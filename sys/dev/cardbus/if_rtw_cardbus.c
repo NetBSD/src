@@ -1,4 +1,4 @@
-/* $NetBSD: if_rtw_cardbus.c,v 1.17 2007/11/16 18:46:23 dyoung Exp $ */
+/* $NetBSD: if_rtw_cardbus.c,v 1.18 2007/11/16 18:47:41 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtw_cardbus.c,v 1.17 2007/11/16 18:46:23 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtw_cardbus.c,v 1.18 2007/11/16 18:47:41 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -146,6 +146,9 @@ struct rtw_cardbus_softc {
 	pcireg_t		sc_bar_val;	/* value of the BAR */
 
 	int			sc_intrline;	/* interrupt line */
+#if 0
+	struct cardbus_conf_state	sc_conf;	/* configuration regs */
+#endif
 };
 
 int	rtw_cardbus_match(struct device *, struct cfdata *, void *);
@@ -186,14 +189,12 @@ rtw_cardbus_lookup(const struct cardbus_attach_args *ca)
 {
 	const struct rtw_cardbus_product *rcp;
 
-	for (rcp = rtw_cardbus_products;
-	     rcp->rcp_product_name != NULL;
-	     rcp++) {
+	for (rcp = rtw_cardbus_products; rcp->rcp_product_name != NULL; rcp++) {
 		if (PCI_VENDOR(ca->ca_id) == rcp->rcp_vendor &&
 		    PCI_PRODUCT(ca->ca_id) == rcp->rcp_product)
-			return (rcp);
+			return rcp;
 	}
-	return (NULL);
+	return NULL;
 }
 
 int
@@ -203,9 +204,9 @@ rtw_cardbus_match(struct device *parent, struct cfdata *match,
 	struct cardbus_attach_args *ca = aux;
 
 	if (rtw_cardbus_lookup(ca) != NULL)
-		return (1);
+		return 1;
 
-	return (0);
+	return 0;
 }
 
 static void
@@ -220,17 +221,15 @@ rtw_cardbus_funcregen(struct rtw_regs *regs, int enable)
 	u_int32_t reg;
 	rtw_config0123_enable(regs, 1);
 	reg = RTW_READ(regs, RTW_CONFIG3);
-	if (enable) {
+	if (enable)
 		RTW_WRITE(regs, RTW_CONFIG3, reg | RTW_CONFIG3_FUNCREGEN);
-	} else {
+	else
 		RTW_WRITE(regs, RTW_CONFIG3, reg & ~RTW_CONFIG3_FUNCREGEN);
-	}
 	rtw_config0123_enable(regs, 0);
 }
 
 void
-rtw_cardbus_attach(struct device *parent, struct device *self,
-    void *aux)
+rtw_cardbus_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct rtw_cardbus_softc *csc = device_private(self);
 	struct rtw_softc *sc = &csc->sc_rtw;
@@ -329,6 +328,10 @@ rtw_cardbus_attach(struct device *parent, struct device *self,
 	RTW_WRITE(regs, RTW_FEMR, RTW_FEMR_INTR);
 	RTW_WRITE(regs, RTW_FER, RTW_FER_INTR);
 
+#if 0
+	cardbus_conf_capture(ct->ct_cc, ct->ct_cf, csc->sc_tag, &csc->sc_conf);
+#endif
+
 	/*
 	 * Power down the socket.
 	 */
@@ -342,16 +345,15 @@ rtw_cardbus_detach(struct device *self, int flags)
 	struct rtw_softc *sc = &csc->sc_rtw;
 	struct rtw_regs *regs = &sc->sc_regs;
 	struct cardbus_devfunc *ct = csc->sc_ct;
-	int rv;
+	int rc;
 
 #if defined(DIAGNOSTIC)
 	if (ct == NULL)
 		panic("%s: data structure lacks", sc->sc_dev.dv_xname);
 #endif
 
-	rv = rtw_detach(sc);
-	if (rv)
-		return (rv);
+	if ((rc = rtw_detach(sc)) != 0)
+		return rc;
 
 	rtw_cardbus_funcregen(regs, 0);
 
@@ -368,7 +370,7 @@ rtw_cardbus_detach(struct device *self, int flags)
 		Cardbus_mapreg_unmap(ct, csc->sc_bar_reg,
 		    regs->r_bt, regs->r_bh, csc->sc_mapsize);
 
-	return (0);
+	return 0;
 }
 
 int
@@ -384,6 +386,10 @@ rtw_cardbus_enable(struct rtw_softc *sc)
 	 */
 	Cardbus_function_enable(ct);
 
+#if 0
+	cardbus_conf_restore(cc, cf, csc->sc_tag, &csc->sc_conf);
+#endif
+
 	/*
 	 * Set up the PCI configuration registers.
 	 */
@@ -398,7 +404,7 @@ rtw_cardbus_enable(struct rtw_softc *sc)
 		printf("%s: unable to establish interrupt at %d\n",
 		    sc->sc_dev.dv_xname, csc->sc_intrline);
 		Cardbus_function_disable(csc->sc_ct);
-		return (1);
+		return 1;
 	}
 
 	rtw_cardbus_funcregen(&sc->sc_regs, 1);
@@ -406,7 +412,7 @@ rtw_cardbus_enable(struct rtw_softc *sc)
 	RTW_WRITE(&sc->sc_regs, RTW_FEMR, RTW_FEMR_INTR);
 	RTW_WRITE(&sc->sc_regs, RTW_FER, RTW_FER_INTR);
 
-	return (0);
+	return 0;
 }
 
 void
@@ -425,6 +431,10 @@ rtw_cardbus_disable(struct rtw_softc *sc)
 	/* Unhook the interrupt handler. */
 	cardbus_intr_disestablish(cc, cf, csc->sc_ih);
 	csc->sc_ih = NULL;
+
+#if 0
+	cardbus_conf_capture(cc, cf, csc->sc_tag, &csc->sc_conf);
+#endif
 
 	/* Power down the socket. */
 	Cardbus_function_disable(ct);
