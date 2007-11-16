@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_portal.c,v 1.13 2007/11/05 17:54:32 pooka Exp $	*/
+/*	$NetBSD: puffs_portal.c,v 1.14 2007/11/16 18:39:01 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: puffs_portal.c,v 1.13 2007/11/05 17:54:32 pooka Exp $");
+__RCSID("$NetBSD: puffs_portal.c,v 1.14 2007/11/16 18:39:01 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -448,8 +448,8 @@ main(int argc, char *argv[])
 	puffs_framev_init(pu, portal_frame_rf, portal_frame_wf, NULL,NULL,NULL);
 
 	if (detach)
-		if (daemon(1, 1) == -1)
-			err(1, "daemon");
+		if (puffs_daemon(pu, 1, 1) == -1)
+			err(1, "puffs_daemon");
 
 	if (puffs_mount(pu,  argv[1], mntflags, PORTAL_ROOT) == -1)
 		err(1, "mount");
