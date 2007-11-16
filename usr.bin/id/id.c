@@ -37,7 +37,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)id.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: id.c,v 1.27 2006/06/07 13:09:56 liamjfoy Exp $");
+__RCSID("$NetBSD: id.c,v 1.28 2007/11/16 17:31:13 jmmv Exp $");
 #endif
 #endif /* not lint */
 
@@ -184,7 +184,7 @@ pretty(struct passwd *pw)
 			(void)printf("uid\t%s\n", pw->pw_name);
 		else
 			(void)printf("uid\t%u\n", rid);
-		
+
 		if ((eid = geteuid()) != rid) {
 			if ((pw = getpwuid(eid)) != NULL)
 				(void)printf("euid\t%s\n", pw->pw_name);
