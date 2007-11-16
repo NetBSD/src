@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.132 2007/11/16 04:58:38 dyoung Exp $  */
+/*	$NetBSD: atw.c,v 1.133 2007/11/16 05:53:16 dyoung Exp $  */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.132 2007/11/16 04:58:38 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.133 2007/11/16 05:53:16 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -3080,7 +3080,7 @@ atw_rxintr(struct atw_softc *sc)
 	struct mbuf *m;
 	u_int32_t rxstat;
 	int i, len, rate, rate0;
-	u_int32_t rssi, rssi0;
+	u_int32_t rssi, ctlrssi;
 
 	for (i = sc->sc_rxptr;; i = ATW_NEXTRX(i)) {
 		rxs = &sc->sc_rxsoft[i];
@@ -3088,16 +3088,16 @@ atw_rxintr(struct atw_softc *sc)
 		ATW_CDRXSYNC(sc, i, BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 
 		rxstat = le32toh(sc->sc_rxdescs[i].ar_stat);
-		rssi0 = le32toh(sc->sc_rxdescs[i].ar_ctlrssi);
+		ctlrssi = le32toh(sc->sc_rxdescs[i].ar_ctlrssi);
 		rate0 = __SHIFTOUT(rxstat, ATW_RXSTAT_RXDR_MASK);
 
 		if (rxstat & ATW_RXSTAT_OWN)
 			break; /* We have processed all receive buffers. */
 
 		DPRINTF3(sc,
-		    ("%s: rx stat %08x rssi0 %08x buf1 %08x buf2 %08x\n",
+		    ("%s: rx stat %08x ctlrssi %08x buf1 %08x buf2 %08x\n",
 		    sc->sc_dev.dv_xname,
-		    rxstat, rssi0,
+		    rxstat, ctlrssi,
 		    le32toh(sc->sc_rxdescs[i].ar_buf1),
 		    le32toh(sc->sc_rxdescs[i].ar_buf2)));
 
@@ -3184,9 +3184,9 @@ atw_rxintr(struct atw_softc *sc)
 		 * TBD Use short-preamble bit and such in RF3000_RXSTAT.
 		 */
 		if (sc->sc_bbptype == ATW_BBPTYPE_RFMD)
-			rssi = rssi0 & RF3000_RSSI_MASK;
+			rssi = ctlrssi & RF3000_RSSI_MASK;
 		else
-			rssi = rssi0;
+			rssi = ctlrssi;
 
  #if NBPFILTER > 0
 		/* Pass this up to any BPF listeners. */
@@ -3230,12 +3230,7 @@ atw_rxintr(struct atw_softc *sc)
 void
 atw_txintr(struct atw_softc *sc)
 {
-#define TXSTAT_ERRMASK (ATW_TXSTAT_TUF | ATW_TXSTAT_TLT | ATW_TXSTAT_TRT | \
-    ATW_TXSTAT_TRO | ATW_TXSTAT_SOFBR)
-#define TXSTAT_FMT "\20\31ATW_TXSTAT_SOFBR\32ATW_TXSTAT_TRO\33ATW_TXSTAT_TUF" \
-    "\34ATW_TXSTAT_TRT\35ATW_TXSTAT_TLT"
-
-	static char txstat_buf[sizeof("ffffffff<>" TXSTAT_FMT)];
+	static char txstat_buf[sizeof("ffffffff<>" ATW_TXSTAT_FMT)];
 	struct ifnet *ifp = &sc->sc_if;
 	struct atw_txsoft *txs;
 	u_int32_t txstat;
@@ -3296,9 +3291,9 @@ atw_txintr(struct atw_softc *sc)
 		ifp->if_flags &= ~IFF_OACTIVE;
 
 		if ((ifp->if_flags & IFF_DEBUG) != 0 &&
-		    (txstat & TXSTAT_ERRMASK) != 0) {
-			bitmask_snprintf(txstat & TXSTAT_ERRMASK, TXSTAT_FMT,
-			    txstat_buf, sizeof(txstat_buf));
+		    (txstat & ATW_TXSTAT_ERRMASK) != 0) {
+			bitmask_snprintf(txstat & ATW_TXSTAT_ERRMASK,
+			    ATW_TXSTAT_FMT, txstat_buf, sizeof(txstat_buf));
 			printf("%s: txstat %s %" __PRIuBITS "\n",
 			    sc->sc_dev.dv_xname, txstat_buf,
 			    __SHIFTOUT(txstat, ATW_TXSTAT_ARC_MASK));
@@ -3336,8 +3331,6 @@ atw_txintr(struct atw_softc *sc)
 		KASSERT((ifp->if_flags & IFF_OACTIVE) == 0);
 		sc->sc_tx_timer = 0;
 	}
-#undef TXSTAT_ERRMASK
-#undef TXSTAT_FMT
 }
 
 /*
