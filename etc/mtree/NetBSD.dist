@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.353 2007/11/14 20:37:53 jmmv Exp $
+#	$NetBSD: NetBSD.dist,v 1.354 2007/11/16 18:07:02 jmmv Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -1104,6 +1104,7 @@
 ./usr/tests/games
 ./usr/tests/util
 ./usr/tests/util/df
+./usr/tests/util/id
 ./usr/tests/util/ps
 ./usr/tests/util/sh
 ./usr/tests/util/systrace
