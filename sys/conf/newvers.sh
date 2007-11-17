@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: newvers.sh,v 1.51 2007/11/16 21:48:19 skrll Exp $
+#	$NetBSD: newvers.sh,v 1.52 2007/11/17 08:59:51 skrll Exp $
 #
 # Copyright (c) 1984, 1986, 1990, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -83,9 +83,15 @@ ${copyright}
 /*
  * NetBSD identity note.
  */
+#ifdef __arm__
+#define _SHT_NOTE	%note
+#else
+#define _SHT_NOTE	@note
+#endif
+
 #define	_S(TAG)	__STRING(TAG)
 __asm(
-	".section\t\".note.netbsd.ident\", \"\",@note\n"
+	".section\t\".note.netbsd.ident\", \"\"," _S(_SHT_NOTE) "\n"
 	"\t.p2align\t2\n"
 	"\t.long\t" _S(ELF_NOTE_NETBSD_NAMESZ) "\n"
 	"\t.long\t" _S(ELF_NOTE_NETBSD_DESCSZ) "\n"
