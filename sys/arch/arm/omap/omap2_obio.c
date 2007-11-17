@@ -1,7 +1,7 @@
-/*	$Id: omap2_obio.c,v 1.1.2.3 2007/11/05 22:01:56 matt Exp $	*/
+/*	$Id: omap2_obio.c,v 1.1.2.4 2007/11/17 21:32:50 matt Exp $	*/
 
 /* adapted from: */
-/*	$NetBSD: omap2_obio.c,v 1.1.2.3 2007/11/05 22:01:56 matt Exp $ */
+/*	$NetBSD: omap2_obio.c,v 1.1.2.4 2007/11/17 21:32:50 matt Exp $ */
 
 
 /*
@@ -131,7 +131,7 @@
 
 #include "opt_omap.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap2_obio.c,v 1.1.2.3 2007/11/05 22:01:56 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap2_obio.c,v 1.1.2.4 2007/11/17 21:32:50 matt Exp $");
 
 #include "locators.h"
 #include "obio.h"
@@ -302,7 +302,7 @@ obio_print(void *aux, const char *name)
 	}
 	if (sa->obio_intr != OBIOCF_INTR_DEFAULT)
 		aprint_normal(" intr %d", sa->obio_intr);
-	if (sa->obio_intr != OBIOCF_INTRBASE_DEFAULT)
+	if (sa->obio_intrbase != OBIOCF_INTRBASE_DEFAULT)
 		aprint_normal(" intrbase %d", sa->obio_intrbase);
 
 	return UNCONF;
