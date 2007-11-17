@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysmon_envsys.9,v 1.12 2007/11/16 08:00:11 xtraeme Exp $
+.\"	$NetBSD: sysmon_envsys.9,v 1.13 2007/11/17 23:10:00 xtraeme Exp $
 .\"
 .\" Copyright (c) 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 13, 2007
+.Dd November 17, 2007
 .Dt SYSMON_ENVSYS 9
 .Os
 .Sh NAME
@@ -155,7 +155,8 @@ Pointer to the device struct (also called
 function callback.
 .It Fa sme_refresh
 Pointer to a function that will be used to refresh sensor data in
-the device.
+the device. This can be used to set the state and other properties of the
+sensor depending of the returned data by the driver.
 .Em NOTE :
 .Em You don't have to refresh all sensors, only the sensor specified by the
 .Sy edata->sensor
@@ -373,11 +374,10 @@ is set to
 .Em SME_CLASS_BATTERY .
 .El
 .It
-When initializing the sensor the
+When initializing or refreshing the sensor, the
 .Ar state
-field must be set to
-.Em ENVSYS_SVALID
-(otherwise some sensor's objects won't be created into its dictionary):
+member should be set to a known state (otherwise it will be in
+unknown state). Possible values:
 .Pp
 .Bl -tag -width "ENVSYS_SCRITUNDERXX" -compact
 .It ENVSYS_SVALID
