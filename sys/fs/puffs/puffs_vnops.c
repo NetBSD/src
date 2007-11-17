@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.115 2007/11/17 18:09:04 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.116 2007/11/17 21:30:48 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.115 2007/11/17 18:09:04 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.116 2007/11/17 21:30:48 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -437,6 +437,20 @@ puffs_abortbutton(struct puffs_mount *pmp, int what,
 	puffs_callreclaim(pmp, cookie, cnp->cn_lwp);
 }
 
+/*
+ * Begin vnode operations.
+ *
+ * A word from the keymaster about locks: generally we don't want
+ * to use the vnode locks at all: it creates an ugly dependency between
+ * the userlandia file server and the kernel.  But we'll play along with
+ * the kernel vnode locks for now.  However, even currently we attempt
+ * to release locks as early as possible.  This is possible for some
+ * operations which a) don't need a locked vnode after the userspace op
+ * and b) return with the vnode unlocked.  Theoretically we could
+ * unlock-do op-lock for others and order the graph in userspace, but I
+ * don't want to think of the consequences for the time being.
+ */
+
 int
 puffs_lookup(void *v)
 {
@@ -581,6 +595,27 @@ puffs_lookup(void *v)
 	return error;
 }
 
+#define REFPN_AND_UNLOCKVP(a, b)					\
+do {									\
+	mutex_enter(&b->pn_mtx);					\
+	puffs_referencenode(b);						\
+	mutex_exit(&b->pn_mtx);						\
+	VOP_UNLOCK(a, 0);						\
+} while (/*CONSTCOND*/0)
+
+#define REFPN(b)							\
+do {									\
+	mutex_enter(&b->pn_mtx);					\
+	puffs_referencenode(b);						\
+	mutex_exit(&b->pn_mtx);						\
+} while (/*CONSTCOND*/0)
+
+#define RELEPN_AND_VP(a, b)						\
+do {									\
+	puffs_releasenode(b);						\
+	vrele(a);							\
+} while (/*CONSTCOND*/0)
+
 int
 puffs_create(void *v)
 {
@@ -593,8 +628,10 @@ puffs_create(void *v)
 	} */ *ap = v;
 	PUFFS_MSG_VARS(vn, create);
 	struct vnode *dvp = ap->a_dvp;
+	struct puffs_node *dpn = VPTOPP(dvp);
 	struct componentname *cnp = ap->a_cnp;
-	struct puffs_mount *pmp = MPTOPUFFSMP(dvp->v_mount);
+	struct mount *mp = dvp->v_mount;
+	struct puffs_mount *pmp = MPTOPUFFSMP(mp);
 	int error;
 
 	DPRINTF(("puffs_create: dvp %p, cnp: %s\n",
@@ -607,22 +644,31 @@ puffs_create(void *v)
 	puffs_msg_setinfo(park_create, PUFFSOP_VN,
 	    PUFFS_VN_CREATE, VPTOPNC(dvp));
 
-	PUFFS_MSG_ENQUEUEWAIT2(pmp, park_create, dvp->v_data, NULL, error);
+	/*
+	 * Do the dance:
+	 * + insert into queue ("interlock")
+	 * + unlock vnode
+	 * + wait for response
+	 */
+	puffs_msg_enqueue(pmp, park_create);
+	REFPN_AND_UNLOCKVP(dvp, dpn);
+	error = puffs_msg_wait2(pmp, park_create, dpn, NULL);
+
 	error = checkerr(pmp, error, __func__);
 	if (error)
 		goto out;
 
-	error = puffs_newnode(dvp->v_mount, dvp, ap->a_vpp,
+	error = puffs_newnode(mp, dvp, ap->a_vpp,
 	    create_msg->pvnr_newnode, cnp, ap->a_vap->va_type, 0);
 	if (error)
-		puffs_abortbutton(pmp, PUFFS_ABORT_CREATE, VPTOPNC(dvp),
+		puffs_abortbutton(pmp, PUFFS_ABORT_CREATE, dpn->pn_cookie,
 		    create_msg->pvnr_newnode, cnp);
 
  out:
 	if (error || (cnp->cn_flags & SAVESTART) == 0)
 		PNBUF_PUT(cnp->cn_pnbuf);
-	vput(dvp);
 
+	RELEPN_AND_VP(dvp, dpn);
 	DPRINTF(("puffs_create: return %d\n", error));
 	PUFFS_MSG_RELEASE(create);
 	return error;
@@ -640,8 +686,10 @@ puffs_mknod(void *v)
 	} */ *ap = v;
 	PUFFS_MSG_VARS(vn, mknod);
 	struct vnode *dvp = ap->a_dvp;
+	struct puffs_node *dpn = VPTOPP(dvp);
 	struct componentname *cnp = ap->a_cnp;
-	struct puffs_mount *pmp = MPTOPUFFSMP(dvp->v_mount);
+	struct mount *mp = dvp->v_mount;
+	struct puffs_mount *pmp = MPTOPUFFSMP(mp);
 	int error;
 
 	PUFFS_MSG_ALLOC(vn, mknod);
@@ -651,23 +699,26 @@ puffs_mknod(void *v)
 	puffs_msg_setinfo(park_mknod, PUFFSOP_VN,
 	    PUFFS_VN_MKNOD, VPTOPNC(dvp));
 
-	PUFFS_MSG_ENQUEUEWAIT2(pmp, park_mknod, dvp->v_data, NULL, error);
+	puffs_msg_enqueue(pmp, park_mknod);
+	REFPN_AND_UNLOCKVP(dvp, dpn);
+	error = puffs_msg_wait2(pmp, park_mknod, dpn, NULL);
+
 	error = checkerr(pmp, error, __func__);
 	if (error)
 		goto out;
 
-	error = puffs_newnode(dvp->v_mount, dvp, ap->a_vpp,
+	error = puffs_newnode(mp, dvp, ap->a_vpp,
 	    mknod_msg->pvnr_newnode, cnp, ap->a_vap->va_type,
 	    ap->a_vap->va_rdev);
 	if (error)
-		puffs_abortbutton(pmp, PUFFS_ABORT_MKNOD, VPTOPNC(dvp),
+		puffs_abortbutton(pmp, PUFFS_ABORT_MKNOD, dpn->pn_cookie,
 		    mknod_msg->pvnr_newnode, cnp);
 
  out:
 	PUFFS_MSG_RELEASE(mknod);
 	if (error || (cnp->cn_flags & SAVESTART) == 0)
 		PNBUF_PUT(cnp->cn_pnbuf);
-	vput(dvp);
+	RELEPN_AND_VP(dvp, dpn);
 	return error;
 }
 
@@ -1376,7 +1427,7 @@ puffs_callremove(struct puffs_mount *pmp, void *dcookie, void *cookie,
 
 /*
  * XXX: can't use callremove now because can't catch setbacks with
- * it due to lack of a vnode argument.
+ * it due to lack of a pnode argument.
  */
 int
 puffs_remove(void *v)
@@ -1390,8 +1441,11 @@ puffs_remove(void *v)
 	PUFFS_MSG_VARS(vn, remove);
 	struct vnode *dvp = ap->a_dvp;
 	struct vnode *vp = ap->a_vp;
-	struct puffs_mount *pmp = MPTOPUFFSMP(dvp->v_mount);
+	struct puffs_node *dpn = VPTOPP(dvp);
+	struct puffs_node *pn = VPTOPP(vp);
 	struct componentname *cnp = ap->a_cnp;
+	struct mount *mp = dvp->v_mount;
+	struct puffs_mount *pmp = MPTOPUFFSMP(mp);
 	int error;
 
 	PUFFS_MSG_ALLOC(vn, remove);
@@ -1401,17 +1455,20 @@ puffs_remove(void *v)
 	puffs_msg_setinfo(park_remove, PUFFSOP_VN,
 	    PUFFS_VN_REMOVE, VPTOPNC(dvp));
 
-	PUFFS_MSG_ENQUEUEWAIT2(pmp, park_remove,
-	    dvp->v_data, vp->v_data, error);
+	puffs_msg_enqueue(pmp, park_remove);
+	REFPN_AND_UNLOCKVP(dvp, dpn);
+	if (dvp == vp)
+		REFPN(pn);
+	else
+		REFPN_AND_UNLOCKVP(vp, pn);
+	error = puffs_msg_wait2(pmp, park_remove, dpn, pn);
+
 	PUFFS_MSG_RELEASE(remove);
 
-	error = checkerr(pmp, error, __func__);
-	vput(vp);
-	if (dvp == vp)
-		vrele(dvp);
-	else
-		vput(dvp);
+	RELEPN_AND_VP(dvp, dpn);
+	RELEPN_AND_VP(vp, pn);
 
+	error = checkerr(pmp, error, __func__);
 	return error;
 }
 
@@ -1427,8 +1484,10 @@ puffs_mkdir(void *v)
 	} */ *ap = v;
 	PUFFS_MSG_VARS(vn, mkdir);
 	struct vnode *dvp = ap->a_dvp;
-	struct puffs_mount *pmp = MPTOPUFFSMP(dvp->v_mount);
+	struct puffs_node *dpn = VPTOPP(dvp);
 	struct componentname *cnp = ap->a_cnp;
+	struct mount *mp = dvp->v_mount;
+	struct puffs_mount *pmp = MPTOPUFFSMP(mp);
 	int error;
 
 	PUFFS_MSG_ALLOC(vn, mkdir);
@@ -1438,22 +1497,25 @@ puffs_mkdir(void *v)
 	puffs_msg_setinfo(park_mkdir, PUFFSOP_VN,
 	    PUFFS_VN_MKDIR, VPTOPNC(dvp));
 
-	PUFFS_MSG_ENQUEUEWAIT2(pmp, park_mkdir, dvp->v_data, NULL, error);
+	puffs_msg_enqueue(pmp, park_mkdir);
+	REFPN_AND_UNLOCKVP(dvp, dpn);
+	error = puffs_msg_wait2(pmp, park_mkdir, dpn, NULL);
+
 	error = checkerr(pmp, error, __func__);
 	if (error)
 		goto out;
 
-	error = puffs_newnode(dvp->v_mount, dvp, ap->a_vpp,
+	error = puffs_newnode(mp, dvp, ap->a_vpp,
 	    mkdir_msg->pvnr_newnode, cnp, VDIR, 0);
 	if (error)
-		puffs_abortbutton(pmp, PUFFS_ABORT_MKDIR, VPTOPNC(ap->a_dvp),
+		puffs_abortbutton(pmp, PUFFS_ABORT_MKDIR, dpn->pn_cookie,
 		    mkdir_msg->pvnr_newnode, cnp);
 
  out:
 	PUFFS_MSG_RELEASE(mkdir);
 	if (error || (cnp->cn_flags & SAVESTART) == 0)
 		PNBUF_PUT(cnp->cn_pnbuf);
-	vput(ap->a_dvp);
+	RELEPN_AND_VP(dvp, dpn);
 	return error;
 }
 
@@ -1488,6 +1550,8 @@ puffs_rmdir(void *v)
 	PUFFS_MSG_VARS(vn, rmdir);
 	struct vnode *dvp = ap->a_dvp;
 	struct vnode *vp = ap->a_vp;
+	struct puffs_node *dpn = VPTOPP(dvp);
+	struct puffs_node *pn = VPTOPP(vp);
 	struct puffs_mount *pmp = MPTOPUFFSMP(dvp->v_mount);
 	struct componentname *cnp = ap->a_cnp;
 	int error;
@@ -1499,12 +1563,16 @@ puffs_rmdir(void *v)
 	puffs_msg_setinfo(park_rmdir, PUFFSOP_VN,
 	    PUFFS_VN_RMDIR, VPTOPNC(dvp));
 
-	PUFFS_MSG_ENQUEUEWAIT2(pmp, park_rmdir, dvp->v_data, vp->v_data, error);
+	puffs_msg_enqueue(pmp, park_rmdir);
+	REFPN_AND_UNLOCKVP(dvp, dpn);
+	REFPN_AND_UNLOCKVP(vp, pn);
+	error = puffs_msg_wait2(pmp, park_rmdir, dpn, pn);
+
 	PUFFS_MSG_RELEASE(rmdir);
 
 	/* XXX: some call cache_purge() *for both vnodes* here, investigate */
-	vput(dvp);
-	vput(vp);
+	RELEPN_AND_VP(dvp, dpn);
+	RELEPN_AND_VP(vp, pn);
 
 	return error;
 }
@@ -1521,6 +1589,8 @@ puffs_link(void *v)
 	PUFFS_MSG_VARS(vn, link);
 	struct vnode *dvp = ap->a_dvp;
 	struct vnode *vp = ap->a_vp;
+	struct puffs_node *dpn = VPTOPP(dvp);
+	struct puffs_node *pn = VPTOPP(vp);
 	struct puffs_mount *pmp = MPTOPUFFSMP(dvp->v_mount);
 	struct componentname *cnp = ap->a_cnp;
 	int error;
@@ -1532,7 +1602,11 @@ puffs_link(void *v)
 	puffs_msg_setinfo(park_link, PUFFSOP_VN,
 	    PUFFS_VN_LINK, VPTOPNC(dvp));
 
-	PUFFS_MSG_ENQUEUEWAIT2(pmp, park_link, dvp->v_data, NULL, error);
+	puffs_msg_enqueue(pmp, park_link);
+	REFPN_AND_UNLOCKVP(dvp, dpn);
+	REFPN(pn);
+	error = puffs_msg_wait2(pmp, park_link, dpn, pn);
+
 	PUFFS_MSG_RELEASE(link);
 
 	error = checkerr(pmp, error, __func__);
@@ -1540,12 +1614,15 @@ puffs_link(void *v)
 	/*
 	 * XXX: stay in touch with the cache.  I don't like this, but
 	 * don't have a better solution either.  See also puffs_rename().
+	 *
+	 * XXX2: can't use vp safely here
 	 */
 	if (error == 0)
 		puffs_updatenode(vp, PUFFS_UPDATECTIME);
 
 	PNBUF_PUT(cnp->cn_pnbuf);
-	vput(dvp);
+	RELEPN_AND_VP(dvp, dpn);
+	puffs_releasenode(pn);
 
 	return error;
 }
@@ -1563,36 +1640,42 @@ puffs_symlink(void *v)
 	} */ *ap = v;
 	PUFFS_MSG_VARS(vn, symlink);
 	struct vnode *dvp = ap->a_dvp;
+	struct puffs_node *dpn = VPTOPP(dvp);
+	struct mount *mp = dvp->v_mount;
 	struct puffs_mount *pmp = MPTOPUFFSMP(dvp->v_mount);
+	struct componentname *cnp = ap->a_cnp;
 	int error;
 
 	*ap->a_vpp = NULL;
 
 	PUFFS_MSG_ALLOC(vn, symlink);
 	puffs_makecn(&symlink_msg->pvnr_cn, &symlink_msg->pvnr_cn_cred,
-		&symlink_msg->pvnr_cn_cid, ap->a_cnp, PUFFS_USE_FULLPNBUF(pmp));
+		&symlink_msg->pvnr_cn_cid, cnp, PUFFS_USE_FULLPNBUF(pmp));
 	symlink_msg->pvnr_va = *ap->a_vap;
 	(void)strlcpy(symlink_msg->pvnr_link, ap->a_target,
 	    sizeof(symlink_msg->pvnr_link));
 	puffs_msg_setinfo(park_symlink, PUFFSOP_VN,
 	    PUFFS_VN_SYMLINK, VPTOPNC(dvp));
 
-	PUFFS_MSG_ENQUEUEWAIT2(pmp, park_symlink, dvp->v_data, NULL, error);
+	puffs_msg_enqueue(pmp, park_symlink);
+	REFPN_AND_UNLOCKVP(dvp, dpn);
+	error = puffs_msg_wait2(pmp, park_symlink, dpn, NULL);
+
 	error = checkerr(pmp, error, __func__);
 	if (error)
 		goto out;
 
-	error = puffs_newnode(ap->a_dvp->v_mount, ap->a_dvp, ap->a_vpp,
-	    symlink_msg->pvnr_newnode, ap->a_cnp, VLNK, 0);
+	error = puffs_newnode(mp, dvp, ap->a_vpp,
+	    symlink_msg->pvnr_newnode, cnp, VLNK, 0);
 	if (error)
-		puffs_abortbutton(pmp, PUFFS_ABORT_SYMLINK, VPTOPNC(ap->a_dvp),
-		    symlink_msg->pvnr_newnode, ap->a_cnp);
+		puffs_abortbutton(pmp, PUFFS_ABORT_SYMLINK, dpn->pn_cookie,
+		    symlink_msg->pvnr_newnode, cnp);
 
  out:
 	PUFFS_MSG_RELEASE(symlink);
-	if (error || (ap->a_cnp->cn_flags & SAVESTART) == 0)
-		PNBUF_PUT(ap->a_cnp->cn_pnbuf);
-	vput(ap->a_dvp);
+	if (error || (cnp->cn_flags & SAVESTART) == 0)
+		PNBUF_PUT(cnp->cn_pnbuf);
+	RELEPN_AND_VP(dvp, dpn);
 
 	return error;
 }
