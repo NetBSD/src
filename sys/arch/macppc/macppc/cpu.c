@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.47 2007/11/17 17:02:55 macallan Exp $	*/
+/*	$NetBSD: cpu.c,v 1.48 2007/11/17 18:02:42 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2001 Tsubai Masanari.
@@ -33,10 +33,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.47 2007/11/17 17:02:55 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.48 2007/11/17 18:02:42 macallan Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
+#include "opt_interrupt.h"
 #include "opt_altivec.h"
 
 #include <sys/param.h>
@@ -68,7 +69,13 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.47 2007/11/17 17:02:55 macallan Exp $");
 #include <machine/pio.h>
 #include <machine/trap.h>
 
-#include "opt_openpic.h"
+#include "pic_openpic.h"
+
+#ifndef OPENPIC
+#if NPIC_OPENPIC > 0
+#define OPENPIC
+#endif /* NOPENPIC > 0 */
+#endif /* OPENPIC */
 
 int cpumatch(struct device *, struct cfdata *, void *);
 void cpuattach(struct device *, struct device *, void *);
