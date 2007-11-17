@@ -1,4 +1,4 @@
-/* $NetBSD: privcmd.c,v 1.18.10.2 2007/11/16 17:18:04 bouyer Exp $ */
+/* $NetBSD: privcmd.c,v 1.18.10.3 2007/11/17 15:47:54 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2004 Christian Limpach.
@@ -32,7 +32,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.18.10.2 2007/11/16 17:18:04 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.18.10.3 2007/11/17 15:47:54 bouyer Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -69,11 +69,8 @@ privcmd_ioctl(void *v)
 
 	switch (ap->a_command) {
 	case IOCTL_PRIVCMD_HYPERCALL: {
-		privcmd_hypercall_t hc;
-		error = copyin(ap->a_data, &hc, sizeof(hc));
-		if (error)
-			return error;
-		if (hc.op >= (PAGE_SIZE >> 5))
+		privcmd_hypercall_t *hc = ap->a_data;
+		if (hc->op >= (PAGE_SIZE >> 5))
 			return EINVAL;
 		error = -EOPNOTSUPP;
 #if defined(i386)
@@ -107,12 +104,12 @@ privcmd_ioctl(void *v)
 			"call *%%rax"
 			: "=a" (error), "=D" (i1),
 			  "=S" (i2), "=d" (i3)
-			: "0" ((unsigned int)hc.op),
-			  "1" (hc.arg[0]),
-			  "2" (hc.arg[1]),
-			  "3" (hc.arg[2]),
-			  "g" (hc.arg[3]),
-			  "g" (hc.arg[4])
+			: "0" ((unsigned int)hc->op),
+			  "1" (hc->arg[0]),
+			  "2" (hc->arg[1]),
+			  "3" (hc->arg[2]),
+			  "g" (hc->arg[3]),
+			  "g" (hc->arg[4])
 			: "r8", "r10", "memory" );
 		}
 #endif /* x86_64 */
