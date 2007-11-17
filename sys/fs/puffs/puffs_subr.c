@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_subr.c,v 1.58 2007/11/16 20:32:18 pooka Exp $	*/
+/*	$NetBSD: puffs_subr.c,v 1.59 2007/11/17 18:09:04 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.58 2007/11/16 20:32:18 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.59 2007/11/17 18:09:04 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -110,12 +110,43 @@ puffs_parkdone_asyncbioread(struct puffs_mount *pmp,
 	struct buf *bp = arg;
 	size_t moved;
 
+	DPRINTF(("%s\n", __func__));
+
 	bp->b_error = checkerr(pmp, preq->preq_rv, __func__);
 	if (bp->b_error == 0) {
-		moved = bp->b_bcount - read_msg->pvnr_resid;
-		bp->b_resid = read_msg->pvnr_resid;
+		if (read_msg->pvnr_resid > bp->b_bcount) {
+			puffs_senderr(pmp, PUFFS_ERR_READ, E2BIG,
+			    "resid grew", preq->preq_cookie);
+			bp->b_error = E2BIG;
+		} else {
+			moved = bp->b_bcount - read_msg->pvnr_resid;
+			bp->b_resid = read_msg->pvnr_resid;
 
-		memcpy(bp->b_data, read_msg->pvnr_data, moved);
+			memcpy(bp->b_data, read_msg->pvnr_data, moved);
+		}
+	}
+
+	biodone(bp);
+}
+
+void
+puffs_parkdone_asyncbiowrite(struct puffs_mount *pmp,
+	struct puffs_req *preq, void *arg)
+{
+	struct puffs_vnmsg_write *write_msg = (void *)preq;
+	struct buf *bp = arg;
+
+	DPRINTF(("%s\n", __func__));
+
+	bp->b_error = checkerr(pmp, preq->preq_rv, __func__);
+	if (bp->b_error == 0) {
+		if (write_msg->pvnr_resid > bp->b_bcount) {
+			puffs_senderr(pmp, PUFFS_ERR_WRITE, E2BIG,
+			    "resid grew", preq->preq_cookie);
+			bp->b_error = E2BIG;
+		} else {
+			bp->b_resid = write_msg->pvnr_resid;
+		}
 	}
 
 	biodone(bp);
