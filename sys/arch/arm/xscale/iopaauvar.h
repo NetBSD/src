@@ -1,4 +1,4 @@
-/*	$NetBSD: iopaauvar.h,v 1.5 2007/11/13 22:09:37 ad Exp $	*/
+/*	$NetBSD: iopaauvar.h,v 1.6 2007/11/17 15:28:37 ad Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -73,7 +73,7 @@ struct iopaau_softc {
 
 struct iopaau_function {
 	int	(*af_setup)(struct iopaau_softc *, struct dmover_request *);
-	struct pool_cache *af_desc_cache;
+	pool_cache_t af_desc_cache;
 };
 
 extern pool_cache_t iopaau_desc_4_cache;
