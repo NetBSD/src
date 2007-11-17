@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_bswap.c,v 1.11 2005/12/11 12:25:25 christos Exp $	*/
+/*	$NetBSD: ext2fs_bswap.c,v 1.12 2007/11/17 03:43:18 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_bswap.c,v 1.11 2005/12/11 12:25:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_bswap.c,v 1.12 2007/11/17 03:43:18 tsutsui Exp $");
 
 #include <sys/types.h>
 #include <ufs/ext2fs/ext2fs.h>
@@ -82,6 +82,7 @@ e2fs_sb_bswap(struct ext2fs *old, struct ext2fs *new)
 	new->e2fs_features_incompat =	bswap32(old->e2fs_features_incompat);
 	new->e2fs_features_rocompat =	bswap32(old->e2fs_features_rocompat);
 	new->e2fs_algo		=	bswap32(old->e2fs_algo);
+	new->e2fs_reserved_ngdb	=	bswap16(old->e2fs_reserved_ngdb);
 }
 
 void e2fs_cg_bswap(struct ext2_gd *old, struct ext2_gd *new, int size)
