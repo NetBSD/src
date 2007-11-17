@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.730 2007/11/12 16:39:36 pooka Exp $
+# $NetBSD: mi,v 1.731 2007/11/17 17:00:15 tsutsui Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -201,6 +201,7 @@
 ./sbin/mountd					base-obsolete		obsolete
 ./sbin/newbtconf				base-sysutil-root
 ./sbin/newfs					base-sysutil-root
+./sbin/newfs_ext2fs				base-sysutil-root
 ./sbin/newfs_lfs				base-sysutil-root
 ./sbin/newfs_msdos				base-sysutil-root
 ./sbin/newfs_sysvbfs				base-sysutil-root
