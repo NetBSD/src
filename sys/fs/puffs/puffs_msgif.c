@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.c,v 1.57 2007/11/16 20:32:17 pooka Exp $	*/
+/*	$NetBSD: puffs_msgif.c,v 1.58 2007/11/17 18:03:15 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.57 2007/11/16 20:32:17 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.58 2007/11/17 18:03:15 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -724,7 +724,7 @@ puffsop_msg(void *this, struct puffs_req *preq)
 			break;
 	}
 	if (park == NULL) {
-		DPRINTF(("puffs_msgif_income: no request: %" PRIu64 "\n",
+		DPRINTF(("puffsop_msg: no request: %" PRIu64 "\n",
 		    preq->preq_id));
 		mutex_exit(&pmp->pmp_lock);
 		return; /* XXX send error */
@@ -733,7 +733,7 @@ puffsop_msg(void *this, struct puffs_req *preq)
 	mutex_enter(&park->park_mtx);
 	puffs_msgpark_reference(park);
 	if (pth->pth_framelen > park->park_maxlen) {
-		DPRINTF(("puffs_msgif_income: invalid buffer length: "
+		DPRINTF(("puffsop_msg: invalid buffer length: "
 		    "%" PRIu64 " (req %" PRIu64 ", \n", pth->pth_framelen,
 		    preq->preq_id));
 		park->park_preq->preq_rv = EPROTO;
@@ -750,11 +750,11 @@ puffsop_msg(void *this, struct puffs_req *preq)
 	mutex_exit(&pmp->pmp_lock);
 
 	if (wgone) {
-		DPRINTF(("puffs_putop: bad service - waiter gone for "
+		DPRINTF(("puffsop_msg: bad service - waiter gone for "
 		    "park %p\n", park));
 	} else {
 		if (park->park_flags & PARKFLAG_CALL) {
-			DPRINTF(("puffs_msgif_income: call for %p, arg %p\n",
+			DPRINTF(("puffsop_msg: call for %p, arg %p\n",
 			    park->park_preq, park->park_donearg));
 			park->park_done(pmp, preq, park->park_donearg);
 		} else {
