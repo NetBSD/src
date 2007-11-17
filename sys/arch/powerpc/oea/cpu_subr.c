@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.34 2007/11/16 08:00:12 xtraeme Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.35 2007/11/17 08:30:35 kefren Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.34 2007/11/16 08:00:12 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.35 2007/11/17 08:30:35 kefren Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -893,6 +893,7 @@ cpu_tau_setup(struct cpu_info *ci)
 
 	sme = sysmon_envsys_create();
 
+	sensor.state = ENVSYS_SVALID;
 	sensor.units = ENVSYS_STEMP;
 	(void)strlcpy(sensor.desc, "CPU Temp", sizeof(sensor.desc));
 	if (sysmon_envsys_sensor_attach(sme, &sensor)) {

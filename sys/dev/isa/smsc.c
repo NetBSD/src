@@ -1,4 +1,4 @@
-/*	$NetBSD: smsc.c,v 1.5 2007/11/16 08:00:15 xtraeme Exp $ */
+/*	$NetBSD: smsc.c,v 1.6 2007/11/17 08:30:35 kefren Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smsc.c,v 1.5 2007/11/16 08:00:15 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smsc.c,v 1.6 2007/11/17 08:30:35 kefren Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -371,4 +371,5 @@ smsc_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 		edata->value_cur = smsc_reg2rpm(rpm);
 		break;
 	}
+	edata->state = ENVSYS_SVALID;
 }
