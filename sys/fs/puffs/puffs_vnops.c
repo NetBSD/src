@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.114 2007/11/16 20:32:18 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.115 2007/11/17 18:09:04 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.114 2007/11/16 20:32:18 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.115 2007/11/17 18:09:04 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -2080,7 +2080,7 @@ puffs_strategy(void *v)
 	struct buf *bp;
 	size_t argsize;
 	size_t tomove, moved;
-	int error, dofaf;
+	int error, dofaf, dobiodone;
 
 	pmp = MPTOPUFFSMP(vp->v_mount);
 	bp = ap->a_bp;
@@ -2088,6 +2088,7 @@ puffs_strategy(void *v)
 	dofaf = 0;
 	pn = VPTOPP(vp);
 	park_rw = NULL; /* explicit */
+	dobiodone = 1;
 
 	if ((BIOREAD(bp) && !EXISTSOP(pmp, READ))
 	    || (BIOWRITE(bp) && !EXISTSOP(pmp, WRITE)))
@@ -2124,12 +2125,9 @@ puffs_strategy(void *v)
 		simple_unlock(&vp->v_interlock);
 	}
 
-	if (BIOASYNC(bp))
-		dofaf = 1;
-
 #ifdef DIAGNOSTIC
-	if (curlwp == uvm.pagedaemon_lwp)
-		KASSERT(dofaf);
+		if (curlwp == uvm.pagedaemon_lwp)
+			KASSERT(dofaf || BIOASYNC(bp));
 #endif
 
 	/* allocate transport structure */
@@ -2146,10 +2144,11 @@ puffs_strategy(void *v)
 		puffs_msg_setinfo(park_rw, PUFFSOP_VN,
 		    PUFFS_VN_READ, VPTOPNC(vp));
 		puffs_msg_setdelta(park_rw, tomove);
-		if (dofaf) {
+		if (BIOASYNC(bp)) {
 			puffs_msg_setcall(park_rw,
 			    puffs_parkdone_asyncbioread, bp);
 			puffs_msg_enqueue(pmp, park_rw);
+			dobiodone = 0;
 		} else {
 			PUFFS_MSG_ENQUEUEWAIT2(pmp, park_rw, vp->v_data,
 			    NULL, error);
@@ -2195,9 +2194,18 @@ puffs_strategy(void *v)
 		}
 
 		(void)memcpy(&rw_msg->pvnr_data, bp->b_data, tomove);
-		if (dofaf)
+		if (dofaf) {
 			puffs_msg_setfaf(park_rw);
+		} else if (BIOASYNC(bp)) {
+			puffs_msg_setcall(park_rw,
+			    puffs_parkdone_asyncbiowrite, bp);
+			dobiodone = 0;
+		}
+
 		PUFFS_MSG_ENQUEUEWAIT2(pmp, park_rw, vp->v_data, NULL, error);
+
+		if (dobiodone == 0)
+			goto out;
 
 		/*
 		 * XXXXXXXX: wrong, but kernel can't survive strategy
@@ -2238,7 +2246,7 @@ puffs_strategy(void *v)
 	if (error)
 		bp->b_error = error;
 
-	if (error || !(BIOREAD(bp) && BIOASYNC(bp)))
+	if (error || dobiodone)
 		biodone(bp);
 
 	return error;
