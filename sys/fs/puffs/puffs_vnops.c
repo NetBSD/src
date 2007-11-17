@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.116 2007/11/17 21:30:48 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.117 2007/11/17 21:55:29 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.116 2007/11/17 21:30:48 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.117 2007/11/17 21:55:29 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -1614,11 +1614,9 @@ puffs_link(void *v)
 	/*
 	 * XXX: stay in touch with the cache.  I don't like this, but
 	 * don't have a better solution either.  See also puffs_rename().
-	 *
-	 * XXX2: can't use vp safely here
 	 */
 	if (error == 0)
-		puffs_updatenode(vp, PUFFS_UPDATECTIME);
+		puffs_updatenode(pn, PUFFS_UPDATECTIME, 0);
 
 	PNBUF_PUT(cnp->cn_pnbuf);
 	RELEPN_AND_VP(dvp, dpn);
@@ -1736,6 +1734,7 @@ puffs_rename(void *v)
 	} */ *ap = v;
 	PUFFS_MSG_VARS(vn, rename);
 	struct vnode *fdvp = ap->a_fdvp;
+	struct puffs_node *fpn = ap->a_fvp->v_data;
 	struct puffs_mount *pmp = MPTOPUFFSMP(fdvp->v_mount);
 	int error;
 
@@ -1766,7 +1765,7 @@ puffs_rename(void *v)
 	 * don't have a better solution either.  See also puffs_link().
 	 */
 	if (error == 0)
-		puffs_updatenode(ap->a_fvp, PUFFS_UPDATECTIME);
+		puffs_updatenode(fpn, PUFFS_UPDATECTIME, 0);
 
  out:
 	PUFFS_MSG_RELEASE(rename);
@@ -1839,7 +1838,7 @@ puffs_read(void *v)
 		}
 
 		if ((vp->v_mount->mnt_flag & MNT_NOATIME) == 0)
-			puffs_updatenode(vp, PUFFS_UPDATEATIME);
+			puffs_updatenode(VPTOPP(vp), PUFFS_UPDATEATIME, 0);
 	} else {
 		/*
 		 * in case it's not a regular file or we're operating
@@ -1999,7 +1998,7 @@ puffs_write(void *v)
 			    round_page(uio->uio_offset), PGO_CLEANIT);
 		}
 
-		puffs_updatenode(vp, uflags);
+		puffs_updatenode(VPTOPP(vp), uflags, vp->v_size);
 	} else {
 		/* tomove is non-increasing */
 		tomove = PUFFS_TOMOVE(uio->uio_resid, pmp);
@@ -2658,7 +2657,7 @@ puffs_spec_read(void *v)
 		kauth_cred_t a_cred;
 	} */ *ap = v;
 
-	puffs_updatenode(ap->a_vp, PUFFS_UPDATEATIME);
+	puffs_updatenode(VPTOPP(ap->a_vp), PUFFS_UPDATEATIME, 0);
 	return VOCALL(spec_vnodeop_p, VOFFSET(vop_read), v);
 }
 
@@ -2673,7 +2672,7 @@ puffs_spec_write(void *v)
 		kauth_cred_t a_cred;
 	} */ *ap = v;
 
-	puffs_updatenode(ap->a_vp, PUFFS_UPDATEMTIME);
+	puffs_updatenode(VPTOPP(ap->a_vp), PUFFS_UPDATEMTIME, 0);
 	return VOCALL(spec_vnodeop_p, VOFFSET(vop_write), v);
 }
 
@@ -2688,7 +2687,7 @@ puffs_fifo_read(void *v)
 		kauth_cred_t a_cred;
 	} */ *ap = v;
 
-	puffs_updatenode(ap->a_vp, PUFFS_UPDATEATIME);
+	puffs_updatenode(VPTOPP(ap->a_vp), PUFFS_UPDATEATIME, 0);
 	return VOCALL(fifo_vnodeop_p, VOFFSET(vop_read), v);
 }
 
@@ -2703,6 +2702,6 @@ puffs_fifo_write(void *v)
 		kauth_cred_t a_cred;
 	} */ *ap = v;
 
-	puffs_updatenode(ap->a_vp, PUFFS_UPDATEMTIME);
+	puffs_updatenode(VPTOPP(ap->a_vp), PUFFS_UPDATEMTIME, 0);
 	return VOCALL(fifo_vnodeop_p, VOFFSET(vop_write), v);
 }
