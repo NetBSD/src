@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.166 2007/11/15 12:53:43 xtraeme Exp $
+$NetBSD: UPDATING,v 1.167 2007/11/17 09:53:16 wiz Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -21,7 +21,7 @@ Recent changes:
 	argument specified in the kernel configuration file is not valid
 	anymore. The itesio(4) driver now uses the Super I/O address port
 	rather than the EC address port. Please update your kernel
-	configuration file appropiately or see GENERIC for more details.
+	configuration file appropriately or see GENERIC for more details.
 
 20071028:
 	The pccons(4) driver has been removed from the NetBSD/shark port.
@@ -51,7 +51,7 @@ Recent changes:
 	has been changed.  Rather than modify the pathname (and copy back
 	to userspace) namei() and lookup() directly check the emulation
 	root. One side effect is that absolute symlinks inside the emulated
-	root filesytem will be relative to that filesystem - unless they
+	root file system will be relative to that file system - unless they
 	start /../ this is useful when the emulated root is a real install
 	that has such links.
 	This might affect symlinks that have been added to reference outside
