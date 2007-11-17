@@ -1,4 +1,4 @@
-/*	$NetBSD: adm1030.c,v 1.10 2007/11/16 08:00:13 xtraeme Exp $	*/
+/*	$NetBSD: adm1030.c,v 1.11 2007/11/17 08:30:35 kefren Exp $	*/
 
 /*-
  * Copyright (C) 2005 Michael Lorenz.
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adm1030.c,v 1.10 2007/11/16 08:00:13 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adm1030.c,v 1.11 2007/11/17 08:30:35 kefren Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -265,5 +265,6 @@ adm1030c_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 			}
 			break;
 	}
+	edata->state = ENVSYS_SVALID;
 }
 #endif /* NSYSMON_ENVSYS > 0 */

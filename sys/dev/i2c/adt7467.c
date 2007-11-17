@@ -1,4 +1,4 @@
-/*	$NetBSD: adt7467.c,v 1.9 2007/11/16 08:00:14 xtraeme Exp $	*/
+/*	$NetBSD: adt7467.c,v 1.10 2007/11/17 08:30:35 kefren Exp $	*/
 
 /*-
  * Copyright (C) 2005 Michael Lorenz
@@ -37,7 +37,7 @@
  */
  
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adt7467.c,v 1.9 2007/11/16 08:00:14 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adt7467.c,v 1.10 2007/11/17 08:30:35 kefren Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -289,5 +289,6 @@ adt7467c_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 			}
 			break;
 	}
+	edata->state = ENVSYS_SVALID;
 }
 #endif /* NSYSMON_ENVSYS > 0 */

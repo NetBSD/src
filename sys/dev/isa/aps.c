@@ -1,4 +1,4 @@
-/*	$NetBSD: aps.c,v 1.3 2007/11/16 08:00:15 xtraeme Exp $	*/
+/*	$NetBSD: aps.c,v 1.4 2007/11/17 08:30:35 kefren Exp $	*/
 /*	$OpenBSD: aps.c,v 1.15 2007/05/19 19:14:11 tedu Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aps.c,v 1.3 2007/11/16 08:00:15 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aps.c,v 1.4 2007/11/17 08:30:35 kefren Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -231,6 +231,7 @@ aps_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_sme = sysmon_envsys_create();
 	for (i = 0; i < APS_NUM_SENSORS; i++) {
+		sc->sc_sensor[i].state = ENVSYS_SVALID;
 		if (sysmon_envsys_sensor_attach(sc->sc_sme,
 						&sc->sc_sensor[i])) {
 			sysmon_envsys_destroy(sc->sc_sme);
