@@ -583,7 +583,7 @@ main(int argc, char **argv)
 
 		/* stuff size into st.st_size */
 		(void) read_capacity(i, 0, &lbac, &blocksize);
-		st.st_size = (uint64_t)(lbac * blocksize);
+		st.st_size = (uint64_t)((uint64_t)lbac * blocksize);
 
 		tv[tc].host = strdup(tinfo.name);
 		tv[tc].ip = strdup(tinfo.ip);
@@ -603,14 +603,6 @@ main(int argc, char **argv)
 		(void) memset(data, 0x0, sizeof(data));
 		inquiry(i, 0, INQUIRY_EVPD_BIT, INQUIRY_UNIT_SERIAL_NUMBER_VPD, data);
 		tv[tc].serial = strdup((char *)&data[4]);
-#if 0
-		(void) memset(data, 0x0, sizeof(data));
-		inquiry(i, 0, INQUIRY_EVPD_BIT, INQUIRY_DEVICE_IDENTIFICATION_VPD, data);
-		tv[tc].iqn = strdup((char *)&data[4]);
-		(void) memset(data, 0x0, sizeof(data));
-		inquiry(i, 0, INQUIRY_EVPD_BIT, INQUIRY_SUPPORTED_VPD_PAGES, data);
-		tv[tc].iqn = strdup((char *)&data[4]);
-#endif
 
 		cc = snprintf(name, sizeof(name), "/%s/%s", host, colon);
 		virtdir_add(&iscsi, name, cc, 'd', name, cc);
