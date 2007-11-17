@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.948 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.949 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -252,3 +252,5 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	tests: Converted the regress/games tree to use ATF and migrated it
 		to tests/games.  [jmmv 20071112]
 	ahcisata(4): Add support for ATAPI devices. [bouyer 20071112]
+	newfs_ext2fs(8): Add a native newfs_ext2fs(8) command.
+		Closes PR bin/16175. [tsutsui 20071117]
