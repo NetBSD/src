@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.75 2007/11/16 18:35:10 pooka Exp $	*/
+/*	$NetBSD: puffs.c,v 1.76 2007/11/17 16:06:18 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.75 2007/11/16 18:35:10 pooka Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.76 2007/11/17 16:06:18 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -414,18 +414,21 @@ puffs_mount(struct puffs_usermount *pu, const char *dir, int mntflags,
 		mntflags |= MNT_NOSUID | MNT_NODEV;
 #endif
 
-	if (realpath(dir, rp) == NULL)
-		return -1;
+	if (realpath(dir, rp) == NULL) {
+		rv = -1;
+		goto out;
+	}
 
 	if (strcmp(dir, rp) != 0) {
 		warnx("puffs_mount: \"%s\" is a relative path.", dir);
 		warnx("puffs_mount: using \"%s\" instead.", rp);
 	}
 
-	fd = open(_PATH_PUFFS, O_RDONLY);
+	fd = open(_PATH_PUFFS, O_RDWR);
 	if (fd == -1) {
 		warnx("puffs_mount: cannot open %s", _PATH_PUFFS);
-		return -1;
+		rv = -1;
+		goto out;
 	}
 	if (fd <= 2)
 		warnx("puffs_init: device fd %d (<= 2), sure this is "
@@ -443,7 +446,10 @@ puffs_mount(struct puffs_usermount *pu, const char *dir, int mntflags,
 	PU_SETSTATE(pu, PUFFS_STATE_RUNNING);
 
  out:
-	sverrno = errno;
+	if (rv != 0)
+		sverrno = errno;
+	else
+		sverrno = 0;
 	free(pu->pu_kargp);
 	pu->pu_kargp = NULL;
 
