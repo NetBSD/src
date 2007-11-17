@@ -1,4 +1,4 @@
-/* $NetBSD: ug.c,v 1.9 2007/11/16 08:00:15 xtraeme Exp $ */
+/* $NetBSD: ug.c,v 1.10 2007/11/17 08:23:46 kefren Exp $ */
 
 /*
  * Copyright (c) 2007 Mihai Chelaru <kefren@netbsd.ro>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ug.c,v 1.9 2007/11/16 08:00:15 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ug.c,v 1.10 2007/11/17 08:23:46 kefren Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -506,10 +506,12 @@ ug2_attach(struct ug_softc *sc)
 	    ai->name, buf[0], buf[1]);
 
 	sc->mbsens = (void*)ai->sensors;
+	sc->sc_sme = sysmon_envsys_create();
 
 	for (i = 0, si = ai->sensors; si && si->name; si++, i++) {
 		COPYDESCR(sc->sc_sensor[i].desc, si->name);
 		sc->sc_sensor[i].rfact = 1;
+		sc->sc_sensor[i].state = ENVSYS_SVALID;
 		switch (si->type) {
 			case UG2_VOLTAGE_SENSOR:
 				sc->sc_sensor[i].units = ENVSYS_SVOLTS_DC;
