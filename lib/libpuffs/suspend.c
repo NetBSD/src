@@ -1,4 +1,4 @@
-/*	$NetBSD: suspend.c,v 1.8 2007/11/12 17:35:32 pooka Exp $	*/
+/*	$NetBSD: suspend.c,v 1.9 2007/11/17 17:12:11 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: suspend.c,v 1.8 2007/11/12 17:35:32 pooka Exp $");
+__RCSID("$NetBSD: suspend.c,v 1.9 2007/11/17 17:12:11 pooka Exp $");
 #endif /* !lint */
 
 /*
@@ -51,7 +51,7 @@ puffs_fs_suspend(struct puffs_usermount *pu)
 	struct puffs_req preq;
 	size_t n;
 
-	preq.preq_pth.pth_framelen = sizeof(struct putter_hdr);
+	preq.preq_pth.pth_framelen = sizeof(struct puffs_req);
 	preq.preq_opclass = PUFFSOP_SUSPEND;
 
 	n = write(pu->pu_fd, &preq, sizeof(preq));
