@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.4 2007/11/11 05:20:27 isaki Exp $	*/
+/*	$NetBSD: fd.c,v 1.5 2007/11/18 05:00:08 isaki Exp $	*/
 
 /*
  * Copyright (c) 2001 MINOURA Makoto.
@@ -27,22 +27,27 @@
 
 #include <sys/param.h>
 #include <sys/disklabel.h>
+#include <machine/stdarg.h>
 #include <lib/libsa/stand.h>
 
+#include "libx68k.h"
 #include "fdvar.h"
 #include "iocs.h"
 
-int fdopen(struct open_file *, int, int);
-int fdclose(struct open_file*);
-int fdstrategy(void *devdata, int rw, daddr_t blk, size_t, void*, size_t*);
-
-
+/* fdopen(struct open_file *f, int id, int part) */
 int
-fdopen(struct open_file *f, int id, int part)
+fdopen(struct open_file *f, ...)
 {
 	int error;
 	struct fd_softc *sc;
 	struct fdfmt fdfmt;
+	int id, part;
+	va_list ap;
+
+	va_start(ap, f);
+	id   = va_arg(ap, int);
+	part = va_arg(ap, int);
+	va_end(ap);
 
 	if (id < 0 || id > 3)
 		return ENXIO;
