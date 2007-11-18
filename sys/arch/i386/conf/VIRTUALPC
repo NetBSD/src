@@ -1,4 +1,4 @@
-# $NetBSD: VIRTUALPC,v 1.55 2007/09/06 11:10:31 martti Exp $
+# $NetBSD: VIRTUALPC,v 1.55.4.1 2007/11/18 19:34:22 bouyer Exp $
 #
 # VIRTUALPC machine description file --
 #
@@ -11,15 +11,10 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"VIRTUALPC-$Revision: 1.55 $"
+#ident 		"VIRTUALPC-$Revision: 1.55.4.1 $"
 
 maxusers	32		# estimated number of users
 
-# CPU support.  At least one is REQUIRED.
-#options 	I386_CPU
-#options 	I486_CPU
-options 	I586_CPU
-options 	I686_CPU
 makeoptions     CPUFLAGS="-march=pentium -mtune=pentiumpro"
 
 # CPU-related options.
@@ -336,15 +331,6 @@ npx0	at isa? port 0xf0 irq 13	# x86 math coprocessor
 
 
 # Console Devices
-
-# ISA console
-#pc0	at isa? port 0x60 irq 1		# pccons generic PC console driver
-# Keyboard layout configuration for pccons
-#options 	FRENCH_KBD
-#options 	FINNISH_KBD
-#options 	GERMAN_KBD
-#options 	NORWEGIAN_KBD
-
 
 # wscons
 pckbc0		at isa?			# pc keyboard controller

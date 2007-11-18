@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.31.2.2 2007/10/25 22:36:48 bouyer Exp $	*/
+/*	$NetBSD: locore.S,v 1.31.2.3 2007/11/18 19:34:51 bouyer Exp $	*/
 /*	NetBSD: locore.S,v 1.31 2004/08/26 10:12:33 junyoung Exp	*/
 
 /*
@@ -103,7 +103,6 @@
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_oldboot.h"
-#include "opt_cputype.h"
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
 #include "opt_lockdebug.h"
@@ -208,9 +207,7 @@
 	.globl	_C_LABEL(proc0uarea),_C_LABEL(PDPpaddr)
 	.globl	_C_LABEL(biosbasemem),_C_LABEL(biosextmem)
 	.globl	_C_LABEL(gdt)
-#ifdef I586_CPU
 	.globl	_C_LABEL(idt)
-#endif
 	.globl	_C_LABEL(lapic_tpr)
 
 #if NLAPIC > 0

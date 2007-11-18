@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.198.2.2 2007/11/13 16:02:32 bouyer Exp $	*/
+/*	$NetBSD: tty.c,v 1.198.2.3 2007/11/18 19:35:51 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.198.2.2 2007/11/13 16:02:32 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.198.2.3 2007/11/18 19:35:51 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2514,6 +2514,7 @@ struct tty *
 ttymalloc(void)
 {
 	struct tty	*tp;
+	int i;	
 
 	tp = pool_get(&tty_pool, PR_WAITOK);
 	memset(tp, 0, sizeof(*tp));
@@ -2528,9 +2529,8 @@ ttymalloc(void)
 	tp->t_linesw = ttyldisc_default();
 	selinit(&tp->t_rsel);
 	selinit(&tp->t_wsel);
-	sigemptyset(&tp->t_sigpg1);
-	sigemptyset(&tp->t_sigpg2);
-	sigemptyset(&tp->t_sigleader);
+	for (i = 0; i < TTYSIG_COUNT; i++) 
+		sigemptyset(&tp->t_sigs[i]);
 	return (tp);
 }
 
@@ -2543,11 +2543,11 @@ ttymalloc(void)
 void
 ttyfree(struct tty *tp)
 {
+	int i;
 
 	mutex_enter(&tty_lock);
-	sigemptyset(&tp->t_sigpg1);
-	sigemptyset(&tp->t_sigpg2);
-	sigemptyset(&tp->t_sigleader);
+	for (i = 0; i < TTYSIG_COUNT; i++) 
+		sigemptyset(&tp->t_sigs[i]);
 	if (tp->t_sigcount != 0)
 		TAILQ_REMOVE(&tty_sigqueue, tp, t_sigqueue);
 	mutex_exit(&tty_lock);
@@ -2600,29 +2600,16 @@ tty_init(void)
 void
 ttysig(struct tty *tp, enum ttysigtype st, int sig)
 {
+	sigset_t *sp;
 
 	/* XXXSMP not yet KASSERT(mutex_owned(&tty_lock)); */
 
-	switch (st) {
-	case TTYSIG_PG1:
-		if (sigismember(&tp->t_sigpg1, sig))
-			return;
-		sigaddset(&tp->t_sigpg1, sig);
-		break;
-	case TTYSIG_PG2:
-		if (sigismember(&tp->t_sigpg2, sig))
-			return;
-		sigaddset(&tp->t_sigpg2, sig);
-		break;
-	case TTYSIG_LEADER:
-		if (sigismember(&tp->t_sigleader, sig))
-			return;
-		sigaddset(&tp->t_sigleader, sig);
-		break;
-	}
-
-	tp->t_sigcount++;
-	TAILQ_INSERT_TAIL(&tty_sigqueue, tp, t_sigqueue);
+	sp = &tp->t_sigs[st];
+	if (sigismember(sp, sig))
+		return;
+	sigaddset(sp, sig);
+	if (tp->t_sigcount++ == 0)
+		TAILQ_INSERT_TAIL(&tty_sigqueue, tp, t_sigqueue);
 	softint_schedule(tty_sigsih);
 }
 
@@ -2642,7 +2629,7 @@ ttysigintr(void *cookie)
 	struct session *sess;
 	int sig;
 
-	mutex_enter(&proclist_lock);
+	/* XXXSMP notyet mutex_enter(&proclist_lock); */
 	for (;;) {
 		mutex_spin_enter(&tty_lock);
 		if ((tp = TAILQ_FIRST(&tty_sigqueue)) == NULL) {
@@ -2650,19 +2637,12 @@ ttysigintr(void *cookie)
 			break;
 		}
 		KASSERT(tp->t_sigcount > 0);
-		if ((sig = firstsig(&tp->t_sigpg1)) != 0) {
-			st = TTYSIG_PG1;
-			sigdelset(&tp->t_sigpg1, sig);
-		} else if ((sig = firstsig(&tp->t_sigpg2)) != 0) {
-			st = TTYSIG_PG2;
-			sigdelset(&tp->t_sigpg2, sig);
-		} else if ((sig = firstsig(&tp->t_sigleader)) != 0) {
-			st = TTYSIG_LEADER;
-			sigdelset(&tp->t_sigleader, sig);
-		} else {
-			st = TTYSIG_PG1;
-			sig = 0;
+		for (st = 0; st < TTYSIG_COUNT; st++) {
+			if ((sig = firstsig(&tp->t_sigs[st])) != 0)
+				break;
 		}
+		KASSERT(st < TTYSIG_COUNT);
+		sigdelset(&tp->t_sigs[st], sig);
 		if (--tp->t_sigcount == 0)
 			TAILQ_REMOVE(&tty_sigqueue, tp, t_sigqueue);
 		pgrp = tp->t_pgrp;
@@ -2684,8 +2664,11 @@ ttysigintr(void *cookie)
 			if (sess != NULL && sess->s_leader != NULL)
 				psignal(sess->s_leader, sig);
 			break;
+		default:
+			/* NOTREACHED */
+			break;
 		}
 		mutex_exit(&proclist_mutex);
 	}
-	mutex_exit(&proclist_lock);
+	/* XXXSMP notyet mutex_exit(&proclist_lock); */
 }

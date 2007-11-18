@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.86 2007/05/17 14:51:20 yamt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.86.14.1 2007/11/18 19:34:25 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.86 2007/05/17 14:51:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.86.14.1 2007/11/18 19:34:25 bouyer Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_multiprocessor.h"
@@ -131,16 +131,14 @@ cpu_configure(void)
 	cpu_init_idle_lwps();
 #endif
 
-#if defined(I586_CPU) || defined(I686_CPU)
 	init_TSC_tc();
-#endif
 
 	spl0();
 #if NLAPIC > 0
 	lapic_tpr = 0;
 #endif
 
-#if defined(I686_CPU) && defined(VIA_PADLOCK)
+#if defined(VIA_PADLOCK)
 	via_padlock_attach();
-#endif /* defined(I686_CPU) && defined(VIA_PADLOCK) */
+#endif
 }

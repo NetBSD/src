@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.h,v 1.6.4.1 2007/11/13 16:03:18 bouyer Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.6.4.2 2007/11/18 19:35:55 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -92,6 +92,7 @@ struct rumpuser_cv;
 void rumpuser_cv_init(struct rumpuser_cv **);
 void rumpuser_cv_destroy(struct rumpuser_cv *);
 void rumpuser_cv_wait(struct rumpuser_cv *, struct rumpuser_mtx *);
+int  rumpuser_cv_timedwait(struct rumpuser_cv *, struct rumpuser_mtx *, int);
 void rumpuser_cv_signal(struct rumpuser_cv *);
 
 void rumpuser_set_curlwp(struct lwp *);

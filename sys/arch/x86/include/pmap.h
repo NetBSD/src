@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.1.4.3 2007/11/13 16:00:17 bouyer Exp $	*/
+/*	$NetBSD: pmap.h,v 1.1.4.4 2007/11/18 19:34:45 bouyer Exp $	*/
 
 /*
  *
@@ -283,12 +283,7 @@ pmap_remove_all(struct pmap *pmap)
 __inline static void __attribute__((__unused__))
 pmap_update_pg(vaddr_t va)
 {
-#if defined(I386_CPU)
-	if (cpu_class == CPUCLASS_386)
-		tlbflush();
-	else
-#endif
-		invlpg(va);
+	invlpg(va);
 }
 
 /*
@@ -298,15 +293,8 @@ pmap_update_pg(vaddr_t va)
 __inline static void __attribute__((__unused__))
 pmap_update_2pg(vaddr_t va, vaddr_t vb)
 {
-#if defined(I386_CPU)
-	if (cpu_class == CPUCLASS_386)
-		tlbflush();
-	else
-#endif
-	{
-		invlpg(va);
-		invlpg(vb);
-	}
+	invlpg(va);
+	invlpg(vb);
 }
 
 /*

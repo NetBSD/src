@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.133.2.1 2007/11/13 16:02:21 bouyer Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.133.2.2 2007/11/18 19:35:50 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002, 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.133.2.1 2007/11/13 16:02:21 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.133.2.2 2007/11/18 19:35:50 bouyer Exp $");
 
 #include "opt_pool.h"
 #include "opt_poollog.h"
@@ -2062,12 +2062,18 @@ pool_cache_bootstrap(pool_cache_t pc, size_t size, u_int align,
 	pc->pc_nfull = 0;
 	pc->pc_contended = 0;
 	pc->pc_refcnt = 0;
+	pc->pc_freecheck = NULL;
 
 	/* Allocate per-CPU caches. */
 	memset(pc->pc_cpus, 0, sizeof(pc->pc_cpus));
 	pc->pc_ncpu = 0;
-	for (CPU_INFO_FOREACH(cii, ci)) {
-		pool_cache_cpu_init1(ci, pc);
+	if (ncpu == 0) {
+		/* XXX For sparc: boot CPU is not attached yet. */
+		pool_cache_cpu_init1(curcpu(), pc);
+	} else {
+		for (CPU_INFO_FOREACH(cii, ci)) {
+			pool_cache_cpu_init1(ci, pc);
+		}
 	}
 	
 	if (__predict_true(!cold)) {
@@ -2142,11 +2148,15 @@ static void
 pool_cache_cpu_init1(struct cpu_info *ci, pool_cache_t pc)
 {
 	pool_cache_cpu_t *cc;
+	int index;
 
+	index = ci->ci_index;
+
+	KASSERT(index < MAXCPUS);
 	KASSERT(((uintptr_t)pc->pc_cpus & (CACHE_LINE_SIZE - 1)) == 0);
 
-	if ((cc = pc->pc_cpus[ci->ci_index]) != NULL) {
-		KASSERT(cc->cc_cpu = ci);
+	if ((cc = pc->pc_cpus[index]) != NULL) {
+		KASSERT(cc->cc_cpuindex == index);
 		return;
 	}
 
@@ -2167,13 +2177,13 @@ pool_cache_cpu_init1(struct cpu_info *ci, pool_cache_t pc)
 	cc->cc_ipl = pc->pc_pool.pr_ipl;
 	cc->cc_iplcookie = makeiplcookie(cc->cc_ipl);
 	cc->cc_cache = pc;
-	cc->cc_cpu = ci;
+	cc->cc_cpuindex = index;
 	cc->cc_hits = 0;
 	cc->cc_misses = 0;
 	cc->cc_current = NULL;
 	cc->cc_previous = NULL;
 
-	pc->pc_cpus[ci->ci_index] = cc;
+	pc->pc_cpus[index] = cc;
 }
 
 /*
@@ -2212,6 +2222,14 @@ pool_cache_reclaim(pool_cache_t pc)
 	return pool_reclaim(&pc->pc_pool);
 }
 
+static void
+pool_cache_destruct_object1(pool_cache_t pc, void *object)
+{
+
+	(*pc->pc_dtor)(pc->pc_arg, object);
+	pool_put(&pc->pc_pool, object);
+}
+
 /*
  * pool_cache_destruct_object:
  *
@@ -2222,8 +2240,9 @@ void
 pool_cache_destruct_object(pool_cache_t pc, void *object)
 {
 
-	(*pc->pc_dtor)(pc->pc_arg, object);
-	pool_put(&pc->pc_pool, object);
+	FREECHECK_IN(&pc->pc_freecheck, object);
+
+	pool_cache_destruct_object1(pc, object);
 }
 
 /*
@@ -2243,7 +2262,7 @@ pool_cache_invalidate_groups(pool_cache_t pc, pcg_t *pcg)
 
 		for (i = 0; i < pcg->pcg_avail; i++) {
 			object = pcg->pcg_objects[i].pcgo_va;
-			pool_cache_destruct_object(pc, object);
+			pool_cache_destruct_object1(pc, object);
 		}
 
 		pool_put(&pcgpool, pcg);
@@ -2310,33 +2329,19 @@ static inline pool_cache_cpu_t *
 pool_cache_cpu_enter(pool_cache_t pc, int *s)
 {
 	pool_cache_cpu_t *cc;
-	struct cpu_info *ci;
 
 	/*
 	 * Prevent other users of the cache from accessing our
 	 * CPU-local data.  To avoid touching shared state, we
 	 * pull the neccessary information from CPU local data.
 	 */
-	ci = curcpu();
-	KASSERT(ci->ci_data.cpu_index < MAXCPUS);
-	cc = pc->pc_cpus[ci->ci_data.cpu_index];
+	crit_enter();
+	cc = pc->pc_cpus[curcpu()->ci_index];
 	KASSERT(cc->cc_cache == pc);
-	if (cc->cc_ipl == IPL_NONE) {
-		crit_enter();
-	} else {
+	if (cc->cc_ipl != IPL_NONE) {
 		*s = splraiseipl(cc->cc_iplcookie);
 	}
-
-	/* Moved to another CPU before disabling preemption? */
-	if (__predict_false(ci != curcpu())) {
-		ci = curcpu();
-		cc = pc->pc_cpus[ci->ci_data.cpu_index];
-	}
-
-#ifdef DIAGNOSTIC
-	KASSERT(cc->cc_cpu == ci);
 	KASSERT(((uintptr_t)cc & (CACHE_LINE_SIZE - 1)) == 0);
-#endif
 
 	return cc;
 }
@@ -2346,11 +2351,10 @@ pool_cache_cpu_exit(pool_cache_cpu_t *cc, int *s)
 {
 
 	/* No longer need exclusive access to the per-CPU data. */
-	if (cc->cc_ipl == IPL_NONE) {
-		crit_exit();
-	} else {
+	if (cc->cc_ipl != IPL_NONE) {
 		splx(*s);
 	}
+	crit_exit();
 }
 
 #if __GNUC_PREREQ__(3, 0)

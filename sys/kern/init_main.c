@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.322.2.2 2007/11/13 16:01:52 bouyer Exp $	*/
+/*	$NetBSD: init_main.c,v 1.322.2.3 2007/11/18 19:35:47 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,10 +71,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.322.2.2 2007/11/13 16:01:52 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.322.2.3 2007/11/18 19:35:47 bouyer Exp $");
 
 #include "opt_ipsec.h"
-#include "opt_multiprocessor.h"
 #include "opt_ntp.h"
 #include "opt_pipe.h"
 #include "opt_posix.h"
@@ -164,7 +163,6 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.322.2.2 2007/11/13 16:01:52 bouyer E
 #ifdef KTRACE
 #include <sys/ktrace.h>
 #endif
-#include <sys/debug.h>
 #include <sys/kauth.h>
 #include <net80211/ieee80211_netbsd.h>
 
@@ -288,10 +286,6 @@ main(void)
 
 	uvm_init();
 
-#ifdef DEBUG
-	debug_init();
-#endif
-
 	kmem_init();
 
 	/* Initialize the extent manager. */
@@ -349,6 +343,9 @@ main(void)
 
 	/* Charge root for one process. */
 	(void)chgproccnt(0, 1);
+
+	/* Initialize timekeeping. */
+	time_init();
 
 	/* Initialize the run queues, turnstiles and sleep queues. */
 	mutex_init(&cpu_lock, MUTEX_DEFAULT, IPL_NONE);
@@ -552,12 +549,10 @@ main(void)
 
 	/*
 	 * Now that device driver threads have been created, wait for
-	 * them to finish any deferred autoconfiguration.  Note we don't
-	 * need to lock this semaphore, since we haven't booted any
-	 * secondary processors, yet.
+	 * them to finish any deferred autoconfiguration.
 	 */
 	while (config_pending)
-		(void) tsleep(&config_pending, PWAIT, "cfpend", 0);
+		(void) tsleep(&config_pending, PWAIT, "cfpend", hz);
 
 	/*
 	 * Finalize configuration now that all real devices have been
@@ -662,11 +657,6 @@ main(void)
 		panic("fork aiodoned");
 
 	vmem_rehash_start();
-
-#if defined(MULTIPROCESSOR)
-	/* Boot the secondary processors. */
-	cpu_boot_secondary_processors();
-#endif
 
 	/* Initialize exec structures */
 	exec_init(1);
