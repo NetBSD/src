@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.1.2.3 2007/11/18 19:34:55 bouyer Exp $	*/
+/*	$NetBSD: cpu.c,v 1.1.2.4 2007/11/18 20:57:21 bouyer Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.1.2.3 2007/11/18 19:34:55 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.1.2.4 2007/11/18 20:57:21 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -507,7 +507,7 @@ cpu_init(ci)
 	if (cpu_feature & CPUID_PGE)
 		lcr4(rcr4() | CR4_PGE);	/* enable global TLB caching */
 
-#ifdef MTRR
+#ifdef XXXMTRR
 	/*
 	 * On a P6 or above, initialize MTRR's if the hardware supports them.
 	 */
