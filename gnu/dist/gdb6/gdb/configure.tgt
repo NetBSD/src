@@ -81,6 +81,7 @@ hppa*64*-*-hpux11*)	gdb_target=hppa64 ;;
 hppa*-*-hpux*)		gdb_target=hppahpux ;;
 hppa*-*-hiux*)		gdb_target=hppahpux ;;
 hppa*-*-linux*)		gdb_target=linux ;;
+hppa*-*-netbsd*)	gdb_target=nbsd ;;
 hppa*-*-openbsd*)	gdb_target=obsd ;;
 hppa*-*-*)		gdb_target=hppa ;;
 
