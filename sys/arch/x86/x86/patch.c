@@ -1,4 +1,4 @@
-/*	$NetBSD: patch.c,v 1.4.2.1 2007/11/13 16:00:24 bouyer Exp $	*/
+/*	$NetBSD: patch.c,v 1.4.2.2 2007/11/18 19:34:49 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.4.2.1 2007/11/13 16:00:24 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.4.2.2 2007/11/18 19:34:49 bouyer Exp $");
 
 #include "opt_lockdebug.h"
 
@@ -165,6 +165,16 @@ x86_patch(void)
 			mb_memory, mb_memory_end,
 			NULL
 		);
+		/*
+		 * Uniprocessor: kill kernel_lock.  Fill another
+		 * 14 bytes of NOPs so not to confuse the decoder.
+		 */
+		patchbytes(_kernel_lock, X86_NOP, X86_RET);
+		patchbytes(_kernel_unlock, X86_NOP, X86_RET);
+		for (i = 2; i < 16; i++) {
+			patchbytes((char *)_kernel_lock + i, X86_NOP, -1);
+			patchbytes((char *)_kernel_unlock + i, X86_NOP, -1);
+		}
 #endif
 	} else if ((cpu_feature & CPUID_SSE2) != 0) {
 		/* Faster memory barriers. */

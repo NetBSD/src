@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_sys.h,v 1.59.2.1 2007/11/13 16:01:45 bouyer Exp $	*/
+/*	$NetBSD: puffs_sys.h,v 1.59.2.2 2007/11/18 19:35:45 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -193,16 +193,16 @@ void	puffs_msgif_init(void);
 void	puffs_msgif_destroy(void);
 int	puffs_msgmem_alloc(size_t, struct puffs_msgpark **, void **, int);
 void	puffs_msgmem_release(struct puffs_msgpark *);
-void	puffs_msg_setfaf(struct puffs_msgpark *);
 
-int	puffs_msg_vfs(struct puffs_mount *, struct puffs_msgpark *, int);
-int	puffs_msg_vn(struct puffs_mount *, struct puffs_msgpark *, int, size_t,
-		       struct vnode *, struct vnode *);
-void	puffs_msg_vncall(struct puffs_mount *, struct puffs_msgpark *, int,
-			    size_t, parkdone_fn, void *, struct vnode *);
-int	puffs_msg_raw(struct puffs_mount *, struct puffs_msgpark *);
-void	puffs_msg_errnotify(struct puffs_mount *, uint8_t, int,
-			    const char *, void *);
+void	puffs_msg_setfaf(struct puffs_msgpark *);
+void	puffs_msg_setdelta(struct puffs_msgpark *, size_t);
+void	puffs_msg_setinfo(struct puffs_msgpark *, int, int, void *);
+void	puffs_msg_setcall(struct puffs_msgpark *, parkdone_fn, void *);
+
+void	puffs_msg_enqueue(struct puffs_mount *, struct puffs_msgpark *);
+int	puffs_msg_wait(struct puffs_mount *, struct puffs_msgpark *);
+int	puffs_msg_wait2(struct puffs_mount *, struct puffs_msgpark *,
+			struct puffs_node *, struct puffs_node *);
 
 int	puffs_getvnode(struct mount *, void *, enum vtype, voff_t, dev_t,
 		       struct vnode **);
@@ -223,6 +223,8 @@ void	puffs_cidcvt(struct puffs_kcid *, const struct lwp *);
 
 void	puffs_parkdone_asyncbioread(struct puffs_mount *,
 				    struct puffs_req *, void *);
+void	puffs_parkdone_asyncbiowrite(struct puffs_mount *,
+				     struct puffs_req *, void *);
 void	puffs_parkdone_poll(struct puffs_mount *, struct puffs_req *, void *);
 
 void	puffs_mp_reference(struct puffs_mount *);
@@ -231,7 +233,9 @@ void	puffs_mp_release(struct puffs_mount *);
 void	puffs_gop_size(struct vnode *, off_t, off_t *, int); 
 void	puffs_gop_markupdate(struct vnode *, int);
 
-void	puffs_updatenode(struct vnode *, int);
+void	puffs_senderr(struct puffs_mount *, int, int, const char *, void *);
+
+void	puffs_updatenode(struct puffs_node *, int, voff_t);
 #define PUFFS_UPDATEATIME	0x01
 #define PUFFS_UPDATECTIME	0x02
 #define PUFFS_UPDATEMTIME	0x04
@@ -243,6 +247,7 @@ extern int (**puffs_vnodeop_p)(void *);
 
 MALLOC_DECLARE(M_PUFFS);
 
+/* for putter */
 int	puffs_msgif_getout(void *, size_t, int, uint8_t **, size_t *, void **);
 void	puffs_msgif_releaseout(void *, void *, int);
 int	puffs_msgif_dispatch(void *, struct putter_hdr *);
@@ -254,7 +259,7 @@ checkerr(struct puffs_mount *pmp, int error, const char *str)
 {
 
 	if (error < 0 || error > ELAST) {
-		puffs_msg_errnotify(pmp, PUFFS_ERR_ERROR, error, str, NULL);
+		puffs_senderr(pmp, PUFFS_ERR_ERROR, error, str, NULL);
 		error = EPROTO;
 	}
 
@@ -272,6 +277,18 @@ checkerr(struct puffs_mount *pmp, int error, const char *str)
 #define PUFFS_MSG_RELEASE(a) 						\
 do {									\
 	if (park_##a) puffs_msgmem_release(park_##a);			\
+} while (/*CONSTCOND*/0)
+
+#define PUFFS_MSG_ENQUEUEWAIT(pmp, park, var)				\
+do {									\
+	puffs_msg_enqueue(pmp, park);					\
+	var = puffs_msg_wait(pmp, park);				\
+} while (/*CONSTCOND*/0)
+
+#define PUFFS_MSG_ENQUEUEWAIT2(pmp, park, vp1, vp2, var)		\
+do {									\
+	puffs_msg_enqueue(pmp, park);					\
+	var = puffs_msg_wait2(pmp, park, vp1, vp2);			\
 } while (/*CONSTCOND*/0)
 
 #endif /* _PUFFS_SYS_H_ */

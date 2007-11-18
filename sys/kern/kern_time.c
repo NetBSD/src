@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_time.c,v 1.129.2.1 2007/10/25 22:40:02 bouyer Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.129.2.2 2007/11/18 19:35:49 bouyer Exp $	*/
 
 /*-
- * Copyright (c) 2000, 2004, 2005 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000, 2004, 2005, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.129.2.1 2007/10/25 22:40:02 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.129.2.2 2007/11/18 19:35:49 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -91,10 +91,22 @@ __KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.129.2.1 2007/10/25 22:40:02 bouyer E
 
 #include <sys/cpu.h>
 
+kmutex_t	time_lock;
+
 POOL_INIT(ptimer_pool, sizeof(struct ptimer), 0, 0, 0, "ptimerpl",
     &pool_allocator_nointr, IPL_NONE);
 POOL_INIT(ptimers_pool, sizeof(struct ptimers), 0, 0, 0, "ptimerspl",
     &pool_allocator_nointr, IPL_NONE);
+
+/*
+ * Initialize timekeeping.
+ */
+void
+time_init(void)
+{
+
+	mutex_init(&time_lock, MUTEX_DEFAULT, IPL_NONE);
+}
 
 /* Time of day and interval timer support.
  *

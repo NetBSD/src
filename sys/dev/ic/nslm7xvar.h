@@ -1,4 +1,4 @@
-/*	$NetBSD: nslm7xvar.h,v 1.22 2007/09/08 00:42:11 xtraeme Exp $ */
+/*	$NetBSD: nslm7xvar.h,v 1.22.4.1 2007/11/18 19:35:26 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -166,7 +166,7 @@ struct lm_softc {
 	callout_t sc_callout;
 
 	envsys_data_t sensors[WB_MAX_SENSORS];
-	struct sysmon_envsys sc_sysmon;
+	struct sysmon_envsys *sc_sme;
 	uint8_t numsensors;
 
 	void (*refresh_sensor_data)(struct lm_softc *);

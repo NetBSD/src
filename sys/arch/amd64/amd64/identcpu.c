@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.25.2.2 2007/11/13 15:58:04 bouyer Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.25.2.3 2007/11/18 19:34:09 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.25.2.2 2007/11/13 15:58:04 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.25.2.3 2007/11/18 19:34:09 bouyer Exp $");
 
 #include "opt_enhanced_speedstep.h"
 #include "opt_intel_coretemp.h"
@@ -94,28 +94,7 @@ identifycpu(struct cpu_info *ci)
 	else if (strstr(cpu_model, "AMD") == NULL)
 		cpu_vendor = CPUVENDOR_INTEL;
 
-#ifndef XEN
-	{
-	u_int64_t last_tsc;
-	last_tsc = rdtsc();
-	i8254_delay(100000);
-	ci->ci_tsc_freq = (rdtsc() - last_tsc) * 10;
-	}
-#else /* XEN */
-	{
-	const volatile vcpu_time_info_t *tinfo =
-	   &HYPERVISOR_shared_info->vcpu_info[0].time;
-	delay(1000000);
-	uint64_t freq = 1000000000ULL << 32;
-	freq = freq / (uint64_t)tinfo->tsc_to_system_mul;
-	if ( tinfo->tsc_shift < 0 )
-		freq = freq << -tinfo->tsc_shift;
-	else
-		freq = freq >> tinfo->tsc_shift;
-	ci->ci_tsc_freq = freq;
-	}
-#endif /* XEN */
-
+	cpu_get_tsc_freq(ci);
 
 	amd_cpu_cacheinfo(ci);
 

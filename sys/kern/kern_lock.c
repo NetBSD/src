@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.123.2.1 2007/11/13 16:02:04 bouyer Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.123.2.2 2007/11/18 19:35:48 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.123.2.1 2007/11/13 16:02:04 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.123.2.2 2007/11/18 19:35:48 bouyer Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -887,26 +887,4 @@ _kernel_unlock(int nlocks, struct lwp *l, int *countp)
 	if (countp != NULL)
 		*countp = olocks;
 }
-
-#if defined(DEBUG)
-/*
- * Assert that the kernel lock is held.
- */
-void
-_kernel_lock_assert_locked(void)
-{
-
-	if (!__SIMPLELOCK_LOCKED_P(&kernel_lock) ||
-	    curcpu()->ci_biglock_count == 0)
-		_KERNEL_LOCK_ABORT("not locked");
-}
-
-void
-_kernel_lock_assert_unlocked()
-{
-
-	if (curcpu()->ci_biglock_count != 0)
-		_KERNEL_LOCK_ABORT("locked");
-}
-#endif
 #endif /* !_RUMPKERNEL */

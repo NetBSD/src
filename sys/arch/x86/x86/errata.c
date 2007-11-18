@@ -1,4 +1,4 @@
-/*	$NetBSD: errata.c,v 1.10.2.2 2007/11/13 16:00:22 bouyer Exp $	*/
+/*	$NetBSD: errata.c,v 1.10.2.3 2007/11/18 19:34:47 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -52,12 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: errata.c,v 1.10.2.2 2007/11/13 16:00:22 bouyer Exp $");
-
-#include "opt_multiprocessor.h"
-#ifdef i386
-#include "opt_cputype.h"
-#endif
+__KERNEL_RCSID(0, "$NetBSD: errata.c,v 1.10.2.3 2007/11/18 19:34:47 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -68,8 +63,6 @@ __KERNEL_RCSID(0, "$NetBSD: errata.c,v 1.10.2.2 2007/11/13 16:00:22 bouyer Exp $
 
 #include <x86/cpuvar.h>
 #include <x86/cputypes.h>
-
-#if defined(I686_CPU) || defined(__x86_64__)
 
 typedef struct errata {
 	u_short		e_num;
@@ -197,7 +190,6 @@ static errata_t errata[] = {
 		113, FALSE, MSR_BU_CFG, x86_errata_set3,
 		x86_errata_setmsr, BU_CFG_WBENHWSBDIS
 	},
-#ifdef MULTIPROCESSOR
 	/*
 	 * 69: Multiprocessor Coherency Problem with Hardware
 	 * Prefetch Mechanism
@@ -238,7 +230,6 @@ static errata_t errata[] = {
 		122, FALSE, MSR_HWCR, x86_errata_set4,
 		x86_errata_setmsr, HWCR_FFDIS
 	},
-#endif	/* MULTIPROCESSOR */
 };
 
 static bool 
@@ -330,13 +321,3 @@ x86_errata(void)
 		    "operation\n", ci->ci_dev->dv_xname);
 	}
 }
-
-#else	/* defined(I686_CPU) || defined(__x86_64__) */
-
-void
-x86_errata(void)
-{
-
-}
-
-#endif	/* defined(I686_CPU) || defined(__x86_64__) */
