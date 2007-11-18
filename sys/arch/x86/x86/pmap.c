@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.6 2007/11/14 17:55:00 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.7 2007/11/18 18:09:10 ad Exp $	*/
 
 /*
  *
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.6 2007/11/14 17:55:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.7 2007/11/18 18:09:10 ad Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -124,6 +124,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.6 2007/11/14 17:55:00 ad Exp $");
 #include <sys/pool.h>
 #include <sys/user.h>
 #include <sys/kernel.h>
+#include <sys/atomic.h>
 
 #include <uvm/uvm.h>
 
@@ -139,10 +140,6 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.6 2007/11/14 17:55:00 ad Exp $");
 
 #include <x86/i82489reg.h>
 #include <x86/i82489var.h>
-
-/* XXX */
-void		atomic_inc_uint(volatile unsigned int *);
-unsigned int	atomic_dec_uint_nv(volatile unsigned int *);
 
 /*
  * general info:
