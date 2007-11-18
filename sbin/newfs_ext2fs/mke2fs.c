@@ -1,4 +1,4 @@
-/*	$NetBSD: mke2fs.c,v 1.1 2007/11/17 16:50:26 tsutsui Exp $	*/
+/*	$NetBSD: mke2fs.c,v 1.2 2007/11/18 07:11:39 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2007 Izumi Tsutsui.
@@ -108,7 +108,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mke2fs.c,v 1.1 2007/11/17 16:50:26 tsutsui Exp $");
+__RCSID("$NetBSD: mke2fs.c,v 1.2 2007/11/18 07:11:39 tsutsui Exp $");
 #endif
 #endif /* not lint */
 
@@ -156,6 +156,8 @@ static int skpc(int, size_t, uint8_t *);
 #define EXT2_LOSTFOUNDSIZE	16384
 #define EXT2_LOSTFOUNDINO	EXT2_FIRSTINO		/* XXX: not quite */
 #define EXT2_LOSTFOUNDUMASK	0700
+
+#define EXT2_RESIZEINOUMASK	0600
 
 #define NBLOCK_SUPERBLOCK	1
 #define NBLOCK_BLOCK_BITMAP	1
@@ -208,27 +210,27 @@ mke2fs(const char *fsys, int fi, int fo)
 	 */
 	if (!powerof2(bsize)) {
 		errx(EXIT_FAILURE,
-		    "block size must be a power of 2, not %d\n",
+		    "block size must be a power of 2, not %u\n",
 		    bsize);
 	}
 	if (!powerof2(fsize)) {
 		errx(EXIT_FAILURE,
-		    "fragment size must be a power of 2, not %d\n",
+		    "fragment size must be a power of 2, not %u\n",
 		    fsize);
 	}
 	if (fsize < sectorsize) {
 		errx(EXIT_FAILURE,
-		    "fragment size %d is too small, minimum is %d\n",
+		    "fragment size %u is too small, minimum is %u\n",
 		    fsize, sectorsize);
 	}
 	if (bsize < MINBSIZE) {
 		errx(EXIT_FAILURE,
-		    "block size %d is too small, minimum is %d\n",
+		    "block size %u is too small, minimum is %u\n",
 		    bsize, MINBSIZE);
 	}
 	if (bsize > MAXBSIZE) {
 		errx(EXIT_FAILURE,
-		    "block size %d is too large, maximum is %d\n",
+		    "block size %u is too large, maximum is %u\n",
 		    bsize, MAXBSIZE);
 	}
 	if (bsize != fsize) {
@@ -238,8 +240,8 @@ mke2fs(const char *fsys, int fi, int fo)
 		 * and Linux seems to set the same values to them.
 		 */
 		errx(EXIT_FAILURE,
-		    "block size (%d) can't be diffrent from "
-		    "fragment size (%d)\n",
+		    "block size (%u) can't be diffrent from "
+		    "fragment size (%u)\n",
 		    bsize, fsize);
 	}
 
@@ -429,7 +431,8 @@ mke2fs(const char *fsys, int fi, int fo)
 
 	/* calculate blocks for reserved group descriptors for resize */
 	sblock.e2fs.e2fs_reserved_ngdb = 0;
-	if ((sblock.e2fs.e2fs_features_compat & EXT2F_COMPAT_RESIZE) != 0) {
+	if (sblock.e2fs.e2fs_rev > E2FS_REV0 &&
+	    (sblock.e2fs.e2fs_features_compat & EXT2F_COMPAT_RESIZE) != 0) {
 		uint64_t target_blocks;
 		uint target_ncg, target_ngdb, reserved_ngdb;
 
@@ -440,8 +443,7 @@ mke2fs(const char *fsys, int fi, int fo)
 		/* number of blocks must be in uint32_t */
 		if (target_blocks > UINT32_MAX)
 			target_blocks = UINT32_MAX;
-		target_ncg =
-		    howmany(target_blocks, sblock.e2fs.e2fs_bpg);
+		target_ncg = howmany(target_blocks, sblock.e2fs.e2fs_bpg);
 		target_ngdb = howmany(sizeof(struct ext2_gd) * target_ncg,
 		    sblock.e2fs_bsize);
 		/*
@@ -552,7 +554,8 @@ mke2fs(const char *fsys, int fi, int fo)
 	 */
 
 	if (!Nflag) {
-		static const uint pbsize[] = { 1024, 2048, 8192, 16384, 0 };
+		static const uint pbsize[] =
+		    { 1024, 2048, 4096, 8192, 16384, 0 };
 		uint pblock, epblock;
 		/*
 		 * Validate the given file system size.
@@ -1064,7 +1067,7 @@ init_resizeino(const struct timeval *tv)
 	 * The release notes of e2fsprogs says they changed e2fsck to allow
 	 * IFREG for RESIZEINO since a certain resize tool used it. Hmm.
 	 */
-	node.e2di_mode = EXT2_IFREG | 0600;
+	node.e2di_mode = EXT2_IFREG | EXT2_RESIZEINOUMASK;
 	node.e2di_uid = geteuid();
 	node.e2di_atime = tv->tv_sec;
 	node.e2di_ctime = tv->tv_sec;
@@ -1092,7 +1095,7 @@ init_resizeino(const struct timeval *tv)
 	 * have block numbers of actual reserved group descriptors
 	 * allocated at block group zero. This means e2fs_reserved_ngdb
 	 * blocks are reserved as the second level dindirect reference
-	 * blocks, and they acutually contain block numberf of indirect
+	 * blocks, and they acutually contain block numbers of indirect
 	 * references. It may be safe since they don't have to keep any
 	 * data yet.
 	 *
@@ -1319,8 +1322,8 @@ iput(struct ext2fs_dinode *ip, ino_t ino)
 		/* sanity check */
 		if (gd[c].ext2bgd_nifree == 0)
 			errx(EXIT_FAILURE,
-			    "%s: no free inode %" PRId64 " in block group %u\n",
-			    __func__, ino, c);
+			    "%s: no free inode %" PRIu64 " in block group %u\n",
+			    __func__, (uint64_t)ino, c);
 
 		/* update inode bitmap */
 		rdfs(fsbtodb(&sblock, gd[0].ext2bgd_i_bitmap),
@@ -1328,8 +1331,8 @@ iput(struct ext2fs_dinode *ip, ino_t ino)
 
 		/* more sanity */
 		if (isset(bp, EXT2_INO_INDEX(ino)))
-			errx(EXIT_FAILURE, "%s: inode %u already in use\n",
-			    __func__, (uint)ino);
+			errx(EXIT_FAILURE, "%s: inode %" PRIu64
+			    " already in use\n", __func__, (uint64_t)ino);
 		setbit(bp, EXT2_INO_INDEX(ino));
 		wtfs(fsbtodb(&sblock, gd[0].ext2bgd_i_bitmap),
 		    sblock.e2fs_bsize, bp);
@@ -1338,8 +1341,8 @@ iput(struct ext2fs_dinode *ip, ino_t ino)
 	}
 
 	if (ino >= sblock.e2fs.e2fs_ipg * sblock.e2fs_ncg)
-		errx(EXIT_FAILURE, "%s: inode value out of range (%llu).\n",
-		    __func__, (unsigned long long)ino);
+		errx(EXIT_FAILURE, "%s: inode value out of range (%" PRIu64
+		    ").\n", __func__, (uint64_t)ino);
 
 	/* update an inode entry in the table */
 	d = fsbtodb(&sblock, ino_to_fsba(&sblock, ino));
@@ -1370,8 +1373,8 @@ rdfs(daddr_t bno, int size, void *bf)
 	offset = bno;
 	n = pread(fsi, bf, size, offset * sectorsize);
 	if (n != size)
-		errx(EXIT_FAILURE, "%s: read error for sector %lld: %s\n",
-		    __func__, (long long)bno, strerror(errno));
+		err(EXIT_FAILURE, "%s: read error for sector %" PRId64,
+		    __func__, (int64_t)bno);
 }
 
 /*
@@ -1388,8 +1391,8 @@ wtfs(daddr_t bno, int size, void *bf)
 	offset = bno;
 	n = pwrite(fso, bf, size, offset * sectorsize);
 	if (n != size)
-		errx(EXIT_FAILURE, "%s: write error for sector %lld: %s\n",
-		    __func__, (long long)bno, strerror(errno));
+		err(EXIT_FAILURE, "%s: write error for sector %" PRId64,
+		    __func__, (int64_t)bno);
 }
 
 int
@@ -1397,7 +1400,7 @@ ilog2(uint val)
 {
 
 	if (val == 0 || !powerof2(val))
-		errx(EXIT_FAILURE, "%s: %d is not a power of 2\n",
+		errx(EXIT_FAILURE, "%s: %u is not a power of 2\n",
 		    __func__, val);
 
 	return ffs(val) - 1;
