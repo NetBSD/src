@@ -1,4 +1,4 @@
-/*	$NetBSD: atactl.c,v 1.47 2007/11/04 02:34:27 xtraeme Exp $	*/
+/*	$NetBSD: atactl.c,v 1.48 2007/11/18 17:48:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: atactl.c,v 1.47 2007/11/04 02:34:27 xtraeme Exp $");
+__RCSID("$NetBSD: atactl.c,v 1.48 2007/11/18 17:48:21 christos Exp $");
 #endif
 
 
@@ -131,6 +131,7 @@ const	char *argnames;			/* helpstring: expected arguments */
 void	device_identify(int, char *[]);
 void	device_setidle(int, char *[]);
 void	device_idle(int, char *[]);
+void	device_apm(int, char *[]);
 void	device_checkpower(int, char *[]);
 void	device_smart(int, char *[]);
 void	device_security(int, char *[]);
@@ -140,6 +141,7 @@ void	device_smart_temp(struct ata_smart_attr *, uint64_t);
 struct command device_commands[] = {
 	{ "identify",	"",			device_identify },
 	{ "setidle",	"idle-timer",		device_setidle },
+	{ "apm",	"disable|set #",	device_apm },
 	{ "setstandby",	"standby-timer",	device_setidle },
 	{ "idle",	"",			device_idle },
 	{ "standby",	"",			device_idle },
@@ -956,7 +958,6 @@ device_identify(int argc, char *argv[])
  *
  * issue the IDLE IMMEDIATE command to the drive
  */
-
 void
 device_idle(int argc, char *argv[])
 {
@@ -981,6 +982,38 @@ device_idle(int argc, char *argv[])
 
 	return;
 }
+
+/*
+ * device apm:
+ *
+ * enable/disable/control the APM feature of the drive
+ */
+void
+device_apm(int argc, char *argv[])
+{
+	struct atareq req;
+	long l;
+
+	memset(&req, 0, sizeof(req));
+	if (argc >= 1) {
+		req.command = SET_FEATURES;
+		req.timeout = 1000;
+		
+		if (strcmp(argv[0], "disable") == 0)
+			req.features = WDSF_APM_DS;
+		else if (strcmp(argv[0], "set") == 0 && argc >= 2 &&
+		         (l = strtol(argv[1], NULL, 0)) >= 0 && l <= 253) {
+			
+			req.features = WDSF_APM_EN;
+			req.sec_count = l + 1;
+		} else
+			usage();
+	} else
+		usage();
+	
+	ata_command(&req);
+}
+	
 
 /*
  * Set the idle timer on the disk.  Set it for either idle mode or
