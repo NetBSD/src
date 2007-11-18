@@ -1,4 +1,4 @@
-/*	$NetBSD: libx68k.h,v 1.4 2007/11/11 05:20:27 isaki Exp $	*/
+/*	$NetBSD: libx68k.h,v 1.5 2007/11/18 04:59:51 isaki Exp $	*/
 
 /*
  * Copyright (c) 2001 Minoura Makoto
@@ -47,7 +47,7 @@ char *gettrailer(char *);
 int parseopts(const char *, int *);
 int parseboot(char *, char **, int *);
 
-/* sd.c */
+/* sdcd.c */
 struct sd_softc;
 int sdstrategy(void *, int, daddr_t, size_t, void *, size_t *);
 int sdopen(struct open_file *, ...);
