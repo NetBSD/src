@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.1.4.8 2007/11/18 17:21:31 bouyer Exp $	*/
+/*	$NetBSD: pmap.c,v 1.1.4.9 2007/11/18 19:34:50 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,11 +154,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.1.4.8 2007/11/18 17:21:31 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.1.4.9 2007/11/18 19:34:50 bouyer Exp $");
 
-#ifndef __x86_64__
-#include "opt_cputype.h"
-#endif
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
 #include "opt_multiprocessor.h"
@@ -174,6 +171,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.1.4.8 2007/11/18 17:21:31 bouyer Exp $");
 #include <sys/pool.h>
 #include <sys/user.h>
 #include <sys/kernel.h>
+#include <sys/atomic.h>
 
 #include <uvm/uvm.h>
 
@@ -201,10 +199,6 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.1.4.8 2007/11/18 17:21:31 bouyer Exp $");
 #else
 #define PG_k 0
 #endif
-
-/* XXX */
-void		atomic_inc_uint(volatile unsigned int *);
-unsigned int	atomic_dec_uint_nv(volatile unsigned int *);
 
 /*
  * general info:
@@ -561,7 +555,7 @@ extern vaddr_t lo32_paddr;
 
 extern int end;
 
-#if defined(I586_CPU)
+#ifdef i386
 /* stuff to fix the pentium f00f bug */
 extern vaddr_t pentium_idt_vaddr;
 #endif
@@ -1329,13 +1323,10 @@ pmap_bootstrap(vaddr_t kva_start)
 #else /* defined(__x86_64__) */
 	virtual_avail += PAGE_SIZE; pte++;
 	avail_start += PAGE_SIZE;
-#endif /* defined(__x86_64__) */
-
-#if defined(I586_CPU)
 	/* pentium f00f bug stuff */
 	pentium_idt_vaddr = virtual_avail;		/* don't need pte */
 	virtual_avail += PAGE_SIZE; pte++;
-#endif
+#endif /* defined(__x86_64__) */
 #endif /* XEN */
 
 #ifdef _LP64

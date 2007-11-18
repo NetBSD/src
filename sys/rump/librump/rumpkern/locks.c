@@ -1,4 +1,4 @@
-/*	$NetBSD: locks.c,v 1.2.2.2 2007/11/13 16:03:14 bouyer Exp $	*/
+/*	$NetBSD: locks.c,v 1.2.2.3 2007/11/18 19:35:55 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -153,6 +153,15 @@ cv_wait(kcondvar_t *cv, kmutex_t *mtx)
 {
 
 	rumpuser_cv_wait(RUMPCV(cv), mtx->kmtx_mtx);
+}
+
+int
+cv_timedwait(kcondvar_t *cv, kmutex_t *mtx, int ticks)
+{
+	extern int hz;
+
+	KASSERT(hz == 100);
+	return rumpuser_cv_timedwait(RUMPCV(cv), mtx->kmtx_mtx, ticks);
 }
 
 void

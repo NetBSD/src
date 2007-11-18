@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.4.6.2 2007/11/13 15:58:32 bouyer Exp $	*/
+/*	$NetBSD: copy.S,v 1.4.6.3 2007/11/18 19:34:25 bouyer Exp $	*/
 /*	NetBSD: locore.S,v 1.34 2005/04/01 11:59:31 yamt Exp $	*/
 
 /*-
@@ -71,7 +71,6 @@
  *	@(#)locore.s	7.3 (Berkeley) 5/13/91
  */
 
-#include "opt_cputype.h"
 #include "assym.h"
 
 #include <sys/errno.h>
@@ -142,8 +141,10 @@ ENTRY(kcopy)
 	movsl
 	movl	24(%esp),%ecx
 	andl	$3,%ecx			# any bytes left?
+	jz	0f
 	rep
 	movsb
+0:
 
 	GET_CURPCB(%edx)		# XXX save curpcb?
 	popl	PCB_ONFAULT(%edx)
@@ -184,144 +185,24 @@ ENTRY(kcopy)
  */
 
 /*
- * Default to the lowest-common-denominator.  We will improve it
- * later.
- */
-#if defined(I386_CPU)
-#define	DEFAULT_COPYOUT		_C_LABEL(i386_copyout)
-#define	DEFAULT_COPYIN		_C_LABEL(i386_copyin)
-#elif defined(I486_CPU)
-#define	DEFAULT_COPYOUT		_C_LABEL(i486_copyout)
-#define	DEFAULT_COPYIN		_C_LABEL(i386_copyin)
-#elif defined(I586_CPU)
-#define	DEFAULT_COPYOUT		_C_LABEL(i486_copyout)	/* XXX */
-#define	DEFAULT_COPYIN		_C_LABEL(i386_copyin)	/* XXX */
-#elif defined(I686_CPU)
-#define	DEFAULT_COPYOUT		_C_LABEL(i486_copyout)	/* XXX */
-#define	DEFAULT_COPYIN		_C_LABEL(i386_copyin)	/* XXX */
-#endif
-
-	.data
-
-	.globl	_C_LABEL(copyout_func)
-_C_LABEL(copyout_func):
-	.long	DEFAULT_COPYOUT
-
-	.globl	_C_LABEL(copyin_func)
-_C_LABEL(copyin_func):
-	.long	DEFAULT_COPYIN
-
-	.text
-
-/*
  * int copyout(const void *from, void *to, size_t len);
  * Copy len bytes into the user's address space.
  * see copyout(9)
  */
+
 /* LINTSTUB: Func: int copyout(const void *kaddr, void *uaddr, size_t len) */
 ENTRY(copyout)
 	DO_DEFERRED_SWITCH
-	jmp	*_C_LABEL(copyout_func)
-
-#if defined(I386_CPU)
-/* LINTSTUB: Func: int i386_copyout(const void *kaddr, void *uaddr, size_t len) */
-ENTRY(i386_copyout)
-	pushl	%esi
-	pushl	%edi
-	pushl	$0
-
-	movl	16(%esp),%esi
-	movl	20(%esp),%edi
-	movl	24(%esp),%eax
-
-	/*
-	 * We check that the end of the destination buffer is not past the end
-	 * of the user's address space.  If it's not, then we only need to
-	 * check that each page is writable.  The 486 will do this for us; the
-	 * 386 will not.  (We assume that pages in user space that are not
-	 * writable by the user are not writable by the kernel either.)
-	 */
-	movl	%edi,%edx
-	addl	%eax,%edx
-	jc	_C_LABEL(copy_efault)
-	cmpl	$VM_MAXUSER_ADDRESS,%edx
-	ja	_C_LABEL(copy_efault)
-
-	testl	%eax,%eax		# anything to do?
-	jz	3f
-
-	/*
-	 * We have to check each PTE for (write) permission, since the CPU
-	 * doesn't do it for us.
-	 */
-
-	/* Compute number of pages. */
-	movl	%edi,%ecx
-	andl	$PGOFSET,%ecx
-	addl	%eax,%ecx
-	decl	%ecx
-	shrl	$PGSHIFT,%ecx
-
-	/* Compute PTE offset for start address. */
-	shrl	$PGSHIFT,%edi
 
 	GET_CURPCB(%edx)
-	movl	$2f,PCB_ONFAULT(%edx)
-
-1:	/* Check PTE for each page. */
-	testb	$PG_RW,PTE_BASE(,%edi,4)
-	jz	2f
-
-4:	incl	%edi
-	decl	%ecx
-	jns	1b
-
-	movl	20(%esp),%edi
-	movl	24(%esp),%eax
-	jmp	3f
-
-2:	/* Simulate a trap. */
-	pushl	%ecx
-	movl	%edi,%eax
-	shll	$PGSHIFT,%eax
-	pushl	%eax
-	call	_C_LABEL(trapwrite)	# trapwrite(addr)
-	addl	$4,%esp			# pop argument
-	popl	%ecx
-	testl	%eax,%eax		# if not ok, return EFAULT
-	jz	4b
-	jmp	_C_LABEL(copy_efault)
-
-3:	GET_CURPCB(%edx)
-	movl	$_C_LABEL(copy_fault),PCB_ONFAULT(%edx)
-
-	/* bcopy(%esi, %edi, %eax); */
-	movl	%eax,%ecx
-	shrl	$2,%ecx
-	rep
-	movsl
-	movl	%eax,%ecx
-	andl	$3,%ecx
-	rep
-	movsb
-
-	popl	PCB_ONFAULT(%edx)
-	popl	%edi
-	popl	%esi
-	xorl	%eax,%eax
-	ret
-#endif /* I386_CPU */
-
-#if defined(I486_CPU) || defined(I586_CPU) || defined(I686_CPU)
-/* LINTSTUB: Func: int i486_copyout(const void *kaddr, void *uaddr, size_t len) */
-ENTRY(i486_copyout)
 	pushl	%esi
 	pushl	%edi
-	pushl	$0
+	pushl	$0	/* PCB_ONFAULT(%edx) */
 
 	movl	16(%esp),%esi
 	movl	20(%esp),%edi
 	movl	24(%esp),%eax
+	movl	$_C_LABEL(copy_fault),PCB_ONFAULT(%edx)
 
 	/*
 	 * We check that the end of the destination buffer is not past the end
@@ -332,50 +213,42 @@ ENTRY(i486_copyout)
 	jc	_C_LABEL(copy_efault)
 	cmpl	$VM_MAXUSER_ADDRESS,%edx
 	ja	_C_LABEL(copy_efault)
-
-	GET_CURPCB(%edx)
-	movl	$_C_LABEL(copy_fault),PCB_ONFAULT(%edx)
-
-	/* bcopy(%esi, %edi, %eax); */
 	movl	%eax,%ecx
 	shrl	$2,%ecx
 	rep
 	movsl
+	andl	$3,%eax
+	jz	1f
 	movl	%eax,%ecx
-	andl	$3,%ecx
 	rep
 	movsb
-
+1:
+	GET_CURPCB(%edx)
 	popl	PCB_ONFAULT(%edx)
 	popl	%edi
 	popl	%esi
 	xorl	%eax,%eax
 	ret
-#endif /* I486_CPU || I586_CPU || I686_CPU */
 
 /*
  * int copyin(const void *from, void *to, size_t len);
  * Copy len bytes from the user's address space.
  * see copyin(9)
  */
+
 /* LINTSTUB: Func: int copyin(const void *uaddr, void *kaddr, size_t len) */
 ENTRY(copyin)
 	DO_DEFERRED_SWITCH
-	jmp	*_C_LABEL(copyin_func)
 
-#if defined(I386_CPU) || defined(I486_CPU) || defined(I586_CPU) || \
-    defined(I686_CPU)
-/* LINTSTUB: Func: int i386_copyin(const void *uaddr, void *kaddr, size_t len) */
-ENTRY(i386_copyin)
+	GET_CURPCB(%edx)
 	pushl	%esi
 	pushl	%edi
-	GET_CURPCB(%eax)
-	pushl	$0
-	movl	$_C_LABEL(copy_fault),PCB_ONFAULT(%eax)
+	pushl	$0	/* PCB_ONFAULT(%edx) */ 
 
 	movl	16(%esp),%esi
 	movl	20(%esp),%edi
 	movl	24(%esp),%eax
+	movl	$_C_LABEL(copy_fault),PCB_ONFAULT(%edx)
 
 	/*
 	 * We check that the end of the destination buffer is not past the end
@@ -387,24 +260,22 @@ ENTRY(i386_copyin)
 	jc	_C_LABEL(copy_efault)
 	cmpl	$VM_MAXUSER_ADDRESS,%edx
 	ja	_C_LABEL(copy_efault)
-
-	/* bcopy(%esi, %edi, %eax); */
 	movl	%eax,%ecx
 	shrl	$2,%ecx
 	rep
 	movsl
+	andl	$3,%eax
+	jz	1f
 	movl	%eax,%ecx
-	andl	$3,%ecx
 	rep
 	movsb
-
+1:
 	GET_CURPCB(%edx)
 	popl	PCB_ONFAULT(%edx)
 	popl	%edi
 	popl	%esi
 	xorl	%eax,%eax
 	ret
-#endif /* I386_CPU || I486_CPU || I586_CPU || I686_CPU */
 
 /* LINTSTUB: Ignore */
 NENTRY(copy_efault)
@@ -450,73 +321,6 @@ ENTRY(copyoutstr)
 	movl	16(%esp),%edi		# edi = to
 	movl	20(%esp),%edx		# edx = maxlen
 
-#if defined(I386_CPU)
-#if defined(I486_CPU) || defined(I586_CPU) || defined(I686_CPU)
-	cmpl	$CPUCLASS_386,_C_LABEL(cpu_class)
-	jne	5f
-#endif /* I486_CPU || I586_CPU || I686_CPU */
-
-	/* Compute number of bytes in first page. */
-	movl	%edi,%eax
-	andl	$PGOFSET,%eax
-	movl	$PAGE_SIZE,%ecx
-	subl	%eax,%ecx		# ecx = PAGE_SIZE - (src % PAGE_SIZE)
-
-	GET_CURPCB(%eax)
-	movl	$6f,PCB_ONFAULT(%eax)
-
-1:	/*
-	 * Once per page, check that we are still within the bounds of user
-	 * space, and check for a write fault.
-	 */
-	cmpl	$VM_MAXUSER_ADDRESS,%edi
-	jae	_C_LABEL(copystr_efault)
-
-	/* Compute PTE offset. */
-	movl	%edi,%eax
-	shrl	$PGSHIFT,%eax		# calculate pte address
-
-	testb	$PG_RW,PTE_BASE(,%eax,4)
-	jnz	2f
-
-6:	/* Simulate a trap. */
-	pushl	%edx
-	pushl	%edi
-	call	_C_LABEL(trapwrite)	# trapwrite(addr)
-	addl	$4,%esp			# clear argument from stack
-	popl	%edx
-	testl	%eax,%eax
-	jnz	_C_LABEL(copystr_efault)
-
-2:	/* Copy up to end of this page. */
-	subl	%ecx,%edx		# predecrement total count
-	jnc	3f
-	addl	%edx,%ecx		# ecx += (edx - ecx) = edx
-	xorl	%edx,%edx
-
-3:	decl	%ecx
-	js	4f
-	lodsb
-	stosb
-	testb	%al,%al
-	jnz	3b
-
-	/* Success -- 0 byte reached. */
-	addl	%ecx,%edx		# add back residual for this page
-	xorl	%eax,%eax
-	jmp	copystr_return
-
-4:	/* Go to next page, if any. */
-	movl	$PAGE_SIZE,%ecx
-	testl	%edx,%edx
-	jnz	1b
-
-	/* edx is zero -- return ENAMETOOLONG. */
-	movl	$ENAMETOOLONG,%eax
-	jmp	copystr_return
-#endif /* I386_CPU */
-
-#if defined(I486_CPU) || defined(I586_CPU) || defined(I686_CPU)
 5:	GET_CURPCB(%eax)
 	movl	$_C_LABEL(copystr_fault),PCB_ONFAULT(%eax)
 	/*
@@ -549,7 +353,6 @@ ENTRY(copyoutstr)
 	jae	_C_LABEL(copystr_efault)
 	movl	$ENAMETOOLONG,%eax
 	jmp	copystr_return
-#endif /* I486_CPU || I586_CPU || I686_CPU */
 
 /*
  * int copyinstr(const void *from, void *to, size_t maxlen, size_t *lencopied);
@@ -779,37 +582,8 @@ ENTRY(suword)
 	movl	4(%esp),%edx
 	cmpl	$VM_MAXUSER_ADDRESS-4,%edx
 	ja	_C_LABEL(fusuaddrfault)
-
-#if defined(I386_CPU)
-#if defined(I486_CPU) || defined(I586_CPU) || defined(I686_CPU)
-	cmpl	$CPUCLASS_386,_C_LABEL(cpu_class)
-	jne	2f
-#endif /* I486_CPU || I586_CPU || I686_CPU */
-
-	GET_CURPCB(%eax)
-	movl	$3f,PCB_ONFAULT(%eax)
-
-	movl	%edx,%eax
-	shrl	$PGSHIFT,%eax		# calculate pte address
-	testb	$PG_RW,PTE_BASE(,%eax,4)
-	jnz	1f
-
-3:	/* Simulate a trap. */
-	pushl	%edx
-	pushl	%edx
-	call	_C_LABEL(trapwrite)	# trapwrite(addr)
-	addl	$4,%esp			# clear parameter from the stack
-	popl	%edx
 	GET_CURPCB(%ecx)
-	testl	%eax,%eax
-	jnz	_C_LABEL(fusufault)
-
-1:	/* XXX also need to check the following 3 bytes for validity! */
-#endif
-
-2:	GET_CURPCB(%ecx)
 	movl	$_C_LABEL(fusufault),PCB_ONFAULT(%ecx)
-
 	movl	8(%esp),%eax
 	movl	%eax,(%edx)
 	xorl	%eax,%eax
@@ -827,37 +601,8 @@ ENTRY(susword)
 	movl	4(%esp),%edx
 	cmpl	$VM_MAXUSER_ADDRESS-2,%edx
 	ja	_C_LABEL(fusuaddrfault)
-
-#if defined(I386_CPU)
-#if defined(I486_CPU) || defined(I586_CPU) || defined(I686_CPU)
-	cmpl	$CPUCLASS_386,_C_LABEL(cpu_class)
-	jne	2f
-#endif /* I486_CPU || I586_CPU || I686_CPU */
-
-	GET_CURPCB(%eax)
-	movl	$3f,PCB_ONFAULT(%eax)
-
-	movl	%edx,%eax
-	shrl	$PGSHIFT,%eax		# calculate pte address
-	testb	$PG_RW,PTE_BASE(,%eax,4)
-	jnz	1f
-
-3:	/* Simulate a trap. */
-	pushl	%edx
-	pushl	%edx
-	call	_C_LABEL(trapwrite)	# trapwrite(addr)
-	addl	$4,%esp			# clear parameter from the stack
-	popl	%edx
 	GET_CURPCB(%ecx)
-	testl	%eax,%eax
-	jnz	_C_LABEL(fusufault)
-
-1:	/* XXX also need to check the following byte for validity! */
-#endif
-
-2:	GET_CURPCB(%ecx)
 	movl	$_C_LABEL(fusufault),PCB_ONFAULT(%ecx)
-
 	movl	8(%esp),%eax
 	movw	%ax,(%edx)
 	xorl	%eax,%eax
@@ -880,25 +625,7 @@ ENTRY(suswintr)
 	movl	CPUVAR(CURLWP),%ecx
 	movl	L_ADDR(%ecx),%ecx
 	movl	$_C_LABEL(fusubail),PCB_ONFAULT(%ecx)
-
-#if defined(I386_CPU)
-#if defined(I486_CPU) || defined(I586_CPU) || defined(I686_CPU)
-	cmpl	$CPUCLASS_386,_C_LABEL(cpu_class)
-	jne	2f
-#endif /* I486_CPU || I586_CPU || I686_CPU */
-
-	movl	%edx,%eax
-	shrl	$PGSHIFT,%eax		# calculate pte address
-	testb	$PG_RW,PTE_BASE(,%eax,4)
-	jnz	1f
-
-	/* Simulate a trap. */
-	jmp	_C_LABEL(fusubail)
-
-1:	/* XXX also need to check the following byte for validity! */
-#endif
-
-2:	movl	8(%esp),%eax
+	movl	8(%esp),%eax
 	movw	%ax,(%edx)
 	xorl	%eax,%eax
 	movl	%eax,PCB_ONFAULT(%ecx)
@@ -915,37 +642,8 @@ ENTRY(subyte)
 	movl	4(%esp),%edx
 	cmpl	$VM_MAXUSER_ADDRESS-1,%edx
 	ja	_C_LABEL(fusuaddrfault)
-
-#if defined(I386_CPU)
-#if defined(I486_CPU) || defined(I586_CPU) || defined(I686_CPU)
-	cmpl	$CPUCLASS_386,_C_LABEL(cpu_class)
-	jne	2f
-#endif /* I486_CPU || I586_CPU || I686_CPU */
-
-	GET_CURPCB(%eax)
-	movl	$3f,PCB_ONFAULT(%eax)
-
-	movl	%edx,%eax
-	shrl	$PGSHIFT,%eax		# calculate pte address
-	testb	$PG_RW,PTE_BASE(,%eax,4)
-	jnz	1f
-
-3:	/* Simulate a trap. */
-	pushl	%edx
-	pushl	%edx
-	call	_C_LABEL(trapwrite)	# trapwrite(addr)
-	addl	$4,%esp			# clear parameter from the stack
-	popl	%edx
 	GET_CURPCB(%ecx)
-	testl	%eax,%eax
-	jnz	_C_LABEL(fusufault)
-
-1:
-#endif
-
-2:	GET_CURPCB(%ecx)
 	movl	$_C_LABEL(fusufault),PCB_ONFAULT(%ecx)
-
 	movb	8(%esp),%al
 	movb	%al,(%edx)
 	xorl	%eax,%eax

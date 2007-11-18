@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.10.2.1 2007/11/13 16:00:18 bouyer Exp $	*/
+/*	$NetBSD: clock.c,v 1.10.2.2 2007/11/18 19:34:46 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -121,7 +121,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.10.2.1 2007/11/13 16:00:18 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.10.2.2 2007/11/18 19:34:46 bouyer Exp $");
 
 /* #define CLOCKDEBUG */
 /* #define CLOCK_PARANOIA */
@@ -366,10 +366,7 @@ startrtclock(void)
 
 	tc_init(&i8254_timecounter);
 
-#if defined(I586_CPU) || defined(I686_CPU) || defined(__x86_64__)
 	init_TSC();
-#endif
-
 	rtc_register();
 }
 

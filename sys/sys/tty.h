@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.h,v 1.73.20.1 2007/11/13 16:03:27 bouyer Exp $	*/
+/*	$NetBSD: tty.h,v 1.73.20.2 2007/11/18 19:35:57 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -67,6 +67,15 @@ struct clist {
 	u_char	*c_cq;		/* N bits/bytes long, see tty_subr.c */
 };
 
+/* tty signal types */
+enum ttysigtype {
+	TTYSIG_PG1,
+	TTYSIG_PG2,
+	TTYSIG_LEADER,
+	TTYSIG_COUNT
+};
+
+
 /*
  * Per-tty structure.
  *
@@ -106,9 +115,7 @@ struct tty {
 	short	t_hiwat;		/* High water mark. */
 	short	t_lowat;		/* Low water mark. */
 	short	t_gen;			/* Generation number. */
-	sigset_t t_sigpg1;		/* Signals to PG (set 1) */
-	sigset_t t_sigpg2;		/* Signals to PG (set 2) */
-	sigset_t t_sigleader;		/* Signals to session leader */
+	sigset_t t_sigs[TTYSIG_COUNT];	/* Pending signals */
 	int	t_sigcount;		/* # pending signals */
 	TAILQ_ENTRY(tty) t_sigqueue;	/* entry on pending signal list */
 };
@@ -208,12 +215,6 @@ extern	struct ttychars ttydefaults;
 
 /* Symbolic sleep message strings. */
 extern	 const char ttyin[], ttyout[], ttopen[], ttclos[], ttybg[], ttybuf[];
-
-enum ttysigtype {
-	TTYSIG_PG1,
-	TTYSIG_PG2,
-	TTYSIG_LEADER
-};
 
 int	 b_to_q(const u_char *, int, struct clist *);
 void	 catq(struct clist *, struct clist *);

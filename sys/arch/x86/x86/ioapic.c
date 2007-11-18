@@ -1,4 +1,4 @@
-/* 	$NetBSD: ioapic.c,v 1.23.2.2 2007/10/25 22:36:47 bouyer Exp $	*/
+/* 	$NetBSD: ioapic.c,v 1.23.2.3 2007/11/18 19:34:48 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.23.2.2 2007/10/25 22:36:47 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.23.2.3 2007/11/18 19:34:48 bouyer Exp $");
 
 #include "opt_ddb.h"
 
@@ -341,7 +341,7 @@ ioapic_attach(struct device *parent, struct device *self, void *aux)
 	    M_DEVBUF, M_WAITOK);
 
 	for (i=0; i<sc->sc_apic_sz; i++) {
-		uint32_t redlo;
+		uint32_t redlo, redhi;
 
 		sc->sc_pins[i].ip_next = NULL;
 		sc->sc_pins[i].ip_map = NULL;
@@ -360,6 +360,8 @@ ioapic_attach(struct device *parent, struct device *self, void *aux)
 		if (i >= 16)
 			redlo |= IOAPIC_REDLO_LEVEL | IOAPIC_REDLO_ACTLO;
 		ioapic_write(sc, IOAPIC_REDLO(i), redlo);
+		redhi = (cpu_info_primary.ci_apicid << IOAPIC_REDHI_DEST_SHIFT);
+		ioapic_write(sc, IOAPIC_REDHI(i), redhi);
 	}
 	
 	/*

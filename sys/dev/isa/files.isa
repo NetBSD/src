@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.152 2007/09/12 11:45:39 xtraeme Exp $
+#	$NetBSD: files.isa,v 1.152.4.1 2007/11/18 19:35:29 bouyer Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -461,9 +461,9 @@ attach	lm at isa with lm_isa
 file	dev/isa/lm_isa.c		lm_isa
 
 # IT8705F/8712F SIS950 hardware monitor
-device	it: sysmon_envsys
-attach	it at isa with it_isa
-file	dev/isa/it.c			it_isa
+device	itesio: sysmon_envsys
+attach	itesio at isa with itesio
+file	dev/isa/itesio_isa.c		itesio
 
 # Abit uGuru hardware monitor
 attach	ug at isa with ug_isa

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.shark.inc,v 1.8 2007/03/12 15:09:35 jmmv Exp $
+#	$NetBSD: Makefile.shark.inc,v 1.8.24.1 2007/11/18 19:34:40 bouyer Exp $
 
 MACHINE_ARCH=		arm
 CPPFLAGS+=		-D${MACHINE}
@@ -18,8 +18,8 @@ SYSTEM_LD_HEAD_EXTRA+=; \
 
 SYSTEM_LD_TAIL_EXTRA+=; \
 	echo \
-	 "${OBJCOPY} -O a.out-arm-netbsd -R .ident -R .arm.atpcs -R .comment $@ $@.aout"; \
-	${OBJCOPY} -O a.out-arm-netbsd -R .ident -R .arm.atpcs -R .comment $@ $@.aout
+	 "${OBJCOPY} -O a.out-arm-netbsd -R .ident -R .arm.atpcs -R .comment -R .note.netbsd.ident $@ $@.aout"; \
+	${OBJCOPY} -O a.out-arm-netbsd -R .ident -R .arm.atpcs -R .comment -R .note.netbsd.ident $@ $@.aout
 
 KERNIMAGES=	netbsd netbsd.aout
 
