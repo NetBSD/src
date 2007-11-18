@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.107 2007/10/28 10:02:08 tsutsui Exp $ */
+/*	$NetBSD: fdisk.c,v 1.108 2007/11/18 19:19:00 apb Exp $ */
 
 /*
  * Mach Operating System
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.107 2007/10/28 10:02:08 tsutsui Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.108 2007/11/18 19:19:00 apb Exp $");
 #endif /* not lint */
 
 #define MBRPTYPENAMES
@@ -859,7 +859,7 @@ print_pbr(daddr_t sector, int indent, uint8_t part_type)
 		PBR_ERROR("All bytes are identical (0x%02x)\n", val);
 
 	if (pboot.mbr_magic != LE_MBR_MAGIC)
-		PBR_ERROR("Bad magic number (0x%04x)>\n",
+		PBR_ERROR("Bad magic number (0x%04x)\n",
 			le16toh(pboot.mbr_magic));
 
 #if 0
