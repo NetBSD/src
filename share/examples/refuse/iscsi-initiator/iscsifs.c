@@ -583,7 +583,7 @@ main(int argc, char **argv)
 
 		/* stuff size into st.st_size */
 		(void) read_capacity(i, 0, &lbac, &blocksize);
-		st.st_size = (uint64_t)((uint64_t)lbac * blocksize);
+		st.st_size = ((uint64_t)lbac + 1) * blocksize;
 
 		tv[tc].host = strdup(tinfo.name);
 		tv[tc].ip = strdup(tinfo.ip);
