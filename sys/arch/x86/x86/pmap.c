@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.1.4.7 2007/11/16 17:18:03 bouyer Exp $	*/
+/*	$NetBSD: pmap.c,v 1.1.4.8 2007/11/18 17:21:31 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.1.4.7 2007/11/16 17:18:03 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.1.4.8 2007/11/18 17:21:31 bouyer Exp $");
 
 #ifndef __x86_64__
 #include "opt_cputype.h"
@@ -743,30 +743,10 @@ pmap_map_ptes(struct pmap *pmap, struct pmap **pmap2,
 		 * Xen won't allow us to clear his entries either
 		 */
 		s = splvm();
-		if (pmap->pm_flags & PMF_USER_XPIN) {
-			if (pmap->pm_pdirpa == xen_current_user_pgd) {
-				xen_set_user_pgd(xen_dummy_user_pgd);
-				xen_current_user_pgd = 0;
-				pmap->pm_flags |= PMF_USER_RELOAD;
-			}
-			xpq_queue_unpin_table(
-			    xpmap_ptom_masked(pmap->pm_pdirpa));
-		}
-		/* Set user PGD R/W, update and make R/O again */
-		HYPERVISOR_update_va_mapping((unsigned long)pmap->pm_pdir,
-		    npde | PG_RW, UVMF_INVLPG);
-		memset(&pmap->pm_pdir[256], 0,
-		    (271-256+1) * sizeof(pd_entry_t));
 		/* Make recursive entry usable in user PGD */
-		pmap->pm_pdir[PDIR_SLOT_PTE] = npde;
-		HYPERVISOR_update_va_mapping((unsigned long)pmap->pm_pdir,
-		    npde, UVMF_INVLPG);
-		/*
-		 * Hack: force validation of pgd as a l4 page early,
-		 * otherwise APDP mapping will end marking it as a l3
-		 * and fail subsequent validations
-		 */
-		xpq_queue_pin_table(xpmap_ptom_masked(pmap->pm_pdirpa));
+		xpq_queue_pte_update((void *)xpmap_ptom(pmap->pm_pdirpa +
+		    PDIR_SLOT_PTE * sizeof(pd_entry_t)), npde);
+		xpq_queue_invlpg((vaddr_t)&pmap->pm_pdir[PDIR_SLOT_PTE]);
 		pmap_pte_set(APDP_PDE, npde);
 		pmap_pte_flush();
 		if (pmap_valid_entry(opde))
