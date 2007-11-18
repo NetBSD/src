@@ -1,4 +1,4 @@
-/*	$NetBSD: node.c,v 1.44 2007/11/11 18:06:35 pooka Exp $	*/
+/*	$NetBSD: node.c,v 1.45 2007/11/18 17:41:55 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: node.c,v 1.44 2007/11/11 18:06:35 pooka Exp $");
+__RCSID("$NetBSD: node.c,v 1.45 2007/11/18 17:41:55 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -252,9 +252,6 @@ psshfs_node_open(struct puffs_cc *pcc, void *opc, int mode,
 	}
 
  out:
-	if (rv == 0)
-		psn->opencount++;
-
 	PSSHFSRETURN(rv);
 }
 
@@ -289,27 +286,12 @@ closehandles(struct puffs_cc *pcc, struct psshfs_node *psn)
 }
 
 int
-psshfs_node_close(struct puffs_cc *pcc, void *opc, int flags,
-	const struct puffs_cred *pcr, const struct puffs_cid *pcid)
-{
-	struct puffs_node *pn = opc;
-	struct psshfs_node *psn = pn->pn_data;
-
-	if (psn->opencount > 0)
-		if (--psn->opencount == 0)
-			closehandles(pcc, psn);
-
-	return 0;
-}
-
-int
 psshfs_node_inactive(struct puffs_cc *pcc, void *opc,
 	const struct puffs_cid *pcid)
 {
 	struct puffs_node *pn = opc;
 	struct psshfs_node *psn = pn->pn_data;
 
-	assert(psn->opencount == 0);
 	psn->stat &= ~(PSN_READMAP | PSN_WRITEMAP);
 	closehandles(pcc, psn);
 
