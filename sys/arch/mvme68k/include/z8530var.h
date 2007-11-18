@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530var.h,v 1.10 2007/11/07 15:56:12 ad Exp $	*/
+/*	$NetBSD: z8530var.h,v 1.11 2007/11/18 13:52:44 he Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
