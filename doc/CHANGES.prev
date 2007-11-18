@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.75 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.76 $>
 
 
 Changes from 386bsd 0.1 + patchkit 0.2.2 to NetBSD 0.8:
@@ -1904,7 +1904,7 @@ Changes from NetBSD 1.0 to NetBSD 1.1:
 		colrm, column, comm, ctags, and cut to Lite versions. (glass)
 	Converted apply, apropos, ar, asa, at, basename, cap_mkdb, chflags,
 		and compress to new RCS Id format. (glass)
-	bdes(1): Added bsed(1) from Lite.  Domestic distribution only.  (glass)
+	bdes(1): Added bdes(1) from Lite.  Domestic distribution only.  (glass)
 	msdosfs: Lightened the sanity checks when mounting a msdosfs file
 		system, to be more compatible. [mycroft 19950327]
 	mcd: Rewrote most of the `mcd' driver, to be much simpler and faster,
