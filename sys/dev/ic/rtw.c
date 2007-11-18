@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.93 2007/11/16 23:35:19 dyoung Exp $ */
+/* $NetBSD: rtw.c,v 1.94 2007/11/18 12:40:15 jnemeth Exp $ */
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 David Young.  All rights
  * reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.93 2007/11/16 23:35:19 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.94 2007/11/18 12:40:15 jnemeth Exp $");
 
 #include "bpfilter.h"
 
@@ -1518,8 +1518,8 @@ rtw_intr_rx(struct rtw_softc *sc, uint16_t isr)
 			sc->sc_ic.ic_stats.is_rx_tooshort++;
 			goto next;
 		}
-		KASSERT(len <= m->m_pkthdr.len);
-		KASSERT(len <= m->m_len);
+		KASSERT(len <= rs->rs_mbuf->m_pkthdr.len);
+		KASSERT(len <= rs->rs_mbuf->m_len);
 
 		hwrate = __SHIFTOUT(hstat, RTW_RXSTAT_RATE_MASK);
 		if (hwrate >= __arraycount(ratetbl)) {
