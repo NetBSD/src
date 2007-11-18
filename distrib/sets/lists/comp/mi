@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1086 2007/11/14 21:51:16 jmmv Exp $
+#	$NetBSD: mi,v 1.1087 2007/11/18 22:45:02 yamt Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -2362,6 +2362,7 @@
 ./usr/libdata/debug/sbin/mount_umap.debug	comp-miscfs-debug	debug
 ./usr/libdata/debug/sbin/mount_union.debug	comp-miscfs-debug	debug
 ./usr/libdata/debug/sbin/newfs.debug		comp-sysutil-debug	debug
+./usr/libdata/debug/sbin/newfs_ext2fs.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/newfs_lfs.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/newfs_msdos.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/newfs_sysvbfs.debug	comp-sysutil-debug	debug
