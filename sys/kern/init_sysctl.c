@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.112 2007/10/19 12:16:42 ad Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.112.2.1 2007/11/19 00:48:33 mjf Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.112 2007/10/19 12:16:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.112.2.1 2007/11/19 00:48:33 mjf Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
@@ -2743,7 +2743,6 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki)
 		ki->p_tdev = NODEV;
 	}
 
-	ki->p_estcpu = p->p_estcpu;
 
 	mutex_enter(&p->p_smutex);
 
@@ -2759,6 +2758,7 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki)
 
 	ki->p_cpticks = 0;
 	ki->p_pctcpu = p->p_pctcpu;
+	ki->p_estcpu = 0;
 	ss1 = p->p_sigpend.sp_set;
 	LIST_FOREACH(l, &p->p_lwps, l_sibling) {
 		/* This is hardly correct, but... */
@@ -2766,6 +2766,7 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki)
 		sigplusset(&l->l_sigmask, &ss2);
 		ki->p_cpticks += l->l_cpticks;
 		ki->p_pctcpu += l->l_pctcpu;
+		ki->p_estcpu += l->l_estcpu;
 	}
 	memcpy(&ki->p_siglist, &ss1, sizeof(ki_sigset_t));
 	memcpy(&ki->p_sigmask, &ss2, sizeof(ki_sigset_t));
@@ -2818,8 +2819,8 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki)
 		else
 			ki->p_schedflags = 0;
 		ki->p_holdcnt = l->l_holdcnt;
-		ki->p_priority = l->l_priority;
-		ki->p_usrpri = l->l_usrpri;
+		ki->p_priority = lwp_eprio(l);
+		ki->p_usrpri = l->l_priority;
 		if (l->l_wmesg)
 			strncpy(ki->p_wmesg, l->l_wmesg, sizeof(ki->p_wmesg));
 		ki->p_wchan = PTRTOUINT64(l->l_wchan);
@@ -2907,8 +2908,8 @@ fill_lwp(struct lwp *l, struct kinfo_lwp *kl)
 	else
 		kl->l_schedflags = 0;
 	kl->l_holdcnt = l->l_holdcnt;
-	kl->l_priority = l->l_priority;
-	kl->l_usrpri = l->l_usrpri;
+	kl->l_priority = lwp_eprio(l);
+	kl->l_usrpri = l->l_priority;
 	if (l->l_wmesg)
 		strncpy(kl->l_wmesg, l->l_wmesg, sizeof(kl->l_wmesg));
 	kl->l_wchan = PTRTOUINT64(l->l_wchan);

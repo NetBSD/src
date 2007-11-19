@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.113 2007/10/04 12:55:48 ad Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.113.4.1 2007/11/19 00:48:35 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.113 2007/10/04 12:55:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.113.4.1 2007/11/19 00:48:35 mjf Exp $");
 
 #include "opt_ntp.h"
 #include "opt_multiprocessor.h"
@@ -316,7 +316,7 @@ int	profsrc;
 int	schedhz;
 int	profprocs;
 int	hardclock_ticks;
-static int statscheddiv; /* stat => sched divider (used if schedhz == 0) */
+static int hardscheddiv; /* hard => sched divider (used if schedhz == 0) */
 static int psdiv;			/* prof => stat divider */
 int	psratio;			/* ratio: prof / stat */
 #ifndef __HAVE_TIMECOUNTER
@@ -391,9 +391,9 @@ initclocks(void)
 	psratio = profhz / i;
 	if (schedhz == 0) {
 		/* 16Hz is best */
-		statscheddiv = i / 16;
-		if (statscheddiv <= 0)
-			panic("statscheddiv");
+		hardscheddiv = hz / 16;
+		if (hardscheddiv <= 0)
+			panic("hardscheddiv");
 	}
 
 #ifndef __HAVE_TIMECOUNTER
@@ -490,7 +490,7 @@ hardclock(struct clockframe *frame)
 #endif /* NTP */
 #endif /* __HAVE_TIMECOUNTER */
 
-	l = curlwp;
+	l = ci->ci_data.cpu_onproc;
 	if (!CURCPU_IDLE_P()) {
 		p = l->l_proc;
 		/*
@@ -511,6 +511,16 @@ hardclock(struct clockframe *frame)
 	 */
 	if (stathz == 0)
 		statclock(frame);
+	/*
+	 * If no separate schedclock is provided, call it here
+	 * at about 16 Hz.
+	 */
+	if (schedhz == 0) {
+		if ((int)(--ci->ci_schedstate.spc_schedticks) <= 0) {
+			schedclock(l);
+			ci->ci_schedstate.spc_schedticks = hardscheddiv;
+		}
+	}
 	if ((--ci->ci_schedstate.spc_ticks) <= 0)
 		sched_tick(ci);
 
@@ -886,7 +896,7 @@ proftick(struct clockframe *frame)
 	struct lwp *l;
 	struct proc *p;
 
-	l = curlwp;
+	l = curcpu()->ci_data.cpu_onproc;
 	p = (l ? l->l_proc : NULL);
 	if (CLKF_USERMODE(frame)) {
 		mutex_spin_enter(&p->p_stmutex);
@@ -951,7 +961,7 @@ statclock(struct clockframe *frame)
 			setstatclockrate(profhz);
 		}
 	}
-	l = curlwp;
+	l = ci->ci_data.cpu_onproc;
 	if ((l->l_flag & LW_IDLE) != 0) {
 		/*
 		 * don't account idle lwps as swapper.
@@ -1016,7 +1026,7 @@ statclock(struct clockframe *frame)
 		 * so that we know how much of its real time was spent
 		 * in ``non-process'' (i.e., interrupt) work.
 		 */
-		if (CLKF_INTR(frame) || (l->l_flag & LW_INTR) != 0) {
+		if (CLKF_INTR(frame) || (curlwp->l_pflag & LP_INTR) != 0) {
 			if (p != NULL) {
 				p->p_iticks++;
 			}
@@ -1033,17 +1043,6 @@ statclock(struct clockframe *frame)
 	if (p != NULL) {
 		++l->l_cpticks;
 		mutex_spin_exit(&p->p_stmutex);
-	}
-
-	/*
-	 * If no separate schedclock is provided, call it here
-	 * at about 16 Hz.
-	 */
-	if (schedhz == 0) {
-		if ((int)(--ci->ci_schedstate.spc_schedticks) <= 0) {
-			schedclock(l);
-			ci->ci_schedstate.spc_schedticks = statscheddiv;
-		}
 	}
 }
 

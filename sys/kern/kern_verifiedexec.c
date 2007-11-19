@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.101 2007/07/09 21:10:54 ad Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.101.14.1 2007/11/19 00:48:45 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.101 2007/07/09 21:10:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.101.14.1 2007/11/19 00:48:45 mjf Exp $");
 
 #include "opt_veriexec.h"
 
@@ -107,15 +107,16 @@ struct veriexec_table_entry {
 static int veriexec_verbose;
 int veriexec_strict;
 
-static char *veriexec_fp_names;
-static size_t veriexec_name_max;
+static char *veriexec_fp_names = NULL;
+static size_t veriexec_name_max = 0;
 
 static const struct sysctlnode *veriexec_count_node;
 
 static fileassoc_t veriexec_hook;
 static specificdata_key_t veriexec_mountspecific_key;
 
-static LIST_HEAD(, veriexec_fpops) veriexec_fpops_list;
+static LIST_HEAD(, veriexec_fpops) veriexec_fpops_list =
+	LIST_HEAD_INITIALIZER(veriexec_fpops_list);
 
 static int veriexec_raw_cb(kauth_cred_t, kauth_action_t, void *,
     void *, void *, void *, void *);
@@ -307,10 +308,6 @@ veriexec_init(void)
 	    veriexec_mountspecific_dtor);
 	if (error)
 		panic("Veriexec: Can't create mountspecific key");
-
-	LIST_INIT(&veriexec_fpops_list);
-	veriexec_fp_names = NULL;
-	veriexec_name_max = 0;
 
 #define	FPOPS_ADD(a, b, c, d, e, f)	\
 	veriexec_fpops_add(a, b, c, (veriexec_fpop_init_t)d, \

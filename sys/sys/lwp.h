@@ -1,4 +1,4 @@
-/* 	$NetBSD: lwp.h,v 1.67 2007/11/01 21:54:10 dsl Exp $	*/
+/* 	$NetBSD: lwp.h,v 1.67.2.1 2007/11/19 00:49:27 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  * t:	l_proc->p_stmutex
  * S:	select_lock
  * (:	unlocked, stable
- * !:	unlocked, may only be safely accessed by the LWP itself
+ * !:	unlocked, may only be reliably accessed by the LWP itself
  * ?:	undecided
  *
  * Fields are clustered together by usage (to increase the likelyhood
@@ -86,16 +86,19 @@ struct lwp {
 	u_int		l_swtime;	/* l: time swapped in or out */
 	int		l_holdcnt;	/* l: if non-zero, don't swap */
 	int		l_biglocks;	/* l: biglock count before sleep */
-	pri_t		l_priority;	/* l: process priority */
-	pri_t		l_usrpri;	/* l: user-priority */
+	int		l_class;	/* l: scheduling class */
+	int		l_kpriority;	/* !: has kernel priority boost */
+	pri_t		l_priority;	/* l: scheduler priority */
 	pri_t		l_inheritedprio;/* l: inherited priority */
 	SLIST_HEAD(, turnstile) l_pi_lenders; /* l: ts lending us priority */
 	uint64_t	l_ncsw;		/* l: total context switches */
 	uint64_t	l_nivcsw;	/* l: involuntary context switches */
 	int		l_cpticks;	/* t: Ticks of CPU time */
 	fixpt_t		l_pctcpu;	/* t: %cpu during l_swtime */
-	int		l_policy;	/* l: scheduling policy */
+	fixpt_t		l_estcpu;	/* l: cpu time for SCHED_4BSD */
 	kmutex_t	l_swaplock;	/* l: lock to prevent swapping */
+	struct lwpctl	*l_lwpctl;	/* p: lwpctl block kernel address */
+	struct lcpage	*l_lcpage;	/* p: lwpctl containing page */
 
 	/* Synchronisation */
 	struct turnstile *l_ts;		/* l: current turnstile */
@@ -106,7 +109,7 @@ struct lwp {
 	struct sleepq	*l_sleepq;	/* l: current sleep queue */
 	int		l_sleeperr;	/* !: error before unblock */
 	u_int		l_slptime;	/* l: time since last blocked */
-	callout_t	l_timeout_ch;	/* !: callout for sleep timeout */
+	callout_t	l_timeout_ch;	/* !: callout for tsleep */
 
 	/* Process level and global state, misc. */
 	LIST_ENTRY(lwp)	l_list;		/* a: entry on list of all LWPs */
@@ -192,7 +195,6 @@ extern lwp_t lwp0;			/* LWP for proc0 */
 #define	LW_WREBOOT	0x08000000 /* System is rebooting, please suspend */
 #define	LW_UNPARKED	0x10000000 /* Unpark op pending */
 #define	LW_RUNNING	0x20000000 /* Active on a CPU (except if LSZOMB) */
-#define	LW_INTR		0x40000000 /* Soft interrupt handler */
 #define	LW_BOUND	0x80000000 /* Bound to a CPU */
 
 /* The second set of flags is kept in l_pflag. */
@@ -202,6 +204,7 @@ extern lwp_t lwp0;			/* LWP for proc0 */
 #define	LP_UFSCOW	0x00000008 /* UFS: doing copy on write */
 #define	LP_OWEUPC	0x00000010 /* Owe user profiling tick */
 #define	LP_MPSAFE	0x00000020 /* Starts life without kernel_lock */
+#define	LP_INTR		0x00000040 /* Soft interrupt handler */
 
 /* The third set is kept in l_prflag. */
 #define	LPR_DETACHED	0x00800000 /* Won't be waited for. */
@@ -321,9 +324,6 @@ lwp_changepri(lwp_t *l, pri_t pri)
 {
 	KASSERT(mutex_owned(l->l_mutex));
 
-	if (l->l_priority == pri)
-		return;
-
 	(*l->l_syncobj->sobj_changepri)(l, pri);
 }
 
@@ -346,15 +346,19 @@ lwp_unsleep(lwp_t *l)
 	(*l->l_syncobj->sobj_unsleep)(l);
 }
 
-static inline int
+static inline pri_t
 lwp_eprio(lwp_t *l)
 {
+	pri_t pri;
 
-	return MIN(l->l_inheritedprio, l->l_priority);
+	pri = l->l_priority;
+	if (l->l_kpriority && pri < PRI_KERNEL)
+		pri = (pri >> 1) + PRI_KERNEL;
+	return MAX(l->l_inheritedprio, pri);
 }
 
-int newlwp(lwp_t *, struct proc *, vaddr_t, bool, int,
-    void *, size_t, void (*)(void *), void *, lwp_t **);
+int lwp_create(lwp_t *, struct proc *, vaddr_t, bool, int,
+    void *, size_t, void (*)(void *), void *, lwp_t **, int);
 
 /*
  * We should provide real stubs for the below that LKMs can use.

@@ -1,6 +1,7 @@
-/* $NetBSD: rtw.c,v 1.91 2007/10/19 12:00:00 ad Exp $ */
+/* $NetBSD: rtw.c,v 1.91.2.1 2007/11/19 00:47:56 mjf Exp $ */
 /*-
- * Copyright (c) 2004, 2005 David Young.  All rights reserved.
+ * Copyright (c) 2004, 2005, 2006, 2007 David Young.  All rights
+ * reserved.
  *
  * Programmed for NetBSD by David Young.
  *
@@ -34,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.91 2007/10/19 12:00:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.91.2.1 2007/11/19 00:47:56 mjf Exp $");
 
 #include "bpfilter.h"
 
@@ -1345,6 +1346,10 @@ rtw_rxdesc_init(struct rtw_rxdesc_blk *rdb, struct rtw_rxsoft *rs,
 	uint32_t ctl, octl, obuf;
 	struct rtw_rxdesc *rd = &rdb->rdb_desc[idx];
 
+	/* sync the mbuf before the descriptor */
+	bus_dmamap_sync(rdb->rdb_dmat, rs->rs_dmamap, 0,
+	    rs->rs_dmamap->dm_mapsize, BUS_DMASYNC_PREREAD);
+
 	obuf = rd->rd_buf;
 	rd->rd_buf = htole32(rs->rs_dmamap->dm_segs[0].ds_addr);
 
@@ -1363,10 +1368,6 @@ rtw_rxdesc_init(struct rtw_rxdesc_blk *rdb, struct rtw_rxsoft *rs,
 	    ("%s: rd %p buf %08x -> %08x ctl %08x -> %08x\n", __func__, rd,
 	     le32toh(obuf), le32toh(rd->rd_buf), le32toh(octl),
 	     le32toh(rd->rd_ctl)));
-
-	/* sync the mbuf */
-	bus_dmamap_sync(rdb->rdb_dmat, rs->rs_dmamap, 0,
-	    rs->rs_dmamap->dm_mapsize, BUS_DMASYNC_PREREAD);
 
 	/* sync the descriptor */
 	bus_dmamap_sync(rdb->rdb_dmat, rdb->rdb_dmamap,
@@ -1450,7 +1451,7 @@ rtw_intr_rx(struct rtw_softc *sc, uint16_t isr)
 
 	for (next = rdb->rdb_next; ; next = rdb->rdb_next) {
 		KASSERT(next < rdb->rdb_ndesc);
-	
+
 		rtw_rxdescs_sync(rdb, next, 1,
 		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 		rd = &rdb->rdb_desc[next];
@@ -1517,9 +1518,8 @@ rtw_intr_rx(struct rtw_softc *sc, uint16_t isr)
 			sc->sc_ic.ic_stats.is_rx_tooshort++;
 			goto next;
 		}
-
-		/* CRC is included with the packet; trim it off. */
-		len -= IEEE80211_CRC_LEN;
+		KASSERT(len <= rs->rs_mbuf->m_pkthdr.len);
+		KASSERT(len <= rs->rs_mbuf->m_len);
 
 		hwrate = __SHIFTOUT(hstat, RTW_RXSTAT_RATE_MASK);
 		if (hwrate >= __arraycount(ratetbl)) {
@@ -1536,10 +1536,6 @@ rtw_intr_rx(struct rtw_softc *sc, uint16_t isr)
 		    ("rate %d.%d Mb/s, time %08x%08x\n", (rate * 5) / 10,
 		     (rate * 5) % 10, htsfth, htsftl));
 #endif /* RTW_DEBUG */
-
-		if ((hstat & RTW_RXSTAT_RES) != 0 &&
-		    sc->sc_ic.ic_opmode != IEEE80211_M_MONITOR)
-			goto next;
 
 		/* if bad flags, skip descriptor */
 		if ((hstat & RTW_RXSTAT_ONESEG) != RTW_RXSTAT_ONESEG) {
@@ -1568,8 +1564,10 @@ rtw_intr_rx(struct rtw_softc *sc, uint16_t isr)
 			    sc->sc_dev.dv_xname);
 		}
 
+		sq = __SHIFTOUT(hrssi, RTW_RXRSSI_SQ);
+
 		if (sc->sc_rfchipid == RTW_RFCHIPID_PHILIPS)
-			rssi = __SHIFTOUT(hrssi, RTW_RXRSSI_RSSI);
+			rssi = UINT8_MAX - sq;
 		else {
 			rssi = __SHIFTOUT(hrssi, RTW_RXRSSI_IMR_RSSI);
 			/* TBD find out each front-end's LNA gain in the
@@ -1578,7 +1576,6 @@ rtw_intr_rx(struct rtw_softc *sc, uint16_t isr)
 			if ((hrssi & RTW_RXRSSI_IMR_LNA) == 0)
 				rssi |= 0x80;
 		}
-		sq = __SHIFTOUT(hrssi, RTW_RXRSSI_SQ);
 
 		/* Note well: now we cannot recycle the rs_mbuf unless
 		 * we restore its original length.
@@ -1590,8 +1587,6 @@ rtw_intr_rx(struct rtw_softc *sc, uint16_t isr)
 
 		if (!IS_BEACON(wh->i_fc[0]))
 			sc->sc_led_state.ls_event |= RTW_LED_S_RX;
-		/* TBD use _MAR, _BAR, _PAR flags as hints to _find_rxnode? */
-		ni = ieee80211_find_rxnode(&sc->sc_ic, wh);
 
 		sc->sc_tsfth = htsfth;
 
@@ -1610,19 +1605,38 @@ rtw_intr_rx(struct rtw_softc *sc, uint16_t isr)
 			rr->rr_tsft =
 			    htole64(((uint64_t)htsfth << 32) | htsftl);
 
+			rr->rr_flags = IEEE80211_RADIOTAP_F_FCS;
+
 			if ((hstat & RTW_RXSTAT_SPLCP) != 0)
-				rr->rr_flags = IEEE80211_RADIOTAP_F_SHORTPRE;
+				rr->rr_flags |= IEEE80211_RADIOTAP_F_SHORTPRE;
+			if ((hstat & RTW_RXSTAT_CRC32) != 0)
+				rr->rr_flags |= IEEE80211_RADIOTAP_F_BADFCS;
 
-			rr->rr_flags = 0;
 			rr->rr_rate = rate;
-			rr->rr_antsignal = rssi;
-			rr->rr_barker_lock = htole16(sq);
 
-			bpf_mtap2(sc->sc_radiobpf, (void *)rr,
+			if (sc->sc_rfchipid == RTW_RFCHIPID_PHILIPS)
+				rr->rr_u.u_philips.p_antsignal = rssi;
+			else {
+				rr->rr_u.u_other.o_antsignal = rssi;
+				rr->rr_u.u_other.o_barker_lock =
+				    htole16(UINT8_MAX - sq);
+			}
+
+			bpf_mtap2(sc->sc_radiobpf, rr,
 			    sizeof(sc->sc_rxtapu), m);
 		}
 #endif /* NBPFILTER > 0 */
 
+		if ((hstat & RTW_RXSTAT_RES) != 0) {
+			m_freem(m);
+			goto next;
+		}
+
+		/* CRC is included with the packet; trim it off. */
+		m_adj(m, -IEEE80211_CRC_LEN);
+
+		/* TBD use _MAR, _BAR, _PAR flags as hints to _find_rxnode? */
+		ni = ieee80211_find_rxnode(&sc->sc_ic, wh);
 		ieee80211_input(&sc->sc_ic, m, ni, rssi, htsftl);
 		ieee80211_free_node(ni);
 next:
@@ -1722,7 +1736,7 @@ rtw_reset_oactive(struct rtw_softc *sc)
 }
 
 /* Collect transmitted packets. */
-static inline void
+static void
 rtw_collect_txring(struct rtw_softc *sc, struct rtw_txsoft_blk *tsb,
     struct rtw_txdesc_blk *tdb, int force)
 {
@@ -2626,6 +2640,8 @@ rtw_pktfilt_load(struct rtw_softc *sc)
 
 	if (ifp->if_flags & IFF_PROMISC) {
 		sc->sc_rcr |= RTW_RCR_AB;	/* accept all broadcast */
+		sc->sc_rcr |= RTW_RCR_ACRC32;	/* accept frames failing CRC */
+		sc->sc_rcr |= RTW_RCR_AICV;	/* accept frames failing ICV */
 		ifp->if_flags |= IFF_ALLMULTI;
 	}
 
@@ -3332,7 +3348,6 @@ rtw_start(struct ifnet *ifp)
 		if (sc->sc_radiobpf != NULL) {
 			struct rtw_tx_radiotap_header *rt = &sc->sc_txtap;
 
-			rt->rt_flags = 0;
 			rt->rt_rate = rate;
 
 			bpf_mtap2(sc->sc_radiobpf, (void *)rt,
@@ -3350,11 +3365,12 @@ rtw_start(struct ifnet *ifp)
 			}
 			td = &tdb->tdb_desc[desc];
 			td->td_ctl0 = htole32(ctl0);
-			if (i != 0)
-				td->td_ctl0 |= htole32(RTW_TXCTL0_OWN);
 			td->td_ctl1 = htole32(ctl1);
 			td->td_buf = htole32(dmamap->dm_segs[i].ds_addr);
 			td->td_len = htole32(dmamap->dm_segs[i].ds_len);
+			td->td_next = htole32(RTW_NEXT_DESC(tdb, desc));
+			if (i != 0)
+				td->td_ctl0 |= htole32(RTW_TXCTL0_OWN);
 			lastdesc = desc;
 #ifdef RTW_DEBUG
 			rtw_print_txdesc(sc, "load", ts, tdb, desc);
@@ -3815,9 +3831,16 @@ rtw_disestablish_hooks(struct rtw_hooks *hooks, const char *dvname,
 static inline void
 rtw_init_radiotap(struct rtw_softc *sc)
 {
+	uint32_t present;
+
 	memset(&sc->sc_rxtapu, 0, sizeof(sc->sc_rxtapu));
 	sc->sc_rxtap.rr_ihdr.it_len = htole16(sizeof(sc->sc_rxtapu));
-	sc->sc_rxtap.rr_ihdr.it_present = htole32(RTW_RX_RADIOTAP_PRESENT);
+
+	if (sc->sc_rfchipid == RTW_RFCHIPID_PHILIPS)
+		present = htole32(RTW_PHILIPS_RX_RADIOTAP_PRESENT);
+	else
+		present = htole32(RTW_RX_RADIOTAP_PRESENT);
+	sc->sc_rxtap.rr_ihdr.it_present = present;
 
 	memset(&sc->sc_txtapu, 0, sizeof(sc->sc_txtapu));
 	sc->sc_txtap.rt_ihdr.it_len = htole16(sizeof(sc->sc_txtapu));

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.184 2007/10/19 18:52:11 njoly Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.184.2.1 2007/11/19 00:47:28 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.184 2007/10/19 18:52:11 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.184.2.1 2007/11/19 00:47:28 mjf Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ptrace.h"
@@ -373,12 +373,12 @@ linux_sys_uname(struct lwp *l, void *v, register_t *retval)
 	} */ *uap = v;
 	struct linux_utsname luts;
 
-	strncpy(luts.l_sysname, linux_sysname, sizeof(luts.l_sysname));
-	strncpy(luts.l_nodename, hostname, sizeof(luts.l_nodename));
-	strncpy(luts.l_release, linux_release, sizeof(luts.l_release));
-	strncpy(luts.l_version, linux_version, sizeof(luts.l_version));
-	strncpy(luts.l_machine, LINUX_UNAME_ARCH, sizeof(luts.l_machine));
-	strncpy(luts.l_domainname, domainname, sizeof(luts.l_domainname));
+	strlcpy(luts.l_sysname, linux_sysname, sizeof(luts.l_sysname));
+	strlcpy(luts.l_nodename, hostname, sizeof(luts.l_nodename));
+	strlcpy(luts.l_release, linux_release, sizeof(luts.l_release));
+	strlcpy(luts.l_version, linux_version, sizeof(luts.l_version));
+	strlcpy(luts.l_machine, LINUX_UNAME_ARCH, sizeof(luts.l_machine));
+	strlcpy(luts.l_domainname, domainname, sizeof(luts.l_domainname));
 
 	return copyout(&luts, SCARG(uap, up), sizeof(luts));
 }
@@ -1032,6 +1032,7 @@ linux_sys_personality(struct lwp *l, void *v, register_t *retval)
 /*
  * The calls are here because of type conversions.
  */
+#ifndef COMPAT_LINUX32
 int
 linux_sys_setreuid16(l, v, retval)
 	struct lwp *l;
@@ -1117,6 +1118,7 @@ linux_sys_setresgid16(l, v, retval)
 
 	return linux_sys_setresgid(l, &lsa, retval);
 }
+#endif /* COMPAT_LINUX32 */
 
 int
 linux_sys_getgroups16(l, v, retval)

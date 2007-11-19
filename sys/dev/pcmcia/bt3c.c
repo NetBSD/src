@@ -1,4 +1,4 @@
-/* $NetBSD: bt3c.c,v 1.13 2007/11/03 17:41:04 plunky Exp $ */
+/* $NetBSD: bt3c.c,v 1.13.2.1 2007/11/19 00:48:20 mjf Exp $ */
 
 /*-
  * Copyright (c) 2005 Iain D. Hibbert,
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bt3c.c,v 1.13 2007/11/03 17:41:04 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bt3c.c,v 1.13.2.1 2007/11/19 00:48:20 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -134,9 +134,9 @@ static void bt3c_power(int, void *);
 CFATTACH_DECL_NEW(bt3c, sizeof(struct bt3c_softc),
     bt3c_match, bt3c_attach, bt3c_detach, NULL);
 
-static void bt3c_start(struct hci_unit *);
-static int bt3c_enable(struct hci_unit *);
-static void bt3c_disable(struct hci_unit *);
+static void bt3c_start(device_t);
+static int bt3c_enable(device_t);
+static void bt3c_disable(device_t);
 
 /**************************************************************************
  *
@@ -279,8 +279,8 @@ bt3c_receive(struct bt3c_softc *sc)
 				/* new packet */
 				MGETHDR(m, M_DONTWAIT, MT_DATA);
 				if (m == NULL) {
-					printf("%s: out of memory\n",
-						device_xname(sc->sc_dev));
+					aprint_error_dev(sc->sc_dev,
+					    "out of memory\n");
 					++sc->sc_unit.hci_stats.err_rx;
 					goto out;	/* (lost sync) */
 				}
@@ -295,8 +295,8 @@ bt3c_receive(struct bt3c_softc *sc)
 				/* extend mbuf */
 				MGET(m->m_next, M_DONTWAIT, MT_DATA);
 				if (m->m_next == NULL) {
-					printf("%s: out of memory\n",
-						device_xname(sc->sc_dev));
+					aprint_error_dev(sc->sc_dev,
+					    "out of memory\n");
 					++sc->sc_unit.hci_stats.err_rx;
 					goto out;	/* (lost sync) */
 				}
@@ -344,8 +344,8 @@ bt3c_receive(struct bt3c_softc *sc)
 				break;
 
 			default:
-				printf("%s: Unknown packet type=%#x!\n",
-					device_xname(sc->sc_dev), b);
+				aprint_error_dev(sc->sc_dev,
+				    "Unknown packet type=%#x!\n", b);
 				++sc->sc_unit.hci_stats.err_rx;
 				m_freem(sc->sc_rxp);
 				sc->sc_rxp = NULL;
@@ -419,7 +419,7 @@ bt3c_transmit(struct bt3c_softc *sc)
 	m = sc->sc_txp;
 	if (m == NULL) {
 		sc->sc_unit.hci_flags &= ~BTF_XMIT;
-		bt3c_start(&sc->sc_unit);
+		bt3c_start(sc->sc_dev);
 		return;
 	}
 
@@ -476,8 +476,7 @@ bt3c_intr(void *arg)
 	if (control & BT3C_IOR_CNTL_INTR) {
 		isr = bt3c_read(sc, BT3C_ISR);
 		if ((isr & 0xff) == 0x7f) {
-			printf("%s: bt3c_intr got strange ISR=%04x\n",
-				device_xname(sc->sc_dev), isr);
+			aprint_error_dev(sc->sc_dev, "strange ISR=%04x\n", isr);
 		} else if ((isr & 0xff) != 0xff) {
 
 			if (isr & BT3C_ISR_RXRDY)
@@ -489,11 +488,11 @@ bt3c_intr(void *arg)
 #ifdef DIAGNOSTIC
 			if (isr & BT3C_ISR_ANTENNA) {
 				if (bt3c_read(sc, BT3C_CSR) & BT3C_CSR_ANTENNA)
-					printf("%s: Antenna Out\n",
-						device_xname(sc->sc_dev));
+					aprint_verbose_dev(sc->sc_dev,
+					    "Antenna Out\n");
 				else
-					printf("%s: Antenna In\n",
-						device_xname(sc->sc_dev));
+					aprint_verbose_dev(sc->sc_dev,
+					    "Antenna In\n");
 			}
 #endif
 
@@ -563,16 +562,15 @@ bt3c_load_firmware(struct bt3c_softc *sc)
 	err = firmware_open(cf->cf_name,
 			    BT3C_FIRMWARE_FILE, &fh);
 	if (err) {
-		printf("%s: Cannot open firmware %s/%s\n",
-		    device_xname(sc->sc_dev), cf->cf_name, BT3C_FIRMWARE_FILE);
+		aprint_error_dev(sc->sc_dev, "Cannot open firmware %s/%s\n",
+		    cf->cf_name, BT3C_FIRMWARE_FILE);
 		return err;
 	}
 
 	size = (size_t)firmware_get_size(fh);
 #ifdef DIAGNOSTIC
 	if (size > 10 * 1024) {	/* sanity check */
-		printf("%s: firmware file seems WAY too big!\n",
-			device_xname(sc->sc_dev));
+		aprint_error_dev(sc->sc_dev, "insane firmware file size!\n");
 		firmware_close(fh);
 		return EFBIG;
 	}
@@ -583,8 +581,7 @@ bt3c_load_firmware(struct bt3c_softc *sc)
 
 	err = firmware_read(fh, 0, buf, size);
 	if (err) {
-		printf("%s: Firmware read failed (%d)\n",
-				device_xname(sc->sc_dev), err);
+		aprint_error_dev(sc->sc_dev, "Firmware read failed (%d)\n", err);
 		goto out;
 	}
 
@@ -703,9 +700,10 @@ out:
  * we only send cmd packets that are clear to send
  */
 static void
-bt3c_start(struct hci_unit *unit)
+bt3c_start(device_t self)
 {
-	struct bt3c_softc *sc = unit->hci_softc;
+	struct bt3c_softc *sc = device_private(self);
+	struct hci_unit *unit = &sc->sc_unit;
 	struct mbuf *m;
 
 	KASSERT((unit->hci_flags & BTF_XMIT) == 0);
@@ -747,9 +745,10 @@ start:
  *	establish interrupts
  */
 static int
-bt3c_enable(struct hci_unit *unit)
+bt3c_enable(device_t self)
 {
-	struct bt3c_softc *sc = unit->hci_softc;
+	struct bt3c_softc *sc = device_private(self);
+	struct hci_unit *unit = &sc->sc_unit;
 	int err;
 
 	if (unit->hci_flags & BTF_RUNNING)
@@ -796,9 +795,10 @@ bad:
  *	free held packets
  */
 static void
-bt3c_disable(struct hci_unit *unit)
+bt3c_disable(device_t self)
 {
-	struct bt3c_softc *sc = unit->hci_softc;
+	struct bt3c_softc *sc = device_private(self);
+	struct hci_unit *unit = &sc->sc_unit;
 
 	if ((unit->hci_flags & BTF_RUNNING) == 0)
 		return;
@@ -879,8 +879,7 @@ bt3c_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/* Attach Bluetooth unit */
-	sc->sc_unit.hci_softc = sc;
-	sc->sc_unit.hci_devname = device_xname(sc->sc_dev);
+	sc->sc_unit.hci_dev = self;
 	sc->sc_unit.hci_enable = bt3c_enable;
 	sc->sc_unit.hci_disable = bt3c_disable;
 	sc->sc_unit.hci_start_cmd = bt3c_start;
@@ -908,7 +907,7 @@ bt3c_detach(device_t self, int flags)
 	struct bt3c_softc *sc = device_private(self);
 	int err = 0;
 
-	bt3c_disable(&sc->sc_unit);
+	bt3c_disable(self);
 
 	if (sc->sc_powerhook) {
 		powerhook_disestablish(sc->sc_powerhook);
@@ -938,18 +937,17 @@ bt3c_power(int why, void *arg)
 			hci_detach(&sc->sc_unit);
 
 			sc->sc_flags |= BT3C_SLEEPING;
-			printf_nolog("%s: sleeping\n", device_xname(sc->sc_dev));
+			aprint_verbose_dev(sc->sc_dev, "sleeping\n");
 		}
 		break;
 
 	case PWR_RESUME:
 		if (sc->sc_flags & BT3C_SLEEPING) {
-			printf_nolog("%s: waking up\n", device_xname(sc->sc_dev));
+			aprint_verbose_dev(sc->sc_dev, "waking up\n");
 			sc->sc_flags &= ~BT3C_SLEEPING;
 
 			memset(&sc->sc_unit, 0, sizeof(sc->sc_unit));
-			sc->sc_unit.hci_softc = sc;
-			sc->sc_unit.hci_devname = device_xname(sc->sc_dev);
+			sc->sc_unit.hci_dev = sc->sc_dev;
 			sc->sc_unit.hci_enable = bt3c_enable;
 			sc->sc_unit.hci_disable = bt3c_disable;
 			sc->sc_unit.hci_start_cmd = bt3c_start;

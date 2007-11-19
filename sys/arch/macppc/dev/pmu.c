@@ -1,4 +1,4 @@
-/*	$NetBSD: pmu.c,v 1.9 2007/10/17 19:55:19 garbled Exp $ */
+/*	$NetBSD: pmu.c,v 1.9.2.1 2007/11/19 00:46:36 mjf Exp $ */
 
 /*-
  * Copyright (c) 2006 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmu.c,v 1.9 2007/10/17 19:55:19 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmu.c,v 1.9.2.1 2007/11/19 00:46:36 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -262,7 +262,7 @@ pmu_attach(struct device *parent, struct device *dev, void *aux)
 	uint8_t resp[16];
 	char name[256];
 
-	extint_node = getnodebyname(OF_parent(ca->ca_node), "extint-gpio1");
+	extint_node = of_getnode_byname(OF_parent(ca->ca_node), "extint-gpio1");
 	if (extint_node) {
 
 		OF_getprop(extint_node, "interrupts", &irq, 4);
@@ -376,7 +376,7 @@ next:
 	} else {
 
 		/* check how many batteries we have */
-		pmnode = getnodebyname(ca->ca_node, "power-mgt");
+		pmnode = of_getnode_byname(ca->ca_node, "power-mgt");
 		if (pmnode == -1)
 			goto bat_done;
 		if (OF_getprop(pmnode, "prim-info", regs, sizeof(regs)) < 24)

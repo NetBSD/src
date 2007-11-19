@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.2 2007/10/18 15:28:37 yamt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.2.8.1 2007/11/19 00:46:59 mjf Exp $	*/
 
 /*
  *
@@ -173,7 +173,6 @@ struct pv_entry {			/* locked by its list's pvh_lock */
 	struct pmap *pv_pmap;		/* the pmap */
 	vaddr_t pv_va;			/* the virtual address */
 	struct vm_page *pv_ptp;		/* the vm_page of the PTP */
-	struct pmap_cpu *pv_alloc_cpu;	/* CPU allocated from */
 };
 
 /*
@@ -281,12 +280,7 @@ pmap_remove_all(struct pmap *pmap)
 __inline static void __attribute__((__unused__))
 pmap_update_pg(vaddr_t va)
 {
-#if defined(I386_CPU)
-	if (cpu_class == CPUCLASS_386)
-		tlbflush();
-	else
-#endif
-		invlpg(va);
+	invlpg(va);
 }
 
 /*
@@ -296,15 +290,8 @@ pmap_update_pg(vaddr_t va)
 __inline static void __attribute__((__unused__))
 pmap_update_2pg(vaddr_t va, vaddr_t vb)
 {
-#if defined(I386_CPU)
-	if (cpu_class == CPUCLASS_386)
-		tlbflush();
-	else
-#endif
-	{
-		invlpg(va);
-		invlpg(vb);
-	}
+	invlpg(va);
+	invlpg(vb);
 }
 
 /*

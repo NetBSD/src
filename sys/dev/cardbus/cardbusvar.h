@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbusvar.h,v 1.35 2005/12/11 12:21:15 christos Exp $	*/
+/*	$NetBSD: cardbusvar.h,v 1.35.52.1 2007/11/19 00:47:45 mjf Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -127,7 +127,7 @@ typedef struct cardbus_functions {
 #endif /* rbus */
 
 /*
- * struct cbslot_attach_args is the attach argument for cardbus card.
+ * struct cbslot_attach_args is the attach argument for Cardbus cardslot.
  */
 struct cbslot_attach_args {
 	const char *cba_busname;
@@ -147,7 +147,17 @@ struct cbslot_attach_args {
 #endif
 
 	int cba_cacheline;		/* cache line size */
-	int cba_lattimer;		/* latency timer */
+	int cba_max_lattimer;		/* No card's latency timer may
+					 * exceed this.  On a PCI-Cardbus
+					 * bridge, I let the latency timer on
+					 * the primary bus (PCI bus) set
+					 * the maximum.  That is kind of an
+					 * arbitrary choice.  A more sensible
+					 * choice may be either the
+					 * latency timer on the primary bus,
+					 * or the bridge's buffer size,
+					 * whichever is larger.
+					 */
 };
 
 
@@ -175,7 +185,12 @@ struct cardbus_softc {
 #endif
 
 	int sc_cacheline;		/* cache line size */
-	int sc_lattimer;		/* latency timer */
+	int sc_max_lattimer;		/* No card's latency timer
+					 * may exceed this.  On a PCI-Cardbus
+					 * bridge, the latency timer on
+					 * the primary bus (PCI bus) sets
+					 * the maximum.
+					 */
 	int sc_volt;			/* applied Vcc voltage */
 #define PCCARD_33V  0x02
 #define PCCARD_XXV  0x04
@@ -204,8 +219,8 @@ typedef struct cardbus_devfunc {
 	rbus_tag_t ct_rbus_memt;	/* CardBus mem rbus tag */
 #endif
 
-	u_int32_t ct_bar[6];		/* Base Address Regs 0 to 6 */
-	u_int32_t ct_lc;		/* Latency timer and cache line size */
+	cardbusreg_t ct_bar[6];		/* Base Address Regs 0 to 6 */
+	cardbusreg_t ct_bhlc;		/* Latency timer and cache line size */
 	/* u_int32_t ct_cisreg; */	/* CIS reg: is it needed??? */
 
 	struct device *ct_device;	/* pointer to the device */

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.145 2007/10/24 14:50:40 ad Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.145.2.1 2007/11/19 00:48:37 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.145 2007/10/24 14:50:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.145.2.1 2007/11/19 00:48:37 mjf Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -323,11 +323,10 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	mutex_init(&p2->p_stmutex, MUTEX_SPIN, IPL_HIGH);
 	mutex_init(&p2->p_raslock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&p2->p_mutex, MUTEX_DEFAULT, IPL_NONE);
-	cv_init(&p2->p_refcv, "drainref");
+	rw_init(&p2->p_reflock);
 	cv_init(&p2->p_waitcv, "wait");
 	cv_init(&p2->p_lwpcv, "lwpwait");
 
-	p2->p_refcnt = 1;
 	kauth_proc_fork(p1, p2);
 
 	p2->p_raslist = NULL;
@@ -433,9 +432,9 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	 * Finish creating the child process.
 	 * It will return through a different path later.
 	 */
-	newlwp(l1, p2, uaddr, inmem, 0, stack, stacksize,
-	    (func != NULL) ? func : child_return,
-	    arg, &l2);
+	lwp_create(l1, p2, uaddr, inmem, 0, stack, stacksize,
+	    (func != NULL) ? func : child_return, arg, &l2,
+	    l1->l_class);
 
 	/*
 	 * It's now safe for the scheduler and other processes to see the

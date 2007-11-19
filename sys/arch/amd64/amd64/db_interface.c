@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.11 2007/10/17 19:53:00 garbled Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.11.2.1 2007/11/19 00:46:07 mjf Exp $	*/
 
 /*
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.11 2007/10/17 19:53:00 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.11.2.1 2007/11/19 00:46:07 mjf Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -84,6 +84,7 @@ void kdbprinttrap(int, int);
 extern void ddb_ipi(struct trapframe);
 static void ddb_suspend(struct trapframe *);
 int ddb_vec;
+static bool ddb_mp_online;
 #endif
 
 #define NOCPU	-1
@@ -125,6 +126,8 @@ db_suspend_others(void)
 	if (win) {
 		x86_ipi(ddb_vec, LAPIC_DEST_ALLEXCL, LAPIC_DLMODE_FIXED);
 	}
+	ddb_mp_online = x86_mp_online;
+	x86_mp_online = false;
 	return win;
 }
 
@@ -133,6 +136,7 @@ db_resume_others(void)
 {
 	int i;
 
+	x86_mp_online = ddb_mp_online;
 	__cpu_simple_lock(&db_lock);
 	ddb_cpu = NOCPU;
 	__cpu_simple_unlock(&db_lock);
@@ -262,6 +266,7 @@ ddb_suspend(struct trapframe *frame)
 	while (ci->ci_flags & CPUF_PAUSE)
 		;
 	ci->ci_ddb_regs = 0;
+	tlbflushg();
 }
 
 

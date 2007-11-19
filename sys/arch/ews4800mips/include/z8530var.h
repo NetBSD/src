@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530var.h,v 1.2 2006/11/03 03:04:53 tsutsui Exp $	*/
+/*	$NetBSD: z8530var.h,v 1.2.34.1 2007/11/19 00:46:14 mjf Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -118,4 +118,5 @@ extern struct zs_chanstate *zs_conscs;
 extern void *zs_consaddr;
 
 #define splzs()		splserial()
+#define	IPL_ZS		IPL_SERIAL
 #define ZS_DELAY()

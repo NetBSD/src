@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_private.h,v 1.4 2007/11/04 19:52:14 pooka Exp $	*/
+/*	$NetBSD: rump_private.h,v 1.4.2.1 2007/11/19 00:49:24 mjf Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -53,6 +53,8 @@ struct lwp;
 extern kauth_cred_t rump_cred;
 extern struct vmspace rump_vmspace;
 
+extern kmutex_t rump_giantlock;
+
 #define UIO_VMSPACE_SYS (&rump_vmspace)
 
 struct rump_specpriv {
@@ -78,7 +80,6 @@ int	rump_ubc_magic_uiomove(void *, size_t, struct uio *, int *,
 void		rumpvm_init(void);
 void		rump_sleepers_init(void);
 struct vm_page	*rumpvm_makepage(struct uvm_object *, voff_t);
-void		rumpvm_freepage(struct vm_page *);
 
 void		rumpvm_enterva(vaddr_t addr, struct vm_page *);
 void		rumpvm_flushva(void);

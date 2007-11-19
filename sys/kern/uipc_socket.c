@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.144 2007/10/05 02:40:25 dyoung Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.144.4.1 2007/11/19 00:48:58 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.144 2007/10/05 02:40:25 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.144.4.1 2007/11/19 00:48:58 mjf Exp $");
 
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
@@ -303,7 +303,6 @@ sodopendfreel()
 {
 	struct mbuf *m, *next;
 	size_t rv = 0;
-	int s;
 
 	KASSERT(mutex_owned(&so_pendfree_lock));
 
@@ -319,9 +318,7 @@ sodopendfreel()
 			sodoloanfree((m->m_flags & M_EXT_PAGES) ?
 			    m->m_ext.ext_pgs : NULL, m->m_ext.ext_buf,
 			    m->m_ext.ext_size);
-			s = splvm();
-			pool_cache_put(&mbpool_cache, m);
-			splx(s);
+			pool_cache_put(mb_cache, m);
 		}
 
 		mutex_enter(&so_pendfree_lock);
