@@ -1,4 +1,4 @@
-/*	$NetBSD: locks.c,v 1.3 2007/11/17 20:50:18 pooka Exp $	*/
+/*	$NetBSD: locks.c,v 1.4 2007/11/19 14:17:26 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -169,6 +169,13 @@ cv_signal(kcondvar_t *cv)
 {
 
 	rumpuser_cv_signal(RUMPCV(cv));
+}
+
+void
+cv_broadcast(kcondvar_t *cv)
+{
+
+	rumpuser_cv_broadcast(RUMPCV(cv));
 }
 
 /* kernel biglock, only for vnode_if */
