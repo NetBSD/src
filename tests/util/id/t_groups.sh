@@ -1,4 +1,4 @@
-# $NetBSD: t_groups.sh,v 1.1 2007/11/16 18:06:46 jmmv Exp $
+# $NetBSD: t_groups.sh,v 1.2 2007/11/19 14:17:45 jmmv Exp $
 #
 # Copyright (c) 2007 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -33,7 +33,8 @@
 #
 
 run_groups() {
-	LD_PRELOAD=$(atf_get_srcdir)/libfake.so.0 groups "${@}"
+	[ -f ./groups ] || ln -s $(atf_get_srcdir)/h_id ./groups
+	./groups "${@}"
 }
 
 atf_test_case correct

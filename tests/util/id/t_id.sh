@@ -1,4 +1,4 @@
-# $NetBSD: t_id.sh,v 1.1 2007/11/16 18:06:46 jmmv Exp $
+# $NetBSD: t_id.sh,v 1.2 2007/11/19 14:17:45 jmmv Exp $
 #
 # Copyright (c) 2007 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -33,7 +33,8 @@
 #
 
 run_id() {
-	LD_PRELOAD=$(atf_get_srcdir)/libfake.so.0 id "${@}"
+	[ -f ./id ] || ln -s $(atf_get_srcdir)/h_id ./id
+	./id "${@}"
 }
 
 atf_test_case default
