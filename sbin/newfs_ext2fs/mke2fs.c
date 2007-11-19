@@ -1,4 +1,4 @@
-/*	$NetBSD: mke2fs.c,v 1.2 2007/11/18 07:11:39 tsutsui Exp $	*/
+/*	$NetBSD: mke2fs.c,v 1.3 2007/11/19 15:11:50 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2007 Izumi Tsutsui.
@@ -108,7 +108,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mke2fs.c,v 1.2 2007/11/18 07:11:39 tsutsui Exp $");
+__RCSID("$NetBSD: mke2fs.c,v 1.3 2007/11/19 15:11:50 tsutsui Exp $");
 #endif
 #endif /* not lint */
 
@@ -576,7 +576,7 @@ mke2fs(const char *fsys, int fi, int fo)
 		 *      on other OSes determine alternate superblocks
 		 */
 		for (i = 0; pbsize[i] != 0; i++) {
-			epblock = bcount * bsize / pbsize[i];
+			epblock = (uint64_t)bcount * bsize / pbsize[i];
 			for (pblock = ((pbsize[i] == SBSIZE) ? 1 : 0);
 			    pblock < epblock;
 			    pblock += pbsize[i] * NBBY /* bpg */)
@@ -686,7 +686,8 @@ mke2fs(const char *fsys, int fi, int fo)
 void
 initcg(uint cylno)
 {
-	uint nblcg, i, sboff;
+	uint nblcg, i, j, sboff;
+	struct ext2fs_dinode *dp;
 
 	/*
 	 * Make a copy of the superblock and group descriptors.
@@ -751,10 +752,17 @@ initcg(uint cylno)
 	/*
 	 * Initialize inode tables.
 	 *
-	 *  Just zero out entries (no magic there).
+	 *  Just initialize generation numbers for NFS security.
+	 *  XXX: sys/ufs/ext2fs/ext2fs_alloc.c:ext2fs_valloc() seems
+	 *       to override these generated numbers.
 	 */
 	memset(buf, 0, sblock.e2fs_bsize);
+	dp = (struct ext2fs_dinode *)buf;
 	for (i = 0; i < sblock.e2fs_itpg; i++) {
+		for (j = 0; j < sblock.e2fs_ipb; j++) {
+			/* h2fs32() just for consistency */
+			dp[j].e2di_gen = h2fs32(arc4random());
+		}
 		wtfs(fsbtodb(&sblock, gd[cylno].ext2bgd_i_tables + i),
 		    sblock.e2fs_bsize, buf);
 	}
@@ -950,7 +958,6 @@ fsinit(const struct timeval *tv)
 		}
 		node.e2di_blocks[i] = blk;
 	}
-	node.e2di_gen = tv->tv_sec;
 	wtfs(fsbtodb(&sblock, node.e2di_blocks[0]), sblock.e2fs_bsize, buf);
 	pad_dir.e2d_reclen = sblock.e2fs_bsize;
 	for (i = 1; i < nblks_lostfound; i++) {
@@ -1356,6 +1363,8 @@ iput(struct ext2fs_dinode *ip, ino_t ino)
 		for (i = 0; i < NDADDR + NIADDR; i++)
 			dp->e2di_blocks[i] = h2fs32(ip->e2di_blocks[i]);
 	}
+	/* h2fs32() just for consistency */
+	dp->e2di_gen = h2fs32(arc4random());
 
 	wtfs(d, sblock.e2fs_bsize, bp);
 	free(bp);
