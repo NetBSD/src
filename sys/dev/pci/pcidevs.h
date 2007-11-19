@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.702.2.45 2007/11/19 21:20:12 bouyer Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.702.2.46 2007/11/19 21:25:11 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.701.2.47 2007/11/19 21:18:10 bouyer Exp
+ *	NetBSD: pcidevs,v 1.701.2.48 2007/11/19 21:24:24 bouyer Exp
  */
 
 /*
@@ -1830,6 +1830,10 @@
 #define	PCI_PRODUCT_INTEL_82572EI	0x10b9		/* i82572EI 1000baseT Ethernet */
 #define	PCI_PRODUCT_INTEL_80K3LAN_CPR_SPT	0x10ba		/* i80003 1000baseT Ethernet */
 #define	PCI_PRODUCT_INTEL_80K3LAN_SDS_SPT	0x10bb		/* i80003 Gigabit Ethernet (SERDES) */
+#define	PCI_PRODUCT_INTEL_82801I_IGP_AMT	0x10bd		/* 82801I (AMT) LAN Controller */
+#define	PCI_PRODUCT_INTEL_82801I_IFE	0x10c0		/* 82801I LAN Controller */
+#define	PCI_PRODUCT_INTEL_82801I_IFE_G	0x10c2		/* 82801I (G) LAN Controller */
+#define	PCI_PRODUCT_INTEL_82801I_IFE_GT	0x10c3		/* 82801I (GT) LAN Controller */
 #define	PCI_PRODUCT_INTEL_82801H_IFE_GT	0x10c4		/* i82801H IFE (GT) LAN Controller */
 #define	PCI_PRODUCT_INTEL_82801H_IFE_G	0x10c5		/* i82801H IFE (G) LAN Controller */
 #define	PCI_PRODUCT_INTEL_82815_DC100_HUB	0x1100		/* 82815 Hub */
@@ -2033,6 +2037,7 @@
 #define	PCI_PRODUCT_INTEL_82801G_IDE	0x27df		/* 82801GB/GR IDE Controller */
 #define	PCI_PRODUCT_INTEL_82801G_EXP_5	0x27e0		/* 82801GB/GR PCI Express Port #5 */
 #define	PCI_PRODUCT_INTEL_82801G_EXP_6	0x27e2		/* 82801GB/GR PCI Express Port #6 */
+#define	PCI_PRODUCT_INTEL_82801I_IGP_C	0x294c		/* 82801I (C) LAN Controller */
 #define	PCI_PRODUCT_INTEL_31244	0x3200		/* 31244 Serial ATA Controller */
 #define	PCI_PRODUCT_INTEL_82855PM_DDR	0x3340		/* 82855PM MCH Host Controller */
 #define	PCI_PRODUCT_INTEL_82855PM_AGP	0x3341		/* 82855PM Host-AGP Bridge */
