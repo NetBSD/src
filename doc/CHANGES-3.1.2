@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1.2,v 1.1.2.12 2007/11/04 12:44:37 ghen Exp $
+#	$NetBSD: CHANGES-3.1.2,v 1.1.2.13 2007/11/19 21:11:06 bouyer Exp $
 
 A complete list of changes from the NetBSD 3.1.1 release to the NetBSD 3.1.2
 release:
@@ -137,4 +137,10 @@ etc/namedb/root.cache				1.11
 
 	Update to 2007110100 version
 	[martti, ticket #1871, #1872]
+
+usr.sbin/rpc.lockd/lock_proc.c			1.8
+
+	Fix off-by-one error accessing "clnt_cache_addr" array which causes
+	heap corruption. This will hopefully fix PR bin/37236.
+	[tron, ticket #1873]
 
