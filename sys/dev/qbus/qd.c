@@ -1,4 +1,4 @@
-/*	$NetBSD: qd.c,v 1.39 2007/10/19 12:01:09 ad Exp $	*/
+/*	$NetBSD: qd.c,v 1.40 2007/11/19 18:51:49 ad Exp $	*/
 
 /*-
  * Copyright (c) 1988 Regents of the University of California.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qd.c,v 1.39 2007/10/19 12:01:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qd.c,v 1.40 2007/11/19 18:51:49 ad Exp $");
 
 #include "opt_ddb.h"
 
@@ -1808,17 +1808,7 @@ void qdstart(tp)
 		if (unit == 0)
 			blitc(which_unit, (u_char)c);
 	}
-	/*
-	* If there are sleepers, and output has drained below low
-	* water mark, wake up the sleepers.
-	*/
-	if (tp->t_outq.c_cc <= tp->t_lowat) {
-		if (tp->t_state & TS_ASLEEP){
-			tp->t_state &= ~TS_ASLEEP;
-			wakeup((void *) &tp->t_outq);
-		}
-	}
-
+	ttypull(tp);
 	tp->t_state &= ~TS_BUSY;
 
 out:

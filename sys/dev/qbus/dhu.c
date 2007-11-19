@@ -1,4 +1,4 @@
-/*	$NetBSD: dhu.c,v 1.49 2007/11/07 15:56:21 ad Exp $	*/
+/*	$NetBSD: dhu.c,v 1.50 2007/11/19 18:51:49 ad Exp $	*/
 /*
  * Copyright (c) 2003, Hugh Graham.
  * Copyright (c) 1992, 1993
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dhu.c,v 1.49 2007/11/07 15:56:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dhu.c,v 1.50 2007/11/19 18:51:49 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -358,7 +358,7 @@ dhurint(arg)
 		}
 
 		if (!(tp->t_state & TS_ISOPEN)) {
-			wakeup((void *)&tp->t_rawq);
+			clwakeup(&tp->t_rawq);
 			continue;
 		}
 
@@ -685,14 +685,7 @@ dhustart(tp)
 	s = spltty();
 	if (tp->t_state & (TS_TIMEOUT|TS_BUSY|TS_TTSTOP))
 		goto out;
-	if (tp->t_outq.c_cc <= tp->t_lowat) {
-		if (tp->t_state & TS_ASLEEP) {
-			tp->t_state &= ~TS_ASLEEP;
-			wakeup((void *)&tp->t_outq);
-		}
-		selwakeup(&tp->t_wsel);
-	}
-	if (tp->t_outq.c_cc == 0)
+	if (!ttypull(tp))
 		goto out;
 	cc = ndqb(&tp->t_outq, 0);
 	if (cc == 0)

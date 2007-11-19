@@ -1,4 +1,4 @@
-/*	$NetBSD: clmpcc.c,v 1.35 2007/10/19 11:59:49 ad Exp $ */
+/*	$NetBSD: clmpcc.c,v 1.36 2007/11/19 18:51:47 ad Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clmpcc.c,v 1.35 2007/10/19 11:59:49 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clmpcc.c,v 1.36 2007/11/19 18:51:47 ad Exp $");
 
 #include "opt_ddb.h"
 
@@ -1050,14 +1050,7 @@ clmpcc_start(tp)
 	s = spltty();
 
 	if ( ISCLR(tp->t_state, TS_TTSTOP | TS_TIMEOUT | TS_BUSY) ) {
-		if ( tp->t_outq.c_cc <= tp->t_lowat ) {
-			if ( ISSET(tp->t_state, TS_ASLEEP) ) {
-				CLR(tp->t_state, TS_ASLEEP);
-				wakeup(&tp->t_outq);
-			}
-			selwakeup(&tp->t_wsel);
-		}
-
+		ttypull(tp);
 		if ( ISSET(ch->ch_flags, CLMPCC_FLG_START_BREAK |
 					 CLMPCC_FLG_END_BREAK) ||
 		     tp->t_outq.c_cc > 0 ) {

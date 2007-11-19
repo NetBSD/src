@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.202 2007/11/14 01:15:31 ad Exp $	*/
+/*	$NetBSD: tty.c,v 1.203 2007/11/19 18:51:51 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.202 2007/11/14 01:15:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.203 2007/11/19 18:51:51 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1359,7 +1359,6 @@ ttywait(struct tty *tp)
 	while ((tp->t_outq.c_cc || ISSET(tp->t_state, TS_BUSY)) &&
 	    CONNECTED(tp) && tp->t_oproc) {
 		(*tp->t_oproc)(tp);
-		SET(tp->t_state, TS_ASLEEP);
 		error = ttysleep(tp, &tp->t_outq.c_cv, true, 0);
 		if (error)
 			break;
@@ -1407,7 +1406,7 @@ ttyflush(struct tty *tp, int rw)
 		CLR(tp->t_state, TS_TTSTOP);
 		cdev_stop(tp, rw);
 		FLUSHQ(&tp->t_outq);
-		cv_broadcast(&tp->t_outq.c_cv);
+		clwakeup(&tp->t_outq);
 		selnotify(&tp->t_wsel, NOTE_SUBMIT);
 	}
 }
@@ -1424,7 +1423,7 @@ ttychars(struct tty *tp)
 
 /*
  * Send stop character on input overflow.
- * Call withthe tty lock held.
+ * Call with the tty lock held.
  */
 static void
 ttyblock(struct tty *tp)
@@ -1828,7 +1827,6 @@ ttycheckoutq_wlock(struct tty *tp, int wait)
 			ttstart(tp);
 			if (wait == 0)
 				return (0);
-			SET(tp->t_state, TS_ASLEEP);
 			error = ttysleep(tp, &tp->t_outq.c_cv, true, hz);
 			if (error == EINTR)
 				wait = 0;
@@ -2029,12 +2027,28 @@ ttwrite(struct tty *tp, struct uio *uio, int flag)
 		error = EWOULDBLOCK;
 		goto out;
 	}
-	SET(tp->t_state, TS_ASLEEP);
 	error = ttysleep(tp, &tp->t_outq.c_cv, true, 0);
 	mutex_spin_exit(&tty_lock);
 	if (error)
 		goto out;
 	goto loop;
+}
+
+/*
+ * Try to pull more output from the producer.  Return non-zero if
+ * there is output ready to be sent.
+ */
+bool
+ttypull(struct tty *tp)
+{
+
+	/* XXXSMP not yet KASSERT(mutex_owned(&tty_lock)); */
+
+	if (tp->t_outq.c_cc <= tp->t_lowat) {
+		clwakeup(&tp->t_outq);
+		selnotify(&tp->t_wsel, NOTE_SUBMIT);
+	}
+	return tp->t_outq.c_cc != 0;
 }
 
 /*
@@ -2206,7 +2220,7 @@ ttwakeup(struct tty *tp)
 	selnotify(&tp->t_rsel, NOTE_SUBMIT);
 	if (ISSET(tp->t_state, TS_ASYNC))
 		ttysig(tp, TTYSIG_PG2, SIGIO);
-	cv_broadcast(&tp->t_rawq.c_cv);
+	clwakeup(&tp->t_rawq);
 }
 
 /*
@@ -2657,8 +2671,8 @@ ttysigintr(void *cookie)
 				pgsignal(pgrp, sig, 1);
 			break;
 		case TTYSIG_PG2:
-			if (pgrp != NULL && sess != NULL)
-				pgsignal(pgrp, sig, 0);
+			if (pgrp != NULL)
+				pgsignal(pgrp, sig, sess != NULL);
 			break;
 		case TTYSIG_LEADER:
 			if (sess != NULL && sess->s_leader != NULL)
@@ -2670,5 +2684,7 @@ ttysigintr(void *cookie)
 		}
 		mutex_exit(&proclist_mutex);
 	}
+
+
 	/* XXXSMP notyet mutex_exit(&proclist_lock); */
 }

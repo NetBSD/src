@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.116 2007/11/10 18:07:53 ad Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.117 2007/11/19 18:51:48 ad Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -137,7 +137,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.116 2007/11/10 18:07:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.117 2007/11/19 18:51:48 ad Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_ntp.h"
@@ -1052,16 +1052,8 @@ zsstart(tp)
 		return;
 	if (zst->zst_tx_stopped)
 		return;
-
-	if (tp->t_outq.c_cc <= tp->t_lowat) {
-		if (ISSET(tp->t_state, TS_ASLEEP)) {
-			CLR(tp->t_state, TS_ASLEEP);
-			cv_broadcast(&tp->t_outq.c_cv);
-		}
-		selwakeup(&tp->t_wsel);
-		if (tp->t_outq.c_cc == 0)
-			return;
-	}
+	if (!ttypull(tp))
+		return;
 
 	/* Grab the first contiguous region of buffer space. */
 	tba = tp->t_outq.c_cf;
