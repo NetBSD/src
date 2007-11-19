@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.9 2007/11/16 18:07:42 jmmv Exp $
+# $NetBSD: mi,v 1.10 2007/11/19 14:18:35 jmmv Exp $
 ./etc/mtree/set.tests				tests-sys-root
 ./usr/libdata/debug/usr/tests						tests-base-debug
 ./usr/libdata/debug/usr/tests/atf					tests-atf-debug
@@ -294,9 +294,10 @@
 ./usr/tests/util/df/t_df			tests-util-tests
 ./usr/tests/util/id				tests-util-tests
 ./usr/tests/util/id/Atffile			tests-util-tests
-./usr/tests/util/id/libfake.so.0		tests-util-tests
-./usr/tests/util/id/libfake.so.0.0		tests-util-tests
-./usr/tests/util/id/libfake_pic.a		tests-util-tests
+./usr/tests/util/id/libfake.so.0		tests-obsolete		obsolete
+./usr/tests/util/id/libfake.so.0.0		tests-obsolete		obsolete
+./usr/tests/util/id/libfake_pic.a		tests-obsolete		obsolete
+./usr/tests/util/id/h_id			tests-util-tests
 ./usr/tests/util/id/t_groups			tests-util-tests
 ./usr/tests/util/id/t_id			tests-util-tests
 ./usr/tests/util/id/t_whoami			tests-util-tests
