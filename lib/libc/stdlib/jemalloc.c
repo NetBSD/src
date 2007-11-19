@@ -1,4 +1,4 @@
-/*	$NetBSD: jemalloc.c,v 1.10 2007/10/22 04:16:48 simonb Exp $	*/
+/*	$NetBSD: jemalloc.c,v 1.11 2007/11/19 14:48:42 ad Exp $	*/
 
 /*-
  * Copyright (C) 2006,2007 Jason Evans <jasone@FreeBSD.org>.
@@ -118,7 +118,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/lib/libc/stdlib/malloc.c,v 1.147 2007/06/15 22:00:16 jasone Exp $"); */ 
-__RCSID("$NetBSD: jemalloc.c,v 1.10 2007/10/22 04:16:48 simonb Exp $");
+__RCSID("$NetBSD: jemalloc.c,v 1.11 2007/11/19 14:48:42 ad Exp $");
 
 #ifdef __FreeBSD__
 #include "libc_private.h"
@@ -3693,9 +3693,6 @@ RETURN:
 	UTRACE(0, size, ret);
 	return (ret);
 }
-
-/* XXXAD */
-int	posix_memalign(void **memptr, size_t alignment, size_t size);
 
 int
 posix_memalign(void **memptr, size_t alignment, size_t size)
