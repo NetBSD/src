@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.2,v 1.1.2.108 2007/11/19 21:12:13 bouyer Exp $
+#	$NetBSD: CHANGES-3.2,v 1.1.2.109 2007/11/19 21:36:22 bouyer Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.2
 release:
@@ -3730,4 +3730,79 @@ usr.sbin/rpc.lockd/lock_proc.c			1.8
 	Fix off-by-one error accessing "clnt_cache_addr" array which causes
 	heap corruption. This will hopefully fix PR bin/37236.
 	[tron, ticket #1873]
+
+sys/dev/pci/if_bge.c				1.89,1.95,1.97,1.101,1.103,
+						1.105,1.107,1.117-1.122,
+						1.128-1.131,1.133-1.135,1.39
+						via patch
+sys/dev/pci/if_bgereg.h				1.31,1.34-1.39,1.42-1.43
+sys/dev/pci/pcidevs				patch 
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data			regen
+
+	Some cleanups(typo, whitespace, debug message). 
+	Add TSO support to bge(4)
+	Add support for BCM5715, BCM5752M, BCM5754, BCM5755, BCM5786 and 5787.  
+	Add support for BCM5789. Fixes PR/33828 from Pawel Chwalowskibg.
+	Add support for BCM5753 and BCM5753M Fixes PR kern/36139 from
+	Mustafa Dogan.
+	Add and fix some BGE_CHIPIDs. From FreeBSD and OpenBSD.
+	In bge_ioctl(), don't call bge_init() if the interface is already up
+	(Makes ifwatchd work on this interface).
+	BCM5701 B2 requires BGE_QUIRK_ONLY_PHY_1 quirk. From Brian Baird in
+	PR kern/23778.
+	Move TX ring full sanity check further up and check the number of DMA
+	segments from the DMA map, instead of counting the DMA segments in the  
+	for loop and breaking out later.
+	Unload the DMA map if encountering an error condition.
+	Fix a NULL reference on failing mbuf allocation.
+	In bge_start return if IFF_OACTIVE is set in combination with
+	IFF_RUNNING, drop obscure check for length of interface queue.
+	Remove message about failing bge_encap, it can happen just too easily
+	because of full descriptor rings.
+	Fix some watchdog timeout and "block failed to stop" problems on
+	some cards.
+	Fix "pcistate failed to revert" problem on many cards.
+	[msaitoh, ticket #1862]
+
+sys/dev/pci/if_wm.c			 	1.137-1.138,1.141,1.144-1.146
+sys/dev/pci/if_wmreg.h				1.23
+sys/dev/pci/pcidevs				1.893 via patch
+share/man/man4/wm.4				1.18-1.19
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data			regen
+
+	Fix typo.
+	Fix EEPROM reload sequence.
+	Add ICH9 support.
+	Workaround for 82541 Errata 29 and 82547 Errata 28:
+	 these devices have to reset the PHY before reset the MAC.
+	 Reported and tested by salo.
+	[msaitoh, ticket #1862]
+
+distrib/sets/lists/comp/mi			1.990 via patch
+sys/net/Makefile				1.22 via patch
+
+	Install <net/if_pflog.h>.
+	[tron, ticket #1864]
+
+sys/arch/mips/include/cpuregs.h			1.72
+sys/arch/mips/mips/mips_machdep.c		1.195
+
+	Recognise the R2000A cpu as found in some pmaxen.
+	From Dennis Grevenstein on port-pmax@.
+	[simonb, ticket #1865]
+
+sys/dev/ic/ninjascsi32.c			1.13, 1.14
+sys/dev/ic/ninjascsi32var.h			1.4
+
+	Make targets at ID 0,1 or 2 actually work. 
+	some NinjaSCSI-32UDE devices would hang the system if the termination
+	power is absent 
+	[itohy, ticket #1875]
+
+sys/dev/pci/if_bnx.c				1.10
+
+	Added missing newline.
+	[martti, ticket #1876]
 
