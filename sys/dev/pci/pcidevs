@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.701.2.47 2007/11/19 21:18:10 bouyer Exp $
+$NetBSD: pcidevs,v 1.701.2.48 2007/11/19 21:24:24 bouyer Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1823,6 +1823,10 @@ product INTEL 82546GB_QUAD_COPPER_KSP3 0x10b5 i82546GB quad-port Gigabit Etherne
 product INTEL 82572EI		0x10b9	i82572EI 1000baseT Ethernet
 product INTEL 80K3LAN_CPR_SPT 0x10ba	i80003 1000baseT Ethernet
 product INTEL 80K3LAN_SDS_SPT 0x10bb	i80003 Gigabit Ethernet (SERDES)
+product INTEL 82801I_IGP_AMT	0x10bd	82801I (AMT) LAN Controller
+product INTEL 82801I_IFE	0x10c0	82801I LAN Controller
+product INTEL 82801I_IFE_G	0x10c2	82801I (G) LAN Controller
+product INTEL 82801I_IFE_GT	0x10c3	82801I (GT) LAN Controller
 product INTEL 82801H_IFE_GT 	0x10c4	i82801H IFE (GT) LAN Controller
 product INTEL 82801H_IFE_G 	0x10c5	i82801H IFE (G) LAN Controller
 product INTEL 82815_DC100_HUB	0x1100	82815 Hub
@@ -2026,6 +2030,7 @@ product INTEL 82801G_ACA	0x27de	82801GB/GR AC'97 Audio Controller
 product INTEL 82801G_IDE	0x27df	82801GB/GR IDE Controller
 product INTEL 82801G_EXP_5	0x27e0	82801GB/GR PCI Express Port #5
 product INTEL 82801G_EXP_6	0x27e2	82801GB/GR PCI Express Port #6
+product INTEL 82801I_IGP_C	0x294c	82801I (C) LAN Controller
 product INTEL 31244		0x3200	31244 Serial ATA Controller
 product INTEL 82855PM_DDR	0x3340	82855PM MCH Host Controller
 product INTEL 82855PM_AGP	0x3341	82855PM Host-AGP Bridge
