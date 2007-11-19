@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.169 2007/11/08 11:10:28 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.167 2007/10/17 19:53:31 garbled Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -212,7 +212,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.169 2007/11/08 11:10:28 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.167 2007/10/17 19:53:31 garbled Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -268,7 +268,8 @@ static pmap_t pmap_recent_user;
  * We use a cache to avoid clearing the pm_l2[] array (1KB)
  * in pmap_create().
  */
-static struct pool_cache pmap_cache;
+static struct pool pmap_pmap_pool;
+static struct pool_cache pmap_pmap_cache;
 static LIST_HEAD(, pmap) pmap_pmaps;
 
 /*
@@ -286,6 +287,7 @@ static struct pool_allocator pmap_bootstrap_pv_allocator = {
  * We use a cache to avoid clearing the structures when they're
  * allocated. (196 bytes)
  */
+static struct pool pmap_l2dtable_pool;
 static struct pool_cache pmap_l2dtable_cache;
 static vaddr_t pmap_kernel_l2dtable_kva;
 
@@ -294,6 +296,7 @@ static vaddr_t pmap_kernel_l2dtable_kva;
  * We use a cache to avoid clearing the descriptor table
  * when they're allocated. (1KB)
  */
+static struct pool pmap_l2ptp_pool;
 static struct pool_cache pmap_l2ptp_cache;
 static vaddr_t pmap_kernel_l2ptp_kva;
 static paddr_t pmap_kernel_l2ptp_phys;
@@ -1907,7 +1910,7 @@ pmap_create(void)
 {
 	pmap_t pm;
 
-	pm = pool_cache_get(&pmap_cache, PR_WAITOK);
+	pm = pool_cache_get(&pmap_pmap_cache, PR_WAITOK);
 
 	simple_lock_init(&pm->pm_lock);
 	pm->pm_obj.pgops = NULL;	/* currently not a mappable object */
@@ -3271,7 +3274,7 @@ pmap_destroy(pmap_t pm)
 		pmap_recent_user = NULL;
 
 	/* return the pmap to the pool */
-	pool_cache_put(&pmap_cache, pm);
+	pool_cache_put(&pmap_pmap_cache, pm);
 }
 
 
@@ -4005,10 +4008,12 @@ pmap_bootstrap(pd_entry_t *kernel_l1pt, vaddr_t vstart, vaddr_t vend)
 		pm->pm_pl1vec = NULL;
 
 	/*
-	 * Initialize the pmap cache
+	 * Initialize the pmap pool and cache
 	 */
-	pool_cache_bootstrap(&pmap_cache, sizeof(struct pmap), 0, 0, 0,
-	    "pmappl", NULL, IPL_NONE, pmap_pmap_ctor, NULL, NULL);
+	pool_init(&pmap_pmap_pool, sizeof(struct pmap), 0, 0, 0, "pmappl",
+	    &pool_allocator_nointr, IPL_NONE);
+	pool_cache_init(&pmap_pmap_cache, &pmap_pmap_pool,
+	    pmap_pmap_ctor, NULL, NULL);
 	LIST_INIT(&pmap_pmaps);
 	LIST_INSERT_HEAD(&pmap_pmaps, pm, pm_list);
 
@@ -4021,14 +4026,17 @@ pmap_bootstrap(pd_entry_t *kernel_l1pt, vaddr_t vstart, vaddr_t vend)
 	/*
 	 * Initialize the L2 dtable pool and cache.
 	 */
-	pool_cache_bootstrap(&pmap_l2dtable_cache, sizeof(struct l2_dtable), 0,
-	    0, 0, "l2dtblpl", NULL, IPL_NONE, pmap_l2dtable_ctor, NULL, NULL);
+	pool_init(&pmap_l2dtable_pool, sizeof(struct l2_dtable), 0, 0, 0,
+	    "l2dtblpl", NULL, IPL_NONE);
+	pool_cache_init(&pmap_l2dtable_cache, &pmap_l2dtable_pool,
+	    pmap_l2dtable_ctor, NULL, NULL);
 
 	/*
 	 * Initialise the L2 descriptor table pool and cache
 	 */
-	pool_cache_bootstrap(&pmap_l2ptp_cache, L2_TABLE_SIZE_REAL, 0,
-	    L2_TABLE_SIZE_REAL, 0, "l2ptppl", NULL, IPL_NONE,
+	pool_init(&pmap_l2ptp_pool, L2_TABLE_SIZE_REAL, 0, L2_TABLE_SIZE_REAL,
+	    0, "l2ptppl", NULL, IPL_NONE);
+	pool_cache_init(&pmap_l2ptp_cache, &pmap_l2ptp_pool,
 	    pmap_l2ptp_ctor, NULL, NULL);
 
 	cpu_dcache_wbinv_all();
@@ -4188,9 +4196,9 @@ pmap_postinit(void)
 	u_int loop, needed;
 	int error;
 
-	pool_cache_setlowat(&pmap_l2ptp_cache,
+	pool_setlowat(&pmap_l2ptp_pool,
 	    (PAGE_SIZE / L2_TABLE_SIZE_REAL) * 4);
-	pool_cache_setlowat(&pmap_l2dtable_cache,
+	pool_setlowat(&pmap_l2dtable_pool,
 	    (PAGE_SIZE / sizeof(struct l2_dtable)) * 2);
 
 	needed = (maxproc / PMAP_DOMAINS) + ((maxproc % PMAP_DOMAINS) ? 1 : 0);

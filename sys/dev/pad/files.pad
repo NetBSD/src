@@ -1,5 +1,0 @@
-# $NetBSD: files.pad,v 1.2 2007/11/11 19:53:38 jmcneill Exp $
-
-defpseudo pad: audiobus, auconv, aurateconv
-file	dev/pad/pad.c		pad
-file	dev/pad/padvol.c	pad

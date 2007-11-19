@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_data.h,v 1.14 2007/11/06 00:42:44 ad Exp $	*/
+/*	$NetBSD: cpu_data.h,v 1.13 2007/10/08 15:12:11 ad Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -70,8 +70,7 @@ struct cpu_data {
 	u_int		cpu_callout_nwait;	/* # LWPs waiting on callout */
 	struct schedstate_percpu cpu_schedstate; /* scheduler state */
 	kcondvar_t	cpu_xcall;		/* cross-call support */
-	int		cpu_xcall_pending;	/* cross-call support */
-	lwp_t		*cpu_onproc;		/* bottom level LWP */
+	bool		cpu_xcall_pending;	/* cross-call support */
 	
 	/*
 	 * This section is mostly CPU-private.
@@ -86,7 +85,7 @@ struct cpu_data {
 	u_int		cpu_lkdebug_recurse;	/* LOCKDEBUG recursion */
 	void		*cpu_softcpu;		/* soft interrupt table */
 	TAILQ_HEAD(,buf) cpu_biodone;		/* finished block xfers */
-	u_int		cpu_softints;		/* pending (slow) softints */
+	u_int		cpu_netisrs;		/* legacy netisrs XXX */
 	kmutex_t	cpu_uarea_lock;		/* uarea alloc lock */
 	u_int		cpu_uarea_cnt;		/* count of free uareas */
 	vaddr_t		cpu_uarea_list;		/* free uareas */

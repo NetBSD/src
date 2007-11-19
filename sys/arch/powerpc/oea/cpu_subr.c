@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.35 2007/11/17 08:30:35 kefren Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.33 2007/10/17 19:56:42 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.35 2007/11/17 08:30:35 kefren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.33 2007/10/17 19:56:42 garbled Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -65,7 +65,7 @@ static void cpu_probe_speed(struct cpu_info *);
 static void cpu_idlespin(void);
 #if NSYSMON_ENVSYS > 0
 static void cpu_tau_setup(struct cpu_info *);
-static void cpu_tau_refresh(struct sysmon_envsys *, envsys_data_t *);
+static int cpu_tau_gtredata(struct sysmon_envsys *, envsys_data_t *);
 #endif
 
 int cpu;
@@ -887,38 +887,44 @@ cpu_probe_speed(struct cpu_info *ci)
 void
 cpu_tau_setup(struct cpu_info *ci)
 {
-	struct sysmon_envsys *sme;
-	envsys_data_t sensor;
+	struct {
+		struct sysmon_envsys sme;
+		envsys_data_t edata;
+	} *datap;
 	int error;
 
-	sme = sysmon_envsys_create();
+	datap = malloc(sizeof(*datap), M_DEVBUF, M_WAITOK | M_ZERO);
 
-	sensor.state = ENVSYS_SVALID;
-	sensor.units = ENVSYS_STEMP;
-	(void)strlcpy(sensor.desc, "CPU Temp", sizeof(sensor.desc));
-	if (sysmon_envsys_sensor_attach(sme, &sensor)) {
-		sysmon_envsys_destroy(sme);
-		return;
-	}
+	datap->edata.sensor = 0;
+	datap->edata.units = ENVSYS_STEMP;
+	datap->edata.state = ENVSYS_SVALID;
+	(void)strlcpy(datap->edata.desc, "CPU Temp",
+	    sizeof(datap->edata.desc));
 
-	sme->sme_name = ci->ci_dev->dv_xname;	
-	sme->sme_cookie = ci;
-	sme->sme_refresh = cpu_tau_refresh;
+	ci->ci_sysmon_cookie = &datap->sme;
+	datap->sme.sme_nsensors = 1;
+	datap->sme.sme_sensor_data = &datap->edata;
+	datap->sme.sme_name = ci->ci_dev->dv_xname;	
+	datap->sme.sme_cookie = ci;
+	datap->sme.sme_gtredata = cpu_tau_gtredata;
 
-	if ((error = sysmon_envsys_register(sme)) != 0) {
+	if ((error = sysmon_envsys_register(&datap->sme)) != 0)
 		aprint_error("%s: unable to register with sysmon (%d)\n",
 		    ci->ci_dev->dv_xname, error);
-		sysmon_envsys_destroy(sme);
-	}
 }
 
 
 /* Find the temperature of the CPU. */
-void
-cpu_tau_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
+int
+cpu_tau_gtredata(struct sysmon_envsys *sme, envsys_data_t *edata)
 {
 	int i, threshold, count;
 
+	if (edata->sensor != 0) {
+		edata->state = ENVSYS_SINVALID;
+		return 0;
+	}
+	
 	threshold = 64; /* Half of the 7-bit sensor range */
 	mtspr(SPR_THRM1, 0);
 	mtspr(SPR_THRM2, 0);
@@ -957,7 +963,9 @@ cpu_tau_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 	threshold += 2;
 
 	/* Convert the temperature in degrees C to microkelvin */
-	edata->value_cur = (threshold * 1000000) + 273150000;
+	sme->sme_sensor_data->value_cur = (threshold * 1000000) + 273150000;
+	
+	return 0;
 }
 #endif /* NSYSMON_ENVSYS > 0 */
 

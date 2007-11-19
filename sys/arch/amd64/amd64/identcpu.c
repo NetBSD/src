@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.30 2007/11/13 18:41:59 ad Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.27 2007/10/29 00:42:29 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.30 2007/11/13 18:41:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.27 2007/10/29 00:42:29 xtraeme Exp $");
 
 #include "opt_enhanced_speedstep.h"
 #include "opt_intel_coretemp.h"
@@ -54,14 +54,15 @@ __KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.30 2007/11/13 18:41:59 ad Exp $");
 
 /* sysctl wants this. */
 char cpu_model[48];
-int cpu_vendor;
 
 void
 identifycpu(struct cpu_info *ci)
 {
+	u_int64_t last_tsc;
 	u_int32_t val;
 	char buf[512];
 	u_int32_t brand[12], descs[4];
+	int vendor;
 	const char *feature_str[3];
 
 	x86_cpuid(0, descs);
@@ -87,13 +88,16 @@ identifycpu(struct cpu_info *ci)
 
 	strcpy(cpu_model, (char *)brand);
 
-	cpu_vendor = CPUVENDOR_AMD;
+	vendor = CPUVENDOR_AMD;
 	if (cpu_model[0] == 0)
 		strcpy(cpu_model, "Opteron or Athlon 64");
 	else if (strstr(cpu_model, "AMD") == NULL)
-		cpu_vendor = CPUVENDOR_INTEL;
+		vendor = CPUVENDOR_INTEL;
 
-	cpu_get_tsc_freq(ci);
+	last_tsc = rdtsc();
+	delay(100000);
+	ci->ci_tsc_freq = (rdtsc() - last_tsc) * 10;
+
 	amd_cpu_cacheinfo(ci);
 
 	aprint_normal("%s: %s", ci->ci_dev->dv_xname, cpu_model);
@@ -104,7 +108,7 @@ identifycpu(struct cpu_info *ci)
 		    ((ci->ci_tsc_freq + 4999) / 10000) % 100);
 	aprint_normal("\n");
 
-	if (cpu_vendor == CPUVENDOR_INTEL) {
+	if (vendor == CPUVENDOR_INTEL) {
 		feature_str[0] = CPUID_FLAGS1;
 		feature_str[1] = CPUID_FLAGS2;
 		feature_str[2] = CPUID_FLAGS3;
@@ -140,7 +144,7 @@ identifycpu(struct cpu_info *ci)
 		    ci->ci_dev->dv_xname, buf);
 	}
 
-	if (cpu_vendor == CPUVENDOR_INTEL &&
+	if (vendor == CPUVENDOR_INTEL &&
 	    (ci->ci_feature_flags & CPUID_MASK4) != 0) {
 		bitmask_snprintf(ci->ci_feature_flags,
 		    CPUID_FLAGS4, buf, sizeof(buf));
@@ -157,12 +161,15 @@ identifycpu(struct cpu_info *ci)
 		k8_powernow_init();
 #endif
 
+	x86_errata(ci, vendor);
+	x86_patch();
+
 #ifdef INTEL_ONDEMAND_CLOCKMOD
 	clockmod_init();
 #endif
 
 #ifdef ENHANCED_SPEEDSTEP
-	if ((cpu_vendor == CPUVENDOR_INTEL) &&
+	if ((vendor == CPUVENDOR_INTEL) &&
 	    (ci->ci_feature2_flags & CPUID2_EST)) {
 		if (rdmsr(MSR_MISC_ENABLE) & (1 << 16))
 			est_init(CPUVENDOR_INTEL);
@@ -173,7 +180,7 @@ identifycpu(struct cpu_info *ci)
 #endif
 
 #ifdef INTEL_CORETEMP
-	if (cpu_vendor == CPUVENDOR_INTEL)
+	if (vendor == CPUVENDOR_INTEL)
 		coretemp_register(ci);
 #endif
 }

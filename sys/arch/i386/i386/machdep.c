@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.615 2007/11/14 17:50:13 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.611 2007/10/26 13:24:40 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.615 2007/11/14 17:50:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.611 2007/10/26 13:24:40 joerg Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -80,6 +80,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.615 2007/11/14 17:50:13 ad Exp $");
 #include "opt_compat_netbsd.h"
 #include "opt_compat_svr4.h"
 #include "opt_cpureset_delay.h"
+#include "opt_cputype.h"
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
 #include "opt_kgdb.h"
@@ -252,7 +253,10 @@ unsigned int msgbuf_p_cnt = 0;
 
 vaddr_t	idt_vaddr;
 paddr_t	idt_paddr;
+
+#ifdef I586_CPU
 vaddr_t	pentium_idt_vaddr;
+#endif
 
 struct vm_map *exec_map = NULL;
 struct vm_map *mb_map = NULL;
@@ -515,8 +519,6 @@ i386_proc0_tss_ldt_init()
 	pcb->pcb_tss.tss_esp0 = USER_TO_UAREA(l->l_addr) + KSTACK_SIZE - 16;
 	l->l_md.md_regs = (struct trapframe *)pcb->pcb_tss.tss_esp0 - 1;
 	l->l_md.md_tss_sel = tss_alloc(pcb);
-	memcpy(pcb->pcb_fsd, &gdt[GUDATA_SEL], sizeof(pcb->pcb_fsd));
-	memcpy(pcb->pcb_gsd, &gdt[GUDATA_SEL], sizeof(pcb->pcb_gsd));
 
 	ltr(l->l_md.md_tss_sel);
 	lldt(pcb->pcb_ldt_sel);
@@ -721,13 +723,13 @@ buildcontext(struct lwp *l, int sel, void *catcher, void *fp)
 {
 	struct trapframe *tf = l->l_md.md_regs;
 
-	tf->tf_gs = GSEL(GUGS_SEL, SEL_UPL);
-	tf->tf_fs = GSEL(GUFS_SEL, SEL_UPL);
+	tf->tf_gs = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_fs = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_eip = (int)catcher;
 	tf->tf_cs = GSEL(sel, SEL_UPL);
-	tf->tf_eflags &= ~(PSL_T|PSL_VM|PSL_AC|PSL_D);
+	tf->tf_eflags &= ~(PSL_T|PSL_VM|PSL_AC);
 	tf->tf_esp = (int)fp;
 	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
 }
@@ -1216,12 +1218,10 @@ setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 		pcb->pcb_savefpu.sv_xmm.sv_env.en_mxcsr = __INITIAL_MXCSR__;
 	} else
 		pcb->pcb_savefpu.sv_87.sv_env.en_cw = __NetBSD_NPXCW__;
-	memcpy(pcb->pcb_fsd, &gdt[GUDATA_SEL], sizeof(pcb->pcb_fsd));
-	memcpy(pcb->pcb_gsd, &gdt[GUDATA_SEL], sizeof(pcb->pcb_gsd));
 
 	tf = l->l_md.md_regs;
-	tf->tf_gs = GSEL(GUGS_SEL, SEL_UPL);
-	tf->tf_fs = GSEL(GUFS_SEL, SEL_UPL);
+	tf->tf_gs = LSEL(LUDATA_SEL, SEL_UPL);
+	tf->tf_fs = LSEL(LUDATA_SEL, SEL_UPL);
 	tf->tf_es = LSEL(LUDATA_SEL, SEL_UPL);
 	tf->tf_ds = LSEL(LUDATA_SEL, SEL_UPL);
 	tf->tf_edi = 0;
@@ -1247,7 +1247,9 @@ union	descriptor *gdt, *ldt;
 struct gate_descriptor *idt;
 char idt_allocmap[NIDT];
 kmutex_t idt_lock;
+#ifdef I586_CPU
 union	descriptor *pentium_idt;
+#endif
 struct user *proc0paddr;
 extern vaddr_t proc0uarea;
 
@@ -1322,7 +1324,11 @@ extern vector IDTVEC(mach_trap);
 void cpu_init_idt()
 {
 	struct region_descriptor region;
+#ifdef I586_CPU
 	setregion(&region, pentium_idt, NIDT * sizeof(idt[0]) - 1);
+#else
+	setregion(&region, idt, NIDT * sizeof(idt[0]) - 1);
+#endif
 	lidt(&region);
 }
 
@@ -1418,9 +1424,9 @@ initgdt(union descriptor *tgdt)
 	setsegment(&gdt[GDATA_SEL].sd, 0, 0xfffff, SDT_MEMRWA, SEL_KPL, 1, 1);
 	setsegment(&gdt[GUCODE_SEL].sd, 0, x86_btop(I386_MAX_EXE_ADDR) - 1,
 	    SDT_MEMERA, SEL_UPL, 1, 1);
-	setsegment(&gdt[GUCODEBIG_SEL].sd, 0, 0xfffff,
+	setsegment(&gdt[GUCODEBIG_SEL].sd, 0, x86_btop(VM_MAXUSER_ADDRESS) - 1,
 	    SDT_MEMERA, SEL_UPL, 1, 1);
-	setsegment(&gdt[GUDATA_SEL].sd, 0, 0xfffff,
+	setsegment(&gdt[GUDATA_SEL].sd, 0, x86_btop(VM_MAXUSER_ADDRESS) - 1,
 	    SDT_MEMRWA, SEL_UPL, 1, 1);
 #ifdef COMPAT_MACH
 	setgate(&gdt[GMACHCALLS_SEL].gd, &IDTVEC(mach_trap), 1,
@@ -1433,8 +1439,8 @@ initgdt(union descriptor *tgdt)
 	setsegment(&gdt[GBIOSDATA_SEL].sd, 0, 0xfffff, SDT_MEMRWA, SEL_KPL, 0,
 	    0);
 #endif
-	setsegment(&gdt[GCPU_SEL].sd, &cpu_info_primary, 0xfffff,
-	    SDT_MEMRWA, SEL_KPL, 1, 1);
+	setsegment(&gdt[GCPU_SEL].sd, &cpu_info_primary,
+	    sizeof(struct cpu_info)-1, SDT_MEMRWA, SEL_KPL, 1, 1);
 
 	setregion(&region, gdt, NGDT * sizeof(gdt[0]) - 1);
 	lgdt(&region);
@@ -1953,9 +1959,11 @@ init386(paddr_t first_avail)
 	memset((void *)idt_vaddr, 0, PAGE_SIZE);
 
 	idt = (struct gate_descriptor *)idt_vaddr;
+#ifdef I586_CPU
 	pmap_kenter_pa(pentium_idt_vaddr, idt_paddr, VM_PROT_READ);
 	pmap_update(pmap_kernel());
 	pentium_idt = (union descriptor *)pentium_idt_vaddr;
+#endif
 
 	tgdt = gdt;
 	gdt = (union descriptor *)
@@ -2427,6 +2435,52 @@ cpu_initclocks()
 {
 
 	(*initclock_func)();
+}
+
+void
+cpu_need_resched(struct cpu_info *ci, int flags)
+{
+	bool immed = (flags & RESCHED_IMMED) != 0;
+
+	if (ci->ci_want_resched && !immed)
+		return;
+	ci->ci_want_resched = 1;
+
+	if (ci->ci_curlwp != ci->ci_data.cpu_idlelwp) {
+		aston(ci->ci_curlwp);
+#ifdef MULTIPROCESSOR
+		if (immed && ci != curcpu()) {
+			x86_send_ipi(ci, 0);
+		}
+#endif
+	} else {
+#ifdef MULTIPROCESSOR
+		if ((ci->ci_feature2_flags & CPUID2_MONITOR) == 0 &&
+		    ci != curcpu())
+			x86_send_ipi(ci, 0);
+#endif
+	}
+}
+
+void
+cpu_signotify(struct lwp *l)
+{
+
+	aston(l);
+#ifdef MULTIPROCESSOR
+	if (l->l_cpu != NULL && l->l_cpu != curcpu())
+		x86_send_ipi(l->l_cpu, 0);
+#endif
+}
+
+void
+cpu_need_proftick(struct lwp *l)
+{
+
+	KASSERT(l->l_cpu == curcpu());
+
+	l->l_pflag |= LP_OWEUPC;
+	aston(l);
 }
 
 /*

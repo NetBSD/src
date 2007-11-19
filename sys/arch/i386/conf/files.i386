@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.321 2007/11/15 19:18:32 ad Exp $
+#	$NetBSD: files.i386,v 1.319 2007/10/26 22:17:13 xtraeme Exp $
 #
 # new style config file for i386 architecture
 #
@@ -9,6 +9,9 @@ maxpartitions 8
 maxusers 2 16 128
 
 defparam opt_kernbase.h	KERNBASE
+
+# Processor type options.
+defflag	opt_cputype.h	I386_CPU I486_CPU I586_CPU I686_CPU
 
 # delay before cpu_reset() for reboot.
 defparam		CPURESET_DELAY
@@ -237,7 +240,7 @@ include	"dev/isa/files.isa"
 file	arch/x86/isa/clock.c		isa
 
 # TSC support
-file	arch/x86/x86/tsc.c
+file	arch/x86/x86/tsc.c		i586_cpu | i686_cpu
 
 # Numeric Processing Extension; Math Co-processor
 device	npx
@@ -245,6 +248,13 @@ file	arch/i386/isa/npx.c		npx needs-flag
 
 attach	npx at isa with npx_isa
 file	arch/i386/isa/npx_isa.c		npx_isa
+
+# PC console support a la "pccons"
+device	pc: tty
+attach	pc at isa
+device	pcconskbd: pckbport_machdep_cnattach
+attach	pcconskbd at pckbport
+file	arch/i386/isa/pccons.c		pc | pcconskbd needs-flag
 
 # PC Mice: Logitech-style and Microsoft-style
 device	lms: wsmousedev

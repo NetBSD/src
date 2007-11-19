@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.193 2007/11/12 23:11:59 ad Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.190 2007/10/24 14:50:40 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.193 2007/11/12 23:11:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.190 2007/10/24 14:50:40 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -114,8 +114,8 @@ __KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.193 2007/11/12 23:11:59 ad Exp $");
 #include <sys/sleepq.h>
 #include <sys/lockdebug.h>
 #include <sys/ktrace.h>
+
 #include <sys/cpu.h>
-#include <sys/lwpctl.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -197,6 +197,7 @@ void
 exit1(struct lwp *l, int rv)
 {
 	struct proc	*p, *q, *nq;
+	int		s;
 	ksiginfo_t	ksi;
 	ksiginfoq_t	kq;
 	int		wakeinit;
@@ -238,10 +239,6 @@ exit1(struct lwp *l, int rv)
 	} else
 		mutex_exit(&p->p_smutex);
 
-	/* Destroy any lwpctl info. */
-	if (p->p_lwpctl != NULL)
-		lwp_ctl_exit();
-
 	/* Destroy all AIO works */
 	aio_exit(p, p->p_aio);
 
@@ -249,7 +246,9 @@ exit1(struct lwp *l, int rv)
 	 * Drain all remaining references that procfs, ptrace and others may
 	 * have on the process.
 	 */
-	rw_enter(&p->p_reflock, RW_WRITER);
+	mutex_enter(&p->p_mutex);
+	proc_drainrefs(p);
+	mutex_exit(&p->p_mutex);
 
 	/*
 	 * Bin any remaining signals and mark the process as dying so it will
@@ -368,7 +367,8 @@ exit1(struct lwp *l, int rv)
 			 * and revoke access to controlling terminal.
 			 */
 			tp = sp->s_ttyp;
-			mutex_spin_enter(&tty_lock);
+			s = spltty();
+			TTY_LOCK(tp);
 			if (tp->t_session == sp) {
 				if (tp->t_pgrp) {
 					mutex_enter(&proclist_mutex);
@@ -378,7 +378,8 @@ exit1(struct lwp *l, int rv)
 				/* we can't guarantee the revoke will do this */
 				tp->t_pgrp = NULL;
 				tp->t_session = NULL;
-				mutex_spin_exit(&tty_lock);
+				TTY_UNLOCK(tp);
+				splx(s);
 				SESSRELE(sp);
 				mutex_exit(&proclist_lock);
 				(void) ttywait(tp);
@@ -389,8 +390,10 @@ exit1(struct lwp *l, int rv)
 				 * if we blocked.
 				 */
 				vprevoke = sp->s_ttyvp;
-			} else
-				mutex_spin_exit(&tty_lock);
+			} else {
+				TTY_UNLOCK(tp);
+				splx(s);
+			}
 			vprele = sp->s_ttyvp;
 			sp->s_ttyvp = NULL;
 			/*
@@ -570,11 +573,9 @@ exit1(struct lwp *l, int rv)
 
 	/*
 	 * Signal the parent to collect us, and drop the proclist lock.
-	 * Drop debugger/procfs lock; no new references can be gained.
 	 */
 	cv_broadcast(&p->p_pptr->p_waitcv);
 	mutex_exit(&proclist_lock);
-	rw_exit(&p->p_reflock);
 
 	/* Verify that we hold no locks other than the kernel lock. */
 #ifdef MULTIPROCESSOR
@@ -998,7 +999,7 @@ proc_free(struct proc *p, struct rusage *ru)
 	mutex_destroy(&p->p_smutex);
 	cv_destroy(&p->p_waitcv);
 	cv_destroy(&p->p_lwpcv);
-	rw_destroy(&p->p_reflock);
+	cv_destroy(&p->p_refcv);
 
 	pool_put(&proc_pool, p);
 

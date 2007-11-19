@@ -1,4 +1,4 @@
-# $NetBSD: PARALLELS,v 1.17 2007/11/14 17:54:58 ad Exp $
+# $NetBSD: PARALLELS,v 1.16 2007/10/17 19:54:43 garbled Exp $
 #
 # PARALLELS machine description file
 #
@@ -12,6 +12,8 @@ include 	"arch/i386/conf/std.i386"
 
 maxusers	32
 
+# CPU support.
+options 	I686_CPU
 makeoptions	CPUFLAGS="-march=pentiumpro -mtune=pentiumpro"
 
 # CPU-related options.

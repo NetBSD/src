@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_usrreq.c,v 1.80 2007/11/14 22:58:27 dyoung Exp $	*/
+/*	$NetBSD: udp6_usrreq.c,v 1.78 2007/11/01 20:33:59 dyoung Exp $	*/
 /*	$KAME: udp6_usrreq.c,v 1.86 2001/05/27 17:33:00 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.80 2007/11/14 22:58:27 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.78 2007/11/01 20:33:59 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -271,16 +271,14 @@ udp6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr6,
 	 *  and AF_INET6 socket for AF_INET6 addrs.
 	 */
 	if (req == PRU_CONTROL)
-		return in6_control(so, (u_long)m, (void *)addr6,
-				   (struct ifnet *)control, l);
+		return (in6_control(so, (u_long)m, (void *)addr6,
+				   (struct ifnet *)control, l));
 
 	if (req == PRU_PURGEIF) {
-		s = splsoftnet();
 		in6_pcbpurgeif0(&udbtable, (struct ifnet *)control);
 		in6_purgeif((struct ifnet *)control);
 		in6_pcbpurgeif(&udbtable, (struct ifnet *)control);
-		splx(s);
-		return 0;
+		return (0);
 	}
 
 	if (in6p == NULL && req != PRU_ATTACH) {
@@ -321,6 +319,10 @@ udp6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr6,
 		splx(s);
 		break;
 
+	case PRU_LISTEN:
+		error = EOPNOTSUPP;
+		break;
+
 	case PRU_CONNECT:
 		if (!IN6_IS_ADDR_UNSPECIFIED(&in6p->in6p_faddr)) {
 			error = EISCONN;
@@ -331,6 +333,14 @@ udp6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr6,
 		splx(s);
 		if (error == 0)
 			soisconnected(so);
+		break;
+
+	case PRU_CONNECT2:
+		error = EOPNOTSUPP;
+		break;
+
+	case PRU_ACCEPT:
+		error = EOPNOTSUPP;
 		break;
 
 	case PRU_DISCONNECT:
@@ -351,10 +361,7 @@ udp6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr6,
 		break;
 
 	case PRU_SEND:
-		s = splsoftnet();
-		error = udp6_output(in6p, m, addr6, control, l);
-		splx(s);
-		return error;
+		return (udp6_output(in6p, m, addr6, control, l));
 
 	case PRU_ABORT:
 		soisdisconnected(so);
@@ -373,11 +380,8 @@ udp6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr6,
 		/*
 		 * stat: don't bother with a blocksize
 		 */
-		return 0;
+		return (0);
 
-	case PRU_LISTEN:
-	case PRU_CONNECT2:
-	case PRU_ACCEPT:
 	case PRU_SENDOOB:
 	case PRU_FASTTIMO:
 	case PRU_SLOWTIMO:
@@ -388,18 +392,18 @@ udp6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr6,
 
 	case PRU_RCVD:
 	case PRU_RCVOOB:
-		return EOPNOTSUPP;	/* do not free mbuf's */
+		return (EOPNOTSUPP);	/* do not free mbuf's */
 
 	default:
 		panic("udp6_usrreq");
 	}
 
 release:
-	if (control != NULL)
+	if (control)
 		m_freem(control);
-	if (m != NULL)
+	if (m)
 		m_freem(m);
-	return error;
+	return (error);
 }
 
 SYSCTL_SETUP(sysctl_net_inet6_udp6_setup, "sysctl net.inet6.udp6 subtree setup")

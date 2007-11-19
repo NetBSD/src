@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.43 2007/11/14 19:16:29 pooka Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.42 2007/10/08 18:04:04 ad Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.43 2007/11/14 19:16:29 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.42 2007/10/08 18:04:04 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -834,9 +834,6 @@ msdosfs_link(v)
  * I'm not sure how the memory containing the pathnames pointed at by the
  * componentname structures is freed, there may be some memory bleeding
  * for each rename done.
- *
- * --More-- Notes:
- * This routine needs help.  badly.
  */
 int
 msdosfs_rename(v)
@@ -905,11 +902,7 @@ abortit:
 		goto abortit;
 	}
 
-	/*
-	 * XXX: This can deadlock since we hold tdvp/tvp locked.
-	 * But I'm not going to fix it now.  If lockmgr detected the
-	 * deadlock, this might actually work... sorta.
-	 */
+	/* */
 	if ((error = vn_lock(fvp, LK_EXCLUSIVE)) != 0)
 		goto abortit;
 	dp = VTODE(fdvp);
@@ -965,23 +958,12 @@ abortit:
 	VOP_UNLOCK(fvp, 0);
 	if (VTODE(fdvp)->de_StartCluster != VTODE(tdvp)->de_StartCluster)
 		newparent = 1;
-
-	/*
-	 * XXX: We can do this here because rename uses SAVEFART and
-	 * therefore fdvp has at least two references (one doesn't
-	 * belong to us, though, and that's evil).  We'll get
-	 * another "extra" reference when we do relookup(), so we
-	 * need to compensate.  We should *NOT* be doing this, but
-	 * it works, so whatever.
-	 */
 	vrele(fdvp);
-
 	if (doingdirectory && newparent) {
 		if (error)	/* write access check above */
-			goto tdvpbad;
+			goto bad;
 		if (xp != NULL)
 			vput(tvp);
-		tvp = NULL;
 		/*
 		 * doscheckpath() vput()'s dp,
 		 * so we have to do a relookup afterwards
@@ -990,15 +972,8 @@ abortit:
 			goto out;
 		if ((tcnp->cn_flags & SAVESTART) == 0)
 			panic("msdosfs_rename: lost to startdir");
-		vn_lock(tdvp, LK_EXCLUSIVE | LK_RETRY);
-		if ((error = relookup(tdvp, &tvp, tcnp)) != 0) {
-			VOP_UNLOCK(tdvp, 0);
+		if ((error = relookup(tdvp, &tvp, tcnp)) != 0)
 			goto out;
-		}
-		/*
-		 * XXX: SAVESTART causes us to get a reference, but
-		 * that's released already above in doscheckpath()
-		 */
 		dp = VTODE(tdvp);
 		xp = tvp ? VTODE(tvp) : NULL;
 	}
@@ -1012,23 +987,22 @@ abortit:
 		if (xp->de_Attributes & ATTR_DIRECTORY) {
 			if (!dosdirempty(xp)) {
 				error = ENOTEMPTY;
-				goto tdvpbad;
+				goto bad;
 			}
 			if (!doingdirectory) {
 				error = ENOTDIR;
-				goto tdvpbad;
+				goto bad;
 			}
 		} else if (doingdirectory) {
 			error = EISDIR;
-			goto tdvpbad;
+			goto bad;
 		}
 		if ((error = removede(dp, xp)) != 0)
-			goto tdvpbad;
+			goto bad;
 		VN_KNOTE(tdvp, NOTE_WRITE);
 		VN_KNOTE(tvp, NOTE_DELETE);
 		cache_purge(tvp);
 		vput(tvp);
-		tvp = NULL;
 		xp = NULL;
 	}
 
@@ -1048,10 +1022,11 @@ abortit:
 	fcnp->cn_flags |= LOCKPARENT | LOCKLEAF;
 	if ((fcnp->cn_flags & SAVESTART) == 0)
 		panic("msdosfs_rename: lost from startdir");
-	VOP_UNLOCK(tdvp, 0);
+	if (!newparent)
+		VOP_UNLOCK(tdvp, 0);
 	vn_lock(fdvp, LK_EXCLUSIVE | LK_RETRY);
 	if ((error = relookup(fdvp, &fvp, fcnp))) {
-		VOP_UNLOCK(fdvp, 0);
+		vput(fdvp);
 		vrele(ap->a_fvp);
 		vrele(tdvp);
 		return (error);
@@ -1068,7 +1043,6 @@ abortit:
 		return 0;
 	}
 	fdvp_dorele = 1;
-	VOP_UNLOCK(fdvp, 0);
 	xp = VTODE(fvp);
 	zp = VTODE(fdvp);
 	from_diroffset = zp->de_fndoffset;
@@ -1086,6 +1060,8 @@ abortit:
 			panic("rename: lost dir entry");
 		vrele(ap->a_fvp);
 		VOP_UNLOCK(fvp, 0);
+		if (newparent)
+			VOP_UNLOCK(fdvp, 0);
 		xp = NULL;
 	} else {
 		vrele(fvp);
@@ -1106,6 +1082,8 @@ abortit:
 		error = createde(ip, dp, (struct denode **)0, tcnp);
 		if (error) {
 			memcpy(ip->de_Name, oldname, 11);
+			if (newparent)
+				VOP_UNLOCK(fdvp, 0);
 			VOP_UNLOCK(fvp, 0);
 			goto bad;
 		}
@@ -1113,6 +1091,8 @@ abortit:
 		zp->de_fndoffset = from_diroffset;
 		if ((error = removede(zp, ip)) != 0) {
 			/* XXX should really panic here, fs is corrupt */
+			if (newparent)
+				VOP_UNLOCK(fdvp, 0);
 			VOP_UNLOCK(fvp, 0);
 			goto bad;
 		}
@@ -1122,6 +1102,8 @@ abortit:
 				       &ip->de_dirclust, 0);
 			if (error) {
 				/* XXX should really panic here, fs is corrupt */
+				if (newparent)
+					VOP_UNLOCK(fdvp, 0);
 				VOP_UNLOCK(fvp, 0);
 				goto bad;
 			}
@@ -1130,6 +1112,8 @@ abortit:
 				ip->de_diroffset &= pmp->pm_crbomask;
 		}
 		reinsert(ip);
+		if (newparent)
+			VOP_UNLOCK(fdvp, 0);
 	}
 
 	/*
@@ -1169,9 +1153,9 @@ abortit:
 	VN_KNOTE(fvp, NOTE_RENAME);
 	VOP_UNLOCK(fvp, 0);
 bad:
-	if (tvp)
+	if (xp)
 		vput(tvp);
-	vrele(tdvp);
+	vput(tdvp);
 out:
 	ip->de_flag &= ~DE_RENAME;
 	if (fdvp_dorele)
@@ -1179,10 +1163,6 @@ out:
 	vrele(fvp);
 	return (error);
 
-	/* XXX: uuuh */
-tdvpbad:
-	VOP_UNLOCK(tdvp, 0);
-	goto bad;
 }
 
 static const struct {

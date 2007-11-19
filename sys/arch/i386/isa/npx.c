@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.119 2007/11/14 17:51:36 ad Exp $	*/
+/*	$NetBSD: npx.c,v 1.118 2007/10/17 19:54:57 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.119 2007/11/14 17:51:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.118 2007/10/17 19:54:57 garbled Exp $");
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -75,6 +75,7 @@ __KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.119 2007/11/14 17:51:36 ad Exp $");
 #define	IPRINTF(x)
 #endif
 
+#include "opt_cputype.h"
 #include "opt_multiprocessor.h"
 
 #include <sys/param.h>
@@ -125,7 +126,9 @@ __KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.119 2007/11/14 17:51:36 ad Exp $");
  */
 
 static int	npxdna_s87(struct cpu_info *);
+#ifdef I686_CPU
 static int	npxdna_xmm(struct cpu_info  *);
+#endif /* I686_CPU */
 static int	x86fpflags_to_ksiginfo(uint32_t flags);
 
 static	enum npx_type		npx_type;
@@ -141,6 +144,7 @@ struct npx_softc		*npx_softc;
 static inline void
 fpu_save(union savefpu *addr)
 {
+#ifdef I686_CPU
 	if (i386_use_fxsave)
 	{
                 fxsave(&addr->sv_xmm);
@@ -148,6 +152,7 @@ fpu_save(union savefpu *addr)
 		/* FXSAVE doesn't FNINIT like FNSAVE does -- so do it here. */
 		fninit();
 	} else
+#endif /* I686_CPU */
 		fnsave(&addr->sv_87);
 }
 
@@ -299,9 +304,11 @@ npxattach(struct npx_softc *sc)
 	npxinit(&cpu_info_primary);
 	i386_fpu_present = 1;
 
+#ifdef I686_CPU
 	if (i386_use_fxsave)
 		npxdna_func = npxdna_xmm;
 	else
+#endif /* I686_CPU */
 		npxdna_func = npxdna_s87;
 }
 
@@ -485,6 +492,7 @@ x86fpflags_to_ksiginfo(uint32_t flags)
  * to simply return.
  */
 
+#ifdef I686_CPU
 static int
 npxdna_xmm(struct cpu_info *ci)
 {
@@ -498,8 +506,12 @@ npxdna_xmm(struct cpu_info *ci)
 		return (0);
 	}
 
-	s = splhigh();		/* lock out IPI's while we clean house.. */
+	s = splipi();		/* lock out IPI's while we clean house.. */
+#ifdef MULTIPROCESSOR
 	l = ci->ci_curlwp;
+#else
+	l = curlwp;
+#endif
 	/*
 	 * XXX should have a fast-path here when no save/restore is necessary
 	 */
@@ -521,11 +533,15 @@ npxdna_xmm(struct cpu_info *ci)
 	splx(s);
 
 	KDASSERT(ci->ci_fpcurlwp == NULL);
+#ifndef MULTIPROCESSOR
+	KDASSERT(l->l_addr->u_pcb.pcb_fpcpu == NULL);
+#else
 	if (l->l_addr->u_pcb.pcb_fpcpu != NULL)
 		npxsave_lwp(l, 1);
+#endif
 	l->l_addr->u_pcb.pcb_cr0 &= ~CR0_TS;
 	clts();
-	s = splhigh();
+	s = splipi();
 	ci->ci_fpcurlwp = l;
 	l->l_addr->u_pcb.pcb_fpcpu = ci;
 	splx(s);
@@ -559,6 +575,7 @@ npxdna_xmm(struct cpu_info *ci)
 
 	return (1);
 }
+#endif /* I686_CPU */
 
 static int
 npxdna_s87(struct cpu_info *ci)
@@ -573,8 +590,12 @@ npxdna_s87(struct cpu_info *ci)
 		return (0);
 	}
 
-	s = splhigh();		/* lock out IPI's while we clean house.. */
+	s = splipi();		/* lock out IPI's while we clean house.. */
+#ifdef MULTIPROCESSOR
 	l = ci->ci_curlwp;
+#else
+	l = curlwp;
+#endif
 
 	IPRINTF(("%s: dna for lwp %p\n", ci->ci_dev->dv_xname, l));
 	/*
@@ -595,11 +616,15 @@ npxdna_s87(struct cpu_info *ci)
 
 	IPRINTF(("%s: done saving\n", ci->ci_dev->dv_xname));
 	KDASSERT(ci->ci_fpcurlwp == NULL);
+#ifndef MULTIPROCESSOR
+	KDASSERT(l->l_addr->u_pcb.pcb_fpcpu == NULL);
+#else
 	if (l->l_addr->u_pcb.pcb_fpcpu != NULL)
 		npxsave_lwp(l, 1);
+#endif
 	l->l_addr->u_pcb.pcb_cr0 &= ~CR0_TS;
 	clts();
-	s = splhigh();
+	s = splipi();
 	ci->ci_fpcurlwp = l;
 	l->l_addr->u_pcb.pcb_fpcpu = ci;
 	splx(s);
@@ -629,7 +654,7 @@ npxdna_s87(struct cpu_info *ci)
 }
 
 void
-npxsave_cpu(struct cpu_info *ci, int save)
+npxsave_cpu (struct cpu_info *ci, int save)
 {
 	struct lwp *l;
 	int s;
@@ -674,7 +699,7 @@ npxsave_cpu(struct cpu_info *ci, int save)
 	stts();
 	l->l_addr->u_pcb.pcb_cr0 |= CR0_TS;
 
-	s = splhigh();
+	s = splipi();
 	l->l_addr->u_pcb.pcb_fpcpu = NULL;
 	ci->ci_fpcurlwp = NULL;
 	splx(s);
@@ -707,7 +732,7 @@ npxsave_lwp(struct lwp *l, int save)
 
 #if defined(MULTIPROCESSOR)
 	if (oci == ci) {
-		int s = splhigh();
+		int s = splipi();
 		npxsave_cpu(ci, save);
 		splx(s);
 	} else {

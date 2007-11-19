@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.26 2007/11/12 12:58:10 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.25 2007/10/17 19:54:26 garbled Exp $	*/
 /*	$OpenBSD: locore.S,v 1.46 2001/09/20 18:33:03 mickey Exp $	*/
 
 /*
@@ -76,6 +76,9 @@
 #include <machine/intr.h>
 #include <machine/frame.h>
 #include <machine/reg.h>
+#ifdef	GPROF
+#include <machine/gprof.h>
+#endif
 #include "assym.h"
 
 /* Some aliases for the macros in assym.h. */
@@ -162,7 +165,7 @@ kernelmapped:
 /*
  * This is the starting location for the kernel
  */
-ENTRY_NOPROFILE(start,0)
+ENTRY(start,0)
 /*
  *	start(pdc, boothowto, bootdev, esym, bootapiver, argv, argc)
  *
@@ -542,7 +545,7 @@ EXIT(spllower)
 /*
  * void hp700_intr_schedule(int mask);
  */
-ENTRY(hp700_intr_schedule,0)
+ENTRY(hp700_intr_schedule,64)
 	ldil	L%ipending, %t1
 	ldil	L%cpl, %t2
 	mfctl	%eiem, %arg1
@@ -664,7 +667,7 @@ EXIT(hp700_intr_ipending_new)
 /*
  * void cpu_die(void);
  */
-LEAF_ENTRY_NOPROFILE(cpu_die)
+LEAF_ENTRY(cpu_die)
 	rsm	RESET_PSW, %r0
 	nop
 	nop
@@ -889,7 +892,7 @@ EXIT(cpu_switchto)
  * cpu_switchto() also makes sure that %arg0 and %arg1 are (still)
  * curl and newl respectively.
  */
-ENTRY_NOPROFILE(lwp_trampoline,HPPA_FRAME_SIZE)
+ENTRY(lwp_trampoline,HPPA_FRAME_SIZE)
 	/* no return point */
 	stw	%r0, HPPA_FRAME_CRP(%sp)
 

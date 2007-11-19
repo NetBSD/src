@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.9 2007/11/13 19:17:30 garbled Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.7 2007/10/25 16:55:49 garbled Exp $	*/
 
 #ifndef _OFPPC_AUTOCONF_H_
 #define _OFPPC_AUTOCONF_H_
@@ -29,8 +29,7 @@ void resettodr(void);
 void cpu_initclocks(void);
 void decr_intr(struct clockframe *);
 void setstatclockrate(int);
-void init_interrupt(void);
-void ofppc_init_comcons(void);
+void ofppc_setup_pics(void);
 
 int ofb_cnattach(void);
 #endif /* _KERNEL */

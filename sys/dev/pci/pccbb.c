@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.151 2007/11/16 18:36:51 dyoung Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.150 2007/10/25 13:49:06 joerg Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.151 2007/11/16 18:36:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.150 2007/10/25 13:49:06 joerg Exp $");
 
 /*
 #define CBB_DEBUG
@@ -92,8 +92,6 @@ struct cfdriver cbb_cd = {
 #define DPRINTF(x)
 #define STATIC static
 #endif
-
-int pccbb_burstup = 1;
 
 /*
  * delay_ms() is wait in milliseconds.  It should be used instead
@@ -314,7 +312,7 @@ const struct yenta_chipinfo {
 	    PCCBB_PCMCIA_IO_RELOC | PCCBB_PCMCIA_MEM_32},
 	{ MAKEID(PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1410), CB_TI12XX,
 	    PCCBB_PCMCIA_IO_RELOC | PCCBB_PCMCIA_MEM_32},
-	{ MAKEID(PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1420), CB_TI1420,
+	{ MAKEID(PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1420), CB_TI12XX,
 	    PCCBB_PCMCIA_IO_RELOC | PCCBB_PCMCIA_MEM_32},
 	{ MAKEID(PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1450), CB_TI125X,
 	    PCCBB_PCMCIA_IO_RELOC | PCCBB_PCMCIA_MEM_32},
@@ -685,12 +683,12 @@ pccbb_pci_callback(struct device *self)
 #endif
 
 		cba.cba_cacheline = PCI_CACHELINE(bhlc);
-		cba.cba_max_lattimer = PCI_LATTIMER(bhlc);
+		cba.cba_lattimer = PCI_LATTIMER(bhlc);
 
 		if (bootverbose) {
 			printf("%s: cacheline 0x%x lattimer 0x%x\n",
 			    sc->sc_dev.dv_xname, cba.cba_cacheline,
-			    cba.cba_max_lattimer);
+			    cba.cba_lattimer);
 			printf("%s: bhlc 0x%x\n",
 			    device_xname(&sc->sc_dev), bhlc);
 		}
@@ -740,8 +738,8 @@ pccbb_chipinit(struct pccbb_softc *sc)
 	pcitag_t tag = sc->sc_tag;
 	bus_space_tag_t bmt = sc->sc_base_memt;
 	bus_space_handle_t bmh = sc->sc_base_memh;
-	pcireg_t bcr, bhlc, cbctl, csr, lscp, mfunc, mrburst, slotctl, sockctl,
-	    sockmask, sysctrl;
+	pcireg_t bcr, bhlc, cbctl, csr, lscp, mfunc, slotctl, sockctl, sockmask,
+	    sysctrl;
 
 	/*
 	 * Set PCI command reg.
@@ -751,7 +749,6 @@ pccbb_chipinit(struct pccbb_softc *sc)
 	/* I believe it is harmless. */
 	csr |= (PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE |
 	    PCI_COMMAND_MASTER_ENABLE);
-	csr |= (PCI_COMMAND_PARITY_ENABLE|PCI_COMMAND_SERR_ENABLE);
 	pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, csr);
 
 	/*
@@ -785,12 +782,6 @@ pccbb_chipinit(struct pccbb_softc *sc)
 	bcr |= CB_BCR_WRITE_POST_ENABLE;	/* enable write post */
 	/* assert reset */
 	bcr |= PCI_BRIDGE_CONTROL_SECBR	<< PCI_BRIDGE_CONTROL_SHIFT;
-        /* Set master abort mode to 1, forward SERR# from secondary
-         * to primary, and detect parity errors on secondary.
-	 */
-	bcr |= PCI_BRIDGE_CONTROL_MABRT	<< PCI_BRIDGE_CONTROL_SHIFT;
-	bcr |= PCI_BRIDGE_CONTROL_SERR << PCI_BRIDGE_CONTROL_SHIFT;
-	bcr |= PCI_BRIDGE_CONTROL_PERE << PCI_BRIDGE_CONTROL_SHIFT;
 	pci_conf_write(pc, tag, PCI_BRIDGE_CONTROL_REG, bcr);
 
 	switch (sc->sc_chipset) {
@@ -806,28 +797,6 @@ pccbb_chipinit(struct pccbb_softc *sc)
 		pci_conf_write(pc, tag, PCI_CBCTRL, cbctl);
 		break;
 
-	case CB_TI1420:
-		sysctrl = pci_conf_read(pc, tag, PCI_SYSCTRL);
-		mrburst = pccbb_burstup
-		    ? PCI1420_SYSCTRL_MRBURST : PCI1420_SYSCTRL_MRBURSTDN;
-		if ((sysctrl & PCI1420_SYSCTRL_MRBURST) == mrburst) {
-			printf("%s: %swrite bursts enabled\n",
-			    device_xname(&sc->sc_dev),
-			    pccbb_burstup ? "read/" : "");
-		} else if (pccbb_burstup) {
-			printf("%s: enabling read/write bursts\n",
-			    device_xname(&sc->sc_dev));
-			sysctrl |= PCI1420_SYSCTRL_MRBURST;
-			pci_conf_write(pc, tag, PCI_SYSCTRL, sysctrl);
-		} else {
-			printf("%s: disabling read bursts, "
-			    "enabling write bursts\n",
-			    device_xname(&sc->sc_dev));
-			sysctrl |= PCI1420_SYSCTRL_MRBURSTDN;
-			sysctrl &= ~PCI1420_SYSCTRL_MRBURSTUP;
-			pci_conf_write(pc, tag, PCI_SYSCTRL, sysctrl);
-		}
-		/*FALLTHROUGH*/
 	case CB_TI12XX:
 		/*
 		 * Some TI 12xx (and [14][45]xx) based pci cards

@@ -1,4 +1,4 @@
-/*	$NetBSD: specfs.c,v 1.13 2007/11/07 18:59:18 pooka Exp $	*/
+/*	$NetBSD: specfs.c,v 1.11 2007/11/04 18:43:55 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -48,7 +48,6 @@ static int rump_specclose(void *);
 static int rump_specfsync(void *);
 static int rump_specputpages(void *);
 static int rump_specstrategy(void *);
-static int rump_specsimpleul(void *);
 
 int (**spec_vnodeop_p)(void *);
 const struct vnodeopv_entry_desc rumpspec_vnodeop_entries[] = {
@@ -62,8 +61,6 @@ const struct vnodeopv_entry_desc rumpspec_vnodeop_entries[] = {
 	{ &vop_fsync_desc, rump_specfsync },		/* fsync */
 	{ &vop_putpages_desc, rump_specputpages },	/* putpages */
 	{ &vop_strategy_desc, rump_specstrategy },	/* strategy */
-	{ &vop_getpages_desc, rump_specsimpleul },	/* getpages */
-	{ &vop_putpages_desc, rump_specsimpleul },	/* putpages */
 	{ NULL, NULL }
 };
 const struct vnodeopv_desc spec_vnodeop_opv_desc =
@@ -193,6 +190,7 @@ rump_specstrategy(void *v)
 	struct buf *bp = ap->a_bp;
 	struct rump_specpriv *sp;
 	off_t off;
+	int error;
 
 	assert(vp->v_type == VBLK);
 	sp = vp->v_data;
@@ -203,79 +201,16 @@ rump_specstrategy(void *v)
 	    bp->b_bcount, bp->b_flags & B_READ ? "READ" : "WRITE",
 	    off, off, (off + bp->b_bcount)));
 
-	/*
-	 * Do I/O.  We have different paths for async and sync I/O.
-	 * Async I/O is done by passing a request to rumpuser where
-	 * it is executed.  The rumpuser routine then calls
-	 * biodone() to signal any waiters in the kernel.  I/O's are
-	 * executed in series.  Technically executing them in parallel
-	 * would produce better results, but then we'd need either
-	 * more threads or posix aio.  Maybe worth investigating
-	 * this later.
-	 *
-	 * Synchronous I/O is done directly in the context mainly to
-	 * avoid unnecessary scheduling with the I/O thread.
-	 */
-	if (bp->b_flags & B_ASYNC) {
-		struct rumpuser_aio *rua;
-
-		rua = rumpuser_malloc(sizeof(struct rumpuser_aio), 0);
-		rua->rua_fd = sp->rsp_fd;
-		rua->rua_data = bp->b_data;
-		rua->rua_dlen = bp->b_bcount;
-		rua->rua_off = off;
-		rua->rua_bp = bp;
-		rua->rua_op = bp->b_flags & B_READ;
-
-		rumpuser_mutex_enter(&rua_mtx);
-
-		/*
-		 * Check if our buffer is full.  Doing it this way
-		 * throttles the I/O a bit if we have a massive
-		 * async I/O burst.
-		 *
-		 * XXX: this actually leads to deadlocks with spl()
-		 * (caller maybe be at splbio() legally for async I/O),
-		 * so for now set N_AIOS high and FIXXXME some day.
-		 */
-		if ((rua_head+1) % N_AIOS == rua_tail) {
-			rumpuser_free(rua);
-			rumpuser_mutex_exit(&rua_mtx);
-			goto syncfallback;
-		}
-
-		/* insert into queue & signal */
-		rua_aios[rua_head] = rua;
-		rua_head = (rua_head+1) % (N_AIOS-1);
-		rumpuser_cv_signal(&rua_cv);
-		rumpuser_mutex_exit(&rua_mtx);
-	} else {
- syncfallback:
-		if (bp->b_flags & B_READ) {
-			rumpuser_read(sp->rsp_fd, bp->b_data,
-			    bp->b_bcount, off, bp);
-		} else {
-			rumpuser_write(sp->rsp_fd, bp->b_data,
-			    bp->b_bcount, off, bp);
-		}
-		biowait(bp);
+	if (bp->b_flags & B_READ)
+		rumpuser_read(sp->rsp_fd, bp->b_data, bp->b_bcount, off, bp);
+	else {
+		rumpuser_write(sp->rsp_fd, bp->b_data, bp->b_bcount, off, bp);
 	}
 
-	return 0;
-}
+#ifdef notyet
+	if ((bp->b_flags & B_ASYNC) == 0)
+#endif
+		biowait(bp);
 
-int
-rump_specsimpleul(void *v)
-{
-	struct vop_generic_args *ap = v;
-	struct vnode *vp;
-	int offset;
-
-	offset = ap->a_desc->vdesc_vp_offsets[0];
-	KASSERT(offset != VDESC_NO_OFFSET);
-
-	vp = *VOPARG_OFFSETTO(struct vnode **, offset, ap);
-	simple_unlock(&vp->v_interlock);
-
-	return 0;
+	return error;
 }

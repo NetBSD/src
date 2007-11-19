@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cpu.c,v 1.14 2007/11/07 00:23:20 ad Exp $	*/
+/*	$NetBSD: kern_cpu.c,v 1.12 2007/11/05 03:36:14 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.14 2007/11/07 00:23:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.12 2007/11/05 03:36:14 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,14 +117,8 @@ mi_cpu_attach(struct cpu_info *ci)
 		return error;
 	}
 
-	if (ci == curcpu())
-		ci->ci_data.cpu_onproc = curlwp;
-	else
-		ci->ci_data.cpu_onproc = ci->ci_data.cpu_idlelwp;
-
 	softint_init(ci);
 	xc_init_cpu(ci);
-	pool_cache_cpu_init(ci);
 	TAILQ_INIT(&ci->ci_data.cpu_biodone);
 	ncpu++;
 	ncpuonline++;

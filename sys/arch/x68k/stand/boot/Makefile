@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2007/11/11 05:33:12 isaki Exp $
+#	$NetBSD: Makefile,v 1.13 2006/06/29 03:46:43 lukem Exp $
 
 NOMAN=		# defined
 
@@ -51,7 +51,7 @@ LDLIBS=		-L${LIBSA} -lsa -L${LIBIOCS} -liocs
 .include "../Makefile.booters"
 
 realall: machine-links ${PROG}
-${PROG}:	${OBJS} ${LIBSA}/libsa.a ${LIBIOCS}/libiocs.a
+${PROG}:	${OBJS}
 	${_MKTARGET_LINK}
 	${LD} ${LINKFLAGS} -o ${PROG}.sym ${OBJS} ${LDLIBS}
 	${STRIP} -F ${BFDNAME} -o ${PROG} ${PROG}.sym

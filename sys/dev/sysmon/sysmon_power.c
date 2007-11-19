@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_power.c,v 1.30 2007/11/10 09:32:24 xtraeme Exp $	*/
+/*	$NetBSD: sysmon_power.c,v 1.29 2007/10/10 23:25:40 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.30 2007/11/10 09:32:24 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.29 2007/10/10 23:25:40 xtraeme Exp $");
 
 #include "opt_compat_netbsd.h"
 #include <sys/param.h>
@@ -156,7 +156,6 @@ static const struct power_event_description penvsys_type_desc[] = {
 
 #define SYSMON_MAX_POWER_EVENTS		32
 #define SYSMON_POWER_DICTIONARY_BUSY	0x01
-#define SYSMON_POWER_DICTIONARY_READY	0x02
 
 static power_event_t sysmon_power_event_queue[SYSMON_MAX_POWER_EVENTS];
 static int sysmon_power_event_queue_head;
@@ -266,7 +265,7 @@ sysmon_power_daemon_task(struct power_event_dictionary *ped,
 	power_event_t pev;
 	int rv, error = 0;
 
-	if (!ped || !ped->dict || !pev_data)
+	if (!pev_data)
 		return EINVAL;
 
 	mutex_enter(&sysmon_power_event_queue_mtx);
@@ -343,6 +342,12 @@ sysmon_power_daemon_task(struct power_event_dictionary *ped,
 	}
 
 	/*
+	 * The dictionary for the event was created successfully
+	 * at this point, time to add it into the list.
+	 */
+	SLIST_INSERT_HEAD(&pev_dict_list, ped, pev_dict_head);
+
+	/*
 	 * Enqueue the event.
 	 */
 	rv = sysmon_queue_power_event(&pev);
@@ -354,11 +359,8 @@ sysmon_power_daemon_task(struct power_event_dictionary *ped,
 		goto out;
 	} else {
 		/*
-		 * Notify the daemon that an event is ready and its
-		 * dictionary is ready to be fetched.
+		 * Notify the daemon that an event is ready.
 		 */
-		ped->flags |= SYSMON_POWER_DICTIONARY_READY;
-		SLIST_INSERT_HEAD(&pev_dict_list, ped, pev_dict_head);
 		cv_broadcast(&sysmon_power_event_queue_cv);
 		mutex_exit(&sysmon_power_event_queue_mtx);
 		selnotify(&sysmon_power_event_queue_selinfo, 0);
@@ -561,15 +563,9 @@ sysmonioctl_power(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		 */
 		mutex_enter(&sysmon_power_event_queue_mtx);
 		ped = SLIST_FIRST(&pev_dict_list);
-		if (!ped || !ped->dict) {
+		if (!ped) {
 			mutex_exit(&sysmon_power_event_queue_mtx);
 			error = ENOTSUP;
-			break;
-		}
-
-		if ((ped->flags & SYSMON_POWER_DICTIONARY_READY) == 0) {
-			mutex_exit(&sysmon_power_event_queue_mtx);
-			error = EINVAL;
 			break;
 		}
 
@@ -594,7 +590,6 @@ sysmonioctl_power(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		 */
 		mutex_enter(&sysmon_power_event_queue_mtx);
 		ped->flags &= ~SYSMON_POWER_DICTIONARY_BUSY;
-		ped->flags &= ~SYSMON_POWER_DICTIONARY_READY;
 		SLIST_REMOVE_HEAD(&pev_dict_list, pev_dict_head);
 		mutex_exit(&sysmon_power_event_queue_mtx);
 		sysmon_power_destroy_dictionary(ped);

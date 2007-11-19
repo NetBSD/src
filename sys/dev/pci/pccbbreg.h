@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbbreg.h,v 1.13 2007/11/16 18:36:52 dyoung Exp $	*/
+/*	$NetBSD: pccbbreg.h,v 1.12 2007/08/11 00:31:05 dyoung Exp $	*/
 /*
  * Copyright (c) 1999 HAYAKAWA Koichi.  All rights reserved.
  *
@@ -131,13 +131,6 @@
 #define PCI12XX_CBCTRL_SPK_ENA 0x0200 /* Speaker enable */
 #define PCI12XX_CBCTRL_INTR_DET 0x0100 /* functional interrupt detect */
 
-/* 1: permit burst read from CardBus (default: on) */
-#define	PCI1420_SYSCTRL_MRBURSTDN	__BIT(15)
-/* 1: permit burst read from PCI bus (default: off!) */
-#define	PCI1420_SYSCTRL_MRBURSTUP	__BIT(14)
-
-#define	PCI1420_SYSCTRL_MRBURST	\
-	(PCI1420_SYSCTRL_MRBURSTDN|PCI1420_SYSCTRL_MRBURSTUP)
 
 /* PCI_BCR_INTR additional bit for Rx5C46[567] */
 #define CB_BCRI_RL_3E0_ENA 0x08000000

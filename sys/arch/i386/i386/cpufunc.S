@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.S,v 1.3 2007/11/12 18:42:00 ad Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.2 2007/09/26 22:05:24 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -346,6 +346,7 @@ ENTRY(insb)
 	movl	8(%esp), %edx
 	movl	12(%esp), %edi
 	movl	16(%esp), %ecx
+	cld
 	rep
 	insb
 	popl	%edi
@@ -362,6 +363,7 @@ ENTRY(insw)
 	movl	8(%esp), %edx
 	movl	12(%esp), %edi
 	movl	16(%esp), %ecx
+	cld
 	rep
 	insw
 	popl	%edi
@@ -377,6 +379,7 @@ ENTRY(insl)
 	movl	8(%esp), %edx
 	movl	12(%esp), %edi
 	movl	16(%esp), %ecx
+	cld
 	rep
 	insl
 	popl	%edi
@@ -393,6 +396,7 @@ ENTRY(outsb)
 	movl	8(%esp), %edx
 	movl	12(%esp), %esi
 	movl	16(%esp), %ecx
+	cld
 	rep
 	outsb
 	popl	%esi
@@ -409,6 +413,7 @@ ENTRY(outsw)
 	movl	8(%esp), %edx
 	movl	12(%esp), %esi
 	movl	16(%esp), %ecx
+	cld
 	rep
 	outsw
 	popl	%esi
@@ -425,6 +430,7 @@ ENTRY(outsl)
 	movl	8(%esp), %edx
 	movl	12(%esp), %esi
 	movl	16(%esp), %ecx
+	cld
 	rep
 	outsl
 	popl	%esi

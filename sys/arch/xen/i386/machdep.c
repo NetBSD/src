@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.47 2007/11/14 17:55:01 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.45 2007/10/26 13:24:41 joerg Exp $	*/
 /*	NetBSD: machdep.c,v 1.559 2004/07/22 15:12:46 mycroft Exp 	*/
 
 /*-
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.47 2007/11/14 17:55:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.45 2007/10/26 13:24:41 joerg Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -81,6 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.47 2007/11/14 17:55:01 ad Exp $");
 #include "opt_compat_netbsd.h"
 #include "opt_compat_svr4.h"
 #include "opt_cpureset_delay.h"
+#include "opt_cputype.h"
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
 #include "opt_kgdb.h"
@@ -247,7 +248,10 @@ paddr_t msgbuf_paddr;
 
 vaddr_t	idt_vaddr;
 paddr_t	idt_paddr;
+
+#ifdef I586_CPU
 vaddr_t	pentium_idt_vaddr;
+#endif
 
 struct vm_map *exec_map = NULL;
 struct vm_map *mb_map = NULL;
@@ -1135,7 +1139,9 @@ union	descriptor *gdt, *ldt;
 struct gate_descriptor *idt;
 char idt_allocmap[NIDT];
 struct simplelock idt_lock = SIMPLELOCK_INITIALIZER;
+#ifdef I586_CPU
 union	descriptor *pentium_idt;
+#endif
 struct user *proc0paddr;
 extern vaddr_t proc0uarea;
 
@@ -1215,7 +1221,11 @@ void cpu_init_idt()
 	struct region_descriptor region;
 
 	panic("cpu_init_idt");
+#ifdef I586_CPU
 	setregion(&region, pentium_idt, NIDT * sizeof(idt[0]) - 1);
+#else
+	setregion(&region, idt, NIDT * sizeof(idt[0]) - 1);
+#endif
         lidt(&region);
 }
 
@@ -1868,8 +1878,10 @@ init386(paddr_t first_avail)
 
 #if !defined(XEN)
 	idt = (struct gate_descriptor *)idt_vaddr;
+#ifdef I586_CPU
  	pmap_kenter_pa(pentium_idt_vaddr, idt_paddr, VM_PROT_READ);
 	pentium_idt = (union descriptor *)pentium_idt_vaddr;
+#endif
 #endif
 	pmap_update(pmap_kernel());
 
@@ -2355,6 +2367,51 @@ void
 cpu_initclocks()
 {
 	(*initclock_func)();
+}
+
+void
+cpu_need_resched(struct cpu_info *ci, int flags)
+{
+	bool immed = (flags & RESCHED_IMMED) != 0;
+
+	if (ci->ci_want_resched && !immed)
+		return;
+	ci->ci_want_resched = 1;
+
+	if (ci->ci_curlwp != ci->ci_data.cpu_idlelwp) {
+		aston(ci->ci_curlwp);
+#ifdef MULTIPROCESSOR
+		if (immed && ci != curcpu()) {
+			x86_send_ipi(ci, 0);
+		}
+#endif
+	} else {
+#ifdef MULTIPROCESSOR
+		if (ci != curcpu())
+			x86_send_ipi(ci, 0);
+#endif
+	}
+}
+
+void
+cpu_signotify(struct lwp *l)
+{
+
+	aston(l);
+#ifdef MULTIPROCESSOR
+	if (l->l_cpu != NULL && l->l_cpu != curcpu())
+		x86_send_ipi(l->l_cpu, 0);
+#endif
+}
+
+void
+cpu_need_proftick(struct lwp *l)
+{
+
+	KASSERT(l->l_cpu == curcpu());
+
+	l->l_pflag |= LP_OWEUPC;
+	aston(l);
 }
 
 /*

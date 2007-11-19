@@ -1,4 +1,4 @@
-/*      $NetBSD: procfs_linux.c,v 1.45 2007/11/12 14:11:47 ad Exp $      */
+/*      $NetBSD: procfs_linux.c,v 1.42 2007/10/11 18:46:19 ad Exp $      */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.45 2007/11/12 14:11:47 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.42 2007/10/11 18:46:19 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,24 +95,13 @@ get_proc_size_info(struct lwp *l, unsigned long *stext, unsigned long *etext, un
 			break;
 		}
 	}
-#ifdef LINUX_USRSTACK32
-	if (strcmp(p->p_emul->e_name, "linux32") == 0 &&
-	    LINUX_USRSTACK32 < USRSTACK32)
-		*sstack = (unsigned long)LINUX_USRSTACK32;
-	else
-#endif
 #ifdef LINUX_USRSTACK
 	if (strcmp(p->p_emul->e_name, "linux") == 0 &&
 	    LINUX_USRSTACK < USRSTACK)
-		*sstack = (unsigned long)LINUX_USRSTACK;
+		*sstack = (unsigned long) LINUX_USRSTACK;
 	else
 #endif
-#ifdef	USRSTACK32
-	if (strstr(p->p_emul->e_name, "32") != NULL)
-		*sstack = (unsigned long)USRSTACK32;
-	else
-#endif
-		*sstack = (unsigned long)USRSTACK;
+		*sstack = (unsigned long) USRSTACK;
 
 	/*
 	 * jdk 1.6 compares low <= addr && addr < high
@@ -187,7 +176,6 @@ procfs_dodevices(struct lwp *curl, struct proc *p,
 	char *bf;
 	int offset = 0;
 	int i, error = ENAMETOOLONG;
-	extern kmutex_t devsw_lock;
 
 	/* XXX elad - may need filtering. */
 
@@ -197,7 +185,6 @@ procfs_dodevices(struct lwp *curl, struct proc *p,
 	if (offset >= LBFSZ)
 		goto out;
 
-	mutex_enter(&devsw_lock);
 	for (i = 0; i < max_devsw_convs; i++) {
 		if ((devsw_conv[i].d_name == NULL) || 
 		    (devsw_conv[i].d_cmajor == -1))
@@ -205,17 +192,13 @@ procfs_dodevices(struct lwp *curl, struct proc *p,
 
 		offset += snprintf(&bf[offset], LBFSZ - offset, 
 		    "%3d %s\n", devsw_conv[i].d_cmajor, devsw_conv[i].d_name);
-		if (offset >= LBFSZ) {
-			mutex_exit(&devsw_lock);
+		if (offset >= LBFSZ)
 			goto out;
-		}
 	}
 
 	offset += snprintf(&bf[offset], LBFSZ - offset, "\nBlock devices:\n");
-	if (offset >= LBFSZ) {
-		mutex_exit(&devsw_lock);
+	if (offset >= LBFSZ)
 		goto out;
-	}
 
 	for (i = 0; i < max_devsw_convs; i++) {
 		if ((devsw_conv[i].d_name == NULL) || 
@@ -224,12 +207,9 @@ procfs_dodevices(struct lwp *curl, struct proc *p,
 
 		offset += snprintf(&bf[offset], LBFSZ - offset, 
 		    "%3d %s\n", devsw_conv[i].d_bmajor, devsw_conv[i].d_name);
-		if (offset >= LBFSZ) {
-			mutex_exit(&devsw_lock);
+		if (offset >= LBFSZ)
 			goto out;
-		}
 	}
-	mutex_exit(&devsw_lock);
 
 	error = uiomove_frombuf(bf, offset, uio);
 out:
@@ -558,6 +538,8 @@ procfs_domounts(struct lwp *curl, struct proc *p,
 	struct mount *mp, *nmp;
 	struct statvfs *sfs;
 	int error = 0;
+
+	/* XXX elad - may need filtering. */
 
 	bf = malloc(LBFSZ, M_TEMP, M_WAITOK);
 	mutex_enter(&mountlist_lock);

@@ -1,7 +1,7 @@
-/*	$NetBSD: tty_conf.c,v 1.54 2007/11/07 15:56:22 ad Exp $	*/
+/*	$NetBSD: tty_conf.c,v 1.53 2007/03/04 06:03:10 christos Exp $	*/
 
 /*-
- * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2005 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_conf.c,v 1.54 2007/11/07 15:56:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_conf.c,v 1.53 2007/03/04 06:03:10 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,7 +82,8 @@ __KERNEL_RCSID(0, "$NetBSD: tty_conf.c,v 1.54 2007/11/07 15:56:22 ad Exp $");
 #include <sys/tty.h>
 #include <sys/ttycom.h>
 #include <sys/conf.h>
-#include <sys/mutex.h>
+#include <sys/once.h>
+#include <sys/lock.h>
 #include <sys/queue.h>
 
 static struct linesw termios_disc = {
@@ -117,6 +118,7 @@ static struct linesw ntty_disc = {	/* old NTTYDISC */
 };
 
 static LIST_HEAD(, linesw) ttyldisc_list = LIST_HEAD_INITIALIZER(ttyldisc_head);
+static struct simplelock ttyldisc_list_slock = SIMPLELOCK_INITIALIZER;
 
 /*
  * Note: We don't bother refcounting termios_disc and ntty_disc; they can't
@@ -169,7 +171,9 @@ ttyerrpoll(struct tty *tp, int events, struct lwp *l)
 	return (POLLERR);
 }
 
-void
+static ONCE_DECL(ttyldisc_init_once);
+
+static int
 ttyldisc_init(void)
 {
 
@@ -177,6 +181,8 @@ ttyldisc_init(void)
 		panic("ttyldisc_init: termios_disc");
 	if (ttyldisc_attach(&ntty_disc) != 0)
 		panic("ttyldisc_init: ntty_disc");
+
+	return 0;
 }
 
 static struct linesw *
@@ -201,11 +207,13 @@ ttyldisc_lookup(const char *name)
 {
 	struct linesw *disc;
 
-	mutex_spin_enter(&tty_lock);
+	RUN_ONCE(&ttyldisc_init_once, ttyldisc_init);
+
+	simple_lock(&ttyldisc_list_slock);
 	disc = ttyldisc_lookup_locked(name);
 	if (disc != NULL)
 		TTYLDISC_HOLD(disc);
-	mutex_spin_exit(&tty_lock);
+	simple_unlock(&ttyldisc_list_slock);
 
 	return (disc);
 }
@@ -219,17 +227,19 @@ ttyldisc_lookup_bynum(int num)
 {
 	struct linesw *disc;
 
-	mutex_spin_enter(&tty_lock);
+	RUN_ONCE(&ttyldisc_init_once, ttyldisc_init);
+
+	simple_lock(&ttyldisc_list_slock);
 
 	LIST_FOREACH(disc, &ttyldisc_list, l_list) {
 		if (disc->l_no == num) {
 			TTYLDISC_HOLD(disc);
-			mutex_spin_exit(&tty_lock);
+			simple_unlock(&ttyldisc_list_slock);
 			return (disc);
 		}
 	}
 
-	mutex_spin_exit(&tty_lock);
+	simple_unlock(&ttyldisc_list_slock);
 	return (NULL);
 }
 
@@ -244,9 +254,9 @@ ttyldisc_release(struct linesw *disc)
 	if (disc == NULL)
 		return;
 
-	mutex_spin_enter(&tty_lock);
+	simple_lock(&ttyldisc_list_slock);
 	TTYLDISC_RELE(disc);
-	mutex_spin_exit(&tty_lock);
+	simple_unlock(&ttyldisc_list_slock);
 }
 
 #define	TTYLDISC_LEGACY_NUMBER_MIN	10
@@ -310,17 +320,17 @@ ttyldisc_attach(struct linesw *disc)
 	if (strlen(disc->l_name) >= TTLINEDNAMELEN)
 		return (ENAMETOOLONG);
 
-	mutex_spin_enter(&tty_lock);
+	simple_lock(&ttyldisc_list_slock);
 
 	if (ttyldisc_lookup_locked(disc->l_name) != NULL) {
-		mutex_spin_exit(&tty_lock);
+		simple_unlock(&ttyldisc_list_slock);
 		return (EEXIST);
 	}
 
 	ttyldisc_assign_legacy_number(disc);
 	LIST_INSERT_HEAD(&ttyldisc_list, disc, l_list);
 
-	mutex_spin_exit(&tty_lock);
+	simple_unlock(&ttyldisc_list_slock);
 
 	return (0);
 }
@@ -339,16 +349,16 @@ ttyldisc_detach(struct linesw *disc)
 	ttyldisc_release(ldisc);
 #endif
 
-	mutex_spin_enter(&tty_lock);
+	simple_lock(&ttyldisc_list_slock);
 
 	if (TTYLDISC_ISINUSE(disc)) {
-		mutex_spin_exit(&tty_lock);
+		simple_unlock(&ttyldisc_list_slock);
 		return (EBUSY);
 	}
 
 	LIST_REMOVE(disc, l_list);
 
-	mutex_spin_exit(&tty_lock);
+	simple_unlock(&ttyldisc_list_slock);
 
 	return (0);
 }

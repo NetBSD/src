@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.69 2007/11/15 19:18:34 ad Exp $
+#	$NetBSD: files.xen,v 1.68 2007/10/26 22:33:23 xtraeme Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -7,6 +7,9 @@ maxpartitions 8
 maxusers 2 16 128
 
 defparam opt_kernbase.h	KERNBASE
+
+# Processor type options.
+defflag	opt_cputype.h	I686_CPU
 
 # options for MP configuration through the MP spec
 defflag opt_mpbios.h MPBIOS MPVERBOSE MPDEBUG MPBIOS_SCANPCI

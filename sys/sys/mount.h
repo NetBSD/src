@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.166 2007/10/10 20:42:32 ad Exp $	*/
+/*	$NetBSD: mount.h,v 1.166.4.1 2007/11/19 00:34:31 mjf Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -87,6 +87,7 @@
 #define MOUNT_PUFFS	"puffs"		/* Pass-to-Userspace filesystem */
 #define MOUNT_HFS	"hfs"		/* Apple HFS+ Filesystem */
 #define MOUNT_EFS	"efs"		/* SGI's Extent Filesystem */
+#define MOUNT_DEVFS	"devfs"		/* Device Filesystem */
 
 /*
  * Structure per mounted file system.  Each mounted file system has an

@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.5 2007/11/18 05:00:08 isaki Exp $	*/
+/*	$NetBSD: fd.c,v 1.3 2006/01/25 18:28:28 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 MINOURA Makoto.
@@ -27,27 +27,22 @@
 
 #include <sys/param.h>
 #include <sys/disklabel.h>
-#include <machine/stdarg.h>
 #include <lib/libsa/stand.h>
 
-#include "libx68k.h"
 #include "fdvar.h"
 #include "iocs.h"
 
-/* fdopen(struct open_file *f, int id, int part) */
+int fdopen(struct open_file *, int, int);
+int fdclose(struct open_file*);
+int fdstrategy(void *devdata, int rw, daddr_t blk, size_t, void*, size_t*);
+
+
 int
-fdopen(struct open_file *f, ...)
+fdopen (struct open_file *f, int id, int part)
 {
 	int error;
 	struct fd_softc *sc;
 	struct fdfmt fdfmt;
-	int id, part;
-	va_list ap;
-
-	va_start(ap, f);
-	id   = va_arg(ap, int);
-	part = va_arg(ap, int);
-	va_end(ap);
 
 	if (id < 0 || id > 3)
 		return ENXIO;
@@ -60,15 +55,15 @@ fdopen(struct open_file *f, ...)
 
 	/* detect the sector size */
 	error = IOCS_B_RECALI((0x90 + id) << 8);
-	error = fd_check_format(id, 0, &sc->fmt);
+	error = fd_check_format (id, 0, &sc->fmt);
 	if (error < 0) {
 		IOCS_B_DRVCHK((0x90 + id) << 8, 3); /* unlock */
-		dealloc(sc, sizeof(struct fd_softc));
+		dealloc(sc, sizeof (struct fd_softc));
 		return -error;
 	}
 
 	/* check the second side */
-	error = fd_check_format(id, 1, &fdfmt);
+	error = fd_check_format (id, 1, &fdfmt);
 	if (error == 0)		/* valid second side; set the #heads */
 		sc->fmt.maxsec.H = fdfmt.maxsec.H;
 
@@ -79,18 +74,18 @@ fdopen(struct open_file *f, ...)
 }
 
 int
-fdclose(struct open_file *f)
+fdclose (struct open_file *f)
 {
 	struct fd_softc *sc = f->f_devdata;
 
 	IOCS_B_DRVCHK((0x90 + sc->unit) << 8, 3);
-	dealloc(sc, sizeof(struct fd_softc));
+	dealloc (sc, sizeof (struct fd_softc));
 	return 0;
 }
 
 int
-fdstrategy(void *arg, int rw, daddr_t dblk, size_t size,
-           void *buf, size_t *rsize)
+fdstrategy (void *arg, int rw, daddr_t dblk, size_t size,
+	    void *buf, size_t *rsize)
 {
 	struct fd_softc *sc = arg;
 	int cyl, head, sect;
@@ -102,7 +97,7 @@ fdstrategy(void *arg, int rw, daddr_t dblk, size_t size,
 			*rsize = 0;
 		return 0;
 	}
-	nbytes = howmany(size, 128 << sc->fmt.minsec.N)
+	nbytes = howmany (size, 128 << sc->fmt.minsec.N)
 		* (128 << sc->fmt.minsec.N);
 
 	nhead = sc->fmt.maxsec.H - sc->fmt.minsec.H + 1;
@@ -122,9 +117,8 @@ fdstrategy(void *arg, int rw, daddr_t dblk, size_t size,
 	if (error & 0xf8ffff00) {
 		nbytes = 0;
 		error = EIO;
-	} else {
+	} else
 		error = 0;
-	}
 
 	if (rsize)
 		*rsize = nbytes;

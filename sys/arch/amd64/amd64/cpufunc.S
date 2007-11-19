@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.S,v 1.2 2007/11/12 18:42:00 ad Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.1 2007/09/26 19:48:34 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -437,6 +437,7 @@ NENTRY(insb)
 	movq	%rdi, %rdx
 	movq	%rsi, %rdi
 	movq	%rdx, %rcx
+	cld
 	rep
 	insb
 	ret
@@ -451,6 +452,7 @@ NENTRY(insw)
 	movq	%rdi, %rdx
 	movq	%rsi, %rdi
 	movq	%rdx, %rcx
+	cld
 	rep
 	insw
 	ret
@@ -465,6 +467,7 @@ NENTRY(insl)
 	movq	%rdi, %rdx
 	movq	%rsi, %rdi
 	movq	%rdx, %rcx
+	cld
 	rep
 	insl
 	ret
@@ -478,6 +481,7 @@ NENTRY(outb)
 NENTRY(outsb)
 	movq	%rdi, %rdx
 	movq	%rdx, %rcx
+	cld
 	rep
 	outsb
 	ret
@@ -491,6 +495,7 @@ NENTRY(outw)
 NENTRY(outsw)
 	movq	%rdi, %rdx
 	movq	%rdx, %rcx
+	cld
 	rep
 	outsw
 	ret
@@ -504,6 +509,7 @@ NENTRY(outl)
 NENTRY(outsl)
 	movq	%rdi, %rdx
 	movq	%rdx, %rcx
+	cld
 	rep
 	outsl
 	ret

@@ -1,4 +1,4 @@
-/*	$NetBSD: viaide.c,v 1.47 2007/11/14 14:46:12 xtraeme Exp $	*/
+/*	$NetBSD: viaide.c,v 1.45 2007/10/04 13:30:59 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.47 2007/11/14 14:46:12 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.45 2007/10/04 13:30:59 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -208,16 +208,6 @@ static const struct pciide_product_desc pciide_nvidia_products[] = {
 	{ PCI_PRODUCT_NVIDIA_MCP65_IDE,
 	  0,
 	  "NVIDIA MCP65 IDE Controller",
-	  via_chip_map
-	},
-	{ PCI_PRODUCT_NVIDIA_MCP73_IDE,
-	  0,
-	  "NVIDIA MCP73 IDE Controller",
-	  via_chip_map
-	},
-	{ PCI_PRODUCT_NVIDIA_MCP77_IDE,
-	  0,
-	  "NVIDIA MCP77 IDE Controller",
 	  via_chip_map
 	},
 	{ PCI_PRODUCT_NVIDIA_MCP61_SATA,
@@ -504,8 +494,6 @@ unknown:
 		case PCI_PRODUCT_NVIDIA_MCP61_IDE:
 		case PCI_PRODUCT_NVIDIA_MCP65_IDE:
 		case PCI_PRODUCT_NVIDIA_MCP67_IDE:
-		case PCI_PRODUCT_NVIDIA_MCP73_IDE:
-		case PCI_PRODUCT_NVIDIA_MCP77_IDE:
 			sc->sc_wdcdev.sc_atac.atac_udma_cap = 6;
 			break;
 		}

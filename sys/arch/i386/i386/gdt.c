@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.c,v 1.42 2007/11/14 14:44:14 ad Exp $	*/
+/*	$NetBSD: gdt.c,v 1.41 2007/10/17 19:54:45 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.42 2007/11/14 14:44:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.41 2007/10/17 19:54:45 garbled Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -139,7 +139,7 @@ gdt_init()
 	pmap_update(pmap_kernel());
 	memcpy(gdt, old_gdt, NGDT * sizeof(gdt[0]));
 	ci->ci_gdt = gdt;
-	setsegment(&ci->ci_gdt[GCPU_SEL].sd, ci, 0xfffff,
+	setsegment(&ci->ci_gdt[GCPU_SEL].sd, ci, sizeof(struct cpu_info)-1,
 	    SDT_MEMRWA, SEL_KPL, 1, 1);
 
 	gdt_init_cpu(ci);
@@ -170,7 +170,7 @@ gdt_alloc_cpu(struct cpu_info *ci)
 	pmap_update(pmap_kernel());
 	memset(ci->ci_gdt, 0, min_len);
 	memcpy(ci->ci_gdt, gdt, gdt_count * sizeof(gdt[0]));
-	setsegment(&ci->ci_gdt[GCPU_SEL].sd, ci, 0xfffff,
+	setsegment(&ci->ci_gdt[GCPU_SEL].sd, ci, sizeof(struct cpu_info)-1,
 	    SDT_MEMRWA, SEL_KPL, 1, 1);
 }
 

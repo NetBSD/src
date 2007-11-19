@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.7 2007/11/10 20:06:23 ad Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.6 2007/10/18 15:28:31 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -56,9 +56,13 @@
 #define	FULL
 #endif
 
-#define	END(name,a)	.align	a; LABEL(name)
+#if defined(MULTIPROCESSOR)
+#define	LOCK		lock
+#else
+#define	LOCK		/* nothing */
+#endif
 
-#define	LOCK(name)	LABEL(name) lock
+#define	END(name,a)	.align	a; LABEL(name)
 
 #ifndef LOCKDEBUG
 
@@ -72,7 +76,7 @@
 NENTRY(mutex_enter)				/* 0x0000, 25 bytes */
 	movq	CPUVAR(CURLWP), %rcx
 	xorq	%rax, %rax
-	LOCK(lockpatch1)
+	LOCK
 	cmpxchgq %rcx, MTX_OWNER(%rdi)
 	jnz,pn	_C_LABEL(mutex_vector_enter)
 	ret
@@ -112,7 +116,7 @@ NENTRY(mutex_spin_enter)
 	cmovgl	%esi, %ecx
 	movl	%ecx, CPU_INFO_ILEVEL(%r8)	/* splraiseipl() */
 #if defined(FULL)
-	LOCK(lockpatch11)
+	LOCK
 	cmpxchgb %ah, MTX_LOCK(%rdi)		/* lock */
 	jnz,pn	_C_LABEL(mutex_spin_retry)	/* failed; hard case */
 #endif
@@ -190,7 +194,7 @@ NENTRY(rw_enter)				/* 0x00c0, 62 bytes */
 	testb	$(RW_WRITE_LOCKED|RW_WRITE_WANTED), %al
 	leaq	RW_READ_INCR(%rax), %rdx 
 	jnz,pn	_C_LABEL(rw_vector_enter)
-	LOCK(lockpatch2)
+	LOCK
 	cmpxchgq %rdx, RW_OWNER(%rdi)
 	jnz,pn	1b
 	ret
@@ -201,7 +205,7 @@ NENTRY(rw_enter)				/* 0x00c0, 62 bytes */
 2:	movq	CPUVAR(CURLWP), %rcx
 	xorq	%rax, %rax
 	orq	$RW_WRITE_LOCKED, %rcx
-	LOCK(lockpatch3)
+	LOCK
 	cmpxchgq %rcx, RW_OWNER(%rdi)
 	jnz,pn	_C_LABEL(rw_vector_enter)
 	ret
@@ -224,7 +228,7 @@ NENTRY(rw_exit)					/* 0x0100, 64 bytes */
 	cmpq	$RW_READ_INCR, %rax
 	leaq	-RW_READ_INCR(%rax), %rdx
 	jb,pn	3f
-	LOCK(lockpatch4)
+	LOCK
 	cmpxchgq %rdx, RW_OWNER(%rdi)
 	jnz,pn	1b
 	ret
@@ -235,7 +239,7 @@ NENTRY(rw_exit)					/* 0x0100, 64 bytes */
 2:	leaq	-RW_WRITE_LOCKED(%rax), %rdx
 	subq	CPUVAR(CURLWP), %rdx
 	jnz,pn	3f
-	LOCK(lockpatch5)
+	LOCK
 	cmpxchgq %rdx, RW_OWNER(%rdi)
 	jnz	3f
 	ret
@@ -251,78 +255,35 @@ NENTRY(rw_exit)					/* 0x0100, 64 bytes */
  */
 NENTRY(_lock_cas)				/* 0x0140, 19 bytes */
 	movq	%rsi, %rax
-	LOCK(lockpatch6)
+	LOCK
 	cmpxchgq %rdx, (%rdi)
 	movq	$0, %rax
 	setz	%al				/* = 1 if success */
 	ret
 
 /*
- * Memory barrier operations, may be patched at runtime.
+ * Memory barrier operations.
  */
-	.align	8
-ENTRY(mb_read)
-	LOCK(lockpatch7)
-	addq	$0, 0(%rsp)
+NENTRY(mb_read)
+	lfence
 	ret
 END(mb_read_end, 8)
 
-ENTRY(mb_write)
-	nop
+NENTRY(mb_write)
+	/* Nothing just yet */
 	ret
 END(mb_write_end, 8)
 
-ENTRY(mb_memory)
-	LOCK(lockpatch8)
-	addq	$0, 0(%rsp)
-	ret
-END(mb_memory_end, 8)
-
-ENTRY(sse2_mb_read)
-	lfence
-	ret
-END(sse2_mb_read_end, 8)
-
-ENTRY(sse2_mb_memory)
+NENTRY(mb_memory)
 	mfence
 	ret
-END(sse2_mb_memory_end, 8)
+END(mb_memory_end, 8)
 
 /*
  * Make sure code after the ret is properly encoded with nopness
  * by gas, or could stall newer processors.
  */
 
-ENTRY(x86_mb_nop)
-	nop
+NENTRY(x86_mb_nop)
 	ret
 END(x86_mb_nop_end, 8)
-
-/*
- * XXX Don't belong here.
- */
-ENTRY(atomic_inc_uint)
-	LOCK(lockpatch9)
-	incl	(%rdi)
-	ret
-
-ENTRY(atomic_dec_uint_nv)
-	movl	$-1, %eax
-	LOCK(lockpatch10)
-	xaddl	%eax, (%rdi)
-	decl	%eax
-	ret
-
-/*
- * Patchpoints to replace with NOP when ncpu == 1.
- */
-#ifndef LOCKDEBUG
-LABEL(x86_lockpatch)
-	.quad	lockpatch1, lockpatch2, lockpatch3, lockpatch4
-	.quad	lockpatch5, lockpatch6, lockpatch7, lockpatch8
-	.quad	lockpatch9, lockpatch10
-#ifdef FULL
-	.quad	lockpatch11
-#endif
-	.quad	0
-#endif

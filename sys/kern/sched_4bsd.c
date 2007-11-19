@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_4bsd.c,v 1.8 2007/11/06 00:42:43 ad Exp $	*/
+/*	$NetBSD: sched_4bsd.c,v 1.7 2007/10/10 21:24:53 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.8 2007/11/06 00:42:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.7 2007/10/10 21:24:53 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -103,30 +103,28 @@ __KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.8 2007/11/06 00:42:43 ad Exp $");
 /*
  * Run queues.
  *
- * We maintain bitmasks of non-empty queues in order speed up finding
- * the first runnable process.  Since there can be (by definition) few
- * real time LWPs in the the system, we maintain them on a linked list,
- * sorted by priority.
+ * We have 32 run queues in descending priority of 0..31.  We maintain
+ * a bitmask of non-empty queues in order speed up finding the first
+ * runnable process.  The bitmask is maintained only by machine-dependent
+ * code, allowing the most efficient instructions to be used to find the
+ * first non-empty queue.
  */
 
-#define	PPB_SHIFT	5
-#define	PPB_MASK	31
+#define	RUNQUE_NQS		32      /* number of runqueues */
+#define	PPQ	(128 / RUNQUE_NQS)	/* priorities per queue */
 
-#define	NUM_Q		(NPRI_KERNEL + NPRI_USER)
-#define	NUM_PPB		(1 << PPB_SHIFT)
-#define	NUM_B		(NUM_Q / NUM_PPB)
-
+typedef struct subqueue {
+	TAILQ_HEAD(, lwp) sq_queue;
+} subqueue_t;
 typedef struct runqueue {
-	TAILQ_HEAD(, lwp) rq_fixedpri;		/* realtime, kthread */
-	u_int		rq_count;		/* total # jobs */
-	uint32_t	rq_bitmap[NUM_B];	/* bitmap of queues */
-	TAILQ_HEAD(, lwp) rq_queue[NUM_Q];	/* user+kernel */
+	subqueue_t rq_subqueues[RUNQUE_NQS];	/* run queues */
+	uint32_t rq_bitmap;	/* bitmap of non-empty queues */
 } runqueue_t;
-
 static runqueue_t global_queue; 
 
 static void updatepri(struct lwp *);
 static void resetpriority(struct lwp *);
+static void resetprocpriority(struct proc *);
 
 fixpt_t decay_cpu(fixpt_t, fixpt_t);
 
@@ -137,8 +135,6 @@ kmutex_t sched_mutex;
 
 /* Number of hardclock ticks per sched_tick() */
 int rrticks;
-
-const int schedppq = 1;
 
 /*
  * Force switch among equal priority processes every 100ms.
@@ -171,39 +167,28 @@ sched_tick(struct cpu_info *ci)
 	cpu_need_resched(ci, 0);
 }
 
-/*
- * Why PRIO_MAX - 2? From setpriority(2):
- *
- *	prio is a value in the range -20 to 20.  The default priority is
- *	0; lower priorities cause more favorable scheduling.  A value of
- *	19 or 20 will schedule a process only when nothing at priority <=
- *	0 is runnable.
- *
- * This gives estcpu influence over 18 priority levels, and leaves nice
- * with 40 levels.  One way to think about it is that nice has 20 levels
- * either side of estcpu's 18.
- */
+#define	NICE_WEIGHT 2			/* priorities per nice level */
+
 #define	ESTCPU_SHIFT	11
-#define	ESTCPU_MAX	((PRIO_MAX - 2) << ESTCPU_SHIFT)
-#define	ESTCPU_ACCUM	(1 << (ESTCPU_SHIFT - 1))
+#define	ESTCPU_MAX	((NICE_WEIGHT * PRIO_MAX - PPQ) << ESTCPU_SHIFT)
 #define	ESTCPULIM(e)	min((e), ESTCPU_MAX)
 
 /*
  * Constants for digital decay and forget:
- *	90% of (l_estcpu) usage in 5 * loadav time
- *	95% of (l_pctcpu) usage in 60 seconds (load insensitive)
+ *	90% of (p_estcpu) usage in 5 * loadav time
+ *	95% of (p_pctcpu) usage in 60 seconds (load insensitive)
  *          Note that, as ps(1) mentions, this can let percentages
  *          total over 100% (I've seen 137.9% for 3 processes).
  *
- * Note that hardclock updates l_estcpu and l_cpticks independently.
+ * Note that hardclock updates p_estcpu and p_cpticks independently.
  *
- * We wish to decay away 90% of l_estcpu in (5 * loadavg) seconds.
+ * We wish to decay away 90% of p_estcpu in (5 * loadavg) seconds.
  * That is, the system wants to compute a value of decay such
  * that the following for loop:
  * 	for (i = 0; i < (5 * loadavg); i++)
- * 		l_estcpu *= decay;
+ * 		p_estcpu *= decay;
  * will compute
- * 	l_estcpu *= 0.1;
+ * 	p_estcpu *= 0.1;
  * for all values of loadavg:
  *
  * Mathematically this loop can be expressed by saying:
@@ -275,8 +260,8 @@ decay_cpu(fixpt_t loadfac, fixpt_t estcpu)
 }
 
 /*
- * For all load averages >= 1 and max l_estcpu of (255 << ESTCPU_SHIFT),
- * sleeping for at least seven times the loadfactor will decay l_estcpu to
+ * For all load averages >= 1 and max p_estcpu of (255 << ESTCPU_SHIFT),
+ * sleeping for at least seven times the loadfactor will decay p_estcpu to
  * less than (1 << ESTCPU_SHIFT).
  *
  * note that our ESTCPU_MAX is actually much smaller than (255 << ESTCPU_SHIFT).
@@ -305,26 +290,9 @@ decay_cpu_batch(fixpt_t loadfac, fixpt_t estcpu, unsigned int n)
 void
 sched_pstats_hook(struct lwp *l)
 {
-	fixpt_t loadfac;
-	int sleeptm;
 
-	/*
-	 * If the LWP has slept an entire second, stop recalculating
-	 * its priority until it wakes up.
-	 */
-	if (l->l_stat == LSSLEEP || l->l_stat == LSSTOP ||
-	    l->l_stat == LSSUSPENDED) {
-		l->l_slptime++;
-		sleeptm = 1;
-	} else {
-		sleeptm = 0x7fffffff;
-	}
-
-	if (l->l_slptime <= sleeptm) {
-		loadfac = 2 * (averunnable.ldavg[0]);
-		l->l_estcpu = decay_cpu(loadfac, l->l_estcpu);
+	if (l->l_slptime <= 1 && l->l_priority >= PUSER)
 		resetpriority(l);
-	}
 }
 
 /*
@@ -333,6 +301,7 @@ sched_pstats_hook(struct lwp *l)
 static void
 updatepri(struct lwp *l)
 {
+	struct proc *p = l->l_proc;
 	fixpt_t loadfac;
 
 	KASSERT(lwp_locked(l, NULL));
@@ -341,132 +310,158 @@ updatepri(struct lwp *l)
 	loadfac = loadfactor(averunnable.ldavg[0]);
 
 	l->l_slptime--; /* the first time was done in sched_pstats */
-	l->l_estcpu = decay_cpu_batch(loadfac, l->l_estcpu, l->l_slptime);
+	/* XXX NJWLWP */
+	/* XXXSMP occasionally unlocked, should be per-LWP */
+	p->p_estcpu = decay_cpu_batch(loadfac, p->p_estcpu, l->l_slptime);
 	resetpriority(l);
 }
+
+/*
+ * On some architectures, it's faster to use a MSB ordering for the priorites
+ * than the traditional LSB ordering.
+ */
+#define	RQMASK(n) (0x00000001 << (n))
+
+/*
+ * The primitives that manipulate the run queues.  whichqs tells which
+ * of the 32 queues qs have processes in them.  sched_enqueue() puts processes
+ * into queues, sched_dequeue removes them from queues.  The running process is
+ * on no queue, other processes are on a queue related to p->p_priority,
+ * divided by 4 actually to shrink the 0-127 range of priorities into the 32
+ * available queues.
+ */
+#ifdef RQDEBUG
+static void
+runqueue_check(const runqueue_t *rq, int whichq, struct lwp *l)
+{
+	const subqueue_t * const sq = &rq->rq_subqueues[whichq];
+	const uint32_t bitmap = rq->rq_bitmap;
+	struct lwp *l2;
+	int found = 0;
+	int die = 0;
+	int empty = 1;
+
+	TAILQ_FOREACH(l2, &sq->sq_queue, l_runq) {
+		if (l2->l_stat != LSRUN) {
+			printf("runqueue_check[%d]: lwp %p state (%d) "
+			    " != LSRUN\n", whichq, l2, l2->l_stat);
+		}
+		if (l2 == l)
+			found = 1;
+		empty = 0;
+	}
+	if (empty && (bitmap & RQMASK(whichq)) != 0) {
+		printf("runqueue_check[%d]: bit set for empty run-queue %p\n",
+		    whichq, rq);
+		die = 1;
+	} else if (!empty && (bitmap & RQMASK(whichq)) == 0) {
+		printf("runqueue_check[%d]: bit clear for non-empty "
+		    "run-queue %p\n", whichq, rq);
+		die = 1;
+	}
+	if (l != NULL && (bitmap & RQMASK(whichq)) == 0) {
+		printf("runqueue_check[%d]: bit clear for active lwp %p\n",
+		    whichq, l);
+		die = 1;
+	}
+	if (l != NULL && empty) {
+		printf("runqueue_check[%d]: empty run-queue %p with "
+		    "active lwp %p\n", whichq, rq, l);
+		die = 1;
+	}
+	if (l != NULL && !found) {
+		printf("runqueue_check[%d]: lwp %p not in runqueue %p!",
+		    whichq, l, rq);
+		die = 1;
+	}
+	if (die)
+		panic("runqueue_check: inconsistency found");
+}
+#else /* RQDEBUG */
+#define	runqueue_check(a, b, c)	/* nothing */
+#endif /* RQDEBUG */
 
 static void
 runqueue_init(runqueue_t *rq)
 {
 	int i;
 
-	for (i = 0; i < NUM_Q; i++)
-		TAILQ_INIT(&rq->rq_queue[i]);
-	for (i = 0; i < NUM_B; i++)
-		rq->rq_bitmap[i] = 0;
-	TAILQ_INIT(&rq->rq_fixedpri);
-	rq->rq_count = 0;
+	for (i = 0; i < RUNQUE_NQS; i++)
+		TAILQ_INIT(&rq->rq_subqueues[i].sq_queue);
 }
 
 static void
 runqueue_enqueue(runqueue_t *rq, struct lwp *l)
 {
-	pri_t pri;
-	lwp_t *l2;
+	subqueue_t *sq;
+	const int whichq = lwp_eprio(l) / PPQ;
 
 	KASSERT(lwp_locked(l, l->l_cpu->ci_schedstate.spc_mutex));
 
-	pri = lwp_eprio(l);
-	rq->rq_count++;
-
-	if (pri >= PRI_KTHREAD) {
-		TAILQ_FOREACH(l2, &rq->rq_fixedpri, l_runq) {
-			if (lwp_eprio(l2) < pri) {
-				TAILQ_INSERT_BEFORE(l2, l, l_runq);
-				return;
-			}
-		}
-		TAILQ_INSERT_TAIL(&rq->rq_fixedpri, l, l_runq);
-		return;
-	}
-
-	rq->rq_bitmap[pri >> PPB_SHIFT] |=
-	    (0x80000000U >> (pri & PPB_MASK));
-	TAILQ_INSERT_TAIL(&rq->rq_queue[pri], l, l_runq);
+	runqueue_check(rq, whichq, NULL);
+	rq->rq_bitmap |= RQMASK(whichq);
+	sq = &rq->rq_subqueues[whichq];
+	TAILQ_INSERT_TAIL(&sq->sq_queue, l, l_runq);
+	runqueue_check(rq, whichq, l);
 }
 
 static void
 runqueue_dequeue(runqueue_t *rq, struct lwp *l)
 {
-	pri_t pri;
+	subqueue_t *sq;
+	const int whichq = lwp_eprio(l) / PPQ;
 
 	KASSERT(lwp_locked(l, l->l_cpu->ci_schedstate.spc_mutex));
 
-	pri = lwp_eprio(l);
-	rq->rq_count--;
-
-	if (pri >= PRI_KTHREAD) {
-		TAILQ_REMOVE(&rq->rq_fixedpri, l, l_runq);
-		return;
-	}
-
-	TAILQ_REMOVE(&rq->rq_queue[pri], l, l_runq);
-	if (TAILQ_EMPTY(&rq->rq_queue[pri]))
-		rq->rq_bitmap[pri >> PPB_SHIFT] ^=
-		    (0x80000000U >> (pri & PPB_MASK));
+	runqueue_check(rq, whichq, l);
+	KASSERT((rq->rq_bitmap & RQMASK(whichq)) != 0);
+	sq = &rq->rq_subqueues[whichq];
+	TAILQ_REMOVE(&sq->sq_queue, l, l_runq);
+	if (TAILQ_EMPTY(&sq->sq_queue))
+		rq->rq_bitmap &= ~RQMASK(whichq);
+	runqueue_check(rq, whichq, NULL);
 }
-
-#if (NUM_B != 3) || (NUM_Q != 96)
-#error adjust runqueue_nextlwp
-#endif
 
 static struct lwp *
 runqueue_nextlwp(runqueue_t *rq)
 {
-	pri_t pri;
+	const uint32_t bitmap = rq->rq_bitmap;
+	int whichq;
 
-	KASSERT(rq->rq_count != 0);
-
-	if (!TAILQ_EMPTY(&rq->rq_fixedpri))
-		return TAILQ_FIRST(&rq->rq_fixedpri);
-
-	if (rq->rq_bitmap[2] != 0)
-		pri = 96 - ffs(rq->rq_bitmap[2]);
-	else if (rq->rq_bitmap[1] != 0)
-		pri = 64 - ffs(rq->rq_bitmap[1]);
-	else
-		pri = 32 - ffs(rq->rq_bitmap[0]);
-	return TAILQ_FIRST(&rq->rq_queue[pri]);
+	if (bitmap == 0) {
+		return NULL;
+	}
+	whichq = ffs(bitmap) - 1;
+	return TAILQ_FIRST(&rq->rq_subqueues[whichq].sq_queue);
 }
 
 #if defined(DDB)
 static void
 runqueue_print(const runqueue_t *rq, void (*pr)(const char *, ...))
 {
-	CPU_INFO_ITERATOR cii;
-	struct cpu_info *ci;
-	lwp_t *l;
-	int i;
+	const uint32_t bitmap = rq->rq_bitmap;
+	struct lwp *l;
+	int i, first;
 
-	printf("PID\tLID\tPRI\tIPRI\tEPRI\tLWP\t\t NAME\n");
-
-	TAILQ_FOREACH(l, &rq->rq_fixedpri, l_runq) {
-		(*pr)("%d\t%d\%d\t%d\t%d\t%016lx %s\n",
-		    l->l_proc->p_pid, l->l_lid, (int)l->l_priority,
-		    (int)l->l_inheritedprio, lwp_eprio(l),
-		    (long)l, l->l_proc->p_comm);
-	}
-
-	for (i = NUM_Q - 1; i >= 0; i--) {
-		TAILQ_FOREACH(l, &rq->rq_queue[i], l_runq) {
-			(*pr)("%d\t%d\t%d\t%d\t%d\t%016lx %s\n",
-			    l->l_proc->p_pid, l->l_lid, (int)l->l_priority,
-			    (int)l->l_inheritedprio, lwp_eprio(l),
-			    (long)l, l->l_proc->p_comm);
+	for (i = 0; i < RUNQUE_NQS; i++) {
+		const subqueue_t *sq;
+		first = 1;
+		sq = &rq->rq_subqueues[i];
+		TAILQ_FOREACH(l, &sq->sq_queue, l_runq) {
+			if (first) {
+				(*pr)("%c%d",
+				    (bitmap & RQMASK(i)) ? ' ' : '!', i);
+				first = 0;
+			}
+			(*pr)("\t%d.%d (%s) pri=%d usrpri=%d\n",
+			    l->l_proc->p_pid,
+			    l->l_lid, l->l_proc->p_comm,
+			    (int)l->l_priority, (int)l->l_usrpri);
 		}
 	}
-
-	printf("CPUIDX\tRESCHED\tCURPRI\tFLAGS\n");
-	for (CPU_INFO_FOREACH(cii, ci)) {
-		printf("%d\t%d\t%d\t%04x\n", (int)ci->ci_index,
-		    (int)ci->ci_want_resched,
-		    (int)ci->ci_schedstate.spc_curpriority,
-		    (int)ci->ci_schedstate.spc_flags);
-	}
-
-	printf("NEXTLWP\n%016lx\n", (long)sched_nextlwp());
 }
 #endif /* defined(DDB) */
+#undef RQMASK
 
 /*
  * Initialize the (doubly-linked) run queues
@@ -512,30 +507,57 @@ bool
 sched_curcpu_runnable_p(void)
 {
 	struct schedstate_percpu *spc;
-	struct cpu_info *ci;
-	int bits;
+	runqueue_t *rq;
 
-	ci = curcpu();
-	spc = &ci->ci_schedstate;
-#ifndef __HAVE_FAST_SOFTINTS
-	bits = ci->ci_data.cpu_softints;
-	bits |= ((runqueue_t *)spc->spc_sched_info)->rq_count;
-#else
-	bits = ((runqueue_t *)spc->spc_sched_info)->rq_count;
-#endif
+	spc = &curcpu()->ci_schedstate;
+	rq = spc->spc_sched_info;
+
 	if (__predict_true((spc->spc_flags & SPCF_OFFLINE) == 0))
-		bits |= global_queue.rq_count;
-	return bits != 0;
+		return (global_queue.rq_bitmap | rq->rq_bitmap) != 0;
+	return rq->rq_bitmap != 0;
 }
 
 void
-sched_nice(struct proc *p, int n)
+sched_nice(struct proc *chgp, int n)
+{
+
+	chgp->p_nice = n;
+	(void)resetprocpriority(chgp);
+}
+
+/*
+ * Compute the priority of a process when running in user mode.
+ * Arrange to reschedule if the resulting priority is better
+ * than that of the current process.
+ */
+static void
+resetpriority(struct lwp *l)
+{
+	unsigned int newpriority;
+	struct proc *p = l->l_proc;
+
+	/* XXXSMP LOCK_ASSERT(mutex_owned(&p->p_stmutex)); */
+	LOCK_ASSERT(lwp_locked(l, NULL));
+
+	if ((l->l_flag & LW_SYSTEM) != 0)
+		return;
+
+	newpriority = PUSER + (p->p_estcpu >> ESTCPU_SHIFT) +
+	    NICE_WEIGHT * (p->p_nice - NZERO);
+	newpriority = min(newpriority, MAXPRI);
+	lwp_changepri(l, newpriority);
+}
+
+/*
+ * Recompute priority for all LWPs in a process.
+ */
+static void
+resetprocpriority(struct proc *p)
 {
 	struct lwp *l;
 
-	KASSERT(mutex_owned(&p->p_smutex));
+	KASSERT(mutex_owned(&p->p_stmutex));
 
-	p->p_nice = n;
 	LIST_FOREACH(l, &p->p_lwps, l_sibling) {
 		lwp_lock(l);
 		resetpriority(l);
@@ -544,32 +566,10 @@ sched_nice(struct proc *p, int n)
 }
 
 /*
- * Recompute the priority of an LWP.  Arrange to reschedule if
- * the resulting priority is better than that of the current LWP.
- */
-static void
-resetpriority(struct lwp *l)
-{
-	pri_t pri;
-	struct proc *p = l->l_proc;
-
-	KASSERT(lwp_locked(l, NULL));
-
-	if (l->l_class != SCHED_OTHER)
-		return;
-
-	/* See comments above ESTCPU_SHIFT definition. */
-	pri = (PRI_KERNEL - 1) - (l->l_estcpu >> ESTCPU_SHIFT) - p->p_nice;
-	pri = imax(pri, 0);
-	if (pri != l->l_priority)
-		lwp_changepri(l, pri);
-}
-
-/*
  * We adjust the priority of the current process.  The priority of a process
- * gets worse as it accumulates CPU time.  The CPU usage estimator (l_estcpu)
+ * gets worse as it accumulates CPU time.  The CPU usage estimator (p_estcpu)
  * is increased here.  The formula for computing priorities (in kern_synch.c)
- * will compute a different value each time l_estcpu increases. This can
+ * will compute a different value each time p_estcpu increases. This can
  * cause a switch, but unless the priority crosses a PPQ boundary the actual
  * queue will not change.  The CPU usage estimator ramps up quite quickly
  * when the process is running (linearly), and decays away exponentially, at
@@ -583,14 +583,16 @@ resetpriority(struct lwp *l)
 void
 sched_schedclock(struct lwp *l)
 {
-
-	if (l->l_class != SCHED_OTHER)
-		return;
+	struct proc *p = l->l_proc;
 
 	KASSERT(!CURCPU_IDLE_P());
-	l->l_estcpu = ESTCPULIM(l->l_estcpu + ESTCPU_ACCUM);
+	mutex_spin_enter(&p->p_stmutex);
+	p->p_estcpu = ESTCPULIM(p->p_estcpu + (1 << ESTCPU_SHIFT));
 	lwp_lock(l);
 	resetpriority(l);
+	mutex_spin_exit(&p->p_stmutex);
+	if ((l->l_flag & LW_SYSTEM) == 0 && l->l_priority >= PUSER)
+		l->l_priority = l->l_usrpri;
 	lwp_unlock(l);
 }
 
@@ -602,12 +604,10 @@ sched_schedclock(struct lwp *l)
 void
 sched_proc_fork(struct proc *parent, struct proc *child)
 {
-	lwp_t *pl;
 
 	KASSERT(mutex_owned(&parent->p_smutex));
 
-	pl = LIST_FIRST(&parent->p_lwps);
-	child->p_estcpu_inherited = pl->l_estcpu;
+	child->p_estcpu = child->p_estcpu_inherited = parent->p_estcpu;
 	child->p_forktime = sched_pstats_ticks;
 }
 
@@ -621,21 +621,16 @@ sched_proc_exit(struct proc *parent, struct proc *child)
 {
 	fixpt_t loadfac = loadfactor(averunnable.ldavg[0]);
 	fixpt_t estcpu;
-	lwp_t *pl, *cl;
 
 	/* XXX Only if parent != init?? */
 
-	mutex_enter(&parent->p_smutex);
-	pl = LIST_FIRST(&parent->p_lwps);
-	cl = LIST_FIRST(&child->p_lwps);
+	mutex_spin_enter(&parent->p_stmutex);
 	estcpu = decay_cpu_batch(loadfac, child->p_estcpu_inherited,
 	    sched_pstats_ticks - child->p_forktime);
-	if (cl->l_estcpu > estcpu) {
-		lwp_lock(pl);
-		pl->l_estcpu = ESTCPULIM(pl->l_estcpu + cl->l_estcpu - estcpu);
-		lwp_unlock(pl);
-	}
-	mutex_exit(&parent->p_smutex);
+	if (child->p_estcpu > estcpu)
+		parent->p_estcpu =
+		    ESTCPULIM(parent->p_estcpu + child->p_estcpu - estcpu);
+	mutex_spin_exit(&parent->p_stmutex);
 }
 
 void
@@ -668,32 +663,29 @@ struct lwp *
 sched_nextlwp(void)
 {
 	struct schedstate_percpu *spc;
-	runqueue_t *rq;
 	lwp_t *l1, *l2;
 
 	spc = &curcpu()->ci_schedstate;
 
 	/* For now, just pick the highest priority LWP. */
-	rq = spc->spc_sched_info;
-	l1 = NULL;
-	if (rq->rq_count != 0)
-		l1 = runqueue_nextlwp(rq);
-
-	rq = &global_queue;
-	if (__predict_false((spc->spc_flags & SPCF_OFFLINE) != 0) ||
-	    rq->rq_count == 0)
+	l1 = runqueue_nextlwp(spc->spc_sched_info);
+	if (__predict_false((spc->spc_flags & SPCF_OFFLINE) != 0))
 		return l1;
-	l2 = runqueue_nextlwp(rq);
+	l2 = runqueue_nextlwp(&global_queue);
 
 	if (l1 == NULL)
 		return l2;
 	if (l2 == NULL)
 		return l1;
-	if (lwp_eprio(l2) > lwp_eprio(l1))
+	if (lwp_eprio(l2) < lwp_eprio(l1))
 		return l2;
 	else
 		return l1;
 }
+
+/*
+ * Dummy.
+ */
 
 struct cpu_info *
 sched_takecpu(struct lwp *l)
@@ -715,28 +707,15 @@ sched_slept(struct lwp *l)
 }
 
 void
-sched_lwp_fork(struct lwp *l1, struct lwp *l2)
+sched_lwp_fork(struct lwp *l)
 {
 
-	l2->l_estcpu = l1->l_estcpu;
 }
 
 void
 sched_lwp_exit(struct lwp *l)
 {
 
-}
-
-void
-sched_lwp_collect(struct lwp *t)
-{
-	lwp_t *l;
-
-	/* Absorb estcpu value of collected LWP. */
-	l = curlwp;
-	lwp_lock(l);
-	l->l_estcpu += t->l_estcpu;
-	lwp_unlock(l);
 }
 
 /*

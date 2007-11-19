@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_pcb.c,v 1.40 2007/11/09 21:00:06 plunky Exp $	*/
+/*	$NetBSD: iso_pcb.c,v 1.39 2007/05/02 20:40:29 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -62,7 +62,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iso_pcb.c,v 1.40 2007/11/09 21:00:06 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iso_pcb.c,v 1.39 2007/05/02 20:40:29 dyoung Exp $");
 
 #include "opt_iso.h"
 
@@ -118,7 +118,7 @@ iso_pcballoc(struct socket *so, void *v)
 		return ENOBUFS;
 	isop->isop_head = head;
 	isop->isop_socket = so;
-	iso_insque(isop, head);
+	insque(isop, head);
 	if (so)
 		so->so_pcb = isop;
 	return 0;
@@ -545,7 +545,7 @@ iso_pcbdetach(void *v)
 		printf("iso_pcbdetach 4 \n");
 	}
 #endif
-	iso_remque(isop);
+	remque(isop);
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_ISO]) {
 		printf("iso_pcbdetach 5 \n");

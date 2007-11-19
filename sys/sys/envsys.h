@@ -1,4 +1,4 @@
-/* $NetBSD: envsys.h,v 1.19 2007/11/16 08:00:17 xtraeme Exp $ */
+/* $NetBSD: envsys.h,v 1.18 2007/11/03 23:05:21 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -45,7 +45,6 @@
 
 #include <sys/ioccom.h>
 #include <sys/power.h>
-#include <sys/queue.h>
 
 /*
  * ENVironmental SYStem version 2 (aka ENVSYS 2)
@@ -56,7 +55,6 @@
 
 /* struct used by a sensor */
 struct envsys_data {
-	TAILQ_ENTRY(envsys_data)	sensors_head;
 	uint32_t	sensor;		/* sensor number */
 	uint32_t	units;		/* type of sensor */
 	uint32_t	state;		/* sensor state */
@@ -141,6 +139,7 @@ enum envsys_battery_capacity_states {
 #define ENVSYS_FMONWARNOVER	0x00000200	/* monitor a warnover state */
 #define ENVSYS_FMONSTCHANGED	0x00000400	/* monitor a battery/drive state */
 #define ENVSYS_FMONNOTSUPP	0x00000800	/* monitoring not supported */
+#define ENVSYS_FNOTVALID 	0x00001000	/* sensor is invalid */
 
 #define ENVSYS_GETDICTIONARY	_IOWR('E', 0, struct plistref)
 #define ENVSYS_SETDICTIONARY	_IOWR('E', 1, struct plistref)
@@ -206,7 +205,7 @@ static const char * const envsysdrivestatus[] = {
 #define ENVSYS_FAVGVALID	0x00000010  /* avg for this sens is valid */
 #define ENVSYS_FFRACVALID	0x00000020  /* display fraction of max */
 
-#define ENVSYS_GTREDATA 	_IOWR('E', 2, envsys_tre_data_t)
+#define ENVSYS_GTREDATA _IOWR('E', 2, envsys_tre_data_t)
 
 /* set and check sensor info */
 
@@ -220,6 +219,6 @@ struct envsys_basic_info {
 };
 typedef struct envsys_basic_info envsys_basic_info_t;
 
-#define ENVSYS_GTREINFO 	_IOWR('E', 4, envsys_basic_info_t)
+#define ENVSYS_GTREINFO _IOWR('E', 4, envsys_basic_info_t)
 
 #endif /* _SYS_ENVSYS_H_ */

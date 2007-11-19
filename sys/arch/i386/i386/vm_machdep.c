@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.135 2007/11/10 23:04:29 ad Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.133 2007/10/18 15:28:36 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.135 2007/11/10 23:04:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.133 2007/10/18 15:28:36 yamt Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_mtrr.h"
@@ -181,8 +181,6 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 
 	l2->l_md.md_tss_sel = tss_alloc(pcb);
 	l2->l_md.md_astpending = 0;
-	memcpy(&pcb->pcb_fsd, curpcb->pcb_fsd, sizeof(pcb->pcb_fsd));
-	memcpy(&pcb->pcb_gsd, curpcb->pcb_gsd, sizeof(pcb->pcb_gsd));
 
 	/*
 	 * Copy the trapframe.

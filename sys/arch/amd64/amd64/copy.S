@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.8 2007/11/12 18:42:00 ad Exp $	*/
+/*	$NetBSD: copy.S,v 1.7 2007/10/18 15:28:31 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -86,6 +86,7 @@ ENTRY(fillw)
 	movw	%ax,%cx
 	rorl	$16,%eax
 	movw	%cx,%ax
+	cld
 	movq	%rdx,%rcx
 	shrq	%rcx
 	rep
@@ -109,7 +110,7 @@ ENTRY(kcopy)
 	subq	%rsi,%rax
 	cmpq	%rcx,%rax		# overlapping?
 	jb	1f
-	# nope, copy forward
+	cld				# nope, copy forward
 	shrq	$3,%rcx			# copy by 64-bit words
 	rep
 	movsq
@@ -163,6 +164,7 @@ ENTRY(copyout)
 	leaq	_C_LABEL(copy_fault)(%rip),%r11
 	movq	%r11,PCB_ONFAULT(%rdx)
 
+	cld
 	movq	%rax,%rcx
 	shrq	$3,%rcx
 	rep
@@ -194,6 +196,7 @@ ENTRY(copyin)
 	ja	_C_LABEL(copy_efault)
 
 3:	/* bcopy(%rsi, %rdi, %rax); */
+	cld
 	movq	%rax,%rcx
 	shrq	$3,%rcx
 	rep
@@ -248,6 +251,7 @@ ENTRY(copyoutstr)
 	movq	%rax,%r8
 
 1:	incq	%rdx
+	cld
 
 1:	decq	%rdx
 	jz	2f
@@ -290,6 +294,7 @@ ENTRY(copyinstr)
 	movq	%rax,%r8
 
 1:	incq	%rdx
+	cld
 
 1:	decq	%rdx
 	jz	2f
@@ -330,6 +335,7 @@ ENTRY(copystr)
 	movq	%rdx,%r8
 
 	incq	%rdx
+	cld
 
 1:	decq	%rdx
 	jz	4f

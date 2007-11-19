@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eon.c,v 1.62 2007/11/09 21:00:05 plunky Exp $	*/
+/*	$NetBSD: if_eon.c,v 1.61 2007/10/19 12:16:47 ad Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -67,7 +67,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_eon.c,v 1.62 2007/11/09 21:00:05 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eon.c,v 1.61 2007/10/19 12:16:47 ad Exp $");
 
 #include "opt_eon.h"
 
@@ -266,7 +266,7 @@ eonrtrequest(int cmd, struct rtentry *rt, struct rt_addrinfo *info)
 	switch (cmd) {
 	case RTM_DELETE:
 		if (el) {
-			iso_remque(&el->el_qhdr);
+			remque(&el->el_qhdr);
 			rtcache_free(&el->el_iproute);
 			Free(el);
 			rt->rt_llinfo = NULL;
@@ -281,7 +281,7 @@ eonrtrequest(int cmd, struct rtentry *rt, struct rt_addrinfo *info)
 		if (el == NULL)
 			return;
 		memset(el, 0, sizeof(*el));
-		iso_insque(&el->el_qhdr, &eon_llinfo.el_qhdr);
+		insque(&el->el_qhdr, &eon_llinfo.el_qhdr);
 		el->el_rt = rt;
 		break;
 	}

@@ -1,7 +1,7 @@
-/*	$NetBSD: mbuf.h,v 1.138 2007/11/10 13:06:23 yamt Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.135 2007/03/04 06:03:41 christos Exp $	*/
 
 /*-
- * Copyright (c) 1996, 1997, 1999, 2001, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 1997, 1999, 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -118,7 +118,7 @@ struct mowner {
 	u_long mo_ext_releases;		/* # of M_EXT mbuf released */
 };
 
-#define MOWNER_INIT(x, y) { .mo_name = x, .mo_descr = y }
+#define MOWNER_INIT(x, y) { x, y, { NULL, NULL }, 0, 0, 0, 0, 0, 0 }
 
 /*
  * Macros for type conversion
@@ -419,6 +419,7 @@ do {									\
 
 #define	MOWNER_ATTACH(mo)	LIST_INSERT_HEAD(&mowners, (mo), mo_link)
 #define	MOWNER_DETACH(mo)	LIST_REMOVE((mo), mo_link)
+#define MBUFTRACE_ASSERT(cond)	KASSERT(cond)
 #else
 #define _MOWNERINIT(m, type)		do { } while (/* CONSTCOND */ 0)
 #define	_MOWNERREF(m, flags)		do { } while (/* CONSTCOND */ 0)
@@ -429,6 +430,7 @@ do {									\
 #define	MOWNER_ATTACH(mo)		do { } while (/* CONSTCOND */ 0)
 #define	MOWNER_DETACH(mo)		do { } while (/* CONSTCOND */ 0)
 #define	m_claimm(m, mo)			do { } while (/* CONSTCOND */ 0)
+#define MBUFTRACE_ASSERT(cond)		do { } while (/* CONSTCOND */ 0)
 #endif
 
 
@@ -447,7 +449,7 @@ do {									\
  */
 #define	MGET(m, how, type)						\
 MBUFLOCK(								\
-	(m) = pool_cache_get(mb_cache,					\
+	(m) = pool_cache_get(&mbpool_cache,				\
 		(how) == M_WAIT ? PR_WAITOK|PR_LIMITFAIL : 0);		\
 	if (m) {							\
 		mbstat.m_mtypes[type]++;				\
@@ -462,7 +464,7 @@ MBUFLOCK(								\
 
 #define	MGETHDR(m, how, type)						\
 MBUFLOCK(								\
-	(m) = pool_cache_get(mb_cache,					\
+	(m) = pool_cache_get(&mbpool_cache,				\
 	    (how) == M_WAIT ? PR_WAITOK|PR_LIMITFAIL : 0);		\
 	if (m) {							\
 		mbstat.m_mtypes[type]++;				\
@@ -571,7 +573,7 @@ do {									\
 /*
  * The standard mbuf cluster pool.
  */
-#define	MCLGET(m, how)	_MCLGET((m), mcl_cache, MCLBYTES, (how))
+#define	MCLGET(m, how)	_MCLGET((m), &mclpool_cache, MCLBYTES, (how))
 
 #define	MEXTMALLOC(m, size, how)					\
 do {									\
@@ -640,7 +642,7 @@ do {									\
 		if ((m)->m_flags & M_EXT) {				\
 			m_ext_free(m, TRUE);				\
 		} else {						\
-			pool_cache_put(mb_cache, (m));			\
+			pool_cache_put(&mbpool_cache, (m));		\
 		}							\
 	)
 
@@ -832,7 +834,7 @@ struct name {							\
 /*
  * Mbuf statistics.
  * For statistics related to mbuf and cluster allocations, see also the
- * pool headers (mb_cache and mcl_cache).
+ * pool headers (mbpool and mclpool).
  */
 struct mbstat {
 	u_long	_m_spare;	/* formerly m_mbufs */
@@ -879,8 +881,10 @@ extern int	max_hdr;		/* largest link+protocol header */
 extern int	max_datalen;		/* MHLEN - max_hdr */
 extern const int msize;			/* mbuf base size */
 extern const int mclbytes;		/* mbuf cluster size */
-extern pool_cache_t mb_cache;
-extern pool_cache_t mcl_cache;
+extern struct pool mbpool;
+extern struct pool mclpool;
+extern struct pool_cache mbpool_cache;
+extern struct pool_cache mclpool_cache;
 #ifdef MBUFTRACE
 LIST_HEAD(mownerhead, mowner);
 extern struct mownerhead mowners;
@@ -1014,7 +1018,7 @@ m_ext_free(struct mbuf *m, bool dofree)
 		free(m->m_ext.ext_buf, m->m_ext.ext_type);
 	}
 	if (dofree)
-		pool_cache_put(mb_cache, m);
+		pool_cache_put(&mbpool_cache, m);
 }
 
 void m_print(const struct mbuf *, const char *, void (*)(const char *, ...));

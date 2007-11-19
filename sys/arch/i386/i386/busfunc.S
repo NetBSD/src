@@ -1,4 +1,4 @@
-/*	$NetBSD: busfunc.S,v 1.3 2007/11/12 18:42:00 ad Exp $	*/
+/*	$NetBSD: busfunc.S,v 1.2 2007/09/26 22:05:23 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -159,6 +159,7 @@ ENTRY(bus_space_read_multi_1)
 	movl	20(%esp), %edi
 	movl	24(%esp), %ecx
 	jne	1f
+	cld
 	rep
 	insb	(%dx), %es:(%edi)
 	popl	%edi
@@ -185,6 +186,7 @@ ENTRY(bus_space_read_multi_2)
 	movl	20(%esp), %edi
 	movl	24(%esp), %ecx
 	jne	1f
+	cld
 	rep
 	insw	(%dx), %es:(%edi)
 	popl	%edi
@@ -211,6 +213,7 @@ ENTRY(bus_space_read_multi_4)
 	movl	20(%esp), %edi
 	movl	24(%esp), %ecx
 	jne	1f
+	cld
 	rep
 	insl	(%dx), %es:(%edi)
 	popl	%edi
@@ -241,6 +244,7 @@ ENTRY(bus_space_write_multi_1)
 	movl	20(%esp), %esi
 	movl	24(%esp), %ecx
 	jne	1f
+	cld
 	rep
 	outsb	%ds:(%esi), (%dx)
 	popl	%esi
@@ -267,6 +271,7 @@ ENTRY(bus_space_write_multi_2)
 	movl	20(%esp), %esi
 	movl	24(%esp), %ecx
 	jne	1f
+	cld
 	rep
 	outsw	%ds:(%esi),(%dx)
 	popl	%esi
@@ -293,6 +298,7 @@ ENTRY(bus_space_write_multi_4)
 	movl	20(%esp), %esi
 	movl	24(%esp), %ecx
 	jne	1f
+	cld
 	rep
 	outsl	%ds:(%esi),(%dx)
 	popl	%esi
@@ -325,6 +331,7 @@ ENTRY(bus_space_read_region_1)
 	je	2f
 1:
 	xchgl	%edx, %esi
+	cld	
 	rep
 	movsb	%ds:(%esi), %es:(%edi)
 	movl	%edx, %esi
@@ -354,6 +361,7 @@ ENTRY(bus_space_read_region_2)
 	je	2f
 1:
 	xchgl	%edx, %esi
+	cld	
 	rep
 	movsw	%ds:(%esi), %es:(%edi)
 	movl	%edx, %esi
@@ -383,6 +391,7 @@ ENTRY(bus_space_read_region_4)
 	je	2f
 1:
 	xchgl	%edx, %esi
+	cld	
 	rep
 	movsl	%ds:(%esi), %es:(%edi)
 	movl	%edx, %esi
@@ -416,6 +425,7 @@ ENTRY(bus_space_write_region_1)
 	je	2f
 1:
 	xchgl	%edx, %edi
+	cld
 	rep
 	movsb	%ds:(%esi), %es:(%edi)
 	movl	%edx, %edi
@@ -445,6 +455,7 @@ ENTRY(bus_space_write_region_2)
 	je	2f
 1:
 	xchgl	%edx, %edi
+	cld
 	rep
 	movsw	%ds:(%esi), %es:(%edi)
 	movl	%edx, %edi
@@ -474,6 +485,7 @@ ENTRY(bus_space_write_region_4)
 	je	2f
 1:
 	xchgl	%edx, %edi
+	cld
 	rep
 	movsl	%ds:(%esi), %es:(%edi)
 	movl	%edx, %edi

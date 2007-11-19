@@ -1,4 +1,4 @@
-/*	$NetBSD: owtemp.c,v 1.12 2007/11/16 08:00:15 xtraeme Exp $ */
+/*	$NetBSD: owtemp.c,v 1.11 2007/09/05 15:24:07 xtraeme Exp $ */
 /*	$OpenBSD: owtemp.c,v 1.1 2006/03/04 16:27:03 grange Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: owtemp.c,v 1.12 2007/11/16 08:00:15 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: owtemp.c,v 1.11 2007/09/05 15:24:07 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,8 +45,8 @@ struct owtemp_softc {
 	void *				sc_onewire;
 	u_int64_t			sc_rom;
 
-	envsys_data_t			sc_sensor;
-	struct sysmon_envsys		*sc_sme;
+	envsys_data_t			sc_sensor[1];
+	struct sysmon_envsys		sc_sysmon;
 
 	uint32_t			(*sc_owtemp_decode)(const uint8_t *);
 
@@ -71,7 +71,7 @@ static const struct onewire_matchfam owtemp_fams[] = {
 	{ ONEWIRE_FAMILY_DS1822 },
 };
 
-static void	owtemp_refresh(struct sysmon_envsys *, envsys_data_t *);
+static int	owtemp_gtredata(struct sysmon_envsys *, envsys_data_t *);
 
 static uint32_t	owtemp_decode_ds18b20(const uint8_t *);
 static uint32_t	owtemp_decode_ds1920(const uint8_t *);
@@ -102,28 +102,23 @@ owtemp_attach(struct device *parent, struct device *self, void *aux)
 		break;
 	}
 
-	sc->sc_sme = sysmon_envsys_create();
-
 	/* Initialize sensor */
-	sc->sc_sensor.units = ENVSYS_STEMP;
-	(void)strlcpy(sc->sc_sensor.desc,
-	    sc->sc_dev.dv_xname, sizeof(sc->sc_sensor.desc));
-	if (sysmon_envsys_sensor_attach(sc->sc_sme, &sc->sc_sensor)) {
-		sysmon_envsys_destroy(sc->sc_sme);
-		return;
-	}
+	sc->sc_sensor[0].sensor = 0;
+	sc->sc_sensor[0].state = ENVSYS_SVALID;
+	sc->sc_sensor[0].units = ENVSYS_STEMP;
+	(void)strlcpy(sc->sc_sensor[0].desc,
+	    sc->sc_dev.dv_xname, sizeof(sc->sc_sensor[0].desc));
 
 	/* Hook into system monitor. */
-	sc->sc_sme->sme_name = sc->sc_dev.dv_xname;
-	sc->sc_sme->sme_cookie = sc;
-	sc->sc_sme->sme_refresh = owtemp_refresh;
+	sc->sc_sysmon.sme_name = sc->sc_dev.dv_xname;
+	sc->sc_sysmon.sme_sensor_data = sc->sc_sensor;
+	sc->sc_sysmon.sme_cookie = sc;
+	sc->sc_sysmon.sme_gtredata = owtemp_gtredata;
+	sc->sc_sysmon.sme_nsensors = 1;
 
-	if (sysmon_envsys_register(sc->sc_sme)) {
+	if (sysmon_envsys_register(&sc->sc_sysmon))
 		aprint_error("%s: unable to register with sysmon\n",
 		    sc->sc_dev.dv_xname);
-		sysmon_envsys_destroy(sc->sc_sme);
-		return;
-	}
 
 	printf("\n");
 }
@@ -133,7 +128,7 @@ owtemp_detach(struct device *self, int flags)
 {
 	struct owtemp_softc *sc = device_private(self);
 
-	sysmon_envsys_unregister(sc->sc_sme);
+	sysmon_envsys_unregister(&sc->sc_sysmon);
 
 	return 0;
 }
@@ -192,19 +187,20 @@ owtemp_update(void *arg)
 	}
 #endif
 
-	sc->sc_sensor.value_cur = sc->sc_owtemp_decode(data);
-	sc->sc_sensor.state = ENVSYS_SVALID;
+	sc->sc_sensor[0].value_cur = sc->sc_owtemp_decode(data);
+	sc->sc_sensor[0].state = ENVSYS_SVALID;
 
 done:
 	onewire_unlock(sc->sc_onewire);
 }
 
-static void
-owtemp_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
+static int
+owtemp_gtredata(struct sysmon_envsys *sme, envsys_data_t *edata)
 {
 	struct owtemp_softc *sc = sme->sme_cookie;
 
 	owtemp_update(sc);
+	return 0;
 }
 
 static uint32_t

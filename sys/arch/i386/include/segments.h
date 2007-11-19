@@ -1,4 +1,4 @@
-/*	$NetBSD: segments.h,v 1.44 2007/11/10 20:06:24 ad Exp $	*/
+/*	$NetBSD: segments.h,v 1.43 2007/10/18 15:28:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -293,9 +293,7 @@ void idt_vec_free(int);
 #define GTRAPTSS_SEL	18
 #define GIPITSS_SEL	19
 #define GUCODEBIG_SEL	20	/* User code with executable stack */
-#define	GUFS_SEL	21
-#define	GUGS_SEL	22
-#define	NGDT		23
+#define	NGDT		21
 
 /*
  * Entries in the Local Descriptor Table (LDT)

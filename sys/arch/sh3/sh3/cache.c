@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.13 2007/11/06 01:33:00 uwe Exp $	*/
+/*	$NetBSD: cache.c,v 1.12 2006/09/24 00:43:44 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.13 2007/11/06 01:33:00 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.12 2006/09/24 00:43:44 tsutsui Exp $");
 
 #include "opt_memsize.h"	/* IOM_RAM_BEGIN */
 
@@ -107,47 +107,45 @@ sh_cache_information()
 #endif
 
 	/* I-cache or I/D-unified cache */
-	aprint_normal("cpu0: %dKB/%dB",
-		      sh_cache_size_icache >> 10,
-		      sh_cache_line_size);
+	printf("cpu0: %dKB/%dB",
+	       sh_cache_size_icache >> 10, sh_cache_line_size);
 	if (sh_cache_ways > 1)
-		aprint_normal(" %d-way set-associative", sh_cache_ways);
+		printf(" %d-way set-associative", sh_cache_ways);
 	else
-		aprint_normal(" direct-mapped");
+		printf(" direct-mapped");
 	if (sh_cache_unified)
-		aprint_normal(" I/D-unified cache.");
+		printf(" I/D-unified");
 	else
-		aprint_normal(" Instruction cache.");
+		printf(" Instruction");
+	printf(" cache.");
 	if (!sh_cache_enable_icache)
-		aprint_normal(" DISABLED");
+		printf(" DISABLED");
 	if (sh_cache_unified && sh_cache_ram_mode)
-		aprint_normal(" RAM-mode");
+		printf(" RAM-mode");
 	if (sh_cache_index_mode_icache)
-		aprint_normal(" INDEX-mode");
-	aprint_normal("\n");
+		printf(" INDEX-mode");
+	printf("\n");
 
 	/* D-cache */
 	if (!sh_cache_unified) {
-		aprint_normal("cpu0: %dKB/%dB",
-			      sh_cache_size_dcache >> 10,
-			      sh_cache_line_size);
+		printf("cpu0: %dKB/%dB", sh_cache_size_dcache >> 10,
+		    sh_cache_line_size);
 		if (sh_cache_ways > 1)
-			aprint_normal(" %d-way set-associative",
-				      sh_cache_ways);
+			printf(" %d-way set-associative", sh_cache_ways);
 		else
-			aprint_normal(" direct-mapped");
-		aprint_normal(" Data cache.");
+			printf(" direct-mapped");
+		printf(" Data cache.");
 		if (!sh_cache_enable_dcache)
-			aprint_normal(" DISABLED");
+			printf(" DISABLED");
 		if (sh_cache_ram_mode)
-			aprint_normal(" RAM-mode");
+			printf(" RAM-mode");
 		if (sh_cache_index_mode_dcache)
-			aprint_normal(" INDEX-mode");
-		aprint_normal("\n");
+			printf(" INDEX-mode");
+		printf("\n");
 	}
 
 	/* Write-through/back */
-	aprint_normal("cpu0: P0, U0, P3 write-%s; P1 write-%s\n",
+	printf("cpu0: P0, U0, P3 write-%s; P1 write-%s\n",
 	    sh_cache_write_through_p0_u0_p3 ? "through" : "back",
 	    sh_cache_write_through_p1 ? "through" : "back");
 }
