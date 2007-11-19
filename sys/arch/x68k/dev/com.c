@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.49 2007/10/17 19:58:01 garbled Exp $	*/
+/*	$NetBSD: com.c,v 1.50 2007/11/19 18:51:44 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.49 2007/10/17 19:58:01 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.50 2007/11/19 18:51:44 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -838,15 +838,8 @@ comstart(struct tty *tp)
 		goto stopped;
 	if (ISSET(tp->t_cflag, CRTSCTS) && !ISSET(sc->sc_msr, MSR_CTS))
 		goto stopped;
-	if (tp->t_outq.c_cc <= tp->t_lowat) {
-		if (ISSET(tp->t_state, TS_ASLEEP)) {
-			CLR(tp->t_state, TS_ASLEEP);
-			wakeup(&tp->t_outq);
-		}
-		if (tp->t_outq.c_cc == 0)
-			goto stopped;
-		selwakeup(&tp->t_wsel);
-	}
+	if (!ttypull(tp))
+		goto stopped;
 	SET(tp->t_state, TS_BUSY);
 
 	if (!ISSET(sc->sc_ier, IER_ETXRDY)) {
@@ -1080,7 +1073,7 @@ comintr(void *arg)
 		if (ISSET(lsr, LSR_TXRDY) && ISSET(tp->t_state, TS_BUSY)) {
 			CLR(tp->t_state, TS_BUSY | TS_FLUSH);
 			if (sc->sc_halt > 0)
-				wakeup(&tp->t_outq);
+				clwakeup(&tp->t_outq);
 			(*tp->t_linesw->l_start)(tp);
 		}
 
