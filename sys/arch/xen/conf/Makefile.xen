@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.xen,v 1.19.28.1 2007/11/19 19:17:18 bouyer Exp $
+#	$NetBSD: Makefile.xen,v 1.19.28.2 2007/11/19 19:35:51 bouyer Exp $
 #	NetBSD: Makefile.i386,v 1.132 2003/07/05 16:56:10 simonb Exp 
 
 # Makefile for NetBSD
@@ -36,9 +36,9 @@ GENASSYM_CONF=	$S/arch/${XEN_BUILD}/${XEN_BUILD}/genassym.cf
 .endif
 
 .if ${XEN_BUILD} == "amd64"
-ARCH_INC=	xenamd64
+ARCH_INC=	$S/arch/xen/include/amd64
 .elif ${XEN_BUILD} == "i386"
-ARCH_INC=	xen
+ARCH_INC=	$S/arch/xen/include
 .endif
 
 ##
@@ -114,7 +114,7 @@ vector.o: ${AMD64}/amd64/vector.S assym.h
 	mkdir xen-ma
 	ln -s ../${XEN_BUILD} xen-ma/machine
 	rm -f machine
-	ln -s $S/arch/${ARCH_INC}/include machine
+	ln -s ${ARCH_INC} machine
 .endif
 .endif
 

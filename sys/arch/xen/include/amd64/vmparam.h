@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.1.2.1 2007/10/17 21:38:23 bouyer Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.1.2.1 2007/11/19 19:35:54 bouyer Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
