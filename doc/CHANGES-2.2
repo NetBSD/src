@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.2,v 1.1.2.121 2007/11/04 12:45:48 ghen Exp $
+#	$NetBSD: CHANGES-2.2,v 1.1.2.122 2007/11/19 20:40:33 bouyer Exp $
 
 A complete list of changes from the NetBSD 2.1 release to the NetBSD 2.2 
 release
@@ -1335,4 +1335,18 @@ etc/namedb/root.cache				1.11
 
 	Update to 2007110100 version
 	[martti, ticket #11388, #11389]
+
+usr.sbin/rpc.lockd/lock_proc.c			1.8
+
+	Fix off-by-one error accessing "clnt_cache_addr" array which causes
+	heap corruption. This will hopefully fix PR bin/37236.
+	[tron, ticket #11390]
+
+sys/dev/ic/ninjascsi32.c			1.13, 1.14
+sys/dev/ic/ninjascsi32var.h			1.4
+
+	Make targets at ID 0,1 or 2 actually work.
+	some NinjaSCSI-32UDE devices would hang the system if the termination
+	power is absent
+	[itohy, ticket #11391]
 
