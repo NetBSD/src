@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.62.2.7 2007/11/16 17:18:01 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.62.2.8 2007/11/19 19:10:22 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007
@@ -120,7 +120,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.62.2.7 2007/11/16 17:18:01 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.62.2.8 2007/11/19 19:10:22 bouyer Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_ddb.h"
@@ -1131,6 +1131,10 @@ init_x86_64(paddr_t first_avail)
 	__PRINTK(("init_x86_64(0x%lx)\n", first_avail));
 	first_bt_vaddr = (vaddr_t) (first_avail + KERNBASE + PAGE_SIZE * 2);
 	__PRINTK(("first_bt_vaddr 0x%lx\n", first_bt_vaddr));
+	cpu_probe_features(&cpu_info_primary);
+	cpu_feature = cpu_info_primary.ci_feature_flags;
+	/* not on Xen... */
+	cpu_feature &= ~(CPUID_PGE|CPUID_PSE|CPUID_MTRR|CPUID_FXSR|CPUID_NOX);
 #endif /* XEN */
 
 	cpu_init_msrs(&cpu_info_primary);
