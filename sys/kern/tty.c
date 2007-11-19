@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.203 2007/11/19 18:51:51 ad Exp $	*/
+/*	$NetBSD: tty.c,v 1.204 2007/11/19 19:53:48 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.203 2007/11/19 18:51:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.204 2007/11/19 19:53:48 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2220,7 +2220,12 @@ ttwakeup(struct tty *tp)
 	selnotify(&tp->t_rsel, NOTE_SUBMIT);
 	if (ISSET(tp->t_state, TS_ASYNC))
 		ttysig(tp, TTYSIG_PG2, SIGIO);
+#if 0
+	/* XXX tp->t_rawq.c_cv.cv_waiters dropping to zero early!? */
 	clwakeup(&tp->t_rawq);
+#else
+	cv_wakeup(&tp->t_rawq.c_cv);
+#endif
 }
 
 /*
