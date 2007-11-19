@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_barrier.c,v 1.15 2007/11/13 15:57:11 ad Exp $	*/
+/*	$NetBSD: pthread_barrier.c,v 1.16 2007/11/19 15:14:12 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,20 +37,12 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_barrier.c,v 1.15 2007/11/13 15:57:11 ad Exp $");
+__RCSID("$NetBSD: pthread_barrier.c,v 1.16 2007/11/19 15:14:12 ad Exp $");
 
 #include <errno.h>
 
 #include "pthread.h"
 #include "pthread_int.h"
-
-#undef PTHREAD_BARRIER_DEBUG
-
-#ifdef PTHREAD_BARRIER_DEBUG
-#define SDPRINTF(x) DPRINTF(x)
-#else
-#define SDPRINTF(x)
-#endif
 
 int
 pthread_barrier_init(pthread_barrier_t *barrier,
@@ -162,9 +154,6 @@ pthread_barrier_wait(pthread_barrier_t *barrier)
 	 * but instead is responsible for waking everyone else up.
 	 */
 	if (barrier->ptb_curcount + 1 == barrier->ptb_initcount) {
-		SDPRINTF(("(barrier wait %p) Satisfied %p\n",
-		    self, barrier));
-
 		barrier->ptb_generation++;
 		pthread__unpark_all(self, &barrier->ptb_lock,
 		    &barrier->ptb_waiters);
@@ -174,8 +163,6 @@ pthread_barrier_wait(pthread_barrier_t *barrier)
 	barrier->ptb_curcount++;
 	gen = barrier->ptb_generation;
 	while (gen == barrier->ptb_generation) {
-		SDPRINTF(("(barrier wait %p) Waiting on %p\n",
-		    self, barrier));
 		PTQ_INSERT_TAIL(&barrier->ptb_waiters, self, pt_sleep);
 		self->pt_sleeponq = 1;
 		self->pt_sleepobj = &barrier->ptb_waiters;
@@ -183,8 +170,6 @@ pthread_barrier_wait(pthread_barrier_t *barrier)
 		(void)pthread__park(self, &barrier->ptb_lock,
 		    &barrier->ptb_waiters, NULL, 0,
 		    &barrier->ptb_waiters);
-		SDPRINTF(("(barrier wait %p) Woke up on %p\n",
-		    self, barrier));
 		pthread__spinlock(self, &barrier->ptb_lock);
 	}
 	pthread__spinunlock(self, &barrier->ptb_lock);
