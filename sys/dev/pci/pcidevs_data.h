@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.915 2007/11/15 04:34:23 manu Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.916 2007/11/19 19:04:43 ad Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.915 2007/11/15 04:33:50 manu Exp
+ *	NetBSD: pcidevs,v 1.916 2007/11/19 19:04:10 ad Exp
  */
 
 /*
@@ -9944,6 +9944,10 @@ static const struct pci_product pci_products[] = {
 	    "RIVA TNT2 Model 64",
 	},
 	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP04_PCIB,
+	    "MCP04 PCI-ISA Bridge",
+	},
+	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP04_SMBUS,
 	    "MCP04 SMBus",
 	},
@@ -9984,7 +9988,11 @@ static const struct pci_product pci_products[] = {
 	    "GeForce 6800 GT",
 	},
 	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE4_PCIB,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE4_PCIB1,
+	    "nForce4 PCI-ISA bridge",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE4_PCIB2,
 	    "nForce4 PCI-ISA bridge",
 	},
 	{
@@ -13196,6 +13204,10 @@ static const struct pci_product pci_products[] = {
 	    "K8HTB Host",
 	},
 	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8237_PCIB,
+	    "VT8237 PCI-ISA Bridge",
+	},
+	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT6421_RAID,
 	    "VT6421 Serial RAID Controller",
 	},
@@ -13848,4 +13860,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2863;
+const int pci_nproducts = 2866;
