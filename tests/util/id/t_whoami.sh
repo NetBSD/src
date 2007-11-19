@@ -1,4 +1,4 @@
-# $NetBSD: t_whoami.sh,v 1.1 2007/11/16 18:06:46 jmmv Exp $
+# $NetBSD: t_whoami.sh,v 1.2 2007/11/19 14:17:45 jmmv Exp $
 #
 # Copyright (c) 2007 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -33,7 +33,8 @@
 #
 
 run_whoami() {
-	LD_PRELOAD=$(atf_get_srcdir)/libfake.so.0 whoami "${@}"
+	[ -f ./whoami ] || ln -s $(atf_get_srcdir)/h_id ./whoami
+	./whoami "${@}"
 }
 
 atf_test_case correct

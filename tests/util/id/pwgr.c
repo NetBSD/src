@@ -1,4 +1,4 @@
-/* $NetBSD: pwgr.c,v 1.1 2007/11/16 18:06:47 jmmv Exp $ */
+/* $NetBSD: pwgr.c,v 1.1 2007/11/19 14:17:45 jmmv Exp $ */
 /*
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
