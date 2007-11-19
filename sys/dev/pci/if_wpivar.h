@@ -1,4 +1,4 @@
-/*  $NetBSD: if_wpivar.h,v 1.8 2007/09/02 12:18:05 degroote Exp $    */
+/*  $NetBSD: if_wpivar.h,v 1.8.6.1 2007/11/19 00:48:12 mjf Exp $    */
 
 /*-
  * Copyright (c) 2006
@@ -125,7 +125,7 @@ struct wpi_power_group {
 };
 
 struct wpi_softc {
-	struct device		sc_dev;
+	device_t			sc_dev;
 	struct ethercom	 	sc_ec;
 	struct ieee80211com	sc_ic;
 	int			(*sc_newstate)(struct ieee80211com *,

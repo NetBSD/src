@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.128 2007/09/02 19:42:22 dyoung Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.128.6.1 2007/11/19 00:49:08 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.128 2007/09/02 19:42:22 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.128.6.1 2007/11/19 00:49:08 mjf Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -115,8 +115,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.128 2007/09/02 19:42:22 dyoung Exp $");
 #include <netinet/ip.h>
 #include <netinet/if_inarp.h>
 
-#include "arc.h"
-#if NARC > 0
+#include "arcnet.h"
+#if NARCNET > 0
 #include <net/if_arc.h>
 #endif
 #include "fddi.h"

@@ -1,4 +1,4 @@
-#	$NetBSD: files.ofppc,v 1.31 2007/11/05 15:49:03 garbled Exp $
+#	$NetBSD: files.ofppc,v 1.31.2.1 2007/11/19 00:46:42 mjf Exp $
 #
 # NetBSD/ofppc configuration info
 #
@@ -22,7 +22,7 @@ defflag ukbd.h NO_UKBD_DEVICE
 defflag zstty.h NO_ZSTTY_DEVICE
 defflag ofb.h NO_OFB_DEVICE
 
-file	arch/ofppc/ofppc/autoconf.c
+file	arch/powerpc/oea/ofw_autoconf.c
 file	arch/powerpc/powerpc/clock.c
 file	kern/subr_disk_mbr.c			disk
 file	arch/powerpc/oea/ofwoea_machdep.c
@@ -122,6 +122,8 @@ include "dev/isa/files.isa"
 file	arch/powerpc/isa/isa_machdep_common.c	isa
 file	arch/ofppc/isa/isa_machdep.c		isa
 file	arch/powerpc/isa/isadma_machdep.c	isa
+
+include "dev/pckbport/files.pckbport"
 
 device	cpu
 attach	cpu at mainbus

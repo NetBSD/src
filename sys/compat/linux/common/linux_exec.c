@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.c,v 1.97 2007/10/19 18:52:10 njoly Exp $	*/
+/*	$NetBSD: linux_exec.c,v 1.97.2.1 2007/11/19 00:47:27 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995, 1998, 2000, 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec.c,v 1.97 2007/10/19 18:52:10 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec.c,v 1.97.2.1 2007/11/19 00:47:27 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,30 +89,6 @@ static void linux_e_proc_init __P((struct proc *, struct proc *, int));
 #ifdef LINUX_NPTL
 void linux_userret(void);
 #endif
-
-/*
- * Execve(2). Just check the alternate emulation path, and pass it on
- * to the NetBSD execve().
- */
-int
-linux_sys_execve(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
-{
-	struct linux_sys_execve_args /* {
-		syscallarg(const char *) path;
-		syscallarg(char **) argv;
-		syscallarg(char **) envp;
-	} */ *uap = v;
-	struct sys_execve_args ap;
-
-	SCARG(&ap, path) = SCARG(uap, path);
-	SCARG(&ap, argp) = SCARG(uap, argp);
-	SCARG(&ap, envp) = SCARG(uap, envp);
-
-	return sys_execve(l, &ap, retval);
-}
 
 /*
  * Emulation switch.

@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.h,v 1.40 2007/10/29 12:16:54 yamt Exp $	*/
+/*	$NetBSD: sched.h,v 1.40.2.1 2007/11/19 00:49:31 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2007 The NetBSD Foundation, Inc.
@@ -168,6 +168,7 @@ struct schedstate_percpu {
 #ifdef _KERNEL
 
 extern int schedhz;			/* ideally: 16 */
+extern const int schedppq;
 
 struct proc;
 struct cpu_info;
@@ -202,8 +203,9 @@ pri_t		sched_kpri(struct lwp *);
 /* Handlers of fork and exit */
 void		sched_proc_fork(struct proc *, struct proc *);
 void		sched_proc_exit(struct proc *, struct proc *);
-void		sched_lwp_fork(struct lwp *);
+void		sched_lwp_fork(struct lwp *, struct lwp *);
 void		sched_lwp_exit(struct lwp *);
+void		sched_lwp_collect(struct lwp *);
 
 void		sched_slept(struct lwp *);
 void		sched_wakeup(struct lwp *);
@@ -217,7 +219,7 @@ void		sched_print_runqueue(void (*pr)(const char *, ...));
 /* Dispatching */
 void		preempt(void);
 int		mi_switch(struct lwp *);
-inline void	resched_cpu(struct lwp *);
+void		resched_cpu(struct lwp *);
 void		updatertime(lwp_t *, const struct timeval *);
 
 #endif	/* _KERNEL */

@@ -1,7 +1,7 @@
-/* $NetBSD: cpu.c,v 1.4 2007/10/18 15:28:38 yamt Exp $ */
+/* $NetBSD: cpu.c,v 1.4.2.1 2007/11/19 00:47:01 mjf Exp $ */
 
 /*-
- * Copyright (c) 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000, 2006, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.4 2007/10/18 15:28:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.4.2.1 2007/11/19 00:47:01 mjf Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -334,6 +334,7 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 		cpu_init(ci);
 		cpu_set_tss_gates(ci);
 		pmap_cpu_init_late(ci);
+		x86_errata();
 		break;
 
 	case CPU_ROLE_BP:
@@ -354,6 +355,7 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 #if NIOAPIC > 0
 		ioapic_bsp_id = caa->cpu_number;
 #endif
+		x86_errata();
 		break;
 
 	case CPU_ROLE_AP:
@@ -477,6 +479,9 @@ cpu_init(ci)
 #ifdef MULTIPROCESSOR
 	ci->ci_flags |= CPUF_RUNNING;
 	cpus_running |= ci->ci_cpumask;
+#else
+	/* XXX */
+	x86_patch();
 #endif
 }
 
@@ -488,6 +493,9 @@ cpu_boot_secondary_processors()
 {
 	struct cpu_info *ci;
 	u_long i;
+
+	/* Now that we know the number of CPUs, patch the text segment. */
+	x86_patch();
 
 	for (i=0; i < X86_MAXPROCS; i++) {
 		ci = cpu_info[i];
@@ -606,14 +614,12 @@ cpu_boot_secondary(ci)
  * This is called from code in mptramp.s; at this point, we are running
  * in the idle pcb/idle stack of the new CPU.  When this function returns,
  * this processor will enter the idle loop and start looking for work.
- *
- * XXX should share some of this with init386 in machdep.c
  */
 void
 cpu_hatch(void *v)
 {
 	struct cpu_info *ci = (struct cpu_info *)v;
-	int s;
+	int s, i;
 
 #ifdef __x86_64__
 	cpu_init_msrs(ci);
@@ -622,27 +628,26 @@ cpu_hatch(void *v)
 	cpu_feature &= ci->ci_feature_flags;
 	cpu_feature2 &= ci->ci_feature2_flags;
 
-#ifdef DEBUG
-	if (ci->ci_flags & CPUF_PRESENT)
-		panic("%s: already running!?", ci->ci_dev->dv_xname);
-#endif
-
+	KDASSERT((ci->ci_flags & CPUF_PRESENT) == 0);
 	ci->ci_flags |= CPUF_PRESENT;
+	while ((ci->ci_flags & CPUF_GO) == 0) {
+		/* Don't use delay, boot CPU may be patching the text. */
+		for (i = 10000; i != 0; i--)
+			x86_pause();
+	}
 
-	lapic_enable();
-	lapic_initclocks();
+	/* Beacuse the text may have been patched in x86_patch(). */
+	wbinvd();
+	x86_flush();
 
-	while ((ci->ci_flags & CPUF_GO) == 0)
-		delay(10);
-#ifdef DEBUG
-	if (ci->ci_flags & CPUF_RUNNING)
-		panic("%s: already running!?", ci->ci_dev->dv_xname);
-#endif
+	KASSERT((ci->ci_flags & CPUF_RUNNING) == 0);
 
 	lcr0(ci->ci_data.cpu_idlelwp->l_addr->u_pcb.pcb_cr0);
 	cpu_init_idt();
-	lapic_set_lvt();
 	gdt_init_cpu(ci);
+	lapic_enable();
+	lapic_set_lvt();
+	lapic_initclocks();
 
 #ifdef i386
 	npxinit(ci);
@@ -652,6 +657,7 @@ cpu_hatch(void *v)
 	lldt(GSYSSEL(GLDT_SEL, SEL_KPL));
 
 	cpu_init(ci);
+	cpu_get_tsc_freq(ci);
 
 	s = splhigh();
 #ifdef i386
@@ -661,6 +667,7 @@ cpu_hatch(void *v)
 #endif
 	x86_enable_intr();
 	splx(s);
+	x86_errata();
 
 	aprint_debug("%s: CPU %ld running\n", ci->ci_dev->dv_xname,
 	    (long)ci->ci_cpuid);
@@ -876,3 +883,18 @@ cpu_init_msrs(struct cpu_info *ci)
 		wrmsr(MSR_EFER, rdmsr(MSR_EFER) | EFER_NXE);
 }
 #endif	/* __x86_64__ */
+
+void
+cpu_get_tsc_freq(struct cpu_info *ci)
+{
+	uint64_t last_tsc;
+	u_int junk[4];
+
+	if (ci->ci_feature_flags & CPUID_TSC) {
+		/* Serialize. */
+		x86_cpuid(0, junk);
+		last_tsc = rdtsc();
+		i8254_delay(100000);
+		ci->ci_tsc_freq = (rdtsc() - last_tsc) * 10;
+	}
+}

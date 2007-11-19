@@ -1,4 +1,4 @@
-/* $NetBSD: zs_ioasic.c,v 1.33 2007/10/08 16:18:04 ad Exp $ */
+/* $NetBSD: zs_ioasic.c,v 1.33.4.1 2007/11/19 00:48:25 mjf Exp $ */
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.33 2007/10/08 16:18:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.33.4.1 2007/11/19 00:48:25 mjf Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -255,6 +255,7 @@ zs_ioasic_attach(struct device *parent, struct device *self, void *aux)
 		} else {
 			cs = malloc(sizeof(struct zs_chanstate),
 					M_DEVBUF, M_NOWAIT|M_ZERO);
+			zs_lock_init(cs);
 			zc = zs_ioasic_get_chan_addr(d->iada_addr, channel);
 			cs->cs_reg_csr = (volatile void *)&zc->zc_csr;
 
@@ -776,6 +777,7 @@ zs_ioasic_cnattach(tc_addr_t ioasic_addr, tc_offset_t zs_offset, int channel)
 	extern const struct cdevsw zstty_cdevsw;
 
 	zs_ioasic_cninit(ioasic_addr, zs_offset, channel);
+	zs_lock_init(cs);
 	cs->cs_defspeed = 9600;
 	cs->cs_defcflag = (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8;
 
@@ -798,6 +800,7 @@ zs_ioasic_lk201_cnattach(tc_addr_t ioasic_addr, tc_offset_t zs_offset,
 	struct zs_chanstate *cs = &zs_ioasic_conschanstate_store;
 
 	zs_ioasic_cninit(ioasic_addr, zs_offset, channel);
+	zs_lock_init(cs);
 	cs->cs_defspeed = 4800;
 	cs->cs_defcflag = (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8;
 	return (zskbd_cnattach(cs));

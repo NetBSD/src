@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.124 2007/10/31 15:36:07 pooka Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.124.2.1 2007/11/19 00:48:38 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.124 2007/10/31 15:36:07 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.124.2.1 2007/11/19 00:48:38 mjf Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -84,6 +84,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.124 2007/10/31 15:36:07 pooka Exp $"
 #include <sys/proc.h>
 #include <sys/lock.h>
 #include <sys/systm.h>
+#include <sys/kernel.h>
 #include <sys/lockdebug.h>
 #include <sys/cpu.h>
 #include <sys/syslog.h>
@@ -325,7 +326,7 @@ lockmgr(struct lock *lkp, u_int flags, struct simplelock *interlkp)
 
 	/* LK_RETRY is for vn_lock, not for lockmgr. */
 	KASSERT((flags & LK_RETRY) == 0);
-	KASSERT((l->l_flag & LW_INTR) == 0 || panicstr != NULL);
+	KASSERT((l->l_pflag & LP_INTR) == 0 || panicstr != NULL);
 
 	simple_lock(&lkp->lk_interlock);
 	if (flags & LK_INTERLOCK)
@@ -684,7 +685,7 @@ assert_sleepable(struct simplelock *interlock, const char *msg)
 	if (panicstr != NULL)
 		return;
 	LOCKDEBUG_BARRIER(&kernel_lock, 1);
-	if (CURCPU_IDLE_P()) {
+	if (CURCPU_IDLE_P() && !cold) {
 		panic("assert_sleepable: idle");
 	}
 }
@@ -886,26 +887,4 @@ _kernel_unlock(int nlocks, struct lwp *l, int *countp)
 	if (countp != NULL)
 		*countp = olocks;
 }
-
-#if defined(DEBUG)
-/*
- * Assert that the kernel lock is held.
- */
-void
-_kernel_lock_assert_locked(void)
-{
-
-	if (!__SIMPLELOCK_LOCKED_P(&kernel_lock) ||
-	    curcpu()->ci_biglock_count == 0)
-		_KERNEL_LOCK_ABORT("not locked");
-}
-
-void
-_kernel_lock_assert_unlocked()
-{
-
-	if (curcpu()->ci_biglock_count != 0)
-		_KERNEL_LOCK_ABORT("locked");
-}
-#endif
 #endif /* !_RUMPKERNEL */

@@ -1,4 +1,4 @@
-/*	$NetBSD: locks.c,v 1.1 2007/10/31 15:57:21 pooka Exp $	*/
+/*	$NetBSD: locks.c,v 1.1.4.1 2007/11/19 00:49:23 mjf Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -31,6 +31,8 @@
 #include <sys/param.h>
 #include <sys/mutex.h>
 #include <sys/rwlock.h>
+
+#include "rump_private.h"
 
 #include "rumpuser.h"
 
@@ -153,9 +155,38 @@ cv_wait(kcondvar_t *cv, kmutex_t *mtx)
 	rumpuser_cv_wait(RUMPCV(cv), mtx->kmtx_mtx);
 }
 
+int
+cv_timedwait(kcondvar_t *cv, kmutex_t *mtx, int ticks)
+{
+	extern int hz;
+
+	KASSERT(hz == 100);
+	return rumpuser_cv_timedwait(RUMPCV(cv), mtx->kmtx_mtx, ticks);
+}
+
 void
 cv_signal(kcondvar_t *cv)
 {
 
 	rumpuser_cv_signal(RUMPCV(cv));
+}
+
+/* kernel biglock, only for vnode_if */
+
+void
+_kernel_lock(int nlocks, struct lwp *l)
+{
+
+	KASSERT(nlocks == 1);
+	mutex_enter(&rump_giantlock);
+}
+
+void
+_kernel_unlock(int nlocks, struct lwp *l, int *countp)
+{
+
+	KASSERT(nlocks == 1);
+	mutex_exit(&rump_giantlock);
+	if (countp)
+		*countp = 1;
 }

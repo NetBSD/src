@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_node.c,v 1.6 2007/10/11 19:41:13 pooka Exp $	*/
+/*	$NetBSD: puffs_node.c,v 1.6.6.1 2007/11/19 00:48:29 mjf Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_node.c,v 1.6 2007/10/11 19:41:13 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_node.c,v 1.6.6.1 2007/11/19 00:48:29 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/hash.h>
@@ -79,12 +79,12 @@ puffs_getvnode(struct mount *mp, void *cookie, enum vtype type,
 
 	error = EPROTO;
 	if (type <= VNON || type >= VBAD) {
-		puffs_msg_errnotify(pmp, PUFFS_ERR_MAKENODE, EINVAL,
+		puffs_senderr(pmp, PUFFS_ERR_MAKENODE, EINVAL,
 		    "bad node type", cookie);
 		goto bad;
 	}
 	if (vsize == VSIZENOTSET) {
-		puffs_msg_errnotify(pmp, PUFFS_ERR_MAKENODE, EINVAL,
+		puffs_senderr(pmp, PUFFS_ERR_MAKENODE, EINVAL,
 		    "VSIZENOTSET is not a valid size", cookie);
 		goto bad;
 	}
@@ -273,7 +273,7 @@ puffs_newnode(struct mount *mp, struct vnode *dvp, struct vnode **vpp,
 	if (cookie == pmp->pmp_root_cookie
 	    || puffs_cookie2pnode(pmp, cookie) != NULL) {
 		mutex_exit(&pmp->pmp_lock);
-		puffs_msg_errnotify(pmp, PUFFS_ERR_MAKENODE, EEXIST,
+		puffs_senderr(pmp, PUFFS_ERR_MAKENODE, EEXIST,
 		    "cookie exists", cookie);
 		return EPROTO;
 	}
@@ -281,7 +281,7 @@ puffs_newnode(struct mount *mp, struct vnode *dvp, struct vnode **vpp,
 	LIST_FOREACH(pnc, &pmp->pmp_newcookie, pnc_entries) {
 		if (pnc->pnc_cookie == cookie) {
 			mutex_exit(&pmp->pmp_lock);
-			puffs_msg_errnotify(pmp, PUFFS_ERR_MAKENODE, EEXIST,
+			puffs_senderr(pmp, PUFFS_ERR_MAKENODE, EEXIST,
 			    "cookie exists", cookie);
 			return EPROTO;
 		}
@@ -466,15 +466,13 @@ puffs_cookie2vnode(struct puffs_mount *pmp, void *cookie, int lock,
 }
 
 void
-puffs_updatenode(struct vnode *vp, int flags)
+puffs_updatenode(struct puffs_node *pn, int flags, voff_t size)
 {
-	struct puffs_node *pn;
 	struct timespec ts;
 
 	if (flags == 0)
 		return;
 
-	pn = VPTOPP(vp);
 	nanotime(&ts);
 
 	if (flags & PUFFS_UPDATEATIME) {
@@ -490,7 +488,7 @@ puffs_updatenode(struct vnode *vp, int flags)
 		pn->pn_stat |= PNODE_METACACHE_MTIME;
 	}
 	if (flags & PUFFS_UPDATESIZE) {
-		pn->pn_mc_size = vp->v_size;
+		pn->pn_mc_size = size;
 		pn->pn_stat |= PNODE_METACACHE_SIZE;
 	}
 }

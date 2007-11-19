@@ -1,7 +1,7 @@
-/* 	$NetBSD: cpuvar.h,v 1.16 2007/10/29 00:42:29 xtraeme Exp $ */
+/* 	$NetBSD: cpuvar.h,v 1.16.2.1 2007/11/19 00:46:58 mjf Exp $ */
 
 /*-
- * Copyright (c) 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -107,7 +107,7 @@ extern u_int32_t cpus_running;
 int x86_ipi(int,int,int);
 void x86_self_ipi(int);
 int x86_ipi_init(int);
-void x86_errata(struct cpu_info *, int);
+void x86_errata(void);
 
 void identifycpu(struct cpu_info *);
 void cpu_init(struct cpu_info *);
@@ -127,6 +127,11 @@ int	via_get_bus_clock(struct cpu_info *);
 int	p3_get_bus_clock(struct cpu_info *);
 int	p4_get_bus_clock(struct cpu_info *);
 #endif
+
+void	cpu_get_tsc_freq(struct cpu_info *);
+
+extern int cpu_vendor;
+extern bool x86_mp_online;
 
 #endif
 

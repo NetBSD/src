@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs.h,v 1.26 2007/02/22 06:37:00 thorpej Exp $	*/
+/*	$NetBSD: tmpfs.h,v 1.26.24.1 2007/11/19 00:48:31 mjf Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.

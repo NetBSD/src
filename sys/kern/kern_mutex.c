@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.21 2007/11/04 17:26:02 pooka Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.21.2.1 2007/11/19 00:48:40 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.21 2007/11/04 17:26:02 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.21.2.1 2007/11/19 00:48:40 mjf Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -314,11 +314,18 @@ mutex_init(kmutex_t *mtx, kmutex_type_t type, int ipl)
 
 	switch (type) {
 	case MUTEX_ADAPTIVE:
-	case MUTEX_DEFAULT:
 		KASSERT(ipl == IPL_NONE);
 		break;
+	case MUTEX_DEFAULT:
 	case MUTEX_DRIVER:
-		type = (ipl == IPL_NONE ? MUTEX_ADAPTIVE : MUTEX_SPIN);
+		switch (ipl) {
+		case IPL_NONE:
+			type = MUTEX_ADAPTIVE;
+			break;
+		default:
+			type = MUTEX_SPIN;
+			break;
+		}
 		break;
 	default:
 		break;
@@ -331,7 +338,6 @@ mutex_init(kmutex_t *mtx, kmutex_type_t type, int ipl)
 		MUTEX_INITIALIZE_SPIN(mtx, id, ipl);
 		break;
 	case MUTEX_ADAPTIVE:
-	case MUTEX_DEFAULT:
 		id = LOCKDEBUG_ALLOC(mtx, &mutex_adaptive_lockops,
 		    (uintptr_t)__builtin_return_address(0));
 		MUTEX_INITIALIZE_ADAPTIVE(mtx, id);

@@ -1,4 +1,4 @@
-/*	$NetBSD: atareg.h,v 1.30 2007/08/21 16:53:18 bouyer Exp $	*/
+/*	$NetBSD: atareg.h,v 1.30.8.1 2007/11/19 00:47:42 mjf Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -194,9 +194,11 @@ atacmd_tostatq(int cmd32)
 #endif /* _KERNEL */
 
 /* Subcommands for SET_FEATURES (features register) */
+#define	WDSF_8BIT_PIO_EN	0x01
 #define	WDSF_WRITE_CACHE_EN	0x02
 #define	WDSF_SET_MODE		0x03
 #define	WDSF_REASSIGN_EN	0x04
+#define	WDSF_APM_EN		0x05
 #define	WDSF_RETRY_DS		0x33
 #define	WDSF_SET_CACHE_SGMT	0x54
 #define	WDSF_READAHEAD_DS	0x55
@@ -204,6 +206,7 @@ atacmd_tostatq(int cmd32)
 #define	WDSF_ECC_DS		0x77
 #define	WDSF_WRITE_CACHE_DS	0x82
 #define	WDSF_REASSIGN_DS	0x84
+#define	WDSF_APM_DS		0x85
 #define	WDSF_ECC_EN		0x88
 #define	WDSF_RETRY_EN		0x99
 #define	WDSF_SET_CURRENT	0x9a

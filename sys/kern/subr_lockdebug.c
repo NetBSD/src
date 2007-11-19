@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_lockdebug.c,v 1.11 2007/10/27 01:23:25 ad Exp $	*/
+/*	$NetBSD: subr_lockdebug.c,v 1.11.2.1 2007/11/19 00:48:49 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.11 2007/10/27 01:23:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.11.2.1 2007/11/19 00:48:49 mjf Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_ddb.h"
@@ -109,10 +109,10 @@ lockdebuglk_t		ld_free_lk;
 lockdebuglk_t		ld_mem_lk[LD_MLOCKS];
 
 lockdebuglist_t		ld_mem_list[LD_MLISTS];
-lockdebuglist_t		ld_sleepers;
-lockdebuglist_t		ld_spinners;
-lockdebuglist_t		ld_free;
-lockdebuglist_t		ld_all;
+lockdebuglist_t		ld_sleepers = TAILQ_HEAD_INITIALIZER(ld_sleepers);
+lockdebuglist_t		ld_spinners = TAILQ_HEAD_INITIALIZER(ld_spinners);
+lockdebuglist_t		ld_free = TAILQ_HEAD_INITIALIZER(ld_free);
+lockdebuglist_t		ld_all = TAILQ_HEAD_INITIALIZER(ld_all);
 int			ld_nfree;
 int			ld_freeptr;
 int			ld_recurse;
@@ -203,11 +203,6 @@ lockdebug_init(void)
 	__cpu_simple_lock_init(&ld_sleeper_lk.lk_lock);
 	__cpu_simple_lock_init(&ld_spinner_lk.lk_lock);
 	__cpu_simple_lock_init(&ld_free_lk.lk_lock);
-
-	TAILQ_INIT(&ld_free);
-	TAILQ_INIT(&ld_all);
-	TAILQ_INIT(&ld_sleepers);
-	TAILQ_INIT(&ld_spinners);
 
 	ld = ld_prime;
 	ld_table[0] = ld;
@@ -589,7 +584,7 @@ lockdebug_barrier(volatile void *spinlock, int slplocks)
 					    "not held by current CPU", true);
 				continue;
 			}
-			if (ld->ld_cpu == cpuno && (l->l_flag & LW_INTR) == 0)
+			if (ld->ld_cpu == cpuno && (l->l_pflag & LP_INTR) == 0)
 				lockdebug_abort1(ld, &ld_spinner_lk,
 				    __func__, "spin lock held", true);
 		}

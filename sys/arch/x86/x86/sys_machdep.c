@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.4 2007/10/17 19:58:17 garbled Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.4.2.1 2007/11/19 00:47:04 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.4 2007/10/17 19:58:17 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.4.2.1 2007/11/19 00:47:04 mjf Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_mtrr.h"
@@ -101,6 +101,8 @@ int x86_get_ioperm(struct lwp *, void *, register_t *);
 int x86_set_ioperm(struct lwp *, void *, register_t *);
 int x86_get_mtrr(struct lwp *, void *, register_t *);
 int x86_set_mtrr(struct lwp *, void *, register_t *);
+int x86_set_sdbase(void *arg, char which);
+int x86_get_sdbase(void *arg, char which);
 
 #ifdef LDT_DEBUG
 static void x86_print_ldt(int, const struct segment_descriptor *);
@@ -597,6 +599,70 @@ x86_set_mtrr(struct lwp *l, void *args, register_t *retval)
 }
 
 int
+x86_set_sdbase(void *arg, char which)
+{
+#ifdef i386
+	struct segment_descriptor sd;
+	vaddr_t base;
+	int error;
+
+	error = copyin(arg, &base, sizeof(base));
+	if (error != 0)
+		return error;
+
+	sd.sd_lobase = base & 0xffffff;
+	sd.sd_hibase = (base >> 24) & 0xff;
+	sd.sd_lolimit = 0xffff;
+	sd.sd_hilimit = 0xf;
+	sd.sd_type = SDT_MEMRWA;
+	sd.sd_dpl = SEL_UPL;
+	sd.sd_p = 1;
+	sd.sd_xx = 0;
+	sd.sd_def32 = 1;
+	sd.sd_gran = 1;
+
+	crit_enter();
+	if (which == 'f') {
+		memcpy(&curpcb->pcb_fsd, &sd, sizeof(sd));
+		memcpy(&curcpu()->ci_gdt[GUFS_SEL], &sd, sizeof(sd));
+	} else /* which == 'g' */ {
+		memcpy(&curpcb->pcb_gsd, &sd, sizeof(sd));
+		memcpy(&curcpu()->ci_gdt[GUGS_SEL], &sd, sizeof(sd));
+	}
+	crit_exit();
+
+	return 0;
+#else
+	return EINVAL;
+#endif
+}
+
+int
+x86_get_sdbase(void *arg, char which)
+{
+#ifdef i386
+	struct segment_descriptor *sd;
+	vaddr_t base;
+
+	switch (which) {
+	case 'f':
+		sd = (struct segment_descriptor *)&curpcb->pcb_fsd;
+		break;
+	case 'g':
+		sd = (struct segment_descriptor *)&curpcb->pcb_gsd;
+		break;
+	default:
+		panic("x86_get_sdbase");
+	}
+
+	base = sd->sd_hibase << 24 | sd->sd_lobase;
+	return copyout(&base, &arg, sizeof(base));
+#else
+	return EINVAL;
+#endif
+}
+
+int
 sys_sysarch(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_sysarch_args /* {
@@ -657,6 +723,22 @@ sys_sysarch(struct lwp *l, void *v, register_t *retval)
 		error = pmc_read(l, SCARG(uap, parms), retval);
 		break;
 #endif
+
+	case X86_SET_FSBASE:
+		error = x86_set_sdbase(SCARG(uap, parms), 'f');
+		break;
+
+	case X86_SET_GSBASE:
+		error = x86_set_sdbase(SCARG(uap, parms), 'g');
+		break;
+
+	case X86_GET_FSBASE:
+		error = x86_get_sdbase(SCARG(uap, parms), 'f');
+		break;
+
+	case X86_GET_GSBASE:
+		error = x86_get_sdbase(SCARG(uap, parms), 'g');
+		break;
 
 	default:
 		error = EINVAL;

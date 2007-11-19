@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.c,v 1.5 2007/10/31 15:57:19 pooka Exp $	*/
+/*	$NetBSD: ffs.c,v 1.5.4.1 2007/11/19 00:49:20 mjf Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -100,7 +100,7 @@ main(int argc, char *argv[])
 	rv = p2k_run_fs(MOUNT_FFS, argv[0], argv[1], mntflags,
 	    &args, sizeof(args), pflags);
 	if (rv)
-		err(1, "mount %d", rv);
+		err(1, "mount");
 
 	return 0;
 }

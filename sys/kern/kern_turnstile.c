@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_turnstile.c,v 1.10 2007/07/09 21:10:54 ad Exp $	*/
+/*	$NetBSD: kern_turnstile.c,v 1.10.14.1 2007/11/19 00:48:45 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.10 2007/07/09 21:10:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.10.14.1 2007/11/19 00:48:45 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/lock.h>
@@ -84,9 +84,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.10 2007/07/09 21:10:54 ad Exp $
 #define	TS_HASH(obj)	(((uintptr_t)(obj) >> 3) & TS_HASH_MASK)
 
 tschain_t	turnstile_tab[TS_HASH_SIZE];
-
-struct pool turnstile_pool;
-struct pool_cache turnstile_cache;
+pool_cache_t	turnstile_cache;
 
 int	turnstile_ctor(void *, void *, int);
 
@@ -109,10 +107,9 @@ turnstile_init(void)
 		mutex_init(&tc->tc_mutex, MUTEX_SPIN, IPL_SCHED);
 	}
 
-	pool_init(&turnstile_pool, sizeof(turnstile_t), 0, 0, 0,
-	    "tstilepl", &pool_allocator_nointr, IPL_NONE);
-	pool_cache_init(&turnstile_cache, &turnstile_pool,
-	    turnstile_ctor, NULL, NULL);
+	turnstile_cache = pool_cache_init(sizeof(turnstile_t), 0, 0, 0,
+	    "tstilepl", NULL, IPL_NONE, turnstile_ctor, NULL, NULL);
+	KASSERT(turnstile_cache != NULL);
 
 	(void)turnstile_ctor(NULL, &turnstile0, 0);
 }
@@ -264,14 +261,13 @@ turnstile_block(turnstile_t *ts, int q, wchan_t obj, syncobj_t *sobj)
 	sq = &ts->ts_sleepq[q];
 	sleepq_enter(sq, l);
 	LOCKDEBUG_BARRIER(&tc->tc_mutex, 1);
-	l->l_priority = sched_kpri(l);
-	prio = lwp_eprio(l);
-	sleepq_enqueue(sq, prio, obj, "tstile", sobj);
+	l->l_kpriority = true;
+	sleepq_enqueue(sq, obj, "tstile", sobj);
 
 	/*
 	 * lend our priority to lwps on the blocking chain.
 	 */
-
+	prio = lwp_eprio(l);
 	for (;;) {
 		bool dolock;
 
@@ -299,7 +295,7 @@ turnstile_block(turnstile_t *ts, int q, wchan_t obj, syncobj_t *sobj)
 			prio = lwp_eprio(l);
 			continue;
 		}
-		if (prio >= lwp_eprio(owner)) {
+		if (prio <= lwp_eprio(owner)) {
 			if (dolock)
 				lwp_unlock(owner);
 			break;
@@ -311,7 +307,7 @@ turnstile_block(turnstile_t *ts, int q, wchan_t obj, syncobj_t *sobj)
 			ts->ts_eprio = prio;
 			SLIST_INSERT_HEAD(&owner->l_pi_lenders, ts, ts_pichain);
 			lwp_lendpri(owner, prio);
-		} else if (prio < ts->ts_eprio) {
+		} else if (prio > ts->ts_eprio) {
 			ts->ts_eprio = prio;
 			lwp_lendpri(owner, prio);
 		}
@@ -377,11 +373,11 @@ turnstile_wakeup(turnstile_t *ts, int q, int count, lwp_t *nl)
 		 * - from the rest of the list, find the highest priority.
 		 */
 
-		prio = MAXPRI;
+		prio = -1;
 		KASSERT(!SLIST_EMPTY(&l->l_pi_lenders));
 		for (iter = SLIST_FIRST(&l->l_pi_lenders);
 		    iter != NULL; iter = next) {
-			KASSERT(lwp_eprio(l) <= ts->ts_eprio);
+			KASSERT(lwp_eprio(l) >= ts->ts_eprio);
 			next = SLIST_NEXT(iter, ts_pichain);
 			if (iter == ts) {
 				if (prev == NULL) {
@@ -390,7 +386,7 @@ turnstile_wakeup(turnstile_t *ts, int q, int count, lwp_t *nl)
 				} else {
 					SLIST_REMOVE_AFTER(prev, ts_pichain);
 				}
-			} else if (prio > iter->ts_eprio) {
+			} else if (prio < iter->ts_eprio) {
 				prio = iter->ts_eprio;
 			}
 			prev = iter;

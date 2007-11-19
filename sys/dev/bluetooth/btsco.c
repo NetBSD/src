@@ -1,4 +1,4 @@
-/*	$NetBSD: btsco.c,v 1.16 2007/11/03 17:41:04 plunky Exp $	*/
+/*	$NetBSD: btsco.c,v 1.16.2.1 2007/11/19 00:47:44 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.16 2007/11/03 17:41:04 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.16.2.1 2007/11/19 00:47:44 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -1044,7 +1044,7 @@ btsco_freem(void *hdl, void *addr, struct malloc_type *type)
 			tsleep(sc, PWAIT, "drain", 1);
 
 		if (sc->sc_tx_refcnt > 0) {
-			printf("%s: ring buffer unreleased!\n", sc->sc_name);
+			aprint_error("%s: ring buffer unreleased!\n", sc->sc_name);
 			return;
 		}
 	}
@@ -1161,7 +1161,7 @@ btsco_extfree(struct mbuf *m, void *addr, size_t size,
 	struct btsco_softc *sc = arg;
 
 	if (m != NULL)
- 		pool_cache_put(&mbpool_cache, m);
+		pool_cache_put(mb_cache, m);
 
 	sc->sc_tx_refcnt--;
 }

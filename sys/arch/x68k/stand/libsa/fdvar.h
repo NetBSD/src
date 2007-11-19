@@ -1,4 +1,4 @@
-/*	$NetBSD: fdvar.h,v 1.1 2001/09/27 10:03:28 minoura Exp $	*/
+/*	$NetBSD: fdvar.h,v 1.1.106.1 2007/11/19 00:46:57 mjf Exp $	*/
 
 /*
  * Copyright (c) 2001 Minoura Makoto
@@ -41,4 +41,4 @@ struct fd_softc {
 	struct fdfmt	fmt;
 };
 
-extern int fd_check_format (int, int, struct fdfmt *);
+extern int fd_check_format(int, int, struct fdfmt *);

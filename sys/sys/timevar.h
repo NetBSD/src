@@ -1,4 +1,4 @@
-/*	$NetBSD: timevar.h,v 1.15 2007/10/22 05:26:42 simonb Exp $	*/
+/*	$NetBSD: timevar.h,v 1.15.2.1 2007/11/19 00:49:34 mjf Exp $	*/
 
 /*
  *  Copyright (c) 2005 The NetBSD Foundation.
@@ -191,6 +191,7 @@ int	tvtohz(struct timeval *);
 int	inittimeleft(struct timeval *, struct timeval *);
 int	gettimeleft(struct timeval *, struct timeval *);
 void	timerupcall(struct lwp *);
+void	time_init(void);
 
 #ifdef __HAVE_TIMECOUNTER
 extern time_t time_second;	/* current second in the epoch */

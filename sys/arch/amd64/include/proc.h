@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.6 2007/02/09 21:55:01 ad Exp $	*/
+/*	$NetBSD: proc.h,v 1.6.30.1 2007/11/19 00:46:10 mjf Exp $	*/
 
 /*
  * Copyright (c) 1991 Regents of the University of California.
@@ -37,7 +37,7 @@
 #include <machine/frame.h>
 
 /*
- * Machine-dependent part of the proc structure for amd64.
+ * Machine-dependent part of the lwp structure for amd64.
  */
 struct mdlwp {
 	struct	trapframe *md_regs;	/* registers on current frame */

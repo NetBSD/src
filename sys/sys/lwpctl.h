@@ -1,11 +1,11 @@
-/*	$NetBSD: pecoff_misc.c,v 1.19 2007/04/23 21:22:29 dsl Exp $	*/
+/*	$NetBSD: lwpctl.h,v 1.1.8.2 2007/11/19 00:49:28 mjf Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Christos Zoulas.
+ * by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,26 +36,71 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pecoff_misc.c,v 1.19 2007/04/23 21:22:29 dsl Exp $");
+#if !defined(_SYS_LWPCTL_H_)
+#define	_SYS_LWPCTL_H_
 
-#if defined(_KERNEL_OPT)
-#include "opt_nfsserver.h"
-#include "opt_compat_netbsd.h"
-#include "opt_sysv.h"
-#include "opt_compat_43.h"
+/*
+ * Note on compatibility:
+ *
+ * This must be the same size for both 32 and 64-bit processes, since
+ * the same format will be used by both.
+ *
+ * Removal of unused fields is OK, as long as the change in layout
+ * does not affect supported fields.
+ *
+ * It is OK to add fields to this structure, since the kernel allocates
+ * the space.  Re-use of fields is more complicated - see the feature
+ * word passed to the system call.
+ *
+ * lc_reserved is just to reduce the size of the bitmap slightly, and
+ * can be reused.
+ */
+typedef struct lwpctl {
+	volatile int	lc_curcpu;
+	int		lc_reserved;
+} lwpctl_t;
 
-#include "fs_lfs.h"
-#include "fs_nfs.h"
-#endif
+#define	LWPCTL_CPU_NONE		(-1)
+#define	LWPCTL_CPU_EXITED	(-2)
 
-#include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/mount.h>
-#include <sys/fcntl.h>
-#include <sys/proc.h>
+#define	LWPCTL_FEATURE_CURCPU	0x00000001
 
-#include <sys/syscallargs.h>
+#if defined(_KERNEL)
 
-#include <compat/common/compat_util.h>
-#include <compat/pecoff/pecoff_syscallargs.h>
+#include <sys/mutex.h>
+
+#include <uvm/uvm_extern.h>
+
+typedef struct lcpage {
+	TAILQ_ENTRY(lcpage) lcp_chain;
+	vaddr_t		lcp_uaddr;
+	vaddr_t		lcp_kaddr;
+	u_int		lcp_nfree;
+	u_int		lcp_rotor;
+	u_int		lcp_bitmap[1];
+} lcpage_t;
+
+typedef struct lcproc {
+	kmutex_t	lp_lock;
+	struct uvm_object *lp_uao;
+	TAILQ_HEAD(,lcpage) lp_pages;
+	vaddr_t		lp_cur;
+	vaddr_t		lp_max;
+	vaddr_t		lp_uva;
+} lcproc_t;
+
+#define	LWPCTL_PER_PAGE		((PAGE_SIZE / sizeof(lwpctl_t)) & ~31)
+#define	LWPCTL_BITMAP_ENTRIES	(LWPCTL_PER_PAGE >> 5)
+#define	LWPCTL_BITMAP_SZ	(LWPCTL_BITMAP_ENTRIES * sizeof(u_int))
+#define	LWPCTL_LCPAGE_SZ	\
+    (sizeof(lcpage_t) - sizeof(u_int) + LWPCTL_BITMAP_SZ)
+#define	LWPCTL_UAREA_SZ		\
+    (round_page(MAX_LWP_PER_PROC * sizeof(lwpctl_t)))
+
+int	lwp_ctl_alloc(vaddr_t *);
+void	lwp_ctl_free(lwp_t *);
+void	lwp_ctl_exit(void);
+
+#endif /* defined(_KERNEL) */
+
+#endif /* !_SYS_LWPCTL_H_ */

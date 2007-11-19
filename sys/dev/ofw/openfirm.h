@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.h,v 1.24 2007/10/25 16:59:38 garbled Exp $	*/
+/*	$NetBSD: openfirm.h,v 1.24.2.1 2007/11/19 00:48:04 mjf Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -30,6 +30,12 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifndef _OPENFIRM_H_
+#define _OPENFIRM_H_
+
+#include <prop/proplib.h>
+
 /*
  * Prototypes for OpenFirmware Interface Routines
  */
@@ -100,5 +106,12 @@ int	of_compatible(int, const char * const *);
 int	of_decode_int(const unsigned char *);
 int	of_packagename(int, char *, int);
 int	of_find_firstchild_byname(int, const char *);
+int	of_getnode_byname(int, const char *);
+boolean_t	of_to_uint32_prop(prop_dictionary_t, int, const char *,
+    const char *);
+boolean_t	of_to_dataprop(prop_dictionary_t, int, const char *,
+    const char *);
 
 int	*of_network_decode_media(int, int *, int *);
+
+#endif /*_OPENFIRM_H_*/

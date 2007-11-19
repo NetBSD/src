@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_pth.c,v 1.1 2007/10/31 15:57:22 pooka Exp $	*/
+/*	$NetBSD: rumpuser_pth.c,v 1.1.4.1 2007/11/19 00:49:25 mjf Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -32,21 +32,79 @@
 #include <sys/lwp.h>
 
 #include <assert.h>
+#include <errno.h>
 #include <pthread.h>
 #include <stdlib.h>
 #include <stdio.h>
 
 #include "rumpuser.h"
 
-pthread_key_t curlwpkey;
+static pthread_key_t curlwpkey;
+static pthread_key_t isintr;
 
 #define NOFAIL(a) do {if (!(a)) abort();} while (/*CONSTCOND*/0)
+
+struct rumpuser_mtx {
+	pthread_mutex_t pthmtx;
+};
+
+struct rumpuser_rw {
+	pthread_rwlock_t pthrw;
+};
+
+struct rumpuser_cv {
+	pthread_cond_t pthcv;
+};
+
+struct rumpuser_mtx rua_mtx;
+struct rumpuser_cv rua_cv;
+int rua_head, rua_tail;
+struct rumpuser_aio *rua_aios[N_AIOS];
+
+struct rumpuser_rw rumpspl;
+
+static void *
+iothread(void *arg)
+{
+	struct rumpuser_aio *rua;
+
+	NOFAIL(pthread_mutex_lock(&rua_mtx.pthmtx) == 0);
+	for (;;) {
+		while (rua_head == rua_tail) {
+			NOFAIL(pthread_cond_wait(&rua_cv.pthcv,
+			    &rua_mtx.pthmtx) == 0);
+		}
+
+		rua = rua_aios[rua_tail];
+		rua_tail = (rua_tail+1) % (N_AIOS-1);
+		pthread_mutex_unlock(&rua_mtx.pthmtx);
+
+		if (rua->rua_op)
+			rumpuser_read(rua->rua_fd, rua->rua_data,
+			    rua->rua_dlen, rua->rua_off, rua->rua_bp);
+		else
+			rumpuser_write(rua->rua_fd, rua->rua_data,
+			    rua->rua_dlen, rua->rua_off, rua->rua_bp);
+
+		free(rua);
+		NOFAIL(pthread_mutex_lock(&rua_mtx.pthmtx) == 0);
+	}
+}
 
 int
 rumpuser_thrinit()
 {
+	pthread_t iothr;
+
+	pthread_mutex_init(&rua_mtx.pthmtx, NULL);
+	pthread_cond_init(&rua_cv.pthcv, NULL);
+	pthread_rwlock_init(&rumpspl.pthrw, NULL);
 
 	pthread_key_create(&curlwpkey, NULL);
+	pthread_key_create(&isintr, NULL);
+
+	pthread_create(&iothr, NULL, iothread, NULL);
+
 	return 0;
 }
 
@@ -72,16 +130,25 @@ rumpuser_thread_exit()
 	pthread_exit(NULL);
 }
 
-struct rumpuser_mtx {
-	pthread_mutex_t pthmtx;
-};
-
 void
 rumpuser_mutex_init(struct rumpuser_mtx **mtx)
 {
-
 	NOFAIL(*mtx = malloc(sizeof(struct rumpuser_mtx)));
 	NOFAIL(pthread_mutex_init(&((*mtx)->pthmtx), NULL) == 0);
+}
+
+void
+rumpuser_mutex_recursive_init(struct rumpuser_mtx **mtx)
+{
+	pthread_mutexattr_t mattr;
+
+	pthread_mutexattr_init(&mattr);
+	pthread_mutexattr_settype(&mattr, PTHREAD_MUTEX_RECURSIVE);
+
+	NOFAIL(*mtx = malloc(sizeof(struct rumpuser_mtx)));
+	NOFAIL(pthread_mutex_init(&((*mtx)->pthmtx), &mattr) == 0);
+
+	pthread_mutexattr_destroy(&mattr);
 }
 
 void
@@ -112,10 +179,6 @@ rumpuser_mutex_destroy(struct rumpuser_mtx *mtx)
 	NOFAIL(pthread_mutex_destroy(&mtx->pthmtx) == 0);
 	free(mtx);
 }
-
-struct rumpuser_rw {
-	pthread_rwlock_t pthrw;
-};
 
 void
 rumpuser_rw_init(struct rumpuser_rw **rw)
@@ -160,10 +223,6 @@ rumpuser_rw_destroy(struct rumpuser_rw *rw)
 	free(rw);
 }
 
-struct rumpuser_cv {
-	pthread_cond_t pthcv;
-};
-
 void
 rumpuser_cv_init(struct rumpuser_cv **cv)
 {
@@ -185,6 +244,25 @@ rumpuser_cv_wait(struct rumpuser_cv *cv, struct rumpuser_mtx *mtx)
 {
 
 	NOFAIL(pthread_cond_wait(&cv->pthcv, &mtx->pthmtx) == 0);
+}
+
+int
+rumpuser_cv_timedwait(struct rumpuser_cv *cv, struct rumpuser_mtx *mtx,
+	int stdticks)
+{
+	struct timespec ts;
+	int rv;
+
+	ts.tv_sec = stdticks / 100;
+	ts.tv_nsec = (stdticks % 100) * 100000000;
+
+	rv = pthread_cond_timedwait(&cv->pthcv, &mtx->pthmtx, &ts);
+	if (rv != 0 && rv != ETIMEDOUT)
+		abort();
+
+	if (rv == ETIMEDOUT)
+		rv = EWOULDBLOCK;
+	return rv;
 }
 
 void
@@ -211,4 +289,42 @@ rumpuser_get_curlwp()
 {
 
 	return pthread_getspecific(curlwpkey);
+}
+
+/*
+ * I am the interrupt
+ */
+
+void
+rumpuser_set_ipl(int what)
+{
+	int cur;
+
+	if (what == RUMPUSER_IPL_INTR) {
+		pthread_setspecific(isintr, (void *)RUMPUSER_IPL_INTR);
+	} else  {
+		cur = (int)(intptr_t)pthread_getspecific(isintr);
+		pthread_setspecific(isintr, (void *)(intptr_t)(cur+1));
+	}
+}
+
+int
+rumpuser_whatis_ipl()
+{
+
+	return (int)(intptr_t)pthread_getspecific(isintr);
+}
+
+void
+rumpuser_clear_ipl(int what)
+{
+	int cur;
+
+	if (what == RUMPUSER_IPL_INTR)
+		cur = 1;
+	else
+		cur = (int)(intptr_t)pthread_getspecific(isintr);
+	cur--;
+
+	pthread_setspecific(isintr, (void *)(intptr_t)cur);
 }
