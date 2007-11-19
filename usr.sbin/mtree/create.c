@@ -1,4 +1,4 @@
-/*	$NetBSD: create.c,v 1.53 2007/11/19 08:42:24 rillig Exp $	*/
+/*	$NetBSD: create.c,v 1.54 2007/11/19 08:58:54 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)create.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: create.c,v 1.53 2007/11/19 08:42:24 rillig Exp $");
+__RCSID("$NetBSD: create.c,v 1.54 2007/11/19 08:58:54 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -83,7 +83,7 @@ static uid_t uid;
 static mode_t mode;
 static u_long flags;
 
-static int	dsort(const FTSENT **, const FTSENT **);
+static int	dcmp(const FTSENT **, const FTSENT **);
 static void	output(int *, const char *, ...)
 	__attribute__((__format__(__printf__, 2, 3)));
 static int	statd(FTS *, FTSENT *, uid_t *, gid_t *, mode_t *, u_long *);
@@ -108,7 +108,7 @@ cwalk(void)
 	    "#\t   user: %s\n#\tmachine: %s\n#\t   tree: %s\n#\t   date: %s",
 	    getlogin(), host, fullpath, ctime(&clocktime));
 
-	if ((t = fts_open(argv, ftsoptions, dsort)) == NULL)
+	if ((t = fts_open(argv, ftsoptions, dcmp)) == NULL)
 		mtree_err("fts_open: %s", strerror(errno));
 	while ((p = fts_read(t)) != NULL) {
 		if (check_excludes(p->fts_name, p->fts_path)) {
@@ -376,7 +376,7 @@ statd(FTS *t, FTSENT *parent, uid_t *puid, gid_t *pgid, mode_t *pmode,
 }
 
 static int
-dsort(const FTSENT **a, const FTSENT **b)
+dcmp(const FTSENT **a, const FTSENT **b)
 {
 
 	if (S_ISDIR((*a)->fts_statp->st_mode)) {
