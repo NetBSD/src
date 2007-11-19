@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_mutex.c,v 1.37 2007/11/13 15:57:11 ad Exp $	*/
+/*	$NetBSD: pthread_mutex.c,v 1.38 2007/11/19 15:14:13 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_mutex.c,v 1.37 2007/11/13 15:57:11 ad Exp $");
+__RCSID("$NetBSD: pthread_mutex.c,v 1.38 2007/11/19 15:14:13 ad Exp $");
 
 #include <errno.h>
 #include <limits.h>
@@ -155,8 +155,6 @@ pthread_mutex_lock(pthread_mutex_t *mutex)
 
 	self = pthread__self();
 
-	PTHREADD_ADD(PTHREADD_MUTEX_LOCK);
-
 	/*
 	 * Note that if we get the lock, we don't have to deal with any
 	 * non-default lock type handling.
@@ -187,7 +185,6 @@ pthread_mutex_lock_slow(pthread_t self, pthread_mutex_t *mutex)
 	pthread__error(EINVAL, "Invalid mutex",
 	    mutex->ptm_magic == _PT_MUTEX_MAGIC);
 
-	PTHREADD_ADD(PTHREADD_MUTEX_LOCK_SLOW);
 	for (;;) {
 		/* Spin for a while. */
 		count = pthread__nspins;
@@ -280,7 +277,6 @@ pthread_mutex_trylock(pthread_mutex_t *mutex)
 
 	self = pthread__self();
 
-	PTHREADD_ADD(PTHREADD_MUTEX_TRYLOCK);
 	if (pthread__spintrylock(self, &mutex->ptm_lock) == 0) {
 		/*
 		 * These tests can be performed without holding the
@@ -314,8 +310,6 @@ pthread_mutex_unlock(pthread_mutex_t *mutex)
 
 	pthread__error(EINVAL, "Invalid mutex",
 	    mutex->ptm_magic == _PT_MUTEX_MAGIC);
-
-	PTHREADD_ADD(PTHREADD_MUTEX_UNLOCK);
 
 	/*
 	 * These tests can be performed without holding the

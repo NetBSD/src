@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.61 2007/11/13 17:20:09 ad Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.62 2007/11/19 15:14:13 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -49,7 +49,6 @@
 
 #include "pthread_types.h"
 #include "pthread_queue.h"
-#include "pthread_debug.h"
 #include "pthread_md.h"
 
 #include <sys/tree.h>
