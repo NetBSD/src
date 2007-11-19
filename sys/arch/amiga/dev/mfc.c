@@ -1,4 +1,4 @@
-/*	$NetBSD: mfc.c,v 1.47 2007/11/07 15:56:11 ad Exp $ */
+/*	$NetBSD: mfc.c,v 1.48 2007/11/19 18:51:37 ad Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -55,7 +55,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfc.c,v 1.47 2007/11/07 15:56:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfc.c,v 1.48 2007/11/19 18:51:37 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -820,14 +820,7 @@ mfcsstart(struct tty *tp)
 		goto out;
 
 	cc = tp->t_outq.c_cc;
-	if (cc <= tp->t_lowat) {
-		if (tp->t_state & TS_ASLEEP) {
-			tp->t_state &= ~TS_ASLEEP;
-			wakeup((void *) & tp->t_outq);
-		}
-		selwakeup(&tp->t_wsel);
-	}
-	if (cc == 0 || (tp->t_state & TS_BUSY))
+	if (!ttypull(tp) || (tp->t_state & TS_BUSY))
 		goto out;
 
 	/*
