@@ -1,4 +1,4 @@
-/*	$NetBSD: msc.c,v 1.38 2007/03/04 05:59:26 christos Exp $ */
+/*	$NetBSD: msc.c,v 1.38.26.1 2007/11/19 00:46:11 mjf Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msc.c,v 1.38 2007/03/04 05:59:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msc.c,v 1.38.26.1 2007/11/19 00:46:11 mjf Exp $");
 
 #include "msc.h"
 
@@ -376,12 +376,12 @@ mscopen(dev_t dev, int flag, int mode, struct lwp *l)
 		ms->OutFlush = true;
 		msc->closing = false;
 	}
+	splx(s);	
 
-	if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN, tp)) {
-		splx(s);	
+	if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN, tp))
 		return (EBUSY);
-	}
 
+	mutex_spin_enter(&tty_lock);
 	/* initialize tty */
 	if ((tp->t_state & TS_ISOPEN) == 0 && tp->t_wopen == 0) {
 		ttychars(tp);
@@ -438,11 +438,11 @@ mscopen(dev_t dev, int flag, int mode, struct lwp *l)
 #if DEBUG_CD
 		printf("msc%d: %d waiting for CD\n", msc->unit, MSCLINE(dev));
 #endif
-		error = ttysleep(tp, (void *)&tp->t_rawq, TTIPRI | PCATCH, ttopen, 0);
+		error = ttysleep(tp, &tp->t_rawq.c_cv, true, 0);
 		tp->t_wopen--;
 
 		if (error) {
-			splx(s);
+			mutex_spin_exit(&tty_lock);
 			return(error);
 		}
 	}
@@ -458,13 +458,12 @@ mscopen(dev_t dev, int flag, int mode, struct lwp *l)
 			ttstart (tp);
 		}
 
-	splx(s);
-
 	/*
 	 * Reset the tty pointer, as there could have been a dialout
 	 * use of the tty with a dialin open waiting.
 	 */
 	tp->t_dev = dev;
+	mutex_spin_exit(&tty_lock);
 
 	return tp->t_linesw->l_open(dev, tp);
 }

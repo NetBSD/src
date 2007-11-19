@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.38 2007/10/10 20:42:25 ad Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.38.4.1 2007/11/19 00:48:31 mjf Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.38 2007/10/10 20:42:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.38.4.1 2007/11/19 00:48:31 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>

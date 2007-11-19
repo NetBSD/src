@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.54 2007/10/18 15:28:35 yamt Exp $
+#	$NetBSD: genassym.cf,v 1.54.2.1 2007/11/19 00:46:25 mjf Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -107,6 +107,7 @@ include <machine/pmap.h>
 include <machine/vmparam.h>
 include <machine/intr.h>
 include <machine/types.h>
+include <machine/segments.h>
 
 if defined(_KERNEL) && !defined(_LKM)
 include "ioapic.h"
@@ -168,6 +169,7 @@ define	PG_RW			PG_RW
 define	PG_V			PG_V
 define	PG_KW			PG_KW
 define	PG_KR			PG_KR
+define	PGEX_U			PGEX_U
 
 define	L2_SLOT_KERNBASE	pl2_pi(KERNBASE)
 define	L1_SLOT_KERNBASE	pl1_pi(KERNBASE)
@@ -192,6 +194,9 @@ define	P_MD_SYSCALL		offsetof(struct proc, p_md.md_syscall)
 
 define	LW_SYSTEM		LW_SYSTEM
 
+define	GUFS_SEL		GUFS_SEL
+define	GUGS_SEL		GUGS_SEL
+
 define	M_DATA			offsetof(struct mbuf, m_data)
 define	M_LEN			offsetof(struct mbuf, m_len)
 define	M_NEXT			offsetof(struct mbuf, m_next)
@@ -213,6 +218,8 @@ define	PCB_CR0			offsetof(struct pcb, pcb_cr0)
 define	PCB_LDT_SEL		offsetof(struct pcb, pcb_ldt_sel)
 define	PCB_ONFAULT		offsetof(struct pcb, pcb_onfault)
 define	PCB_FPCPU		offsetof(struct pcb, pcb_fpcpu)
+define	PCB_FSD			offsetof(struct pcb, pcb_fsd)
+define	PCB_GSD			offsetof(struct pcb, pcb_gsd)
 
 define	TF_CS			offsetof(struct trapframe, tf_cs)
 define	TF_EIP			offsetof(struct trapframe, tf_eip)

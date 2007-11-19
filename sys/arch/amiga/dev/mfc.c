@@ -1,4 +1,4 @@
-/*	$NetBSD: mfc.c,v 1.46 2007/03/04 05:59:23 christos Exp $ */
+/*	$NetBSD: mfc.c,v 1.46.26.1 2007/11/19 00:46:11 mjf Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -55,7 +55,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfc.c,v 1.46 2007/03/04 05:59:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfc.c,v 1.46.26.1 2007/11/19 00:46:11 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -478,7 +478,7 @@ mfcsopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct tty *tp;
 	struct mfcs_softc *sc;
-	int unit, error, s;
+	int unit, error;
 
 	error = 0;
 	unit = dev & 0x1f;
@@ -486,8 +486,6 @@ mfcsopen(dev_t dev, int flag, int mode, struct lwp *l)
 	if (unit >= mfcs_cd.cd_ndevs || (mfcs_active & (1 << unit)) == 0)
 		return (ENXIO);
 	sc = mfcs_cd.cd_devs[unit];
-
-	s = spltty();
 
 	if (sc->sc_tty)
 		tp = sc->sc_tty;
@@ -501,11 +499,10 @@ mfcsopen(dev_t dev, int flag, int mode, struct lwp *l)
 	tp->t_dev = dev;
 	tp->t_hwiflow = mfcshwiflow;
 
-	if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN, tp)) {
-		splx(s);
+	if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN, tp))
 		return (EBUSY);
-	}
 
+	mutex_spin_enter(&tty_lock);
 	if ((tp->t_state & TS_ISOPEN) == 0 && tp->t_wopen == 0) {
 		ttychars(tp);
 		if (tp->t_ispeed == 0) {
@@ -549,11 +546,10 @@ mfcsopen(dev_t dev, int flag, int mode, struct lwp *l)
 	 */
 	while ((tp->t_state & TS_CARR_ON) == 0 && (tp->t_cflag & CLOCAL) == 0) {
 		tp->t_wopen++;
-		error = ttysleep(tp, (void *)&tp->t_rawq,
-		    TTIPRI | PCATCH, ttopen, 0);
+		error = ttysleep(tp, &tp->t_rawq.c_cv, true, 0);
 		tp->t_wopen--;
 		if (error) {
-			splx(s);
+			mutex_spin_exit(&tty_lock);
 			return(error);
 		}
 	}
@@ -563,13 +559,12 @@ done:
 		tp->t_state &= ~TS_TTSTOP;
 	        ttstart (tp);
 	}
-
-	splx(s);
 	/*
 	 * Reset the tty pointer, as there could have been a dialout
 	 * use of the tty with a dialin open waiting.
 	 */
 	tp->t_dev = dev;
+	mutex_spin_exit(&tty_lock);
 	return tp->t_linesw->l_open(dev, tp);
 }
 

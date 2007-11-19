@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.32 2007/10/19 12:16:38 ad Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.32.2.1 2007/11/19 00:47:23 mjf Exp $ */
 
 /*-
  * Copyright (c) 1995, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.32 2007/10/19 12:16:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.32.2.1 2007/11/19 00:47:23 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -383,12 +383,12 @@ linux_sys_new_uname(l, v, retval)
         } */ *uap = v;
         struct linux_utsname luts;
 
-        strncpy(luts.l_sysname, linux_sysname, sizeof(luts.l_sysname));
-        strncpy(luts.l_nodename, hostname, sizeof(luts.l_nodename));
-        strncpy(luts.l_release, "2.4.0", sizeof(luts.l_release));
-        strncpy(luts.l_version, linux_version, sizeof(luts.l_version));
-        strncpy(luts.l_machine, machine, sizeof(luts.l_machine));
-        strncpy(luts.l_domainname, domainname, sizeof(luts.l_domainname));
+        strlcpy(luts.l_sysname, linux_sysname, sizeof(luts.l_sysname));
+        strlcpy(luts.l_nodename, hostname, sizeof(luts.l_nodename));
+        strlcpy(luts.l_release, "2.4.0", sizeof(luts.l_release));
+        strlcpy(luts.l_version, linux_version, sizeof(luts.l_version));
+        strlcpy(luts.l_machine, machine, sizeof(luts.l_machine));
+        strlcpy(luts.l_domainname, domainname, sizeof(luts.l_domainname));
 
         return copyout(&luts, SCARG(uap, up), sizeof(luts));
 #else

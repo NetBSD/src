@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kse.c,v 1.10 2007/10/19 12:00:46 ad Exp $	*/
+/*	$NetBSD: if_kse.c,v 1.10.2.1 2007/11/19 00:48:09 mjf Exp $	*/
 
 /*
  * Copyright (c) 2006 Tohru Nishimura
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.10 2007/10/19 12:00:46 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.10.2.1 2007/11/19 00:48:09 mjf Exp $");
 
 #include "bpfilter.h"
 
@@ -292,7 +292,7 @@ do {									\
 	KSE_CDRXSYNC((sc), (x), BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE); \
 } while (/*CONSTCOND*/0)
 
-u_int kse_burstsize = 32;	/* DMA burst length tuning knob */
+u_int kse_burstsize = 8;	/* DMA burst length tuning knob */
 
 #ifdef KSEDIAGNOSTIC
 u_int kse_monitor_rxintr;	/* fragmented UDP csum HW bug hook */

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.12 2007/10/17 19:54:26 garbled Exp $	*/
+/*	$NetBSD: intr.c,v 1.12.2.1 2007/11/19 00:46:14 mjf Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.12 2007/10/17 19:54:26 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.12.2.1 2007/11/19 00:46:14 mjf Exp $");
 
 #define __MUTEX_PRIVATE
 
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.12 2007/10/17 19:54:26 garbled Exp $");
 #include <machine/autoconf.h>
 #include <machine/cpufunc.h>
 #include <machine/intr.h>
+#include <machine/reg.h>
 
 #include <hp700/hp700/intr.h>
 #include <hp700/hp700/machdep.h>

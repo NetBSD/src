@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.70 2007/07/09 21:10:57 ad Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.70.14.1 2007/11/19 00:48:58 mjf Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.70 2007/07/09 21:10:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.70.14.1 2007/11/19 00:48:58 mjf Exp $");
 
 #include "opt_ddb.h"
 #include "opt_revcache.h"
@@ -83,11 +83,11 @@ LIST_HEAD(ncvhashhead, namecache) *ncvhashtbl;
 u_long	ncvhash;			/* size of hash table - 1 */
 #define	NCVHASH(vp)		(((uintptr_t)(vp) >> 3) & ncvhash)
 
-TAILQ_HEAD(, namecache) nclruhead;		/* LRU chain */
+TAILQ_HEAD(, namecache) nclruhead =		/* LRU chain */
+	TAILQ_HEAD_INITIALIZER(nclruhead);
 struct	nchstats nchstats;		/* cache effectiveness statistics */
 
-POOL_INIT(namecache_pool, sizeof(struct namecache), 0, 0, 0, "ncachepl",
-    &pool_allocator_nointr, IPL_NONE);
+static pool_cache_t namecache_cache;
 
 MALLOC_DEFINE(M_CACHE, "namecache", "Dynamically allocated cache entries");
 
@@ -133,7 +133,7 @@ static void
 cache_free(struct namecache *ncp)
 {
 
-	pool_put(&namecache_pool, ncp);
+	pool_cache_put(namecache_cache, ncp);
 	numcache--;
 }
 
@@ -462,7 +462,7 @@ cache_enter(struct vnode *dvp, struct vnode *vp, struct componentname *cnp)
 	if (numcache < numvnodes) {
 		numcache++;
 		mutex_exit(&namecache_lock);
-		ncp = pool_get(&namecache_pool, PR_WAITOK);
+		ncp = pool_cache_get(namecache_cache, PR_WAITOK);
 		memset(ncp, 0, sizeof(*ncp));
 		mutex_enter(&namecache_lock);
 	} else if ((ncp = TAILQ_FIRST(&nclruhead)) != NULL) {
@@ -531,8 +531,11 @@ void
 nchinit(void)
 {
 
+	namecache_cache = pool_cache_init(sizeof(struct namecache), 0, 0, 0,
+	    "ncachepl", NULL, IPL_NONE, NULL, NULL, NULL);
+	KASSERT(namecache_cache != NULL);
+
 	mutex_init(&namecache_lock, MUTEX_DEFAULT, IPL_NONE);
-	TAILQ_INIT(&nclruhead);
 	nchashtbl =
 	    hashinit(desiredvnodes, HASH_LIST, M_CACHE, M_WAITOK, &nchash);
 	ncvhashtbl =

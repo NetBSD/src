@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_pool.c,v 1.8 2007/10/23 19:43:54 dyoung Exp $	*/
+/*	$NetBSD: tmpfs_pool.c,v 1.8.2.1 2007/11/19 00:48:31 mjf Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_pool.c,v 1.8 2007/10/23 19:43:54 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_pool.c,v 1.8.2.1 2007/11/19 00:48:31 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/pool.h>
