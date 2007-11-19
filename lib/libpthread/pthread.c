@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.89 2007/11/14 19:28:23 drochner Exp $	*/
+/*	$NetBSD: pthread.c,v 1.90 2007/11/19 15:14:12 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.89 2007/11/14 19:28:23 drochner Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.90 2007/11/19 15:14:12 ad Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -204,7 +204,6 @@ pthread__init(void)
 
 	/* Start subsystems */
 	PTHREAD_MD_INIT
-	pthread__debug_init();
 
 	for (p = pthread__getenv("PTHREAD_DIAGASSERT"); p && *p; p++) {
 		switch (*p) {
@@ -326,8 +325,6 @@ pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 	char * volatile name;
 	unsigned long flag;
 	int ret;
-
-	PTHREADD_ADD(PTHREADD_CREATE);
 
 	/*
 	 * It's okay to check this without a lock because there can

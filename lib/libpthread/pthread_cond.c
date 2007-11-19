@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cond.c,v 1.38 2007/11/13 15:57:11 ad Exp $	*/
+/*	$NetBSD: pthread_cond.c,v 1.39 2007/11/19 15:14:12 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_cond.c,v 1.38 2007/11/13 15:57:11 ad Exp $");
+__RCSID("$NetBSD: pthread_cond.c,v 1.39 2007/11/19 15:14:12 ad Exp $");
 
 #include <errno.h>
 #include <sys/time.h>
@@ -104,7 +104,6 @@ pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex)
 	    mutex->ptm_owner != NULL);
 
 	self = pthread__self();
-	PTHREADD_ADD(PTHREADD_COND_WAIT);
 
 	/* Just hang out for a while if threads aren't running yet. */
 	if (__predict_false(pthread__started == 0))
@@ -195,7 +194,6 @@ pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
 	    (abstime->tv_nsec >= 0) && (abstime->tv_nsec < 1000000000));
 
 	self = pthread__self();
-	PTHREADD_ADD(PTHREADD_COND_TIMEDWAIT);
 
 	/* Just hang out for a while if threads aren't running yet. */
 	if (__predict_false(pthread__started == 0))
@@ -277,7 +275,6 @@ pthread_cond_signal(pthread_cond_t *cond)
 
 	pthread__error(EINVAL, "Invalid condition variable",
 	    cond->ptc_magic == _PT_COND_MAGIC);
-	PTHREADD_ADD(PTHREADD_COND_SIGNAL);
 
 	if (PTQ_EMPTY(&cond->ptc_waiters))
 		return 0;
@@ -334,7 +331,6 @@ pthread_cond_signal(pthread_cond_t *cond)
 		pthread__unpark(self, &cond->ptc_lock,
 		    &cond->ptc_waiters, signaled);
 	}
-	PTHREADD_ADD(PTHREADD_COND_WOKEUP);
 
 	return 0;
 }
@@ -348,8 +344,6 @@ pthread_cond_broadcast(pthread_cond_t *cond)
 
 	pthread__error(EINVAL, "Invalid condition variable",
 	    cond->ptc_magic == _PT_COND_MAGIC);
-
-	PTHREADD_ADD(PTHREADD_COND_BROADCAST);
 
 	if (PTQ_EMPTY(&cond->ptc_waiters))
 		return 0;
@@ -387,11 +381,7 @@ pthread_cond_broadcast(pthread_cond_t *cond)
 		}
 	}
 	pthread__unpark_all(self, &cond->ptc_lock, &cond->ptc_waiters);
-
-	PTHREADD_ADD(PTHREADD_COND_WOKEUP);
-
 	return 0;
-
 }
 
 

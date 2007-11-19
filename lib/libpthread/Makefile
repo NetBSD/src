@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.46 2007/11/13 17:20:08 ad Exp $
+#	$NetBSD: Makefile,v 1.47 2007/11/19 15:14:11 ad Exp $
 #
 
 WARNS=	4
@@ -60,7 +60,6 @@ SRCS+=	pthread_rwlock2.c
 SRCS+=	pthread_specific.c
 SRCS+=	pthread_spin.c
 SRCS+=	pthread_tsd.c
-SRCS+=  pthread_debug.c
 SRCS+=	res_state.c
 SRCS+=	sched.c
 SRCS+=	sem.c
@@ -148,9 +147,6 @@ MLINKS+=	pthread_testcancel.3 pthread_setcancelstate.3
 MLINKS+=	pthread_testcancel.3 pthread_setcanceltype.3
 
 pthread_switch.S _context_u.S: assym.h
-
-debuglog: debuglog.o
-	$(CC) -o debuglog debuglog.o -lpthread
 
 .include <bsd.lib.mk>
 
