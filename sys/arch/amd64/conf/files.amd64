@@ -1,7 +1,11 @@
-#	$NetBSD: files.amd64,v 1.44.2.2 2007/11/13 15:58:09 bouyer Exp $
+#	$NetBSD: files.amd64,v 1.44.2.3 2007/11/19 19:17:17 bouyer Exp $
 #
 # new style config file for amd64 architecture
 #
+
+version 20071109
+
+ifndef xen
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16
@@ -186,3 +190,4 @@ include "dev/acpi/files.acpi"
 file	arch/amd64/acpi/acpi_wakeup.c	acpi
 
 include	"arch/amd64/conf/majors.amd64"
+endif #xen
