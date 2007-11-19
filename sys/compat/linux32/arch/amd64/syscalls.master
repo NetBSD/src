@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.20 2007/11/16 12:56:50 njoly Exp $
+	$NetBSD: syscalls.master,v 1.18 2007/10/31 22:35:34 dsl Exp $
 
 ; NetBSD i386 COMPAT_LINUX32 system call name/number "master" file.
 ; (See syscalls.conf to see what it is processed into.)
@@ -98,7 +98,7 @@
 24	NOARGS	linux_getuid16 { uid_t sys_getuid(void); }
 25	STD	{ int linux32_sys_stime(linux32_timep_t t); }
 26	UNIMPL	ptrace
-27	STD	{ int linux32_sys_alarm(unsigned int secs); }
+27	NOARGS	{ int linux_sys_alarm(unsigned int secs); }
 28	OBSOL	ofstat
 29	NOARGS	{ int linux_sys_pause(void); }
 30	STD	{ int linux32_sys_utime(const netbsd32_charp path, \
@@ -107,7 +107,7 @@
 32	OBSOL	gtty
 33	NOARGS	{ int netbsd32_access(const netbsd32_charp path, \
 		    int flags); }
-34	STD	{ int linux32_sys_nice(int incr); }
+34	NOARGS	{ int linux_sys_nice(int incr); }
 35	OBSOL	ftime
 36	NOARGS	{ int sys_sync(void); }
 37	STD	{ int linux32_sys_kill(int pid, int signum); }
@@ -148,8 +148,8 @@
 67	UNIMPL	sigaction
 68	UNIMPL	siggetmask
 69	UNIMPL	sigsetmask
-70	STD	{ int linux32_sys_setreuid16(int ruid, int euid); }
-71	STD	{ int linux32_sys_setregid16(int rgid, int egid); }
+70	STD	{ int linux_sys_setreuid16(int ruid, int euid); }
+71	STD	{ int linux_sys_setregid16(int rgid, int egid); }
 72	UNIMPL	sigsuspend
 73	UNIMPL	sigpending
 74	NOARGS	{ int compat_43_netbsd32_osethostname(netbsd32_charp hostname, \
@@ -173,7 +173,7 @@
 		    const netbsd32_charp link); }
 84	NOARGS	{ int compat_43_netbsd32_lstat43(const netbsd32_charp \
 		    path, netbsd32_stat43p_t ub); }
-85	NOARGS	{ int netbsd32_readlink(const netbsd32_charp name, \
+85	STD	{ int linux32_sys_readlink(const netbsd32_charp name, \
 		    netbsd32_charp buf, int count); }
 86	UNIMPL	uselib
 87	STD	{ int linux32_sys_swapon(netbsd32_charp name); }
@@ -235,7 +235,7 @@
 135	UNIMPL	sysfs
 136	UNIMPL	personality
 137	UNIMPL	afs_syscall
-138	NOARGS	setfsuid16 { int linux32_sys_setfsuid(uid_t uid); }
+138	NOARGS	setfsuid16 { int linux_sys_setfsuid(uid_t uid); }
 139	NOARGS	getfsuid16 { int linux_sys_getfsuid(void); }
 140	STD	{ int linux32_sys_llseek(int fd, u_int32_t ohigh, \
 		    u_int32_t olow, netbsd32_caddr_t res, int whence); }
@@ -253,7 +253,7 @@
 146	NOARGS	{ netbsd32_ssize_t netbsd32_writev(int fd, \
 		    const netbsd32_iovecp_t iovp, int iovcnt); }
 147	NOARGS	{ pid_t netbsd32_getsid(pid_t pid); }
-148	STD	{ int linux32_sys_fdatasync(int fd); }
+148	NOARGS	{ int linux_sys_fdatasync(int fd); }
 149	STD	{ int linux32_sys___sysctl(linux32___sysctlp_t lsp); }
 150	UNIMPL	mlock
 151	UNIMPL	munlock
@@ -264,7 +264,7 @@
 		    linux32_sched_paramp_t sp); }
 156	STD	{ int linux32_sys_sched_setscheduler(pid_t pid, \
 		    int policy, const linux32_sched_paramp_t sp); }
-157	STD	{ int linux32_sys_sched_getscheduler(pid_t pid); }
+157	NOARGS	{ int linux_sys_sched_getscheduler(pid_t pid); }
 158	NOARGS	{ int linux_sys_sched_yield(void); }
 159	UNIMPL	sched_get_priority_max
 160	UNIMPL	sched_get_priority_min
@@ -275,7 +275,7 @@
 163	STD	{ int linux32_sys_mremap(netbsd32_voidp old_address, \
 		    netbsd32_size_t old_size , netbsd32_size_t new_size, \
 		    netbsd32_u_long flags); }
-164	STD	{ int linux32_sys_setresuid16(uid_t ruid, uid_t euid, \
+164	NOARGS	{ int linux_sys_setresuid16(uid_t ruid, uid_t euid, \
 		    uid_t suid); }
 165	UNIMPL	getresuid16
 166	UNIMPL	vm86
@@ -283,7 +283,7 @@
 168	NOARGS	{ int netbsd32_poll(netbsd32_pollfdp_t fds, u_int nfds, \
 		   int timeout); }
 169	UNIMPL	nfsservctl
-170	STD	{ int linux32_sys_setresgid16(gid_t rgid, gid_t egid, \
+170	NOARGS	{ int linux_sys_setresgid16(gid_t rgid, gid_t egid, \
 		    gid_t sgid); }
 171	UNIMPL	int
 172	UNIMPL	prctl
@@ -350,7 +350,7 @@
 		    int uid, int gid); }
 213 	NOARGS	{ int netbsd32_setuid(uid_t uid); }
 214	NOARGS	{ int netbsd32_setgid(gid_t gid); }
-215	STD	{ int linux32_sys_setfsuid(uid_t uid); }
+215	NOARGS	{ int linux_sys_setfsuid(uid_t uid); }
 216	NOARGS	{ int linux_sys_getfsuid(void); }
 217	UNIMPL	pivot_root
 218	UNIMPL	mincore
@@ -390,7 +390,7 @@
 249	UNIMPL	io_cancel
 250	UNIMPL	fadvise64
 251	UNIMPL	/*	unused	*/
-252	STD	{ int linux32_sys_exit_group(int error_code); }
+252	NOARGS	{ int linux_sys_exit_group(int error_code); }
 253	UNIMPL	lookup_dcookie
 254	UNIMPL	epoll_create
 255	UNIMPL	epoll_ctl

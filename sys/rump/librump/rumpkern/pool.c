@@ -1,4 +1,4 @@
-/*	$NetBSD: pool.c,v 1.4 2007/11/07 16:22:22 pooka Exp $	*/
+/*	$NetBSD: pool.c,v 1.2 2007/08/14 13:54:15 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -52,34 +52,24 @@ pool_destroy(struct pool *pp)
 	return;
 }
 
-pool_cache_t
-pool_cache_init(size_t size, u_int align, u_int align_offset, u_int flags,
-	const char *wchan, struct pool_allocator *palloc, int ipl,
+void
+pool_cache_init(struct pool_cache *pc, struct pool *pp,
 	int (*ctor)(void *, void *, int), void (*dtor)(void *, void *),
 	void *arg)
 {
-	pool_cache_t pc;
-	char *ptr;
 
-	ptr = rumpuser_malloc(sizeof(*pc) + CACHE_LINE_SIZE, 0);
-	pc = (pool_cache_t)(((uintptr_t)ptr + CACHE_LINE_SIZE - 1) &
-	    ~(CACHE_LINE_SIZE - 1));
-
-	pool_init(&pc->pc_pool, size, align, align_offset, flags,
-	    wchan, palloc, ipl);
+	pc->pc_pool = pp;
 	pc->pc_ctor = ctor;
 	pc->pc_dtor = dtor;
 	pc->pc_arg = arg;
-
-	return pc;
 }
 
 void *
-pool_cache_get_paddr(pool_cache_t pc, int flags, paddr_t *pap)
+pool_cache_get_paddr(struct pool_cache *pc, int flags, paddr_t *pap)
 {
 	void *item;
 
-	item = pool_get(&pc->pc_pool, 0);
+	item = pool_get(pc->pc_pool, 0);
 	if (pc->pc_ctor)
 		pc->pc_ctor(pc->pc_arg, item, flags);
 	if (pap)
@@ -89,12 +79,12 @@ pool_cache_get_paddr(pool_cache_t pc, int flags, paddr_t *pap)
 }
 
 void
-pool_cache_put_paddr(pool_cache_t pc, void *object, paddr_t pa)
+pool_cache_put_paddr(struct pool_cache *pc, void *object, paddr_t pa)
 {
 
 	if (pc->pc_dtor)
 		pc->pc_dtor(pc->pc_arg, object);
-	pool_put(&pc->pc_pool, object);
+	pool_put(pc->pc_pool, object);
 }
 
 void *

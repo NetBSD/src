@@ -1,4 +1,4 @@
-/*	$NetBSD: btbc.c,v 1.9 2007/11/11 12:59:03 plunky Exp $	*/
+/*	$NetBSD: btbc.c,v 1.7 2007/11/03 18:24:01 plunky Exp $	*/
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btbc.c,v 1.9 2007/11/11 12:59:03 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btbc.c,v 1.7 2007/11/03 18:24:01 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -107,9 +107,9 @@ static void btbc_receive(struct btbc_softc *, uint32_t);
 static void btbc_transmit(struct btbc_softc *);
 static int btbc_intr(void *);
 
-static void btbc_start(device_t);
-static int btbc_enable(device_t);
-static void btbc_disable(device_t);
+static void btbc_start(struct hci_unit *);
+static int btbc_enable(struct hci_unit *);
+static void btbc_disable(struct hci_unit *);
 
 CFATTACH_DECL_NEW(btbc, sizeof(struct btbc_softc),
     btbc_match, btbc_attach, btbc_detach, NULL);
@@ -143,7 +143,7 @@ btbc_pcmcia_validate_config(struct pcmcia_config_entry *cfe)
 static void
 btbc_attach(device_t parent, device_t self, void *aux)
 {
-	struct btbc_softc *sc = device_private(self);
+	struct btbc_softc *sc = (struct btbc_softc *)self;
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
 	int error;
@@ -153,7 +153,8 @@ btbc_attach(device_t parent, device_t self, void *aux)
 
 	if ((error = pcmcia_function_configure(pa->pf,
 	    btbc_pcmcia_validate_config)) != 0) {
-		aprint_error_dev(self, "configure failed, error=%d\n", error);
+		aprint_error("%s: configure failed, error=%d\n",
+		    self->dv_xname, error);
 		return;
 	}
 
@@ -161,7 +162,8 @@ btbc_attach(device_t parent, device_t self, void *aux)
 	sc->sc_pcioh = cfe->iospace[0].handle;
 
 	/* Attach Bluetooth unit */
-	sc->sc_unit.hci_dev = self;
+	sc->sc_unit.hci_softc = sc;
+	sc->sc_unit.hci_devname = device_xname(sc->sc_dev);
 	sc->sc_unit.hci_enable = btbc_enable;
 	sc->sc_unit.hci_disable = btbc_disable;
 	sc->sc_unit.hci_start_cmd = btbc_start;
@@ -184,10 +186,10 @@ btbc_attach(device_t parent, device_t self, void *aux)
 static int
 btbc_detach(device_t self, int flags)
 {
-	struct btbc_softc *sc = device_private(self);
+	struct btbc_softc *sc = (struct btbc_softc *)self;
 	int err = 0;
 
-	btbc_disable(sc->sc_dev);
+	btbc_disable(&sc->sc_unit);
 
 	if (sc->sc_powerhook) {
 		powerhook_disestablish(sc->sc_powerhook);
@@ -216,17 +218,18 @@ btbc_power(int why, void *arg)
 			hci_detach(&sc->sc_unit);
 
 			sc->sc_flags |= BTBC_SLEEPING;
-			aprint_verbose_dev(sc->sc_dev, "sleeping\n");
+			printf_nolog("%s: sleeping\n", device_xname(sc->sc_dev));
 		}
 		break;
 
 	case PWR_RESUME:
 		if (sc->sc_flags & BTBC_SLEEPING) {
-			aprint_verbose_dev(sc->sc_dev, "waking up\n");
+			printf_nolog("%s: waking up\n", device_xname(sc->sc_dev));
 			sc->sc_flags &= ~BTBC_SLEEPING;
 
 			memset(&sc->sc_unit, 0, sizeof(sc->sc_unit));
-			sc->sc_unit.hci_dev = sc->sc_dev;
+			sc->sc_unit.hci_softc = sc;
+			sc->sc_unit.hci_devname = device_xname(sc->sc_dev);
 			sc->sc_unit.hci_enable = btbc_enable;
 			sc->sc_unit.hci_disable = btbc_disable;
 			sc->sc_unit.hci_start_cmd = btbc_start;
@@ -367,7 +370,7 @@ btbc_set_baudrate(struct btbc_softc *sc, int baud)
 	m_copyback(m, sizeof(hci_cmd_hdr_t), p->length, &param);
 
 	MBUFQ_ENQUEUE(&unit->hci_cmdq, m);
-	btbc_start(sc->sc_dev);
+	btbc_start(unit);
 
 	return 0;
 }
@@ -401,8 +404,8 @@ btbc_receive(struct btbc_softc *sc, uint32_t offset)
 				/* new packet */
 				MGETHDR(m, M_DONTWAIT, MT_DATA);
 				if (m == NULL) {
-					aprint_error_dev(sc->sc_dev,
-					    "out of memory\n");
+					printf("%s: out of memory\n",
+						device_xname(sc->sc_dev));
 					++sc->sc_unit.hci_stats.err_rx;
 					return;		/* (lost sync) */
 				}
@@ -417,8 +420,8 @@ btbc_receive(struct btbc_softc *sc, uint32_t offset)
 				/* extend mbuf */
 				MGET(m->m_next, M_DONTWAIT, MT_DATA);
 				if (m->m_next == NULL) {
-					aprint_error_dev(sc->sc_dev,
-					    "out of memory\n");
+					printf("%s: out of memory\n",
+						device_xname(sc->sc_dev));
 					++sc->sc_unit.hci_stats.err_rx;
 					return;		/* (lost sync) */
 				}
@@ -470,8 +473,8 @@ btbc_receive(struct btbc_softc *sc, uint32_t offset)
 				break;
 
 			default:
-				aprint_error_dev(sc->sc_dev,
-				    "Unknown packet type=%#x!\n", buf[i]);
+				printf("%s: Unknown packet type=%#x!\n",
+					device_xname(sc->sc_dev), buf[i]);
 				++sc->sc_unit.hci_stats.err_rx;
 				m_freem(sc->sc_rxp);
 				sc->sc_rxp = NULL;
@@ -545,7 +548,7 @@ btbc_transmit(struct btbc_softc *sc)
 	m = sc->sc_txp;
 	if (m == NULL) {
 		sc->sc_unit.hci_flags &= ~BTF_XMIT;
-		btbc_start(sc->sc_dev);
+		btbc_start(&sc->sc_unit);
 		return;
 	}
 
@@ -716,14 +719,13 @@ btbc_intr(void *arg)
 		}
 
 		if (isr & 0x40) {	/* card eject ? */
-			aprint_normal_dev(sc->sc_dev, "card eject?\n");
+			printf("card eject?\n");
 			isr &= ~0x40;
 			bus_space_write_1(sc->sc_pcioh.iot, sc->sc_pcioh.ioh,
 			    BLUECARD_INTERRUPT, 0x40);
 		}
 		if (isr != 0x00) {
-			aprint_error_dev(sc->sc_dev,
-			    "unknown interrupt: isr=0x%x\n", isr);
+			printf("unknwon intrrupt: isr=0x%x\n", isr);
 			bus_space_write_1(sc->sc_pcioh.iot, sc->sc_pcioh.ioh,
 			    BLUECARD_INTERRUPT, isr);
 		}
@@ -738,10 +740,9 @@ btbc_intr(void *arg)
  * we only send cmd packets that are clear to send
  */
 static void
-btbc_start(device_t self)
+btbc_start(struct hci_unit *unit)
 {
-	struct btbc_softc *sc = device_private(self);
-	struct hci_unit *unit = &sc->sc_unit;
+	struct btbc_softc *sc = unit->hci_softc;
 	struct mbuf *m;
 
 	KASSERT((unit->hci_flags & BTF_XMIT) == 0);
@@ -777,10 +778,9 @@ start:
 }
 
 static int
-btbc_enable(device_t self)
+btbc_enable(struct hci_unit *unit)
 {
-	struct btbc_softc *sc = device_private(self);
-	struct hci_unit *unit = &sc->sc_unit;
+	struct btbc_softc *sc = unit->hci_softc;
 	int err;
 	uint8_t id, ctrl;
 
@@ -884,10 +884,9 @@ fail1:
 }
 
 static void
-btbc_disable(device_t self)
+btbc_disable(struct hci_unit *unit)
 {
-	struct btbc_softc *sc = device_private(self);
-	struct hci_unit *unit = &sc->sc_unit;
+	struct btbc_softc *sc = unit->hci_softc;
 
 	if ((unit->hci_flags & BTF_RUNNING) == 0)
 		return;

@@ -1,4 +1,4 @@
-/*	$NetBSD: iopaau.c,v 1.15 2007/11/13 22:09:37 ad Exp $	*/
+/*	$NetBSD: iopaau.c,v 1.13 2007/03/12 18:18:25 ad Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iopaau.c,v 1.15 2007/11/13 22:09:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iopaau.c,v 1.13 2007/03/12 18:18:25 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/pool.h>
@@ -65,8 +65,11 @@ __KERNEL_RCSID(0, "$NetBSD: iopaau.c,v 1.15 2007/11/13 22:09:37 ad Exp $");
 #define	DPRINTF(x)	/* nothing */
 #endif
 
-pool_cache_t iopaau_desc_4_cache;
-pool_cache_t iopaau_desc_8_cache;
+static struct pool aau_desc_4_pool;
+static struct pool aau_desc_8_pool;
+
+struct pool_cache iopaau_desc_4_cache;
+struct pool_cache iopaau_desc_8_cache;
 
 /*
  * iopaau_desc_ctor:
@@ -651,12 +654,17 @@ iopaau_attach(struct iopaau_softc *sc)
 	 * Initialize global resources.  Ok to do here, since there's
 	 * only one AAU.
 	 */
-	iopaau_desc_4_cache = pool_cache_init(sizeof(struct aau_desc_4),
+	pool_init(&aau_desc_4_pool, sizeof(struct aau_desc_4),
 	    8 * 4, offsetof(struct aau_desc_4, d_nda), 0, "aaud4pl",
-	    NULL, IPL_VM, iopaau_desc_ctor, NULL, NULL);
-	iopaau_desc_8_cache = pool_cache_init(sizeof(struct aau_desc_8),
+	    NULL, IPL_VM);
+	pool_init(&aau_desc_8_pool, sizeof(struct aau_desc_8),
 	    8 * 4, offsetof(struct aau_desc_8, d_nda), 0, "aaud8pl",
-	    NULL, IPL_VM, iopaau_desc_ctor, NULL, NULL);
+	    NULL, IPL_VM);
+
+	pool_cache_init(&iopaau_desc_4_cache, &aau_desc_4_pool,
+	    iopaau_desc_ctor, NULL, NULL);
+	pool_cache_init(&iopaau_desc_8_cache, &aau_desc_8_pool,
+	    iopaau_desc_ctor, NULL, NULL);
 
 	/* Register us with dmover. */
 	dmover_backend_register(&sc->sc_dmb);

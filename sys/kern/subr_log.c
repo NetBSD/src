@@ -1,40 +1,4 @@
-/*	$NetBSD: subr_log.c,v 1.42 2007/11/07 00:19:08 ad Exp $	*/
-
-/*-
- * Copyright (c) 2007 The NetBSD Foundation, Inc.
- * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Andrew Doran.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
- * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
- * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
- * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
- */
+/*	$NetBSD: subr_log.c,v 1.41 2007/05/17 14:51:41 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -72,30 +36,31 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_log.c,v 1.42 2007/11/07 00:19:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_log.c,v 1.41 2007/05/17 14:51:41 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/vnode.h>
 #include <sys/ioctl.h>
 #include <sys/msgbuf.h>
 #include <sys/file.h>
+#include <sys/signalvar.h>
 #include <sys/syslog.h>
 #include <sys/conf.h>
 #include <sys/select.h>
-#include <sys/poll.h> 
-#include <sys/intr.h>
+#include <sys/poll.h>
 
-static void	logsoftintr(void *);
+#define LOG_RDPRI	(PZERO + 1)
 
-static bool	log_async;
-static struct selinfo log_selp;		/* process waiting on select call */
-static pid_t	log_pgid;		/* process/group for async I/O */
-static kcondvar_t log_cv;
-static kmutex_t log_lock;
-static void	*log_sih;
+#define LOG_ASYNC	0x04
+#define LOG_RDWAIT	0x08
+
+struct logsoftc {
+	int	sc_state;		/* see above for possibilities */
+	struct	selinfo sc_selp;	/* process waiting on select call */
+	pid_t	sc_pgid;		/* process/group for async I/O */
+} logsoftc;
 
 int	log_open;			/* also used in log() */
 int	msgbufmapped;			/* is the message buffer mapped */
@@ -133,45 +98,28 @@ initmsgbuf(void *bf, size_t bufsize)
 	msgbufmapped = msgbufenabled = 1;
 }
 
-void
-loginit(void)
-{
-
-	mutex_init(&log_lock, MUTEX_SPIN, IPL_VM);
-	selinit(&log_selp);
-	cv_init(&log_cv, "klog");
-	log_sih = softint_establish(SOFTINT_CLOCK | SOFTINT_MPSAFE,
-	    logsoftintr, NULL);
-}
-
 /*ARGSUSED*/
 static int
 logopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct kern_msgbuf *mbp = msgbufp;
-	int error = 0;
 
-	mutex_spin_enter(&log_lock);
-	if (log_open) {
-		error = EBUSY;
-	} else {
-		log_open = 1;
-		log_pgid = l->l_proc->p_pid;	/* signal process only */
-		/*
-		 * The message buffer is initialized during system
-		 * configuration.  If it's been clobbered, note that
-		 * and return an error.  (This allows a user to read
-		 * the buffer via /dev/kmem, and try to figure out
-		 * what clobbered it.
-		 */
-		if (mbp->msg_magic != MSG_MAGIC) {
-			msgbufenabled = 0;
-			error = ENXIO;
-		}
+	if (log_open)
+		return (EBUSY);
+	log_open = 1;
+	logsoftc.sc_pgid = l->l_proc->p_pid;	/* signal process only */
+	/*
+	 * The message buffer is initialized during system configuration.
+	 * If it's been clobbered, note that and return an error.  (This
+	 * allows a user to potentially read the buffer via /dev/kmem,
+	 * and try to figure out what clobbered it.
+	 */
+	if (mbp->msg_magic != MSG_MAGIC) {
+		msgbufenabled = 0;
+		return (ENXIO);
 	}
-	mutex_spin_exit(&log_lock);
 
-	return error;
+	return (0);
 }
 
 /*ARGSUSED*/
@@ -179,13 +127,9 @@ static int
 logclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 
-	mutex_spin_enter(&log_lock);
-	log_pgid = 0;
 	log_open = 0;
-	log_async = 0;
-	mutex_spin_exit(&log_lock);
-
-	return 0;
+	logsoftc.sc_state = 0;
+	return (0);
 }
 
 /*ARGSUSED*/
@@ -194,20 +138,26 @@ logread(dev_t dev, struct uio *uio, int flag)
 {
 	struct kern_msgbuf *mbp = msgbufp;
 	long l;
+	int s;
 	int error = 0;
 
-	mutex_spin_enter(&log_lock);
+	s = splsched();
 	while (mbp->msg_bufr == mbp->msg_bufx) {
 		if (flag & IO_NDELAY) {
-			mutex_spin_exit(&log_lock);
-			return EWOULDBLOCK;
+			splx(s);
+			return (EWOULDBLOCK);
 		}
-		error = cv_wait_sig(&log_cv, &log_lock);
+		logsoftc.sc_state |= LOG_RDWAIT;
+		error = tsleep((void *)mbp, LOG_RDPRI | PCATCH,
+			       "klog", 0);
 		if (error) {
-			mutex_spin_exit(&log_lock);
-			return error;
+			splx(s);
+			return (error);
 		}
 	}
+	splx(s);
+	logsoftc.sc_state &= ~LOG_RDWAIT;
+
 	while (uio->uio_resid > 0) {
 		l = mbp->msg_bufx - mbp->msg_bufr;
 		if (l < 0)
@@ -215,18 +165,15 @@ logread(dev_t dev, struct uio *uio, int flag)
 		l = min(l, uio->uio_resid);
 		if (l == 0)
 			break;
-		mutex_spin_exit(&log_lock);
-		error = uiomove(&mbp->msg_bufc[mbp->msg_bufr], (int)l, uio);
-		mutex_spin_enter(&log_lock);
+		error = uiomove((void *)&mbp->msg_bufc[mbp->msg_bufr],
+			(int)l, uio);
 		if (error)
 			break;
 		mbp->msg_bufr += l;
 		if (mbp->msg_bufr < 0 || mbp->msg_bufr >= mbp->msg_bufs)
 			mbp->msg_bufr = 0;
 	}
-	mutex_spin_exit(&log_lock);
-
-	return error;
+	return (error);
 }
 
 /*ARGSUSED*/
@@ -234,49 +181,43 @@ static int
 logpoll(dev_t dev, int events, struct lwp *l)
 {
 	int revents = 0;
+	int s = splsched();
 
 	if (events & (POLLIN | POLLRDNORM)) {
-		mutex_spin_enter(&log_lock);
 		if (msgbufp->msg_bufr != msgbufp->msg_bufx)
 			revents |= events & (POLLIN | POLLRDNORM);
 		else
-			selrecord(l, &log_selp);
-		mutex_spin_exit(&log_lock);
+			selrecord(l, &logsoftc.sc_selp);
 	}
 
-	return revents;
+	splx(s);
+	return (revents);
 }
 
 static void
 filt_logrdetach(struct knote *kn)
 {
+	int s;
 
-	mutex_spin_enter(&log_lock);
-	SLIST_REMOVE(&log_selp.sel_klist, kn, knote, kn_selnext);
-	mutex_spin_exit(&log_lock);
+	s = splsched();
+	SLIST_REMOVE(&logsoftc.sc_selp.sel_klist, kn, knote, kn_selnext);
+	splx(s);
 }
 
 static int
 filt_logread(struct knote *kn, long hint)
 {
-	int rv;
 
-	if ((hint & NOTE_SUBMIT) == 0)
-		mutex_spin_enter(&log_lock);
-	if (msgbufp->msg_bufr == msgbufp->msg_bufx) {
-		rv = 0;
-	} else if (msgbufp->msg_bufr < msgbufp->msg_bufx) {
+	if (msgbufp->msg_bufr == msgbufp->msg_bufx)
+		return (0);
+
+	if (msgbufp->msg_bufr < msgbufp->msg_bufx)
 		kn->kn_data = msgbufp->msg_bufx - msgbufp->msg_bufr;
-		rv = 1;
-	} else {
+	else
 		kn->kn_data = (msgbufp->msg_bufs - msgbufp->msg_bufr) +
 		    msgbufp->msg_bufx;
-		rv = 1;
-	}
-	if ((hint & NOTE_SUBMIT) == 0)
-		mutex_spin_exit(&log_lock);
 
-	return rv;
+	return (1);
 }
 
 static const struct filterops logread_filtops =
@@ -286,10 +227,11 @@ static int
 logkqfilter(dev_t dev, struct knote *kn)
 {
 	struct klist *klist;
+	int s;
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
-		klist = &log_selp.sel_klist;
+		klist = &logsoftc.sc_selp.sel_klist;
 		kn->kn_fop = &logread_filtops;
 		break;
 
@@ -297,10 +239,11 @@ logkqfilter(dev_t dev, struct knote *kn)
 		return (1);
 	}
 
-	mutex_spin_enter(&log_lock);
 	kn->kn_hook = NULL;
+
+	s = splsched();
 	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
-	mutex_spin_exit(&log_lock);
+	splx(s);
 
 	return (0);
 }
@@ -308,24 +251,15 @@ logkqfilter(dev_t dev, struct knote *kn)
 void
 logwakeup(void)
 {
-
-	if (!cold && log_open) {
-		mutex_spin_enter(&log_lock);
-		selnotify(&log_selp, NOTE_SUBMIT);
-		if (log_async)
-			softint_schedule(log_sih);
-		cv_broadcast(&log_cv);
-		mutex_spin_exit(&log_lock);
+	if (!log_open)
+		return;
+	selnotify(&logsoftc.sc_selp, 0);
+	if (logsoftc.sc_state & LOG_ASYNC)
+		fownsignal(logsoftc.sc_pgid, SIGIO, 0, 0, NULL);
+	if (logsoftc.sc_state & LOG_RDWAIT) {
+		wakeup((void *)msgbufp);
+		logsoftc.sc_state &= ~LOG_RDWAIT;
 	}
-}
-
-static void
-logsoftintr(void *cookie)
-{
-	pid_t pid;
-
-	if ((pid = log_pgid) != 0)
-		fownsignal(pid, SIGIO, 0, 0, NULL);
 }
 
 /*ARGSUSED*/
@@ -334,16 +268,17 @@ logioctl(dev_t dev, u_long com, void *data, int flag, struct lwp *lwp)
 {
 	struct proc *p = lwp->l_proc;
 	long l;
+	int s;
 
 	switch (com) {
 
 	/* return number of characters immediately available */
 	case FIONREAD:
-		mutex_spin_enter(&log_lock);
+		s = splsched();
 		l = msgbufp->msg_bufx - msgbufp->msg_bufr;
+		splx(s);
 		if (l < 0)
 			l += msgbufp->msg_bufs;
-		mutex_spin_exit(&log_lock);
 		*(int *)data = l;
 		break;
 
@@ -351,17 +286,19 @@ logioctl(dev_t dev, u_long com, void *data, int flag, struct lwp *lwp)
 		break;
 
 	case FIOASYNC:
-		/* No locking needed, 'thread private'. */
-		log_async = (*((int *)data) != 0);
+		if (*(int *)data)
+			logsoftc.sc_state |= LOG_ASYNC;
+		else
+			logsoftc.sc_state &= ~LOG_ASYNC;
 		break;
 
 	case TIOCSPGRP:
 	case FIOSETOWN:
-		return fsetown(p, &log_pgid, com, data);
+		return fsetown(p, &logsoftc.sc_pgid, com, data);
 
 	case TIOCGPGRP:
 	case FIOGETOWN:
-		return fgetown(p, log_pgid, com, data);
+		return fgetown(p, logsoftc.sc_pgid, com, data);
 
 	default:
 		return (EPASSTHROUGH);
@@ -369,43 +306,7 @@ logioctl(dev_t dev, u_long com, void *data, int flag, struct lwp *lwp)
 	return (0);
 }
 
-void
-logputchar(int c)
-{
-	struct kern_msgbuf *mbp;
-
-	if (!cold)
-		mutex_spin_enter(&log_lock);
-	if (msgbufenabled) {
-		mbp = msgbufp;
-		if (mbp->msg_magic != MSG_MAGIC) {
-			/*
-			 * Arguably should panic or somehow notify the
-			 * user...  but how?  Panic may be too drastic,
-			 * and would obliterate the message being kicked
-			 * out (maybe a panic itself), and printf
-			 * would invoke us recursively.  Silently punt
-			 * for now.  If syslog is running, it should
-			 * notice.
-			 */
-			msgbufenabled = 0;
-		} else {
-			mbp->msg_bufc[mbp->msg_bufx++] = c;
-			if (mbp->msg_bufx < 0 || mbp->msg_bufx >= mbp->msg_bufs)
-				mbp->msg_bufx = 0;
-			/* If the buffer is full, keep the most recent data. */
-			if (mbp->msg_bufr == mbp->msg_bufx) {
-				 if (++mbp->msg_bufr >= mbp->msg_bufs)
-					mbp->msg_bufr = 0;
-			}
-		}
-	}
-	if (!cold)
-		mutex_spin_exit(&log_lock);
-}
-
 const struct cdevsw log_cdevsw = {
 	logopen, logclose, logread, nowrite, logioctl,
-	nostop, notty, logpoll, nommap, logkqfilter,
-	D_OTHER | D_MPSAFE
+	    nostop, notty, logpoll, nommap, logkqfilter, D_OTHER,
 };

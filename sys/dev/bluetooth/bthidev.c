@@ -1,4 +1,4 @@
-/*	$NetBSD: bthidev.c,v 1.13 2007/11/12 19:19:32 plunky Exp $	*/
+/*	$NetBSD: bthidev.c,v 1.11 2007/11/03 18:24:01 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bthidev.c,v 1.13 2007/11/12 19:19:32 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bthidev.c,v 1.11 2007/11/03 18:24:01 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -69,7 +69,7 @@ struct bthidev_softc {
 	struct btdev		sc_btdev;
 	uint16_t		sc_state;
 	uint16_t		sc_flags;
-	device_t		sc_dev;
+	const char		*sc_name;	/* our device_xname */
 
 	bdaddr_t		sc_laddr;	/* local address */
 	bdaddr_t		sc_raddr;	/* remote address */
@@ -186,7 +186,6 @@ bthidev_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Init softc
 	 */
-	sc->sc_dev = self;
 	LIST_INIT(&sc->sc_list);
 	callout_init(&sc->sc_reconnect, 0);
 	callout_setfunc(&sc->sc_reconnect, bthidev_timeout, sc);
@@ -194,6 +193,7 @@ bthidev_attach(device_t parent, device_t self, void *aux)
 	sc->sc_flags = BTHID_CONNECTING;
 	sc->sc_ctlpsm = L2CAP_PSM_HID_CNTL;
 	sc->sc_intpsm = L2CAP_PSM_HID_INTR;
+	sc->sc_name = device_xname(self);
 
 	/*
 	 * extract config from proplist
@@ -509,7 +509,7 @@ bthidev_connect(struct bthidev_softc *sc)
 	int err;
 
 	if (sc->sc_attempts++ > 0)
-		aprint_verbose_dev(sc->sc_dev, "connect (#%d)\n", sc->sc_attempts);
+		printf("%s: connect (#%d)\n", sc->sc_name, sc->sc_attempts);
 
 	memset(&sa, 0, sizeof(sa));
 	sa.bt_len = sizeof(sa);
@@ -517,7 +517,7 @@ bthidev_connect(struct bthidev_softc *sc)
 
 	err = l2cap_attach(&sc->sc_ctl, &bthidev_ctl_proto, sc);
 	if (err) {
-		aprint_error_dev(sc->sc_dev, "l2cap_attach failed (%d)\n", err);
+		printf("%s: l2cap_attach failed (%d)\n", sc->sc_name, err);
 		return err;
 	}
 
@@ -528,7 +528,7 @@ bthidev_connect(struct bthidev_softc *sc)
 	bdaddr_copy(&sa.bt_bdaddr, &sc->sc_laddr);
 	err = l2cap_bind(sc->sc_ctl, &sa);
 	if (err) {
-		aprint_error_dev(sc->sc_dev, "l2cap_bind failed (%d)\n", err);
+		printf("%s: l2cap_bind failed (%d)\n", sc->sc_name, err);
 		return err;
 	}
 
@@ -536,7 +536,7 @@ bthidev_connect(struct bthidev_softc *sc)
 	bdaddr_copy(&sa.bt_bdaddr, &sc->sc_raddr);
 	err = l2cap_connect(sc->sc_ctl, &sa);
 	if (err) {
-		aprint_error_dev(sc->sc_dev, "l2cap_connect failed (%d)\n", err);
+		printf("%s: l2cap_connect failed (%d)\n", sc->sc_name, err);
 		return err;
 	}
 
@@ -605,7 +605,7 @@ fail:
 	l2cap_detach(&sc->sc_ctl);
 	sc->sc_ctl = NULL;
 
-	aprint_error_dev(sc->sc_dev, "connect failed (%d)\n", err);
+	printf("%s: connect failed (%d)\n", sc->sc_name, err);
 }
 
 static void
@@ -623,7 +623,7 @@ bthidev_int_connected(void *arg)
 	sc->sc_flags &= ~BTHID_CONNECTING;
 	sc->sc_state = BTHID_OPEN;
 
-	aprint_normal_dev(sc->sc_dev, "connected\n");
+	printf("%s: connected\n", sc->sc_name);
 }
 
 /*
@@ -646,7 +646,7 @@ bthidev_ctl_disconnected(void *arg, int err)
 	sc->sc_state = BTHID_CLOSED;
 
 	if (sc->sc_int == NULL) {
-		aprint_normal_dev(sc->sc_dev, "disconnected\n");
+		printf("%s: disconnected\n", sc->sc_name);
 		sc->sc_flags &= ~BTHID_CONNECTING;
 
 		if (sc->sc_flags & BTHID_RECONNECT)
@@ -678,7 +678,7 @@ bthidev_int_disconnected(void *arg, int err)
 	sc->sc_state = BTHID_CLOSED;
 
 	if (sc->sc_ctl == NULL) {
-		aprint_normal_dev(sc->sc_dev, "disconnected\n");
+		printf("%s: disconnected\n", sc->sc_name);
 		sc->sc_flags &= ~BTHID_CONNECTING;
 
 		if (sc->sc_flags & BTHID_RECONNECT)
@@ -749,11 +749,11 @@ bthidev_linkmode(void *arg, int new)
 	struct bthidev_softc *sc = arg;
 
 	if ((sc->sc_mode & L2CAP_LM_AUTH) && !(new & L2CAP_LM_AUTH))
-		aprint_error_dev(sc->sc_dev, "auth failed\n");
+		printf("%s: auth failed\n", sc->sc_name);
 	else if ((sc->sc_mode & L2CAP_LM_ENCRYPT) && !(new & L2CAP_LM_ENCRYPT))
-		aprint_error_dev(sc->sc_dev, "encrypt off\n");
+		printf("%s: encrypt off\n", sc->sc_name);
 	else if ((sc->sc_mode & L2CAP_LM_SECURE) && !(new & L2CAP_LM_SECURE))
-		aprint_error_dev(sc->sc_dev, "insecure\n");
+		printf("%s: insecure\n", sc->sc_name);
 	else
 		return;
 
@@ -779,7 +779,7 @@ bthidev_input(void *arg, struct mbuf *m)
 		goto release;
 
 	if (m->m_pkthdr.len > m->m_len)
-		aprint_error_dev(sc->sc_dev, "truncating HID report\n");
+		printf("%s: truncating HID report\n", sc->sc_name);
 
 	len = m->m_len;
 	data = mtod(m, uint8_t *);
@@ -811,8 +811,8 @@ bthidev_input(void *arg, struct mbuf *m)
 				goto release;
 			}
 		}
-		aprint_error_dev(sc->sc_dev, "report id %d, len = %d ignored\n",
-		    data[1], len - 2);
+		printf("%s: report id %d, len = %d ignored\n",
+			sc->sc_name, data[1], len - 2);
 
 		goto release;
 	}
@@ -822,7 +822,7 @@ bthidev_input(void *arg, struct mbuf *m)
 			goto release;
 
 		if (BTHID_DATA_PARAM(data[0]) == BTHID_CONTROL_UNPLUG) {
-			aprint_normal_dev(sc->sc_dev, "unplugged\n");
+			printf("%s: unplugged\n", sc->sc_name);
 
 			/* close interrupt channel */
 			if (sc->sc_int != NULL) {
@@ -878,8 +878,7 @@ bthidev_output(struct bthidev *hidev, uint8_t *report, int rlen)
 		return 0;
 
 	if (rlen > MHLEN - 2) {
-		aprint_error_dev(sc->sc_dev,
-		    "output report too long (%d)!\n", rlen);
+		printf("%s: output report too long (%d)!\n", sc->sc_name, rlen);
 		return EMSGSIZE;
 	}
 

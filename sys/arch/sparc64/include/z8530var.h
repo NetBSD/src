@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530var.h,v 1.11 2007/11/07 15:56:13 ad Exp $	*/
+/*	$NetBSD: z8530var.h,v 1.10 2006/02/13 21:47:12 cdi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -103,5 +103,3 @@ void  zs_write_data(struct zs_chanstate *cs, u_char val);
 
 #undef cn_trap
 #define cn_trap() zs_abort(NULL)
-
-#define	IPL_ZS	IPL_SERIAL

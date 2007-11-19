@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_fd.c,v 1.12 2007/11/07 00:23:37 ad Exp $	*/
+/*	$NetBSD: procfs_fd.c,v 1.11 2007/02/09 21:55:36 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_fd.c,v 1.12 2007/11/07 00:23:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_fd.c,v 1.11 2007/02/09 21:55:36 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,7 +61,9 @@ procfs_dofd(
 	struct file *fp;
 	off_t offs;
 
+	mutex_enter(&p->p_mutex);
 	fp = fd_getfile(p->p_fd, pfs->pfs_fd);
+	mutex_exit(&p->p_mutex);
 	if (fp == NULL)
 		return (EBADF);
 

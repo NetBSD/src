@@ -1,4 +1,4 @@
-/* $NetBSD: kvm86call.S,v 1.8 2007/11/12 18:42:00 ad Exp $ */
+/* $NetBSD: kvm86call.S,v 1.7 2006/04/11 17:14:07 drochner Exp $ */
 
 /*-
  * Copyright (c) 1998 Jonathan Lemon
@@ -34,7 +34,7 @@
 
 #include "assym.h"
 
-__KERNEL_RCSID(0, "$NetBSD: kvm86call.S,v 1.8 2007/11/12 18:42:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kvm86call.S,v 1.7 2006/04/11 17:14:07 drochner Exp $");
 
 	.data
 	.align 4
@@ -77,6 +77,7 @@ ENTRY(kvm86_call)
 	movl	vm86frame,%edi		/* target frame location */
 	movl    SCRARGFRAME,%esi	/* source (set on entry) */
 	movl	$FRAMESIZE/4,%ecx	/* sizeof(struct trapframe)/4 */
+	cld
 	rep
 	movsl				/* copy frame to new stack */
 
@@ -145,6 +146,7 @@ ENTRY(kvm86_ret)
 	movl	8(%ebp),%esi		/* source */
 	movl	SCRARGFRAME,%edi	/* destination */
 	movl	$FRAMESIZE/4,%ecx	/* size */
+	cld
 	rep
 	movsl				/* copy frame to original frame */
 

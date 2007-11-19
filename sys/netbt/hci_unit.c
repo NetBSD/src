@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_unit.c,v 1.7 2007/11/10 23:12:23 plunky Exp $	*/
+/*	$NetBSD: hci_unit.c,v 1.5 2007/10/08 16:18:05 ad Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_unit.c,v 1.7 2007/11/10 23:12:23 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_unit.c,v 1.5 2007/10/08 16:18:05 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -67,7 +67,8 @@ void
 hci_attach(struct hci_unit *unit)
 {
 
-	KASSERT(unit->hci_dev != NULL);
+	KASSERT(unit->hci_softc != NULL);
+	KASSERT(unit->hci_devname != NULL);
 	KASSERT(unit->hci_enable != NULL);
 	KASSERT(unit->hci_disable != NULL);
 	KASSERT(unit->hci_start_cmd != NULL);
@@ -128,7 +129,7 @@ hci_enable(struct hci_unit *unit)
 		return EIO;
 
 	s = splraiseipl(unit->hci_ipl);
-	err = (*unit->hci_enable)(unit->hci_dev);
+	err = (*unit->hci_enable)(unit);
 	splx(s);
 	if (err)
 		goto bad1;
@@ -157,14 +158,14 @@ hci_enable(struct hci_unit *unit)
 	/*
 	 * Attach Bluetooth Device Hub
 	 */
-	unit->hci_bthub = config_found_ia(unit->hci_dev,
+	unit->hci_bthub = config_found_ia((struct device *)unit->hci_softc,
 					  "btbus", &unit->hci_bdaddr, NULL);
 
 	return 0;
 
 bad2:
 	s = splraiseipl(unit->hci_ipl);
-	(*unit->hci_disable)(unit->hci_dev);
+	(*unit->hci_disable)(unit);
 	splx(s);
 
 bad1:
@@ -192,7 +193,7 @@ hci_disable(struct hci_unit *unit)
 	}
 
 	s = splraiseipl(unit->hci_ipl);
-	(*unit->hci_disable)(unit->hci_dev);
+	(*unit->hci_disable)(unit);
 	splx(s);
 
 	/*
@@ -274,7 +275,7 @@ hci_send_cmd(struct hci_unit *unit, uint16_t opcode, void *buf, uint8_t len)
 		}
 	}
 
-	DPRINTFN(2, "(%s) opcode (%3.3x|%4.4x)\n", device_xname(unit->hci_dev),
+	DPRINTFN(2, "(%s) opcode (%3.3x|%4.4x)\n", unit->hci_devname,
 		HCI_OGF(opcode), HCI_OCF(opcode));
 
 	/* and send it on */
@@ -309,7 +310,7 @@ another:
 		splx(s);
 
 		DPRINTFN(10, "(%s) recv event, len = %d\n",
-				device_xname(unit->hci_dev), m->m_pkthdr.len);
+				unit->hci_devname, m->m_pkthdr.len);
 
 		m->m_flags |= M_LINK0;	/* mark incoming packet */
 		hci_mtap(m, unit);
@@ -325,7 +326,7 @@ another:
 		splx(s);
 
 		DPRINTFN(10, "(%s) recv SCO, len = %d\n",
-				device_xname(unit->hci_dev), m->m_pkthdr.len);
+				unit->hci_devname, m->m_pkthdr.len);
 
 		m->m_flags |= M_LINK0;	/* mark incoming packet */
 		hci_mtap(m, unit);
@@ -341,7 +342,7 @@ another:
 		splx(s);
 
 		DPRINTFN(10, "(%s) recv ACL, len = %d\n",
-				device_xname(unit->hci_dev), m->m_pkthdr.len);
+				unit->hci_devname, m->m_pkthdr.len);
 
 		m->m_flags |= M_LINK0;	/* mark incoming packet */
 		hci_mtap(m, unit);
@@ -356,7 +357,7 @@ another:
 		splx(s);
 
 		DPRINTFN(11, "(%s) complete SCO\n",
-				device_xname(unit->hci_dev));
+				unit->hci_devname);
 
 		TAILQ_FOREACH(link, &unit->hci_links, hl_next) {
 			if (link == M_GETCTX(m, struct hci_link *)) {
@@ -389,7 +390,7 @@ hci_input_event(struct hci_unit *unit, struct mbuf *m)
 {
 
 	if (unit->hci_eventqlen > hci_eventq_max || unit->hci_rxint == NULL) {
-		DPRINTF("(%s) dropped event packet.\n", device_xname(unit->hci_dev));
+		DPRINTF("(%s) dropped event packet.\n", unit->hci_devname);
 		unit->hci_stats.err_rx++;
 		m_freem(m);
 	} else {
@@ -404,7 +405,7 @@ hci_input_acl(struct hci_unit *unit, struct mbuf *m)
 {
 
 	if (unit->hci_aclrxqlen > hci_aclrxq_max || unit->hci_rxint == NULL) {
-		DPRINTF("(%s) dropped ACL packet.\n", device_xname(unit->hci_dev));
+		DPRINTF("(%s) dropped ACL packet.\n", unit->hci_devname);
 		unit->hci_stats.err_rx++;
 		m_freem(m);
 	} else {
@@ -419,7 +420,7 @@ hci_input_sco(struct hci_unit *unit, struct mbuf *m)
 {
 
 	if (unit->hci_scorxqlen > hci_scorxq_max || unit->hci_rxint == NULL) {
-		DPRINTF("(%s) dropped SCO packet.\n", device_xname(unit->hci_dev));
+		DPRINTF("(%s) dropped SCO packet.\n", unit->hci_devname);
 		unit->hci_stats.err_rx++;
 		m_freem(m);
 	} else {
@@ -437,7 +438,7 @@ hci_output_cmd(struct hci_unit *unit, struct mbuf *m)
 
 	hci_mtap(m, unit);
 
-	DPRINTFN(10, "(%s) num_cmd_pkts=%d\n", device_xname(unit->hci_dev),
+	DPRINTFN(10, "(%s) num_cmd_pkts=%d\n", unit->hci_devname,
 					       unit->hci_num_cmd_pkts);
 
 	unit->hci_num_cmd_pkts--;
@@ -453,7 +454,7 @@ hci_output_cmd(struct hci_unit *unit, struct mbuf *m)
 	s = splraiseipl(unit->hci_ipl);
 	MBUFQ_ENQUEUE(&unit->hci_cmdq, m);
 	if ((unit->hci_flags & BTF_XMIT_CMD) == 0)
-		(*unit->hci_start_cmd)(unit->hci_dev);
+		(*unit->hci_start_cmd)(unit);
 
 	splx(s);
 }
@@ -465,7 +466,7 @@ hci_output_acl(struct hci_unit *unit, struct mbuf *m)
 
 	hci_mtap(m, unit);
 
-	DPRINTFN(10, "(%s) num_acl_pkts=%d\n", device_xname(unit->hci_dev),
+	DPRINTFN(10, "(%s) num_acl_pkts=%d\n", unit->hci_devname,
 					       unit->hci_num_acl_pkts);
 
 	unit->hci_num_acl_pkts--;
@@ -473,7 +474,7 @@ hci_output_acl(struct hci_unit *unit, struct mbuf *m)
 	s = splraiseipl(unit->hci_ipl);
 	MBUFQ_ENQUEUE(&unit->hci_acltxq, m);
 	if ((unit->hci_flags & BTF_XMIT_ACL) == 0)
-		(*unit->hci_start_acl)(unit->hci_dev);
+		(*unit->hci_start_acl)(unit);
 
 	splx(s);
 }
@@ -485,7 +486,7 @@ hci_output_sco(struct hci_unit *unit, struct mbuf *m)
 
 	hci_mtap(m, unit);
 
-	DPRINTFN(10, "(%s) num_sco_pkts=%d\n", device_xname(unit->hci_dev),
+	DPRINTFN(10, "(%s) num_sco_pkts=%d\n", unit->hci_devname,
 					       unit->hci_num_sco_pkts);
 
 	unit->hci_num_sco_pkts--;
@@ -493,7 +494,7 @@ hci_output_sco(struct hci_unit *unit, struct mbuf *m)
 	s = splraiseipl(unit->hci_ipl);
 	MBUFQ_ENQUEUE(&unit->hci_scotxq, m);
 	if ((unit->hci_flags & BTF_XMIT_SCO) == 0)
-		(*unit->hci_start_sco)(unit->hci_dev);
+		(*unit->hci_start_sco)(unit);
 
 	splx(s);
 }
@@ -503,7 +504,7 @@ hci_complete_sco(struct hci_unit *unit, struct mbuf *m)
 {
 
 	if (unit->hci_rxint == NULL) {
-		DPRINTFN(10, "(%s) complete SCO!\n", device_xname(unit->hci_dev));
+		DPRINTFN(10, "(%s) complete SCO!\n", unit->hci_devname);
 		unit->hci_stats.err_rx++;
 		m_freem(m);
 	} else {

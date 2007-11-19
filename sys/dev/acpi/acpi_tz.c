@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_tz.c,v 1.27 2007/11/16 08:00:13 xtraeme Exp $ */
+/* $NetBSD: acpi_tz.c,v 1.26 2007/11/02 19:21:29 plunky Exp $ */
 
 /*
  * Copyright (c) 2003 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.27 2007/11/16 08:00:13 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.26 2007/11/02 19:21:29 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,6 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.27 2007/11/16 08:00:13 xtraeme Exp $")
 
 /* sensor indexes */
 #define ATZ_SENSOR_TEMP	0	/* thermal zone temperature */
+#define ATZ_NUMSENSORS	1	/* number of sensors */
 
 static int	acpitz_match(struct device *, struct cfdata *, void *);
 static void	acpitz_attach(struct device *, struct device *, void *);
@@ -105,8 +106,8 @@ struct acpitz_softc {
 	struct acpi_devnode *sc_devnode;
 	struct acpitz_zone sc_zone;
 	struct callout sc_callout;
-	struct sysmon_envsys *sc_sme;
-	envsys_data_t sc_sensor;
+	struct envsys_data sc_data[ATZ_NUMSENSORS];
+	struct sysmon_envsys sc_sysmon;
 	kmutex_t sc_mtx;
 	int sc_active;		/* active cooling level */
 	int sc_flags;
@@ -237,8 +238,9 @@ acpitz_get_status(void *opaque)
 	 * that K = C + 273.2 rather than the nominal 273.15 used by envsys(4),
 	 * so we correct for that too.
 	 */
-	sc->sc_sensor.value_cur = sc->sc_zone.tmp * 100000 - 50000;
-	sc->sc_sensor.state = ENVSYS_SVALID;
+	sc->sc_data[ATZ_SENSOR_TEMP].value_cur =
+	    sc->sc_zone.tmp * 100000 - 50000;
+	sc->sc_data[ATZ_SENSOR_TEMP].state = ENVSYS_SVALID;
 
 	if (sc->sc_flags & ATZ_F_VERBOSE)
 		acpitz_print_status(sc);
@@ -275,12 +277,14 @@ acpitz_get_status(void *opaque)
 			int changed = (sc->sc_flags ^ flags) & flags;
 			sc->sc_flags = flags;
 			if (changed & ATZ_F_CRITICAL) {
-				sc->sc_sensor.state = ENVSYS_SCRITICAL;
+				sc->sc_data[ATZ_SENSOR_TEMP].state =
+				    ENVSYS_SCRITICAL;
 				printf("%s: zone went critical at temp %sC\n",
 				    sc->sc_dev.dv_xname,
 				    acpitz_celcius_string(tmp));
 			} else if (changed & ATZ_F_HOT) {
-				sc->sc_sensor.state = ENVSYS_SWARNOVER;
+				sc->sc_data[ATZ_SENSOR_TEMP].state =
+				    ENVSYS_SWARNOVER;
 				printf("%s: zone went hot at temp %sC\n",
 				    sc->sc_dev.dv_xname,
 				    acpitz_celcius_string(tmp));
@@ -574,23 +578,30 @@ acpitz_tick(void *opaque)
 static void
 acpitz_init_envsys(struct acpitz_softc *sc)
 {
-	sc->sc_sme = sysmon_envsys_create();
-	sc->sc_sensor.monitor = true;
-	sc->sc_sensor.flags = (ENVSYS_FMONCRITICAL|ENVSYS_FMONWARNOVER);
-	strlcpy(sc->sc_sensor.desc, "temperature", sizeof(sc->sc_sensor.desc));
-	if (sysmon_envsys_sensor_attach(sc->sc_sme, &sc->sc_sensor)) {
-		sysmon_envsys_destroy(sc->sc_sme);
-		return;
+	int i;
+
+	for (i = 0; i < ATZ_NUMSENSORS; i++) {
+		sc->sc_data[i].sensor = i;
+		sc->sc_data[i].state = ENVSYS_SVALID;
+		sc->sc_data[i].monitor = true;
+		sc->sc_data[i].flags = 
+		    (ENVSYS_FMONCRITICAL|ENVSYS_FMONWARNOVER);
 	}
+#define INITDATA(index, unit, string) \
+	sc->sc_data[index].units = unit;				   \
+	strlcpy(sc->sc_data[index].desc, string,			   \
+	    sizeof(sc->sc_data[index].desc));
+
+	INITDATA(ATZ_SENSOR_TEMP, ENVSYS_STEMP, "temperature");
 
 	/* hook into sysmon */
-	sc->sc_sme->sme_name = sc->sc_dev.dv_xname;
-	sc->sc_sme->sme_cookie = sc;
-	sc->sc_sme->sme_flags = SME_DISABLE_REFRESH;
+	sc->sc_sysmon.sme_sensor_data = sc->sc_data;
+	sc->sc_sysmon.sme_name = sc->sc_dev.dv_xname;
+	sc->sc_sysmon.sme_cookie = sc;
+	sc->sc_sysmon.sme_nsensors = ATZ_NUMSENSORS;
+	sc->sc_sysmon.sme_flags = SME_DISABLE_GTREDATA;
 
-	if (sysmon_envsys_register(sc->sc_sme)) {
+	if (sysmon_envsys_register(&sc->sc_sysmon))
 		printf("%s: unable to register with sysmon\n",
 		    sc->sc_dev.dv_xname);
-		sysmon_envsys_destroy(sc->sc_sme);
-	}
 }

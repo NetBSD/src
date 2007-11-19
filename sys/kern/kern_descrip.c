@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.162 2007/11/07 00:23:20 ad Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.161 2007/10/08 15:12:07 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.162 2007/11/07 00:23:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.161 2007/10/08 15:12:07 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,18 +64,15 @@ __KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.162 2007/11/07 00:23:20 ad Exp $"
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 
-static int	cwdi_ctor(void *, void *, int);
-static void	cwdi_dtor(void *, void *);
-
 /*
  * Descriptor management.
  */
 struct filelist	filehead;	/* head of list of open files */
 int		nfiles;		/* actual number of open files */
 
-static pool_cache_t cwdi_cache;
-static pool_cache_t filedesc0_cache;
-static pool_cache_t file_cache;
+static struct pool file_pool;
+static struct pool cwdi_pool;
+static struct pool filedesc0_pool;
 
 /* Global file list lock */
 kmutex_t filelist_lock;
@@ -268,17 +265,14 @@ filedesc_init(void)
 
 	mutex_init(&filelist_lock, MUTEX_DEFAULT, IPL_NONE);
 
-	file_cache = pool_cache_init(sizeof(struct file), 0, 0, 0,
-	    "filepl", NULL, IPL_NONE, NULL, NULL, NULL);
-	KASSERT(file_cache != NULL);
+	pool_init(&file_pool, sizeof(struct file), 0, 0, 0,
+	    "filepl", &pool_allocator_nointr, IPL_NONE);
 
-	cwdi_cache = pool_cache_init(sizeof(struct cwdinfo), 0, 0, 0,
-	    "cwdipl", NULL, IPL_NONE, cwdi_ctor, cwdi_dtor, NULL);
-	KASSERT(cwdi_cache != NULL);
+	pool_init(&cwdi_pool, sizeof(struct cwdinfo), 0, 0, 0,
+	    "cwdipl", &pool_allocator_nointr, IPL_NONE);
 
-	filedesc0_cache = pool_cache_init(sizeof(struct filedesc0), 0, 0, 0,
-	    "fdescpl", NULL, IPL_NONE, NULL, NULL, NULL);
-	KASSERT(filedesc0_cache != NULL);
+	pool_init(&filedesc0_pool, sizeof(struct filedesc0), 0, 0, 0,
+	    "fdescpl", &pool_allocator_nointr, IPL_NONE);
 }
 
 /*
@@ -1024,7 +1018,7 @@ falloc(struct lwp *l, struct file **resultfp, int *resultfd)
 		return (error);
 	}
 
-	fp = pool_cache_get(file_cache, PR_WAITOK);
+	fp = pool_get(&file_pool, PR_WAITOK);
 	memset(fp, 0, sizeof(struct file));
 	mutex_init(&fp->f_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_enter(&filelist_lock);
@@ -1035,7 +1029,7 @@ falloc(struct lwp *l, struct file **resultfp, int *resultfd)
 		fd_unused(fdp, i);
 		rw_exit(&fdp->fd_lock);
 		mutex_destroy(&fp->f_lock);
-		pool_cache_put(file_cache, fp);
+		pool_put(&file_pool, fp);
 		return (ENFILE);
 	}
 	/*
@@ -1094,7 +1088,7 @@ ffree(struct file *fp)
 	mutex_exit(&filelist_lock);
 	mutex_destroy(&fp->f_lock);
 	cv_destroy(&fp->f_cv);
-	pool_cache_put(file_cache, fp);
+	pool_put(&file_pool, fp);
 	kauth_cred_free(cred);
 }
 
@@ -1108,8 +1102,9 @@ cwdinit(struct proc *p)
 	struct cwdinfo *cwdi;
 	struct cwdinfo *copy;
 
-	cwdi = pool_cache_get(cwdi_cache, PR_WAITOK);
+	cwdi = pool_get(&cwdi_pool, PR_WAITOK);
 	copy = p->p_cwdi;
+	rw_init(&cwdi->cwdi_lock);
 
 	rw_enter(&copy->cwdi_lock, RW_READER);
 	cwdi->cwdi_cdir = p->p_cwdi->cwdi_cdir;
@@ -1126,26 +1121,6 @@ cwdinit(struct proc *p)
 	rw_exit(&copy->cwdi_lock);
 
 	return (cwdi);
-}
-
-static int
-cwdi_ctor(void *arg, void *obj, int flags)
-{
-	struct cwdinfo *cwdi;
-
-	cwdi = obj;
-	rw_init(&cwdi->cwdi_lock);
-
-	return 0;
-}
-
-static void
-cwdi_dtor(void *arg, void *obj)
-{
-	struct cwdinfo *cwdi;
-
-	cwdi = obj;
-	rw_destroy(&cwdi->cwdi_lock);
 }
 
 /*
@@ -1199,7 +1174,8 @@ cwdfree(struct cwdinfo *cwdi)
 		vrele(cwdi->cwdi_rdir);
 	if (cwdi->cwdi_edir)
 		vrele(cwdi->cwdi_edir);
-	pool_cache_put(cwdi_cache, cwdi);
+	rw_destroy(&cwdi->cwdi_lock);
+	pool_put(&cwdi_pool, cwdi);
 }
 
 /*
@@ -1211,7 +1187,7 @@ fdinit(struct proc *p)
 {
 	struct filedesc0 *newfdp;
 
-	newfdp = pool_cache_get(filedesc0_cache, PR_WAITOK);
+	newfdp = pool_get(&filedesc0_pool, PR_WAITOK);
 	memset(newfdp, 0, sizeof(struct filedesc0));
 
 	fdinit1(newfdp);
@@ -1294,7 +1270,7 @@ fdcopy(struct proc *p)
 	int		i, numfiles, lastfile;
 
 	fdp = p->p_fd;
-	newfdp = pool_cache_get(filedesc0_cache, PR_WAITOK);
+	newfdp = pool_get(&filedesc0_pool, PR_WAITOK);
 	newfdp->fd_refcnt = 1;
 	rw_init(&newfdp->fd_lock);
 
@@ -1438,7 +1414,7 @@ fdfree(struct lwp *l)
 		free(fdp->fd_knlist, M_KEVENT);
 	if (fdp->fd_knhash)
 		hashdone(fdp->fd_knhash, M_KEVENT);
-	pool_cache_put(filedesc0_cache, fdp);
+	pool_put(&filedesc0_pool, fdp);
 }
 
 /*

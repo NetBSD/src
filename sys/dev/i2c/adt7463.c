@@ -1,4 +1,4 @@
-/*	$NetBSD: adt7463.c,v 1.14 2007/11/16 22:46:56 njoly Exp $ */
+/*	$NetBSD: adt7463.c,v 1.12 2007/07/25 11:18:15 njoly Exp $ */
 
 /*
  * Copyright (c) 2005 Anil Gopinath (anil_public@yahoo.com)
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adt7463.c,v 1.14 2007/11/16 22:46:56 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adt7463.c,v 1.12 2007/07/25 11:18:15 njoly Exp $");
 
 /* Fan speed control added by Hanns Hartman */
 #include <sys/param.h>
@@ -48,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: adt7463.c,v 1.14 2007/11/16 22:46:56 njoly Exp $");
 
 #include <dev/i2c/adt7463reg.h>
 
-static void adt7463c_refresh(struct sysmon_envsys *, envsys_data_t *);
+static int adt7463c_gtredata(struct sysmon_envsys *, envsys_data_t *);
 
 static int adt7463c_send_1(struct adt7463c_softc *, uint8_t);
 static int adt7463c_receive_1(struct adt7463c_softc *);
@@ -88,8 +88,7 @@ adt7463c_attach(struct device *parent, struct device *self, void *aux)
 	struct i2c_attach_args *ia = aux;
 	size_t i;
 
-	aprint_naive("\n");
-	aprint_normal("\n");
+	printf("\n");
 
 	sc->sc_tag = ia->ia_tag;
         sc->sc_address = ia->ia_addr;
@@ -135,25 +134,22 @@ adt7463c_attach(struct device *parent, struct device *self, void *aux)
 	/* Initialize sensors */
 	adt7463c_setup_sensors(sc);
 
-	sc->sc_sme = sysmon_envsys_create();
-	for (i = 0; i < ADT7463_MAX_ENVSYS_RANGE; i++) {
-		if (sysmon_envsys_sensor_attach(sc->sc_sme,
-						&sc->sc_sensor[i])) {
-			sysmon_envsys_destroy(sc->sc_sme);
-			return;
-		}
+	for (i = 0; i < ADT7463_MAX_ENVSYS_RANGE; ++i) {
+		sc->sc_sensor[i].sensor = i;
+		sc->sc_sensor[i].state = ENVSYS_SVALID;
 	}
 
 	/* Hook into the System Monitor. */
-	sc->sc_sme->sme_name = sc->sc_dev.dv_xname;
-	sc->sc_sme->sme_cookie = sc;
-	sc->sc_sme->sme_refresh = adt7463c_refresh;
+	sc->sc_sysmon.sme_name = sc->sc_dev.dv_xname;
+	sc->sc_sysmon.sme_sensor_data = sc->sc_sensor;
+	sc->sc_sysmon.sme_cookie = sc;
+	/* callback for envsys get data */
+	sc->sc_sysmon.sme_gtredata = adt7463c_gtredata;
+	sc->sc_sysmon.sme_nsensors = ADT7463_MAX_ENVSYS_RANGE;
 
-	if (sysmon_envsys_register(sc->sc_sme)) {
-		aprint_error("%s: unable to register with sysmon\n",
+	if (sysmon_envsys_register(&sc->sc_sysmon))
+		aprint_error("%s:: unable to register with sysmon\n",
 		    sc->sc_dev.dv_xname);
-		sysmon_envsys_destroy(sc->sc_sme);
-	}
 }
 
 static int
@@ -210,8 +206,8 @@ adt7463c_setup_sensors(struct adt7463c_softc *sc)
 	COPYDESCR(sc->sc_sensor[11].desc, "Fan-4");
 }
 
-static void
-adt7463c_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
+static int
+adt7463c_gtredata(struct sysmon_envsys *sme, envsys_data_t *edata)
 {
         struct adt7463c_softc *sc = sme->sme_cookie;
 
@@ -223,6 +219,8 @@ adt7463c_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 		adt7463c_refresh_temp(sc, edata);
 	else
 		adt7463c_refresh_fan(sc, edata);
+
+	return 0;
 }
 
 static void
@@ -245,10 +243,9 @@ adt7463c_refresh_volt(struct adt7463c_softc *sc, envsys_data_t *edata)
 	data = adt7463c_receive_1(sc);
 
 	/* envstat assumes that voltage is in uVDC */
-	if (data > 0) {
+	if (data > 0)
 		edata->value_cur = data * 100 * mult[i];
-		edata->state = ENVSYS_SVALID;
-	} else
+	else
 		edata->state = ENVSYS_SINVALID;
 }
 
@@ -264,10 +261,9 @@ adt7463c_refresh_temp(struct adt7463c_softc *sc, envsys_data_t *edata)
 	data = adt7463c_receive_1(sc);
 
 	/* envstat assumes temperature is in micro kelvin */
-	if (data > 0) {
+	if (data > 0)
 		edata->value_cur = (data * 100 + ADT7463_CEL_TO_KELVIN) * 10000;
-		edata->state = ENVSYS_SVALID;
-	} else
+	else
 		edata->state = ENVSYS_SINVALID;
 }
 
@@ -300,10 +296,9 @@ adt7463c_refresh_fan(struct adt7463c_softc *sc, envsys_data_t *edata)
 #endif
 
 	/* calculate RPM */
-	if (val != 0 && val != 0xffff) {
+	if (val != 0 && val != 0xffff)
 		edata->value_cur = (ADT7463_RPM_CONST) / val;
-		edata->state = ENVSYS_SVALID;
-	} else
+	else
 		edata->state = ENVSYS_SINVALID;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_ifattach.c,v 1.75 2007/11/10 00:14:31 dyoung Exp $	*/
+/*	$NetBSD: in6_ifattach.c,v 1.74 2007/11/01 20:33:56 dyoung Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.75 2007/11/10 00:14:31 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.74 2007/11/01 20:33:56 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -563,7 +563,9 @@ in6_ifattach_linklocal(struct ifnet *ifp, struct ifnet *altifp)
 	if (in6_setscope(&ifra.ifra_addr.sin6_addr, ifp, NULL))
 		return -1;
 
-	sockaddr_in6_init(&ifra.ifra_prefixmask, &in6mask64, 0, 0, 0);
+	ifra.ifra_prefixmask.sin6_len = sizeof(struct sockaddr_in6);
+	ifra.ifra_prefixmask.sin6_family = AF_INET6;
+	ifra.ifra_prefixmask.sin6_addr = in6mask64;
 	/* link-local addresses should NEVER expire. */
 	ifra.ifra_lifetime.ia6t_vltime = ND6_INFINITE_LIFETIME;
 	ifra.ifra_lifetime.ia6t_pltime = ND6_INFINITE_LIFETIME;
@@ -656,15 +658,21 @@ in6_ifattach_loopback(struct ifnet *ifp)
 	 */
 	strncpy(ifra.ifra_name, if_name(ifp), sizeof(ifra.ifra_name));
 
-	sockaddr_in6_init(&ifra.ifra_prefixmask, &in6mask128, 0, 0, 0);
+	ifra.ifra_prefixmask.sin6_len = sizeof(struct sockaddr_in6);
+	ifra.ifra_prefixmask.sin6_family = AF_INET6;
+	ifra.ifra_prefixmask.sin6_addr = in6mask128;
 
 	/*
 	 * Always initialize ia_dstaddr (= broadcast address) to loopback
 	 * address.  Follows IPv4 practice - see in_ifinit().
 	 */
-	sockaddr_in6_init(&ifra.ifra_dstaddr, &in6addr_loopback, 0, 0, 0);
+	ifra.ifra_dstaddr.sin6_len = sizeof(struct sockaddr_in6);
+	ifra.ifra_dstaddr.sin6_family = AF_INET6;
+	ifra.ifra_dstaddr.sin6_addr = in6addr_loopback;
 
-	sockaddr_in6_init(&ifra.ifra_addr, &in6addr_loopback, 0, 0, 0);
+	ifra.ifra_addr.sin6_len = sizeof(struct sockaddr_in6);
+	ifra.ifra_addr.sin6_family = AF_INET6;
+	ifra.ifra_addr.sin6_addr = in6addr_loopback;
 
 	/* the loopback  address should NEVER expire. */
 	ifra.ifra_lifetime.ia6t_vltime = ND6_INFINITE_LIFETIME;

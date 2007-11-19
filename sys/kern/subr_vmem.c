@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.35 2007/11/07 00:23:23 ad Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.33 2007/10/23 11:29:06 yamt Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.35 2007/11/07 00:23:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.33 2007/10/23 11:29:06 yamt Exp $");
 
 #define	VMEM_DEBUG
 #if defined(_KERNEL)
@@ -107,12 +107,13 @@ LIST_HEAD(vmem_hashlist, vmem_btag);
 #define	QC_NAME_MAX	16
 
 struct qcache {
-	pool_cache_t qc_cache;
+	struct pool qc_pool;
+	struct pool_cache qc_cache;
 	vmem_t *qc_vmem;
 	char qc_name[QC_NAME_MAX];
 };
 typedef struct qcache qcache_t;
-#define	QC_POOL_TO_QCACHE(pool)	((qcache_t *)(pool->pr_qcache))
+#define	QC_POOL_TO_QCACHE(pool)	((qcache_t *)(pool))
 #endif /* defined(QCACHE) */
 
 /* vmem arena */
@@ -144,7 +145,11 @@ struct vmem {
 #define	VMEM_LOCK(vm)		mutex_enter(&vm->vm_lock)
 #define	VMEM_TRYLOCK(vm)	mutex_tryenter(&vm->vm_lock)
 #define	VMEM_UNLOCK(vm)		mutex_exit(&vm->vm_lock)
+#ifdef notyet /* XXX needs vmlocking branch changes */
 #define	VMEM_LOCK_INIT(vm, ipl)	mutex_init(&vm->vm_lock, MUTEX_DRIVER, ipl)
+#else
+#define	VMEM_LOCK_INIT(vm, ipl)	mutex_init(&vm->vm_lock, MUTEX_DRIVER, IPL_VM)
+#endif
 #define	VMEM_LOCK_DESTROY(vm)	mutex_destroy(&vm->vm_lock)
 #define	VMEM_ASSERT_LOCKED(vm)	KASSERT(mutex_owned(&vm->vm_lock))
 
@@ -231,7 +236,8 @@ xfree(void *p)
 /* ---- boundary tag */
 
 #if defined(_KERNEL)
-static struct pool_cache bt_cache;
+static struct pool_cache bt_poolcache;
+static POOL_INIT(bt_pool, sizeof(bt_t), 0, 0, 0, "vmembtpl", NULL, IPL_VM);
 #endif /* defined(_KERNEL) */
 
 static bt_t *
@@ -240,8 +246,13 @@ bt_alloc(vmem_t *vm, vm_flag_t flags)
 	bt_t *bt;
 
 #if defined(_KERNEL)
-	bt = pool_cache_get(&bt_cache,
+	int s;
+
+	/* XXX bootstrap */
+	s = splvm();
+	bt = pool_cache_get(&bt_poolcache,
 	    (flags & VM_SLEEP) != 0 ? PR_WAITOK : PR_NOWAIT);
+	splx(s);
 #else /* defined(_KERNEL) */
 	bt = malloc(sizeof *bt);
 #endif /* defined(_KERNEL) */
@@ -254,7 +265,12 @@ bt_free(vmem_t *vm, bt_t *bt)
 {
 
 #if defined(_KERNEL)
-	pool_cache_put(&bt_cache, bt);
+	int s;
+
+	/* XXX bootstrap */
+	s = splvm();
+	pool_cache_put(&bt_poolcache, bt);
+	splx(s);
 #else /* defined(_KERNEL) */
 	free(bt);
 #endif /* defined(_KERNEL) */
@@ -491,19 +507,17 @@ qc_init(vmem_t *vm, size_t qcache_max, int ipl)
 		qc->qc_vmem = vm;
 		snprintf(qc->qc_name, sizeof(qc->qc_name), "%s-%zu",
 		    vm->vm_name, size);
-		qc->qc_cache = pool_cache_init(size,
-		    ORDER2SIZE(vm->vm_quantum_shift), 0,
-		    PR_NOALIGN | PR_NOTOUCH /* XXX */,
-		    qc->qc_name, pa, ipl, NULL, NULL, NULL);
-		KASSERT(qc->qc_cache != NULL);	/* XXX */
+		pool_init(&qc->qc_pool, size, ORDER2SIZE(vm->vm_quantum_shift),
+		    0, PR_NOALIGN | PR_NOTOUCH /* XXX */, qc->qc_name, pa,
+		    ipl);
 		if (prevqc != NULL &&
-		    qc->qc_cache->pc_pool.pr_itemsperpage ==
-		    prevqc->qc_cache->pc_pool.pr_itemsperpage) {
-			pool_cache_destroy(qc->qc_cache);
+		    qc->qc_pool.pr_itemsperpage ==
+		    prevqc->qc_pool.pr_itemsperpage) {
+			pool_destroy(&qc->qc_pool);
 			vm->vm_qcache[i - 1] = prevqc;
 			continue;
 		}
-		qc->qc_cache->pc_pool.pr_qcache = qc;
+		pool_cache_init(&qc->qc_cache, &qc->qc_pool, NULL, NULL, NULL);
 		vm->vm_qcache[i - 1] = qc;
 		prevqc = qc;
 	}
@@ -524,7 +538,8 @@ qc_destroy(vmem_t *vm)
 		if (prevqc == qc) {
 			continue;
 		}
-		pool_cache_destroy(qc->qc_cache);
+		pool_cache_destroy(&qc->qc_cache);
+		pool_destroy(&qc->qc_pool);
 		prevqc = qc;
 	}
 }
@@ -545,7 +560,7 @@ qc_reap(vmem_t *vm)
 		if (prevqc == qc) {
 			continue;
 		}
-		if (pool_cache_reclaim(qc->qc_cache) != 0) {
+		if (pool_reclaim(&qc->qc_pool) != 0) {
 			didsomething = true;
 		}
 		prevqc = qc;
@@ -561,8 +576,7 @@ vmem_init(void)
 {
 
 	mutex_init(&vmem_list_lock, MUTEX_DEFAULT, IPL_NONE);
-	pool_cache_bootstrap(&bt_cache, sizeof(bt_t), 0, 0, 0, "vmembt",
-	    NULL, IPL_VM, NULL, NULL, NULL);
+	pool_cache_init(&bt_poolcache, &bt_pool, NULL, NULL, NULL);
 	return 0;
 }
 #endif /* defined(_KERNEL) */
@@ -867,7 +881,7 @@ vmem_alloc(vmem_t *vm, vmem_size_t size0, vm_flag_t flags)
 		int qidx = size >> vm->vm_quantum_shift;
 		qcache_t *qc = vm->vm_qcache[qidx - 1];
 
-		return (vmem_addr_t)pool_cache_get(qc->qc_cache,
+		return (vmem_addr_t)pool_cache_get(&qc->qc_cache,
 		    vmf_to_prf(flags));
 	}
 #endif /* defined(QCACHE) */
@@ -1036,7 +1050,7 @@ vmem_free(vmem_t *vm, vmem_addr_t addr, vmem_size_t size)
 		int qidx = (size + vm->vm_quantum_mask) >> vm->vm_quantum_shift;
 		qcache_t *qc = vm->vm_qcache[qidx - 1];
 
-		return pool_cache_put(qc->qc_cache, (void *)addr);
+		return pool_cache_put(&qc->qc_cache, (void *)addr);
 	}
 #endif /* defined(QCACHE) */
 
@@ -1189,7 +1203,7 @@ vmem_rehash_start(void)
 	int error;
 
 	error = workqueue_create(&vmem_rehash_wq, "vmem_rehash",
-	    vmem_rehash_all, NULL, PRI_VM, IPL_SOFTCLOCK, 0);
+	    vmem_rehash_all, NULL, PVM, IPL_SOFTCLOCK, 0);
 	if (error) {
 		panic("%s: workqueue_create %d\n", __func__, error);
 	}

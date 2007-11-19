@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.20 2007/11/10 20:06:24 ad Exp $	*/
+/*	$NetBSD: spl.S,v 1.19 2007/10/18 15:28:36 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@ ENTRY(spllower)
 LABEL(spllower_end)
 
 /*
- * void	cx8_spllower(int s);
+ * void	i686_spllower(int s);
  *
  * spllower() optimized for Pentium Pro and later, which have long
  * pipelines that will be stalled by pushf/cli/popf.  Must be the
@@ -111,7 +111,7 @@ LABEL(spllower_end)
  * edx : eax = old level / old ipending 
  * ecx : ebx = new level / old ipending
  */
-ENTRY(cx8_spllower)
+ENTRY(i686_spllower)
 	movl	4(%esp),%ecx
 	movl	CPUVAR(ILEVEL),%edx
 	cmpl	%edx,%ecx			/* new level is lower? */
@@ -133,10 +133,10 @@ ENTRY(cx8_spllower)
 	ret
 2:
 	popl	%ebx
-LABEL(cx8_spllower_patch)
+LABEL(i686_spllower_patch)
 	jmp	_C_LABEL(Xspllower)
 	.align	32
-LABEL(cx8_spllower_end)
+LABEL(i686_spllower_end)
 
 /*
  * void Xspllower(int s);
@@ -156,7 +156,7 @@ LABEL(cx8_spllower_end)
  * the sending CPU will never see the that CPU accept the IPI
  * (see pmap_tlb_shootnow).
  */
-	nop	/* Don't get confused with cx8_spllower_end */
+	nop	/* Don't get confused with i686_spllower_end */
 
 IDTVEC(spllower)
 #if defined(DDB) || defined(GPROF)

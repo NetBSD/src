@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.17 2007/11/07 19:31:10 garbled Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.15 2007/10/25 16:55:50 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.17 2007/11/07 19:31:10 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.15 2007/10/25 16:55:50 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -48,16 +48,11 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.17 2007/11/07 19:31:10 garbled Exp $")
 #include <dev/ofw/ofw_pci.h>
 #include <arch/powerpc/pic/picvar.h>
 #include <machine/pci_machdep.h>
+
 #include <machine/autoconf.h>
-
-#include <dev/isa/isareg.h>
-#include <dev/isa/isavar.h>
-
 
 int	mainbus_match(struct device *, struct cfdata *, void *);
 void	mainbus_attach(struct device *, struct device *, void *);
-
-static int pegasos_get_irq(struct pic_ops *);
 
 CFATTACH_DECL(mainbus, sizeof(struct device),
     mainbus_match, mainbus_attach, NULL, NULL);
@@ -158,22 +153,23 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 		ca.ca_reg  = reg;
 		config_found(self, &ca, NULL);
 	}
+
+#ifdef MAMBO
+	ca.ca_name="com";
+	config_found(self, &ca, NULL);
+#endif
+
 }
 
 void
-init_interrupt(void)
+ofppc_setup_pics(void)
 {
-	int node, i, isa_cascade = 0;
-	char name[32];
+	int i, isa_cascade = 0;
 
 	/* Now setup the PIC's */
-	node = OF_finddevice("/");
-	if (node <= 0)
-		panic("Can't find root OFW device node\n");
-	genofw_find_ofpics(node);
+	genofw_find_ofpics(OF_finddevice("/"));
 	genofw_fixup_picnode_offsets();
 	pic_init();
-
 	/* find ISA first */
 	for (i = 0; i < nrofpics; i++)
 		if (picnodes[i].type == PICNODE_TYPE_8259)
@@ -195,32 +191,4 @@ init_interrupt(void)
 		intr_establish(16, IST_LEVEL, IPL_NONE, pic_handle_intr,
 		    isa_pic);
 	}
-
-	/* The PegasosII is wierd (surprise!) and needs a prepivr style
-	 * get_irq routine.  yay.
-	 */
-	memset(name, 0, sizeof(name));
-	OF_getprop(node, "name", name, sizeof(name));
-	if (strcmp(name, "bplan,Pegasos2") == 0)
-		isa_pic->pic_get_irq = pegasos_get_irq;
-}
-
-static int
-pegasos_get_irq(struct pic_ops *pic)
-{
-	static int lirq;
-	int irq;
-
-	irq = i8259_get_irq(pic);
-
-	if (lirq == 7 && irq == lirq) {
-		lirq = -1;
-		return 255;
-	}
-
-	lirq = irq;
-	if (irq == 0)
-		return 255;
-
-	return irq;
 }

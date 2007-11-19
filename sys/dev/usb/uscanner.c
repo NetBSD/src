@@ -1,4 +1,4 @@
-/*	$NetBSD: uscanner.c,v 1.58 2007/11/16 15:21:42 gson Exp $	*/
+/*	$NetBSD: uscanner.c,v 1.57 2007/09/09 16:35:13 gson Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.58 2007/11/16 15:21:42 gson Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.57 2007/09/09 16:35:13 gson Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -335,7 +335,6 @@ USB_ATTACH(uscanner)
 	if (err) {
 		printf("%s: setting config no failed\n",
 		    USBDEVNAME(sc->sc_dev));
-		sc->sc_dying = 1;
 		USB_ATTACH_ERROR_RETURN;
 	}
 
@@ -346,7 +345,6 @@ USB_ATTACH(uscanner)
 	if (err || id == 0) {
 		printf("%s: could not get interface descriptor, err=%d,id=%p\n",
 		       USBDEVNAME(sc->sc_dev), err, id);
-		sc->sc_dying = 1;
 		USB_ATTACH_ERROR_RETURN;
 	}
 
@@ -356,7 +354,6 @@ USB_ATTACH(uscanner)
 		if (ed == 0) {
 			printf("%s: could not read endpoint descriptor\n",
 			       USBDEVNAME(sc->sc_dev));
-			sc->sc_dying = 1;
 			USB_ATTACH_ERROR_RETURN;
 		}
 
@@ -376,7 +373,6 @@ USB_ATTACH(uscanner)
 	if (ed_bulkin == NULL || ed_bulkout == NULL) {
 		printf("%s: bulk-in and/or bulk-out endpoint not found\n",
 			USBDEVNAME(sc->sc_dev));
-		sc->sc_dying = 1;
 		USB_ATTACH_ERROR_RETURN;
 	}
 

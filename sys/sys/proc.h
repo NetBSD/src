@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.261 2007/11/12 23:12:00 ad Exp $	*/
+/*	$NetBSD: proc.h,v 1.258 2007/11/01 21:57:44 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -219,9 +219,10 @@ struct proc {
 	kmutex_t	p_mutex;	/* :: general mutex */
 	kmutex_t	p_smutex;	/* :: mutex on scheduling state */
 	kmutex_t	p_stmutex;	/* :: mutex on profiling state */
-	krwlock_t	p_reflock;	/* p: lock for debugger, procfs */
+	kcondvar_t	p_refcv;	/* p: reference count CV */
 	kcondvar_t	p_waitcv;	/* s: wait, stop CV on children */
 	kcondvar_t	p_lwpcv;	/* s: wait, stop CV on LWPs */
+	int		p_refcnt;	/* p: ref count for procfs etc */
       
 	/* Substructures: */
 	struct kauth_cred *p_cred;	/* p: Master copy of credentials */
@@ -298,7 +299,6 @@ struct proc {
 
 	LIST_HEAD(, lwp) p_sigwaiters;	/* s: LWPs waiting for signals */
 	sigpend_t	p_sigpend;	/* s: pending signals */
-	struct lcproc	*p_lwpctl;	/* s: _lwp_ctl() information */
 
 /*
  * End area that is zeroed on creation
@@ -467,12 +467,7 @@ extern struct lwp	*curlwp;		/* Current running LWP */
 #endif /* MULTIPROCESSOR */
 #endif /* ! curlwp */
 
-static inline bool
-CURCPU_IDLE_P(void)
-{
-	struct cpu_info *ci = curcpu();
-	return ci->ci_data.cpu_onproc == ci->ci_data.cpu_idlelwp;
-}
+#define	CURCPU_IDLE_P()	(curlwp == curcpu()->ci_data.cpu_idlelwp)
 #define	curproc		(curlwp->l_proc)
 
 extern struct proc	proc0;		/* Process slot for swapper */

@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_subr.c,v 1.60 2007/11/17 21:55:29 pooka Exp $	*/
+/*	$NetBSD: puffs_subr.c,v 1.57 2007/10/11 19:41:14 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.60 2007/11/17 21:55:29 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.57 2007/10/11 19:41:14 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -110,43 +110,12 @@ puffs_parkdone_asyncbioread(struct puffs_mount *pmp,
 	struct buf *bp = arg;
 	size_t moved;
 
-	DPRINTF(("%s\n", __func__));
-
 	bp->b_error = checkerr(pmp, preq->preq_rv, __func__);
 	if (bp->b_error == 0) {
-		if (read_msg->pvnr_resid > bp->b_bcount) {
-			puffs_senderr(pmp, PUFFS_ERR_READ, E2BIG,
-			    "resid grew", preq->preq_cookie);
-			bp->b_error = E2BIG;
-		} else {
-			moved = bp->b_bcount - read_msg->pvnr_resid;
-			bp->b_resid = read_msg->pvnr_resid;
+		moved = bp->b_bcount - read_msg->pvnr_resid;
+		bp->b_resid = read_msg->pvnr_resid;
 
-			memcpy(bp->b_data, read_msg->pvnr_data, moved);
-		}
-	}
-
-	biodone(bp);
-}
-
-void
-puffs_parkdone_asyncbiowrite(struct puffs_mount *pmp,
-	struct puffs_req *preq, void *arg)
-{
-	struct puffs_vnmsg_write *write_msg = (void *)preq;
-	struct buf *bp = arg;
-
-	DPRINTF(("%s\n", __func__));
-
-	bp->b_error = checkerr(pmp, preq->preq_rv, __func__);
-	if (bp->b_error == 0) {
-		if (write_msg->pvnr_resid > bp->b_bcount) {
-			puffs_senderr(pmp, PUFFS_ERR_WRITE, E2BIG,
-			    "resid grew", preq->preq_cookie);
-			bp->b_error = E2BIG;
-		} else {
-			bp->b_resid = write_msg->pvnr_resid;
-		}
+		memcpy(bp->b_data, read_msg->pvnr_data, moved);
 	}
 
 	biodone(bp);
@@ -210,23 +179,5 @@ puffs_gop_markupdate(struct vnode *vp, int flags)
 	if (flags & GOP_UPDATE_MODIFIED)
 		uflags |= PUFFS_UPDATEMTIME;
 
-	puffs_updatenode(VPTOPP(vp), uflags, 0);
-}
-
-void
-puffs_senderr(struct puffs_mount *pmp, int type, int error,
-	const char *str, void *cookie)
-{
-	struct puffs_msgpark *park;
-	struct puffs_error *perr;
-
-	puffs_msgmem_alloc(sizeof(struct puffs_error), &park, (void**)&perr, 1);
-	puffs_msg_setfaf(park);
-	puffs_msg_setinfo(park, PUFFSOP_ERROR, type, cookie);
-
-	perr->perr_error = error;
-	strlcpy(perr->perr_str, str, sizeof(perr->perr_str));
-
-	puffs_msg_enqueue(pmp, park);
-	puffs_msgmem_release(park);
+	puffs_updatenode(vp, uflags);
 }

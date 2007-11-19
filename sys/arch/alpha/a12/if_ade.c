@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ade.c,v 1.31 2007/11/07 00:23:13 ad Exp $	*/
+/*	$NetBSD: if_ade.c,v 1.30 2007/10/17 19:52:54 garbled Exp $	*/
 
 /*
  * NOTE: this version of if_de was modified for bounce buffers prior
@@ -81,7 +81,7 @@
 #define	LCLDMA 1
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ade.c,v 1.31 2007/11/07 00:23:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ade.c,v 1.30 2007/10/17 19:52:54 garbled Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -239,9 +239,12 @@ static void dumpring(void **);
 static void
 donothing(struct mbuf *m, void *buf, size_t size, void *arg)
 {
+	int s;
 
 	if (__predict_true(m != NULL)) {
-		pool_cache_put(mb_cache, m);
+		s = splvm();
+		pool_cache_put(&mbpool_cache, m);
+		splx(s);
 	}
 
 }

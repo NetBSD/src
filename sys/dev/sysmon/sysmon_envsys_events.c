@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.45 2007/11/16 08:00:16 xtraeme Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.44 2007/11/03 23:05:21 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -30,13 +30,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.45 2007/11/16 08:00:16 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.44 2007/11/03 23:05:21 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/conf.h>
 #include <sys/errno.h>
 #include <sys/kernel.h>
+#include <sys/sysctl.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/mutex.h>
@@ -62,14 +63,71 @@ static const struct sme_sensor_event sme_sensor_event[] = {
 	{ -1, 			-1 }
 };
 
-kmutex_t sme_mtx, sme_events_mtx, sme_callout_mtx;
-kcondvar_t sme_cv, sme_callout_cv;
+static struct workqueue *seewq;
+static struct callout seeco;
+static bool sme_events_initialized = false;
 static bool sysmon_low_power = false;
+kmutex_t sme_mtx, sme_event_init_mtx;
+kcondvar_t sme_cv;
 
-#define SME_EVTIMO	(SME_EVENTS_DEFTIMEOUT * hz)
+/* 10 seconds of timeout for the callout */
+static int sme_events_timeout = 10;
+static int sme_events_timeout_sysctl(SYSCTLFN_PROTO);
+#define SME_EVTIMO 	(sme_events_timeout * hz)
 
 static bool sme_event_check_low_power(void);
 static bool sme_battery_critical(envsys_data_t *);
+
+/*
+ * sysctl(9) stuff to handle the refresh value in the callout
+ * function.
+ */
+static int
+sme_events_timeout_sysctl(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node;
+	int timo, error;
+
+	node = *rnode;
+	timo = sme_events_timeout;
+	node.sysctl_data = &timo;
+
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || !newp)
+		return error;
+
+	/* min 1s */
+	if (timo < 1)
+		return EINVAL;
+
+	sme_events_timeout = timo;
+	return 0;
+}
+
+SYSCTL_SETUP(sysctl_kern_envsys_timeout_setup, "sysctl kern.envsys subtree")
+{
+	const struct sysctlnode *node, *envsys_node;
+
+	sysctl_createv(clog, 0, NULL, &node,
+			CTLFLAG_PERMANENT,
+			CTLTYPE_NODE, "kern", NULL,
+			NULL, 0, NULL, 0,
+			CTL_KERN, CTL_EOL);
+
+	sysctl_createv(clog, 0, &node, &envsys_node,
+			0,
+			CTLTYPE_NODE, "envsys", NULL,
+			NULL, 0, NULL, 0,
+			CTL_CREATE, CTL_EOL);
+
+	sysctl_createv(clog, 0, &envsys_node, &node,
+			CTLFLAG_READWRITE,
+			CTLTYPE_INT, "refresh_value",
+			SYSCTL_DESCR("wait time in seconds to refresh "
+			    "sensors being monitored"),
+			sme_events_timeout_sysctl, 0, &sme_events_timeout, 0,
+			CTL_CREATE, CTL_EOL);
+}
 
 /*
  * sme_event_register:
@@ -79,7 +137,7 @@ static bool sme_battery_critical(envsys_data_t *);
  */
 int
 sme_event_register(prop_dictionary_t sdict, envsys_data_t *edata,
-		   struct sysmon_envsys *sme, const char *objkey,
+		   const char *drvn, const char *objkey,
 		   int32_t critval, int crittype, int powertype)
 {
 	sme_event_t *see = NULL;
@@ -87,22 +145,22 @@ sme_event_register(prop_dictionary_t sdict, envsys_data_t *edata,
 	bool critvalup = false;
 	int error = 0;
 
-	KASSERT(sdict != NULL || edata != NULL || sme != NULL);
-	KASSERT(mutex_owned(&sme_mtx));
+	KASSERT(sdict != NULL || edata != NULL);
 
+	mutex_enter(&sme_mtx);
 	/* 
 	 * check if the event is already on the list and return
 	 * EEXIST if value provided hasn't been changed.
 	 */
-	LIST_FOREACH(see, &sme->sme_events_list, see_list) {
-		if (strcmp(edata->desc, see->see_pes.pes_sensname) == 0)
-			if (crittype == see->see_type) {
-				if (see->see_critval == critval) {
+	LIST_FOREACH(see, &sme_events_list, see_list) {
+		if (strcmp(edata->desc, see->pes.pes_sensname) == 0)
+			if (crittype == see->type) {
+				if (see->critval == critval) {
 					DPRINTF(("%s: dev=%s sensor=%s type=%d "
 				    	    "(already exists)\n", __func__,
-				    	    see->see_pes.pes_dvname,
-				    	    see->see_pes.pes_sensname,
-					    see->see_type));
+				    	    see->pes.pes_dvname,
+				    	    see->pes.pes_sensname, see->type));
+					mutex_exit(&sme_mtx);
 					return EEXIST;
 				}
 				critvalup = true;
@@ -115,17 +173,17 @@ sme_event_register(prop_dictionary_t sdict, envsys_data_t *edata,
 	 */
 	if (objkey && critval && critvalup) {
 		obj = prop_dictionary_get(sdict, objkey);
-		if (obj && prop_object_type(obj) == PROP_TYPE_NUMBER) {
+		if (obj) {
 			/* 
 			 * object is already in dictionary and value
 			 * provided is not the same than we have
 			 * currently,  update the critical value.
 			 */
-			see->see_critval = critval;
-			DPRINTF(("%s: (%s) sensor=%s type=%d "
-			    "(critval updated)\n", __func__, sme->sme_name,
-			    edata->desc, see->see_type));
+			see->critval = critval;
+			DPRINTF(("%s: sensor=%s type=%d (critval updated)\n",
+				 __func__, edata->desc, see->type));
 			error = sme_sensor_upint32(sdict, objkey, critval);
+			mutex_exit(&sme_mtx);
 			return error;
 		}
 	}
@@ -135,37 +193,43 @@ sme_event_register(prop_dictionary_t sdict, envsys_data_t *edata,
 	 * sme event, assign required members and update the object in
 	 * the dictionary.
 	 */
+	see = NULL;
 	see = kmem_zalloc(sizeof(*see), KM_NOSLEEP);
-	if (see == NULL)
+	if (see == NULL) {
+		mutex_exit(&sme_mtx);
 		return ENOMEM;
+	}
 
-	see->see_edata = edata;
-	see->see_critval = critval;
-	see->see_type = crittype;
-	see->see_sme = sme;
-	(void)strlcpy(see->see_pes.pes_dvname, sme->sme_name,
-	    sizeof(see->see_pes.pes_dvname));
-	see->see_pes.pes_type = powertype;
-	(void)strlcpy(see->see_pes.pes_sensname, edata->desc,
-	    sizeof(see->see_pes.pes_sensname));
+	see->critval = critval;
+	see->type = crittype;
+	(void)strlcpy(see->pes.pes_dvname, drvn,
+	    sizeof(see->pes.pes_dvname));
+	see->pes.pes_type = powertype;
+	(void)strlcpy(see->pes.pes_sensname, edata->desc,
+	    sizeof(see->pes.pes_sensname));
+	see->snum = edata->sensor;
 
-	LIST_INSERT_HEAD(&sme->sme_events_list, see, see_list);
+	LIST_INSERT_HEAD(&sme_events_list, see, see_list);
 	if (objkey && critval) {
 		error = sme_sensor_upint32(sdict, objkey, critval);
-		if (error)
+		if (error) {
+			mutex_exit(&sme_mtx);
 			goto out;
+		}
 	}
-	DPRINTF(("%s: (%s) registering sensor=%s snum=%d type=%d "
+	DPRINTF(("%s: registering dev=%s sensor=%s snum=%d type=%d "
 	    "critval=%" PRIu32 "\n", __func__,
-	    see->see_sme->sme_name, see->see_pes.pes_sensname,
-	    see->see_edata->sensor, see->see_type, see->see_critval));
+	    see->pes.pes_dvname, see->pes.pes_sensname,
+	    see->snum, see->type, see->critval));
 	/*
-	 * Initialize the events framework if it wasn't initialized before.
+	 * Initialize the events framework if it wasn't initialized
+	 * before.
 	 */
-	mutex_enter(&sme_events_mtx);
-	if ((sme->sme_flags & SME_CALLOUT_INITIALIZED) == 0)
-		error = sme_events_init(sme);
-	mutex_exit(&sme_events_mtx);
+	mutex_enter(&sme_event_init_mtx);
+	mutex_exit(&sme_mtx);
+	if (sme_events_initialized == false)
+		error = sme_events_init();
+	mutex_exit(&sme_event_init_mtx);
 out:
 	if (error)
 		kmem_free(see, sizeof(*see));
@@ -179,30 +243,29 @@ out:
  * 	  sysmon envsys device.
  */
 void
-sme_event_unregister_all(struct sysmon_envsys *sme)
+sme_event_unregister_all(const char *sme_name)
 {
 	sme_event_t *see;
 	int evcounter = 0;
 
 	KASSERT(mutex_owned(&sme_mtx));
-	KASSERT(sme != NULL);
+	KASSERT(sme_name != NULL);
 
-	LIST_FOREACH(see, &sme->sme_events_list, see_list) {
-		if (strcmp(see->see_pes.pes_dvname, sme->sme_name) == 0)
+	LIST_FOREACH(see, &sme_events_list, see_list) {
+		if (strcmp(see->pes.pes_dvname, sme_name) == 0)
 			evcounter++;
 	}
 
 	DPRINTF(("%s: total events %d (%s)\n", __func__,
-	    evcounter, sme->sme_name));
+	    evcounter, sme_name));
 
-	while ((see = LIST_FIRST(&sme->sme_events_list))) {
+	while ((see = LIST_FIRST(&sme_events_list))) {
 		if (evcounter == 0)
 			break;
 
-		if (strcmp(see->see_pes.pes_dvname, sme->sme_name) == 0) {
+		if (strcmp(see->pes.pes_dvname, sme_name) == 0) {
 			DPRINTF(("%s: event %s %d removed (%s)\n", __func__,
-			    see->see_pes.pes_sensname, see->see_type,
-			    sme->sme_name));
+			    see->pes.pes_sensname, see->type, sme_name));
 
 			while (see->see_flags & SME_EVENT_WORKING)
 				cv_wait(&sme_cv, &sme_mtx);
@@ -213,21 +276,21 @@ sme_event_unregister_all(struct sysmon_envsys *sme)
 		}
 	}
 
-	if (LIST_EMPTY(&sme->sme_events_list)) {
-		mutex_enter(&sme_events_mtx);
-		if (sme->sme_flags & SME_CALLOUT_INITIALIZED)
-			sme_events_destroy(sme);
-		mutex_exit(&sme_events_mtx);
+	if (LIST_EMPTY(&sme_events_list)) {
+		mutex_enter(&sme_event_init_mtx);
+		if (sme_events_initialized)
+			sme_events_destroy();
+		mutex_exit(&sme_event_init_mtx);
 	}
 }
 
 /*
  * sme_event_unregister:
  *
- * 	+ Unregisters an event from the specified sysmon envsys device.
+ * 	+ Unregisters a sysmon envsys event.
  */
 int
-sme_event_unregister(struct sysmon_envsys *sme, const char *sensor, int type)
+sme_event_unregister(const char *sensor, int type)
 {
 	sme_event_t *see;
 	bool found = false;
@@ -235,9 +298,9 @@ sme_event_unregister(struct sysmon_envsys *sme, const char *sensor, int type)
 	KASSERT(mutex_owned(&sme_mtx));
 	KASSERT(sensor != NULL);
 
-	LIST_FOREACH(see, &sme->sme_events_list, see_list) {
-		if (strcmp(see->see_pes.pes_sensname, sensor) == 0) {
-			if (see->see_type == type) {
+	LIST_FOREACH(see, &sme_events_list, see_list) {
+		if (strcmp(see->pes.pes_sensname, sensor) == 0) {
+			if (see->type == type) {
 				found = true;
 				break;
 			}
@@ -251,7 +314,7 @@ sme_event_unregister(struct sysmon_envsys *sme, const char *sensor, int type)
 		cv_wait(&sme_cv, &sme_mtx);
 
 	DPRINTF(("%s: removing dev=%s sensor=%s type=%d\n",
-	    __func__, see->see_pes.pes_dvname, sensor, type));
+	    __func__, see->pes.pes_dvname, sensor, type));
 	LIST_REMOVE(see, see_list);
 	/*
 	 * So the events list is empty, we'll do the following:
@@ -259,10 +322,10 @@ sme_event_unregister(struct sysmon_envsys *sme, const char *sensor, int type)
 	 * 	- stop and destroy the callout.
 	 * 	- destroy the workqueue.
 	 */
-	if (LIST_EMPTY(&sme->sme_events_list)) {
-		mutex_enter(&sme_events_mtx);
-		sme_events_destroy(sme);
-		mutex_exit(&sme_events_mtx);
+	if (LIST_EMPTY(&sme_events_list)) {
+		mutex_enter(&sme_event_init_mtx);
+		sme_events_destroy();
+		mutex_exit(&sme_event_init_mtx);
 	}
 
 	kmem_free(see, sizeof(*see));
@@ -272,8 +335,8 @@ sme_event_unregister(struct sysmon_envsys *sme, const char *sensor, int type)
 /*
  * sme_event_drvadd:
  *
- * 	+ Registers a new event for a device that had enabled any of
- * 	  the monitoring flags in the driver.
+ * 	+ Adds a new sysmon envsys event for a driver if a sensor
+ * 	  has set any accepted monitoring flag.
  */
 void
 sme_event_drvadd(void *arg)
@@ -285,33 +348,29 @@ sme_event_drvadd(void *arg)
 
 #define SEE_REGEVENT(a, b, c)						\
 do {									\
-	if (sed_t->sed_edata->flags & (a)) {				\
+	if (sed_t->edata->flags & (a)) {				\
 		char str[ENVSYS_DESCLEN] = "monitoring-state-";		\
 									\
-		sysmon_envsys_acquire(sed_t->sed_sme);			\
-		error = sme_event_register(sed_t->sed_sdict,		\
-				      sed_t->sed_edata,			\
-				      sed_t->sed_sme,			\
+		error = sme_event_register(sed_t->sdict,		\
+				      sed_t->edata,			\
+				      sed_t->sme->sme_name,		\
 				      NULL,				\
 				      0,				\
 				      (b),				\
-				      sed_t->sed_powertype);		\
+				      sed_t->powertype);		\
 		if (error && error != EEXIST)				\
 			printf("%s: failed to add event! "		\
 			    "error=%d sensor=%s event=%s\n",		\
-			    __func__, error,				\
-			    sed_t->sed_edata->desc, (c));		\
+			    __func__, error, sed_t->edata->desc, (c));	\
 		else {							\
 			(void)strlcat(str, (c), sizeof(str));		\
-			prop_dictionary_set_bool(sed_t->sed_sdict,	\
+			prop_dictionary_set_bool(sed_t->sdict,		\
 						 str,			\
 						 true);			\
 		}							\
-		sysmon_envsys_release(sed_t->sed_sme);			\
 	}								\
 } while (/* CONSTCOND */ 0)
 
-	mutex_enter(&sme_mtx);
 	SEE_REGEVENT(ENVSYS_FMONCRITICAL,
 		     PENVSYS_EVENT_CRITICAL,
 		     "critical");
@@ -335,44 +394,33 @@ do {									\
 	SEE_REGEVENT(ENVSYS_FMONSTCHANGED,
 		     PENVSYS_EVENT_STATE_CHANGED,
 		     "state-changed");
-	mutex_exit(&sme_mtx);
 
-	/* 
-	 * we are done, free memory now.
-	 */
+	/* we are done, free memory now */
 	kmem_free(sed_t, sizeof(*sed_t));
 }
 
 /*
  * sme_events_init:
  *
- * 	+ Initialize the events framework for this device.
+ * 	+ Initializes the events framework.
  */
 int
-sme_events_init(struct sysmon_envsys *sme)
+sme_events_init(void)
 {
 	int error;
-	uint64_t timo;
 
-	KASSERT(sme != NULL);
-	KASSERT(mutex_owned(&sme_events_mtx));
+	KASSERT(mutex_owned(&sme_event_init_mtx));
 
-	if (sme->sme_events_timeout)
-		timo = sme->sme_events_timeout * hz;
-	else
-		timo = SME_EVTIMO;
-
-	error = workqueue_create(&sme->sme_wq, sme->sme_name,
-	    sme_events_worker, sme, PRI_NONE, IPL_SOFTCLOCK, WQ_MPSAFE);
+	error = workqueue_create(&seewq, "envsysev",
+	    sme_events_worker, NULL, PRI_NONE, IPL_SOFTCLOCK, WQ_MPSAFE);
 	if (error)
 		goto out;
 
-	callout_init(&sme->sme_callout, CALLOUT_MPSAFE);
-	callout_setfunc(&sme->sme_callout, sme_events_check, sme);
-	callout_schedule(&sme->sme_callout, timo);
-	sme->sme_flags |= SME_CALLOUT_INITIALIZED;
-	DPRINTF(("%s: events framework initialized for '%s'\n",
-	    __func__, sme->sme_name));
+	callout_init(&seeco, 0);
+	callout_setfunc(&seeco, sme_events_check, NULL);
+	callout_schedule(&seeco, SME_EVTIMO);
+	sme_events_initialized = true;
+	DPRINTF(("%s: events framework initialized\n", __func__));
 
 out:
 	return error;
@@ -381,60 +429,49 @@ out:
 /*
  * sme_events_destroy:
  *
- * 	+ Destroys the events framework for this device: the workqueue and the
- * 	  callout are stopped/destroyed because the queue is empty.
+ * 	+ Destroys the events framework: the workqueue and the
+ * 	  callout are stopped and destroyed because there are not
+ * 	  events in the queue.
  */
 void
-sme_events_destroy(struct sysmon_envsys *sme)
+sme_events_destroy(void)
 {
-	KASSERT(mutex_owned(&sme_events_mtx));
+	KASSERT(mutex_owned(&sme_event_init_mtx));
 
-	callout_stop(&sme->sme_callout);
-	sme->sme_flags &= ~SME_CALLOUT_INITIALIZED;
-	DPRINTF(("%s: events framework destroyed for '%s'\n",
-	    __func__, sme->sme_name));
-	callout_destroy(&sme->sme_callout);
-	workqueue_destroy(sme->sme_wq);
+	callout_stop(&seeco);
+	sme_events_initialized = false;
+	DPRINTF(("%s: events framework destroyed\n", __func__));
+	callout_destroy(&seeco);
+	workqueue_destroy(seewq);
 }
 
 /*
  * sme_events_check:
  *
- * 	+ Runs the work on the passed sysmon envsys device for all
- * 	  registered events.
+ * 	+ Runs the work on each sysmon envsys event in our
+ * 	  workqueue periodically with callout.
  */
 void
 sme_events_check(void *arg)
 {
-	struct sysmon_envsys *sme = arg;
 	sme_event_t *see;
-	uint64_t timo;
 
-	KASSERT(sme != NULL);
-
-	mutex_enter(&sme_callout_mtx);
-	sme->sme_flags |= SME_CALLOUT_BUSY;
-
-	LIST_FOREACH(see, &sme->sme_events_list, see_list)
-		workqueue_enqueue(sme->sme_wq, &see->see_wk, NULL);
-
+	LIST_FOREACH(see, &sme_events_list, see_list) {
+		DPRINTFOBJ(("%s: dev=%s sensor=%s type=%d\n",
+		    __func__,
+		    see->pes.pes_dvname,
+		    see->pes.pes_sensname,
+		    see->type));
+		workqueue_enqueue(seewq, &see->see_wk, NULL);
+	}
 	/*
 	 * Now that the events list was checked, reset the refresh value.
 	 */
-	LIST_FOREACH(see, &sme->sme_events_list, see_list)
+	LIST_FOREACH(see, &sme_events_list, see_list)
 		see->see_flags &= ~SME_EVENT_REFRESHED;
 
-	if (sme->sme_events_timeout)
-		timo = sme->sme_events_timeout * hz;
-	else
-		timo = SME_EVTIMO;
-
-	sme->sme_flags &= ~SME_CALLOUT_BUSY;
 	if (!sysmon_low_power)
-		callout_schedule(&sme->sme_callout, timo);
-
-	cv_broadcast(&sme_callout_cv);
-	mutex_exit(&sme_callout_mtx);
+		callout_schedule(&seeco, SME_EVTIMO);
 }
 
 /*
@@ -450,48 +487,61 @@ sme_events_worker(struct work *wk, void *arg)
 	const struct sme_sensor_event *sse = sme_sensor_event;
 	sme_event_t *see = (void *)wk;
 	struct sysmon_envsys *sme;
+	envsys_data_t *edata;
 	int i, state, error;
 
 	KASSERT(wk == &see->see_wk);
-	KASSERT(see != NULL);
 
 	state = error = 0;
 
 	mutex_enter(&sme_mtx);
 	see->see_flags |= SME_EVENT_WORKING;
-	sme = see->see_sme;
+
+	/*
+	 * We have to find the sme device by looking
+	 * at the power envsys device name.
+	 */
+	LIST_FOREACH(sme, &sysmon_envsys_list, sme_list)
+		if (strcmp(sme->sme_name, see->pes.pes_dvname) == 0)
+			break;
+	if (!sme)
+		goto out;
+
+	/* get the sensor with the index specified in see->snum */
+	edata = &sme->sme_sensor_data[see->snum];
 
 	/* 
 	 * refresh the sensor that was marked with a critical event
 	 * only if it wasn't refreshed before or if the driver doesn't
 	 * use its own method for refreshing.
 	 */
-	if ((sme->sme_flags & SME_DISABLE_REFRESH) == 0) {
+	if ((sme->sme_flags & SME_DISABLE_GTREDATA) == 0) {
 		if ((see->see_flags & SME_EVENT_REFRESHED) == 0) {
-			(*sme->sme_refresh)(sme, see->see_edata);
+			error = (*sme->sme_gtredata)(sme, edata);
+			if (error)
+				goto out;
 			see->see_flags |= SME_EVENT_REFRESHED;
 		}
 	}
 
-	DPRINTFOBJ(("%s: (%s) desc=%s sensor=%d units=%d value_cur=%d\n",
-	    __func__, sme->sme_name, see->see_edata->desc,
-	    see->see_edata->sensor,
-	    see->see_edata->units, see->see_edata->value_cur));
+	DPRINTFOBJ(("%s: desc=%s sensor=%d units=%d value_cur=%d\n",
+	    __func__, edata->desc, edata->sensor,
+	    edata->units, edata->value_cur));
 
 #define SME_SEND_NORMALEVENT()						\
 do {									\
-	see->see_evsent = false;					\
-	sysmon_penvsys_event(&see->see_pes, PENVSYS_EVENT_NORMAL);	\
+	see->evsent = false;						\
+	sysmon_penvsys_event(&see->pes, PENVSYS_EVENT_NORMAL);		\
 } while (/* CONSTCOND */ 0)
 
 #define SME_SEND_EVENT(type)						\
 do {									\
-	see->see_evsent = true;						\
-	sysmon_penvsys_event(&see->see_pes, (type));			\
+	see->evsent = true;						\
+	sysmon_penvsys_event(&see->pes, (type));			\
 } while (/* CONSTCOND */ 0)
 
 
-	switch (see->see_type) {
+	switch (see->type) {
 	/*
 	 * if state is the same than the one that matches sse[i].state,
 	 * send the event...
@@ -502,14 +552,14 @@ do {									\
 	case PENVSYS_EVENT_WARNUNDER:
 	case PENVSYS_EVENT_WARNOVER:
 		for (i = 0; sse[i].state != -1; i++)
-			if (sse[i].event == see->see_type)
+			if (sse[i].event == see->type)
 				break;
 
-		if (see->see_evsent && see->see_edata->state == ENVSYS_SVALID)
+		if (see->evsent && edata->state == ENVSYS_SVALID)
 			SME_SEND_NORMALEVENT();
 
-		if (!see->see_evsent && see->see_edata->state == sse[i].state)
-			SME_SEND_EVENT(see->see_type);
+		if (!see->evsent && edata->state == sse[i].state)
+			SME_SEND_EVENT(see->type);
 
 		break;
 	/*
@@ -517,26 +567,22 @@ do {									\
 	 */
 	case PENVSYS_EVENT_BATT_USERCAP:
 	case PENVSYS_EVENT_USER_CRITMIN:
-		if (see->see_evsent &&
-		    see->see_edata->value_cur > see->see_critval)
+		if (see->evsent && edata->value_cur > see->critval)
 			SME_SEND_NORMALEVENT();
 
-		if (!see->see_evsent &&
-		    see->see_edata->value_cur < see->see_critval)
-			SME_SEND_EVENT(see->see_type);
+		if (!see->evsent && edata->value_cur < see->critval)
+			SME_SEND_EVENT(see->type);
 
 		break;
 	/*
 	 * if value_cur is higher than the limit, send the event...
 	 */
 	case PENVSYS_EVENT_USER_CRITMAX:
-		if (see->see_evsent &&
-		    see->see_edata->value_cur < see->see_critval)
+		if (see->evsent && edata->value_cur < see->critval)
 			SME_SEND_NORMALEVENT();
 
-		if (!see->see_evsent &&
-		    see->see_edata->value_cur > see->see_critval)
-			SME_SEND_EVENT(see->see_type);
+		if (!see->evsent && edata->value_cur > see->critval)
+			SME_SEND_EVENT(see->type);
 
 		break;
 	/*
@@ -544,13 +590,11 @@ do {									\
 	 * send the event...
 	 */
 	case PENVSYS_EVENT_STATE_CHANGED:
-		/* 
-		 * the state has not been changed, just ignore the event.
-		 */
-		if (see->see_edata->value_cur == see->see_evsent)
+		/* the state has not been changed, just ignore the event */
+		if (edata->value_cur == see->evsent)
 			break;
 
-		switch (see->see_edata->units) {
+		switch (edata->units) {
 		case ENVSYS_DRIVE:
 			sdt = sme_get_description_table(SME_DESC_DRIVE_STATES);
 			state = ENVSYS_DRIVE_ONLINE;
@@ -566,30 +610,22 @@ do {									\
 		}
 
 		for (i = 0; sdt[i].type != -1; i++)
-			if (sdt[i].type == see->see_edata->value_cur)
+			if (sdt[i].type == edata->value_cur)
 				break;
 
-		/* 
-		 * copy current state description.
-		 */
-		(void)strlcpy(see->see_pes.pes_statedesc, sdt[i].desc,
-		    sizeof(see->see_pes.pes_statedesc));
+		/* copy current state description  */
+		(void)strlcpy(see->pes.pes_statedesc, sdt[i].desc,
+		    sizeof(see->pes.pes_statedesc));
 
-		/* 
-		 * state is ok again... send a normal event.
-		 */
-		if (see->see_evsent && see->see_edata->value_cur == state)
+		/* state is ok again... send a normal event */
+		if (see->evsent && edata->value_cur == state)
 			SME_SEND_NORMALEVENT();
 
-		/*
-		 * state has been changed... send event.
-		 */
-		if (see->see_evsent || see->see_edata->value_cur != state) {
-			/* 
-			 * save current drive state.
-			 */
-			see->see_evsent = see->see_edata->value_cur;
-			sysmon_penvsys_event(&see->see_pes, see->see_type);
+		/* state has been changed... send event */
+		if (see->evsent || edata->value_cur != state) {
+			/* save current drive state */
+			see->evsent = edata->value_cur;
+			sysmon_penvsys_event(&see->pes, see->type);
 		}
 
 		/*
@@ -600,17 +636,15 @@ do {									\
 		if (!sysmon_low_power && sme_event_check_low_power()) {
 			struct penvsys_state pes;
 
-			/*
-			 * Stop the callout and send the 'low-power' event.
-			 */
-			sysmon_low_power = true;
-			callout_stop(&sme->sme_callout);
 			pes.pes_type = PENVSYS_TYPE_BATTERY;
 			sysmon_penvsys_event(&pes, PENVSYS_EVENT_LOW_POWER);
+			sysmon_low_power = true;
+			callout_stop(&seeco);
 		}
+
 		break;
 	}
-
+out:
 	see->see_flags &= ~SME_EVENT_WORKING;
 	cv_broadcast(&sme_cv);
 	mutex_exit(&sme_mtx);
@@ -621,6 +655,7 @@ sme_event_check_low_power(void)
 {
 	struct sysmon_envsys *sme;
 	envsys_data_t *edata;
+	int i;
 	bool battery, batterycap, batterycharge;
 
 	KASSERT(mutex_owned(&sme_mtx));
@@ -641,7 +676,8 @@ sme_event_check_low_power(void)
 	 * If there's an AC Adapter connected, there's no need
 	 * to continue...
 	 */
-	TAILQ_FOREACH(edata, &sme->sme_sensors_list, sensors_head) {
+	for (i = 0; i < sme->sme_nsensors; i++) {
+		edata = &sme->sme_sensor_data[i];
 		if (edata->units == ENVSYS_INDICATOR) {
 			if (edata->value_cur)
 				return false;
@@ -659,7 +695,8 @@ sme_event_check_low_power(void)
 		 * We've found a battery device...
 		 */
 		battery = true;
-		TAILQ_FOREACH(edata, &sme->sme_sensors_list, sensors_head) {
+		for (i = 0; i < sme->sme_nsensors; i++) {
+			edata = &sme->sme_sensor_data[i];
 			if (edata->units == ENVSYS_BATTERY_CAPACITY) {
 				batterycap = true;
 				if (!sme_battery_critical(edata))
