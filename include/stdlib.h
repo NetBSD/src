@@ -1,4 +1,4 @@
-/*	$NetBSD: stdlib.h,v 1.77 2007/04/22 08:21:50 ragge Exp $	*/
+/*	$NetBSD: stdlib.h,v 1.78 2007/11/19 14:48:41 ad Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -229,6 +229,7 @@ int	 unsetenv(const char *) __RENAME(__unsetenv13);
 #endif
 
 int	 posix_openpt(int);
+int	 posix_memalign(void **, size_t, size_t);
 #endif
 
 /*
