@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.218 2007/11/15 14:44:50 yamt Exp $
+#	$NetBSD: BRANCHES,v 1.219 2007/11/19 20:45:41 mjf Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -863,6 +863,19 @@ Scope:		basesrc, syssrc, sharesrc
 Notes:		Citrus Project is developing dynamically-loadable, codeset-
 		independent locale subsystem.  Part of the implementation
 		(LC_CTYPE) called XPG4DL is now integrated to -current.
+
+Branch:		mjf-devfs
+Description:	device filesystem supporting dynamic device nodes
+Status:		Active
+Start Date:	12 November 2007
+End Date:
+Base Tag:	mjf-devfs-base
+Maintainer:	Matt Fleming <mjf@NetBSD.org>
+Scope:		kernel and userland
+Notes:		This branch will move away from the static device nodes that
+		are created with MAKEDEV scripts and allow nodes to be created
+		and removed dynamically as devices are attached and detached
+		from the machine.
 
 Branch:		mjf-ufs-trans
 Description:	filesystem transactions for ufs
