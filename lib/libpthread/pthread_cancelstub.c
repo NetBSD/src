@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cancelstub.c,v 1.15 2007/10/09 18:18:33 rmind Exp $	*/
+/*	$NetBSD: pthread_cancelstub.c,v 1.16 2007/11/19 15:12:18 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_cancelstub.c,v 1.15 2007/10/09 18:18:33 rmind Exp $");
+__RCSID("$NetBSD: pthread_cancelstub.c,v 1.16 2007/11/19 15:12:18 ad Exp $");
 
 /*
  * This is necessary because the names are always weak (they are not
@@ -253,7 +253,7 @@ mq_send(mqd_t mqdes, const char *msg_ptr, size_t msg_len, unsigned msg_prio)
 ssize_t
 mq_receive(mqd_t mqdes, char *msg_ptr, size_t msg_len, unsigned *msg_prio)
 {
-	int retval;
+	ssize_t retval;
 	pthread_t self;
 
 	self = pthread__self();
@@ -283,7 +283,7 @@ ssize_t
 mq_timedreceive(mqd_t mqdes, char *msg_ptr, size_t msg_len, unsigned *msg_prio,
     const struct timespec *abst)
 {
-	int retval;
+	ssize_t retval;
 	pthread_t self;
 
 	self = pthread__self();
