@@ -1,9 +1,7 @@
-# $NetBSD: INSTALL_XEN3_DOMU,v 1.1.2.1 2007/10/17 21:38:16 bouyer Exp $
+# $NetBSD: INSTALL_XEN3_DOMU,v 1.1.2.2 2007/11/19 19:17:16 bouyer Exp $
 
-include 	"arch/xenamd64/conf/std.xen"
+include 	"arch/amd64/conf/std.xen"
 
-options 	XEN
-options 	XEN3	#Xen 3.x support
 options 	MAXPHYS=32768   #xbd doesn't handle 64k transfers
 
 

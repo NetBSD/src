@@ -1,6 +1,6 @@
-# $NetBSD: XEN3_DOM0,v 1.1.2.1 2007/11/16 17:18:02 bouyer Exp $
+# $NetBSD: XEN3_DOM0,v 1.1.2.2 2007/11/19 19:17:16 bouyer Exp $
 
-include 	"arch/xenamd64/conf/std.xen"
+include 	"arch/amd64/conf/std.xen"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
@@ -11,8 +11,6 @@ options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 maxusers	32		# estimated number of users
 
 #
-options 	XEN
-options 	XEN3	#Xen 3.x support
 options 	MAXPHYS=32768   #xbd doesn't handle 64k transfers
 options 	DOM0OPS
 # boot messages with MPBIOS, acpi and ioapic can be quite large

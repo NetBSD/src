@@ -1,10 +1,13 @@
-# $NetBSD: std.xen,v 1.1.2.1 2007/10/17 21:38:21 bouyer Exp $
+# $NetBSD: std.xen,v 1.1.2.1 2007/11/19 19:17:17 bouyer Exp $
 # NetBSD: std.i386,v 1.24 2003/02/26 21:33:36 fvdl Exp 
 #
 # standard, required NetBSD/i386 'options'
 
-machine xenamd64
+machine xen amd64
 include		"conf/std"	# MI standard options
+
+options 	XEN	#Xen support
+options 	XEN3	#Xen 3.x support
 
 options 	EXEC_ELF64	# exec ELF binaries
 options 	EXEC_SCRIPT	# exec #! scripts
