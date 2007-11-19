@@ -1,4 +1,4 @@
-/*	$NetBSD: pstat.c,v 1.102 2007/10/20 01:38:45 briggs Exp $	*/
+/*	$NetBSD: pstat.c,v 1.103 2007/11/19 19:00:30 ad Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)pstat.c	8.16 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: pstat.c,v 1.102 2007/10/20 01:38:45 briggs Exp $");
+__RCSID("$NetBSD: pstat.c,v 1.103 2007/11/19 19:00:30 ad Exp $");
 #endif
 #endif /* not lint */
 
@@ -790,7 +790,6 @@ static const struct flagbit_desc ttystates[] = {
 	{ TS_TIMEOUT,	'T'},
 	{ TS_FLUSH,	'F'},
 	{ TS_BUSY,	'B'},
-	{ TS_ASLEEP,	'A'},
 	{ TS_XCLUDE,	'X'},
 	{ TS_TTSTOP,	'S'},
 	{ TS_TBLOCK,	'K'},
