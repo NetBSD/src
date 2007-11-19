@@ -1,4 +1,4 @@
-/*	$NetBSD: pdc.c,v 1.22 2007/10/17 19:54:25 garbled Exp $	*/
+/*	$NetBSD: pdc.c,v 1.23 2007/11/19 18:51:40 ad Exp $	*/
 
 /*	$OpenBSD: pdc.c,v 1.14 2001/04/29 21:05:43 mickey Exp $	*/
 
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pdc.c,v 1.22 2007/10/17 19:54:25 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pdc.c,v 1.23 2007/11/19 18:51:40 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -321,13 +321,7 @@ pdcstart(struct tty *tp)
 		splx(s);
 		return;
 	}
-	if (tp->t_outq.c_cc <= tp->t_lowat) {
-		if (tp->t_state & TS_ASLEEP) {
-			tp->t_state &= ~TS_ASLEEP;
-			wakeup((void *)&tp->t_outq);
-		}
-		selwakeup(&tp->t_wsel);
-	}
+	ttypull(tp);
 	tp->t_state |= TS_BUSY;
 	while (tp->t_outq.c_cc != 0)
 		pdccnputc(tp->t_dev, getc(&tp->t_outq));

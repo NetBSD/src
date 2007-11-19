@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.52 2007/10/28 13:29:21 rjs Exp $	*/
+/*	$NetBSD: kd.c,v 1.53 2007/11/19 18:51:44 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.52 2007/10/28 13:29:21 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.53 2007/11/19 18:51:44 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -296,7 +296,7 @@ kdstart(struct tty *tp)
 		goto out;
 
 	cl = &tp->t_outq;
-	if (cl->c_cc) {
+	if (ttypull(tp)) {
 		if (kd_is_console) {
 			tp->t_state |= TS_BUSY;
 			if ((s1 & PSL_IPL) == 0) {
@@ -318,13 +318,6 @@ kdstart(struct tty *tp)
 			 */
 			ndflush(cl, cl->c_cc);
 		}
-	}
-	if (cl->c_cc <= tp->t_lowat) {
-		if (tp->t_state & TS_ASLEEP) {
-			tp->t_state &= ~TS_ASLEEP;
-			wakeup((void *)cl);
-		}
-		selwakeup(&tp->t_wsel);
 	}
 out:
 	splx(s2);

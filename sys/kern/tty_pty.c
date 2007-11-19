@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.102 2007/11/07 15:56:22 ad Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.103 2007/11/19 18:51:52 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.102 2007/11/07 15:56:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.103 2007/11/19 18:51:52 ad Exp $");
 
 #include "opt_compat_sunos.h"
 #include "opt_ptm.h"
@@ -480,7 +480,7 @@ ptsstart(tp)
 	}
 
 	selnotify(&pti->pt_selr, NOTE_SUBMIT);
-	cv_broadcast(&tp->t_outq.c_cvf);
+	clwakeup(&tp->t_outq);
 }
 
 /*
@@ -505,11 +505,11 @@ ptsstop(tp, flush)
 	/* change of perspective */
 	if (flush & FREAD) {
 		selnotify(&pti->pt_selw, NOTE_SUBMIT);
-		cv_broadcast(&tp->t_rawq.c_cvf);
+		clwakeup(&tp->t_rawq);
 	}
 	if (flush & FWRITE) {
 		selnotify(&pti->pt_selr, NOTE_SUBMIT);
-		cv_broadcast(&tp->t_outq.c_cvf);
+		clwakeup(&tp->t_outq);
 	}
 }
 
@@ -523,11 +523,11 @@ ptcwakeup(tp, flag)
 	mutex_spin_enter(&tty_lock);
 	if (flag & FREAD) {
 		selnotify(&pti->pt_selr, NOTE_SUBMIT);
-		cv_broadcast(&tp->t_outq.c_cvf);
+		clwakeup(&tp->t_outq);
 	}
 	if (flag & FWRITE) {
 		selnotify(&pti->pt_selw, NOTE_SUBMIT);
-		cv_broadcast(&tp->t_rawq.c_cvf);
+		clwakeup(&tp->t_rawq);
 	}
 	mutex_spin_exit(&tty_lock);
 }
@@ -636,7 +636,7 @@ ptcread(dev, uio, flag)
 			error = EWOULDBLOCK;
 			goto out;
 		}
-		error = cv_wait_sig(&tp->t_outq.c_cvf, &tty_lock);
+		error = cv_wait_sig(&tp->t_outq.c_cv, &tty_lock);
 		if (error)
 			goto out;
 	}
@@ -658,14 +658,7 @@ ptcread(dev, uio, flag)
 		if (error == 0 && !ISSET(tp->t_state, TS_ISOPEN))
 			error = EIO;
 	}
-
-	if (tp->t_outq.c_cc <= tp->t_lowat) {
-		if (ISSET(tp->t_state, TS_ASLEEP)) {
-			CLR(tp->t_state, TS_ASLEEP);
-			cv_broadcast(&tp->t_outq.c_cv);
-		}
-		selnotify(&tp->t_wsel, NOTE_SUBMIT);
-	}
+	ttypull(tp);
 out:
 	mutex_spin_exit(&tty_lock);
 	return (error);
@@ -720,7 +713,7 @@ again:
 		}
 		(void) putc(0, &tp->t_canq);
 		ttwakeup(tp);
-		cv_broadcast(&tp->t_canq.c_cv);
+		clwakeup(&tp->t_canq);
 		error = 0;
 		goto out;
 	}
@@ -744,7 +737,7 @@ again:
 		while (cc > 0) {
 			if ((tp->t_rawq.c_cc + tp->t_canq.c_cc) >= TTYHOG - 2 &&
 			   (tp->t_canq.c_cc > 0 || !ISSET(tp->t_lflag, ICANON))) {
-				cv_broadcast(&tp->t_rawq.c_cv);
+				clwakeup(&tp->t_rawq);
 				goto block;
 			}
 			/* XXX - should change l_rint to be called with lock
