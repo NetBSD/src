@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.770.2.12 2007/10/15 05:09:57 riz Exp $
+#	$NetBSD: mi,v 1.770.2.13 2007/11/19 21:28:31 bouyer Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -878,6 +878,7 @@
 ./usr/include/net/if_ieee80211.h		comp-obsolete		obsolete
 ./usr/include/net/if_llc.h			comp-c-include
 ./usr/include/net/if_media.h			comp-c-include
+./usr/include/net/if_pflog.h			comp-c-include
 ./usr/include/net/if_ppp.h			comp-c-include
 ./usr/include/net/if_pppoe.h			comp-c-include
 ./usr/include/net/if_pppvar.h			comp-c-include
