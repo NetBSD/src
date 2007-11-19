@@ -1,4 +1,4 @@
-/*	$NetBSD: parseutils.c,v 1.2 2007/11/11 05:20:27 isaki Exp $	*/
+/*	$NetBSD: parseutils.c,v 1.1 2001/09/27 10:03:28 minoura Exp $	*/
 
 /*
  *	from /sys/arch/i386/lib/parseutils.c
@@ -54,12 +54,13 @@
  * or possibly an empty string.
  */
 char *
-gettrailer(char *arg)
+gettrailer(arg)
+	char *arg;
 {
 	char *options;
 
 	if ((options = strchr(arg, ' ')) == NULL)
-		return "";
+		return ("");
 	else
 		*options++ = '\0';
 
@@ -67,11 +68,13 @@ gettrailer(char *arg)
 	while (*options && *options == ' ')
 		options++;
 
-	return options;
+	return (options);
 }
 
 int
-parseopts(const char *opts, int *howto)
+parseopts(opts, howto)
+	const char *opts;
+	int *howto;
 {
 	int r, tmpopt = 0;
 
@@ -81,18 +84,21 @@ parseopts(const char *opts, int *howto)
 		BOOT_FLAG(*opts, r);
 		if (r == 0) {
 			printf("-%c: unknown flag\n", *opts);
-			return 0;
+			return(0);
 		}
 		tmpopt |= r;
 		opts++;
 	}
 
 	*howto = tmpopt;
-	return 1;
+	return(1);
 }
 
 int
-parseboot(char *arg, char **filename, int *howto)
+parseboot(arg, filename, howto)
+	char *arg;
+	char **filename;
+	int *howto;
 {
 	char *opts = NULL;
 
@@ -101,24 +107,24 @@ parseboot(char *arg, char **filename, int *howto)
 
 	/* if there were no arguments */
 	if (!*arg)
-		return 1;
+		return(1);
 
 	/* format is... */
 	/* [[xxNx:]filename] [-adqsv] */
 
 	/* check for just args */
-	if (arg[0] == '-') {
+	if (arg[0] == '-')
 		opts = arg;
-	} else {
+	else {
 		/* there's a file name */
 		*filename = arg;
 
 		opts = gettrailer(arg);
-		if (!*opts) {
+		if (!*opts)
 			opts = NULL;
-		} else if (*opts != '-') {
+		else if (*opts != '-') {
 			printf("invalid arguments\n");
-			return 0;
+			return(0);
 		}
 	}
 
@@ -127,8 +133,8 @@ parseboot(char *arg, char **filename, int *howto)
 	/* now, deal with options */
 	if (opts) {
 		if (parseopts(opts, howto) == 0)
-			return 0;
+			return(0);
 	}
 
-	return 1;
+	return(1);
 }

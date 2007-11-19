@@ -1,4 +1,4 @@
-/*	$NetBSD: sleepq.h,v 1.9 2007/11/07 00:23:44 ad Exp $	*/
+/*	$NetBSD: sleepq.h,v 1.7 2007/05/17 14:51:43 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@ typedef struct sleeptab {
 
 void	sleepq_init(sleepq_t *, kmutex_t *);
 int	sleepq_remove(sleepq_t *, lwp_t *);
-void	sleepq_enqueue(sleepq_t *, wchan_t, const char *, syncobj_t *);
+void	sleepq_enqueue(sleepq_t *, pri_t, wchan_t, const char *, syncobj_t *);
 void	sleepq_unsleep(lwp_t *);
 void	sleepq_timeout(void *);
 lwp_t	*sleepq_wake(sleepq_t *, wchan_t, u_int);
@@ -91,6 +91,9 @@ void	sleepq_changepri(lwp_t *, pri_t);
 void	sleepq_lendpri(lwp_t *, pri_t);
 int	sleepq_block(int, bool);
 void	sleepq_insert(sleepq_t *, lwp_t *, syncobj_t *);
+
+void	sleepq_enqueue(sleepq_t *, pri_t, wchan_t, const char *, syncobj_t *);
+void	sleepq_switch(int, bool);
 
 void	sleeptab_init(sleeptab_t *);
 
@@ -196,8 +199,8 @@ void	turnstile_print(volatile void *, void (*)(const char *, ...));
 void	turnstile_unsleep(lwp_t *);
 void	turnstile_changepri(lwp_t *, pri_t);
 
-extern pool_cache_t turnstile_cache;
-extern turnstile_t turnstile0;
+extern struct pool_cache turnstile_cache;
+extern struct turnstile turnstile0;
 
 #endif	/* _KERNEL */
 

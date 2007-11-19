@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.262 2007/11/07 19:12:25 macallan Exp $
+# $NetBSD: GENERIC,v 1.261 2007/11/04 14:34:23 xtraeme Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.262 $"
+#ident 		"GENERIC-$Revision: 1.261 $"
 
 maxusers	32
 
@@ -60,7 +60,6 @@ options 	DDB		# in-kernel debugger
 #options 	DDB_ONPANIC=0	# don't go into ddb on panic.
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	TRAP_PANICWAIT
-#options		DDB_COMMANDONENTER="bt"
 
 #makeoptions 	DEBUG="-g"	# compile full symbol table
 
@@ -288,7 +287,6 @@ radeonfb*	at pci? function ?	# ATI Radeon. R3xx is problematic
 options 	RADEONFB_MMAP_BARS	# allow mmap()ing BARs - needed for X
 
 voodoofb*	at pci? function ?	# 3Dfx Voodoo3 
-r128fb*		at pci? function ?	# ATI Rage 128
 genfb*		at pci? function ?
 
 # make sure the console display is always wsdisplay0

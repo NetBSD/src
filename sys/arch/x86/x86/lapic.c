@@ -1,4 +1,4 @@
-/* $NetBSD: lapic.c,v 1.27 2007/11/14 15:54:22 joerg Exp $ */
+/* $NetBSD: lapic.c,v 1.25 2007/10/26 13:24:41 joerg Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.27 2007/11/14 15:54:22 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.25 2007/10/26 13:24:41 joerg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -67,7 +67,9 @@ __KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.27 2007/11/14 15:54:22 joerg Exp $");
 #include <machine/pcb.h>
 #include <machine/specialreg.h>
 #include <machine/segments.h>
+#ifdef _HAVE_TIMECOUNTER
 #include <x86/x86/tsc.h>
+#endif
 
 #include <machine/apicvar.h>
 #include <machine/i82489reg.h>
@@ -77,7 +79,7 @@ __KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.27 2007/11/14 15:54:22 joerg Exp $");
 void		lapic_clockintr(void *, struct intrframe *);
 
 static void	lapic_delay(unsigned int);
-static uint32_t lapic_gettick(void);
+static uint32_t	lapic_gettick(void);
 static void 	lapic_map(paddr_t);
 
 static void lapic_hwmask(struct pic *, int);
@@ -99,7 +101,8 @@ struct pic local_pic = {
 };
 
 static void
-lapic_map(paddr_t lapic_base)
+lapic_map(lapic_base)
+	paddr_t lapic_base;
 {
 	int s;
 	pt_entry_t *pte;
@@ -133,13 +136,13 @@ lapic_map(paddr_t lapic_base)
  * enable local apic
  */
 void
-lapic_enable(void)
+lapic_enable()
 {
 	i82489_writereg(LAPIC_SVR, LAPIC_SVR_ENABLE | LAPIC_SPURIOUS_VECTOR);
 }
 
 void
-lapic_set_lvt(void)
+lapic_set_lvt()
 {
 	struct cpu_info *ci = curcpu();
 	int i;
@@ -180,7 +183,7 @@ lapic_set_lvt(void)
 				i82489_writereg(LAPIC_LVINT1, mpi->redir);
 		}
 	}
-
+			
 #ifdef MULTIPROCESSOR
 	if (mp_verbose) {
 		apic_format_redir (ci->ci_dev->dv_xname, "timer", 0, 0,
@@ -201,7 +204,8 @@ lapic_set_lvt(void)
  * Initialize fixed idt vectors for use by local apic.
  */
 void
-lapic_boot_init(paddr_t lapic_base)
+lapic_boot_init(lapic_base)
+	paddr_t lapic_base;
 {
 	lapic_map(lapic_base);
 
@@ -220,8 +224,7 @@ lapic_boot_init(paddr_t lapic_base)
 	idt_vec_set(LAPIC_TIMER_VECTOR, Xintr_lapic_ltimer);
 }
 
-static uint32_t
-lapic_gettick(void)
+static inline u_int32_t lapic_gettick()
 {
 	return i82489_readreg(LAPIC_CCR_TIMER);
 }
@@ -229,22 +232,24 @@ lapic_gettick(void)
 #include <sys/kernel.h>		/* for hz */
 
 int lapic_timer = 0;
-uint32_t lapic_tval;
+u_int32_t lapic_tval;
 
 /*
  * this gets us up to a 4GHz busclock....
  */
-uint32_t lapic_per_second;
-uint32_t lapic_frac_usec_per_cycle;
-uint64_t lapic_frac_cycle_per_usec;
-uint32_t lapic_delaytab[26];
-
-extern u_int i8254_get_timecount(struct timecounter *);
+u_int32_t lapic_per_second;
+u_int32_t lapic_frac_usec_per_cycle;
+u_int64_t lapic_frac_cycle_per_usec;
+u_int32_t lapic_delaytab[26];
 
 void
 lapic_clockintr(void *arg, struct intrframe *frame)
 {
-#if defined(TIMECOUNTER_DEBUG)
+#if defined(I586_CPU) || defined(I686_CPU) || defined(__x86_64__)
+#ifndef __HAVE_TIMECOUNTER
+	static int microset_iter; /* call cc_microset once/sec */
+#endif /* __HAVE_TIMECOUNTER */
+#if defined(TIMECOUNTER_DEBUG) && defined(__HAVE_TIMECOUNTER)
 	static u_int last_count[X86_MAXPROCS],
 		     last_delta[X86_MAXPROCS],
 		     last_tsc[X86_MAXPROCS],
@@ -255,7 +260,7 @@ lapic_clockintr(void *arg, struct intrframe *frame)
 
 	ci->ci_isources[LIR_TIMER]->is_evcnt.ev_count++;
 
-#if defined(TIMECOUNTER_DEBUG)
+#if defined(TIMECOUNTER_DEBUG) && defined(__HAVE_TIMECOUNTER)
 	{
 		int cid = ci->ci_cpuid;
 		extern u_int i8254_get_timecount(struct timecounter *);
@@ -314,7 +319,24 @@ lapic_clockintr(void *arg, struct intrframe *frame)
 		last_tsc[cid]      = c_tsc;
 		last_tscdelta[cid] = tsc_delta;
 	}
-#endif /* TIMECOUNTER_DEBUG */
+#endif /* TIMECOUNTER_DEBUG && __HAVE_TIMECOUNTER */
+
+#ifndef __HAVE_TIMECOUNTER
+	/*
+	 * If we have a cycle counter, do the microset thing.
+	 */
+	if (ci->ci_feature_flags & CPUID_TSC) {
+		if (CPU_IS_PRIMARY(ci) && (microset_iter--) == 0) {
+			microset_iter = hz - 1;
+			cc_microset_time = time;
+#if defined(MULTIPROCESSOR)
+			x86_broadcast_ipi(X86_IPI_MICROSET);
+#endif
+			cc_microset(ci);
+		}
+	}
+#endif /* !__HAVE_TIMECOUNTER */
+#endif /* I586_CPU || I686_CPU || __x86_64__ */
 
 	hardclock((struct clockframe *)frame);
 }
@@ -326,6 +348,15 @@ extern int fixtick;
 void
 lapic_initclocks()
 {
+
+#if !defined(__HAVE_TIMECOUNTER) && defined(NTP)
+	/*
+	 * we'll actually get (lapic_per_second/lapic_tval) interrupts/sec.
+	 */
+	fixtick = 1000000 -
+	    ((int64_t)tick * lapic_per_second + lapic_tval / 2) / lapic_tval;
+#endif /* !__HAVE_TIMECOUNTER && NTP */
+
 	/*
 	 * Start local apic countdown timer running, in repeated mode.
 	 *
@@ -355,11 +386,12 @@ extern void (*initclock_func)(void); /* XXX put in header file */
  * We're actually using the IRQ0 timer.  Hmm.
  */
 void
-lapic_calibrate_timer(struct cpu_info *ci)
+lapic_calibrate_timer(ci)
+	struct cpu_info *ci;
 {
 	unsigned int starttick, tick1, tick2, endtick;
 	unsigned int startapic, apic1, apic2, endapic;
-	uint64_t dtick, dapic, tmp;
+	u_int64_t dtick, dapic, tmp;
 	int i;
 	char tbuf[9];
 
@@ -377,12 +409,12 @@ lapic_calibrate_timer(struct cpu_info *ci)
 	startapic = lapic_gettick();
 
 	for (i=0; i<hz; i++) {
-		i8254_delay(2);
+		DELAY(2);
 		do {
 			tick1 = gettick();
 			apic1 = lapic_gettick();
 		} while (tick1 < starttick);
-		i8254_delay(2);
+		DELAY(2);
 		do {
 			tick2 = gettick();
 			apic2 = lapic_gettick();
@@ -447,7 +479,11 @@ lapic_calibrate_timer(struct cpu_info *ci)
 		 */
 		delay_func = lapic_delay;
 		initclock_func = lapic_initclocks;
+#ifdef __HAVE_TIMECOUNTER
 		initrtclock(0);
+#else
+		initrtclock();
+#endif
 	}
 }
 
@@ -486,8 +522,10 @@ lapic_delay(unsigned int usec)
  * XXX the following belong mostly or partly elsewhere..
  */
 
-static void
-i82489_icr_wait(void)
+static inline void i82489_icr_wait(void);
+
+static inline void
+i82489_icr_wait()
 {
 #ifdef DIAGNOSTIC
 	unsigned j = 100000;
@@ -504,7 +542,8 @@ i82489_icr_wait(void)
 }
 
 int
-x86_ipi_init(int target)
+x86_ipi_init(target)
+	int target;
 {
 
 	if ((target&LAPIC_DEST_MASK)==0) {
@@ -512,14 +551,14 @@ x86_ipi_init(int target)
 	}
 
 	i82489_writereg(LAPIC_ICRLO, (target & LAPIC_DEST_MASK) |
-	    LAPIC_DLMODE_INIT | LAPIC_LEVEL_ASSERT );
+	    LAPIC_DLMODE_INIT | LAPIC_LVL_ASSERT );
 
 	i82489_icr_wait();
 
-	i8254_delay(10000);
+	delay(10000);
 
 	i82489_writereg(LAPIC_ICRLO, (target & LAPIC_DEST_MASK) |
-	     LAPIC_DLMODE_INIT | LAPIC_TRIGGER_LEVEL | LAPIC_LEVEL_DEASSERT);
+	     LAPIC_DLMODE_INIT | LAPIC_LVL_TRIG | LAPIC_LVL_DEASSERT);
 
 	i82489_icr_wait();
 
@@ -527,7 +566,8 @@ x86_ipi_init(int target)
 }
 
 int
-x86_ipi(int vec, int target, int dl)
+x86_ipi(vec,target,dl)
+	int vec,target,dl;
 {
 	int result, s;
 
@@ -539,7 +579,7 @@ x86_ipi(int vec, int target, int dl)
 		i82489_writereg(LAPIC_ICRHI, target << LAPIC_ID_SHIFT);
 
 	i82489_writereg(LAPIC_ICRLO,
-	    (target & LAPIC_DEST_MASK) | vec | dl | LAPIC_LEVEL_ASSERT);
+	    (target & LAPIC_DEST_MASK) | vec | dl | LAPIC_LVL_ASSERT);
 
 #ifdef DIAGNOSTIC
 	i82489_icr_wait();

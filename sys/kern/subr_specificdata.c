@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_specificdata.c,v 1.11 2007/11/07 00:23:23 ad Exp $	*/
+/*	$NetBSD: subr_specificdata.c,v 1.10 2007/08/18 00:11:00 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_specificdata.c,v 1.11 2007/11/07 00:23:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_specificdata.c,v 1.10 2007/08/18 00:11:00 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -102,6 +102,11 @@ struct specificdata_domain {
 	LIST_HEAD(, specificdata_container) sd_list;
 	specificdata_key_impl *sd_keys;
 };
+
+#define	specdataref_lock_init(ref)			\
+				simple_lock_init(&(ref)->specdataref_slock)
+#define	specdataref_lock(ref)	simple_lock(&(ref)->specdataref_slock)
+#define	specdataref_unlock(ref)	simple_unlock(&(ref)->specdataref_slock)
 
 static void
 specificdata_container_link(specificdata_domain_t sd,
@@ -273,7 +278,7 @@ specificdata_init(specificdata_domain_t sd, specificdata_reference *ref)
 	 * container the first time specificdata is put into it.
 	 */
 	ref->specdataref_container = NULL;
-	mutex_init(&ref->specdataref_lock, MUTEX_DEFAULT, IPL_NONE);
+	specdataref_lock_init(ref);
 
 	return (0);
 }
@@ -290,8 +295,6 @@ specificdata_fini(specificdata_domain_t sd, specificdata_reference *ref)
 	specificdata_key_t key;
 
 	ASSERT_SLEEPABLE(NULL, __func__);
-
-	mutex_destroy(&ref->specdataref_lock);
 
 	sc = ref->specdataref_container;
 	if (sc == NULL)
@@ -321,13 +324,13 @@ specificdata_getspecific(specificdata_domain_t sd, specificdata_reference *ref,
 	specificdata_container_t sc;
 	void *data = NULL;
 
-	mutex_enter(&ref->specdataref_lock);
+	specdataref_lock(ref);
 
 	sc = ref->specdataref_container;
 	if (sc != NULL && key < sc->sc_nkey)
 		data = sc->sc_data[key];
 
-	mutex_exit(&ref->specdataref_lock);
+	specdataref_unlock(ref);
 
 	return (data);
 }
@@ -369,16 +372,16 @@ specificdata_setspecific(specificdata_domain_t sd,
 
 	ASSERT_SLEEPABLE(NULL, __func__);
 
-	mutex_enter(&ref->specdataref_lock);
+	specdataref_lock(ref);
 
 	sc = ref->specdataref_container;
 	if (__predict_true(sc != NULL && key < sc->sc_nkey)) {
 		sc->sc_data[key] = data;
-		mutex_exit(&ref->specdataref_lock);
+		specdataref_unlock(ref);
 		return;
 	}
 
-	mutex_exit(&ref->specdataref_lock);
+	specdataref_unlock(ref);
 
 	/*
 	 * Slow path: need to resize.
@@ -395,7 +398,7 @@ specificdata_setspecific(specificdata_domain_t sd,
 	KASSERT(newsc != NULL);
 	newsc->sc_nkey = newnkey;
 
-	mutex_enter(&ref->specdataref_lock);
+	specdataref_lock(ref);
 
 	sc = ref->specdataref_container;
 	if (sc != NULL) {
@@ -405,7 +408,7 @@ specificdata_setspecific(specificdata_domain_t sd,
 			 * the object into the now large enough container.
 			 */
 			sc->sc_data[key] = data;
-			mutex_exit(&ref->specdataref_lock);
+			specdataref_unlock(ref);
 			mutex_exit(&sd->sd_lock);
 			kmem_free(newsc, sz);
 			return;
@@ -418,7 +421,7 @@ specificdata_setspecific(specificdata_domain_t sd,
 	specificdata_container_link(sd, newsc);
 	ref->specdataref_container = newsc;
 
-	mutex_exit(&ref->specdataref_lock);
+	specdataref_unlock(ref);
 	mutex_exit(&sd->sd_lock);
 
 	if (sc != NULL)

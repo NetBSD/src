@@ -1,4 +1,4 @@
-/*	$NetBSD: busfunc.S,v 1.4 2007/11/12 18:42:00 ad Exp $	*/
+/*	$NetBSD: busfunc.S,v 1.3 2007/10/01 21:18:18 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -155,6 +155,7 @@ NENTRY(bus_space_read_multi_1)
 	jne	1f
 	movq	%rcx, %rdi
 	movq	%r8, %rcx
+	cld
 	rep
 	insb	(%dx), %es:(%rdi)
 	ret
@@ -177,6 +178,7 @@ NENTRY(bus_space_read_multi_2)
 	jne	1f
 	movq	%rcx, %rdi
 	movq	%r8, %rcx
+	cld
 	rep
 	insw	(%dx), %es:(%rdi)
 	ret
@@ -199,6 +201,7 @@ NENTRY(bus_space_read_multi_4)
 	jne	1f
 	movq	%rcx, %rdi
 	movq	%r8, %rcx
+	cld
 	rep
 	insl	(%dx), %es:(%rdi)
 	ret
@@ -225,6 +228,7 @@ NENTRY(bus_space_write_multi_1)
 	jne	1f
 	movq	%rcx, %rsi
 	movq	%r8, %rcx
+	cld
 	rep
 	outsb	%ds:(%rsi), (%dx)
 	ret
@@ -247,6 +251,7 @@ NENTRY(bus_space_write_multi_2)
 	jne	1f
 	movq	%rcx, %rsi
 	movq	%r8, %rcx
+	cld
 	rep
 	outsw	%ds:(%rsi), (%dx)
 	ret
@@ -269,6 +274,7 @@ NENTRY(bus_space_write_multi_4)
 	jne	1f
 	movq	%rcx, %rsi
 	movq	%r8, %rcx
+	cld
 	rep
 	outsl	%ds:(%rsi), (%dx)
 	ret
@@ -296,6 +302,7 @@ NENTRY(bus_space_read_region_1)
 	addq	%rdx, %rsi
 	movq	%rcx, %rdi
 	movq	%r8, %rcx
+	cld	
 	rep
 	movsb	%ds:(%rsi), %es:(%rdi)
 	ret
@@ -321,6 +328,7 @@ NENTRY(bus_space_read_region_2)
 	addq	%rdx, %rsi
 	movq	%rcx, %rdi
 	movq	%r8, %rcx
+	cld	
 	rep
 	movsw	%ds:(%rsi), %es:(%rdi)
 	ret
@@ -346,6 +354,7 @@ NENTRY(bus_space_read_region_4)
 	addq	%rdx, %rsi
 	movq	%rcx, %rdi
 	movq	%r8, %rcx
+	cld	
 	rep
 	movsl	%ds:(%rsi), %es:(%rdi)
 	ret
@@ -375,6 +384,7 @@ NENTRY(bus_space_write_region_1)
 	leaq	(%rdx,%rsi,1), %rdi
 	movq	%rcx, %rsi
 	movq	%r8, %rcx
+	cld	
 	rep
 	movsb	%ds:(%rsi), %es:(%rdi)
 	ret
@@ -400,6 +410,7 @@ NENTRY(bus_space_write_region_2)
 	leaq	(%rdx,%rsi,1), %rdi
 	movq	%rcx, %rsi
 	movq	%r8, %rcx
+	cld	
 	rep
 	movsw	%ds:(%rsi), %es:(%rdi)
 	ret
@@ -425,6 +436,7 @@ NENTRY(bus_space_write_region_4)
 	leaq	(%rdx,%rsi,1), %rdi
 	movq	%rcx, %rsi
 	movq	%r8, %rcx
+	cld	
 	rep
 	movsl	%ds:(%rsi), %es:(%rdi)
 	ret

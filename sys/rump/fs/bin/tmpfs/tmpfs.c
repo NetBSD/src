@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs.c,v 1.3 2007/11/06 12:26:12 pooka Exp $	*/
+/*	$NetBSD: tmpfs.c,v 1.2 2007/08/14 15:56:16 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -77,7 +77,6 @@ main(int argc, char *argv[])
 
 	memset(&args, 0, sizeof(args));
 	args.ta_version = TMPFS_ARGS_VERSION;
-	args.ta_root_mode = 0777;
 
 	rv = p2k_run_fs(MOUNT_TMPFS, argv[0], argv[1], mntflags,
 		&args, sizeof(args), pflags | PUFFS_KFLAG_NOCACHE_PAGE);

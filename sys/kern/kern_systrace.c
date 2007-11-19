@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_systrace.c,v 1.76 2007/11/07 00:23:22 ad Exp $	*/
+/*	$NetBSD: kern_systrace.c,v 1.75 2007/09/25 14:04:07 ad Exp $	*/
 
 /*
  * Copyright 2002, 2003 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.76 2007/11/07 00:23:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.75 2007/09/25 14:04:07 ad Exp $");
 
 #include "opt_systrace.h"
 
@@ -421,8 +421,13 @@ systracef_ioctl(struct file *fp, u_long cmd, void *data, struct lwp *l)
 		break;
 	}
 
-	if (strp)
-		rw_exit(&strp->proc->p_reflock);
+	if (strp) {
+		struct proc *q = strp->proc;
+
+		mutex_enter(&q->p_mutex);
+		proc_delref(q);
+		mutex_exit(&q->p_mutex);
+	}
  unlock:
 	SYSTRACE_UNLOCK(fst, curlwp);
 
@@ -599,8 +604,7 @@ systrace_find(struct str_process *strp)
 		mutex_exit(&proclist_lock);
 		return (NULL);
 	}
-	if (!rw_tryenter(&proc->p_reflock, RW_READER))
-		error = EBUSY;
+	error = proc_addref(proc);
 	mutex_exit(&proc->p_mutex);
 	mutex_exit(&proclist_lock);
 
@@ -1053,7 +1057,9 @@ systrace_policy(struct fsystrace *fst, struct systrace_policy *pol)
 		/* Check that emulation matches */
 		if (strpol->emul && strpol->emul != strp->proc->p_emul) {
 			struct proc *p = strp->proc;
-			rw_exit(&p->p_reflock);
+			mutex_enter(&p->p_mutex);
+			proc_delref(p);
+			mutex_exit(&p->p_mutex);
 			return (EINVAL);
 		}
 
@@ -1065,7 +1071,10 @@ systrace_policy(struct fsystrace *fst, struct systrace_policy *pol)
 		/* Record emulation for this policy */
 		if (strpol->emul == NULL)
 			strpol->emul = strp->proc->p_emul;
-		rw_exit(&strp->proc->p_reflock);
+
+		mutex_enter(&strp->proc->p_mutex);
+		proc_delref(strp->proc);
+		mutex_exit(&strp->proc->p_mutex);
 		break;
 	case SYSTR_POLICY_MODIFY:
 		DPRINTF(("%s: %d: code %d -> policy %d\n", __func__,
@@ -1228,9 +1237,13 @@ systrace_attach(struct fsystrace *fst, pid_t pid)
 		return (ESRCH);
 	}
 
-	if (!rw_tryenter(&proc->p_reflock, RW_READER)) {
+	mutex_enter(&proc->p_mutex);
+	error = proc_addref(proc);
+	mutex_exit(&proclist_lock);
+
+	if (error != 0) {
 		mutex_exit(&proc->p_mutex);
-		return (EBUSY);
+		return (error);
 	}
 
 	/*
@@ -1277,7 +1290,7 @@ systrace_attach(struct fsystrace *fst, pid_t pid)
 		(*proc->p_emul->e_syscall_intern)(proc);
 #endif
  out:
- 	rw_exit(&proc->p_reflock);
+ 	proc_delref(proc);
  	mutex_exit(&proc->p_mutex);
 	return (error);
 }
@@ -1599,7 +1612,9 @@ systrace_detach(struct str_process *strp)
 	systrace_replacefree(strp);
 	pool_put(&systr_proc_pl, strp);
 
-	rw_exit(&strp->proc->p_reflock);
+	mutex_enter(&strp->proc->p_mutex);
+	proc_delref(strp->proc);
+	mutex_exit(&strp->proc->p_mutex);
 
 	return (error);
 }

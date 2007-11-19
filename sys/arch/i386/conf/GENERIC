@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.862 2007/11/15 12:58:29 xtraeme Exp $
+# $NetBSD: GENERIC,v 1.859 2007/11/04 14:34:22 xtraeme Exp $
 #
 # GENERIC machine description file
 #
@@ -22,9 +22,15 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.862 $"
+#ident 		"GENERIC-$Revision: 1.859 $"
 
 maxusers	32		# estimated number of users
+
+# CPU support.  At least one is REQUIRED.
+#options 	I386_CPU
+options 	I486_CPU
+options 	I586_CPU
+options 	I686_CPU
 
 makeoptions	CPUFLAGS="-march=i486 -mtune=pentiumpro" # Assume at least 486,
 							# tune for more modern
@@ -498,6 +504,15 @@ npx0	at isa? port 0xf0 irq 13	# x86 math coprocessor
 
 # Console Devices
 
+# ISA console
+#pc0	at isa? port 0x60 irq 1		# pccons generic PC console driver
+# Keyboard layout configuration for pccons
+#options 	FRENCH_KBD
+#options 	FINNISH_KBD
+#options 	GERMAN_KBD
+#options 	NORWEGIAN_KBD
+
+
 # wscons
 pckbc0		at isa?			# pc keyboard controller
 pckbd*		at pckbc?		# PC keyboard
@@ -618,7 +633,7 @@ iic*	at piixpm?			# SMBus on PIIX4
 #aps0 	at isa? port 0x1600
 
 # iTE IT87xxF and compatible hardware monitors
-#itesio0 	at isa? port 0x2e
+#it0	at isa? port 0x290		# other ports: 0xc00, 0xd00
 
 # LM7[89] and compatible hardware monitors
 #lm0	at isa?	port 0x290		# other common: 0x280, 0x310
@@ -1459,9 +1474,6 @@ pseudo-device	nsmb			# experimental - SMB requester
 # wscons pseudo-devices
 pseudo-device	wsmux			# mouse & keyboard multiplexor
 pseudo-device	wsfont
-
-# pseudo audio device driver
-pseudo-device	pad
 
 options 	FILEASSOC		# fileassoc(9) - required for Veriexec
 

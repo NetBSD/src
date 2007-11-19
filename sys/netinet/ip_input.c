@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.255 2007/11/09 06:59:33 kefren Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.254 2007/10/02 20:35:04 dyoung Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.255 2007/11/09 06:59:33 kefren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.254 2007/10/02 20:35:04 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
@@ -469,6 +469,7 @@ ipintr(void)
 		splx(s);
 		if (m == 0)
 			return;
+		MCLAIM(m, &ip_rx_mowner);
 		ip_input(m);
 	}
 }

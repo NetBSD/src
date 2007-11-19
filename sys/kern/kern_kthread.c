@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_kthread.c,v 1.19 2007/11/06 00:42:41 ad Exp $	*/
+/*	$NetBSD: kern_kthread.c,v 1.18 2007/07/10 23:06:56 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_kthread.c,v 1.19 2007/11/06 00:42:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_kthread.c,v 1.18 2007/07/10 23:06:56 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,10 +74,10 @@ kthread_create(pri_t pri, int flag, struct cpu_info *ci,
 	inmem = uvm_uarea_alloc(&uaddr);
 	if (uaddr == 0)
 		return ENOMEM;
-	error = lwp_create(&lwp0, &proc0, uaddr, inmem, LWP_DETACHED, NULL,
-	    0, func, arg, &l, SCHED_FIFO);
+	error = newlwp(&lwp0, &proc0, uaddr, inmem, LWP_DETACHED, NULL, 0,
+	    func, arg, &l);
 	if (error) {
-		uvm_uarea_free(uaddr, curcpu());
+		uvm_uarea_free(uaddr);
 		return error;
 	}
 	uvm_lwp_hold(l);
@@ -99,12 +99,13 @@ kthread_create(pri_t pri, int flag, struct cpu_info *ci,
 		KASSERT((flag & KTHREAD_MPSAFE) != 0);
 	}
 
-	if (pri == PRI_NONE) {
-		/* Minimum kernel priority level. */
-		pri = PRI_KTHREAD;
-	}
 	mutex_enter(&proc0.p_smutex);
 	lwp_lock(l);
+	if (pri == PRI_NONE) {
+		/* Minimum kernel priority level. */
+		pri = PUSER - 1;
+	}
+	l->l_usrpri = pri;
 	l->l_priority = pri;
 	if (ci != NULL) {
 		if (ci != l->l_cpu) {
@@ -115,7 +116,7 @@ kthread_create(pri_t pri, int flag, struct cpu_info *ci,
 		l->l_cpu = ci;
 	}
 	if ((flag & KTHREAD_INTR) != 0)
-		l->l_pflag |= LP_INTR;
+		l->l_flag |= LW_INTR;
 	if ((flag & KTHREAD_MPSAFE) != 0)
 		l->l_pflag |= LP_MPSAFE;
 
@@ -126,15 +127,14 @@ kthread_create(pri_t pri, int flag, struct cpu_info *ci,
 	if ((flag & KTHREAD_IDLE) == 0) {
 		l->l_stat = LSRUN;
 		sched_enqueue(l, false);
-		lwp_unlock(l);
-	} else
-		lwp_unlock_to(l, &ci->ci_schedstate.spc_lwplock);
+	}
 
 	/*
 	 * The LWP is not created suspended or stopped and cannot be set
 	 * into those states later, so must be considered runnable.
 	 */
 	proc0.p_nrlwps++;
+	lwp_unlock(l);
 	mutex_exit(&proc0.p_smutex);
 
 	/* All done! */

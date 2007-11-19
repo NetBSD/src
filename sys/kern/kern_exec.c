@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.253 2007/11/12 23:11:58 ad Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.251 2007/10/24 14:50:40 ad Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.253 2007/11/12 23:11:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.251 2007/10/24 14:50:40 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -62,7 +62,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.253 2007/11/12 23:11:58 ad Exp $");
 #include <sys/stat.h>
 #include <sys/syscall.h>
 #include <sys/kauth.h>
-#include <sys/lwpctl.h>
 
 #include <sys/syscallargs.h>
 #if NVERIEXEC > 0
@@ -445,7 +444,9 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	 * to avoid race conditions - e.g. in ptrace() - that might allow
 	 * a local user to illicitly obtain elevated privileges.
 	 */
-	rw_enter(&p->p_reflock, RW_WRITER);
+	mutex_enter(&p->p_mutex);
+	proc_drainrefs(p);
+	mutex_exit(&p->p_mutex);
 
 	base_vcp = NULL;
 	/*
@@ -623,10 +624,6 @@ execve1(struct lwp *l, const char *path, char * const *args,
 		mutex_exit(&p->p_smutex);
 	}
 	KDASSERT(p->p_nlwps == 1);
-
-	/* Destroy any lwpctl info. */
-	if (p->p_lwpctl != NULL)
-		lwp_ctl_exit();
 
 	/* This is now LWP 1 */
 	l->l_lid = 1;
@@ -954,8 +951,6 @@ execve1(struct lwp *l, const char *path, char * const *args,
 #endif
 	ktremul();
 
-	/* Allow new references from the debugger/procfs. */
-	rw_exit(&p->p_reflock);
 #ifdef LKM
 	rw_exit(&exec_lock);
 #endif
@@ -977,6 +972,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 		ksiginfo_queue_init(&kq);
 		sigclearall(p, &contsigmask, &kq);
 		lwp_lock(l);
+		p->p_refcnt = 1;
 		l->l_stat = LSSTOP;
 		p->p_stat = SSTOP;
 		p->p_nrlwps--;
@@ -987,6 +983,10 @@ execve1(struct lwp *l, const char *path, char * const *args,
 		KERNEL_LOCK(l->l_biglocks, l);
 	} else {
 		mutex_exit(&proclist_mutex);
+
+		/* Unlock the process. */
+		mb_write();
+		p->p_refcnt = 1;
 	}
 
 #ifdef SYSTRACE
@@ -1023,7 +1023,10 @@ execve1(struct lwp *l, const char *path, char * const *args,
 #ifdef SYSTRACE
  clrflg:
 #endif /* SYSTRACE */
-	rw_exit(&p->p_reflock);
+	/* Unlock the process. */
+	mb_write();
+	p->p_refcnt = 1;
+
 #ifdef LKM
 	rw_exit(&exec_lock);
 #endif
@@ -1031,7 +1034,6 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	return error;
 
  exec_abort:
-	rw_exit(&p->p_reflock);
 #ifdef LKM
 	rw_exit(&exec_lock);
 #endif
@@ -1053,7 +1055,11 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	if (pack.ep_interp != NULL)
 		vrele(pack.ep_interp);
 
-	/* Acquire the sched-state mutex (exit1() will release it). */
+	/*
+	 * Acquire the sched-state mutex (exit1() will release it).  Since
+	 * this is a failed exec and we are exiting, keep the process locked
+	 * (p->p_refcnt == 0) through exit1().
+	 */
 	mutex_enter(&p->p_smutex);
 	exit1(l, W_EXITCODE(error, SIGABRT));
 

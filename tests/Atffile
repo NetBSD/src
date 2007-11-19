@@ -1,6 +1,0 @@
-Content-Type: application/X-atf-atffile; version="1"
-
-# XXX: This top-level file shouldn't have to define a test-suite.
-prop: test-suite = "NetBSD"
-
-tp-glob: *

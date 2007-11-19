@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.42 2007/11/10 03:36:16 ad Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.40 2007/10/23 19:49:01 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.42 2007/11/10 03:36:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.40 2007/10/23 19:49:01 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
