@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.93 2007/10/17 19:57:27 garbled Exp $
+# $NetBSD: GENERIC,v 1.94 2007/11/19 03:43:28 macallan Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.93 $"
+#ident 		"GENERIC-$Revision: 1.94 $"
 
 maxusers	64
 
@@ -849,6 +849,9 @@ ffb*		at mainbus0
 
 # On board vga on U5/U10 etc.
 machfb*		at pci?
+
+# generic PCI framebuffers
+genfb*		at pci?
 
 # make sure the console display is always wsdisplay0
 wsdisplay0	at wsemuldisplaydev? console 1
