@@ -1,4 +1,4 @@
-/*	$NetBSD: pcivar.h,v 1.74.14.5 2007/11/06 14:27:28 joerg Exp $	*/
+/*	$NetBSD: pcivar.h,v 1.74.14.6 2007/11/20 22:49:52 joerg Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -177,8 +177,6 @@ struct pci_conf_state {
 };
 
 extern struct cfdriver pci_cd;
-
-struct ifnet;
 
 int pcibusprint(void *, const char *);
 
