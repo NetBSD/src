@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm_upper.c,v 1.9 2007/11/20 20:19:24 plunky Exp $	*/
+/*	$NetBSD: rfcomm_upper.c,v 1.10 2007/11/20 20:25:57 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rfcomm_upper.c,v 1.9 2007/11/20 20:19:24 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rfcomm_upper.c,v 1.10 2007/11/20 20:25:57 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -305,20 +305,23 @@ rfcomm_detach(struct rfcomm_dlc **handle)
  *
  * This DLC is a listener. We look for an existing listening session
  * with a matching address to attach to or else create a new one on
- * the listeners list.
+ * the listeners list. If the ANY channel is given, allocate the first
+ * available for the session.
  */
 int
 rfcomm_listen(struct rfcomm_dlc *dlc)
 {
 	struct rfcomm_session *rs;
+	struct rfcomm_dlc *used;
 	struct sockaddr_bt addr;
-	int err;
+	int err, channel;
 
 	if (dlc->rd_state != RFCOMM_DLC_CLOSED)
 		return EISCONN;
 
-	if (dlc->rd_laddr.bt_channel < RFCOMM_CHANNEL_MIN
-	    || dlc->rd_laddr.bt_channel > RFCOMM_CHANNEL_MAX)
+	if (dlc->rd_laddr.bt_channel != RFCOMM_CHANNEL_ANY
+	    && (dlc->rd_laddr.bt_channel < RFCOMM_CHANNEL_MIN
+	    || dlc->rd_laddr.bt_channel > RFCOMM_CHANNEL_MAX))
 		return EADDRNOTAVAIL;
 
 	if (dlc->rd_laddr.bt_psm == L2CAP_PSM_ANY)
@@ -351,6 +354,24 @@ rfcomm_listen(struct rfcomm_dlc *dlc)
 			rfcomm_session_free(rs);
 			return err;
 		}
+	}
+
+	if (dlc->rd_laddr.bt_channel == RFCOMM_CHANNEL_ANY) {
+		channel = RFCOMM_CHANNEL_MIN;
+		used = LIST_FIRST(&rs->rs_dlcs);
+
+		while (used != NULL) {
+			if (used->rd_laddr.bt_channel == channel) {
+				if (channel++ == RFCOMM_CHANNEL_MAX)
+					return EADDRNOTAVAIL;
+
+				used = LIST_FIRST(&rs->rs_dlcs);
+			} else {
+				used = LIST_NEXT(used, rd_next);
+			}
+		}
+
+		dlc->rd_laddr.bt_channel = channel;
 	}
 
 	dlc->rd_session = rs;
