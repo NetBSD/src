@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.173 2007/10/24 09:38:40 pooka Exp $
+$NetBSD: acronyms,v 1.174 2007/11/20 12:26:12 sborrill Exp $
 
 AFAIC	as far as I'm concerned
 AFAICR	as far as I can recall
@@ -124,6 +124,7 @@ ISTR	I seem to recall
 ITYM	I think you mean
 IWBNI	it would be nice if
 IYSS	if you say so
+IYSWIM	if you see what I mean
 J/K	just kidding
 JFW	just fucking works
 JHD	just hit ``delete''
