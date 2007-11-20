@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.73 2007/11/20 17:24:32 xtraeme Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.74 2007/11/20 17:27:35 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.73 2007/11/20 17:24:32 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.74 2007/11/20 17:27:35 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -95,10 +95,7 @@ __KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.73 2007/11/20 17:24:32 xtraeme E
  * workqueue(9) that is used to check for conditions and sending events
  * to the powerd(8) daemon (if running)).
  *
- * The callouts are protected by the 'sme_callout_mtx' spin lock and the
- * 'sme_callout_cv' is used to check that the callout has finished before
- * unregistering a sysmon_envsys device.
- *
+ * The callouts are protected by the 'sme_callout_mtx' spin lock.
  */
 
 kmutex_t sme_mtx, sme_events_mtx, sme_callout_mtx;
