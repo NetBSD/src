@@ -1,4 +1,4 @@
-/*	$NetBSD: boot2.c,v 1.14 2007/10/17 19:54:59 garbled Exp $	*/
+/*	$NetBSD: boot2.c,v 1.15 2007/11/20 15:37:37 sborrill Exp $	*/
 
 /*
  * Copyright (c) 2003
@@ -77,6 +77,12 @@ static const char * const names[][2] = {
 
 #define MAXDEVNAME 16
 
+#ifndef SMALL
+#define BOOTCONF "boot.cfg"
+#define MAXMENU 10
+#define MAXBANNER 10
+#endif /* !SMALL */
+
 static char *default_devname;
 static int default_unit, default_partition;
 static const char *default_filename;
@@ -85,6 +91,12 @@ char *sprint_bootsel(const char *);
 void bootit(const char *, int, int);
 void print_banner(void);
 void boot2(int, u_int);
+
+#ifndef SMALL
+void parsebootconf(const char *);
+void doboottypemenu(void);
+int atoi(const char *);
+#endif /* !SMALL */
 
 void	command_help(char *);
 void	command_ls(char *);
@@ -103,6 +115,18 @@ const struct bootblk_command commands[] = {
 	{ "consdev",	command_consdev },
 	{ NULL,		NULL },
 };
+
+#ifndef SMALL
+struct bootconf_def {
+	char *banner[MAXBANNER];	/* Banner text */
+	char *command[MAXMENU];		/* Menu commands per entry*/
+	char *consdev;			/* Console device */
+	int def;			/* Default menu option */
+	char *desc[MAXMENU];		/* Menu text per entry */
+	int nummenu;			/* Number of menu items */
+	int timeout;		 	/* Timeout in seconds */
+} bootconf;
+#endif /* !SMALL */
 
 int
 parsebootfile(const char *fname, char **fsname, char **devname,
@@ -207,12 +231,219 @@ bootit(const char *filename, int howto, int tell)
 void
 print_banner(void)
 {
+#ifndef SMALL
+	int n;
+	if (bootconf.banner[0]) {
+		for (n = 0; bootconf.banner[n]; n++) 
+			printf("%s\n", bootconf.banner[n]);
+		printf("\n");
+	} else {
+#endif /* !SMALL */
+		printf("\n");
+		printf(">> %s, Revision %s\n", bootprog_name, bootprog_rev);
+		printf(">> (%s, %s)\n", bootprog_maker, bootprog_date);
+		printf(">> Memory: %d/%d k\n", getbasemem(), getextmem());
 
-	printf("\n");
-	printf(">> %s, Revision %s\n", bootprog_name, bootprog_rev);
-	printf(">> (%s, %s)\n", bootprog_maker, bootprog_date);
-	printf(">> Memory: %d/%d k\n", getbasemem(), getextmem());
+#ifndef SMALL
+	}
+#endif /* !SMALL */
 }
+
+#ifndef SMALL
+int
+atoi(const char *in)
+{
+	char *c;
+	int ret;
+
+	ret = 0;
+	c = (char *)in;
+	if (*c == '-')
+		c++;
+	for (; isnum(*c); c++)
+		ret = (ret * 10) + (*c - '0');
+
+	return (*in == '-') ? -ret : ret;
+}
+
+/*
+ * This function parses a boot.cnf file in the root of the filesystem
+ * (if present) and populates the global boot configuration.
+ * 
+ * The file consists of a number of lines each terminated by \n
+ * The lines are in the format keyword=value. There should be spaces
+ * around the = sign.
+ *
+ * The recognised keywords are:
+ * banner: text displayed instead of the normal welcome text
+ * menu: Descriptive text:command to use
+ * timeout: Timeout in seconds (overrides that set by installboot)
+ * default: the default menu option to use if Return is pressed
+ * consdev: the console device to use
+ *
+ * Example boot.cnf file:
+ * banner=Welcome to NetBSD
+ * banner=Please choose the boot type from the following menu
+ * menu=Boot NetBSD:boot netbsd
+ * menu=Boot into single user mode:boot netbsd -s
+ * menu=Goto boot comand line:prompt
+ * timeout=10
+ * consdev=com0
+ * default=1
+*/
+void
+parsebootconf(const char *conf)
+{
+	char *bc, *c;
+	int cmenu, cbanner, len;
+	int fd, err, off;
+	struct stat st;
+	char *value, *key;
+
+	/* Clear bootconf structure */
+	bzero((void *)&bootconf, sizeof(bootconf));
+	
+	/* Set timeout to configured */
+	bootconf.timeout = boot_params.bp_timeout;
+
+	err = stat(BOOTCONF, &st);
+	if (err == -1)
+		return;
+
+	fd = open(BOOTCONF, 0);
+	if (fd < 0)
+		return;
+	
+	bc = alloc(st.st_size + 1);
+	if (bc == NULL) {
+		printf("Could not allocate memory for boot configuration\n");
+		return;
+	}
+	
+	off = 0;
+	do {
+		len = read(fd, bc + off, 1024);
+		if (len <= 0)
+			break;
+		off += len;
+	} while (len > 0);
+	bc[off] = '\0';
+	
+	close(fd);
+	/* bc now contains the whole boot.cnf file */
+	
+	cmenu = 0;
+	cbanner = 0;
+	for(c = bc; *c; c++) {
+		key = c;
+		/* Look for = separator between key and value */
+		for (; *c && *c != '='; c++)
+			continue;
+		if (*c == '\0')
+			break; /* break if at end of data */
+		
+		/* zero terminate key which points to keyword */
+		*c++ = 0;
+		value = c;
+		/* Look for end of line (or file) and zero terminate value */
+		for (; *c && *c != '\n'; c++)
+			continue;
+		*c = 0;
+		
+		if (!strncmp(key, "menu", 4)) {
+			if (cmenu >= MAXMENU)
+				continue;
+			bootconf.desc[cmenu] = value;
+			/* Look for : between description and command */
+			for (; *value && *value != ':'; value++)
+				continue;
+			if(*value) {
+				*value++ = 0;
+				bootconf.command[cmenu] = value;
+				cmenu++;
+			} else {
+				/* No delimiter means invalid line */
+				bootconf.desc[cmenu] = NULL;
+			}
+		} else if (!strncmp(key, "banner", 6)) {
+			if (cbanner < MAXBANNER)
+				bootconf.banner[cbanner++] = value;
+		} else if (!strncmp(key, "timeout", 7)) {
+			if (!isnum(*value))
+				bootconf.timeout = -1;
+			else
+				bootconf.timeout = atoi(value);
+		} else if (!strncmp(key, "default", 7)) {
+			bootconf.def = atoi(value) - 1;
+		} else if (!strncmp(key, "consdev", 7)) {
+			bootconf.consdev = value;
+		}
+	}
+	bootconf.nummenu = cmenu;
+	if (bootconf.def < 0)
+		bootconf.def = 0;
+	if (bootconf.def >= cmenu)
+		bootconf.def = cmenu - 1;
+}
+
+/*
+ * doboottypemenu will render the menu and parse any user input
+ */
+
+void
+doboottypemenu(void)
+{
+	int choice;
+	char input[80], c;
+		
+	/* Display menu */
+	for (choice = 0; bootconf.desc[choice]; choice++)
+		printf("    %d. %s\n", choice+1, bootconf.desc[choice]);
+
+	choice = -1;
+	for(;;) {
+		input[0] = '\0';
+		
+		if (bootconf.timeout < 0) {
+			printf("\nOption: [%d]:", bootconf.def + 1);
+			gets(input);
+			if (input[0] == '\0') choice = bootconf.def;
+			if (input[0] >= '1' && 
+				input[0] <= bootconf.nummenu + '0')
+				    choice = input[0] - '1';
+		} else if (bootconf.timeout == 0)
+			choice = bootconf.def;
+		else  {
+			printf("\nPress the key for your chosen option or ");
+			printf("Return to choose the default (%d)\n",
+			      bootconf.def + 1);
+			printf("Option %d will be chosen in ",
+			      bootconf.def + 1);
+			c = awaitkey(bootconf.timeout, 1);
+			if (c >= '1' && c <= bootconf.nummenu + '0')
+				choice = c - '1';
+			else if (c ==  '\r' || c == '\n' || c == '\0')
+				/* default if timed out or Return pressed */
+				choice = bootconf.def;
+			else {
+				/* If any other key pressed, drop to menu */
+				bootconf.timeout = -1;
+				choice = -1;
+			}
+		}
+		if (choice < 0)
+			continue;
+		if (!strcmp(bootconf.command[choice], "prompt") && 
+		    ((boot_params.bp_flags & X86_BP_FLAGS_PASSWORD) == 0 ||
+		    check_password(boot_params.bp_password))) {
+			printf("type \"?\" or \"help\" for help.\n");
+			bootmenu(); /* does not return */
+		} else
+			docommand(bootconf.command[choice]);
+			
+	}
+}
+#endif /* !SMALL */
 
 /*
  * Called from the initial entry point boot_start in biosboot.S
@@ -236,8 +467,6 @@ boot2(int biosdev, u_int biossector)
 	if (boot_params.bp_flags & X86_BP_FLAGS_RESET_VIDEO)
 		biosvideomode();
 
-	print_banner();
-
 	/* need to remember these */
 	boot_biosdev = biosdev;
 	boot_biossector = biossector;
@@ -249,12 +478,37 @@ boot2(int biosdev, u_int biossector)
 	/* if the user types "boot" without filename */
 	default_filename = DEFFILENAME;
 
+#ifndef SMALL
+	parsebootconf(BOOTCONF);
+
+	/*
+	 * If console set in boot.cnf, switch to it.
+	 * This will print the banner, so we don't need to explicitly do it
+	 */
+	if (bootconf.consdev)
+		command_consdev(bootconf.consdev);
+	else 
+		print_banner();
+
+	/* Display the menu, if applicable */
+	if (bootconf.nummenu > 0) {
+		/* Does not return */
+		doboottypemenu();
+	}
+#else
+		print_banner();
+#endif
+
 	printf("Press return to boot now, any other key for boot menu\n");
 	for (currname = 0; currname < NUMNAMES; currname++) {
 		printf("booting %s - starting in ",
 		       sprint_bootsel(names[currname][0]));
 
+#ifdef SMALL
 		c = awaitkey(boot_params.bp_timeout, 1);
+#else
+		c = awaitkey((bootconf.timeout < 0) ? 0 : bootconf.timeout, 1);
+#endif
 		if ((c != '\r') && (c != '\n') && (c != '\0') &&
 		    ((boot_params.bp_flags & X86_BP_FLAGS_PASSWORD) == 0
 		     || check_password(boot_params.bp_password))) {
