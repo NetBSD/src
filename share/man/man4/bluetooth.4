@@ -1,4 +1,4 @@
-.\"	$NetBSD: bluetooth.4,v 1.7 2007/09/30 04:22:52 kiyohara Exp $
+.\"	$NetBSD: bluetooth.4,v 1.8 2007/11/20 20:25:57 plunky Exp $
 .\"
 .\" Copyright (c) 2006 Itronix Inc.
 .\" All rights reserved.
@@ -189,7 +189,15 @@ and
 fields in the
 .Ar sockaddr_bt
 structure.
-The channel number must be between 1 and 30 inclusive.
+The channel number must be between 1 and 30 inclusive except that if the
+special value
+.Dv RFCOMM_CHANNEL_ANY
+is bound, when the
+.Xr listen 2
+call is made, the first unused channel for the relevant bdaddr will be
+allocated and may be discovered using the
+.Xr getsockname 2
+call.
 If no PSM is specified, a default value of
 .Dv L2CAP_PSM_RFCOMM
 (0x0003) will be used.
