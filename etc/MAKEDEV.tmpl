@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.90 2007/11/13 13:14:25 pooka Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.91 2007/11/20 18:58:46 pooka Exp $
 #
 # Copyright (c) 2003,2007 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1698,6 +1698,7 @@ fw*)
 # create putter device and symlinks for all subsystems using it
 putter)
 	mkdev putter c %putter_chr% 0 600
+	mkdev pud c %putter_chr% 1 600
 	lndev putter puffs 
 	;;
 
