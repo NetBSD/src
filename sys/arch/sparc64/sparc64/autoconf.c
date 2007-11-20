@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.143 2007/11/19 02:52:56 macallan Exp $ */
+/*	$NetBSD: autoconf.c,v 1.144 2007/11/20 17:06:18 macallan Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.143 2007/11/19 02:52:56 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.144 2007/11/20 17:06:18 macallan Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -878,6 +878,11 @@ device_register(struct device *dev, void *aux)
 			dict = device_properties(dev);
 			node = PCITAG_NODE(pa->pa_tag);
 			device_setofnode(dev, node);
+
+			/* we only care about display devices from here on */
+			if (PCI_CLASS(pa->pa_class) != PCI_CLASS_DISPLAY)
+				return;
+
 			console = (node == console_node);
 
 			if (!console) {
