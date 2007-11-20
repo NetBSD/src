@@ -1,4 +1,4 @@
-/*	$NetBSD: dz.c,v 1.32 2007/11/19 18:51:46 ad Exp $	*/
+/*	$NetBSD: dz.c,v 1.33 2007/11/20 09:16:53 yamt Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dz.c,v 1.32 2007/11/19 18:51:46 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dz.c,v 1.33 2007/11/20 09:16:53 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -571,7 +571,6 @@ void
 dzstart(struct tty *tp)
 {
 	struct dz_softc *sc;
-	struct clist *cl;
 	int unit, line, s;
 	char state;
 
