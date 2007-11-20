@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm_upper.c,v 1.8 2007/11/03 17:20:17 plunky Exp $	*/
+/*	$NetBSD: rfcomm_upper.c,v 1.9 2007/11/20 20:19:24 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rfcomm_upper.c,v 1.8 2007/11/03 17:20:17 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rfcomm_upper.c,v 1.9 2007/11/20 20:19:24 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -310,7 +310,7 @@ rfcomm_detach(struct rfcomm_dlc **handle)
 int
 rfcomm_listen(struct rfcomm_dlc *dlc)
 {
-	struct rfcomm_session *rs, *any, *best;
+	struct rfcomm_session *rs;
 	struct sockaddr_bt addr;
 	int err;
 
@@ -328,7 +328,6 @@ rfcomm_listen(struct rfcomm_dlc *dlc)
 	    || L2CAP_PSM_INVALID(dlc->rd_laddr.bt_psm)))
 		return EADDRNOTAVAIL;
 
-	any = best = NULL;
 	LIST_FOREACH(rs, &rfcomm_session_listen, rs_next) {
 		l2cap_sockaddr(rs->rs_l2cap, &addr);
 
@@ -336,13 +335,9 @@ rfcomm_listen(struct rfcomm_dlc *dlc)
 			continue;
 
 		if (bdaddr_same(&dlc->rd_laddr.bt_bdaddr, &addr.bt_bdaddr))
-			best = rs;
-
-		if (bdaddr_any(&addr.bt_bdaddr))
-			any = rs;
+			break;
 	}
 
-	rs = best ? best : any;
 	if (rs == NULL) {
 		rs = rfcomm_session_alloc(&rfcomm_session_listen,
 						&dlc->rd_laddr);
