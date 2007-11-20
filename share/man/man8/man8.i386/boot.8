@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.38 2006/06/29 20:24:13 christos Exp $
+.\"	$NetBSD: boot.8,v 1.39 2007/11/20 15:37:36 sborrill Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -135,6 +135,12 @@ enter interactive mode.
 When using a short or 0 timeout, it is often useful to interrupt the boot
 by holding down a shift key, as some BIOSes and BIOS extensions will drain the
 keystroke buffer at various points during POST.
+.Pp
+If present, the file /boot.cfg will be used to configure the behaviour of the
+boot loader including setting the timeout, choosing a console device, altering
+the banner text and displaying a menu allowing boot commands to be easily
+chosen. See
+.Xr boot.cfg 5 .
 .Ss Diagnostic Output
 If the first stage boot fails to load the boot, it will print a terse
 message indicating the reason for the failure.
@@ -264,6 +270,8 @@ can be used to boot from floppy.
 .Bl -tag -width /usr/mdec/bootxx_fstype -compact
 .It Pa /boot
 boot program code loaded by the primary bootstrap
+.It Pa /boot.cfg
+optional configuration file
 .It Pa /netbsd
 system code
 .It Pa /netbsd.gz
@@ -278,6 +286,7 @@ the netbsd partition by
 .Sh SEE ALSO
 .Xr ddb 4 ,
 .Xr userconf 4 ,
+.Xr boot.cfg 5 ,
 .Xr boot_console 8 ,
 .Xr dosboot 8 ,
 .Xr halt 8 ,
