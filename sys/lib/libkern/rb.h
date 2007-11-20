@@ -1,4 +1,4 @@
-/* $NetBSD: rb.h,v 1.7 2006/09/10 23:57:31 matt Exp $ */
+/* $NetBSD: rb.h,v 1.8 2007/11/20 12:32:56 yamt Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -44,11 +44,11 @@
 
 struct rb_node {
 	struct rb_node *rb_nodes[2];
-#define	RB_LEFT		0
-#define	RB_RIGHT	1
-#define	RB_OTHER	1
-#define	rb_left		rb_nodes[RB_LEFT]
-#define	rb_right	rb_nodes[RB_RIGHT]
+#define	RB_DIR_LEFT	0
+#define	RB_DIR_RIGHT	1
+#define	RB_DIR_OTHER	1
+#define	rb_left		rb_nodes[RB_DIR_LEFT]
+#define	rb_right	rb_nodes[RB_DIR_RIGHT]
 	struct rb_node *rb_parent;
 	struct rb_properties {
 #if BYTE_ORDER == LITTLE_ENDIAN
