@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1088 2007/11/19 14:48:43 ad Exp $
+#	$NetBSD: mi,v 1.1089 2007/11/20 18:54:32 pooka Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -448,6 +448,7 @@
 ./usr/include/dev/pcmcia/pcmciachip.h		comp-obsolete		obsolete
 ./usr/include/dev/pcmcia/pcmciareg.h		comp-obsolete		obsolete
 ./usr/include/dev/pcmcia/pcmciavar.h		comp-obsolete		obsolete
+./usr/include/dev/pud/pud_msgif.h		comp-c-include
 ./usr/include/dev/putter/putter.h		comp-c-include
 ./usr/include/dev/raidframe/raidframeio.h	comp-c-include
 ./usr/include/dev/raidframe/raidframevar.h	comp-c-include
