@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysmon_envsys.9,v 1.15 2007/11/20 09:16:36 xtraeme Exp $
+.\"	$NetBSD: sysmon_envsys.9,v 1.16 2007/11/20 10:08:47 xtraeme Exp $
 .\"
 .\" Copyright (c) 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -448,8 +448,10 @@ or
 .Ar ENVSYS_BATTERY_CAPACITY .
 .It ENVSYS_FMONNOTSUPP
 Disallows to set a critical limit via the
-.Xr ioctl(9) .
-This flag has not any effect for monitoring flags set in the driver.
+.Em ENVSYS_SETDICTIONARY
+.Xr ioctl(2) .
+This flag has not any effect for monitoring flags set in the driver and it's
+only meant to disable setting critical limits from userland.
 .El
 .Pp
 .Em If the driver has to use any of the
