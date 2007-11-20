@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.67 2007/11/19 19:02:20 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.68 2007/11/20 23:10:49 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.67 2007/11/19 19:02:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.68 2007/11/20 23:10:49 xtraeme Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_ddb.h"
@@ -1502,6 +1502,7 @@ init_x86_64(paddr_t first_avail)
 
 	intr_default_setup();
 
+	softintr_init();
 	splraise(IPL_HIGH);
 	x86_enable_intr();
 
