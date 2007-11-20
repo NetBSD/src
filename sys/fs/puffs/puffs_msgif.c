@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.c,v 1.58 2007/11/17 18:03:15 pooka Exp $	*/
+/*	$NetBSD: puffs_msgif.c,v 1.59 2007/11/20 11:51:01 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.58 2007/11/17 18:03:15 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.59 2007/11/20 11:51:01 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -866,8 +866,7 @@ puffsop_flush(struct puffs_mount *pmp, struct puffs_flush *pf)
 	struct componentname *pf_cn;
 	char *name;
 		/* get comfortab^Wcomponentname */
-		MALLOC(pf_cn, struct componentname *,
-		    sizeof(struct componentname), M_PUFFS, M_WAITOK | M_ZERO);
+		pf_cn = kmem_alloc(componentname);
 		memset(pf_cn, 0, sizeof(struct componentname));
 		break;
 

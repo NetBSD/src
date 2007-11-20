@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.117 2007/11/17 21:55:29 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.118 2007/11/20 11:51:02 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.117 2007/11/17 21:55:29 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.118 2007/11/20 11:51:02 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -2478,8 +2478,8 @@ puffs_getpages(void *v)
 #ifdef notnowjohn
 		/* allocate worst-case memory */
 		runsizes = ((npages / 2) + 1) * sizeof(struct puffs_cacherun);
-		pcinfo = malloc(sizeof(struct puffs_cacheinfo) + runsizes,
-		    M_PUFFS, M_ZERO | locked ? M_NOWAIT : M_WAITOK);
+		pcinfo = kmem_zalloc(sizeof_puffs_cacheinfo) + runsize,
+		    locked ? KM_NOSLEEP : KM_SLEEP);
 
 		/*
 		 * can't block if we're locked and can't mess up caching
@@ -2552,7 +2552,8 @@ puffs_getpages(void *v)
  out:
 	if (error) {
 		if (pcinfo != NULL)
-			free(pcinfo, M_PUFFS);
+			kmem_free(pcinfo,
+			    sizeof(struct puffs_cacheinfo) + runsizes);
 #ifdef notnowjohn
 		if (parkmem != NULL)
 			puffs_park_release(parkmem, 1);
