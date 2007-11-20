@@ -1,4 +1,4 @@
-/* $NetBSD: rb.c,v 1.11 2006/09/10 23:57:31 matt Exp $ */
+/* $NetBSD: rb.c,v 1.12 2007/11/20 08:30:05 yamt Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -59,6 +59,8 @@ static const struct rb_node *rb_tree_iterate_const(const struct rb_tree *,
 	const struct rb_node *, const unsigned int);
 static bool rb_tree_check_node(const struct rb_tree *, const struct rb_node *,
 	const struct rb_node *, bool);
+#else
+#define	rb_tree_check_node(a, b, c, d)	true
 #endif
 
 /*
