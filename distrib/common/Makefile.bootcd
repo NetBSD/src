@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootcd,v 1.11 2007/08/31 14:20:29 jnemeth Exp $
+#	$NetBSD: Makefile.bootcd,v 1.12 2007/11/20 16:12:50 sborrill Exp $
 #
 # Makefile snipped to create a CD/DVD ISO
 #
@@ -24,9 +24,10 @@
 #	CDINSTKERNEL	instkernel directory (relative to ${.CURDIR})
 #	CDKERNELS	couples of the form:
 #				source	name_on_cd
-# source kernels are copied from ${CDINSTKENRNEL} (or it's obj dir)
-# note that as of yet, bootxx_cd9660 can't load kernel names  of more than
-# 8 chars.
+# source kernels are copied from ${CDINSTKERNEL} (or its obj dir)
+# note that as of yet, bootxx_cd9660 can't load kernel names of more than
+# 8 chars (though they can be in a sub-directory meaning the pathname is
+# longer than 8 chars)
 #
 
 BOOT?=		${DESTDIR}/usr/mdec/boot
