@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.204 2007/11/19 19:53:48 ad Exp $	*/
+/*	$NetBSD: tty.c,v 1.205 2007/11/20 00:45:23 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.204 2007/11/19 19:53:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.205 2007/11/20 00:45:23 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1989,8 +1989,8 @@ ttwrite(struct tty *tp, struct uio *uio, int flag)
 			    tp->t_outq.c_cc > hiwat)
 				break;
 		}
-		mutex_spin_exit(&tty_lock);
 		ttstart(tp);
+		mutex_spin_exit(&tty_lock);
 	}
 
  out:
@@ -2012,8 +2012,8 @@ ttwrite(struct tty *tp, struct uio *uio, int flag)
 	hiwat = tp->t_outq.c_cc - 1;
 
  ovhiwat:
-	ttstart(tp);
 	mutex_spin_enter(&tty_lock);
+	ttstart(tp);
 	/*
 	 * This can only occur if FLUSHO is set in t_lflag,
 	 * or if ttstart/oproc is synchronous (or very fast).
