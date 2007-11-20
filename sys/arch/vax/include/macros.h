@@ -1,4 +1,4 @@
-/*	$NetBSD: macros.h,v 1.42 2007/10/17 19:57:48 garbled Exp $	*/
+/*	$NetBSD: macros.h,v 1.43 2007/11/20 13:37:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994, 1998, 2000 Ludd, University of Lule}, Sweden.
@@ -340,7 +340,7 @@ bbcci(int bitnr, long *addr)
 }
 
 static inline struct lwp *
-cpu_switchto(struct lwp *oldlwp, struct lwp *newlwp)
+cpu_switchto(struct lwp *oldlwp, struct lwp *newlwp, bool returning)
 {
 	struct lwp *prevlwp;
 	__asm volatile(
