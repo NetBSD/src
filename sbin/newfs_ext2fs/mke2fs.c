@@ -1,4 +1,4 @@
-/*	$NetBSD: mke2fs.c,v 1.3 2007/11/19 15:11:50 tsutsui Exp $	*/
+/*	$NetBSD: mke2fs.c,v 1.4 2007/11/20 16:34:37 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2007 Izumi Tsutsui.
@@ -108,7 +108,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mke2fs.c,v 1.3 2007/11/19 15:11:50 tsutsui Exp $");
+__RCSID("$NetBSD: mke2fs.c,v 1.4 2007/11/20 16:34:37 tsutsui Exp $");
 #endif
 #endif /* not lint */
 
@@ -329,12 +329,11 @@ mke2fs(const char *fsys, int fi, int fo)
 		blocks_lastcg = blocks_per_cg;
 		blocks_gd = howmany(sizeof(struct ext2_gd) * ncg, bsize);
 		inodes_per_cg = num_inodes / ncg;
-		iblocks_per_cg =
-		    howmany(EXT2_DINODE_SIZE * inodes_per_cg, bsize);
 	}
 	/* inodes_per_cg should be a multiple of 8 for bitmap ops */
 	inodes_per_cg = rounddown(inodes_per_cg, NBBY);
 	num_inodes = inodes_per_cg * ncg;
+	iblocks_per_cg = howmany(EXT2_DINODE_SIZE * inodes_per_cg, bsize);
 
 	/* XXX: probably we should check these adjusted values again */
 
