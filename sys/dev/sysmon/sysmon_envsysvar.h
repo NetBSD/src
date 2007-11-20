@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsysvar.h,v 1.25 2007/11/16 08:18:33 xtraeme Exp $ */
+/* $NetBSD: sysmon_envsysvar.h,v 1.26 2007/11/20 17:24:32 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -113,7 +113,6 @@ extern	kmutex_t sme_mtx; 		/* mutex for devices/events */
 extern 	kmutex_t sme_events_mtx;	/* to init/destroy the events layer */
 extern	kmutex_t sme_callout_mtx;	/* for the callouts */
 extern 	kcondvar_t sme_cv;		/* to wait for devices/events working */
-extern	kcondvar_t sme_callout_cv;	/* to wait for the callout handler */
 
 /* 
  * linked list for the sysmon envsys devices.
