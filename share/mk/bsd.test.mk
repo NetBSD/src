@@ -1,8 +1,7 @@
-# $NetBSD: bsd.test.mk,v 1.1 2007/11/12 15:05:16 jmmv Exp $
+# $NetBSD: bsd.test.mk,v 1.2 2007/11/21 15:40:09 jmmv Exp $
 #
 
 TESTSBASE=	/usr/tests
-TESTSDIR?=	${TESTSBASE}${.CURDIR:S/^${NETBSDSRCDIR}\/tests//}
 
 _TESTS=		# empty
 
