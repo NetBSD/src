@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.151 2007/11/16 18:36:51 dyoung Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.152 2007/11/21 02:07:09 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.151 2007/11/16 18:36:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.152 2007/11/21 02:07:09 dyoung Exp $");
 
 /*
 #define CBB_DEBUG
@@ -1037,7 +1037,24 @@ pccbbintr(void *arg)
 	bus_space_write_4(memt, memh, CB_SOCKET_EVENT, sockevent);
 	Pcic_read(ph, PCIC_CSC);
 
-	if (sockevent == 0) {
+	if (sockevent != 0) {
+		aprint_debug("%s: enter sockevent %" PRIx32 "\n", __func__,
+		    sockevent);
+	}
+
+	/* Sometimes a change of CSTSCHG# accompanies the first
+	 * interrupt from an Atheros WLAN.  That generates a
+	 * CB_SOCKET_EVENT_CSTS event on the bridge.  The event
+	 * isn't interesting to pccbb(4), so we used to ignore the
+	 * interrupt.  Now, let the child devices try to handle
+	 * the interrupt, instead.  The Atheros NIC produces
+	 * interrupts more reliably, now: used to be that it would
+	 * only interrupt if the driver avoided powering down the
+	 * NIC's cardslot, and then the NIC would only work after
+	 * it was reset a second time.
+	 */
+	if (sockevent == 0 ||
+	    (sockevent & ~(CB_SOCKET_EVENT_POWER|CB_SOCKET_EVENT_CD)) != 0) {
 		/* This intr is not for me: it may be for my child devices. */
 		if (sc->sc_pil_intr_enable) {
 			return pccbbintr_function(sc);
@@ -1045,8 +1062,6 @@ pccbbintr(void *arg)
 			return 0;
 		}
 	}
-
-	aprint_debug("%s: enter sockevent %" PRIx32 "\n", __func__, sockevent);
 
 	if (sockevent & CB_SOCKET_EVENT_CD) {
 		sockstate = bus_space_read_4(memt, memh, CB_SOCKET_STAT);
