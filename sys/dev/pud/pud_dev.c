@@ -1,4 +1,4 @@
-/*	$NetBSD: pud_dev.c,v 1.2 2007/11/21 11:19:44 pooka Exp $	*/
+/*	$NetBSD: pud_dev.c,v 1.3 2007/11/21 18:10:48 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pud_dev.c,v 1.2 2007/11/21 11:19:44 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pud_dev.c,v 1.3 2007/11/21 18:10:48 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -40,6 +40,17 @@ __KERNEL_RCSID(0, "$NetBSD: pud_dev.c,v 1.2 2007/11/21 11:19:44 pooka Exp $");
 #include <sys/socketvar.h>
 
 #include <dev/pud/pud_sys.h>
+
+static int
+openclose(dev_t dev, int flags, int fmt, int class, int type)
+{
+	struct pud_req_openclose pc_oc; /* XXX: stack = stupid */
+
+	pc_oc.pm_flags = flags;
+	pc_oc.pm_fmt = fmt;
+
+	return pud_request(dev, &pc_oc, sizeof(pc_oc), class, type);
+}
 
 /*
  * Block de-vices
@@ -69,21 +80,50 @@ static int
 pud_bdev_open(dev_t dev, int flags, int fmt, lwp_t *l)
 {
 
-	return EOPNOTSUPP;
+	return openclose(dev, flags, fmt, PUD_REQ_BDEV, PUD_BDEV_OPEN);
 }
 
 static int
 pud_bdev_close(dev_t dev, int flags, int fmt, lwp_t *l)
 {
 
-	return EOPNOTSUPP;
+	return openclose(dev, flags, fmt, PUD_REQ_BDEV, PUD_BDEV_CLOSE);
 }
 
 static void
 pud_bdev_strategy(struct buf *bp)
 {
+	struct pud_req_readwrite *pc_rw;
+	size_t allocsize;
+	int error;
 
-	bp->b_error = EOPNOTSUPP;
+	allocsize = sizeof(struct pud_req_readwrite) + bp->b_bcount;
+	pc_rw = kmem_zalloc(allocsize, KM_SLEEP);
+
+	pc_rw->pm_offset = bp->b_blkno << DEV_BSHIFT;
+	pc_rw->pm_resid = bp->b_bcount;
+
+	if (BUF_ISWRITE(bp))
+		memcpy(pc_rw->pm_data, bp->b_data, bp->b_bcount);
+
+	error = pud_request(bp->b_dev, pc_rw, allocsize, PUD_REQ_BDEV,
+	    BUF_ISREAD(bp) ? PUD_BDEV_STRATREAD : PUD_BDEV_STRATWRITE);
+	if (error)
+		goto out;
+
+	if (pc_rw->pm_resid > bp->b_bcount) {
+		error = EINVAL;
+		goto out;
+	}
+
+	if (BUF_ISREAD(bp))
+		memcpy(bp->b_data,pc_rw->pm_data,bp->b_bcount-pc_rw->pm_resid);
+
+	bp->b_resid = pc_rw->pm_resid;
+
+ out:
+	kmem_free(pc_rw, allocsize);
+	bp->b_error = error;
 	biodone(bp);
 }
 
@@ -143,25 +183,15 @@ struct cdevsw pud_cdevsw = {
 static int
 pud_cdev_open(dev_t dev, int flags, int fmt, lwp_t *l)
 {
-	struct pud_creq_open pc_open; /* XXX: stack = stupid */
 
-	pc_open.pm_flags = flags;
-	pc_open.pm_fmt = fmt;
-
-	return pud_request(dev, &pc_open, sizeof(pc_open),
-	    PUD_REQ_CDEV, PUD_CDEV_OPEN);
+	return openclose(dev, flags, fmt, PUD_REQ_CDEV, PUD_CDEV_OPEN);
 }
 
 static int
 pud_cdev_close(dev_t dev, int flags, int fmt, lwp_t *l)
 {
-	struct pud_creq_close pc_close; /* XXX: stack = stupid */
 
-	pc_close.pm_flags = flags;
-	pc_close.pm_fmt = fmt;
-
-	return pud_request(dev, &pc_close, sizeof(pc_close),
-	    PUD_REQ_CDEV, PUD_CDEV_CLOSE);
+	return openclose(dev, flags, fmt, PUD_REQ_CDEV, PUD_CDEV_OPEN);
 }
 
 static int
@@ -187,7 +217,8 @@ pud_cdev_read(dev_t dev, struct uio *uio, int flag)
 		goto out;
 	}
 
-	error = uiomove(pc_read->pm_data, pc_read->pm_resid, uio);
+	error = uiomove(pc_read->pm_data,
+	    uio->uio_resid - pc_read->pm_resid, uio);
 
  out:
 	kmem_free(pc_read, allocsize);
