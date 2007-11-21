@@ -1,4 +1,4 @@
-/* $NetBSD: rb.c,v 1.13 2007/11/20 12:32:55 yamt Exp $ */
+/* $NetBSD: rb.c,v 1.14 2007/11/21 16:42:51 matt Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -150,7 +150,7 @@ rb_tree_find_node_leq(struct rb_tree *rbt, const void *key)
 	return last;
 }
 
-void
+bool
 rb_tree_insert_node(struct rb_tree *rbt, struct rb_node *self)
 {
 	rb_compare_nodes_fn compare_nodes = rbt->rbt_ops->rb_compare_nodes;
@@ -178,8 +178,13 @@ rb_tree_insert_node(struct rb_tree *rbt, struct rb_node *self)
 	 */
 	while (!RB_SENTINEL_P(tmp)) {
 		const signed int diff = (*compare_nodes)(tmp, self);
+		if (__predict_false(diff == 0)) {
+			/*
+			 * Node already exists; don't insert.
+			 */
+			return false;
+		}
 		parent = tmp;
-		KASSERT(diff != 0);
 		position = (diff > 0);
 		tmp = parent->rb_nodes[position];
 	}
@@ -275,6 +280,8 @@ rb_tree_insert_node(struct rb_tree *rbt, struct rb_node *self)
 		rb_tree_insert_rebalance(rbt, self);
 		KASSERT(rb_tree_check_node(rbt, self, NULL, true));
 	}
+
+	return true;
 }
 
 /*
