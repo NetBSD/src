@@ -1,4 +1,6 @@
-# $NetBSD: Makefile,v 1.1 2007/11/12 15:18:20 jmmv Exp $
+# $NetBSD: Makefile,v 1.2 2007/11/21 15:39:34 jmmv Exp $
+
+TESTSDIR=	${TESTSBASE}/fs/tmpfs
 
 TESTS_SH=	t_create
 TESTS_SH+=	t_devices

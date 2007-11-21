@@ -1,8 +1,10 @@
-# $NetBSD: Makefile,v 1.2 2007/11/19 14:17:45 jmmv Exp $
+# $NetBSD: Makefile,v 1.3 2007/11/21 15:39:34 jmmv Exp $
 
 NOMAN=		# defined
 
 .include <bsd.own.mk>
+
+TESTSDIR=	${TESTSBASE}/util/id
 
 TESTS_SH=	t_groups
 TESTS_SH+=	t_id
