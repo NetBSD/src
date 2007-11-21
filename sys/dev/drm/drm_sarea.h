@@ -1,3 +1,5 @@
+/* $NetBSD: drm_sarea.h,v 1.2 2007/11/21 19:22:13 bjs Exp $ */
+
 /**
  * \file drm_sarea.h
  * \brief SAREA definitions
