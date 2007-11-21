@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.65.2.2 2007/11/18 19:35:46 bouyer Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.65.2.3 2007/11/21 21:19:44 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.65.2.2 2007/11/18 19:35:46 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.65.2.3 2007/11/21 21:19:44 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -54,8 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.65.2.2 2007/11/18 19:35:46 bouyer
 
 VFS_PROTOS(puffs);
 
-MALLOC_JUSTDEFINE(M_PUFFS, "puffs", "Pass-to-Userspace Framework File System");
-
 #ifndef PUFFS_PNODEBUCKETS
 #define PUFFS_PNODEBUCKETS 256
 #endif
@@ -64,6 +62,8 @@ MALLOC_JUSTDEFINE(M_PUFFS, "puffs", "Pass-to-Userspace Framework File System");
 #endif
 int puffs_pnodebuckets_default = PUFFS_PNODEBUCKETS;
 int puffs_maxpnodebuckets = PUFFS_MAXPNODEBUCKETS;
+
+#define BUCKETALLOC(a) (sizeof(struct puffs_pnode_hashlist *) * (a))
 
 static struct putter_ops puffs_putter = {
 	.pop_getout	= puffs_msgif_getout,
@@ -104,10 +104,7 @@ puffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
 	if (!data)
 		return EINVAL;
 
-	MALLOC(args, struct puffs_kargs *, sizeof(struct puffs_kargs),
-	    M_PUFFS, M_WAITOK);
-
-	*args = *(struct puffs_kargs *)data;
+	args = (struct puffs_kargs *)data;
 
 	/* devel phase */
 	if (args->pa_vers != (PUFFSVERSION | PUFFSDEVELVERS)) {
@@ -213,8 +210,7 @@ puffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
 	copy_statvfs_info(&args->pa_svfsb, mp);
 	(void)memcpy(&mp->mnt_stat, &args->pa_svfsb, sizeof(mp->mnt_stat));
 
-	MALLOC(pmp, struct puffs_mount *, sizeof(struct puffs_mount),
-	    M_PUFFS, M_WAITOK | M_ZERO);
+	pmp = kmem_zalloc(sizeof(struct puffs_mount), KM_SLEEP);
 
 	mp->mnt_fs_bshift = DEV_BSHIFT;
 	mp->mnt_dev_bshift = DEV_BSHIFT;
@@ -228,9 +224,7 @@ puffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
 	pmp->pmp_args = *args;
 
 	pmp->pmp_npnodehash = args->pa_nhashbuckets;
-	pmp->pmp_pnodehash = malloc
-	    (sizeof(struct puffs_pnode_hashlist *) * pmp->pmp_npnodehash,
-	    M_PUFFS, M_WAITOK);
+	pmp->pmp_pnodehash = kmem_alloc(BUCKETALLOC(pmp->pmp_npnodehash), KM_SLEEP);
 	for (i = 0; i < pmp->pmp_npnodehash; i++)
 		LIST_INIT(&pmp->pmp_pnodehash[i]);
 	LIST_INIT(&pmp->pmp_newcookie);
@@ -266,10 +260,9 @@ puffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
 
  out:
 	if (error && pmp && pmp->pmp_pnodehash)
-		free(pmp->pmp_pnodehash, M_PUFFS);
+		kmem_free(pmp->pmp_pnodehash, BUCKETALLOC(pmp->pmp_npnodehash));
 	if (error && pmp)
-		FREE(pmp, M_PUFFS);
-	FREE(args, M_PUFFS);
+		kmem_free(pmp, sizeof(struct puffs_mount));
 	return error;
 }
 
@@ -363,8 +356,8 @@ puffs_unmount(struct mount *mp, int mntflags, struct lwp *l)
 		cv_destroy(&pmp->pmp_msg_waiter_cv);
 		mutex_destroy(&pmp->pmp_lock);
 
-		free(pmp->pmp_pnodehash, M_PUFFS);
-		FREE(pmp, M_PUFFS);
+		kmem_free(pmp->pmp_pnodehash, BUCKETALLOC(pmp->pmp_npnodehash));
+		kmem_free(pmp, sizeof(struct puffs_mount));
 		error = 0;
 	} else {
 		mutex_exit(&pmp->pmp_lock);
@@ -708,8 +701,6 @@ puffs_init()
 	/* some checks depend on this */
 	KASSERT(VNOVAL == VSIZENOTSET);
 
-	malloc_type_attach(M_PUFFS);
-
 	pool_init(&puffs_pnpool, sizeof(struct puffs_node), 0, 0, 0,
 	    "puffpnpl", &pool_allocator_nointr, IPL_NONE);
 	puffs_msgif_init();
@@ -721,8 +712,6 @@ puffs_done()
 
 	puffs_msgif_destroy();
 	pool_destroy(&puffs_pnpool);
-
-	malloc_type_detach(M_PUFFS);
 }
 
 int

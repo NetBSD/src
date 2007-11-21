@@ -1,3 +1,5 @@
+/* $NetBSD: drm_dma.c,v 1.2.20.2 2007/11/21 21:19:30 bouyer Exp $ */
+
 /* drm_dma.c -- DMA IOCTL and function support -*- linux-c -*-
  * Created: Fri Mar 19 14:30:16 1999 by faith@valinux.com
  */
