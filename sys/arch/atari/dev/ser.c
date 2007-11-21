@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.34 2007/07/09 20:52:08 ad Exp $	*/
+/*	$NetBSD: ser.c,v 1.34.8.1 2007/11/21 21:53:05 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.34 2007/07/09 20:52:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.34.8.1 2007/11/21 21:53:05 joerg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
@@ -968,16 +968,8 @@ serstart(tp)
 
 	if (sc->sc_tx_stopped)
 		goto stopped;
-
-	if (tp->t_outq.c_cc <= tp->t_lowat) {
-		if (ISSET(tp->t_state, TS_ASLEEP)) {
-			CLR(tp->t_state, TS_ASLEEP);
-			wakeup(&tp->t_outq);
-		}
-		selwakeup(&tp->t_wsel);
-		if (tp->t_outq.c_cc == 0)
-			goto stopped;
-	}
+	if (!ttypull(tp))
+		goto stopped;
 
 	/* Grab the first contiguous region of buffer space. */
 	{

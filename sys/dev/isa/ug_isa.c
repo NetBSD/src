@@ -1,4 +1,4 @@
-/* $NetBSD: ug_isa.c,v 1.2.8.2 2007/10/26 15:45:31 joerg Exp $ */
+/* $NetBSD: ug_isa.c,v 1.2.8.3 2007/11/21 21:55:26 joerg Exp $ */
 
 /*
  * Copyright (c) 2007 Mihai Chelaru <kefren@netbsd.ro>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ug_isa.c,v 1.2.8.2 2007/10/26 15:45:31 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ug_isa.c,v 1.2.8.3 2007/11/21 21:55:26 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,20 +147,24 @@ ug_isa_attach(struct device *parent, struct device *self, void *aux)
 		aprint_error("%s: reset failed.\n", sc->sc_dev.dv_xname);
 
 	ug_setup_sensors(sc);
+	sc->sc_sme = sysmon_envsys_create();
 
 	for (i = 0; i < UG_NUM_SENSORS; i++) {
-		sc->sc_data[i].sensor = i;
-		sc->sc_data[i].state = ENVSYS_SVALID;
+		if (sysmon_envsys_sensor_attach(sc->sc_sme,
+						&sc->sc_sensor[i])) {
+			sysmon_envsys_destroy(sc->sc_sme);
+			return;
+		}
 	}
 
-	sc->sc_sysmon.sme_sensor_data = sc->sc_data;
-	sc->sc_sysmon.sme_cookie = sc;
-	sc->sc_sysmon.sme_gtredata = ug_gtredata;
-	sc->sc_sysmon.sme_nsensors = UG_NUM_SENSORS;
+	sc->sc_sme->sme_cookie = sc;
+	sc->sc_sme->sme_refresh = ug_refresh;
 
-	if (sysmon_envsys_register(&sc->sc_sysmon))
+	if (sysmon_envsys_register(sc->sc_sme)) {
 		aprint_error("%s: unable to register with sysmon\n",
 		    sc->sc_dev.dv_xname);
+		sysmon_envsys_destroy(sc->sc_sme);
+	}
 
 }
 
@@ -169,7 +173,7 @@ ug_isa_detach(struct device *self, int flags)
 {
 	struct ug_softc *sc = device_private(self);
 
-	sysmon_envsys_unregister(&sc->sc_sysmon);
+	sysmon_envsys_unregister(sc->sc_sme);
 	bus_space_unmap(sc->sc_iot, sc->sc_ioh, 8);
 	return 0;
 }

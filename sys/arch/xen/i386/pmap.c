@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.29.8.3 2007/11/11 16:47:04 joerg Exp $	*/
+/*	$NetBSD: pmap.c,v 1.29.8.4 2007/11/21 21:53:42 joerg Exp $	*/
 /*	NetBSD: pmap.c,v 1.179 2004/10/10 09:55:24 yamt Exp		*/
 
 /*
@@ -61,9 +61,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.29.8.3 2007/11/11 16:47:04 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.29.8.4 2007/11/21 21:53:42 joerg Exp $");
 
-#include "opt_cputype.h"
 #include "opt_user_ldt.h"
 #include "opt_largepages.h"
 #include "opt_lockdebug.h"
@@ -466,7 +465,6 @@ static void *csrcp, *cdstp, *zerop, *ptpp;
  */
 
 struct pool_cache pmap_pdp_cache;
-u_int pmap_pdp_cache_generation;
 
 int	pmap_pdp_ctor(void *, void *, int);
 void	pmap_pdp_dtor(void *, void *);
@@ -476,10 +474,8 @@ void *vmmap; /* XXX: used by mem.c... it should really uvm_map_reserve it */
 extern vaddr_t idt_vaddr;			/* we allocate IDT early */
 extern paddr_t idt_paddr;
 
-#if defined(I586_CPU)
 /* stuff to fix the pentium f00f bug */
 extern vaddr_t pentium_idt_vaddr;
-#endif
 
 
 /*
@@ -1221,11 +1217,9 @@ pmap_bootstrap(kva_start)
 	idt_paddr = avail_start;			/* steal a page */
 	avail_start += PAGE_SIZE;
 
-#if defined(I586_CPU)
 	/* pentium f00f bug stuff */
 	pentium_idt_vaddr = virtual_avail;		/* don't need pte */
 	virtual_avail += PAGE_SIZE;
-#endif
 
 	/*
 	 * now we reserve some VM for mapping pages when doing a crash dump
@@ -1749,6 +1743,7 @@ pmap_pdp_ctor(void *arg, void *object, int flags)
 {
 	pd_entry_t *pdir = object;
 	paddr_t pdirpa;
+	u_int npde;
 	int s;
 
 	/*
@@ -1768,12 +1763,13 @@ pmap_pdp_ctor(void *arg, void *object, int flags)
 	pdir[PDSLOT_PTE] = xpmap_ptom(pdirpa | PG_V /* | PG_KW */);
 
 	/* put in kernel VM PDEs */
+	npde = nkpde;
 	memcpy(&pdir[PDSLOT_KERN], &PDP_BASE[PDSLOT_KERN],
-	    nkpde * sizeof(pd_entry_t));
+	    npde * sizeof(pd_entry_t));
 
 	/* zero the rest */
-	memset(&pdir[PDSLOT_KERN + nkpde], 0,
-	    PAGE_SIZE - ((PDSLOT_KERN + nkpde) * sizeof(pd_entry_t)));
+	memset(&pdir[PDSLOT_KERN + npde], 0,
+	    PAGE_SIZE - ((PDSLOT_KERN + npde) * sizeof(pd_entry_t)));
 
 	pmap_kenter_pa((vaddr_t)pdir, pdirpa, VM_PROT_READ);
 	pmap_update(pmap_kernel());
@@ -1819,7 +1815,6 @@ struct pmap *
 pmap_create()
 {
 	struct pmap *pmap;
-	u_int gen;
 
 	XENPRINTF(("pmap_create\n"));
 	pmap = pool_get(&pmap_pmap_pool, PR_WAITOK);
@@ -1855,12 +1850,11 @@ pmap_create()
 	 */
 
  try_again:
-	gen = pmap_pdp_cache_generation;
 	pmap->pm_pdir = pool_cache_get(&pmap_pdp_cache, PR_WAITOK);
 
 	simple_lock(&pmaps_lock);
 
-	if (gen != pmap_pdp_cache_generation) {
+	if (pmap->pm_pdir[PDSLOT_KERN + nkpde - 1] == 0) {
 		simple_unlock(&pmaps_lock);
 		pool_cache_destruct_object(&pmap_pdp_cache, pmap->pm_pdir);
 		goto try_again;
@@ -2482,9 +2476,7 @@ pmap_pageidlezero(pa)
 	bool rv = true;
 	int *ptr;
 	int *ep;
-#if defined(I686_CPU)
 	const u_int32_t cpu_features = curcpu()->ci_feature_flags;
-#endif /* defined(I686_CPU) */
 
 #ifdef DIAGNOSTIC
 	if (PTE_GET(zpte))
@@ -2508,19 +2500,15 @@ pmap_pageidlezero(pa)
 			rv = false;
 			break;
 		}
-#if defined(I686_CPU)
 		if (cpu_features & CPUID_SSE2)
 			__asm volatile ("movnti %1, %0" :
 			    "=m"(*ptr) : "r" (0));
 		else
-#endif /* defined(I686_CPU) */
 			*ptr = 0;
 	}
 
-#if defined(I686_CPU)
 	if (cpu_features & CPUID_SSE2)
 		__asm volatile ("sfence" ::: "memory");
-#endif /* defined(I686_CPU) */       
 
 	PTE_CLEAR(zpte, maptp);				/* zap! */
 	return (rv);
@@ -3787,7 +3775,7 @@ pmap_growkernel(maxkvaddr)
 	s = splhigh();	/* to be safe */
 	simple_lock(&kpm->pm_obj.vmobjlock);
 
-	for (/*null*/ ; nkpde < needed_kpde ; nkpde++) {
+	for (/*null*/ ; nkpde < needed_kpde ;) {
 
 		mapdp = (pt_entry_t *)vtomach((vaddr_t)&kpm->pm_pdir[PDSLOT_KERN + nkpde]);
 		if (uvm.page_init_done == false) {
@@ -3807,6 +3795,7 @@ pmap_growkernel(maxkvaddr)
 
 			/* count PTP as resident */
 			kpm->pm_stats.resident_count++;
+			nkpde++;
 			continue;
 		}
 
@@ -3833,12 +3822,11 @@ pmap_growkernel(maxkvaddr)
 			PDE_COPY(&pm->pm_pdir[PDSLOT_KERN + nkpde], maptp,
 			    &kpm->pm_pdir[PDSLOT_KERN + nkpde]);
 		}
+		nkpde++;
+		simple_unlock(&pmaps_lock);
 
 		/* Invalidate the PDP cache. */
 		pool_cache_invalidate(&pmap_pdp_cache);
-		pmap_pdp_cache_generation++;
-
-		simple_unlock(&pmaps_lock);
 	}
 
 	simple_unlock(&kpm->pm_obj.vmobjlock);
@@ -4021,24 +4009,6 @@ pmap_tlb_shootdown(pmap, va, pte, cpumaskp)
 			__cpu_simple_unlock(&pq->pq_slock);
 			continue;
 		}
-
-#ifdef I386_CPU
-		/*
-		 * i386 CPUs can't invalidate a single VA, only
-		 * flush the entire TLB, so don't bother allocating
-		 * jobs for them -- just queue a `flushu'.
-		 *
-		 * XXX note that this can be executed for non-i386
-		 * when called * early (before identifycpu() has set
-		 * cpu_class)
-		 */
-		if (cpu_class == CPUCLASS_386) {
-			pq->pq_flushu++;
-			*cpumaskp |= 1U << ci->ci_cpuid;
-			__cpu_simple_unlock(&pq->pq_slock);
-			continue;
-		}
-#endif
 
 		pj = pmap_tlb_shootdown_job_get(pq);
 		pq->pq_pte |= pte;

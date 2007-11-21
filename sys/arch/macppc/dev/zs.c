@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.42.18.2 2007/11/11 16:46:41 joerg Exp $	*/
+/*	$NetBSD: zs.c,v 1.42.18.3 2007/11/21 21:53:21 joerg Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Bill Studenmund
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.42.18.2 2007/11/11 16:46:41 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.42.18.3 2007/11/21 21:53:21 joerg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -70,6 +70,8 @@ __KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.42.18.2 2007/11/11 16:46:41 joerg Exp $");
 #include <sys/time.h>
 #include <sys/kernel.h>
 #include <sys/syslog.h>
+#include <sys/intr.h>
+#include <sys/cpu.h>
 #ifdef KGDB
 #include <sys/kgdb.h>
 #endif
@@ -80,7 +82,6 @@ __KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.42.18.2 2007/11/11 16:46:41 joerg Exp $");
 
 #include <machine/z8530var.h>
 #include <machine/autoconf.h>
-#include <machine/cpu.h>
 #include <machine/pio.h>
 
 /* Are these in a header file anywhere? */
@@ -386,7 +387,7 @@ zsc_attach(struct device *parent, struct device *self, void *aux)
 	intr_establish(intr[1][1], IST_EDGE, IPL_TTY, zs_txdma_int, (void *)1);
 #endif
 
-	zsc->zsc_si = softintr_establish(IPL_SOFTSERIAL,
+	zsc->zsc_si = softint_establish(SOFTINT_SERIAL,
 		(void (*)(void *)) zsc_intr_soft, zsc);
 
 	/*
@@ -452,7 +453,7 @@ zshard(void *arg)
 	zsc = arg;
 	rval = zsc_intr_hard(zsc);
 	if ((zsc->zsc_cs[0]->cs_softreq) || (zsc->zsc_cs[1]->cs_softreq))
-		softintr_schedule(zsc->zsc_si);
+		softint_schedule(zsc->zsc_si);
 
 	return rval;
 }
@@ -474,7 +475,7 @@ zs_txdma_int(void *arg)
 	zstty_txdma_int(cs);
 
 	if (cs->cs_softreq)
-		softintr_schedule(zsc->zsc_si);
+		softint_schedule(zsc->zsc_si);
 
 	return 1;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: dl.c,v 1.37.14.1 2007/10/26 15:47:24 joerg Exp $	*/
+/*	$NetBSD: dl.c,v 1.37.14.2 2007/11/21 21:55:45 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dl.c,v 1.37.14.1 2007/10/26 15:47:24 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dl.c,v 1.37.14.2 2007/11/21 21:55:45 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -283,7 +283,7 @@ dlrint(void *arg)
 		cc = c & 0xFF;
 
 		if (!(tp->t_state & TS_ISOPEN)) {
-			wakeup((void *)&tp->t_rawq);
+			clwakeup(&tp->t_rawq);
 			return;
 		}
 
@@ -468,17 +468,8 @@ dlstart(struct tty *tp)
 
 	if (tp->t_state & (TS_TIMEOUT|TS_BUSY|TS_TTSTOP))
 		goto out;
-	if (tp->t_outq.c_cc <= tp->t_lowat) {
-		if (tp->t_state & TS_ASLEEP) {
-			tp->t_state &= ~TS_ASLEEP;
-			wakeup((void *)&tp->t_outq);
-		}
-		selwakeup(&tp->t_wsel);
-	}
-	if (tp->t_outq.c_cc == 0)
+	if (!ttypull(tp))
 		goto out;
-
-
 	if (DL_READ_WORD(DL_UBA_XCSR) & DL_XCSR_TX_READY) {
 		tp->t_state |= TS_BUSY;
 		DL_WRITE_BYTE(DL_UBA_XBUFL, getc(&tp->t_outq));

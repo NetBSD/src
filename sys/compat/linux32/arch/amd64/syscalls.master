@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.15.6.4 2007/11/11 16:47:17 joerg Exp $
+	$NetBSD: syscalls.master,v 1.15.6.5 2007/11/21 21:53:57 joerg Exp $
 
 ; NetBSD i386 COMPAT_LINUX32 system call name/number "master" file.
 ; (See syscalls.conf to see what it is processed into.)
@@ -173,7 +173,7 @@
 		    const netbsd32_charp link); }
 84	NOARGS	{ int compat_43_netbsd32_lstat43(const netbsd32_charp \
 		    path, netbsd32_stat43p_t ub); }
-85	STD	{ int linux32_sys_readlink(const netbsd32_charp name, \
+85	NOARGS	{ int netbsd32_readlink(const netbsd32_charp name, \
 		    netbsd32_charp buf, int count); }
 86	UNIMPL	uselib
 87	STD	{ int linux32_sys_swapon(netbsd32_charp name); }

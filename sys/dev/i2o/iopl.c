@@ -1,4 +1,4 @@
-/*	$NetBSD: iopl.c,v 1.26.6.2 2007/10/26 15:44:32 joerg Exp $	*/
+/*	$NetBSD: iopl.c,v 1.26.6.3 2007/11/21 21:54:45 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -46,9 +46,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iopl.c,v 1.26.6.2 2007/10/26 15:44:32 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iopl.c,v 1.26.6.3 2007/11/21 21:54:45 joerg Exp $");
 
 #include "opt_inet.h"
+#include "opt_i2o.h"
 #include "bpfilter.h"
 
 #include <sys/param.h>

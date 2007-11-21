@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.2.4.3 2007/11/11 16:47:03 joerg Exp $	*/
+/*	$NetBSD: pmap.c,v 1.2.4.4 2007/11/21 21:53:39 joerg Exp $	*/
 
 /*
  *
@@ -108,11 +108,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.2.4.3 2007/11/11 16:47:03 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.2.4.4 2007/11/21 21:53:39 joerg Exp $");
 
-#ifndef __x86_64__
-#include "opt_cputype.h"
-#endif
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
 #include "opt_multiprocessor.h"
@@ -127,6 +124,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.2.4.3 2007/11/11 16:47:03 joerg Exp $");
 #include <sys/pool.h>
 #include <sys/user.h>
 #include <sys/kernel.h>
+#include <sys/atomic.h>
 
 #include <uvm/uvm.h>
 
@@ -142,10 +140,6 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.2.4.3 2007/11/11 16:47:03 joerg Exp $");
 
 #include <x86/i82489reg.h>
 #include <x86/i82489var.h>
-
-/* XXX */
-void		atomic_inc_uint(volatile unsigned int *);
-unsigned int	atomic_dec_uint_nv(volatile unsigned int *);
 
 /*
  * general info:
@@ -487,7 +481,7 @@ extern vaddr_t lo32_paddr;
 
 extern int end;
 
-#if defined(I586_CPU)
+#ifdef i386
 /* stuff to fix the pentium f00f bug */
 extern vaddr_t pentium_idt_vaddr;
 #endif
@@ -1099,13 +1093,10 @@ pmap_bootstrap(vaddr_t kva_start)
 #else /* defined(__x86_64__) */
 	virtual_avail += PAGE_SIZE; pte++;
 	avail_start += PAGE_SIZE;
-#endif /* defined(__x86_64__) */
-
-#if defined(I586_CPU)
 	/* pentium f00f bug stuff */
 	pentium_idt_vaddr = virtual_avail;		/* don't need pte */
 	virtual_avail += PAGE_SIZE; pte++;
-#endif
+#endif /* defined(__x86_64__) */
 
 #ifdef _LP64
 	/*

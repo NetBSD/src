@@ -1,4 +1,4 @@
-/* $NetBSD: ofwoea_machdep.c,v 1.1.6.2 2007/10/28 20:10:46 joerg Exp $ */
+/* $NetBSD: ofwoea_machdep.c,v 1.1.6.3 2007/11/21 21:53:26 joerg Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.1.6.2 2007/10/28 20:10:46 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.1.6.3 2007/11/21 21:53:26 joerg Exp $");
 
 
 #include "opt_compat_netbsd.h"
@@ -57,6 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.1.6.2 2007/10/28 20:10:46 joerg
 #include <machine/pmap.h>
 #include <machine/powerpc.h>
 #include <machine/trap.h>
+#include <machine/vmparam.h>
 #include <powerpc/bus.h>
 #include <powerpc/oea/bat.h>
 #include <powerpc/ofw_bus.h>
@@ -362,11 +363,15 @@ ofwoea_batinit(void)
 	/* XXX this is a macppc-specific hack */
 	bitmap = 0x8f00;
 #endif
-	for (i=1; i < 0x10; i++)
+	for (i=1; i < 0x10; i++) {
+		/* skip the three vital SR regions */
+		if (i == USER_SR || i == KERNEL_SR || i == KERNEL2_SR)
+			continue;
 		if (bitmap & (1 << i)) {
 			oea_iobat_add(0x10000000 * i, BAT_BL_256M);
 			DPRINTF("Batmapped 256M at 0x%x\n", 0x10000000 * i);
 		}
+	}
 #endif
 }
 
