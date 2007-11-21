@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.252 2007/11/21 18:41:01 pooka Exp $
+#       $NetBSD: Makefile,v 1.253 2007/11/21 22:49:06 elad Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -43,7 +43,7 @@ MAN=	altq.9 arc4random.9 arp.9 audio.9 autoconf.9 \
 	radio.9 ras.9 rasops.9 ratecheck.9 resettodr.9 rnd.9 rssadapt.9 \
 	rt_timer.9 rwlock.9 RUN_ONCE.9 \
 	sched_4bsd.9 scsipi.9 \
-	secmodel.9 secmodel_bsd44.9 secmodel_overlay.9 \
+	secmodel.9 secmodel_bsd44.9 secmodel_overlay.9 secmodel_securelevel.9 \
 	setjmp.9 shutdownhook_establish.9 \
 	signal.9 softintr.9 spl.9 splraiseipl.9 store.9 suspendsched.9 \
 	sysctl.9 sysmon_envsys.9 tc.9 tcp_congctl.9 timecounter.9 time_second.9 \
