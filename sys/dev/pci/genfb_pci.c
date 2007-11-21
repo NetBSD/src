@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb_pci.c,v 1.1 2007/04/10 02:16:48 macallan Exp $ */
+/*	$NetBSD: genfb_pci.c,v 1.1.22.1 2007/11/21 21:19:35 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb_pci.c,v 1.1 2007/04/10 02:16:48 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb_pci.c,v 1.1.22.1 2007/11/21 21:19:35 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,6 +53,12 @@ __KERNEL_RCSID(0, "$NetBSD: genfb_pci.c,v 1.1 2007/04/10 02:16:48 macallan Exp $
 #include "opt_wsfb.h"
 #include "opt_genfb.h"
 
+#ifdef GENFB_PCI_DEBUG
+# define DPRINTF printf
+#else
+# define DPRINTF while (0) printf
+#endif
+
 struct range {
 	bus_addr_t offset;
 	bus_size_t size;
@@ -67,6 +73,7 @@ struct pci_genfb_softc {
 	bus_space_tag_t sc_memt;
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_memh;
+	pcireg_t sc_bars[9];
 	struct range sc_ranges[8];
 	int sc_ranges_used;
 };
@@ -76,6 +83,8 @@ static void	pci_genfb_attach(struct device *, struct device *, void *);
 static int	pci_genfb_ioctl(void *, void *, u_long, void *, int,
 		    struct lwp *);
 static paddr_t	pci_genfb_mmap(void *, void *, off_t, int);
+static int	pci_genfb_drm_print(void *, const char *);
+
 
 CFATTACH_DECL(genfb_pci, sizeof(struct pci_genfb_softc),
     pci_genfb_match, pci_genfb_attach, NULL, NULL);
@@ -111,8 +120,13 @@ pci_genfb_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_iot = pa->pa_iot;	
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_pcitag = pa->pa_tag;
-
 	genfb_init(&sc->sc_gen);
+
+	if ((sc->sc_gen.sc_width == 0) || (sc->sc_gen.sc_fbsize == 0)) {
+		aprint_error("%s: bogus parameters, unable to continue\n", 
+		    device_xname(self));
+		return;
+	}
 
 	if (bus_space_map(sc->sc_memt, sc->sc_gen.sc_fboffset,
 	    sc->sc_gen.sc_fbsize, BUS_SPACE_MAP_LINEAR, &sc->sc_memh) != 0) {
@@ -136,6 +150,8 @@ pci_genfb_attach(struct device *parent, struct device *self, void *aux)
 			    &sc->sc_ranges[idx].flags);
 			idx++;
 		}
+		sc->sc_bars[(bar - 0x10) >> 2] =
+		    pci_conf_read(sc->sc_pc, sc->sc_pcitag, bar);
 		bar += 4;
 	}
 	sc->sc_ranges_used = idx;			    
@@ -144,7 +160,19 @@ pci_genfb_attach(struct device *parent, struct device *self, void *aux)
 	ops.genfb_mmap = pci_genfb_mmap;
 
 	genfb_attach(&sc->sc_gen, &ops);
+
+	/* now try to attach a DRM */
+	config_found_ia(self, "drm", aux, pci_genfb_drm_print);	
 }
+
+static int
+pci_genfb_drm_print(void *aux, const char *pnp)
+{
+	if (pnp)
+		aprint_normal("direct rendering for %s", pnp);
+	return (UNSUPP);
+}
+
 
 static int
 pci_genfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
@@ -162,6 +190,18 @@ pci_genfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 		case PCI_IOC_CFGWRITE:
 			return (pci_devioctl(sc->sc_pc, sc->sc_pcitag,
 			    cmd, data, flag, l));
+		case WSDISPLAYIO_SMODE:
+			{
+				int new_mode = *(int*)data, i;
+				if (new_mode == WSDISPLAYIO_MODE_EMUL) {
+					for (i = 0; i < 9; i++)
+						pci_conf_write(sc->sc_pc,
+						     sc->sc_pcitag,
+						     0x10 + (i << 2),
+						     sc->sc_bars[i]);
+				}
+			}
+			return 0;
 	}
 
 	return EPASSTHROUGH;
@@ -176,6 +216,8 @@ pci_genfb_mmap(void *v, void *vs, off_t offset, int prot)
 	int i;
 
 	/* regular fb mapping at 0 */
+	DPRINTF("%s: %08x limit %08x\n", __func__, (uint32_t)offset,
+	    (uint32_t)sc->sc_gen.sc_fbsize);
 	if ((offset >= 0) && (offset < sc->sc_gen.sc_fbsize)) {
 
 		return bus_space_mmap(sc->sc_memt, sc->sc_gen.sc_fboffset,
@@ -221,6 +263,7 @@ pci_genfb_mmap(void *v, void *vs, off_t offset, int prot)
 #endif
 
 	/* allow to mmap() our BARs */
+	/* maybe the ROM BAR too? */
 	for (i = 0; i < sc->sc_ranges_used; i++) {
 
 		r = &sc->sc_ranges[i];

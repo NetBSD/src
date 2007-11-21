@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb.c,v 1.10.6.1 2007/11/13 16:01:43 bouyer Exp $ */
+/*	$NetBSD: genfb.c,v 1.10.6.2 2007/11/21 21:19:43 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.10.6.1 2007/11/13 16:01:43 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.10.6.2 2007/11/21 21:19:43 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,21 +96,21 @@ genfb_init(struct genfb_softc *sc)
 	printf(prop_dictionary_externalize(dict));
 #endif
 	if (!prop_dictionary_get_uint32(dict, "width", &sc->sc_width)) {
-		GPRINTF("no width property");
+		GPRINTF("no width property\n");
 		return;
 	}
 	if (!prop_dictionary_get_uint32(dict, "height", &sc->sc_height)) {
-		GPRINTF("no height property");
+		GPRINTF("no height property\n");
 		return;
 	}
 	if (!prop_dictionary_get_uint32(dict, "depth", &sc->sc_depth)) {
-		GPRINTF("no depth property");
+		GPRINTF("no depth property\n");
 		return;
 	}
 
 	/* XXX should be a 64bit value */
 	if (!prop_dictionary_get_uint32(dict, "address", &fboffset)) {
-		GPRINTF("no address property");
+		GPRINTF("no address property\n");
 		return;
 	}
 

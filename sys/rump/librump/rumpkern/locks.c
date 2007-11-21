@@ -1,4 +1,4 @@
-/*	$NetBSD: locks.c,v 1.2.2.3 2007/11/18 19:35:55 bouyer Exp $	*/
+/*	$NetBSD: locks.c,v 1.2.2.4 2007/11/21 21:19:49 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -169,6 +169,13 @@ cv_signal(kcondvar_t *cv)
 {
 
 	rumpuser_cv_signal(RUMPCV(cv));
+}
+
+void
+cv_broadcast(kcondvar_t *cv)
+{
+
+	rumpuser_cv_broadcast(RUMPCV(cv));
 }
 
 /* kernel biglock, only for vnode_if */

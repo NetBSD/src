@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.77 2007/10/08 20:06:17 ad Exp $ */
+/* $NetBSD: cpu.c,v 1.77.2.1 2007/11/21 21:19:05 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.77 2007/10/08 20:06:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.77.2.1 2007/11/21 21:19:05 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -88,7 +88,9 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.77 2007/10/08 20:06:17 ad Exp $");
 #include <machine/prom.h>
 #include <machine/alpha.h>
 
-struct cpu_info cpu_info_primary;
+struct cpu_info cpu_info_primary = {
+	.ci_curlwp = &lwp0
+};
 struct cpu_info *cpu_info_list = &cpu_info_primary;
 
 #if defined(MULTIPROCESSOR)

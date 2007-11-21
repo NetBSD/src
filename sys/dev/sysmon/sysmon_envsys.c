@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.69.2.2 2007/11/18 19:35:41 bouyer Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.69.2.3 2007/11/21 21:19:41 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.69.2.2 2007/11/18 19:35:41 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.69.2.3 2007/11/21 21:19:41 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -95,14 +95,11 @@ __KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.69.2.2 2007/11/18 19:35:41 bouye
  * workqueue(9) that is used to check for conditions and sending events
  * to the powerd(8) daemon (if running)).
  *
- * The callouts are protected by the 'sme_callout_mtx' spin lock and the
- * 'sme_callout_cv' is used to check that the callout has finished before
- * unregistering a sysmon_envsys device.
- *
+ * The callouts are protected by the 'sme_callout_mtx' spin lock.
  */
 
 kmutex_t sme_mtx, sme_events_mtx, sme_callout_mtx;
-kcondvar_t sme_cv, sme_callout_cv;
+kcondvar_t sme_cv;
 
 /*
  * Types of properties that can be set via userland.
@@ -135,9 +132,8 @@ sysmon_envsys_init(void)
 	LIST_INIT(&sysmon_envsys_list);
 	mutex_init(&sme_mtx, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&sme_events_mtx, MUTEX_DEFAULT, IPL_NONE);
-	mutex_init(&sme_callout_mtx, MUTEX_SPIN, IPL_NONE);
+	mutex_init(&sme_callout_mtx, MUTEX_SPIN, IPL_SOFTCLOCK);
 	cv_init(&sme_cv, "smeworker");
-	cv_init(&sme_callout_cv, "smecallout");
 	sme_propd = prop_dictionary_create();
 }
 
@@ -890,12 +886,9 @@ sysmon_envsys_unregister(struct sysmon_envsys *sme)
 	while (sme->sme_flags & SME_FLAG_BUSY)
 		cv_wait(&sme_cv, &sme_mtx);
 	/*
-	 * Wait for the callout to finish.
+	 * Stop the callout.
 	 */
-	mutex_enter(&sme_callout_mtx);
-	while (sme->sme_flags & SME_CALLOUT_BUSY)
-		cv_wait(&sme_callout_cv, &sme_callout_mtx);
-	mutex_exit(&sme_callout_mtx);
+	callout_stop(&sme->sme_callout);
 	/*
 	 * Decrement global sensors counter (only useful for compatibility).
 	 */

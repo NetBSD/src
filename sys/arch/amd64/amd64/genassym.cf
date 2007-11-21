@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.12.2.4 2007/11/16 17:18:00 bouyer Exp $
+#	$NetBSD: genassym.cf,v 1.12.2.5 2007/11/21 21:19:06 bouyer Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -310,6 +310,7 @@ endif
 
 define	IPL_NONE		IPL_NONE
 define	IPL_CLOCK		IPL_CLOCK
+define	IPL_HIGH		IPL_HIGH
 define	IPL_IPI			IPL_IPI
 
 define	IPL_SOFTNET		IPL_SOFTNET

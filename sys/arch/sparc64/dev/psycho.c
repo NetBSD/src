@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.80 2007/03/04 06:00:49 christos Exp $	*/
+/*	$NetBSD: psycho.c,v 1.80.24.1 2007/11/21 21:19:22 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Eduardo E. Horvath
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.80 2007/03/04 06:00:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.80.24.1 2007/11/21 21:19:22 bouyer Exp $");
 
 #include "opt_ddb.h"
 
@@ -266,8 +266,10 @@ psycho_attach(struct device *parent, struct device *self, void *aux)
 	struct psycho_pbm *pp;
 	struct pcibus_attach_args pba;
 	struct mainbus_attach_args *ma = aux;
+	struct psycho_ranges *pr;
+	prop_dictionary_t dict;
 	bus_space_handle_t bh;
-	uint64_t csr;
+	uint64_t csr, mem_base;
 	int psycho_br[2], n, i;
 	bus_space_handle_t pci_ctl;
 	char *model = prom_getpropstring(ma->ma_node, "model");
@@ -626,6 +628,14 @@ found:
 		}
 		iommu_reset(sc->sc_is);
 	}
+
+	dict = device_properties(self);
+	pr = get_psychorange(pp, 2);	/* memory range */
+#ifdef DEBUG
+	printf("memory range: %08x %08x\n", pr->phys_hi, pr->phys_lo);
+#endif
+	mem_base = ((uint64_t)pr->phys_hi) << 32 | pr->phys_lo;
+	prop_dictionary_set_uint64(dict, "mem_base", mem_base);
 
 	/*
 	 * attach the pci.. note we pass PCI A tags, etc., for the sabre here.

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rwlock.c,v 1.11 2007/10/11 19:45:25 ad Exp $	*/
+/*	$NetBSD: kern_rwlock.c,v 1.11.2.1 2007/11/21 21:19:45 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.11 2007/10/11 19:45:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.11.2.1 2007/11/21 21:19:45 bouyer Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -69,13 +69,13 @@ __KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.11 2007/10/11 19:45:25 ad Exp $");
 #if defined(LOCKDEBUG)
 
 #define	RW_WANTLOCK(rw, op)						\
-	LOCKDEBUG_WANTLOCK(RW_GETID(rw),				\
+	LOCKDEBUG_WANTLOCK(RW_DEBUG_P(rw), (rw),			\
 	    (uintptr_t)__builtin_return_address(0), op == RW_READER);
 #define	RW_LOCKED(rw, op)						\
-	LOCKDEBUG_LOCKED(RW_GETID(rw),					\
+	LOCKDEBUG_LOCKED(RW_DEBUG_P(rw), (rw),				\
 	    (uintptr_t)__builtin_return_address(0), op == RW_READER);
 #define	RW_UNLOCKED(rw, op)						\
-	LOCKDEBUG_UNLOCKED(RW_GETID(rw),				\
+	LOCKDEBUG_UNLOCKED(RW_DEBUG_P(rw), (rw),			\
 	    (uintptr_t)__builtin_return_address(0), op == RW_READER);
 #define	RW_DASSERT(rw, cond)						\
 do {									\
@@ -114,10 +114,23 @@ do {									\
  * For platforms that use 'simple' RW locks.
  */
 #ifdef __HAVE_SIMPLE_RW_LOCKS
-#define	RW_ACQUIRE(rw, old, new)	RW_CAS(&(rw)->rw_owner, old, new)
-#define	RW_RELEASE(rw, old, new)	RW_CAS(&(rw)->rw_owner, old, new)
-#define	RW_SETID(rw, id)		((rw)->rw_id = id)
-#define	RW_GETID(rw)			((rw)->rw_id)
+#define	RW_ACQUIRE(rw, old, new)	RW_CAS1(&(rw)->rw_owner, old, new)
+#define	RW_RELEASE(rw, old, new)	RW_CAS1(&(rw)->rw_owner, old, new)
+#define	RW_SETDEBUG(rw, on)		((rw)->rw_owner |= (on) ? RW_DEBUG : 0)
+#define	RW_DEBUG_P(rw)			(((rw)->rw_owner & RW_DEBUG) != 0)
+#if defined(LOCKDEBUG)
+#define	RW_INHERITDEBUG(new, old)	(new) |= (old) & RW_DEBUG
+#else /* defined(LOCKDEBUG) */
+#define	RW_INHERITDEBUG(new, old)	/* nothing */
+#endif /* defined(LOCKDEBUG) */
+
+static inline int
+RW_CAS1(volatile uintptr_t *ptr, uintptr_t old, uintptr_t new)
+{
+
+	RW_INHERITDEBUG(new, old);
+	return RW_CAS(ptr, old, new);
+}
 
 static inline int
 RW_SET_WAITERS(krwlock_t *rw, uintptr_t need, uintptr_t set)
@@ -190,7 +203,7 @@ rw_abort(krwlock_t *rw, const char *func, const char *msg)
 	if (panicstr != NULL)
 		return;
 
-	LOCKDEBUG_ABORT(RW_GETID(rw), rw, &rwlock_lockops, func, msg);
+	LOCKDEBUG_ABORT(rw, &rwlock_lockops, func, msg);
 }
 
 /*
@@ -201,13 +214,13 @@ rw_abort(krwlock_t *rw, const char *func, const char *msg)
 void
 rw_init(krwlock_t *rw)
 {
-	u_int id;
+	bool dodebug;
 
 	memset(rw, 0, sizeof(*rw));
 
-	id = LOCKDEBUG_ALLOC(rw, &rwlock_lockops,
+	dodebug = LOCKDEBUG_ALLOC(rw, &rwlock_lockops,
 	    (uintptr_t)__builtin_return_address(0));
-	RW_SETID(rw, id);
+	RW_SETDEBUG(rw, dodebug);
 }
 
 /*
@@ -219,8 +232,8 @@ void
 rw_destroy(krwlock_t *rw)
 {
 
-	LOCKDEBUG_FREE(rw, RW_GETID(rw));
-	RW_ASSERT(rw, rw->rw_owner == 0);
+	RW_ASSERT(rw, (rw->rw_owner & ~RW_DEBUG) == 0);
+	LOCKDEBUG_FREE(RW_DEBUG_P(rw), rw);
 }
 
 /*
@@ -441,7 +454,7 @@ rw_vector_exit(krwlock_t *rw)
 			new = rcnt << RW_READ_COUNT_SHIFT;
 			if (wcnt != 0)
 				new |= RW_HAS_WAITERS | RW_WRITE_WANTED;
-				
+			
 			RW_GIVE(rw);
 			if (!RW_RELEASE(rw, owner, new)) {
 				/* Oops, try again. */

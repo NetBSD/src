@@ -1,10 +1,11 @@
-# $NetBSD: Makefile,v 1.2 2007/09/11 22:02:09 xtraeme Exp $
+# $NetBSD: Makefile,v 1.2.6.1 2007/11/21 21:19:48 bouyer Exp $
 
 S=		${.CURDIR}/../../../..
 .PATH:		$S/dev/isa $S/dev/ic
 
-KMOD= 		aps_isa
-SRCS= 		aps.c lkm_isa.c
+KMOD= 		aps
+SRCS= 		real-aps.c lkm_isa.c
+BUILDSYMLINKS+=	aps.c real-aps.c
 NOMAN=		# yes
 
 LKM_ISA_IO_PORT=	0x1600

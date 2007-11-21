@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_pth.c,v 1.4.2.3 2007/11/18 19:35:55 bouyer Exp $	*/
+/*	$NetBSD: rumpuser_pth.c,v 1.4.2.4 2007/11/21 21:19:49 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -270,6 +270,13 @@ rumpuser_cv_signal(struct rumpuser_cv *cv)
 {
 
 	NOFAIL(pthread_cond_signal(&cv->pthcv) == 0);
+}
+
+void
+rumpuser_cv_broadcast(struct rumpuser_cv *cv)
+{
+
+	NOFAIL(pthread_cond_broadcast(&cv->pthcv) == 0);
 }
 
 /*
