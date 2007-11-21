@@ -1,3 +1,5 @@
+/* $NetBSD: drm_context.c,v 1.2 2007/11/21 19:22:12 bjs Exp $ */
+
 /* drm_context.h -- IOCTLs for generic contexts -*- linux-c -*-
  * Created: Fri Nov 24 18:31:37 2000 by gareth@valinux.com
  */
