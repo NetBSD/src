@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.370 2007/11/18 10:53:03 jnemeth Exp $
+.\"	$NetBSD: main,v 1.371 2007/11/21 15:43:57 dsieger Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1701,9 +1701,9 @@ If you're one of them, and would like to mentioned, tell us!)
 .It Em "The NetBSD core group:"
 .It Ta Ta
 .It Ta Alistair Crooks Ta Mt agc@NetBSD.org
+.It Ta Quentin Garnier Ta Mt cube@NetBSD.org
 .It Ta YAMAMOTO Takashi Ta Mt yamt@NetBSD.org
 .It Ta Matt Thomas Ta Mt matt@NetBSD.org
-.It Ta Valeriy E. Ushakov Ta Mt uwe@NetBSD.org
 .It Ta Christos Zoulas Ta Mt christos@NetBSD.org
 .It Ta Ta
 .
