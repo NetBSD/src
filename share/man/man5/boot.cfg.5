@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.cfg.5,v 1.1 2007/11/20 15:37:36 sborrill Exp $
+.\"	$NetBSD: boot.cfg.5,v 1.2 2007/11/21 08:14:10 sborrill Exp $
 .\"
 .\" Copyright (c) 2007 Stephen Borrill
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .Dd November 19, 2007
-.Dt BOOT.CFG 5 i386
+.Dt BOOT.CFG 5
 .Os
 .Sh NAME
 .Nm boot.cfg
@@ -146,6 +146,15 @@ Pressing Return by itself will run option 1.
 There will be no timeout.
 .Sh SEE ALSO
 .Xr boot 8
+.Sh BUGS
+Support for
+.Nm
+is currently for 
+.Nx Ns /i386 only.
+It is hoped that its use will be extended to other appropriate ports that
+use the
+.Xr boot 8
+interface.
 .Sh HISTORY
 The
 .Nm
