@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_lockdebug.c,v 1.18 2007/11/21 10:25:51 yamt Exp $	*/
+/*	$NetBSD: subr_lockdebug.c,v 1.19 2007/11/21 11:33:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.18 2007/11/21 10:25:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.19 2007/11/21 11:33:11 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_ddb.h"
@@ -174,6 +174,26 @@ lockdebug_unlock(lockdebuglk_t *lk)
 	splx(s);
 }
 
+static inline lockdebug_t *
+lockdebug_lookup1(volatile void *lock, lockdebuglk_t **lk)
+{
+	lockdebug_t *ld;
+
+	lockdebug_lock(&ld_tree_lk);
+	ld = (lockdebug_t *)rb_tree_find_node(&ld_rb_tree, __UNVOLATILE(lock));
+	lockdebug_unlock(&ld_tree_lk);
+	if (ld == NULL)
+		return NULL;
+
+	if ((ld->ld_flags & LD_SLEEPER) != 0)
+		*lk = &ld_sleeper_lk;
+	else
+		*lk = &ld_spinner_lk;
+
+	lockdebug_lock(*lk);
+	return ld;
+}
+
 /*
  * lockdebug_lookup:
  *
@@ -184,18 +204,9 @@ lockdebug_lookup(volatile void *lock, lockdebuglk_t **lk)
 {
 	lockdebug_t *ld;
 
-	lockdebug_lock(&ld_tree_lk);
-	ld = (lockdebug_t *)rb_tree_find_node(&ld_rb_tree, __UNVOLATILE(lock));
-	lockdebug_unlock(&ld_tree_lk);
+	ld = lockdebug_lookup1(lock, lk);
 	if (ld == NULL)
 		panic("lockdebug_lookup: uninitialized lock (lock=%p)", lock);
-
-	if ((ld->ld_flags & LD_SLEEPER) != 0)
-		*lk = &ld_sleeper_lk;
-	else
-		*lk = &ld_spinner_lk;
-
-	lockdebug_lock(*lk);
 	return ld;
 }
 
@@ -239,11 +250,17 @@ lockdebug_alloc(volatile void *lock, lockops_t *lo, uintptr_t initaddr)
 {
 	struct cpu_info *ci;
 	lockdebug_t *ld;
+	lockdebuglk_t *lk;
 
 	if (lo == NULL || panicstr != NULL)
 		return false;
 	if (ld_freeptr == 0)
 		lockdebug_init();
+
+	if ((ld = lockdebug_lookup1(lock, &lk)) != NULL) {
+		lockdebug_abort1(ld, lk, __func__, "already initialized", true);
+		/* NOTREACHED */
+	}
 
 	ci = curcpu();
 
