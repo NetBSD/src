@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.11 2007/10/19 12:16:48 ad Exp $	*/
+/*	$NetBSD: mutex.h,v 1.12 2007/11/21 10:19:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -83,10 +83,10 @@
  *
  * Otherwise, the following must be defined:
  *
- *	MUTEX_INITIALIZE_SPIN(mtx, id, minipl)
+ *	MUTEX_INITIALIZE_SPIN(mtx, dodebug, minipl)
  *		Initialize a spin mutex.
  *
- *	MUTEX_INITIALIZE_ADAPTIVE(mtx, id)
+ *	MUTEX_INITIALIZE_ADAPTIVE(mtx, dodebug)
  *		Initialize an adaptive mutex.
  *
  *	MUTEX_DESTROY(mtx)
@@ -123,9 +123,9 @@
  *		Release the lock and clear the "has waiters" indication.
  *		Must be interrupt atomic, need not be MP safe.
  *
- *	MUTEX_GETID(rw)
- *		Get the debugging ID for the mutex, an integer.  Only
- *		used in the LOCKDEBUG case.
+ *	MUTEX_DEBUG_P(mtx)
+ *		Evaluates to true if the mutex is initialized with
+ *		dodebug==true.  Only used in the LOCKDEBUG case.
  *
  * Machine dependent code may optionally provide stubs for the following
  * functions to implement the easy (unlocked / no waiters) cases.  If
@@ -172,6 +172,7 @@ typedef struct kmutex kmutex_t;
 
 #define	MUTEX_BIT_SPIN			0x01
 #define	MUTEX_BIT_WAITERS		0x02
+#define	MUTEX_BIT_DEBUG			0x04
 
 #define	MUTEX_SPIN_IPL(mtx)		((mtx)->mtx_ipl)
 #define	MUTEX_SPIN_OLDSPL(ci)		((ci)->ci_mtx_oldspl)
