@@ -1,4 +1,4 @@
-/*	$NetBSD: mke2fs.c,v 1.4 2007/11/20 16:34:37 tsutsui Exp $	*/
+/*	$NetBSD: mke2fs.c,v 1.5 2007/11/21 13:14:06 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2007 Izumi Tsutsui.
@@ -108,7 +108,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mke2fs.c,v 1.4 2007/11/20 16:34:37 tsutsui Exp $");
+__RCSID("$NetBSD: mke2fs.c,v 1.5 2007/11/21 13:14:06 tsutsui Exp $");
 #endif
 #endif /* not lint */
 
@@ -254,6 +254,7 @@ mke2fs(const char *fsys, int fi, int fo)
 	sblock.e2fs_qbmask = sblock.e2fs_bsize - 1;
 	sblock.e2fs_bmask = ~sblock.e2fs_qbmask;
 	sblock.e2fs_fsbtodb = ilog2(sblock.e2fs_bsize) - ilog2(sectorsize);
+	sblock.e2fs_ipb = sblock.e2fs_bsize / EXT2_DINODE_SIZE;
 
 	/*
 	 * Ext2fs preseves BBSIZE (1024 bytes) space at the top for
@@ -330,10 +331,10 @@ mke2fs(const char *fsys, int fi, int fo)
 		blocks_gd = howmany(sizeof(struct ext2_gd) * ncg, bsize);
 		inodes_per_cg = num_inodes / ncg;
 	}
-	/* inodes_per_cg should be a multiple of 8 for bitmap ops */
-	inodes_per_cg = rounddown(inodes_per_cg, NBBY);
+	/* roundup inodes_per_cg to make it use whole inode table blocks */
+	inodes_per_cg = roundup(inodes_per_cg, sblock.e2fs_ipb);
 	num_inodes = inodes_per_cg * ncg;
-	iblocks_per_cg = howmany(EXT2_DINODE_SIZE * inodes_per_cg, bsize);
+	iblocks_per_cg = inodes_per_cg / sblock.e2fs_ipb;
 
 	/* XXX: probably we should check these adjusted values again */
 
@@ -342,7 +343,6 @@ mke2fs(const char *fsys, int fi, int fo)
 
 	sblock.e2fs_ncg = ncg;
 	sblock.e2fs_ngdb = blocks_gd;
-	sblock.e2fs_ipb = sblock.e2fs_bsize / EXT2_DINODE_SIZE;
 	sblock.e2fs_itpg = iblocks_per_cg;
 
 	sblock.e2fs.e2fs_rbcount = sblock.e2fs.e2fs_bcount * minfree / 100;
@@ -734,7 +734,8 @@ initcg(uint cylno)
 	/*
 	 * Initialize inode bitmap.
 	 *
-	 *  Assume e2fs_ipg is a multiple of NBBY (as we did above).
+	 *  Assume e2fs_ipg is a multiple of NBBY since
+	 *  it's a multible of e2fs_ipb (as we did above).
 	 *  Note even (possibly smaller) the last group has the same e2fs_ipg.
 	 */
 	i = sblock.e2fs.e2fs_ipg / NBBY;
