@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.10.2.1 2007/11/16 17:18:02 bouyer Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.10.2.2 2007/11/21 20:49:29 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.10.2.1 2007/11/16 17:18:02 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.10.2.2 2007/11/21 20:49:29 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -381,7 +381,11 @@ x86_mem_add_mapping(bpa, size, cacheable, bshp)
 	}
 	pmap_tlb_shootnow(cpumask);
 #else	/* XEN && i386 */
+#ifdef XEN
+		pmap_kenter_ma(va, pa, VM_PROT_READ | VM_PROT_WRITE);
+#else
 		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE);
+#endif /* XEN */
 
 		if (pmap_cpu_has_pg_n()) {
 			pte = kvtopte(va);
