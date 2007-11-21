@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_bsd44_securelevel.c,v 1.30 2007/07/09 21:11:31 ad Exp $ */
+/* $NetBSD: secmodel_securelevel.c,v 1.1 2007/11/21 22:49:09 elad Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_securelevel.c,v 1.30 2007/07/09 21:11:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_securelevel.c,v 1.1 2007/11/21 22:49:09 elad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_insecure.h"
@@ -52,7 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_securelevel.c,v 1.30 2007/07/09 21:11
 
 #include <miscfs/specfs/specdev.h>
 
-#include <secmodel/bsd44/securelevel.h>
+#include <secmodel/securelevel/securelevel.h>
 
 static int securelevel;
 
@@ -63,7 +63,7 @@ static kauth_listener_t l_system, l_process, l_network, l_machdep, l_device;
  * only rises unless the caller has pid 1 (assumed to be init).
  */
 int
-secmodel_bsd44_sysctl_securelevel(SYSCTLFN_ARGS)
+secmodel_securelevel_sysctl(SYSCTLFN_ARGS)
 {       
 	int newsecurelevel, error;
 	struct sysctlnode node;
@@ -84,7 +84,7 @@ secmodel_bsd44_sysctl_securelevel(SYSCTLFN_ARGS)
 }
 
 void
-secmodel_bsd44_securelevel_init(void)
+secmodel_securelevel_init(void)
 {
 #ifdef INSECURE
 	securelevel = -1;
@@ -93,8 +93,8 @@ secmodel_bsd44_securelevel_init(void)
 #endif /* INSECURE */
 }
 
-SYSCTL_SETUP(sysctl_security_bsd44_securelevel_setup,
-    "sysctl security bsd44 securelevel setup")
+SYSCTL_SETUP(sysctl_security_securelevel_setup,
+    "sysctl security securelevel setup")
 {
 	/*
 	 * For compatibility, we create a kern.securelevel variable.
@@ -109,28 +109,28 @@ SYSCTL_SETUP(sysctl_security_bsd44_securelevel_setup,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "securelevel",
 		       SYSCTL_DESCR("System security level"),
-		       secmodel_bsd44_sysctl_securelevel, 0, NULL, 0,
+		       secmodel_securelevel_sysctl, 0, NULL, 0,
 		       CTL_KERN, KERN_SECURELVL, CTL_EOL);
 }
 
 void
-secmodel_bsd44_securelevel_start(void)
+secmodel_securelevel_start(void)
 {
 	l_system = kauth_listen_scope(KAUTH_SCOPE_SYSTEM,
-	    secmodel_bsd44_securelevel_system_cb, NULL);
+	    secmodel_securelevel_system_cb, NULL);
 	l_process = kauth_listen_scope(KAUTH_SCOPE_PROCESS,
-	    secmodel_bsd44_securelevel_process_cb, NULL);
+	    secmodel_securelevel_process_cb, NULL);
 	l_network = kauth_listen_scope(KAUTH_SCOPE_NETWORK,
-	    secmodel_bsd44_securelevel_network_cb, NULL);
+	    secmodel_securelevel_network_cb, NULL);
 	l_machdep = kauth_listen_scope(KAUTH_SCOPE_MACHDEP,
-	    secmodel_bsd44_securelevel_machdep_cb, NULL);
+	    secmodel_securelevel_machdep_cb, NULL);
 	l_device = kauth_listen_scope(KAUTH_SCOPE_DEVICE,
-	    secmodel_bsd44_securelevel_device_cb, NULL);
+	    secmodel_securelevel_device_cb, NULL);
 }
 
 #if defined(_LKM)
 void
-secmodel_bsd44_securelevel_stop(void)
+secmodel_securelevel_stop(void)
 {
 	kauth_unlisten_scope(l_system);
 	kauth_unlisten_scope(l_process);
@@ -148,7 +148,7 @@ secmodel_bsd44_securelevel_stop(void)
  * Responsibility: Securelevel
  */
 int
-secmodel_bsd44_securelevel_system_cb(kauth_cred_t cred,
+secmodel_securelevel_system_cb(kauth_cred_t cred,
     kauth_action_t action, void *cookie, void *arg0, void *arg1,
     void *arg2, void *arg3)
 {
@@ -267,7 +267,7 @@ secmodel_bsd44_securelevel_system_cb(kauth_cred_t cred,
  * Responsibility: Securelevel
  */
 int
-secmodel_bsd44_securelevel_process_cb(kauth_cred_t cred,
+secmodel_securelevel_process_cb(kauth_cred_t cred,
     kauth_action_t action, void *cookie, void *arg0,
     void *arg1, void *arg2, void *arg3)
 {
@@ -335,7 +335,7 @@ secmodel_bsd44_securelevel_process_cb(kauth_cred_t cred,
  * Responsibility: Securelevel
  */
 int
-secmodel_bsd44_securelevel_network_cb(kauth_cred_t cred,
+secmodel_securelevel_network_cb(kauth_cred_t cred,
     kauth_action_t action, void *cookie, void *arg0,
     void *arg1, void *arg2, void *arg3)
 {
@@ -381,7 +381,7 @@ secmodel_bsd44_securelevel_network_cb(kauth_cred_t cred,
  * Responsibility: Securelevel
  */
 int
-secmodel_bsd44_securelevel_machdep_cb(kauth_cred_t cred,
+secmodel_securelevel_machdep_cb(kauth_cred_t cred,
     kauth_action_t action, void *cookie, void *arg0,
     void *arg1, void *arg2, void *arg3)
 {
@@ -417,7 +417,7 @@ secmodel_bsd44_securelevel_machdep_cb(kauth_cred_t cred,
  * Responsibility: Securelevel
  */
 int
-secmodel_bsd44_securelevel_device_cb(kauth_cred_t cred,
+secmodel_securelevel_device_cb(kauth_cred_t cred,
     kauth_action_t action, void *cookie, void *arg0,
     void *arg1, void *arg2, void *arg3)
 {
