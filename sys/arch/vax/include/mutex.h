@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.9 2007/11/21 10:19:09 yamt Exp $	*/
+/*	$NetBSD: mutex.h,v 1.10 2007/11/21 11:15:50 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -149,6 +149,7 @@ MUTEX_CLEAR_WAITERS(volatile kmutex_t *mtx)
 static inline void
 MUTEX_INITIALIZE_SPIN(kmutex_t *mtx, bool dodebug, int ipl)
 {
+	/* lock_stubs.S checks the lowest bit of mtx_flags using blbs/blbc */
 	mtx->mtx_flags = (dodebug << 1) | 1;
 	mtx->mtx_owner = 0x80000000;
 	mtx->mtx_ipl = makeiplcookie(ipl);
@@ -158,6 +159,7 @@ MUTEX_INITIALIZE_SPIN(kmutex_t *mtx, bool dodebug, int ipl)
 static inline void
 MUTEX_INITIALIZE_ADAPTIVE(kmutex_t *mtx, bool dodebug)
 {
+	/* lock_stubs.S checks the lowest bit of mtx_flags using blbs/blbc */
 	mtx->mtx_flags = (dodebug << 1);
 	mtx->mtx_ipl = makeiplcookie(-1);
 	mtx->mtx_owner = 0;
