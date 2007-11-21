@@ -1,4 +1,4 @@
-/*	$NetBSD: pud.c,v 1.2 2007/11/21 01:31:34 dogcow Exp $	*/
+/*	$NetBSD: pud.c,v 1.3 2007/11/21 18:10:48 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pud.c,v 1.2 2007/11/21 01:31:34 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pud.c,v 1.3 2007/11/21 18:10:48 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -100,6 +100,7 @@ pud_putter_getout(void *this, size_t maxsize, int nonblock,
 
 		putp = TAILQ_FIRST(&pd->pd_waitq_req);
 		TAILQ_REMOVE(&pd->pd_waitq_req, putp, pt_entries);
+		KASSERT(error == 0);
 		break;
 	}
 	mutex_exit(&pd->pd_mtx);
@@ -177,7 +178,7 @@ pudconf_reg(struct pud_dev *pd, struct pud_conf_reg *pcr)
 	int cmajor, bmajor, error;
 
 	cmajor = major(pcr->pm_regdev);
-	if (pcr->pm_flags & PUD_CONF_BDEV) {
+	if (pcr->pm_flags & PUD_CONFFLAG_BDEV) {
 		bsw = &pud_bdevsw;
 		bmajor = cmajor;
 	} else {
