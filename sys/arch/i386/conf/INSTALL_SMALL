@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_SMALL,v 1.134.8.1 2007/10/02 18:27:11 joerg Exp $
+#	$NetBSD: INSTALL_SMALL,v 1.134.8.2 2007/11/21 21:53:12 joerg Exp $
 #
 #	INSTALL_SMALL - Small Installation kernel.
 #
@@ -25,12 +25,6 @@ options 	MEMORY_DISK_ROOT_SIZE=3900	# size of memory disk, in blocks
 makeoptions	COPTS="-Os"		# generates smaller code than -O2, -O1
 
 maxusers	32		# estimated number of users
-
-# CPU support.  At least one is REQUIRED.
-options 	I386_CPU
-options 	I486_CPU
-options 	I586_CPU
-options 	I686_CPU
 
 # CPU-related options.
 options 	MATH_EMULATE	# floating point emulation
@@ -208,15 +202,6 @@ npx0	at isa? port 0xf0 irq 13	# x86 math coprocessor
 
 
 # Console Devices
-
-# ISA console
-pc0	at isa? port 0x60 irq 1		# pccons generic PC console driver
-
-# Keyboard layout configuration for pccons
-#options 	FRENCH_KBD
-#options 	FINNISH_KBD
-#options 	GERMAN_KBD
-#options 	NORWEGIAN_KBD
 
 #attimer0	at isa?
 #pcppi0	at isa?

@@ -1,4 +1,4 @@
-/*	$NetBSD: locks.c,v 1.1.2.3 2007/11/11 16:48:44 joerg Exp $	*/
+/*	$NetBSD: locks.c,v 1.1.2.4 2007/11/21 21:56:14 joerg Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -155,11 +155,27 @@ cv_wait(kcondvar_t *cv, kmutex_t *mtx)
 	rumpuser_cv_wait(RUMPCV(cv), mtx->kmtx_mtx);
 }
 
+int
+cv_timedwait(kcondvar_t *cv, kmutex_t *mtx, int ticks)
+{
+	extern int hz;
+
+	KASSERT(hz == 100);
+	return rumpuser_cv_timedwait(RUMPCV(cv), mtx->kmtx_mtx, ticks);
+}
+
 void
 cv_signal(kcondvar_t *cv)
 {
 
 	rumpuser_cv_signal(RUMPCV(cv));
+}
+
+void
+cv_broadcast(kcondvar_t *cv)
+{
+
+	rumpuser_cv_broadcast(RUMPCV(cv));
 }
 
 /* kernel biglock, only for vnode_if */

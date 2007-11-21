@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.108.14.3 2007/11/06 14:27:35 joerg Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.108.14.4 2007/11/21 21:55:52 joerg Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.108.14.3 2007/11/06 14:27:35 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.108.14.4 2007/11/21 21:55:52 joerg Exp $");
 
 #include "opt_wsdisplay_compat.h"
 #include "opt_wsmsgattrs.h"
@@ -1492,16 +1492,9 @@ wsdisplaystart(struct tty *tp)
 	s = spltty();
 	tp->t_state &= ~TS_BUSY;
 	/* Come back if there's more to do */
-	if (tp->t_outq.c_cc) {
+	if (ttypull(tp)) {
 		tp->t_state |= TS_TIMEOUT;
 		callout_schedule(&tp->t_rstrt_ch, (hz > 128) ? (hz / 128) : 1);
-	}
-	if (tp->t_outq.c_cc <= tp->t_lowat) {
-		if (tp->t_state&TS_ASLEEP) {
-			tp->t_state &= ~TS_ASLEEP;
-			wakeup(&tp->t_outq);
-		}
-		selwakeup(&tp->t_wsel);
 	}
 	splx(s);
 }

@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.9.8.4 2007/11/04 21:02:49 jmcneill Exp $
+#	$NetBSD: genassym.cf,v 1.9.8.5 2007/11/21 21:52:58 joerg Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -292,6 +292,7 @@ define	IS_MAXLEVEL		offsetof(struct intrsource, is_maxlevel)
 
 define	IPL_NONE		IPL_NONE
 define	IPL_CLOCK		IPL_CLOCK
+define	IPL_HIGH		IPL_HIGH
 define	IPL_IPI			IPL_IPI
 
 define	IPL_SOFTNET		IPL_SOFTNET

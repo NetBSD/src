@@ -1,4 +1,4 @@
-/*     $NetBSD: buf.h,v 1.96.4.2 2007/10/26 15:49:15 joerg Exp $ */
+/*     $NetBSD: buf.h,v 1.96.4.3 2007/11/21 21:56:15 joerg Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -225,6 +225,10 @@ do {									\
 #define	BC_AGE		B_AGE
 #define	BC_INVAL	B_INVAL
 #define	BC_NOCACHE	B_NOCACHE
+
+/* Avoid weird code due to B_WRITE being a "pseudo flag" */
+#define BUF_ISREAD(bp)	(((bp)->b_flags & B_READ) == B_READ)
+#define BUF_ISWRITE(bp)	(((bp)->b_flags & B_READ) == B_WRITE)
 
 /*
  * This structure describes a clustered I/O.  It is stored in the b_saveaddr

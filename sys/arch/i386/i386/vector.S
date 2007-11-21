@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.24.22.3 2007/10/26 15:42:37 joerg Exp $	*/
+/*	$NetBSD: vector.S,v 1.24.22.4 2007/11/21 21:53:17 joerg Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -850,9 +850,6 @@ IDTVEC(trap0c)
 IDTVEC(trap0d)
 	TRAP(T_PROTFLT)
 IDTVEC(trap0e)
-#ifndef I586_CPU
-	TRAP(T_PAGEFLT)
-#else
 	pushl	$T_PAGEFLT
 	INTRENTRY
 	testb	$PGEX_U,TF_ERR(%esp)
@@ -863,7 +860,6 @@ IDTVEC(trap0e)
 	jne	calltrap
 	movb	$T_PRIVINFLT,TF_TRAPNO(%esp)
 	jmp	calltrap
-#endif
 
 IDTVEC(intrspurious)
 IDTVEC(trap0f)

@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.49.8.4 2007/11/11 16:46:30 joerg Exp $
+#	$NetBSD: genassym.cf,v 1.49.8.5 2007/11/21 21:53:15 joerg Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -169,6 +169,7 @@ define	PG_RW			PG_RW
 define	PG_V			PG_V
 define	PG_KW			PG_KW
 define	PG_KR			PG_KR
+define	PGEX_U			PGEX_U
 
 define	L2_SLOT_KERNBASE	pl2_pi(KERNBASE)
 define	L1_SLOT_KERNBASE	pl1_pi(KERNBASE)

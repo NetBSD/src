@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.230.4.5 2007/11/14 19:04:35 joerg Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.230.4.6 2007/11/21 21:55:46 joerg Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -146,7 +146,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.230.4.5 2007/11/14 19:04:35 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.230.4.6 2007/11/21 21:55:46 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -478,9 +478,6 @@ rf_buildroothack(RF_ConfigSet_t *config_sets)
 				rf_release_all_vps(cset);
 			}
 		} else {
-#ifdef DEBUG
-			printf("raid%d: not enough components\n", raidID);
-#endif
 			/* we're not autoconfiguring this set...
 			   release the associated resources */
 			rf_release_all_vps(cset);

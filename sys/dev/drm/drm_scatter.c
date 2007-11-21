@@ -1,3 +1,5 @@
+/* $NetBSD: drm_scatter.c,v 1.1.12.1 2007/11/21 21:54:36 joerg Exp $ */
+
 /* drm_scatter.h -- IOCTLs to manage scatter/gather memory -*- linux-c -*-
  * Created: Mon Dec 18 23:20:54 2000 by gareth@valinux.com */
 /*-

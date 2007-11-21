@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmpsc.c,v 1.23.14.1 2007/10/26 15:45:40 joerg Exp $	*/
+/*	$NetBSD: gtmpsc.c,v 1.23.14.2 2007/11/21 21:55:27 joerg Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmpsc.c,v 1.23.14.1 2007/10/26 15:45:40 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmpsc.c,v 1.23.14.2 2007/11/21 21:55:27 joerg Exp $");
 
 #include "opt_kgdb.h"
 
@@ -768,15 +768,8 @@ gtmpscstart(struct tty *tp)
 		goto out;
 	if (sc->sc_tx_stopped)
 		goto out;
-	if (tp->t_outq.c_cc <= tp->t_lowat) {
-		if ((tp->t_state & TS_ASLEEP) != 0) {
-			tp->t_state &= ~TS_ASLEEP;
-			wakeup(&tp->t_outq);
-		}
-		selwakeup(&tp->t_wsel);
-		if (tp->t_outq.c_cc == 0)
-			goto out;
-	}
+	if (!ttypull(tp))
+		goto out;
 
 	/* Grab the first contiguous region of buffer space. */
 	tba = tp->t_outq.c_cf;

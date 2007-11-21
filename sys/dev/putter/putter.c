@@ -1,4 +1,4 @@
-/*	$NetBSD: putter.c,v 1.4.2.2 2007/11/14 19:04:33 joerg Exp $	*/
+/*	$NetBSD: putter.c,v 1.4.2.3 2007/11/21 21:55:45 joerg Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: putter.c,v 1.4.2.2 2007/11/14 19:04:33 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: putter.c,v 1.4.2.3 2007/11/21 21:55:45 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -46,6 +46,52 @@ __KERNEL_RCSID(0, "$NetBSD: putter.c,v 1.4.2.2 2007/11/14 19:04:33 joerg Exp $")
 #include <sys/socketvar.h>
 
 #include <dev/putter/putter_sys.h>
+
+/*
+ * Configuration data.
+ *
+ * This is static-size for now.  Will be redone for devfs.
+ */
+
+#define PUTTER_CONFSIZE 16
+
+static struct putter_config {
+	int	pc_minor;
+	int	(*pc_config)(int, int, int);
+} putterconf[PUTTER_CONFSIZE];
+
+static int
+putter_configure(dev_t dev, int flags, int fmt, int fd)
+{
+	struct putter_config *pc;
+
+	/* are we the catch-all node? */
+	if (minor(dev) == PUTTER_MINOR_WILDCARD
+	    || minor(dev) == PUTTER_MINOR_COMPAT)
+		return 0;
+
+	/* nopes?  try to configure us */
+	for (pc = putterconf; pc->pc_config; pc++)
+		if (minor(dev) == pc->pc_minor)
+			return pc->pc_config(fd, flags, fmt);
+	return ENXIO;
+}
+
+int
+putter_register(putter_config_fn pcfn, int minor)
+{
+	int i;
+
+	for (i = 0; i < PUTTER_CONFSIZE; i++)
+		if (putterconf[i].pc_config == NULL)
+			break;
+	if (i == PUTTER_CONFSIZE)
+		return EBUSY;
+
+	putterconf[i].pc_minor = minor;
+	putterconf[i].pc_config = pcfn;
+	return 0;
+}
 
 /*
  * putter instance structures.  these are always allocated and freed
@@ -401,11 +447,7 @@ puttercdopen(dev_t dev, int flags, int fmt, struct lwp *l)
 	struct file *fp;
 	int error, fd, idx;
 
-	if ((error = falloc(l, &fp, &fd)) != 0)
-		return error;
-
 	pi = kmem_alloc(sizeof(struct putter_instance), KM_SLEEP);
-
 	mutex_enter(&pi_mtx);
 	idx = get_pi_idx(pi);
 
@@ -417,10 +459,27 @@ puttercdopen(dev_t dev, int flags, int fmt, struct lwp *l)
 	selinit(&pi->pi_sel);
 	mutex_exit(&pi_mtx);
 
+	if ((error = falloc(l, &fp, &fd)) != 0)
+		goto bad1;
+
+	if ((error = putter_configure(dev, flags, fmt, fd)) != 0)
+		goto bad2;
+
 	DPRINTF(("puttercdopen: registered embryonic pmp for pid: %d\n",
 	    pi->pi_pid));
 
-	return fdclone(l, fp, fd, FREAD|FWRITE, &putter_fileops, pi);
+	error = fdclone(l, fp, fd, FREAD|FWRITE, &putter_fileops, pi);
+	KASSERT(error = EMOVEFD);
+	return error;
+
+ bad2:
+	FILE_UNUSE(fp, l);
+	fdremove(l->l_proc->p_fd, fd);
+	ffree(fp);
+ bad1:
+	putter_detach(pi);
+	kmem_free(pi, sizeof(struct putter_instance));
+	return error;
 }
 
 int

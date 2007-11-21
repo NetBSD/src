@@ -1,4 +1,4 @@
-/* 	$NetBSD: xlcom.c,v 1.2.18.2 2007/10/28 17:13:14 joerg Exp $ */
+/* 	$NetBSD: xlcom.c,v 1.2.18.3 2007/11/21 21:53:06 joerg Exp $ */
 
 /*
  * Copyright (c) 2006 Jachym Holecek
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xlcom.c,v 1.2.18.2 2007/10/28 17:13:14 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xlcom.c,v 1.2.18.3 2007/11/21 21:53:06 joerg Exp $");
 
 #include "opt_kgdb.h"
 
@@ -605,17 +605,9 @@ xlcom_start(struct tty *tp)
 		return ;
 	}
 
-	if (tp->t_outq.c_cc <= tp->t_lowat) {
-		if (tp->t_state & TS_ASLEEP) {
-			tp->t_state &= ~TS_ASLEEP;
-			wakeup(&tp->t_outq);
-		}
-		selwakeup(&tp->t_wsel);
-
-		if (tp->t_outq.c_cc == 0) {
-			splx(s1);
-			return ;
-		}
+	if (!ttypull(tp)) {
+		splx(s1);
+		return;
 	}
 
 	tp->t_state |= TS_BUSY;

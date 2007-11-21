@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.118.4.5 2007/11/14 19:04:40 joerg Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.118.4.6 2007/11/21 21:55:58 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.118.4.5 2007/11/14 19:04:40 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.118.4.6 2007/11/21 21:55:58 joerg Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -104,7 +104,7 @@ void	lock_printf(const char *fmt, ...)
 static int acquire(struct lock **, int *, int, int, int, uintptr_t);
 
 int	lock_debug_syslog = 0;	/* defaults to printf, but can be patched */
-int	kernel_lock_id;
+bool	kernel_lock_dodebug;
 __cpu_simple_lock_t kernel_lock;
 
 #if defined(LOCKDEBUG) || defined(DIAGNOSTIC) /* { */
@@ -705,8 +705,7 @@ assert_sleepable(struct simplelock *interlock, const char *msg)
  */
 
 #define	_KERNEL_LOCK_ABORT(msg)						\
-    LOCKDEBUG_ABORT(kernel_lock_id, &kernel_lock, &_kernel_lock_ops,	\
-        __func__, msg)
+    LOCKDEBUG_ABORT(&kernel_lock, &_kernel_lock_ops, __func__, msg)
 
 #ifdef LOCKDEBUG
 #define	_KERNEL_LOCK_ASSERT(cond)					\
@@ -734,7 +733,7 @@ kernel_lock_init(void)
 {
 
 	__cpu_simple_lock_init(&kernel_lock);
-	kernel_lock_id = LOCKDEBUG_ALLOC(&kernel_lock, &_kernel_lock_ops,
+	kernel_lock_dodebug = LOCKDEBUG_ALLOC(&kernel_lock, &_kernel_lock_ops,
 	    RETURN_ADDRESS);
 }
 
@@ -782,13 +781,15 @@ _kernel_lock(int nlocks, struct lwp *l)
 	}
 
 	_KERNEL_LOCK_ASSERT(l->l_blcnt == 0);
-	LOCKDEBUG_WANTLOCK(kernel_lock_id, RETURN_ADDRESS, 0);
+	LOCKDEBUG_WANTLOCK(kernel_lock_dodebug, &kernel_lock, RETURN_ADDRESS,
+	    0);
 
 	s = splvm();
 	if (__cpu_simple_lock_try(&kernel_lock)) {
 		ci->ci_biglock_count = nlocks;
 		l->l_blcnt = nlocks;
-		LOCKDEBUG_LOCKED(kernel_lock_id, RETURN_ADDRESS, 0);
+		LOCKDEBUG_LOCKED(kernel_lock_dodebug, &kernel_lock,
+		    RETURN_ADDRESS, 0);
 		splx(s);
 		return;
 	}
@@ -825,7 +826,7 @@ _kernel_lock(int nlocks, struct lwp *l)
 	ci->ci_biglock_count = nlocks;
 	l->l_blcnt = nlocks;
 	LOCKSTAT_STOP_TIMER(lsflag, spintime);
-	LOCKDEBUG_LOCKED(kernel_lock_id, RETURN_ADDRESS, 0);
+	LOCKDEBUG_LOCKED(kernel_lock_dodebug, &kernel_lock, RETURN_ADDRESS, 0);
 	splx(s);
 
 	/*
@@ -877,7 +878,8 @@ _kernel_unlock(int nlocks, struct lwp *l, int *countp)
 	l->l_blcnt -= nlocks;
 	if (ci->ci_biglock_count == nlocks) {
 		s = splvm();
-		LOCKDEBUG_UNLOCKED(kernel_lock_id, RETURN_ADDRESS, 0);
+		LOCKDEBUG_UNLOCKED(kernel_lock_dodebug, &kernel_lock,
+		    RETURN_ADDRESS, 0);
 		ci->ci_biglock_count = 0;
 		__cpu_simple_unlock(&kernel_lock);
 		splx(s);

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.25.8.4 2007/11/14 19:04:02 joerg Exp $	*/
+/*	$NetBSD: locore.S,v 1.25.8.5 2007/11/21 21:52:59 joerg Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -747,11 +747,11 @@ ENTRY(cpu_switchto)
 	jne	5f
 
 	/*
-	 * Restore cr0 (including FPU state).  Raise the IPL to IPL_IPI.
+	 * Restore cr0 (including FPU state).  Raise the IPL to IPL_HIGH.
 	 * FPU IPIs can alter the LWP's saved cr0.  Dropping the priority
 	 * is deferred until mi_switch(), when cpu_switchto() returns.
 	 */
-2:	movl	$IPL_IPI,CPUVAR(ILEVEL)
+2:	movl	$IPL_HIGH,CPUVAR(ILEVEL)
 	movl	PCB_CR0(%r14),%ecx
 	movq	%cr0,%rdx
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.55.8.1 2007/10/26 15:42:16 joerg Exp $	*/
+/*	$NetBSD: ite.c,v 1.55.8.2 2007/11/21 21:53:05 joerg Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.55.8.1 2007/10/26 15:42:16 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.55.8.2 2007/11/21 21:53:05 joerg Exp $");
 
 #include "opt_ddb.h"
 
@@ -677,17 +677,9 @@ itestart(tp)
 	s = spltty(); {
 		tp->t_state &= ~TS_BUSY;
 		/* we have characters remaining. */
-		if (rbp->c_cc) {
+		if (ttypull(tp)) {
 			tp->t_state |= TS_TIMEOUT;
 			callout_schedule(&tp->t_rstrt_ch, 1);
-		}
-		/* wakeup we are below */
-		if (rbp->c_cc <= tp->t_lowat) {
-			if (tp->t_state & TS_ASLEEP) {
-				tp->t_state &= ~TS_ASLEEP;
-				wakeup((void *) rbp);
-			}
-			selwakeup(&tp->t_wsel);
 		}
 	      out: ;
 	} splx(s);

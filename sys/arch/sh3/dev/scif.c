@@ -1,4 +1,4 @@
-/*	$NetBSD: scif.c,v 1.51.8.1 2007/11/06 19:25:09 joerg Exp $ */
+/*	$NetBSD: scif.c,v 1.51.8.2 2007/11/21 21:53:27 joerg Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scif.c,v 1.51.8.1 2007/11/06 19:25:09 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scif.c,v 1.51.8.2 2007/11/21 21:53:27 joerg Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_scif.h"
@@ -514,16 +514,8 @@ scifstart(struct tty *tp)
 		goto out;
 	if (sc->sc_tx_stopped)
 		goto out;
-
-	if (tp->t_outq.c_cc <= tp->t_lowat) {
-		if (ISSET(tp->t_state, TS_ASLEEP)) {
-			CLR(tp->t_state, TS_ASLEEP);
-			wakeup(&tp->t_outq);
-		}
-		selwakeup(&tp->t_wsel);
-		if (tp->t_outq.c_cc == 0)
-			goto out;
-	}
+	if (!ttypull(tp))
+		goto out;
 
 	/* Grab the first contiguous region of buffer space. */
 	{
