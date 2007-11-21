@@ -1,4 +1,4 @@
-/*	$NetBSD: cz.c,v 1.45.12.1 2007/11/13 16:01:14 bouyer Exp $	*/
+/*	$NetBSD: cz.c,v 1.45.12.2 2007/11/21 21:19:35 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cz.c,v 1.45.12.1 2007/11/13 16:01:14 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cz.c,v 1.45.12.2 2007/11/21 21:19:35 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1481,17 +1481,8 @@ czttystart(struct tty *tp)
 	s = spltty();
 	if (ISSET(tp->t_state, TS_BUSY | TS_TIMEOUT | TS_TTSTOP))
 		goto out;
-
-	if (tp->t_outq.c_cc <= tp->t_lowat) {
-		if (ISSET(tp->t_state, TS_ASLEEP)) {
-			CLR(tp->t_state, TS_ASLEEP);
-			wakeup(&tp->t_outq);
-		}
-		selwakeup(&tp->t_wsel);
-		if (tp->t_outq.c_cc == 0)
-			goto out;
-	}
-
+	if (!ttypull(tp))
+		goto out;
 	cztty_transmit(sc, tp);
  out:
 	splx(s);

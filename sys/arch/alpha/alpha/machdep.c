@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.299 2007/07/08 10:19:21 pooka Exp $ */
+/* $NetBSD: machdep.c,v 1.299.14.1 2007/11/21 21:19:05 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.299 2007/07/08 10:19:21 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.299.14.1 2007/11/21 21:19:05 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1998,9 +1998,9 @@ cpu_need_resched(struct cpu_info *ci, int flags)
 	bool immed = (flags & RESCHED_IMMED) != 0;
 #endif /* defined(MULTIPROCESSOR) */
 
+	aston(ci->ci_data.cpu_onproc);
 	ci->ci_want_resched = 1;
-	if (ci->ci_curlwp != ci->ci_data.cpu_idlelwp) {
-		aston(ci->ci_curlwp);
+	if (ci->ci_data.cpu_onproc != ci->ci_data.cpu_idlelwp) {
 #if defined(MULTIPROCESSOR)
 		if (immed && ci != curcpu()) {
 			alpha_send_ipi(ci->ci_cpuid, 0);

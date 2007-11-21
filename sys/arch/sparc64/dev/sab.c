@@ -1,4 +1,4 @@
-/*	$NetBSD: sab.c,v 1.37.24.1 2007/11/13 15:59:37 bouyer Exp $	*/
+/*	$NetBSD: sab.c,v 1.37.24.2 2007/11/21 21:19:22 bouyer Exp $	*/
 /*	$OpenBSD: sab.c,v 1.7 2002/04/08 17:49:42 jason Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.37.24.1 2007/11/13 15:59:37 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.37.24.2 2007/11/21 21:19:22 bouyer Exp $");
 
 #include "opt_kgdb.h"
 #include <sys/types.h>
@@ -1075,14 +1075,7 @@ sabtty_start(struct tty *tp)
 
 	s = spltty();
 	if ((tp->t_state & (TS_TTSTOP | TS_TIMEOUT | TS_BUSY)) == 0) {
-		if (tp->t_outq.c_cc <= tp->t_lowat) {
-			if (tp->t_state & TS_ASLEEP) {
-				tp->t_state &= ~TS_ASLEEP;
-				wakeup(&tp->t_outq);
-			}
-			selwakeup(&tp->t_wsel);
-		}
-		if (tp->t_outq.c_cc) {
+		if (ttypull(tp)) {
 			sc->sc_txc = ndqb(&tp->t_outq, 0);
 			sc->sc_txp = tp->t_outq.c_cf;
 			tp->t_state |= TS_BUSY;

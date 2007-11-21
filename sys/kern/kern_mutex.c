@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.19.2.2 2007/11/13 16:02:07 bouyer Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.19.2.3 2007/11/21 21:19:45 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.19.2.2 2007/11/13 16:02:07 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.19.2.3 2007/11/21 21:19:45 bouyer Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -78,13 +78,13 @@ __KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.19.2.2 2007/11/13 16:02:07 bouyer E
  */
 
 #define	MUTEX_WANTLOCK(mtx)					\
-    LOCKDEBUG_WANTLOCK(MUTEX_GETID(mtx),			\
+    LOCKDEBUG_WANTLOCK(MUTEX_DEBUG_P(mtx), (mtx),		\
         (uintptr_t)__builtin_return_address(0), 0)
 #define	MUTEX_LOCKED(mtx)					\
-    LOCKDEBUG_LOCKED(MUTEX_GETID(mtx),				\
+    LOCKDEBUG_LOCKED(MUTEX_DEBUG_P(mtx), (mtx),			\
         (uintptr_t)__builtin_return_address(0), 0)
 #define	MUTEX_UNLOCKED(mtx)					\
-    LOCKDEBUG_UNLOCKED(MUTEX_GETID(mtx),			\
+    LOCKDEBUG_UNLOCKED(MUTEX_DEBUG_P(mtx), (mtx),		\
         (uintptr_t)__builtin_return_address(0), 0)
 #define	MUTEX_ABORT(mtx, msg)					\
     mutex_abort(mtx, __func__, msg)
@@ -154,28 +154,27 @@ do {									\
 
 #define	MUTEX_OWNER(owner)						\
 	(owner & MUTEX_THREAD)
-#define	MUTEX_OWNED(owner)						\
-	(owner != 0)
 #define	MUTEX_HAS_WAITERS(mtx)						\
 	(((int)(mtx)->mtx_owner & MUTEX_BIT_WAITERS) != 0)
 
-#define	MUTEX_INITIALIZE_ADAPTIVE(mtx, id)				\
+#define	MUTEX_INITIALIZE_ADAPTIVE(mtx, dodebug)				\
 do {									\
-	(mtx)->mtx_id = (id);						\
+	if (dodebug)							\
+		(mtx)->mtx_owner |= MUTEX_BIT_DEBUG;			\
 } while (/* CONSTCOND */ 0);
 
-#define	MUTEX_INITIALIZE_SPIN(mtx, id, ipl)				\
+#define	MUTEX_INITIALIZE_SPIN(mtx, dodebug, ipl)			\
 do {									\
 	(mtx)->mtx_owner = MUTEX_BIT_SPIN;				\
+	if (dodebug)							\
+		(mtx)->mtx_owner |= MUTEX_BIT_DEBUG;			\
 	(mtx)->mtx_ipl = makeiplcookie((ipl));				\
-	(mtx)->mtx_id = (id);						\
 	__cpu_simple_lock_init(&(mtx)->mtx_lock);			\
 } while (/* CONSTCOND */ 0)
 
 #define	MUTEX_DESTROY(mtx)						\
 do {									\
 	(mtx)->mtx_owner = MUTEX_THREAD;				\
-	(mtx)->mtx_id = -1;						\
 } while (/* CONSTCOND */ 0);
 
 #define	MUTEX_SPIN_P(mtx)		\
@@ -183,13 +182,25 @@ do {									\
 #define	MUTEX_ADAPTIVE_P(mtx)		\
     (((mtx)->mtx_owner & MUTEX_BIT_SPIN) == 0)
 
-#define	MUTEX_GETID(mtx)		((mtx)->mtx_id)
+#define	MUTEX_DEBUG_P(mtx)	(((mtx)->mtx_owner & MUTEX_BIT_DEBUG) != 0)
+#if defined(LOCKDEBUG)
+#define	MUTEX_OWNED(owner)		(((owner) & ~MUTEX_BIT_DEBUG) != 0)
+#define	MUTEX_INHERITDEBUG(new, old)	(new) |= (old) & MUTEX_BIT_DEBUG
+#else /* defined(LOCKDEBUG) */
+#define	MUTEX_OWNED(owner)		((owner) != 0)
+#define	MUTEX_INHERITDEBUG(new, old)	/* nothing */
+#endif /* defined(LOCKDEBUG) */
 
 static inline int
 MUTEX_ACQUIRE(kmutex_t *mtx, uintptr_t curthread)
 {
 	int rv;
-	rv = MUTEX_CAS(&mtx->mtx_owner, 0UL, curthread);
+	uintptr_t old = 0;
+	uintptr_t new = curthread;
+
+	MUTEX_INHERITDEBUG(old, mtx->mtx_owner);
+	MUTEX_INHERITDEBUG(new, old);
+	rv = MUTEX_CAS(&mtx->mtx_owner, old, new);
 	MUTEX_RECEIVE(mtx);
 	return rv;
 }
@@ -206,8 +217,12 @@ MUTEX_SET_WAITERS(kmutex_t *mtx, uintptr_t owner)
 static inline void
 MUTEX_RELEASE(kmutex_t *mtx)
 {
+	uintptr_t new;
+
 	MUTEX_GIVE(mtx);
-	mtx->mtx_owner = 0;
+	new = 0;
+	MUTEX_INHERITDEBUG(new, mtx->mtx_owner);
+	mtx->mtx_owner = new;
 }
 
 static inline void
@@ -291,7 +306,7 @@ void
 mutex_abort(kmutex_t *mtx, const char *func, const char *msg)
 {
 
-	LOCKDEBUG_ABORT(MUTEX_GETID(mtx), mtx, (MUTEX_SPIN_P(mtx) ?
+	LOCKDEBUG_ABORT(mtx, (MUTEX_SPIN_P(mtx) ?
 	    &mutex_spin_lockops : &mutex_adaptive_lockops), func, msg);
 	/* NOTREACHED */
 }
@@ -308,7 +323,7 @@ mutex_abort(kmutex_t *mtx, const char *func, const char *msg)
 void
 mutex_init(kmutex_t *mtx, kmutex_type_t type, int ipl)
 {
-	u_int id;
+	bool dodebug;
 
 	memset(mtx, 0, sizeof(*mtx));
 
@@ -333,19 +348,19 @@ mutex_init(kmutex_t *mtx, kmutex_type_t type, int ipl)
 
 	switch (type) {
 	case MUTEX_NODEBUG:
-		id = LOCKDEBUG_ALLOC(mtx, NULL,
+		dodebug = LOCKDEBUG_ALLOC(mtx, NULL,
 		    (uintptr_t)__builtin_return_address(0));
-		MUTEX_INITIALIZE_SPIN(mtx, id, ipl);
+		MUTEX_INITIALIZE_SPIN(mtx, dodebug, ipl);
 		break;
 	case MUTEX_ADAPTIVE:
-		id = LOCKDEBUG_ALLOC(mtx, &mutex_adaptive_lockops,
+		dodebug = LOCKDEBUG_ALLOC(mtx, &mutex_adaptive_lockops,
 		    (uintptr_t)__builtin_return_address(0));
-		MUTEX_INITIALIZE_ADAPTIVE(mtx, id);
+		MUTEX_INITIALIZE_ADAPTIVE(mtx, dodebug);
 		break;
 	case MUTEX_SPIN:
-		id = LOCKDEBUG_ALLOC(mtx, &mutex_spin_lockops,
+		dodebug = LOCKDEBUG_ALLOC(mtx, &mutex_spin_lockops,
 		    (uintptr_t)__builtin_return_address(0));
-		MUTEX_INITIALIZE_SPIN(mtx, id, ipl);
+		MUTEX_INITIALIZE_SPIN(mtx, dodebug, ipl);
 		break;
 	default:
 		panic("mutex_init: impossible type");
@@ -369,7 +384,7 @@ mutex_destroy(kmutex_t *mtx)
 		MUTEX_ASSERT(mtx, !__SIMPLELOCK_LOCKED_P(&mtx->mtx_lock));
 	}
 
-	LOCKDEBUG_FREE(mtx, MUTEX_GETID(mtx));
+	LOCKDEBUG_FREE(MUTEX_DEBUG_P(mtx), mtx);
 	MUTEX_DESTROY(mtx);
 }
 

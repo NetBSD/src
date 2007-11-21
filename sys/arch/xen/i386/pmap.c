@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.32.2.3 2007/11/18 19:34:53 bouyer Exp $	*/
+/*	$NetBSD: pmap.c,v 1.32.2.4 2007/11/21 21:19:26 bouyer Exp $	*/
 /*	NetBSD: pmap.c,v 1.179 2004/10/10 09:55:24 yamt Exp		*/
 
 /*
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.32.2.3 2007/11/18 19:34:53 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.32.2.4 2007/11/21 21:19:26 bouyer Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_largepages.h"
@@ -465,7 +465,6 @@ static void *csrcp, *cdstp, *zerop, *ptpp;
  */
 
 struct pool_cache pmap_pdp_cache;
-u_int pmap_pdp_cache_generation;
 
 int	pmap_pdp_ctor(void *, void *, int);
 void	pmap_pdp_dtor(void *, void *);
@@ -1744,6 +1743,7 @@ pmap_pdp_ctor(void *arg, void *object, int flags)
 {
 	pd_entry_t *pdir = object;
 	paddr_t pdirpa;
+	u_int npde;
 	int s;
 
 	/*
@@ -1763,12 +1763,13 @@ pmap_pdp_ctor(void *arg, void *object, int flags)
 	pdir[PDSLOT_PTE] = xpmap_ptom(pdirpa | PG_V /* | PG_KW */);
 
 	/* put in kernel VM PDEs */
+	npde = nkpde;
 	memcpy(&pdir[PDSLOT_KERN], &PDP_BASE[PDSLOT_KERN],
-	    nkpde * sizeof(pd_entry_t));
+	    npde * sizeof(pd_entry_t));
 
 	/* zero the rest */
-	memset(&pdir[PDSLOT_KERN + nkpde], 0,
-	    PAGE_SIZE - ((PDSLOT_KERN + nkpde) * sizeof(pd_entry_t)));
+	memset(&pdir[PDSLOT_KERN + npde], 0,
+	    PAGE_SIZE - ((PDSLOT_KERN + npde) * sizeof(pd_entry_t)));
 
 	pmap_kenter_pa((vaddr_t)pdir, pdirpa, VM_PROT_READ);
 	pmap_update(pmap_kernel());
@@ -1814,7 +1815,6 @@ struct pmap *
 pmap_create()
 {
 	struct pmap *pmap;
-	u_int gen;
 
 	XENPRINTF(("pmap_create\n"));
 	pmap = pool_get(&pmap_pmap_pool, PR_WAITOK);
@@ -1850,12 +1850,11 @@ pmap_create()
 	 */
 
  try_again:
-	gen = pmap_pdp_cache_generation;
 	pmap->pm_pdir = pool_cache_get(&pmap_pdp_cache, PR_WAITOK);
 
 	simple_lock(&pmaps_lock);
 
-	if (gen != pmap_pdp_cache_generation) {
+	if (pmap->pm_pdir[PDSLOT_KERN + nkpde - 1] == 0) {
 		simple_unlock(&pmaps_lock);
 		pool_cache_destruct_object(&pmap_pdp_cache, pmap->pm_pdir);
 		goto try_again;
@@ -3776,7 +3775,7 @@ pmap_growkernel(maxkvaddr)
 	s = splhigh();	/* to be safe */
 	simple_lock(&kpm->pm_obj.vmobjlock);
 
-	for (/*null*/ ; nkpde < needed_kpde ; nkpde++) {
+	for (/*null*/ ; nkpde < needed_kpde ;) {
 
 		mapdp = (pt_entry_t *)vtomach((vaddr_t)&kpm->pm_pdir[PDSLOT_KERN + nkpde]);
 		if (uvm.page_init_done == false) {
@@ -3796,6 +3795,7 @@ pmap_growkernel(maxkvaddr)
 
 			/* count PTP as resident */
 			kpm->pm_stats.resident_count++;
+			nkpde++;
 			continue;
 		}
 
@@ -3822,12 +3822,11 @@ pmap_growkernel(maxkvaddr)
 			PDE_COPY(&pm->pm_pdir[PDSLOT_KERN + nkpde], maptp,
 			    &kpm->pm_pdir[PDSLOT_KERN + nkpde]);
 		}
+		nkpde++;
+		simple_unlock(&pmaps_lock);
 
 		/* Invalidate the PDP cache. */
 		pool_cache_invalidate(&pmap_pdp_cache);
-		pmap_pdp_cache_generation++;
-
-		simple_unlock(&pmaps_lock);
 	}
 
 	simple_unlock(&kpm->pm_obj.vmobjlock);

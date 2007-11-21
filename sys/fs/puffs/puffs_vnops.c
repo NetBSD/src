@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.107.2.3 2007/11/18 19:35:46 bouyer Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.107.2.4 2007/11/21 21:19:44 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.107.2.3 2007/11/18 19:35:46 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.107.2.4 2007/11/21 21:19:44 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -2141,8 +2141,6 @@ puffs_advlock(void *v)
 }
 
 #define BIOASYNC(bp) (bp->b_flags & B_ASYNC)
-#define BIOREAD(bp) (bp->b_flags & B_READ)
-#define BIOWRITE(bp) ((bp->b_flags & B_READ) == 0)
 
 /*
  * This maps itself to PUFFS_VN_READ/WRITE for data transfer.
@@ -2172,8 +2170,8 @@ puffs_strategy(void *v)
 	park_rw = NULL; /* explicit */
 	dobiodone = 1;
 
-	if ((BIOREAD(bp) && !EXISTSOP(pmp, READ))
-	    || (BIOWRITE(bp) && !EXISTSOP(pmp, WRITE)))
+	if ((BUF_ISREAD(bp) && !EXISTSOP(pmp, READ))
+	    || (BUF_ISWRITE(bp) && !EXISTSOP(pmp, WRITE)))
 		ERROUT(EOPNOTSUPP);
 
 	/*
@@ -2181,7 +2179,7 @@ puffs_strategy(void *v)
 	 * VOP_INACTIVE and VOP_RECLAIM in case the node has no references.
 	 */
 	if (pn->pn_stat & PNODE_DYING) {
-		KASSERT(BIOWRITE(bp));
+		KASSERT(BUF_ISWRITE(bp));
 		bp->b_resid = 0;
 		goto out;
 	}
@@ -2198,7 +2196,7 @@ puffs_strategy(void *v)
 	 * Also, do FAF in case we're suspending.
 	 * See puffs_vfsops.c:pageflush()
 	 */
-	if (BIOWRITE(bp)) {
+	if (BUF_ISWRITE(bp)) {
 		simple_lock(&vp->v_interlock);
 		if (vp->v_iflag & VI_XLOCK)
 			dofaf = 1;
@@ -2222,7 +2220,7 @@ puffs_strategy(void *v)
 	RWARGS(rw_msg, 0, tomove, bp->b_blkno << DEV_BSHIFT, FSCRED);
 
 	/* 2x2 cases: read/write, faf/nofaf */
-	if (BIOREAD(bp)) {
+	if (BUF_ISREAD(bp)) {
 		puffs_msg_setinfo(park_rw, PUFFSOP_VN,
 		    PUFFS_VN_READ, VPTOPNC(vp));
 		puffs_msg_setdelta(park_rw, tomove);
@@ -2478,8 +2476,8 @@ puffs_getpages(void *v)
 #ifdef notnowjohn
 		/* allocate worst-case memory */
 		runsizes = ((npages / 2) + 1) * sizeof(struct puffs_cacherun);
-		pcinfo = malloc(sizeof(struct puffs_cacheinfo) + runsizes,
-		    M_PUFFS, M_ZERO | locked ? M_NOWAIT : M_WAITOK);
+		pcinfo = kmem_zalloc(sizeof_puffs_cacheinfo) + runsize,
+		    locked ? KM_NOSLEEP : KM_SLEEP);
 
 		/*
 		 * can't block if we're locked and can't mess up caching
@@ -2552,7 +2550,8 @@ puffs_getpages(void *v)
  out:
 	if (error) {
 		if (pcinfo != NULL)
-			free(pcinfo, M_PUFFS);
+			kmem_free(pcinfo,
+			    sizeof(struct puffs_cacheinfo) + runsizes);
 #ifdef notnowjohn
 		if (parkmem != NULL)
 			puffs_park_release(parkmem, 1);

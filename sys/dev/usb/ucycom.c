@@ -1,4 +1,4 @@
-/*	$NetBSD: ucycom.c,v 1.17.20.1 2007/11/13 16:01:42 bouyer Exp $	*/
+/*	$NetBSD: ucycom.c,v 1.17.20.2 2007/11/21 21:19:43 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ucycom.c,v 1.17.20.1 2007/11/13 16:01:42 bouyer Exp $");
+__RCSID("$NetBSD: ucycom.c,v 1.17.20.2 2007/11/21 21:19:43 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -472,15 +472,8 @@ ucycomstart(struct tty *tp)
 		goto out;
 #endif
 
-	if (tp->t_outq.c_cc <= tp->t_lowat) {
-		if (ISSET(tp->t_state, TS_ASLEEP)) {
-			CLR(tp->t_state, TS_ASLEEP);
-			wakeup(&tp->t_outq);
-		}
-		selwakeup(&tp->t_wsel);
-		if (tp->t_outq.c_cc == 0)
-			goto out;
-	}
+	if (ttypull(tp) == 0)
+		goto out;
 
 	/* Grab the first contiguous region of buffer space. */
 	data = tp->t_outq.c_cf;

@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_sys.h,v 1.59.2.2 2007/11/18 19:35:45 bouyer Exp $	*/
+/*	$NetBSD: puffs_sys.h,v 1.59.2.3 2007/11/21 21:19:44 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -244,8 +244,6 @@ void	puffs_updatenode(struct puffs_node *, int, voff_t);
 void	puffs_userdead(struct puffs_mount *);
 
 extern int (**puffs_vnodeop_p)(void *);
-
-MALLOC_DECLARE(M_PUFFS);
 
 /* for putter */
 int	puffs_msgif_getout(void *, size_t, int, uint8_t **, size_t *, void **);
