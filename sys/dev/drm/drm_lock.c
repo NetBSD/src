@@ -1,3 +1,5 @@
+/* $NetBSD: drm_lock.c,v 1.3 2007/11/21 19:22:13 bjs Exp $ */
+
 /* lock.c -- IOCTLs for locking -*- linux-c -*-
  * Created: Tue Feb  2 08:37:54 1999 by faith@valinux.com
  */
@@ -130,13 +132,8 @@ int drm_lock(DRM_IOCTL_ARGS)
 		}
 
 		/* Contention */
-#if defined(__FreeBSD__) && __FreeBSD_version > 500000
-		ret = msleep((void *)&dev->lock.lock_queue, &dev->dev_lock,
-		    PZERO | PCATCH, "drmlk2", 0);
-#else
 		ret = mtsleep((void *)&dev->lock.lock_queue, PZERO | PCATCH,
 		    "drmlk2", 0, &dev->dev_lock);
-#endif
 		if (ret != 0)
 			break;
 	}
