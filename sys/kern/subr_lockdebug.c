@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_lockdebug.c,v 1.16 2007/11/21 10:19:10 yamt Exp $	*/
+/*	$NetBSD: subr_lockdebug.c,v 1.17 2007/11/21 10:21:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.16 2007/11/21 10:19:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.17 2007/11/21 10:21:40 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_ddb.h"
@@ -237,10 +237,6 @@ lockdebug_init(void)
 bool
 lockdebug_alloc(volatile void *lock, lockops_t *lo, uintptr_t initaddr)
 {
-#if 0
-	lockdebuglist_t *head;
-	lockdebuglk_t *lk;
-#endif
 	struct cpu_info *ci;
 	lockdebug_t *ld;
 
