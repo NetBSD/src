@@ -1,4 +1,4 @@
-/*	$NetBSD: pud_msgif.h,v 1.1 2007/11/20 18:47:05 pooka Exp $	*/
+/*	$NetBSD: pud_msgif.h,v 1.2 2007/11/21 18:10:48 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -68,9 +68,9 @@ struct pud_req_openclose {
 	int		pm_fmt;
 };
 
-#define pud_creq_read pud_creq_readwrite
-#define pud_creq_write pud_creq_readwrite
-struct pud_creq_readwrite {
+#define pud_creq_read pud_req_readwrite
+#define pud_creq_write pud_req_readwrite
+struct pud_req_readwrite {
 	struct pud_req	pm_pdr;
 
 	off_t		pm_offset;
@@ -87,7 +87,7 @@ struct pud_conf_reg {
 	int		pm_flags;
 	char		pm_devname[PUD_DEVNAME_MAX+1];
 };
-#define PUD_CONF_BDEV	1
+#define PUD_CONFFLAG_BDEV	1
 
 struct pud_conf_ioctl {
 	struct pud_req	pm_pdr;
@@ -103,12 +103,12 @@ enum {
 };
 
 enum {
-	PUD_BDEV_OPEN,	PUD_BDEV_CLOSE,	PUD_BDEV_STRATEGY,
+	PUD_BDEV_OPEN,	PUD_BDEV_CLOSE, PUD_BDEV_STRATREAD, PUD_BDEV_STRATWRITE,
 	PUD_BDEV_IOCTL,	PUD_BDEV_DUMP,	PUD_BDEV_PSIZE,
 };
 
 enum {
-	PUD_CONF_REG,	PUD_CONF_DEREG,	PUD_CONF_IOCTL,
+	PUD_CONF_REG,	PUD_CONF_DEREG,	PUD_CONF_IOCTL,	PUD_CONF_MMAP,
 };
 
 #endif /* _DEV_PUD_PUDMSGIF_H_ */
