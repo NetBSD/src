@@ -1,4 +1,4 @@
-/*	$NetBSD: pud_dev.c,v 1.1 2007/11/20 18:47:05 pooka Exp $	*/
+/*	$NetBSD: pud_dev.c,v 1.2 2007/11/21 11:19:44 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pud_dev.c,v 1.1 2007/11/20 18:47:05 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pud_dev.c,v 1.2 2007/11/21 11:19:44 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -231,15 +231,15 @@ pud_cdev_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 	return EOPNOTSUPP;
 }
 
-static int
-pud_cdev_poll(dev_t dev, int flag, lwp_t *l)
-{
-
-	return EOPNOTSUPP;
-}
-
 static paddr_t
 pud_cdev_mmap(dev_t dev, off_t off, int flag)
+{
+
+	return (paddr_t)-1;
+}
+
+static int
+pud_cdev_poll(dev_t dev, int flag, lwp_t *l)
 {
 
 	return EOPNOTSUPP;
