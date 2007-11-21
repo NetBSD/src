@@ -1,4 +1,4 @@
-/* $NetBSD: rb.h,v 1.8 2007/11/20 12:32:56 yamt Exp $ */
+/* $NetBSD: rb.h,v 1.9 2007/11/21 16:42:51 matt Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -168,7 +168,7 @@ struct rb_tree {
 #endif
 
 void	rb_tree_init(struct rb_tree *, const struct rb_tree_ops *);
-void	rb_tree_insert_node(struct rb_tree *, struct rb_node *);
+bool	rb_tree_insert_node(struct rb_tree *, struct rb_node *);
 struct rb_node	*
 	rb_tree_find_node(struct rb_tree *, const void *);
 struct rb_node	*
