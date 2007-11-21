@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_lockdebug.c,v 1.17 2007/11/21 10:21:40 yamt Exp $	*/
+/*	$NetBSD: subr_lockdebug.c,v 1.18 2007/11/21 10:25:51 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.17 2007/11/21 10:21:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.18 2007/11/21 10:25:51 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_ddb.h"
@@ -605,7 +605,6 @@ lockdebug_barrier(volatile void *spinlock, int slplocks)
 void
 lockdebug_mem_check(const char *func, void *base, size_t sz)
 {
-#if 0
 	lockdebug_t *ld;
 	lockdebuglk_t *lk;
 	uintptr_t lock;
@@ -629,7 +628,6 @@ lockdebug_mem_check(const char *func, void *base, size_t sz)
 		return;
 	}
 	lockdebug_unlock(lk);
-#endif
 }
 
 /*
