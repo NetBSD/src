@@ -1,3 +1,5 @@
+/* $NetBSD: drmP.h,v 1.10 2007/11/21 19:22:12 bjs Exp $ */
+
 /* drmP.h -- Private header for Direct Rendering Manager -*- linux-c -*-
  * Created: Mon Jan  4 10:05:05 1999 by faith@precisioninsight.com
  */
