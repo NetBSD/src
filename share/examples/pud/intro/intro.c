@@ -1,4 +1,4 @@
-/*	$NetBSD: intro.c,v 1.1 2007/11/20 18:58:17 pooka Exp $	*/
+/*	$NetBSD: intro.c,v 1.2 2007/11/21 18:11:17 pooka Exp $	*/
 
 /*
  * El extra-simplo example of the userspace driver framework.
@@ -61,7 +61,7 @@ main(int argc, char *argv[])
 	pcr.pm_pdr.pdr_reqtype = PUD_CONF_REG;
 
 	pcr.pm_regdev = makedev(377, 0);
-	pcr.pm_flags = 0;
+	pcr.pm_flags = PUD_CONFFLAG_BDEV;
 	strlcpy(pcr.pm_devname, "testdev", sizeof(pcr.pm_devname));
 
 	n = write(fd, &pcr, pcr.pm_pdr.pdr_pth.pth_framelen);
@@ -73,12 +73,7 @@ main(int argc, char *argv[])
 	 */
 	for (;;) {
 		n = read(fd, pdr, DEFALLOC);
-		printf("read %d\n", n);
-
-		if (pdr->pdr_reqclass != PUD_REQ_CDEV) {
-			printf("class %d not supported\n", pdr->pdr_reqclass);
-			abort();
-		}
+		printf("read %d %d\n", n, errno);
 
 		switch (pdr->pdr_reqtype) {
 		case PUD_CDEV_OPEN:
@@ -88,24 +83,39 @@ main(int argc, char *argv[])
 			break;
 
 		case PUD_CDEV_READ:
+		/* uh oh case PUD_BDEV_STRATREAD: */
 		{
 			struct pud_creq_read *pc_read;
 			size_t clen;
 
 			pc_read = (void *)pdr;
+			printf("read from offset %llu, resid %zu\n",
+			    (unsigned long long)pc_read->pm_offset,
+			    pc_read->pm_resid);
+
 			clen = MIN(strlen(ECHOSTR), pc_read->pm_resid);
 			strncpy(pc_read->pm_data, ECHOSTR, clen);
-			pc_read->pm_resid -= clen;
+			if (pdr->pdr_reqclass == PUD_REQ_BDEV) {
+				clen = pc_read->pm_resid;
+				pc_read->pm_resid = 0;
+			} else {
+				pc_read->pm_resid -= clen;
+			}
 			pdr->pdr_pth.pth_framelen =
 			    sizeof(struct pud_creq_read) + clen;
 		}
 			break;
 
 		case PUD_CDEV_WRITE:
+		/* uh uh oh case PUD_BDEV_STRATWRITE: */
 		{
 			struct pud_creq_write *pc_write;
 
 			pc_write = (void *)pdr;
+			printf("write to offset %llu, resid %zu\n",
+			    (unsigned long long)pc_write->pm_offset,
+			    pc_write->pm_resid);
+
 			pc_write->pm_data[pc_write->pm_resid] = '\0';
 			printf("got via write: %s", pc_write->pm_data);
 			pdr->pdr_pth.pth_framelen =
