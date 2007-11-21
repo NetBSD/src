@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.732 2007/11/21 01:28:44 dogcow Exp $
+# $NetBSD: mi,v 1.733 2007/11/21 16:23:29 njoly Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -4072,6 +4072,7 @@
 ./var/db/obsolete/games				base-sys-root
 ./var/db/obsolete/man				base-sys-root
 ./var/db/obsolete/misc				base-sys-root
+./var/db/obsolete/tests				base-sys-root
 ./var/db/obsolete/text				base-sys-root
 ./var/db/xdm					base-sys-root
 ./var/empty					base-obsolete		obsolete
