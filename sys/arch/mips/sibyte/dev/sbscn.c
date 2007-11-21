@@ -1,4 +1,4 @@
-/* $NetBSD: sbscn.c,v 1.22 2007/07/09 20:52:23 ad Exp $ */
+/* $NetBSD: sbscn.c,v 1.22.8.1 2007/11/21 21:53:23 joerg Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -116,7 +116,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbscn.c,v 1.22 2007/07/09 20:52:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbscn.c,v 1.22.8.1 2007/11/21 21:53:23 joerg Exp $");
 
 #define	SBSCN_DEBUG
 
@@ -1235,16 +1235,8 @@ sbscn_start(struct tty *tp)
 		goto out;
 	if (ch->ch_tx_stopped)
 		goto out;
-
-	if (tp->t_outq.c_cc <= tp->t_lowat) {
-		if (ISSET(tp->t_state, TS_ASLEEP)) {
-			CLR(tp->t_state, TS_ASLEEP);
-			wakeup(&tp->t_outq);
-		}
-		selwakeup(&tp->t_wsel);
-		if (tp->t_outq.c_cc == 0)
-			goto out;
-	}
+	if (!ttypull(tp))
+		goto out;
 
 	/* Grab the first contiguous region of buffer space. */
 	{

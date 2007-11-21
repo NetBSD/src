@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.261.6.2 2007/10/26 15:44:40 joerg Exp $	*/
+/*	$NetBSD: com.c,v 1.261.6.3 2007/11/21 21:54:49 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.261.6.2 2007/10/26 15:44:40 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.261.6.3 2007/11/21 21:54:49 joerg Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -1660,16 +1660,8 @@ comstart(struct tty *tp)
 		goto out;
 	if (sc->sc_tx_stopped)
 		goto out;
-
-	if (tp->t_outq.c_cc <= tp->t_lowat) {
-		if (ISSET(tp->t_state, TS_ASLEEP)) {
-			CLR(tp->t_state, TS_ASLEEP);
-			wakeup(&tp->t_outq);
-		}
-		selwakeup(&tp->t_wsel);
-		if (tp->t_outq.c_cc == 0)
-			goto out;
-	}
+	if (!ttypull(tp))
+		goto out;
 
 	/* Grab the first contiguous region of buffer space. */
 	{

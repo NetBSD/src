@@ -1,4 +1,4 @@
-/*	$NetBSD: pcons.c,v 1.25.8.1 2007/10/26 15:43:37 joerg Exp $	*/
+/*	$NetBSD: pcons.c,v 1.25.8.2 2007/11/21 21:53:31 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2000 Eduardo E. Horvath
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcons.c,v 1.25.8.1 2007/10/26 15:43:37 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcons.c,v 1.25.8.2 2007/11/21 21:53:31 joerg Exp $");
 
 #include "opt_ddb.h"
 
@@ -239,16 +239,9 @@ pconsstart(struct tty *tp)
 	prom_write(prom_stdout(), buf, len);
 	s = spltty();
 	tp->t_state &= ~TS_BUSY;
-	if (cl->c_cc) {
+	if (ttypull(tp)) {
 		tp->t_state |= TS_TIMEOUT;
 		callout_schedule(&tp->t_rstrt_ch, 1);
-	}
-	if (cl->c_cc <= tp->t_lowat) {
-		if (tp->t_state & TS_ASLEEP) {
-			tp->t_state &= ~TS_ASLEEP;
-			wakeup(cl);
-		}
-		selwakeup(&tp->t_wsel);
 	}
 	splx(s);
 }

@@ -1,11 +1,6 @@
-/**
- * \file drm_pci.h
- * \brief PCI consistent, DMA-accessible memory functions.
- *
- * \author Eric Anholt <anholt@FreeBSD.org>
- */
+/* $NetBSD: drm_pci.c,v 1.4.12.1 2007/11/21 21:54:36 joerg Exp $ */
 
-/*-
+/*
  * Copyright 2003 Eric Anholt.
  * All Rights Reserved.
  *
@@ -35,36 +30,25 @@ __FBSDID("$FreeBSD: src/sys/dev/drm/drm_pci.c,v 1.2 2005/11/28 23:13:52 anholt E
 
 #include "drmP.h"
 
-/**********************************************************************/
-/** \name PCI memory */
-/*@{*/
-
-#if defined(__FreeBSD__)
-static void
-drm_pci_busdma_callback(void *arg, bus_dma_segment_t *segs, int nsegs, int error)
-{
-	drm_dma_handle_t *dmah = arg;
-
-	if (error != 0)
-		return;
-
-	KASSERT(nsegs == 1, ("drm_pci_busdma_callback: bad dma segment count"));
-	dmah->busaddr = segs[0].ds_addr;
-}
-#endif
-
-/**
- * \brief Allocate a physically contiguous DMA-accessible consistent 
+/* What might happen in age of Aquarius:
+ *
+ *
+ * Allocate a physically contiguous DMA-accessible consistent 
  * memory block.
  */
+
+/* NetBSD reality:
+ *
+ * XXX We must fix this mess! This is a horrible misuse of bus_dma(9),
+ *     and I am surprised it works at all.  			 
+ */
+
 drm_dma_handle_t *
 drm_pci_alloc(drm_device_t *dev, size_t size, size_t align, dma_addr_t maxaddr)
 {
 	drm_dma_handle_t *dmah;
 	int ret;
-#ifdef __NetBSD__
 	int nsegs;
-#endif
 
 	/* Need power-of-two alignment, so fail the allocation if it isn't. */
 	if ((align & (align - 1)) != 0) {
@@ -77,35 +61,6 @@ drm_pci_alloc(drm_device_t *dev, size_t size, size_t align, dma_addr_t maxaddr)
 	if (dmah == NULL)
 		return NULL;
 
-#ifdef __FreeBSD__
-	ret = bus_dma_tag_create(NULL, align, 0, /* tag, align, boundary */
-	    maxaddr, BUS_SPACE_MAXADDR, /* lowaddr, highaddr */
-	    NULL, NULL, /* filtfunc, filtfuncargs */
-	    size, 1, size, /* maxsize, nsegs, maxsegsize */
-	    BUS_DMA_ALLOCNOW, NULL, NULL, /* flags, lockfunc, lockfuncargs */
-	    &dmah->tag);
-	if (ret != 0) {
-		free(dmah, M_DRM);
-		return NULL;
-	}
-
-	ret = bus_dmamem_alloc(dmah->tag, &dmah->vaddr, BUS_DMA_NOWAIT,
-	    &dmah->map);
-	if (ret != 0) {
-		bus_dma_tag_destroy(dmah->tag);
-		free(dmah, M_DRM);
-		return NULL;
-	}
-
-	ret = bus_dmamap_load(dmah->tag, dmah->map, dmah->vaddr, size,
-	    drm_pci_busdma_callback, dmah, 0);
-	if (ret != 0) {
-		bus_dmamem_free(dmah->tag, dmah->vaddr, dmah->map);
-		bus_dma_tag_destroy(dmah->tag);
-		free(dmah, M_DRM);
-		return NULL;
-	}
-#elif defined(__NetBSD__)
 	ret = bus_dmamem_alloc(dev->pa.pa_dmat, size, align, 0,
 	    &dmah->seg, 1, &nsegs, BUS_DMA_NOWAIT);
 	if (ret != 0) {
@@ -134,28 +89,21 @@ drm_pci_alloc(drm_device_t *dev, size_t size, size_t align, dma_addr_t maxaddr)
 
 	dmah->busaddr = dmah->seg.ds_addr;
 	dmah->vaddr = dmah->addr;
-#endif
 
 	return dmah;
 }
 
-/**
- * \brief Free a DMA-accessible consistent memory block.
+/*
+ * 	Free a DMA-accessible consistent memory block.
  */
+
 void
 drm_pci_free(drm_device_t *dev, drm_dma_handle_t *dmah)
 {
 	if (dmah == NULL)
 		return;
 
-#if defined(__FreeBSD__)
-	bus_dmamem_free(dmah->tag, dmah->vaddr, dmah->map);
-	bus_dma_tag_destroy(dmah->tag);
-#elif defined(__NetBSD__)
 	bus_dmamem_free(dev->pa.pa_dmat, &dmah->seg, 1);
-#endif
 
 	free(dmah, M_DRM);
 }
-
-/*@}*/

@@ -1,3 +1,5 @@
+/* $NetBSD: drm_ioctl.c,v 1.1.12.1 2007/11/21 21:54:34 joerg Exp $ */
+
 /* drm_ioctl.h -- IOCTL processing for DRM -*- linux-c -*-
  * Created: Fri Jan  8 09:01:26 1999 by faith@valinux.com
  */
@@ -71,9 +73,7 @@ int drm_setunique(DRM_IOCTL_ARGS)
 	drm_unique_t u;
 	int domain = 0, bus = 0, slot = 0, func = 0, ret = 0;
 	char *busid;
-#ifdef __NetBSD__
 	return EOPNOTSUPP;
-#endif
 
 	DRM_COPY_FROM_USER_IOCTL( u, (drm_unique_t *)data, sizeof(u) );
 
@@ -94,9 +94,7 @@ int drm_setunique(DRM_IOCTL_ARGS)
 	/* Return error if the busid submitted doesn't match the device's actual
 	 * busid.
 	 */
-#ifdef __FreeBSD__
-	ret = sscanf(busid, "PCI:%d:%d:%d", &bus, &slot, &func);
-#endif
+
 	if (ret != 3) {
 		free(busid, M_DRM);
 		return DRM_ERR(EINVAL);

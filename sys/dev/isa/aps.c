@@ -1,4 +1,4 @@
-/*	$NetBSD: aps.c,v 1.1.4.5 2007/11/06 14:27:18 joerg Exp $	*/
+/*	$NetBSD: aps.c,v 1.1.4.6 2007/11/21 21:55:01 joerg Exp $	*/
 /*	$OpenBSD: aps.c,v 1.15 2007/05/19 19:14:11 tedu Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aps.c,v 1.1.4.5 2007/11/06 14:27:18 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aps.c,v 1.1.4.6 2007/11/21 21:55:01 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,8 +98,8 @@ struct aps_softc {
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
 
-	struct sysmon_envsys sc_sysmon;
-	envsys_data_t sc_data[APS_NUM_SENSORS];
+	struct sysmon_envsys *sc_sme;
+	envsys_data_t sc_sensor[APS_NUM_SENSORS];
 	struct callout sc_callout;
 
 	struct sensor_rec aps_data;
@@ -214,14 +214,9 @@ aps_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* Initialize sensors */
-	for (i = 0; i < APS_NUM_SENSORS; ++i) {
-		sc->sc_data[i].sensor = i;
-		sc->sc_data[i].state = ENVSYS_SVALID;
-	}
-
 #define INITDATA(idx, unit, string)					\
-	sc->sc_data[idx].units = unit;					\
-	snprintf(sc->sc_data[idx].desc, sizeof(sc->sc_data[idx].desc),	\
+	sc->sc_sensor[idx].units = unit;					\
+	snprintf(sc->sc_sensor[idx].desc, sizeof(sc->sc_sensor[idx].desc),	\
 	    "%s %s", sc->sc_dev.dv_xname, string);
 
 	INITDATA(APS_SENSOR_XACCEL, ENVSYS_INTEGER, "X_ACCEL");
@@ -234,17 +229,25 @@ aps_attach(struct device *parent, struct device *self, void *aux)
 	INITDATA(APS_SENSOR_MSACT, ENVSYS_INDICATOR, "Mouse Active");
 	INITDATA(APS_SENSOR_LIDOPEN, ENVSYS_INDICATOR, "Lid Open");
 
+	sc->sc_sme = sysmon_envsys_create();
+	for (i = 0; i < APS_NUM_SENSORS; i++) {
+		sc->sc_sensor[i].state = ENVSYS_SVALID;
+		if (sysmon_envsys_sensor_attach(sc->sc_sme,
+						&sc->sc_sensor[i])) {
+			sysmon_envsys_destroy(sc->sc_sme);
+			return;
+		}
+	}
         /*
          * Register with the sysmon_envsys(9) framework.
          */
-	sc->sc_sysmon.sme_name = sc->sc_dev.dv_xname;
-	sc->sc_sysmon.sme_sensor_data = sc->sc_data;
-	sc->sc_sysmon.sme_flags |= SME_DISABLE_GTREDATA;
-	sc->sc_sysmon.sme_nsensors = APS_NUM_SENSORS;
+	sc->sc_sme->sme_name = sc->sc_dev.dv_xname;
+	sc->sc_sme->sme_flags |= SME_DISABLE_REFRESH;
 
-	if ((i = sysmon_envsys_register(&sc->sc_sysmon))) {
+	if ((i = sysmon_envsys_register(sc->sc_sme))) {
 		aprint_error("%s: unable to register with sysmon (%d)\n",
 		    device_xname(&sc->sc_dev), i);
+		sysmon_envsys_destroy(sc->sc_sme);
 		return;
 	}
 
@@ -304,7 +307,7 @@ aps_detach(struct device *self, int flags)
 
         callout_stop(&sc->sc_callout);
         callout_destroy(&sc->sc_callout);
-	sysmon_envsys_unregister(&sc->sc_sysmon);
+	sysmon_envsys_unregister(sc->sc_sme);
 	bus_space_unmap(sc->sc_iot, sc->sc_ioh, APS_ADDR_SIZE);
 
 	return 0;
@@ -363,28 +366,28 @@ aps_refresh_sensor_data(struct aps_softc *sc)
 	bus_space_read_1(sc->sc_iot, sc->sc_ioh, APS_CMD);
 	bus_space_read_1(sc->sc_iot, sc->sc_ioh, APS_ACCEL_STATE);
 
-	sc->sc_data[APS_SENSOR_XACCEL].value_cur = sc->aps_data.x_accel;
-	sc->sc_data[APS_SENSOR_YACCEL].value_cur = sc->aps_data.y_accel;
+	sc->sc_sensor[APS_SENSOR_XACCEL].value_cur = sc->aps_data.x_accel;
+	sc->sc_sensor[APS_SENSOR_YACCEL].value_cur = sc->aps_data.y_accel;
 
 	/* convert to micro (mu) degrees */
 	temp = sc->aps_data.temp1 * 1000000;	
 	/* convert to kelvin */
 	temp += 273150000; 
-	sc->sc_data[APS_SENSOR_TEMP1].value_cur = temp;
+	sc->sc_sensor[APS_SENSOR_TEMP1].value_cur = temp;
 
 	/* convert to micro (mu) degrees */
 	temp = sc->aps_data.temp2 * 1000000;	
 	/* convert to kelvin */
 	temp += 273150000; 
-	sc->sc_data[APS_SENSOR_TEMP2].value_cur = temp;
+	sc->sc_sensor[APS_SENSOR_TEMP2].value_cur = temp;
 
-	sc->sc_data[APS_SENSOR_XVAR].value_cur = sc->aps_data.x_var;
-	sc->sc_data[APS_SENSOR_YVAR].value_cur = sc->aps_data.y_var;
-	sc->sc_data[APS_SENSOR_KBACT].value_cur =
+	sc->sc_sensor[APS_SENSOR_XVAR].value_cur = sc->aps_data.x_var;
+	sc->sc_sensor[APS_SENSOR_YVAR].value_cur = sc->aps_data.y_var;
+	sc->sc_sensor[APS_SENSOR_KBACT].value_cur =
 	    (sc->aps_data.input &  APS_INPUT_KB) ? 1 : 0;
-	sc->sc_data[APS_SENSOR_MSACT].value_cur =
+	sc->sc_sensor[APS_SENSOR_MSACT].value_cur =
 	    (sc->aps_data.input & APS_INPUT_MS) ? 1 : 0;
-	sc->sc_data[APS_SENSOR_LIDOPEN].value_cur =
+	sc->sc_sensor[APS_SENSOR_LIDOPEN].value_cur =
 	    (sc->aps_data.input & APS_INPUT_LIDOPEN) ? 1 : 0;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.32.8.2 2007/10/28 20:10:31 joerg Exp $	*/
+/*	$NetBSD: trap.c,v 1.32.8.3 2007/11/21 21:53:00 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.32.8.2 2007/10/28 20:10:31 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.32.8.3 2007/11/21 21:53:00 joerg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -118,9 +118,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.32.8.2 2007/10/28 20:10:31 joerg Exp $");
 #endif
 
 void trap(struct trapframe *);
-#if defined(I386_CPU)
-int trapwrite(unsigned);
-#endif
 
 const char *trap_type[] = {
 	"privileged instruction fault",		/*  0 T_PRIVINFLT */

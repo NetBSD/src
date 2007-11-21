@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.606.8.13 2007/11/14 19:04:12 joerg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.606.8.14 2007/11/21 21:53:16 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.606.8.13 2007/11/14 19:04:12 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.606.8.14 2007/11/21 21:53:16 joerg Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -80,7 +80,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.606.8.13 2007/11/14 19:04:12 joerg Exp
 #include "opt_compat_netbsd.h"
 #include "opt_compat_svr4.h"
 #include "opt_cpureset_delay.h"
-#include "opt_cputype.h"
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
 #include "opt_kgdb.h"
@@ -253,10 +252,7 @@ unsigned int msgbuf_p_cnt = 0;
 
 vaddr_t	idt_vaddr;
 paddr_t	idt_paddr;
-
-#ifdef I586_CPU
 vaddr_t	pentium_idt_vaddr;
-#endif
 
 struct vm_map *exec_map = NULL;
 struct vm_map *mb_map = NULL;
@@ -731,7 +727,7 @@ buildcontext(struct lwp *l, int sel, void *catcher, void *fp)
 	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_eip = (int)catcher;
 	tf->tf_cs = GSEL(sel, SEL_UPL);
-	tf->tf_eflags &= ~(PSL_T|PSL_VM|PSL_AC);
+	tf->tf_eflags &= ~(PSL_T|PSL_VM|PSL_AC|PSL_D);
 	tf->tf_esp = (int)fp;
 	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
 }
@@ -1251,9 +1247,7 @@ union	descriptor *gdt, *ldt;
 struct gate_descriptor *idt;
 char idt_allocmap[NIDT];
 kmutex_t idt_lock;
-#ifdef I586_CPU
 union	descriptor *pentium_idt;
-#endif
 struct user *proc0paddr;
 extern vaddr_t proc0uarea;
 
@@ -1328,11 +1322,7 @@ extern vector IDTVEC(mach_trap);
 void cpu_init_idt()
 {
 	struct region_descriptor region;
-#ifdef I586_CPU
 	setregion(&region, pentium_idt, NIDT * sizeof(idt[0]) - 1);
-#else
-	setregion(&region, idt, NIDT * sizeof(idt[0]) - 1);
-#endif
 	lidt(&region);
 }
 
@@ -1428,9 +1418,9 @@ initgdt(union descriptor *tgdt)
 	setsegment(&gdt[GDATA_SEL].sd, 0, 0xfffff, SDT_MEMRWA, SEL_KPL, 1, 1);
 	setsegment(&gdt[GUCODE_SEL].sd, 0, x86_btop(I386_MAX_EXE_ADDR) - 1,
 	    SDT_MEMERA, SEL_UPL, 1, 1);
-	setsegment(&gdt[GUCODEBIG_SEL].sd, 0, x86_btop(VM_MAXUSER_ADDRESS) - 1,
+	setsegment(&gdt[GUCODEBIG_SEL].sd, 0, 0xfffff,
 	    SDT_MEMERA, SEL_UPL, 1, 1);
-	setsegment(&gdt[GUDATA_SEL].sd, 0, x86_btop(VM_MAXUSER_ADDRESS) - 1,
+	setsegment(&gdt[GUDATA_SEL].sd, 0, 0xfffff,
 	    SDT_MEMRWA, SEL_UPL, 1, 1);
 #ifdef COMPAT_MACH
 	setgate(&gdt[GMACHCALLS_SEL].gd, &IDTVEC(mach_trap), 1,
@@ -1443,8 +1433,8 @@ initgdt(union descriptor *tgdt)
 	setsegment(&gdt[GBIOSDATA_SEL].sd, 0, 0xfffff, SDT_MEMRWA, SEL_KPL, 0,
 	    0);
 #endif
-	setsegment(&gdt[GCPU_SEL].sd, &cpu_info_primary,
-	    sizeof(struct cpu_info)-1, SDT_MEMRWA, SEL_KPL, 1, 1);
+	setsegment(&gdt[GCPU_SEL].sd, &cpu_info_primary, 0xfffff,
+	    SDT_MEMRWA, SEL_KPL, 1, 1);
 
 	setregion(&region, gdt, NGDT * sizeof(gdt[0]) - 1);
 	lgdt(&region);
@@ -1917,11 +1907,9 @@ init386(paddr_t first_avail)
 	memset((void *)idt_vaddr, 0, PAGE_SIZE);
 
 	idt = (struct gate_descriptor *)idt_vaddr;
-#ifdef I586_CPU
 	pmap_kenter_pa(pentium_idt_vaddr, idt_paddr, VM_PROT_READ);
 	pmap_update(pmap_kernel());
 	pentium_idt = (union descriptor *)pentium_idt_vaddr;
-#endif
 
 	tgdt = gdt;
 	gdt = (union descriptor *)

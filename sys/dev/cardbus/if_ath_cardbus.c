@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ath_cardbus.c,v 1.18.22.5 2007/11/06 14:27:15 joerg Exp $ */
+/*	$NetBSD: if_ath_cardbus.c,v 1.18.22.6 2007/11/21 21:54:25 joerg Exp $ */
 /*
  * Copyright (c) 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ath_cardbus.c,v 1.18.22.5 2007/11/06 14:27:15 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ath_cardbus.c,v 1.18.22.6 2007/11/21 21:54:25 joerg Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -294,7 +294,6 @@ ath_cardbus_disable(struct ath_softc *sc)
 	/* Unhook the interrupt handler. */
 	cardbus_intr_disestablish(cc, cf, csc->sc_ih);
 	csc->sc_ih = NULL;
-
 }
 
 void
@@ -303,9 +302,12 @@ ath_cardbus_setup(struct ath_cardbus_softc *csc)
 	cardbus_devfunc_t ct = csc->sc_ct;
 	cardbus_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
+	int error;
 	pcireg_t reg;
 
-	(void)cardbus_set_powerstate(ct, csc->sc_tag, PCI_PWR_D0);
+	if ((error = cardbus_set_powerstate(ct, csc->sc_tag,
+	    PCI_PWR_D0)) != 0)
+		aprint_debug("%s: cardbus_set_powerstate %d\n", __func__, error);
 
 	/* Program the BAR. */
 	cardbus_conf_write(cc, cf, csc->sc_tag, ATH_PCI_MMBA,
@@ -321,15 +323,4 @@ ath_cardbus_setup(struct ath_cardbus_softc *csc)
 	reg |= CARDBUS_COMMAND_MASTER_ENABLE | CARDBUS_COMMAND_MEM_ENABLE;
 	cardbus_conf_write(cc, cf, csc->sc_tag, CARDBUS_COMMAND_STATUS_REG,
 	    reg);
-
-	/*
-	 * Make sure the latency timer is set to some reasonable
-	 * value.
-	 */
-	reg = cardbus_conf_read(cc, cf, csc->sc_tag, CARDBUS_BHLC_REG);
-	if (CARDBUS_LATTIMER(reg) < 0x20) {
-		reg &= ~(CARDBUS_LATTIMER_MASK << CARDBUS_LATTIMER_SHIFT);
-		reg |= (0x20 << CARDBUS_LATTIMER_SHIFT);
-		cardbus_conf_write(cc, cf, csc->sc_tag, CARDBUS_BHLC_REG, reg);
-	}
 }

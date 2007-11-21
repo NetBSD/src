@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.11 2007/07/12 19:31:01 skrll Exp $	*/
+/*	$NetBSD: intr.c,v 1.11.8.1 2007/11/21 21:53:08 joerg Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.11 2007/07/12 19:31:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.11.8.1 2007/11/21 21:53:08 joerg Exp $");
 
 #define __MUTEX_PRIVATE
 
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.11 2007/07/12 19:31:01 skrll Exp $");
 #include <machine/autoconf.h>
 #include <machine/cpufunc.h>
 #include <machine/intr.h>
+#include <machine/reg.h>
 
 #include <hp700/hp700/intr.h>
 #include <hp700/hp700/machdep.h>

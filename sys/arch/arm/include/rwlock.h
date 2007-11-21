@@ -1,4 +1,4 @@
-/*	$NetBSD: rwlock.h,v 1.2 2007/03/09 20:08:26 thorpej Exp $	*/
+/*	$NetBSD: rwlock.h,v 1.2.18.1 2007/11/21 21:53:03 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006 The NetBSD Foundation, Inc.
@@ -41,7 +41,6 @@
 
 struct krwlock {
 	volatile uintptr_t	rw_owner;
-	uint32_t		rw_id;
 };
 
 #ifdef __RWLOCK_PRIVATE
