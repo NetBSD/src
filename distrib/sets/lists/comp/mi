@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1089 2007/11/20 18:54:32 pooka Exp $
+#	$NetBSD: mi,v 1.1090 2007/11/21 18:40:58 pooka Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -7531,6 +7531,7 @@
 ./usr/share/man/cat9/properties.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/psignal.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/putiobuf.0			comp-sys-catman		.cat
+./usr/share/man/cat9/putter.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/radio.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/ras.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/ras_fork.0			comp-sys-catman		.cat
@@ -12113,6 +12114,7 @@
 ./usr/share/man/man9/properties.9		comp-obsolete		obsolete
 ./usr/share/man/man9/psignal.9			comp-sys-man		.man
 ./usr/share/man/man9/putiobuf.9			comp-sys-man		.man
+./usr/share/man/man9/putter.9			comp-sys-man		.man
 ./usr/share/man/man9/radio.9			comp-sys-man		.man
 ./usr/share/man/man9/ras.9			comp-sys-man		.man
 ./usr/share/man/man9/ras_fork.9			comp-sys-man		.man
