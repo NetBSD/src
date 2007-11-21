@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: utmutex - local mutex support
- *              $Revision: 1.1.44.1 $
+ *              $Revision: 1.1.44.2 $
  *
  ******************************************************************************/
 
@@ -339,8 +339,8 @@ AcpiUtAcquireMutex (
                 if (i == MutexId)
                 {
                     ACPI_ERROR ((AE_INFO,
-                        "Mutex [%s] already acquired by this thread [%X]",
-                        AcpiUtGetMutexName (MutexId), ThisThreadId));
+                        "Mutex [%s] already acquired by this thread [%jX]",
+                        AcpiUtGetMutexName (MutexId), (uintmax_t)ThisThreadId));
 
                     return (AE_ALREADY_ACQUIRED);
                 }
@@ -357,15 +357,15 @@ AcpiUtAcquireMutex (
 #endif
 
     ACPI_DEBUG_PRINT ((ACPI_DB_MUTEX,
-        "Thread %X attempting to acquire Mutex [%s]\n",
-        ThisThreadId, AcpiUtGetMutexName (MutexId)));
+        "Thread %jX attempting to acquire Mutex [%s]\n",
+        (uintmax_t)ThisThreadId, AcpiUtGetMutexName (MutexId)));
 
     Status = AcpiOsAcquireMutex (AcpiGbl_MutexInfo[MutexId].Mutex,
                 ACPI_WAIT_FOREVER);
     if (ACPI_SUCCESS (Status))
     {
-        ACPI_DEBUG_PRINT ((ACPI_DB_MUTEX, "Thread %X acquired Mutex [%s]\n",
-            ThisThreadId, AcpiUtGetMutexName (MutexId)));
+        ACPI_DEBUG_PRINT ((ACPI_DB_MUTEX, "Thread %jX acquired Mutex [%s]\n",
+            (uintmax_t)ThisThreadId, AcpiUtGetMutexName (MutexId)));
 
         AcpiGbl_MutexInfo[MutexId].UseCount++;
         AcpiGbl_MutexInfo[MutexId].ThreadId = ThisThreadId;
@@ -373,7 +373,7 @@ AcpiUtAcquireMutex (
     else
     {
         ACPI_EXCEPTION ((AE_INFO, Status,
-            "Thread %X could not acquire Mutex [%X]", (UINT32)ThisThreadId,
+            "Thread %jX could not acquire Mutex [%X]", (uintmax_t)ThisThreadId,
 	    MutexId));
     }
 
@@ -405,7 +405,7 @@ AcpiUtReleaseMutex (
 
     ThisThreadId = AcpiOsGetThreadId ();
     ACPI_DEBUG_PRINT ((ACPI_DB_MUTEX,
-        "Thread %X releasing Mutex [%s]\n", ThisThreadId,
+        "Thread %jX releasing Mutex [%s]\n", (uintmax_t)ThisThreadId,
         AcpiUtGetMutexName (MutexId)));
 
     if (MutexId > ACPI_MAX_MUTEX)
