@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.10 2007/11/16 01:37:58 ad Exp $	*/
+/*	$NetBSD: copy.S,v 1.11 2007/11/21 00:15:08 dsl Exp $	*/
 /*	NetBSD: locore.S,v 1.34 2005/04/01 11:59:31 yamt Exp $	*/
 
 /*-
@@ -673,47 +673,37 @@ ENTRY(x86_copyargs)
 	jc	_C_LABEL(x86_copyargs_efault)
 	cmpl	$VM_MAXUSER_ADDRESS,%eax
 	ja	_C_LABEL(x86_copyargs_efault)
-1:
+	/* There are a maximum of 8 args + 2 for syscall indirect */
+	cmp     $16,%ecx
 	movl	(%esi),%eax
-	cmpl	$4,%ecx
+	movl	4(%esi),%ecx
 	movl	%eax,(%edx)
-	je	2f
-	movl	4(%esi),%eax
-	cmpl	$8,%ecx
-	movl	%eax,4(%edx)
-	je	2f
+	movl	%ecx,4(%edx)
 	movl	8(%esi),%eax
-	cmpl	$12,%ecx
+	movl	12(%esi),%ecx
 	movl	%eax,8(%edx)
-	je	2f
-	movl	12(%esi),%eax
-	cmpl	$16,%ecx
-	movl	%eax,12(%edx)
-	je	2f
-	movl	16(%esi),%eax
-	cmpl	$20,%ecx
-	movl	%eax,16(%edx)
-	je	2f
-	movl	20(%esi),%eax
-	cmpl	$24,%ecx
-	movl	%eax,20(%edx)
-	je	2f
-	movl	24(%esi),%eax
-	cmpl	$28,%ecx
-	movl	%eax,24(%edx)
-	je	2f
-	movl	28(%esi),%eax
-	addl	$32,%esi
-	movl	%eax,28(%edx)
-	addl	$32,%edx
-	subl	$32,%ecx
-	jnz	1b
-2:
+	movl	%ecx,12(%edx)
+	ja	2f		/* Optimise since most sycalls have <= 4 args */
+1:
 	GET_CURPCB(%edx)
 	popl	PCB_ONFAULT(%edx)
 	popl	%esi
 	xorl	%eax,%eax
 	ret
+2:
+	movl	16(%esi),%eax
+	movl	20(%esi),%ecx
+	movl	%eax,16(%edx)
+	movl	%ecx,20(%edx)
+	movl	24(%esi),%eax
+	movl	28(%esi),%ecx
+	movl	%eax,24(%edx)
+	movl	%ecx,28(%edx)
+	movl	32(%esi),%eax
+	movl	36(%esi),%ecx
+	movl	%eax,32(%edx)
+	movl	%ecx,36(%edx)
+	jmp 1b
 
 /* LINTSTUB: Ignore */
 NENTRY(x86_copyargs_efault)
