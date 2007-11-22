@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.247 2007/11/10 18:53:57 rmind Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.248 2007/11/22 10:51:44 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.247 2007/11/10 18:53:57 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.248 2007/11/22 10:51:44 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -346,7 +346,7 @@ lfs_mountroot()
 	if ((error = lfs_mountfs(rootvp, mp, l))) {
 		mp->mnt_op->vfs_refcount--;
 		vfs_unbusy(mp);
-		free(mp, M_MOUNT);
+		vfs_destroy(mp);
 		return (error);
 	}
 	mutex_enter(&mountlist_lock);
