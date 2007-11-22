@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_lockdebug.c,v 1.19 2007/11/21 11:33:11 yamt Exp $	*/
+/*	$NetBSD: subr_lockdebug.c,v 1.20 2007/11/22 10:47:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.19 2007/11/21 11:33:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.20 2007/11/22 10:47:37 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_ddb.h"
@@ -127,11 +127,13 @@ ld_rb_compare_nodes(const struct rb_node *n1, const struct rb_node *n2)
 {
 	const lockdebug_t *ld1 = (const void *)n1;
 	const lockdebug_t *ld2 = (const void *)n2;
-	intptr_t diff = (intptr_t)ld1->ld_lock - (intptr_t)ld2->ld_lock;
-	if (diff < 0)
-		return -1;
-	else if (diff > 0)
+	const uintptr_t a = (uintptr_t)ld1->ld_lock;
+	const uintptr_t b = (uintptr_t)ld2->ld_lock;
+
+	if (a < b)
 		return 1;
+	if (a > b)
+		return -1;
 	return 0;
 }
 
@@ -139,11 +141,13 @@ static signed int
 ld_rb_compare_key(const struct rb_node *n, const void *key)
 {
 	const lockdebug_t *ld = (const void *)n;
-	intptr_t diff = (intptr_t)ld->ld_lock - (intptr_t)key;
-	if (diff < 0)
-		return -1;
-	else if (diff > 0)
+	const uintptr_t a = (uintptr_t)ld->ld_lock;
+	const uintptr_t b = (uintptr_t)key;
+
+	if (a < b)
 		return 1;
+	if (a > b)
+		return -1;
 	return 0;
 }
 
