@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.219 2007/11/19 20:45:41 mjf Exp $
+#	$NetBSD: BRANCHES,v 1.220 2007/11/22 16:20:39 bouyer Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -253,15 +253,6 @@ Scope:		sys/arch/arm sys/arch/acorn32
 Notes:		This code was on a branch because it involves changes to
 		cpuswitch.S which would otherwise make merging the
 		nathanw_sa branch difficult.
-
-Branch:		bouyer-xenamd64
-Description:	add amd64 support to Xen and rework some parts to share more code between Xen and others
-Status:		Active
-Start Date:	18 Oct 2007
-End Date:	
-Base Tag:	bouyer-xenamd64-base
-Scope:		kernel
-Notes:		
 
 Branch:		chris-arm-intr-rework
 Description:	Rework arm interrupt handling code
@@ -689,6 +680,16 @@ Base Tag:	netbsd-2-base
 Maintainer:	Manuel Bouyer <bouyer@NetBSD.org>
 Scope:		src/sys/arch/xen
 Notes:
+
+Branch:		bouyer-xenamd64
+Description:	add amd64 support to Xen and rework some parts to share more code between Xen and others
+Status:		Terminated
+Start Date:	18 Oct 2007
+End Date:	22 Nov 2007
+Base Tag:	bouyer-xenamd64-base
+Maintainer:	Manuel Bouyer <bouyer@NetBSD.org>
+Scope:		kernel
+Notes:		
 
 Branch: 	chap-midi
 Description:	Renovation of MIDI support
