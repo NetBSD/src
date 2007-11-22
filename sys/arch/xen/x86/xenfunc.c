@@ -1,4 +1,4 @@
-/*	$NetBSD: xenfunc.c,v 1.1 2007/09/26 19:48:38 ad Exp $	*/
+/*	$NetBSD: xenfunc.c,v 1.2 2007/11/22 16:17:06 bouyer Exp $	*/
 
 /*
  *
@@ -38,10 +38,10 @@
 #include <machine/intr.h>
 #include <machine/vmparam.h>
 #include <machine/pmap.h>
-#include <machine/xen.h>
-#include <machine/hypervisor.h>
-#include <machine/evtchn.h>
-#include <machine/xenpmap.h>
+#include <xen/xen.h>
+#include <xen/hypervisor.h>
+//#include <xen/evtchn.h>
+#include <xen/xenpmap.h>
 #include <machine/pte.h>
 
 #ifdef XENDEBUG_LOW
@@ -62,6 +62,7 @@ invlpg(vaddr_t addr)
 	splx(s);
 }  
 
+#ifndef __x86_64__
 void
 lldt(u_short sel)
 {
@@ -73,6 +74,7 @@ lldt(u_short sel)
 		xen_set_ldt(cpu_info_primary.ci_gdt[IDXSELN(sel)].ld.ld_base,
 		    cpu_info_primary.ci_gdt[IDXSELN(sel)].ld.ld_entries);
 }
+#endif
 
 void
 ltr(u_short sel)
@@ -93,14 +95,16 @@ rcr0(void)
 	return 0;
 }
 
+#ifndef __x86_64__
 void
 lcr3(vaddr_t val)
 {
 	int s = splvm();
-	xpq_queue_pt_switch(xpmap_ptom(val) & PG_FRAME);
+	xpq_queue_pt_switch(xpmap_ptom_masked(val));
 	xpq_flush_queue();
 	splx(s);
 }
+#endif
 
 void
 tlbflush(void)
@@ -143,13 +147,9 @@ wbinvd(void)
 vaddr_t
 rcr2(void)
 {
-
-	return 0;	/* XXX Why? */
-}
-
-void
-lgdt(struct region_descriptor *rdp)
-{
-
-	panic("lgdt %p %08x\n", (void *)rdp->rd_base, rdp->rd_limit);
+#ifdef XEN3
+	return HYPERVISOR_shared_info->vcpu_info[0].arch.cr2; /* XXX curcpu */
+#else
+	return 0;
+#endif
 }

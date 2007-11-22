@@ -1,4 +1,4 @@
-/*	$NetBSD: bios32.c,v 1.8 2007/10/17 19:53:00 garbled Exp $	*/
+/*	$NetBSD: bios32.c,v 1.9 2007/11/22 16:16:40 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bios32.c,v 1.8 2007/10/17 19:53:00 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bios32.c,v 1.9 2007/11/22 16:16:40 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,6 +84,7 @@ __KERNEL_RCSID(0, "$NetBSD: bios32.c,v 1.8 2007/10/17 19:53:00 garbled Exp $");
 #include <uvm/uvm.h>
 
 #include "ipmi.h"
+#include "opt_xen.h"
 
 #define	BIOS32_START	0xe0000
 #define	BIOS32_SIZE	0x20000
@@ -180,7 +181,11 @@ bios32_init()
 		smbios_entry.count = sh->count;
 
     		for (; pa < end; pa+= NBPG, eva+= NBPG)
+#ifdef XEN
+			pmap_kenter_ma(eva, pa, VM_PROT_READ);
+#else
 			pmap_kenter_pa(eva, pa, VM_PROT_READ);
+#endif
 		pmap_update(pmap_kernel());
 
 		printf("SMBIOS rev. %d.%d @ 0x%lx (%d entries)\n",

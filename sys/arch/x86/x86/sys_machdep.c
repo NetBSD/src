@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.6 2007/11/10 23:04:29 ad Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.7 2007/11/22 16:17:13 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.6 2007/11/10 23:04:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.7 2007/11/22 16:17:13 bouyer Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_mtrr.h"
@@ -434,6 +434,11 @@ x86_iopl(struct lwp *l, void *args, register_t *retval)
 	struct x86_iopl_args ua;
 #ifdef XEN
 	struct pcb *pcb = &l->l_addr->u_pcb;
+#ifdef __x86_64__
+#define TSS_IO	tss_iobase
+#else
+#define TSS_IO	tss_ioopt
+#endif /* __x86_64__ */
 #else
 	struct trapframe *tf = l->l_md.md_regs;
 #endif
@@ -448,18 +453,18 @@ x86_iopl(struct lwp *l, void *args, register_t *retval)
 
 #ifdef XEN
 	{
-		pcb->pcb_tss.tss_ioopt &= ~SEL_RPL;
+		pcb->pcb_tss.TSS_IO &= ~SEL_RPL;
 		if (ua.iopl)
-			pcb->pcb_tss.tss_ioopt |= SEL_UPL; /* i/o pl */
+			pcb->pcb_tss.TSS_IO |= SEL_UPL; /* i/o pl */
 		else
-			pcb->pcb_tss.tss_ioopt |= SEL_KPL; /* i/o pl */
+			pcb->pcb_tss.TSS_IO |= SEL_KPL; /* i/o pl */
 	}
 	/* Force the change at ring 0. */
 #ifdef XEN3
 	{
 		struct physdev_op physop;
 		physop.cmd = PHYSDEVOP_SET_IOPL;
-		physop.u.set_iopl.iopl = pcb->pcb_tss.tss_ioopt & SEL_RPL;
+		physop.u.set_iopl.iopl = pcb->pcb_tss.TSS_IO & SEL_RPL;
 		HYPERVISOR_physdev_op(&physop);
 	}
 #else /* XEN3 */
@@ -467,10 +472,11 @@ x86_iopl(struct lwp *l, void *args, register_t *retval)
 		dom0_op_t op;
 		op.cmd = DOM0_IOPL;
 		op.u.iopl.domain = DOMID_SELF;
-		op.u.iopl.iopl = pcb->pcb_tss.tss_ioopt & SEL_RPL; /* i/o pl */
+		op.u.iopl.iopl = pcb->pcb_tss.TSS_IO & SEL_RPL; /* i/o pl */
 		HYPERVISOR_dom0_op(&op);
 	}
 #endif /* XEN3 */
+#undef TSS_IO
 #elif defined(__x86_64__)
 	if (ua.iopl)
 		tf->tf_rflags |= PSL_IOPL;

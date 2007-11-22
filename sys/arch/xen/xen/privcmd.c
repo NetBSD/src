@@ -1,4 +1,4 @@
-/* $NetBSD: privcmd.c,v 1.19 2007/10/17 19:58:33 garbled Exp $ */
+/* $NetBSD: privcmd.c,v 1.20 2007/11/22 16:17:08 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2004 Christian Limpach.
@@ -32,7 +32,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.19 2007/10/17 19:58:33 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.20 2007/11/22 16:17:08 bouyer Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -47,8 +47,8 @@ __KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.19 2007/10/17 19:58:33 garbled Exp $")
 #include <miscfs/specfs/specdev.h>
 #include <miscfs/kernfs/kernfs.h>
 
-#include <machine/kernfs_machdep.h>
-#include <machine/xenio.h>
+#include <xen/kernfs_machdep.h>
+#include <xen/xenio.h>
 
 #define	PRIVCMD_MODE	(S_IRUSR)
 
@@ -68,7 +68,12 @@ privcmd_ioctl(void *v)
 	int error = 0;
 
 	switch (ap->a_command) {
-	case IOCTL_PRIVCMD_HYPERCALL:
+	case IOCTL_PRIVCMD_HYPERCALL: {
+		privcmd_hypercall_t *hc = ap->a_data;
+		if (hc->op >= (PAGE_SIZE >> 5))
+			return EINVAL;
+		error = -EOPNOTSUPP;
+#if defined(i386)
 		__asm volatile (
 			"pushl %%ebx; pushl %%ecx; pushl %%edx;"
 			"pushl %%esi; pushl %%edi; "
@@ -88,8 +93,29 @@ privcmd_ioctl(void *v)
 			"popl %%edi; popl %%esi; popl %%edx;"
 			"popl %%ecx; popl %%ebx"
 			: "=a" (error) : "0" (ap->a_data) : "memory" );
+#endif /* i386 */
+#if defined(x86_64)
+		{
+		long i1, i2, i3;
+		__asm volatile (
+			"movq %8,%%r10; movq %9,%%r8;"
+			"shll $5,%%eax ;"
+			"addq $hypercall_page,%%rax ;"
+			"call *%%rax"
+			: "=a" (error), "=D" (i1),
+			  "=S" (i2), "=d" (i3)
+			: "0" ((unsigned int)hc->op),
+			  "1" (hc->arg[0]),
+			  "2" (hc->arg[1]),
+			  "3" (hc->arg[2]),
+			  "g" (hc->arg[3]),
+			  "g" (hc->arg[4])
+			: "r8", "r10", "memory" );
+		}
+#endif /* x86_64 */
 		error = -error;
 		break;
+	}
 #ifndef XEN3
 #if defined(COMPAT_30)
 	case IOCTL_PRIVCMD_INITDOMAIN_EVTCHN_OLD:
