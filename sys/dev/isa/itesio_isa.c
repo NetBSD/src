@@ -1,4 +1,4 @@
-/*	$NetBSD: itesio_isa.c,v 1.4 2007/11/16 08:00:15 xtraeme Exp $ */
+/*	$NetBSD: itesio_isa.c,v 1.5 2007/11/22 08:15:00 xtraeme Exp $ */
 /*	Derived from $OpenBSD: it.c,v 1.19 2006/04/10 00:57:54 deraadt Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: itesio_isa.c,v 1.4 2007/11/16 08:00:15 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: itesio_isa.c,v 1.5 2007/11/22 08:15:00 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -229,10 +229,12 @@ itesio_isa_attach(device_t parent, device_t self, void *aux)
 	sc->sc_sme->sme_cookie = sc;
 	sc->sc_sme->sme_refresh = itesio_refresh;
 	
-	if (sysmon_envsys_register(sc->sc_sme)) {
-		aprint_error_dev(self, "unable to register with sysmon\n");
+	if ((i = sysmon_envsys_register(sc->sc_sme))) {
+		aprint_error_dev(self,
+		    "unable to register with sysmon (%d)\n", i);
 		sysmon_envsys_destroy(sc->sc_sme);
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, 8);
+		return;
 	}
 	sc->sc_hwmon_enabled = true;
 }
