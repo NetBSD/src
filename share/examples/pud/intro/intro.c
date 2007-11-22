@@ -1,4 +1,4 @@
-/*	$NetBSD: intro.c,v 1.2 2007/11/21 18:11:17 pooka Exp $	*/
+/*	$NetBSD: intro.c,v 1.3 2007/11/22 11:28:49 pooka Exp $	*/
 
 /*
  * El extra-simplo example of the userspace driver framework.
@@ -27,8 +27,14 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "common.h"
+
 #define DEFALLOC 1024*1024
-#define ECHOSTR "Would you like some sauce diable with that?\n"
+#define ECHOSTR1 "Would you like some sauce diable with that?\n"
+#define ECHOSTR2 "Nej tack, you fool, I'm happy with my tournedos Rossini\n"
+#define NSTR 2
+
+const char *curstr = ECHOSTR1;
 
 #ifndef MIN
 #define MIN(a,b) ((a)<(b)?(a):(b))
@@ -93,8 +99,8 @@ main(int argc, char *argv[])
 			    (unsigned long long)pc_read->pm_offset,
 			    pc_read->pm_resid);
 
-			clen = MIN(strlen(ECHOSTR), pc_read->pm_resid);
-			strncpy(pc_read->pm_data, ECHOSTR, clen);
+			clen = MIN(strlen(curstr), pc_read->pm_resid);
+			strncpy(pc_read->pm_data, curstr, clen);
 			if (pdr->pdr_reqclass == PUD_REQ_BDEV) {
 				clen = pc_read->pm_resid;
 				pc_read->pm_resid = 0;
@@ -121,6 +127,34 @@ main(int argc, char *argv[])
 			pdr->pdr_pth.pth_framelen =
 			    sizeof(struct pud_creq_write);
 			pc_write->pm_resid = 0;
+		}
+			break;
+
+		case PUD_CDEV_IOCTL:
+		{
+			struct pud_req_ioctl *pc_ioctl;
+			int *iocval;
+
+			pc_ioctl = (void *)pdr;
+			switch (pc_ioctl->pm_iocmd) {
+			case INTROTOGGLE:
+			case INTROTOGGLE_R:
+				iocval = (int *)pc_ioctl->pm_data;
+				if (*iocval < 0 || *iocval > 2) {
+					pdr->pdr_rv = ERANGE;
+					break;
+				}
+
+				if (*iocval == 1)
+					curstr = ECHOSTR1;
+				else
+					curstr = ECHOSTR2;
+
+				*iocval = 0;
+				break;
+			default:
+				abort();
+			}
 		}
 			break;
 
