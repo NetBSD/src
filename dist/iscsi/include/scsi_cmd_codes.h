@@ -1,4 +1,4 @@
-/* $NetBSD: scsi_cmd_codes.h,v 1.14 2007/11/14 19:58:06 agc Exp $ */
+/* $NetBSD: scsi_cmd_codes.h,v 1.15 2007/11/22 22:51:09 agc Exp $ */
 
 /*
  * Copyright © 2006 Alistair Crooks.  All rights reserved.
@@ -61,7 +61,9 @@ enum {
 #define SIX_BYTE_COMMAND(op)	((op) <= 0x1f)
 #define TEN_BYTE_COMMAND(op)	((op) > 0x1f && (op) <= 0x5f)
 
-#define ISCSI_MODE_SENSE_LEN	11
+enum {
+	ISCSI_MODE_SENSE_LEN = 	11,
+};
 
 /* miscellaneous definitions */
 enum {
@@ -134,7 +136,12 @@ enum {
 		PAGE_CONTROL_CHANGEABLE_VALUES = 0x40,
 		PAGE_CONTROL_DEFAULT_VALUES = 0x80,
 		PAGE_CONTROL_SAVAED_VALUES = 0xc0,
-	PAGE_CODE_MASK = 0x3f
+	PAGE_CODE_MASK = 0x3f,
+
+		ASC_LUN_UNSUPPORTED = 0x25,
+		ASCQ_LUN_UNSUPPORTED = 0x0,
+
+		SCSI_SKEY_ILLEGAL_REQUEST = 0x05
 };
 
 /* device return codes */
