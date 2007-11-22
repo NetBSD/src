@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.19 2007/11/07 15:38:11 ad Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.20 2007/11/22 16:17:11 bouyer Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -59,11 +59,11 @@
 #include <net/if_ether.h>
 
 
-#include <machine/xen.h>
-#include <machine/xen_shm.h>
-#include <machine/evtchn.h>
-#include <machine/xenbus.h>
-#include <machine/xennet_checksum.h>
+#include <xen/xen.h>
+#include <xen/xen_shm.h>
+#include <xen/evtchn.h>
+#include <xen/xenbus.h>
+#include <xen/xennet_checksum.h>
 
 #include <uvm/uvm.h>
 

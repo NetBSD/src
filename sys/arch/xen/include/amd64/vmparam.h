@@ -1,7 +1,7 @@
-/*	$NetBSD: idle_machdep.c,v 1.4 2007/09/26 19:48:39 ad Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.2 2007/11/22 16:17:02 bouyer Exp $	*/
 
 /*-
- * Copyright (c)2002, 2006, 2007 YAMAMOTO Takashi,
+ * Copyright (c)2005 YAMAMOTO Takashi,
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,25 +26,13 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
+#if !defined(_VMPARAM_H_)
+#include <amd64/vmparam.h>
 
-__KERNEL_RCSID(0, "$NetBSD: idle_machdep.c,v 1.4 2007/09/26 19:48:39 ad Exp $");
+#undef VM_PHYSSEG_MAX
+#define	VM_PHYSSEG_MAX	1
 
-#include <sys/param.h>
-#include <sys/cpu.h>
-
-#include <machine/xen.h>
-
-void
-cpu_idle(void)
-{
-	struct cpu_info *ci = curcpu();
-
-	x86_disable_intr();
-	if (!__predict_false(ci->ci_want_resched)) {
-		idle_block();
-	} else {
-		x86_enable_intr();
-	}
-	ci->ci_want_resched = 0;
-}
+#undef VM_NFREELIST
+#undef VM_FREELIST_FIRST16
+#define	VM_NFREELIST	1
+#endif /* _VMPARAM_H_ */

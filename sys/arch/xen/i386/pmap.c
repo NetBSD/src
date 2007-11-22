@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.37 2007/11/19 21:46:51 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.38 2007/11/22 16:16:52 bouyer Exp $	*/
 /*	NetBSD: pmap.c,v 1.179 2004/10/10 09:55:24 yamt Exp		*/
 
 /*
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.37 2007/11/19 21:46:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.38 2007/11/22 16:16:52 bouyer Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_largepages.h"
@@ -762,10 +762,10 @@ pte_atomic_update_ma(pt_entry_t *pte, pt_entry_t *mapte, pt_entry_t npte)
 		/* must remove opte unchecked */
 		if (npte > pmap_mem_end)
 			/* must set npte unchecked */
-			xpq_queue_unchecked_pte_update(mapte, npte);
+			xpq_queue_pte_update(mapte, npte);
 		else {
 			/* must set npte checked */
-			xpq_queue_unchecked_pte_update(mapte, 0);
+			xpq_queue_pte_update(mapte, 0);
 			xpq_queue_pte_update(mapte, npte);
 		}
 	} else {
@@ -773,7 +773,7 @@ pte_atomic_update_ma(pt_entry_t *pte, pt_entry_t *mapte, pt_entry_t npte)
 		if (npte > pmap_mem_end) {
 			/* must set npte unchecked */
 			xpq_queue_pte_update(mapte, 0);
-			xpq_queue_unchecked_pte_update(mapte, npte);
+			xpq_queue_pte_update(mapte, npte);
 		} else
 			/* must set npte checked */
 			xpq_queue_pte_update(mapte, npte);
@@ -1776,7 +1776,7 @@ pmap_pdp_ctor(void *arg, void *object, int flags)
 
 	/* pin page type */
 	s = splvm();
-	xpq_queue_pin_table(xpmap_ptom(pdirpa), XPQ_PIN_L2_TABLE);
+	xpq_queue_pin_table(xpmap_ptom(pdirpa));
 	xpq_flush_queue();
 	splx(s);
 
