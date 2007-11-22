@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.13 2007/11/22 16:16:41 bouyer Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.14 2007/11/22 20:24:25 bouyer Exp $	*/
 
 /*
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.13 2007/11/22 16:16:41 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.14 2007/11/22 20:24:25 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.13 2007/11/22 16:16:41 bouyer Exp
 
 #include <machine/cpufunc.h>
 #include <machine/db_machdep.h>
+#include <machine/cpuvar.h>
 #include <machine/i82093var.h>
 #include <machine/i82489reg.h>
 #include <machine/i82489var.h>
