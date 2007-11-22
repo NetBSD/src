@@ -1,4 +1,4 @@
-/*      $NetBSD: xen_shm_machdep.c,v 1.26 2007/11/08 07:50:03 dogcow Exp $      */
+/*      $NetBSD: xen_shm_machdep.c,v 1.2 2007/11/22 16:17:06 bouyer Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -40,10 +40,10 @@
 #include <uvm/uvm.h>
 
 #include <machine/pmap.h>
-#include <machine/hypervisor.h>
-#include <machine/xen.h>
-#include <machine/evtchn.h>
-#include <machine/xen_shm.h>
+#include <xen/hypervisor.h>
+#include <xen/xen.h>
+#include <xen/evtchn.h>
+#include <xen/xen_shm.h>
 
 /*
  * Helper routines for the backend drivers. This implement the necessary
