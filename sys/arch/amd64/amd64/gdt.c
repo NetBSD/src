@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.c,v 1.12.4.2 2007/10/25 23:59:21 bouyer Exp $	*/
+/*	$NetBSD: gdt.c,v 1.12.4.3 2007/11/22 15:29:00 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.12.4.2 2007/10/25 23:59:21 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.12.4.3 2007/11/22 15:29:00 bouyer Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -416,7 +416,7 @@ lgdt(desc)
 	* Zero out last frame after limit if needed.
 	*/
 	va = desc->rd_base + desc->rd_limit + 1;
-	printk("memset 0x%lx -> 0x%lx\n", va, roundup(va, PAGE_SIZE));
+	__PRINTK(("memset 0x%lx -> 0x%lx\n", va, roundup(va, PAGE_SIZE)));
 	memset((void *) va, 0, roundup(va, PAGE_SIZE) - va);
 	for  (i = 0; i < roundup(desc->rd_limit,PAGE_SIZE) >> PAGE_SHIFT; i++) {
 		/*
@@ -429,12 +429,12 @@ r Xen.
 				(pt_entry_t *) (desc->rd_base + (i << PAGE_SHIFT
 ))))
 			>> PAGE_SHIFT;
-		printk("frames[%d] = 0x%lx (pa 0x%lx)\n", i, frames[i],
-		    xpmap_mtop(frames[i] << PAGE_SHIFT));
+		__PRINTK(("frames[%d] = 0x%lx (pa 0x%lx)\n", i, frames[i],
+		    xpmap_mtop(frames[i] << PAGE_SHIFT)));
 		pmap_pte_clearbits(kvtopte(desc->rd_base + (i << PAGE_SHIFT)),
 		    PG_RW);
 	}
-	printk("HYPERVISOR_set_gdt(%d)\n", (desc->rd_limit + 1) >> 3);
+	__PRINTK(("HYPERVISOR_set_gdt(%d)\n", (desc->rd_limit + 1) >> 3));
 
 	if (HYPERVISOR_set_gdt(frames, (desc->rd_limit + 1) >> 3))
 		panic("lgdt(): HYPERVISOR_set_gdt() failed");
