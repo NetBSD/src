@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.862 2007/11/15 12:58:29 xtraeme Exp $
+# $NetBSD: GENERIC,v 1.863 2007/11/22 14:33:53 jnemeth Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.862 $"
+#ident 		"GENERIC-$Revision: 1.863 $"
 
 maxusers	32		# estimated number of users
 
@@ -347,11 +347,11 @@ acpitz* 	at acpi?		# ACPI Thermal Zone
 # Mainboard devices
 aiboost*	at acpi?		# ASUS AI Booster Hardware Monitor
 attimer*	at acpi?		# AT Timer
-com* 		at acpi?		# Serial communications interface
+#com* 		at acpi?		# Serial communications interface
 #fdc* 		at acpi?		# Floppy disk controller
 hpet* 		at acpi?		# High Precision Event Timer
 joy*		at acpi?		# Joystick/Game port
-lpt* 		at acpi?		# Parallel port
+#lpt* 		at acpi?		# Parallel port
 mpu*		at acpi?		# Roland MPU-401 MIDI UART
 npx*		at acpi?		# Math coprocessor
 pckbc*  	at acpi?		# PC keyboard controller
