@@ -1,4 +1,4 @@
-/*	$NetBSD: pud_msgif.h,v 1.2 2007/11/21 18:10:48 pooka Exp $	*/
+/*	$NetBSD: pud_msgif.h,v 1.3 2007/11/22 11:26:27 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -79,6 +79,15 @@ struct pud_req_readwrite {
 	uint8_t		pm_data[0];
 };
 
+struct pud_req_ioctl {
+	struct pud_req	pm_pdr;
+
+	u_long		pm_iocmd;
+	int		pm_flag;	/* XXX: I feel like a cargo cult */
+
+	uint8_t		pm_data[0];
+};
+
 #define PUD_DEVNAME_MAX 31
 struct pud_conf_reg {
 	struct pud_req	pm_pdr;
@@ -88,13 +97,6 @@ struct pud_conf_reg {
 	char		pm_devname[PUD_DEVNAME_MAX+1];
 };
 #define PUD_CONFFLAG_BDEV	1
-
-struct pud_conf_ioctl {
-	struct pud_req	pm_pdr;
-
-	u_long		pm_iocmd;
-	size_t		pm_dsize;
-};
 
 enum {
 	PUD_CDEV_OPEN,	PUD_CDEV_CLOSE,	PUD_CDEV_READ,	PUD_CDEV_WRITE,
@@ -108,7 +110,7 @@ enum {
 };
 
 enum {
-	PUD_CONF_REG,	PUD_CONF_DEREG,	PUD_CONF_IOCTL,	PUD_CONF_MMAP,
+	PUD_CONF_REG,	PUD_CONF_DEREG,	PUD_CONF_MMAP,
 };
 
 #endif /* _DEV_PUD_PUDMSGIF_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: pud_dev.c,v 1.3 2007/11/21 18:10:48 pooka Exp $	*/
+/*	$NetBSD: pud_dev.c,v 1.4 2007/11/22 11:26:27 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -29,20 +29,25 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pud_dev.c,v 1.3 2007/11/21 18:10:48 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pud_dev.c,v 1.4 2007/11/22 11:26:27 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
 #include <sys/conf.h>
 #include <sys/event.h>
+#include <sys/ioccom.h>
 #include <sys/kmem.h>
 #include <sys/poll.h>
 #include <sys/socketvar.h>
 
 #include <dev/pud/pud_sys.h>
 
+/*
+ * b/c independent helpers
+ */
+
 static int
-openclose(dev_t dev, int flags, int fmt, int class, int type)
+doopenclose(dev_t dev, int flags, int fmt, int class, int type)
 {
 	struct pud_req_openclose pc_oc; /* XXX: stack = stupid */
 
@@ -50,6 +55,33 @@ openclose(dev_t dev, int flags, int fmt, int class, int type)
 	pc_oc.pm_fmt = fmt;
 
 	return pud_request(dev, &pc_oc, sizeof(pc_oc), class, type);
+}
+
+static int
+doioctl(dev_t dev, u_long cmd, void *data, int flag, int class, int type)
+{
+	struct pud_req_ioctl *pc_ioctl;
+	size_t dlen, allocsize;
+	int error;
+
+	dlen = IOCPARM_LEN(cmd);
+	allocsize = sizeof(struct pud_req_ioctl) + dlen;
+	pc_ioctl = kmem_zalloc(allocsize, KM_SLEEP);
+
+	pc_ioctl->pm_iocmd = cmd;
+	pc_ioctl->pm_flag = flag;
+
+	if (cmd & IOC_IN)
+		memcpy(pc_ioctl->pm_data, data, dlen);
+	error = pud_request(dev, pc_ioctl, allocsize, class, type);
+	if (error)
+		goto out;
+	if (cmd & IOC_OUT)
+		memcpy(data, pc_ioctl->pm_data, dlen);
+
+ out:
+	kmem_free(pc_ioctl, allocsize);
+	return error;
 }
 
 /*
@@ -80,14 +112,14 @@ static int
 pud_bdev_open(dev_t dev, int flags, int fmt, lwp_t *l)
 {
 
-	return openclose(dev, flags, fmt, PUD_REQ_BDEV, PUD_BDEV_OPEN);
+	return doopenclose(dev, flags, fmt, PUD_REQ_BDEV, PUD_BDEV_OPEN);
 }
 
 static int
 pud_bdev_close(dev_t dev, int flags, int fmt, lwp_t *l)
 {
 
-	return openclose(dev, flags, fmt, PUD_REQ_BDEV, PUD_BDEV_CLOSE);
+	return doopenclose(dev, flags, fmt, PUD_REQ_BDEV, PUD_BDEV_CLOSE);
 }
 
 static void
@@ -128,10 +160,10 @@ pud_bdev_strategy(struct buf *bp)
 }
 
 int
-pud_bdev_ioctl(dev_t dev, u_long cmd, void *data, int dlen, lwp_t *l)
+pud_bdev_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 {
 
-	return EOPNOTSUPP;
+	return doioctl(dev, cmd, data, flag, PUD_REQ_BDEV, PUD_BDEV_IOCTL);
 }
 
 /* hnmmm */
@@ -184,14 +216,14 @@ static int
 pud_cdev_open(dev_t dev, int flags, int fmt, lwp_t *l)
 {
 
-	return openclose(dev, flags, fmt, PUD_REQ_CDEV, PUD_CDEV_OPEN);
+	return doopenclose(dev, flags, fmt, PUD_REQ_CDEV, PUD_CDEV_OPEN);
 }
 
 static int
 pud_cdev_close(dev_t dev, int flags, int fmt, lwp_t *l)
 {
 
-	return openclose(dev, flags, fmt, PUD_REQ_CDEV, PUD_CDEV_OPEN);
+	return doopenclose(dev, flags, fmt, PUD_REQ_CDEV, PUD_CDEV_OPEN);
 }
 
 static int
@@ -259,7 +291,7 @@ static int
 pud_cdev_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 {
 
-	return EOPNOTSUPP;
+	return doioctl(dev, cmd, data, flag, PUD_REQ_CDEV, PUD_CDEV_IOCTL);
 }
 
 static paddr_t
