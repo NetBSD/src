@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.88.10.1 2007/11/13 16:02:55 bouyer Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.88.10.2 2007/11/22 15:18:24 bouyer Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.88.10.1 2007/11/13 16:02:55 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.88.10.2 2007/11/22 15:18:24 bouyer Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -903,20 +903,38 @@ struct rtentry *
 in6_pcbrtentry(struct in6pcb *in6p)
 {
 	struct route *ro;
-	const struct sockaddr_in6 *cdst;
+	union {
+		const struct sockaddr *sa;
+		const struct sockaddr_in6 *sa6;
+#ifdef INET
+		const struct sockaddr_in *sa4;
+#endif
+	} cdst;
 
 	ro = &in6p->in6p_route;
 
 	if (in6p->in6p_af != AF_INET6)
 		return (NULL);
 
-	cdst = (const struct sockaddr_in6 *)rtcache_getdst(ro);
-	if (cdst == NULL)
+	cdst.sa = rtcache_getdst(ro);
+	if (cdst.sa == NULL)
 		;
-	else if (!IN6_ARE_ADDR_EQUAL(&cdst->sin6_addr, &in6p->in6p_faddr))
-		rtcache_free(ro);
-	else
-		rtcache_check(ro);
+#ifdef INET
+	else if (cdst.sa->sa_family == AF_INET) {
+		KASSERT(IN6_IS_ADDR_V4MAPPED(&in6p->in6p_faddr));
+		if (cdst.sa4->sin_addr.s_addr != in6p->in6p_faddr.s6_addr32[3])
+			rtcache_free(ro);
+		else
+			rtcache_check(ro);
+	}
+#endif
+	else {
+		if (!IN6_ARE_ADDR_EQUAL(&cdst.sa6->sin6_addr,
+					&in6p->in6p_faddr))
+			rtcache_free(ro);
+		else
+			rtcache_check(ro);
+	}
 #ifdef INET
 	if (ro->ro_rt == NULL && IN6_IS_ADDR_V4MAPPED(&in6p->in6p_faddr)) {
 		union {
