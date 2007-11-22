@@ -1,4 +1,4 @@
-/*	$NetBSD: macros.h,v 1.43 2007/11/20 13:37:37 yamt Exp $	*/
+/*	$NetBSD: macros.h,v 1.44 2007/11/22 23:02:05 plunky Exp $	*/
 
 /*
  * Copyright (c) 1994, 1998, 2000 Ludd, University of Lule}, Sweden.
@@ -66,7 +66,6 @@ vax_remque(void *p)
 			: "r" (p)
 			: "memory" );
 }
-#define _remque vax_remque
 
 static __inline void  __attribute__((__unused__))
 vax_insque(void *p, void *q)
@@ -76,7 +75,6 @@ vax_insque(void *p, void *q)
 			: "r" (p),"r" (q)
 			: "memory" );
 }
-#define _insque vax_insque
 
 #if 0
 static __inline void *__attribute__((__unused__))
