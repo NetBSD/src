@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2007/03/06 21:47:46 bouyer Exp $
+#	$NetBSD: Makefile,v 1.3 2007/11/22 21:23:43 bouyer Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -13,8 +13,13 @@ ${V}=		${${V}DIR}/${F}.fs
 .endfor
 
 MDSETTARGETS=		INSTALL		${RAMDISK}	-
+MDSETTARGETS+=INSTALL_XEN3_DOMU		${RAMDISK}	-
 
 MDSET_RELEASEDIR=	binary/kernel
+
+# do not strip Xen kernels, there's no space constraints here.
+MDSET_NOSTRIP.netbsd-INSTALL_XEN3_DOMU=
+MDSET_NOSYMBOLS.netbsd-INSTALL_XEN3_DOMU=
 
 .include "${DISTRIBDIR}/common/Makefile.mdset"
 
