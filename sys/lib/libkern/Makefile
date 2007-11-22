@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.85 2007/11/20 13:49:01 yamt Exp $
+#	$NetBSD: Makefile,v 1.86 2007/11/22 22:56:17 plunky Exp $
 
 LIB=		kern
 NOPIC=		# defined
@@ -47,7 +47,7 @@ SRCS+=	adddi3.c anddi3.c ashldi3.c ashrdi3.c cmpdi2.c divdi3.c iordi3.c \
 # Other stuff
 SRCS+=	__cmsg_alignbytes.c inet_addr.c intoa.c
 SRCS+=	md4c.c md5c.c rmd160.c sha1.c sha2.c
-SRCS+=	pmatch.c _que.c arc4random.c bcd.c mcount.c
+SRCS+=	pmatch.c arc4random.c bcd.c mcount.c
 
 SRCS+=	strsep.c strstr.c strlcpy.c strlcat.c
 
