@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.62.2.9 2007/11/21 21:19:06 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.62.2.10 2007/11/22 15:29:00 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007
@@ -120,7 +120,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.62.2.9 2007/11/21 21:19:06 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.62.2.10 2007/11/22 15:29:00 bouyer Exp $");
+
+/* #define XENDEBUG_LOW  */
 
 #include "opt_user_ldt.h"
 #include "opt_ddb.h"

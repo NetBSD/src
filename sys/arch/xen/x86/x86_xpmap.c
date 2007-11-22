@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_xpmap.c,v 1.1.2.5 2007/11/21 20:48:57 bouyer Exp $	*/
+/*	$NetBSD: x86_xpmap.c,v 1.1.2.6 2007/11/22 15:29:01 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2006 Mathieu Ropert <mro@adviseo.fr>
@@ -79,7 +79,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.1.2.5 2007/11/21 20:48:57 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.1.2.6 2007/11/22 15:29:01 bouyer Exp $");
 
 #include "opt_xen.h"
 
@@ -514,7 +514,7 @@ xen_pmap_bootstrap()
 
 	xpmap_phys_to_machine_mapping = (paddr_t *) xen_start_info.mfn_list;
 	init_tables = xen_start_info.pt_base;
-	printk("xen_arch_pmap_bootstrap init_tables=0x%lx\n", init_tables);
+	__PRINTK(("xen_arch_pmap_bootstrap init_tables=0x%lx\n", init_tables));
 
 	/* Space after Xen boostrap tables should be free */
 	bootstrap_tables = xen_start_info.pt_base +
@@ -572,8 +572,8 @@ xen_bootstrap_tables (vaddr_t old_pgd, vaddr_t new_pgd,
 	int i;
 	extern char __data_start;
 
-	printk("xen_bootstrap_tables(0x%lx, 0x%lx, %d, %d)\n",
-	    old_pgd, new_pgd, old_count, new_count);
+	__PRINTK(("xen_bootstrap_tables(0x%lx, 0x%lx, %d, %d)\n",
+	    old_pgd, new_pgd, old_count, new_count));
 	text_end = ((vaddr_t)&__data_start) & ~PAGE_MASK;
 	/*
 	 * size of R/W area after kernel text:
@@ -599,8 +599,8 @@ xen_bootstrap_tables (vaddr_t old_pgd, vaddr_t new_pgd,
 	}
 #endif /* DOM0OPS */
 
-	printk("xen_bootstrap_tables text_end 0x%lx map_end 0x%lx\n", text_end,
-	map_end);
+	__PRINTK(("xen_bootstrap_tables text_end 0x%lx map_end 0x%lx\n",
+	    text_end, map_end));
 
 	/* 
 	 * Create bootstrap page tables
@@ -625,7 +625,8 @@ xen_bootstrap_tables (vaddr_t old_pgd, vaddr_t new_pgd,
 	bt_pgd[pl4_pi(KERNTEXTOFF)] =
 	    xpmap_ptom_masked(addr) | PG_u | PG_RW | PG_V;
 
-	printk("L3 va 0x%lx pa 0x%lx entry 0x%lx -> L4[0x%x]\n", pdtpe, addr, bt_pgd[pl4_pi(KERNTEXTOFF)], pl4_pi(KERNTEXTOFF));
+	__PRINTK(("L3 va 0x%lx pa 0x%lx entry 0x%lx -> L4[0x%x]\n",
+	    pdtpe, addr, bt_pgd[pl4_pi(KERNTEXTOFF)], pl4_pi(KERNTEXTOFF)));
 
 	/* Level 2 */
 	pde = (pd_entry_t *) avail;
@@ -635,7 +636,8 @@ xen_bootstrap_tables (vaddr_t old_pgd, vaddr_t new_pgd,
 	addr = ((paddr_t) pde) - KERNBASE;
 	pdtpe[pl3_pi(KERNTEXTOFF)] =
 	    xpmap_ptom_masked(addr) | PG_u | PG_RW | PG_V;
-	printk("L2 va 0x%lx pa 0x%lx entry 0x%lx -> L3[0x%x]\n", pde, addr, pdtpe[pl3_pi(KERNTEXTOFF)], pl3_pi(KERNTEXTOFF));
+	__PRINTK(("L2 va 0x%lx pa 0x%lx entry 0x%lx -> L3[0x%x]\n",
+	    pde, addr, pdtpe[pl3_pi(KERNTEXTOFF)], pl3_pi(KERNTEXTOFF)));
 
 	/* Level 1 */
 	page = KERNTEXTOFF;
@@ -656,21 +658,27 @@ xen_bootstrap_tables (vaddr_t old_pgd, vaddr_t new_pgd,
 			pte[pl1_pi(page)] = xpmap_ptom_masked(page - KERNBASE);
 			if (page == (vaddr_t)HYPERVISOR_shared_info) {
 				pte[pl1_pi(page)] = xen_start_info.shared_info;
-				printk("HYPERVISOR_shared_info va 0x%lx pte 0x%lx\n", HYPERVISOR_shared_info, pte[pl1_pi(page)]);
+				__PRINTK(("HYPERVISOR_shared_info "
+				    "va 0x%lx pte 0x%lx\n",
+				    HYPERVISOR_shared_info, pte[pl1_pi(page)]));
 			}
 			if (xpmap_ptom_masked(page - KERNBASE) ==
 			    (xen_start_info.console_mfn << PAGE_SHIFT)) {
 				xencons_interface = (void *)page;
 				pte[pl1_pi(page)] =
 				    (xen_start_info.console_mfn << PAGE_SHIFT);
-				printk("xencons_interface va 0x%lx pte 0x%lx\n", xencons_interface, pte[pl1_pi(page)]);
+				__PRINTK(("xencons_interface "
+				    va 0x%lx pte 0x%lx\n",
+				    xencons_interface, pte[pl1_pi(page)]));
 			}
 			if (xpmap_ptom_masked(page - KERNBASE) ==
 			    (xen_start_info.store_mfn << PAGE_SHIFT)) {
 				xenstore_interface = (void *)page;
 				pte[pl1_pi(page)] =
 				    (xen_start_info.store_mfn << PAGE_SHIFT);
-				printk("xenstore_interface va 0x%lx pte 0x%lx\n", xenstore_interface, pte[pl1_pi(page)]);
+				__PRINTK(("xenstore_interface "
+				    "va 0x%lx pte 0x%lx\n",
+				    xenstore_interface, pte[pl1_pi(page)]));
 			}
 #ifdef DOM0OPS
 			if (page >= (vaddr_t)atdevbase &&
@@ -696,14 +704,18 @@ xen_bootstrap_tables (vaddr_t old_pgd, vaddr_t new_pgd,
 				pte[pl1_pi(page)] |= PG_RW;
 			}
 			if (page  == old_pgd)
-				printk("va 0x%lx pa 0x%lx entry 0x%lx -> L1[0x%x]\n", page, page - KERNBASE, pte[pl1_pi(page)], pl1_pi(page));
+				__PRINTK(("va 0x%lx pa 0x%lx
+				    "entry 0x%lx -> L1[0x%x]\n",
+				    page, page - KERNBASE,
+				    pte[pl1_pi(page)], pl1_pi(page)));
 			page += PAGE_SIZE;
 		}
 
 		addr = ((paddr_t) pte) - KERNBASE;
 		pde[pl2_pi(cur_page)] =
 		    xpmap_ptom_masked(addr) | PG_u | PG_RW | PG_V;
-		printk("L1 va 0x%lx pa 0x%lx entry 0x%lx -> L2[0x%x]\n", pte, addr, pde[pl2_pi(cur_page)], pl2_pi(cur_page));
+		__PRINTK(("L1 va 0x%lx pa 0x%lx entry 0x%lx -> L2[0x%x]\n",
+		    pte, addr, pde[pl2_pi(cur_page)], pl2_pi(cur_page)));
 		/* Mark readonly */
 		xen_bt_set_readonly((vaddr_t) pte);
 	}
@@ -711,26 +723,28 @@ xen_bootstrap_tables (vaddr_t old_pgd, vaddr_t new_pgd,
 	/* Install recursive page tables mapping */
 	bt_pgd[PDIR_SLOT_PTE] =
 	    xpmap_ptom_masked(new_pgd - KERNBASE) | PG_u | PG_V;
-	printk("bt_pgd[PDIR_SLOT_PTE] va 0x%lx pa 0x%lx entry 0x%lx\n", new_pgd, new_pgd - KERNBASE, bt_pgd[PDIR_SLOT_PTE]);
+	__PRINTK(("bt_pgd[PDIR_SLOT_PTE] va 0x%lx pa 0x%lx entry 0x%lx\n",
+	    new_pgd, new_pgd - KERNBASE, bt_pgd[PDIR_SLOT_PTE]));
 
 	/* Mark tables RO */
 	xen_bt_set_readonly((vaddr_t) pde);
 	xen_bt_set_readonly((vaddr_t) pdtpe);
 	xen_bt_set_readonly(new_pgd);
 	/* Pin the PGD */
-	printk("pin PDG\n");
+	__PRINTK(("pin PDG\n"));
 	xpq_queue_pin_table(xpmap_ptom_masked(new_pgd - KERNBASE));
 	/* Switch to new tables */
-	printk("switch to PDG\n");
+	__PRINTK(("switch to PDG\n"));
 	xpq_queue_pt_switch(xpmap_ptom_masked(new_pgd - KERNBASE));
-	printk("bt_pgd[PDIR_SLOT_PTE] now entry 0x%lx\n",bt_pgd[PDIR_SLOT_PTE]);
-	printk("L4_BASE va 0x%lx\n", (long)L4_BASE);
-	printk("value 0x%lx\n", *L4_BASE);
-	printk("[PDIR_SLOT_PTE] 0x%lx\n", L4_BASE[PDIR_SLOT_PTE]);
+	__PRINTK(("bt_pgd[PDIR_SLOT_PTE] now entry 0x%lx\n",
+	    bt_pgd[PDIR_SLOT_PTE]));
+	__PRINTK(("L4_BASE va 0x%lx\n", (long)L4_BASE));
+	__PRINTK(("value 0x%lx\n", *L4_BASE));
+	__PRINTK(("[PDIR_SLOT_PTE] 0x%lx\n", L4_BASE[PDIR_SLOT_PTE]));
 
 	/* Now we can safely reclaim space taken by old tables */
 	
-	printk("unpin old PDG\n");
+	__PRINTK(("unpin old PDG\n"));
 	/* Unpin old PGD */
 	xpq_queue_unpin_table(xpmap_ptom_masked(old_pgd - KERNBASE));
 	/* Mark old tables RW */
@@ -739,7 +753,8 @@ xen_bootstrap_tables (vaddr_t old_pgd, vaddr_t new_pgd,
 	addr = xpmap_mtop(addr);
 	pte = (pd_entry_t *) (addr + KERNBASE);
 	pte += pl1_pi(page);
-	printk("*pde 0x%lx addr 0x%lx pte 0x%lx\n", pde[pl2_pi(page)], addr, pte);
+	__PRINTK(("*pde 0x%lx addr 0x%lx pte 0x%lx\n",
+	    pde[pl2_pi(page)], addr, pte));
 	while (page < old_pgd + (old_count * PAGE_SIZE) && page < map_end) {
 		addr = xpmap_ptom(((paddr_t) pte) - KERNBASE);
 		xpq_queue_pte_update((pt_entry_t *) addr, *pte | PG_RW);
