@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.13 2007/01/29 01:52:46 hubertf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.14 2007/11/22 16:17:04 bouyer Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -125,7 +125,7 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.13 2007/01/29 01:52:46 hubertf Exp $");
 #include <machine/i8259.h>
 #include <machine/cpu.h>
 #include <machine/pio.h>
-#include <machine/evtchn.h>
+#include <xen/evtchn.h>
 
 #ifdef XEN3
 #include "acpi.h"
@@ -207,8 +207,10 @@ void
 cpu_intr_init(struct cpu_info *ci)
 {
 	struct iplsource *ipl;
-	char *cp;
 	int i;
+#if defined(INTRSTACKSIZE)
+	char *cp;
+#endif
 
 	ci->ci_iunmask[0] = 0xfffffffe;
 	for (i = 1; i < NIPL; i++)
@@ -264,8 +266,10 @@ cpu_intr_init(struct cpu_info *ci)
 	    ci->ci_dev->dv_xname, "xenevt");
 #endif /* defined(DOM0OPS) */
 
+#if defined(INTRSTACKSIZE)
 	cp = (char *)uvm_km_alloc(kernel_map, INTRSTACKSIZE, 0, UVM_KMF_WIRED);
 	ci->ci_intrstack = cp + INTRSTACKSIZE - sizeof(register_t);
+#endif
 	ci->ci_idepth = -1;
 }
 

@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback.c,v 1.26 2007/10/17 19:58:33 garbled Exp $      */
+/*      $NetBSD: xbdback.c,v 1.27 2007/11/22 16:17:09 bouyer Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -44,11 +44,11 @@
 #include <sys/kauth.h>
 
 #include <machine/pmap.h>
-#include <machine/hypervisor.h>
-#include <machine/xen.h>
-#include <machine/evtchn.h>
-#include <machine/ctrl_if.h>
-#include <machine/xen_shm.h>
+#include <xen/hypervisor.h>
+#include <xen/xen.h>
+#include <xen/evtchn.h>
+#include <xen/ctrl_if.h>
+#include <xen/xen_shm.h>
 
 #ifdef XENDEBUG_VBD
 #define XENPRINTF(x) printf x

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.94 2007/10/18 15:28:37 yamt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.95 2007/11/22 16:16:46 bouyer Exp $	*/
 
 /*
  *
@@ -260,9 +260,13 @@
  */
 #define NPTECL		8
 
-#define pmap_pte_set(p, n)		x86_atomic_testset_ul(p, n)
+#define pmap_pa2pte(a)			(a)
+#define pmap_pte2pa(a)			((a) & PG_FRAME)
+#define pmap_pte_set(p, n)		do { *(p) = (n); } while (0)
+#define pmap_pte_testset(p, n)		x86_atomic_testset_ul(p, n)
 #define pmap_pte_setbits(p, b)		x86_atomic_setbits_l(p, b)
 #define pmap_pte_clearbits(p, b)	x86_atomic_clearbits_l(p, b)
+#define pmap_pte_flush()		/* nothing */
 #define pmap_cpu_has_pg_n()		(cpu_class != CPUCLASS_386)
 #define pmap_cpu_has_invlpg()		(cpu_class != CPUCLASS_386)
 

@@ -1,12 +1,20 @@
-/*	$NetBSD: frameasm.h,v 1.7 2007/11/14 11:09:49 ad Exp $	*/
+/*	$NetBSD: frameasm.h,v 1.8 2007/11/22 16:16:45 bouyer Exp $	*/
 
 #ifndef _AMD64_MACHINE_FRAMEASM_H
 #define _AMD64_MACHINE_FRAMEASM_H
+#include "opt_xen.h"
 
 /*
  * Macros to define pushing/popping frames for interrupts, traps
  * and system calls. Currently all the same; will diverge later.
  */
+
+#ifdef XEN
+#define HYPERVISOR_iret hypercall_page + (__HYPERVISOR_iret * 32)
+/* Xen do not need swapgs, done by hypervisor */
+#define swapgs
+#define iretq	pushq $0 ; jmp HYPERVISOR_iret
+#endif
 
 /*
  * These are used on interrupt or trap entry or exit.
@@ -59,6 +67,7 @@
 	movw	%ds,24(%rsp)		; \
 98: 	INTR_SAVE_GPRS
 
+#ifndef XEN
 #define INTRFASTEXIT \
 	INTR_RESTORE_GPRS 		; \
 	testq	$SEL_UPL,56(%rsp)	; \
@@ -82,6 +91,35 @@
 	pushq	%r11			; \
 	pushq	%r13			;
 
+#else	/* !XEN */
+/*
+ * Disabling events before going to user mode sounds like a BAD idea
+ * do no restore gs either, HYPERVISOR_iret will do a swapgs
+ */
+#define INTRFASTEXIT \
+ 	INTR_RESTORE_GPRS 		; \
+ 	testq	$SEL_UPL,56(%rsp)	; \
+ 	je	99f			; \
+ 	movw	8(%rsp),%fs		; \
+ 	movw	16(%rsp),%es		; \
+ 	movw	24(%rsp),%ds		; \
+99:	addq	$48,%rsp		; \
+ 	iretq
+  
+/* We must fixup CS, as even kernel mode runs at CPL 3 */
+#define INTR_RECURSE_HWFRAME \
+ 	movq	%rsp,%r10		; \
+ 	movl	%ss,%r11d		; \
+ 	pushq	%r11			; \
+ 	pushq	%r10			; \
+ 	pushfq				; \
+ 	movl	%cs,%r11d		; \
+ 	pushq	%r11			; \
+ 	andb	$0xfc,(%rsp)		; \
+ 	pushq	%r13			;
+ 
+#endif	/* !XEN */
+ 
 #define	DO_DEFERRED_SWITCH \
 	cmpq	$0, CPUVAR(WANT_PMAPLOAD)		; \
 	jz	1f					; \
@@ -97,5 +135,23 @@
 				99:
 
 #define CLEAR_ASTPENDING(reg)	movl	$0, L_MD_ASTPENDING(reg)
+
+#ifdef XEN
+#define CLI(reg1,reg2) \
+ 	movl CPUVAR(CPUID),%e/**/reg1 ;			\
+ 	shlq $6,%r/**/reg1 ;					\
+ 	movq _C_LABEL(HYPERVISOR_shared_info),%r/**/reg2 ;	\
+ 	addq %r/**/reg1,%r/**/reg2 ;				\
+ 	movb $1,EVTCHN_UPCALL_MASK(%r/**/reg2)
+#define STI(reg1,reg2) \
+ 	movl CPUVAR(CPUID),%e/**/reg1 ;			\
+ 	shlq $6,%r/**/reg1 ;					\
+ 	movq _C_LABEL(HYPERVISOR_shared_info),%r/**/reg2 ;	\
+ 	addq %r/**/reg1,%r/**/reg2 ;				\
+ 	movb $0,EVTCHN_UPCALL_MASK(%r/**/reg2)
+#else /* XEN */
+#define CLI(reg1,reg2) cli
+#define STI(reg1,reg2) sti
+#endif	/* XEN */
 
 #endif /* _AMD64_MACHINE_FRAMEASM_H */

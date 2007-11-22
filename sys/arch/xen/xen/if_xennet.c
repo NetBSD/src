@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xennet.c,v 1.53 2007/11/07 00:23:17 ad Exp $	*/
+/*	$NetBSD: if_xennet.c,v 1.54 2007/11/22 16:17:07 bouyer Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.53 2007/11/07 00:23:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.54 2007/11/22 16:17:07 bouyer Exp $");
 
 #include "opt_inet.h"
 #include "opt_nfs_boot.h"
@@ -88,12 +88,12 @@ __KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.53 2007/11/07 00:23:17 ad Exp $");
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_page.h>
 
-#include <machine/xen.h>
-#include <machine/hypervisor.h>
-#include <machine/evtchn.h>
-#include <machine/ctrl_if.h>
+#include <xen/xen.h>
+#include <xen/hypervisor.h>
+#include <xen/evtchn.h>
+#include <xen/ctrl_if.h>
 
-#include <machine/if_xennetvar.h>
+#include <xen/if_xennetvar.h>
 
 #ifdef DEBUG
 #define XENNET_DEBUG

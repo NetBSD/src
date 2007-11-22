@@ -1,4 +1,4 @@
-/*      $NetBSD: xenevt.c,v 1.15 2007/10/17 19:58:33 garbled Exp $      */
+/*      $NetBSD: xenevt.c,v 1.16 2007/11/22 16:17:10 bouyer Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -45,13 +45,13 @@
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/hypervisor.h>
-#include <machine/xenpmap.h>
-#include <machine/xenio.h>
+#include <xen/hypervisor.h>
+#include <xen/xenpmap.h>
+#include <xen/xenio.h>
 #ifdef XEN3
-#include <machine/xenio3.h>
+#include <xen/xenio3.h>
 #endif
-#include <machine/xen.h>
+#include <xen/xen.h>
 
 extern struct evcnt softxenevt_evtcnt;
 

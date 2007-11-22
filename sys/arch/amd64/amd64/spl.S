@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.11 2007/11/10 20:06:23 ad Exp $	*/
+/*	$NetBSD: spl.S,v 1.12 2007/11/22 16:16:42 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -84,6 +84,7 @@
 
 	.text
 
+#ifndef XEN
 /*
  * int splraise(int s);
  */
@@ -95,6 +96,7 @@ ENTRY(splraise)
 	cmoval	%eax,%edi
 	movl	%edi,CPUVAR(ILEVEL)
 	ret
+#endif
 
 /*
  * void softintr(int sir);
@@ -110,6 +112,7 @@ ENTRY(softintr)
 	orl	%eax,CPUVAR(IPENDING)
 	ret
 
+#ifndef XEN
 /*
  * void spllower(int s);
  *
@@ -137,6 +140,8 @@ ENTRY(spllower)
 	jmp	_C_LABEL(Xspllower)
 	.align	64
 LABEL(spllower_end)
+
+#endif /* !XEN */
 
 /*
  * void	cx8_spllower(int s);
@@ -204,7 +209,7 @@ IDTVEC(spllower)
 	leaq	1f(%rip),%r13		# address to resume loop at
 1:	movl	%ebx,%eax		# get cpl
 	movl	CPUVAR(IUNMASK)(,%rax,4),%eax
-	cli
+	CLI(si,di)
 	andl	CPUVAR(IPENDING),%eax		# any non-masked bits left?
 	jz	2f
 	bsrl	%eax,%eax
@@ -213,7 +218,7 @@ IDTVEC(spllower)
 	jmp	*IS_RECURSE(%rax)
 2:
 	movl	%ebx,CPUVAR(ILEVEL)
-	sti
+	STI(si,di)
 	popq	%r12
 	popq	%r13
 	popq	%rbx
@@ -232,7 +237,7 @@ IDTVEC(doreti)
 	leaq	1f(%rip),%r13
 1:	movl	%ebx,%eax
 	movl	CPUVAR(IUNMASK)(,%rax,4),%eax
-	cli
+	CLI(si,di)
 	andl	CPUVAR(IPENDING),%eax
 	jz	2f
 	bsrl    %eax,%eax               # slow, but not worth optimizing
@@ -244,25 +249,34 @@ IDTVEC(doreti)
 5:
 	testb   $SEL_RPL,TF_CS(%rsp)
 	jz	6f
-.Ldoreti_checkast:
+	.globl doreti_checkast
+doreti_checkast:
 	movq	CPUVAR(CURLWP),%r14
 	CHECK_ASTPENDING(%r14)
 	je	3f
 	CLEAR_ASTPENDING(%r14)
-	sti
+	STI(si,di)
 	movl	$T_ASTFLT,TF_TRAPNO(%rsp)	/* XXX undo later.. */
 	/* Pushed T_ASTFLT into tf_trapno on entry. */
 	movq	%rsp,%rdi
 	call	_C_LABEL(trap)
-	cli
-	jmp	.Ldoreti_checkast
+	CLI(si,di)
+	jmp	doreti_checkast
 3:
 	CHECK_DEFERRED_SWITCH
 	jnz	9f
 6:
 	INTRFASTEXIT
 9:
-	sti
+	STI(si,di)
 	call	_C_LABEL(do_pmap_load)
-	cli
-	jmp	.Ldoreti_checkast	/* recheck ASTs */
+	CLI(si,di)
+	jmp	doreti_checkast		/* recheck ASTs */
+
+#ifdef XEN
+NENTRY(call_evtchn_do_event)
+	incl	CPUVAR(IDEPTH)
+	call    _C_LABEL(evtchn_do_event)
+	decl	CPUVAR(IDEPTH)
+	ret
+#endif

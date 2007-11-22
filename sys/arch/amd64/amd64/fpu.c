@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.19 2007/10/17 19:53:00 garbled Exp $	*/
+/*	$NetBSD: fpu.c,v 1.20 2007/11/22 16:16:41 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.19 2007/10/17 19:53:00 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.20 2007/11/22 16:16:41 bouyer Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -96,8 +96,10 @@ __KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.19 2007/10/17 19:53:00 garbled Exp $");
 #include <machine/specialreg.h>
 #include <machine/fpu.h>
 
+#ifndef XEN
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
+#endif
 
 /*
  * We do lazy initialization and switching using the TS bit in cr0 and the
