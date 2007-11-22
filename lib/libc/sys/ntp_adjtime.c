@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_adjtime.c,v 1.9 2007/01/17 23:24:22 hubertf Exp $ */
+/*	$NetBSD: ntp_adjtime.c,v 1.10 2007/11/22 21:11:31 dsl Exp $ */
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.      
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: ntp_adjtime.c,v 1.9 2007/01/17 23:24:22 hubertf Exp $");
+__RCSID("$NetBSD: ntp_adjtime.c,v 1.10 2007/11/22 21:11:31 dsl Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -57,13 +57,14 @@ __weak_alias(ntp_adjtime,_ntp_adjtime)
 
 extern int __clockctl_fd;
 
+int __ntp_adjtime(struct timex *tp);
+
 int
 ntp_adjtime(tp)
 	struct timex *tp;
 {
 	struct clockctl_ntp_adjtime args;
 	int error;
-	quad_t q;
 	int rv;
 
 	/*
@@ -73,12 +74,7 @@ ntp_adjtime(tp)
 	 * ntp_adjtime() is callable for mortals if tp->modes == 0 !
 	 */
 	if (__clockctl_fd == -1) {
-		q = __syscall((quad_t)SYS_ntp_adjtime, tp);
-		if (/* LINTED constant */ sizeof (quad_t) == sizeof (register_t)
-		    || /* LINTED constant */ BYTE_ORDER == LITTLE_ENDIAN)
-			rv = (int)q;
-		else
-			rv = (int)((u_quad_t)q >> 32);
+		rv = __ntp_adjtime(tp);
 	
 		/*
 		 * if we fail with EPERM we try the clockctl device
