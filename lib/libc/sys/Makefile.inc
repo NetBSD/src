@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.180 2007/11/13 15:21:19 ad Exp $
+#	$NetBSD: Makefile.inc,v 1.181 2007/11/22 21:11:30 dsl Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -23,14 +23,27 @@ CLEANFILES+=	${_LSRC:MLintSys*.c}
 .endif
 
 # glue to offer userland wrappers for some syscalls
-SRCS+=	sigtimedwait.c sigwait.c sigwaitinfo.c statvfs.c
+SRCS+=	sigtimedwait.c sigwait.c sigwaitinfo.c statvfs.c swapon.c
 
 # glue to provide compatibility between GCC 1.X and 2.X and for compat
 # with old syscall interfaces.
-SRCS+=	adjtime.c clock_settime.c ftruncate.c \
+GLUE+=	adjtime.c clock_settime.c ftruncate.c \
 	lseek.c mmap.c ntp_adjtime.c pread.c preadv.c pwrite.c \
 	pwritev.c settimeofday.c \
-	swapon.c truncate.c
+	truncate.c
+
+# 'glue' files might .c or .S depending on the architecture
+.for glue in ${GLUE}
+.if exists(${glue:.c=.S})
+# Build the ASM glue file
+SRCS+=${glue:.c=.S}
+.else
+# Build the C glue file
+SRCS+= ${glue}
+# and an asm entry for __<syscall>
+ASM_GLUE+= __${glue:.c=.S}
+.endif
+.endfor
 
 # glue to syscalls that may pass structs or unions, which cannot be
 # handled portably and easily by the syscall interface. The glue
@@ -108,8 +121,8 @@ NOERR=	getegid.S geteuid.S getgid.S getpid.S getppid.S getuid.S \
 
 PSEUDONOERR=	_exit.S
 
-SRCS+=		${ASM} ${WEAKASM} ${NOERR} ${PSEUDONOERR}
-CLEANFILES+=	${ASM} ${WEAKASM} ${NOERR} ${PSEUDONOERR}
+SRCS+=		${ASM} ${WEAKASM} ${NOERR} ${PSEUDONOERR} ${ASM_GLUE}
+CLEANFILES+=	${ASM} ${WEAKASM} ${NOERR} ${PSEUDONOERR} ${ASM_GLUE}
 
 ASMDEPS=	${.CURDIR}/sys/Makefile.inc ${ARCHDIR}/SYS.h \
 		${DESTDIR}/usr/include/sys/syscall.h
@@ -119,6 +132,10 @@ _LINTASM=	${ASM:Nsa_*.S} ${WEAKASM:Nsa_*.S}
 ${ASM}: ${ASMDEPS}
 	${_MKTARGET_CREATE}
 	printf '#include "SYS.h"\nRSYSCALL(${.PREFIX})\n' >${.TARGET}
+
+${ASM_GLUE}: ${ASMDEPS}
+	${_MKTARGET_CREATE}
+	printf '#include "SYS.h"\nPSEUDO(${.PREFIX},${.PREFIX:S/__//})\n' >${.TARGET}
 
 ${WEAKASM}: ${ASMDEPS}
 	${_MKTARGET_CREATE}
