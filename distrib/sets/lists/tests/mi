@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.10 2007/11/19 14:18:35 jmmv Exp $
+# $NetBSD: mi,v 1.11 2007/11/22 11:32:12 jmmv Exp $
 ./etc/mtree/set.tests				tests-sys-root
 ./usr/libdata/debug/usr/tests						tests-base-debug
 ./usr/libdata/debug/usr/tests/atf					tests-atf-debug
@@ -30,6 +30,8 @@
 ./usr/libdata/debug/usr/tests/util					tests-util-debug
 ./usr/libdata/debug/usr/tests/util/df					tests-util-debug
 ./usr/libdata/debug/usr/tests/util/df/h_df.debug			tests-util-debug	debug
+./usr/libdata/debug/usr/tests/util/id					tests-util-debug
+./usr/libdata/debug/usr/tests/util/id/h_id.debug			tests-util-debug	debug
 ./usr/libdata/debug/usr/tests/util/systrace				tests-util-debug
 ./usr/libdata/debug/usr/tests/util/systrace/h_have_systrace.debug	tests-util-debug	debug
 ./usr/tests					tests-base-tests
