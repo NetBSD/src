@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.951 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.952 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -264,3 +264,5 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		[sborrill 20071120]
 	pud(4): Add a driver via which it is possible to implement
 		block and character devices in userspace. [pooka 20071120]
+	xen: Added support for amd64 architecture, both as dom0 and domU.
+		[bouyer 20071122]
