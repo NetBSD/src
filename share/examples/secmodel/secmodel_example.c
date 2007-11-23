@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_example.c,v 1.14 2007/01/20 16:47:38 elad Exp $ */
+/* $NetBSD: secmodel_example.c,v 1.15 2007/11/23 16:03:47 elad Exp $ */
 
 /*
  * This file is placed in the public domain.
@@ -13,7 +13,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_example.c,v 1.14 2007/01/20 16:47:38 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_example.c,v 1.15 2007/11/23 16:03:47 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -157,6 +157,7 @@ secmodel_example_system_cb(kauth_cred_t cred, kauth_action_t action,
                 case KAUTH_REQ_SYSTEM_TIME_NTPADJTIME:
                 case KAUTH_REQ_SYSTEM_TIME_RTCOFFSET:
                 case KAUTH_REQ_SYSTEM_TIME_SYSTEM:
+		case KAUTH_REQ_SYSTEM_TIME_TIMECOUNTERS:
                 default:
                         result = KAUTH_RESULT_DEFER;
                         break;
