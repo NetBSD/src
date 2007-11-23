@@ -1,4 +1,4 @@
-/*	$NetBSD: segments.h,v 1.13 2007/11/22 21:21:14 bouyer Exp $	*/
+/*	$NetBSD: segments.h,v 1.14 2007/11/23 15:38:06 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -84,7 +84,7 @@
 
 #ifndef _AMD64_SEGMENTS_H_
 #define _AMD64_SEGMENTS_H_
-#if defined(_KERNEL) && !defined(_RUMPKERNEL) && !defined(_LKM)
+#ifdef _KERNEL_OPT
 #include "opt_xen.h"
 #endif
 
