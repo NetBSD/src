@@ -1,4 +1,4 @@
-/*	$NetBSD: truncate.c,v 1.11 2007/11/22 21:11:32 dsl Exp $	*/
+/*	$NetBSD: truncate.c,v 1.12 2007/11/23 12:39:16 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)truncate.c	8.1 (Berkeley) 6/17/93";
 #else
-__RCSID("$NetBSD: truncate.c,v 1.11 2007/11/22 21:11:32 dsl Exp $");
+__RCSID("$NetBSD: truncate.c,v 1.12 2007/11/23 12:39:16 uebayasi Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -42,7 +42,7 @@ __RCSID("$NetBSD: truncate.c,v 1.11 2007/11/22 21:11:32 dsl Exp $");
 #include <sys/syscall.h>
 #include <unistd.h>
 
-int __truncate(const char *path, int, off_t length);
+int __truncate(const char *, int, off_t);
 
 /*
  * This function provides 64-bit offset padding that

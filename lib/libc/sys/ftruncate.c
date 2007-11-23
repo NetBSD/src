@@ -1,4 +1,4 @@
-/*	$NetBSD: ftruncate.c,v 1.12 2007/11/22 21:11:31 dsl Exp $	*/
+/*	$NetBSD: ftruncate.c,v 1.13 2007/11/23 12:39:15 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)ftruncate.c	8.1 (Berkeley) 6/17/93";
 #else
-__RCSID("$NetBSD: ftruncate.c,v 1.12 2007/11/22 21:11:31 dsl Exp $");
+__RCSID("$NetBSD: ftruncate.c,v 1.13 2007/11/23 12:39:15 uebayasi Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -47,7 +47,7 @@ __RCSID("$NetBSD: ftruncate.c,v 1.12 2007/11/22 21:11:31 dsl Exp $");
 __weak_alias(ftruncate,_ftruncate)
 #endif
 
-int __ftruncate(int fd, int, off_t length);
+int __ftruncate(int, int, off_t);
 
 /*
  * This function provides 64-bit offset padding that
