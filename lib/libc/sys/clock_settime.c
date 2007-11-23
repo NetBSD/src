@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_settime.c,v 1.9 2007/11/22 21:11:31 dsl Exp $ */
+/*	$NetBSD: clock_settime.c,v 1.10 2007/11/23 12:39:15 uebayasi Exp $ */
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.      
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: clock_settime.c,v 1.9 2007/11/22 21:11:31 dsl Exp $");
+__RCSID("$NetBSD: clock_settime.c,v 1.10 2007/11/23 12:39:15 uebayasi Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -57,7 +57,7 @@ __weak_alias(clock_settime,_clock_settime)
 
 extern int __clockctl_fd;
 
-int __clock_settime(clockid_t clock_id, const struct timespec *tp);
+int __clock_settime(clockid_t, const struct timespec *);
 
 int
 clock_settime(clock_id, tp)
