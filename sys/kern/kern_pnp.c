@@ -1,4 +1,4 @@
-/* $NetBSD: kern_pnp.c,v 1.1.2.14 2007/11/14 02:19:29 joerg Exp $ */
+/* $NetBSD: kern_pnp.c,v 1.1.2.15 2007/11/23 16:03:15 joerg Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_pnp.c,v 1.1.2.14 2007/11/14 02:19:29 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_pnp.c,v 1.1.2.15 2007/11/23 16:03:15 joerg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -94,20 +94,25 @@ pnp_check_system_drivers(void)
 bool
 pnp_system_resume(void)
 {
-	int depth;
+	int depth, maxdepth;
 	bool rv;
-	bool got_change;
 	device_t curdev, parent;
 
 	if (!pnp_check_system_drivers())
 		return false;
 
+	maxdepth = 0;
+	TAILQ_FOREACH(curdev, &alldevs, dv_list) {
+		if (curdev->dv_depth > maxdepth)
+			maxdepth = curdev->dv_depth;
+	}
+	++maxdepth;
+
 	printf("Resuming devices:");
 	/* D0 handlers are run in order */
 	depth = 0;
 	rv = true;
-	do {
-		got_change = false;
+	for (depth = 0; depth < maxdepth; ++depth) {
 		TAILQ_FOREACH(curdev, &alldevs, dv_list) {
 			if (device_is_active(curdev) ||
 			    !device_is_enabled(curdev))
@@ -124,11 +129,9 @@ pnp_system_resume(void)
 			if (!pnp_device_resume(curdev)) {
 				rv = false;
 				printf("(failed)");
-			} else
-				got_change = true;
+			}
 		}
-		++depth;
-	} while (got_change);
+	}
 	printf(".\n");
 
 	return rv;
@@ -309,6 +312,41 @@ pnp_device_resume(device_t dev)
 		return false;
 	PNP_TRANSITION_PRINTF(("%s: resume exit\n", device_xname(dev)));
 	return true;
+}
+
+bool
+pnp_device_recursive_suspend(device_t dv)
+{
+	device_t curdev;
+
+	if (!device_is_active(dv))
+		return true;
+
+	TAILQ_FOREACH(curdev, &alldevs, dv_list) {
+		if (device_parent(curdev) != dv)
+			continue;
+		if (!pnp_device_recursive_suspend(curdev))
+			return false;
+	}
+
+	return pnp_device_suspend(dv);
+}
+
+bool
+pnp_device_recursive_resume(device_t dv)
+{
+	device_t parent;
+
+	if (device_is_active(dv))
+		return true;
+
+	parent = device_parent(dv);
+	if (parent != NULL) {
+		if (!pnp_device_recursive_resume(parent))
+			return false;
+	}
+
+	return pnp_device_resume(dv);
 }
 
 #include <net/if.h>
