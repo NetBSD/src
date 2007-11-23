@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.916 2007/11/19 19:04:43 ad Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.917 2007/11/23 20:08:48 xtraeme Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.916 2007/11/19 19:04:10 ad Exp
+ *	NetBSD: pcidevs,v 1.917 2007/11/23 20:08:24 xtraeme Exp
  */
 
 /*
@@ -8108,6 +8108,66 @@ static const struct pci_product pci_products[] = {
 	    "5000X Memory Controller Hub",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_5000_PCIE_1,
+	    "5000 Series Chipset PCI Express x4 Port 2",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_5000_PCIE_2,
+	    "5000 Series Chipset PCI Express x4 Port 3",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_5000_PCIE_3,
+	    "5000 Series Chipset PCI Express x4 Port 4",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_5000_PCIE_4,
+	    "5000 Series Chipset PCI Express x4 Port 5",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_5000_PCIE_5,
+	    "5000 Series Chipset PCI Express x4 Port 6",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_5000_PCIE_6,
+	    "5000 Series Chipset PCI Express x4 Port 7",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_5000_FSB_REG,
+	    "5000 Series Chipset FSB Registers",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_5000_RESERVED_1,
+	    "5000 Series Chipset Reserved Registers",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_5000_RESERVED_2,
+	    "5000 Series Chipset Reserved Registers",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_5000_FBD_1,
+	    "5000 Series Chipset FBD Registers",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_5000_FBD_2,
+	    "5000 Series Chipset FBD Registers",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_5000_PCIE_7,
+	    "5000 Series Chipset PCI Express x8 Port 2-3",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_5000_PCIE_8,
+	    "5000 Series Chipset PCI Express x8 Port 4-5",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_5000_PCIE_9,
+	    "5000 Series Chipset PCI Express x8 Port 6-7",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_5000X_PCIE,
+	    "5000X PCI Express x16 Port 4-7",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FB_LPC,
 	    "82801FB LPC Interface Bridge",
 	},
@@ -13860,4 +13920,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2866;
+const int pci_nproducts = 2881;
