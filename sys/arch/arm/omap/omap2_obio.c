@@ -1,7 +1,7 @@
-/*	$Id: omap2_obio.c,v 1.1.2.4 2007/11/17 21:32:50 matt Exp $	*/
+/*	$Id: omap2_obio.c,v 1.1.2.5 2007/11/23 21:29:43 matt Exp $	*/
 
 /* adapted from: */
-/*	$NetBSD: omap2_obio.c,v 1.1.2.4 2007/11/17 21:32:50 matt Exp $ */
+/*	$NetBSD: omap2_obio.c,v 1.1.2.5 2007/11/23 21:29:43 matt Exp $ */
 
 
 /*
@@ -131,7 +131,7 @@
 
 #include "opt_omap.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap2_obio.c,v 1.1.2.4 2007/11/17 21:32:50 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap2_obio.c,v 1.1.2.5 2007/11/23 21:29:43 matt Exp $");
 
 #include "locators.h"
 #include "obio.h"
@@ -172,13 +172,15 @@ struct obio_softc {
 static int	obio_match(device_t, cfdata_t, void *);
 static void	obio_attach(device_t, device_t, void *);
 static int 	obio_search(device_t, cfdata_t, const int *, void *);
+static int	obio_find(device_t, cfdata_t, const int *, void *);
 static int	obio_print(void *, const char *);
+static void	obio_attach_critical(struct obio_softc *);
 
 /* attach structures */
 CFATTACH_DECL(obio, sizeof(struct obio_softc),
 	obio_match, obio_attach, NULL, NULL);
 
-static int obio_attached[NOBIO];
+static uint8_t obio_attached[NOBIO];
 
 static int
 obio_match(device_t parent, cfdata_t match, void *aux)
@@ -227,7 +229,11 @@ obio_attach(device_t parent, device_t self, void *aux)
 #endif
 
 	/*
-	 * Attach all our devices
+	 * Attach critical devices first.
+	 */
+	obio_attach_critical(sc);
+	/*
+	 * Then attach the rest of our devices
 	 */
 	config_search_ia(obio_search, self, "obio", NULL);
 }
@@ -235,26 +241,26 @@ obio_attach(device_t parent, device_t self, void *aux)
 static int
 obio_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
-	struct obio_softc *sc = (struct obio_softc *)parent;
-	struct obio_attach_args aa;
+	struct obio_softc * const sc = device_private(parent);
+	struct obio_attach_args oa;
 
 	/* Set up the attach args. */
 	if (cf->cf_loc[OBIOCF_NOBYTEACC] == 1) {
 		if (cf->cf_loc[OBIOCF_MULT] == 1)
-			aa.obio_iot = &nobyteacc_bs_tag;
+			oa.obio_iot = &nobyteacc_bs_tag;
 		else
 			panic("nobyteacc specified for device with "
 				"non-byte multiplier\n");
 	} else {
 		switch (cf->cf_loc[OBIOCF_MULT]) {
 		case 1:
-			aa.obio_iot = &omap_bs_tag;
+			oa.obio_iot = &omap_bs_tag;
 			break;
 		case 2:
-			aa.obio_iot = &omap_a2x_bs_tag;
+			oa.obio_iot = &omap_a2x_bs_tag;
 			break;
 		case 4:
-			aa.obio_iot = &omap_a4x_bs_tag;
+			oa.obio_iot = &omap_a4x_bs_tag;
 			break;
 		default:
 			panic("Unsupported EMIFS multiplier.");
@@ -262,25 +268,25 @@ obio_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 		}
 	}
 
-	aa.obio_dmat = sc->sc_dmat;
-	aa.obio_addr = cf->cf_loc[OBIOCF_ADDR];
-	aa.obio_size = cf->cf_loc[OBIOCF_SIZE];
-	aa.obio_intr = cf->cf_loc[OBIOCF_INTR];
-	aa.obio_intrbase = cf->cf_loc[OBIOCF_INTRBASE];
+	oa.obio_dmat = sc->sc_dmat;
+	oa.obio_addr = cf->cf_loc[OBIOCF_ADDR];
+	oa.obio_size = cf->cf_loc[OBIOCF_SIZE];
+	oa.obio_intr = cf->cf_loc[OBIOCF_INTR];
+	oa.obio_intrbase = cf->cf_loc[OBIOCF_INTRBASE];
 
 #if defined(OMAP2)
-	if ((aa.obio_addr >= sc->sc_base)
-	&&  (aa.obio_addr < (sc->sc_base + sc->sc_size))) {
+	if ((oa.obio_addr >= sc->sc_base)
+	&&  (oa.obio_addr < (sc->sc_base + sc->sc_size))) {
 		/* XXX
 		 * if size was specified, then check it too
 		 * otherwise just assume it is OK
 		 */
-		if ((aa.obio_size != OBIOCF_SIZE_DEFAULT)
-		&&  ((aa.obio_addr + aa.obio_size)
+		if ((oa.obio_size != OBIOCF_SIZE_DEFAULT)
+		&&  ((oa.obio_addr + oa.obio_size)
 			>= (sc->sc_base + sc->sc_size)))
 				return 1;		/* NG */
-		if (config_match(parent, cf, &aa)) {
-			config_attach(parent, cf, &aa, obio_print);
+		if (config_match(parent, cf, &oa)) {
+			config_attach(parent, cf, &oa, obio_print);
 			return 0;			/* love it */
 		}
 	}
@@ -290,20 +296,118 @@ obio_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 }
 
 static int
+obio_find(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
+{
+	struct obio_attach_args * const oa = aux;
+
+	if (oa->obio_addr != OBIOCF_ADDR_DEFAULT
+	    && oa->obio_addr != cf->cf_loc[OBIOCF_ADDR])
+		return 0;
+	if (oa->obio_size != OBIOCF_SIZE_DEFAULT
+	    && oa->obio_size != cf->cf_loc[OBIOCF_SIZE])
+		return 0;
+	if (oa->obio_intr != OBIOCF_INTR_DEFAULT
+	    && oa->obio_intr != cf->cf_loc[OBIOCF_INTR])
+		return 0;
+	if (oa->obio_intrbase != OBIOCF_INTRBASE_DEFAULT
+	    && oa->obio_intrbase != cf->cf_loc[OBIOCF_INTRBASE])
+		return 0;
+
+	/* Set up the attach args. */
+	if (cf->cf_loc[OBIOCF_NOBYTEACC] == 1) {
+		if (cf->cf_loc[OBIOCF_MULT] == 1)
+			oa->obio_iot = &nobyteacc_bs_tag;
+		else
+			panic("nobyteacc specified for device with "
+				"non-byte multiplier\n");
+	} else {
+		switch (cf->cf_loc[OBIOCF_MULT]) {
+		case 1:
+			oa->obio_iot = &omap_bs_tag;
+			break;
+		case 2:
+			oa->obio_iot = &omap_a2x_bs_tag;
+			break;
+		case 4:
+			oa->obio_iot = &omap_a4x_bs_tag;
+			break;
+		default:
+			panic("Unsupported EMIFS multiplier.");
+			break;
+		}
+	}
+	oa->obio_addr = cf->cf_loc[OBIOCF_ADDR];
+	oa->obio_size = cf->cf_loc[OBIOCF_SIZE];
+	oa->obio_intr = cf->cf_loc[OBIOCF_INTR];
+	oa->obio_intrbase = cf->cf_loc[OBIOCF_INTRBASE];
+
+	return config_match(parent, cf, oa);
+}
+
+#if 0 && NOMAP2ICU == 0
+#error no avic present in config file
+#endif
+
+static const struct {
+	const char *name;
+	bus_addr_t addr;
+	bool required;
+} critical_devs[] = {
+#if 0
+	{ .name = "avic", .addr = INTC_BASE, .required = true },
+	{ .name = "gpio1", .addr = GPIO1_BASE, .required = false },
+	{ .name = "gpio2", .addr = GPIO2_BASE, .required = false },
+	{ .name = "gpio3", .addr = GPIO3_BASE, .required = false },
+	{ .name = "dmac", .addr = DMAC_BASE, .required = true },
+#endif
+};
+
+static void
+obio_attach_critical(struct obio_softc *sc)
+{
+	struct obio_attach_args oa;
+	cfdata_t cf;
+	size_t i;
+
+	for (i = 0; i < __arraycount(critical_devs); i++) {
+		oa.obio_iot = sc->sc_iot;
+#ifdef NOTYET
+		oa.obio_dmat = sc->sc_dmat;
+#endif
+
+		oa.obio_addr = critical_devs[i].addr;
+		oa.obio_size = OBIOCF_SIZE_DEFAULT;
+		oa.obio_intr = OBIOCF_INTR_DEFAULT;
+		oa.obio_intrbase = OBIOCF_INTRBASE_DEFAULT;
+
+		cf = config_search_ia(obio_find, &sc->sc_dev, "obio", &oa);
+		if (cf == NULL && critical_devs[i].required)
+			panic("obio_attach_critical: failed to find %s!",
+			    critical_devs[i].name);
+
+		oa.obio_addr = cf->cf_loc[OBIOCF_ADDR];
+		oa.obio_size = cf->cf_loc[OBIOCF_SIZE];
+		oa.obio_intr = cf->cf_loc[OBIOCF_INTR];
+		oa.obio_intrbase = cf->cf_loc[OBIOCF_INTRBASE];
+		config_attach(&sc->sc_dev, cf, &oa, obio_print);
+	}
+}
+
+static int
 obio_print(void *aux, const char *name)
 {
-	struct obio_attach_args *sa = (struct obio_attach_args*)aux;
+	struct obio_attach_args *oa = (struct obio_attach_args*)aux;
 
-	if (sa->obio_addr != OBIOCF_ADDR_DEFAULT) {
-		aprint_normal(" addr 0x%08lx", sa->obio_addr);
-		if (sa->obio_size != OBIOCF_SIZE_DEFAULT)
+	if (oa->obio_addr != OBIOCF_ADDR_DEFAULT) {
+		aprint_normal(" addr 0x%08lx", oa->obio_addr);
+		if (oa->obio_size != OBIOCF_SIZE_DEFAULT)
 			aprint_normal("-0x%08lx",
-				sa->obio_addr + sa->obio_size-1);
+				oa->obio_addr + oa->obio_size-1);
 	}
-	if (sa->obio_intr != OBIOCF_INTR_DEFAULT)
-		aprint_normal(" intr %d", sa->obio_intr);
-	if (sa->obio_intrbase != OBIOCF_INTRBASE_DEFAULT)
-		aprint_normal(" intrbase %d", sa->obio_intrbase);
+	if (oa->obio_intr != OBIOCF_INTR_DEFAULT)
+		aprint_normal(" intr %d", oa->obio_intr);
+	if (oa->obio_intrbase != OBIOCF_INTRBASE_DEFAULT)
+		aprint_normal(" intrbase %d", oa->obio_intrbase);
 
 	return UNCONF;
 }
