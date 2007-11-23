@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.8 2007/11/22 16:17:12 bouyer Exp $	*/
+/*	$NetBSD: pmap.c,v 1.9 2007/11/23 16:33:25 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.8 2007/11/22 16:17:12 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.9 2007/11/23 16:33:25 bouyer Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -730,13 +730,17 @@ pmap_map_ptes(struct pmap *pmap, struct pmap **pmap2,
 	npde = pmap_pa2pte(pmap->pm_pdirpa) | PG_k | PG_V;
 	if (!pmap_valid_entry(opde) || pmap_pte2pa(opde) != pmap->pm_pdirpa) {
 		int s;
-		/*
-		 * Xen private mappings (slots 256-271)
-		 * won't be accepted as L3 entries
-		 * If pmap is current user pmap,
-		 * Xen won't allow us to clear his entries either
-		 */
 		s = splvm();
+		/*
+		 * Hack: force validation of pgd as a l4 page early,
+		 * otherwise APDP mapping will end marking it as a l3
+		 * and fail subsequent validations
+		 */
+		if ((pmap->pm_flags & PMF_USER_XPIN) == 0) {
+			xpq_queue_pin_table(
+			    xpmap_ptom_masked(pmap->pm_pdirpa));
+			pmap->pm_flags |= PMF_USER_XPIN;
+		}
 		/* Make recursive entry usable in user PGD */
 		xpq_queue_pte_update((void *)xpmap_ptom(pmap->pm_pdirpa +
 		    PDIR_SLOT_PTE * sizeof(pd_entry_t)), npde);
