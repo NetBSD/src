@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.178 2007/11/20 01:33:32 uebayasi Exp $
+#	$NetBSD: build.sh,v 1.179 2007/11/23 16:19:28 sborrill Exp $
 #
 # Copyright (c) 2001-2005 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -499,7 +499,7 @@ usage()
 	fi
 	cat <<_usage_
 
-Usage: ${progname} [-EnorUux] [-a arch] [-B buildid] [-C cddir] [-D dest]
+Usage: ${progname} [-EnorUux] [-a arch] [-B buildid] [-C cdextras] [-D dest]
 		[-j njob] [-M obj] [-m mach] [-N noisy] [-O obj] [-R release]
 		[-T tools] [-V var=[value]] [-w wrapper] [-X x11src] [-Z var]
 		operation [...]
@@ -525,13 +525,13 @@ Usage: ${progname} [-EnorUux] [-a arch] [-B buildid] [-C cddir] [-D dest]
     syspkgs             Create syspkgs in RELEASEDIR/MACHINE/binary/syspkgs.
     iso-image           Create CD-ROM image in RELEASEDIR/iso.
     iso-image-source    Create CD-ROM image with source in RELEASEDIR/iso.
-    iso-dir=cddir       Add the contents of \`cddir' to a CD-ROM image.
+    iso-dir=cdextras    Add the contents of \`cdextras' to a CD-ROM image.
     params              Display various make(1) parameters.
 
  Options:
     -a arch     Set MACHINE_ARCH to arch.  [Default: deduced from MACHINE]
     -B buildId  Set BUILDID to buildId.
-    -C cddir    Set CDEXTRA to cddir.
+    -C cdextras Set CDEXTRA to cdextras
     -D dest     Set DESTDIR to dest.  [Default: destdir.MACHINE]
     -E          Set "expert" mode; disables various safety checks.
                 Should not be used without expert knowledge of the build system.
@@ -1096,7 +1096,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.178 2007/11/20 01:33:32 uebayasi Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.179 2007/11/23 16:19:28 sborrill Exp $
 # with these arguments: ${_args}
 #
 
