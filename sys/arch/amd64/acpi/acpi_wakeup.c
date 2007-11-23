@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.3.48.22 2007/11/14 15:42:39 joerg Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.3.48.23 2007/11/23 20:00:50 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.3.48.22 2007/11/14 15:42:39 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.3.48.23 2007/11/23 20:00:50 joerg Exp $");
 
 /*-
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
@@ -114,10 +114,6 @@ static int acpi_md_beep_on_reset = 1;
 static int	sysctl_md_acpi_vbios_reset(SYSCTLFN_ARGS);
 static int	sysctl_md_acpi_beep_on_reset(SYSCTLFN_ARGS);
 
-extern uint8_t acpi_wakeup_gdt[10];
-extern uint64_t acpi_wakeup_ds;
-extern uint64_t acpi_wakeup_cr0;
-extern uint64_t acpi_wakeup_cr4;
 /* XXX shut gcc up */
 extern int	acpi_md_sleep_prepare(int);
 extern int	acpi_md_sleep_exit(int);	
@@ -150,12 +146,7 @@ acpi_md_sleep_enter(int state)
 	WAKECODE_FIXUP(WAKEUP_vbios_reset, uint8_t, acpi_md_vbios_reset);
 	WAKECODE_FIXUP(WAKEUP_beep_on_reset, uint8_t, acpi_md_beep_on_reset);
 
-	WAKECODE_FIXUP(WAKEUP_r_cr0, uint64_t, acpi_wakeup_cr0);
 	WAKECODE_FIXUP(WAKEUP_r_cr3, uint64_t, tmp_pdir);
-	WAKECODE_FIXUP(WAKEUP_r_cr4, uint64_t, acpi_wakeup_cr4);
-
-	WAKECODE_BCOPY(WAKEUP_r_gdt, struct region_descriptor, acpi_wakeup_gdt);
-
 	WAKECODE_FIXUP(WAKEUP_restorecpu, void *, acpi_md_sleep_exit);
 
 	ACPI_FLUSH_CPU_CACHE();
