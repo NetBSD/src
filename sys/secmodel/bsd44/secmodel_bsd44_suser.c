@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_bsd44_suser.c,v 1.37 2007/02/21 23:00:09 thorpej Exp $ */
+/* $NetBSD: secmodel_bsd44_suser.c,v 1.38 2007/11/23 16:03:48 elad Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.37 2007/02/21 23:00:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.38 2007/11/23 16:03:48 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -239,6 +239,7 @@ secmodel_bsd44_suser_system_cb(kauth_cred_t cred, kauth_action_t action,
 		case KAUTH_REQ_SYSTEM_TIME_ADJTIME:
 		case KAUTH_REQ_SYSTEM_TIME_NTPADJTIME:
 		case KAUTH_REQ_SYSTEM_TIME_SYSTEM:
+		case KAUTH_REQ_SYSTEM_TIME_TIMECOUNTERS:
 			if (isroot)
 				result = KAUTH_RESULT_ALLOW;
 			break;

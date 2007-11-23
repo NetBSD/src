@@ -1,4 +1,4 @@
-/* $NetBSD: kauth.h,v 1.40 2007/09/23 16:00:08 yamt Exp $ */
+/* $NetBSD: kauth.h,v 1.41 2007/11/23 16:03:49 elad Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>  
@@ -114,7 +114,8 @@ enum kauth_system_req {
 	KAUTH_REQ_SYSTEM_TIME_BACKWARDS,
 	KAUTH_REQ_SYSTEM_TIME_NTPADJTIME,
 	KAUTH_REQ_SYSTEM_TIME_RTCOFFSET,
-	KAUTH_REQ_SYSTEM_TIME_SYSTEM
+	KAUTH_REQ_SYSTEM_TIME_SYSTEM,
+	KAUTH_REQ_SYSTEM_TIME_TIMECOUNTERS
 };	
 
 /*

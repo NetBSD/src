@@ -1,4 +1,4 @@
-.\" $NetBSD: kauth.9,v 1.53 2007/09/23 16:03:41 yamt Exp $
+.\" $NetBSD: kauth.9,v 1.54 2007/11/23 16:03:48 elad Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 24, 2007
+.Dd November 22, 2007
 .Dt KAUTH 9
 .Os
 .Sh NAME
@@ -307,6 +307,8 @@ Check if changing the time (usually via
 is allowed.
 .It Dv KAUTH_REQ_SYSTEM_TIME_RTCOFFSET
 Check if changing the RTC offset is allowed.
+.It Dv KAUTH_REQ_SYSTEM_TIME_TIMECOUNTERS
+Check if manipulating timecounters is allowed.
 .El
 .El
 .Ss Process Scope

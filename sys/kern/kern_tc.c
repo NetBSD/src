@@ -1,4 +1,4 @@
-/* $NetBSD: kern_tc.c,v 1.25 2007/11/16 01:21:24 ad Exp $ */
+/* $NetBSD: kern_tc.c,v 1.26 2007/11/23 16:03:48 elad Exp $ */
 
 /*-
  * ----------------------------------------------------------------------------
@@ -11,7 +11,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_tc.c,v 1.166 2005/09/19 22:16:31 andre Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.25 2007/11/16 01:21:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.26 2007/11/23 16:03:48 elad Exp $");
 
 #include "opt_ntp.h"
 
@@ -131,8 +131,9 @@ sysctl_kern_timecounter_hardware(SYSCTLFN_ARGS)
 	    strncmp(newname, tc->tc_name, sizeof(newname)) == 0)
 		return error;
 
-	if (l != NULL && (error = kauth_authorize_generic(l->l_cred, 
-	    KAUTH_GENERIC_ISSUSER, NULL)) != 0)
+	if (l != NULL && (error = kauth_authorize_system(l->l_cred, 
+	    KAUTH_SYSTEM_TIME, KAUTH_REQ_SYSTEM_TIME_TIMECOUNTERS, newname,
+	    NULL, NULL)) != 0)
 		return (error);
 
 	if (!cold)
