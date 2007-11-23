@@ -1,4 +1,4 @@
-/*	$NetBSD: saerrno.h,v 1.9 2005/12/11 12:24:46 christos Exp $	*/
+/*	$NetBSD: saerrno.h,v 1.10 2007/11/23 04:32:14 isaki Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -48,4 +48,5 @@ extern int errno;
 #define	EWCK	(ELAST+10)	/* write check error */
 #define	EECC	(ELAST+11)	/* uncorrectable ecc error */
 #define	EHER	(ELAST+12)	/* hard error */
-#define	ESALAST	(ELAST+12)	/* */
+#define	ESHORT	(ELAST+13)	/* short read */
+#define	ESALAST	(ELAST+13)	/* */
