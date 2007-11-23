@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.173 2007/10/10 20:42:32 ad Exp $	*/
+/*	$NetBSD: vnode.h,v 1.174 2007/11/23 11:53:45 pooka Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -246,7 +246,7 @@ extern struct simplelock global_v_numoutput_slock;
  */
 #define	IO_UNIT		0x00010		/* do I/O as atomic unit */
 #define	IO_APPEND	0x00020		/* append write to end */
-#define	IO_SYNC		(0x04|IO_DSYNC)	/* sync I/O file integrity completion */
+#define	IO_SYNC		(0x40|IO_DSYNC)	/* sync I/O file integrity completion */
 #define	IO_NODELOCKED	0x00080		/* underlying node already locked */
 #define	IO_NDELAY	0x00100		/* FNDELAY flag set in file table */
 #define	IO_DSYNC	0x00200		/* sync I/O data integrity completion */
