@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.92 2007/03/04 06:02:49 christos Exp $	*/
+/*	$NetBSD: ugen.c,v 1.92.14.1 2007/11/23 20:47:54 joerg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.92 2007/03/04 06:02:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.92.14.1 2007/11/23 20:47:54 joerg Exp $");
 
 #include "opt_ugen_bulk_ra_wb.h"
 #include "opt_compat_netbsd.h"
@@ -270,6 +270,9 @@ USB_ATTACH(ugen)
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
 			   USBDEV(sc->sc_dev));
+
+	if (!pnp_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	USB_ATTACH_SUCCESS_RETURN;
 }
