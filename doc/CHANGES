@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.952 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.953 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -257,7 +257,7 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	ahcisata(4): Add support for ATAPI devices. [bouyer 20071112]
 	newfs_ext2fs(8): Add a native newfs_ext2fs(8) command.
 		Closes PR bin/16175. [tsutsui 20071117]
-	i386: Add support for /boot.cfg to configure the bootloader. This
+	x86: Add support for /boot.cfg to configure the bootloader. This
 		includes optionally displaying menus, altering banner text
 		and changing options such as timeouts and console device
 		which previously required use of installboot.
@@ -266,3 +266,6 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		block and character devices in userspace. [pooka 20071120]
 	xen: Added support for amd64 architecture, both as dom0 and domU.
 		[bouyer 20071122]
+	i386: Create a boot.cfg on the install CD to allow the end-user to
+		select either the standard or non-ACPI kernel easily.
+		[sborrill 20071123]
