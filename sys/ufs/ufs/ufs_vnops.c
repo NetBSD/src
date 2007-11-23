@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.157 2007/10/10 20:42:41 ad Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.158 2007/11/23 14:18:01 pooka Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.157 2007/10/10 20:42:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.158 2007/11/23 14:18:01 pooka Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -822,7 +822,7 @@ ufs_whiteout(void *v)
 
 
 /*
- * Rename system call.
+ * Rename vnode operation
  * 	rename("foo", "bar");
  * is essentially
  *	unlink("bar");
@@ -1256,9 +1256,6 @@ ufs_rename(void *v)
 	return (error);
 }
 
-/*
- * Mkdir system call
- */
 int
 ufs_mkdir(void *v)
 {
@@ -1443,9 +1440,6 @@ ufs_mkdir(void *v)
 	return (error);
 }
 
-/*
- * Rmdir system call.
- */
 int
 ufs_rmdir(void *v)
 {
