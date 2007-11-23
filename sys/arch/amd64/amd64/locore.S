@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.32 2007/11/22 16:16:42 bouyer Exp $	*/
+/*	$NetBSD: locore.S,v 1.33 2007/11/23 15:38:52 bouyer Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -213,7 +213,7 @@
 	.ascii	",VIRT_ENTRY=0xffffffff80100000"
 	.ascii	",HYPERCALL_PAGE=0x00000101" /*  (???+HYPERCALL_PAGE_OFFSET)/PAGE_SIZE) */
 #if NKSYMS > 0 || defined(DDB) || defined(LKM)
-	.ascii	",BSD_SYMTAB"
+	.ascii	",BSD_SYMTAB=yes"
 #endif
 	.byte   0
 
