@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup_low.S,v 1.1.2.12 2007/11/12 12:06:59 joerg Exp $	*/
+/*	$NetBSD: acpi_wakeup_low.S,v 1.1.2.13 2007/11/23 20:00:51 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@netbsd.org>
@@ -36,6 +36,7 @@
 	.p2align 2, 0x90
 	.globl acpi_md_sleep_exit
 acpi_md_sleep_exit:
+	lgdt	r_gdt
 
 	xorw	%ax,%ax
 	movw	%ax,%fs
@@ -188,18 +189,12 @@ r_r14:		.quad	0
 r_r15:		.quad	0
 r_rfl:		.quad	0
 
-	.globl acpi_wakeup_cr0
-acpi_wakeup_cr0:
 r_cr0:		.quad	0
 r_cr2:		.quad	0
 r_cr3:		.quad	0
-	.globl acpi_wakeup_cr4
-acpi_wakeup_cr4:
 r_cr4:		.quad	0
 r_cr8:		.quad	0
 
-	.globl acpi_wakeup_gdt
-acpi_wakeup_gdt:
 r_gdt:		.word	0
 		.quad	0
 r_idt:		.word	0

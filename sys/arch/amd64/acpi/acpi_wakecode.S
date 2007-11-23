@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakecode.S,v 1.1.2.11 2007/10/28 17:11:25 joerg Exp $	*/
+/*	$NetBSD: acpi_wakecode.S,v 1.1.2.12 2007/11/23 20:00:50 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@netbsd.org>
@@ -169,7 +169,7 @@ wakeup_32:
 	popfl
 
 	/* Enable PAE and potentially PSE */
-	movl	WAKEUP_r_cr4 + ACPI_WAKEUP_ADDR,%eax
+	movl	$(CR4_PAE|CR4_OSFXSR|CR4_OSXMMEXCPT|CR4_PSE),%eax
 	movl	%eax,%cr4
 
 	/* Enable SYSCALL extension and Long Mode */
@@ -183,9 +183,10 @@ wakeup_32:
 	movl	WAKEUP_r_cr3 + ACPI_WAKEUP_ADDR,%eax
 	movl	%eax,%cr3
 
-	/* Reload cr0 with normal values, activating paging effectively */
-	movl	WAKEUP_r_cr0 + ACPI_WAKEUP_ADDR,%eax
-        movl	%eax,%cr0
+	/* Enable paging */
+	movl	%cr0,%eax
+	orl	$(CR0_PE|CR0_PG|CR0_NE|CR0_TS|CR0_MP|CR0_WP),%eax
+	movl	%eax,%cr0
 	/* Flush prefetch queue */
 	jmp	1f
 1:
@@ -205,9 +206,6 @@ wakeup_64:
 	movw	%ax,%ss
 
 	movq	WAKEUP_restorecpu + ACPI_WAKEUP_ADDR,%rbx
-
-	/* Switch to the normal kernel GDT */
-	lgdt	WAKEUP_r_gdt + ACPI_WAKEUP_ADDR
 
 	/* Continue with wakeup in the high-level wakeup code */
 	jmp	*%rbx
@@ -239,16 +237,9 @@ tmp_gdtable64:
 	.quad 0x00cf92000000ffff
 
 	.align	16, 0
-	.global WAKEUP_r_cr0
-WAKEUP_r_cr0:		.quad 0
 	.global WAKEUP_r_cr3
 WAKEUP_r_cr3:		.quad 0
-	.global WAKEUP_r_cr4
-WAKEUP_r_cr4:		.quad 0
 
-	.global WAKEUP_r_gdt
-WAKEUP_r_gdt:		.word 0
-			.quad 0
 	.global WAKEUP_restorecpu
 WAKEUP_restorecpu:	.quad 0
 
