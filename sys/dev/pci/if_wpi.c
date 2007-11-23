@@ -1,4 +1,4 @@
-/*  $NetBSD: if_wpi.c,v 1.29 2007/11/23 19:47:27 joerg Exp $    */
+/*  $NetBSD: if_wpi.c,v 1.30 2007/11/23 22:27:02 plunky Exp $    */
 
 /*-
  * Copyright (c) 2006, 2007
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.29 2007/11/23 19:47:27 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.30 2007/11/23 22:27:02 plunky Exp $");
 
 /*
  * Driver for Intel PRO/Wireless 3945ABG 802.11 network adapters.
@@ -201,6 +201,7 @@ wpi_attach(device_t parent __unused, device_t self, void *aux)
 	pcireg_t data;
 	int error, ac, revision;
 
+	sc->sc_dev = self;
 	sc->sc_pct = pa->pa_pc;
 	sc->sc_pcitag = pa->pa_tag;
 
