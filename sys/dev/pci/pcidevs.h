@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.917 2007/11/19 19:04:43 ad Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.918 2007/11/23 20:08:47 xtraeme Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.916 2007/11/19 19:04:10 ad Exp
+ *	NetBSD: pcidevs,v 1.917 2007/11/23 20:08:24 xtraeme Exp
  */
 
 /*
@@ -2316,6 +2316,21 @@
 #define	PCI_PRODUCT_INTEL_6300ESB_PCIX	0x25ae		/* 6300ESB PCI-X Bridge */
 #define	PCI_PRODUCT_INTEL_6300ESB_RAID	0x25b0		/* 6300ESB SATA RAID Controller */
 #define	PCI_PRODUCT_INTEL_5000X_MCH	0x25c0		/* 5000X Memory Controller Hub */
+#define	PCI_PRODUCT_INTEL_5000_PCIE_1	0x25e2		/* 5000 Series Chipset PCI Express x4 Port 2 */
+#define	PCI_PRODUCT_INTEL_5000_PCIE_2	0x25e3		/* 5000 Series Chipset PCI Express x4 Port 3 */
+#define	PCI_PRODUCT_INTEL_5000_PCIE_3	0x25e4		/* 5000 Series Chipset PCI Express x4 Port 4 */
+#define	PCI_PRODUCT_INTEL_5000_PCIE_4	0x25e4		/* 5000 Series Chipset PCI Express x4 Port 5 */
+#define	PCI_PRODUCT_INTEL_5000_PCIE_5	0x25e6		/* 5000 Series Chipset PCI Express x4 Port 6 */
+#define	PCI_PRODUCT_INTEL_5000_PCIE_6	0x25e7		/* 5000 Series Chipset PCI Express x4 Port 7 */
+#define	PCI_PRODUCT_INTEL_5000_FSB_REG	0x25f0		/* 5000 Series Chipset FSB Registers */
+#define	PCI_PRODUCT_INTEL_5000_RESERVED_1	0x25f1		/* 5000 Series Chipset Reserved Registers */
+#define	PCI_PRODUCT_INTEL_5000_RESERVED_2	0x25f3		/* 5000 Series Chipset Reserved Registers */
+#define	PCI_PRODUCT_INTEL_5000_FBD_1	0x25f5		/* 5000 Series Chipset FBD Registers */
+#define	PCI_PRODUCT_INTEL_5000_FBD_2	0x25f6		/* 5000 Series Chipset FBD Registers */
+#define	PCI_PRODUCT_INTEL_5000_PCIE_7	0x25f7		/* 5000 Series Chipset PCI Express x8 Port 2-3 */
+#define	PCI_PRODUCT_INTEL_5000_PCIE_8	0x25f8		/* 5000 Series Chipset PCI Express x8 Port 4-5 */
+#define	PCI_PRODUCT_INTEL_5000_PCIE_9	0x25f9		/* 5000 Series Chipset PCI Express x8 Port 6-7 */
+#define	PCI_PRODUCT_INTEL_5000X_PCIE	0x25fa		/* 5000X PCI Express x16 Port 4-7 */
 #define	PCI_PRODUCT_INTEL_82801FB_LPC	0x2640		/* 82801FB LPC Interface Bridge */
 #define	PCI_PRODUCT_INTEL_82801FBM_LPC	0x2641		/* 82801FBM ICH6M LPC Interface Bridge */
 #define	PCI_PRODUCT_INTEL_82801FB_SATA	0x2651		/* 82801FB Serial ATA Controller */
