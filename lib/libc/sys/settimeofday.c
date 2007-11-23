@@ -1,4 +1,4 @@
-/*	$NetBSD: settimeofday.c,v 1.11 2007/11/22 21:11:32 dsl Exp $ */
+/*	$NetBSD: settimeofday.c,v 1.12 2007/11/23 12:39:16 uebayasi Exp $ */
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.      
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: settimeofday.c,v 1.11 2007/11/22 21:11:32 dsl Exp $");
+__RCSID("$NetBSD: settimeofday.c,v 1.12 2007/11/23 12:39:16 uebayasi Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -57,7 +57,7 @@ __weak_alias(settimeofday,_settimeofday)
 
 int __clockctl_fd = -1;
 
-int __settimeofday(const struct timeval *tv, const void *tzp);
+int __settimeofday(const struct timeval *, const void *);
 
 int
 settimeofday(tv, tzp)

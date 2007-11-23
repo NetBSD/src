@@ -1,4 +1,4 @@
-/*	$NetBSD: lseek.c,v 1.9 2007/11/22 21:11:31 dsl Exp $	*/
+/*	$NetBSD: lseek.c,v 1.10 2007/11/23 12:39:15 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)lseek.c	8.1 (Berkeley) 6/17/93";
 #else
-__RCSID("$NetBSD: lseek.c,v 1.9 2007/11/22 21:11:31 dsl Exp $");
+__RCSID("$NetBSD: lseek.c,v 1.10 2007/11/23 12:39:15 uebayasi Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -47,7 +47,7 @@ __RCSID("$NetBSD: lseek.c,v 1.9 2007/11/22 21:11:31 dsl Exp $");
 __weak_alias(lseek,_lseek)
 #endif
 
-off_t __lseek(int fd, int, off_t offset, int whence);
+off_t __lseek(int, int, off_t, int);
 
 /*
  * This function provides 64-bit offset padding that

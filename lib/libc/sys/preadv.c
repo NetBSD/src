@@ -1,4 +1,4 @@
-/*	$NetBSD: preadv.c,v 1.5 2007/11/22 21:11:32 dsl Exp $	*/
+/*	$NetBSD: preadv.c,v 1.6 2007/11/23 12:39:15 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: preadv.c,v 1.5 2007/11/22 21:11:32 dsl Exp $");
+__RCSID("$NetBSD: preadv.c,v 1.6 2007/11/23 12:39:15 uebayasi Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -39,7 +39,7 @@ __RCSID("$NetBSD: preadv.c,v 1.5 2007/11/22 21:11:32 dsl Exp $");
 #include <sys/uio.h>
 #include <unistd.h>
 
-ssize_t __preadv(int fd, const struct iovec *iovp, int iovcnt, int, off_t offset);
+ssize_t __preadv(int, const struct iovec *, int, int, off_t);
 
 /*
  * This function provides 64-bit offset padding that
