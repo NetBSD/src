@@ -1,4 +1,4 @@
-/*	$NetBSD: snprintf.c,v 1.3 2005/12/11 12:24:46 christos Exp $	*/
+/*	$NetBSD: snprintf.c,v 1.4 2007/11/24 13:20:57 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -60,5 +60,5 @@ snprintf(buf, size, fmt, va_alist)
 #endif
 	len = vsnprintf(buf, size, fmt, ap);
 	va_end(ap);
-	return (len);
+	return len;
 }

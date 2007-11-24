@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.9 2005/12/11 12:24:46 christos Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.10 2007/11/24 13:20:54 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -43,10 +43,9 @@
 static char nolabel[] = "no disk label";
 static char corruptedlabel[] = "disk label corrupted";
 #endif
+
 char *
-getdisklabel(buf, lp)
-	const char *buf;
-	struct disklabel *lp;
+getdisklabel(const char *buf, struct disklabel *lp)
 {
 	const struct disklabel *dlp, *elp;
 	char *msg = NULL;
@@ -58,9 +57,9 @@ getdisklabel(buf, lp)
 			if (msg == NULL)
 				msg = nolabel;
 		} else if (dlp->d_npartitions > MAXPARTITIONS ||
-			   dkcksum(dlp) != 0)
+			   dkcksum(dlp) != 0) {
 			msg = corruptedlabel;
-		else {
+		} else {
 			(void)memcpy(lp, dlp, sizeof *lp);
 			msg = NULL;
 			break;

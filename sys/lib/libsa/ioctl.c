@@ -1,4 +1,4 @@
-/*	$NetBSD: ioctl.c,v 1.9 2005/12/11 12:24:46 christos Exp $	*/
+/*	$NetBSD: ioctl.c,v 1.10 2007/11/24 13:20:55 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -63,10 +63,7 @@
 #include "stand.h"
 
 int
-ioctl(fd, cmd, arg)
-	int fd;
-	u_long cmd;
-	char *arg;
+ioctl(int fd, u_long cmd, char *arg)
 {
 #if !defined(LIBSA_NO_FD_CHECKING) || !defined(LIBSA_NO_RAW_ACCESS)
 	struct open_file *f = &files[fd];
@@ -75,17 +72,17 @@ ioctl(fd, cmd, arg)
 #if !defined(LIBSA_NO_FD_CHECKING)
 	if ((unsigned)fd >= SOPEN_MAX || f->f_flags == 0) {
 		errno = EBADF;
-		return (-1);
+		return -1;
 	}
 #endif
 #if !defined(LIBSA_NO_RAW_ACCESS)
 	if (f->f_flags & F_RAW) {
 		errno = DEV_IOCTL(f->f_dev)(f, cmd, arg);
 		if (errno)
-			return (-1);
-		return (0);
+			return -1;
+		return 0;
 	}
 #endif
 	errno = EIO;
-	return (-1);
+	return -1;
 }

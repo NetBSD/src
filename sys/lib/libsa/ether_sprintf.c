@@ -1,4 +1,4 @@
-/*	$NetBSD: ether_sprintf.c,v 1.5 2006/01/24 17:07:19 christos Exp $	*/
+/*	$NetBSD: ether_sprintf.c,v 1.6 2007/11/24 13:20:55 isaki Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -69,5 +69,5 @@ ether_sprintf(const u_char *ap)
 		*cp++ = ':';
 	}
 	*--cp = 0;
-	return (etherbuf);
+	return etherbuf;
 }
