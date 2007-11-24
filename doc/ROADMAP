@@ -1,4 +1,4 @@
-#	$NetBSD: ROADMAP,v 1.20 2007/11/14 22:20:53 agc Exp $
+#	$NetBSD: ROADMAP,v 1.21 2007/11/24 12:25:17 jmmv Exp $
 
 A high-level roadmap for NetBSD
 
@@ -354,9 +354,11 @@ aa. More and better regression tests
     The suite of tests that we have now is limited.  We should expand
     these and provide systems (or manage a volunteer pool?) to run the
     tests on -current and release branches on a variety of platforms.
-    ( Perhaps virtualize some with qemu or similar? )
-	Responsible: TBD
-	ETA: ?
+    We also need to migrate all the tests that currently live in
+    'regress' to 'tests' so that they can make use of ATF.
+    ( Need to virtualize some with qemu or similar? )
+	Responsible: jmmv
+	ETA: 5.0 should have most of regress converted
 
 ab. Native Java on multiple platforms
     Getting i386, amd64, sparc64, and PowerPC would be a good start,
