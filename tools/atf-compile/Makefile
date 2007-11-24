@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2007/11/12 14:54:43 jmmv Exp $
+# $NetBSD: Makefile,v 1.2 2007/11/24 18:44:00 christos Exp $
 
 CLEANFILES+=	atf-host-compile
 CLEANFILES+=	atf-host-compile.tmp
@@ -7,11 +7,19 @@ CLEANFILES+=	atf-host-compile.tmp
 
 realall: atf-host-compile
 atf-host-compile: atf-host-compile.sh
-	${HOST_SED} -e 's,__ATF_PKGDATADIR__,${SRCDIR}/subrs,g' \
-	            -e 's,__ATF_SHELL__,${HOST_SH},g' \
+	@echo "create atf-host-compile"; \
+	if [ -x ${HOST_SH} ]; then \
+		H=${HOST_SH}; \
+	elif [ -x /bin/${HOST_SH} ]; then \
+		H=/bin/${HOST_SH}; \
+	else \
+		H=/usr/bin/${HOST_SH}; \
+	fi; \
+	${HOST_SED} -e s,__ATF_PKGDATADIR__,${SRCDIR}/subrs,g \
+	            -e s,__ATF_SHELL__,$$H,g \
 	            <${SRCDIR}/tools/atf-host-compile.sh \
-	            >atf-host-compile.tmp
-	chmod +x atf-host-compile.tmp
+	            >atf-host-compile.tmp; \
+	chmod +x atf-host-compile.tmp; \
 	mv atf-host-compile.tmp atf-host-compile
 
 # Install rule.
