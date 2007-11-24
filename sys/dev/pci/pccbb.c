@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.152 2007/11/21 02:07:09 dyoung Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.153 2007/11/24 07:53:52 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.152 2007/11/21 02:07:09 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.153 2007/11/24 07:53:52 dyoung Exp $");
 
 /*
 #define CBB_DEBUG
@@ -1110,6 +1110,7 @@ pccbbintr(void *arg)
 		}
 	}
 
+	/* XXX sockevent == 9 does occur in the wild.  handle it. */
 	if (sockevent & CB_SOCKET_EVENT_POWER) {
 		DPRINTF(("Powercycling because of socket event\n"));
 		/* XXX: Does not happen when attaching a 16-bit card */
@@ -1521,17 +1522,22 @@ cb_reset(struct pccbb_softc *sc)
 	int reset_duration =
 	    (sc->sc_chipset == CB_RX5C47X ? 400 : 50);
 	u_int32_t bcr = pci_conf_read(sc->sc_pc, sc->sc_tag, PCI_BRIDGE_CONTROL_REG);
+	aprint_debug("%s: enter bcr %" PRIx32 "\n", __func__, bcr);
 
 	/* Reset bit Assert (bit 6 at 0x3E) */
-	bcr |= CB_BCR_RESET_ENABLE;
+	bcr |= PCI_BRIDGE_CONTROL_SECBR << PCI_BRIDGE_CONTROL_SHIFT;
 	pci_conf_write(sc->sc_pc, sc->sc_tag, PCI_BRIDGE_CONTROL_REG, bcr);
+	aprint_debug("%s: wrote bcr %" PRIx32 "\n", __func__, bcr);
 	delay_ms(reset_duration, sc);
 
 	if (CBB_CARDEXIST & sc->sc_flags) {	/* A card exists.  Reset it! */
 		/* Reset bit Deassert (bit 6 at 0x3E) */
-		bcr &= ~CB_BCR_RESET_ENABLE;
-		pci_conf_write(sc->sc_pc, sc->sc_tag, PCI_BRIDGE_CONTROL_REG, bcr);
+		bcr &= ~(PCI_BRIDGE_CONTROL_SECBR << PCI_BRIDGE_CONTROL_SHIFT);
+		pci_conf_write(sc->sc_pc, sc->sc_tag, PCI_BRIDGE_CONTROL_REG,
+		    bcr);
+		aprint_debug("%s: wrote bcr %" PRIx32 "\n", __func__, bcr);
 		delay_ms(reset_duration, sc);
+		aprint_debug("%s: end of delay\n", __func__);
 	}
 	/* No card found on the slot. Keep Reset. */
 	return 1;
