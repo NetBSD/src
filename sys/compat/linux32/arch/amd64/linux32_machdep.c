@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_machdep.c,v 1.12 2007/10/19 12:16:39 ad Exp $ */
+/*	$NetBSD: linux32_machdep.c,v 1.13 2007/11/24 23:52:56 christos Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -31,7 +31,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_machdep.c,v 1.12 2007/10/19 12:16:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_machdep.c,v 1.13 2007/11/24 23:52:56 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -246,9 +246,9 @@ linux32_rt_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	}
 
 	/* Save register context. */
+	linux32_save_ucontext(l, tf, mask, sas, &frame.sf_uc);
 	sendsig_reset(l, sig);
 	mutex_exit(&p->p_smutex);
-	linux32_save_ucontext(l, tf, mask, sas, &frame.sf_uc);
 	error = copyout(&frame, fp, sizeof(frame));
 	mutex_enter(&p->p_smutex);
 
@@ -386,7 +386,7 @@ linux32_save_sigcontext(l, tf, mask, sc)
 	sc->sc_ss = tf->tf_ss;
 	sc->sc_err = tf->tf_err;
 	sc->sc_trapno = tf->tf_trapno;
-	/* sc->sc_cr2 = l->l_addr->u_pcb.pcb_cr2; */ /* XXX */
+	sc->sc_cr2 = l->l_addr->u_pcb.pcb_cr2;
 	NETBSD32PTR32(sc->sc_387, NULL);
 
 	/* Save signal stack. */
