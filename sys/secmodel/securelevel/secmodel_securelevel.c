@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_securelevel.c,v 1.1 2007/11/21 22:49:09 elad Exp $ */
+/* $NetBSD: secmodel_securelevel.c,v 1.2 2007/11/24 20:47:14 elad Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_securelevel.c,v 1.1 2007/11/21 22:49:09 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_securelevel.c,v 1.2 2007/11/24 20:47:14 elad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_insecure.h"
@@ -155,45 +155,43 @@ secmodel_securelevel_system_cb(kauth_cred_t cred,
 	int result;
 	enum kauth_system_req req;
 
-	result = KAUTH_RESULT_DENY;
+	result = KAUTH_RESULT_DEFER;
 	req = (enum kauth_system_req)arg0;
 
 	switch (action) {
 	case KAUTH_SYSTEM_CHSYSFLAGS:
-		if (securelevel < 1)
-			result = KAUTH_RESULT_ALLOW;
+		if (securelevel > 0)
+			result = KAUTH_RESULT_DENY;
 		break;
 
 	case KAUTH_SYSTEM_TIME:
 		switch (req) {
 		case KAUTH_REQ_SYSTEM_TIME_BACKWARDS:
-			if (securelevel < 2)
-				result = KAUTH_RESULT_ALLOW;
+			if (securelevel > 1)
+				result = KAUTH_RESULT_DENY;
 			break;
 
 		case KAUTH_REQ_SYSTEM_TIME_RTCOFFSET:
-			if (securelevel < 1)
-				result = KAUTH_RESULT_ALLOW;
+			if (securelevel > 0)
+				result = KAUTH_RESULT_DENY;
 			break;
 
 		default:
-			result = KAUTH_RESULT_DEFER;
 			break;
 		}
 		break;
 
 	case KAUTH_SYSTEM_LKM:
-		if (securelevel < 1)
-			result = KAUTH_RESULT_ALLOW;
+		if (securelevel > 0)
+			result = KAUTH_RESULT_DENY;
 		break;
 
 	case KAUTH_SYSTEM_MOUNT:
 		switch (req) {
 		case KAUTH_REQ_SYSTEM_MOUNT_NEW:
 			if (securelevel > 1)
-				break;
+				result = KAUTH_RESULT_DENY;
 
-			result = KAUTH_RESULT_ALLOW;
 			break;
 
 		case KAUTH_REQ_SYSTEM_MOUNT_UPDATE:
@@ -204,15 +202,12 @@ secmodel_securelevel_system_cb(kauth_cred_t cred,
 				/* Can only degrade from read/write to read-only. */
 				if (flags != (mp->mnt_flag | MNT_RDONLY | MNT_RELOAD |
 				    MNT_FORCE | MNT_UPDATE))
-					break;
+					result = KAUTH_RESULT_DENY;
 			}
-
-			result = KAUTH_RESULT_ALLOW;
 
 			break;
 
 		default:
-			result = KAUTH_RESULT_DEFER;
 			break;
 		}
 
@@ -223,36 +218,30 @@ secmodel_securelevel_system_cb(kauth_cred_t cred,
 		case KAUTH_REQ_SYSTEM_SYSCTL_ADD:
 		case KAUTH_REQ_SYSTEM_SYSCTL_DELETE:
 		case KAUTH_REQ_SYSTEM_SYSCTL_DESC:
-			if (securelevel < 1)
-				result = KAUTH_RESULT_ALLOW;
+			if (securelevel > 0)
+				result = KAUTH_RESULT_DENY;
 			break;
 
 		default:
-			result = KAUTH_RESULT_DEFER;
 			break;
 		}
 		break;
 
 	case KAUTH_SYSTEM_SETIDCORE:
-		if (securelevel < 1)
-			result = KAUTH_RESULT_ALLOW;
+		if (securelevel > 0)
+			result = KAUTH_RESULT_DENY;
 		break;
 
 	case KAUTH_SYSTEM_DEBUG:
 		switch (req) {
 		case KAUTH_REQ_SYSTEM_DEBUG_IPKDB:
-			if (securelevel < 1)
-				result = KAUTH_RESULT_ALLOW;
+			if (securelevel > 0)
+				result = KAUTH_RESULT_DENY;
 			break;
 
 		default:
-			result = KAUTH_RESULT_DEFER;
 			break;
 		}
-		break;
-
-	default:
-		result = KAUTH_RESULT_DEFER;
 		break;
 	}
 
@@ -274,7 +263,7 @@ secmodel_securelevel_process_cb(kauth_cred_t cred,
 	struct proc *p;
 	int result;
 
-	result = KAUTH_RESULT_DENY;
+	result = KAUTH_RESULT_DEFER;
 	p = arg0;
 
 	switch (action) {
@@ -284,19 +273,16 @@ secmodel_securelevel_process_cb(kauth_cred_t cred,
 		req = (enum kauth_process_req)arg2;
 		switch (req) {
 		case KAUTH_REQ_PROCESS_CANPROCFS_READ:
-			result = KAUTH_RESULT_ALLOW;
 			break;
 
 		case KAUTH_REQ_PROCESS_CANPROCFS_RW:
 		case KAUTH_REQ_PROCESS_CANPROCFS_WRITE:
 			if ((p == initproc) && (securelevel > -1))
 				result = KAUTH_RESULT_DENY;
-			else
-				result = KAUTH_RESULT_ALLOW;
 
 			break;
+
 		default:
-			result = KAUTH_RESULT_DEFER;
 			break;
 		}
 
@@ -305,22 +291,14 @@ secmodel_securelevel_process_cb(kauth_cred_t cred,
 
 	case KAUTH_PROCESS_CANPTRACE:
 	case KAUTH_PROCESS_CANSYSTRACE:
-		if ((p == initproc) && (securelevel >= 0)) {
+		if ((p == initproc) && (securelevel >= 0))
 			result = KAUTH_RESULT_DENY;
-			break;
-		}
-
-		result = KAUTH_RESULT_ALLOW;
 
 		break;
 
 	case KAUTH_PROCESS_CORENAME:
-		if (securelevel < 2)
-			result = KAUTH_RESULT_ALLOW;
-		break;
-
-	default:
-		result = KAUTH_RESULT_DEFER;
+		if (securelevel > 1)
+			result = KAUTH_RESULT_DENY;
 		break;
 	}
 
@@ -342,7 +320,7 @@ secmodel_securelevel_network_cb(kauth_cred_t cred,
 	int result;
 	enum kauth_network_req req;
 
-	result = KAUTH_RESULT_DENY;
+	result = KAUTH_RESULT_DEFER;
 	req = (enum kauth_network_req)arg0;
 
 	switch (action) {
@@ -350,23 +328,18 @@ secmodel_securelevel_network_cb(kauth_cred_t cred,
 		switch (req) {
 		case KAUTH_REQ_NETWORK_FIREWALL_FW:
 		case KAUTH_REQ_NETWORK_FIREWALL_NAT:
-			if (securelevel < 2)
-				result = KAUTH_RESULT_ALLOW;
+			if (securelevel > 1)
+				result = KAUTH_RESULT_DENY;
 			break;
 
 		default:
-			result = KAUTH_RESULT_DEFER;
 			break;
 		}
 		break;
 
 	case KAUTH_NETWORK_FORWSRCRT:
-		if (securelevel < 1)
-			result = KAUTH_RESULT_ALLOW;
-		break;
-
-	default:
-		result = KAUTH_RESULT_DEFER;
+		if (securelevel > 0)
+			result = KAUTH_RESULT_DENY;
 		break;
 	}
 
@@ -387,22 +360,18 @@ secmodel_securelevel_machdep_cb(kauth_cred_t cred,
 {
         int result;
 
-        result = KAUTH_RESULT_DENY;
+        result = KAUTH_RESULT_DEFER;
 
         switch (action) {
 	case KAUTH_MACHDEP_IOPERM_SET:
 	case KAUTH_MACHDEP_IOPL:
-		if (securelevel < 1)
-			result = KAUTH_RESULT_ALLOW;
+		if (securelevel > 0)
+			result = KAUTH_RESULT_DENY;
 		break;
 
 	case KAUTH_MACHDEP_UNMANAGEDMEM:
-		if (securelevel <= 0)
-			result = KAUTH_RESULT_ALLOW;
-		break;
-
-	default:
-		result = KAUTH_RESULT_DEFER;
+		if (securelevel > 0)
+			result = KAUTH_RESULT_DENY;
 		break;
 	}
 
@@ -423,7 +392,7 @@ secmodel_securelevel_device_cb(kauth_cred_t cred,
 {
 	int result;
 
-	result = KAUTH_RESULT_DENY;
+	result = KAUTH_RESULT_DEFER;
 
 	switch (action) {
 	case KAUTH_DEVICE_RAWIO_SPEC: {
@@ -445,17 +414,12 @@ secmodel_securelevel_device_cb(kauth_cred_t cred,
 		if ((vp->v_type == VCHR) && iskmemdev(dev)) {
 			switch (req) {
 			case KAUTH_REQ_DEVICE_RAWIO_SPEC_READ:
-				result = KAUTH_RESULT_ALLOW;
 				break;
 
 			case KAUTH_REQ_DEVICE_RAWIO_SPEC_WRITE:
 			case KAUTH_REQ_DEVICE_RAWIO_SPEC_RW:
-				if (securelevel < 1)
-					result = KAUTH_RESULT_ALLOW;
-				break;
-
-			default:
-				result = KAUTH_RESULT_DEFER;
+				if (securelevel > 0)
+					result = KAUTH_RESULT_DENY;
 				break;
 			}
 
@@ -464,7 +428,6 @@ secmodel_securelevel_device_cb(kauth_cred_t cred,
 
 		switch (req) {
 		case KAUTH_REQ_DEVICE_RAWIO_SPEC_READ:
-			result = KAUTH_RESULT_ALLOW;
 			break;
 
 		case KAUTH_REQ_DEVICE_RAWIO_SPEC_WRITE:
@@ -499,15 +462,13 @@ secmodel_securelevel_device_cb(kauth_cred_t cred,
 
 				break;
 				}
+
 			default:
-				result = KAUTH_RESULT_DEFER;
 				break;
 			}
 
-			if (d_type != D_DISK) {
-				result = KAUTH_RESULT_ALLOW;
+			if (d_type != D_DISK)
 				break;
-			}
 
 			/*
 			 * XXX: This is bogus. We should be failing the request
@@ -517,20 +478,16 @@ secmodel_securelevel_device_cb(kauth_cred_t cred,
 			if (vfs_mountedon(bvp) && (securelevel > 0))
 				break;
 
-			if (securelevel < 2)
-				result = KAUTH_RESULT_ALLOW;
+			if (securelevel > 1)
+				result = KAUTH_RESULT_DENY;
 
-			break;
-
-		default:
-			result = KAUTH_RESULT_DEFER;
 			break;
 		}
 
 		break;
 		}
 
-	case KAUTH_DEVICE_RAWIO_PASSTHRU: {
+	case KAUTH_DEVICE_RAWIO_PASSTHRU:
 		if (securelevel > 0) {
 			u_long bits;
 
@@ -541,16 +498,8 @@ secmodel_securelevel_device_cb(kauth_cred_t cred,
 
 			if (bits & ~KAUTH_REQ_DEVICE_RAWIO_PASSTHRU_READCONF)
 				result = KAUTH_RESULT_DENY;
-			else
-				result = KAUTH_RESULT_ALLOW;
-		} else
-			result = KAUTH_RESULT_ALLOW;
-
-		break;
 		}
 
-	default:
-		result = KAUTH_RESULT_DEFER;
 		break;
 	}
 
