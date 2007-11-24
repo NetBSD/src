@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.37 2007/11/22 16:16:42 bouyer Exp $	*/
+/*	$NetBSD: trap.c,v 1.38 2007/11/24 23:51:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.37 2007/11/22 16:16:42 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.38 2007/11/24 23:51:23 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -454,6 +454,7 @@ faultcommon:
 		vm = p->p_vmspace;
 		if (vm == NULL)
 			goto we_re_toast;
+		pcb->pcb_cr2 = cr2;
 		va = trunc_page((vaddr_t)cr2);
 		/*
 		 * It is only a kernel address space fault iff:
