@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_compat.c,v 1.96 2007/10/19 12:16:37 ad Exp $	*/
+/*	$NetBSD: hpux_compat.c,v 1.97 2007/11/24 20:43:34 elad Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.96 2007/10/19 12:16:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.97 2007/11/24 20:43:34 elad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -1119,29 +1119,18 @@ hpux_sys_stime_6x(struct lwp *l, void *v, register_t *retval)
 		syscallarg(int) time;
 	} */ *uap = v;
 	struct timeval tv;
-#ifdef __HAVE_TIMECOUNTER
 	struct timespec ts;
-#endif
-	int s, error;
+	int error;
 
 	tv.tv_sec = SCARG(uap, time);
 	tv.tv_usec = 0;
-	if ((error = kauth_authorize_system(l->l_cred,
+	TIMEVAL_TO_TIMESPEC(&tv, &ts);
+
+	if ((error = kauth_authorize_system(l->l_cred, KAUTH
 	    KAUTH_SYSTEM_TIME, KAUTH_REQ_SYSTEM_TIME_SYSTEM, NULL, NULL, NULL)))
 		return (error);
 
-	/* WHAT DO WE DO ABOUT PENDING REAL-TIME TIMEOUTS??? */
-	boottime.tv_sec += tv.tv_sec - time_second;
-	s = splclock();
-#ifdef __HAVE_TIMECOUNTER
-	TIMEVAL_TO_TIMESPEC(&tv, &ts);
-	tc_setclock(&ts);
-#else
-	time = tv;
-#endif
-	splx(s);
-	resettodr();
-	return (0);
+	return (settime(l->l_proc, &ts));
 }
 
 int
