@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.119 2007/11/24 07:43:32 dyoung Exp $ */
+/*	$NetBSD: if_gre.c,v 1.120 2007/11/24 07:49:04 dyoung Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.119 2007/11/24 07:43:32 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.120 2007/11/24 07:49:04 dyoung Exp $");
 
 #include "opt_gre.h"
 #include "opt_inet.h"
@@ -477,7 +477,7 @@ gre_socreate(struct gre_softc *sc, struct lwp *l,
 		return rc;
 	}
 
-	if ((m = getsombuf(so)) == NULL) {
+	if ((m = getsombuf(so, MT_SONAME)) == NULL) {
 		rc = ENOBUFS;
 		goto out;
 	}
@@ -1049,7 +1049,7 @@ gre_getnames(struct socket *so, struct lwp *l, struct sockaddr_storage *src,
 	struct sockaddr_storage *ss;
 	int rc;
 
-	if ((m = getsombuf(so)) == NULL)
+	if ((m = getsombuf(so, MT_SONAME)) == NULL)
 		return ENOBUFS;
 
 	ss = mtod(m, struct sockaddr_storage *);

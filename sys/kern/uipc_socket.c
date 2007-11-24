@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.146 2007/11/24 07:46:11 dyoung Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.147 2007/11/24 07:49:03 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.146 2007/11/24 07:46:11 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.147 2007/11/24 07:49:03 dyoung Exp $");
 
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
@@ -428,11 +428,11 @@ sokva_reclaim_callback(struct callback_entry *ce, void *obj, void *arg)
 }
 
 struct mbuf *
-getsombuf(struct socket *so)
+getsombuf(struct socket *so, int type)
 {
 	struct mbuf *m;
 
-	m = m_get(M_WAIT, MT_SONAME);
+	m = m_get(M_WAIT, type);
 	MCLAIM(m, so->so_mowner);
 	return m;
 }
@@ -442,7 +442,7 @@ m_intopt(struct socket *so, int val)
 {
 	struct mbuf *m;
 
-	m = getsombuf(so);
+	m = getsombuf(so, MT_SOOPTS);
 	m->m_len = sizeof(int);
 	*mtod(m, int *) = val;
 	return m;
