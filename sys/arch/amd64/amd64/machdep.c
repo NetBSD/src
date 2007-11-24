@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.69 2007/11/22 16:16:42 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.70 2007/11/24 17:57:53 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007
@@ -120,7 +120,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.69 2007/11/22 16:16:42 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.70 2007/11/24 17:57:53 bouyer Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -1692,17 +1692,15 @@ init_x86_64(paddr_t first_avail)
 			tesym = (vaddr_t)symtab->esym + KERNBASE;
 			ksyms_init(symtab->nsym, (void *)tssym, (void *)tesym);
 		} else
-#else  /* XEN */
-			esym = xen_start_info.mod_start ?
-			    (void *)xen_start_info.mod_start :
-			    (void *)xen_start_info.mfn_list;
-			printf("ksyms_init 0x%lx, 0x%lx, 0x%lx\n",
-			    (unsigned long)&end,
-			    (unsigned long)(((long *)(void *)&end) + 1),
-			    (unsigned long)esym);
-#endif /* XEN */
 			ksyms_init(*(long *)(void *)&end,
 			    ((long *)(void *)&end) + 1, esym);
+#else  /* XEN */
+		esym = xen_start_info.mod_start ?
+		    (void *)xen_start_info.mod_start :
+		    (void *)xen_start_info.mfn_list;
+		ksyms_init(*(int *)(void *)&end,
+		    ((int *)(void *)&end) + 1, esym);
+#endif /* XEN */
 	}
 #endif
 #ifdef DDB
