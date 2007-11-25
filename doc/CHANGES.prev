@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.76 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.77 $>
 
 
 Changes from 386bsd 0.1 + patchkit 0.2.2 to NetBSD 0.8:
@@ -8608,6 +8608,7 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 	ipf(8): Updated to version 4.1.22. [martin 20070515]
 	kernel: add jmide(4), a driver for the JMicron Technology JMB36x
 		PCIe to SATA II/PATA controllers. [bouyer 20070515]
+	aac(4): Compile and run on amd64. [briggs 20070525]
 	amd64: The Enhanced Speedstep driver is now able to work on EM64T
 		CPUs running in 64bit mode. [xtraeme 20070603]
 	audio(4): New ioctl AUDIO_GETBUFINFO reduces system overhead for many
