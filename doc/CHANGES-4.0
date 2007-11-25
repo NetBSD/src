@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.364 2007/11/25 09:27:08 xtraeme Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.365 2007/11/25 09:34:47 xtraeme Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -10608,4 +10608,21 @@ share/man/man4/sk.4				1.11
 
 	tell about 88E8055 support
 	[manu, ticket #991]
+
+sys/dev/scsipi/st.c				1.199 (patch)
+sys/dev/scsipi/st.c				1.200 (patch)
+sys/dev/scsipi/st.c				1.201 (patch)
+
+	Properly set b_resid in an error case.
+	Clamp b_resid to b_bcount in case the info field is larger. Fix a KASSERT
+	in physio() when a media error occurs on my SDLT320 drive (maybe this drive
+	is bogus for not setting the highter bits to 0 in the INFO field in this
+	case).
+
+	When checking for invalid b_resid valyes, also check negative ones.
+	Should fix kern/36690.
+
+	Move check for b_resid value to the right place. Should definitively fix
+	kern/36690.
+	[bouyer, ticket #1002]
 
