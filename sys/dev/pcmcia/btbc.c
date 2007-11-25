@@ -1,4 +1,4 @@
-/*	$NetBSD: btbc.c,v 1.9 2007/11/11 12:59:03 plunky Exp $	*/
+/*	$NetBSD: btbc.c,v 1.10 2007/11/25 23:32:44 kiyohara Exp $	*/
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btbc.c,v 1.9 2007/11/11 12:59:03 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btbc.c,v 1.10 2007/11/25 23:32:44 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -66,7 +66,9 @@ __KERNEL_RCSID(0, "$NetBSD: btbc.c,v 1.9 2007/11/11 12:59:03 plunky Exp $");
 #define BTBC_SLEEPING		(1 << 0)	/* but not with the fishes */
 
 /* Default baud rate: 57600, 115200, 230400 or 460800 */
+#ifndef BTBC_DEFAULT_BAUDRATE
 #define BTBC_DEFAULT_BAUDRATE	57600
+#endif
 
 struct btbc_softc {
 	device_t sc_dev;
