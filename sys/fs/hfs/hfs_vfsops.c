@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_vfsops.c,v 1.10 2007/10/10 20:42:23 ad Exp $	*/
+/*	$NetBSD: hfs_vfsops.c,v 1.11 2007/11/25 16:26:42 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hfs_vfsops.c,v 1.10 2007/10/10 20:42:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hfs_vfsops.c,v 1.11 2007/11/25 16:26:42 pooka Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -151,7 +151,7 @@ struct vfsops hfs_vfsops = {
 	hfs_start,
 	hfs_unmount,
 	hfs_root,
-	hfs_quotactl,
+	(void *)eopnotsupp,		/* vfs_quotactl */
 	hfs_statvfs,
 	hfs_sync,
 	hfs_vget,
@@ -162,7 +162,7 @@ struct vfsops hfs_vfsops = {
 	hfs_done,
 	NULL,				/* vfs_mountroot */
 	NULL,				/* vfs_snapshot */
-	hfs_extattrctl,
+	vfs_stdextattrctl,
 	(void *)eopnotsupp,		/* vfs_suspendctl */
 	hfs_vnodeopv_descs,
 	0,
@@ -456,18 +456,6 @@ hfs_root(struct mount *mp, struct vnode **vpp)
 }
 
 int
-hfs_quotactl(struct mount *mp, int cmds, uid_t uid, void *arg,
-    struct lwp *l)
-{
-
-#ifdef HFS_DEBUG	
-	printf("vfsop = hfs_quotactl()\n");
-#endif /* HFS_DEBUG */
-
-	return EOPNOTSUPP;
-}
-
-int
 hfs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l)
 {
 	hfs_volume_header_t *vh;
@@ -569,6 +557,7 @@ hfs_vget_internal(struct mount *mp, ino_t ino, uint8_t fork,
 	MALLOC(hnode, struct hfsnode *, sizeof(struct hfsnode), M_TEMP,
 		M_WAITOK + M_ZERO);
 	vp->v_data = hnode;
+	genfs_node_init(vp, &hfs_genfsops);
 	
 	hnode->h_vnode = vp;
 	hnode->h_hmp = hmp;
@@ -616,12 +605,10 @@ hfs_vget_internal(struct mount *mp, ino_t ino, uint8_t fork,
 
 	/*
 	 * Initialize the vnode from the hfsnode, check for aliases.
-	 * Note that the underlying vnode may have changed.
+	 * Note that the underlying vnode may change.
 	 */
-
 	hfs_vinit(mp, hfs_specop_p, hfs_fifoop_p, &vp);
 
-	genfs_node_init(vp, &hfs_genfsops);
 	hnode->h_devvp = hmp->hm_devvp;	
 	VREF(hnode->h_devvp);  /* Increment the ref count to the volume's device. */
 
@@ -722,17 +709,6 @@ hfs_mountroot(void)
 
 #ifdef HFS_DEBUG	
 	printf("vfsop = hfs_mountroot()\n");
-#endif /* HFS_DEBUG */
-
-	return EOPNOTSUPP;
-}
-
-int hfs_extattrctl(struct mount *mp, int cmd, struct vnode *vp,
-    int attrnamespace, const char *attrname, struct lwp *l)
-{
-
-#ifdef HFS_DEBUG	
-	printf("vfsop = hfs_checkexp()\n");
 #endif /* HFS_DEBUG */
 
 	return EOPNOTSUPP;
