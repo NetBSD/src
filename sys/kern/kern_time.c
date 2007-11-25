@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.131 2007/11/15 20:12:04 ad Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.132 2007/11/25 00:35:27 elad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2007 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.131 2007/11/15 20:12:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.132 2007/11/25 00:35:27 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -118,8 +118,8 @@ time_init(void)
  */
 
 /* This function is used by clock_settime and settimeofday */
-int
-settime(struct proc *p, struct timespec *ts)
+static int
+settime1(struct proc *p, struct timespec *ts, bool check_kauth)
 {
 	struct timeval delta, tv;
 #ifdef __HAVE_TIMECOUNTER
@@ -129,33 +129,6 @@ settime(struct proc *p, struct timespec *ts)
 	lwp_t *l;
 	int s;
 
-	/*
-	 * Don't allow the time to be set forward so far it will wrap
-	 * and become negative, thus allowing an attacker to bypass
-	 * the next check below.  The cutoff is 1 year before rollover
-	 * occurs, so even if the attacker uses adjtime(2) to move
-	 * the time past the cutoff, it will take a very long time
-	 * to get to the wrap point.
-	 *
-	 * XXX: we check against INT_MAX since on 64-bit
-	 *	platforms, sizeof(int) != sizeof(long) and
-	 *	time_t is 32 bits even when atv.tv_sec is 64 bits.
-	 */
-	if (ts->tv_sec > INT_MAX - 365*24*60*60) {
-		struct proc *pp;
-
-		mutex_enter(&proclist_lock);
-		pp = p->p_pptr;
-		mutex_enter(&pp->p_mutex);
-		log(LOG_WARNING, "pid %d (%s) "
-		    "invoked by uid %d ppid %d (%s) "
-		    "tried to set clock forward to %ld\n",
-		    p->p_pid, p->p_comm, kauth_cred_geteuid(pp->p_cred),
-		    pp->p_pid, pp->p_comm, (long)ts->tv_sec);
-		mutex_exit(&pp->p_mutex);
-		mutex_exit(&proclist_lock);
-		return (EPERM);
-	}
 	TIMESPEC_TO_TIMEVAL(&tv, ts);
 
 	/* WHAT DO WE DO ABOUT PENDING REAL-TIME TIMEOUTS??? */
@@ -166,12 +139,14 @@ settime(struct proc *p, struct timespec *ts)
 #else /* !__HAVE_TIMECOUNTER */
 	timersub(&tv, &time, &delta);
 #endif /* !__HAVE_TIMECOUNTER */
-	if ((delta.tv_sec < 0 || delta.tv_usec < 0) &&
-	    kauth_authorize_system(p->p_cred, KAUTH_SYSTEM_TIME,
-	    KAUTH_REQ_SYSTEM_TIME_BACKWARDS, NULL, NULL, NULL)) {
+
+	if (check_kauth && kauth_authorize_system(p->p_cred, KAUTH_SYSTEM_TIME,
+	    KAUTH_REQ_SYSTEM_TIME_SYSTEM, ts, &delta,
+	    KAUTH_ARG(check_kauth ? false : true)) != 0) {
 		splx(s);
 		return (EPERM);
 	}
+
 #ifdef notyet
 	if ((delta.tv_sec < 86400) && securelevel > 0) { /* XXX elad - notyet */
 		splx(s);
@@ -204,6 +179,12 @@ settime(struct proc *p, struct timespec *ts)
 	splx(s);
 
 	return (0);
+}
+
+int
+settime(struct proc *p, struct timespec *ts)
+{
+	return (settime1(p, ts, true));
 }
 
 /* ARGSUSED */
@@ -240,18 +221,15 @@ sys_clock_settime(struct lwp *l, void *v, register_t *retval)
 		syscallarg(clockid_t) clock_id;
 		syscallarg(const struct timespec *) tp;
 	} */ *uap = v;
-	int error;
 
-	if ((error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_TIME,
-	    KAUTH_REQ_SYSTEM_TIME_SYSTEM, NULL, NULL, NULL)) != 0)
-		return (error);
-
-	return clock_settime1(l->l_proc, SCARG(uap, clock_id), SCARG(uap, tp));
+	return clock_settime1(l->l_proc, SCARG(uap, clock_id), SCARG(uap, tp),
+	    true);
 }
 
 
 int
-clock_settime1(struct proc *p, clockid_t clock_id, const struct timespec *tp)
+clock_settime1(struct proc *p, clockid_t clock_id, const struct timespec *tp,
+    bool check_kauth)
 {
 	struct timespec ats;
 	int error;
@@ -261,7 +239,7 @@ clock_settime1(struct proc *p, clockid_t clock_id, const struct timespec *tp)
 
 	switch (clock_id) {
 	case CLOCK_REALTIME:
-		if ((error = settime(p, &ats)) != 0)
+		if ((error = settime1(p, &ats, check_kauth)) != 0)
 			return (error);
 		break;
 	case CLOCK_MONOTONIC:

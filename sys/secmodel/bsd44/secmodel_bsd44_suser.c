@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_bsd44_suser.c,v 1.39 2007/11/24 20:47:14 elad Exp $ */
+/* $NetBSD: secmodel_bsd44_suser.c,v 1.40 2007/11/25 00:35:27 elad Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.39 2007/11/24 20:47:14 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.40 2007/11/25 00:35:27 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -238,11 +238,19 @@ secmodel_bsd44_suser_system_cb(kauth_cred_t cred, kauth_action_t action,
 		switch (req) {
 		case KAUTH_REQ_SYSTEM_TIME_ADJTIME:
 		case KAUTH_REQ_SYSTEM_TIME_NTPADJTIME:
-		case KAUTH_REQ_SYSTEM_TIME_SYSTEM:
 		case KAUTH_REQ_SYSTEM_TIME_TIMECOUNTERS:
 			if (isroot)
 				result = KAUTH_RESULT_ALLOW;
 			break;
+
+		case KAUTH_REQ_SYSTEM_TIME_SYSTEM: {
+			bool device_context = (bool)arg3;
+
+			if (device_context || isroot)
+				result = KAUTH_RESULT_ALLOW;
+
+			break;
+		}
 
 		case KAUTH_REQ_SYSTEM_TIME_BACKWARDS:
 		case KAUTH_REQ_SYSTEM_TIME_RTCOFFSET:

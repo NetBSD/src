@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_compat.c,v 1.97 2007/11/24 20:43:34 elad Exp $	*/
+/*	$NetBSD: hpux_compat.c,v 1.98 2007/11/25 00:35:26 elad Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.97 2007/11/24 20:43:34 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.98 2007/11/25 00:35:26 elad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -1125,10 +1125,6 @@ hpux_sys_stime_6x(struct lwp *l, void *v, register_t *retval)
 	tv.tv_sec = SCARG(uap, time);
 	tv.tv_usec = 0;
 	TIMEVAL_TO_TIMESPEC(&tv, &ts);
-
-	if ((error = kauth_authorize_system(l->l_cred, KAUTH
-	    KAUTH_SYSTEM_TIME, KAUTH_REQ_SYSTEM_TIME_SYSTEM, NULL, NULL, NULL)))
-		return (error);
 
 	return (settime(l->l_proc, &ts));
 }
