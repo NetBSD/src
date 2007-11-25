@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.358 2007/11/25 08:43:17 xtraeme Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.359 2007/11/25 08:48:40 xtraeme Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -10521,4 +10521,25 @@ sys/arch/hpcmips/dev/mq200machdep.c		1.5
 
 	There is a possibility that TLB-miss is caused in mq200_mdsetup().
 	[kiyohara, ticket #997]
+
+sys/dev/ic/ninjascsi32.c			1.13
+sys/dev/ic/ninjascsi32.c			1.14
+sys/dev/ic/ninjascsi32var.h			1.4
+
+	Fix problem where targets with ID 0, 1, or 2 couldn't be reconnected.
+
+	It seems I have always tested with targets those ID >= 3,
+	and that I am the only user of this driver.
+
+	- Reset the bus if a Bus Reset condition is detected to make sure
+  	  all devices on the bus are really reset.
+
+	- Block interrupts on Bus Reset, and check it periodically until the
+	  reset is released.  On some 32UDE devices (probably the earlier ones)
+	  the RST line looks unstable without the termination power and may
+	  suffer ~continuous Bus Reset interrupts.
+
+	- Change number of scatter/gather segments from 16 to 17, to allow
+	  non-page-aligned 64KB transfer on 4KB/page platforms.
+	[itohy, ticket #980]
 
