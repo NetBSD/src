@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci_pci.c,v 1.38 2007/11/24 02:13:49 gavan Exp $	*/
+/*	$NetBSD: uhci_pci.c,v 1.39 2007/11/25 02:46:54 dsainty Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci_pci.c,v 1.38 2007/11/24 02:13:49 gavan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci_pci.c,v 1.39 2007/11/25 02:46:54 dsainty Exp $");
 
 #include "ehci.h"
 
@@ -122,7 +122,7 @@ uhci_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	/*
 	 * Disable interrupts, so we don't get any spurious ones.
-	 * Acknolewdge all pending interrupts.
+	 * Acknowledge all pending interrupts.
 	 */
 	bus_space_write_2(sc->sc.iot, sc->sc.ioh, UHCI_INTR, 0);
 	bus_space_write_2(sc->sc.iot, sc->sc.ioh, UHCI_STS,
@@ -155,8 +155,8 @@ uhci_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	/*
 	 * Set LEGSUP register to its default value.
-	 * This can reenable or trigger interrupts, so protect against them
-	 * and explicitly disable and ACK them afterwards.
+	 * This can re-enable or trigger interrupts, so protect against
+	 * them and explicitly disable and ACK them afterwards.
 	 */
 	s = splhardusb();
 	pci_conf_write(pc, tag, PCI_LEGSUP, PCI_LEGSUP_USBPIRQDEN);
