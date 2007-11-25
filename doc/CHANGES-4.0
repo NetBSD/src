@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.360 2007/11/25 08:53:41 xtraeme Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.361 2007/11/25 08:57:14 xtraeme Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -10547,4 +10547,12 @@ sys/dev/pci/if_bnx.c				1.10
 
 	Added missing newline.
 	[martti, ticket #986]
+
+distrib/sets/lists/base/mi			1.725
+share/zoneinfo/Makefile				1.42
+
+	also install zone.tab and iso3166.tab from tzdata, some applications
+	(evolution, KDE) want the former at least, and other OSes install it
+	(as the Makefile in tzcode suggests)
+	[drochner, ticket #987]
 
