@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.367 2007/11/25 09:41:33 xtraeme Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.368 2007/11/25 09:46:49 xtraeme Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -10636,4 +10636,10 @@ distrib/notes/common/main			1.369
 
 	Note gdb 6.5 kernel crash dump & pthread debugging problems.
 	[martin, ticket #993]
+
+sys/ufs/lfs/lfs_vnops.c				1.208 patch
+
+	Move the "vp = NULL" assignment after the code that requires vp != NULL.
+	Reported by Chris Ross on current-users.
+	[christos, ticket #994]
 
