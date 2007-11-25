@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.359 2007/11/25 08:48:40 xtraeme Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.360 2007/11/25 08:53:41 xtraeme Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -10542,4 +10542,9 @@ sys/dev/ic/ninjascsi32var.h			1.4
 	- Change number of scatter/gather segments from 16 to 17, to allow
 	  non-page-aligned 64KB transfer on 4KB/page platforms.
 	[itohy, ticket #980]
+
+sys/dev/pci/if_bnx.c				1.10
+
+	Added missing newline.
+	[martti, ticket #986]
 
