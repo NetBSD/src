@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback_xenbus.c,v 1.9 2007/11/25 22:44:39 bouyer Exp $      */
+/*      $NetBSD: xbdback_xenbus.c,v 1.10 2007/11/25 23:23:09 bouyer Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -1272,18 +1272,21 @@ xbdback_send_reply(struct xbdback_instance *xbdi, uint64_t id,
 		resp_n->id        = id;
 		resp_n->operation = op;
 		resp_n->status    = status;
+		break;
 	case XBDIP_32:
 		resp32 = RING_GET_RESPONSE(&xbdi->xbdi_ring.ring_32,
 		    xbdi->xbdi_ring.ring_n.rsp_prod_pvt);
 		resp32->id        = id;
 		resp32->operation = op;
 		resp32->status    = status;
+		break;
 	case XBDIP_64:
 		resp64 = RING_GET_RESPONSE(&xbdi->xbdi_ring.ring_64,
 		    xbdi->xbdi_ring.ring_n.rsp_prod_pvt);
 		resp64->id        = id;
 		resp64->operation = op;
 		resp64->status    = status;
+		break;
 	}
 	xbdi->xbdi_ring.ring_n.rsp_prod_pvt++;
 	RING_PUSH_RESPONSES_AND_CHECK_NOTIFY(&xbdi->xbdi_ring.ring_n, notify);
