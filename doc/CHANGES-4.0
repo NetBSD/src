@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.366 2007/11/25 09:38:26 xtraeme Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.367 2007/11/25 09:41:33 xtraeme Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -10631,4 +10631,9 @@ lib/libc/gen/humanize_number.c			1.12
 	Fix a bug that humanize_number() produces "1000" where it should be "1.0G"
 	or "1.0M".  The bug reported by Greg Troxel.
 	[simonb, ticket #992]
+
+distrib/notes/common/main			1.369
+
+	Note gdb 6.5 kernel crash dump & pthread debugging problems.
+	[martin, ticket #993]
 
