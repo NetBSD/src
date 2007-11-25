@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.320.2.6 2007/11/05 23:17:55 pavel Exp $
+.\"	$NetBSD: main,v 1.320.2.7 2007/11/25 09:41:23 xtraeme Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1500,6 +1500,18 @@ postinstall -s /path/to/etc.tgz fix sendmail
 .disp)
 .bullet)
 .
+.Ss "Issues with GDB 6.5"
+Some architectures (arm, i386, powerpc and sparc64) have switched to a newer
+gdb version (6.5) in this release.
+Unfortunately support for debugging programs using the SA (scheduler
+activation) based thread library, is incomplete in this gdb version.
+Furthermore kernel crashdumps can not be debugged due to a missing
+identification in the kernel binaries.
+.Pa
+Both issues have been addressed on the wrstuden-fixsa branch, but did not
+make it into the
+.Nx
+release. Both will be fixed in the next patch release.
 .
 .Ss "Using online NetBSD documentation"
 .Pp
