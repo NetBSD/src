@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.132 2007/11/25 00:35:27 elad Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.133 2007/11/25 08:43:11 elad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2007 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.132 2007/11/25 00:35:27 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.133 2007/11/25 08:43:11 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -434,13 +434,6 @@ settimeofday1(const struct timeval *utv, bool userspace,
 
 	/* Verify all parameters before changing time. */
 
-	if (check_kauth) {
-		error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_TIME,
-		    KAUTH_REQ_SYSTEM_TIME_SYSTEM, NULL, NULL, NULL);
-		if (error != 0)
-			return (error);
-	}
-
 	/*
 	 * NetBSD has no kernel notion of time zone, and only an
 	 * obsolete program would try to set it, so we log a warning.
@@ -459,7 +452,7 @@ settimeofday1(const struct timeval *utv, bool userspace,
 	}
 
 	TIMEVAL_TO_TIMESPEC(utv, &ts);
-	return settime(l->l_proc, &ts);
+	return settime1(l->l_proc, &ts, check_kauth);
 }
 
 #ifndef __HAVE_TIMECOUNTER
