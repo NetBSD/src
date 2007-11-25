@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.357 2007/11/06 16:18:08 liamjfoy Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.358 2007/11/25 08:43:17 xtraeme Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -10516,3 +10516,9 @@ sys/sys/param.h					patch
 
 	Welcome to NetBSD 4.0_RC4.
 	[liamjfoy]
+
+sys/arch/hpcmips/dev/mq200machdep.c		1.5
+
+	There is a possibility that TLB-miss is caused in mq200_mdsetup().
+	[kiyohara, ticket #997]
+
