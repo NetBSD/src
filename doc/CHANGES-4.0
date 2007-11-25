@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.362 2007/11/25 09:01:22 xtraeme Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.363 2007/11/25 09:21:22 xtraeme Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -10582,4 +10582,25 @@ usr.sbin/sdpd/ssr.c				1.2
 	each profile now supplies a list of UUIDs instead of just a
 	service class.
 	[plunky, ticket #988]
+
+sys/arch/amd64/conf/GENERIC			1.144 patch
+sys/arch/amd64/conf/INSTALL			1.70 patch
+sys/dev/ic/aac.c				1.31 patch
+sys/dev/ic/aac.c				1.32 patch
+sys/dev/ic/aac.c				1.33 patch
+sys/dev/ic/aac.c				1.34 patch
+sys/dev/ic/aac.c				1.37 patch
+sys/dev/ic/aac_tables.h				1.5 patch
+sys/dev/ic/aacreg.h				1.6 patch
+sys/dev/ic/aacreg.h				1.7 patch
+sys/dev/ic/aacreg.h				1.8 patch
+sys/dev/ic/aacreg.h				1.9 patch
+sys/dev/ic/aacvar.h				1.10 patch
+sys/dev/ic/aacvar.h				1.9 patch
+sys/dev/ic/ld_aac.c				1.14 patch
+sys/dev/ic/ld_aac.c				1.15 patch
+sys/dev/pci/aac_pci.c				1.21 patch
+
+	Compile and run on amd64 and on >2GB RAM.
+	[briggs, ticket #990]
 
