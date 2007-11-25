@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.361 2007/11/25 08:57:14 xtraeme Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.362 2007/11/25 09:01:22 xtraeme Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -10555,4 +10555,31 @@ share/zoneinfo/Makefile				1.42
 	(evolution, KDE) want the former at least, and other OSes install it
 	(as the Makefile in tzcode suggests)
 	[drochner, ticket #987]
+
+usr.sbin/sdpd/bgd.c				1.2
+usr.sbin/sdpd/dun.c				1.2
+usr.sbin/sdpd/ftrn.c				1.2
+usr.sbin/sdpd/hf.c				1.2
+usr.sbin/sdpd/hset.c				1.2
+usr.sbin/sdpd/irmc.c				1.2
+usr.sbin/sdpd/irmc_command.c			1.2
+usr.sbin/sdpd/lan.c				1.2
+usr.sbin/sdpd/opush.c				1.2
+usr.sbin/sdpd/profile.c				1.4
+usr.sbin/sdpd/profile.h				1.2
+usr.sbin/sdpd/provider.c			1.2
+usr.sbin/sdpd/provider.h			1.2
+usr.sbin/sdpd/sd.c				1.2
+usr.sbin/sdpd/server.h				1.3
+usr.sbin/sdpd/sp.c				1.2
+usr.sbin/sdpd/ssar.c				1.2
+usr.sbin/sdpd/ssr.c				1.2
+
+	Fix ServiceSearchAttribute and ServiceSearch request handling
+	so that they match the whole list of UUIDs against a record,
+	as according to the spec
+
+	each profile now supplies a list of UUIDs instead of just a
+	service class.
+	[plunky, ticket #988]
 
