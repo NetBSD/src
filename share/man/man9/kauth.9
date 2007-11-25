@@ -1,4 +1,4 @@
-.\" $NetBSD: kauth.9,v 1.56 2007/11/25 00:35:26 elad Exp $
+.\" $NetBSD: kauth.9,v 1.57 2007/11/25 09:39:26 elad Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -295,8 +295,6 @@ can be any of the following:
 Check if changing the time using
 .Xr adjtime 2
 is allowed.
-.It Dv KAUTH_REQ_SYSTEM_TIME_BACKWARDS
-Check if setting the time backwards is allowed.
 .It Dv KAUTH_REQ_SYSTEM_TIME_NTPADJTIME
 Check if setting the time using
 .Xr ntp_adjtime 2

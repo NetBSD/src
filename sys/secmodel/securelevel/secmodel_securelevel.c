@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_securelevel.c,v 1.3 2007/11/25 00:35:28 elad Exp $ */
+/* $NetBSD: secmodel_securelevel.c,v 1.4 2007/11/25 09:39:26 elad Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_securelevel.c,v 1.3 2007/11/25 00:35:28 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_securelevel.c,v 1.4 2007/11/25 09:39:26 elad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_insecure.h"
@@ -166,11 +166,6 @@ secmodel_securelevel_system_cb(kauth_cred_t cred,
 
 	case KAUTH_SYSTEM_TIME:
 		switch (req) {
-		case KAUTH_REQ_SYSTEM_TIME_BACKWARDS:
-			if (securelevel > 1)
-				result = KAUTH_RESULT_DENY;
-			break;
-
 		case KAUTH_REQ_SYSTEM_TIME_RTCOFFSET:
 			if (securelevel > 0)
 				result = KAUTH_RESULT_DENY;

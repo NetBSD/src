@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_bsd44_suser.c,v 1.40 2007/11/25 00:35:27 elad Exp $ */
+/* $NetBSD: secmodel_bsd44_suser.c,v 1.41 2007/11/25 09:39:26 elad Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.40 2007/11/25 00:35:27 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.41 2007/11/25 09:39:26 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -252,14 +252,9 @@ secmodel_bsd44_suser_system_cb(kauth_cred_t cred, kauth_action_t action,
 			break;
 		}
 
-		case KAUTH_REQ_SYSTEM_TIME_BACKWARDS:
 		case KAUTH_REQ_SYSTEM_TIME_RTCOFFSET:
 			/*
 			 * Decisions here are root-agnostic.
-			 *
-			 * KAUTH_REQ_SYSTEM_TIME_BACKWARDS - Candidate for
-			 *  removal. Can be issued only via settime() for
-			 *  context where time modification is allowed.
 			 *
 			 * KAUTH_REQ_SYSTEM_TIME_RTCOFFSET - Should be used
 			 *  only after the caller was determined as someone
