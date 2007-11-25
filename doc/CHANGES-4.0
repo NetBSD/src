@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.365 2007/11/25 09:34:47 xtraeme Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.366 2007/11/25 09:38:26 xtraeme Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -10625,4 +10625,10 @@ sys/dev/scsipi/st.c				1.201 (patch)
 	Move check for b_resid value to the right place. Should definitively fix
 	kern/36690.
 	[bouyer, ticket #1002]
+
+lib/libc/gen/humanize_number.c			1.12
+
+	Fix a bug that humanize_number() produces "1000" where it should be "1.0G"
+	or "1.0M".  The bug reported by Greg Troxel.
+	[simonb, ticket #992]
 
