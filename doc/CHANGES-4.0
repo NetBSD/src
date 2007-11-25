@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.363 2007/11/25 09:21:22 xtraeme Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.364 2007/11/25 09:27:08 xtraeme Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -10603,4 +10603,9 @@ sys/dev/pci/aac_pci.c				1.21 patch
 
 	Compile and run on amd64 and on >2GB RAM.
 	[briggs, ticket #990]
+
+share/man/man4/sk.4				1.11
+
+	tell about 88E8055 support
+	[manu, ticket #991]
 
