@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.87 2007/10/19 11:59:47 ad Exp $	*/
+/*	$NetBSD: ath.c,v 1.88 2007/11/26 23:48:37 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.104 2005/09/16 10:09:23 ru Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.87 2007/10/19 11:59:47 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.88 2007/11/26 23:48:37 dyoung Exp $");
 #endif
 
 /*
@@ -291,7 +291,7 @@ ath_enable(struct ath_softc *sc)
 	if (ATH_IS_ENABLED(sc) == 0) {
 		if (sc->sc_enable != NULL && (*sc->sc_enable)(sc) != 0) {
 			printf("%s: device enable failed\n",
-				sc->sc_dev.dv_xname);
+				device_xname(&sc->sc_dev));
 			return (EIO);
 		}
 		sc->sc_flags |= ATH_ENABLED;
@@ -323,7 +323,7 @@ ath_attach(u_int16_t devid, struct ath_softc *sc)
 
 	DPRINTF(sc, ATH_DEBUG_ANY, "%s: devid 0x%x\n", __func__, devid);
 
-	memcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
+	memcpy(ifp->if_xname, device_xname(&sc->sc_dev), IFNAMSIZ);
 
 	ah = ath_hal_attach(devid, sc, sc->sc_st, sc->sc_sh, &status);
 	if (ah == NULL) {
@@ -2077,7 +2077,7 @@ ath_beaconq_config(struct ath_softc *sc)
 	}
 
 	if (!ath_hal_settxqueueprops(ah, sc->sc_bhalq, &qi)) {
-		device_printf(sc->sc_dev, "unable to update parameters for "
+		device_printf(&sc->sc_dev, "unable to update parameters for "
 			"beacon hardware queue!\n");
 		return 0;
 	} else {
@@ -3269,7 +3269,7 @@ ath_txq_setup(struct ath_softc *sc, int qtype, int subtype)
 		return NULL;
 	}
 	if (qnum >= N(sc->sc_txq)) {
-		device_printf(sc->sc_dev,
+		device_printf(&sc->sc_dev,
 			"hal qnum %u out of range, max %zu!\n",
 			qnum, N(sc->sc_txq));
 		ath_hal_releasetxqueue(ah, qnum);
@@ -3306,7 +3306,7 @@ ath_tx_setup(struct ath_softc *sc, int ac, int haltype)
 	struct ath_txq *txq;
 
 	if (ac >= N(sc->sc_ac2q)) {
-		device_printf(sc->sc_dev, "AC %u out of range, max %zu!\n",
+		device_printf(&sc->sc_dev, "AC %u out of range, max %zu!\n",
 			ac, N(sc->sc_ac2q));
 		return 0;
 	}
@@ -3340,7 +3340,7 @@ ath_txq_update(struct ath_softc *sc, int ac)
 	qi.tqi_burstTime = ATH_TXOP_TO_US(wmep->wmep_txopLimit);
 
 	if (!ath_hal_settxqueueprops(ah, txq->axq_qnum, &qi)) {
-		device_printf(sc->sc_dev, "unable to update hardware queue "
+		device_printf(&sc->sc_dev, "unable to update hardware queue "
 			"parameters for %s traffic!\n",
 			ieee80211_wme_acnames[ac]);
 		return 0;
