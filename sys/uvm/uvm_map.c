@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.243 2007/10/15 11:24:30 yamt Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.244 2007/11/26 08:15:19 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.243 2007/10/15 11:24:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.244 2007/11/26 08:15:19 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -87,6 +87,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.243 2007/10/15 11:24:30 yamt Exp $");
 #include <sys/kernel.h>
 #include <sys/mount.h>
 #include <sys/vnode.h>
+#include <sys/lockdebug.h>
 
 #ifdef SYSVSHM
 #include <sys/shm.h>
@@ -5006,6 +5007,8 @@ uvm_unmap1(struct vm_map *map, vaddr_t start, vaddr_t end, int flags)
 
 	UVMHIST_LOG(maphist, "  (map=0x%x, start=0x%x, end=0x%x)",
 	    map, start, end, 0);
+	if (map == kernel_map)
+		LOCKDEBUG_MEM_CHECK((void *)start, end - start);
 	/*
 	 * work now done by helper functions.   wipe the pmap's and then
 	 * detach from the dead entries...
