@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.9 2007/11/13 19:17:30 garbled Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.10 2007/11/26 19:58:30 garbled Exp $	*/
 
 #ifndef _OFPPC_AUTOCONF_H_
 #define _OFPPC_AUTOCONF_H_
@@ -18,9 +18,11 @@ struct confargs {
 };
 
 extern int console_node;
+extern char model_name[64];
 
 #ifdef _KERNEL
 void initppc(u_int, u_int, char *);
+void model_init(void);
 void strayintr(int);
 void dumpsys(void);
 
@@ -30,9 +32,10 @@ void cpu_initclocks(void);
 void decr_intr(struct clockframe *);
 void setstatclockrate(int);
 void init_interrupt(void);
-void ofppc_init_comcons(void);
+void ofppc_init_comcons(int);
+void copy_disp_props(struct device *, int, prop_dictionary_t);
 
-int ofb_cnattach(void);
+int rascons_cnattach(void);
 #endif /* _KERNEL */
 
 #endif /* _OFPPC_AUTOCONF_H_ */
