@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.8 2007/11/24 23:51:23 christos Exp $	*/
+/*	$NetBSD: pcb.h,v 1.9 2007/11/26 15:38:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -100,6 +100,7 @@ struct pcb {
 	 * Should just make this a pointer and allocate.
 	 */
 	struct	x86_64_tss pcb_tss;
+	u_int64_t pcb_cr2;		/* page fault address (CR2) */
 	u_int64_t pcb_cr3;
 	u_int64_t pcb_rsp;
 	u_int64_t pcb_rbp;
@@ -107,7 +108,6 @@ struct pcb {
 	u_int64_t pcb_ldt_sel;
 	struct	savefpu pcb_savefpu;	/* floating point state */
 	int	pcb_cr0;		/* saved image of CR0 */
-	int	pcb_cr2;		/* page fault address (CR2) */
 	int	pcb_flags;
 #define	PCB_USER_LDT	0x01		/* has user-set LDT */
 #define PCB_GS64	0x02
