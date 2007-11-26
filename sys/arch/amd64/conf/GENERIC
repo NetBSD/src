@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.120.2.15 2007/11/25 09:20:35 xtraeme Exp $
+# $NetBSD: GENERIC,v 1.120.2.16 2007/11/26 21:35:46 xtraeme Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.120.2.15 $"
+#ident 		"GENERIC-$Revision: 1.120.2.16 $"
 
 maxusers	32		# estimated number of users
 
@@ -253,10 +253,10 @@ acpilid* 	at acpi?		# ACPI Lid Switch
 acpitz* 	at acpi?		# ACPI Thermal Zone
 
 # Mainboard devices
-com* 		at acpi?		# Serial communications interface
+#com* 		at acpi?		# Serial communications interface
 #fdc* 		at acpi?		# Floppy disk controller
 joy*		at acpi?		# Joystick/Game port
-lpt* 		at acpi?		# Parallel port
+#lpt* 		at acpi?		# Parallel port
 mpu*		at acpi?		# Roland MPU-401 MIDI UART
 pckbc*  	at acpi?		# PC keyboard controller
 attimer*	at acpi?		# AT Timer
