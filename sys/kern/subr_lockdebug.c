@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_lockdebug.c,v 1.20 2007/11/22 10:47:37 yamt Exp $	*/
+/*	$NetBSD: subr_lockdebug.c,v 1.21 2007/11/26 08:16:49 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.20 2007/11/22 10:47:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.21 2007/11/26 08:16:49 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_ddb.h"
@@ -643,7 +643,9 @@ lockdebug_mem_check(const char *func, void *base, size_t sz)
 
 	lockdebug_lock(lk);
 	lock = (uintptr_t)ld->ld_lock;
-	if ((uintptr_t)base <= lock && lock < (uintptr_t)base + sz) {
+	if ((uintptr_t)base > lock)
+		lockdebug_abort1(ld, lk, func, "corrupt tree", true);
+	if (lock < (uintptr_t)base + sz) {
 		lockdebug_abort1(ld, lk, func,
 		    "allocation contains active lock", !cold);
 		return;
