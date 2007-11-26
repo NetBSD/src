@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.120 2007/10/17 17:34:25 ad Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.121 2007/11/26 15:41:03 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.120 2007/10/17 17:34:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.121 2007/11/26 15:41:03 tsutsui Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -781,7 +781,7 @@ ext2fs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l)
 {
 	struct ufsmount *ump;
 	struct m_ext2fs *fs;
-	u_int32_t overhead, overhead_per_group;
+	u_int32_t overhead, overhead_per_group, ngdb;
 	int i, ngroups;
 
 	ump = VFSTOUFS(mp);
@@ -806,7 +806,11 @@ ext2fs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l)
 	} else {
 		ngroups = fs->e2fs_ncg;
 	}
-	overhead += ngroups * (1 + fs->e2fs_ngdb);
+	ngdb = fs->e2fs_ngdb;
+	if (fs->e2fs.e2fs_rev > E2FS_REV0 &&
+	    fs->e2fs.e2fs_features_compat & EXT2F_COMPAT_RESIZE)
+		ngdb += fs->e2fs.e2fs_reserved_ngdb;
+	overhead += ngroups * (1 + ngdb);
 
 	sbp->f_bsize = fs->e2fs_bsize;
 	sbp->f_frsize = 1024 << fs->e2fs.e2fs_fsize;
