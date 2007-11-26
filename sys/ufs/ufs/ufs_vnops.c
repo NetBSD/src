@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.158 2007/11/23 14:18:01 pooka Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.159 2007/11/26 19:02:35 pooka Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.158 2007/11/23 14:18:01 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.159 2007/11/26 19:02:35 pooka Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -192,7 +192,6 @@ ufs_open(void *v)
 		struct vnode	*a_vp;
 		int		a_mode;
 		kauth_cred_t	a_cred;
-		struct lwp	*a_l;
 	} */ *ap = v;
 
 	/*
@@ -217,7 +216,6 @@ ufs_close(void *v)
 		struct vnode	*a_vp;
 		int		a_fflag;
 		kauth_cred_t	a_cred;
-		struct lwp	*a_l;
 	} */ *ap = v;
 	struct vnode	*vp;
 	struct inode	*ip;
@@ -238,7 +236,6 @@ ufs_access(void *v)
 		struct vnode	*a_vp;
 		int		a_mode;
 		kauth_cred_t	a_cred;
-		struct lwp	*a_l;
 	} */ *ap = v;
 	struct vnode	*vp;
 	struct inode	*ip;
@@ -297,7 +294,6 @@ ufs_getattr(void *v)
 		struct vnode	*a_vp;
 		struct vattr	*a_vap;
 		kauth_cred_t	a_cred;
-		struct lwp	*a_l;
 	} */ *ap = v;
 	struct vnode	*vp;
 	struct inode	*ip;
@@ -368,7 +364,6 @@ ufs_setattr(void *v)
 		struct vnode	*a_vp;
 		struct vattr	*a_vap;
 		kauth_cred_t	a_cred;
-		struct lwp	*a_l;
 	} */ *ap = v;
 	struct vattr	*vap;
 	struct vnode	*vp;
@@ -381,7 +376,7 @@ ufs_setattr(void *v)
 	vp = ap->a_vp;
 	ip = VTOI(vp);
 	cred = ap->a_cred;
-	l = ap->a_l;
+	l = curlwp;
 
 	/*
 	 * Check for unsettable attributes.
@@ -504,7 +499,7 @@ ufs_setattr(void *v)
 		    (error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
 		    NULL)) &&
 		    ((vap->va_vaflags & VA_UTIMES_NULL) == 0 ||
-		    (error = VOP_ACCESS(vp, VWRITE, cred, l))))
+		    (error = VOP_ACCESS(vp, VWRITE, cred))))
 			goto out;
 		if (vap->va_atime.tv_sec != VNOVAL)
 			if (!(vp->v_mount->mnt_flag & MNT_NOATIME))
@@ -1000,7 +995,7 @@ ufs_rename(void *v)
 	 * to namei, as the parent directory is unlocked by the
 	 * call to checkpath().
 	 */
-	error = VOP_ACCESS(fvp, VWRITE, tcnp->cn_cred, tcnp->cn_lwp);
+	error = VOP_ACCESS(fvp, VWRITE, tcnp->cn_cred);
 	VOP_UNLOCK(fvp, 0);
 	if (oldparent != dp->i_number)
 		newparent = dp->i_number;
@@ -1888,7 +1883,6 @@ ufsspec_close(void *v)
 		struct vnode	*a_vp;
 		int		a_fflag;
 		kauth_cred_t	a_cred;
-		struct lwp	*a_l;
 	} */ *ap = v;
 	struct vnode	*vp;
 	struct inode	*ip;
@@ -1954,7 +1948,6 @@ ufsfifo_close(void *v)
 		struct vnode	*a_vp;
 		int		a_fflag;
 		kauth_cred_t	a_cred;
-		struct lwp	*a_l;
 	} */ *ap = v;
 	struct vnode	*vp;
 	struct inode	*ip;

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.99 2007/11/07 00:23:25 ad Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.100 2007/11/26 19:02:07 pooka Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.99 2007/11/07 00:23:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.100 2007/11/26 19:02:07 pooka Exp $");
 
 #include "opt_systrace.h"
 #include "opt_magiclinks.h"
@@ -371,8 +371,7 @@ namei(struct nameidata *ndp)
 			break;
 		}
 		if (ndp->ni_vp->v_mount->mnt_flag & MNT_SYMPERM) {
-			error = VOP_ACCESS(ndp->ni_vp, VEXEC, cnp->cn_cred,
-			    cnp->cn_lwp);
+			error = VOP_ACCESS(ndp->ni_vp, VEXEC, cnp->cn_cred);
 			if (error != 0)
 				break;
 		}

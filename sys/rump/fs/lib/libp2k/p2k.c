@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.c,v 1.27 2007/11/06 10:57:35 pooka Exp $	*/
+/*	$NetBSD: p2k.c,v 1.28 2007/11/26 19:02:23 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -341,7 +341,7 @@ p2k_node_open(struct puffs_cc *pcc, void *opc, int mode,
 
 	cred = cred_create(pcr);
 	VLE(opc);
-	rv = RUMP_VOP_OPEN(opc, mode, cred, curlwp);
+	rv = RUMP_VOP_OPEN(opc, mode, cred);
 	VUL(opc);
 	cred_destroy(cred);
 
@@ -357,7 +357,7 @@ p2k_node_close(struct puffs_cc *pcc, void *opc, int flags,
 
 	cred = cred_create(pcr);
 	VLE(opc);
-	rv = RUMP_VOP_CLOSE(opc, flags, cred, curlwp);
+	rv = RUMP_VOP_CLOSE(opc, flags, cred);
 	VUL(opc);
 	cred_destroy(cred);
 
@@ -373,7 +373,7 @@ p2k_node_access(struct puffs_cc *pcc, void *opc, int mode,
 
 	cred = cred_create(pcr);
 	VLE(opc);
-	rv = RUMP_VOP_ACCESS(opc, mode, cred, curlwp);
+	rv = RUMP_VOP_ACCESS(opc, mode, cred);
 	VUL(opc);
 	cred_destroy(cred);
 
@@ -389,7 +389,7 @@ p2k_node_getattr(struct puffs_cc *pcc, void *opc, struct vattr *vap,
 
 	cred = cred_create(pcr);
 	VLE(opc);
-	rv = RUMP_VOP_GETATTR(opc, vap, cred, curlwp);
+	rv = RUMP_VOP_GETATTR(opc, vap, cred);
 	VUL(opc);
 	cred_destroy(cred);
 
@@ -405,7 +405,7 @@ p2k_node_setattr(struct puffs_cc *pcc, void *opc, const struct vattr *vap,
 
 	cred = cred_create(pcr);
 	VLE(opc);
-	rv = RUMP_VOP_SETATTR(opc, __UNCONST(vap), cred, curlwp);
+	rv = RUMP_VOP_SETATTR(opc, __UNCONST(vap), cred);
 	VUL(opc);
 	cred_destroy(cred);
 
@@ -421,7 +421,7 @@ p2k_node_fsync(struct puffs_cc *pcc, void *opc, const struct puffs_cred *pcr,
 
 	cred = cred_create(pcr);
 	VLE(opc);
-	rv = RUMP_VOP_FSYNC(opc, cred, flags, offlo, offhi, curlwp);
+	rv = RUMP_VOP_FSYNC(opc, cred, flags, offlo, offhi);
 	VUL(opc);
 	cred_destroy(cred);
 
@@ -671,7 +671,7 @@ p2k_node_inactive(struct puffs_cc *pcc, void *opc, const struct puffs_cid *pcid)
 
 	(void) RUMP_VOP_PUTPAGES(vp, 0, 0, PGO_ALLPAGES);
 	VLE(vp);
-	rv = RUMP_VOP_INACTIVE(vp, curlwp);
+	rv = RUMP_VOP_INACTIVE(vp);
 	if (vp->v_usecount == 0)
 		puffs_setback(pcc, PUFFS_SETBACK_NOREF_N1);
 
