@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.43 2007/11/23 17:16:22 pooka Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.44 2007/11/26 19:01:55 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.43 2007/11/23 17:16:22 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.44 2007/11/26 19:01:55 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -137,7 +137,7 @@ tmpfs_lookup(void *v)
 	*vpp = NULL;
 
 	/* Check accessibility of requested node as a first step. */
-	error = VOP_ACCESS(dvp, VEXEC, cnp->cn_cred, cnp->cn_lwp);
+	error = VOP_ACCESS(dvp, VEXEC, cnp->cn_cred);
 	if (error != 0)
 		goto out;
 
@@ -185,8 +185,7 @@ tmpfs_lookup(void *v)
 			if ((cnp->cn_flags & ISLASTCN) &&
 			    (cnp->cn_nameiop == CREATE || \
 			    cnp->cn_nameiop == RENAME)) {
-				error = VOP_ACCESS(dvp, VWRITE, cnp->cn_cred,
-				    cnp->cn_lwp);
+				error = VOP_ACCESS(dvp, VWRITE, cnp->cn_cred);
 				if (error != 0)
 					goto out;
 
@@ -227,8 +226,7 @@ tmpfs_lookup(void *v)
 				    kauth_cred_geteuid(cnp->cn_cred) != dnode->tn_uid &&
 				    kauth_cred_geteuid(cnp->cn_cred) != tnode->tn_uid)
 					return EPERM;
-				error = VOP_ACCESS(dvp, VWRITE, cnp->cn_cred,
-				    cnp->cn_lwp);
+				error = VOP_ACCESS(dvp, VWRITE, cnp->cn_cred);
 				if (error != 0)
 					goto out;
 				tnode->tn_lookup_dirent = de;
@@ -451,7 +449,7 @@ tmpfs_setattr(void *v)
 	struct vnode *vp = ((struct vop_setattr_args *)v)->a_vp;
 	struct vattr *vap = ((struct vop_setattr_args *)v)->a_vap;
 	kauth_cred_t cred = ((struct vop_setattr_args *)v)->a_cred;
-	struct lwp *l = ((struct vop_setattr_args *)v)->a_l;
+	struct lwp *l = curlwp;
 
 	int error;
 
@@ -1246,7 +1244,6 @@ int
 tmpfs_inactive(void *v)
 {
 	struct vnode *vp = ((struct vop_inactive_args *)v)->a_vp;
-	struct lwp *l = ((struct vop_inactive_args *)v)->a_l;
 	nlink_t links;
 
 	struct tmpfs_node *node;
@@ -1259,7 +1256,7 @@ tmpfs_inactive(void *v)
 	VOP_UNLOCK(vp, 0);
 
 	if (links == 0)
-		vrecycle(vp, NULL, l);
+		vrecycle(vp, NULL, curlwp);
 
 	return 0;
 }

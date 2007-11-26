@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.37 2007/11/10 18:53:57 rmind Exp $	*/
+/*	$NetBSD: fss.c,v 1.38 2007/11/26 19:01:35 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.37 2007/11/10 18:53:57 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.38 2007/11/26 19:01:35 pooka Exp $");
 
 #include "fss.h"
 
@@ -608,8 +608,7 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
 		return EINVAL;
 	}
 
-	error = VOP_IOCTL(nd.ni_vp, DIOCGPART, &dpart, FREAD,
-	    l->l_cred, l);
+	error = VOP_IOCTL(nd.ni_vp, DIOCGPART, &dpart, FREAD, l->l_cred);
 	if (error) {
 		vrele(nd.ni_vp);
 		return error;
@@ -634,7 +633,7 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
 		return EINVAL;
 
 	if (sc->sc_bs_vp->v_type == VREG) {
-		error = VOP_GETATTR(sc->sc_bs_vp, &va, l->l_cred, l);
+		error = VOP_GETATTR(sc->sc_bs_vp, &va, l->l_cred);
 		if (error != 0)
 			return error;
 		sc->sc_bs_size = va.va_size;

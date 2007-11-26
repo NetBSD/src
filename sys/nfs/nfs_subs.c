@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.192 2007/10/28 22:24:29 yamt Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.193 2007/11/26 19:02:21 pooka Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.192 2007/10/28 22:24:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.193 2007/11/26 19:02:21 pooka Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -2234,8 +2234,7 @@ nfs_namei(ndp, nsfh, len, slp, nam, mdp, dposp, retdirp, l, kerbflag, pubflag)
 			break;
 		}
 		if (ndp->ni_vp->v_mount->mnt_flag & MNT_SYMPERM) {
-			error = VOP_ACCESS(ndp->ni_vp, VEXEC, cnp->cn_cred,
-			    cnp->cn_lwp);
+			error = VOP_ACCESS(ndp->ni_vp, VEXEC, cnp->cn_cred);
 			if (error != 0)
 				break;
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.122 2007/11/26 15:46:48 tsutsui Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.123 2007/11/26 19:02:27 pooka Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.122 2007/11/26 15:46:48 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.123 2007/11/26 19:02:27 pooka Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -206,7 +206,6 @@ ext2fs_mountroot(void)
 	extern struct vnode *rootvp;
 	struct m_ext2fs *fs;
 	struct mount *mp;
-	struct lwp *l = curlwp;		/* XXX */
 	struct ufsmount *ump;
 	int error;
 
@@ -218,7 +217,7 @@ ext2fs_mountroot(void)
 		return (error);
 	}
 
-	if ((error = ext2fs_mountfs(rootvp, mp, l)) != 0) {
+	if ((error = ext2fs_mountfs(rootvp, mp)) != 0) {
 		mp->mnt_op->vfs_refcount--;
 		vfs_unbusy(mp);
 		vfs_destroy(mp);
@@ -237,7 +236,7 @@ ext2fs_mountroot(void)
 		(void) copystr(mp->mnt_stat.f_mntonname, fs->e2fs.e2fs_fsmnt,
 		    sizeof(fs->e2fs.e2fs_fsmnt) - 1, 0);
 	}
-	(void)ext2fs_statvfs(mp, &mp->mnt_stat, l);
+	(void)ext2fs_statvfs(mp, &mp->mnt_stat);
 	vfs_unbusy(mp);
 	setrootfstime((time_t)fs->e2fs.e2fs_wtime);
 	return (0);
@@ -249,9 +248,9 @@ ext2fs_mountroot(void)
  * mount system call
  */
 int
-ext2fs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
-	struct lwp *l)
+ext2fs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 {
+	struct lwp *l = curlwp;
 	struct nameidata nd;
 	struct vnode *devvp;
 	struct ufs_args *args = data;
@@ -326,7 +325,7 @@ ext2fs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
 		    (mp->mnt_flag & MNT_RDONLY) == 0)
 			accessmode |= VWRITE;
 		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-		error = VOP_ACCESS(devvp, accessmode, l->l_cred, l);
+		error = VOP_ACCESS(devvp, accessmode, l->l_cred);
 		VOP_UNLOCK(devvp, 0);
 	}
 
@@ -355,13 +354,13 @@ ext2fs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
 			xflags = FREAD;
 		else
 			xflags = FREAD|FWRITE;
-		error = VOP_OPEN(devvp, xflags, FSCRED, l);
+		error = VOP_OPEN(devvp, xflags, FSCRED);
 		if (error)
 			goto fail;
-		error = ext2fs_mountfs(devvp, mp, l);
+		error = ext2fs_mountfs(devvp, mp);
 		if (error) {
 			vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-			(void)VOP_CLOSE(devvp, xflags, NOCRED, l);
+			(void)VOP_CLOSE(devvp, xflags, NOCRED);
 			VOP_UNLOCK(devvp, 0);
 			goto fail;
 		}
@@ -389,7 +388,7 @@ ext2fs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
 			flags = WRITECLOSE;
 			if (mp->mnt_flag & MNT_FORCE)
 				flags |= FORCECLOSE;
-			error = ext2fs_flushfiles(mp, flags, l);
+			error = ext2fs_flushfiles(mp, flags);
 			if (error == 0 &&
 			    ext2fs_cgupdate(ump, MNT_WAIT) == 0 &&
 			    (fs->e2fs.e2fs_state & E2FS_ERRORS) == 0) {
@@ -402,7 +401,7 @@ ext2fs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
 		}
 
 		if (mp->mnt_flag & MNT_RELOAD) {
-			error = ext2fs_reload(mp, l->l_cred, l);
+			error = ext2fs_reload(mp, l->l_cred);
 			if (error)
 				return (error);
 		}
@@ -463,8 +462,9 @@ fail:
  *	6) re-read inode data for all active vnodes.
  */
 int
-ext2fs_reload(struct mount *mountp, kauth_cred_t cred, struct lwp *l)
+ext2fs_reload(struct mount *mountp, kauth_cred_t cred)
 {
+	struct lwp *l = curlwp;
 	struct vnode *vp, *nvp, *devvp;
 	struct inode *ip;
 	struct buf *bp;
@@ -488,7 +488,7 @@ ext2fs_reload(struct mount *mountp, kauth_cred_t cred, struct lwp *l)
 	/*
 	 * Step 2: re-read superblock from disk.
 	 */
-	if (VOP_IOCTL(devvp, DIOCGPART, &dpart, FREAD, NOCRED, l) != 0)
+	if (VOP_IOCTL(devvp, DIOCGPART, &dpart, FREAD, NOCRED) != 0)
 		size = DEV_BSIZE;
 	else
 		size = dpart.disklab->d_secsize;
@@ -593,8 +593,9 @@ loop:
  * Common code for mount and mountroot
  */
 int
-ext2fs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
+ext2fs_mountfs(struct vnode *devvp, struct mount *mp)
 {
+	struct lwp *l = curlwp;
 	struct ufsmount *ump;
 	struct buf *bp;
 	struct ext2fs *fs;
@@ -617,7 +618,7 @@ ext2fs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 		return (error);
 
 	ronly = (mp->mnt_flag & MNT_RDONLY) != 0;
-	if (VOP_IOCTL(devvp, DIOCGPART, &dpart, FREAD, cred, l) != 0)
+	if (VOP_IOCTL(devvp, DIOCGPART, &dpart, FREAD, cred) != 0)
 		size = DEV_BSIZE;
 	else
 		size = dpart.disklab->d_secsize;
@@ -727,7 +728,7 @@ out:
  * unmount system call
  */
 int
-ext2fs_unmount(struct mount *mp, int mntflags, struct lwp *l)
+ext2fs_unmount(struct mount *mp, int mntflags)
 {
 	struct ufsmount *ump;
 	struct m_ext2fs *fs;
@@ -736,7 +737,7 @@ ext2fs_unmount(struct mount *mp, int mntflags, struct lwp *l)
 	flags = 0;
 	if (mntflags & MNT_FORCE)
 		flags |= FORCECLOSE;
-	if ((error = ext2fs_flushfiles(mp, flags, l)) != 0)
+	if ((error = ext2fs_flushfiles(mp, flags)) != 0)
 		return (error);
 	ump = VFSTOUFS(mp);
 	fs = ump->um_e2fs;
@@ -750,7 +751,7 @@ ext2fs_unmount(struct mount *mp, int mntflags, struct lwp *l)
 		ump->um_devvp->v_specmountpoint = NULL;
 	vn_lock(ump->um_devvp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_CLOSE(ump->um_devvp, fs->e2fs_ronly ? FREAD : FREAD|FWRITE,
-	    NOCRED, l);
+	    NOCRED);
 	vput(ump->um_devvp);
 	free(fs->e2fs_gd, M_UFSMNT);
 	free(fs, M_UFSMNT);
@@ -764,7 +765,7 @@ ext2fs_unmount(struct mount *mp, int mntflags, struct lwp *l)
  * Flush out all the files in a filesystem.
  */
 int
-ext2fs_flushfiles(struct mount *mp, int flags, struct lwp *l)
+ext2fs_flushfiles(struct mount *mp, int flags)
 {
 	extern int doforce;
 	int error;
@@ -779,7 +780,7 @@ ext2fs_flushfiles(struct mount *mp, int flags, struct lwp *l)
  * Get file system statistics.
  */
 int
-ext2fs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l)
+ext2fs_statvfs(struct mount *mp, struct statvfs *sbp)
 {
 	struct ufsmount *ump;
 	struct m_ext2fs *fs;
@@ -841,7 +842,7 @@ ext2fs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l)
  * Note: we are always called with the filesystem marked `MPBUSY'.
  */
 int
-ext2fs_sync(struct mount *mp, int waitfor, kauth_cred_t cred, struct lwp *l)
+ext2fs_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
 {
 	struct vnode *vp, *nvp;
 	struct inode *ip;
@@ -894,7 +895,7 @@ loop:
 			error = ext2fs_update(vp, NULL, NULL, 0);
 		else
 			error = VOP_FSYNC(vp, cred,
-			    waitfor == MNT_WAIT ? FSYNC_WAIT : 0, 0, 0, l);
+			    waitfor == MNT_WAIT ? FSYNC_WAIT : 0, 0, 0);
 		if (error)
 			allerror = error;
 		vput(vp);
@@ -907,7 +908,7 @@ loop:
 	if (waitfor != MNT_LAZY) {
 		vn_lock(ump->um_devvp, LK_EXCLUSIVE | LK_RETRY);
 		if ((error = VOP_FSYNC(ump->um_devvp, cred,
-		    waitfor == MNT_WAIT ? FSYNC_WAIT : 0, 0, 0, l)) != 0)
+		    waitfor == MNT_WAIT ? FSYNC_WAIT : 0, 0, 0)) != 0)
 			allerror = error;
 		VOP_UNLOCK(ump->um_devvp, 0);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: efs_vfsops.c,v 1.12 2007/10/10 20:42:23 ad Exp $	*/
+/*	$NetBSD: efs_vfsops.c,v 1.13 2007/11/26 19:01:43 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble <rumble@ephemeral.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efs_vfsops.c,v 1.12 2007/10/10 20:42:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efs_vfsops.c,v 1.13 2007/11/26 19:01:43 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,19 +52,20 @@ MALLOC_JUSTDEFINE(M_EFSINO, "efsino", "efs in-core inode structure");
 MALLOC_JUSTDEFINE(M_EFSTMP, "efstmp", "efs temporary allocations");
 
 extern int (**efs_vnodeop_p)(void *); 	/* for getnewvnode() */
-static int efs_statvfs(struct mount *, struct statvfs *, struct lwp *);
+static int efs_statvfs(struct mount *, struct statvfs *);
 
 /*
  * efs_mount and efs_mountroot common functions.
  */
 static int
 efs_mount_common(struct mount *mp, const char *path, struct vnode *devvp,
-    struct efs_args *args, struct lwp *l)
+    struct efs_args *args)
 {
 	int err;
 	struct buf *bp;
 	const char *why;
 	struct efs_mount *emp;
+	struct lwp *l = curlwp;
 
 	emp = malloc(sizeof(*emp), M_EFSMNT, M_WAITOK);
 	emp->em_dev = devvp->v_rdev;
@@ -149,7 +150,7 @@ efs_mount_common(struct mount *mp, const char *path, struct vnode *devvp,
 	mp->mnt_fs_bshift = EFS_BB_SHFT;
 	mp->mnt_dev_bshift = DEV_BSHIFT;
 	vfs_getnewfsid(mp);
-	efs_statvfs(mp, &mp->mnt_stat, l);
+	efs_statvfs(mp, &mp->mnt_stat);
 
 	err = set_statvfs_info(path, UIO_USERSPACE, args->fspec,
 	    UIO_USERSPACE, mp->mnt_op->vfs_name, mp, l);
@@ -165,9 +166,9 @@ efs_mount_common(struct mount *mp, const char *path, struct vnode *devvp,
  * Returns 0 on success.
  */
 static int
-efs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
-    struct lwp *l)
+efs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 {
+	struct lwp *l = curlwp;
 	struct efs_args *args = data;
 	struct nameidata devndp;
 	struct efs_mount *emp; 
@@ -209,21 +210,21 @@ efs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
 	 * permissions on the device.
 	 */
 	if (kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER, NULL)) {
-		err = VOP_ACCESS(devvp, mode, l->l_cred, l);
+		err = VOP_ACCESS(devvp, mode, l->l_cred);
 		if (err) {
 			vput(devvp);
 			return (err);
 		}
 	}
 
-	if ((err = VOP_OPEN(devvp, mode, l->l_cred, l))) {
+	if ((err = VOP_OPEN(devvp, mode, l->l_cred))) {
 		vput(devvp);
 		return (err);
 	}
 
-	err = efs_mount_common(mp, path, devvp, args, l);
+	err = efs_mount_common(mp, path, devvp, args);
 	if (err) {
-		VOP_CLOSE(devvp, mode, l->l_cred, l);
+		VOP_CLOSE(devvp, mode, l->l_cred);
 		vput(devvp);
 		return (err);
 	}
@@ -239,7 +240,7 @@ efs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
  * Returns 0 on success.
  */
 static int
-efs_start(struct mount *mp, int flags, struct lwp *l)
+efs_start(struct mount *mp, int flags)
 {
 
 	return (0);
@@ -251,12 +252,11 @@ efs_start(struct mount *mp, int flags, struct lwp *l)
  * Returns 0 on success.
  */
 static int
-efs_unmount(struct mount *mp, int mntflags, struct lwp *l)
+efs_unmount(struct mount *mp, int mntflags)
 {
 	struct efs_mount *emp;
+	struct lwp *l = curlwp;
 	int err;
-
-	(void)l;
 
 	emp = VFSTOEFS(mp);
 
@@ -267,7 +267,7 @@ efs_unmount(struct mount *mp, int mntflags, struct lwp *l)
 	cache_purgevfs(mp);
 
 	vn_lock(emp->em_devvp, LK_EXCLUSIVE | LK_RETRY);
-        err = VOP_CLOSE(emp->em_devvp, FREAD, l->l_cred, l);
+        err = VOP_CLOSE(emp->em_devvp, FREAD, l->l_cred);
 	vput(emp->em_devvp);
 
 	free(mp->mnt_data, M_EFSMNT);
@@ -301,7 +301,7 @@ efs_root(struct mount *mp, struct vnode **vpp)
  * Returns 0 on success.
  */
 static int
-efs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l)
+efs_statvfs(struct mount *mp, struct statvfs *sbp)
 {
 	struct efs_mount *emp;
 	

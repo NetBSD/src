@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.174 2007/11/23 11:53:45 pooka Exp $	*/
+/*	$NetBSD: vnode.h,v 1.175 2007/11/26 19:02:25 pooka Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -418,7 +418,6 @@ struct vnodeop_desc {
 	const int	*vdesc_vp_offsets;	/* list ended by VDESC_NO_OFFSET */
 	int		vdesc_vpp_offset;	/* return vpp location */
 	int		vdesc_cred_offset;	/* cred location, if any */
-	int		vdesc_proc_offset;	/* proc location, if any */
 	int		vdesc_componentname_offset; /* if any */
 	/*
 	 * Finally, we've got a list of private data (about each operation)

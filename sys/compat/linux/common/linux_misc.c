@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.186 2007/11/08 21:07:23 njoly Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.187 2007/11/26 19:01:32 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.186 2007/11/08 21:07:23 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.187 2007/11/26 19:01:32 pooka Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ptrace.h"
@@ -763,7 +763,7 @@ linux_sys_getdents(l, v, retval)
 		goto out1;
 	}
 
-	if ((error = VOP_GETATTR(vp, &va, l->l_cred, l)))
+	if ((error = VOP_GETATTR(vp, &va, l->l_cred)))
 		goto out1;
 
 	nbytes = SCARG(uap, count);

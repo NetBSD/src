@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_node.c,v 1.32 2007/10/10 20:42:25 ad Exp $	*/
+/*	$NetBSD: smbfs_node.c,v 1.33 2007/11/26 19:01:52 pooka Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_node.c,v 1.32 2007/10/10 20:42:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_node.c,v 1.33 2007/11/26 19:01:52 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -277,9 +277,8 @@ smbfs_inactive(v)
 {
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
-		struct thread *a_td;
 	} */ *ap = v;
-	struct lwp *l = ap->a_l;
+	struct lwp *l = curlwp;
 	kauth_cred_t cred = l->l_cred;
 	struct vnode *vp = ap->a_vp;
 	struct smbnode *np = VTOSMB(vp);
