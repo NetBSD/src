@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.153.2.4 2007/09/29 11:10:56 xtraeme Exp $
+#	$NetBSD: build.sh,v 1.153.2.5 2007/11/26 21:40:55 xtraeme Exp $
 #
 # Copyright (c) 2001-2005 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -482,7 +482,6 @@ Usage: ${progname} [-EnorUux] [-a arch] [-B buildid] [-C cddir] [-D dest]
     syspkgs             Create syspkgs in RELEASEDIR/MACHINE/binary/syspkgs.
     iso-image           Create CD-ROM image in RELEASEDIR/iso.
     iso-image-source    Create CD-ROM image with source in RELEASEDIR/iso.
-    iso-dir=cddir       Add the contents of \`cddir' to a CD-ROM image.
     params              Display various make(1) parameters.
 
  Options:
@@ -978,7 +977,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.153.2.4 2007/09/29 11:10:56 xtraeme Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.153.2.5 2007/11/26 21:40:55 xtraeme Exp $
 # with these arguments: ${_args}
 #
 EOF
