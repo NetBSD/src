@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.31.2.7 2007/10/26 23:33:12 xtraeme Exp $
+# $NetBSD: postinstall,v 1.31.2.8 2007/11/26 21:24:43 xtraeme Exp $
 #
 # Copyright (c) 2002-2005 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -629,7 +629,7 @@ do_gid()
 	[ -n "$1" ] || err 3 "USAGE: do_gid  fix|check"
 
 	check_ids $1 groups "${DEST_DIR}/etc/group" \
-	    named ntpd postfix sshd authpf _pflogd _rwhod _sdpd
+	    named ntpd postfix sshd authpf _pflogd _rwhod _proxy _sdpd
 }
 
 #
@@ -1138,7 +1138,7 @@ do_uid()
 	[ -n "$1" ] || err 3 "USAGE: do_uid  fix|check"
 
 	check_ids $1 users "${DEST_DIR}/etc/master.passwd" \
-	    named ntpd postfix sshd _pflogd _rwhod _sdpd
+	    named ntpd postfix sshd _pflogd _rwhod _proxy _sdpd
 }
 
 
