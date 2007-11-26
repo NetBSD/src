@@ -1,4 +1,4 @@
-/* $NetBSD: ofw_autoconf.c,v 1.3 2007/11/26 19:58:31 garbled Exp $ */
+/* $NetBSD: ofw_autoconf.c,v 1.4 2007/11/26 23:13:37 macallan Exp $ */
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
  * Copyright (C) 1995, 1996 TooLs GmbH.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_autoconf.c,v 1.3 2007/11/26 19:58:31 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_autoconf.c,v 1.4 2007/11/26 23:13:37 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -223,7 +223,7 @@ device_register(dev, aux)
 		dict = device_properties(dev);
 		node = pcidev_to_ofdev(pa->pa_pc, pa->pa_tag);
 
-		if (node > 0) {
+		if (node != 0) {
 			prop_dictionary_set_uint32(dict, "device_node", node);
 
 			memset(name, 0, sizeof(name));
