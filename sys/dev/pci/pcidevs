@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.919 2007/11/24 01:44:55 markd Exp $
+$NetBSD: pcidevs,v 1.920 2007/11/26 09:36:28 bjs Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1240,9 +1240,11 @@ product ATI RADEON_R423_UH	0x5548	Radeon X800 (R423) UH
 product ATI RADEON_R423_UI	0x5549	Radeon X800PRO (R423) UI
 product ATI RADEON_R423_UJ	0x554a	Radeon X800LE (R423) UJ
 product ATI RADEON_R423_UK	0x554b	Radeon X800SE (R423) UK
+product ATI RADEON_R430_554F	0x554f  Radeon X800 GTO (R430) 554F
 product ATI RADEON_R423_UQ	0x5551	FireGL V7200 (R423) UQ
 product ATI RADEON_R423_UR	0x5552	FireGL V5100 (R423) UR
 product ATI RADEON_R423_UT	0x5554	FireGL V7100 (R423) UT
+product ATI RADEON_R430_556F	0x556f  Radeon X800 GTO (R430) Secondary
 product ATI MACH64_VT		0x5654	Mach64 VT
 product ATI MACH64_VTB		0x5655	Mach64 VTB
 product ATI MACH64_VT4		0x5656	Mach64 VT4
