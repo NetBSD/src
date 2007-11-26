@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.88 2007/11/26 23:48:37 dyoung Exp $	*/
+/*	$NetBSD: ath.c,v 1.89 2007/11/26 23:49:55 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.104 2005/09/16 10:09:23 ru Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.88 2007/11/26 23:48:37 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.89 2007/11/26 23:49:55 dyoung Exp $");
 #endif
 
 /*
@@ -195,6 +195,7 @@ static int	ath_getchannels(struct ath_softc *, u_int cc,
 static void	ath_led_event(struct ath_softc *, int);
 static void	ath_update_txpow(struct ath_softc *);
 static void	ath_freetx(struct mbuf *);
+static void	ath_restore_diversity(struct ath_softc *);
 
 static int	ath_rate_setup(struct ath_softc *, u_int mode);
 static void	ath_setcurmode(struct ath_softc *, enum ieee80211_phymode);
@@ -1053,7 +1054,7 @@ ath_init(struct ath_softc *sc)
 	 * Likewise this is set during reset so update
 	 * state cached in the driver.
 	 */
-	sc->sc_diversity = ath_hal_getdiversity(ah);
+	ath_restore_diversity(sc);
 	sc->sc_calinterval = 1;
 	sc->sc_caltries = 0;
 
@@ -1185,6 +1186,20 @@ ath_stop(struct ifnet *ifp, int disable)
 	ATH_UNLOCK(sc);
 }
 
+static void
+ath_restore_diversity(struct ath_softc *sc)
+{
+	struct ifnet *ifp = &sc->sc_if;
+	struct ath_hal *ah = sc->sc_ah;
+
+	if (!ath_hal_setdiversity(sc->sc_ah, sc->sc_diversity) ||
+	    sc->sc_diversity != ath_hal_getdiversity(ah)) {
+		if_printf(ifp, "could not restore diversity setting %d\n",
+		    sc->sc_diversity);
+		sc->sc_diversity = ath_hal_getdiversity(ah);
+	}
+}
+
 /*
  * Reset the hardware w/o losing operational state.  This is
  * basically a more efficient way of doing ath_stop, ath_init,
@@ -1217,7 +1232,7 @@ ath_reset(struct ifnet *ifp)
 		if_printf(ifp, "%s: unable to reset hardware; hal status %u\n",
 			__func__, status);
 	ath_update_txpow(sc);		/* update tx power state */
-	sc->sc_diversity = ath_hal_getdiversity(ah);
+	ath_restore_diversity(sc);
 	sc->sc_calinterval = 1;
 	sc->sc_caltries = 0;
 	if (ath_startrecv(sc) != 0)	/* restart recv */
@@ -4468,7 +4483,7 @@ ath_chan_set(struct ath_softc *sc, struct ieee80211_channel *chan)
 		}
 		sc->sc_curchan = hchan;
 		ath_update_txpow(sc);		/* update tx power state */
-		sc->sc_diversity = ath_hal_getdiversity(ah);
+		ath_restore_diversity(sc);
 		sc->sc_calinterval = 1;
 		sc->sc_caltries = 0;
 
