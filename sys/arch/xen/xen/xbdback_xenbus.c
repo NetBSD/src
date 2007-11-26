@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback_xenbus.c,v 1.10 2007/11/25 23:23:09 bouyer Exp $      */
+/*      $NetBSD: xbdback_xenbus.c,v 1.11 2007/11/26 19:01:28 pooka Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -657,7 +657,7 @@ xbdback_backend_changed(struct xenbus_watch *watch,
 		vrele(xbdi->xbdi_vp);
 		return;
 	}
-	err  = VOP_OPEN(xbdi->xbdi_vp, FREAD, NOCRED, 0);
+	err  = VOP_OPEN(xbdi->xbdi_vp, FREAD, NOCRED);
 	if (err) {
 		printf("xbdback %s: can't VOP_OPEN device 0x%x: %d\n",
 		    xbusd->xbusd_path, xbdi->xbdi_dev, err);
@@ -665,7 +665,7 @@ xbdback_backend_changed(struct xenbus_watch *watch,
 		return;
 	}
 	VOP_UNLOCK(xbdi->xbdi_vp, 0);
-	err = VOP_IOCTL(xbdi->xbdi_vp, DIOCGPART, &dpart, FREAD, 0, NULL);
+	err = VOP_IOCTL(xbdi->xbdi_vp, DIOCGPART, &dpart, FREAD, 0);
 	if (err) {
 		printf("xbdback %s: can't ioctl device 0x%x: %d\n",
 		    xbusd->xbusd_path, xbdi->xbdi_dev, err);

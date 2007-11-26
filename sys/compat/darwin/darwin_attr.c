@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_attr.c,v 1.18 2007/06/17 20:43:10 dsl Exp $ */
+/*	$NetBSD: darwin_attr.c,v 1.19 2007/11/26 19:01:29 pooka Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_attr.c,v 1.18 2007/06/17 20:43:10 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_attr.c,v 1.19 2007/11/26 19:01:29 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -160,7 +160,7 @@ darwin_sys_getattrlist(l, v, retval)
 		goto out2;
 
 	vp = nd.ni_vp;
-	if ((error = VOP_ACCESS(vp, VREAD | VEXEC, cred, l)) != 0)
+	if ((error = VOP_ACCESS(vp, VREAD | VEXEC, cred)) != 0)
 		goto out3;
 
 	/* Get the informations for path: file related info */

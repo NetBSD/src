@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.40 2007/10/31 15:42:13 reinoud Exp $ */
+/* $NetBSD: udf_subr.c,v 1.41 2007/11/26 19:01:56 pooka Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_subr.c,v 1.40 2007/10/31 15:42:13 reinoud Exp $");
+__RCSID("$NetBSD: udf_subr.c,v 1.41 2007/11/26 19:01:56 pooka Exp $");
 #endif /* not lint */
 
 
@@ -464,14 +464,14 @@ udf_update_discinfo(struct udf_mount *ump)
 	memset(di, 0, sizeof(struct mmc_discinfo));
 
 	/* check if we're on a MMC capable device, i.e. CD/DVD */
-	error = VOP_IOCTL(devvp, MMCGETDISCINFO, di, FKIOCTL, NOCRED, NULL);
+	error = VOP_IOCTL(devvp, MMCGETDISCINFO, di, FKIOCTL, NOCRED);
 	if (error == 0) {
 		udf_dump_discinfo(ump);
 		return 0;
 	}
 
 	/* disc partition support */
-	error = VOP_IOCTL(devvp, DIOCGPART, &dpart, FREAD, NOCRED, NULL);
+	error = VOP_IOCTL(devvp, DIOCGPART, &dpart, FREAD, NOCRED);
 	if (error)
 		return ENODEV;
 
@@ -517,8 +517,7 @@ udf_update_trackinfo(struct udf_mount *ump, struct mmc_trackinfo *ti)
 	class = di->mmc_class;
 	if (class != MMC_CLASS_DISC) {
 		/* tracknr specified in struct ti */
-		error = VOP_IOCTL(devvp, MMCGETTRACKINFO, ti, FKIOCTL,
-			NOCRED, NULL);
+		error = VOP_IOCTL(devvp, MMCGETTRACKINFO, ti, FKIOCTL, NOCRED);
 		return error;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_vfsops.c,v 1.11 2007/11/25 16:26:42 pooka Exp $	*/
+/*	$NetBSD: hfs_vfsops.c,v 1.12 2007/11/26 19:01:45 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hfs_vfsops.c,v 1.11 2007/11/25 16:26:42 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hfs_vfsops.c,v 1.12 2007/11/26 19:01:45 pooka Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -175,9 +175,9 @@ static const struct genfs_ops hfs_genfsops = {
 };
 
 int
-hfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
-    struct lwp *l)
+hfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 {
+	struct lwp *l = curlwp;
 	struct nameidata nd;
 	struct hfs_args *args = data;
 	struct vnode *devvp;
@@ -264,7 +264,7 @@ hfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
 			(mp->mnt_flag & MNT_RDONLY) == 0)
 			accessmode |= VWRITE;
 		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-		error = VOP_ACCESS(devvp, accessmode, l->l_cred, l);
+		error = VOP_ACCESS(devvp, accessmode, l->l_cred);
 		VOP_UNLOCK(devvp, 0);
 	}
 
@@ -323,7 +323,7 @@ error:
 }
 
 int
-hfs_start(struct mount *mp, int flags, struct lwp *l)
+hfs_start(struct mount *mp, int flags)
 {
 
 #ifdef HFS_DEBUG	
@@ -403,7 +403,7 @@ error:
 }
 
 int
-hfs_unmount(struct mount *mp, int mntflags, struct lwp *l)
+hfs_unmount(struct mount *mp, int mntflags)
 {
 	hfs_callback_args cbargs;
 	hfs_libcb_argsread argsclose;
@@ -425,7 +425,7 @@ hfs_unmount(struct mount *mp, int mntflags, struct lwp *l)
 		return error;
 
 	hfslib_init_cbargs(&cbargs);
-	argsclose.l = l;
+	argsclose.l = curlwp;
 	cbargs.closevol = (void*)&argsclose;
 	hfslib_close_volume(&hmp->hm_vol, &cbargs);
 	
@@ -456,7 +456,7 @@ hfs_root(struct mount *mp, struct vnode **vpp)
 }
 
 int
-hfs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l)
+hfs_statvfs(struct mount *mp, struct statvfs *sbp)
 {
 	hfs_volume_header_t *vh;
 	
@@ -481,7 +481,7 @@ hfs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l)
 }
 
 int
-hfs_sync(struct mount *mp, int waitfor, kauth_cred_t cred, struct lwp *l)
+hfs_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
 {
 
 #ifdef HFS_DEBUG	
