@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.76 2007/11/17 16:06:18 pooka Exp $	*/
+/*	$NetBSD: puffs.c,v 1.77 2007/11/26 12:20:21 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.76 2007/11/17 16:06:18 pooka Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.77 2007/11/26 12:20:21 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -108,7 +108,8 @@ puffs_defaulterror(struct puffs_usermount *pu, uint8_t type,
 	int error, const char *str, void *cookie)
 {
 
-	fprintf(stderr, "%s\n", str);
+	fprintf(stderr, "abort: type %d, error %d, cookie %p (%s)\n",
+	    type, error, cookie, str);
 	abort();
 }
 
