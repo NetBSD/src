@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.221 2007/11/26 19:10:07 ad Exp $
+#	$NetBSD: BRANCHES,v 1.222 2007/11/26 22:48:57 ad Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -484,17 +484,13 @@ Notes:		Goals:
 		  powerpc	partial: need pmap/trap locking changes
 		  hppa		done
 		  sh3		done
-		  vax			
+		  vax		partial: need pmap/trap locking changes
 		  m68k		
 		  xen		partial
 
 		Remaining MI work to do:
 
-		- Clean up vfs_busy/vfs_unbusy and mount/dounmount semantics
-		  so that lockmgr is not being used any more. Reference
-		  counting on struct mount is probably the best solution.
-
-		- Check + document locking around fields in struct mount.
+		- Document locking around fields in struct mount.
 
 		- Check aliased vnode handling. There may be problems.
 
@@ -514,6 +510,8 @@ Notes:		Goals:
 		- ext2fs dup alloc.
 
 		- Unmount erroneously reports busy sometimes. Why?
+
+		- usl_detachtimeout warning occasionally.
 
 Branch:		yamt-lazymbuf
 Description:	implement and evaluate lazy mapping of mbuf external data pages
