@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.170.2.26 2007/11/10 12:19:01 yamt Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.170.2.27 2007/11/26 10:08:18 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.170.2.26 2007/11/10 12:19:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.170.2.27 2007/11/26 10:08:18 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2005,6 +2005,7 @@ buf_init(buf_t *bp)
 	bp->b_cflags = 0;
 	bp->b_oflags = 0;
 	bp->b_objlock = &buffer_lock;
+	bp->b_iodone = NULL;
 	BIO_SETPRIO(bp, BPRIO_DEFAULT);
 }
 
