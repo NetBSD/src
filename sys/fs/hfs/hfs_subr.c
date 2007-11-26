@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_subr.c,v 1.5 2007/10/10 20:42:23 ad Exp $	*/
+/*	$NetBSD: hfs_subr.c,v 1.6 2007/11/26 19:01:45 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */                                     
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hfs_subr.c,v 1.5 2007/10/10 20:42:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hfs_subr.c,v 1.6 2007/11/26 19:01:45 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -196,7 +196,7 @@ hfs_libcb_opendev(
 	
 	/* Open the device node. */
 	if ((result = VOP_OPEN(args->devvp, vol->readonly? FREAD : FREAD|FWRITE,
-		FSCRED, args->l)) != 0)
+		FSCRED)) != 0)
 		goto error;
 
 	/* Flush out any old buffers remaining from a previous use. */
@@ -209,7 +209,7 @@ hfs_libcb_opendev(
 	cbdata->devvp = args->devvp;
 
 	/* Determine the device's block size. Default to DEV_BSIZE if unavailable.*/
-	if (VOP_IOCTL(args->devvp, DIOCGPART, &dpart, FREAD, args->cred, args->l)
+	if (VOP_IOCTL(args->devvp, DIOCGPART, &dpart, FREAD, args->cred)
 		!= 0)
 		cbdata->devblksz = DEV_BSIZE;
 	else
@@ -222,7 +222,7 @@ error:
 		if (cbdata->devvp != NULL) {
 			vn_lock(cbdata->devvp, LK_EXCLUSIVE | LK_RETRY);
 			(void)VOP_CLOSE(cbdata->devvp, vol->readonly ? FREAD :
-				FREAD | FWRITE, NOCRED, args->l);
+				FREAD | FWRITE, NOCRED);
 			VOP_UNLOCK(cbdata->devvp, 0);
 		}
 		free(cbdata, M_HFSMNT);
@@ -244,8 +244,8 @@ hfs_libcb_closedev(hfs_volume* in_vol, hfs_callback_args* cbargs)
 		devvp = ((hfs_libcb_data*)in_vol->cbdata)->devvp;
 		if (devvp != NULL) {
 			vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-			(void)VOP_CLOSE(devvp, in_vol->readonly ? FREAD : FREAD | FWRITE,
-				NOCRED, ((hfs_libcb_argsclose*)cbargs->closevol)->l);
+			(void)VOP_CLOSE(devvp,
+			    in_vol->readonly ? FREAD : FREAD | FWRITE, NOCRED);
 			/* XXX do we need a VOP_UNLOCK() here? */
 		}
 

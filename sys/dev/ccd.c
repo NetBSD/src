@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.123 2007/10/08 16:41:10 ad Exp $	*/
+/*	$NetBSD: ccd.c,v 1.124 2007/11/26 19:01:34 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2007 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.123 2007/10/08 16:41:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.124 2007/11/26 19:01:34 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -325,7 +325,7 @@ ccdinit(struct ccd_softc *cs, char **cpaths, struct vnode **vpp,
 		/*
 		 * XXX: Cache the component's dev_t.
 		 */
-		if ((error = VOP_GETATTR(vpp[ix], &va, l->l_cred, l)) != 0) {
+		if ((error = VOP_GETATTR(vpp[ix], &va, l->l_cred)) != 0) {
 #ifdef DEBUG
 			if (ccddebug & (CCDB_FOLLOW|CCDB_INIT))
 				printf("%s: %s: getattr failed %s = %d\n",
@@ -340,7 +340,7 @@ ccdinit(struct ccd_softc *cs, char **cpaths, struct vnode **vpp,
 		 * Get partition information for the component.
 		 */
 		error = VOP_IOCTL(vpp[ix], DIOCGPART, &dpart,
-		    FREAD, l->l_cred, l);
+		    FREAD, l->l_cred);
 		if (error) {
 #ifdef DEBUG
 			if (ccddebug & (CCDB_FOLLOW|CCDB_INIT))
@@ -1228,7 +1228,7 @@ ccdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		 */
 		for (error = 0, i = 0; i < cs->sc_nccdisks; i++) {
 			j = VOP_IOCTL(cs->sc_cinfo[i].ci_vp, cmd, data,
-				      flag, uc, l);
+				      flag, uc);
 			if (j != 0 && error == 0)
 				error = j;
 		}

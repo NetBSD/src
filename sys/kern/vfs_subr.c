@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.305 2007/11/04 17:31:16 pooka Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.306 2007/11/26 19:02:07 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.305 2007/11/04 17:31:16 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.306 2007/11/26 19:02:07 pooka Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -710,7 +710,6 @@ vget(struct vnode *vp, int flags)
 void
 vput(struct vnode *vp)
 {
-	struct lwp *l = curlwp;		/* XXX */
 
 #ifdef DIAGNOSTIC
 	if (vp == NULL)
@@ -745,7 +744,7 @@ vput(struct vnode *vp)
 	vp->v_iflag &= ~(VI_TEXT|VI_EXECMAP|VI_WRMAP|VI_MAPPED);
 	vp->v_vflag &= ~VV_MAPPED;
 	simple_unlock(&vp->v_interlock);
-	VOP_INACTIVE(vp, l);
+	VOP_INACTIVE(vp);
 }
 
 /*
@@ -755,7 +754,6 @@ vput(struct vnode *vp)
 static void
 do_vrele(struct vnode *vp, int doinactive, int onhead)
 {
-	struct lwp *l = curlwp;		/* XXX */
 
 #ifdef DIAGNOSTIC
 	if (vp == NULL)
@@ -795,7 +793,7 @@ do_vrele(struct vnode *vp, int doinactive, int onhead)
 
 	if (doinactive) {
 		if (vn_lock(vp, LK_EXCLUSIVE | LK_INTERLOCK) == 0)
-			VOP_INACTIVE(vp, l);
+			VOP_INACTIVE(vp);
 	} else {
 		simple_unlock(&vp->v_interlock);
 	}
@@ -1069,7 +1067,7 @@ vclean(struct vnode *vp, int flags, struct lwp *l)
 		KASSERT((vp->v_iflag & VI_ONWORKLST) == 0);
 
 		if (active)
-			VOP_CLOSE(vp, FNONBLOCK, NOCRED, NULL);
+			VOP_CLOSE(vp, FNONBLOCK, NOCRED);
 
 		if ((vp->v_type == VBLK || vp->v_type == VCHR) &&
 		    vp->v_specinfo != 0) {
@@ -1118,7 +1116,7 @@ vclean(struct vnode *vp, int flags, struct lwp *l)
 	 * VOP_INACTIVE will unlock the vnode.
 	 */
 	if (active) {
-		VOP_INACTIVE(vp, l);
+		VOP_INACTIVE(vp);
 	} else {
 		/*
 		 * Any other processes trying to obtain this lock must first
@@ -1129,7 +1127,7 @@ vclean(struct vnode *vp, int flags, struct lwp *l)
 	/*
 	 * Reclaim the vnode.
 	 */
-	if (VOP_RECLAIM(vp, l))
+	if (VOP_RECLAIM(vp))
 		panic("vclean: cannot reclaim, vp %p", vp);
 	if (active) {
 		/*
@@ -1675,7 +1673,7 @@ vfs_mountroot(void)
 			panic("vfs_mountroot: rootdev not set for DV_DISK");
 	        if (bdevvp(rootdev, &rootvp))
 	                panic("vfs_mountroot: can't get vnode for rootdev");
-		error = VOP_OPEN(rootvp, FREAD, FSCRED, curlwp);
+		error = VOP_OPEN(rootvp, FREAD, FSCRED);
 		if (error) {
 			printf("vfs_mountroot: can't open root device\n");
 			return (error);
@@ -1729,7 +1727,7 @@ vfs_mountroot(void)
 
 done:
 	if (error && device_class(root_device) == DV_DISK) {
-		VOP_CLOSE(rootvp, FREAD, FSCRED, curlwp);
+		VOP_CLOSE(rootvp, FREAD, FSCRED);
 		vrele(rootvp);
 	}
 	return (error);

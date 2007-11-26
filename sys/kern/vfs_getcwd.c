@@ -1,4 +1,4 @@
-/* $NetBSD: vfs_getcwd.c,v 1.37 2007/10/10 20:42:26 ad Exp $ */
+/* $NetBSD: vfs_getcwd.c,v 1.38 2007/11/26 19:02:06 pooka Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_getcwd.c,v 1.37 2007/10/10 20:42:26 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_getcwd.c,v 1.38 2007/11/26 19:02:06 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,7 +119,7 @@ getcwd_scandir(struct vnode **lvpp, struct vnode **uvpp, char **bpp,
 	 * current directory is still locked.
 	 */
 	if (bufp != NULL) {
-		error = VOP_GETATTR(lvp, &va, cred, l);
+		error = VOP_GETATTR(lvp, &va, cred);
 		if (error) {
 			vput(lvp);
 			*lvpp = NULL;
@@ -392,7 +392,7 @@ getcwd_common(struct vnode *lvp, struct vnode *rvp, char **bpp, char *bufp,
 		 * whether or not caller cares.
 		 */
 		if (flags & GETCWD_CHECK_ACCESS) {
-			error = VOP_ACCESS(lvp, perms, cred, l);
+			error = VOP_ACCESS(lvp, perms, cred);
 			if (error)
 				goto out;
 			perms = VEXEC|VREAD;

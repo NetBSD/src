@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.49 2007/10/10 20:42:22 ad Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.50 2007/11/26 19:01:42 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.49 2007/10/10 20:42:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.50 2007/11/26 19:01:42 pooka Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -92,7 +92,7 @@ struct vfsops cd9660_vfsops = {
 	cd9660_start,
 	cd9660_unmount,
 	cd9660_root,
-	cd9660_quotactl,
+	(void *)eopnotsupp,
 	cd9660_statvfs,
 	cd9660_sync,
 	cd9660_vget,
@@ -130,7 +130,7 @@ int
 cd9660_mountroot()
 {
 	struct mount *mp;
-	struct lwp *l = curlwp;	/* XXX */
+	struct lwp *l = curlwp;
 	int error;
 	struct iso_args args;
 
@@ -153,7 +153,7 @@ cd9660_mountroot()
 	mutex_enter(&mountlist_lock);
 	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
 	mutex_exit(&mountlist_lock);
-	(void)cd9660_statvfs(mp, &mp->mnt_stat, l);
+	(void)cd9660_statvfs(mp, &mp->mnt_stat);
 	vfs_unbusy(mp);
 	return (0);
 }
@@ -164,13 +164,13 @@ cd9660_mountroot()
  * mount system call
  */
 int
-cd9660_mount(mp, path, data, data_len, l)
+cd9660_mount(mp, path, data, data_len)
 	struct mount *mp;
 	const char *path;
 	void *data;
 	size_t *data_len;
-	struct lwp *l;
 {
+	struct lwp *l = curlwp;
 	struct nameidata nd;
 	struct vnode *devvp;
 	struct iso_args *args = data;
@@ -218,7 +218,7 @@ cd9660_mount(mp, path, data, data_len, l)
 	 */
 	if (kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER, NULL) != 0) {
 		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-		error = VOP_ACCESS(devvp, VREAD, l->l_cred, l);
+		error = VOP_ACCESS(devvp, VREAD, l->l_cred);
 		VOP_UNLOCK(devvp, 0);
 		if (error) {
 			vrele(devvp);
@@ -239,13 +239,13 @@ cd9660_mount(mp, path, data, data_len, l)
 			error = EBUSY;
 			goto fail;
 		}
-		error = VOP_OPEN(devvp, FREAD, FSCRED, l);
+		error = VOP_OPEN(devvp, FREAD, FSCRED);
 		if (error)
 			goto fail;
 		error = iso_mountfs(devvp, mp, l, args);
 		if (error) {
 			vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-			(void)VOP_CLOSE(devvp, FREAD, NOCRED, l);
+			(void)VOP_CLOSE(devvp, FREAD, NOCRED);
 			VOP_UNLOCK(devvp, 0);
 			goto fail;
 		}
@@ -340,14 +340,14 @@ iso_mountfs(devvp, mp, l, argp)
 	 */
 	iso_bsize = ISO_DEFAULT_BLOCK_SIZE;
 
-	error = VOP_IOCTL(devvp, DIOCGDINFO, &label, FREAD, FSCRED, l);
+	error = VOP_IOCTL(devvp, DIOCGDINFO, &label, FREAD, FSCRED);
 	if (!error &&
 	    label.d_partitions[DISKPART(dev)].p_fstype == FS_ISO9660) {
 		/* XXX more sanity checks? */
 		sess = label.d_partitions[DISKPART(dev)].p_cdsession;
 	} else {
 		/* fallback to old method */
-		error = VOP_IOCTL(devvp, CDIOREADMSADDR, &sess, 0, FSCRED, l);
+		error = VOP_IOCTL(devvp, CDIOREADMSADDR, &sess, 0, FSCRED);
 		if (error)
 			sess = 0;	/* never mind */
 	}
@@ -516,8 +516,7 @@ out:
  */
 /* ARGSUSED */
 int
-cd9660_start(struct mount *mp, int flags,
-    struct lwp *l)
+cd9660_start(struct mount *mp, int flags)
 {
 	return 0;
 }
@@ -526,10 +525,9 @@ cd9660_start(struct mount *mp, int flags,
  * unmount system call
  */
 int
-cd9660_unmount(mp, mntflags, l)
+cd9660_unmount(mp, mntflags)
 	struct mount *mp;
 	int mntflags;
-	struct lwp *l;
 {
 	struct iso_mnt *isomp;
 	int error, flags = 0;
@@ -550,7 +548,7 @@ cd9660_unmount(mp, mntflags, l)
 		isomp->im_devvp->v_specmountpoint = NULL;
 
 	vn_lock(isomp->im_devvp, LK_EXCLUSIVE | LK_RETRY);
-	error = VOP_CLOSE(isomp->im_devvp, FREAD, NOCRED, l);
+	error = VOP_CLOSE(isomp->im_devvp, FREAD, NOCRED);
 	vput(isomp->im_devvp);
 	free(isomp, M_ISOFSMNT);
 	mp->mnt_data = NULL;
@@ -580,29 +578,12 @@ cd9660_root(mp, vpp)
 }
 
 /*
- * Do operations associated with quotas, not supported
- */
-/* ARGSUSED */
-int
-cd9660_quotactl(
-    struct mount *mp,
-    int cmd,
-    uid_t uid,
-    void *arg,
-    struct lwp *l)
-{
-
-	return (EOPNOTSUPP);
-}
-
-/*
  * Get file system statistics.
  */
 int
 cd9660_statvfs(
     struct mount *mp,
-    struct statvfs *sbp,
-    struct lwp *l)
+    struct statvfs *sbp)
 {
 	struct iso_mnt *isomp;
 
@@ -630,8 +611,7 @@ int
 cd9660_sync(
     struct mount *mp,
     int waitfor,
-    kauth_cred_t cred,
-    struct lwp *l)
+    kauth_cred_t cred)
 {
 	return (0);
 }

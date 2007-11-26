@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback.c,v 1.27 2007/11/22 16:17:09 bouyer Exp $      */
+/*      $NetBSD: xbdback.c,v 1.28 2007/11/26 19:01:27 pooka Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -556,7 +556,7 @@ xbdback_ctrlif_rx(ctrl_msg_t *msg, unsigned long id)
 			req->status = BLKIF_BE_STATUS_EXTENT_NOT_FOUND;
 			goto end;
 		}
-		error = VOP_OPEN(vbd->vp, FREAD, NOCRED, 0);
+		error = VOP_OPEN(vbd->vp, FREAD, NOCRED);
 		if (error) {
 			printf("xbdback VBD grow domain %d: can't open2 "
 			    "device 0x%x (error %d)\n", xbdi->domid,
@@ -566,7 +566,7 @@ xbdback_ctrlif_rx(ctrl_msg_t *msg, unsigned long id)
 			goto end;
 		}
 		VOP_UNLOCK(vbd->vp, 0);
-		error = VOP_IOCTL(vbd->vp, DIOCGPART, &dpart, FREAD, 0, NULL);
+		error = VOP_IOCTL(vbd->vp, DIOCGPART, &dpart, FREAD, 0);
 		if (error) {
 			printf("xbdback VBD grow domain %d: can't ioctl "
 			    "device 0x%x (error %d)\n", xbdi->domid,
