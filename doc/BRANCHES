@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.220 2007/11/22 16:20:39 bouyer Exp $
+#	$NetBSD: BRANCHES,v 1.221 2007/11/26 19:10:07 ad Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -474,25 +474,19 @@ Notes:		Goals:
 
 		Status by architecture:
 
-		  alpha			partial: pmap.c/trap.c need work
-		  i386			done
-		  amd64			done
-		  mips			partial: !pmax needs work
+		  alpha		partial: need pmap/trap locking changes
+		  i386		done
+		  amd64		done
+		  mips		done
 		  sparc			
 		  sparc64		
 		  arm			
-		  macppc/powerpc	
-		  hppa			
-		  sh3			
+		  powerpc	partial: need pmap/trap locking changes
+		  hppa		done
+		  sh3		done
 		  vax			
-		  m68k			
-
-		Remaining MD work to do:
-
-		- Defer x86 npxsave interrupts to an process context (do
-		  aston() and handle from trap.c).
-
-		- Port other architectures.
+		  m68k		
+		  xen		partial
 
 		Remaining MI work to do:
 
@@ -502,18 +496,13 @@ Notes:		Goals:
 
 		- Check + document locking around fields in struct mount.
 
-		- Check file systems that traverse mountpoint vnode lists.
-		  They need to use marker vnodes. Most already done.
-
-		- Re-write the itimer code to be MP safe and work in the
-		  presence of threaded soft interrupts.
-
 		- Check aliased vnode handling. There may be problems.
+
+		- Check layered file systems, LFS.
 
 		Remaining problems:
 
-		- tmpfs_rmdir occasionally leaks tmpfs_nodes. This could be
-		  an old problem but either way it needs to be fixed.
+		- tmpfs_rmdir occasionally leaks tmpfs_nodes.
 
 		- UVM_FLAG_TRYLOCK is not sufficient in uvm_km.c because
 		  allocations will fail too often. It's needed for !kmem_map
@@ -522,11 +511,9 @@ Notes:		Goals:
 		  wait long term even if they are trying to make a NOWAIT
 		  allocation.
 
-		- ffs+snapshots needs testing.
+		- ext2fs dup alloc.
 
-		- LFS port has been fudged and it's probably borked.
-
-		- ext2fs panic on unmount.
+		- Unmount erroneously reports busy sometimes. Why?
 
 Branch:		yamt-lazymbuf
 Description:	implement and evaluate lazy mapping of mbuf external data pages
