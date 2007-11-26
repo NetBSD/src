@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_compat.c,v 1.98 2007/11/25 00:35:26 elad Exp $	*/
+/*	$NetBSD: hpux_compat.c,v 1.99 2007/11/26 23:16:15 he Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.98 2007/11/25 00:35:26 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.99 2007/11/26 23:16:15 he Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -1120,7 +1120,6 @@ hpux_sys_stime_6x(struct lwp *l, void *v, register_t *retval)
 	} */ *uap = v;
 	struct timeval tv;
 	struct timespec ts;
-	int error;
 
 	tv.tv_sec = SCARG(uap, time);
 	tv.tv_usec = 0;
