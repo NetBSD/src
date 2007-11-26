@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.90 2007/11/26 23:52:40 dyoung Exp $	*/
+/*	$NetBSD: ath.c,v 1.91 2007/11/26 23:54:48 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.104 2005/09/16 10:09:23 ru Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.90 2007/11/26 23:52:40 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.91 2007/11/26 23:54:48 dyoung Exp $");
 #endif
 
 /*
@@ -4183,7 +4183,6 @@ ath_tx_proc_q0123(void *arg, int npending)
 	if (nacked) {
 		sc->sc_lastrx = ath_hal_gettsf64(sc->sc_ah);
 	}
-	ath_tx_processq(sc, sc->sc_cabq);
 
 	if (sc->sc_softled)
 		ath_led_event(sc, ATH_LED_TX);
