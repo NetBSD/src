@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.368 2007/11/25 09:46:49 xtraeme Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.369 2007/11/26 21:24:54 xtraeme Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -10609,9 +10609,9 @@ share/man/man4/sk.4				1.11
 	tell about 88E8055 support
 	[manu, ticket #991]
 
-sys/dev/scsipi/st.c				1.199 (patch)
-sys/dev/scsipi/st.c				1.200 (patch)
-sys/dev/scsipi/st.c				1.201 (patch)
+sys/dev/scsipi/st.c				1.199 patch
+sys/dev/scsipi/st.c				1.200 patch
+sys/dev/scsipi/st.c				1.201 patch
 
 	Properly set b_resid in an error case.
 	Clamp b_resid to b_bcount in case the info field is larger. Fix a KASSERT
@@ -10642,4 +10642,9 @@ sys/ufs/lfs/lfs_vnops.c				1.208 patch
 	Move the "vp = NULL" assignment after the code that requires vp != NULL.
 	Reported by Chris Ross on current-users.
 	[christos, ticket #994]
+
+usr.sbin/postinstall/postinstall		1.55 patch
+
+	PR/35238 - tls@ -- add _proxy to uid and gid checks
+	[jnemeth, ticket #995]
 
