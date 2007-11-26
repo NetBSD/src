@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.244 2007/11/26 08:15:19 yamt Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.245 2007/11/26 08:20:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.244 2007/11/26 08:15:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.245 2007/11/26 08:20:46 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -2658,6 +2658,9 @@ uvm_map_extract(struct vm_map *srcmap, vaddr_t start, vsize_t len,
 			newentry->aref.ar_pageoff = 0;
 		}
 		newentry->advice = entry->advice;
+		if ((flags & UVM_EXTRACT_QREF) != 0) {
+			newentry->flags |= UVM_MAP_NOMERGE;
+		}
 
 		/* now link it on the chain */
 		nchain++;
