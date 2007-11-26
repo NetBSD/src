@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.89 2007/11/26 23:49:55 dyoung Exp $	*/
+/*	$NetBSD: ath.c,v 1.90 2007/11/26 23:52:40 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.104 2005/09/16 10:09:23 ru Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.89 2007/11/26 23:49:55 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.90 2007/11/26 23:52:40 dyoung Exp $");
 #endif
 
 /*
@@ -3438,9 +3438,8 @@ again:
 		n = m->m_next;
 		if (n == NULL)
 			break;
-		if ((m->m_flags & M_RDONLY) == 0 &&
-		    n->m_len < M_TRAILINGSPACE(m)) {
-			bcopy(mtod(n, void *), mtod(m, char *) + m->m_len,
+		if (n->m_len < M_TRAILINGSPACE(m)) {
+			memcpy(mtod(m, char *) + m->m_len, mtod(n, void *),
 				n->m_len);
 			m->m_len += n->m_len;
 			m->m_next = n->m_next;
