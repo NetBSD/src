@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_sbdio.c,v 1.6 2007/11/09 00:05:04 ad Exp $	*/
+/*	$NetBSD: zs_sbdio.c,v 1.7 2007/11/26 23:29:37 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2005 The NetBSD Foundation, Inc.
@@ -44,13 +44,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_sbdio.c,v 1.6 2007/11/09 00:05:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_sbdio.c,v 1.7 2007/11/26 23:29:37 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/tty.h>
 #include <sys/conf.h>
+#include <sys/intr.h>
 
 #include <dev/cons.h>
 #include <dev/ic/z8530reg.h>
@@ -189,7 +190,7 @@ zs_sbdio_attach(struct device *parent, struct device *self, void *aux)
 		}
 	}
 
-	zsc->zsc_si = softintr_establish(IPL_SOFTSERIAL,
+	zsc->zsc_si = softint_establish(SOFTINT_SERIAL,
 	    (void (*)(void *))zsc_intr_soft, zsc);
 	intr_establish(sa->sa_irq, zshard, zsc);
 

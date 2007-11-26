@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_ap.c,v 1.22 2007/11/09 00:05:05 ad Exp $	*/
+/*	$NetBSD: zs_ap.c,v 1.23 2007/11/26 23:29:36 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,16 +45,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_ap.c,v 1.22 2007/11/09 00:05:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_ap.c,v 1.23 2007/11/26 23:29:36 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/tty.h>
 #include <sys/conf.h>
+#include <sys/cpu.h>
+#include <sys/intr.h>
 
 #include <machine/adrsmap.h>
-#include <machine/cpu.h>
 #include <machine/z8530var.h>
 
 #include <dev/cons.h>
@@ -307,7 +308,7 @@ zs_ap_attach(struct device *parent, struct device *self, void *aux)
 	if (!didintr) {
 		didintr = 1;
 
-		zsc->zsc_si = softintr_establish(IPL_SOFTSERIAL, zssoft, zsc);
+		zsc->zsc_si = softint_establish(SOFTINT_SERIAL, zssoft, zsc);
 		apbus_intr_establish(1, /* interrupt level ( 0 or 1 ) */
 				     NEWS5000_INT1_SCC,
 				     0, /* priority */
