@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.369 2007/11/26 21:24:54 xtraeme Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.370 2007/11/26 21:27:59 xtraeme Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -10647,4 +10647,9 @@ usr.sbin/postinstall/postinstall		1.55 patch
 
 	PR/35238 - tls@ -- add _proxy to uid and gid checks
 	[jnemeth, ticket #995]
+
+sys/arch/amd64/conf/INSTALL			1.74
+
+	PR/37404 - Rui-Xiang Guo -- sync phy list with GENERIC
+	[jnemeth, ticket #996]
 
