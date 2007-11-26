@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.114 2007/11/11 23:22:23 matt Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.115 2007/11/26 11:48:55 yamt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.114 2007/11/11 23:22:23 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.115 2007/11/26 11:48:55 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -559,7 +559,8 @@ free(void *addr, struct malloc_type *ksp)
 	size = 1 << kup->ku_indx;
 	kbp = &kmembuckets[kup->ku_indx];
 
-	LOCKDEBUG_MEM_CHECK(addr, size);
+	LOCKDEBUG_MEM_CHECK(addr,
+	    size <= MAXALLOCSAVE ? size : ctob(kup->ku_pagecnt));
 
 	mutex_spin_enter(&malloc_lock);
 #ifdef MALLOCLOG
