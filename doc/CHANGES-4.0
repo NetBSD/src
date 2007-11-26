@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.370 2007/11/26 21:27:59 xtraeme Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.371 2007/11/26 21:36:03 xtraeme Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -10652,4 +10652,12 @@ sys/arch/amd64/conf/INSTALL			1.74
 
 	PR/37404 - Rui-Xiang Guo -- sync phy list with GENERIC
 	[jnemeth, ticket #996]
+
+sys/arch/amd64/conf/GENERIC			1.176 patch
+sys/arch/i386/conf/GENERIC			1.863
+
+	comment out com*/lpt* at acpi? as they cause these ports to move from
+	their traditional location and imminent changes in -current will cause
+	them to move back
+	[jnemeth, ticket #998]
 
