@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs_data.h,v 1.918 2007/11/24 01:45:38 markd Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.919 2007/11/26 09:36:29 bjs Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -4540,6 +4540,10 @@ static const struct pci_product pci_products[] = {
 	    "Radeon X800SE (R423) UK",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_R430_554F,
+	    "Radeon X800 GTO (R430) 554F",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_R423_UQ,
 	    "FireGL V7200 (R423) UQ",
 	},
@@ -4550,6 +4554,10 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_R423_UT,
 	    "FireGL V7100 (R423) UT",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_R430_556F,
+	    "Radeon X800 GTO (R430) Secondary",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_VT,
@@ -13952,4 +13960,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2889;
+const int pci_nproducts = 2891;
