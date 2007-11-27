@@ -1,4 +1,4 @@
-#	$NetBSD: files.macppc,v 1.84.10.4 2007/11/21 21:53:21 joerg Exp $
+#	$NetBSD: files.macppc,v 1.84.10.5 2007/11/27 19:35:42 joerg Exp $
 #
 # macppc-specific configuration info
 
@@ -18,7 +18,7 @@ file arch/macppc/macppc/interrupts.c
 file arch/powerpc/oea/ofwoea_machdep.c
 file arch/powerpc/oea/ofw_consinit.c
 file arch/macppc/macppc/machdep.c
-file arch/macppc/dev/ofb_cons.c
+file arch/powerpc/oea/ofw_rascons.c
 file arch/macppc/dev/dbdma.c
 
 # interrupt controllers

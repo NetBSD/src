@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.12.6.4 2007/11/14 02:19:30 joerg Exp $ */
+/*	$NetBSD: apm.c,v 1.12.6.5 2007/11/27 19:37:00 joerg Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.12.6.4 2007/11/14 02:19:30 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.12.6.5 2007/11/27 19:37:00 joerg Exp $");
 
 #include "opt_apm.h"
 
@@ -631,9 +631,7 @@ apm_match(void)
 void
 apm_attach(struct apm_softc *sc)
 {
-	struct apm_power_info pinfo;
 	u_int numbatts, capflags;
-	int error;
 
 	aprint_normal(": ");
 
@@ -661,13 +659,6 @@ apm_attach(struct apm_softc *sc)
 	 */
 	(*sc->sc_ops->aa_enable)(sc->sc_cookie, 1);
 
-	error = (*sc->sc_ops->aa_get_powstat)(sc->sc_cookie, 0, &pinfo);
-	if (error == 0) {
-#ifdef APM_POWER_PRINT
-		apm_power_print(sc, &pinfo);
-#endif
-	} else
-		apm_perror("get power status", error);
 	if (sc->sc_ops->aa_cpu_busy)
 		(*sc->sc_ops->aa_cpu_busy)(sc->sc_cookie);
 

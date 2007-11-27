@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.91.4.2 2007/10/26 15:49:38 joerg Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.91.4.3 2007/11/27 19:39:30 joerg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.91.4.2 2007/10/26 15:49:38 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.91.4.3 2007/11/27 19:39:30 joerg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -154,7 +154,7 @@ ufs_lookup(void *v)
 	/*
 	 * Check accessiblity of directory.
 	 */
-	if ((error = VOP_ACCESS(vdp, VEXEC, cred, cnp->cn_lwp)) != 0)
+	if ((error = VOP_ACCESS(vdp, VEXEC, cred)) != 0)
 		return (error);
 
 	if ((flags & ISLASTCN) && (vdp->v_mount->mnt_flag & MNT_RDONLY) &&
@@ -425,7 +425,7 @@ notfound:
 		 * Access for write is interpreted as allowing
 		 * creation of files in the directory.
 		 */
-		error = VOP_ACCESS(vdp, VWRITE, cred, cnp->cn_lwp);
+		error = VOP_ACCESS(vdp, VWRITE, cred);
 		if (error)
 			goto out;
 		/*
@@ -514,7 +514,7 @@ found:
 		/*
 		 * Write access to directory required to delete files.
 		 */
-		error = VOP_ACCESS(vdp, VWRITE, cred, cnp->cn_lwp);
+		error = VOP_ACCESS(vdp, VWRITE, cred);
 		if (error)
 			goto out;
 		/*
@@ -567,7 +567,7 @@ found:
 	 * regular file, or empty directory.
 	 */
 	if (nameiop == RENAME && (flags & ISLASTCN)) {
-		error = VOP_ACCESS(vdp, VWRITE, cred, cnp->cn_lwp);
+		error = VOP_ACCESS(vdp, VWRITE, cred);
 		if (error)
 			goto out;
 		/*
@@ -847,7 +847,7 @@ ufs_direnter(struct vnode *dvp, struct vnode *tvp, struct direct *dirp,
 				return (error);
 			if (tvp != NULL)
 				VOP_UNLOCK(tvp, 0);
-			error = VOP_FSYNC(dvp, l->l_cred, FSYNC_WAIT, 0, 0, l);
+			error = VOP_FSYNC(dvp, l->l_cred, FSYNC_WAIT, 0, 0);
 			if (tvp != 0)
 				vn_lock(tvp, LK_EXCLUSIVE | LK_RETRY);
 			return (error);

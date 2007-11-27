@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_fcntl.c,v 1.28 2007/05/13 08:38:34 dsl Exp $	*/
+/*	$NetBSD: ibcs2_fcntl.c,v 1.28.6.1 2007/11/27 19:36:43 joerg Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Bartram
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_fcntl.c,v 1.28 2007/05/13 08:38:34 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_fcntl.c,v 1.28.6.1 2007/11/27 19:36:43 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -257,7 +257,7 @@ ibcs2_sys_eaccess(struct lwp *l, void *v, register_t *retval)
                 if (SCARG(uap, flags) & IBCS2_X_OK)
 			flags |= VEXEC;
                 if ((flags & VWRITE) == 0 || (error = vn_writechk(vp)) == 0)
-                        error = VOP_ACCESS(vp, flags, l->l_cred, l);
+                        error = VOP_ACCESS(vp, flags, l->l_cred);
         }
         vput(vp);
         return error;

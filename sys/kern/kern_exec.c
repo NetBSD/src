@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.246.4.6 2007/11/14 19:04:39 joerg Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.246.4.7 2007/11/27 19:38:02 joerg Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.246.4.6 2007/11/14 19:04:39 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.246.4.7 2007/11/27 19:38:02 joerg Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -254,11 +254,11 @@ check_exec(struct lwp *l, struct exec_package *epp)
 		error = EACCES;
 		goto bad1;
 	}
-	if ((error = VOP_ACCESS(vp, VEXEC, l->l_cred, l)) != 0)
+	if ((error = VOP_ACCESS(vp, VEXEC, l->l_cred)) != 0)
 		goto bad1;
 
 	/* get attributes */
-	if ((error = VOP_GETATTR(vp, epp->ep_vap, l->l_cred, l)) != 0)
+	if ((error = VOP_GETATTR(vp, epp->ep_vap, l->l_cred)) != 0)
 		goto bad1;
 
 	/* Check mount point */
@@ -270,7 +270,7 @@ check_exec(struct lwp *l, struct exec_package *epp)
 		epp->ep_vap->va_mode &= ~(S_ISUID | S_ISGID);
 
 	/* try to open it */
-	if ((error = VOP_OPEN(vp, FREAD, l->l_cred, l)) != 0)
+	if ((error = VOP_OPEN(vp, FREAD, l->l_cred)) != 0)
 		goto bad1;
 
 	/* unlock vp, since we need it unlocked from here on out. */
@@ -365,7 +365,7 @@ bad2:
 	 * pathname buf, and punt.
 	 */
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-	VOP_CLOSE(vp, FREAD, l->l_cred, l);
+	VOP_CLOSE(vp, FREAD, l->l_cred);
 	vput(vp);
 	PNBUF_PUT(ndp->ni_cnd.cn_pnbuf);
 	return error;
@@ -700,7 +700,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	kill_vmcmds(&pack.ep_vmcmds);
 
 	vn_lock(pack.ep_vp, LK_EXCLUSIVE | LK_RETRY);
-	VOP_CLOSE(pack.ep_vp, FREAD, l->l_cred, l);
+	VOP_CLOSE(pack.ep_vp, FREAD, l->l_cred);
 	vput(pack.ep_vp);
 
 	/* if an error happened, deallocate and punt */
@@ -1008,7 +1008,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	}
 	/* close and put the exec'd file */
 	vn_lock(pack.ep_vp, LK_EXCLUSIVE | LK_RETRY);
-	VOP_CLOSE(pack.ep_vp, FREAD, l->l_cred, l);
+	VOP_CLOSE(pack.ep_vp, FREAD, l->l_cred);
 	vput(pack.ep_vp);
 	PNBUF_PUT(nid.ni_cnd.cn_pnbuf);
 	uvm_km_free(exec_map, (vaddr_t) argp, NCARGS, UVM_KMF_PAGEABLE);

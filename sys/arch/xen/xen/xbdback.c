@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback.c,v 1.25 2007/07/29 12:15:42 ad Exp $      */
+/*      $NetBSD: xbdback.c,v 1.25.4.1 2007/11/27 19:36:30 joerg Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -44,11 +44,11 @@
 #include <sys/kauth.h>
 
 #include <machine/pmap.h>
-#include <machine/hypervisor.h>
-#include <machine/xen.h>
-#include <machine/evtchn.h>
-#include <machine/ctrl_if.h>
-#include <machine/xen_shm.h>
+#include <xen/hypervisor.h>
+#include <xen/xen.h>
+#include <xen/evtchn.h>
+#include <xen/ctrl_if.h>
+#include <xen/xen_shm.h>
 
 #ifdef XENDEBUG_VBD
 #define XENPRINTF(x) printf x
@@ -556,7 +556,7 @@ xbdback_ctrlif_rx(ctrl_msg_t *msg, unsigned long id)
 			req->status = BLKIF_BE_STATUS_EXTENT_NOT_FOUND;
 			goto end;
 		}
-		error = VOP_OPEN(vbd->vp, FREAD, NOCRED, 0);
+		error = VOP_OPEN(vbd->vp, FREAD, NOCRED);
 		if (error) {
 			printf("xbdback VBD grow domain %d: can't open2 "
 			    "device 0x%x (error %d)\n", xbdi->domid,
@@ -566,7 +566,7 @@ xbdback_ctrlif_rx(ctrl_msg_t *msg, unsigned long id)
 			goto end;
 		}
 		VOP_UNLOCK(vbd->vp, 0);
-		error = VOP_IOCTL(vbd->vp, DIOCGPART, &dpart, FREAD, 0, NULL);
+		error = VOP_IOCTL(vbd->vp, DIOCGPART, &dpart, FREAD, 0);
 		if (error) {
 			printf("xbdback VBD grow domain %d: can't ioctl "
 			    "device 0x%x (error %d)\n", xbdi->domid,

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_inode.c,v 1.59.6.1 2007/10/26 15:49:26 joerg Exp $	*/
+/*	$NetBSD: ext2fs_inode.c,v 1.59.6.2 2007/11/27 19:39:18 joerg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.59.6.1 2007/10/26 15:49:26 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.59.6.2 2007/11/27 19:39:18 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -141,11 +141,9 @@ ext2fs_inactive(void *v)
 {
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
-		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct inode *ip = VTOI(vp);
-	struct lwp *l = ap->a_l;
 	int error = 0;
 
 	if (prtactive && vp->v_usecount != 0)
@@ -173,7 +171,7 @@ out:
 	 * so that it can be reused immediately.
 	 */
 	if (ip->i_e2fs_dtime != 0)
-		vrecycle(vp, NULL, l);
+		vrecycle(vp, NULL, curlwp);
 	return (error);
 }
 

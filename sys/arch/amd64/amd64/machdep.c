@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.60.8.11 2007/11/21 21:52:59 joerg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.60.8.12 2007/11/27 19:35:26 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007
@@ -38,6 +38,53 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Copyright (c) 2006 Mathieu Ropert <mro@adviseo.fr>
+ *
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
+
+/*
+ * Copyright (c) 2007 Manuel Bouyer.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed by Manuel Bouyer.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ */
+
+
 /*-
  * Copyright (c) 1982, 1987, 1990 The Regents of the University of California.
  * All rights reserved.
@@ -73,7 +120,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.60.8.11 2007/11/21 21:52:59 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.60.8.12 2007/11/27 19:35:26 joerg Exp $");
+
+/* #define XENDEBUG_LOW  */
 
 #include "opt_user_ldt.h"
 #include "opt_ddb.h"
@@ -86,6 +135,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.60.8.11 2007/11/21 21:52:59 joerg Exp 
 #include "opt_lockdebug.h"
 #include "opt_mtrr.h"
 #include "opt_realmem.h"
+#include "opt_xen.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -140,9 +190,17 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.60.8.11 2007/11/21 21:52:59 joerg Exp 
 #include <machine/isa_machdep.h>
 #include <dev/ic/i8042reg.h>
 
+#ifdef XEN
+#include <xen/xen.h>
+#include <xen/hypervisor.h>
+#include <xen/evtchn.h>
+#endif
+
 #ifdef DDB
 #include <machine/db_machdep.h>
 #include <ddb/db_extern.h>
+#include <ddb/db_output.h>
+#include <ddb/db_interface.h>
 #endif
 
 #include "acpi.h"
@@ -210,9 +268,19 @@ struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
 extern	paddr_t avail_start, avail_end;
+#ifdef XEN
+extern  vaddr_t first_bt_vaddr;
+extern  paddr_t pmap_pa_start, pmap_pa_end;
+#endif
 
+#ifndef XEN
 void (*delay_func)(unsigned int) = i8254_delay;
 void (*initclock_func)(void) = i8254_initclocks;
+#else /* XEN */
+void (*delay_func)(unsigned int) = xen_delay;
+void (*initclock_func)(void) = xen_initclocks;
+#endif
+
 
 #ifdef MTRR
 struct mtrr_funcs *mtrr_funcs;
@@ -304,12 +372,44 @@ cpu_startup(void)
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
 
+#if !defined(XEN) || defined(DOM0OPS)
 	/* Safe for i/o port / memory space allocation to use malloc now. */
 	x86_bus_space_mallocok();
+#endif
 
 	gdt_init();
 	x86_64_proc0_tss_ldt_init();
 }
+
+#ifdef XEN
+/* used in assembly */
+void hypervisor_callback(void);
+void failsafe_callback(void);
+void x86_64_switch_context(struct pcb *);
+
+void
+x86_64_switch_context(struct pcb *new)
+{
+	struct cpu_info *ci;
+	ci = curcpu();
+	if (/* XXX ! ci->ci_fpused */ 1) {
+		HYPERVISOR_fpu_taskswitch(0);
+		/* XXX ci->ci_fpused = 0; */
+	}
+	HYPERVISOR_stack_switch(GSEL(GDATA_SEL, SEL_KPL), new->pcb_tss.tss_rsp0);
+	if (xen_start_info.flags & SIF_PRIVILEGED) {
+		struct physdev_op physop;
+		physop.cmd = PHYSDEVOP_SET_IOPL;
+		if ((new->pcb_tss.tss_iobase & SEL_RPL) == 0)
+			physop.u.set_iopl.iopl = 1;
+		else
+			physop.u.set_iopl.iopl =
+			    (new->pcb_tss.tss_iobase & SEL_RPL);
+		HYPERVISOR_physdev_op(&physop);
+	}
+}
+
+#endif
 
 /*
  * Set up proc0's TSS and LDT.
@@ -342,9 +442,17 @@ x86_64_proc0_tss_ldt_init(void)
 	l->l_md.md_regs = (struct trapframe *)pcb->pcb_tss.tss_rsp0 - 1;
 	l->l_md.md_tss_sel = tss_alloc(pcb);
 
+#ifndef XEN
 	ltr(l->l_md.md_tss_sel);
 	lldt(pcb->pcb_ldt_sel);
+#else
+	xen_set_ldt((vaddr_t) ldtstore, LDT_SIZE >> 3);
+	/* Reset TS bit and set kernel stack for interrupt handlers */
+	HYPERVISOR_fpu_taskswitch(0);
+	HYPERVISOR_stack_switch(GSEL(GDATA_SEL, SEL_KPL), pcb->pcb_tss.tss_rsp0);
+#endif /* XEN */
 }
+
 
 /*  
  * machine dependent system variables.
@@ -544,11 +652,15 @@ haltsys:
 	doshutdownhooks();
 
         if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
+#ifndef XEN
 #if NACPI > 0
 		delay(500000);
 		acpi_enter_sleep_state(acpi_softc, ACPI_STATE_S5);
 		printf("WARNING: powerdown failed!\n");
 #endif
+#else /* XEN */
+		HYPERVISOR_shutdown();
+#endif /* XEN */
 	}
 
 #ifdef MULTIPROCESSOR
@@ -888,7 +1000,12 @@ setregs(struct lwp *l, struct exec_package *pack, u_long stack)
  * Initialize segments and descriptor tables
  */
 
+#ifndef XEN
 struct gate_descriptor *idt;
+#else
+struct trap_info *idt;
+int xen_idt_idx;
+#endif
 char idt_allocmap[NIDT];
 struct simplelock idt_lock = SIMPLELOCK_INITIALIZER;
 char *ldtstore;
@@ -970,10 +1087,15 @@ set_sys_segment(struct sys_segment_descriptor *sd, void *base, size_t limit,
 void
 cpu_init_idt(void)
 {
+#ifndef XEN
 	struct region_descriptor region;
 
 	setregion(&region, idt, NIDT * sizeof(idt[0]) - 1);
 	lidt(&region); 
+#else
+	if (HYPERVISOR_set_trap_table(idt))
+		panic("HYPERVISOR_set_trap_table() failed");
+#endif
 }
 
 
@@ -1053,13 +1175,16 @@ init_x86_64_ksyms(void)
 #if NKSYMS || defined(DDB) || defined(LKM)
 	extern int end;
 	extern int *esym;
+#ifndef XEN
 	struct btinfo_symtab *symtab;
 	vaddr_t tssym, tesym;
+#endif
 
 #ifdef DDB
 	db_machine_init();
 #endif
 
+#ifndef XEN
 	symtab = lookup_bootinfo(BTINFO_SYMTAB);
 	if (symtab) {
 		tssym = (vaddr_t)symtab->ssym + KERNBASE;
@@ -1068,6 +1193,13 @@ init_x86_64_ksyms(void)
 	} else
 		ksyms_init(*(long *)(void *)&end,
 		    ((long *)(void *)&end) + 1, esym);
+#else  /* XEN */
+	esym = xen_start_info.mod_start ?
+	    (void *)xen_start_info.mod_start :
+	    (void *)xen_start_info.mfn_list;
+	ksyms_init(*(int *)(void *)&end,
+	    ((int *)(void *)&end) + 1, esym);
+#endif /* XEN */
 #endif
 }
 
@@ -1075,22 +1207,39 @@ void
 init_x86_64(paddr_t first_avail)
 {
 	extern void consinit(void);
-	extern struct extent *iomem_ex;
 	struct region_descriptor region;
 	struct mem_segment_descriptor *ldt_segp;
-	int x, first16q, ist;
+	int x;
+#ifndef XEN
+	int first16q, ist;
+	extern struct extent *iomem_ex;
 	u_int64_t seg_start, seg_end;
 	u_int64_t seg_start1, seg_end1;
 #if !defined(REALEXTMEM) && !defined(REALBASEMEM)
 	struct btinfo_memmap *bim;
 	u_int64_t addr, size, io_end;
 #endif
+#else /* XEN */
+	__PRINTK(("init_x86_64(0x%lx)\n", first_avail));
+	first_bt_vaddr = (vaddr_t) (first_avail + KERNBASE + PAGE_SIZE * 2);
+	__PRINTK(("first_bt_vaddr 0x%lx\n", first_bt_vaddr));
+	cpu_probe_features(&cpu_info_primary);
+	cpu_feature = cpu_info_primary.ci_feature_flags;
+	/* not on Xen... */
+	cpu_feature &= ~(CPUID_PGE|CPUID_PSE|CPUID_MTRR|CPUID_FXSR|CPUID_NOX);
+#endif /* XEN */
 
 	cpu_init_msrs(&cpu_info_primary, true);
 
 	lwp0.l_addr = proc0paddr;
+#ifdef XEN
+	lwp0.l_addr->u_pcb.pcb_cr3 = xen_start_info.pt_base - KERNBASE;
+	__PRINTK(("pcb_cr3 0x%lx\n", xen_start_info.pt_base - KERNBASE));
+#endif
 
+#if !defined(XEN) || defined(DOM0OPS)
 	x86_bus_space_init();
+#endif
 
 	consinit();	/* XXX SHOULD NOT BE DONE HERE */
 
@@ -1101,6 +1250,7 @@ init_x86_64(paddr_t first_avail)
 
 	uvmexp.ncolors = 2;
 
+#ifndef XEN
 	/*
 	 * Low memory reservations:
 	 * Page 0:	BIOS data
@@ -1113,6 +1263,18 @@ init_x86_64(paddr_t first_avail)
 	 * Page 7:	Temporary page map level 4
 	 */
 	avail_start = 8 * PAGE_SIZE;
+#else	/* XEN */
+	/* Parse Xen command line (replace bootinfo */
+	xen_parse_cmdline(XEN_PARSE_BOOTFLAGS, NULL);
+
+	/* Determine physical address space */
+	avail_start = first_avail;
+	avail_end = xen_start_info.nr_pages << PAGE_SHIFT;
+	pmap_pa_start = (KERNTEXTOFF - KERNBASE);
+	pmap_pa_end = avail_end;
+	__PRINTK(("pmap_pa_start 0x%lx avail_start 0x%lx avail_end 0x%lx\n",
+	    pmap_pa_start, avail_start, avail_end));
+#endif	/* !XEN */
 
 	/*
 	 * Call pmap initialization to make new kernel address space.
@@ -1123,6 +1285,7 @@ init_x86_64(paddr_t first_avail)
 	if (avail_start != PAGE_SIZE)
 		pmap_prealloc_lowmem_ptps();
 
+#ifndef XEN
 #if !defined(REALBASEMEM) && !defined(REALEXTMEM)
 
 	/*
@@ -1402,6 +1565,14 @@ init_x86_64(paddr_t first_avail)
 			}
 		}
 	}
+#else	/* XEN */
+	kern_end = KERNBASE + first_avail;
+	physmem = xen_start_info.nr_pages;
+
+	uvm_page_physload(atop(avail_start),
+		atop(avail_end), atop(avail_start),
+		atop(avail_end), VM_FREELIST_DEFAULT);
+#endif	/* !XEN */
 
 	init_x86_64_msgbuf();
 
@@ -1410,25 +1581,42 @@ init_x86_64(paddr_t first_avail)
 	pmap_kenter_pa(idt_vaddr, idt_paddr, VM_PROT_READ|VM_PROT_WRITE);
 	pmap_update(pmap_kernel());
 	memset((void *)idt_vaddr, 0, PAGE_SIZE);
+#ifndef XEN
 	pmap_changeprot_local(idt_vaddr, VM_PROT_READ);
+#endif
 	pmap_kenter_pa(idt_vaddr + PAGE_SIZE, idt_paddr + PAGE_SIZE,
 	    VM_PROT_READ|VM_PROT_WRITE);
+#ifdef XEN
+	/* Steal one more page for LDT */
+	pmap_kenter_pa(idt_vaddr + 2 * PAGE_SIZE, idt_paddr + 2 * PAGE_SIZE,
+	    VM_PROT_READ|VM_PROT_WRITE);
+#endif
 	pmap_kenter_pa(lo32_vaddr, lo32_paddr, VM_PROT_READ|VM_PROT_WRITE);
 	pmap_update(pmap_kernel());
 
+#ifndef XEN
 	idt = (struct gate_descriptor *)idt_vaddr;
 	gdtstore = (char *)(idt + NIDT);
 	ldtstore = gdtstore + DYNSEL_START;
+#else
+	idt = (struct trap_info *)idt_vaddr;
+	xen_idt_idx = 0;
+	/* Xen wants page aligned GDT/LDT in separated pages */
+	ldtstore = (char *) roundup((vaddr_t) (idt + NIDT), PAGE_SIZE);
+	gdtstore = (char *) (ldtstore + PAGE_SIZE);
+#endif /* XEN */
 
 	/* make gdt gates and memory segments */
-	set_mem_segment(GDT_ADDR_MEM(gdtstore, GCODE_SEL), 0, 0xfffff, SDT_MEMERA,
-	    SEL_KPL, 1, 0, 1);
+	set_mem_segment(GDT_ADDR_MEM(gdtstore, GCODE_SEL), 0,
+	    0xfffff, SDT_MEMERA, SEL_KPL, 1, 0, 1);
 
-	set_mem_segment(GDT_ADDR_MEM(gdtstore, GDATA_SEL), 0, 0xfffff, SDT_MEMRWA,
-	    SEL_KPL, 1, 0, 1);
+	set_mem_segment(GDT_ADDR_MEM(gdtstore, GDATA_SEL), 0,
+	    0xfffff, SDT_MEMRWA, SEL_KPL, 1, 0, 1);
 
-	set_sys_segment(GDT_ADDR_SYS(gdtstore, GLDT_SEL), ldtstore, LDT_SIZE - 1,
-	    SDT_SYSLDT, SEL_KPL, 0);
+#ifndef XEN
+	set_sys_segment(GDT_ADDR_SYS(gdtstore, GLDT_SEL), ldtstore,
+	    LDT_SIZE - 1, SDT_SYSLDT, SEL_KPL, 0);
+#endif
 
 	set_mem_segment(GDT_ADDR_MEM(gdtstore, GUCODE_SEL), 0,
 	    x86_btop(VM_MAXUSER_ADDRESS) - 1, SDT_MEMERA, SEL_UPL, 1, 0, 1);
@@ -1479,23 +1667,50 @@ init_x86_64(paddr_t first_avail)
 
 	/* exceptions */
 	for (x = 0; x < 32; x++) {
+#ifndef XEN
 		ist = (x == 8) ? 2 : 0;
 		setgate(&idt[x], IDTVEC(exceptions)[x], ist, SDT_SYS386IGT,
 		    (x == 3 || x == 4) ? SEL_UPL : SEL_KPL,
 		    GSEL(GCODE_SEL, SEL_KPL));
+#else /* XEN */
+		idt[xen_idt_idx].vector = x;
+		idt[xen_idt_idx].flags = (x == 3 || x == 4) ? SEL_UPL : SEL_KPL;
+		idt[xen_idt_idx].cs = GSEL(GCODE_SEL, SEL_KPL);
+		idt[xen_idt_idx].address = (unsigned long)IDTVEC(exceptions)[x];
+		xen_idt_idx++;
+#endif /* XEN */
 		idt_allocmap[x] = 1;
 	}
 
 #if defined(COMPAT_16) || defined(COMPAT_NETBSD32)
 	/* new-style interrupt gate for syscalls */
+#ifndef XEN
 	setgate(&idt[128], &IDTVEC(osyscall), 0, SDT_SYS386IGT, SEL_UPL,
 	    GSEL(GCODE_SEL, SEL_KPL));
+#else
+	idt[xen_idt_idx].vector = 128;
+	idt[xen_idt_idx].flags = SEL_KPL;
+	idt[xen_idt_idx].cs = GSEL(GCODE_SEL, SEL_KPL);
+	idt[xen_idt_idx].address =  (unsigned long) &IDTVEC(osyscall);
+	xen_idt_idx++;
+#endif /* XEN */
 	idt_allocmap[128] = 1;
+#endif
+#ifdef XEN
+	pmap_changeprot_local(idt_vaddr, VM_PROT_READ);
 #endif
 
 	setregion(&region, gdtstore, DYNSEL_START - 1);
 	lgdt(&region);
 
+#ifdef XEN
+	/* Init Xen callbacks and syscall handlers */
+	if (HYPERVISOR_set_callbacks(
+	    (unsigned long) hypervisor_callback,
+	    (unsigned long) failsafe_callback,
+	    (unsigned long) Xsyscall))
+		panic("HYPERVISOR_set_callbacks() failed");
+#endif /* XEN */
 	cpu_init_idt();
 
 	init_x86_64_ksyms();
@@ -1512,7 +1727,11 @@ init_x86_64(paddr_t first_avail)
 	}
 #endif
 
+#ifndef XEN
 	intr_default_setup();
+#else
+	events_default_setup();
+#endif
 
 	softintr_init();
 	splraise(IPL_HIGH);
@@ -1530,6 +1749,10 @@ cpu_reset(void)
 {
 
 	x86_disable_intr();
+
+#ifdef XEN
+	HYPERVISOR_reboot();
+#else
 
 	/*
 	 * The keyboard controller has 4 random output pins, one of which is
@@ -1560,6 +1783,7 @@ cpu_reset(void)
 	memset((void *)PTD, 0, PAGE_SIZE);
 	tlbflush(); 
 #endif
+#endif	/* XEN */
 
 	for (;;);
 }
@@ -1636,6 +1860,14 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 		err = tf->tf_err;
 		trapno = tf->tf_trapno;
 		memcpy(tf, gr, sizeof *tf);
+#ifdef XEN
+		/*
+		 * Xen has its own way of dealing with %cs and %ss,
+		 * reset it to proper values.
+		 */
+		tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
+		tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
+#endif
 		rflags &= ~PSL_USER;
 		tf->tf_rflags = rflags | (gr[_REG_RFL] & PSL_USER);
 		tf->tf_err = err;
@@ -1694,11 +1926,13 @@ check_mcontext(struct lwp *l, const mcontext_t *mcp, struct trapframe *tf)
 		if (error != 0)
 			return error;
 
+#ifndef XEN
 		if ((gr[_REG_SS] & 0xffff) == 0)
 			return EINVAL;
 		error = valid_user_selector(l, gr[_REG_SS], NULL, 0);
 		if (error != 0)
 			return error;
+#endif
 	} else {
 		sel = gr[_REG_ES] & 0xffff;
 		if (sel != 0 && !VALID_USER_DSEL(sel))
@@ -1716,15 +1950,19 @@ check_mcontext(struct lwp *l, const mcontext_t *mcp, struct trapframe *tf)
 		if (!VALID_USER_DSEL(sel))
 			return EINVAL;
 
+#ifndef XEN
 		sel = gr[_REG_SS] & 0xffff;
 		if (!VALID_USER_DSEL(sel)) 
 			return EINVAL;
+#endif
 
 	}
 
+#ifndef XEN
 	sel = gr[_REG_CS] & 0xffff;
 	if (!VALID_USER_CSEL(sel))
 		return EINVAL;
+#endif
 
 	if (gr[_REG_RIP] >= VM_MAXUSER_ADDRESS)
 		return EINVAL;
@@ -1737,6 +1975,7 @@ cpu_initclocks(void)
 	(*initclock_func)();
 }
 
+#ifndef XEN
 /*
  * Allocate an IDT vector slot within the given range.
  * XXX needs locking to avoid MP allocation races.
@@ -1779,6 +2018,7 @@ idt_vec_free(int vec)
 	idt_allocmap[vec] = 0;
 	simple_unlock(&idt_lock);
 }
+#endif	/* !XEN */
 
 int
 memseg_baseaddr(struct lwp *l, uint64_t seg, char *ldtp, int llen,

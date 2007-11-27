@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.37 2007/07/12 14:15:37 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.37.8.1 2007/11/27 19:35:37 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.37 2007/07/12 14:15:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.37.8.1 2007/11/27 19:35:37 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1270,7 +1270,7 @@ pmap_create(void)
 		splx(s);
 	} else {
 		splx(s);
-		MALLOC(pmap, struct pmap *, sizeof(*pmap), M_VMMAP, M_NOWAIT);
+		MALLOC(pmap, struct pmap *, sizeof(*pmap), M_VMPMAP, M_NOWAIT);
 		if (pmap == NULL)
 			return NULL;
 		memset(pmap, 0, sizeof(*pmap));

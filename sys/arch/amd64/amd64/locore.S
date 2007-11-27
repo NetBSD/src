@@ -1,7 +1,53 @@
-/*	$NetBSD: locore.S,v 1.25.8.5 2007/11/21 21:52:59 joerg Exp $	*/
+/*	$NetBSD: locore.S,v 1.25.8.6 2007/11/27 19:35:26 joerg Exp $	*/
 
 /*
  * Copyright-o-rama!
+ */
+
+/*
+ * Copyright (c) 2007 Manuel Bouyer.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed by Manuel Bouyer.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ */
+
+/*
+ * Copyright (c) 2006 Mathieu Ropert <mro@adviseo.fr>
+ *
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 /*
@@ -117,6 +163,7 @@
 #include "opt_compat_netbsd.h"
 #include "opt_compat_netbsd32.h"
 #include "opt_compat_ibcs2.h"
+#include "opt_xen.h"
 
 #include "assym.h"
 #include "lapic.h"
@@ -150,6 +197,27 @@
 /* Get definitions for IOM_BEGIN, IOM_END, and IOM_SIZE */
 #include <dev/isa/isareg.h>
 
+#ifdef XEN
+
+/*
+ * Xen Guest Loader Info
+ */
+
+.section __xen_guest
+
+	.ascii  "GUEST_OS=NetBSD,GUEST_VER=4.99"
+	.ascii  ",XEN_VER=xen-3.0"
+	.ascii  ",LOADER=generic"
+	.ascii	",VIRT_BASE=0xffffffff80000000"
+	.ascii	",ELF_PADDR_OFFSET=0xffffffff80000000"
+	.ascii	",VIRT_ENTRY=0xffffffff80100000"
+	.ascii	",HYPERCALL_PAGE=0x00000101" /*  (???+HYPERCALL_PAGE_OFFSET)/PAGE_SIZE) */
+#if NKSYMS > 0 || defined(DDB) || defined(LKM)
+	.ascii	",BSD_SYMTAB=yes"
+#endif
+	.byte   0
+
+#endif	/* XEN */
 
 /*
  * Initialization
@@ -209,6 +277,7 @@ _C_LABEL(biosextmem):	.long	REALEXTMEM
 #define	_RELOC(x)	((x) - KERNBASE)
 #define	RELOC(x)	_RELOC(_C_LABEL(x))
 
+#ifndef XEN
 	.globl	gdt64
 
 gdt64:
@@ -226,6 +295,7 @@ farjmp64:
 	.long	longmode-KERNBASE
 	.word	GSEL(GCODE_SEL, SEL_KPL)
 	
+#endif	/* !XEN */
 	.space 512
 tmpstk:
 
@@ -242,6 +312,7 @@ tmpstk:
 	.globl	_C_LABEL(kernel_text)
 	.set	_C_LABEL(kernel_text),KERNTEXTOFF
 
+#ifndef XEN
 .code32
 
 	.globl	start
@@ -626,11 +697,109 @@ longmode_hi:
 
 	/* XXX merge these */
 	leaq	TABLESIZE(%rsi),%rdi
+
+#else	/* XEN */
+	.globl	start
+start:
+	/* First, reset the PSL. */
+	pushq	$2
+	popfq
+
+	cld
+
+	/*
+	 * Xen info:
+	 * - %rsi -> start_info struct
+	 * - %rsp -> stack, *theorically* the last used page
+	 *	by Xen bootstrap
+	 */
+	movq	%rsi, %rbx
+
+	/* Clear BSS */
+	xorq	%rax,%rax
+	movq	$_C_LABEL(__bss_start),%rdi
+	movq	$_C_LABEL(_end),%rcx
+	subq	%rdi,%rcx
+	rep
+	stosb
+
+	/* Copy start_info to a safe place */
+	movq	%rbx,%rsi
+	movq	$_C_LABEL(start_info_union),%rdi
+	movq	$64,%rcx
+	rep
+	movsq
+
+	/*
+	 * Memory layout at start of the day:
+	 * - Kernel image
+	 * - Page frames list
+	 * - start_info struct. we copied it, so it can be recycled.
+	 * - xenstore
+	 * - console
+	 * - Xen bootstrap page tables
+	 * - kernel stack. provided by Xen
+	 * - guaranted 512kB padding
+	 *
+	 * As we want to rebuild our page tables and place our stack
+	 * in proc0 struct, all data starting from after console can be
+	 * discarded after we've done a little setup.
+	 */
+
+	/*
+	 * We want our own page tables, let's rebuild them
+	 * We will reclaim xen space afterward INCLUDING stack
+	 * so let's change it to a temporary one
+	 */
+
+	movq	$tmpstk, %rax
+	subq	$8, %rax
+	movq	%rax, %rsp
+
+	call	xen_pmap_bootstrap
+
+	/*
+	 * First avail returned by xen_pmap_bootstrap in %rax
+	 */
+	movq	%rax, %rsi
+	movq	%rsi,_C_LABEL(proc0paddr)
+	
+	xorq	%rax,%rax
+	movq	%rsi,%rdi
+	movq	$USPACE,%rcx
+	rep
+	stosb
+
+	/*
+	 * Set new stack and clear segments
+	 */
+
+	leaq	(USPACE-FRAMESIZE)(%rsi),%rsp
+	xorq	%rbp,%rbp
+
+	movw	%ax,%gs
+	movw	%ax,%fs
+	
+	/*
+	 * Set first_avail after proc0
+	 */
+
+	movq	%rsi,%rdi
+	addq	$USPACE,%rdi
+	subq	$KERNBASE,%rdi		# init_x86_64 want a physical address
+
+#endif	/* !XEN */
 	call	_C_LABEL(init_x86_64)
 
 	call 	_C_LABEL(main)
 
-/*****************************************************************************/
+#ifdef XEN
+/* space for the hypercall call page */
+#define HYPERCALL_PAGE_OFFSET 0x1000
+.org HYPERCALL_PAGE_OFFSET
+ENTRY(hypercall_page)
+.skip 0x1000
+#endif /* XEN */
 
 /*
  * int setjmp(label_t *)
@@ -725,14 +894,25 @@ ENTRY(cpu_switchto)
 
 	/* Switch to newlwp's stack. */
 1:	movq	L_ADDR(%r12),%r14
+#ifdef XEN /* XXX debug code */
+	cmpq	$0, PCB_RSP(%r14)
+	jne 999f
+	callq _C_LABEL(cpu_Debugger);
+999:
+#endif
 	movq	PCB_RSP(%r14),%rsp
 	movq	PCB_RBP(%r14),%rbp
 
 	/* Switch TSS. Reset "task busy" flag before loading. */
+#ifdef XEN
+	movq	%r14, %rdi
+	callq	_C_LABEL(x86_64_switch_context);
+#else
 	movq    CPUVAR(GDT),%rax
 	movl	L_MD_TSS_SEL(%r12),%edx
 	andl	$~0x0200,4(%rax,%rdx, 1)
 	ltr	%dx
+#endif
 
 	/* Set curlwp. */
 	movq	%r12,CPUVAR(CURLWP)
@@ -747,11 +927,13 @@ ENTRY(cpu_switchto)
 	jne	5f
 
 	/*
-	 * Restore cr0 (including FPU state).  Raise the IPL to IPL_HIGH.
+	 * Restore cr0 (including FPU state).  Raise the IPL to IPL_IPI.
 	 * FPU IPIs can alter the LWP's saved cr0.  Dropping the priority
 	 * is deferred until mi_switch(), when cpu_switchto() returns.
 	 */
-2:	movl	$IPL_HIGH,CPUVAR(ILEVEL)
+2:
+#ifndef XEN
+	movl	$IPL_IPI,CPUVAR(ILEVEL)
 	movl	PCB_CR0(%r14),%ecx
 	movq	%cr0,%rdx
 
@@ -768,6 +950,7 @@ ENTRY(cpu_switchto)
 3:	cmpq	%rdx,%rcx
 	je	4f
 	movq	%rcx,%cr0
+#endif
 
 	/* Return to the new LWP, returning 'oldlwp' in %rax. */
 4:	movq	%r13,%rax
@@ -808,6 +991,7 @@ IDTVEC(syscall32)
  * it can be made faster in the future.
  */
 IDTVEC(syscall)
+#ifndef XEN
 	swapgs
 	movq	%r15,CPUVAR(SCRATCH)
 	movq	CPUVAR(CURLWP),%r15
@@ -838,6 +1022,23 @@ IDTVEC(syscall)
 	movq	%rcx,TF_RIP(%rsp)
 	movq	$2,TF_ERR(%rsp)
 	movq	$T_ASTFLT, TF_TRAPNO(%rsp)
+#else
+	/* Xen already switched to kernel stack */
+	pushq	%rsi
+	pushq	%rdi
+	STI(si,di)
+	popq	%rdi
+	popq	%rsi
+	addq $0x10,%rsp
+	pushq	$2	/* error code */
+	pushq	$T_ASTFLT
+	subq	$32,%rsp
+	INTR_SAVE_GPRS
+	movw	%fs,TF_FS(%rsp)
+	movw	%gs,TF_GS(%rsp)
+	movw	%es,TF_ES(%rsp)
+	movw	$(LSEL(LUDATA_SEL, SEL_UPL)),TF_DS(%rsp)
+#endif
 
 	movq	CPUVAR(CURLWP),%r14
 	movq	%rsp,L_MD_REGS(%r14)	# save pointer to frame
@@ -847,19 +1048,19 @@ IDTVEC(syscall)
 	call	*P_MD_SYSCALL(%r15)
 .Lsyscall_checkast:
 	/* Check for ASTs on exit to user mode. */
-	cli
+	CLI(si,di)
 	CHECK_ASTPENDING(%r14)
 	je	1f
 	/* Always returning to user mode here. */
 	CLEAR_ASTPENDING(%r14)
-	sti
+	STI(si,di)
 	/* Pushed T_ASTFLT into tf_trapno on entry. */
 	movq	%rsp,%rdi
 	call	_C_LABEL(trap)
 	jmp	.Lsyscall_checkast	/* re-check ASTs */
 1:	CHECK_DEFERRED_SWITCH
 	jnz	9f
-	sti
+	STI(si,di)
 	testl	$MDP_IRET, L_MD_FLAGS(%r14)
 	jne	iret_return;
 syscall_return:
@@ -870,20 +1071,29 @@ syscall_return:
 	/*
 	 * XXX interrupts off longer than they should be here.
 	 */
+#ifndef XEN
 	cli
 	swapgs
+#endif
 	movw	TF_ES(%rsp),%es
 	movw	TF_FS(%rsp),%fs
+#ifndef XEN
 	movw	TF_GS(%rsp),%gs
+#endif
 	INTR_RESTORE_GPRS
 	movw	$(LSEL(LUDATA_SEL, SEL_UPL)),%r11
 	movw	%r11,%ds
 	addq	$48,%rsp
+#ifndef XEN
 	popq	%rcx	/* return rip */
 	addq	$8,%rsp
 	popq	%r11	/* flags as set by sysret insn */
 	movq	%ss:(%rsp),%rsp
 	sysretq
+#else
+	pushq	$256	/* VGCF_IN_SYSCALL */
+	jmp	HYPERVISOR_iret
+#endif
 
 #ifdef DIAGNOSTIC
 3:	movabsq	$4f, %rdi
@@ -901,7 +1111,7 @@ syscall_return:
 4:	.asciz	"WARNING: SPL NOT LOWERED ON SYSCALL %d %d EXIT %x %x\n"
 #endif
 
-9:	sti
+9:	STI(si,di)
 	call	_C_LABEL(do_pmap_load)
 	jmp	.Lsyscall_checkast	/* re-check ASTs */
 
@@ -960,11 +1170,16 @@ IDTVEC(oosyscall)
  * Trap gate entry for int $80 syscall, also used by sigreturn.
  */
 IDTVEC(osyscall)
+#ifdef XEN
+	movq (%rsp),%rcx
+	movq 8(%rsp),%r11
+	addq $0x10,%rsp
+#endif
 	pushq	$2		# size of instruction for restart
 osyscall1:
 	pushq	$T_ASTFLT	# trap # for doing ASTs
 	INTRENTRY
-	sti
+	STI(si,di)
 	movq	CPUVAR(CURLWP),%r14
 	movq	%rsp,L_MD_REGS(%r14)	# save pointer to frame
 	movq	L_PROC(%r14),%rdx
@@ -973,12 +1188,12 @@ osyscall1:
 _C_LABEL(osyscall_return):
 .Losyscall_checkast:
 	/* Check for ASTs on exit to user mode. */
-	cli
+	CLI(si,di)
 	CHECK_ASTPENDING(%r14)
 	je	1f
 	/* Always returning to user mode here. */
 	CLEAR_ASTPENDING(%r14)
-	sti
+	STI(si,di)
 	/* Pushed T_ASTFLT into tf_trapno on entry. */
 	movq	%rsp,%rdi
 	call	_C_LABEL(trap)
@@ -992,7 +1207,8 @@ iret_return:
 	cmpl	$IPL_NONE,CPUVAR(ILEVEL)
 	jne	3f
 	INTRFASTEXIT
-3:	sti
+3:
+	STI(si,di)
 	movabsq	$4f, %rdi
 	xorq	%rax,%rax
 	call	_C_LABEL(printf)
@@ -1003,7 +1219,7 @@ iret_return:
 	jmp	.Losyscall_checkast
 4:	.asciz	"WARNING: SPL NOT LOWERED ON SYSCALL EXIT\n"
 #endif /* DIAGNOSTIC */
-9:	sti
+9:	STI(si,di)
 	call	_C_LABEL(do_pmap_load)
 	jmp	.Losyscall_checkast	/* re-check ASTs */
 

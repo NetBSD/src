@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.6 2007/05/17 14:51:15 yamt Exp $	*/
+/*	$NetBSD: pcb.h,v 1.6.8.1 2007/11/27 19:35:33 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -100,22 +100,23 @@ struct pcb {
 	 * Should just make this a pointer and allocate.
 	 */
 	struct	x86_64_tss pcb_tss;
+	int	  pcb_flags;
+#define	PCB_USER_LDT	0x01		/* has user-set LDT */
+#define PCB_GS64	0x02
+#define PCB_FS64	0x04
+	int	  pcb_cr0;		/* saved image of CR0 */
+	u_int64_t pcb_cr2;		/* page fault address (CR2) */
 	u_int64_t pcb_cr3;
 	u_int64_t pcb_rsp;
 	u_int64_t pcb_rbp;
 	u_int64_t pcb_usersp;
 	u_int64_t pcb_ldt_sel;
 	struct	savefpu pcb_savefpu;	/* floating point state */
-	int	pcb_cr0;		/* saved image of CR0 */
-	int	pcb_flags;
-#define	PCB_USER_LDT	0x01		/* has user-set LDT */
-#define PCB_GS64	0x02
-#define PCB_FS64	0x04
-	void *	pcb_onfault;		/* copyin/out fault recovery */
+	void     *pcb_onfault;		/* copyin/out fault recovery */
 	struct cpu_info *pcb_fpcpu;	/* cpu holding our fp state. */
-	unsigned pcb_iomap[NIOPORTS/32];	/* I/O bitmap */
-	uint64_t pcb_gs;
-	uint64_t pcb_fs;
+	unsigned  pcb_iomap[NIOPORTS/32];	/* I/O bitmap */
+	uint64_t  pcb_gs;
+	uint64_t  pcb_fs;
 };
 
 /*    

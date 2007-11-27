@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.8.22.1 2007/11/21 21:53:43 joerg Exp $	*/
+/*	$NetBSD: consinit.c,v 1.8.22.2 2007/11/27 19:36:18 joerg Exp $	*/
 /*	NetBSD: consinit.c,v 1.4 2004/03/13 17:31:34 bjh21 Exp 	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.8.22.1 2007/11/21 21:53:43 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.8.22.2 2007/11/27 19:36:18 joerg Exp $");
 
 #include "opt_kgdb.h"
 
@@ -72,9 +72,9 @@ __KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.8.22.1 2007/11/21 21:53:43 joerg Exp 
 
 #include "opt_xen.h"
 #if (XEN > 0)
-#include <machine/xen.h>
+#include <xen/xen.h>
 #include <dev/pckbport/pckbportvar.h>
-#include <machine/hypervisor.h>
+#include <xen/hypervisor.h>
 #endif
 
 #include "com.h"

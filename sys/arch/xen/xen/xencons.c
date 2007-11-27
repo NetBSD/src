@@ -1,4 +1,4 @@
-/*	$NetBSD: xencons.c,v 1.22.18.2 2007/11/21 21:53:44 joerg Exp $	*/
+/*	$NetBSD: xencons.c,v 1.22.18.3 2007/11/27 19:36:32 joerg Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -63,7 +63,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.22.18.2 2007/11/21 21:53:44 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.22.18.3 2007/11/27 19:36:32 joerg Exp $");
 
 #include "opt_xen.h"
 
@@ -77,15 +77,15 @@ __KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.22.18.2 2007/11/21 21:53:44 joerg Exp 
 #include <sys/kauth.h>
 
 #include <machine/stdarg.h>
-#include <machine/xen.h>
-#include <machine/hypervisor.h>
-#include <machine/evtchn.h>
+#include <xen/xen.h>
+#include <xen/hypervisor.h>
+#include <xen/evtchn.h>
 #ifdef XEN3
 #include <uvm/uvm.h>
 #include <machine/pmap.h>
-#include <machine/xen3-public/io/console.h>
+#include <xen/xen3-public/io/console.h>
 #else
-#include <machine/ctrl_if.h>
+#include <xen/ctrl_if.h>
 #endif
 
 #include <dev/cons.h>

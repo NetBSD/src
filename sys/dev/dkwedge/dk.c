@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.28.4.2 2007/11/06 14:27:16 joerg Exp $	*/
+/*	$NetBSD: dk.c,v 1.28.4.3 2007/11/27 19:37:03 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.28.4.2 2007/11/06 14:27:16 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.28.4.3 2007/11/27 19:37:03 joerg Exp $");
 
 #include "opt_dkwedge.h"
 
@@ -812,7 +812,7 @@ dkwedge_discover(struct disk *pdk)
 		goto out;
 	}
 
-	error = VOP_OPEN(vp, FREAD, NOCRED, 0);
+	error = VOP_OPEN(vp, FREAD, NOCRED);
 	if (error) {
 		aprint_error("%s: unable to open device, error = %d\n",
 		    pdk->dk_name, error);
@@ -925,7 +925,7 @@ dkopen(dev_t dev, int flags, int fmt, struct lwp *l)
 				vrele(vp);
 				goto popen_fail;
 			}
-			error = VOP_OPEN(vp, FREAD | FWRITE, NOCRED, 0);
+			error = VOP_OPEN(vp, FREAD | FWRITE, NOCRED);
 			if (error) {
 				vput(vp);
 				goto popen_fail;
@@ -1195,7 +1195,7 @@ dkioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		else
 			error = VOP_IOCTL(sc->sc_parent->dk_rawvp,
 					  cmd, data, flag,
-					  l != NULL ? l->l_cred : NOCRED, l);
+					  l != NULL ? l->l_cred : NOCRED);
 		break;
 	case DIOCGWEDGEINFO:
 	    {

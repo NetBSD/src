@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_pool.c,v 1.7.12.3 2007/11/11 16:47:55 joerg Exp $	*/
+/*	$NetBSD: tmpfs_pool.c,v 1.7.12.4 2007/11/27 19:37:54 joerg Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_pool.c,v 1.7.12.3 2007/11/11 16:47:55 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_pool.c,v 1.7.12.4 2007/11/27 19:37:54 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/pool.h>
@@ -153,7 +153,6 @@ tmpfs_pool_destroy(struct tmpfs_pool *tpp)
 void *
 tmpfs_pool_page_alloc(struct pool *pp, int flags)
 {
-	void *page;
 	struct tmpfs_pool *tpp;
 	struct tmpfs_mount *tmp;
 
@@ -164,10 +163,7 @@ tmpfs_pool_page_alloc(struct pool *pp, int flags)
 		return NULL;
 
 	tmp->tm_pages_used += 1;
-	page = pool_page_alloc_nointr(pp, flags);
-	KASSERT(page != NULL);
-
-	return page;
+	return pool_page_alloc_nointr(pp, flags);
 }
 
 /* --------------------------------------------------------------------- */

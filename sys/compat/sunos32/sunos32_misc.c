@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_misc.c,v 1.51 2007/07/17 20:53:49 christos Exp $	*/
+/*	$NetBSD: sunos32_misc.c,v 1.51.6.1 2007/11/27 19:36:54 joerg Exp $	*/
 /* from :NetBSD: sunos_misc.c,v 1.107 2000/12/01 19:25:10 jdolecek Exp	*/
 
 /*
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.51 2007/07/17 20:53:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.51.6.1 2007/11/27 19:36:54 joerg Exp $");
 
 #define COMPAT_SUNOS 1
 
@@ -1232,7 +1232,7 @@ sunos32_sys_statfs(l, v, retval)
 	mp = nd.ni_vp->v_mount;
 	sp = &mp->mnt_stat;
 	vrele(nd.ni_vp);
-	if ((error = VFS_STATVFS(mp, sp, l)) != 0)
+	if ((error = VFS_STATVFS(mp, sp)) != 0)
 		return (error);
 	sp->f_flag = mp->mnt_flag & MNT_VISFLAGMASK;
 	return sunstatfs(sp, SCARG_P32(uap, buf));
@@ -1259,7 +1259,7 @@ sunos32_sys_fstatfs(l, v, retval)
 		return (error);
 	mp = ((struct vnode *)fp->f_data)->v_mount;
 	sp = &mp->mnt_stat;
-	if ((error = VFS_STATVFS(mp, sp, l)) != 0)
+	if ((error = VFS_STATVFS(mp, sp)) != 0)
 		goto out;
 	sp->f_flag = mp->mnt_flag & MNT_VISFLAGMASK;
 	error = sunstatfs(sp, SCARG_P32(uap, buf));

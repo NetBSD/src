@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.28.4.1 2007/10/26 15:48:12 joerg Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.28.4.2 2007/11/27 19:37:35 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.28.4.1 2007/10/26 15:48:12 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.28.4.2 2007/11/27 19:37:35 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -154,7 +154,6 @@ cd9660_access(v)
 		struct vnode *a_vp;
 		int  a_mode;
 		kauth_cred_t a_cred;
-		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct iso_node *ip = VTOI(vp);
@@ -187,7 +186,6 @@ cd9660_getattr(v)
 		struct vnode *a_vp;
 		struct vattr *a_vap;
 		kauth_cred_t a_cred;
-		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct iso_node *ip = VTOI(vp);

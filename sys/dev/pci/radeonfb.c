@@ -1,4 +1,4 @@
-/* $NetBSD: radeonfb.c,v 1.17.2.3 2007/10/26 15:46:53 joerg Exp $ */
+/* $NetBSD: radeonfb.c,v 1.17.2.4 2007/11/27 19:37:19 joerg Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.17.2.3 2007/10/26 15:46:53 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.17.2.4 2007/11/27 19:37:19 joerg Exp $");
 
 #define RADEONFB_DEFAULT_DEPTH 32
 
@@ -357,6 +357,7 @@ static struct {
 	{ PCI_PRODUCT_ATI_RADEON_R423_UR,	RADEON_R420, 0 },
 	{ PCI_PRODUCT_ATI_RADEON_R423_UT,	RADEON_R420, 0 },
 	{ PCI_PRODUCT_ATI_RADEON_R423_5D57,	RADEON_R420, 0 },
+	{ PCI_PRODUCT_ATI_RADEON_R430_554F,	RADEON_R420, 0 },
 
 	{ 0, 0, 0 }
 };

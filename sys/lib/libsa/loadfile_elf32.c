@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile_elf32.c,v 1.17 2007/06/05 08:48:50 martin Exp $ */
+/* $NetBSD: loadfile_elf32.c,v 1.17.6.1 2007/11/27 19:38:33 joerg Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -276,6 +276,7 @@ ELFNAMEEND(loadfile)(fd, elf, marks, flags)
 	int first;
 	paddr_t minp = ~0, maxp = 0, pos = 0;
 	paddr_t offset = marks[MARK_START], shpp, elfp = 0;
+	ssize_t nr;
 
 	/* some ports dont use the offset */
 	offset = offset;
@@ -289,7 +290,13 @@ ELFNAMEEND(loadfile)(fd, elf, marks, flags)
 		WARN(("lseek phdr"));
 		goto freephdr;
 	}
-	if (read(fd, phdr, sz) != sz) {
+	nr = read(fd, phdr, sz);
+	if (nr == -1) {
+		WARN(("read program headers"));
+		goto freephdr;
+	}
+	if (nr != sz) {
+		errno = ESHORT;
 		WARN(("read program headers"));
 		goto freephdr;
 	}
@@ -329,8 +336,13 @@ ELFNAMEEND(loadfile)(fd, elf, marks, flags)
 				WARN(("lseek text"));
 				goto freephdr;
 			}
-			if (READ(fd, phdr[i].p_vaddr, phdr[i].p_filesz) !=
-			    (ssize_t)phdr[i].p_filesz) {
+			nr = READ(fd, phdr[i].p_vaddr, phdr[i].p_filesz);
+			if (nr == -1) {
+				WARN(("read text error"));
+				goto freephdr;
+			}
+			if (nr != (ssize_t)phdr[i].p_filesz) {
+				errno = ESHORT;
 				WARN(("read text"));
 				goto freephdr;
 			}
@@ -380,7 +392,13 @@ ELFNAMEEND(loadfile)(fd, elf, marks, flags)
 
 		shp = ALLOC(sz);
 
-		if (read(fd, shp, sz) != sz) {
+		nr = read(fd, shp, sz);
+		if (nr == -1) {
+			WARN(("read section headers"));
+			goto freeshp;
+		}
+		if (nr != sz) {
+			errno = ESHORT;
 			WARN(("read section headers"));
 			goto freeshp;
 		}
@@ -422,8 +440,13 @@ ELFNAMEEND(loadfile)(fd, elf, marks, flags)
 						WARN(("lseek symbols"));
 						goto freeshp;
 					}
-					if (READ(fd, maxp, shp[i].sh_size) !=
-					    (ssize_t)shp[i].sh_size) {
+					nr = READ(fd, maxp, shp[i].sh_size);
+					if (nr == -1) {
+						WARN(("read symbols"));
+						goto freeshp;
+					}
+					if (nr != (ssize_t)shp[i].sh_size) {
+						errno = ESHORT;
 						WARN(("read symbols"));
 						goto freeshp;
 					}

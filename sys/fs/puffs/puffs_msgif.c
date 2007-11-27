@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.c,v 1.40.4.8 2007/11/21 21:55:54 joerg Exp $	*/
+/*	$NetBSD: puffs_msgif.c,v 1.40.4.9 2007/11/27 19:37:47 joerg Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.40.4.8 2007/11/21 21:55:54 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.40.4.9 2007/11/27 19:37:47 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -493,7 +493,7 @@ puffs_msg_wait(struct puffs_mount *pmp, struct puffs_msgpark *park)
 			}
 			mutex_exit(&pmp->pmp_lock);
 
-			rv = error;
+			rv = EINTR;
 		}
 	} else {
 		rv = preq->preq_rv;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.96.4.3 2007/11/11 16:48:55 joerg Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.96.4.4 2007/11/27 19:39:22 joerg Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.96.4.3 2007/11/11 16:48:55 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.96.4.4 2007/11/27 19:39:22 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -894,7 +894,7 @@ softdep_flushworklist(oldmnt, countp, l)
 	while ((count = softdep_process_worklist(oldmnt)) > 0) {
 		*countp += count;
 		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-		error = VOP_FSYNC(devvp, l->l_cred, FSYNC_WAIT, 0, 0, l);
+		error = VOP_FSYNC(devvp, l->l_cred, FSYNC_WAIT, 0, 0);
 		VOP_UNLOCK(devvp, 0);
 		if (error)
 			break;
@@ -4666,7 +4666,7 @@ softdep_fsync(vp, f)
 	struct inode *ip;
 	struct buf *bp;
 	struct fs *fs;
-	struct lwp *lp = curlwp;	/* XXX */
+	struct lwp *lp = curlwp;
 	int error, flushparent;
 	ino_t parentino;
 	daddr_t lbn;
@@ -4749,7 +4749,7 @@ softdep_fsync(vp, f)
 			}
 			if ((pagedep->pd_state & NEWBLOCK) &&
 			    (error = VOP_FSYNC(pvp, lp->l_cred,
-			    FSYNC_WAIT, 0, 0, lp))) {
+			    FSYNC_WAIT, 0, 0))) {
 				vput(pvp);
 				return (error);
 			}
@@ -4776,7 +4776,7 @@ softdep_fsync(vp, f)
 		 */
 		l = 0;
 		VOP_IOCTL(ip->i_devvp, DIOCCACHESYNC, &l, FWRITE,
-		    lp->l_cred, lp);
+		    lp->l_cred);
 	}
 	return (0);
 }
@@ -4853,7 +4853,6 @@ softdep_sync_metadata(v)
 		int a_waitfor;
 		off_t a_offlo;
 		off_t a_offhi;
-		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct inodedep *inodedep;
@@ -5099,7 +5098,7 @@ loop:
 		if (vp->v_type == VBLK && vp->v_specmountpoint &&
 		    !VOP_ISLOCKED(vp) &&
 		    (error = VFS_SYNC(vp->v_specmountpoint, MNT_WAIT,
-		     ap->a_cred, ap->a_l)) != 0)
+		     ap->a_cred)) != 0)
 			return (error);
 		ACQUIRE_LOCK(&lk);
 	}
@@ -5306,9 +5305,9 @@ flush_pagedep_deps(pvp, mp, diraddhdp)
 			if ((error = VFS_VGET(mp, inum, &vp)) != 0)
 				break;
 			if ((error = VOP_FSYNC(vp, l->l_cred,
-					       0, 0, 0, l)) ||
+					       0, 0, 0)) ||
 			    (error = VOP_FSYNC(vp, l->l_cred,
-					       0, 0, 0, l))) {
+					       0, 0, 0))) {
 				vput(vp);
 				break;
 			}
@@ -5496,7 +5495,7 @@ clear_remove(l)
 				softdep_error("clear_remove: vget", error);
 				return;
 			}
-			if ((error = VOP_FSYNC(vp, l->l_cred, 0, 0, 0, l)))
+			if ((error = VOP_FSYNC(vp, l->l_cred, 0, 0, 0)))
 				softdep_error("clear_remove: fsync", error);
 			drain_output(vp, 0);
 			vput(vp);
@@ -5567,10 +5566,10 @@ clear_inodedeps(l)
 		}
 		if (ino == lastino) {
 			if ((error = VOP_FSYNC(vp, l->l_cred, FSYNC_WAIT,
-				    0, 0, l)))
+				    0, 0)))
 				softdep_error("clear_inodedeps: fsync1", error);
 		} else {
-			if ((error = VOP_FSYNC(vp, l->l_cred, 0, 0, 0, l)))
+			if ((error = VOP_FSYNC(vp, l->l_cred, 0, 0, 0)))
 				softdep_error("clear_inodedeps: fsync2", error);
 			drain_output(vp, 0);
 		}

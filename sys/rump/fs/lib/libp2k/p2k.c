@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.c,v 1.24.2.4 2007/11/06 19:25:36 joerg Exp $	*/
+/*	$NetBSD: p2k.c,v 1.24.2.5 2007/11/27 19:39:05 joerg Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -27,9 +27,11 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/types.h>
 #define __VFSOPS_EXPOSE
+
 #include <sys/mount.h>
+#include <sys/param.h>
+#include <sys/vnode.h>
 #include <sys/lock.h>
 #include <sys/namei.h>
 #include <sys/dirent.h>
@@ -187,32 +189,30 @@ p2k_run_fs(const char *vfsname, const char *devpath, const char *mountpath,
 }
 
 int
-p2k_fs_statvfs(struct puffs_cc *pcc, struct statvfs *sbp,
-	const struct puffs_cid *pcid)
+p2k_fs_statvfs(struct puffs_cc *pcc, struct statvfs *sbp)
 {
 	struct mount *mp = puffs_cc_getspecific(pcc);
 
-	return VFS_STATVFS(mp, sbp, NULL);
+	return VFS_STATVFS(mp, sbp);
 }
 
 int
-p2k_fs_unmount(struct puffs_cc *pcc, int flags, const struct puffs_cid *pcid)
+p2k_fs_unmount(struct puffs_cc *pcc, int flags)
 {
 	struct mount *mp = puffs_cc_getspecific(pcc);
 
-	return VFS_UNMOUNT(mp, flags, curlwp);
+	return VFS_UNMOUNT(mp, flags);
 }
 
 int
-p2k_fs_sync(struct puffs_cc *pcc, int waitfor,
-	const struct puffs_cred *pcr, const struct puffs_cid *pcid)
+p2k_fs_sync(struct puffs_cc *pcc, int waitfor, const struct puffs_cred *pcr)
 {
 	struct mount *mp = puffs_cc_getspecific(pcc);
 	kauth_cred_t cred;
 	int rv;
 
 	cred = cred_create(pcr);
-	rv = VFS_SYNC(mp, waitfor, (kauth_cred_t)cred, curlwp);
+	rv = VFS_SYNC(mp, waitfor, (kauth_cred_t)cred);
 	cred_destroy(cred);
 
 	rump_bioops_sync();
@@ -334,14 +334,14 @@ p2k_node_mknod(struct puffs_cc *pcc, void *opc, struct puffs_newinfo *pni,
 
 int
 p2k_node_open(struct puffs_cc *pcc, void *opc, int mode,
-	const struct puffs_cred *pcr, const struct puffs_cid *pcid)
+	const struct puffs_cred *pcr)
 {
 	kauth_cred_t cred;
 	int rv;
 
 	cred = cred_create(pcr);
 	VLE(opc);
-	rv = RUMP_VOP_OPEN(opc, mode, cred, curlwp);
+	rv = RUMP_VOP_OPEN(opc, mode, cred);
 	VUL(opc);
 	cred_destroy(cred);
 
@@ -350,14 +350,14 @@ p2k_node_open(struct puffs_cc *pcc, void *opc, int mode,
 
 int
 p2k_node_close(struct puffs_cc *pcc, void *opc, int flags,
-	const struct puffs_cred *pcr, const struct puffs_cid *pcid)
+	const struct puffs_cred *pcr)
 {
 	kauth_cred_t cred;
 	int rv;
 
 	cred = cred_create(pcr);
 	VLE(opc);
-	rv = RUMP_VOP_CLOSE(opc, flags, cred, curlwp);
+	rv = RUMP_VOP_CLOSE(opc, flags, cred);
 	VUL(opc);
 	cred_destroy(cred);
 
@@ -366,14 +366,14 @@ p2k_node_close(struct puffs_cc *pcc, void *opc, int flags,
 
 int
 p2k_node_access(struct puffs_cc *pcc, void *opc, int mode,
-	const struct puffs_cred *pcr, const struct puffs_cid *pcid)
+	const struct puffs_cred *pcr)
 {
 	kauth_cred_t cred;
 	int rv;
 
 	cred = cred_create(pcr);
 	VLE(opc);
-	rv = RUMP_VOP_ACCESS(opc, mode, cred, curlwp);
+	rv = RUMP_VOP_ACCESS(opc, mode, cred);
 	VUL(opc);
 	cred_destroy(cred);
 
@@ -382,14 +382,14 @@ p2k_node_access(struct puffs_cc *pcc, void *opc, int mode,
 
 int
 p2k_node_getattr(struct puffs_cc *pcc, void *opc, struct vattr *vap,
-	const struct puffs_cred *pcr, const struct puffs_cid *pcid)
+	const struct puffs_cred *pcr)
 {
 	kauth_cred_t cred;
 	int rv;
 
 	cred = cred_create(pcr);
 	VLE(opc);
-	rv = RUMP_VOP_GETATTR(opc, vap, cred, curlwp);
+	rv = RUMP_VOP_GETATTR(opc, vap, cred);
 	VUL(opc);
 	cred_destroy(cred);
 
@@ -398,14 +398,14 @@ p2k_node_getattr(struct puffs_cc *pcc, void *opc, struct vattr *vap,
 
 int
 p2k_node_setattr(struct puffs_cc *pcc, void *opc, const struct vattr *vap,
-	const struct puffs_cred *pcr, const struct puffs_cid *pcid)
+	const struct puffs_cred *pcr)
 {
 	kauth_cred_t cred;
 	int rv;
 
 	cred = cred_create(pcr);
 	VLE(opc);
-	rv = RUMP_VOP_SETATTR(opc, __UNCONST(vap), cred, curlwp);
+	rv = RUMP_VOP_SETATTR(opc, __UNCONST(vap), cred);
 	VUL(opc);
 	cred_destroy(cred);
 
@@ -414,14 +414,14 @@ p2k_node_setattr(struct puffs_cc *pcc, void *opc, const struct vattr *vap,
 
 int
 p2k_node_fsync(struct puffs_cc *pcc, void *opc, const struct puffs_cred *pcr,
-	int flags, off_t offlo, off_t offhi, const struct puffs_cid *pcid)
+	int flags, off_t offlo, off_t offhi)
 {
 	kauth_cred_t cred;
 	int rv;
 
 	cred = cred_create(pcr);
 	VLE(opc);
-	rv = RUMP_VOP_FSYNC(opc, cred, flags, offlo, offhi, curlwp);
+	rv = RUMP_VOP_FSYNC(opc, cred, flags, offlo, offhi);
 	VUL(opc);
 	cred_destroy(cred);
 
@@ -654,7 +654,7 @@ p2k_node_write(struct puffs_cc *pcc, void *opc, uint8_t *buf, off_t offset,
 }
 
 int
-p2k_node_reclaim(struct puffs_cc *pcc, void *opc, const struct puffs_cid *pcid)
+p2k_node_reclaim(struct puffs_cc *pcc, void *opc)
 {
 
 	rump_recyclenode(opc);
@@ -664,14 +664,14 @@ p2k_node_reclaim(struct puffs_cc *pcc, void *opc, const struct puffs_cid *pcid)
 }
 
 int
-p2k_node_inactive(struct puffs_cc *pcc, void *opc, const struct puffs_cid *pcid)
+p2k_node_inactive(struct puffs_cc *pcc, void *opc)
 {
 	struct vnode *vp = opc;
 	int rv;
 
 	(void) RUMP_VOP_PUTPAGES(vp, 0, 0, PGO_ALLPAGES);
 	VLE(vp);
-	rv = RUMP_VOP_INACTIVE(vp, curlwp);
+	rv = RUMP_VOP_INACTIVE(vp);
 	if (vp->v_usecount == 0)
 		puffs_setback(pcc, PUFFS_SETBACK_NOREF_N1);
 

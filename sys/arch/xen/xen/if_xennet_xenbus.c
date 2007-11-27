@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.17.4.2 2007/11/11 16:47:06 joerg Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.17.4.3 2007/11/27 19:36:27 joerg Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.17.4.2 2007/11/11 16:47:06 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.17.4.3 2007/11/27 19:36:27 joerg Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -96,17 +96,17 @@ __KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.17.4.2 2007/11/11 16:47:06 jo
 #include <nfs/nfs.h>
 #include <nfs/nfsmount.h>
 #include <nfs/nfsdiskless.h>
-#include <machine/if_xennetvar.h>
+#include <xen/if_xennetvar.h>
 #endif /* defined(NFS_BOOT_BOOTSTATIC) */
 
-#include <machine/xennet_checksum.h>
+#include <xen/xennet_checksum.h>
 
 #include <uvm/uvm.h>
 
-#include <machine/xen3-public/io/ring.h>
+#include <xen/xen3-public/io/ring.h>
 
-#include <machine/granttables.h>
-#include <machine/xenbus.h>
+#include <xen/granttables.h>
+#include <xen/xenbus.h>
 #include "locators.h"
 
 #undef XENNET_DEBUG_DUMP

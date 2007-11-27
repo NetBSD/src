@@ -1,4 +1,4 @@
-/*  $NetBSD: if_wpi.c,v 1.17.4.11 2007/11/21 21:55:30 joerg Exp $    */
+/*  $NetBSD: if_wpi.c,v 1.17.4.12 2007/11/27 19:37:11 joerg Exp $    */
 
 /*-
  * Copyright (c) 2006, 2007
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.17.4.11 2007/11/21 21:55:30 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.17.4.12 2007/11/27 19:37:11 joerg Exp $");
 
 /*
  * Driver for Intel PRO/Wireless 3945ABG 802.11 network adapters.
@@ -201,6 +201,7 @@ wpi_attach(device_t parent __unused, device_t self, void *aux)
 	pcireg_t data;
 	int error, ac, revision;
 
+	sc->sc_dev = self;
 	sc->sc_pct = pa->pa_pc;
 	sc->sc_pcitag = pa->pa_tag;
 
@@ -254,10 +255,8 @@ wpi_attach(device_t parent __unused, device_t self, void *aux)
  	/*
 	 * Allocate DMA memory for firmware transfers.
 	 */
-	if ((error = wpi_alloc_fwmem(sc)) != 0) {
-		aprint_error("could not allocate firmware memory\n");
+	if ((error = wpi_alloc_fwmem(sc)) != 0)
 		return;
-	}
 
 	/*
 	 * Allocate shared page and Tx/Rx rings.
