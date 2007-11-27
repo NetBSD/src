@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.71 2007/11/26 19:01:49 pooka Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.72 2007/11/27 11:31:17 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.71 2007/11/26 19:01:49 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.72 2007/11/27 11:31:17 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -315,7 +315,6 @@ puffs_unmount(struct mount *mp, int mntflags)
 		puffs_msg_setinfo(park_unmount,
 		    PUFFSOP_VFS, PUFFS_VFS_UNMOUNT, NULL);
 		unmount_msg->pvfsr_flags = mntflags;
-		puffs_cidcvt(&unmount_msg->pvfsr_cid, curlwp);
 
 		PUFFS_MSG_ENQUEUEWAIT(pmp, park_unmount, error);
 		PUFFS_MSG_RELEASE(unmount);
@@ -401,7 +400,6 @@ puffs_statvfs(struct mount *mp, struct statvfs *sbp)
 
 	PUFFS_MSG_ALLOC(vfs, statvfs);
 	puffs_msg_setinfo(park_statvfs, PUFFSOP_VFS, PUFFS_VFS_STATVFS, NULL);
-	puffs_cidcvt(&statvfs_msg->pvfsr_cid, curlwp);
 
 	PUFFS_MSG_ENQUEUEWAIT(pmp, park_statvfs, error);
 	error = checkerr(pmp, error, __func__);
@@ -544,7 +542,6 @@ puffs_sync(struct mount *mp, int waitfor, struct kauth_cred *cred)
 	PUFFS_MSG_ALLOC(vfs, sync);
 	sync_msg->pvfsr_waitfor = waitfor;
 	puffs_credcvt(&sync_msg->pvfsr_cred, cred);
-	puffs_cidcvt(&sync_msg->pvfsr_cid, curlwp);
 	puffs_msg_setinfo(park_sync, PUFFSOP_VFS, PUFFS_VFS_SYNC, NULL);
 
 	PUFFS_MSG_ENQUEUEWAIT(pmp, park_sync, rv);
