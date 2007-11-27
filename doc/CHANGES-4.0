@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.372 2007/11/26 21:41:06 xtraeme Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.373 2007/11/27 17:43:38 bouyer Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -10667,4 +10667,10 @@ build.sh					1.180 patch
 	the original implementation of cdextra as an operation instead of
 	a being paramater.
 	[jnemeth, ticket #999]
+
+gnu/usr.bin/groff/tmac/mdoc.local		patch
+sys/sys/param.h					patch
+
+	Welcome to NetBSD 4.0_RC5.
+	[bouyer]
 
