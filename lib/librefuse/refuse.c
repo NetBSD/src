@@ -1,4 +1,4 @@
-/*	$NetBSD: refuse.c,v 1.83 2007/11/08 17:08:46 pooka Exp $	*/
+/*	$NetBSD: refuse.c,v 1.84 2007/11/27 11:31:20 pooka Exp $	*/
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: refuse.c,v 1.83 2007/11/08 17:08:46 pooka Exp $");
+__RCSID("$NetBSD: refuse.c,v 1.84 2007/11/27 11:31:20 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -615,7 +615,7 @@ puffs_fuse_node_lookup(struct puffs_cc *pcc, void *opc,
 /* ARGSUSED3 */
 static int
 puffs_fuse_node_getattr(struct puffs_cc *pcc, void *opc, struct vattr *va,
-	const struct puffs_cred *pcr, const struct puffs_cid *pcid) 
+	const struct puffs_cred *pcr) 
 {
 	struct puffs_usermount	*pu = puffs_cc_getusermount(pcc);
 	struct puffs_node	*pn = opc;
@@ -922,8 +922,7 @@ puffs_fuse_node_link(struct puffs_cc *pcc, void *opc, void *targ,
 /* ARGSUSED3 */
 static int
 puffs_fuse_node_setattr(struct puffs_cc *pcc, void *opc,
-	const struct vattr *va, const struct puffs_cred *pcr,
-	const struct puffs_cid *pcid)
+	const struct vattr *va, const struct puffs_cred *pcr)
 {
 	struct puffs_usermount	*pu = puffs_cc_getusermount(pcc);
 	struct puffs_node	*pn = opc;
@@ -940,7 +939,7 @@ puffs_fuse_node_setattr(struct puffs_cc *pcc, void *opc,
 /* ARGSUSED2 */
 static int
 puffs_fuse_node_open(struct puffs_cc *pcc, void *opc, int mode,
-	const struct puffs_cred *cred, const struct puffs_cid *pcid)
+	const struct puffs_cred *cred)
 {
 	struct puffs_usermount	*pu = puffs_cc_getusermount(pcc);
 	struct puffs_node	*pn = opc;
@@ -979,7 +978,7 @@ puffs_fuse_node_open(struct puffs_cc *pcc, void *opc, int mode,
 /* ARGSUSED2 */
 static int
 puffs_fuse_node_close(struct puffs_cc *pcc, void *opc, int fflag,
-	const struct puffs_cred *pcr, const struct puffs_cid *pcid)
+	const struct puffs_cred *pcr)
 {
 	struct puffs_usermount	*pu = puffs_cc_getusermount(pcc);
 	struct puffs_node	*pn = opc;
@@ -1154,8 +1153,7 @@ puffs_fuse_node_readdir(struct puffs_cc *pcc, void *opc, struct dirent *dent,
 
 /* ARGSUSED */
 static int
-puffs_fuse_node_reclaim(struct puffs_cc *pcc, void *opc,
-	const struct puffs_cid *pcid)
+puffs_fuse_node_reclaim(struct puffs_cc *pcc, void *opc)
 {
 	struct puffs_node	*pn = opc;
 
@@ -1165,8 +1163,7 @@ puffs_fuse_node_reclaim(struct puffs_cc *pcc, void *opc,
 
 /* ARGSUSED1 */
 static int
-puffs_fuse_fs_unmount(struct puffs_cc *pcc, int flags,
-	const struct puffs_cid *pcid)
+puffs_fuse_fs_unmount(struct puffs_cc *pcc, int flags)
 {
         struct puffs_usermount	*pu = puffs_cc_getusermount(pcc);
 	struct fuse		*fuse;
@@ -1182,7 +1179,7 @@ puffs_fuse_fs_unmount(struct puffs_cc *pcc, int flags,
 /* ARGSUSED0 */
 static int
 puffs_fuse_fs_sync(struct puffs_cc *pcc, int flags,
-            const struct puffs_cred *cr, const struct puffs_cid *pcid)
+            const struct puffs_cred *cr)
 {
 	set_fuse_context_uid_gid(cr);
         return 0;
@@ -1190,8 +1187,7 @@ puffs_fuse_fs_sync(struct puffs_cc *pcc, int flags,
 
 /* ARGSUSED2 */
 static int
-puffs_fuse_fs_statvfs(struct puffs_cc *pcc, struct statvfs *svfsb,
-	const struct puffs_cid *pcid)
+puffs_fuse_fs_statvfs(struct puffs_cc *pcc, struct statvfs *svfsb)
 {
         struct puffs_usermount	*pu = puffs_cc_getusermount(pcc);
 	struct fuse		*fuse;

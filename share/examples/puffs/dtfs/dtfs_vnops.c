@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs_vnops.c,v 1.39 2007/10/11 23:03:00 pooka Exp $	*/
+/*	$NetBSD: dtfs_vnops.c,v 1.40 2007/11/27 11:31:22 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -87,7 +87,7 @@ dtfs_node_lookup(struct puffs_cc *pcc, void *opc, struct puffs_newinfo *pni,
 
 int
 dtfs_node_access(struct puffs_cc *pcc, void *opc, int acc_mode,
-	const struct puffs_cred *pcr, const struct puffs_cid *pcid)
+	const struct puffs_cred *pcr)
 {
 	struct puffs_node *pn = opc;
 
@@ -97,8 +97,7 @@ dtfs_node_access(struct puffs_cc *pcc, void *opc, int acc_mode,
 
 int
 dtfs_node_getattr(struct puffs_cc *pcc, void *opc,
-	struct vattr *va, const struct puffs_cred *pcr,
-	const struct puffs_cid *pcid)
+	struct vattr *va, const struct puffs_cred *pcr)
 {
 	struct puffs_node *pn = opc;
 
@@ -109,8 +108,7 @@ dtfs_node_getattr(struct puffs_cc *pcc, void *opc,
 
 int
 dtfs_node_setattr(struct puffs_cc *pcc, void *opc,
-	const struct vattr *va, const struct puffs_cred *pcr,
-	const struct puffs_cid *pcid)
+	const struct vattr *va, const struct puffs_cred *pcr)
 {
 	struct puffs_node *pn = opc;
 	int rv;
@@ -279,8 +277,7 @@ dtfs_node_readdir(struct puffs_cc *pcc, void *opc,
 }
 
 int
-dtfs_node_poll(struct puffs_cc *pcc, void *opc, int *events,
-	const struct puffs_cid *pcid)
+dtfs_node_poll(struct puffs_cc *pcc, void *opc, int *events)
 {
 	struct dtfs_mount *dtm = puffs_cc_getspecific(pcc);
 	struct dtfs_poll dp;
@@ -301,7 +298,7 @@ dtfs_node_poll(struct puffs_cc *pcc, void *opc, int *events,
 
 int
 dtfs_node_mmap(struct puffs_cc *pcc, void *opc, vm_prot_t prot,
-	const struct puffs_cred *pcr, const struct puffs_cid *pcid)
+	const struct puffs_cred *pcr)
 {
 	struct dtfs_mount *dtm = puffs_cc_getspecific(pcc);
 
@@ -509,7 +506,7 @@ dtfs_node_write(struct puffs_cc *pcc, void *opc, uint8_t *buf,
 }
 
 int
-dtfs_node_reclaim(struct puffs_cc *pcc, void *opc, const struct puffs_cid *pcid)
+dtfs_node_reclaim(struct puffs_cc *pcc, void *opc)
 {
 	struct puffs_node *pn = opc;
 
