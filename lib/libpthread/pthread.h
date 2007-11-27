@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.h,v 1.22 2007/11/14 19:28:24 drochner Exp $	*/
+/*	$NetBSD: pthread.h,v 1.23 2007/11/27 20:58:26 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -136,6 +136,8 @@ int	pthread_setname_np(pthread_t, const char *, void *);
 int 	pthread_attr_setcreatesuspend_np(pthread_attr_t *);
 int	pthread_suspend_np(pthread_t);
 int	pthread_resume_np(pthread_t);
+
+unsigned int	pthread_curcpu_np(void);
 
 struct pthread_cleanup_store {
 	void	*pad[4];
@@ -347,6 +349,7 @@ pthread_t	__libc_thr_self(void);
 void	__libc_thr_exit(void *) __attribute__((__noreturn__));
 int	__libc_thr_setcancelstate(int, int *);
 int	__libc_thr_equal(pthread_t, pthread_t);
+unsigned int	__libc_thr_curcpu(void);
 __END_DECLS
 
 #define	pthread_once			__libc_thr_once
@@ -354,6 +357,7 @@ __END_DECLS
 #define	pthread_exit			__libc_thr_exit
 #define	pthread_setcancelstate		__libc_thr_setcancelstate
 #define pthread_equal			__libc_thr_equal
+#define pthread_curcpu_np		__libc_thr_curcpu
 
 #endif /* __LIBPTHREAD_SOURCE__ */
 

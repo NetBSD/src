@@ -1,4 +1,4 @@
-/*	$NetBSD: thread-stub.c,v 1.16 2007/11/14 19:28:23 drochner Exp $	*/
+/*	$NetBSD: thread-stub.c,v 1.17 2007/11/27 20:58:26 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: thread-stub.c,v 1.16 2007/11/14 19:28:23 drochner Exp $");
+__RCSID("$NetBSD: thread-stub.c,v 1.17 2007/11/27 20:58:26 ad Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -364,6 +364,7 @@ __weak_alias(__libc_thr_exit,__libc_thr_exit_stub)
 __weak_alias(__libc_thr_errno,__libc_thr_errno_stub)
 __weak_alias(__libc_thr_setcancelstate,__libc_thr_setcancelstate_stub)
 __weak_alias(__libc_thr_equal,__libc_thr_equal_stub)
+__weak_alias(__libc_thr_curcpu,__libc_thr_curcpu)
 
 
 int
@@ -459,6 +460,13 @@ __libc_thr_errno_stub(void)
 	DIE();
 
 	return (NULL);
+}
+
+unsigned int
+__libc_thr_curcpu(void)
+{
+
+	return (0);
 }
 
 #endif /* _REENTRANT */
