@@ -1,4 +1,4 @@
-/*	$NetBSD: node.c,v 1.17 2007/10/13 17:21:39 pooka Exp $	*/
+/*	$NetBSD: node.c,v 1.18 2007/11/27 11:31:20 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: node.c,v 1.17 2007/10/13 17:21:39 pooka Exp $");
+__RCSID("$NetBSD: node.c,v 1.18 2007/11/27 11:31:20 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -70,7 +70,7 @@ do_getattr(struct puffs_cc *pcc, struct puffs_node *pn, struct vattr *vap)
 
 int
 puffs9p_node_getattr(struct puffs_cc *pcc, void *opc, struct vattr *vap,
-	const struct puffs_cred *pcr, const struct puffs_cid *pcid)
+	const struct puffs_cred *pcr)
 {
 	struct puffs_node *pn = opc;
 	int rv;
@@ -209,8 +209,7 @@ puffs9p_node_readdir(struct puffs_cc *pcc, void *opc, struct dirent *dent,
 
 int
 puffs9p_node_setattr(struct puffs_cc *pcc, void *opc,
-	const struct vattr *va, const struct puffs_cred *pcr,
-	const struct puffs_cid *pcid)
+	const struct vattr *va, const struct puffs_cred *pcr)
 {
 	AUTOVAR(pcc);
 	struct puffs_node *pn = opc;
@@ -243,7 +242,7 @@ puffs9p_node_setattr(struct puffs_cc *pcc, void *opc,
  */
 int
 puffs9p_node_open(struct puffs_cc *pcc, void *opc, int mode,
-	const struct puffs_cred *pcr, const struct puffs_cid *pcid)
+	const struct puffs_cred *pcr)
 {
 	struct puffs9p *p9p = puffs_cc_getspecific(pcc);
 	struct puffs_node *pn = opc;
@@ -275,8 +274,7 @@ puffs9p_node_open(struct puffs_cc *pcc, void *opc, int mode,
 }
 
 int
-puffs9p_node_inactive(struct puffs_cc *pcc, void *opc,
-	const struct puffs_cid *pcid)
+puffs9p_node_inactive(struct puffs_cc *pcc, void *opc)
 {
 	struct puffs_node *pn = opc;
 	struct p9pnode *p9n = pn->pn_data;
@@ -586,8 +584,7 @@ puffs9p_node_rename(struct puffs_cc *pcc, void *opc, void *src,
  * - "thanks"
  */
 int
-puffs9p_node_reclaim(struct puffs_cc *pcc, void *opc,
-	const struct puffs_cid *pcid)
+puffs9p_node_reclaim(struct puffs_cc *pcc, void *opc)
 {
 	struct puffs_node *pn = opc;
 	struct p9pnode *p9n = pn->pn_data;

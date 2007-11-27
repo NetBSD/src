@@ -1,4 +1,4 @@
-/*	$NetBSD: null.c,v 1.22 2007/11/05 16:53:00 pooka Exp $	*/
+/*	$NetBSD: null.c,v 1.23 2007/11/27 11:31:19 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: null.c,v 1.22 2007/11/05 16:53:00 pooka Exp $");
+__RCSID("$NetBSD: null.c,v 1.23 2007/11/27 11:31:19 pooka Exp $");
 #endif /* !lint */
 
 /*
@@ -187,8 +187,7 @@ puffs_null_setops(struct puffs_ops *pops)
 
 /*ARGSUSED*/
 int
-puffs_null_fs_statvfs(struct puffs_cc *pcc, struct statvfs *svfsb,
-	const struct puffs_cid *pcid)
+puffs_null_fs_statvfs(struct puffs_cc *pcc, struct statvfs *svfsb)
 {
 	struct puffs_usermount *pu = puffs_cc_getusermount(pcc);
 
@@ -280,7 +279,7 @@ puffs_null_node_mknod(struct puffs_cc *pcc, void *opc,
 /*ARGSUSED*/
 int
 puffs_null_node_getattr(struct puffs_cc *pcc, void *opc, struct vattr *va,
-	const struct puffs_cred *pcred, const struct puffs_cid *pcid)
+	const struct puffs_cred *pcred)
 {
 	struct puffs_node *pn = opc;
 	struct stat sb;
@@ -295,8 +294,7 @@ puffs_null_node_getattr(struct puffs_cc *pcc, void *opc, struct vattr *va,
 /*ARGSUSED*/
 int
 puffs_null_node_setattr(struct puffs_cc *pcc, void *opc,
-	const struct vattr *va, const struct puffs_cred *pcred,
-	const struct puffs_cid *pcid)
+	const struct vattr *va, const struct puffs_cred *pcred)
 {
 	struct puffs_node *pn = opc;
 	int rv;
@@ -314,7 +312,7 @@ puffs_null_node_setattr(struct puffs_cc *pcc, void *opc,
 int
 puffs_null_node_fsync(struct puffs_cc *pcc, void *opc,
 	const struct puffs_cred *pcred, int how,
-	off_t offlo, off_t offhi, const struct puffs_cid *pcid)
+	off_t offlo, off_t offhi)
 {
 	struct puffs_node *pn = opc;
 	int fd, rv;

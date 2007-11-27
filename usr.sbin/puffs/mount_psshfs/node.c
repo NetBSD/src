@@ -1,4 +1,4 @@
-/*	$NetBSD: node.c,v 1.45 2007/11/18 17:41:55 pooka Exp $	*/
+/*	$NetBSD: node.c,v 1.46 2007/11/27 11:31:21 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: node.c,v 1.45 2007/11/18 17:41:55 pooka Exp $");
+__RCSID("$NetBSD: node.c,v 1.46 2007/11/27 11:31:21 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -106,7 +106,7 @@ psshfs_node_lookup(struct puffs_cc *pcc, void *opc, struct puffs_newinfo *pni,
 
 int
 psshfs_node_getattr(struct puffs_cc *pcc, void *opc, struct vattr *vap,
-	const struct puffs_cred *pcr, const struct puffs_cid *pcid)
+	const struct puffs_cred *pcr)
 {
 	struct puffs_node *pn = opc;
 	int rv;
@@ -122,8 +122,7 @@ psshfs_node_getattr(struct puffs_cc *pcc, void *opc, struct vattr *vap,
 
 int
 psshfs_node_setattr(struct puffs_cc *pcc, void *opc,
-	const struct vattr *va, const struct puffs_cred *pcr,
-	const struct puffs_cid *pcid)
+	const struct vattr *va, const struct puffs_cred *pcr)
 {
 	PSSHFSAUTOVAR(pcc);
 	struct vattr kludgeva;
@@ -202,7 +201,7 @@ psshfs_node_create(struct puffs_cc *pcc, void *opc, struct puffs_newinfo *pni,
 
 int
 psshfs_node_mmap(struct puffs_cc* pcc, void *opc, vm_prot_t prot,
-	const struct puffs_cred *pcr, const struct puffs_cid *pcid)
+	const struct puffs_cred *pcr)
 {
 	struct puffs_node *pn = opc;
 	struct psshfs_node *psn = pn->pn_data;
@@ -217,7 +216,7 @@ psshfs_node_mmap(struct puffs_cc* pcc, void *opc, vm_prot_t prot,
 
 int
 psshfs_node_open(struct puffs_cc *pcc, void *opc, int mode,
-	const struct puffs_cred *pcr, const struct puffs_cid *pcid)
+	const struct puffs_cred *pcr)
 {
 	PSSHFSAUTOVAR(pcc);
 	struct vattr va;
@@ -286,8 +285,7 @@ closehandles(struct puffs_cc *pcc, struct psshfs_node *psn)
 }
 
 int
-psshfs_node_inactive(struct puffs_cc *pcc, void *opc,
-	const struct puffs_cid *pcid)
+psshfs_node_inactive(struct puffs_cc *pcc, void *opc)
 {
 	struct puffs_node *pn = opc;
 	struct psshfs_node *psn = pn->pn_data;
@@ -704,8 +702,7 @@ psshfs_node_rename(struct puffs_cc *pcc, void *opc, void *src,
  * bit.
  */
 int
-psshfs_node_reclaim(struct puffs_cc *pcc, void *opc,
-	const struct puffs_cid *pcid)
+psshfs_node_reclaim(struct puffs_cc *pcc, void *opc)
 {
 	struct puffs_usermount *pu = puffs_cc_getusermount(pcc);
 	struct puffs_node *pn = opc, *pn_next, *pn_root;
