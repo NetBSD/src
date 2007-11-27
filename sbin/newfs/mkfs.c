@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.102 2006/10/16 03:04:45 christos Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.103 2007/11/27 13:31:10 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -73,7 +73,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.102 2006/10/16 03:04:45 christos Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.103 2007/11/27 13:31:10 tsutsui Exp $");
 #endif
 #endif /* not lint */
 
@@ -128,7 +128,6 @@ static void *mkfs_malloc(size_t size);
  * make file system for cylinder-group style file systems
  */
 #define	UMASK		0755
-#define	POWEROF2(num)	(((num) & ((num) - 1)) == 0)
 
 union {
 	struct fs fs;
@@ -220,12 +219,12 @@ mkfs(const char *fsys, int fi, int fo,
 	 */
 	sblock.fs_bsize = bsize;
 	sblock.fs_fsize = fsize;
-	if (!POWEROF2(sblock.fs_bsize)) {
+	if (!powerof2(sblock.fs_bsize)) {
 		printf("block size must be a power of 2, not %d\n",
 		    sblock.fs_bsize);
 		exit(16);
 	}
-	if (!POWEROF2(sblock.fs_fsize)) {
+	if (!powerof2(sblock.fs_fsize)) {
 		printf("fragment size must be a power of 2, not %d\n",
 		    sblock.fs_fsize);
 		exit(17);
@@ -251,7 +250,7 @@ mkfs(const char *fsys, int fi, int fo,
 		exit(20);
 	}
 
-	if (maxbsize < bsize || !POWEROF2(maxbsize)) {
+	if (maxbsize < bsize || !powerof2(maxbsize)) {
 		sblock.fs_maxbsize = sblock.fs_bsize;
 	} else if (sblock.fs_maxbsize > FS_MAXCONTIG * sblock.fs_bsize) {
 		sblock.fs_maxbsize = FS_MAXCONTIG * sblock.fs_bsize;
