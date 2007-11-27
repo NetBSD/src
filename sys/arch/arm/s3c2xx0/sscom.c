@@ -1,4 +1,4 @@
-/*	$NetBSD: sscom.c,v 1.26 2007/11/19 18:51:38 ad Exp $ */
+/*	$NetBSD: sscom.c,v 1.27 2007/11/27 22:00:59 ad Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sscom.c,v 1.26 2007/11/19 18:51:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sscom.c,v 1.27 2007/11/27 22:00:59 ad Exp $");
 
 #include "opt_sscom.h"
 #include "opt_ddb.h"
@@ -148,9 +148,8 @@ __KERNEL_RCSID(0, "$NetBSD: sscom.c,v 1.26 2007/11/19 18:51:38 ad Exp $");
 #include <sys/timepps.h>
 #include <sys/vnode.h>
 #include <sys/kauth.h>
-
-#include <machine/intr.h>
-#include <machine/bus.h>
+#include <sys/intr.h>
+#include <sys/bus.h>
 
 #include <arm/s3c2xx0/s3c2xx0reg.h>
 #include <arm/s3c2xx0/s3c2xx0var.h>
@@ -499,7 +498,7 @@ sscom_attach_subr(struct sscom_softc *sc)
 	}
 
 
-	sc->sc_si = softintr_establish(IPL_SOFTSERIAL, sscomsoft, sc);
+	sc->sc_si = softint_establish(SOFTINT_SERIAL, sscomsoft, sc);
 
 #if NRND > 0 && defined(RND_COM)
 	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
@@ -895,7 +894,7 @@ sscom_schedrx(struct sscom_softc *sc)
 	sc->sc_rx_ready = 1;
 
 	/* Wake up the poller. */
-	softintr_schedule(sc->sc_si);
+	softint_schedule(sc->sc_si);
 }
 
 static void
@@ -1741,7 +1740,7 @@ sscomrxintr(void *arg)
 	SSCOM_UNLOCK(sc);
 
 	/* Wake up the poller. */
-	softintr_schedule(sc->sc_si);
+	softint_schedule(sc->sc_si);
 
 #if NRND > 0 && defined(RND_COM)
 	rnd_add_uint32(&sc->rnd_source, iir | rsr);
@@ -1806,7 +1805,7 @@ sscomtxintr(void *arg)
 	SSCOM_UNLOCK(sc);
 
 	/* Wake up the poller. */
-	softintr_schedule(sc->sc_si);
+	softint_schedule(sc->sc_si);
 
 #if NRND > 0 && defined(RND_COM)
 	rnd_add_uint32(&sc->rnd_source, iir | rsr);
