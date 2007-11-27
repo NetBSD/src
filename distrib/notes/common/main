@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.373 2007/11/27 13:38:23 jnemeth Exp $
+.\"	$NetBSD: main,v 1.374 2007/11/27 22:56:07 rhaen Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1881,6 +1881,7 @@ If you're one of them, and would like to mentioned, tell us!)
 .It Ta Brian C. Grayson Ta Mt bgrayson@NetBSD.org
 .It Ta Matthew Green Ta Mt mrg@NetBSD.org
 .It Ta Andreas Gustafsson Ta Mt gson@NetBSD.org
+.It Ta Ulrich Habel Ta Mt rhaen@NetBSD.org
 .It Ta Jun-ichiro itojun Hagino Ta Mt itojun@NetBSD.org
 .It Ta Adam Hamsik Ta Mt haad@NetBSD.org
 .It Ta Juergen Hannken-Illjes Ta Mt hannken@NetBSD.org
