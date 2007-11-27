@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_mman.c,v 1.13 2007/02/09 21:55:18 ad Exp $ */
+/*	$NetBSD: irix_mman.c,v 1.14 2007/11/27 23:30:56 dogcow Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_mman.c,v 1.13 2007/02/09 21:55:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_mman.c,v 1.14 2007/11/27 23:30:56 dogcow Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -198,7 +198,7 @@ irix_mmap(l, addr, len, prot, flags, fd, pos, retval)
 			goto out;
 		}
 
-		if ((error = VOP_GETATTR(vp, &vattr, l->l_cred, l)) != 0)
+		if ((error = VOP_GETATTR(vp, &vattr, l->l_cred)) != 0)
 			goto out;
 
 		if (pos + len > vattr.va_size) {
