@@ -1,4 +1,4 @@
-/*	$NetBSD: rlphy.c,v 1.15.6.2 2007/11/06 19:25:22 joerg Exp $	*/
+/*	$NetBSD: rlphy.c,v 1.15.6.3 2007/11/27 09:28:24 joerg Exp $	*/
 /*	$OpenBSD: rlphy.c,v 1.20 2005/07/31 05:27:30 pvalchev Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rlphy.c,v 1.15.6.2 2007/11/06 19:25:22 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rlphy.c,v 1.15.6.3 2007/11/27 09:28:24 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -140,6 +140,9 @@ rlphyattach(struct device *parent, struct device *self, void *aux)
 	if (sc->mii_capabilities & BMSR_MEDIAMASK)
 		mii_phy_add_media(sc);
 	aprint_normal("\n");
+
+	if (!pnp_device_register(self, NULL, mii_phy_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
 int

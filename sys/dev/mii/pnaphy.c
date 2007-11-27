@@ -1,4 +1,4 @@
-/*	$NetBSD: pnaphy.c,v 1.16 2006/11/16 21:24:07 christos Exp $	*/
+/*	$NetBSD: pnaphy.c,v 1.16.22.1 2007/11/27 09:28:23 joerg Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pnaphy.c,v 1.16 2006/11/16 21:24:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pnaphy.c,v 1.16.22.1 2007/11/27 09:28:23 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -130,6 +130,9 @@ pnaphyattach(struct device *parent, struct device *self, void *aux)
 	else
 		mii_phy_add_media(sc);
 	aprint_normal("\n");
+
+	if (!pnp_device_register(self, NULL, mii_phy_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
 static int

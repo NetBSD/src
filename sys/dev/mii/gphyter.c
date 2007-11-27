@@ -1,4 +1,4 @@
-/*	$NetBSD: gphyter.c,v 1.19 2006/11/16 21:24:07 christos Exp $	*/
+/*	$NetBSD: gphyter.c,v 1.19.22.1 2007/11/27 09:28:21 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gphyter.c,v 1.19 2006/11/16 21:24:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gphyter.c,v 1.19.22.1 2007/11/27 09:28:21 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -183,6 +183,9 @@ gphyterattach(struct device *parent, struct device *self, void *aux)
 	if (strap & STRAP_NC_MODE)
 		aprint_normal(", pre-C5 BCM5400 compat enabled");
 	aprint_normal("\n");
+
+	if (!pnp_device_register(self, NULL, mii_phy_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
 static int
