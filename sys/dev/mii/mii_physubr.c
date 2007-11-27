@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_physubr.c,v 1.53 2006/11/16 21:24:07 christos Exp $	*/
+/*	$NetBSD: mii_physubr.c,v 1.53.22.1 2007/11/27 09:28:22 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.53 2006/11/16 21:24:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.53.22.1 2007/11/27 09:28:22 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -632,4 +632,13 @@ mii_phy_flowstatus(struct mii_softc *sc)
 		return (IFM_FLOW|IFM_ETH_RXPAUSE|IFM_ETH_TXPAUSE);
 	}
 	/* NOTREACHED */
+}
+
+bool
+mii_phy_resume(device_t dv)
+{
+	struct mii_softc *sc = device_private(dv);
+
+	PHY_RESET(sc);
+	return true;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: dmphy.c,v 1.27 2006/11/16 21:24:07 christos Exp $	*/
+/*	$NetBSD: dmphy.c,v 1.27.22.1 2007/11/27 09:28:21 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmphy.c,v 1.27 2006/11/16 21:24:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dmphy.c,v 1.27.22.1 2007/11/27 09:28:21 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -158,6 +158,9 @@ dmphyattach(struct device *parent, struct device *self, void *aux)
 	else
 		mii_phy_add_media(sc);
 	aprint_normal("\n");
+
+	if (!pnp_device_register(self, NULL, mii_phy_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
 static int
