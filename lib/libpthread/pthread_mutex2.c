@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_mutex2.c,v 1.12 2007/11/14 17:20:57 ad Exp $	*/
+/*	$NetBSD: pthread_mutex2.c,v 1.13 2007/11/27 20:55:03 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_mutex2.c,v 1.12 2007/11/14 17:20:57 ad Exp $");
+__RCSID("$NetBSD: pthread_mutex2.c,v 1.13 2007/11/27 20:55:03 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/lwpctl.h>
@@ -584,7 +584,7 @@ pthread__mutex_deferwake(pthread_t thread, pthread_mutex_t *ptm)
 		return 0;
 	pthread__atomic_or_ulong((volatile unsigned long *)
 	    (uintptr_t)&ptm->ptm_owner,
-	    MUTEX_DEFERRED_BIT);
+	    (unsigned long)MUTEX_DEFERRED_BIT);
 	return 1;	
 }
 
