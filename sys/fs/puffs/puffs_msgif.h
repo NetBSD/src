@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.h,v 1.60 2007/11/12 16:39:35 pooka Exp $	*/
+/*	$NetBSD: puffs_msgif.h,v 1.61 2007/11/27 11:31:17 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -100,7 +100,7 @@ enum {
 #define PUFFS_ERR_MAX PUFFS_ERR_VPTOFH
 
 #define PUFFSDEVELVERS	0x80000000
-#define PUFFSVERSION	23
+#define PUFFSVERSION	24
 #define PUFFSNAMESIZE	32
 
 #define PUFFS_TYPEPREFIX "puffs|"
@@ -277,21 +277,18 @@ struct puffs_vfsmsg_unmount {
 	struct puffs_req	pvfsr_pr;
 
 	int			pvfsr_flags;
-	struct puffs_kcid	pvfsr_cid;
 };
 
 struct puffs_vfsmsg_statvfs {
 	struct puffs_req	pvfsr_pr;
 
 	struct statvfs		pvfsr_sb;
-	struct puffs_kcid	pvfsr_cid;
 };
 
 struct puffs_vfsmsg_sync {
 	struct puffs_req	pvfsr_pr;
 
 	struct puffs_kcred	pvfsr_cred;
-	struct puffs_kcid	pvfsr_cid;
 	int			pvfsr_waitfor;
 };
 
@@ -371,7 +368,6 @@ struct puffs_vnmsg_open {
 	struct puffs_req	pvn_pr;
 
 	struct puffs_kcred	pvnr_cred;		/* OUT	*/
-	struct puffs_kcid	pvnr_cid;		/* OUT	*/
 	int			pvnr_mode;		/* OUT	*/
 };
 
@@ -379,7 +375,6 @@ struct puffs_vnmsg_close {
 	struct puffs_req	pvn_pr;
 
 	struct puffs_kcred	pvnr_cred;		/* OUT	*/
-	struct puffs_kcid	pvnr_cid;		/* OUT	*/
 	int			pvnr_fflag;		/* OUT	*/
 };
 
@@ -387,7 +382,6 @@ struct puffs_vnmsg_access {
 	struct puffs_req	pvn_pr;
 
 	struct puffs_kcred	pvnr_cred;		/* OUT	*/
-	struct puffs_kcid	pvnr_cid;		/* OUT	*/
 	int			pvnr_mode;		/* OUT	*/
 };
 
@@ -397,7 +391,6 @@ struct puffs_vnmsg_setgetattr {
 	struct puffs_req	pvn_pr;
 
 	struct puffs_kcred	pvnr_cred;		/* OUT	*/
-	struct puffs_kcid	pvnr_cid;		/* OUT	*/
 	struct vattr		pvnr_va;		/* IN/OUT (op depend) */
 };
 
@@ -433,14 +426,12 @@ struct puffs_vnmsg_poll {
 	struct puffs_req	pvn_pr;
 
 	int			pvnr_events;		/* IN/OUT */
-	struct puffs_kcid	pvnr_cid;		/* OUT    */
 };
 
 struct puffs_vnmsg_fsync {
 	struct puffs_req	pvn_pr;
 
 	struct puffs_kcred	pvnr_cred;		/* OUT	*/
-	struct puffs_kcid	pvnr_cid;		/* OUT	*/
 	off_t			pvnr_offlo;		/* OUT	*/
 	off_t			pvnr_offhi;		/* OUT	*/
 	int			pvnr_flags;		/* OUT	*/
@@ -546,14 +537,10 @@ struct puffs_vnmsg_readlink {
 
 struct puffs_vnmsg_reclaim {
 	struct puffs_req	pvn_pr;
-
-	struct puffs_kcid	pvnr_cid;		/* OUT	*/
 };
 
 struct puffs_vnmsg_inactive {
 	struct puffs_req	pvn_pr;
-
-	struct puffs_kcid	pvnr_cid;		/* OUT	*/
 };
 
 struct puffs_vnmsg_print {
@@ -583,7 +570,6 @@ struct puffs_vnmsg_mmap {
 
 	vm_prot_t		pvnr_prot;		/* OUT	*/
 	struct puffs_kcred	pvnr_cred;		/* OUT	*/
-	struct puffs_kcid	pvnr_cid;		/* OUT	*/
 };
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: dispatcher.c,v 1.21 2007/10/31 16:09:09 pooka Exp $	*/
+/*	$NetBSD: dispatcher.c,v 1.22 2007/11/27 11:31:19 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: dispatcher.c,v 1.21 2007/10/31 16:09:09 pooka Exp $");
+__RCSID("$NetBSD: dispatcher.c,v 1.22 2007/11/27 11:31:19 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -278,11 +278,9 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 		case PUFFS_VFS_UNMOUNT:
 		{
 			struct puffs_vfsmsg_unmount *auxt = auxbuf;
-			PUFFS_MAKECID(pcid, &auxt->pvfsr_cid);
 
 			PU_SETSTATE(pu, PUFFS_STATE_UNMOUNTING);
-			error = pops->puffs_fs_unmount(pcc,
-			    auxt->pvfsr_flags, pcid);
+			error = pops->puffs_fs_unmount(pcc, auxt->pvfsr_flags);
 			if (!error)
 				PU_SETSTATE(pu, PUFFS_STATE_UNMOUNTED);
 			else
@@ -293,10 +291,8 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 		case PUFFS_VFS_STATVFS:
 		{
 			struct puffs_vfsmsg_statvfs *auxt = auxbuf;
-			PUFFS_MAKECID(pcid, &auxt->pvfsr_cid);
 
-			error = pops->puffs_fs_statvfs(pcc,
-			    &auxt->pvfsr_sb, pcid);
+			error = pops->puffs_fs_statvfs(pcc, &auxt->pvfsr_sb);
 			break;
 		}
 
@@ -304,10 +300,9 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 		{
 			struct puffs_vfsmsg_sync *auxt = auxbuf;
 			PUFFS_MAKECRED(pcr, &auxt->pvfsr_cred);
-			PUFFS_MAKECID(pcid, &auxt->pvfsr_cid);
 
 			error = pops->puffs_fs_sync(pcc,
-			    auxt->pvfsr_waitfor, pcr, pcid);
+			    auxt->pvfsr_waitfor, pcr);
 			break;
 		}
 
@@ -494,7 +489,6 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 		{
 			struct puffs_vnmsg_open *auxt = auxbuf;
 			PUFFS_MAKECRED(pcr, &auxt->pvnr_cred);
-			PUFFS_MAKECID(pcid, &auxt->pvnr_cid);
 
 			if (pops->puffs_node_open == NULL) {
 				error = 0;
@@ -502,7 +496,7 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 			}
 
 			error = pops->puffs_node_open(pcc,
-			    opcookie, auxt->pvnr_mode, pcr, pcid);
+			    opcookie, auxt->pvnr_mode, pcr);
 			break;
 		}
 
@@ -510,8 +504,6 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 		{
 			struct puffs_vnmsg_close *auxt = auxbuf;
 			PUFFS_MAKECRED(pcr, &auxt->pvnr_cred);
-			PUFFS_MAKECID(pcid, &auxt->pvnr_cid);
-
 
 			if (pops->puffs_node_close == NULL) {
 				error = 0;
@@ -519,7 +511,7 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 			}
 
 			error = pops->puffs_node_close(pcc,
-			    opcookie, auxt->pvnr_fflag, pcr, pcid);
+			    opcookie, auxt->pvnr_fflag, pcr);
 			break;
 		}
 
@@ -527,8 +519,6 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 		{
 			struct puffs_vnmsg_access *auxt = auxbuf;
 			PUFFS_MAKECRED(pcr, &auxt->pvnr_cred);
-			PUFFS_MAKECID(pcid, &auxt->pvnr_cid);
-
 
 			if (pops->puffs_node_access == NULL) {
 				error = 0;
@@ -536,7 +526,7 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 			}
 
 			error = pops->puffs_node_access(pcc,
-			    opcookie, auxt->pvnr_mode, pcr, pcid);
+			    opcookie, auxt->pvnr_mode, pcr);
 			break;
 		}
 
@@ -544,8 +534,6 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 		{
 			struct puffs_vnmsg_getattr *auxt = auxbuf;
 			PUFFS_MAKECRED(pcr, &auxt->pvnr_cred);
-			PUFFS_MAKECID(pcid, &auxt->pvnr_cid);
-
 
 			if (pops->puffs_node_getattr == NULL) {
 				error = EOPNOTSUPP;
@@ -553,7 +541,7 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 			}
 
 			error = pops->puffs_node_getattr(pcc,
-			    opcookie, &auxt->pvnr_va, pcr, pcid);
+			    opcookie, &auxt->pvnr_va, pcr);
 			break;
 		}
 
@@ -561,8 +549,6 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 		{
 			struct puffs_vnmsg_setattr *auxt = auxbuf;
 			PUFFS_MAKECRED(pcr, &auxt->pvnr_cred);
-			PUFFS_MAKECID(pcid, &auxt->pvnr_cid);
-
 
 			if (pops->puffs_node_setattr == NULL) {
 				error = EOPNOTSUPP;
@@ -570,7 +556,7 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 			}
 
 			error = pops->puffs_node_setattr(pcc,
-			    opcookie, &auxt->pvnr_va, pcr, pcid);
+			    opcookie, &auxt->pvnr_va, pcr);
 			break;
 		}
 
@@ -578,8 +564,6 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 		{
 			struct puffs_vnmsg_mmap *auxt = auxbuf;
 			PUFFS_MAKECRED(pcr, &auxt->pvnr_cred);
-			PUFFS_MAKECID(pcid, &auxt->pvnr_cid);
-
 
 			if (pops->puffs_node_mmap == NULL) {
 				error = 0;
@@ -587,7 +571,7 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 			}
 
 			error = pops->puffs_node_mmap(pcc,
-			    opcookie, auxt->pvnr_prot, pcr, pcid);
+			    opcookie, auxt->pvnr_prot, pcr);
 			break;
 		}
 
@@ -595,8 +579,6 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 		{
 			struct puffs_vnmsg_fsync *auxt = auxbuf;
 			PUFFS_MAKECRED(pcr, &auxt->pvnr_cred);
-			PUFFS_MAKECID(pcid, &auxt->pvnr_cid);
-
 
 			if (pops->puffs_node_fsync == NULL) {
 				error = 0;
@@ -605,7 +587,7 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 
 			error = pops->puffs_node_fsync(pcc, opcookie, pcr,
 			    auxt->pvnr_flags, auxt->pvnr_offlo,
-			    auxt->pvnr_offhi, pcid);
+			    auxt->pvnr_offhi);
 			break;
 		}
 
@@ -899,29 +881,25 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 
 		case PUFFS_VN_RECLAIM:
 		{
-			struct puffs_vnmsg_reclaim *auxt = auxbuf;
-			PUFFS_MAKECID(pcid, &auxt->pvnr_cid);
 
 			if (pops->puffs_node_reclaim == NULL) {
 				error = 0;
 				break;
 			}
 
-			error = pops->puffs_node_reclaim(pcc, opcookie, pcid);
+			error = pops->puffs_node_reclaim(pcc, opcookie);
 			break;
 		}
 
 		case PUFFS_VN_INACTIVE:
 		{
-			struct puffs_vnmsg_inactive *auxt = auxbuf;
-			PUFFS_MAKECID(pcid, &auxt->pvnr_cid);
 
 			if (pops->puffs_node_inactive == NULL) {
 				error = EOPNOTSUPP;
 				break;
 			}
 
-			error = pops->puffs_node_inactive(pcc, opcookie, pcid);
+			error = pops->puffs_node_inactive(pcc, opcookie);
 			break;
 		}
 
@@ -1011,7 +989,6 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 		case PUFFS_VN_POLL:
 		{
 			struct puffs_vnmsg_poll *auxt = auxbuf;
-			PUFFS_MAKECID(pcid, &auxt->pvnr_cid);
 
 			if (pops->puffs_node_poll == NULL) {
 				error = 0;
@@ -1024,7 +1001,7 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 			}
 
 			error = pops->puffs_node_poll(pcc,
-			    opcookie, &auxt->pvnr_events, pcid);
+			    opcookie, &auxt->pvnr_events);
 			break;
 		}
 

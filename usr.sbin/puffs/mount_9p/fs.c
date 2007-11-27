@@ -1,4 +1,4 @@
-/*	$NetBSD: fs.c,v 1.5 2007/07/17 10:06:03 pooka Exp $	*/
+/*	$NetBSD: fs.c,v 1.6 2007/11/27 11:31:20 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fs.c,v 1.5 2007/07/17 10:06:03 pooka Exp $");
+__RCSID("$NetBSD: fs.c,v 1.6 2007/11/27 11:31:20 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -227,8 +227,7 @@ p9p_handshake(struct puffs_usermount *pu,
 }
 
 int
-puffs9p_fs_unmount(struct puffs_cc *pcc, int flags,
-	const struct puffs_cid *pcid)
+puffs9p_fs_unmount(struct puffs_cc *pcc, int flags)
 {
 	struct puffs_usermount *pu = puffs_cc_getusermount(pcc);
 	struct puffs9p *p9p = puffs_getspecific(pu);

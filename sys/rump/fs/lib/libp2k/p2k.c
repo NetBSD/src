@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.c,v 1.29 2007/11/27 09:14:21 dogcow Exp $	*/
+/*	$NetBSD: p2k.c,v 1.30 2007/11/27 11:31:22 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -189,8 +189,7 @@ p2k_run_fs(const char *vfsname, const char *devpath, const char *mountpath,
 }
 
 int
-p2k_fs_statvfs(struct puffs_cc *pcc, struct statvfs *sbp,
-	const struct puffs_cid *pcid)
+p2k_fs_statvfs(struct puffs_cc *pcc, struct statvfs *sbp)
 {
 	struct mount *mp = puffs_cc_getspecific(pcc);
 
@@ -198,7 +197,7 @@ p2k_fs_statvfs(struct puffs_cc *pcc, struct statvfs *sbp,
 }
 
 int
-p2k_fs_unmount(struct puffs_cc *pcc, int flags, const struct puffs_cid *pcid)
+p2k_fs_unmount(struct puffs_cc *pcc, int flags)
 {
 	struct mount *mp = puffs_cc_getspecific(pcc);
 
@@ -206,8 +205,7 @@ p2k_fs_unmount(struct puffs_cc *pcc, int flags, const struct puffs_cid *pcid)
 }
 
 int
-p2k_fs_sync(struct puffs_cc *pcc, int waitfor,
-	const struct puffs_cred *pcr, const struct puffs_cid *pcid)
+p2k_fs_sync(struct puffs_cc *pcc, int waitfor, const struct puffs_cred *pcr)
 {
 	struct mount *mp = puffs_cc_getspecific(pcc);
 	kauth_cred_t cred;
@@ -336,7 +334,7 @@ p2k_node_mknod(struct puffs_cc *pcc, void *opc, struct puffs_newinfo *pni,
 
 int
 p2k_node_open(struct puffs_cc *pcc, void *opc, int mode,
-	const struct puffs_cred *pcr, const struct puffs_cid *pcid)
+	const struct puffs_cred *pcr)
 {
 	kauth_cred_t cred;
 	int rv;
@@ -352,7 +350,7 @@ p2k_node_open(struct puffs_cc *pcc, void *opc, int mode,
 
 int
 p2k_node_close(struct puffs_cc *pcc, void *opc, int flags,
-	const struct puffs_cred *pcr, const struct puffs_cid *pcid)
+	const struct puffs_cred *pcr)
 {
 	kauth_cred_t cred;
 	int rv;
@@ -368,7 +366,7 @@ p2k_node_close(struct puffs_cc *pcc, void *opc, int flags,
 
 int
 p2k_node_access(struct puffs_cc *pcc, void *opc, int mode,
-	const struct puffs_cred *pcr, const struct puffs_cid *pcid)
+	const struct puffs_cred *pcr)
 {
 	kauth_cred_t cred;
 	int rv;
@@ -384,7 +382,7 @@ p2k_node_access(struct puffs_cc *pcc, void *opc, int mode,
 
 int
 p2k_node_getattr(struct puffs_cc *pcc, void *opc, struct vattr *vap,
-	const struct puffs_cred *pcr, const struct puffs_cid *pcid)
+	const struct puffs_cred *pcr)
 {
 	kauth_cred_t cred;
 	int rv;
@@ -400,7 +398,7 @@ p2k_node_getattr(struct puffs_cc *pcc, void *opc, struct vattr *vap,
 
 int
 p2k_node_setattr(struct puffs_cc *pcc, void *opc, const struct vattr *vap,
-	const struct puffs_cred *pcr, const struct puffs_cid *pcid)
+	const struct puffs_cred *pcr)
 {
 	kauth_cred_t cred;
 	int rv;
@@ -416,7 +414,7 @@ p2k_node_setattr(struct puffs_cc *pcc, void *opc, const struct vattr *vap,
 
 int
 p2k_node_fsync(struct puffs_cc *pcc, void *opc, const struct puffs_cred *pcr,
-	int flags, off_t offlo, off_t offhi, const struct puffs_cid *pcid)
+	int flags, off_t offlo, off_t offhi)
 {
 	kauth_cred_t cred;
 	int rv;
@@ -656,7 +654,7 @@ p2k_node_write(struct puffs_cc *pcc, void *opc, uint8_t *buf, off_t offset,
 }
 
 int
-p2k_node_reclaim(struct puffs_cc *pcc, void *opc, const struct puffs_cid *pcid)
+p2k_node_reclaim(struct puffs_cc *pcc, void *opc)
 {
 
 	rump_recyclenode(opc);
@@ -666,7 +664,7 @@ p2k_node_reclaim(struct puffs_cc *pcc, void *opc, const struct puffs_cid *pcid)
 }
 
 int
-p2k_node_inactive(struct puffs_cc *pcc, void *opc, const struct puffs_cid *pcid)
+p2k_node_inactive(struct puffs_cc *pcc, void *opc)
 {
 	struct vnode *vp = opc;
 	int rv;

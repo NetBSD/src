@@ -1,4 +1,4 @@
-.\"	$NetBSD: puffs_ops.3,v 1.15 2007/07/31 21:48:18 pooka Exp $
+.\"	$NetBSD: puffs_ops.3,v 1.16 2007/11/27 11:31:19 pooka Exp $
 .\"
 .\" Copyright (c) 2007 Antti Kantee.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd July 31, 2007
+.Dd November 27, 2007
 .Dt PUFFS_OPS 3
 .Os
 .Sh NAME
@@ -35,12 +35,11 @@
 .In puffs.h
 .Ft int
 .Fo puffs_fs_statvfs
-.Fa "struct puffs_cc *pcc" "struct statvfs *sbp" "const struct puffs_cid *pcid"
+.Fa "struct puffs_cc *pcc" "struct statvfs *sbp"
 .Fc
 .Ft int
 .Fo puffs_fs_sync
 .Fa "struct puffs_cc *pcc" "int waitfor" "const struct puffs_cred *pcr"
-.Fa "const struct puffs_cid *pcid"
 .Fc
 .Ft int
 .Fo puffs_fs_fhtonode
@@ -55,7 +54,7 @@
 .Fn puffs_fs_suspend "struct puffs_cc *pcc" "int status"
 .Ft int
 .Fo puffs_fs_unmount
-.Fa "struct puffs_cc *pcc" "int flags" "const struct puffs_cid *pcid"
+.Fa "struct puffs_cc *pcc" "int flags"
 .Fc
 .Ft int
 .Fo puffs_node_lookup
@@ -75,42 +74,41 @@
 .Ft int
 .Fo puffs_node_open
 .Fa "struct puffs_cc *pcc" "void *opc" "int mode"
-.Fa "const struct puffs_cred *pcr" "const struct puffs_cid *pcid"
+.Fa "const struct puffs_cred *pcr"
 .Fc
 .Ft int
 .Fo puffs_node_close
 .Fa "struct puffs_cc *pcc" "void *opc" "int flags"
-.Fa "const struct puffs_cred *pcr" "const struct puffs_cid *pcid"
+.Fa "const struct puffs_cred *pcr"
 .Fc
 .Ft int
 .Fo puffs_node_access
 .Fa "struct puffs_cc *pcc" "void *opc" "int mode"
-.Fa "const struct puffs_cred *pcr" "const struct puffs_cid *pcid"
+.Fa "const struct puffs_cred *pcr"
 .Fc
 .Ft int
 .Fo puffs_node_getattr
 .Fa "struct puffs_cc *pcc" "void *opc" "struct vattr *vap"
-.Fa "const struct puffs_cred *pcr" "const struct puffs_cid *pcid"
+.Fa "const struct puffs_cred *pcr"
 .Fc
 .Ft int
 .Fo puffs_node_setattr
 .Fa "struct puffs_cc *pcc" "void *opc" "const struct vattr *vap"
-.Fa "const struct puffs_cred *pcr" "const struct puffs_cid *pcid"
+.Fa "const struct puffs_cred *pcr"
 .Fc
 .Ft int
 .Fo puffs_node_poll
 .Fa "struct puffs_cc *pcc" "void *opc" "int *events"
-.Fa "const struct puffs_cid *pcid"
 .Fc
 .Ft int
 .Fo puffs_node_mmap
 .Fa "struct puffs_cc *pcc" "void *opc" "int flags"
-.Fa "const struct puffs_cred *pcr" "const struct puffs_cid *pcid"
+.Fa "const struct puffs_cred *pcr"
 .Fc
 .Ft int
 .Fo puffs_node_fsync
 .Fa "struct puffs_cc *pcc" "void *opc" "const struct puffs_cred *pcr"
-.Fa "int flags" "off_t offlo" "off_t offhi" "const struct puffs_cid *pcid"
+.Fa "int flags" "off_t offlo" "off_t offhi"
 .Fc
 .Ft int
 .Fo puffs_node_seek
@@ -174,11 +172,11 @@
 .Fn puffs_node_print "struct puffs_cc *pcc" "void *opc"
 .Ft int
 .Fo puffs_node_reclaim
-.Fa "struct puffs_cc *pcc" "void *opc" "const struct puffs_cid *pcid"
+.Fa "struct puffs_cc *pcc" "void *opc"
 .Fc
 .Ft int
 .Fo puffs_node_inactive
-.Fa "struct puffs_cc *pcc" "void *opc" "const struct puffs_cid *pcid"
+.Fa "struct puffs_cc *pcc" "void *opc"
 .Fc
 .Ft void
 .Fn puffs_setback "struct puffs_cc *pcc" "int op"
@@ -214,7 +212,7 @@ name using the macro
 .Fn PUFFSOP_PROTOS fsname .
 .Ss File system callbacks (puffs_fs)
 .Bl -tag -width xxxx
-.It Fn puffs_fs_statvfs "pcc" "sbp" "pcid"
+.It Fn puffs_fs_statvfs "pcc" "sbp"
 The following fields of the argument
 .Fa sbp
 need to be filled:
@@ -234,9 +232,7 @@ need to be filled:
  * fsfilcnt_t     f_fresvd;    file nodes reserved for root
 
 .Ed
-The process requiring this information is given by
-.Fa pcid .
-.It Fn puffs_fs_sync "pcc" "waitfor" "pcr" "pcid"
+.It Fn puffs_fs_sync "pcc" "waitfor" "pcr"
 All the dirty buffers that have been cached at the file server
 level including metadata should be committed to stable storage.
 The
@@ -305,7 +301,7 @@ Called when file system suspension reaches various phases.
 See
 .Xr puffs_suspend 3
 for more information.
-.It Fn puffs_fs_unmount "pcc" "flags" "pcid"
+.It Fn puffs_fs_unmount "pcc" "flags"
 Unmount the file system.
 The kernel has assumedly flushed all cached data when this callback
 is executed.
@@ -423,7 +419,7 @@ file, directory and device special file, respectively.
 .Pp
 In case of mknod, the device identifier can be found in
 .Fa va-\*[Gt]va_rdev .
-.It Fn puffs_node_open "pcc" "opc" "mode" "pcr" "pcid"
+.It Fn puffs_node_open "pcc" "opc" "mode" "pcr"
 Open the node denoted by the cookie
 .Fa opc .
 The parameter
@@ -434,12 +430,12 @@ was called with, e.g.
 .Dv O_APPEND
 and
 .Dv O_NONBLOCK .
-.It Fn puffs_node_close "pcc" "opc" "flags" "pcr" "pcid"
+.It Fn puffs_node_close "pcc" "opc" "flags" "pcr"
 Close a node.
 The parameter
 .Fa flags
 parameter describes the flags that the file was opened with.
-.It Fn puffs_node_access "pcc" "opc" "mode" "pcr" "pcid"
+.It Fn puffs_node_access "pcc" "opc" "mode" "pcr"
 Check if the credentials of
 .Fa pcr
 have the right to perform the operation specified by
@@ -454,12 +450,12 @@ can specify read, write or execute by
 and
 .Dv PUFFS_VEXEC ,
 respectively.
-.It Fn puffs_node_getattr "pcc" "opc" "va" "pcr" "pcid"
+.It Fn puffs_node_getattr "pcc" "opc" "va" "pcr"
 The attributes of the node specified by
 .Fa opc
 must be copied to the space pointed by
 .Fa va .
-.It Fn puffs_node_setattr "pcc" "opc" "va" "pcr" "pcid"
+.It Fn puffs_node_setattr "pcc" "opc" "va" "pcr"
 The attributes for the node specified by
 .Fa opc
 must be set to those contained in
@@ -469,7 +465,7 @@ Only fields of
 which contain a value different from
 .Dv PUFFS_VNOVAL
 (typecast to the field's type!) contain a valid value.
-.It Fn puffs_node_poll pcc opc events pcid
+.It Fn puffs_node_poll "pcc" "opc" "events"
 Poll for events on node
 .Ar opc .
 If
@@ -498,12 +494,12 @@ At this level, however, the timeout is not supplied.
 In case input does not arrive, the file system should periodically
 unblock and return 0 new events to avoid hanging forever.
 This will hopefully be better supported by libpuffs in the future.
-.It Fn puffs_node_mmap "pcc" "opc" "flags" "pcr" "pcid"
+.It Fn puffs_node_mmap "pcc" "opc" "flags" "pcr"
 Called when a regular file is being memory mapped by
 .Xr mmap 2 .
 .Fa flags
 is currently always 0.
-.It Fn puffs_node_fsync "pcc" "opc" "pcr" "flags" "offlo" "offhi" "pcid"
+.It Fn puffs_node_fsync "pcc" "opc" "pcr" "flags" "offlo" "offhi"
 Sychronize a node's contents onto stable storage.
 This is necessary only if the file server caches some information
 before committing it.
@@ -707,23 +703,19 @@ is specified, the data should be appended to the end of the file.
 .It Fn puffs_node_print "pcc" "opc"
 Print information about node.  This is used only for kernel-initiated
 diagnostic purposes.
-.It Fn puffs_node_reclaim "pcc" "opc" "pcid"
+.It Fn puffs_node_reclaim "pcc" "opc"
 The kernel will no longer reference the cookie and resources associated
 with it may be freed.
 In case the file
 .Fa opc
 has a link count of zero, it may be safely removed now.
-.It Fn puffs_node_inactive "pcc" "opc" "pcid" "refcount"
+.It Fn puffs_node_inactive "pcc" "opc"
 The node
 .Fa opc
 has lost its last reference in the kernel.
 However, the cookie must still remain valid until
 .Fn puffs_node_reclaim
 is called.
-The file system should return its internal reference count on the file
-(usually number of links to the file) in
-.Fa refcount .
-If this is zero, the kernel will call reclaim immediately.
 .It Fn puffs_setback pcc op
 Issue a "setback" operation which will be handled when the request response
 is returned to the kernel.

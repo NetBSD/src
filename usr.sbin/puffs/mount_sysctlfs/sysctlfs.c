@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctlfs.c,v 1.6 2007/11/16 18:39:01 pooka Exp $	*/
+/*	$NetBSD: sysctlfs.c,v 1.7 2007/11/27 11:31:21 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: sysctlfs.c,v 1.6 2007/11/16 18:39:01 pooka Exp $");
+__RCSID("$NetBSD: sysctlfs.c,v 1.7 2007/11/27 11:31:21 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -505,7 +505,7 @@ sysctlfs_node_lookup(struct puffs_cc *pcc, void *opc, struct puffs_newinfo *pni,
 
 int
 sysctlfs_node_getattr(struct puffs_cc *pcc, void *opc, struct vattr *va,
-	const struct puffs_cred *pcr, const struct puffs_cid *pcid)
+	const struct puffs_cred *pcr)
 {
 	struct puffs_node *pn = opc;
 	struct sfsnode *sfs = pn->pn_data;
@@ -536,8 +536,7 @@ sysctlfs_node_getattr(struct puffs_cc *pcc, void *opc, struct vattr *va,
 
 int
 sysctlfs_node_setattr(struct puffs_cc *pcc, void *opc,
-	const struct vattr *va, const struct puffs_cred *pcr,
-	const struct puffs_cid *pcid)
+	const struct vattr *va, const struct puffs_cred *pcr)
 {
 
 	/* dummy, but required for write */

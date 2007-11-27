@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.120 2007/11/26 19:01:50 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.121 2007/11/27 11:31:18 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.120 2007/11/26 19:01:50 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.121 2007/11/27 11:31:18 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -748,7 +748,6 @@ puffs_open(void *v)
 	PUFFS_MSG_ALLOC(vn, open);
 	open_msg->pvnr_mode = mode;
 	puffs_credcvt(&open_msg->pvnr_cred, ap->a_cred);
-	puffs_cidcvt(&open_msg->pvnr_cid, curlwp);
 	puffs_msg_setinfo(park_open, PUFFSOP_VN,
 	    PUFFS_VN_OPEN, VPTOPNC(vp));
 
@@ -778,7 +777,6 @@ puffs_close(void *v)
 	puffs_msg_setfaf(park_close);
 	close_msg->pvnr_fflag = ap->a_fflag;
 	puffs_credcvt(&close_msg->pvnr_cred, ap->a_cred);
-	puffs_cidcvt(&close_msg->pvnr_cid, curlwp);
 	puffs_msg_setinfo(park_close, PUFFSOP_VN,
 	    PUFFS_VN_CLOSE, VPTOPNC(vp));
 
@@ -822,7 +820,6 @@ puffs_access(void *v)
 	PUFFS_MSG_ALLOC(vn, access);
 	access_msg->pvnr_mode = ap->a_mode;
 	puffs_credcvt(&access_msg->pvnr_cred, ap->a_cred);
-	puffs_cidcvt(&access_msg->pvnr_cid, curlwp);
 	puffs_msg_setinfo(park_access, PUFFSOP_VN,
 	    PUFFS_VN_ACCESS, VPTOPNC(vp));
 
@@ -855,7 +852,6 @@ puffs_getattr(void *v)
 	PUFFS_MSG_ALLOC(vn, getattr);
 	vattr_null(&getattr_msg->pvnr_va);
 	puffs_credcvt(&getattr_msg->pvnr_cred, ap->a_cred);
-	puffs_cidcvt(&getattr_msg->pvnr_cid, curlwp);
 	puffs_msg_setinfo(park_getattr, PUFFSOP_VN,
 	    PUFFS_VN_GETATTR, VPTOPNC(vp));
 
@@ -947,7 +943,6 @@ puffs_dosetattr(struct vnode *vp, struct vattr *vap, kauth_cred_t cred,
 	PUFFS_MSG_ALLOC(vn, setattr);
 	(void)memcpy(&setattr_msg->pvnr_va, vap, sizeof(struct vattr));
 	puffs_credcvt(&setattr_msg->pvnr_cred, cred);
-	puffs_cidcvt(&setattr_msg->pvnr_cid, curlwp);
 	puffs_msg_setinfo(park_setattr, PUFFSOP_VN,
 	    PUFFS_VN_SETATTR, VPTOPNC(vp));
 
@@ -1003,7 +998,6 @@ puffs_callinactive(struct puffs_mount *pmp, void *cookie, int iaflag)
 
 	if (doinact(pmp, iaflag)) {
 		PUFFS_MSG_ALLOC(vn, inactive);
-		puffs_cidcvt(&inactive_msg->pvnr_cid, curlwp);
 		puffs_msg_setinfo(park_inactive, PUFFSOP_VN,
 		    PUFFS_VN_INACTIVE, cookie);
 
@@ -1030,7 +1024,6 @@ puffs_inactive(void *v)
 
 	if (doinact(pmp, pnode->pn_stat & PNODE_DOINACT)) {
 		PUFFS_MSG_ALLOC(vn, inactive);
-		puffs_cidcvt(&inactive_msg->pvnr_cid, curlwp);
 		puffs_msg_setinfo(park_inactive, PUFFSOP_VN,
 		    PUFFS_VN_INACTIVE, VPTOPNC(vp));
 
@@ -1064,7 +1057,6 @@ puffs_callreclaim(struct puffs_mount *pmp, void *cookie)
 
 	PUFFS_MSG_ALLOC(vn, reclaim);
 	puffs_msg_setfaf(park_reclaim);
-	puffs_cidcvt(&reclaim_msg->pvnr_cid, curlwp);
 	puffs_msg_setinfo(park_reclaim, PUFFSOP_VN, PUFFS_VN_RECLAIM, cookie);
 
 	puffs_msg_enqueue(pmp, park_reclaim);
@@ -1267,7 +1259,6 @@ puffs_poll(void *v)
 
 			PUFFS_MSG_ALLOC(vn, poll);
 			poll_msg->pvnr_events = ap->a_events;
-			puffs_cidcvt(&poll_msg->pvnr_cid, curlwp);
 			puffs_msg_setinfo(park_poll, PUFFSOP_VN,
 			    PUFFS_VN_POLL, VPTOPNC(vp));
 			puffs_msg_setcall(park_poll, puffs_parkdone_poll, pn);
@@ -1357,7 +1348,6 @@ puffs_fsync(void *v)
 	fsync_msg->pvnr_flags = ap->a_flags;
 	fsync_msg->pvnr_offlo = ap->a_offlo;
 	fsync_msg->pvnr_offhi = ap->a_offhi;
-	puffs_cidcvt(&fsync_msg->pvnr_cid, curlwp);
 	puffs_msg_setinfo(park_fsync, PUFFSOP_VN,
 	    PUFFS_VN_FSYNC, VPTOPNC(vp));
 
@@ -2343,7 +2333,6 @@ puffs_mmap(void *v)
 		PUFFS_MSG_ALLOC(vn, mmap);
 		mmap_msg->pvnr_prot = ap->a_prot;
 		puffs_credcvt(&mmap_msg->pvnr_cred, ap->a_cred);
-		puffs_cidcvt(&mmap_msg->pvnr_cid, curlwp);
 		puffs_msg_setinfo(park_mmap, PUFFSOP_VN,
 		    PUFFS_VN_MMAP, VPTOPNC(vp));
 

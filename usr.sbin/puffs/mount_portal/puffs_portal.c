@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_portal.c,v 1.14 2007/11/16 18:39:01 pooka Exp $	*/
+/*	$NetBSD: puffs_portal.c,v 1.15 2007/11/27 11:31:21 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: puffs_portal.c,v 1.14 2007/11/16 18:39:01 pooka Exp $");
+__RCSID("$NetBSD: puffs_portal.c,v 1.15 2007/11/27 11:31:21 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -516,7 +516,7 @@ int fakeid = 3;
 /* XXX: libpuffs'ize */
 int
 portal_node_getattr(struct puffs_cc *pcc, void *opc, struct vattr *va,
-	const struct puffs_cred *pcr, const struct puffs_cid *pcid)
+	const struct puffs_cred *pcr)
 {
 	struct timeval tv;
 	struct timespec ts;
@@ -548,7 +548,7 @@ portal_node_getattr(struct puffs_cc *pcc, void *opc, struct vattr *va,
 /* for writing, just pretend we care */
 int
 portal_node_setattr(struct puffs_cc *pcc, void *opc, const struct vattr *va,
-	const struct puffs_cred *pcr, const struct puffs_cid *pcid)
+	const struct puffs_cred *pcr)
 {
 
 	return 0;
@@ -556,7 +556,7 @@ portal_node_setattr(struct puffs_cc *pcc, void *opc, const struct vattr *va,
 
 int
 portal_node_open(struct puffs_cc *pcc, void *opc, int mode,
-	const struct puffs_cred *pcr, const struct puffs_cid *pcid)
+	const struct puffs_cred *pcr)
 {
 	struct portal_node *portn = opc;
 	struct portal_cred portc;
@@ -706,8 +706,7 @@ portal_node_seek(struct puffs_cc *pcc, void *opc, off_t oldoff, off_t newoff,
 }
 
 int
-portal_node_poll(struct puffs_cc *pcc, void *opc, int *events,
-	const struct puffs_cid *pcid)
+portal_node_poll(struct puffs_cc *pcc, void *opc, int *events)
 {
 	struct portal_node *portn = opc;
 	int what;
@@ -739,8 +738,7 @@ portal_node_poll(struct puffs_cc *pcc, void *opc, int *events,
 }
 
 int
-portal_node_inactive(struct puffs_cc *pcc, void *opc,
-	const struct puffs_cid *pcid)
+portal_node_inactive(struct puffs_cc *pcc, void *opc)
 {
 
 	if (opc == PORTAL_ROOT)
@@ -751,8 +749,7 @@ portal_node_inactive(struct puffs_cc *pcc, void *opc,
 }
 
 int
-portal_node_reclaim(struct puffs_cc *pcc, void *opc,
-	const struct puffs_cid *pcid)
+portal_node_reclaim(struct puffs_cc *pcc, void *opc)
 {
 	struct portal_node *portn = opc;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.c,v 1.19 2007/10/21 14:26:15 pooka Exp $	*/
+/*	$NetBSD: subr.c,v 1.20 2007/11/27 11:31:20 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006 Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: subr.c,v 1.19 2007/10/21 14:26:15 pooka Exp $");
+__RCSID("$NetBSD: subr.c,v 1.20 2007/11/27 11:31:20 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -81,8 +81,7 @@ puffs_nextdent(struct dirent **dent, const char *name, ino_t id, uint8_t dtype,
 
 /*ARGSUSED*/
 int
-puffs_fsnop_unmount(struct puffs_cc *dontuse1, int dontuse2,
-	const struct puffs_cid *dontuse3)
+puffs_fsnop_unmount(struct puffs_cc *dontuse1, int dontuse2)
 {
 
 	/* would you like to see puffs rule again, my friend? */
@@ -92,7 +91,7 @@ puffs_fsnop_unmount(struct puffs_cc *dontuse1, int dontuse2,
 /*ARGSUSED*/
 int
 puffs_fsnop_sync(struct puffs_cc *dontuse1, int dontuse2,
-	const struct puffs_cred *dontuse3, const struct puffs_cid *dontuse4)
+	const struct puffs_cred *dontuse3)
 {
 
 	return 0;
@@ -100,8 +99,7 @@ puffs_fsnop_sync(struct puffs_cc *dontuse1, int dontuse2,
 
 /*ARGSUSED*/
 int
-puffs_fsnop_statvfs(struct puffs_cc *dontuse1, struct statvfs *sbp,
-	const struct puffs_cid *dontuse2)
+puffs_fsnop_statvfs(struct puffs_cc *dontuse1, struct statvfs *sbp)
 {
 
 	sbp->f_bsize = sbp->f_frsize = sbp->f_iosize = 512;
@@ -118,8 +116,7 @@ puffs_fsnop_statvfs(struct puffs_cc *dontuse1, struct statvfs *sbp,
  */
 /*ARGSUSED2*/
 int
-puffs_genfs_node_reclaim(struct puffs_cc *pcc, void *opc,
-	const struct puffs_cid *pcid)
+puffs_genfs_node_reclaim(struct puffs_cc *pcc, void *opc)
 {
 	struct puffs_usermount *pu = puffs_cc_getusermount(pcc);
 
@@ -136,7 +133,7 @@ void
 puffs_zerostatvfs(struct statvfs *sbp)
 {
 
-	puffs_fsnop_statvfs(NULL, sbp, 0);
+	puffs_fsnop_statvfs(NULL, sbp);
 }
 
 /*
