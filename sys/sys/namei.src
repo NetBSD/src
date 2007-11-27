@@ -1,4 +1,4 @@
-/*	$NetBSD: namei.src,v 1.4 2007/11/27 15:27:30 pooka Exp $	*/
+/*	$NetBSD: namei.src,v 1.5 2007/11/27 15:52:26 pooka Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1991, 1993
@@ -138,6 +138,7 @@ NAMEIFL	PARAMASK	0x02fff00	/* mask of parameter descriptors */
  * Initialization of an nameidata structure.
  */
 #define NDINIT(ndp, op, flags, segflg, namep, l) { \
+	KASSERT((l) == curlwp); \
 	(ndp)->ni_cnd.cn_nameiop = op; \
 	(ndp)->ni_cnd.cn_flags = flags; \
 	(ndp)->ni_segflg = segflg; \
