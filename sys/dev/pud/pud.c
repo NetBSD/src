@@ -1,4 +1,4 @@
-/*	$NetBSD: pud.c,v 1.3.2.2 2007/11/21 21:55:43 joerg Exp $	*/
+/*	$NetBSD: pud.c,v 1.3.2.3 2007/11/27 19:37:22 joerg Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pud.c,v 1.3.2.2 2007/11/21 21:55:43 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pud.c,v 1.3.2.3 2007/11/27 19:37:22 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -205,10 +205,6 @@ pudop_conf(struct pud_dev *pd, struct pud_req *pdr)
 		rv = pudconf_reg(pd, (struct pud_conf_reg *)pdr);
 		break;
 	case PUD_CONF_DEREG:
-		/* unimplemented */
-		rv = 0;
-		break;
-	case PUD_CONF_IOCTL:
 		/* unimplemented */
 		rv = 0;
 		break;

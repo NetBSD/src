@@ -1,4 +1,4 @@
-/*	$NetBSD: ofbvar.h,v 1.10 2006/11/08 01:25:10 macallan Exp $	*/
+/*	$NetBSD: ofw_rasconsvar.h,v 1.1.2.2 2007/11/27 19:35:51 joerg Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -27,11 +27,11 @@
  * rights to redistribute these changes.
  */
 
-#ifndef _OFBVAR_H_
-#define _OFBVAR_H_
+#ifndef _OFW_RASCONSVAR_H_
+#define _OFW_RASCONSVAR_H_
 
-extern struct vcons_screen ofb_console_screen;
-extern struct wsscreen_descr ofb_stdscreen;
-int ofb_init_rasops(int, struct rasops_info *);
+extern struct vcons_screen rascons_console_screen;
+extern struct wsscreen_descr rascons_stdscreen;
+int rascons_init_rasops(int, struct rasops_info *);
 
-#endif /* _OFBVAR_H_ */
+#endif /* _OFW_RASCONSVAR_H_ */

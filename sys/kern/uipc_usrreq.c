@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.97.6.4 2007/10/26 15:48:44 joerg Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.97.6.5 2007/11/27 19:38:16 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.97.6.4 2007/10/26 15:48:44 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.97.6.5 2007/11/27 19:38:16 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -655,7 +655,7 @@ unp_bind(struct unpcb *unp, struct mbuf *nam, struct lwp *l)
 	VATTR_NULL(&vattr);
 	vattr.va_type = VSOCK;
 	vattr.va_mode = ACCESSPERMS & ~(p->p_cwdi->cwdi_cmask);
-	VOP_LEASE(nd.ni_dvp, l, l->l_cred, LEASE_WRITE);
+	VOP_LEASE(nd.ni_dvp, l->l_cred, LEASE_WRITE);
 	error = VOP_CREATE(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &vattr);
 	if (error)
 		goto bad;
@@ -709,7 +709,7 @@ unp_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
 		error = ENOTSOCK;
 		goto bad;
 	}
-	if ((error = VOP_ACCESS(vp, VWRITE, l->l_cred, l)) != 0)
+	if ((error = VOP_ACCESS(vp, VWRITE, l->l_cred)) != 0)
 		goto bad;
 	so2 = vp->v_socket;
 	if (so2 == 0) {

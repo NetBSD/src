@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.230.4.6 2007/11/21 21:55:46 joerg Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.230.4.7 2007/11/27 19:37:26 joerg Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -146,7 +146,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.230.4.6 2007/11/21 21:55:46 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.230.4.7 2007/11/27 19:37:26 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -2656,7 +2656,7 @@ rf_close_component(RF_Raid_t *raidPtr, struct vnode *vp, int auto_configured)
 	if (vp != NULL) {
 		if (auto_configured == 1) {
 			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-			VOP_CLOSE(vp, FREAD | FWRITE, NOCRED, 0);
+			VOP_CLOSE(vp, FREAD | FWRITE, NOCRED);
 			vput(vp);
 
 		} else {
@@ -2832,7 +2832,7 @@ oomem:
 		/* cleanup */
 		free(clabel, M_RAIDFRAME);
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-		VOP_CLOSE(vp, FREAD | FWRITE, NOCRED, 0);
+		VOP_CLOSE(vp, FREAD | FWRITE, NOCRED);
 		vput(vp);
 	}
 	return ac_list;
@@ -2895,7 +2895,7 @@ rf_find_raid_components()
 		if (bdevvp(dev, &vp))
 			panic("RAID can't alloc vnode");
 
-		error = VOP_OPEN(vp, FREAD, NOCRED, 0);
+		error = VOP_OPEN(vp, FREAD, NOCRED);
 
 		if (error) {
 			/* "Who cares."  Continue looking
@@ -2907,9 +2907,9 @@ rf_find_raid_components()
 		if (wedge) {
 			struct dkwedge_info dkw;
 			error = VOP_IOCTL(vp, DIOCGWEDGEINFO, &dkw, FREAD,
-			    NOCRED, 0);
+			    NOCRED);
 			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-			VOP_CLOSE(vp, FREAD | FWRITE, NOCRED, 0);
+			VOP_CLOSE(vp, FREAD | FWRITE, NOCRED);
 			vput(vp);
 			if (error) {
 				printf("RAIDframe: can't get wedge info for "
@@ -2926,7 +2926,7 @@ rf_find_raid_components()
 		}
 
 		/* Ok, the disk exists.  Go get the disklabel. */
-		error = VOP_IOCTL(vp, DIOCGDINFO, &label, FREAD, NOCRED, 0);
+		error = VOP_IOCTL(vp, DIOCGDINFO, &label, FREAD, NOCRED);
 		if (error) {
 			/*
 			 * XXX can't happen - open() would
@@ -2940,7 +2940,7 @@ rf_find_raid_components()
 		/* don't need this any more.  We'll allocate it again
 		   a little later if we really do... */
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-		VOP_CLOSE(vp, FREAD | FWRITE, NOCRED, 0);
+		VOP_CLOSE(vp, FREAD | FWRITE, NOCRED);
 		vput(vp);
 
 		if (error)
@@ -2957,7 +2957,7 @@ rf_find_raid_components()
 			if (bdevvp(dev, &vp))
 				panic("RAID can't alloc vnode");
 
-			error = VOP_OPEN(vp, FREAD, NOCRED, 0);
+			error = VOP_OPEN(vp, FREAD, NOCRED);
 			if (error) {
 				/* Whatever... */
 				vput(vp);
@@ -3360,7 +3360,7 @@ rf_release_all_vps(RF_ConfigSet_t *cset)
 		/* Close the vp, and give it back */
 		if (ac->vp) {
 			vn_lock(ac->vp, LK_EXCLUSIVE | LK_RETRY);
-			VOP_CLOSE(ac->vp, FREAD, NOCRED, 0);
+			VOP_CLOSE(ac->vp, FREAD, NOCRED);
 			vput(ac->vp);
 			ac->vp = NULL;
 		}
@@ -3566,7 +3566,7 @@ rf_getdisksize(struct vnode *vp, struct lwp *l, RF_RaidDisk_t *diskPtr)
 	struct dkwedge_info dkw;
 	int error;
 
-	error = VOP_IOCTL(vp, DIOCGPART, &dpart, FREAD, l->l_cred, l);
+	error = VOP_IOCTL(vp, DIOCGPART, &dpart, FREAD, l->l_cred);
 	if (error == 0) {
 		diskPtr->blockSize = dpart.disklab->d_secsize;
 		diskPtr->numBlocks = dpart.part->p_size - rf_protectedSectors;
@@ -3574,7 +3574,7 @@ rf_getdisksize(struct vnode *vp, struct lwp *l, RF_RaidDisk_t *diskPtr)
 		return 0;
 	}
 
-	error = VOP_IOCTL(vp, DIOCGWEDGEINFO, &dkw, FREAD, l->l_cred, l);
+	error = VOP_IOCTL(vp, DIOCGWEDGEINFO, &dkw, FREAD, l->l_cred);
 	if (error == 0) {
 		diskPtr->blockSize = 512;	/* XXX */
 		diskPtr->numBlocks = dkw.dkw_size - rf_protectedSectors;

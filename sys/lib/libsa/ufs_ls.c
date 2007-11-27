@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_ls.c,v 1.13 2006/01/25 18:27:23 christos Exp $	 */
+/*	$NetBSD: ufs_ls.c,v 1.13.42.1 2007/11/27 19:38:43 joerg Exp $	 */
 
 /*
  * Copyright (c) 1993
@@ -172,8 +172,8 @@ ufs_ls(const char *path)
 	while ((size = read(fd, dirbuf, DIRBLKSIZ)) == DIRBLKSIZ) {
 		struct direct  *dp, *edp;
 
-		dp = (struct direct *) dirbuf;
-		edp = (struct direct *) (dirbuf + size);
+		dp = (struct direct *)dirbuf;
+		edp = (struct direct *)(dirbuf + size);
 
 		for (; dp < edp; dp = (void *)((char *)dp + dp->d_reclen)) {
 			const char *t;

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.41.8.4 2007/11/21 21:53:41 joerg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.41.8.5 2007/11/27 19:36:01 joerg Exp $	*/
 /*	NetBSD: machdep.c,v 1.559 2004/07/22 15:12:46 mycroft Exp 	*/
 
 /*-
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.41.8.4 2007/11/21 21:53:41 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.41.8.5 2007/11/27 19:36:01 joerg Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -231,6 +231,8 @@ int	physmem;
 int	dumpmem_low;
 int	dumpmem_high;
 unsigned int cpu_feature;
+unsigned int cpu_feature2;
+unsigned int cpu_feature_padlock;
 int	cpu_class;
 int	i386_fpu_present;
 int	i386_fpu_exception;
@@ -1413,7 +1415,7 @@ init386(paddr_t first_avail)
 	cpu_feature = cpu_info_primary.ci_feature_flags;
 
 	/* not on Xen... */
-	cpu_feature &= ~(CPUID_PGE|CPUID_PSE|CPUID_MTRR|CPUID_FXSR);
+	cpu_feature &= ~(CPUID_PGE|CPUID_PSE|CPUID_MTRR|CPUID_FXSR|CPUID_NOX);
 
 	proc0paddr = UAREA_TO_USER(proc0uarea);
 	lwp0.l_addr = proc0paddr;

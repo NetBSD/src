@@ -1,7 +1,11 @@
-#	$NetBSD: files.i386,v 1.312.8.9 2007/11/21 21:53:14 joerg Exp $
+#	$NetBSD: files.i386,v 1.312.8.10 2007/11/27 19:35:39 joerg Exp $
 #
 # new style config file for i386 architecture
 #
+
+version 20071109
+
+ifndef xen
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 8
@@ -515,3 +519,4 @@ attach	glxsb at pci
 file	arch/i386/pci/glxsb.c		glxsb
 
 include "arch/i386/conf/majors.i386"
+endif #xen

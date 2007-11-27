@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.324.2.4 2007/10/28 20:11:13 joerg Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.324.2.5 2007/11/27 19:38:18 joerg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.324.2.4 2007/10/28 20:11:13 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.324.2.5 2007/11/27 19:38:18 joerg Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -185,7 +185,7 @@ mount_update(struct lwp *l, struct vnode *vp, const char *path, int flags,
 	    MNT_NOATIME | MNT_NODEVMTIME | MNT_SYMPERM | MNT_SOFTDEP |
 	    MNT_IGNORE);
 
-	error = VFS_MOUNT(mp, path, data, data_len, l);
+	error = VFS_MOUNT(mp, path, data, data_len);
 
 #if defined(COMPAT_30) && defined(NFSSERVER)
 	if (error && data != NULL) {
@@ -281,7 +281,7 @@ mount_domount(struct lwp *l, struct vnode **vpp, struct vfsops *vfsops,
 	 * If the user is not root, ensure that they own the directory
 	 * onto which we are attempting to mount.
 	 */
-	if ((error = VOP_GETATTR(vp, &va, l->l_cred, l)) != 0 ||
+	if ((error = VOP_GETATTR(vp, &va, l->l_cred)) != 0 ||
 	    (va.va_uid != kauth_cred_geteuid(l->l_cred) &&
 	    (error = kauth_authorize_generic(l->l_cred,
 	    KAUTH_GENERIC_ISSUSER, NULL)) != 0)) {
@@ -326,7 +326,7 @@ mount_domount(struct lwp *l, struct vnode **vpp, struct vfsops *vfsops,
 	    MNT_NOATIME | MNT_NODEVMTIME | MNT_SYMPERM | MNT_SOFTDEP |
 	    MNT_IGNORE | MNT_RDONLY);
 
-	error = VFS_MOUNT(mp, path, data, data_len, l);
+	error = VFS_MOUNT(mp, path, data, data_len);
 	mp->mnt_flag &= ~MNT_OP_FLAGS;
 
 	/*
@@ -351,8 +351,8 @@ mount_domount(struct lwp *l, struct vnode **vpp, struct vfsops *vfsops,
 	if ((mp->mnt_flag & (MNT_RDONLY | MNT_ASYNC)) == 0)
 		error = vfs_allocate_syncvnode(mp);
 	vfs_unbusy(mp);
-	(void) VFS_STATVFS(mp, &mp->mnt_stat, l);
-	error = VFS_START(mp, 0, l);
+	(void) VFS_STATVFS(mp, &mp->mnt_stat);
+	error = VFS_START(mp, 0);
 	if (error)
 		vrele(vp);
 	*vpp = NULL;
@@ -386,7 +386,7 @@ mount_getargs(struct lwp *l, struct vnode *vp, const char *path, int flags,
 
 	mp->mnt_flag &= ~MNT_OP_FLAGS;
 	mp->mnt_flag |= MNT_GETARGS;
-	error = VFS_MOUNT(mp, path, data, data_len, l);
+	error = VFS_MOUNT(mp, path, data, data_len);
 	mp->mnt_flag &= ~MNT_OP_FLAGS;
 
 	vfs_unbusy(mp);
@@ -675,10 +675,10 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 		error = fss_umount_hook(mp, (flags & MNT_FORCE));
 #endif
 		if (error == 0)
-			error = VFS_SYNC(mp, MNT_WAIT, l->l_cred, l);
+			error = VFS_SYNC(mp, MNT_WAIT, l->l_cred);
 	}
 	if (error == 0 || (flags & MNT_FORCE))
-		error = VFS_UNMOUNT(mp, flags, l);
+		error = VFS_UNMOUNT(mp, flags);
 	if (error) {
 		if ((mp->mnt_flag & (MNT_RDONLY | MNT_ASYNC)) == 0)
 			(void) vfs_allocate_syncvnode(mp);
@@ -752,7 +752,7 @@ sys_sync(struct lwp *l, void *v, register_t *retval)
 		if ((mp->mnt_flag & MNT_RDONLY) == 0) {
 			asyncflag = mp->mnt_flag & MNT_ASYNC;
 			mp->mnt_flag &= ~MNT_ASYNC;
-			VFS_SYNC(mp, MNT_NOWAIT, l->l_cred, l);
+			VFS_SYNC(mp, MNT_NOWAIT, l->l_cred);
 			if (asyncflag)
 				 mp->mnt_flag |= MNT_ASYNC;
 		}
@@ -792,7 +792,7 @@ sys_quotactl(struct lwp *l, void *v, register_t *retval)
 		return (error);
 	mp = nd.ni_vp->v_mount;
 	error = VFS_QUOTACTL(mp, SCARG(uap, cmd), SCARG(uap, uid),
-	    SCARG(uap, arg), l);
+	    SCARG(uap, arg));
 	vrele(nd.ni_vp);
 	return (error);
 }
@@ -817,7 +817,7 @@ dostatvfs(struct mount *mp, struct statvfs *sp, struct lwp *l, int flags,
 
 	/* Get the filesystem stats now */
 	memset(sp, 0, sizeof(*sp));
-	if ((error = VFS_STATVFS(mp, sp, l)) != 0) {
+	if ((error = VFS_STATVFS(mp, sp)) != 0) {
 		return error;
 	}
 
@@ -1055,7 +1055,7 @@ sys_fchdir(struct lwp *l, void *v, register_t *retval)
 	if (vp->v_type != VDIR)
 		error = ENOTDIR;
 	else
-		error = VOP_ACCESS(vp, VEXEC, l->l_cred, l);
+		error = VOP_ACCESS(vp, VEXEC, l->l_cred);
 	if (error) {
 		vput(vp);
 		goto out;
@@ -1119,7 +1119,7 @@ sys_fchroot(struct lwp *l, void *v, register_t *retval)
 	if (vp->v_type != VDIR)
 		error = ENOTDIR;
 	else
-		error = VOP_ACCESS(vp, VEXEC, l->l_cred, l);
+		error = VOP_ACCESS(vp, VEXEC, l->l_cred);
 	VOP_UNLOCK(vp, 0);
 	if (error)
 		goto out;
@@ -1244,7 +1244,7 @@ change_dir(struct nameidata *ndp, struct lwp *l)
 	if (vp->v_type != VDIR)
 		error = ENOTDIR;
 	else
-		error = VOP_ACCESS(vp, VEXEC, l->l_cred, l);
+		error = VOP_ACCESS(vp, VEXEC, l->l_cred);
 
 	if (error)
 		vput(vp);
@@ -1621,7 +1621,7 @@ dofhopen(struct lwp *l, const void *ufhp, size_t fhsize, int oflags,
 		goto bad;
 	}
 	if (flags & FREAD) {
-		if ((error = VOP_ACCESS(vp, VREAD, cred, l)) != 0)
+		if ((error = VOP_ACCESS(vp, VREAD, cred)) != 0)
 			goto bad;
 	}
 	if (flags & (FWRITE | O_TRUNC)) {
@@ -1630,20 +1630,20 @@ dofhopen(struct lwp *l, const void *ufhp, size_t fhsize, int oflags,
 			goto bad;
 		}
 		if ((error = vn_writechk(vp)) != 0 ||
-		    (error = VOP_ACCESS(vp, VWRITE, cred, l)) != 0)
+		    (error = VOP_ACCESS(vp, VWRITE, cred)) != 0)
 			goto bad;
 	}
 	if (flags & O_TRUNC) {
 		VOP_UNLOCK(vp, 0);			/* XXX */
-		VOP_LEASE(vp, l, cred, LEASE_WRITE);
+		VOP_LEASE(vp, cred, LEASE_WRITE);
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);   /* XXX */
 		VATTR_NULL(&va);
 		va.va_size = 0;
-		error = VOP_SETATTR(vp, &va, cred, l);
+		error = VOP_SETATTR(vp, &va, cred);
 		if (error)
 			goto bad;
 	}
-	if ((error = VOP_OPEN(vp, flags, cred, l)) != 0)
+	if ((error = VOP_OPEN(vp, flags, cred)) != 0)
 		goto bad;
 	if (flags & FWRITE)
 		vp->v_writecount++;
@@ -1876,7 +1876,7 @@ sys_mknod(struct lwp *l, void *v, register_t *retval)
 		}
 	}
 	if (!error) {
-		VOP_LEASE(nd.ni_dvp, l, l->l_cred, LEASE_WRITE);
+		VOP_LEASE(nd.ni_dvp, l->l_cred, LEASE_WRITE);
 		switch (optype) {
 		case VOP_WHITEOUT_DESCOFFSET:
 			error = VOP_WHITEOUT(nd.ni_dvp, &nd.ni_cnd, CREATE);
@@ -1945,7 +1945,7 @@ sys_mkfifo(struct lwp *l, void *v, register_t *retval)
 	vattr.va_type = VFIFO;
 	/* We will read cwdi->cwdi_cmask unlocked. */
 	vattr.va_mode = (SCARG(uap, mode) & ALLPERMS) &~ p->p_cwdi->cwdi_cmask;
-	VOP_LEASE(nd.ni_dvp, l, l->l_cred, LEASE_WRITE);
+	VOP_LEASE(nd.ni_dvp, l->l_cred, LEASE_WRITE);
 	error = VOP_MKNOD(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &vattr);
 	if (error == 0)
 		vput(nd.ni_vp);
@@ -1986,8 +1986,8 @@ sys_link(struct lwp *l, void *v, register_t *retval)
 		error = EEXIST;
 		goto out;
 	}
-	VOP_LEASE(nd.ni_dvp, l, l->l_cred, LEASE_WRITE);
-	VOP_LEASE(vp, l, l->l_cred, LEASE_WRITE);
+	VOP_LEASE(nd.ni_dvp, l->l_cred, LEASE_WRITE);
+	VOP_LEASE(vp, l->l_cred, LEASE_WRITE);
 	error = VOP_LINK(nd.ni_dvp, vp, &nd.ni_cnd);
 out:
 	vrele(vp);
@@ -2033,7 +2033,7 @@ sys_symlink(struct lwp *l, void *v, register_t *retval)
 	vattr.va_type = VLNK;
 	/* We will read cwdi->cwdi_cmask unlocked. */
 	vattr.va_mode = ACCESSPERMS &~ p->p_cwdi->cwdi_cmask;
-	VOP_LEASE(nd.ni_dvp, l, l->l_cred, LEASE_WRITE);
+	VOP_LEASE(nd.ni_dvp, l->l_cred, LEASE_WRITE);
 	error = VOP_SYMLINK(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &vattr, path);
 	if (error == 0)
 		vput(nd.ni_vp);
@@ -2071,7 +2071,7 @@ sys_undelete(struct lwp *l, void *v, register_t *retval)
 			vrele(nd.ni_vp);
 		return (EEXIST);
 	}
-	VOP_LEASE(nd.ni_dvp, l, l->l_cred, LEASE_WRITE);
+	VOP_LEASE(nd.ni_dvp, l->l_cred, LEASE_WRITE);
 	if ((error = VOP_WHITEOUT(nd.ni_dvp, &nd.ni_cnd, DELETE)) != 0)
 		VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
 	vput(nd.ni_dvp);
@@ -2129,8 +2129,8 @@ sys_unlink(struct lwp *l, void *v, register_t *retval)
 	}
 #endif /* NVERIEXEC > 0 */
 	
-	VOP_LEASE(nd.ni_dvp, l, l->l_cred, LEASE_WRITE);
-	VOP_LEASE(vp, l, l->l_cred, LEASE_WRITE);
+	VOP_LEASE(nd.ni_dvp, l->l_cred, LEASE_WRITE);
+	VOP_LEASE(vp, l->l_cred, LEASE_WRITE);
 #ifdef FILEASSOC
 	(void)fileassoc_file_delete(vp);
 #endif /* FILEASSOC */
@@ -2178,7 +2178,7 @@ sys_lseek(struct lwp *l, void *v, register_t *retval)
 		break;
 	case SEEK_END:
 		FILE_USE(fp);
-		error = VOP_GETATTR(vp, &vattr, cred, l);
+		error = VOP_GETATTR(vp, &vattr, cred);
 		if (error) {
 			FILE_UNUSE(fp, l);
 			goto out;
@@ -2380,7 +2380,7 @@ sys_access(struct lwp *l, void *v, register_t *retval)
 		if (SCARG(uap, flags) & X_OK)
 			flags |= VEXEC;
 
-		error = VOP_ACCESS(vp, flags, cred, l);
+		error = VOP_ACCESS(vp, flags, cred);
 		if (!error && (flags & VWRITE))
 			error = vn_writechk(vp);
 	}
@@ -2499,7 +2499,7 @@ sys_readlink(struct lwp *l, void *v, register_t *retval)
 	if (vp->v_type != VLNK)
 		error = EINVAL;
 	else if (!(vp->v_mount->mnt_flag & MNT_SYMPERM) ||
-	    (error = VOP_ACCESS(vp, VREAD, l->l_cred, l)) == 0) {
+	    (error = VOP_ACCESS(vp, VREAD, l->l_cred)) == 0) {
 		aiov.iov_base = SCARG(uap, buf);
 		aiov.iov_len = SCARG(uap, count);
 		auio.uio_iov = &aiov;
@@ -2601,14 +2601,14 @@ change_flags(struct vnode *vp, u_long flags, struct lwp *l)
 	struct vattr vattr;
 	int error;
 
-	VOP_LEASE(vp, l, l->l_cred, LEASE_WRITE);
+	VOP_LEASE(vp, l->l_cred, LEASE_WRITE);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	/*
 	 * Non-superusers cannot change the flags on devices, even if they
 	 * own them.
 	 */
 	if (kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER, NULL)) {
-		if ((error = VOP_GETATTR(vp, &vattr, l->l_cred, l)) != 0)
+		if ((error = VOP_GETATTR(vp, &vattr, l->l_cred)) != 0)
 			goto out;
 		if (vattr.va_type == VCHR || vattr.va_type == VBLK) {
 			error = EINVAL;
@@ -2617,7 +2617,7 @@ change_flags(struct vnode *vp, u_long flags, struct lwp *l)
 	}
 	VATTR_NULL(&vattr);
 	vattr.va_flags = flags;
-	error = VOP_SETATTR(vp, &vattr, l->l_cred, l);
+	error = VOP_SETATTR(vp, &vattr, l->l_cred);
 out:
 	return (error);
 }
@@ -2705,11 +2705,11 @@ change_mode(struct vnode *vp, int mode, struct lwp *l)
 	struct vattr vattr;
 	int error;
 
-	VOP_LEASE(vp, l, l->l_cred, LEASE_WRITE);
+	VOP_LEASE(vp, l->l_cred, LEASE_WRITE);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	VATTR_NULL(&vattr);
 	vattr.va_mode = mode & ALLPERMS;
-	error = VOP_SETATTR(vp, &vattr, l->l_cred, l);
+	error = VOP_SETATTR(vp, &vattr, l->l_cred);
 	VOP_UNLOCK(vp, 0);
 	return (error);
 }
@@ -2883,9 +2883,9 @@ change_owner(struct vnode *vp, uid_t uid, gid_t gid, struct lwp *l,
 	mode_t newmode;
 	int error;
 
-	VOP_LEASE(vp, l, l->l_cred, LEASE_WRITE);
+	VOP_LEASE(vp, l->l_cred, LEASE_WRITE);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-	if ((error = VOP_GETATTR(vp, &vattr, l->l_cred, l)) != 0)
+	if ((error = VOP_GETATTR(vp, &vattr, l->l_cred)) != 0)
 		goto out;
 
 #define CHANGED(x) ((int)(x) != -1)
@@ -2919,7 +2919,7 @@ change_owner(struct vnode *vp, uid_t uid, gid_t gid, struct lwp *l,
 	vattr.va_uid = CHANGED(uid) ? uid : (uid_t)VNOVAL;
 	vattr.va_gid = CHANGED(gid) ? gid : (gid_t)VNOVAL;
 	vattr.va_mode = newmode;
-	error = VOP_SETATTR(vp, &vattr, l->l_cred, l);
+	error = VOP_SETATTR(vp, &vattr, l->l_cred);
 #undef CHANGED
 
 out:
@@ -3022,9 +3022,9 @@ do_sys_utimes(struct lwp *l, struct vnode *vp, const char *path, int flag,
 	} else
 		nd.ni_vp = NULL;
 
-	VOP_LEASE(vp, l, l->l_cred, LEASE_WRITE);
+	VOP_LEASE(vp, l->l_cred, LEASE_WRITE);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-	error = VOP_SETATTR(vp, &vattr, l->l_cred, l);
+	error = VOP_SETATTR(vp, &vattr, l->l_cred);
 	VOP_UNLOCK(vp, 0);
 
 	if (nd.ni_vp != NULL)
@@ -3055,15 +3055,15 @@ sys_truncate(struct lwp *l, void *v, register_t *retval)
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	vp = nd.ni_vp;
-	VOP_LEASE(vp, l, l->l_cred, LEASE_WRITE);
+	VOP_LEASE(vp, l->l_cred, LEASE_WRITE);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	if (vp->v_type == VDIR)
 		error = EISDIR;
 	else if ((error = vn_writechk(vp)) == 0 &&
-	    (error = VOP_ACCESS(vp, VWRITE, l->l_cred, l)) == 0) {
+	    (error = VOP_ACCESS(vp, VWRITE, l->l_cred)) == 0) {
 		VATTR_NULL(&vattr);
 		vattr.va_size = SCARG(uap, length);
-		error = VOP_SETATTR(vp, &vattr, l->l_cred, l);
+		error = VOP_SETATTR(vp, &vattr, l->l_cred);
 	}
 	vput(vp);
 	return (error);
@@ -3095,14 +3095,14 @@ sys_ftruncate(struct lwp *l, void *v, register_t *retval)
 		goto out;
 	}
 	vp = (struct vnode *)fp->f_data;
-	VOP_LEASE(vp, l, l->l_cred, LEASE_WRITE);
+	VOP_LEASE(vp, l->l_cred, LEASE_WRITE);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	if (vp->v_type == VDIR)
 		error = EISDIR;
 	else if ((error = vn_writechk(vp)) == 0) {
 		VATTR_NULL(&vattr);
 		vattr.va_size = SCARG(uap, length);
-		error = VOP_SETATTR(vp, &vattr, fp->f_cred, l);
+		error = VOP_SETATTR(vp, &vattr, fp->f_cred);
 	}
 	VOP_UNLOCK(vp, 0);
  out:
@@ -3130,7 +3130,7 @@ sys_fsync(struct lwp *l, void *v, register_t *retval)
 		return (error);
 	vp = (struct vnode *)fp->f_data;
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-	error = VOP_FSYNC(vp, fp->f_cred, FSYNC_WAIT, 0, 0, l);
+	error = VOP_FSYNC(vp, fp->f_cred, FSYNC_WAIT, 0, 0);
 	if (error == 0 && bioopsp != NULL &&
 	    vp->v_mount && (vp->v_mount->mnt_flag & MNT_SOFTDEP))
 		(*bioopsp->io_fsync)(vp, 0);
@@ -3202,7 +3202,7 @@ sys_fsync_range(struct lwp *l, void *v, register_t *retval)
 
 	vp = (struct vnode *)fp->f_data;
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-	error = VOP_FSYNC(vp, fp->f_cred, nflags, s, e, l);
+	error = VOP_FSYNC(vp, fp->f_cred, nflags, s, e);
 
 	if (error == 0 && bioopsp != NULL &&
 	    vp->v_mount && (vp->v_mount->mnt_flag & MNT_SOFTDEP))
@@ -3238,7 +3238,7 @@ sys_fdatasync(struct lwp *l, void *v, register_t *retval)
 	}
 	vp = (struct vnode *)fp->f_data;
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-	error = VOP_FSYNC(vp, fp->f_cred, FSYNC_WAIT|FSYNC_DATAONLY, 0, 0, l);
+	error = VOP_FSYNC(vp, fp->f_cred, FSYNC_WAIT|FSYNC_DATAONLY, 0, 0);
 	VOP_UNLOCK(vp, 0);
 	FILE_UNUSE(fp, l);
 	return (error);
@@ -3359,11 +3359,11 @@ rename_files(const char *from, const char *to, struct lwp *l, int retain)
 out:
 	p = l->l_proc;
 	if (!error) {
-		VOP_LEASE(tdvp, l, l->l_cred, LEASE_WRITE);
+		VOP_LEASE(tdvp, l->l_cred, LEASE_WRITE);
 		if (fromnd.ni_dvp != tdvp)
-			VOP_LEASE(fromnd.ni_dvp, l, l->l_cred, LEASE_WRITE);
+			VOP_LEASE(fromnd.ni_dvp, l->l_cred, LEASE_WRITE);
 		if (tvp) {
-			VOP_LEASE(tvp, l, l->l_cred, LEASE_WRITE);
+			VOP_LEASE(tvp, l->l_cred, LEASE_WRITE);
 		}
 		error = VOP_RENAME(fromnd.ni_dvp, fromnd.ni_vp, &fromnd.ni_cnd,
 				   tond.ni_dvp, tond.ni_vp, &tond.ni_cnd);
@@ -3424,7 +3424,7 @@ sys_mkdir(struct lwp *l, void *v, register_t *retval)
 	/* We will read cwdi->cwdi_cmask unlocked. */
 	vattr.va_mode =
 	    (SCARG(uap, mode) & ACCESSPERMS) &~ p->p_cwdi->cwdi_cmask;
-	VOP_LEASE(nd.ni_dvp, l, l->l_cred, LEASE_WRITE);
+	VOP_LEASE(nd.ni_dvp, l->l_cred, LEASE_WRITE);
 	error = VOP_MKDIR(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &vattr);
 	if (!error)
 		vput(nd.ni_vp);
@@ -3468,8 +3468,8 @@ sys_rmdir(struct lwp *l, void *v, register_t *retval)
 		error = EBUSY;
 		goto out;
 	}
-	VOP_LEASE(nd.ni_dvp, l, l->l_cred, LEASE_WRITE);
-	VOP_LEASE(vp, l, l->l_cred, LEASE_WRITE);
+	VOP_LEASE(nd.ni_dvp, l->l_cred, LEASE_WRITE);
+	VOP_LEASE(vp, l->l_cred, LEASE_WRITE);
 	error = VOP_RMDIR(nd.ni_dvp, nd.ni_vp, &nd.ni_cnd);
 	return (error);
 
@@ -3564,7 +3564,7 @@ sys_revoke(struct lwp *l, void *v, register_t *retval)
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	vp = nd.ni_vp;
-	if ((error = VOP_GETATTR(vp, &vattr, l->l_cred, l)) != 0)
+	if ((error = VOP_GETATTR(vp, &vattr, l->l_cred)) != 0)
 		goto out;
 	if (kauth_cred_geteuid(l->l_cred) != vattr.va_uid &&
 	    (error = kauth_authorize_generic(l->l_cred,

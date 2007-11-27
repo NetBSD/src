@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_43.c,v 1.39.6.1 2007/10/26 15:43:51 joerg Exp $	*/
+/*	$NetBSD: vfs_syscalls_43.c,v 1.39.6.2 2007/11/27 19:36:40 joerg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.39.6.1 2007/10/26 15:43:51 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.39.6.2 2007/11/27 19:36:40 joerg Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_union.h"
@@ -457,7 +457,7 @@ unionread:
 			 * If the directory is opaque,
 			 * then don't show lower entries
 			 */
-			error = VOP_GETATTR(vp, &va, fp->f_cred, l);
+			error = VOP_GETATTR(vp, &va, fp->f_cred);
 			if (va.va_flags & OPAQUE) {
 				vput(lvp);
 				lvp = NULL;
@@ -465,7 +465,7 @@ unionread:
 		}
 
 		if (lvp != NULLVP) {
-			error = VOP_OPEN(lvp, FREAD, fp->f_cred, l);
+			error = VOP_OPEN(lvp, FREAD, fp->f_cred);
 			VOP_UNLOCK(lvp, 0);
 
 			if (error) {

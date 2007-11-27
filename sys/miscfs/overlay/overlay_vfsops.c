@@ -1,4 +1,4 @@
-/*	$NetBSD: overlay_vfsops.c,v 1.43.2.1 2007/10/26 15:48:54 joerg Exp $	*/
+/*	$NetBSD: overlay_vfsops.c,v 1.43.2.2 2007/11/27 19:38:50 joerg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 National Aeronautics & Space Administration
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.43.2.1 2007/10/26 15:48:54 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.43.2.2 2007/11/27 19:38:50 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,9 +96,9 @@ VFS_PROTOS(ov);
  * Mount overlay layer
  */
 int
-ov_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
-    struct lwp *l)
+ov_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 {
+	struct lwp *l = curlwp;
 	int error = 0;
 	struct overlay_args *args = data;
 	struct vnode *lowerrootvp, *vp;
@@ -198,7 +198,7 @@ ov_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
  * Free reference to overlay layer
  */
 int
-ov_unmount(struct mount *mp, int mntflags, struct lwp *l)
+ov_unmount(struct mount *mp, int mntflags)
 {
 	struct vnode *overlay_rootvp = MOUNTTOOVERLAYMOUNT(mp)->ovm_rootvp;
 	int error;

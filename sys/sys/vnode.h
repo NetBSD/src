@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.170.6.3 2007/10/26 15:49:23 joerg Exp $	*/
+/*	$NetBSD: vnode.h,v 1.170.6.4 2007/11/27 19:39:16 joerg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -246,7 +246,7 @@ extern struct simplelock global_v_numoutput_slock;
  */
 #define	IO_UNIT		0x00010		/* do I/O as atomic unit */
 #define	IO_APPEND	0x00020		/* append write to end */
-#define	IO_SYNC		(0x04|IO_DSYNC)	/* sync I/O file integrity completion */
+#define	IO_SYNC		(0x40|IO_DSYNC)	/* sync I/O file integrity completion */
 #define	IO_NODELOCKED	0x00080		/* underlying node already locked */
 #define	IO_NDELAY	0x00100		/* FNDELAY flag set in file table */
 #define	IO_DSYNC	0x00200		/* sync I/O data integrity completion */
@@ -418,7 +418,6 @@ struct vnodeop_desc {
 	const int	*vdesc_vp_offsets;	/* list ended by VDESC_NO_OFFSET */
 	int		vdesc_vpp_offset;	/* return vpp location */
 	int		vdesc_cred_offset;	/* cred location, if any */
-	int		vdesc_proc_offset;	/* proc location, if any */
 	int		vdesc_componentname_offset; /* if any */
 	/*
 	 * Finally, we've got a list of private data (about each operation)

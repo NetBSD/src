@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.h,v 1.22.6.2 2007/10/07 13:25:09 joerg Exp $ */
+/*	$NetBSD: if_gre.h,v 1.22.6.3 2007/11/27 19:38:57 joerg Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -61,7 +61,6 @@ struct gre_soparm {
 enum gre_state {
 	  GRE_S_IDLE = 0
 	, GRE_S_IOCTL
-	, GRE_S_DOCONF
 	, GRE_S_DIE
 };
 

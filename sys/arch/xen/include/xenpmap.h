@@ -1,4 +1,4 @@
-/*	$NetBSD: xenpmap.h,v 1.15 2006/10/17 18:53:04 bouyer Exp $	*/
+/*	$NetBSD: xenpmap.h,v 1.15.26.1 2007/11/27 19:36:09 joerg Exp $	*/
 
 /*
  *
@@ -41,19 +41,15 @@ void xpq_queue_machphys_update(paddr_t, paddr_t);
 void xpq_queue_invlpg(vaddr_t);
 void xpq_queue_pde_update(pd_entry_t *, pd_entry_t);
 void xpq_queue_pte_update(pt_entry_t *, pt_entry_t);
-void xpq_queue_unchecked_pte_update(pt_entry_t *, pt_entry_t);
 void xpq_queue_pt_switch(paddr_t);
 void xpq_flush_queue(void);
 void xpq_queue_set_ldt(vaddr_t, uint32_t);
 void xpq_queue_tlb_flush(void);
-void xpq_queue_pin_table(paddr_t, int);
+void xpq_queue_pin_table(paddr_t);
 void xpq_queue_unpin_table(paddr_t);
 int  xpq_update_foreign(pt_entry_t *, pt_entry_t, int);
 
 extern paddr_t *xpmap_phys_to_machine_mapping;
-
-#define	XPQ_PIN_L1_TABLE 1
-#define	XPQ_PIN_L2_TABLE 2
 
 #ifndef XEN
 #define	PDE_GET(_pdp)						\
@@ -108,12 +104,6 @@ paddr_t *xpmap_phys_to_machine_mapping;
 #define PTE_SET_MA(_ptp,_maptp,_npte) do {			\
 	int _s = splvm();					\
 	xpq_queue_pte_update((_maptp), (_npte));		\
-	xpq_flush_queue();					\
-	splx(_s);						\
-} while (/*CONSTCOND*/0)
-#define PTE_SET_MA_UNCHECKED(_ptp,_maptp,_npte) do {		\
-	_s = splvm();						\
-	xpq_queue_unchecked_pte_update((_maptp), (_npte));	\
 	xpq_flush_queue();					\
 	splx(_s);						\
 } while (/*CONSTCOND*/0)
@@ -233,6 +223,13 @@ xpmap_mtop(paddr_t mpa)
 }
 
 static __inline paddr_t
+xpmap_mtop_masked(paddr_t mpa)
+{
+	return ((machine_to_phys_mapping[mpa >> PAGE_SHIFT] << PAGE_SHIFT) +
+	    XPMAP_OFFSET);
+}
+
+static __inline paddr_t
 xpmap_ptom(paddr_t ppa)
 {
 	return (xpmap_phys_to_machine_mapping[(ppa -
@@ -289,6 +286,10 @@ MULTI_update_va_mapping_otherdomain(
 #else
 #define MULTI_UVMFLAGS_INDEX 3
 #define MULTI_UVMDOMID_INDEX 4
+#endif
+
+#if defined(__x86_64__)
+void xen_set_user_pgd(paddr_t);
 #endif
 
 #endif /* XEN3 */

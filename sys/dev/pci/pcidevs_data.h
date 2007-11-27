@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs_data.h,v 1.884.6.12 2007/11/21 21:55:41 joerg Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.884.6.13 2007/11/27 19:37:17 joerg Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -4540,6 +4540,10 @@ static const struct pci_product pci_products[] = {
 	    "Radeon X800SE (R423) UK",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_R430_554F,
+	    "Radeon X800 GTO (R430) 554F",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_R423_UQ,
 	    "FireGL V7200 (R423) UQ",
 	},
@@ -4550,6 +4554,10 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_R423_UT,
 	    "FireGL V7100 (R423) UT",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_R430_556F,
+	    "Radeon X800 GTO (R430) Secondary",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_VT,
@@ -8108,6 +8116,66 @@ static const struct pci_product pci_products[] = {
 	    "5000X Memory Controller Hub",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_5000_PCIE_1,
+	    "5000 Series Chipset PCI Express x4 Port 2",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_5000_PCIE_2,
+	    "5000 Series Chipset PCI Express x4 Port 3",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_5000_PCIE_3,
+	    "5000 Series Chipset PCI Express x4 Port 4",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_5000_PCIE_4,
+	    "5000 Series Chipset PCI Express x4 Port 5",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_5000_PCIE_5,
+	    "5000 Series Chipset PCI Express x4 Port 6",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_5000_PCIE_6,
+	    "5000 Series Chipset PCI Express x4 Port 7",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_5000_FSB_REG,
+	    "5000 Series Chipset FSB Registers",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_5000_RESERVED_1,
+	    "5000 Series Chipset Reserved Registers",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_5000_RESERVED_2,
+	    "5000 Series Chipset Reserved Registers",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_5000_FBD_1,
+	    "5000 Series Chipset FBD Registers",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_5000_FBD_2,
+	    "5000 Series Chipset FBD Registers",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_5000_PCIE_7,
+	    "5000 Series Chipset PCI Express x8 Port 2-3",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_5000_PCIE_8,
+	    "5000 Series Chipset PCI Express x8 Port 4-5",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_5000_PCIE_9,
+	    "5000 Series Chipset PCI Express x8 Port 6-7",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_5000X_PCIE,
+	    "5000X PCI Express x16 Port 4-7",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FB_LPC,
 	    "82801FB LPC Interface Bridge",
 	},
@@ -8644,6 +8712,22 @@ static const struct pci_product pci_products[] = {
 	    "82965G Integrated Graphics Device",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82Q35_HB,
+	    "82Q35 Host Bridge",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82Q35_EXP,
+	    "82Q35 PCI Express Bridge",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82Q35_IGD,
+	    "82Q35 Integrated Graphics Device",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82Q35_IGD_1,
+	    "82Q35 Integrated Graphics Device",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82G33_HB,
 	    "82G33/P35 Host Bridge",
 	},
@@ -8662,6 +8746,22 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_LAN,
 	    "82801I LAN Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82Q33_HB,
+	    "82Q35 Host Bridge",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82Q33_EXP,
+	    "82Q35 PCI Express Bridge",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82Q33_IGD,
+	    "82Q35 Integrated Graphics Device",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82Q33_IGD_1,
+	    "82Q35 Integrated Graphics Device",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82965PM_HB,
@@ -13860,4 +13960,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2866;
+const int pci_nproducts = 2891;

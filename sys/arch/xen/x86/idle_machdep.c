@@ -1,4 +1,4 @@
-/*	$NetBSD: idle_machdep.c,v 1.3.10.1 2007/10/02 18:27:55 joerg Exp $	*/
+/*	$NetBSD: idle_machdep.c,v 1.2.2.2 2007/11/27 19:36:20 joerg Exp $	*/
 
 /*-
  * Copyright (c)2002, 2006, 2007 YAMAMOTO Takashi,
@@ -28,12 +28,12 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: idle_machdep.c,v 1.3.10.1 2007/10/02 18:27:55 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: idle_machdep.c,v 1.2.2.2 2007/11/27 19:36:20 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
 
-#include <machine/xen.h>
+#include <xen/xen.h>
 
 void
 cpu_idle(void)

@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.10.6.2 2007/10/26 15:48:24 joerg Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.10.6.3 2007/11/27 19:37:57 joerg Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_vnops.c,v 1.10.6.2 2007/10/26 15:48:24 joerg Exp $");
+__RCSID("$NetBSD: udf_vnops.c,v 1.10.6.3 2007/11/27 19:37:57 joerg Exp $");
 #endif /* not lint */
 
 
@@ -491,7 +491,7 @@ udf_lookup(void *v)
 	mounted_ro  = dvp->v_mount->mnt_flag & MNT_RDONLY;
 
 	/* check exec/dirread permissions first */
-	error = VOP_ACCESS(dvp, VEXEC, cnp->cn_cred, cnp->cn_lwp);
+	error = VOP_ACCESS(dvp, VEXEC, cnp->cn_cred);
 	if (error)
 		return error;
 
@@ -572,8 +572,7 @@ udf_lookup(void *v)
 				(nameiop == CREATE || nameiop == RENAME))
 					error = 0;
 			if (!error) {
-				error = VOP_ACCESS(dvp, VWRITE, cnp->cn_cred,
-						cnp->cn_lwp);
+				error = VOP_ACCESS(dvp, VWRITE, cnp->cn_cred);
 				if (!error) {
 					/* keep the component name */
 					cnp->cn_flags |= SAVENAME;

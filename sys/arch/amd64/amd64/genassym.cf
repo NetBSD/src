@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.9.8.5 2007/11/21 21:52:58 joerg Exp $
+#	$NetBSD: genassym.cf,v 1.9.8.6 2007/11/27 19:35:25 joerg Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,6 +78,7 @@ if defined(_KERNEL_OPT)
 include "opt_compat_netbsd32.h"
 include "opt_compat_linux32.h"
 include "opt_multiprocessor.h"
+include "opt_xen.h"
 endif
 
 quote #define __MUTEX_PRIVATE
@@ -132,6 +133,10 @@ if NIOAPIC > 0
 include <machine/i82093reg.h>
 include <machine/i82093var.h>
 endif
+
+ifdef XEN
+include <xen/xen3-public/xen.h>
+endif  
 
 include <x86/busdefs.h>
 
@@ -252,6 +257,7 @@ define	CPU_INFO_IDEPTH		offsetof(struct cpu_info, ci_idepth)
 define	CPU_INFO_ISOURCES	offsetof(struct cpu_info, ci_isources)
 define	CPU_INFO_MTX_COUNT	offsetof(struct cpu_info, ci_mtx_count)
 define	CPU_INFO_MTX_OLDSPL	offsetof(struct cpu_info, ci_mtx_oldspl)
+define  CPU_INFO_CPUID		offsetof(struct cpu_info, ci_cpuid)
 define	CPU_INFO_ISTATE		offsetof(struct cpu_info, ci_istate)
 
 if NIOAPIC > 0
@@ -262,8 +268,12 @@ endif
 
 define	IH_FUN			offsetof(struct intrhand, ih_fun)
 define	IH_ARG			offsetof(struct intrhand, ih_arg)
-define	IH_NEXT			offsetof(struct intrhand, ih_next)
 define  IH_LEVEL		offsetof(struct intrhand, ih_level)
+ifdef XEN
+define IH_IPL_NEXT		offsetof(struct intrhand, ih_ipl_next)
+else
+define	IH_NEXT			offsetof(struct intrhand, ih_next)
+endif
 
 ifdef COMPAT_NETBSD32
 define	SC_FS32			offsetof(struct netbsd32_sigcontext, sc_fs)
@@ -280,15 +290,23 @@ define  LINUX32_SYS_sigreturn		LINUX32_SYS_sigreturn
 define  LINUX32_SYS_exit		LINUX32_SYS_netbsd32_exit
 endif
 
-define	IS_RECURSE		offsetof(struct intrsource, is_recurse)
-define	IS_RESUME		offsetof(struct intrsource, is_resume)
-define	IS_EVCNT		offsetof(struct intrsource, is_evcnt.ev_count)
-define	IS_HANDLERS		offsetof(struct intrsource, is_handlers)
-define	IS_PIC			offsetof(struct intrsource, is_pic)
-define	IS_FLAGS		offsetof(struct intrsource, is_flags)
-define	IS_PIN			offsetof(struct intrsource, is_pin)
-define	IS_TYPE			offsetof(struct intrsource, is_type)
-define	IS_MAXLEVEL		offsetof(struct intrsource, is_maxlevel)
+ifdef XEN
+define	SIZEOF_IPLSOURCE	sizeof(struct iplsource)
+define	IS_RECURSE      offsetof(struct iplsource, ipl_recurse)
+define	IS_RESUME       offsetof(struct iplsource, ipl_resume)
+define	IS_HANDLERS     offsetof(struct iplsource, ipl_handlers)
+define	EV_EVCNTL	offsetof(struct evcnt, ev_count)
+else
+define	IS_RECURSE	offsetof(struct intrsource, is_recurse)
+define	IS_RESUME	offsetof(struct intrsource, is_resume)
+define	IS_EVCNT	offsetof(struct intrsource, is_evcnt.ev_count)
+define	IS_HANDLERS	offsetof(struct intrsource, is_handlers)
+define	IS_PIC		offsetof(struct intrsource, is_pic)
+define	IS_FLAGS	offsetof(struct intrsource, is_flags)
+define	IS_PIN		offsetof(struct intrsource, is_pin)
+define	IS_TYPE		offsetof(struct intrsource, is_type)
+define	IS_MAXLEVEL	offsetof(struct intrsource, is_maxlevel)
+endif
 
 define	IPL_NONE		IPL_NONE
 define	IPL_CLOCK		IPL_CLOCK
@@ -298,6 +316,9 @@ define	IPL_IPI			IPL_IPI
 define	IPL_SOFTNET		IPL_SOFTNET
 define	IPL_SOFTCLOCK		IPL_SOFTCLOCK
 define	IPL_SOFTSERIAL		IPL_SOFTSERIAL
+ifdef XEN
+define	IPL_SOFTXENEVT		IPL_SOFTXENEVT
+endif
 
 define	LIR_IPI			LIR_IPI
 define	LIR_TIMER		LIR_TIMER
@@ -341,6 +362,13 @@ define	EV_COUNT		offsetof(struct evcnt, ev_count)
 define	OPTERON_MSR_PASSCODE	OPTERON_MSR_PASSCODE
 
 define	X86_BUS_SPACE_IO	X86_BUS_SPACE_IO
+
+ifdef XEN
+define EVTCHN_UPCALL_MASK	offsetof(struct vcpu_info, evtchn_upcall_mask)
+define XEN_PT_BASE		offsetof(struct start_info, pt_base)    
+define XEN_NR_PT_FRAMES		offsetof(struct start_info, nr_pt_frames)
+define __HYPERVISOR_iret	__HYPERVISOR_iret
+endif
 
 define	NKL4_KIMG_ENTRIES	NKL4_KIMG_ENTRIES
 define	NKL3_KIMG_ENTRIES	NKL3_KIMG_ENTRIES

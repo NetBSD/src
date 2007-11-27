@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.119.4.7 2007/11/21 21:56:02 joerg Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.119.4.8 2007/11/27 19:38:09 joerg Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.119.4.7 2007/11/21 21:56:02 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.119.4.8 2007/11/27 19:38:09 joerg Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_ddb.h"
@@ -233,7 +233,7 @@ opendisk(struct device *dv)
 	if (bdevvp(dev, &tmpvn))
 		panic("%s: can't alloc vnode for %s", __func__,
 		    device_xname(dv));
-	error = VOP_OPEN(tmpvn, FREAD, NOCRED, 0);
+	error = VOP_OPEN(tmpvn, FREAD, NOCRED);
 	if (error) {
 #ifndef DEBUG
 		/*
@@ -266,8 +266,8 @@ config_handle_wedges(struct device *dv, int par)
 	wl.dkwl_bufsize = sizeof(*wi) * 16;
 	wl.dkwl_buf = wi = malloc(wl.dkwl_bufsize, M_TEMP, M_WAITOK);
 
-	error = VOP_IOCTL(vn, DIOCLWEDGES, &wl, FREAD, NOCRED, 0);
-	VOP_CLOSE(vn, FREAD, NOCRED, 0);
+	error = VOP_IOCTL(vn, DIOCLWEDGES, &wl, FREAD, NOCRED);
+	VOP_CLOSE(vn, FREAD, NOCRED);
 	vput(vn);
 	if (error) {
 #ifdef DEBUG_WEDGE

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_20.c,v 1.17.6.2 2007/11/04 21:03:18 jmcneill Exp $	*/
+/*	$NetBSD: vfs_syscalls_20.c,v 1.17.6.3 2007/11/27 19:36:40 joerg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_20.c,v 1.17.6.2 2007/11/04 21:03:18 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_20.c,v 1.17.6.3 2007/11/27 19:36:40 joerg Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -301,7 +301,7 @@ compat_20_sys_fhstatfs(struct lwp *l, void *v, register_t *retval)
 	mp = vp->v_mount;
 	vput(vp);
 	sbuf = malloc(sizeof(*sbuf), M_TEMP, M_WAITOK);
-	if ((error = VFS_STATVFS(mp, sbuf, l)) != 0)
+	if ((error = VFS_STATVFS(mp, sbuf)) != 0)
 		goto out;
 	error = vfs2fs(SCARG(uap, buf), sbuf);
 out:

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.164.4.4 2007/10/29 02:57:25 joerg Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.164.4.5 2007/11/27 19:39:00 joerg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.164.4.4 2007/10/29 02:57:25 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.164.4.5 2007/11/27 19:39:00 joerg Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -703,12 +703,12 @@ nfs_flushstalebuf(struct vnode *vp, kauth_cred_t cred, struct lwp *l,
 			 */
 		}
 		NFS_INVALIDATE_ATTRCACHE(np);
-		error = VOP_GETATTR(vp, &vattr, cred, l);
+		error = VOP_GETATTR(vp, &vattr, cred);
 		if (error)
 			return error;
 		np->n_mtime = vattr.va_mtime;
 	} else {
-		error = VOP_GETATTR(vp, &vattr, cred, l);
+		error = VOP_GETATTR(vp, &vattr, cred);
 		if (error)
 			return error;
 		if (timespeccmp(&np->n_mtime, &vattr.va_mtime, !=)) {

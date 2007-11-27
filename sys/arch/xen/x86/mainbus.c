@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.11 2007/03/05 23:26:40 dogcow Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.2.2.2 2007/11/27 19:36:21 joerg Exp $	*/
 /*	NetBSD: mainbus.c,v 1.53 2003/10/27 14:11:47 junyoung Exp 	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.11 2007/03/05 23:26:40 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.2.2.2 2007/11/27 19:36:21 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,8 +54,8 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.11 2007/03/05 23:26:40 dogcow Exp $");
 #include <machine/cpuvar.h>
 #include <machine/i82093var.h>
 
-#include <machine/xen.h>
-#include <machine/hypervisor.h>
+#include <xen/xen.h>
+#include <xen/hypervisor.h>
 
 #if NIPMI > 0
 #include <x86/ipmivar.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.53.2.6 2007/11/21 21:55:56 joerg Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.53.2.7 2007/11/27 19:37:49 joerg Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.53.2.6 2007/11/21 21:55:56 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.53.2.7 2007/11/27 19:37:49 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -74,15 +74,14 @@ static struct putter_ops puffs_putter = {
 };
 
 int
-puffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
-	    struct lwp *l)
+puffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 {
 	struct puffs_mount *pmp = NULL;
 	struct puffs_kargs *args;
 	char fstype[_VFS_NAMELEN];
 	char *p;
 	int error = 0, i;
-	pid_t mntpid = l->l_proc->p_pid;
+	pid_t mntpid = curlwp->l_proc->p_pid;
 
 	if (*data_len < sizeof *args)
 		return EINVAL;
@@ -197,7 +196,7 @@ puffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
 	}
 
 	error = set_statvfs_info(path, UIO_USERSPACE, args->pa_mntfromname,
-	    UIO_SYSSPACE, fstype, mp, l);
+	    UIO_SYSSPACE, fstype, mp, curlwp);
 	if (error)
 		goto out;
 	mp->mnt_stat.f_iosize = DEV_BSIZE;
@@ -267,7 +266,7 @@ puffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
 }
 
 int
-puffs_start(struct mount *mp, int flags, struct lwp *l)
+puffs_start(struct mount *mp, int flags)
 {
 	struct puffs_mount *pmp = MPTOPUFFSMP(mp);
 
@@ -278,7 +277,7 @@ puffs_start(struct mount *mp, int flags, struct lwp *l)
 }
 
 int
-puffs_unmount(struct mount *mp, int mntflags, struct lwp *l)
+puffs_unmount(struct mount *mp, int mntflags)
 {
 	PUFFS_MSG_VARS(vfs, unmount);
 	struct puffs_mount *pmp;
@@ -316,7 +315,6 @@ puffs_unmount(struct mount *mp, int mntflags, struct lwp *l)
 		puffs_msg_setinfo(park_unmount,
 		    PUFFSOP_VFS, PUFFS_VFS_UNMOUNT, NULL);
 		unmount_msg->pvfsr_flags = mntflags;
-		puffs_cidcvt(&unmount_msg->pvfsr_cid, l);
 
 		PUFFS_MSG_ENQUEUEWAIT(pmp, park_unmount, error);
 		PUFFS_MSG_RELEASE(unmount);
@@ -383,7 +381,7 @@ puffs_root(struct mount *mp, struct vnode **vpp)
 }
 
 int
-puffs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l)
+puffs_statvfs(struct mount *mp, struct statvfs *sbp)
 {
 	PUFFS_MSG_VARS(vfs, statvfs);
 	struct puffs_mount *pmp;
@@ -402,7 +400,6 @@ puffs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l)
 
 	PUFFS_MSG_ALLOC(vfs, statvfs);
 	puffs_msg_setinfo(park_statvfs, PUFFSOP_VFS, PUFFS_VFS_STATVFS, NULL);
-	puffs_cidcvt(&statvfs_msg->pvfsr_cid, l);
 
 	PUFFS_MSG_ENQUEUEWAIT(pmp, park_statvfs, error);
 	error = checkerr(pmp, error, __func__);
@@ -427,8 +424,7 @@ puffs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l)
 }
 
 static int
-pageflush(struct mount *mp, kauth_cred_t cred,
-	int waitfor, int suspending, struct lwp *l)
+pageflush(struct mount *mp, kauth_cred_t cred, int waitfor, int suspending)
 {
 	struct puffs_node *pn;
 	struct vnode *vp, *nvp;
@@ -517,7 +513,7 @@ pageflush(struct mount *mp, kauth_cred_t cred,
 			pn->pn_stat |= PNODE_SUSPEND;
 			simple_unlock(&vp->v_interlock);
 		}
-		rv = VOP_FSYNC(vp, cred, waitfor, 0, 0, l);
+		rv = VOP_FSYNC(vp, cred, waitfor, 0, 0);
 		if (suspending || waitfor == MNT_LAZY) {
 			simple_lock(&vp->v_interlock);
 			pn->pn_stat &= ~PNODE_SUSPEND;
@@ -534,20 +530,18 @@ pageflush(struct mount *mp, kauth_cred_t cred,
 }
 
 int
-puffs_sync(struct mount *mp, int waitfor, struct kauth_cred *cred,
-	struct lwp *l)
+puffs_sync(struct mount *mp, int waitfor, struct kauth_cred *cred)
 {
 	PUFFS_MSG_VARS(vfs, sync);
 	struct puffs_mount *pmp = MPTOPUFFSMP(mp);
 	int error, rv;
 
-	error = pageflush(mp, cred, waitfor, 0, l);
+	error = pageflush(mp, cred, waitfor, 0);
 
 	/* sync fs */
 	PUFFS_MSG_ALLOC(vfs, sync);
 	sync_msg->pvfsr_waitfor = waitfor;
 	puffs_credcvt(&sync_msg->pvfsr_cred, cred);
-	puffs_cidcvt(&sync_msg->pvfsr_cid, l);
 	puffs_msg_setinfo(park_sync, PUFFSOP_VFS, PUFFS_VFS_SYNC, NULL);
 
 	PUFFS_MSG_ENQUEUEWAIT(pmp, park_sync, rv);
@@ -743,7 +737,7 @@ puffs_suspendctl(struct mount *mp, int cmd)
 		puffs_msg_enqueue(pmp, park_suspend);
 		PUFFS_MSG_RELEASE(suspend);
 
-		error = pageflush(mp, FSCRED, 0, 1, curlwp);
+		error = pageflush(mp, FSCRED, 0, 1);
 		if (error == 0)
 			error = fstrans_setstate(mp, FSTRANS_SUSPENDED);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_subr.c,v 1.54.4.1 2007/10/26 15:48:26 joerg Exp $	*/
+/*	$NetBSD: exec_subr.c,v 1.54.4.2 2007/11/27 19:38:00 joerg Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.54.4.1 2007/10/26 15:48:26 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.54.4.2 2007/11/27 19:38:00 joerg Exp $");
 
 #include "opt_pax.h"
 
@@ -185,7 +185,7 @@ vmcmd_map_pagedvn(struct lwp *l, struct exec_vmcmd *cmd)
 	 * check the file system's opinion about mmapping the file
 	 */
 
-	error = VOP_MMAP(vp, prot, p->p_cred, l);
+	error = VOP_MMAP(vp, prot, p->p_cred);
 	if (error)
 		return error;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: intrdefs.h,v 1.6 2006/09/28 18:53:15 bouyer Exp $	*/
+/*	$NetBSD: intrdefs.h,v 1.6.26.1 2007/11/27 19:36:08 joerg Exp $	*/
 /*	NetBSD intrdefs.h,v 1.3 2003/06/16 20:01:06 thorpej Exp 	*/
 
 #ifndef _XEN_INTRDEFS_H
@@ -45,6 +45,13 @@
 #define	IPL_DIE		0xf	/* die events */
 #define	NIPL		16
 
+/*
+ * Local APIC masks and software interrupt masks, in order
+ * of priority.  Must not conflict with SIR_* below.
+ */
+#define LIR_IPI		31
+#define LIR_TIMER	30
+
 /* Soft interrupt masks. */
 #define	SIR_CLOCK	IPL_SOFTCLOCK
 #define	SIR_NET		IPL_SOFTNET
@@ -61,5 +68,7 @@
 
 #define NUM_LEGACY_IRQS	16
 #define MAX_INTR_SOURCES 32
+
+#define X86_NIPI		7
 
 #endif /* _XEN_INTRDEFS_H */

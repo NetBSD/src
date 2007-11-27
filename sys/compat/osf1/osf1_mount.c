@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_mount.c,v 1.35 2007/07/12 19:41:58 dsl Exp $	*/
+/*	$NetBSD: osf1_mount.c,v 1.35.6.1 2007/11/27 19:36:50 joerg Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_mount.c,v 1.35 2007/07/12 19:41:58 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_mount.c,v 1.35.6.1 2007/11/27 19:36:50 joerg Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -127,7 +127,7 @@ osf1_sys_fstatfs(l, v, retval)
 		return (error);
 	mp = ((struct vnode *)fp->f_data)->v_mount;
 	sp = &mp->mnt_stat;
-	if ((error = VFS_STATVFS(mp, sp, l)))
+	if ((error = VFS_STATVFS(mp, sp)))
 		goto out;
 	sp->f_flag = mp->mnt_flag & MNT_VISFLAGMASK;
 	osf1_cvt_statfs_from_native(sp, &osfs);
@@ -168,7 +168,7 @@ osf1_sys_getfsstat(l, v, retval)
 			 */
 			if (((SCARG(uap, flags) & OSF1_MNT_NOWAIT) == 0 ||
 			    (SCARG(uap, flags) & OSF1_MNT_WAIT)) &&
-			    (error = VFS_STATVFS(mp, sp, l)))
+			    (error = VFS_STATVFS(mp, sp)))
 				continue;
 			sp->f_flag = mp->mnt_flag & MNT_VISFLAGMASK;
 			osf1_cvt_statfs_from_native(sp, &osfs);
@@ -231,7 +231,7 @@ osf1_sys_statfs(l, v, retval)
 	mp = nd.ni_vp->v_mount;
 	sp = &mp->mnt_stat;
 	vrele(nd.ni_vp);
-	if ((error = VFS_STATVFS(mp, sp, l)))
+	if ((error = VFS_STATVFS(mp, sp)))
 		return (error);
 	sp->f_flag = mp->mnt_flag & MNT_VISFLAGMASK;
 	osf1_cvt_statfs_from_native(sp, &osfs);

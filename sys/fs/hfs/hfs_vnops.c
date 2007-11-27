@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_vnops.c,v 1.3.8.1 2007/09/03 16:48:45 jmcneill Exp $	*/
+/*	$NetBSD: hfs_vnops.c,v 1.3.8.2 2007/11/27 19:37:39 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hfs_vnops.c,v 1.3.8.1 2007/09/03 16:48:45 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hfs_vnops.c,v 1.3.8.2 2007/11/27 19:37:39 joerg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -360,7 +360,7 @@ hfs_vop_lookup(void *v)
 	/*
 	 * Check accessiblity of directory.
 	 */
-	if ((error = VOP_ACCESS(vdp, VEXEC, cred, cnp->cn_lwp)) != 0)
+	if ((error = VOP_ACCESS(vdp, VEXEC, cred)) != 0)
 		return error;
 
 	if ((flags & ISLASTCN) && (vdp->v_mount->mnt_flag & MNT_RDONLY) &&
@@ -557,7 +557,7 @@ hfs_vop_access(void *v)
 		}
 	}
 
-	if ((error = VOP_GETATTR(ap->a_vp, &va, ap->a_cred, ap->a_l)) != 0)
+	if ((error = VOP_GETATTR(ap->a_vp, &va, ap->a_cred)) != 0)
 		return error;
 
 	return vaccess(va.va_type, va.va_mode, va.va_uid, va.va_gid,

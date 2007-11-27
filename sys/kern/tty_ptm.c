@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_ptm.c,v 1.19.8.1 2007/10/26 15:48:44 joerg Exp $	*/
+/*	$NetBSD: tty_ptm.c,v 1.19.8.2 2007/11/27 19:38:13 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.19.8.1 2007/10/26 15:48:44 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.19.8.2 2007/11/27 19:38:13 joerg Exp $");
 
 #include "opt_ptm.h"
 
@@ -119,7 +119,7 @@ pty_vn_open(struct vnode *vp, struct lwp *l)
 		return EINVAL;
 	}
 
-	error = VOP_OPEN(vp, FREAD|FWRITE, lwp0.l_cred, l);
+	error = VOP_OPEN(vp, FREAD|FWRITE, lwp0.l_cred);
 
 	if (error) {
 		vput(vp);
@@ -216,7 +216,7 @@ pty_grant_slave(struct lwp *l, dev_t dev)
 		struct vattr vattr;
 		(*ptm->getvattr)(ptm, l, &vattr);
 		/* Do the VOP_SETATTR() as root. */
-		error = VOP_SETATTR(vp, &vattr, lwp0.l_cred, l);
+		error = VOP_SETATTR(vp, &vattr, lwp0.l_cred);
 		if (error) {
 			DPRINTF(("setattr %d\n", error));
 			VOP_UNLOCK(vp, 0);

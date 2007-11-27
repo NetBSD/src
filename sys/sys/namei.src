@@ -1,4 +1,4 @@
-/*	$NetBSD: namei.src,v 1.1.2.3 2007/09/03 16:49:13 jmcneill Exp $	*/
+/*	$NetBSD: namei.src,v 1.1.2.4 2007/11/27 19:39:13 joerg Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1991, 1993
@@ -138,6 +138,7 @@ NAMEIFL	PARAMASK	0x02fff00	/* mask of parameter descriptors */
  * Initialization of an nameidata structure.
  */
 #define NDINIT(ndp, op, flags, segflg, namep, l) { \
+	KASSERT((l) == curlwp); \
 	(ndp)->ni_cnd.cn_nameiop = op; \
 	(ndp)->ni_cnd.cn_flags = flags; \
 	(ndp)->ni_segflg = segflg; \
@@ -175,11 +176,10 @@ struct	namecache {
 
 struct mount;
 
-extern struct pool pnbuf_pool;		/* pathname buffer pool */
-extern struct pool_cache pnbuf_cache;	/* pathname buffer cache */
+extern pool_cache_t pnbuf_cache;	/* pathname buffer cache */
 
-#define	PNBUF_GET()	pool_cache_get(&pnbuf_cache, PR_WAITOK)
-#define	PNBUF_PUT(pnb)	pool_cache_put(&pnbuf_cache, (pnb))
+#define	PNBUF_GET()	pool_cache_get(pnbuf_cache, PR_WAITOK)
+#define	PNBUF_PUT(pnb)	pool_cache_put(pnbuf_cache, (pnb))
 
 int	namei(struct nameidata *);
 uint32_t namei_hash(const char *, const char **);

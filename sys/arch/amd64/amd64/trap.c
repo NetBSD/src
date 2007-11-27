@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.32.8.3 2007/11/21 21:53:00 joerg Exp $	*/
+/*	$NetBSD: trap.c,v 1.32.8.4 2007/11/27 19:35:27 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.32.8.3 2007/11/21 21:53:00 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.32.8.4 2007/11/27 19:35:27 joerg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -111,7 +111,9 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.32.8.3 2007/11/21 21:53:00 joerg Exp $");
 #include <machine/db_machdep.h>
 #endif
 
+#ifndef XEN
 #include "isa.h"
+#endif
 
 #ifdef KGDB
 #include <sys/kgdb.h>
@@ -452,6 +454,7 @@ faultcommon:
 		vm = p->p_vmspace;
 		if (vm == NULL)
 			goto we_re_toast;
+		pcb->pcb_cr2 = cr2;
 		va = trunc_page((vaddr_t)cr2);
 		/*
 		 * It is only a kernel address space fault iff:
@@ -634,6 +637,9 @@ startlwp(void *arg)
 static void
 frame_dump(struct trapframe *tf)
 {
+	int i;
+	unsigned long *p;
+
 	printf("rip %p  rsp %p  rfl %p\n",
 	    (void *)tf->tf_rip, (void *)tf->tf_rsp, (void *)tf->tf_rflags);
 	printf("rdi %p  rsi %p  rdx %p\n",
@@ -646,5 +652,14 @@ frame_dump(struct trapframe *tf)
 	    (void *)tf->tf_r13, (void *)tf->tf_r14, (void *)tf->tf_r15);
 	printf("rbp %p  rbx %p  rax %p\n",
 	    (void *)tf->tf_rbp, (void *)tf->tf_rbx, (void *)tf->tf_rax);
+	printf("cs %p  ds %p  es %p  fs %p  gs %p  ss %p\n",
+		tf->tf_cs & 0xffff, tf->tf_ds & 0xffff, tf->tf_es & 0xffff,
+		tf->tf_fs & 0xffff, tf->tf_gs & 0xffff, tf->tf_ss & 0xffff);
+	
+	printf("\n");
+	printf("Stack dump:\n");
+	for (i = 0, p = (unsigned long *) tf; i < 20; i ++, p += 4)
+		printf("   0x%.16lx  0x%.16lx  0x%.16lx 0x%.16lx\n", *p, p[1], p[2], p[3]);
+	printf("\n");
 }
 #endif

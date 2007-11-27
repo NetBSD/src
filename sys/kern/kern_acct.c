@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_acct.c,v 1.75.6.1 2007/10/02 18:28:57 joerg Exp $	*/
+/*	$NetBSD: kern_acct.c,v 1.75.6.2 2007/11/27 19:38:01 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.75.6.1 2007/10/02 18:28:57 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.75.6.2 2007/11/27 19:38:01 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -179,7 +179,7 @@ acct_chkfree(void)
 	sb = kmem_alloc(sizeof(*sb), KM_SLEEP);
 	if (sb == NULL)
 		return (ENOMEM);
-	error = VFS_STATVFS(acct_vp->v_mount, sb, NULL);
+	error = VFS_STATVFS(acct_vp->v_mount, sb);
 	if (error != 0) {
 		kmem_free(sb, sizeof(*sb));
 		return (error);
@@ -310,7 +310,7 @@ sys_acct(struct lwp *l, void *v, register_t *retval)
 			error = EACCES;
 			goto bad;
 		}
-		if ((error = VOP_GETATTR(nd.ni_vp, &va, l->l_cred, l)) != 0) {
+		if ((error = VOP_GETATTR(nd.ni_vp, &va, l->l_cred)) != 0) {
 			VOP_UNLOCK(nd.ni_vp, 0);
 			goto bad;
 		}
@@ -324,7 +324,7 @@ sys_acct(struct lwp *l, void *v, register_t *retval)
 #endif
 			VATTR_NULL(&va);
 			va.va_size = size;
-			error = VOP_SETATTR(nd.ni_vp, &va, l->l_cred, l);
+			error = VOP_SETATTR(nd.ni_vp, &va, l->l_cred);
 			if (error != 0) {
 				VOP_UNLOCK(nd.ni_vp, 0);
 				goto bad;
@@ -461,7 +461,7 @@ acct_process(struct lwp *l)
 	/*
 	 * Now, just write the accounting information to the file.
 	 */
-	VOP_LEASE(acct_vp, l, l->l_cred, LEASE_WRITE);
+	VOP_LEASE(acct_vp, l->l_cred, LEASE_WRITE);
 	error = vn_rdwr(UIO_WRITE, acct_vp, (void *)&acct,
 	    sizeof(acct), (off_t)0, UIO_SYSSPACE, IO_APPEND|IO_UNIT,
 	    acct_cred, NULL, NULL);

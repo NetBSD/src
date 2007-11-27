@@ -1,4 +1,4 @@
-/* $NetBSD: securelevel.h,v 1.5 2007/01/09 12:57:56 elad Exp $ */
+/* $NetBSD: securelevel.h,v 1.1.4.2 2007/11/27 19:39:11 joerg Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -26,28 +26,28 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _SECMODEL_BSD44_SECURELEVEL_H_
-#define	_SECMODEL_BSD44_SECURELEVEL_H_
+#ifndef _SECMODEL_SECURELEVEL_SECURELEVEL_H_
+#define	_SECMODEL_SECURELEVEL_SECURELEVEL_H_
 
-int secmodel_bsd44_sysctl_securelevel(SYSCTLFN_PROTO);
+int secmodel_securelevel_sysctl(SYSCTLFN_PROTO);
 
-void secmodel_bsd44_securelevel_init(void);
-void secmodel_bsd44_securelevel_start(void);
+void secmodel_securelevel_init(void);
+void secmodel_securelevel_start(void);
 
 #if defined(_LKM)
-void secmodel_bsd44_securelevel_stop(void);
-SYSCTL_SETUP_PROTO(sysctl_security_bsd44_securelevel_setup);
+void secmodel_securelevel_stop(void);
+SYSCTL_SETUP_PROTO(sysctl_security_securelevel_setup);
 #endif /* _LKM */
 
-int secmodel_bsd44_securelevel_system_cb(kauth_cred_t, kauth_action_t, void *,
+int secmodel_securelevel_system_cb(kauth_cred_t, kauth_action_t, void *,
     void *, void *, void *, void *);
-int secmodel_bsd44_securelevel_process_cb(kauth_cred_t, kauth_action_t, void *,
+int secmodel_securelevel_process_cb(kauth_cred_t, kauth_action_t, void *,
     void *, void *, void *, void *);
-int secmodel_bsd44_securelevel_network_cb(kauth_cred_t, kauth_action_t, void *,
+int secmodel_securelevel_network_cb(kauth_cred_t, kauth_action_t, void *,
     void *, void *, void *, void *);
-int secmodel_bsd44_securelevel_machdep_cb(kauth_cred_t, kauth_action_t, void *,
+int secmodel_securelevel_machdep_cb(kauth_cred_t, kauth_action_t, void *,
     void *, void *, void *, void *);
-int secmodel_bsd44_securelevel_device_cb(kauth_cred_t, kauth_action_t, void *,
+int secmodel_securelevel_device_cb(kauth_cred_t, kauth_action_t, void *,
     void *, void *, void *, void *);
 
-#endif /* !_SECMODEL_BSD44_SECURELEVEL_H_ */
+#endif /* !_SECMODEL_SECURELEVEL_SECURELEVEL_H_ */

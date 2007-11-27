@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_ataraid.c,v 1.21 2007/07/29 12:50:19 ad Exp $	*/
+/*	$NetBSD: ld_ataraid.c,v 1.21.4.1 2007/11/27 19:37:03 joerg Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.21 2007/07/29 12:50:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.21.4.1 2007/11/27 19:37:03 joerg Exp $");
 
 #include "rnd.h"
 
@@ -207,7 +207,7 @@ ld_ataraid_attach(struct device *parent, struct device *self,
 		error = bdevvp(dev, &vp);
 		if (error)
 			break;
-		error = VOP_OPEN(vp, FREAD|FWRITE, NOCRED, 0);
+		error = VOP_OPEN(vp, FREAD|FWRITE, NOCRED);
 		if (error) {
 			vput(vp);
 			/*

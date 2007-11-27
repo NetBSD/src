@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.22.4.2 2007/10/26 15:48:15 joerg Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.22.4.3 2007/11/27 19:37:40 joerg Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.22.4.2 2007/10/26 15:48:15 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.22.4.3 2007/11/27 19:37:40 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -386,8 +386,7 @@ deupdat(dep, waitfor)
  * Truncate the file described by dep to the length specified by length.
  */
 int
-detrunc(struct denode *dep, u_long length, int flags, kauth_cred_t cred,
-    struct lwp *l)
+detrunc(struct denode *dep, u_long length, int flags, kauth_cred_t cred)
 {
 	int error;
 	int allerror;
@@ -556,7 +555,7 @@ deextend(dep, length, cred)
 		error = extendfile(dep, count, NULL, NULL, DE_CLEAR);
 		if (error) {
 			/* truncate the added clusters away again */
-			(void) detrunc(dep, dep->de_FileSize, 0, cred, NULL);
+			(void) detrunc(dep, dep->de_FileSize, 0, cred);
 			return (error);
 		}
 	}
@@ -636,9 +635,7 @@ msdosfs_inactive(v)
 {
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
-		struct lwp *a_l;
 	} */ *ap = v;
-	struct lwp *l = ap->a_l;
 	struct vnode *vp = ap->a_vp;
 	struct denode *dep = VTODE(vp);
 	int error = 0;
@@ -668,7 +665,7 @@ msdosfs_inactive(v)
 #endif
 	if (dep->de_refcnt <= 0 && (vp->v_mount->mnt_flag & MNT_RDONLY) == 0) {
 		if (dep->de_FileSize != 0) {
-			error = detrunc(dep, (u_long)0, 0, NOCRED, NULL);
+			error = detrunc(dep, (u_long)0, 0, NOCRED);
 		}
 		dep->de_Name[0] = SLOT_DELETED;
 	}
@@ -684,7 +681,7 @@ out:
 		vp->v_usecount, dep->de_Name[0]);
 #endif
 	if (dep->de_Name[0] == SLOT_DELETED)
-		vrecycle(vp, (struct simplelock *)0, l);
+		vrecycle(vp, (struct simplelock *)0, curlwp);
 	return (error);
 }
 
