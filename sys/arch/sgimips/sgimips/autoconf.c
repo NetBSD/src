@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.38 2007/10/17 19:57:06 garbled Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.39 2007/11/27 13:26:37 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.38 2007/10/17 19:57:06 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.39 2007/11/27 13:26:37 tsutsui Exp $");
 
 #include "opt_ddb.h"
 
@@ -192,17 +192,19 @@ device_register(struct device *dev, void *aux)
 		struct pci_attach_args *pa = aux;
 
 		if (BUILTIN_AHC_P(pa)) {
-			prop_bool_t usetd = prop_bool_create(true);
-			KASSERT(usetd != NULL);
-
-			if (prop_dictionary_set(device_properties(dev),
-						"aic7xxx-use-target-defaults",
-						usetd) == false) {
+			if (prop_dictionary_set_bool(device_properties(dev),
+			    "aic7xxx-use-target-defaults", true) == false) {
 				printf("WARNING: unable to set "
 				    "aic7xxx-use-target-defaults property "
 				    "for %s\n", dev->dv_xname);
 			}
-			prop_object_release(usetd);
+
+			if (prop_dictionary_set_bool(device_properties(dev),
+			    "override_ultra", true) == false) {
+				printf("WARNING: unable to set "
+				    "override_ultra property for %s\n",
+				    dev->dv_xname);
+			}
 		}
 	}
 
@@ -228,12 +230,6 @@ device_register(struct device *dev, void *aux)
 			prop_object_release(gfe_boundary);
 			return;
 		}
-	}
-
-	if (device_is_a(dev, "ahc")) {
-
-		prop_dictionary_set_bool(device_properties(dev),
-		    "override_ultra", true);
 	}
 
 	if (found)
