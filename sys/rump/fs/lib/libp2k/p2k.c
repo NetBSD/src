@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.c,v 1.28 2007/11/26 19:02:23 pooka Exp $	*/
+/*	$NetBSD: p2k.c,v 1.29 2007/11/27 09:14:21 dogcow Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -27,9 +27,11 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/types.h>
 #define __VFSOPS_EXPOSE
+
 #include <sys/mount.h>
+#include <sys/param.h>
+#include <sys/vnode.h>
 #include <sys/lock.h>
 #include <sys/namei.h>
 #include <sys/dirent.h>
@@ -192,7 +194,7 @@ p2k_fs_statvfs(struct puffs_cc *pcc, struct statvfs *sbp,
 {
 	struct mount *mp = puffs_cc_getspecific(pcc);
 
-	return VFS_STATVFS(mp, sbp, NULL);
+	return VFS_STATVFS(mp, sbp);
 }
 
 int
@@ -200,7 +202,7 @@ p2k_fs_unmount(struct puffs_cc *pcc, int flags, const struct puffs_cid *pcid)
 {
 	struct mount *mp = puffs_cc_getspecific(pcc);
 
-	return VFS_UNMOUNT(mp, flags, curlwp);
+	return VFS_UNMOUNT(mp, flags);
 }
 
 int
@@ -212,7 +214,7 @@ p2k_fs_sync(struct puffs_cc *pcc, int waitfor,
 	int rv;
 
 	cred = cred_create(pcr);
-	rv = VFS_SYNC(mp, waitfor, (kauth_cred_t)cred, curlwp);
+	rv = VFS_SYNC(mp, waitfor, (kauth_cred_t)cred);
 	cred_destroy(cred);
 
 	rump_bioops_sync();
