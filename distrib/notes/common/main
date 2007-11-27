@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.372 2007/11/27 13:04:01 haad Exp $
+.\"	$NetBSD: main,v 1.373 2007/11/27 13:38:23 jnemeth Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -32,6 +32,10 @@
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
 .ig
+
+	To "regenate" this file, go up one level to src/distrib/notes
+	and type "make".  This will create
+	src/distrib/notes/<arch>/INSTALL.*.
 
 	The notes that describe the improvements over the last release
 	aren't appropriate for a snapshot, so these are conditional on
