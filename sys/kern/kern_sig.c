@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.258 2007/10/19 12:16:43 ad Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.259 2007/11/27 01:27:30 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.258 2007/10/19 12:16:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.259 2007/11/27 01:27:30 ad Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_multiprocessor.h"
@@ -204,32 +204,26 @@ sigacts_poolpage_free(struct pool *pp, void *v)
 struct sigacts *
 sigactsinit(struct proc *pp, int share)
 {
-	struct sigacts *ps;
+	struct sigacts *ps, *ps2;
 
-	if (pp != NULL) {
-		KASSERT(mutex_owned(&pp->p_smutex));
-	}
+	ps = pp->p_sigacts;
 
 	if (share) {
-		ps = pp->p_sigacts;
 		mutex_enter(&ps->sa_mutex);
 		ps->sa_refcnt++;
 		mutex_exit(&ps->sa_mutex);
+		ps2 = ps;
 	} else {
-		if (pp)
-			mutex_exit(&pp->p_smutex);
-		ps = pool_get(&sigacts_pool, PR_WAITOK);
-		mutex_init(&ps->sa_mutex, MUTEX_SPIN, IPL_NONE);
-		if (pp) {
-			mutex_enter(&pp->p_smutex);
-			memcpy(&ps->sa_sigdesc, pp->p_sigacts->sa_sigdesc,
-			    sizeof(ps->sa_sigdesc));
-		} else
-			memset(&ps->sa_sigdesc, 0, sizeof(ps->sa_sigdesc));
-		ps->sa_refcnt = 1;
+		ps2 = pool_get(&sigacts_pool, PR_WAITOK);
+		mutex_init(&ps2->sa_mutex, MUTEX_SPIN, IPL_SCHED);
+		mutex_enter(&ps->sa_mutex);
+		memcpy(&ps2->sa_sigdesc, ps->sa_sigdesc,
+		    sizeof(ps2->sa_sigdesc));
+		mutex_exit(&ps->sa_mutex);
+		ps2->sa_refcnt = 1;
 	}
 
-	return ps;
+	return ps2;
 }
 
 /*
@@ -242,23 +236,14 @@ void
 sigactsunshare(struct proc *p)
 {
 	struct sigacts *ps, *oldps;
-	int refcnt;
-
-	KASSERT(mutex_owned(&p->p_smutex));
 
 	oldps = p->p_sigacts;
-
-	mutex_enter(&oldps->sa_mutex);
-	refcnt = oldps->sa_refcnt;
-	mutex_exit(&oldps->sa_mutex);
-	if (refcnt == 1)
+	if (oldps->sa_refcnt == 1)
 		return;
-
-	mutex_exit(&p->p_smutex);
-	ps = sigactsinit(NULL, 0);
-	mutex_enter(&p->p_smutex);
+	ps = pool_get(&sigacts_pool, PR_WAITOK);
+	mutex_init(&ps->sa_mutex, MUTEX_SPIN, IPL_SCHED);
+	memset(&ps->sa_sigdesc, 0, sizeof(ps->sa_sigdesc));
 	p->p_sigacts = ps;
-
 	sigactsfree(oldps);
 }
 
@@ -350,16 +335,16 @@ execsigs(struct proc *p)
 
 	KASSERT(p->p_nlwps == 1);
 
-	mutex_enter(&p->p_smutex);
-
 	sigactsunshare(p);
-
 	ps = p->p_sigacts;
 
 	/*
 	 * Reset caught signals.  Held signals remain held through
 	 * l->l_sigmask (unless they were caught, and are now ignored
 	 * by default).
+	 *
+	 * No need to lock yet, the process has only one LWP and
+	 * at this point the sigacts are private to the process.
 	 */
 	sigemptyset(&tset);
 	for (signo = 1; signo < NSIG; signo++) {
@@ -377,6 +362,8 @@ execsigs(struct proc *p)
 		SIGACTION_PS(ps, signo).sa_flags = SA_RESTART;
 	}
 	ksiginfo_queue_init(&kq);
+
+	mutex_enter(&p->p_smutex);
 	sigclearall(p, &tset, &kq);
 	sigemptyset(&p->p_sigctx.ps_sigcatch);
 
@@ -397,8 +384,8 @@ execsigs(struct proc *p)
 	l->l_sigstk.ss_sp = 0;
 	ksiginfo_queue_init(&l->l_sigpend.sp_info);
 	sigemptyset(&l->l_sigpend.sp_set);
-
 	mutex_exit(&p->p_smutex);
+
 	ksiginfo_queue_drain(&kq);
 }
 
@@ -1208,6 +1195,7 @@ void
 kpsignal2(struct proc *p, ksiginfo_t *ksi)
 {
 	int prop, lid, toall, signo = ksi->ksi_signo;
+	struct sigacts *sa;
 	struct lwp *l;
 	ksiginfo_t *kp;
 	ksiginfoq_t kq;
@@ -1264,10 +1252,13 @@ kpsignal2(struct proc *p, ksiginfo_t *ksi)
 		 * process dumps core immediately.
 		 */
 		if (KSI_TRAP_P(ksi)) {
+			sa = p->p_sigacts;
+			mutex_enter(&sa->sa_mutex);
 			if (!sigismember(&p->p_sigctx.ps_sigcatch, signo)) {
 				sigdelset(&p->p_sigctx.ps_sigignore, signo);
 				SIGACTION(p, signo).sa_handler = SIG_DFL;
 			}
+			mutex_exit(&sa->sa_mutex);
 		}
 
 		/*
@@ -1857,6 +1848,7 @@ sendsig_reset(struct lwp *l, int signo)
 	p->p_sigctx.ps_code = 0;
 	p->p_sigctx.ps_signo = 0;
 
+	mutex_enter(&ps->sa_mutex);
 	sigplusset(&SIGACTION_PS(ps, signo).sa_mask, &l->l_sigmask);
 	if (SIGACTION_PS(ps, signo).sa_flags & SA_RESETHAND) {
 		sigdelset(&p->p_sigctx.ps_sigcatch, signo);
@@ -1864,6 +1856,7 @@ sendsig_reset(struct lwp *l, int signo)
 			sigaddset(&p->p_sigctx.ps_sigignore, signo);
 		SIGACTION_PS(ps, signo).sa_handler = SIG_DFL;
 	}
+	mutex_exit(&ps->sa_mutex);
 }
 
 /*
