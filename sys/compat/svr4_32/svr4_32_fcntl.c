@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_fcntl.c,v 1.24 2007/10/10 21:59:11 ad Exp $	 */
+/*	$NetBSD: svr4_32_fcntl.c,v 1.25 2007/11/27 22:12:24 ad Exp $	 */
 
 /*-
  * Copyright (c) 1994, 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_fcntl.c,v 1.24 2007/10/10 21:59:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_fcntl.c,v 1.25 2007/11/27 22:12:24 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -255,7 +255,7 @@ fd_revoke(struct lwp *l, int fd, register_t *retval)
 		goto out;
 	}
 
-	if ((error = VOP_GETATTR(vp, &vattr, l->l_cred, l)) != 0)
+	if ((error = VOP_GETATTR(vp, &vattr, l->l_cred)) != 0)
 		goto out;
 
 	if (kauth_cred_geteuid(l->l_cred) != vattr.va_uid &&
@@ -299,7 +299,7 @@ fd_truncate(l, fd, flp, retval)
 		return ESPIPE;
 	}
 	FILE_USE(fp);
-	if ((error = VOP_GETATTR(vp, &vattr, l->l_cred, l)) != 0) {
+	if ((error = VOP_GETATTR(vp, &vattr, l->l_cred)) != 0) {
 		FILE_UNUSE(fp, l);
 		return error;
 	}
