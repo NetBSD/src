@@ -1,4 +1,4 @@
-print '.\\"	$NetBSD: libcrypto.pl,v 1.2 2007/11/26 15:12:06 christos Exp $' . "\n";
+print '.\\"	$NetBSD: libcrypto.pl,v 1.3 2007/11/27 22:16:03 christos Exp $' . "\n";
 print '.\\"' . "\n";
 while (<>) {
 	next if (/\$RCSfile/);
@@ -61,6 +61,8 @@ while (<>) {
 	s/Isha\\fR\\\|\(3\)/Iopenssl_sha\\fR\\|(3)/g;
 	s/Ithreads\\fR\\\|\(3\)/Iopenssl_threads\\fR\\|(3)/g;
 	s/Iconfig\\fR\\\|\(5\)/Iopenssl.cnf\\fR\\|(5)/g;
+
+	s,/usr/local/ssl/lib/openssl.cnf,/etc/openssh/openssh.cnf      ,g;
 
 	print;
 }
