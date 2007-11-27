@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.91 2007/11/26 23:54:48 dyoung Exp $	*/
+/*	$NetBSD: ath.c,v 1.92 2007/11/27 00:07:42 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.104 2005/09/16 10:09:23 ru Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.91 2007/11/26 23:54:48 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.92 2007/11/27 00:07:42 dyoung Exp $");
 #endif
 
 /*
@@ -1020,8 +1020,10 @@ ath_init(struct ath_softc *sc)
 
 	ATH_LOCK(sc);
 
-	if ((error = ath_enable(sc)) != 0)
+	if ((error = ath_enable(sc)) != 0) {
+		ATH_UNLOCK(sc);
 		return error;
+	}
 
 	/*
 	 * Stop anything previously setup.  This is safe
