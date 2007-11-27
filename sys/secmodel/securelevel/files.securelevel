@@ -1,0 +1,5 @@
+# $NetBSD: files.securelevel,v 1.1.4.2 2007/11/27 19:39:10 joerg Exp $
+
+defflag secmodel_securelevel
+
+file	secmodel/securelevel/secmodel_securelevel.c	secmodel_securelevel

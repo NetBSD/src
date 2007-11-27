@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_probe.c,v 1.15 2007/07/09 20:52:40 ad Exp $ */
+/* $NetBSD: xenbus_probe.c,v 1.15.8.1 2007/11/27 19:36:35 joerg Exp $ */
 /******************************************************************************
  * Talks to Xen Store to figure out what devices we have.
  *
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.15 2007/07/09 20:52:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.15.8.1 2007/11/27 19:36:35 joerg Exp $");
 
 #if 0
 #define DPRINTK(fmt, args...) \
@@ -49,10 +49,10 @@ __KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.15 2007/07/09 20:52:40 ad Exp $")
 
 #include <machine/stdarg.h>
 
-#include <machine/hypervisor.h>
-#include <machine/xenbus.h>
-#include <machine/evtchn.h>
-#include <machine/shutdown_xenbus.h>
+#include <xen/hypervisor.h>
+#include <xen/xenbus.h>
+#include <xen/evtchn.h>
+#include <xen/shutdown_xenbus.h>
 
 #include "xenbus_comms.h"
 

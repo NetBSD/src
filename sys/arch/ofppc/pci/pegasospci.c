@@ -1,4 +1,4 @@
-/* $NetBSD: pegasospci.c,v 1.2.4.6 2007/11/14 19:04:14 joerg Exp $ */
+/* $NetBSD: pegasospci.c,v 1.2.4.7 2007/11/27 19:35:48 joerg Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pegasospci.c,v 1.2.4.6 2007/11/14 19:04:14 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pegasospci.c,v 1.2.4.7 2007/11/27 19:35:48 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -108,7 +108,6 @@ pegasospci_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct confargs *ca = aux;
 	char name[32];
-	int node;
 
 	if (strcmp(ca->ca_name, "pci") != 0)
 		return 0;
@@ -118,12 +117,7 @@ pegasospci_match(struct device *parent, struct cfdata *cf, void *aux)
 	if (strcmp(name, "pci") != 0)
 		return 0;
 
-	node = OF_finddevice("/");
-	if (node < 0)
-		return 0;
-	memset(name, 0, sizeof(name));
-	OF_getprop(node, "name", name, sizeof(name));
-	if (strcmp(name, "bplan,Pegasos2") != 0)
+	if (strcmp(model_name, "Pegasos2") != 0)
 		return 0;
 
 	return 10;
@@ -163,16 +157,18 @@ pegasospci_attach(struct device *parent, struct device *self, void *aux)
 		panic("Can't init pegasospci mem tag");
 
 	/* are we the primary pci bus? */
-	if (of_find_firstchild_byname(OF_finddevice("/"), "pci") ==
-	    ca->ca_node) {
+	if (of_find_firstchild_byname(OF_finddevice("/"), "pci") == node) {
+		int isa_node;
+
 		isprim++;
 		/* yes we are, now do we have an ISA child? */
-		if (of_find_firstchild_byname(ca->ca_node, "isa") != -1) {
+		isa_node = of_find_firstchild_byname(node, "isa");
+		if (isa_node != -1) {
 			/* The Pegasos is very simple.  isa == pci */
 			genppc_isa_io_space_tag = sc->sc_iot;
 			genppc_isa_mem_space_tag = sc->sc_memt;
 			map_isa_ioregs(sc->sc_iot.pbs_offset);
-			ofppc_init_comcons();
+			ofppc_init_comcons(isa_node);
 		}
 	}
 

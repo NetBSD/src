@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.c,v 1.6 2005/12/11 12:24:46 christos Exp $	*/
+/*	$NetBSD: stat.c,v 1.6.44.1 2007/11/27 19:38:40 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -34,16 +34,14 @@
 #include "stand.h"
 
 int
-stat(str, sb)
-	const char *str;
-	struct stat *sb;
+stat(const char *str, struct stat *sb)
 {
 	int fd, rv;
 
 	fd = open(str, 0);
 	if (fd < 0)
-		return (-1);
+		return -1;
 	rv = fstat(fd, sb);
 	(void)close(fd);
-	return (rv);
+	return rv;
 }

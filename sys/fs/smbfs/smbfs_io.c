@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_io.c,v 1.26.4.1 2007/10/02 18:28:54 joerg Exp $	*/
+/*	$NetBSD: smbfs_io.c,v 1.26.4.2 2007/11/27 19:37:50 joerg Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_io.c,v 1.26.4.1 2007/10/02 18:28:54 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_io.c,v 1.26.4.2 2007/11/27 19:37:50 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -219,12 +219,12 @@ smbfs_readvnode(struct vnode *vp, struct uio *uiop, kauth_cred_t cred)
 
 	if (np->n_flag & NMODIFIED) {
 		smbfs_attr_cacheremove(vp);
-		error = VOP_GETATTR(vp, &vattr, cred, l);
+		error = VOP_GETATTR(vp, &vattr, cred);
 		if (error)
 			return error;
 		np->n_mtime.tv_sec = vattr.va_mtime.tv_sec;
 	} else {
-		error = VOP_GETATTR(vp, &vattr, cred, l);
+		error = VOP_GETATTR(vp, &vattr, cred);
 		if (error)
 			return error;
 		if (np->n_mtime.tv_sec != vattr.va_mtime.tv_sec) {

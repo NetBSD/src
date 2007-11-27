@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.197.6.6 2007/11/21 21:56:04 joerg Exp $	*/
+/*	$NetBSD: tty.c,v 1.197.6.7 2007/11/27 19:38:12 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.197.6.6 2007/11/21 21:56:04 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.197.6.7 2007/11/27 19:38:12 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -908,7 +908,7 @@ ttioctl(struct tty *tp, u_long cmd, void *data, int flag, struct lwp *l)
 			    "/dev/console", l);
 			if ((error = namei(&nd)) != 0)
 				return error;
-			error = VOP_ACCESS(nd.ni_vp, VREAD, l->l_cred, l);
+			error = VOP_ACCESS(nd.ni_vp, VREAD, l->l_cred);
 			vput(nd.ni_vp);
 			if (error)
 				return error;

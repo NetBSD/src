@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.41.6.11 2007/11/14 19:04:28 joerg Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.41.6.12 2007/11/27 19:37:08 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.41.6.11 2007/11/14 19:04:28 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.41.6.12 2007/11/27 19:37:08 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -159,6 +159,10 @@ agp_i810_vgamatch(struct pci_attach_args *pa)
 	case PCI_PRODUCT_INTEL_82G33_IGD_1:
 	case PCI_PRODUCT_INTEL_82965G_IGD:
 	case PCI_PRODUCT_INTEL_82965G_IGD_1:
+	case PCI_PRODUCT_INTEL_82Q35_IGD:
+	case PCI_PRODUCT_INTEL_82Q35_IGD_1:
+	case PCI_PRODUCT_INTEL_82Q33_IGD:
+	case PCI_PRODUCT_INTEL_82Q33_IGD_1:
 		return (1);
 	}
 
@@ -249,8 +253,12 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 	case PCI_PRODUCT_INTEL_82965G_IGD_1:
 		isc->chiptype = CHIP_I965;
 		break;
+	case PCI_PRODUCT_INTEL_82Q35_IGD:
+	case PCI_PRODUCT_INTEL_82Q35_IGD_1:
 	case PCI_PRODUCT_INTEL_82G33_IGD:
 	case PCI_PRODUCT_INTEL_82G33_IGD_1:
+	case PCI_PRODUCT_INTEL_82Q33_IGD:
+	case PCI_PRODUCT_INTEL_82Q33_IGD_1:
 		isc->chiptype = CHIP_G33;
 		break;
 	}
@@ -464,6 +472,12 @@ static int agp_i810_init(struct agp_softc *sc)
 			break;
 		case AGP_I915_GCC1_GMS_STOLEN_64M:
 			isc->stolen = (65536 - stolen) * 1024 / 4096;
+			break;
+		case AGP_G33_GCC1_GMS_STOLEN_128M:
+			isc->stolen = ((128 * 1024) - stolen) * 1024 / 4096;
+			break;
+		case AGP_G33_GCC1_GMS_STOLEN_256M:
+			isc->stolen = ((256 * 1024) - stolen) * 1024 / 4096;
 			break;
 		default:
 			isc->stolen = 0;

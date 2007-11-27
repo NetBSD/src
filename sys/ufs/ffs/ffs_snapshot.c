@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.46.6.3 2007/10/26 15:49:30 joerg Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.46.6.4 2007/11/27 19:39:21 joerg Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.46.6.3 2007/10/26 15:49:30 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.46.6.4 2007/11/27 19:39:21 joerg Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -343,7 +343,7 @@ ffs_snapshot(struct mount *mp, struct vnode *vp,
 	 * Since we have marked it as a snapshot it is safe to
 	 * unlock it as no process will be allowed to write to it.
 	 */
-	if ((error = VOP_FSYNC(vp, KERNCRED, FSYNC_WAIT, 0, 0, l)) != 0)
+	if ((error = VOP_FSYNC(vp, KERNCRED, FSYNC_WAIT, 0, 0)) != 0)
 		goto out;
 	VOP_UNLOCK(vp, 0);
 	/*
@@ -454,7 +454,7 @@ loop:
 		if (snapdebug)
 			vprint("ffs_snapshot: busy vnode", xvp);
 #endif
-		if (VOP_GETATTR(xvp, &vat, l->l_cred, l) == 0 &&
+		if (VOP_GETATTR(xvp, &vat, l->l_cred) == 0 &&
 		    vat.va_nlink > 0) {
 			MNT_ILOCK(mp);
 			continue;

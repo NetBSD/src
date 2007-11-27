@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.122.2.3 2007/10/26 15:49:13 joerg Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.122.2.4 2007/11/27 19:39:02 joerg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.122.2.3 2007/10/26 15:49:13 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.122.2.4 2007/11/27 19:39:02 joerg Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -545,7 +545,6 @@ nfssvc_nfsd(nsd, argp, l)
 					}
 					goto done;
 				}
-				KASSERT(nfsd->nfsd_slp != NULL);
 			}
 			if (nfsd->nfsd_slp == NULL &&
 			    (nfsd_head_flag & NFSD_CHECKSLP) != 0) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_mount.c,v 1.11 2007/04/22 08:29:55 dsl Exp $ */
+/*	$NetBSD: darwin_mount.c,v 1.11.6.1 2007/11/27 19:36:41 joerg Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_mount.c,v 1.11 2007/04/22 08:29:55 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_mount.c,v 1.11.6.1 2007/11/27 19:36:41 joerg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -83,7 +83,7 @@ darwin_sys_fstatfs(struct lwp *l, void *v, register_t *retval)
 	mp = ((struct vnode *)fp->f_data)->v_mount;
 	bs = &mp->mnt_stat;
 
-	if ((error = VFS_STATVFS(mp, bs, l)) != 0)
+	if ((error = VFS_STATVFS(mp, bs)) != 0)
 		goto out;
 
 	native_to_darwin_statvfs(bs, &ds);
@@ -124,7 +124,7 @@ darwin_sys_getfsstat(l, v, retval)
 
 			if (((SCARG(uap, flags) & MNT_NOWAIT) == 0 ||
 			    (SCARG(uap, flags) & MNT_WAIT)) &&
-			    (error = VFS_STATVFS(mp, bs, l)))
+			    (error = VFS_STATVFS(mp, bs)))
 				continue;
 
 			native_to_darwin_statvfs(bs, &ds);
@@ -165,7 +165,7 @@ darwin_sys_statfs(struct lwp *l, void *v, register_t *retval)
 	bs = &mp->mnt_stat;
 	vrele(nd.ni_vp);
 
-	if ((error = VFS_STATVFS(mp, bs, l)) != 0)
+	if ((error = VFS_STATVFS(mp, bs)) != 0)
 		return error;
 
 	native_to_darwin_statvfs(bs, &ds);

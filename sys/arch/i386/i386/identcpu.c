@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.74.4.6 2007/11/21 21:53:15 joerg Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.74.4.7 2007/11/27 19:35:39 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,13 +37,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.74.4.6 2007/11/21 21:53:15 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.74.4.7 2007/11/27 19:35:39 joerg Exp $");
 
 #include "opt_enhanced_speedstep.h"
 #include "opt_intel_odcm.h"
 #include "opt_intel_coretemp.h"
 #include "opt_powernow_k7.h"
 #include "opt_powernow_k8.h"
+#include "opt_xen.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -586,9 +587,9 @@ cyrix6x86_cpu_setup(ci)
 	 * model device is detected. Ideally, this work-around should not
 	 * even be in here, it should be in there. XXX
 	 */
-
-	extern int clock_broken_latch;
 	u_char c3;
+#ifndef XEN
+	extern int clock_broken_latch;
 
 	switch (ci->ci_signature) {
 	case 0x440:     /* Cyrix MediaGX */
@@ -596,6 +597,7 @@ cyrix6x86_cpu_setup(ci)
 		clock_broken_latch = 1;
 		break;
 	}
+#endif
 
 	/* set up various cyrix registers */
 	/*
@@ -1393,12 +1395,6 @@ identifycpu(struct cpu_info *ci)
 	cpu_class = class;
 	ci->ci_cpu_class = class;
 
-	/*
-	 * If we have a cycle counter, compute the approximate
-	 * CPU speed in MHz.  We will re-run this on the CPU
-	 * itself in cpu_hatch() (first time around, we use the
-	 * value from the boot CPU to cover all CPUs).
-	 */
 	cpu_get_tsc_freq(ci);
 
 	snprintf(cpu_model, sizeof(cpu_model), "%s%s%s%s%s%s%s (%s-class)",

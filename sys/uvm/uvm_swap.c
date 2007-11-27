@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.129.4.1 2007/10/26 15:49:43 joerg Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.129.4.2 2007/11/27 19:39:33 joerg Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.129.4.1 2007/10/26 15:49:43 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.129.4.2 2007/11/27 19:39:33 joerg Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -815,7 +815,7 @@ swap_on(struct lwp *l, struct swapdev *sdp)
 	 * has already been opened when root was mounted (mountroot).
 	 */
 	if (vp != rootvp) {
-		if ((error = VOP_OPEN(vp, FREAD|FWRITE, l->l_cred, l)))
+		if ((error = VOP_OPEN(vp, FREAD|FWRITE, l->l_cred)))
 			return (error);
 	}
 
@@ -842,11 +842,11 @@ swap_on(struct lwp *l, struct swapdev *sdp)
 		break;
 
 	case VREG:
-		if ((error = VOP_GETATTR(vp, &va, l->l_cred, l)))
+		if ((error = VOP_GETATTR(vp, &va, l->l_cred)))
 			goto bad;
 		nblocks = (int)btodb(va.va_size);
 		if ((error =
-		     VFS_STATVFS(vp->v_mount, &vp->v_mount->mnt_stat, l)) != 0)
+		     VFS_STATVFS(vp->v_mount, &vp->v_mount->mnt_stat)) != 0)
 			goto bad;
 
 		sdp->swd_bsize = vp->v_mount->mnt_stat.f_iosize;
@@ -997,7 +997,7 @@ bad:
 		blist_destroy(sdp->swd_blist);
 	}
 	if (vp != rootvp) {
-		(void)VOP_CLOSE(vp, FREAD|FWRITE, l->l_cred, l);
+		(void)VOP_CLOSE(vp, FREAD|FWRITE, l->l_cred);
 	}
 	return (error);
 }
@@ -1066,7 +1066,7 @@ swap_off(struct lwp *l, struct swapdev *sdp)
 	 */
 	vrele(sdp->swd_vp);
 	if (sdp->swd_vp != rootvp) {
-		(void) VOP_CLOSE(sdp->swd_vp, FREAD|FWRITE, l->l_cred, l);
+		(void) VOP_CLOSE(sdp->swd_vp, FREAD|FWRITE, l->l_cred);
 	}
 
 	mutex_enter(&uvm_swap_data_lock);

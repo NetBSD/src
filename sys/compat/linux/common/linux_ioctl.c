@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ioctl.c,v 1.48.6.1 2007/10/26 15:43:57 joerg Exp $	*/
+/*	$NetBSD: linux_ioctl.c,v 1.48.6.2 2007/11/27 19:36:45 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ioctl.c,v 1.48.6.1 2007/10/26 15:43:57 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ioctl.c,v 1.48.6.2 2007/11/27 19:36:45 joerg Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "sequencer.h"
@@ -134,7 +134,7 @@ linux_sys_ioctl(l, v, retval)
 		if (fp->f_type == DTYPE_VNODE &&
 		    (vp = (struct vnode *)fp->f_data) != NULL &&
 		    vp->v_type == VCHR &&
-		    VOP_GETATTR(vp, &va, l->l_cred, l) == 0 &&
+		    VOP_GETATTR(vp, &va, l->l_cred) == 0 &&
 		    cdevsw_lookup(va.va_rdev) == &sequencer_cdevsw) {
 			error = oss_ioctl_sequencer(l, (void*)LINUX_TO_OSS(uap),
 						   retval);

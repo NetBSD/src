@@ -1,4 +1,4 @@
-/* $NetBSD: sbtimer.c,v 1.11 2006/03/29 04:16:45 thorpej Exp $ */
+/* $NetBSD: sbtimer.c,v 1.11.36.1 2007/11/27 19:35:45 joerg Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbtimer.c,v 1.11 2006/03/29 04:16:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbtimer.c,v 1.11.36.1 2007/11/27 19:35:45 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -112,7 +112,7 @@ sbtimer_attach(struct device *parent, struct device *self, void *aux)
 		}
 		printf("system timer");
 	} else if ((sc->sc_flags & SBTIMER_STATCLOCK) != 0) {
-		ipl = IPL_STATCLOCK;
+		ipl = IPL_HIGH;
 		fun = sbtimer_statclockintr;
 
 		/* XXX make sure it's the statclock */

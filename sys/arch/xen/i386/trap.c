@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.16.8.3 2007/11/21 21:53:43 joerg Exp $	*/
+/*	$NetBSD: trap.c,v 1.16.8.4 2007/11/27 19:36:02 joerg Exp $	*/
 /*	NetBSD: trap.c,v 1.200 2004/03/14 01:08:48 cl Exp 	*/
 
 /*-
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.16.8.3 2007/11/21 21:53:43 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.16.8.4 2007/11/27 19:36:02 joerg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -544,7 +544,7 @@ copyfault:
 			goto we_re_toast;
 #endif
 #ifdef XEN3
-		cr2 = HYPERVISOR_shared_info->vcpu_info[0].arch.cr2;
+		cr2 = rcr2();
 #else
 		cr2 = ((uint32_t *)(void *)&frame)[1];
 #endif
@@ -559,7 +559,7 @@ copyfault:
 		extern struct vm_map *kernel_map;
 
 #ifdef XEN3
-		cr2 = HYPERVISOR_shared_info->vcpu_info[0].arch.cr2;
+		cr2 = rcr2();
 #else
 		cr2 = ((uint32_t *)(void *)&frame)[1];
 #endif

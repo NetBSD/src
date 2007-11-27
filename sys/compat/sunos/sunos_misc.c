@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.151.6.1 2007/10/26 15:44:03 joerg Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.151.6.2 2007/11/27 19:36:53 joerg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.151.6.1 2007/10/26 15:44:03 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.151.6.2 2007/11/27 19:36:53 joerg Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -974,7 +974,7 @@ sunos_sys_statfs(l, v, retval)
 	mp = nd.ni_vp->v_mount;
 	sp = &mp->mnt_stat;
 	vrele(nd.ni_vp);
-	if ((error = VFS_STATVFS(mp, sp, l)) != 0)
+	if ((error = VFS_STATVFS(mp, sp)) != 0)
 		return (error);
 	sp->f_flag = mp->mnt_flag & MNT_VISFLAGMASK;
 	return sunstatfs(sp, (void *)SCARG(uap, buf));
@@ -998,7 +998,7 @@ sunos_sys_fstatfs(l, v, retval)
 		return (error);
 	mp = ((struct vnode *)fp->f_data)->v_mount;
 	sp = &mp->mnt_stat;
-	if ((error = VFS_STATVFS(mp, sp, l)) != 0)
+	if ((error = VFS_STATVFS(mp, sp)) != 0)
 		goto out;
 	sp->f_flag = mp->mnt_flag & MNT_VISFLAGMASK;
 	error = sunstatfs(sp, (void *)SCARG(uap, buf));

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stream.c,v 1.67.6.1 2007/10/26 15:44:05 joerg Exp $	 */
+/*	$NetBSD: svr4_stream.c,v 1.67.6.2 2007/11/27 19:36:55 joerg Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_stream.c,v 1.67.6.1 2007/10/26 15:44:05 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_stream.c,v 1.67.6.2 2007/11/27 19:36:55 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -334,7 +334,7 @@ clean_pipe(l, path)
 	 */
 	if (nd.ni_vp->v_type != VFIFO)
 		goto bad;
-        error = VOP_GETATTR(nd.ni_vp, &va, l->l_cred, l);
+        error = VOP_GETATTR(nd.ni_vp, &va, l->l_cred);
 	if (error != 0)
 		goto bad;
 	if ((va.va_mode & ALLPERMS) != 0)

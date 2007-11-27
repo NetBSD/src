@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.124.8.1 2007/10/26 15:48:26 joerg Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.124.8.2 2007/11/27 19:37:59 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.124.8.1 2007/10/26 15:48:26 joerg Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.124.8.2 2007/11/27 19:37:59 joerg Exp $");
 
 /* If not included by exec_elf64.c, ELFSIZE won't be defined. */
 #ifndef ELFSIZE
@@ -380,11 +380,11 @@ elf_load_file(struct lwp *l, struct exec_package *epp, char *path,
 		error = EACCES;
 		goto badunlock;
 	}
-	if ((error = VOP_ACCESS(vp, VEXEC, l->l_cred, l)) != 0)
+	if ((error = VOP_ACCESS(vp, VEXEC, l->l_cred)) != 0)
 		goto badunlock;
 
 	/* get attributes */
-	if ((error = VOP_GETATTR(vp, &attr, l->l_cred, l)) != 0)
+	if ((error = VOP_GETATTR(vp, &attr, l->l_cred)) != 0)
 		goto badunlock;
 
 	/*

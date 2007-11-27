@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.83.6.2 2007/11/21 21:53:55 joerg Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.83.6.3 2007/11/27 19:36:44 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.83.6.2 2007/11/21 21:53:55 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.83.6.3 2007/11/27 19:36:44 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -420,7 +420,7 @@ linux_sys_fcntl(l, v, retval)
 			break;
 		}
 
-		error = VOP_GETATTR(vp, &va, l->l_cred, l);
+		error = VOP_GETATTR(vp, &va, l->l_cred);
 
 		FILE_UNUSE(fp, l);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci_pci.c,v 1.36.2.4 2007/11/06 14:27:29 joerg Exp $	*/
+/*	$NetBSD: uhci_pci.c,v 1.36.2.5 2007/11/27 19:37:20 joerg Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci_pci.c,v 1.36.2.4 2007/11/06 14:27:29 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci_pci.c,v 1.36.2.5 2007/11/27 19:37:20 joerg Exp $");
 
 #include "ehci.h"
 
@@ -102,6 +102,7 @@ uhci_pci_attach(struct device *parent, struct device *self, void *aux)
 	const char *devname = sc->sc.sc_bus.bdev.dv_xname;
 	char devinfo[256];
 	usbd_status r;
+	int s;
 
 	aprint_naive("\n");
 
@@ -116,8 +117,13 @@ uhci_pci_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	/* Disable interrupts, so we don't get any spurious ones. */
+	/*
+	 * Disable interrupts, so we don't get any spurious ones.
+	 * Acknowledge all pending interrupts.
+	 */
 	bus_space_write_2(sc->sc.iot, sc->sc.ioh, UHCI_INTR, 0);
+	bus_space_write_2(sc->sc.iot, sc->sc.ioh, UHCI_STS,
+	    bus_space_read_2(sc->sc.iot, sc->sc.ioh, UHCI_STS));
 
 	sc->sc_pc = pc;
 	sc->sc_tag = tag;
@@ -144,8 +150,17 @@ uhci_pci_attach(struct device *parent, struct device *self, void *aux)
 	}
 	aprint_normal("%s: interrupting at %s\n", devname, intrstr);
 
-	/* Set LEGSUP register to its default value. */
+	/*
+	 * Set LEGSUP register to its default value.
+	 * This can re-enable or trigger interrupts, so protect against
+	 * them and explicitly disable and ACK them afterwards.
+	 */
+	s = splhardusb();
 	pci_conf_write(pc, tag, PCI_LEGSUP, PCI_LEGSUP_USBPIRQDEN);
+	bus_space_write_2(sc->sc.iot, sc->sc.ioh, UHCI_INTR, 0);
+	bus_space_write_2(sc->sc.iot, sc->sc.ioh, UHCI_STS,
+	    bus_space_read_2(sc->sc.iot, sc->sc.ioh, UHCI_STS));
+	splx(s);
 
 	switch(pci_conf_read(pc, tag, PCI_USBREV) & PCI_USBREV_MASK) {
 	case PCI_USBREV_PRE_1_0:

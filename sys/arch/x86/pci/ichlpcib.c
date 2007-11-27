@@ -1,4 +1,4 @@
-/*	$NetBSD: ichlpcib.c,v 1.4.6.15 2007/11/12 18:56:56 joerg Exp $	*/
+/*	$NetBSD: ichlpcib.c,v 1.4.6.16 2007/11/27 19:35:55 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.4.6.15 2007/11/12 18:56:56 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.4.6.16 2007/11/27 19:35:55 joerg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -416,21 +416,21 @@ tcotimer_setmode(struct sysmon_wdog *smw)
 		/* Stop the TCO timer. */
 		tcotimer_stop(sc);
 	} else {
-		period = lpcib_tcotimer_second_to_tick(smw->smw_period);
 		/* 
 		 * ICH6 or newer are limited to 2s min and 613s max.
 		 * ICH5 or older are limited to 4s min and 39s max.
 		 */
 		if (sc->sc_has_rcba) {
-			if (period < LPCIB_TCOTIMER2_MIN_TICK ||
-			    period > LPCIB_TCOTIMER2_MAX_TICK)
+			if (smw->smw_period < LPCIB_TCOTIMER2_MIN_TICK ||
+			    smw->smw_period > LPCIB_TCOTIMER2_MAX_TICK)
 				return EINVAL;
 		} else {
-			if (period < LPCIB_TCOTIMER_MIN_TICK ||
-			    period > LPCIB_TCOTIMER_MAX_TICK)
+			if (smw->smw_period < LPCIB_TCOTIMER_MIN_TICK ||
+			    smw->smw_period > LPCIB_TCOTIMER_MAX_TICK)
 				return EINVAL;
 		}
-
+		period = lpcib_tcotimer_second_to_tick(smw->smw_period);
+		
 		/* Stop the TCO timer, */
 		tcotimer_stop(sc);
 

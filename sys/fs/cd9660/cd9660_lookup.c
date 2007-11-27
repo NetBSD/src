@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_lookup.c,v 1.12.18.1 2007/10/26 15:48:11 joerg Exp $	*/
+/*	$NetBSD: cd9660_lookup.c,v 1.12.18.2 2007/11/27 19:37:34 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993, 1994
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_lookup.c,v 1.12.18.1 2007/10/26 15:48:11 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_lookup.c,v 1.12.18.2 2007/11/27 19:37:34 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/namei.h>
@@ -138,7 +138,7 @@ cd9660_lookup(v)
 	/*
 	 * Check accessiblity of directory.
 	 */
-	if ((error = VOP_ACCESS(vdp, VEXEC, cred, cnp->cn_lwp)) != 0)
+	if ((error = VOP_ACCESS(vdp, VEXEC, cred)) != 0)
 		return (error);
 
 	if ((flags & ISLASTCN) && (vdp->v_mount->mnt_flag & MNT_RDONLY) &&

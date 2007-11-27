@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.98.2.1 2007/10/02 18:29:29 joerg Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.98.2.2 2007/11/27 19:39:14 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -271,7 +271,7 @@ struct stat;
 struct knote;
 
 struct	mbuf *m_intopt(struct socket *, int);
-struct	mbuf *getsombuf(struct socket *);
+struct	mbuf *getsombuf(struct socket *, int);
 
 /*
  * File operations on sockets.

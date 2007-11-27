@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.158.4.2 2007/11/11 16:48:23 joerg Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.158.4.3 2007/11/27 19:38:52 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.158.4.2 2007/11/11 16:48:23 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.158.4.3 2007/11/27 19:38:52 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -313,7 +313,6 @@ procfs_open(v)
 		struct vnode *a_vp;
 		int  a_mode;
 		kauth_cred_t a_cred;
-		struct lwp *a_l;
 	} */ *ap = v;
 	struct pfsnode *pfs = VTOPFS(ap->a_vp);
 	struct lwp *l1;
@@ -323,7 +322,7 @@ procfs_open(v)
 	if ((error = procfs_proc_lock(pfs->pfs_pid, &p2, ENOENT)) != 0)
 		return error;
 
-	l1 = ap->a_l;				/* tracer */
+	l1 = curlwp;				/* tracer */
 
 #define	M2K(m)	(((m) & FREAD) && ((m) & FWRITE) ? \
 		 KAUTH_REQ_PROCESS_CANPROCFS_RW : \
@@ -390,7 +389,6 @@ procfs_close(v)
 		struct vnode *a_vp;
 		int  a_fflag;
 		kauth_cred_t a_cred;
-		struct lwp *a_l;
 	} */ *ap = v;
 	struct pfsnode *pfs = VTOPFS(ap->a_vp);
 
@@ -639,7 +637,6 @@ procfs_getattr(v)
 		struct vnode *a_vp;
 		struct vattr *a_vap;
 		kauth_cred_t a_cred;
-		struct lwp *a_l;
 	} */ *ap = v;
 	struct pfsnode *pfs = VTOPFS(ap->a_vp);
 	struct vattr *vap = ap->a_vap;
@@ -950,12 +947,11 @@ procfs_access(v)
 		struct vnode *a_vp;
 		int a_mode;
 		kauth_cred_t a_cred;
-		struct lwp *a_l;
 	} */ *ap = v;
 	struct vattr va;
 	int error;
 
-	if ((error = VOP_GETATTR(ap->a_vp, &va, ap->a_cred, ap->a_l)) != 0)
+	if ((error = VOP_GETATTR(ap->a_vp, &va, ap->a_cred)) != 0)
 		return (error);
 
 	return (vaccess(va.va_type, va.va_mode,
