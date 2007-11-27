@@ -1,4 +1,4 @@
-/* $NetBSD: privcmd.c,v 1.20 2007/11/22 16:17:08 bouyer Exp $ */
+/* $NetBSD: privcmd.c,v 1.21 2007/11/27 11:37:27 pooka Exp $ */
 
 /*-
  * Copyright (c) 2004 Christian Limpach.
@@ -32,7 +32,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.20 2007/11/22 16:17:08 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.21 2007/11/27 11:37:27 pooka Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -63,7 +63,6 @@ privcmd_ioctl(void *v)
 		void *a_data;
 		int a_fflag;
 		kauth_cred_t a_cred;
-		struct lwp *a_l;
 	} */ *ap = v;
 	int error = 0;
 
@@ -141,7 +140,7 @@ privcmd_ioctl(void *v)
 		vaddr_t va;
 		u_long ma;
 		vm_prot_t prot;
-		struct vm_map *vmm = &ap->a_l->l_proc->p_vmspace->vm_map;
+		struct vm_map *vmm = &curlwp->l_proc->p_vmspace->vm_map;
 		//printf("IOCTL_PRIVCMD_MMAP: %d entries\n", mcmd->num);
 
 		pmap_t pmap = vm_map_pmap(vmm);
@@ -201,7 +200,7 @@ privcmd_ioctl(void *v)
 		vm_prot_t prot;
 		pmap_t pmap;
 
-		vmm = &ap->a_l->l_proc->p_vmspace->vm_map;
+		vmm = &curlwp->l_proc->p_vmspace->vm_map;
 		pmap = vm_map_pmap(vmm);
 		va0 = pmb->addr & ~PAGE_MASK;
 
