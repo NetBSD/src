@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.147 2007/11/07 00:23:21 ad Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.148 2007/11/27 01:27:30 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.147 2007/11/07 00:23:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.148 2007/11/27 01:27:30 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -394,8 +394,8 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	/*
 	 * Create signal actions for the child process.
 	 */
-	mutex_enter(&p1->p_smutex);
 	p2->p_sigacts = sigactsinit(p1, flags & FORK_SHARESIGS);
+	mutex_enter(&p1->p_smutex);
 	p2->p_sflag |=
 	    (p1->p_sflag & (PS_STOPFORK | PS_STOPEXEC | PS_NOCLDSTOP));
 	sched_proc_fork(p1, p2);
