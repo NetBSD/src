@@ -1,4 +1,4 @@
-/* $NetBSD: btconfig.c,v 1.7 2007/11/06 21:35:36 plunky Exp $ */
+/* $NetBSD: btconfig.c,v 1.8 2007/11/28 20:16:13 plunky Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -34,7 +34,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2006 Itronix, Inc.\n"
 	    "All rights reserved.\n");
-__RCSID("$NetBSD: btconfig.c,v 1.7 2007/11/06 21:35:36 plunky Exp $");
+__RCSID("$NetBSD: btconfig.c,v 1.8 2007/11/28 20:16:13 plunky Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/param.h>
@@ -104,7 +104,9 @@ int opt_reset = 0;
 			"\005XMIT_SCO"		\
 			"\006INIT_BDADDR"	\
 			"\007INIT_BUFFER_SIZE"	\
-			"\010INIT_FEATURES"
+			"\010INIT_FEATURES"	\
+			"\011POWER_UP_NOOP"	\
+			""
 
 /* authorisation (flag) */
 int opt_auth = 0;
@@ -680,9 +682,13 @@ print_info(int level)
 	if (val & HCI_LINK_POLICY_ENABLE_PARK_MODE)	tag("park");
 	else if (level > 0)				tag("-park");
 
+/* bt3c(4) locks up if you send this command as it is 1.0b spec
+ * I have ideas about fixing that so it can't happen.
+ *
 	load_value(HCI_CMD_READ_INQUIRY_MODE, &val, sizeof(val));
 	if (val)				tag("rssi");
 	else if (level > 0)			tag("-rssi");
+*/
 
 	tag(NULL);
 
