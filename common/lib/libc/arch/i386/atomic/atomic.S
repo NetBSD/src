@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.S,v 1.2 2007/11/28 15:24:38 ad Exp $	*/
+/*	$NetBSD: atomic.S,v 1.3 2007/11/28 18:02:29 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -135,7 +135,6 @@ NENTRY(_atomic_or_32_nv)
 NENTRY(_atomic_swap_32)
 	movl	4(%esp), %edx
 	movl	8(%esp), %eax
-	LOCK(11)
 	xchgl	%eax, (%edx)
 	ret
 
@@ -193,7 +192,7 @@ atomic_lockpatch:
 	.globl	atomic_lockpatch
 	.long	.Lpatch1, .Lpatch2, .Lpatch3, .Lpatch4, .Lpatch5
 	.long	.Lpatch6, .Lpatch7, .Lpatch8, .Lpatch9, .Lpatch10
-	.long	.Lpatch11, .Lpatch12, .Lpatch13, .Lpatch14, 0
+	.long	.Lpatch12, .Lpatch13, .Lpatch14, 0
 #endif	/* _KERNEL */
 
 ALIAS(atomic_add_32,_atomic_add_32)
