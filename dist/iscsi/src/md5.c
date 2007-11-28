@@ -26,22 +26,23 @@
 
 #include "md5.h"
 
-#ifdef WORDS_BIGENDIAN
-void
+static void
 byteSwap(UWORD32 *buf, uint32_t words)
 {
 	md5byte *p = (md5byte *)buf;
+	int	indian = 1;
 
-	do {
-		*buf++ = (UWORD32)((uint32_t)p[3] << 8 | p[2]) << 16 |
-			((uint32_t)p[1] << 8 | p[0]);
-		p += 4;
-	} while (--words);
+	if (*(char *) (void *) &indian) {
+		/* little endian */
+		/* nothing needed */
+	} else {
+		do {
+			*buf++ = (UWORD32)((uint32_t)p[3] << 8 | p[2]) << 16 |
+				((uint32_t)p[1] << 8 | p[0]);
+			p += 4;
+		} while (--words);
+	}
 }
-#else
-#define byteSwap(buf,words)
-#endif
-
 
 /*
  * Start MD5 accumulation.  Set bit count to 0 and buffer to mysterious
