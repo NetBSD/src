@@ -1,4 +1,4 @@
-/*	$NetBSD: patch.c,v 1.8 2007/11/28 15:26:00 ad Exp $	*/
+/*	$NetBSD: patch.c,v 1.9 2007/11/28 18:19:21 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.8 2007/11/28 15:26:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.9 2007/11/28 18:19:21 ad Exp $");
 
 #include "opt_lockdebug.h"
 
@@ -77,12 +77,8 @@ void	sse2_mfence_end(void);
 
 void	mb_read(void);
 void	mb_read_end(void);
-void	mb_write(void);
-void	mb_write_end(void);
 void	mb_memory(void);
 void	mb_memory_end(void);
-void	x86_mb_nop(void);
-void	x86_mb_nop_end(void);
 void	sse2_mb_read(void);
 void	sse2_mb_read_end(void);
 void	sse2_mb_memory(void);
@@ -135,7 +131,7 @@ patchbytes(void *addr, const int byte1, const int byte2)
 void
 x86_patch(void)
 {
-#if !defined(GPROF)
+#if !defined(GPROF) && !defined(LOCKDEBUG)
 	static int again;
 	u_long psl;
 	u_long cr0;
@@ -153,7 +149,6 @@ x86_patch(void)
 	lcr0(cr0 & ~CR0_WP);
 
 	if (ncpu == 1) {
-#ifndef LOCKDEBUG
 		int i;
 
 		/* Uniprocessor: kill LOCK prefixes. */
@@ -161,22 +156,6 @@ x86_patch(void)
 			patchbytes(x86_lockpatch[i], X86_NOP, -1);	
 		for (i = 0; atomic_lockpatch[i] != 0; i++)
 			patchbytes(atomic_lockpatch[i], X86_NOP, -1);
-		/* Uniprocessor: kill memory barriers. */
-		patchfunc(
-			x86_mb_nop, x86_mb_nop_end,
-			mb_read, mb_read_end,
-			NULL
-		);
-		patchfunc(
-			x86_mb_nop, x86_mb_nop_end,
-			mb_write, mb_write_end,
-			NULL
-		);
-		patchfunc(
-			x86_mb_nop, x86_mb_nop_end,
-			mb_memory, mb_memory_end,
-			NULL
-		);
 		/*
 		 * Uniprocessor: kill kernel_lock.  Fill another
 		 * 14 bytes of NOPs so not to confuse the decoder.
@@ -187,7 +166,6 @@ x86_patch(void)
 			patchbytes((char *)_kernel_lock + i, X86_NOP, -1);
 			patchbytes((char *)_kernel_unlock + i, X86_NOP, -1);
 		}
-#endif
 	} else if ((cpu_feature & CPUID_SSE2) != 0) {
 		/* Faster memory barriers. */
 		patchfunc(
@@ -219,7 +197,7 @@ x86_patch(void)
 		    spllower, spllower_end,
 		    cx8_spllower_patch
 		);
-#if defined(i386) && !defined(LOCKDEBUG)
+#if defined(i386)
 		patchfunc(
 		    i686_mutex_spin_exit, i686_mutex_spin_exit_end,
 		    mutex_spin_exit, mutex_spin_exit_end,
