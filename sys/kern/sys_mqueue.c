@@ -1,7 +1,8 @@
-/*	$NetBSD: sys_mqueue.c,v 1.4 2007/11/11 23:22:24 matt Exp $	*/
+/*	$NetBSD: sys_mqueue.c,v 1.5 2007/11/28 19:30:56 rmind Exp $	*/
 
 /*
  * Copyright (c) 2007, Mindaugas Rasiukevicius <rmind at NetBSD org>
+ * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -44,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_mqueue.c,v 1.4 2007/11/11 23:22:24 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_mqueue.c,v 1.5 2007/11/28 19:30:56 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
