@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.9 2007/11/28 15:26:00 ad Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.10 2007/11/28 18:19:20 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -311,16 +311,6 @@ ENTRY(sse2_mb_memory)
 	mfence
 	ret
 END(sse2_mb_memory_end, 8)
-
-/*
- * Make sure code after the ret is properly encoded with nopness
- * by gas, or could stall newer processors.
- */
-
-ENTRY(x86_mb_nop)
-	nop
-	ret
-END(x86_mb_nop_end, 8)
 
 /*
  * Patchpoints to replace with NOP when ncpu == 1.
