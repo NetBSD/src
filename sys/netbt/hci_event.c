@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_event.c,v 1.10 2007/11/10 23:12:22 plunky Exp $	*/
+/*	$NetBSD: hci_event.c,v 1.11 2007/11/28 20:16:12 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_event.c,v 1.10 2007/11/10 23:12:22 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_event.c,v 1.11 2007/11/28 20:16:12 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -808,7 +808,6 @@ static void
 hci_cmd_read_bdaddr(struct hci_unit *unit, struct mbuf *m)
 {
 	hci_read_bdaddr_rp rp;
-	int s;
 
 	KASSERT(m->m_pkthdr.len >= sizeof(rp));
 	m_copydata(m, 0, sizeof(rp), &rp);
@@ -822,9 +821,7 @@ hci_cmd_read_bdaddr(struct hci_unit *unit, struct mbuf *m)
 
 	bdaddr_copy(&unit->hci_bdaddr, &rp.bdaddr);
 
-	s = splraiseipl(unit->hci_ipl);
 	unit->hci_flags &= ~BTF_INIT_BDADDR;
-	splx(s);
 
 	wakeup(unit);
 }
@@ -836,7 +833,6 @@ static void
 hci_cmd_read_buffer_size(struct hci_unit *unit, struct mbuf *m)
 {
 	hci_read_buffer_size_rp rp;
-	int s;
 
 	KASSERT(m->m_pkthdr.len >= sizeof(rp));
 	m_copydata(m, 0, sizeof(rp), &rp);
@@ -853,9 +849,7 @@ hci_cmd_read_buffer_size(struct hci_unit *unit, struct mbuf *m)
 	unit->hci_max_sco_size = rp.max_sco_size;
 	unit->hci_num_sco_pkts = le16toh(rp.num_sco_pkts);
 
-	s = splraiseipl(unit->hci_ipl);
 	unit->hci_flags &= ~BTF_INIT_BUFFER_SIZE;
-	splx(s);
 
 	wakeup(unit);
 }
@@ -867,7 +861,6 @@ static void
 hci_cmd_read_local_features(struct hci_unit *unit, struct mbuf *m)
 {
 	hci_read_local_features_rp rp;
-	int s;
 
 	KASSERT(m->m_pkthdr.len >= sizeof(rp));
 	m_copydata(m, 0, sizeof(rp), &rp);
@@ -944,9 +937,7 @@ hci_cmd_read_local_features(struct hci_unit *unit, struct mbuf *m)
 
 	/* XXX what do 2MBPS/3MBPS/3SLOT eSCO mean? */
 
-	s = splraiseipl(unit->hci_ipl);
 	unit->hci_flags &= ~BTF_INIT_FEATURES;
-	splx(s);
 
 	wakeup(unit);
 

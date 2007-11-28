@@ -1,4 +1,4 @@
-.\"	$NetBSD: bluetooth.9,v 1.2 2007/04/21 06:15:22 plunky Exp $
+.\"	$NetBSD: bluetooth.9,v 1.3 2007/11/28 20:16:12 plunky Exp $
 .\"
 .\" Copyright (c) 2006 Itronix Inc.
 .\" All rights reserved.
@@ -30,7 +30,7 @@
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd April 10, 2007
+.Dd November 20, 2007
 .Dt BLUETOOTH 9
 .Os
 .Sh NAME
@@ -41,8 +41,8 @@
 .In netbt/hci.h
 .In netbt/l2cap.h
 .In netbt/rfcomm.h
-.Ft void
-.Fn hci_attach "struct hci_unit *unit"
+.Ft struct hci_unit *
+.Fn hci_attach "const struct hci_if *hci_if" "device_t dev" "uint16_t flags"
 .Ft void
 .Fn hci_detach "struct hci_unit *unit"
 .Ft void
@@ -81,34 +81,22 @@ Devices. This document describes device driver access to the stack from
 below, and also the general Bluetooth Protocol/Service API for layering
 above existing Bluetooth Protocols.
 .Sh DATA TYPES
-Device drivers attached to the Bluetooth Protocol Stack will make use of the
-.Fa struct hci_unit
-data type defined in
+Device drivers attaching to the Bluetooth Protocol Stack should pass a
+pointer to a
+.Fa struct hci_if
+defined in
 .In netbt/hci.h
-.Pp
-This contains the following data items and function callbacks which
-should be initialised by the device before
-.Fn hci_attach
-is called:
+containing the driver information as follows:
 .Bd -literal
-	void	 *hci_softc;		/* self reference */
-	char	 *hci_devname;		/* ->dv_xname */
-	int	  hci_ipl;		/* to block interrupts */
-	int	(*hci_enable)(struct hci_unit *);
-	void	(*hci_disable)(struct hci_unit *);
-	void	(*hci_start_cmd)(struct hci_unit *);
-	void	(*hci_start_acl)(struct hci_unit *);
-	void	(*hci_start_sco)(struct hci_unit *);
-.Ed
-.Pp
-and other items of interest that will be initialised by the protocol
-stack:
-.Bd -literal
-	uint16_t	hci_flags;
-	MBUFQ_HEAD()	hci_cmdq;
-	MBUFQ_HEAD()	hci_acltxq;
-	MBUFQ_HEAD()	hci_scotxq;
-	struct bt_stats hci_stats;
+struct hci_if {
+	int	(*enable)(device_t);
+	void	(*disable)(device_t);
+	void	(*output_cmd)(device_t, struct mbuf *);
+	void	(*output_acl)(device_t, struct mbuf *);
+	void	(*output_sco)(device_t, struct mbuf *);
+	void	(*get_stats)(device_t, struct bt_stats *, int);
+	int	ipl;
+};
 .Ed
 .Pp
 Statistics counters should be updated by the device after packets have
@@ -150,91 +138,86 @@ struct btproto {
 .Sh FUNCTIONS
 The following functions are related to the Bluetooth Device API.
 .Bl -tag -width XXXX
-.It Fn hci_attach "unit"
+.It Fn hci_attach "hci_if" "dev"
 Attach Bluetooth HCI device
-.Ar unit
-to the protocol stack.
+.Ar dev
+to the protocol stack in the manner described by
+.Ar hci_if .
+Driver quirks may be registered by passing the corresponding
+.Dv BTF_xxxx
+flag in the
+.Ar flags
+argument.
+.Pp
+.Fn hci_attach
+will return a
+.Fa struct hci_unit
+handle to be passed to the protocol stack in other calls.
 .It Fn hci_detach "unit"
-Detach Bluetooth HCI device
+Detach Bluetooth HCI
 .Ar unit
-from the protocol stack.
+from the device.
 .It Fn hci_input_event "unit" "mbuf"
 This function should be called by the device when it has an event
 packet to present to the protocol stack. It may be called from an
 interrupt routine at the
-.Fa hci_ipl
-value given above.
+.Fa ipl
+value given in the
+.Ar hci_if
+descriptor.
 .It Fn hci_input_acl "unit" "mbuf"
 This function should be called by the device when it has an ACL data
 packet to present to the protocol stack. It may be called from an
 interrupt routine at the
-.Fa hci_ipl
-value given above.
+.Fa ipl
+value given in the
+.Ar hci_if
+descriptor.
 .It Fn hci_input_sco "unit" "mbuf"
 This function should be called by the device when it has an SCO data
 packet to present to the protocol stack. It may be called from an
 interrupt routine at the
-.Fa hci_ipl
-value given above.
-.It Fn "(*hci_enable)" "unit"
-This will be called at the given
-.Fa hci_ipl
-level when the protocl stack wishes to enable the device. The driver should
-set the
-.Dv BTF_RUNNING
-flag in the unit structure.
-.It Fn "(*hci_disable)" "unit"
-This will be called at the given
-.Fa hci_ipl
-level when the protocol stack wishes to disable the device. The driver
-should clear the
-.Dv BTF_RUNNING
-flag in the unit structure.
-.It Fn "(*hci_start_cmd)" "unit"
-Will be called at the given
-.Fa hci_ipl
-level when command packets are available to be transmitted on the
-.Fa hci_cmdq
-queue in the
-.Fa hci_unit
-structure and the
-.Dv BTF_XMID_CMD
-flag is not set. The device should set
-.Dv BTF_XMIT_CMD
-and start sending command packets asyncrhonously until the queue
-is empty, then clear the
-.Dv BTF_XMIT_CMD
-flag and exit.
-.It Fn "(*hci_start_acl)" "unit"
-Will be called at the given
-.Fa hci_ipl
-level when ACL packets are available to be transmitted on the
-.Fa hci_acltxq
-queue in the
-.Fa hci_unit
-structure and the
-.Dv BTF_XMIT_ACL
-unit flag is not set. The device should set
-.Dv BTF_XMIT_ACL
-and start sending ACL packets asynchronously until the queue is empty,
-then clear the
-.Dv BTF_XMIT_ACL
-flag and exit.
-.It Fn "(*hci_start_sco)" "unit"
-Will be called at the given
-.Fa hci_ipl
-level when SCO packets are available to be transmitted on the
-.Fa hci_scotxq
-queue in the
-.Fa hci_unit
-structure and the
-.Dv BTF_XMIT_SCO
-flag is not set. The device should set the unit flag
-.Dv BTF_XMIT_SCO
-and start sending SCO packets asynchronously until the queue is empty,
-then clear the
-.Dv BTF_XMIT_SCO
-flag and exit.
+.Fa ipl
+value given in the
+.Ar hci_if
+descriptor.
+.It Fn "(*enable)" "dev"
+This will be called when the protocl stack wishes to enable the device.
+.It Fn "(*disable)" "dev"
+This will be called when the protocol stack wishes to disable the device.
+.It Fn "(*output_cmd)" "dev" "mbuf"
+Will be called to output command packets on the device.
+The device is responsible for arbitrating access to the output queue, and
+output commands should be sent asynchronously.
+The device owns the
+.Ar mbuf
+and should release it when sent.
+.It Fn "(*output_acl)" "dev" "mbuf"
+Will be called to output ACL data packets on the device.
+The device is responsible for arbitrating access to the output queue, and
+ACL data packets should be sent asynchronously.
+The device owns the
+.Ar mbuf
+and should release it when sent.
+.It Fn "(*output_sco)" "dev" "mbuf"
+Will be called to output SCO data packets on the device.
+The device is responsible for arbitrating access to the output queue, and
+SCO data packets should be sent asynchronously.
+When the SCO data packet has been placed on the device and the
+.Ar mbuf
+is no longer required, it should be returned to the Bluetooth protocol
+stack via the
+.Fn hci_complete_sco
+call.
+.It Fn "(*get_stats)" "dev" "dest" "flush"
+Will be called when IO statistics are requested.
+The
+.Fa bt_stats
+structure
+.Ar dest
+should be filled in, and if the
+.Ar flush
+argument is true, statistics should be reset.
 .El
 .Pp
 The following function definitions are related to the Bluetooth Protocol API.
