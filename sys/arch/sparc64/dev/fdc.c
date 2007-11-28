@@ -1,4 +1,4 @@
-/*	$NetBSD: fdc.c,v 1.16 2007/10/17 19:57:28 garbled Exp $	*/
+/*	$NetBSD: fdc.c,v 1.17 2007/11/28 12:44:13 jnemeth Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc.c,v 1.16 2007/10/17 19:57:28 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc.c,v 1.17 2007/11/28 12:44:13 jnemeth Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -126,6 +126,7 @@ __KERNEL_RCSID(0, "$NetBSD: fdc.c,v 1.16 2007/10/17 19:57:28 garbled Exp $");
 #include <sys/fdio.h>
 #include <sys/buf.h>
 #include <sys/bufq.h>
+#include <sys/intr.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/uio.h>
@@ -139,7 +140,6 @@ __KERNEL_RCSID(0, "$NetBSD: fdc.c,v 1.16 2007/10/17 19:57:28 garbled Exp $");
 #include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
-#include <machine/intr.h>
 
 #ifdef SUN4
 #include <sparc/sparc/auxreg.h>
@@ -228,7 +228,7 @@ struct fdc_softc {
 #define sc_status	sc_io.fdcio_status
 #define sc_intrcnt	sc_io.fdcio_intrcnt
 
-	void		*sc_sicookie;	/* softintr(9) cookie */
+	void		*sc_sicookie;	/* softint(9) cookie */
 };
 
 #ifdef SUN4
@@ -799,9 +799,9 @@ fdcattach(struct fdc_softc *fdc, int pri)
 	}
 
 #ifdef SUN4
-	fdc->sc_sicookie = softintr_establish(IPL_BIO, fdcswintr, fdc);
+	fdc->sc_sicookie = softint_establish(SOFTINT_BIO, fdcswintr, fdc);
 #elif SUN4U
-	fdc->sc_sicookie = softintr_establish(IPL_FDSOFT, fdcswintr, fdc);
+	fdc->sc_sicookie = softint_establish(SOFTINT_BIO, fdcswintr, fdc);
 #endif
 	if (fdc->sc_sicookie == NULL) {
 		printf("\n%s: cannot register soft interrupt handler\n",
@@ -831,7 +831,7 @@ fdcattach(struct fdc_softc *fdc, int pri)
 			fdc->sc_dev.dv_xname);
 		callout_stop(&fdc->sc_timo_ch);
 		callout_stop(&fdc->sc_intr_ch);
-		softintr_disestablish(fdc->sc_sicookie);
+		softint_disestablish(fdc->sc_sicookie);
 		return -1;
 	}
 
@@ -1485,14 +1485,14 @@ fdc_c_hwintr(void *arg)
 			fdc->sc_istatus = FDC_ISTATUS_ERROR;
 		else
 			fdc->sc_istatus = FDC_ISTATUS_DONE;
-		softintr_schedule(fdc->sc_sicookie);
+		softint_schedule(fdc->sc_sicookie);
 		return 1;
 	case FDC_ITASK_RESULT:
 		if (fdcresult(fdc) == -1)
 			fdc->sc_istatus = FDC_ISTATUS_ERROR;
 		else
 			fdc->sc_istatus = FDC_ISTATUS_DONE;
-		softintr_schedule(fdc->sc_sicookie);
+		softint_schedule(fdc->sc_sicookie);
 		return 1;
 	case FDC_ITASK_DMA:
 		/* Proceed with pseudo-DMA below */
@@ -1500,7 +1500,7 @@ fdc_c_hwintr(void *arg)
 	default:
 		printf("fdc: stray hard interrupt: itask=%d\n", fdc->sc_itask);
 		fdc->sc_istatus = FDC_ISTATUS_SPURIOUS;
-		softintr_schedule(fdc->sc_sicookie);
+		softint_schedule(fdc->sc_sicookie);
 		return 1;
 	}
 
@@ -1520,7 +1520,7 @@ fdc_c_hwintr(void *arg)
 			/* Execution phase finished, get result. */
 			fdcresult(fdc);
 			fdc->sc_istatus = FDC_ISTATUS_DONE;
-			softintr_schedule(fdc->sc_sicookie);
+			softint_schedule(fdc->sc_sicookie);
 			break;
 		}
 
