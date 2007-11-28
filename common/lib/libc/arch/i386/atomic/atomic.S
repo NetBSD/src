@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.S,v 1.1 2007/11/28 01:33:47 ad Exp $	*/
+/*	$NetBSD: atomic.S,v 1.2 2007/11/28 15:24:38 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -41,11 +41,11 @@
 #ifdef _KERNEL
 #define	LOCK(n)		.Lpatch/**/n:	lock
 #define	ALIAS(f, t)	STRONG_ALIAS(f,t)
-#define	END(a,b)	.align  b; LABEL(a)
+#define	END(a)		_ALIGN_TEXT; LABEL(a)
 #else
 #define	LOCK(n)		lock
 #define	ALIAS(f, t)	WEAK_ALIAS(f,t)
-#define	END(a,b)	/* nothing */
+#define	END(a)		/* nothing */
 #endif
 
 	.text
@@ -152,47 +152,42 @@ NENTRY(_membar_consumer)
 	LOCK(13)
 	addl	$0, -4(%esp)
 	ret
-END(membar_consumer_end, 8)
+END(membar_consumer_end)
 
 NENTRY(_membar_producer)
 	/* A store is enough */
 	movl	$0, -4(%esp)
 	ret
-END(membar_producer_end, 8)
+END(membar_producer_end)
 
 NENTRY(_membar_enter)
 	/* A store is enough */
 	movl	$0, -4(%esp)
 	ret
-END(membar_enter_end, 8)
+END(membar_enter_end)
 
 NENTRY(_membar_exit)
 	/* A store is enough */
 	movl	$0, -4(%esp)
 	ret
-END(membar_exit_end, 8)
+END(membar_exit_end)
 
 NENTRY(_membar_sync)
 	LOCK(14)
 	addl	$0, -4(%esp)
 	ret
-END(membar_sync_end, 8)
+END(membar_sync_end)
 
 #ifdef _KERNEL
-NENTRY(membar_nop)
-	/* Nothing */
-	ret
-END(membar_nop_end, 8)
-
 NENTRY(sse2_lfence)
 	lfence
 	ret
-END(sse2_lfence_end, 8)
+END(sse2_lfence_end)
 
 NENTRY(sse2_mfence)
 	mfence
 	ret
-END(sse2_mfence_end, 8)
+END(sse2_mfence_end)
 
 atomic_lockpatch:
 	.globl	atomic_lockpatch
