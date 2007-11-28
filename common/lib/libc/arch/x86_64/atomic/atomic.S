@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.S,v 1.1 2007/11/28 01:33:49 ad Exp $	*/
+/*	$NetBSD: atomic.S,v 1.2 2007/11/28 15:24:38 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -41,11 +41,11 @@
 #ifdef _KERNEL
 #define	LOCK(n)		.Lpatch/**/n:	lock
 #define	ALIAS(f, t)	STRONG_ALIAS(f,t)
-#define	END(a,b)	.align  b; LABEL(a)
+#define	END(a)		_ALIGN_TEXT; LABEL(a)
 #else
 #define	LOCK(n)		lock
 #define	ALIAS(f, t)	WEAK_ALIAS(f,t)
-#define	END(a,b)	/* nothing */
+#define	END(a)		/* nothing */
 #endif
 
 	.text
@@ -220,56 +220,51 @@ NENTRY(_membar_consumer)
 	LOCK(25)
 	addq	$0, -8(%rsp)
 	ret
-END(membar_consumer_end, 8)
+END(membar_consumer_end)
 
 NENTRY(_membar_producer)
 	/* A store is enough */
 	movq	$0, -8(%rsp)
 	ret
-END(membar_producer_end, 8)
+END(membar_producer_end)
 
 NENTRY(_membar_enter)
 	/* A store is enough */
 	movq	$0, -8(%rsp)
 	ret
-END(membar_enter_end, 8)
+END(membar_enter_end)
 
 NENTRY(_membar_exit)
 	/* A store is enough */
 	movq	$0, -8(%rsp)
 	ret
-END(membar_exit_end, 8)
+END(membar_exit_end)
 
 NENTRY(_membar_sync)
 	LOCK(26)
 	addq	$0, -8(%rsp)
 	ret
-END(membar_sync_end, 8)
+END(membar_sync_end)
 
 #ifdef _KERNEL
-NENTRY(membar_nop)
-	/* Nothing */
-	ret
-END(membar_nop_end, 8)
-
 NENTRY(sse2_lfence)
 	lfence
 	ret
-END(sse2_lfence_end, 8)
+END(sse2_lfence_end)
 
 NENTRY(sse2_mfence)
 	mfence
 	ret
-END(sse2_mfence_end, 8)
+END(sse2_mfence_end)
 
 atomic_lockpatch:
 	.globl	atomic_lockpatch
-	.long	.Lpatch1, .Lpatch2, .Lpatch3, .Lpatch4, .Lpatch5
-	.long	.Lpatch6, .Lpatch7, .Lpatch8, .Lpatch9, .Lpatch10
-	.long	.Lpatch11, .Lpatch12, .Lpatch13, .Lpatch14, .Lpatch15
-	.long	.Lpatch16, .Lpatch17, .Lpatch18, .Lpatch19, .Lpatch20
-	.long	.Lpatch21, .Lpatch22, .Lpatch23, .Lpatch24, .Lpatch25
-	.long	.Lpatch26, 0
+	.quad	.Lpatch1, .Lpatch2, .Lpatch3, .Lpatch4, .Lpatch5
+	.quad	.Lpatch6, .Lpatch7, .Lpatch8, .Lpatch9, .Lpatch10
+	.quad	.Lpatch11, .Lpatch12, .Lpatch13, .Lpatch14, .Lpatch15
+	.quad	.Lpatch16, .Lpatch17, .Lpatch18, .Lpatch19, .Lpatch20
+	.quad	.Lpatch21, .Lpatch22, .Lpatch23, .Lpatch24, .Lpatch25
+	.quad	.Lpatch26, 0
 #endif	/* _KERNEL */
 
 ALIAS(atomic_add_32,_atomic_add_32)
