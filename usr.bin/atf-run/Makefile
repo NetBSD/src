@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2007/11/12 15:00:01 jmmv Exp $
+# $NetBSD: Makefile,v 1.2 2007/11/28 08:20:29 jnemeth Exp $
 
 .include <bsd.own.mk>
 
@@ -13,6 +13,8 @@ CPPFLAGS+=	-DHAVE_CONFIG_H
 CPPFLAGS+=	-I${SRCDIR}/libs
 CPPFLAGS+=	-I${.CURDIR}/../../lib/libatf
 LDADD+=		-latf
+
+COPTS.atf-run.cpp+=	-Wno-stack-protector
 
 WARNS?=		2
 
