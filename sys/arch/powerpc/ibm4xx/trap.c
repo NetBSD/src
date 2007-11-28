@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.46 2007/11/22 13:33:08 hpeyerl Exp $	*/
+/*	$NetBSD: trap.c,v 1.47 2007/11/28 12:22:28 simonb Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.46 2007/11/22 13:33:08 hpeyerl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.47 2007/11/28 12:22:28 simonb Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -438,11 +438,11 @@ copyin(const void *udaddr, void *kaddr, size_t len)
 		"   beq-  2f;"              /* No words. Go do bytes */
 		"   mtctr %[count];"
 		"1: mtpid %[ctx]; sync;"
-		"   lwz %[tmp],0(%[udaddr]);"       /* Load user word */
+		"   lswi %[tmp],%[udaddr],4;"       /* Load user word */
 		"   addi %[udaddr],%[udaddr],0x4;"  /* next udaddr word */
 		"   sync; isync;"
 		"   mtpid %[pid];sync;"
-		"   stw %[tmp],0(%[kaddr]);"        /* Store kernel word */
+		"   stswi %[tmp],%[kaddr],4;"        /* Store kernel word */
 		"   dcbf 0,%[kaddr];"           /* flush cache */
 		"   addi %[kaddr],%[kaddr],0x4;"    /* next udaddr word */
 		"   sync; isync;"
@@ -537,11 +537,11 @@ copyout(const void *kaddr, void *udaddr, size_t len)
 		"   beq-  2f;"              /* No words. Go do bytes */
 		"   mtctr %[count];"
 		"1: mtpid %[pid];sync;"
-		"   lwz %[tmp],0(%[kaddr]);"        /* Load kernel word */
+		"   lswi %[tmp],%[kaddr],4;"        /* Load kernel word */
 		"   addi %[kaddr],%[kaddr],0x4;"    /* next kaddr word */
 		"   sync; isync;"
 		"   mtpid %[ctx]; sync;"
-		"   stw %[tmp],0(%[udaddr]);"       /* Store user word */
+		"   stswi %[tmp],%[udaddr],4;"       /* Store user word */
 		"   dcbf 0,%[udaddr];"          /* flush cache */
 		"   addi %[udaddr],%[udaddr],0x4;"  /* next udaddr word */
 		"   sync; isync;"
