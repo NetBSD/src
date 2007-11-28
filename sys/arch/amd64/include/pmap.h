@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.16 2007/11/28 16:28:43 ad Exp $	*/
+/*	$NetBSD: pmap.h,v 1.17 2007/11/28 16:44:46 ad Exp $	*/
 
 /*
  *
@@ -264,8 +264,6 @@
 #define pmap_pte_clearbits(p, b)	\
     atomic_and_ulong((volatile unsigned long *)p, ~(b))
 #define pmap_pte_flush()		/* nothing */
-#define pmap_cpu_has_pg_n()		(1)
-#define pmap_cpu_has_invlpg		(1)
 #else
 static __inline pt_entry_t
 pmap_pa2pte(paddr_t pa)
@@ -318,8 +316,6 @@ pmap_pte_clearbits(volatile pt_entry_t *pte, pt_entry_t bits)
 	splx(s);
 }
 
-#define pmap_cpu_has_pg_n()		(1)
-#define pmap_cpu_has_invlpg		(1)
 static __inline void
 pmap_pte_flush(void)
 {
