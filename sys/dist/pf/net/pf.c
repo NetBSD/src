@@ -1,4 +1,4 @@
-/*	$NetBSD: pf.c,v 1.40 2007/08/07 10:08:21 yamt Exp $	*/
+/*	$NetBSD: pf.c,v 1.41 2007/11/28 04:23:33 dyoung Exp $	*/
 /*	$OpenBSD: pf.c,v 1.487 2005/04/22 09:53:18 dhartmei Exp $ */
 
 /*
@@ -63,6 +63,7 @@
 #include <net/route.h>
 
 #include <netinet/in.h>
+#include <netinet/in_offload.h>
 #include <netinet/in_var.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
@@ -5558,6 +5559,10 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 			goto bad;
 	}
 
+	/* Make ip_fragment re-compute checksums. */
+	if (IN_NEED_CHECKSUM(ifp, M_CSUM_IPv4)) {
+		m0->m_pkthdr.csum_flags |= M_CSUM_IPv4;
+	}
 	m1 = m0;
 	error = ip_fragment(m0, ifp, ifp->if_mtu);
 	if (error) {
