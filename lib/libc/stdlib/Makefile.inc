@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.67 2007/11/19 14:48:42 ad Exp $
+#	$NetBSD: Makefile.inc,v 1.68 2007/11/28 21:55:14 christos Exp $
 #	from: @(#)Makefile.inc	8.3 (Berkeley) 2/4/95
 
 # stdlib sources
@@ -20,7 +20,7 @@ SRCS+=	_rand48.c _strtoimax.c _strtoumax.c _strtoll.c _strtoull.c \
 .if (${USE_JEMALLOC} != "no")
 SRCS+=	jemalloc.c
 .else
-SRCS+=	malloc.c calloc.c
+SRCS+=	malloc.c
 .endif
 
 # machine-dependent stdlib sources
