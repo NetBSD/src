@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.8 2007/11/11 01:27:43 ad Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.9 2007/11/28 15:26:00 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -323,30 +323,12 @@ ENTRY(x86_mb_nop)
 END(x86_mb_nop_end, 8)
 
 /*
- * XXX Don't belong here.
- */
-ENTRY(atomic_inc_uint)
-	movl	4(%esp), %edx
-	LOCK(lockpatch9)
-	incl	(%edx)
-	ret
-
-ENTRY(atomic_dec_uint_nv)
-	movl	4(%esp), %edx
-	movl	$-1, %eax
-	LOCK(lockpatch10)
-	xaddl	%eax, (%edx)
-	decl	%eax
-	ret
-
-/*
  * Patchpoints to replace with NOP when ncpu == 1.
  */
 #ifndef LOCKDEBUG
 LABEL(x86_lockpatch)
 	.long	lockpatch1, lockpatch2, lockpatch3, lockpatch4
 	.long	lockpatch5, lockpatch6, lockpatch7, lockpatch8
-	.long	lockpatch9, lockpatch10
 #if defined(FULL) && !defined(__XEN__)
 	.long	lockpatch11
 #endif
