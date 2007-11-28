@@ -1,4 +1,4 @@
-/*	$NetBSD: bcsp.c,v 1.8 2007/11/11 12:59:06 plunky Exp $	*/
+/*	$NetBSD: bcsp.c,v 1.9 2007/11/28 01:31:55 kiyohara Exp $	*/
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcsp.c,v 1.8 2007/11/11 12:59:06 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcsp.c,v 1.9 2007/11/28 01:31:55 kiyohara Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -121,9 +121,9 @@ struct bcsp_softc {
 };
 
 void bcspattach(int);
-static int bcsp_match(struct device *, struct cfdata *, void *);
-static void bcsp_attach(struct device *, struct device *, void *);
-static int bcsp_detach(struct device *, int);
+static int bcsp_match(device_t, struct cfdata *, void *);
+static void bcsp_attach(device_t, device_t, void *);
+static int bcsp_detach(device_t, int);
 
 /* tty functions */
 static int bcspopen(dev_t, struct tty *);
@@ -221,7 +221,7 @@ bcspattach(int num __unused)
  */
 /* ARGSUSED */
 static int
-bcsp_match(struct device *self __unused, struct cfdata *cfdata __unused,
+bcsp_match(device_t self __unused, struct cfdata *cfdata __unused,
 	   void *arg __unused)
 {
 
@@ -235,8 +235,7 @@ bcsp_match(struct device *self __unused, struct cfdata *cfdata __unused,
  */
 /* ARGSUSED */
 static void
-bcsp_attach(struct device *parent __unused, struct device *self,
-	    void *aux __unused)
+bcsp_attach(device_t parent __unused, device_t self, void *aux __unused)
 {
 	struct bcsp_softc *sc = device_private(self);
 	const struct sysctlnode *node;
@@ -349,6 +348,7 @@ static int
 bcspopen(dev_t device __unused, struct tty *tp)
 {
 	struct bcsp_softc *sc;
+	device_t dev;
 	struct cfdata *cfdata;
 	struct lwp *l = curlwp;		/* XXX */
 	int error, unit, s;
@@ -381,11 +381,12 @@ bcspopen(dev_t device __unused, struct tty *tp)
 
 	aprint_normal("%s%d at tty major %d minor %d",
 	    name, unit, major(tp->t_dev), minor(tp->t_dev));
-	sc = (struct bcsp_softc *)config_attach_pseudo(cfdata);
-	if (sc == NULL) {
+	dev = (device_t)config_attach_pseudo(cfdata);
+	if (dev == NULL) {
 		splx(s);
 		return EIO;
 	}
+	sc = device_private(dev);
 
 	mutex_spin_enter(&tty_lock);
 	tp->t_sc = sc;
@@ -492,7 +493,7 @@ bcsp_slip_transmit(struct tty *tp)
 #ifdef BCSP_DEBUG
 		if (sc->sc_slip_txrsv == BCSP_SLIP_PKTSTART)
 			DPRINTFN(4, ("%s: slip transmit start\n",
-			    device_xname(sc->sc_dev));
+			    device_xname(sc->sc_dev)));
 		else
 			DPRINTFN(4, ("0x%02x ", sc->sc_slip_txrsv));
 #endif
@@ -544,6 +545,7 @@ bcsp_slip_transmit(struct tty *tp)
 				break;
 			}
 			DPRINTFN(4, ("0x%02x ", BCSP_SLIP_ESCAPE_PKTEND));
+			rptr++;
 		} else if (*rptr == BCSP_SLIP_ESCAPE) {
 			if (putc(BCSP_SLIP_ESCAPE, &tp->t_outq) < 0)
 				break;
@@ -555,6 +557,7 @@ bcsp_slip_transmit(struct tty *tp)
 				break;
 			}
 			DPRINTFN(4, ("0x%02x ", BCSP_SLIP_ESCAPE_ESCAPE));
+			rptr++;
 		} else {
 			if (putc(*rptr++, &tp->t_outq) < 0)
 				break;
@@ -600,7 +603,7 @@ bcsp_slip_receive(int c, struct tty *tp)
 			}
 
 			m = m->m_next;
-			m->m_pkthdr.len = m->m_len = 0;
+			m->m_len = 0;
 		}
 	} else
 		if (c != BCSP_SLIP_PKTSTART) {
@@ -709,15 +712,13 @@ discarded:
 static void
 bcsp_pktintegrity_transmit(struct bcsp_softc *sc)
 {
-	struct mbuf *_m, *m = sc->sc_txp;
+	struct mbuf *m = sc->sc_txp;
 	bcsp_hdr_t *hdrp = mtod(m, bcsp_hdr_t *);
-	int pktlen, pldlen;
+	int pldlen;
 
 	DPRINTFN(3, ("%s: pi transmit\n", device_xname(sc->sc_dev)));
 
-	for (pktlen = 0, _m = m; _m != NULL; _m = _m->m_next)
-		pktlen += _m->m_len;
-	pldlen = pktlen - sizeof(bcsp_hdr_t);
+	pldlen = m->m_pkthdr.len - sizeof(bcsp_hdr_t);
 
 	if (sc->sc_pi_txcrc)
 		hdrp->flags |= BCSP_FLAGS_CRC_PRESENT;
@@ -726,6 +727,7 @@ bcsp_pktintegrity_transmit(struct bcsp_softc *sc)
 	BCSP_SET_CSUM(hdrp);
 
 	if (sc->sc_pi_txcrc) {
+		struct mbuf *_m;
 		int n = 0;
 		uint16_t crc = 0xffff;
 		uint8_t *buf;
@@ -736,7 +738,7 @@ bcsp_pktintegrity_transmit(struct bcsp_softc *sc)
 				bcsp_crc_update(&crc, *(buf + n));
 		}
 		crc = htobe16(bcsp_crc_reverse(crc));
-		m_copyback(m, pktlen, sizeof(crc), &crc);
+		m_copyback(m, m->m_pkthdr.len, sizeof(crc), &crc);
 	}
 
 #ifdef BCSP_DEBUG
@@ -750,9 +752,8 @@ bcsp_pktintegrity_transmit(struct bcsp_softc *sc)
 static void
 bcsp_pktintegrity_receive(struct bcsp_softc *sc, struct mbuf *m)
 {
-	bcsp_hdr_t *hdrp;
-	struct mbuf *_m;
-	u_int pktlen, pldlen;
+	bcsp_hdr_t *hdrp = mtod(m, bcsp_hdr_t *);
+	u_int pldlen;
 	int discard = 0;
 	uint16_t crc = 0xffff;
 	const char *errstr;
@@ -765,10 +766,7 @@ bcsp_pktintegrity_receive(struct bcsp_softc *sc, struct mbuf *m)
 
 	KASSERT(m->m_len >= sizeof(bcsp_hdr_t));
 
-	hdrp = mtod(m, bcsp_hdr_t *);
-	for (pktlen = 0, _m = m; _m != NULL; _m = _m->m_next)
-		pktlen += _m->m_len;
-	pldlen = pktlen - sizeof(bcsp_hdr_t) -
+	pldlen = m->m_pkthdr.len - sizeof(bcsp_hdr_t) -
 	    ((hdrp->flags & BCSP_FLAGS_CRC_PRESENT) ? sizeof(crc) : 0);
 	if (pldlen > 0xfff) {
 		discard = 1;
@@ -786,6 +784,7 @@ bcsp_pktintegrity_receive(struct bcsp_softc *sc, struct mbuf *m)
 		goto discarded;
 	}
 	if (hdrp->flags & BCSP_FLAGS_CRC_PRESENT) {
+		struct mbuf *_m;
 		int i, n;
 		uint16_t crc0;
 		uint8_t *buf;
