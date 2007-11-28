@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_sem.c,v 1.68.2.4 2007/11/04 12:09:05 rmind Exp $	*/
+/*	$NetBSD: sysv_sem.c,v 1.68.2.5 2007/11/28 17:23:39 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.68.2.4 2007/11/04 12:09:05 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.68.2.5 2007/11/28 17:23:39 rmind Exp $");
 
 #define SYSVSEM
 
@@ -610,6 +610,15 @@ sys_semop(struct lwp *l, void *v, register_t *retval)
 		return (E2BIG);
 	}
 
+	error = copyin(SCARG(uap, sops), sops, nsops * sizeof(sops[0]));
+	if (error) {
+		SEM_PRINTF(("error = %d from copyin(%p, %p, %zd)\n", error,
+		    SCARG(uap, sops), &sops, nsops * sizeof(sops[0])));
+		if (sops != small_sops)
+			kmem_free(sops, nsops * sizeof(*sops));
+		return error;
+	}
+
 	mutex_enter(&semlock);
 
 	semid = IPCID_TO_IX(semid);	/* Convert back to zero origin */
@@ -628,13 +637,6 @@ sys_semop(struct lwp *l, void *v, register_t *retval)
 
 	if ((error = ipcperm(cred, &semaptr->sem_perm, IPC_W))) {
 		SEM_PRINTF(("error = %d from ipaccess\n", error));
-		goto out;
-	}
-
-	if ((error = copyin(SCARG(uap, sops),
-	    sops, nsops * sizeof(sops[0]))) != 0) {
-		SEM_PRINTF(("error = %d from copyin(%p, %p, %zd)\n", error,
-		    SCARG(uap, sops), &sops, nsops * sizeof(sops[0])));
 		goto out;
 	}
 
