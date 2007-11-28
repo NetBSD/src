@@ -1,4 +1,4 @@
-/*	$NetBSD: bcsp.c,v 1.9 2007/11/28 01:31:55 kiyohara Exp $	*/
+/*	$NetBSD: bcsp.c,v 1.10 2007/11/28 20:16:11 plunky Exp $	*/
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcsp.c,v 1.9 2007/11/28 01:31:55 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcsp.c,v 1.10 2007/11/28 20:16:11 plunky Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -76,7 +76,15 @@ struct bcsp_softc {
 	device_t sc_dev;
 
 	struct tty *sc_tp;
-	struct hci_unit sc_unit;		/* Bluetooth HCI Unit */
+	struct hci_unit *sc_unit;		/* Bluetooth HCI Unit */
+	struct bt_stats sc_stats;
+
+	int sc_flags;
+
+	/* output queues */
+	MBUFQ_HEAD()	sc_cmdq;
+	MBUFQ_HEAD()	sc_aclq;
+	MBUFQ_HEAD()	sc_scoq;
 
 	int sc_baud;
 	int sc_init_baud;
@@ -120,6 +128,10 @@ struct bcsp_softc {
 	struct sysctllog *sc_log;		/* sysctl log */
 };
 
+/* sc_flags */
+#define	BCSP_XMIT	(1 << 0)	/* transmit active */
+#define	BCSP_ENABLED	(1 << 1)	/* is enabled */
+
 void bcspattach(int);
 static int bcsp_match(device_t, struct cfdata *, void *);
 static void bcsp_attach(device_t, device_t, void *);
@@ -156,15 +168,20 @@ static void bcsp_datagramq_receive(struct bcsp_softc *, struct mbuf *);
 static bool bcsp_tx_unreliable_pkt(struct bcsp_softc *, struct mbuf *, u_int);
 static void bcsp_unreliabletx_callback(struct bcsp_softc *, struct mbuf *);
 
-static int bcsp_start_le(struct hci_unit *);
-static void bcsp_terminate_le(struct hci_unit *);
-static void bcsp_input_le(struct hci_unit *, struct mbuf *);
+static int bcsp_start_le(struct bcsp_softc *);
+static void bcsp_terminate_le(struct bcsp_softc *);
+static void bcsp_input_le(struct bcsp_softc *, struct mbuf *);
 static void bcsp_le_timeout(void *);
+
+static void bcsp_start(struct bcsp_softc *);
 
 /* bluetooth hci functions */
 static int bcsp_enable(device_t);
 static void bcsp_disable(device_t);
-static void bcsp_start(device_t);
+static void bcsp_output_cmd(device_t, struct mbuf *);
+static void bcsp_output_acl(device_t, struct mbuf *);
+static void bcsp_output_sco(device_t, struct mbuf *);
+static void bcsp_stats(device_t, struct bt_stats *, int);
 
 #ifdef BCSP_DEBUG
 static void bcsp_packet_print(struct mbuf *m);
@@ -191,6 +208,15 @@ static struct linesw bcsp_disc = {
 	.l_poll = ttyerrpoll
 };
 
+static const struct hci_if bcsp_hci = {
+	.enable = bcsp_enable,
+	.disable = bcsp_disable,
+	.output_cmd = bcsp_output_cmd,
+	.output_acl = bcsp_output_acl,
+	.output_sco = bcsp_output_sco,
+	.get_stats = bcsp_stats,
+	.ipl = IPL_TTY,
+};
 
 /* ARGSUSED */
 void
@@ -255,16 +281,12 @@ bcsp_attach(device_t parent __unused, device_t self, void *aux __unused)
 	MBUFQ_INIT(&sc->sc_seqq);
 	MBUFQ_INIT(&sc->sc_seq_retryq);
 	MBUFQ_INIT(&sc->sc_dgq);
+	MBUFQ_INIT(&sc->sc_cmdq);
+	MBUFQ_INIT(&sc->sc_aclq);
+	MBUFQ_INIT(&sc->sc_scoq);
 
 	/* Attach Bluetooth unit */
-	sc->sc_unit.hci_dev = self;
-	sc->sc_unit.hci_enable = bcsp_enable;
-	sc->sc_unit.hci_disable = bcsp_disable;
-	sc->sc_unit.hci_start_cmd = bcsp_start;
-	sc->sc_unit.hci_start_acl = bcsp_start;
-	sc->sc_unit.hci_start_sco = bcsp_start;
-	sc->sc_unit.hci_ipl = makeiplcookie(IPL_TTY);
-	hci_attach(&sc->sc_unit);
+	sc->sc_unit = hci_attach(&bcsp_hci, self, 0);
 
 	if ((rc = sysctl_createv(&sc->sc_log, 0, NULL, NULL,
 	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "hw", NULL,
@@ -324,11 +346,14 @@ err:
  */
 /* ARGSUSED */
 static int
-bcsp_detach(struct device *self, int flags __unused)
+bcsp_detach(device_t self, int flags __unused)
 {
 	struct bcsp_softc *sc = device_private(self);
 
-	hci_detach(&sc->sc_unit);
+	if (sc->sc_unit != NULL) {
+		hci_detach(sc->sc_unit);
+		sc->sc_unit = NULL;
+	}
 
 	callout_stop(&sc->sc_seq_timer);
 	callout_destroy(&sc->sc_seq_timer);
@@ -381,7 +406,7 @@ bcspopen(dev_t device __unused, struct tty *tp)
 
 	aprint_normal("%s%d at tty major %d minor %d",
 	    name, unit, major(tp->t_dev), minor(tp->t_dev));
-	dev = (device_t)config_attach_pseudo(cfdata);
+	dev = config_attach_pseudo(cfdata);
 	if (dev == NULL) {
 		splx(s);
 		return EIO;
@@ -400,7 +425,7 @@ bcspopen(dev_t device __unused, struct tty *tp)
 	bcsp_sequencing_reset(sc);
 
 	/* start link-establishment */
-	bcsp_start_le(&sc->sc_unit);
+	bcsp_start_le(sc);
 
 	return 0;
 }
@@ -414,7 +439,7 @@ bcspclose(struct tty *tp, int flag __unused)
 	int s;
 
 	/* terminate link-establishment */
-	bcsp_terminate_le(&sc->sc_unit);
+	bcsp_terminate_le(sc);
 
 	s = spltty();
 
@@ -480,7 +505,7 @@ bcsp_slip_transmit(struct tty *tp)
 
 	m = sc->sc_txp;
 	if (m == NULL) {
-		sc->sc_unit.hci_flags &= ~BTF_XMIT;
+		sc->sc_flags &= ~BCSP_XMIT;
 		bcsp_mux_transmit(sc);
 		return 0;
 	}
@@ -569,7 +594,7 @@ bcsp_slip_transmit(struct tty *tp)
 	if (m != NULL)
 		m_adj(m, rlen);
 
-	sc->sc_unit.hci_stats.byte_tx += count;
+	sc->sc_stats.byte_tx += count;
 
 	if (tp->t_outq.c_cc != 0)
 		(*tp->t_oproc)(tp);
@@ -598,7 +623,7 @@ bcsp_slip_receive(int c, struct tty *tp)
 			if (m->m_next == NULL) {
 				aprint_error_dev(sc->sc_dev,
 				    "out of memory\n");
-				++sc->sc_unit.hci_stats.err_rx;
+				sc->sc_stats.err_rx++;
 				return 0;	/* (lost sync) */
 			}
 
@@ -625,7 +650,7 @@ bcsp_slip_receive(int c, struct tty *tp)
 			if (m == NULL) {
 				aprint_error_dev(sc->sc_dev,
 				    "out of memory\n");
-				++sc->sc_unit.hci_stats.err_rx;
+				sc->sc_stats.err_rx++;
 				return 0;	/* (lost sync) */
 			}
 
@@ -639,7 +664,7 @@ bcsp_slip_receive(int c, struct tty *tp)
 				DPRINTFN(4, ("%s: resynchronises\n",
 				    device_xname(sc->sc_dev)));
 
-				sc->sc_unit.hci_stats.byte_rx++;
+				sc->sc_stats.byte_rx++;
 				return 0;
 			}
 
@@ -651,7 +676,7 @@ bcsp_slip_receive(int c, struct tty *tp)
 			sc->sc_rxp = NULL;
 			sc->sc_slip_rxexp = BCSP_SLIP_PKTSTART;
 		}
-		sc->sc_unit.hci_stats.byte_rx++;
+		sc->sc_stats.byte_rx++;
 		return 0;
 
 	case BCSP_SLIP_ESCAPE:
@@ -699,7 +724,7 @@ discarded:
 		DPRINTFN(4, ("%s: receives unexpected byte 0x%02x: %s\n",
 		    device_xname(sc->sc_dev), c, errstr));
 	}
-	sc->sc_unit.hci_stats.byte_rx++;
+	sc->sc_stats.byte_rx++;
 
 	return 0;
 }
@@ -856,12 +881,11 @@ bcsp_crc_reverse(uint16_t crc)
 static void
 bcsp_mux_transmit(struct bcsp_softc *sc)
 {
-	struct hci_unit *unit = &sc->sc_unit;
 	struct mbuf *m;
 	bcsp_hdr_t *hdrp;
 
-	DPRINTFN(2, ("%s: mux transmit: hci_flags=0x%x, choke=%d",
-	    device_xname(sc->sc_dev), unit->hci_flags, sc->sc_mux_choke));
+	DPRINTFN(2, ("%s: mux transmit: sc_flags=0x%x, choke=%d",
+	    device_xname(sc->sc_dev), sc->sc_flags, sc->sc_mux_choke));
 
 	if (sc->sc_mux_choke) {
 		struct mbuf *_m = NULL;
@@ -901,13 +925,13 @@ bcsp_mux_transmit(struct bcsp_softc *sc)
 		hdrp->flags |= BCSP_FLAGS_PROTOCOL_REL;		/* Reliable */
 		goto transmit;
 	}
-	bcsp_start(sc->sc_dev);
+	bcsp_start(sc);
 	if (sc->sc_mux_send_ack == true) {
 		m = bcsp_create_ackpkt();
 		if (m != NULL)
 			goto transmit;
 		aprint_error_dev(sc->sc_dev, "out of memory\n");
-		++unit->hci_stats.err_tx;
+		sc->sc_stats.err_tx++;
 	}
 
 	/* Nothing to send */
@@ -1043,20 +1067,26 @@ bcsp_sequencing_receive(struct bcsp_softc *sc, struct mbuf *m)
 	switch (hdr.ident) {
 	case BCSP_CHANNEL_HCI_CMDEVT:
 		*(mtod(m, uint8_t *)) = HCI_EVENT_PKT;
-		hci_input_event(&sc->sc_unit, m);
-		sc->sc_unit.hci_stats.evt_rx++;
+		if (!hci_input_event(sc->sc_unit, m))
+			sc->sc_stats.err_rx++;
+
+		sc->sc_stats.evt_rx++;
 		break;
 
 	case BCSP_CHANNEL_HCI_ACL:
 		*(mtod(m, uint8_t *)) = HCI_ACL_DATA_PKT;
-		hci_input_acl(&sc->sc_unit, m);
-		sc->sc_unit.hci_stats.acl_rx++;
+		if (!hci_input_acl(sc->sc_unit, m))
+			sc->sc_stats.err_rx++;
+
+		sc->sc_stats.acl_rx++;
 		break;
 
 	case BCSP_CHANNEL_HCI_SCO:
 		*(mtod(m, uint8_t *)) = HCI_SCO_DATA_PKT;
-		hci_input_sco(&sc->sc_unit, m);
-		sc->sc_unit.hci_stats.sco_rx++;
+		if (!hci_input_sco(sc->sc_unit, m))
+			sc->sc_stats.err_rx++;
+
+		sc->sc_stats.sco_rx++;
 		break;
 
 	case BCSP_CHANNEL_HQ:
@@ -1242,7 +1272,7 @@ bcsp_timer_timeout(void *arg)
 			    "reached the retry limit."
 			    " restart the link-establishment\n");
 			bcsp_sequencing_reset(sc);
-			bcsp_start_le(&sc->sc_unit);
+			bcsp_start_le(sc);
 			return;
 		}
 	}
@@ -1292,7 +1322,7 @@ bcsp_datagramq_receive(struct bcsp_softc *sc, struct mbuf *m)
 	switch (hdr.ident) {
 	case BCSP_CHANNEL_LE:
 		m_adj(m, sizeof(bcsp_hdr_t));
-		bcsp_input_le(&sc->sc_unit, m);
+		bcsp_input_le(sc, m);
 		break;
 
 	case BCSP_CHANNEL_HCI_SCO:
@@ -1302,8 +1332,10 @@ bcsp_datagramq_receive(struct bcsp_softc *sc, struct mbuf *m)
 		 */
 		m_adj(m, sizeof(bcsp_hdr_t) - sizeof(uint8_t));
 		*(mtod(m, uint8_t *)) = HCI_SCO_DATA_PKT;
-		hci_input_sco(&sc->sc_unit, m);
-		sc->sc_unit.hci_stats.sco_rx++;
+		if (!hci_input_sco(sc->sc_unit, m))
+			sc->sc_stats.err_rx++;
+
+		sc->sc_stats.sco_rx++;
 		break;
 
 	default:
@@ -1378,8 +1410,8 @@ bcsp_unreliabletx_callback(struct bcsp_softc *sc, struct mbuf *m)
 
 	if (M_GETCTX(m, void *) == NULL)
 		m_freem(m);
-	else
-		hci_complete_sco(&sc->sc_unit, m);
+	else if (!hci_complete_sco(sc->sc_unit, m))
+		sc->sc_stats.err_tx++;
 }
 
 
@@ -1392,9 +1424,8 @@ static const uint8_t conf[] = BCSP_LE_CONF;
 static const uint8_t confresp[] = BCSP_LE_CONFRESP;
 
 static int
-bcsp_start_le(struct hci_unit *unit)
+bcsp_start_le(struct bcsp_softc *sc)
 {
-	struct bcsp_softc *sc = device_private(unit->hci_dev);
 
 	DPRINTF(("%s: start link-establish\n", device_xname(sc->sc_dev)));
 
@@ -1419,9 +1450,8 @@ bcsp_start_le(struct hci_unit *unit)
 }
 
 static void
-bcsp_terminate_le(struct hci_unit *unit)
+bcsp_terminate_le(struct bcsp_softc *sc)
 {
-	struct bcsp_softc *sc = device_private(unit->hci_dev);
 	struct mbuf *m;
 
 	/* terminate link-establishment */
@@ -1441,9 +1471,8 @@ bcsp_terminate_le(struct hci_unit *unit)
 }
 
 static void
-bcsp_input_le(struct hci_unit *unit, struct mbuf *m)
+bcsp_input_le(struct bcsp_softc *sc, struct mbuf *m)
 {
-	struct bcsp_softc *sc = device_private(unit->hci_dev);
 	uint32_t *rcvpkt;
 	int i;
 	const uint8_t *rplypkt;
@@ -1603,13 +1632,17 @@ static int
 bcsp_enable(device_t self)
 {
 	struct bcsp_softc *sc = device_private(self);
-	struct hci_unit *unit = &sc->sc_unit;
+	int s;
 
-	if (unit->hci_flags & BTF_RUNNING)
+	if (sc->sc_flags & BCSP_ENABLED)
 		return 0;
 
-	unit->hci_flags |= BTF_RUNNING;
-	unit->hci_flags &= ~BTF_XMIT;
+	s = spltty();
+
+	sc->sc_flags |= BCSP_ENABLED;
+	sc->sc_flags &= ~BCSP_XMIT;
+
+	splx(s);
 
 	return 0;
 }
@@ -1618,10 +1651,12 @@ static void
 bcsp_disable(device_t self)
 {
 	struct bcsp_softc *sc = device_private(self);
-	struct hci_unit *unit = &sc->sc_unit;
+	int s;
 
-	if ((unit->hci_flags & BTF_RUNNING) == 0)
+	if ((sc->sc_flags & BCSP_ENABLED) == 0)
 		return;
+
+	s = spltty();
 
 	if (sc->sc_rxp) {
 		m_freem(sc->sc_rxp);
@@ -1633,47 +1668,116 @@ bcsp_disable(device_t self)
 		sc->sc_txp = NULL;
 	}
 
-	unit->hci_flags &= ~BTF_RUNNING;
+	MBUFQ_DRAIN(&sc->sc_cmdq);
+	MBUFQ_DRAIN(&sc->sc_aclq);
+	MBUFQ_DRAIN(&sc->sc_scoq);
+
+	sc->sc_flags &= ~BCSP_ENABLED;
+	splx(s);
 }
 
 static void
-bcsp_start(device_t self)
+bcsp_start(struct bcsp_softc *sc)
 {
-	struct bcsp_softc *sc = device_private(self);
-	struct hci_unit *unit = &sc->sc_unit;
 	struct mbuf *m;
 
-	KASSERT((unit->hci_flags & BTF_XMIT) == 0);
+	KASSERT((sc->sc_flags & BCSP_XMIT) == 0);
 	KASSERT(sc->sc_txp == NULL);
 
-	if (MBUFQ_FIRST(&unit->hci_acltxq)) {
-		MBUFQ_DEQUEUE(&unit->hci_acltxq, m);
-		unit->hci_stats.acl_tx++;
-		M_SETCTX(m, NULL);
-		m_adj(m, sizeof(uint8_t));
-		unit->hci_flags |= BTF_XMIT;
+	if (MBUFQ_FIRST(&sc->sc_aclq)) {
+		MBUFQ_DEQUEUE(&sc->sc_aclq, m);
+		sc->sc_stats.acl_tx++;
+		sc->sc_flags |= BCSP_XMIT;
 		bcsp_tx_reliable_pkt(sc, m, BCSP_CHANNEL_HCI_ACL);
 	}
 
-	if (MBUFQ_FIRST(&unit->hci_cmdq)) {
-		MBUFQ_DEQUEUE(&unit->hci_cmdq, m);
-		unit->hci_stats.cmd_tx++;
-		M_SETCTX(m, NULL);
-		m_adj(m, sizeof(uint8_t));
-		unit->hci_flags |= BTF_XMIT;
+	if (MBUFQ_FIRST(&sc->sc_cmdq)) {
+		MBUFQ_DEQUEUE(&sc->sc_cmdq, m);
+		sc->sc_stats.cmd_tx++;
+		sc->sc_flags |= BCSP_XMIT;
 		bcsp_tx_reliable_pkt(sc, m, BCSP_CHANNEL_HCI_CMDEVT);
 	}
 
-	if (MBUFQ_FIRST(&unit->hci_scotxq)) {
-		MBUFQ_DEQUEUE(&unit->hci_scotxq, m);
-		unit->hci_stats.sco_tx++;
+	if (MBUFQ_FIRST(&sc->sc_scoq)) {
+		MBUFQ_DEQUEUE(&sc->sc_scoq, m);
+		sc->sc_stats.sco_tx++;
 		/* XXXX: We can transmit with reliable */
-		m_adj(m, sizeof(uint8_t));
-		unit->hci_flags |= BTF_XMIT;
+		sc->sc_flags |= BCSP_XMIT;
 		bcsp_tx_unreliable_pkt(sc, m, BCSP_CHANNEL_HCI_SCO);
 	}
 
 	return;
+}
+
+static void
+bcsp_output_cmd(device_t self, struct mbuf *m)
+{
+	struct bcsp_softc *sc = device_private(self);
+	int s;
+
+	KASSERT(sc->sc_flags & BCSP_ENABLED);
+
+	m_adj(m, sizeof(uint8_t));
+	M_SETCTX(m, NULL);
+
+	s = spltty();
+	MBUFQ_ENQUEUE(&sc->sc_cmdq, m);
+	if ((sc->sc_flags & BCSP_XMIT) == 0)
+		bcsp_start(sc);
+
+	splx(s);
+}
+
+static void
+bcsp_output_acl(device_t self, struct mbuf *m)
+{
+	struct bcsp_softc *sc = device_private(self);
+	int s;
+
+	KASSERT(sc->sc_flags & BCSP_ENABLED);
+
+	m_adj(m, sizeof(uint8_t));
+	M_SETCTX(m, NULL);
+
+	s = spltty();
+	MBUFQ_ENQUEUE(&sc->sc_aclq, m);
+	if ((sc->sc_flags & BCSP_XMIT) == 0)
+		bcsp_start(sc);
+
+	splx(s);
+}
+
+static void
+bcsp_output_sco(device_t self, struct mbuf *m)
+{
+	struct bcsp_softc *sc = device_private(self);
+	int s;
+
+	KASSERT(sc->sc_flags & BCSP_ENABLED);
+
+	m_adj(m, sizeof(uint8_t));
+
+	s = spltty();
+	MBUFQ_ENQUEUE(&sc->sc_scoq, m);
+	if ((sc->sc_flags & BCSP_XMIT) == 0)
+		bcsp_start(sc);
+
+	splx(s);
+}
+
+static void
+bcsp_stats(device_t self, struct bt_stats *dest, int flush)
+{
+	struct bcsp_softc *sc = device_private(self);
+	int s;
+
+	s = spltty();
+	memcpy(dest, &sc->sc_stats, sizeof(struct bt_stats));
+
+	if (flush)
+		memset(&sc->sc_stats, 0, sizeof(struct bt_stats));
+
+	splx(s);
 }
 
 
