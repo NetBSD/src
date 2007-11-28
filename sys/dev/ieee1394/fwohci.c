@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.107.6.3 2007/11/06 19:25:20 joerg Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.107.6.4 2007/11/28 01:25:22 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.107.6.3 2007/11/06 19:25:20 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.107.6.4 2007/11/28 01:25:22 jmcneill Exp $");
 
 #define ATRQ_CH 0
 #define ATRS_CH 1
@@ -2207,6 +2207,11 @@ int
 fwohci_filt(void *arg)
 {
 	struct fwohci_softc *sc = (struct fwohci_softc *)arg;
+
+#if defined(__NetBSD__)
+	if (!device_is_active(sc->fc.dev))
+		return (FILTER_STRAY);
+#endif
 
 	if (!(sc->intmask & OHCI_INT_EN)) {
 		/* polling mode */
