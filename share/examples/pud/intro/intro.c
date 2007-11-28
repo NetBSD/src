@@ -1,4 +1,4 @@
-/*	$NetBSD: intro.c,v 1.3 2007/11/22 11:28:49 pooka Exp $	*/
+/*	$NetBSD: intro.c,v 1.4 2007/11/28 16:59:02 pooka Exp $	*/
 
 /*
  * El extra-simplo example of the userspace driver framework.
@@ -63,6 +63,7 @@ main(int argc, char *argv[])
 	 */
 	memset(&pcr, 0, sizeof(pcr));
 	pcr.pm_pdr.pdr_pth.pth_framelen = sizeof(struct pud_conf_reg);
+	pcr.pm_version = PUD_DEVELVERSION | PUD_VERSION;
 	pcr.pm_pdr.pdr_reqclass = PUD_REQ_CONF;
 	pcr.pm_pdr.pdr_reqtype = PUD_CONF_REG;
 

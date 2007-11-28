@@ -1,4 +1,4 @@
-/*	$NetBSD: pud_msgif.h,v 1.3 2007/11/22 11:26:27 pooka Exp $	*/
+/*	$NetBSD: pud_msgif.h,v 1.4 2007/11/28 16:59:02 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -92,11 +92,15 @@ struct pud_req_ioctl {
 struct pud_conf_reg {
 	struct pud_req	pm_pdr;
 
+	int		pm_version;
 	dev_t		pm_regdev;
 	int		pm_flags;
 	char		pm_devname[PUD_DEVNAME_MAX+1];
 };
 #define PUD_CONFFLAG_BDEV	1
+
+#define PUD_DEVELVERSION	0x80000000
+#define PUD_VERSION		1
 
 enum {
 	PUD_CDEV_OPEN,	PUD_CDEV_CLOSE,	PUD_CDEV_READ,	PUD_CDEV_WRITE,
