@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.S,v 1.2 2007/11/28 15:24:38 ad Exp $	*/
+/*	$NetBSD: atomic.S,v 1.3 2007/11/28 18:02:29 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -121,7 +121,6 @@ NENTRY(_atomic_or_32_nv)
 	ret
 
 NENTRY(_atomic_swap_32)
-	LOCK(11)
 	xchgl	%esi, (%rdi)
 	ret
 
@@ -203,7 +202,6 @@ NENTRY(_atomic_or_64_nv)
 	ret
 
 NENTRY(_atomic_swap_64)
-	LOCK(23)
 	xchgq	%rsi, (%rdi)
 	ret
 
@@ -261,9 +259,9 @@ atomic_lockpatch:
 	.globl	atomic_lockpatch
 	.quad	.Lpatch1, .Lpatch2, .Lpatch3, .Lpatch4, .Lpatch5
 	.quad	.Lpatch6, .Lpatch7, .Lpatch8, .Lpatch9, .Lpatch10
-	.quad	.Lpatch11, .Lpatch12, .Lpatch13, .Lpatch14, .Lpatch15
+	.quad	.Lpatch12, .Lpatch13, .Lpatch14, .Lpatch15
 	.quad	.Lpatch16, .Lpatch17, .Lpatch18, .Lpatch19, .Lpatch20
-	.quad	.Lpatch21, .Lpatch22, .Lpatch23, .Lpatch24, .Lpatch25
+	.quad	.Lpatch21, .Lpatch22, .Lpatch24, .Lpatch25
 	.quad	.Lpatch26, 0
 #endif	/* _KERNEL */
 
