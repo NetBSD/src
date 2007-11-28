@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_compat.c,v 1.99 2007/11/26 23:16:15 he Exp $	*/
+/*	$NetBSD: hpux_compat.c,v 1.100 2007/11/28 18:45:03 ad Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.99 2007/11/26 23:16:15 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.100 2007/11/28 18:45:03 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -1060,11 +1060,11 @@ hpux_sys_getaccess(struct lwp *l, void *v, register_t *retval)
 	 */
 	vp = nd.ni_vp;
 	*retval = 0;
-	if (VOP_ACCESS(vp, VREAD, cred, l) == 0)
+	if (VOP_ACCESS(vp, VREAD, cred) == 0)
 		*retval |= R_OK;
-	if (vn_writechk(vp) == 0 && VOP_ACCESS(vp, VWRITE, cred, l) == 0)
+	if (vn_writechk(vp) == 0 && VOP_ACCESS(vp, VWRITE, cred) == 0)
 		*retval |= W_OK;
-	if (VOP_ACCESS(vp, VEXEC, cred, l) == 0)
+	if (VOP_ACCESS(vp, VEXEC, cred) == 0)
 		*retval |= X_OK;
 	vput(vp);
 	kauth_cred_free(cred);
@@ -1330,7 +1330,7 @@ hpux_sys_utime_6x(struct lwp *l, void *v, register_t *retval)
 	if (vp->v_mount->mnt_flag & MNT_RDONLY)
 		error = EROFS;
 	else
-		error = VOP_SETATTR(vp, &vattr, nd.ni_cnd.cn_cred, l);
+		error = VOP_SETATTR(vp, &vattr, nd.ni_cnd.cn_cred);
 	vput(vp);
 	return (error);
 }
