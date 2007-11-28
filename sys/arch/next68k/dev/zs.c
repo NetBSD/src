@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.29 2007/11/09 00:05:06 ad Exp $	*/
+/*	$NetBSD: zs.c,v 1.30 2007/11/28 18:55:30 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.29 2007/11/09 00:05:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.30 2007/11/28 18:55:30 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -67,9 +67,10 @@ __KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.29 2007/11/09 00:05:06 ad Exp $");
 #include <sys/tty.h>
 #include <sys/time.h>
 #include <sys/syslog.h>
+#include <sys/intr.h>
+#include <sys/cpu.h>
 
 #include <machine/autoconf.h>
-#include <machine/cpu.h>
 #include <machine/psl.h>
 
 #include <dev/cons.h>
@@ -274,7 +275,7 @@ zs_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	isrlink_autovec(zshard, NULL, NEXT_I_IPL(NEXT_I_SCC), 0, NULL);
-	zsc->zsc_softintr_cookie = softintr_establish(IPL_SOFTSERIAL,
+	zsc->zsc_softintr_cookie = softint_establish(SOFTINT_SERIAL,
 	    (void (*)(void *))zsc_intr_soft, zsc);
 	INTR_ENABLE(NEXT_I_SCC);
 
@@ -333,7 +334,7 @@ zshard(void *arg)
 		}
 		/* We are at splzs here, so no need to lock. */
 		if (zsc->zsc_cs[0]->cs_softreq || zsc->zsc_cs[1]->cs_softreq)
-			softintr_schedule(zsc->zsc_softintr_cookie);
+			softint_schedule(zsc->zsc_softintr_cookie);
 	}
 
 	return(1);
