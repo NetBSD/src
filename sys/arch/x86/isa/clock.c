@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.9.8.3 2007/11/21 21:53:38 joerg Exp $	*/
+/*	$NetBSD: clock.c,v 1.9.8.4 2007/11/28 01:11:46 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -121,7 +121,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.9.8.3 2007/11/21 21:53:38 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.9.8.4 2007/11/28 01:11:46 jmcneill Exp $");
 
 /* #define CLOCKDEBUG */
 /* #define CLOCK_PARANOIA */
@@ -559,6 +559,9 @@ sysbeepattach(struct device *parent, struct device *self,
 
 	ppicookie = ((struct pcppi_attach_args *)aux)->pa_cookie;
 	ppi_attached = 1;
+
+	if (!pnp_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 #endif
 
