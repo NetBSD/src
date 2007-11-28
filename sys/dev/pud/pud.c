@@ -1,4 +1,4 @@
-/*	$NetBSD: pud.c,v 1.5 2007/11/28 16:59:02 pooka Exp $	*/
+/*	$NetBSD: pud.c,v 1.6 2007/11/28 17:01:59 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pud.c,v 1.5 2007/11/28 16:59:02 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pud.c,v 1.6 2007/11/28 17:01:59 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -337,6 +337,7 @@ pud_request(dev_t dev, void *data, size_t dlen, int class, int type)
 	if (--pd->pd_waitcount == 0)
 		cv_signal(&pd->pd_draincv);
 	mutex_exit(&pd->pd_mtx);
+	cv_destroy(&put.pt_cv);
 
 	return pdr->pdr_rv;
 }
