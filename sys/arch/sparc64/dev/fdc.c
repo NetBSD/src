@@ -1,4 +1,4 @@
-/*	$NetBSD: fdc.c,v 1.17 2007/11/28 12:44:13 jnemeth Exp $	*/
+/*	$NetBSD: fdc.c,v 1.18 2007/11/28 18:03:56 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc.c,v 1.17 2007/11/28 12:44:13 jnemeth Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc.c,v 1.18 2007/11/28 18:03:56 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -134,6 +134,7 @@ __KERNEL_RCSID(0, "$NetBSD: fdc.c,v 1.17 2007/11/28 12:44:13 jnemeth Exp $");
 #include <sys/syslog.h>
 #include <sys/queue.h>
 #include <sys/conf.h>
+#include <sys/intr.h>
 
 #include <dev/cons.h>
 
@@ -798,11 +799,7 @@ fdcattach(struct fdc_softc *fdc, int pri)
 		return -1;
 	}
 
-#ifdef SUN4
 	fdc->sc_sicookie = softint_establish(SOFTINT_BIO, fdcswintr, fdc);
-#elif SUN4U
-	fdc->sc_sicookie = softint_establish(SOFTINT_BIO, fdcswintr, fdc);
-#endif
 	if (fdc->sc_sicookie == NULL) {
 		printf("\n%s: cannot register soft interrupt handler\n",
 			fdc->sc_dev.dv_xname);
