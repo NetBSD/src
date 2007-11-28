@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.224 2007/11/15 19:18:33 ad Exp $	*/
+/*	$NetBSD: trap.c,v 1.225 2007/11/28 14:02:30 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2005 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.224 2007/11/15 19:18:33 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.225 2007/11/28 14:02:30 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -578,7 +578,18 @@ copyfault:
 		if (frame->tf_err & PGEX_P)
 			goto we_re_toast;
 #endif
-		cr2 = rcr2();
+
+		/*
+		 * XXXhack: xen2 hypervisor pushes cr2 onto guest's stack
+		 * and Xtrap0e passes it to us as an extra hidden argument.
+		 */
+#if defined(XEN) && !defined(XEN3)
+#define	FETCH_CR2	(((uint32_t *)(void *)&frame)[1])
+#else /* defined(XEN) && !defined(XEN3) */
+#define	FETCH_CR2	rcr2()
+#endif /* defined(XEN) && !defined(XEN3) */
+
+		cr2 = FETCH_CR2;
 		KERNEL_LOCK(1, NULL);
 		goto faultcommon;
 
@@ -589,7 +600,7 @@ copyfault:
 		vm_prot_t ftype;
 		extern struct vm_map *kernel_map;
 
-		cr2 = rcr2();
+		cr2 = FETCH_CR2;
 		KERNEL_LOCK(1, l);
 	faultcommon:
 		vm = p->p_vmspace;
@@ -720,7 +731,7 @@ copyfault:
 		}
 		break;
 
-#if	NISA > 0 || NMCA > 0
+#if !defined(XEN) && (NISA > 0 || NMCA > 0)
 	case T_NMI:
 #if defined(KGDB) || defined(DDB)
 		/* NMI can be hooked up to a pushbutton for debugging */
@@ -749,7 +760,7 @@ copyfault:
 		else
 			return;
 #endif /* NMCA > 0 */
-#endif /* NISA > 0 || NMCA > 0 */
+#endif /* !defined(XEN) && (NISA > 0 || NMCA > 0) */
 	}
 
 	if ((type & T_USER) == 0)
