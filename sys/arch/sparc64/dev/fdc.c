@@ -1,4 +1,4 @@
-/*	$NetBSD: fdc.c,v 1.18 2007/11/28 18:03:56 ad Exp $	*/
+/*	$NetBSD: fdc.c,v 1.19 2007/11/28 20:41:35 jnemeth Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc.c,v 1.18 2007/11/28 18:03:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc.c,v 1.19 2007/11/28 20:41:35 jnemeth Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -126,7 +126,6 @@ __KERNEL_RCSID(0, "$NetBSD: fdc.c,v 1.18 2007/11/28 18:03:56 ad Exp $");
 #include <sys/fdio.h>
 #include <sys/buf.h>
 #include <sys/bufq.h>
-#include <sys/intr.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/uio.h>
