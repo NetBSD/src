@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.96 2007/11/28 16:28:44 ad Exp $	*/
+/*	$NetBSD: pmap.h,v 1.97 2007/11/28 16:44:46 ad Exp $	*/
 
 /*
  *
@@ -271,8 +271,6 @@
 #define pmap_pte_clearbits(p, b)	\
     atomic_and_ulong((volatile unsigned long *)p, ~(b))
 #define pmap_pte_flush()		/* nothing */
-#define pmap_cpu_has_pg_n()		(cpu_class != CPUCLASS_386)
-#define pmap_cpu_has_invlpg()		(cpu_class != CPUCLASS_386)
 
 #include <x86/pmap.h>
 

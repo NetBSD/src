@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.16 2007/11/28 16:40:40 ad Exp $	*/
+/*	$NetBSD: pmap.h,v 1.17 2007/11/28 16:44:47 ad Exp $	*/
 /*	NetBSD: pmap.h,v 1.82 2004/02/20 17:35:01 yamt Exp 	*/
 
 /*
@@ -508,8 +508,6 @@ vtomach(vaddr_t va)
     atomic_or_ulong((volatile unsigned long *)p, b)
 #define pmap_pte_clearbits(p, b)	\
     atomic_and_ulong((volatile unsigned long *)p, ~(b))
-#define pmap_cpu_has_pg_n()		(cpu_class != CPUCLASS_386)
-#define pmap_cpu_has_invlpg()		(cpu_class != CPUCLASS_386)
 
 paddr_t vtophys(vaddr_t);
 vaddr_t	pmap_map(vaddr_t, paddr_t, paddr_t, vm_prot_t);
