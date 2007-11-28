@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_swap_64_cas.c,v 1.2 2007/11/28 16:55:11 ad Exp $	*/
+/*	$NetBSD: atomic_swap_64_cas.c,v 1.3 2007/11/28 16:59:11 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -39,7 +39,6 @@
 #include "atomic_op_namespace.h"
 
 #include <sys/atomic.h>
-#include "atomic_op_cas_impl.h"
 
 uint64_t
 atomic_swap_64(volatile uint64_t *addr, uint64_t new)
@@ -47,7 +46,6 @@ atomic_swap_64(volatile uint64_t *addr, uint64_t new)
 	uint64_t old;
 
 	do {
-		OP_READ_BARRIER;
 		old = *addr;
 	} while (atomic_cas_64(addr, old, new) != old);
 
