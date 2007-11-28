@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.34 2007/10/17 19:58:16 garbled Exp $	*/
+/*	$NetBSD: intr.c,v 1.35 2007/11/28 16:28:44 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -140,7 +140,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.34 2007/10/17 19:58:16 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.35 2007/11/28 16:28:44 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_acpi.h"
@@ -760,7 +760,7 @@ intr_disestablish(struct intrhand *ih)
 
 	mutex_enter(&x86_intr_lock);
 	pic->pic_hwmask(pic, ih->ih_pin);	
-	x86_atomic_clearbits_l(&ci->ci_ipending, (1 << ih->ih_slot));
+	atomic_and_32(&ci->ci_ipending, ~(1 << ih->ih_slot));
 
 	/*
 	 * Remove the handler from the chain.
