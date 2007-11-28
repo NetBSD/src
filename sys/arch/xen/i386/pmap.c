@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.38 2007/11/22 16:16:52 bouyer Exp $	*/
+/*	$NetBSD: pmap.c,v 1.39 2007/11/28 16:40:40 ad Exp $	*/
 /*	NetBSD: pmap.c,v 1.179 2004/10/10 09:55:24 yamt Exp		*/
 
 /*
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.38 2007/11/22 16:16:52 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.39 2007/11/28 16:40:40 ad Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_largepages.h"
@@ -77,10 +77,10 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.38 2007/11/22 16:16:52 bouyer Exp $");
 #include <sys/pool.h>
 #include <sys/user.h>
 #include <sys/kernel.h>
+#include <sys/atomic.h>
 
 #include <uvm/uvm.h>
 
-#include <machine/atomic.h>
 #include <machine/cpu.h>
 #include <machine/specialreg.h>
 #include <machine/gdt.h>
@@ -2140,7 +2140,7 @@ pmap_reactivate(struct pmap *pmap)
 	s = splvm();
 #endif /* defined(MULTIPROCESSOR) */
 	oldcpus = pmap->pm_cpus;
-	x86_atomic_setbits_l(&pmap->pm_cpus, cpumask);
+	atomic_or_32(&pmap->pm_cpus, cpumask);
 	if (oldcpus & cpumask) {
 		KASSERT(ci->ci_tlbstate == TLBSTATE_LAZY);
 		/* got it */
@@ -2206,7 +2206,7 @@ pmap_load()
 	 * actually switch pmap.
 	 */
 
-	x86_atomic_clearbits_l(&oldpmap->pm_cpus, cpumask);
+	atomic_and_32(&oldpmap->pm_cpus, ~cpumask);
 
 	KASSERT((pmap->pm_cpus & cpumask) == 0);
 
@@ -2223,7 +2223,7 @@ pmap_load()
 #else /* defined(MULTIPROCESSOR) */
 	s = splvm();
 #endif /* defined(MULTIPROCESSOR) */
-	x86_atomic_setbits_l(&pmap->pm_cpus, cpumask);
+	atomic_or_32(&pmap->pm_cpus, cpumask);
 	ci->ci_pmap = pmap;
 	ci->ci_tlbstate = TLBSTATE_VALID;
 	splx(s);
@@ -3936,8 +3936,8 @@ pmap_tlb_shootnow(int32_t cpumask)
 			continue;
 		if (cpumask & (1U << ci->ci_cpuid))
 			if (x86_send_ipi(ci, X86_IPI_TLB) != 0)
-				x86_atomic_clearbits_l(&self->ci_tlb_ipi_mask,
-				    (1U << ci->ci_cpuid));
+				atomic_and_32(&self->ci_tlb_ipi_mask,
+				    ~(1U << ci->ci_cpuid));
 	}
 
 	while (self->ci_tlb_ipi_mask != 0) {
@@ -4072,8 +4072,8 @@ pmap_do_tlb_shootdown_checktlbstate(struct cpu_info *ci)
 		 * mark the pmap no longer in use by this processor.
 		 */
 
-		x86_atomic_clearbits_l(&ci->ci_pmap->pm_cpus,
-		    1U << ci->ci_cpuid);
+		atomic_and_32(&ci->ci_pmap->pm_cpus,
+		    ~(1U << ci->ci_cpuid));
 		ci->ci_tlbstate = TLBSTATE_STALE;
 	}
 
@@ -4147,8 +4147,8 @@ pmap_do_tlb_shootdown(struct cpu_info *self)
 
 #ifdef MULTIPROCESSOR
 	for (CPU_INFO_FOREACH(cii, ci))
-		x86_atomic_clearbits_l(&ci->ci_tlb_ipi_mask,
-		    (1U << cpu_id));
+		atomic_and_32(&ci->ci_tlb_ipi_mask,
+		    ~(1U << cpu_id));
 #endif /* MULTIPROCESSOR */
 	__cpu_simple_unlock(&pq->pq_slock);
 

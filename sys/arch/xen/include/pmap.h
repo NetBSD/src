@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.15 2007/11/22 16:16:57 bouyer Exp $	*/
+/*	$NetBSD: pmap.h,v 1.16 2007/11/28 16:40:40 ad Exp $	*/
 /*	NetBSD: pmap.h,v 1.82 2004/02/20 17:35:01 yamt Exp 	*/
 
 /*
@@ -47,12 +47,13 @@
 
 #include "opt_xen.h"
 
+#include <sys/atomic.h>
+
 #include <machine/cpufunc.h>
 #include <machine/pte.h>
 #include <xen/xenfunc.h>
 #include <xen/xenpmap.h>
 #include <machine/segments.h>
-#include <machine/atomic.h>
 #include <uvm/uvm_object.h>
 
 /*
@@ -501,9 +502,12 @@ vtomach(vaddr_t va)
 	return xpmap_ptom((pte & PG_FRAME) | (va & ~PG_FRAME));
 }
 
-#define pmap_pte_testset(p, n)		x86_atomic_testset_ul(p, n)
-#define pmap_pte_setbits(p, b)		x86_atomic_setbits_l(p, b)
-#define pmap_pte_clearbits(p, b)	x86_atomic_clearbits_l(p, b)
+#define pmap_pte_testset(p, n)		\
+    atomic_swap_ulong((volatile unsigned long *)p, n)
+#define pmap_pte_setbits(p, b)		\
+    atomic_or_ulong((volatile unsigned long *)p, b)
+#define pmap_pte_clearbits(p, b)	\
+    atomic_and_ulong((volatile unsigned long *)p, ~(b))
 #define pmap_cpu_has_pg_n()		(cpu_class != CPUCLASS_386)
 #define pmap_cpu_has_invlpg()		(cpu_class != CPUCLASS_386)
 
