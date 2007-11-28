@@ -1,4 +1,4 @@
-/*	$NetBSD: pud.c,v 1.4 2007/11/22 13:51:59 pooka Exp $	*/
+/*	$NetBSD: pud.c,v 1.5 2007/11/28 16:59:02 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pud.c,v 1.4 2007/11/22 13:51:59 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pud.c,v 1.5 2007/11/28 16:59:02 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -177,6 +177,12 @@ pudconf_reg(struct pud_dev *pd, struct pud_conf_reg *pcr)
 	struct bdevsw *bsw;
 	int cmajor, bmajor, error;
 
+	if (pcr->pm_version != (PUD_DEVELVERSION | PUD_VERSION)) {
+		printf("pud version mismatch %d vs %d\n",
+		    pcr->pm_version & ~PUD_DEVELVERSION, PUD_VERSION);
+		return EINVAL; /* XXX */
+	}
+
 	cmajor = major(pcr->pm_regdev);
 	if (pcr->pm_flags & PUD_CONFFLAG_BDEV) {
 		bsw = &pud_bdevsw;
@@ -275,6 +281,10 @@ pud_putter_close(void *this)
 		devsw_detach(&pud_bdevsw /* XXX */, &pud_cdevsw);
 		
 	putter_detach(pd->pd_pi);
+
+	mutex_destroy(&pd->pd_mtx);
+	cv_destroy(&pd->pd_draincv);
+	cv_destroy(&pd->pd_waitq_req_cv);
 	kmem_free(pd, sizeof(struct pud_dev));
 
 	return 0;
