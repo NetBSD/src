@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_event.c,v 1.11 2007/11/28 20:16:12 plunky Exp $	*/
+/*	$NetBSD: hci_event.c,v 1.12 2007/11/28 21:46:52 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_event.c,v 1.11 2007/11/28 20:16:12 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_event.c,v 1.12 2007/11/28 21:46:52 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -258,6 +258,12 @@ hci_event_command_status(struct hci_unit *unit, struct mbuf *m)
 		ep.status,
 		ep.num_cmd_pkts);
 
+	if (ep.status > 0)
+		aprint_error_dev(unit->hci_dev,
+		    "CommandStatus opcode (%03x|%04x) failed (status=0x%02x)\n",
+		    HCI_OGF(le16toh(ep.opcode)), HCI_OCF(le16toh(ep.opcode)),
+		    ep.status);
+
 	unit->hci_num_cmd_pkts = ep.num_cmd_pkts;
 
 	/*
@@ -284,6 +290,7 @@ static void
 hci_event_command_compl(struct hci_unit *unit, struct mbuf *m)
 {
 	hci_command_compl_ep ep;
+	hci_status_rp rp;
 
 	KASSERT(m->m_pkthdr.len >= sizeof(ep));
 	m_copydata(m, 0, sizeof(ep), &ep);
@@ -293,6 +300,18 @@ hci_event_command_compl(struct hci_unit *unit, struct mbuf *m)
 		device_xname(unit->hci_dev),
 		HCI_OGF(le16toh(ep.opcode)), HCI_OCF(le16toh(ep.opcode)),
 		ep.num_cmd_pkts);
+
+	/*
+	 * I am not sure if this is completely correct, it is not guaranteed
+	 * that a command_complete packet will contain the status though most
+	 * do seem to.
+	 */
+	m_copydata(m, 0, sizeof(rp), &rp);
+	if (rp.status > 0)
+		aprint_error_dev(unit->hci_dev,
+		    "CommandComplete opcode (%03x|%04x) failed (status=0x%02x)\n",
+		    HCI_OGF(le16toh(ep.opcode)), HCI_OCF(le16toh(ep.opcode)),
+		    rp.status);
 
 	unit->hci_num_cmd_pkts = ep.num_cmd_pkts;
 
