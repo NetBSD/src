@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.120 2007/11/24 07:49:04 dyoung Exp $ */
+/*	$NetBSD: if_gre.c,v 1.121 2007/11/28 02:40:21 dyoung Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.120 2007/11/24 07:49:04 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.121 2007/11/28 02:40:21 dyoung Exp $");
 
 #include "opt_gre.h"
 #include "opt_inet.h"
@@ -424,8 +424,7 @@ gre_receive(struct socket *so, void *arg, int waitflag)
 		sc->sc_error_ev.ev_count++;
 		return;
 	}
-	if (m->m_len < sizeof(*gh) &&
-	    (m = m_pullup(m, sizeof(*gh))) == NULL) {
+	if (m->m_len < sizeof(*gh) && (m = m_pullup(m, sizeof(*gh))) == NULL) {
 		GRE_DPRINTF(sc, "%s: m_pullup failed\n", __func__);
 		sc->sc_pullup_ev.ev_count++;
 		return;
