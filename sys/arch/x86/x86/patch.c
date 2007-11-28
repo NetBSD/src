@@ -1,4 +1,4 @@
-/*	$NetBSD: patch.c,v 1.7 2007/11/13 18:38:58 ad Exp $	*/
+/*	$NetBSD: patch.c,v 1.8 2007/11/28 15:26:00 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.7 2007/11/13 18:38:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.8 2007/11/28 15:26:00 ad Exp $");
 
 #include "opt_lockdebug.h"
 
@@ -66,6 +66,15 @@ void	i686_mutex_spin_exit(int);
 void	i686_mutex_spin_exit_end(void);
 void	i686_mutex_spin_exit_patch(void);
 
+void	membar_consumer(void);
+void	membar_consumer_end(void);
+void	membar_sync(void);
+void	membar_sync_end(void);
+void	sse2_lfence(void);
+void	sse2_lfence_end(void);
+void	sse2_mfence(void);
+void	sse2_mfence_end(void);
+
 void	mb_read(void);
 void	mb_read_end(void);
 void	mb_write(void);
@@ -80,6 +89,7 @@ void	sse2_mb_memory(void);
 void	sse2_mb_memory_end(void);
 
 extern void	*x86_lockpatch[];
+extern void	*atomic_lockpatch[];
 
 #define	X86_NOP		0x90
 #define	X86_REP		0xf3
@@ -149,6 +159,8 @@ x86_patch(void)
 		/* Uniprocessor: kill LOCK prefixes. */
 		for (i = 0; x86_lockpatch[i] != 0; i++)
 			patchbytes(x86_lockpatch[i], X86_NOP, -1);	
+		for (i = 0; atomic_lockpatch[i] != 0; i++)
+			patchbytes(atomic_lockpatch[i], X86_NOP, -1);
 		/* Uniprocessor: kill memory barriers. */
 		patchfunc(
 			x86_mb_nop, x86_mb_nop_end,
@@ -186,6 +198,16 @@ x86_patch(void)
 		patchfunc(
 		    sse2_mb_memory, sse2_mb_memory_end,
 		    mb_memory, mb_memory_end,
+		    NULL
+		);
+		patchfunc(
+		    sse2_lfence, sse2_lfence_end,
+		    membar_consumer, membar_consumer_end,
+		    NULL
+		);
+		patchfunc(
+		    sse2_mfence, sse2_mfence_end,
+		    membar_sync, membar_sync_end,
 		    NULL
 		);
 	}
