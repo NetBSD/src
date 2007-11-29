@@ -1,4 +1,4 @@
-/*	$NetBSD: frameasm.h,v 1.9 2007/11/14 11:09:49 ad Exp $	*/
+/*	$NetBSD: frameasm.h,v 1.10 2007/11/29 09:53:33 yamt Exp $	*/
 
 #ifndef _I386_FRAMEASM_H_
 #define _I386_FRAMEASM_H_
@@ -88,6 +88,14 @@
 	cmpl	$0, CPUVAR(WANT_PMAPLOAD)		; \
 	jz	1f					; \
 	call	_C_LABEL(pmap_load)			; \
+	1:
+
+#define	DO_DEFERRED_SWITCH_RETRY \
+	1:						; \
+	cmpl	$0, CPUVAR(WANT_PMAPLOAD)		; \
+	jz	1f					; \
+	call	_C_LABEL(pmap_load)			; \
+	jmp	1b					; \
 	1:
 
 #define	CHECK_DEFERRED_SWITCH \
