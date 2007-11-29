@@ -1,4 +1,4 @@
-/*	$NetBSD: opdump.c,v 1.18 2007/11/16 14:59:14 pooka Exp $	*/
+/*	$NetBSD: opdump.c,v 1.19 2007/11/29 17:22:04 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: opdump.c,v 1.18 2007/11/16 14:59:14 pooka Exp $");
+__RCSID("$NetBSD: opdump.c,v 1.19 2007/11/29 17:22:04 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -171,6 +171,9 @@ puffsdump_req(struct puffs_req *preq)
 		case PUFFS_VN_WRITE:
 			puffsdump_readwrite(preq);
 			break;
+		case PUFFS_VN_OPEN:
+			puffsdump_open(preq);
+			break;
 		default:
 			break;
 		}
@@ -252,6 +255,14 @@ puffsdump_readwrite(struct puffs_req *preq)
 
 	printf("\t\toffset: %" PRId64 ", resid %zu, ioflag 0x%x\n",
 	    rw_msg->pvnr_offset, rw_msg->pvnr_resid, rw_msg->pvnr_ioflag);
+}
+
+void
+puffsdump_open(struct puffs_req *preq)
+{
+	struct puffs_vnmsg_open *open_msg = (void *)preq;
+
+	printf("\t\tmode: 0x%x\n", open_msg->pvnr_mode);
 }
 
 void
