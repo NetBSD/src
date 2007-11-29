@@ -1,4 +1,4 @@
-/*	$NetBSD: dispatcher.c,v 1.22 2007/11/27 11:31:19 pooka Exp $	*/
+/*	$NetBSD: dispatcher.c,v 1.23 2007/11/29 17:47:55 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: dispatcher.c,v 1.22 2007/11/27 11:31:19 pooka Exp $");
+__RCSID("$NetBSD: dispatcher.c,v 1.23 2007/11/29 17:47:55 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -261,6 +261,7 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 	int error, rv, buildpath;
 
 	assert(pcc->pcc_flags & (PCC_FAKECC | PCC_REALCC | PCC_THREADED));
+	assert(pcc == puffs_cc_getcc(pu)); /* remove me soon */
 
 	if (PUFFSOP_WANTREPLY(preq->preq_opclass))
 		rv = PUFFCALL_ANSWER;
