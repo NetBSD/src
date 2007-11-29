@@ -1,4 +1,4 @@
-/* $NetBSD: kern_auth.c,v 1.55 2007/11/29 17:48:27 ad Exp $ */
+/* $NetBSD: kern_auth.c,v 1.56 2007/11/29 19:50:28 ad Exp $ */
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.55 2007/11/29 17:48:27 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.56 2007/11/29 19:50:28 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -103,7 +103,7 @@ struct kauth_cred {
 	 * sharing between CPUs.
 	 */
 	u_int cr_refcnt;		/* reference count */
-	u_int cr_pad[CACHE_LINE_SIZE - sizeof(u_int)];
+	uint8_t cr_pad[CACHE_LINE_SIZE - sizeof(u_int)];
 	uid_t cr_uid;			/* user id */
 	uid_t cr_euid;			/* effective user id */
 	uid_t cr_svuid;			/* saved effective user id */
@@ -198,7 +198,7 @@ kauth_cred_free(kauth_cred_t cred)
 	KASSERT(cred != NULL);
 	KASSERT(cred->cr_refcnt > 0);
 
-	if (atomic_dec_uint_nv(&cred->cr_refcnt) != 0)
+	if (atomic_dec_uint_nv(&cred->cr_refcnt) > 0)
 		return;
 
 	kauth_cred_hook(cred, KAUTH_CRED_FREE, NULL, NULL);
