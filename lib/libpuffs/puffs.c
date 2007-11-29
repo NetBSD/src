@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.77 2007/11/26 12:20:21 pooka Exp $	*/
+/*	$NetBSD: puffs.c,v 1.78 2007/11/29 17:47:55 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.77 2007/11/26 12:20:21 pooka Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.78 2007/11/29 17:47:55 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -155,7 +155,15 @@ puffs_getstate(struct puffs_usermount *pu)
 void
 puffs_setstacksize(struct puffs_usermount *pu, size_t ss)
 {
+	long psize;
 	int stackshift;
+
+	psize = sysconf(_SC_PAGESIZE);
+	if (ss < 2*psize) {
+		ss = 2*psize;
+		fprintf(stderr, "puffs_setstacksize: adjusting stacksize "
+		    "to minimum %zu\n", ss);
+	}
  
 	assert(puffs_getstate(pu) == PUFFS_STATE_BEFOREMOUNT);
 	stackshift = -1;
