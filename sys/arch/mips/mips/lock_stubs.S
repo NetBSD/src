@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.6 2007/11/29 00:14:27 ad Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.7 2007/11/29 01:04:20 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -108,6 +108,11 @@ END(_atomic_cas_ulong)
 STRONG_ALIAS(atomic_cas_ulong,_atomic_cas_ulong)
 STRONG_ALIAS(_atomic_cas_ptr,_atomic_cas_ulong)
 STRONG_ALIAS(atomic_cas_ptr,_atomic_cas_ulong)
+
+#if defined(__mips_n32) || defined(_LP64)
+STRONG_ALIAS(_atomic_cas_64,_atomic_cas_ulong)
+STRONG_ALIAS(atomic_cas_64,_atomic_cas_ulong)
+#endif
 
 /*
  * unsigned int _atomic_cas_uint(volatile unsigned int *val,
