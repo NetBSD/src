@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_add_64_nv_cas.c,v 1.3 2007/11/28 16:59:09 ad Exp $	*/
+/*	$NetBSD: atomic_add_64_nv_cas.c,v 1.4 2007/11/29 01:02:41 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -40,6 +40,8 @@
 
 #include <sys/atomic.h>
 
+#ifdef __HAVE_ATOMIC64_OPS
+
 uint64_t
 atomic_add_64_nv(volatile uint64_t *addr, int64_t val)
 {
@@ -65,3 +67,5 @@ __strong_alias(_atomic_add_long_nv,_atomic_add_64_nv)
 atomic_op_alias(atomic_add_ptr_nv,_atomic_add_64_nv)
 __strong_alias(_atomic_add_ptr_nv,_atomic_add_64_nv)
 #endif /* _LP64 */
+
+#endif
