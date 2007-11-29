@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.144 2007/11/26 19:02:10 pooka Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.145 2007/11/29 18:07:11 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.144 2007/11/26 19:02:10 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.145 2007/11/29 18:07:11 ad Exp $");
 
 #include "fs_union.h"
 #include "veriexec.h"
@@ -59,6 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.144 2007/11/26 19:02:10 pooka Exp $"
 #include <sys/kauth.h>
 #include <sys/syslog.h>
 #include <sys/fstrans.h>
+#include <sys/atomic.h>
 
 #include <miscfs/specfs/specdev.h>
 
@@ -244,9 +245,8 @@ vn_markexec(struct vnode *vp)
 	LOCK_ASSERT(simple_lock_held(&vp->v_interlock));
 
 	if ((vp->v_iflag & VI_EXECMAP) == 0) {
-		/* XXXSMP should be atomic */
-		uvmexp.filepages -= vp->v_uobj.uo_npages;
-		uvmexp.execpages += vp->v_uobj.uo_npages;
+		atomic_add_int(&uvmexp.filepages, -vp->v_uobj.uo_npages);
+		atomic_add_int(&uvmexp.execpages, vp->v_uobj.uo_npages);
 	}
 	vp->v_iflag |= VI_EXECMAP;
 }
