@@ -1,3 +1,8 @@
+2007-11-29  Yvan Vanhullebus  <vanhu@netasq.com>
+	From Natanael Copa <natanael.copa@gmail.com>:
+	* src/racoon/Makefile.am: fixed a race condition when building
+	  yacc stuff.
+	
 2007-11-06  Yvan Vanhullebus  <vanhu@netasq.com>
 	From Scott Lamb <slamb@slamb.org>
 	* src/racoon/plog.[ch]: new plog macro
