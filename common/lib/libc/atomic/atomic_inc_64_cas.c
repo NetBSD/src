@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_inc_64_cas.c,v 1.1 2007/11/29 15:27:58 ad Exp $	*/
+/*	$NetBSD: atomic_inc_64_cas.c,v 1.2 2007/11/29 17:29:41 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -57,9 +57,9 @@ atomic_inc_64(volatile uint64_t *addr)
 atomic_op_alias(atomic_inc_64,_atomic_inc_64)
 
 #if defined(_LP64)
-#undef atomic_inc_long
-atomic_op_alias(atomic_inc_long,_atomic_inc_64)
-__strong_alias(_atomic_inc_long,_atomic_inc_64)
+#undef atomic_inc_ulong
+atomic_op_alias(atomic_inc_ulong,_atomic_inc_64)
+__strong_alias(_atomic_inc_ulong,_atomic_inc_64)
 
 #undef atomic_inc_ptr
 atomic_op_alias(atomic_inc_ptr,_atomic_inc_64)
