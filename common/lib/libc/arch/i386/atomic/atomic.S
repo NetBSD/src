@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.S,v 1.3 2007/11/28 18:02:29 ad Exp $	*/
+/*	$NetBSD: atomic.S,v 1.4 2007/11/29 17:29:40 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -196,13 +196,13 @@ atomic_lockpatch:
 #endif	/* _KERNEL */
 
 ALIAS(atomic_add_32,_atomic_add_32)
-ALIAS(atomic_add_uint,_atomic_add_32)
-ALIAS(atomic_add_ulong,_atomic_add_32)
+ALIAS(atomic_add_int,_atomic_add_32)
+ALIAS(atomic_add_long,_atomic_add_32)
 ALIAS(atomic_add_ptr,_atomic_add_32)
 
 ALIAS(atomic_add_32_nv,_atomic_add_32_nv)
-ALIAS(atomic_add_uint_nv,_atomic_add_32_nv)
-ALIAS(atomic_add_ulong_nv,_atomic_add_32_nv)
+ALIAS(atomic_add_int_nv,_atomic_add_32_nv)
+ALIAS(atomic_add_long_nv,_atomic_add_32_nv)
 ALIAS(atomic_add_ptr_nv,_atomic_add_32_nv)
 
 ALIAS(atomic_and_32,_atomic_and_32)
