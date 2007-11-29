@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.162 2007/11/07 00:23:20 ad Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.163 2007/11/29 18:15:14 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.162 2007/11/07 00:23:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.163 2007/11/29 18:15:14 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,6 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.162 2007/11/07 00:23:20 ad Exp $"
 #include <sys/conf.h>
 #include <sys/event.h>
 #include <sys/kauth.h>
+#include <sys/atomic.h>
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
@@ -1156,9 +1157,7 @@ cwdshare(struct proc *p1, struct proc *p2)
 {
 	struct cwdinfo *cwdi = p1->p_cwdi;
 
-	rw_enter(&cwdi->cwdi_lock, RW_WRITER);
-	cwdi->cwdi_refcnt++;
-	rw_exit(&cwdi->cwdi_lock);
+	atomic_inc_uint(&cwdi->cwdi_refcnt);
 	p2->p_cwdi = cwdi;
 }
 
@@ -1186,12 +1185,8 @@ cwdunshare(struct proc *p)
 void
 cwdfree(struct cwdinfo *cwdi)
 {
-	int n;
 
-	rw_enter(&cwdi->cwdi_lock, RW_WRITER);
-	n = --cwdi->cwdi_refcnt;
-	rw_exit(&cwdi->cwdi_lock);
-	if (n > 0)
+	if (atomic_dec_uint_nv(&cwdi->cwdi_refcnt) > 0)
 		return;
 
 	vrele(cwdi->cwdi_cdir);
