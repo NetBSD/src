@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.8 2007/11/21 10:19:06 yamt Exp $	*/
+/*	$NetBSD: mutex.h,v 1.9 2007/11/29 15:17:45 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -49,9 +49,8 @@
  * compare-and-swap.
  *
  * So, what we have done is impement simple mutexes using a compare-and-swap.
- * We support pre-ARMv6 by implementing _lock_cas() as a restartable atomic
- * sequence that is checked by the IRQ vector.  MP-safe ARMv6 support will
- * be added later.
+ * We support pre-ARMv6 by implementing CAS as a restartable atomic sequence
+ * that is checked by the IRQ vector.  MP-safe ARMv6 support will be added later.
  */
 
 #ifndef __MUTEX_PRIVATE
@@ -98,9 +97,11 @@ struct kmutex {
  */
 #define	MUTEX_GIVE(mtx)			/* nothing */
 
-bool	_lock_cas(volatile uintptr_t *, uintptr_t, uintptr_t);
+unsigned long	_lock_cas(volatile unsigned long *,
+    unsigned long, unsigned long);
 
-#define	MUTEX_CAS(p, o, n)		_lock_cas((p), (o), (n))
+#define	MUTEX_CAS(p, o, n)		\
+    (_lock_cas((volatile unsigned long *)(p), (o), (n)) == (o))
 
 #endif	/* __MUTEX_PRIVATE */
 
