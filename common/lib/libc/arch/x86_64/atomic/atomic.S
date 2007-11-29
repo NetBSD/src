@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.S,v 1.4 2007/11/29 17:29:41 ad Exp $	*/
+/*	$NetBSD: atomic.S,v 1.5 2007/11/29 21:59:47 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -121,7 +121,8 @@ NENTRY(_atomic_or_32_nv)
 	ret
 
 NENTRY(_atomic_swap_32)
-	xchgl	%esi, (%rdi)
+	movl	%esi, %eax
+	xchgl	%eax, (%rdi)
 	ret
 
 NENTRY(_atomic_cas_32)
@@ -202,7 +203,8 @@ NENTRY(_atomic_or_64_nv)
 	ret
 
 NENTRY(_atomic_swap_64)
-	xchgq	%rsi, (%rdi)
+	movq	%rsi, %rax
+	xchgq	%rax, (%rdi)
 	ret
 
 NENTRY(_atomic_cas_64)
