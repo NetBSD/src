@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.77 2006/11/24 22:54:47 wiz Exp $ */
+/*	$NetBSD: mbr.c,v 1.78 2007/11/29 23:20:47 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -904,8 +904,8 @@ edit_mbr_bootmenu(menudesc *m, void *arg)
 		opt = 0;
 
 	msg_prompt_win(/* XXX translate? */ "bootmenu", -1, 18, 0, 0,
-		(char *) mbri->mbrb.mbrbs_nametab[opt],
-		(char *) mbri->mbrb.mbrbs_nametab[opt],
+		mbri->mbrb.mbrbs_nametab[opt],
+		mbri->mbrb.mbrbs_nametab[opt],
 		sizeof mbri->mbrb.mbrbs_nametab[opt]);
 	if (mbri->mbrb.mbrbs_nametab[opt][0] == ' ')
 		mbri->mbrb.mbrbs_nametab[opt][0] = 0;
