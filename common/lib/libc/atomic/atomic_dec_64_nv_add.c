@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_dec_64_nv_add.c,v 1.2 2007/11/28 16:55:04 ad Exp $	*/
+/*	$NetBSD: atomic_dec_64_nv_add.c,v 1.3 2007/11/29 01:02:42 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -40,6 +40,8 @@
 
 #include <sys/atomic.h>
 
+#ifdef __HAVE_ATOMIC64_OPS
+
 uint64_t
 atomic_dec_64_nv(volatile uint64_t *addr)
 {
@@ -57,3 +59,5 @@ __strong_alias(_atomic_dec_ulong_nv,_atomic_dec_64_nv)
 atomic_op_alias(atomic_dec_ptr_nv,_atomic_dec_64_nv)
 __strong_alias(_atomic_dec_ptr_nv,_atomic_dec_64_nv)
 #endif /* _LP64 */
+
+#endif
