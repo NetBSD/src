@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.225 2007/11/28 14:02:30 yamt Exp $	*/
+/*	$NetBSD: trap.c,v 1.226 2007/11/29 09:53:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2005 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.225 2007/11/28 14:02:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.226 2007/11/29 09:53:33 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -230,6 +230,30 @@ xmm_si_code(struct lwp *l)
         }
 }
 
+static void *
+onfault_handler(const struct pcb *pcb, const struct trapframe *tf)
+{
+	struct onfault_table {
+		uintptr_t start;
+		uintptr_t end;
+		void *handler;
+	};
+	extern const struct onfault_table onfault_table[];
+	const struct onfault_table *p;
+	uintptr_t pc;
+
+	if (pcb->pcb_onfault != NULL) {
+		return pcb->pcb_onfault;
+	}
+
+	pc = tf->tf_eip;
+	for (p = onfault_table; p->start; p++) {
+		if (p->start <= pc && pc < p->end) {
+			return p->handler;
+		}
+	}
+	return NULL;
+}
 
 /*
  * trap(frame):
@@ -351,11 +375,12 @@ trap(frame)
 		if (p == NULL)
 			goto we_re_toast;
 		/* Check for copyin/copyout fault. */
-		if (pcb->pcb_onfault != 0) {
+		onfault = onfault_handler(pcb, frame);
+		if (onfault != NULL) {
 copyefault:
 			error = EFAULT;
 copyfault:
-			frame->tf_eip = (int)pcb->pcb_onfault;
+			frame->tf_eip = (uintptr_t)onfault;
 			frame->tf_eax = error;
 			return;
 		}
@@ -570,8 +595,9 @@ copyfault:
 		 * fusubail is used by [fs]uswintr() to prevent page faulting
 		 * from inside the profiling interrupt.
 		 */
-		if (pcb->pcb_onfault == fusubail)
+		if ((onfault = pcb->pcb_onfault) == fusubail) {
 			goto copyefault;
+		}
 
 #if 0
 		/* XXX - check only applies to 386's and 486's with WP off */
@@ -652,9 +678,13 @@ copyfault:
 				 * it never touch userspace.
 				 */
 
-				if (onfault != kcopy_fault &&
-				    curcpu()->ci_want_pmapload)
-					pmap_load();
+				if (curcpu()->ci_want_pmapload) {
+					onfault = onfault_handler(pcb, frame);
+					if (onfault != NULL &&
+					    onfault != kcopy_fault) {
+						pmap_load();
+					}
+				}
 				return;
 			}
 			KERNEL_UNLOCK_LAST(l);
@@ -671,7 +701,8 @@ copyfault:
 		}
 
 		if (type == T_PAGEFLT) {
-			if (pcb->pcb_onfault != 0) {
+			onfault = onfault_handler(pcb, frame);
+			if (onfault != NULL) {
 				KERNEL_UNLOCK_ONE(NULL);
 				goto copyfault;
 			}
