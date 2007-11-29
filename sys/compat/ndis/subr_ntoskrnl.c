@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sys/compat/ndis/subr_ntoskrnl.c,v 1.43.2.5 2005/03/31 04:24:36 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: subr_ntoskrnl.c,v 1.10 2007/10/19 12:16:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_ntoskrnl.c,v 1.11 2007/11/29 14:29:29 ad Exp $");
 #endif
 
 #ifdef __FreeBSD__
@@ -65,7 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_ntoskrnl.c,v 1.10 2007/10/19 12:16:40 ad Exp $"
 #include <sys/lkm.h>
 #endif
 
-#include <machine/atomic.h>
+#include <sys/atomic.h>
 #ifdef __FreeBSD__
 #include <machine/clock.h>
 #include <machine/bus_memio.h>
@@ -2002,7 +2002,7 @@ KeAcquireSpinLockRaiseToDpc(kspin_lock *lock)
 __stdcall void
 KeAcquireSpinLockAtDpcLevel(kspin_lock *lock)
 {
-	while (atomic_cmpset_acq_int((volatile u_int *)lock, 0, 1) == 0)
+	while (atomic_swap_uint((volatile u_int *)lock, 1) == 1)
 		/* sit and spin */;
 
 	return;
@@ -2011,7 +2011,7 @@ KeAcquireSpinLockAtDpcLevel(kspin_lock *lock)
 __stdcall void
 KeReleaseSpinLockFromDpcLevel(kspin_lock *lock)
 {
-	atomic_store_rel_int((volatile u_int *)lock, 0);
+	*(volatile u_int *)lock = 0;
 
 	return;
 }
@@ -2034,14 +2034,14 @@ InterlockedExchange(REGARGS2(volatile uint32_t *dst, uintptr_t val))
 __fastcall static uint32_t
 InterlockedIncrement(REGARGS1(volatile uint32_t *addend))
 {
-	atomic_add_long((volatile u_long *)addend, 1);
+	atomic_inc_32(addend);
 	return(*addend);
 }
 
 __fastcall static uint32_t
 InterlockedDecrement(REGARGS1(volatile uint32_t *addend))
 {
-	atomic_subtract_long((volatile u_long *)addend, 1);
+	atomic_dec_32(addend);
 	return(*addend);
 }
 
