@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_aio.c,v 1.11 2007/11/29 17:52:27 ad Exp $	*/
+/*	$NetBSD: sys_aio.c,v 1.12 2007/11/29 18:17:01 rmind Exp $	*/
 
 /*
  * Copyright (c) 2007, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.11 2007/11/29 17:52:27 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.12 2007/11/29 18:17:01 rmind Exp $");
 
 #include "opt_ddb.h"
 
@@ -145,7 +145,7 @@ aio_init(struct proc *p)
 	p->p_nrlwps++;
 	lwp_lock(l);
 	l->l_stat = LSRUN;
-	l->l_priority = PRI_KERNEL - 1;
+	l->l_priority = MAXPRI_USER;
 	sched_enqueue(l, false);
 	lwp_unlock(l);
 	mutex_exit(&p->p_smutex);
@@ -411,8 +411,8 @@ aio_enqueue_job(int op, void *aiocb_uptr, struct lio_req *lio)
 	struct sigevent *sig;
 	int error;
 
-	/* Check for the limit */
-	if (aio_jobs_count + 1 > aio_max) /* XXXSMP */
+	/* Non-accurate check for the limit */
+	if (aio_jobs_count + 1 > aio_max)
 		return EAGAIN;
 
 	/* Get the data structure from user-space */
@@ -509,7 +509,11 @@ aio_enqueue_job(int op, void *aiocb_uptr, struct lio_req *lio)
 	mutex_enter(&aio->aio_mtx);
 
 	/* Fail, if the limit was reached */
-	if (aio->jobs_count >= aio_listio_max) {
+	if (atomic_inc_uint_nv(&aio_jobs_count) > aio_max) {
+		atomic_dec_uint(&aio_jobs_count);
+		error = EAGAIN;
+	}
+	if (error || aio->jobs_count >= aio_listio_max) {
 		mutex_exit(&aio->aio_mtx);
 		pool_put(&aio_job_pool, a_job);
 		return EAGAIN;
@@ -852,10 +856,10 @@ sys_lio_listio(struct lwp *l, void *v, register_t *retval)
 	mode = SCARG(uap, mode);
 	nent = SCARG(uap, nent);
 
-	/* Check for the limits, and invalid values */
+	/* Non-accurate checks for the limit and invalid values */
 	if (nent < 1 || nent > aio_listio_max)
 		return EINVAL;
-	if (aio_jobs_count + nent > aio_max) /* XXXSMP */
+	if (aio_jobs_count + nent > aio_max)
 		return EAGAIN;
 
 	/* Check if AIO structure is initialized, if not - initialize it */
@@ -969,7 +973,6 @@ sysctl_aio_listio_max(SYSCTLFN_ARGS)
 	if (error || newp == NULL)
 		return error;
 
-	/* XXXSMP */
 	if (newsize < 1 || newsize > aio_max)
 		return EINVAL;
 	aio_listio_max = newsize;
@@ -991,7 +994,6 @@ sysctl_aio_max(SYSCTLFN_ARGS)
 	if (error || newp == NULL)
 		return error;
 
-	/* XXXSMP */
 	if (newsize < 1 || newsize < aio_listio_max)
 		return EINVAL;
 	aio_max = newsize;
