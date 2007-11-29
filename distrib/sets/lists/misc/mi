@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.148 2007/11/12 15:04:02 jmmv Exp $
+# $NetBSD: mi,v 1.149 2007/11/29 12:35:04 mjf Exp $
 ./etc/mtree/set.misc				misc-sys-root
 ./usr/share/dict/README				misc-reference-share	share
 ./usr/share/dict/american			misc-reference-share	share
@@ -538,6 +538,8 @@
 ./usr/share/doc/smm/11.timedop/timed.ms		misc-smm-doc		doc
 ./usr/share/doc/smm/12.timed/Makefile		misc-smm-doc		doc
 ./usr/share/doc/smm/12.timed/timed.ms		misc-smm-doc		doc
+./usr/share/doc/smm/17.password/Makefile	misc-smm-doc		doc
+./usr/share/doc/smm/17.password/password.ms	misc-smm-doc		doc
 ./usr/share/doc/smm/18.net/0.t			misc-smm-doc		doc
 ./usr/share/doc/smm/18.net/1.t			misc-smm-doc		doc
 ./usr/share/doc/smm/18.net/2.t			misc-smm-doc		doc
@@ -558,6 +560,14 @@
 ./usr/share/doc/smm/Makefile			misc-smm-doc		doc
 ./usr/share/doc/smm/Title			misc-smm-doc		doc
 ./usr/share/doc/usd/00.contents			misc-usd-doc		doc
+./usr/share/doc/usd/01.begin/Makefile		misc-usd-doc		doc
+./usr/share/doc/usd/01.begin/u.mac		misc-usd-doc		doc
+./usr/share/doc/usd/01.begin/u0			misc-usd-doc		doc
+./usr/share/doc/usd/01.begin/u1			misc-usd-doc		doc
+./usr/share/doc/usd/01.begin/u2			misc-usd-doc		doc
+./usr/share/doc/usd/01.begin/u3			misc-usd-doc		doc
+./usr/share/doc/usd/01.begin/u4			misc-usd-doc		doc
+./usr/share/doc/usd/01.begin/u5			misc-usd-doc		doc
 ./usr/share/doc/usd/04.csh/Makefile		misc-usd-doc		doc
 ./usr/share/doc/usd/04.csh/csh.1		misc-usd-doc		doc
 ./usr/share/doc/usd/04.csh/csh.2		misc-usd-doc		doc
@@ -598,6 +608,9 @@
 ./usr/share/doc/usd/13.viref/spell.ok		misc-obsolete		obsolete
 ./usr/share/doc/usd/13.viref/vi.cmd.roff	misc-usd-doc		doc
 ./usr/share/doc/usd/13.viref/vi.ref		misc-usd-doc		doc
+./usr/share/doc/usd/17.msmacros/Makefile	misc-usd-doc		doc
+./usr/share/doc/usd/17.msmacros/fig1.pic	misc-usd-doc		doc
+./usr/share/doc/usd/17.msmacros/ms
 ./usr/share/doc/usd/18.msdiffs/Makefile		misc-usd-doc		doc
 ./usr/share/doc/usd/18.msdiffs/ms.diffs		misc-usd-doc		doc
 ./usr/share/doc/usd/19.memacros/Makefile	misc-usd-doc		doc
