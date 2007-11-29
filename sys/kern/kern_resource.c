@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.125 2007/11/29 18:21:03 ad Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.126 2007/11/29 18:33:29 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.125 2007/11/29 18:21:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.126 2007/11/29 18:33:29 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -626,10 +626,6 @@ limfree(struct plimit *lim)
 	do {
 		if (atomic_dec_uint_nv(&lim->pl_refcnt) > 0)
 			return;
-#ifdef DIAGNOSTIC
-		if (n < 0)
-			panic("limfree");
-#endif
 		if (lim->pl_corename != defcorename)
 			free(lim->pl_corename, M_TEMP);
 		sv_lim = lim->pl_sv_limit;
