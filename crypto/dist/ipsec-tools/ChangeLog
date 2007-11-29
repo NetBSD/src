@@ -1,3 +1,8 @@
+2007-11-29  Yvan Vanhullebus  <vanhu@netasq.com>
+	From Natanael Copa <natanael.copa@gmail.com>:
+	* src/racoon/Makefile.am: fixed a race condition when building
+	  yacc stuff.
+	
 2007-11-09  Yvan Vanhullebus  <vanhu@netasq.com>
 	From Arnaud Ebalard <arno@natisbad.org>:
 	* src/racoon/pfkey.c: Some sanity check in pk_recv()
