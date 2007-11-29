@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.163 2007/11/29 18:15:14 ad Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.164 2007/11/29 18:17:47 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.163 2007/11/29 18:15:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.164 2007/11/29 18:17:47 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1240,10 +1240,8 @@ fdshare(struct proc *p1, struct proc *p2)
 {
 	struct filedesc *fdp = p1->p_fd;
 
-	rw_enter(&fdp->fd_lock, RW_WRITER);
 	p2->p_fd = fdp;
-	fdp->fd_refcnt++;
-	rw_exit(&fdp->fd_lock);
+	atomic_inc_uint(&fdp->fd_refcnt);
 }
 
 /*
@@ -1403,10 +1401,7 @@ fdfree(struct lwp *l)
 	int		i;
 
 	fdp = p->p_fd;
-	rw_enter(&fdp->fd_lock, RW_WRITER);
-	i = --fdp->fd_refcnt;
-	rw_exit(&fdp->fd_lock);
-	if (i > 0)
+	if (atomic_dec_uint_nv(&fdp->fd_refcnt) > 0)
 		return;
 
 	rw_destroy(&fdp->fd_lock);
