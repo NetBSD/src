@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.109 2007/11/29 23:02:00 dsl Exp $ */
+/*	$NetBSD: fdisk.c,v 1.110 2007/11/29 23:19:25 dsl Exp $ */
 
 /*
  * Mach Operating System
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.109 2007/11/29 23:02:00 dsl Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.110 2007/11/29 23:19:25 dsl Exp $");
 #endif /* not lint */
 
 #define MBRPTYPENAMES
@@ -219,7 +219,7 @@ void	print_s0(int);
 void	print_part(struct mbr_sector *, int, daddr_t);
 void	print_mbr_partition(struct mbr_sector *, int, daddr_t, daddr_t, int);
 void	print_pbr(daddr_t, int, uint8_t);
-int	is_all_zero(const char *, size_t);
+int	is_all_zero(const unsigned char *, size_t);
 void	printvis(int, const char *, const char *, size_t);
 int	read_boot(const char *, void *, size_t, int);
 void	init_sector0(int);
@@ -792,7 +792,7 @@ printvis(int indent, const char *label, const char *buf, size_t size)
 
 /* Check whether a buffer contains all bytes zero */
 int
-is_all_zero(const char *p, size_t size)
+is_all_zero(const unsigned char *p, size_t size)
 {
 
 	while (size-- > 0) {
@@ -850,7 +850,7 @@ print_pbr(daddr_t sector, int indent, uint8_t part_type)
 	}
 
 	/* all bytes identical? */
-	p = (char *)&pboot;
+	p = (unsigned char *)&pboot;
 	endp = p + sizeof(pboot);
 	val = *p;
 	ok = 0;
