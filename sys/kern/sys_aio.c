@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_aio.c,v 1.10 2007/11/28 19:30:56 rmind Exp $	*/
+/*	$NetBSD: sys_aio.c,v 1.11 2007/11/29 17:52:27 ad Exp $	*/
 
 /*
  * Copyright (c) 2007, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.10 2007/11/28 19:30:56 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.11 2007/11/29 17:52:27 ad Exp $");
 
 #include "opt_ddb.h"
 
@@ -55,12 +55,12 @@ __KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.10 2007/11/28 19:30:56 rmind Exp $");
 #include <sys/systm.h>
 #include <sys/types.h>
 #include <sys/vnode.h>
+#include <sys/atomic.h>
 
 #include <uvm/uvm_extern.h>
 
 /*
  * System-wide limits and counter of AIO operations.
- * XXXSMP: We should spin-lock it, or modify atomically.
  */
 static u_int aio_listio_max = AIO_LISTIO_MAX;
 static u_int aio_max = AIO_MAX;
@@ -169,7 +169,7 @@ aio_exit(struct proc *p, struct aioproc *aio)
 		a_job = TAILQ_FIRST(&aio->jobs_queue);
 		TAILQ_REMOVE(&aio->jobs_queue, a_job, list);
 		pool_put(&aio_job_pool, a_job);
-		aio_jobs_count--; /* XXXSMP */
+		atomic_dec_uint(&aio_jobs_count);
 	}
 
 	/* Destroy and free the entire AIO data structure */
@@ -224,7 +224,7 @@ aio_worker(void *arg)
 		aio->curjob = a_job;
 		TAILQ_REMOVE(&aio->jobs_queue, a_job, list);
 
-		aio_jobs_count--; /* XXXSMP */
+		atomic_dec_uint(&aio_jobs_count);
 		aio->jobs_count--;
 
 		mutex_exit(&aio->aio_mtx);
@@ -516,7 +516,7 @@ aio_enqueue_job(int op, void *aiocb_uptr, struct lio_req *lio)
 	}
 
 	TAILQ_INSERT_TAIL(&aio->jobs_queue, a_job, list);
-	aio_jobs_count++; /* XXXSMP */
+	atomic_inc_uint(&aio_jobs_count);
 	aio->jobs_count++;
 	if (lio)
 		lio->refcnt++;
@@ -586,7 +586,7 @@ sys_aio_cancel(struct lwp *l, void *v, register_t *retval)
 		TAILQ_INSERT_TAIL(&tmp_jobs_list, a_job, list);
 
 		/* Decrease the counters */
-		aio_jobs_count--; /* XXXSMP */
+		atomic_dec_uint(&aio_jobs_count);
 		aio->jobs_count--;
 		lio = a_job->lio;
 		if (lio != NULL && --lio->refcnt != 0)
