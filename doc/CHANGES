@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.954 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.955 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -60,6 +60,8 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		power and overheating in CPUs supporting the Thermal
 		Monitor feature (TM). Adapted from OpenBSD/FreeBSD.
 		See options(4) for more information. [xtraeme 20070320]
+	kernel: Import of DRM (Direct Rendering Manager).  Not yet enabled
+		by default. [drochner 20070320]
 	libc: add support for LC_TIME [manu 20070328]
 	genfb: generic framebuffer console driver with PCI and SBus
 		frontends [macallan 20070411]
