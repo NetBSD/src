@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_dec_32_cas.c,v 1.1 2007/11/29 15:27:57 ad Exp $	*/
+/*	$NetBSD: atomic_dec_32_cas.c,v 1.2 2007/11/29 17:29:41 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -54,14 +54,14 @@ atomic_dec_32(volatile uint32_t *addr)
 #undef atomic_dec_32
 atomic_op_alias(atomic_dec_32,_atomic_dec_32)
 
-#undef atomic_dec_int
-atomic_op_alias(atomic_dec_int,_atomic_dec_32)
-__strong_alias(_atomic_dec_int,_atomic_dec_32)
+#undef atomic_dec_uint
+atomic_op_alias(atomic_dec_uint,_atomic_dec_32)
+__strong_alias(_atomic_dec_uint,_atomic_dec_32)
 
 #if !defined(_LP64)
-#undef atomic_dec_long
-atomic_op_alias(atomic_dec_long,_atomic_dec_32)
-__strong_alias(_atomic_dec_long,_atomic_dec_32)
+#undef atomic_dec_ulong
+atomic_op_alias(atomic_dec_ulong,_atomic_dec_32)
+__strong_alias(_atomic_dec_ulong,_atomic_dec_32)
 
 #undef atomic_dec_ptr
 atomic_op_alias(atomic_dec_ptr,_atomic_dec_32)
