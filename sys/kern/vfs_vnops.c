@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.145 2007/11/29 18:07:11 ad Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.146 2007/11/30 16:52:21 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.145 2007/11/29 18:07:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.146 2007/11/30 16:52:21 yamt Exp $");
 
 #include "fs_union.h"
 #include "veriexec.h"
@@ -175,20 +175,9 @@ vn_open(struct nameidata *ndp, int fmode, int cmode)
 	}
 
 	if ((fmode & O_CREAT) == 0) {
-		if (fmode & FREAD) {
-			if ((error = VOP_ACCESS(vp, VREAD, cred)) != 0)
-				goto bad;
-		}
-
-		if (fmode & (FWRITE | O_TRUNC)) {
-			if (vp->v_type == VDIR) {
-				error = EISDIR;
-				goto bad;
-			}
-			if ((error = vn_writechk(vp)) != 0 ||
-			    (error = VOP_ACCESS(vp, VWRITE, cred)) != 0)
-				goto bad;
-		}
+		error = vn_openchk(vp, cred, fmode);
+		if (error != 0)
+			goto bad;
 	}
 
 	if (fmode & O_TRUNC) {
@@ -233,6 +222,30 @@ vn_writechk(struct vnode *vp)
 	if (vp->v_iflag & VI_TEXT)
 		return (ETXTBSY);
 	return (0);
+}
+
+int
+vn_openchk(struct vnode *vp, kauth_cred_t cred, int fflags)
+{
+	int permbits = 0;
+	int error;
+
+	if ((fflags & FREAD) != 0) {
+		permbits = VREAD;
+	}
+	if ((fflags & (FWRITE | O_TRUNC)) != 0) {
+		permbits |= VWRITE;
+		if (vp->v_type == VDIR) {
+			error = EISDIR;
+			goto bad;
+		}
+		error = vn_writechk(vp);
+		if (error != 0)
+			goto bad;
+	}
+	error = VOP_ACCESS(vp, permbits, cred);
+bad:
+	return error;
 }
 
 /*
