@@ -1,4 +1,4 @@
-/*      $NetBSD: subr.c,v 1.36 2007/11/16 15:53:47 pooka Exp $        */
+/*      $NetBSD: subr.c,v 1.37 2007/11/30 16:24:04 pooka Exp $        */
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: subr.c,v 1.36 2007/11/16 15:53:47 pooka Exp $");
+__RCSID("$NetBSD: subr.c,v 1.37 2007/11/30 16:24:04 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -119,6 +119,95 @@ lookup_by_entry(struct psshfs_dir *bdir, size_t ndir, struct puffs_node *entry)
 	}
 
 	return NULL;
+}
+
+
+void
+closehandles(struct puffs_usermount *pu, struct psshfs_node *psn, int which)
+{
+	struct psshfs_ctx *pctx = puffs_getspecific(pu);
+	struct puffs_framebuf *pb1, *pb2;
+	uint32_t reqid;
+
+	if (psn->fhand_r && (which & HANDLE_READ)) {
+		assert(psn->lazyopen_r == NULL);
+
+		pb1 = psbuf_makeout();
+		reqid = NEXTREQ(pctx);
+		psbuf_req_data(pb1, SSH_FXP_CLOSE, reqid,
+		    psn->fhand_r, psn->fhand_r_len);
+		puffs_framev_enqueue_justsend(pu, pctx->sshfd, pb1, 1, 0);
+		free(psn->fhand_r);
+		psn->fhand_r = NULL;
+	}
+
+	if (psn->fhand_w && (which & HANDLE_WRITE)) {
+		assert(psn->lazyopen_w == NULL);
+
+		pb2 = psbuf_makeout();
+		reqid = NEXTREQ(pctx);
+		psbuf_req_data(pb2, SSH_FXP_CLOSE, reqid,
+		    psn->fhand_w, psn->fhand_w_len);
+		puffs_framev_enqueue_justsend(pu, pctx->sshfd, pb2, 1, 0);
+		free(psn->fhand_w);
+		psn->fhand_w = NULL;
+	}
+
+	psn->stat |= PSN_HANDLECLOSE;
+}
+
+void
+lazyopen_rresp(struct puffs_usermount *pu, struct puffs_framebuf *pb,
+	void *arg, int error)
+{
+	struct psshfs_node *psn = arg;
+
+	/* XXX: this is not enough */
+	if (psn->stat & PSN_RECLAIMED) {
+		error = ENOENT;
+		goto moreout;
+	}
+	if (error)
+		goto out;
+
+	error = psbuf_expect_handle(pb, &psn->fhand_r, &psn->fhand_r_len);
+
+ out:
+	psn->lazyopen_err_r = error;
+	psn->lazyopen_r = NULL;
+	if (error)
+		psn->stat &= ~PSN_DOLAZY_R;
+	if (psn->stat & PSN_HANDLECLOSE && (psn->stat & PSN_LAZYWAIT_R) == 0)
+		closehandles(pu, psn, HANDLE_READ);
+ moreout:
+	puffs_framebuf_destroy(pb);
+}
+
+void
+lazyopen_wresp(struct puffs_usermount *pu, struct puffs_framebuf *pb,
+	void *arg, int error)
+{
+	struct psshfs_node *psn = arg;
+
+	/* XXX: this is not enough */
+	if (psn->stat & PSN_RECLAIMED) {
+		error = ENOENT;
+		goto moreout;
+	}
+	if (error)
+		goto out;
+
+	error = psbuf_expect_handle(pb, &psn->fhand_w, &psn->fhand_w_len);
+
+ out:
+	psn->lazyopen_err_w = error;
+	psn->lazyopen_w = NULL;
+	if (error)
+		psn->stat &= ~PSN_DOLAZY_W;
+	if (psn->stat & PSN_HANDLECLOSE && (psn->stat & PSN_LAZYWAIT_W) == 0)
+		closehandles(pu, psn, HANDLE_WRITE);
+ moreout:
+	puffs_framebuf_destroy(pb);
 }
 
 struct readdirattr {
