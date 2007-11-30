@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.72 2007/11/28 14:02:31 yamt Exp $
+#	$NetBSD: files.xen,v 1.73 2007/11/30 22:56:05 dsl Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -420,5 +420,5 @@ file	arch/xen/xen/xbdback_xenbus.c xbdback & xen3
 ifdef i386
 include "arch/i386/conf/majors.i386"
 elifdef amd64
-include "arch/amd64/conf/majors.amd64"
+# include "arch/amd64/conf/majors.amd64"
 endif
