@@ -1,4 +1,4 @@
-/*	$NetBSD: jemalloc.c,v 1.12 2007/11/29 18:46:13 ad Exp $	*/
+/*	$NetBSD: jemalloc.c,v 1.13 2007/11/30 17:09:22 christos Exp $	*/
 
 /*-
  * Copyright (C) 2006,2007 Jason Evans <jasone@FreeBSD.org>.
@@ -118,7 +118,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/lib/libc/stdlib/malloc.c,v 1.147 2007/06/15 22:00:16 jasone Exp $"); */ 
-__RCSID("$NetBSD: jemalloc.c,v 1.12 2007/11/29 18:46:13 ad Exp $");
+__RCSID("$NetBSD: jemalloc.c,v 1.13 2007/11/30 17:09:22 christos Exp $");
 
 #ifdef __FreeBSD__
 #include "libc_private.h"
@@ -724,7 +724,7 @@ static unsigned		next_arena;
 static malloc_mutex_t	arenas_mtx; /* Protects arenas initialization. */
 
 static thread_key_t arenas_map_key;
-#define	get_arenas_map()	((unsigned)thr_getspecific(arenas_map_key))
+#define	get_arenas_map()	((uintptr_t)thr_getspecific(arenas_map_key))
 #define	set_arenas_map(x)	thr_setspecific(arenas_map_key, (void *)x)
 
 #ifdef MALLOC_STATS
