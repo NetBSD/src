@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_dec.S,v 1.2 2007/11/28 17:29:32 ad Exp $	*/
+/*	$NetBSD: atomic_dec.S,v 1.3 2007/11/30 17:11:48 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 	.text
 
-ENTRY_NOPROFILE(_atomic_inc_32)
+ENTRY_NOPROFILE(_atomic_dec_32)
 	ld	[%o0], %o2
 1:	add	%o2, -1, %o3
 	cas	[%o0], %o2, %o3
@@ -49,16 +49,16 @@ ENTRY_NOPROFILE(_atomic_inc_32)
 	 mov	%o3, %o2
 	retl
 	 add	%o2, -1, %o0
-ATOMIC_OP_ALIAS(atomic_inc_32,_atomic_inc_32)
-ATOMIC_OP_ALIAS(atomic_inc_uint,_atomic_inc_32)
-STRONG_ALIAS(_atomic_inc_uint,_atomic_inc_32)
+ATOMIC_OP_ALIAS(atomic_dec_32,_atomic_dec_32)
+ATOMIC_OP_ALIAS(atomic_dec_uint,_atomic_dec_32)
+STRONG_ALIAS(_atomic_dec_uint,_atomic_dec_32)
 
-ATOMIC_OP_ALIAS(atomic_inc_32_nv,_atomic_inc_32)
-STRONG_ALIAS(_atomic_inc_32_nv,_atomic_inc_32)
-ATOMIC_OP_ALIAS(atomic_inc_uint_nv,_atomic_inc_32)
-STRONG_ALIAS(_atomic_inc_uint_nv,_atomic_inc_32)
+ATOMIC_OP_ALIAS(atomic_dec_32_nv,_atomic_dec_32)
+STRONG_ALIAS(_atomic_dec_32_nv,_atomic_dec_32)
+ATOMIC_OP_ALIAS(atomic_dec_uint_nv,_atomic_dec_32)
+STRONG_ALIAS(_atomic_dec_uint_nv,_atomic_dec_32)
 
-ENTRY_NOPROFILE(_atomic_inc_64)
+ENTRY_NOPROFILE(_atomic_dec_64)
 	ldx	[%o0], %o2
 1:	add	%o2, -1, %o3
 	casx	[%o0], %o2, %o3
@@ -67,15 +67,15 @@ ENTRY_NOPROFILE(_atomic_inc_64)
 	 mov	%o3, %o2
 	retl
 	 add	%o2, -1, %o0
-ATOMIC_OP_ALIAS(atomic_inc_64,_atomic_inc_64)
-ATOMIC_OP_ALIAS(atomic_inc_ulong,_atomic_inc_64)
-STRONG_ALIAS(_atomic_inc_ulong,_atomic_inc_64)
-ATOMIC_OP_ALIAS(atomic_inc_ptr,_atomic_inc_64)
-STRONG_ALIAS(_atomic_inc_ptr,_atomic_inc_64)
+ATOMIC_OP_ALIAS(atomic_dec_64,_atomic_dec_64)
+ATOMIC_OP_ALIAS(atomic_dec_ulong,_atomic_dec_64)
+STRONG_ALIAS(_atomic_dec_ulong,_atomic_dec_64)
+ATOMIC_OP_ALIAS(atomic_dec_ptr,_atomic_dec_64)
+STRONG_ALIAS(_atomic_dec_ptr,_atomic_dec_64)
 
-ATOMIC_OP_ALIAS(atomic_inc_64_nv,_atomic_inc_64)
-STRONG_ALIAS(_atomic_inc_64_nv,_atomic_inc_64)
-ATOMIC_OP_ALIAS(atomic_inc_ulong_nv,_atomic_inc_64)
-STRONG_ALIAS(_atomic_inc_ulong_nv,_atomic_inc_64)
-ATOMIC_OP_ALIAS(atomic_inc_ptr_nv,_atomic_inc_64)
-STRONG_ALIAS(_atomic_inc_ptr_nv,_atomic_inc_64)
+ATOMIC_OP_ALIAS(atomic_dec_64_nv,_atomic_dec_64)
+STRONG_ALIAS(_atomic_dec_64_nv,_atomic_dec_64)
+ATOMIC_OP_ALIAS(atomic_dec_ulong_nv,_atomic_dec_64)
+STRONG_ALIAS(_atomic_dec_ulong_nv,_atomic_dec_64)
+ATOMIC_OP_ALIAS(atomic_dec_ptr_nv,_atomic_dec_64)
+STRONG_ALIAS(_atomic_dec_ptr_nv,_atomic_dec_64)
