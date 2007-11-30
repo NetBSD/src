@@ -1,4 +1,4 @@
-/*	$NetBSD: rot13fs.c,v 1.15 2007/11/16 18:39:02 pooka Exp $	*/
+/*	$NetBSD: rot13fs.c,v 1.16 2007/11/30 19:02:38 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -189,7 +189,7 @@ main(int argc, char *argv[])
 }
 
 int
-rot13_node_readdir(struct puffs_cc *pcc, void *opc, struct dirent *dent,
+rot13_node_readdir(struct puffs_usermount *pu, void *opc, struct dirent *dent,
 	off_t *readoff, size_t *reslen, const struct puffs_cred *pcr,
 	int *eofflag, off_t *cookies, size_t *ncookies)
 {
@@ -200,7 +200,7 @@ rot13_node_readdir(struct puffs_cc *pcc, void *opc, struct dirent *dent,
 	dp = dent;
 	rl = *reslen;
 
-	rv = puffs_null_node_readdir(pcc, opc, dent, readoff, reslen, pcr,
+	rv = puffs_null_node_readdir(pu, opc, dent, readoff, reslen, pcr,
 	    eofflag, cookies, ncookies);
 	if (rv)
 		return rv;
@@ -215,14 +215,15 @@ rot13_node_readdir(struct puffs_cc *pcc, void *opc, struct dirent *dent,
 }
 
 int
-rot13_node_read(struct puffs_cc *pcc, void *opc, uint8_t *buf, off_t offset,
-	size_t *resid, const struct puffs_cred *pcr, int ioflag)
+rot13_node_read(struct puffs_usermount *pu, void *opc,
+	uint8_t *buf, off_t offset, size_t *resid,
+	const struct puffs_cred *pcr, int ioflag)
 {
 	uint8_t *prebuf = buf;
 	size_t preres = *resid;
 	int rv;
 
-	rv = puffs_null_node_read(pcc, opc, buf, offset, resid, pcr, ioflag);
+	rv = puffs_null_node_read(pu, opc, buf, offset, resid, pcr, ioflag);
 	if (rv)
 		return rv;
 
@@ -232,10 +233,11 @@ rot13_node_read(struct puffs_cc *pcc, void *opc, uint8_t *buf, off_t offset,
 }
 
 int
-rot13_node_write(struct puffs_cc *pcc, void *opc, uint8_t *buf, off_t offset,
-	size_t *resid, const struct puffs_cred *pcr, int ioflag)
+rot13_node_write(struct puffs_usermount *pu, void *opc,
+	uint8_t *buf, off_t offset, size_t *resid,
+	const struct puffs_cred *pcr, int ioflag)
 {
 
 	flipflop(buf, *resid);
-	return puffs_null_node_write(pcc, opc, buf, offset, resid, pcr, ioflag);
+	return puffs_null_node_write(pu, opc, buf, offset, resid, pcr, ioflag);
 }
