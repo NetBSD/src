@@ -817,13 +817,17 @@ param_text_parse(iscsi_parameter_t * head,
 		if (outgoing) {
 			if (param->rx_offer) {
 				param->tx_answer = 1;	/* sending an answer */
+				param->rx_answer = 0; /* reset */
+				param->tx_offer = 0; /* reset */
+				param->rx_offer = 0; /* reset */
 				(void) strlcpy(param->answer_tx, value, sizeof(param->answer_tx));
 				iscsi_trace(TRACE_ISCSI_PARAM, __FILE__, __LINE__, "sending answer \"%s\"=\"%s\" for offer \"%s\"\n",
 				      param->key, param->answer_tx, param->offer_rx);
 				goto negotiate;
 			} else {
 				param->tx_offer = 1;	/* sending an offer */
-				param->rx_offer = 0;	/* reset */
+				param->tx_answer = 0;
+				param->rx_answer = 0;
 				(void) strlcpy(param->offer_tx, value, sizeof(param->offer_tx));
 				iscsi_trace(TRACE_ISCSI_PARAM, __FILE__, __LINE__, "sending offer \"%s\"=\"%s\"\n", param->key, param->offer_tx);
 				if ((param->type == ISCSI_PARAM_TYPE_DECLARATIVE) ||
@@ -835,6 +839,8 @@ param_text_parse(iscsi_parameter_t * head,
 		} else {
 			if (param->tx_offer) {
 				param->rx_answer = 1;	/* received an answer */
+				param->tx_answer = 0;
+				param->rx_offer = 0;
 				param->tx_offer = 0;	/* reset */
 				(void) strlcpy(param->answer_rx, value, sizeof(param->answer_rx));
 				iscsi_trace(TRACE_ISCSI_PARAM, __FILE__, __LINE__, "received answer \"%s\"=\"%s\" for offer \"%s\"\n",
@@ -859,6 +865,8 @@ param_text_parse(iscsi_parameter_t * head,
 				return ISCSI_PARAM_STATUS_AUTH_FAILED;
 			} else {
 				param->rx_offer = 1;	/* received an offer */
+				param->rx_answer = 0;
+				param->tx_answer = 0; 
 				(void) strlcpy(param->offer_rx, value, sizeof(param->offer_rx));
 				iscsi_trace(TRACE_ISCSI_PARAM, __FILE__, __LINE__, "received offer \"%s\"=\"%s\"\n", param->key, param->offer_rx);
 
@@ -1052,7 +1060,17 @@ negotiate:
 			goto declarative_negotiate;
 		case ISCSI_PARAM_TYPE_DECLARATIVE:
 declarative_negotiate:
-			(void) strlcpy(param->negotiated, (outgoing) ? param->offer_tx : param->offer_rx, sizeof(param->negotiated));
+			if (param->tx_answer) {
+				(void) strlcpy(param->negotiated, param->answer_tx, sizeof(param->negotiated));
+			} else if (param->tx_offer) {
+				(void) strlcpy(param->negotiated, param->offer_tx, sizeof(param->negotiated));
+			} else if (param->rx_answer) {
+				(void) strlcpy(param->negotiated, param->answer_rx, sizeof(param->negotiated));
+			} else if (param->rx_offer) {
+				(void) strlcpy(param->negotiated, param->offer_rx, sizeof(param->negotiated));
+			} else {
+				iscsi_trace_error(__FILE__, __LINE__, "Invalid negotiation!?!?\n");	
+			}
 			break;
 		case ISCSI_PARAM_TYPE_BINARY_AND:
 			goto binary_or_negotiate;
