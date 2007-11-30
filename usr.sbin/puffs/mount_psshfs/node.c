@@ -1,4 +1,4 @@
-/*	$NetBSD: node.c,v 1.46 2007/11/27 11:31:21 pooka Exp $	*/
+/*	$NetBSD: node.c,v 1.47 2007/11/30 16:24:04 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: node.c,v 1.46 2007/11/27 11:31:21 pooka Exp $");
+__RCSID("$NetBSD: node.c,v 1.47 2007/11/30 16:24:04 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -199,100 +199,116 @@ psshfs_node_create(struct puffs_cc *pcc, void *opc, struct puffs_newinfo *pni,
 	PSSHFSRETURN(rv);
 }
 
-int
-psshfs_node_mmap(struct puffs_cc* pcc, void *opc, vm_prot_t prot,
-	const struct puffs_cred *pcr)
-{
-	struct puffs_node *pn = opc;
-	struct psshfs_node *psn = pn->pn_data;
-
-	if (prot & (VM_PROT_READ | VM_PROT_EXECUTE))
-		psn->stat |= PSN_READMAP;
-	if (prot & VM_PROT_WRITE)
-		psn->stat |= PSN_WRITEMAP;
-
-	return 0;
-}
-
+/*
+ * Open a file handle.  This is used for read and write.  We do not
+ * wait here for the success or failure of this operation.  This is
+ * because otherwise opening and closing file handles would block
+ * reading potentially cached information.  Rather, we defer the wait
+ * to read/write and therefore allow cached access without a wait.
+ *
+ * If we have not yet succesfully opened a type of handle, we do wait
+ * here.  Also, if a lazy open fails, we revert back to the same
+ * state of waiting.
+ */
 int
 psshfs_node_open(struct puffs_cc *pcc, void *opc, int mode,
 	const struct puffs_cred *pcr)
 {
-	PSSHFSAUTOVAR(pcc);
+	struct psshfs_ctx *pctx = puffs_cc_getspecific(pcc);
+	struct puffs_usermount *pu = puffs_cc_getusermount(pcc);
+	struct puffs_framebuf *pb, *pb2;
 	struct vattr va;
 	struct puffs_node *pn = opc;
 	struct psshfs_node *psn = pn->pn_data;
+	uint32_t reqid;
+	int didread, didwrite;
+	int rv = 0;
 
 	if (pn->pn_va.va_type == VDIR)
-		goto out;
+		return 0;
 
 	puffs_setback(pcc, PUFFS_SETBACK_INACT_N1);
 	puffs_vattr_null(&va);
-	if (mode & FREAD && psn->fhand_r == NULL) {
+	didread = didwrite = 0;
+	if (mode & FREAD && psn->fhand_r == NULL && psn->lazyopen_r == NULL) {
+		pb = psbuf_makeout();
+
+		reqid = NEXTREQ(pctx);
 		psbuf_req_str(pb, SSH_FXP_OPEN, reqid, PNPATH(pn));
 		psbuf_put_4(pb, SSH_FXF_READ);
 		psbuf_put_vattr(pb, &va);
-		GETRESPONSE(pb);
 
-		rv = psbuf_expect_handle(pb, &psn->fhand_r, &psn->fhand_r_len);
-		if (rv)
+		if (puffs_framev_enqueue_cb(pu, pctx->sshfd, pb,
+		    lazyopen_rresp, psn, 0) == -1) {
+			puffs_framebuf_destroy(pb);
+			rv = errno;
 			goto out;
-		psbuf_recycleout(pb);
+		}
+
+		psn->lazyopen_r = pb;
+		didread = 1;
 	}
-	if (mode & FWRITE && psn->fhand_w == NULL) {
-		psbuf_req_str(pb, SSH_FXP_OPEN, reqid, PNPATH(pn));
-		psbuf_put_4(pb, SSH_FXF_WRITE);
-		psbuf_put_vattr(pb, &va);
-		GETRESPONSE(pb);
-
-		rv = psbuf_expect_handle(pb, &psn->fhand_w, &psn->fhand_w_len);
-		if (rv)
-			goto out;
-	}
-
- out:
-	PSSHFSRETURN(rv);
-}
-
-static void
-closehandles(struct puffs_cc *pcc, struct psshfs_node *psn)
-{
-	struct puffs_usermount *pu = puffs_cc_getusermount(pcc);
-	struct psshfs_ctx *pctx = puffs_cc_getspecific(pcc);
-	struct puffs_framebuf *pb1, *pb2;
-	uint32_t reqid = NEXTREQ(pctx);
-	int rv; /* macro magic */
-
-	if ((psn->stat & PSN_READMAP) == 0 && psn->fhand_r) {
-		pb1 = psbuf_makeout();
-		psbuf_req_data(pb1, SSH_FXP_CLOSE, reqid,
-		    psn->fhand_r, psn->fhand_r_len);
-		JUSTSEND(pb1);
-		free(psn->fhand_r);
-		psn->fhand_r = NULL;
-	}
-	if ((psn->stat & PSN_WRITEMAP) == 0 && psn->fhand_w) {
+	if (mode & FWRITE && psn->fhand_w == NULL && psn->lazyopen_w == NULL) {
 		pb2 = psbuf_makeout();
-		psbuf_req_data(pb2, SSH_FXP_CLOSE, reqid,
-		    psn->fhand_w, psn->fhand_w_len);
-		JUSTSEND(pb2);
-		free(psn->fhand_w);
-		psn->fhand_w = NULL;
+
+		reqid = NEXTREQ(pctx);
+		psbuf_req_str(pb2, SSH_FXP_OPEN, reqid, PNPATH(pn));
+		psbuf_put_4(pb2, SSH_FXF_WRITE);
+		psbuf_put_vattr(pb2, &va);
+
+		if (puffs_framev_enqueue_cb(pu, pctx->sshfd, pb2,
+		    lazyopen_wresp, psn, 0) == -1) {
+			puffs_framebuf_destroy(pb2);
+			rv = errno;
+			goto out;
+		}
+
+		psn->lazyopen_w = pb2;
+		didwrite = 1;
 	}
+	psn->stat &= ~PSN_HANDLECLOSE;
 
  out:
-	return;
+	/* wait? */
+	if (didread && (psn->stat & PSN_DOLAZY_R) == 0) {
+		assert(psn->lazyopen_r);
+
+		rv = puffs_framev_framebuf_ccpromote(psn->lazyopen_r, pcc);
+		lazyopen_rresp(pu, psn->lazyopen_r, psn, rv);
+		if (psn->fhand_r) {
+			psn->stat |= PSN_DOLAZY_R;
+		} else {
+			if (psn->lazyopen_err_r)
+				return psn->lazyopen_err_r;
+			return EINVAL;
+		}
+	}
+
+	/* wait? */
+	if (didwrite && (psn->stat & PSN_DOLAZY_W) == 0) {
+		assert(psn->lazyopen_w);
+
+		rv = puffs_framev_framebuf_ccpromote(psn->lazyopen_w, pcc);
+		lazyopen_wresp(pu, psn->lazyopen_w, psn, rv);
+		if (psn->fhand_w) {
+			psn->stat |= PSN_DOLAZY_W;
+		} else {
+			if (psn->lazyopen_err_w)
+				return psn->lazyopen_err_w;
+			return EINVAL;
+		}
+	}
+
+	return rv;
 }
 
 int
 psshfs_node_inactive(struct puffs_cc *pcc, void *opc)
 {
 	struct puffs_node *pn = opc;
-	struct psshfs_node *psn = pn->pn_data;
 
-	psn->stat &= ~(PSN_READMAP | PSN_WRITEMAP);
-	closehandles(pcc, psn);
-
+	closehandles(puffs_cc_getusermount(pcc), pn->pn_data,
+	    HANDLE_READ | HANDLE_WRITE);
 	return 0;
 }
 
@@ -307,14 +323,17 @@ psshfs_node_readdir(struct puffs_cc *pcc, void *opc, struct dirent *dent,
 	struct psshfs_dir *pd;
 	int i, rv, set_readdir;
 
+ restart:
 	if (psn->stat & PSN_READDIR) {
 		struct psshfs_wait pw;
 
 		set_readdir = 0;
 		pw.pw_cc = pcc;
+		pw.pw_type = PWTYPE_READDIR;
 		TAILQ_INSERT_TAIL(&psn->pw, &pw, pw_entries);
 		puffs_cc_yield(pcc);
 		TAILQ_REMOVE(&psn->pw, &pw, pw_entries);
+		goto restart;
 	} else {
 		psn->stat |= PSN_READDIR;
 		set_readdir = 1;
@@ -363,8 +382,10 @@ psshfs_node_readdir(struct puffs_cc *pcc, void *opc, struct dirent *dent,
 		struct psshfs_wait *pw;
 
 		/* all will likely run to completion because of cache */
-		TAILQ_FOREACH(pw, &psn->pw, pw_entries)
+		TAILQ_FOREACH(pw, &psn->pw, pw_entries) {
+			assert(pw->pw_type == PWTYPE_READDIR);
 			puffs_cc_schedule(pw->pw_cc);
+		}
 
 		psn->stat &= ~PSN_READDIR;
 	}
@@ -378,12 +399,55 @@ psshfs_node_read(struct puffs_cc *pcc, void *opc, uint8_t *buf,
 	int ioflag)
 {
 	PSSHFSAUTOVAR(pcc);
+	struct puffs_usermount *pu = puffs_cc_getusermount(pcc);
 	struct puffs_node *pn = opc;
 	struct psshfs_node *psn = pn->pn_data;
+	struct psshfs_wait *pwp;
 	uint32_t readlen;
 
 	if (pn->pn_va.va_type == VDIR) {
 		rv = EISDIR;
+		goto farout;
+	}
+
+	/* check that a lazyopen didn't fail */
+	if (!psn->fhand_r && !psn->lazyopen_r) {
+		rv = psn->lazyopen_err_r;
+		goto farout;
+	}
+
+	/* if someone is already waiting for the lazyopen, "just" wait */
+	if (psn->stat & PSN_LAZYWAIT_R) {
+		struct psshfs_wait pw;
+
+		assert(psn->lazyopen_r);
+
+		pw.pw_cc = pcc;
+		pw.pw_type = PWTYPE_READ1;
+		TAILQ_INSERT_TAIL(&psn->pw, &pw, pw_entries);
+		puffs_cc_yield(pcc);
+		TAILQ_REMOVE(&psn->pw, &pw, pw_entries);
+	}
+
+	/* if lazyopening, wait for the result */
+	if (psn->lazyopen_r) {
+		psn->stat |= PSN_LAZYWAIT_R;
+		rv = puffs_framev_framebuf_ccpromote(psn->lazyopen_r, pcc);
+		lazyopen_rresp(pu, psn->lazyopen_r, psn, rv);
+
+		/* schedule extra waiters */
+		TAILQ_FOREACH(pwp, &psn->pw, pw_entries)
+			if (pwp->pw_type == PWTYPE_READ1)
+				puffs_cc_schedule(pwp->pw_cc);
+		psn->stat &= ~PSN_LAZYWAIT_R;
+
+		if ((rv = psn->lazyopen_err_r) != 0)
+			goto farout;
+	}
+
+	/* if there is still no handle, just refuse to live with this */
+	if (!psn->fhand_r) {
+		rv = EINVAL;
 		goto farout;
 	}
 
@@ -400,6 +464,7 @@ psshfs_node_read(struct puffs_cc *pcc, void *opc, uint8_t *buf,
 		struct psshfs_wait pw;
 
 		pw.pw_cc = pcc;
+		pw.pw_type = PWTYPE_READ2;
 		TAILQ_INSERT_TAIL(&psn->pw, &pw, pw_entries);
 		puffs_cc_yield(pcc);
 	}
@@ -412,15 +477,23 @@ psshfs_node_read(struct puffs_cc *pcc, void *opc, uint8_t *buf,
 
  out:
 	if (max_reads && --psn->readcount >= max_reads) {
-		struct psshfs_wait *pw;
-
-		pw = TAILQ_FIRST(&psn->pw);
-		assert(pw != NULL);
-		TAILQ_REMOVE(&psn->pw, pw, pw_entries);
-		puffs_cc_schedule(pw->pw_cc);
+		TAILQ_FOREACH(pwp, &psn->pw, pw_entries)
+			if (pwp->pw_type == PWTYPE_READ2)
+				break;
+		assert(pwp != NULL);
+		TAILQ_REMOVE(&psn->pw, pwp, pw_entries);
+		puffs_cc_schedule(pwp->pw_cc);
 	}
 
  farout:
+	/* check if we need a lazyclose */
+	if (psn->stat & PSN_HANDLECLOSE && psn->fhand_r) {
+		TAILQ_FOREACH(pwp, &psn->pw, pw_entries)
+			if (pwp->pw_type == PWTYPE_READ1)
+				break;
+		if (pwp == NULL)
+			closehandles(pu, psn, HANDLE_READ);
+	}
 	PSSHFSRETURN(rv);
 }
 
@@ -431,12 +504,58 @@ psshfs_node_write(struct puffs_cc *pcc, void *opc, uint8_t *buf,
 	int ioflag)
 {
 	PSSHFSAUTOVAR(pcc);
+	struct puffs_usermount *pu = puffs_cc_getusermount(pcc);
+	struct psshfs_wait *pwp;
 	struct puffs_node *pn = opc;
 	struct psshfs_node *psn = pn->pn_data;
 	uint32_t writelen;
 
 	if (pn->pn_va.va_type == VDIR) {
 		rv = EISDIR;
+		goto out;
+	}
+
+	/* check that a lazyopen didn't fail */
+	if (!psn->fhand_w && !psn->lazyopen_w) {
+		rv = psn->lazyopen_err_w;
+		goto out;
+	}
+
+	if (psn->stat & PSN_LAZYWAIT_W) {
+		struct psshfs_wait pw;
+
+		assert(psn->lazyopen_w);
+
+		pw.pw_cc = pcc;
+		pw.pw_type = PWTYPE_WRITE;
+		TAILQ_INSERT_TAIL(&psn->pw, &pw, pw_entries);
+		puffs_cc_yield(pcc);
+		TAILQ_REMOVE(&psn->pw, &pw, pw_entries);
+	}
+
+	/*
+	 * If lazyopening, wait for the result.
+	 * There can still be more than oen writer at a time in case
+	 * the kernel issues write FAFs.
+	 */
+	if (psn->lazyopen_w) {
+		psn->stat |= PSN_LAZYWAIT_W;
+		rv = puffs_framev_framebuf_ccpromote(psn->lazyopen_w, pcc);
+		lazyopen_wresp(pu, psn->lazyopen_w, psn, rv);
+
+		/* schedule extra waiters */
+		TAILQ_FOREACH(pwp, &psn->pw, pw_entries)
+			if (pwp->pw_type == PWTYPE_WRITE)
+				puffs_cc_schedule(pwp->pw_cc);
+		psn->stat &= ~PSN_LAZYWAIT_W;
+
+		if ((rv = psn->lazyopen_err_w) != 0)
+			goto out;
+	}
+
+	if (!psn->fhand_w) {
+		abort();
+		rv = EINVAL;
 		goto out;
 	}
 
@@ -454,6 +573,14 @@ psshfs_node_write(struct puffs_cc *pcc, void *opc, uint8_t *buf,
 		pn->pn_va.va_size = offset + writelen;
 
  out:
+	/* check if we need a lazyclose */
+	if (psn->stat & PSN_HANDLECLOSE && psn->fhand_w) {
+		TAILQ_FOREACH(pwp, &psn->pw, pw_entries)
+			if (pwp->pw_type == PWTYPE_WRITE)
+				break;
+		if (pwp == NULL)
+			closehandles(pu, psn, HANDLE_WRITE);
+	}
 	PSSHFSRETURN(rv);
 }
 

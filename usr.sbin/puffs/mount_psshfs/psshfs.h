@@ -1,4 +1,4 @@
-/*	$NetBSD: psshfs.h,v 1.29 2007/11/18 17:41:56 pooka Exp $	*/
+/*	$NetBSD: psshfs.h,v 1.30 2007/11/30 16:24:04 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -101,8 +101,13 @@ struct psshfs_fid {
 
 struct psshfs_wait {
 	struct puffs_cc *pw_cc;
+	int pw_type;
 	TAILQ_ENTRY(psshfs_wait) pw_entries;
 };
+#define PWTYPE_READDIR	1
+#define PWTYPE_READ1	2
+#define PWTYPE_READ2	3
+#define PWTYPE_WRITE	4
 
 struct psshfs_node {
 	struct puffs_node *parent;
@@ -131,14 +136,23 @@ struct psshfs_node {
 	char *fhand_w;
 	uint32_t fhand_r_len;
 	uint32_t fhand_w_len;
+	struct puffs_framebuf *lazyopen_r;
+	struct puffs_framebuf *lazyopen_w;
+	int lazyopen_err_r, lazyopen_err_w;
 
 	TAILQ_HEAD(, psshfs_wait) pw;
 };
 #define PSN_RECLAIMED	0x01
 #define PSN_HASFH	0x02
-#define PSN_READMAP	0x04
-#define PSN_WRITEMAP	0x08
-#define PSN_READDIR	0x10
+#define PSN_READDIR	0x04
+#define PSN_DOLAZY_R	0x08
+#define PSN_DOLAZY_W	0x10
+#define PSN_LAZYWAIT_R	0x20
+#define PSN_LAZYWAIT_W	0x40
+#define PSN_HANDLECLOSE	0x80
+
+#define HANDLE_READ	0x1
+#define HANDLE_WRITE	0x2
 
 struct psshfs_ctx {
 	int sshfd;
@@ -212,5 +226,11 @@ void nukenode(struct puffs_node *, const char *, int);
 void doreclaim(struct puffs_node *);
 int getpathattr(struct puffs_cc *, const char *, struct vattr *);
 int getnodeattr(struct puffs_cc *, struct puffs_node *);
+
+void closehandles(struct puffs_usermount *, struct psshfs_node *, int);
+void lazyopen_rresp(struct puffs_usermount *, struct puffs_framebuf *,
+		    void *, int);
+void lazyopen_wresp(struct puffs_usermount *, struct puffs_framebuf *,
+		    void *, int);
 
 #endif /* PSSHFS_H_ */
