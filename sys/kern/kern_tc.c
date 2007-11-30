@@ -1,4 +1,4 @@
-/* $NetBSD: kern_tc.c,v 1.26 2007/11/23 16:03:48 elad Exp $ */
+/* $NetBSD: kern_tc.c,v 1.27 2007/11/30 23:05:44 ad Exp $ */
 
 /*-
  * ----------------------------------------------------------------------------
@@ -11,7 +11,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_tc.c,v 1.166 2005/09/19 22:16:31 andre Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.26 2007/11/23 16:03:48 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.27 2007/11/30 23:05:44 ad Exp $");
 
 #include "opt_ntp.h"
 
@@ -28,6 +28,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.26 2007/11/23 16:03:48 elad Exp $");
 #include <sys/evcnt.h>
 #include <sys/kauth.h>
 #include <sys/mutex.h>
+#include <sys/atomic.h>
 
 /*
  * A large step happens on boot.  This constant detects such steps.
@@ -528,7 +529,7 @@ tc_windup(void)
 	th = tho->th_next;
 	ogen = th->th_generation;
 	th->th_generation = 0;
-	mb_write();
+	membar_producer();
 	bcopy(tho, th, offsetof(struct timehands, th_generation));
 
 	/*
@@ -628,7 +629,7 @@ tc_windup(void)
 	 */
 	if (++ogen == 0)
 		ogen = 1;
-	mb_write();
+	membar_producer();
 	th->th_generation = ogen;
 
 	/*
@@ -637,7 +638,7 @@ tc_windup(void)
 	 */
 	time_second = th->th_microtime.tv_sec;
 	time_uptime = th->th_offset.sec;
-	mb_write();
+	membar_producer();
 	timehands = th;
 
 	/*

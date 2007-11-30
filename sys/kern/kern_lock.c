@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.127 2007/11/21 10:19:09 yamt Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.128 2007/11/30 23:05:43 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.127 2007/11/21 10:19:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.128 2007/11/30 23:05:43 ad Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -88,6 +88,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.127 2007/11/21 10:19:09 yamt Exp $")
 #include <sys/lockdebug.h>
 #include <sys/cpu.h>
 #include <sys/syslog.h>
+#include <sys/atomic.h>
 
 #include <machine/stdarg.h>
 
@@ -694,7 +695,7 @@ assert_sleepable(struct simplelock *interlock, const char *msg)
 /*
  * rump doesn't need the kernel lock so force it out.  We cannot
  * currently easily include it for compilation because of
- * a) SPINLOCK_* b) mb_write().  They are defined in different
+ * a) SPINLOCK_* b) membar_producer().  They are defined in different
  * places / way for each arch, so just simply do not bother to
  * fight a lot for no gain (i.e. pain but still no gain).
  */
@@ -832,7 +833,7 @@ _kernel_lock(int nlocks, struct lwp *l)
 	/*
 	 * Again, another store fence is required (see kern_mutex.c).
 	 */
-	mb_write();
+	membar_producer();
 	if (owant == NULL) {
 		LOCKSTAT_EVENT(lsflag, &kernel_lock, LB_KERNEL_LOCK | LB_SPIN,
 		    1, spintime);
