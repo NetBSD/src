@@ -1,4 +1,4 @@
-/*	$NetBSD: psshfs.c,v 1.45 2007/11/18 17:41:56 pooka Exp $	*/
+/*	$NetBSD: psshfs.c,v 1.46 2007/11/30 16:24:04 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: psshfs.c,v 1.45 2007/11/18 17:41:56 pooka Exp $");
+__RCSID("$NetBSD: psshfs.c,v 1.46 2007/11/30 16:24:04 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -179,7 +179,6 @@ main(int argc, char *argv[])
 	PUFFSOP_SET(pops, psshfs, node, lookup);
 	PUFFSOP_SET(pops, psshfs, node, create);
 	PUFFSOP_SET(pops, psshfs, node, open);
-	PUFFSOP_SET(pops, psshfs, node, mmap);
 	PUFFSOP_SET(pops, psshfs, node, inactive);
 	PUFFSOP_SET(pops, psshfs, node, readdir);
 	PUFFSOP_SET(pops, psshfs, node, getattr);
