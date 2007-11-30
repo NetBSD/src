@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_lockdebug.c,v 1.21 2007/11/26 08:16:49 yamt Exp $	*/
+/*	$NetBSD: subr_lockdebug.c,v 1.22 2007/11/30 23:05:44 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.21 2007/11/26 08:16:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.22 2007/11/30 23:05:44 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_ddb.h"
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.21 2007/11/26 08:16:49 yamt Exp
 #include <sys/lockdebug.h>
 #include <sys/sleepq.h>
 #include <sys/cpu.h>
+#include <sys/atomic.h>
 
 #include <lib/libkern/rb.h>
 
@@ -409,7 +410,7 @@ lockdebug_more(void)
 			TAILQ_INSERT_TAIL(&ld_all, ld, ld_achain);
 		}
 
-		mb_write();
+		membar_producer();
 		ld_table[ld_freeptr++] = block;
 	}
 }

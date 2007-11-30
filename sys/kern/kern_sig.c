@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.259 2007/11/27 01:27:30 ad Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.260 2007/11/30 23:05:44 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.259 2007/11/27 01:27:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.260 2007/11/30 23:05:44 ad Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_multiprocessor.h"
@@ -99,7 +99,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.259 2007/11/27 01:27:30 ad Exp $");
 #include <sys/kauth.h>
 #include <sys/acct.h>
 #include <sys/callout.h>
-
+#include <sys/atomic.h>
 #include <sys/cpu.h>
 
 #ifdef PAX_SEGVGUARD
@@ -669,7 +669,7 @@ sigispending(struct lwp *l, int signo)
 	struct proc *p = l->l_proc;
 	sigset_t tset;
 
-	mb_read();
+	membar_consumer();
 
 	tset = l->l_sigpend.sp_set;
 	sigplusset(&p->p_sigpend.sp_set, &tset);
@@ -1327,7 +1327,7 @@ kpsignal2(struct proc *p, ksiginfo_t *ksi)
 		l = lwp_find(p, lid);
 		if (l != NULL) {
 			sigput(&l->l_sigpend, p, kp);
-			mb_write();
+			membar_producer();
 			(void)sigpost(l, action, prop, kp->ksi_signo);
 		}
 		goto out;
@@ -1412,7 +1412,7 @@ kpsignal2(struct proc *p, ksiginfo_t *ksi)
 	 * visible on the per process list (for sigispending()).  This
 	 * is unlikely to be needed in practice, but...
 	 */
-	mb_write();
+	membar_producer();
 
 	/*
 	 * Try to find an LWP that can take the signal.
@@ -1466,7 +1466,7 @@ sigswitch(bool ppsig, int ppmask, int signo)
 		 * to a halt so they are included in p->p_nrlwps
 		 */
 		p->p_sflag |= (PS_STOPPING | PS_NOTIFYSTOP);
-		mb_write();
+		membar_producer();
 
 		LIST_FOREACH(l2, &p->p_lwps, l_sibling) {
 			lwp_lock(l2);
@@ -1997,7 +1997,7 @@ proc_stop(struct proc *p, int notify, int signo)
 	 * unlock between here and the p->p_nrlwps check below.
 	 */
 	p->p_sflag |= PS_STOPPING;
-	mb_write();
+	membar_producer();
 
 	LIST_FOREACH(l, &p->p_lwps, l_sibling) {
 		lwp_lock(l);
