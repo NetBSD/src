@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.h,v 1.3 2007/11/28 01:30:06 ad Exp $	*/
+/*	$NetBSD: atomic.h,v 1.4 2007/11/30 01:32:09 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -47,17 +47,17 @@
 /*
  * Atomic ADD
  */
-void		atomic_add_32(volatile uint32_t *, int32_t);
-void		atomic_add_int(volatile unsigned int *, int);
-void		atomic_add_long(volatile unsigned long *, long);
+void		atomic_add_32(volatile int32_t *, int32_t);
+void		atomic_add_int(volatile int *, int);
+void		atomic_add_long(volatile long *, long);
 void		atomic_add_ptr(volatile void *, ssize_t);
 void		atomic_add_64(volatile uint64_t *, int64_t);
 
-uint32_t	atomic_add_32_nv(volatile uint32_t *, int32_t);
-unsigned int	atomic_add_int_nv(volatile unsigned int *, int);
-unsigned long	atomic_add_long_nv(volatile unsigned long *, long);
+int32_t		atomic_add_32_nv(volatile uint32_t *, int32_t);
+int		atomic_add_int_nv(volatile int *, int);
+long		atomic_add_long_nv(volatile long *, long);
 void *		atomic_add_ptr_nv(volatile void *, ssize_t);
-uint64_t	atomic_add_64_nv(volatile uint64_t *, int64_t);
+int64_t		atomic_add_64_nv(volatile int64_t *, int64_t);
 
 /*
  * Atomic AND
