@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_aio.c,v 1.12 2007/11/29 18:17:01 rmind Exp $	*/
+/*	$NetBSD: sys_aio.c,v 1.13 2007/11/30 17:39:43 rmind Exp $	*/
 
 /*
  * Copyright (c) 2007, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.12 2007/11/29 18:17:01 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.13 2007/11/30 17:39:43 rmind Exp $");
 
 #include "opt_ddb.h"
 
@@ -509,18 +509,15 @@ aio_enqueue_job(int op, void *aiocb_uptr, struct lio_req *lio)
 	mutex_enter(&aio->aio_mtx);
 
 	/* Fail, if the limit was reached */
-	if (atomic_inc_uint_nv(&aio_jobs_count) > aio_max) {
+	if (atomic_inc_uint_nv(&aio_jobs_count) > aio_max ||
+	    aio->jobs_count >= aio_listio_max) {
 		atomic_dec_uint(&aio_jobs_count);
-		error = EAGAIN;
-	}
-	if (error || aio->jobs_count >= aio_listio_max) {
 		mutex_exit(&aio->aio_mtx);
 		pool_put(&aio_job_pool, a_job);
 		return EAGAIN;
 	}
 
 	TAILQ_INSERT_TAIL(&aio->jobs_queue, a_job, list);
-	atomic_inc_uint(&aio_jobs_count);
 	aio->jobs_count++;
 	if (lio)
 		lio->refcnt++;
