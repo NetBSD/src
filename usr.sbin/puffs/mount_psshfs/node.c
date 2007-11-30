@@ -1,4 +1,4 @@
-/*	$NetBSD: node.c,v 1.47 2007/11/30 16:24:04 pooka Exp $	*/
+/*	$NetBSD: node.c,v 1.48 2007/11/30 19:02:40 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: node.c,v 1.47 2007/11/30 16:24:04 pooka Exp $");
+__RCSID("$NetBSD: node.c,v 1.48 2007/11/30 19:02:40 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -39,10 +39,10 @@ __RCSID("$NetBSD: node.c,v 1.47 2007/11/30 16:24:04 pooka Exp $");
 #include "sftp_proto.h"
 
 int
-psshfs_node_lookup(struct puffs_cc *pcc, void *opc, struct puffs_newinfo *pni,
-	const struct puffs_cn *pcn)
+psshfs_node_lookup(struct puffs_usermount *pu, void *opc,
+	struct puffs_newinfo *pni, const struct puffs_cn *pcn)
 {
-        struct puffs_usermount *pu = puffs_cc_getusermount(pcc);
+	struct puffs_cc *pcc = puffs_cc_getcc(pu);
 	struct psshfs_ctx *pctx = puffs_getspecific(pu);
 	struct puffs_node *pn_dir = opc;
 	struct psshfs_node *psn, *psn_dir = pn_dir->pn_data;
@@ -69,7 +69,7 @@ psshfs_node_lookup(struct puffs_cc *pcc, void *opc, struct puffs_newinfo *pni,
 		 * Can't read the directory.  We still might be
 		 * able to find the node with getattr in -r+x dirs
 		 */
-		rv = getpathattr(pcc, PCNPATH(pcn), &va);
+		rv = getpathattr(pu, PCNPATH(pcn), &va);
 		if (rv)
 			return rv;
 
@@ -105,13 +105,13 @@ psshfs_node_lookup(struct puffs_cc *pcc, void *opc, struct puffs_newinfo *pni,
 }
 
 int
-psshfs_node_getattr(struct puffs_cc *pcc, void *opc, struct vattr *vap,
+psshfs_node_getattr(struct puffs_usermount *pu, void *opc, struct vattr *vap,
 	const struct puffs_cred *pcr)
 {
 	struct puffs_node *pn = opc;
 	int rv;
 
-	rv = getnodeattr(pcc, pn);
+	rv = getnodeattr(pu, pn);
 	if (rv)
 		return rv;
 
@@ -121,10 +121,10 @@ psshfs_node_getattr(struct puffs_cc *pcc, void *opc, struct vattr *vap,
 }
 
 int
-psshfs_node_setattr(struct puffs_cc *pcc, void *opc,
+psshfs_node_setattr(struct puffs_usermount *pu, void *opc,
 	const struct vattr *va, const struct puffs_cred *pcr)
 {
-	PSSHFSAUTOVAR(pcc);
+	PSSHFSAUTOVAR(pu);
 	struct vattr kludgeva;
 	struct puffs_node *pn = opc;
 
@@ -160,11 +160,10 @@ psshfs_node_setattr(struct puffs_cc *pcc, void *opc,
 }
 
 int
-psshfs_node_create(struct puffs_cc *pcc, void *opc, struct puffs_newinfo *pni,
+psshfs_node_create(struct puffs_usermount *pu, void *opc, struct puffs_newinfo *pni,
 	const struct puffs_cn *pcn, const struct vattr *va)
 {
-	PSSHFSAUTOVAR(pcc);
-	struct puffs_usermount *pu = puffs_cc_getusermount(pcc);
+	PSSHFSAUTOVAR(pu);
 	struct puffs_node *pn = opc;
 	struct puffs_node *pn_new;
 	char *fhand = NULL;
@@ -211,11 +210,11 @@ psshfs_node_create(struct puffs_cc *pcc, void *opc, struct puffs_newinfo *pni,
  * state of waiting.
  */
 int
-psshfs_node_open(struct puffs_cc *pcc, void *opc, int mode,
+psshfs_node_open(struct puffs_usermount *pu, void *opc, int mode,
 	const struct puffs_cred *pcr)
 {
-	struct psshfs_ctx *pctx = puffs_cc_getspecific(pcc);
-	struct puffs_usermount *pu = puffs_cc_getusermount(pcc);
+	struct puffs_cc *pcc = puffs_cc_getcc(pu);
+	struct psshfs_ctx *pctx = puffs_getspecific(pu);
 	struct puffs_framebuf *pb, *pb2;
 	struct vattr va;
 	struct puffs_node *pn = opc;
@@ -303,21 +302,21 @@ psshfs_node_open(struct puffs_cc *pcc, void *opc, int mode,
 }
 
 int
-psshfs_node_inactive(struct puffs_cc *pcc, void *opc)
+psshfs_node_inactive(struct puffs_usermount *pu, void *opc)
 {
 	struct puffs_node *pn = opc;
 
-	closehandles(puffs_cc_getusermount(pcc), pn->pn_data,
-	    HANDLE_READ | HANDLE_WRITE);
+	closehandles(pu, pn->pn_data, HANDLE_READ | HANDLE_WRITE);
 	return 0;
 }
 
 int
-psshfs_node_readdir(struct puffs_cc *pcc, void *opc, struct dirent *dent,
+psshfs_node_readdir(struct puffs_usermount *pu, void *opc, struct dirent *dent,
 	off_t *readoff, size_t *reslen, const struct puffs_cred *pcr,
 	int *eofflag, off_t *cookies, size_t *ncookies)
 {
-	struct psshfs_ctx *pctx = puffs_cc_getspecific(pcc);
+	struct puffs_cc *pcc = puffs_cc_getcc(pu);
+	struct psshfs_ctx *pctx = puffs_getspecific(pu);
 	struct puffs_node *pn = opc;
 	struct psshfs_node *psn = pn->pn_data;
 	struct psshfs_dir *pd;
@@ -394,12 +393,11 @@ psshfs_node_readdir(struct puffs_cc *pcc, void *opc, struct dirent *dent,
 }
 
 int
-psshfs_node_read(struct puffs_cc *pcc, void *opc, uint8_t *buf,
+psshfs_node_read(struct puffs_usermount *pu, void *opc, uint8_t *buf,
 	off_t offset, size_t *resid, const struct puffs_cred *pcr,
 	int ioflag)
 {
-	PSSHFSAUTOVAR(pcc);
-	struct puffs_usermount *pu = puffs_cc_getusermount(pcc);
+	PSSHFSAUTOVAR(pu);
 	struct puffs_node *pn = opc;
 	struct psshfs_node *psn = pn->pn_data;
 	struct psshfs_wait *pwp;
@@ -499,12 +497,11 @@ psshfs_node_read(struct puffs_cc *pcc, void *opc, uint8_t *buf,
 
 /* XXX: we should getattr for size */
 int
-psshfs_node_write(struct puffs_cc *pcc, void *opc, uint8_t *buf,
+psshfs_node_write(struct puffs_usermount *pu, void *opc, uint8_t *buf,
 	off_t offset, size_t *resid, const struct puffs_cred *cred,
 	int ioflag)
 {
-	PSSHFSAUTOVAR(pcc);
-	struct puffs_usermount *pu = puffs_cc_getusermount(pcc);
+	PSSHFSAUTOVAR(pu);
 	struct psshfs_wait *pwp;
 	struct puffs_node *pn = opc;
 	struct psshfs_node *psn = pn->pn_data;
@@ -585,10 +582,10 @@ psshfs_node_write(struct puffs_cc *pcc, void *opc, uint8_t *buf,
 }
 
 int
-psshfs_node_readlink(struct puffs_cc *pcc, void *opc,
+psshfs_node_readlink(struct puffs_usermount *pu, void *opc,
 	const struct puffs_cred *cred, char *linkvalue, size_t *linklen)
 {
-	PSSHFSAUTOVAR(pcc);
+	PSSHFSAUTOVAR(pu);
 	struct puffs_node *pn = opc;
 	struct psshfs_node *psn = pn->pn_data;
 	uint32_t count;
@@ -639,10 +636,10 @@ psshfs_node_readlink(struct puffs_cc *pcc, void *opc,
 }
 
 static int
-doremove(struct puffs_cc *pcc, struct puffs_node *pn_dir,
+doremove(struct puffs_usermount *pu, struct puffs_node *pn_dir,
 	struct puffs_node *pn, const char *name)
 {
-	PSSHFSAUTOVAR(pcc);
+	PSSHFSAUTOVAR(pu);
 	int op;
 
 	if (pn->pn_va.va_type == VDIR)
@@ -662,7 +659,7 @@ doremove(struct puffs_cc *pcc, struct puffs_node *pn_dir,
 }
 
 int
-psshfs_node_remove(struct puffs_cc *pcc, void *opc, void *targ,
+psshfs_node_remove(struct puffs_usermount *pu, void *opc, void *targ,
 	const struct puffs_cn *pcn)
 {
 	struct puffs_node *pn_targ = targ;
@@ -670,15 +667,15 @@ psshfs_node_remove(struct puffs_cc *pcc, void *opc, void *targ,
 
 	assert(pn_targ->pn_va.va_type != VDIR);
 
-	rv = doremove(pcc, opc, targ, pcn->pcn_name);
+	rv = doremove(pu, opc, targ, pcn->pcn_name);
 	if (rv == 0)
-		puffs_setback(pcc, PUFFS_SETBACK_NOREF_N2);
+		puffs_setback(puffs_cc_getcc(pu), PUFFS_SETBACK_NOREF_N2);
 
 	return rv;
 }
 
 int
-psshfs_node_rmdir(struct puffs_cc *pcc, void *opc, void *targ,
+psshfs_node_rmdir(struct puffs_usermount *pu, void *opc, void *targ,
 	const struct puffs_cn *pcn)
 {
 	struct puffs_node *pn_targ = targ;
@@ -686,19 +683,18 @@ psshfs_node_rmdir(struct puffs_cc *pcc, void *opc, void *targ,
 
 	assert(pn_targ->pn_va.va_type == VDIR);
 
-	rv = doremove(pcc, opc, targ, pcn->pcn_name);
+	rv = doremove(pu, opc, targ, pcn->pcn_name);
 	if (rv == 0)
-		puffs_setback(pcc, PUFFS_SETBACK_NOREF_N2);
+		puffs_setback(puffs_cc_getcc(pu), PUFFS_SETBACK_NOREF_N2);
 
 	return rv;
 }
 
 int
-psshfs_node_mkdir(struct puffs_cc *pcc, void *opc,  struct puffs_newinfo *pni,
+psshfs_node_mkdir(struct puffs_usermount *pu, void *opc,  struct puffs_newinfo *pni,
 	const struct puffs_cn *pcn, const struct vattr *va)
 {
-	PSSHFSAUTOVAR(pcc);
-	struct puffs_usermount *pu = puffs_cc_getusermount(pcc);
+	PSSHFSAUTOVAR(pu);
 	struct puffs_node *pn = opc;
 	struct puffs_node *pn_new;
 
@@ -724,12 +720,11 @@ psshfs_node_mkdir(struct puffs_cc *pcc, void *opc,  struct puffs_newinfo *pni,
 }
 
 int
-psshfs_node_symlink(struct puffs_cc *pcc, void *opc, struct puffs_newinfo *pni,
+psshfs_node_symlink(struct puffs_usermount *pu, void *opc, struct puffs_newinfo *pni,
 	const struct puffs_cn *pcn, const struct vattr *va,
 	const char *link_target)
 {
-	PSSHFSAUTOVAR(pcc);
-	struct puffs_usermount *pu = puffs_cc_getusermount(pcc);
+	PSSHFSAUTOVAR(pu);
 	struct puffs_node *pn = opc;
 	struct puffs_node *pn_new;
 
@@ -763,11 +758,11 @@ psshfs_node_symlink(struct puffs_cc *pcc, void *opc, struct puffs_newinfo *pni,
 }
 
 int
-psshfs_node_rename(struct puffs_cc *pcc, void *opc, void *src,
+psshfs_node_rename(struct puffs_usermount *pu, void *opc, void *src,
 	const struct puffs_cn *pcn_src, void *targ_dir, void *targ,
 	const struct puffs_cn *pcn_targ)
 {
-	PSSHFSAUTOVAR(pcc);
+	PSSHFSAUTOVAR(pu);
 	struct puffs_node *pn_sf = src;
 	struct puffs_node *pn_td = targ_dir, *pn_tf = targ;
 	struct psshfs_node *psn_targdir = pn_td->pn_data;
@@ -778,7 +773,7 @@ psshfs_node_rename(struct puffs_cc *pcc, void *opc, void *src,
 	}
 
 	if (pn_tf) {
-		rv = doremove(pcc, targ_dir, pn_tf, pcn_targ->pcn_name);
+		rv = doremove(pu, targ_dir, pn_tf, pcn_targ->pcn_name);
 		if (rv)
 			goto out;
 	}
@@ -829,9 +824,8 @@ psshfs_node_rename(struct puffs_cc *pcc, void *opc, void *src,
  * bit.
  */
 int
-psshfs_node_reclaim(struct puffs_cc *pcc, void *opc)
+psshfs_node_reclaim(struct puffs_usermount *pu, void *opc)
 {
-	struct puffs_usermount *pu = puffs_cc_getusermount(pcc);
 	struct puffs_node *pn = opc, *pn_next, *pn_root;
 	struct psshfs_node *psn = pn->pn_data;
 
