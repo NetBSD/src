@@ -1,4 +1,4 @@
-/*      $NetBSD: subr.c,v 1.37 2007/11/30 16:24:04 pooka Exp $        */
+/*      $NetBSD: subr.c,v 1.38 2007/11/30 19:02:41 pooka Exp $        */
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: subr.c,v 1.37 2007/11/30 16:24:04 pooka Exp $");
+__RCSID("$NetBSD: subr.c,v 1.38 2007/11/30 19:02:41 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -315,9 +315,9 @@ readdir_getattr_send(struct puffs_usermount *pu, struct psshfs_node *psn)
 }
 
 int
-getpathattr(struct puffs_cc *pcc, const char *path, struct vattr *vap)
+getpathattr(struct puffs_usermount *pu, const char *path, struct vattr *vap)
 {
-	PSSHFSAUTOVAR(pcc);
+	PSSHFSAUTOVAR(pu);
 
 	psbuf_req_str(pb, SSH_FXP_LSTAT, reqid, path);
 	GETRESPONSE(pb);
@@ -329,9 +329,9 @@ getpathattr(struct puffs_cc *pcc, const char *path, struct vattr *vap)
 }
 
 int
-getnodeattr(struct puffs_cc *pcc, struct puffs_node *pn)
+getnodeattr(struct puffs_usermount *pu, struct puffs_node *pn)
 {
-	struct puffs_usermount *pu = puffs_cc_getusermount(pcc);
+	struct puffs_cc *pcc = puffs_cc_getcc(pu);
 	struct psshfs_ctx *pctx = puffs_getspecific(pu);
 	struct psshfs_node *psn = pn->pn_data;
 	struct vattr va;
@@ -351,7 +351,7 @@ getnodeattr(struct puffs_cc *pcc, struct puffs_node *pn)
 		}
 
 		if (dohardway) {
-			rv = getpathattr(pcc, PNPATH(pn), &va);
+			rv = getpathattr(pu, PNPATH(pn), &va);
 			if (rv)
 				return rv;
 		}
