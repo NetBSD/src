@@ -1,4 +1,4 @@
-/*	$NetBSD: icfs.c,v 1.8 2007/11/16 18:39:01 pooka Exp $	*/
+/*	$NetBSD: icfs.c,v 1.9 2007/11/30 19:02:37 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -225,7 +225,7 @@ main(int argc, char *argv[])
 }
 
 int
-ic_node_readdir(struct puffs_cc *pcc, void *opc, struct dirent *dent,
+ic_node_readdir(struct puffs_usermount *pu, void *opc, struct dirent *dent,
 	off_t *readoff, size_t *reslen, const struct puffs_cred *pcr,
 	int *eofflag, off_t *cookies, size_t *ncookies)
 {
@@ -236,7 +236,7 @@ ic_node_readdir(struct puffs_cc *pcc, void *opc, struct dirent *dent,
 	dp = dent;
 	rl = *reslen;
 
-	rv = puffs_null_node_readdir(pcc, opc, dent, readoff, reslen, pcr,
+	rv = puffs_null_node_readdir(pu, opc, dent, readoff, reslen, pcr,
 	    eofflag, cookies, ncookies);
 	if (rv)
 		return rv;

@@ -1,4 +1,4 @@
-/*	$NetBSD: psshfs.h,v 1.30 2007/11/30 16:24:04 pooka Exp $	*/
+/*	$NetBSD: psshfs.h,v 1.31 2007/11/30 19:02:40 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -49,8 +49,9 @@ extern unsigned int max_reads;
 PUFFSOP_PROTOS(psshfs);
 
 #define NEXTREQ(pctx) ((pctx->nextreq)++)
-#define PSSHFSAUTOVAR(pcc)						\
-	struct psshfs_ctx *pctx = puffs_cc_getspecific(pcc);		\
+#define PSSHFSAUTOVAR(pu)						\
+	struct puffs_cc *pcc = puffs_cc_getcc(pu);			\
+	struct psshfs_ctx *pctx = puffs_getspecific(pu);		\
 	uint32_t reqid = NEXTREQ(pctx);					\
 	struct puffs_framebuf *pb = psbuf_makeout();			\
 	int rv = 0
@@ -224,8 +225,8 @@ struct puffs_node *allocnode(struct puffs_usermount *, struct puffs_node *,
 struct psshfs_dir *direnter(struct puffs_node *, const char *);
 void nukenode(struct puffs_node *, const char *, int);
 void doreclaim(struct puffs_node *);
-int getpathattr(struct puffs_cc *, const char *, struct vattr *);
-int getnodeattr(struct puffs_cc *, struct puffs_node *);
+int getpathattr(struct puffs_usermount *, const char *, struct vattr *);
+int getnodeattr(struct puffs_usermount *, struct puffs_node *);
 
 void closehandles(struct puffs_usermount *, struct psshfs_node *, int);
 void lazyopen_rresp(struct puffs_usermount *, struct puffs_framebuf *,

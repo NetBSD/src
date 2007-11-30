@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs_vfsops.c,v 1.22 2007/11/27 11:31:22 pooka Exp $	*/
+/*	$NetBSD: dtfs_vfsops.c,v 1.23 2007/11/30 19:02:37 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -191,15 +191,13 @@ dtfs_domount(struct puffs_usermount *pu, const char *typestr)
 #define ROUND(a,b) (((a) + ((b)-1)) & ~((b)-1))
 #define NFILES 1024*1024
 int
-dtfs_fs_statvfs(struct puffs_cc *pcc, struct statvfs *sbp)
+dtfs_fs_statvfs(struct puffs_usermount *pu, struct statvfs *sbp)
 {
-	struct puffs_usermount *pu;
 	struct rlimit rlim;
 	struct dtfs_mount *dtm;
 	off_t btot, bfree;
 	int pgsize;
 
-	pu = puffs_cc_getusermount(pcc);
 	dtm = puffs_getspecific(pu);
 	pgsize = getpagesize();
 	memset(sbp, 0, sizeof(struct statvfs));
@@ -239,10 +237,9 @@ addrcmp(struct puffs_usermount *pu, struct puffs_node *pn, void *arg)
 }
 
 int
-dtfs_fs_fhtonode(struct puffs_cc *pcc, void *fid, size_t fidsize,
+dtfs_fs_fhtonode(struct puffs_usermount *pu, void *fid, size_t fidsize,
 	struct puffs_newinfo *pni)
 {
-	struct puffs_usermount *pu = puffs_cc_getusermount(pcc);
 	struct dtfs_fid *dfid;
 	struct puffs_node *pn;
 
@@ -266,7 +263,7 @@ dtfs_fs_fhtonode(struct puffs_cc *pcc, void *fid, size_t fidsize,
 }
 
 int
-dtfs_fs_nodetofh(struct puffs_cc *pcc, void *cookie,
+dtfs_fs_nodetofh(struct puffs_usermount *pu, void *cookie,
 	void *fid, size_t *fidsize)
 {
 	struct puffs_node *pn = cookie;
@@ -293,7 +290,7 @@ dtfs_fs_nodetofh(struct puffs_cc *pcc, void *cookie,
 }
 
 void
-dtfs_fs_suspend(struct puffs_cc *pcc, int status)
+dtfs_fs_suspend(struct puffs_usermount *pu, int status)
 {
 
 	printf("suspend status %d\n", status);
@@ -302,7 +299,7 @@ dtfs_fs_suspend(struct puffs_cc *pcc, int status)
 }
 
 int
-dtfs_fs_unmount(struct puffs_cc *pcc, int flags)
+dtfs_fs_unmount(struct puffs_usermount *pu, int flags)
 {
 
 	return 0;
