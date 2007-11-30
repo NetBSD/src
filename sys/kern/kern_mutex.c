@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.23 2007/11/21 10:19:10 yamt Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.24 2007/11/30 23:05:43 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.23 2007/11/21 10:19:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.24 2007/11/30 23:05:43 ad Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -59,10 +59,10 @@ __KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.23 2007/11/21 10:19:10 yamt Exp $")
 #include <sys/systm.h>
 #include <sys/lockdebug.h>
 #include <sys/kernel.h>
+#include <sys/atomic.h>
+#include <sys/intr.h>
 
 #include <dev/lockstat.h>
-
-#include <sys/intr.h>
 
 /*
  * When not running a debug kernel, spin mutexes are not much
@@ -676,8 +676,8 @@ mutex_vector_enter(kmutex_t *mtx)
 		 * If the waiters bit is not set it's unsafe to go asleep,
 		 * as we might never be awoken.
 		 */
-		if ((mb_read(), mutex_onproc(owner, &ci)) ||
-		    (mb_read(), !MUTEX_HAS_WAITERS(mtx))) {
+		if ((membar_consumer(), mutex_onproc(owner, &ci)) ||
+		    (membar_consumer(), !MUTEX_HAS_WAITERS(mtx))) {
 			turnstile_exit(mtx);
 			continue;
 		}
