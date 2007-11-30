@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.175 2007/11/26 19:02:25 pooka Exp $	*/
+/*	$NetBSD: vnode.h,v 1.176 2007/11/30 16:52:19 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -571,6 +571,7 @@ u_int	vn_setrecurse(struct vnode *);
 int	vn_stat(struct vnode *, struct stat *, struct lwp *);
 int	vn_kqfilter(struct file *, struct knote *);
 int	vn_writechk(struct vnode *);
+int	vn_openchk(struct vnode *, kauth_cred_t, int);
 int	vn_extattr_get(struct vnode *, int, int, const char *, size_t *,
 	    void *, struct lwp *);
 int	vn_extattr_set(struct vnode *, int, int, const char *, size_t,
