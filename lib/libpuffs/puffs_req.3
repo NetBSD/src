@@ -1,4 +1,4 @@
-.\"	$NetBSD: puffs_req.3,v 1.4 2007/12/01 19:18:51 wiz Exp $
+.\"	$NetBSD: puffs_req.3,v 1.5 2007/12/01 19:54:01 wiz Exp $
 .\"
 .\" Copyright (c) 2007 Antti Kantee.  All rights reserved.
 .\"
@@ -109,7 +109,7 @@ but this might return fewer requests if there was not enough space
 in the buffer or if fewer requests were available at the time of
 the call.
 In case at least one request is returned, the operation
-is considered to be succesful.
+is considered to be successful.
 The function also resets any previous state in the buffer back to
 what it would have been like immediate after the call to
 .Fn puffs_req_makeget
