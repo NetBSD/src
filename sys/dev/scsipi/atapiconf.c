@@ -1,4 +1,4 @@
-/*	$NetBSD: atapiconf.c,v 1.72.22.1 2007/11/12 12:09:45 joerg Exp $	*/
+/*	$NetBSD: atapiconf.c,v 1.72.22.2 2007/12/01 14:46:39 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1996, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapiconf.c,v 1.72.22.1 2007/11/12 12:09:45 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapiconf.c,v 1.72.22.2 2007/12/01 14:46:39 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -154,7 +154,8 @@ atapibusattach(struct device *parent, struct device *self, void *aux)
 
 	/* ATAPI has no LUNs. */
 	chan->chan_nluns = 1;
-	printf(": %d targets\n", chan->chan_ntargets);
+	aprint_naive("\n");
+	aprint_normal(": %d targets\n", chan->chan_ntargets);
 
 	/* Initialize the channel. */
 	chan->chan_init_cb = NULL;

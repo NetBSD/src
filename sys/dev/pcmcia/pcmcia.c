@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia.c,v 1.82.22.2 2007/11/06 14:27:30 joerg Exp $	*/
+/*	$NetBSD: pcmcia.c,v 1.82.22.3 2007/12/01 14:40:36 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2004 Charles M. Hannum.  All rights reserved.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.82.22.2 2007/11/06 14:27:30 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.82.22.3 2007/12/01 14:40:36 jmcneill Exp $");
 
 #include "opt_pcmciaverbose.h"
 
@@ -131,7 +131,8 @@ pcmcia_attach(struct device *parent, struct device *self, void *aux)
 	struct pcmciabus_attach_args *paa = aux;
 	struct pcmcia_softc *sc = (struct pcmcia_softc *) self;
 
-	printf("\n");
+	aprint_naive("\n");
+	aprint_normal("\n");
 
 	sc->pct = paa->pct;
 	sc->pch = paa->pch;
