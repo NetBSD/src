@@ -1,4 +1,4 @@
-/* $NetBSD: privcmd.c,v 1.21 2007/11/27 11:37:27 pooka Exp $ */
+/* $NetBSD: privcmd.c,v 1.22 2007/12/01 12:57:09 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2004 Christian Limpach.
@@ -32,7 +32,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.21 2007/11/27 11:37:27 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.22 2007/12/01 12:57:09 bouyer Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -72,7 +72,7 @@ privcmd_ioctl(void *v)
 		if (hc->op >= (PAGE_SIZE >> 5))
 			return EINVAL;
 		error = -EOPNOTSUPP;
-#if defined(i386)
+#if defined(__i386__)
 		__asm volatile (
 			"pushl %%ebx; pushl %%ecx; pushl %%edx;"
 			"pushl %%esi; pushl %%edi; "
@@ -92,8 +92,8 @@ privcmd_ioctl(void *v)
 			"popl %%edi; popl %%esi; popl %%edx;"
 			"popl %%ecx; popl %%ebx"
 			: "=a" (error) : "0" (ap->a_data) : "memory" );
-#endif /* i386 */
-#if defined(x86_64)
+#endif /* __i386__ */
+#if defined(__x86_64__)
 		{
 		long i1, i2, i3;
 		__asm volatile (
@@ -111,7 +111,7 @@ privcmd_ioctl(void *v)
 			  "g" (hc->arg[4])
 			: "r8", "r10", "memory" );
 		}
-#endif /* x86_64 */
+#endif /* __x86_64__ */
 		error = -error;
 		break;
 	}
