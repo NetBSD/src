@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs.c,v 1.51 2007/11/24 13:20:58 isaki Exp $	*/
+/*	$NetBSD: ufs.c,v 1.52 2007/12/01 17:44:16 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -282,7 +282,7 @@ block_map(struct open_file *f, indp_t file_block, indp_t *disk_block_p)
 {
 	struct file *fp = (struct file *)f->f_fsdata;
 	struct fs *fs = fp->f_fs;
-	unsigned level;
+	uint level;
 	indp_t ind_cache;
 	indp_t ind_block_num;
 	size_t rsize;
