@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnodeops.9,v 1.69 2007/11/26 19:11:11 pooka Exp $
+.\"     $NetBSD: vnodeops.9,v 1.70 2007/12/01 19:46:56 wiz Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -227,7 +227,7 @@ closely related to their corresponding system calls.
 In most cases, they are called as a result of the system call
 associated with the operation being invoked.
 .Pp
-Functions in the vnode operations vector are invoked using specialised
+Functions in the vnode operations vector are invoked using specialized
 macros.
 The following table lists the elements of the vnode operations vector,
 the corresponding invocation macro, and a description of the element.
@@ -321,7 +321,7 @@ struct componentname {
 The top half of the structure is used exclusively for the pathname
 lookups using
 .Fn VOP_LOOKUP
-and is initialised by the caller.
+and is initialized by the caller.
 The semantics of the lookup are affected by the lookup operation
 specified in
 .Em cn_nameiop
@@ -797,7 +797,7 @@ Test if the file is seekable for the specified offset
 The argument
 .Fa vp
 is the locked vnode of the file to test.
-For most filesystems this function simply tests if
+For most file systems this function simply tests if
 .Fa newoff
 is valid.
 If the specified
@@ -981,7 +981,7 @@ should be
 if they aren't required to be returned by
 .Fn VOP_READDIR .
 The directory contents are read into struct dirent structures and
-.Fa uio->uio_offset
+.Fa uio-\*[Gt]uio_offset
 is set to the offset of the next unread directory entry.
 This offset may be used in a following invocation to continue a
 sequential read of the directory contents.
@@ -1083,7 +1083,7 @@ flags.
 If the operation is successful zero is returned, otherwise an
 appropriate error code is returned.
 .Fn VOP_LOCK
-is used to serialise access to the file system such as to prevent two
+is used to serialize access to the file system such as to prevent two
 writes to the same file from happening at the same time.
 Kernel code should use
 .Xr vn_lock 9
@@ -1103,7 +1103,7 @@ flags.
 If the operation is successful zero is returned, otherwise an
 appropriate error code is returned.
 .Fn VOP_UNLOCK
-is used to serialise access to the file system such as to prevent two
+is used to serialize access to the file system such as to prevent two
 writes to the same file from happening at the same time.
 .It Fn VOP_ISLOCKED "vp"
 Test if the vnode
@@ -1176,7 +1176,7 @@ return if file names longer than KERN_NAME_MAX are truncated
 .Pp
 If
 .Fa name
-is recognised,
+is recognized,
 .Fa *retval
 is set to the specified value and zero is returned, otherwise an
 appropriate error is returned.
@@ -1298,9 +1298,9 @@ belonging the vnode
 will be written.
 The argument
 .Fa flags
-controls the behaviour of the routine and takes the vm pager's
+controls the behavior of the routine and takes the vm pager's
 flags
-.Dv ( PGO_ -prefixed).
+.Dv ( PGO_ -prefixed ) .
 If the operation is successful zero is returned, otherwise an
 appropriate error code is returned.
 .Pp
@@ -1434,13 +1434,13 @@ an attempt was made to change an immutable file
 .It Bq Er ENOTEMPTY
 attempt to remove a directory which is not empty
 .It Bq Er EINVAL
-attempt to read from an illegal offset in the directory; unrecognised
+attempt to read from an illegal offset in the directory; unrecognized
 input
 .It Bq Er EIO
 a read error occurred while reading the directory or reading the
 contents of a symbolic link
 .It Bq Er EROFS
-the filesystem is read-only
+the file system is read-only
 .El
 .Sh SEE ALSO
 .Xr extattr 9 ,
