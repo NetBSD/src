@@ -1,4 +1,4 @@
-/*  $NetBSD: if_wpi.c,v 1.17.4.12 2007/11/27 19:37:11 joerg Exp $    */
+/*  $NetBSD: if_wpi.c,v 1.17.4.13 2007/12/01 18:03:01 jmcneill Exp $    */
 
 /*-
  * Copyright (c) 2006, 2007
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.17.4.12 2007/11/27 19:37:11 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.17.4.13 2007/12/01 18:03:01 jmcneill Exp $");
 
 /*
  * Driver for Intel PRO/Wireless 3945ABG 802.11 network adapters.
@@ -2077,7 +2077,7 @@ wpi_read_eeprom(struct wpi_softc *sc)
 
 	/* read and print regulatory domain */
 	wpi_read_prom_data(sc, WPI_EEPROM_DOMAIN, domain, 4);
-	aprint_normal(", %.4s", domain);
+	aprint_normal_dev(sc->sc_dev, "%.4s", domain);
 
 	/* read and print MAC address */
 	wpi_read_prom_data(sc, WPI_EEPROM_MAC, ic->ic_myaddr, 6);
