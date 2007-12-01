@@ -1,4 +1,4 @@
-/* $NetBSD: pckbd.c,v 1.15.14.3 2007/11/06 14:27:29 joerg Exp $ */
+/* $NetBSD: pckbd.c,v 1.15.14.4 2007/12/01 14:40:38 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbd.c,v 1.15.14.3 2007/11/06 14:27:29 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbd.c,v 1.15.14.4 2007/12/01 14:40:38 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -361,7 +361,8 @@ pckbdattach(struct device *parent, struct device *self, void *aux)
 	int isconsole;
 	u_char cmd[1];
 
-	printf("\n");
+	aprint_naive("\n");
+	aprint_normal("\n");
 
 	isconsole = pckbd_is_console(pa->pa_tag, pa->pa_slot);
 

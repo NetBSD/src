@@ -1,4 +1,4 @@
-/* 	$NetBSD: ioapic.c,v 1.19.8.13 2007/11/14 19:04:16 joerg Exp $	*/
+/* 	$NetBSD: ioapic.c,v 1.19.8.14 2007/12/01 14:40:38 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.19.8.13 2007/11/14 19:04:16 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.19.8.14 2007/12/01 14:40:38 jmcneill Exp $");
 
 #include "opt_ddb.h"
 
@@ -277,10 +277,11 @@ ioapic_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_flags = aaa->flags;
 	sc->sc_pic.pic_apicid = aaa->apic_id;
 
-	printf("\n");
+	aprint_naive("\n");
+	aprint_normal("\n");
 
 	if (ioapic_find(aaa->apic_id) != NULL) {
-		printf("%s: duplicate apic id (ignored)\n",
+		aprint_error("%s: duplicate apic id (ignored)\n",
 		    sc->sc_pic.pic_dev.dv_xname);
 		return;
 	}
@@ -294,7 +295,7 @@ ioapic_attach(struct device *parent, struct device *self, void *aux)
 	bus_space_handle_t bh;
 
 	if (x86_mem_add_mapping(aaa->apic_address, PAGE_SIZE, 0, &bh) != 0) {
-		printf(": map failed\n");
+		aprint_error(": map failed\n");
 		return;
 	}
 	sc->sc_reg = (volatile u_int32_t *)(bh + IOAPIC_REG);
