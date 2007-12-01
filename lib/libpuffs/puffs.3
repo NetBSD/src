@@ -1,4 +1,4 @@
-.\"	$NetBSD: puffs.3,v 1.33 2007/11/16 18:35:10 pooka Exp $
+.\"	$NetBSD: puffs.3,v 1.34 2007/12/01 18:53:28 wiz Exp $
 .\"
 .\" Copyright (c) 2006, 2007 Antti Kantee.  All rights reserved.
 .\"
@@ -157,7 +157,7 @@ and
 .Xr df 1 .
 .Ar puffsname
 is the file system type.
-It will always be predended with the string "puffs|".
+It will always be prepended with the string "puffs|".
 If possible, file server binaries should be named using the format
 "mount_myfsnamehere" and this value should equal "myfsnamehere".
 A file system specific context pointer can optionally be given in
@@ -189,7 +189,7 @@ This flag requests that all operations are sent to userspace.
 Normally the kernel shortcircuits unimplemented operations.
 This flag is mostly useful for debugging purposes.
 .It Dv PUFFS_KFLAG_WTCACHE
-Set the file system cache behaviour as write-through.
+Set the file system cache behavior as write-through.
 This means that all writes are immediately issued to the file server
 instead of being flushed in file system sync.
 This is useful especially for distributed file systems.
@@ -211,7 +211,7 @@ This flag affects only the parameter
 .Fn puffs_node_lookup .
 If this flag is not given, only the next pathname component under
 lookup is found from
-.Ar pcn->pcn_name .
+.Ar pcn-\*[Gt]pcn_name .
 If this flag is given, the full path the kernel was
 asked to resolve can be found from there.
 .It Dv PUFFS_FLAG_BUILDPATH
@@ -320,7 +320,7 @@ be passed as the parameter to
 .Fn puffs_req_makeget .
 .It Fn puffs_setfhsize "pu" "fhsize" "flags"
 Sets the desired file handle size.
-This must be called if the file system wishes to support nfs exporting
+This must be called if the file system wishes to support NFS exporting
 file systems of the
 .Fn fh*
 family of function calls.
@@ -424,7 +424,7 @@ and the foreground process does not exit before the file system mount
 call has returned from the kernel.
 .It Fn puffs_mainloop pu flags
 Handle all requests automatically until the file system is unmounted.
-It returns 0 if the file system was succesfully unmounted or \-1 if it
+It returns 0 if the file system was successfully unmounted or \-1 if it
 was killed in action.
 .Pp
 In case
@@ -451,7 +451,7 @@ address as a cookie and store file system specific data in the private
 portion of
 .Vt struct puffs_node .
 The library assumes this by default.
-If it is not desireable, the file system implementation can call
+If it is not desirable, the file system implementation can call
 .Fn puffs_set_cookiemap
 to provide an alternative cookie-to-node mapping function.
 .Sh SEE ALSO
