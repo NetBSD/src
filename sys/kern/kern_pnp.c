@@ -1,4 +1,4 @@
-/* $NetBSD: kern_pnp.c,v 1.1.2.16 2007/12/01 04:10:03 jmcneill Exp $ */
+/* $NetBSD: kern_pnp.c,v 1.1.2.17 2007/12/01 04:27:09 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_pnp.c,v 1.1.2.16 2007/12/01 04:10:03 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_pnp.c,v 1.1.2.17 2007/12/01 04:27:09 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -122,7 +122,7 @@ pnp_check_system_drivers(void)
 		if (device_pnp_is_registered(curdev))
 			continue;
 		if (!unsupported_devs)
-			printf("Devices without suspend/resume support:");
+			printf("Devices without power management support:");
 		printf(" %s", device_xname(curdev));
 		unsupported_devs = true;
 	}
@@ -150,7 +150,7 @@ pnp_system_resume(void)
 	}
 	++maxdepth;
 
-	printf("Resuming devices:");
+	aprint_debug("Resuming devices:");
 	/* D0 handlers are run in order */
 	depth = 0;
 	rv = true;
@@ -166,15 +166,15 @@ pnp_system_resume(void)
 			    !device_is_active(parent))
 				continue;
 
-			printf(" %s", device_xname(curdev));
+			aprint_debug(" %s", device_xname(curdev));
 
 			if (!pnp_device_resume(curdev)) {
 				rv = false;
-				printf("(failed)");
+				aprint_debug("(failed)");
 			}
 		}
 	}
-	printf(".\n");
+	aprint_debug(".\n");
 
 	return rv;
 }
@@ -201,7 +201,7 @@ pnp_system_suspend(void)
 			printf("done\n");
 	}
 
-	printf("Suspending devices:");
+	aprint_debug("Suspending devices:");
 
 	maxdepth = 0;
 	TAILQ_FOREACH(curdev, &alldevs, dv_list) {
@@ -216,15 +216,15 @@ pnp_system_suspend(void)
 			if (!device_is_active(curdev))
 				continue;
 
-			printf(" %s", device_xname(curdev));
+			aprint_debug(" %s", device_xname(curdev));
 
 			/* XXX joerg check return value and abort suspend */
 			if (!pnp_device_suspend(curdev))
-				printf("(failed)");
+				aprint_debug("(failed)");
 		}
 	}
 
-	printf(".\n");
+	aprint_debug(".\n");
 
 	return true;
 }
@@ -238,7 +238,7 @@ pnp_system_shutdown(void)
 	if (!pnp_check_system_drivers())
 		delay(2000000);
 
-	printf("Shutting down devices:");
+	aprint_debug("Shutting down devices:");
 
 	maxdepth = 0;
 	TAILQ_FOREACH(curdev, &alldevs, dv_list) {
@@ -253,22 +253,22 @@ pnp_system_shutdown(void)
 			if (!device_is_active(curdev))
 				continue;
 
-			printf(" %s", device_xname(curdev));
+			aprint_debug(" %s", device_xname(curdev));
 
 			if (!device_pnp_is_registered(curdev))
 				continue;
 			if (!device_pnp_class_suspend(curdev)) {
-				printf("(failed)");
+				aprint_debug("(failed)");
 				continue;
 			}
 			if (!device_pnp_driver_suspend(curdev)) {
-				printf("(failed)");
+				aprint_debug("(failed)");
 				continue;
 			}
 		}
 	}
 
-	printf(".\n");
+	aprint_debug(".\n");
 }
 
 bool
