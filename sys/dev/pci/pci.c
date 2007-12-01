@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.103.22.9 2007/12/01 04:25:37 jmcneill Exp $	*/
+/*	$NetBSD: pci.c,v 1.103.22.10 2007/12/01 04:31:37 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.103.22.9 2007/12/01 04:25:37 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.103.22.10 2007/12/01 04:31:37 jmcneill Exp $");
 
 #include "opt_pci.h"
 
@@ -309,16 +309,10 @@ pci_probe_device(struct pci_softc *sc, pcitag_t tag,
 	 * as appropriate.
 	 */
 	pa.pa_flags = sc->sc_flags;
-	if (PCI_CLASS(class) != PCI_CLASS_BRIDGE) {
-		if ((csr & PCI_COMMAND_IO_ENABLE) == 0)
-			pa.pa_flags &= ~PCI_FLAGS_IO_ENABLED;
-		if ((csr & PCI_COMMAND_MEM_ENABLE) == 0)
-			pa.pa_flags &= ~PCI_FLAGS_MEM_ENABLED;
-	} else if ((csr & PCI_COMMAND_IO_ENABLE) == 0 ||
-		    (csr & PCI_COMMAND_MEM_ENABLE) == 0) {
-			pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG,
-			    csr | sc->sc_flags);
-	}
+	if ((csr & PCI_COMMAND_IO_ENABLE) == 0)
+		pa.pa_flags &= ~PCI_FLAGS_IO_ENABLED;
+	if ((csr & PCI_COMMAND_MEM_ENABLE) == 0)
+		pa.pa_flags &= ~PCI_FLAGS_MEM_ENABLED;
 
 	/*
 	 * If the cache line size is not configured, then
