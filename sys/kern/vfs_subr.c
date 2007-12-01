@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.307 2007/11/29 18:07:11 ad Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.308 2007/12/01 10:36:47 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.307 2007/11/29 18:07:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.308 2007/12/01 10:36:47 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -334,7 +334,6 @@ int
 getnewvnode(enum vtagtype tag, struct mount *mp, int (**vops)(void *),
     struct vnode **vpp)
 {
-	extern struct uvm_pagerops uvm_vnodeops;
 	struct uvm_object *uobj;
 	struct lwp *l = curlwp;		/* XXX */
 	static int toggle;
