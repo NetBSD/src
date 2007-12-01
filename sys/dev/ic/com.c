@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.232 2005/02/27 00:27:01 perry Exp $	*/
+/*	$NetBSD: com.c,v 1.232.2.1 2007/12/01 17:49:45 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.232 2005/02/27 00:27:01 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.232.2.1 2007/12/01 17:49:45 bouyer Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -1751,7 +1751,6 @@ comstart(struct tty *tp)
 		bus_space_write_1(iot, ioh, com_ier, sc->sc_ier);
 	}
 
-#if 0
 	/* Output the first chunk of the contiguous buffer. */
 	if (!ISSET(sc->sc_hwflags, COM_HW_NO_TXPRELOAD)) {
 		u_int n;
@@ -1763,7 +1762,7 @@ comstart(struct tty *tp)
 		sc->sc_tbc -= n;
 		sc->sc_tba += n;
 	}
-#endif
+
 	COM_UNLOCK(sc);
 out:
 	splx(s);
