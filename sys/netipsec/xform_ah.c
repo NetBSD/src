@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ah.c,v 1.6.2.1 2004/05/11 12:30:46 tron Exp $	*/
+/*	$NetBSD: xform_ah.c,v 1.6.2.1.4.1 2007/12/01 17:32:28 bouyer Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ah.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ah.c,v 1.63 2001/06/26 06:18:58 angelos Exp $ */
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.6.2.1 2004/05/11 12:30:46 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.6.2.1.4.1 2007/12/01 17:32:28 bouyer Exp $");
 
 #include "opt_inet.h"
 #ifdef __FreeBSD__
@@ -326,12 +326,12 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 
 
 			if (alg == CRYPTO_MD5_KPDK || alg == CRYPTO_SHA1_KPDK)
-				ip->ip_off = htons(TOHOST(ip->ip_off) & IP_DF);
+				ip->ip_off  &= IP_OFF_CONVERT(IP_DF);
 			else
 				ip->ip_off = 0;
 		} else {
 			if (alg == CRYPTO_MD5_KPDK || alg == CRYPTO_SHA1_KPDK)
-				ip->ip_off = htons(ntohs(ip->ip_off) & IP_DF);
+				ip->ip_off &= IP_OFF_CONVERT(IP_DF);
 			else
 				ip->ip_off = 0;
 		}
