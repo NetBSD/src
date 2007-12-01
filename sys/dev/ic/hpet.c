@@ -1,4 +1,4 @@
-/* $NetBSD: hpet.c,v 1.2 2007/10/19 11:59:52 ad Exp $ */
+/* $NetBSD: hpet.c,v 1.3 2007/12/01 16:51:22 ad Exp $ */
 
 /*
  * Copyright (c) 2006 Nicolas Joly
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpet.c,v 1.2 2007/10/19 11:59:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpet.c,v 1.3 2007/12/01 16:51:22 ad Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -63,7 +63,7 @@ hpet_attach_subr(struct hpet_softc *sc) {
 	/* XXX Only 32-bits supported for now */
 	val = bus_space_read_4(sc->sc_memt, sc->sc_memh, HPET_INFO);
 	if ((val & HPET_INFO_64BITS) != 0) {
-		aprint_normal("%s: Found 64-bits HPET, will only use lowest"
+		aprint_debug("%s: Found 64-bits HPET, will only use lowest"
 		    " 32-bits\n", sc->sc_dev.dv_xname);
 	}
 	tc->tc_counter_mask = 0xffffffff;
