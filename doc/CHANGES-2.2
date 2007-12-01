@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.2,v 1.1.2.122 2007/11/19 20:40:33 bouyer Exp $
+#	$NetBSD: CHANGES-2.2,v 1.1.2.123 2007/12/01 17:39:27 bouyer Exp $
 
 A complete list of changes from the NetBSD 2.1 release to the NetBSD 2.2 
 release
@@ -1349,4 +1349,34 @@ sys/dev/ic/ninjascsi32var.h			1.4
 	some NinjaSCSI-32UDE devices would hang the system if the termination
 	power is absent
 	[itohy, ticket #11391]
+
+sys/netinet6/ipcomp_input.c			1.28
+
+	From FreeBSD:
+	    In ipcomp6_input(), check 'md' not 'm' after a call to
+	    m_pulldown(): 'm' may be a stale pointer at this point, and
+	    we're interested in whether or not m_pulldown() failed.
+	    Noticed by:     Coverity Prevent analysis tool
+	[jdc, ticket #11393]
+
+sys/netipsec/ipsec.c				1.34 via patch
+sys/netipsec/ipsec_osdep.h			1.21 via patch
+sys/netipsec/ipsec_output.c			1.23 via patch
+sys/netipsec/xform_ah.c				1.19 via patch
+sys/netipsec/xform_ipip.c			1.18 via patch
+
+	The function ipsec4_get_ulp assumes that ip_off is in host order.
+	This results in IPsec processing that is dependent on protocol
+	and/or port can be bypassed.
+
+	Bug report, analysis and initial fix from Karl Knutsson.
+	Final patch and ok from degroote@
+	[adrianp, ticket #11395]
+
+sys/dev/ic/com.c				1.233
+
+	Revert the part of revision 1.228 that made HW_NO_TXPRELOAD the
+	default: it appears to break output on the Soekris net4501, which
+	is a rather popular platform. This should fix PR kern/29612.
+	[is, ticket #11394]
 
