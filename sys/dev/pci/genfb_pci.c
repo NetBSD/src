@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb_pci.c,v 1.2 2007/11/19 04:03:44 macallan Exp $ */
+/*	$NetBSD: genfb_pci.c,v 1.3 2007/12/01 16:54:28 ad Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb_pci.c,v 1.2 2007/11/19 04:03:44 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb_pci.c,v 1.3 2007/12/01 16:54:28 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -169,7 +169,7 @@ static int
 pci_genfb_drm_print(void *aux, const char *pnp)
 {
 	if (pnp)
-		aprint_normal("direct rendering for %s", pnp);
+		aprint_verbose("direct rendering for %s", pnp);
 	return (UNSUPP);
 }
 
