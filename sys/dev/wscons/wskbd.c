@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.107 2007/10/18 14:51:25 joerg Exp $ */
+/* $NetBSD: wskbd.c,v 1.108 2007/12/01 05:22:02 jmcneill Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.107 2007/10/18 14:51:25 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.108 2007/12/01 05:22:02 jmcneill Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -397,10 +397,10 @@ wskbd_attach(struct device *parent, struct device *self, void *aux)
 		mux = -1;
 	}
 	if (mux >= 0)
-		printf(" mux %d", mux);
+		aprint_normal(" mux %d", mux);
 #else
 	if (device_cfdata(&sc->sc_base.me_dv)->wskbddevcf_mux >= 0)
-		printf(" (mux ignored)");
+		aprint_normal(" (mux ignored)");
 #endif
 
 	if (ap->console) {
@@ -443,15 +443,18 @@ wskbd_attach(struct device *parent, struct device *self, void *aux)
 
 		wskbd_console_device = sc;
 
-		printf(": console keyboard");
+		aprint_naive(": console keyboard");
+		aprint_normal(": console keyboard");
 
 #if NWSDISPLAY > 0
 		wsdisplay_set_console_kbd(&sc->sc_base); /* sets me_dispv */
 		if (sc->sc_base.me_dispdv != NULL)
-			printf(", using %s", sc->sc_base.me_dispdv->dv_xname);
+			aprint_normal(", using %s",
+			    sc->sc_base.me_dispdv->dv_xname);
 #endif
 	}
-	printf("\n");
+	aprint_naive("\n");
+	aprint_normal("\n");
 
 #if NWSMUX > 0
 	if (mux >= 0) {
