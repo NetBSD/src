@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.267.4.3 2007/11/06 23:03:26 joerg Exp $	*/
+/*	$NetBSD: cd.c,v 1.267.4.4 2007/12/01 04:14:35 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.267.4.3 2007/11/06 23:03:26 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.267.4.4 2007/12/01 04:14:35 jmcneill Exp $");
 
 #include "rnd.h"
 
@@ -174,7 +174,6 @@ static int	cdmatch(struct device *, struct cfdata *, void *);
 static void	cdattach(struct device *, struct device *, void *);
 static int	cdactivate(struct device *, enum devact);
 static int	cddetach(struct device *, int);
-static bool	cd_suspend(device_t);
 
 static int	mmc_getdiscinfo(struct scsipi_periph *, struct mmc_discinfo *);
 static int	mmc_gettrackinfo(struct scsipi_periph *, struct mmc_trackinfo *);
@@ -291,7 +290,7 @@ cdattach(struct device *parent, struct device *self, void *aux)
 			  RND_TYPE_DISK, 0);
 #endif
 
-	if (!pnp_device_register(self, cd_suspend, NULL))
+	if (!pnp_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
@@ -3471,13 +3470,4 @@ mmc_gettrackinfo(struct scsipi_periph *periph,
 	trackinfo->last_recorded  = _4btol(ti.last_recorded);
 
 	return 0;
-}
-
-static bool
-cd_suspend(device_t dv)
-{
-	struct cd_softc *cd = device_private(dv);
-
-	cdcachesync(cd->sc_periph, 0);
-	return true;
 }
