@@ -1,4 +1,4 @@
-/*	$NetBSD: vga_pci.c,v 1.32.8.4 2007/11/06 14:27:29 joerg Exp $	*/
+/*	$NetBSD: vga_pci.c,v 1.32.8.5 2007/12/01 05:22:51 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_pci.c,v 1.32.8.4 2007/11/06 14:27:29 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_pci.c,v 1.32.8.5 2007/12/01 05:22:51 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -177,7 +177,8 @@ vga_pci_attach(struct device *parent, struct device *self, void *aux)
 	psc->sc_pcitag = pa->pa_tag;
 
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
-	printf(": %s (rev. 0x%02x)\n", devinfo,
+	aprint_naive("\n");
+	aprint_normal(": %s (rev. 0x%02x)\n", devinfo,
 	    PCI_REVISION(pa->pa_class));
 
 	/*
@@ -200,7 +201,7 @@ vga_pci_attach(struct device *parent, struct device *self, void *aux)
 		if (PCI_MAPREG_MEM_TYPE(psc->sc_bars[bar].vb_type) ==
 		    PCI_MAPREG_MEM_TYPE_64BIT) {
 			/* XXX */
-			printf("%s: WARNING: ignoring 64-bit BAR @ 0x%02x\n",
+			aprint_error("%s: WARNING: ignoring 64-bit BAR @ 0x%02x\n",
 			    sc->sc_dev.dv_xname, reg);
 			bar++;
 			continue;
@@ -211,7 +212,7 @@ vga_pci_attach(struct device *parent, struct device *self, void *aux)
 		     &psc->sc_bars[bar].vb_base,
 		     &psc->sc_bars[bar].vb_size,
 		     &psc->sc_bars[bar].vb_flags))
-			printf("%s: WARNING: strange BAR @ 0x%02x\n",
+			aprint_error("%s: WARNING: strange BAR @ 0x%02x\n",
 			       sc->sc_dev.dv_xname, reg);
 	}
 
