@@ -1,4 +1,4 @@
-/*	$NetBSD: vga_pci.c,v 1.35 2007/12/01 16:54:29 ad Exp $	*/
+/*	$NetBSD: vga_pci.c,v 1.36 2007/12/01 17:00:41 ad Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_pci.c,v 1.35 2007/12/01 16:54:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_pci.c,v 1.36 2007/12/01 17:00:41 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -234,7 +234,7 @@ int
 vga_drm_print(void *aux, const char *pnp)
 {
 	if (pnp)
-		aprint_verbose("direct rendering for %s", pnp);
+		aprint_normal("direct rendering for %s", pnp);
 	return (UNSUPP);
 }
 
