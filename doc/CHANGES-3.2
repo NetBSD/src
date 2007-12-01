@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.2,v 1.1.2.111 2007/11/22 19:10:16 bouyer Exp $
+#	$NetBSD: CHANGES-3.2,v 1.1.2.112 2007/12/01 17:50:34 bouyer Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.2
 release:
@@ -3828,4 +3828,11 @@ sys/netinet6/ipcomp_input.c			1.28
 	    Noticed by:     Coverity Prevent analysis tool
 	Should fix PR 37410.
 	[jdc, ticket #1879]
+
+sys/dev/ic/com.c				1.233
+
+	Revert the part of revision 1.228 that made HW_NO_TXPRELOAD the
+	default: it appears to break output on the Soekris net4501, which
+	is a rather popular platform. This should fix PR kern/29612.
+	[is, ticket #1882]
 
