@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_tz.c,v 1.27 2007/11/16 08:00:13 xtraeme Exp $ */
+/* $NetBSD: acpi_tz.c,v 1.28 2007/12/01 05:12:09 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2003 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.27 2007/11/16 08:00:13 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.28 2007/12/01 05:12:09 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -225,7 +225,8 @@ acpitz_get_status(void *opaque)
 	}
 
 	if (acpitz_get_integer(sc, "_TMP", &tmp)) {
-		printf("%s: failed to evaluate _TMP\n", sc->sc_dev.dv_xname);
+		aprint_error("%s: failed to evaluate _TMP\n",
+		    sc->sc_dev.dv_xname);
 		return;
 	}
 	sc->sc_zone.tmp = tmp;
@@ -448,7 +449,7 @@ acpitz_get_zone(void *opaque, int verbose)
 		}
 
 		if (first)
-			printf("%s: active cooling level %d: %sC\n",
+			aprint_normal("%s: active cooling level %d: %sC\n",
 			    sc->sc_dev.dv_xname, i,
 			    acpitz_celcius_string(sc->sc_zone.ac[i]));
 
@@ -458,7 +459,7 @@ acpitz_get_zone(void *opaque, int verbose)
 	if (valid_levels == 0) {
 		sc->sc_flags |= ATZ_F_PASSIVEONLY;
 		if (first)
-			printf("%s: passive cooling mode only\n",
+			aprint_normal("%s: passive cooling mode only\n",
 			    sc->sc_dev.dv_xname);
 	}
 
@@ -478,17 +479,17 @@ acpitz_get_zone(void *opaque, int verbose)
 	acpitz_sane_temp(&sc->sc_zone.psv);
 
 	if (verbose) {
-		printf("%s:", sc->sc_dev.dv_xname);
+		aprint_normal("%s:", sc->sc_dev.dv_xname);
 		if (sc->sc_zone.crt != ATZ_TMP_INVALID)
-			printf(" critical %sC",
+			aprint_normal(" critical %sC",
 			    acpitz_celcius_string(sc->sc_zone.crt));
 		if (sc->sc_zone.hot != ATZ_TMP_INVALID)
-			printf(" hot %sC",
+			aprint_normal(" hot %sC",
 			    acpitz_celcius_string(sc->sc_zone.hot));
 		if (sc->sc_zone.psv != ATZ_TMP_INVALID)
-			printf(" passive %sC",
+			aprint_normal(" passive %sC",
 			    acpitz_celcius_string(sc->sc_zone.tmp));
-		printf("\n");
+		aprint_normal("\n");
 	}
 
 	for (i = 0; i < ATZ_NLEVELS; i++)
