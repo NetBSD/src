@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipip.c,v 1.9 2004/03/17 00:21:43 jonathan Exp $	*/
+/*	$NetBSD: xform_ipip.c,v 1.9.16.1 2007/12/01 17:32:29 bouyer Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ipip.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ipip.c,v 1.25 2002/06/10 18:04:55 itojun Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.9 2004/03/17 00:21:43 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.9.16.1 2007/12/01 17:32:29 bouyer Exp $");
 
 /*
  * IP-inside-IP processing
@@ -510,9 +510,7 @@ ipip_output(
 			m_copydata(m, sizeof(struct ip) +
 			    offsetof(struct ip, ip_off),
 			    sizeof(u_int16_t), (caddr_t) &ipo->ip_off);
-			ipo->ip_off = ntohs(ipo->ip_off);
-			ipo->ip_off &= ~(IP_DF | IP_MF | IP_OFFMASK);
-			ipo->ip_off = htons(ipo->ip_off);
+			ipo->ip_off &= ~ IP_OFF_CONVERT(IP_DF | IP_MF | IP_OFFMASK);
 		}
 #ifdef INET6
 		else if (tp == (IPV6_VERSION >> 4)) {
