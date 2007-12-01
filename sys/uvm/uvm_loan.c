@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_loan.c,v 1.67 2007/10/11 19:53:43 ad Exp $	*/
+/*	$NetBSD: uvm_loan.c,v 1.68 2007/12/01 10:18:21 yamt Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.67 2007/10/11 19:53:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.68 2007/12/01 10:18:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1078,12 +1078,7 @@ ulz_put(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 }
 
 static struct uvm_pagerops ulz_pager = {
-	NULL,		/* init */
-	NULL,		/* reference */
-	NULL,		/* detach */
-	NULL,		/* fault */
-	NULL,		/* get */
-	ulz_put,	/* put */
+	.pgo_put = ulz_put,
 };
 
 /*
