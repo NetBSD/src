@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnp.c,v 1.53 2007/10/19 12:00:31 ad Exp $	*/
+/*	$NetBSD: isapnp.c,v 1.54 2007/12/01 16:58:36 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isapnp.c,v 1.53 2007/10/19 12:00:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isapnp.c,v 1.54 2007/12/01 16:58:36 ad Exp $");
 
 #include "isadma.h"
 
@@ -158,7 +158,7 @@ isapnp_findcard(sc)
 	int i, b;
 
 	if (sc->sc_ncards == ISAPNP_MAX_CARDS) {
-		printf("%s: Too many pnp cards\n", sc->sc_dev.dv_xname);
+		aprint_error("%s: Too many pnp cards\n", sc->sc_dev.dv_xname);
 		return 0;
 	}
 
@@ -943,10 +943,10 @@ isapnp_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_dmat = ia->ia_dmat;
 	sc->sc_ncards = 0;
 
-	printf(": ISA Plug 'n Play device support\n");
+	aprint_normal(": ISA Plug 'n Play device support\n");
 
 	if (isapnp_map(sc)) {
-		printf("%s: unable to map PnP register\n",
+		aprint_error("%s: unable to map PnP register\n",
 		    sc->sc_dev.dv_xname);
 		return;
 	}
@@ -977,12 +977,12 @@ isapnp_callback(self)
 	 * Look for cards.  If none are found, we say so and just return.
 	 */
 	if (isapnp_find(sc, 1) == 0) {
-		printf("%s: no ISA Plug 'n Play devices found\n",
+		aprint_verbose("%s: no ISA Plug 'n Play devices found\n",
 		    sc->sc_dev.dv_xname);
 		return;
 	}
 
-	printf("%s: read port 0x%x\n", sc->sc_dev.dv_xname, sc->sc_read_port);
+	aprint_verbose("%s: read port 0x%x\n", sc->sc_dev.dv_xname, sc->sc_read_port);
 
 	/*
 	 * Now configure all of the cards.
@@ -1013,7 +1013,7 @@ isapnp_callback(self)
 			    lpa->ipa_devident, lpa->ipa_devlogic,
 			    lpa->ipa_devcompat, lpa->ipa_devclass));
 			if (lpa->ipa_pref == ISAPNP_DEP_CONFLICTING) {
-				printf("%s: <%s, %s, %s, %s> ignored; %s\n",
+				aprint_verbose("%s: <%s, %s, %s, %s> ignored; %s\n",
 				    sc->sc_dev.dv_xname,
 				    lpa->ipa_devident, lpa->ipa_devlogic,
 				    lpa->ipa_devcompat, lpa->ipa_devclass,
@@ -1034,7 +1034,7 @@ isapnp_callback(self)
 				isapnp_write_reg(sc, ISAPNP_ACTIVATE, 0);
 #else
 			isapnp_print(lpa, NULL);
-			printf("\n");
+			aprint_verbose("\n");
 #endif
 			ISAPNP_FREE(lpa);
 		}
