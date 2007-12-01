@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.5 2007/10/30 15:07:08 tsutsui Exp $	*/
+/*	$NetBSD: conf.c,v 1.6 2007/12/01 17:05:11 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -61,7 +61,8 @@ int	ndevs = (sizeof(devsw)/sizeof(devsw[0]));
  * Filesystem configuration
  */
 struct fs_ops file_system[] = {
-	FS_OPS(ufs),
+	FS_OPS(ffsv1),
+	FS_OPS(ffsv2),
 	FS_OPS(nfs),
 };
 
