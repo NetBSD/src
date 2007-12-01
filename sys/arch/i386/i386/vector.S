@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.29 2007/11/14 17:55:00 ad Exp $	*/
+/*	$NetBSD: vector.S,v 1.30 2007/12/01 22:34:28 ad Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -253,27 +253,23 @@ IDTVEC(intr_lapic_tlb_bcast)
 	pushl	%eax
 	pushl	%ebx
 	pushl	%edx
-	pushl	%ds
-	movl	$GSEL(GDATA_SEL, SEL_KPL), %eax
-	movl	%eax, %ds
 	/* Find out what we need to invalidate. */
-	movl	_C_LABEL(pmap_mbox)+MB_ADDR1, %eax
-	movl	_C_LABEL(pmap_mbox)+MB_ADDR2, %edx
-	movl	_C_LABEL(pmap_mbox)+MB_GLOBAL, %ebx
-	movl	$0, _C_LABEL(local_apic)+LAPIC_EOI
+	movl	%ss:_C_LABEL(pmap_mbox)+MB_ADDR1, %eax
+	movl	%ss:_C_LABEL(pmap_mbox)+MB_ADDR2, %edx
+	movl	%ss:_C_LABEL(pmap_mbox)+MB_GLOBAL, %ebx
+	movl	$0, %ss:_C_LABEL(local_apic)+LAPIC_EOI
 	cmpl	$-1, %eax
 	je,pn	3f
 1:
 	/* Invalidate a single page or a range of pages. */
-	invlpg	(%eax)
+	invlpg	%ss:(%eax)
 	addl	$PAGE_SIZE, %eax
 	cmpl	%edx, %eax
 	jb	1b
 2:
 	/* Ack the request, restore state & return. */
 	lock
-	incl	_C_LABEL(pmap_mbox)+MB_TAIL
-	popl	%ds
+	incl	%ss:_C_LABEL(pmap_mbox)+MB_TAIL
 	popl	%edx
 	popl	%ebx
 	popl	%eax
