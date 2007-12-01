@@ -1,4 +1,4 @@
-/*	$NetBSD: cardslot.c,v 1.35.6.2 2007/11/06 14:27:15 joerg Exp $	*/
+/*	$NetBSD: cardslot.c,v 1.35.6.3 2007/12/01 05:51:32 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardslot.c,v 1.35.6.2 2007/11/06 14:27:15 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardslot.c,v 1.35.6.3 2007/12/01 05:51:32 jmcneill Exp $");
 
 #include "opt_cardslot.h"
 
@@ -113,7 +113,8 @@ cardslotattach(struct device *parent, struct device *self,
 	SIMPLEQ_INIT(&sc->sc_events);
 	sc->sc_th_enable = 0;
 
-	printf(" slot %d flags %x\n", sc->sc_slot,
+	aprint_naive("\n");
+	aprint_normal(" slot %d flags %x\n", sc->sc_slot,
 	       device_cfdata(&sc->sc_dev)->cf_flags);
 
 	DPRINTF(("%s attaching CardBus bus...\n", sc->sc_dev.dv_xname));

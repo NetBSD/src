@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.145.6.6 2007/11/27 19:37:12 joerg Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.145.6.7 2007/12/01 05:42:31 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.145.6.6 2007/11/27 19:37:12 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.145.6.7 2007/12/01 05:42:31 jmcneill Exp $");
 
 /*
 #define CBB_DEBUG
@@ -400,10 +400,13 @@ pccbbattach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_chipset = cb_chipset(pa->pa_id, &flags);
 
+	aprint_naive("\n");
+
 	pci_devinfo(pa->pa_id, 0, 0, devinfo, sizeof(devinfo));
-	printf(": %s (rev. 0x%02x)", devinfo, PCI_REVISION(pa->pa_class));
+	aprint_normal(": %s (rev. 0x%02x)", devinfo,
+	    PCI_REVISION(pa->pa_class));
 	DPRINTF((" (chipflags %x)", flags));
-	printf("\n");
+	aprint_normal("\n");
 
 	TAILQ_INIT(&sc->sc_memwindow);
 	TAILQ_INIT(&sc->sc_iowindow);
@@ -432,7 +435,7 @@ pccbbattach(struct device *parent, struct device *self, void *aux)
 		/* The address must be valid. */
 		if (pci_mapreg_map(pa, PCI_SOCKBASE, PCI_MAPREG_TYPE_MEM, 0,
 		    &sc->sc_base_memt, &sc->sc_base_memh, &sockbase, NULL)) {
-			printf("%s: can't map socket base address 0x%lx\n",
+			aprint_error("%s: can't map socket base address 0x%lx\n",
 			    sc->sc_dev.dv_xname, (unsigned long)sock_base);
 			/*
 			 * I think it's funny: socket base registers must be
@@ -441,7 +444,7 @@ pccbbattach(struct device *parent, struct device *self, void *aux)
 			if (pci_mapreg_map(pa, PCI_SOCKBASE, PCI_MAPREG_TYPE_IO,
 			    0, &sc->sc_base_memt, &sc->sc_base_memh, &sockbase,
 			    NULL)) {
-				printf("%s: can't map socket base address"
+				aprint_error("%s: can't map socket base address"
 				    " 0x%lx: io mode\n", sc->sc_dev.dv_xname,
 				    (unsigned long)sockbase);
 				/* give up... allocate reg space via rbus. */
@@ -581,7 +584,8 @@ pccbb_pci_callback(struct device *self)
 
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(&sc->sc_pa, &ih)) {
-		printf("%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
+		aprint_error("%s: couldn't map interrupt\n",
+		    sc->sc_dev.dv_xname);
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
@@ -593,15 +597,16 @@ pccbb_pci_callback(struct device *self)
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_BIO, pccbbintr, sc);
 
 	if (sc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt", sc->sc_dev.dv_xname);
+		aprint_error("%s: couldn't establish interrupt",
+		    sc->sc_dev.dv_xname);
 		if (intrstr != NULL) {
-			printf(" at %s", intrstr);
+			aprint_normal(" at %s", intrstr);
 		}
-		printf("\n");
+		aprint_normal("\n");
 		return;
 	}
 
-	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
+	aprint_normal("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
 
 	{
 		u_int32_t sockstat;
