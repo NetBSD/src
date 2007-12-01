@@ -1,4 +1,4 @@
-/*	$NetBSD: mca_machdep.c,v 1.33 2007/10/17 19:54:58 garbled Exp $	*/
+/*	$NetBSD: mca_machdep.c,v 1.34 2007/12/01 16:49:56 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mca_machdep.c,v 1.33 2007/10/17 19:54:58 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mca_machdep.c,v 1.34 2007/12/01 16:49:56 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -307,16 +307,13 @@ mca_busprobe(void)
 	bioscall(0x15, &regs);
 
 	if ((regs.EFLAGS & PSL_C) || regs.AH != 0) {
-#ifdef DEBUG
-		printf("BIOS CFG: Not supported. Not AT-compatible?\n");
-#endif
+		aprint_verbose("BIOS CFG: Not supported. Not AT-compatible?\n");
 		return;
 	}
 
 	paddr = (regs.ES << 4) + regs.BX;
 	scp = (struct bios_config *)ISA_HOLE_VADDR(paddr);
 
-#if 1 /* MCAVERBOSE */
 	bitmask_snprintf((scp->feature2 << 8) | scp->feature1,
 		"\20"
 		"\01MCA+ISA"
@@ -337,9 +334,8 @@ mca_busprobe(void)
 		"\020DMA32\n",
 		buf, sizeof(buf));
 
-	aprint_normal("BIOS CFG: Model-SubM-Rev: %02x-%02x-%02x, 0x%s\n",
+	aprint_verbose("BIOS CFG: Model-SubM-Rev: %02x-%02x-%02x, 0x%s\n",
 		scp->model, scp->submodel, scp->bios_rev, buf);
-#endif
 
 	MCA_system = (scp->feature1 & FEATURE_MCABUS) ? 1 : 0;
 }
