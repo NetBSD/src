@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.103.22.8 2007/11/06 14:27:27 joerg Exp $	*/
+/*	$NetBSD: pci.c,v 1.103.22.9 2007/12/01 04:25:37 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.103.22.8 2007/11/06 14:27:27 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.103.22.9 2007/12/01 04:25:37 jmcneill Exp $");
 
 #include "opt_pci.h"
 
@@ -309,10 +309,16 @@ pci_probe_device(struct pci_softc *sc, pcitag_t tag,
 	 * as appropriate.
 	 */
 	pa.pa_flags = sc->sc_flags;
-	if ((csr & PCI_COMMAND_IO_ENABLE) == 0)
-		pa.pa_flags &= ~PCI_FLAGS_IO_ENABLED;
-	if ((csr & PCI_COMMAND_MEM_ENABLE) == 0)
-		pa.pa_flags &= ~PCI_FLAGS_MEM_ENABLED;
+	if (PCI_CLASS(class) != PCI_CLASS_BRIDGE) {
+		if ((csr & PCI_COMMAND_IO_ENABLE) == 0)
+			pa.pa_flags &= ~PCI_FLAGS_IO_ENABLED;
+		if ((csr & PCI_COMMAND_MEM_ENABLE) == 0)
+			pa.pa_flags &= ~PCI_FLAGS_MEM_ENABLED;
+	} else if ((csr & PCI_COMMAND_IO_ENABLE) == 0 ||
+		    (csr & PCI_COMMAND_MEM_ENABLE) == 0) {
+			pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG,
+			    csr | sc->sc_flags);
+	}
 
 	/*
 	 * If the cache line size is not configured, then
@@ -806,6 +812,7 @@ struct pci_child_power {
 	bool p_has_pm;
 	int p_pm_offset;
 	pcireg_t p_pm_cap;
+	pcireg_t p_class;
 };
 
 static bool
@@ -816,6 +823,7 @@ pci_child_suspend(device_t dv)
 	pci_conf_capture(priv->p_pc, priv->p_tag, &priv->p_pciconf);
 
 	if (priv->p_has_pm &&
+	    PCI_CLASS(priv->p_class) != PCI_CLASS_DISPLAY &&
 	    pci_set_powerstate_int(priv->p_pc, priv->p_tag,
 	    PCI_PMCSR_STATE_D3, priv->p_pm_offset, priv->p_pm_cap)) {
 		aprint_error_dev(dv, "unsupported state, continuing.\n");
@@ -866,6 +874,7 @@ pci_child_register(device_t child)
 	priv->p_pc = sc->sc_pc;
 	priv->p_tag = pci_make_tag(priv->p_pc, sc->sc_bus, device,
 	    function);
+	priv->p_class = pci_conf_read(priv->p_pc, priv->p_tag, PCI_CLASS_REG);
 
 	if (pci_get_capability(priv->p_pc, priv->p_tag,
 			       PCI_CAP_PWRMGMT, &off, &reg)) {
