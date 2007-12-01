@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_bsd44_suser.c,v 1.41 2007/11/25 09:39:26 elad Exp $ */
+/* $NetBSD: secmodel_bsd44_suser.c,v 1.42 2007/12/01 21:59:49 elad Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.41 2007/11/25 09:39:26 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.42 2007/12/01 21:59:49 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -463,6 +463,7 @@ secmodel_bsd44_suser_process_cb(kauth_cred_t cred, kauth_action_t action,
 
 	case KAUTH_PROCESS_CANPTRACE: {
 		switch ((u_long)arg1) {
+		case PT_TRACE_ME:
 		case PT_ATTACH:
 		case PT_WRITE_I:
 		case PT_WRITE_D:
