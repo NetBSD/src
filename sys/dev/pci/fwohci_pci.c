@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci_pci.c,v 1.25.22.3 2007/11/14 19:26:54 joerg Exp $	*/
+/*	$NetBSD: fwohci_pci.c,v 1.25.22.4 2007/12/01 05:28:59 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci_pci.c,v 1.25.22.3 2007/11/14 19:26:54 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci_pci.c,v 1.25.22.4 2007/12/01 05:28:59 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,7 +116,7 @@ fwohci_pci_attach(struct device *parent, struct device *self,
 	    NULL, &psc->psc_sc.bssize)) {
 		aprint_error("%s: can't map OHCI register space\n",
 		    self->dv_xname);
-		return;
+		goto fail;
 	}
 
 	/* Disable interrupts, so we don't get any spurious ones. */
@@ -130,7 +130,7 @@ fwohci_pci_attach(struct device *parent, struct device *self,
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pa, &ih)) {
 		aprint_error("%s: couldn't map interrupt\n", self->dv_xname);
-		return;
+		goto fail;
 	}
 	intrstr = pci_intr_string(pa->pa_pc, ih);
 	psc->psc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO, fwohci_filt,
@@ -141,7 +141,7 @@ fwohci_pci_attach(struct device *parent, struct device *self,
 		if (intrstr != NULL)
 			aprint_normal(" at %s", intrstr);
 		aprint_normal("\n");
-		return;
+		goto fail;
 	}
 	aprint_normal("%s: interrupting at %s\n", self->dv_xname, intrstr);
 
@@ -153,6 +153,15 @@ fwohci_pci_attach(struct device *parent, struct device *self,
 		bus_space_unmap(psc->psc_sc.bst, psc->psc_sc.bsh,
 		    psc->psc_sc.bssize);
 	}
+
+	return;
+
+fail:
+	/* In the event that we fail to attach, register a null pnp handler */
+	if (!pnp_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+
+	return;
 }
 
 static bool
