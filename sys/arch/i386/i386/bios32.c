@@ -1,4 +1,4 @@
-/*	$NetBSD: bios32.c,v 1.15 2007/10/17 19:54:44 garbled Exp $	*/
+/*	$NetBSD: bios32.c,v 1.16 2007/12/01 16:59:13 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bios32.c,v 1.15 2007/10/17 19:54:44 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bios32.c,v 1.16 2007/12/01 16:59:13 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -203,7 +203,7 @@ bios32_init()
     		for (; pa < end; pa+= NBPG, eva+= NBPG)
 			pmap_kenter_pa(eva, pa, VM_PROT_READ);
 
-		printf("SMBIOS rev. %d.%d @ 0x%lx (%d entries)\n",
+		aprint_normal("SMBIOS rev. %d.%d @ 0x%lx (%d entries)\n",
 			    sh->majrev, sh->minrev, (u_long)sh->addr,
 			    sh->count);
 
