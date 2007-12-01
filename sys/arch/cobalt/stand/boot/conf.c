@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.6 2007/12/01 17:05:11 tsutsui Exp $	*/
+/*	$NetBSD: conf.c,v 1.7 2007/12/01 18:13:17 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -41,6 +41,7 @@
 
 #include <lib/libsa/stand.h>
 #include <ufs.h>
+#include <ext2fs.h>
 #include <nfs.h>
 #include <netif.h>
 #include <dev_net.h>
@@ -63,6 +64,7 @@ int	ndevs = (sizeof(devsw)/sizeof(devsw[0]));
 struct fs_ops file_system[] = {
 	FS_OPS(ffsv1),
 	FS_OPS(ffsv2),
+	FS_OPS(ext2fs),
 	FS_OPS(nfs),
 };
 
