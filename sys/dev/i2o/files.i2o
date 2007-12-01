@@ -1,6 +1,5 @@
-#	$NetBSD: files.i2o,v 1.8 2007/11/16 21:14:26 christos Exp $
+#	$NetBSD: files.i2o,v 1.9 2007/12/01 18:13:17 ad Exp $
 
-defflag	opt_i2o.h	I2OVERBOSE
 device	iop {tid = -1}
 file	dev/i2o/iop.c			iop			needs-flag
 
