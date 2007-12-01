@@ -1,4 +1,4 @@
-.\"	$NetBSD: mutex.9,v 1.9 2007/04/09 13:37:57 ad Exp $
+.\"	$NetBSD: mutex.9,v 1.10 2007/12/01 20:00:16 wiz Exp $
 .\"
 .\" Copyright (c) 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -106,7 +106,7 @@ may block in order to allocate memory.
 The
 .Fa type
 argument specifies the kind of mutex to be initialized, controlling the
-behaviour of the mutex.
+behavior of the mutex.
 Once initialized, all types of mutex are manipulated using the same interface.
 Valid types are as follows:
 .Bl -tag -width cdoscdosrunru
@@ -153,7 +153,7 @@ argument is used to determine whether a spin or adaptive mutex is
 returned, depending on how interrupt handling is implemented by
 the machine architecture.
 .Pp
-If 
+If
 .Dv IPL_NONE
 is specified,
 .Fn mutex_init
@@ -238,7 +238,7 @@ For example:
 	KASSERT(mutex_owned(\*[Am]driver_lock));
 .Ed
 .Pp
-It should not be used to make locking decisions at run time, or to 
+It should not be used to make locking decisions at run time, or to
 verify that a lock is unheld.
 .El
 .Sh CODE REFERENCES
