@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vfsops.c,v 1.60 2007/11/26 19:01:28 pooka Exp $	*/
+/*	$NetBSD: coda_vfsops.c,v 1.61 2007/12/01 00:09:41 dsl Exp $	*/
 
 /*
  *
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.60 2007/11/26 19:01:28 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.61 2007/12/01 00:09:41 dsl Exp $");
 
 #ifdef	_LKM
 #define	NVCODA 4
@@ -186,8 +186,10 @@ coda_mount(struct mount *vfsp,	/* Allocated and initialized by mount(2) */
      * XXX: coda passes the mount device as the entire mount args,
      * All other fs pass a structure contining a pointer.
      * In order to get sys_mount() to do the copyin() we've set a
-     * fixed size for the filename buffer.
+     * fixed default size for the filename buffer.
      */
+    /* Ensure that namei() doesn't run off the filename buffer */
+    ((char *)data)[*data_len - 1] = 0;
     NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, data, l);
     error = namei(&nd);
     dvp = nd.ni_vp;
