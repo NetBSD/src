@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_osdep.h,v 1.9.2.1 2004/05/10 15:06:08 tron Exp $	*/
+/*	$NetBSD: ipsec_osdep.h,v 1.9.2.2 2007/12/01 17:33:16 bouyer Exp $	*/
 /*	$FreeBSD: /repoman/r/ncvs/src/sys/netipsec/ipsec_osdep.h,v 1.1 2003/09/29 22:47:45 sam Exp $	*/
 
 /*
@@ -44,6 +44,7 @@
  * 9.  Global SLIST of all open raw sockets.
  * 10. Global SLIST of known interface addresses.
  * 11. Type of initialization functions.
+ * 12. Byte order of ip_off
  */
 
 /*
@@ -268,8 +269,22 @@ if_handoff(struct ifqueue *ifq, struct mbuf *m, struct ifnet *ifp, int adjust)
 #define INITFN extern
 #endif
 
+/* 12. On FreeBSD, ip_off  assumed in host endian;
+ * it is converted (if necessary) by ip_input().
+ * On NetBSD, ip_off is in network byte order.
+ * We hide the difference with the macro IP_OFF_CONVERT
+ */
+
+#ifdef __FreeBSD__
+#define IP_OFF_CONVERT(x) (x)
+#endif
+
+#ifdef __NetBSD__
+#define IP_OFF_CONVERT(x) (htons(x))
+#endif
+
 /*
- * 12. IPv6 support, and "generic" inpcb vs. IPv4 pcb vs. IPv6 pcb.
+ * 13. IPv6 support, and "generic" inpcb vs. IPv4 pcb vs. IPv6 pcb.
  * To IPv6 V4-mapped addresses (and the KAME-derived implementation
  * of IPv6 v4-mapped addresses)  we must support limited polymorphism:
  * partway down the stack we detect an IPv6 protocol address is really
