@@ -1,4 +1,4 @@
-.\"	$NetBSD: puffs.4,v 1.5 2007/03/13 17:06:10 pooka Exp $
+.\"	$NetBSD: puffs.4,v 1.6 2007/12/01 18:55:12 wiz Exp $
 .\"
 .\" Copyright (c) 2006 Antti Kantee.  All rights reserved.
 .\"
@@ -36,7 +36,7 @@
 This document describes interfaces which are not yet guaranteed to be
 stable.
 In case you update your system sources, please recompile everything
-and fix complation errors.
+and fix compilation errors.
 If your sources are out-of-sync, incorrect operation may result.
 .Pp
 .Nm
@@ -129,7 +129,7 @@ This array is ignored if
 .Dv PUFFS_KFLAG_ALLOPS
 is given.
 .Pp
-After a succesful mount system call, the the ioctl
+After a successful mount system call, the the ioctl
 .Dv PUFFSSTARTOP
 must be issued through the open device node.
 The parameter for this ioctl is the following structure:
@@ -164,7 +164,7 @@ but it is possible to set the file descriptor into non-blocking
 mode, in which case
 .Er EWOULDBLOCK
 is returned if no event is available.
-Asynchoronous I/O calls (i.e.,
+Asynchronous I/O calls (i.e.,
 .Xr select 2 ,
 .Xr poll 2 ,
 and
@@ -254,7 +254,7 @@ and this may result in data loss.
 .%J Proceedings of AsiaBSDCon 2007
 .%P pp. 29-42
 .%T puffs - Pass-to-Userspace Framework File System
-.Re 
+.Re
 .Sh HISTORY
 An unsupported experimental version of
 .Nm
