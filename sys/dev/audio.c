@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.222.6.8 2007/11/06 14:27:11 joerg Exp $	*/
+/*	$NetBSD: audio.c,v 1.222.6.9 2007/12/01 05:13:25 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.222.6.8 2007/11/06 14:27:11 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.222.6.9 2007/12/01 05:13:25 jmcneill Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -310,17 +310,19 @@ audioattach(struct device *parent, struct device *self, void *aux)
 
 	props = hwp->get_props(hdlp);
 
+	aprint_naive("\n");
+
 	if (props & AUDIO_PROP_FULLDUPLEX)
-		printf(": full duplex");
+		aprint_normal(": full duplex");
 	else
-		printf(": half duplex");
+		aprint_normal(": half duplex");
 
 	if (props & AUDIO_PROP_MMAP)
-		printf(", mmap");
+		aprint_normal(", mmap");
 	if (props & AUDIO_PROP_INDEPENDENT)
-		printf(", independent");
+		aprint_normal(", independent");
 
-	printf("\n");
+	aprint_normal("\n");
 
 	sc->hw_if = hwp;
 	sc->hw_hdl = hdlp;
@@ -331,21 +333,21 @@ audioattach(struct device *parent, struct device *self, void *aux)
 	error = audio_alloc_ring(sc, &sc->sc_pr, AUMODE_PLAY, AU_RING_SIZE);
 	if (error) {
 		sc->hw_if = NULL;
-		printf("audio: could not allocate play buffer\n");
+		aprint_error("audio: could not allocate play buffer\n");
 		return;
 	}
 	error = audio_alloc_ring(sc, &sc->sc_rr, AUMODE_RECORD, AU_RING_SIZE);
 	if (error) {
 		audio_free_ring(sc, &sc->sc_pr);
 		sc->hw_if = NULL;
-		printf("audio: could not allocate record buffer\n");
+		aprint_error("audio: could not allocate record buffer\n");
 		return;
 	}
 
 	sc->sc_lastgain = 128;
 
 	if ((error = audio_set_defaults(sc, 0))) {
-		printf("audioattach: audio_set_defaults() failed\n");
+		aprint_error("audioattach: audio_set_defaults() failed\n");
 		sc->hw_if = NULL;
 		return;
 	}
