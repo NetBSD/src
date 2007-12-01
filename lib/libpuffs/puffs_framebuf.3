@@ -1,4 +1,4 @@
-.\"	$NetBSD: puffs_framebuf.3,v 1.17 2007/12/01 19:18:50 wiz Exp $
+.\"	$NetBSD: puffs_framebuf.3,v 1.18 2007/12/01 19:54:01 wiz Exp $
 .\"
 .\" Copyright (c) 2007 Antti Kantee.  All rights reserved.
 .\"
@@ -323,7 +323,7 @@ to outgoing queue of descriptor
 and yield with the continuation
 .Ar pcc .
 Execution is resumed once a response is received.
-Returns 0 if the buffer was succesfully enqueued (not necessarily
+Returns 0 if the buffer was successfully enqueued (not necessarily
 delivered) and non-zero to signal a non-recoverable error.
 .Pp
 Usually the buffer is placed at the end of the output queue.
@@ -345,7 +345,7 @@ will be called with the argument
 The callback function
 .Fn fcb
 is responsible for freeing the buffer.
-Returns 0 if the buffer was succesfully enqueued (not necessarily
+Returns 0 if the buffer was successfully enqueued (not necessarily
 delivered) and non-zero to signal a non-recoverable error.
 .Pp
 See
@@ -372,7 +372,7 @@ can be used to control if the buffer is to be freed immediately after
 sending of if a response is expected and the buffer should be freed
 only after the response arrives (receiving an unexpected message from
 the server is treated as an error).
-Returns 0 if the buffer was succesfully enqueued (not necessarily
+Returns 0 if the buffer was successfully enqueued (not necessarily
 delivered) and non-zero to signal a non-recoverable error.
 .Pp
 See
@@ -463,7 +463,7 @@ Write the frame contained in
 .Ar pufbuf
 to the file descriptor
 .Ar fd .
-In case the entire frame is succesfully written,
+In case the entire frame is successfully written,
 .Ar *done
 should be set to 1.
 This function should return 0 on success (even if a complete frame was not
