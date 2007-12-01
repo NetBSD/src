@@ -1,4 +1,4 @@
-/* $NetBSD: unichromefb.c,v 1.8 2007/10/19 12:00:56 ad Exp $ */
+/* $NetBSD: unichromefb.c,v 1.9 2007/12/01 16:54:28 ad Exp $ */
 
 /*-
  * Copyright (c) 2006 Jared D. McNeill <jmcneill@invisible.ca>
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: unichromefb.c,v 1.8 2007/10/19 12:00:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: unichromefb.c,v 1.9 2007/12/01 16:54:28 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -367,7 +367,7 @@ static int
 unichromefb_drm_print(void *opaque, const char *pnp)
 {
 	if (pnp)
-		aprint_normal("direct rendering for %s", pnp);
+		aprint_verbose("direct rendering for %s", pnp);
 
 	return UNSUPP;
 }
