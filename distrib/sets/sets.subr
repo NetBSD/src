@@ -1,4 +1,4 @@
-#	$NetBSD: sets.subr,v 1.57 2007/11/12 15:06:45 jmmv Exp $
+#	$NetBSD: sets.subr,v 1.58 2007/12/01 03:20:33 minskim Exp $
 #
 
 #
@@ -58,7 +58,6 @@ MKVARS="\
 	MKSENDMAIL	\
 	MKSHARE		\
 	MKSKEY		\
-	MKUUCP		\
 	MKX11		\
 	MKYP		\
 	USE_INET6	\
@@ -219,7 +218,7 @@ fi
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.57 2007/11/12 15:06:45 jmmv Exp $
+# 	# $NetBSD: sets.subr,v 1.58 2007/12/01 03:20:33 minskim Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root
