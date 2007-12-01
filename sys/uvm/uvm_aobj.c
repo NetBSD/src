@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.94 2007/12/01 10:18:21 yamt Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.95 2007/12/01 10:40:27 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.94 2007/12/01 10:18:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.95 2007/12/01 10:40:27 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -198,7 +198,7 @@ static void uao_dropswap_range1(struct uvm_aobj *, voff_t, voff_t);
  * note that some functions (e.g. put) are handled elsewhere
  */
 
-struct uvm_pagerops aobj_pager = {
+const struct uvm_pagerops aobj_pager = {
 	.pgo_reference = uao_reference,
 	.pgo_detach = uao_detach,
 	.pgo_get = uao_get,
