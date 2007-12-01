@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0.4,v 1.1.2.79 2007/11/19 20:34:08 bouyer Exp $
+#	$NetBSD: CHANGES-2.0.4,v 1.1.2.80 2007/12/01 17:34:38 bouyer Exp $
 
 A complete list of changes from the NetBSD 2.0.3 update to the NetBSD 2.0.4
 update.
@@ -688,4 +688,27 @@ usr.sbin/rpc.lockd/lock_proc.c			1.8
 	Fix off-by-one error accessing "clnt_cache_addr" array which causes
 	heap corruption. This will hopefully fix PR bin/37236.
 	[tron, ticket #11390]
+
+sys/netinet6/ipcomp_input.c			1.28
+
+	From FreeBSD:
+	    In ipcomp6_input(), check 'md' not 'm' after a call to
+	    m_pulldown(): 'm' may be a stale pointer at this point, and
+	    we're interested in whether or not m_pulldown() failed.
+	    Noticed by:     Coverity Prevent analysis tool
+	[jdc, ticket #11393]
+
+sys/netipsec/ipsec.c				1.34 via patch
+sys/netipsec/ipsec_osdep.h			1.21 via patch
+sys/netipsec/ipsec_output.c			1.23 via patch
+sys/netipsec/xform_ah.c				1.19 via patch
+sys/netipsec/xform_ipip.c			1.18 via patch
+
+	The function ipsec4_get_ulp assumes that ip_off is in host order.
+	This results in IPsec processing that is dependent on protocol
+	and/or port can be bypassed.
+
+	Bug report, analysis and initial fix from Karl Knutsson.
+	Final patch and ok from degroote@
+	[adrianp, ticket #11395]
 
