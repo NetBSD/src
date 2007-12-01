@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.90 2007/11/19 15:14:12 ad Exp $	*/
+/*	$NetBSD: pthread.c,v 1.91 2007/12/01 01:07:34 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.90 2007/11/19 15:14:12 ad Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.91 2007/12/01 01:07:34 ad Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -195,12 +195,7 @@ pthread__init(void)
 	PTQ_INSERT_HEAD(&pthread__allqueue, first, pt_allq);
 	RB_INSERT(__pthread__alltree, &pthread__alltree, first);
 
-	/*
-	 * Don't need lwpctl if running on a uniprocessor.
-	 * Just use the dummy block.
-	 */
-	if (pthread__concurrency > 1)
-		(void)_lwp_ctl(LWPCTL_FEATURE_CURCPU, &first->pt_lwpctl);
+	(void)_lwp_ctl(LWPCTL_FEATURE_CURCPU, &first->pt_lwpctl);
 
 	/* Start subsystems */
 	PTHREAD_MD_INIT
@@ -239,10 +234,7 @@ pthread__fork_callback(void)
 {
 
 	/* lwpctl state is not copied across fork. */
-	if (pthread__concurrency > 1) {
-		(void)_lwp_ctl(LWPCTL_FEATURE_CURCPU,
-		    &pthread__first->pt_lwpctl);
-	}
+	(void)_lwp_ctl(LWPCTL_FEATURE_CURCPU, &pthread__first->pt_lwpctl);
 }
 
 static void
@@ -298,7 +290,7 @@ pthread__initthread(pthread_t t)
 	pthread_mutex_init(&t->pt_lock, NULL);
 	PTQ_INIT(&t->pt_cleanup_stack);
 	PTQ_INIT(&t->pt_joiners);
-	memset(&t->pt_specific, 0, sizeof(int) * PTHREAD_KEYS_MAX);
+	memset(&t->pt_specific, 0, sizeof(t->pt_specific));
 }
 
 static void
@@ -464,12 +456,7 @@ pthread__create_tramp(pthread_t self, void *(*start)(void *), void *arg)
 		pthread_mutex_unlock(&self->pt_lock);
 	}
 
-	/*
-	 * Don't need lwpctl if running on a uniprocessor.
-	 * Just use the dummy block.
-	 */
-	if (pthread__concurrency > 1)
-		(void)_lwp_ctl(LWPCTL_FEATURE_CURCPU, &self->pt_lwpctl);
+	(void)_lwp_ctl(LWPCTL_FEATURE_CURCPU, &self->pt_lwpctl);
 
 	retval = (*start)(arg);
 
