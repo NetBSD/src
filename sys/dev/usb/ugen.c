@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.92 2007/03/04 06:02:49 christos Exp $	*/
+/*	$NetBSD: ugen.c,v 1.93 2007/12/01 14:45:41 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.92 2007/03/04 06:02:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.93 2007/12/01 14:45:41 jmcneill Exp $");
 
 #include "opt_ugen_bulk_ra_wb.h"
 #include "opt_compat_netbsd.h"
@@ -234,7 +234,7 @@ USB_ATTACH(ugen)
 
 	devinfop = usbd_devinfo_alloc(uaa->device, 0);
 	USB_ATTACH_SETUP;
-	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfop);
+	aprint_normal("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfop);
 	usbd_devinfo_free(devinfop);
 
 	sc->sc_udev = udev = uaa->device;
@@ -242,7 +242,7 @@ USB_ATTACH(ugen)
 	/* First set configuration index 0, the default one for ugen. */
 	err = usbd_set_config_index(udev, 0, 0);
 	if (err) {
-		printf("%s: setting configuration index 0 failed\n",
+		aprint_error("%s: setting configuration index 0 failed\n",
 		       USBDEVNAME(sc->sc_dev));
 		sc->sc_dying = 1;
 		USB_ATTACH_ERROR_RETURN;
@@ -252,7 +252,7 @@ USB_ATTACH(ugen)
 	/* Set up all the local state for this configuration. */
 	err = ugen_set_config(sc, conf);
 	if (err) {
-		printf("%s: setting configuration %d failed\n",
+		aprint_error("%s: setting configuration %d failed\n",
 		       USBDEVNAME(sc->sc_dev), conf);
 		sc->sc_dying = 1;
 		USB_ATTACH_ERROR_RETURN;
