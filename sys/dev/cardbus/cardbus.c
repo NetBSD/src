@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.75.16.7 2007/12/01 05:51:31 jmcneill Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.75.16.8 2007/12/01 17:57:26 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.75.16.7 2007/12/01 05:51:31 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.75.16.8 2007/12/01 17:57:26 jmcneill Exp $");
 
 #include "opt_cardbus.h"
 
@@ -126,7 +126,7 @@ cardbusattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_cacheline = cba->cba_cacheline;
 	sc->sc_max_lattimer = MIN(0xf8, cba->cba_max_lattimer);
 
-	aprint_normal("\n");
+	aprint_naive("\n");
 	aprint_normal(": bus %d", sc->sc_bus);
 	if (bootverbose)
 		aprint_normal(" cacheline 0x%x, lattimer 0x%x",
