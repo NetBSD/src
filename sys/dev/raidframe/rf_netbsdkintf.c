@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.230.4.7 2007/11/27 19:37:26 joerg Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.230.4.8 2007/12/01 18:11:10 jmcneill Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -146,7 +146,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.230.4.7 2007/11/27 19:37:26 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.230.4.8 2007/12/01 18:11:10 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -367,7 +367,7 @@ raidattach(int num)
 		raidPtrs[i] = NULL;
 	rc = rf_BootRaidframe();
 	if (rc == 0)
-		printf("Kernelized RAIDframe activated\n");
+		aprint_normal("Kernelized RAIDframe activated\n");
 	else
 		panic("Serious error booting RAID!!");
 
@@ -378,7 +378,7 @@ raidattach(int num)
 		malloc(num * sizeof(struct raid_softc),
 		       M_RAIDFRAME, M_NOWAIT);
 	if (raid_softc == NULL) {
-		printf("WARNING: no memory for RAIDframe driver\n");
+		aprint_error("WARNING: no memory for RAIDframe driver\n");
 		return;
 	}
 
@@ -390,14 +390,14 @@ raidattach(int num)
 		RF_Malloc(raidPtrs[raidID], sizeof(RF_Raid_t),
 			  (RF_Raid_t *));
 		if (raidPtrs[raidID] == NULL) {
-			printf("WARNING: raidPtrs[%d] is NULL\n", raidID);
+			aprint_error("WARNING: raidPtrs[%d] is NULL\n", raidID);
 			numraid = raidID;
 			return;
 		}
 	}
 
 	if (config_cfattach_attach(raid_cd.cd_name, &raid_ca)) {
-		printf("config_cfattach_attach failed?\n");
+		aprint_error("raidattach: config_cfattach_attach failed?\n");
 	}
 
 #ifdef RAID_AUTOCONFIG
@@ -409,7 +409,7 @@ raidattach(int num)
 	 * sets once all real hardware devices have been found.
 	 */
 	if (config_finalize_register(NULL, rf_autoconfig) != 0)
-		printf("WARNING: unable to register RAIDframe finalizer\n");
+		aprint_error("WARNING: unable to register RAIDframe finalizer\n");
 }
 
 int
