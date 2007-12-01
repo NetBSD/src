@@ -1,4 +1,4 @@
-/*	$NetBSD: iopl.c,v 1.30 2007/11/16 21:14:27 christos Exp $	*/
+/*	$NetBSD: iopl.c,v 1.31 2007/12/01 18:13:17 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -46,10 +46,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iopl.c,v 1.30 2007/11/16 21:14:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iopl.c,v 1.31 2007/12/01 18:13:17 ad Exp $");
 
 #include "opt_inet.h"
-#include "opt_i2o.h"
 #include "bpfilter.h"
 
 #include <sys/param.h>
@@ -128,7 +127,6 @@ static void	iopl_stop(struct ifnet *, int);
 CFATTACH_DECL(iopl, sizeof(struct iopl_softc),
     iopl_match, iopl_attach, NULL, NULL);
 
-#ifdef I2OVERBOSE
 static const char * const iopl_errors[] = {
 	"success",
 	"device failure",
@@ -149,7 +147,6 @@ static const char * const iopl_errors[] = {
 	"partial packet returned",
 	"temporarily suspended",
 };
-#endif	/* I2OVERBOSE */
 
 static const struct iopl_media iopl_ether_media[] = {
 	{ I2O_LAN_CONNECTION_100BASEVG_ETHERNET,	IFM_100_VG },
@@ -1157,9 +1154,7 @@ iopl_intr_tx(struct device *dv, struct iop_msg *im, void *reply)
 static void
 iopl_error(struct iopl_softc *sc, u_int dsc)
 {
-#ifdef I2OVERBOSE
 	const char *errstr;
-#endif
 
 	switch (dsc) {
 	case I2O_LAN_DSC_RECEIVE_ERROR:
@@ -1170,16 +1165,12 @@ iopl_error(struct iopl_softc *sc, u_int dsc)
 		break;
 
 	default:
-#ifdef I2OVERBOSE
 		if (dsc > sizeof(iopl_errors) / sizeof(iopl_errors[0]))
 			errstr = "<unknown>";
 		else
 			errstr = iopl_errors[dsc];
 		printf("%s: error 0x%04x: %s\n", sc->sc_dv.dv_xname, dsc,
 		    errstr);
-#else
-		printf("%s: error 0x%04x\n", sc->sc_dv.dv_xname, dsc);
-#endif
 		break;
 	}
 }
