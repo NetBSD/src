@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_map.c,v 1.20.8.2 2007/11/20 22:46:45 joerg Exp $	*/
+/*	$NetBSD: pci_map.c,v 1.20.8.3 2007/12/01 06:06:06 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_map.c,v 1.20.8.2 2007/11/20 22:46:45 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_map.c,v 1.20.8.3 2007/12/01 06:06:06 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,7 +86,7 @@ pci_io_find(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t type,
 	splx(s);
 
 	if (PCI_MAPREG_TYPE(address) != PCI_MAPREG_TYPE_IO) {
-		printf("pci_io_find: expected type i/o, found mem\n");
+		aprint_debug("pci_io_find: expected type i/o, found mem\n");
 		return (1);
 	}
 
