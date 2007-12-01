@@ -1,4 +1,4 @@
-.\" $NetBSD: btuartd.8,v 1.5 2007/09/30 04:11:02 kiyohara Exp $
+.\" $NetBSD: btuartd.8,v 1.6 2007/12/01 18:41:24 wiz Exp $
 .\"
 .\" Copyright (c) 2007 KIYOHARA Takashi
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $Id: btuartd.8,v 1.5 2007/09/30 04:11:02 kiyohara Exp $
+.\" $Id: btuartd.8,v 1.6 2007/12/01 18:41:24 wiz Exp $
 .\"
 .Dd September 22, 2007
 .Dt BTUARTD 8
@@ -118,7 +118,7 @@ Enable flow control as
 .It Fl i Ar init_speed
 Specify the initial speed for the Bluetooth module. It first sets to this
 value, and it initializes it if specified. Afterwards, the speed is set to
-.Ar speed. 
+.Ar speed .
 .It Fl o
 Enable odd parity, if enabled parity.
 .It Fl p
@@ -137,7 +137,7 @@ Enable parity (even parity).
 .Sh HISTORY
 The
 .Nm
-daemon was writen for
+daemon was written for
 .Nx 4.0 .
 .Sh AUTHORS
 .An KIYOHARA Takashi Aq kiyohara@kk.iij4u.or.jp
