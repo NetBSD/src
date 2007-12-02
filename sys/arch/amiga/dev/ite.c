@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.81 2007/11/19 18:51:37 ad Exp $ */
+/*	$NetBSD: ite.c,v 1.82 2007/12/02 04:21:22 mhitch Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.81 2007/11/19 18:51:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.82 2007/12/02 04:21:22 mhitch Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -425,8 +425,6 @@ iteinit(dev_t dev)
 	struct ite_softc *ip;
 	static int kbdmap_loaded = 0;
 
-	callout_init(&repeat_ch, 0);
-
 	ip = getitesp(dev);
 	if (ip->flags & ITE_INITED)
 		return;
@@ -434,6 +432,8 @@ iteinit(dev_t dev)
 		bcopy(&ascii_kbdmap, &kbdmap, sizeof(struct kbdmap));
 		kbdmap_loaded = 1;
 	}
+
+	callout_init(&repeat_ch, 0);
 
 	ip->cursorx = 0;
 	ip->cursory = 0;
