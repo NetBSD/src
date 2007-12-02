@@ -1,4 +1,4 @@
-/*	$NetBSD: lseek.c,v 1.10 2007/11/24 13:20:55 isaki Exp $	*/
+/*	$NetBSD: lseek.c,v 1.11 2007/12/02 04:59:26 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -72,7 +72,7 @@ olseek(int fd, off_t offset, int where)
 	struct open_file *f = &files[fd];
 
 #if !defined(LIBSA_NO_FD_CHECKING)
-	if ((unsigned)fd >= SOPEN_MAX || f->f_flags == 0) {
+	if ((unsigned int)fd >= SOPEN_MAX || f->f_flags == 0) {
 		errno = EBADF;
 		return -1;
 	}
