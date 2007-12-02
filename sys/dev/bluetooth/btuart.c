@@ -1,4 +1,4 @@
-/*	$NetBSD: btuart.c,v 1.14 2007/11/28 20:16:11 plunky Exp $	*/
+/*	$NetBSD: btuart.c,v 1.15 2007/12/02 00:09:49 kiyohara Exp $	*/
 /*
  * Copyright (c) 2006, 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btuart.c,v 1.14 2007/11/28 20:16:11 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btuart.c,v 1.15 2007/12/02 00:09:49 kiyohara Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -120,6 +120,7 @@ static int init_swave(struct btuart_softc *);
 static int init_st(struct btuart_softc *);
 static int firmload_stlc2500(struct btuart_softc *, int, char *);
 static int init_stlc2500(struct btuart_softc *);
+static int init_bgb2xx(struct btuart_softc *);
 static int init_bcm2035(struct btuart_softc *);
 static int bth4init(struct btuart_softc *);
 static bool bth4init_input(struct hci_unit *, struct mbuf *);
@@ -173,17 +174,11 @@ static struct bth4hci bth4hci[] = {
 	{ BTUART_HCITYPE_ERICSSON,	 B57600, FLOW_CTL, init_ericsson },
 	{ BTUART_HCITYPE_DIGI,		  B9600, FLOW_CTL, init_digi },
 	{ BTUART_HCITYPE_TEXAS,		B115200, FLOW_CTL, init_texas },
-	/* CSR Casira serial adapter or BrainBoxes serial dongle (BL642) */
 	{ BTUART_HCITYPE_CSR,		B115200, FLOW_CTL, init_csr },
-	/* Silicon Wave kits */
 	{ BTUART_HCITYPE_SWAVE,		B115200, FLOW_CTL, init_swave },
-	/* ST Microelectronics minikits based on STLC2410/STLC2415 */
 	{ BTUART_HCITYPE_ST,		 B57600, FLOW_CTL, init_st },
-	/* ST Microelectronics minikits based on STLC2500 */
 	{ BTUART_HCITYPE_STLC2500,	B115200, FLOW_CTL, init_stlc2500 },
-	/* AmbiCom BT2000C Bluetooth PC/CF Card */
-	{ BTUART_HCITYPE_BT2000C,	 B57600, FLOW_CTL, init_csr },
-	/* Broadcom BCM2035 */
+	{ BTUART_HCITYPE_BGB2XX,	B115200, FLOW_CTL, init_bgb2xx },
 	{ BTUART_HCITYPE_BCM2035,	B115200,        0, init_bcm2035 },
 
 	{ -1,				     B0,        0, NULL }
@@ -219,8 +214,8 @@ btuartattach(int num __unused)
  */
 /* ARGSUSED */
 static int
-btuart_match(device_t self __unused,
-    struct cfdata *cfdata __unused, void *arg __unused)
+btuart_match(device_t self __unused, struct cfdata *cfdata __unused,
+	     void *arg __unused)
 {
 
 	/* pseudo-device; always present */
@@ -233,8 +228,7 @@ btuart_match(device_t self __unused,
  */
 /* ARGSUSED */
 static void
-btuart_attach(device_t parent __unused,
-    device_t self, void *aux __unused)
+btuart_attach(device_t parent __unused, device_t self, void *aux __unused)
 {
 	struct btuart_softc *sc = device_private(self);
 	int i;
@@ -390,6 +384,9 @@ init_ericsson(struct btuart_softc *sc)
 		{    B600, 0x18 },
 		{    B300, 0x19 },
 		{ B921600, 0x20 },
+		{  200000, 0x25 },
+		{  300000, 0x27 },
+		{  400000, 0x2b },
 		{      B0, 0xff }
 	};
 
@@ -757,7 +754,48 @@ init_stlc2500(struct btuart_softc *sc)
 	static const char filenametmpl[] = "STLC2500_R%d_%02d%s";
 	const char *suffix[] = { ".ptc", ".ssf", NULL };
 
+	/* STLC2500 has an ericsson core */
+	error = init_ericsson(sc);
+	if (error != 0)
+		return error;
+
+	if (sc->sc_bth4hci.init_baud != 0 &&
+	    sc->sc_bth4hci.init_baud != sc->sc_baud) {
+		struct tty *tp = sc->sc_tp;
+		struct termios t;
+
+		t.c_ispeed = 0;
+		t.c_ospeed = sc->sc_baud;
+		t.c_cflag = tp->t_cflag;
+		error = (*tp->t_param)(tp, &t);
+		if (error != 0)
+			return error;
+	}
+
 	m = m_gethdr(M_WAIT, MT_DATA);
+	p = mtod(m, hci_cmd_hdr_t *);
+#define HCI_CMD_ERICSSON_READ_REVISION_INFORMATION	0xfc0f	/* XXXX */
+	opcode = htole16(HCI_CMD_ERICSSON_READ_REVISION_INFORMATION);
+	p->type = HCI_CMD_PKT;
+	p->opcode = opcode;
+	p->length = 0;
+	m->m_pkthdr.len = m->m_len = sizeof(hci_cmd_hdr_t);
+
+	bth4_output_cmd(sc->sc_dev, m);
+
+	error = bth4_waitresp(sc, &m, opcode);
+	if (m != NULL) {
+		if (error != 0) {
+			aprint_error_dev(sc->sc_dev,
+			    "HCI_Ericsson_Read_Reversion_Information failed:"
+			    " Status 0x%02x\n", error);
+			error = EFAULT;
+			m_freem(m);
+		}
+	}
+	if (error != 0)
+		return error;
+
 	p = mtod(m, hci_cmd_hdr_t *);
 	opcode = htole16(HCI_CMD_READ_LOCAL_VER);
 	p->type = HCI_CMD_PKT;
@@ -783,56 +821,13 @@ init_stlc2500(struct btuart_softc *sc)
 	e = mtod(m, hci_event_hdr_t *);
 	lv = (hci_read_local_ver_rp *)(e + 1);
 	revision = le16toh(lv->hci_revision);
-	opcode = htole16(HCI_CMD_RESET);
 	for (i = 0; suffix[i] != NULL; i++) {
 		/* send firmware */
 		snprintf(filename, sizeof(filename), filenametmpl,
 		    (uint8_t)(revision >> 8), (uint8_t)revision, suffix[i]);
 		bth4_firmload(sc, filename, firmload_stlc2500);
-
-		p = mtod(m, hci_cmd_hdr_t *);
-		p->type = HCI_CMD_PKT;
-		p->opcode = opcode;
-		p->length = 0;
-		m->m_pkthdr.len = m->m_len = sizeof(hci_cmd_hdr_t);
-
-		bth4_output_cmd(sc->sc_dev, m);
-
-		error = bth4_waitresp(sc, &m, opcode);
-		if (m != NULL) {
-			if (error != 0) {
-				aprint_error_dev(sc->sc_dev,
-				    "HCI_Reset (%d) failed: Status 0x%02x\n",
-				    i, error);
-				error = EFAULT;
-				m_freem(m);
-			}
-		}
-		if (error != 0)
-			return error;
 	}
 
-	/* XXXX: We will obtain the character string.  But I don't know... */
-	p = mtod(m, hci_cmd_hdr_t *);
-	opcode = htole16(0xfc0f);		/* XXXXX ?? */
-	p->type = HCI_CMD_PKT;
-	p->opcode = opcode;
-	p->length = 0;
-	m->m_pkthdr.len = m->m_len = sizeof(hci_cmd_hdr_t);
-
-	bth4_output_cmd(sc->sc_dev, m);
-
-	error = bth4_waitresp(sc, &m, opcode);
-	if (m != NULL) {
-		if (error != 0) {
-			aprint_error_dev(sc->sc_dev,
-			    "failed: opcode 0xfc0f Status 0x%02x\n", error);
-			error = EFAULT;
-			m_freem(m);
-		}
-	}
-	if (error != 0)
-		return error;
 	/*
 	 * XXXX:
 	 * We do not know the beginning point of this character string.
@@ -842,7 +837,8 @@ init_stlc2500(struct btuart_softc *sc)
 	 */
 
 	p = mtod(m, hci_cmd_hdr_t *);
-	opcode = htole16(0xfc22);		/* XXXXX ?? */
+#define HCI_CMD_ST_STORE_IN_NVDS	0xfc22	/* XXXX */
+	opcode = htole16(HCI_CMD_ST_STORE_IN_NVDS);
 	p->type = HCI_CMD_PKT;
 	p->opcode = opcode;
 	p->length = sizeof(param);
@@ -857,6 +853,70 @@ init_stlc2500(struct btuart_softc *sc)
 	param[5] = 0xe1;
 	param[6] = 0x80;
 	param[7] = 0x00;
+	m_copyback(m, sizeof(hci_cmd_hdr_t), p->length, param);
+
+	bth4_output_cmd(sc->sc_dev, m);
+
+	error = bth4_waitresp(sc, &m, opcode);
+	if (m != NULL) {
+		if (error != 0) {
+			aprint_error_dev(sc->sc_dev,
+			    "failed: opcode 0xfc0f Status 0x%02x\n", error);
+			error = EFAULT;
+			m_freem(m);
+		}
+	}
+	if (error != 0)
+		return error;
+
+	opcode = htole16(HCI_CMD_RESET);
+	p = mtod(m, hci_cmd_hdr_t *);
+	p->type = HCI_CMD_PKT;
+	p->opcode = opcode;
+	p->length = 0;
+	m->m_pkthdr.len = m->m_len = sizeof(hci_cmd_hdr_t);
+
+	bth4_output_cmd(sc->sc_dev, m);
+
+	error = bth4_waitresp(sc, &m, opcode);
+	if (m != NULL) {
+		if (error != 0) {
+			aprint_error_dev(sc->sc_dev,
+			    "HCI_Reset failed: Status 0x%02x\n", error);
+			error = EFAULT;
+			m_freem(m);
+		}
+	}
+
+	return error;
+}
+
+static int
+init_bgb2xx(struct btuart_softc *sc)
+{
+	struct mbuf *m;
+	hci_cmd_hdr_t *p;
+	int error;
+	uint16_t opcode;
+	char param[8];
+
+	m = m_gethdr(M_WAIT, MT_DATA);
+	p = mtod(m, hci_cmd_hdr_t *);
+	opcode = htole16(HCI_CMD_ST_STORE_IN_NVDS);
+	p->type = HCI_CMD_PKT;
+	p->opcode = opcode;
+	p->length = sizeof(param);
+	m->m_pkthdr.len = m->m_len = sizeof(hci_cmd_hdr_t);
+
+	/* XXXX */
+	param[0] = 0xfe;
+	param[1] = 0x06;
+	param[2] = 0xbd;
+	param[3] = 0xb2;
+	param[4] = 0x10;
+	param[5] = 0x00;
+	param[6] = 0xab;
+	param[7] = 0xba;
 	m_copyback(m, sizeof(hci_cmd_hdr_t), p->length, param);
 
 	bth4_output_cmd(sc->sc_dev, m);
@@ -922,8 +982,8 @@ init_bcm2035(struct btuart_softc *sc)
 
 	/*
 	 * XXXX: Should we send some commands?
-	 *         HCI_CMD_RESET and HCI_CMD_READ_LOCAL_VER and
-	 *         HCI_CMD_READ_LOCAL_COMMANDS
+	 *         HCI_CMD_RESET and Set BD_ADDR and
+	 *         HCI_CMD_READ_LOCAL_VER and HCI_CMD_READ_LOCAL_COMMANDS
 	 */
 
 	p = mtod(m, hci_cmd_hdr_t *);
@@ -1048,6 +1108,7 @@ static int
 bth4open(dev_t device __unused, struct tty *tp)
 {
 	struct btuart_softc *sc;
+	device_t dev;
 	struct cfdata *cfdata;
 	struct lwp *l = curlwp;		/* XXX */
 	int error, unit, s;
@@ -1080,11 +1141,12 @@ bth4open(dev_t device __unused, struct tty *tp)
 
 	aprint_normal("%s%d at tty major %d minor %d",
 	    name, unit, major(tp->t_dev), minor(tp->t_dev));
-	sc = (struct btuart_softc *)config_attach_pseudo(cfdata);
-	if (sc == NULL) {
+	dev = config_attach_pseudo(cfdata);
+	if (dev == NULL) {
 		splx(s);
 		return EIO;
 	}
+	sc = device_private(dev);
 	mutex_spin_enter(&tty_lock);
 	tp->t_sc = sc;
 	sc->sc_tp = tp;
