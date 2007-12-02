@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.2,v 1.1.2.112 2007/12/01 17:50:34 bouyer Exp $
+#	$NetBSD: CHANGES-3.2,v 1.1.2.113 2007/12/02 22:44:16 bouyer Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.2
 release:
@@ -3835,4 +3835,9 @@ sys/dev/ic/com.c				1.233
 	default: it appears to break output on the Soekris net4501, which
 	is a rather popular platform. This should fix PR kern/29612.
 	[is, ticket #1882]
+
+sys/netinet6/in6_src.c				1.40 via patch
+
+	in6_pcbsetport: add missing htons.  (fixes ephemeral port allocation.)
+	[yamt, ticket #1881]
 
