@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.176 2007/11/22 14:33:53 jnemeth Exp $
+# $NetBSD: GENERIC,v 1.177 2007/12/02 05:19:12 kiyohara Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.176 $"
+#ident 		"GENERIC-$Revision: 1.177 $"
 
 maxusers	32		# estimated number of users
 
@@ -931,6 +931,7 @@ btbc* at pcmcia? function ?		# AnyCom BlueCard LSE041/039/139
 ubt* at uhub? port ?
 
 # Bluetooth Device Hub
+bthub* at bcsp?
 bthub* at bt3c?
 bthub* at btbc?
 bthub* at btuart?
@@ -1017,6 +1018,7 @@ pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
 pseudo-device	lockstat		# lock profiling
+pseudo-device	bcsp			# BlueCore Serial Protocol
 pseudo-device	btuart			# Bluetooth HCI UART (H4)
 
 # a pseudo device needed for Coda	# also needs CODA (above)
