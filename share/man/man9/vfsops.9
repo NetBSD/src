@@ -1,4 +1,4 @@
-.\"     $NetBSD: vfsops.9,v 1.33 2007/11/26 19:11:11 pooka Exp $
+.\"     $NetBSD: vfsops.9,v 1.34 2007/12/02 19:35:39 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -119,8 +119,8 @@ int  (*vfs_sync)()	VFS_SYNC	Flush file system buffers
 int  (*vfs_vget)()	VFS_VGET	Get vnode from file id
 int  (*vfs_fhtovp)()	VFS_FHTOVP	NFS file handle to vnode lookup
 int  (*vfs_vptofh)()	VFS_VPTOFH	Vnode to NFS file handle lookup
-void (*vfs_init)()	-	Initialise file system
-void (*vfs_reinit)()	-	Reinitialise file system
+void (*vfs_init)()	-	Initialize file system
+void (*vfs_reinit)()	-	Reinitialize file system
 void (*vfs_done)()	-	Cleanup unmounted file system
 int  (*vfs_mountroot)()	-	Mount the root file system
 int  (*vfs_snapshot)()	VFS_SNAPSHOT	Take a snapshot
@@ -148,10 +148,10 @@ be
 .Pp
 At system boot, each file system with an entry in
 .Va vfs_list_initial
-is established and initialised.
-Each initialised file system is recorded by the kernel in the list
+is established and initialized.
+Each initialized file system is recorded by the kernel in the list
 .Va vfs_list
-and the file system specific initialisation function
+and the file system specific initialization function
 .Em vfs_init
 in its vfsops vector is invoked.
 When the file system is no longer needed
@@ -159,13 +159,13 @@ When the file system is no longer needed
 is invoked to run file system specific cleanups and the file system is
 removed from the kernel list.
 .Pp
-At system boot, the root filesystem is mounted by invoking the file
+At system boot, the root file system is mounted by invoking the file
 system type specific
 .Em vfs_mountroot
 function in the vfsops vector.
-All filesystems that can be mounted as a root file system must define
+All file systems that can be mounted as a root file system must define
 this function.
-It is responsible for initialising to list of mount structures for
+It is responsible for initializing to list of mount structures for
 all future mounted file systems.
 .Pp
 Kernel state which affects a specific file system type can be
@@ -186,15 +186,15 @@ contains file system type specific data, while the argument
 points to a location specifying the length of the data.
 .Pp
 .Fn VFS_MOUNT
-initialises the mount structure for the mounted file system.
+initializes the mount structure for the mounted file system.
 This structure records mount-specific information for the file system and
 records the list of vnodes associated with the file system.
 This function is invoked both to mount new file systems and to change the
 attributes of an existing file system.
 If the flag MNT_UPDATE is set in
 .Em mp-\*[Gt]mnt_flag ,
-the filesystem should update its state.
-This can be used, for instance, to convert a read-only filesystem to
+the file system should update its state.
+This can be used, for instance, to convert a read-only file system to
 read-write.
 The current attributes for a mounted file system can be fetched by
 specifying
@@ -288,7 +288,7 @@ The vnode is returned in the address specified
 The function is optional for file systems which have a unique id
 number for every file in the file system.
 It is used internally by the UFS file system and also by the NFSv3
-server to implement the READDIRPLUS nfs call.
+server to implement the READDIRPLUS NFS call.
 If the file system does not support this function, it should return
 .Er EOPNOTSUPP .
 .It Fn VFS_FHTOVP "mp" "fhp" "vpp"
@@ -303,7 +303,7 @@ When exporting, the call to
 .Fn VFS_FHTOVP
 should follow a call to
 .Fn netexport_check ,
-which checks if the file is accessable to the client.
+which checks if the file is accessible to the client.
 .Pp
 If file handles are not supported by the file system, this function
 must return
