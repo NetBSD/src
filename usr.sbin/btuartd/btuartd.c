@@ -1,4 +1,4 @@
-/*	$NetBSD: btuartd.c,v 1.3 2007/09/30 04:11:02 kiyohara Exp $	*/
+/*	$NetBSD: btuartd.c,v 1.4 2007/12/02 00:20:24 kiyohara Exp $	*/
 /*
  * Copyright (c) 2006, 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: btuartd.c,v 1.3 2007/09/30 04:11:02 kiyohara Exp $");
+__RCSID("$NetBSD: btuartd.c,v 1.4 2007/12/02 00:20:24 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -83,9 +83,9 @@ static struct hcitypetbl {
 	{ "swave",		BTUART_HCITYPE_SWAVE },
 	{ "st",			BTUART_HCITYPE_ST },
 	{ "stlc2500",		BTUART_HCITYPE_STLC2500 },
-	{ "bt2000c",		BTUART_HCITYPE_BT2000C },
 	{ "bcm2035",		BTUART_HCITYPE_BCM2035 },
 	{ "bcsp",		BTUART_HCITYPE_BCSP },
+	{ "bgb2xx",		BTUART_HCITYPE_BGB2XX },
 	{ "*",			BTUART_HCITYPE_ANY },
 	{ NULL },
 };
