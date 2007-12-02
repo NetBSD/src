@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.9 2007/12/02 19:33:31 ad Exp $ */
+/* $NetBSD: cpu.c,v 1.10 2007/12/02 20:34:41 ad Exp $ */
 
 /*-
  * Copyright (c) 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.9 2007/12/02 19:33:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.10 2007/12/02 20:34:41 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -598,7 +598,7 @@ cpu_boot_secondary(ci)
 
 	atomic_or_32(&ci->ci_flags, CPUF_GO);
 	for (i = 100000; (!(ci->ci_flags & CPUF_RUNNING)) && i>0;i--) {
-		lapic_boot_timecount = lapic_get_timecount(NULL);
+		DELAY(10);
 	}
 	if ((ci->ci_flags & CPUF_RUNNING) == 0) {
 		aprint_error("%s: failed to start\n", ci->ci_dev->dv_xname);
