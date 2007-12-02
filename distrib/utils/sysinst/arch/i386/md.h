@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.60 2007/11/15 00:55:02 joerg Exp $	*/
+/*	$NetBSD: md.h,v 1.61 2007/12/03 00:00:42 ad Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -64,14 +64,12 @@
 
 #define SET_KERNEL_GENERIC	SET_KERNEL_1
 #define SET_KERNEL_MP		SET_KERNEL_2
-#define SET_KERNEL_DIAGNOSTIC	SET_KERNEL_3
-#define	SET_KERNEL_NOACPI	SET_KERNEL_4
+#define	SET_KERNEL_NOACPI	SET_KERNEL_3
 /* #define SET_KERNEL_TINY		SET_KERNEL_5 */
 
 #define SET_KERNEL_1_NAME	"kern-GENERIC"
 #define SET_KERNEL_2_NAME	"kern-GENERIC.MP"
-#define SET_KERNEL_3_NAME	"kern-GENERIC_DIAGNOSTIC"
-#define SET_KERNEL_4_NAME	"kern-GENERIC.NOACPI"
+#define SET_KERNEL_3_NAME	"kern-GENERIC.NOACPI"
 /* #define SET_KERNEL_5_NAME	"kern-GENERIC_TINY" */
 
 /*
