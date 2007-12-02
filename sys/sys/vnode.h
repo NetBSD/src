@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.176 2007/11/30 16:52:19 yamt Exp $	*/
+/*	$NetBSD: vnode.h,v 1.177 2007/12/02 13:56:20 hannken Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -577,10 +577,6 @@ int	vn_extattr_get(struct vnode *, int, int, const char *, size_t *,
 int	vn_extattr_set(struct vnode *, int, int, const char *, size_t,
 	    const void *, struct lwp *);
 int	vn_extattr_rm(struct vnode *, int, int, const char *, struct lwp *);
-int	vn_cow_establish(struct vnode *, int (*)(void *, struct buf *),
-            void *);
-int	vn_cow_disestablish(struct vnode *, int (*)(void *, struct buf *),
-            void *);
 void	vn_ra_allocctx(struct vnode *);
 
 /* initialise global vnode management */
