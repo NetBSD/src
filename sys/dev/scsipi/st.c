@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.178.2.2 2007/09/17 20:39:43 msaitoh Exp $ */
+/*	$NetBSD: st.c,v 1.178.2.3 2007/12/02 23:56:57 riz Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.178.2.2 2007/09/17 20:39:43 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.178.2.3 2007/12/02 23:56:57 riz Exp $");
 
 #include "opt_scsi.h"
 
@@ -1219,6 +1219,7 @@ ststart(struct scsipi_periph *periph)
 						BUFQ_GET(&st->buf_queue);
 						bp->b_flags |= B_ERROR;
 						bp->b_error = EIO;
+						bp->b_resid = bp->b_bcount;
 						biodone(bp);
 						continue;
 					}
@@ -1329,6 +1330,14 @@ stdone(struct scsipi_xfer *xs, int error)
 	if (bp) {
 		bp->b_error = error;
 		bp->b_resid = xs->resid;
+		/*
+		 * buggy device ? A SDLT320 can report an info
+		 * field of 0x3de8000 on a Media Error/Write Error
+		 * for this CBD: 0x0a 00 00 80 00 00
+		 */
+		if (bp->b_resid > bp->b_bcount || bp->b_resid < 0)
+			bp->b_resid = bp->b_bcount;
+
 		if (error)
 			bp->b_flags |= B_ERROR;
 
