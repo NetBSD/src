@@ -1,4 +1,4 @@
-/* 	$NetBSD: xlcom.c,v 1.4 2007/11/19 18:51:39 ad Exp $ */
+/* 	$NetBSD: xlcom.c,v 1.5 2007/12/02 20:46:53 ad Exp $ */
 
 /*
  * Copyright (c) 2006 Jachym Holecek
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xlcom.c,v 1.4 2007/11/19 18:51:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xlcom.c,v 1.5 2007/12/02 20:46:53 ad Exp $");
 
 #include "opt_kgdb.h"
 
@@ -46,15 +46,14 @@ __KERNEL_RCSID(0, "$NetBSD: xlcom.c,v 1.4 2007/11/19 18:51:39 ad Exp $");
 #include <sys/tty.h>
 #include <sys/time.h>
 #include <sys/syslog.h>
+#include <sys/intr.h>
+#include <sys/bus.h>
 
 #if defined(KGDB)
 #include <sys/kgdb.h>
 #endif /* KGDB */
 
 #include <dev/cons.h>
-
-#include <machine/intr.h>
-#include <machine/bus.h>
 
 #include <evbppc/virtex/virtex.h>
 #include <evbppc/virtex/dev/xcvbusvar.h>
@@ -211,8 +210,8 @@ xlcom_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_rput = sc->sc_rget = 0;
 	sc->sc_ravail = XLCOM_RXBUF_SIZE;
 
-	sc->sc_rx_soft = softintr_establish(IPL_SOFTSERIAL, xlcom_rx_soft, sc);
-	sc->sc_tx_soft = softintr_establish(IPL_SOFTSERIAL, xlcom_tx_soft, sc);
+	sc->sc_rx_soft = softint_establish(SOFTINT_SERIAL, xlcom_rx_soft, sc);
+	sc->sc_tx_soft = softint_establish(SOFTINT_SERIAL, xlcom_tx_soft, sc);
 
 	if (sc->sc_rx_soft == NULL || sc->sc_tx_soft == NULL) {
 		printf("%s: could not establish Rx or Tx softintr\n",
@@ -318,7 +317,7 @@ xlcom_send_chunk(struct xlcom_softc *sc)
 	/* Try to grab more data while FIFO drains. */
 	if (sc->sc_tbc == 0) {
 		sc->sc_tty->t_state &= ~TS_BUSY;
-		softintr_schedule(sc->sc_tx_soft);
+		softint_schedule(sc->sc_tx_soft);
 	}
 }
 
@@ -350,7 +349,7 @@ xlcom_recv_chunk(struct xlcom_softc *sc)
 
 	/* Shedule completion hook if we received any. */
 	if (n != sc->sc_ravail)
-		softintr_schedule(sc->sc_rx_soft);
+		softint_schedule(sc->sc_rx_soft);
 }
 
 static int
