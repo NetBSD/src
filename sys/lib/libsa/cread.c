@@ -1,4 +1,4 @@
-/*	$NetBSD: cread.c,v 1.19 2007/11/24 13:20:54 isaki Exp $	*/
+/*	$NetBSD: cread.c,v 1.20 2007/12/02 04:59:25 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -266,7 +266,7 @@ close(int fd)
 	struct sd *s;
 
 #if !defined(LIBSA_NO_FD_CHECKING)
-	if ((unsigned)fd >= SOPEN_MAX) {
+	if ((unsigned int)fd >= SOPEN_MAX) {
 		errno = EBADF;
 		return -1;
 	}
@@ -381,7 +381,7 @@ lseek(int fd, off_t offset, int where)
 	struct sd *s;
 
 #if !defined(LIBSA_NO_FD_CHECKING)
-	if ((unsigned)fd >= SOPEN_MAX) {
+	if ((unsigned int)fd >= SOPEN_MAX) {
 		errno = EBADF;
 		return -1;
 	}

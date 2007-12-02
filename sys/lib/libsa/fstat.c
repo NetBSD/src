@@ -1,4 +1,4 @@
-/*	$NetBSD: fstat.c,v 1.6 2007/11/24 13:20:55 isaki Exp $	*/
+/*	$NetBSD: fstat.c,v 1.7 2007/12/02 04:59:25 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -39,7 +39,7 @@ fstat(int fd, struct stat *sb)
 	struct open_file *f = &files[fd];
 
 #if !defined(LIBSA_NO_FD_CHECKING)
-	if ((unsigned)fd >= SOPEN_MAX || f->f_flags == 0) {
+	if ((unsigned int)fd >= SOPEN_MAX || f->f_flags == 0) {
 		errno = EBADF;
 		return -1;
 	}
