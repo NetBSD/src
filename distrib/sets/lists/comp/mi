@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1091 2007/11/21 22:49:05 elad Exp $
+#	$NetBSD: mi,v 1.1092 2007/12/02 18:10:20 bouyer Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -3216,17 +3216,6 @@
 ./usr/share/ldscripts/elf64alpha.xr		comp-obsolete		obsolete
 ./usr/share/ldscripts/elf64alpha.xs		comp-obsolete		obsolete
 ./usr/share/ldscripts/elf64alpha.xu		comp-obsolete		obsolete
-./usr/share/ldscripts/elf_i386.x		comp-obsolete		obsolete
-./usr/share/ldscripts/elf_i386.xbn		comp-obsolete		obsolete
-./usr/share/ldscripts/elf_i386.xn		comp-obsolete		obsolete
-./usr/share/ldscripts/elf_i386.xr		comp-obsolete		obsolete
-./usr/share/ldscripts/elf_i386.xs		comp-obsolete		obsolete
-./usr/share/ldscripts/elf_i386.xu		comp-obsolete		obsolete
-./usr/share/ldscripts/i386nbsd.x		comp-obsolete		obsolete
-./usr/share/ldscripts/i386nbsd.xbn		comp-obsolete		obsolete
-./usr/share/ldscripts/i386nbsd.xn		comp-obsolete		obsolete
-./usr/share/ldscripts/i386nbsd.xr		comp-obsolete		obsolete
-./usr/share/ldscripts/i386nbsd.xu		comp-obsolete		obsolete
 ./usr/share/ldscripts/m68kelf.x			comp-obsolete		obsolete
 ./usr/share/ldscripts/m68kelf.xbn		comp-obsolete		obsolete
 ./usr/share/ldscripts/m68kelf.xn		comp-obsolete		obsolete
