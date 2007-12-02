@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.2,v 1.1.2.113 2007/12/02 22:44:16 bouyer Exp $
+#	$NetBSD: CHANGES-3.2,v 1.1.2.114 2007/12/02 23:58:41 riz Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.2
 release:
@@ -3840,4 +3840,9 @@ sys/netinet6/in6_src.c				1.40 via patch
 
 	in6_pcbsetport: add missing htons.  (fixes ephemeral port allocation.)
 	[yamt, ticket #1881]
+
+sys/dev/scsipi/st.c				1.199-201 via patch
+
+	Properly set b_resid in an error case.  PR#36690
+	[bouyer, ticket #1880]
 
