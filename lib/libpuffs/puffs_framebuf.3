@@ -1,4 +1,4 @@
-.\"	$NetBSD: puffs_framebuf.3,v 1.18 2007/12/01 19:54:01 wiz Exp $
+.\"	$NetBSD: puffs_framebuf.3,v 1.19 2007/12/02 22:05:51 wiz Exp $
 .\"
 .\" Copyright (c) 2007 Antti Kantee.  All rights reserved.
 .\"
@@ -281,7 +281,7 @@ Read
 bytes of data from the buffer into
 .Ar data .
 Advances the offset cursor.
-.It Fn puffs_framebuf_getdata_atoff pufbuf offset data dlen 
+.It Fn puffs_framebuf_getdata_atoff pufbuf offset data dlen
 Read data from buffer position
 .Ar offset .
 Does NOT modify the offset cursor.
@@ -427,7 +427,7 @@ The events which happened are returned back in
 .Ar what .
 The possible events are
 .Dv PUFFS_FBIO_READ ,
-.Dv PUFFS_FBIO_WRITE
+.Dv PUFFS_FBIO_WRITE ,
 and
 .Dv PUFFS_FBIO_ERROR ,
 specifying read, write and error conditions, respectively.
@@ -445,7 +445,7 @@ Callback function.
 Read at most one frame from file descriptor
 .Ar fd
 into the buffer
-.Ar pufbuf.
+.Ar pufbuf .
 If a complete frame is read, the value pointed to by
 .Ar done
 must be set to 1.
@@ -532,7 +532,7 @@ The framework provides the routines
 and
 .Fn puffs_framev_unmountonclose ,
 which can be given as
-.Ar fdnotfn.
+.Ar fdnotfn .
 The first one removes the file descriptor once both sides are closed
 while the second one unmounts the file system and exits the mainloop.
 .It Fn puffs_framev_addfd pu fd what
@@ -580,7 +580,7 @@ or
 .Fn puffs_node_reclaim ,
 depending a little on the structure of the file system.
 .It Fn puffs_framev_unmountonclose pu fd what
-This is library provided convinience routine for
+This is library provided convenience routine for
 .Fn puffs_framev_fdnotify_fn .
 It unmounts the file system when both the read and write side are
 closed.
