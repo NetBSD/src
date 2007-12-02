@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.7 2007/12/01 18:13:17 tsutsui Exp $	*/
+/*	$NetBSD: conf.c,v 1.8 2007/12/02 05:36:46 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -56,7 +56,7 @@ struct devsw devsw[] = {
 	{ "nfs", net_strategy, net_open, net_close, net_ioctl }
 };
 
-int	ndevs = (sizeof(devsw)/sizeof(devsw[0]));
+int ndevs = __arraycount(devsw);
 
 /*
  * Filesystem configuration
@@ -68,7 +68,7 @@ struct fs_ops file_system[] = {
 	FS_OPS(nfs),
 };
 
-int nfsys = sizeof(file_system) / sizeof(file_system[0]);
+int nfsys = __arraycount(file_system);
 
 extern struct netif_driver en_driver;
 
@@ -76,4 +76,4 @@ struct netif_driver *netif_drivers[] = {
 	&ether_tlp_driver,
 };
 
-int n_netif_drivers = sizeof(netif_drivers) / sizeof(netif_drivers[0]);
+int n_netif_drivers = __arraycount(netif_drivers);
