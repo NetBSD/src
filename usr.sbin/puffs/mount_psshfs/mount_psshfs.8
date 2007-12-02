@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount_psshfs.8,v 1.13 2007/11/08 17:49:43 pooka Exp $
+.\"	$NetBSD: mount_psshfs.8,v 1.14 2007/12/02 19:05:51 wiz Exp $
 .\"
 .\" Copyright (c) 2007 Antti Kantee.  All rights reserved.
 .\"
@@ -47,7 +47,7 @@ The mandatory parameters are the target host name and local mount
 point.
 The target host parameter can optionally contain a username whose
 credentials will be used by the remote sshd, and a relative or
-absolute path for the remote mountpoint's root.
+absolute path for the remote mount point's root.
 If no user is given, the credentials of the user issuing the mount
 command are used.
 If no path is given, the user's home directory on the remote machine
@@ -57,10 +57,10 @@ The following command line options are available:
 .Pp
 .Bl -tag -width xxx
 .It Fl e
-Makes the mounted file system nfs exportable.
+Makes the mounted file system NFS exportable.
 If this option is used, it is very important to understand that
 .Nm
-can not provide complete support for nfs due to the limitations in
+can not provide complete support for NFS due to the limitations in
 the backend.
 Files are valid only for the time that
 .Nm
@@ -125,12 +125,12 @@ for psshfs mounts, with SSH public key authentication:
 .Pp
 .Dl "abc@bigiron:/usr /mnt psshfs rw,noauto,-O=BatchMode=yes,-O=IdentityFile=/root/.ssh/id_rsa,-t=-1"
 .Sh SEE ALSO
-.Xr fstab 5 ,
 .Xr sftp 1 ,
 .Xr puffs 3 ,
 .Xr puffs 4 ,
-.Xr mount 8 ,
+.Xr fstab 5 ,
 .Xr ssh_config 5 ,
+.Xr mount 8 ,
 .Xr sshd 8
 .Sh HISTORY
 The
