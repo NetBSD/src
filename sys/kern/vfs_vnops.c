@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.146 2007/11/30 16:52:21 yamt Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.147 2007/12/02 13:56:17 hannken Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.146 2007/11/30 16:52:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.147 2007/12/02 13:56:17 hannken Exp $");
 
 #include "fs_union.h"
 #include "veriexec.h"
@@ -743,40 +743,6 @@ vn_restorerecurse(struct vnode *vp, u_int flags)
 	lkp->lk_flags &= ~LK_CANRECURSE;
 	lkp->lk_flags |= flags;
 	simple_unlock(&lkp->lk_interlock);
-}
-
-/*
- * Obsolete: this function will be removed from 6.0
- * Please use fscow_establish() instead.
- */
-int
-vn_cow_establish(struct vnode *vp,
-    int (*func)(void *, struct buf *), void *cookie)
-{
-	static int firstrun = 1;
-
-	if (firstrun) {
-		printf("%s: this function is obsolete.\n", __FUNCTION__);
-		firstrun = 0;
-	}
-	if (vp->v_type == VBLK)
-		return fscow_establish(vp->v_specmountpoint, func, cookie);
-	else
-		return fscow_establish(vp->v_mount, func, cookie);
-}
-
-/*
- * Obsolete: this function will be removed from 6.0
- * Please use fscow_disestablish() instead.
- */
-int
-vn_cow_disestablish(struct vnode *vp,
-    int (*func)(void *, struct buf *), void *cookie)
-{
-	if (vp->v_type == VBLK)
-		return fscow_disestablish(vp->v_specmountpoint, func, cookie);
-	else
-		return fscow_disestablish(vp->v_mount, func, cookie);
 }
 
 /*

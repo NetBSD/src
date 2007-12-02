@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.180 2007/10/21 23:27:16 martin Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.181 2007/12/02 13:56:16 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.180 2007/10/21 23:27:16 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.181 2007/12/02 13:56:16 hannken Exp $");
 
 #include "fs_ffs.h"
 #include "opt_bufcache.h"
@@ -1383,6 +1383,7 @@ biodone(struct buf *bp)
 	simple_lock(&bp->b_interlock);
 	if (ISSET(bp->b_flags, B_DONE))
 		panic("biodone already");
+	CLR(bp->b_flags, B_COWDONE);
 	SET(bp->b_flags, B_DONE);		/* note that it's done */
 	BIO_SETPRIO(bp, BPRIO_DEFAULT);
 
