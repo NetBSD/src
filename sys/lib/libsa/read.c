@@ -1,4 +1,4 @@
-/*	$NetBSD: read.c,v 1.14 2007/11/24 13:20:57 isaki Exp $	*/
+/*	$NetBSD: read.c,v 1.15 2007/12/02 04:59:26 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -74,7 +74,7 @@ oread(int fd, void *dest, size_t bcount)
 	size_t resid;
 
 #if !defined(LIBSA_NO_FD_CHECKING)
-	if ((unsigned)fd >= SOPEN_MAX || !(f->f_flags & F_READ)) {
+	if ((unsigned int)fd >= SOPEN_MAX || !(f->f_flags & F_READ)) {
 		errno = EBADF;
 		return -1;
 	}

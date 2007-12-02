@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile_elf32.c,v 1.18 2007/11/23 04:32:14 isaki Exp $ */
+/* $NetBSD: loadfile_elf32.c,v 1.19 2007/12/02 04:59:26 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -423,7 +423,7 @@ ELFNAMEEND(loadfile)(fd, elf, marks, flags)
 			case SHT_STRTAB:
 				for (j = 0; j < elf->e_shnum; j++)
 					if (shp[j].sh_type == SHT_SYMTAB &&
-					    shp[j].sh_link == (unsigned)i)
+					    shp[j].sh_link == (unsigned int)i)
 						goto havesym;
 				/* FALLTHROUGH */
 			default:
