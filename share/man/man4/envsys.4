@@ -1,4 +1,4 @@
-.\"	$NetBSD: envsys.4,v 1.38 2007/11/16 08:00:12 xtraeme Exp $
+.\"	$NetBSD: envsys.4,v 1.39 2007/12/02 19:54:32 wiz Exp $
 .\"
 .\" Copyright (c) 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -59,7 +59,7 @@ the userland part, to receive the current sensor data and
 to set some properties on sensors:
 .Xr envstat 8 .
 .It
-the kernel part that is able to talk to the drivers providing sensor
+The kernel part that is able to talk to the drivers providing sensor
 data:
 .Xr sysmon_envsys 9 .
 .El
@@ -68,22 +68,24 @@ The
 .Nm
 framework uses
 .Xr proplib 3
-for communication between kernel and user space. The following
+for communication between kernel and user space.
+The following
 .Xr ioctl 2
 types are available:
 .Pp
 .Bl -tag -width XX -compact
-.It Dv ENVSYS_GETDICTIONARY (prop_dictionary_t)
+.It Dv ENVSYS_GETDICTIONARY Pq prop_dictionary_t
 .Pp
 This
 .Xr ioctl 2
 is used to receive the global dictionary that is being used in
 the kernel by the
 .Xr sysmon_envsys 9
-framework. It will contain an array of dictionaries per device
+framework.
+It will contain an array of dictionaries per device
 and one dictionary per sensor plus another special dictionary that
-contains the properties for a device. Each sensor dictionary will have 
-their own characteristics and values.
+contains the properties for a device.
+Each sensor dictionary will have their own characteristics and values.
 .Pp
 The following XML property list represents a virtual device
 .Dq device0
@@ -164,18 +166,18 @@ Current average value in the sensor.
 Current capacity state for a battery capacity sensor.
 .It Fa critical-capacity
 Critical capacity set previously by the
-.Ar ENVSYS_SETDICTIONARY
+.Dv ENVSYS_SETDICTIONARY
 .Xr ioctl 2 .
 Only available on sensors with the
 .Em want-percentage
 object enabled.
 .It Fa critical-max
 Critical max limit set previously by the
-.Ar ENVSYS_SETDICTIONARY
+.Dv ENVSYS_SETDICTIONARY
 .Xr ioctl 2 .
 .It Fa critical-min
 Critical min limit set previously by the
-.Ar ENVSYS_SETDICTIONARY
+.Dv ENVSYS_SETDICTIONARY
 .Xr ioctl 2 .
 .It Fa cur-value
 Current value in the sensor.
@@ -202,7 +204,7 @@ If true, the driver has enabled the flag to monitor a warning over state.
 If true, the driver has enabled the flag to monitor a warning under state.
 .It Fa monitoring-supported
 If true, critical capacity/max/min limits may be set by the
-.Ar ENVSYS_SETDICTIONARY
+.Dv ENVSYS_SETDICTIONARY
 .Xr ioctl 2 .
 .It Fa state
 Current state in the sensor.
@@ -218,19 +220,19 @@ are valid and a percentage may be computed from them.
 .El
 .Pp
 .Bl -tag -width XX -compact
-.It Dv ENVSYS_REMOVEPROPS (prop_dictionary_t)
+.It Dv ENVSYS_REMOVEPROPS Pq prop_dictionary_t
 .Pp
 This
 .Xr ioctl 2
 is used to remove all properties that are currently set via the
-.Ar ENVSYS_SETDICTIONARY
-ioctl. The values will be set to defaults, the ones that the driver
-uses.
+.Dv ENVSYS_SETDICTIONARY
+ioctl.
+The values will be set to defaults, the ones that the driver uses.
 .Pp
 Only one object is allowed on this dictionary:
 .Bd -literal -offset -ident
-	<key>envsys-remove-props</key>
-	<true/>
+	\*[Lt]key\*[Gt]envsys-remove-props\*[Lt]/key\*[Gt]
+	\*[Lt]true/\*[Gt]
 .Ed
 .Pp
 It is a boolean object and must be set to
@@ -239,15 +241,16 @@ to be effective.
 .El
 .Bl -tag -width XX -compact
 .Pp
-.It Dv ENVSYS_SETDICTIONARY (prop_dictionary_t)
+.It Dv ENVSYS_SETDICTIONARY Pq prop_dictionary_t
 .Pp
 This
 .Xr ioctl 2
 is used to send a dictionary with new properties that should be
 processed by the
 .Nm
-framework. Only a set of predefined keywords are recognized by
-the kernel part. The following is the property list representation
+framework.
+Only a set of predefined keywords are recognized by the kernel part.
+The following is the property list representation
 of a dictionary with all recognized and required keywords that
 a sensor understands:
 .Bd -literal
@@ -267,9 +270,11 @@ a sensor understands:
 .Pp
 Also if some properties in a device need to be changed, the
 .Dq device-properties
-dictionary must be used. At this moment only the
+dictionary must be used.
+At this moment only the
 .Dq refresh-timeout
-property is understood. This has the following structure:
+property is understood.
+This has the following structure:
 .Bd -literal
 \&\*[Lt]dict\&\*[Gt]
 	\&\*[Lt]key\&\*[Gt]device-properties\&\*[Lt]\&/key\&\*[Gt]
@@ -320,12 +325,12 @@ will be returned.
 .El
 .Sh NOTES
 When setting a critical max or min limit with the
-.Em ENVSYS_SETDICTIONARY
+.Dv ENVSYS_SETDICTIONARY
 .Xr ioctl 2 ,
 the user must be aware that
 .Xr sysmon_envsys 9
-expects to have a proper unit, so the value must be converted. Please
-see
+expects to have a proper unit, so the value must be converted.
+Please see
 .Xr sysmon_envsys 9
 for more information.
 .Pp
@@ -336,14 +341,13 @@ is the following:
 .Em value = (value / 100) * max value .
 The max value is available in the sensor's dictionary.
 .Sh EXAMPLES
-.Pp
 The following example shows how to change the description
 of
 .Ql sensor0
 in the
 .Ql aiboost0
 device with the
-.Ar ENVSYS_SETDICTIONARY
+.Dv ENVSYS_SETDICTIONARY
 .Xr ioctl 2 :
 .Bd -literal
 int
@@ -379,7 +383,7 @@ main(void)
 	if (!prop_array_add(array, sensor_dict))
 		err(EINVAL, "prop_array_add");
 
-	if ((fd = open(_DEV_SYSMON, O_RDWR)) == -1)
+	if ((fd = open(_DEV_SYSMON, O_RDWR)) == \-1)
 		err(EXIT_FAILURE, "open")
 
 	/* we are done, send the dictionary */
@@ -416,5 +420,5 @@ developers around the world.
 .Pp
 The first
 .Em envsys
-framework was implemented by Jason R. Thorpe, Tim Rightnour
+framework was implemented by Jason R. Thorpe, Tim Rightnour,
 and Bill Squier.
