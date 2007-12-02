@@ -1,4 +1,4 @@
-.\" $NetBSD: btuartd.8,v 1.6 2007/12/01 18:41:24 wiz Exp $
+.\" $NetBSD: btuartd.8,v 1.7 2007/12/02 00:20:24 kiyohara Exp $
 .\"
 .\" Copyright (c) 2007 KIYOHARA Takashi
 .\" All rights reserved.
@@ -24,9 +24,9 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $Id: btuartd.8,v 1.6 2007/12/01 18:41:24 wiz Exp $
+.\" $Id: btuartd.8,v 1.7 2007/12/02 00:20:24 kiyohara Exp $
 .\"
-.Dd September 22, 2007
+.Dd November 2, 2007
 .Dt BTUARTD 8
 .Os
 .Sh NAME
@@ -92,16 +92,18 @@ BCSP (BlueCore Serial Protocol)
 .It Cm csr
 Cambridge Silicon Radio Casira serial adapter or BrainBoxes serial dongle
 (BL642)
+.Pp
+AmbiCom BT2000C Bluetooth PC/CF Card
 .It Cm swave
 Silicon Wave kits
 .It Cm st
 ST Microelectronics minikits based on STLC2410/STLC2415
 .It Cm stlc2500
 ST Microelectronics minikits based on STLC2500
-.It Cm bt2000c
-AmbiCom BT2000C Bluetooth PC/CF Card
 .It Cm bcm2035
 Broadcom BCM2035
+.It Cm bgb2xx
+Philips BGB2xx Module
 .El
 .Pp
 The command line options are as follows:
