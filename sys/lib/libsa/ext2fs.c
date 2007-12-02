@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs.c,v 1.1 2007/12/01 18:06:22 tsutsui Exp $	*/
+/*	$NetBSD: ext2fs.c,v 1.2 2007/12/02 05:23:40 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -219,20 +219,24 @@ block_map(struct open_file *f, indp_t file_block, indp_t *disk_block_p)
 	/*
 	 * Index structure of an inode:
 	 *
-	 * di_db[0..NDADDR-1]	hold block numbers for blocks
+	 * e2di_blocks[0..NDADDR-1]
+	 *			hold block numbers for blocks
 	 *			0..NDADDR-1
 	 *
-	 * di_ib[0]		index block 0 is the single indirect block
+	 * e2di_blocks[NDADDR+0]
+	 *			block NDADDR+0 is the single indirect block
 	 *			holds block numbers for blocks
 	 *			NDADDR .. NDADDR + NINDIR(fs)-1
 	 *
-	 * di_ib[1]		index block 1 is the double indirect block
+	 * e2di_blocks[NDADDR+1]
+	 *			block NDADDR+1 is the double indirect block
 	 *			holds block numbers for INDEX blocks for blocks
 	 *			NDADDR + NINDIR(fs) ..
 	 *			NDADDR + NINDIR(fs) + NINDIR(fs)**2 - 1
 	 *
-	 * di_ib[2]		index block 2 is the triple indirect block
-	 *			holds block numbers for double-indirect
+	 * e2di_blocks[NDADDR+2]
+	 *			block NDADDR+2 is the triple indirect block
+	 *			holds block numbers for	double-indirect
 	 *			blocks for blocks
 	 *			NDADDR + NINDIR(fs) + NINDIR(fs)**2 ..
 	 *			NDADDR + NINDIR(fs) + NINDIR(fs)**2
@@ -249,7 +253,8 @@ block_map(struct open_file *f, indp_t file_block, indp_t *disk_block_p)
 
 	ind_cache = file_block >> LN2_IND_CACHE_SZ;
 	if (ind_cache == fp->f_ind_cache_block) {
-		*disk_block_p = fp->f_ind_cache[file_block & IND_CACHE_MASK];
+		*disk_block_p =
+		    fs2h32(fp->f_ind_cache[file_block & IND_CACHE_MASK]);
 		return 0;
 	}
 
@@ -287,7 +292,7 @@ block_map(struct open_file *f, indp_t file_block, indp_t *disk_block_p)
 			return rc;
 		if (rsize != fs->e2fs_bsize)
 			return EIO;
-		ind_block_num = buf[file_block >> level];
+		ind_block_num = fs2h32(buf[file_block >> level]);
 		if (level == 0)
 			break;
 		file_block &= (1 << level) - 1;
