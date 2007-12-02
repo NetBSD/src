@@ -1,4 +1,4 @@
-/*	$NetBSD: btuart.c,v 1.15 2007/12/02 00:09:49 kiyohara Exp $	*/
+/*	$NetBSD: btuart.c,v 1.16 2007/12/02 02:06:30 kiyohara Exp $	*/
 /*
  * Copyright (c) 2006, 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btuart.c,v 1.15 2007/12/02 00:09:49 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btuart.c,v 1.16 2007/12/02 02:06:30 kiyohara Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -322,7 +322,8 @@ bth4_firmload(struct btuart_softc *sc, char *filename,
 	char *buf;
 
 	if ((error = firmware_open(cd->cd_name, filename, &fh)) != 0) {
-		aprint_error_dev(sc->sc_dev, "firmware_open failed\n");
+		aprint_error_dev(sc->sc_dev, "firmware_open failed: %s\n",
+		    filename);
 		return error;
 	}
 	size = firmware_get_size(fh);
