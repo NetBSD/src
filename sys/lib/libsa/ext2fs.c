@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs.c,v 1.3 2007/12/02 06:12:35 tsutsui Exp $	*/
+/*	$NetBSD: ext2fs.c,v 1.4 2007/12/02 06:47:43 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -703,9 +703,12 @@ ext2fs_close(struct open_file *f)
 	if (fp == NULL)
 		return 0;
 
+	if (fp->f_fs->e2fs_gd)
+		dealloc(fp->f_fs->e2fs_gd,
+		    sizeof(struct ext2_gd) * fp->f_fs->e2fs_ncg);
 	if (fp->f_buf)
 		dealloc(fp->f_buf, fp->f_fs->e2fs_bsize);
-	dealloc(fp->f_fs, SBSIZE);
+	dealloc(fp->f_fs, sizeof(*fp->f_fs));
 	dealloc(fp, sizeof(struct file));
 	return 0;
 }
