@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_trans.c,v 1.14 2007/10/08 09:09:47 hannken Exp $	*/
+/*	$NetBSD: vfs_trans.c,v 1.15 2007/12/02 13:56:16 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.14 2007/10/08 09:09:47 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.15 2007/12/02 13:56:16 hannken Exp $");
 
 /*
  * File system transaction operations.
@@ -486,7 +486,7 @@ fstrans_dump(int full)
 
 struct fscow_handler {
 	SLIST_ENTRY(fscow_handler) ch_list;
-	int (*ch_func)(void *, struct buf *);
+	int (*ch_func)(void *, struct buf *, bool);
 	void *ch_arg;
 };
 
@@ -535,7 +535,8 @@ fscow_mount_init(struct mount *mp)
 }
 
 int
-fscow_establish(struct mount *mp, int (*func)(void *, struct buf *), void *arg)
+fscow_establish(struct mount *mp, int (*func)(void *, struct buf *, bool),
+    void *arg)
 {
 	struct fscow_mount_info *cmi;
 	struct fscow_handler *new;
@@ -557,7 +558,7 @@ fscow_establish(struct mount *mp, int (*func)(void *, struct buf *), void *arg)
 }
 
 int
-fscow_disestablish(struct mount *mp, int (*func)(void *, struct buf *),
+fscow_disestablish(struct mount *mp, int (*func)(void *, struct buf *, bool),
     void *arg)
 {
 	struct fscow_mount_info *cmi;
@@ -580,30 +581,36 @@ fscow_disestablish(struct mount *mp, int (*func)(void *, struct buf *),
 }
 
 int
-fscow_run(struct buf *bp)
+fscow_run(struct buf *bp, bool data_valid)
 {
 	int error = 0;
 	struct mount *mp;
 	struct fscow_mount_info *cmi;
 	struct fscow_handler *hp;
 
+	if ((bp->b_flags & B_COWDONE))
+		goto done;
 	if (bp->b_vp == NULL)
-		return 0;
+		goto done;
 	if (bp->b_vp->v_type == VBLK)
 		mp = bp->b_vp->v_specmountpoint;
 	else
 		mp = bp->b_vp->v_mount;
 	if (mp == NULL)
-		return 0;
+		goto done;
 
 	if ((cmi = mount_getspecific(mp, mount_cow_key)) == NULL)
-		return 0;
+		goto done;
 
 	rw_enter(&cmi->cmi_lock, RW_READER);
 	SLIST_FOREACH(hp, &cmi->cmi_handler, ch_list)
-		if ((error = (*hp->ch_func)(hp->ch_arg, bp)) != 0)
+		if ((error = (*hp->ch_func)(hp->ch_arg, bp, data_valid)) != 0)
 			break;
 	rw_exit(&cmi->cmi_lock);
+
+done:
+	if (error == 0)
+		bp->b_flags |= B_COWDONE;
 
 	return error;
 }
