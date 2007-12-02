@@ -1,4 +1,4 @@
-/*	$NetBSD: idle_machdep.c,v 1.2 2007/11/22 16:17:04 bouyer Exp $	*/
+/*	$NetBSD: idle_machdep.c,v 1.3 2007/12/02 16:37:58 ad Exp $	*/
 
 /*-
  * Copyright (c)2002, 2006, 2007 YAMAMOTO Takashi,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: idle_machdep.c,v 1.2 2007/11/22 16:17:04 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: idle_machdep.c,v 1.3 2007/12/02 16:37:58 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -46,5 +46,4 @@ cpu_idle(void)
 	} else {
 		x86_enable_intr();
 	}
-	ci->ci_want_resched = 0;
 }
