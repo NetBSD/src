@@ -1,4 +1,4 @@
-/*	$NetBSD: close.c,v 1.13 2007/11/24 13:20:54 isaki Exp $	*/
+/*	$NetBSD: close.c,v 1.14 2007/12/02 04:59:25 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -73,7 +73,7 @@ oclose(int fd)
 	int err1 = 0, err2 = 0;
 
 #if !defined(LIBSA_NO_FD_CHECKING)
-	if ((unsigned)fd >= SOPEN_MAX || f->f_flags == 0) {
+	if ((unsigned int)fd >= SOPEN_MAX || f->f_flags == 0) {
 		errno = EBADF;
 		return -1;
 	}
