@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.80 2007/11/13 11:38:35 skrll Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.81 2007/12/02 14:55:32 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -205,7 +205,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.80 2007/11/13 11:38:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.81 2007/12/02 14:55:32 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -225,6 +225,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.80 2007/11/13 11:38:35 skrll Exp $");
 #include <sys/kmem.h>
 #include <sys/intr.h>
 #include <sys/lwpctl.h>
+#include <sys/atomic.h>
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_object.h>
@@ -650,7 +651,14 @@ lwp_startup(struct lwp *prev, struct lwp *new)
 {
 
 	if (prev != NULL) {
-		lwp_unlock(prev);
+		/*
+		 * Normalize the count of the spin-mutexes, it was
+		 * increased in mi_switch().  Unmark the state of
+		 * context switch - it is finished for previous LWP.
+		 */
+		curcpu()->ci_mtx_count++;
+		membar_exit();
+		prev->l_ctxswtch = 0;
 	}
 	spl0();
 	pmap_activate(new);
@@ -1139,7 +1147,7 @@ lwp_setlock(struct lwp *l, kmutex_t *new)
 
 	KASSERT(mutex_owned(l->l_mutex));
 
-	mb_write();
+	membar_producer();
 	l->l_mutex = new;
 }
 
@@ -1155,7 +1163,7 @@ lwp_unlock_to(struct lwp *l, kmutex_t *new)
 	KASSERT(mutex_owned(l->l_mutex));
 
 	old = l->l_mutex;
-	mb_write();
+	membar_producer();
 	l->l_mutex = new;
 	mutex_spin_exit(old);
 }
@@ -1285,7 +1293,7 @@ lwp_need_userret(struct lwp *l)
 	 * that the condition will be seen before forcing the LWP to enter
 	 * kernel mode.
 	 */
-	mb_write();
+	membar_producer();
 	cpu_signotify(l);
 }
 
@@ -1439,8 +1447,11 @@ lwp_ctl_alloc(vaddr_t *uaddr)
 	l = curlwp;
 	p = l->l_proc;
 
-	if (l->l_lcpage != NULL)
+	if (l->l_lcpage != NULL) {
+		lcp = l->l_lcpage;
+		*uaddr = lcp->lcp_uaddr + (vaddr_t)l->l_lwpctl - lcp->lcp_kaddr;
 		return (EINVAL);
+	}
 
 	/* First time around, allocate header structure for the process. */
 	if ((lp = p->p_lwpctl) == NULL) {
