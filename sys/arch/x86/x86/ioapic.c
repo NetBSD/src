@@ -1,4 +1,4 @@
-/* 	$NetBSD: ioapic.c,v 1.19.8.14 2007/12/01 14:40:38 jmcneill Exp $	*/
+/* 	$NetBSD: ioapic.c,v 1.19.8.15 2007/12/02 06:52:10 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.19.8.14 2007/12/01 14:40:38 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.19.8.15 2007/12/02 06:52:10 jmcneill Exp $");
 
 #include "opt_ddb.h"
 
@@ -278,18 +278,15 @@ ioapic_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_pic.pic_apicid = aaa->apic_id;
 
 	aprint_naive("\n");
-	aprint_normal("\n");
 
 	if (ioapic_find(aaa->apic_id) != NULL) {
-		aprint_error("%s: duplicate apic id (ignored)\n",
-		    sc->sc_pic.pic_dev.dv_xname);
+		aprint_error(": duplicate apic id (ignored)\n");
 		return;
 	}
 
 	ioapic_add(sc);
 
-	aprint_verbose("%s: pa 0x%lx", sc->sc_pic.pic_dev.dv_xname,
-	    aaa->apic_address);
+	aprint_verbose(": pa 0x%lx", aaa->apic_address);
 #ifndef _IOAPIC_CUSTOM_RW
 	{
 	bus_space_handle_t bh;
@@ -336,8 +333,9 @@ ioapic_attach(struct device *parent, struct device *self, void *aux)
 		    aaa->flags & IOAPIC_PICMODE ? "PIC" : "virtual wire");
 	}
 	
-	aprint_verbose(", version %x, %d pins\n", sc->sc_apic_vers,
+	aprint_verbose(", version %x, %d pins", sc->sc_apic_vers,
 	    sc->sc_apic_sz);
+	aprint_normal("\n");
 
 	sc->sc_pins = malloc(sizeof(struct ioapic_pin) * sc->sc_apic_sz,
 	    M_DEVBUF, M_WAITOK);
@@ -373,7 +371,7 @@ ioapic_attach(struct device *parent, struct device *self, void *aux)
 	 * mapping later ...
 	 */
 	if (apic_id != sc->sc_pic.pic_apicid) {
-		aprint_verbose("%s: misconfigured as apic %d\n",
+		aprint_debug("%s: misconfigured as apic %d\n",
 		    sc->sc_pic.pic_dev.dv_xname, apic_id);
 
 		ioapic_write(sc,IOAPIC_ID,
@@ -387,7 +385,7 @@ ioapic_attach(struct device *parent, struct device *self, void *aux)
 			    sc->sc_pic.pic_dev.dv_xname,
 			    sc->sc_pic.pic_apicid);
 		} else {
-			aprint_verbose("%s: remapped to apic %d\n",
+			aprint_debug("%s: remapped to apic %d\n",
 			    sc->sc_pic.pic_dev.dv_xname,
 			    sc->sc_pic.pic_apicid);
 		}
