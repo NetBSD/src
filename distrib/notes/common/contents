@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.129 2007/10/17 22:59:27 garbled Exp $
+.\"	$NetBSD: contents,v 1.130 2007/12/02 23:56:57 ad Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -102,14 +102,6 @@ user-friendly installation program.
 .			It Pa netbsd-RAMDISK.symbols.gz
 Symbols for
 .Pa netbsd-RAMDISK.gz .
-.\}
-.
-.if \n[i386] \{\
-.			It Pa netbsd-GENERIC_DIAGNOSTIC.gz
-A gzipped
-.Nx
-kernel containing code for everything supported in this release,
-with diagnostic messages enabled. 
 .\}
 .
 .if \n[i386] \{\

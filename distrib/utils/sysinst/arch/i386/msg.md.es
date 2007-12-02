@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.es,v 1.7 2007/11/15 00:55:03 joerg Exp $	*/
+/*	$NetBSD: msg.md.es,v 1.8 2007/12/03 00:00:43 ad Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -166,6 +166,5 @@ Record a la ultima versión del código de arranque de NetBSD?}
 
 message set_kernel_1  {Núcleo (GENERIC)}
 message set_kernel_2  {Núcleo (GENERIC.MP)}
-message set_kernel_3  {Núcleo (GENERIC_DIAGNOSTIC)}
-message set_kernel_4  {Núcleo (GENERIC.NOACPI)}
-/* message set_kernel_5  {Núcleo (GENERIC_PS2TINY)} */
+message set_kernel_3  {Núcleo (GENERIC.NOACPI)}
+/* message set_kernel_4  {Núcleo (GENERIC_PS2TINY)} */

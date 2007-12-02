@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.52 2007/11/15 00:31:21 joerg Exp $
+#	$NetBSD: Makefile.inc,v 1.53 2007/12/02 23:55:52 ad Exp $
 #
 #	etc.i386/Makefile.inc -- i386-specific etc Makefile targets
 #
@@ -7,7 +7,6 @@
 # to update the release documentation in distrib/notes/common/contents
 
 KERNEL_SETS=	GENERIC
-KERNEL_SETS+=	GENERIC_DIAGNOSTIC
 KERNEL_SETS+=	GENERIC.MP
 KERNEL_SETS+=	GENERIC.NOACPI
 KERNEL_SETS+=	XEN2_DOM0
