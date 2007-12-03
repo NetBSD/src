@@ -1,4 +1,4 @@
-/*	$NetBSD: barrier1.c,v 1.2 2006/12/23 17:44:12 ad Exp $	*/
+/*	$NetBSD: barrier1.c,v 1.3 2007/12/03 17:59:45 ad Exp $	*/
 
 #include <assert.h>
 #include <err.h>
@@ -43,7 +43,7 @@ main(int argc, char *argv[])
 	for (i = 0; i < COUNT; i++) {
 		ret = pthread_join(new[i], &joinval);
 		if (ret != 0)
-			err(1, "pthread_join");
+			err(1, "pthread_join: %d", ret);
 		pthread_mutex_lock(&mutex);
 		assert(after_barrier_count > i);
 		pthread_mutex_unlock(&mutex);
