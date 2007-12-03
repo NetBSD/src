@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.355 2007/12/02 21:09:21 wiz Exp $
+.\"	$NetBSD: options.4,v 1.356 2007/12/03 18:09:28 wiz Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -1195,15 +1195,15 @@ and
 .Xr vnconfig 8
 for more information.
 .It Cd options TFTPROOT
-Download the root memory disk through TFTP at root mount time. This enable
-the use of a root
+Download the root memory disk through TFTP at root mount time.
+This enables the use of a root
 .Tn RAM
 disk without requiring it to be embedded in the kernel using
 .Xr mdsetimage 8 .
 The
 .Tn RAM
 disk name is obtained using DHCP's filename parameter.
-This option require
+This option requires
 .Em MEMORY_DISK_HOOKS ,
 .Em MEMORY_DISK_DYNAMIC ,
 and
