@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.10 2007/11/06 01:33:00 uwe Exp $	*/
+/*	$NetBSD: cpu.c,v 1.11 2007/12/03 15:34:19 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -34,18 +34,18 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.10 2007/11/06 01:33:00 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.11 2007/12/03 15:34:19 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/proc.h>
 
 #include <sh3/clock.h>
 #include <sh3/cache.h>
 #include <sh3/mmu.h>
 
 #include <machine/autoconf.h>
-
 
 extern struct cfdriver cpu_cd;
 

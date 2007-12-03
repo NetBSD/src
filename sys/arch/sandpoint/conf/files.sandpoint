@@ -1,4 +1,4 @@
-#	$NetBSD: files.sandpoint,v 1.21 2007/10/17 19:56:55 garbled Exp $
+#	$NetBSD: files.sandpoint,v 1.22 2007/12/03 15:34:16 ad Exp $
 #
 # Motorola's "SandPoint" evaluation board's specific configuration info
 #
@@ -15,7 +15,6 @@ file	arch/sandpoint/sandpoint/disksubr.c		disk
 file	arch/powerpc/powerpc/bus_dma.c
 file	arch/powerpc/powerpc/bus_space.c
 file	arch/powerpc/powerpc/clock.c
-file	arch/powerpc/powerpc/softintr.c
 file	arch/powerpc/powerpc/procfs_machdep.c		procfs
 
 # General files

@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.21 2007/11/22 16:17:07 bouyer Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.22 2007/12/03 15:34:30 ad Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.21 2007/11/22 16:17:07 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.22 2007/12/03 15:34:30 ad Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -74,6 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.21 2007/11/22 16:17:07 bouyer
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
+#include <sys/intr.h>
 #if NRND > 0
 #include <sys/rnd.h>
 #endif
@@ -336,7 +337,7 @@ xennet_xenbus_attach(struct device *parent, struct device *self, void *aux)
 	IFQ_SET_READY(&ifp->if_snd);
 	if_attach(ifp);
 	ether_ifattach(ifp, sc->sc_enaddr);
-	sc->sc_softintr = softintr_establish(IPL_SOFTNET, xennet_softstart, sc);
+	sc->sc_softintr = softint_establish(SOFTINT_NET, xennet_softstart, sc);
 	if (sc->sc_softintr == NULL)
 		panic(" xennet: can't establish soft interrupt");
 
@@ -385,7 +386,7 @@ xennet_xenbus_detach(struct device *self, int flags)
 	xengnt_revoke_access(sc->sc_rx_ring_gntref);
 	uvm_km_free(kernel_map, (vaddr_t)sc->sc_rx_ring.sring, PAGE_SIZE,
 	    UVM_KMF_WIRED);
-	softintr_disestablish(sc->sc_softintr);
+	softint_disestablish(sc->sc_softintr);
 	event_remove_handler(sc->sc_evtchn, &xennet_handler, sc);
 	splx(s0);
 	DPRINTF(("%s: xennet_xenbus_detach done\n", sc->sc_dev.dv_xname));
@@ -892,7 +893,7 @@ xennet_start(struct ifnet *ifp)
 	 * stack will enqueue all pending mbufs in the interface's send queue
 	 * before it is processed by xennet_softstart().
 	 */
-	softintr_schedule(sc->sc_softintr);
+	softint_schedule(sc->sc_softintr);
 	return;
 }
 

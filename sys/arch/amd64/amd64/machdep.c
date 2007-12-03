@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.70 2007/11/24 17:57:53 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.71 2007/12/03 15:33:09 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007
@@ -120,7 +120,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.70 2007/11/24 17:57:53 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.71 2007/12/03 15:33:09 ad Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -1721,7 +1721,6 @@ init_x86_64(paddr_t first_avail)
 	events_default_setup();
 #endif
 
-	softintr_init();
 	splraise(IPL_HIGH);
 	x86_enable_intr();
 

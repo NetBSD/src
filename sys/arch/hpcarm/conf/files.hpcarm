@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcarm,v 1.61 2007/01/08 16:21:46 ichiro Exp $
+#	$NetBSD: files.hpcarm,v 1.62 2007/12/03 15:33:41 ad Exp $
 #
 # hpcarm specific configuration info
 #
@@ -20,7 +20,6 @@ file	dev/md_root.c				memory_disk_hooks
 # Generic MD files
 file	arch/hpcarm/hpcarm/autoconf.c
 file	arch/hpcarm/hpcarm/intr.c
-file	arch/hpcarm/hpcarm/softintr.c
 file	arch/hpcarm/hpcarm/spl.S
 
 # HPCARM specific files
