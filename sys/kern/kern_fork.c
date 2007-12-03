@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.148 2007/11/27 01:27:30 ad Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.149 2007/12/03 20:26:24 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.148 2007/11/27 01:27:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.149 2007/12/03 20:26:24 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -450,8 +450,8 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 
 	mutex_enter(&proclist_mutex);
 	LIST_INSERT_AFTER(p1, p2, p_pglist);
-	LIST_INSERT_HEAD(&allproc, p2, p_list);
 	mutex_exit(&proclist_mutex);
+	LIST_INSERT_HEAD(&allproc, p2, p_list);
 
 	mutex_exit(&proclist_lock);
 

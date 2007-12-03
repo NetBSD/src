@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.82 2007/12/03 17:14:59 ad Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.83 2007/12/03 20:26:25 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -205,7 +205,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.82 2007/12/03 17:14:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.83 2007/12/03 20:26:25 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -629,9 +629,7 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, bool inmem, int flags,
 	mutex_exit(&p2->p_smutex);
 
 	mutex_enter(&proclist_lock);
-	mutex_enter(&proclist_mutex);
 	LIST_INSERT_HEAD(&alllwp, l2, l_list);
-	mutex_exit(&proclist_mutex);
 	mutex_exit(&proclist_lock);
 
 	SYSCALL_TIME_LWP_INIT(l2);

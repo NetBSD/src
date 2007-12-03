@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.260 2007/11/30 23:05:44 ad Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.261 2007/12/03 20:26:25 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.260 2007/11/30 23:05:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.261 2007/12/03 20:26:25 ad Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_multiprocessor.h"
@@ -2073,6 +2073,7 @@ proc_stop_callout(void *cookie)
 		restart = false;
 		more = false;
 
+		mutex_enter(&proclist_lock);
 		mutex_enter(&proclist_mutex);
 		PROCLIST_FOREACH(p, &allproc) {
 			mutex_enter(&p->p_smutex);
@@ -2122,6 +2123,7 @@ proc_stop_callout(void *cookie)
 				break;
 		}
 		mutex_exit(&proclist_mutex);
+		mutex_exit(&proclist_lock);
 	} while (restart);
 
 	/*
