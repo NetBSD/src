@@ -1,4 +1,4 @@
-/*	$NetBSD: filedesc.h,v 1.42 2007/11/29 18:15:14 ad Exp $	*/
+/*	$NetBSD: filedesc.h,v 1.43 2007/12/03 02:06:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -158,6 +158,8 @@ void	cwdfree(struct cwdinfo *);
 #define GETCWD_CHECK_ACCESS 0x0001
 int	getcwd_common(struct vnode *, struct vnode *, char **, char *, int,
     int, struct lwp *);
+int	vnode_to_path(char *, size_t, struct vnode *, struct lwp *,
+    struct proc *);
 
 int	closef(struct file *, struct lwp *);
 int	getsock(struct filedesc *, int, struct file **);
