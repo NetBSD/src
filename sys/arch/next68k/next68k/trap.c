@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.65.2.3 2007/10/09 13:38:17 ad Exp $	*/
+/*	$NetBSD: trap.c,v 1.65.2.4 2007/12/03 18:38:02 ad Exp $	*/
 
 /*
  * This file was taken from mvme68k/mvme68k/trap.c
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.65.2.3 2007/10/09 13:38:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.65.2.4 2007/12/03 18:38:02 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -279,7 +279,6 @@ again:
 		}
 	}
 #endif
-	curcpu()->ci_schedstate.spc_curpriority = l->l_priority = l->l_usrpri;
 }
 
 /*
@@ -577,9 +576,6 @@ trap(struct frame *fp, int type, unsigned code, unsigned v)
 
 	case T_SSIR:		/* software interrupt */
 	case T_SSIR|T_USER:
-
-		softintr_dispatch();
-
 		/*
 		 * If this was not an AST trap, we are all done.
 		 */

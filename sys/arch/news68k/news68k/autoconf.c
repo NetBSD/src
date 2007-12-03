@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.15 2007/02/10 02:03:51 tsutsui Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.15.6.1 2007/12/03 18:37:51 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.15 2007/02/10 02:03:51 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.15.6.1 2007/12/03 18:37:51 ad Exp $");
 
 #include "scsibus.h"
 
@@ -128,8 +128,6 @@ cpu_configure(void)
 	 * Kick off autoconfiguration
 	 */
 	(void) splhigh();
-
-	softintr_init();
 
 	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("autoconfig failed, no root");

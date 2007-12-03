@@ -1,4 +1,4 @@
-#	$NetBSD: majors.amd64,v 1.17 2007/01/09 21:59:08 cube Exp $
+#	$NetBSD: majors.amd64,v 1.17.6.1 2007/12/03 18:34:41 ad Exp $
 #
 # Device majors for amd64
 #
@@ -91,6 +91,26 @@ device-major	kttcp		char 92			kttcp
 device-major	dpt		char 96			dpt
 device-major	twe		char 97			twe
 device-major	nsmb		char 98			nsmb		
+
+#
+# Device majors for Xen. These are assigned here so that:
+# - we are sure there are no conflicts with plain i386 
+# - they appear in the i386 MAKEDEV
+#
+
+device-major	xenevt		char 141		xenevt
+device-major	xbd		char 142 block 142	xbd
+device-major	xencons		char 143		xencons
+
+#
+# Device majors for Xen. These are assigned here so that:
+# - we are sure there are no conflicts with plain i386 
+# - they appear in the i386 MAKEDEV
+#
+
+device-major	xenevt		char 141		xenevt
+device-major	xbd		char 142 block 142	xbd
+device-major	xencons		char 143		xencons
 
 # Majors up to 143 are reserved for machine-dependant drivers.
 # New machine-independent driver majors are assigned in 

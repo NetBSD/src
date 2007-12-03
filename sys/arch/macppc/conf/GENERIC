@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.254.2.5 2007/10/23 20:13:13 ad Exp $
+# $NetBSD: GENERIC,v 1.254.2.6 2007/12/03 18:37:15 ad Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.254.2.5 $"
+#ident 		"GENERIC-$Revision: 1.254.2.6 $"
 
 maxusers	32
 
@@ -38,12 +38,7 @@ options 	KTRACE		# system call tracing via ktrace(1)
 
 options 	SYSVMSG		# System V message queues
 options 	SYSVSEM		# System V semaphores
-#options 	SEMMNI=10	# number of semaphore identifiers
-#options 	SEMMNS=60	# number of semaphores in system
-#options 	SEMUME=10	# max number of undo entries per process
-#options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V shared memory
-#options 	SHMMAXPGS=1024	# 1024 pages is the default
 options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 
 options 	LKM		# loadable kernel modules
@@ -65,6 +60,7 @@ options 	DDB		# in-kernel debugger
 #options 	DDB_ONPANIC=0	# don't go into ddb on panic.
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	TRAP_PANICWAIT
+#options		DDB_COMMANDONENTER="bt"
 
 #makeoptions 	DEBUG="-g"	# compile full symbol table
 
@@ -292,6 +288,7 @@ radeonfb*	at pci? function ?	# ATI Radeon. R3xx is problematic
 options 	RADEONFB_MMAP_BARS	# allow mmap()ing BARs - needed for X
 
 voodoofb*	at pci? function ?	# 3Dfx Voodoo3 
+r128fb*		at pci? function ?	# ATI Rage 128
 genfb*		at pci? function ?
 
 # make sure the console display is always wsdisplay0

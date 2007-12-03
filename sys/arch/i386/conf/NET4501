@@ -1,4 +1,4 @@
-# $NetBSD: NET4501,v 1.54.8.2 2007/10/09 13:37:51 ad Exp $
+# $NetBSD: NET4501,v 1.54.8.3 2007/12/03 18:36:31 ad Exp $
 #
 # NET4501 -- kernel configuration for a Soekris Engineering net4501
 # single-board computer.
@@ -10,15 +10,9 @@ include 	"arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"NET4501-$Revision: 1.54.8.2 $"
+#ident 		"NET4501-$Revision: 1.54.8.3 $"
 
 maxusers	32		# estimated number of users
-
-# CPU support.  At least one is REQUIRED.
-#options 	I386_CPU
-options 	I486_CPU
-#options 	I586_CPU
-#options 	I686_CPU
 
 # AMD Elan SC520's timer runs at a different frequency
 options 	TIMER_FREQ=1189200

@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.15.6.9 2007/11/16 20:35:32 ad Exp $	*/
+/*	$NetBSD: spl.S,v 1.15.6.10 2007/12/03 18:36:46 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -89,7 +89,7 @@ ENTRY(spllower)
 LABEL(spllower_end)
 
 /*
- * void	i686_spllower(int s);
+ * void	cx8_spllower(int s);
  *
  * spllower() optimized for Pentium Pro and later, which have long
  * pipelines that will be stalled by pushf/cli/popf.  Must be the
@@ -101,7 +101,7 @@ LABEL(spllower_end)
  * edx : eax = old level / old ipending 
  * ecx : ebx = new level / old ipending
  */
-ENTRY(i686_spllower)
+ENTRY(cx8_spllower)
 	movl	4(%esp),%ecx
 	movl	CPUVAR(ILEVEL),%edx
 	cmpl	%edx,%ecx			/* new level is lower? */
@@ -123,10 +123,10 @@ ENTRY(i686_spllower)
 	ret
 2:
 	popl	%ebx
-LABEL(i686_spllower_patch)
+LABEL(cx8_spllower_patch)
 	jmp	_C_LABEL(Xspllower)
 	.align	32
-LABEL(i686_spllower_end)
+LABEL(cx8_spllower_end)
 
 /*
  * void Xspllower(int s);
@@ -146,7 +146,7 @@ LABEL(i686_spllower_end)
  * the sending CPU will never see the that CPU accept the IPI
  * (see pmap_tlb_shootnow).
  */
-	nop	/* Don't get confused with i686_spllower_end */
+	nop	/* Don't get confused with cx8_spllower_end */
 
 IDTVEC(spllower)
 #if defined(DDB) || defined(GPROF)
@@ -264,6 +264,130 @@ IDTVEC(doreti)
 	call	_C_LABEL(panic)
 1:	.asciz	"DORETI: INTERRUPT ENABLED"
 #endif /* defined(DEBUG) */
+
+/*
+ * softintr()
+ *
+ * Switch to the LWP assigned to handle interrupts from the given
+ * source.  We borrow the VM context from the interrupted LWP.
+ *
+ * On entry:
+ *
+ *	%eax		intrsource
+ *	%esi		address to return to
+ */
+IDTVEC(softintr)
+	pushl	$_C_LABEL(softintr_ret)	/* set up struct switchframe */
+	pushl	%ebx
+	pushl	%esi
+	pushl	%edi
+	movl	$IPL_HIGH,CPUVAR(ILEVEL)
+	movl	CPUVAR(CURLWP),%esi
+	movl	IS_LWP(%eax),%edi	/* switch to handler LWP */
+	movl	%edi,CPUVAR(CURLWP)
+	movl	L_ADDR(%edi),%edx
+	movl	L_ADDR(%esi),%ecx
+	movl	%esp,PCB_ESP(%ecx)
+	movl	%ebp,PCB_EBP(%ecx)
+	movl	PCB_ESP0(%edx),%esp	/* onto new stack */
+	sti
+	pushl	IS_MAXLEVEL(%eax)	/* ipl to run at */
+	pushl	%esi
+	call	_C_LABEL(softint_dispatch)/* run handlers */
+	addl	$8,%esp
+	movl	L_ADDR(%esi),%ecx
+	movl	PCB_ESP(%ecx),%esp
+	movl	%esi,CPUVAR(CURLWP)
+	popl	%edi			/* unwind switchframe */
+	popl	%esi
+	addl	$8,%esp
+	cli
+	jmp	*%esi			/* back to splx/doreti */
+
+/*
+ * softintr_ret()
+ *
+ * Trampoline function that gets returned to by cpu_switchto() when
+ * an interrupt handler blocks.  On entry:
+ *
+ *	%eax		prevlwp from cpu_switchto()
+ */
+NENTRY(softintr_ret)
+	movl	$0, L_CTXSWTCH(%eax)	/* %eax from cpu_switchto */
+	cli
+	jmp	*%esi			/* back to splx/doreti */
+
+/*
+ * void softint_trigger(uintptr_t machdep);
+ *
+ * Software interrupt registration.
+ */
+NENTRY(softint_trigger)
+	movl	4(%esp),%eax
+	orl	%eax,CPUVAR(IPENDING)	/* atomic on local cpu */
+	ret
+
+/*
+ * softintr()
+ *
+ * Switch to the LWP assigned to handle interrupts from the given
+ * source.  We borrow the VM context from the interrupted LWP.
+ *
+ * On entry:
+ *
+ *	%eax		intrsource
+ *	%esi		address to return to
+ */
+IDTVEC(softintr)
+	pushl	$_C_LABEL(softintr_ret)	/* set up struct switchframe */
+	pushl	%ebx
+	pushl	%esi
+	pushl	%edi
+	movl	$IPL_HIGH,CPUVAR(ILEVEL)
+	movl	CPUVAR(CURLWP),%esi
+	movl	IS_LWP(%eax),%edi	/* switch to handler LWP */
+	movl	%edi,CPUVAR(CURLWP)
+	movl	L_ADDR(%edi),%edx
+	movl	L_ADDR(%esi),%ecx
+	movl	%esp,PCB_ESP(%ecx)
+	movl	%ebp,PCB_EBP(%ecx)
+	movl	PCB_ESP0(%edx),%esp	/* onto new stack */
+	sti
+	pushl	IS_MAXLEVEL(%eax)	/* ipl to run at */
+	pushl	%esi
+	call	_C_LABEL(softint_dispatch)/* run handlers */
+	addl	$8,%esp
+	movl	L_ADDR(%esi),%ecx
+	movl	PCB_ESP(%ecx),%esp
+	movl	%esi,CPUVAR(CURLWP)
+	popl	%edi			/* unwind switchframe */
+	popl	%esi
+	addl	$8,%esp
+	cli
+	jmp	*%esi			/* back to splx/doreti */
+
+/*
+ * softintr_ret()
+ *
+ * Trampoline function that gets returned to by cpu_switchto() when
+ * an interrupt handler blocks.  On entry:
+ *
+ *	%eax		prevlwp from cpu_switchto()
+ */
+NENTRY(softintr_ret)
+	movl	$0, L_CTXSWTCH(%eax)	/* %eax from cpu_switchto */
+	cli
+	jmp	*%esi			/* back to splx/doreti */
+
+/*
+ * void softint_trigger(uintptr_t machdep);
+ *
+ * Software interrupt registration.
+ */
+NENTRY(softint_trigger)
+	movl	4(%esp),%eax
+	orl	%eax,CPUVAR(IPENDING)	/* atomic on local cpu */
+	ret
 
 /*
  * softintr()

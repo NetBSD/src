@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.217.2.6 2007/11/01 21:23:38 ad Exp $	*/
+/*	$NetBSD: trap.c,v 1.217.2.7 2007/12/03 18:36:47 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2005 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.217.2.6 2007/11/01 21:23:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.217.2.7 2007/12/03 18:36:47 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -84,7 +84,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.217.2.6 2007/11/01 21:23:38 ad Exp $");
 #include "opt_multiprocessor.h"
 #include "opt_vm86.h"
 #include "opt_kvm86.h"
-#include "opt_cputype.h"
 #include "opt_kstack_dr0.h"
 
 #include <sys/param.h>
@@ -128,9 +127,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.217.2.6 2007/11/01 21:23:38 ad Exp $");
 static inline int xmm_si_code(struct lwp *);
 void trap(struct trapframe *);
 void trap_tss(struct i386tss *, int, int);
-#if defined(I386_CPU)
-int trapwrite(unsigned);
-#endif
 
 #ifdef KVM86
 #include <machine/kvm86.h>
@@ -234,6 +230,30 @@ xmm_si_code(struct lwp *l)
         }
 }
 
+static void *
+onfault_handler(const struct pcb *pcb, const struct trapframe *tf)
+{
+	struct onfault_table {
+		uintptr_t start;
+		uintptr_t end;
+		void *handler;
+	};
+	extern const struct onfault_table onfault_table[];
+	const struct onfault_table *p;
+	uintptr_t pc;
+
+	if (pcb->pcb_onfault != NULL) {
+		return pcb->pcb_onfault;
+	}
+
+	pc = tf->tf_eip;
+	for (p = onfault_table; p->start; p++) {
+		if (p->start <= pc && pc < p->end) {
+			return p->handler;
+		}
+	}
+	return NULL;
+}
 
 /*
  * trap(frame):
@@ -355,11 +375,12 @@ trap(frame)
 		if (p == NULL)
 			goto we_re_toast;
 		/* Check for copyin/copyout fault. */
-		if (pcb->pcb_onfault != 0) {
+		onfault = onfault_handler(pcb, frame);
+		if (onfault != NULL) {
 copyefault:
 			error = EFAULT;
 copyfault:
-			frame->tf_eip = (int)pcb->pcb_onfault;
+			frame->tf_eip = (uintptr_t)onfault;
 			frame->tf_eax = error;
 			return;
 		}
@@ -633,9 +654,13 @@ copyfault:
 				 * it never touch userspace.
 				 */
 
-				if (onfault != kcopy_fault &&
-				    curcpu()->ci_want_pmapload)
-					pmap_load();
+				if (curcpu()->ci_want_pmapload) {
+					onfault = onfault_handler(pcb, frame);
+					if (onfault != NULL &&
+					    onfault != kcopy_fault) {
+						pmap_load();
+					}
+				}
 				return;
 			}
 			goto out;
@@ -689,7 +714,7 @@ copyfault:
 		/*
 		 * Don't go single-stepping into a RAS.
 		 */
-		if (LIST_EMPTY(&p->p_raslist) ||
+		if (p->p_raslist == NULL ||
 		    (ras_lookup(p, (void *)frame->tf_eip) == (void *)-1)) {
 			KSI_INIT_TRAP(&ksi);
 			ksi.ksi_signo = SIGTRAP;
@@ -703,7 +728,7 @@ copyfault:
 		}
 		break;
 
-#if	NISA > 0 || NMCA > 0
+#if !defined(XEN) && (NISA > 0 || NMCA > 0)
 	case T_NMI:
 #if defined(KGDB) || defined(DDB)
 		/* NMI can be hooked up to a pushbutton for debugging */
@@ -732,7 +757,7 @@ copyfault:
 		else
 			return;
 #endif /* NMCA > 0 */
-#endif /* NISA > 0 || NMCA > 0 */
+#endif /* !defined(XEN) && (NISA > 0 || NMCA > 0) */
 	}
 
 	if ((type & T_USER) == 0)
@@ -745,39 +770,6 @@ trapsignal:
 	(*p->p_emul->e_trapsignal)(l, &ksi);
 	userret(l);
 }
-
-#if defined(I386_CPU)
-
-#ifdef MULTIPROCESSOR
-/* XXX XXX XXX */
-#endif
-/*
- * Compensate for 386 brain damage (missing URKR)
- */
-int
-trapwrite(addr)
-	unsigned addr;
-{
-	vaddr_t va;
-	struct proc *p;
-	struct vmspace *vm;
-
-	va = trunc_page((vaddr_t)addr);
-	if (va >= VM_MAXUSER_ADDRESS)
-		return 1;
-
-	p = curproc;
-	vm = p->p_vmspace;
-
-	if (uvm_fault(&vm->vm_map, va, VM_PROT_WRITE) != 0)
-		return 1;
-
-	if ((void *)va >= vm->vm_maxsaddr)
-		uvm_grow(p, va);
-
-	return 0;
-}
-#endif /* I386_CPU */
 
 /* 
  * Start a new LWP

@@ -1,4 +1,4 @@
-/*	$NetBSD: snapper.c,v 1.16.2.3 2007/10/23 20:13:22 ad Exp $	*/
+/*	$NetBSD: snapper.c,v 1.16.2.4 2007/12/03 18:37:21 ad Exp $	*/
 /*	Id: snapper.c,v 1.11 2002/10/31 17:42:13 tsubai Exp	*/
 /*	Id: i2s.c,v 1.12 2005/01/15 14:32:35 tsubai Exp		*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: snapper.c,v 1.16.2.3 2007/10/23 20:13:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: snapper.c,v 1.16.2.4 2007/12/03 18:37:21 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -2017,7 +2017,7 @@ snapper_init(struct snapper_softc *sc, int node)
 #endif
 	headphone_detect_intr = -1;
 
-	gpio = getnodebyname(OF_parent(node), "gpio");
+	gpio = of_getnode_byname(OF_parent(node), "gpio");
 	DPRINTF(" /gpio 0x%x\n", gpio);
 	gpio = OF_child(gpio);
 	while (gpio) {

@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.in,v 1.65.8.2 2007/08/20 18:37:43 ad Exp $
+#	$NetBSD: GENERIC.in,v 1.65.8.3 2007/12/03 18:35:11 ad Exp $
 #
 # Generic atari
 #
@@ -172,9 +172,6 @@ options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 options 	SYSVSHM			# System V shared memory
 options 	SYSVMSG			# System V messages
 options 	SYSVSEM			# System V semaphores
-#options 	SEMMNI=10		# number of semaphore identifiers
-#options 	SEMUME=10		# max number of undo entries per proc.
-#options 	SEMMNU=30		# number of undo structures in system
 options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 #endif
 

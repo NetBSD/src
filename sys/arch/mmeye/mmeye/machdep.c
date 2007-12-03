@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.38.30.1 2007/06/09 23:55:19 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.38.30.2 2007/12/03 18:37:38 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.38.30.1 2007/06/09 23:55:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.38.30.2 2007/12/03 18:37:38 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_memsize.h"
@@ -561,6 +561,8 @@ Send16550(int c)
 		else
 			return;
 	}
+
+	ci->ci_idepth--;
 }
 #endif /* sh3_tmp */
 
@@ -569,7 +571,11 @@ void
 intc_intr(int ssr, int spc, int ssp)
 {
 	struct intc_intrhand *ih;
+	struct cpu_info *ci;
 	int s, evtcode;
+
+	ci = curcpu();
+	ci->ci_idepth++;
 
 	evtcode = _reg_read_4(SH3_INTEVT);
 
@@ -592,6 +598,8 @@ intc_intr(int ssr, int spc, int ssp)
 	} else {
 		(*ih->ih_func)(ih->ih_arg);
 	}
+
+	ci->ci_idepth--;
 }
 
 void *

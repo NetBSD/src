@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.24.6.8 2007/11/16 20:31:20 ad Exp $	*/
+/*	$NetBSD: vector.S,v 1.24.6.9 2007/12/03 18:36:47 ad Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -248,27 +248,23 @@ IDTVEC(intr_lapic_tlb_bcast)
 	pushl	%eax
 	pushl	%ebx
 	pushl	%edx
-	pushl	%ds
-	movl	$GSEL(GDATA_SEL, SEL_KPL), %eax
-	movl	%eax, %ds
 	/* Find out what we need to invalidate. */
-	movl	_C_LABEL(pmap_mbox)+MB_ADDR1, %eax
-	movl	_C_LABEL(pmap_mbox)+MB_ADDR2, %edx
-	movl	_C_LABEL(pmap_mbox)+MB_GLOBAL, %ebx
-	movl	$0, _C_LABEL(local_apic)+LAPIC_EOI
+	movl	%ss:_C_LABEL(pmap_mbox)+MB_ADDR1, %eax
+	movl	%ss:_C_LABEL(pmap_mbox)+MB_ADDR2, %edx
+	movl	%ss:_C_LABEL(pmap_mbox)+MB_GLOBAL, %ebx
+	movl	$0, %ss:_C_LABEL(local_apic)+LAPIC_EOI
 	cmpl	$-1, %eax
 	je,pn	3f
 1:
 	/* Invalidate a single page or a range of pages. */
-	invlpg	(%eax)
+	invlpg	%ss:(%eax)
 	addl	$PAGE_SIZE, %eax
 	cmpl	%edx, %eax
 	jb	1b
 2:
 	/* Ack the request, restore state & return. */
 	lock
-	incl	_C_LABEL(pmap_mbox)+MB_TAIL
-	popl	%ds
+	incl	%ss:_C_LABEL(pmap_mbox)+MB_TAIL
 	popl	%edx
 	popl	%ebx
 	popl	%eax
@@ -767,9 +763,6 @@ IDTVEC(trap0c)
 IDTVEC(trap0d)
 	TRAP(T_PROTFLT)
 IDTVEC(trap0e)
-#ifndef I586_CPU
-	TRAP(T_PAGEFLT)
-#else
 	pushl	$T_PAGEFLT
 	INTRENTRY
 	testb	$PGEX_U,TF_ERR(%esp)
@@ -780,7 +773,6 @@ IDTVEC(trap0e)
 	jne	calltrap
 	movb	$T_PRIVINFLT,TF_TRAPNO(%esp)
 	jmp	calltrap
-#endif
 
 IDTVEC(intrspurious)
 IDTVEC(trap0f)

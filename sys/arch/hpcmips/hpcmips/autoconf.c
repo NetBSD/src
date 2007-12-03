@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.17 2005/12/11 12:17:33 christos Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.17.30.1 2007/12/03 18:36:07 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.17 2005/12/11 12:17:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.17.30.1 2007/12/03 18:36:07 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,8 +103,6 @@ static void get_device(const char *);
 void
 cpu_configure()
 {
-
-	softintr_init();
 
 	/* Kick off autoconfiguration. */
 	(void)splhigh();

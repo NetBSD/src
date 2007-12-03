@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.13.30.1 2007/10/23 20:13:43 ad Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.13.30.2 2007/12/03 18:38:08 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.13.30.1 2007/10/23 20:13:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.13.30.2 2007/12/03 18:38:08 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -48,11 +48,16 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.13.30.1 2007/10/23 20:13:43 ad Exp $")
 #include <dev/ofw/ofw_pci.h>
 #include <arch/powerpc/pic/picvar.h>
 #include <machine/pci_machdep.h>
-
 #include <machine/autoconf.h>
+
+#include <dev/isa/isareg.h>
+#include <dev/isa/isavar.h>
+
 
 int	mainbus_match(struct device *, struct cfdata *, void *);
 void	mainbus_attach(struct device *, struct device *, void *);
+
+static int pegasos_get_irq(struct pic_ops *);
 
 CFATTACH_DECL(mainbus, sizeof(struct device),
     mainbus_match, mainbus_attach, NULL, NULL);
@@ -119,12 +124,11 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ofbus_attach_args oba;
 	struct confargs ca;
-	int node, i, isa_cascade;
+	int node, i;
 	u_int32_t reg[4];
 	char name[32];
 
 	mainbus_found = 1;
-	isa_cascade = 0;
 
 	aprint_normal("\n");
 
@@ -135,10 +139,41 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 		config_found(self, &ca, NULL);
 	}
 
+	node = OF_peer(0);
+	if (node) {
+		oba.oba_busname = "ofw";
+		oba.oba_phandle = node;
+		config_found(self, &oba, NULL);
+	}
+
+	/* this primarily searches for pci bridges on the root bus */
+	for (node = OF_child(OF_finddevice("/")); node; node = OF_peer(node)) {
+		memset(name, 0, sizeof(name));
+		if (OF_getprop(node, "name", name, sizeof(name)) == -1)
+			continue;
+
+		ca.ca_name = name;
+		ca.ca_node = node;
+		ca.ca_nreg = OF_getprop(node, "reg", reg, sizeof(reg));
+		ca.ca_reg  = reg;
+		config_found(self, &ca, NULL);
+	}
+}
+
+void
+init_interrupt(void)
+{
+	int node, i, isa_cascade = 0;
+	char name[32];
+
 	/* Now setup the PIC's */
-	genofw_find_ofpics(OF_finddevice("/"));
+	node = OF_finddevice("/");
+	if (node <= 0)
+		panic("Can't find root OFW device node\n");
+	genofw_find_ofpics(node);
 	genofw_fixup_picnode_offsets();
 	pic_init();
+
 	/* find ISA first */
 	for (i = 0; i < nrofpics; i++)
 		if (picnodes[i].type == PICNODE_TYPE_8259)
@@ -161,29 +196,31 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 		    isa_pic);
 	}
 
-	node = OF_peer(0);
-	if (node) {
-		oba.oba_busname = "ofw";
-		oba.oba_phandle = node;
-		config_found(self, &oba, NULL);
+	/* The PegasosII is wierd (surprise!) and needs a prepivr style
+	 * get_irq routine.  yay.
+	 */
+	memset(name, 0, sizeof(name));
+	OF_getprop(node, "name", name, sizeof(name));
+	if (strcmp(name, "bplan,Pegasos2") == 0)
+		isa_pic->pic_get_irq = pegasos_get_irq;
+}
+
+static int
+pegasos_get_irq(struct pic_ops *pic)
+{
+	static int lirq;
+	int irq;
+
+	irq = i8259_get_irq(pic);
+
+	if (lirq == 7 && irq == lirq) {
+		lirq = -1;
+		return 255;
 	}
 
-	/* this primarily searches for pci bridges on the root bus */
-	for (node = OF_child(OF_finddevice("/")); node; node = OF_peer(node)) {
-		memset(name, 0, sizeof(name));
-		if (OF_getprop(node, "name", name, sizeof(name)) == -1)
-			continue;
+	lirq = irq;
+	if (irq == 0)
+		return 255;
 
-		ca.ca_name = name;
-		ca.ca_node = node;
-		ca.ca_nreg = OF_getprop(node, "reg", reg, sizeof(reg));
-		ca.ca_reg  = reg;
-		config_found(self, &ca, NULL);
-	}
-
-#ifdef MAMBO
-	ca.ca_name="com";
-	config_found(self, &ca, NULL);
-#endif
-
+	return irq;
 }

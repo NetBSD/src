@@ -1,4 +1,4 @@
-/*	$NetBSD: powerpc_machdep.c,v 1.33.6.1 2007/06/09 23:55:22 ad Exp $	*/
+/*	$NetBSD: powerpc_machdep.c,v 1.33.6.2 2007/12/03 18:38:31 ad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.33.6.1 2007/06/09 23:55:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.33.6.2 2007/12/03 18:38:31 ad Exp $");
 
 #include "opt_altivec.h"
 
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.33.6.1 2007/06/09 23:55:22 ad 
 #include <sys/sysctl.h>
 #include <sys/ucontext.h>
 #include <sys/user.h>
+#include <sys/cpu.h>
 
 int cpu_timebase;
 int cpu_printfataltraps;
@@ -268,3 +269,19 @@ cpu_dumpconf(void)
 	if (dumplo < nblks - ctod(dumpsize))
 		dumplo = nblks - ctod(dumpsize);
 }
+
+bool
+cpu_intr_p(void)
+{
+
+	return curcpu()->ci_idepth != 0;
+}
+
+
+bool
+cpu_intr_p(void)
+{
+
+	return curcpu()->ci_idepth != 0;
+}
+

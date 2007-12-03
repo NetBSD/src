@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.17 2006/01/13 22:18:59 uwe Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.17.28.1 2007/12/03 18:36:12 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.17 2006/01/13 22:18:59 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.17.28.1 2007/12/03 18:36:12 ad Exp $");
 
 #include "opt_md.h"
 
@@ -107,7 +107,6 @@ cpu_configure()
 {
 
 	config_hook_init();
-	softintr_init();
 	hd6446x_intr_init();
 #ifdef SH3
 	if (CPU_IS_SH3)	/* HD64461 (Jornada 690, HP620LX, HPW-50PA) */

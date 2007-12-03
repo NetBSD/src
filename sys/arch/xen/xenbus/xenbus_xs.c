@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_xs.c,v 1.6.16.1 2007/07/15 13:17:23 ad Exp $ */
+/* $NetBSD: xenbus_xs.c,v 1.6.16.2 2007/12/03 18:40:55 ad Exp $ */
 /******************************************************************************
  * xenbus_xs.c
  *
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_xs.c,v 1.6.16.1 2007/07/15 13:17:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_xs.c,v 1.6.16.2 2007/12/03 18:40:55 ad Exp $");
 
 #if 0
 #define DPRINTK(fmt, args...) \
@@ -50,7 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: xenbus_xs.c,v 1.6.16.1 2007/07/15 13:17:23 ad Exp $"
 
 #include <machine/stdarg.h>
 
-#include <machine/xenbus.h>
+#include <xen/xenbus.h>
 #include "xenbus_comms.h"
 
 #define streq(a, b) (strcmp((a), (b)) == 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.10.6.8 2007/11/16 20:31:19 ad Exp $	*/
+/*	$NetBSD: vector.S,v 1.10.6.9 2007/12/03 18:34:40 ad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -104,12 +104,20 @@
 
 /*****************************************************************************/
 
+#ifndef	XEN
 #define	TRAP(a)		pushq $(a) ; jmp _C_LABEL(alltraps)
 #define	ZTRAP(a)	pushq $0 ; TRAP(a)
+#else
+#define	PRE_TRAP	movq (%rsp),%rcx ; movq 8(%rsp),%r11 ; addq $0x10,%rsp 
+#define	POST_TRAP(a)	pushq $(a) ; jmp _C_LABEL(alltraps)
+#define	TRAP(a)		PRE_TRAP ; POST_TRAP(a)
+#define ZTRAP(a)	PRE_TRAP ; pushq $0 ; POST_TRAP(a)
+#endif
 
 #define	BPTTRAP(a)	ZTRAP(a)
 
 	.text
+
 IDTVEC(trap00)
 	ZTRAP(T_DIVIDE)
 IDTVEC(trap01)
@@ -128,7 +136,7 @@ IDTVEC(trap07)
 	pushq	$0			# dummy error code
 	pushq	$T_DNA
 	INTRENTRY
-	sti
+  	STI(si,di)
 	movq	CPUVAR(SELF),%rdi
 	call	_C_LABEL(fpudna)
 	INTRFASTEXIT
@@ -217,7 +225,7 @@ NENTRY(resume_pop_es)
  */
 NENTRY(alltraps)
 	INTRENTRY
-	sti
+  	STI(si,di)
 calltrap:
 #ifdef DIAGNOSTIC
 	movl	CPUVAR(ILEVEL),%ebx
@@ -230,11 +238,11 @@ calltrap:
 .Lalltraps_checkast:
 	movq	CPUVAR(CURLWP),%r14
 	/* Check for ASTs on exit to user mode. */
-	cli
+  	CLI(si,di)							;\
 	CHECK_ASTPENDING(%r14)
 	je	3f
 	CLEAR_ASTPENDING(%r14)
-	sti
+  	STI(si,di)
 	movl	$T_ASTFLT,TF_TRAPNO(%rsp)
 	movq	%rsp,%rdi
 	call	_C_LABEL(trap)
@@ -247,7 +255,7 @@ calltrap:
 6:	cmpl	CPUVAR(ILEVEL),%ebx
 	jne	3f
 	INTRFASTEXIT
-3:	sti
+3:  	STI(si,di)
 	movabsq	$4f,%rdi
 	movl	CPUVAR(ILEVEL),%esi
 	movl	%ebx,%edx
@@ -258,7 +266,7 @@ calltrap:
 	jmp	.Lalltraps_checkast
 4:	.asciz	"WARNING: SPL NOT LOWERED ON TRAP EXIT %x %x\n"
 #endif /* DIAGNOSTIC */
-9:	sti
+9:	STI(si,di)
 	call	_C_LABEL(do_pmap_load)
 	jmp	.Lalltraps_checkast	/* re-check ASTs */
 
@@ -373,6 +381,7 @@ IDTVEC(resume_lapic_ltimer)
 	INTRFASTEXIT
 #endif /* NLAPIC > 0 */
 
+#ifndef XEN
 /*
  * Multicast TLB shootdown handler for !kernel_pmap.
  */
@@ -439,6 +448,7 @@ IDTVEC(intr_lapic_tlb_mcast)
 	movq	%rax, %cr3
 	jmp	2b
 
+#ifndef XEN
 /*
  * Broadcast TLB shootdown handler for kernel_pmap.
  */
@@ -487,8 +497,11 @@ IDTVEC(intr_lapic_tlb_bcast)
 	movq	%rax, %cr3
 	jmp	2b
 
+#endif /* !XEN */
+
 #define voidop(num)
 
+#ifndef XEN
 
 /*
  * This macro defines the generic stub code. Its arguments modifiy it

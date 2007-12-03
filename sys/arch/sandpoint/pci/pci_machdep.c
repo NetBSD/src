@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.12.30.1 2007/10/23 20:14:33 ad Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.12.30.2 2007/12/03 18:38:38 ad Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.12.30.1 2007/10/23 20:14:33 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.12.30.2 2007/12/03 18:38:38 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -99,9 +99,8 @@ static int brdtype;
 #define	PCI_CONFIG_ENABLE	0x80000000UL
 
 void
-pci_attach_hook(parent, self, pba)
-	struct device *parent, *self;
-	struct pcibus_attach_args *pba;
+pci_attach_hook(struct device *parent, struct device *self,
+    struct pcibus_attach_args *pba)
 {
 	pcitag_t tag;
 	pcireg_t dev11, dev22, dev15;
@@ -147,22 +146,14 @@ pci_attach_hook(parent, self, pba)
 }
 
 int
-pci_bus_maxdevs(pc, busno)
-	pci_chipset_tag_t pc;
-	int busno;
+pci_bus_maxdevs(pci_chipset_tag_t pc, int busno)
 {
 
-	/*
-	 * Bus number is irrelevant.  Configuration Mechanism 1 is in
-	 * use, can have devices 0-32 (i.e. the `normal' range).
-	 */
-	return (32);
+	return 32;
 }
 
 pcitag_t
-pci_make_tag(pc, bus, device, function)
-	pci_chipset_tag_t pc;
-	int bus, device, function;
+pci_make_tag(pci_chipset_tag_t pc, int bus, int device, int function)
 {
 	pcitag_t tag;
 
@@ -175,10 +166,8 @@ pci_make_tag(pc, bus, device, function)
 }
 
 void
-pci_decompose_tag(pc, tag, bp, dp, fp)
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
-	int *bp, *dp, *fp;
+pci_decompose_tag(pci_chipset_tag_t pc, pcitag_t tag,
+    int *bp, int *dp, int *fp)
 {
 
 	if (bp != NULL)
@@ -196,38 +185,28 @@ pci_decompose_tag(pc, tag, bp, dp, fp)
  * DINK32 ROM doesn't do it that way (I peeked at 0xfec00000 after running
  * the DINK32 "pcf" command).
  */
-#define SP_PCI(tag, reg) ((tag) | (reg))
-
 pcireg_t
-pci_conf_read(pc, tag, reg)
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
-	int reg;
+pci_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 {
 	pcireg_t data;
 
-	out32rb(SANDPOINT_PCI_CONFIG_ADDR, SP_PCI(tag,reg));
+	out32rb(SANDPOINT_PCI_CONFIG_ADDR, tag | reg);
 	data = in32rb(SANDPOINT_PCI_CONFIG_DATA);
 	out32rb(SANDPOINT_PCI_CONFIG_ADDR, 0);
 	return data;
 }
 
 void
-pci_conf_write(pc, tag, reg, data)
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
-	int reg;
-	pcireg_t data;
+pci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t data)
 {
-	out32rb(SANDPOINT_PCI_CONFIG_ADDR, SP_PCI(tag, reg));
+
+	out32rb(SANDPOINT_PCI_CONFIG_ADDR, tag | reg);
 	out32rb(SANDPOINT_PCI_CONFIG_DATA, data);
 	out32rb(SANDPOINT_PCI_CONFIG_ADDR, 0);
 }
 
 int
-pci_intr_map(pa, ihp)
-	struct pci_attach_args *pa;
-	pci_intr_handle_t *ihp;
+pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	int	pin = pa->pa_intrpin;
 	int	line = pa->pa_intrline;
@@ -278,10 +257,10 @@ printf("line %d, pin %c", line, pin + '@');
 	 * Sandpoint X3 brd uses EPIC serial mode IRQ.
 	 * - i8259 PIC interrupt to EPIC IRQ0.
 	 * - WinBond IDE PCI C/D to EPIC IRQ8/9.
-	 * - PCI AD13 pin A,B,C,D to EPIC IRQ2,5,4,3.
-	 * - PCI AD14 pin A,B,C,D to EPIC IRQ3,2,5,4.
-	 * - PCI AD15 pin A,B,C,D to EPIC IRQ4,3,2,5.
-	 * - PCI AD16 pin A,B,C,D to EPIC IRQ5,4,3,2.
+	 * - PCI AD13 pin A to EPIC IRQ2.
+	 * - PCI AD14 pin A to EPIC IRQ3.
+	 * - PCI AD15 pin A to EPIC IRQ4.
+	 * - PCI AD16 pin A to EPIC IRQ5.
 	 */
 		if (line == 11
 		    && pa->pa_function == 1 && pa->pa_bus == 0) {
@@ -294,8 +273,8 @@ printf("line %d, pin %c", line, pin + '@');
 				line, pin + '@');
 			goto bad;
 		}
-		line -= 13; pin -= 1;
-		*ihp = 2 + ((line + (4 - pin)) & 03);
+		line -= 13; /* B/C/D is not available */
+		*ihp = 2 + line;
 		break;
 	case BRD_SANDPOINTX2:
 	/*
@@ -323,16 +302,18 @@ printf("line %d, pin %c", line, pin + '@');
 		break;
 	case BRD_ENCOREPP1:
 	/*
-	 * Ampro EnCorePP1 brd uses EPIC direct mode IRQ. VIA 686B SB
-	 * i8259 interrupt goes through EPC IRQ0.  PCI pin A-D are
-	 * tied with EPIC IRQ1-4.
-	 * - PCI AD22 pin A,B,C,D to EPIC IRQ 1,2,3,4.
-	 * - PCI AD23 pin A,B,C,D to EPIC IRQ 2,3,4,1.
-	 * - PCI AD24 pin A,B,C,D to EPIC IRQ 3,4,1,2.
-	 * - PCI AD25 pin A,B,C,D to EPIC IRQ 4,1,2,3.
+	 * Ampro EnCorePP1 brd uses EPIC direct mode IRQ.
+	 * PDF says VIA 686B SB i8259 interrupt goes through EPC IRQ0,
+	 * while  PCI pin A-D are tied with EPIC IRQ1-4.
+	 *
+	 * It mentions i82559 is at AD24, however, found at AD25 instead.
+	 * Heuristics show that i82559 responds to EPIC 2 (!).  Then we
+	 * decided to return EPIC 2 here since i82559 is the only one PCI
+	 * device ENCPP1 can have;
 	 */
-		line -= 22; pin -= 1;
-		*ihp = 1 + ((line + pin) & 3);
+		if (pa->pa_device != 25)
+			goto bad; /* eeh !? */
+		*ihp = 2;
 		break;
 	case BRD_KUROBOX:
 		/* map line 11,12,13,14 to EPIC IRQ0,1,4,3 */
@@ -361,24 +342,20 @@ printf(" = EPIC %d\n", *ihp);
 }
 
 const char *
-pci_intr_string(pc, ih)
-	pci_chipset_tag_t pc;
-	pci_intr_handle_t ih;
+pci_intr_string(pci_chipset_tag_t pc, pci_intr_handle_t ih)
 {
 	static char irqstr[8];		/* 4 + 2 + NULL + sanity */
 
-	if (ih < 0 || ih >= ICU_LEN)
+	if (ih < 0 || ih >= OPENPIC_ICU)
 		panic("pci_intr_string: bogus handle 0x%x", ih);
 
-	sprintf(irqstr, "irq %d", ih + 16);
+	sprintf(irqstr, "irq %d", ih + I8259_ICU);
 	return (irqstr);
 	
 }
 
 const struct evcnt *
-pci_intr_evcnt(pc, ih)
-	pci_chipset_tag_t pc;
-	pci_intr_handle_t ih;
+pci_intr_evcnt(void *v, pci_intr_handle_t ih)
 {
 
 	/* XXX for now, no evcnt parent reported */
@@ -386,30 +363,26 @@ pci_intr_evcnt(pc, ih)
 }
 
 void *
-pci_intr_establish(pc, ih, level, func, arg)
-	pci_chipset_tag_t pc;
-	pci_intr_handle_t ih;
-	int level, (*func) __P((void *));
-	void *arg;
+pci_intr_establish(void *v, pci_intr_handle_t ih, int level,
+    int (*func)(void *), void *arg)
 {
 	/*
 	 * ih is the value assigned in pci_intr_map(), above.
 	 * It's the EPIC IRQ #.
 	 */
-	return intr_establish(ih + 16, IST_LEVEL, level, func, arg);
+	return intr_establish(ih + I8259_ICU, IST_LEVEL, level, func, arg);
 }
 
 void
-pci_intr_disestablish(pc, cookie)
-	pci_chipset_tag_t pc;
-	void *cookie;
+pci_intr_disestablish(void *v, void *cookie)
 {
+
 	intr_disestablish(cookie);
 }
 
 void
-pci_conf_interrupt(pci_chipset_tag_t pc, int bus, int dev, int pin, int swiz,
-    int *iline)
+pci_conf_interrupt(pci_chipset_tag_t pc, int bus, int dev,
+    int pin, int swiz, int *iline)
 {
 	if (bus == 0) {
 		*iline = dev;

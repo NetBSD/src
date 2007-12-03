@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.21 2007/03/04 05:59:53 christos Exp $	*/
+/*	$NetBSD: bus.h,v 1.21.2.1 2007/12/03 18:36:08 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -72,8 +72,8 @@
  * derived from arch/arm/include/bus.h Rev. 1.3
  */
 
-#ifndef _SYS_BUS_H_
-#define _SYS_BUS_H_
+#ifndef _HPCMIPS_BUS_H_
+#define _HPCMIPS_BUS_H_
 
 #include <machine/bus_types.h>
 
@@ -1099,4 +1099,4 @@ struct bus_dmamap {
 
 #include <machine/bus_machdep.h>
 
-#endif /* _SYS_BUS_H_ */
+#endif /* _HPCMIPS_BUS_H_ */

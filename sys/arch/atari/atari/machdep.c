@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.143.2.2 2007/05/27 12:27:11 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.143.2.3 2007/12/03 18:35:10 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.143.2.2 2007/05/27 12:27:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.143.2.3 2007/12/03 18:35:10 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -103,13 +103,13 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.143.2.2 2007/05/27 12:27:11 ad Exp $")
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 #include <sys/ksyms.h>
-
+#include <sys/intr.h>
 #include <sys/exec.h>
+#include <sys/cpu.h>
 #if defined(DDB) && defined(__ELF__)
 #include <sys/exec_elf.h>
 #endif
 
-#include <net/netisr.h>
 #undef PS	/* XXX netccitt/pk.h conflict with machine/reg.h? */
 
 #define	MAXMEM	64*1024	/* XXX - from cmap.h */
@@ -121,7 +121,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.143.2.2 2007/05/27 12:27:11 ad Exp $")
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
 
-#include <machine/cpu.h>
 #include <machine/reg.h>
 #include <machine/psl.h>
 #include <machine/pte.h>
@@ -757,7 +756,7 @@ static int ncbd;	/* number of callback blocks dynamically allocated */
 void init_sicallback(void)
 {
 
-	si_callback_cookie = softintr_establish(IPL_SOFT,
+	si_callback_cookie = softint_establish(SOFTINT_NET,
 	    (void (*)(void *))call_sicallbacks, NULL);
 }
 
@@ -809,7 +808,7 @@ void	*rock1, *rock2;
 	 * traditional hp300 derived ssir (simulated software interrupt
 	 * request) on VAX REI emulation in locore.s is used.
 	 */
-	softintr_schedule(si_callback_cookie);
+	softint_schedule(si_callback_cookie);
 }
 
 void rem_sicallback(function)
@@ -856,7 +855,7 @@ static void call_sicallbacks()
 			rock2    = si->rock2;
 			s = splhigh ();
 			if(si_callbacks)
-				softintr_schedule(si_callback_cookie);
+				softint_schedule(si_callback_cookie);
 			si->next = si_free;
 			si_free  = si;
 			splx(s);

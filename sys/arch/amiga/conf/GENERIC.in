@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.in,v 1.58.8.2 2007/08/20 18:37:13 ad Exp $
+# $NetBSD: GENERIC.in,v 1.58.8.3 2007/12/03 18:34:44 ad Exp $
 #
 # GENERIC machine description file
 #
@@ -56,7 +56,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.58.8.2 $"
+#ident 		"GENERIC-$Revision: 1.58.8.3 $"
 
 m4_ifdef(`INSTALL_CONFIGURATION', `m4_dnl
 makeoptions	COPTS="-Os"
@@ -214,10 +214,6 @@ m4_ifdef(`INSTALL_CONFIGURATION', `', `m4_dnl
 options 	SYSVSHM		# System V-like shared memory
 options 	SYSVMSG		# System V-like messages
 options 	SYSVSEM		# System V-like semaphores
-#options 	SEMMNI=10	# number of semaphore identifiers
-#options 	SEMMNS=60	# number of semaphores in system
-#options 	SEMUME=10	# max number of undo entries per process
-#options 	SEMMNU=30	# number of undo structures in system
 options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 ')m4_dnl
 

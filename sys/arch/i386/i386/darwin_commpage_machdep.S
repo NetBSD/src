@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_commpage_machdep.S,v 1.5 2005/12/11 12:17:41 christos Exp $ */
+/*	$NetBSD: darwin_commpage_machdep.S,v 1.5.30.1 2007/12/03 18:36:38 ad Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -212,7 +212,6 @@ _C_LABEL(darwin_commpage_bcopy):
 	cmpl	%ecx,%eax	/* overlapping? */
 	movl	%ecx,%eax
 	jb	backwards
-	cld			/* nope, copy forwards. */
 	shrl	$2,%ecx		/* copy by words */
 	rep
 	movsl

@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530var.h,v 1.10.2.1 2007/07/15 13:16:24 ad Exp $	*/
+/*	$NetBSD: z8530var.h,v 1.10.2.2 2007/12/03 18:37:23 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -165,6 +165,7 @@ void  zs_write_data __P((struct zs_chanstate *cs, u_char val));
 
 /* XXX - Could define splzs() here instead of in psl.h */
 #define splzs spltty
+#define	IPL_ZS IPL_TTY
 
 /* Hook for MD ioctl support */
 int	zsmdioctl __P((struct zs_chanstate *cs, u_long cmd, void *data));

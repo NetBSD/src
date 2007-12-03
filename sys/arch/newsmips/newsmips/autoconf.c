@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.26.30.1 2007/07/15 13:16:34 ad Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.26.30.2 2007/12/03 18:37:57 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.26.30.1 2007/07/15 13:16:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.26.30.2 2007/12/03 18:37:57 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,7 +129,6 @@ cpu_configure(void)
 	/*
 	 * Kick off autoconfiguration
 	 */
-	softintr_init();
 	_splnone();	/* enable all interrupts */
 	splhigh();	/* ...then disable device interrupts */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.135.2.13 2007/10/23 20:13:06 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.135.2.14 2007/12/03 18:36:50 ad Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -95,7 +95,7 @@ struct cpu_info {
 	struct pmap *ci_pmap;		/* current pmap */
 	int ci_need_tlbwait;		/* need to wait for TLB invalidations */
 	int ci_want_pmapload;		/* pmap_load() is needed */
-	int ci_tlbstate;		/* one of TLBSTATE_ states. see below */
+	volatile int ci_tlbstate;	/* one of TLBSTATE_ states. see below */
 #define	TLBSTATE_VALID	0	/* all user tlbs are valid */
 #define	TLBSTATE_LAZY	1	/* tlbs are valid but won't be kept uptodate */
 #define	TLBSTATE_STALE	2	/* we might have stale user tlbs */
@@ -281,7 +281,7 @@ extern void	cpu_signotify(struct lwp *);
 /*
  * We need a machine-independent name for this.
  */
-extern void (*delay_func)(int);
+extern void (*delay_func)(unsigned int);
 struct timeval;
 
 #define	DELAY(x)		(*delay_func)(x)
@@ -362,7 +362,7 @@ void	lwp_trampoline(void);
 /* clock.c */
 void	initrtclock(u_long);
 void	startrtclock(void);
-void	i8254_delay(int);
+void	i8254_delay(unsigned int);
 void	i8254_microtime(struct timeval *);
 void	i8254_initclocks(void);
 

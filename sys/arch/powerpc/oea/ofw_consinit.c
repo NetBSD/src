@@ -1,4 +1,4 @@
-/* $NetBSD: ofw_consinit.c,v 1.2.2.2 2007/10/23 20:36:09 ad Exp $ */
+/* $NetBSD: ofw_consinit.c,v 1.2.2.3 2007/12/03 18:38:28 ad Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_consinit.c,v 1.2.2.2 2007/10/23 20:36:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_consinit.c,v 1.2.2.3 2007/12/03 18:38:28 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -59,6 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: ofw_consinit.c,v 1.2.2.2 2007/10/23 20:36:09 ad Exp 
 
 #include "akbd.h"
 #include "adbkbd.h"
+#include "wsdisplay.h"
 #include "ofb.h"
 #include "isa.h"
 
@@ -94,23 +95,25 @@ extern struct consdev consdev_zs;
 #include <dev/ic/pckbcvar.h>
 #endif
 
-#include "com.h"
-#if (NCOM > 0)
-#include <sys/termios.h>
-#include <dev/ic/comreg.h>
-#include <dev/ic/comvar.h>
-#endif
-
 extern int console_node, console_instance;
-extern struct consdev consdev_ofcons;
 
-int chosen;
+int chosen, stdin, stdout;
 int ofkbd_ihandle;
 
 static void cninit_kd(void);
 static void ofwoea_bootstrap_console(void);
+static int ofwbootcons_cngetc(dev_t);
+static void ofwbootcons_cnputc(dev_t, int);
 
 /*#define OFDEBUG*/
+
+struct consdev consdev_ofwbootcons = {
+	NULL, NULL,
+	ofwbootcons_cngetc,
+	ofwbootcons_cnputc,
+	nullcnpollc,
+	NULL, NULL, NULL, NODEV, CN_INTERNAL,
+};
 
 #ifdef OFDEBUG
 void ofprint(const char *, ...);
@@ -134,7 +137,7 @@ void ofprint(const char *blah, ...)
 void
 cninit(void)
 {
-	char type[16];
+	char name[32];
 
 	ofwoea_bootstrap_console();
 
@@ -143,34 +146,27 @@ cninit(void)
 	if (console_node == -1)
 		goto nocons;
 
-	memset(type, 0, sizeof(type));
-	if (OF_getprop(console_node, "device_type", type, sizeof(type)) == -1)
+	memset(name, 0, sizeof(name));
+	if (OF_getprop(console_node, "device_type", name, sizeof(name)) == -1)
 		goto nocons;
 
-	OFPRINTF("console type: %s\n", type);
-	if (strcmp(type, "display") == 0) {
-		cninit_kd();
-		return;
-	}
+	OFPRINTF("console type: %s\n", name);
 
-	if (strcmp(type, "serial") == 0) {
-#if defined(PMAC_G5) || defined (MAMBO) || NZSTTY > 0 || NCOM > 0
+	if (strcmp(name, "serial") == 0) {
 		struct consdev *cp;
-#endif
-		char name[32];
 
-#if defined(PMAC_G5)
+#ifdef PMAC_G5
 		/* The MMU hasn't been initialized yet, use failsafe for now */
 		cp = &failsafe_cons;
 		cn_tab = cp;
 		(*cp->cn_probe)(cp);
 		(*cp->cn_init)(cp);
 		aprint_verbose("Early G5 console initialized\n");
-#elif defined(MAMBO)
-		goto fallback;
-#else
+		return;
+#endif /* PMAC_G5 */
+
+#if (NZSTTY > 0) && !defined(MAMBO)
 		OF_getprop(console_node, "name", name, sizeof(name));
-#if NZSTTY > 0
 		if (strcmp(name, "ch-a") == 0 || strcmp(name, "ch-b") == 0) {
 			cp = &consdev_zs;
 			(*cp->cn_probe)(cp);
@@ -179,40 +175,14 @@ cninit(void)
 		}
 		return;
 #endif /* NZTTY */
-#if (NCOM > 0 && NISA > 0)
-		if (strcmp(name, "serial") == 0) {
-			bus_space_tag_t tag = &genppc_isa_io_space_tag;
-			u_int32_t freq, reg[3];
 
-			if (OF_getprop(console_node, "clock-frequency", &freq,
-			    sizeof(freq)) != sizeof(freq))
-				goto fallback;
-			if (OF_getprop(console_node, "reg", reg, sizeof(reg))
-			    != sizeof(reg))
-				goto fallback;
-
-			/* We assume 9600.  Sorry. */
-			if (comcnattach(tag, reg[1], 9600,
-			    freq, COM_TYPE_NORMAL,
-			    ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8)))
-				goto fallback;
-		}
-#endif /* NCOM */
-#endif /* MAMBO || PMACG5 */
-#if 0
-#if (NCOM > 0 || MAMBO)
-fallback:
-		/* fallback to ofcons */
-		if (strcmp(name, "serial") == 0) {
-			cp = &consdev_ofcons;
-			cn_tab = cp;
-			(*cp->cn_probe)(cp);
-			(*cp->cn_init)(cp);
-		}
+		/* fallback to OFW boot console */
+		cp = &consdev_ofwbootcons;
+		cn_tab = cp;
 		return;
-#endif
-#endif
 	}
+	else
+		cninit_kd();
 nocons:
 	return;
 }
@@ -221,7 +191,7 @@ nocons:
 static void
 cninit_kd(void)
 {
-	int stdin, node;
+	int kstdin, node;
 	char name[16];
 #if (NAKBD > 0) || (NADBKBD > 0)
 	int akbd;
@@ -235,18 +205,20 @@ cninit_kd(void)
 	 * Attach the console output now (so we can see debugging messages,
 	 * if any).
 	 */
-	ofb_cnattach();
+#if NWSDISPLAY > 0
+	rascons_cnattach();
+#endif
 
 	/*
 	 * We must determine which keyboard type we have.
 	 */
-	if (OF_getprop(chosen, "stdin", &stdin, sizeof(stdin))
-	    != sizeof(stdin)) {
+	if (OF_getprop(chosen, "stdin", &kstdin, sizeof(kstdin))
+	    != sizeof(kstdin)) {
 		printf("WARNING: no `stdin' property in /chosen\n");
 		return;
 	}
 
-	node = OF_instance_to_package(stdin);
+	node = OF_instance_to_package(kstdin);
 	memset(name, 0, sizeof(name));
 	OF_getprop(node, "name", name, sizeof(name));
 	if (strcmp(name, "keyboard") != 0) {
@@ -357,24 +329,24 @@ cninit_kd(void)
 		goto kbd_found;
 	}
 	/* Try old method name. */
-	if (OF_call_method("`usb-kbd-ihandle", stdin, 0, 1, &ukbd) >= 0 &&
+	if (OF_call_method("`usb-kbd-ihandle", kstdin, 0, 1, &ukbd) >= 0 &&
 	    ukbd != 0 &&
 	    OF_instance_to_package(ukbd) != -1) {
 		printf("usb-kbd-ihandle matches\n");
 		printf("console keyboard type: USB\n");
-		stdin = ukbd;
+		kstdin = ukbd;
 		ukbd_cnattach();
 		goto kbd_found;
 	}
 #endif
 
 #if (NAKBD > 0) || (NADBKBD > 0)
-	if (OF_call_method("`adb-kbd-ihandle", stdin, 0, 1, &akbd) >= 0 &&
+	if (OF_call_method("`adb-kbd-ihandle", kstdin, 0, 1, &akbd) >= 0 &&
 	    akbd != 0 &&
 	    OF_instance_to_package(akbd) != -1) {
 		printf("adb-kbd-ihandle matches\n");
 		printf("console keyboard type: ADB\n");
-		stdin = akbd;
+		kstdin = akbd;
 #if NAKBD > 0
 		akbd_cnattach();
 #endif
@@ -408,7 +380,7 @@ kbd_found:;
 	 * XXX This is a little gross, but we don't get to call
 	 * XXX wskbd_cnattach() twice.
 	 */
-	ofkbd_ihandle = stdin;
+	ofkbd_ihandle = kstdin;
 #if NWSDISPLAY > 0
 	wsdisplay_set_cons_kbd(ofkbd_cngetc, NULL, NULL);
 #endif
@@ -431,6 +403,54 @@ ofkbd_cngetc(dev_t dev)
 	return c;
 }
 
+/*
+ * Bootstrap console support functions
+ */
+
+static int 
+ofwbootcons_cngetc(dev_t dev)
+{
+	unsigned char ch = '\0';
+	int l;
+
+	while ((l = OF_read(stdin, &ch, 1)) != 1)
+		if (l != -2 && l != 0)
+			return -1;
+	return ch;
+}
+
+static void
+ofwbootcons_cnputc(dev_t dev, int c)
+{
+	char ch = c;
+
+	OF_write(stdout, &ch, 1);
+}
+
+/*
+ * Bootstrap console support functions
+ */
+
+static int 
+ofwbootcons_cngetc(dev_t dev)
+{
+	unsigned char ch = '\0';
+	int l;
+
+	while ((l = OF_read(stdin, &ch, 1)) != 1)
+		if (l != -2 && l != 0)
+			return -1;
+	return ch;
+}
+
+static void
+ofwbootcons_cnputc(dev_t dev, int c)
+{
+	char ch = c;
+
+	OF_write(stdout, &ch, 1);
+}
+
 void
 ofwoea_consinit(void)
 {
@@ -446,7 +466,7 @@ ofwoea_consinit(void)
 static void
 ofwoea_bootstrap_console(void)
 {
-	int stdout, node;
+	int node;
 
 	chosen = OF_finddevice("/chosen");
 	if (chosen == -1)
@@ -454,6 +474,12 @@ ofwoea_bootstrap_console(void)
 
 	if (OF_getprop(chosen, "stdout", &stdout,
 	    sizeof(stdout)) != sizeof(stdout))
+		goto nocons;
+	if (OF_getprop(chosen, "stdin", &stdin,
+	    sizeof(stdin)) != sizeof(stdin))
+		goto nocons;
+	if (OF_getprop(chosen, "stdin", &stdin,
+	    sizeof(stdin)) != sizeof(stdin))
 		goto nocons;
 	node = OF_instance_to_package(stdout);
 	console_node = node;

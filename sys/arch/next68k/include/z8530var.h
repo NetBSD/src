@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530var.h,v 1.6 2007/03/08 16:37:43 tsutsui Exp $	*/
+/*	$NetBSD: z8530var.h,v 1.6.2.1 2007/12/03 18:38:01 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,6 +41,7 @@
  */
 
 #define splzs() splserial()
+#define	IPL_ZS	IPL_SERIAL
 
 #include <dev/ic/z8530sc.h>
 

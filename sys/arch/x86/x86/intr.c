@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.28.4.11 2007/10/10 23:08:12 ad Exp $	*/
+/*	$NetBSD: intr.c,v 1.28.4.12 2007/12/03 18:40:16 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -140,7 +140,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.28.4.11 2007/10/10 23:08:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.28.4.12 2007/12/03 18:40:16 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_acpi.h"
@@ -618,7 +618,7 @@ intr_establish(int legacy_irq, struct pic *pic, int pin, int type, int level,
 	struct intrsource *source;
 	struct intrstub *stubp;
 #ifdef MULTIPROCESSOR
-	bool mpsafe = level >= IPL_SCHED;
+	bool mpsafe = (level != IPL_VM);
 #endif /* MULTIPROCESSOR */
 
 #ifdef DIAGNOSTIC
@@ -760,7 +760,7 @@ intr_disestablish(struct intrhand *ih)
 
 	mutex_enter(&x86_intr_lock);
 	pic->pic_hwmask(pic, ih->ih_pin);	
-	x86_atomic_clearbits_l(&ci->ci_ipending, (1 << ih->ih_slot));
+	atomic_and_32(&ci->ci_ipending, ~(1 << ih->ih_slot));
 
 	/*
 	 * Remove the handler from the chain.

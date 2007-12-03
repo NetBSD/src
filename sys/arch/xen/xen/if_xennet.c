@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xennet.c,v 1.49.2.2 2007/10/09 13:38:58 ad Exp $	*/
+/*	$NetBSD: if_xennet.c,v 1.49.2.3 2007/12/03 18:40:43 ad Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.49.2.2 2007/10/09 13:38:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.49.2.3 2007/12/03 18:40:43 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_nfs_boot.h"
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.49.2.2 2007/10/09 13:38:58 ad Exp $"
 #include <sys/device.h>
 #include <sys/ioctl.h>
 #include <sys/errno.h>
+#include <sys/intr.h>
 #if NRND > 0
 #include <sys/rnd.h>
 #endif
@@ -88,12 +89,12 @@ __KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.49.2.2 2007/10/09 13:38:58 ad Exp $"
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_page.h>
 
-#include <machine/xen.h>
-#include <machine/hypervisor.h>
-#include <machine/evtchn.h>
-#include <machine/ctrl_if.h>
+#include <xen/xen.h>
+#include <xen/hypervisor.h>
+#include <xen/evtchn.h>
+#include <xen/ctrl_if.h>
 
-#include <machine/if_xennetvar.h>
+#include <xen/if_xennetvar.h>
 
 #ifdef DEBUG
 #define XENNET_DEBUG
@@ -555,7 +556,7 @@ xennet_interface_status_change(netif_fe_interface_status_t *status)
 		if_attach(ifp);
 		ether_ifattach(ifp, sc->sc_enaddr);
 
-		sc->sc_softintr = softintr_establish(IPL_SOFTNET,
+		sc->sc_softintr = softint_establish(SOFTINT_NET,
 		    xennet_softstart, sc);
 		if (sc->sc_softintr == NULL)
 			panic(" xennet: can't establish soft interrupt");
@@ -674,7 +675,7 @@ xennet_rx_mbuf_free(struct mbuf *m, void *buf, size_t size, void *arg)
 	xennet_rx_push_buffer(sc, id);
 
 	if (m != NULL) {
-		pool_cache_put(&mbpool_cache, m);
+		pool_cache_put(mb_cache, m);
 	}
 }
 
@@ -1028,7 +1029,7 @@ xennet_start(struct ifnet *ifp)
 	 * stack will enqueue all pending mbufs in the interface's send queue
 	 * before it is processed by xennet_softstart().
 	 */
-	softintr_schedule(sc->sc_softintr);
+	softint_schedule(sc->sc_softintr);
 	return;
 }
 

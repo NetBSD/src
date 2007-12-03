@@ -1,4 +1,4 @@
-/*	$NetBSD: byte_swap.h,v 1.11.6.1 2007/10/09 13:37:58 ad Exp $	*/
+/*	$NetBSD: byte_swap.h,v 1.11.6.2 2007/12/03 18:36:49 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -40,10 +40,6 @@
 #define	_I386_BYTE_SWAP_H_
 
 #include <sys/types.h>
-
-#if defined(_KERNEL_OPT)
-#include "opt_cputype.h"
-#endif
 
 #ifdef  __GNUC__
 __BEGIN_DECLS

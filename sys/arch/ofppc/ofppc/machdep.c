@@ -1,9 +1,10 @@
-/*	$NetBSD: machdep.c,v 1.91.2.2 2007/10/23 20:13:43 ad Exp $	*/
-
-/*
- * Copyright (C) 1995, 1996 Wolfgang Solfrank.
- * Copyright (C) 1995, 1996 TooLs GmbH.
+/*	$NetBSD: machdep.c,v 1.91.2.3 2007/12/03 18:38:07 ad Exp $	*/
+/*-
+ * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Tim Rightnour
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -15,24 +16,27 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by TooLs GmbH.
- * 4. The name of TooLs GmbH may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY TOOLS GMBH ``AS IS'' AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL TOOLS GMBH BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
- * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
- * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
- * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.91.2.2 2007/10/23 20:13:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.91.2.3 2007/12/03 18:38:07 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -55,6 +59,12 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.91.2.2 2007/10/23 20:13:43 ad Exp $");
 #include <powerpc/oea/bat.h>
 #include <powerpc/ofw_cons.h>
 
+#include "com.h"
+#if (NCOM > 0)
+#include <sys/termios.h>
+#include <dev/ic/comreg.h>
+#include <dev/ic/comvar.h>
+#endif
 
 struct pmap ofw_pmap;
 char bootpath[256];
@@ -65,25 +75,100 @@ void	ofppc_bootstrap_console(void);
 void
 initppc(u_int startkernel, u_int endkernel, char *args)
 {
-	/* Initialize the bootstrap console. */
-	ofppc_bootstrap_console();
 	ofwoea_initppc(startkernel, endkernel, args);
-	map_isa_ioregs();
+}
+
+/* perform model-specific actions at initppc() */
+void
+model_init(void)
+{
+	int qhandle, phandle;
+
+	/* Pegasos1, Pegasos2 */
+	if (strncmp(model_name, "Pegasos", 7) == 0) {
+		static uint16_t modew[] = { 640, 800, 1024, 1280, 0 };
+		static uint16_t modeh[] = { 480, 600, 768, 1024, 0 };
+		uint32_t width, height, mode, fbaddr;
+		char buf[32];
+		int i;
+
+		/* fix the device_type property of a graphics card */
+		for (qhandle = OF_peer(0); qhandle; qhandle = phandle) {
+			if (OF_getprop(qhandle, "name", buf, sizeof buf) > 0
+			    && strncmp(buf, "display", 7) == 0) {
+				OF_setprop(qhandle, "device_type", "display", 8);
+				break;
+			}
+			if ((phandle = OF_child(qhandle)))
+				continue;
+			while (qhandle) {
+				if ((phandle = OF_peer(qhandle)))
+					break;
+				qhandle = OF_parent(qhandle);
+			}
+		}
+
+		/*
+		 * Get screen width/height and switch to framebuffer mode.
+		 * The default dimensions are: 800 x 600
+		 */
+		OF_interpret("screen-width", 0, 1, &width);
+		if (width == 0)
+			width = 800;
+
+		OF_interpret("screen-height", 0, 1, &height);
+		if (height == 0)
+			height = 600;
+
+		/* find VESA mode */
+		for (i = 0, mode = 0; modew[i] != 0; i++) {
+			if (modew[i] == width && modeh[i] == height) {
+				mode = 0x101 + 2 * i;
+				break;
+			}
+		}
+		if (!mode) {
+			mode = 0x102;
+			width = 800;
+			height = 600;
+		}
+
+		/* init frame buffer mode */
+		sprintf(buf, "%x vesa-set-mode", mode);
+		OF_interpret(buf, 0, 0);
+
+		/* set dimensions and frame buffer address in OFW */
+		sprintf(buf, "%x to screen-width", width);
+		OF_interpret(buf, 0, 0);
+		sprintf(buf, "%x to screen-height", height);
+		OF_interpret(buf, 0, 0);
+		OF_interpret("vesa-frame-buffer-adr", 0, 1, &fbaddr);
+		if (fbaddr != 0) {
+			sprintf(buf, "%x to frame-buffer-adr", fbaddr);
+			OF_interpret(buf, 0, 0);
+		}
+	}
 }
 
 void
 cpu_startup(void)
 {
-	oea_startup(NULL);
+	oea_startup(model_name[0] ? model_name : NULL);
 }
 
-/*
+#include "com.h"
+#if (NCOM > 0)
+#include <sys/termios.h>
+#include <dev/ic/comreg.h>
+#include <dev/ic/comvar.h>
+#endif
+
 void
 consinit(void)
 {
 	ofwoea_consinit();
 }
-*/
+
 
 void
 dumpsys(void)
@@ -94,6 +179,7 @@ dumpsys(void)
 /*
  * Halt or reboot the machine after syncing/dumping according to howto.
  */
+void rtas_reboot(void);
 
 void
 cpu_reboot(int howto, char *what)
@@ -118,6 +204,9 @@ cpu_reboot(int howto, char *what)
 		oea_dumpsys();
 	doshutdownhooks();
 	printf("rebooting\n\n");
+
+	rtas_reboot();
+
 	if (what && *what) {
 		if (strlen(what) > sizeof str - 5)
 			printf("boot string too large, ignored\n");
@@ -139,72 +228,117 @@ cpu_reboot(int howto, char *what)
 }
 
 /*
- * XXX
- * The following code is subject to die at a later date.  This is the only
- * remaining code in this file subject to the Tools GmbH copyright.
  */
+void rtas_reboot(void);
+
+#define divrnd(n, q)	(((n)*2/(q)+1)/2)
 
 void
-consinit()
+ofppc_init_comcons(int isa_node)
 {
+#if (NCOM > 0)
+	char name[64];
+	uint32_t reg[2], comfreq;
+	uint8_t dll, dlm;
+	int speed, rate, err, com_node, child;
 
-	(*cn_tab->cn_probe)(cn_tab);
+	/* if we have a serial cons, we have work to do */
+	memset(name, 0, sizeof(name));
+	OF_getprop(console_node, "device_type", name, sizeof(name));
+	if (strcmp(name, "serial") != 0)
+		return;
+
+	/* scan ISA children for serial devices to match our console */
+	com_node = -1;
+	for (child = OF_child(isa_node); child; child = OF_peer(child)) {
+		memset(name, 0, sizeof(name));
+		OF_getprop(child, "device_type", name, sizeof(name));
+		if (strcmp(name, "serial") == 0) {
+			/*
+			 * Serial device even matches our console_node?
+			 * Then we're done!
+			 */
+			if (child == console_node) {
+				com_node = child;
+				break;
+			}
+			/* remember first serial device found */
+			if (com_node == -1)
+				com_node = child;
+		}
+	}
+
+	if (com_node == -1)
+		return;
+
+	if (OF_getprop(com_node, "reg", reg, sizeof(reg)) == -1)
+		return;
+
+	if (OF_getprop(com_node, "clock-frequency", &comfreq, 4) == -1)
+		comfreq = 0;
+
+	if (comfreq == 0)
+		comfreq = COM_FREQ;
+
+	isa_outb(reg[1] + com_cfcr, LCR_DLAB);
+	dll = isa_inb(reg[1] + com_dlbl);
+	dlm = isa_inb(reg[1] + com_dlbh);
+	rate = dll | (dlm << 8);
+	isa_outb(reg[1] + com_cfcr, LCR_8BITS);
+	speed = divrnd((comfreq / 16), rate);
+	err = speed - (speed + 150)/300 * 300;
+	speed -= err;
+	if (err < 0)
+		err = -err;
+	if (err > 50)
+		speed = 9600;
+
+	/* Now we can attach the comcons */
+	aprint_verbose("Switching to COM console at speed %d", speed);
+	if (comcnattach(&genppc_isa_io_space_tag, reg[1],
+	    speed, comfreq, COM_TYPE_NORMAL,
+	    ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8)))
+		panic("Can't init serial console");
+	aprint_verbose("\n");
+#endif /*NCOM*/
 }
-
-void	ofcons_cnprobe(struct consdev *);
-int	ofppc_cngetc(dev_t);
-void	ofppc_cnputc(dev_t, int);
-
-struct consdev ofppc_bootcons = {
-	ofcons_cnprobe, NULL, ofppc_cngetc, ofppc_cnputc, nullcnpollc, NULL,
-	    NULL, NULL, makedev(0,0), 1,
-};
-
-int	ofppc_stdin_ihandle, ofppc_stdout_ihandle;
-int	ofppc_stdin_phandle, ofppc_stdout_phandle;
 
 void
-ofppc_bootstrap_console(void)
+copy_disp_props(struct device *dev, int node, prop_dictionary_t dict)
 {
-	int chosen;
-	char data[4];
+	uint32_t temp;
+	char typestr[32];
 
-	chosen = OF_finddevice("/chosen");
+	memset(typestr, 0, sizeof(typestr));
+	OF_getprop(console_node, "device_type", typestr, sizeof(typestr));
+	if (strcmp(typestr, "serial") != 0) {
+		/* this is our console, when we don't have a serial console */
+		prop_dictionary_set_bool(dict, "is_console", 1);
+	}
 
-	if (OF_getprop(chosen, "stdin", data, sizeof(data)) != sizeof(int))
-		goto nocons;
-	ofppc_stdin_ihandle = of_decode_int(data);
-	ofppc_stdin_phandle = OF_instance_to_package(ofppc_stdin_ihandle);
+	if (!of_to_uint32_prop(dict, node, "width", "width")) {
 
-	if (OF_getprop(chosen, "stdout", data, sizeof(data)) != sizeof(int))
-		goto nocons;
-	ofppc_stdout_ihandle = of_decode_int(data);
-	ofppc_stdout_phandle = OF_instance_to_package(ofppc_stdout_ihandle);
+		OF_interpret("screen-width", 0, 1, &temp);
+		prop_dictionary_set_uint32(dict, "width", temp);
+	}
+	if (!of_to_uint32_prop(dict, node, "height", "height")) {
 
-	cn_tab = &ofppc_bootcons;
-
- nocons:
-	return;
+		OF_interpret("screen-height", 0, 1, &temp);
+		prop_dictionary_set_uint32(dict, "height", temp);
+	}
+	of_to_uint32_prop(dict, node, "linebytes", "linebytes");
+	if (!of_to_uint32_prop(dict, node, "depth", "depth")) {
+		/*
+		 * XXX we should check linebytes vs. width but those
+		 * FBs that don't have a depth property ( /chaos/control... )
+		 * won't have linebytes either
+		 */
+		prop_dictionary_set_uint32(dict, "depth", 8);
+	}
+	if (!of_to_uint32_prop(dict, node, "address", "address")) {
+		uint32_t fbaddr = 0;
+			OF_interpret("frame-buffer-adr", 0, 1, &fbaddr);
+		if (fbaddr != 0)
+			prop_dictionary_set_uint32(dict, "address", fbaddr);
+	}
 }
-
-int
-ofppc_cngetc(dev_t dev)
-{
-	u_char ch = '\0';
-	int l;
-
-	while ((l = OF_read(ofppc_stdin_ihandle, &ch, 1)) != 1)
-		if (l != -2 && l != 0)
-			return (-1);
-
-	return (ch);
-}
-
-void
-ofppc_cnputc(dev_t dev, int c)
-{
-	char ch = c;
-
-	OF_write(ofppc_stdout_ihandle, &ch, 1);
-}
-
