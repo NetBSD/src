@@ -1,4 +1,4 @@
-/*	$NetBSD: bcsp.c,v 1.10 2007/11/28 20:16:11 plunky Exp $	*/
+/*	$NetBSD: bcsp.c,v 1.11 2007/12/03 10:41:59 plunky Exp $	*/
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcsp.c,v 1.10 2007/11/28 20:16:11 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcsp.c,v 1.11 2007/12/03 10:41:59 plunky Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1496,6 +1496,7 @@ bcsp_input_le(struct bcsp_softc *sc, struct mbuf *m)
 #endif
 
 	rcvpkt = mtod(m, uint32_t *);
+	i = 0;
 
 	/* length of le packets is 4 */
 	if (m->m_len == sizeof(uint32_t))
