@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.41 2007/10/08 15:12:07 ad Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.42 2007/12/03 15:21:57 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.41 2007/10/08 15:12:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.42 2007/12/03 15:21:57 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -588,7 +588,7 @@ filt_seltruedetach(struct knote *kn)
 	/* Nothing to do */
 }
 
-static const struct filterops seltrue_filtops =
+const struct filterops seltrue_filtops =
 	{ 1, NULL, filt_seltruedetach, filt_seltrue };
 
 int
