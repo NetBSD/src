@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xennet.c,v 1.54 2007/11/22 16:17:07 bouyer Exp $	*/
+/*	$NetBSD: if_xennet.c,v 1.55 2007/12/03 15:34:30 ad Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.54 2007/11/22 16:17:07 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.55 2007/12/03 15:34:30 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_nfs_boot.h"
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.54 2007/11/22 16:17:07 bouyer Exp $"
 #include <sys/device.h>
 #include <sys/ioctl.h>
 #include <sys/errno.h>
+#include <sys/intr.h>
 #if NRND > 0
 #include <sys/rnd.h>
 #endif
@@ -555,7 +556,7 @@ xennet_interface_status_change(netif_fe_interface_status_t *status)
 		if_attach(ifp);
 		ether_ifattach(ifp, sc->sc_enaddr);
 
-		sc->sc_softintr = softintr_establish(IPL_SOFTNET,
+		sc->sc_softintr = softint_establish(SOFTINT_NET,
 		    xennet_softstart, sc);
 		if (sc->sc_softintr == NULL)
 			panic(" xennet: can't establish soft interrupt");
@@ -1028,7 +1029,7 @@ xennet_start(struct ifnet *ifp)
 	 * stack will enqueue all pending mbufs in the interface's send queue
 	 * before it is processed by xennet_softstart().
 	 */
-	softintr_schedule(sc->sc_softintr);
+	softint_schedule(sc->sc_softintr);
 	return;
 }
 

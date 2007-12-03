@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.36 2007/02/16 02:53:51 ad Exp $ */
+/*	$NetBSD: psl.h,v 1.37 2007/12/03 15:34:23 ad Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -409,24 +409,10 @@ SPLHOLD(splausoft, PIL_AUSOFT)
 /* floppy software interrupts are at software level 4 too */
 SPLHOLD(splfdsoft, PIL_FDSOFT)
 
-/* Block devices */
-SPLHOLD(splbio, PIL_BIO)
-
-/* network hardware interrupts are at level 6 */
-SPLHOLD(splnet, PIL_NET)
-
-/* tty input runs at software level 6 */
-SPLHOLD(spltty, PIL_TTY)
-
-/* parallel port runs at software level 6 */
-SPLHOLD(spllpt, PIL_LPT)
-
 /*
  * Memory allocation (must be as high as highest network, tty, or disk device)
  */
 SPLHOLD(splvm, PIL_VM)
-
-SPLHOLD(splclock, PIL_CLOCK)
 
 /* fd hardware interrupts are at level 11 */
 SPLHOLD(splfd, PIL_FD)
@@ -455,10 +441,6 @@ SPLHOLD(splhigh, PIL_HIGH)
 #define	splsoftserial()	splsoftserialX(__FILE__, __LINE__)
 #define	splausoft()	splausoftX(__FILE__, __LINE__)
 #define	splfdsoft()	splfdsoftX(__FILE__, __LINE__)
-#define	splbio()	splbioX(__FILE__, __LINE__)
-#define	splnet()	splnetX(__FILE__, __LINE__)
-#define	spltty()	splttyX(__FILE__, __LINE__)
-#define	spllpt()	spllptX(__FILE__, __LINE__)
 #define	splvm()		splvmX(__FILE__, __LINE__)
 #define	splclock()	splclockX(__FILE__, __LINE__)
 #define	splfd()		splfdX(__FILE__, __LINE__)
