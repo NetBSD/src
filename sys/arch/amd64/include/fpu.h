@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.h,v 1.1 2003/04/26 18:39:40 fvdl Exp $	*/
+/*	$NetBSD: fpu.h,v 1.1.60.1 2007/12/03 18:34:42 ad Exp $	*/
 
 #ifndef	_AMD64_FPU_H_
 #define	_AMD64_FPU_H_
@@ -29,7 +29,7 @@ struct savefpu {
 	struct fxsave64 fp_fxsave;	/* see above */
 	u_int16_t fp_ex_sw;		/* saved status from last exception */
 	u_int16_t fp_ex_tw;		/* saved tag from last exception */
-};
+} __aligned(16);
 
 #ifdef _KERNEL
 

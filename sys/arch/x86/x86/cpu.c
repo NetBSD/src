@@ -1,7 +1,7 @@
-/* $NetBSD: cpu.c,v 1.1.2.4 2007/10/23 20:14:42 ad Exp $ */
+/* $NetBSD: cpu.c,v 1.1.2.5 2007/12/03 18:40:13 ad Exp $ */
 
 /*-
- * Copyright (c) 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000, 2006, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.1.2.4 2007/10/23 20:14:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.1.2.5 2007/12/03 18:40:13 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -87,10 +87,11 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.1.2.4 2007/10/23 20:14:42 ad Exp $");
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/cpu.h>
+#include <sys/atomic.h>
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/cpu.h>
 #include <machine/cpufunc.h>
 #include <machine/cpuvar.h>
 #include <machine/pmap.h>
@@ -165,6 +166,7 @@ static void	cpu_init_tss(struct i386tss *, void *, void *);
 #endif
 
 uint32_t cpus_attached = 0;
+uint32_t cpus_running = 0;
 
 extern char x86_64_doubleflt_stack[];
 
@@ -174,8 +176,6 @@ extern char x86_64_doubleflt_stack[];
  * curproc, etc. are used early.
  */
 struct cpu_info *cpu_info[X86_MAXPROCS] = { &cpu_info_primary, };
-
-uint32_t cpus_running = 0;
 
 void    	cpu_hatch(void *);
 static void    	cpu_boot_secondary(struct cpu_info *ci);
@@ -189,7 +189,7 @@ static void	cpu_copy_trampoline(void);
  * Called from lapic_boot_init() (from mpbios_scan()).
  */
 void
-cpu_init_first()
+cpu_init_first(void)
 {
 	int cpunum = lapic_cpu_number();
 
@@ -328,17 +328,20 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 	switch (caa->cpu_role) {
 	case CPU_ROLE_SP:
 		aprint_normal(": (uniprocessor)\n");
-		ci->ci_flags |= CPUF_PRESENT | CPUF_SP | CPUF_PRIMARY;
+		atomic_or_32(&ci->ci_flags,
+		    CPUF_PRESENT | CPUF_SP | CPUF_PRIMARY);
 		cpu_intr_init(ci);
 		identifycpu(ci);
 		cpu_init(ci);
 		cpu_set_tss_gates(ci);
 		pmap_cpu_init_late(ci);
+		x86_errata();
 		break;
 
 	case CPU_ROLE_BP:
 		aprint_normal(": (boot processor)\n");
-		ci->ci_flags |= CPUF_PRESENT | CPUF_BSP | CPUF_PRIMARY;
+		atomic_or_32(&ci->ci_flags,
+		    CPUF_PRESENT | CPUF_BSP | CPUF_PRIMARY);
 		cpu_intr_init(ci);
 		identifycpu(ci);
 		cpu_init(ci);
@@ -354,6 +357,7 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 #if NIOAPIC > 0
 		ioapic_bsp_id = caa->cpu_number;
 #endif
+		x86_errata();
 		break;
 
 	case CPU_ROLE_AP:
@@ -409,8 +413,7 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
  */
 
 void
-cpu_init(ci)
-	struct cpu_info *ci;
+cpu_init(struct cpu_info *ci)
 {
 	/* configure the CPU if needed */
 	if (ci->cpu_setup != NULL)
@@ -474,9 +477,12 @@ cpu_init(ci)
 #endif	/* i386 */
 #endif /* MTRR */
 
-#ifdef MULTIPROCESSOR
-	ci->ci_flags |= CPUF_RUNNING;
-	cpus_running |= ci->ci_cpumask;
+	atomic_or_32(&ci->ci_flags, CPUF_RUNNING);
+	atomic_or_32(&cpus_running, ci->ci_cpumask);
+
+#ifndef MULTIPROCESSOR
+	/* XXX */
+	x86_patch();
 #endif
 }
 
@@ -488,6 +494,9 @@ cpu_boot_secondary_processors()
 {
 	struct cpu_info *ci;
 	u_long i;
+
+	/* Now that we know the number of CPUs, patch the text segment. */
+	x86_patch();
 
 	for (i=0; i < X86_MAXPROCS; i++) {
 		ci = cpu_info[i];
@@ -556,7 +565,7 @@ cpu_start_secondary(ci)
 #endif
 		mp_pdirpa = kpm->pm_pdirpa;
 
-	ci->ci_flags |= CPUF_AP;
+	atomic_or_32(&ci->ci_flags, CPUF_AP);
 
 	aprint_debug("%s: starting\n", ci->ci_dev->dv_xname);
 
@@ -569,7 +578,7 @@ cpu_start_secondary(ci)
 	for (i = 100000; (!(ci->ci_flags & CPUF_PRESENT)) && i>0;i--) {
 		delay(10);
 	}
-	if (! (ci->ci_flags & CPUF_PRESENT)) {
+	if ((ci->ci_flags & CPUF_PRESENT) == 0) {
 		aprint_error("%s: failed to become ready\n",
 		    ci->ci_dev->dv_xname);
 #if defined(MPDEBUG) && defined(DDB)
@@ -587,12 +596,11 @@ cpu_boot_secondary(ci)
 {
 	int i;
 
-	ci->ci_flags |= CPUF_GO; /* XXX atomic */
-
+	atomic_or_32(&ci->ci_flags, CPUF_GO);
 	for (i = 100000; (!(ci->ci_flags & CPUF_RUNNING)) && i>0;i--) {
-		delay(10);
+		DELAY(10);
 	}
-	if (! (ci->ci_flags & CPUF_RUNNING)) {
+	if ((ci->ci_flags & CPUF_RUNNING) == 0) {
 		aprint_error("%s: failed to start\n", ci->ci_dev->dv_xname);
 #if defined(MPDEBUG) && defined(DDB)
 		printf("dropping into debugger; continue from here to resume boot\n");
@@ -606,14 +614,12 @@ cpu_boot_secondary(ci)
  * This is called from code in mptramp.s; at this point, we are running
  * in the idle pcb/idle stack of the new CPU.  When this function returns,
  * this processor will enter the idle loop and start looking for work.
- *
- * XXX should share some of this with init386 in machdep.c
  */
 void
 cpu_hatch(void *v)
 {
 	struct cpu_info *ci = (struct cpu_info *)v;
-	int s;
+	int s, i;
 
 #ifdef __x86_64__
 	cpu_init_msrs(ci);
@@ -622,27 +628,26 @@ cpu_hatch(void *v)
 	cpu_feature &= ci->ci_feature_flags;
 	cpu_feature2 &= ci->ci_feature2_flags;
 
-#ifdef DEBUG
-	if (ci->ci_flags & CPUF_PRESENT)
-		panic("%s: already running!?", ci->ci_dev->dv_xname);
-#endif
+	KDASSERT((ci->ci_flags & CPUF_PRESENT) == 0);
+	atomic_or_32(&ci->ci_flags, CPUF_PRESENT);
+	while ((ci->ci_flags & CPUF_GO) == 0) {
+		/* Don't use delay, boot CPU may be patching the text. */
+		for (i = 10000; i != 0; i--)
+			x86_pause();
+	}
 
-	ci->ci_flags |= CPUF_PRESENT;
+	/* Beacuse the text may have been patched in x86_patch(). */
+	wbinvd();
+	x86_flush();
 
-	lapic_enable();
-	lapic_initclocks();
-
-	while ((ci->ci_flags & CPUF_GO) == 0)
-		delay(10);
-#ifdef DEBUG
-	if (ci->ci_flags & CPUF_RUNNING)
-		panic("%s: already running!?", ci->ci_dev->dv_xname);
-#endif
+	KASSERT((ci->ci_flags & CPUF_RUNNING) == 0);
 
 	lcr0(ci->ci_data.cpu_idlelwp->l_addr->u_pcb.pcb_cr0);
 	cpu_init_idt();
-	lapic_set_lvt();
 	gdt_init_cpu(ci);
+	lapic_enable();
+	lapic_set_lvt();
+	lapic_initclocks();
 
 #ifdef i386
 	npxinit(ci);
@@ -652,6 +657,7 @@ cpu_hatch(void *v)
 	lldt(GSYSSEL(GLDT_SEL, SEL_KPL));
 
 	cpu_init(ci);
+	cpu_get_tsc_freq(ci);
 
 	s = splhigh();
 #ifdef i386
@@ -661,6 +667,7 @@ cpu_hatch(void *v)
 #endif
 	x86_enable_intr();
 	splx(s);
+	x86_errata();
 
 	aprint_debug("%s: CPU %ld running\n", ci->ci_dev->dv_xname,
 	    (long)ci->ci_cpuid);
@@ -876,3 +883,18 @@ cpu_init_msrs(struct cpu_info *ci)
 		wrmsr(MSR_EFER, rdmsr(MSR_EFER) | EFER_NXE);
 }
 #endif	/* __x86_64__ */
+
+void
+cpu_get_tsc_freq(struct cpu_info *ci)
+{
+	uint64_t last_tsc;
+	u_int junk[4];
+
+	if (ci->ci_feature_flags & CPUID_TSC) {
+		/* Serialize. */
+		x86_cpuid(0, junk);
+		last_tsc = rdtsc();
+		i8254_delay(100000);
+		ci->ci_tsc_freq = (rdtsc() - last_tsc) * 10;
+	}
+}

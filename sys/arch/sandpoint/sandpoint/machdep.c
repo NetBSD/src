@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.35.6.1 2007/10/23 20:14:35 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.35.6.2 2007/12/03 18:38:38 ad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.35.6.1 2007/10/23 20:14:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.35.6.2 2007/12/03 18:38:38 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -260,17 +260,18 @@ cpu_startup(void)
 	 */
 	baseaddr = (void *)(SANDPOINT_BUS_SPACE_EUMB + 0x40000);
 	pic_init();
-#if NPCIB > 0
-	/* set up i8259 as a cascade on EPIC irq 0 */
 	isa_pic = setup_i8259();
 	(void)setup_openpic(baseaddr, 0);
 	primary_pic = 1;
-	/* XXX exceptional SP2 has 17 XXX */
+
+#if (NPCIB > 0)
+	/*
+	 * set up i8259 as a cascade on EPIC irq 0.
+	 * XXX exceptional SP2 has 17
+	 */
 	intr_establish(16, IST_LEVEL, IPL_NONE, pic_handle_intr, isa_pic);
-#else
-	primary_pic = 0;
-	(void)setup_openpic(baseaddr, 0);
 #endif
+
 	oea_install_extint(pic_ext_intr);
 
 	/*
@@ -286,6 +287,12 @@ cpu_startup(void)
 	    :	"=r"(msr)
 	    :	"K"(PSL_EE));
 }
+
+#if (NPCIB > 0)
+struct btinfo_console bi_cons = { { 0, 0 },  "com", 0x3f8, 38400 };
+#else
+struct btinfo_console bi_cons = { { 0, 0 },  "eumb", 0x4600, 57600 };
+#endif
 
 /*
  * lookup_bootinfo:
@@ -317,22 +324,21 @@ lookup_bootinfo(int type)
 void
 consinit(void)
 {
-	struct btinfo_console *consinfo;
-	struct btinfo_console bi_cons = { { 0, 0 },  "com", 0x3f8, 38400 };
+	struct btinfo_console *bi;
 	static int initted;
 
 	if (initted)
 		return;
 	initted = 1;
 
-	consinfo = lookup_bootinfo(BTINFO_CONSOLE);
-	if (consinfo == NULL)
-		consinfo = &bi_cons;
+	bi = lookup_bootinfo(BTINFO_CONSOLE);
+	if (bi == NULL)
+		bi = &bi_cons;
 
 #if (NCOM > 0)
-	if (strcmp(consinfo->devname, "com") == 0) {
+	if (strcmp(bi->devname, "com") == 0) {
 		bus_space_tag_t tag = &genppc_isa_io_space_tag;
-		if (comcnattach(tag, consinfo->addr, consinfo->speed,
+		if (comcnattach(tag, bi->addr, bi->speed,
 		    COM_FREQ, COM_TYPE_NORMAL,
 		    ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8)))
 			panic("can't init com serial console");
@@ -340,11 +346,11 @@ consinit(void)
 	}
 #endif
 #if (NCOM_EUMB > 0)
-	if (strcmp(consinfo->devname, "eumb") == 0) {
+	if (strcmp(bi->devname, "eumb") == 0) {
 		bus_space_tag_t tag = &sandpoint_eumb_space_tag;
 		extern u_long ticks_per_sec;
 
-		if (eumbcnattach(tag, consinfo->addr, consinfo->speed,
+		if (eumbcnattach(tag, bi->addr, bi->speed,
 		    4 * ticks_per_sec, COM_TYPE_NORMAL,
 		    ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8)))
 			panic("can't init eumb serial console");
@@ -543,7 +549,6 @@ struct consdev kcomcons = {
 	NULL, NULL, NODEV, CN_NORMAL
 };
 
-static unsigned uartbase = 0xfe0003f8;
 #define THR		0
 #define RBR		0
 #define LSR		5
@@ -559,17 +564,19 @@ static unsigned uartbase = 0xfe0003f8;
 #define LSR_RXREADY		0x01
 #define LSR_ANYE		(LSR_OE|LSR_PE|LSR_FE|LSR_BE)
 
+static unsigned uartbase = 0xfe0003f8;
+
 static void
 kcomcninit(struct consdev *cn)
 {
 	struct btinfo_console *bi = lookup_bootinfo(BTINFO_CONSOLE);
 
-	if (bi != NULL) {
-		if (strcmp(bi->devname, "com") == 0)
-			uartbase = 0xfe000000 + bi->addr;
-		else if (strcmp(bi->devname, "eumb") == 0)
-			uartbase = 0xfc000000 + bi->addr;
-	}
+	if (bi == NULL)
+		bi = &bi_cons;
+	if (strcmp(bi->devname, "com") == 0)
+		uartbase = 0xfe000000 + bi->addr;
+	else if (strcmp(bi->devname, "eumb") == 0)
+		uartbase = 0xfc000000 + bi->addr;
 	/*
 	 * we do not touch UART operating parameters since bootloader
 	 * is supposed to have done well.

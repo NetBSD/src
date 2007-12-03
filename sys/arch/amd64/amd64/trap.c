@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.30.2.5 2007/11/01 21:23:39 ad Exp $	*/
+/*	$NetBSD: trap.c,v 1.30.2.6 2007/12/03 18:34:40 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.30.2.5 2007/11/01 21:23:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.30.2.6 2007/12/03 18:34:40 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -111,16 +111,15 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.30.2.5 2007/11/01 21:23:39 ad Exp $");
 #include <machine/db_machdep.h>
 #endif
 
+#ifndef XEN
 #include "isa.h"
+#endif
 
 #ifdef KGDB
 #include <sys/kgdb.h>
 #endif
 
 void trap(struct trapframe *);
-#if defined(I386_CPU)
-int trapwrite(unsigned);
-#endif
 
 const char *trap_type[] = {
 	"privileged instruction fault",		/*  0 T_PRIVINFLT */
@@ -449,6 +448,7 @@ faultcommon:
 		vm = p->p_vmspace;
 		if (vm == NULL)
 			goto we_re_toast;
+		pcb->pcb_cr2 = cr2;
 		va = trunc_page((vaddr_t)cr2);
 		/*
 		 * It is only a kernel address space fault iff:
@@ -552,7 +552,7 @@ faultcommon:
 #ifdef MATH_EMULATE
 	trace:
 #endif
-		if (LIST_EMPTY(&p->p_raslist) ||
+		if (p->p_raslist == NULL ||
 		    (ras_lookup(p, (void *)frame->tf_rip) == (void *)-1)) {
 			KSI_INIT_TRAP(&ksi);
 			ksi.ksi_signo = SIGTRAP;
@@ -615,6 +615,9 @@ startlwp(void *arg)
 static void
 frame_dump(struct trapframe *tf)
 {
+	int i;
+	unsigned long *p;
+
 	printf("rip %p  rsp %p  rfl %p\n",
 	    (void *)tf->tf_rip, (void *)tf->tf_rsp, (void *)tf->tf_rflags);
 	printf("rdi %p  rsi %p  rdx %p\n",
@@ -627,5 +630,23 @@ frame_dump(struct trapframe *tf)
 	    (void *)tf->tf_r13, (void *)tf->tf_r14, (void *)tf->tf_r15);
 	printf("rbp %p  rbx %p  rax %p\n",
 	    (void *)tf->tf_rbp, (void *)tf->tf_rbx, (void *)tf->tf_rax);
+	printf("cs %p  ds %p  es %p  fs %p  gs %p  ss %p\n",
+		tf->tf_cs & 0xffff, tf->tf_ds & 0xffff, tf->tf_es & 0xffff,
+		tf->tf_fs & 0xffff, tf->tf_gs & 0xffff, tf->tf_ss & 0xffff);
+	
+	printf("\n");
+	printf("Stack dump:\n");
+	for (i = 0, p = (unsigned long *) tf; i < 20; i ++, p += 4)
+		printf("   0x%.16lx  0x%.16lx  0x%.16lx 0x%.16lx\n", *p, p[1], p[2], p[3]);
+	printf("\n");
+	printf("cs %p  ds %p  es %p  fs %p  gs %p  ss %p\n",
+		tf->tf_cs & 0xffff, tf->tf_ds & 0xffff, tf->tf_es & 0xffff,
+		tf->tf_fs & 0xffff, tf->tf_gs & 0xffff, tf->tf_ss & 0xffff);
+	
+	printf("\n");
+	printf("Stack dump:\n");
+	for (i = 0, p = (unsigned long *) tf; i < 20; i ++, p += 4)
+		printf("   0x%.16lx  0x%.16lx  0x%.16lx 0x%.16lx\n", *p, p[1], p[2], p[3]);
+	printf("\n");
 }
 #endif

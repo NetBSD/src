@@ -1,4 +1,4 @@
-# $NetBSD: QEMU,v 1.9.8.2 2007/10/09 13:37:51 ad Exp $
+# $NetBSD: QEMU,v 1.9.8.3 2007/12/03 18:36:32 ad Exp $
 #
 # QEMU machine description file
 #
@@ -11,15 +11,10 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"QEMU-$Revision: 1.9.8.2 $"
+#ident 		"QEMU-$Revision: 1.9.8.3 $"
 
 maxusers	32		# estimated number of users
 
-# CPU support.  At least one is REQUIRED.
-#options 	I386_CPU
-#options 	I486_CPU
-#options 	I586_CPU
-options 	I686_CPU
 makeoptions	CPUFLAGS="-march=pentiumpro -mtune=pentiumpro"
 
 # CPU-related options.

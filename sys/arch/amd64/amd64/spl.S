@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.6.6.5 2007/11/16 20:35:32 ad Exp $	*/
+/*	$NetBSD: spl.S,v 1.6.6.6 2007/12/03 18:34:39 ad Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -103,8 +103,6 @@ ENTRY(splraise)
  * pushf/cli/popf as it is used early in boot where interrupts
  * are disabled via eflags/IE.
  */
-	.align 64
-
 ENTRY(spllower)
 	cmpl	CPUVAR(ILEVEL), %edi
 	jae	1f
@@ -116,28 +114,30 @@ ENTRY(spllower)
 	movl	%edi, CPUVAR(ILEVEL)
 	popf
 1:
-	rep
+	ret
 	ret
 2:
 	popf
 	jmp	_C_LABEL(Xspllower)
-	.align	64
+	nop
+	nop
+	.align	16
 LABEL(spllower_end)
 
+#endif /* !XEN */
+
 /*
- * void	amd64_spllower(int s);
+ * void	cx8_spllower(int s);
  *
  * For cmpxchg8b, edx/ecx are the high words and eax/ebx the low.
  *
  * edx : eax = old level / old ipending 
  * ecx : ebx = new level / old ipending
  */
-	.align	64
-
-ENTRY(amd64_spllower)
+ENTRY(cx8_spllower)
 	movl	CPUVAR(ILEVEL),%edx
+	movq	%rbx,%r8
 	cmpl	%edx,%edi			/* new level is lower? */
-	pushq	%rbx
 	jae,pn	1f
 0:
 	movl	CPUVAR(IPENDING),%eax
@@ -152,15 +152,15 @@ ENTRY(amd64_spllower)
 	cmpxchg8b CPUVAR(ISTATE)		/* swap in new ilevel */
 	jnz,pn	0b
 1:
-	popq	%rbx
+	movq	%r8,%rbx
 	ret
 2:
-	popq	%rbx
-LABEL(amd64_spllower_patch)
+	movq	%r8,%rbx
+LABEL(cx8_spllower_patch)
 	jmp	_C_LABEL(Xspllower)
 
-	.align	64
-LABEL(amd64_spllower_end)
+	.align	16
+LABEL(cx8_spllower_end)
 
 /*
  * void Xspllower(int s);
@@ -180,7 +180,7 @@ LABEL(amd64_spllower_end)
  * (see pmap_tlb_shootnow).
  */
 	nop
-	.align	4	/* Avoid confusion with amd64_spllower_end */
+	.align	4	/* Avoid confusion with cx8_spllower_end */
 
 IDTVEC(spllower)
 	pushq	%rbx
@@ -190,7 +190,7 @@ IDTVEC(spllower)
 	leaq	1f(%rip),%r13		# address to resume loop at
 1:	movl	%ebx,%eax		# get cpl
 	movl	CPUVAR(IUNMASK)(,%rax,4),%eax
-	cli
+	CLI(si,di)
 	andl	CPUVAR(IPENDING),%eax		# any non-masked bits left?
 	jz	2f
 	bsrl	%eax,%eax
@@ -199,7 +199,7 @@ IDTVEC(spllower)
 	jmp	*IS_RECURSE(%rax)
 2:
 	movl	%ebx,CPUVAR(ILEVEL)
-	sti
+	STI(si,di)
 	popq	%r12
 	popq	%r13
 	popq	%rbx
@@ -218,7 +218,7 @@ IDTVEC(doreti)
 	leaq	1f(%rip),%r13
 1:	movl	%ebx,%eax
 	movl	CPUVAR(IUNMASK)(,%rax,4),%eax
-	cli
+	CLI(si,di)
 	andl	CPUVAR(IPENDING),%eax
 	jz	2f
 	bsrl    %eax,%eax               # slow, but not worth optimizing
@@ -230,28 +230,37 @@ IDTVEC(doreti)
 5:
 	testb   $SEL_RPL,TF_CS(%rsp)
 	jz	6f
-.Ldoreti_checkast:
+	.globl doreti_checkast
+doreti_checkast:
 	movq	CPUVAR(CURLWP),%r14
 	CHECK_ASTPENDING(%r14)
 	je	3f
 	CLEAR_ASTPENDING(%r14)
-	sti
+	STI(si,di)
 	movl	$T_ASTFLT,TF_TRAPNO(%rsp)	/* XXX undo later.. */
 	/* Pushed T_ASTFLT into tf_trapno on entry. */
 	movq	%rsp,%rdi
 	call	_C_LABEL(trap)
-	cli
-	jmp	.Ldoreti_checkast
+	CLI(si,di)
+	jmp	doreti_checkast
 3:
 	CHECK_DEFERRED_SWITCH
 	jnz	9f
 6:
 	INTRFASTEXIT
 9:
-	sti
+	STI(si,di)
 	call	_C_LABEL(do_pmap_load)
-	cli
-	jmp	.Ldoreti_checkast	/* recheck ASTs */
+	CLI(si,di)
+	jmp	doreti_checkast		/* recheck ASTs */
+
+#ifdef XEN
+NENTRY(call_evtchn_do_event)
+	incl	CPUVAR(IDEPTH)
+	call    _C_LABEL(evtchn_do_event)
+	decl	CPUVAR(IDEPTH)
+	ret
+#endif
 
 /*
  * softintr()

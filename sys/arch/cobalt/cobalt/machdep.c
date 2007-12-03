@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.80.2.5 2007/08/20 18:37:48 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.80.2.6 2007/12/03 18:35:23 ad Exp $	*/
 
 /*
  * Copyright (c) 2006 Izumi Tsutsui.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.80.2.5 2007/08/20 18:37:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.80.2.6 2007/12/03 18:35:23 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -69,14 +69,14 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.80.2.5 2007/08/20 18:37:48 ad Exp $");
 #include <sys/kcore.h>
 #include <sys/boot_flag.h>
 #include <sys/ksyms.h>
+#include <sys/cpu.h>
+#include <sys/intr.h>
 
 #include <uvm/uvm_extern.h>
 
 #include <mips/mips3_clock.h>
 #include <machine/bootinfo.h>
 #include <machine/bus.h>
-#include <machine/cpu.h>
-#include <machine/intr.h>
 #include <machine/leds.h>
 #include <machine/psl.h>
 
@@ -462,13 +462,6 @@ cpu_reboot(int howto, char *bootstr)
 #define ELCR_WRITE(reg, val)	\
     bus_space_write_1(icu_bst, elcr_bsh, (reg), (val))
 
-const uint32_t mips_ipl_si_to_sr[SI_NQUEUES] = {
-	[SI_SOFT] = MIPS_SOFT_INT_MASK_0,
-	[SI_SOFTCLOCK] = MIPS_SOFT_INT_MASK_0,
-	[SI_SOFTNET] = MIPS_SOFT_INT_MASK_1,
-	[SI_SOFTSERIAL] = MIPS_SOFT_INT_MASK_1,
-};
-
 u_int icu_imen;
 
 static bus_space_tag_t icu_bst;
@@ -683,6 +676,9 @@ cpu_intr_disestablish(void *cookie)
 		ih->ih_cookie_type = 0;
 		evcnt_detach(&ih->ih_evcnt);
 	}
+
+	if (nfsroot_bstr != NULL)
+		netboot = 1;
 }
 
 void
@@ -690,7 +686,10 @@ cpu_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 {
 	struct clockframe cf;
 	struct cobalt_intrhand *ih;
+	struct cpu_info *ci;
 
+	ci = curcpu();
+	ci->ci_idepth++;
 	uvmexp.intrs++;
 
 	if (ipending & MIPS_INT_MASK_5) {
@@ -761,17 +760,17 @@ cpu_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 		}
 	}
 	_splset((status & ~cause & MIPS_HARD_INT_MASK) | MIPS_SR_INT_IE);
+	ci->ci_idepth--;
 
+#ifdef __HAVE_FAST_SOFTINTS
 	/* software interrupt */
 	ipending &= (MIPS_SOFT_INT_MASK_1|MIPS_SOFT_INT_MASK_0);
 	if (ipending == 0)
 		return;
-
 	_clrsoftintr(ipending);
-
 	softintr_dispatch(ipending);
+#endif
 }
-
 
 void
 decode_bootstring(void)
@@ -823,6 +822,9 @@ decode_bootstring(void)
 			bootpart = root_bstr[8] - '1';
 		}
 	}
+
+	if (nfsroot_bstr != NULL)
+		netboot = 1;
 }
 
 
@@ -913,13 +915,8 @@ static const int ipl2spl_table[] = {
 	[IPL_NONE] = 0,
 	[IPL_SOFTCLOCK] = MIPS_SOFT_INT_MASK_0,
 	[IPL_SOFTNET] = MIPS_SOFT_INT_MASK_0|MIPS_SOFT_INT_MASK_1,
-	[IPL_SOFTSERIAL] = MIPS_SOFT_INT_MASK_0|MIPS_SOFT_INT_MASK_1,
-	[IPL_BIO] = SPLBIO,
-	[IPL_NET] = SPLNET,
-	[IPL_TTY] = SPLTTY,
-	[IPL_VM] = SPLCLOCK,
-	[IPL_CLOCK] = SPLCLOCK,
-	[IPL_STATCLOCK] = SPLCLOCK,
+	[IPL_VM] = SPLVM,
+	[IPL_SCHED] = SPLSCHED,
 	[IPL_HIGH] = MIPS_INT_MASK,
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: p_dti_tyne.c,v 1.12.4.2 2007/08/20 18:37:22 ad Exp $	*/
+/*	$NetBSD: p_dti_tyne.c,v 1.12.4.3 2007/12/03 18:34:48 ad Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: p_dti_tyne.c,v 1.12.4.2 2007/08/20 18:37:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: p_dti_tyne.c,v 1.12.4.3 2007/12/03 18:34:48 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -140,15 +140,11 @@ struct platform platform_desktech_tyne = {
 /* XXX see comments in p_dti_tyne_init() */
 static const uint32_t dti_tyne_ipl_sr_bits[_IPL_N] = {
 	[IPL_NONE] =0,
-	[IPL_SOFT] =
-	    MIPS_SOFT_INT_MASK_0,
 	[IPL_SOFTCLOCK] =
 	    MIPS_SOFT_INT_MASK_0,
 	[IPL_SOFTNET] =
 	    MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1,
-	[IPL_SOFTSERIAL] =
-	    MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1,
-	[IPL_BIO] =	/* XXX */
+	[IPL_VM] =	/* XXX */
 	    MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1 |
 	    MIPS_INT_MASK_0|
 	    MIPS_INT_MASK_1|
@@ -156,23 +152,7 @@ static const uint32_t dti_tyne_ipl_sr_bits[_IPL_N] = {
 	    MIPS_INT_MASK_3|
 	    MIPS_INT_MASK_4|
 	    MIPS_INT_MASK_5,
-	[IPL_NET] =	/* XXX */
-	    MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1 |
-	    MIPS_INT_MASK_0|
-	    MIPS_INT_MASK_1|
-	    MIPS_INT_MASK_2|
-	    MIPS_INT_MASK_3|
-	    MIPS_INT_MASK_4|
-	    MIPS_INT_MASK_5,
-	[IPL_TTY] =	/* XXX */
-	    MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1 |
-	    MIPS_INT_MASK_0|
-	    MIPS_INT_MASK_1|
-	    MIPS_INT_MASK_2|
-	    MIPS_INT_MASK_3|
-	    MIPS_INT_MASK_4|
-	    MIPS_INT_MASK_5,
-	[IPL_CLOCK] =	/* XXX */
+	[IPL_SCHED] =	/* XXX */
 	    MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1 |
 	    MIPS_INT_MASK_0|
 	    MIPS_INT_MASK_1|

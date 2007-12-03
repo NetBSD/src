@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback.c,v 1.23.2.2 2007/10/09 13:38:59 ad Exp $      */
+/*      $NetBSD: xennetback.c,v 1.23.2.3 2007/12/03 18:40:51 ad Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -44,6 +44,7 @@
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/device.h>
+#include <sys/intr.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -59,14 +60,14 @@
 #include <net/if_ether.h>
 
 
-#include <machine/xen.h>
-#include <machine/xen_shm.h>
-#include <machine/evtchn.h>
-#include <machine/ctrl_if.h>
+#include <xen/xen.h>
+#include <xen/xen_shm.h>
+#include <xen/evtchn.h>
+#include <xen/ctrl_if.h>
 
 #ifdef XEN3
 #else
-#include <machine/xen-public/io/domain_controller.h>
+#include <xen/xen-public/io/domain_controller.h>
 #endif
 
 #include <uvm/uvm.h>
@@ -171,14 +172,13 @@ static int  xennetback_get_mcl_page(paddr_t *);
 static void xennetback_get_new_mcl_pages(void);
 /*
  * If we can't transfer the mbuf directly, we have to copy it to a page which
- * will be transfered to the remote domain. We use a pool + pool_cache
+ * will be transfered to the remote domain. We use a pool_cache
  * for this, or the mbuf cluster pool cache if MCLBYTES == PAGE_SIZE
  */
 #if MCLBYTES != PAGE_SIZE
-struct pool xmit_pages_pool;
-struct pool_cache xmit_pages_pool_cache;
+pool_cache_t xmit_pages_cache;
 #endif
-struct pool_cache *xmit_pages_pool_cachep;
+pool_cache_t xmit_pages_cachep;
 
 /* arrays used in xennetback_ifstart(), too large to allocate on stack */
 static mmu_update_t xstart_mmu[NB_XMIT_PAGES_BATCH * 3];
@@ -230,13 +230,11 @@ xennetback_init()
 	pool_init(&xni_page_pool, sizeof(struct xni_page), 0, 0, 0,
 	    "xnbpa", NULL, IPL_VM);
 #if MCLBYTES != PAGE_SIZE
-	pool_init(&xmit_pages_pool, PAGE_SIZE, 0, 0, 0, "xnbxm", NULL,
-	    IPL_VM);
-	pool_cache_init(&xmit_pages_pool_cache, &xmit_pages_pool,
-	    NULL, NULL, NULL);
-	xmit_pages_pool_cachep = &xmit_pages_pool_cache;
+	xmit_pages_cache = pool_cache_init(PAGE_SIZE, 0, 0, 0, "xnbxm", NULL,
+	    IPL_VM, NULL, NULL, NULL);
+	xmit_pages_cachep = xmit_pages_cache;
 #else
-	xmit_pages_pool_cachep = &mclpool_cache;
+	xmit_pages_cachep = mcl_cache;
 #endif
 
 	/*
@@ -284,7 +282,7 @@ xnetback_ctrlif_rx(ctrl_msg_t *msg, unsigned long id)
 		xneti->handle = req->netif_handle;
 		xneti->status = DISCONNECTED;
 
-		xneti->xni_softintr = softintr_establish(IPL_SOFTNET,
+		xneti->xni_softintr = softint_establish(SOFTINT_NET,
 		    xennetback_ifsoftstart, xneti);
 		if (xneti->xni_softintr == NULL) {
 			free(xneti, M_DEVBUF);
@@ -443,7 +441,7 @@ fail_1:
 		hypervisor_mask_event(xneti->xni_evtchn);
 		event_remove_handler(xneti->xni_evtchn,
 		    xennetback_evthandler, xneti);
-		softintr_disestablish(xneti->xni_softintr);
+		softint_disestablish(xneti->xni_softintr);
 		ring_addr = (vaddr_t)xneti->xni_rxring;
 		pmap_remove(pmap_kernel(), ring_addr, ring_addr + PAGE_SIZE);
 		uvm_km_free(kernel_map, ring_addr, PAGE_SIZE,
@@ -754,7 +752,7 @@ again:
 		goto again; /* more work to do ? */
 
 	/* check to see if we can transmit more packets */
-	softintr_schedule(xneti->xni_softintr);
+	softint_schedule(xneti->xni_softintr);
 
 	return 1;
 }
@@ -799,7 +797,7 @@ xennetback_tx_free(struct mbuf *m, void *va, size_t size, void *arg)
 		pool_put(&xni_page_pool, pkt_page);
 	}
 	if (m)
-		pool_cache_put(&mbpool_cache, m);
+		pool_cache_put(mb_cache, m);
 	splx(s);
 }
 
@@ -830,7 +828,7 @@ xennetback_ifstart(struct ifnet *ifp)
 	 * stack will enqueue all pending mbufs in the interface's send queue
 	 * before it is processed by xennet_softstart().
 	 */
-	softintr_schedule(xneti->xni_softintr);
+	softint_schedule(xneti->xni_softintr);
 }
 
 static void
@@ -906,7 +904,7 @@ xennetback_ifsoftstart(void *arg)
 			} else {
 				/* we have to copy the packet */
 				xmit_va = (vaddr_t)pool_cache_get_paddr(
-				    xmit_pages_pool_cachep,
+				    xmit_pages_cachep,
 				    PR_NOWAIT, &xmit_pa);
 				if (__predict_false(xmit_va == 0))
 					break; /* out of memory */
@@ -983,7 +981,7 @@ xennetback_ifsoftstart(void *arg)
 				m_freem(mbufs_sent[j]);
 			}
 			for (j = 0; j < nppitems; j++) {
-				pool_cache_put_paddr(xmit_pages_pool_cachep,
+				pool_cache_put_paddr(xmit_pages_cachep,
 				    (void *)pages_pool_free[j].va,
 				    pages_pool_free[j].pa);
 			}

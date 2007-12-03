@@ -1,4 +1,4 @@
-/* $NetBSD: ofwoea_machdep.c,v 1.2.2.2 2007/10/23 20:36:10 ad Exp $ */
+/* $NetBSD: ofwoea_machdep.c,v 1.2.2.3 2007/12/03 18:38:28 ad Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.2.2.2 2007/10/23 20:36:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.2.2.3 2007/12/03 18:38:28 ad Exp $");
 
 
 #include "opt_compat_netbsd.h"
@@ -57,6 +57,8 @@ __KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.2.2.2 2007/10/23 20:36:10 ad Ex
 #include <machine/pmap.h>
 #include <machine/powerpc.h>
 #include <machine/trap.h>
+#include <machine/vmparam.h>
+#include <machine/autoconf.h>
 #include <powerpc/bus.h>
 #include <powerpc/oea/bat.h>
 #include <powerpc/ofw_bus.h>
@@ -86,7 +88,7 @@ __KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.2.2.2 2007/10/23 20:36:10 ad Ex
 #ifdef OFWOEA_DEBUG
 #define DPRINTF printf
 #else
-#define DPRINTF while(0) printf
+#define DPRINTF while (0) printf
 #endif
 
 typedef struct _rangemap {
@@ -109,6 +111,7 @@ struct ofw_translations {
 struct pmap ofw_pmap;
 struct ofw_translations ofmap[32];
 char bootpath[256];
+char model_name[64];
 #if NKSYMS || defined(DDB) || defined(LKM)
 void *startsym, *endsym;
 #endif
@@ -131,7 +134,7 @@ static void set_timebase(void);
 void
 ofwoea_initppc(u_int startkernel, u_int endkernel, char *args)
 {
-	int ofmaplen;
+	int ofmaplen, node;
 #if defined (PPC_OEA64_BRIDGE)
 	register_t scratch;
 #endif
@@ -151,7 +154,13 @@ ofwoea_initppc(u_int startkernel, u_int endkernel, char *args)
 	    startsym = endsym = NULL;
 #endif
 
-	ofwoea_bus_space_init();
+	/* get model name and perform model-specific actions */
+	memset(model_name, 0, sizeof(model_name));
+	node = OF_finddevice("/");
+	if (node >= 0) {
+		OF_getprop(node, "model", model_name, sizeof(model_name));
+		model_init();
+	}
 
 	ofwoea_consinit();
 
@@ -310,32 +319,33 @@ restore_ofmap(struct ofw_translations *map, int len)
 static u_int16_t
 ranges_bitmap(int node, u_int16_t bitmap)
 {
-	int child, mlen, len, acells, scells, reclen, i, addr, j;
-	u_int32_t map[160];
+	int child, mlen, acells, scells, reclen, i, j;
+	u_int32_t addr, len, map[160];
 
 	for (child = OF_child(node); child; child = OF_peer(child)) {
 		mlen = OF_getprop(child, "ranges", map, sizeof(map));
 		if (mlen == -1)
 			goto noranges;
-		len = OF_getprop(child, "#address-cells", &acells,
+
+		j = OF_getprop(child, "#address-cells", &acells,
 		    sizeof(acells));
-		if (len == -1)
+		if (j == -1)
 			goto noranges;
-		len = OF_getprop(child, "#size-cells", &scells,
+
+		j = OF_getprop(child, "#size-cells", &scells,
 		    sizeof(scells));
-		if (len == -1)
+		if (j == -1)
 			goto noranges;
 
 		reclen = acells + 1 + scells;
 
-		for (i=0; i < reclen/(mlen/4); i++) {
-			addr = map[reclen * i + acells + 1];
+		for (i=0; i < (mlen/4)/reclen; i++) {
+			addr = map[reclen * i + acells];
 			len = map[reclen * i + reclen - 1];
 			for (j = 0; j < len / 0x10000000; j++)
 				bitmap |= 1 << ((addr+j*0x10000000) >>28);
 			bitmap |= 1 << (addr >> 28);
 		}
-
 noranges:
 		bitmap |= ranges_bitmap(child, bitmap);
 		continue;
@@ -359,11 +369,19 @@ ofwoea_batinit(void)
 	bitmap = ranges_bitmap(node, 0);
 	oea_batinit(0);
 
+#ifdef macppc
 	/* XXX this is a macppc-specific hack */
 	bitmap = 0x8f00;
-	for (i=1; i < 0x10; i++)
-		if (bitmap & (1 << i))
+#endif
+	for (i=1; i < 0x10; i++) {
+		/* skip the three vital SR regions */
+		if (i == USER_SR || i == KERNEL_SR || i == KERNEL2_SR)
+			continue;
+		if (bitmap & (1 << i)) {
 			oea_iobat_add(0x10000000 * i, BAT_BL_256M);
+			DPRINTF("Batmapped 256M at 0x%x\n", 0x10000000 * i);
+		}
+	}
 #endif
 }
 
@@ -414,11 +432,25 @@ find_ranges(int base, rangemap_t *regions, int *cur, int type)
 		reclen = 6;
 	else
 		reclen = acells + scells + 1;
-	DPRINTF("found a map reclen=%d cur=%d\n", reclen, *cur);
+	/*
+	 * There exist ISA buses with empty ranges properties.  This is
+	 * known to occur on the Pegasos II machine, and likely others.
+	 * According to them, that means that the isa bus is a fake bus, and
+	 * the real maps are the PCI maps of the preceeding bus.  To deal
+	 * with this, we will set cur to -1 and return.
+	 */
+	if (type == RANGE_TYPE_ISA && strcmp("isa", tmp) == 0 && len == 0) {
+		*cur = -1;
+		DPRINTF("Found empty range in isa bus\n");
+		return;
+	}
+
+	DPRINTF("found a map reclen=%d cur=%d len=%d\n", reclen, *cur, len);
 	switch (type) {
 		case RANGE_TYPE_PCI:
 		case RANGE_TYPE_FIRSTPCI:
 			for (i=0; i < len/(4*reclen); i++) {
+				DPRINTF("FOUND PCI RANGE\n");
 				regions[*cur].type = map[i*reclen] >> 24;
 				regions[*cur].addr = map[i*reclen + acells];
 				regions[*cur].size =
@@ -432,16 +464,23 @@ find_ranges(int base, rangemap_t *regions, int *cur, int type)
 					regions[*cur].type = RANGE_IO;
 				else
 					regions[*cur].type = RANGE_MEM;
+				DPRINTF("FOUND ISA RANGE TYPE=%d\n",
+					regions[*cur].type);
 				regions[*cur].size =
 				    map[i*reclen + acells + scells];
 				(*cur)++;
 			}
 			break;
 	}
+	DPRINTF("returning with CUR=%d\n", *cur);
 	return;
 rec:
-	for (node = OF_child(base); node; node = OF_peer(node))
+	for (node = OF_child(base); node; node = OF_peer(node)) {
+		DPRINTF("RECURSE 1 STEP\n");
 		find_ranges(node, regions, cur, type);
+		if (*cur == -1)
+			return;
+	}
 }
 
 static int
@@ -486,11 +525,24 @@ ofwoea_map_space(int rangetype, int iomem, int node,
 		u_int32_t size = 0;
 		rangemap_t regions[32];
 
+		DPRINTF("LOOKING FOR FIRSTPCI\n");
 		find_ranges(node, list, &cur, RANGE_TYPE_FIRSTPCI);
 		range = 0;
+		DPRINTF("LOOKING FOR ISA\n");
 		find_ranges(node, regions, &range, RANGE_TYPE_ISA);
 		if (range == 0 || cur == 0)
 			return -1; /* no isa stuff found */
+		/*
+		 * This may be confusing to some.  The ISA ranges property
+		 * is supposed to be a set of IO ranges for the ISA bus, but
+		 * generally, it's just a set of pci devfunc lists that tell
+		 * you to go look at the parent PCI device for the actual
+		 * ranges.
+		 */
+		if (range == -1) {
+			/* we found a rangeless isa bus */
+		}
+		DPRINTF("found isa stuff\n");
 		for (i=0; i < range; i++)
 			if (regions[i].type == iomem)
 				size = regions[i].size;
@@ -498,6 +550,7 @@ ofwoea_map_space(int rangetype, int iomem, int node,
 			/* the first io range is the one */
 			for (i=0; i < cur; i++)
 				if (list[i].type == RANGE_IO && size) {
+					DPRINTF("found IO\n");
 					tag->pbs_offset = list[i].addr;
 					tag->pbs_limit = size;
 					error = bus_space_init(tag, name, NULL, 0);
@@ -507,6 +560,7 @@ ofwoea_map_space(int rangetype, int iomem, int node,
 			for (i=0; i < cur; i++)
 				if (list[i].type == RANGE_MEM &&
 				    list[i].size == size) {
+					DPRINTF("found mem\n");
 					tag->pbs_offset = list[i].addr;
 					tag->pbs_limit = size;
 					error = bus_space_init(tag, name, NULL, 0);
@@ -605,6 +659,7 @@ ofwoea_bus_space_init(void)
 	    &genppc_isa_io_space_tag, "isa-ioport");
 	if (error > 0)
 		panic("Could not map ISA IO");
+
 	error = ofwoea_map_space(RANGE_TYPE_ISA, RANGE_MEM, -1,
 	    &genppc_isa_mem_space_tag, "isa-iomem");
 	if (error > 0)

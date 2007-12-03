@@ -1,4 +1,4 @@
-/*	$NetBSD: xenfunc.h,v 1.10.24.1 2007/10/09 13:38:53 ad Exp $	*/
+/*	$NetBSD: xenfunc.h,v 1.10.24.2 2007/12/03 18:40:38 ad Exp $	*/
 
 /*
  *
@@ -35,10 +35,10 @@
 #ifndef _XEN_XENFUNC_H_
 #define _XEN_XENFUNC_H_
 
-#include <machine/xen.h>
-#include <machine/hypervisor.h>
-#include <machine/evtchn.h>
-#include <machine/xenpmap.h>
+#include <xen/xen.h>
+#include <xen/hypervisor.h>
+#include <xen/evtchn.h>
+#include <xen/xenpmap.h>
 #include <machine/pte.h>
 
 #ifdef XENDEBUG_LOW
@@ -48,6 +48,7 @@
 #endif
 
 void xen_set_ldt(vaddr_t, uint32_t);
+#ifndef __x86_64__
 void xen_update_descriptor(union descriptor *, union descriptor *);
-
+#endif
 #endif /* _XEN_XENFUNC_H_ */

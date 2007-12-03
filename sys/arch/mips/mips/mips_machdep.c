@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.193.2.3 2007/10/23 20:13:31 ad Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.193.2.4 2007/12/03 18:37:30 ad Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -119,7 +119,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.193.2.3 2007/10/23 20:13:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.193.2.4 2007/12/03 18:37:30 ad Exp $");
 
 #include "opt_cputype.h"
 
@@ -1791,4 +1791,18 @@ cpu_idle(void)
 
 	while (!curcpu()->ci_want_resched)
 		(*mach_idle)();
+}
+
+bool
+cpu_intr_p(void)
+{
+
+	return curcpu()->ci_idepth != 0;
+}
+
+bool
+cpu_intr_p(void)
+{
+
+	return curcpu()->ci_idepth != 0;
 }

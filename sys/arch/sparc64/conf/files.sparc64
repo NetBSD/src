@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.108.6.4 2007/08/20 18:39:02 ad Exp $
+#	$NetBSD: files.sparc64,v 1.108.6.5 2007/12/03 18:39:22 ad Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -255,3 +255,6 @@ include "arch/sparc64/conf/majors.sparc64"
 
 # special compiler settings (no optimization if 32bit kernel)
 file	uvm/uvm_bio.c compile-with "${CC_NOOPT}"
+
+# OpenFirmware convenience stuff
+file  dev/ofw/ofw_subr.c

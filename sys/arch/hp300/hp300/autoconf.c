@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.84.2.1 2007/10/09 13:37:40 ad Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.84.2.2 2007/12/03 18:35:57 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2002 The NetBSD Foundation, Inc.
@@ -143,7 +143,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.84.2.1 2007/10/09 13:37:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.84.2.2 2007/12/03 18:35:57 ad Exp $");
 
 #include "hil.h"
 #include "dvbox.h"
@@ -342,8 +342,6 @@ cpu_configure(void)
 
 	/* Kick off autoconfiguration. */
 	(void)splhigh();
-
-	softintr_init();
 
 	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("no mainbus found");

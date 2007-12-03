@@ -1,4 +1,4 @@
-/* $NetBSD: interrupt.c,v 1.72.6.4 2007/10/18 18:12:59 ad Exp $ */
+/* $NetBSD: interrupt.c,v 1.72.6.5 2007/12/03 18:34:29 ad Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.72.6.4 2007/10/18 18:12:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.72.6.5 2007/12/03 18:34:29 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,7 +122,7 @@ scb_stray(void *arg, u_long vec)
 }
 
 void
-scb_set(u_long vec, void (*func)(void *, u_long), void *arg)
+scb_set(u_long vec, void (*func)(void *, u_long), void *arg, int level)
 {
 	u_long idx;
 	int s;
@@ -140,6 +140,7 @@ scb_set(u_long vec, void (*func)(void *, u_long), void *arg)
 
 	scb_iovectab[idx].scb_func = func;
 	scb_iovectab[idx].scb_arg = arg;
+	scb_mpsafe[idx] = (level != IPL_VM);
 
 	splx(s);
 }
@@ -265,20 +266,22 @@ interrupt(unsigned long a0, unsigned long a1, unsigned long a2,
 	case ALPHA_INTR_DEVICE:	/* I/O device interrupt */
 	    {
 		struct scbvec *scb;
+		int idx = SCB_VECTOIDX(a1 - SCB_IOVECBASE);
+		bool mpsafe = scb_mpsafe[idx];
 
 		KDASSERT(a1 >= SCB_IOVECBASE && a1 < SCB_SIZE);
 
 		atomic_add_ulong(&sc->sc_evcnt_device.ev_count, 1);
 		atomic_add_ulong(&ci->ci_intrdepth, 1);
 
-		KERNEL_LOCK(1, NULL);
-
+		if (!mpsafe) {
+			KERNEL_LOCK(1, NULL);
+		}
 		uvmexp.intrs++;
-
-		scb = &scb_iovectab[SCB_VECTOIDX(a1 - SCB_IOVECBASE)];
+		scb = &scb_iovectab[idx];
 		(*scb->scb_func)(scb->scb_arg, a1);
-
-		KERNEL_UNLOCK_ONE(NULL);
+		if (!mpsafe)
+			KERNEL_UNLOCK_ONE(NULL);
 
 		atomic_sub_ulong(&ci->ci_intrdepth, 1);
 		break;

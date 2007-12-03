@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.15.2.2 2007/07/15 13:15:22 ad Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.15.2.3 2007/12/03 18:34:39 ad Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.15.2.2 2007/07/15 13:15:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.15.2.3 2007/12/03 18:34:39 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -155,7 +155,8 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 	int numioapics = 0;
 #endif
 
-	printf("\n");
+	aprint_naive("\n");
+	aprint_normal("\n");
 
 #ifdef MPBIOS
 	mpbios_present = mpbios_probe(self);

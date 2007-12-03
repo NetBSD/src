@@ -1,4 +1,4 @@
-/*	$NetBSD: sab.c,v 1.37 2007/03/04 06:00:49 christos Exp $	*/
+/*	$NetBSD: sab.c,v 1.37.2.1 2007/12/03 18:39:26 ad Exp $	*/
 /*	$OpenBSD: sab.c,v 1.7 2002/04/08 17:49:42 jason Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.37 2007/03/04 06:00:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.37.2.1 2007/12/03 18:39:26 ad Exp $");
 
 #include "opt_kgdb.h"
 #include <sys/types.h>
@@ -58,6 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.37 2007/03/04 06:00:49 christos Exp $");
 #include <sys/syslog.h>
 #include <sys/kauth.h>
 #include <sys/kgdb.h>
+#include <sys/intr.h>
 
 #include <machine/autoconf.h>
 #include <machine/openfirm.h>
@@ -264,7 +265,7 @@ sab_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	sc->sc_softintr = softintr_establish(IPL_TTY, sab_softintr, sc);
+	sc->sc_softintr = softint_establish(SOFTINT_SERIAL, sab_softintr, sc);
 	if (sc->sc_softintr == NULL) {
 		printf(": can't get soft intr\n");
 		return;
@@ -344,7 +345,7 @@ sab_intr(void *vsc)
 		r |= sabtty_intr(sc->sc_child[1], &needsoft);
 
 	if (needsoft)
-		softintr_schedule(sc->sc_softintr);
+		softint_schedule(sc->sc_softintr);
 
 	return (r);
 }
@@ -667,6 +668,7 @@ sabopen(dev_t dev, int flags, int mode, struct lwp *l)
 	if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN, tp))
 		return (EBUSY);
 
+	mutex_spin_enter(&tty_lock);
 	if ((tp->t_state & TS_ISOPEN) == 0) {
 		ttychars(tp);
 		tp->t_iflag = TTYDEF_IFLAG;
@@ -682,8 +684,6 @@ sabopen(dev_t dev, int flags, int mode, struct lwp *l)
 		tp->t_ispeed = tp->t_ospeed = TTYDEF_SPEED;
 
 		sc->sc_rput = sc->sc_rget = sc->sc_rbuf;
-
-		s = spltty();
 
 		ttsetwater(tp);
 
@@ -710,8 +710,6 @@ sabopen(dev_t dev, int flags, int mode, struct lwp *l)
 			tp->t_state |= TS_CARR_ON;
 		else
 			tp->t_state &= ~TS_CARR_ON;
-	} else {
-		s = spltty();
 	}
 
 	if ((flags & O_NONBLOCK) == 0) {
@@ -719,25 +717,26 @@ sabopen(dev_t dev, int flags, int mode, struct lwp *l)
 		    (tp->t_state & TS_CARR_ON) == 0) {
 			int error;
 
-			error = ttysleep(tp, &tp->t_rawq, TTIPRI | PCATCH,
-			    "sabttycd", 0);
+			error = ttysleep(tp, &tp->t_rawq.c_cv, true, 0);
 			if (error != 0) {
-				splx(s);
+				mutex_spin_exit(&tty_lock);
 				return (error);
 			}
 		}
 	}
 
-	splx(s);
+	mutex_spin_exit(&tty_lock);
 
 	s = (*tp->t_linesw->l_open)(dev, tp);
 	if (s != 0) {
-		if (tp->t_state & TS_ISOPEN)
+		mutex_spin_enter(&tty_lock);
+		if (tp->t_state & TS_ISOPEN) {
+			mutex_spin_exit(&tty_lock);
 			return (s);
-
+		}
 		if (tp->t_cflag & HUPCL) {
 			sabtty_mdmctrl(sc, 0, DMSET);
-			(void)tsleep(sc, TTIPRI, ttclos, hz);
+			cv_wait(&lbolt, &tty_lock);
 		}
 
 		if ((sc->sc_flags & (SABTTYF_CONS_IN | SABTTYF_CONS_OUT)) == 0) {
@@ -745,6 +744,7 @@ sabopen(dev_t dev, int flags, int mode, struct lwp *l)
 			sabtty_flush(sc);
 			sabtty_reset(sc);
 		}
+		mutex_spin_exit(&tty_lock);
 	}
 	return (s);
 }
@@ -1076,14 +1076,7 @@ sabtty_start(struct tty *tp)
 
 	s = spltty();
 	if ((tp->t_state & (TS_TTSTOP | TS_TIMEOUT | TS_BUSY)) == 0) {
-		if (tp->t_outq.c_cc <= tp->t_lowat) {
-			if (tp->t_state & TS_ASLEEP) {
-				tp->t_state &= ~TS_ASLEEP;
-				wakeup(&tp->t_outq);
-			}
-			selwakeup(&tp->t_wsel);
-		}
-		if (tp->t_outq.c_cc) {
+		if (ttypull(tp)) {
 			sc->sc_txc = ndqb(&tp->t_outq, 0);
 			sc->sc_txp = tp->t_outq.c_cf;
 			tp->t_state |= TS_BUSY;

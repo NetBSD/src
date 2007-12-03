@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.121.2.1 2007/05/27 12:27:50 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.121.2.2 2007/12/03 18:37:43 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.121.2.1 2007/05/27 12:27:50 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.121.2.2 2007/12/03 18:37:43 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_hpux.h"
@@ -227,13 +227,6 @@ int	mem_cluster_cnt;
 int	cpuspeed;		/* only used for printing later */
 int	delay_divisor = 512;	/* assume some reasonable value to start */
 
-/*
- * Since mvme68k boards can have anything from 4MB of onboard RAM, we
- * would rather set the PAGER_MAP_SIZE at runtime based on the amount
- * of onboard RAM.
- */
-int	mvme68k_pager_map_size;
-
 /* Machine-dependent initialization routines. */
 void	mvme68k_init __P((void));
 
@@ -256,13 +249,17 @@ mvme68k_init()
 	int i;
 
 	/*
-	 * Set PAGER_MAP_SIZE to half the size of onboard RAM, up to a
+	 * Since mvme68k boards can have anything from 4MB of onboard RAM, we
+	 * would rather set the pager_map_size at runtime based on the amount
+	 * of onboard RAM.
+	 *
+	 * Set pager_map_size to half the size of onboard RAM, up to a
 	 * maximum of 16MB.
 	 * (Note: Just use ps_end here since onboard RAM starts at 0x0)
 	 */
-	mvme68k_pager_map_size = phys_seg_list[0].ps_end / 2;
-	if (mvme68k_pager_map_size > (16 * 1024 * 1024))
-		mvme68k_pager_map_size = 16 * 1024 * 1024;
+	pager_map_size = phys_seg_list[0].ps_end / 2;
+	if (pager_map_size > (16 * 1024 * 1024))
+		pager_map_size = 16 * 1024 * 1024;
 
 	/*
 	 * Tell the VM system about available physical memory.
@@ -1191,20 +1188,12 @@ cpu_exec_aout_makecmds(l, epp)
 
 const static int ipl2psl_table[] = {
 	[IPL_NONE] = PSL_IPL0,
-	[IPL_SOFT] = PSL_IPL1,
+	[IPL_SOFTBIO] = PSL_IPL1,
 	[IPL_SOFTCLOCK] = PSL_IPL1,
 	[IPL_SOFTNET] = PSL_IPL1,
 	[IPL_SOFTSERIAL] = PSL_IPL1,
-	[IPL_BIO] = PSL_IPL2,
-	[IPL_NET] = PSL_IPL3,
-	[IPL_TTY] = PSL_IPL3,
-	/* IPL_LPT == IPL_TTY */
 	[IPL_VM] = PSL_IPL3,
-	[IPL_SERIAL] = PSL_IPL4,
-	[IPL_CLOCK] = PSL_IPL5,
-	[IPL_HIGH] = PSL_IPL7,
-	/* IPL_SCHED == IPL_HIGH */
-	/* IPL_LOCK == IPL_HIGH */
+	[IPL_SCHED] = PSL_IPL7,
 };
 
 ipl_cookie_t

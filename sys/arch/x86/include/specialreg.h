@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.15.6.3 2007/10/09 13:38:42 ad Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.15.6.4 2007/12/03 18:40:09 ad Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -220,6 +220,7 @@
 #define MSR_PERFCTR0		0x0c1
 #define MSR_PERFCTR1		0x0c2
 #define MSR_FSB_FREQ		0x0cd	/* Core Duo/Solo only */
+#define MSR_IA32_EXT_CONFIG	0x0ee	/* Undocumented. Core Solo/Duo only */
 #define MSR_MTRRcap		0x0fe
 #define	MSR_BBL_CR_ADDR		0x116	/* PII+ only */
 #define	MSR_BBL_CR_DECC		0x118	/* PII+ only */

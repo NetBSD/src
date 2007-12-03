@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.28.2.4 2007/10/09 15:22:00 ad Exp $	*/
+/*	$NetBSD: fd.c,v 1.28.2.5 2007/12/03 18:34:27 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.28.2.4 2007/10/09 15:22:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.28.2.5 2007/12/03 18:34:27 ad Exp $");
 
 #include "opt_ddb.h"
 
@@ -1073,7 +1073,8 @@ loop:
 		fdc->sc_fh.fh_regs = &fdc->sc_fr;
 		fdc->sc_fr.fr_r9 = IOMD_BASE + (IOMD_FIQRQ << 2);
 		fdc->sc_fr.fr_r10 = fd->sc_nbytes;
-		fdc->sc_fr.fr_r11 = (u_int)(bp->b_data + fd->sc_skip);
+		fdc->sc_fr.fr_r11 =
+		    (u_int)((uintptr_t)bp->b_data + fd->sc_skip);
 		fdc->sc_fr.fr_r12 = fdc->sc_drq;
 #ifdef FD_DEBUG
 		printf("fdc-doio:r9=%x r10=%x r11=%x r12=%x data=%x skip=%x\n",
@@ -1625,7 +1626,7 @@ load_memory_disc_from_floppy(md, dev)
 		if (biowait(bp))
 			panic("Cannot load floppy image");
                                                  
-		memcpy((void *)md->md_addr + loop * fd_types[type].sectrac
+		memcpy((char *)md->md_addr + loop * fd_types[type].sectrac
 		    * DEV_BSIZE, (void *)bp->b_data,
 		    fd_types[type].sectrac * DEV_BSIZE);
 	}

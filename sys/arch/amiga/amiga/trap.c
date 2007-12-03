@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.112.2.3 2007/10/09 13:37:19 ad Exp $	*/
+/*	$NetBSD: trap.c,v 1.112.2.4 2007/12/03 18:34:43 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
 #include "opt_fpu_emulate.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.112.2.3 2007/10/09 13:37:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.112.2.4 2007/12/03 18:34:43 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -253,7 +253,6 @@ userret(l, pc, oticks)
 
 		addupc_task(l, pc, (int)(p->p_sticks - oticks) * psratio);
 	}
-	curcpu()->ci_schedstate.spc_curpriority = l->l_priority = l->l_usrpri;
 }
 
 /*

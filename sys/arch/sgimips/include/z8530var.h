@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530var.h,v 1.7 2005/12/11 12:18:53 christos Exp $	*/
+/*	$NetBSD: z8530var.h,v 1.7.30.1 2007/12/03 18:38:49 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -118,3 +118,4 @@ void  zs_write_data (struct zs_chanstate *, u_char);
 
 /* Zilog Serial hardware interrupts (level 0) */
 #define splzs()		spltty()
+#define	IPL_ZS		IPL_TTY

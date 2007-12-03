@@ -1,4 +1,4 @@
-#	$NetBSD: files.ofppc,v 1.26.2.2 2007/10/23 20:13:36 ad Exp $
+#	$NetBSD: files.ofppc,v 1.26.2.3 2007/12/03 18:38:04 ad Exp $
 #
 # NetBSD/ofppc configuration info
 #
@@ -20,20 +20,19 @@ defflag zsc.h NO_ZSC_DEVICE
 defflag adb.h NO_ADB_DEVICE
 defflag ukbd.h NO_UKBD_DEVICE
 defflag zstty.h NO_ZSTTY_DEVICE
+defflag ofb.h NO_OFB_DEVICE
 
-file	arch/ofppc/ofppc/autoconf.c
+file	arch/powerpc/oea/ofw_autoconf.c
 file	arch/powerpc/powerpc/clock.c
 file	kern/subr_disk_mbr.c			disk
 file	arch/powerpc/oea/ofwoea_machdep.c
 file	arch/powerpc/oea/ofw_consinit.c
+file	arch/powerpc/oea/ofw_rascons.c
 file	arch/ofppc/ofppc/machdep.c
-#file	arch/ofppc/ofppc/platform.c
-file	arch/macppc/dev/ofb_cons.c
 
 file	arch/powerpc/powerpc/bus_dma.c
 file	arch/powerpc/powerpc/bus_space.c
 file	arch/powerpc/powerpc/procfs_machdep.c	procfs
-file	arch/powerpc/powerpc/softintr.c
 file	dev/cons.c
 
 #
@@ -45,7 +44,7 @@ include "arch/powerpc/pic/files.pic"
 #
 # Generic OpenFirmware device support
 #
-include "dev/ofw/files.ofw"
+#include "dev/ofw/files.ofw"
 
 #
 # I2O device support
@@ -76,9 +75,17 @@ include "dev/wscons/files.wscons"
 include "dev/wsfb/files.wsfb"
 
 define mainbus {}
-device mainbus: mainbus, ofbus
+device mainbus: mainbus
 attach mainbus at root
 file	arch/ofppc/ofppc/mainbus.c		mainbus
+
+defpseudo openfirm
+file	dev/ofw/openfirmio.c			openfirm needs-flag
+file	dev/ofw/ofw_subr.c			ofbus | openfirm
+
+device	rtas
+attach	rtas at mainbus
+file	arch/powerpc/powerpc/rtas.c		rtas needs-flag
 
 #
 # PCI bus support
@@ -86,12 +93,21 @@ file	arch/ofppc/ofppc/mainbus.c		mainbus
 include "dev/pci/files.pci"
 include "dev/pci/files.agp"
 file	arch/powerpc/pci/pciconf_indirect.c	pci
+file	arch/powerpc/pci/pciconf_ofmethod.c	pci
 file	arch/powerpc/pci/pci_machdep_common.c	pci
 file	arch/powerpc/pci/pci_machdep_ofw.c	pci
 
 device ofwpci: pcibus
 attach ofwpci at mainbus
 file	arch/ofppc/pci/ofwpci.c			ofwpci
+
+device pegasospci: pcibus
+attach pegasospci at mainbus
+file	arch/ofppc/pci/pegasospci.c		pegasospci
+
+device pegasospci: pcibus
+attach pegasospci at mainbus
+file	arch/ofppc/pci/pegasospci.c		pegasospci
 
 device pchb: pcibus
 attach pchb at pci
@@ -102,10 +118,6 @@ device	pcib: isabus
 attach	pcib at pci
 file	arch/powerpc/pci/pcib.c			pcib
 
-device ofb: wsemuldisplaydev, rasops8, vcons
-attach ofb at pci
-file arch/macppc/dev/ofb.c			ofb needs-flag
-
 #
 # ISA bus support
 #
@@ -114,11 +126,11 @@ file	arch/powerpc/isa/isa_machdep_common.c	isa
 file	arch/ofppc/isa/isa_machdep.c		isa
 file	arch/powerpc/isa/isadma_machdep.c	isa
 
+include "dev/pckbport/files.pckbport"
+
 device	cpu
 attach	cpu at mainbus
 file	arch/ofppc/ofppc/cpu.c			cpu
-
-include "arch/powerpc/conf/files.rtas"
 
 #
 # Support for generic OpenFirmware driver configurations.  This is

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.209.2.4 2007/08/20 18:38:30 ad Exp $	*/
+/*	$NetBSD: trap.c,v 1.209.2.5 2007/12/03 18:37:31 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.209.2.4 2007/08/20 18:38:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.209.2.5 2007/12/03 18:37:31 ad Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ddb.h"
@@ -628,7 +628,7 @@ mips_singlestep(struct lwp *l)
 	 * We can't single-step into a RAS.  Check if we're in
 	 * a RAS, and set the breakpoint just past it.
 	 */
-	if (!LIST_EMPTY(&p->p_raslist)) {
+	if (p->p_raslist != NULL) {
 		while (ras_lookup(p, (void *)va) != (void *)-1)
 			va += sizeof(int);
 	}

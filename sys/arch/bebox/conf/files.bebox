@@ -1,4 +1,4 @@
-#	$NetBSD: files.bebox,v 1.47.10.2 2007/10/23 20:11:57 ad Exp $
+#	$NetBSD: files.bebox,v 1.47.10.3 2007/12/03 18:35:15 ad Exp $
 #
 # First try for bebox specific configuration info
 #
@@ -16,7 +16,6 @@ file    arch/powerpc/powerpc/clock.c
 file    arch/powerpc/oea/prep_machdep.c
 file	arch/powerpc/powerpc/bus_dma.c
 file	arch/powerpc/powerpc/bus_space.c
-file	arch/powerpc/powerpc/softintr.c
 file	arch/powerpc/powerpc/procfs_machdep.c	procfs
 file    arch/bebox/bebox/pic_bebox.c
 

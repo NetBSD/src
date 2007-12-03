@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.8.2.4 2007/11/01 21:58:14 ad Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.8.2.5 2007/12/03 18:40:24 ad Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -36,8 +36,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_multiprocessor.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.8.2.4 2007/11/01 21:58:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.8.2.5 2007/12/03 18:40:24 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -126,6 +128,49 @@ x86_init(void)
 #ifndef XEN
 	msr_cpu_broadcast_initmtx();
 #endif
+}
+
+void
+cpu_need_resched(struct cpu_info *ci, int flags)
+{
+	lwp_t *l;
+
+	l = ci->ci_data.cpu_onproc;
+	ci->ci_want_resched = 1;
+	aston(l);
+#ifdef MULTIPROCESSOR
+	if (ci == curcpu()) {
+		return;
+	}
+	if (l != ci->ci_data.cpu_idlelwp) {
+		if ((flags & RESCHED_IMMED) != 0) {
+			x86_send_ipi(ci, 0);
+		}
+	} else if ((ci->ci_feature2_flags & CPUID2_MONITOR) == 0) {
+		x86_send_ipi(ci, 0);
+	}
+#endif
+}
+
+void
+cpu_signotify(struct lwp *l)
+{
+
+	aston(l);
+#ifdef MULTIPROCESSOR
+	if (l->l_cpu != curcpu())
+		x86_send_ipi(l->l_cpu, 0);
+#endif
+}
+
+void
+cpu_need_proftick(struct lwp *l)
+{
+
+	KASSERT(l->l_cpu == curcpu());
+
+	l->l_pflag |= LP_OWEUPC;
+	aston(l);
 }
 
 void

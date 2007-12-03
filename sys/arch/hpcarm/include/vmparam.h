@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.27 2005/12/11 12:17:33 christos Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.27.30.1 2007/12/03 18:36:06 ad Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -49,7 +49,7 @@
 /*
  * Override the default pager_map size, there's not enough KVA.
  */
-#define PAGER_MAP_SIZE		(4 * 1024 * 1024)
+#define PAGER_MAP_DEFAULT_SIZE		(4 * 1024 * 1024)
 
 /*
  * Size of User Raw I/O map

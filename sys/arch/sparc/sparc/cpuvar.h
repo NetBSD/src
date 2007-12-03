@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.70.2.1 2007/05/27 12:28:17 ad Exp $ */
+/*	$NetBSD: cpuvar.h,v 1.70.2.2 2007/12/03 18:39:15 ad Exp $ */
 
 /*
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -421,7 +421,11 @@ struct cpu_info {
 
 
 #define CPU_INFO_ITERATOR		int
+#ifdef MULTIPROCESSOR
 #define CPU_INFO_FOREACH(cii, ci)	cii = 0; ci = cpus[cii], cii < sparc_ncpus; cii++
+#else
+#define	CPU_INFO_FOREACH(cii, ci)	(void)cii, ci = curcpu(); ci != NULL; ci = NULL
+#endif
 
 /*
  * Useful macros.

@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.39.30.1 2007/07/15 22:20:23 ad Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.39.30.2 2007/12/03 18:37:29 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,6 +78,10 @@
 
 #ifndef _MIPS_VMPARAM_H_
 #define	_MIPS_VMPARAM_H_
+
+#include <sys/simplelock.h>
+
+#include <sys/simplelock.h>
 
 /*
  * Machine dependent VM constants for MIPS.

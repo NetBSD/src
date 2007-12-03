@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.28.6.2 2007/07/15 22:20:25 ad Exp $	*/
+/*	$NetBSD: intr.h,v 1.28.6.3 2007/12/03 18:38:13 ad Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -151,7 +151,6 @@ extern struct intrhand intrtab[];
 #define SYS_DEV_FDC	9
 #define SYS_DEV_BOGUS	-1
 #define MAX_DEV_NCOOKIES 10
-
 
 struct pmax_intrhand {
 	LIST_ENTRY(pmax_intrhand) ih_q;

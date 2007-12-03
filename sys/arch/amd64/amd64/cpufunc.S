@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.S,v 1.1.6.2 2007/10/09 13:37:15 ad Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.1.6.3 2007/12/03 18:34:36 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -44,6 +44,10 @@
 #include <machine/specialreg.h>
 #include <machine/segments.h>
 
+#include "opt_xen.h"
+
+#include "opt_xen.h"
+
 #include "assym.h"
 
 /* Small and slow, so align less. */
@@ -62,6 +66,7 @@ NENTRY(x86_mfence)
 	mfence
 	ret
 
+#ifndef XEN
 NENTRY(invlpg)
 	invlpg	(%rdi)
 	ret
@@ -93,10 +98,12 @@ NENTRY(rcr2)
 NENTRY(lcr3)
 	movq	%rdi, %cr3
 	ret
+#endif
 
 NENTRY(rcr3)
 	movq	%cr3, %rax
 	ret
+#endif
 
 NENTRY(lcr4)
 	movq	%rdi, %cr4
@@ -130,6 +137,7 @@ NENTRY(rcr8)
  *
  * (the alternatives not quoted above are not an option here.)
  */
+#ifndef XEN
 NENTRY(tlbflushg)
 	movq	%cr4, %rax
 	movq	%rax, %rdx
@@ -172,6 +180,7 @@ NENTRY(x86_write_flags)
 	ret
 
 STRONG_ALIAS(x86_write_psl,x86_write_flags)
+#endif /* XEN */
 
 NENTRY(rdmsr)
 	movq	%rdi, %rcx
@@ -207,9 +216,11 @@ NENTRY(wrmsr_locked)
 	wrmsr
 	ret
 
+#ifndef XEN
 NENTRY(wbinvd)
 	wbinvd
 	ret
+#endif
 
 NENTRY(rdtsc)
 	xorq	%rax, %rax
@@ -284,6 +295,7 @@ NENTRY(__byte_swap_u16_variable)
  * process creation and exit, both of which clean up via task switches.  OTOH,
  * this only happens at run time when the GDT is resized.
  */
+#ifndef XEN
 NENTRY(lgdt)
 	/* Reload the descriptor table. */
 	movq	%rdi,%rax
@@ -292,6 +304,13 @@ NENTRY(lgdt)
 	jmp	1f
 	nop
 1:	/* Reload "stale" selectors. */
+#else /* XEN */
+/*
+ * void lgdt_finish(void);
+ * Reload segments after a GDT change
+ */
+NENTRY(lgdt_finish)
+#endif /* XEN */
 	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax
 	movl	%eax,%ds
 	movl	%eax,%es
@@ -437,7 +456,6 @@ NENTRY(insb)
 	movq	%rdi, %rdx
 	movq	%rsi, %rdi
 	movq	%rdx, %rcx
-	cld
 	rep
 	insb
 	ret
@@ -452,7 +470,6 @@ NENTRY(insw)
 	movq	%rdi, %rdx
 	movq	%rsi, %rdi
 	movq	%rdx, %rcx
-	cld
 	rep
 	insw
 	ret
@@ -467,7 +484,6 @@ NENTRY(insl)
 	movq	%rdi, %rdx
 	movq	%rsi, %rdi
 	movq	%rdx, %rcx
-	cld
 	rep
 	insl
 	ret
@@ -481,7 +497,6 @@ NENTRY(outb)
 NENTRY(outsb)
 	movq	%rdi, %rdx
 	movq	%rdx, %rcx
-	cld
 	rep
 	outsb
 	ret
@@ -495,7 +510,6 @@ NENTRY(outw)
 NENTRY(outsw)
 	movq	%rdi, %rdx
 	movq	%rdx, %rcx
-	cld
 	rep
 	outsw
 	ret
@@ -509,7 +523,6 @@ NENTRY(outl)
 NENTRY(outsl)
 	movq	%rdi, %rdx
 	movq	%rdx, %rcx
-	cld
 	rep
 	outsl
 	ret

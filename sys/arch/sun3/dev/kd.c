@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.50.2.1 2007/10/23 20:14:39 ad Exp $	*/
+/*	$NetBSD: kd.c,v 1.50.2.2 2007/12/03 18:39:39 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.50.2.1 2007/10/23 20:14:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.50.2.2 2007/12/03 18:39:39 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -92,6 +92,7 @@ static int kdparam(struct tty *, struct termios *);
 static void kdstart(struct tty *);
 static void kd_init(struct kd_softc *);
 static void kd_cons_input(int);
+static void kd_later(void *);
 
 dev_type_open(kdopen);
 dev_type_close(kdclose);
@@ -281,7 +282,6 @@ kdparam(struct tty *tp, struct termios *t)
 }
 
 
-static void kd_later(void*);
 static void kd_putfb(struct tty *);
 
 static void 
@@ -296,7 +296,7 @@ kdstart(struct tty *tp)
 		goto out;
 
 	cl = &tp->t_outq;
-	if (cl->c_cc) {
+	if (ttypull(tp)) {
 		if (kd_is_console) {
 			tp->t_state |= TS_BUSY;
 			if ((s1 & PSL_IPL) == 0) {
@@ -318,13 +318,6 @@ kdstart(struct tty *tp)
 			 */
 			ndflush(cl, cl->c_cc);
 		}
-	}
-	if (cl->c_cc <= tp->t_lowat) {
-		if (tp->t_state & TS_ASLEEP) {
-			tp->t_state &= ~TS_ASLEEP;
-			wakeup((void *)cl);
-		}
-		selwakeup(&tp->t_wsel);
 	}
 out:
 	splx(s2);
