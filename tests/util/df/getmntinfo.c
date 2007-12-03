@@ -1,4 +1,4 @@
-/*	$NetBSD: getmntinfo.c,v 1.1 2007/11/12 15:14:01 jmmv Exp $	*/
+/*	$NetBSD: getmntinfo.c,v 1.2 2007/12/03 18:49:24 riz Exp $	*/
 /*
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -85,7 +85,7 @@ other_variants(const struct statvfs *tmpl, const int *minfree, int minfreecnt,
 			used =  total * consumed[j] / 100;
 			sf->f_bfree = (total - used) / sf->f_bsize;
 			sf->f_bavail = (total * (100 - minfree[i]) / 100 -
-			    used) / sf->f_bsize;
+			    used) / (int)sf->f_bsize;
 			sf->f_bresvd = sf->f_bfree - sf->f_bavail;
 		}
 }
