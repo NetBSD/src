@@ -1,4 +1,4 @@
-/*	$NetBSD: gti2c.c,v 1.6 2007/10/19 12:00:33 ad Exp $	*/
+/*	$NetBSD: gti2c.c,v 1.7 2007/12/03 15:34:32 ad Exp $	*/
 
 /*
  * Copyright (c) 2005 Brocade Communcations, inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gti2c.c,v 1.6 2007/10/19 12:00:33 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gti2c.c,v 1.7 2007/12/03 15:34:32 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -267,7 +267,7 @@ gt_i2c_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_i2c.ic_read_byte = gt_i2c_read_byte;
 	sc->sc_i2c.ic_write_byte = gt_i2c_write_byte;
 
-	intr_establish(IRQ_I2C, IST_LEVEL, IPL_I2C, gt_i2c_intr, sc);
+	intr_establish(IRQ_I2C, IST_LEVEL, IPL_VM, gt_i2c_intr, sc);
 
 	evcnt_attach_dynamic(&sc->sc_ev_intr, EVCNT_TYPE_INTR, NULL,
 		sc->sc_dev.dv_xname, "intr");

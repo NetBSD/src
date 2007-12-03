@@ -1,4 +1,4 @@
-/* $NetBSD: dec_maxine.c,v 1.50 2006/12/21 15:55:24 yamt Exp $ */
+/* $NetBSD: dec_maxine.c,v 1.51 2007/12/03 15:34:11 ad Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -106,7 +106,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.50 2006/12/21 15:55:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.51 2007/12/03 15:34:11 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -148,21 +148,16 @@ static unsigned latched_cycle_cnt;
 
 static const int dec_maxine_ipl2spl_table[] = {
 	[IPL_NONE] = 0,
-	[IPL_SOFT] = _SPL_SOFT,
 	[IPL_SOFTCLOCK] = _SPL_SOFTCLOCK,
 	[IPL_SOFTNET] = _SPL_SOFTNET,
-	[IPL_SOFTSERIAL] = _SPL_SOFTSERIAL,
 	/*
 	 * MAXINE IOASIC interrupts come through INT 3, while
 	 * clock interrupt does via INT 1.  splclock and splstatclock
 	 * should block IOASIC activities.
 	 */
-	[IPL_BIO] = MIPS_SPL3,
-	[IPL_NET] = MIPS_SPL3,
-	[IPL_TTY] = MIPS_SPL3,
 	[IPL_VM] = MIPS_SPL3,
-	[IPL_CLOCK] = MIPS_SPL_0_1_3,
-	[IPL_STATCLOCK] = MIPS_SPL_0_1_3,
+	[IPL_SCHED] = MIPS_SPL_0_1_3,
+	[IPL_HIGH] = MIPS_SPL_0_1_3,
 };
 
 void

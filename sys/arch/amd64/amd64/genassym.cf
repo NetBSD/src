@@ -1,11 +1,11 @@
-#	$NetBSD: genassym.cf,v 1.18 2007/11/22 16:16:41 bouyer Exp $
+#	$NetBSD: genassym.cf,v 1.19 2007/12/03 15:33:09 ad Exp $
 
 #
-# Copyright (c) 1998 The NetBSD Foundation, Inc.
+# Copyright (c) 1998, 2006, 2007 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # This code is derived from software contributed to The NetBSD Foundation
-# by Charles M. Hannum.
+# by Charles M. Hannum, and by Andrew Doran.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -168,10 +168,10 @@ define	UVM_PAGE_IDLE_ZERO	offsetof(struct uvm, page_idle_zero)
 define	L_ADDR			offsetof(struct lwp, l_addr)
 define	L_FLAG			offsetof(struct lwp, l_flag)
 define	L_PROC			offsetof(struct lwp, l_proc)
+define	L_CTXSWTCH		offsetof(struct lwp, l_ctxswtch)
 define	L_MD_TSS_SEL		offsetof(struct lwp, l_md.md_tss_sel)
 define	L_MD_REGS		offsetof(struct lwp, l_md.md_regs)
 define	L_MD_FLAGS		offsetof(struct lwp, l_md.md_flags)
-define	L_MUTEX			offsetof(struct lwp, l_mutex)
 define	L_MD_ASTPENDING		offsetof(struct lwp, l_md.md_astpending)
 
 define	PAGE_SIZE		PAGE_SIZE
@@ -306,19 +306,13 @@ define	IS_FLAGS	offsetof(struct intrsource, is_flags)
 define	IS_PIN		offsetof(struct intrsource, is_pin)
 define	IS_TYPE		offsetof(struct intrsource, is_type)
 define	IS_MAXLEVEL	offsetof(struct intrsource, is_maxlevel)
+define	IS_LWP			offsetof(struct intrsource, is_lwp)
 endif
 
 define	IPL_NONE		IPL_NONE
 define	IPL_CLOCK		IPL_CLOCK
 define	IPL_HIGH		IPL_HIGH
 define	IPL_IPI			IPL_IPI
-
-define	IPL_SOFTNET		IPL_SOFTNET
-define	IPL_SOFTCLOCK		IPL_SOFTCLOCK
-define	IPL_SOFTSERIAL		IPL_SOFTSERIAL
-ifdef XEN
-define	IPL_SOFTXENEVT		IPL_SOFTXENEVT
-endif
 
 define	LIR_IPI			LIR_IPI
 define	LIR_TIMER		LIR_TIMER
@@ -328,10 +322,6 @@ define	SIR_CLOCK		SIR_CLOCK
 define	SIR_SERIAL		SIR_SERIAL	
 
 define	IREENT_MAGIC		IREENT_MAGIC
-
-define	X86_SOFTINTR_SOFTSERIAL	X86_SOFTINTR_SOFTSERIAL
-define	X86_SOFTINTR_SOFTNET	X86_SOFTINTR_SOFTNET
-define	X86_SOFTINTR_SOFTCLOCK	X86_SOFTINTR_SOFTCLOCK
 
 define	PSL_MBO			PSL_MBO
 
