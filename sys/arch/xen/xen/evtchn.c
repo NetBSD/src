@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.24 2007/11/22 16:17:07 bouyer Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.25 2007/12/03 15:34:29 ad Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -64,7 +64,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.24 2007/11/22 16:17:07 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.25 2007/12/03 15:34:29 ad Exp $");
 
 #include "opt_xen.h"
 #include "isa.h"
@@ -157,7 +157,7 @@ init_events()
 	evtch = bind_virq_to_evtch(VIRQ_DEBUG);
 	aprint_verbose("debug virtual interrupt using event channel %d\n",
 	    evtch);
-	event_set_handler(evtch, &xen_debug_handler, NULL, IPL_DEBUG,
+	event_set_handler(evtch, &xen_debug_handler, NULL, IPL_HIGH,
 	    "debugev");
 	hypervisor_enable_event(evtch);
 
@@ -165,7 +165,7 @@ init_events()
 	evtch = bind_virq_to_evtch(VIRQ_MISDIRECT);
 	aprint_verbose("misdirect virtual interrupt using event channel %d\n",
 	    evtch);
-	event_set_handler(evtch, &xen_misdirect_handler, NULL, IPL_DIE,
+	event_set_handler(evtch, &xen_misdirect_handler, NULL, IPL_HIGH,
 	    "misdirev");
 	hypervisor_enable_event(evtch);
 

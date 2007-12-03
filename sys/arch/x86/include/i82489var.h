@@ -1,4 +1,4 @@
-/*	$NetBSD: i82489var.h,v 1.7 2007/10/17 19:58:14 garbled Exp $	*/
+/*	$NetBSD: i82489var.h,v 1.8 2007/12/03 15:34:27 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -124,5 +124,10 @@ extern void lapic_set_lvt(void);
 extern void lapic_enable(void);
 extern void lapic_calibrate_timer(struct cpu_info *ci);
 extern void lapic_initclocks(void);
+
+struct timecounter;
+
+extern u_int lapic_get_timecount(struct timecounter *);
+extern u_int lapic_boot_timecount;
 
 #endif

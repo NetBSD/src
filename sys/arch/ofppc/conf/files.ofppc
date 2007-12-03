@@ -1,4 +1,4 @@
-#	$NetBSD: files.ofppc,v 1.34 2007/11/26 19:58:30 garbled Exp $
+#	$NetBSD: files.ofppc,v 1.35 2007/12/03 15:34:07 ad Exp $
 #
 # NetBSD/ofppc configuration info
 #
@@ -33,7 +33,6 @@ file	arch/ofppc/ofppc/machdep.c
 file	arch/powerpc/powerpc/bus_dma.c
 file	arch/powerpc/powerpc/bus_space.c
 file	arch/powerpc/powerpc/procfs_machdep.c	procfs
-file	arch/powerpc/powerpc/softintr.c
 file	dev/cons.c
 
 #

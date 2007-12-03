@@ -1,4 +1,4 @@
-/*	$NetBSD: com_dio.c,v 1.5 2006/07/13 22:56:01 gdamore Exp $	*/
+/*	$NetBSD: com_dio.c,v 1.6 2007/12/03 15:33:38 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_dio.c,v 1.5 2006/07/13 22:56:01 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_dio.c,v 1.6 2007/12/03 15:33:38 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,8 +162,7 @@ com_dio_attach(struct device *parent, struct device *self, void *aux)
 
 	com_attach_subr(sc);
 
-	dsc->sc_ih = dio_intr_establish(comintr, sc, da->da_ipl,
-	    ((sc->sc_hwflags & COM_HW_FIFO) != 0) ? IPL_TTY : IPL_TTYNOBUF);
+	dsc->sc_ih = dio_intr_establish(comintr, sc, da->da_ipl, IPL_VM);
 
 	/* Enable interrupts. */
 	bus_space_write_1(iot, iohdca, DCA_IC, IC_IE);

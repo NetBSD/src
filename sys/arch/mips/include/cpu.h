@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.85 2007/10/19 11:41:27 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.86 2007/12/03 15:33:54 ad Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -65,6 +65,7 @@ struct cpu_info {
 	int ci_want_resched;		/* user preemption pending */
 	int ci_mtx_count;		/* negative count of held mutexes */
 	int ci_mtx_oldspl;		/* saved SPL value */
+	int ci_idepth;			/* hardware interrupt depth */
 };
 
 #define	CPU_INFO_ITERATOR		int

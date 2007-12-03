@@ -1,4 +1,4 @@
-#	$NetBSD: files.sgimips,v 1.45 2007/10/17 19:57:03 garbled Exp $
+#	$NetBSD: files.sgimips,v 1.46 2007/12/03 15:34:17 ad Exp $
 
 maxpartitions 16
 
@@ -26,7 +26,6 @@ file arch/sgimips/sgimips/console.c
 file arch/sgimips/sgimips/disksubr.c
 file arch/sgimips/sgimips/machdep.c
 
-file arch/mips/mips/softintr.c
 file arch/mips/mips/mips3_clock.c	mips3
 file arch/mips/mips/mips3_clockintr.c	mips3
 

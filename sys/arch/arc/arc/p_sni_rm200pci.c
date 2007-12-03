@@ -1,4 +1,4 @@
-/*	$NetBSD: p_sni_rm200pci.c,v 1.11 2007/10/17 19:53:27 garbled Exp $	*/
+/*	$NetBSD: p_sni_rm200pci.c,v 1.12 2007/12/03 15:33:14 ad Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: p_sni_rm200pci.c,v 1.11 2007/10/17 19:53:27 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: p_sni_rm200pci.c,v 1.12 2007/12/03 15:33:14 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,15 +123,11 @@ struct platform platform_sni_rm200pci = {
 /* XXX lack of hardware info for sni_rm200pci */
 static const uint32_t sni_rm200pci_ipl_sr_bits[_IPL_N] = {
 	[IPL_NONE] = 0,
-	[IPL_SOFT] =
-	    MIPS_SOFT_INT_MASK_0,
 	[IPL_SOFTCLOCK] =
 	    MIPS_SOFT_INT_MASK_0,
 	[IPL_SOFTNET] =
 	    MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1,
-	[IPL_SOFTSERIAL] =
-	    MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1,
-	[IPL_BIO] =	/* XXX */
+	[IPL_VM] =	/* XXX */
 	    MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1 |
 	    MIPS_INT_MASK_0 |
 	    MIPS_INT_MASK_1 |
@@ -139,23 +135,7 @@ static const uint32_t sni_rm200pci_ipl_sr_bits[_IPL_N] = {
 	    MIPS_INT_MASK_3 |
 	    MIPS_INT_MASK_4 |
 	    MIPS_INT_MASK_5,
-	[IPL_NET] =	/* XXX */
-	    MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1 |
-	    MIPS_INT_MASK_0 |
-	    MIPS_INT_MASK_1 |
-	    MIPS_INT_MASK_2 |
-	    MIPS_INT_MASK_3 |
-	    MIPS_INT_MASK_4 |
-	    MIPS_INT_MASK_5,
-	[IPL_TTY] =	/* XXX */
-	    MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1 |
-	    MIPS_INT_MASK_0 |
-	    MIPS_INT_MASK_1 |
-	    MIPS_INT_MASK_2 |
-	    MIPS_INT_MASK_3 |
-	    MIPS_INT_MASK_4 |
-	    MIPS_INT_MASK_5,
-	[IPL_CLOCK] =	/* XXX */
+	[IPL_SCHED] =	/* XXX */
 	    MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1 |
 	    MIPS_INT_MASK_0 |
 	    MIPS_INT_MASK_1 |

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.39 2007/11/27 13:26:37 tsutsui Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.40 2007/12/03 15:34:17 ad Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.39 2007/11/27 13:26:37 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.40 2007/12/03 15:34:17 ad Exp $");
 
 #include "opt_ddb.h"
 
@@ -66,8 +66,6 @@ cpu_configure()
 {
 	int s;
 
-	softintr_init();
-
 	s = splhigh();
 	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("no mainbus found");
@@ -77,10 +75,6 @@ cpu_configure()
 	 * caused by probes for non-existent devices.
 	 */
 	(*platform.bus_reset)();
-
-	printf("biomask %02x netmask %02x ttymask %02x clockmask %02x\n",
-	    ipl2spl_table[IPL_BIO] >> 8, ipl2spl_table[IPL_NET] >> 8, 
-	    ipl2spl_table[IPL_TTY] >> 8, ipl2spl_table[IPL_CLOCK] >> 8);
 
 	/*
 	 * Hardware interrupts will be enabled in cpu_initclocks(9)

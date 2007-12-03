@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.224 2007/10/17 19:57:13 garbled Exp $ */
+/*	$NetBSD: autoconf.c,v 1.225 2007/12/03 15:34:21 ad Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.224 2007/10/17 19:57:13 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.225 2007/12/03 15:34:21 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -915,7 +915,7 @@ cpu_configure(void)
 {
 
 	/* initialise the softintr system */
-	softintr_init();
+	sparc_softintr_init();
 
 	/* build the bootpath */
 	bootpath_build();
