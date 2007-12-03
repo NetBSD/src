@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.2.8.6 2007/12/03 18:36:42 ad Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.2.8.7 2007/12/03 19:03:28 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -51,6 +51,10 @@
 #include <machine/cputypes.h>
 
 #include "assym.h"
+
+#if defined(DIAGNOSTIC) || defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
+#define	FULL
+#endif
 
 #define	ALIGN64		.align	64
 #define	ALIGN32		.align	32
@@ -172,47 +176,43 @@ ENTRY(rw_exit)
  *
  * Acquire a spin mutex and post a load fence.
  */
-STUB(mutex_spin_enter, mutex_vector_enter)
-	movl	CPUVAR(SELF), %eax
-	movl	CPU_INFO_ILEVEL(%eax), %ecx
-	subl	$1, CPU_INFO_MTX_COUNT(%eax)	/* decl does not set CF */
+ENTRY(mutex_spin_enter)
+	movl	4(%esp), %edx
+	movl	CPUVAR(ILEVEL), %ecx
+	subl	$1, CPUVAR(MTX_COUNT)		/* decl does not set CF */
 	jnc	1f
-	movl	%ecx, CPU_INFO_MTX_OLDSPL(%eax)
+	movl	%ecx, CPUVAR(MTX_OLDSPL)
 1:	movb	MTX_IPL(%edx), %ch
 	cmpb	%ch, %cl
 	jg,pn	2f
-	movb	%ch, CPU_INFO_ILEVEL(%eax)	/* splraiseipl() */
+	movb	%ch, CPUVAR(ILEVEL)		/* splraiseipl() */
 2:
+#ifdef FULL
 	mov	$0x0100, %eax			/* new + expected value */
-	LOCK
+	LOCK(lockpatch11)
 	cmpxchgb %ah, MTX_LOCK(%edx)		/* lock it */
 	jnz,pn	_C_LABEL(mutex_spin_retry)
+#endif
 	ret
 
 	ALIGN64
 LABEL(mutex_spin_enter_end)
 
 /*
- * void mutex_spin_exit(kmutex_t *mtx);
- *
  * Release a spin mutex and post a store fence.
  */
-STUB(mutex_spin_exit, mutex_vector_exit)
-	movl	$0x0001, %eax			/* new + expected value */
-	cmpxchgb %ah, MTX_LOCK(%edx)
-	jnz,pn	_C_LABEL(mutex_vector_exit)
-	movl	CPUVAR(SELF), %eax
-	movl	CPU_INFO_MTX_OLDSPL(%eax), %ecx
-	incl	CPU_INFO_MTX_COUNT(%eax)
+ENTRY(mutex_spin_exit)
+	movl	4(%esp), %edx
+	movl	CPUVAR(MTX_OLDSPL), %ecx
+	incl	CPUVAR(MTX_COUNT)
+	movb	$0, MTX_LOCK(%edx)		/* zero */
 	jnz	1f
-	cmpl	CPU_INFO_ILEVEL(%eax), %ecx
-	movl    %ecx, 4(%esp)
-	jae	1f
-	movl	CPU_INFO_IUNMASK(%eax,%ecx,4), %edx
+	movl	%fs:CPU_INFO_IUNMASK(,%ecx,4), %edx
 	cli
-	testl	CPU_INFO_IPENDING(%eax), %edx
+	testl	CPUVAR(IPENDING), %edx
+	movl    %ecx, 4(%esp)
 	jnz	_C_LABEL(Xspllower)		/* does sti */
-	movl	%ecx, CPU_INFO_ILEVEL(%eax)
+	movl	%ecx, CPUVAR(ILEVEL)
 	sti
 1:	ret
 	nop					/* XXX round up */

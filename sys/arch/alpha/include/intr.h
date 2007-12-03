@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.59.6.4 2007/12/03 18:34:32 ad Exp $ */
+/* $NetBSD: intr.h,v 1.59.6.5 2007/12/03 19:02:30 ad Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -115,22 +115,13 @@ struct scbvec {
  */
 
 #define	IPL_NONE	0	/* no interrupt level */
-#define	IPL_SOFT	1	/* generic software interrupts */
+#define	IPL_SOFTCLOCK	1	/* generic software interrupts */
+#define	IPL_SOFTBIO	1	/* generic software interrupts */
+#define	IPL_SOFTNET	1	/* generic software interrupts */
+#define	IPL_SOFTSERIAL	1	/* generic software interrupts */
 #define	IPL_VM		2	/* interrupts that can alloc mem */
 #define	IPL_SCHED	3	/* clock interrupts */
 #define	IPL_HIGH	4	/* all interrupts */
-
-/* Aliases */
-#define	IPL_SOFTCLOCK	IPL_SOFT/* clock software interrupts */
-#define	IPL_SOFTNET	IPL_SOFT/* network software interrupts */
-#define	IPL_SOFTSERIAL	IPL_SOFT/* serial software interrupts */
-#define	IPL_BIO		IPL_VM	/* block I/O interrupts */
-#define	IPL_NET		IPL_VM	/* network interrupts */
-#define	IPL_TTY		IPL_VM	/* terminal interrupts */
-#define	IPL_LPT		IPL_VM	/* printer interrupts */
-#define	IPL_SERIAL	IPL_VM	/* serial interrupts */
-#define	IPL_IPI		IPL_SCHED/* AARM, 5-2, II-B */
-#define	IPL_CLOCK	IPL_SCHED/* clock interrupt */
 
 typedef int ipl_t;
 typedef struct {

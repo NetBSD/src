@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.73.30.4 2007/12/03 18:34:29 ad Exp $ */
+/* $NetBSD: cpu.c,v 1.73.30.5 2007/12/03 19:02:22 ad Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.73.30.4 2007/12/03 18:34:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.73.30.5 2007/12/03 19:02:22 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -407,12 +407,6 @@ cpu_boot_secondary_processors(void)
 			continue;
 		if ((cpus_booted & (1UL << i)) == 0)
 			continue;
-
-		/* Patch MP-criticial kernel routines. */
-		if (did_patch == false) {
-			alpha_patch(true);
-			did_patch = true;
-		}
 
 		/* Patch MP-criticial kernel routines. */
 		if (did_patch == false) {

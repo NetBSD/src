@@ -1,4 +1,4 @@
-/* $NetBSD: interrupt.c,v 1.72.6.5 2007/12/03 18:34:29 ad Exp $ */
+/* $NetBSD: interrupt.c,v 1.72.6.6 2007/12/03 19:02:23 ad Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.72.6.5 2007/12/03 18:34:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.72.6.6 2007/12/03 19:02:23 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,6 +98,7 @@ __KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.72.6.5 2007/12/03 18:34:29 ad Exp $"
 #include <machine/alpha.h>
 
 struct scbvec scb_iovectab[SCB_VECTOIDX(SCB_SIZE - SCB_IOVECBASE)];
+static bool scb_mpsafe[SCB_VECTOIDX(SCB_SIZE - SCB_IOVECBASE)];
 
 void	netintr(void);
 
@@ -532,7 +533,7 @@ rlprintf(struct timeval *t, const char *fmt, ...)
 
 const static uint8_t ipl2psl_table[] = {
 	[IPL_NONE] = ALPHA_PSL_IPL_0,
-	[IPL_SOFT] = ALPHA_PSL_IPL_SOFT,
+	[IPL_SOFTCLOCK] = ALPHA_PSL_IPL_SOFT,
 	[IPL_VM] = ALPHA_PSL_IPL_IO,
 	[IPL_CLOCK] = ALPHA_PSL_IPL_CLOCK,
 	[IPL_HIGH] = ALPHA_PSL_IPL_HIGH,

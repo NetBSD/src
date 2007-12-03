@@ -1,16 +1,6 @@
-/*	$NetBSD: vmparam.h,v 1.21.60.1 2007/12/03 18:38:06 ad Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.21.60.2 2007/12/03 19:03:50 ad Exp $	*/
 
 /*
- * These are based on the segments that are least commonly used, and when
- * used, they are less often used as primary PCI's, or PCI's with video or
- * AGP.  There is no unused value for these, as every different machine
- * uses all, or some of the segments after 0x8.
- */
-
-#define USER_SR		0xe
-#define KERNEL_SR	0xa
-#define KERNEL2_SR	0xb
-
  * These are based on the segments that are least commonly used, and when
  * used, they are less often used as primary PCI's, or PCI's with video or
  * AGP.  There is no unused value for these, as every different machine

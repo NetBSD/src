@@ -1,11 +1,7 @@
-#	$NetBSD: files.i386,v 1.303.2.8 2007/12/03 18:36:35 ad Exp $
+#	$NetBSD: files.i386,v 1.303.2.9 2007/12/03 19:03:24 ad Exp $
 #
 # new style config file for i386 architecture
 #
-
-version 20071109
-
-ifndef xen
 
 version 20071109
 
@@ -521,5 +517,4 @@ attach	glxsb at pci
 file	arch/i386/pci/glxsb.c		glxsb
 
 include "arch/i386/conf/majors.i386"
-endif #xen
 endif #xen

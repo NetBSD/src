@@ -1,4 +1,4 @@
-/*	$NetBSD: boot2.c,v 1.12.30.2 2007/12/03 18:36:55 ad Exp $	*/
+/*	$NetBSD: boot2.c,v 1.12.30.3 2007/12/03 19:03:33 ad Exp $	*/
 
 /*
  * Copyright (c) 2003
@@ -83,12 +83,6 @@ static const char * const names[][2] = {
 #define MAXBANNER 10
 #endif /* !SMALL */
 
-#ifndef SMALL
-#define BOOTCONF "boot.cfg"
-#define MAXMENU 10
-#define MAXBANNER 10
-#endif /* !SMALL */
-
 static char *default_devname;
 static int default_unit, default_partition;
 static const char *default_filename;
@@ -97,12 +91,6 @@ char *sprint_bootsel(const char *);
 void bootit(const char *, int, int);
 void print_banner(void);
 void boot2(int, u_int);
-
-#ifndef SMALL
-void parsebootconf(const char *);
-void doboottypemenu(void);
-int atoi(const char *);
-#endif /* !SMALL */
 
 #ifndef SMALL
 void parsebootconf(const char *);
@@ -127,18 +115,6 @@ const struct bootblk_command commands[] = {
 	{ "consdev",	command_consdev },
 	{ NULL,		NULL },
 };
-
-#ifndef SMALL
-struct bootconf_def {
-	char *banner[MAXBANNER];	/* Banner text */
-	char *command[MAXMENU];		/* Menu commands per entry*/
-	char *consdev;			/* Console device */
-	int def;			/* Default menu option */
-	char *desc[MAXMENU];		/* Menu text per entry */
-	int nummenu;			/* Number of menu items */
-	int timeout;		 	/* Timeout in seconds */
-} bootconf;
-#endif /* !SMALL */
 
 #ifndef SMALL
 struct bootconf_def {

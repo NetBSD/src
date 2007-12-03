@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.24.8.1 2007/12/03 18:35:22 ad Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.24.8.2 2007/12/03 19:03:04 ad Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.24.8.1 2007/12/03 18:35:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.24.8.2 2007/12/03 19:03:04 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -36,9 +36,6 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.24.8.1 2007/12/03 18:35:22 ad Exp $")
 
 #include <machine/cpu.h>
 #include <machine/intr.h>
-
-#include <dev/pci/pcivar.h>
-#include <dev/ata/atavar.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/ata/atavar.h>

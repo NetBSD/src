@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.55.2.3 2007/12/03 18:36:13 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.55.2.4 2007/12/03 19:03:18 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.55.2.3 2007/12/03 18:36:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.55.2.4 2007/12/03 19:03:18 ad Exp $");
 
 #include "opt_md.h"
 #include "opt_ddb.h"
@@ -645,6 +645,5 @@ intc_intr(int ssr, int spc, int ssp)
 		(*ih->ih_func)(ih->ih_arg);
 		__dbg_heart_beat(HEART_BEAT_BLUE);
 	}
-	ci->ci_idepth--;
 	ci->ci_idepth--;
 }

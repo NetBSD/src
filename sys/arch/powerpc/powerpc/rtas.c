@@ -1,4 +1,4 @@
-/*	$NetBSD: rtas.c,v 1.1.10.1 2007/12/03 18:38:31 ad Exp $ */
+/*	$NetBSD: rtas.c,v 1.1.10.2 2007/12/03 19:04:06 ad Exp $ */
 
 /*
  * CHRP RTAS support routines
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtas.c,v 1.1.10.1 2007/12/03 18:38:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtas.c,v 1.1.10.2 2007/12/03 19:04:06 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -225,20 +225,6 @@ rtas_call(struct rtas_call *args) {
 	__asm("isync;\n");
 
 	return args->args[args->nargs];
-}
-
-void
-rtas_reboot(void)
-{
-	struct rtas_call rc;
-
-	if (!rtas_function_token[RTAS_FUNC_SYSTEM_REBOOT].exists)
-		return;
-
-	rc.token = rtas_function_token[RTAS_FUNC_SYSTEM_REBOOT].token;
-	rc.nargs = 0;
-	rc.nreturns = 0;
-	rtas_call(&rc);
 }
 
 void

@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.48.4.10 2007/12/03 18:36:40 ad Exp $
+#	$NetBSD: genassym.cf,v 1.48.4.11 2007/12/03 19:03:26 ad Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007 The NetBSD Foundation, Inc.
@@ -193,9 +193,6 @@ define	P_RASLIST		offsetof(struct proc, p_raslist)
 define	P_MD_SYSCALL		offsetof(struct proc, p_md.md_syscall)
 
 define	LW_SYSTEM		LW_SYSTEM
-
-define	GUFS_SEL		GUFS_SEL
-define	GUGS_SEL		GUGS_SEL
 
 define	GUFS_SEL		GUFS_SEL
 define	GUGS_SEL		GUGS_SEL

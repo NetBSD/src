@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.134.2.8 2007/12/03 18:34:40 ad Exp $
+# $NetBSD: GENERIC,v 1.134.2.9 2007/12/03 19:02:40 ad Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.134.2.8 $"
+#ident 		"GENERIC-$Revision: 1.134.2.9 $"
 
 maxusers	32		# estimated number of users
 
@@ -109,6 +109,7 @@ options 	COMPAT_40	# NetBSD 4.0 compatibility.
 options 	COMPAT_43	# and 4.3BSD
 #options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 
+options 	COMPAT_OSSAUDIO
 options 	COMPAT_NETBSD32
 #options 	COMPAT_LINUX
 #options 	COMPAT_LINUX32	# req. COMPAT_LINUX and COMPAT_NETBSD32
@@ -397,9 +398,6 @@ iic*	at nfsmb?
 # Intel Core's on-die Thermal sensor
 options 	INTEL_CORETEMP
 
-# Intel Core's on-die Thermal sensor
-options 	INTEL_CORETEMP
-
 # Intel ICH SMBus controller
 ichsmb*	at pci? dev ? function ?
 iic*	at ichsmb?
@@ -549,7 +547,6 @@ wd*	at atabus? drive ? flags 0x0000
 
 # ATAPI bus support
 atapibus* at atapi?
-
 
 
 # ATA RAID configuration support, as found on some Promise controllers.  
@@ -726,10 +723,6 @@ wsmouse* at ums? mux 0
 uep*	at uhub? port ?
 wsmouse* at uep? mux 0
 
-# USB eGalax touch-panel
-uep*	at uhub? port ?
-wsmouse* at uep? mux 0
-
 # USB Keyboards
 ukbd*	at uhidev? reportid ?
 wskbd*	at ukbd? console ? mux 1
@@ -761,9 +754,6 @@ umidi* at uhub? port ? configuration ?
 # USB-IrDA bridge spec
 uirda* at uhub? port ? configuration ? interface ?
 irframe* at uirda?
-
-stuirda* at uhub? port ? configuration ? interface ?
-irframe* at stuirda?
 
 stuirda* at uhub? port ? configuration ? interface ?
 irframe* at stuirda?
@@ -831,9 +821,6 @@ zyd*	at uhub? port ?		# Zydas ZD1211
 
 # USB scanners that use SCSI emulation, e.g., HP5300
 usscanner* at uhub? port ?
-
-# Topfield TF5000PVR range of DVB recorders
-utoppy*	at uhub? port ?
 
 # Topfield TF5000PVR range of DVB recorders
 utoppy*	at uhub? port ?
@@ -918,9 +905,6 @@ midi*	at pcppi?		# MIDI interface to the PC speaker
 # The spkr driver provides a simple tone interface to the built in speaker.
 #spkr0	at pcppi?		# PC speaker
 
-# USB generic serial port (e.g., data over cellular)
-ugensa*	at uhub? port ?
-ucom*	at ugensa?
 
 # FM-Radio devices
 # PCI radio devices
@@ -1046,9 +1030,6 @@ pseudo-device	nsmb			# experimental - SMB requester
 # wscons pseudo-devices
 pseudo-device	wsmux			# mouse & keyboard multiplexor
 pseudo-device	wsfont
-
-# pseudo audio device driver
-pseudo-device	pad
 
 # pseudo audio device driver
 pseudo-device	pad

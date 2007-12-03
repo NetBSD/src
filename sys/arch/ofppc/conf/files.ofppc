@@ -1,4 +1,4 @@
-#	$NetBSD: files.ofppc,v 1.26.2.3 2007/12/03 18:38:04 ad Exp $
+#	$NetBSD: files.ofppc,v 1.26.2.4 2007/12/03 19:03:47 ad Exp $
 #
 # NetBSD/ofppc configuration info
 #
@@ -100,10 +100,6 @@ file	arch/powerpc/pci/pci_machdep_ofw.c	pci
 device ofwpci: pcibus
 attach ofwpci at mainbus
 file	arch/ofppc/pci/ofwpci.c			ofwpci
-
-device pegasospci: pcibus
-attach pegasospci at mainbus
-file	arch/ofppc/pci/pegasospci.c		pegasospci
 
 device pegasospci: pcibus
 attach pegasospci at mainbus

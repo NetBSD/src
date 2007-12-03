@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.1.60.1 2007/12/03 18:35:26 ad Exp $	*/
+/*	$NetBSD: clock.c,v 1.1.60.2 2007/12/03 19:03:08 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -66,25 +66,6 @@ delay(int ms)
 	volatile register int N = ms * DELAY_CALIBRATE;
 	for (; --N;)
 		__insn_barrier();
-}
-
-time_t
-getsecs(void)
-{
-	volatile uint8_t *mcclock_reg, *mcclock_data;
-	u_int sec;
-
-	mcclock_reg  = (void *)MIPS_PHYS_TO_KSEG1(MCCLOCK_BASE + MCCLOCK_REG);
-	mcclock_data = (void *)MIPS_PHYS_TO_KSEG1(MCCLOCK_BASE + MCCLOCK_DATA);
-
-	*mcclock_reg = MC_SEC;
-	sec  = bcdtobin(*mcclock_data);
-	*mcclock_reg = MC_MIN;
-	sec += bcdtobin(*mcclock_data) * 60;
-	*mcclock_reg = MC_HOUR;
-	sec += bcdtobin(*mcclock_data) * 60 * 60;
-
-	return (time_t)sec;
 }
 
 time_t

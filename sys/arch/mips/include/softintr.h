@@ -1,4 +1,4 @@
-/*	$NetBSD: softintr.h,v 1.2.6.1 2007/07/15 22:20:23 ad Exp $	*/
+/*	$NetBSD: softintr.h,v 1.2.6.2 2007/12/03 19:03:37 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #define _MIPS_SOFTINTR_H_
 
 #ifndef _LOCORE
-extern const u_int32_t mips_ipl_si_to_sr[SI_NQUEUES];
+extern const u_int32_t mips_ipl_si_to_sr[2];
 #endif /* !_LOCORE */
 
 #endif /* _MIPS_SOFTINTR_H_ */

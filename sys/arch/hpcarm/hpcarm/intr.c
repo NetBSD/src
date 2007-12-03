@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.11.6.3 2007/12/03 18:36:05 ad Exp $	*/
+/*	$NetBSD: intr.c,v 1.11.6.4 2007/12/03 19:03:17 ad Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.11.6.3 2007/12/03 18:36:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.11.6.4 2007/12/03 19:03:17 ad Exp $");
 
 #include "opt_irqstats.h"
 
@@ -96,7 +96,6 @@ clearsoftintr(u_int intrmask)
 {
 	atomic_clear_bit(&soft_interrupts, intrmask);
 }
-#endif
 
 void
 setsoftnet(void)

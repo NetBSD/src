@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.217.2.7 2007/12/03 18:36:47 ad Exp $	*/
+/*	$NetBSD: trap.c,v 1.217.2.8 2007/12/03 19:03:31 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2005 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.217.2.7 2007/12/03 18:36:47 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.217.2.8 2007/12/03 19:03:31 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -587,15 +587,27 @@ copyfault:
 		 * fusubail is used by [fs]uswintr() to prevent page faulting
 		 * from inside the profiling interrupt.
 		 */
-		if (pcb->pcb_onfault == fusubail)
+		if ((onfault = pcb->pcb_onfault) == fusubail) {
 			goto copyefault;
+		}
 
 #if 0
 		/* XXX - check only applies to 386's and 486's with WP off */
 		if (frame->tf_err & PGEX_P)
 			goto we_re_toast;
 #endif
-		cr2 = rcr2();
+
+		/*
+		 * XXXhack: xen2 hypervisor pushes cr2 onto guest's stack
+		 * and Xtrap0e passes it to us as an extra hidden argument.
+		 */
+#if defined(XEN) && !defined(XEN3)
+#define	FETCH_CR2	(((uint32_t *)(void *)&frame)[1])
+#else /* defined(XEN) && !defined(XEN3) */
+#define	FETCH_CR2	rcr2()
+#endif /* defined(XEN) && !defined(XEN3) */
+
+		cr2 = FETCH_CR2;
 		goto faultcommon;
 
 	case T_PAGEFLT|T_USER: {	/* page fault */
@@ -676,9 +688,9 @@ copyfault:
 		}
 
 		if (type == T_PAGEFLT) {
-			if (pcb->pcb_onfault != 0) {
+			onfault = onfault_handler(pcb, frame);
+			if (onfault != NULL)
 				goto copyfault;
-			}
 			printf("uvm_fault(%p, %#lx, %d) -> %#x\n",
 			    map, va, ftype, error);
 			goto we_re_toast;

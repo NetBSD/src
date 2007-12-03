@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.S,v 1.1.6.3 2007/12/03 18:34:36 ad Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.1.6.4 2007/12/03 19:02:31 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -43,8 +43,6 @@
 #include <machine/asm.h>
 #include <machine/specialreg.h>
 #include <machine/segments.h>
-
-#include "opt_xen.h"
 
 #include "opt_xen.h"
 
@@ -98,7 +96,6 @@ NENTRY(rcr2)
 NENTRY(lcr3)
 	movq	%rdi, %cr3
 	ret
-#endif
 
 NENTRY(rcr3)
 	movq	%cr3, %rax

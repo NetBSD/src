@@ -1,4 +1,4 @@
-/*	$NetBSD: frameasm.h,v 1.2.6.2 2007/12/03 18:34:42 ad Exp $	*/
+/*	$NetBSD: frameasm.h,v 1.2.6.3 2007/12/03 19:02:49 ad Exp $	*/
 
 #ifndef _AMD64_MACHINE_FRAMEASM_H
 #define _AMD64_MACHINE_FRAMEASM_H
@@ -135,24 +135,6 @@
 				99:
 
 #define CLEAR_ASTPENDING(reg)	movl	$0, L_MD_ASTPENDING(reg)
-
-#ifdef XEN
-#define CLI(reg1,reg2) \
- 	movl CPUVAR(CPUID),%e/**/reg1 ;			\
- 	shlq $6,%r/**/reg1 ;					\
- 	movq _C_LABEL(HYPERVISOR_shared_info),%r/**/reg2 ;	\
- 	addq %r/**/reg1,%r/**/reg2 ;				\
- 	movb $1,EVTCHN_UPCALL_MASK(%r/**/reg2)
-#define STI(reg1,reg2) \
- 	movl CPUVAR(CPUID),%e/**/reg1 ;			\
- 	shlq $6,%r/**/reg1 ;					\
- 	movq _C_LABEL(HYPERVISOR_shared_info),%r/**/reg2 ;	\
- 	addq %r/**/reg1,%r/**/reg2 ;				\
- 	movb $0,EVTCHN_UPCALL_MASK(%r/**/reg2)
-#else /* XEN */
-#define CLI(reg1,reg2) cli
-#define STI(reg1,reg2) sti
-#endif	/* XEN */
 
 #ifdef XEN
 #define CLI(reg1,reg2) \

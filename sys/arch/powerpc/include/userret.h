@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.13.24.1 2007/12/03 18:38:24 ad Exp $	*/
+/*	$NetBSD: userret.h,v 1.13.24.2 2007/12/03 19:03:58 ad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -50,6 +50,8 @@ userret(struct lwp *l, struct trapframe *frame)
 #ifdef PPC_HAVE_FPU
 	struct pcb * const pcb = &l->l_addr->u_pcb;
 #endif
+
+	/* Invoke MI userret code */
 	mi_userret(l);
 
 	frame->srr1 &= PSL_USERSRR1;	/* clear SRR1 status bits */

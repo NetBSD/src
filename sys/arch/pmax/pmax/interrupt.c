@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.12.6.1 2007/07/15 22:20:26 ad Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.12.6.2 2007/12/03 19:03:55 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.12.6.1 2007/07/15 22:20:26 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.12.6.2 2007/12/03 19:03:55 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -51,13 +51,6 @@ __KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.12.6.1 2007/07/15 22:20:26 ad Exp $"
 #include <machine/autoconf.h>
 #include <machine/sysconf.h>
 #include <machine/intr.h>
-
-const uint32_t mips_ipl_si_to_sr[SI_NQUEUES] = {
-	[SI_SOFTBIO] = MIPS_SOFT_INT_MASK_0,
-	[SI_SOFTCLOCK] = MIPS_SOFT_INT_MASK_0,
-	[SI_SOFTNET] = MIPS_SOFT_INT_MASK_1,
-	[SI_SOFTSERIAL] = MIPS_SOFT_INT_MASK_1,
-};
 
 u_int idepth;
 
@@ -141,11 +134,4 @@ makeiplcookie(ipl_t ipl)
 {
 
 	return (ipl_cookie_t){._spl = ipl2spl_table[ipl]};
-}
-
-bool
-cpu_intr_p(void)
-{
-
-	return idepth != 0;
 }

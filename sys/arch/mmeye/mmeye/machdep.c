@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.38.30.2 2007/12/03 18:37:38 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.38.30.3 2007/12/03 19:03:41 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.38.30.2 2007/12/03 18:37:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.38.30.3 2007/12/03 19:03:41 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_memsize.h"
@@ -561,8 +561,6 @@ Send16550(int c)
 		else
 			return;
 	}
-
-	ci->ci_idepth--;
 }
 #endif /* sh3_tmp */
 

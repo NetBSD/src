@@ -1,4 +1,4 @@
-/*	$NetBSD: awacs.c,v 1.26.2.5 2007/12/03 18:37:17 ad Exp $	*/
+/*	$NetBSD: awacs.c,v 1.26.2.6 2007/12/03 19:03:34 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awacs.c,v 1.26.2.5 2007/12/03 18:37:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awacs.c,v 1.26.2.6 2007/12/03 19:03:34 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -850,10 +850,6 @@ awacs_set_port(void *h, mixer_ctrl_t *mc)
 		awacs_set_loopthrough_volume(sc, l, r);
 		return 0;
 
-	case AWACS_VOL_MONITOR:
-		awacs_set_loopthrough_volume(sc, l, r);
-		return 0;
-
 #if NSGSMIX > 0
 	case AWACS_BASS:
 		awacs_set_bass(sc, l);
@@ -946,15 +942,6 @@ awacs_query_devinfo(void *h, mixer_devinfo_t *dip)
 	case AWACS_VOL_MASTER:
 		dip->mixer_class = AWACS_MONITOR_CLASS;
 		strcpy(dip->label.name, AudioNmaster);
-		dip->type = AUDIO_MIXER_VALUE;
-		dip->prev = dip->next = AUDIO_MIXER_LAST;
-		dip->un.v.num_channels = 2;
-		strcpy(dip->un.v.units.name, AudioNvolume);
-		return 0;
-
-	case AWACS_VOL_MONITOR:
-		dip->mixer_class = AWACS_MONITOR_CLASS;
-		strcpy(dip->label.name, AudioNmonitor);
 		dip->type = AUDIO_MIXER_VALUE;
 		dip->prev = dip->next = AUDIO_MIXER_LAST;
 		dip->un.v.num_channels = 2;

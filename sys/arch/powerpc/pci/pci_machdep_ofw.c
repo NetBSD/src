@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep_ofw.c,v 1.2.2.3 2007/12/03 18:38:29 ad Exp $ */
+/* $NetBSD: pci_machdep_ofw.c,v 1.2.2.4 2007/12/03 19:04:03 ad Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep_ofw.c,v 1.2.2.3 2007/12/03 18:38:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep_ofw.c,v 1.2.2.4 2007/12/03 19:04:03 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -140,10 +140,6 @@ foundic:
 				picnodes[nrofpics].type = PICNODE_TYPE_HEATHROW;
 			if (strcmp(name, "chrp,iic") != 0)
 				picnodes[nrofpics].type = PICNODE_TYPE_8259;
-		}
-		if (strlen(name) == 0) {
-			/* probably a Pegasos, assume 8259 */
-			picnodes[nrofpics].type = PICNODE_TYPE_8259;
 		}
 		if (strlen(name) == 0) {
 			/* probably a Pegasos, assume 8259 */

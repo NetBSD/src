@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.80.2.6 2007/12/03 18:35:23 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.80.2.7 2007/12/03 19:03:05 ad Exp $	*/
 
 /*
  * Copyright (c) 2006 Izumi Tsutsui.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.80.2.6 2007/12/03 18:35:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.80.2.7 2007/12/03 19:03:05 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -676,9 +676,6 @@ cpu_intr_disestablish(void *cookie)
 		ih->ih_cookie_type = 0;
 		evcnt_detach(&ih->ih_evcnt);
 	}
-
-	if (nfsroot_bstr != NULL)
-		netboot = 1;
 }
 
 void

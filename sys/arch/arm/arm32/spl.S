@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.4.66.2 2007/12/03 18:34:55 ad Exp $	*/
+/*	$NetBSD: spl.S,v 1.4.66.3 2007/12/03 19:02:58 ad Exp $	*/
 
 /*
  * Copyright (c) 1996-1998 Mark Brinicombe.
@@ -93,8 +93,6 @@ ENTRY(splx)
 
 	bl	_C_LABEL(irq_setmasks)	/* Update the actual masks */
 #ifdef __HAVE_FAST_SOFTINTS
-#ifdef __HAVE_FAST_SOFTINTS
-#endif
 	bl	_C_LABEL(dosoftints)	/* Process any pending soft ints */
 #endif
 	ldmfd	sp!, {r0, pc}		/* Exit */

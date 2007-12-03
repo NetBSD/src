@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_intr.c,v 1.15.8.1 2007/12/03 18:35:07 ad Exp $ */
+/*	$NetBSD: ixp425_intr.c,v 1.15.8.2 2007/12/03 19:03:00 ad Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425_intr.c,v 1.15.8.1 2007/12/03 18:35:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_intr.c,v 1.15.8.2 2007/12/03 19:03:00 ad Exp $");
 
 #ifndef EVBARM_SPL_NOINLINE
 #define	EVBARM_SPL_NOINLINE
@@ -430,7 +430,6 @@ ixp425_intr_disestablish(void *cookie)
 	ixp425_intr_calculate_masks();
 
 	restore_interrupts(oldirqstate);
-#endif
 }
 
 void

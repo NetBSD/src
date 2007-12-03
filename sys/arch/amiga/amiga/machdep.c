@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.202.2.3 2007/12/03 18:34:43 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.202.2.4 2007/12/03 19:02:53 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -85,7 +85,7 @@
 #include "opt_panicbutton.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.202.2.3 2007/12/03 18:34:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.202.2.4 2007/12/03 19:02:53 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1262,8 +1262,6 @@ remove_isr(isr)
 			    INTF_EXTER : INTF_PORTS;
 	}
 }
-
-static int idepth;
 
 static int idepth;
 

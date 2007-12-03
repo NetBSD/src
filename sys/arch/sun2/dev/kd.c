@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.16.2.2 2007/12/03 18:39:35 ad Exp $	*/
+/*	$NetBSD: kd.c,v 1.16.2.3 2007/12/03 19:04:21 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.16.2.2 2007/12/03 18:39:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.16.2.3 2007/12/03 19:04:21 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -102,6 +102,7 @@ static void kdstart(struct tty *);
 static void kd_init(struct kd_softc *);
 static void kd_cons_input(int);
 static int  kdcngetc(dev_t);
+static void kd_later(void*);
 
 dev_type_open(kdopen);
 dev_type_close(kdclose);
@@ -353,7 +354,6 @@ kdparam(struct tty *tp, struct termios *t)
 }
 
 
-static void kd_later(void*);
 static void kd_putfb(struct tty *);
 
 static void 
