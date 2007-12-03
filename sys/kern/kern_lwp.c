@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.81 2007/12/02 14:55:32 ad Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.82 2007/12/03 17:14:59 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -205,7 +205,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.81 2007/12/02 14:55:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.82 2007/12/03 17:14:59 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -572,6 +572,7 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, bool inmem, int flags,
 	l2->l_refcnt = 1;
 	l2->l_class = sclass;
 	l2->l_kpriority = l1->l_kpriority;
+	l2->l_kpribase = PRI_KERNEL;
 	l2->l_priority = l1->l_priority;
 	l2->l_inheritedprio = -1;
 	l2->l_mutex = l1->l_cpu->ci_schedstate.spc_mutex;
