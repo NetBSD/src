@@ -1,4 +1,4 @@
-/*	$NetBSD: audioamd.c,v 1.21 2005/12/11 12:19:05 christos Exp $	*/
+/*	$NetBSD: audioamd.c,v 1.21.48.1 2007/12/03 16:14:15 joerg Exp $	*/
 /*	NetBSD: am7930_sparc.c,v 1.44 1999/03/14 22:29:00 jonathan Exp 	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audioamd.c,v 1.21 2005/12/11 12:19:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audioamd.c,v 1.21.48.1 2007/12/03 16:14:15 joerg Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -41,9 +41,9 @@ __KERNEL_RCSID(0, "$NetBSD: audioamd.c,v 1.21 2005/12/11 12:19:05 christos Exp $
 #include <sys/systm.h>
 #include <sys/errno.h>
 #include <sys/device.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
 #include <machine/autoconf.h>
 
 #include <sys/audioio.h>
@@ -305,7 +305,7 @@ audioamd_attach(struct audioamd_softc *sc, int pri)
 	(void)bus_intr_establish2(sc->sc_bt, pri, IPL_AUDIO,
 				  am7930hwintr, sc, amd7930_trap);
 
-	sc->sc_sicookie = softintr_establish(IPL_SOFTAUDIO, am7930swintr, sc);
+	sc->sc_sicookie = softint_establish(SOFTINT_SERIAL, am7930swintr, sc);
 	if (sc->sc_sicookie == NULL) {
 		printf("\n%s: cannot establish software interrupt\n",
 			sc->sc_am7930.sc_dev.dv_xname);
@@ -412,7 +412,7 @@ am7930hwintr(void *v)
 		au->au_rdata++;
 		if (d == e) {
 			DPRINTFN(1, ("am7930hwintr: swintr(r) requested"));
-			softintr_schedule(sc->sc_sicookie);
+			softint_schedule(sc->sc_sicookie);
 		}
 	}
 
@@ -424,7 +424,7 @@ am7930hwintr(void *v)
 		au->au_pdata++;
 		if (d == e) {
 			DPRINTFN(1, ("am7930hwintr: swintr(p) requested"));
-			softintr_schedule(sc->sc_sicookie);
+			softint_schedule(sc->sc_sicookie);
 		}
 	}
 

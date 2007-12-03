@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.174 2007/07/21 11:59:56 tsutsui Exp $
+# $NetBSD: files.alpha,v 1.174.4.1 2007/12/03 16:13:50 joerg Exp $
 #
 # alpha-specific configuration info
 
@@ -415,6 +415,7 @@ file	arch/alpha/alpha/ipifuncs.c		multiprocessor
 file	arch/alpha/alpha/machdep.c
 file	arch/alpha/alpha/mainbus.c
 file	arch/alpha/alpha/mem.c
+file	arch/alpha/alpha/patch.c
 file	arch/alpha/alpha/pmap.c
 file	arch/alpha/alpha/process_machdep.c
 file	arch/alpha/alpha/procfs_machdep.c	procfs

@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sys/compat/ndis/subr_ndis.c,v 1.67.2.7 2005/03/31 21:50:11 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: subr_ndis.c,v 1.8.14.2 2007/10/26 15:44:02 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_ndis.c,v 1.8.14.3 2007/12/03 16:14:29 joerg Exp $");
 #endif
 
 /*
@@ -100,7 +100,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_ndis.c,v 1.8.14.2 2007/10/26 15:44:02 joerg Exp
 #include <net/if_dl.h>
 #include <net/if_media.h>
 
-#include <machine/atomic.h>
+#include <sys/atomic.h>
 #ifdef __FreeBSD__
 #include <machine/bus_memio.h>
 #include <machine/bus_pio.h>
@@ -2594,7 +2594,7 @@ __stdcall static uint32_t
 NdisInterlockedIncrement(addend)
 	uint32_t		*addend;
 {
-	atomic_add_long((u_long *)addend, 1);
+	atomic_inc_32(addend);
 	return(*addend);
 }
 
@@ -2602,7 +2602,7 @@ __stdcall static uint32_t
 NdisInterlockedDecrement(addend)
 	uint32_t		*addend;
 {
-	atomic_subtract_long((u_long *)addend, 1);
+	atomic_dec_32(addend);
 	return(*addend);
 }
 

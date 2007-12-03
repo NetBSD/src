@@ -1,4 +1,4 @@
-/*	$NetBSD: voodoofb.c,v 1.10 2007/06/12 18:16:54 xtraeme Exp $	*/
+/*	$NetBSD: voodoofb.c,v 1.10.6.1 2007/12/03 16:14:38 joerg Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.10 2007/06/12 18:16:54 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.10.6.1 2007/12/03 16:14:38 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

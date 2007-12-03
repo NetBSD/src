@@ -1,4 +1,4 @@
-/*	$NetBSD: xenpmap.h,v 1.15.26.1 2007/11/27 19:36:09 joerg Exp $	*/
+/*	$NetBSD: xenpmap.h,v 1.15.26.2 2007/12/03 16:14:26 joerg Exp $	*/
 
 /*
  *
@@ -63,17 +63,17 @@ extern paddr_t *xpmap_phys_to_machine_mapping;
 #define PTE_CLEAR(_ptp,_maptp)					\
 	*(_maptp) = 0
 #define PTE_ATOMIC_SET(_ptp,_maptp,_npte,_opte)			\
-	(_opte) = x86_atomic_testset_ul((_maptp), (_npte))
+	(_opte) = atomic_swap_ulong((volatile unsigned long *)(_maptp), (_npte))
 #define PTE_ATOMIC_CLEAR(_ptp,_maptp,_opte)			\
-	(_opte) = x86_atomic_testset_ul((_maptp), 0)
+	(_opte) = atomic_swap_ulong((volatile unsigned long *)((_maptp), 0)
 #define PDE_CLEARBITS(_pdp,_mapdp,_bits)			\
 	*(_mapdp) &= ~(_bits)
 #define PTE_ATOMIC_CLEARBITS(_ptp,_maptp,_bits)			\
-	x86_atomic_clearbits_l((_maptp), (_bits))
+	atomic_and_ulong((volatile unsigned long *)(_maptp), ~(_bits))
 #define PTE_SETBITS(_ptp,_maptp,_bits)				\
 	*(_maptp) |= (_bits)
 #define PTE_ATOMIC_SETBITS(_ptp,_maptp,_bits)			\
-	x86_atomic_setbits_l((_maptp), (_bits))
+	atomic_or_ulong((volatile unsigned long *)(_maptp), (_bits))
 #else
 paddr_t *xpmap_phys_to_machine_mapping;
 

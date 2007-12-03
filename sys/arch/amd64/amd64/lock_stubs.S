@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.3.8.4 2007/11/27 19:35:25 joerg Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.3.8.5 2007/12/03 16:13:52 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -290,38 +290,12 @@ ENTRY(sse2_mb_memory)
 END(sse2_mb_memory_end, 8)
 
 /*
- * Make sure code after the ret is properly encoded with nopness
- * by gas, or could stall newer processors.
- */
-
-ENTRY(x86_mb_nop)
-	nop
-	ret
-END(x86_mb_nop_end, 8)
-
-/*
- * XXX Don't belong here.
- */
-ENTRY(atomic_inc_uint)
-	LOCK(lockpatch9)
-	incl	(%rdi)
-	ret
-
-ENTRY(atomic_dec_uint_nv)
-	movl	$-1, %eax
-	LOCK(lockpatch10)
-	xaddl	%eax, (%rdi)
-	decl	%eax
-	ret
-
-/*
  * Patchpoints to replace with NOP when ncpu == 1.
  */
 #ifndef LOCKDEBUG
 LABEL(x86_lockpatch)
 	.quad	lockpatch1, lockpatch2, lockpatch3, lockpatch4
 	.quad	lockpatch5, lockpatch6, lockpatch7, lockpatch8
-	.quad	lockpatch9, lockpatch10
 #ifdef FULL
 	.quad	lockpatch11
 #endif

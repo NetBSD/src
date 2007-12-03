@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.117.2.2 2007/11/27 19:39:19 joerg Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.117.2.3 2007/12/03 16:15:21 joerg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.117.2.2 2007/11/27 19:39:19 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.117.2.3 2007/12/03 16:15:21 joerg Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -529,8 +529,8 @@ ext2fs_reload(struct mount *mountp, kauth_cred_t cred)
 
 	for (i = 0; i < fs->e2fs_ngdb; i++) {
 		error = bread(devvp ,
-		    fsbtodb(fs, ((fs->e2fs_bsize > SBSIZE) ? 0 : 1) +
-		    i + 1 /* superblock */),
+		    fsbtodb(fs, fs->e2fs.e2fs_first_dblock +
+		    1 /* superblock */ + i),
 		    fs->e2fs_bsize, NOCRED, &bp);
 		if (error) {
 			brelse(bp, 0);
@@ -675,8 +675,8 @@ ext2fs_mountfs(struct vnode *devvp, struct mount *mp)
 	    M_UFSMNT, M_WAITOK);
 	for (i = 0; i < m_fs->e2fs_ngdb; i++) {
 		error = bread(devvp ,
-		    fsbtodb(m_fs, ((m_fs->e2fs_bsize > SBSIZE)? 0 : 1) +
-		    i + 1 /* superblock */),
+		    fsbtodb(m_fs, m_fs->e2fs.e2fs_first_dblock +
+		    1 /* superblock */ + i),
 		    m_fs->e2fs_bsize, NOCRED, &bp);
 		if (error) {
 			free(m_fs->e2fs_gd, M_UFSMNT);
@@ -1166,8 +1166,8 @@ ext2fs_cgupdate(struct ufsmount *mp, int waitfor)
 	allerror = ext2fs_sbupdate(mp, waitfor);
 	for (i = 0; i < fs->e2fs_ngdb; i++) {
 		bp = getblk(mp->um_devvp, fsbtodb(fs,
-		    ((fs->e2fs_bsize > SBSIZE) ? 0 : 1) +
-		    i + 1 /* superblock */), fs->e2fs_bsize, 0, 0);
+		    fs->e2fs.e2fs_first_dblock +
+		    1 /* superblock */ + i), fs->e2fs_bsize, 0, 0);
 		e2fs_cgsave(&fs->e2fs_gd[
 		    i * fs->e2fs_bsize / sizeof(struct ext2_gd)],
 		    (struct ext2_gd *)bp->b_data, fs->e2fs_bsize);

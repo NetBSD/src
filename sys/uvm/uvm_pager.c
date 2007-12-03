@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.85.4.2 2007/10/28 20:11:16 joerg Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.85.4.3 2007/12/03 16:15:26 joerg Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.85.4.2 2007/10/28 20:11:16 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.85.4.3 2007/12/03 16:15:26 joerg Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -76,7 +76,7 @@ struct pool *uvm_aiobuf_pool;
  * list of uvm pagers in the system
  */
 
-struct uvm_pagerops * const uvmpagerops[] = {
+const struct uvm_pagerops * const uvmpagerops[] = {
 	&aobj_pager,
 	&uvm_deviceops,
 	&uvm_vnodeops,
@@ -129,8 +129,7 @@ uvm_pager_init(void)
 	/*
 	 * call pager init functions
 	 */
-	for (lcv = 0 ; lcv < sizeof(uvmpagerops)/sizeof(struct uvm_pagerops *);
-	    lcv++) {
+	for (lcv = 0 ; lcv < __arraycount(uvmpagerops); lcv++) {
 		if (uvmpagerops[lcv]->pgo_init)
 			uvmpagerops[lcv]->pgo_init();
 	}

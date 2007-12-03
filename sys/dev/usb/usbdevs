@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.480.6.4 2007/11/27 19:37:28 joerg Exp $
+$NetBSD: usbdevs,v 1.480.6.5 2007/12/03 16:14:41 joerg Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -903,6 +903,7 @@ product DELL X30		0x4003	Axim X30 PDA
 product DELL BC02		0x8000	BC02 Bluetooth USB Adapter
 product DELL TM1180		0x8100	TrueMobile 1180 WLAN
 product DELL TM350		0x8103	TrueMobile 350 Bluetooth USB Adapter
+product DELL HSDPA		0x8137	Dell/Novatel Wireless HSDPA Modem
 
 /* DeLorme products */
 product DELORME EARTHMATE	0x0100	Earthmate GPS

@@ -1,8 +1,8 @@
-/*	$NetBSD: idle_machdep.c,v 1.2.2.3 2007/12/03 16:14:26 joerg Exp $	*/
+/* $NetBSD: ext2fs.h,v 1.1.2.2 2007/12/03 16:15:02 joerg Exp $ */
 
 /*-
- * Copyright (c)2002, 2006, 2007 YAMAMOTO Takashi,
- * All rights reserved.
+ * Copyright (c) 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -12,11 +12,14 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
  * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
@@ -24,26 +27,8 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ *	@(#)ufs.h	8.1 (Berkeley) 6/11/93
  */
 
-#include <sys/cdefs.h>
-
-__KERNEL_RCSID(0, "$NetBSD: idle_machdep.c,v 1.2.2.3 2007/12/03 16:14:26 joerg Exp $");
-
-#include <sys/param.h>
-#include <sys/cpu.h>
-
-#include <xen/xen.h>
-
-void
-cpu_idle(void)
-{
-	struct cpu_info *ci = curcpu();
-
-	x86_disable_intr();
-	if (!__predict_false(ci->ci_want_resched)) {
-		idle_block();
-	} else {
-		x86_enable_intr();
-	}
-}
+FS_DEF(ext2fs);

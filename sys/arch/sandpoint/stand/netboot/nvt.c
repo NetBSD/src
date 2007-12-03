@@ -1,4 +1,4 @@
-/* $NetBSD: nvt.c,v 1.5.2.4 2007/11/04 21:03:10 jmcneill Exp $ */
+/* $NetBSD: nvt.c,v 1.5.2.5 2007/12/03 16:14:10 joerg Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@ int nvt_recv(void *, char *, unsigned, unsigned);
 #define R0_MAR          (1U << 13)      /* multicast frame */
 #define R0_BAR          (1U << 12)      /* broadcast frame */
 #define R0_PHY          (1U << 11)      /* unicast frame */
-#define R0_CHN          (1U << 10)      /* 1 for chained buffer */
+#define R0_CHN          (1U << 10)      /* "more bit," not the last seg. */
 #define R0_STP          (1U << 9)       /* first frame segment */
 #define R0_EDP          (1U << 8)       /* last frame segment */
 #define R0_BUFF         (1U << 7)       /* segment chain was broken */
@@ -87,7 +87,6 @@ int nvt_recv(void *, char *, unsigned, unsigned);
 #define R1_FLMASK       0x00007ffc      /* Rx segment buffer length */
 
 #define T0_OWN          (1U << 31)      /* 1: loaded for HW to send */
-#define T0_FLMASK       0x7fff0000      /* segment length */
 #define T0_TERR         (1U << 15)      /* Tx error; ABT|CBH */
 #define T0_UDF          (1U << 11)      /* FIFO underflow */
 #define T0_CRS          (1U << 10)      /* found carrier sense lost */
@@ -100,8 +99,8 @@ int nvt_recv(void *, char *, unsigned, unsigned);
 #define T1_STP          (1U << 22)      /* first frame segment */
 #define T1_EDP          (1U << 21)      /* last frame segment */
 #define T1_CRC          (1U << 16)      /* _disable_ CRC generation */ 
-#define T1_CHN          (1U << 15)      /* chain structure mark */
-#define T1_FLMASK       0x00007fff      /* Tx segment length */
+#define T1_CHN          (1U << 15)      /* "more bit," not the last seg. */
+#define T_FLMASK	0x00007fff      /* Tx frame/segment length */
 
 struct desc {
 	uint32_t xd0, xd1, xd2, xd3;
@@ -114,18 +113,20 @@ struct desc {
 #define VR_PAR4		0x04		/* SA [4] */
 #define VR_PAR5		0x05		/* SA [5] */
 #define VR_RCR		0x06		/* Rx control */
-#define	 RCR_PROM	(1U << 4)	/* accept any frame */
-#define	 RCR_AB		(1U << 3)	/* accept broadcast frame */
-#define	 RCR_AM		(1U << 2)	/* use multicast filter */
+#define  RCR_PROM	(1U << 4)	/* accept any frame */
+#define  RCR_AB		(1U << 3)	/* accept broadcast frame */
+#define  RCR_AM		(1U << 2)	/* use multicast filter */
 #define VR_TCR		0x07		/* Tx control */
 #define VR_CTL0		0x08		/* control #0 */
-#define	 CTL0_TXON	(1U << 4)
-#define	 CTL0_RXON	(1U << 3)
-#define	 CTL0_STOP	(1U << 2)
-#define	 CTL0_START	(1U << 1)
+#define  CTL0_TPD	(1U << 5)	/* instruct Tx descriptor poll */
+#define  CTL0_TXON      (1U << 4)       /* start Tx DMA */
+#define  CTL0_RXON      (1U << 3)       /* start Rx DMA */
+#define  CTL0_STOP      (1U << 2)       /* activate stop processing */ 
+#define  CTL0_START     (1U << 1)       /* start and activate */
 #define VR_CTL1		0x09		/* control #1 */
-#define	 CTL1_RESET	(1U << 8)
-#define	 CTL1_FDX	(1U << 2)
+#define  CTL1_RESET     (1U << 7)       /* SW reset, self-clearing */ 
+#define  CTL1_DPOLL     (1U << 3)       /* _disable_ Tx auto polling */
+#define  CTL1_FDX       (1U << 2)       /* set full duplex */
 #define VR_ISR		0x0c		/* interrupt status */
 #define VR_IEN		0x0e		/* interrupt enable */
 #define VR_RDBA		0x18		/* Rx descriptor list base */
@@ -133,53 +134,54 @@ struct desc {
 #define VR_MIICFG	0x6c		/* 4:0 PHY number */
 #define VR_MIISR	0x6d		/* MII status */
 #define VR_MIICR	0x70		/* MII control */
-#define	 MIICR_RCMD	(1U << 6)	/* MII read operation */
-#define	 MIICR_WCMD	(1U << 5)	/* MII write operation */
+#define  MIICR_RCMD	(1U << 6)	/* MII read operation */
+#define  MIICR_WCMD	(1U << 5)	/* MII write operation */
 #define VR_MIIADR	0x71		/* MII indirect */
 #define VR_MIIDATA	0x72		/* MII read/write */
 #define VR_CTLA		0x78		/* control A */
-#define	 CTLA_LED	0x03		/* LED selection, same as MII 16[6:5] */
+#define  CTLA_LED	0x03		/* LED selection, same as MII 16[6:5] */
 #define VR_CTLB		0x79		/* control B */
 #define VR_CTLC		0x7a		/* control C */
 #define VR_CTLD		0x7b		/* control D */
 #define VR_RXC		0x7e		/* Rx feature control */
 #define VR_TXC		0x7f		/* Tx feature control */
 #define VR_MCR0		0x80		/* misc control #0 */
-#define	 MCR0_RFDXFLC	(1U << 3)	/* FCR1? */
-#define	 MCR0_HDXFLC	(1U << 2)	/* FCR2? */
+#define  MCR0_RFDXFLC	(1U << 3)	/* FCR1? */
+#define  MCR0_HDXFLC	(1U << 2)	/* FCR2? */
 #define VR_MCR1		0x81		/* misc control #1 */
 #define VR_FCR0		0x90		/* flow control #0 */
 #define VR_FCR1		0x91		/* flow control #1 */
-#define	 FCR1_3XFLC	(1U << 3)	/* 802.3x PAUSE flow control */
-#define	 FCR1_TPAUSE	(1U << 2)	/* handle PAUSE on transmit side */
-#define	 FCR1_RPAUSE	(1U << 1)	/* handle PAUSE on receive side */
-#define	 FCR1_HDXFLC	(1U << 0)	/* HDX jabber flow control */
+#define  FCR1_3XFLC	(1U << 3)	/* 802.3x PAUSE flow control */
+#define  FCR1_TPAUSE	(1U << 2)	/* handle PAUSE on transmit side */
+#define  FCR1_RPAUSE	(1U << 1)	/* handle PAUSE on receive side */
+#define  FCR1_HDXFLC	(1U << 0)	/* HDX jabber flow control */
 
 #define FRAMESIZE	1536
 
 struct local {
-	struct desc TxD;
-	struct desc RxD[2];
+	struct desc txd;
+	struct desc rxd[2];
 	uint8_t rxstore[2][FRAMESIZE];
 	unsigned csr, rx;
 	unsigned phy, bmsr, anlpar;
-	unsigned rcr, ctl0;
+	unsigned ctl0;
 };
 
 static int nvt_mii_read(struct local *, int, int);
 static void nvt_mii_write(struct local *, int, int, int);
-static void mii_initphy(struct local *);
+static void mii_dealan(struct local *, unsigned);
 
 void *
 nvt_init(unsigned tag, void *data)
 {
-	unsigned val;
+	unsigned val, fdx;
 	struct local *l;
-	struct desc *TxD, *RxD;
+	struct desc *txd, *rxd;
 	uint8_t *en;
 
 	val = pcicfgread(tag, PCI_ID_REG);
-	if (PCI_VENDOR(val) != 0x1106 && PCI_PRODUCT(val) != 0x3053)
+	if (PCI_VENDOR(val) != 0x1106 ||
+	    (PCI_PRODUCT(val) != 0x3053 && PCI_PRODUCT(val) != 0x3065))
 		return NULL;
 
 	l = ALLOC(struct local, sizeof(struct desc));
@@ -193,7 +195,6 @@ nvt_init(unsigned tag, void *data)
 	} while (val & CTL1_RESET);
 
 	l->phy = CSR_READ_1(l, VR_MIICFG) & 0x1f;
-	mii_initphy(l);
 
 	en = data;
 	en[0] = CSR_READ_1(l, VR_PAR0);
@@ -205,33 +206,43 @@ nvt_init(unsigned tag, void *data)
 #if 1
 	printf("MAC address %02x:%02x:%02x:%02x:%02x:%02x\n",
 		en[0], en[1], en[2], en[3], en[4], en[5]);
+	printf("PHY %d (%04x.%04x)\n", l->phy,
+	   nvt_mii_read(l, l->phy, 2), nvt_mii_read(l, l->phy, 3));
+
+	mii_dealan(l, 5);
 #endif
 
-	TxD = &l->TxD;
-	RxD = &l->RxD[0];
-	RxD[0].xd0 = htole32(R0_OWN);
-	RxD[0].xd1 = htole32(FRAMESIZE << 16);
-	RxD[0].xd2 = htole32(VTOPHYS(l->rxstore[0]));
-	RxD[0].xd3 = htole32(&RxD[1]);
-	RxD[1].xd0 = htole32(R0_OWN);
-	RxD[1].xd1 = htole32(VTOPHYS(l->rxstore[1]));
-	RxD[1].xd2 = htole32(FRAMESIZE << 16);
-	RxD[1].xd3 = htole32(&RxD[0]);
+	/* speed and duplexity can be seen in MII 20 */
+	val = nvt_mii_read(l, l->phy, 20);
+	fdx = !!(val & (1U << 0));
+	printf("%s", (val & (1U << 1)) ? "100Mbps" : "10Mbps");
+	if (fdx)
+		printf("-FDX");
+	printf("\n");
+
+	txd = &l->txd;
+	rxd = &l->rxd[0];
+	rxd[0].xd0 = htole32(R0_OWN);
+	rxd[0].xd1 = htole32(FRAMESIZE << 16);
+	rxd[0].xd2 = htole32(VTOPHYS(l->rxstore[0]));
+	rxd[0].xd3 = htole32(&rxd[1]);
+	rxd[1].xd0 = htole32(R0_OWN);
+	rxd[1].xd1 = htole32(VTOPHYS(l->rxstore[1]));
+	rxd[1].xd2 = htole32(FRAMESIZE << 16);
+	rxd[1].xd3 = htole32(&rxd[0]);
 	wbinv(l, sizeof(struct local));
 	l->rx = 0;
 
-	/* speed and duplexity can be seen in MIISR and MII 20 */
-
 	/* enable transmitter and receiver */
-	l->rcr = 0;
-	l->ctl0 = (CTL0_TXON | CTL0_RXON | CTL0_START);
-	CSR_WRITE_4(l, VR_RDBA, VTOPHYS(RxD));
-	CSR_WRITE_4(l, VR_TDBA, VTOPHYS(TxD));
-	CSR_WRITE_1(l, VR_RCR, l->rcr);
+	l->ctl0 = CTL0_TXON | CTL0_RXON | CTL0_START;
+	CSR_WRITE_4(l, VR_RDBA, VTOPHYS(rxd));
+	CSR_WRITE_4(l, VR_TDBA, VTOPHYS(txd));
+	CSR_WRITE_1(l, VR_RCR, 0);
 	CSR_WRITE_1(l, VR_TCR, 0);
 	CSR_WRITE_2(l, VR_ISR, ~0);
 	CSR_WRITE_2(l, VR_IEN, 0);
-
+	if (fdx)
+		CSR_WRITE_1(l, VR_CTL1, CTL1_FDX);
 	CSR_WRITE_1(l, VR_CTL0, CTL0_START);
 	CSR_WRITE_1(l, VR_CTL0, l->ctl0);
 
@@ -242,22 +253,22 @@ int
 nvt_send(void *dev, char *buf, unsigned len)
 {
 	struct local *l = dev;
-	struct desc *TxD;
+	struct desc *txd;
 	int loop;
 	
 	wbinv(buf, len);
-	TxD = &l->TxD;
-	TxD->xd3 = htole32(TxD);
-	TxD->xd2 = htole32(VTOPHYS(buf));
-	TxD->xd1 = htole32(T1_STP | T1_EDP | (len & T1_FLMASK));
-	TxD->xd0 = htole32(T0_OWN);
-	wbinv(TxD, sizeof(struct desc));
+	txd = &l->txd;
+	txd->xd3 = htole32(txd);
+	txd->xd2 = htole32(VTOPHYS(buf));
+	txd->xd1 = htole32(T1_STP | T1_EDP | len);
+	txd->xd0 = htole32(T0_OWN);
+	wbinv(txd, sizeof(struct desc));
 	loop = 100;
 	do {
-		if ((le32toh(TxD->xd0) & T0_OWN) == 0)
+		if ((le32toh(txd->xd0) & T0_OWN) == 0)
 			goto done;
 		DELAY(10);
-		inv(TxD, sizeof(struct desc));
+		inv(txd, sizeof(struct desc));
 	} while (--loop > 0);
 	printf("xmit failed\n");
 	return -1;
@@ -269,38 +280,38 @@ int
 nvt_recv(void *dev, char *buf, unsigned maxlen, unsigned timo)
 {
 	struct local *l = dev;
-	struct desc *RxD;
+	struct desc *rxd;
 	unsigned bound, rxstat, len;
 	uint8_t *ptr;
 
 	bound = 1000 * timo;
 printf("recving with %u sec. timeout\n", timo);
   again:
-	RxD = &l->RxD[l->rx];
+	rxd = &l->rxd[l->rx];
 	do {
-		inv(RxD, sizeof(struct desc));
-		rxstat = le32toh(RxD->xd0);
+		inv(rxd, sizeof(struct desc));
+		rxstat = le32toh(rxd->xd0);
 		if ((rxstat & R0_OWN) == 0)
 			goto gotone;
 		DELAY(1000);	/* 1 milli second */
-	} while (bound-- > 0);
+	} while (--bound > 0);
 	errno = 0;
 	return -1;
   gotone:
 	if ((rxstat & R0_RXOK) == 0) {
-		RxD->xd0 = htole32(R0_OWN);
-		wbinv(RxD, sizeof(struct desc));
+		rxd->xd0 = htole32(R0_OWN);
+		wbinv(rxd, sizeof(struct desc));
 		l->rx ^= 1;
 		goto again;
 	}
-	len = (rxstat & R0_FLMASK) >> 16; /* HASFCS? */
+	len = ((rxstat & R0_FLMASK) >> 16) - 4 /* HASFCS */;
 	if (len > maxlen)
 		len = maxlen;
 	ptr = l->rxstore[l->rx];
 	inv(ptr, len);
 	memcpy(buf, ptr, len);
-	RxD->xd0 = htole32(R0_OWN);
-	wbinv(RxD, sizeof(struct desc));
+	rxd->xd0 = htole32(R0_OWN);
+	wbinv(rxd, sizeof(struct desc));
 	l->rx ^= 1;
 	return len;
 }
@@ -334,47 +345,40 @@ nvt_mii_write(struct local *l, int phy, int reg, int data)
 }
 
 #define MII_BMCR	0x00	/* Basic mode control register (rw) */
-#define	 BMCR_RESET	0x8000	/* reset */
-#define	 BMCR_AUTOEN	0x1000	/* autonegotiation enable */
-#define	 BMCR_ISO	0x0400	/* isolate */
-#define	 BMCR_STARTNEG	0x0200	/* restart autonegotiation */
+#define  BMCR_RESET	0x8000	/* reset */
+#define  BMCR_AUTOEN	0x1000	/* autonegotiation enable */
+#define  BMCR_ISO	0x0400	/* isolate */
+#define  BMCR_STARTNEG	0x0200	/* restart autonegotiation */
 #define MII_BMSR	0x01	/* Basic mode status register (ro) */
+#define  BMSR_ACOMP	0x0020	/* Autonegotiation complete */
+#define  BMSR_LINK	0x0004	/* Link status */
+#define MII_ANAR	0x04	/* Autonegotiation advertisement (rw) */
+#define  ANAR_FC	0x0400	/* local device supports PAUSE */
+#define  ANAR_TX_FD	0x0100	/* local device supports 100bTx FD */
+#define  ANAR_TX	0x0080	/* local device supports 100bTx */
+#define  ANAR_10_FD	0x0040	/* local device supports 10bT FD */
+#define  ANAR_10	0x0020	/* local device supports 10bT */
+#define  ANAR_CSMA	0x0001	/* protocol selector CSMA/CD */
+#define MII_ANLPAR	0x05	/* Autonegotiation lnk partner abilities (rw) */
 
-static void
-mii_initphy(struct local *l)
+void
+mii_dealan(struct local *l, unsigned timo)
 {
-	int phy, ctl, sts, bound;
+	unsigned anar, bound;
 
-	l->bmsr = nvt_mii_read(l, l->phy, MII_BMSR);
-	return; /* XXX */
-
-	for (phy = 0; phy < 32; phy++) {
-		ctl = nvt_mii_read(l, phy, MII_BMCR);
-		sts = nvt_mii_read(l, phy, MII_BMSR);
-		if (ctl != 0xffff && sts != 0xffff)
-			goto found;
-	}
-	printf("MII: no PHY found\n");
-	return;
-  found:
-	ctl = nvt_mii_read(l, phy, MII_BMCR);
-	nvt_mii_write(l, phy, MII_BMCR, ctl | BMCR_RESET);
-	bound = 100;
+	anar = ANAR_TX_FD | ANAR_TX | ANAR_10_FD | ANAR_10 | ANAR_CSMA;
+	nvt_mii_write(l, l->phy, MII_ANAR, anar);
+	nvt_mii_write(l, l->phy, MII_BMCR, BMCR_AUTOEN | BMCR_STARTNEG);
+	l->anlpar = 0;
+	bound = getsecs() + timo;
 	do {
-		DELAY(10);
-		ctl = nvt_mii_read(l, phy, MII_BMCR);
-		if (ctl == 0xffff) {
-			printf("MII: PHY %d has died after reset\n", phy);
-			return;
+		l->bmsr = nvt_mii_read(l, l->phy, MII_BMSR) |
+		   nvt_mii_read(l, l->phy, MII_BMSR); /* read twice */
+		if ((l->bmsr & BMSR_LINK) && (l->bmsr & BMSR_ACOMP)) {
+			l->anlpar = nvt_mii_read(l, l->phy, MII_ANLPAR);
+			break;
 		}
-	} while (bound-- > 0 && (ctl & BMCR_RESET));
-	if (bound == 0) {
-		printf("PHY %d reset failed\n", phy);
-	}
-	ctl &= ~BMCR_ISO;
-	nvt_mii_write(l, phy, MII_BMCR, ctl);
-	sts = nvt_mii_read(l, phy, MII_BMSR) |
-	    nvt_mii_read(l, phy, MII_BMSR); /* read twice */
-	l->phy = phy;
-	l->bmsr = sts;
+		DELAY(10 * 1000);
+	} while (getsecs() < bound);
+	return;
 }

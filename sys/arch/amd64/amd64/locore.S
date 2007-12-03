@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.25.8.6 2007/11/27 19:35:26 joerg Exp $	*/
+/*	$NetBSD: locore.S,v 1.25.8.7 2007/12/03 16:13:53 joerg Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -156,6 +156,15 @@
  *	@(#)locore.s	7.3 (Berkeley) 5/13/91
  */
 
+/*
+ * override user-land alignment before including asm.h
+ */
+#define	ALIGN_DATA	.align	8
+#define ALIGN_TEXT	.align 16,0x90
+#define _ALIGN_TEXT	ALIGN_TEXT
+
+#include <machine/asm.h>
+
 #include "opt_ddb.h"
 #include "opt_ddbparam.h"
 #include "opt_realmem.h"
@@ -183,15 +192,6 @@
 #if NLAPIC > 0
 #include <machine/i82489reg.h>
 #endif
-
-/*
- * override user-land alignment before including asm.h
- */
-#define	ALIGN_DATA	.align	8
-#define ALIGN_TEXT	.align 16,0x90
-#define _ALIGN_TEXT	ALIGN_TEXT
-
-#include <machine/asm.h>
 
 /* XXX temporary kluge; these should not be here */
 /* Get definitions for IOM_BEGIN, IOM_END, and IOM_SIZE */
@@ -1154,13 +1154,19 @@ NENTRY(child_trampoline)
  * oosyscall()
  *
  * Old call gate entry for syscall. only needed if we're
- * going to support running old NetBSD or ibcs2 binaries, etc,
+ * going to support running old i386 NetBSD 1.0 or ibcs2 binaries, etc,
  * on NetBSD/amd64.
+ * The 64bit call gate can't request that arguments be copied from the
+ * user stack (which the i386 code uses to get a gap for the flags).
+ * push/pop are <read>:<modify_sp>:<write> cycles.
  */
 IDTVEC(oosyscall)
 	/* Set rflags in trap frame. */
-	pushfq
+	pushq	(%rsp)		# move user's %eip
+	pushq	16(%rsp)	# and %cs
 	popq	8(%rsp)
+	pushfq
+	popq	16(%rsp)
 	pushq	$7		# size of instruction for restart
 	jmp	osyscall1
 

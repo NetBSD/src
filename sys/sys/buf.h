@@ -1,4 +1,4 @@
-/*     $NetBSD: buf.h,v 1.96.4.3 2007/11/21 21:56:15 joerg Exp $ */
+/*     $NetBSD: buf.h,v 1.96.4.4 2007/12/03 16:15:16 joerg Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -200,6 +200,7 @@ do {									\
 #define	B_DELWRI	0x00000080	/* Delay I/O until buffer reused. */
 #define	B_DIRTY		0x00000100	/* Dirty page to be pushed out async. */
 #define	B_DONE		0x00000200	/* I/O completed. */
+#define	B_COWDONE	0x00000400	/* Copy-on-write already done. */
 #define	B_GATHERED	0x00001000	/* LFS: already in a segment. */
 #define	B_INVAL		0x00002000	/* Does not contain valid info. */
 #define	B_LOCKED	0x00004000	/* Locked in core (not reusable). */
@@ -217,7 +218,7 @@ do {									\
 
 #define BUF_FLAGBITS \
     "\20\1AGE\3ASYNC\4BAD\5BUSY\6SCANNED\7CALL\10DELWRI" \
-    "\11DIRTY\12DONE\15GATHERED\16INVAL\17LOCKED\20NOCACHE" \
+    "\11DIRTY\12DONE\13COWDONE\15GATHERED\16INVAL\17LOCKED\20NOCACHE" \
     "\22CACHE\23PHYS\24RAW\25READ\26TAPE\30WANTED\31FSPRIVATE\32DEVPRIVATE" \
     "\33VFLUSH"
 

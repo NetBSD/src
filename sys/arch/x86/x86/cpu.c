@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.2.6.18 2007/11/14 19:04:15 joerg Exp $ */
+/* $NetBSD: cpu.c,v 1.2.6.19 2007/12/03 16:14:21 joerg Exp $ */
 
 /*-
  * Copyright (c) 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.2.6.18 2007/11/14 19:04:15 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.2.6.19 2007/12/03 16:14:21 joerg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -88,10 +88,10 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.2.6.18 2007/11/14 19:04:15 joerg Exp $");
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/cpu.h>
+#include <sys/atomic.h>
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/cpu.h>
 #include <machine/cpufunc.h>
 #include <machine/cpuvar.h>
 #include <machine/pmap.h>
@@ -173,6 +173,7 @@ static void	cpu_init_idle_lwp(struct cpu_info *);
 #endif
 
 uint32_t cpus_attached = 0;
+uint32_t cpus_running = 0;
 
 extern char x86_64_doubleflt_stack[];
 
@@ -185,8 +186,6 @@ paddr_t mp_trampoline_paddr = MP_TRAMPOLINE;
  * curproc, etc. are used early.
  */
 struct cpu_info *cpu_info[X86_MAXPROCS] = { &cpu_info_primary, };
-
-uint32_t cpus_running = 0;
 
 void    	cpu_hatch(void *);
 static void    	cpu_boot_secondary(struct cpu_info *ci);
@@ -339,7 +338,8 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 	switch (caa->cpu_role) {
 	case CPU_ROLE_SP:
 		aprint_normal(": (uniprocessor)\n");
-		ci->ci_flags |= CPUF_PRESENT | CPUF_SP | CPUF_PRIMARY;
+		atomic_or_32(&ci->ci_flags,
+		    CPUF_PRESENT | CPUF_SP | CPUF_PRIMARY);
 		cpu_intr_init(ci);
 		identifycpu(ci);
 		cpu_init(ci);
@@ -350,7 +350,8 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 
 	case CPU_ROLE_BP:
 		aprint_normal(": (boot processor)\n");
-		ci->ci_flags |= CPUF_PRESENT | CPUF_BSP | CPUF_PRIMARY;
+		atomic_or_32(&ci->ci_flags,
+		    CPUF_PRESENT | CPUF_BSP | CPUF_PRIMARY);
 		cpu_intr_init(ci);
 		identifycpu(ci);
 		cpu_init(ci);
@@ -489,10 +490,10 @@ cpu_init(struct cpu_info *ci)
 #endif	/* i386 */
 #endif /* MTRR */
 
-#ifdef MULTIPROCESSOR
-	ci->ci_flags |= CPUF_RUNNING;
-	cpus_running |= ci->ci_cpumask;
-#else
+	atomic_or_32(&ci->ci_flags, CPUF_RUNNING);
+	atomic_or_32(&cpus_running, ci->ci_cpumask);
+
+#ifndef MULTIPROCESSOR
 	/* XXX */
 	x86_patch();
 #endif
@@ -559,7 +560,7 @@ cpu_start_secondary(struct cpu_info *ci)
 
 	mp_pdirpa = pmap_init_tmp_pgtbl(mp_trampoline_paddr);
 
-	ci->ci_flags |= CPUF_AP;
+	atomic_or_32(&ci->ci_flags, CPUF_AP);
 
 	aprint_debug("%s: starting\n", ci->ci_dev->dv_xname);
 
@@ -572,7 +573,7 @@ cpu_start_secondary(struct cpu_info *ci)
 	for (i = 100000; (!(ci->ci_flags & CPUF_PRESENT)) && i>0;i--) {
 		delay(10);
 	}
-	if (! (ci->ci_flags & CPUF_PRESENT)) {
+	if ((ci->ci_flags & CPUF_PRESENT) == 0) {
 		aprint_error("%s: failed to become ready\n",
 		    ci->ci_dev->dv_xname);
 #if defined(MPDEBUG) && defined(DDB)
@@ -589,12 +590,11 @@ cpu_boot_secondary(struct cpu_info *ci)
 {
 	int i;
 
-	ci->ci_flags |= CPUF_GO; /* XXX atomic */
-
+	atomic_or_32(&ci->ci_flags, CPUF_GO);
 	for (i = 100000; (!(ci->ci_flags & CPUF_RUNNING)) && i>0;i--) {
-		delay(10);
+		DELAY(10);
 	}
-	if (! (ci->ci_flags & CPUF_RUNNING)) {
+	if ((ci->ci_flags & CPUF_RUNNING) == 0) {
 		aprint_error("%s: failed to start\n", ci->ci_dev->dv_xname);
 #if defined(MPDEBUG) && defined(DDB)
 		printf("dropping into debugger; continue from here to resume boot\n");
@@ -623,7 +623,7 @@ cpu_hatch(void *v)
 	cpu_feature2 &= ci->ci_feature2_flags;
 
 	KDASSERT((ci->ci_flags & CPUF_PRESENT) == 0);
-	ci->ci_flags |= CPUF_PRESENT;
+	atomic_or_32(&ci->ci_flags, CPUF_PRESENT);
 	while ((ci->ci_flags & CPUF_GO) == 0) {
 		/* Don't use delay, boot CPU may be patching the text. */
 		for (i = 10000; i != 0; i--)

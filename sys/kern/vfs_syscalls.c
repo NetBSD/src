@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.324.2.5 2007/11/27 19:38:18 joerg Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.324.2.6 2007/12/03 16:15:00 joerg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.324.2.5 2007/11/27 19:38:18 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.324.2.6 2007/12/03 16:15:00 joerg Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -1620,19 +1620,9 @@ dofhopen(struct lwp *l, const void *ufhp, size_t fhsize, int oflags,
 		error = EOPNOTSUPP;
 		goto bad;
 	}
-	if (flags & FREAD) {
-		if ((error = VOP_ACCESS(vp, VREAD, cred)) != 0)
-			goto bad;
-	}
-	if (flags & (FWRITE | O_TRUNC)) {
-		if (vp->v_type == VDIR) {
-			error = EISDIR;
-			goto bad;
-		}
-		if ((error = vn_writechk(vp)) != 0 ||
-		    (error = VOP_ACCESS(vp, VWRITE, cred)) != 0)
-			goto bad;
-	}
+	error = vn_openchk(vp, cred, flags);
+	if (error != 0)
+		goto bad;
 	if (flags & O_TRUNC) {
 		VOP_UNLOCK(vp, 0);			/* XXX */
 		VOP_LEASE(vp, cred, LEASE_WRITE);

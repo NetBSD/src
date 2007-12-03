@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_time.c,v 1.1.4.2 2007/08/16 11:03:38 jmcneill Exp $	*/
+/*	$NetBSD: subr_time.c,v 1.1.4.3 2007/12/03 16:14:57 joerg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -33,13 +33,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_time.c,v 1.1.4.2 2007/08/16 11:03:38 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_time.c,v 1.1.4.3 2007/12/03 16:14:57 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/timex.h>
 #include <sys/time.h>
 #include <sys/timetc.h>
+#include <sys/intr.h>
 
 #ifdef __HAVE_TIMECOUNTER
 /*

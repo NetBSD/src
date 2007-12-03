@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.170.6.4 2007/11/27 19:39:16 joerg Exp $	*/
+/*	$NetBSD: vnode.h,v 1.170.6.5 2007/12/03 16:15:21 joerg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -571,15 +571,12 @@ u_int	vn_setrecurse(struct vnode *);
 int	vn_stat(struct vnode *, struct stat *, struct lwp *);
 int	vn_kqfilter(struct file *, struct knote *);
 int	vn_writechk(struct vnode *);
+int	vn_openchk(struct vnode *, kauth_cred_t, int);
 int	vn_extattr_get(struct vnode *, int, int, const char *, size_t *,
 	    void *, struct lwp *);
 int	vn_extattr_set(struct vnode *, int, int, const char *, size_t,
 	    const void *, struct lwp *);
 int	vn_extattr_rm(struct vnode *, int, int, const char *, struct lwp *);
-int	vn_cow_establish(struct vnode *, int (*)(void *, struct buf *),
-            void *);
-int	vn_cow_disestablish(struct vnode *, int (*)(void *, struct buf *),
-            void *);
 void	vn_ra_allocctx(struct vnode *);
 
 /* initialise global vnode management */

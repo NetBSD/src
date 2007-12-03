@@ -1,4 +1,4 @@
-/*	$NetBSD: pud.c,v 1.3.2.3 2007/11/27 19:37:22 joerg Exp $	*/
+/*	$NetBSD: pud.c,v 1.3.2.4 2007/12/03 16:14:38 joerg Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pud.c,v 1.3.2.3 2007/11/27 19:37:22 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pud.c,v 1.3.2.4 2007/12/03 16:14:38 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -177,6 +177,12 @@ pudconf_reg(struct pud_dev *pd, struct pud_conf_reg *pcr)
 	struct bdevsw *bsw;
 	int cmajor, bmajor, error;
 
+	if (pcr->pm_version != (PUD_DEVELVERSION | PUD_VERSION)) {
+		printf("pud version mismatch %d vs %d\n",
+		    pcr->pm_version & ~PUD_DEVELVERSION, PUD_VERSION);
+		return EINVAL; /* XXX */
+	}
+
 	cmajor = major(pcr->pm_regdev);
 	if (pcr->pm_flags & PUD_CONFFLAG_BDEV) {
 		bsw = &pud_bdevsw;
@@ -275,6 +281,10 @@ pud_putter_close(void *this)
 		devsw_detach(&pud_bdevsw /* XXX */, &pud_cdevsw);
 		
 	putter_detach(pd->pd_pi);
+
+	mutex_destroy(&pd->pd_mtx);
+	cv_destroy(&pd->pd_draincv);
+	cv_destroy(&pd->pd_waitq_req_cv);
 	kmem_free(pd, sizeof(struct pud_dev));
 
 	return 0;
@@ -327,6 +337,7 @@ pud_request(dev_t dev, void *data, size_t dlen, int class, int type)
 	if (--pd->pd_waitcount == 0)
 		cv_signal(&pd->pd_draincv);
 	mutex_exit(&pd->pd_mtx);
+	cv_destroy(&put.pt_cv);
 
 	return pdr->pdr_rv;
 }

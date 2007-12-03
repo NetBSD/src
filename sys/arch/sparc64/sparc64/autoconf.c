@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.138.8.3 2007/11/21 21:53:33 joerg Exp $ */
+/*	$NetBSD: autoconf.c,v 1.138.8.4 2007/12/03 16:14:18 joerg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.138.8.3 2007/11/21 21:53:33 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.138.8.4 2007/12/03 16:14:18 joerg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -909,7 +909,7 @@ device_register(struct device *dev, void *aux)
 				copyprops(busdev, console_node, dict);
 
 				gfb_cb.gcc_cookie = 
-				    (void *)(uint64_t)console_instance;
+				    (void *)(intptr_t)console_instance;
 				gfb_cb.gcc_set_mapreg = of_set_palette;
 				cmap_cb = (uint64_t)&gfb_cb;
 				prop_dictionary_set_uint64(dict,
@@ -986,7 +986,7 @@ copyprops(struct device *busdev, int node, prop_dictionary_t dict)
 static void
 of_set_palette(void *cookie, int index, int r, int g, int b)
 {
-	int ih = (uint64_t)cookie;
+	int ih = (int)((intptr_t)cookie);
 
 	OF_call_method_1("color!", ih, 4, r, g, b, index);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.123.4.1 2007/10/26 15:49:43 joerg Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.123.4.2 2007/12/03 16:15:26 joerg Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.123.4.1 2007/10/26 15:49:43 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.123.4.2 2007/12/03 16:15:26 joerg Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -83,6 +83,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.123.4.1 2007/10/26 15:49:43 joerg Exp
 #include <sys/kernel.h>
 #include <sys/vnode.h>
 #include <sys/proc.h>
+#include <sys/atomic.h>
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_pdpolicy.h>
@@ -209,12 +210,12 @@ uvm_pageinsert_after(struct vm_page *pg, struct vm_page *where)
 			vholdl(vp);
 		}
 		if (UVM_OBJ_IS_VTEXT(uobj)) {
-			uvmexp.execpages++;
+			atomic_inc_uint(&uvmexp.execpages);
 		} else {
-			uvmexp.filepages++;
+			atomic_inc_uint(&uvmexp.filepages);
 		}
 	} else if (UVM_OBJ_IS_AOBJ(uobj)) {
-		uvmexp.anonpages++;
+		atomic_inc_uint(&uvmexp.anonpages);
 	}
 
 	if (where)
@@ -264,12 +265,12 @@ uvm_pageremove(struct vm_page *pg)
 			holdrelel(vp);
 		}
 		if (UVM_OBJ_IS_VTEXT(uobj)) {
-			uvmexp.execpages--;
+			atomic_dec_uint(&uvmexp.execpages);
 		} else {
-			uvmexp.filepages--;
+			atomic_dec_uint(&uvmexp.filepages);
 		}
 	} else if (UVM_OBJ_IS_AOBJ(uobj)) {
-		uvmexp.anonpages--;
+		atomic_dec_uint(&uvmexp.anonpages);
 	}
 
 	/* object should be locked */
@@ -1200,7 +1201,7 @@ uvm_pagealloc_strat(struct uvm_object *obj, voff_t off, struct vm_anon *anon,
 	if (anon) {
 		anon->an_page = pg;
 		pg->pqflags = PQ_ANON;
-		uvmexp.anonpages++;
+		atomic_inc_uint(&uvmexp.anonpages);
 	} else {
 		if (obj) {
 			uvm_pageinsert(pg);
@@ -1370,7 +1371,7 @@ uvm_pagefree(struct vm_page *pg)
 				pg->loan_count--;
 			} else {
 				pg->pqflags &= ~PQ_ANON;
-				uvmexp.anonpages--;
+				atomic_dec_uint(&uvmexp.anonpages);
 			}
 			pg->uanon->an_page = NULL;
 			pg->uanon = NULL;
@@ -1399,7 +1400,7 @@ uvm_pagefree(struct vm_page *pg)
 		uvm_pageremove(pg);
 	} else if (pg->uanon != NULL) {
 		pg->uanon->an_page = NULL;
-		uvmexp.anonpages--;
+		atomic_dec_uint(&uvmexp.anonpages);
 	}
 
 	/*
