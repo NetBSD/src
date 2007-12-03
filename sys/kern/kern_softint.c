@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_softint.c,v 1.5 2007/12/03 15:34:33 ad Exp $	*/
+/*	$NetBSD: kern_softint.c,v 1.6 2007/12/03 17:15:00 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -184,7 +184,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.5 2007/12/03 15:34:33 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.6 2007/12/03 17:15:00 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -660,8 +660,7 @@ softint_picklwp(void)
  * softint_overlay:
  *
  *	Slow path: called from lwp_userret() to run a soft interrupt
- *	within the context of a user thread.  If the LWP blocks,
- *	priority will be elevated in sched_kpri().
+ *	within the context of a user thread.
  */
 void
 softint_overlay(void)
@@ -669,6 +668,7 @@ softint_overlay(void)
 	struct cpu_info *ci;
 	u_int softints;
 	softint_t *si;
+	pri_t obase;
 	lwp_t *l;
 	int s;
 
@@ -678,6 +678,9 @@ softint_overlay(void)
 
 	KASSERT((l->l_pflag & LP_INTR) == 0);
 
+	/* Arrange to elevate priority if the LWP blocks. */
+	obase = l->l_kpribase;
+	l->l_kpribase = PRI_KERNEL_RT;
 	l->l_pflag |= LP_INTR;
 	s = splhigh();
 	while ((softints = ci->ci_data.cpu_softints) != 0) {
@@ -704,20 +707,7 @@ softint_overlay(void)
 	}
 	splx(s);
 	l->l_pflag &= ~LP_INTR;
-}
-
-/*
- * softint_kpri:
- *
- *	Adjust priority for a blocking user LWP that is handling a
- *	soft interrupt.
- */
-pri_t
-softint_kpri(lwp_t *l)
-{
-
-	/* No point doing anything more fair / complicated. */
-	return PRI_SOFTSERIAL;
+	l->l_kpribase = obase;
 }
 
 #else	/*  !__HAVE_FAST_SOFTINTS */

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.5 2007/12/03 15:34:34 ad Exp $	*/
+/*	$NetBSD: intr.h,v 1.6 2007/12/03 17:14:59 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -55,7 +55,6 @@ void	softint_init(struct cpu_info *);
 lwp_t	*softint_picklwp(void);
 void	softint_overlay(void);
 void	softint_block(lwp_t *);
-pri_t	softint_kpri(lwp_t *);
 
 /* MD-MI interface. */
 void	softint_init_md(lwp_t *, u_int, uintptr_t *);
