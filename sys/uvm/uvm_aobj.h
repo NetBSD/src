@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.h,v 1.19 2007/02/22 04:38:07 matt Exp $	*/
+/*	$NetBSD: uvm_aobj.h,v 1.19.16.1 2007/12/03 16:15:24 joerg Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -77,12 +77,6 @@ void uao_dropswap_range(struct uvm_object *, voff_t, voff_t);
 #define	uao_dropswap(obj, off)		/* nothing */
 #define	uao_dropswap_range(obj, lo, hi)	/* nothing */
 #endif /* defined(VMSWAP) */
-
-/*
- * globals
- */
-
-extern struct uvm_pagerops aobj_pager;
 
 #endif /* _KERNEL */
 

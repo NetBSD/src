@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.136.2.2 2007/11/04 21:03:39 jmcneill Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.136.2.3 2007/12/03 16:15:11 joerg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.136.2.2 2007/11/04 21:03:39 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.136.2.3 2007/12/03 16:15:11 joerg Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -721,7 +721,7 @@ tcp_ctloutput(int op, struct socket *so, int level, int optname,
 
 #ifdef TCP_SIGNATURE
 		case TCP_MD5SIG:
-			if (m == NULL || m->m_len < sizeof (int))
+			if (m == NULL || m->m_len != sizeof(int))
 				error = EINVAL;
 			if (error)
 				break;
@@ -733,7 +733,7 @@ tcp_ctloutput(int op, struct socket *so, int level, int optname,
 #endif /* TCP_SIGNATURE */
 
 		case TCP_NODELAY:
-			if (m == NULL || m->m_len < sizeof (int))
+			if (m == NULL || m->m_len != sizeof(int))
 				error = EINVAL;
 			else if (*mtod(m, int *))
 				tp->t_flags |= TF_NODELAY;
@@ -742,7 +742,7 @@ tcp_ctloutput(int op, struct socket *so, int level, int optname,
 			break;
 
 		case TCP_MAXSEG:
-			if (m && m->m_len >= sizeof(int) &&
+			if (m && m->m_len == sizeof(int) &&
 			    (i = *mtod(m, int *)) > 0 &&
 			    i <= tp->t_peermss)
 				tp->t_peermss = i;  /* limit on send size */
@@ -758,7 +758,7 @@ tcp_ctloutput(int op, struct socket *so, int level, int optname,
 			break;
 
 		case TCP_KEEPIDLE:
-			if (m && m->m_len >= sizeof(u_int) &&
+			if (m && m->m_len == sizeof(u_int) &&
 			    (ui = *mtod(m, u_int *)) > 0) {
 				tp->t_keepidle = ui;
 				change_keepalive(so, tp);
@@ -767,7 +767,7 @@ tcp_ctloutput(int op, struct socket *so, int level, int optname,
 			break;
 
 		case TCP_KEEPINTVL:
-			if (m && m->m_len >= sizeof(u_int) &&
+			if (m && m->m_len == sizeof(u_int) &&
 			    (ui = *mtod(m, u_int *)) > 0) {
 				tp->t_keepintvl = ui;
 				change_keepalive(so, tp);
@@ -776,7 +776,7 @@ tcp_ctloutput(int op, struct socket *so, int level, int optname,
 			break;
 
 		case TCP_KEEPCNT:
-			if (m && m->m_len >= sizeof(u_int) &&
+			if (m && m->m_len == sizeof(u_int) &&
 			    (ui = *mtod(m, u_int *)) > 0) {
 				tp->t_keepcnt = ui;
 				change_keepalive(so, tp);
@@ -785,7 +785,7 @@ tcp_ctloutput(int op, struct socket *so, int level, int optname,
 			break;
 
 		case TCP_KEEPINIT:
-			if (m && m->m_len >= sizeof(u_int) &&
+			if (m && m->m_len == sizeof(u_int) &&
 			    (ui = *mtod(m, u_int *)) > 0) {
 				tp->t_keepinit = ui;
 				change_keepalive(so, tp);

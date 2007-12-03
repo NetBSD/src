@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.80.18.1 2007/11/21 21:53:32 joerg Exp $	*/
+/*	$NetBSD: psycho.c,v 1.80.18.2 2007/12/03 16:14:17 joerg Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Eduardo E. Horvath
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.80.18.1 2007/11/21 21:53:32 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.80.18.2 2007/12/03 16:14:17 joerg Exp $");
 
 #include "opt_ddb.h"
 
@@ -1246,16 +1246,11 @@ psycho_intr_establish(bus_space_tag_t t, int ihandle, int level,
 	DPRINTF(PDB_INTR, ("\npsycho: intr %lx: %p\nHunting for IRQ...\n",
 	    (long)ino, intrlev[ino]));
 
-	/* Hunt thru obio first */
-	for (intrmapptr = &sc->sc_regs->scsi_int_map,
-		     intrclrptr = &sc->sc_regs->scsi_clr_int;
-	     intrmapptr < &sc->sc_regs->ue_int_map;
-	     intrmapptr++, intrclrptr++) {
-		if (INTINO(*intrmapptr) == ino)
-			goto found;
-	}
-
-	/* Now do PCI interrupts */
+ 	/* 
+ 	 * First look for PCI interrupts, otherwise the PCI A slot 0
+ 	 * INTA# interrupt might match an unused non-PCI (obio)
+ 	 * interrupt.
+ 	 */
 	for (intrmapptr = &sc->sc_regs->pcia_slot0_int,
 		     intrclrptr = &sc->sc_regs->pcia0_clr_int[0];
 	     intrmapptr <= &sc->sc_regs->pcib_slot3_int;
@@ -1268,6 +1263,15 @@ psycho_intr_establish(bus_space_tag_t t, int ihandle, int level,
 			intrclrptr += vec & 0x3;
 			goto found;
 		}
+	}
+
+	/* Now hunt thru obio. */
+	for (intrmapptr = &sc->sc_regs->scsi_int_map,
+		     intrclrptr = &sc->sc_regs->scsi_clr_int;
+	     intrmapptr < &sc->sc_regs->ue_int_map;
+	     intrmapptr++, intrclrptr++) {
+		if (INTINO(*intrmapptr) == ino)
+			goto found;
 	}
 
 	/* Finally check the two FFB slots */
@@ -1319,6 +1323,10 @@ found:
 		DPRINTF(PDB_INTR, ("; reread intrmap = %016qx",
 			(unsigned long long)(imap = *intrmapptr)));
 	}
+ 	if (intrclrptr) {
+ 		/* set state to IDLE */
+ 		*intrclrptr = 0;
+ 	}
 	return (ih);
 }
 

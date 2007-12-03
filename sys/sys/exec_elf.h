@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.90.6.1 2007/09/03 16:49:12 jmcneill Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.90.6.2 2007/12/03 16:15:17 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -806,7 +806,7 @@ struct netbsd_elfcore_procinfo {
 
 #ifdef _KERNEL
 
-#define ELF_AUX_ENTRIES	12		/* Size of aux array passed to loader */
+#define ELF_AUX_ENTRIES	14	/* Max size of aux array passed to loader */
 #define ELF32_NO_ADDR	(~(Elf32_Addr)0) /* Indicates addr. not yet filled in */
 #define ELF32_LINK_ADDR	((Elf32_Addr)-2) /* advises to use link address */
 #define ELF64_NO_ADDR	(~(Elf64_Addr)0) /* Indicates addr. not yet filled in */

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.2.4.5 2007/11/27 19:35:56 joerg Exp $	*/
+/*	$NetBSD: pmap.c,v 1.2.4.6 2007/12/03 16:14:23 joerg Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.2.4.5 2007/11/27 19:35:56 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.2.4.6 2007/12/03 16:14:23 joerg Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -2253,7 +2253,7 @@ pmap_reactivate(struct pmap *pmap)
 
 	ci->ci_tlbstate = TLBSTATE_VALID;
 	oldcpus = pmap->pm_cpus;
-	x86_atomic_setbits_l(&pmap->pm_cpus, cpumask);
+	atomic_or_32(&pmap->pm_cpus, cpumask);
 	KASSERT((pmap->pm_kernel_cpus & cpumask) != 0);
 	if (oldcpus & cpumask) {
 		/* got it */
@@ -2330,8 +2330,8 @@ pmap_load(void)
 	 * actually switch pmap.
 	 */
 
-	x86_atomic_clearbits_l(&oldpmap->pm_cpus, cpumask);
-	x86_atomic_clearbits_l(&oldpmap->pm_kernel_cpus, cpumask);
+	atomic_and_32(&oldpmap->pm_cpus, ~cpumask);
+	atomic_and_32(&oldpmap->pm_kernel_cpus, ~cpumask);
 
 #ifdef XEN
 	KASSERT(oldpmap->pm_pdirpa == xen_current_user_pgd ||
@@ -2350,8 +2350,8 @@ pmap_load(void)
 	 */
 
 	ci->ci_tlbstate = TLBSTATE_VALID;
-	x86_atomic_setbits_l(&pmap->pm_cpus, cpumask);
-	x86_atomic_setbits_l(&pmap->pm_kernel_cpus, cpumask);
+	atomic_or_32(&pmap->pm_cpus, cpumask);
+	atomic_or_32(&pmap->pm_kernel_cpus, cpumask);
 	ci->ci_pmap = pmap;
 
 	/*

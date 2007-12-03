@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.118.6.4 2007/11/06 19:25:30 joerg Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.118.6.5 2007/12/03 16:14:51 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.118.6.4 2007/11/06 19:25:30 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.118.6.5 2007/12/03 16:14:51 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,7 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.118.6.4 2007/11/06 19:25:30 joer
 #include <sys/proc.h>
 #include <sys/sysctl.h>
 #include <sys/kauth.h>
-
+#include <sys/atomic.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 
@@ -572,9 +572,7 @@ lim_copy(struct plimit *lim)
 void
 lim_addref(struct plimit *lim)
 {
-	mutex_enter(&lim->pl_lock);
-	lim->pl_refcnt++;
-	mutex_exit(&lim->pl_lock);
+	atomic_inc_uint(&lim->pl_refcnt);
 }
 
 /*
@@ -624,18 +622,10 @@ void
 limfree(struct plimit *lim)
 {
 	struct plimit *sv_lim;
-	int n;
 
 	do {
-		mutex_enter(&lim->pl_lock);
-		n = --lim->pl_refcnt;
-		mutex_exit(&lim->pl_lock);
-		if (n > 0)
+		if (atomic_dec_uint_nv(&lim->pl_refcnt) > 0)
 			return;
-#ifdef DIAGNOSTIC
-		if (n < 0)
-			panic("limfree");
-#endif
 		if (lim->pl_corename != defcorename)
 			free(lim->pl_corename, M_TEMP);
 		sv_lim = lim->pl_sv_limit;

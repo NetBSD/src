@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.104.2.4 2007/11/27 19:38:53 joerg Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.104.2.5 2007/12/03 16:15:05 joerg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.104.2.4 2007/11/27 19:38:53 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.104.2.5 2007/12/03 16:15:05 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -565,7 +565,7 @@ spec_strategy(void *v)
 		bioopsp->io_start(bp);
 
 	if (!(bp->b_flags & B_READ))
-		error = fscow_run(bp);
+		error = fscow_run(bp, false);
 
 	if (error) {
 		bp->b_error = error;
