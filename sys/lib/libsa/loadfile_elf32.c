@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile_elf32.c,v 1.19 2007/12/02 04:59:26 tsutsui Exp $ */
+/* $NetBSD: loadfile_elf32.c,v 1.20 2007/12/03 09:51:30 isaki Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -296,7 +296,7 @@ ELFNAMEEND(loadfile)(fd, elf, marks, flags)
 		goto freephdr;
 	}
 	if (nr != sz) {
-		errno = ESHORT;
+		errno = EIO;
 		WARN(("read program headers"));
 		goto freephdr;
 	}
@@ -342,7 +342,7 @@ ELFNAMEEND(loadfile)(fd, elf, marks, flags)
 				goto freephdr;
 			}
 			if (nr != (ssize_t)phdr[i].p_filesz) {
-				errno = ESHORT;
+				errno = EIO;
 				WARN(("read text"));
 				goto freephdr;
 			}
@@ -398,7 +398,7 @@ ELFNAMEEND(loadfile)(fd, elf, marks, flags)
 			goto freeshp;
 		}
 		if (nr != sz) {
-			errno = ESHORT;
+			errno = EIO;
 			WARN(("read section headers"));
 			goto freeshp;
 		}
@@ -446,7 +446,7 @@ ELFNAMEEND(loadfile)(fd, elf, marks, flags)
 						goto freeshp;
 					}
 					if (nr != (ssize_t)shp[i].sh_size) {
-						errno = ESHORT;
+						errno = EIO;
 						WARN(("read symbols"));
 						goto freeshp;
 					}
