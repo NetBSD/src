@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.32 2007/12/03 15:33:39 ad Exp $	*/
+/*	$NetBSD: intr.c,v 1.33 2007/12/03 16:18:47 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.32 2007/12/03 15:33:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.33 2007/12/03 16:18:47 tsutsui Exp $");
 
 #define _HP300_INTR_H_PRIVATE
 
@@ -112,7 +112,30 @@ intr_init(void)
 void
 intr_computeipl(void)
 {
+	struct hp300_intrhand *ih;
+	int ipl;
 
+	/* Start with low values. */
+	hp300_ipl2psl[IPL_VM] = PSL_S|PSL_IPL3;
+
+	for (ipl = 0; ipl < NISR; ipl++) {
+		for (ih = LIST_FIRST(&hp300_intr_list[ipl].hi_q); ih != NULL;
+		    ih = LIST_NEXT(ih, ih_q)) {
+			/*
+			 * Bump up the level for a given priority,
+			 * if necessary.
+			 */
+			switch (ih->ih_priority) {
+			case IPL_VM:
+				if (ipl > PSLTOIPL(hp300_ipl2psl[IPL_VM]))
+					hp300_ipl2psl[IPL_VM] = IPLTOPSL(ipl);
+				break;
+			default:
+				printf("priority = %d\n", ih->ih_priority);
+				panic("intr_computeipl: bad priority");
+			}
+		}
+	}
 }
 
 void
