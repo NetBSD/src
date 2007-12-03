@@ -278,6 +278,7 @@ SB	sound blaster
 SCM	software configuration management
 SCM	source code management
 SCSI	small computer system interface
+SCTP	stream control transmission protocol
 SDRAM	synchronous dynamic random access memory
 SGRAM	synchronous graphics random access memory
 SIFS	short inter-frame space
@@ -295,6 +296,7 @@ SSFDC	solid state floppy disc card
 SSH	secure shell
 SSL	secure sockets layer
 STP	shielded twisted pair
+STP	spanning-tree protocol
 SVGA	super video graphics {array,adapter}
 TCL	tool command language
 TCP	transmission control protocol
