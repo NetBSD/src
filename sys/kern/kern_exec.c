@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.255 2007/12/03 02:06:58 christos Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.256 2007/12/03 02:20:24 christos Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.255 2007/12/03 02:06:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.256 2007/12/03 02:20:24 christos Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -736,7 +736,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 		pack.ep_path = dp;
 #endif
 	else {
-#ifdef DIAGNOSTIC
+#ifdef notyet
 		printf("Cannot get path for pid %d [%s] (error %d)",
 		    (int)p->p_pid, p->p_comm, error);
 #endif
