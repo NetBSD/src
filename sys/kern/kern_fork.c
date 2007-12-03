@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.149 2007/12/03 20:26:24 ad Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.150 2007/12/03 22:37:34 elad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.149 2007/12/03 20:26:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.150 2007/12/03 22:37:34 elad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -247,12 +247,10 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	nprocs++;
 
 	/*
-	 * Increment the count of procs running with this uid. Don't allow
-	 * a nonprivileged user to exceed their current limit.
+	 * Enforce limits.
 	 */
 	count = chgproccnt(uid, 1);
-	if (__predict_false(uid != 0 && count >
-			    p1->p_rlimit[RLIMIT_NPROC].rlim_cur)) {
+	if (__predict_false(count > p1->p_rlimit[RLIMIT_NPROC].rlim_cur)) {
 		(void)chgproccnt(uid, -1);
 		nprocs--;
 		if (forkfsleep)
