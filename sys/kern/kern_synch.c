@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.210 2007/12/03 17:15:00 ad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.211 2007/12/03 20:26:26 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.210 2007/12/03 17:15:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.211 2007/12/03 20:26:26 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_lockdebug.h"
@@ -880,7 +880,7 @@ sched_pstats(void *arg)
 
 	sched_pstats_ticks++;
 
-	mutex_enter(&proclist_mutex);
+	mutex_enter(&proclist_lock);
 	PROCLIST_FOREACH(p, &allproc) {
 		/*
 		 * Increment time in/out of memory and sleep time (if
@@ -941,7 +941,7 @@ sched_pstats(void *arg)
 			psignal(p, sig);
 		}
 	}
-	mutex_exit(&proclist_mutex);
+	mutex_exit(&proclist_lock);
 	uvm_meter();
 	cv_wakeup(&lbolt);
 	callout_schedule(&sched_pstats_ch, hz);
