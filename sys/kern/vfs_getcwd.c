@@ -1,4 +1,4 @@
-/* $NetBSD: vfs_getcwd.c,v 1.38 2007/11/26 19:02:06 pooka Exp $ */
+/* $NetBSD: vfs_getcwd.c,v 1.39 2007/12/03 02:06:58 christos Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_getcwd.c,v 1.38 2007/11/26 19:02:06 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_getcwd.c,v 1.39 2007/12/03 02:06:58 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -561,4 +561,55 @@ sys___getcwd(struct lwp *l, void *v, register_t *retval)
 out:
 	free(path, M_TEMP);
 	return error;
+}
+
+/*
+ * Try to find a pathname for a vnode. Since there is no mapping
+ * vnode -> parent directory, this needs the NAMECACHE_ENTER_REVERSE
+ * option to work (to make cache_revlookup succeed).
+ */
+int
+vnode_to_path(char *path, size_t len, struct vnode *vp, struct lwp *curl,
+    struct proc *p)
+{
+	struct proc *curp = curl->l_proc;
+	int error, lenused, elen;
+	char *bp, *bend;
+	struct vnode *dvp;
+
+	bp = bend = &path[len];
+	*(--bp) = '\0';
+
+	error = vget(vp, LK_EXCLUSIVE | LK_RETRY);
+	if (error != 0)
+		return error;
+	error = cache_revlookup(vp, &dvp, &bp, path);
+	vput(vp);
+	if (error != 0)
+		return (error == -1 ? ENOENT : error);
+
+	error = vget(dvp, 0);
+	if (error != 0)
+		return error;
+	*(--bp) = '/';
+	/* XXX GETCWD_CHECK_ACCESS == 0x0001 */
+	error = getcwd_common(dvp, NULL, &bp, path, len / 2, 1, curl);
+
+	/*
+	 * Strip off emulation path for emulated processes looking at
+	 * the maps file of a process of the same emulation. (Won't
+	 * work if /emul/xxx is a symlink..)
+	 */
+	if (curp->p_emul == p->p_emul && curp->p_emul->e_path != NULL) {
+		elen = strlen(curp->p_emul->e_path);
+		if (!strncmp(bp, curp->p_emul->e_path, elen))
+			bp = &bp[elen];
+	}
+
+	lenused = bend - bp;
+
+	memcpy(path, bp, lenused);
+	path[lenused] = 0;
+
+	return 0;
 }
