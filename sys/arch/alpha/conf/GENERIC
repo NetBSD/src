@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.314.8.3 2007/11/04 21:02:49 jmcneill Exp $
+# $NetBSD: GENERIC,v 1.314.8.4 2007/12/03 16:13:50 joerg Exp $
 #
 # This machine description file is used to generate the default NetBSD
 # kernel.
@@ -19,7 +19,7 @@ include 	"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident		"GENERIC-$Revision: 1.314.8.3 $"
+ident		"GENERIC-$Revision: 1.314.8.4 $"
 
 maxusers 32
 
@@ -634,6 +634,7 @@ btbc* at pcmcia? function ?		# AnyCom BlueCard LSE041/039/139
 ubt* at uhub? port ?
 
 # Bluetooth Device Hub
+bthub* at bcsp?
 bthub* at bt3c?
 bthub* at btbc?
 bthub* at btuart?
@@ -726,6 +727,7 @@ pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
 pseudo-device	lockstat		# lock profiling
+pseudo-device	bcsp			# BlueCore Serial Protocol
 pseudo-device	btuart			# Bluetooth HCI UART (H4)
 
 #options	FILEASSOC		# fileassoc(9) - required for Veriexec

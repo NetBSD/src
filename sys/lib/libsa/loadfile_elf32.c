@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile_elf32.c,v 1.17.6.1 2007/11/27 19:38:33 joerg Exp $ */
+/* $NetBSD: loadfile_elf32.c,v 1.17.6.2 2007/12/03 16:15:03 joerg Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -296,7 +296,7 @@ ELFNAMEEND(loadfile)(fd, elf, marks, flags)
 		goto freephdr;
 	}
 	if (nr != sz) {
-		errno = ESHORT;
+		errno = EIO;
 		WARN(("read program headers"));
 		goto freephdr;
 	}
@@ -342,7 +342,7 @@ ELFNAMEEND(loadfile)(fd, elf, marks, flags)
 				goto freephdr;
 			}
 			if (nr != (ssize_t)phdr[i].p_filesz) {
-				errno = ESHORT;
+				errno = EIO;
 				WARN(("read text"));
 				goto freephdr;
 			}
@@ -398,7 +398,7 @@ ELFNAMEEND(loadfile)(fd, elf, marks, flags)
 			goto freeshp;
 		}
 		if (nr != sz) {
-			errno = ESHORT;
+			errno = EIO;
 			WARN(("read section headers"));
 			goto freeshp;
 		}
@@ -423,7 +423,7 @@ ELFNAMEEND(loadfile)(fd, elf, marks, flags)
 			case SHT_STRTAB:
 				for (j = 0; j < elf->e_shnum; j++)
 					if (shp[j].sh_type == SHT_SYMTAB &&
-					    shp[j].sh_link == (unsigned)i)
+					    shp[j].sh_link == (unsigned int)i)
 						goto havesym;
 				/* FALLTHROUGH */
 			default:
@@ -446,7 +446,7 @@ ELFNAMEEND(loadfile)(fd, elf, marks, flags)
 						goto freeshp;
 					}
 					if (nr != (ssize_t)shp[i].sh_size) {
-						errno = ESHORT;
+						errno = EIO;
 						WARN(("read symbols"));
 						goto freeshp;
 					}

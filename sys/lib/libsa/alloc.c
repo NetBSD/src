@@ -1,4 +1,4 @@
-/*	$NetBSD: alloc.c,v 1.21.42.1 2007/11/27 19:38:23 joerg Exp $	*/
+/*	$NetBSD: alloc.c,v 1.21.42.2 2007/12/03 16:15:01 joerg Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -119,27 +119,28 @@
 #include "stand.h"
 
 /*
- * Each block actually has ALIGN(unsigned) + ALIGN(size) bytes allocated
+ * Each block actually has ALIGN(unsigned int) + ALIGN(size) bytes allocated
  * to it, as follows:
  *
- * 0 ... (sizeof(unsigned) - 1)
+ * 0 ... (sizeof(unsigned int) - 1)
  *	allocated or unallocated: holds size of user-data part of block.
  *
- * sizeof(unsigned) ... (ALIGN(sizeof(unsigned)) - 1)
+ * sizeof(unsigned int) ... (ALIGN(sizeof(unsigned int)) - 1)
  *	allocated: unused
  *	unallocated: depends on packing of struct fl
  *
- * ALIGN(sizeof(unsigned)) ... (ALIGN(sizeof(unsigned)) + ALIGN(data size) - 1)
+ * ALIGN(sizeof(unsigned int)) ...
+ *     (ALIGN(sizeof(unsigned int)) + ALIGN(data size) - 1)
  *	allocated: user data
  *	unallocated: depends on packing of struct fl
  *
  * 'next' is only used when the block is unallocated (i.e. on the free list).
- * However, note that ALIGN(sizeof(unsigned)) + ALIGN(data size) must
+ * However, note that ALIGN(sizeof(unsigned int)) + ALIGN(data size) must
  * be at least 'sizeof(struct fl)', so that blocks can be used as structures
  * when on the free list.
  */
 struct fl {
-	unsigned	size;
+	unsigned int	size;
 	struct fl	*next;
 } *freelist;
 
@@ -166,7 +167,7 @@ alloc(size_t size)
 {
 	struct fl **f = &freelist, **bestf = NULL;
 #ifndef ALLOC_FIRST_FIT
-	unsigned bestsize = 0xffffffff;	/* greater than any real size */
+	unsigned int bestsize = 0xffffffff;	/* greater than any real size */
 #endif
 	char *help;
 	int failed;
@@ -210,16 +211,16 @@ alloc(size_t size)
 		/* make _sure_ the region can hold a struct fl. */
 		if (size < ALIGN(sizeof (struct fl *)))
 			size = ALIGN(sizeof (struct fl *));
-		top += ALIGN(sizeof(unsigned)) + ALIGN(size);
+		top += ALIGN(sizeof(unsigned int)) + ALIGN(size);
 #ifdef HEAP_LIMIT
 		if (top > (char *)HEAP_LIMIT)
 			panic("heap full (0x%lx+%zu)", help, size);
 #endif
-		*(unsigned *)(void *)help = (unsigned)ALIGN(size);
+		*(unsigned int *)(void *)help = (unsigned int)ALIGN(size);
 #ifdef ALLOC_TRACE
-		printf("=%lx\n", (u_long)help + ALIGN(sizeof(unsigned)));
+		printf("=%lx\n", (u_long)help + ALIGN(sizeof(unsigned int)));
 #endif
-		return help + ALIGN(sizeof(unsigned));
+		return help + ALIGN(sizeof(unsigned int));
 	}
 
 	/* we take the best fit */
@@ -232,10 +233,10 @@ found:
 	help = (char *)(void *)*f;
 	*f = (*f)->next;
 #ifdef ALLOC_TRACE
-	printf("=%lx (origsize %u)\n", (u_long)help + ALIGN(sizeof(unsigned)),
-	    *(unsigned *)help);
+	printf("=%lx (origsize %u)\n",
+	    (u_long)help + ALIGN(sizeof(unsigned int)), *(unsigned int *)help);
 #endif
-	return help + ALIGN(sizeof(unsigned));
+	return help + ALIGN(sizeof(unsigned int));
 }
 
 void
@@ -243,7 +244,8 @@ void
 dealloc(void *ptr, size_t size)
 {
 	struct fl *f =
-	    (struct fl *)(void *)((char *)(void *)ptr - ALIGN(sizeof(unsigned)));
+	    (struct fl *)(void *)((char *)(void *)ptr -
+	    ALIGN(sizeof(unsigned int)));
 #ifdef ALLOC_TRACE
 	printf("dealloc(%lx, %zu) (origsize %u)\n", (u_long)ptr, size, f->size);
 #endif

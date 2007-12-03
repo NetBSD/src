@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.296.4.5 2007/11/27 19:38:17 joerg Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.296.4.6 2007/12/03 16:14:59 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.296.4.5 2007/11/27 19:38:17 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.296.4.6 2007/12/03 16:14:59 joerg Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -106,6 +106,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.296.4.5 2007/11/27 19:38:17 joerg Exp
 #include <sys/device.h>
 #include <sys/filedesc.h>
 #include <sys/kauth.h>
+#include <sys/atomic.h>
 
 #include <miscfs/specfs/specdev.h>
 #include <miscfs/syncfs/syncfs.h>
@@ -333,7 +334,6 @@ int
 getnewvnode(enum vtagtype tag, struct mount *mp, int (**vops)(void *),
     struct vnode **vpp)
 {
-	extern struct uvm_pagerops uvm_vnodeops;
 	struct uvm_object *uobj;
 	struct lwp *l = curlwp;		/* XXX */
 	static int toggle;
@@ -738,8 +738,8 @@ vput(struct vnode *vp)
 		TAILQ_INSERT_TAIL(&vnode_free_list, vp, v_freelist);
 	simple_unlock(&vnode_free_list_slock);
 	if (vp->v_iflag & VI_EXECMAP) {
-		uvmexp.execpages -= vp->v_uobj.uo_npages;
-		uvmexp.filepages += vp->v_uobj.uo_npages;
+		atomic_add_int(&uvmexp.execpages, -vp->v_uobj.uo_npages);
+		atomic_add_int(&uvmexp.filepages, vp->v_uobj.uo_npages);
 	}
 	vp->v_iflag &= ~(VI_TEXT|VI_EXECMAP|VI_WRMAP|VI_MAPPED);
 	vp->v_vflag &= ~VV_MAPPED;
@@ -785,8 +785,8 @@ do_vrele(struct vnode *vp, int doinactive, int onhead)
 	}
 	simple_unlock(&vnode_free_list_slock);
 	if (vp->v_iflag & VI_EXECMAP) {
-		uvmexp.execpages -= vp->v_uobj.uo_npages;
-		uvmexp.filepages += vp->v_uobj.uo_npages;
+		atomic_add_int(&uvmexp.execpages, -vp->v_uobj.uo_npages);
+		atomic_add_int(&uvmexp.filepages, vp->v_uobj.uo_npages);
 	}
 	vp->v_iflag &= ~(VI_TEXT|VI_EXECMAP|VI_WRMAP|VI_MAPPED);
 	vp->v_vflag &= ~VV_MAPPED;
@@ -1031,8 +1031,8 @@ vclean(struct vnode *vp, int flags, struct lwp *l)
 		panic("vclean: deadlock, vp %p", vp);
 	vp->v_iflag |= VI_XLOCK;
 	if (vp->v_iflag & VI_EXECMAP) {
-		uvmexp.execpages -= vp->v_uobj.uo_npages;
-		uvmexp.filepages += vp->v_uobj.uo_npages;
+		atomic_add_int(&uvmexp.execpages, -vp->v_uobj.uo_npages);
+		atomic_add_int(&uvmexp.filepages, vp->v_uobj.uo_npages);
 	}
 	vp->v_iflag &= ~(VI_TEXT|VI_EXECMAP);
 

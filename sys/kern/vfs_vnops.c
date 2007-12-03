@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.140.4.2 2007/11/27 19:38:19 joerg Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.140.4.3 2007/12/03 16:15:00 joerg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.140.4.2 2007/11/27 19:38:19 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.140.4.3 2007/12/03 16:15:00 joerg Exp $");
 
 #include "fs_union.h"
 #include "veriexec.h"
@@ -59,6 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.140.4.2 2007/11/27 19:38:19 joerg Ex
 #include <sys/kauth.h>
 #include <sys/syslog.h>
 #include <sys/fstrans.h>
+#include <sys/atomic.h>
 
 #include <miscfs/specfs/specdev.h>
 
@@ -174,20 +175,9 @@ vn_open(struct nameidata *ndp, int fmode, int cmode)
 	}
 
 	if ((fmode & O_CREAT) == 0) {
-		if (fmode & FREAD) {
-			if ((error = VOP_ACCESS(vp, VREAD, cred)) != 0)
-				goto bad;
-		}
-
-		if (fmode & (FWRITE | O_TRUNC)) {
-			if (vp->v_type == VDIR) {
-				error = EISDIR;
-				goto bad;
-			}
-			if ((error = vn_writechk(vp)) != 0 ||
-			    (error = VOP_ACCESS(vp, VWRITE, cred)) != 0)
-				goto bad;
-		}
+		error = vn_openchk(vp, cred, fmode);
+		if (error != 0)
+			goto bad;
 	}
 
 	if (fmode & O_TRUNC) {
@@ -234,6 +224,30 @@ vn_writechk(struct vnode *vp)
 	return (0);
 }
 
+int
+vn_openchk(struct vnode *vp, kauth_cred_t cred, int fflags)
+{
+	int permbits = 0;
+	int error;
+
+	if ((fflags & FREAD) != 0) {
+		permbits = VREAD;
+	}
+	if ((fflags & (FWRITE | O_TRUNC)) != 0) {
+		permbits |= VWRITE;
+		if (vp->v_type == VDIR) {
+			error = EISDIR;
+			goto bad;
+		}
+		error = vn_writechk(vp);
+		if (error != 0)
+			goto bad;
+	}
+	error = VOP_ACCESS(vp, permbits, cred);
+bad:
+	return error;
+}
+
 /*
  * Mark a vnode as having executable mappings.
  */
@@ -244,9 +258,8 @@ vn_markexec(struct vnode *vp)
 	LOCK_ASSERT(simple_lock_held(&vp->v_interlock));
 
 	if ((vp->v_iflag & VI_EXECMAP) == 0) {
-		/* XXXSMP should be atomic */
-		uvmexp.filepages -= vp->v_uobj.uo_npages;
-		uvmexp.execpages += vp->v_uobj.uo_npages;
+		atomic_add_int(&uvmexp.filepages, -vp->v_uobj.uo_npages);
+		atomic_add_int(&uvmexp.execpages, vp->v_uobj.uo_npages);
 	}
 	vp->v_iflag |= VI_EXECMAP;
 }
@@ -730,40 +743,6 @@ vn_restorerecurse(struct vnode *vp, u_int flags)
 	lkp->lk_flags &= ~LK_CANRECURSE;
 	lkp->lk_flags |= flags;
 	simple_unlock(&lkp->lk_interlock);
-}
-
-/*
- * Obsolete: this function will be removed from 6.0
- * Please use fscow_establish() instead.
- */
-int
-vn_cow_establish(struct vnode *vp,
-    int (*func)(void *, struct buf *), void *cookie)
-{
-	static int firstrun = 1;
-
-	if (firstrun) {
-		printf("%s: this function is obsolete.\n", __FUNCTION__);
-		firstrun = 0;
-	}
-	if (vp->v_type == VBLK)
-		return fscow_establish(vp->v_specmountpoint, func, cookie);
-	else
-		return fscow_establish(vp->v_mount, func, cookie);
-}
-
-/*
- * Obsolete: this function will be removed from 6.0
- * Please use fscow_disestablish() instead.
- */
-int
-vn_cow_disestablish(struct vnode *vp,
-    int (*func)(void *, struct buf *), void *cookie)
-{
-	if (vp->v_type == VBLK)
-		return fscow_disestablish(vp->v_specmountpoint, func, cookie);
-	else
-		return fscow_disestablish(vp->v_mount, func, cookie);
 }
 
 /*

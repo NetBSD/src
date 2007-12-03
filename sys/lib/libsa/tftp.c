@@ -1,4 +1,4 @@
-/*	$NetBSD: tftp.c,v 1.22.14.1 2007/11/27 19:38:41 joerg Exp $	 */
+/*	$NetBSD: tftp.c,v 1.22.14.2 2007/12/03 16:15:04 joerg Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -129,7 +129,7 @@ recvtftp(struct iodesc *d, void *pkt, size_t len, time_t tleft)
 		} /* else check uh_sport has not changed??? */
 		return (n - (t->th_data - (char *)t));
 	case ERROR:
-		if ((unsigned) ntohs(t->th_code) >= 8) {
+		if ((unsigned int)ntohs(t->th_code) >= 8) {
 			printf("illegal tftp error %d\n", ntohs(t->th_code));
 			errno = EIO;
 		} else {

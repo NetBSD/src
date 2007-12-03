@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.124.8.2 2007/11/27 19:37:59 joerg Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.124.8.3 2007/12/03 16:14:46 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.124.8.2 2007/11/27 19:37:59 joerg Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.124.8.3 2007/12/03 16:14:46 joerg Exp $");
 
 /* If not included by exec_elf64.c, ELFSIZE won't be defined. */
 #ifndef ELFSIZE
@@ -130,8 +130,8 @@ int
 elf_copyargs(struct lwp *l, struct exec_package *pack,
     struct ps_strings *arginfo, char **stackp, void *argp)
 {
-	size_t len;
-	AuxInfo ai[ELF_AUX_ENTRIES], *a;
+	size_t len, vlen;
+	AuxInfo ai[ELF_AUX_ENTRIES], *a, *execname;
 	struct elf_args *ap;
 	int error;
 
@@ -139,6 +139,7 @@ elf_copyargs(struct lwp *l, struct exec_package *pack,
 		return error;
 
 	a = ai;
+	execname = NULL;
 
 	/*
 	 * Push extra arguments on the stack needed by dynamically
@@ -197,6 +198,12 @@ elf_copyargs(struct lwp *l, struct exec_package *pack,
 		a->a_v = kauth_cred_getgid(l->l_cred);
 		a++;
 
+		if (pack->ep_path) {
+			execname = a;
+			a->a_type = AT_SUN_EXECNAME;
+			a++;
+		}
+
 		free(ap, M_TEMP);
 		pack->ep_emul_arg = NULL;
 	}
@@ -205,10 +212,21 @@ elf_copyargs(struct lwp *l, struct exec_package *pack,
 	a->a_v = 0;
 	a++;
 
-	len = (a - ai) * sizeof(AuxInfo);
-	if ((error = copyout(ai, *stackp, len)) != 0)
+	vlen = (a - ai) * sizeof(AuxInfo);
+
+	if (execname) {
+		char *path = pack->ep_path;
+		execname->a_v = (intptr_t)(*stackp + vlen);
+		len = strlen(path) + 1;
+		if ((error = copyout(path, (*stackp + vlen), len)) != 0)
+			return error;
+		len = ALIGN(len);
+	} else
+		len = 0;
+
+	if ((error = copyout(ai, *stackp, vlen)) != 0)
 		return error;
-	*stackp += len;
+	*stackp += vlen + len;
 
 	return 0;
 }

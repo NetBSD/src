@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.103.22.10 2007/12/01 04:31:37 jmcneill Exp $	*/
+/*	$NetBSD: pci.c,v 1.103.22.11 2007/12/03 16:14:37 joerg Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.103.22.10 2007/12/01 04:31:37 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.103.22.11 2007/12/03 16:14:37 joerg Exp $");
 
 #include "opt_pci.h"
 
@@ -159,17 +159,17 @@ pciattach(struct device *parent, struct device *self, void *aux)
 
 #define	PRINT(str)							\
 do {									\
-	aprint_normal("%s%s", sep, str);				\
+	aprint_verbose("%s%s", sep, str);				\
 	sep = ", ";							\
 } while (/*CONSTCOND*/0)
 
-	aprint_normal("%s: ", self->dv_xname);
+	aprint_verbose("%s: ", self->dv_xname);
 
 	if (io_enabled)
 		PRINT("i/o space");
 	if (mem_enabled)
 		PRINT("memory space");
-	aprint_normal(" enabled");
+	aprint_verbose(" enabled");
 
 	if (mrl_enabled || mrm_enabled || mwi_enabled) {
 		if (mrl_enabled)
@@ -178,10 +178,10 @@ do {									\
 			PRINT("rd/mult");
 		if (mwi_enabled)
 			PRINT("wr/inv");
-		aprint_normal(" ok");
+		aprint_verbose(" ok");
 	}
 
-	aprint_normal("\n");
+	aprint_verbose("\n");
 
 #undef PRINT
 

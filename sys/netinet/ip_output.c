@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.180.6.2 2007/10/02 18:29:20 joerg Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.180.6.3 2007/12/03 16:15:10 joerg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.180.6.2 2007/10/02 18:29:20 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.180.6.3 2007/12/03 16:15:10 joerg Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_inet.h"
@@ -164,12 +164,6 @@ extern struct pfil_head inet_pfil_hook;			/* XXX */
 #endif
 
 int	ip_do_loopback_cksum = 0;
-
-#define	IN_NEED_CHECKSUM(ifp, csum_flags) \
-	(__predict_true(((ifp)->if_flags & IFF_LOOPBACK) == 0 || \
-	(((csum_flags) & M_CSUM_UDPv4) != 0 && udp_do_loopback_cksum) || \
-	(((csum_flags) & M_CSUM_TCPv4) != 0 && tcp_do_loopback_cksum) || \
-	(((csum_flags) & M_CSUM_IPv4) != 0 && ip_do_loopback_cksum)))
 
 /*
  * IP output.  The packet in mbuf chain m contains a skeletal IP

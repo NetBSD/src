@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile_aout.c,v 1.9.6.1 2007/11/27 19:38:32 joerg Exp $ */
+/* $NetBSD: loadfile_aout.c,v 1.9.6.2 2007/12/03 16:15:03 joerg Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -151,7 +151,7 @@ loadfile_aout(fd, x, marks, flags)
 			return 1;
 		}
 		if (nr != (ssize_t)(x->a_text - sub)) {
-			errno = ESHORT;
+			errno = EIO;
 			WARN(("read text"));
 			return 1;
 		}
@@ -192,7 +192,7 @@ loadfile_aout(fd, x, marks, flags)
 			return 1;
 		}
 		if (nr != (ssize_t)x->a_data) {
-			errno = ESHORT;
+			errno = EIO;
 			WARN(("read data"));
 			return 1;
 		}
@@ -243,7 +243,7 @@ loadfile_aout(fd, x, marks, flags)
 				return 1;
 			}
 			if (nr != (ssize_t)x->a_syms) {
-				errno = ESHORT;
+				errno = EIO;
 				WARN(("read symbols"));
 				return 1;
 			}
@@ -262,7 +262,7 @@ loadfile_aout(fd, x, marks, flags)
 			return 1;
 		}
 		if (nr != sizeof(cc)) {
-			errno = ESHORT;
+			errno = EIO;
 			WARN(("read string table"));
 			return 1;
 		}
@@ -290,7 +290,7 @@ loadfile_aout(fd, x, marks, flags)
 				return 1;
 			}
 			if (nr != cc) {
-				errno = ESHORT;
+				errno = EIO;
 				WARN(("read strings"));
 				return 1;
 			}

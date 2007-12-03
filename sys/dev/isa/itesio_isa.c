@@ -1,4 +1,4 @@
-/*	$NetBSD: itesio_isa.c,v 1.4.6.3 2007/11/27 19:37:07 joerg Exp $ */
+/*	$NetBSD: itesio_isa.c,v 1.4.6.4 2007/12/03 16:14:35 joerg Exp $ */
 /*	Derived from $OpenBSD: it.c,v 1.19 2006/04/10 00:57:54 deraadt Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: itesio_isa.c,v 1.4.6.3 2007/11/27 19:37:07 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: itesio_isa.c,v 1.4.6.4 2007/12/03 16:14:35 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -160,6 +160,9 @@ itesio_isa_attach(device_t parent, device_t self, void *aux)
 		aprint_error(": can't map i/o space\n");
 		return;
 	}
+
+	aprint_naive("\n");
+
 	/*
 	 * Enter to the Super I/O MB PNP mode.
 	 */

@@ -1,4 +1,4 @@
-/* $NetBSD: devopen.c,v 1.1.6.2 2007/10/31 23:14:00 joerg Exp $ */
+/* $NetBSD: devopen.c,v 1.1.6.3 2007/12/03 16:14:08 joerg Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -40,10 +40,9 @@
 
 #include <netinet/in.h>
 
-#include <lib/libkern/libkern.h>
 #include <lib/libsa/stand.h>
-#include <lib/libsa/ufs.h>
 #include <lib/libsa/nfs.h>
+#include <lib/libkern/libkern.h>
 
 int net_open(struct open_file *, ...);
 int net_close(struct open_file *);

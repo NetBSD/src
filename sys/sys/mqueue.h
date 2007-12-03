@@ -1,7 +1,8 @@
-/*	$NetBSD: mqueue.h,v 1.2.4.2 2007/10/02 18:29:28 joerg Exp $	*/
+/*	$NetBSD: mqueue.h,v 1.2.4.3 2007/12/03 16:15:20 joerg Exp $	*/
 
 /*
  * Copyright (c) 2007, Mindaugas Rasiukevicius <rmind at NetBSD org>
+ * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions

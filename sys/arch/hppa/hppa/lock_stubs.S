@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.7.8.1 2007/10/02 18:27:03 joerg Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.7.8.2 2007/12/03 16:14:00 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -49,9 +49,9 @@
 #include "assym.h"
 
 /*
- * int _lock_cas(uintptr_t *val, uintptr_t old, uintptr_t new);
+ * uintptr_t _lock_cas(volatile uintptr_t *val, uintptr_t old, uintptr_t new);
  *
- * Perform an atomic compare-and-set operation.
+ * Perform an atomic compare-and-swap operation.
  *
  * On single CPU systems, this can use a restartable sequence:
  * there we don't need the overhead of interlocking.
@@ -74,14 +74,23 @@ LEAF_ENTRY(_lock_cas)
 _lock_cas_ras_start:
 	ldw	0(%arg0),%t1
 	comb,<>	%arg1, %t1, 1f
-	 ldi	0,%ret0
+	 copy	%t1,%ret0
 _lock_cas_ras_end:
 	stw	%arg2,0(%arg0)
-	ldi	1,%ret0
+	copy	%arg1,%ret0
 1:
 	bv,n	%r0(%rp)
 
 EXIT(_lock_cas)
+
+STRONG_ALIAS(_atomic_cas_ulong,_lock_cas)
+STRONG_ALIAS(atomic_cas_ulong,_lock_cas)
+STRONG_ALIAS(_atomic_cas_32,_lock_cas)
+STRONG_ALIAS(atomic_cas_32,_lock_cas)
+STRONG_ALIAS(_atomic_cas_uint,_lock_cas)
+STRONG_ALIAS(atomic_cas_uint,_lock_cas)
+STRONG_ALIAS(_atomic_cas_ptr,_lock_cas)
+STRONG_ALIAS(atomic_cas_ptr,_lock_cas)
 
 #ifndef LOCKDEBUG
 /*

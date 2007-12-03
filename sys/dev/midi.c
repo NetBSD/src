@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.55.6.1 2007/10/26 15:44:10 joerg Exp $	*/
+/*	$NetBSD: midi.c,v 1.55.6.2 2007/12/03 16:14:31 joerg Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.55.6.1 2007/10/26 15:44:10 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.55.6.2 2007/12/03 16:14:31 joerg Exp $");
 
 #include "midi.h"
 #include "sequencer.h"
@@ -150,6 +150,8 @@ midiattach(struct device *parent, struct device *self, void *aux)
 	struct audio_attach_args *sa = aux;
 	const struct midi_hw_if *hwp = sa->hwif;
 	void *hdlp = sa->hdl;
+
+	aprint_naive("\n");
 
 	DPRINTFN(2, ("MIDI attach\n"));
 
@@ -273,7 +275,7 @@ midi_attach(struct midi_softc *sc, struct device *parent)
 			sc->dev.dv_xname, "rcv incomplete msgs");
 	}
 	
-	printf(": %s%s\n", mi.name,
+	aprint_normal(": %s%s\n", mi.name,
 	    (sc->props & (MIDI_PROP_OUT_INTR|MIDI_PROP_NO_OUTPUT)) ?
 	    "" : " (CPU-intensive output)");
 }

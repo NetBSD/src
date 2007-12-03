@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_ioctl.c,v 1.14 2007/05/13 15:57:39 dsl Exp $ */
+/*	$NetBSD: irix_ioctl.c,v 1.14.6.1 2007/12/03 16:14:28 joerg Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_ioctl.c,v 1.14 2007/05/13 15:57:39 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_ioctl.c,v 1.14.6.1 2007/12/03 16:14:28 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -164,7 +164,7 @@ out:
 			error = EINVAL;
 			break;
 		case VBLK:
-			error = VOP_GETATTR(vp, &vattr, l->l_cred, l);
+			error = VOP_GETATTR(vp, &vattr, l->l_cred);
 			if (error == 0) {
 				val = vattr.va_blocksize / 512;
 				error = copyout(&val, data, sizeof(int));

@@ -1,4 +1,4 @@
-/*	$NetBSD: sab.c,v 1.37.18.2 2007/11/21 21:53:32 joerg Exp $	*/
+/*	$NetBSD: sab.c,v 1.37.18.3 2007/12/03 16:14:18 joerg Exp $	*/
 /*	$OpenBSD: sab.c,v 1.7 2002/04/08 17:49:42 jason Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.37.18.2 2007/11/21 21:53:32 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.37.18.3 2007/12/03 16:14:18 joerg Exp $");
 
 #include "opt_kgdb.h"
 #include <sys/types.h>
@@ -58,6 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.37.18.2 2007/11/21 21:53:32 joerg Exp $");
 #include <sys/syslog.h>
 #include <sys/kauth.h>
 #include <sys/kgdb.h>
+#include <sys/intr.h>
 
 #include <machine/autoconf.h>
 #include <machine/openfirm.h>
@@ -264,7 +265,7 @@ sab_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	sc->sc_softintr = softintr_establish(IPL_TTY, sab_softintr, sc);
+	sc->sc_softintr = softint_establish(SOFTINT_SERIAL, sab_softintr, sc);
 	if (sc->sc_softintr == NULL) {
 		printf(": can't get soft intr\n");
 		return;
@@ -344,7 +345,7 @@ sab_intr(void *vsc)
 		r |= sabtty_intr(sc->sc_child[1], &needsoft);
 
 	if (needsoft)
-		softintr_schedule(sc->sc_softintr);
+		softint_schedule(sc->sc_softintr);
 
 	return (r);
 }

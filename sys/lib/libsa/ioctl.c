@@ -1,4 +1,4 @@
-/*	$NetBSD: ioctl.c,v 1.9.44.1 2007/11/27 19:38:31 joerg Exp $	*/
+/*	$NetBSD: ioctl.c,v 1.9.44.2 2007/12/03 16:15:03 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -70,7 +70,7 @@ ioctl(int fd, u_long cmd, char *arg)
 #endif
 
 #if !defined(LIBSA_NO_FD_CHECKING)
-	if ((unsigned)fd >= SOPEN_MAX || f->f_flags == 0) {
+	if ((unsigned int)fd >= SOPEN_MAX || f->f_flags == 0) {
 		errno = EBADF;
 		return -1;
 	}

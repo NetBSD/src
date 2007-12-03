@@ -1,11 +1,11 @@
-/*	$NetBSD: mutex.h,v 1.2.24.2 2007/12/03 16:14:05 joerg Exp $	*/
+/*	$NetBSD: patch.c,v 1.1.8.1 2007/12/03 16:13:49 joerg Exp $	*/
 
 /*-
- * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Jason R. Thorpe and Andrew Doran.
+ * by Andrew Doran and Jason R. Thorpe.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,42 +36,72 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _MIPS_MUTEX_H_
-#define	_MIPS_MUTEX_H_
+/*
+ * Patch kernel code at boot time, depending on available CPU features
+ * and configuration.
+ */
 
-#ifndef __MUTEX_PRIVATE
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.1.8.1 2007/12/03 16:13:49 joerg Exp $");
 
-struct kmutex {
-	uintptr_t	mtx_pad1;
-	uint32_t	mtx_pad2[2];
-};
+#include "opt_multiprocessor.h"
 
-#else	/* __MUTEX_PRIVATE */
+#include <sys/types.h>
+#include <sys/systm.h>
 
-#ifdef __MUTEX_PRIVATE
-#include <machine/lock.h>
-#endif
+#include <machine/cpu.h>
+#include <machine/alpha.h>
+#include <machine/intr.h>
 
-struct kmutex {
-	volatile uintptr_t	mtx_owner;
-	ipl_cookie_t		mtx_ipl;
-	__cpu_simple_lock_t	mtx_lock;
-};
+void	_membar_producer(void);
+void	_membar_producer_end(void);
+void	_membar_producer_mp(void);
+void	_membar_producer_mp_end(void);
 
-#define	__HAVE_SIMPLE_MUTEXES		1
-#define	__HAVE_MUTEX_STUBS		1
-#define	__HAVE_SPIN_MUTEX_STUBS		1
+void	_membar_sync(void);
+void	_membar_sync_end(void);
+void	_membar_sync_mp(void);
+void	_membar_sync_mp_end(void);
 
-#define	MUTEX_RECEIVE(mtx)		mb_read()
-#define	MUTEX_GIVE(mtx)			mb_memory()
+static void __attribute__((__unused__))
+patchfunc(void *from_s, void *from_e, void *to_s, void *to_e)
+{
+	int s;
 
-#define	MUTEX_CAS(p, o, n)		\
-    (_atomic_cas_ulong((volatile unsigned long *)(p), (o), (n)) == (o))
+	s = splhigh();
 
-unsigned long	_atomic_cas_ulong(volatile unsigned long *,
-    unsigned long, unsigned long);
+	if ((uintptr_t)from_e - (uintptr_t)from_s !=
+	    (uintptr_t)to_e - (uintptr_t)to_s)
+	    	panic("patchfunc: sizes do not match (from=%p)", from_s);
+	
+	memcpy(to_s, from_s, (uintptr_t)to_e - (uintptr_t)to_s);
+	alpha_pal_imb();
 
-#endif	/* __MUTEX_PRIVATE */
+	splx(s);
+}
 
-#endif /* _MIPS_MUTEX_H_ */
+void
+alpha_patch(bool is_mp)
+{
 
+	/*
+	 * We allow this function to be called multiple times
+	 * (there is no harm in doing so), so long as other
+	 * CPUs have not yet actually hatched to start running
+	 * kernel code.
+	 */
+
+	KASSERT(curcpu()->ci_flags & CPUF_PRIMARY);
+	KASSERT((cpus_running & ~(1UL << cpu_number())) == 0);
+
+#if defined(MULTIPROCESSOR)
+	if (is_mp) {
+		patchfunc(_membar_producer_mp, _membar_producer_mp_end,
+			  _membar_producer, _membar_producer_end);
+		patchfunc(_membar_sync_mp, _membar_sync_mp_end,
+			  _membar_sync, _membar_sync_end);
+	}
+#else
+	KASSERT(is_mp == false);
+#endif /* MULTIPROCESSOR */
+}

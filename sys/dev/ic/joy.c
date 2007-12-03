@@ -1,4 +1,4 @@
-/*	$NetBSD: joy.c,v 1.14.14.1 2007/10/26 15:44:50 joerg Exp $	*/
+/*	$NetBSD: joy.c,v 1.14.14.2 2007/12/03 16:14:35 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1995 Jean-Marc Zucconi
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: joy.c,v 1.14.14.1 2007/10/26 15:44:50 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: joy.c,v 1.14.14.2 2007/12/03 16:14:35 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,7 +85,7 @@ joyattach(sc)
 	sc->timeout[0] = sc->timeout[1] = 0;
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, 0, 0xff);
 	DELAY(10000);		/* 10 ms delay */
-	printf("%s: joystick %sconnected\n", sc->sc_dev.dv_xname,
+	aprint_normal_dev(&sc->sc_dev, "joystick %sconnected\n",
 	    (bus_space_read_1(sc->sc_iot, sc->sc_ioh, 0) & 0x0f) == 0x0f ?
 	    "not " : "");
 }

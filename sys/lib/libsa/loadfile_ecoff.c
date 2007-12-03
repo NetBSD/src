@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile_ecoff.c,v 1.8.6.1 2007/11/27 19:38:32 joerg Exp $ */
+/* $NetBSD: loadfile_ecoff.c,v 1.8.6.2 2007/12/03 16:15:03 joerg Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@ loadfile_coff(fd, coff, marks, flags)
 				return 1;
 			}
 			if (nr != coff->a.tsize) {
-				errno = ESHORT;
+				errno = EIO;
 				return 1;
 			}
 		}
@@ -115,7 +115,7 @@ loadfile_coff(fd, coff, marks, flags)
 				return 1;
 			}
 			if (nr != coff->a.dsize) {
-				errno = ESHORT;
+				errno = EIO;
 				WARN(("read data"));
 				return 1;
 			}

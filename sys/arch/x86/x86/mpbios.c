@@ -1,4 +1,4 @@
-/*	$NetBSD: mpbios.c,v 1.36.10.2 2007/10/02 18:27:53 joerg Exp $	*/
+/*	$NetBSD: mpbios.c,v 1.36.10.3 2007/12/03 16:14:22 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.36.10.2 2007/10/02 18:27:53 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.36.10.3 2007/12/03 16:14:22 joerg Exp $");
 
 #include "acpi.h"
 #include "lapic.h"
@@ -958,7 +958,8 @@ mpbios_bus(const uint8_t *ent, struct device *self)
 	const struct mpbios_bus *entry = (const struct mpbios_bus *)ent;
 	int bus_id = entry->bus_id;
 
-	printf("mpbios: bus %d is type %6.6s\n", bus_id, entry->bus_type);
+	aprint_verbose("mpbios: bus %d is type %6.6s\n", bus_id,
+	    entry->bus_type);
 
 #ifdef DIAGNOSTIC
 	/*
@@ -989,7 +990,7 @@ mpbios_bus(const uint8_t *ent, struct device *self)
 		    inb(ELCR0) | (inb(ELCR1) << 8);
 
 		if (mp_eisa_bus != -1)
-			printf("oops: multiple isa busses?\n");
+			aprint_error("oops: multiple isa busses?\n");
 		else
 			mp_eisa_bus = bus_id;
 #endif
@@ -1004,7 +1005,7 @@ mpbios_bus(const uint8_t *ent, struct device *self)
 		else
 			mp_isa_bus = bus_id;
 	} else {
-		printf("%s: unsupported bus type %6.6s\n", self->dv_xname,
+		aprint_error("%s: unsupported bus type %6.6s\n", self->dv_xname,
 		    entry->bus_type);
 	}
 }

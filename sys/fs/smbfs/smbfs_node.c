@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_node.c,v 1.31.6.2 2007/11/27 19:37:51 joerg Exp $	*/
+/*	$NetBSD: smbfs_node.c,v 1.31.6.3 2007/12/03 16:14:45 joerg Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_node.c,v 1.31.6.2 2007/11/27 19:37:51 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_node.c,v 1.31.6.3 2007/12/03 16:14:45 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -160,6 +160,8 @@ loop:
 	}
 	vp->v_type = fap->fa_attr & SMB_FA_DIR ? VDIR : VREG;
 	vp->v_data = np;
+	genfs_node_init(vp, &smbfs_genfsops);
+
 	np->n_vnode = vp;
 	np->n_mount = VFSTOSMBFS(mp);
 	np->n_nmlen = nmlen;
@@ -198,7 +200,6 @@ loop:
 	LIST_INSERT_HEAD(nhpp, np, n_hash);
 	smbfs_hash_unlock(smp);
 
-	genfs_node_init(vp, &smbfs_genfsops);
 	uvm_vnp_setsize(vp, np->n_size);
 	*vpp = vp;
 	return 0;
@@ -255,6 +256,7 @@ smbfs_reclaim(v)
 		SMBVDEBUG("root vnode\n");
 		smp->sm_root = NULL;
 	}
+	genfs_node_destroy(vp);
 	vp->v_data = NULL;
 	smbfs_hash_unlock(smp);
 	if (np->n_name)

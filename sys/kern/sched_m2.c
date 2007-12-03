@@ -1,7 +1,8 @@
-/*	$NetBSD: sched_m2.c,v 1.6.2.5 2007/11/11 16:48:06 joerg Exp $	*/
+/*	$NetBSD: sched_m2.c,v 1.6.2.6 2007/12/03 16:14:55 joerg Exp $	*/
 
 /*
- * Copyright (c) 2007, Mindaugas Rasiukevicius
+ * Copyright (c) 2007, Mindaugas Rasiukevicius <rmind at NetBSD org>
+ * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_m2.c,v 1.6.2.5 2007/11/11 16:48:06 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_m2.c,v 1.6.2.6 2007/12/03 16:14:55 joerg Exp $");
 
 #include <sys/param.h>
 

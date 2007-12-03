@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.7.12.1 2007/11/14 19:04:06 joerg Exp $	*/
+/*	$NetBSD: asm.h,v 1.7.12.2 2007/12/03 16:14:00 joerg Exp $	*/
 
 /*	$OpenBSD: asm.h,v 1.12 2001/03/29 02:15:57 mickey Exp $	*/
 
@@ -37,6 +37,8 @@
 #else
 #define	__CONCAT(a,b)	a/**/b
 #endif
+
+#define _C_LABEL(x)	x
 
 #define	LEAF_ENTRY_NOPROFILE(x)				!\
 	 ! .text ! .align 4				!\

@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.299.8.1 2007/11/21 21:52:57 joerg Exp $ */
+/* $NetBSD: machdep.c,v 1.299.8.2 2007/12/03 16:13:48 joerg Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.299.8.1 2007/11/21 21:52:57 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.299.8.2 2007/12/03 16:13:48 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -750,6 +750,11 @@ nobootinfo:
 		}
 	}
 
+	/*
+	 * Perform any initial kernel patches based on the running system.
+	 * We may perform more later if we attach additional CPUs.
+	 */
+	alpha_patch(false);
 
 	/*
 	 * Figure out the number of CPUs in the box, from RPB fields.

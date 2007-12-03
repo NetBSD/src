@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.3.8.4 2007/11/21 21:53:15 joerg Exp $	*/
+/*	$NetBSD: copy.S,v 1.3.8.5 2007/12/03 16:14:02 joerg Exp $	*/
 /*	NetBSD: locore.S,v 1.34 2005/04/01 11:59:31 yamt Exp $	*/
 
 /*-
@@ -124,30 +124,25 @@ ENTRY(fillw)
 ENTRY(kcopy)
 	pushl	%esi
 	pushl	%edi
-	GET_CURPCB(%eax)		# load curpcb into eax and set on-fault
-	pushl	PCB_ONFAULT(%eax)
-	movl	$_C_LABEL(kcopy_fault), PCB_ONFAULT(%eax)
-
-	movl	16(%esp),%esi
-	movl	20(%esp),%edi
-	movl	24(%esp),%ecx
+.Lkcopy_start:
+	movl	12(%esp),%esi
+	movl	16(%esp),%edi
+	movl	20(%esp),%ecx
 	movl	%edi,%eax
 	subl	%esi,%eax
 	cmpl	%ecx,%eax		# overlapping?
+	movl	%ecx,%edx
 	jb	1f
 	# nope, copy forward
 	shrl	$2,%ecx			# copy by 32-bit words
 	rep
 	movsl
-	movl	24(%esp),%ecx
+	movl	%edx,%ecx
 	andl	$3,%ecx			# any bytes left?
 	jz	0f
 	rep
 	movsb
 0:
-
-	GET_CURPCB(%edx)		# XXX save curpcb?
-	popl	PCB_ONFAULT(%edx)
 	popl	%edi
 	popl	%esi
 	xorl	%eax,%eax
@@ -162,7 +157,7 @@ ENTRY(kcopy)
 	decl	%esi
 	rep
 	movsb
-	movl	24(%esp),%ecx		# copy remainder by 32-bit words
+	movl	%edx,%ecx		# copy remainder by 32-bit words
 	shrl	$2,%ecx
 	subl	$3,%esi
 	subl	$3,%edi
@@ -170,8 +165,7 @@ ENTRY(kcopy)
 	movsl
 	cld
 
-	GET_CURPCB(%edx)
-	popl	PCB_ONFAULT(%edx)
+.Lkcopy_end:
 	popl	%edi
 	popl	%esi
 	xorl	%eax,%eax
@@ -192,17 +186,14 @@ ENTRY(kcopy)
 
 /* LINTSTUB: Func: int copyout(const void *kaddr, void *uaddr, size_t len) */
 ENTRY(copyout)
-	DO_DEFERRED_SWITCH
-
-	GET_CURPCB(%edx)
 	pushl	%esi
 	pushl	%edi
-	pushl	$0	/* PCB_ONFAULT(%edx) */
+.Lcopyout_start:
+	DO_DEFERRED_SWITCH_RETRY
 
-	movl	16(%esp),%esi
-	movl	20(%esp),%edi
-	movl	24(%esp),%eax
-	movl	$_C_LABEL(copy_fault),PCB_ONFAULT(%edx)
+	movl	12(%esp),%esi
+	movl	16(%esp),%edi
+	movl	20(%esp),%eax
 
 	/*
 	 * We check that the end of the destination buffer is not past the end
@@ -223,8 +214,7 @@ ENTRY(copyout)
 	rep
 	movsb
 1:
-	GET_CURPCB(%edx)
-	popl	PCB_ONFAULT(%edx)
+.Lcopyout_end:
 	popl	%edi
 	popl	%esi
 	xorl	%eax,%eax
@@ -238,17 +228,14 @@ ENTRY(copyout)
 
 /* LINTSTUB: Func: int copyin(const void *uaddr, void *kaddr, size_t len) */
 ENTRY(copyin)
-	DO_DEFERRED_SWITCH
-
-	GET_CURPCB(%edx)
 	pushl	%esi
 	pushl	%edi
-	pushl	$0	/* PCB_ONFAULT(%edx) */ 
+.Lcopyin_start:
+	DO_DEFERRED_SWITCH_RETRY
 
-	movl	16(%esp),%esi
-	movl	20(%esp),%edi
-	movl	24(%esp),%eax
-	movl	$_C_LABEL(copy_fault),PCB_ONFAULT(%edx)
+	movl	12(%esp),%esi
+	movl	16(%esp),%edi
+	movl	20(%esp),%eax
 
 	/*
 	 * We check that the end of the destination buffer is not past the end
@@ -270,8 +257,7 @@ ENTRY(copyin)
 	rep
 	movsb
 1:
-	GET_CURPCB(%edx)
-	popl	PCB_ONFAULT(%edx)
+.Lcopyin_end:
 	popl	%edi
 	popl	%esi
 	xorl	%eax,%eax
@@ -288,16 +274,12 @@ NENTRY(copy_efault)
  */
 /* LINTSTUB: Ignore */
 NENTRY(kcopy_fault)
-	GET_CURPCB(%edx)
-	popl	PCB_ONFAULT(%edx)
 	popl	%edi
 	popl	%esi
 	ret
 
 /* LINTSTUB: Ignore */
 NENTRY(copy_fault)
-	GET_CURPCB(%edx)
-	popl	PCB_ONFAULT(%edx)
 	popl	%edi
 	popl	%esi
 	ret
@@ -315,14 +297,14 @@ ENTRY(copyoutstr)
 	pushl	%esi
 	pushl	%edi
 
-	DO_DEFERRED_SWITCH
+.Lcopyoutstr_start:
+	DO_DEFERRED_SWITCH_RETRY
 
 	movl	12(%esp),%esi		# esi = from
 	movl	16(%esp),%edi		# edi = to
 	movl	20(%esp),%edx		# edx = maxlen
 
-5:	GET_CURPCB(%eax)
-	movl	$_C_LABEL(copystr_fault),PCB_ONFAULT(%eax)
+5:	
 	/*
 	 * Get min(%edx, VM_MAXUSER_ADDRESS-%edi).
 	 */
@@ -341,6 +323,7 @@ ENTRY(copyoutstr)
 	lodsb
 	stosb
 	testb	%al,%al
+.Lcopyoutstr_end:
 	jnz	1b
 
 	/* Success -- 0 byte reached. */
@@ -367,10 +350,8 @@ ENTRY(copyinstr)
 	pushl	%esi
 	pushl	%edi
 
-	DO_DEFERRED_SWITCH
-
-	GET_CURPCB(%ecx)
-	movl	$_C_LABEL(copystr_fault),PCB_ONFAULT(%ecx)
+.Lcopyinstr_start:
+	DO_DEFERRED_SWITCH_RETRY
 
 	movl	12(%esp),%esi		# %esi = from
 	movl	16(%esp),%edi		# %edi = to
@@ -394,6 +375,7 @@ ENTRY(copyinstr)
 	lodsb
 	stosb
 	testb	%al,%al
+.Lcopyinstr_end:
 	jnz	1b
 
 	/* Success -- 0 byte reached. */
@@ -415,8 +397,6 @@ NENTRY(copystr_efault)
 NENTRY(copystr_fault)
 copystr_return:
 	/* Set *lencopied and return %eax. */
-	GET_CURPCB(%ecx)
-	movl	$0,PCB_ONFAULT(%ecx)
 	movl	20(%esp),%ecx
 	subl	%edx,%ecx
 	movl	24(%esp),%edx
@@ -655,14 +635,13 @@ ENTRY(subyte)
  */
 ENTRY(x86_copyargs)
 	pushl	%esi
-	GET_CURPCB(%eax)
-	pushl	$0
-	movl	$_C_LABEL(x86_copyargs_fault),PCB_ONFAULT(%eax)
 
-	movl	12(%esp),%esi
-	movl	16(%esp),%edx
-	movl	20(%esp),%ecx
+	movl	8(%esp),%esi
+	movl	12(%esp),%edx
+	movl	16(%esp),%ecx
 
+.Lx86_copyargs_start:
+	DO_DEFERRED_SWITCH_RETRY
 	/*
 	 * We check that the end of the destination buffer is not past the end
 	 * of the user's address space.  If it's not, then we only need to
@@ -685,8 +664,6 @@ ENTRY(x86_copyargs)
 	movl	%ecx,12(%edx)
 	ja	2f		/* Optimise since most sycalls have <= 4 args */
 1:
-	GET_CURPCB(%edx)
-	popl	PCB_ONFAULT(%edx)
 	popl	%esi
 	xorl	%eax,%eax
 	ret
@@ -703,6 +680,7 @@ ENTRY(x86_copyargs)
 	movl	36(%esi),%ecx
 	movl	%eax,32(%edx)
 	movl	%ecx,36(%edx)
+.Lx86_copyargs_end:
 	jmp 1b
 
 /* LINTSTUB: Ignore */
@@ -711,7 +689,36 @@ NENTRY(x86_copyargs_efault)
 
 /* LINTSTUB: Ignore */
 NENTRY(x86_copyargs_fault)
-	GET_CURPCB(%edx)
-	popl	PCB_ONFAULT(%edx)
 	popl	%esi
 	ret
+
+	.section ".rodata"
+	.globl _C_LABEL(onfault_table)
+_C_LABEL(onfault_table):
+	.long .Lcopyin_start
+	.long .Lcopyin_end
+	.long _C_LABEL(copy_fault)
+
+	.long .Lcopyout_start
+	.long .Lcopyout_end
+	.long _C_LABEL(copy_fault)
+
+	.long .Lkcopy_start
+	.long .Lkcopy_end
+	.long _C_LABEL(kcopy_fault)
+
+	.long .Lcopyoutstr_start
+	.long .Lcopyoutstr_end
+	.long _C_LABEL(copystr_fault)
+
+	.long .Lcopyinstr_start
+	.long .Lcopyinstr_end
+	.long _C_LABEL(copystr_fault)
+
+	.long .Lx86_copyargs_start
+	.long .Lx86_copyargs_end
+	.long _C_LABEL(x86_copyargs_fault)
+
+	.long 0	/* terminate */
+
+	.text

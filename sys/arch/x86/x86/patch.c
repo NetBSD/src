@@ -1,4 +1,4 @@
-/*	$NetBSD: patch.c,v 1.3.8.3 2007/11/14 19:04:17 joerg Exp $	*/
+/*	$NetBSD: patch.c,v 1.3.8.4 2007/12/03 16:14:23 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.3.8.3 2007/11/14 19:04:17 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.3.8.4 2007/12/03 16:14:23 joerg Exp $");
 
 #include "opt_lockdebug.h"
 
@@ -66,20 +66,26 @@ void	i686_mutex_spin_exit(int);
 void	i686_mutex_spin_exit_end(void);
 void	i686_mutex_spin_exit_patch(void);
 
+void	membar_consumer(void);
+void	membar_consumer_end(void);
+void	membar_sync(void);
+void	membar_sync_end(void);
+void	sse2_lfence(void);
+void	sse2_lfence_end(void);
+void	sse2_mfence(void);
+void	sse2_mfence_end(void);
+
 void	mb_read(void);
 void	mb_read_end(void);
-void	mb_write(void);
-void	mb_write_end(void);
 void	mb_memory(void);
 void	mb_memory_end(void);
-void	x86_mb_nop(void);
-void	x86_mb_nop_end(void);
 void	sse2_mb_read(void);
 void	sse2_mb_read_end(void);
 void	sse2_mb_memory(void);
 void	sse2_mb_memory_end(void);
 
 extern void	*x86_lockpatch[];
+extern void	*atomic_lockpatch[];
 
 #define	X86_NOP		0x90
 #define	X86_REP		0xf3
@@ -125,7 +131,7 @@ patchbytes(void *addr, const int byte1, const int byte2)
 void
 x86_patch(void)
 {
-#if !defined(GPROF)
+#if !defined(GPROF) && !defined(LOCKDEBUG)
 	static int again;
 	u_long psl;
 	u_long cr0;
@@ -143,28 +149,13 @@ x86_patch(void)
 	lcr0(cr0 & ~CR0_WP);
 
 	if (ncpu == 1) {
-#ifndef LOCKDEBUG
 		int i;
 
 		/* Uniprocessor: kill LOCK prefixes. */
 		for (i = 0; x86_lockpatch[i] != 0; i++)
 			patchbytes(x86_lockpatch[i], X86_NOP, -1);	
-		/* Uniprocessor: kill memory barriers. */
-		patchfunc(
-			x86_mb_nop, x86_mb_nop_end,
-			mb_read, mb_read_end,
-			NULL
-		);
-		patchfunc(
-			x86_mb_nop, x86_mb_nop_end,
-			mb_write, mb_write_end,
-			NULL
-		);
-		patchfunc(
-			x86_mb_nop, x86_mb_nop_end,
-			mb_memory, mb_memory_end,
-			NULL
-		);
+		for (i = 0; atomic_lockpatch[i] != 0; i++)
+			patchbytes(atomic_lockpatch[i], X86_NOP, -1);
 		/*
 		 * Uniprocessor: kill kernel_lock.  Fill another
 		 * 14 bytes of NOPs so not to confuse the decoder.
@@ -175,7 +166,6 @@ x86_patch(void)
 			patchbytes((char *)_kernel_lock + i, X86_NOP, -1);
 			patchbytes((char *)_kernel_unlock + i, X86_NOP, -1);
 		}
-#endif
 	} else if ((cpu_feature & CPUID_SSE2) != 0) {
 		/* Faster memory barriers. */
 		patchfunc(
@@ -188,6 +178,16 @@ x86_patch(void)
 		    mb_memory, mb_memory_end,
 		    NULL
 		);
+		patchfunc(
+		    sse2_lfence, sse2_lfence_end,
+		    membar_consumer, membar_consumer_end,
+		    NULL
+		);
+		patchfunc(
+		    sse2_mfence, sse2_mfence_end,
+		    membar_sync, membar_sync_end,
+		    NULL
+		);
 	}
 
 	if ((cpu_feature & CPUID_CX8) != 0) {
@@ -197,7 +197,7 @@ x86_patch(void)
 		    spllower, spllower_end,
 		    cx8_spllower_patch
 		);
-#if defined(i386) && !defined(LOCKDEBUG)
+#if defined(i386)
 		patchfunc(
 		    i686_mutex_spin_exit, i686_mutex_spin_exit_end,
 		    mutex_spin_exit, mutex_spin_exit_end,

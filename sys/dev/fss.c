@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.34.4.3 2007/11/27 19:36:59 joerg Exp $	*/
+/*	$NetBSD: fss.c,v 1.34.4.4 2007/12/03 16:14:30 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.34.4.3 2007/11/27 19:36:59 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.34.4.4 2007/12/03 16:14:30 joerg Exp $");
 
 #include "fss.h"
 
@@ -126,7 +126,7 @@ dev_type_strategy(fss_strategy);
 dev_type_dump(fss_dump);
 dev_type_size(fss_size);
 
-static int fss_copy_on_write(void *, struct buf *);
+static int fss_copy_on_write(void *, struct buf *, bool);
 static inline void fss_error(struct fss_softc *, const char *, ...);
 static int fss_create_files(struct fss_softc *, struct fss_set *,
     off_t *, struct lwp *);
@@ -492,7 +492,7 @@ fss_umount_hook(struct mount *mp, int forced)
  * backing store if needed.
  */
 static int
-fss_copy_on_write(void *v, struct buf *bp)
+fss_copy_on_write(void *v, struct buf *bp, bool data_valid)
 {
 	int s;
 	u_int32_t cl, ch, c;

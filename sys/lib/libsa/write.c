@@ -1,4 +1,4 @@
-/*	$NetBSD: write.c,v 1.13.42.1 2007/11/27 19:38:44 joerg Exp $	*/
+/*	$NetBSD: write.c,v 1.13.42.2 2007/12/03 16:15:05 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -71,7 +71,7 @@ write(int fd, const void *destp, size_t bcount)
 	void *dest = __UNCONST(destp);
 
 #if !defined(LIBSA_NO_FD_CHECKING)
-	if ((unsigned)fd >= SOPEN_MAX || !(f->f_flags & F_WRITE)) {
+	if ((unsigned int)fd >= SOPEN_MAX || !(f->f_flags & F_WRITE)) {
 		errno = EBADF;
 		return -1;
 	}

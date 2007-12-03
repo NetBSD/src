@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_usema.c,v 1.21 2007/07/13 20:46:04 dsl Exp $ */
+/*	$NetBSD: irix_usema.c,v 1.21.6.1 2007/12/03 16:14:28 joerg Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_usema.c,v 1.21 2007/07/13 20:46:04 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_usema.c,v 1.21.6.1 2007/12/03 16:14:28 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -183,7 +183,6 @@ irix_usema_ioctl(v)
 		void * a_data;
 		int  a_fflag;
 		kauth_cred_t a_cred;
-		struct lwp *a_l;
 	} */ *ap = v;
 	u_long cmd = ap->a_command;
 	struct irix_ioctl_usrdata *iiu = ap->a_data;
@@ -215,7 +214,7 @@ irix_usema_ioctl(v)
 		if ((iur = iur_lookup_by_vn(vp)) == NULL)
 			return EBADF;
 
-		iwpr = iur_proc_queue(iur, ap->a_l->l_proc);
+		iwpr = iur_proc_queue(iur, curlwp->l_proc);
 		break;
 
 	case IRIX_UIOCAUNBLOCKQ: /* semaphore has been unblocked */
@@ -251,7 +250,7 @@ irix_usema_ioctl(v)
 		isp = (struct irix_semaphore *)((u_long)(isp) -
 		    (u_long)(&isp->is_oid) + (u_long)iui.iui_oidp);
 
-		if ((iur_insert(isp, vp, ap->a_l->l_proc)) == NULL)
+		if ((iur_insert(isp, vp, curlwp->l_proc)) == NULL)
 			return EFAULT;
 		break;
 	}
@@ -271,7 +270,6 @@ irix_usema_poll(v)
 	struct vop_poll_args /* {
 		struct vnode *a_vp;
 		int a_events;
-		struct lwp *a_l;
 	} */ *ap = v;
 	int events = ap->a_events;
 	struct vnode *vp = ap->a_vp;
@@ -287,7 +285,7 @@ irix_usema_poll(v)
 	if ((iur = iur_lookup_by_vn(vp)) == NULL)
 		return 0;
 
-	if (iur_proc_isreleased(iur, ap->a_l->l_proc) == 0)
+	if (iur_proc_isreleased(iur, curlwp->l_proc) == 0)
 		return 0;
 
 	return (events & check);
@@ -301,7 +299,6 @@ irix_usema_close(v)
 		struct vnode *a_vp;
 		int  a_fflag;
 		kauth_cred_t a_cred;
-		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct vnode *rvp;
@@ -322,7 +319,7 @@ irix_usema_close(v)
 	if (ap->a_fflag & FWRITE)
 		rvp->v_writecount--;
 	vn_lock(rvp, LK_EXCLUSIVE | LK_RETRY);
-	error = VOP_CLOSE(rvp, ap->a_fflag, ap->a_cred, ap->a_l);
+	error = VOP_CLOSE(rvp, ap->a_fflag, ap->a_cred);
 	vput(rvp);
 
 	if ((iur = iur_lookup_by_vn(vp)) != NULL)
@@ -345,7 +342,6 @@ irix_usema_setattr(v)
 		struct vnode    *a_vp;
 		struct vattr    *a_vap;
 		kauth_cred_t	 a_cred;
-		struct lwp      *a_l;
 	} */ *ap = v;
 	struct vnode *vp = (struct vnode *)(ap->a_vp->v_data);
 	int error;
@@ -353,7 +349,7 @@ irix_usema_setattr(v)
 #ifdef DEBUG_IRIX
 	printf("irix_usema_setattr()\n");
 #endif
-	error = VOP_SETATTR(vp, ap->a_vap, ap->a_cred, ap->a_l);
+	error = VOP_SETATTR(vp, ap->a_vap, ap->a_cred);
 
 	/* Silently ignore any error */
 	return 0;
@@ -365,11 +361,10 @@ irix_usema_inactive(v)
 {
 	struct vop_inactive_args /* {
 		struct vnode    *a_vp;
-		struct lwp      *a_l;
 	} */ *ap = v;
 
 	VOP_UNLOCK(ap->a_vp, 0);
-	vrecycle(ap->a_vp, NULL, ap->a_l);
+	vrecycle(ap->a_vp, NULL, curlwp);
 
 	return 0;
 }

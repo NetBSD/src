@@ -1,4 +1,4 @@
-/* $NetBSD: printf.c,v 1.1.6.1 2007/10/28 20:10:51 joerg Exp $ */
+/* $NetBSD: printf.c,v 1.1.6.2 2007/12/03 16:14:10 joerg Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -40,7 +40,6 @@
  * printf -- format and write output using 'func' to write characters
  */
 
-#include <sys/cdefs.h>
 #include <sys/types.h>
 #include <machine/stdarg.h>
 

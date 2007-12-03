@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.246.4.7 2007/11/27 19:38:02 joerg Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.246.4.8 2007/12/03 16:14:48 joerg Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.246.4.7 2007/11/27 19:38:02 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.246.4.8 2007/12/03 16:14:48 joerg Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -431,10 +431,10 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	struct exec_vmcmd	*base_vcp;
 	ksiginfo_t		ksi;
 	ksiginfoq_t		kq;
-#ifdef SYSTRACE
-	int			wassugid = ISSET(p->p_flag, PK_SUGID);
 	char			pathbuf[MAXPATHLEN];
 	size_t			pathbuflen;
+#ifdef SYSTRACE
+	int			wassugid = ISSET(p->p_flag, PK_SUGID);
 #endif /* SYSTRACE */
 
 	p = l->l_proc;
@@ -458,6 +458,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 #ifdef SYSTRACE
 	if (ISSET(p->p_flag, PK_SYSTRACE))
 		systrace_execve0(p);
+#endif
 
 	error = copyinstr(path, pathbuf, sizeof(pathbuf), &pathbuflen);
 	if (error) {
@@ -466,9 +467,6 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	}
 
 	NDINIT(&nid, LOOKUP, NOFOLLOW | TRYEMULROOT, UIO_SYSSPACE, pathbuf, l);
-#else
-	NDINIT(&nid, LOOKUP, NOFOLLOW | TRYEMULROOT, UIO_USERSPACE, path, l);
-#endif /* SYSTRACE */
 
 	/*
 	 * initialize the fields of the exec package.
@@ -713,6 +711,39 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	arginfo.ps_nargvstr = argc;
 	arginfo.ps_nenvstr = envc;
 
+	/* set command name & other accounting info */
+	i = min(nid.ni_cnd.cn_namelen, MAXCOMLEN);
+	(void)memcpy(p->p_comm, nid.ni_cnd.cn_nameptr, i);
+	p->p_comm[i] = '\0';
+
+	dp = PNBUF_GET();
+	/*
+	 * If the path starts with /, we don't need to do any work.
+	 * This handles the majority of the cases.
+	 * In the future perhaps we could canonicalize it?
+	 */
+	if (pathbuf[0] == '/')
+		(void)strlcpy(pack.ep_path = dp, pathbuf, MAXPATHLEN);
+#ifdef notyet
+	/*
+	 * Although this works most of the time [since the entry was just
+	 * entered in the cache] we don't use it because it theoretically
+	 * can fail and it is not the cleanest interface, because there
+	 * could be races. When the namei cache is re-written, this can
+	 * be changed to use the appropriate function.
+	 */
+	else if (!(error = vnode_to_path(dp, MAXPATHLEN, p->p_textvp, l, p)))
+		pack.ep_path = dp;
+#endif
+	else {
+#ifdef notyet
+		printf("Cannot get path for pid %d [%s] (error %d)",
+		    (int)p->p_pid, p->p_comm, error);
+#endif
+		pack.ep_path = NULL;
+		PNBUF_PUT(dp);
+	}
+
 	stack = (char *)STACK_ALLOC(STACK_GROW(vm->vm_minsaddr,
 		STACK_PTHREADSPACE + sizeof(struct ps_strings) + szsigcode),
 		len - (sizeof(struct ps_strings) + szsigcode));
@@ -745,6 +776,10 @@ execve1(struct lwp *l, const char *path, char * const *args,
 
 	/* Now copy argc, args & environ to new stack */
 	error = (*pack.ep_esch->es_copyargs)(l, &pack, &arginfo, &stack, argp);
+	if (pack.ep_path) {
+		PNBUF_PUT(pack.ep_path);
+		pack.ep_path = NULL;
+	}
 	if (error) {
 		DPRINTF(("execve: copyargs failed %d\n", error));
 		goto exec_abort;
@@ -774,12 +809,8 @@ execve1(struct lwp *l, const char *path, char * const *args,
 
 	l->l_ctxlink = NULL;	/* reset ucontext link */
 
-	/* set command name & other accounting info */
-	i = min(nid.ni_cnd.cn_namelen, MAXCOMLEN);
-	memcpy(p->p_comm, nid.ni_cnd.cn_nameptr, i);
-	p->p_comm[i] = '\0';
-	p->p_acflag &= ~AFORK;
 
+	p->p_acflag &= ~AFORK;
 	p->p_flag |= PK_EXEC;
 
 	/*
@@ -1020,9 +1051,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	if (pack.ep_interp != NULL)
 		vrele(pack.ep_interp);
 
-#ifdef SYSTRACE
  clrflg:
-#endif /* SYSTRACE */
 	rw_exit(&p->p_reflock);
 #ifdef LKM
 	rw_exit(&exec_lock);
