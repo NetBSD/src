@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.43.8.4 2007/12/03 18:37:24 ad Exp $	*/
+/*	$NetBSD: cpu.c,v 1.43.8.5 2007/12/03 19:03:36 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 Tsubai Masanari.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.43.8.4 2007/12/03 18:37:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.43.8.5 2007/12/03 19:03:36 ad Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -68,14 +68,6 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.43.8.4 2007/12/03 18:37:24 ad Exp $");
 #include <machine/pcb.h>
 #include <machine/pio.h>
 #include <machine/trap.h>
-
-#include "pic_openpic.h"
-
-#ifndef OPENPIC
-#if NPIC_OPENPIC > 0
-#define OPENPIC
-#endif /* NOPENPIC > 0 */
-#endif /* OPENPIC */
 
 #include "pic_openpic.h"
 

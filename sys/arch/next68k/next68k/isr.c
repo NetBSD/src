@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.23.2.1 2007/12/03 18:38:02 ad Exp $ */
+/*	$NetBSD: isr.c,v 1.23.2.2 2007/12/03 19:03:46 ad Exp $ */
 
 /*
  * This file was taken from mvme68k/mvme68k/isr.c
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.23.2.1 2007/12/03 18:38:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.23.2.2 2007/12/03 19:03:46 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -273,8 +273,6 @@ isrdispatch_autovec(struct clockframe *frame)
 		int handled;
 	} log[256];
 #endif
-
-	idepth++;
 
 	idepth++;
 

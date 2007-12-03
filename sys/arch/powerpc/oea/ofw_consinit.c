@@ -1,4 +1,4 @@
-/* $NetBSD: ofw_consinit.c,v 1.2.2.3 2007/12/03 18:38:28 ad Exp $ */
+/* $NetBSD: ofw_consinit.c,v 1.2.2.4 2007/12/03 19:04:00 ad Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_consinit.c,v 1.2.2.3 2007/12/03 18:38:28 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_consinit.c,v 1.2.2.4 2007/12/03 19:04:00 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -427,30 +427,6 @@ ofwbootcons_cnputc(dev_t dev, int c)
 	OF_write(stdout, &ch, 1);
 }
 
-/*
- * Bootstrap console support functions
- */
-
-static int 
-ofwbootcons_cngetc(dev_t dev)
-{
-	unsigned char ch = '\0';
-	int l;
-
-	while ((l = OF_read(stdin, &ch, 1)) != 1)
-		if (l != -2 && l != 0)
-			return -1;
-	return ch;
-}
-
-static void
-ofwbootcons_cnputc(dev_t dev, int c)
-{
-	char ch = c;
-
-	OF_write(stdout, &ch, 1);
-}
-
 void
 ofwoea_consinit(void)
 {
@@ -474,9 +450,6 @@ ofwoea_bootstrap_console(void)
 
 	if (OF_getprop(chosen, "stdout", &stdout,
 	    sizeof(stdout)) != sizeof(stdout))
-		goto nocons;
-	if (OF_getprop(chosen, "stdin", &stdin,
-	    sizeof(stdin)) != sizeof(stdin))
 		goto nocons;
 	if (OF_getprop(chosen, "stdin", &stdin,
 	    sizeof(stdin)) != sizeof(stdin))

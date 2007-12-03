@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.296.2.3 2007/12/03 18:34:29 ad Exp $ */
+/* $NetBSD: machdep.c,v 1.296.2.4 2007/12/03 19:02:23 ad Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.296.2.3 2007/12/03 18:34:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.296.2.4 2007/12/03 19:02:23 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1419,11 +1419,6 @@ regdump(framep)
 	printregs(&reg);
 }
 
-	/*
-	 * Perform any initial kernel patches based on the running system.
-	 * We may perform more later if we attach additional CPUs.
-	 */
-	alpha_patch(false);
 
 
 void *

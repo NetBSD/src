@@ -1,4 +1,4 @@
-/*	$NetBSD: pcc.c,v 1.27.30.1 2007/12/03 18:37:39 ad Exp $	*/
+/*	$NetBSD: pcc.c,v 1.27.30.2 2007/12/03 19:03:42 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcc.c,v 1.27.30.1 2007/12/03 18:37:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcc.c,v 1.27.30.2 2007/12/03 19:03:42 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -316,7 +316,6 @@ pccintr(frame)
 
 	return (nmihand(frame));
 }
-#endif
 
 #ifdef notyet
 static void

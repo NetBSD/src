@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.57.18.1 2007/12/03 18:35:48 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.57.18.2 2007/12/03 19:03:14 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.57.18.1 2007/12/03 18:35:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.57.18.2 2007/12/03 19:03:14 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -793,8 +793,6 @@ intc_intr(int ssr, int spc, int ssp)
 		printf("NMI ignored.\n");
 		break;
 	}
-
-	ci->ci_idepth--;
 
 	ci->ci_idepth--;
 }

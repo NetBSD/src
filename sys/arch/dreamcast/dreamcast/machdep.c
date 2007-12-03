@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.33.4.1 2007/12/03 18:35:30 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.33.4.2 2007/12/03 19:03:12 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2002 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.33.4.1 2007/12/03 18:35:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.33.4.2 2007/12/03 19:03:12 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -300,8 +300,6 @@ intc_intr(int ssr, int spc, int ssp)
 	} else {
 		(*ih->ih_func)(ih->ih_arg);
 	}
-
-	ci->ci_idepth--;
 
 	ci->ci_idepth--;
 }

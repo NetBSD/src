@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.816.2.8 2007/12/03 18:36:23 ad Exp $
+# $NetBSD: GENERIC,v 1.816.2.9 2007/12/03 19:03:22 ad Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.816.2.8 $"
+#ident 		"GENERIC-$Revision: 1.816.2.9 $"
 
 maxusers	32		# estimated number of users
 
@@ -593,9 +593,6 @@ lpt2	at isa? port 0x3bc
 # AMD 768 and 8111 power/ACPI controllers
 amdpm*	at pci? dev ? function ?	# RNG and SMBus 1.0 interface
 #iic*	at amdpm?			# sensors below are on this bus
-
-# Intel Core's on-die Thermal sensor
-options 	INTEL_CORETEMP
 
 # Intel Core's on-die Thermal sensor
 options 	INTEL_CORETEMP
@@ -1464,9 +1461,6 @@ pseudo-device	nsmb			# experimental - SMB requester
 # wscons pseudo-devices
 pseudo-device	wsmux			# mouse & keyboard multiplexor
 pseudo-device	wsfont
-
-# pseudo audio device driver
-pseudo-device	pad
 
 # pseudo audio device driver
 pseudo-device	pad

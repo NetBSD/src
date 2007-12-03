@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.85.2.9 2007/12/03 18:36:21 ad Exp $
+# $NetBSD: ALL,v 1.85.2.10 2007/12/03 19:03:21 ad Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.85.2.9 $"
+#ident 		"ALL-$Revision: 1.85.2.10 $"
 
 maxusers	32		# estimated number of users
 
@@ -606,9 +606,6 @@ lpt2	at isa? port 0x3bc
 # AMD 768 and 8111 power/ACPI controllers
 amdpm*	at pci? dev ? function ?	# RNG and SMBus 1.0 interface
 iic*	at amdpm?			# sensors below are on this bus
-
-# Intel Core's on-die Thermal sensor
-options 	INTEL_CORETEMP
 
 # Intel Core's on-die Thermal sensor
 options 	INTEL_CORETEMP
@@ -1487,15 +1484,6 @@ pseudo-device	swwdog
 
 # cmos(4) pseudo-device
 pseudo-device	cmos
-
-# Pass-to-Userspace Transporter
-pseudo-device	putter
-
-# Userspace block/char drivers
-pseudo-device	pud
-
-# pseudo audio device driver
-pseudo-device	pad
 
 # Pass-to-Userspace Transporter
 pseudo-device	putter

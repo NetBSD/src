@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.28.4.12 2007/12/03 18:40:16 ad Exp $	*/
+/*	$NetBSD: intr.c,v 1.28.4.13 2007/12/03 19:04:31 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -140,7 +140,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.28.4.12 2007/12/03 18:40:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.28.4.13 2007/12/03 19:04:31 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_acpi.h"
@@ -155,10 +155,10 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.28.4.12 2007/12/03 18:40:16 ad Exp $");
 #include <sys/errno.h>
 #include <sys/intr.h>
 #include <sys/cpu.h>
+#include <sys/atomic.h>
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/atomic.h>
 #include <machine/i8259.h>
 #include <machine/pio.h>
 
@@ -866,19 +866,15 @@ redzone_const_or_zero(int x)
 void
 cpu_intr_init(struct cpu_info *ci)
 {
+#if NLAPIC > 0
 	struct intrsource *isp;
+#endif
 #if NLAPIC > 0 && defined(MULTIPROCESSOR)
 	int i;
 #endif
-	static bool again;
 #ifdef INTRSTACKSIZE
 	char *cp;
 #endif
-
-	if (!again) {
-		again = 0;
-		mutex_init(&x86_intr_lock, MUTEX_DEFAULT, IPL_NONE);
-	}
 
 #if NLAPIC > 0
 	MALLOC(isp, struct intrsource *, sizeof (struct intrsource), M_DEVBUF,

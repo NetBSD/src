@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.16.6.2 2007/12/03 18:38:19 ad Exp $	*/
+/*	$NetBSD: intr.c,v 1.16.6.3 2007/12/03 19:03:56 ad Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.16.6.2 2007/12/03 18:38:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.16.6.3 2007/12/03 19:03:56 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -628,7 +628,6 @@ splx(int newcpl)
 	if (ci->ci_ipending & ~newcpl)
 		do_pending_int();
 }
-#endif
 
 int
 spllower(int newcpl)

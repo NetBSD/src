@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.601.2.12 2007/12/03 18:36:44 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.601.2.13 2007/12/03 19:03:29 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.601.2.12 2007/12/03 18:36:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.601.2.13 2007/12/03 19:03:29 ad Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -2417,6 +2417,13 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
 	mutex_exit(&p->p_smutex);
 	return (0);
+}
+
+void
+cpu_initclocks()
+{
+
+	(*initclock_func)();
 }
 
 /*

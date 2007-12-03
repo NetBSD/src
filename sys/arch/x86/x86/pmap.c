@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.2.2.4 2007/12/03 18:40:21 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.2.2.5 2007/12/03 19:04:33 ad Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.2.2.4 2007/12/03 18:40:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.2.2.5 2007/12/03 19:04:33 ad Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -177,7 +177,6 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.2.2.4 2007/12/03 18:40:21 ad Exp $");
 
 #include <dev/isa/isareg.h>
 
-#include <machine/atomic.h>
 #include <machine/cpu.h>
 #include <machine/specialreg.h>
 #include <machine/gdt.h>
@@ -525,6 +524,9 @@ static char *csrcp, *cdstp, *zerop, *ptpp, *early_zerop;
 static struct pool_cache pmap_pdp_cache;
 
 int	pmap_pdp_ctor(void *, void *, int);
+#ifdef XEN
+void   pmap_pdp_dtor(void *, void *);
+#endif
 
 void *vmmap; /* XXX: used by mem.c... it should really uvm_map_reserve it */
 
@@ -1352,8 +1354,14 @@ pmap_bootstrap(vaddr_t kva_start)
 
 	pool_cache_bootstrap(&pmap_cache, sizeof(struct pmap), 0, 0, 0, "pmappl",
 	    &pool_allocator_nointr, IPL_NONE, NULL, NULL, NULL);
+#ifdef XEN
+	pool_cache_bootstrap(&pmap_pdp_cache, PAGE_SIZE, 0, 0, 0, "pdppl",
+	    &pool_allocator_nointr, IPL_NONE,
+	    pmap_pdp_ctor, pmap_pdp_dtor, NULL);
+#else
 	pool_cache_bootstrap(&pmap_pdp_cache, PAGE_SIZE, 0, 0, 0, "pdppl",
 	    &pool_allocator_nointr, IPL_NONE, pmap_pdp_ctor, NULL, NULL);
+#endif
 	pool_cache_bootstrap(&pmap_pv_cache, sizeof(struct pv_entry), 0, 0, 0,
 	    "pvpl", &pool_allocator_meta, IPL_NONE, NULL, NULL, NULL);
 
@@ -1910,7 +1918,14 @@ pmap_create(void)
 		goto try_again;
 	}
 
-	pmap->pm_pdirpa = pmap->pm_pdir[PDIR_SLOT_PTE] & PG_FRAME;
+	pmap->pm_pdirpa = pmap_pte2pa(pmap->pm_pdir[PDIR_SLOT_PTE]);
+#ifdef XEN
+	/* Xen want PDP R/O */
+	{
+	pt_entry_t *pte = kvtopte((vaddr_t)pmap->pm_pdir);
+	pmap_pte_set(pte, (*pte) & ~PG_RW);
+	}
+#endif
 
 	LIST_INSERT_HEAD(&pmaps, pmap, pm_list);
 
@@ -1971,8 +1986,6 @@ pmap_destroy(struct pmap *pmap)
 	 * remove it from global list of pmaps
 	 */
 
-	KERNEL_LOCK(1, NULL);
-
 	mutex_enter(&pmaps_lock);
 	LIST_REMOVE(pmap, pm_list);
 	mutex_exit(&pmaps_lock);
@@ -2016,12 +2029,11 @@ pmap_destroy(struct pmap *pmap)
  *	Add a reference to the specified pmap.
  */
 
-void
+inline void
 pmap_reference(struct pmap *pmap)
 {
-	mutex_enter(&pmap->pm_lock);
-	pmap->pm_obj[0].uo_refs++;
-	mutex_exit(&pmap->pm_lock);
+
+	atomic_inc_uint((unsigned *)&pmap->pm_obj[0].uo_refs);
 }
 
 #if defined(PMAP_FORK)
@@ -2290,26 +2302,24 @@ pmap_load(void)
 	}
 
 	/*
-	 * grab a reference to the new pmap.  this may block.  if state
-	 * has changed out from underneath us, drop the reference and
-	 * retry.
+	 * grab a reference to the new pmap.
 	 */
 
-	ncsw = l->l_ncsw;
 	pmap_reference(pmap);
-	if (l->l_ncsw != ncsw) {
-		pmap_destroy(pmap);
-		goto retry;
-	}
 
 	/*
 	 * actually switch pmap.
 	 */
 
-	x86_atomic_clearbits_l(&oldpmap->pm_cpus, cpumask);
-	x86_atomic_clearbits_l(&oldpmap->pm_kernel_cpus, cpumask);
+	atomic_and_32(&oldpmap->pm_cpus, ~cpumask);
+	atomic_and_32(&oldpmap->pm_kernel_cpus, ~cpumask);
 
+#ifdef XEN
+	KASSERT(oldpmap->pm_pdirpa == xen_current_user_pgd ||
+	    oldpmap == pmap_kernel());
+#else
 	KASSERT(oldpmap->pm_pdirpa == rcr3());
+#endif
 	KASSERT((pmap->pm_cpus & cpumask) == 0);
 	KASSERT((pmap->pm_kernel_cpus & cpumask) == 0);
 
@@ -2370,6 +2380,7 @@ pmap_load(void)
 	 * to the old pmap.  if we block, we need to go around again.
 	 */
 
+	ncsw = l->l_ncsw;
 	pmap_destroy(oldpmap);
 	if (l->l_ncsw != ncsw) {
 		goto retry;
@@ -3718,6 +3729,22 @@ out:
 	return error;
 }
 
+#ifdef XEN
+int
+pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
+{
+        paddr_t ma;
+
+	if (__predict_false(pa < pmap_pa_start || pmap_pa_end <= pa)) {
+		ma = pa; /* XXX hack */
+	} else {
+		ma = xpmap_ptom(pa);
+	}
+
+	return pmap_enter_ma(pmap, va, ma, pa, prot, flags, DOMID_SELF);
+}
+#endif /* XEN */
+
 static bool
 pmap_get_physpage(vaddr_t va, int level, paddr_t *paddrp)
 {
@@ -3793,14 +3820,24 @@ pmap_alloc_level(pd_entry_t **pdes, vaddr_t kva, int lvl, long *needed_ptps)
 		for (i = index; i <= endindex; i++) {
 			KASSERT(!pmap_valid_entry(pdep[i]));
 			pmap_get_physpage(va, level - 1, &pa);
+#ifdef XEN
+			xpq_queue_pte_update((level == PTP_LEVELS) ?
+			    (pt_entry_t *)xpmap_ptom(pmap_kernel()->pm_pdirpa + sizeof(pt_entry_t) * i) :
+			    (pt_entry_t *)xpmap_ptetomach(&pdep[i]),
+			    pmap_pa2pte(pa) | PG_k | PG_V | PG_RW);
+#else
 			pdep[i] = pa | PG_RW | PG_V;
+#endif
 			KASSERT(level != PTP_LEVELS || nkptp[level - 1] +
 			    pl_i(VM_MIN_KERNEL_ADDRESS, level) == i);
 			nkptp[level - 1]++;
 			va += nbpd[level - 1];
 		}
+		pmap_pte_flush();
 	}
-
+#ifdef XEN
+	splx(s);
+#endif
 	/* For nkptp vs pmap_pdp_cache. */
 	mb_write();
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.91.2.3 2007/12/03 18:38:07 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.91.2.4 2007/12/03 19:03:50 ad Exp $	*/
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.91.2.3 2007/12/03 18:38:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.91.2.4 2007/12/03 19:03:50 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -156,12 +156,6 @@ cpu_startup(void)
 	oea_startup(model_name[0] ? model_name : NULL);
 }
 
-#include "com.h"
-#if (NCOM > 0)
-#include <sys/termios.h>
-#include <dev/ic/comreg.h>
-#include <dev/ic/comvar.h>
-#endif
 
 void
 consinit(void)
@@ -229,7 +223,6 @@ cpu_reboot(int howto, char *what)
 
 /*
  */
-void rtas_reboot(void);
 
 #define divrnd(n, q)	(((n)*2/(q)+1)/2)
 

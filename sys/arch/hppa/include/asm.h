@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.6.28.2 2007/12/03 18:36:17 ad Exp $	*/
+/*	$NetBSD: asm.h,v 1.6.28.3 2007/12/03 19:03:19 ad Exp $	*/
 
 /*	$OpenBSD: asm.h,v 1.12 2001/03/29 02:15:57 mickey Exp $	*/
 
@@ -103,7 +103,6 @@
 	.weak alias !					\
 	alias = sym
 
-#include <machine/frame.h>
 /*
  * STRONG_ALIAS: create a strong alias.
  */

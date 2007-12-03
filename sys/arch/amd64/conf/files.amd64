@@ -1,11 +1,7 @@
-#	$NetBSD: files.amd64,v 1.33.2.8 2007/12/03 18:34:41 ad Exp $
+#	$NetBSD: files.amd64,v 1.33.2.9 2007/12/03 19:02:46 ad Exp $
 #
 # new style config file for amd64 architecture
 #
-
-version 20071109
-
-ifndef xen
 
 version 20071109
 
@@ -194,5 +190,4 @@ include "dev/acpi/files.acpi"
 file	arch/amd64/acpi/acpi_wakeup.c	acpi
 
 include	"arch/amd64/conf/majors.amd64"
-endif #xen
 endif #xen

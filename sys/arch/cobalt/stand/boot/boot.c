@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.5.30.2 2007/12/03 18:35:25 ad Exp $	*/
+/*	$NetBSD: boot.c,v 1.5.30.3 2007/12/03 19:03:06 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -258,11 +258,6 @@ get_bsdbootname(char **dev, char **kname, int *howtop)
 			    &bootstr_dev, &bootstr_kname))
 				return 1;
 		}
-	}
-
-	/* third, check if netboot */
-	if (strstr(bootstring, "nfsroot=") != NULL) {
-		bootstr_dev = nfsbootdev;
 	}
 
 	/* third, check if netboot */

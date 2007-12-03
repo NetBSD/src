@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_TINY,v 1.109.6.4 2007/12/03 18:36:29 ad Exp $
+#	$NetBSD: INSTALL_TINY,v 1.109.6.5 2007/12/03 19:03:24 ad Exp $
 #
 #	This kernel should be derived from INSTALL (which is derived
 #	from GENERIC) with some features commented out.
@@ -154,38 +154,6 @@ options 	NMBCLUSTERS=64
 config		netbsd	root on ? type ?
 #config		netbsd	root on sd0a type ffs
 #config		netbsd	root on ? type nfs
-
-#
-# wscons options
-#
-# builtin terminal emulations
-#options 	WSEMUL_SUN		# sun terminal emulation
-options 	WSEMUL_VT100		# VT100 / VT220 emulation
-# customization of console and kernel output - see dev/wscons/wsdisplayvar.h
-#options 	WSDISPLAY_CUSTOM_OUTPUT	# color customization from wsconsctl(8)
-#options 	WS_DEFAULT_FG=WSCOL_WHITE
-#options 	WS_DEFAULT_BG=WSCOL_BLACK
-#options 	WS_DEFAULT_COLATTR="(0)"
-#options 	WS_DEFAULT_MONOATTR="(0)"
-options 	WS_KERNEL_FG=WSCOL_GREEN
-#options 	WS_KERNEL_BG=WSCOL_BLACK
-#options 	WS_KERNEL_COLATTR=""
-#options 	WS_KERNEL_MONOATTR=""
-# customization of console border color
-#options 	WSDISPLAY_CUSTOM_BORDER	# border customization from wsconsctl(8)
-#options 	WSDISPLAY_BORDER_COLOR=WSCOL_BLUE	# default color
-# compatibility to other console drivers
-options 	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
-options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls
-options 	WSDISPLAY_COMPAT_USL		# VT handling
-options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
-# see dev/pckbport/wskbdmap_mfii.c for implemented layouts
-#options 	PCKBD_LAYOUT="(KB_DE | KB_NODEAD)" # for pckbd driver
-#options 	UKBD_LAYOUT="(KB_DE | KB_NODEAD)"  # for ukbd driver
-# allocate a number of virtual screens at autoconfiguration time
-#options 	WSDISPLAY_DEFAULTSCREENS=4
-# use a large software cursor that doesn't blink
-options 	PCDISPLAY_SOFTCURSOR
 
 #
 # wscons options

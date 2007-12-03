@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.29.6.2 2007/12/03 18:35:58 ad Exp $	*/
+/*	$NetBSD: intr.c,v 1.29.6.3 2007/12/03 19:03:15 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.29.6.2 2007/12/03 18:35:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.29.6.3 2007/12/03 19:03:15 ad Exp $");
 
 #define _HP300_INTR_H_PRIVATE
 
@@ -239,8 +239,6 @@ intr_dispatch(int evec /* format | vector offset */)
 	struct hp300_intr *list;
 	int handled, ipl, vec;
 	static int straycount, unexpected;
-
-	idepth++;
 
 	idepth++;
 

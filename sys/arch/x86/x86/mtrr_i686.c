@@ -1,4 +1,4 @@
-/*	$NetBSD: mtrr_i686.c,v 1.8.8.3 2007/12/03 18:40:20 ad Exp $ */
+/*	$NetBSD: mtrr_i686.c,v 1.8.8.4 2007/12/03 19:04:32 ad Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mtrr_i686.c,v 1.8.8.3 2007/12/03 18:40:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mtrr_i686.c,v 1.8.8.4 2007/12/03 19:04:32 ad Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -156,8 +156,14 @@ static void
 i686_mtrr_reload(int synch)
 {
 	int i;
-	uint32_t cr0, cr3, cr4;
-	uint32_t origcr0, origcr4;
+	/* XXX cr0 is 64-bit on amd64 too, but the upper bits are
+	 * unused and must be zero so it does not matter too
+	 * much. Need to change the prototypes of l/rcr0 too if you
+	 * want to correct it. */
+	uint32_t cr0;
+	vaddr_t cr3, cr4;
+	uint32_t origcr0;
+	vaddr_t origcr4;
 #ifdef MULTIPROCESSOR
 	uint32_t mymask = 1 << cpu_number();
 #endif

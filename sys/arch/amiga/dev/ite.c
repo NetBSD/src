@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.76.2.3 2007/12/03 18:34:45 ad Exp $ */
+/*	$NetBSD: ite.c,v 1.76.2.4 2007/12/03 19:02:55 ad Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.76.2.3 2007/12/03 18:34:45 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.76.2.4 2007/12/03 19:02:55 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -432,8 +432,6 @@ iteinit(dev_t dev)
 		bcopy(&ascii_kbdmap, &kbdmap, sizeof(struct kbdmap));
 		kbdmap_loaded = 1;
 	}
-
-	callout_init(&repeat_ch, 0);
 
 	callout_init(&repeat_ch, 0);
 

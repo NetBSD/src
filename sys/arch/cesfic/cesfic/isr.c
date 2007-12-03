@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.7.2.1 2007/12/03 18:35:18 ad Exp $	*/
+/*	$NetBSD: isr.c,v 1.7.2.2 2007/12/03 19:03:02 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.7.2.1 2007/12/03 18:35:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.7.2.2 2007/12/03 19:03:02 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -229,8 +229,6 @@ isrlink(func, arg, ipl, priority)
 /*
  * Disestablish an interrupt handler.
  */
-static unsigned int idepth;
- 
 void
 isrunlink(arg)
 	void *arg;

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.10.30.2 2007/12/03 18:36:02 ad Exp $	*/
+/*	$NetBSD: intr.c,v 1.10.30.3 2007/12/03 19:03:16 ad Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.10.30.2 2007/12/03 18:36:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.10.30.3 2007/12/03 19:03:16 ad Exp $");
 
 #define __MUTEX_PRIVATE
 
@@ -523,17 +523,6 @@ hp700_intr_dispatch(int ncpl, int eiem, struct trapframe *frame)
 	/* Interrupts are disabled again, restore cpl and the depth. */
 	cpl = ncpl;
 	hppa_intr_depth = old_hppa_intr_depth;
-}
-
-bool
-cpu_intr_p(void)
-{
-
-#ifdef __HAVE_FAST_SOFTINTS
-#error this should not count fast soft interrupts
-#else
-	return hppa_intr_depth != 0;
-#endif
 }
 
 bool

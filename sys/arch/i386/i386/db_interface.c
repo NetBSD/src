@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.51.2.2 2007/12/03 18:36:39 ad Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.51.2.3 2007/12/03 19:03:25 ad Exp $	*/
 
 /*
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.51.2.2 2007/12/03 18:36:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.51.2.3 2007/12/03 19:03:25 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -120,7 +120,6 @@ db_suspend_others(void)
 	if (ddb_vec == 0)
 		return 1;
 
-	x86_mp_online = ddb_mp_online;
 	__cpu_simple_lock(&db_lock);
 	if (ddb_cpu == NOCPU)
 		ddb_cpu = cpu_me;

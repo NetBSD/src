@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_icu.c,v 1.14.8.1 2007/12/03 18:35:05 ad Exp $	*/
+/*	$NetBSD: i80321_icu.c,v 1.14.8.2 2007/12/03 19:02:59 ad Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2006 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i80321_icu.c,v 1.14.8.1 2007/12/03 18:35:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i80321_icu.c,v 1.14.8.2 2007/12/03 19:02:59 ad Exp $");
 
 #ifndef EVBARM_SPL_NOINLINE
 #define	EVBARM_SPL_NOINLINE
@@ -412,7 +412,6 @@ i80321_intr_disestablish(void *cookie)
 	i80321_intr_calculate_masks();
 
 	restore_interrupts(oldirqstate);
-#endif
 }
 
 /*

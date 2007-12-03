@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.25.6.3 2007/12/03 18:40:06 ad Exp $	*/
+/*	$NetBSD: intr.h,v 1.25.6.4 2007/12/03 19:04:23 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -38,8 +38,6 @@
 
 #ifndef _X86_INTR_H_
 #define _X86_INTR_H_
-
-#define	__HAVE_FAST_SOFTINTS
 
 #define	__HAVE_FAST_SOFTINTS
 

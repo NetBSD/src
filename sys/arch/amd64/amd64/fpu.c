@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.17.6.2 2007/12/03 18:34:36 ad Exp $	*/
+/*	$NetBSD: fpu.c,v 1.17.6.3 2007/12/03 19:02:33 ad Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.17.6.2 2007/12/03 18:34:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.17.6.3 2007/12/03 19:02:33 ad Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -179,9 +179,7 @@ fputrap(frame)
 	ksi.ksi_addr = (void *)frame->tf_rip;
 	ksi.ksi_code = x86fpflags_to_ksiginfo(statbits);
 	ksi.ksi_trap = statbits;
-	KERNEL_LOCK(1, l);
 	(*l->l_proc->p_emul->e_trapsignal)(l, &ksi);
-	KERNEL_UNLOCK_LAST(l);
 }
 
 static int

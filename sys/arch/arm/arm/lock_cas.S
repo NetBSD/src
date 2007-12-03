@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_cas.S,v 1.1.2.1 2007/12/03 18:34:52 ad Exp $	*/
+/*	$NetBSD: lock_cas.S,v 1.1.2.2 2007/12/03 19:02:57 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -105,15 +105,6 @@ _C_LABEL(_lock_cas_end):
 #endif /* ARM_LOCK_CAS_DEBUG */
 	mov	r0, r3			/* return actual value */
 	RET
-
-STRONG_ALIAS(_atomic_cas_ulong,_lock_cas)
-STRONG_ALIAS(atomic_cas_ulong,_lock_cas)
-STRONG_ALIAS(_atomic_cas_32,_lock_cas)
-STRONG_ALIAS(atomic_cas_32,_lock_cas)
-STRONG_ALIAS(_atomic_cas_uint,_lock_cas)
-STRONG_ALIAS(atomic_cas_uint,_lock_cas)
-STRONG_ALIAS(_atomic_cas_ptr,_lock_cas)
-STRONG_ALIAS(atomic_cas_ptr,_lock_cas)
 
 STRONG_ALIAS(_atomic_cas_ulong,_lock_cas)
 STRONG_ALIAS(atomic_cas_ulong,_lock_cas)

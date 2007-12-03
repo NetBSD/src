@@ -1,4 +1,4 @@
-/*	$NetBSD: pcctwo_68k.c,v 1.6.30.1 2007/12/03 18:37:40 ad Exp $	*/
+/*	$NetBSD: pcctwo_68k.c,v 1.6.30.2 2007/12/03 19:03:43 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcctwo_68k.c,v 1.6.30.1 2007/12/03 18:37:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcctwo_68k.c,v 1.6.30.2 2007/12/03 19:03:43 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -338,6 +338,5 @@ pcctwosoftintrassert(void)
 	 */
 	pcc2_reg_write(sys_pcctwo, MCCHIPREG_TIMER4_CTRL, PCCTWO_TT_CTRL_CEN);
 }
-#endif
 #endif
 #endif
