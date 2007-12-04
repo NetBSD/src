@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.206 2007/11/26 19:02:04 pooka Exp $	*/
+/*	$NetBSD: tty.c,v 1.207 2007/12/04 08:57:35 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.206 2007/11/26 19:02:04 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.207 2007/12/04 08:57:35 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2648,7 +2648,7 @@ ttysigintr(void *cookie)
 	struct session *sess;
 	int sig;
 
-	/* XXXSMP notyet mutex_enter(&proclist_lock); */
+	mutex_enter(&proclist_lock);
 	for (;;) {
 		mutex_spin_enter(&tty_lock);
 		if ((tp = TAILQ_FIRST(&tty_sigqueue)) == NULL) {
@@ -2689,7 +2689,5 @@ ttysigintr(void *cookie)
 		}
 		mutex_exit(&proclist_mutex);
 	}
-
-
-	/* XXXSMP notyet mutex_exit(&proclist_lock); */
+	mutex_exit(&proclist_lock);
 }
