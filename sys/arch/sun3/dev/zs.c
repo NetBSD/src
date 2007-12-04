@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.80 2007/11/09 00:05:06 ad Exp $	*/
+/*	$NetBSD: zs.c,v 1.81 2007/12/04 15:12:07 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.80 2007/11/09 00:05:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.81 2007/12/04 15:12:07 tsutsui Exp $");
 
 #include "opt_kgdb.h"
 
@@ -60,11 +60,12 @@ __KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.80 2007/11/09 00:05:06 ad Exp $");
 #include <sys/tty.h>
 #include <sys/time.h>
 #include <sys/syslog.h>
+#include <sys/cpu.h>
+#include <sys/intr.h>
 
 #include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
-#include <machine/cpu.h>
 #include <machine/mon.h>
 #include <machine/z8530var.h>
 
@@ -345,7 +346,7 @@ zs_attach(struct device *parent, struct device *self, void *aux)
 		didintr = 1;
 		isr_add_autovect(zshard, NULL, ca->ca_intpri);
 	}
-	zsc->zs_si = softintr_establish(IPL_SOFTSERIAL,
+	zsc->zs_si = softint_establish(SOFTINT_SERIAL,
 	    (void (*)(void *))zsc_intr_soft, zsc);
 	/* XXX; evcnt_attach() ? */
 
@@ -405,7 +406,7 @@ zshard(void *arg)
 		softreq  = zsc->zsc_cs[0]->cs_softreq;
 		softreq |= zsc->zsc_cs[1]->cs_softreq;
 		if (softreq)
-			softintr_schedule(zsc->zs_si);
+			softint_schedule(zsc->zs_si);
 	}
 
 	return (rval);
