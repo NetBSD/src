@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_signal.h,v 1.18 2007/12/04 18:40:11 dsl Exp $	*/
+/*	$NetBSD: ibcs2_signal.h,v 1.19 2007/12/04 22:43:50 he Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -92,7 +92,7 @@
 #define IBCS2_SIG_UNBLOCK	2
 
 typedef long	ibcs2_sigset_t;
-typedef void	(*ibcs2_sig_t) __P((int);
+typedef void	(*ibcs2_sig_t) __P((int));
 
 struct ibcs2_sigaction {
 	ibcs2_sig_t	ibcs2_sa_handler;
