@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_timex.h,v 1.3 2001/09/16 16:34:35 wiz Exp $	*/
+/*	$NetBSD: freebsd_timex.h,v 1.4 2007/12/04 18:40:08 dsl Exp $	*/
 
 /******************************************************************************
  *                                                                            *
@@ -294,8 +294,8 @@ struct freebsd_timex {
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-extern int ntp_gettime	__P((struct ntptimeval *));
-extern int ntp_adjtime	__P((struct timex *));
+extern int ntp_gettime(struct ntptimeval *);
+extern int ntp_adjtime(struct timex *);
 __END_DECLS
 
 #endif /* not _KERNEL */

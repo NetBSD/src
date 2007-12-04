@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_43.c,v 1.41 2007/11/26 19:01:29 pooka Exp $	*/
+/*	$NetBSD: vfs_syscalls_43.c,v 1.42 2007/12/04 18:40:08 dsl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.41 2007/11/26 19:01:29 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.42 2007/12/04 18:40:08 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_union.h"
@@ -70,7 +70,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.41 2007/11/26 19:01:29 pooka E
 #include <compat/sys/stat.h>
 #include <compat/sys/mount.h>
 
-static void cvtstat __P((struct stat *, struct stat43 *));
+static void cvtstat(struct stat *, struct stat43 *);
 
 /*
  * Convert from an old to a new stat structure.
@@ -442,8 +442,8 @@ unionread:
 
 #ifdef UNION
 {
-	extern int (**union_vnodeop_p) __P((void *));
-	extern struct vnode *union_dircache __P((struct vnode *));
+	extern int (**union_vnodeop_p)(void *);
+	extern struct vnode *union_dircache(struct vnode *);
 
 	if ((count == auio.uio_resid) &&
 	    (vp->v_op == union_vnodeop_p)) {

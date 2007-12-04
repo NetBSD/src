@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_prctl.c,v 1.40 2007/09/30 10:35:16 he Exp $ */
+/*	$NetBSD: irix_prctl.c,v 1.41 2007/12/04 18:40:12 dsl Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.40 2007/09/30 10:35:16 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.41 2007/12/04 18:40:12 dsl Exp $");
 
 #include <sys/errno.h>
 #include <sys/types.h>
@@ -78,15 +78,15 @@ struct irix_sproc_child_args {
 	struct irix_share_group *isc_share_group;
 	int isc_child_done;
 };
-static void irix_sproc_child __P((struct irix_sproc_child_args *));
-static int irix_sproc __P((void *, unsigned int, void *, void *, size_t,
-    pid_t, struct lwp *, register_t *));
-static struct irix_shared_regions_rec *irix_isrr_create __P((vaddr_t,
-    vsize_t, int));
+static void irix_sproc_child(struct irix_sproc_child_args *);
+static int irix_sproc(void *, unsigned int, void *, void *, size_t,
+    pid_t, struct lwp *, register_t *);
+static struct irix_shared_regions_rec *irix_isrr_create(vaddr_t,
+    vsize_t, int);
 #ifdef DEBUG_IRIX
-static void irix_isrr_debug __P((struct proc *));
+static void irix_isrr_debug(struct proc *);
 #endif
-static void irix_isrr_cleanup __P((struct proc *));
+static void irix_isrr_cleanup(struct proc *);
 
 int
 irix_sys_prctl(l, v, retval)

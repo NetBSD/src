@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_sockio.c,v 1.16 2007/05/29 21:32:28 christos Exp $	 */
+/*	$NetBSD: svr4_32_sockio.c,v 1.17 2007/12/04 18:40:26 dsl Exp $	 */
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_sockio.c,v 1.16 2007/05/29 21:32:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_sockio.c,v 1.17 2007/12/04 18:40:26 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -67,7 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_32_sockio.c,v 1.16 2007/05/29 21:32:28 christos
 #include <compat/svr4_32/svr4_32_ioctl.h>
 #include <compat/svr4_32/svr4_32_sockio.h>
 
-static int bsd_to_svr4_flags __P((int));
+static int bsd_to_svr4_flags(int);
 
 #define bsd_to_svr4_flag(a) \
 	if (bf & __CONCAT(I,a))	sf |= __CONCAT(SVR4_I,a)

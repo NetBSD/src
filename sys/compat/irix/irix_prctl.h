@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_prctl.h,v 1.11 2006/03/20 13:14:37 drochner Exp $ */
+/*	$NetBSD: irix_prctl.h,v 1.12 2007/12/04 18:40:12 dsl Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -61,10 +61,10 @@ struct irix_shared_regions_rec {
 	LIST_ENTRY(irix_shared_regions_rec) isrr_list;
 };
 
-int irix_prda_init __P((struct proc *));
-void irix_vm_sync __P((struct proc *));
-int irix_vm_fault __P((struct proc *, vaddr_t, vm_prot_t));
-void irix_isrr_insert __P((vaddr_t, vsize_t, int, struct proc *));
+int irix_prda_init(struct proc *);
+void irix_vm_sync(struct proc *);
+int irix_vm_fault(struct proc *, vaddr_t, vm_prot_t);
+void irix_isrr_insert(vaddr_t, vsize_t, int, struct proc *);
 
 /* macro used to wrap irix_vm_sync calls */
 #define IRIX_VM_SYNC(q,cmd)                                                   \

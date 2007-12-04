@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_signal.c,v 1.26 2007/06/16 20:04:28 dsl Exp $	*/
+/*	$NetBSD: ibcs2_signal.c,v 1.27 2007/12/04 18:40:11 dsl Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Bartram
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_signal.c,v 1.26 2007/06/16 20:04:28 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_signal.c,v 1.27 2007/12/04 18:40:11 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,8 +57,8 @@ __KERNEL_RCSID(0, "$NetBSD: ibcs2_signal.c,v 1.26 2007/06/16 20:04:28 dsl Exp $"
 extern const int native_to_ibcs2_signo[];
 extern const int ibcs2_to_native_signo[];
 
-void ibcs2_to_native_sigaction __P((const struct ibcs2_sigaction *, struct sigaction *));
-void native_to_ibcs2_sigaction __P((const struct sigaction *, struct ibcs2_sigaction *));
+void ibcs2_to_native_sigaction(const struct ibcs2_sigaction *, struct sigaction *);
+void native_to_ibcs2_sigaction(const struct sigaction *, struct ibcs2_sigaction *);
 
 void
 ibcs2_to_native_sigset(iss, bss)

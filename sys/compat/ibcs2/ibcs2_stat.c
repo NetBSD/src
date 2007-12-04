@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_stat.c,v 1.40 2007/11/26 19:01:30 pooka Exp $	*/
+/*	$NetBSD: ibcs2_stat.c,v 1.41 2007/12/04 18:40:11 dsl Exp $	*/
 /*
  * Copyright (c) 1995, 1998 Scott Bartram
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_stat.c,v 1.40 2007/11/26 19:01:30 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_stat.c,v 1.41 2007/12/04 18:40:11 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,9 +53,9 @@ __KERNEL_RCSID(0, "$NetBSD: ibcs2_stat.c,v 1.40 2007/11/26 19:01:30 pooka Exp $"
 #include <compat/ibcs2/ibcs2_util.h>
 #include <compat/ibcs2/ibcs2_utsname.h>
 
-static void bsd_stat2ibcs_stat __P((struct stat *, struct ibcs2_stat *));
-static int cvt_statfs __P((struct statvfs *, void *, int));
-static int cvt_statvfs __P((struct statvfs *, void *, int));
+static void bsd_stat2ibcs_stat(struct stat *, struct ibcs2_stat *);
+static int cvt_statfs(struct statvfs *, void *, int);
+static int cvt_statvfs(struct statvfs *, void *, int);
 
 static void
 bsd_stat2ibcs_stat(st, st4)

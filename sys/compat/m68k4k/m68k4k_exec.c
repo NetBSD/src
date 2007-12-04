@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k4k_exec.c,v 1.17 2005/12/11 12:20:20 christos Exp $	*/
+/*	$NetBSD: m68k4k_exec.c,v 1.18 2007/12/04 18:40:19 dsl Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m68k4k_exec.c,v 1.17 2005/12/11 12:20:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m68k4k_exec.c,v 1.18 2007/12/04 18:40:19 dsl Exp $");
 
 #if !defined(__m68k__)
 #error YOU GOTTA BE KIDDING!
@@ -57,9 +57,9 @@ __KERNEL_RCSID(0, "$NetBSD: m68k4k_exec.c,v 1.17 2005/12/11 12:20:20 christos Ex
 
 #include <compat/m68k4k/m68k4k_exec.h>
 
-int	exec_m68k4k_prep_zmagic __P((struct lwp *, struct exec_package *));
-int	exec_m68k4k_prep_nmagic __P((struct lwp *, struct exec_package *));
-int	exec_m68k4k_prep_omagic __P((struct lwp *, struct exec_package *));
+int	exec_m68k4k_prep_zmagic(struct lwp *, struct exec_package *);
+int	exec_m68k4k_prep_nmagic(struct lwp *, struct exec_package *);
+int	exec_m68k4k_prep_omagic(struct lwp *, struct exec_package *);
 
 /*
  * exec_m68k4k_makecmds(): Check if it's an a.out-format executable

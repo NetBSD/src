@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.153 2007/11/27 09:47:16 dogcow Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.154 2007/12/04 18:40:21 dsl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.153 2007/11/27 09:47:16 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.154 2007/12/04 18:40:21 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -110,7 +110,7 @@ __KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.153 2007/11/27 09:47:16 dogcow Exp 
 #include <nfs/nfs.h>
 #include <nfs/nfsmount.h>
 
-static int sunstatfs __P((struct statvfs *, void *));
+static int sunstatfs(struct statvfs *, void *);
 
 int
 sunos_sys_stime(l, v, retval)
@@ -372,8 +372,8 @@ async_daemon(l, v, retval)
 }
 #endif /* NFS */
 
-void	native_to_sunos_sigset __P((const sigset_t *, int *));
-void	sunos_to_native_sigset __P((const int, sigset_t *));
+void	native_to_sunos_sigset(const sigset_t *, int *);
+void	sunos_to_native_sigset(const int, sigset_t *);
 
 inline void
 native_to_sunos_sigset(ss, mask)
@@ -1275,9 +1275,9 @@ sunos_sys_sigvec(l, v, retval)
 	struct sigaction nsa, osa;
 	int error;
 /*XXX*/extern	void compat_43_sigvec_to_sigaction
-		__P((const struct sigvec *, struct sigaction *));
+(const struct sigvec *, struct sigaction *);
 /*XXX*/extern	void compat_43_sigaction_to_sigvec
-		__P((const struct sigaction *, struct sigvec *));
+(const struct sigaction *, struct sigvec *);
 
 	if (SCARG(uap, nsv)) {
 		error = copyin(SCARG(uap, nsv), &nsv, sizeof(nsv));

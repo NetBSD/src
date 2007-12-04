@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_fcntl.c,v 1.18 2007/11/27 23:30:56 dogcow Exp $ */
+/*	$NetBSD: irix_fcntl.c,v 1.19 2007/12/04 18:40:11 dsl Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_fcntl.c,v 1.18 2007/11/27 23:30:56 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_fcntl.c,v 1.19 2007/12/04 18:40:11 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -68,9 +68,9 @@ __KERNEL_RCSID(0, "$NetBSD: irix_fcntl.c,v 1.18 2007/11/27 23:30:56 dogcow Exp $
 #include <compat/svr4/svr4_fcntl.h>
 #include <compat/svr4/svr4_syscallargs.h>
 
-static int fd_truncate __P((struct lwp *, int, int, off_t, register_t *));
-static int bsd_to_irix_fcntl_flags __P((int));
-static int irix_to_bsd_fcntl_flags __P((int));
+static int fd_truncate(struct lwp *, int, int, off_t, register_t *);
+static int bsd_to_irix_fcntl_flags(int);
+static int irix_to_bsd_fcntl_flags(int);
 
 int
 irix_sys_lseek64(l, v, retval)
