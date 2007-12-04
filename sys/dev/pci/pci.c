@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.103.22.11 2007/12/03 16:14:37 joerg Exp $	*/
+/*	$NetBSD: pci.c,v 1.103.22.12 2007/12/04 00:43:12 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.103.22.11 2007/12/03 16:14:37 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.103.22.12 2007/12/04 00:43:12 jmcneill Exp $");
 
 #include "opt_pci.h"
 
@@ -154,7 +154,7 @@ pciattach(struct device *parent, struct device *self, void *aux)
 
 	if (io_enabled == 0 && mem_enabled == 0) {
 		aprint_error("%s: no spaces enabled!\n", self->dv_xname);
-		return;
+		goto fail;
 	}
 
 #define	PRINT(str)							\
@@ -201,6 +201,7 @@ do {									\
 
 	pcirescan(&sc->sc_dev, "pci", wildcard);
 
+fail:
 	if (!pnp_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 }
