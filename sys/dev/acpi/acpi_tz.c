@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_tz.c,v 1.23.6.10 2007/12/03 16:14:32 joerg Exp $ */
+/* $NetBSD: acpi_tz.c,v 1.23.6.11 2007/12/04 00:06:38 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2003 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.23.6.10 2007/12/03 16:14:32 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.23.6.11 2007/12/04 00:06:38 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -480,9 +480,6 @@ acpitz_get_zone(void *opaque, int verbose)
 			aprint_normal(" passive %sC",
 			    acpitz_celcius_string(sc->sc_zone.tmp));
 	}
-
-	if (verbose)
-		aprint_normal("\n");
 
 	if (valid_levels == 0) {
 		sc->sc_flags |= ATZ_F_PASSIVEONLY;
