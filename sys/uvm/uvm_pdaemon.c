@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.88.2.1 2007/12/04 13:04:03 ad Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.88.2.2 2007/12/04 19:59:42 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.88.2.1 2007/12/04 13:04:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.88.2.2 2007/12/04 19:59:42 ad Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -305,13 +305,13 @@ uvm_pageout(void *arg)
 		if (uvmexp.free > uvmexp.reserve_kernel ||
 		    uvmexp.paging == 0) {
 			wakeup(&uvmexp.free);
+			uvm_pagedaemon_waiters = 0;
 		}
 		mutex_spin_exit(&uvm_fpageqlock);
 
 		/*
 		 * scan done.  unlock page queues (the only lock we are holding)
 		 */
-
 		mutex_exit(&uvm_pageqlock);
 
 		/*
