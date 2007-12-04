@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_mb.c,v 1.29 2007/12/04 15:28:58 tsutsui Exp $	*/
+/*	$NetBSD: wdc_mb.c,v 1.30 2007/12/04 16:36:54 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_mb.c,v 1.29 2007/12/04 15:28:58 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_mb.c,v 1.30 2007/12/04 16:36:54 tsutsui Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -122,7 +122,7 @@ wdc_mb_probe(parent, cfp, aux)
 	if (bus_space_map(wdr.cmd_iot, FALCON_WD_BASE, FALCON_WD_LEN, 0,
 	    &wdr.cmd_baseioh))
 		goto out;
-	for (i = 0; i < WDC_NREG; i++)
+	for (i = 0; i < WDC_NREG; i++) {
 		if (bus_space_subregion(wdr.cmd_iot, wdr.cmd_baseioh,
 		    i * 4, 4, &wdr.cmd_iohs[i]) != 0)
 			goto outunmap;
@@ -197,6 +197,8 @@ wdc_mb_attach(parent, self, aux)
 	if (bus_space_subregion(wdr->cmd_iot,
 	    wdr->cmd_baseioh, FALCON_WD_AUX, 4, &wdr->ctl_ioh)) {
 		bus_space_unmap(wdr->cmd_iot, wdr->cmd_baseioh, FALCON_WD_LEN);
+		printf("%s: couldn't subregion aux reg\n",
+		    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
 		return;
 	}
 
