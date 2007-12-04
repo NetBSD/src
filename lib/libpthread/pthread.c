@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.91 2007/12/01 01:07:34 ad Exp $	*/
+/*	$NetBSD: pthread.c,v 1.92 2007/12/04 16:08:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.91 2007/12/01 01:07:34 ad Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.92 2007/12/04 16:08:28 yamt Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -1125,7 +1125,7 @@ pthread__unpark_all(pthread_t self, pthread_spin_t *lock,
 
 	wakeobj = queue;
 
-	for (;; n = 0) {
+	for (;;) {
 		/*
 		 * Pull waiters from the queue and add to this
 		 * thread's waiters list.
