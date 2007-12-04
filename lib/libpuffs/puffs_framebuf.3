@@ -1,4 +1,4 @@
-.\"	$NetBSD: puffs_framebuf.3,v 1.19 2007/12/02 22:05:51 wiz Exp $
+.\"	$NetBSD: puffs_framebuf.3,v 1.20 2007/12/04 19:40:45 pooka Exp $
 .\"
 .\" Copyright (c) 2007 Antti Kantee.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd December 1, 2007
+.Dd December 4, 2007
 .Dt PUFFS_FRAMEBUF 3
 .Os
 .Sh NAME
@@ -253,7 +253,7 @@ Free memory used by buffer.
 .It Fn puffs_framebuf_recycle pufbuf
 Reset offsets so that buffer can be reused.
 Does not free memory or reallocate memory.
-.It Fn puffs_framebuf_reserver_space pufbuf space
+.It Fn puffs_framebuf_reserve_space pufbuf space
 Make sure that the buffer has
 .Ar space
 bytes of available memory starting from the current offset.
