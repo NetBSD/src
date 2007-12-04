@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_inc_64_nv_cas.c,v 1.2 2007/11/29 17:29:41 ad Exp $	*/
+/*	$NetBSD: atomic_inc_64_nv_cas.c,v 1.3 2007/12/04 01:13:38 he Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 #ifdef __HAVE_ATOMIC64_OPS
 
 uint64_t
-atomic_add_64_nv(volatile uint64_t *addr)
+atomic_inc_64_nv(volatile uint64_t *addr)
 {
 	uint64_t old, new;
 
@@ -55,17 +55,17 @@ atomic_add_64_nv(volatile uint64_t *addr)
 	return (new);
 }
 
-#undef atomic_add_64_nv
-atomic_op_alias(atomic_add_64_nv,_atomic_add_64_nv)
+#undef atomic_inc_64_nv
+atomic_op_alias(atomic_inc_64_nv,_atomic_inc_64_nv)
 
 #if defined(_LP64)
 #undef atomic_add_ulong_nv
-atomic_op_alias(atomic_add_ulong_nv,_atomic_add_64_nv)
-__strong_alias(_atomic_add_ulong_nv,_atomic_add_64_nv)
+atomic_op_alias(atomic_inc_ulong_nv,_atomic_inc_64_nv)
+__strong_alias(_atomic_inc_ulong_nv,_atomic_inc_64_nv)
 
-#undef atomic_add_ptr_nv
-atomic_op_alias(atomic_add_ptr_nv,_atomic_add_64_nv)
-__strong_alias(_atomic_add_ptr_nv,_atomic_add_64_nv)
+#undef atomic_inc_ptr_nv
+atomic_op_alias(atomic_inc_ptr_nv,_atomic_inc_64_nv)
+__strong_alias(_atomic_inc_ptr_nv,_atomic_inc_64_nv)
 #endif /* _LP64 */
 
 #endif
