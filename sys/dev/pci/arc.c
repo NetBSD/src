@@ -1,4 +1,4 @@
-/*	$NetBSD: arc.c,v 1.1 2007/12/04 18:47:50 xtraeme Exp $ */
+/*	$NetBSD: arc.c,v 1.2 2007/12/04 21:09:56 xtraeme Exp $ */
 /*	$OpenBSD: arc.c,v 1.68 2007/10/27 03:28:27 dlg Exp $ */
 
 /*
@@ -20,7 +20,7 @@
 #include "bio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arc.c,v 1.1 2007/12/04 18:47:50 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arc.c,v 1.2 2007/12/04 21:09:56 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -29,6 +29,7 @@ __KERNEL_RCSID(0, "$NetBSD: arc.c,v 1.1 2007/12/04 18:47:50 xtraeme Exp $");
 #include <sys/device.h>
 #include <sys/callout.h>
 #include <sys/kthread.h>
+#include <sys/rwlock.h>
 
 #if NBIO > 0
 #include <sys/ioctl.h>
@@ -145,6 +146,7 @@ arc_attach(device_t parent, device_t self, void *aux)
 	struct scsipi_channel	*chan = &sc->sc_chan;
 
 	sc->sc_talking = 0;
+	rw_init(&sc->sc_rwlock);
 
 	if (arc_map_pci_resources(sc, pa) != 0) {
 		/* error message printed by arc_map_pci_resources */
@@ -1177,6 +1179,7 @@ arc_lock(struct arc_softc *sc)
 {	
 	int s;
 
+	rw_enter(&sc->sc_rwlock, RW_WRITER);
 	s = splbio();
 	arc_write(sc, ARC_REG_INTRMASK, ~ARC_REG_INTRMASK_POSTQUEUE);
 	sc->sc_talking = 1;
@@ -1193,6 +1196,7 @@ arc_unlock(struct arc_softc *sc)
 	arc_write(sc, ARC_REG_INTRMASK,
 	    ~(ARC_REG_INTRMASK_POSTQUEUE|ARC_REG_INTRMASK_DOORBELL));
 	splx(s);
+	rw_exit(&sc->sc_rwlock);
 }
 
 void
