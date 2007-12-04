@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.125 2007/12/03 20:26:25 ad Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.126 2007/12/04 16:56:17 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.125 2007/12/03 20:26:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.126 2007/12/04 16:56:17 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_maxuprc.h"
@@ -98,6 +98,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.125 2007/12/03 20:26:25 ad Exp $");
 #include "sys/syscall_stats.h"
 #include <sys/kauth.h>
 #include <sys/sleepq.h>
+#include <sys/atomic.h>
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_extern.h>
@@ -706,7 +707,7 @@ proc_free_pid(struct proc *p)
 	}
 	mutex_exit(&proclist_mutex);
 
-	nprocs--;
+	atomic_dec_uint(&nprocs);
 }
 
 /*
