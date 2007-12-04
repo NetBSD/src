@@ -58,14 +58,16 @@ enum {
 
 	SGsize = 131072,
 
-	MaxTargets = 12
+	MaxTargets = CONFIG_INITIATOR_NUM_TARGETS
 };
+
 
 /* this struct keeps information on the target */
 typedef struct targetinfo_t {
 	 char			*host;		/* resolvable host name */
 	 char			*ip;		/* textual IP address */
 	 char			*targetname;	/* name of iSCSI target program */
+	 char			*stargetname;   /* short name of the target */ 
 	 uint64_t		 target;	/* target number */
 	 uint32_t		 lun;		/* LUN number */
 	 uint32_t		 lbac;		/* number of LBAs */
@@ -80,8 +82,13 @@ typedef struct targetinfo_t {
 static targetinfo_t	tv[MaxTargets];
 static uint32_t		tc;
 
+static strv_t all_targets;
 
-
+/* Small Target Info... */
+typedef struct sti_t {
+	struct stat             st;
+	uint64_t                target;
+} sti_t;
 
 /* read the capacity (maximum LBA and blocksize) from the target */
 int 
@@ -319,7 +326,7 @@ static int
 iscsifs_getattr(const char *path, struct stat *st)
 {
 	virt_dirent_t	*ep;
-	struct stat	*sp;
+	sti_t		*p;
 
 	if (strcmp(path, "/") == 0) {
 		(void) memset(st, 0x0, sizeof(*st));
@@ -344,8 +351,8 @@ iscsifs_getattr(const char *path, struct stat *st)
 		break;
 	case 'f':
 		(void) memcpy(st, &iscsi.file, sizeof(*st));
-		sp = (struct stat *) ep->tgt;
-		st->st_size = sp->st_size;
+		p = (sti_t *) ep->tgt;
+		st->st_size = p->st.st_size;
 		break;
 	case 'l':
 		(void) memcpy(st, &iscsi.lnk, sizeof(*st));
@@ -407,12 +414,17 @@ iscsifs_read(const char *path, char *buf, size_t size, off_t offset,
 	   struct fuse_file_info * fi)
 {
 	virt_dirent_t	*ep;
+	uint64_t target;
+	sti_t *p;
 
 	if ((ep = virtdir_find(&iscsi, path, strlen(path))) == NULL) {
 		return -ENOENT;
 	}
-	/* XXX - hardcoded target */
-	if (targetop(0, offset, size, size, buf, 0) < 0) {
+
+	p = (sti_t *)ep->tgt;
+	target = p->target;
+
+	if (targetop(target, offset, size, size, buf, 0) < 0) {
 		return -EPERM;
 	}
 	return size;
@@ -424,12 +436,17 @@ iscsifs_write(const char *path, const char *buf, size_t size, off_t offset,
 	   struct fuse_file_info * fi)
 {
 	virt_dirent_t	*ep;
+        uint64_t target;   
+        sti_t *p;
 
 	if ((ep = virtdir_find(&iscsi, path, strlen(path))) == NULL) {
 		return -ENOENT;
 	}
-	/* XXX - hardcoded target */
-	if (targetop(0, offset, size, size, __UNCONST(buf), 1) < 0) {
+	
+	p = (sti_t *)ep->tgt;
+	target = p->target;
+
+	if (targetop(target, offset, size, size, __UNCONST(buf), 1) < 0) {
 		return -EPERM;
 	}
 	return size;
@@ -474,7 +491,7 @@ int
 main(int argc, char **argv)
 {
 	initiator_target_t	tinfo;
-	struct stat		st;
+	sti_t			sti;
 	uint32_t		lbac;
 	uint32_t		blocksize;
 	uint8_t			data[256];
@@ -488,6 +505,7 @@ main(int argc, char **argv)
 	int			port;
 	int             	target = -1;
         int			digest_type;
+	int			discover;
         int			mutual_auth;
         int			auth_type;
 	int			cc;
@@ -501,9 +519,10 @@ main(int argc, char **argv)
 	address_family = ISCSI_UNSPEC;
 	port = ISCSI_PORT;
 	mutual_auth = 0;
-	(void) stat("/etc/hosts", &st);
+	discover = 0;
+	(void) stat("/etc/hosts", &sti.st);
 	devtype = 'f';
-	while ((i = getopt(argc, argv, "46a:bcd:fh:p:t:u:vV")) != -1) {
+	while ((i = getopt(argc, argv, "46a:bcd:Dfh:p:t:u:vV")) != -1) {
 		switch(i) {
 		case '4':
 			address_family = ISCSI_IPv4;
@@ -535,6 +554,9 @@ main(int argc, char **argv)
 				digest_type = (DigestHeader | DigestData);
 			}
 			break;
+		case 'D':
+			discover = 1;
+			break;
 		case 'f':
 			devtype = 'f';
 			break;
@@ -565,15 +587,47 @@ main(int argc, char **argv)
 		iscsi_trace_error(__FILE__, __LINE__, "user must be specified with -u");
 		exit(EXIT_FAILURE);
 	}
+
 	if (initiator_init(host, port, address_family, user, auth_type, mutual_auth, digest_type) == -1) {
 		iscsi_trace_error(__FILE__, __LINE__, "initiator_init() failed\n");
 		exit(EXIT_FAILURE);
 	}
-	st.st_ino = 0x15c51;
-	for (i = 0 ; i < CONFIG_INITIATOR_NUM_TARGETS ; i++) {
+
+
+        if (initiator_discover(host, 0, 0) < 0) {
+                printf("initiator_discover() in discover failed\n");
+		exit(EXIT_FAILURE);
+	}
+
+        if (initiator_get_targets(0,&all_targets) == -1) {
+ 		iscsi_trace_error(__FILE__, __LINE__, "initiator_get_targets() failed\n");
+               	exit(EXIT_FAILURE);
+	}
+
+
+        if (discover) {
+		printf("Targets available from host %s:\n",host);
+		for (i = 0; i < all_targets.c ; i+= 2) {
+			printf("%s at %s\n", all_targets.v[i],
+				all_targets.v[i+1]);
+		}
+
+                exit(0);
+        }
+
+	sti.st.st_ino = 0x15c51;
+	if (all_targets.c/2 > CONFIG_INITIATOR_NUM_TARGETS) {
+		iscsi_trace_error(__FILE__, __LINE__, "CONFIG_INITIATOR_NUM_TARGETS too small.  %d targets available, only %d configurable.\n",all_targets.c/2, CONFIG_INITIATOR_NUM_TARGETS);
+	}
+
+	for (i = 0 ; i < all_targets.c/2 ; i++) {
+		initiator_set_target_name(i,all_targets.v[i*2]);
+
 		if (initiator_discover(host, i, 0) < 0) {
+			printf("initiator_discover() failed\n");
 			break;
 		}
+
 		get_target_info(i, &tinfo);
 		if ((colon = strrchr(tinfo.TargetName, ':')) == NULL) {
 			colon = tinfo.TargetName;
@@ -583,11 +637,13 @@ main(int argc, char **argv)
 
 		/* stuff size into st.st_size */
 		(void) read_capacity(i, 0, &lbac, &blocksize);
-		st.st_size = ((uint64_t)lbac + 1) * blocksize;
+		sti.st.st_size = ((uint64_t)lbac + 1) * blocksize;
+		sti.target = i;
 
 		tv[tc].host = strdup(tinfo.name);
 		tv[tc].ip = strdup(tinfo.ip);
 		tv[tc].targetname = strdup(tinfo.TargetName);
+		tv[tc].stargetname = strdup(colon);
 		tv[tc].target = i;
 		tv[tc].lun = 0;
 		tv[tc].lbac = lbac;
@@ -607,7 +663,7 @@ main(int argc, char **argv)
 		cc = snprintf(name, sizeof(name), "/%s/%s", host, colon);
 		virtdir_add(&iscsi, name, cc, 'd', name, cc);
 		cc = snprintf(name, sizeof(name), "/%s/%s/storage", host, colon);
-		virtdir_add(&iscsi, name, cc, devtype, (void *)&st, sizeof(st));
+		virtdir_add(&iscsi, name, cc, devtype, (void *)&sti, sizeof(sti));
 		cc = snprintf(name, sizeof(name), "/%s/%s/hostname", host, colon);
 		virtdir_add(&iscsi, name, cc, 'l', tinfo.name, strlen(tinfo.name));
 		cc = snprintf(name, sizeof(name), "/%s/%s/ip", host, colon);
@@ -624,6 +680,7 @@ main(int argc, char **argv)
 			cc = snprintf(name, sizeof(name), "/%s/%s/serial", host, colon);
 			virtdir_add(&iscsi, name, cc, 'l', tv[tc].serial, strlen(tv[tc].serial));
 		}
+
 
 		tc += 1;
 	}
