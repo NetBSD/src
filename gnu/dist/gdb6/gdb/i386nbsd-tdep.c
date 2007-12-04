@@ -38,8 +38,9 @@
 #include "nbsd-tdep.h"
 #include "solib-svr4.h"
 #include "elf-bfd.h"		/* for header hack */
-#include "trad-frame.h"		/* kernel frame support */
+#include "trad-frame.h"		/* signal trampoline/kernel frame support */
 #include "frame-unwind.h"	/* kernel frame support */
+#include "tramp-frame.h"	/* signal trampoline/kernel frame support
 
 /* From <machine/reg.h>.  */
 static int i386nbsd_r_reg_offset[] =
@@ -97,137 +98,216 @@ i386nbsd_aout_regset_from_core_section (struct gdbarch *gdbarch,
   return NULL;
 }
 
-/* Under NetBSD/i386, signal handler invocations can be identified by the
-   designated code sequence that is used to return from a signal handler.
-   In particular, the return address of a signal handler points to the
-   following code sequence:
-
-	leal	0x8c(%esp), %eax
-	movl	%eax, 0x4(%esp)
-	movl	$0x134, %eax		# setcontext
-	int	$0x80
-
-   Each instruction has a unique encoding, so we simply attempt to match
-   the instruction the PC is pointing to with any of the above instructions.
-   If there is a hit, we know the offset to the start of the designated
-   sequence and can then check whether we really are executing in the
-   signal trampoline.  If not, -1 is returned, otherwise the offset from the
-   start of the return sequence is returned.  */
-#define RETCODE_INSN1		0x8d
-#define RETCODE_INSN2		0x89
-#define RETCODE_INSN3		0xb8
-#define RETCODE_INSN4		0xcd
-
-#define RETCODE_INSN2_OFF	7
-#define RETCODE_INSN3_OFF	11
-#define RETCODE_INSN4_OFF	16
-
-static const unsigned char sigtramp_retcode[] =
-{
-  RETCODE_INSN1, 0x84, 0x24, 0x8c, 0x00, 0x00, 0x00,
-  RETCODE_INSN2, 0x44, 0x24, 0x04,
-  RETCODE_INSN3, 0x34, 0x01, 0x00, 0x00,
-  RETCODE_INSN4, 0x80,
-};
-
-static LONGEST
-i386nbsd_sigtramp_offset (struct frame_info *next_frame)
-{
-  CORE_ADDR pc = frame_pc_unwind (next_frame);
-  unsigned char ret[sizeof(sigtramp_retcode)], insn;
-  LONGEST off;
-  int i;
-
-  if (!safe_frame_unwind_memory (next_frame, pc, &insn, 1))
-    return -1;
-
-  switch (insn)
-    {
-    case RETCODE_INSN1:
-      off = 0;
-      break;
-
-    case RETCODE_INSN2:
-      off = RETCODE_INSN2_OFF;
-      break;
-
-    case RETCODE_INSN3:
-      off = RETCODE_INSN3_OFF;
-      break;
-
-    case RETCODE_INSN4:
-      off = RETCODE_INSN4_OFF;
-      break;
-
-    default:
-      return -1;
-    }
-
-  pc -= off;
-
-  if (!safe_frame_unwind_memory (next_frame, pc, ret, sizeof (ret)))
-    return -1;
-
-  if (memcmp (ret, sigtramp_retcode, sizeof (ret)) == 0)
-    return off;
-
-  return -1;
-}
-
-/* Return whether the frame preceding NEXT_FRAME corresponds to a
-   NetBSD sigtramp routine.  */
-
-static int
-i386nbsd_sigtramp_p (struct frame_info *next_frame)
-{
-  CORE_ADDR pc = frame_pc_unwind (next_frame);
-  char *name;
-
-  find_pc_partial_function (pc, &name, NULL, NULL);
-  return (nbsd_pc_in_sigtramp (pc, name)
-	  || i386nbsd_sigtramp_offset (next_frame) >= 0);
-}
-
-/* From <sys/ucontext.h> and <machine/mcontext.h>. */
-#define MCOFF 36 /* mcontext in ucontext */
-#define _REG_GS         0
-#define _REG_FS         1
-#define _REG_ES         2
-#define _REG_DS         3
-#define _REG_EDI        4
-#define _REG_ESI        5
-#define _REG_EBP        6
-#define _REG_ESP        7
-#define _REG_EBX        8
-#define _REG_EDX        9
-#define _REG_ECX        10
-#define _REG_EAX        11
-#define _REG_TRAPNO     12
-#define _REG_ERR        13
-#define _REG_EIP        14
-#define _REG_CS         15
-#define _REG_EFL        16
-#define _REG_UESP       17
-#define _REG_SS         18
+/* From <machine/signal.h>.  */
 int i386nbsd_sc_reg_offset[] =
 {
-  MCOFF + _REG_EAX * 4,		/* %eax */
-  MCOFF + _REG_ECX * 4,		/* %ecx */
-  MCOFF + _REG_EDX * 4,		/* %edx */
-  MCOFF + _REG_EBX * 4,		/* %ebx */
-  MCOFF + _REG_ESP * 4,		/* %esp */
-  MCOFF + _REG_EBP * 4,		/* %ebp */
-  MCOFF + _REG_ESI * 4,		/* %esi */
-  MCOFF + _REG_EDI * 4,		/* %edi */
-  MCOFF + _REG_EIP * 4,		/* %eip */
-  MCOFF + _REG_EFL * 4,		/* %eflags */
-  MCOFF + _REG_CS * 4,		/* %cs */
-  MCOFF + _REG_SS * 4,		/* %ss */
-  MCOFF + _REG_DS * 4,		/* %ds */
-  MCOFF + _REG_ES * 4,		/* %es */
-  MCOFF + _REG_FS * 4,		/* %fs */
-  MCOFF + _REG_GS * 4		/* %gs */
+  10 * 4,			/* %eax */
+  9 * 4,			/* %ecx */
+  8 * 4,			/* %edx */
+  7 * 4,			/* %ebx */
+  14 * 4,			/* %esp */
+  6 * 4,			/* %ebp */
+  5 * 4,			/* %esi */
+  4 * 4,			/* %edi */
+  11 * 4,			/* %eip */
+  13 * 4,			/* %eflags */
+  12 * 4,			/* %cs */
+  15 * 4,			/* %ss */
+  3 * 4,			/* %ds */
+  2 * 4,			/* %es */
+  1 * 4,			/* %fs */
+  0 * 4				/* %gs */
 };
+
+/* From <machine/mcontext.h>.  */
+int i386nbsd_mc_reg_offset[] =
+{
+  11 * 4,			/* %eax */
+  10 * 4,			/* %ecx */
+  9 * 4,			/* %edx */
+  8 * 4,			/* %ebx */
+  7 * 4,			/* %esp */
+  6 * 4,			/* %ebp */
+  5 * 4,			/* %esi */
+  4 * 4,			/* %edi */
+  14 * 4,			/* %eip */
+  16 * 4,			/* %eflags */
+  15 * 4,			/* %cs */
+  18 * 4,			/* %ss */
+  3 * 4,			/* %ds */
+  2 * 4,			/* %es */
+  1 * 4,			/* %fs */
+  0 * 4				/* %gs */
+};
+
+static void
+i386nbsd_sigtramp_cache_init (const struct tramp_frame *,
+			     struct frame_info *,
+			     struct trad_frame_cache *,
+			     CORE_ADDR);
+
+static const struct tramp_frame i386nbsd_sigtramp_sc16 =
+{
+  SIGTRAMP_FRAME,
+  1,
+  {
+    { 0x8d, -1 }, { 0x44, -1 }, { 0x24, -1 }, { 0x10, -1 },
+			/* leal  0x10(%esp), %eax */
+    { 0x50, -1 },	/* pushl %eax */
+    { 0x50, -1 },	/* pushl %eax */
+    { 0xb8, -1 }, { 0x27, -1 }, {0x01, -1 }, {0x00, -1 }, {0x00, -1 },
+			/* movl  $0x127, %eax		# __sigreturn14 */
+    { 0xcd, -1 }, { 0x80, -1},
+			/* int   $0x80 */
+    { 0xb8, -1 }, { 0x01, -1 }, {0x00, -1 }, {0x00, -1 }, {0x00, -1 },
+			/* movl  $0x1, %eax		# exit */
+    { 0xcd, -1 }, { 0x80, -1},
+			/* int   $0x80 */
+    { TRAMP_SENTINEL_INSN, -1 }
+  },
+  i386nbsd_sigtramp_cache_init
+};
+
+static const struct tramp_frame i386nbsd_sigtramp_sc2 =
+{
+  SIGTRAMP_FRAME,
+  1,
+  {
+    { 0x8d, -1 }, { 0x44, -1 }, { 0x24, -1 }, { 0x0c, -1 },
+			/* leal  0x0c(%esp), %eax */
+    { 0x89, -1 }, { 0x44, -1 }, { 0x24, -1 }, { 0x04, -1 },
+			/* movl  %eax, 0x4(%esp) */
+    { 0xb8, -1 }, { 0x27, -1 }, {0x01, -1 }, {0x00, -1 }, {0x00, -1 },
+			/* movl  $0x127, %eax		# __sigreturn14 */
+    { 0xcd, -1 }, { 0x80, -1},
+			/* int   $0x80 */
+    { 0x89, -1 }, { 0x44, -1 }, { 0x24, -1 }, { 0x04, -1 },
+			/* movl  %eax, 0x4(%esp) */
+    { 0xb8, -1 }, { 0x01, -1 }, {0x00, -1 }, {0x00, -1 }, {0x00, -1 },
+			/* movl  $0x1, %eax */
+    { 0xcd, -1 }, { 0x80, -1},
+			/* int   $0x80 */
+    { TRAMP_SENTINEL_INSN, -1 }
+  },
+  i386nbsd_sigtramp_cache_init
+};
+
+static const struct tramp_frame i386nbsd_sigtramp_si2 =
+{
+  SIGTRAMP_FRAME,
+  1,
+  {
+    { 0x8b, -1 }, { 0x44, -1 }, { 0x24, -1 }, { 0x08, -1 },
+			/* movl  8(%esp),%eax */
+    { 0x89, -1 }, { 0x44, -1 }, { 0x24, -1 }, { 0x04, -1 },
+			/* movl  %eax, 0x4(%esp) */
+    { 0xb8, -1 }, { 0x34, -1 }, { 0x01, -1 }, { 0x00, -1 }, { 0x00, -1 },
+			/* movl  $0x134, %eax            # setcontext */
+    { 0xcd, -1 }, { 0x80, -1 },
+			/* int   $0x80 */
+    { 0x89, -1 }, { 0x44, -1 }, { 0x24, -1 }, { 0x04, -1 },
+			/* movl  %eax, 0x4(%esp) */
+    { 0xb8, -1 }, { 0x01, -1 }, { 0x00, -1 }, { 0x00, -1 }, { 0x00, -1 },
+			/* movl  $0x1, %eax */
+    { 0xcd, -1 }, { 0x80, -1 },
+			/* int   $0x80 */
+    { TRAMP_SENTINEL_INSN, -1 }
+  },
+  i386nbsd_sigtramp_cache_init
+};
+
+static const struct tramp_frame i386nbsd_sigtramp_si31 =
+{
+  SIGTRAMP_FRAME,
+  1,
+  {
+    { 0x8d, -1 }, { 0x84, -1 }, { 0x24, -1 },
+        { 0x8c, -1 }, { 0x00, -1 }, { 0x00, -1 }, { 0x00, -1 },
+			/* leal  0x8c(%esp), %eax */
+    { 0x89, -1 }, { 0x44, -1 }, { 0x24, -1 }, { 0x04, -1 },
+			/* movl  %eax, 0x4(%esp) */
+    { 0xb8, -1 }, { 0x34, -1 }, { 0x01, -1 }, { 0x00, -1 }, { 0x00, -1 },
+			/* movl  $0x134, %eax            # setcontext */
+    { 0xcd, -1 }, { 0x80, -1},
+			/* int   $0x80 */
+    { 0x89, -1 }, { 0x44, -1 }, { 0x24, -1 }, { 0x04, -1 },
+			/* movl  %eax, 0x4(%esp) */
+    { 0xb8, -1 }, { 0x01, -1 }, {0x00, -1 }, {0x00, -1 }, {0x00, -1 },
+			/* movl  $0x1, %eax */
+    { 0xcd, -1 }, { 0x80, -1},
+			/* int   $0x80 */
+    { TRAMP_SENTINEL_INSN, -1 }
+  },
+  i386nbsd_sigtramp_cache_init
+};
+
+static const struct tramp_frame i386nbsd_sigtramp_si4 =
+{
+  SIGTRAMP_FRAME,
+  1,
+  {
+    { 0x8d, -1 }, { 0x84, -1 }, { 0x24, -1 },
+        { 0x8c, -1 }, { 0x00, -1 }, { 0x00, -1 }, { 0x00, -1 },
+			/* leal  0x8c(%esp), %eax */
+    { 0x89, -1 }, { 0x44, -1 }, { 0x24, -1 }, { 0x04, -1 },
+			/* movl  %eax, 0x4(%esp) */
+    { 0xb8, -1 }, { 0x34, -1 }, { 0x01, -1 }, { 0x00, -1 }, { 0x00, -1 },
+			/* movl  $0x134, %eax            # setcontext */
+    { 0xcd, -1 }, { 0x80, -1},
+			/* int   $0x80 */
+    { 0xc7, -1 }, { 0x44, -1 }, { 0x24, -1 }, { 0x04, -1 },
+        { 0xff, -1 }, { 0xff, -1 }, { 0xff, -1 }, { 0xff, -1 },
+			/* movl   $0xffffffff,0x4(%esp) */
+    { 0xb8, -1 }, { 0x01, -1 }, {0x00, -1 }, {0x00, -1 }, {0x00, -1 },
+			/* movl  $0x1, %eax */
+    { 0xcd, -1 }, { 0x80, -1},
+			/* int   $0x80 */
+    { TRAMP_SENTINEL_INSN, -1 }
+  },
+  i386nbsd_sigtramp_cache_init
+};
+
+
+static void
+i386nbsd_sigtramp_cache_init (const struct tramp_frame *self,
+			     struct frame_info *next_frame,
+			     struct trad_frame_cache *this_cache,
+			     CORE_ADDR func)
+{
+  struct gdbarch *gdbarch = get_frame_arch (next_frame);
+  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  CORE_ADDR sp = frame_unwind_register_unsigned (next_frame, I386_ESP_REGNUM);
+  CORE_ADDR base;
+  int *reg_offset;
+  int num_regs;
+  int i;
+
+  if (self == &i386nbsd_sigtramp_sc16 || self == &i386nbsd_sigtramp_sc2)
+    {
+      reg_offset = i386nbsd_sc_reg_offset;
+      num_regs = ARRAY_SIZE (i386nbsd_sc_reg_offset);
+
+      /* Read in the sigcontext address */
+      base = read_memory_unsigned_integer (sp + 8, 4);
+    }
+  else
+    {
+      reg_offset = i386nbsd_mc_reg_offset;
+      num_regs = ARRAY_SIZE (i386nbsd_mc_reg_offset);
+
+      /* Read in the ucontext address */
+      base = read_memory_unsigned_integer (sp + 8, 4);
+      /* offsetof(ucontext_t, uc_mcontext) == 36 */
+      base += 36;
+    }
+
+  for (i = 0; i < num_regs; i++)
+    if (reg_offset[i] != -1)
+      trad_frame_set_reg_addr (this_cache, i, base + reg_offset[i]);
+
+  /* Construct the frame ID using the function start.  */
+  trad_frame_set_id (this_cache, frame_id_build (sp, func));
+}
 
 /* Kernel debugging support */
 
@@ -368,18 +448,22 @@ i386nbsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   tdep->gregset_num_regs = ARRAY_SIZE (i386nbsd_r_reg_offset);
   tdep->sizeof_gregset = 16 * 4;
 
-  /* NetBSD has different signal trampoline conventions.  */
-  tdep->sigtramp_start = 0;
-  tdep->sigtramp_end = 0;
-  tdep->sigtramp_p = i386nbsd_sigtramp_p;
-
   /* NetBSD uses -freg-struct-return by default.  */
   tdep->struct_return = reg_struct_return;
 
-  /* NetBSD has a `struct sigcontext' that's different from the
-     original 4.3 BSD.  */
-  tdep->sc_reg_offset = i386nbsd_sc_reg_offset;
-  tdep->sc_num_regs = ARRAY_SIZE (i386nbsd_sc_reg_offset);
+  /* NetBSD uses tramp_frame sniffers for signal trampolines. */
+  tdep->sigcontext_addr= 0;
+  tdep->sigtramp_start = 0;
+  tdep->sigtramp_end = 0;
+  tdep->sigtramp_p = 0;
+  tdep->sc_reg_offset = 0;
+  tdep->sc_num_regs = 0;
+
+  tramp_frame_prepend_unwinder (gdbarch, &i386nbsd_sigtramp_sc16);
+  tramp_frame_prepend_unwinder (gdbarch, &i386nbsd_sigtramp_sc2);
+  tramp_frame_prepend_unwinder (gdbarch, &i386nbsd_sigtramp_si2);
+  tramp_frame_prepend_unwinder (gdbarch, &i386nbsd_sigtramp_si31);
+  tramp_frame_prepend_unwinder (gdbarch, &i386nbsd_sigtramp_si4);
 
   /* Unwind kernel trap frames correctly.  */
   frame_unwind_prepend_unwinder (gdbarch, &i386nbsd_trapframe_unwind);
