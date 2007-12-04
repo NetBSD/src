@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_usema.h,v 1.10 2006/09/01 04:49:48 sekiya Exp $ */
+/*	$NetBSD: irix_usema.h,v 1.11 2007/12/04 18:40:13 dsl Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -49,27 +49,27 @@
 #include <compat/irix/irix_exec.h>
 
 extern struct vfsops irix_usema_dummy_vfsops;
-void irix_usema_dummy_vfs_init __P((void));
+void irix_usema_dummy_vfs_init(void);
 extern const struct vnodeopv_desc * const irix_usema_vnodeopv_descs[];
 extern const struct vnodeopv_desc irix_usema_opv_desc;
-extern int (**irix_usema_vnodeop_p) __P((void *));
+extern int (**irix_usema_vnodeop_p)(void *);
 extern const struct vnodeopv_entry_desc irix_usema_vnodeop_entries[];
 
 
-void	irix_usemaattach __P((struct device *, struct device *, void *));
+void	irix_usemaattach(struct device *, struct device *, void *);
 
-int	irix_usema_close	__P((void *));
-int	irix_usema_access	__P((void *));
-int	irix_usema_getattr	__P((void *));
-int	irix_usema_setattr	__P((void *));
-int	irix_usema_fcntl	__P((void *));
-int	irix_usema_ioctl	__P((void *));
-int	irix_usema_poll		__P((void *));
-int	irix_usema_inactive	__P((void *));
+int	irix_usema_close(void *);
+int	irix_usema_access(void *);
+int	irix_usema_getattr(void *);
+int	irix_usema_setattr(void *);
+int	irix_usema_fcntl(void *);
+int	irix_usema_ioctl(void *);
+int	irix_usema_poll(void *);
+int	irix_usema_inactive(void *);
 
-void	irix_usema_exit_cleanup	__P((struct proc *, struct proc *));
+void	irix_usema_exit_cleanup(struct proc *, struct proc *);
 #ifdef DEBUG_IRIX
-void	irix_usema_debug	__P((void));
+void	irix_usema_debug(void);
 #endif
 
 #define IRIX_USEMADEV_MINOR	1

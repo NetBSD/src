@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_usema.c,v 1.22 2007/11/28 10:34:37 he Exp $ */
+/*	$NetBSD: irix_usema.c,v 1.23 2007/12/04 18:40:13 dsl Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_usema.c,v 1.22 2007/11/28 10:34:37 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_usema.c,v 1.23 2007/12/04 18:40:13 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,20 +81,20 @@ const struct cdevsw irix_usema_cdevsw = {
 static LIST_HEAD(irix_usema_reclist, irix_usema_rec) irix_usema_reclist;
 static struct lock irix_usema_reclist_lock;
 
-static struct irix_usema_rec *iur_lookup_by_vn __P((struct vnode *));
-static struct irix_usema_rec *iur_lookup_by_sem __P((struct irix_semaphore *));
+static struct irix_usema_rec *iur_lookup_by_vn(struct vnode *);
+static struct irix_usema_rec *iur_lookup_by_sem(struct irix_semaphore *);
 static struct irix_usema_rec *iur_insert
-	__P((struct irix_semaphore *, struct vnode *, struct proc *));
-static void iur_remove __P((struct irix_usema_rec *));
+(struct irix_semaphore *, struct vnode *, struct proc *);
+static void iur_remove(struct irix_usema_rec *);
 static struct irix_waiting_proc_rec *iur_proc_queue
-	__P((struct irix_usema_rec *, struct proc *));
+(struct irix_usema_rec *, struct proc *);
 static void iur_proc_dequeue
-	__P((struct irix_usema_rec *, struct irix_waiting_proc_rec *));
+(struct irix_usema_rec *, struct irix_waiting_proc_rec *);
 static void iur_proc_release
-	__P((struct irix_usema_rec *, struct irix_waiting_proc_rec *));
-static int iur_proc_isreleased __P((struct irix_usema_rec *, struct proc *));
+(struct irix_usema_rec *, struct irix_waiting_proc_rec *);
+static int iur_proc_isreleased(struct irix_usema_rec *, struct proc *);
 static struct irix_waiting_proc_rec *iur_proc_getfirst
-	__P((struct irix_usema_rec *));
+(struct irix_usema_rec *);
 
 /*
  * In order to define a custom vnode operation vector for the usemaclone
@@ -117,7 +117,7 @@ const struct vnodeopv_desc * const irix_usema_vnodeopv_descs[] = {
 };
 const struct vnodeopv_desc irix_usema_opv_desc =
 	{ &irix_usema_vnodeop_p, irix_usema_vnodeop_entries };
-int (**irix_usema_vnodeop_p) __P((void *));
+int (**irix_usema_vnodeop_p)(void *);
 
 /*
  * Vnode operations on the usemaclone device
