@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1092 2007/12/02 18:10:20 bouyer Exp $
+#	$NetBSD: mi,v 1.1093 2007/12/04 21:26:27 pooka Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -5962,7 +5962,7 @@
 ./usr/share/man/cat3/puffs_node.0		comp-c-catman		.cat
 ./usr/share/man/cat3/puffs_ops.0		comp-c-catman		.cat
 ./usr/share/man/cat3/puffs_path.0		comp-c-catman		.cat
-./usr/share/man/cat3/puffs_req.0		comp-c-catman		.cat
+./usr/share/man/cat3/puffs_req.0		comp-obsolete		obsolete
 ./usr/share/man/cat3/puffs_suspend.0		comp-c-catman		.cat
 ./usr/share/man/cat3/putc.0			comp-c-catman		.cat
 ./usr/share/man/cat3/putc_unlocked.0		comp-c-catman		.cat
@@ -10551,7 +10551,7 @@
 ./usr/share/man/man3/puffs_node.3		comp-c-man		.man
 ./usr/share/man/man3/puffs_ops.3		comp-c-man		.man
 ./usr/share/man/man3/puffs_path.3		comp-c-man		.man
-./usr/share/man/man3/puffs_req.3		comp-c-man		.man
+./usr/share/man/man3/puffs_req.3		comp-obsolete		obsolete
 ./usr/share/man/man3/puffs_suspend.3		comp-c-man		.man
 ./usr/share/man/man3/putc.3			comp-c-man		.man
 ./usr/share/man/man3/putc_unlocked.3		comp-c-man		.man
