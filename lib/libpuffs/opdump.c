@@ -1,4 +1,4 @@
-/*	$NetBSD: opdump.c,v 1.19 2007/11/29 17:22:04 pooka Exp $	*/
+/*	$NetBSD: opdump.c,v 1.20 2007/12/04 20:03:40 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: opdump.c,v 1.19 2007/11/29 17:22:04 pooka Exp $");
+__RCSID("$NetBSD: opdump.c,v 1.20 2007/12/04 20:03:40 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -128,6 +128,14 @@ const char *errnot_revmap[] = {
 	"PUFFS_ERR_WRITE",
 	"PUFFS_ERR_VPTOFH"
 };
+/* XXX! */
+const char *flush_revmap[] = {
+	"PUFFS_INVAL_NAMECACHE_NODE",
+	"PUFFS_INVAL_NAMECACHE_DIR",
+	"PUFFS_INVAL_NAMECACHE_ALL",
+	"PUFFS_INVAL_PAGECACHE_NODE_RANGE",
+	"PUFFS_FLUSH_PAGECACHE_NODE_RANGE",
+};
 
 void
 puffsdump_req(struct puffs_req *preq)
@@ -151,6 +159,9 @@ puffsdump_req(struct puffs_req *preq)
 		break;
 	case PUFFSOP_ERROR:
 		map = errnot_revmap;
+		break;
+	case PUFFSOP_FLUSH:
+		map = flush_revmap;
 		break;
 	}
 
