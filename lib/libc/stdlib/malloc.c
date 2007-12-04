@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.c,v 1.49 2007/11/28 21:55:14 christos Exp $	*/
+/*	$NetBSD: malloc.c,v 1.50 2007/12/04 17:45:07 christos Exp $	*/
 
 /*
  * ----------------------------------------------------------------------------
@@ -83,14 +83,13 @@ void utrace(struct ut *, int);
 #endif /* __FreeBSD__ */
 
 #if defined(__NetBSD__)
-void _malloc_prefork(void);
-void _malloc_postfork(void);
 #   define malloc_minsize               16U
 #   define HAS_UTRACE
 #   define UTRACE_LABEL "malloc",
 #include <sys/cdefs.h>
+#include "extern.h"
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: malloc.c,v 1.49 2007/11/28 21:55:14 christos Exp $");
+__RCSID("$NetBSD: malloc.c,v 1.50 2007/12/04 17:45:07 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 #include <sys/types.h>
 int utrace(const char *, void *, size_t);
