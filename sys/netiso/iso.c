@@ -1,4 +1,4 @@
-/*	$NetBSD: iso.c,v 1.43 2007/11/09 21:00:06 plunky Exp $	*/
+/*	$NetBSD: iso.c,v 1.44 2007/12/04 10:31:14 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iso.c,v 1.43 2007/11/09 21:00:06 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iso.c,v 1.44 2007/12/04 10:31:14 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -733,7 +733,7 @@ iso_ifwithidi(struct sockaddr *addr)
 			printf("iso_ifwithidi ifnet %s\n", ifp->if_name);
 		}
 #endif
-		TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
+		IFADDR_FOREACH(ifa, ifp) {
 #ifdef ARGO_DEBUG
 			if (argo_debug[D_ROUTE]) {
 				printf("iso_ifwithidi address ");
