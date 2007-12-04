@@ -1,4 +1,4 @@
-/* $NetBSD: disk.c,v 1.34 2007/11/18 23:52:19 agc Exp $ */
+/* $NetBSD: disk.c,v 1.35 2007/12/04 16:25:37 oster Exp $ */
 
 /*
  * Copyright © 2006 Alistair Crooks.  All rights reserved.
@@ -971,6 +971,8 @@ device_command(target_session_t * sess, target_cmd_t * cmd)
 		args->status = SCSI_SUCCESS;
 		return 0;
 	}
+
+	lun = sess->d;
 	iscsi_trace(TRACE_SCSI_CMD, __FILE__, __LINE__, "SCSI op %#x (lun %d): \n", cdb[0], lun);
 
 	switch (cdb[0]) {
