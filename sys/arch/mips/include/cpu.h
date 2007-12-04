@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.86 2007/12/03 15:33:54 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.87 2007/12/04 02:43:48 he Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -122,8 +122,8 @@ do {									\
 #endif
 
 #ifdef _KERNEL
-#ifdef _LKM
-/* Assume all CPU architectures are valid for LKM's */
+#if defined(_LKM) || defined(_STANDALONE)
+/* Assume all CPU architectures are valid for LKM's and standlone progs */
 #define	MIPS1	1
 #define	MIPS3	1
 #define	MIPS4	1
