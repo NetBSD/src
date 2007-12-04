@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.164.4.1 2007/12/04 13:03:35 ad Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.164.4.2 2007/12/04 18:05:19 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.164.4.1 2007/12/04 13:03:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.164.4.2 2007/12/04 18:05:19 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -369,16 +369,14 @@ bad:
  * nb: Must be called with the nfs_sndlock() set on the mount point.
  */
 int
-nfs_reconnect(rep, l)
-	struct nfsreq *rep;
-	struct lwp *l;
+nfs_reconnect(struct nfsreq *rep)
 {
 	struct nfsreq *rp;
 	struct nfsmount *nmp = rep->r_nmp;
 	int error;
 
 	nfs_disconnect(nmp);
-	while ((error = nfs_connect(nmp, rep, l)) != 0) {
+	while ((error = nfs_connect(nmp, rep, &lwp0)) != 0) {
 		if (error == EINTR || error == ERESTART)
 			return (EINTR);
 		kpause("nfscn2", false, hz, NULL);
@@ -613,7 +611,7 @@ tryagain:
 		}
 		so = rep->r_nmp->nm_so;
 		if (!so) {
-			error = nfs_reconnect(rep, l);
+			error = nfs_reconnect(rep);
 			if (error) {
 				nfs_sndunlock(rep->r_nmp);
 				return (error);
@@ -628,7 +626,7 @@ tryagain:
 			error = nfs_send(so, rep->r_nmp->nm_nam, m, rep, l);
 			if (error) {
 				if (error == EINTR || error == ERESTART ||
-				    (error = nfs_reconnect(rep, l)) != 0) {
+				    (error = nfs_reconnect(rep)) != 0) {
 					nfs_sndunlock(rep->r_nmp);
 					return (error);
 				}
@@ -748,7 +746,7 @@ errout:
 				 rep->r_nmp->nm_mountp->mnt_stat.f_mntfromname);
 			error = nfs_sndlock(rep->r_nmp, rep);
 			if (!error)
-				error = nfs_reconnect(rep, l);
+				error = nfs_reconnect(rep);
 			if (!error)
 				goto tryagain;
 			else
