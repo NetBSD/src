@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_mutex2.c,v 1.14 2007/12/04 16:08:28 yamt Exp $	*/
+/*	$NetBSD: pthread_mutex2.c,v 1.15 2007/12/04 16:56:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_mutex2.c,v 1.14 2007/12/04 16:08:28 yamt Exp $");
+__RCSID("$NetBSD: pthread_mutex2.c,v 1.15 2007/12/04 16:56:11 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/lwpctl.h>
@@ -484,7 +484,8 @@ pthread__mutex_wakeup(pthread_t self, pthread_mutex_t *ptm)
 			}
 			rv = (ssize_t)_lwp_unpark(self->pt_waiters[0],
 			    &ptm->ptm_waiters);
-			if (rv != 0 && errno != EALREADY && errno != EINTR) {
+			if (rv != 0 && errno != EALREADY && errno != EINTR &&
+			    errno != ESRCH) {
 				pthread__errorfunc(__FILE__, __LINE__,
 				    __func__, "_lwp_unpark failed");
 			}
