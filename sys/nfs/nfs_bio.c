@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.170 2007/11/26 19:02:19 pooka Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.171 2007/12/04 17:42:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.170 2007/11/26 19:02:19 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.171 2007/12/04 17:42:30 yamt Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -798,7 +798,7 @@ again:
 	  		/* Enque for later, to avoid free-page deadlock */
 		} else while (nmp->nm_bufqlen >= 2 * nmp->nm_bufqiods) {
 			if (catch) {
-				error = cv_timedwait_sig(&nmp->nm_aiocv, 
+				error = cv_timedwait_sig(&nmp->nm_aiocv,
 				    &nmp->nm_lock, slptimeo);
 			} else {
 				error = cv_timedwait(&nmp->nm_aiocv,
@@ -877,7 +877,7 @@ nfs_doio_read(bp, uiop)
 			uiop->uio_resid = 0;
 		}
 #if 0
-		if (uiop->uio_lwp && (vp->v_flag & VTEXT) &&
+		if (uiop->uio_lwp && (vp->v_iflag & VI_TEXT) &&
 		    timespeccmp(&np->n_mtime, &np->n_vattr->va_mtime, !=)) {
 			killproc(uiop->uio_lwp->l_proc, "process text file was modified");
 #if 0 /* XXX NJWLWP */
