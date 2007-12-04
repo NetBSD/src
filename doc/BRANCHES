@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.222 2007/11/26 22:48:57 ad Exp $
+#	$NetBSD: BRANCHES,v 1.223 2007/12/04 15:18:01 ad Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -460,10 +460,20 @@ Notes:		This branch is based off of the netbsd-4 branch!
 
 Branch:		vmlocking
 Description:	Make VM and file system framework MP safe
-Status:		Active
+Status:		Terminated
 Start Date:	13 March 2007
-End Date:
+End Date:	4 December 2007
 Base Tag:	vmlocking-base
+Maintainer:	Andrew Doran <ad@NetBSD.org>
+Scope:		kernel
+Notes:		Superseded by vmlocking2 branch.
+
+Branch:		vmlocking2
+Description:	Make VM and file system framework MP safe
+Status:		Active
+Start Date:	4 Decenber 2007
+End Date:
+Base Tag:	vmlocking2-base1
 Maintainer:	Andrew Doran <ad@NetBSD.org>
 Scope:		kernel
 Notes:		Goals:
