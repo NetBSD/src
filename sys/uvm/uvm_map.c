@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.246 2007/11/26 08:22:32 xtraeme Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.246.2.1 2007/12/04 13:04:01 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.246 2007/11/26 08:22:32 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.246.2.1 2007/12/04 13:04:01 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -139,18 +139,16 @@ UVMMAP_EVCNT_DEFINE(ukh_free)
 const char vmmapbsy[] = "vmmapbsy";
 
 /*
- * pool for vmspace structures.
+ * cache for vmspace structures.
  */
 
-POOL_INIT(uvm_vmspace_pool, sizeof(struct vmspace), 0, 0, 0, "vmsppl",
-    &pool_allocator_nointr, IPL_NONE);
+static struct pool_cache uvm_vmspace_cache;
 
 /*
- * pool for dynamically-allocated map entries.
+ * cache for dynamically-allocated map entries.
  */
 
-POOL_INIT(uvm_map_entry_pool, sizeof(struct vm_map_entry), 0, 0, 0, "vmmpepl",
-    &pool_allocator_nointr, IPL_NONE);
+static struct pool_cache uvm_map_entry_cache;
 
 MALLOC_DEFINE(M_VMMAP, "VM map", "VM map structures");
 MALLOC_DEFINE(M_VMPMAP, "VM pmap", "VM pmap");
@@ -641,7 +639,7 @@ uvm_mapent_alloc(struct vm_map *map, int flags)
 	if (VM_MAP_USE_KMAPENT(map)) {
 		me = uvm_kmapent_alloc(map, flags);
 	} else {
-		me = pool_get(&uvm_map_entry_pool, pflags);
+		me = pool_cache_get(&uvm_map_entry_cache, pflags);
 		if (__predict_false(me == NULL))
 			return NULL;
 		me->flags = 0;
@@ -696,7 +694,7 @@ uvm_mapent_free(struct vm_map_entry *me)
 	if (me->flags & UVM_MAP_KERNEL) {
 		uvm_kmapent_free(me);
 	} else {
-		pool_put(&uvm_map_entry_pool, me);
+		pool_cache_put(&uvm_map_entry_cache, me);
 	}
 }
 
@@ -837,8 +835,7 @@ uvm_map_unreference_amap(struct vm_map_entry *entry, int flags)
 
 
 /*
- * uvm_map_init: init mapping system at boot time.   note that we allocate
- * and init the static pool of struct vm_map_entry *'s for the kernel here.
+ * uvm_map_init: init mapping system at boot time.
  */
 
 void
@@ -864,6 +861,15 @@ uvm_map_init(void)
 	 */
 
 	mutex_init(&uvm_kentry_lock, MUTEX_DRIVER, IPL_VM);
+
+	/*
+	 * initialize caches.
+	 */
+
+	pool_cache_bootstrap(&uvm_map_entry_cache, sizeof(struct vm_map_entry),
+	    0, 0, 0, "vmmpepl", NULL, IPL_NONE, NULL, NULL, NULL);
+	pool_cache_bootstrap(&uvm_vmspace_cache, sizeof(struct vmspace),
+	    0, 0, 0, "vmsppl", NULL, IPL_NONE, NULL, NULL, NULL);
 }
 
 /*
@@ -1103,7 +1109,8 @@ uvm_map_prepare(struct vm_map *map, vaddr_t start, vsize_t size,
 
 retry:
 	if (vm_map_lock_try(map) == false) {
-		if (flags & UVM_FLAG_TRYLOCK) {
+		if ((flags & UVM_FLAG_TRYLOCK) != 0 &&
+		    (map->flags & VM_MAP_INTRSAFE) == 0) {
 			return EAGAIN;
 		}
 		vm_map_lock(map); /* could sleep here */
@@ -2992,9 +2999,9 @@ uvm_map_protect(struct vm_map *map, vaddr_t start, vaddr_t end,
 
 				if (UVM_OBJ_IS_VNODE(uobj) &&
 				    (current->protection & VM_PROT_EXECUTE)) {
-				    	simple_lock(&uobj->vmobjlock);
+				    	mutex_enter(&uobj->vmobjlock);
 					vn_markexec((struct vnode *) uobj);
-				    	simple_unlock(&uobj->vmobjlock);
+				    	mutex_exit(&uobj->vmobjlock);
 				}
 			}
 		}
@@ -3709,10 +3716,10 @@ uvm_map_clean(struct vm_map *map, vaddr_t start, vaddr_t end, int flags)
 			if (anon == NULL)
 				continue;
 
-			simple_lock(&anon->an_lock);
+			mutex_enter(&anon->an_lock);
 			pg = anon->an_page;
 			if (pg == NULL) {
-				simple_unlock(&anon->an_lock);
+				mutex_exit(&anon->an_lock);
 				continue;
 			}
 
@@ -3732,18 +3739,18 @@ uvm_map_clean(struct vm_map *map, vaddr_t start, vaddr_t end, int flags)
 				 * at all in these cases.
 				 */
 
-				uvm_lock_pageq();
+				mutex_enter(&uvm_pageqlock);
 				if (pg->loan_count != 0 ||
 				    pg->wire_count != 0) {
-					uvm_unlock_pageq();
-					simple_unlock(&anon->an_lock);
+					mutex_exit(&uvm_pageqlock);
+					mutex_exit(&anon->an_lock);
 					continue;
 				}
 				KASSERT(pg->uanon == anon);
 				pmap_clear_reference(pg);
 				uvm_pagedeactivate(pg);
-				uvm_unlock_pageq();
-				simple_unlock(&anon->an_lock);
+				mutex_exit(&uvm_pageqlock);
+				mutex_exit(&anon->an_lock);
 				continue;
 
 			case PGO_FREE:
@@ -3758,12 +3765,12 @@ uvm_map_clean(struct vm_map *map, vaddr_t start, vaddr_t end, int flags)
 
 				/* skip the page if it's wired */
 				if (pg->wire_count != 0) {
-					simple_unlock(&anon->an_lock);
+					mutex_exit(&anon->an_lock);
 					continue;
 				}
 				amap_unadd(&current->aref, offset);
 				refs = --anon->an_ref;
-				simple_unlock(&anon->an_lock);
+				mutex_exit(&anon->an_lock);
 				if (refs == 0)
 					uvm_anfree(anon);
 				continue;
@@ -3782,7 +3789,7 @@ uvm_map_clean(struct vm_map *map, vaddr_t start, vaddr_t end, int flags)
 		uoff = current->offset + (start - current->start);
 		size = MIN(end, current->end) - start;
 		if (uobj != NULL) {
-			simple_lock(&uobj->vmobjlock);
+			mutex_enter(&uobj->vmobjlock);
 			if (uobj->pgops->pgo_put != NULL)
 				error = (uobj->pgops->pgo_put)(uobj, uoff,
 				    uoff + size, flags | PGO_CLEANIT);
@@ -3853,7 +3860,7 @@ uvmspace_alloc(vaddr_t vmin, vaddr_t vmax)
 	struct vmspace *vm;
 	UVMHIST_FUNC("uvmspace_alloc"); UVMHIST_CALLED(maphist);
 
-	vm = pool_get(&uvm_vmspace_pool, PR_WAITOK);
+	vm = pool_cache_get(&uvm_vmspace_cache, PR_WAITOK);
 	uvmspace_init(vm, NULL, vmin, vmax);
 	UVMHIST_LOG(maphist,"<- done (vm=0x%x)", vm,0,0,0);
 	return (vm);
@@ -4067,7 +4074,7 @@ uvmspace_free(struct vmspace *vm)
 	mutex_destroy(&map->mutex);
 	rw_destroy(&map->lock);
 	pmap_destroy(map->pmap);
-	pool_put(&uvm_vmspace_pool, vm);
+	pool_cache_put(&uvm_vmspace_cache, vm);
 }
 
 /*
@@ -4433,8 +4440,7 @@ again:
 		goto again;
 	}
 
-	error = uvm_map_prepare(map, 0, PAGE_SIZE, NULL, UVM_UNKNOWN_OFFSET,
-	    0, mapflags, &args);
+	error = uvm_map_prepare(map, 0, PAGE_SIZE, NULL, 0, 0, mapflags, &args);
 	if (error) {
 		uvm_pagefree(pg);
 		return NULL;
@@ -4791,7 +4797,7 @@ uvm_object_printit(struct uvm_object *uobj, bool full,
 	int cnt = 0;
 
 	(*pr)("OBJECT %p: locked=%d, pgops=%p, npages=%d, ",
-	    uobj, uobj->vmobjlock.lock_data, uobj->pgops, uobj->uo_npages);
+	    uobj, mutex_owned(&uobj->vmobjlock), uobj->pgops, uobj->uo_npages);
 	if (UVM_OBJ_IS_KERN_OBJECT(uobj))
 		(*pr)("refs=<SYSTEM>\n");
 	else

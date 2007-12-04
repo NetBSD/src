@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.167 2007/11/26 19:02:24 pooka Exp $	*/
+/*	$NetBSD: mount.h,v 1.167.2.1 2007/12/04 13:03:38 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -45,8 +45,8 @@
 #include <sys/queue.h>
 #include <sys/lock.h>
 #include <sys/statvfs.h>
+#include <sys/vnode.h>
 #include <sys/specificdata.h>
-#include <sys/mutex.h>
 
 /*
  * file system statistics
@@ -93,8 +93,6 @@
  * array of operations and an instance record.  The file systems are
  * put on a doubly linked list.
  */
-TAILQ_HEAD(vnodelst, vnode);
-
 struct mount {
 	CIRCLEQ_ENTRY(mount) mnt_list;		/* mount list */
 	struct vfsops	*mnt_op;		/* operations on fs */
@@ -110,7 +108,8 @@ struct mount {
 	void		*mnt_data;		/* private data */
 	int		mnt_wcnt;		/* count of vfs_busy waiters */
 	struct lwp	*mnt_unmounter;		/* who is unmounting */
-	struct simplelock mnt_slock;		/* mutex for wcnt */
+	kmutex_t	mnt_mutex;		/* mutex for wcnt */
+	void		*mnt_transinfo;		/* for FS-internal use */
 	specificdata_reference
 			mnt_specdataref;	/* subsystem specific data */
 };
@@ -333,9 +332,9 @@ int	vfs_stdextattrctl(struct mount *, int, struct vnode *,
 extern	CIRCLEQ_HEAD(mntlist, mount) mountlist;	/* mounted filesystem list */
 extern	struct vfsops *vfssw[];			/* filesystem type table */
 extern	int nvfssw;
-extern	kmutex_t mountlist_lock;
-extern	struct simplelock spechash_slock;
-extern  kmutex_t vfs_list_lock;
+extern  kmutex_t mountlist_lock;
+extern	kmutex_t spechash_lock;
+extern	kmutex_t vfs_list_lock;
 
 long	makefstype(const char *);
 int	dounmount(struct mount *, int, struct lwp *);

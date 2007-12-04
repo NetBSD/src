@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.103 2007/10/10 20:42:34 ad Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.103.6.1 2007/12/04 13:03:48 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.103 2007/10/10 20:42:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.103.6.1 2007/12/04 13:03:48 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -256,9 +256,9 @@ lfs_valloc(struct vnode *pvp, int mode, kauth_cred_t cred,
 #endif /* DIAGNOSTIC */
 
 	/* Set superblock modified bit and increment file count. */
-	simple_lock(&fs->lfs_interlock);
+	mutex_enter(&fs->lfs_interlock);
 	fs->lfs_fmod = 1;
-	simple_unlock(&fs->lfs_interlock);
+	mutex_exit(&fs->lfs_interlock);
 	++fs->lfs_nfiles;
 
 	VOP_UNLOCK(fs->lfs_ivnode, 0);
@@ -285,7 +285,9 @@ lfs_ialloc(struct lfs *fs, struct vnode *pvp, ino_t new_ino, int new_gen,
 	lfs_vcreate(pvp->v_mount, new_ino, vp);
 
 	ip = VTOI(vp);
+	mutex_enter(&ip->i_lfs->lfs_interlock);
 	LFS_SET_UINO(ip, IN_CHANGE);
+	mutex_exit(&ip->i_lfs->lfs_interlock);
 	/* on-disk structure has been zeroed out by lfs_vcreate */
 	ip->i_din.ffs1_din->di_inumber = new_ino;
 
@@ -445,26 +447,26 @@ lfs_vfree(struct vnode *vp, ino_t ino, int mode)
 	DLOG((DLOG_ALLOC, "lfs_vfree: free ino %lld\n", (long long)ino));
 
 	/* Drain of pending writes */
-	simple_lock(&vp->v_interlock);
+	mutex_enter(&vp->v_interlock);
 	s = splbio();
 	if (fs->lfs_version > 1 && WRITEINPROG(vp))
-		ltsleep(vp, (PRIBIO+1), "lfs_vfree", 0, &vp->v_interlock);
+		mtsleep(vp, (PRIBIO+1), "lfs_vfree", 0, &vp->v_interlock);
 	splx(s);
-	simple_unlock(&vp->v_interlock);
+	mutex_exit(&vp->v_interlock);
 
 	lfs_seglock(fs, SEGM_PROT);
 	vn_lock(fs->lfs_ivnode, LK_EXCLUSIVE);
 
 	lfs_unmark_vnode(vp);
+	mutex_enter(&fs->lfs_interlock);
 	if (vp->v_uflag & VU_DIROP) {
 		vp->v_uflag &= ~VU_DIROP;
-		simple_lock(&fs->lfs_interlock);
-		simple_lock(&lfs_subsys_lock);
+		mutex_enter(&lfs_subsys_lock);
 		--lfs_dirvcount;
-		simple_unlock(&lfs_subsys_lock);
+		mutex_exit(&lfs_subsys_lock);
 		--fs->lfs_dirvcount;
 		TAILQ_REMOVE(&fs->lfs_dchainhd, ip, i_lfs_dchain);
-		simple_unlock(&fs->lfs_interlock);
+		mutex_exit(&fs->lfs_interlock);
 		wakeup(&fs->lfs_dirvcount);
 		wakeup(&lfs_dirvcount);
 		lfs_vunref(vp);
@@ -487,10 +489,13 @@ lfs_vfree(struct vnode *vp, ino_t ino, int mode)
 		/*
 		 * If it's not a dirop, we can finalize right away.
 		 */
+		mutex_exit(&fs->lfs_interlock);
 		lfs_finalize_ino_seguse(fs, ip);
 	}
 
+	mutex_enter(&fs->lfs_interlock);
 	LFS_CLR_UINO(ip, IN_ACCESSED|IN_CLEANING|IN_MODIFIED);
+	mutex_exit(&fs->lfs_interlock);
 	ip->i_flag &= ~IN_ALLMOD;
 	ip->i_lfs_iflags |= LFSI_DELETED;
 	
@@ -582,9 +587,9 @@ lfs_vfree(struct vnode *vp, ino_t ino, int mode)
 	}
 
 	/* Set superblock modified bit and decrement file count. */
-	simple_lock(&fs->lfs_interlock);
+	mutex_enter(&fs->lfs_interlock);
 	fs->lfs_fmod = 1;
-	simple_unlock(&fs->lfs_interlock);
+	mutex_exit(&fs->lfs_interlock);
 	--fs->lfs_nfiles;
 
 	VOP_UNLOCK(fs->lfs_ivnode, 0);

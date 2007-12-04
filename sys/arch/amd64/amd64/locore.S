@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.35 2007/12/03 20:21:32 ad Exp $	*/
+/*	$NetBSD: locore.S,v 1.34 2007/12/02 21:43:11 dsl Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -865,8 +865,7 @@ ENTRY(dumpsys)
 	ret
 
 /*
- * struct lwp *cpu_switchto(struct lwp *oldlwp, struct newlwp,
- *			    bool returning)
+ * struct lwp *cpu_switchto(struct lwp *, struct lwp *)
  *
  *	1. if (oldlwp != NULL), save its context.
  *	2. then, restore context of newlwp.
@@ -904,13 +903,6 @@ ENTRY(cpu_switchto)
 	movq	PCB_RSP(%r14),%rsp
 	movq	PCB_RBP(%r14),%rbp
 
-	/* Set curlwp. */
-	movq	%r12,CPUVAR(CURLWP)
-
-	/* Skip the rest if returning to a pinned LWP. */
-	testb	%dl,%dl
-	jnz	4f
-
 	/* Switch TSS. Reset "task busy" flag before loading. */
 #ifdef XEN
 	movq	%r14, %rdi
@@ -921,6 +913,9 @@ ENTRY(cpu_switchto)
 	andl	$~0x0200,4(%rax,%rdx, 1)
 	ltr	%dx
 #endif
+
+	/* Set curlwp. */
+	movq	%r12,CPUVAR(CURLWP)
 
 	/* Don't bother with the rest if switching to a system process. */
 	testl	$LW_SYSTEM,L_FLAG(%r12)
@@ -1108,8 +1103,10 @@ syscall_return:
 	movl	CPUVAR(ILEVEL),%r8d
 	xorq	%rax,%rax
 	call	_C_LABEL(printf)
-	movl	$IPL_NONE,%edi
-	call	_C_LABEL(spllower)
+#ifdef DDB
+	int	$3
+#endif /* DDB */
+	movl	$IPL_NONE,CPUVAR(ILEVEL)
 	jmp	.Lsyscall_checkast
 4:	.asciz	"WARNING: SPL NOT LOWERED ON SYSCALL %d %d EXIT %x %x\n"
 #endif
@@ -1221,8 +1218,10 @@ iret_return:
 	movabsq	$4f, %rdi
 	xorq	%rax,%rax
 	call	_C_LABEL(printf)
-	movl	$IPL_NONE,%edi
-	call	_C_LABEL(spllower)
+#ifdef DDB
+	int	$3
+#endif /* DDB */
+	movl	$IPL_NONE,CPUVAR(ILEVEL)
 	jmp	.Losyscall_checkast
 4:	.asciz	"WARNING: SPL NOT LOWERED ON SYSCALL EXIT\n"
 #endif /* DIAGNOSTIC */

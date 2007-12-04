@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.121 2007/11/27 11:31:18 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.121.2.1 2007/12/04 13:03:07 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.121 2007/11/27 11:31:18 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.121.2.1 2007/12/04 13:03:07 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -1033,16 +1033,13 @@ puffs_inactive(void *v)
 	}
 	pnode->pn_stat &= ~PNODE_DOINACT;
 
-	VOP_UNLOCK(vp, 0);
-
 	/*
 	 * file server thinks it's gone?  then don't be afraid care,
 	 * node's life was already all it would ever be
 	 */
-	if (pnode->pn_stat & PNODE_NOREFS) {
-		pnode->pn_stat |= PNODE_DYING;
-		vrecycle(vp, NULL, curlwp);
-	}
+	*ap->a_recycle = ((pnode->pn_stat & PNODE_NOREFS) != 0);
+
+	VOP_UNLOCK(vp, 0);
 
 	return 0;
 }
@@ -1296,8 +1293,7 @@ puffs_fsync(void *v)
 	pn = VPTOPP(vp);
 
 	/* flush out information from our metacache, see vop_setattr */
-	if (pn->pn_stat & PNODE_METACACHE_MASK
-	    && (pn->pn_stat & PNODE_DYING) == 0) {
+	if (pn->pn_stat & PNODE_METACACHE_MASK) {
 		vattr_null(&va);
 		error = VOP_SETATTR(vp, &va, FSCRED); 
 		if (error)
@@ -1310,7 +1306,7 @@ puffs_fsync(void *v)
 	pflags = PGO_CLEANIT;
 	if (ap->a_flags & FSYNC_WAIT)
 		pflags |= PGO_SYNCIO;
-	simple_lock(&vp->v_interlock);
+	mutex_enter(&vp->v_interlock);
 	error = VOP_PUTPAGES(vp, trunc_page(ap->a_offlo),
 	    round_page(ap->a_offhi), pflags);
 	if (error)
@@ -1322,7 +1318,7 @@ puffs_fsync(void *v)
 	 * has references neither in the kernel or the fs server.
 	 * Otherwise we continue to issue fsync() forward.
 	 */
-	if (!EXISTSOP(pmp, FSYNC) || (pn->pn_stat & PNODE_DYING))
+	if (!EXISTSOP(pmp, FSYNC))
 		return 0;
 
 	dofaf = (ap->a_flags & FSYNC_WAIT) == 0 || ap->a_flags == FSYNC_LAZY;
@@ -1955,7 +1951,7 @@ puffs_write(void *v)
 			 * that gives userland too much say in the kernel.
 			 */
 			if (oldoff >> 16 != uio->uio_offset >> 16) {
-				simple_lock(&vp->v_interlock);
+				mutex_enter(&vp->v_interlock);
 				error = VOP_PUTPAGES(vp, oldoff & ~0xffff,
 				    uio->uio_offset & ~0xffff,
 				    PGO_CLEANIT | PGO_SYNCIO);
@@ -1966,14 +1962,14 @@ puffs_write(void *v)
 
 		/* synchronous I/O? */
 		if (error == 0 && ap->a_ioflag & IO_SYNC) {
-			simple_lock(&vp->v_interlock);
+			mutex_enter(&vp->v_interlock);
 			error = VOP_PUTPAGES(vp, trunc_page(origoff),
 			    round_page(uio->uio_offset),
 			    PGO_CLEANIT | PGO_SYNCIO);
 
 		/* write through page cache? */
 		} else if (error == 0 && pmp->pmp_flags & PUFFS_KFLAG_WTCACHE) {
-			simple_lock(&vp->v_interlock);
+			mutex_enter(&vp->v_interlock);
 			error = VOP_PUTPAGES(vp, trunc_page(origoff),
 			    round_page(uio->uio_offset), PGO_CLEANIT);
 		}
@@ -2154,16 +2150,6 @@ puffs_strategy(void *v)
 	    || (BUF_ISWRITE(bp) && !EXISTSOP(pmp, WRITE)))
 		ERROUT(EOPNOTSUPP);
 
-	/*
-	 * Short-circuit optimization: don't flush buffer in between
-	 * VOP_INACTIVE and VOP_RECLAIM in case the node has no references.
-	 */
-	if (pn->pn_stat & PNODE_DYING) {
-		KASSERT(BUF_ISWRITE(bp));
-		bp->b_resid = 0;
-		goto out;
-	}
-
 #ifdef DIAGNOSTIC
 	if (bp->b_bcount > pmp->pmp_msg_maxsize - PUFFS_MSGSTRUCT_MAX)
 		panic("puffs_strategy: wildly inappropriate buf bcount %d",
@@ -2177,12 +2163,12 @@ puffs_strategy(void *v)
 	 * See puffs_vfsops.c:pageflush()
 	 */
 	if (BUF_ISWRITE(bp)) {
-		simple_lock(&vp->v_interlock);
+		mutex_enter(&vp->v_interlock);
 		if (vp->v_iflag & VI_XLOCK)
 			dofaf = 1;
 		if (pn->pn_stat & PNODE_SUSPEND)
 			dofaf = 1;
-		simple_unlock(&vp->v_interlock);
+		mutex_exit(&vp->v_interlock);
 	}
 
 #ifdef DIAGNOSTIC
@@ -2246,10 +2232,10 @@ puffs_strategy(void *v)
 				DPRINTF(("puffs_strategy: write-protecting "
 				    "vp %p page %p, offset %" PRId64"\n",
 				    vp, vmp, vmp->offset));
-				simple_lock(&uobj->vmobjlock);
+				mutex_enter(&uobj->vmobjlock);
 				vmp->flags |= PG_RDONLY;
 				pmap_page_protect(vmp, VM_PROT_READ);
-				simple_unlock(&uobj->vmobjlock);
+				mutex_exit(&uobj->vmobjlock);
 			}
 		}
 
@@ -2441,13 +2427,13 @@ puffs_getpages(void *v)
 		if (locked)
 			ERROUT(EBUSY);
 
-		simple_unlock(&vp->v_interlock);
+		mutex_exit(&vp->v_interlock);
 		vattr_null(&va);
 		va.va_size = vp->v_size;
 		error = puffs_dosetattr(vp, &va, FSCRED, 0);
 		if (error)
 			ERROUT(error);
-		simple_lock(&vp->v_interlock);
+		mutex_enter(&vp->v_interlock);
 	}
 
 	if (write && PUFFS_WCACHEINFO(pmp)) {
@@ -2488,7 +2474,7 @@ puffs_getpages(void *v)
 	 * when the page is actually write-faulted to.
 	 */
 	if (!locked)
-		simple_lock(&vp->v_uobj.vmobjlock);
+		mutex_enter(&vp->v_uobj.vmobjlock);
 	for (i = 0, si = 0, streakon = 0; i < npages; i++) {
 		if (pgs[i] == NULL || pgs[i] == PGO_DONTCARE) {
 			if (streakon && write) {
@@ -2514,7 +2500,7 @@ puffs_getpages(void *v)
 		si++;
 	}
 	if (!locked)
-		simple_unlock(&vp->v_uobj.vmobjlock);
+		mutex_exit(&vp->v_uobj.vmobjlock);
 
 	KASSERT(si <= (npages / 2) + 1);
 
@@ -2566,7 +2552,7 @@ puffs_lock(void *v)
 	 */
 	if (fstrans_is_owner(mp) && fstrans_getstate(mp) == FSTRANS_SUSPENDING){
 		if (ap->a_flags & LK_INTERLOCK)
-			simple_unlock(&vp->v_interlock);
+			mutex_exit(&vp->v_interlock);
 		return 0;
 	}
 
@@ -2590,7 +2576,7 @@ puffs_unlock(void *v)
 	/* XXX: see puffs_lock() */
 	if (fstrans_is_owner(mp) && fstrans_getstate(mp) == FSTRANS_SUSPENDING){
 		if (ap->a_flags & LK_INTERLOCK)
-			simple_unlock(&vp->v_interlock);
+			mutex_exit(&vp->v_interlock);
 		return 0;
 	}
 

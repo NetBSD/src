@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.44 2007/11/26 19:01:55 pooka Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.44.2.1 2007/12/04 13:03:11 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.44 2007/11/26 19:01:55 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.44.2.1 2007/12/04 13:03:11 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -229,11 +229,12 @@ tmpfs_lookup(void *v)
 				error = VOP_ACCESS(dvp, VWRITE, cnp->cn_cred);
 				if (error != 0)
 					goto out;
-				tnode->tn_lookup_dirent = de;
-			}
+			} else
+				de = NULL;
 
 			/* Allocate a new vnode on the matching entry. */
 			error = tmpfs_alloc_vp(dvp->v_mount, tnode, vpp);
+			tnode->tn_lookup_dirent = de;
 		}
 	}
 
@@ -696,8 +697,6 @@ out:
 	else
 		vput(dvp);
 
-	KASSERT(!VOP_ISLOCKED(dvp));
-
 	return error;
 }
 
@@ -716,7 +715,6 @@ tmpfs_link(void *v)
 	struct tmpfs_node *node;
 
 	KASSERT(VOP_ISLOCKED(dvp));
-	KASSERT(!VOP_ISLOCKED(vp));
 	KASSERT(cnp->cn_flags & HASBUF);
 	KASSERT(dvp != vp); /* XXX When can this be false? */
 
@@ -727,7 +725,7 @@ tmpfs_link(void *v)
 	 * needs the vnode to be locked. */
 	error = vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	if (error != 0)
-		goto out;
+		goto out1;
 
 	/* XXX: Why aren't the following two tests done by the caller? */
 
@@ -773,16 +771,11 @@ tmpfs_link(void *v)
 	error = 0;
 
 out:
-	if (VOP_ISLOCKED(vp))
-		VOP_UNLOCK(vp, 0);
-
+	VOP_UNLOCK(vp, 0);
+out1:
 	PNBUF_PUT(cnp->cn_pnbuf);
 
 	vput(dvp);
-
-	/* XXX Locking status of dvp does not match manual page. */
-	KASSERT(!VOP_ISLOCKED(dvp));
-	KASSERT(!VOP_ISLOCKED(vp));
 
 	return error;
 }
@@ -809,7 +802,7 @@ tmpfs_rename(void *v)
 	struct tmpfs_node *tdnode;
 
 	KASSERT(VOP_ISLOCKED(tdvp));
-	KASSERT(IMPLIES(tvp != NULL, VOP_ISLOCKED(tvp)));
+	KASSERT(IMPLIES(tvp != NULL, VOP_ISLOCKED(tvp) == LK_EXCLUSIVE));
 	KASSERT(fcnp->cn_flags & HASBUF);
 	KASSERT(tcnp->cn_flags & HASBUF);
 
@@ -1082,6 +1075,7 @@ tmpfs_rmdir(void *v)
 	 * reclaimed. */
 	tmpfs_free_dirent(tmp, de, true);
 
+	/* KASSERT(node->tn_links == 1); */
  out:
 	/* Release the nodes. */
 	vput(dvp);
@@ -1244,19 +1238,14 @@ int
 tmpfs_inactive(void *v)
 {
 	struct vnode *vp = ((struct vop_inactive_args *)v)->a_vp;
-	nlink_t links;
 
 	struct tmpfs_node *node;
 
 	KASSERT(VOP_ISLOCKED(vp));
 
 	node = VP_TO_TMPFS_NODE(vp);
-	links = node->tn_links;
-
+	*((struct vop_inactive_args *)v)->a_recycle = (node->tn_links == 0);
 	VOP_UNLOCK(vp, 0);
-
-	if (links == 0)
-		vrecycle(vp, NULL, curlwp);
 
 	return 0;
 }
@@ -1271,8 +1260,6 @@ tmpfs_reclaim(void *v)
 	struct tmpfs_mount *tmp;
 	struct tmpfs_node *node;
 
-	KASSERT(!VOP_ISLOCKED(vp));
-
 	node = VP_TO_TMPFS_NODE(vp);
 	tmp = VFS_TO_TMPFS(vp->v_mount);
 
@@ -1285,7 +1272,6 @@ tmpfs_reclaim(void *v)
 	if (node->tn_links == 0)
 		tmpfs_free_node(tmp, node);
 
-	KASSERT(!VOP_ISLOCKED(vp));
 	KASSERT(vp->v_data == NULL);
 
 	return 0;
@@ -1405,7 +1391,7 @@ tmpfs_getpages(void *v)
 	int npages = *count;
 
 	KASSERT(vp->v_type == VREG);
-	LOCK_ASSERT(simple_lock_held(&vp->v_interlock));
+	KASSERT(mutex_owned(&vp->v_interlock));
 
 	node = VP_TO_TMPFS_NODE(vp);
 	uobj = node->tn_spec.tn_reg.tn_aobj;
@@ -1414,7 +1400,7 @@ tmpfs_getpages(void *v)
 
 	if (vp->v_size <= offset + (centeridx << PAGE_SHIFT)) {
 		if ((flags & PGO_LOCKED) == 0)
-			simple_unlock(&vp->v_interlock);
+			mutex_exit(&vp->v_interlock);
 		return EINVAL;
 	}
 
@@ -1433,7 +1419,7 @@ tmpfs_getpages(void *v)
 			node->tn_status |= TMPFS_NODE_MODIFIED;
 	}
 
-	simple_unlock(&vp->v_interlock);
+	mutex_exit(&vp->v_interlock);
 
 	/*
 	 * Make sure that the array on which we will store the
@@ -1448,7 +1434,7 @@ tmpfs_getpages(void *v)
 	if (m != NULL)
 		for (i = 0; i < npages; i++)
 			m[i] = NULL;
-	simple_lock(&uobj->vmobjlock);
+	mutex_enter(&uobj->vmobjlock);
 	error = (*uobj->pgops->pgo_get)(uobj, offset, m, &npages, centeridx,
 	    access_type, advice, flags | PGO_ALLPAGES);
 #if defined(DEBUG)
@@ -1478,19 +1464,19 @@ tmpfs_putpages(void *v)
 	struct tmpfs_node *node;
 	struct uvm_object *uobj;
 
-	LOCK_ASSERT(simple_lock_held(&vp->v_interlock));
+	KASSERT(mutex_owned(&vp->v_interlock));
 
 	node = VP_TO_TMPFS_NODE(vp);
 
 	if (vp->v_type != VREG) {
-		simple_unlock(&vp->v_interlock);
+		mutex_exit(&vp->v_interlock);
 		return 0;
 	}
 
 	uobj = node->tn_spec.tn_reg.tn_aobj;
-	simple_unlock(&vp->v_interlock);
+	mutex_exit(&vp->v_interlock);
 
-	simple_lock(&uobj->vmobjlock);
+	mutex_enter(&uobj->vmobjlock);
 	error = (*uobj->pgops->pgo_put)(uobj, offlo, offhi, flags);
 
 	/* XXX mtime */

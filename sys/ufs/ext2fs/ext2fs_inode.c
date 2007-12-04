@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_inode.c,v 1.61 2007/11/26 19:02:26 pooka Exp $	*/
+/*	$NetBSD: ext2fs_inode.c,v 1.61.2.1 2007/12/04 13:03:41 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.61 2007/11/26 19:02:26 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.61.2.1 2007/12/04 13:03:41 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -141,6 +141,7 @@ ext2fs_inactive(void *v)
 {
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
+		bool *a_recycle;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct inode *ip = VTOI(vp);
@@ -165,13 +166,12 @@ ext2fs_inactive(void *v)
 		ext2fs_update(vp, NULL, NULL, 0);
 	}
 out:
-	VOP_UNLOCK(vp, 0);
 	/*
 	 * If we are done with the inode, reclaim it
 	 * so that it can be reused immediately.
 	 */
-	if (ip->i_e2fs_dtime != 0)
-		vrecycle(vp, NULL, curlwp);
+	*ap->a_recycle = (ip->i_e2fs_dtime != 0);
+	VOP_UNLOCK(vp, 0);
 	return (error);
 }
 
@@ -478,7 +478,7 @@ ext2fs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn, daddr_t lastbn,
 	 */
 	vp = ITOV(ip);
 	bp = getblk(vp, lbn, (int)fs->e2fs_bsize, 0, 0);
-	if (bp->b_flags & (B_DONE | B_DELWRI)) {
+	if (bp->b_oflags & (BO_DONE | BO_DELWRI)) {
 		/* Braces must be here in case trace evaluates to nothing. */
 		trace(TR_BREADHIT, pack(vp, fs->e2fs_bsize), lbn);
 	} else {

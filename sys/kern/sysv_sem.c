@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_sem.c,v 1.76 2007/11/25 19:03:24 rmind Exp $	*/
+/*	$NetBSD: sysv_sem.c,v 1.76.2.1 2007/12/04 13:03:18 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.76 2007/11/25 19:03:24 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.76.2.1 2007/12/04 13:03:18 ad Exp $");
 
 #define SYSVSEM
 
@@ -764,13 +764,20 @@ restart:
 	if (nsops <= SMALL_SOPS) {
 		sops = small_sops;
 	} else if (nsops <= seminfo.semopm) {
-		KERNEL_LOCK(1, l);		/* XXXSMP */
 		sops = kmem_alloc(nsops * sizeof(*sops), KM_SLEEP);
-		KERNEL_UNLOCK_ONE(l);		/* XXXSMP */
 	} else {
 		SEM_PRINTF(("too many sops (max=%d, nsops=%zd)\n",
 		    seminfo.semopm, nsops));
 		return (E2BIG);
+	}
+
+	error = copyin(SCARG(uap, sops), sops, nsops * sizeof(sops[0]));
+	if (error) {
+		SEM_PRINTF(("error = %d from copyin(%p, %p, %zd)\n", error,
+		    SCARG(uap, sops), &sops, nsops * sizeof(sops[0])));
+		if (sops != small_sops)
+			kmem_free(sops, nsops * sizeof(*sops));
+		return error;
 	}
 
 	mutex_enter(&semlock);
@@ -794,13 +801,6 @@ restart:
 
 	if ((error = ipcperm(cred, &semaptr->sem_perm, IPC_W))) {
 		SEM_PRINTF(("error = %d from ipaccess\n", error));
-		goto out;
-	}
-
-	if ((error = copyin(SCARG(uap, sops),
-	    sops, nsops * sizeof(sops[0]))) != 0) {
-		SEM_PRINTF(("error = %d from copyin(%p, %p, %zd)\n", error,
-		    SCARG(uap, sops), &sops, nsops * sizeof(sops[0])));
 		goto out;
 	}
 
@@ -1005,11 +1005,8 @@ done:
 
  out:
 	mutex_exit(&semlock);
-	if (sops != small_sops) {
-		KERNEL_LOCK(1, l);		/* XXXSMP */
+	if (sops != small_sops)
 		kmem_free(sops, nsops * sizeof(*sops));
-		KERNEL_UNLOCK_ONE(l);		/* XXXSMP */
-	}
 	return error;
 }
 

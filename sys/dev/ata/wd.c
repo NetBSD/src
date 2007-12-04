@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.350 2007/11/07 08:59:03 itohy Exp $ */
+/*	$NetBSD: wd.c,v 1.350.2.1 2007/12/04 13:02:56 ad Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.350 2007/11/07 08:59:03 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.350.2.1 2007/12/04 13:02:56 ad Exp $");
 
 #include "opt_ata.h"
 
@@ -652,7 +652,9 @@ wd_split_mod15_write(struct buf *bp)
 	 * Advance the pointer to the second half and issue that command
 	 * using the same opening.
 	 */
-	bp->b_flags = obp->b_flags | B_CALL;
+	bp->b_flags = obp->b_flags;
+	bp->b_oflags = obp->b_oflags;
+	bp->b_cflags = obp->b_cflags;
 	bp->b_data = (char *)bp->b_data + bp->b_bcount;
 	bp->b_blkno += (bp->b_bcount / 512);
 	bp->b_rawblkno += (bp->b_bcount / 512);
@@ -687,7 +689,7 @@ __wdstart(struct wd_softc *wd, struct buf *bp)
 		struct buf *nbp;
 
 		/* already at splbio */
-		nbp = getiobuf_nowait();
+		nbp = getiobuf(NULL, false);
 		if (__predict_false(nbp == NULL)) {
 			/* No memory -- fail the iop. */
 			bp->b_error = ENOMEM;
@@ -699,7 +701,6 @@ __wdstart(struct wd_softc *wd, struct buf *bp)
 
 		nbp->b_error = 0;
 		nbp->b_proc = bp->b_proc;
-		nbp->b_vp = NULLVP;
 		nbp->b_dev = bp->b_dev;
 
 		nbp->b_bcount = bp->b_bcount / 2;
@@ -709,7 +710,9 @@ __wdstart(struct wd_softc *wd, struct buf *bp)
 		nbp->b_blkno = bp->b_blkno;
 		nbp->b_rawblkno = bp->b_rawblkno;
 
-		nbp->b_flags = bp->b_flags | B_CALL;
+		nbp->b_flags = bp->b_flags;
+		nbp->b_oflags = bp->b_oflags;
+		nbp->b_cflags = bp->b_cflags;
 		nbp->b_iodone = wd_split_mod15_write;
 
 		/* Put ptr to orig buf in b_private and use new buf */
@@ -863,8 +866,7 @@ noerror:	if ((wd->sc_wdc_bio.flags & ATA_CORR) || wd->retries > 0)
 	rnd_add_uint32(&wd->rnd_source, bp->b_blkno);
 #endif
 	/* XXX Yuck, but we don't want to increment openings in this case */
-	if (__predict_false((bp->b_flags & B_CALL) != 0 &&
-			    bp->b_iodone == wd_split_mod15_write))
+	if (__predict_false(bp->b_iodone == wd_split_mod15_write))
 		biodone(bp);
 	else {
 		biodone(bp);
@@ -1948,7 +1950,7 @@ wi_get(void)
 	int s;
 
 	wi = malloc(sizeof(struct wd_ioctl), M_TEMP, M_WAITOK|M_ZERO);
-	simple_lock_init(&wi->wi_bp.b_interlock);
+	buf_init(&wi->wi_bp);
 	s = splbio();
 	LIST_INSERT_HEAD(&wi_head, wi, wi_list);
 	splx(s);
@@ -1967,6 +1969,7 @@ wi_free(struct wd_ioctl *wi)
 	s = splbio();
 	LIST_REMOVE(wi, wi_list);
 	splx(s);
+	buf_destroy(&wi->wi_bp);
 	free(wi, M_TEMP);
 }
 
@@ -2022,7 +2025,7 @@ wdioctlstrategy(struct buf *bp)
 		printf("wdioctlstrategy: "
 		    "No matching ioctl request found in queue\n");
 		error = EINVAL;
-		goto done;
+		goto bad;
 	}
 
 	memset(&ata_c, 0, sizeof(ata_c));
@@ -2034,7 +2037,7 @@ wdioctlstrategy(struct buf *bp)
 	if (bp->b_bcount != wi->wi_atareq.datalen) {
 		printf("physio split wd ioctl request... cannot proceed\n");
 		error = EIO;
-		goto done;
+		goto bad;
 	}
 
 	/*
@@ -2046,7 +2049,7 @@ wdioctlstrategy(struct buf *bp)
 	    (bp->b_bcount / wi->wi_softc->sc_dk.dk_label->d_secsize) >=
 	     (1 << NBBY)) {
 		error = EINVAL;
-		goto done;
+		goto bad;
 	}
 
 	/*
@@ -2055,7 +2058,7 @@ wdioctlstrategy(struct buf *bp)
 
 	if (wi->wi_atareq.timeout == 0) {
 		error = EINVAL;
-		goto done;
+		goto bad;
 	}
 
 	if (wi->wi_atareq.flags & ATACMD_READ)
@@ -2083,8 +2086,7 @@ wdioctlstrategy(struct buf *bp)
 	if (wi->wi_softc->atabus->ata_exec_command(wi->wi_softc->drvp, &ata_c)
 	    != ATACMD_COMPLETE) {
 		wi->wi_atareq.retsts = ATACMD_ERROR;
-		error = EIO;
-		goto done;
+		goto bad;
 	}
 
 	if (ata_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
@@ -2107,7 +2109,10 @@ wdioctlstrategy(struct buf *bp)
 		}
 	}
 
-done:
+	bp->b_error = 0;
+	biodone(bp);
+	return;
+bad:
 	bp->b_error = error;
 	biodone(bp);
 }

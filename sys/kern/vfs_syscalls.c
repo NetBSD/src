@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.333 2007/11/30 16:52:20 yamt Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.333.2.1 2007/12/04 13:03:22 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.333 2007/11/30 16:52:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.333.2.1 2007/12/04 13:03:22 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -306,7 +306,7 @@ mount_domount(struct lwp *l, struct vnode **vpp, struct vfsops *vfsops,
 
 	TAILQ_INIT(&mp->mnt_vnodelist);
 	lockinit(&mp->mnt_lock, PVFS, "vfslock", 0, 0);
-	simple_lock_init(&mp->mnt_slock);
+	mutex_init(&mp->mnt_mutex, MUTEX_DEFAULT, IPL_NONE);
 	(void)vfs_busy(mp, LK_NOWAIT, 0);
 
 	mp->mnt_vnodecovered = vp;
@@ -661,8 +661,7 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 
 	mp->mnt_iflag |= IMNT_UNMOUNT;
 	mp->mnt_unmounter = l;
-	mutex_exit(&mountlist_lock);	/* XXX */
-	lockmgr(&mp->mnt_lock, LK_DRAIN, NULL);
+	lockmgr(&mp->mnt_lock, LK_DRAIN | LK_INTERLOCK, &mountlist_lock);
 
 	async = mp->mnt_flag & MNT_ASYNC;
 	mp->mnt_flag &= ~MNT_ASYNC;
@@ -686,20 +685,20 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 		mp->mnt_iflag &= ~IMNT_UNMOUNT;
 		mp->mnt_unmounter = NULL;
 		mp->mnt_flag |= async;
-		mutex_exit(&mountlist_lock);	/* XXX */
-		lockmgr(&mp->mnt_lock, LK_RELEASE | LK_REENABLE,
-		    NULL);
+		lockmgr(&mp->mnt_lock, LK_RELEASE | LK_INTERLOCK | LK_REENABLE,
+		    &mountlist_lock);
 		if (used_syncer)
 			mutex_exit(&syncer_mutex);
-		simple_lock(&mp->mnt_slock);
+		mutex_enter(&mp->mnt_mutex);
 		while (mp->mnt_wcnt > 0) {
 			wakeup(mp);
-			ltsleep(&mp->mnt_wcnt, PVFS, "mntwcnt1",
-				0, &mp->mnt_slock);
+			mtsleep(&mp->mnt_wcnt, PVFS, "mntwcnt1",
+				0, &mp->mnt_mutex);
 		}
-		simple_unlock(&mp->mnt_slock);
+		mutex_exit(&mp->mnt_mutex);
 		return (error);
 	}
+	vfs_scrubvnlist(mp);
 	mutex_enter(&mountlist_lock);
 	CIRCLEQ_REMOVE(&mountlist, mp, mnt_list);
 	if ((coveredvp = mp->mnt_vnodecovered) != NULLVP)
@@ -707,18 +706,17 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 	if (TAILQ_FIRST(&mp->mnt_vnodelist) != NULL)
 		panic("unmount: dangling vnode");
 	mp->mnt_iflag |= IMNT_GONE;
-	mutex_exit(&mountlist_lock);
-	lockmgr(&mp->mnt_lock, LK_RELEASE, NULL);
+	lockmgr(&mp->mnt_lock, LK_RELEASE | LK_INTERLOCK, &mountlist_lock);
 	if (coveredvp != NULLVP)
 		vrele(coveredvp);
 	if (used_syncer)
 		mutex_exit(&syncer_mutex);
-	simple_lock(&mp->mnt_slock);
+	mutex_enter(&mp->mnt_mutex);
 	while (mp->mnt_wcnt > 0) {
 		wakeup(mp);
-		ltsleep(&mp->mnt_wcnt, PVFS, "mntwcnt2", 0, &mp->mnt_slock);
+		mtsleep(&mp->mnt_wcnt, PVFS, "mntwcnt2", 0, &mp->mnt_mutex);
 	}
-	simple_unlock(&mp->mnt_slock);
+	mutex_exit(&mp->mnt_mutex);
 	vfs_hooks_unmount(mp);
 	vfs_delref(mp->mnt_op);
 	vfs_destroy(mp);
@@ -3560,9 +3558,9 @@ sys_revoke(struct lwp *l, void *v, register_t *retval)
 	    (error = kauth_authorize_generic(l->l_cred,
 	    KAUTH_GENERIC_ISSUSER, NULL)) != 0)
 		goto out;
-	simple_lock(&vp->v_interlock);
+	mutex_enter(&vp->v_interlock);
 	revoke = (vp->v_usecount > 1 || (vp->v_iflag & (VI_ALIASED|VI_LAYER)));
-	simple_unlock(&vp->v_interlock);
+	mutex_exit(&vp->v_interlock);
 	if (revoke)
 		VOP_REVOKE(vp, REVOKEALL);
 out:

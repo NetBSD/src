@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vnops.c,v 1.15 2007/11/26 19:01:54 pooka Exp $	*/
+/*	$NetBSD: sysvbfs_vnops.c,v 1.15.2.1 2007/12/04 13:03:09 ad Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.15 2007/11/26 19:01:54 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.15.2.1 2007/12/04 13:03:09 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -572,12 +572,13 @@ sysvbfs_inactive(void *arg)
 {
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
+		bool *a_inactive;
 	} */ *a = arg;
 	struct vnode *v = a->a_vp;
 
 	DPRINTF("%s:\n", __FUNCTION__);
+	*ap->a_inactive = true;
 	VOP_UNLOCK(v, 0);
-	vrecycle(v, NULL, curlwp);
 
 	return 0;
 }
@@ -593,9 +594,9 @@ sysvbfs_reclaim(void *v)
 	struct sysvbfs_node *bnode = vp->v_data;
 
 	DPRINTF("%s:\n", __FUNCTION__);
-	simple_lock(&mntvnode_slock);
+	mutex_enter(&mntvnode_lock);
 	LIST_REMOVE(bnode, link);
-	simple_unlock(&mntvnode_slock);
+	mutex_exit(&mntvnode_lock);
 	cache_purge(vp);
 	genfs_node_destroy(vp);
 	pool_put(&sysvbfs_node_pool, bnode);

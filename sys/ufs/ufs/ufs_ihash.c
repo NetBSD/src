@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_ihash.c,v 1.23 2007/05/28 23:42:56 ad Exp $	*/
+/*	$NetBSD: ufs_ihash.c,v 1.23.16.1 2007/12/04 13:03:54 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_ihash.c,v 1.23 2007/05/28 23:42:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_ihash.c,v 1.23.16.1 2007/12/04 13:03:54 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -148,7 +148,7 @@ ufs_ihashget(dev_t dev, ino_t inum, int flags)
 			if (flags == 0) {
 				mutex_exit(&ufs_ihash_lock);
 			} else {
-				simple_lock(&vp->v_interlock);
+				mutex_enter(&vp->v_interlock);
 				mutex_exit(&ufs_ihash_lock);
 				if (vget(vp, flags | LK_INTERLOCK))
 					goto loop;

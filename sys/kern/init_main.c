@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.330 2007/11/15 20:12:04 ad Exp $	*/
+/*	$NetBSD: init_main.c,v 1.330.2.1 2007/12/04 13:03:12 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.330 2007/11/15 20:12:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.330.2.1 2007/12/04 13:03:12 ad Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_ntp.h"
@@ -422,6 +422,9 @@ main(void)
 	/* Initialize tty subsystem. */
 	tty_init();
 	ttyldisc_init();
+
+	/* Initialize the buffer cache, part 2. */
+	bufinit2();
 
 	/* Initialize the disk wedge subsystem. */
 	dkwedge_init();
