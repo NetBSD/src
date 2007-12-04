@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.69 2007/11/10 00:14:32 dyoung Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.70 2007/12/04 10:27:34 dyoung Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.69 2007/11/10 00:14:32 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.70 2007/12/04 10:27:34 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1095,7 +1095,7 @@ prelist_update(struct nd_prefixctl *new,
 	 * consider autoconfigured addresses while RFC2462 simply said
 	 * "address".
 	 */
-	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
+	IFADDR_FOREACH(ifa, ifp) {
 		struct in6_ifaddr *ifa6;
 		u_int32_t remaininglifetime;
 
@@ -1554,7 +1554,7 @@ nd6_prefix_onlink(struct nd_prefix *pr)
 	    IN6_IFF_NOTREADY | IN6_IFF_ANYCAST);
 	if (ifa == NULL) {
 		/* XXX: freebsd does not have ifa_ifwithaf */
-		TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
+		IFADDR_FOREACH(ifa, ifp) {
 			if (ifa->ifa_addr->sa_family == AF_INET6)
 				break;
 		}
