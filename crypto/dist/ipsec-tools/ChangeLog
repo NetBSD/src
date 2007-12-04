@@ -1,3 +1,11 @@
+2007-12-04  Matthew Grooms
+	From Timo Teras <timo.teras@iki.fi>:
+	* src/racoon/ipsec_doi.c
+	  src/racoon/ipsec_doi.h
+	  src/racoon/isakmp_quick.c: modify ipsecdoi_sockaddr2id to obtain host
+	  address without specific prefix legth.
+	  src/racoon/isakmp_quick.c: correct a memory leak in phase2.
+	
 2007-11-29  Yvan Vanhullebus  <vanhu@netasq.com>
 	From Natanael Copa <natanael.copa@gmail.com>:
 	* src/racoon/Makefile.am: fixed a race condition when building
@@ -9,7 +17,6 @@
 	* src/racoon/policy.c: better matching of SPD entries in
 	  getsp_r().
 	* src/racoon/isakmp_quick.c: added some debug in get_proposal_r().
-	
 
 2007-10-18  Emmanuel Dreyfus  <manu@netbsd.org>
 	* src/racoon/{isakmp_unity.[ch]|isakmp_cfg.c|racoon.conf.5}:
