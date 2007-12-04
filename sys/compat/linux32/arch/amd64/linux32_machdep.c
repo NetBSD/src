@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_machdep.c,v 1.13 2007/11/24 23:52:56 christos Exp $ */
+/*	$NetBSD: linux32_machdep.c,v 1.14 2007/12/04 18:40:18 dsl Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -31,7 +31,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_machdep.c,v 1.13 2007/11/24 23:52:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_machdep.c,v 1.14 2007/12/04 18:40:18 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,16 +87,16 @@ extern char linux32_sigcode[1];
 extern char linux32_rt_sigcode[1];
 extern char linux32_esigcode[1];
 
-extern void (osyscall_return) __P((void));
+extern void (osyscall_return)(void);
 
-static void linux32_save_ucontext __P((struct lwp *, struct trapframe *,
-    const sigset_t *, struct sigaltstack *, struct linux32_ucontext *));
-static void linux32_save_sigcontext __P((struct lwp *, struct trapframe *,
-    const sigset_t *, struct linux32_sigcontext *));
-static void linux32_rt_sendsig __P((const ksiginfo_t *, const sigset_t *));
-static void linux32_old_sendsig __P((const ksiginfo_t *, const sigset_t *));
-static int linux32_restore_sigcontext __P((struct lwp *, 
-    struct linux32_sigcontext *, register_t *));
+static void linux32_save_ucontext(struct lwp *, struct trapframe *,
+    const sigset_t *, struct sigaltstack *, struct linux32_ucontext *);
+static void linux32_save_sigcontext(struct lwp *, struct trapframe *,
+    const sigset_t *, struct linux32_sigcontext *);
+static void linux32_rt_sendsig(const ksiginfo_t *, const sigset_t *);
+static void linux32_old_sendsig(const ksiginfo_t *, const sigset_t *);
+static int linux32_restore_sigcontext(struct lwp *, 
+    struct linux32_sigcontext *, register_t *);
 
 void
 linux32_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)

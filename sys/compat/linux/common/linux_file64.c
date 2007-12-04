@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file64.c,v 1.41 2007/11/26 19:01:31 pooka Exp $	*/
+/*	$NetBSD: linux_file64.c,v 1.42 2007/12/04 18:40:15 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.41 2007/11/26 19:01:31 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.42 2007/12/04 18:40:15 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,8 +78,8 @@ __KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.41 2007/11/26 19:01:31 pooka Exp 
 
 # ifndef COMPAT_LINUX32
 
-static void bsd_to_linux_stat __P((struct stat *, struct linux_stat64 *));
-static int linux_do_stat64 __P((struct lwp *, void *, register_t *, int));
+static void bsd_to_linux_stat(struct stat *, struct linux_stat64 *);
+static int linux_do_stat64(struct lwp *, void *, register_t *, int);
 
 /*
  * Convert a NetBSD stat structure to a Linux stat structure.
@@ -238,10 +238,10 @@ linux_sys_ftruncate64(l, v, retval)
 # endif /* !COMPAT_LINUX32 */
 
 # if !defined(__m68k__) && (!defined(__amd64__) || defined(COMPAT_LINUX32))
-static void bsd_to_linux_flock64 __P((struct linux_flock64 *,
-    const struct flock *));
-static void linux_to_bsd_flock64 __P((struct flock *,
-    const struct linux_flock64 *));
+static void bsd_to_linux_flock64(struct linux_flock64 *,
+    const struct flock *);
+static void linux_to_bsd_flock64(struct flock *,
+    const struct linux_flock64 *);
 
 static void
 bsd_to_linux_flock64(lfp, bfp)

@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_signal.h,v 1.7 2005/12/11 12:20:02 christos Exp $ */
+/*	$NetBSD: freebsd_signal.h,v 1.8 2007/12/04 18:40:08 dsl Exp $ */
 
 /*
  * Copyright (c) 2000 Atsushi Onoe
@@ -36,7 +36,7 @@
 #define	_FREEBSD_SIG_H
 
 struct	freebsd_sigaction4 {
-	void    (*freebsd_sa_handler) __P((int)); /* signal handler */
+	void    (*freebsd_sa_handler)(int); /* signal handler */
 	int	freebsd_sa_flags;		/* see signal options below */
 	sigset_t freebsd_sa_mask;		/* signal mask to apply */
 };

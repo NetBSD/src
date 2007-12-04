@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_sig.h,v 1.4 2005/12/11 12:20:02 christos Exp $	*/
+/*	$NetBSD: hpux_sig.h,v 1.5 2007/12/04 18:40:09 dsl Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -82,8 +82,8 @@
  */
 
 #ifdef _KERNEL
-int	hpuxtobsdsig __P((int));
-int	bsdtohpuxsig __P((int));
-void	hpuxtobsdmask __P((int, sigset_t *));
-void	bsdtohpuxmask __P((const sigset_t *, int *));
+int	hpuxtobsdsig(int);
+int	bsdtohpuxsig(int);
+void	hpuxtobsdmask(int, sigset_t *);
+void	bsdtohpuxmask(const sigset_t *, int *);
 #endif /* _KERNEL */

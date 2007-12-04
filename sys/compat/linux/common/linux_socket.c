@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.80 2007/10/19 18:52:12 njoly Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.81 2007/12/04 18:40:17 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.80 2007/10/19 18:52:12 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.81 2007/12/04 18:40:17 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -117,19 +117,19 @@ __KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.80 2007/10/19 18:52:12 njoly Exp 
  * than a normal syscall.
  */
 
-static int linux_to_bsd_domain __P((int));
-static int bsd_to_linux_domain __P((int));
-int linux_to_bsd_sopt_level __P((int));
-int linux_to_bsd_so_sockopt __P((int));
-int linux_to_bsd_ip_sockopt __P((int));
-int linux_to_bsd_tcp_sockopt __P((int));
-int linux_to_bsd_udp_sockopt __P((int));
-int linux_getifhwaddr __P((struct lwp *, register_t *, u_int, void *));
+static int linux_to_bsd_domain(int);
+static int bsd_to_linux_domain(int);
+int linux_to_bsd_sopt_level(int);
+int linux_to_bsd_so_sockopt(int);
+int linux_to_bsd_ip_sockopt(int);
+int linux_to_bsd_tcp_sockopt(int);
+int linux_to_bsd_udp_sockopt(int);
+int linux_getifhwaddr(struct lwp *, register_t *, u_int, void *);
 static int linux_get_sa(struct lwp *, int, struct mbuf **,
 		const struct osockaddr *, int);
-static int linux_sa_put __P((struct osockaddr *osa));
-static int linux_to_bsd_msg_flags __P((int));
-static int bsd_to_linux_msg_flags __P((int));
+static int linux_sa_put(struct osockaddr *osa);
+static int linux_to_bsd_msg_flags(int);
+static int bsd_to_linux_msg_flags(int);
 
 static const int linux_to_bsd_domain_[LINUX_AF_MAX] = {
 	AF_UNSPEC,
