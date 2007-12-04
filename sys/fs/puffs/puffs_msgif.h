@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.h,v 1.61 2007/11/27 11:31:17 pooka Exp $	*/
+/*	$NetBSD: puffs_msgif.h,v 1.62 2007/12/04 19:43:42 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -46,13 +46,15 @@
 
 #include <uvm/uvm_prot.h>
 
-#define PUFFSOP_VFS		0x01	/* read/write	*/
-#define PUFFSOP_VN		0x02	/* read/write	*/
-#define PUFFSOP_CACHE		0x03	/* read 	*/
-#define PUFFSOP_ERROR		0x04	/* read		*/
-#define PUFFSOP_FLUSH		0x05	/* write	*/
-#define PUFFSOP_SUSPEND		0x06	/* write	*/
+#define PUFFSOP_VFS		0x01	/* kernel-> */
+#define PUFFSOP_VN		0x02	/* kernel-> */
+#define PUFFSOP_CACHE		0x03	/* only kernel-> */
+#define PUFFSOP_ERROR		0x04	/* only kernel-> */
+#define PUFFSOP_FLUSH		0x05	/* ->kernel */
+#define PUFFSOP_SUSPEND		0x06	/* ->kernel */
+
 #define PUFFSOPFLAG_FAF		0x10	/* fire-and-forget */
+#define PUFFSOPFLAG_ISRESPONSE	0x20	/* req is actually a resp */
 
 #define PUFFSOP_OPCMASK		0x07
 #define PUFFSOP_OPCLASS(a)	((a) & PUFFSOP_OPCMASK)
