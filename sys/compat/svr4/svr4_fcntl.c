@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_fcntl.c,v 1.61 2007/11/26 19:01:33 pooka Exp $	 */
+/*	$NetBSD: svr4_fcntl.c,v 1.61.2.1 2007/12/04 13:02:53 ad Exp $	 */
 
 /*-
  * Copyright (c) 1994, 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_fcntl.c,v 1.61 2007/11/26 19:01:33 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_fcntl.c,v 1.61.2.1 2007/12/04 13:02:53 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -263,9 +263,9 @@ fd_revoke(struct lwp *l, int fd, register_t *retval)
 	    KAUTH_GENERIC_ISSUSER, NULL)) != 0)
 		goto out;
 
-	simple_lock(&vp->v_interlock);
+	mutex_enter(&vp->v_interlock);
 	revoke = (vp->v_usecount > 1 || (vp->v_iflag & VI_ALIASED));
-	simple_unlock(&vp->v_interlock);
+	mutex_exit(&vp->v_interlock);
 	if (revoke)
 		VOP_REVOKE(vp, REVOKEALL);
 out:

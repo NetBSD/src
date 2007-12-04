@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.70 2007/11/26 19:02:34 pooka Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.70.2.1 2007/12/04 13:03:54 ad Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.70 2007/11/26 19:02:34 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.70.2.1 2007/12/04 13:03:54 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -77,7 +77,7 @@ ufs_inactive(void *v)
 {
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
-		struct lwp *a_l;
+		struct bool *a_recycle;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct inode *ip = VTOI(vp);
@@ -86,7 +86,7 @@ ufs_inactive(void *v)
 	mode_t mode;
 	int error = 0;
 
-	if (prtactive && vp->v_usecount != 0)
+	if (prtactive && vp->v_usecount > 1)
 		vprint("ufs_inactive: pushing active", vp);
 
 	transmp = vp->v_mount;
@@ -118,28 +118,24 @@ ufs_inactive(void *v)
 		DIP_ASSIGN(ip, rdev, 0);
 		mode = ip->i_mode;
 		ip->i_mode = 0;
+		ip->i_omode = mode;
 		DIP_ASSIGN(ip, mode, 0);
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
-		simple_lock(&vp->v_interlock);
-		vp->v_iflag |= VI_FREEING;
-		simple_unlock(&vp->v_interlock);
 		if (DOINGSOFTDEP(vp))
 			softdep_change_linkcnt(ip);
-		UFS_VFREE(vp, ip->i_number, mode);
-	}
-
-	if (ip->i_flag & (IN_CHANGE | IN_UPDATE | IN_MODIFIED)) {
+		/*
+		 * Defer final inode free and update to ufs_reclaim().
+		 */
+	} else if (ip->i_flag & (IN_CHANGE | IN_UPDATE | IN_MODIFIED)) {
 		UFS_UPDATE(vp, NULL, NULL, 0);
 	}
 out:
-	VOP_UNLOCK(vp, 0);
 	/*
 	 * If we are done with the inode, reclaim it
 	 * so that it can be reused immediately.
 	 */
-
-	if (ip->i_mode == 0)
-		vrecycle(vp, NULL, l);
+	*ap->a_recycle = (ip->i_mode == 0);
+	VOP_UNLOCK(vp, 0);
 	fstrans_done(transmp);
 	return (error);
 }
@@ -152,15 +148,20 @@ ufs_reclaim(struct vnode *vp)
 {
 	struct inode *ip = VTOI(vp);
 
-	if (prtactive && vp->v_usecount != 0)
+	if (prtactive && vp->v_usecount > 1)
 		vprint("ufs_reclaim: pushing active", vp);
 
-	UFS_UPDATE(vp, NULL, NULL, UPDATE_CLOSE);
-
 	/*
-	 * Remove the inode from its hash chain.
+	 * The inode must be freed and updated before being removed
+	 * from its hash chain.  Other threads trying to gain a hold
+	 * on the inode will be stalled because it is locked (VI_XLOCK).
 	 */
+	if (ip->i_nlink <= 0 && (vp->v_mount->mnt_flag & MNT_RDONLY) == 0) {
+		UFS_VFREE(vp, ip->i_number, ip->i_omode);
+	}
+	UFS_UPDATE(vp, NULL, NULL, UPDATE_CLOSE);
 	ufs_ihashrem(ip);
+
 	/*
 	 * Purge old data structures associated with the inode.
 	 */
@@ -223,23 +224,23 @@ ufs_balloc_range(struct vnode *vp, off_t off, off_t len, kauth_cred_t cred,
 	pgssize = npages * sizeof(struct vm_page *);
 	pgs = kmem_zalloc(pgssize, KM_SLEEP);
 
-	simple_lock(&uobj->vmobjlock);
+	mutex_enter(&uobj->vmobjlock);
 	error = VOP_GETPAGES(vp, pagestart, pgs, &npages, 0,
 	    VM_PROT_WRITE, 0,
 	    PGO_SYNCIO|PGO_PASTEOF|PGO_NOBLOCKALLOC|PGO_NOTIMESTAMP);
 	if (error) {
 		goto out;
 	}
-	simple_lock(&uobj->vmobjlock);
-	uvm_lock_pageq();
+	mutex_enter(&uobj->vmobjlock);
+	mutex_enter(&uvm_pageqlock);
 	for (i = 0; i < npages; i++) {
 		UVMHIST_LOG(ubchist, "got pgs[%d] %p", i, pgs[i],0,0);
 		KASSERT((pgs[i]->flags & PG_RELEASED) == 0);
 		pgs[i]->flags &= ~PG_CLEAN;
 		uvm_pageactivate(pgs[i]);
 	}
-	uvm_unlock_pageq();
-	simple_unlock(&uobj->vmobjlock);
+	mutex_exit(&uvm_pageqlock);
+	mutex_exit(&uobj->vmobjlock);
 
 	/*
 	 * adjust off to be block-aligned.
@@ -263,7 +264,7 @@ ufs_balloc_range(struct vnode *vp, off_t off, off_t len, kauth_cred_t cred,
 	 */
 
 	GOP_SIZE(vp, off + len, &eob, 0);
-	simple_lock(&uobj->vmobjlock);
+	mutex_enter(&uobj->vmobjlock);
 	for (i = 0; i < npages; i++) {
 		if (error) {
 			pgs[i]->flags |= PG_RELEASED;
@@ -273,15 +274,15 @@ ufs_balloc_range(struct vnode *vp, off_t off, off_t len, kauth_cred_t cred,
 		}
 	}
 	if (error) {
-		uvm_lock_pageq();
+		mutex_enter(&uvm_pageqlock);
 		uvm_page_unbusy(pgs, npages);
-		uvm_unlock_pageq();
+		mutex_exit(&uvm_pageqlock);
 	} else {
 		uvm_page_unbusy(pgs, npages);
 	}
-	simple_unlock(&uobj->vmobjlock);
+	mutex_exit(&uobj->vmobjlock);
 
  out:
-	kmem_free(pgs, pgssize);
+ 	kmem_free(pgs, pgssize);
 	return error;
 }

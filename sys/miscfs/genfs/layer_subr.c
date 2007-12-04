@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_subr.c,v 1.22 2007/10/10 20:42:28 ad Exp $	*/
+/*	$NetBSD: layer_subr.c,v 1.22.6.1 2007/12/04 13:03:25 ad Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_subr.c,v 1.22 2007/10/10 20:42:28 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_subr.c,v 1.22.6.1 2007/12/04 13:03:25 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -193,9 +193,9 @@ layer_node_alloc(mp, lowervp, vpp)
 			&vp)) != 0)
 		return (error);
 	vp->v_type = lowervp->v_type;
-	simple_lock(&vp->v_interlock);
+	mutex_enter(&vp->v_interlock);
 	vp->v_iflag |= VI_LAYER;
-	simple_unlock(&vp->v_interlock);
+	mutex_exit(&vp->v_interlock);
 
 	xp = malloc(lmp->layerm_size, M_TEMP, M_WAITOK);
 	if (vp->v_type == VBLK || vp->v_type == VCHR) {

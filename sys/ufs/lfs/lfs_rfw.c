@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_rfw.c,v 1.5 2007/10/10 20:42:35 ad Exp $	*/
+/*	$NetBSD: lfs_rfw.c,v 1.5.6.1 2007/12/04 13:03:51 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #ifdef LFS_KERNEL_RFW
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_rfw.c,v 1.5 2007/10/10 20:42:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_rfw.c,v 1.5.6.1 2007/12/04 13:03:51 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -200,16 +200,16 @@ lfs_rf_valloc(struct lfs *fs, ino_t ino, int vers, struct lwp *l,
 		/* The dirop-nature of this vnode is past */
 		lfs_unmark_vnode(vp);
 		(void)lfs_vunref(vp);
-		vp->v_uflag &= ~VU_DIROP;
-		simple_lock(&fs->lfs_interlock);
-		simple_lock(&lfs_subsys_lock);
+		vp->v_flag &= ~VDIROP;
+		mutex_enter(&fs->lfs_interlock);
+		mutex_enter(&lfs_subsys_lock);
 		--lfs_dirvcount;
-		simple_unlock(&lfs_subsys_lock);
+		mutex_exit(&lfs_subsys_lock);
 		--fs->lfs_dirvcount;
 		TAILQ_REMOVE(&fs->lfs_dchainhd, ip, i_lfs_dchain);
 		wakeup(&lfs_dirvcount);
 		wakeup(&fs->lfs_dirvcount);
-		simple_unlock(&fs->lfs_interlock);
+		mutex_exit(&fs->lfs_interlock);
 	}
 	*vpp = vp;
 	return error;
@@ -572,20 +572,19 @@ check_segsum(struct lfs *fs, daddr_t offset, u_int64_t nextserial,
 	if (flags & CHECK_UPDATE) {
 		fs->lfs_avail -= (offset - oldoffset);
 		/* Don't clog the buffer queue */
-		simple_lock(&lfs_subsys_lock);
+		mutex_enter(&lfs_subsys_lock);
 		if (locked_queue_count > LFS_MAX_BUFS ||
 		    locked_queue_bytes > LFS_MAX_BYTES) {
 			lfs_flush(fs, SEGM_CKP, 0);
 		}
-		simple_unlock(&lfs_subsys_lock);
+		mutex_exit(&lfs_subsys_lock);
 	}
 
     err2:
 	if (flags & CHECK_CKSUM)
 		free(datap, M_SEGMENT);
     err1:
-	bp->b_flags |= B_AGE;
-	brelse(bp);
+	brelse(bp, BC_AGE);
 
 	/* XXX should we update the serial number even for bad psegs? */
 	if ((flags & CHECK_UPDATE) && offset > 0 && fs->lfs_version > 1)

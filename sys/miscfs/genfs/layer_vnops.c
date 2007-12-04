@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vnops.c,v 1.32 2007/10/10 20:42:29 ad Exp $	*/
+/*	$NetBSD: layer_vnops.c,v 1.32.6.1 2007/12/04 13:03:25 ad Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -232,7 +232,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.32 2007/10/10 20:42:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.32.6.1 2007/12/04 13:03:25 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -637,7 +637,7 @@ layer_lock(v)
 		 */
 		lowervp = LAYERVPTOLOWERVP(vp);
 		if (flags & LK_INTERLOCK) {
-			simple_unlock(&vp->v_interlock);
+			mutex_exit(&vp->v_interlock);
 			flags &= ~LK_INTERLOCK;
 		}
 		if ((flags & LK_TYPE_MASK) == LK_DRAIN) {
@@ -673,7 +673,7 @@ layer_unlock(v)
 			&vp->v_interlock));
 	} else {
 		if (flags & LK_INTERLOCK) {
-			simple_unlock(&vp->v_interlock);
+			mutex_exit(&vp->v_interlock);
 			flags &= ~LK_INTERLOCK;
 		}
 		VOP_UNLOCK(LAYERVPTOLOWERVP(vp), flags);
@@ -738,7 +738,7 @@ layer_inactive(v)
 {
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
-		struct lwp *a_l;
+		bool *a_recycle;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 
@@ -760,9 +760,8 @@ layer_inactive(v)
 	 * ..., but don't cache the device node. Also, if we did a
 	 * remove, don't cache the node.
 	 */
-	if (vp->v_type == VBLK || vp->v_type == VCHR
-	    || (VTOLAYER(vp)->layer_flags & LAYERFS_REMOVED))
-		vgone(vp);
+	*ap->a_recycle = (vp->v_type == VBLK || vp->v_type == VCHR
+	    || (VTOLAYER(vp)->layer_flags & LAYERFS_REMOVED));
 	return (0);
 }
 
@@ -969,8 +968,8 @@ layer_getpages(v)
 		return EBUSY;
 	}
 	ap->a_vp = LAYERVPTOLOWERVP(vp);
-	simple_unlock(&vp->v_interlock);
-	simple_lock(&ap->a_vp->v_interlock);
+	mutex_exit(&vp->v_interlock);
+	mutex_enter(&ap->a_vp->v_interlock);
 	error = VCALL(ap->a_vp, VOFFSET(vop_getpages), ap);
 	return error;
 }
@@ -993,11 +992,11 @@ layer_putpages(v)
 	 */
 
 	ap->a_vp = LAYERVPTOLOWERVP(vp);
-	simple_unlock(&vp->v_interlock);
+	mutex_exit(&vp->v_interlock);
 	if (ap->a_flags & PGO_RECLAIM) {
 		return 0;
 	}
-	simple_lock(&ap->a_vp->v_interlock);
+	mutex_enter(&ap->a_vp->v_interlock);
 	error = VCALL(ap->a_vp, VOFFSET(vop_putpages), ap);
 	return error;
 }

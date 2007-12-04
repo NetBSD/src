@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.23 2007/11/26 19:01:58 pooka Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.23.2.1 2007/12/04 13:03:12 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.23 2007/11/26 19:01:58 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.23.2.1 2007/12/04 13:03:12 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1093,7 +1093,7 @@ union_revoke(v)
 		VOP_REVOKE(UPPERVP(vp), ap->a_flags);
 	if (LOWERVP(vp))
 		VOP_REVOKE(LOWERVP(vp), ap->a_flags);
-	vgone(vp);
+	vgone(vp);	/* XXXAD?? */
 	return (0);
 }
 
@@ -1620,6 +1620,7 @@ union_inactive(v)
 	struct vop_inactive_args /* {
 		const struct vnodeop_desc *a_desc;
 		struct vnode *a_vp;
+		bool *a_recycle;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct union_node *un = VTOUNION(vp);
@@ -1645,10 +1646,8 @@ union_inactive(v)
 		un->un_dircache = 0;
 	}
 
+	*ap->a_recycle = ((un->un_flags & UN_CACHED) == 0);
 	VOP_UNLOCK(vp, 0);
-
-	if ((un->un_flags & UN_CACHED) == 0)
-		vgone(vp);
 
 	return (0);
 }
@@ -1985,8 +1984,8 @@ union_getpages(v)
 		return EBUSY;
 	}
 	ap->a_vp = OTHERVP(vp);
-	simple_unlock(&vp->v_interlock);
-	simple_lock(&ap->a_vp->v_interlock);
+	mutex_exit(&vp->v_interlock);
+	mutex_enter(&ap->a_vp->v_interlock);
 	error = VCALL(ap->a_vp, VOFFSET(vop_getpages), ap);
 	return error;
 }
@@ -2009,11 +2008,11 @@ union_putpages(v)
 	 */
 
 	ap->a_vp = OTHERVP(vp);
-	simple_unlock(&vp->v_interlock);
+	mutex_exit(&vp->v_interlock);
+	mutex_enter(&ap->a_vp->v_interlock);
 	if (ap->a_flags & PGO_RECLAIM) {
 		return 0;
 	}
-	simple_lock(&ap->a_vp->v_interlock);
 	error = VCALL(ap->a_vp, VOFFSET(vop_putpages), ap);
 	return error;
 }

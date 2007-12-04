@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.83 2007/12/03 20:26:25 ad Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.83.2.1 2007/12/04 13:03:14 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -205,7 +205,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.83 2007/12/03 20:26:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.83.2.1 2007/12/04 13:03:14 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -578,6 +578,7 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, bool inmem, int flags,
 	l2->l_mutex = l1->l_cpu->ci_schedstate.spc_mutex;
 	l2->l_cpu = l1->l_cpu;
 	l2->l_flag = inmem ? LW_INMEM : 0;
+	l2->l_pflag = LP_MPSAFE;
 
 	if (p2->p_flag & PK_SYSTEM) {
 		/*
@@ -910,8 +911,6 @@ lwp_free(struct lwp *l, bool recycle, bool last)
 	 *
 	 * We don't recycle the VM resources at this time.
 	 */
-	KERNEL_LOCK(1, curlwp);		/* XXXSMP */
-
 	if (l->l_lwpctl != NULL)
 		lwp_ctl_free(l);
 	sched_lwp_exit(l);
@@ -926,7 +925,6 @@ lwp_free(struct lwp *l, bool recycle, bool last)
 	KASSERT(l->l_inheritedprio == -1);
 	if (!recycle)
 		pool_put(&lwp_pool, l);
-	KERNEL_UNLOCK_ONE(curlwp);	/* XXXSMP */
 }
 
 /*
@@ -1086,11 +1084,8 @@ lwp_update_creds(struct lwp *l)
 	kauth_cred_hold(p->p_cred);
 	l->l_cred = p->p_cred;
 	mutex_exit(&p->p_mutex);
-	if (oc != NULL) {
-		KERNEL_LOCK(1, l);	/* XXXSMP */
+	if (oc != NULL)
 		kauth_cred_free(oc);
-		KERNEL_UNLOCK_ONE(l);	/* XXXSMP */
-	}
 }
 
 /*
@@ -1231,12 +1226,10 @@ lwp_userret(struct lwp *l)
 		 */
 		if ((l->l_flag & (LW_PENDSIG | LW_WCORE | LW_WEXIT)) ==
 		    LW_PENDSIG) {
-			KERNEL_LOCK(1, l);	/* XXXSMP pool_put() below */
 			mutex_enter(&p->p_smutex);
 			while ((sig = issignal(l)) != 0)
 				postsig(sig);
 			mutex_exit(&p->p_smutex);
-			KERNEL_UNLOCK_LAST(l);	/* XXXSMP */
 		}
 
 		/*
@@ -1261,7 +1254,6 @@ lwp_userret(struct lwp *l)
 
 		/* Process is exiting. */
 		if ((l->l_flag & LW_WEXIT) != 0) {
-			KERNEL_LOCK(1, l);
 			lwp_exit(l);
 			KASSERT(0);
 			/* NOTREACHED */

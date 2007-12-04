@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.21 2007/12/03 15:33:46 ad Exp $	*/
+/*	$NetBSD: spl.S,v 1.21.2.1 2007/12/04 13:02:50 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -313,6 +313,7 @@ IDTVEC(softintr)
  *	%eax		prevlwp from cpu_switchto()
  */
 NENTRY(softintr_ret)
+	incl	CPUVAR(MTX_COUNT)	/* re-adjust after mi_switch */
 	movl	$0, L_CTXSWTCH(%eax)	/* %eax from cpu_switchto */
 	cli
 	jmp	*%esi			/* back to splx/doreti */

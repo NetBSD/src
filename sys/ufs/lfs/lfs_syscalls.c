@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.124 2007/10/10 20:42:35 ad Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.124.6.1 2007/12/04 13:03:52 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.124 2007/10/10 20:42:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.124.6.1 2007/12/04 13:03:52 ad Exp $");
 
 #ifndef LFS
 # define LFS		/* for prototypes in syscallargs.h */
@@ -366,7 +366,7 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov,
 
 		/* Past this point we are guaranteed that vp, ip are valid. */
 
-		/* Can't clean VU_DIROP directories in case of truncation */
+		/* Can't clean VDIROP directories in case of truncation */
 		/* XXX - maybe we should mark removed dirs specially? */
 		if (vp->v_type == VDIR && (vp->v_uflag & VU_DIROP)) {
 			do_again++;
@@ -379,8 +379,11 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov,
 			/* XXX but only write the inode if it's the right one */
 			if (blkp->bi_inode != LFS_IFILE_INUM) {
 				LFS_IENTRY(ifp, fs, blkp->bi_inode, bp);
-				if (ifp->if_daddr == blkp->bi_daddr)
+				if (ifp->if_daddr == blkp->bi_daddr) {
+					mutex_enter(&fs->lfs_interlock);
 					LFS_SET_UINO(ip, IN_CLEANING);
+					mutex_exit(&fs->lfs_interlock);
+				}
 				brelse(bp, 0);
 			}
 			continue;
@@ -443,7 +446,7 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov,
 				panic("lfs_markv: partial indirect block?"
 				    " size=%d\n", blkp->bi_size);
 			bp = getblk(vp, blkp->bi_lbn, blkp->bi_size, 0, 0);
-			if (!(bp->b_flags & (B_DONE|B_DELWRI))) { /* B_CACHE */
+			if (!(bp->b_oflags & (BO_DONE|BO_DELWRI))) {
 				/*
 				 * The block in question was not found
 				 * in the cache; i.e., the block that
@@ -902,14 +905,14 @@ lfs_do_segclean(struct lfs *fs, unsigned long segnum)
 	if (fs->lfs_version > 1 && segnum == 0 &&
 	    fs->lfs_start < btofsb(fs, LFS_LABELPAD))
 		fs->lfs_avail -= btofsb(fs, LFS_LABELPAD) - fs->lfs_start;
-	simple_lock(&fs->lfs_interlock);
+	mutex_enter(&fs->lfs_interlock);
 	fs->lfs_bfree += sup->su_nsums * btofsb(fs, fs->lfs_sumsize) +
 		btofsb(fs, sup->su_ninos * fs->lfs_ibsize);
 	fs->lfs_dmeta -= sup->su_nsums * btofsb(fs, fs->lfs_sumsize) +
 		btofsb(fs, sup->su_ninos * fs->lfs_ibsize);
 	if (fs->lfs_dmeta < 0)
 		fs->lfs_dmeta = 0;
-	simple_unlock(&fs->lfs_interlock);
+	mutex_exit(&fs->lfs_interlock);
 	sup->su_flags &= ~SEGUSE_DIRTY;
 	LFS_WRITESEGENTRY(sup, fs, segnum, bp);
 
@@ -918,10 +921,10 @@ lfs_do_segclean(struct lfs *fs, unsigned long segnum)
 	--cip->dirty;
 	fs->lfs_nclean = cip->clean;
 	cip->bfree = fs->lfs_bfree;
-	simple_lock(&fs->lfs_interlock);
+	mutex_enter(&fs->lfs_interlock);
 	cip->avail = fs->lfs_avail - fs->lfs_ravail - fs->lfs_favail;
 	wakeup(&fs->lfs_avail);
-	simple_unlock(&fs->lfs_interlock);
+	mutex_exit(&fs->lfs_interlock);
 	(void) LFS_BWRITE_LOG(bp);
 
 	if (lfs_dostats)
@@ -1010,7 +1013,7 @@ lfs_fasthashget(dev_t dev, ino_t ino, struct vnode **vpp)
 {
 	if ((*vpp = ufs_ihashlookup(dev, ino)) != NULL) {
 		if ((*vpp)->v_iflag & VI_XLOCK) {
-			DLOG((DLOG_CLEAN, "lfs_fastvget: ino %d VI_XLOCK\n",
+			DLOG((DLOG_CLEAN, "lfs_fastvget: ino %d VXLOCK\n",
 			      ino));
 			lfs_stats.clean_vnlocked++;
 			return EAGAIN;
@@ -1048,12 +1051,12 @@ lfs_fastvget(struct mount *mp, ino_t ino, daddr_t daddr, struct vnode **vpp,
 	 * Wait until the filesystem is fully mounted before allowing vget
 	 * to complete.	 This prevents possible problems with roll-forward.
 	 */
-	simple_lock(&fs->lfs_interlock);
+	mutex_enter(&fs->lfs_interlock);
 	while (fs->lfs_flags & LFS_NOTYET) {
-		ltsleep(&fs->lfs_flags, PRIBIO+1, "lfs_fnotyet", 0,
+		mtsleep(&fs->lfs_flags, PRIBIO+1, "lfs_fnotyet", 0,
 			&fs->lfs_interlock);
 	}
-	simple_unlock(&fs->lfs_interlock);
+	mutex_exit(&fs->lfs_interlock);
 
 	/*
 	 * This is playing fast and loose.  Someone may have the inode
@@ -1191,9 +1194,9 @@ lfs_fakebuf(struct lfs *fs, struct vnode *vp, int lbn, size_t size, void *uaddr)
 	KDASSERT(bp->b_iodone == lfs_callback);
 
 #if 0
-	simple_lock(&fs->lfs_interlock);
+	mutex_enter(&fs->lfs_interlock);
 	++fs->lfs_iocount;
-	simple_unlock(&fs->lfs_interlock);
+	mutex_exit(&fs->lfs_interlock);
 #endif
 	bp->b_bufsize = size;
 	bp->b_bcount = size;

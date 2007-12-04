@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.113 2007/11/06 00:42:46 ad Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.113.2.1 2007/12/04 13:03:59 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.113 2007/11/06 00:42:46 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.113.2.1 2007/12/04 13:03:59 ad Exp $");
 
 #include "opt_coredump.h"
 #include "opt_kgdb.h"
@@ -809,10 +809,10 @@ void
 uvm_lwp_hold(struct lwp *l)
 {
 
-	/* XXXSMP mutex_enter(&l->l_swaplock); */
+	mutex_enter(&l->l_swaplock);
 	if (l->l_holdcnt++ == 0 && (l->l_flag & LW_INMEM) == 0)
 		uvm_swapin(l);
-	/* XXXSMP mutex_exit(&l->l_swaplock); */
+	mutex_exit(&l->l_swaplock);
 }
 
 /*
@@ -826,9 +826,9 @@ uvm_lwp_rele(struct lwp *l)
 
 	KASSERT(l->l_holdcnt != 0);
 
-	/* XXXSMP mutex_enter(&l->l_swaplock); */
+	mutex_enter(&l->l_swaplock);
 	l->l_holdcnt--;
-	/* XXXSMP mutex_exit(&l->l_swaplock); */
+	mutex_exit(&l->l_swaplock);
 }
 
 #ifdef COREDUMP

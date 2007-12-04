@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.84 2007/10/10 20:42:40 ad Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.84.6.1 2007/12/04 13:03:55 ad Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.84 2007/10/10 20:42:40 ad Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.84.6.1 2007/12/04 13:03:55 ad Exp $");
 
 #ifdef LFS_READWRITE
 #define	FS			struct lfs
@@ -311,7 +311,7 @@ WRITE(void *v)
 		if (error)
 			goto out;
 		if (flags & B_SYNC) {
-			simple_lock(&vp->v_interlock);
+			mutex_enter(&vp->v_interlock);
 			VOP_PUTPAGES(vp, trunc_page(osize & fs->fs_bmask),
 			    round_page(eob), PGO_CLEANIT | PGO_SYNCIO);
 		}
@@ -406,7 +406,7 @@ WRITE(void *v)
 
 #ifndef LFS_READWRITE
 		if (!async && oldoff >> 16 != uio->uio_offset >> 16) {
-			simple_lock(&vp->v_interlock);
+			mutex_enter(&vp->v_interlock);
 			error = VOP_PUTPAGES(vp, (oldoff >> 16) << 16,
 			    (uio->uio_offset >> 16) << 16, PGO_CLEANIT);
 			if (error)
@@ -415,7 +415,7 @@ WRITE(void *v)
 #endif
 	}
 	if (error == 0 && ioflag & IO_SYNC) {
-		simple_lock(&vp->v_interlock);
+		mutex_enter(&vp->v_interlock);
 		error = VOP_PUTPAGES(vp, trunc_page(origoff & fs->fs_bmask),
 		    round_page(blkroundup(fs, uio->uio_offset)),
 		    PGO_CLEANIT | PGO_SYNCIO);
@@ -423,7 +423,7 @@ WRITE(void *v)
 	goto out;
 
  bcache:
-	simple_lock(&vp->v_interlock);
+	mutex_enter(&vp->v_interlock);
 	VOP_PUTPAGES(vp, trunc_page(origoff), round_page(origoff + resid),
 	    PGO_CLEANIT | PGO_FREE | PGO_SYNCIO);
 	while (uio->uio_resid > 0) {

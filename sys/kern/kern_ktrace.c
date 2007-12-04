@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.128 2007/10/08 15:13:12 ad Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.128.6.1 2007/12/04 13:03:13 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.128 2007/10/08 15:13:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.128.6.1 2007/12/04 13:03:13 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -200,13 +200,9 @@ static void
 ktd_callout(void *arg)
 {
 
-	/*
-	 * XXXSMP Should be acquiring ktrace_lock, but that
-	 * is not yet possible from a callout.  For now, we'll
-	 * rely on the callout & ktrace thread both holding the
-	 * kernel_lock.
-	 */
+	mutex_enter(&ktrace_lock);
 	ktd_wakeup(arg);
+	mutex_exit(&ktrace_lock);
 }
 
 static void
@@ -416,11 +412,9 @@ void
 ktefree(struct ktrace_entry *kte)
 {
 
-	KERNEL_LOCK(1, curlwp);			/* XXXSMP */
 	if (kte->kte_buf != kte->kte_space)
 		kmem_free(kte->kte_buf, kte->kte_bufsz);
 	pool_put(&kte_pool, kte);
-	KERNEL_UNLOCK_ONE(curlwp);		/* XXXSMP */
 }
 
 /*
@@ -504,18 +498,15 @@ ktealloc(struct ktrace_entry **ktep, void **bufp, lwp_t *l, int type,
 	if (ktrenter(l))
 		return EAGAIN;
 
-	KERNEL_LOCK(1, l);			/* XXXSMP */
 	kte = pool_get(&kte_pool, PR_WAITOK);
 	if (sz > sizeof(kte->kte_space)) {
 		if ((buf = kmem_alloc(sz, KM_SLEEP)) == NULL) {
 			pool_put(&kte_pool, kte);
-			KERNEL_UNLOCK_ONE(l);	/* XXXSMP */
 			ktrexit(l);
 			return ENOMEM;
 		}
 	} else
 		buf = kte->kte_space;
-	KERNEL_UNLOCK_ONE(l);			/* XXXSMP */
 
 	kte->kte_bufsz = sz;
 	kte->kte_buf = buf;
@@ -1063,7 +1054,7 @@ ktrace_common(lwp_t *curl, int ops, int facs, int pid, struct file *fp)
 		if (ktd == NULL) {
 			ktd = kmem_alloc(sizeof(*ktd), KM_SLEEP);
 			TAILQ_INIT(&ktd->ktd_queue);
-			callout_init(&ktd->ktd_wakch, 0);
+			callout_init(&ktd->ktd_wakch, CALLOUT_MPSAFE);
 			cv_init(&ktd->ktd_cv, "ktrwait");
 			cv_init(&ktd->ktd_sync_cv, "ktrsync");
 			ktd->ktd_flags = 0;
@@ -1085,7 +1076,7 @@ ktrace_common(lwp_t *curl, int ops, int facs, int pid, struct file *fp)
 			if (fp->f_type == DTYPE_PIPE)
 				ktd->ktd_flags |= KTDF_INTERACTIVE;
 
-			error = kthread_create(PRI_NONE, 0, NULL,
+			error = kthread_create(PRI_NONE, KTHREAD_MPSAFE, NULL,
 			    ktrace_thread, ktd, &ktd->ktd_lwp, "ktrace");
 			if (error != 0) {
 				kmem_free(ktd, sizeof(*ktd));

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_init.c,v 1.30 2007/11/14 11:04:08 yamt Exp $	*/
+/*	$NetBSD: uvm_init.c,v 1.30.2.1 2007/12/04 13:04:00 ad Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.30 2007/11/14 11:04:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.30.2.1 2007/12/04 13:04:00 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,8 +64,8 @@ struct uvm uvm;		/* decl */
 struct uvmexp uvmexp;	/* decl */
 struct uvm_object *uvm_kernel_object;
 
+kmutex_t uvm_pageqlock;
 kmutex_t uvm_fpageqlock;
-kmutex_t uvm_pagedaemon_lock;
 kmutex_t uvm_kentry_lock;
 kmutex_t uvm_swap_data_lock;
 kmutex_t uvm_scheduler_mutex;

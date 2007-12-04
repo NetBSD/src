@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.75 2007/10/12 09:15:37 dogcow Exp $	*/
+/*	$NetBSD: lock.h,v 1.75.6.1 2007/12/04 13:03:38 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -82,6 +82,7 @@
 
 #include <sys/stdint.h>
 #include <sys/queue.h>
+#include <sys/mutex.h>
 #include <sys/simplelock.h>
 
 #include <machine/lock.h>
@@ -91,7 +92,7 @@
  * and upgrading from shared to exclusive.
  */
 struct lock {
-	struct	simplelock lk_interlock;/* lock on remaining fields */
+	kmutex_t lk_interlock;		/* lock on remaining fields */
 	u_int	lk_flags;		/* see below */
 	int	lk_sharecount;		/* # of accepted shared locks */
 	short	lk_exclusivecount;	/* # of recursive exclusive locks */
@@ -229,7 +230,7 @@ struct proc;
 
 void	lockinit(struct lock *, pri_t, const char *, int, int);
 void	lockdestroy(struct lock *);
-int	lockmgr(struct lock *, u_int flags, struct simplelock *);
+int	lockmgr(struct lock *, u_int flags, kmutex_t *);
 void	transferlockers(struct lock *, struct lock *);
 int	lockstatus(struct lock *);
 void	lockmgr_printinfo(struct lock *);

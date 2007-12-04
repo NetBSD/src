@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.13 2007/12/03 15:33:10 ad Exp $	*/
+/*	$NetBSD: spl.S,v 1.13.2.1 2007/12/04 13:02:50 ad Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -133,6 +133,7 @@ IDTVEC(softintr)
  *	%rax		prevlwp from cpu_switchto()
  */
 NENTRY(softintr_ret)
+	incl	CPUVAR(MTX_COUNT)	/* re-adjust after mi_switch */
 	movl	$0, L_CTXSWTCH(%rax)	/* %rax from cpu_switchto */
 	cli
 	jmp	*%r13			/* back to splx/doreti */
