@@ -1,4 +1,4 @@
-/*	$NetBSD: node.c,v 1.48 2007/11/30 19:02:40 pooka Exp $	*/
+/*	$NetBSD: node.c,v 1.49 2007/12/04 19:31:22 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: node.c,v 1.48 2007/11/30 19:02:40 pooka Exp $");
+__RCSID("$NetBSD: node.c,v 1.49 2007/12/04 19:31:22 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -331,7 +331,6 @@ psshfs_node_readdir(struct puffs_usermount *pu, void *opc, struct dirent *dent,
 		pw.pw_type = PWTYPE_READDIR;
 		TAILQ_INSERT_TAIL(&psn->pw, &pw, pw_entries);
 		puffs_cc_yield(pcc);
-		TAILQ_REMOVE(&psn->pw, &pw, pw_entries);
 		goto restart;
 	} else {
 		psn->stat |= PSN_READDIR;
@@ -384,6 +383,7 @@ psshfs_node_readdir(struct puffs_usermount *pu, void *opc, struct dirent *dent,
 		TAILQ_FOREACH(pw, &psn->pw, pw_entries) {
 			assert(pw->pw_type == PWTYPE_READDIR);
 			puffs_cc_schedule(pw->pw_cc);
+			TAILQ_REMOVE(&psn->pw, pw, pw_entries);
 		}
 
 		psn->stat &= ~PSN_READDIR;
@@ -424,7 +424,6 @@ psshfs_node_read(struct puffs_usermount *pu, void *opc, uint8_t *buf,
 		pw.pw_type = PWTYPE_READ1;
 		TAILQ_INSERT_TAIL(&psn->pw, &pw, pw_entries);
 		puffs_cc_yield(pcc);
-		TAILQ_REMOVE(&psn->pw, &pw, pw_entries);
 	}
 
 	/* if lazyopening, wait for the result */
@@ -435,8 +434,10 @@ psshfs_node_read(struct puffs_usermount *pu, void *opc, uint8_t *buf,
 
 		/* schedule extra waiters */
 		TAILQ_FOREACH(pwp, &psn->pw, pw_entries)
-			if (pwp->pw_type == PWTYPE_READ1)
+			if (pwp->pw_type == PWTYPE_READ1) {
 				puffs_cc_schedule(pwp->pw_cc);
+				TAILQ_REMOVE(&psn->pw, pwp, pw_entries);
+			}
 		psn->stat &= ~PSN_LAZYWAIT_R;
 
 		if ((rv = psn->lazyopen_err_r) != 0)
@@ -479,8 +480,8 @@ psshfs_node_read(struct puffs_usermount *pu, void *opc, uint8_t *buf,
 			if (pwp->pw_type == PWTYPE_READ2)
 				break;
 		assert(pwp != NULL);
-		TAILQ_REMOVE(&psn->pw, pwp, pw_entries);
 		puffs_cc_schedule(pwp->pw_cc);
+		TAILQ_REMOVE(&psn->pw, pwp, pw_entries);
 	}
 
  farout:
@@ -527,7 +528,6 @@ psshfs_node_write(struct puffs_usermount *pu, void *opc, uint8_t *buf,
 		pw.pw_type = PWTYPE_WRITE;
 		TAILQ_INSERT_TAIL(&psn->pw, &pw, pw_entries);
 		puffs_cc_yield(pcc);
-		TAILQ_REMOVE(&psn->pw, &pw, pw_entries);
 	}
 
 	/*
@@ -542,8 +542,10 @@ psshfs_node_write(struct puffs_usermount *pu, void *opc, uint8_t *buf,
 
 		/* schedule extra waiters */
 		TAILQ_FOREACH(pwp, &psn->pw, pw_entries)
-			if (pwp->pw_type == PWTYPE_WRITE)
+			if (pwp->pw_type == PWTYPE_WRITE) {
 				puffs_cc_schedule(pwp->pw_cc);
+				TAILQ_REMOVE(&psn->pw, pwp, pw_entries);
+			}
 		psn->stat &= ~PSN_LAZYWAIT_W;
 
 		if ((rv = psn->lazyopen_err_w) != 0)
