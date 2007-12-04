@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_quick.c,v 1.14 2007/11/09 16:27:42 vanhu Exp $	*/
+/*	$NetBSD: isakmp_quick.c,v 1.15 2007/12/04 19:52:31 mgrooms Exp $	*/
 
 /* Id: isakmp_quick.c,v 1.29 2006/08/22 18:17:17 manubsd Exp */
 
@@ -1081,7 +1081,8 @@ quick_r1recv(iph2, msg0)
 			plog(LLV_ERROR, LOCATION, NULL,
 				"failed to generate a proposal template "
 				"from client's proposal.\n");
-			return ISAKMP_INTERNAL_ERROR;
+			error = ISAKMP_INTERNAL_ERROR;
+			goto end;
 		}
 		/*FALLTHROUGH*/
 	case 0:
@@ -1804,24 +1805,11 @@ get_sainfo_r(iph2)
 	struct ph2handle *iph2;
 {
 	vchar_t *idsrc = NULL, *iddst = NULL, *client = NULL;
-	int prefixlen;
 	int error = ISAKMP_INTERNAL_ERROR;
 	int remoteid = 0;
 
 	if (iph2->id == NULL) {
-		switch (iph2->src->sa_family) {
-		case AF_INET:
-			prefixlen = sizeof(struct in_addr) << 3;
-			break;
-		case AF_INET6:
-			prefixlen = sizeof(struct in6_addr) << 3;
-			break;
-		default:
-			plog(LLV_ERROR, LOCATION, NULL,
-				"invalid family: %d\n", iph2->src->sa_family);
-			goto end;
-		}
-		idsrc = ipsecdoi_sockaddr2id(iph2->src, prefixlen,
+		idsrc = ipsecdoi_sockaddr2id(iph2->src, IPSECDOI_PREFIX_HOST,
 					IPSEC_ULPROTO_ANY);
 	} else {
 		idsrc = vdup(iph2->id);
@@ -1833,19 +1821,7 @@ get_sainfo_r(iph2)
 	}
 
 	if (iph2->id_p == NULL) {
-		switch (iph2->dst->sa_family) {
-		case AF_INET:
-			prefixlen = sizeof(struct in_addr) << 3;
-			break;
-		case AF_INET6:
-			prefixlen = sizeof(struct in6_addr) << 3;
-			break;
-		default:
-			plog(LLV_ERROR, LOCATION, NULL,
-				"invalid family: %d\n", iph2->dst->sa_family);
-			goto end;
-		}
-		iddst = ipsecdoi_sockaddr2id(iph2->dst, prefixlen,
+		iddst = ipsecdoi_sockaddr2id(iph2->dst, IPSECDOI_PREFIX_HOST,
 					IPSEC_ULPROTO_ANY);
 	} else {
 		iddst = vdup(iph2->id_p);
@@ -1889,19 +1865,7 @@ get_sainfo_r(iph2)
 	/* clientaddr check, fallback to peer address */
 	if (client == NULL)
 	{
-		switch (iph2->dst->sa_family) {
-		case AF_INET:
-			prefixlen = sizeof(struct in_addr) << 3;
-			break;
-		case AF_INET6:
-			prefixlen = sizeof(struct in6_addr) << 3;
-			break;
-		default:
-			plog(LLV_ERROR, LOCATION, NULL,
-				"invalid family: %d\n", iph2->dst->sa_family);
-			goto end;
-		}
-		client = ipsecdoi_sockaddr2id(iph2->dst, prefixlen,
+		client = ipsecdoi_sockaddr2id(iph2->dst, IPSECDOI_PREFIX_HOST,
 					IPSEC_ULPROTO_ANY);
 	}
 #endif
