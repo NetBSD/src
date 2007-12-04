@@ -1,4 +1,4 @@
-/*	$NetBSD: framebuf.c,v 1.23 2007/09/06 18:01:34 pooka Exp $	*/
+/*	$NetBSD: framebuf.c,v 1.24 2007/12/04 17:21:24 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: framebuf.c,v 1.23 2007/09/06 18:01:34 pooka Exp $");
+__RCSID("$NetBSD: framebuf.c,v 1.24 2007/12/04 17:21:24 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -155,7 +155,7 @@ reservespace(struct puffs_framebuf *pufbuf, size_t off, size_t wantsize)
 	    incr += PUFBUF_INCRALLOC)
 		continue;
 
-	nd = realloc(pufbuf->buf, pufbuf->offset + incr);
+	nd = realloc(pufbuf->buf, pufbuf->len + incr);
 	if (nd == NULL)
 		return -1;
 
