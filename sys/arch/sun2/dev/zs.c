@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.15 2007/11/09 00:05:06 ad Exp $	*/
+/*	$NetBSD: zs.c,v 1.16 2007/12/04 15:12:07 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.15 2007/11/09 00:05:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.16 2007/12/04 15:12:07 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -61,6 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.15 2007/11/09 00:05:06 ad Exp $");
 #include <sys/tty.h>
 #include <sys/time.h>
 #include <sys/syslog.h>
+#include <sys/intr.h>
 
 #include <machine/autoconf.h>
 #include <machine/promlib.h>
@@ -157,15 +158,19 @@ zs_attach(struct zsc_softc *zsc, struct zsdevice *zsd, int pri)
 {
 	struct zsc_attach_args zsc_args;
 	struct zs_chanstate *cs;
-	int s, channel, softpri = IPL_SOFTSERIAL;
+	int s, channel;
 
 	if (zsd == NULL) {
 		printf("configuration incomplete\n");
 		return;
 	}
 
+#if 0
 	/* we should use ipl2si(softpri) but it isn't exported */
 	printf(" softpri %d\n", _IPL_SOFT_LEVEL3);
+#else
+	printf("\n");
+#endif
 
 	/*
 	 * Initialize software state for each channel.
@@ -292,7 +297,8 @@ zs_attach(struct zsc_softc *zsc, struct zsdevice *zsd, int pri)
 	 * Now safe to install interrupt handlers.
 	 */
 	bus_intr_establish(zsc->zsc_bustag, pri, IPL_SERIAL, 0, zshard, zsc);
-	if (!(zsc->zsc_softintr = softintr_establish(softpri, zssoft, zsc)))
+	if (!(zsc->zsc_softintr = softint_establish(SOFTINT_SERIAL,
+	    zssoft, zsc)))
 		panic("zsattach: could not establish soft interrupt");
 
 	evcnt_attach_dynamic(&zsc->zsc_intrcnt, EVCNT_TYPE_INTR, NULL,
@@ -342,7 +348,7 @@ zshard(void *arg)
 	if (((zsc->zsc_cs[0] && zsc->zsc_cs[0]->cs_softreq) ||
 	     (zsc->zsc_cs[1] && zsc->zsc_cs[1]->cs_softreq)) &&
 	    zsc->zsc_softintr) {
-		softintr_schedule(zsc->zsc_softintr);
+		softint_schedule(zsc->zsc_softintr);
 	}
 	return (rval);
 }
