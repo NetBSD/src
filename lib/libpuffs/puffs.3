@@ -1,4 +1,4 @@
-.\"	$NetBSD: puffs.3,v 1.35 2007/12/01 19:18:49 wiz Exp $
+.\"	$NetBSD: puffs.3,v 1.36 2007/12/04 21:24:11 pooka Exp $
 .\"
 .\" Copyright (c) 2006, 2007 Antti Kantee.  All rights reserved.
 .\"
@@ -109,10 +109,6 @@ in conjuction with
 .Fn puffs_mainloop ,
 it is possible to handle I/O to and from file descriptors.
 This is suited e.g. for distributed file servers.
-Alternatively, control can be kept with the caller and operations
-handled manually using
-.Xr puffs_req 3
-directly.
 .Ss Library operation
 Operations on the library always require a pointer to the opaque context
 identifier,
@@ -311,13 +307,15 @@ It is legal to call this function only between
 .Fn puffs_init
 and
 .Fn puffs_mount .
+.Pp
+.Em NOTE
+This does not currently work.
 .It Fn puffs_getmaxreqlen "pu"
 Returns the maximum request length the kernel will need for a single
 request.
-This information can be used to allocate the request buffer and
-.B must
-be passed as the parameter to
-.Fn puffs_req_makeget .
+.Pp
+.Em NOTE
+This does not currently work.
 .It Fn puffs_setfhsize "pu" "fhsize" "flags"
 Sets the desired file handle size.
 This must be called if the file system wishes to support NFS exporting
@@ -463,7 +461,6 @@ to provide an alternative cookie-to-node mapping function.
 .Xr puffs_node 3 ,
 .Xr puffs_ops 3 ,
 .Xr puffs_path 3 ,
-.Xr puffs_req 3 ,
 .Xr puffs_suspend 3 ,
 .Xr refuse 3 ,
 .Xr puffs 4

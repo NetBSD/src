@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.h,v 1.97 2007/11/30 19:02:29 pooka Exp $	*/
+/*	$NetBSD: puffs.h,v 1.98 2007/12/04 21:24:11 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -51,7 +51,6 @@
 struct puffs_cc;
 
 struct puffs_getreq;
-struct puffs_putreq;
 struct puffs_cred;
 struct puffs_cid;
 struct puffs_newinfo;
@@ -522,28 +521,6 @@ int	puffs_access_times(uid_t, gid_t, mode_t, int,
 
 
 /*
- * Requests
- */
-
-struct puffs_getreq	*puffs_req_makeget(struct puffs_usermount *,
-					   size_t, int);
-int			puffs_req_loadget(struct puffs_getreq *);
-struct puffs_req	*puffs_req_get(struct puffs_getreq *);
-int			puffs_req_remainingget(struct puffs_getreq *);
-void			puffs_req_setmaxget(struct puffs_getreq *, int);
-void			puffs_req_destroyget(struct puffs_getreq *);
-
-struct puffs_putreq	*puffs_req_makeput(struct puffs_usermount *);
-void			puffs_req_put(struct puffs_putreq *,struct puffs_req *);
-void			puffs_req_putcc(struct puffs_putreq *,struct puffs_cc*);
-int			puffs_req_putput(struct puffs_putreq *);
-void			puffs_req_resetput(struct puffs_putreq *);
-void			puffs_req_destroyput(struct puffs_putreq *);
-
-int			puffs_req_handle(struct puffs_getreq *,
-					 struct puffs_putreq *, int);
-
-/*
  * Call Context interfaces relevant for user.
  */
 
@@ -554,14 +531,6 @@ struct puffs_usermount	*puffs_cc_getusermount(struct puffs_cc *);
 void 			*puffs_cc_getspecific(struct puffs_cc *);
 int			puffs_cc_getcaller(struct puffs_cc *,pid_t *,lwpid_t *);
 struct puffs_cc		*puffs_cc_getcc(struct puffs_usermount *);
-
-/*
- * Execute or continue a request
- */
-
-int	puffs_dopreq(struct puffs_usermount *, struct puffs_req *,
-		     struct puffs_putreq *);
-void	puffs_docc(struct puffs_cc *, struct puffs_putreq *);
 
 /*
  * Flushing / invalidation routines
@@ -596,9 +565,7 @@ void	*puffs_path_prefixadj(struct puffs_usermount *,
 int	puffs_path_pcnbuild(struct puffs_usermount *,
 			    struct puffs_cn *, void *);
 void	puffs_path_buildhash(struct puffs_usermount *, struct puffs_pathobj *);
-
-void	puffs_set_pathbuild(struct puffs_usermount *, pu_pathbuild_fn);
-void	puffs_set_pathtransform(struct puffs_usermount *, pu_pathtransform_fn);
+void	puffs_set_pathbuild(struct puffs_usermount *, pu_pathbuild_fn); void	puffs_set_pathtransform(struct puffs_usermount *, pu_pathtransform_fn);
 void	puffs_set_pathcmp(struct puffs_usermount *, pu_pathcmp_fn);
 void	puffs_set_pathfree(struct puffs_usermount *, pu_pathfree_fn);
 void	puffs_set_namemod(struct puffs_usermount *, pu_namemod_fn);
@@ -626,6 +593,8 @@ void	puffs_framev_init(struct puffs_usermount *,
 
 struct puffs_framebuf 	*puffs_framebuf_make(void);
 void			puffs_framebuf_destroy(struct puffs_framebuf *);
+int			puffs_framebuf_dup(struct puffs_framebuf *,
+					   struct puffs_framebuf **);
 void			puffs_framebuf_recycle(struct puffs_framebuf *);
 int			puffs_framebuf_reserve_space(struct puffs_framebuf *,
 						     size_t);

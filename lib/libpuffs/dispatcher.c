@@ -1,4 +1,4 @@
-/*	$NetBSD: dispatcher.c,v 1.24 2007/11/30 19:02:28 pooka Exp $	*/
+/*	$NetBSD: dispatcher.c,v 1.25 2007/12/04 21:24:10 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: dispatcher.c,v 1.24 2007/11/30 19:02:28 pooka Exp $");
+__RCSID("$NetBSD: dispatcher.c,v 1.25 2007/12/04 21:24:10 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -49,7 +49,7 @@ __RCSID("$NetBSD: dispatcher.c,v 1.24 2007/11/30 19:02:28 pooka Exp $");
 
 #include "puffs_priv.h"
 
-static void processresult(struct puffs_cc *, struct puffs_putreq *, int);
+static void processresult(struct puffs_cc *, int);
 
 /*
  * Set the following to 1 to not handle each request on a separate
@@ -66,29 +66,10 @@ int puffs_fakecc;
  */
 int puffs_usethreads;
 
-#ifdef PUFFS_WITH_THREADS
-struct puffs_workerargs {
-	struct puffs_cc *pwa_pcc;
-	struct puffs_putreq *pwa_ppr;
-};
-
-static void *
-threadlauncher(void *v)
-{
-	struct puffs_workerargs *ap = v;
-	struct puffs_cc *pcc = ap->pwa_pcc;
-	struct puffs_putreq *ppr = ap->pwa_ppr;
-
-	free(ap);
-	puffs_docc(pcc, ppr);
-	return NULL;
-}
-#endif
-
 static int
-dopreq2(struct puffs_usermount *pu, struct puffs_req *preq,
-	struct puffs_putreq *ppr)
+dopufbuf2(struct puffs_usermount *pu, struct puffs_framebuf *pb)
 {
+	struct puffs_req *preq = puffs__framebuf_getdataptr(pb);
 	struct puffs_cc *pcc;
 	int type;
 
@@ -103,41 +84,41 @@ dopreq2(struct puffs_usermount *pu, struct puffs_req *preq,
 		type = PCC_REALCC;
 	}
 
-	if (puffs_cc_create(pu, preq, type, &pcc) == -1)
+	if (puffs_cc_create(pu, pb, type, &pcc) == -1)
 		return errno;
 
 	puffs_cc_setcaller(pcc, preq->preq_pid, preq->preq_lid);
 
 #ifdef PUFFS_WITH_THREADS
 	if (puffs_usethreads) {
-		struct puffs_workerargs *ap;
 		pthread_attr_t pattr;
 		pthread_t ptid;
 		int rv;
-
-		ap = malloc(sizeof(struct puffs_workerargs));
 
 		pthread_attr_init(&pattr);
 		pthread_attr_setdetachstate(&pattr, PTHREAD_CREATE_DETACHED);
 		pthread_attr_destroy(&pattr);
 
 		ap->pwa_pcc = pcc;
-		ap->pwa_ppr = ppr;
 
-		rv = pthread_create(&ptid, &pattr, threadlauncher, ap);
+		rv = pthread_create(&ptid, &pattr, puffs_docc, pcc);
 
 		return rv;
 	}
 #endif
-	puffs_docc(pcc, ppr);
+	puffs_docc(pcc);
 	return 0;
 }
 
-/* user-visible point to handle a request from */
+/*
+ * User-visible point to handle a request from.
+ *
+ * <insert text here>
+ */
 int
-puffs_dopreq(struct puffs_usermount *pu, struct puffs_req *preq,
-	struct puffs_putreq *ppr)
+puffs_dopufbuf(struct puffs_usermount *pu, struct puffs_framebuf *pb)
 {
+	struct puffs_req *preq = puffs__framebuf_getdataptr(pb);
 	struct puffs_executor *pex;
 
 	/*
@@ -179,13 +160,16 @@ puffs_dopreq(struct puffs_usermount *pu, struct puffs_req *preq,
 	 * and dispatching.
 	 */
 	pex = malloc(sizeof(struct puffs_executor));
-	pex->pex_preq = preq;
+	pex->pex_pufbuf = pb;
 	PU_LOCK();
 	TAILQ_INSERT_TAIL(&pu->pu_exq, pex, pex_entries);
 	TAILQ_FOREACH(pex, &pu->pu_exq, pex_entries) {
-		if (pex->pex_preq->preq_pid == preq->preq_pid
-		    && pex->pex_preq->preq_lid == preq->preq_lid) {
-			if (pex->pex_preq != preq) {
+		struct puffs_req *pb_preq;
+
+		pb_preq = puffs__framebuf_getdataptr(pex->pex_pufbuf);
+		if (pb_preq->preq_pid == preq->preq_pid
+		    && pb_preq->preq_lid == preq->preq_lid) {
+			if (pb_preq != preq) {
 				PU_UNLOCK();
 				return 0;
 			}
@@ -193,15 +177,15 @@ puffs_dopreq(struct puffs_usermount *pu, struct puffs_req *preq,
 	}
 	PU_UNLOCK();
 
-	return dopreq2(pu, preq, ppr);
+	return dopufbuf2(pu, pb);
 }
 
 enum {PUFFCALL_ANSWER, PUFFCALL_IGNORE, PUFFCALL_AGAIN};
 
-/* user-visible continuation point */
-void
-puffs_docc(struct puffs_cc *pcc, struct puffs_putreq *ppr)
+void *
+puffs_docc(void *arg)
 {
+	struct puffs_cc *pcc = arg;
 	struct puffs_usermount *pu = pcc->pcc_pu;
 	struct puffs_req *preq;
 	struct puffs_cc *pcc_iter;
@@ -209,36 +193,46 @@ puffs_docc(struct puffs_cc *pcc, struct puffs_putreq *ppr)
 	int found;
 
 	assert((pcc->pcc_flags & PCC_DONE) == 0);
-	pcc->pcc_ppr = ppr;
 
 	if (pcc->pcc_flags & PCC_REALCC)
 		puffs_cc_continue(pcc);
 	else
 		puffs_calldispatcher(pcc);
 
+	if ((pcc->pcc_flags & PCC_DONE) == 0) {
+		assert(pcc->pcc_flags & PCC_REALCC);
+		return NULL;
+	}
+
 	/* check if we need to schedule FAFs which were stalled */
 	found = 0;
-	preq = pcc->pcc_preq;
+	preq = puffs__framebuf_getdataptr(pcc->pcc_pb);
 	PU_LOCK();
 	for (pex = TAILQ_FIRST(&pu->pu_exq); pex; pex = pex_n) {
+		struct puffs_req *pb_preq;
+
+		pb_preq = puffs__framebuf_getdataptr(pex->pex_pufbuf);
 		pex_n = TAILQ_NEXT(pex, pex_entries);
-		if (pex->pex_preq->preq_pid == preq->preq_pid
-		    && pex->pex_preq->preq_lid == preq->preq_lid) {
+		if (pb_preq->preq_pid == preq->preq_pid
+		    && pb_preq->preq_lid == preq->preq_lid) {
 			if (found == 0) {
 				/* this is us */
-				assert(pex->pex_preq == preq);
+				assert(pb_preq == preq);
 				TAILQ_REMOVE(&pu->pu_exq, pex, pex_entries);
 				free(pex);
 				found = 1;
 			} else {
 				/* down at the mardi gras */
 				PU_UNLOCK();
-				dopreq2(pu, pex->pex_preq, ppr);
+				dopufbuf2(pu, pex->pex_pufbuf);
 				PU_LOCK();
 				break;
 			}
 		}
 	}
+
+	if (!PUFFSOP_WANTREPLY(preq->preq_opclass))
+		puffs_framebuf_destroy(pcc->pcc_pb);
 
 	/* can't do this above due to PCC_BORROWED */
 	while ((pcc_iter = LIST_FIRST(&pu->pu_ccnukelst)) != NULL) {
@@ -246,6 +240,8 @@ puffs_docc(struct puffs_cc *pcc, struct puffs_putreq *ppr)
 		puffs_cc_destroy(pcc_iter);
 	}
 	PU_UNLOCK();
+
+	return NULL;
 }
 
 /* library private, but linked from callcontext.c */
@@ -255,7 +251,7 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 {
 	struct puffs_usermount *pu = pcc->pcc_pu;
 	struct puffs_ops *pops = &pu->pu_ops;
-	struct puffs_req *preq = pcc->pcc_preq;
+	struct puffs_req *preq = puffs__framebuf_getdataptr(pcc->pcc_pb);
 	void *auxbuf = preq; /* help with typecasting */
 	void *opcookie = preq->preq_cookie;
 	int error, rv, buildpath;
@@ -1029,14 +1025,14 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 	 * off of the continuation stack.  Otherwise puffs_goto() would
 	 * not work.
 	 */
-	processresult(pcc, pcc->pcc_ppr, rv);
+	processresult(pcc, rv);
 }
 
 static void
-processresult(struct puffs_cc *pcc, struct puffs_putreq *ppr, int how)
+processresult(struct puffs_cc *pcc, int how)
 {
 	struct puffs_usermount *pu = puffs_cc_getusermount(pcc);
-	struct puffs_req *preq = pcc->pcc_preq;
+	struct puffs_req *preq = puffs__framebuf_getdataptr(pcc->pcc_pb);
 	int pccflags = pcc->pcc_flags;
 
 	/* check if we need to store this reply */
@@ -1045,17 +1041,21 @@ processresult(struct puffs_cc *pcc, struct puffs_putreq *ppr, int how)
 		if (pu->pu_flags & PUFFS_FLAG_OPDUMP)
 			puffsdump_rv(preq);
 
-		puffs_req_putcc(ppr, pcc);
-		break;
+		puffs_framev_enqueue_justsend(pu, pu->pu_fd,
+		    pcc->pcc_pb, 0, 0);
+		/*FALLTHROUGH*/
+
 	case PUFFCALL_IGNORE:
 		PU_LOCK();
 		LIST_INSERT_HEAD(&pu->pu_ccnukelst, pcc, nlst_entries);
 		PU_UNLOCK();
 		break;
+
 	case PUFFCALL_AGAIN:
 		if ((pcc->pcc_flags & PCC_REALCC) == 0)
 			assert(pcc->pcc_flags & PCC_DONE);
 		break;
+
 	default:
 		assert(/*CONSTCOND*/0);
 	}
