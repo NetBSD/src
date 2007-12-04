@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.122 2007/11/10 00:07:57 dyoung Exp $	*/
+/*	$NetBSD: nd6.c,v 1.123 2007/12/04 10:27:34 dyoung Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.122 2007/11/10 00:07:57 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.123 2007/12/04 10:27:34 dyoung Exp $");
 
 #include "opt_ipsec.h"
 
@@ -639,7 +639,7 @@ regen_tmpaddr(struct in6_ifaddr *ia6)
 	struct in6_ifaddr *public_ifa6 = NULL;
 
 	ifp = ia6->ia_ifa.ifa_ifp;
-	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
+	IFADDR_FOREACH(ifa, ifp) {
 		struct in6_ifaddr *it6;
 
 		if (ifa->ifa_addr->sa_family != AF_INET6)
