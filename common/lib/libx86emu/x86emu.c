@@ -1,4 +1,4 @@
-/*	$NetBSD: x86emu.c,v 1.1 2007/11/30 20:02:49 joerg Exp $	*/
+/*	$NetBSD: x86emu.c,v 1.2 2007/12/04 17:32:22 joerg Exp $	*/
 
 /****************************************************************************
 *
@@ -35,8 +35,8 @@
 #include <stdbool.h>
 #endif
 
-#include "x86emu.h"
-#include "x86emu_regs.h"
+#include <x86emu/x86emu.h>
+#include <x86emu/x86emu_regs.h>
 
 static void 	x86emu_intr_raise (struct X86EMU *, uint8_t type);
 
