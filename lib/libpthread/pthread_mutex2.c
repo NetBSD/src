@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_mutex2.c,v 1.13 2007/11/27 20:55:03 ad Exp $	*/
+/*	$NetBSD: pthread_mutex2.c,v 1.14 2007/12/04 16:08:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_mutex2.c,v 1.13 2007/11/27 20:55:03 ad Exp $");
+__RCSID("$NetBSD: pthread_mutex2.c,v 1.14 2007/12/04 16:08:28 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/lwpctl.h>
@@ -451,7 +451,7 @@ pthread__mutex_wakeup(pthread_t self, pthread_mutex_t *ptm)
 	 */
 	thread = pthread__atomic_swap_ptr(&ptm->ptm_waiters, NULL);
 
-	for (;; n = 0) {
+	for (;;) {
 		/*
 		 * Pull waiters from the queue and add to our list.
 		 * Use a memory barrier to ensure that we safely
