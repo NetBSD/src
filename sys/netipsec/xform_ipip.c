@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipip.c,v 1.18 2007/10/28 15:48:23 adrianp Exp $	*/
+/*	$NetBSD: xform_ipip.c,v 1.19 2007/12/04 10:28:45 dyoung Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ipip.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ipip.c,v 1.25 2002/06/10 18:04:55 itojun Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.18 2007/10/28 15:48:23 adrianp Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.19 2007/12/04 10:28:45 dyoung Exp $");
 
 /*
  * IP-inside-IP processing
@@ -342,10 +342,8 @@ _ipip_input(struct mbuf *m, int iphlen, struct ifnet *gifp)
 	if ((m->m_pkthdr.rcvif == NULL ||
 	    !(m->m_pkthdr.rcvif->if_flags & IFF_LOOPBACK)) &&
 	    ipip_allow != 2) {
-		for (ifp = ifnet.tqh_first; ifp != 0;
-		     ifp = ifp->if_list.tqe_next) {
-			for (ifa = ifp->if_addrlist.tqh_first; ifa != 0;
-			     ifa = ifa->ifa_list.tqe_next) {
+		IFNET_FOREACH(ifp) {
+			IFADDR_FOREACH(ifa, ifp) {
 #ifdef INET
 				if (ipo) {
 					if (ifa->ifa_addr->sa_family !=

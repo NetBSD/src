@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_ifattach.c,v 1.75 2007/11/10 00:14:31 dyoung Exp $	*/
+/*	$NetBSD: in6_ifattach.c,v 1.76 2007/12/04 10:27:33 dyoung Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.75 2007/11/10 00:14:31 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.76 2007/12/04 10:27:33 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -331,7 +331,7 @@ in6_get_hw_ifid(struct ifnet *ifp, struct in6_addr *in6)
 	static u_int8_t allone[8] =
 		{ 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
 
-	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
+	IFADDR_FOREACH(ifa, ifp) {
 		if (ifa->ifa_addr->sa_family != AF_LINK)
 			continue;
 		sdl = satocsdl(ifa->ifa_addr);
@@ -854,6 +854,7 @@ in6_ifdetach(struct ifnet *ifp)
 	/* remove neighbor management table */
 	nd6_purge(ifp);
 
+	/* XXX this code is duplicated in in6_purgeif() --dyoung */
 	/* nuke any of IPv6 addresses we have */
 	for (ifa = TAILQ_FIRST(&ifp->if_addrlist); ifa; ifa = next) {
 		next = TAILQ_NEXT(ifa, ifa_list);
@@ -862,6 +863,8 @@ in6_ifdetach(struct ifnet *ifp)
 		in6_purgeaddr(ifa);
 	}
 
+	/* XXX isn't this code is redundant, given the above? --dyoung */
+	/* XXX doesn't this code replicate code in in6_purgeaddr() ? --dyoung */
 	/* undo everything done by in6_ifattach(), just in case */
 	for (ifa = TAILQ_FIRST(&ifp->if_addrlist); ifa; ifa = next) {
 		next = TAILQ_NEXT(ifa, ifa_list);
