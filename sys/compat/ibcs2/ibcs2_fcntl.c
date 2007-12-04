@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_fcntl.c,v 1.29 2007/11/26 19:01:30 pooka Exp $	*/
+/*	$NetBSD: ibcs2_fcntl.c,v 1.30 2007/12/04 18:40:10 dsl Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Bartram
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_fcntl.c,v 1.29 2007/11/26 19:01:30 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_fcntl.c,v 1.30 2007/12/04 18:40:10 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,11 +51,11 @@ __KERNEL_RCSID(0, "$NetBSD: ibcs2_fcntl.c,v 1.29 2007/11/26 19:01:30 pooka Exp $
 #include <compat/ibcs2/ibcs2_syscallargs.h>
 #include <compat/ibcs2/ibcs2_util.h>
 
-static int cvt_o_flags __P((int));
-static void cvt_flock2iflock __P((struct flock *, struct ibcs2_flock *));
-static void cvt_iflock2flock __P((struct ibcs2_flock *, struct flock *));
-static int ioflags2oflags __P((int));
-static int oflags2ioflags __P((int));
+static int cvt_o_flags(int);
+static void cvt_flock2iflock(struct flock *, struct ibcs2_flock *);
+static void cvt_iflock2flock(struct ibcs2_flock *, struct flock *);
+static int ioflags2oflags(int);
+static int oflags2ioflags(int);
 
 static int
 cvt_o_flags(flags)

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.130 2007/10/19 12:16:38 ad Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.131 2007/12/04 18:40:13 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.130 2007/10/19 12:16:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.131 2007/12/04 18:40:13 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -113,16 +113,16 @@ __KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.130 2007/10/19 12:16:38 ad Exp $
 #define DPRINTF(a)
 #endif
 
-static struct biosdisk_info *fd2biosinfo __P((struct proc *, struct file *));
+static struct biosdisk_info *fd2biosinfo(struct proc *, struct file *);
 extern struct disklist *x86_alldisks;
-static void linux_save_ucontext __P((struct lwp *, struct trapframe *,
-    const sigset_t *, struct sigaltstack *, struct linux_ucontext *));
-static void linux_save_sigcontext __P((struct lwp *, struct trapframe *,
-    const sigset_t *, struct linux_sigcontext *));
-static int linux_restore_sigcontext __P((struct lwp *,
-    struct linux_sigcontext *, register_t *));
-static void linux_rt_sendsig __P((const ksiginfo_t *, const sigset_t *));
-static void linux_old_sendsig __P((const ksiginfo_t *, const sigset_t *));
+static void linux_save_ucontext(struct lwp *, struct trapframe *,
+    const sigset_t *, struct sigaltstack *, struct linux_ucontext *);
+static void linux_save_sigcontext(struct lwp *, struct trapframe *,
+    const sigset_t *, struct linux_sigcontext *);
+static int linux_restore_sigcontext(struct lwp *,
+    struct linux_sigcontext *, register_t *);
+static void linux_rt_sendsig(const ksiginfo_t *, const sigset_t *);
+static void linux_old_sendsig(const ksiginfo_t *, const sigset_t *);
 
 extern char linux_sigcode[], linux_rt_sigcode[];
 /*
@@ -509,7 +509,7 @@ linux_restore_sigcontext(struct lwp *l, struct linux_sigcontext *scp,
 	DPRINTF(("sigreturn enter esp=%x eip=%x\n", tf->tf_esp, tf->tf_eip));
 #ifdef VM86
 	if (scp->sc_eflags & PSL_VM) {
-		void syscall_vm86 __P((struct trapframe *));
+		void syscall_vm86(struct trapframe *);
 
 		tf->tf_vm86_gs = scp->sc_gs;
 		tf->tf_vm86_fs = scp->sc_fs;
