@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2007/10/26 17:35:01 pooka Exp $
+#	$NetBSD: Makefile,v 1.22 2007/12/04 21:24:10 pooka Exp $
 #
 
 .include <bsd.own.mk>
@@ -19,7 +19,7 @@ SRCS=		puffs.c callcontext.c creds.c dispatcher.c flush.c	\
 		subr.c suspend.c
 MAN=		puffs.3 puffs_cc.3 puffs_cred.3 puffs_flush.3		\
 		puffs_framebuf.3 puffs_node.3 puffs_ops.3 puffs_path.3	\
-		puffs_req.3 puffs_suspend.3
+		puffs_suspend.3
 INCS=		puffs.h puffsdump.h
 INCSDIR=	/usr/include
 LINTFLAGS+=-S -w

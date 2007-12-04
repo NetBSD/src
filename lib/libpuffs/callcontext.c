@@ -1,4 +1,4 @@
-/*	$NetBSD: callcontext.c,v 1.14 2007/11/29 17:47:54 pooka Exp $	*/
+/*	$NetBSD: callcontext.c,v 1.15 2007/12/04 21:24:10 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006 Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: callcontext.c,v 1.14 2007/11/29 17:47:54 pooka Exp $");
+__RCSID("$NetBSD: callcontext.c,v 1.15 2007/12/04 21:24:10 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -136,7 +136,7 @@ int pthread__stackid_setup(void *, size_t, pthread_t *);
 static struct puffs_cc fakecc;
 
 int
-puffs_cc_create(struct puffs_usermount *pu, struct puffs_req *preq,
+puffs_cc_create(struct puffs_usermount *pu, struct puffs_framebuf *pb,
 	int type, struct puffs_cc **pccp)
 {
 	struct puffs_cc *volatile pcc;
@@ -176,7 +176,7 @@ puffs_cc_create(struct puffs_usermount *pu, struct puffs_req *preq,
 
 	memset(pcc, 0, sizeof(struct puffs_cc));
 	pcc->pcc_pu = pu;
-	pcc->pcc_preq = preq;
+	pcc->pcc_pb = pb;
 	pcc->pcc_flags = type;
 
 	/* Not a real cc?  Don't need to init more */
@@ -249,7 +249,6 @@ puffs_cc_destroy(struct puffs_cc *pcc)
 	stacksize = pthread__stacksize;
 #endif
 
-	free(pcc->pcc_preq); /* XXX */
 	if ((pcc->pcc_flags & PCC_FAKECC) == 0)
 		munmap(pcc, stacksize);
 }
