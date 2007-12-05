@@ -1,4 +1,4 @@
-/*	$NetBSD: at_control.c,v 1.21 2007/12/05 01:16:02 dyoung Exp $	 */
+/*	$NetBSD: at_control.c,v 1.22 2007/12/05 22:56:51 dyoung Exp $	 */
 
 /*
  * Copyright (c) 1990,1994 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at_control.c,v 1.21 2007/12/05 01:16:02 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at_control.c,v 1.22 2007/12/05 22:56:51 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -355,8 +355,8 @@ at_purgeif(ifp)
 {
 	struct ifaddr *ifa, *nifa;
 
-	for (ifa = TAILQ_FIRST(&ifp->if_addrlist); ifa != NULL; ifa = nifa) {
-		nifa = TAILQ_NEXT(ifa, ifa_list);
+	for (ifa = IFADDR_FIRST(ifp); ifa != NULL; ifa = nifa) {
+		nifa = IFADDR_NEXT(ifa);
 		if (ifa->ifa_addr->sa_family != AF_APPLETALK)
 			continue;
 		at_purgeaddr(ifa, ifp);
