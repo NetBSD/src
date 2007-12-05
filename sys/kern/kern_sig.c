@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.261 2007/12/03 20:26:25 ad Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.262 2007/12/05 07:06:53 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.261 2007/12/03 20:26:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.262 2007/12/05 07:06:53 ad Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_multiprocessor.h"
@@ -215,7 +215,8 @@ sigactsinit(struct proc *pp, int share)
 		ps2 = ps;
 	} else {
 		ps2 = pool_get(&sigacts_pool, PR_WAITOK);
-		mutex_init(&ps2->sa_mutex, MUTEX_SPIN, IPL_SCHED);
+		/* XXX IPL_SCHED to match p_smutex */
+		mutex_init(&ps2->sa_mutex, MUTEX_DEFAULT, IPL_SCHED);
 		mutex_enter(&ps->sa_mutex);
 		memcpy(&ps2->sa_sigdesc, ps->sa_sigdesc,
 		    sizeof(ps2->sa_sigdesc));
@@ -241,7 +242,8 @@ sigactsunshare(struct proc *p)
 	if (oldps->sa_refcnt == 1)
 		return;
 	ps = pool_get(&sigacts_pool, PR_WAITOK);
-	mutex_init(&ps->sa_mutex, MUTEX_SPIN, IPL_SCHED);
+	/* XXX IPL_SCHED to match p_smutex */
+	mutex_init(&ps->sa_mutex, MUTEX_DEFAULT, IPL_SCHED);
 	memset(&ps->sa_sigdesc, 0, sizeof(ps->sa_sigdesc));
 	p->p_sigacts = ps;
 	sigactsfree(oldps);

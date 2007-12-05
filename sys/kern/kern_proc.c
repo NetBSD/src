@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.126 2007/12/04 16:56:17 ad Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.127 2007/12/05 07:06:53 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.126 2007/12/04 16:56:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.127 2007/12/05 07:06:53 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_maxuprc.h"
@@ -318,7 +318,7 @@ procinit(void)
 		LIST_INIT(pd->pd_list);
 
 	mutex_init(&proclist_lock, MUTEX_DEFAULT, IPL_NONE);
-	mutex_init(&proclist_mutex, MUTEX_SPIN, IPL_SCHED);
+	mutex_init(&proclist_mutex, MUTEX_DEFAULT, IPL_SCHED);
 
 	pid_table = malloc(INITIAL_PID_TABLE_SIZE * sizeof *pid_table,
 			    M_PROC, M_WAITOK);
@@ -363,8 +363,8 @@ proc0_init(void)
 
 	KASSERT(l->l_lid == p->p_nlwpid);
 
-	mutex_init(&p->p_smutex, MUTEX_SPIN, IPL_SCHED);
-	mutex_init(&p->p_stmutex, MUTEX_SPIN, IPL_HIGH);
+	mutex_init(&p->p_smutex, MUTEX_DEFAULT, IPL_SCHED);
+	mutex_init(&p->p_stmutex, MUTEX_DEFAULT, IPL_HIGH);
 	mutex_init(&p->p_raslock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&p->p_mutex, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&l->l_swaplock, MUTEX_DEFAULT, IPL_NONE);
@@ -431,8 +431,8 @@ proc0_init(void)
 
 	l->l_addr = proc0paddr;				/* XXX */
 
-	/* Initialize signal state for proc0. */
-	mutex_init(&p->p_sigacts->sa_mutex, MUTEX_SPIN, IPL_NONE);
+	/* Initialize signal state for proc0. XXX IPL_SCHED */
+	mutex_init(&p->p_sigacts->sa_mutex, MUTEX_DEFAULT, IPL_SCHED);
 	siginit(p);
 
 	proc_initspecific(p);
