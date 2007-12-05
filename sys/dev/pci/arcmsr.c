@@ -1,4 +1,4 @@
-/*	$NetBSD: arcmsr.c,v 1.1 2007/12/05 00:18:07 xtraeme Exp $ */
+/*	$NetBSD: arcmsr.c,v 1.2 2007/12/05 16:02:25 xtraeme Exp $ */
 /*	$OpenBSD: arc.c,v 1.68 2007/10/27 03:28:27 dlg Exp $ */
 
 /*
@@ -20,14 +20,13 @@
 #include "bio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arcmsr.c,v 1.1 2007/12/05 00:18:07 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcmsr.c,v 1.2 2007/12/05 16:02:25 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
-#include <sys/callout.h>
 #include <sys/kthread.h>
 #include <sys/rwlock.h>
 
@@ -51,8 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: arcmsr.c,v 1.1 2007/12/05 00:18:07 xtraeme Exp $");
 #include <uvm/uvm_extern.h>	/* for PAGE_SIZE */
 
 #include <dev/pci/arcmsrvar.h>
-
-#define ARC_REFRESH_TIMO	(60 * hz)
 
 /* #define ARC_DEBUG */
 #ifdef ARC_DEBUG
@@ -101,7 +98,7 @@ static int 	arc_bio_alarm_state(struct arc_softc *, struct bioc_alarm *);
 static int 	arc_bio_getvol(struct arc_softc *, int,
 			       struct arc_fw_volinfo *);
 static void 	arc_create_sensors(void *);
-static void 	arc_refresh_sensors(void *);
+static void 	arc_refresh_sensors(struct sysmon_envsys *, envsys_data_t *);
 #endif
 
 static int
@@ -1168,8 +1165,8 @@ arc_msgbuf(struct arc_softc *sc, void *wptr, size_t wbuflen, void *rptr,
 	}
 
 out:
-	free(wbuf, M_DEVBUF);
-	free(rbuf, M_DEVBUF);
+	free(wbuf, M_TEMP);
+	free(rbuf, M_TEMP);
 
 	return error;
 }
@@ -1247,6 +1244,7 @@ arc_create_sensors(void *arg)
 
 		sc->sc_sensors[i].units = ENVSYS_DRIVE;
 		sc->sc_sensors[i].monitor = true;
+		sc->sc_sensors[i].flags = ENVSYS_FMONSTCHANGED;
 		strlcpy(sc->sc_sensors[i].desc, bv.bv_dev,
 		    sizeof(sc->sc_sensors[i].desc));
 		if (sysmon_envsys_sensor_attach(sc->sc_sme, &sc->sc_sensors[i]))
@@ -1254,15 +1252,13 @@ arc_create_sensors(void *arg)
 	}
 
 	sc->sc_sme->sme_name = device_xname(&sc->sc_dev);
-	sc->sc_sme->sme_flags = SME_DISABLE_REFRESH;
+	sc->sc_sme->sme_cookie = sc;
+	sc->sc_sme->sme_refresh = arc_refresh_sensors;
 	if (sysmon_envsys_register(sc->sc_sme)) {
 		aprint_debug("%s: unable to register with sysmon\n",
 		    device_xname(&sc->sc_dev));
 		goto bad;
 	}
-	callout_init(&sc->sc_callout, CALLOUT_MPSAFE);
-	callout_setfunc(&sc->sc_callout, arc_refresh_sensors, sc);
-	callout_schedule(&sc->sc_callout, ARC_REFRESH_TIMO);
 	kthread_exit(0);
 
 bad:
@@ -1272,48 +1268,45 @@ bad:
 }
 
 static void
-arc_refresh_sensors(void *arg)
+arc_refresh_sensors(struct sysmon_envsys *sme, envsys_data_t *edata)
 {
-	struct arc_softc	*sc = arg;
+	struct arc_softc	*sc = sme->sme_cookie;
 	struct bioc_vol		bv;
-	int 			i;
 
 	memset(&bv, 0, sizeof(bv));
-	for (i = 0; i < sc->sc_nsensors; i++) {
-		bv.bv_volid = i;
-		if (arc_bio_vol(sc, &bv)) {
-			sc->sc_sensors[i].value_cur = ENVSYS_DRIVE_EMPTY;
-			sc->sc_sensors[i].state = ENVSYS_SINVALID;
-			goto out;
-		}
+	bv.bv_volid = edata->sensor;
 
-		switch (bv.bv_status) {
-		case BIOC_SVOFFLINE:
-			sc->sc_sensors[i].value_cur = ENVSYS_DRIVE_FAIL;
-			sc->sc_sensors[i].state = ENVSYS_SCRITICAL;
-			break;
-		case BIOC_SVDEGRADED:
-			sc->sc_sensors[i].value_cur = ENVSYS_DRIVE_PFAIL;
-			sc->sc_sensors[i].state = ENVSYS_SCRITICAL;
-			break;
-		case BIOC_SVBUILDING:
-			sc->sc_sensors[i].value_cur = ENVSYS_DRIVE_REBUILD;
-			sc->sc_sensors[i].state = ENVSYS_SVALID;
-			break;
-		case BIOC_SVSCRUB:
-		case BIOC_SVONLINE:
-			sc->sc_sensors[i].value_cur = ENVSYS_DRIVE_ONLINE;
-			sc->sc_sensors[i].state = ENVSYS_SVALID;
-			break;
-		case BIOC_SVINVALID:
-			/* FALLTRHOUGH */
-		default:
-			sc->sc_sensors[i].value_cur = ENVSYS_DRIVE_EMPTY;
-			sc->sc_sensors[i].state = ENVSYS_SINVALID;
-		}
+	if (arc_bio_vol(sc, &bv)) {
+		edata->value_cur = ENVSYS_DRIVE_EMPTY;
+		edata->state = ENVSYS_SINVALID;
+		return;
 	}
-out:
-	callout_schedule(&sc->sc_callout, ARC_REFRESH_TIMO);
+
+	switch (bv.bv_status) {
+	case BIOC_SVOFFLINE:
+		edata->value_cur = ENVSYS_DRIVE_FAIL;
+		edata->state = ENVSYS_SCRITICAL;
+		break;
+	case BIOC_SVDEGRADED:
+		edata->value_cur = ENVSYS_DRIVE_PFAIL;
+		edata->state = ENVSYS_SCRITICAL;
+		break;
+	case BIOC_SVBUILDING:
+		edata->value_cur = ENVSYS_DRIVE_REBUILD;
+		edata->state = ENVSYS_SVALID;
+		break;
+	case BIOC_SVSCRUB:
+	case BIOC_SVONLINE:
+		edata->value_cur = ENVSYS_DRIVE_ONLINE;
+		edata->state = ENVSYS_SVALID;
+		break;
+	case BIOC_SVINVALID:
+		/* FALLTRHOUGH */
+	default:
+		edata->value_cur = ENVSYS_DRIVE_EMPTY; /* unknown state */
+		edata->state = ENVSYS_SINVALID;
+		break;
+	}
 }
 #endif /* NBIO > 0 */
 
