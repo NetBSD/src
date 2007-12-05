@@ -1,4 +1,4 @@
-/* $NetBSD: kern_pnp.c,v 1.1.2.17 2007/12/01 04:27:09 jmcneill Exp $ */
+/* $NetBSD: kern_pnp.c,v 1.1.2.18 2007/12/05 14:47:07 joerg Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_pnp.c,v 1.1.2.17 2007/12/01 04:27:09 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_pnp.c,v 1.1.2.18 2007/12/05 14:47:07 joerg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -389,6 +389,23 @@ pnp_device_recursive_resume(device_t dv)
 	}
 
 	return pnp_device_resume(dv);
+}
+
+bool
+pnp_device_resume_subtree(device_t dv)
+{
+	device_t curdev;
+
+	if (!pnp_device_recursive_resume(dv))
+		return false;
+
+	TAILQ_FOREACH(curdev, &alldevs, dv_list) {
+		if (device_parent(curdev) != dv)
+			continue;
+		if (!pnp_device_resume_subtree(curdev))
+			return false;
+	}
+	return true;
 }
 
 #include <net/if.h>
