@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.69 2007/12/03 15:33:53 ad Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.70 2007/12/05 12:31:27 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.69 2007/12/03 15:33:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.70 2007/12/05 12:31:27 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,7 +151,8 @@ findbootdev(void)
 	}
 
 	sprintf(buf, "%s%d", name, unit);
-	for (dv = alldevs.tqh_first; dv != NULL; dv = dv->dv_list.tqe_next) {
+	for (dv = TAILQ_FIRST(&alldevs); dv != NULL;
+	    dv = TAILQ_NEXT(dv, dv_list)) {
 		if (strcmp(buf, dv->dv_xname) == 0) {
 			booted_device = dv;
 			return;

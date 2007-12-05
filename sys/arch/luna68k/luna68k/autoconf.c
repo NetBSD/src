@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.c,v 1.8 2007/12/03 15:33:49 ad Exp $ */
+/* $NetBSD: autoconf.c,v 1.9 2007/12/05 12:31:26 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.8 2007/12/03 15:33:49 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.9 2007/12/05 12:31:26 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,7 +105,8 @@ find_dev_byname(name)
 {
 	struct device *dv;
 
-	for (dv = alldevs.tqh_first; dv != NULL; dv = dv->dv_list.tqe_next) {
+	for (dv = TAILQ_FIRST(&alldevs); dv != NULL;
+	    dv = TAILQ_NEXT(dv, dv_list)) {
 		if (!strcmp(dv->dv_xname, name)) {
 			return dv;
 		}

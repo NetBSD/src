@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.20 2007/12/03 15:34:06 ad Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.21 2007/12/05 12:31:27 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.20 2007/12/03 15:34:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.21 2007/12/05 12:31:27 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -188,7 +188,7 @@ cpu_rootconf(void)
 static struct device *
 getdevunit(const char *name, int unit)
 {
-	struct device *dev = alldevs.tqh_first;
+	struct device *dev = TAILQ_FIRST(&alldevs);
 	char num[10], fullname[16];
 	int lunit;
 	int i;
@@ -207,7 +207,7 @@ getdevunit(const char *name, int unit)
 	strcat(fullname, num);
 
 	while (strcmp(dev->dv_xname, fullname) != 0) {
-		if ((dev = dev->dv_list.tqe_next) == NULL)
+		if ((dev = TAILQ_NEXT(dev, dv_list)) == NULL)
 			return NULL;
 	}
 	return dev;

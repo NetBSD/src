@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.22 2007/12/04 15:12:08 tsutsui Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.23 2007/12/05 12:31:28 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.22 2007/12/04 15:12:08 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.23 2007/12/05 12:31:28 tsutsui Exp $");
 
 #include "opt_kgdb.h"
 
@@ -440,8 +440,8 @@ find_dev_byname(char *name)
 {
 	struct device *dv;
 
-	for (dv = alldevs.tqh_first; dv != NULL;
-	    dv = dv->dv_list.tqe_next) {
+	for (dv = TAILQ_FIRST(&alldevs); dv != NULL;
+	    dv = TAILQ_NEXT(dv, dv_list)) {
 		if (!strcmp(dv->dv_xname, name)) {
 			return dv;
 		}
