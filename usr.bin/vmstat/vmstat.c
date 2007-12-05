@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.154 2007/11/07 00:24:18 ad Exp $ */
+/* $NetBSD: vmstat.c,v 1.155 2007/12/05 09:20:56 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.154 2007/11/07 00:24:18 ad Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.155 2007/12/05 09:20:56 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -1706,7 +1706,7 @@ usage(void)
 {
 
 	(void)fprintf(stderr,
-	    "usage: %s [-efHiLlmstUvW] [-c count] [-h hashname] [-M core] [-N system]\n"
+	    "usage: %s [-CefHiLlmstUvW] [-c count] [-h hashname] [-M core] [-N system]\n"
 	    "\t\t[-u histname] [-w wait] [disks]\n", getprogname());
 	exit(1);
 }
