@@ -5,6 +5,7 @@
 #include <sys/lkm.h>
 #include <sys/cdefs.h>
 #include <sys/queue.h>
+#include <sys/mutex.h>
 #ifdef _KERNEL
 #include <sys/device.h>
 #else
