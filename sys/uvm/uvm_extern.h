@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.137 2007/11/30 22:43:17 ad Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.138 2007/12/05 09:35:46 yamt Exp $	*/
 
 /*
  *
@@ -202,15 +202,6 @@ typedef voff_t pgoff_t;		/* XXX: number of pages within a uvm object */
  * flags for ubc_uiomve()
  */
 #define	UBC_PARTIALOK	0x100
-
-/*
- * helpers for calling ubc_release()
- */
-#ifdef PMAP_CACHE_VIVT
-#define UBC_WANT_UNMAP(vp) (((vp)->v_flag & VTEXT) != 0)
-#else
-#define UBC_WANT_UNMAP(vp) false
-#endif
 
 /*
  * flags for uvn_findpages().
@@ -476,6 +467,15 @@ extern struct uvmexp uvmexp;
 #include <uvm/uvm_pmap.h>
 #include <uvm/uvm_map.h>
 #include <uvm/uvm_pager.h>
+
+/*
+ * helpers for calling ubc_release()
+ */
+#ifdef PMAP_CACHE_VIVT
+#define UBC_WANT_UNMAP(vp) (((vp)->v_iflag & VI_TEXT) != 0)
+#else
+#define UBC_WANT_UNMAP(vp) false
+#endif
 
 /*
  * Shareable process virtual address space.
