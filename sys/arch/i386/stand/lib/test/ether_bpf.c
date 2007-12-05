@@ -1,4 +1,4 @@
-/*	$NetBSD: ether_bpf.c,v 1.8 2007/12/05 01:02:15 dyoung Exp $	*/
+/*	$NetBSD: ether_bpf.c,v 1.9 2007/12/05 22:50:00 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -131,10 +131,10 @@ int EtherInit(ha)
 		struct ifnet ifnet;
 		kvm_read(kvm, (u_long)ifp, &ifnet, sizeof(struct ifnet));
 		if (!strcmp(ifnet.if_xname, BPF_IFNAME)) {
-			ifap = TAILQ_FIRST(&ifnet.if_addrlist);
+			ifap = IFADDR_FIRST(&ifnet);
 			break;
 		}
-		ifp = TAILQ_NEXT(&ifnet, if_list);
+		ifp = IFNET_NEXT(&ifnet);
 	}
 	if (!ifp) {
 		warnx("interface not found");
@@ -155,7 +155,7 @@ int EtherInit(ha)
 			memcpy(ha, CLLADDR(sdlp), 6);
 			break;
 		}
-		ifap = TAILQ_NEXT(&ifaddr, ifa_list);
+		ifap = IFADDR_NEXT(&ifaddr);
 	}
 	free(sdlp);
 	kvm_close(kvm);
