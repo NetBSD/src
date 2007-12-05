@@ -1,4 +1,4 @@
-/* $NetBSD: bioctl.c,v 1.3 2007/12/05 13:26:04 xtraeme Exp $ */
+/* $NetBSD: bioctl.c,v 1.4 2007/12/05 14:28:14 xtraeme Exp $ */
 /* $OpenBSD: bioctl.c,v 1.52 2007/03/20 15:26:06 jmc Exp $       */
 
 /*
@@ -30,7 +30,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: bioctl.c,v 1.3 2007/12/05 13:26:04 xtraeme Exp $");
+__RCSID("$NetBSD: bioctl.c,v 1.4 2007/12/05 14:28:14 xtraeme Exp $");
 #endif
 
 #include <sys/ioctl.h>
@@ -65,7 +65,6 @@ static void bio_setstate(int, char *);
 static void bio_setblink(int, char *, char *, int);
 static void bio_blink(int, char *, int, int);
 
-static int debug;
 static int human;
 static int verbose;
 
@@ -101,9 +100,6 @@ main(int argc, char *argv[])
 			func |= BIOC_BLINK;
 			blink = BIOC_SBUNBLINK;
 			bl_arg = optarg;
-			break;
-		case 'D': /* debug */
-			debug = 1;
 			break;
 		case 'H': /* set hotspare */
 			func |= BIOC_SETSTATE;
@@ -146,9 +142,6 @@ main(int argc, char *argv[])
 			    bl.bl_name, "/dev/bio");
 	}
 
-	if (debug)
-		warnx("cookie = %p", bl.bl_cookie);
-
 	if (func & BIOC_INQ) {
 		bio_inq(fd, bioc_dev);
 	} else if (func == BIOC_ALARM) {
@@ -166,7 +159,7 @@ static void
 usage(void)
 {
 	(void)fprintf(stderr,
-		"usage: %s [-Dhv] [-a alarm-function] "
+		"usage: %s [-hv] [-a alarm-function] "
 		"[-b channel:target[.lun]]\n"
 		"\t[-H channel:target[.lun]]\n"
 		"\t[-u channel:target[.lun]] device\n", getprogname());
@@ -218,23 +211,11 @@ bio_inq(int fd, char *name)
 
 	memset(&bi, 0, sizeof(bi));
 
-	if (debug)
-		printf("bio_inq\n");
-
 	bi.bi_cookie = bl.bl_cookie;
 
 	rv = ioctl(fd, BIOCINQ, &bi);
-	if (rv == -1) {
-		warn("BIOCINQ");
-		return;
-	}
-
-	if (debug)
-		printf("bio_inq { %p, %s, %d, %d }\n",
-		    bi.bi_cookie,
-		    bi.bi_dev,
-		    bi.bi_novol,
-		    bi.bi_nodisk);
+	if (rv)
+		errx(EXIT_FAILURE, "BIOCINQ %s", strerror(errno));
 
 	volheader = 0;
 	for (i = 0; i < bi.bi_novol; i++) {
@@ -245,10 +226,8 @@ bio_inq(int fd, char *name)
 		bv.bv_seconds = 0;
 
 		rv = ioctl(fd, BIOCVOL, &bv);
-		if (rv == -1) {
-			warn("BIOCVOL");
-			return;
-		}
+		if (rv)
+			errx(EXIT_FAILURE, "BIOCVOL %s", strerror(errno));
 
 		if (!volheader) {
 			volheader = 1;
@@ -320,10 +299,9 @@ bio_inq(int fd, char *name)
 			bd.bd_volid = i;
 
 			rv = ioctl(fd, BIOCDISK, &bd);
-			if (rv == -1) {
-				warn("BIOCDISK");
-				return;
-			}
+			if (rv)
+				errx(EXIT_FAILURE, "BIOCDISK %s",
+				    strerror(errno));
 
 			switch (bd.bd_status) {
 			case BIOC_SDONLINE:
@@ -424,10 +402,8 @@ bio_alarm(int fd, char *arg)
 	}
 
 	rv = ioctl(fd, BIOCALARM, &ba);
-	if (rv == -1) {
-		warn("BIOCALARM");
-		return;
-	}
+	if (rv)
+		errx(EXIT_FAILURE, "BIOCALARM %s", strerror(errno));
 
 	if (arg[0] == 'g') {
 		printf("alarm is currently %s\n",
@@ -455,10 +431,8 @@ bio_setstate(int fd, char *arg)
 	bs.bs_lun = location.lun;
 
 	rv = ioctl(fd, BIOCSETSTATE, &bs);
-	if (rv == -1) {
-		warn("BIOCSETSTATE");
-		return;
-	}
+	if (rv)
+		errx(EXIT_FAILURE, "BIOCSETSTATE %s", strerror(errno));
 }
 
 static void
@@ -474,7 +448,7 @@ bio_setblink(int fd, char *name, char *arg, int blink)
 
 	errstr = str2locator(arg, &location);
 	if (errstr)
-		errx(1, "Target %s: %s", arg, errstr);
+		errx(EXIT_FAILURE, "Target %s: %s", arg, errstr);
 
 	/* try setting blink on the device directly */
 	memset(&bb, 0, sizeof(bb));
@@ -491,23 +465,16 @@ bio_setblink(int fd, char *name, char *arg, int blink)
 	memset(&bi, 0, sizeof(bi));
 	bi.bi_cookie = bl.bl_cookie;
 	rv = ioctl(fd, BIOCINQ, &bi);
-	if (rv == -1) {
-		warn("BIOCINQ");
-		return;
-	}
+	if (rv)
+		errx(EXIT_FAILURE, "BIOCINQ %s", strerror(errno));
 
 	for (v = 0; v < bi.bi_novol; v++) {
 		memset(&bv, 0, sizeof(bv));
 		bv.bv_cookie = bl.bl_cookie;
 		bv.bv_volid = v;
 		rv = ioctl(fd, BIOCVOL, &bv);
-		if (rv == -1) {
-			warn("BIOCVOL");
-			return;
-		}
-
-		if (name && strcmp(name, bv.bv_dev) != 0)
-			continue;
+		if (rv == -1)
+			errx(EXIT_FAILURE, "BIOCVOL %s", strerror(errno));
 
 		for (d = 0; d < bv.bv_nodisk; d++) {
 			memset(&bd, 0, sizeof(bd));
@@ -516,10 +483,9 @@ bio_setblink(int fd, char *name, char *arg, int blink)
 			bd.bd_diskid = d;
 
 			rv = ioctl(fd, BIOCDISK, &bd);
-			if (rv == -1) {
-				warn("BIOCDISK");
-				return;
-			}
+			if (rv == -1)
+				errx(EXIT_FAILURE, "BIOCDISK %s",
+				    strerror(errno));
 
 			if (bd.bd_channel == location.channel &&
 			    bd.bd_target == location.target &&
@@ -548,7 +514,8 @@ bio_blink(int fd, char *enclosure, int target, int blinktype)
 	bio.bl_name = enclosure;
 	rv = ioctl(fd, BIOCLOCATE, &bio);
 	if (rv == -1)
-		errx(1, "Can't locate %s device via %s", enclosure, "/dev/bio");
+		errx(EXIT_FAILURE,
+		    "Can't locate %s device via %s", enclosure, "/dev/bio");
 
 	memset(&blink, 0, sizeof(blink));
 	blink.bb_cookie = bio.bl_cookie;
@@ -557,5 +524,5 @@ bio_blink(int fd, char *enclosure, int target, int blinktype)
 
 	rv = ioctl(fd, BIOCBLINK, &blink);
 	if (rv == -1)
-		warn("BIOCBLINK");
+		errx(EXIT_FAILURE, "BIOCBLINK %s", strerror(errno));
 }
