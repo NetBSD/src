@@ -1,4 +1,4 @@
-/* $NetBSD: pnp.h,v 1.1.2.8 2007/11/23 16:03:15 joerg Exp $ */
+/* $NetBSD: pnp.h,v 1.1.2.9 2007/12/05 14:47:07 joerg Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -87,6 +87,7 @@ bool		pnp_device_resume(device_t);
 
 bool		pnp_device_recursive_suspend(device_t);
 bool		pnp_device_recursive_resume(device_t);
+bool		pnp_device_resume_subtree(device_t);
 
 struct ifnet;
 void		pnp_class_network_register(device_t, struct ifnet *);
