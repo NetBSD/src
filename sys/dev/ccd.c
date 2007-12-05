@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.124 2007/11/26 19:01:34 pooka Exp $	*/
+/*	$NetBSD: ccd.c,v 1.125 2007/12/05 07:06:50 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2007 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.124 2007/11/26 19:01:34 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.125 2007/12/05 07:06:50 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -261,7 +261,7 @@ ccdattach(int num)
 	for (i = 0; i < num; i++) {
 		cs = &ccd_softc[i];
 		snprintf(cs->sc_xname, sizeof(cs->sc_xname), "ccd%d", i);
-		mutex_init(&cs->sc_lock, MUTEX_DRIVER, IPL_NONE);
+		mutex_init(&cs->sc_lock, MUTEX_DEFAULT, IPL_NONE);
 		disk_init(&cs->sc_dkdev, cs->sc_xname, NULL); /* XXX */
 	}
 }

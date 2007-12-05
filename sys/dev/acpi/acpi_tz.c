@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_tz.c,v 1.29 2007/12/02 06:26:40 jmcneill Exp $ */
+/* $NetBSD: acpi_tz.c,v 1.30 2007/12/05 07:06:51 ad Exp $ */
 
 /*
  * Copyright (c) 2003 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.29 2007/12/02 06:26:40 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.30 2007/12/05 07:06:51 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -159,7 +159,7 @@ acpitz_attach(struct device *parent, struct device *self, void *aux)
 	ACPI_STATUS rv;
 	ACPI_INTEGER v;
 
-	mutex_init(&sc->sc_mtx, MUTEX_DRIVER, IPL_NONE);
+	mutex_init(&sc->sc_mtx, MUTEX_DEFAULT, IPL_NONE);
 
 #if 0
 	sc->sc_flags = ATZ_F_VERBOSE;
