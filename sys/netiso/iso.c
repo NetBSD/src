@@ -1,4 +1,4 @@
-/*	$NetBSD: iso.c,v 1.46 2007/12/05 23:02:51 dyoung Exp $	*/
+/*	$NetBSD: iso.c,v 1.47 2007/12/05 23:47:19 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iso.c,v 1.46 2007/12/05 23:02:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iso.c,v 1.47 2007/12/05 23:47:19 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -589,7 +589,7 @@ iso_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 		return (error);
 
 	case SIOCDIFADDR_ISO:
-		iso_purgeaddr(&ia->ia_ifa, ifp);
+		iso_purgeaddr(&ia->ia_ifa);
 		break;
 
 #define cmdbyte(x)	(((x) >> 8) & 0xff)
@@ -604,28 +604,22 @@ iso_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 }
 
 void
-iso_purgeaddr(struct ifaddr *ifa, struct ifnet *ifp)
+iso_purgeaddr(struct ifaddr *ifa)
 {
+	struct ifnet *ifp = ifa->ifa_ifp;
 	struct iso_ifaddr *ia = (void *) ifa;
 
 	iso_ifscrub(ifp, ia);
 	TAILQ_REMOVE(&ifp->if_addrlist, &ia->ia_ifa, ifa_list);
 	IFAFREE(&ia->ia_ifa);
 	TAILQ_REMOVE(&iso_ifaddr, ia, ia_list);
-	IFAFREE((&ia->ia_ifa));
+	IFAFREE(&ia->ia_ifa);
 }
 
 void
 iso_purgeif(struct ifnet *ifp)
 {
-	struct ifaddr *ifa, *nifa;
-
-	for (ifa = IFADDR_FIRST(ifp); ifa != NULL; ifa = nifa) {
-		nifa = IFADDR_NEXT(ifa);
-		if (ifa->ifa_addr->sa_family != AF_ISO)
-			continue;
-		iso_purgeaddr(ifa, ifp);
-	}
+	if_purgeaddrs(ifp, AF_ISO, iso_purgeaddr);
 }
 
 /*
