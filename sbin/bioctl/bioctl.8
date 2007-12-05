@@ -1,4 +1,4 @@
-.\"	$NetBSD: bioctl.8,v 1.6 2007/12/05 12:29:55 xtraeme Exp $
+.\"	$NetBSD: bioctl.8,v 1.7 2007/12/05 14:28:13 xtraeme Exp $
 .\"	$OpenBSD: bioctl.8,v 1.43 2007/03/20 06:12:11 jmc Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Marco Peereboom
@@ -33,7 +33,7 @@
 .Sh SYNOPSIS
 .Nm bioctl
 .Bk -words
-.Op Fl Dhv
+.Op Fl hv
 .Op Fl a Ar alarm-function
 .Op Fl b Ar channel:target[.lun]
 .Op Fl H Ar channel:target[.lun]
@@ -78,8 +78,6 @@ Instruct the device at
 to start blinking, if there is
 .Xr ses 4
 support in the enclosure.
-.It Fl D
-Enable debug output.
 .It Fl H Ar channel:target[.lun]
 If the device at
 .Ar channel:target[.lun]
