@@ -1,4 +1,4 @@
-/*	$NetBSD: requests.c,v 1.18 2007/12/05 04:29:10 dogcow Exp $	*/
+/*	$NetBSD: requests.c,v 1.19 2007/12/05 10:13:37 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: requests.c,v 1.18 2007/12/05 04:29:10 dogcow Exp $");
+__RCSID("$NetBSD: requests.c,v 1.19 2007/12/05 10:13:37 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -133,14 +133,13 @@ puffs_fsframe_write(struct puffs_usermount *pu, struct puffs_framebuf *pb,
 	 * XXX: this shouldn't be here
 	 */
 	if (puffs_framebuf_telloff(pb) == 0) {
-		void *preq;
+		struct puffs_req *preq;
 
 		winlen = sizeof(struct puffs_req);
-		rv = puffs_framebuf_getwindow(pb, 0, (void **)&preq, &winlen);
+		rv = puffs_framebuf_getwindow(pb, 0, (void *)&preq, &winlen);
 		if (rv == -1)
 			return errno;
-		flen = ((struct puffs_req *)preq)->preq_buflen;
-		((struct puffs_req *)preq)->preq_pth.pth_framelen = flen;
+		preq->preq_pth.pth_framelen = flen = preq->preq_buflen;
 	} else {
 		struct putter_hdr phdr;
 
@@ -204,13 +203,13 @@ int
 puffs_fsframe_cmp(struct puffs_usermount *pu,
 	struct puffs_framebuf *pb1, struct puffs_framebuf *pb2, int *notresp)
 {
-	void *preq1, *preq2;
+	struct puffs_req *preq1, *preq2;
 	size_t winlen;
 	int rv;
 
 	/* map incoming preq */
 	winlen = sizeof(struct puffs_req);
-	rv = puffs_framebuf_getwindow(pb1, 0, &preq1, &winlen);
+	rv = puffs_framebuf_getwindow(pb1, 0, (void *)&preq1, &winlen);
 	assert(rv == 0); /* frames are always at least puffs_req in size */
 	assert(winlen = sizeof(struct puffs_req));
 
@@ -218,20 +217,19 @@ puffs_fsframe_cmp(struct puffs_usermount *pu,
 	 * Check if this is not a response in this slot.  That's the
 	 * likely case.
 	 */
-	if ((((struct puffs_req *)preq1)->preq_opclass & PUFFSOPFLAG_ISRESPONSE) == 0) {
+	if ((preq1->preq_opclass & PUFFSOPFLAG_ISRESPONSE) == 0) {
 		*notresp = 1;
 		return 0;
 	}
 
 	/* map second preq */
 	winlen = sizeof(struct puffs_req);
-	rv = puffs_framebuf_getwindow(pb2, 0, &preq2, &winlen);
+	rv = puffs_framebuf_getwindow(pb2, 0, (void *)&preq2, &winlen);
 	assert(rv == 0); /* frames are always at least puffs_req in size */
 	assert(winlen = sizeof(struct puffs_req));
 
 	/* then compare: resid equal? */
-	return ((struct puffs_req *)preq1)->preq_id ==
-	    ((struct puffs_req *)preq2)->preq_id;
+	return preq1->preq_id == preq2->preq_id;
 }
 
 void
