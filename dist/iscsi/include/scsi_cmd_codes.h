@@ -1,4 +1,4 @@
-/* $NetBSD: scsi_cmd_codes.h,v 1.15 2007/11/22 22:51:09 agc Exp $ */
+/* $NetBSD: scsi_cmd_codes.h,v 1.16 2007/12/05 07:23:03 agc Exp $ */
 
 /*
  * Copyright © 2006 Alistair Crooks.  All rights reserved.
@@ -62,7 +62,7 @@ enum {
 #define TEN_BYTE_COMMAND(op)	((op) > 0x1f && (op) <= 0x5f)
 
 enum {
-	ISCSI_MODE_SENSE_LEN = 	11,
+	ISCSI_MODE_SENSE_LEN = 	11
 };
 
 /* miscellaneous definitions */
