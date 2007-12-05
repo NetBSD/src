@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.81 2007/12/04 18:40:17 dsl Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.82 2007/12/05 01:06:23 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.81 2007/12/04 18:40:17 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.82 2007/12/05 01:06:23 dyoung Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1059,31 +1059,31 @@ linux_getifhwaddr(struct lwp *l, register_t *retval, u_int fd,
 	/*
 	 * Try real interface name first, then fake "ethX"
 	 */
-	for (ifp = ifnet.tqh_first, found = 0;
-	     ifp != 0 && !found;
-	     ifp = ifp->if_list.tqe_next) {
+	found = 0;
+	IFNET_FOREACH(ifp) {
+		if (found)
+			break;
 		if (strcmp(lreq.if_name, ifp->if_xname))
 			/* not this interface */
 			continue;
 		found=1;
-		if ((ifa = ifp->if_addrlist.tqh_first) != 0) {
-			for (; ifa != 0; ifa = ifa->ifa_list.tqe_next) {
-				sadl = satosdl(ifa->ifa_addr);
-				/* only return ethernet addresses */
-				/* XXX what about FDDI, etc. ? */
-				if (sadl->sdl_family != AF_LINK ||
-				    sadl->sdl_type != IFT_ETHER)
-					continue;
-				memcpy(&lreq.hwaddr.sa_data, CLLADDR(sadl),
-				       MIN(sadl->sdl_alen,
-					   sizeof(lreq.hwaddr.sa_data)));
-				lreq.hwaddr.sa_family =
-					sadl->sdl_family;
-				error = copyout(&lreq, data, sizeof(lreq));
-				goto out;
-			}
-		} else {
+		if (TAILQ_EMPTY(&ifp->if_addrlist)) {
 			error = ENODEV;
+			goto out;
+		}
+		IFADDR_FOREACH(ifa, ifp) {
+			sadl = satosdl(ifa->ifa_addr);
+			/* only return ethernet addresses */
+			/* XXX what about FDDI, etc. ? */
+			if (sadl->sdl_family != AF_LINK ||
+			    sadl->sdl_type != IFT_ETHER)
+				continue;
+			memcpy(&lreq.hwaddr.sa_data, CLLADDR(sadl),
+			       MIN(sadl->sdl_alen,
+				   sizeof(lreq.hwaddr.sa_data)));
+			lreq.hwaddr.sa_family =
+				sadl->sdl_family;
+			error = copyout(&lreq, data, sizeof(lreq));
 			goto out;
 		}
 	}
@@ -1097,35 +1097,32 @@ linux_getifhwaddr(struct lwp *l, register_t *retval, u_int fd,
 		}
 
 		error = EINVAL;			/* in case we don't find one */
-		for (ifp = ifnet.tqh_first, found = 0;
-		     ifp != 0 && !found;
-		     ifp = ifp->if_list.tqe_next) {
+		found = 0;
+		IFNET_FOREACH(ifp) {
+			if (found)
+				break;
 			memcpy(lreq.if_name, ifp->if_xname,
 			       MIN(IF_NAME_LEN, IFNAMSIZ));
-			if ((ifa = ifp->if_addrlist.tqh_first) == 0)
-				/* no addresses on this interface */
-				continue;
-			else
-				for (; ifa != 0; ifa = ifa->ifa_list.tqe_next) {
-					sadl = satosdl(ifa->ifa_addr);
-					/* only return ethernet addresses */
-					/* XXX what about FDDI, etc. ? */
-					if (sadl->sdl_family != AF_LINK ||
-					    sadl->sdl_type != IFT_ETHER)
-						continue;
-					if (ifnum--)
-						/* not the reqested iface */
-						continue;
-					memcpy(&lreq.hwaddr.sa_data,
-					       CLLADDR(sadl),
-					       MIN(sadl->sdl_alen,
-						   sizeof(lreq.hwaddr.sa_data)));
-					lreq.hwaddr.sa_family =
-						sadl->sdl_family;
-					error = copyout(&lreq, data, sizeof(lreq));
-					found = 1;
-					break;
-				}
+			IFADDR_FOREACH(ifa, ifp) {
+				sadl = satosdl(ifa->ifa_addr);
+				/* only return ethernet addresses */
+				/* XXX what about FDDI, etc. ? */
+				if (sadl->sdl_family != AF_LINK ||
+				    sadl->sdl_type != IFT_ETHER)
+					continue;
+				if (ifnum--)
+					/* not the reqested iface */
+					continue;
+				memcpy(&lreq.hwaddr.sa_data,
+				       CLLADDR(sadl),
+				       MIN(sadl->sdl_alen,
+					   sizeof(lreq.hwaddr.sa_data)));
+				lreq.hwaddr.sa_family =
+					sadl->sdl_family;
+				error = copyout(&lreq, data, sizeof(lreq));
+				found = 1;
+				break;
+			}
 		}
 	} else {
 		/* unknown interface, not even an "eth*" name */
