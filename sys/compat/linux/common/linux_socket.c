@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.82 2007/12/05 01:06:23 dyoung Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.83 2007/12/05 22:51:57 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.82 2007/12/05 01:06:23 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.83 2007/12/05 22:51:57 dyoung Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1067,7 +1067,7 @@ linux_getifhwaddr(struct lwp *l, register_t *retval, u_int fd,
 			/* not this interface */
 			continue;
 		found=1;
-		if (TAILQ_EMPTY(&ifp->if_addrlist)) {
+		if (IFADDR_EMPTY(ifp)) {
 			error = ENODEV;
 			goto out;
 		}

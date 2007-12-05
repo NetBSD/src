@@ -1,9 +1,9 @@
-/*	$NetBSD: uipc_syscalls_40.c,v 1.5 2007/12/05 01:03:30 dyoung Exp $	*/
+/*	$NetBSD: uipc_syscalls_40.c,v 1.6 2007/12/05 22:51:28 dyoung Exp $	*/
 
 /* written by Pavel Cahyna, 2006. Public domain. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_40.c,v 1.5 2007/12/05 01:03:30 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_40.c,v 1.6 2007/12/05 22:51:28 dyoung Exp $");
 
 /*
  * System call interface to the socket abstraction.
@@ -49,7 +49,7 @@ compat_ifconf(u_long cmd, void *data)
 		    sizeof(ifr.ifr_name));
 		if (ifr.ifr_name[sizeof(ifr.ifr_name) - 1] != '\0')
 			return ENAMETOOLONG;
-		if (TAILQ_EMPTY(&ifp->if_addrlist)) {
+		if (IFADDR_EMPTY(ifp)) {
 			memset(&ifr.ifr_addr, 0, sizeof(ifr.ifr_addr));
 			if (space >= sz) {
 				error = copyout(&ifr, ifrp, sz);
