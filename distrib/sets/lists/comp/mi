@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1093 2007/12/04 21:26:27 pooka Exp $
+#	$NetBSD: mi,v 1.1094 2007/12/05 04:53:19 ad Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -7619,6 +7619,7 @@
 ./usr/share/man/cat9/splraiseipl.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/splsched.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/splserial.0		comp-sys-catman		.cat
+./usr/share/man/cat9/splsoftbio.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/splsoftclock.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/splsoftnet.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/splsoftserial.0		comp-sys-catman		.cat
@@ -12203,6 +12204,7 @@
 ./usr/share/man/man9/splraiseipl.9		comp-sys-man		.man
 ./usr/share/man/man9/splsched.9			comp-sys-man		.man
 ./usr/share/man/man9/splserial.9		comp-sys-man		.man
+./usr/share/man/man9/splsoftbio.9		comp-sys-man		.man
 ./usr/share/man/man9/splsoftclock.9		comp-sys-man		.man
 ./usr/share/man/man9/splsoftnet.9		comp-sys-man		.man
 ./usr/share/man/man9/splsoftserial.9		comp-sys-man		.man
