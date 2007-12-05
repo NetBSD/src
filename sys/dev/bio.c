@@ -1,4 +1,4 @@
-/*	$NetBSD: bio.c,v 1.3 2007/11/19 16:01:09 xtraeme Exp $ */
+/*	$NetBSD: bio.c,v 1.4 2007/12/05 07:06:50 ad Exp $ */
 /*	$OpenBSD: bio.c,v 1.9 2007/03/20 02:35:55 marco Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
 /* A device controller ioctl tunnelling device.  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bio.c,v 1.3 2007/11/19 16:01:09 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bio.c,v 1.4 2007/12/05 07:06:50 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -76,7 +76,7 @@ bio_initialize(void)
 	if (bio_lock_initialized)
 		return;
 
-	mutex_init(&bio_lock, MUTEX_DRIVER, IPL_BIO);
+	mutex_init(&bio_lock, MUTEX_DEFAULT, IPL_VM);
 	bio_lock_initialized = true;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.126 2007/11/29 18:33:29 ad Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.127 2007/12/05 07:06:53 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.126 2007/11/29 18:33:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.127 2007/12/05 07:06:53 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -999,7 +999,7 @@ uid_init(void)
 	 * XXXSMP This could be at IPL_SOFTNET, but for now we want
 	 * to to be deadlock free, so it must be at IPL_VM.
 	 */
-	mutex_init(&uihashtbl_lock, MUTEX_DRIVER, IPL_VM);
+	mutex_init(&uihashtbl_lock, MUTEX_DEFAULT, IPL_VM);
 
 	/*
 	 * Ensure that uid 0 is always in the user hash table, as
@@ -1033,7 +1033,7 @@ again:
 		/* Must not be called from interrupt context. */
 		newuip = malloc(sizeof(*uip), M_PROC, M_WAITOK | M_ZERO);
 		/* XXX this could be IPL_SOFTNET */
-		mutex_init(&newuip->ui_lock, MUTEX_DRIVER, IPL_VM);
+		mutex_init(&newuip->ui_lock, MUTEX_DEFAULT, IPL_VM);
 		goto again;
 	}
 	uip = newuip;
