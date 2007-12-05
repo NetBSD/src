@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.79 2007/12/04 21:24:11 pooka Exp $	*/
+/*	$NetBSD: puffs.c,v 1.80 2007/12/05 12:11:56 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.79 2007/12/04 21:24:11 pooka Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.80 2007/12/05 12:11:56 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -135,6 +135,18 @@ puffs_getselectable(struct puffs_usermount *pu)
 {
 
 	return pu->pu_fd;
+}
+
+uint64_t
+puffs__nextreq(struct puffs_usermount *pu)
+{
+	uint64_t rv;
+
+	PU_LOCK();
+	rv = pu->pu_nextreq++;
+	PU_UNLOCK();
+
+	return rv;
 }
 
 int
@@ -666,8 +678,6 @@ puffs_mainloop(struct puffs_usermount *pu)
 
 		/* else: do full processing */
 		/* Don't bother worrying about O(n) for now */
-		nchanges = 0;
-
 		LIST_FOREACH(fio, &pu->pu_ios, fio_entries) {
 			if (fio->stat & FIO_WRGONE)
 				continue;
@@ -686,6 +696,7 @@ puffs_mainloop(struct puffs_usermount *pu)
 		/*
 		 * Build list of which to enable/disable in writecheck.
 		 */
+		nchanges = 0;
 		LIST_FOREACH(fio, &pu->pu_ios, fio_entries) {
 			if (fio->stat & FIO_WRGONE)
 				continue;
