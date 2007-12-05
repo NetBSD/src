@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.74 2007/11/20 17:27:35 xtraeme Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.75 2007/12/05 06:52:27 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.74 2007/11/20 17:27:35 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.75 2007/12/05 06:52:27 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -95,7 +95,7 @@ __KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.74 2007/11/20 17:27:35 xtraeme E
  * workqueue(9) that is used to check for conditions and sending events
  * to the powerd(8) daemon (if running)).
  *
- * The callouts are protected by the 'sme_callout_mtx' spin lock.
+ * The callouts are protected by the 'sme_callout_mtx'.
  */
 
 kmutex_t sme_mtx, sme_events_mtx, sme_callout_mtx;
@@ -132,7 +132,7 @@ sysmon_envsys_init(void)
 	LIST_INIT(&sysmon_envsys_list);
 	mutex_init(&sme_mtx, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&sme_events_mtx, MUTEX_DEFAULT, IPL_NONE);
-	mutex_init(&sme_callout_mtx, MUTEX_SPIN, IPL_SOFTCLOCK);
+	mutex_init(&sme_callout_mtx, MUTEX_DEFAULT, IPL_SOFTCLOCK);
 	cv_init(&sme_cv, "smeworker");
 	sme_propd = prop_dictionary_create();
 }
