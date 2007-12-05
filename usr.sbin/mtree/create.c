@@ -1,4 +1,4 @@
-/*	$NetBSD: create.c,v 1.54 2007/11/19 08:58:54 rillig Exp $	*/
+/*	$NetBSD: create.c,v 1.55 2007/12/05 16:55:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)create.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: create.c,v 1.54 2007/11/19 08:58:54 rillig Exp $");
+__RCSID("$NetBSD: create.c,v 1.55 2007/12/05 16:55:29 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -96,17 +96,25 @@ cwalk(void)
 	FTSENT *p;
 	time_t clocktime;
 	char host[MAXHOSTNAMELEN + 1];
+	const char *user;
 	char *argv[2];
 	char  dot[] = ".";
+
 	argv[0] = dot;
 	argv[1] = NULL;
 
 	time(&clocktime);
 	gethostname(host, sizeof(host));
 	host[sizeof(host) - 1] = '\0';
+	if ((user = getlogin()) == NULL) {
+		struct passwd *pw;
+		user = (pw = getpwuid(getuid())) == NULL ? pw->pw_name :
+		    "<unknown>";
+	}
+
 	printf(
 	    "#\t   user: %s\n#\tmachine: %s\n#\t   tree: %s\n#\t   date: %s",
-	    getlogin(), host, fullpath, ctime(&clocktime));
+	    user, host, fullpath, ctime(&clocktime));
 
 	if ((t = fts_open(argv, ftsoptions, dcmp)) == NULL)
 		mtree_err("fts_open: %s", strerror(errno));
