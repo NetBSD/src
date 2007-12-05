@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_lockdebug.c,v 1.22 2007/11/30 23:05:44 ad Exp $	*/
+/*	$NetBSD: subr_lockdebug.c,v 1.22.2.1 2007/12/05 08:32:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.22 2007/11/30 23:05:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.22.2.1 2007/12/05 08:32:01 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_ddb.h"
@@ -445,14 +445,12 @@ lockdebug_wantlock(volatile void *lock, uintptr_t where, int shared)
 			recurse = true;
 	}
 
-#ifdef notyet
 	if (cpu_intr_p()) {
 		if ((ld->ld_flags & LD_SLEEPER) != 0)
 			lockdebug_abort1(ld, lk, __func__,
 			    "acquiring sleep lock from interrupt context",
 			    true);
 	}
-#endif
 
 	if (shared)
 		ld->ld_shwant++;
