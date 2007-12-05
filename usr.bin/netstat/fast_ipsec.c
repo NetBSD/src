@@ -1,4 +1,4 @@
-/*	$NetBSD: fast_ipsec.c,v 1.7 2005/08/04 19:41:28 rpaulo Exp $ */
+/*	$NetBSD: fast_ipsec.c,v 1.8 2007/12/05 00:51:12 seanb Exp $ */
 /* 	$FreeBSD: src/tools/tools/crypto/ipsecstats.c,v 1.1.4.1 2003/06/03 00:13:13 sam Exp $ */
 
 /*-
@@ -33,7 +33,7 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #ifdef __NetBSD__
-__RCSID("$NetBSD: fast_ipsec.c,v 1.7 2005/08/04 19:41:28 rpaulo Exp $");
+__RCSID("$NetBSD: fast_ipsec.c,v 1.8 2007/12/05 00:51:12 seanb Exp $");
 #endif
 #endif /* not lint*/
 
@@ -216,7 +216,7 @@ fast_ipsec_stats(u_long off, char *name)
 	STAT(ipsecstats.ips_out_inval, "generic errors (output)");
 	STAT(ipsecstats.ips_out_bundlesa, "bundled SA processed (output)");
 	STAT(ipsecstats.ips_spdcache_lookup, "SPD cache lookups");
-	STAT(ipsecstats.ips_spdcache_lookup, "SPD cache misses");
+	STAT(ipsecstats.ips_spdcache_miss, "SPD cache misses");
 #undef STAT
 	printf("\n");
 	
