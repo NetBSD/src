@@ -1,4 +1,4 @@
-.\"	$NetBSD: mutex.9,v 1.11 2007/12/05 05:17:53 ad Exp $
+.\"	$NetBSD: mutex.9,v 1.12 2007/12/05 05:20:38 ad Exp $
 .\"
 .\" Copyright (c) 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -43,10 +43,10 @@
 .Nm mutex_destroy ,
 .Nm mutex_enter ,
 .Nm mutex_exit ,
-.Nm mutex_tryenter ,
 .Nm mutex_owned ,
 .Nm mutex_spin_enter ,
-.Nm mutex_spin_exit
+.Nm mutex_spin_exit ,
+.Nm mutex_tryenter
 .Nd mutual exclusion primitives
 .Sh SYNOPSIS
 .In sys/mutex.h
@@ -59,13 +59,13 @@
 .Ft void
 .Fn mutex_exit "kmutex_t *mtx"
 .Ft int
-.Fn mutex_tryenter "kmutex_t *mtx"
-.Ft int
 .Fn mutex_owned "kmutex_t *mtx"
 .Ft void
 .Fn mutex_spin_enter "kmutex_t *mtx"
 .Ft void
 .Fn mutex_spin_exit "kmutex_t *mtx"
+.Ft int
+.Fn mutex_tryenter "kmutex_t *mtx"
 .Pp
 .Cd "options DIAGNOSTIC"
 .Cd "options LOCKDEBUG"
@@ -172,36 +172,6 @@ not be acquired once a spin mutex is held by the caller.
 Release a mutex.
 The mutex must have been previously acquired by the caller.
 Mutexes may be released out of order as needed.
-.It Fn mutex_tryenter "mtx"
-.Pp
-Try to acquire a mutex, but do not block if the mutex is already held.
-Returns non-zero if the mutex was acquired, or zero if the mutex was
-already held.
-.Pp
-.Fn mutex_tryenter
-can be used as an optimization when acquiring locks in the the wrong order.
-For example, in a setting where the convention is that
-.Dv first_lock
-must be acquired before
-.Dv second_lock ,
-the following can be used to optimistically lock in reverse order:
-.Bd -literal
-	/* We hold second_lock, but not first_lock. */
-	KASSERT(mutex_owned(\*[Am]second_lock));
-
-	if (!mutex_tryenter(\*[Am]first_lock)) {
-		/* Failed to get it - lock in the correct order. */
-		mutex_exit(\*[Am]second_lock);
-		mutex_enter(\*[Am]first_lock);
-		mutex_enter(\*[Am]second_lock);
-
-		/*
-		 * We may need to recheck any conditions the code
-		 * path depends on, as we released second_lock
-		 * briefly.
-		 */
-	}
-.Ed
 .It Fn mutex_owned "mtx"
 .Pp
 For adaptive mutexes, return non-zero if the current LWP holds the mutex.
@@ -236,6 +206,36 @@ but may only be used when it is known that
 is a spin mutex.
 On some architectures, this can substantially reduce the cost of releasing
 an unheld spin mutex.
+.It Fn mutex_tryenter "mtx"
+.Pp
+Try to acquire a mutex, but do not block if the mutex is already held.
+Returns non-zero if the mutex was acquired, or zero if the mutex was
+already held.
+.Pp
+.Fn mutex_tryenter
+can be used as an optimization when acquiring locks in the the wrong order.
+For example, in a setting where the convention is that
+.Dv first_lock
+must be acquired before
+.Dv second_lock ,
+the following can be used to optimistically lock in reverse order:
+.Bd -literal
+	/* We hold second_lock, but not first_lock. */
+	KASSERT(mutex_owned(\*[Am]second_lock));
+
+	if (!mutex_tryenter(\*[Am]first_lock)) {
+		/* Failed to get it - lock in the correct order. */
+		mutex_exit(\*[Am]second_lock);
+		mutex_enter(\*[Am]first_lock);
+		mutex_enter(\*[Am]second_lock);
+
+		/*
+		 * We may need to recheck any conditions the code
+		 * path depends on, as we released second_lock
+		 * briefly.
+		 */
+	}
+.Ed
 .El
 .Sh CODE REFERENCES
 This section describes places within the
