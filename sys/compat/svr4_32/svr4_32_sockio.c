@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_sockio.c,v 1.17 2007/12/04 18:40:26 dsl Exp $	 */
+/*	$NetBSD: svr4_32_sockio.c,v 1.18 2007/12/05 01:10:47 dyoung Exp $	 */
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_sockio.c,v 1.17 2007/12/04 18:40:26 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_sockio.c,v 1.18 2007/12/05 01:10:47 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -110,7 +110,6 @@ svr4_32_sock_ioctl(fp, l, retval, fd, cmd, data)
 	case SVR4_SIOCGIFNUM:
 		{
 			struct ifnet *ifp;
-			struct ifaddr *ifa;
 			int ifnum = 0;
 
 			/*
@@ -125,15 +124,8 @@ svr4_32_sock_ioctl(fp, l, retval, fd, cmd, data)
 			 * entry per physical interface?
 			 */
 
-			for (ifp = ifnet.tqh_first;
-			     ifp != 0; ifp = ifp->if_list.tqe_next)
-				if ((ifa = ifp->if_addrlist.tqh_first) == NULL)
-					ifnum++;
-				else
-					for (;ifa != NULL;
-					    ifa = ifa->ifa_list.tqe_next)
-						ifnum++;
-
+			IFNET_FOREACH(ifp)
+				ifnum += svr4_count_ifnum(ifp)
 
 			DPRINTF(("SIOCGIFNUM %d\n", ifnum));
 			return copyout(&ifnum, data, sizeof(ifnum));
