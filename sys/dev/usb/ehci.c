@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.125 2007/10/19 12:01:21 ad Exp $ */
+/*	$NetBSD: ehci.c,v 1.126 2007/12/05 07:15:53 ad Exp $ */
 
 /*
  * Copyright (c) 2004,2005 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.125 2007/10/19 12:01:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.126 2007/12/05 07:15:53 ad Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -74,8 +74,9 @@ __KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.125 2007/10/19 12:01:21 ad Exp $");
 #include <sys/select.h>
 #include <sys/proc.h>
 #include <sys/queue.h>
-
+#include <sys/mutex.h>
 #include <sys/bus.h>
+
 #include <machine/endian.h>
 
 #include <dev/usb/usb.h>
@@ -494,7 +495,7 @@ ehci_init(ehci_softc_t *sc)
 
 	usb_callout_init(sc->sc_tmo_intrlist);
 
-	lockinit(&sc->sc_doorbell_lock, PZERO, "ehcidb", 0, 0);
+	mutex_init(&sc->sc_doorbell_lock, MUTEX_DEFAULT, IPL_NONE);
 
 	/* Turn on controller */
 	EOWRITE4(sc, EHCI_USBCMD,
@@ -932,6 +933,7 @@ ehci_detach(struct ehci_softc *sc, int flags)
 	usb_delay_ms(&sc->sc_bus, 300); /* XXX let stray task complete */
 
 	/* XXX free other data structures XXX */
+	mutex_destroy(&sc->sc_doorbell_lock);
 
 	return (rv);
 }
@@ -1525,7 +1527,7 @@ ehci_sync_hc(ehci_softc_t *sc)
 		return;
 	}
 	DPRINTFN(2,("ehci_sync_hc: enter\n"));
-	usb_lockmgr(&sc->sc_doorbell_lock, LK_EXCLUSIVE, NULL); /* get doorbell */
+	mutex_enter(&sc->sc_doorbell_lock);	/* get doorbell */
 	s = splhardusb();
 	/* ask for doorbell */
 	EOWRITE4(sc, EHCI_USBCMD, EOREAD4(sc, EHCI_USBCMD) | EHCI_CMD_IAAD);
@@ -1535,7 +1537,7 @@ ehci_sync_hc(ehci_softc_t *sc)
 	DPRINTFN(1,("ehci_sync_hc: cmd=0x%08x sts=0x%08x\n",
 		    EOREAD4(sc, EHCI_USBCMD), EOREAD4(sc, EHCI_USBSTS)));
 	splx(s);
-	usb_lockmgr(&sc->sc_doorbell_lock, LK_RELEASE, NULL); /* release doorbell */
+	mutex_exit(&sc->sc_doorbell_lock);	/* release doorbell */
 #ifdef DIAGNOSTIC
 	if (error)
 		printf("ehci_sync_hc: tsleep() = %d\n", error);
