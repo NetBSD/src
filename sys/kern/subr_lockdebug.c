@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_lockdebug.c,v 1.22.2.3 2007/12/05 18:49:10 ad Exp $	*/
+/*	$NetBSD: subr_lockdebug.c,v 1.22.2.4 2007/12/05 23:59:58 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.22.2.3 2007/12/05 18:49:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.22.2.4 2007/12/05 23:59:58 ad Exp $");
 
 #include "opt_ddb.h"
 
@@ -179,6 +179,7 @@ lockdebug_lock_wr(lockdebuglk_t *lk)
 		}
 	} while (atomic_cas_uint(&lk->lk_lock, 0, LD_WRITE_LOCK) != 0);
 	lk->lk_oldspl = s;
+	membar_enter();
 }
 
 static void
@@ -187,6 +188,7 @@ lockdebug_unlock_wr(lockdebuglk_t *lk)
 	int s;
 
 	s = lk->lk_oldspl;
+	membar_exit();
 	lk->lk_lock = 0;
 	splx(s);
 }
@@ -203,6 +205,7 @@ lockdebug_lock_rd(lockdebuglk_t *lk)
 			SPINLOCK_SPIN_HOOK;
 		}
 	} while (atomic_cas_uint(&lk->lk_lock, val, val + 1) != val);
+	membar_enter();
 	return s;
 }
 
@@ -210,6 +213,7 @@ static void
 lockdebug_unlock_rd(lockdebuglk_t *lk, int s)
 {
 
+	membar_exit();
 	atomic_dec_uint(&lk->lk_lock);
 	splx(s);
 }
