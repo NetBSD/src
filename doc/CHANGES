@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.959 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.960 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -275,5 +275,5 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	toolchain: Install the linker scripts on amd64, which allows to
 		link x86 32bits objects using the native ld(1).
 		[bouyer 20071202]
-	arc(4):	Areca Technology Corporation SATA RAID controller driver,
+	arcmsr(4): Areca Technology Corporation SATA RAID controller driver,
 		ported from OpenBSD. [xtraeme 20071204]

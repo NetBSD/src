@@ -1,4 +1,4 @@
-/*	$NetBSD: arc.c,v 1.2 2007/12/04 21:09:56 xtraeme Exp $ */
+/*	$NetBSD: arcmsr.c,v 1.1 2007/12/05 00:18:07 xtraeme Exp $ */
 /*	$OpenBSD: arc.c,v 1.68 2007/10/27 03:28:27 dlg Exp $ */
 
 /*
@@ -20,7 +20,7 @@
 #include "bio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arc.c,v 1.2 2007/12/04 21:09:56 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcmsr.c,v 1.1 2007/12/05 00:18:07 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -50,7 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: arc.c,v 1.2 2007/12/04 21:09:56 xtraeme Exp $");
 
 #include <uvm/uvm_extern.h>	/* for PAGE_SIZE */
 
-#include <dev/pci/arcvar.h>
+#include <dev/pci/arcmsrvar.h>
 
 #define ARC_REFRESH_TIMO	(60 * hz)
 
@@ -85,7 +85,7 @@ static void 	arc_shutdown(void *);
 static int 	arc_intr(void *);
 static void	arc_minphys(struct buf *);
 
-CFATTACH_DECL(arc, sizeof(struct arc_softc),
+CFATTACH_DECL(arcmsr, sizeof(struct arc_softc),
 	arc_match, arc_attach, arc_detach, NULL);
 
 /*

@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.297 2007/12/04 18:47:51 xtraeme Exp $
+#	$NetBSD: files.pci,v 1.298 2007/12/05 00:18:08 xtraeme Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -73,9 +73,9 @@ attach	ld at amr with ld_amr
 file	dev/pci/ld_amr.c		ld_amr
 
 # Areca SATA RAID Controllers
-device	arc: scsi
-attach	arc at pci
-file	dev/pci/arc.c			arc
+device	arcmsr: scsi
+attach	arcmsr at pci
+file	dev/pci/arcmsr.c		arcmsr
 
 # Compaq RAID controllers
 attach	cac at pci with cac_pci
