@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_signal.h,v 1.19 2007/12/04 22:43:50 he Exp $	*/
+/*	$NetBSD: ibcs2_signal.h,v 1.20 2007/12/05 00:31:01 dsl Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -82,17 +82,17 @@
 #define IBCS2_SIGNO(x)		((x) & IBCS2_SIGNO_MASK)
 #define IBCS2_SIGCALL(x)	((x) & ~IBCS2_SIGNO_MASK)
 
-#define IBCS2_SIG_DFL		(void(*)(int)))	0
-#define IBCS2_SIG_ERR		(void(*) __P((int)))	-1
-#define IBCS2_SIG_IGN		(void(*) __P((int)))	1
-#define IBCS2_SIG_HOLD		(void(*) __P((int)))	2
+#define IBCS2_SIG_DFL		(void(*)(int))	0
+#define IBCS2_SIG_ERR		(void(*)(int))	(-1)
+#define IBCS2_SIG_IGN		(void(*)(int))	1
+#define IBCS2_SIG_HOLD		(void(*)(int))	2
 
 #define IBCS2_SIG_SETMASK	0
 #define IBCS2_SIG_BLOCK		1
 #define IBCS2_SIG_UNBLOCK	2
 
 typedef long	ibcs2_sigset_t;
-typedef void	(*ibcs2_sig_t) __P((int));
+typedef void	(*ibcs2_sig_t)(int);
 
 struct ibcs2_sigaction {
 	ibcs2_sig_t	ibcs2_sa_handler;
