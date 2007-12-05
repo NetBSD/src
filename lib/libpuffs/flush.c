@@ -1,4 +1,4 @@
-/*	$NetBSD: flush.c,v 1.14 2007/12/05 12:11:56 pooka Exp $	*/
+/*	$NetBSD: flush.c,v 1.15 2007/12/05 18:55:19 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: flush.c,v 1.14 2007/12/05 12:11:56 pooka Exp $");
+__RCSID("$NetBSD: flush.c,v 1.15 2007/12/05 18:55:19 pooka Exp $");
 #endif /* !lint */
 
 /*
@@ -62,13 +62,15 @@ doflush(struct puffs_usermount *pu, void *cookie, int op,
 	struct puffs_framebuf *pb;
 	struct puffs_flush *pf;
 	size_t winlen;
+	int rv;
 
 	pb = puffs_framebuf_make();
 	if (pb == NULL)
 		return ENOMEM;
 
 	winlen = sizeof(struct puffs_flush);
-	puffs_framebuf_getwindow(pb, 0, (void *)&pf, &winlen);
+	if ((rv = puffs_framebuf_getwindow(pb, 0, (void *)&pf, &winlen)) == -1)
+		goto out;
 	assert(winlen == sizeof(struct puffs_flush));
 
 	pf->pf_req.preq_buflen = sizeof(struct puffs_flush);
@@ -80,8 +82,12 @@ doflush(struct puffs_usermount *pu, void *cookie, int op,
 	pf->pf_start = start;
 	pf->pf_end = end;
 
-	return puffs_framev_enqueue_cc(puffs_cc_getcc(pu),
+	rv = puffs_framev_enqueue_cc(puffs_cc_getcc(pu),
 	    puffs_getselectable(pu), pb, 0);
+
+ out:
+	puffs_framebuf_destroy(pb);
+	return rv;
 }
 
 int
