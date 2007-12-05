@@ -1,4 +1,4 @@
-/*	$NetBSD: at_control.c,v 1.20 2007/09/01 04:32:51 dyoung Exp $	 */
+/*	$NetBSD: at_control.c,v 1.21 2007/12/05 01:16:02 dyoung Exp $	 */
 
 /*
  * Copyright (c) 1990,1994 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at_control.c,v 1.20 2007/09/01 04:32:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at_control.c,v 1.21 2007/12/05 01:16:02 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -865,24 +865,18 @@ aa_clean()
 	struct ifaddr  *ifa;
 	struct ifnet   *ifp;
 
-	while (aa = at_ifaddr) {
+	while ((aa = TAILQ_FIRST(&at_ifaddr)) != NULL) {
+		TAILQ_REMOVE(&at_ifaddr, aa, aa_list);
 		ifp = aa->aa_ifp;
 		at_scrub(ifp, aa);
-		at_ifaddr = aa->aa_next;
-		if ((ifa = ifp->if_addrlist) == (struct ifaddr *) aa) {
-			ifp->if_addrlist = ifa->ifa_next;
-		} else {
-			while (ifa->ifa_next &&
-			       (ifa->ifa_next != (struct ifaddr *) aa)) {
-				ifa = ifa->ifa_next;
-			}
-			if (ifa->ifa_next) {
-				ifa->ifa_next =
-				    ((struct ifaddr *) aa)->ifa_next;
-			} else {
-				panic("at_entry");
-			}
+		IFADDR_FOREACH(ifa, ifp) {
+			if (ifa == &aa->aa_ifa)
+				break;
 		}
+		if (ifa == NULL)
+			panic("aa not present");
+		else
+			TAILQ_REMOVE(&ifp->if_addrlist, ifa, ifa_list);
 	}
 }
 #endif
