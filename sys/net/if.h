@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.128 2007/12/05 18:07:21 dyoung Exp $	*/
+/*	$NetBSD: if.h,v 1.129 2007/12/05 23:47:17 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -824,6 +824,7 @@ void	if_attach(struct ifnet *);
 void	if_attachdomain(void);
 void	if_attachdomain1(struct ifnet *);
 void	if_deactivate(struct ifnet *);
+void	if_purgeaddrs(struct ifnet *, int, void (*)(struct ifaddr *));
 void	if_detach(struct ifnet *);
 void	if_down(struct ifnet *);
 void	if_link_state_change(struct ifnet *, int);

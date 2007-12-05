@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.205 2007/12/05 22:54:18 dyoung Exp $	*/
+/*	$NetBSD: if.c,v 1.206 2007/12/05 23:47:17 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.205 2007/12/05 22:54:18 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.206 2007/12/05 23:47:17 dyoung Exp $");
 
 #include "opt_inet.h"
 
@@ -519,6 +519,20 @@ if_deactivate(struct ifnet *ifp)
 	ifp->if_snd.ifq_maxlen = 0;
 
 	splx(s);
+}
+
+void
+if_purgeaddrs(struct ifnet *ifp, int family,
+    void (*purgeaddr)(struct ifaddr *))
+{
+	struct ifaddr *ifa, *nifa;
+
+	for (ifa = IFADDR_FIRST(ifp); ifa != NULL; ifa = nifa) {
+		nifa = IFADDR_NEXT(ifa);
+		if (ifa->ifa_addr->sa_family != family)
+			continue;
+		(*purgeaddr)(ifa);
+	}
 }
 
 /*

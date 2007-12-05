@@ -1,4 +1,4 @@
-/*	$NetBSD: at_control.c,v 1.22 2007/12/05 22:56:51 dyoung Exp $	 */
+/*	$NetBSD: at_control.c,v 1.23 2007/12/05 23:47:18 dyoung Exp $	 */
 
 /*
  * Copyright (c) 1990,1994 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at_control.c,v 1.22 2007/12/05 22:56:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at_control.c,v 1.23 2007/12/05 23:47:18 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -204,7 +204,7 @@ at_control(cmd, data, ifp, l)
 		         * and link our new one on the end
 		         */
 			TAILQ_INSERT_TAIL(&ifp->if_addrlist,
-			    (struct ifaddr *) aa, ifa_list);
+			    &aa->aa_ifa, ifa_list);
 			IFAREF(&aa->aa_ifa);
 
 			/*
@@ -316,7 +316,7 @@ at_control(cmd, data, ifp, l)
 		    (const struct sockaddr_at *)ifreq_getaddr(cmd, ifr));
 
 	case SIOCDIFADDR:
-		at_purgeaddr((struct ifaddr *) aa, ifp);
+		at_purgeaddr(&aa->aa_ifa);
 		break;
 
 	default:
@@ -328,10 +328,9 @@ at_control(cmd, data, ifp, l)
 }
 
 void
-at_purgeaddr(ifa, ifp)
-	struct ifaddr *ifa;
-	struct ifnet *ifp;
+at_purgeaddr(struct ifaddr *ifa)
 {
+	struct ifnet *ifp = ifa->ifa_ifp;
 	struct at_ifaddr *aa = (void *) ifa;
 
 	/*
@@ -343,24 +342,16 @@ at_purgeaddr(ifa, ifp)
 	/*
 	 * remove the ifaddr from the interface
 	 */
-	TAILQ_REMOVE(&ifp->if_addrlist, (struct ifaddr *) aa, ifa_list);
+	TAILQ_REMOVE(&ifp->if_addrlist, &aa->aa_ifa, ifa_list);
 	IFAFREE(&aa->aa_ifa);
 	TAILQ_REMOVE(&at_ifaddr, aa, aa_list);
 	IFAFREE(&aa->aa_ifa);
 }
 
 void
-at_purgeif(ifp)
-	struct ifnet *ifp;
+at_purgeif(struct ifnet *ifp)
 {
-	struct ifaddr *ifa, *nifa;
-
-	for (ifa = IFADDR_FIRST(ifp); ifa != NULL; ifa = nifa) {
-		nifa = IFADDR_NEXT(ifa);
-		if (ifa->ifa_addr->sa_family != AF_APPLETALK)
-			continue;
-		at_purgeaddr(ifa, ifp);
-	}
+	if_purgeaddrs(ifp, AF_APPLETALK, at_purgeaddr);
 }
 
 /*
