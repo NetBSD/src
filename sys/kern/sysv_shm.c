@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.100.16.1 2007/12/05 21:13:05 rmind Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.100.16.2 2007/12/05 22:58:36 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.100.16.1 2007/12/05 21:13:05 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.100.16.2 2007/12/05 22:58:36 rmind Exp $");
 
 #define SYSVSHM
 
@@ -477,11 +477,11 @@ sys_shmat(struct lwp *l, void *v, register_t *retval)
 	shmmap_se->va = attach_va;
 	shmmap_se->shmid = SCARG(uap, shmid);
 	shmseg->shm_atime = time_second;
+	shm_realloc_disable--;
 	retval[0] = attach_va;
 	SHMPRINTF(("shmat: vm %p: add %d @%lx\n",
 	    p->p_vmspace, shmmap_se->shmid, attach_va));
 err:
-	shm_realloc_disable--;
 	cv_broadcast(&shm_realloc_cv);
 	mutex_exit(&shm_lock);
 	if (error && shmmap_se)
@@ -737,6 +737,7 @@ sys_shmget(struct lwp *l, void *v, register_t *retval)
 		if (error) {
 			mutex_enter(&shm_lock);
 			shm_free_segment(segnum);
+			shm_realloc_disable--;
 			mutex_exit(&shm_lock);
 			return error;
 		}
