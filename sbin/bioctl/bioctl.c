@@ -1,4 +1,4 @@
-/* $NetBSD: bioctl.c,v 1.2 2007/11/04 08:25:05 xtraeme Exp $ */
+/* $NetBSD: bioctl.c,v 1.3 2007/12/05 13:26:04 xtraeme Exp $ */
 /* $OpenBSD: bioctl.c,v 1.52 2007/03/20 15:26:06 jmc Exp $       */
 
 /*
@@ -30,7 +30,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: bioctl.c,v 1.2 2007/11/04 08:25:05 xtraeme Exp $");
+__RCSID("$NetBSD: bioctl.c,v 1.3 2007/12/05 13:26:04 xtraeme Exp $");
 #endif
 
 #include <sys/ioctl.h>
@@ -250,12 +250,9 @@ bio_inq(int fd, char *name)
 			return;
 		}
 
-		if (name && strcmp(name, bv.bv_dev) != 0)
-			continue;
-
 		if (!volheader) {
 			volheader = 1;
-			printf("%-7s %-10s %14s %-8s\n",
+			printf("%10s %-10s %14s %-8s\n",
 			    "Volume", "Status", "Size", "Device");
 		}
 
@@ -311,7 +308,7 @@ bio_inq(int fd, char *name)
 			else
 				snprintf(size, sizeof size, "%14llu",
 				    (long long unsigned int)bv.bv_size);
-			printf("%7s %-10s %14s %-7s RAID%u%s%s\n",
+			printf("%10s %-10s %14s %-7s RAID%u%s%s\n",
 			    volname, status, size, bv.bv_dev,
 			    bv.bv_level, percent, seconds);
 		}
@@ -380,7 +377,7 @@ bio_inq(int fd, char *name)
 			else
 				strlcpy(serial, "unknown serial", sizeof serial);
 
-			printf("%7s %-10s %14s %-7s %-6s <%s>\n",
+			printf("%10s %-10s %14s %-7s %-6s <%s>\n",
 			    volname, status, size, scsiname, encname,
 			    bd.bd_vendor);
 			if (verbose)
