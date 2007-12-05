@@ -1,4 +1,4 @@
-/*	$NetBSD: requests.c,v 1.19 2007/12/05 10:13:37 pooka Exp $	*/
+/*	$NetBSD: requests.c,v 1.20 2007/12/05 11:06:05 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: requests.c,v 1.19 2007/12/05 10:13:37 pooka Exp $");
+__RCSID("$NetBSD: requests.c,v 1.20 2007/12/05 11:06:05 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -229,7 +229,7 @@ puffs_fsframe_cmp(struct puffs_usermount *pu,
 	assert(winlen = sizeof(struct puffs_req));
 
 	/* then compare: resid equal? */
-	return preq1->preq_id == preq2->preq_id;
+	return preq1->preq_id != preq2->preq_id;
 }
 
 void
