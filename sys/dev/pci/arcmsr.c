@@ -1,4 +1,4 @@
-/*	$NetBSD: arcmsr.c,v 1.2 2007/12/05 16:02:25 xtraeme Exp $ */
+/*	$NetBSD: arcmsr.c,v 1.3 2007/12/05 18:07:34 xtraeme Exp $ */
 /*	$OpenBSD: arc.c,v 1.68 2007/10/27 03:28:27 dlg Exp $ */
 
 /*
@@ -20,7 +20,7 @@
 #include "bio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arcmsr.c,v 1.2 2007/12/05 16:02:25 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcmsr.c,v 1.3 2007/12/05 18:07:34 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -28,7 +28,8 @@ __KERNEL_RCSID(0, "$NetBSD: arcmsr.c,v 1.2 2007/12/05 16:02:25 xtraeme Exp $");
 #include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/kthread.h>
-#include <sys/rwlock.h>
+#include <sys/mutex.h>
+#include <sys/condvar.h>
 
 #if NBIO > 0
 #include <sys/ioctl.h>
@@ -143,7 +144,8 @@ arc_attach(device_t parent, device_t self, void *aux)
 	struct scsipi_channel	*chan = &sc->sc_chan;
 
 	sc->sc_talking = 0;
-	rw_init(&sc->sc_rwlock);
+	mutex_init(&sc->sc_mutex, MUTEX_DEFAULT, IPL_BIO);
+	cv_init(&sc->sc_condvar, "arcdb");
 
 	if (arc_map_pci_resources(sc, pa) != 0) {
 		/* error message printed by arc_map_pci_resources */
@@ -214,6 +216,7 @@ arc_detach(device_t self, int flags)
 
 	shutdownhook_disestablish(sc->sc_shutdownhook);
 
+	mutex_enter(&sc->sc_mutex);
 	if (arc_msg0(sc, ARC_REG_INB_MSG0_STOP_BGRB) != 0)
 		aprint_error("%s: timeout waiting to stop bg rebuild\n",
 		    device_xname(&sc->sc_dev));
@@ -221,6 +224,7 @@ arc_detach(device_t self, int flags)
 	if (arc_msg0(sc, ARC_REG_INB_MSG0_FLUSH_CACHE) != 0)
 		aprint_error("%s: timeout waiting to flush cache\n",
 		    device_xname(&sc->sc_dev));
+	mutex_exit(&sc->sc_mutex);
 
 	return 0;
 }
@@ -230,6 +234,7 @@ arc_shutdown(void *xsc)
 {
 	struct arc_softc		*sc = xsc;
 
+	mutex_enter(&sc->sc_mutex);
 	if (arc_msg0(sc, ARC_REG_INB_MSG0_STOP_BGRB) != 0)
 		aprint_error("%s: timeout waiting to stop bg rebuild\n",
 		    device_xname(&sc->sc_dev));
@@ -237,6 +242,7 @@ arc_shutdown(void *xsc)
 	if (arc_msg0(sc, ARC_REG_INB_MSG0_FLUSH_CACHE) != 0)
 		aprint_error("%s: timeout waiting to flush cache\n",
 		    device_xname(&sc->sc_dev));
+	mutex_exit(&sc->sc_mutex);
 }
 
 static void
@@ -256,9 +262,12 @@ arc_intr(void *arg)
 	struct arc_io_cmd		*cmd;
 	uint32_t			reg, intrstat;
 
+	mutex_enter(&sc->sc_mutex);
 	intrstat = arc_read(sc, ARC_REG_INTRSTAT);
-	if (intrstat == 0x0)
+	if (intrstat == 0x0) {
+		mutex_exit(&sc->sc_mutex);
 		return 0;
+	}
 
 	intrstat &= ARC_REG_INTRSTAT_POSTQUEUE | ARC_REG_INTRSTAT_DOORBELL;
 	arc_write(sc, ARC_REG_INTRSTAT, intrstat);
@@ -268,7 +277,7 @@ arc_intr(void *arg)
 			/* if an ioctl is talking, wake it up */
 			arc_write(sc, ARC_REG_INTRMASK,
 			    ~ARC_REG_INTRMASK_POSTQUEUE);
-			wakeup(sc);
+			cv_broadcast(&sc->sc_condvar);
 		} else {
 			/* otherwise drop it */
 			reg = arc_read(sc, ARC_REG_OUTB_DOORBELL);
@@ -278,6 +287,7 @@ arc_intr(void *arg)
 				    ARC_REG_INB_DOORBELL_READ_OK);
 		}
 	}
+	mutex_exit(&sc->sc_mutex);
 
 	while ((reg = arc_pop(sc)) != 0xffffffff) {
 		cmd = (struct arc_io_cmd *)(kva +
@@ -306,7 +316,6 @@ arc_scsi_cmd(struct scsipi_channel *chan, scsipi_adapter_req_t req, void *arg)
 	struct arc_msg_scsicmd		*cmd;
 	uint32_t			reg;
 	uint8_t				target;
-	int 				s;
 
 	switch (req) {
 	case ADAPTER_REQ_GROW_RESOURCES:
@@ -330,28 +339,24 @@ arc_scsi_cmd(struct scsipi_channel *chan, scsipi_adapter_req_t req, void *arg)
 		xs->sense.scsi_sense.asc = 0x20;
 		xs->error = XS_SENSE;
 		xs->status = SCSI_CHECK;
-		s = splbio();
 		scsipi_done(xs);
-		goto out;
+		return;
 	}
 
-	s = splbio();
 	ccb = arc_get_ccb(sc);
 	if (ccb == NULL) {
 		xs->error = XS_RESOURCE_SHORTAGE;
 		scsipi_done(xs);
-		goto out;
+		return;
 	}
-	splx(s);
 
 	ccb->ccb_xs = xs;
 
 	if (arc_load_xs(ccb) != 0) {
 		xs->error = XS_DRIVER_STUFFUP;
-		s = splbio();
 		arc_put_ccb(sc, ccb);
 		scsipi_done(xs);
-		goto out;
+		return;
 	}
 
 	cmd = &ccb->ccb_cmd->cmd;
@@ -381,7 +386,6 @@ arc_scsi_cmd(struct scsipi_channel *chan, scsipi_adapter_req_t req, void *arg)
 	    ccb->ccb_offset, ARC_MAX_IOCMDLEN,
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
-	s = splbio();
 	arc_push(sc, reg);
 	if (xs->xs_control & XS_CTL_POLL) {
 		if (arc_complete(sc, ccb, xs->timeout) != 0) {
@@ -389,8 +393,6 @@ arc_scsi_cmd(struct scsipi_channel *chan, scsipi_adapter_req_t req, void *arg)
 			scsipi_done(xs);
 		}
 	}
-out:
-	splx(s);
 }
 
 int
@@ -573,18 +575,29 @@ arc_query_firmware(struct arc_softc *sc)
 	struct arc_msg_firmware_info	fwinfo;
 	char				string[81]; /* sizeof(vendor)*2+1 */
 
+	mutex_enter(&sc->sc_mutex);
 	if (arc_wait_eq(sc, ARC_REG_OUTB_ADDR1, ARC_REG_OUTB_ADDR1_FIRMWARE_OK,
 	    ARC_REG_OUTB_ADDR1_FIRMWARE_OK) != 0) {
 		aprint_debug("%s: timeout waiting for firmware ok\n",
 		    device_xname(&sc->sc_dev));
+		mutex_enter(&sc->sc_mutex);
 		return 1;
 	}
 
 	if (arc_msg0(sc, ARC_REG_INB_MSG0_GET_CONFIG) != 0) {
 		aprint_debug("%s: timeout waiting for get config\n",
 		    device_xname(&sc->sc_dev));
+		mutex_exit(&sc->sc_mutex);
 		return 1;
 	}
+
+	if (arc_msg0(sc, ARC_REG_INB_MSG0_START_BGRB) != 0) {
+		aprint_debug("%s: timeout waiting to start bg rebuild\n",
+		    device_xname(&sc->sc_dev));
+		mutex_exit(&sc->sc_mutex);
+		return 1;
+	}
+	mutex_exit(&sc->sc_mutex);
 
 	arc_read_region(sc, ARC_REG_MSGBUF, &fwinfo, sizeof(fwinfo));
 
@@ -631,12 +644,6 @@ arc_query_firmware(struct arc_softc *sc)
 	}
 
 	sc->sc_req_count = htole32(fwinfo.queue_len);
-
-	if (arc_msg0(sc, ARC_REG_INB_MSG0_START_BGRB) != 0) {
-		aprint_debug("%s: timeout waiting to start bg rebuild\n",
-		    device_xname(&sc->sc_dev));
-		return 1;
-	}
 
 	aprint_normal("%s: %d ports, %dMB SDRAM, firmware <%s>\n",
 	    device_xname(&sc->sc_dev), htole32(fwinfo.sata_ports),
@@ -1174,39 +1181,32 @@ out:
 void
 arc_lock(struct arc_softc *sc)
 {	
-	int s;
-
-	rw_enter(&sc->sc_rwlock, RW_WRITER);
-	s = splbio();
+	mutex_enter(&sc->sc_mutex);
 	arc_write(sc, ARC_REG_INTRMASK, ~ARC_REG_INTRMASK_POSTQUEUE);
 	sc->sc_talking = 1;
-	splx(s);
 }
 
 void
 arc_unlock(struct arc_softc *sc)
 {
-	int s;
+	KASSERT(mutex_owned(&sc->sc_mutex));
 
-	s = splbio();
 	sc->sc_talking = 0;
 	arc_write(sc, ARC_REG_INTRMASK,
 	    ~(ARC_REG_INTRMASK_POSTQUEUE|ARC_REG_INTRMASK_DOORBELL));
-	splx(s);
-	rw_exit(&sc->sc_rwlock);
+	mutex_exit(&sc->sc_mutex);
 }
 
 void
 arc_wait(struct arc_softc *sc)
 {
-	int s;
+	KASSERT(mutex_owned(&sc->sc_mutex));
 
-	s = splbio();
 	arc_write(sc, ARC_REG_INTRMASK,
 	    ~(ARC_REG_INTRMASK_POSTQUEUE|ARC_REG_INTRMASK_DOORBELL));
-	if (tsleep(sc, PWAIT|PCATCH, "arcdb", hz) == EWOULDBLOCK)
+	if (cv_timedwait_sig(&sc->sc_condvar, &sc->sc_mutex, hz) ==
+	    EWOULDBLOCK)
 		arc_write(sc, ARC_REG_INTRMASK, ~ARC_REG_INTRMASK_POSTQUEUE);
-	splx(s);
 }
 
 #if NBIO > 0
@@ -1315,6 +1315,8 @@ arc_read(struct arc_softc *sc, bus_size_t r)
 {
 	uint32_t			v;
 
+	KASSERT(mutex_owned(&sc->sc_mutex));
+
 	bus_space_barrier(sc->sc_iot, sc->sc_ioh, r, 4,
 	    BUS_SPACE_BARRIER_READ);
 	v = bus_space_read_4(sc->sc_iot, sc->sc_ioh, r);
@@ -1337,6 +1339,8 @@ arc_read_region(struct arc_softc *sc, bus_size_t r, void *buf, size_t len)
 void
 arc_write(struct arc_softc *sc, bus_size_t r, uint32_t v)
 {
+	KASSERT(mutex_owned(&sc->sc_mutex));
+
 	DNPRINTF(ARC_D_RW, "%s: arc_write 0x%lx 0x%08x\n",
 	    device_xname(&sc->sc_dev), r, v);
 
@@ -1359,6 +1363,8 @@ arc_wait_eq(struct arc_softc *sc, bus_size_t r, uint32_t mask,
 	    uint32_t target)
 {
 	int i;
+
+	KASSERT(mutex_owned(&sc->sc_mutex));
 
 	DNPRINTF(ARC_D_RW, "%s: arc_wait_eq 0x%lx 0x%08x 0x%08x\n",
 	    device_xname(&sc->sc_dev), r, mask, target);
@@ -1393,6 +1399,8 @@ arc_wait_ne(struct arc_softc *sc, bus_size_t r, uint32_t mask,
 int
 arc_msg0(struct arc_softc *sc, uint32_t m)
 {
+	KASSERT(mutex_owned(&sc->sc_mutex));
+
 	/* post message */
 	arc_write(sc, ARC_REG_INB_MSG0, m);
 	/* wait for the fw to do it */
@@ -1520,17 +1528,21 @@ arc_get_ccb(struct arc_softc *sc)
 {
 	struct arc_ccb			*ccb;
 
+	mutex_enter(&sc->sc_mutex);
 	ccb = TAILQ_FIRST(&sc->sc_ccb_free);
 	if (ccb != NULL)
 		TAILQ_REMOVE(&sc->sc_ccb_free, ccb, ccb_link);
-
+	mutex_exit(&sc->sc_mutex);
+	
 	return ccb;
 }
 
 void
 arc_put_ccb(struct arc_softc *sc, struct arc_ccb *ccb)
 {
+	mutex_enter(&sc->sc_mutex);
 	ccb->ccb_xs = NULL;
 	memset(ccb->ccb_cmd, 0, ARC_MAX_IOCMDLEN);
 	TAILQ_INSERT_TAIL(&sc->sc_ccb_free, ccb, ccb_link);
+	mutex_exit(&sc->sc_mutex);
 }
