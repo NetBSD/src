@@ -1,4 +1,4 @@
-/*	$NetBSD: arcmsr.c,v 1.3 2007/12/05 18:07:34 xtraeme Exp $ */
+/*	$NetBSD: arcmsr.c,v 1.4 2007/12/05 18:25:53 xtraeme Exp $ */
 /*	$OpenBSD: arc.c,v 1.68 2007/10/27 03:28:27 dlg Exp $ */
 
 /*
@@ -20,7 +20,7 @@
 #include "bio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arcmsr.c,v 1.3 2007/12/05 18:07:34 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcmsr.c,v 1.4 2007/12/05 18:25:53 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -181,7 +181,7 @@ arc_attach(device_t parent, device_t self, void *aux)
 	chan->chan_ntargets = ARC_MAX_TARGET;
 	chan->chan_id = ARC_MAX_TARGET;
 	chan->chan_channel = 0;
-	chan->chan_flags = 0;
+	chan->chan_flags = SCSIPI_CHAN_NOSETTLE;
 
 	(void)config_found(self, &sc->sc_chan, scsiprint);
 
