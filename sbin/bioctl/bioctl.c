@@ -1,4 +1,4 @@
-/* $NetBSD: bioctl.c,v 1.4 2007/12/05 14:28:14 xtraeme Exp $ */
+/* $NetBSD: bioctl.c,v 1.5 2007/12/05 16:29:48 xtraeme Exp $ */
 /* $OpenBSD: bioctl.c,v 1.52 2007/03/20 15:26:06 jmc Exp $       */
 
 /*
@@ -30,7 +30,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: bioctl.c,v 1.4 2007/12/05 14:28:14 xtraeme Exp $");
+__RCSID("$NetBSD: bioctl.c,v 1.5 2007/12/05 16:29:48 xtraeme Exp $");
 #endif
 
 #include <sys/ioctl.h>
@@ -231,8 +231,12 @@ bio_inq(int fd, char *name)
 
 		if (!volheader) {
 			volheader = 1;
-			printf("%10s %-10s %14s %-8s\n",
-			    "Volume", "Status", "Size", "Device");
+			if (human)
+				printf("%10s %-10s %4s %-8s\n",
+				    "Volume", "Status", "Size", "Device");
+			else
+				printf("%10s %-10s %14s %-8s\n",
+			    	    "Volume", "Status", "Size", "Device");
 		}
 
 		percent[0] = '\0';
@@ -280,16 +284,20 @@ bio_inq(int fd, char *name)
 			unused = 0;
 			hotspare = 0;
 
-			if (human)
+			if (human) {
 				humanize_number(size, 5,
 				    (int64_t)bv.bv_size, "", HN_AUTOSCALE,
 				    HN_B | HN_NOSPACE | HN_DECIMAL);
-			else
+				printf("%10s %-10s %4s %-7s RAID %u%s%s\n",
+				    volname, status, size, bv.bv_dev,
+				    bv.bv_level, percent, seconds);
+			} else {
 				snprintf(size, sizeof size, "%14llu",
 				    (long long unsigned int)bv.bv_size);
-			printf("%10s %-10s %14s %-7s RAID%u%s%s\n",
-			    volname, status, size, bv.bv_dev,
-			    bv.bv_level, percent, seconds);
+				printf("%10s %-10s %14s %-7s RAID %u%s%s\n",
+			    	    volname, status, size, bv.bv_dev,
+			    	    bv.bv_level, percent, seconds);
+			}
 		}
 
 		for (d = 0; d < bv.bv_nodisk; d++) {
@@ -355,9 +363,14 @@ bio_inq(int fd, char *name)
 			else
 				strlcpy(serial, "unknown serial", sizeof serial);
 
-			printf("%10s %-10s %14s %-7s %-6s <%s>\n",
-			    volname, status, size, scsiname, encname,
-			    bd.bd_vendor);
+			if (human)
+				printf("%10s %-10s %4s %-7s %-6s <%s>\n",
+				    volname, status, size, scsiname, encname,
+				    bd.bd_vendor);
+			else
+				printf("%10s %-10s %14s %-7s %-6s <%s>\n",
+			    	    volname, status, size, scsiname, encname,
+			    	    bd.bd_vendor);
 			if (verbose)
 				printf("%7s %-10s %14s %-7s %-6s '%s'\n",
 				    "", "", "", "", "", serial);
