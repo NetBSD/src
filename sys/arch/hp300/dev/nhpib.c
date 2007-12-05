@@ -1,4 +1,4 @@
-/*	$NetBSD: nhpib.c,v 1.37 2007/10/17 19:54:23 garbled Exp $	*/
+/*	$NetBSD: nhpib.c,v 1.38 2007/12/05 12:03:08 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nhpib.c,v 1.37 2007/10/17 19:54:23 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nhpib.c,v 1.38 2007/12/05 12:03:08 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -471,7 +471,7 @@ nhpibreadtimo(void *arg)
 		hs->sc_flags &= ~(HPIBF_DONE|HPIBF_IO|HPIBF_READ|HPIBF_TIMO);
 		dmafree(hs->sc_dq);
 
-		hq = hs->sc_queue.tqh_first;
+		hq = TAILQ_FIRST(&hs->sc_queue);
 		(hq->hq_intr)(hq->hq_softc);
 	}
 	splx(s);
@@ -528,7 +528,7 @@ nhpibintr(void *arg)
 	stat0 = hd->hpib_mis;
 	stat1 = hd->hpib_lis;
 
-	hq = hs->sc_queue.tqh_first;
+	hq = TAILQ_FIRST(&hs->sc_queue);
 
 	if (hs->sc_flags & HPIBF_IO) {
 		hd->hpib_mim = 0;
@@ -604,7 +604,7 @@ nhpibppwatch(void *arg)
 	if ((hs->sc_flags & HPIBF_PPOLL) == 0)
 		return;
 again:
-	if (nhpibppoll(hs) & (0x80 >> hs->sc_queue.tqh_first->hq_slave))
+	if (nhpibppoll(hs) & (0x80 >> TAILQ_FIRST(&hs->sc_queue)->hq_slave))
 		sc->sc_regs->hpib_mim = MIS_BO;
 	else if (cold)
 		/* timeouts not working yet */
