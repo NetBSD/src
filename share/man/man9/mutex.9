@@ -1,4 +1,4 @@
-.\"	$NetBSD: mutex.9,v 1.13 2007/12/05 05:24:28 ad Exp $
+.\"	$NetBSD: mutex.9,v 1.14 2007/12/05 18:12:09 ad Exp $
 .\"
 .\" Copyright (c) 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -139,7 +139,7 @@ and interrupt handlers.
 .Pp
 The
 .Fa ipl
-argument is used to pass an system interrupt priority level (IPL)
+argument is used to pass a system interrupt priority level (IPL)
 that will block all interrupt handlers that may try to acquire the mutex.
 .Pp
 LWPs that own spin mutexes may not sleep, and therefore must not
@@ -170,7 +170,7 @@ consistent order with respect to each other.
 Otherwise, the potential for system deadlock exists.
 .Pp
 Adaptive mutexes and other types of lock that can sleep may
-not be acquired once a spin mutex is held by the caller.
+not be acquired while a spin mutex is held by the caller.
 .It Fn mutex_exit "mtx"
 .Pp
 Release a mutex.
