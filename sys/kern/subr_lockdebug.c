@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_lockdebug.c,v 1.22.2.1 2007/12/05 08:32:01 yamt Exp $	*/
+/*	$NetBSD: subr_lockdebug.c,v 1.22.2.2 2007/12/05 08:33:39 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.22.2.1 2007/12/05 08:32:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.22.2.2 2007/12/05 08:33:39 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_ddb.h"
@@ -627,10 +627,18 @@ lockdebug_mem_check(const char *func, void *base, size_t sz)
 {
 	lockdebug_t *ld;
 	lockdebuglk_t *lk;
-	uintptr_t lock;
 
 	lockdebug_lock(&ld_tree_lk);
 	ld = (lockdebug_t *)rb_tree_find_node_geq(&ld_rb_tree, base);
+	if (ld != NULL) {
+		const uintptr_t lock = (uintptr_t)ld->ld_lock;
+
+		if ((uintptr_t)base > lock)
+			panic("%s: corrupt tree ld=%p, base=%p, sz=%zu",
+			    __func__, ld, base, sz);
+		if (lock >= (uintptr_t)base + sz)
+			ld = NULL;
+	}
 	lockdebug_unlock(&ld_tree_lk);
 	if (ld == NULL)
 		return;
@@ -641,15 +649,9 @@ lockdebug_mem_check(const char *func, void *base, size_t sz)
 		lk = &ld_spinner_lk;
 
 	lockdebug_lock(lk);
-	lock = (uintptr_t)ld->ld_lock;
-	if ((uintptr_t)base > lock)
-		lockdebug_abort1(ld, lk, func, "corrupt tree", true);
-	if (lock < (uintptr_t)base + sz) {
-		lockdebug_abort1(ld, lk, func,
-		    "allocation contains active lock", !cold);
-		return;
-	}
-	lockdebug_unlock(lk);
+	lockdebug_abort1(ld, lk, func,
+	    "allocation contains active lock", !cold);
+	return;
 }
 
 /*
