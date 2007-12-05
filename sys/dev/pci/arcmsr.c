@@ -1,4 +1,4 @@
-/*	$NetBSD: arcmsr.c,v 1.5 2007/12/05 18:58:00 xtraeme Exp $ */
+/*	$NetBSD: arcmsr.c,v 1.6 2007/12/05 23:20:27 gmcgarry Exp $ */
 /*	$OpenBSD: arc.c,v 1.68 2007/10/27 03:28:27 dlg Exp $ */
 
 /*
@@ -20,7 +20,7 @@
 #include "bio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arcmsr.c,v 1.5 2007/12/05 18:58:00 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcmsr.c,v 1.6 2007/12/05 23:20:27 gmcgarry Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -582,7 +582,7 @@ arc_query_firmware(struct arc_softc *sc)
 	    ARC_REG_OUTB_ADDR1_FIRMWARE_OK) != 0) {
 		aprint_debug("%s: timeout waiting for firmware ok\n",
 		    device_xname(&sc->sc_dev));
-		mutex_enter(&sc->sc_mutex);
+		mutex_exit(&sc->sc_mutex);
 		return 1;
 	}
 
