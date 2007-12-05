@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.180.2.2 2007/12/04 16:59:52 ad Exp $
+	$NetBSD: syscalls.master,v 1.180.2.3 2007/12/05 21:13:05 rmind Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -475,12 +475,12 @@
 227	EXCL 		msgrcv
 #endif
 #if defined(SYSVSHM) || !defined(_KERNEL)
-228	STD 		{ void *sys_shmat(int shmid, const void *shmaddr, \
+228	STD MPSAFE	{ void *sys_shmat(int shmid, const void *shmaddr, \
 			    int shmflg); }
-229	COMPAT_14 	{ int sys_shmctl(int shmid, int cmd, \
+229	COMPAT_14 MPSAFE { int sys_shmctl(int shmid, int cmd, \
 			    struct shmid_ds14 *buf); }
-230	STD		{ int sys_shmdt(const void *shmaddr); }
-231	STD		{ int sys_shmget(key_t key, size_t size, int shmflg); }
+230	STD MPSAFE	{ int sys_shmdt(const void *shmaddr); }
+231	STD MPSAFE	{ int sys_shmget(key_t key, size_t size, int shmflg); }
 #else
 228	EXCL		shmat
 229	EXCL		compat_14_shmctl
@@ -632,7 +632,7 @@
 302	EXCL		__msgctl13
 #endif
 #if defined(SYSVSHM) || !defined(_KERNEL)
-303	STD 		{ int sys___shmctl13(int shmid, int cmd, \
+303	STD MPSAFE	{ int sys___shmctl13(int shmid, int cmd, \
 			    struct shmid_ds *buf); }
 #else
 303	EXCL		__shmctl13
