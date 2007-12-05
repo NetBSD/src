@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1094 2007/12/05 04:53:19 ad Exp $
+#	$NetBSD: mi,v 1.1095 2007/12/05 05:19:35 ad Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -7379,6 +7379,8 @@
 ./usr/share/man/cat9/mutex_exit.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/mutex_init.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/mutex_owned.0	 	comp-sys-catman		.cat
+./usr/share/man/cat9/mutex_spin_enter.0		comp-sys-catman		.cat
+./usr/share/man/cat9/mutex_spin_exit.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/mutex_tryenter.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/namecache.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/namecache_print.0		comp-sys-catman		.cat
@@ -11964,6 +11966,8 @@
 ./usr/share/man/man9/mutex_exit.9		comp-sys-man		.man
 ./usr/share/man/man9/mutex_init.9		comp-sys-man		.man
 ./usr/share/man/man9/mutex_owned.9	 	comp-sys-man		.man
+./usr/share/man/man9/mutex_spin_enter.9	 	comp-sys-man		.man
+./usr/share/man/man9/mutex_spin_exit.9	 	comp-sys-man		.man
 ./usr/share/man/man9/mutex_tryenter.9		comp-sys-man		.man
 ./usr/share/man/man9/namecache.9		comp-sys-man		.man
 ./usr/share/man/man9/namecache_print.9		comp-sys-man		.man
