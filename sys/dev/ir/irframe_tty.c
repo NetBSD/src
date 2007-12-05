@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe_tty.c,v 1.48 2007/12/05 07:58:30 ad Exp $	*/
+/*	$NetBSD: irframe_tty.c,v 1.49 2007/12/05 17:19:49 pooka Exp $	*/
 
 /*
  * TODO
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irframe_tty.c,v 1.48 2007/12/05 07:58:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irframe_tty.c,v 1.49 2007/12/05 17:19:49 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -815,7 +815,7 @@ irframet_kqfilter(void *h, struct knote *kn)
 		kn->kn_fop = &irframetwrite_filtops;
 		break;
 	default:
-		return (1);
+		return (EINVAL);
 	}
 
 	kn->kn_hook = tp;

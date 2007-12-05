@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.148 2007/12/05 07:06:55 ad Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.149 2007/12/05 17:19:59 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.148 2007/12/05 07:06:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.149 2007/12/05 17:19:59 pooka Exp $");
 
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
@@ -1795,7 +1795,7 @@ soo_kqfilter(struct file *fp, struct knote *kn)
 		sb = &so->so_snd;
 		break;
 	default:
-		return (1);
+		return (EINVAL);
 	}
 	SLIST_INSERT_HEAD(&sb->sb_sel.sel_klist, kn, kn_selnext);
 	sb->sb_flags |= SB_KNOTE;
