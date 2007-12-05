@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1095 2007/12/05 05:19:35 ad Exp $
+#	$NetBSD: mi,v 1.1096 2007/12/05 05:52:21 ad Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -7604,6 +7604,10 @@
 ./usr/share/man/cat9/simple_unlock.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/sleep.0			comp-obsolete		obsolete
 ./usr/share/man/cat9/snprintf.0			comp-sys-catman		.cat
+./usr/share/man/cat9/softint.0			comp-sys-catman		.cat
+./usr/share/man/cat9/softint_disestablish.0	comp-sys-catman		.cat
+./usr/share/man/cat9/softint_establish.0	comp-sys-catman		.cat
+./usr/share/man/cat9/softint_schedule.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/softintr.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/softintr_disestablish.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/softintr_establish.0	comp-sys-catman		.cat
@@ -12191,6 +12195,10 @@
 ./usr/share/man/man9/simple_unlock.9		comp-sys-man		.man
 ./usr/share/man/man9/sleep.9			comp-obsolete		obsolete
 ./usr/share/man/man9/snprintf.9			comp-sys-man		.man
+./usr/share/man/man9/softint.9			comp-sys-man		.man
+./usr/share/man/man9/softint_disestablish.9	comp-sys-man		.man
+./usr/share/man/man9/softint_establish.9	comp-sys-man		.man
+./usr/share/man/man9/softint_schedule.9		comp-sys-man		.man
 ./usr/share/man/man9/softintr.9			comp-sys-man		.man
 ./usr/share/man/man9/softintr_disestablish.9	comp-sys-man		.man
 ./usr/share/man/man9/softintr_establish.9	comp-sys-man		.man
