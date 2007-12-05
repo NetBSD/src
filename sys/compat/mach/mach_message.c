@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_message.c,v 1.52 2007/08/15 12:07:30 ad Exp $ */
+/*	$NetBSD: mach_message.c,v 1.53 2007/12/05 08:33:27 ad Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.52 2007/08/15 12:07:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.53 2007/12/05 08:33:27 ad Exp $");
 
 #include "opt_compat_mach.h" /* For COMPAT_MACH in <sys/ktrace.h> */
 #include "opt_compat_darwin.h"
@@ -556,7 +556,7 @@ mach_msg_recv(l, urm, option, recv_size, timeout, mn)
 	 * only one reader process, so mm will not disapear
 	 * except if there is a port refcount error in our code.
 	 */
-	lockmgr(&mp->mp_msglock, LK_SHARED, NULL);
+	rw_enter(&mp->mp_msglock, RW_READER);
 	mm = TAILQ_FIRST(&mp->mp_msglist);
 #ifdef DEBUG_MACH_MSG
 	printf("pid %d: dequeue message on port %p (id %d)\n",
@@ -654,7 +654,7 @@ mach_msg_recv(l, urm, option, recv_size, timeout, mn)
 	free(mm->mm_msg, M_EMULDATA);
 	mach_message_put_shlocked(mm); /* decrease mp_count */
 unlock:
-	lockmgr(&mp->mp_msglock, LK_RELEASE, NULL);
+	rw_exit(&mp->mp_msglock);
 
 	return ret;
 }
@@ -1173,10 +1173,10 @@ mach_message_get(msgh, size, mp, l)
 	mm->mm_port = mp;
 	mm->mm_l = l;
 
-	lockmgr(&mp->mp_msglock, LK_EXCLUSIVE, NULL);
+	rw_enter(&mp->mp_msglock, RW_WRITER);
 	TAILQ_INSERT_TAIL(&mp->mp_msglist, mm, mm_list);
 	mp->mp_count++;
-	lockmgr(&mp->mp_msglock, LK_RELEASE, NULL);
+	rw_exit(&mp->mp_msglock);
 
 	return mm;
 }
@@ -1189,9 +1189,9 @@ mach_message_put(mm)
 
 	mp = mm->mm_port;
 
-	lockmgr(&mp->mp_msglock, LK_EXCLUSIVE, NULL);
+	rw_enter(&mp->mp_msglock, RW_WRITER);
 	mach_message_put_exclocked(mm);
-	lockmgr(&mp->mp_msglock, LK_RELEASE, NULL);
+	rw_exit(&mp->mp_msglock);
 
 	return;
 }
@@ -1204,9 +1204,13 @@ mach_message_put_shlocked(mm)
 
 	mp = mm->mm_port;
 
-	lockmgr(&mp->mp_msglock, LK_UPGRADE, NULL);
+	if (!rw_tryupgrade(&mp->mp_msglock)) {
+		/* XXX  */
+		rw_exit(&mp->mp_msglock);
+		rw_enter(&mp->mp_msglock, RW_WRITER);
+	}
 	mach_message_put_exclocked(mm);
-	lockmgr(&mp->mp_msglock, LK_DOWNGRADE, NULL);
+	rw_downgrade(&mp->mp_msglock);
 
 	return;
 }
