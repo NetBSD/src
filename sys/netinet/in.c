@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.119 2007/11/09 23:53:13 dyoung Exp $	*/
+/*	$NetBSD: in.c,v 1.120 2007/12/05 22:58:14 dyoung Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.119 2007/11/09 23:53:13 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.120 2007/12/05 22:58:14 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet_conf.h"
@@ -614,8 +614,8 @@ in_purgeif(struct ifnet *ifp)		/* MUST be called at splsoftnet() */
 {
 	struct ifaddr *ifa, *nifa;
 
-	for (ifa = TAILQ_FIRST(&ifp->if_addrlist); ifa != NULL; ifa = nifa) {
-		nifa = TAILQ_NEXT(ifa, ifa_list);
+	for (ifa = IFADDR_FIRST(ifp); ifa != NULL; ifa = nifa) {
+		nifa = IFADDR_NEXT(ifa);
 		if (ifa->ifa_addr->sa_family != AF_INET)
 			continue;
 		in_purgeaddr(ifa, ifp);
