@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.42 2007/10/19 11:59:34 ad Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.43 2007/12/05 07:58:29 ad Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -172,7 +172,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.42 2007/10/19 11:59:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.43 2007/12/05 07:58:29 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -210,7 +210,7 @@ struct acpi_ec_softc {
 	uint32_t	sc_csrvalue;	/* saved control register */
 	uint32_t	sc_uid;		/* _UID in namespace (ECDT only) */
 
-	struct lock	sc_lock;	/* serialize operations to this EC */
+	kmutex_t	sc_lock;	/* serialize operations to this EC */
 	struct simplelock sc_slock;	/* protect against interrupts */
 	UINT32		sc_glkhandle;	/* global lock handle */
 	UINT32		sc_glk;		/* need global lock? */
@@ -274,7 +274,7 @@ static inline int
 EcIsLocked(struct acpi_ec_softc *sc)
 {
 
-	return (lockstatus(&sc->sc_lock) == LK_EXCLUSIVE);
+	return (mutex_owned(&sc->sc_lock));
 }
 
 static inline void
@@ -283,14 +283,14 @@ EcLock(struct acpi_ec_softc *sc)
 	ACPI_STATUS rv;
 	int s;
 
-	lockmgr(&sc->sc_lock, LK_EXCLUSIVE, NULL);
+	mutex_enter(&sc->sc_lock);
 	if (sc->sc_glk) {
 		rv = AcpiAcquireGlobalLock(EC_LOCK_TIMEOUT,
 		    &sc->sc_glkhandle);
 		if (ACPI_FAILURE(rv)) {
 			printf("%s: failed to acquire global lock\n",
 			    sc->sc_dev.dv_xname);
-			lockmgr(&sc->sc_lock, LK_RELEASE, NULL);
+			mutex_exit(&sc->sc_lock);
 			return;
 		}
 	}
@@ -339,7 +339,7 @@ EcUnlock(struct acpi_ec_softc *sc)
 			printf("%s: failed to release global lock\n",
 			    sc->sc_dev.dv_xname);
 	}
-	lockmgr(&sc->sc_lock, LK_RELEASE, NULL);
+	mutex_exit(&sc->sc_lock);
 }
 
 /*
@@ -454,7 +454,7 @@ acpiec_early_attach(struct device *parent)
 	printf("%s: found ECDT, GPE %d\n", parent->dv_xname,
 	    ecdt_sc->sc_gpebit);
 
-	lockinit(&ecdt_sc->sc_lock, PWAIT, "eclock", 0, 0);
+	mutex_init(&ecdt_sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
 	simple_lock_init(&ecdt_sc->sc_slock);
 
 	AcpiOsUnmapMemory(ep, ep->Length);
@@ -495,7 +495,7 @@ acpiec_attach(struct device *parent, struct device *self, void *aux)
 	aprint_naive(": ACPI Embedded Controller\n");
 	aprint_normal(": ACPI Embedded Controller\n");
 
-	lockinit(&sc->sc_lock, PWAIT, "eclock", 0, 0);
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
 	simple_lock_init(&sc->sc_slock);
 
 	sc->sc_handle = aa->aa_node->ad_handle;
@@ -530,6 +530,7 @@ acpiec_attach(struct device *parent, struct device *self, void *aux)
 		bus_space_unmap(ecdt_sc->sc_data_st,
 		    ecdt_sc->sc_data_sh, 1);
 
+		mutex_destroy(&ecdt_sc->sc_lock);
 		free(ecdt_sc, M_ACPI);
 		ecdt_sc = NULL;
 	}
