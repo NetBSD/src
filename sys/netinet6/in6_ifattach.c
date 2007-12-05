@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_ifattach.c,v 1.76 2007/12/04 10:27:33 dyoung Exp $	*/
+/*	$NetBSD: in6_ifattach.c,v 1.77 2007/12/05 23:00:58 dyoung Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.76 2007/12/04 10:27:33 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.77 2007/12/05 23:00:58 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -856,8 +856,8 @@ in6_ifdetach(struct ifnet *ifp)
 
 	/* XXX this code is duplicated in in6_purgeif() --dyoung */
 	/* nuke any of IPv6 addresses we have */
-	for (ifa = TAILQ_FIRST(&ifp->if_addrlist); ifa; ifa = next) {
-		next = TAILQ_NEXT(ifa, ifa_list);
+	for (ifa = IFADDR_FIRST(ifp); ifa != NULL; ifa = next) {
+		next = IFADDR_NEXT(ifa);
 		if (ifa->ifa_addr->sa_family != AF_INET6)
 			continue;
 		in6_purgeaddr(ifa);
@@ -866,8 +866,8 @@ in6_ifdetach(struct ifnet *ifp)
 	/* XXX isn't this code is redundant, given the above? --dyoung */
 	/* XXX doesn't this code replicate code in in6_purgeaddr() ? --dyoung */
 	/* undo everything done by in6_ifattach(), just in case */
-	for (ifa = TAILQ_FIRST(&ifp->if_addrlist); ifa; ifa = next) {
-		next = TAILQ_NEXT(ifa, ifa_list);
+	for (ifa = IFADDR_FIRST(ifp); ifa != NULL; ifa = next) {
+		next = IFADDR_NEXT(ifa);
 
 		if (ifa->ifa_addr->sa_family != AF_INET6
 		 || !IN6_IS_ADDR_LINKLOCAL(&satosin6(&ifa->ifa_addr)->sin6_addr)) {

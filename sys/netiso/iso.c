@@ -1,4 +1,4 @@
-/*	$NetBSD: iso.c,v 1.45 2007/12/05 01:20:01 dyoung Exp $	*/
+/*	$NetBSD: iso.c,v 1.46 2007/12/05 23:02:51 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iso.c,v 1.45 2007/12/05 01:20:01 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iso.c,v 1.46 2007/12/05 23:02:51 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -620,8 +620,8 @@ iso_purgeif(struct ifnet *ifp)
 {
 	struct ifaddr *ifa, *nifa;
 
-	for (ifa = TAILQ_FIRST(&ifp->if_addrlist); ifa != NULL; ifa = nifa) {
-		nifa = TAILQ_NEXT(ifa, ifa_list);
+	for (ifa = IFADDR_FIRST(ifp); ifa != NULL; ifa = nifa) {
+		nifa = IFADDR_NEXT(ifa);
 		if (ifa->ifa_addr->sa_family != AF_ISO)
 			continue;
 		iso_purgeaddr(ifa, ifp);
