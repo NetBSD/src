@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.99 2007/10/19 12:16:45 ad Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.100 2007/12/05 17:20:01 pooka Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -15,7 +15,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.99 2007/10/19 12:16:45 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.100 2007/12/05 17:20:01 pooka Exp $");
 
 #include "opt_inet.h"
 
@@ -1085,7 +1085,7 @@ tunkqfilter(dev_t dev, struct knote *kn)
 		break;
 
 	default:
-		rv = 1;
+		rv = EINVAL;
 		goto out;
 	}
 

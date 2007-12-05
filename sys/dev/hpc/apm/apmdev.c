@@ -1,4 +1,4 @@
-/*	$NetBSD: apmdev.c,v 1.13 2007/12/05 07:58:29 ad Exp $ */
+/*	$NetBSD: apmdev.c,v 1.14 2007/12/05 17:19:49 pooka Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apmdev.c,v 1.13 2007/12/05 07:58:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apmdev.c,v 1.14 2007/12/05 17:19:49 pooka Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_apmdev.h"
@@ -966,7 +966,7 @@ apmdevkqfilter(dev_t dev, struct knote *kn)
 		break;
 
 	default:
-		return (1);
+		return (EINVAL);
 	}
 
 	kn->kn_hook = sc;

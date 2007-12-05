@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.34 2007/12/05 08:05:57 ad Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.35 2007/12/05 17:20:00 pooka Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004 The NetBSD Foundation.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.34 2007/12/05 08:05:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.35 2007/12/05 17:20:00 pooka Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "bpfilter.h"
@@ -1121,7 +1121,7 @@ tap_dev_kqfilter(int unit, struct knote *kn)
 		kn->kn_fop = &tap_seltrue_filterops;
 		break;
 	default:
-		return (1);
+		return (EINVAL);
 	}
 
 	kn->kn_hook = sc;

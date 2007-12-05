@@ -1,4 +1,4 @@
-/*	$NetBSD: uirda.c,v 1.26 2007/12/05 07:15:54 ad Exp $	*/
+/*	$NetBSD: uirda.c,v 1.27 2007/12/05 17:19:55 pooka Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uirda.c,v 1.26 2007/12/05 07:15:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uirda.c,v 1.27 2007/12/05 17:19:55 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -643,7 +643,7 @@ uirda_kqfilter(void *h, struct knote *kn)
 		kn->kn_fop = &uirdawrite_filtops;
 		break;
 	default:
-		return (1);
+		return (EINVAL);
 	}
 
 	kn->kn_hook = sc;
