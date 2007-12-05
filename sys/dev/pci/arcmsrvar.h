@@ -1,4 +1,4 @@
-/*	$NetBSD: arcvar.h,v 1.2 2007/12/04 21:09:57 xtraeme Exp $ */
+/*	$NetBSD: arcmsrvar.h,v 1.1 2007/12/05 00:18:07 xtraeme Exp $ */
 /*	Derived from $OpenBSD: arc.c,v 1.68 2007/10/27 03:28:27 dlg Exp $ */
 
 /*
