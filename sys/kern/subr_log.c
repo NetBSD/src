@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_log.c,v 1.43 2007/12/05 07:06:54 ad Exp $	*/
+/*	$NetBSD: subr_log.c,v 1.44 2007/12/05 17:19:58 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_log.c,v 1.43 2007/12/05 07:06:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_log.c,v 1.44 2007/12/05 17:19:58 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -294,7 +294,7 @@ logkqfilter(dev_t dev, struct knote *kn)
 		break;
 
 	default:
-		return (1);
+		return (EINVAL);
 	}
 
 	mutex_spin_enter(&log_lock);
