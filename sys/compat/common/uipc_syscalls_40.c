@@ -1,9 +1,9 @@
-/*	$NetBSD: uipc_syscalls_40.c,v 1.4 2007/06/02 01:29:25 enami Exp $	*/
+/*	$NetBSD: uipc_syscalls_40.c,v 1.5 2007/12/05 01:03:30 dyoung Exp $	*/
 
 /* written by Pavel Cahyna, 2006. Public domain. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_40.c,v 1.4 2007/06/02 01:29:25 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_40.c,v 1.5 2007/12/05 01:03:30 dyoung Exp $");
 
 /*
  * System call interface to the socket abstraction.
@@ -61,7 +61,7 @@ compat_ifconf(u_long cmd, void *data)
 			continue;
 		}
 
-		TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
+		IFADDR_FOREACH(ifa, ifp) {
 			struct sockaddr *sa = ifa->ifa_addr;
 #ifdef COMPAT_OSOCK
 			if (cmd == OOSIOCGIFCONF) {
