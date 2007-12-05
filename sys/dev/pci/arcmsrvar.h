@@ -1,4 +1,4 @@
-/*	$NetBSD: arcmsrvar.h,v 1.2 2007/12/05 16:02:26 xtraeme Exp $ */
+/*	$NetBSD: arcmsrvar.h,v 1.3 2007/12/05 18:07:34 xtraeme Exp $ */
 /*	Derived from $OpenBSD: arc.c,v 1.68 2007/10/27 03:28:27 dlg Exp $ */
 
 /*
@@ -330,7 +330,8 @@ struct arc_softc {
 
 	struct lwp		*sc_lwp;
 	volatile int		sc_talking;
-	krwlock_t		sc_rwlock;
+	kmutex_t		sc_mutex;
+	kcondvar_t		sc_condvar;
 
 	struct sysmon_envsys	*sc_sme;
 	envsys_data_t		*sc_sensors;
