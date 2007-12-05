@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.39 2007/12/02 13:56:15 hannken Exp $	*/
+/*	$NetBSD: fss.c,v 1.40 2007/12/05 07:06:50 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.39 2007/12/02 13:56:15 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.40 2007/12/05 07:06:50 ad Exp $");
 
 #include "fss.h"
 
@@ -163,7 +163,7 @@ fssattach(int num)
 		sc->sc_unit = i;
 		sc->sc_bdev = NODEV;
 		simple_lock_init(&sc->sc_slock);
-		mutex_init(&sc->sc_lock, MUTEX_DRIVER, IPL_NONE);
+		mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
 		bufq_alloc(&sc->sc_bufq, "fcfs", 0);
 	}
 }
