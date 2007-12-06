@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_usema.c,v 1.23 2007/12/04 18:40:13 dsl Exp $ */
+/*	$NetBSD: irix_usema.c,v 1.24 2007/12/06 14:53:36 ad Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_usema.c,v 1.23 2007/12/04 18:40:13 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_usema.c,v 1.24 2007/12/06 14:53:36 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: irix_usema.c,v 1.23 2007/12/04 18:40:13 dsl Exp $");
 #include <sys/proc.h>
 #include <sys/errno.h>
 #include <sys/ioctl.h>
-#include <sys/lock.h>
+#include <sys/rwlock.h>
 #include <sys/device.h>
 #include <sys/vnode.h>
 #include <sys/vnode_if.h>
@@ -79,7 +79,7 @@ const struct cdevsw irix_usema_cdevsw = {
  * semaphore list, and operations on the list
  */
 static LIST_HEAD(irix_usema_reclist, irix_usema_rec) irix_usema_reclist;
-static struct lock irix_usema_reclist_lock;
+static krwlock_t irix_usema_reclist_lock;
 
 static struct irix_usema_rec *iur_lookup_by_vn(struct vnode *);
 static struct irix_usema_rec *iur_lookup_by_sem(struct irix_semaphore *);
@@ -162,7 +162,7 @@ irix_usemaattach(parent, self, aux)
 {
 	int error;
 
-	lockinit(&irix_usema_reclist_lock, PZERO|PCATCH, "usema", 0, 0);
+	rw_init(&irix_usema_reclist_lock);
 	LIST_INIT(&irix_usema_reclist);
 	if ((error = vfs_attach(&irix_usema_dummy_vfsops)) != 0)
 		panic("irix_usemaattach: vfs_attach() failed");
@@ -446,13 +446,13 @@ irix_sys_usync_cntl(l, v, retval)
 		if ((iur = iur_lookup_by_sem(iua.iua_sem)) == 0)
 			return EINVAL;
 
-		(void)lockmgr(&iur->iur_lock, LK_SHARED, NULL);
+		rw_enter(&iur->iur_lock, RW_READER);
 		TAILQ_FOREACH(iwpr, &iur->iur_waiting_p, iwpr_list) {
 			wakeup((void *)iwpr);
 			iur_proc_dequeue(iur, iwpr);
 		}
 		iur_remove(iur);
-		(void)lockmgr(&iur->iur_lock, LK_RELEASE, NULL);
+		rw_exit(&iur->iur_lock);
 		break;
 
 	case IRIX_USYNC_UNBLOCK:
@@ -495,11 +495,11 @@ iur_lookup_by_vn(vp)
 {
 	struct irix_usema_rec *iur;
 
-	(void)lockmgr(&irix_usema_reclist_lock, LK_SHARED, NULL);
+	rw_enter(&irix_usema_reclist_lock, RW_READER);
 	LIST_FOREACH(iur, &irix_usema_reclist, iur_list)
 		if (iur->iur_vn == vp)
 			break;
-	(void)lockmgr(&irix_usema_reclist_lock, LK_RELEASE, NULL);
+	rw_exit(&irix_usema_reclist_lock);
 	return iur;
 }
 
@@ -514,11 +514,11 @@ iur_lookup_by_sem(sem)
 	if ((error = copyin(sem, &is, sizeof(is))) != 0)
 		return NULL;
 
-	(void)lockmgr(&irix_usema_reclist_lock, LK_SHARED, NULL);
+	rw_enter(&irix_usema_reclist_lock, RW_READER);
 	LIST_FOREACH(iur, &irix_usema_reclist, iur_list)
 		if (iur->iur_sem == sem && iur->iur_shid == is.is_shid)
 			break;
-	(void)lockmgr(&irix_usema_reclist_lock, LK_RELEASE, NULL);
+	rw_exit(&irix_usema_reclist_lock);
 
 	return iur;
 }
@@ -545,12 +545,12 @@ iur_insert(sem, vp, p)
 	iur->iur_shid = is.is_shid;
 	iur->iur_p = p;
 	iur->iur_waiting_count = 0;
-	lockinit(&iur->iur_lock, PZERO|PCATCH, "_usema", 0, 0);
+	rw_init(&iur->iur_lock);
 	TAILQ_INIT(&iur->iur_waiting_p);
 	TAILQ_INIT(&iur->iur_released_p);
-	(void)lockmgr(&irix_usema_reclist_lock, LK_EXCLUSIVE, NULL);
+	rw_enter(&irix_usema_reclist_lock, RW_WRITER);
 	LIST_INSERT_HEAD(&irix_usema_reclist, iur, iur_list);
-	(void)lockmgr(&irix_usema_reclist_lock, LK_RELEASE, NULL);
+	rw_exit(&irix_usema_reclist_lock);
 	return iur;
 }
 
@@ -560,7 +560,7 @@ iur_remove(iur)
 {
 	struct irix_waiting_proc_rec *iwpr;
 
-	(void)lockmgr(&iur->iur_lock, LK_EXCLUSIVE, NULL);
+	rw_enter(&iur->iur_lock, RW_WRITER);
 waiting_restart:
 	TAILQ_FOREACH(iwpr, &iur->iur_waiting_p, iwpr_list) {
 		TAILQ_REMOVE(&iur->iur_waiting_p, iwpr, iwpr_list);
@@ -577,11 +577,12 @@ released_restart:
 		goto released_restart;
 	}
 
-	(void)lockmgr(&irix_usema_reclist_lock, LK_EXCLUSIVE, NULL);
+	rw_enter(&irix_usema_reclist_lock, RW_WRITER);
 	LIST_REMOVE(iur, iur_list);
-	(void)lockmgr(&irix_usema_reclist_lock, LK_RELEASE, NULL);
+	rw_exit(&irix_usema_reclist_lock);
 
-	(void)lockmgr(&iur->iur_lock, LK_RELEASE, NULL);
+	rw_exit(&iur->iur_lock);
+	rw_destroy(&iur->iur_lock);
 	free(iur, M_DEVBUF);
 	return;
 }
@@ -594,10 +595,9 @@ iur_proc_queue(iur, p)
 	struct irix_waiting_proc_rec *iwpr;
 
 	/* Do we have this iwpr on the released list? If we do, reuse it */
-	(void)lockmgr(&iur->iur_lock, LK_SHARED, NULL);
+	rw_enter(&iur->iur_lock, RW_WRITER);
 	TAILQ_FOREACH(iwpr, &iur->iur_released_p, iwpr_list) {
 		if (iwpr->iwpr_p == p) {
-			(void)lockmgr(&iur->iur_lock, LK_UPGRADE, NULL);
 			TAILQ_REMOVE(&iur->iur_released_p, iwpr, iwpr_list);
 			goto got_iwpr;
 		}
@@ -606,12 +606,10 @@ iur_proc_queue(iur, p)
 	/* Otherwise, create a new one */
 	iwpr = malloc(sizeof(struct irix_waiting_proc_rec), M_DEVBUF, M_WAITOK);
 	iwpr->iwpr_p = p;
-
-	(void)lockmgr(&iur->iur_lock, LK_UPGRADE, NULL);
 got_iwpr:
 	TAILQ_INSERT_TAIL(&iur->iur_waiting_p, iwpr, iwpr_list);
 	iur->iur_waiting_count++;
-	(void)lockmgr(&iur->iur_lock, LK_RELEASE, NULL);
+	rw_exit(&iur->iur_lock);
 	return iwpr;
 }
 
@@ -620,10 +618,10 @@ iur_proc_dequeue(iur, iwpr)
 	struct irix_usema_rec *iur;
 	struct irix_waiting_proc_rec *iwpr;
 {
-	(void)lockmgr(&iur->iur_lock, LK_EXCLUSIVE, NULL);
+	rw_enter(&iur->iur_lock, RW_WRITER);
 	iur->iur_waiting_count--;
 	TAILQ_REMOVE(&iur->iur_waiting_p, iwpr, iwpr_list);
-	(void)lockmgr(&iur->iur_lock, LK_RELEASE, NULL);
+	rw_exit(&iur->iur_lock);
 	free(iwpr, M_DEVBUF);
 	return;
 }
@@ -633,11 +631,11 @@ iur_proc_release(iur, iwpr)
 	struct irix_usema_rec *iur;
 	struct irix_waiting_proc_rec *iwpr;
 {
-	(void)lockmgr(&iur->iur_lock, LK_EXCLUSIVE, NULL);
+	rw_enter(&iur->iur_lock, RW_WRITER);
 	iur->iur_waiting_count--;
 	TAILQ_REMOVE(&iur->iur_waiting_p, iwpr, iwpr_list);
 	TAILQ_INSERT_TAIL(&iur->iur_released_p, iwpr, iwpr_list);
-	(void)lockmgr(&iur->iur_lock, LK_RELEASE, NULL);
+	rw_exit(&iur->iur_lock);
 	return;
 }
 
@@ -650,14 +648,14 @@ iur_proc_isreleased(iur, p)
 	struct irix_waiting_proc_rec *iwpr;
 	int res = 0;
 
-	(void)lockmgr(&iur->iur_lock, LK_SHARED, NULL);
+	rw_enter(&iur->iur_lock, RW_READER);
 	TAILQ_FOREACH(iwpr, &iur->iur_released_p, iwpr_list) {
 		if (iwpr->iwpr_p == p) {
 			res = 1;
 			break;
 		}
 	}
-	(void)lockmgr(&iur->iur_lock, LK_RELEASE, NULL);
+	rw_exit(&iur->iur_lock);
 	return res;
 }
 
@@ -667,9 +665,9 @@ iur_proc_getfirst(iur)
 {
 	struct irix_waiting_proc_rec *iwpr;
 
-	(void)lockmgr(&iur->iur_lock, LK_SHARED, NULL);
+	rw_enter(&iur->iur_lock, RW_READER);
 	iwpr = TAILQ_FIRST(&iur->iur_waiting_p);
-	(void)lockmgr(&iur->iur_lock, LK_RELEASE, NULL);
+	rw_exit(&iur->iur_lock);
 	return iwpr;
 }
 
@@ -689,7 +687,7 @@ irix_usema_exit_cleanup(p, new_p)
 	printf("irix_usema_exit_cleanup(): p = %p, new_p = %p\n", p, new_p);
 #endif
 remove_restart:
-	(void)lockmgr(&irix_usema_reclist_lock, LK_SHARED, NULL);
+	rw_enter(&irix_usema_reclist_lock, RW_WRITER);
 	LIST_FOREACH(iur, &irix_usema_reclist, iur_list) {
 		if (iur->iur_p != p)
 			continue;
@@ -698,22 +696,17 @@ remove_restart:
 			 * Release the lock now since iur_remove() needs to
 			 * acquire an exclusive lock.
 			 */
-			(void)lockmgr(&irix_usema_reclist_lock,
-			    LK_RELEASE, NULL);
+			rw_exit(&irix_usema_reclist_lock);
 			iur_remove(iur);
 			/*
 			 * iur is now invalid and we lost the lock, restart
 			 */
 			goto remove_restart;
 		} else {
-			(void)lockmgr(&irix_usema_reclist_lock,
-			    LK_UPGRADE, NULL);
 			iur->iur_p = new_p;
-			(void)lockmgr(&irix_usema_reclist_lock,
-			    LK_DOWNGRADE, NULL);
 		}
 	}
-	(void)lockmgr(&irix_usema_reclist_lock, LK_RELEASE, NULL);
+	rw_exit(&irix_usema_reclist_lock);
 
 	return;
 }
@@ -723,7 +716,6 @@ remove_restart:
  * This dumps all in-kernel information about processes waiting for
  * semaphores and process that have been released by an operation
  * on a semaphore.
- * When called from ddb, curproc is NULL, and this panic lockmgr().
  */
 void
 irix_usema_debug(void)
@@ -731,8 +723,6 @@ irix_usema_debug(void)
 	struct irix_usema_rec *iur;
 	struct irix_waiting_proc_rec *iwpr;
 
-	if (curproc != NULL)
-		(void)lockmgr(&irix_usema_reclist_lock, LK_SHARED, NULL);
 	LIST_FOREACH(iur, &irix_usema_reclist, iur_list) {
 		printf("iur %p\n", iur);
 		printf("  iur->iur_vn = %p\n", iur->iur_vn);
@@ -742,8 +732,6 @@ irix_usema_debug(void)
 		printf("  iur->iur_waiting_count = %d\n",
 		    iur->iur_waiting_count);
 		printf("  Waiting processes\n");
-		if (curproc != NULL)
-			(void)lockmgr(&iur->iur_lock, LK_SHARED, NULL);
 		TAILQ_FOREACH(iwpr, &iur->iur_waiting_p, iwpr_list) {
 			printf("    iwpr %p: iwpr->iwpr_p = %p (pid %d)\n",
 			    iwpr, iwpr->iwpr_p, iwpr->iwpr_p->p_pid);
@@ -753,10 +741,6 @@ irix_usema_debug(void)
 			printf("    iwpr %p: iwpr->iwpr_p = %p (pid %d)\n",
 			    iwpr, iwpr->iwpr_p, iwpr->iwpr_p->p_pid);
 		}
-		if (curproc != NULL)
-			(void)lockmgr(&iur->iur_lock, LK_RELEASE, NULL);
 	}
-	if (curproc != NULL)
-		(void)lockmgr(&irix_usema_reclist_lock, LK_RELEASE, NULL);
 }
 #endif /* DEBUG_IRIX */
