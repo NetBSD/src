@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.129 2007/12/05 23:47:17 dyoung Exp $	*/
+/*	$NetBSD: if.h,v 1.130 2007/12/06 00:23:09 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -835,6 +835,9 @@ void	ifinit(void);
 int	ifioctl(struct socket *, u_long, void *, struct lwp *);
 int	ifpromisc(struct ifnet *, int);
 struct	ifnet *ifunit(const char *);
+
+void ifa_insert(struct ifnet *, struct ifaddr *);
+void ifa_remove(struct ifnet *, struct ifaddr *);
 
 struct	ifaddr *ifa_ifwithaddr(const struct sockaddr *);
 struct	ifaddr *ifa_ifwithaf(int);
