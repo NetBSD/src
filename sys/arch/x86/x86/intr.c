@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.36 2007/12/03 15:34:27 ad Exp $	*/
+/*	$NetBSD: intr.c,v 1.37 2007/12/06 13:58:38 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -140,7 +140,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.36 2007/12/03 15:34:27 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.37 2007/12/06 13:58:38 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_acpi.h"
@@ -998,11 +998,4 @@ softint_init_md(lwp_t *l, u_int level, uintptr_t *machdep)
 	ci->ci_isources[sir]->is_lwp = l;
 
 	intr_calculatemasks(ci);
-}
-
-bool
-cpu_intr_p(void)
-{
-
-	return (curcpu()->ci_idepth >= 0);
 }
