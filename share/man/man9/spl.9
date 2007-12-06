@@ -1,4 +1,4 @@
-.\"	$NetBSD: spl.9,v 1.29 2007/12/06 10:32:12 xtraeme Exp $
+.\"	$NetBSD: spl.9,v 1.30 2007/12/06 10:36:37 xtraeme Exp $
 .\"
 .\" Copyright (c) 2000, 2001 Jason R. Thorpe.  All rights reserved.
 .\" Copyright (c) 1997 Michael Long.
@@ -112,7 +112,7 @@ statistics clock (if any).
 It is also used for code that cannot tolerate any interrupts.
 .Pp
 Code running at this level may not (in general) directly access
-machine indepenent kernel services.
+machine independent kernel services.
 For example, it is illegal to call the kernel
 .Fn printf
 function or to try and allocate memory.
