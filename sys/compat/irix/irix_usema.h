@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_usema.h,v 1.11 2007/12/04 18:40:13 dsl Exp $ */
+/*	$NetBSD: irix_usema.h,v 1.12 2007/12/06 14:53:36 ad Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/param.h>
 #include <sys/device.h>
-#include <sys/lock.h>
+#include <sys/rwlock.h>
 #include <sys/queue.h>
 #include <sys/vnode.h>
 
@@ -114,7 +114,7 @@ struct irix_usema_rec {
 	int iur_waiting_count;
 	TAILQ_HEAD(iur_waiting_p, irix_waiting_proc_rec) iur_waiting_p;
 	TAILQ_HEAD(iur_released_p, irix_waiting_proc_rec) iur_released_p;
-	struct lock iur_lock; 		/* lock for both lists */
+	krwlock_t iur_lock; 		/* lock for both lists */
 };
 
 /* From IRIX's <sys/usioctl.h> */

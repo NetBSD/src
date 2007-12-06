@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_exec.h,v 1.23 2007/12/04 18:40:11 dsl Exp $ */
+/*	$NetBSD: irix_exec.h,v 1.24 2007/12/06 14:53:35 ad Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 #include <sys/exec.h>
 #include <sys/signal.h>
 #include <sys/queue.h>
-#include <sys/lock.h>
+#include <sys/rwlock.h>
 #include <sys/exec_elf.h>
 
 #include <machine/vmparam.h>
