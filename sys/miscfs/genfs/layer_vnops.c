@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vnops.c,v 1.32.6.1 2007/12/04 13:03:25 ad Exp $	*/
+/*	$NetBSD: layer_vnops.c,v 1.32.6.2 2007/12/06 21:03:39 ad Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -232,7 +232,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.32.6.1 2007/12/04 13:03:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.32.6.2 2007/12/06 21:03:39 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -241,7 +241,7 @@ __KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.32.6.1 2007/12/04 13:03:25 ad Exp 
 #include <sys/vnode.h>
 #include <sys/mount.h>
 #include <sys/namei.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/buf.h>
 #include <sys/kauth.h>
 
@@ -743,6 +743,13 @@ layer_inactive(v)
 	struct vnode *vp = ap->a_vp;
 
 	/*
+	 * ..., but don't cache the device node. Also, if we did a
+	 * remove, don't cache the node.
+	 */
+	*ap->a_recycle = (vp->v_type == VBLK || vp->v_type == VCHR
+	    || (VTOLAYER(vp)->layer_flags & LAYERFS_REMOVED));
+
+	/*
 	 * Do nothing (and _don't_ bypass).
 	 * Wait to vrele lowervp until reclaim,
 	 * so that until then our layer_node is in the
@@ -756,12 +763,6 @@ layer_inactive(v)
 	 */
 	VOP_UNLOCK(vp, 0);
 
-	/*
-	 * ..., but don't cache the device node. Also, if we did a
-	 * remove, don't cache the node.
-	 */
-	*ap->a_recycle = (vp->v_type == VBLK || vp->v_type == VCHR
-	    || (VTOLAYER(vp)->layer_flags & LAYERFS_REMOVED));
 	return (0);
 }
 
@@ -876,7 +877,7 @@ layer_reclaim(v)
 	mutex_enter(&lmp->layerm_hashlock);
 	LIST_REMOVE(xp, layer_hash);
 	mutex_exit(&lmp->layerm_hashlock);
-	FREE(vp->v_data, M_TEMP);
+	kmem_free(vp->v_data, lmp->layerm_size);
 	vp->v_data = NULL;
 	vrele(lowervp);
 	return (0);
