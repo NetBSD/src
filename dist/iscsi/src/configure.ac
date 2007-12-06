@@ -1,6 +1,6 @@
 dnl Process this file with autoconf to produce a configure script.
 AC_PREREQ(2.57)
-AC_INIT([netbsd-iscsi],[20071130],[Alistair Crooks <agc@NetBSD.org>])
+AC_INIT([netbsd-iscsi],[20071206],[Alistair Crooks <agc@NetBSD.org>])
 AC_CONFIG_SRCDIR([iscsi.c])
 AC_CONFIG_HEADER(../include/config.h)
 
@@ -14,7 +14,7 @@ AC_HEADER_STDC
 AC_CHECK_HEADERS(sys/types.h sys/param.h sys/stat.h sys/time.h sys/mman.h sys/uio.h sys/socket.h sys/time.h sys/vfs.h)
 AC_CHECK_HEADERS(arpa/inet.h netinet/in.h netinet/tcp.h netdb.h poll.h)
 AC_CHECK_HEADERS(asm/byteorder.h sys/bswap.h sys/byteorder.h sys/select.h libkern/OSByteOrder.h byteswap.h machine/endian.h)
-AC_CHECK_HEADERS(ctype.h errno.h fcntl.h pthread.h pwd.h signal.h stdlib.h syslog.h unistd.h string.h stdarg.h utime.h uuid.h)
+AC_CHECK_HEADERS(ctype.h errno.h fcntl.h pthread.h pwd.h signal.h stdint.h stdlib.h syslog.h unistd.h string.h stdarg.h utime.h uuid.h)
 
 dnl Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
