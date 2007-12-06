@@ -1,4 +1,4 @@
-.\"	$NetBSD: softintr.9,v 1.14 2007/12/05 18:10:00 ad Exp $
+.\"	$NetBSD: softintr.9,v 1.15 2007/12/06 10:27:20 xtraeme Exp $
 .\"
 .\" Copyright (c) 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -66,7 +66,7 @@
 .\"
 .\" --(license Id: LICENSE.proto,v 1.1 2000/06/13 21:40:26 cgd Exp )--
 .\"
-.Dd December 4, 2007
+.Dd December 6, 2007
 .Dt SOFTINT 9
 .Os
 .Sh NAME
@@ -119,7 +119,7 @@ execution at a later time.
 Since software interrupts are a limited resource and run with
 higher priority than most other LWPs in the system, all
 block-and-resume activity by a software interrupt must be kept
-short to allow futher processing at that level to continue.
+short to allow further processing at that level to continue.
 By extension, code running with process context must take care to
 ensure that any lock that may be taken from a software interrupt
 can not be held for more than a short period of time.
