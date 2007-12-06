@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.S,v 1.3 2007/11/22 16:16:40 bouyer Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.4 2007/12/06 14:40:28 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -450,9 +450,9 @@ NENTRY(inb)
 	ret
 
 NENTRY(insb)
-	movq	%rdi, %rdx
+	movl	%edx, %ecx
+	movl	%edi, %edx
 	movq	%rsi, %rdi
-	movq	%rdx, %rcx
 	rep
 	insb
 	ret
@@ -464,9 +464,9 @@ NENTRY(inw)
 	ret
 
 NENTRY(insw)
-	movq	%rdi, %rdx
+	movl	%edx, %ecx
+	movl	%edi, %edx
 	movq	%rsi, %rdi
-	movq	%rdx, %rcx
 	rep
 	insw
 	ret
@@ -478,9 +478,9 @@ NENTRY(inl)
 	ret
 
 NENTRY(insl)
-	movq	%rdi, %rdx
+	movl	%edx, %ecx
+	movl	%edi, %edx
 	movq	%rsi, %rdi
-	movq	%rdx, %rcx
 	rep
 	insl
 	ret
@@ -492,8 +492,8 @@ NENTRY(outb)
 	ret
 
 NENTRY(outsb)
-	movq	%rdi, %rdx
-	movq	%rdx, %rcx
+	movl	%edx, %ecx
+	movl	%edi, %edx
 	rep
 	outsb
 	ret
@@ -505,8 +505,8 @@ NENTRY(outw)
 	ret
 
 NENTRY(outsw)
-	movq	%rdi, %rdx
-	movq	%rdx, %rcx
+	movl	%edx, %ecx
+	movl	%edi, %edx
 	rep
 	outsw
 	ret
@@ -518,8 +518,8 @@ NENTRY(outl)
 	ret
 
 NENTRY(outsl)
-	movq	%rdi, %rdx
-	movq	%rdx, %rcx
+	movl	%edx, %ecx
+	movl	%edi, %edx
 	rep
 	outsl
 	ret
