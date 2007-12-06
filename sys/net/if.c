@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.207 2007/12/06 00:23:09 dyoung Exp $	*/
+/*	$NetBSD: if.c,v 1.208 2007/12/06 02:23:42 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.207 2007/12/06 00:23:09 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.208 2007/12/06 02:23:42 dyoung Exp $");
 
 #include "opt_inet.h"
 
@@ -902,7 +902,7 @@ void
 ifa_insert(struct ifnet *ifp, struct ifaddr *ifa)
 {
 	ifa->ifa_ifp = ifp;
-	TAILQ_INSERT_HEAD(&ifp->if_addrlist, ifa, ifa_list);
+	TAILQ_INSERT_TAIL(&ifp->if_addrlist, ifa, ifa_list);
 	IFAREF(ifa);
 }
 
