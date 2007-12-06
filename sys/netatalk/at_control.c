@@ -1,4 +1,4 @@
-/*	$NetBSD: at_control.c,v 1.23 2007/12/05 23:47:18 dyoung Exp $	 */
+/*	$NetBSD: at_control.c,v 1.24 2007/12/06 00:28:37 dyoung Exp $	 */
 
 /*
  * Copyright (c) 1990,1994 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at_control.c,v 1.23 2007/12/05 23:47:18 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at_control.c,v 1.24 2007/12/06 00:28:37 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -203,9 +203,7 @@ at_control(cmd, data, ifp, l)
 		         * Find the end of the interface's addresses
 		         * and link our new one on the end
 		         */
-			TAILQ_INSERT_TAIL(&ifp->if_addrlist,
-			    &aa->aa_ifa, ifa_list);
-			IFAREF(&aa->aa_ifa);
+			ifa_insert(ifp, &aa->aa_ifa);
 
 			/*
 		         * As the at_ifaddr contains the actual sockaddrs,
@@ -342,8 +340,7 @@ at_purgeaddr(struct ifaddr *ifa)
 	/*
 	 * remove the ifaddr from the interface
 	 */
-	TAILQ_REMOVE(&ifp->if_addrlist, &aa->aa_ifa, ifa_list);
-	IFAFREE(&aa->aa_ifa);
+	ifa_remove(ifp, &aa->aa_ifa);
 	TAILQ_REMOVE(&at_ifaddr, aa, aa_list);
 	IFAFREE(&aa->aa_ifa);
 }
@@ -866,8 +863,7 @@ aa_clean()
 		}
 		if (ifa == NULL)
 			panic("aa not present");
-		else
-			TAILQ_REMOVE(&ifp->if_addrlist, ifa, ifa_list);
+		ifa_remove(ifp, ifa);
 	}
 }
 #endif
