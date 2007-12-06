@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_prctl.h,v 1.12 2007/12/04 18:40:12 dsl Exp $ */
+/*	$NetBSD: irix_prctl.h,v 1.13 2007/12/06 14:53:36 ad Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 /* IRIX share group structure */
 struct irix_share_group {
 	LIST_HEAD(isg_head, irix_emuldata) isg_head;	/* list head */
-	struct lock isg_lock;				/* list lock */
+	krwlock_t isg_lock;				/* list lock */
 	int isg_refcount;
 };
 
@@ -72,14 +72,12 @@ if (((struct irix_emuldata *)((q)->p_emuldata))->ied_share_group == NULL ||   \
     ((struct irix_emuldata *)((q)->p_emuldata))->ied_shareaddr == 0) {        \
 	(cmd);                                                                \
 } else {                                                                      \
-	lockmgr(&((struct irix_emuldata *)                                    \
-	    ((q)->p_emuldata))->ied_share_group->isg_lock,                    \
-	    LK_EXCLUSIVE, NULL);                                              \
+	rw_enter(&((struct irix_emuldata *)                                   \
+	    ((q)->p_emuldata))->ied_share_group->isg_lock, RW_WRITER);        \
 	(cmd);                                                                \
 	irix_vm_sync((q));                                                    \
-	lockmgr(&((struct irix_emuldata *)                                    \
-	    ((q)->p_emuldata))->ied_share_group->isg_lock,                    \
-	    LK_RELEASE, NULL);                                                \
+	rw_exit(&((struct irix_emuldata *)                                    \
+	    ((q)->p_emuldata))->ied_share_group->isg_lock);                   \
 }
 
 /* From IRIX's <sys/prctl.h> */
