@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.206 2007/12/05 23:47:17 dyoung Exp $	*/
+/*	$NetBSD: if.c,v 1.207 2007/12/06 00:23:09 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.206 2007/12/05 23:47:17 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.207 2007/12/06 00:23:09 dyoung Exp $");
 
 #include "opt_inet.h"
 
@@ -299,10 +299,8 @@ if_alloc_sadl(struct ifnet *ifp)
 
 	ifnet_addrs[ifp->if_index] = ifa;
 	IFAREF(ifa);
-	ifa->ifa_ifp = ifp;
+	ifa_insert(ifp, ifa);
 	ifa->ifa_rtrequest = link_rtrequest;
-	TAILQ_INSERT_HEAD(&ifp->if_addrlist, ifa, ifa_list);
-	IFAREF(ifa);
 	ifa->ifa_addr = (struct sockaddr *)sdl;
 	ifp->if_sadl = sdl;
 	ifa->ifa_netmask = (struct sockaddr *)mask;
@@ -329,8 +327,7 @@ if_free_sadl(struct ifnet *ifp)
 
 	s = splnet();
 	rtinit(ifa, RTM_DELETE, 0);
-	TAILQ_REMOVE(&ifp->if_addrlist, ifa, ifa_list);
-	IFAFREE(ifa);
+	ifa_remove(ifp, ifa);
 
 	ifp->if_sadl = NULL;
 
@@ -637,7 +634,7 @@ again:
 			 */
 			printf("if_detach: WARNING: AF %d not purged\n",
 			    family);
-			TAILQ_REMOVE(&ifp->if_addrlist, ifa, ifa_list);
+			ifa_remove(ifp, ifa);
 		}
 		goto again;
 	}
@@ -899,6 +896,22 @@ if_clone_list(struct if_clonereq *ifcr)
 	}
 
 	return error;
+}
+
+void
+ifa_insert(struct ifnet *ifp, struct ifaddr *ifa)
+{
+	ifa->ifa_ifp = ifp;
+	TAILQ_INSERT_HEAD(&ifp->if_addrlist, ifa, ifa_list);
+	IFAREF(ifa);
+}
+
+void
+ifa_remove(struct ifnet *ifp, struct ifaddr *ifa)
+{
+	KASSERT(ifa->ifa_ifp == ifp);
+	TAILQ_REMOVE(&ifp->if_addrlist, ifa, ifa_list);
+	IFAFREE(ifa);
 }
 
 static inline int
