@@ -1,4 +1,4 @@
-/*	$NetBSD: null_vfsops.c,v 1.70.2.1 2007/12/04 13:03:26 ad Exp $	*/
+/*	$NetBSD: null_vfsops.c,v 1.70.2.2 2007/12/06 21:03:54 ad Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: null_vfsops.c,v 1.70.2.1 2007/12/04 13:03:26 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: null_vfsops.c,v 1.70.2.2 2007/12/06 21:03:54 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -190,6 +190,9 @@ nullfs_mount(mp, path, data, data_len)
 	 */
 	vp->v_vflag |= VV_ROOT;
 	nmp->nullm_rootvp = vp;
+
+	/* We don't need kernel_lock. */
+	mp->mnt_iflag |= IMNT_MPSAFE;
 
 	/*
 	 * Unlock the node
