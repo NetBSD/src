@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_ifattach.c,v 1.78 2007/12/05 23:47:18 dyoung Exp $	*/
+/*	$NetBSD: in6_ifattach.c,v 1.79 2007/12/06 00:28:36 dyoung Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.78 2007/12/05 23:47:18 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.79 2007/12/06 00:28:36 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -891,8 +891,7 @@ in6_ifdetach(struct ifnet *ifp)
 		}
 
 		/* remove from the linked list */
-		TAILQ_REMOVE(&ifp->if_addrlist, &ia->ia_ifa, ifa_list);
-		IFAFREE(&ia->ia_ifa);
+		ifa_remove(ifp, &ia->ia_ifa);
 
 		/* also remove from the IPv6 address chain(itojun&jinmei) */
 		oia = ia;

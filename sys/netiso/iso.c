@@ -1,4 +1,4 @@
-/*	$NetBSD: iso.c,v 1.47 2007/12/05 23:47:19 dyoung Exp $	*/
+/*	$NetBSD: iso.c,v 1.48 2007/12/06 00:28:36 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iso.c,v 1.47 2007/12/05 23:47:19 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iso.c,v 1.48 2007/12/06 00:28:36 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -524,9 +524,7 @@ iso_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 				return (ENOBUFS);
 			TAILQ_INSERT_TAIL(&iso_ifaddr, ia, ia_list);
 			IFAREF(&ia->ia_ifa);
-			TAILQ_INSERT_TAIL(&ifp->if_addrlist, &ia->ia_ifa,
-			    ifa_list);
-			IFAREF(&ia->ia_ifa);
+			ifa_insert(ifp, &ia->ia_ifa);
 			ia->ia_ifa.ifa_addr = sisotosa(&ia->ia_addr);
 			ia->ia_ifa.ifa_dstaddr = sisotosa(&ia->ia_dstaddr);
 			ia->ia_ifa.ifa_netmask = sisotosa(&ia->ia_sockmask);
@@ -610,8 +608,7 @@ iso_purgeaddr(struct ifaddr *ifa)
 	struct iso_ifaddr *ia = (void *) ifa;
 
 	iso_ifscrub(ifp, ia);
-	TAILQ_REMOVE(&ifp->if_addrlist, &ia->ia_ifa, ifa_list);
-	IFAFREE(&ia->ia_ifa);
+	ifa_remove(ifp, &ia->ia_ifa);
 	TAILQ_REMOVE(&iso_ifaddr, ia, ia_list);
 	IFAFREE(&ia->ia_ifa);
 }
