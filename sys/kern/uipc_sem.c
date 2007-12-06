@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_sem.c,v 1.21 2007/06/15 18:27:13 ad Exp $	*/
+/*	$NetBSD: uipc_sem.c,v 1.22 2007/12/06 01:27:21 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.21 2007/06/15 18:27:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.22 2007/12/06 01:27:21 rmind Exp $");
 
 #include "opt_posix.h"
 
@@ -78,15 +78,13 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.21 2007/06/15 18:27:13 ad Exp $");
 #include <sys/kmem.h>
 #include <sys/fcntl.h>
 #include <sys/kauth.h>
+#include <sys/sysctl.h>
 
 #include <sys/mount.h>
 
 #include <sys/syscallargs.h>
 
-#ifndef SEM_MAX
-#define SEM_MAX	30
-#endif
-
+#define SEM_MAX 128
 #define SEM_MAX_NAMELEN	14
 #define SEM_VALUE_MAX (~0U)
 #define SEM_HASHTBL_SIZE 13
@@ -136,6 +134,7 @@ LIST_HEAD(ksem_list, ksem);
 static kmutex_t ksem_mutex;
 static struct ksem_list ksem_head = LIST_HEAD_INITIALIZER(&ksem_head);
 static struct ksem_list ksem_hash[SEM_HASHTBL_SIZE];
+static u_int sem_max = SEM_MAX;
 static int nsems = 0;
 
 /*
@@ -347,7 +346,7 @@ ksem_create(struct lwp *l, const char *name, struct ksem **ksret,
 	cv_init(&ret->ks_cv, "psem");
 
 	mutex_enter(&ksem_mutex);
-	if (nsems >= SEM_MAX) {
+	if (nsems >= sem_max) {
 		mutex_exit(&ksem_mutex);
 		if (ret->ks_name != NULL)
 			kmem_free(ret->ks_name, ret->ks_namelen);
@@ -843,4 +842,35 @@ ksem_init(void)
 	error = proc_specific_key_create(&ksem_specificdata_key,
 					 ksem_proc_dtor);
 	KASSERT(error == 0);
+}
+
+/*
+ * Sysctl initialization and nodes.
+ */
+
+SYSCTL_SETUP(sysctl_posix_sem_setup, "sysctl kern.posix subtree setup")
+{
+	const struct sysctlnode *node = NULL;
+
+	sysctl_createv(clog, 0, NULL, NULL,
+		CTLFLAG_PERMANENT,
+		CTLTYPE_NODE, "kern", NULL,
+		NULL, 0, NULL, 0,
+		CTL_KERN, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, &node,
+		CTLFLAG_PERMANENT,
+		CTLTYPE_NODE, "posix",
+		SYSCTL_DESCR("POSIX options"),
+		NULL, 0, NULL, 0,
+		CTL_KERN, CTL_CREATE, CTL_EOL);
+
+	if (node == NULL)
+		return;
+
+	sysctl_createv(clog, 0, &node, NULL,
+		CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
+		CTLTYPE_INT, "semmax",
+		SYSCTL_DESCR("Maximal number of semaphores"),
+		NULL, 0, &sem_max, 0,
+		CTL_CREATE, CTL_EOL);
 }
