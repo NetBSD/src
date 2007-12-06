@@ -1,4 +1,4 @@
-/*	$NetBSD: supfilesrv.c,v 1.39 2007/10/06 20:19:52 christos Exp $	*/
+/*	$NetBSD: supfilesrv.c,v 1.40 2007/12/06 21:58:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -1913,7 +1913,7 @@ local_file(int handle, struct stat * sinfo)
 	 * determined this empirically -- DLC).  Without a fstatvfs()
 	 * system call, this will have to do for now.
 	 */
-#if defined(__SVR4) || __NetBSD_Version__ > 200030000
+#if defined(__SVR4) || __NetBSD_Version__ > 299000900
 	{
 		struct statvfs sf;
 
