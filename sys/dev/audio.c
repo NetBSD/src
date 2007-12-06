@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.222.6.9 2007/12/01 05:13:25 jmcneill Exp $	*/
+/*	$NetBSD: audio.c,v 1.222.6.10 2007/12/06 14:20:47 joerg Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.222.6.9 2007/12/01 05:13:25 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.222.6.10 2007/12/06 14:20:47 joerg Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -3990,12 +3990,16 @@ audio_suspend(device_t dv)
 {
 	struct audio_softc *sc = device_private(dv);
 	const struct audio_hw_if *hwp = sc->hw_if;
+	int (s);
 
+	s = splaudio();
 	audio_mixer_capture(sc);
 	if (sc->sc_pbus == true)
 		hwp->halt_output(sc->hw_hdl);
 	if (sc->sc_rbus == true)
 		hwp->halt_input(sc->hw_hdl);
+	callout_stop(&sc->sc_idle_counter);
+	splx(s);
 
 	return true;
 }
@@ -4004,12 +4008,15 @@ static bool
 audio_resume(device_t dv)
 {
 	struct audio_softc *sc = device_private(dv);
+	int s;
 
+	s = splaudio();
 	audio_mixer_restore(sc);
 	if (sc->sc_pbus == true)
 		audiostartp(sc);
 	if (sc->sc_rbus == true)
 		audiostartr(sc);
+	splx(s);
 
 	return true;
 }
@@ -4020,12 +4027,15 @@ audio_volume_down(device_t dv)
 	struct audio_softc *sc = device_private(dv);
 	u_int gain, newgain;
 	u_char balance;
+	int s;
 
+	s = splaudio();
 	au_get_gain(sc, &sc->sc_outports, &gain, &balance);
 	newgain = gain - 32;
 	if (newgain > 255)
 		newgain = 0;
 	au_set_gain(sc, &sc->sc_outports, newgain, balance);
+	splx(s);
 }
 
 static void
@@ -4034,12 +4044,15 @@ audio_volume_up(device_t dv)
 	struct audio_softc *sc = device_private(dv);
 	u_int gain, newgain;
 	u_char balance;
+	int s;
 
+	s = splaudio();
 	au_get_gain(sc, &sc->sc_outports, &gain, &balance);
 	newgain = gain + 32;
 	if (newgain > 255)
 		newgain = 255;
 	au_set_gain(sc, &sc->sc_outports, newgain, balance);
+	splx(s);
 }
 
 static void
@@ -4048,7 +4061,9 @@ audio_volume_toggle(device_t dv)
 	struct audio_softc *sc = device_private(dv);
 	u_int gain, newgain;
 	u_char balance;
+	int s;
 
+	s = splaudio();
 	au_get_gain(sc, &sc->sc_outports, &gain, &balance);
 	if (gain != 0) {
 		sc->sc_lastgain = gain;
@@ -4056,6 +4071,7 @@ audio_volume_toggle(device_t dv)
 	} else
 		newgain = 0;
 	au_set_gain(sc, &sc->sc_outports, newgain, balance);
+	splx(s);
 }
 
 #endif /* NAUDIO > 0 */
