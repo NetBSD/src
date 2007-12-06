@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.138 2007/12/05 23:47:18 dyoung Exp $	*/
+/*	$NetBSD: in6.c,v 1.139 2007/12/06 00:28:36 dyoung Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.138 2007/12/05 23:47:18 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.139 2007/12/06 00:28:36 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_pfil_hooks.h"
@@ -946,9 +946,7 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 		/* gain a refcnt for the link from in6_ifaddr */
 		IFAREF(&ia->ia_ifa);
 
-		TAILQ_INSERT_TAIL(&ifp->if_addrlist, &ia->ia_ifa, ifa_list);
-		/* gain another refcnt for the link from if_addrlist */
-		IFAREF(&ia->ia_ifa);
+		ifa_insert(ifp, &ia->ia_ifa);
 	}
 
 	/* update timestamp */
@@ -1355,9 +1353,7 @@ in6_unlink_ifa(struct in6_ifaddr *ia, struct ifnet *ifp)
 	struct in6_ifaddr *oia;
 	int	s = splnet();
 
-	TAILQ_REMOVE(&ifp->if_addrlist, &ia->ia_ifa, ifa_list);
-	/* release a refcnt for the link from if_addrlist */
-	IFAFREE(&ia->ia_ifa);
+	ifa_remove(ifp, &ia->ia_ifa);
 
 	oia = ia;
 	if (oia == (ia = in6_ifaddr))
