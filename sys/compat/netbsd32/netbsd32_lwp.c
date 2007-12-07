@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_lwp.c,v 1.7 2007/09/10 10:54:20 cube Exp $	*/
+/*	$NetBSD: netbsd32_lwp.c,v 1.8 2007/12/07 22:41:05 ad Exp $	*/
 
 /*
  *  Copyright (c) 2005, 2006, 2007 The NetBSD Foundation.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_lwp.c,v 1.7 2007/09/10 10:54:20 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_lwp.c,v 1.8 2007/12/07 22:41:05 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_lwp.c,v 1.7 2007/09/10 10:54:20 cube Exp $"
 #include <sys/mount.h>
 #include <sys/proc.h>
 #include <sys/syscallargs.h>
+#include <sys/lwpctl.h>
 
 #include <compat/netbsd32/netbsd32.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
@@ -212,4 +213,48 @@ netbsd32__lwp_unpark_all(struct lwp *l, void *v, register_t *retval)
 	NETBSD32TOX_UAP(ntargets, size_t);
 	NETBSD32TOP_UAP(hint, void);
 	return sys__lwp_unpark_all(l, &ua, retval);
+}
+
+int
+netbsd32__lwp_setname(struct lwp *l, void *v, register_t *retval)
+{
+	struct netbsd32__lwp_setname_args /* {
+		syscallarg(lwpid_t) target;
+		syscallarg(const netbsd32_charp) name;
+	} */ *uap = v;
+	struct sys__lwp_setname_args ua;
+
+	NETBSD32TO64_UAP(target);
+	NETBSD32TOP_UAP(name, char *);
+	return sys__lwp_setname(l, &ua, retval);
+}
+
+int
+netbsd32__lwp_getname(struct lwp *l, void *v, register_t *retval)
+{
+	struct netbsd32__lwp_getname_args /* {
+		syscallarg(lwpid_t) target;
+		syscallarg(netbsd32_charp) name;
+		syscallarg(netbsd32_size_t) len;
+	} */ *uap = v;
+	struct sys__lwp_getname_args ua;
+
+	NETBSD32TO64_UAP(target);
+	NETBSD32TOP_UAP(name, char *);
+	NETBSD32TOX_UAP(len, size_t);
+	return sys__lwp_getname(l, &ua, retval);
+}
+
+int
+netbsd32__lwp_ctl(struct lwp *l, void *v, register_t *retval)
+{
+	struct netbsd32__lwp_ctl_args /* {
+		syscallarg(int) features;
+		syscallarg(netbsd32_pointer_t) address;
+	} */ *uap = v;
+	struct sys__lwp_ctl_args ua;
+
+	NETBSD32TO64_UAP(features);
+	NETBSD32TOP_UAP(address, struct lwpctl *);
+	return sys__lwp_ctl(l, &ua, retval);
 }
