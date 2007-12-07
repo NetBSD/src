@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.9.2.1 2007/09/03 14:23:45 yamt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.9.2.2 2007/12/07 17:24:24 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.9.2.1 2007/09/03 14:23:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.9.2.2 2007/12/07 17:24:24 yamt Exp $");
 
 #include "opt_md.h"
 
@@ -138,7 +138,6 @@ extern int footbridge_imask[NIPL];
 void
 cpu_configure(void)
 {
-	softintr_init();
 	/*
 	 * Since various PCI interrupts could be routed via the ICU
 	 * (for PCI devices in the bridge) we need to set up the ICU

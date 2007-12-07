@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.14.2.2 2007/09/03 14:27:34 yamt Exp $	*/
+/*	$NetBSD: apm.c,v 1.14.2.3 2007/12/07 17:25:15 yamt Exp $	*/
 /*	$OpenBSD: apm.c,v 1.5 2002/06/07 07:13:59 miod Exp $	*/
 
 /*-
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.14.2.2 2007/09/03 14:27:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.14.2.3 2007/12/07 17:25:15 yamt Exp $");
 
 #include "apm.h"
 
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.14.2.2 2007/09/03 14:27:34 yamt Exp $");
 #include <sys/device.h>
 #include <sys/fcntl.h>
 #include <sys/ioctl.h>
+#include <sys/mutex.h>
 #ifdef __OpenBSD__
 #include <sys/event.h>
 #endif
@@ -87,7 +88,7 @@ struct apm_softc {
 	int    sc_flags;
 	int	event_count;
 	int	event_ptr;
-	struct lock sc_lock;
+	kmutex_t sc_lock;
 	struct	apm_event_info event_list[APM_NEVENTS];
 };
 
@@ -98,10 +99,8 @@ struct apm_softc {
  * user context.
  */
 #ifdef __NetBSD__
-#define	APM_LOCK(apmsc)							\
-	(void) lockmgr(&(apmsc)->sc_lock, LK_EXCLUSIVE, NULL)
-#define	APM_UNLOCK(apmsc)						\
-	(void) lockmgr(&(apmsc)->sc_lock, LK_RELEASE, NULL)
+#define	APM_LOCK(apmsc)		mutex_enter(&(apmsc)->sc_lock)
+#define	APM_UNLOCK(apmsc)	mutex_exit(&(apmsc)->sc_lock)
 #else
 #define APM_LOCK(apmsc)
 #define APM_UNLOCK(apmsc)
@@ -198,7 +197,7 @@ apmattach(parent, self, aux)
 	sc->sc_flags = 0;
 	sc->event_ptr = 0;
 	sc->event_count = 0;
-	lockinit(&sc->sc_lock, PWAIT, "apmlk", 0, 0);
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnx.c,v 1.1.8.5 2007/11/15 11:44:20 yamt Exp $	*/
+/*	$NetBSD: if_bnx.c,v 1.1.8.6 2007/12/07 17:30:24 yamt Exp $	*/
 /*	$OpenBSD: if_bnx.c,v 1.43 2007/01/30 03:21:10 krw Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/dev/bce/if_bce.c,v 1.3 2006/04/13 14:12:26 ru Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.1.8.5 2007/11/15 11:44:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.1.8.6 2007/12/07 17:30:24 yamt Exp $");
 
 /*
  * The following controllers are supported by this driver:
@@ -4420,12 +4420,13 @@ bnx_ioctl(struct ifnet *ifp, u_long command, void *data)
 
 	default:
 		error = ether_ioctl(ifp, command, data);
-		if (error == ENETRESET) {
-#if 0
+		if (error != ENETRESET)
+			break;
+		error = 0;
+		if (command == SIOCADDMULTI || command == SIOCDELMULTI) {
+			/* reload packet filter if running */
 			if (ifp->if_flags & IFF_RUNNING)
-				/*bnx_setmulti(sc)*/;
-#endif
-			error = 0;
+				bnx_set_rx_mode(sc);
 		}
 		break;
 	}

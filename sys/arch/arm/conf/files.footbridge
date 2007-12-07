@@ -1,4 +1,4 @@
-#	$NetBSD: files.footbridge,v 1.11.18.1 2006/12/30 20:45:32 yamt Exp $
+#	$NetBSD: files.footbridge,v 1.11.18.2 2007/12/07 17:24:14 yamt Exp $
 #
 # Shared footbridge files information
 
@@ -12,7 +12,6 @@ file	arch/arm/footbridge/footbridge_pci.c		footbridge
 file	arch/arm/arm32/irq_dispatch.S
 file	arch/arm/footbridge/footbridge_irqhandler.c	footbridge
 file	arch/arm/footbridge/footbridge_clock.c		footbridge
-file	arch/arm/arm/softintr.c				footbridge
 
 # DC21285 "Footbridge" serial port
 device	fcom: tty, bus_space_generic

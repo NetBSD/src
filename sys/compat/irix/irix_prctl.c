@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_prctl.c,v 1.27.2.5 2007/10/27 11:29:32 yamt Exp $ */
+/*	$NetBSD: irix_prctl.c,v 1.27.2.6 2007/12/07 17:27:47 yamt Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.27.2.5 2007/10/27 11:29:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.27.2.6 2007/12/07 17:27:47 yamt Exp $");
 
 #include <sys/errno.h>
 #include <sys/types.h>
@@ -48,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.27.2.5 2007/10/27 11:29:32 yamt Exp
 #include <sys/exec.h>
 #include <sys/malloc.h>
 #include <sys/pool.h>
-#include <sys/lock.h>
+#include <sys/rwlock.h>
 #include <sys/filedesc.h>
 #include <sys/vnode.h>
 #include <sys/resourcevar.h>
@@ -78,15 +78,15 @@ struct irix_sproc_child_args {
 	struct irix_share_group *isc_share_group;
 	int isc_child_done;
 };
-static void irix_sproc_child __P((struct irix_sproc_child_args *));
-static int irix_sproc __P((void *, unsigned int, void *, void *, size_t,
-    pid_t, struct lwp *, register_t *));
-static struct irix_shared_regions_rec *irix_isrr_create __P((vaddr_t,
-    vsize_t, int));
+static void irix_sproc_child(struct irix_sproc_child_args *);
+static int irix_sproc(void *, unsigned int, void *, void *, size_t,
+    pid_t, struct lwp *, register_t *);
+static struct irix_shared_regions_rec *irix_isrr_create(vaddr_t,
+    vsize_t, int);
 #ifdef DEBUG_IRIX
-static void irix_isrr_debug __P((struct proc *));
+static void irix_isrr_debug(struct proc *);
 #endif
-static void irix_isrr_cleanup __P((struct proc *));
+static void irix_isrr_cleanup(struct proc *);
 
 int
 irix_sys_prctl(l, v, retval)
@@ -151,10 +151,10 @@ irix_sys_prctl(l, v, retval)
 		}
 
 		count = 0;
-		(void)lockmgr(&isg->isg_lock, LK_SHARED, NULL);
+		rw_enter(&isg->isg_lock, RW_READER);
 		LIST_FOREACH(iedp, &isg->isg_head, ied_sglist)
 			count++;
-		(void)lockmgr(&isg->isg_lock, LK_RELEASE, NULL);
+		rw_exit(&isg->isg_lock);
 
 		*retval = count;
 		return 0;
@@ -317,14 +317,14 @@ irix_sproc(entry, inh, arg, sp, len, pid, l, retval)
 	if (ied->ied_share_group == NULL) {
 		isg = malloc(sizeof(struct irix_share_group),
 		    M_EMULDATA, M_WAITOK);
-		lockinit(&isg->isg_lock, PZERO|PCATCH, "sharegroup", 0, 0);
+		rw_init(&isg->isg_lock);
 		isg->isg_refcount = 0;
 
-		(void)lockmgr(&isg->isg_lock, LK_EXCLUSIVE, NULL);
+		rw_enter(&isg->isg_lock, RW_WRITER);
 		LIST_INIT(&isg->isg_head);
 		LIST_INSERT_HEAD(&isg->isg_head, ied, ied_sglist);
 		isg->isg_refcount++;
-		(void)lockmgr(&isg->isg_lock, LK_RELEASE, NULL);
+		rw_exit(&isg->isg_lock);
 
 		ied->ied_share_group = isg;
 	}
@@ -370,12 +370,12 @@ irix_sproc(entry, inh, arg, sp, len, pid, l, retval)
 		    / PAGE_SIZE;
 
 
-		(void)lockmgr(&isg->isg_lock, LK_EXCLUSIVE, NULL);
+		rw_enter(&isg->isg_lock, RW_WRITER);
 		LIST_FOREACH(iedp, &isg->isg_head, ied_sglist) {
 			iedp->ied_p->p_vmspace->vm_maxsaddr = (void *)sp;
 			iedp->ied_p->p_vmspace->vm_ssize = stacksize;
 		}
-		(void)lockmgr(&isg->isg_lock, LK_RELEASE, NULL);
+		rw_exit(&isg->isg_lock);
 	}
 
 	/*
@@ -521,10 +521,10 @@ irix_sproc_child(isc)
 	parent_ied = (struct irix_emuldata *)(parent->p_emuldata);
 	ied->ied_share_group = parent_ied->ied_share_group;
 
-	(void)lockmgr(&ied->ied_share_group->isg_lock, LK_EXCLUSIVE, NULL);
+	rw_enter(&ied->ied_share_group->isg_lock, RW_WRITER);
 	LIST_INSERT_HEAD(&ied->ied_share_group->isg_head, ied, ied_sglist);
 	ied->ied_share_group->isg_refcount++;
-	(void)lockmgr(&ied->ied_share_group->isg_lock, LK_RELEASE, NULL);
+	rw_exit(&ied->ied_share_group->isg_lock);
 
 	if (inh & IRIX_PR_SADDR)
 		ied->ied_shareaddr = 1;
@@ -617,7 +617,7 @@ irix_sys_procblk(l, v, retval)
 			return irix_sys_procblk(l, &cup, retval);
 		}
 
-		(void)lockmgr(&isg->isg_lock, LK_SHARED, NULL);
+		rw_enter(&isg->isg_lock, RW_READER);
 		LIST_FOREACH(iedp, &isg->isg_head, ied_sglist) {
 			/* Recall procblk for this process */
 			SCARG(&cup, pid) = iedp->ied_p->p_pid;
@@ -626,7 +626,7 @@ irix_sys_procblk(l, v, retval)
 			if (error != 0)
 				last_error = error;
 		}
-		(void)lockmgr(&isg->isg_lock, LK_RELEASE, NULL);
+		rw_exit(&isg->isg_lock);
 
 		return last_error;
 		break;
@@ -708,10 +708,10 @@ irix_vm_fault(p, vaddr, access_type)
 		return uvm_fault(map, vaddr, access_type);
 
 	/* share group version */
-	(void)lockmgr(&ied->ied_share_group->isg_lock, LK_EXCLUSIVE, NULL);
+	rw_enter(&ied->ied_share_group->isg_lock, RW_WRITER);
 	error = uvm_fault(map, vaddr, access_type);
 	irix_vm_sync(p);
-	(void)lockmgr(&ied->ied_share_group->isg_lock, LK_RELEASE, NULL);
+	rw_exit(&ied->ied_share_group->isg_lock);
 
 	return error;
 }

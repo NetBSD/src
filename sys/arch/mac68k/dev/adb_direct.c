@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.51.2.4 2007/09/03 14:27:18 yamt Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.51.2.5 2007/12/07 17:25:11 yamt Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -62,7 +62,7 @@
 #ifdef __NetBSD__
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_direct.c,v 1.51.2.4 2007/09/03 14:27:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_direct.c,v 1.51.2.5 2007/12/07 17:25:11 yamt Exp $");
 
 #include "opt_adb.h"
 
@@ -71,10 +71,11 @@ __KERNEL_RCSID(0, "$NetBSD: adb_direct.c,v 1.51.2.4 2007/09/03 14:27:18 yamt Exp
 #include <sys/queue.h>
 #include <sys/systm.h>
 #include <sys/callout.h>
+#include <sys/cpu.h>
+#include <sys/intr.h>
 
 #include <machine/viareg.h>
 #include <machine/param.h>
-#include <machine/cpu.h>
 #include <machine/adbsys.h>			/* required for adbvar.h */
 #include <machine/iopreg.h>			/* required for IOP support */
 
@@ -1727,7 +1728,7 @@ adb_pass_up(struct adbCommand *in)
 	if (adb_polling)
 		adb_soft_intr();
 	else
-		softintr_schedule(adb_softintr_cookie);
+		softint_schedule(adb_softintr_cookie);
 
 	return;
 }

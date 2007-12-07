@@ -1,4 +1,4 @@
-/*	$NetBSD: macrom.c,v 1.57.2.3 2007/09/03 14:27:26 yamt Exp $	*/
+/*	$NetBSD: macrom.c,v 1.57.2.4 2007/12/07 17:25:13 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: macrom.c,v 1.57.2.3 2007/09/03 14:27:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: macrom.c,v 1.57.2.4 2007/12/07 17:25:13 yamt Exp $");
 
 #include "opt_adb.h"
 #include "opt_ddb.h"
@@ -56,10 +56,11 @@ __KERNEL_RCSID(0, "$NetBSD: macrom.c,v 1.57.2.3 2007/09/03 14:27:26 yamt Exp $")
 #include <sys/lock.h>
 #include <sys/malloc.h>
 #include <sys/queue.h>
+#include <sys/cpu.h>
+#include <sys/intr.h>
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/cpu.h>
 #include <machine/frame.h>
 #include <machine/viareg.h>
 
@@ -187,7 +188,7 @@ mrg_DTInstall(void)
 	cprev = (void **)prev;
 	*cptr = NULL;
 	*cprev = ptr;
-	softintr_schedule(dtmgr_softintr_cookie);
+	softint_schedule(dtmgr_softintr_cookie);
 
 	__asm volatile ("clrl %%d0" : : : "d0");
 }
@@ -956,7 +957,7 @@ mrg_init(void)
 	SCCRd = (void *)__UNVOLATILE(sccA);/* ser.c ; we run before serinit */
 
 	jDTInstall = (void *)mrg_DTInstall;
-	dtmgr_softintr_cookie = softintr_establish(IPL_SOFT,
+	dtmgr_softintr_cookie = softint_establish(SOFTINT_SERIAL,
 	    (void (*)(void *))mrg_execute_deferred, NULL);
 
 	/* AV ROMs want this low memory vector to point to a jump table */

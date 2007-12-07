@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.117.2.4 2007/10/27 11:28:33 yamt Exp $	*/
+/*	$NetBSD: fd.c,v 1.117.2.5 2007/12/07 17:26:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.117.2.4 2007/10/27 11:28:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.117.2.5 2007/12/07 17:26:11 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -132,13 +132,13 @@ __KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.117.2.4 2007/10/27 11:28:33 yamt Exp $");
 #include <sys/syslog.h>
 #include <sys/queue.h>
 #include <sys/conf.h>
+#include <sys/intr.h>
 
 #include <dev/cons.h>
 
 #include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
-#include <machine/intr.h>
 
 #include <sparc/sparc/auxreg.h>
 #include <sparc/dev/fdreg.h>
@@ -652,7 +652,7 @@ fdcattach(struct fdc_softc *fdc, int pri)
 		return (-1);
 	}
 
-	fdc->sc_sicookie = softintr_establish(IPL_BIO, fdcswintr, fdc);
+	fdc->sc_sicookie = softint_establish(SOFTINT_BIO, fdcswintr, fdc);
 	if (fdc->sc_sicookie == NULL) {
 		printf("\n%s: cannot register soft interrupt handler\n",
 			fdc->sc_dev.dv_xname);
@@ -1298,14 +1298,14 @@ fdc_c_hwintr(void *arg)
 			fdc->sc_istatus = FDC_ISTATUS_ERROR;
 		else
 			fdc->sc_istatus = FDC_ISTATUS_DONE;
-		softintr_schedule(fdc->sc_sicookie);
+		softint_schedule(fdc->sc_sicookie);
 		return (1);
 	case FDC_ITASK_RESULT:
 		if (fdcresult(fdc) == -1)
 			fdc->sc_istatus = FDC_ISTATUS_ERROR;
 		else
 			fdc->sc_istatus = FDC_ISTATUS_DONE;
-		softintr_schedule(fdc->sc_sicookie);
+		softint_schedule(fdc->sc_sicookie);
 		return (1);
 	case FDC_ITASK_DMA:
 		/* Proceed with pseudo-DMA below */
@@ -1313,7 +1313,7 @@ fdc_c_hwintr(void *arg)
 	default:
 		printf("fdc: stray hard interrupt: itask=%d\n", fdc->sc_itask);
 		fdc->sc_istatus = FDC_ISTATUS_SPURIOUS;
-		softintr_schedule(fdc->sc_sicookie);
+		softint_schedule(fdc->sc_sicookie);
 		return (1);
 	}
 
@@ -1333,7 +1333,7 @@ fdc_c_hwintr(void *arg)
 			/* Execution phase finished, get result. */
 			fdcresult(fdc);
 			fdc->sc_istatus = FDC_ISTATUS_DONE;
-			softintr_schedule(fdc->sc_sicookie);
+			softint_schedule(fdc->sc_sicookie);
 			break;
 		}
 

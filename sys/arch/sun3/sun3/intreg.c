@@ -1,4 +1,4 @@
-/*	$NetBSD: intreg.c,v 1.22.8.1 2006/12/30 20:47:12 yamt Exp $	*/
+/*	$NetBSD: intreg.c,v 1.22.8.2 2007/12/07 17:26:29 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intreg.c,v 1.22.8.1 2006/12/30 20:47:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intreg.c,v 1.22.8.2 2007/12/07 17:26:29 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,6 +121,7 @@ intreg_attach(struct device *parent, struct device *self, void *args)
 }
 
 
+#if 0
 void 
 isr_soft_request(int level)
 {
@@ -144,4 +145,4 @@ isr_soft_clear(int level)
 	bit = 1 << level;
 	single_inst_bclr_b(*interrupt_reg, bit);
 }
-
+#endif

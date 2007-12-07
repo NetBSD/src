@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_com.c,v 1.15.18.4 2007/10/27 11:25:22 yamt Exp $	*/
+/*	$NetBSD: footbridge_com.c,v 1.15.18.5 2007/12/07 17:24:15 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 Mark Brinicombe
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: footbridge_com.c,v 1.15.18.4 2007/10/27 11:25:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: footbridge_com.c,v 1.15.18.5 2007/12/07 17:24:15 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ddbparam.h"
@@ -438,16 +438,9 @@ fcomstart(tp)
 	}
 	s = spltty();
 	tp->t_state &= ~TS_BUSY;
-	if (cl->c_cc) {
+	if (ttypull(tp)) {
 		tp->t_state |= TS_TIMEOUT;
 		callout_schedule(&tp->t_rstrt_ch, 1);
-	}
-	if (cl->c_cc <= tp->t_lowat) {
-		if (tp->t_state & TS_ASLEEP) {
-			tp->t_state &= ~TS_ASLEEP;
-			wakeup(cl);
-		}
-		selwakeup(&tp->t_wsel);
 	}
 	(void)splx(s);
 }

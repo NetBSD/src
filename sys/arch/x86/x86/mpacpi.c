@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.33.2.5 2007/10/27 11:29:02 yamt Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.33.2.6 2007/12/07 17:27:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.33.2.5 2007/10/27 11:29:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.33.2.6 2007/12/07 17:27:01 yamt Exp $");
 
 #include "acpi.h"
 #include "opt_acpi.h"
@@ -149,8 +149,8 @@ mpacpi_cpuprint(void *aux, const char *pnp)
 	struct cpu_attach_args *caa = aux;
 
 	if (pnp)
-		printf("cpu at %s", pnp);
-	printf(" apid %d", caa->cpu_number);
+		aprint_normal("cpu at %s", pnp);
+	aprint_normal(" apid %d", caa->cpu_number);
 	return (UNCONF);
 }
 
@@ -160,8 +160,8 @@ mpacpi_ioapicprint(void *aux, const char *pnp)
 	struct apic_attach_args *aaa = aux;
 
 	if (pnp)
-		printf("ioapic at %s", pnp);
-	printf(" apid %d", aaa->apic_id);
+		aprint_normal("ioapic at %s", pnp);
+	aprint_normal(" apid %d", aaa->apic_id);
 	return (UNCONF);
 }
 
@@ -633,7 +633,7 @@ mpacpi_pcibus_cb(ACPI_HANDLE handle, UINT32 level, void *p,
 			if (mpacpi_npciroots != 0)
 				panic("mpacpi: ASL is broken");
 
-			printf("mpacpi: could not get bus number, "
+			aprint_normal("mpacpi: could not get bus number, "
 				    "assuming bus 0\n");
 			mpr->mpr_bus = 0;
 		}

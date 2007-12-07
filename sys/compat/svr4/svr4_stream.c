@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stream.c,v 1.53.4.5 2007/10/27 11:29:50 yamt Exp $	 */
+/*	$NetBSD: svr4_stream.c,v 1.53.4.6 2007/12/07 17:29:07 yamt Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_stream.c,v 1.53.4.5 2007/10/27 11:29:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_stream.c,v 1.53.4.6 2007/12/07 17:29:07 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -125,63 +125,63 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_stream.c,v 1.53.4.5 2007/10/27 11:29:50 yamt Ex
 #endif /* SVR4_32 */
 
 /* Utils */
-static int clean_pipe __P((struct lwp *, const char *));
-static void getparm __P((struct file *, struct svr4_si_sockparms *));
+static int clean_pipe(struct lwp *, const char *);
+static void getparm(struct file *, struct svr4_si_sockparms *);
 
 /* Address Conversions */
-static void sockaddr_to_netaddr_in __P((struct svr4_strmcmd *,
-					const struct sockaddr_in *));
-static void sockaddr_to_netaddr_un __P((struct svr4_strmcmd *,
-					const struct sockaddr_un *));
-static void netaddr_to_sockaddr_in __P((struct sockaddr_in *,
-					const struct svr4_strmcmd *));
-static void netaddr_to_sockaddr_un __P((struct sockaddr_un *,
-					const struct svr4_strmcmd *));
+static void sockaddr_to_netaddr_in(struct svr4_strmcmd *,
+					const struct sockaddr_in *);
+static void sockaddr_to_netaddr_un(struct svr4_strmcmd *,
+					const struct sockaddr_un *);
+static void netaddr_to_sockaddr_in(struct sockaddr_in *,
+					const struct svr4_strmcmd *);
+static void netaddr_to_sockaddr_un(struct sockaddr_un *,
+					const struct svr4_strmcmd *);
 
 /* stream ioctls */
-static int i_nread __P((struct file *, struct lwp *, register_t *, int,
-    u_long, void *));
-static int i_fdinsert __P((struct file *, struct lwp *, register_t *, int,
-    u_long, void *));
-static int i_str __P((struct file *, struct lwp *, register_t *, int,
-    u_long, void *));
-static int i_setsig __P((struct file *, struct lwp *, register_t *, int,
-    u_long, void *));
-static int i_getsig __P((struct file *, struct lwp *, register_t *, int,
-    u_long, void *));
-static int _i_bind_rsvd __P((struct file *, struct lwp *, register_t *, int,
-    u_long, void *));
-static int _i_rele_rsvd __P((struct file *, struct lwp *, register_t *, int,
-    u_long, void *));
+static int i_nread(struct file *, struct lwp *, register_t *, int,
+    u_long, void *);
+static int i_fdinsert(struct file *, struct lwp *, register_t *, int,
+    u_long, void *);
+static int i_str(struct file *, struct lwp *, register_t *, int,
+    u_long, void *);
+static int i_setsig(struct file *, struct lwp *, register_t *, int,
+    u_long, void *);
+static int i_getsig(struct file *, struct lwp *, register_t *, int,
+    u_long, void *);
+static int _i_bind_rsvd(struct file *, struct lwp *, register_t *, int,
+    u_long, void *);
+static int _i_rele_rsvd(struct file *, struct lwp *, register_t *, int,
+    u_long, void *);
 
 /* i_str sockmod calls */
-static int sockmod       __P((struct file *, int, struct svr4_strioctl *,
-			      struct lwp *));
-static int si_listen     __P((struct file *, int, struct svr4_strioctl *,
-			      struct lwp *));
-static int si_ogetudata  __P((struct file *, int, struct svr4_strioctl *,
-			      struct lwp *));
-static int si_sockparams __P((struct file *, int, struct svr4_strioctl *,
-			      struct lwp *));
-static int si_shutdown	 __P((struct file *, int, struct svr4_strioctl *,
-			      struct lwp *));
-static int si_getudata   __P((struct file *, int, struct svr4_strioctl *,
-			      struct lwp *));
+static int sockmod(struct file *, int, struct svr4_strioctl *,
+			      struct lwp *);
+static int si_listen(struct file *, int, struct svr4_strioctl *,
+			      struct lwp *);
+static int si_ogetudata(struct file *, int, struct svr4_strioctl *,
+			      struct lwp *);
+static int si_sockparams(struct file *, int, struct svr4_strioctl *,
+			      struct lwp *);
+static int si_shutdown(struct file *, int, struct svr4_strioctl *,
+			      struct lwp *);
+static int si_getudata(struct file *, int, struct svr4_strioctl *,
+			      struct lwp *);
 
 /* i_str timod calls */
-static int timod         __P((struct file *, int, struct svr4_strioctl *,
-		              struct lwp *));
-static int ti_getinfo    __P((struct file *, int, struct svr4_strioctl *,
-			      struct lwp *));
-static int ti_bind       __P((struct file *, int, struct svr4_strioctl *,
-			      struct lwp *));
+static int timod(struct file *, int, struct svr4_strioctl *,
+		              struct lwp *);
+static int ti_getinfo(struct file *, int, struct svr4_strioctl *,
+			      struct lwp *);
+static int ti_bind(struct file *, int, struct svr4_strioctl *,
+			      struct lwp *);
 
 #ifdef DEBUG_SVR4
-static void bufprint __P((u_char *, size_t));
-static int show_ioc __P((const char *, struct svr4_strioctl *));
-static int show_strbuf __P((struct svr4_strbuf *));
-static void show_msg __P((const char *, int, struct svr4_strbuf *,
-			  struct svr4_strbuf *, int));
+static void bufprint(u_char *, size_t);
+static int show_ioc(const char *, struct svr4_strioctl *);
+static int show_strbuf(struct svr4_strbuf *);
+static void show_msg(const char *, int, struct svr4_strbuf *,
+			  struct svr4_strbuf *, int);
 
 static void
 bufprint(buf, len)
@@ -334,7 +334,7 @@ clean_pipe(l, path)
 	 */
 	if (nd.ni_vp->v_type != VFIFO)
 		goto bad;
-        error = VOP_GETATTR(nd.ni_vp, &va, l->l_cred, l);
+        error = VOP_GETATTR(nd.ni_vp, &va, l->l_cred);
 	if (error != 0)
 		goto bad;
 	if ((va.va_mode & ALLPERMS) != 0)

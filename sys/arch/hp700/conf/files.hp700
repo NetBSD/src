@@ -1,4 +1,4 @@
-#	$NetBSD: files.hp700,v 1.14.2.1 2007/09/03 14:25:34 yamt Exp $
+#	$NetBSD: files.hp700,v 1.14.2.2 2007/12/07 17:24:44 yamt Exp $
 #
 #	$OpenBSD: files.hp700,v 1.31 2001/06/26 02:41:25 mickey Exp $
 #
@@ -233,7 +233,6 @@ file	arch/hp700/hp700/conf.c
 file	arch/hp700/hp700/disksubr.c		disk
 file	arch/hp700/hp700/intr.c
 file	arch/hp700/hp700/machdep.c
-file	arch/hp700/hp700/softintr.c
 file	arch/hp700/hp700/sys_machdep.c
 file	arch/hp700/hp700/power.c		power_switch
 file	arch/hp700/dev/clock.c

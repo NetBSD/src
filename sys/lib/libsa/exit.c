@@ -1,4 +1,4 @@
-/*	$NetBSD: exit.c,v 1.15 2005/02/26 22:58:56 perry Exp $	*/
+/*	$NetBSD: exit.c,v 1.15.4.1 2007/12/07 17:33:39 yamt Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -31,9 +31,8 @@
 #include "stand.h"
 
 void
-exit(arg)
-	int arg;
+exit(int arg)
 {
-    panic("exit");
-    /*NOTREACHED*/
+	panic("exit");
+	/*NOTREACHED*/
 }

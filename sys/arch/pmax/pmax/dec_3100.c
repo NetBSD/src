@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3100.c,v 1.39.10.2 2006/12/30 20:46:43 yamt Exp $ */
+/* $NetBSD: dec_3100.c,v 1.39.10.3 2007/12/07 17:25:50 yamt Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dec_3100.c,v 1.39.10.2 2006/12/30 20:46:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3100.c,v 1.39.10.3 2007/12/07 17:25:50 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -144,16 +144,11 @@ static void	dec_3100_intr_establish __P((struct device *, void *,
 
 static const int dec_3100_ipl2spl_table[] = {
 	[IPL_NONE] = 0,
-	[IPL_SOFT] = _SPL_SOFT,
 	[IPL_SOFTCLOCK] = _SPL_SOFTCLOCK,
-	[IPL_SOFTNET] = _SPL_SOFTNET,
 	[IPL_SOFTSERIAL] = _SPL_SOFTSERIAL,
-	[IPL_BIO] = MIPS_SPL0,
-	[IPL_NET] = MIPS_SPL_0_1,
-	[IPL_TTY] = MIPS_SPL_0_1_2,
-	[IPL_VM] = MIPS_SPLHIGH,	/* ??? */
-	[IPL_CLOCK] = MIPS_SPL_0_1_2_3,
-	[IPL_STATCLOCK] = MIPS_SPL_0_1_2_3,
+	[IPL_VM] = MIPS_SPL_0_1_2,
+	[IPL_SCHED] = MIPS_SPL_0_1_2_3,
+	[IPL_HIGH] = MIPS_SPL_0_1_2_3,
 };
 
 void

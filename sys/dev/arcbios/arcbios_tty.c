@@ -1,4 +1,4 @@
-/*	$NetBSD: arcbios_tty.c,v 1.9.2.3 2007/09/03 14:33:25 yamt Exp $	*/
+/*	$NetBSD: arcbios_tty.c,v 1.9.2.4 2007/12/07 17:29:38 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arcbios_tty.c,v 1.9.2.3 2007/09/03 14:33:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcbios_tty.c,v 1.9.2.4 2007/12/07 17:29:38 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/user.h>
@@ -189,13 +189,7 @@ arcbios_tty_start(struct tty *tp)
 	s = spltty();
 	if (tp->t_state & (TS_TTSTOP | TS_BUSY))
 		goto out;
-	if (tp->t_outq.c_cc <= tp->t_lowat) {
-		if (tp->t_state & TS_ASLEEP) {
-			tp->t_state &= ~TS_ASLEEP;
-			wakeup((void *)&tp->t_outq);
-		}
-		selwakeup(&tp->t_wsel);
-	}
+	ttypull(tp);
 	tp->t_state |= TS_BUSY;
 	while (tp->t_outq.c_cc != 0) {
 		(*ARCBIOS->Write)(ARCBIOS_STDOUT, tp->t_outq.c_cf,

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.75.2.5 2007/11/15 11:43:37 yamt Exp $	*/
+/*	$NetBSD: trap.c,v 1.75.2.6 2007/12/07 17:26:36 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.75.2.5 2007/11/15 11:43:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.75.2.6 2007/12/07 17:26:36 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -594,9 +594,6 @@ trap(struct frame *fp, int type, unsigned code, unsigned v)
 
 	case T_SSIR:		/* software interrupt */
 	case T_SSIR|T_USER:
-
-		softintr_dispatch();
-
 		/*
 		 * If this was not an AST trap, we are all done.
 		 */

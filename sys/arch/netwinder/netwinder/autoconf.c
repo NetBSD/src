@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.6.12.1 2007/09/03 14:28:15 yamt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.6.12.2 2007/12/07 17:25:42 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.6.12.1 2007/09/03 14:28:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.6.12.2 2007/12/07 17:25:42 yamt Exp $");
 
 #include "opt_md.h"
 
@@ -85,7 +85,6 @@ cpu_rootconf(void)
 void
 cpu_configure(void)
 {
-	softintr_init();
 	/*
 	 * Since various PCI interrupts could be routed via the ICU
 	 * (for PCI devices in the bridge) we need to set up the ICU

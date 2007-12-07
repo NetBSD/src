@@ -1,4 +1,4 @@
-/*	$NetBSD: r128fb.c,v 1.1.6.2 2007/11/15 11:44:27 yamt Exp $	*/
+/*	$NetBSD: r128fb.c,v 1.1.6.3 2007/12/07 17:30:31 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Michael Lorenz
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: r128fb.c,v 1.1.6.2 2007/11/15 11:44:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: r128fb.c,v 1.1.6.3 2007/12/07 17:30:31 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -237,8 +237,12 @@ r128fb_attach(device_t parent, device_t self, void *aux)
 		    device_xname(sc->sc_dev));
 	}
 
+	/*
+	 * XXX yeah, casting the fb address to uint32_t is formally wrong
+	 * but as far as I know there are no mach64 with 64bit BARs
+	 */
 	aprint_normal("%s: %d MB aperture at 0x%08x\n", device_xname(self),
-	    (sc->sc_fbsize >> 20), sc->sc_fb);
+	    (int)(sc->sc_fbsize >> 20), (uint32_t)sc->sc_fb);
 
 	sc->sc_defaultscreen_descr = (struct wsscreen_descr){
 		"default",

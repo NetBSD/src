@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_dev.c,v 1.5.6.2 2006/06/21 14:58:24 yamt Exp $ */
+/* $NetBSD: xenbus_dev.c,v 1.5.6.3 2007/12/07 17:27:26 yamt Exp $ */
 /*
  * xenbus_dev.c
  * 
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_dev.c,v 1.5.6.2 2006/06/21 14:58:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_dev.c,v 1.5.6.3 2007/12/07 17:27:26 yamt Exp $");
 
 #include "opt_xen.h"
 
@@ -48,10 +48,11 @@ __KERNEL_RCSID(0, "$NetBSD: xenbus_dev.c,v 1.5.6.2 2006/06/21 14:58:24 yamt Exp 
 #include <sys/vnode.h>
 #include <miscfs/specfs/specdev.h>
 #include <miscfs/kernfs/kernfs.h>
-#include <machine/kernfs_machdep.h>
 
-#include <machine/hypervisor.h>
-#include <machine/xenbus.h>
+#include <xen/kernfs_machdep.h>
+
+#include <xen/hypervisor.h>
+#include <xen/xenbus.h>
 #include "xenbus_comms.h"
 
 static int xenbus_dev_read(void *);
@@ -261,7 +262,6 @@ xenbus_dev_open(void *v)
 		struct vnode *a_vp;
 		int a_mode;
 		struct ucred *a_cred;
-		struct lwp *a_l;
 	} */ *ap = v;
 	struct kernfs_node *kfs = VTOKERN(ap->a_vp);    
 
@@ -289,7 +289,6 @@ xenbus_dev_close(void *v)
 		struct vnode *a_vp;
 		int a_fflag;
 		struct ucred *a_cred;
-		struct lwp *a_l;
 	} */ *ap = v;
 	struct kernfs_node *kfs = VTOKERN(ap->a_vp);    
 

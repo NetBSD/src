@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_time.c,v 1.11.2.4 2007/10/27 11:29:42 yamt Exp $ */
+/*	$NetBSD: linux_time.c,v 1.11.2.5 2007/12/07 17:28:25 yamt Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_time.c,v 1.11.2.4 2007/10/27 11:29:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_time.c,v 1.11.2.5 2007/12/07 17:28:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/ucred.h>
@@ -231,11 +231,6 @@ linux_sys_clock_settime(l, v, retval)
 		return error;
 
 	linux_to_native_timespec(&ts, &lts);
-
-	error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_TIME,
-	    KAUTH_REQ_SYSTEM_TIME_SYSTEM, NULL, NULL, NULL);
-	if (error != 0)
-		return (error);
 
 	return settime(l->l_proc, &ts);
 }

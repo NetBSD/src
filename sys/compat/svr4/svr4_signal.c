@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_signal.c,v 1.51.4.4 2007/09/03 14:32:54 yamt Exp $	 */
+/*	$NetBSD: svr4_signal.c,v 1.51.4.5 2007/12/07 17:29:06 yamt Exp $	 */
 
 /*-
  * Copyright (c) 1994, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_signal.c,v 1.51.4.4 2007/09/03 14:32:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_signal.c,v 1.51.4.5 2007/12/07 17:29:06 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,11 +71,11 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_signal.c,v 1.51.4.4 2007/09/03 14:32:54 yamt Ex
 #define	svr4_sigismember(s, n)	((s)->bits[svr4_sigword(n)] & svr4_sigmask(n))
 #define	svr4_sigaddset(s, n)	((s)->bits[svr4_sigword(n)] |= svr4_sigmask(n))
 
-static inline void svr4_sigfillset __P((svr4_sigset_t *));
-void svr4_to_native_sigaction __P((const struct svr4_sigaction *,
-				struct sigaction *));
-void native_to_svr4_sigaction __P((const struct sigaction *,
-				struct svr4_sigaction *));
+static inline void svr4_sigfillset(svr4_sigset_t *);
+void svr4_to_native_sigaction(const struct svr4_sigaction *,
+				struct sigaction *);
+void native_to_svr4_sigaction(const struct sigaction *,
+				struct svr4_sigaction *);
 
 extern const int native_to_svr4_signo[];
 extern const int svr4_to_native_signo[];

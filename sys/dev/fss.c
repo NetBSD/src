@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.15.2.6 2007/11/15 11:44:01 yamt Exp $	*/
+/*	$NetBSD: fss.c,v 1.15.2.7 2007/12/07 17:29:16 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.15.2.6 2007/11/15 11:44:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.15.2.7 2007/12/07 17:29:16 yamt Exp $");
 
 #include "fss.h"
 
@@ -126,7 +126,7 @@ dev_type_strategy(fss_strategy);
 dev_type_dump(fss_dump);
 dev_type_size(fss_size);
 
-static int fss_copy_on_write(void *, struct buf *);
+static int fss_copy_on_write(void *, struct buf *, bool);
 static inline void fss_error(struct fss_softc *, const char *, ...);
 static int fss_create_files(struct fss_softc *, struct fss_set *,
     off_t *, struct lwp *);
@@ -163,7 +163,7 @@ fssattach(int num)
 		sc->sc_unit = i;
 		sc->sc_bdev = NODEV;
 		simple_lock_init(&sc->sc_slock);
-		mutex_init(&sc->sc_lock, MUTEX_DRIVER, IPL_NONE);
+		mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
 		bufq_alloc(&sc->sc_bufq, "fcfs", 0);
 	}
 }
@@ -492,7 +492,7 @@ fss_umount_hook(struct mount *mp, int forced)
  * backing store if needed.
  */
 static int
-fss_copy_on_write(void *v, struct buf *bp)
+fss_copy_on_write(void *v, struct buf *bp, bool data_valid)
 {
 	int s;
 	u_int32_t cl, ch, c;
@@ -608,8 +608,7 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
 		return EINVAL;
 	}
 
-	error = VOP_IOCTL(nd.ni_vp, DIOCGPART, &dpart, FREAD,
-	    l->l_cred, l);
+	error = VOP_IOCTL(nd.ni_vp, DIOCGPART, &dpart, FREAD, l->l_cred);
 	if (error) {
 		vrele(nd.ni_vp);
 		return error;
@@ -634,7 +633,7 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
 		return EINVAL;
 
 	if (sc->sc_bs_vp->v_type == VREG) {
-		error = VOP_GETATTR(sc->sc_bs_vp, &va, l->l_cred, l);
+		error = VOP_GETATTR(sc->sc_bs_vp, &va, l->l_cred);
 		if (error != 0)
 			return error;
 		sc->sc_bs_size = va.va_size;

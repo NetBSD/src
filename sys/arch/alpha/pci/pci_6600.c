@@ -1,4 +1,4 @@
-/* $NetBSD: pci_6600.c,v 1.12.2.1 2006/06/21 14:48:15 yamt Exp $ */
+/* $NetBSD: pci_6600.c,v 1.12.2.2 2007/12/07 17:23:53 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pci_6600.c,v 1.12.2.1 2006/06/21 14:48:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_6600.c,v 1.12.2.2 2007/12/07 17:23:53 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -244,7 +244,8 @@ dec_6600_intr_establish(acv, ih, level, func, arg)
 
 	if (cookie != NULL &&
 	    alpha_shared_intr_firstactive(dec_6600_pci_intr, ih)) {
-		scb_set(0x900 + SCB_IDXTOVEC(ih), dec_6600_iointr, NULL);
+		scb_set(0x900 + SCB_IDXTOVEC(ih), dec_6600_iointr, NULL,
+		    level);
 		dec_6600_intr_enable(ih);
 	}
 	return (cookie);

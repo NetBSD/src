@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.17.16.2 2007/02/26 09:07:27 yamt Exp $	*/
+/*	$NetBSD: proc.h,v 1.17.16.3 2007/12/07 17:25:20 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -42,7 +42,7 @@
 struct lwp;
 
 /*
- * Machine-dependent part of the proc structure for MIPS
+ * Machine-dependent part of the lwp structure for MIPS
  */
 
 struct mdlwp {

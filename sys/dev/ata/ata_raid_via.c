@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_raid_via.c,v 1.1.20.2 2007/09/03 14:33:26 yamt Exp $	*/
+/*	$NetBSD: ata_raid_via.c,v 1.1.20.3 2007/12/07 17:29:39 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000,2001,2002 Søren Schmidt <sos@FreeBSD.org>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_raid_via.c,v 1.1.20.2 2007/09/03 14:33:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_raid_via.c,v 1.1.20.3 2007/12/07 17:29:39 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -135,7 +135,7 @@ ata_raid_read_config_via(struct wd_softc *sc)
 	if (error)
 		goto out;
 
-	error = VOP_OPEN(vp, FREAD, NOCRED, 0);
+	error = VOP_OPEN(vp, FREAD, NOCRED);
 	if (error) {
 		vput(vp);
 		goto out;

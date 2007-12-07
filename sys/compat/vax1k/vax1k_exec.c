@@ -1,4 +1,4 @@
-/*	$NetBSD: vax1k_exec.c,v 1.11.4.1 2006/06/21 15:00:01 yamt Exp $	*/
+/*	$NetBSD: vax1k_exec.c,v 1.11.4.2 2007/12/07 17:29:12 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vax1k_exec.c,v 1.11.4.1 2006/06/21 15:00:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vax1k_exec.c,v 1.11.4.2 2007/12/07 17:29:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,8 +58,8 @@ __KERNEL_RCSID(0, "$NetBSD: vax1k_exec.c,v 1.11.4.1 2006/06/21 15:00:01 yamt Exp
 #define COMPAT_43	/* enable 4.3BSD binaries for lkm */
 #endif
 
-int	exec_vax1k_prep_anymagic __P((struct lwp *l, struct exec_package *epp,
-				      int, int));
+int	exec_vax1k_prep_anymagic(struct lwp *l, struct exec_package *epp,
+				      int, int);
 
 /*
  * exec_vax1k_makecmds(): Check if it's an a.out-format executable

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_time.c,v 1.9.2.3 2007/09/03 14:32:42 yamt Exp $	*/
+/*	$NetBSD: netbsd32_time.c,v 1.9.2.4 2007/12/07 17:28:49 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.9.2.3 2007/09/03 14:32:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.9.2.4 2007/12/07 17:28:49 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -302,10 +302,6 @@ netbsd32_settimeofday(l, v, retval)
 	struct proc *p = l->l_proc;
 
 	/* Verify all parameters before changing time. */
-	if ((error = kauth_authorize_system(l->l_cred,
-	    KAUTH_SYSTEM_TIME, KAUTH_REQ_SYSTEM_TIME_SYSTEM, NULL, NULL,
-	    NULL)) != 0)
-		return error;
 
 	/*
 	 * NetBSD has no kernel notion of time zone, and only an
@@ -463,11 +459,6 @@ netbsd32_clock_settime(l, v, retval)
 	clockid_t clock_id;
 	struct timespec ats;
 	int error;
-
-	if ((error = kauth_authorize_system(l->l_cred,
-	    KAUTH_SYSTEM_TIME, KAUTH_REQ_SYSTEM_TIME_SYSTEM, NULL, NULL,
-	    NULL)) != 0)
-		return (error);
 
 	clock_id = SCARG(uap, clock_id);
 	if (clock_id != CLOCK_REALTIME)

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_taskq.c,v 1.4.2.1 2007/09/03 14:38:51 yamt Exp $	*/
+/*	$NetBSD: sysmon_taskq.c,v 1.4.2.2 2007/12/07 17:31:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_taskq.c,v 1.4.2.1 2007/09/03 14:38:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_taskq.c,v 1.4.2.2 2007/12/07 17:31:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -75,7 +75,7 @@ static void sysmon_task_queue_thread(void *);
 void
 sysmon_task_queue_preinit(void)
 {
-	mutex_init(&sysmon_task_queue_mtx, MUTEX_SPIN, IPL_VM);
+	mutex_init(&sysmon_task_queue_mtx, MUTEX_DEFAULT, IPL_VM);
 	mutex_init(&sysmon_task_queue_init_mtx, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&sysmon_task_queue_cv, "smtaskq");
 }

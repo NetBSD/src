@@ -1,3 +1,5 @@
+/* $NetBSD: drm_atomic.h,v 1.1.16.3 2007/12/07 17:29:43 yamt Exp $ */
+
 /**
  * \file drm_atomic.h
  * Atomic operations used in the DRM which may or may not be provided by the OS.

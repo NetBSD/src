@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_mount.c,v 1.9.4.3 2007/09/03 14:32:08 yamt Exp $ */
+/*	$NetBSD: irix_mount.c,v 1.9.4.4 2007/12/07 17:27:47 yamt Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_mount.c,v 1.9.4.3 2007/09/03 14:32:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_mount.c,v 1.9.4.4 2007/12/07 17:27:47 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -87,7 +87,7 @@ irix_sys_getmountid(l, v, retval)
 	vp = nd.ni_vp;
 
 	/* Check for accessibility */
-	if ((error = VOP_ACCESS(vp, VREAD | VEXEC, cred, l)) != 0)
+	if ((error = VOP_ACCESS(vp, VREAD | VEXEC, cred)) != 0)
 		goto bad;
 
 	/*

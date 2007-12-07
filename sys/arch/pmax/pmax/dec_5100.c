@@ -1,4 +1,4 @@
-/* $NetBSD: dec_5100.c,v 1.35.10.2 2006/12/30 20:46:43 yamt Exp $ */
+/* $NetBSD: dec_5100.c,v 1.35.10.3 2007/12/07 17:25:51 yamt Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_5100.c,v 1.35.10.2 2006/12/30 20:46:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_5100.c,v 1.35.10.3 2007/12/07 17:25:51 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,16 +65,11 @@ static void	dec_5100_memintr __P((void));
 
 static const int dec_5100_ipl2spl_table[] = {
 	[IPL_NONE] = 0,
-	[IPL_SOFT] = _SPL_SOFT,
 	[IPL_SOFTCLOCK] = _SPL_SOFTCLOCK,
 	[IPL_SOFTNET] = _SPL_SOFTNET,
-	[IPL_SOFTSERIAL] = _SPL_SOFTSERIAL,
-	[IPL_BIO] = MIPS_SPL1,
-	[IPL_NET] = MIPS_SPL1,
-	[IPL_TTY] = MIPS_SPL_0_1,
-	[IPL_VM] = MIPS_SPL_0_1_2,
-	[IPL_CLOCK] = MIPS_SPL_0_1_2,
-	[IPL_STATCLOCK] = MIPS_SPL_0_1_2,
+	[IPL_VM] = MIPS_SPL_0_1,
+	[IPL_SCHED] = MIPS_SPL_0_1_2,
+	[IPL_HIGH] = MIPS_SPL_0_1_2,
 };
 
 void

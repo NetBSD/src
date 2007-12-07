@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.5.12.2 2007/09/03 14:29:50 yamt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.5.12.3 2007/12/07 17:26:11 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.5.12.2 2007/09/03 14:29:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.5.12.3 2007/12/07 17:26:11 yamt Exp $");
 
 #include "opt_md.h"
 
@@ -115,7 +115,8 @@ get_device(name)
 	else if (*cp != '\0' && *cp != ' ')
 		return;
 	sprintf(buf, "%s%d", devname, unit);
-	for (dv = alldevs.tqh_first; dv != NULL; dv = dv->dv_list.tqe_next) {
+	for (dv = TAILQ_FIRST(&alldevs); dv != NULL;
+	    dv = TAILQ_NEXT(dv, dv_list)) {
 		if (strcmp(buf, dv->dv_xname) == 0) {
 			booted_device = dv;
 			booted_partition = part;
@@ -187,7 +188,6 @@ cpu_configure()
 #if NISA > 0 && !defined(SHARK)
 	isa_intr_init();
 #endif
-	softintr_init();
 
 	config_rootfound("mainbus", NULL);
 #if defined(OFWGENCFG) || defined(SHARK)

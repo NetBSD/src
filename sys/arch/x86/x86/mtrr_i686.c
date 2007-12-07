@@ -1,4 +1,4 @@
-/*	$NetBSD: mtrr_i686.c,v 1.3.16.4 2007/10/27 11:29:03 yamt Exp $ */
+/*	$NetBSD: mtrr_i686.c,v 1.3.16.5 2007/12/07 17:27:01 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mtrr_i686.c,v 1.3.16.4 2007/10/27 11:29:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mtrr_i686.c,v 1.3.16.5 2007/12/07 17:27:01 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -47,11 +47,11 @@ __KERNEL_RCSID(0, "$NetBSD: mtrr_i686.c,v 1.3.16.4 2007/10/27 11:29:03 yamt Exp 
 #include <sys/lock.h>
 #include <sys/user.h>
 #include <sys/malloc.h>
+#include <sys/atomic.h>
 
 #include <uvm/uvm_extern.h>
 
 #include <machine/specialreg.h>
-#include <machine/atomic.h>
 #include <machine/cpuvar.h>
 #include <machine/cpufunc.h>
 #include <machine/mtrr.h>
@@ -180,7 +180,7 @@ i686_mtrr_reload(int synch)
 		 * 3. Wait for all processors to reach this point.
 		 */
 
-		x86_atomic_setbits_l(&mtrr_waiting, mymask);
+		atomic_or_32(&mtrr_waiting, mymask);
 
 		while (mtrr_waiting != cpus_running)
 			DELAY(10);
@@ -277,7 +277,7 @@ i686_mtrr_reload(int synch)
 		/*
 		 * 14. Wait for all processors to reach this point.
 		 */
-		x86_atomic_clearbits_l(&mtrr_waiting, mymask);
+		atomic_and_32(&mtrr_waiting, ~mymask);
 
 		while (mtrr_waiting != 0)
 			DELAY(10);

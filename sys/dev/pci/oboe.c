@@ -1,4 +1,4 @@
-/*	$NetBSD: oboe.c,v 1.19.2.4 2007/10/27 11:33:19 yamt Exp $	*/
+/*	$NetBSD: oboe.c,v 1.19.2.5 2007/12/07 17:30:27 yamt Exp $	*/
 
 /*	XXXXFVDL THIS DRIVER IS BROKEN FOR NON-i386 -- vtophys() usage	*/
 
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oboe.c,v 1.19.2.4 2007/10/27 11:33:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oboe.c,v 1.19.2.5 2007/12/07 17:30:27 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -542,7 +542,7 @@ oboe_kqfilter(void *h, struct knote *kn)
 		kn->kn_fop = &oboewrite_filtops;
 		break;
 	default:
-		return (1);
+		return (EINVAL);
 	}
 
 	kn->kn_hook = sc;

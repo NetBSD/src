@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_stat.c,v 1.11.4.3 2007/09/03 14:32:09 yamt Exp $ */
+/*	$NetBSD: irix_stat.c,v 1.11.4.4 2007/12/07 17:27:48 yamt Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_stat.c,v 1.11.4.3 2007/09/03 14:32:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_stat.c,v 1.11.4.4 2007/12/07 17:27:48 yamt Exp $");
 
 #include <sys/errno.h>
 #include <sys/types.h>
@@ -62,8 +62,8 @@ __KERNEL_RCSID(0, "$NetBSD: irix_stat.c,v 1.11.4.3 2007/09/03 14:32:09 yamt Exp 
 #include <compat/irix/irix_syscall.h>
 #include <compat/irix/irix_syscallargs.h>
 
-static void bsd_to_irix_stat __P((struct stat *, struct irix_stat *));
-static void bsd_to_irix_stat64 __P((struct stat *, struct irix_stat64 *));
+static void bsd_to_irix_stat(struct stat *, struct irix_stat *);
+static void bsd_to_irix_stat64(struct stat *, struct irix_stat64 *);
 
 static void
 bsd_to_irix_stat(bsp, isp)

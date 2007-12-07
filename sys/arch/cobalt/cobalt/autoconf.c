@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.13.2.3 2007/11/15 11:42:38 yamt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.13.2.4 2007/12/07 17:24:27 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.13.2.3 2007/11/15 11:42:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.13.2.4 2007/12/07 17:24:27 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,8 +48,6 @@ extern int	bootpart;
 void
 cpu_configure(void)
 {
-
-	softintr_init();
 
 	(void)splhigh();
 

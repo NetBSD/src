@@ -1,9 +1,9 @@
-# $NetBSD: std.xen,v 1.1.20.1 2006/06/21 14:58:06 yamt Exp $
+# $NetBSD: std.xen,v 1.1.20.2 2007/12/07 17:27:04 yamt Exp $
 # NetBSD: std.i386,v 1.24 2003/02/26 21:33:36 fvdl Exp 
 #
 # standard, required NetBSD/i386 'options'
 
-machine xen
+machine xen i386
 include		"conf/std"	# MI standard options
 
 options 	EXEC_AOUT	# exec a.out binaries

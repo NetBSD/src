@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stat.c,v 1.52.4.4 2007/09/03 14:32:55 yamt Exp $	 */
+/*	$NetBSD: svr4_stat.c,v 1.52.4.5 2007/12/07 17:29:07 yamt Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_stat.c,v 1.52.4.4 2007/09/03 14:32:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_stat.c,v 1.52.4.5 2007/12/07 17:29:07 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,10 +83,10 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_stat.c,v 1.52.4.4 2007/09/03 14:32:55 yamt Exp 
 # define SVR4_NO_OSTAT
 #endif
 
-static void bsd_to_svr4_xstat __P((struct stat *, struct svr4_xstat *));
-static void bsd_to_svr4_stat64 __P((struct stat *, struct svr4_stat64 *));
-int svr4_ustat __P((struct lwp *, void *, register_t *));
-static int svr4_to_bsd_pathconf __P((int));
+static void bsd_to_svr4_xstat(struct stat *, struct svr4_xstat *);
+static void bsd_to_svr4_stat64(struct stat *, struct svr4_stat64 *);
+int svr4_ustat(struct lwp *, void *, register_t *);
+static int svr4_to_bsd_pathconf(int);
 
 /*
  * SVR4 uses named pipes as named sockets, so we tell programs
@@ -96,7 +96,7 @@ static int svr4_to_bsd_pathconf __P((int));
 
 
 #ifndef SVR4_NO_OSTAT
-static void bsd_to_svr4_stat __P((struct stat *, struct svr4_stat *));
+static void bsd_to_svr4_stat(struct stat *, struct svr4_stat *);
 
 static void
 bsd_to_svr4_stat(st, st4)

@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_ioctl.c,v 1.34.4.4 2007/09/03 14:32:04 yamt Exp $	*/
+/*	$NetBSD: ibcs2_ioctl.c,v 1.34.4.5 2007/12/07 17:27:45 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_ioctl.c,v 1.34.4.4 2007/09/03 14:32:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_ioctl.c,v 1.34.4.5 2007/12/07 17:27:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,10 +113,10 @@ static const u_long s2btab[] = {
 	38400,
 };
 
-static void stios2btios __P((struct ibcs2_termios *, struct termios *));
-static void btios2stios __P((struct termios *, struct ibcs2_termios *));
-static void stios2stio __P((struct ibcs2_termios *, struct ibcs2_termio *));
-static void stio2stios __P((struct ibcs2_termio *, struct ibcs2_termios *));
+static void stios2btios(struct ibcs2_termios *, struct termios *);
+static void btios2stios(struct termios *, struct ibcs2_termios *);
+static void stios2stio(struct ibcs2_termios *, struct ibcs2_termio *);
+static void stio2stios(struct ibcs2_termio *, struct ibcs2_termios *);
 
 static void
 stios2btios(st, bt)

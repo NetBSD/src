@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.64.2.4 2007/09/03 14:39:13 yamt Exp $	*/
+/*	$NetBSD: uhid.c,v 1.64.2.5 2007/12/07 17:31:36 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.64.2.4 2007/09/03 14:39:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.64.2.5 2007/12/07 17:31:36 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -642,7 +642,7 @@ uhidkqfilter(dev_t dev, struct knote *kn)
 	USB_GET_SC(uhid, UHIDUNIT(dev), sc);
 
 	if (sc->sc_dying)
-		return (EIO);
+		return (ENXIO);
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
@@ -656,7 +656,7 @@ uhidkqfilter(dev_t dev, struct knote *kn)
 		break;
 
 	default:
-		return (1);
+		return (EINVAL);
 	}
 
 	kn->kn_hook = sc;

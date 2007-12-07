@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.43.2.5 2007/10/27 11:28:46 yamt Exp $	*/
+/*	$NetBSD: fd.c,v 1.43.2.6 2007/12/07 17:26:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.43.2.5 2007/10/27 11:28:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.43.2.6 2007/12/07 17:26:28 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -314,7 +314,7 @@ static void fdconf(struct fdc_softc *);
 
 #define IPL_SOFTFD	IPL_BIO
 #define	FDC_SOFTPRI	2
-#define FD_SET_SWINTR()	softintr_schedule(fdc->sc_si);
+#define FD_SET_SWINTR()	softint_schedule(fdc->sc_si);
 
 /*
  * The Floppy Control Register on the sun3x, not to be confused with the
@@ -441,8 +441,12 @@ fdcattach(struct device *parent, struct device *self, void *aux)
 	}
 	*fdc->sc_reg_fvr = vec;	/* Program controller w/ interrupt vector */
 
-	fdc->sc_si = softintr_establish(IPL_SOFTFD, fdcswintr, fdc);
+	fdc->sc_si = softint_establish(SOFTINT_BIO, fdcswintr, fdc);
+#if 0
 	printf(": (softpri %d) chip 8207%c\n", FDC_SOFTPRI, code);
+#else
+	printf(": chip 8207%c\n", code);
+#endif
 
 #ifdef FD_DEBUG
 	if (out_fdc(fdc, NE7CMD_VERSION) == 0 &&

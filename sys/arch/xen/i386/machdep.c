@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.17.2.6 2007/11/15 11:43:44 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.17.2.7 2007/12/07 17:27:06 yamt Exp $	*/
 /*	NetBSD: machdep.c,v 1.559 2004/07/22 15:12:46 mycroft Exp 	*/
 
 /*-
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.17.2.6 2007/11/15 11:43:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.17.2.7 2007/12/07 17:27:06 yamt Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -231,6 +231,8 @@ int	physmem;
 int	dumpmem_low;
 int	dumpmem_high;
 unsigned int cpu_feature;
+unsigned int cpu_feature2;
+unsigned int cpu_feature_padlock;
 int	cpu_class;
 int	i386_fpu_present;
 int	i386_fpu_exception;
@@ -1413,7 +1415,7 @@ init386(paddr_t first_avail)
 	cpu_feature = cpu_info_primary.ci_feature_flags;
 
 	/* not on Xen... */
-	cpu_feature &= ~(CPUID_PGE|CPUID_PSE|CPUID_MTRR|CPUID_FXSR);
+	cpu_feature &= ~(CPUID_PGE|CPUID_PSE|CPUID_MTRR|CPUID_FXSR|CPUID_NOX);
 
 	proc0paddr = UAREA_TO_USER(proc0uarea);
 	lwp0.l_addr = proc0paddr;
@@ -2020,10 +2022,6 @@ init386(paddr_t first_avail)
 #else
 	intr_default_setup();
 #endif
-
-	/* Initialize software interrupts. */
-	XENPRINTF(("softintr_init\n"));
-	softintr_init();
 
 	XENPRINTF(("splraise(IPL_IPI)\n"));
 	splraise(IPL_IPI);

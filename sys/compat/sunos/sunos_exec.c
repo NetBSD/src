@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_exec.c,v 1.47.2.1 2006/06/21 14:59:42 yamt Exp $	*/
+/*	$NetBSD: sunos_exec.c,v 1.47.2.2 2007/12/07 17:29:02 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993 Theo de Raadt
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_exec.c,v 1.47.2.1 2006/06/21 14:59:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_exec.c,v 1.47.2.2 2007/12/07 17:29:02 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -57,7 +57,7 @@ extern const char * const sunos_syscallnames[];
 #endif
 extern char sunos_sigcode[], sunos_esigcode[];
 #ifndef __HAVE_SYSCALL_INTERN
-void syscall __P((void));
+void syscall(void);
 #endif
 
 struct uvm_object *emul_sunos_object;

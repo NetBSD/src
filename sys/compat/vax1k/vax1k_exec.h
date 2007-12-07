@@ -1,4 +1,4 @@
-/*	$NetBSD: vax1k_exec.h,v 1.3.18.1 2006/06/21 15:00:01 yamt Exp $	*/
+/*	$NetBSD: vax1k_exec.h,v 1.3.18.2 2007/12/07 17:29:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -42,6 +42,6 @@
 #define VAX1K_LDPGSZ		1024
 #define VAX1K_USRTEXT		VAX1K_LDPGSZ
 
-int	exec_vax1k_makecmds __P((struct lwp *, struct exec_package *));
-int	vax1k_map_readvn __P((struct lwp *, struct exec_vmcmd *));
+int	exec_vax1k_makecmds(struct lwp *, struct exec_package *);
+int	vax1k_map_readvn(struct lwp *, struct exec_vmcmd *);
 #endif /* _VAX1K_EXEC_H_ */

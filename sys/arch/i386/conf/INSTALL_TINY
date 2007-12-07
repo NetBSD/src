@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_TINY,v 1.92.2.6 2007/11/15 11:42:50 yamt Exp $
+#	$NetBSD: INSTALL_TINY,v 1.92.2.7 2007/12/07 17:24:56 yamt Exp $
 #
 #	This kernel should be derived from INSTALL (which is derived
 #	from GENERIC) with some features commented out.
@@ -21,9 +21,6 @@ options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
 options 	MEMORY_DISK_ROOT_SIZE=3100	# size of memory disk, in blocks
 
 maxusers	2		# estimated number of users
-
-# CPU support.
-options 	I386_CPU
 
 # CPU-related options.
 options 	MATH_EMULATE	# floating point emulation

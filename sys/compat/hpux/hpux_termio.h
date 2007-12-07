@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_termio.h,v 1.9.16.1 2007/09/03 14:32:03 yamt Exp $	*/
+/*	$NetBSD: hpux_termio.h,v 1.9.16.2 2007/12/07 17:27:43 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -230,11 +230,11 @@ struct hpux_termios {
 struct termio;
 struct termios;
 
-int	hpux_termio __P((int, int, void *, struct lwp *));
-void	termiototermios __P((struct hpux_termio *, struct hpux_termios *,
-	    struct termios *));
-void	termiostotermio __P((struct hpux_termios *, struct hpux_termio *));
-int	bsdtohpuxbaud __P((long));
-int	hpuxtobsdbaud __P((int));
-int	getsettty __P((struct lwp *, int, int, void *));
+int	hpux_termio(int, int, void *, struct lwp *);
+void	termiototermios(struct hpux_termio *, struct hpux_termios *,
+	    struct termios *);
+void	termiostotermio(struct hpux_termios *, struct hpux_termio *);
+int	bsdtohpuxbaud(long);
+int	hpuxtobsdbaud(int);
+int	getsettty(struct lwp *, int, int, void *);
 #endif /* _KERNEL */

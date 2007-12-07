@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_socket.c,v 1.14.2.3 2007/09/03 14:32:40 yamt Exp $	*/
+/*	$NetBSD: netbsd32_socket.c,v 1.14.2.4 2007/12/07 17:28:49 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_socket.c,v 1.14.2.3 2007/09/03 14:32:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_socket.c,v 1.14.2.4 2007/12/07 17:28:49 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,8 +52,8 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_socket.c,v 1.14.2.3 2007/09/03 14:32:40 yam
 #include <compat/netbsd32/netbsd32_conv.h>
 
 /* note that the netbsd32_msghdr's iov really points to a struct iovec, not a netbsd32_iovec. */
-static int recvit32 __P((struct lwp *, int, struct netbsd32_msghdr *, struct iovec *, void *,
-			 register_t *));
+static int recvit32(struct lwp *, int, struct netbsd32_msghdr *, struct iovec *, void *,
+			 register_t *);
 
 int
 netbsd32_recvmsg(l, v, retval)

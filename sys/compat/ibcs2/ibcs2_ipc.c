@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_ipc.c,v 1.18.4.3 2007/09/03 14:32:04 yamt Exp $	*/
+/*	$NetBSD: ibcs2_ipc.c,v 1.18.4.4 2007/12/07 17:27:45 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Bartram
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_ipc.c,v 1.18.4.3 2007/09/03 14:32:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_ipc.c,v 1.18.4.4 2007/12/07 17:27:45 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -246,8 +246,8 @@ struct ibcs2_sem {
 };
 
 #ifdef notdef
-static void cvt_sem2isem __P((struct sem *, struct ibcs2_sem *));
-static void cvt_isem2sem __P((struct ibcs2_sem *, struct sem *));
+static void cvt_sem2isem(struct sem *, struct ibcs2_sem *);
+static void cvt_isem2sem(struct ibcs2_sem *, struct sem *);
 
 static void
 cvt_sem2isem(bp, ibp)

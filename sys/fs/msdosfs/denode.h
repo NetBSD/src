@@ -1,4 +1,4 @@
-/*	$NetBSD: denode.h,v 1.4.16.3 2007/09/03 14:40:24 yamt Exp $	*/
+/*	$NetBSD: denode.h,v 1.4.16.4 2007/12/07 17:31:57 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -300,7 +300,7 @@ int createde(struct denode *, struct denode *,
 		struct denode **, struct componentname *);
 int deextend(struct denode *, u_long, kauth_cred_t);
 int deget(struct msdosfsmount *, u_long, u_long, struct denode **);
-int detrunc(struct denode *, u_long, int, kauth_cred_t, struct lwp *);
+int detrunc(struct denode *, u_long, int, kauth_cred_t);
 int deupdat(struct denode *, int);
 int doscheckpath(struct denode *, struct denode *);
 int dosdirempty(struct denode *);

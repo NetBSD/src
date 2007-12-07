@@ -1,4 +1,4 @@
-/* 	$NetBSD: linux_limit.h,v 1.1.16.2 2006/06/21 14:59:12 yamt Exp $ */
+/* 	$NetBSD: linux_limit.h,v 1.1.16.3 2007/12/07 17:28:22 yamt Exp $ */
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #ifndef _LINUX_LIMIT_H_
 #define _LINUX_LIMIT_H_
 
-static int linux_to_bsd_limit __P((int));
+static int linux_to_bsd_limit(int);
 
 #ifdef LINUX_LARGEFILE64
 #define bsd_to_linux_rlimit1(l, b, f) \

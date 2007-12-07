@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.71.16.3 2007/10/27 11:24:57 yamt Exp $ */
+/* $NetBSD: cpu.c,v 1.71.16.4 2007/12/07 17:23:48 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.71.16.3 2007/10/27 11:24:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.71.16.4 2007/12/07 17:23:48 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -88,7 +88,9 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.71.16.3 2007/10/27 11:24:57 yamt Exp $");
 #include <machine/prom.h>
 #include <machine/alpha.h>
 
-struct cpu_info cpu_info_primary;
+struct cpu_info cpu_info_primary = {
+	.ci_curlwp = &lwp0
+};
 struct cpu_info *cpu_info_list = &cpu_info_primary;
 
 #if defined(MULTIPROCESSOR)
@@ -395,6 +397,7 @@ cpu_boot_secondary_processors(void)
 {
 	struct cpu_info *ci;
 	u_long i;
+	bool did_patch = false;
 
 	for (i = 0; i < ALPHA_MAXPROCS; i++) {
 		ci = cpu_info[i];
@@ -404,6 +407,12 @@ cpu_boot_secondary_processors(void)
 			continue;
 		if ((cpus_booted & (1UL << i)) == 0)
 			continue;
+
+		/* Patch MP-criticial kernel routines. */
+		if (did_patch == false) {
+			alpha_patch(true);
+			did_patch = true;
+		}
 
 		/*
 		 * Link the processor into the list, and launch it.
