@@ -1,4 +1,4 @@
-/*	$NetBSD: node.c,v 1.49 2007/12/04 19:31:22 pooka Exp $	*/
+/*	$NetBSD: node.c,v 1.50 2007/12/07 13:09:49 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: node.c,v 1.49 2007/12/04 19:31:22 pooka Exp $");
+__RCSID("$NetBSD: node.c,v 1.50 2007/12/07 13:09:49 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -93,6 +93,7 @@ psshfs_node_lookup(struct puffs_usermount *pu, void *opc,
 		else
 			pn = makenode(pu, pn_dir, pd, &pd->va);
 		psn = pn->pn_data;
+		psn->attrread = psn_dir->dentread;
 	}
 
 	psn->stat &= ~PSN_RECLAIMED;
