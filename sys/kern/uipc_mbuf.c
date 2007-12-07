@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.100.2.19 2007/11/15 14:41:03 yamt Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.100.2.20 2007/12/07 17:41:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -69,13 +69,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.100.2.19 2007/11/15 14:41:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.100.2.20 2007/12/07 17:41:58 yamt Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_ddb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/atomic.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
 #define MBTYPES
@@ -145,48 +146,13 @@ struct mowner revoked_mowner = MOWNER_INIT("revoked", "");
 #define	MEXT_UNLOCK(m)	mutex_exit(&(m)->m_ext.ext_lock)
 #define	MEXT_ISEMBEDDED(m) ((m)->m_ext_ref == (m))
 
-static inline void
-mcl_inc_reference(struct mbuf *m)
-{
-
-#if defined(__i386__) || defined(__x86_64__)
-	void atomic_inc_uint(volatile unsigned int *);
-
-	atomic_inc_uint(&m->m_ext.ext_refcnt);
-#else
-	MEXT_LOCK(m);
-	m->m_ext.ext_refcnt++;
-	MEXT_UNLOCK(m);
-#endif
-}
-
-static inline bool
-mcl_dec_and_test_reference(struct mbuf *m)
-{
-#if defined(__i386__) || defined(__x86_64__)
-	unsigned int atomic_dec_uint_nv(volatile unsigned int *);
-
-	return atomic_dec_uint_nv(&m->m_ext.ext_refcnt) == 0;
-#else
-	bool gotzero;
-
-	MEXT_LOCK(m);
-	KASSERT(m->m_ext.ext_refcnt > 0);
-	m->m_ext.ext_refcnt--;
-	gotzero = (m->m_ext.ext_refcnt == 0);
-	MEXT_UNLOCK(m);
-
-	return gotzero;
-#endif
-}
-
 #define	MCLADDREFERENCE(o, n)						\
 do {									\
 	KASSERT(((o)->m_flags & M_EXT) != 0);				\
 	KASSERT(((n)->m_flags & M_EXT) == 0);				\
 	KASSERT((o)->m_ext.ext_refcnt >= 1);				\
 	(n)->m_flags |= ((o)->m_flags & M_EXTCOPYFLAGS);		\
-	mcl_inc_reference((o));						\
+	atomic_inc_uint(&(o)->m_ext.ext_refcnt);			\
 	(n)->m_ext_ref = (o)->m_ext_ref;				\
 	_MOWNERREF((n), (n)->m_flags);					\
 	MCLREFDEBUGN((n), __FILE__, __LINE__);				\
@@ -1487,7 +1453,7 @@ m_ext_free(struct mbuf *m)
 	KASSERT((m->m_flags & M_EXT_CLUSTER) ==
 	    (m->m_ext_ref->m_flags & M_EXT_CLUSTER));
 
-	if (!mcl_dec_and_test_reference(m)) {
+	if (atomic_dec_uint_nv(&m->m_ext.ext_refcnt) > 0) {
 		if (embedded) {
 			/*
 			 * other mbuf's m_ext_ref still points to us.
@@ -1501,7 +1467,7 @@ m_ext_free(struct mbuf *m)
 		 * dropping the last reference
 		 */
 		if (!embedded) {
-			mcl_inc_reference(m); /* XXX */
+			atomic_inc_uint(&m->m_ext.ext_refcnt); /* XXX */
 			m_ext_free(m->m_ext_ref);
 			m->m_ext_ref = m;
 		} else if ((m->m_flags & M_EXT_CLUSTER) != 0) {
