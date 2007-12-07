@@ -1,4 +1,4 @@
-/*	$NetBSD: arcmsr.c,v 1.7 2007/12/07 08:50:36 xtraeme Exp $ */
+/*	$NetBSD: arcmsr.c,v 1.8 2007/12/07 11:51:21 xtraeme Exp $ */
 /*	$OpenBSD: arc.c,v 1.68 2007/10/27 03:28:27 dlg Exp $ */
 
 /*
@@ -20,7 +20,7 @@
 #include "bio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arcmsr.c,v 1.7 2007/12/07 08:50:36 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcmsr.c,v 1.8 2007/12/07 11:51:21 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -888,6 +888,9 @@ arc_bio_vol(struct arc_softc *sc, struct bioc_vol *bv)
 	} else if (status & ARC_FW_VOL_STATUS_REBUILDING) {
 		bv->bv_status = BIOC_SVREBUILD;
 		bv->bv_percent = htole32(volinfo->progress) / 10;
+	} else if (status & ARC_FW_VOL_STATUS_MIGRATING) {
+		bv->bv_status = BIOC_SVMIGRATING;
+		bv->bv_percent = htole32(volinfo->progress) / 10;
 	}
 
 	blocks = (uint64_t)htole32(volinfo->capacity2) << 32;
@@ -1288,6 +1291,10 @@ arc_refresh_sensors(struct sysmon_envsys *sme, envsys_data_t *edata)
 		break;
 	case BIOC_SVBUILDING:
 		edata->value_cur = ENVSYS_DRIVE_REBUILD;
+		edata->state = ENVSYS_SVALID;
+		break;
+	case BIOC_SVMIGRATING:
+		edata->value_cur = ENVSYS_DRIVE_MIGRATING;
 		edata->state = ENVSYS_SVALID;
 		break;
 	case BIOC_SVSCRUB:
