@@ -1,4 +1,4 @@
-/*	$NetBSD: node.c,v 1.51 2007/12/07 14:54:08 pooka Exp $	*/
+/*	$NetBSD: node.c,v 1.52 2007/12/07 14:59:22 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: node.c,v 1.51 2007/12/07 14:54:08 pooka Exp $");
+__RCSID("$NetBSD: node.c,v 1.52 2007/12/07 14:59:22 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -42,7 +42,6 @@ int
 psshfs_node_lookup(struct puffs_usermount *pu, void *opc,
 	struct puffs_newinfo *pni, const struct puffs_cn *pcn)
 {
-	struct puffs_cc *pcc = puffs_cc_getcc(pu);
 	struct psshfs_ctx *pctx = puffs_getspecific(pu);
 	struct puffs_node *pn_dir = opc;
 	struct psshfs_node *psn, *psn_dir = pn_dir->pn_data;
@@ -60,7 +59,7 @@ psshfs_node_lookup(struct puffs_usermount *pu, void *opc,
 		return 0;
 	}
 
-	rv = sftp_readdir(pcc, pctx, pn_dir);
+	rv = sftp_readdir(pu, pctx, pn_dir);
 	if (rv) {
 		if (rv != EPERM)
 			return rv;
@@ -338,7 +337,7 @@ psshfs_node_readdir(struct puffs_usermount *pu, void *opc, struct dirent *dent,
 	}
 
 	*ncookies = 0;
-	rv = sftp_readdir(pcc, pctx, pn);
+	rv = sftp_readdir(pu, pctx, pn);
 	if (rv)
 		goto out;
 
