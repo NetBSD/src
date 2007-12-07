@@ -1,9 +1,8 @@
-# $NetBSD: files.bsd44,v 1.1.10.2 2006/12/30 20:50:55 yamt Exp $
+# $NetBSD: files.bsd44,v 1.1.10.3 2007/12/07 17:34:49 yamt Exp $
 
 defflag secmodel_bsd44_logic
-defflag secmodel_bsd44 : secmodel_bsd44_logic
+defflag secmodel_bsd44 : secmodel_bsd44_logic, secmodel_securelevel
 
 file	secmodel/bsd44/secmodel_bsd44.c			secmodel_bsd44
 file	secmodel/bsd44/secmodel_bsd44_logic.c		secmodel_bsd44_logic
 file	secmodel/bsd44/secmodel_bsd44_suser.c		secmodel_bsd44_logic
-file	secmodel/bsd44/secmodel_bsd44_securelevel.c	secmodel_bsd44_logic

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_extern.h,v 1.25.6.3 2007/09/03 14:46:45 yamt Exp $	*/
+/*	$NetBSD: ext2fs_extern.h,v 1.25.6.4 2007/12/07 17:35:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -138,9 +138,9 @@ void ext2fs_itimes(struct inode *, const struct timespec *,
 
 /* ext2fs_vfsops.c */
 VFS_PROTOS(ext2fs);
-int ext2fs_reload(struct mount *, kauth_cred_t, struct lwp *);
-int ext2fs_mountfs(struct vnode *, struct mount *, struct lwp *);
-int ext2fs_flushfiles(struct mount *, int, struct lwp *);
+int ext2fs_reload(struct mount *, kauth_cred_t);
+int ext2fs_mountfs(struct vnode *, struct mount *);
+int ext2fs_flushfiles(struct mount *, int);
 int ext2fs_sbupdate(struct ufsmount *, int);
 int ext2fs_cgupdate(struct ufsmount *, int);
 

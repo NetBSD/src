@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vfsops.c,v 1.19.12.2 2006/12/30 20:50:17 yamt Exp $	*/
+/*	$NetBSD: layer_vfsops.c,v 1.19.12.3 2007/12/07 17:34:05 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_vfsops.c,v 1.19.12.2 2006/12/30 20:50:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_vfsops.c,v 1.19.12.3 2007/12/07 17:34:05 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -95,12 +95,11 @@ __KERNEL_RCSID(0, "$NetBSD: layer_vfsops.c,v 1.19.12.2 2006/12/30 20:50:17 yamt 
  * when that filesystem was mounted.
  */
 int
-layerfs_start(struct mount *mp, int flags,
-    struct lwp *l)
+layerfs_start(struct mount *mp, int flags)
 {
 
 #ifdef notyet
-	return VFS_START(MOUNTTOLAYERMOUNT(mp)->layerm_vfs, flags, l);
+	return VFS_START(MOUNTTOLAYERMOUNT(mp)->layerm_vfs, flags);
 #else
 	return 0;
 #endif
@@ -135,23 +134,20 @@ layerfs_root(mp, vpp)
 }
 
 int
-layerfs_quotactl(mp, cmd, uid, arg, l)
+layerfs_quotactl(mp, cmd, uid, arg)
 	struct mount *mp;
 	int cmd;
 	uid_t uid;
 	void *arg;
-	struct lwp *l;
 {
 
-	return VFS_QUOTACTL(MOUNTTOLAYERMOUNT(mp)->layerm_vfs,
-				cmd, uid, arg, l);
+	return VFS_QUOTACTL(MOUNTTOLAYERMOUNT(mp)->layerm_vfs, cmd, uid, arg);
 }
 
 int
-layerfs_statvfs(mp, sbp, l)
+layerfs_statvfs(mp, sbp)
 	struct mount *mp;
 	struct statvfs *sbp;
-	struct lwp *l;
 {
 	int error;
 	struct statvfs *sbuf = malloc(sizeof(*sbuf), M_TEMP, M_WAITOK);
@@ -165,7 +161,7 @@ layerfs_statvfs(mp, sbp, l)
 
 	(void)memset(sbuf, 0, sizeof(*sbuf));
 
-	error = VFS_STATVFS(MOUNTTOLAYERMOUNT(mp)->layerm_vfs, sbuf, l);
+	error = VFS_STATVFS(MOUNTTOLAYERMOUNT(mp)->layerm_vfs, sbuf);
  	if (error)
 		goto done;
 
@@ -191,7 +187,7 @@ done:
 
 int
 layerfs_sync(struct mount *mp, int waitfor,
-    kauth_cred_t cred, struct lwp *l)
+    kauth_cred_t cred)
 {
 
 	/*

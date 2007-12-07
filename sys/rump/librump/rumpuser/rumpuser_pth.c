@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_pth.c,v 1.4.4.2 2007/11/15 11:45:29 yamt Exp $	*/
+/*	$NetBSD: rumpuser_pth.c,v 1.4.4.3 2007/12/07 17:34:48 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -32,6 +32,7 @@
 #include <sys/lwp.h>
 
 #include <assert.h>
+#include <errno.h>
 #include <pthread.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -245,11 +246,37 @@ rumpuser_cv_wait(struct rumpuser_cv *cv, struct rumpuser_mtx *mtx)
 	NOFAIL(pthread_cond_wait(&cv->pthcv, &mtx->pthmtx) == 0);
 }
 
+int
+rumpuser_cv_timedwait(struct rumpuser_cv *cv, struct rumpuser_mtx *mtx,
+	int stdticks)
+{
+	struct timespec ts;
+	int rv;
+
+	ts.tv_sec = stdticks / 100;
+	ts.tv_nsec = (stdticks % 100) * 100000000;
+
+	rv = pthread_cond_timedwait(&cv->pthcv, &mtx->pthmtx, &ts);
+	if (rv != 0 && rv != ETIMEDOUT)
+		abort();
+
+	if (rv == ETIMEDOUT)
+		rv = EWOULDBLOCK;
+	return rv;
+}
+
 void
 rumpuser_cv_signal(struct rumpuser_cv *cv)
 {
 
 	NOFAIL(pthread_cond_signal(&cv->pthcv) == 0);
+}
+
+void
+rumpuser_cv_broadcast(struct rumpuser_cv *cv)
+{
+
+	NOFAIL(pthread_cond_broadcast(&cv->pthcv) == 0);
 }
 
 /*

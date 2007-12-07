@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.138.2.4 2007/09/03 14:43:13 yamt Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.138.2.5 2007/12/07 17:34:33 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.138.2.4 2007/09/03 14:43:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.138.2.5 2007/12/07 17:34:33 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1029,7 +1029,7 @@ udp_ctloutput(int op, struct socket *so, int level, int optname,
 
 		switch (optname) {
 		case UDP_ENCAP:
-			if (m == NULL || m->m_len < sizeof (int)) {
+			if (m == NULL || m->m_len != sizeof(int)) {
 				error = EINVAL;
 				break;
 			}

@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.109.2.3 2007/09/03 14:46:11 yamt Exp $	*/
+/*	$NetBSD: exec.h,v 1.109.2.4 2007/12/07 17:34:53 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -202,6 +202,7 @@ struct exec_package {
 	struct vnode *ep_emul_root;     /* base of emulation filesystem */
 	struct vnode *ep_interp;        /* vnode of (elf) interpeter */
 	uint32_t ep_pax_flags;		/* pax flags */
+	char	*ep_path;		/* absolute path of executable */
 };
 #define	EXEC_INDIR	0x0001		/* script handling already done */
 #define	EXEC_HASFD	0x0002		/* holding a shell script */

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.103.2.5 2007/11/15 11:45:38 yamt Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.103.2.6 2007/12/07 17:35:26 yamt Exp $	*/
 
 /*
  *
@@ -204,15 +204,6 @@ typedef voff_t pgoff_t;		/* XXX: number of pages within a uvm object */
 #define	UBC_PARTIALOK	0x100
 
 /*
- * helpers for calling ubc_release()
- */
-#ifdef PMAP_CACHE_VIVT
-#define UBC_WANT_UNMAP(vp) (((vp)->v_flag & VTEXT) != 0)
-#else
-#define UBC_WANT_UNMAP(vp) false
-#endif
-
-/*
  * flags for uvn_findpages().
  */
 #define UFP_ALL		0x00
@@ -294,9 +285,9 @@ struct uvmexp {
 	int zeropages;		/* number of zero'd pages */
 	int reserve_pagedaemon; /* number of pages reserved for pagedaemon */
 	int reserve_kernel;	/* number of pages reserved for kernel */
-	int anonpages;		/* number of pages used by anon mappings */
-	int filepages;		/* number of pages used by cached file data */
-	int execpages;		/* number of pages used by cached exec data */
+	unsigned anonpages;	/* number of pages used by anon mappings */
+	unsigned filepages;	/* number of pages used by cached file data */
+	unsigned execpages;	/* number of pages used by cached exec data */
 
 	/* pageout params */
 	int freemin;    /* min number of free pages */
@@ -476,6 +467,15 @@ extern struct uvmexp uvmexp;
 #include <uvm/uvm_pmap.h>
 #include <uvm/uvm_map.h>
 #include <uvm/uvm_pager.h>
+
+/*
+ * helpers for calling ubc_release()
+ */
+#ifdef PMAP_CACHE_VIVT
+#define UBC_WANT_UNMAP(vp) (((vp)->v_iflag & VI_TEXT) != 0)
+#else
+#define UBC_WANT_UNMAP(vp) false
+#endif
 
 /*
  * Shareable process virtual address space.
@@ -713,7 +713,6 @@ void			uvm_deallocate(struct vm_map *, vaddr_t, vsize_t);
 /* uvm_vnode.c */
 void			uvm_vnp_setsize(struct vnode *, voff_t);
 void			uvm_vnp_setwritesize(struct vnode *, voff_t);
-void			uvm_vnp_sync(struct mount *);
 int			uvn_findpages(struct uvm_object *, voff_t,
 			    int *, struct vm_page **, int);
 void			uvm_vnp_zerorange(struct vnode *, off_t, size_t);

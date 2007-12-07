@@ -1,4 +1,4 @@
-/*	$NetBSD: cdio.h,v 1.21.4.3 2007/09/03 14:46:03 yamt Exp $	*/
+/*	$NetBSD: cdio.h,v 1.21.4.4 2007/12/07 17:34:53 yamt Exp $	*/
 
 #ifndef _SYS_CDIO_H_
 #define _SYS_CDIO_H_
@@ -284,7 +284,6 @@ struct mmc_discinfo {
 
 	uint32_t	last_possible_lba;	/* last leadout start adr. */
 	uint32_t	sector_size;
-	uint32_t	blockingnr;		/* ECC/write blocking size */
 
 	uint16_t	num_sessions;
 	uint16_t	num_tracks;		/* derived */

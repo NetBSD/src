@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.57.2.5 2007/11/15 11:45:14 yamt Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.57.2.6 2007/12/07 17:34:37 yamt Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.57.2.5 2007/11/15 11:45:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.57.2.6 2007/12/07 17:34:37 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -351,10 +351,10 @@ nd6_ns_output(struct ifnet *ifp, const struct in6_addr *daddr6,
 	const void *mac;
 	struct route ro;
 
-	memset(&ro, 0, sizeof(ro));
-
 	if (IN6_IS_ADDR_MULTICAST(taddr6))
 		return;
+
+	memset(&ro, 0, sizeof(ro));
 
 	/* estimate the size of message */
 	maxlen = sizeof(*ip6) + sizeof(*nd_ns);

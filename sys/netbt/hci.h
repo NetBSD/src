@@ -1,4 +1,4 @@
-/*	$NetBSD: hci.h,v 1.1.2.7 2007/11/15 11:45:03 yamt Exp $	*/
+/*	$NetBSD: hci.h,v 1.1.2.8 2007/12/07 17:34:24 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -54,7 +54,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: hci.h,v 1.1.2.7 2007/11/15 11:45:03 yamt Exp $
+ * $Id: hci.h,v 1.1.2.8 2007/12/07 17:34:24 yamt Exp $
  * $FreeBSD: src/sys/netgraph/bluetooth/include/ng_hci.h,v 1.6 2005/01/07 01:45:43 imp Exp $
  */
 
@@ -2013,6 +2013,7 @@ struct btreq {
 #define BTF_INIT_BUFFER_SIZE	(1<<6)	/* waiting for buffer size */
 #define BTF_INIT_FEATURES	(1<<7)	/* waiting for features */
 #define BTF_INIT		(BTF_INIT_BDADDR | BTF_INIT_BUFFER_SIZE | BTF_INIT_FEATURES)
+#define BTF_POWER_UP_NOOP	(1<<8)	/* should wait for No-op on power up */
 
 /**************************************************************************
  **************************************************************************
@@ -2101,11 +2102,25 @@ struct hci_memo {
 };
 
 /*
+ * The Bluetooth HCI interface attachment structure
+ */
+struct hci_if {
+	int	(*enable)(device_t);
+	void	(*disable)(device_t);
+	void	(*output_cmd)(device_t, struct mbuf *);
+	void	(*output_acl)(device_t, struct mbuf *);
+	void	(*output_sco)(device_t, struct mbuf *);
+	void	(*get_stats)(device_t, struct bt_stats *, int);
+	int	ipl;		/* for locking */
+};
+
+/*
  * The Bluetooth HCI device unit structure
  */
 struct hci_unit {
 	device_t	 hci_dev;		/* bthci handle */
 	device_t	 hci_bthub;		/* bthub(4) handle */
+	const struct hci_if *hci_if;		/* bthci driver interface */
 
 	/* device info */
 	bdaddr_t	 hci_bdaddr;		/* device address */
@@ -2128,20 +2143,9 @@ struct hci_unit {
 	TAILQ_HEAD(,hci_link)	hci_links;	/* list of ACL/SCO links */
 	LIST_HEAD(,hci_memo)	hci_memos;	/* cached memo list */
 
-	/*
-	 * h/w driver callbacks
-	 *
-	 * the device driver must supply these.
-	 */
-	int	(*hci_enable)(device_t);	/* enable device */
-	void	(*hci_disable)(device_t);	/* disable device */
-	void	(*hci_start_cmd)(device_t);	/* initiate cmd output routine */
-	void	(*hci_start_acl)(device_t);	/* initiate acl output routine */
-	void	(*hci_start_sco)(device_t);	/* initiate sco output routine */
-	ipl_cookie_t	hci_ipl;		/* to block queue operations */
-
 	/* input queues */
 	void			*hci_rxint;	/* receive interrupt cookie */
+	kmutex_t		 hci_devlock;	/* device queue lock */
 	MBUFQ_HEAD()		 hci_eventq;	/* Event queue */
 	MBUFQ_HEAD()		 hci_aclrxq;	/* ACL rx queue */
 	MBUFQ_HEAD()		 hci_scorxq;	/* SCO rx queue */
@@ -2151,12 +2155,7 @@ struct hci_unit {
 
 	/* output queues */
 	MBUFQ_HEAD()		 hci_cmdwait;	/* pending commands */
-	MBUFQ_HEAD()		 hci_cmdq;	/* Command queue */
-	MBUFQ_HEAD()		 hci_acltxq;	/* ACL tx queue */
-	MBUFQ_HEAD()		 hci_scotxq;	/* SCO tx queue */
 	MBUFQ_HEAD()		 hci_scodone;	/* SCO done queue */
-
-	struct bt_stats		 hci_stats;	/* unit statistics */
 
 	SIMPLEQ_ENTRY(hci_unit) hci_next;
 };
@@ -2206,16 +2205,16 @@ int hci_ctloutput(int, struct socket *, int, int, struct mbuf **);
 void hci_mtap(struct mbuf *, struct hci_unit *);
 
 /* hci_unit.c */
-void hci_attach(struct hci_unit *);
+struct hci_unit *hci_attach(const struct hci_if *, device_t, uint16_t);
 void hci_detach(struct hci_unit *);
 int hci_enable(struct hci_unit *);
 void hci_disable(struct hci_unit *);
 struct hci_unit *hci_unit_lookup(bdaddr_t *);
 int hci_send_cmd(struct hci_unit *, uint16_t, void *, uint8_t);
-void hci_input_event(struct hci_unit *, struct mbuf *);
-void hci_input_acl(struct hci_unit *, struct mbuf *);
-void hci_input_sco(struct hci_unit *, struct mbuf *);
-void hci_complete_sco(struct hci_unit *, struct mbuf *);
+bool hci_input_event(struct hci_unit *, struct mbuf *);
+bool hci_input_acl(struct hci_unit *, struct mbuf *);
+bool hci_input_sco(struct hci_unit *, struct mbuf *);
+bool hci_complete_sco(struct hci_unit *, struct mbuf *);
 void hci_output_cmd(struct hci_unit *, struct mbuf *);
 void hci_output_acl(struct hci_unit *, struct mbuf *);
 void hci_output_sco(struct hci_unit *, struct mbuf *);
