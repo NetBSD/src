@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_kq.c,v 1.8.4.3 2007/09/03 14:44:17 yamt Exp $	*/
+/*	$NetBSD: nfs_kq.c,v 1.8.4.4 2007/12/07 17:34:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_kq.c,v 1.8.4.3 2007/09/03 14:44:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_kq.c,v 1.8.4.4 2007/12/07 17:34:42 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,7 +127,7 @@ nfs_kqpoll(void *arg)
 			/* save v_size, nfs_getattr() updates it */
 			osize = ke->vp->v_size;
 
-			(void) VOP_GETATTR(ke->vp, &attr, l->l_cred, l);
+			(void) VOP_GETATTR(ke->vp, &attr, l->l_cred);
 
 			/* following is a bit fragile, but about best
 			 * we can get */
@@ -252,7 +252,7 @@ nfs_kqfilter(void *v)
 	struct kevq *ke;
 	int error = 0;
 	struct vattr attr;
-	struct lwp *l = curlwp;		/* XXX */
+	struct lwp *l = curlwp;
 
 	vp = ap->a_vp;
 	kn = ap->a_kn;
@@ -264,7 +264,7 @@ nfs_kqfilter(void *v)
 		kn->kn_fop = &nfsvnode_filtops;
 		break;
 	default:
-		return (1);
+		return (EINVAL);
 	}
 
 	kn->kn_hook = vp;
@@ -279,7 +279,7 @@ nfs_kqfilter(void *v)
 	 * held. This is likely cheap due to attrcache, so do it now.
 	 */
 	memset(&attr, 0, sizeof(attr));
-	(void) VOP_GETATTR(vp, &attr, l->l_cred, l);
+	(void) VOP_GETATTR(vp, &attr, l->l_cred);
 
 	mutex_enter(&nfskevq_lock);
 

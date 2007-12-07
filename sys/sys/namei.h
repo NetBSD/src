@@ -1,10 +1,10 @@
-/*	$NetBSD: namei.h,v 1.39.2.4 2007/11/15 11:45:32 yamt Exp $	*/
+/*	$NetBSD: namei.h,v 1.39.2.5 2007/12/07 17:34:56 yamt Exp $	*/
 
 /*
  * WARNING: GENERATED FILE.  DO NOT EDIT
  * (edit namei.src and run make namei)
  *   by:   NetBSD: gennameih.awk,v 1.1 2007/08/15 14:08:11 pooka Exp 
- *   from: NetBSD: namei.src,v 1.3 2007/08/22 17:49:40 pooka Exp 
+ *   from: NetBSD: namei.src,v 1.5 2007/11/27 15:52:26 pooka Exp 
  */
 
 /*
@@ -145,6 +145,7 @@ struct nameidata {
  * Initialization of an nameidata structure.
  */
 #define NDINIT(ndp, op, flags, segflg, namep, l) { \
+	KASSERT((l) == curlwp); \
 	(ndp)->ni_cnd.cn_nameiop = op; \
 	(ndp)->ni_cnd.cn_flags = flags; \
 	(ndp)->ni_segflg = segflg; \

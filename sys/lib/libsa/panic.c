@@ -1,4 +1,4 @@
-/*	$NetBSD: panic.c,v 1.4 2005/02/26 22:58:56 perry Exp $	*/
+/*	$NetBSD: panic.c,v 1.4.4.1 2007/12/07 17:33:49 yamt Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -43,24 +43,24 @@ panic(fmt /*, va_alist */)
 	char *fmt;
 #endif
 {
-    va_list ap;
+	va_list ap;
 #ifndef LIBSA_NO_FS_CLOSE
-    static int paniced;
+	static int paniced;
 
-    if (!paniced) {
-        paniced = 1;
-        closeall();
-    }
+	if (!paniced) {
+		paniced = 1;
+		closeall();
+	}
 #endif
 
 #ifdef __STDC__
-    va_start(ap, fmt);
+	va_start(ap, fmt);
 #else
-    va_start(ap);
+	va_start(ap);
 #endif
-    vprintf(fmt, ap);
-    printf("\n");
-    va_end(ap);
-    _rtt();
-    /*NOTREACHED*/
+	vprintf(fmt, ap);
+	printf("\n");
+	va_end(ap);
+	_rtt();
+	/*NOTREACHED*/
 }

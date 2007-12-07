@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.94.2.3 2007/09/03 14:42:58 yamt Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.94.2.4 2007/12/07 17:34:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.94.2.3 2007/09/03 14:42:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.94.2.4 2007/12/07 17:34:30 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -611,7 +611,7 @@ ip_mrouter_init(struct socket *so, struct mbuf *m)
 	    so->so_proto->pr_protocol != IPPROTO_IGMP)
 		return (EOPNOTSUPP);
 
-	if (m == NULL || m->m_len < sizeof(int))
+	if (m == NULL || m->m_len != sizeof(int))
 		return (EINVAL);
 
 	v = mtod(m, int *);
@@ -751,7 +751,7 @@ set_assert(struct mbuf *m)
 {
 	int *i;
 
-	if (m == NULL || m->m_len < sizeof(int))
+	if (m == NULL || m->m_len != sizeof(int))
 		return (EINVAL);
 
 	i = mtod(m, int *);

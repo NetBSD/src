@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_proto.c,v 1.1.2.4 2007/09/03 14:42:32 yamt Exp $	*/
+/*	$NetBSD: bt_proto.c,v 1.1.2.5 2007/12/07 17:34:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bt_proto.c,v 1.1.2.4 2007/09/03 14:42:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bt_proto.c,v 1.1.2.5 2007/12/07 17:34:23 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/domain.h>
@@ -88,18 +88,6 @@ const struct protosw btsw[] = {
 struct domain btdomain = {
 	.dom_family = AF_BLUETOOTH,
 	.dom_name = "bluetooth",
-	.dom_init = NULL,
-	.dom_externalize = NULL,
-	.dom_dispose = NULL,
 	.dom_protosw = btsw,
-	.dom_protoswNPROTOSW = &btsw[sizeof(btsw)/sizeof(btsw[0])],
-	.dom_rtattach = NULL,
-	.dom_rtoffset = 32,
-	.dom_maxrtkey = sizeof(struct sockaddr_bt),
-	.dom_ifattach = NULL,
-	.dom_ifdetach = NULL,
-	.dom_ifqueues = { NULL, NULL },
-	.dom_link = { NULL },
-	.dom_mowner = MOWNER_INIT("",""),
-	.dom_rtcache = LIST_HEAD_INITIALIZER(btdomain.dom_rtcache)
+	.dom_protoswNPROTOSW = &btsw[__arraycount(btsw)],
 };

@@ -1,4 +1,4 @@
-/* 	$NetBSD: lwp.h,v 1.28.2.6 2007/11/15 11:45:31 yamt Exp $	*/
+/* 	$NetBSD: lwp.h,v 1.28.2.7 2007/12/07 17:34:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -77,6 +77,7 @@ struct lwp {
 	void		*l_sched_info;	/* s: Scheduler-specific structure */
 	struct cpu_info *volatile l_cpu;/* s: CPU we're on if LSONPROC */
 	kmutex_t * volatile l_mutex;	/* l: ptr to mutex on sched state */
+	int		l_ctxswtch;	/* l: performing a context switch */
 	struct user	*l_addr;	/* l: KVA of u-area (PROC ONLY) */
 	struct mdlwp	l_md;		/* l: machine-dependent fields. */
 	int		l_flag;		/* l: misc flag values */
@@ -88,6 +89,7 @@ struct lwp {
 	int		l_biglocks;	/* l: biglock count before sleep */
 	int		l_class;	/* l: scheduling class */
 	int		l_kpriority;	/* !: has kernel priority boost */
+	pri_t		l_kpribase;	/* !: kernel priority base level */
 	pri_t		l_priority;	/* l: scheduler priority */
 	pri_t		l_inheritedprio;/* l: inherited priority */
 	SLIST_HEAD(, turnstile) l_pi_lenders; /* l: ts lending us priority */
@@ -353,7 +355,7 @@ lwp_eprio(lwp_t *l)
 
 	pri = l->l_priority;
 	if (l->l_kpriority && pri < PRI_KERNEL)
-		pri = (pri >> 1) + PRI_KERNEL;
+		pri = (pri >> 1) + l->l_kpribase;
 	return MAX(l->l_inheritedprio, pri);
 }
 

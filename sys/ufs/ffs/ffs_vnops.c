@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.69.4.5 2007/10/27 11:36:44 yamt Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.69.4.6 2007/12/07 17:35:20 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.69.4.5 2007/10/27 11:36:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.69.4.6 2007/12/07 17:35:20 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -327,7 +327,7 @@ ffs_fsync(void *v)
 	if (error == 0 && ap->a_flags & FSYNC_CACHE) {
 		int l = 0;
 		VOP_IOCTL(VTOI(vp)->i_devvp, DIOCCACHESYNC, &l, FWRITE,
-			ap->a_l->l_cred, ap->a_l);
+			curlwp->l_cred);
 	}
 
 out:
@@ -470,7 +470,7 @@ loop:
 	if (error == 0 && ap->a_flags & FSYNC_CACHE) {
 		int i = 0;
 		VOP_IOCTL(VTOI(vp)->i_devvp, DIOCCACHESYNC, &i, FWRITE,
-			ap->a_l->l_cred, ap->a_l);
+			curlwp->l_cred);
 	}
 
 	return error;
@@ -493,7 +493,7 @@ ffs_reclaim(void *v)
 	int error;
 
 	fstrans_start(mp, FSTRANS_LAZY);
-	if ((error = ufs_reclaim(vp, ap->a_l)) != 0) {
+	if ((error = ufs_reclaim(vp)) != 0) {
 		fstrans_done(mp);
 		return (error);
 	}

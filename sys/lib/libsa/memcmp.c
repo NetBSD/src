@@ -1,4 +1,4 @@
-/*	$NetBSD: memcmp.c,v 1.9 2003/09/01 12:28:03 dsl Exp $	*/
+/*	$NetBSD: memcmp.c,v 1.9.16.1 2007/12/07 17:33:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -54,9 +54,7 @@ __strong_alias(bcmp, memcmp);
  * Conformant memcmp()
  */
 int
-memcmp(b1, b2, len)
-	const void *b1, *b2;
-	size_t len;
+memcmp(const void *b1, const void *b2, size_t len)
 {
 	const unsigned char *c1 = b1, *c2 = b2;
 	int diff;

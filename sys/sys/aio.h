@@ -1,7 +1,8 @@
-/*	$NetBSD: aio.h,v 1.5.14.2 2007/09/03 14:45:56 yamt Exp $	*/
+/*	$NetBSD: aio.h,v 1.5.14.3 2007/12/07 17:34:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007, Mindaugas Rasiukevicius <rmind at NetBSD org>
+ * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions

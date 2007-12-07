@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.152.2.5 2007/10/27 11:36:49 yamt Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.152.2.6 2007/12/07 17:35:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.152.2.5 2007/10/27 11:36:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.152.2.6 2007/12/07 17:35:22 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -277,7 +277,6 @@ lfs_fsync(void *v)
 		int a_flags;
 		off_t offlo;
 		off_t offhi;
-		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	int error, wait;
@@ -339,7 +338,7 @@ lfs_fsync(void *v)
 	if (error == 0 && ap->a_flags & FSYNC_CACHE) {
 		int l = 0;
 		error = VOP_IOCTL(ip->i_devvp, DIOCCACHESYNC, &l, FWRITE,
-				  ap->a_l->l_cred, ap->a_l);
+				  curlwp->l_cred);
 	}
 	if (wait && !VPISEMPTY(vp))
 		LFS_SET_UINO(ip, IN_MODIFIED);
@@ -355,7 +354,6 @@ lfs_inactive(void *v)
 {
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
-		struct lwp *a_l;
 	} */ *ap = v;
 
 	KASSERT(VTOI(ap->a_vp)->i_nlink == VTOI(ap->a_vp)->i_ffs_effnlink);
@@ -657,8 +655,7 @@ lfs_mknod(void *v)
 	 * return.  But, that leaves this vnode in limbo, also not good.
 	 * Can this ever happen (barring hardware failure)?
 	 */
-	if ((error = VOP_FSYNC(*vpp, NOCRED, FSYNC_WAIT, 0, 0,
-			       curlwp)) != 0) {
+	if ((error = VOP_FSYNC(*vpp, NOCRED, FSYNC_WAIT, 0, 0)) != 0) {
 		panic("lfs_mknod: couldn't fsync (ino %llu)",
 		      (unsigned long long)ino);
 		/* return (error); */
@@ -912,7 +909,6 @@ lfs_getattr(void *v)
 		struct vnode *a_vp;
 		struct vattr *a_vap;
 		kauth_cred_t a_cred;
-		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct inode *ip = VTOI(vp);
@@ -961,7 +957,6 @@ lfs_setattr(void *v)
 		struct vnode *a_vp;
 		struct vattr *a_vap;
 		kauth_cred_t a_cred;
-		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 
@@ -1010,7 +1005,6 @@ lfs_close(void *v)
 		struct vnode *a_vp;
 		int  a_fflag;
 		kauth_cred_t a_cred;
-		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct inode *ip = VTOI(vp);
@@ -1046,7 +1040,6 @@ lfsspec_close(void *v)
 		struct vnode	*a_vp;
 		int		a_fflag;
 		kauth_cred_t	a_cred;
-		struct lwp	*a_l;
 	} */ *ap = v;
 	struct vnode	*vp;
 	struct inode	*ip;
@@ -1071,7 +1064,6 @@ lfsfifo_close(void *v)
 		struct vnode	*a_vp;
 		int		a_fflag;
 		kauth_cred_	a_cred;
-		struct lwp	*a_l;
 	} */ *ap = v;
 	struct vnode	*vp;
 	struct inode	*ip;
@@ -1093,7 +1085,6 @@ lfs_reclaim(void *v)
 {
 	struct vop_reclaim_args /* {
 		struct vnode *a_vp;
-		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct inode *ip = VTOI(vp);
@@ -1103,7 +1094,7 @@ lfs_reclaim(void *v)
 	KASSERT(ip->i_nlink == ip->i_ffs_effnlink);
 
 	LFS_CLR_UINO(ip, IN_ALLMOD);
-	if ((error = ufs_reclaim(vp, ap->a_l)))
+	if ((error = ufs_reclaim(vp)))
 		return (error);
 
 	/*
@@ -1439,7 +1430,6 @@ lfs_fcntl(void *v)
 		void * a_data;
 		int  a_fflag;
 		kauth_cred_t a_cred;
-		struct lwp *a_l;
 	} */ *ap = v;
 	struct timeval *tvp;
 	BLOCK_INFO *blkiov;
@@ -1467,7 +1457,7 @@ lfs_fcntl(void *v)
 	}
 
 	/* LFS control and monitoring fcntls are available only to root */
-	l = ap->a_l;
+	l = curlwp;
 	if (((ap->a_command & 0xff00) >> 8) == 'L' &&
 	    (error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
 					     NULL)) != 0)
@@ -2440,7 +2430,6 @@ lfs_mmap(void *v)
 		struct vnode *a_vp;
 		vm_prot_t a_prot;
 		kauth_cred_t a_cred;
-		struct lwp *a_l;
 	} */ *ap = v;
 
 	if (VTOI(ap->a_vp)->i_number == LFS_IFILE_INUM)

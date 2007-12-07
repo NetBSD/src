@@ -1,4 +1,4 @@
-/*	$NetBSD: extattr.h,v 1.4.6.3 2007/09/03 14:46:58 yamt Exp $	*/
+/*	$NetBSD: extattr.h,v 1.4.6.4 2007/12/07 17:35:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001 Robert N. M. Watson
@@ -108,7 +108,7 @@ int	ufs_extattr_start(struct mount *mp, struct lwp *l);
 int	ufs_extattr_autostart(struct mount *mp, struct lwp *l);
 int	ufs_extattr_stop(struct mount *mp, struct lwp *l);
 int	ufs_extattrctl(struct mount *mp, int cmd, struct vnode *filename,
-	    int attrnamespace, const char *attrname, struct lwp *l);
+	    int attrnamespace, const char *attrname);
 int	ufs_getextattr(struct vop_getextattr_args *ap);
 int	ufs_deleteextattr(struct vop_deleteextattr_args *ap);
 int	ufs_setextattr(struct vop_setextattr_args *ap);

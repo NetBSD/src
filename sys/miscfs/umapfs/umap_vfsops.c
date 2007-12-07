@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vfsops.c,v 1.53.2.5 2007/10/27 11:35:58 yamt Exp $	*/
+/*	$NetBSD: umap_vfsops.c,v 1.53.2.6 2007/12/07 17:34:13 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.53.2.5 2007/10/27 11:35:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.53.2.6 2007/12/07 17:34:13 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,13 +63,13 @@ VFS_PROTOS(umapfs);
  * Mount umap layer
  */
 int
-umapfs_mount(mp, path, data, data_len, l)
+umapfs_mount(mp, path, data, data_len)
 	struct mount *mp;
 	const char *path;
 	void *data;
 	size_t *data_len;
-	struct lwp *l;
 {
+	struct lwp *l = curlwp;
 	struct nameidata nd;
 	struct umap_args *args = data;
 	struct vnode *lowerrootvp, *vp;
@@ -233,7 +233,7 @@ umapfs_mount(mp, path, data, data_len, l)
  * Free reference to umap layer
  */
 int
-umapfs_unmount(struct mount *mp, int mntflags, struct lwp *l)
+umapfs_unmount(struct mount *mp, int mntflags)
 {
 	struct umap_mount *amp = MOUNTTOUMAPMOUNT(mp);
 	struct vnode *rtvp = amp->umapm_rootvp;

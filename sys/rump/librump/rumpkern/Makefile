@@ -1,8 +1,11 @@
-#	$NetBSD: Makefile,v 1.15.4.4 2007/11/15 11:45:25 yamt Exp $
+#	$NetBSD: Makefile,v 1.15.4.5 2007/12/07 17:34:47 yamt Exp $
 #
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/sys/rump/Makefile.rump"
+
+# Temporary until atomic_add_int() is in libc
+CPPFLAGS += -D_SYS_ATOMIC_H_ '-Datomic_add_int(t,v)=*(t)+=(v)'
 
 LIB=	rump
 

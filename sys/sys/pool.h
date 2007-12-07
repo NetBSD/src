@@ -1,4 +1,4 @@
-/*	$NetBSD: pool.h,v 1.45.10.5 2007/11/15 11:45:33 yamt Exp $	*/
+/*	$NetBSD: pool.h,v 1.45.10.6 2007/12/07 17:34:57 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2007 The NetBSD Foundation, Inc.
@@ -201,14 +201,13 @@ typedef struct pool_cache_group {
 } pcg_t;
 
 typedef struct pool_cache_cpu {
+	uint64_t		cc_misses;
+	uint64_t		cc_hits;
 	struct pool_cache_group	*cc_current;
 	struct pool_cache_group	*cc_previous;	
 	struct pool_cache	*cc_cache;
-	struct cpu_info		*cc_cpu;	
-	struct lwp		*cc_busy;
-	uint64_t		cc_misses;
-	uint64_t		cc_hits;
 	int			cc_ipl;
+	int			cc_cpuindex;
 #ifdef _KERNEL
 	ipl_cookie_t		cc_iplcookie;
 #endif

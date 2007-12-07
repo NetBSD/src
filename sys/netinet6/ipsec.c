@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.102.2.3 2007/09/03 14:43:39 yamt Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.102.2.4 2007/12/07 17:34:37 yamt Exp $	*/
 /*	$KAME: ipsec.c,v 1.136 2002/05/19 00:36:39 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.102.2.3 2007/09/03 14:43:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.102.2.4 2007/12/07 17:34:37 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -2645,6 +2645,9 @@ ipsec4_output(struct ipsec_output_state *state, struct secpolicy *sp, int flags)
 				goto bad;
 			}
 
+			/* XXX state->dst will dangle if the rtentry goes
+			 * away!  I suggest sockaddr_dup()'ing it.  --dyoung
+			 */
 			/* adjust state->dst if tunnel endpoint is offlink */
 			if (state->ro->ro_rt->rt_flags & RTF_GATEWAY) {
 				state->dst = state->ro->ro_rt->rt_gateway;
@@ -3019,8 +3022,7 @@ ipsec6_output_tunnel(struct ipsec_output_state *state, struct secpolicy *sp,
 			} u;
 
 			sockaddr_in6_init(&u.dst6, &ip6->ip6_dst, 0, 0, 0);
-			rtcache_lookup(state->ro, &u.dst);
-			if (state->ro->ro_rt == NULL) {
+			if (rtcache_lookup(state->ro, &u.dst) == NULL) {
 				rtcache_free(state->ro);
 				ip6stat.ip6s_noroute++;
 				ipsec6stat.out_noroute++;
@@ -3028,6 +3030,9 @@ ipsec6_output_tunnel(struct ipsec_output_state *state, struct secpolicy *sp,
 				goto bad;
 			}
 
+			/* XXX state->dst will dangle if the rtentry goes
+			 * away!  I suggest sockaddr_dup()'ing it.  --dyoung
+			 */
 			/* adjust state->dst if tunnel endpoint is offlink */
 			if (state->ro->ro_rt->rt_flags & RTF_GATEWAY) {
 				state->dst = state->ro->ro_rt->rt_gateway;

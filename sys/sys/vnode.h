@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.140.2.5 2007/10/27 11:36:36 yamt Exp $	*/
+/*	$NetBSD: vnode.h,v 1.140.2.6 2007/12/07 17:34:59 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -246,7 +246,7 @@ extern struct simplelock global_v_numoutput_slock;
  */
 #define	IO_UNIT		0x00010		/* do I/O as atomic unit */
 #define	IO_APPEND	0x00020		/* append write to end */
-#define	IO_SYNC		(0x04|IO_DSYNC)	/* sync I/O file integrity completion */
+#define	IO_SYNC		(0x40|IO_DSYNC)	/* sync I/O file integrity completion */
 #define	IO_NODELOCKED	0x00080		/* underlying node already locked */
 #define	IO_NDELAY	0x00100		/* FNDELAY flag set in file table */
 #define	IO_DSYNC	0x00200		/* sync I/O data integrity completion */
@@ -418,7 +418,6 @@ struct vnodeop_desc {
 	const int	*vdesc_vp_offsets;	/* list ended by VDESC_NO_OFFSET */
 	int		vdesc_vpp_offset;	/* return vpp location */
 	int		vdesc_cred_offset;	/* cred location, if any */
-	int		vdesc_proc_offset;	/* proc location, if any */
 	int		vdesc_componentname_offset; /* if any */
 	/*
 	 * Finally, we've got a list of private data (about each operation)
@@ -572,15 +571,12 @@ u_int	vn_setrecurse(struct vnode *);
 int	vn_stat(struct vnode *, struct stat *, struct lwp *);
 int	vn_kqfilter(struct file *, struct knote *);
 int	vn_writechk(struct vnode *);
+int	vn_openchk(struct vnode *, kauth_cred_t, int);
 int	vn_extattr_get(struct vnode *, int, int, const char *, size_t *,
 	    void *, struct lwp *);
 int	vn_extattr_set(struct vnode *, int, int, const char *, size_t,
 	    const void *, struct lwp *);
 int	vn_extattr_rm(struct vnode *, int, int, const char *, struct lwp *);
-int	vn_cow_establish(struct vnode *, int (*)(void *, struct buf *),
-            void *);
-int	vn_cow_disestablish(struct vnode *, int (*)(void *, struct buf *),
-            void *);
 void	vn_ra_allocctx(struct vnode *);
 
 /* initialise global vnode management */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs.c,v 1.9.2.4 2007/11/15 11:45:24 yamt Exp $	*/
+/*	$NetBSD: ukfs.c,v 1.9.2.5 2007/12/07 17:34:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -108,7 +108,7 @@ ukfs_mount(const char *vfsname, const char *devpath, const char *mountpath,
 	memset(fs, 0, sizeof(struct ukfs));
 
 	rump_fakeblk_register(devpath);
-	rv = rump_mnt_mount(mp, mountpath, arg, &alen, curlwp);
+	rv = rump_mnt_mount(mp, mountpath, arg, &alen);
 	if (rv) {
 		warnx("VFS_MOUNT %d", rv);
 		goto out;
@@ -135,8 +135,8 @@ ukfs_release(struct ukfs *fs, int dounmount)
 	int rv;
 
 	if (dounmount) {
-		rv = rump_vfs_sync(fs->ukfs_mp, 1, NULL, curlwp);
-		rv |= rump_vfs_unmount(fs->ukfs_mp, 0, curlwp);
+		rv = rump_vfs_sync(fs->ukfs_mp, 1, NULL);
+		rv |= rump_vfs_unmount(fs->ukfs_mp, 0);
 		assert(rv == 0);
 	}
 
@@ -161,8 +161,8 @@ ukfs_ll_recycle(struct vnode *vp)
 		return;
 
 	VLE(vp);
-	RUMP_VOP_FSYNC(vp, NULL, 0, 0, 0, curlwp);
-	RUMP_VOP_INACTIVE(vp, curlwp);
+	RUMP_VOP_FSYNC(vp, NULL, 0, 0, 0);
+	RUMP_VOP_INACTIVE(vp);
 	rump_recyclenode(vp);
 	rump_putnode(vp);
 }

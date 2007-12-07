@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.80.2.4 2007/09/03 14:44:17 yamt Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.80.2.5 2007/12/07 17:34:43 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.80.2.4 2007/09/03 14:44:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.80.2.5 2007/12/07 17:34:43 yamt Exp $");
 
 #include "opt_nfs.h"
 
@@ -224,11 +224,10 @@ nfs_inactive(v)
 {
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
-		struct lwp *a_l;
 	} */ *ap = v;
 	struct nfsnode *np;
 	struct sillyrename *sp;
-	struct lwp *l = ap->a_l;
+	struct lwp *l = curlwp;
 	struct vnode *vp = ap->a_vp;
 	bool removed;
 

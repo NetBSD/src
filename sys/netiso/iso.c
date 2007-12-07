@@ -1,4 +1,4 @@
-/*	$NetBSD: iso.c,v 1.35.12.5 2007/11/15 11:45:18 yamt Exp $	*/
+/*	$NetBSD: iso.c,v 1.35.12.6 2007/12/07 17:34:41 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iso.c,v 1.35.12.5 2007/11/15 11:45:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iso.c,v 1.35.12.6 2007/12/07 17:34:41 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -523,10 +523,8 @@ iso_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 			if (ia == 0)
 				return (ENOBUFS);
 			TAILQ_INSERT_TAIL(&iso_ifaddr, ia, ia_list);
-			IFAREF((struct ifaddr *)ia);
-			TAILQ_INSERT_TAIL(&ifp->if_addrlist, (struct ifaddr *)ia,
-			    ifa_list);
-			IFAREF((struct ifaddr *)ia);
+			IFAREF(&ia->ia_ifa);
+			ifa_insert(ifp, &ia->ia_ifa);
 			ia->ia_ifa.ifa_addr = sisotosa(&ia->ia_addr);
 			ia->ia_ifa.ifa_dstaddr = sisotosa(&ia->ia_dstaddr);
 			ia->ia_ifa.ifa_netmask = sisotosa(&ia->ia_sockmask);
@@ -589,7 +587,7 @@ iso_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 		return (error);
 
 	case SIOCDIFADDR_ISO:
-		iso_purgeaddr(&ia->ia_ifa, ifp);
+		iso_purgeaddr(&ia->ia_ifa);
 		break;
 
 #define cmdbyte(x)	(((x) >> 8) & 0xff)
@@ -604,28 +602,21 @@ iso_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 }
 
 void
-iso_purgeaddr(struct ifaddr *ifa, struct ifnet *ifp)
+iso_purgeaddr(struct ifaddr *ifa)
 {
+	struct ifnet *ifp = ifa->ifa_ifp;
 	struct iso_ifaddr *ia = (void *) ifa;
 
 	iso_ifscrub(ifp, ia);
-	TAILQ_REMOVE(&ifp->if_addrlist, (struct ifaddr *)ia, ifa_list);
-	IFAFREE(&ia->ia_ifa);
+	ifa_remove(ifp, &ia->ia_ifa);
 	TAILQ_REMOVE(&iso_ifaddr, ia, ia_list);
-	IFAFREE((&ia->ia_ifa));
+	IFAFREE(&ia->ia_ifa);
 }
 
 void
 iso_purgeif(struct ifnet *ifp)
 {
-	struct ifaddr *ifa, *nifa;
-
-	for (ifa = TAILQ_FIRST(&ifp->if_addrlist); ifa != NULL; ifa = nifa) {
-		nifa = TAILQ_NEXT(ifa, ifa_list);
-		if (ifa->ifa_addr->sa_family != AF_ISO)
-			continue;
-		iso_purgeaddr(ifa, ifp);
-	}
+	if_purgeaddrs(ifp, AF_ISO, iso_purgeaddr);
 }
 
 /*
@@ -733,7 +724,7 @@ iso_ifwithidi(struct sockaddr *addr)
 			printf("iso_ifwithidi ifnet %s\n", ifp->if_name);
 		}
 #endif
-		TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
+		IFADDR_FOREACH(ifa, ifp) {
 #ifdef ARGO_DEBUG
 			if (argo_debug[D_ROUTE]) {
 				printf("iso_ifwithidi address ");

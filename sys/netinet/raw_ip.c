@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.87.2.5 2007/10/27 11:36:09 yamt Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.87.2.6 2007/12/07 17:34:32 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.87.2.5 2007/10/27 11:36:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.87.2.6 2007/12/07 17:34:32 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -384,7 +384,7 @@ rip_ctloutput(int op, struct socket *so, int level, int optname,
 			*m = m_intopt(so,
 			    (inp->inp_flags & INP_NOHEADER) ? 1 : 0);
 			return 0;
-		} else if (*m == NULL || (*m)->m_len < sizeof(int))
+		} else if (*m == NULL || (*m)->m_len != sizeof(int))
 			error = EINVAL;
 		else if (*mtod(*m, int *)) {
 			inp->inp_flags &= ~INP_HDRINCL;
@@ -400,7 +400,7 @@ rip_ctloutput(int op, struct socket *so, int level, int optname,
 	case PRCO_SETOPT:
 		switch (optname) {
 		case IP_HDRINCL:
-			if (*m == NULL || (*m)->m_len < sizeof(int))
+			if (*m == NULL || (*m)->m_len != sizeof(int))
 				error = EINVAL;
 			else if (*mtod(*m, int *))
 				inp->inp_flags |= INP_HDRINCL;

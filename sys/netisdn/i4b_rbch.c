@@ -27,7 +27,7 @@
  *	i4b_rbch.c - device driver for raw B channel data
  *	---------------------------------------------------
  *
- *	$Id: i4b_rbch.c,v 1.15.4.3 2007/09/03 14:43:57 yamt Exp $
+ *	$Id: i4b_rbch.c,v 1.15.4.4 2007/12/07 17:34:39 yamt Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_rbch.c,v 1.15.4.3 2007/09/03 14:43:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_rbch.c,v 1.15.4.4 2007/12/07 17:34:39 yamt Exp $");
 
 #include "isdnbchan.h"
 
@@ -872,7 +872,7 @@ isdnbchankqfilter(dev_t dev, struct knote *kn)
 		break;
 
 	default:
-		return (1);
+		return (EINVAL);
 	}
 
 	kn->kn_hook = sc;
