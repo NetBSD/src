@@ -1,4 +1,4 @@
-/*      $NetBSD: subr.c,v 1.40 2007/12/07 14:54:08 pooka Exp $        */
+/*      $NetBSD: subr.c,v 1.41 2007/12/07 14:59:22 pooka Exp $        */
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: subr.c,v 1.40 2007/12/07 14:54:08 pooka Exp $");
+__RCSID("$NetBSD: subr.c,v 1.41 2007/12/07 14:59:22 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -248,10 +248,10 @@ getnodeattr(struct puffs_usermount *pu, struct puffs_node *pn)
 }
 
 int
-sftp_readdir(struct puffs_cc *pcc, struct psshfs_ctx *pctx,
+sftp_readdir(struct puffs_usermount *pu, struct psshfs_ctx *pctx,
 	struct puffs_node *pn)
 {
-	struct puffs_usermount *pu = puffs_cc_getusermount(pcc);
+	struct puffs_cc *pcc = puffs_cc_getcc(pu);
 	struct psshfs_node *psn = pn->pn_data;
 	struct psshfs_dir *olddir, *testd;
 	struct puffs_framebuf *pb;
