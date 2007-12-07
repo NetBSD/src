@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_mutex2.c,v 1.15 2007/12/04 16:56:11 yamt Exp $	*/
+/*	$NetBSD: pthread_mutex2.c,v 1.16 2007/12/07 01:38:38 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_mutex2.c,v 1.15 2007/12/04 16:56:11 yamt Exp $");
+__RCSID("$NetBSD: pthread_mutex2.c,v 1.16 2007/12/07 01:38:38 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/lwpctl.h>
@@ -242,10 +242,20 @@ pthread__mutex_lock_slow(pthread_mutex_t *ptm)
 		owner = pthread__mutex_spin(ptm, owner);
 
 		/* If it has become free, try to acquire it again. */
-		while (MUTEX_OWNER(owner) == 0) {
-			new = (void *)((uintptr_t)self | (uintptr_t)owner);
-			if (mutex_cas(&ptm->ptm_owner, &owner, new))
-				return 0;
+		if (MUTEX_OWNER(owner) == 0) {
+			while (MUTEX_OWNER(owner) == 0) {
+				new = (void *)
+				    ((uintptr_t)self | (uintptr_t)owner);
+				if (mutex_cas(&ptm->ptm_owner, &owner, new))
+					return 0;
+			}
+			/*
+			 * We have lost the race to acquire the mutex.
+			 * The new owner could be running on another
+			 * CPU, in which case we should spin and avoid
+			 * the overhead of blocking.
+			 */
+			continue;
 		}
 
 		/*
@@ -304,10 +314,11 @@ pthread__mutex_lock_slow(pthread_mutex_t *ptm)
 		}
 
 		/*
-		 * We may be awoken by this thread, or some other thread.
+		 * We may have been awoken by the current thread above,
+		 * or will be awoken by the current holder of the mutex.
 		 * The key requirement is that we must not proceed until
 		 * told that we are no longer waiting (via pt_sleeponq
-		 * being set to zero),  Otherwise it is unsafe to re-enter
+		 * being set to zero).  Otherwise it is unsafe to re-enter
 		 * the thread onto the waiters list.
 		 */
 		while (self->pt_sleeponq) {
