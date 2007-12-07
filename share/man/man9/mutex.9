@@ -1,4 +1,4 @@
-.\"	$NetBSD: mutex.9,v 1.14 2007/12/05 18:12:09 ad Exp $
+.\"	$NetBSD: mutex.9,v 1.15 2007/12/07 14:24:21 ad Exp $
 .\"
 .\" Copyright (c) 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -128,7 +128,7 @@ An adaptive mutex will be returned.
 Adaptive mutexes provide mutual exclusion between LWPs,
 and between LWPs and soft interrupt handlers.
 .Pp
-Adaptive mutexes cannot not be acquired from a hardware interrupt handler.
+Adaptive mutexes cannot be acquired from a hardware interrupt handler.
 An LWP may either sleep or busy-wait when attempting to acquire
 an adaptive mutex that is already held.
 .It IPL_VM, IPL_SCHED, IPL_HIGH
