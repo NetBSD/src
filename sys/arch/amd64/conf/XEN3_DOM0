@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.3 2007/12/06 20:02:02 bouyer Exp $
+# $NetBSD: XEN3_DOM0,v 1.4 2007/12/07 10:13:22 xtraeme Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -426,6 +426,7 @@ uk*	at scsibus? target ? lun ?	# SCSI unknown
 # RAID controllers and devices
 aac*	at pci? dev ? function ?	# Adaptec AAC family
 amr*	at pci? dev ? function ?	# AMI/LSI Logic MegaRAID
+arcmsr*	at pci? dev ? function ? 	# Areca SATA RAID controllers
 cac*	at pci? dev ? function ?	# Compaq PCI array controllers
 ciss*	at pci? dev ? function ?	# HP Smart Array controllers
 icp*	at pci? dev ? function ?	# ICP-Vortex GDT & Intel RAID
