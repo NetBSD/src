@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.35 2007/12/07 18:35:21 tsutsui Exp $
+# $NetBSD: Makefile,v 1.36 2007/12/07 21:08:58 tsutsui Exp $
 #
 # Consult "*.conf" for the configuration variables; this Makefile is typically
 # not edited for basic configuration changes.
@@ -83,7 +83,32 @@ MACPPC_MKBOOTHFSDIR!= cd ${.CURDIR}/macppc_mkboothfs && ${PRINTOBJDIR}
 SGIMIPS_SGIVOL?=	${TOOLDIR}/bin/nbsgivol
 .endif
 
-RSYNC_SITE?=	rsync://rsync.NetBSD.org/NetBSD/${RELEASENAME}
+##### rsync settings #####
+
+# rsync host; check mirrors on http://www.NetBSD.org/mirrors/#rsync
+# (note not all rsync mirrors provide NetBSD-daily)
+RSYNC_HOST?=	rsync.NetBSD.org
+
+# extra path for rsync mirrors ("/pub", "/netbsd" etc.)
+RSYNC_PATH_PREFIX?=
+
+.if ${RELEASE} == "current"
+# daily date dir name
+BRANCH?=	HEAD
+#DAILY_DIR?=	yyyymmddhhmmZ
+RSYNC_PATH?=	${RSYNC_PATH_PREFIX}/NetBSD-daily/${BRANCH}/${DAILY_DIR}
+.else
+# extra suffix on pre-release ("_BETA2", "_RC5" etc.)
+RELEASE_SUFFIX?=
+RSYNC_PATH?=	${RSYNC_PATH_PREFIX}/NetBSD/${RELEASENAME}${RELEASE_SUFFIX}
+
+# alternative for NetBSD-daily sets of stable branches
+#DAILY_DIR?=	yyyymmddhhmmZ
+#BRANCH?=	netbsd-4
+#RSYNC_PATH?=	${RSYNC_PATH_PREFIX}/NetBSD-daily/${BRANCH}/${DAILY_DIR}
+.endif
+
+RSYNC_SITE?=	rsync://${RSYNC_HOST}${RSYNC_PATH}
 RSYNC_ARGS?=	-va --delete
 RSYNC_EXCLUDE+=	--exclude=/* --exclude=Split --exclude=cdrom
 
