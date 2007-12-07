@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.67.2.1 2006/06/21 14:54:48 yamt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.67.2.2 2007/12/07 17:25:50 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.67.2.1 2006/06/21 14:54:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.67.2.2 2007/12/07 17:25:50 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,7 +114,6 @@ cpu_configure()
 	/* Kick off autoconfiguration. */
 	(void)splhigh();
 
-	softintr_init();
 	evcnt_attach_static(&pmax_clock_evcnt);
 	evcnt_attach_static(&pmax_fpu_evcnt);
 	evcnt_attach_static(&pmax_memerr_evcnt);

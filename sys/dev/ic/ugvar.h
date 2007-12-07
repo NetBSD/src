@@ -1,4 +1,4 @@
-/* $NetBSD: ugvar.h,v 1.2.12.2 2007/09/03 14:35:19 yamt Exp $ */
+/* $NetBSD: ugvar.h,v 1.2.12.3 2007/12/07 17:29:58 yamt Exp $ */
 
 /*
  * Copyright (c) 2007 Mihai Chelaru <kefren@netbsd.ro>
@@ -34,8 +34,8 @@ struct ug_softc {
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
 
-	struct sysmon_envsys sc_sysmon;
-	envsys_data_t sc_data[UG_MAX_SENSORS];
+	struct sysmon_envsys *sc_sme;
+	envsys_data_t sc_sensor[UG_MAX_SENSORS];
 	uint8_t version;
 	void *mbsens;
 };
@@ -67,7 +67,7 @@ int ug2_sync(struct ug_softc *);
 int ug2_read(struct ug_softc *, uint8_t, uint8_t, uint8_t, uint8_t*);
 
 /* Envsys */
-int ug_gtredata(struct sysmon_envsys *, envsys_data_t *);
-int ug2_gtredata(struct sysmon_envsys *, envsys_data_t *);
+void ug_refresh(struct sysmon_envsys *, envsys_data_t *);
+void ug2_refresh(struct sysmon_envsys *, envsys_data_t *);
 
 #endif		/* _UGVAR_H_ */

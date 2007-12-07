@@ -1,14 +1,12 @@
-/*	$NetBSD: kern_fork.c,v 1.122.2.6 2007/11/15 11:44:41 yamt Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.122.2.7 2007/12/07 17:32:41 yamt Exp $	*/
 
 /*-
- * Copyright (c) 1999, 2001, 2004 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2001, 2004, 2006, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
- * NASA Ames Research Center.
- * This code is derived from software contributed to The NetBSD Foundation
- * by Charles M. Hannum.
+ * NASA Ames Research Center, by Charles M. Hannum, and by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -76,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.122.2.6 2007/11/15 11:44:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.122.2.7 2007/12/07 17:32:41 yamt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -101,13 +99,12 @@ __KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.122.2.6 2007/11/15 11:44:41 yamt Exp
 #include <sys/signalvar.h>
 #include <sys/systrace.h>
 #include <sys/kauth.h>
-
+#include <sys/atomic.h>
 #include <sys/syscallargs.h>
 
 #include <uvm/uvm_extern.h>
 
-
-int	nprocs = 1;		/* process 0 */
+u_int	nprocs = 1;		/* process 0 */
 
 /*
  * Number of ticks to sleep if fork() would fail due to process hitting
@@ -222,6 +219,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	vaddr_t		uaddr;
 	bool		inmem;
 	int		tmp;
+	int		tnprocs;
 
 	/*
 	 * Although process entries are dynamically created, we still keep
@@ -234,27 +232,25 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	mutex_enter(&p1->p_mutex);
 	uid = kauth_cred_getuid(p1->p_cred);
 	mutex_exit(&p1->p_mutex);
-	if (__predict_false((nprocs >= maxproc - 5 && uid != 0) ||
-			    nprocs >= maxproc)) {
+	tnprocs = atomic_inc_uint_nv(&nprocs);
+	if (__predict_false((tnprocs >= maxproc - 5 && uid != 0) ||
+			    tnprocs >= maxproc)) {
 		static struct timeval lasttfm;
-
+		atomic_dec_uint(&nprocs);
 		if (ratecheck(&lasttfm, &fork_tfmrate))
 			tablefull("proc", "increase kern.maxproc or NPROC");
 		if (forkfsleep)
 			(void)tsleep(&nprocs, PUSER, "forkmx", forkfsleep);
 		return (EAGAIN);
 	}
-	nprocs++;
 
 	/*
-	 * Increment the count of procs running with this uid. Don't allow
-	 * a nonprivileged user to exceed their current limit.
+	 * Enforce limits.
 	 */
 	count = chgproccnt(uid, 1);
-	if (__predict_false(uid != 0 && count >
-			    p1->p_rlimit[RLIMIT_NPROC].rlim_cur)) {
+	if (__predict_false(count > p1->p_rlimit[RLIMIT_NPROC].rlim_cur)) {
 		(void)chgproccnt(uid, -1);
-		nprocs--;
+		atomic_dec_uint(&nprocs);
 		if (forkfsleep)
 			(void)tsleep(&nprocs, PUSER, "forkulim", forkfsleep);
 		return (EAGAIN);
@@ -270,7 +266,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	inmem = uvm_uarea_alloc(&uaddr);
 	if (__predict_false(uaddr == 0)) {
 		(void)chgproccnt(uid, -1);
-		nprocs--;
+		atomic_dec_uint(&nprocs);
 		return (ENOMEM);
 	}
 
@@ -319,8 +315,8 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	}
 
 	/* XXX p_smutex can be IPL_VM except for audio drivers */
-	mutex_init(&p2->p_smutex, MUTEX_SPIN, IPL_SCHED);
-	mutex_init(&p2->p_stmutex, MUTEX_SPIN, IPL_HIGH);
+	mutex_init(&p2->p_smutex, MUTEX_DEFAULT, IPL_SCHED);
+	mutex_init(&p2->p_stmutex, MUTEX_DEFAULT, IPL_HIGH);
 	mutex_init(&p2->p_raslock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&p2->p_mutex, MUTEX_DEFAULT, IPL_NONE);
 	rw_init(&p2->p_reflock);
@@ -394,8 +390,8 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	/*
 	 * Create signal actions for the child process.
 	 */
-	mutex_enter(&p1->p_smutex);
 	p2->p_sigacts = sigactsinit(p1, flags & FORK_SHARESIGS);
+	mutex_enter(&p1->p_smutex);
 	p2->p_sflag |=
 	    (p1->p_sflag & (PS_STOPFORK | PS_STOPEXEC | PS_NOCLDSTOP));
 	sched_proc_fork(p1, p2);
@@ -450,8 +446,8 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 
 	mutex_enter(&proclist_mutex);
 	LIST_INSERT_AFTER(p1, p2, p_pglist);
-	LIST_INSERT_HEAD(&allproc, p2, p_list);
 	mutex_exit(&proclist_mutex);
+	LIST_INSERT_HEAD(&allproc, p2, p_list);
 
 	mutex_exit(&proclist_lock);
 

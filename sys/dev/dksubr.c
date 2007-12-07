@@ -1,4 +1,4 @@
-/* $NetBSD: dksubr.c,v 1.15.2.3 2007/09/03 14:33:11 yamt Exp $ */
+/* $NetBSD: dksubr.c,v 1.15.2.4 2007/12/07 17:29:16 yamt Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.15.2.3 2007/09/03 14:33:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.15.2.4 2007/12/07 17:29:16 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -645,7 +645,7 @@ dk_lookup(const char *path, struct lwp *l, struct vnode **vpp,
 	}
 
 	vp = nd.ni_vp;
-	if ((error = VOP_GETATTR(vp, &va, l->l_cred, l)) != 0) {
+	if ((error = VOP_GETATTR(vp, &va, l->l_cred)) != 0) {
 		DPRINTF((DKDB_FOLLOW|DKDB_INIT),
 		    ("dk_lookup: getattr error = %d\n", error));
 		goto out;

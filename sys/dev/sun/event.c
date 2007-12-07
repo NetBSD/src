@@ -1,4 +1,4 @@
-/*	$NetBSD: event.c,v 1.17.4.3 2007/09/03 14:38:45 yamt Exp $	*/
+/*	$NetBSD: event.c,v 1.17.4.4 2007/12/07 17:31:24 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: event.c,v 1.17.4.3 2007/09/03 14:38:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: event.c,v 1.17.4.4 2007/12/07 17:31:24 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/fcntl.h>
@@ -218,7 +218,7 @@ ev_kqfilter(struct evvar *ev, struct knote *kn)
 		break;
 
 	default:
-		return (1);
+		return (EINVAL);
 	}
 
 	kn->kn_hook = ev;

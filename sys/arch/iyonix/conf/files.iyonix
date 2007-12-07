@@ -1,4 +1,4 @@
-#	$NetBSD: files.iyonix,v 1.1.14.1 2007/09/03 14:27:00 yamt Exp $
+#	$NetBSD: files.iyonix,v 1.1.14.2 2007/12/07 17:25:06 yamt Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -61,9 +61,6 @@ include "arch/arm/conf/majors.arm32"
 #
 # Machine dependent stuff
 #
-
-# Use the generic ARM soft interrupt code.
-file	arch/arm/arm/softintr.c
 
 file	arch/iyonix/iyonix/iyonix_machdep.c
 file	arch/iyonix/iyonix/iyonix_pci.c

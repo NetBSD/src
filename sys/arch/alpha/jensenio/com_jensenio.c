@@ -1,4 +1,4 @@
-/* $NetBSD: com_jensenio.c,v 1.5.22.1 2006/12/30 20:45:22 yamt Exp $ */
+/* $NetBSD: com_jensenio.c,v 1.5.22.2 2007/12/07 17:23:52 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: com_jensenio.c,v 1.5.22.1 2006/12/30 20:45:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_jensenio.c,v 1.5.22.2 2007/12/07 17:23:52 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,7 +115,7 @@ com_jensenio_attach(struct device *parent, struct device *self, void *aux)
 
 	com_attach_subr(sc);
 
-	scb_set(ja->ja_irq[0], com_jensenio_intr, sc);
+	scb_set(ja->ja_irq[0], com_jensenio_intr, sc, IPL_VM);
 	printf("%s: interrupting at vector 0x%x\n",
 	    sc->sc_dev.dv_xname, ja->ja_irq[0]);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.39.12.1 2006/06/21 14:54:01 yamt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.39.12.2 2007/12/07 17:25:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.39.12.1 2006/06/21 14:54:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.39.12.2 2007/12/07 17:25:40 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,7 +123,6 @@ cpu_configure()
 
 	/* Initialise interrupt handlers */
 	isrinit();
-	softintr_init();
 
 	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("autoconfig failed, no root");

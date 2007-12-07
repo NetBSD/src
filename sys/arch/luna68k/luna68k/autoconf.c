@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.c,v 1.5.2.1 2007/09/03 14:27:05 yamt Exp $ */
+/* $NetBSD: autoconf.c,v 1.5.2.2 2007/12/07 17:25:08 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.5.2.1 2007/09/03 14:27:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.5.2.2 2007/12/07 17:25:08 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,7 +64,6 @@ cpu_configure()
 
 	(void)splhigh();
 	isrinit();
-	softintr_init();
 	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("autoconfig failed, no root");
 
@@ -106,7 +105,8 @@ find_dev_byname(name)
 {
 	struct device *dv;
 
-	for (dv = alldevs.tqh_first; dv != NULL; dv = dv->dv_list.tqe_next) {
+	for (dv = TAILQ_FIRST(&alldevs); dv != NULL;
+	    dv = TAILQ_NEXT(dv, dv_list)) {
 		if (!strcmp(dv->dv_xname, name)) {
 			return dv;
 		}

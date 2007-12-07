@@ -1,4 +1,4 @@
-/*	$NetBSD: gtsc.c,v 1.34.16.1 2006/06/21 14:48:26 yamt Exp $ */
+/*	$NetBSD: gtsc.c,v 1.34.16.2 2007/12/07 17:24:07 yamt Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -66,12 +66,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtsc.c,v 1.34.16.1 2006/06/21 14:48:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtsc.c,v 1.34.16.2 2007/12/07 17:24:07 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
+#include <sys/intr.h>
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>

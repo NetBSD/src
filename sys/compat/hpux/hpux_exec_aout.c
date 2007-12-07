@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_exec_aout.c,v 1.12.4.3 2007/10/27 11:29:31 yamt Exp $	*/
+/*	$NetBSD: hpux_exec_aout.c,v 1.12.4.4 2007/12/07 17:27:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_exec_aout.c,v 1.12.4.3 2007/10/27 11:29:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_exec_aout.c,v 1.12.4.4 2007/12/07 17:27:42 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,9 +98,9 @@ __KERNEL_RCSID(0, "$NetBSD: hpux_exec_aout.c,v 1.12.4.3 2007/10/27 11:29:31 yamt
 
 #include <machine/hpux_machdep.h>
 
-static	int exec_hpux_prep_nmagic __P((struct lwp *, struct exec_package *));
-static	int exec_hpux_prep_zmagic __P((struct lwp *, struct exec_package *));
-static	int exec_hpux_prep_omagic __P((struct lwp *, struct exec_package *));
+static	int exec_hpux_prep_nmagic(struct lwp *, struct exec_package *);
+static	int exec_hpux_prep_zmagic(struct lwp *, struct exec_package *);
+static	int exec_hpux_prep_omagic(struct lwp *, struct exec_package *);
 
 int
 exec_hpux_makecmds(l, epp)

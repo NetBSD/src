@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_exec_ecoff.c,v 1.11.4.4 2007/09/03 14:32:43 yamt Exp $ */
+/* $NetBSD: osf1_exec_ecoff.c,v 1.11.4.5 2007/12/07 17:28:50 yamt Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_exec_ecoff.c,v 1.11.4.4 2007/09/03 14:32:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_exec_ecoff.c,v 1.11.4.5 2007/12/07 17:28:50 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -234,7 +234,7 @@ osf1_exec_ecoff_dynamic(struct lwp *l, struct exec_package *epp)
 		goto badunlock;
 	}
 
-	if ((error = VOP_ACCESS(ldr_vp, VEXEC, l->l_cred, l)) != 0)
+	if ((error = VOP_ACCESS(ldr_vp, VEXEC, l->l_cred)) != 0)
 		goto badunlock;
 
         if (ldr_vp->v_mount->mnt_flag & MNT_NOEXEC) {

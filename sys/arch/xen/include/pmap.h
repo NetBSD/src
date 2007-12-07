@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.4.4.4 2007/10/27 11:29:12 yamt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.4.4.5 2007/12/07 17:27:11 yamt Exp $	*/
 /*	NetBSD: pmap.h,v 1.82 2004/02/20 17:35:01 yamt Exp 	*/
 
 /*
@@ -47,12 +47,13 @@
 
 #include "opt_xen.h"
 
+#include <sys/atomic.h>
+
 #include <machine/cpufunc.h>
 #include <machine/pte.h>
-#include <machine/xenfunc.h>
-#include <machine/xenpmap.h>
+#include <xen/xenfunc.h>
+#include <xen/xenpmap.h>
 #include <machine/segments.h>
-#include <machine/atomic.h>
 #include <uvm/uvm_object.h>
 
 /*
@@ -393,12 +394,7 @@ pmap_remove_all(struct pmap *pmap)
 __inline static void __attribute__((__unused__))
 pmap_update_pg(vaddr_t va)
 {
-#if defined(I386_CPU)
-	if (cpu_class == CPUCLASS_386)
-		tlbflush();
-	else
-#endif
-		invlpg((u_int) va);
+	invlpg((u_int) va);
 }
 
 /*
@@ -408,15 +404,8 @@ pmap_update_pg(vaddr_t va)
 __inline static void __attribute__((__unused__))
 pmap_update_2pg(vaddr_t va, vaddr_t vb)
 {
-#if defined(I386_CPU)
-	if (cpu_class == CPUCLASS_386)
-		tlbflush();
-	else
-#endif
-	{
-		invlpg((u_int) va);
-		invlpg((u_int) vb);
-	}
+	invlpg((u_int) va);
+	invlpg((u_int) vb);
 }
 
 /*
@@ -513,11 +502,12 @@ vtomach(vaddr_t va)
 	return xpmap_ptom((pte & PG_FRAME) | (va & ~PG_FRAME));
 }
 
-#define pmap_pte_set(p, n)		x86_atomic_testset_ul(p, n)
-#define pmap_pte_setbits(p, b)		x86_atomic_setbits_l(p, b)
-#define pmap_pte_clearbits(p, b)	x86_atomic_clearbits_l(p, b)
-#define pmap_cpu_has_pg_n()		(cpu_class != CPUCLASS_386)
-#define pmap_cpu_has_invlpg()		(cpu_class != CPUCLASS_386)
+#define pmap_pte_testset(p, n)		\
+    atomic_swap_ulong((volatile unsigned long *)p, n)
+#define pmap_pte_setbits(p, b)		\
+    atomic_or_ulong((volatile unsigned long *)p, b)
+#define pmap_pte_clearbits(p, b)	\
+    atomic_and_ulong((volatile unsigned long *)p, ~(b))
 
 paddr_t vtophys(vaddr_t);
 vaddr_t	pmap_map(vaddr_t, paddr_t, paddr_t, vm_prot_t);

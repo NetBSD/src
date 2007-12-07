@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_mman.c,v 1.9.4.3 2007/02/26 09:09:10 yamt Exp $ */
+/*	$NetBSD: irix_mman.c,v 1.9.4.4 2007/12/07 17:27:46 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_mman.c,v 1.9.4.3 2007/02/26 09:09:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_mman.c,v 1.9.4.4 2007/12/07 17:27:46 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: irix_mman.c,v 1.9.4.3 2007/02/26 09:09:10 yamt Exp $
 #include <sys/vnode.h>
 #include <sys/vnode_if.h>
 #include <sys/mount.h>
-#include <sys/lock.h>
+#include <sys/rwlock.h>
 #include <sys/systm.h>
 #include <sys/syscallargs.h>
 
@@ -70,8 +70,8 @@ __KERNEL_RCSID(0, "$NetBSD: irix_mman.c,v 1.9.4.3 2007/02/26 09:09:10 yamt Exp $
 #include <compat/irix/irix_exec.h>
 #include <compat/irix/irix_syscallargs.h>
 
-static int irix_mmap __P((struct lwp *, void *, size_t, int ,
-		int, int, off_t, register_t *));
+static int irix_mmap(struct lwp *, void *, size_t, int ,
+		int, int, off_t, register_t *);
 
 int
 irix_sys_mmap(l, v, retval)
@@ -198,17 +198,17 @@ irix_mmap(l, addr, len, prot, flags, fd, pos, retval)
 			goto out;
 		}
 
-		if ((error = VOP_GETATTR(vp, &vattr, l->l_cred, l)) != 0)
+		if ((error = VOP_GETATTR(vp, &vattr, l->l_cred)) != 0)
 			goto out;
 
 		if (pos + len > vattr.va_size) {
 			VATTR_NULL(&vattr);
 			vattr.va_size = round_page(pos + len);
 
-			VOP_LEASE(vp, l, l->l_cred, LEASE_WRITE);
+			VOP_LEASE(vp, l->l_cred, LEASE_WRITE);
 			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 
-			error = VOP_SETATTR(vp, &vattr, l->l_cred, l);
+			error = VOP_SETATTR(vp, &vattr, l->l_cred);
 
 			VOP_UNLOCK(vp, 0);
 		}

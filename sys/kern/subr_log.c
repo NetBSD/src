@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_log.c,v 1.35.2.4 2007/11/15 11:44:49 yamt Exp $	*/
+/*	$NetBSD: subr_log.c,v 1.35.2.5 2007/12/07 17:33:06 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_log.c,v 1.35.2.4 2007/11/15 11:44:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_log.c,v 1.35.2.5 2007/12/07 17:33:06 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -137,7 +137,7 @@ void
 loginit(void)
 {
 
-	mutex_init(&log_lock, MUTEX_SPIN, IPL_VM);
+	mutex_init(&log_lock, MUTEX_DEFAULT, IPL_VM);
 	selinit(&log_selp);
 	cv_init(&log_cv, "klog");
 	log_sih = softint_establish(SOFTINT_CLOCK | SOFTINT_MPSAFE,
@@ -294,7 +294,7 @@ logkqfilter(dev_t dev, struct knote *kn)
 		break;
 
 	default:
-		return (1);
+		return (EINVAL);
 	}
 
 	mutex_spin_enter(&log_lock);

@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_port.h,v 1.37 2005/02/26 23:10:20 perry Exp $ */
+/*	$NetBSD: mach_port.h,v 1.37.4.1 2007/12/07 17:28:45 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -335,7 +335,7 @@ struct mach_port {
 	int mp_count;			/* Count of queued messages */
 	TAILQ_HEAD(mp_msglist,		/* Queue pending messages */
 	    mach_message) mp_msglist;
-	struct lock mp_msglock;		/* Lock for the queue */
+	krwlock_t mp_msglock;		/* Lock for the queue */
 	int mp_refcount;		/* Reference count */
 	int mp_flags;			/* Flags, see below */
 	int mp_datatype;		/* Type of field mp_data, see below */

@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_autoconf.c,v 1.4.2.3 2007/09/03 14:31:29 yamt Exp $	*/
+/*	$NetBSD: x86_autoconf.c,v 1.4.2.4 2007/12/07 17:27:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.4.2.3 2007/09/03 14:31:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.4.2.4 2007/12/07 17:27:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -161,7 +161,7 @@ matchbiosdisks(void)
 
 			error = vn_rdwr(UIO_READ, tv, mbr, DEV_BSIZE, 0,
 			    UIO_SYSSPACE, 0, NOCRED, NULL, NULL);
-			VOP_CLOSE(tv, FREAD, NOCRED, 0);
+			VOP_CLOSE(tv, FREAD, NOCRED);
 			if (error) {
 #ifdef GEOM_DEBUG
 				printf("matchbiosdisks: %s: MBR read failure\n",
@@ -243,7 +243,7 @@ match_bootwedge(struct device *dv, struct btinfo_bootwedge *biw)
 	found = memcmp(biw->matchhash, hash, sizeof(hash)) == 0;
 
  closeout:
-	VOP_CLOSE(tmpvn, FREAD, NOCRED, 0);
+	VOP_CLOSE(tmpvn, FREAD, NOCRED);
 	vput(tmpvn);
 	return (found);
 }
@@ -274,7 +274,7 @@ match_bootdisk(struct device *dv, struct btinfo_bootdisk *bid)
 	if ((tmpvn = opendisk(dv)) == NULL)
 		return 0;
 
-	error = VOP_IOCTL(tmpvn, DIOCGDINFO, &label, FREAD, NOCRED, 0);
+	error = VOP_IOCTL(tmpvn, DIOCGDINFO, &label, FREAD, NOCRED);
 	if (error) {
 		/*
 		 * XXX Can't happen -- open() would have errored out
@@ -292,7 +292,7 @@ match_bootdisk(struct device *dv, struct btinfo_bootdisk *bid)
 		found = 1;
 
  closeout:
-	VOP_CLOSE(tmpvn, FREAD, NOCRED, 0);
+	VOP_CLOSE(tmpvn, FREAD, NOCRED);
 	vput(tmpvn);
 	return (found);
 }

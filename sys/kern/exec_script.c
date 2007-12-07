@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_script.c,v 1.41.2.4 2007/09/03 14:40:39 yamt Exp $	*/
+/*	$NetBSD: exec_script.c,v 1.41.2.5 2007/12/07 17:32:34 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_script.c,v 1.41.2.4 2007/09/03 14:40:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_script.c,v 1.41.2.5 2007/12/07 17:32:34 yamt Exp $");
 
 #if defined(SETUIDSCRIPTS) && !defined(FDSCRIPTS)
 #define FDSCRIPTS		/* Need this for safe set-id scripts. */
@@ -284,7 +284,7 @@ check_shell:
 		 */
 		if ((epp->ep_flags & EXEC_HASFD) == 0) {
 			vn_lock(scriptvp, LK_EXCLUSIVE | LK_RETRY);
-			VOP_CLOSE(scriptvp, FREAD, l->l_cred, l);
+			VOP_CLOSE(scriptvp, FREAD, l->l_cred);
 			vput(scriptvp);
 		}
 
@@ -321,7 +321,7 @@ fail:
                 (void) fdrelease(l, epp->ep_fd);
         } else if (scriptvp) {
 		vn_lock(scriptvp, LK_EXCLUSIVE | LK_RETRY);
-		VOP_CLOSE(scriptvp, FREAD, l->l_cred, l);
+		VOP_CLOSE(scriptvp, FREAD, l->l_cred);
 		vput(scriptvp);
 	}
 

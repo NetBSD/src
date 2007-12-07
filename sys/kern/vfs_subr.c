@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.250.2.6 2007/11/15 11:44:57 yamt Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.250.2.7 2007/12/07 17:33:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.250.2.6 2007/11/15 11:44:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.250.2.7 2007/12/07 17:33:22 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -106,6 +106,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.250.2.6 2007/11/15 11:44:57 yamt Exp 
 #include <sys/device.h>
 #include <sys/filedesc.h>
 #include <sys/kauth.h>
+#include <sys/atomic.h>
 
 #include <miscfs/specfs/specdev.h>
 #include <miscfs/syncfs/syncfs.h>
@@ -333,7 +334,6 @@ int
 getnewvnode(enum vtagtype tag, struct mount *mp, int (**vops)(void *),
     struct vnode **vpp)
 {
-	extern struct uvm_pagerops uvm_vnodeops;
 	struct uvm_object *uobj;
 	struct lwp *l = curlwp;		/* XXX */
 	static int toggle;
@@ -710,7 +710,6 @@ vget(struct vnode *vp, int flags)
 void
 vput(struct vnode *vp)
 {
-	struct lwp *l = curlwp;		/* XXX */
 
 #ifdef DIAGNOSTIC
 	if (vp == NULL)
@@ -739,13 +738,13 @@ vput(struct vnode *vp)
 		TAILQ_INSERT_TAIL(&vnode_free_list, vp, v_freelist);
 	simple_unlock(&vnode_free_list_slock);
 	if (vp->v_iflag & VI_EXECMAP) {
-		uvmexp.execpages -= vp->v_uobj.uo_npages;
-		uvmexp.filepages += vp->v_uobj.uo_npages;
+		atomic_add_int(&uvmexp.execpages, -vp->v_uobj.uo_npages);
+		atomic_add_int(&uvmexp.filepages, vp->v_uobj.uo_npages);
 	}
 	vp->v_iflag &= ~(VI_TEXT|VI_EXECMAP|VI_WRMAP|VI_MAPPED);
 	vp->v_vflag &= ~VV_MAPPED;
 	simple_unlock(&vp->v_interlock);
-	VOP_INACTIVE(vp, l);
+	VOP_INACTIVE(vp);
 }
 
 /*
@@ -755,7 +754,6 @@ vput(struct vnode *vp)
 static void
 do_vrele(struct vnode *vp, int doinactive, int onhead)
 {
-	struct lwp *l = curlwp;		/* XXX */
 
 #ifdef DIAGNOSTIC
 	if (vp == NULL)
@@ -787,15 +785,15 @@ do_vrele(struct vnode *vp, int doinactive, int onhead)
 	}
 	simple_unlock(&vnode_free_list_slock);
 	if (vp->v_iflag & VI_EXECMAP) {
-		uvmexp.execpages -= vp->v_uobj.uo_npages;
-		uvmexp.filepages += vp->v_uobj.uo_npages;
+		atomic_add_int(&uvmexp.execpages, -vp->v_uobj.uo_npages);
+		atomic_add_int(&uvmexp.filepages, vp->v_uobj.uo_npages);
 	}
 	vp->v_iflag &= ~(VI_TEXT|VI_EXECMAP|VI_WRMAP|VI_MAPPED);
 	vp->v_vflag &= ~VV_MAPPED;
 
 	if (doinactive) {
 		if (vn_lock(vp, LK_EXCLUSIVE | LK_INTERLOCK) == 0)
-			VOP_INACTIVE(vp, l);
+			VOP_INACTIVE(vp);
 	} else {
 		simple_unlock(&vp->v_interlock);
 	}
@@ -1033,8 +1031,8 @@ vclean(struct vnode *vp, int flags, struct lwp *l)
 		panic("vclean: deadlock, vp %p", vp);
 	vp->v_iflag |= VI_XLOCK;
 	if (vp->v_iflag & VI_EXECMAP) {
-		uvmexp.execpages -= vp->v_uobj.uo_npages;
-		uvmexp.filepages += vp->v_uobj.uo_npages;
+		atomic_add_int(&uvmexp.execpages, -vp->v_uobj.uo_npages);
+		atomic_add_int(&uvmexp.filepages, vp->v_uobj.uo_npages);
 	}
 	vp->v_iflag &= ~(VI_TEXT|VI_EXECMAP);
 
@@ -1069,7 +1067,7 @@ vclean(struct vnode *vp, int flags, struct lwp *l)
 		KASSERT((vp->v_iflag & VI_ONWORKLST) == 0);
 
 		if (active)
-			VOP_CLOSE(vp, FNONBLOCK, NOCRED, NULL);
+			VOP_CLOSE(vp, FNONBLOCK, NOCRED);
 
 		if ((vp->v_type == VBLK || vp->v_type == VCHR) &&
 		    vp->v_specinfo != 0) {
@@ -1118,7 +1116,7 @@ vclean(struct vnode *vp, int flags, struct lwp *l)
 	 * VOP_INACTIVE will unlock the vnode.
 	 */
 	if (active) {
-		VOP_INACTIVE(vp, l);
+		VOP_INACTIVE(vp);
 	} else {
 		/*
 		 * Any other processes trying to obtain this lock must first
@@ -1129,7 +1127,7 @@ vclean(struct vnode *vp, int flags, struct lwp *l)
 	/*
 	 * Reclaim the vnode.
 	 */
-	if (VOP_RECLAIM(vp, l))
+	if (VOP_RECLAIM(vp))
 		panic("vclean: cannot reclaim, vp %p", vp);
 	if (active) {
 		/*
@@ -1675,7 +1673,7 @@ vfs_mountroot(void)
 			panic("vfs_mountroot: rootdev not set for DV_DISK");
 	        if (bdevvp(rootdev, &rootvp))
 	                panic("vfs_mountroot: can't get vnode for rootdev");
-		error = VOP_OPEN(rootvp, FREAD, FSCRED, curlwp);
+		error = VOP_OPEN(rootvp, FREAD, FSCRED);
 		if (error) {
 			printf("vfs_mountroot: can't open root device\n");
 			return (error);
@@ -1729,7 +1727,7 @@ vfs_mountroot(void)
 
 done:
 	if (error && device_class(root_device) == DV_DISK) {
-		VOP_CLOSE(rootvp, FREAD, FSCRED, curlwp);
+		VOP_CLOSE(rootvp, FREAD, FSCRED);
 		vrele(rootvp);
 	}
 	return (error);

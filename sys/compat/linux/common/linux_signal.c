@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_signal.c,v 1.47.2.5 2007/10/27 11:29:40 yamt Exp $	*/
+/*	$NetBSD: linux_signal.c,v 1.47.2.6 2007/12/07 17:28:24 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.47.2.5 2007/10/27 11:29:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.47.2.6 2007/12/07 17:28:24 yamt Exp $");
 
 #define COMPAT_LINUX 1
 
@@ -568,8 +568,8 @@ linux_sys_kill(l, v, retval)
 }
 
 #ifdef LINUX_SS_ONSTACK
-static void linux_to_native_sigaltstack __P((struct sigaltstack *,
-    const struct linux_sigaltstack *));
+static void linux_to_native_sigaltstack(struct sigaltstack *,
+    const struct linux_sigaltstack *);
 
 static void
 linux_to_native_sigaltstack(bss, lss)

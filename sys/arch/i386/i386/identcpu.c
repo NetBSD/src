@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.19.2.6 2007/11/15 11:42:55 yamt Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.19.2.7 2007/12/07 17:24:59 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,14 +37,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.19.2.6 2007/11/15 11:42:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.19.2.7 2007/12/07 17:24:59 yamt Exp $");
 
-#include "opt_cputype.h"
 #include "opt_enhanced_speedstep.h"
 #include "opt_intel_odcm.h"
 #include "opt_intel_coretemp.h"
 #include "opt_powernow_k7.h"
 #include "opt_powernow_k8.h"
+#include "opt_xen.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -587,9 +587,9 @@ cyrix6x86_cpu_setup(ci)
 	 * model device is detected. Ideally, this work-around should not
 	 * even be in here, it should be in there. XXX
 	 */
-
-	extern int clock_broken_latch;
 	u_char c3;
+#ifndef XEN
+	extern int clock_broken_latch;
 
 	switch (ci->ci_signature) {
 	case 0x440:     /* Cyrix MediaGX */
@@ -597,6 +597,7 @@ cyrix6x86_cpu_setup(ci)
 		clock_broken_latch = 1;
 		break;
 	}
+#endif
 
 	/* set up various cyrix registers */
 	/*
@@ -1274,11 +1275,6 @@ transmeta_cpu_setup(struct cpu_info *ci)
 		tmx86_has_longrun = 1;
 }
 
-static const char n_support[] __attribute__((__unused__)) =
-    "NOTICE: this kernel does not support %s CPU class\n";
-static const char n_lower[] __attribute__((__unused__)) =
-    "NOTICE: lowering CPU class to %s\n";
-
 void
 identifycpu(struct cpu_info *ci)
 {
@@ -1399,12 +1395,6 @@ identifycpu(struct cpu_info *ci)
 	cpu_class = class;
 	ci->ci_cpu_class = class;
 
-	/*
-	 * If we have a cycle counter, compute the approximate
-	 * CPU speed in MHz.  We will re-run this on the CPU
-	 * itself in cpu_hatch() (first time around, we use the
-	 * value from the boot CPU to cover all CPUs).
-	 */
 	cpu_get_tsc_freq(ci);
 
 	snprintf(cpu_model, sizeof(cpu_model), "%s%s%s%s%s%s%s (%s-class)",
@@ -1510,37 +1500,8 @@ identifycpu(struct cpu_info *ci)
 		    ci->ci_cpu_serial[2] / 65536, ci->ci_cpu_serial[2] % 65536);
 	}
 
-	/*
-	 * Now that we have told the user what they have,
-	 * let them know if that machine type isn't configured.
-	 */
-	switch (cpu_class) {
-#ifndef I386_CPU
-	case CPUCLASS_386:
-		aprint_error(n_support, "i386");
-		panic("no appropriate CPU class available");
-#endif
-	default:
-		break;
-	}
-
-	/*
-	 * Now plug in optimized versions of various routines we
-	 * might have.
-	 */
-	switch (cpu_class) {
-	case CPUCLASS_686:
-		copyout_func = i486_copyout;
-		break;
-	case CPUCLASS_586:
-		copyout_func = i486_copyout;
-		break;
-	case CPUCLASS_486:
-		copyout_func = i486_copyout;
-		break;
-	default:
-		/* We just inherit the default i386 versions. */
-		break;
+	if (cpu_class == CPUCLASS_386) {
+		panic("NetBSD requires an 80486 or later processor");
 	}
 
 	if (cpu == CPU_486DLC) {

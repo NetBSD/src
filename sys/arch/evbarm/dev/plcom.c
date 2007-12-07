@@ -1,4 +1,4 @@
-/*	$NetBSD: plcom.c,v 1.10.2.3 2007/09/03 14:24:02 yamt Exp $	*/
+/*	$NetBSD: plcom.c,v 1.10.2.4 2007/12/07 17:24:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 ARM Ltd
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.10.2.3 2007/09/03 14:24:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.10.2.4 2007/12/07 17:24:32 yamt Exp $");
 
 #include "opt_plcom.h"
 #include "opt_ddb.h"
@@ -1425,15 +1425,8 @@ plcomstart(struct tty *tp)
 	if (sc->sc_tx_stopped)
 		goto out;
 
-	if (tp->t_outq.c_cc <= tp->t_lowat) {
-		if (ISSET(tp->t_state, TS_ASLEEP)) {
-			CLR(tp->t_state, TS_ASLEEP);
-			wakeup(&tp->t_outq);
-		}
-		selwakeup(&tp->t_wsel);
-		if (tp->t_outq.c_cc == 0)
-			goto out;
-	}
+	if (!ttypull(tp))
+		goto out;
 
 	/* Grab the first contiguous region of buffer space. */
 	{

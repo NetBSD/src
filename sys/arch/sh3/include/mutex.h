@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.4.2.3 2007/09/03 14:29:26 yamt Exp $	*/
+/*	$NetBSD: mutex.h,v 1.4.2.4 2007/12/07 17:26:09 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -43,7 +43,6 @@
 
 struct kmutex {
 	uintptr_t	mtx_pad1;
-	uint32_t	mtx_pad2;
 };
 
 #else	/* __MUTEX_PRIVATE */
@@ -61,7 +60,6 @@ struct kmutex {
 			volatile uint8_t	mtxs_unused;
 		} s;
 	} u;
-	volatile uint32_t	mtx_id;			/* 4-7 */
 };
 
 #define	mtx_owner		u.mtxa_owner
@@ -82,9 +80,9 @@ struct kmutex {
  */
 #define	MUTEX_GIVE(mtx)			/* nothing */
 
-int	_lock_cas(volatile uintptr_t *, uintptr_t, uintptr_t);
+uintptr_t	_lock_cas(volatile uintptr_t *, uintptr_t, uintptr_t);
 
-#define	MUTEX_CAS(p, o, n)		_lock_cas((p), (o), (n))
+#define	MUTEX_CAS(p, o, n)		(_lock_cas((p), (o), (n)) == (o))
 
 #endif	/* __MUTEX_PRIVATE */
 

@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.c,v 1.42 2005/06/01 16:13:04 drochner Exp $ */
+/* $NetBSD: autoconf.c,v 1.42.2.1 2007/12/07 17:23:48 yamt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.42 2005/06/01 16:13:04 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.42.2.1 2007/12/07 17:23:48 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,7 +74,6 @@ cpu_configure()
 {
 
 	parse_prom_bootdev();
-	softintr_init();
 
 	/*
 	 * Disable interrupts during autoconfiguration.  splhigh() won't

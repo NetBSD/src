@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_43.c,v 1.29.4.5 2007/10/27 11:29:30 yamt Exp $	*/
+/*	$NetBSD: vfs_syscalls_43.c,v 1.29.4.6 2007/12/07 17:27:38 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.29.4.5 2007/10/27 11:29:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.29.4.6 2007/12/07 17:27:38 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_union.h"
@@ -70,7 +70,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.29.4.5 2007/10/27 11:29:30 yam
 #include <compat/sys/stat.h>
 #include <compat/sys/mount.h>
 
-static void cvtstat __P((struct stat *, struct stat43 *));
+static void cvtstat(struct stat *, struct stat43 *);
 
 /*
  * Convert from an old to a new stat structure.
@@ -442,8 +442,8 @@ unionread:
 
 #ifdef UNION
 {
-	extern int (**union_vnodeop_p) __P((void *));
-	extern struct vnode *union_dircache __P((struct vnode *));
+	extern int (**union_vnodeop_p)(void *);
+	extern struct vnode *union_dircache(struct vnode *);
 
 	if ((count == auio.uio_resid) &&
 	    (vp->v_op == union_vnodeop_p)) {
@@ -457,7 +457,7 @@ unionread:
 			 * If the directory is opaque,
 			 * then don't show lower entries
 			 */
-			error = VOP_GETATTR(vp, &va, fp->f_cred, l);
+			error = VOP_GETATTR(vp, &va, fp->f_cred);
 			if (va.va_flags & OPAQUE) {
 				vput(lvp);
 				lvp = NULL;
@@ -465,7 +465,7 @@ unionread:
 		}
 
 		if (lvp != NULLVP) {
-			error = VOP_OPEN(lvp, FREAD, fp->f_cred, l);
+			error = VOP_OPEN(lvp, FREAD, fp->f_cred);
 			VOP_UNLOCK(lvp, 0);
 
 			if (error) {

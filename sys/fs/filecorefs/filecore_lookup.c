@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_lookup.c,v 1.5.4.3 2007/10/27 11:35:02 yamt Exp $	*/
+/*	$NetBSD: filecore_lookup.c,v 1.5.4.4 2007/12/07 17:31:53 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993, 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_lookup.c,v 1.5.4.3 2007/10/27 11:35:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_lookup.c,v 1.5.4.4 2007/12/07 17:31:53 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/namei.h>
@@ -156,7 +156,7 @@ filecore_lookup(v)
 	/*
 	 * Check accessiblity of directory.
 	 */
-	if ((error = VOP_ACCESS(vdp, VEXEC, cred, cnp->cn_lwp)) != 0)
+	if ((error = VOP_ACCESS(vdp, VEXEC, cred)) != 0)
 		return (error);
 
 	if ((flags & ISLASTCN) && (vdp->v_mount->mnt_flag & MNT_RDONLY) &&

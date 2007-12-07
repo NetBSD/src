@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_signal.c,v 1.33.2.2 2007/09/03 14:32:09 yamt Exp $ */
+/*	$NetBSD: irix_signal.c,v 1.33.2.3 2007/12/07 17:27:47 yamt Exp $ */
 
 /*-
  * Copyright (c) 1994, 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.33.2.2 2007/09/03 14:32:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.33.2.3 2007/12/07 17:27:47 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -72,16 +72,16 @@ __KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.33.2.2 2007/09/03 14:32:09 yamt Ex
 extern const int native_to_svr4_signo[];
 extern const int svr4_to_native_signo[];
 
-static int irix_wait_siginfo __P((int, struct rusage *, int,
-    struct irix_irix5_siginfo *));
-static void irix_signal_siginfo __P((struct irix_irix5_siginfo *,
-    int, u_long, void *));
-static void irix_set_ucontext __P((struct irix_ucontext*, const sigset_t *,
-    int, struct lwp *));
-static void irix_set_sigcontext __P((struct irix_sigcontext*, const sigset_t *,
-    int, struct lwp *));
-static void irix_get_ucontext __P((struct irix_ucontext*, struct lwp *));
-static void irix_get_sigcontext __P((struct irix_sigcontext*, struct lwp *));
+static int irix_wait_siginfo(int, struct rusage *, int,
+    struct irix_irix5_siginfo *);
+static void irix_signal_siginfo(struct irix_irix5_siginfo *,
+    int, u_long, void *);
+static void irix_set_ucontext(struct irix_ucontext*, const sigset_t *,
+    int, struct lwp *);
+static void irix_set_sigcontext(struct irix_sigcontext*, const sigset_t *,
+    int, struct lwp *);
+static void irix_get_ucontext(struct irix_ucontext*, struct lwp *);
+static void irix_get_sigcontext(struct irix_sigcontext*, struct lwp *);
 
 #define irix_sigmask(n)	 (1 << (((n) - 1) & 31))
 #define irix_sigword(n)	 (((n) - 1) >> 5)

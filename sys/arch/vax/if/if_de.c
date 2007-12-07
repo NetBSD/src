@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.41.16.2 2007/09/03 14:30:47 yamt Exp $	*/
+/*	$NetBSD: if_de.c,v 1.41.16.3 2007/12/07 17:26:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989 Regents of the University of California.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.41.16.2 2007/09/03 14:30:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.41.16.3 2007/12/07 17:26:30 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -267,7 +267,7 @@ deinit(ds)
 	int s,incaddr;
 
 	/* not yet, if address still unknown */
-	if (ifp->if_addrlist.tqh_first == (struct ifaddr *)0)
+	if (IFADDR_EMPTY(ifp))
 		return;
 
 	if (ds->ds_flags & DSF_RUNNING)

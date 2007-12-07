@@ -1,4 +1,4 @@
-/*	$NetBSD: if_auereg.h,v 1.16.34.1 2006/12/30 20:49:38 yamt Exp $	*/
+/*	$NetBSD: if_auereg.h,v 1.16.34.2 2007/12/07 17:31:28 yamt Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -275,7 +275,7 @@ struct aue_softc {
 	struct usb_task		aue_tick_task;
 	struct usb_task		aue_stop_task;
 
-	struct lock		aue_mii_lock;
+	kmutex_t		aue_mii_lock;
 
 };
 

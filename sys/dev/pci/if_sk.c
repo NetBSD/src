@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sk.c,v 1.15.2.5 2007/11/15 11:44:22 yamt Exp $	*/
+/*	$NetBSD: if_sk.c,v 1.15.2.6 2007/12/07 17:30:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -1229,6 +1229,8 @@ sk_attach(struct device *parent, struct device *self, void *aux)
 	void *kva;
 	int i, rseg;
 
+	aprint_naive("\n");
+
 	sc_if->sk_port = sa->skc_port;
 	sc_if->sk_softc = sc;
 	sc->sk_if[sa->skc_port] = sc_if;
@@ -1517,6 +1519,8 @@ skc_attach(struct device *parent, struct device *self, void *aux)
 	u_int32_t command;
 	const char *revstr;
 	const struct sysctlnode *node;
+
+	aprint_naive("\n");
 
 	DPRINTFN(2, ("begin skc_attach\n"));
 

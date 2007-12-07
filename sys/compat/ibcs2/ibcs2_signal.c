@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_signal.c,v 1.21.4.3 2007/09/03 14:32:05 yamt Exp $	*/
+/*	$NetBSD: ibcs2_signal.c,v 1.21.4.4 2007/12/07 17:27:45 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Bartram
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_signal.c,v 1.21.4.3 2007/09/03 14:32:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_signal.c,v 1.21.4.4 2007/12/07 17:27:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,8 +57,8 @@ __KERNEL_RCSID(0, "$NetBSD: ibcs2_signal.c,v 1.21.4.3 2007/09/03 14:32:05 yamt E
 extern const int native_to_ibcs2_signo[];
 extern const int ibcs2_to_native_signo[];
 
-void ibcs2_to_native_sigaction __P((const struct ibcs2_sigaction *, struct sigaction *));
-void native_to_ibcs2_sigaction __P((const struct sigaction *, struct ibcs2_sigaction *));
+void ibcs2_to_native_sigaction(const struct ibcs2_sigaction *, struct sigaction *);
+void native_to_ibcs2_sigaction(const struct sigaction *, struct ibcs2_sigaction *);
 
 void
 ibcs2_to_native_sigset(iss, bss)

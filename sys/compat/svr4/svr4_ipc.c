@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_ipc.c,v 1.17.4.3 2007/09/03 14:32:54 yamt Exp $	*/
+/*	$NetBSD: svr4_ipc.c,v 1.17.4.4 2007/12/07 17:29:05 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_ipc.c,v 1.17.4.3 2007/09/03 14:32:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_ipc.c,v 1.17.4.4 2007/12/07 17:29:05 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -68,42 +68,42 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_ipc.c,v 1.17.4.3 2007/09/03 14:32:54 yamt Exp $
 #include <compat/svr4/svr4_ipc.h>
 
 #if defined(SYSVMSG) || defined(SYSVSHM) || defined(SYSVSEM)
-static void svr4_to_bsd_ipc_perm __P((const struct svr4_ipc_perm *,
-				      struct ipc_perm *));
-static void bsd_to_svr4_ipc_perm __P((const struct ipc_perm *,
-				      struct svr4_ipc_perm *));
+static void svr4_to_bsd_ipc_perm(const struct svr4_ipc_perm *,
+				      struct ipc_perm *);
+static void bsd_to_svr4_ipc_perm(const struct ipc_perm *,
+				      struct svr4_ipc_perm *);
 #endif
 
 #ifdef SYSVSEM
-static void bsd_to_svr4_semid_ds __P((const struct semid_ds *,
-				      struct svr4_semid_ds *));
-static void svr4_to_bsd_semid_ds __P((const struct svr4_semid_ds *,
-				      struct semid_ds *));
-static int svr4_semop __P((struct lwp *, void *, register_t *));
-static int svr4_semget __P((struct lwp *, void *, register_t *));
-static int svr4_semctl __P((struct lwp *, void *, register_t *));
+static void bsd_to_svr4_semid_ds(const struct semid_ds *,
+				      struct svr4_semid_ds *);
+static void svr4_to_bsd_semid_ds(const struct svr4_semid_ds *,
+				      struct semid_ds *);
+static int svr4_semop(struct lwp *, void *, register_t *);
+static int svr4_semget(struct lwp *, void *, register_t *);
+static int svr4_semctl(struct lwp *, void *, register_t *);
 #endif
 
 #ifdef SYSVMSG
-static void bsd_to_svr4_msqid_ds __P((const struct msqid_ds *,
-				      struct svr4_msqid_ds *));
-static void svr4_to_bsd_msqid_ds __P((const struct svr4_msqid_ds *,
-				      struct msqid_ds *));
-static int svr4_msgsnd __P((struct lwp *, void *, register_t *));
-static int svr4_msgrcv __P((struct lwp *, void *, register_t *));
-static int svr4_msgget __P((struct lwp *, void *, register_t *));
-static int svr4_msgctl __P((struct lwp *, void *, register_t *));
+static void bsd_to_svr4_msqid_ds(const struct msqid_ds *,
+				      struct svr4_msqid_ds *);
+static void svr4_to_bsd_msqid_ds(const struct svr4_msqid_ds *,
+				      struct msqid_ds *);
+static int svr4_msgsnd(struct lwp *, void *, register_t *);
+static int svr4_msgrcv(struct lwp *, void *, register_t *);
+static int svr4_msgget(struct lwp *, void *, register_t *);
+static int svr4_msgctl(struct lwp *, void *, register_t *);
 #endif
 
 #ifdef SYSVSHM
-static void bsd_to_svr4_shmid_ds __P((const struct shmid_ds *,
-				      struct svr4_shmid_ds *));
-static void svr4_to_bsd_shmid_ds __P((const struct svr4_shmid_ds *,
-				      struct shmid_ds *));
-static int svr4_shmat __P((struct lwp *, void *, register_t *));
-static int svr4_shmdt __P((struct lwp *, void *, register_t *));
-static int svr4_shmget __P((struct lwp *, void *, register_t *));
-static int svr4_shmctl __P((struct lwp *, void *, register_t *));
+static void bsd_to_svr4_shmid_ds(const struct shmid_ds *,
+				      struct svr4_shmid_ds *);
+static void svr4_to_bsd_shmid_ds(const struct svr4_shmid_ds *,
+				      struct shmid_ds *);
+static int svr4_shmat(struct lwp *, void *, register_t *);
+static int svr4_shmdt(struct lwp *, void *, register_t *);
+static int svr4_shmget(struct lwp *, void *, register_t *);
+static int svr4_shmctl(struct lwp *, void *, register_t *);
 #endif
 
 #if defined(SYSVMSG) || defined(SYSVSHM) || defined(SYSVSEM)

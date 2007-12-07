@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_sun4.c,v 1.12.12.2 2006/12/30 20:46:58 yamt Exp $	*/
+/*	$NetBSD: timer_sun4.c,v 1.12.12.3 2007/12/07 17:26:16 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: timer_sun4.c,v 1.12.12.2 2006/12/30 20:46:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timer_sun4.c,v 1.12.12.3 2007/12/07 17:26:16 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -144,7 +144,7 @@ statintr_4(void *cap)
 			 * We're interrupting a thread that may have the
 			 * scheduler lock; run schedintr() later.
 			 */
-			softintr_schedule(sched_cookie);
+			sparc_softintr_schedule(sched_cookie);
 		}
 	}
 

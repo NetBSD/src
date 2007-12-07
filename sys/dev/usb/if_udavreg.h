@@ -1,4 +1,4 @@
-/*	$NetBSD: if_udavreg.h,v 1.2 2003/09/04 15:17:39 tsutsui Exp $	*/
+/*	$NetBSD: if_udavreg.h,v 1.2.18.1 2007/12/07 17:31:32 yamt Exp $	*/
 /*	$nabe: if_udavreg.h,v 1.2 2003/08/21 16:26:40 nabe Exp $	*/
 /*
  * Copyright (c) 2003
@@ -186,7 +186,7 @@ struct udav_softc {
 	/* Ethernet */
 	struct ethercom		sc_ec; /* ethernet common */
 	struct mii_data		sc_mii;
-	struct lock		sc_mii_lock;
+	kmutex_t		sc_mii_lock;
 	int			sc_link;
 #define	sc_media udav_mii.mii_media
 #if NRND > 0

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_todr.c,v 1.24.4.2 2006/12/30 20:50:06 yamt Exp $	*/
+/*	$NetBSD: kern_todr.c,v 1.24.4.3 2007/12/07 17:32:53 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,13 +76,15 @@
  *	@(#)clock.c	8.1 (Berkeley) 6/10/93
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.24.4.2 2006/12/30 20:50:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.24.4.3 2007/12/07 17:32:53 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/timetc.h>
+#include <sys/intr.h>
+
 #include <dev/clock_subr.h>	/* hmm.. this should probably move to sys */
 
 #ifdef	__HAVE_GENERIC_TODR

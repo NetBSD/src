@@ -1,4 +1,4 @@
-/*	$Id: shutdown_xenbus.c,v 1.3.4.2 2006/12/30 20:47:25 yamt Exp $	*/
+/*	$Id: shutdown_xenbus.c,v 1.3.4.3 2007/12/07 17:27:22 yamt Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -61,15 +61,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: shutdown_xenbus.c,v 1.3.4.2 2006/12/30 20:47:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: shutdown_xenbus.c,v 1.3.4.3 2007/12/07 17:27:22 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
 
 #include <dev/sysmon/sysmonvar.h>
 
-#include <machine/xenbus.h>
-#include <machine/shutdown_xenbus.h>
+#include <xen/xenbus.h>
+#include <xen/shutdown_xenbus.h>
 
 #define	SHUTDOWN_PATH	"control"
 #define	SHUTDOWN_NAME	"shutdown"

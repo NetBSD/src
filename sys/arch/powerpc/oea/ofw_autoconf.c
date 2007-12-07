@@ -1,4 +1,4 @@
-/* $NetBSD: ofw_autoconf.c,v 1.2.6.2 2007/11/15 11:43:17 yamt Exp $ */
+/* $NetBSD: ofw_autoconf.c,v 1.2.6.3 2007/12/07 17:25:56 yamt Exp $ */
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
  * Copyright (C) 1995, 1996 TooLs GmbH.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_autoconf.c,v 1.2.6.2 2007/11/15 11:43:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_autoconf.c,v 1.2.6.3 2007/12/07 17:25:56 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -52,20 +52,11 @@ __KERNEL_RCSID(0, "$NetBSD: ofw_autoconf.c,v 1.2.6.2 2007/11/15 11:43:17 yamt Ex
 #include <dev/scsipi/scsiconf.h>
 #include <dev/ata/atavar.h>
 #include <dev/ic/wdcvar.h>
-#include <dev/wsfb/genfbvar.h>
 
 extern char bootpath[256];
 char cbootpath[256];
 int console_node = 0, console_instance = 0;
 
-#ifdef macppc
-volatile uint32_t *heathrow_FCR = NULL;
-#endif
-
-struct genfb_colormap_callback gfb_cb;
-static void of_set_palette(void *, int, int, int, int);
-static void add_model_specifics(prop_dictionary_t);
-static void copyprops(int, prop_dictionary_t);
 static void canonicalize_bootpath(void);
 
 /*
@@ -213,9 +204,6 @@ device_register(dev, aux)
 	unsigned long addr;
 	char *p;
 
-	if (booted_device)
-		return;
-
 	/* Skip over devices not represented in the OF tree. */
 	if (device_is_a(dev, "mainbus")) {
 		parent = dev;
@@ -229,44 +217,27 @@ device_register(dev, aux)
 		/* see if this is going to be console */
 		struct pci_attach_args *pa = aux;
 		prop_dictionary_t dict;
-		int node, sub;
-		int console = 0;
+		int node;
+		char name[32];
 
 		dict = device_properties(dev);
 		node = pcidev_to_ofdev(pa->pa_pc, pa->pa_tag);
-		prop_dictionary_set_uint32(dict, "device_node", node);
 
-		console = (node == console_node);
+		if (node != 0) {
+			prop_dictionary_set_uint32(dict, "device_node", node);
 
-		if (!console) {
-			/*
-			 * see if any child matches since OF attaches nodes for
-			 * each head and /chosen/stdout points to the head
-			 * rather than the device itself in this case
-			 */
-			sub = OF_child(node);
-			while ((sub != 0) && (sub != console_node)) {
-				sub = OF_peer(sub);
+			memset(name, 0, sizeof(name));
+			OF_getprop(node, "device_type", name, sizeof(name));
+			if (strcmp(name, "display") == 0) {
+				/* setup display properties for fb driver */
+				prop_dictionary_set_bool(dict, "is_console", 0);
+				copy_disp_props(dev, node, dict);
 			}
-			if (sub == console_node) {
-				console = true;
-			}
-		}
-
-		if (console) {
-			uint64_t cmap_cb;
-
-			prop_dictionary_set_uint32(dict, "instance_handle",
-			    console_instance);
-			copyprops(console_node, dict);
-
-			gfb_cb.gcc_cookie = (void *)console_instance;
-			gfb_cb.gcc_set_mapreg = of_set_palette;
-			cmap_cb = (uint64_t)&gfb_cb;
-			prop_dictionary_set_uint64(dict, "cmap_callback",
-			    cmap_cb);
 		}
 	}
+
+	if (booted_device)
+		return;
 
 	if (device_is_a(device_parent(dev), "atapibus") ||
 	    device_is_a(device_parent(dev), "atabus") ||
@@ -409,70 +380,4 @@ pcidev_to_ofdev(pci_chipset_tag_t pc, pcitag_t tag)
 		}
 	}
 	return 0;
-}
-
-static void
-add_model_specifics(prop_dictionary_t dict)
-{
-	const char *bl_rev_models[] = {
-		"PowerBook4,3", "PowerBook6,3", "PowerBook6,5", NULL};
-	int node;
-
-	node = OF_finddevice("/");
-
-	if (of_compatible(node, bl_rev_models) != -1) {
-		prop_dictionary_set_bool(dict, "backlight_level_reverted", 1);
-	}
-}
-
-static void
-copyprops(int node, prop_dictionary_t dict)
-{
-	uint32_t temp;
-
-	prop_dictionary_set_bool(dict, "is_console", 1);
-	if (!of_to_uint32_prop(dict, node, "width", "width")) {
-
-		OF_interpret("screen-width", 0, 1, &temp);
-		prop_dictionary_set_uint32(dict, "width", temp);
-	}
-	if (!of_to_uint32_prop(dict, console_node, "height", "height")) {
-
-		OF_interpret("screen-height", 0, 1, &temp);
-		prop_dictionary_set_uint32(dict, "height", temp);
-	}
-	of_to_uint32_prop(dict, console_node, "linebytes", "linebytes");
-	if (!of_to_uint32_prop(dict, console_node, "depth", "depth")) {
-		/*
-		 * XXX we should check linebytes vs. width but those
-		 * FBs that don't have a depth property ( /chaos/control... )
-		 * won't have linebytes either
-		 */
-		prop_dictionary_set_uint32(dict, "depth", 8);
-	}
-	if (!of_to_uint32_prop(dict, console_node, "address", "address")) {
-		uint32_t fbaddr = 0;
-			OF_interpret("frame-buffer-adr", 0, 1, &fbaddr);
-		if (fbaddr != 0)
-			prop_dictionary_set_uint32(dict, "address", fbaddr);
-	}
-	of_to_dataprop(dict, console_node, "EDID", "EDID");
-	add_model_specifics(dict);
-
-	temp = 0;
-	if (OF_getprop(console_node, "ATY,RefCLK", &temp, sizeof(temp)) != 4) {
-
-		OF_getprop(OF_parent(console_node), "ATY,RefCLK", &temp,
-		    sizeof(temp));
-	}
-	if (temp != 0)
-		prop_dictionary_set_uint32(dict, "refclk", temp / 10);
-}
-
-static void
-of_set_palette(void *cookie, int index, int r, int g, int b)
-{
-	int ih = (int)cookie;
-
-	OF_call_method_1("color!", ih, 4, r, g, b, index);
 }

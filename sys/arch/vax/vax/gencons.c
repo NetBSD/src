@@ -1,4 +1,4 @@
-/*	$NetBSD: gencons.c,v 1.40.16.4 2007/09/03 14:30:53 yamt Exp $	*/
+/*	$NetBSD: gencons.c,v 1.40.16.5 2007/12/07 17:26:32 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -36,7 +36,7 @@
  /* All bugs are subject to removal without further notice */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gencons.c,v 1.40.16.4 2007/09/03 14:30:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gencons.c,v 1.40.16.5 2007/12/07 17:26:32 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_cputype.h"
@@ -201,19 +201,13 @@ gencnstart(struct tty *tp)
 		goto out;
 	cl = &tp->t_outq;
 
-	if(cl->c_cc){
+	if (ttypull(tp)) {
 		tp->t_state |= TS_BUSY;
 		ch = getc(cl);
 		mtpr(ch, pr_txdb[minor(tp->t_dev)]);
-	} else {
-		if (tp->t_state & TS_ASLEEP) {
-			tp->t_state &= ~TS_ASLEEP;
-			wakeup((void *)cl);
-		}
-		selwakeup(&tp->t_wsel);
 	}
-
-out:	splx(s);
+ out:
+	splx(s);
 }
 
 static void

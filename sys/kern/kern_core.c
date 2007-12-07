@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_core.c,v 1.3.2.4 2007/10/27 11:35:20 yamt Exp $	*/
+/*	$NetBSD: kern_core.c,v 1.3.2.5 2007/12/07 17:32:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_core.c,v 1.3.2.4 2007/10/27 11:35:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_core.c,v 1.3.2.5 2007/12/07 17:32:37 yamt Exp $");
 
 #include "opt_coredump.h"
 
@@ -169,7 +169,7 @@ coredump(struct lwp *l, const char *pattern)
 
 	/* Don't dump to non-regular files or files with links. */
 	if (vp->v_type != VREG ||
-	    VOP_GETATTR(vp, &vattr, cred, l) || vattr.va_nlink != 1) {
+	    VOP_GETATTR(vp, &vattr, cred) || vattr.va_nlink != 1) {
 		error = EINVAL;
 		goto out;
 	}
@@ -182,8 +182,8 @@ coredump(struct lwp *l, const char *pattern)
 		vattr.va_mode = security_setidcore_mode;
 	}
 
-	VOP_LEASE(vp, l, cred, LEASE_WRITE);
-	VOP_SETATTR(vp, &vattr, cred, l);
+	VOP_LEASE(vp, cred, LEASE_WRITE);
+	VOP_SETATTR(vp, &vattr, cred);
 	p->p_acflag |= ACORE;
 
 	io.io_lwp = l;

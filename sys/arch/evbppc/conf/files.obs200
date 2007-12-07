@@ -1,4 +1,4 @@
-#	$NetBSD: files.obs200,v 1.1.8.2 2006/12/30 20:45:52 yamt Exp $
+#	$NetBSD: files.obs200,v 1.1.8.3 2007/12/07 17:24:35 yamt Exp $
 #	Original Tag: files.obs405,v 1.9 2005/01/24 18:47:37 shige Exp
 #
 # obs200-specific configuration info
@@ -7,7 +7,6 @@ file	arch/powerpc/ibm4xx/ibm4xx_autoconf.c
 file	arch/powerpc/ibm4xx/ibm40x_machdep.c
 file	arch/powerpc/ibm4xx/ibm4xx_machdep.c
 file	arch/powerpc/ibm4xx/intr.c
-file 	arch/powerpc/powerpc/softintr.c
 file	arch/evbppc/obs405/dev/century_bios.c
 file	arch/evbppc/obs405/consinit.c
 file	arch/evbppc/obs405/obs200_autoconf.c

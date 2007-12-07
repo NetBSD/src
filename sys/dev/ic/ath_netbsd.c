@@ -1,4 +1,4 @@
-/*	$NetBSD: ath_netbsd.c,v 1.3.2.4 2007/10/27 11:30:31 yamt Exp $ */
+/*	$NetBSD: ath_netbsd.c,v 1.3.2.5 2007/12/07 17:29:51 yamt Exp $ */
 
 /*-
  * Copyright (c) 2003, 2004 David Young
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ath_netbsd.c,v 1.3.2.4 2007/10/27 11:30:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath_netbsd.c,v 1.3.2.5 2007/12/07 17:29:51 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -61,34 +61,15 @@ __KERNEL_RCSID(0, "$NetBSD: ath_netbsd.c,v 1.3.2.4 2007/10/27 11:30:31 yamt Exp 
 #include <dev/ic/athvar.h>
 
 void
-device_printf(struct device dv, const char *fmt, ...)
+device_printf(device_t dev, const char *fmt, ...)
 {
-        va_list ap;
+	va_list ap;
 
-        va_start(ap, fmt);
-        printf("%s: ", dv.dv_xname);
-        vprintf(fmt, ap);
-        va_end(ap);
+	va_start(ap, fmt);
+	printf("%s: ", device_xname(dev));
+	vprintf(fmt, ap);
+	va_end(ap);
 	return;
-}
-
-struct mbuf *
-m_defrag(struct mbuf *m0, int flags)
-{
-	struct mbuf *m;
-	MGETHDR(m, flags, MT_DATA);
-	if (m == NULL)
-		return NULL;
-
-	M_COPY_PKTHDR(m, m0);
-	MCLGET(m, flags);
-	if ((m->m_flags & M_EXT) == 0) {
-		m_free(m);
-		return NULL;
-	}
-	m_copydata(m0, 0, m0->m_pkthdr.len, mtod(m, void *));
-	m->m_len = m->m_pkthdr.len;
-	return m;
 }
 
 /*

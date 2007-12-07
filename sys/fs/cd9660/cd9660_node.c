@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_node.c,v 1.10.2.4 2007/10/27 11:35:00 yamt Exp $	*/
+/*	$NetBSD: cd9660_node.c,v 1.10.2.5 2007/12/07 17:31:50 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_node.c,v 1.10.2.4 2007/10/27 11:35:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_node.c,v 1.10.2.5 2007/12/07 17:31:50 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -285,10 +285,8 @@ cd9660_inactive(v)
 {
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
-		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
-	struct lwp *l = ap->a_l;
 	struct iso_node *ip = VTOI(vp);
 	int error = 0;
 
@@ -302,7 +300,7 @@ cd9660_inactive(v)
 	 * so that it can be reused immediately.
 	 */
 	if (ip->inode.iso_mode == 0)
-		vrecycle(vp, (struct simplelock *)0, l);
+		vrecycle(vp, (struct simplelock *)0, curlwp);
 	return error;
 }
 

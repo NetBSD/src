@@ -1,4 +1,4 @@
-/*	$NetBSD: bios32.c,v 1.2.16.2 2007/09/03 14:22:29 yamt Exp $	*/
+/*	$NetBSD: bios32.c,v 1.2.16.3 2007/12/07 17:23:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bios32.c,v 1.2.16.2 2007/09/03 14:22:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bios32.c,v 1.2.16.3 2007/12/07 17:23:55 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,6 +84,7 @@ __KERNEL_RCSID(0, "$NetBSD: bios32.c,v 1.2.16.2 2007/09/03 14:22:29 yamt Exp $")
 #include <uvm/uvm.h>
 
 #include "ipmi.h"
+#include "opt_xen.h"
 
 #define	BIOS32_START	0xe0000
 #define	BIOS32_SIZE	0x20000
@@ -121,12 +122,12 @@ bios32_init()
 
 		entry = *(u_int32_t *)(p + 4);
 
-		printf("BIOS32 rev. %d found at 0x%lx\n",
+		aprint_verbose("BIOS32 rev. %d found at 0x%lx\n",
 		    *(p + 8), entry);
 
 		if (entry < BIOS32_START ||
 		    entry >= BIOS32_END) {
-			printf("BIOS32 entry point outside "
+			aprint_error("BIOS32 entry point outside "
 			    "allowable range\n");
 			entry = 0;
 		}
@@ -180,10 +181,14 @@ bios32_init()
 		smbios_entry.count = sh->count;
 
     		for (; pa < end; pa+= NBPG, eva+= NBPG)
+#ifdef XEN
+			pmap_kenter_ma(eva, pa, VM_PROT_READ);
+#else
 			pmap_kenter_pa(eva, pa, VM_PROT_READ);
+#endif
 		pmap_update(pmap_kernel());
 
-		printf("SMBIOS rev. %d.%d @ 0x%lx (%d entries)\n",
+		aprint_normal("SMBIOS rev. %d.%d @ 0x%lx (%d entries)\n",
 			    sh->majrev, sh->minrev, (u_long)sh->addr,
 			    sh->count);
 
@@ -218,7 +223,8 @@ bios32_service(service, e, ei)
 	entry = ebx + edx;
 
 	if (entry < BIOS32_START || entry >= BIOS32_END) {
-		printf("bios32: entry point for service %c%c%c%c is outside "
+		aprint_error(
+		    "bios32: entry point for service %c%c%c%c is outside "
 		    "allowable range\n",
 		    service & 0xff,
 		    (service >> 8) & 0xff,

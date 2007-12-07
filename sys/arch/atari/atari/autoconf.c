@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.51.2.2 2007/09/03 14:23:30 yamt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.51.2.3 2007/12/07 17:24:21 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.51.2.2 2007/09/03 14:23:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.51.2.3 2007/12/07 17:24:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,7 +63,6 @@ cpu_configure()
 	
 	atari_realconfig = 1;
 
-	softintr_init();
 	init_sicallback();
 
 	if (config_rootfound("mainbus", __UNCONST("mainbus")) == NULL)

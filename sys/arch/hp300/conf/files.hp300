@@ -1,4 +1,4 @@
-#	$NetBSD: files.hp300,v 1.73.12.2 2007/09/03 14:24:57 yamt Exp $
+#	$NetBSD: files.hp300,v 1.73.12.3 2007/12/07 17:24:40 yamt Exp $
 #
 # hp300-specific configuration info
 
@@ -195,7 +195,6 @@ file	arch/m68k/m68k/db_memrw.c		ddb | kgdb
 file	arch/m68k/m68k/kgdb_machdep.c		kgdb
 file	arch/m68k/m68k/pmap_motorola.c
 file	arch/m68k/m68k/procfs_machdep.c		procfs
-file	arch/m68k/m68k/softintr.c
 file	arch/m68k/m68k/sys_machdep.c
 file	arch/m68k/m68k/vm_machdep.c
 

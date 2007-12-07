@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_xs.c,v 1.5.10.4 2007/09/03 14:31:40 yamt Exp $ */
+/* $NetBSD: xenbus_xs.c,v 1.5.10.5 2007/12/07 17:27:26 yamt Exp $ */
 /******************************************************************************
  * xenbus_xs.c
  *
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_xs.c,v 1.5.10.4 2007/09/03 14:31:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_xs.c,v 1.5.10.5 2007/12/07 17:27:26 yamt Exp $");
 
 #if 0
 #define DPRINTK(fmt, args...) \
@@ -46,11 +46,12 @@ __KERNEL_RCSID(0, "$NetBSD: xenbus_xs.c,v 1.5.10.4 2007/09/03 14:31:40 yamt Exp 
 #include <sys/systm.h>
 #include <sys/param.h>
 #include <sys/proc.h>
+#include <sys/mutex.h>
 #include <sys/kthread.h>
 
 #include <machine/stdarg.h>
 
-#include <machine/xenbus.h>
+#include <xen/xenbus.h>
 #include "xenbus_comms.h"
 
 #define streq(a, b) (strcmp((a), (b)) == 0)
@@ -79,7 +80,7 @@ struct xs_handle {
 	/* A list of replies. Currently only one will ever be outstanding. */
 	SIMPLEQ_HEAD(, xs_stored_msg) reply_list;
 	struct simplelock reply_lock;
-	struct lock xs_lock; /* serialize access to xenstore */
+	kmutex_t xs_lock; /* serialize access to xenstore */
 	int suspend_spl;
 
 };
@@ -168,10 +169,7 @@ xenbus_dev_request_and_reply(struct xsd_sockmsg *msg, void**reply)
 	int err = 0, s;
 
 	s = spltty();
-	err = lockmgr(&xs_state.xs_lock, LK_EXCLUSIVE, NULL);
-	if (err)
-		panic("can't get xs_state.xs_lock: %d", err);
-
+	mutex_enter(&xs_state.xs_lock);
 	err = xb_write(msg, sizeof(*msg) + msg->len);
 	if (err) {
 		msg->type = XS_ERROR;
@@ -179,8 +177,7 @@ xenbus_dev_request_and_reply(struct xsd_sockmsg *msg, void**reply)
 	} else {
 		*reply = read_reply(&msg->type, &msg->len);
 	}
-
-	lockmgr(&xs_state.xs_lock, LK_RELEASE, NULL);
+	mutex_exit(&xs_state.xs_lock);
 	splx(s);
 
 	return err;
@@ -208,15 +205,13 @@ xs_talkv(struct xenbus_transaction *t,
 		msg.len += iovec[i].iov_len;
 
 	s = spltty();
-	err = lockmgr(&xs_state.xs_lock, LK_EXCLUSIVE, NULL);
-	if (err)
-		panic("can't get xs_state.xs_lock: %d", err);
+	mutex_enter(&xs_state.xs_lock);
 
 	DPRINTK("write msg");
 	err = xb_write(&msg, sizeof(msg));
 	DPRINTK("write msg err %d", err);
 	if (err) {
-		lockmgr(&xs_state.xs_lock, LK_RELEASE, NULL);
+		mutex_exit(&xs_state.xs_lock);
 		splx(s);
 		return (err);
 	}
@@ -226,7 +221,7 @@ xs_talkv(struct xenbus_transaction *t,
 		err = xb_write(iovec[i].iov_base, iovec[i].iov_len);;
 		DPRINTK("write iovect err %d", err);
 		if (err) {
-			lockmgr(&xs_state.xs_lock, LK_RELEASE, NULL);
+			mutex_exit(&xs_state.xs_lock);
 			splx(s);
 			return (err);
 		}
@@ -236,7 +231,7 @@ xs_talkv(struct xenbus_transaction *t,
 	ret = read_reply(&msg.type, len);
 	DPRINTK("read done");
 
-	lockmgr(&xs_state.xs_lock, LK_RELEASE, NULL);
+	mutex_exit(&xs_state.xs_lock);
 	splx(s);
 
 	if (msg.type == XS_ERROR) {
@@ -834,7 +829,7 @@ xs_init(void)
 
 	SIMPLEQ_INIT(&xs_state.reply_list);
 	simple_lock_init(&xs_state.reply_lock);
-	lockinit(&xs_state.xs_lock, IPL_TTY, "xenst", 0, 0);
+	mutex_init(&xs_state.xs_lock, MUTEX_DEFAULT, IPL_NONE);
 
 	err = kthread_create(PRI_NONE, 0, NULL, xenwatch_thread,
 	    NULL, NULL, "xenwatch");

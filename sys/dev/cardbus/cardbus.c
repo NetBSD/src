@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.61.4.4 2007/10/27 11:30:08 yamt Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.61.4.5 2007/12/07 17:29:41 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.61.4.4 2007/10/27 11:30:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.61.4.5 2007/12/07 17:29:41 yamt Exp $");
 
 #include "opt_cardbus.h"
 
@@ -122,13 +122,14 @@ cardbusattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_bus = cba->cba_bus;
 	sc->sc_intrline = cba->cba_intrline;
 	sc->sc_cacheline = cba->cba_cacheline;
-	sc->sc_lattimer = cba->cba_lattimer;
+	sc->sc_max_lattimer = MIN(0xf8, cba->cba_max_lattimer);
 
-	printf(": bus %d", sc->sc_bus);
+	aprint_naive("\n");
+	aprint_normal(": bus %d", sc->sc_bus);
 	if (bootverbose)
-		printf(" cacheline 0x%x, lattimer 0x%x", sc->sc_cacheline,
-		    sc->sc_lattimer);
-	printf("\n");
+		aprint_normal(" cacheline 0x%x, lattimer 0x%x",
+		    sc->sc_cacheline, sc->sc_max_lattimer);
+	aprint_normal("\n");
 
 	sc->sc_iot = cba->cba_iot;	/* CardBus I/O space tag */
 	sc->sc_memt = cba->cba_memt;	/* CardBus MEM space tag */
@@ -194,7 +195,7 @@ cardbus_read_tuples(struct cardbus_attach_args *ca, cardbusreg_t cis_ptr,
 			DPRINTF(("%s: reading CIS data from ROM\n",
 			    sc->sc_dev.dv_xname));
 		} else {
-			reg = CARDBUS_BASE0_REG + (cardbus_space - 1) * 4;
+			reg = CARDBUS_CIS_ASI_BAR(cardbus_space);
 			DPRINTF(("%s: reading CIS data from BAR%d\n",
 			    sc->sc_dev.dv_xname, cardbus_space - 1));
 		}
@@ -415,7 +416,7 @@ cardbus_rescan(struct device *self, const char *ifattr,
 	cardbus_function_tag_t cf;
 	cardbustag_t tag;
 	cardbusreg_t id, class, cis_ptr;
-	cardbusreg_t bhlc;
+	cardbusreg_t bhlc, icr, lattimer;
 	int cdstatus;
 	int function, nfunction;
 	struct device *csc;
@@ -442,6 +443,9 @@ cardbus_rescan(struct device *self, const char *ifattr,
 
 	/*
 	 * Wait until power comes up.  Maxmum 500 ms.
+	 *
+	 * XXX What is this for?  The bridge driver ought to have waited
+	 * XXX already.
 	 */
 	{
 		int i;
@@ -509,26 +513,38 @@ cardbus_rescan(struct device *self, const char *ifattr,
 
 		/* set initial latency and cacheline size */
 		bhlc = cardbus_conf_read(cc, cf, tag, CARDBUS_BHLC_REG);
-		DPRINTF(("%s func%d bhlc 0x%08x -> ", sc->sc_dev.dv_xname,
-		    function, bhlc));
-		bhlc &= ~((CARDBUS_LATTIMER_MASK << CARDBUS_LATTIMER_SHIFT) |
-		    (CARDBUS_CACHELINE_MASK << CARDBUS_CACHELINE_SHIFT));
+		icr = cardbus_conf_read(cc, cf, tag, CARDBUS_INTERRUPT_REG);
+		DPRINTF(("%s func%d icr 0x%08x bhlc 0x%08x -> ",
+		    device_xname(&sc->sc_dev), function, icr, bhlc));
+		bhlc &= ~(CARDBUS_CACHELINE_MASK << CARDBUS_CACHELINE_SHIFT);
 		bhlc |= (sc->sc_cacheline & CARDBUS_CACHELINE_MASK) <<
 		    CARDBUS_CACHELINE_SHIFT;
-		bhlc |= (sc->sc_lattimer & CARDBUS_LATTIMER_MASK) <<
-		    CARDBUS_LATTIMER_SHIFT;
+		/*
+		 * Set the initial value of the Latency Timer.
+		 *
+		 * While a PCI device owns the bus, its Latency
+		 * Timer counts down bus cycles from its initial
+		 * value to 0.  Minimum Grant tells for how long
+		 * the device wants to own the bus once it gets
+		 * access, in units of 250ns.
+		 *
+		 * On a 33 MHz bus, there are 8 cycles per 250ns.
+		 * So I multiply the Minimum Grant by 8 to find
+		 * out the initial value of the Latency Timer.
+		 *
+		 * Avoid setting a Latency Timer less than 0x10,
+		 * since the old code did not do that.
+		 */
+		lattimer =
+		    MIN(sc->sc_max_lattimer, MAX(0x10, 8 * PCI_MIN_GNT(icr)));
+		if (PCI_LATTIMER(bhlc) < lattimer) {
+			bhlc &= ~(PCI_LATTIMER_MASK << PCI_LATTIMER_SHIFT);
+			bhlc |= (lattimer << PCI_LATTIMER_SHIFT);
+		}
 
 		cardbus_conf_write(cc, cf, tag, CARDBUS_BHLC_REG, bhlc);
 		bhlc = cardbus_conf_read(cc, cf, tag, CARDBUS_BHLC_REG);
 		DPRINTF(("0x%08x\n", bhlc));
-
-		if (CARDBUS_LATTIMER(bhlc) < 0x10) {
-			bhlc &= ~(CARDBUS_LATTIMER_MASK <<
-			    CARDBUS_LATTIMER_SHIFT);
-			bhlc |= (0x10 << CARDBUS_LATTIMER_SHIFT);
-			cardbus_conf_write(cc, cf, tag,
-			    CARDBUS_BHLC_REG, bhlc);
-		}
 
 		/*
 		 * We need to allocate the ct here, since we might
@@ -539,6 +555,7 @@ cardbus_rescan(struct device *self, const char *ifattr,
 			panic("no room for cardbus_tag");
 		}
 
+		ct->ct_bhlc = bhlc;
 		ct->ct_cc = sc->sc_cc;
 		ct->ct_cf = sc->sc_cf;
 		ct->ct_bus = sc->sc_bus;
@@ -763,6 +780,7 @@ cardbus_function_enable(struct cardbus_softc *sc, int func)
 {
 	cardbus_chipset_tag_t cc = sc->sc_cc;
 	cardbus_function_tag_t cf = sc->sc_cf;
+	cardbus_devfunc_t ct;
 	cardbusreg_t command;
 	cardbustag_t tag;
 
@@ -782,6 +800,9 @@ cardbus_function_enable(struct cardbus_softc *sc, int func)
 	    CARDBUS_COMMAND_MASTER_ENABLE); /* XXX: good guess needed */
 
 	cardbus_conf_write(cc, cf, tag, CARDBUS_COMMAND_STATUS_REG, command);
+
+	if ((ct = sc->sc_funcs[func]) != NULL)
+		Cardbus_conf_write(ct, tag, CARDBUS_BHLC_REG, ct->ct_bhlc);
 
 	cardbus_free_tag(cc, cf, tag);
 

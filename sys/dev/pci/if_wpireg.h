@@ -1,4 +1,4 @@
-/*  $NetBSD: if_wpireg.h,v 1.2.4.5 2007/10/27 11:33:07 yamt Exp $    */
+/*  $NetBSD: if_wpireg.h,v 1.2.4.6 2007/12/07 17:30:26 yamt Exp $    */
 
 /*-
  * Copyright (c) 2006
@@ -87,6 +87,7 @@
 #define WPI_MEM_CLOCK2		0x3008
 #define WPI_MEM_POWER		0x300c
 #define WPI_MEM_PCIDEV		0x3010
+#define WPI_MEM_RFKILL		0x3014
 #define WPI_MEM_UCODE_CTL	0x3400
 #define WPI_MEM_UCODE_SRC	0x3404
 #define WPI_MEM_UCODE_DST	0x3408
