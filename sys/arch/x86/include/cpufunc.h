@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.2.10.2 2007/10/27 11:28:54 yamt Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.2.10.3 2007/12/07 17:26:56 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -123,18 +123,6 @@ uint64_t	rdtsc(void);
 uint64_t	rdpmc(u_int);
 void		wrmsr(u_int, uint64_t);
 void		wrmsr_locked(u_int, u_int, u_int64_t);
-
-/*
- * XXX Maybe these don't belong here...
- */
-
-extern int (*copyout_func)(const void *, void *, size_t);
-extern int (*copyin_func)(const void *, void *, size_t);
-
-int	i386_copyout(const void *, void *, size_t);
-int	i486_copyout(const void *, void *, size_t);
-
-int	i386_copyin(const void *, void *, size_t);
 
 #endif /* _KERNEL */
 

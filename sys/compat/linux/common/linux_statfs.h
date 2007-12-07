@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_statfs.h,v 1.1.20.2 2007/09/03 14:32:26 yamt Exp $	*/
+/*	$NetBSD: linux_statfs.h,v 1.1.20.3 2007/12/07 17:28:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -40,8 +40,8 @@
 #ifndef _LINUX_STATFS_H
 #define _LINUX_STATFS_H
 
-static void bsd_to_linux_statfs __P((const struct statvfs *,
-    struct linux_statfs *));
+static void bsd_to_linux_statfs(const struct statvfs *,
+    struct linux_statfs *);
 
 /*
  * Convert NetBSD statvfs structure to Linux statfs structure.

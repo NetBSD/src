@@ -1,4 +1,4 @@
-/*	$NetBSD: efs_vnops.c,v 1.6.8.3 2007/10/27 11:35:02 yamt Exp $	*/
+/*	$NetBSD: efs_vnops.c,v 1.6.8.4 2007/12/07 17:31:53 yamt Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble <rumble@ephemeral.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efs_vnops.c,v 1.6.8.3 2007/10/27 11:35:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efs_vnops.c,v 1.6.8.4 2007/12/07 17:31:53 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,7 +66,7 @@ efs_lookup(void *v)
 	int err, nameiop = cnp->cn_nameiop;
 
 	/* ensure that the directory can be accessed first */
-        err = VOP_ACCESS(ap->a_dvp, VEXEC, cnp->cn_cred, cnp->cn_lwp);
+        err = VOP_ACCESS(ap->a_dvp, VEXEC, cnp->cn_cred);
 	if (err)
 		return (err);
 
@@ -105,7 +105,7 @@ efs_lookup(void *v)
 			if (err == ENOENT && (nameiop == CREATE ||
 			    nameiop == RENAME)) {
 				err = VOP_ACCESS(ap->a_dvp, VWRITE,
-				    cnp->cn_cred, cnp->cn_lwp);
+				    cnp->cn_cred);
 				if (err)
 					return (err);
 				cnp->cn_flags |= SAVENAME;
@@ -139,7 +139,6 @@ efs_access(void *v)
 		struct vnode *a_vp;
 		int a_mode;
 		struct ucred *a_cred;
-		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct efs_inode *eip = EFS_VTOI(vp);
@@ -164,7 +163,6 @@ efs_getattr(void *v)
 		struct vnode *a_vp;
 		struct vattr *a_vap; 
 		struct ucred *a_cred;
-		struct lwp *a_l;
 	} */ *ap = v;
 
 	struct vattr *vap = ap->a_vap;
@@ -561,14 +559,13 @@ efs_inactive(void *v)
 	struct vop_inactive_args /* {
 		const struct vnodeop_desc *a_desc;
 		struct vnode *a_vp;
-		struct lwp *a_l;
 	} */ *ap = v;
 	struct efs_inode *eip = EFS_VTOI(ap->a_vp);
 
 	VOP_UNLOCK(ap->a_vp, 0);
 
 	if (eip->ei_mode == 0)
-		vrecycle(ap->a_vp, NULL, ap->a_l);
+		vrecycle(ap->a_vp, NULL, curlwp);
 
 	return (0);
 }
@@ -579,7 +576,6 @@ efs_reclaim(void *v)
 	struct vop_reclaim_args /* {
 		const struct vnodeop_desc *a_desc;
 		struct vnode *a_vp;
-		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 

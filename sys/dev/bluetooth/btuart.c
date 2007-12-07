@@ -1,4 +1,4 @@
-/*	$NetBSD: btuart.c,v 1.1.2.5 2007/11/15 11:44:06 yamt Exp $	*/
+/*	$NetBSD: btuart.c,v 1.1.2.6 2007/12/07 17:29:40 yamt Exp $	*/
 /*
  * Copyright (c) 2006, 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btuart.c,v 1.1.2.5 2007/11/15 11:44:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btuart.c,v 1.1.2.6 2007/12/07 17:29:40 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -70,9 +70,11 @@ struct bth4hci {
 
 struct btuart_softc {
 	device_t	sc_dev;
+	int sc_flags;
 
 	struct tty *sc_tp;
-	struct hci_unit sc_unit;		/* Bluetooth HCI Unit */
+	struct hci_unit *sc_unit;		/* Bluetooth HCI Unit */
+	struct bt_stats sc_stats;
 
 	struct bth4hci sc_bth4hci;
 	int sc_baud;
@@ -89,10 +91,18 @@ struct btuart_softc {
 	struct mbuf *sc_rxp;			/* incoming packet */
 	struct mbuf *sc_txp;			/* outgoing packet */
 
-	void (*sc_input_acl)(struct hci_unit *, struct mbuf *);
-	void (*sc_input_sco)(struct hci_unit *, struct mbuf *);
-	void (*sc_input_event)(struct hci_unit *, struct mbuf *);
+	MBUFQ_HEAD() sc_cmdq;
+	MBUFQ_HEAD() sc_aclq;
+	MBUFQ_HEAD() sc_scoq;
+
+	bool (*sc_input_acl)(struct hci_unit *, struct mbuf *);
+	bool (*sc_input_sco)(struct hci_unit *, struct mbuf *);
+	bool (*sc_input_event)(struct hci_unit *, struct mbuf *);
 };
+
+/* sc_flags */
+#define BTUART_XMIT	(1 << 0)	/* transmit is active */
+#define BTUART_ENABLED	(1 << 1)	/* device is enabled */
 
 void btuartattach(int);
 static int btuart_match(device_t, struct cfdata *, void *);
@@ -110,19 +120,24 @@ static int init_swave(struct btuart_softc *);
 static int init_st(struct btuart_softc *);
 static int firmload_stlc2500(struct btuart_softc *, int, char *);
 static int init_stlc2500(struct btuart_softc *);
+static int init_bgb2xx(struct btuart_softc *);
 static int init_bcm2035(struct btuart_softc *);
 static int bth4init(struct btuart_softc *);
-static void bth4init_input(struct hci_unit *, struct mbuf *);
+static bool bth4init_input(struct hci_unit *, struct mbuf *);
 
 static int bth4open(dev_t, struct tty *);
 static int bth4close(struct tty *, int);
 static int bth4ioctl(struct tty *, u_long, void *, int, struct lwp *);
 static int bth4input(int, struct tty *);
 static int bth4start(struct tty *);
+static void bth4_start(struct btuart_softc *);
 
 static int bth4_enable(device_t);
 static void bth4_disable(device_t);
-static void bth4_start(device_t);
+static void bth4_output_cmd(device_t, struct mbuf *);
+static void bth4_output_acl(device_t, struct mbuf *);
+static void bth4_output_sco(device_t, struct mbuf *);
+static void bth4_stats(device_t, struct bt_stats *, int);
 
 /*
  * It doesn't need to be exported, as only btuartattach() uses it,
@@ -144,22 +159,26 @@ static struct linesw bth4_disc = {
 	.l_poll = ttyerrpoll
 };
 
+static const struct hci_if btuart_hci = {
+	.enable = bth4_enable,
+	.disable = bth4_disable,
+	.output_cmd = bth4_output_cmd,
+	.output_acl = bth4_output_acl,
+	.output_sco = bth4_output_sco,
+	.get_stats = bth4_stats,
+	.ipl = IPL_TTY,
+};
+
 static struct bth4hci bth4hci[] = {
 	{ BTUART_HCITYPE_ANY,		     B0, FLOW_CTL, NULL },
 	{ BTUART_HCITYPE_ERICSSON,	 B57600, FLOW_CTL, init_ericsson },
 	{ BTUART_HCITYPE_DIGI,		  B9600, FLOW_CTL, init_digi },
 	{ BTUART_HCITYPE_TEXAS,		B115200, FLOW_CTL, init_texas },
-	/* CSR Casira serial adapter or BrainBoxes serial dongle (BL642) */
 	{ BTUART_HCITYPE_CSR,		B115200, FLOW_CTL, init_csr },
-	/* Silicon Wave kits */
 	{ BTUART_HCITYPE_SWAVE,		B115200, FLOW_CTL, init_swave },
-	/* ST Microelectronics minikits based on STLC2410/STLC2415 */
 	{ BTUART_HCITYPE_ST,		 B57600, FLOW_CTL, init_st },
-	/* ST Microelectronics minikits based on STLC2500 */
 	{ BTUART_HCITYPE_STLC2500,	B115200, FLOW_CTL, init_stlc2500 },
-	/* AmbiCom BT2000C Bluetooth PC/CF Card */
-	{ BTUART_HCITYPE_BT2000C,	 B57600, FLOW_CTL, init_csr },
-	/* Broadcom BCM2035 */
+	{ BTUART_HCITYPE_BGB2XX,	B115200, FLOW_CTL, init_bgb2xx },
 	{ BTUART_HCITYPE_BCM2035,	B115200,        0, init_bcm2035 },
 
 	{ -1,				     B0,        0, NULL }
@@ -195,8 +214,8 @@ btuartattach(int num __unused)
  */
 /* ARGSUSED */
 static int
-btuart_match(device_t self __unused,
-    struct cfdata *cfdata __unused, void *arg __unused)
+btuart_match(device_t self __unused, struct cfdata *cfdata __unused,
+	     void *arg __unused)
 {
 
 	/* pseudo-device; always present */
@@ -209,13 +228,16 @@ btuart_match(device_t self __unused,
  */
 /* ARGSUSED */
 static void
-btuart_attach(device_t parent __unused,
-    device_t self, void *aux __unused)
+btuart_attach(device_t parent __unused, device_t self, void *aux __unused)
 {
 	struct btuart_softc *sc = device_private(self);
 	int i;
 
 	sc->sc_dev = self;
+
+	MBUFQ_INIT(&sc->sc_cmdq);
+	MBUFQ_INIT(&sc->sc_aclq);
+	MBUFQ_INIT(&sc->sc_scoq);
 
 	aprint_normal("\n");
 	aprint_naive("\n");
@@ -229,14 +251,7 @@ btuart_attach(device_t parent __unused,
 	memcpy(&sc->sc_bth4hci, &bth4hci[i], sizeof(struct bth4hci));
 
 	/* Attach Bluetooth unit */
-	sc->sc_unit.hci_dev = self;
-	sc->sc_unit.hci_enable = bth4_enable;
-	sc->sc_unit.hci_disable = bth4_disable;
-	sc->sc_unit.hci_start_cmd = bth4_start;
-	sc->sc_unit.hci_start_acl = bth4_start;
-	sc->sc_unit.hci_start_sco = bth4_start;
-	sc->sc_unit.hci_ipl = makeiplcookie(IPL_TTY);
-	hci_attach(&sc->sc_unit);
+	sc->sc_unit = hci_attach(&btuart_hci, self, 0);
 }
 
 /*
@@ -247,7 +262,10 @@ btuart_detach(device_t self, int flags __unused)
 {
 	struct btuart_softc *sc = device_private(self);
 
-	hci_detach(&sc->sc_unit);
+	if (sc->sc_unit) {
+		hci_detach(sc->sc_unit);
+		sc->sc_unit = NULL;
+	}
 
 	return 0;
 }
@@ -256,8 +274,8 @@ btuart_detach(device_t self, int flags __unused)
 static int
 bth4_waitresp(struct btuart_softc *sc, struct mbuf **mp, uint16_t opcode)
 {
-	struct hci_unit *unit = &sc->sc_unit;
 	hci_event_hdr_t *e;
+	struct hci_unit *unit = sc->sc_unit;
 	int status = 0, rv;
 
 	*mp = NULL;
@@ -304,7 +322,8 @@ bth4_firmload(struct btuart_softc *sc, char *filename,
 	char *buf;
 
 	if ((error = firmware_open(cd->cd_name, filename, &fh)) != 0) {
-		aprint_error_dev(sc->sc_dev, "firmware_open failed\n");
+		aprint_error_dev(sc->sc_dev, "firmware_open failed: %s\n",
+		    filename);
 		return error;
 	}
 	size = firmware_get_size(fh);
@@ -332,7 +351,6 @@ static int
 init_ericsson(struct btuart_softc *sc)
 {
 	struct mbuf *m;
-	struct hci_unit *unit = &sc->sc_unit;
 	hci_cmd_hdr_t *p;
 	int i, error = 0;
 	const uint16_t opcode = htole16(HCI_CMD_ERICSSON_SET_UART_BAUD_RATE);
@@ -367,6 +385,9 @@ init_ericsson(struct btuart_softc *sc)
 		{    B600, 0x18 },
 		{    B300, 0x19 },
 		{ B921600, 0x20 },
+		{  200000, 0x25 },
+		{  300000, 0x27 },
+		{  400000, 0x2b },
 		{      B0, 0xff }
 	};
 
@@ -383,8 +404,7 @@ init_ericsson(struct btuart_softc *sc)
 	m_copyback(m, sizeof(hci_cmd_hdr_t), p->length,
 	    &ericsson_baudtbl[i].param);
 
-	MBUFQ_ENQUEUE(&unit->hci_cmdq, m);
-	bth4_start(sc->sc_dev);
+	bth4_output_cmd(sc->sc_dev, m);
 
 #if 0
 	error = bth4_waitresp(sc, &m, opcode);
@@ -412,7 +432,6 @@ static int
 init_digi(struct btuart_softc *sc)
 {
 	struct mbuf *m;
-	struct hci_unit *unit = &sc->sc_unit;
 	hci_cmd_hdr_t *p;
 	uint8_t param;
 
@@ -439,8 +458,7 @@ init_digi(struct btuart_softc *sc)
 	m->m_pkthdr.len = m->m_len = sizeof(hci_cmd_hdr_t);
 	m_copyback(m, sizeof(hci_cmd_hdr_t), p->length, &param);
 
-	MBUFQ_ENQUEUE(&unit->hci_cmdq, m);
-	bth4_start(sc->sc_dev);
+	bth4_output_cmd(sc->sc_dev, m);
 
 	/*
 	 * XXXX
@@ -464,7 +482,6 @@ static int
 init_csr(struct btuart_softc *sc)
 {
 	struct mbuf *m;
-	struct hci_unit *unit = &sc->sc_unit;
 	hci_cmd_hdr_t *p;
 	int error;
 	const uint16_t opcode = htole16(HCI_CMD_CSR_EXTN);
@@ -531,8 +548,7 @@ init_csr(struct btuart_softc *sc)
 	bccmd.message.payload[0] = htole16((sc->sc_baud * 64 + 7812) / 15625);
 
 	m_copyback(m, sizeof(hci_cmd_hdr_t), p->length, &bccmd);
-	MBUFQ_ENQUEUE(&unit->hci_cmdq, m);
-	bth4_start(sc->sc_dev);
+	bth4_output_cmd(sc->sc_dev, m);
 
 	error = bth4_waitresp(sc, &m, opcode);
 	if (m != NULL) {
@@ -557,7 +573,6 @@ static int
 init_swave(struct btuart_softc *sc)
 {
 	struct mbuf *m;
-	struct hci_unit *unit = &sc->sc_unit;
 	hci_cmd_hdr_t *p;
 	hci_event_hdr_t *e;
 	int i, error;
@@ -596,8 +611,7 @@ init_swave(struct btuart_softc *sc)
 	param[5] = swave_baudtbl[i].param;
 	m_copyback(m, sizeof(hci_cmd_hdr_t), p->length, &param);
 
-	MBUFQ_ENQUEUE(&unit->hci_cmdq, m);
-	bth4_start(sc->sc_dev);
+	bth4_output_cmd(sc->sc_dev, m);
 
 	while(1 /* CONSTCOND */) {
 		error = bth4_waitresp(sc, &m, opcode);
@@ -640,7 +654,6 @@ static int
 init_st(struct btuart_softc *sc)
 {
 	struct mbuf *m;
-	struct hci_unit *unit = &sc->sc_unit;
 	hci_cmd_hdr_t *p;
 	int i;
 	static struct {			/* XXXX */
@@ -671,8 +684,7 @@ init_st(struct btuart_softc *sc)
 	m->m_pkthdr.len = m->m_len = sizeof(hci_cmd_hdr_t);
 	m_copyback(m, sizeof(hci_cmd_hdr_t), p->length, &st_baudtbl[i].param);
 
-	MBUFQ_ENQUEUE(&unit->hci_cmdq, m);
-	bth4_start(sc->sc_dev);
+	bth4_output_cmd(sc->sc_dev, m);
 
 	/*
 	 * XXXX
@@ -687,7 +699,6 @@ init_st(struct btuart_softc *sc)
 static int
 firmload_stlc2500(struct btuart_softc *sc, int size, char *buf)
 {
-	struct hci_unit *unit = &sc->sc_unit;
 	struct mbuf *m;
 	hci_cmd_hdr_t *p;
 	int error, offset, n;
@@ -710,8 +721,7 @@ firmload_stlc2500(struct btuart_softc *sc, int size, char *buf)
 		m_copyback(m,
 		    sizeof(hci_cmd_hdr_t) + 1, p->length, buf + offset);
 
-		MBUFQ_ENQUEUE(&unit->hci_cmdq, m);
-		bth4_start(sc->sc_dev);
+		bth4_output_cmd(sc->sc_dev, m);
 
 		error = bth4_waitresp(sc, &m, opcode);
 		if (m != NULL) {
@@ -736,7 +746,6 @@ static int
 init_stlc2500(struct btuart_softc *sc)
 {
 	struct mbuf *m;
-	struct hci_unit *unit = &sc->sc_unit;
 	hci_cmd_hdr_t *p;
 	hci_event_hdr_t *e;
 	hci_read_local_ver_rp *lv;
@@ -746,7 +755,48 @@ init_stlc2500(struct btuart_softc *sc)
 	static const char filenametmpl[] = "STLC2500_R%d_%02d%s";
 	const char *suffix[] = { ".ptc", ".ssf", NULL };
 
+	/* STLC2500 has an ericsson core */
+	error = init_ericsson(sc);
+	if (error != 0)
+		return error;
+
+	if (sc->sc_bth4hci.init_baud != 0 &&
+	    sc->sc_bth4hci.init_baud != sc->sc_baud) {
+		struct tty *tp = sc->sc_tp;
+		struct termios t;
+
+		t.c_ispeed = 0;
+		t.c_ospeed = sc->sc_baud;
+		t.c_cflag = tp->t_cflag;
+		error = (*tp->t_param)(tp, &t);
+		if (error != 0)
+			return error;
+	}
+
 	m = m_gethdr(M_WAIT, MT_DATA);
+	p = mtod(m, hci_cmd_hdr_t *);
+#define HCI_CMD_ERICSSON_READ_REVISION_INFORMATION	0xfc0f	/* XXXX */
+	opcode = htole16(HCI_CMD_ERICSSON_READ_REVISION_INFORMATION);
+	p->type = HCI_CMD_PKT;
+	p->opcode = opcode;
+	p->length = 0;
+	m->m_pkthdr.len = m->m_len = sizeof(hci_cmd_hdr_t);
+
+	bth4_output_cmd(sc->sc_dev, m);
+
+	error = bth4_waitresp(sc, &m, opcode);
+	if (m != NULL) {
+		if (error != 0) {
+			aprint_error_dev(sc->sc_dev,
+			    "HCI_Ericsson_Read_Reversion_Information failed:"
+			    " Status 0x%02x\n", error);
+			error = EFAULT;
+			m_freem(m);
+		}
+	}
+	if (error != 0)
+		return error;
+
 	p = mtod(m, hci_cmd_hdr_t *);
 	opcode = htole16(HCI_CMD_READ_LOCAL_VER);
 	p->type = HCI_CMD_PKT;
@@ -754,8 +804,7 @@ init_stlc2500(struct btuart_softc *sc)
 	p->length = 0;
 	m->m_pkthdr.len = m->m_len = sizeof(hci_cmd_hdr_t);
 
-	MBUFQ_ENQUEUE(&unit->hci_cmdq, m);
-	bth4_start(sc->sc_dev);
+	bth4_output_cmd(sc->sc_dev, m);
 
 	error = bth4_waitresp(sc, &m, opcode);
 	if (m != NULL) {
@@ -773,58 +822,13 @@ init_stlc2500(struct btuart_softc *sc)
 	e = mtod(m, hci_event_hdr_t *);
 	lv = (hci_read_local_ver_rp *)(e + 1);
 	revision = le16toh(lv->hci_revision);
-	opcode = htole16(HCI_CMD_RESET);
 	for (i = 0; suffix[i] != NULL; i++) {
 		/* send firmware */
 		snprintf(filename, sizeof(filename), filenametmpl,
 		    (uint8_t)(revision >> 8), (uint8_t)revision, suffix[i]);
 		bth4_firmload(sc, filename, firmload_stlc2500);
-
-		p = mtod(m, hci_cmd_hdr_t *);
-		p->type = HCI_CMD_PKT;
-		p->opcode = opcode;
-		p->length = 0;
-		m->m_pkthdr.len = m->m_len = sizeof(hci_cmd_hdr_t);
-
-		MBUFQ_ENQUEUE(&unit->hci_cmdq, m);
-		bth4_start(sc->sc_dev);
-
-		error = bth4_waitresp(sc, &m, opcode);
-		if (m != NULL) {
-			if (error != 0) {
-				aprint_error_dev(sc->sc_dev,
-				    "HCI_Reset (%d) failed: Status 0x%02x\n",
-				    i, error);
-				error = EFAULT;
-				m_freem(m);
-			}
-		}
-		if (error != 0)
-			return error;
 	}
 
-	/* XXXX: We will obtain the character string.  But I don't know... */
-	p = mtod(m, hci_cmd_hdr_t *);
-	opcode = htole16(0xfc0f);		/* XXXXX ?? */
-	p->type = HCI_CMD_PKT;
-	p->opcode = opcode;
-	p->length = 0;
-	m->m_pkthdr.len = m->m_len = sizeof(hci_cmd_hdr_t);
-
-	MBUFQ_ENQUEUE(&unit->hci_cmdq, m);
-	bth4_start(sc->sc_dev);
-
-	error = bth4_waitresp(sc, &m, opcode);
-	if (m != NULL) {
-		if (error != 0) {
-			aprint_error_dev(sc->sc_dev,
-			    "failed: opcode 0xfc0f Status 0x%02x\n", error);
-			error = EFAULT;
-			m_freem(m);
-		}
-	}
-	if (error != 0)
-		return error;
 	/*
 	 * XXXX:
 	 * We do not know the beginning point of this character string.
@@ -834,7 +838,8 @@ init_stlc2500(struct btuart_softc *sc)
 	 */
 
 	p = mtod(m, hci_cmd_hdr_t *);
-	opcode = htole16(0xfc22);		/* XXXXX ?? */
+#define HCI_CMD_ST_STORE_IN_NVDS	0xfc22	/* XXXX */
+	opcode = htole16(HCI_CMD_ST_STORE_IN_NVDS);
 	p->type = HCI_CMD_PKT;
 	p->opcode = opcode;
 	p->length = sizeof(param);
@@ -851,8 +856,7 @@ init_stlc2500(struct btuart_softc *sc)
 	param[7] = 0x00;
 	m_copyback(m, sizeof(hci_cmd_hdr_t), p->length, param);
 
-	MBUFQ_ENQUEUE(&unit->hci_cmdq, m);
-	bth4_start(sc->sc_dev);
+	bth4_output_cmd(sc->sc_dev, m);
 
 	error = bth4_waitresp(sc, &m, opcode);
 	if (m != NULL) {
@@ -873,8 +877,71 @@ init_stlc2500(struct btuart_softc *sc)
 	p->length = 0;
 	m->m_pkthdr.len = m->m_len = sizeof(hci_cmd_hdr_t);
 
-	MBUFQ_ENQUEUE(&unit->hci_cmdq, m);
-	bth4_start(sc->sc_dev);
+	bth4_output_cmd(sc->sc_dev, m);
+
+	error = bth4_waitresp(sc, &m, opcode);
+	if (m != NULL) {
+		if (error != 0) {
+			aprint_error_dev(sc->sc_dev,
+			    "HCI_Reset failed: Status 0x%02x\n", error);
+			error = EFAULT;
+			m_freem(m);
+		}
+	}
+
+	return error;
+}
+
+static int
+init_bgb2xx(struct btuart_softc *sc)
+{
+	struct mbuf *m;
+	hci_cmd_hdr_t *p;
+	int error;
+	uint16_t opcode;
+	char param[8];
+
+	m = m_gethdr(M_WAIT, MT_DATA);
+	p = mtod(m, hci_cmd_hdr_t *);
+	opcode = htole16(HCI_CMD_ST_STORE_IN_NVDS);
+	p->type = HCI_CMD_PKT;
+	p->opcode = opcode;
+	p->length = sizeof(param);
+	m->m_pkthdr.len = m->m_len = sizeof(hci_cmd_hdr_t);
+
+	/* XXXX */
+	param[0] = 0xfe;
+	param[1] = 0x06;
+	param[2] = 0xbd;
+	param[3] = 0xb2;
+	param[4] = 0x10;
+	param[5] = 0x00;
+	param[6] = 0xab;
+	param[7] = 0xba;
+	m_copyback(m, sizeof(hci_cmd_hdr_t), p->length, param);
+
+	bth4_output_cmd(sc->sc_dev, m);
+
+	error = bth4_waitresp(sc, &m, opcode);
+	if (m != NULL) {
+		if (error != 0) {
+			aprint_error_dev(sc->sc_dev,
+			    "failed: opcode 0xfc0f Status 0x%02x\n", error);
+			error = EFAULT;
+			m_freem(m);
+		}
+	}
+	if (error != 0)
+		return error;
+
+	opcode = htole16(HCI_CMD_RESET);
+	p = mtod(m, hci_cmd_hdr_t *);
+	p->type = HCI_CMD_PKT;
+	p->opcode = opcode;
+	p->length = 0;
+	m->m_pkthdr.len = m->m_len = sizeof(hci_cmd_hdr_t);
+
+	bth4_output_cmd(sc->sc_dev, m);
 
 	error = bth4_waitresp(sc, &m, opcode);
 	if (m != NULL) {
@@ -893,7 +960,6 @@ static int
 init_bcm2035(struct btuart_softc *sc)
 {
 	struct mbuf *m;
-	struct hci_unit *unit = &sc->sc_unit;
 	hci_cmd_hdr_t *p;
 	int i, error;
 #define HCI_CMD_BCM2035_SET_UART_BAUD_RATE	0xfc18	/* XXXX */
@@ -917,8 +983,8 @@ init_bcm2035(struct btuart_softc *sc)
 
 	/*
 	 * XXXX: Should we send some commands?
-	 *         HCI_CMD_RESET and HCI_CMD_READ_LOCAL_VER and
-	 *         HCI_CMD_READ_LOCAL_COMMANDS
+	 *         HCI_CMD_RESET and Set BD_ADDR and
+	 *         HCI_CMD_READ_LOCAL_VER and HCI_CMD_READ_LOCAL_COMMANDS
 	 */
 
 	p = mtod(m, hci_cmd_hdr_t *);
@@ -929,8 +995,7 @@ init_bcm2035(struct btuart_softc *sc)
 	m_copyback(m, sizeof(hci_cmd_hdr_t), p->length,
 	    &bcm2035_baudtbl[i].param);
 
-	MBUFQ_ENQUEUE(&unit->hci_cmdq, m);
-	bth4_start(sc->sc_dev);
+	bth4_output_cmd(sc->sc_dev, m);
 
 	error = bth4_waitresp(sc, &m, opcode);
 	if (m != NULL) {
@@ -984,7 +1049,7 @@ bth4init(struct btuart_softc *sc)
 	return error;
 }
 
-static void
+static bool
 bth4init_input(struct hci_unit *unit, struct mbuf *m)
 {
 	int i;
@@ -1031,6 +1096,8 @@ bth4init_input(struct hci_unit *unit, struct mbuf *m)
 
 	if (m != NULL)
 		m_freem(m);
+
+	return true;
 }
 
 
@@ -1042,6 +1109,7 @@ static int
 bth4open(dev_t device __unused, struct tty *tp)
 {
 	struct btuart_softc *sc;
+	device_t dev;
 	struct cfdata *cfdata;
 	struct lwp *l = curlwp;		/* XXX */
 	int error, unit, s;
@@ -1074,11 +1142,12 @@ bth4open(dev_t device __unused, struct tty *tp)
 
 	aprint_normal("%s%d at tty major %d minor %d",
 	    name, unit, major(tp->t_dev), minor(tp->t_dev));
-	sc = (struct btuart_softc *)config_attach_pseudo(cfdata);
-	if (sc == NULL) {
+	dev = config_attach_pseudo(cfdata);
+	if (dev == NULL) {
 		splx(s);
 		return EIO;
 	}
+	sc = device_private(dev);
 	mutex_spin_enter(&tty_lock);
 	tp->t_sc = sc;
 	sc->sc_tp = tp;
@@ -1197,7 +1266,7 @@ bth4input(int c, struct tty *tp)
 			if (m == NULL) {
 				aprint_error_dev(sc->sc_dev,
 				    "out of memory\n");
-				++sc->sc_unit.hci_stats.err_rx;
+				sc->sc_stats.err_rx++;
 				return 0;	/* (lost sync) */
 			}
 
@@ -1213,7 +1282,7 @@ bth4input(int c, struct tty *tp)
 			if (m->m_next == NULL) {
 				aprint_error_dev(sc->sc_dev,
 				    "out of memory\n");
-				++sc->sc_unit.hci_stats.err_rx;
+				sc->sc_stats.err_rx++;
 				return 0;	/* (lost sync) */
 			}
 
@@ -1231,7 +1300,7 @@ bth4input(int c, struct tty *tp)
 
 	mtod(m, uint8_t *)[m->m_len++] = c;
 	sc->sc_rxp->m_pkthdr.len++;
-	sc->sc_unit.hci_stats.byte_rx++;
+	sc->sc_stats.byte_rx++;
 
 	sc->sc_want--;
 	if (sc->sc_want > 0)
@@ -1259,7 +1328,7 @@ bth4input(int c, struct tty *tp)
 		default:
 			aprint_error_dev(sc->sc_dev,
 			    "Unknown packet type=%#x!\n", c);
-			sc->sc_unit.hci_stats.err_rx++;
+			sc->sc_stats.err_rx++;
 			m_freem(sc->sc_rxp);
 			sc->sc_rxp = NULL;
 			return 0;	/* (lost sync) */
@@ -1288,20 +1357,26 @@ bth4input(int c, struct tty *tp)
 		break;
 
 	case BTUART_RECV_ACL_DATA:	/* ACL Packet Complete */
-		(*sc->sc_input_acl)(&sc->sc_unit, sc->sc_rxp);
-		sc->sc_unit.hci_stats.acl_rx++;
+		if (!(*sc->sc_input_acl)(sc->sc_unit, sc->sc_rxp))
+			sc->sc_stats.err_rx++;
+
+		sc->sc_stats.acl_rx++;
 		sc->sc_rxp = m = NULL;
 		break;
 
 	case BTUART_RECV_SCO_DATA:	/* SCO Packet Complete */
-		(*sc->sc_input_sco)(&sc->sc_unit, sc->sc_rxp);
-		sc->sc_unit.hci_stats.sco_rx++;
+		if (!(*sc->sc_input_sco)(sc->sc_unit, sc->sc_rxp))
+			sc->sc_stats.err_rx++;
+
+		sc->sc_stats.sco_rx++;
 		sc->sc_rxp = m = NULL;
 		break;
 
 	case BTUART_RECV_EVENT_DATA:	/* Event Packet Complete */
-		sc->sc_unit.hci_stats.evt_rx++;
-		(*sc->sc_input_event)(&sc->sc_unit, sc->sc_rxp);
+		if (!(*sc->sc_input_event)(sc->sc_unit, sc->sc_rxp))
+			sc->sc_stats.err_rx++;
+
+		sc->sc_stats.evt_rx++;
 		sc->sc_rxp = m = NULL;
 		break;
 
@@ -1323,8 +1398,8 @@ bth4start(struct tty *tp)
 
 	m = sc->sc_txp;
 	if (m == NULL) {
-		sc->sc_unit.hci_flags &= ~BTF_XMIT;
-		bth4_start(sc->sc_dev);
+		sc->sc_flags &= ~BTUART_XMIT;
+		bth4_start(sc);
 		return 0;
 	}
 
@@ -1341,8 +1416,8 @@ bth4start(struct tty *tp)
 
 				if (M_GETCTX(m, void *) == NULL)
 					m_freem(m);
-				else
-					hci_complete_sco(&sc->sc_unit, m);
+				else if (!hci_complete_sco(sc->sc_unit, m))
+					sc->sc_stats.err_tx++;
 
 				break;
 			}
@@ -1360,7 +1435,7 @@ bth4start(struct tty *tp)
 		count++;
 	}
 
-	sc->sc_unit.hci_stats.byte_tx += count;
+	sc->sc_stats.byte_tx += count;
 
 	if (tp->t_outq.c_cc != 0)
 		(*tp->t_oproc)(tp);
@@ -1376,13 +1451,17 @@ static int
 bth4_enable(device_t self)
 {
 	struct btuart_softc *sc = device_private(self);
-	struct hci_unit *unit = &sc->sc_unit;
+	int s;
 
-	if (unit->hci_flags & BTF_RUNNING)
+	if (sc->sc_flags & BTUART_ENABLED)
 		return 0;
 
-	unit->hci_flags |= BTF_RUNNING;
-	unit->hci_flags &= ~BTF_XMIT;
+	s = spltty();
+
+	sc->sc_flags |= BTUART_ENABLED;
+	sc->sc_flags &= ~BTUART_XMIT;
+
+	splx(s);
 
 	return 0;
 }
@@ -1391,10 +1470,12 @@ static void
 bth4_disable(device_t self)
 {
 	struct btuart_softc *sc = device_private(self);
-	struct hci_unit *unit = &sc->sc_unit;
+	int s;
 
-	if ((unit->hci_flags & BTF_RUNNING) == 0)
+	if ((sc->sc_flags & BTUART_ENABLED) == 0)
 		return;
+
+	s = spltty();
 
 	if (sc->sc_rxp) {
 		m_freem(sc->sc_rxp);
@@ -1406,36 +1487,38 @@ bth4_disable(device_t self)
 		sc->sc_txp = NULL;
 	}
 
-	unit->hci_flags &= ~BTF_RUNNING;
+	MBUFQ_DRAIN(&sc->sc_cmdq);
+	MBUFQ_DRAIN(&sc->sc_aclq);
+	MBUFQ_DRAIN(&sc->sc_scoq);
+
+	sc->sc_flags &= ~BTUART_ENABLED;
+
+	splx(s);
 }
 
 static void
-bth4_start(device_t self)
+bth4_start(struct btuart_softc *sc)
 {
-	struct btuart_softc *sc = device_private(self);
-	struct hci_unit *unit = &sc->sc_unit;
 	struct mbuf *m;
 
-	KASSERT((unit->hci_flags & BTF_XMIT) == 0);
+	KASSERT((sc->sc_flags & BTUART_XMIT) == 0);
 	KASSERT(sc->sc_txp == NULL);
 
-	if (MBUFQ_FIRST(&unit->hci_cmdq)) {
-		MBUFQ_DEQUEUE(&unit->hci_cmdq, m);
-		unit->hci_stats.cmd_tx++;
-		M_SETCTX(m, NULL);
+	if (MBUFQ_FIRST(&sc->sc_cmdq)) {
+		MBUFQ_DEQUEUE(&sc->sc_cmdq, m);
+		sc->sc_stats.cmd_tx++;
 		goto start;
 	}
 
-	if (MBUFQ_FIRST(&unit->hci_scotxq)) {
-		MBUFQ_DEQUEUE(&unit->hci_scotxq, m);
-		unit->hci_stats.sco_tx++;
+	if (MBUFQ_FIRST(&sc->sc_scoq)) {
+		MBUFQ_DEQUEUE(&sc->sc_scoq, m);
+		sc->sc_stats.sco_tx++;
 		goto start;
 	}
 
-	if (MBUFQ_FIRST(&unit->hci_acltxq)) {
-		MBUFQ_DEQUEUE(&unit->hci_acltxq, m);
-		unit->hci_stats.acl_tx++;
-		M_SETCTX(m, NULL);
+	if (MBUFQ_FIRST(&sc->sc_aclq)) {
+		MBUFQ_DEQUEUE(&sc->sc_aclq, m);
+		sc->sc_stats.acl_tx++;
 		goto start;
 	}
 
@@ -1444,6 +1527,74 @@ bth4_start(device_t self)
 
 start:
 	sc->sc_txp = m;
-	unit->hci_flags |= BTF_XMIT;
+	sc->sc_flags |= BTUART_XMIT;
 	bth4start(sc->sc_tp);
+}
+
+static void
+bth4_output_cmd(device_t self, struct mbuf *m)
+{
+	struct btuart_softc *sc = device_private(self);
+	int s;
+
+	KASSERT(sc->sc_flags & BTUART_ENABLED);
+
+	M_SETCTX(m, NULL);
+
+	s = spltty();
+	MBUFQ_ENQUEUE(&sc->sc_cmdq, m);
+	if ((sc->sc_flags & BTUART_XMIT) == 0)
+		bth4_start(sc);
+
+	splx(s);
+}
+
+static void
+bth4_output_acl(device_t self, struct mbuf *m)
+{
+	struct btuart_softc *sc = device_private(self);
+	int s;
+
+	KASSERT(sc->sc_flags & BTUART_ENABLED);
+
+	M_SETCTX(m, NULL);
+
+	s = spltty();
+	MBUFQ_ENQUEUE(&sc->sc_aclq, m);
+	if ((sc->sc_flags & BTUART_XMIT) == 0)
+		bth4_start(sc);
+
+	splx(s);
+}
+
+static void
+bth4_output_sco(device_t self, struct mbuf *m)
+{
+	struct btuart_softc *sc = device_private(self);
+	int s;
+
+	KASSERT(sc->sc_flags & BTUART_ENABLED);
+
+	s = spltty();
+	MBUFQ_ENQUEUE(&sc->sc_scoq, m);
+	if ((sc->sc_flags & BTUART_XMIT) == 0)
+		bth4_start(sc);
+
+	splx(s);
+}
+
+static void
+bth4_stats(device_t self, struct bt_stats *dest, int flush)
+{
+	struct btuart_softc *sc = device_private(self);
+	int s;
+
+	s = spltty();
+
+	memcpy(dest, &sc->sc_stats, sizeof(struct bt_stats));
+
+	if (flush)
+		memset(&sc->sc_stats, 0, sizeof(struct bt_stats));
+
+	splx(s);
 }

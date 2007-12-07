@@ -1,4 +1,4 @@
-/*	$NetBSD: news3400.c,v 1.15.6.1 2006/12/30 20:46:40 yamt Exp $	*/
+/*	$NetBSD: news3400.c,v 1.15.6.2 2007/12/07 17:25:45 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: news3400.c,v 1.15.6.1 2006/12/30 20:46:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: news3400.c,v 1.15.6.2 2007/12/07 17:25:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -66,6 +66,10 @@ void
 news3400_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 {
 	struct clockframe cf;
+	struct cpu_info *ci;
+
+	ci = curcpu();
+	ci->ci_idepth++;
 
 	/* handle clock interrupts ASAP */
 	if (ipending & MIPS_INT_MASK_2) {
@@ -127,6 +131,8 @@ news3400_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 		MachFPInterrupt(status, cause, pc, curlwp->l_md.md_regs);
 #endif
 	}
+
+	ci->ci_idepth--;
 }
 
 #define LEVEL0_MASK \

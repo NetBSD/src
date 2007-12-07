@@ -1,4 +1,4 @@
-/*	$NetBSD: qd.c,v 1.33.4.3 2007/10/27 11:34:00 yamt Exp $	*/
+/*	$NetBSD: qd.c,v 1.33.4.4 2007/12/07 17:31:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1988 Regents of the University of California.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qd.c,v 1.33.4.3 2007/10/27 11:34:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qd.c,v 1.33.4.4 2007/12/07 17:31:03 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -1623,7 +1623,7 @@ qdkqfilter(dev_t dev, struct knote *kn)
 		break;
 
 	default:
-		return (1);
+		return (EINVAL);
 	}
 
 	kn->kn_hook = (void *)(intptr_t) dev;
@@ -1808,17 +1808,7 @@ void qdstart(tp)
 		if (unit == 0)
 			blitc(which_unit, (u_char)c);
 	}
-	/*
-	* If there are sleepers, and output has drained below low
-	* water mark, wake up the sleepers.
-	*/
-	if (tp->t_outq.c_cc <= tp->t_lowat) {
-		if (tp->t_state & TS_ASLEEP){
-			tp->t_state &= ~TS_ASLEEP;
-			wakeup((void *) &tp->t_outq);
-		}
-	}
-
+	ttypull(tp);
 	tp->t_state &= ~TS_BUSY;
 
 out:

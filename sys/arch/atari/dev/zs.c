@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.43.2.3 2007/09/03 14:23:40 yamt Exp $	*/
+/*	$NetBSD: zs.c,v 1.43.2.4 2007/12/07 17:24:23 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.43.2.3 2007/09/03 14:23:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.43.2.4 2007/12/07 17:24:23 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1001,13 +1001,7 @@ register struct tty *tp;
 	 * If there are sleepers, and output has drained below low
 	 * water mark, awaken.
 	 */
-	if(tp->t_outq.c_cc <= tp->t_lowat) {
-		if(tp->t_state & TS_ASLEEP) {
-			tp->t_state &= ~TS_ASLEEP;
-			wakeup((void *)&tp->t_outq);
-		}
-		selwakeup(&tp->t_wsel);
-	}
+	ttypull(tp);
 
 	nch = ndqb(&tp->t_outq, 0);	/* XXX */
 	if(nch) {

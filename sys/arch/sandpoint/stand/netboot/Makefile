@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.2.4.3 2007/11/15 11:43:19 yamt Exp $
+#	$NetBSD: Makefile,v 1.2.4.4 2007/12/07 17:26:00 yamt Exp $
 
 S=		${.CURDIR}/../../../..
 
 PROG=		netboot
 SRCS=		entry.S main.c pci.c devopen.c dev_net.c nif.c \
-		fxp.c tlp.c pcn.c sip.c nvt.c rge.c vge.c printf.c vers.c
+		fxp.c tlp.c pcn.c sip.c nvt.c rge.c vge.c wm.c printf.c
 CLEANFILES+=	vers.c ${PROG} ${PROG}.bin
 CFLAGS+=	-Wall -Wno-main -ffreestanding -msoft-float -mmultiple
 CPPFLAGS+=	-D_STANDALONE -DSUPPORT_DHCP
@@ -49,13 +49,11 @@ SAMISCMAKEFLAGS= SA_USE_CREAD=yes SA_USE_LOADFILE=yes
 .include "${S}/lib/libsa/Makefile.inc"
 LIBSA=		${SALIB}
 
-.PHONY: vers.c
-vers.c: version
-	${HOST_SH} ./newvers.sh ${.CURDIR}/version
-
 ${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
+	${HOST_SH} ./newvers.sh ${.CURDIR}/version
+	${CC} -c vers.c
 	${LD} -N -Ttext ${RELOC} -Bstatic -e ${ENTRY} -o ${PROG} \
-	    ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
+	    ${OBJS} vers.o ${LIBSA} ${LIBZ} ${LIBKERN}
 	${OBJCOPY} -S -O binary ${.TARGET} ${.TARGET}.bin
 
 .include <bsd.prog.mk>

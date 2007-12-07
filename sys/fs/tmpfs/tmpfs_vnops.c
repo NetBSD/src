@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.24.6.6 2007/10/27 11:35:15 yamt Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.24.6.7 2007/12/07 17:32:12 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.24.6.6 2007/10/27 11:35:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.24.6.7 2007/12/07 17:32:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -137,7 +137,7 @@ tmpfs_lookup(void *v)
 	*vpp = NULL;
 
 	/* Check accessibility of requested node as a first step. */
-	error = VOP_ACCESS(dvp, VEXEC, cnp->cn_cred, cnp->cn_lwp);
+	error = VOP_ACCESS(dvp, VEXEC, cnp->cn_cred);
 	if (error != 0)
 		goto out;
 
@@ -185,8 +185,7 @@ tmpfs_lookup(void *v)
 			if ((cnp->cn_flags & ISLASTCN) &&
 			    (cnp->cn_nameiop == CREATE || \
 			    cnp->cn_nameiop == RENAME)) {
-				error = VOP_ACCESS(dvp, VWRITE, cnp->cn_cred,
-				    cnp->cn_lwp);
+				error = VOP_ACCESS(dvp, VWRITE, cnp->cn_cred);
 				if (error != 0)
 					goto out;
 
@@ -227,8 +226,7 @@ tmpfs_lookup(void *v)
 				    kauth_cred_geteuid(cnp->cn_cred) != dnode->tn_uid &&
 				    kauth_cred_geteuid(cnp->cn_cred) != tnode->tn_uid)
 					return EPERM;
-				error = VOP_ACCESS(dvp, VWRITE, cnp->cn_cred,
-				    cnp->cn_lwp);
+				error = VOP_ACCESS(dvp, VWRITE, cnp->cn_cred);
 				if (error != 0)
 					goto out;
 				tnode->tn_lookup_dirent = de;
@@ -451,7 +449,7 @@ tmpfs_setattr(void *v)
 	struct vnode *vp = ((struct vop_setattr_args *)v)->a_vp;
 	struct vattr *vap = ((struct vop_setattr_args *)v)->a_vap;
 	kauth_cred_t cred = ((struct vop_setattr_args *)v)->a_cred;
-	struct lwp *l = ((struct vop_setattr_args *)v)->a_l;
+	struct lwp *l = curlwp;
 
 	int error;
 
@@ -867,11 +865,29 @@ tmpfs_rename(void *v)
 
 	/* If we need to move the directory between entries, lock the
 	 * source so that we can safely operate on it. */
+
+	/* XXX: this is a potential locking order violation! */
 	if (fdnode != tdnode) {
 		error = vn_lock(fdvp, LK_EXCLUSIVE | LK_RETRY);
 		if (error != 0)
 			goto out;
 	}
+
+	/* Make sure we have the correct cached dirent */
+	fcnp->cn_flags &= ~(MODMASK | SAVESTART);
+	fcnp->cn_flags |= LOCKPARENT | LOCKLEAF;
+	if ((error = relookup(fdvp, &fvp, fcnp))) {
+		goto out_locked;
+	}
+	KASSERT(fvp != NULL);
+	/* Relookup always returns with vpp locked and 1UP referenced */
+	VOP_UNLOCK(fvp, 0);
+	vrele(((struct vop_rename_args *)v)->a_fvp);
+
+	/* Reacquire values.  fvp might have changed.  Since we only
+	 * used fvp to sanitycheck fcnp values above, we can do this. */
+	fnode = VP_TO_TMPFS_NODE(fvp);
+	de = fnode->tn_lookup_dirent;
 
 	/* Ensure that we have enough memory to hold the new name, if it
 	 * has to be changed. */
@@ -973,8 +989,6 @@ out_locked:
 
 out:
 	/* Release target nodes. */
-	/* XXX: I don't understand when tdvp can be the same as tvp, but
-	 * other code takes care of this... */
 	if (tdvp == tvp)
 		vrele(tdvp);
 	else
@@ -1230,7 +1244,6 @@ int
 tmpfs_inactive(void *v)
 {
 	struct vnode *vp = ((struct vop_inactive_args *)v)->a_vp;
-	struct lwp *l = ((struct vop_inactive_args *)v)->a_l;
 	nlink_t links;
 
 	struct tmpfs_node *node;
@@ -1243,7 +1256,7 @@ tmpfs_inactive(void *v)
 	VOP_UNLOCK(vp, 0);
 
 	if (links == 0)
-		vrecycle(vp, NULL, l);
+		vrecycle(vp, NULL, curlwp);
 
 	return 0;
 }

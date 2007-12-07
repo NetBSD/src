@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.69.2.5 2007/10/27 11:29:36 yamt Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.69.2.6 2007/12/07 17:28:20 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.69.2.5 2007/10/27 11:29:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.69.2.6 2007/12/07 17:28:20 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,13 +75,13 @@ __KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.69.2.5 2007/10/27 11:29:36 yamt Exp
 
 #include <compat/linux/linux_syscallargs.h>
 
-static int linux_to_bsd_ioflags __P((int));
-static int bsd_to_linux_ioflags __P((int));
-static void bsd_to_linux_flock __P((struct flock *, struct linux_flock *));
-static void linux_to_bsd_flock __P((struct linux_flock *, struct flock *));
+static int linux_to_bsd_ioflags(int);
+static int bsd_to_linux_ioflags(int);
+static void bsd_to_linux_flock(struct flock *, struct linux_flock *);
+static void linux_to_bsd_flock(struct linux_flock *, struct flock *);
 #ifndef __amd64__
-static void bsd_to_linux_stat __P((struct stat *, struct linux_stat *));
-static int linux_stat1 __P((struct lwp *, void *, register_t *, int));
+static void bsd_to_linux_stat(struct stat *, struct linux_stat *);
+static int linux_stat1(struct lwp *, void *, register_t *, int);
 #endif
 
 /*
@@ -301,7 +301,7 @@ linux_sys_fcntl(l, v, retval)
 	const struct cdevsw *cdev;
 	long pgid;
 	struct pgrp *pgrp;
-	struct tty *tp, *(*d_tty) __P((dev_t));
+	struct tty *tp, *(*d_tty)(dev_t);
 
 	fd = SCARG(uap, fd);
 	cmd = SCARG(uap, cmd);
@@ -420,7 +420,7 @@ linux_sys_fcntl(l, v, retval)
 			break;
 		}
 
-		error = VOP_GETATTR(vp, &va, l->l_cred, l);
+		error = VOP_GETATTR(vp, &va, l->l_cred);
 
 		FILE_UNUSE(fp, l);
 
@@ -588,20 +588,6 @@ linux_sys_lstat(l, v, retval)
  * The following syscalls are mostly here because of the alternate path check.
  */
 int
-linux_sys_access(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
-{
-	struct linux_sys_access_args /* {
-		syscallarg(const char *) path;
-		syscallarg(int) flags;
-	} */ *uap = v;
-
-	return sys_access(l, uap, retval);
-}
-
-int
 linux_sys_unlink(l, v, retval)
 	struct lwp *l;
 	void *v;
@@ -640,19 +626,6 @@ linux_sys_unlink(l, v, retval)
 }
 
 int
-linux_sys_chdir(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
-{
-	struct linux_sys_chdir_args /* {
-		syscallarg(const char *) path;
-	} */ *uap = v;
-
-	return sys_chdir(l, uap, retval);
-}
-
-int
 linux_sys_mknod(l, v, retval)
 	struct lwp *l;
 	void *v;
@@ -687,20 +660,6 @@ linux_sys_mknod(l, v, retval)
 		SCARG(&bma, dev) = SCARG(uap, dev) & 0xffff;
 		return sys_mknod(l, &bma, retval);
 	}
-}
-
-int
-linux_sys_chmod(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
-{
-	struct linux_sys_chmod_args /* {
-		syscallarg(const char *) path;
-		syscallarg(int) mode;
-	} */ *uap = v;
-
-	return sys_chmod(l, uap, retval);
 }
 
 #if defined(__i386__) || defined(__m68k__) || \
@@ -771,138 +730,6 @@ linux_sys_lchown16(l, v, retval)
 	return sys___posix_lchown(l, &bla, retval);
 }
 #endif /* __i386__ || __m68k__ || __arm__ || __amd64__ */
-#if defined (__i386__) || defined (__m68k__) || defined(__amd64__) || \
-    defined (__powerpc__) || defined (__mips__) || defined (__arm__)
-int
-linux_sys_chown(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
-{
-	struct linux_sys_chown_args /* {
-		syscallarg(char *) path;
-		syscallarg(int) uid;
-		syscallarg(int) gid;
-	} */ *uap = v;
-
-	return sys___posix_chown(l, uap, retval);
-}
-
-int
-linux_sys_lchown(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
-{
-	struct linux_sys_lchown_args /* {
-		syscallarg(char *) path;
-		syscallarg(int) uid;
-		syscallarg(int) gid;
-	} */ *uap = v;
-
-	return sys___posix_lchown(l, uap, retval);
-}
-#endif /* __i386__||__m68k__||__powerpc__||__mips__||__arm__ ||__amd64__ */
-
-int
-linux_sys_rename(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
-{
-	struct linux_sys_rename_args /* {
-		syscallarg(const char *) from;
-		syscallarg(const char *) to;
-	} */ *uap = v;
-
-	return sys___posix_rename(l, uap, retval);
-}
-
-int
-linux_sys_mkdir(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
-{
-	struct linux_sys_mkdir_args /* {
-		syscallarg(const char *) path;
-		syscallarg(int) mode;
-	} */ *uap = v;
-
-	return sys_mkdir(l, uap, retval);
-}
-
-int
-linux_sys_rmdir(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
-{
-	struct linux_sys_rmdir_args /* {
-		syscallarg(const char *) path;
-	} */ *uap = v;
-
-	return sys_rmdir(l, uap, retval);
-}
-
-int
-linux_sys_symlink(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
-{
-	struct linux_sys_symlink_args /* {
-		syscallarg(const char *) path;
-		syscallarg(const char *) to;
-	} */ *uap = v;
-
-	return sys_symlink(l, uap, retval);
-}
-
-int
-linux_sys_link(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
-{
-	struct linux_sys_link_args /* {
-		syscallarg(const char *) path;
-		syscallarg(const char *) link;
-	} */ *uap = v;
-
-	return sys_link(l, uap, retval);
-}
-
-int
-linux_sys_readlink(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
-{
-	struct linux_sys_readlink_args /* {
-		syscallarg(const char *) name;
-		syscallarg(char *) buf;
-		syscallarg(int) count;
-	} */ *uap = v;
-
-	return sys_readlink(l, uap, retval);
-}
-
-#if !defined(__amd64__)
-int
-linux_sys_truncate(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
-{
-	struct linux_sys_truncate_args /* {
-		syscallarg(const char *) path;
-		syscallarg(long) length;
-	} */ *uap = v;
-
-	return compat_43_sys_truncate(l, uap, retval);
-}
-#endif /* !__amd64__ */
 
 /*
  * This is just fsync() for now (just as it is in the Linux kernel)

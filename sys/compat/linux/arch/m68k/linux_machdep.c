@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.23.2.5 2007/10/27 11:29:33 yamt Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.23.2.6 2007/12/07 17:28:15 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.23.2.5 2007/10/27 11:29:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.23.2.6 2007/12/07 17:28:15 yamt Exp $");
 
 #define COMPAT_LINUX 1
 
@@ -82,10 +82,10 @@ extern int sigpid;
 #define SDB_FPSTATE	0x04
 #endif
 
-void setup_linux_sigframe __P((struct frame *frame, int sig,
-    const sigset_t *mask, void *usp));
-void setup_linux_rt_sigframe __P((struct frame *frame, int sig,
-    const sigset_t *mask, void *usp, struct lwp *l));
+void setup_linux_sigframe(struct frame *frame, int sig,
+    const sigset_t *mask, void *usp);
+void setup_linux_rt_sigframe(struct frame *frame, int sig,
+    const sigset_t *mask, void *usp, struct lwp *l);
 
 /*
  * Deal with some m68k-specific things in the Linux emulation code.

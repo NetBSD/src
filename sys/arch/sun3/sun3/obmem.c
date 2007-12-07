@@ -1,4 +1,4 @@
-/*	$NetBSD: obmem.c,v 1.21.2.1 2006/12/30 20:47:13 yamt Exp $	*/
+/*	$NetBSD: obmem.c,v 1.21.2.2 2007/12/07 17:26:29 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obmem.c,v 1.21.2.1 2006/12/30 20:47:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obmem.c,v 1.21.2.2 2007/12/07 17:26:29 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,7 +63,7 @@ struct obmem_softc {
 	bus_dma_tag_t	sc_dmatag;
 };
 
-CFATTACH_DECL(obmem, sizeof(struct device),
+CFATTACH_DECL(obmem, sizeof(struct obmem_softc),
     obmem_match, obmem_attach, NULL, NULL);
 
 static int obmem_attached;

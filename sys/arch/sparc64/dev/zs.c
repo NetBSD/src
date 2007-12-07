@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.54.16.3 2007/11/15 11:43:30 yamt Exp $	*/
+/*	$NetBSD: zs.c,v 1.54.16.4 2007/12/07 17:26:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.54.16.3 2007/11/15 11:43:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.54.16.4 2007/12/07 17:26:25 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -61,6 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.54.16.3 2007/11/15 11:43:30 yamt Exp $");
 #include <sys/tty.h>
 #include <sys/time.h>
 #include <sys/syslog.h>
+#include <sys/intr.h>
 
 #include <machine/autoconf.h>
 #include <machine/openfirm.h>
@@ -260,14 +261,12 @@ zs_attach(struct zsc_softc *zsc, struct zsdevice *zsd, int pri)
 {
 	struct zsc_attach_args zsc_args;
 	struct zs_chanstate *cs;
-	int s, channel, softpri = PIL_TTY;
+	int s, channel;
 
 	if (zsd == NULL) {
 		printf("configuration incomplete\n");
 		return;
 	}
-
-	printf(" softpri %d\n", softpri);
 
 	/*
 	 * Initialize software state for each channel.
@@ -384,7 +383,7 @@ zs_attach(struct zsc_softc *zsc, struct zsdevice *zsd, int pri)
 	 * once since both SCCs interrupt at the same level and vector.
 	 */
 	bus_intr_establish(zsc->zsc_bustag, pri, IPL_SERIAL, zshard, zsc);
-	if (!(zsc->zsc_softintr = softintr_establish(softpri, zssoft, zsc)))
+	if (!(zsc->zsc_softintr = softint_establish(SOFTINT_SERIAL, zssoft, zsc)))
 		panic("zsattach: could not establish soft interrupt");
 
 	evcnt_attach_dynamic(&zsc->zsc_intrcnt, EVCNT_TYPE_INTR, NULL,
@@ -438,7 +437,7 @@ zshard(void *arg)
 	     (zsc->zsc_cs[1] && zsc->zsc_cs[1]->cs_softreq)) &&
 	    zsc->zsc_softintr) {
 		zssoftpending = PIL_TTY;
-		softintr_schedule(zsc->zsc_softintr);
+		softint_schedule(zsc->zsc_softintr);
 	}
 	return (rval);
 }

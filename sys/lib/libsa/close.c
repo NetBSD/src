@@ -1,4 +1,4 @@
-/*	$NetBSD: close.c,v 1.11 2005/02/26 22:58:56 perry Exp $	*/
+/*	$NetBSD: close.c,v 1.11.4.1 2007/12/07 17:33:35 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -64,19 +64,18 @@
 
 int
 #ifndef __INTERNAL_LIBSA_CREAD
-close(fd)
+close(int fd)
 #else
-oclose(fd)
+oclose(int fd)
 #endif
-	int fd;
 {
 	struct open_file *f = &files[fd];
 	int err1 = 0, err2 = 0;
 
 #if !defined(LIBSA_NO_FD_CHECKING)
-	if ((unsigned)fd >= SOPEN_MAX || f->f_flags == 0) {
+	if ((unsigned int)fd >= SOPEN_MAX || f->f_flags == 0) {
 		errno = EBADF;
-		return (-1);
+		return -1;
 	}
 #endif
 #if !defined(LIBSA_NO_RAW_ACCESS)
@@ -94,11 +93,11 @@ oclose(fd)
 	f->f_flags = 0;
 	if (err1) {
 		errno = err1;
-		return (-1);
+		return -1;
 	}
 	if (err2) {
 		errno = err2;
-		return (-1);
+		return -1;
 	}
-	return (0);
+	return 0;
 }

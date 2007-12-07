@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc_notalpha.c,v 1.74.2.6 2007/11/15 11:43:51 yamt Exp $	*/
+/*	$NetBSD: linux_misc_notalpha.c,v 1.74.2.7 2007/12/07 17:28:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.74.2.6 2007/11/15 11:43:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.74.2.7 2007/12/07 17:28:23 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -384,11 +384,6 @@ linux_sys_stime(struct lwp *l, void *v, register_t *retval)
 	struct timespec ats;
 	linux_time_t tt;
 	int error;
-
-	if ((error = kauth_authorize_system(l->l_cred,
-	    KAUTH_SYSTEM_TIME, KAUTH_REQ_SYSTEM_TIME_SYSTEM, NULL, NULL,
-	    NULL)) != 0)
-		return (error);
 
 	if ((error = copyin(&tt, SCARG(uap, t), sizeof tt)) != 0)
 		return error;

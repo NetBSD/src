@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_ipc.c,v 1.6.18.2 2007/02/26 09:09:07 yamt Exp $	*/
+/*	$NetBSD: hpux_ipc.c,v 1.6.18.3 2007/12/07 17:27:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_ipc.c,v 1.6.18.2 2007/02/26 09:09:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_ipc.c,v 1.6.18.3 2007/12/07 17:27:42 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -71,14 +71,14 @@ __KERNEL_RCSID(0, "$NetBSD: hpux_ipc.c,v 1.6.18.2 2007/02/26 09:09:07 yamt Exp $
 #include <compat/hpux/hpux_syscallargs.h>
 
 #if defined(SYSVMSG) || defined(SYSVSEM) || defined(SYSVSHM)
-void	bsd_to_hpux_ipc_perm __P((const struct ipc_perm *,
-	    struct hpux_ipc_perm *));
-void	bsd_to_hpux_oipc_perm __P((const struct ipc_perm *,
-	    struct hpux_oipc_perm *));
-void	hpux_to_bsd_ipc_perm __P((const struct hpux_ipc_perm *,
-	    struct ipc_perm *));
-void	hpux_to_bsd_oipc_perm __P((const struct hpux_oipc_perm *,
-	    struct ipc_perm *));
+void	bsd_to_hpux_ipc_perm(const struct ipc_perm *,
+	    struct hpux_ipc_perm *);
+void	bsd_to_hpux_oipc_perm(const struct ipc_perm *,
+	    struct hpux_oipc_perm *);
+void	hpux_to_bsd_ipc_perm(const struct hpux_ipc_perm *,
+	    struct ipc_perm *);
+void	hpux_to_bsd_oipc_perm(const struct hpux_oipc_perm *,
+	    struct ipc_perm *);
 
 void
 bsd_to_hpux_ipc_perm(bp, hp)
@@ -142,15 +142,15 @@ hpux_to_bsd_oipc_perm(hp, bp)
 #endif /* SYSVMSG || SYSVSEM || SYSVSHM */
 
 #ifdef SYSVMSG
-void	bsd_to_hpux_msqid_ds __P((const struct msqid_ds *,
-	    struct hpux_msqid_ds *));
-void	bsd_to_hpux_omsqid_ds __P((const struct msqid_ds *,
-	    struct hpux_omsqid_ds *));
+void	bsd_to_hpux_msqid_ds(const struct msqid_ds *,
+	    struct hpux_msqid_ds *);
+void	bsd_to_hpux_omsqid_ds(const struct msqid_ds *,
+	    struct hpux_omsqid_ds *);
 
-void	hpux_to_bsd_msqid_ds __P((const struct hpux_msqid_ds *,
-	    struct msqid_ds *));
-void	hpux_to_bsd_omsqid_ds __P((const struct hpux_omsqid_ds *,
-	    struct msqid_ds *));
+void	hpux_to_bsd_msqid_ds(const struct hpux_msqid_ds *,
+	    struct msqid_ds *);
+void	hpux_to_bsd_omsqid_ds(const struct hpux_omsqid_ds *,
+	    struct msqid_ds *);
 
 void
 bsd_to_hpux_msqid_ds(bp, hp)
@@ -299,15 +299,15 @@ hpux_sys_msgctl(l, v, retval)
 #endif /* SYSVMSG */
 
 #ifdef SYSVSEM
-void	bsd_to_hpux_semid_ds __P((const struct semid_ds *,
-	    struct hpux_semid_ds *));
-void	bsd_to_hpux_osemid_ds __P((const struct semid_ds *,
-	    struct hpux_osemid_ds *));
+void	bsd_to_hpux_semid_ds(const struct semid_ds *,
+	    struct hpux_semid_ds *);
+void	bsd_to_hpux_osemid_ds(const struct semid_ds *,
+	    struct hpux_osemid_ds *);
 
-void	hpux_to_bsd_semid_ds __P((const struct hpux_semid_ds *,
-	    struct semid_ds *));
-void	hpux_to_bsd_osemid_ds __P((const struct hpux_osemid_ds *,
-	    struct semid_ds *));
+void	hpux_to_bsd_semid_ds(const struct hpux_semid_ds *,
+	    struct semid_ds *);
+void	hpux_to_bsd_osemid_ds(const struct hpux_osemid_ds *,
+	    struct semid_ds *);
 
 void
 bsd_to_hpux_semid_ds(bp, hp)
@@ -463,15 +463,15 @@ hpux_sys_semctl(l, v, retval)
 #endif /* SYSVSEM */
 
 #ifdef SYSVSHM
-void	bsd_to_hpux_shmid_ds __P((const struct shmid_ds *,
-	    struct hpux_shmid_ds *));
-void	bsd_to_hpux_oshmid_ds __P((const struct shmid_ds *,
-	    struct hpux_oshmid_ds *));
+void	bsd_to_hpux_shmid_ds(const struct shmid_ds *,
+	    struct hpux_shmid_ds *);
+void	bsd_to_hpux_oshmid_ds(const struct shmid_ds *,
+	    struct hpux_oshmid_ds *);
 
-void	hpux_to_bsd_shmid_ds __P((const struct hpux_shmid_ds *,
-	    struct shmid_ds *));
-void	hpux_to_bsd_oshmid_ds __P((const struct hpux_oshmid_ds *,
-	    struct shmid_ds *));
+void	hpux_to_bsd_shmid_ds(const struct hpux_shmid_ds *,
+	    struct shmid_ds *);
+void	hpux_to_bsd_oshmid_ds(const struct hpux_oshmid_ds *,
+	    struct shmid_ds *);
 
 void
 bsd_to_hpux_shmid_ds(bp, hp)

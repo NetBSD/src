@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.114.2.5 2007/10/27 11:29:59 yamt Exp $	*/
+/*	$NetBSD: vnd.c,v 1.114.2.6 2007/12/07 17:29:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -137,7 +137,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.114.2.5 2007/10/27 11:29:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.114.2.6 2007/12/07 17:29:18 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -897,7 +897,7 @@ vnd_cget(struct lwp *l, int unit, int *un, struct vattr *va)
 	if ((vnd->sc_flags & VNF_INITED) == 0)
 		return -1;
 
-	return VOP_GETATTR(vnd->sc_vp, va, l->l_cred, l);
+	return VOP_GETATTR(vnd->sc_vp, va, l->l_cred);
 }
 
 /* ARGSUSED */
@@ -981,7 +981,7 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		if ((error = vn_open(&nd, fflags, 0)) != 0)
 			goto unlock_and_exit;
 		KASSERT(l);
-		error = VOP_GETATTR(nd.ni_vp, &vattr, l->l_cred, l);
+		error = VOP_GETATTR(nd.ni_vp, &vattr, l->l_cred);
 		if (!error && nd.ni_vp->v_type != VREG)
 			error = EOPNOTSUPP;
 		if (error) {

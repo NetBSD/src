@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_wdog.c,v 1.11.10.3 2007/09/03 14:38:52 yamt Exp $	*/
+/*	$NetBSD: sysmon_wdog.c,v 1.11.10.4 2007/12/07 17:31:26 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_wdog.c,v 1.11.10.3 2007/09/03 14:38:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_wdog.c,v 1.11.10.4 2007/12/07 17:31:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -73,7 +73,7 @@ void
 sysmon_wdog_init(void)
 {
 	mutex_init(&sysmon_wdog_list_mtx, MUTEX_DEFAULT, IPL_NONE);
-	mutex_init(&sysmon_wdog_mtx, MUTEX_SPIN, IPL_SOFTCLOCK);
+	mutex_init(&sysmon_wdog_mtx, MUTEX_DEFAULT, IPL_SOFTCLOCK);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: putter_sys.h,v 1.2.4.2 2007/11/15 11:44:30 yamt Exp $	*/
+/*	$NetBSD: putter_sys.h,v 1.2.4.3 2007/12/07 17:31:03 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -36,6 +36,18 @@
 
 #include <dev/putter/putter.h>
 
+/*
+ * Configuration data.
+ *
+ * Users of putter currently must be registered statically.  This sucks,
+ * I know, but what are you going to do since you need static allocation
+ * for /dev nodes anyway.  Ok, we could be slightly more forgiving about
+ * this, but let's just wait for devfs for now.
+ */
+#define	PUTTER_MINOR_WILDCARD	0
+#define	PUTTER_MINOR_PUD	1
+#define	PUTTER_MINOR_COMPAT	0x7ffff		/* will die sometime soon */
+
 struct putter_ops {
 	int	(*pop_getout)(void *, size_t, int, uint8_t **,size_t *,void **);
 	void	(*pop_releaseout)(void *, void *, int);
@@ -44,10 +56,13 @@ struct putter_ops {
 	int	(*pop_close)(void *);
 };
 
+typedef	int (*putter_config_fn)(int, int, int);
+
 struct putter_instance;
 struct putter_instance	*putter_attach(pid_t, int, void *,
 				       struct putter_ops *);
 void			putter_detach(struct putter_instance *);
 void			putter_notify(struct putter_instance *);
+int			putter_register(putter_config_fn, int);
 
 #endif /* _DEV_PUTTER_PUTTERSYS_H_ */

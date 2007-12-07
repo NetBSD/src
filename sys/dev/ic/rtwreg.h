@@ -1,4 +1,4 @@
-/*	$NetBSD: rtwreg.h,v 1.13.4.3 2007/02/26 09:10:12 yamt Exp $	*/
+/*	$NetBSD: rtwreg.h,v 1.13.4.4 2007/12/07 17:29:57 yamt Exp $	*/
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -283,6 +283,7 @@
 
 /* Receive power-management frames and mgmt/ctrl/data frames. */
 #define	RTW_RCR_PKTFILTER_DEFAULT	(	\
+    RTW_RCR_ACF |				\
     RTW_RCR_ADF |				\
     RTW_RCR_AMF |				\
     RTW_RCR_APM |				\

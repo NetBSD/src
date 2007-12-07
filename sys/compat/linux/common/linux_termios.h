@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_termios.h,v 1.13.2.1 2006/06/21 14:59:12 yamt Exp $	*/
+/*	$NetBSD: linux_termios.h,v 1.13.2.2 2007/12/07 17:28:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -159,25 +159,25 @@ static const int linux_spmasks[] = {
 #ifdef COMPAT_LINUX32
 struct linux32_termio;
 struct linux32_termios;
-static void linux32_termio_to_bsd_termios __P((struct linux32_termio *,
-					     struct termios *));
-static void bsd_termios_to_linux32_termio __P((struct termios *,
-					     struct linux32_termio *));
-static void linux32_termios_to_bsd_termios __P((struct linux32_termios *,
-					      struct termios *));
-static void bsd_termios_to_linux32_termios __P((struct termios *,
-					      struct linux32_termios *));
+static void linux32_termio_to_bsd_termios(struct linux32_termio *,
+					     struct termios *);
+static void bsd_termios_to_linux32_termio(struct termios *,
+					     struct linux32_termio *);
+static void linux32_termios_to_bsd_termios(struct linux32_termios *,
+					      struct termios *);
+static void bsd_termios_to_linux32_termios(struct termios *,
+					      struct linux32_termios *);
 #else
 struct linux_termio;
 struct linux_termios;
-static void linux_termio_to_bsd_termios __P((struct linux_termio *,
-					     struct termios *));
-static void bsd_termios_to_linux_termio __P((struct termios *,
-					     struct linux_termio *));
-static void linux_termios_to_bsd_termios __P((struct linux_termios *,
-					      struct termios *));
-static void bsd_termios_to_linux_termios __P((struct termios *,
-					      struct linux_termios *));
+static void linux_termio_to_bsd_termios(struct linux_termio *,
+					     struct termios *);
+static void bsd_termios_to_linux_termio(struct termios *,
+					     struct linux_termio *);
+static void linux_termios_to_bsd_termios(struct linux_termios *,
+					      struct termios *);
+static void bsd_termios_to_linux_termios(struct termios *,
+					      struct linux_termios *);
 #endif
 
 /*

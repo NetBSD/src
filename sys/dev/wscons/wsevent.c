@@ -1,4 +1,4 @@
-/* $NetBSD: wsevent.c,v 1.16.16.3 2007/02/26 09:10:51 yamt Exp $ */
+/* $NetBSD: wsevent.c,v 1.16.16.4 2007/12/07 17:31:45 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsevent.c,v 1.16.16.3 2007/02/26 09:10:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsevent.c,v 1.16.16.4 2007/12/07 17:31:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -299,7 +299,7 @@ wsevent_kqfilter(struct wseventvar *ev, struct knote *kn)
 		break;
 
 	default:
-		return (1);
+		return (EINVAL);
 	}
 
 	kn->kn_hook = ev;

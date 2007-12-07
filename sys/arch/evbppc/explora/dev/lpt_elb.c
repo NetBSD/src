@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_elb.c,v 1.2 2003/07/15 01:37:37 lukem Exp $	*/
+/*	$NetBSD: lpt_elb.c,v 1.2.16.1 2007/12/07 17:24:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt_elb.c,v 1.2 2003/07/15 01:37:37 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_elb.c,v 1.2.16.1 2007/12/07 17:24:37 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -76,7 +76,9 @@ lpt_elb_attach(struct device *parent, struct device *self, void *aux)
 	struct elb_attach_args *eaa = aux;
 
 	sc->sc_iot = eaa->elb_bt;
-	bus_space_map(sc->sc_iot, eaa->elb_base, LPT_NPORTS, 0, &sc->sc_ioh);
+	bus_space_map(sc->sc_iot,
+	    _BUS_SPACE_UNSTRIDE(sc->sc_iot, eaa->elb_base), LPT_NPORTS,
+	    0, &sc->sc_ioh);
 
 	printf("\n");
 

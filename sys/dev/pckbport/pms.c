@@ -1,4 +1,4 @@
-/* $NetBSD: pms.c,v 1.6.4.4 2007/10/27 11:33:39 yamt Exp $ */
+/* $NetBSD: pms.c,v 1.6.4.5 2007/12/07 17:30:59 yamt Exp $ */
 
 /*-
  * Copyright (c) 2004 Kentaro Kurahone.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.6.4.4 2007/10/27 11:33:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.6.4.5 2007/12/07 17:30:59 yamt Exp $");
 
 #include "opt_pms.h"
 
@@ -179,7 +179,8 @@ pmsattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_kbctag = pa->pa_tag;
 	sc->sc_kbcslot = pa->pa_slot;
 
-	printf("\n");
+	aprint_naive("\n");
+	aprint_normal("\n");
 
 	/* Flush any garbage. */
 	pckbport_flush(pa->pa_tag, pa->pa_slot);
@@ -189,7 +190,7 @@ pmsattach(struct device *parent, struct device *self, void *aux)
 	res = pckbport_poll_cmd(pa->pa_tag, pa->pa_slot, cmd, 1, 2, resp, 1);
 #ifdef DEBUG
 	if (res || resp[0] != PMS_RSTDONE || resp[1] != 0) {
-		printf("pmsattach: reset error\n");
+		aprint_error("pmsattach: reset error\n");
 		return;
 	}
 #endif
@@ -222,7 +223,7 @@ pmsattach(struct device *parent, struct device *self, void *aux)
 	cmd[0] = PMS_DEV_DISABLE;
 	res = pckbport_poll_cmd(pa->pa_tag, pa->pa_slot, cmd, 1, 0, 0, 0);
 	if (res)
-		printf("pmsattach: disable error\n");
+		aprint_error("pmsattach: disable error\n");
 	pckbport_slot_enable(sc->sc_kbctag, sc->sc_kbcslot, 0);
 
 	kthread_create(PRI_NONE, 0, NULL, pms_reset_thread, sc,
@@ -254,7 +255,7 @@ do_enable(struct pms_softc *sc)
 	res = pckbport_enqueue_cmd(sc->sc_kbctag, sc->sc_kbcslot, cmd,
 	    1, 0, 1, 0);
 	if (res)
-		printf("pms_enable: command error %d\n", res);
+		aprint_error("pms_enable: command error %d\n", res);
 
 	if (sc->protocol == PMS_UNKNOWN)
 		sc->protocol = pms_protocol(sc->sc_kbctag, sc->sc_kbcslot);
@@ -297,7 +298,7 @@ do_disable(struct pms_softc *sc)
 	res = pckbport_enqueue_cmd(sc->sc_kbctag, sc->sc_kbcslot, cmd,
 	    1, 0, 1, 0);
 	if (res)
-		printf("pms_disable: command error\n");
+		aprint_error("pms_disable: command error\n");
 
 	pckbport_slot_enable(sc->sc_kbctag, sc->sc_kbcslot, 0);
 }

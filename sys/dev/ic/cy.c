@@ -1,4 +1,4 @@
-/*	$NetBSD: cy.c,v 1.37.4.6 2007/11/15 11:44:08 yamt Exp $	*/
+/*	$NetBSD: cy.c,v 1.37.4.7 2007/12/07 17:29:53 yamt Exp $	*/
 
 /*
  * cy.c
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cy.c,v 1.37.4.6 2007/11/15 11:44:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cy.c,v 1.37.4.7 2007/12/07 17:29:53 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -593,16 +593,8 @@ cystart(struct tty *tp)
 #endif
 
 	if (!ISSET(tp->t_state, TS_TTSTOP | TS_TIMEOUT | TS_BUSY)) {
-		if (tp->t_outq.c_cc <= tp->t_lowat) {
-			if (ISSET(tp->t_state, TS_ASLEEP)) {
-				CLR(tp->t_state, TS_ASLEEP);
-				wakeup(&tp->t_outq);
-			}
-			selwakeup(&tp->t_wsel);
-
-			if (tp->t_outq.c_cc == 0)
-				goto out;
-		}
+		if (!ttypull(tp))
+			goto out;
 		SET(tp->t_state, TS_BUSY);
 		cy_enable_transmitter(sc, cy);
 	}

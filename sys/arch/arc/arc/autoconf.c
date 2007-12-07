@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.25.2.2 2006/12/30 20:45:29 yamt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.25.2.3 2007/12/07 17:24:09 yamt Exp $	*/
 /*	$OpenBSD: autoconf.c,v 1.9 1997/05/18 13:45:20 pefo Exp $	*/
 
 /*
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.25.2.2 2006/12/30 20:45:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.25.2.3 2007/12/07 17:24:09 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -130,8 +130,6 @@ struct bootdev_data *bootdev_data;
 void
 cpu_configure(void)
 {
-
-	softintr_init();
 
 #ifdef ENABLE_INT5_STATCLOCK
 	evcnt_attach_static(&statclock_ev);

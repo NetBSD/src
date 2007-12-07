@@ -1,4 +1,4 @@
-/*      $NetBSD: clockctl.c,v 1.13.4.3 2007/09/03 14:33:11 yamt Exp $ */
+/*      $NetBSD: clockctl.c,v 1.13.4.4 2007/12/07 17:29:16 yamt Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clockctl.c,v 1.13.4.3 2007/09/03 14:33:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clockctl.c,v 1.13.4.4 2007/12/07 17:29:16 yamt Exp $");
 
 #include "opt_ntp.h"
 
@@ -103,7 +103,7 @@ clockctlioctl(
 			    (struct clockctl_clock_settime *)data;
 
 			error = clock_settime1(l->l_proc, args->clock_id,
-			    args->tp);
+			    args->tp, false);
 			if (error)
 				return (error);
 			break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: segments.h,v 1.5.2.2 2007/10/27 11:25:11 yamt Exp $	*/
+/*	$NetBSD: segments.h,v 1.5.2.3 2007/12/07 17:24:06 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -84,13 +84,21 @@
 
 #ifndef _AMD64_SEGMENTS_H_
 #define _AMD64_SEGMENTS_H_
+#ifdef _KERNEL_OPT
+#include "opt_xen.h"
+#endif
 
 /*
  * Selectors
  */
 
 #define	ISPL(s)		((s) & SEL_RPL)	/* what is the priority level of a selector */
+#ifdef XEN
+#define	SEL_KPL		3		/* kernel privilege level */	
+#define	SEL_XPL		0		/* Xen Hypervisor privilege level */	
+#else
 #define	SEL_KPL		0		/* kernel privilege level */	
+#endif
 #define	SEL_UPL		3		/* user privilege level */	
 #define	SEL_RPL		3		/* requester's privilege level mask */
 #define	ISLDT(s)	((s) & SEL_LDT)	/* is it local or global */
@@ -119,7 +127,15 @@
 #define LSEL(s,r)	((s) | r | SEL_LDT)
 
 #define	USERMODE(c, f)		(ISPL(c) == SEL_UPL)
+#ifdef XEN
+/*
+ * As KPL == UPL, Xen emulate interrupt in kernel context by pushing
+ * a fake CS with XPL privilege
+ */
+#define	KERNELMODE(c, f)	(ISPL(c) == SEL_XPL)
+#else
 #define	KERNELMODE(c, f)	(ISPL(c) == SEL_KPL)
+#endif
 
 #ifndef _LOCORE
 
@@ -201,7 +217,11 @@ struct region_descriptor {
 #if 0
 extern struct sys_segment_descriptor *ldt;
 #endif
+#ifdef XEN
+extern struct trap_info *idt;
+#else
 extern struct gate_descriptor *idt;
+#endif
 extern char *gdtstore;
 extern char *ldtstore;
 

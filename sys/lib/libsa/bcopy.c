@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopy.c,v 1.9 2003/08/07 16:32:25 agc Exp $	*/
+/*	$NetBSD: bcopy.c,v 1.9.16.1 2007/12/07 17:33:31 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -40,10 +40,7 @@
  * This is designed to be small, not fast.
  */
 void
-bcopy(s1, s2, n)
-	const void *s1;
-	void *s2;
-	size_t n;
+bcopy(const void *s1, void *s2, size_t n)
 {
 	const char *f = s1;
 	char *t = s2;
@@ -53,7 +50,8 @@ bcopy(s1, s2, n)
 		t += n;
 		while (n-- > 0)
 			*--t = *--f;
-	} else
+	} else {
 		while (n-- > 0)
 			*t++ = *f++;
+	}
 }

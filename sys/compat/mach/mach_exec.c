@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_exec.c,v 1.57.2.4 2007/09/03 14:32:32 yamt Exp $	 */
+/*	$NetBSD: mach_exec.c,v 1.57.2.5 2007/12/07 17:28:44 yamt Exp $	 */
 
 /*-
  * Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.57.2.4 2007/09/03 14:32:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.57.2.5 2007/12/07 17:28:44 yamt Exp $");
 
 #include "opt_syscall_debug.h"
 
@@ -295,10 +295,10 @@ mach_e_proc_init(struct proc *p, struct vmspace *vmspace)
 	 * must free anything that will not be used anymore.
 	 */
 	if (med->med_inited != 0) {
-		lockmgr(&med->med_rightlock, LK_EXCLUSIVE, NULL);
+		rw_enter(&med->med_rightlock, RW_WRITER);
 		while ((mr = LIST_FIRST(&med->med_right)) != NULL)
 			mach_right_put_exclocked(mr, MACH_PORT_TYPE_ALL_RIGHTS);
-		lockmgr(&med->med_rightlock, LK_RELEASE, NULL);
+		rw_exit(&med->med_rightlock);
 
 		/*
 		 * Do not touch special ports. Some other process (eg: gdb)
@@ -310,8 +310,8 @@ mach_e_proc_init(struct proc *p, struct vmspace *vmspace)
 		 * p->p_emuldata is uninitialized. Go ahead and initialize it.
 		 */
 		LIST_INIT(&med->med_right);
-		lockinit(&med->med_rightlock, PZERO|PCATCH, "mach_right", 0, 0);
-		lockinit(&med->med_exclock, PZERO, "exclock", 0, 0);
+		rw_init(&med->med_rightlock);
+		rw_init(&med->med_exclock);
 
 		/*
 		 * For debugging purpose, it's convenient to have each process
@@ -372,10 +372,10 @@ mach_e_proc_exit(p)
 
 	med = (struct mach_emuldata *)p->p_emuldata;
 
-	lockmgr(&med->med_rightlock, LK_EXCLUSIVE, NULL);
+	rw_enter(&med->med_rightlock, RW_WRITER);
 	while ((mr = LIST_FIRST(&med->med_right)) != NULL)
 		mach_right_put_exclocked(mr, MACH_PORT_TYPE_ALL_RIGHTS);
-	lockmgr(&med->med_rightlock, LK_RELEASE, NULL);
+	rw_exit(&med->med_rightlock);
 
 	MACH_PORT_UNREF(med->med_bootstrap);
 
@@ -384,7 +384,7 @@ mach_e_proc_exit(p)
 	 * release it now as it will never be released by the
 	 * exception handler.
 	 */
-	if (lockstatus(&med->med_exclock) != 0)
+	if (rw_lock_held(&med->med_exclock))
 		wakeup(&med->med_exclock);
 
 	/*
@@ -404,6 +404,8 @@ mach_e_proc_exit(p)
 		if (med->med_exc[i] != NULL)
 			MACH_PORT_UNREF(med->med_exc[i]);
 
+	rw_destroy(&med->med_exclock);
+	rw_destroy(&med->med_rightlock);
 	free(med, M_EMULDATA);
 	p->p_emuldata = NULL;
 

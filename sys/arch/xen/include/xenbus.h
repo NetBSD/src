@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus.h,v 1.5.4.3 2006/12/30 20:47:25 yamt Exp $ */
+/* $NetBSD: xenbus.h,v 1.5.4.4 2007/12/07 17:27:11 yamt Exp $ */
 /******************************************************************************
  * xenbus.h
  *
@@ -34,8 +34,8 @@
 
 #include <sys/device.h>
 #include <sys/queue.h>
-#include <machine/xen3-public/io/xenbus.h>
-#include <machine/xen3-public/io/xs_wire.h>
+#include <xen/xen3-public/io/xenbus.h>
+#include <xen/xen3-public/io/xs_wire.h>
 
 /* xenbus to hypervisor attach */
 struct xenbus_attach_args {

@@ -1,4 +1,4 @@
-/*	$NetBSD: sdcd.c,v 1.5.34.2 2007/11/15 11:43:37 yamt Exp $	*/
+/*	$NetBSD: sdcd.c,v 1.5.34.3 2007/12/07 17:26:35 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 MINOURA Makoto.
@@ -27,9 +27,11 @@
 
 #include <sys/param.h>
 #include <sys/disklabel.h>
+#include <machine/stdarg.h>
 #include <lib/libkern/libkern.h>
 #include <lib/libsa/stand.h>
 
+#include "libx68k.h"
 #include "sdcdvar.h"
 #include "iocs.h"
 
@@ -37,14 +39,6 @@
 static int current_id = -1;
 static int current_blklen, current_devsize, current_npart;
 static struct boot_partinfo partitions[MAXPARTITIONS];
-
-int sdopen(struct open_file *, int, int);
-int sdclose(struct open_file *);
-int sdstrategy(void *, int, daddr_t, size_t, void *, size_t *);
-int sd_getbsdpartition(int, int);
-int cdopen(struct open_file *, int, int);
-int cdclose(struct open_file *);
-int cdstrategy(void *, int, daddr_t, size_t, void *, size_t *);
 
 static int readdisklabel(int);
 static int check_unit(int);
@@ -239,11 +233,19 @@ struct sdcd_softc {
 	int			sc_blocksize;
 };
 
+/* sdopen(struct open_file *f, int id, int part) */
 int
-sdopen(struct open_file *f, int id, int part)
+sdopen(struct open_file *f, ...)
 {
 	int error;
 	struct sdcd_softc *sc;
+	int id, part;
+	va_list ap;
+
+	va_start(ap, f);
+	id   = va_arg(ap, int);
+	part = va_arg(ap, int);
+	va_end(ap);
 
 	if (id < 0 || id > 7)
 		return ENXIO;
@@ -309,11 +311,19 @@ sdstrategy(void *arg, int rw, daddr_t dblk, size_t size,
 	return 0;
 }
 
+/* cdopen(struct open_file *f, int id, int part) */
 int
-cdopen(struct open_file *f, int id, int part)
+cdopen(struct open_file *f, ...)
 {
 	int error;
 	struct sdcd_softc *sc;
+	int id, part;
+	va_list ap;
+
+	va_start(ap, f);
+	id   = va_arg(ap, int);
+	part = va_arg(ap, int);
+	va_end(ap);
 
 	if (id < 0 || id > 7)
 		return ENXIO;

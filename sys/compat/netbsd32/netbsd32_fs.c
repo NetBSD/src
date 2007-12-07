@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_fs.c,v 1.19.4.4 2007/09/03 14:32:38 yamt Exp $	*/
+/*	$NetBSD: netbsd32_fs.c,v 1.19.4.5 2007/12/07 17:28:48 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.19.4.4 2007/09/03 14:32:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.19.4.5 2007/12/07 17:28:48 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,10 +58,10 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.19.4.4 2007/09/03 14:32:38 yamt Ex
 #include <compat/sys/mount.h>
 
 
-static int dofilereadv32 __P((struct lwp *, int, struct file *, struct netbsd32_iovec *,
-			      int, off_t *, int, register_t *));
-static int dofilewritev32 __P((struct lwp *, int, struct file *, struct netbsd32_iovec *,
-			       int,  off_t *, int, register_t *));
+static int dofilereadv32(struct lwp *, int, struct file *, struct netbsd32_iovec *,
+			      int, off_t *, int, register_t *);
+static int dofilewritev32(struct lwp *, int, struct file *, struct netbsd32_iovec *,
+			       int,  off_t *, int, register_t *);
 
 struct iovec *
 netbsd32_get_iov(struct netbsd32_iovec *iov32, int iovlen, struct iovec *aiov,
@@ -780,8 +780,8 @@ out:
  */
 /* XXX NH Why does this exist */
 int
-getcwd_common __P((struct vnode *, struct vnode *,
-		   char **, char *, int, int, struct lwp *));
+getcwd_common(struct vnode *, struct vnode *,
+		   char **, char *, int, int, struct lwp *);
 
 int netbsd32___getcwd(l, v, retval)
 	struct lwp *l;

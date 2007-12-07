@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.2.26.2 2007/09/03 14:33:24 yamt Exp $ */
+/*	$NetBSD: apm.c,v 1.2.26.3 2007/12/07 17:29:37 yamt Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.2.26.2 2007/09/03 14:33:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.2.26.3 2007/12/07 17:29:37 yamt Exp $");
 
 #include "opt_apm.h"
 
@@ -102,9 +102,9 @@ int	apmdebug = 0;
  * user context.
  */
 #define	APM_LOCK(apmsc)						\
-	(void) lockmgr(&(apmsc)->sc_lock, LK_EXCLUSIVE, NULL)
+	(void) mutex_enter(&(apmsc)->sc_lock)
 #define	APM_UNLOCK(apmsc)						\
-	(void) lockmgr(&(apmsc)->sc_lock, LK_RELEASE, NULL)
+	(void) mutex_exit(&(apmsc)->sc_lock)
 
 static void	apm_event_handle(struct apm_softc *, u_int, u_int);
 static void	apm_periodic_check(struct apm_softc *);
@@ -640,9 +640,7 @@ apm_match(void)
 void
 apm_attach(struct apm_softc *sc)
 {
-	struct apm_power_info pinfo;
 	u_int numbatts, capflags;
-	int error;
 
 	aprint_normal(": ");
 
@@ -670,17 +668,10 @@ apm_attach(struct apm_softc *sc)
 	 */
 	(*sc->sc_ops->aa_enable)(sc->sc_cookie, 1);
 
-	error = (*sc->sc_ops->aa_get_powstat)(sc->sc_cookie, 0, &pinfo);
-	if (error == 0) {
-#ifdef APM_POWER_PRINT
-		apm_power_print(sc, &pinfo);
-#endif
-	} else
-		apm_perror("get power status", error);
 	if (sc->sc_ops->aa_cpu_busy)
 		(*sc->sc_ops->aa_cpu_busy)(sc->sc_cookie);
 
-	lockinit(&sc->sc_lock, PWAIT, "apmlk", 0, 0);
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
 
 	/* Initial state is `resumed'. */
 	sc->sc_power_state = PWR_RESUME;
@@ -950,7 +941,7 @@ apmkqfilter(dev_t dev, struct knote *kn)
 		break;
 
 	default:
-		return (1);
+		return (EINVAL);
 	}
 
 	kn->kn_hook = sc;

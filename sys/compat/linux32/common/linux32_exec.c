@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_exec.c,v 1.1.16.6 2007/10/27 11:29:43 yamt Exp $ */
+/*	$NetBSD: linux32_exec.c,v 1.1.16.7 2007/12/07 17:28:42 yamt Exp $ */
 
 /*-
  * Copyright (c) 1994-2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_exec.c,v 1.1.16.6 2007/10/27 11:29:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_exec.c,v 1.1.16.7 2007/12/07 17:28:42 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,16 +78,16 @@ extern char linux32_esigcode[1];
 extern struct sysent linux32_sysent[];
 extern const char * const linux32_syscallnames[];
 
-static void linux32_e_proc_exec __P((struct proc *, struct exec_package *));
-static void linux32_e_proc_fork __P((struct proc *, struct proc *, int));
-static void linux32_e_proc_exit __P((struct proc *));
-static void linux32_e_proc_init __P((struct proc *, struct proc *, int));
+static void linux32_e_proc_exec(struct proc *, struct exec_package *);
+static void linux32_e_proc_fork(struct proc *, struct proc *, int);
+static void linux32_e_proc_exit(struct proc *);
+static void linux32_e_proc_init(struct proc *, struct proc *, int);
 
 #ifdef LINUX32_NPTL
 void linux32_userret(void);
 void linux_nptl_proc_fork(struct proc *, struct proc *, void (*luserret)(void));
-void linux_nptl_proc_exit __P((struct proc *));
-void linux_nptl_proc_init __P((struct proc *, struct proc *));
+void linux_nptl_proc_exit(struct proc *);
+void linux_nptl_proc_init(struct proc *, struct proc *);
 #endif
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.82.2.5 2007/10/27 11:34:39 yamt Exp $	*/
+/*	$NetBSD: usb.c,v 1.82.2.6 2007/12/07 17:31:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.82.2.5 2007/10/27 11:34:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.82.2.6 2007/12/07 17:31:39 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -181,7 +181,8 @@ USB_ATTACH(usb)
 	sc->sc_port.power = USB_MAX_POWER;
 
 	usbrev = sc->sc_bus->usbrev;
-	printf(": USB revision %s", usbrev_str[usbrev]);
+	aprint_naive("\n");
+	aprint_normal(": USB revision %s", usbrev_str[usbrev]);
 	switch (usbrev) {
 	case USBREV_1_0:
 	case USBREV_1_1:
@@ -191,11 +192,11 @@ USB_ATTACH(usb)
 		speed = USB_SPEED_HIGH;
 		break;
 	default:
-		printf(", not supported\n");
+		aprint_error(", not supported\n");
 		sc->sc_dying = 1;
 		USB_ATTACH_ERROR_RETURN;
 	}
-	printf("\n");
+	aprint_normal("\n");
 
 	/* Make sure not to use tsleep() if we are cold booting. */
 	if (cold)
@@ -210,7 +211,7 @@ USB_ATTACH(usb)
 	sc->sc_bus->soft = softint_establish(SOFTINT_NET,
 	    sc->sc_bus->methods->soft_intr, sc->sc_bus);
 	if (sc->sc_bus->soft == NULL) {
-		printf("%s: can't register softintr\n", USBDEVNAME(sc->sc_dev));
+		aprint_error("%s: can't register softintr\n", USBDEVNAME(sc->sc_dev));
 		sc->sc_dying = 1;
 		USB_ATTACH_ERROR_RETURN;
 	}
@@ -222,7 +223,7 @@ USB_ATTACH(usb)
 		dev = sc->sc_port.device;
 		if (dev->hub == NULL) {
 			sc->sc_dying = 1;
-			printf("%s: root device is not a hub\n",
+			aprint_error("%s: root device is not a hub\n",
 			       USBDEVNAME(sc->sc_dev));
 			USB_ATTACH_ERROR_RETURN;
 		}
@@ -237,7 +238,7 @@ USB_ATTACH(usb)
 			dev->hub->explore(sc->sc_bus->root_hub);
 #endif
 	} else {
-		printf("%s: root hub problem, error=%d\n",
+		aprint_error("%s: root hub problem, error=%d\n",
 		       USBDEVNAME(sc->sc_dev), err);
 		sc->sc_dying = 1;
 	}
@@ -729,7 +730,7 @@ usbkqfilter(dev_t dev, struct knote *kn)
 		break;
 
 	default:
-		return (1);
+		return (EINVAL);
 	}
 
 	kn->kn_hook = NULL;

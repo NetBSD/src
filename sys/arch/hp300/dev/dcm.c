@@ -1,4 +1,4 @@
-/*	$NetBSD: dcm.c,v 1.66.4.3 2007/09/03 14:24:59 yamt Exp $	*/
+/*	$NetBSD: dcm.c,v 1.66.4.4 2007/12/07 17:24:41 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dcm.c,v 1.66.4.3 2007/09/03 14:24:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dcm.c,v 1.66.4.4 2007/12/07 17:24:41 yamt Exp $");
 
 #include "opt_kgdb.h"
 
@@ -1221,14 +1221,7 @@ dcmstart(struct tty *tp)
 #endif
 	if (tp->t_state & (TS_TIMEOUT|TS_BUSY|TS_TTSTOP))
 		goto out;
-	if (tp->t_outq.c_cc <= tp->t_lowat) {
-		if (tp->t_state&TS_ASLEEP) {
-			tp->t_state &= ~TS_ASLEEP;
-			wakeup((void *)&tp->t_outq);
-		}
-		selwakeup(&tp->t_wsel);
-	}
-	if (tp->t_outq.c_cc == 0) {
+	if (!ttypull(tp)) {
 #ifdef DCMSTATS
 		dsp->xempty++;
 #endif

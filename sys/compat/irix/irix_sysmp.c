@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_sysmp.c,v 1.13.2.2 2007/02/26 09:09:11 yamt Exp $ */
+/*	$NetBSD: irix_sysmp.c,v 1.13.2.3 2007/12/07 17:27:48 yamt Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_sysmp.c,v 1.13.2.2 2007/02/26 09:09:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_sysmp.c,v 1.13.2.3 2007/12/07 17:27:48 yamt Exp $");
 
 #include <sys/errno.h>
 #include <sys/param.h>
@@ -62,9 +62,9 @@ __KERNEL_RCSID(0, "$NetBSD: irix_sysmp.c,v 1.13.2.2 2007/02/26 09:09:11 yamt Exp
 #include <compat/irix/irix_syscallargs.h>
 
 /* IRIX /dev/kmem diggers emulation */
-static int irix_sysmp_kernaddr __P((int, register_t *));
-static int irix_sysmp_sasz __P((int, register_t *));
-static int irix_sysmp_saget __P((int, char *, size_t));
+static int irix_sysmp_kernaddr(int, register_t *);
+static int irix_sysmp_sasz(int, register_t *);
+static int irix_sysmp_saget(int, char *, size_t);
 extern struct loadavg averunnable;
 extern long irix_kernel_var[32];
 

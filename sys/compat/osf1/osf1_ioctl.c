@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_ioctl.c,v 1.17.4.1 2007/02/26 09:09:34 yamt Exp $	*/
+/*	$NetBSD: osf1_ioctl.c,v 1.17.4.2 2007/12/07 17:28:50 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_ioctl.c,v 1.17.4.1 2007/02/26 09:09:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_ioctl.c,v 1.17.4.2 2007/12/07 17:28:50 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_43.h"
@@ -79,12 +79,12 @@ __KERNEL_RCSID(0, "$NetBSD: osf1_ioctl.c,v 1.17.4.1 2007/02/26 09:09:34 yamt Exp
 extern int scdebug;
 #endif
 
-static int osf1_ioctl_f	__P((struct lwp *l, struct sys_ioctl_args *nuap,
-			    register_t *retval, int cmd, int dir, int len));
-static int osf1_ioctl_i	__P((struct lwp *l, struct sys_ioctl_args *nuap,
-			    register_t *retval, int cmd, int dir, int len));
-static int osf1_ioctl_t	__P((struct lwp *l, struct sys_ioctl_args *nuap,
-			    register_t *retval, int cmd, int dir, int len));
+static int osf1_ioctl_f(struct lwp *l, struct sys_ioctl_args *nuap,
+			    register_t *retval, int cmd, int dir, int len);
+static int osf1_ioctl_i(struct lwp *l, struct sys_ioctl_args *nuap,
+			    register_t *retval, int cmd, int dir, int len);
+static int osf1_ioctl_t(struct lwp *l, struct sys_ioctl_args *nuap,
+			    register_t *retval, int cmd, int dir, int len);
 
 int
 osf1_sys_ioctl(l, v, retval)

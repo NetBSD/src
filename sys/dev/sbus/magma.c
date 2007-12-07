@@ -1,4 +1,4 @@
-/*	$NetBSD: magma.c,v 1.29.4.4 2007/10/27 11:34:11 yamt Exp $	*/
+/*	$NetBSD: magma.c,v 1.29.4.5 2007/12/07 17:31:07 yamt Exp $	*/
 /*
  * magma.c
  *
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: magma.c,v 1.29.4.4 2007/10/27 11:34:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: magma.c,v 1.29.4.5 2007/12/07 17:31:07 yamt Exp $");
 
 #if 0
 #define MAGMA_DEBUG
@@ -1224,22 +1224,7 @@ mtty_start(tp)
 	 * or delaying or stopped
 	 */
 	if( !ISSET(tp->t_state, TS_TTSTOP | TS_TIMEOUT | TS_BUSY) ) {
-
-		/* if we are sleeping and output has drained below
-		 * low water mark, awaken
-		 */
-		if( tp->t_outq.c_cc <= tp->t_lowat ) {
-			if( ISSET(tp->t_state, TS_ASLEEP) ) {
-				CLR(tp->t_state, TS_ASLEEP);
-				wakeup(&tp->t_outq);
-			}
-
-			selwakeup(&tp->t_wsel);
-		}
-
-		/* if something to send, start transmitting
-		 */
-		if( tp->t_outq.c_cc ) {
+		if (ttypull(tp)) {
 			mp->mp_txc = ndqb(&tp->t_outq, 0);
 			mp->mp_txp = tp->t_outq.c_cf;
 			SET(tp->t_state, TS_BUSY);

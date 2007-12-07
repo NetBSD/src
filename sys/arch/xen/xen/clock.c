@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.13.2.4 2007/10/27 11:29:26 yamt Exp $	*/
+/*	$NetBSD: clock.c,v 1.13.2.5 2007/12/07 17:27:19 yamt Exp $	*/
 
 /*
  *
@@ -34,7 +34,7 @@
 #include "opt_xen.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.13.2.4 2007/10/27 11:29:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.13.2.5 2007/12/07 17:27:19 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,9 +45,9 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.13.2.4 2007/10/27 11:29:26 yamt Exp $");
 #include <sys/device.h>
 #include <sys/sysctl.h>
 
-#include <machine/xen.h>
-#include <machine/hypervisor.h>
-#include <machine/evtchn.h>
+#include <xen/xen.h>
+#include <xen/hypervisor.h>
+#include <xen/evtchn.h>
 #include <machine/cpu_counter.h>
 
 #include <dev/clock_subr.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_time.c,v 1.4.4.5 2007/09/03 14:32:31 yamt Exp $ */
+/*	$NetBSD: linux32_time.c,v 1.4.4.6 2007/12/07 17:28:43 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_time.c,v 1.4.4.5 2007/09/03 14:32:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_time.c,v 1.4.4.6 2007/12/07 17:28:43 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -203,11 +203,6 @@ linux32_sys_stime(l, v, retval)
 	linux32_time_t tt32;
 	int error;
 	
-	if ((error = kauth_authorize_system(l->l_cred,
-	    KAUTH_SYSTEM_TIME, KAUTH_REQ_SYSTEM_TIME_SYSTEM, NULL, NULL,
-	    NULL)) != 0)
-		return error;
-
 	if ((error = copyin(&tt32, SCARG_P32(uap, t), sizeof tt32)) != 0)
 		return error;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_private.h,v 1.1.6.2 2006/12/30 20:47:25 yamt Exp $	*/
+/*	$NetBSD: bus_private.h,v 1.1.6.3 2007/12/07 17:27:09 yamt Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -59,6 +59,10 @@ int _xen_bus_dmamem_alloc_range(bus_dma_tag_t, bus_size_t, bus_size_t,
  * The higher machine address of our allocated range isn't know and can change
  * over time. Just assume it's the largest possible value.
  */
+#if defined(_LP64) || defined(PAE)
+#define _BUS_AVAIL_END ((bus_addr_t)0xffffffffffffffff)
+#else
 #define _BUS_AVAIL_END ((bus_addr_t)0xffffffff)
+#endif
 
 #include <x86/bus_private.h>

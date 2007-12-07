@@ -1,4 +1,4 @@
-/*	$NetBSD: rwlock.h,v 1.1.2.3 2007/09/03 14:23:20 yamt Exp $	*/
+/*	$NetBSD: rwlock.h,v 1.1.2.4 2007/12/07 17:24:16 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006 The NetBSD Foundation, Inc.
@@ -41,7 +41,6 @@
 
 struct krwlock {
 	volatile uintptr_t	rw_owner;
-	uint32_t		rw_id;
 };
 
 #ifdef __RWLOCK_PRIVATE
@@ -51,9 +50,11 @@ struct krwlock {
 #define	RW_RECEIVE(rw)			/* nothing */
 #define	RW_GIVE(rw)			/* nothing */
 
-bool	_lock_cas(volatile uintptr_t *, uintptr_t, uintptr_t);
+unsigned long	_lock_cas(volatile unsigned long *,
+    unsigned long, unsigned long);
 
-#define	RW_CAS(p, o, n)			_lock_cas((p), (o), (n))
+#define	RW_CAS(p, o, n)			\
+    (_lock_cas((volatile unsigned long *)(p), (o), (n)) == (o))
 
 #endif	/* __RWLOCK_PRIVATE */
 

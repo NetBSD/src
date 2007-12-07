@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.53.2.5 2007/10/27 11:30:30 yamt Exp $	*/
+/*	$NetBSD: ath.c,v 1.53.2.6 2007/12/07 17:29:50 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.104 2005/09/16 10:09:23 ru Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.53.2.5 2007/10/27 11:30:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.53.2.6 2007/12/07 17:29:50 yamt Exp $");
 #endif
 
 /*
@@ -195,6 +195,7 @@ static int	ath_getchannels(struct ath_softc *, u_int cc,
 static void	ath_led_event(struct ath_softc *, int);
 static void	ath_update_txpow(struct ath_softc *);
 static void	ath_freetx(struct mbuf *);
+static void	ath_restore_diversity(struct ath_softc *);
 
 static int	ath_rate_setup(struct ath_softc *, u_int mode);
 static void	ath_setcurmode(struct ath_softc *, enum ieee80211_phymode);
@@ -291,7 +292,7 @@ ath_enable(struct ath_softc *sc)
 	if (ATH_IS_ENABLED(sc) == 0) {
 		if (sc->sc_enable != NULL && (*sc->sc_enable)(sc) != 0) {
 			printf("%s: device enable failed\n",
-				sc->sc_dev.dv_xname);
+				device_xname(&sc->sc_dev));
 			return (EIO);
 		}
 		sc->sc_flags |= ATH_ENABLED;
@@ -323,7 +324,7 @@ ath_attach(u_int16_t devid, struct ath_softc *sc)
 
 	DPRINTF(sc, ATH_DEBUG_ANY, "%s: devid 0x%x\n", __func__, devid);
 
-	memcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
+	memcpy(ifp->if_xname, device_xname(&sc->sc_dev), IFNAMSIZ);
 
 	ah = ath_hal_attach(devid, sc, sc->sc_st, sc->sc_sh, &status);
 	if (ah == NULL) {
@@ -1019,8 +1020,10 @@ ath_init(struct ath_softc *sc)
 
 	ATH_LOCK(sc);
 
-	if ((error = ath_enable(sc)) != 0)
+	if ((error = ath_enable(sc)) != 0) {
+		ATH_UNLOCK(sc);
 		return error;
+	}
 
 	/*
 	 * Stop anything previously setup.  This is safe
@@ -1053,7 +1056,7 @@ ath_init(struct ath_softc *sc)
 	 * Likewise this is set during reset so update
 	 * state cached in the driver.
 	 */
-	sc->sc_diversity = ath_hal_getdiversity(ah);
+	ath_restore_diversity(sc);
 	sc->sc_calinterval = 1;
 	sc->sc_caltries = 0;
 
@@ -1185,6 +1188,20 @@ ath_stop(struct ifnet *ifp, int disable)
 	ATH_UNLOCK(sc);
 }
 
+static void
+ath_restore_diversity(struct ath_softc *sc)
+{
+	struct ifnet *ifp = &sc->sc_if;
+	struct ath_hal *ah = sc->sc_ah;
+
+	if (!ath_hal_setdiversity(sc->sc_ah, sc->sc_diversity) ||
+	    sc->sc_diversity != ath_hal_getdiversity(ah)) {
+		if_printf(ifp, "could not restore diversity setting %d\n",
+		    sc->sc_diversity);
+		sc->sc_diversity = ath_hal_getdiversity(ah);
+	}
+}
+
 /*
  * Reset the hardware w/o losing operational state.  This is
  * basically a more efficient way of doing ath_stop, ath_init,
@@ -1217,7 +1234,7 @@ ath_reset(struct ifnet *ifp)
 		if_printf(ifp, "%s: unable to reset hardware; hal status %u\n",
 			__func__, status);
 	ath_update_txpow(sc);		/* update tx power state */
-	sc->sc_diversity = ath_hal_getdiversity(ah);
+	ath_restore_diversity(sc);
 	sc->sc_calinterval = 1;
 	sc->sc_caltries = 0;
 	if (ath_startrecv(sc) != 0)	/* restart recv */
@@ -2077,7 +2094,7 @@ ath_beaconq_config(struct ath_softc *sc)
 	}
 
 	if (!ath_hal_settxqueueprops(ah, sc->sc_bhalq, &qi)) {
-		device_printf(sc->sc_dev, "unable to update parameters for "
+		device_printf(&sc->sc_dev, "unable to update parameters for "
 			"beacon hardware queue!\n");
 		return 0;
 	} else {
@@ -3269,7 +3286,7 @@ ath_txq_setup(struct ath_softc *sc, int qtype, int subtype)
 		return NULL;
 	}
 	if (qnum >= N(sc->sc_txq)) {
-		device_printf(sc->sc_dev,
+		device_printf(&sc->sc_dev,
 			"hal qnum %u out of range, max %zu!\n",
 			qnum, N(sc->sc_txq));
 		ath_hal_releasetxqueue(ah, qnum);
@@ -3306,7 +3323,7 @@ ath_tx_setup(struct ath_softc *sc, int ac, int haltype)
 	struct ath_txq *txq;
 
 	if (ac >= N(sc->sc_ac2q)) {
-		device_printf(sc->sc_dev, "AC %u out of range, max %zu!\n",
+		device_printf(&sc->sc_dev, "AC %u out of range, max %zu!\n",
 			ac, N(sc->sc_ac2q));
 		return 0;
 	}
@@ -3340,7 +3357,7 @@ ath_txq_update(struct ath_softc *sc, int ac)
 	qi.tqi_burstTime = ATH_TXOP_TO_US(wmep->wmep_txopLimit);
 
 	if (!ath_hal_settxqueueprops(ah, txq->axq_qnum, &qi)) {
-		device_printf(sc->sc_dev, "unable to update hardware queue "
+		device_printf(&sc->sc_dev, "unable to update hardware queue "
 			"parameters for %s traffic!\n",
 			ieee80211_wme_acnames[ac]);
 		return 0;
@@ -3423,9 +3440,8 @@ again:
 		n = m->m_next;
 		if (n == NULL)
 			break;
-		if ((m->m_flags & M_RDONLY) == 0 &&
-		    n->m_len < M_TRAILINGSPACE(m)) {
-			bcopy(mtod(n, void *), mtod(m, char *) + m->m_len,
+		if (n->m_len < M_TRAILINGSPACE(m)) {
+			memcpy(mtod(m, char *) + m->m_len, mtod(n, void *),
 				n->m_len);
 			m->m_len += n->m_len;
 			m->m_next = n->m_next;
@@ -4169,7 +4185,6 @@ ath_tx_proc_q0123(void *arg, int npending)
 	if (nacked) {
 		sc->sc_lastrx = ath_hal_gettsf64(sc->sc_ah);
 	}
-	ath_tx_processq(sc, sc->sc_cabq);
 
 	if (sc->sc_softled)
 		ath_led_event(sc, ATH_LED_TX);
@@ -4468,7 +4483,7 @@ ath_chan_set(struct ath_softc *sc, struct ieee80211_channel *chan)
 		}
 		sc->sc_curchan = hchan;
 		ath_update_txpow(sc);		/* update tx power state */
-		sc->sc_diversity = ath_hal_getdiversity(ah);
+		ath_restore_diversity(sc);
 		sc->sc_calinterval = 1;
 		sc->sc_caltries = 0;
 

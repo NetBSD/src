@@ -1,4 +1,4 @@
-#	$NetBSD: files.i2o,v 1.6.32.1 2007/09/03 14:34:07 yamt Exp $
+#	$NetBSD: files.i2o,v 1.6.32.2 2007/12/07 17:29:49 yamt Exp $
 
 device	iop {tid = -1}
 file	dev/i2o/iop.c			iop			needs-flag
@@ -9,10 +9,6 @@ file	dev/i2o/ld_iop.c		ld_iop
 device	iopsp: scsi
 attach	iopsp at iop
 file	dev/i2o/iopsp.c			iopsp
-
-device	iopl: ether, token, fddi, ifnet, arp
-attach	iopl at iop
-file	dev/i2o/iopl.c			iopl
 
 device	dpti
 attach	dpti at iop

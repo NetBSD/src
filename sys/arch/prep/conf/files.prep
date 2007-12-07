@@ -1,4 +1,4 @@
-#	$NetBSD: files.prep,v 1.48.12.4 2007/10/27 11:28:05 yamt Exp $
+#	$NetBSD: files.prep,v 1.48.12.5 2007/12/07 17:25:59 yamt Exp $
 #
 # prep-specific configuration info
 #
@@ -28,7 +28,6 @@ file	arch/prep/prep/residual.c
 file	arch/powerpc/powerpc/bus_dma.c
 file	arch/powerpc/powerpc/bus_space.c
 file	arch/powerpc/powerpc/procfs_machdep.c	procfs
-file	arch/powerpc/powerpc/softintr.c
 
 # General files
 file	dev/cons.c

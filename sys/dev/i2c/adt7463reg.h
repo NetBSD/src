@@ -1,4 +1,4 @@
-/*	$NetBSD: adt7463reg.h,v 1.2.18.3 2007/09/03 14:34:02 yamt Exp $ */
+/*	$NetBSD: adt7463reg.h,v 1.2.18.4 2007/12/07 17:29:48 yamt Exp $ */
 
 /*
  * Copyright (c) 2005 Anil Gopinath (anil_public@yahoo.com)
@@ -83,7 +83,7 @@ struct adt7463c_softc {
 	i2c_tag_t sc_tag;
 	i2c_addr_t sc_address;
 	envsys_data_t sc_sensor[ADT7463_MAX_ENVSYS_RANGE];
-	struct sysmon_envsys sc_sysmon;  
+	struct sysmon_envsys *sc_sme;
 };
 
 /*

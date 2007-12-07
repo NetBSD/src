@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.248.2.6 2007/11/15 11:44:37 yamt Exp $	*/
+/*	$NetBSD: init_main.c,v 1.248.2.7 2007/12/07 17:32:35 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.248.2.6 2007/11/15 11:44:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.248.2.7 2007/12/07 17:32:35 yamt Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_ntp.h"
@@ -343,6 +343,9 @@ main(void)
 
 	/* Charge root for one process. */
 	(void)chgproccnt(0, 1);
+
+	/* Initialize timekeeping. */
+	time_init();
 
 	/* Initialize the run queues, turnstiles and sleep queues. */
 	mutex_init(&cpu_lock, MUTEX_DEFAULT, IPL_NONE);

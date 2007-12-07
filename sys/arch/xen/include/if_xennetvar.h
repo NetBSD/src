@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xennetvar.h,v 1.7.2.1 2006/06/21 14:58:15 yamt Exp $	*/
+/*	$NetBSD: if_xennetvar.h,v 1.7.2.2 2007/12/07 17:27:10 yamt Exp $	*/
 
 /*
  *
@@ -35,7 +35,7 @@
 #ifndef _XEN_IF_XENNETVAR_H_
 #define _XEN_IF_XENNETVAR_H_
 
-#include <machine/xen.h>
+#include <xen/xen.h>
 
 struct xennet_attach_args {
 	const char 		*xa_device;

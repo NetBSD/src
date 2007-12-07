@@ -1,7 +1,8 @@
-/*	$NetBSD: sched_m2.c,v 1.6.4.3 2007/11/15 11:44:47 yamt Exp $	*/
+/*	$NetBSD: sched_m2.c,v 1.6.4.4 2007/12/07 17:32:56 yamt Exp $	*/
 
 /*
- * Copyright (c) 2007, Mindaugas Rasiukevicius
+ * Copyright (c) 2007, Mindaugas Rasiukevicius <rmind at NetBSD org>
+ * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_m2.c,v 1.6.4.3 2007/11/15 11:44:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_m2.c,v 1.6.4.4 2007/12/07 17:32:56 yamt Exp $");
 
 #include <sys/param.h>
 
@@ -225,7 +226,7 @@ sched_cpuattach(struct cpu_info *ci)
 	ci_rq = (void *)(roundup((intptr_t)(rq_ptr), CACHE_LINE_SIZE));
 
 	/* Initialize run queues */
-	mutex_init(&ci_rq->r_rq_mutex, MUTEX_SPIN, IPL_SCHED);
+	mutex_init(&ci_rq->r_rq_mutex, MUTEX_DEFAULT, IPL_SCHED);
 	for (i = 0; i < PRI_RT_COUNT; i++)
 		TAILQ_INIT(&ci_rq->r_rt_queue[i].q_head);
 	for (i = 0; i < PRI_TS_COUNT; i++)

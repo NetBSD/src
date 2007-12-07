@@ -1,4 +1,4 @@
-/*	$NetBSD: ipifuncs.c,v 1.10.16.5 2007/11/15 11:42:55 yamt Exp $ */
+/*	$NetBSD: ipifuncs.c,v 1.10.16.6 2007/12/07 17:24:59 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.10.16.5 2007/11/15 11:42:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.10.16.6 2007/12/07 17:24:59 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mtrr.h"
@@ -53,12 +53,12 @@ __KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.10.16.5 2007/11/15 11:42:55 yamt Exp 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/systm.h>
+#include <sys/atomic.h>
 
 #include <uvm/uvm_extern.h>
 
 #include <x86/cpu_msr.h>
 #include <machine/intr.h>
-#include <machine/atomic.h>
 #include <machine/cpuvar.h>
 #include <machine/i82093var.h>
 #include <machine/i82489reg.h>
@@ -99,7 +99,7 @@ void
 i386_ipi_halt(struct cpu_info *ci)
 {
 	x86_disable_intr();
-	x86_atomic_clearbits_l(&ci->ci_flags, CPUF_RUNNING);
+	atomic_and_32(&ci->ci_flags, ~CPUF_RUNNING);
 
 	for(;;) {
 		x86_hlt();

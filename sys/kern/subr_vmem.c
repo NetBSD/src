@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.24.4.6 2007/11/15 11:44:50 yamt Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.24.4.7 2007/12/07 17:33:08 yamt Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.24.4.6 2007/11/15 11:44:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.24.4.7 2007/12/07 17:33:08 yamt Exp $");
 
 #define	VMEM_DEBUG
 #if defined(_KERNEL)
@@ -144,7 +144,7 @@ struct vmem {
 #define	VMEM_LOCK(vm)		mutex_enter(&vm->vm_lock)
 #define	VMEM_TRYLOCK(vm)	mutex_tryenter(&vm->vm_lock)
 #define	VMEM_UNLOCK(vm)		mutex_exit(&vm->vm_lock)
-#define	VMEM_LOCK_INIT(vm, ipl)	mutex_init(&vm->vm_lock, MUTEX_DRIVER, ipl)
+#define	VMEM_LOCK_INIT(vm, ipl)	mutex_init(&vm->vm_lock, MUTEX_DEFAULT, ipl)
 #define	VMEM_LOCK_DESTROY(vm)	mutex_destroy(&vm->vm_lock)
 #define	VMEM_ASSERT_LOCKED(vm)	KASSERT(mutex_owned(&vm->vm_lock))
 

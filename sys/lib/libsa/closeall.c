@@ -1,4 +1,4 @@
-/*	$NetBSD: closeall.c,v 1.3 2005/02/26 22:58:56 perry Exp $	*/
+/*	$NetBSD: closeall.c,v 1.3.4.1 2007/12/07 17:33:35 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -63,11 +63,11 @@
 #include "stand.h"
 
 void
-closeall()
+closeall(void)
 {
 	int i;
 
-        for (i = 0; i < SOPEN_MAX; i++)
-            if (files[i].f_flags != 0)
-                (void)close(i);
+	for (i = 0; i < SOPEN_MAX; i++)
+		if (files[i].f_flags != 0)
+			(void)close(i);
 }

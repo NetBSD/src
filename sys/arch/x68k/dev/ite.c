@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.40.2.4 2007/10/27 11:28:52 yamt Exp $	*/
+/*	$NetBSD: ite.c,v 1.40.2.5 2007/12/07 17:26:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.40.2.4 2007/10/27 11:28:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.40.2.5 2007/12/07 17:26:33 yamt Exp $");
 
 #include "ite.h"
 #if NITE > 0
@@ -557,17 +557,9 @@ itestart(struct tty *tp)
 	/*s = spltty();*/
 	tp->t_state &= ~TS_BUSY;
 	/* we have characters remaining. */
-	if (rbp->c_cc) {
+	if (ttypull(tp)) {
 		tp->t_state |= TS_TIMEOUT;
 		callout_schedule(&tp->t_rstrt_ch, 1);
-	}
-	/* wakeup we are below */
-	if (rbp->c_cc <= tp->t_lowat) {
-		if (tp->t_state & TS_ASLEEP) {
-			tp->t_state &= ~TS_ASLEEP;
-			wakeup((void *)rbp);
-		}
-		selwakeup(&tp->t_wsel);
 	}
 out:
 	splx(s);

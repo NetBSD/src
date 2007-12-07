@@ -1,4 +1,4 @@
-/*	$NetBSD: isa.c,v 1.120.2.4 2007/10/27 11:31:43 yamt Exp $	*/
+/*	$NetBSD: isa.c,v 1.120.2.5 2007/12/07 17:30:17 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa.c,v 1.120.2.4 2007/10/27 11:31:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa.c,v 1.120.2.5 2007/12/07 17:30:17 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,7 +100,8 @@ isaattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_dynamicdevs = 0;
 
 	isa_attach_hook(parent, self, iba);
-	printf("\n");
+	aprint_naive("\n");
+	aprint_normal("\n");
 
 	/* XXX Add code to fetch known-devices. */
 

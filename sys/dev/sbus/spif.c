@@ -1,4 +1,4 @@
-/*	$NetBSD: spif.c,v 1.2.4.5 2007/11/15 11:44:31 yamt Exp $	*/
+/*	$NetBSD: spif.c,v 1.2.4.6 2007/12/07 17:31:07 yamt Exp $	*/
 /*	$OpenBSD: spif.c,v 1.12 2003/10/03 16:44:51 miod Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spif.c,v 1.2.4.5 2007/11/15 11:44:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spif.c,v 1.2.4.6 2007/12/07 17:31:07 yamt Exp $");
 
 #include "spif.h"
 #if NSPIF > 0
@@ -739,14 +739,7 @@ stty_start(tp)
 	s = spltty();
 
 	if (!ISSET(tp->t_state, TS_TTSTOP | TS_TIMEOUT | TS_BUSY)) {
-		if (tp->t_outq.c_cc <= tp->t_lowat) {
-			if (ISSET(tp->t_state, TS_ASLEEP)) {
-				CLR(tp->t_state, TS_ASLEEP);
-				wakeup(&tp->t_outq);
-			}
-			selwakeup(&tp->t_wsel);
-		}
-		if (tp->t_outq.c_cc) {
+		if (ttypull(tp)) {
 			sp->sp_txc = ndqb(&tp->t_outq, 0);
 			sp->sp_txp = tp->t_outq.c_cf;
 			SET(tp->t_state, TS_BUSY);

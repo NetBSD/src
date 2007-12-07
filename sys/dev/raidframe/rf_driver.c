@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.108.2.3 2007/09/03 14:38:18 yamt Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.108.2.4 2007/12/07 17:31:04 yamt Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,7 +73,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.108.2.3 2007/09/03 14:38:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.108.2.4 2007/12/07 17:31:04 yamt Exp $");
 
 #include "opt_raid_diagnostic.h"
 
@@ -166,7 +166,7 @@ rf_BootRaidframe()
 	if (raidframe_booted)
 		return (EBUSY);
 	raidframe_booted = 1;
-	lockinit(&configureMutex, PRIBIO, "RAIDframe lock", 0, 0);
+	mutex_init(&configureMutex, MUTEX_DEFAULT, IPL_NONE);
  	configureCount = 0;
 	isconfigged = 0;
 	globalShutdown = NULL;

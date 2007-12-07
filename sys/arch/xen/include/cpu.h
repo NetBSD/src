@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.8.2.5 2007/10/27 11:29:11 yamt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.8.2.6 2007/12/07 17:27:09 yamt Exp $	*/
 /*	NetBSD: cpu.h,v 1.113 2004/02/20 17:35:01 yamt Exp 	*/
 
 /*-
@@ -82,6 +82,7 @@ struct cpu_info {
 	struct lwp *ci_curlwp;		/* current owner of the processor */
 	struct simplelock ci_slock;	/* lock on this data structure */
 	cpuid_t ci_cpuid;		/* our CPU ID */
+	int ci_cpumask;			/* (1 << CPU ID) */
 	u_int ci_apicid;		/* our APIC ID */
 	struct cpu_data ci_data;	/* MI per-cpu data */
 
@@ -96,7 +97,7 @@ struct cpu_info {
 
 	struct pmap *ci_pmap;		/* current pmap */
 	int ci_want_pmapload;		/* pmap_load() is needed */
-	int ci_tlbstate;		/* one of TLBSTATE_ states. see below */
+	volatile int ci_tlbstate;	/* one of TLBSTATE_ states. see below */
 #define	TLBSTATE_VALID	0	/* all user tlbs are valid */
 #define	TLBSTATE_LAZY	1	/* tlbs are valid but won't be kept uptodate */
 #define	TLBSTATE_STALE	2	/* we might have stale user tlbs */
@@ -121,6 +122,9 @@ struct cpu_info {
 	int32_t		ci_cpuid_level;
 	u_int32_t	ci_signature;	 /* X86 cpuid type */
 	u_int32_t	ci_feature_flags;/* X86 CPUID feature bits */
+	u_int32_t	ci_feature2_flags;/* X86 %ecx CPUID feature bits */
+	u_int32_t	ci_feature3_flags;/* X86 extended feature bits */
+	u_int32_t	ci_padlock_flags;/* VIA PadLock feature bits */
 	u_int32_t	ci_cpu_class;	 /* CPU class */
 	u_int32_t	ci_brand_id;	 /* Intel brand id */
 	u_int32_t	ci_vendor[4];	 /* vendor string */
@@ -306,6 +310,8 @@ struct cpu_cpuid_nameclass {
 extern int biosbasemem;
 extern int biosextmem;
 extern unsigned int cpu_feature;
+extern unsigned int cpu_feature2;
+extern unsigned int cpu_feature_padlock;
 extern int cpu;
 extern int cpu_class;
 extern const struct cpu_nocpuid_nameclass i386_nocpuid_cpus[];

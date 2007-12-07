@@ -1,4 +1,4 @@
-/*	$NetBSD: ustir.c,v 1.14.2.3 2007/09/03 14:39:27 yamt Exp $	*/
+/*	$NetBSD: ustir.c,v 1.14.2.4 2007/12/07 17:31:43 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ustir.c,v 1.14.2.3 2007/09/03 14:39:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ustir.c,v 1.14.2.4 2007/12/07 17:31:43 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1289,7 +1289,7 @@ ustir_kqfilter(void *h, struct knote *kn)
 		kn->kn_fop = &ustirwrite_filtops;
 		break;
 	default:
-		return (1);
+		return (EINVAL);
 	}
 
 	kn->kn_hook = sc;

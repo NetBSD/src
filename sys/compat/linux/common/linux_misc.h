@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.h,v 1.12.2.1 2007/09/03 14:32:24 yamt Exp $	*/
+/*	$NetBSD: linux_misc.h,v 1.12.2.2 2007/12/07 17:28:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -131,8 +131,8 @@ extern const int linux_fstypes_cnt;
 #ifdef _KERNEL
 __BEGIN_DECLS
 int bsd_to_linux_wstat(int);
-int linux_select1 __P((struct lwp *, register_t *, int, fd_set *, fd_set *,
-		       fd_set *, struct timeval *));
+int linux_select1(struct lwp *, register_t *, int, fd_set *, fd_set *,
+		       fd_set *, struct timeval *);
 __END_DECLS
 #endif /* !_KERNEL */
 

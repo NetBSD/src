@@ -1,4 +1,4 @@
-/*	$NetBSD: apmdev.c,v 1.3.2.3 2007/09/03 14:34:02 yamt Exp $ */
+/*	$NetBSD: apmdev.c,v 1.3.2.4 2007/12/07 17:29:47 yamt Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apmdev.c,v 1.3.2.3 2007/09/03 14:34:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apmdev.c,v 1.3.2.4 2007/12/07 17:29:47 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_apmdev.h"
@@ -60,7 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: apmdev.c,v 1.3.2.3 2007/09/03 14:34:02 yamt Exp $");
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/kthread.h>
-#include <sys/lock.h>
+#include <sys/mutex.h>
 #include <sys/user.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
@@ -104,8 +104,8 @@ struct apm_softc {
 	int	event_count;
 	int	event_ptr;
 	int	sc_power_state;
-	struct lwp *sc_thread;
-	struct lock sc_lock;
+	lwp_t	*sc_thread;
+	kmutex_t sc_lock;
 	struct apm_event_info event_list[APM_NEVENTS];
 	struct apm_accessops *ops;
 	void *cookie;
@@ -126,9 +126,9 @@ struct apm_softc {
  * user context.
  */
 #define	APM_LOCK(apmsc)							\
-	(void) lockmgr(&(apmsc)->sc_lock, LK_EXCLUSIVE, NULL)
+	(void) mutex_enter(&(apmsc)->sc_lock)
 #define	APM_UNLOCK(apmsc)						\
-	(void) lockmgr(&(apmsc)->sc_lock, LK_RELEASE, NULL)
+	(void) mutex_exit(&(apmsc)->sc_lock)
 
 static void	apmattach(struct device *, struct device *, void *);
 static int	apmmatch(struct device *, struct cfdata *, void *);
@@ -966,7 +966,7 @@ apmdevkqfilter(dev_t dev, struct knote *kn)
 		break;
 
 	default:
-		return (1);
+		return (EINVAL);
 	}
 
 	kn->kn_hook = sc;

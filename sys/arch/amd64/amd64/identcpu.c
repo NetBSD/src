@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.2.16.6 2007/11/15 11:42:29 yamt Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.2.16.7 2007/12/07 17:23:57 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,12 +36,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.2.16.6 2007/11/15 11:42:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.2.16.7 2007/12/07 17:23:57 yamt Exp $");
 
 #include "opt_enhanced_speedstep.h"
 #include "opt_intel_coretemp.h"
 #include "opt_intel_odcm.h"
 #include "opt_powernow_k8.h"
+#include "opt_xen.h"
 
 #include <sys/types.h>
 #include <sys/systm.h>

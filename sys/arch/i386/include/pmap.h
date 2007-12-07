@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.82.12.4 2007/10/27 11:26:45 yamt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.82.12.5 2007/12/07 17:25:03 yamt Exp $	*/
 
 /*
  *
@@ -74,9 +74,10 @@
 #include "opt_user_ldt.h"
 #endif
 
+#include <sys/atomic.h>
+
 #include <machine/pte.h>
 #include <machine/segments.h>
-#include <machine/atomic.h>
 #if defined(_KERNEL)
 #include <machine/cpufunc.h>
 #endif
@@ -260,11 +261,16 @@
  */
 #define NPTECL		8
 
-#define pmap_pte_set(p, n)		x86_atomic_testset_ul(p, n)
-#define pmap_pte_setbits(p, b)		x86_atomic_setbits_l(p, b)
-#define pmap_pte_clearbits(p, b)	x86_atomic_clearbits_l(p, b)
-#define pmap_cpu_has_pg_n()		(cpu_class != CPUCLASS_386)
-#define pmap_cpu_has_invlpg()		(cpu_class != CPUCLASS_386)
+#define pmap_pa2pte(a)			(a)
+#define pmap_pte2pa(a)			((a) & PG_FRAME)
+#define pmap_pte_set(p, n)		do { *(p) = (n); } while (0)
+#define pmap_pte_testset(p, n)		\
+    atomic_swap_ulong((volatile unsigned long *)p, n)
+#define pmap_pte_setbits(p, b)		\
+    atomic_or_ulong((volatile unsigned long *)p, b)
+#define pmap_pte_clearbits(p, b)	\
+    atomic_and_ulong((volatile unsigned long *)p, ~(b))
+#define pmap_pte_flush()		/* nothing */
 
 #include <x86/pmap.h>
 

@@ -1,4 +1,4 @@
-/* $NetBSD: xbd.c,v 1.20.2.3 2007/10/27 11:29:27 yamt Exp $ */
+/* $NetBSD: xbd.c,v 1.20.2.4 2007/12/07 17:27:22 yamt Exp $ */
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.20.2.3 2007/10/27 11:29:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.20.2.4 2007/12/07 17:27:22 yamt Exp $");
 
 #include "xbd_hypervisor.h"
 #include "rnd.h"
@@ -66,12 +66,12 @@ __KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.20.2.3 2007/10/27 11:29:27 yamt Exp $");
 #endif
 
 #include <dev/dkvar.h>
-#include <machine/xbdvar.h>
+#include <xen/xbdvar.h>
 
-#include <machine/xen.h>
-#include <machine/hypervisor.h>
-#include <machine/evtchn.h>
-#include <machine/ctrl_if.h>
+#include <xen/xen.h>
+#include <xen/hypervisor.h>
+#include <xen/evtchn.h>
+#include <xen/ctrl_if.h>
 
 
 static void	control_send(blkif_request_t *, blkif_response_t *);

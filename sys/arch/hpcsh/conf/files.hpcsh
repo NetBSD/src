@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcsh,v 1.40.2.3 2007/10/27 11:26:15 yamt Exp $
+#	$NetBSD: files.hpcsh,v 1.40.2.4 2007/12/07 17:24:50 yamt Exp $
 #
 maxpartitions 8
 
@@ -156,5 +156,7 @@ file	arch/hpcsh/dev/hd6446x/hd6446xintc.c	hd64461if | hd64465if
 #
 device	fdc {drive = -1}	# XXX: required by files.pcmcia
 include "dev/pcmcia/files.pcmcia"
+
+include "dev/bluetooth/files.bluetooth"
 
 include "arch/hpcsh/conf/majors.hpcsh"

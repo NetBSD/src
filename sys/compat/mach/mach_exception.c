@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_exception.c,v 1.6.2.3 2007/09/03 14:32:32 yamt Exp $ */
+/*	$NetBSD: mach_exception.c,v 1.6.2.4 2007/12/07 17:28:43 yamt Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_exception.c,v 1.6.2.3 2007/09/03 14:32:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_exception.c,v 1.6.2.4 2007/12/07 17:28:43 yamt Exp $");
 
 #include "opt_compat_darwin.h"
 
@@ -364,7 +364,7 @@ mach_exception(exc_l, exc, code)
 	 * no new exception will be taken until the catcher
 	 * acknowledge the first one.
 	 */
-	lockmgr(&catcher_med->med_exclock, LK_EXCLUSIVE, NULL);
+	rw_enter(&catcher_med->med_exclock, RW_WRITER);
 
 	/*
 	 * If the catcher died, we are done.
@@ -396,7 +396,7 @@ mach_exception(exc_l, exc, code)
 	/*
 	 * Unlock the catcher's exception handler
 	 */
-	lockmgr(&catcher_med->med_exclock, LK_RELEASE, NULL);
+	rw_exit(&catcher_med->med_exclock);
 
 out:
 	MACH_PORT_UNREF(exc_port);
@@ -511,7 +511,7 @@ mach_exception_raise(args)
 	 * Check for unexpected exception acknowledge, whereas
 	 * the kernel sent no exception message.
 	 */
-	if (lockstatus(&med->med_exclock) == 0) {
+	if (!rw_lock_held(&med->med_exclock)) {
 #ifdef DEBUG_MACH
 		printf("spurious mach_exception_raise\n");
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ipc.h,v 1.6.38.1 2006/06/21 14:59:12 yamt Exp $	*/
+/*	$NetBSD: linux_ipc.h,v 1.6.38.2 2007/12/07 17:28:21 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -91,14 +91,14 @@ struct linux_ipc64_perm {
 #if defined (SYSVSEM) || defined(SYSVSHM) || defined(SYSVMSG)
 #ifdef _KERNEL
 __BEGIN_DECLS
-void linux_to_bsd_ipc_perm __P((struct linux_ipc_perm *,
-				       struct ipc_perm *));
-void linux_to_bsd_ipc64_perm __P((struct linux_ipc64_perm *,
-				       struct ipc_perm *));
-void bsd_to_linux_ipc_perm __P((struct ipc_perm *,
-				       struct linux_ipc_perm *));
-void bsd_to_linux_ipc64_perm __P((struct ipc_perm *,
-				       struct linux_ipc64_perm *));
+void linux_to_bsd_ipc_perm(struct linux_ipc_perm *,
+				       struct ipc_perm *);
+void linux_to_bsd_ipc64_perm(struct linux_ipc64_perm *,
+				       struct ipc_perm *);
+void bsd_to_linux_ipc_perm(struct ipc_perm *,
+				       struct linux_ipc_perm *);
+void bsd_to_linux_ipc64_perm(struct ipc_perm *,
+				       struct linux_ipc64_perm *);
 __END_DECLS
 #endif	/* !_KERNEL */
 #endif	/* !SYSVSEM, !SYSVSHM, !SYSVMSG */

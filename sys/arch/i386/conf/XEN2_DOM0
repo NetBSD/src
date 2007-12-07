@@ -1,4 +1,4 @@
-# $NetBSD: XEN2_DOM0,v 1.2.4.7 2007/11/15 11:42:53 yamt Exp $
+# $NetBSD: XEN2_DOM0,v 1.2.4.8 2007/12/07 17:24:57 yamt Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -443,6 +443,7 @@ uk*	at scsibus? target ? lun ?	# SCSI unknown
 # RAID controllers and devices
 aac*	at pci? dev ? function ?	# Adaptec AAC family
 amr*	at pci? dev ? function ?	# AMI/LSI Logic MegaRAID
+arcmsr*	at pci? dev ? function ?	# Areca SATA RAID controllers
 cac*	at pci? dev ? function ?	# Compaq PCI array controllers
 ciss*	at pci? dev ? function ?	# HP Smart Array controllers
 icp*	at pci? dev ? function ?	# ICP-Vortex GDT & Intel RAID

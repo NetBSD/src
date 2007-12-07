@@ -1,7 +1,11 @@
-#	$NetBSD: files.i386,v 1.269.2.6 2007/11/15 11:42:53 yamt Exp $
+#	$NetBSD: files.i386,v 1.269.2.7 2007/12/07 17:24:57 yamt Exp $
 #
 # new style config file for i386 architecture
 #
+
+version 20071109
+
+ifndef xen
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 8
@@ -9,9 +13,6 @@ maxpartitions 8
 maxusers 2 16 128
 
 defparam opt_kernbase.h	KERNBASE
-
-# Processor type options.
-defflag	opt_cputype.h	I386_CPU
 
 # delay before cpu_reset() for reboot.
 defparam		CPURESET_DELAY
@@ -516,3 +517,4 @@ attach	glxsb at pci
 file	arch/i386/pci/glxsb.c		glxsb
 
 include "arch/i386/conf/majors.i386"
+endif #xen

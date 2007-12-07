@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.727.2.6 2007/11/15 11:44:25 yamt Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.727.2.7 2007/12/07 17:30:29 yamt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.915 2007/11/15 04:33:50 manu Exp
+ *	NetBSD: pcidevs,v 1.919 2007/11/24 01:44:55 markd Exp
  */
 
 /*
@@ -1247,9 +1247,11 @@
 #define	PCI_PRODUCT_ATI_RADEON_R423_UI	0x5549		/* Radeon X800PRO (R423) UI */
 #define	PCI_PRODUCT_ATI_RADEON_R423_UJ	0x554a		/* Radeon X800LE (R423) UJ */
 #define	PCI_PRODUCT_ATI_RADEON_R423_UK	0x554b		/* Radeon X800SE (R423) UK */
+#define	PCI_PRODUCT_ATI_RADEON_R430_554F	0x554f		/* Radeon X800 GTO (R430) 554F */
 #define	PCI_PRODUCT_ATI_RADEON_R423_UQ	0x5551		/* FireGL V7200 (R423) UQ */
 #define	PCI_PRODUCT_ATI_RADEON_R423_UR	0x5552		/* FireGL V5100 (R423) UR */
 #define	PCI_PRODUCT_ATI_RADEON_R423_UT	0x5554		/* FireGL V7100 (R423) UT */
+#define	PCI_PRODUCT_ATI_RADEON_R430_556F	0x556f		/* Radeon X800 GTO (R430) Secondary */
 #define	PCI_PRODUCT_ATI_MACH64_VT	0x5654		/* Mach64 VT */
 #define	PCI_PRODUCT_ATI_MACH64_VTB	0x5655		/* Mach64 VTB */
 #define	PCI_PRODUCT_ATI_MACH64_VT4	0x5656		/* Mach64 VT4 */
@@ -2316,6 +2318,21 @@
 #define	PCI_PRODUCT_INTEL_6300ESB_PCIX	0x25ae		/* 6300ESB PCI-X Bridge */
 #define	PCI_PRODUCT_INTEL_6300ESB_RAID	0x25b0		/* 6300ESB SATA RAID Controller */
 #define	PCI_PRODUCT_INTEL_5000X_MCH	0x25c0		/* 5000X Memory Controller Hub */
+#define	PCI_PRODUCT_INTEL_5000_PCIE_1	0x25e2		/* 5000 Series Chipset PCI Express x4 Port 2 */
+#define	PCI_PRODUCT_INTEL_5000_PCIE_2	0x25e3		/* 5000 Series Chipset PCI Express x4 Port 3 */
+#define	PCI_PRODUCT_INTEL_5000_PCIE_3	0x25e4		/* 5000 Series Chipset PCI Express x4 Port 4 */
+#define	PCI_PRODUCT_INTEL_5000_PCIE_4	0x25e4		/* 5000 Series Chipset PCI Express x4 Port 5 */
+#define	PCI_PRODUCT_INTEL_5000_PCIE_5	0x25e6		/* 5000 Series Chipset PCI Express x4 Port 6 */
+#define	PCI_PRODUCT_INTEL_5000_PCIE_6	0x25e7		/* 5000 Series Chipset PCI Express x4 Port 7 */
+#define	PCI_PRODUCT_INTEL_5000_FSB_REG	0x25f0		/* 5000 Series Chipset FSB Registers */
+#define	PCI_PRODUCT_INTEL_5000_RESERVED_1	0x25f1		/* 5000 Series Chipset Reserved Registers */
+#define	PCI_PRODUCT_INTEL_5000_RESERVED_2	0x25f3		/* 5000 Series Chipset Reserved Registers */
+#define	PCI_PRODUCT_INTEL_5000_FBD_1	0x25f5		/* 5000 Series Chipset FBD Registers */
+#define	PCI_PRODUCT_INTEL_5000_FBD_2	0x25f6		/* 5000 Series Chipset FBD Registers */
+#define	PCI_PRODUCT_INTEL_5000_PCIE_7	0x25f7		/* 5000 Series Chipset PCI Express x8 Port 2-3 */
+#define	PCI_PRODUCT_INTEL_5000_PCIE_8	0x25f8		/* 5000 Series Chipset PCI Express x8 Port 4-5 */
+#define	PCI_PRODUCT_INTEL_5000_PCIE_9	0x25f9		/* 5000 Series Chipset PCI Express x8 Port 6-7 */
+#define	PCI_PRODUCT_INTEL_5000X_PCIE	0x25fa		/* 5000X PCI Express x16 Port 4-7 */
 #define	PCI_PRODUCT_INTEL_82801FB_LPC	0x2640		/* 82801FB LPC Interface Bridge */
 #define	PCI_PRODUCT_INTEL_82801FBM_LPC	0x2641		/* 82801FBM ICH6M LPC Interface Bridge */
 #define	PCI_PRODUCT_INTEL_82801FB_SATA	0x2651		/* 82801FB Serial ATA Controller */
@@ -2450,11 +2467,19 @@
 #define	PCI_PRODUCT_INTEL_82965G_EXP	0x29a1		/* 82965G PCI Express Bridge */
 #define	PCI_PRODUCT_INTEL_82965G_IGD	0x29a2		/* 82965G Integrated Graphics Device */
 #define	PCI_PRODUCT_INTEL_82965G_IGD_1	0x29a3		/* 82965G Integrated Graphics Device */
+#define	PCI_PRODUCT_INTEL_82Q35_HB	0x29b0		/* 82Q35 Host Bridge */
+#define	PCI_PRODUCT_INTEL_82Q35_EXP	0x29b1		/* 82Q35 PCI Express Bridge */
+#define	PCI_PRODUCT_INTEL_82Q35_IGD	0x29b2		/* 82Q35 Integrated Graphics Device */
+#define	PCI_PRODUCT_INTEL_82Q35_IGD_1	0x29b3		/* 82Q35 Integrated Graphics Device */
 #define	PCI_PRODUCT_INTEL_82G33_HB	0x29c0		/* 82G33/P35 Host Bridge */
 #define	PCI_PRODUCT_INTEL_82G33_EXP	0x29c1		/* 82G33 PCI Express Port */
 #define	PCI_PRODUCT_INTEL_82G33_IGD	0x29c2		/* 82G33 Integrated Graphics Device */
 #define	PCI_PRODUCT_INTEL_82G33_IGD_1	0x29c3		/* 82G33 Integrated Graphics Device */
 #define	PCI_PRODUCT_INTEL_82801I_LAN	0x29c4		/* 82801I LAN Controller */
+#define	PCI_PRODUCT_INTEL_82Q33_HB	0x29d0		/* 82Q35 Host Bridge */
+#define	PCI_PRODUCT_INTEL_82Q33_EXP	0x29d1		/* 82Q35 PCI Express Bridge */
+#define	PCI_PRODUCT_INTEL_82Q33_IGD	0x29d2		/* 82Q35 Integrated Graphics Device */
+#define	PCI_PRODUCT_INTEL_82Q33_IGD_1	0x29d3		/* 82Q35 Integrated Graphics Device */
 #define	PCI_PRODUCT_INTEL_82965PM_HB	0x2a00		/* 82965PM Host Bridge */
 #define	PCI_PRODUCT_INTEL_82965PM_IGD	0x2a02		/* 82965PM Integrated Graphics Device */
 #define	PCI_PRODUCT_INTEL_82965PM_IGD_1	0x2a03		/* 82965PM Integrated Graphics Device */
@@ -2877,6 +2902,7 @@
 #define	PCI_PRODUCT_NVIDIA_RIVATNT2U	0x0029		/* RIVA TNT2 Ultra */
 #define	PCI_PRODUCT_NVIDIA_VANTA	0x002c		/* Vanta */
 #define	PCI_PRODUCT_NVIDIA_RIVATNT2M64	0x002d		/* RIVA TNT2 Model 64 */
+#define	PCI_PRODUCT_NVIDIA_MCP04_PCIB	0x0030		/* MCP04 PCI-ISA Bridge */
 #define	PCI_PRODUCT_NVIDIA_MCP04_SMBUS	0x0034		/* MCP04 SMBus */
 #define	PCI_PRODUCT_NVIDIA_MCP04_IDE	0x0035		/* MCP04 IDE */
 #define	PCI_PRODUCT_NVIDIA_MCP04_SATA	0x0036		/* MCP04 SATA */
@@ -2887,7 +2913,8 @@
 #define	PCI_PRODUCT_NVIDIA_GEFORCE_6800	0x0041		/* GeForce 6800 */
 #define	PCI_PRODUCT_NVIDIA_GEFORCE_6800LE	0x0042		/* GeForce 6800LE */
 #define	PCI_PRODUCT_NVIDIA_GEFORCE_6800GT	0x0045		/* GeForce 6800 GT */
-#define	PCI_PRODUCT_NVIDIA_NFORCE4_PCIB	0x0051		/* nForce4 PCI-ISA bridge */
+#define	PCI_PRODUCT_NVIDIA_NFORCE4_PCIB1	0x0050		/* nForce4 PCI-ISA bridge */
+#define	PCI_PRODUCT_NVIDIA_NFORCE4_PCIB2	0x0051		/* nForce4 PCI-ISA bridge */
 #define	PCI_PRODUCT_NVIDIA_NFORCE4_SMBUS	0x0052		/* nForce4 SMBus */
 #define	PCI_PRODUCT_NVIDIA_NFORCE4_ATA133	0x0053		/* nForce4 ATA133 IDE */
 #define	PCI_PRODUCT_NVIDIA_NFORCE4_SATA1	0x0054		/* nForce4 Serial ATA 1 */
@@ -3826,6 +3853,7 @@
 #define	PCI_PRODUCT_VIATECH_VT8233A	0x3147		/* VT8233A PCI-ISA Bridge */
 #define	PCI_PRODUCT_VIATECH_VT8237_SATA	0x3149		/* VT8237 Integrated SATA Controller */
 #define	PCI_PRODUCT_VIATECH_K8HTB	0x3188		/* K8HTB Host */
+#define	PCI_PRODUCT_VIATECH_VT8237_PCIB	0x3227		/* VT8237 PCI-ISA Bridge */
 #define	PCI_PRODUCT_VIATECH_VT6421_RAID	0x3249		/* VT6421 Serial RAID Controller */
 #define	PCI_PRODUCT_VIATECH_VT3314_IG	0x3344		/* VT3314 CN900 UniChrome Integrated Graphics */
 #define	PCI_PRODUCT_VIATECH_VT8237R_SATA	0x3349		/* VT8237R Integrated SATA Controller */

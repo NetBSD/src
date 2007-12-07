@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.15.4.5 2007/10/27 11:34:59 yamt Exp $	*/
+/*	$NetBSD: advnops.c,v 1.15.4.6 2007/12/07 17:31:49 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.15.4.5 2007/10/27 11:34:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.15.4.6 2007/12/07 17:31:49 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -155,7 +155,6 @@ adosfs_getattr(v)
 		struct vnode *a_vp;
 		struct vattr *a_vap;
 		kauth_cred_t a_cred;
-		struct lwp *a_l;
 	} */ *sp = v;
 	struct vattr *vap;
 	struct adosfsmount *amp;
@@ -777,7 +776,6 @@ adosfs_access(v)
 		struct vnode *a_vp;
 		int  a_mode;
 		kauth_cred_t a_cred;
-		struct lwp *a_l;
 	} */ *sp = v;
 	struct anode *ap;
 	struct vnode *vp = sp->a_vp;
@@ -849,10 +847,9 @@ adosfs_inactive(v)
 {
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
-		struct lwp *a_l;
 	} */ *sp = v;
 	struct vnode *vp = sp->a_vp;
-	struct lwp *l = sp->a_l;
+	struct lwp *l = curlwp;
 #ifdef ADOSFS_DIAGNOSTIC
 	advopprint(sp);
 #endif

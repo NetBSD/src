@@ -1,4 +1,4 @@
-/*	$NetBSD: getfile.c,v 1.7 2003/08/07 16:32:27 agc Exp $	*/
+/*	$NetBSD: getfile.c,v 1.7.16.1 2007/12/07 17:33:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -32,12 +32,10 @@
  */
 #include "stand.h"
 
-#define CTRL(x) (x&037)
+#define CTRL(x) ((x) & 037)
 
 int
-getfile(prompt, mode)
-	char *prompt;
-	int mode;
+getfile(char *prompt, int mode)
 {
 	int fd;
 	char buf[100];
@@ -46,8 +44,8 @@ getfile(prompt, mode)
 		printf("%s: ", prompt);
 		gets(buf);
 		if (buf[0] == CTRL('d') && buf[1] == 0)
-			return (-1);
+			return -1;
 	} while ((fd = open(buf, mode)) < 0);
 
-	return (fd);
+	return fd;
 }

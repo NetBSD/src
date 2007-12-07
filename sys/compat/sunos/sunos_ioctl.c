@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_ioctl.c,v 1.50.2.3 2007/09/03 14:32:49 yamt Exp $	*/
+/*	$NetBSD: sunos_ioctl.c,v 1.50.2.4 2007/12/07 17:29:02 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993 Markus Wild.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_ioctl.c,v 1.50.2.3 2007/09/03 14:32:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_ioctl.c,v 1.50.2.4 2007/12/07 17:29:02 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_execfmt.h"
@@ -106,10 +106,10 @@ static const u_long s2btab[] = {
 	38400,
 };
 
-static void stios2btios __P((struct sunos_termios *, struct termios *));
-static void btios2stios __P((struct termios *, struct sunos_termios *));
-static void stios2stio __P((struct sunos_termios *, struct sunos_termio *));
-static void stio2stios __P((struct sunos_termio *, struct sunos_termios *));
+static void stios2btios(struct sunos_termios *, struct termios *);
+static void btios2stios(struct termios *, struct sunos_termios *);
+static void stios2stio(struct sunos_termios *, struct sunos_termio *);
+static void stio2stios(struct sunos_termio *, struct sunos_termios *);
 
 /*
  * These two conversion functions have mostly been done
@@ -935,8 +935,8 @@ struct sunos_flock {
 	short	l_xxx;
 };
 
-static void bsd_to_sunos_flock __P((struct flock *, struct sunos_flock *));
-static void sunos_to_bsd_flock __P((struct sunos_flock *, struct flock *));
+static void bsd_to_sunos_flock(struct flock *, struct sunos_flock *);
+static void sunos_to_bsd_flock(struct sunos_flock *, struct flock *);
 
 #define SUNOS_F_RDLCK	1
 #define	SUNOS_F_WRLCK	2

@@ -1,4 +1,4 @@
-/*	$NetBSD: bio.c,v 1.1.18.3 2007/11/15 11:44:00 yamt Exp $ */
+/*	$NetBSD: bio.c,v 1.1.18.4 2007/12/07 17:29:15 yamt Exp $ */
 /*	$OpenBSD: bio.c,v 1.9 2007/03/20 02:35:55 marco Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
 /* A device controller ioctl tunnelling device.  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bio.c,v 1.1.18.3 2007/11/15 11:44:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bio.c,v 1.1.18.4 2007/12/07 17:29:15 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -52,7 +52,9 @@ struct bio_mapping {
 
 LIST_HEAD(, bio_mapping) bios = LIST_HEAD_INITIALIZER(bios);
 static kmutex_t bio_lock;
+static bool bio_lock_initialized = false;
 
+static void bio_initialize(void);
 void	bioattach(int);
 int	bioclose(dev_t, int, int, struct lwp *);
 int	bioioctl(dev_t, u_long, void *, int, struct lwp *);
@@ -69,9 +71,20 @@ const struct cdevsw bio_cdevsw = {
 
 
 void
+bio_initialize(void)
+{
+	if (bio_lock_initialized)
+		return;
+
+	mutex_init(&bio_lock, MUTEX_DEFAULT, IPL_VM);
+	bio_lock_initialized = true;
+}
+
+void
 bioattach(int nunits)
 {
-	mutex_init(&bio_lock, MUTEX_DRIVER, IPL_BIO);
+	if (!bio_lock_initialized)
+		bio_initialize();
 }
 
 int
@@ -168,6 +181,9 @@ int
 bio_register(struct device *dev, int (*ioctl)(struct device *, u_long, void *))
 {
 	struct bio_mapping *bm;
+
+	if (!bio_lock_initialized)
+		bio_initialize();
 
 	bm = (struct bio_mapping *)malloc(sizeof(*bm), M_DEVBUF,
 	    M_NOWAIT|M_ZERO);

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.65.2.6 2007/11/15 11:44:51 yamt Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.65.2.7 2007/12/07 17:33:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.65.2.6 2007/11/15 11:44:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.65.2.7 2007/12/07 17:33:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1478,7 +1478,7 @@ pipe_kqfilter(struct file *fp, struct knote *kn)
 		break;
 	default:
 		rw_exit(&pipe_peer_lock);
-		return (1);
+		return (EINVAL);
 	}
 
 	kn->kn_hook = pipe;

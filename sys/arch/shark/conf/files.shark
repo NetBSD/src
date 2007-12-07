@@ -1,4 +1,4 @@
-#	$NetBSD: files.shark,v 1.9.10.3 2007/11/15 11:43:26 yamt Exp $
+#	$NetBSD: files.shark,v 1.9.10.4 2007/12/07 17:26:10 yamt Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -98,7 +98,6 @@ file	arch/arm/arm/disksubr_acorn.c		disk
 file	arch/arm/arm/disksubr_mbr.c		disk
 
 file	arch/arm/arm32/intr.c
-file	arch/arm/arm/softintr.c
 file	arch/arm/arm32/spl.S
 
 # Shark specific files

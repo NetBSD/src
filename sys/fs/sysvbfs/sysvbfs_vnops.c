@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vnops.c,v 1.3.6.6 2007/10/27 11:35:14 yamt Exp $	*/
+/*	$NetBSD: sysvbfs_vnops.c,v 1.3.6.7 2007/12/07 17:32:10 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.3.6.6 2007/10/27 11:35:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.3.6.7 2007/12/07 17:32:10 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -88,8 +88,7 @@ sysvbfs_lookup(void *arg)
 	    cnp->cn_flags);
 
 	KASSERT((cnp->cn_flags & ISDOTDOT) == 0);
-	if ((error = VOP_ACCESS(a->a_dvp, VEXEC, cnp->cn_cred,
-	    cnp->cn_lwp)) != 0) {
+	if ((error = VOP_ACCESS(a->a_dvp, VEXEC, cnp->cn_cred)) != 0) {
 		return error;	/* directory permittion. */
 	}
 
@@ -105,8 +104,7 @@ sysvbfs_lookup(void *arg)
 				    __FUNCTION__);
 				return ENOENT;
 			}
-			if ((error = VOP_ACCESS(v, VWRITE, cnp->cn_cred,
-			    cnp->cn_lwp)) != 0)
+			if ((error = VOP_ACCESS(v, VWRITE, cnp->cn_cred)) != 0)
 				return error;
 			cnp->cn_flags |= SAVENAME;
 			return EJUSTRETURN;
@@ -183,7 +181,6 @@ sysvbfs_open(void *arg)
 		struct vnode *a_vp;
 		int  a_mode;
 		kauth_cred_t a_cred;
-		struct lwp *a_l;
 	} */ *a = arg;
 	struct vnode *v = a->a_vp;
 	struct sysvbfs_node *bnode = v->v_data;
@@ -215,7 +212,6 @@ sysvbfs_close(void *arg)
 		struct vnode *a_vp;
 		int  a_fflag;
 		kauth_cred_t a_cred;
-		struct lwp *a_l;
 	} */ *a = arg;
 	struct vnode *v = a->a_vp;
 	struct sysvbfs_node *bnode = v->v_data;
@@ -233,7 +229,7 @@ sysvbfs_close(void *arg)
 		attr.mtime = time_second;
 	bfs_inode_set_attr(bnode->bmp->bfs, bnode->inode, &attr);
 
-	VOP_FSYNC(a->a_vp, a->a_cred, FSYNC_WAIT, 0, 0, a->a_l);
+	VOP_FSYNC(a->a_vp, a->a_cred, FSYNC_WAIT, 0, 0);
 
 	return 0;
 }
@@ -245,7 +241,6 @@ sysvbfs_access(void *arg)
 		struct vnode	*a_vp;
 		int		a_mode;
 		kauth_cred_t	a_cred;
-		struct lwp	*a_l;
 	} */ *ap = arg;
 	struct vnode *vp = ap->a_vp;
 	struct sysvbfs_node *bnode = vp->v_data;
@@ -266,7 +261,6 @@ sysvbfs_getattr(void *v)
 		struct vnode *a_vp;
 		struct vattr *a_vap;
 		kauth_cred_t a_cred;
-		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct sysvbfs_node *bnode = vp->v_data;
@@ -578,14 +572,12 @@ sysvbfs_inactive(void *arg)
 {
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
-		struct lwp *a_l;
 	} */ *a = arg;
 	struct vnode *v = a->a_vp;
-	struct lwp *l = a->a_l;
 
 	DPRINTF("%s:\n", __FUNCTION__);
 	VOP_UNLOCK(v, 0);
-	vrecycle(v, NULL, l);
+	vrecycle(v, NULL, curlwp);
 
 	return 0;
 }
@@ -760,7 +752,6 @@ sysvbfs_fsync(void *v)
 		int a_flags;
 		off_t offlo;
 		off_t offhi;
-		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	int error, wait;

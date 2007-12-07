@@ -1,4 +1,4 @@
-#	$NetBSD: files.ofppc,v 1.23.12.4 2007/11/15 11:43:13 yamt Exp $
+#	$NetBSD: files.ofppc,v 1.23.12.5 2007/12/07 17:25:47 yamt Exp $
 #
 # NetBSD/ofppc configuration info
 #
@@ -27,13 +27,12 @@ file	arch/powerpc/powerpc/clock.c
 file	kern/subr_disk_mbr.c			disk
 file	arch/powerpc/oea/ofwoea_machdep.c
 file	arch/powerpc/oea/ofw_consinit.c
+file	arch/powerpc/oea/ofw_rascons.c
 file	arch/ofppc/ofppc/machdep.c
-#file	arch/ofppc/ofppc/platform.c
 
 file	arch/powerpc/powerpc/bus_dma.c
 file	arch/powerpc/powerpc/bus_space.c
 file	arch/powerpc/powerpc/procfs_machdep.c	procfs
-file	arch/powerpc/powerpc/softintr.c
 file	dev/cons.c
 
 #

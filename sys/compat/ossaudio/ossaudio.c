@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.47.4.5 2007/10/27 11:29:48 yamt Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.47.4.6 2007/12/07 17:29:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ossaudio.c,v 1.47.4.5 2007/10/27 11:29:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ossaudio.c,v 1.47.4.6 2007/12/07 17:29:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -63,12 +63,12 @@ int ossdebug = 0;
 #define TO_OSSVOL(x)	(((x) * 100 + 127) / 255)
 #define FROM_OSSVOL(x)	((((x) > 100 ? 100 : (x)) * 255 + 50) / 100)
 
-static struct audiodevinfo *getdevinfo __P((struct file *, struct lwp *));
+static struct audiodevinfo *getdevinfo(struct file *, struct lwp *);
 static int opaque_to_enum(struct audiodevinfo *di, audio_mixer_name_t *label, int opq);
 static int enum_to_ord(struct audiodevinfo *di, int enm);
 static int enum_to_mask(struct audiodevinfo *di, int enm);
 
-static void setblocksize __P((struct file *, struct audio_info *, struct lwp *));
+static void setblocksize(struct file *, struct audio_info *, struct lwp *);
 
 
 int
@@ -654,7 +654,7 @@ getdevinfo(fp, l)
 	vp = (struct vnode *)fp->f_data;
 	if (vp->v_type != VCHR)
 		return 0;
-	if (VOP_GETATTR(vp, &va, l->l_cred, l))
+	if (VOP_GETATTR(vp, &va, l->l_cred))
 		return 0;
 	if (di->done && di->dev == va.va_rdev)
 		return di;

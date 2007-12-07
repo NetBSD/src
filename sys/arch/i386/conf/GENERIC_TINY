@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_TINY,v 1.86.2.6 2007/11/15 11:42:48 yamt Exp $
+#	$NetBSD: GENERIC_TINY,v 1.86.2.7 2007/12/07 17:24:55 yamt Exp $
 #
 #	GENERIC_TINY -- suitable default for 4M machines
 #			No EISA, PCI, or SCSI.
@@ -11,9 +11,6 @@ include "arch/i386/conf/std.i386"
 makeoptions	COPTS="-Os"
 
 maxusers	8		# estimated number of users
-
-# CPU support.
-options 	I386_CPU
 
 # CPU-related options.
 options 	MATH_EMULATE	# floating point emulation

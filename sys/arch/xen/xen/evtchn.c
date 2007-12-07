@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.14.2.3 2007/10/27 11:29:26 yamt Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.14.2.4 2007/12/07 17:27:20 yamt Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -64,7 +64,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.14.2.3 2007/10/27 11:29:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.14.2.4 2007/12/07 17:27:20 yamt Exp $");
 
 #include "opt_xen.h"
 #include "isa.h"
@@ -81,13 +81,13 @@ __KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.14.2.3 2007/10/27 11:29:26 yamt Exp $")
 
 #include <machine/intrdefs.h>
 
-#include <machine/xen.h>
-#include <machine/hypervisor.h>
-#include <machine/evtchn.h>
+#include <xen/xen.h>
+#include <xen/hypervisor.h>
+#include <xen/evtchn.h>
 #ifndef XEN3
-#include <machine/ctrl_if.h>
+#include <xen/ctrl_if.h>
 #endif
-#include <machine/xenfunc.h>
+#include <xen/xenfunc.h>
 
 /*
  * This lock protects updates to the following mapping and reference-count
@@ -154,11 +154,10 @@ void
 init_events()
 {
 	int evtch;
-
 	evtch = bind_virq_to_evtch(VIRQ_DEBUG);
 	aprint_verbose("debug virtual interrupt using event channel %d\n",
 	    evtch);
-	event_set_handler(evtch, &xen_debug_handler, NULL, IPL_DEBUG,
+	event_set_handler(evtch, &xen_debug_handler, NULL, IPL_HIGH,
 	    "debugev");
 	hypervisor_enable_event(evtch);
 
@@ -166,7 +165,7 @@ init_events()
 	evtch = bind_virq_to_evtch(VIRQ_MISDIRECT);
 	aprint_verbose("misdirect virtual interrupt using event channel %d\n",
 	    evtch);
-	event_set_handler(evtch, &xen_misdirect_handler, NULL, IPL_DIE,
+	event_set_handler(evtch, &xen_misdirect_handler, NULL, IPL_HIGH,
 	    "misdirev");
 	hypervisor_enable_event(evtch);
 
@@ -605,9 +604,9 @@ xen_debug_handler(void *arg)
 {
 	struct cpu_info *ci = curcpu();
 	int i;
-	int ci_ilevel = ci->ci_ilevel;
-	int ci_ipending = ci->ci_ipending;
-	int ci_idepth = ci->ci_idepth;
+	int xci_ilevel = ci->ci_ilevel;
+	int xci_ipending = ci->ci_ipending;
+	int xci_idepth = ci->ci_idepth;
 	u_long upcall_pending =
 	    HYPERVISOR_shared_info->vcpu_info[0].evtchn_upcall_pending;
 	u_long upcall_mask =
@@ -630,7 +629,7 @@ xen_debug_handler(void *arg)
 	__insn_barrier();
 	printf("debug event\n");
 	printf("ci_ilevel 0x%x ci_ipending 0x%x ci_idepth %d\n",
-	    ci_ilevel, ci_ipending, ci_idepth);
+	    xci_ilevel, xci_ipending, xci_idepth);
 	printf("evtchn_upcall_pending %ld evtchn_upcall_mask %ld"
 	    " evtchn_pending_sel 0x%lx\n",
 		upcall_pending, upcall_mask, pending_sel);

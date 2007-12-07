@@ -1,4 +1,4 @@
-/* $NetBSD: wsmouse.c,v 1.36.2.4 2007/10/27 11:34:51 yamt Exp $ */
+/* $NetBSD: wsmouse.c,v 1.36.2.5 2007/12/07 17:31:46 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.36.2.4 2007/10/27 11:34:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.36.2.5 2007/12/07 17:31:46 yamt Exp $");
 
 #include "wsmouse.h"
 #include "wsdisplay.h"
@@ -264,16 +264,17 @@ wsmouse_attach(struct device *parent, struct device *self, void *aux)
 	if (mux >= 0) {
 		error = wsmux_attach_sc(wsmux_getmux(mux), &sc->sc_base);
 		if (error)
-			printf(" attach error=%d", error);
+			aprint_error(" attach error=%d", error);
 		else
-			printf(" mux %d", mux);
+			aprint_normal(" mux %d", mux);
 	}
 #else
 	if (device_cfdata(&sc->sc_base.me_dv)->wsmousedevcf_mux >= 0)
-		printf(" (mux ignored)");
+		aprint_normal(" (mux ignored)");
 #endif
 
-	printf("\n");
+	aprint_naive("\n");
+	aprint_normal("\n");
 }
 
 int

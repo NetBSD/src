@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11xx_pcicvar.h,v 1.2.40.1 2007/09/03 14:23:26 yamt Exp $	*/
+/*	$NetBSD: sa11xx_pcicvar.h,v 1.2.40.2 2007/12/07 17:24:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -84,8 +84,7 @@ struct sapcic_tag {
 struct sapcic_softc {
 	struct device sc_dev;
 	bus_space_tag_t sc_iot;
-
-	struct lock sc_lock;
+	kmutex_t sc_lock;
 };
 
 int	sapcic_intr(void *);

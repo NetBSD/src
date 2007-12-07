@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_fcntl.c,v 1.19.4.4 2007/09/03 14:32:04 yamt Exp $	*/
+/*	$NetBSD: ibcs2_fcntl.c,v 1.19.4.5 2007/12/07 17:27:44 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Bartram
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_fcntl.c,v 1.19.4.4 2007/09/03 14:32:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_fcntl.c,v 1.19.4.5 2007/12/07 17:27:44 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,11 +51,11 @@ __KERNEL_RCSID(0, "$NetBSD: ibcs2_fcntl.c,v 1.19.4.4 2007/09/03 14:32:04 yamt Ex
 #include <compat/ibcs2/ibcs2_syscallargs.h>
 #include <compat/ibcs2/ibcs2_util.h>
 
-static int cvt_o_flags __P((int));
-static void cvt_flock2iflock __P((struct flock *, struct ibcs2_flock *));
-static void cvt_iflock2flock __P((struct ibcs2_flock *, struct flock *));
-static int ioflags2oflags __P((int));
-static int oflags2ioflags __P((int));
+static int cvt_o_flags(int);
+static void cvt_flock2iflock(struct flock *, struct ibcs2_flock *);
+static void cvt_iflock2flock(struct ibcs2_flock *, struct flock *);
+static int ioflags2oflags(int);
+static int oflags2ioflags(int);
 
 static int
 cvt_o_flags(flags)
@@ -257,7 +257,7 @@ ibcs2_sys_eaccess(struct lwp *l, void *v, register_t *retval)
                 if (SCARG(uap, flags) & IBCS2_X_OK)
 			flags |= VEXEC;
                 if ((flags & VWRITE) == 0 || (error = vn_writechk(vp)) == 0)
-                        error = VOP_ACCESS(vp, flags, l->l_cred, l);
+                        error = VOP_ACCESS(vp, flags, l->l_cred);
         }
         vput(vp);
         return error;

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.h,v 1.12.2.3 2007/09/03 14:32:23 yamt Exp $	*/
+/*	$NetBSD: linux_machdep.h,v 1.12.2.4 2007/12/07 17:28:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -63,13 +63,13 @@
 
 #ifdef _KERNEL
 __BEGIN_DECLS
-void linux_sendsig __P((const ksiginfo_t *, const sigset_t *));
-dev_t linux_fakedev __P((dev_t, int));
+void linux_sendsig(const ksiginfo_t *, const sigset_t *);
+dev_t linux_fakedev(dev_t, int);
 __END_DECLS
 #ifdef LINUX_NPTL
 __BEGIN_DECLS
-void *linux_get_newtls __P((struct lwp *));
-int linux_set_newtls __P((struct lwp *, void *));
+void *linux_get_newtls(struct lwp *);
+int linux_set_newtls(struct lwp *, void *);
 __END_DECLS
 #endif /* !LINUX_NPTL */
 #endif /* !_KERNEL */

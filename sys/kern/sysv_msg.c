@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_msg.c,v 1.39.2.6 2007/11/15 11:44:53 yamt Exp $	*/
+/*	$NetBSD: sysv_msg.c,v 1.39.2.7 2007/12/07 17:33:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.39.2.6 2007/11/15 11:44:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.39.2.7 2007/12/07 17:33:12 yamt Exp $");
 
 #define SYSVMSG
 
@@ -659,15 +659,13 @@ msgsnd1(struct lwp *l, int msqidr, const char *user_msgp, size_t msgsz,
 
 	MSG_PRINTF(("call to msgsnd(%d, %p, %lld, %d)\n", msqid, user_msgp,
 	    (long long)msgsz, msgflg));
-
+restart:
 	msqid = IPCID_TO_IX(msqidr);
 
 	mutex_enter(&msgmutex);
-	if (msg_realloc_state) {
-		/* In case of reallocation, we will wait for completion */
-		while (msg_realloc_state)
-			cv_wait(&msg_realloc_cv, &msgmutex);
-	}
+	/* In case of reallocation, we will wait for completion */
+	while (__predict_false(msg_realloc_state))
+		cv_wait(&msg_realloc_cv, &msgmutex);
 
 	if (msqid < 0 || msqid >= msginfo.msgmni) {
 		MSG_PRINTF(("msqid (%d) out of range (0<=msqid<%d)\n", msqid,
@@ -756,13 +754,20 @@ msgsnd1(struct lwp *l, int msqidr, const char *user_msgp, size_t msgsz,
 			MSG_PRINTF(("good morning, error=%d\n", error));
 			msg_waiters--;
 
-			/* Notify reallocator, in case of such state */
-			if (msg_realloc_state)
-				cv_broadcast(&msg_realloc_cv);
-
 			if (we_own_it)
 				msqptr->msg_perm.mode &= ~MSG_LOCKED;
-			if (error || msg_realloc_state) {
+
+			/*
+			 * In case of such state, notify reallocator and
+			 * restart the call.
+			 */
+			if (msg_realloc_state) {
+				cv_broadcast(&msg_realloc_cv);
+				mutex_exit(&msgmutex);
+				goto restart;
+			}
+
+			if (error != 0) {
 				MSG_PRINTF(("msgsnd: interrupted system "
 				    "call\n"));
 				error = EINTR;
@@ -959,15 +964,13 @@ msgrcv1(struct lwp *l, int msqidr, char *user_msgp, size_t msgsz, long msgtyp,
 
 	MSG_PRINTF(("call to msgrcv(%d, %p, %lld, %ld, %d)\n", msqid,
 	    user_msgp, (long long)msgsz, msgtyp, msgflg));
-
+restart:
 	msqid = IPCID_TO_IX(msqidr);
 
 	mutex_enter(&msgmutex);
-	if (msg_realloc_state) {
-		/* In case of reallocation, we will wait for completion */
-		while (msg_realloc_state)
-			cv_wait(&msg_realloc_cv, &msgmutex);
-	}
+	/* In case of reallocation, we will wait for completion */
+	while (__predict_false(msg_realloc_state))
+		cv_wait(&msg_realloc_cv, &msgmutex);
 
 	if (msqid < 0 || msqid >= msginfo.msgmni) {
 		MSG_PRINTF(("msqid (%d) out of range (0<=msqid<%d)\n", msqid,
@@ -1090,11 +1093,17 @@ msgrcv1(struct lwp *l, int msqidr, char *user_msgp, size_t msgsz, long msgtyp,
 		MSG_PRINTF(("msgrcv: good morning (error=%d)\n", error));
 		msg_waiters--;
 
-		/* Notify reallocator, in case of such state */
-		if (msg_realloc_state)
+		/*
+		 * In case of such state, notify reallocator and
+		 * restart the call.
+		 */
+		if (msg_realloc_state) {
 			cv_broadcast(&msg_realloc_cv);
+			mutex_exit(&msgmutex);
+			goto restart;
+		}
 
-		if (error || msg_realloc_state) {
+		if (error != 0) {
 			MSG_PRINTF(("msgsnd: interrupted system call\n"));
 			error = EINTR;
 			goto unlock;

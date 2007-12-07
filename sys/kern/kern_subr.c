@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.117.2.5 2007/10/27 11:35:28 yamt Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.117.2.6 2007/12/07 17:32:50 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2006 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.117.2.5 2007/10/27 11:35:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.117.2.6 2007/12/07 17:32:50 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -714,8 +714,8 @@ isswap(struct device *dv)
 	if ((vn = opendisk(dv)) == NULL)
 		return 0;
 
-	error = VOP_IOCTL(vn, DIOCGWEDGEINFO, &wi, FREAD, NOCRED, 0);
-	VOP_CLOSE(vn, FREAD, NOCRED, 0);
+	error = VOP_IOCTL(vn, DIOCGWEDGEINFO, &wi, FREAD, NOCRED);
+	VOP_CLOSE(vn, FREAD, NOCRED);
 	vput(vn);
 	if (error) {
 #ifdef DEBUG_WEDGE

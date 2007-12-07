@@ -1,4 +1,4 @@
-/*	$NetBSD: epcom.c,v 1.3.2.3 2007/09/03 14:23:17 yamt Exp $ */
+/*	$NetBSD: epcom.c,v 1.3.2.4 2007/12/07 17:24:15 yamt Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2001, 2002, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epcom.c,v 1.3.2.3 2007/09/03 14:23:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epcom.c,v 1.3.2.4 2007/12/07 17:24:15 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -367,16 +367,8 @@ epcomstart(struct tty *tp)
 		goto out;
 	if (sc->sc_tx_stopped)
 		goto out;
-
-	if (tp->t_outq.c_cc <= tp->t_lowat) {
-		if (ISSET(tp->t_state, TS_ASLEEP)) {
-			CLR(tp->t_state, TS_ASLEEP);
-			wakeup(&tp->t_outq);
-		}
-		selwakeup(&tp->t_wsel);
-		if (tp->t_outq.c_cc == 0)
-			goto out;
-	}
+	if (!ttypull(tp))
+		goto out;
 
 	/* Grab the first contiguous region of buffer space. */
 	{

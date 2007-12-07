@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vnops.c,v 1.7.4.5 2007/10/27 11:35:08 yamt Exp $	*/
+/*	$NetBSD: ptyfs_vnops.c,v 1.7.4.6 2007/12/07 17:32:02 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.7.4.5 2007/10/27 11:35:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.7.4.6 2007/12/07 17:32:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -298,7 +298,6 @@ ptyfs_getattr(void *v)
 		struct vnode *a_vp;
 		struct vattr *a_vap;
 		kauth_cred_t a_cred;
-		struct lwp *a_l;
 	} */ *ap = v;
 	struct ptyfsnode *ptyfs = VTOPTYFS(ap->a_vp);
 	struct vattr *vap = ap->a_vap;
@@ -355,13 +354,12 @@ ptyfs_setattr(void *v)
 		struct vnode *a_vp;
 		struct vattr *a_vap;
 		kauth_cred_t a_cred;
-		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct ptyfsnode *ptyfs = VTOPTYFS(vp);
 	struct vattr *vap = ap->a_vap;
 	kauth_cred_t cred = ap->a_cred;
-	struct lwp *l = ap->a_l;
+	struct lwp *l = curlwp;
 	int error;
 
 	if (vap->va_size != VNOVAL) {
@@ -425,7 +423,7 @@ ptyfs_setattr(void *v)
 		    (error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
 		    NULL)) &&
 		    ((vap->va_vaflags & VA_UTIMES_NULL) == 0 ||
-		    (error = VOP_ACCESS(vp, VWRITE, cred, l)) != 0))
+		    (error = VOP_ACCESS(vp, VWRITE, cred)) != 0))
 			return (error);
 		if (vap->va_atime.tv_sec != VNOVAL)
 			if (!(vp->v_mount->mnt_flag & MNT_NOATIME))
@@ -525,12 +523,11 @@ ptyfs_access(void *v)
 		struct vnode *a_vp;
 		int a_mode;
 		kauth_cred_t a_cred;
-		struct lwp *a_l;
 	} */ *ap = v;
 	struct vattr va;
 	int error;
 
-	if ((error = VOP_GETATTR(ap->a_vp, &va, ap->a_cred, ap->a_l)) != 0)
+	if ((error = VOP_GETATTR(ap->a_vp, &va, ap->a_cred)) != 0)
 		return error;
 
 	return vaccess(va.va_type, va.va_mode,
@@ -721,7 +718,6 @@ ptyfs_open(void *v)
 		struct vnode *a_vp;
 		int  a_mode;
 		kauth_cred_t a_cred;
-		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct ptyfsnode *ptyfs = VTOPTYFS(vp);
@@ -745,7 +741,6 @@ ptyfs_close(void *v)
 		struct vnode *a_vp;
 		int  a_fflag;
 		kauth_cred_t a_cred;
-		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct ptyfsnode *ptyfs = VTOPTYFS(vp);
@@ -836,7 +831,6 @@ ptyfs_ioctl(void *v)
 		void *a_data;
 		int  a_fflag;
 		kauth_cred_t a_cred;
-		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct ptyfsnode *ptyfs = VTOPTYFS(vp);
@@ -845,7 +839,7 @@ ptyfs_ioctl(void *v)
 	case PTYFSpts:
 	case PTYFSptc:
 		return cdev_ioctl(vp->v_rdev, ap->a_command,
-		    ap->a_data, ap->a_fflag, ap->a_l);
+		    ap->a_data, ap->a_fflag, curlwp);
 	default:
 		return EOPNOTSUPP;
 	}
@@ -857,7 +851,6 @@ ptyfs_poll(void *v)
 	struct vop_poll_args /* {
 		struct vnode *a_vp;
 		int a_events;
-		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct ptyfsnode *ptyfs = VTOPTYFS(vp);
@@ -865,7 +858,7 @@ ptyfs_poll(void *v)
 	switch (ptyfs->ptyfs_type) {
 	case PTYFSpts:
 	case PTYFSptc:
-		return cdev_poll(vp->v_rdev, ap->a_events, ap->a_l);
+		return cdev_poll(vp->v_rdev, ap->a_events, curlwp);
 	default:
 		return genfs_poll(v);
 	}

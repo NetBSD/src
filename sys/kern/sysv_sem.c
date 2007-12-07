@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_sem.c,v 1.56.2.5 2007/11/15 11:44:54 yamt Exp $	*/
+/*	$NetBSD: sysv_sem.c,v 1.56.2.6 2007/12/07 17:33:13 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.56.2.5 2007/11/15 11:44:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.56.2.6 2007/12/07 17:33:13 yamt Exp $");
 
 #define SYSVSEM
 
@@ -760,7 +760,7 @@ sys_semop(struct lwp *l, void *v, register_t *retval)
 	int do_wakeup, do_undos;
 
 	SEM_PRINTF(("call to semop(%d, %p, %zd)\n", semid, SCARG(uap,sops), nsops));
-
+restart:
 	if (nsops <= SMALL_SOPS) {
 		sops = small_sops;
 	} else if (nsops <= seminfo.semopm) {
@@ -774,11 +774,9 @@ sys_semop(struct lwp *l, void *v, register_t *retval)
 	}
 
 	mutex_enter(&semlock);
-	if (sem_realloc_state) {
-		/* In case of reallocation, we will wait for completion */
-		while (sem_realloc_state)
-			cv_wait(&sem_realloc_cv, &semlock);
-	}
+	/* In case of reallocation, we will wait for completion */
+	while (__predict_false(sem_realloc_state))
+		cv_wait(&sem_realloc_cv, &semlock);
 
 	semid = IPCID_TO_IX(semid);	/* Convert back to zero origin */
 	if (semid < 0 || semid >= seminfo.semmni) {
@@ -899,9 +897,8 @@ sys_semop(struct lwp *l, void *v, register_t *retval)
 		SEM_PRINTF(("semop:  good morning (error=%d)!\n", error));
 		sem_waiters--;
 
-		/* Notify reallocator, in case of such state */
-		if (sem_realloc_state)
-			cv_broadcast(&sem_realloc_cv);
+		/* Notify reallocator, if it is waiting */
+		cv_broadcast(&sem_realloc_cv);
 
 		/*
 		 * Make sure that the semaphore still exists
@@ -922,8 +919,14 @@ sys_semop(struct lwp *l, void *v, register_t *retval)
 		else
 			semptr->semncnt--;
 
+		/* In case of such state, restart the call */
+		if (sem_realloc_state) {
+			mutex_exit(&semlock);
+			goto restart;
+		}
+
 		/* Is it really morning, or was our sleep interrupted? */
-		if (error || sem_realloc_state) {
+		if (error != 0) {
 			error = EINTR;
 			goto out;
 		}

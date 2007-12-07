@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.14.2.1 2006/06/21 14:53:48 yamt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.14.2.2 2007/12/07 17:25:24 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.14.2.1 2006/06/21 14:53:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.14.2.2 2007/12/07 17:25:24 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,7 +127,6 @@ cpu_configure()
 {
   	int s;
 
-	softintr_init();
 	/*
 	 * Kick off autoconfiguration
 	 */

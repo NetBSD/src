@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_ioctl.c,v 1.9.4.3 2007/09/03 14:32:58 yamt Exp $	 */
+/*	$NetBSD: svr4_32_ioctl.c,v 1.9.4.4 2007/12/07 17:29:09 yamt Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_ioctl.c,v 1.9.4.3 2007/09/03 14:32:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_ioctl.c,v 1.9.4.4 2007/12/07 17:29:09 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -71,7 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_32_ioctl.c,v 1.9.4.3 2007/09/03 14:32:58 yamt E
 
 
 #ifdef DEBUG_SVR4
-static void svr4_32_decode_cmd __P((netbsd32_u_long, char *, char *, int *, int *));
+static void svr4_32_decode_cmd(netbsd32_u_long, char *, char *, int *, int *);
 /*
  * Decode an ioctl command symbolically
  */
@@ -109,8 +109,8 @@ svr4_32_sys_ioctl(l, v, retval)
 	struct file	*fp;
 	struct filedesc	*fdp;
 	u_long		 cmd;
-	int (*fun) __P((struct file *, struct lwp *, register_t *,
-			int, u_long, void *));
+	int (*fun)(struct file *, struct lwp *, register_t *,
+			int, u_long, void *);
 #ifdef DEBUG_SVR4
 	char		 dir[4];
 	char		 c;

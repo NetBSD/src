@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.8.2.5 2007/11/15 11:43:39 yamt Exp $	*/
+/*	$NetBSD: clock.c,v 1.8.2.6 2007/12/07 17:26:57 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -121,7 +121,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.8.2.5 2007/11/15 11:43:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.8.2.6 2007/12/07 17:26:57 yamt Exp $");
 
 /* #define CLOCKDEBUG */
 /* #define CLOCK_PARANOIA */
@@ -257,22 +257,21 @@ static int ticks[6];
 static unsigned int
 gettick_broken_latch(void)
 {
-	u_long flags;
 	int v1, v2, v3;
 	int w1, w2, w3;
+	int s;
 
 	/* Don't want someone screwing with the counter while we're here. */
-	flags = x86_read_psl();
-	x86_disable_intr();
-
+	s = splhigh();
+	__cpu_simple_lock(&tmr_lock);
 	v1 = inb(IO_TIMER1+TIMER_CNTR0);
 	v1 |= inb(IO_TIMER1+TIMER_CNTR0) << 8;
 	v2 = inb(IO_TIMER1+TIMER_CNTR0);
 	v2 |= inb(IO_TIMER1+TIMER_CNTR0) << 8;
 	v3 = inb(IO_TIMER1+TIMER_CNTR0);
 	v3 |= inb(IO_TIMER1+TIMER_CNTR0) << 8;
-
-	x86_write_psl(flags);
+	__cpu_simple_unlock(&tmr_lock);
+	splx(s);
 
 #ifdef CLOCK_PARANOIA
 	if (clock_debug) {
@@ -371,7 +370,7 @@ startrtclock(void)
 }
 
 /*
- * Must be called at splclock().
+ * Must be called at splsched().
  */
 static void
 tickle_tc(void) 
@@ -418,31 +417,25 @@ u_int
 i8254_get_timecount(struct timecounter *tc)
 {
 	u_int count;
-	u_char high, low;
-	u_long flags;
+	uint16_t rdval;
+	int s;
 
 	/* Don't want someone screwing with the counter while we're here. */
-	flags = x86_read_psl();
-	x86_disable_intr();
+	s = splhigh();
 	__cpu_simple_lock(&tmr_lock);
-
 	/* Select timer0 and latch counter value. */ 
 	outb(IO_TIMER1 + TIMER_MODE, TIMER_SEL0 | TIMER_LATCH);
-
-	low = inb(IO_TIMER1 + TIMER_CNTR0);
-	high = inb(IO_TIMER1 + TIMER_CNTR0);
-	count = rtclock_tval - ((high << 8) | low);
-
+	/* insb to make the read atomic */
+	insb(IO_TIMER1+TIMER_CNTR0, &rdval, 2);
+	count = rtclock_tval - rdval;
 	if (rtclock_tval && (count < i8254_lastcount || !i8254_ticked)) {
 		i8254_ticked = 1;
 		i8254_offset += rtclock_tval;
 	}
-
 	i8254_lastcount = count;
 	count += i8254_offset;
-
 	__cpu_simple_unlock(&tmr_lock);
-	x86_write_psl(flags);
+	splx(s);
 
 	return (count);
 }
@@ -450,21 +443,23 @@ i8254_get_timecount(struct timecounter *tc)
 unsigned int
 gettick(void)
 {
-	u_long flags;
-	u_char lo, hi;
-
+	uint16_t rdval;
+	int s;
+	
 	if (clock_broken_latch)
 		return (gettick_broken_latch());
 
 	/* Don't want someone screwing with the counter while we're here. */
-	flags = x86_read_psl();
-	x86_disable_intr();
+	s = splhigh();
+	__cpu_simple_lock(&tmr_lock);
 	/* Select counter 0 and latch it. */
 	outb(IO_TIMER1+TIMER_MODE, TIMER_SEL0 | TIMER_LATCH);
-	lo = inb(IO_TIMER1+TIMER_CNTR0);
-	hi = inb(IO_TIMER1+TIMER_CNTR0);
-	x86_write_psl(flags);
-	return ((hi << 8) | lo);
+	/* insb to make the read atomic */
+	insb(IO_TIMER1+TIMER_CNTR0, &rdval, 2);
+	__cpu_simple_unlock(&tmr_lock);
+	splx(s);
+
+	return rdval;
 }
 
 /*

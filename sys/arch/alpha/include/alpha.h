@@ -1,4 +1,4 @@
-/* $NetBSD: alpha.h,v 1.19.16.1 2007/09/03 14:22:22 yamt Exp $ */
+/* $NetBSD: alpha.h,v 1.19.16.2 2007/12/07 17:23:50 yamt Exp $ */
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -148,6 +148,8 @@ char *	dot_conv(unsigned long);
 
 void	fpusave_cpu(struct cpu_info *, int);
 void	fpusave_proc(struct lwp *, int);
+
+void	alpha_patch(bool);
 
 /* Multiprocessor glue; cpu.c */
 
