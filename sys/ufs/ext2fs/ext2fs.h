@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs.h,v 1.17.4.2 2007/11/15 11:45:36 yamt Exp $	*/
+/*	$NetBSD: ext2fs.h,v 1.17.4.3 2007/12/07 17:35:17 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -103,7 +103,7 @@
  * Note that super blocks are always of size SBSIZE,
  * and that both SBSIZE and MAXBSIZE must be >= MINBSIZE.
  */
-#define LOG_MINBSIZE 10
+#define LOG_MINBSIZE	10
 #define MINBSIZE	(1 << LOG_MINBSIZE)
 
 /*
@@ -169,7 +169,7 @@ struct ext2fs {
 	u_int32_t  e2fs_algo;		/* For compression */
 	u_int8_t   e2fs_prealloc;	/* # of blocks to preallocate */
 	u_int8_t   e2fs_dir_prealloc;	/* # of blocks to preallocate for dir */
-	u_int16_t  pad1;
+	u_int16_t  e2fs_reserved_ngdb; /* # of reserved gd blocks for resize */
 	u_int32_t  reserved2[204];
 };
 
@@ -203,6 +203,7 @@ struct m_ext2fs {
 
 /* compatible/incompatible features */
 #define EXT2F_COMPAT_PREALLOC		0x0001
+#define EXT2F_COMPAT_RESIZE		0x0010
 
 #define EXT2F_ROCOMPAT_SPARSESUPER	0x0001
 #define EXT2F_ROCOMPAT_LARGEFILE	0x0002
@@ -274,10 +275,9 @@ struct ext2_gd {
 
 static __inline int cg_has_sb(int) __attribute__((__unused__));
 static __inline int
-cg_has_sb(i)
-	int i;
+cg_has_sb(int i)
 {
-	int a3 ,a5 , a7;
+	int a3, a5, a7;
 
 	if (i == 0 || i == 1)
 		return 1;
@@ -334,9 +334,9 @@ void e2fs_cg_bswap(struct ext2_gd *, struct ext2_gd *, int);
  */
 #define	ino_to_cg(fs, x)	(((x) - 1) / (fs)->e2fs.e2fs_ipg)
 #define	ino_to_fsba(fs, x)						\
-	((fs)->e2fs_gd[ino_to_cg(fs, x)].ext2bgd_i_tables + \
-	(((x)-1) % (fs)->e2fs.e2fs_ipg)/(fs)->e2fs_ipb)
-#define	ino_to_fsbo(fs, x)	(((x)-1) % (fs)->e2fs_ipb)
+	((fs)->e2fs_gd[ino_to_cg((fs), (x))].ext2bgd_i_tables +		\
+	(((x) - 1) % (fs)->e2fs.e2fs_ipg) / (fs)->e2fs_ipb)
+#define	ino_to_fsbo(fs, x)	(((x) - 1) % (fs)->e2fs_ipb)
 
 /*
  * Give cylinder group number for a file system block.

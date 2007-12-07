@@ -1,4 +1,4 @@
-/*	$NetBSD: strerror.c,v 1.18 2004/07/01 19:04:43 christos Exp $	*/
+/*	$NetBSD: strerror.c,v 1.18.12.1 2007/12/07 17:33:54 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -54,7 +54,8 @@ static const struct mi {
 	{ ENOTDIR,	"Not a directory" },
 	{ EOFFSET,	"invalid file offset" },
 	{ EACCES,	"Permission denied" },
-	{ 0, 0 } };
+	{ 0, 0 },
+};
 
 char *
 strerror(int err)

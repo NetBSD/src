@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.78.2.6 2007/11/15 11:45:11 yamt Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.78.2.7 2007/12/07 17:34:36 yamt Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.78.2.6 2007/11/15 11:45:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.78.2.7 2007/12/07 17:34:36 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -559,7 +559,7 @@ ip6_input(struct mbuf *m)
 	 * working right.
 	 */
 	struct ifaddr *ifa;
-	TAILQ_FOREACH(ifa, &m->m_pkthdr.rcvif->if_addrlist, ifa_list) {
+	IFADDR_FOREACH(ifa, m->m_pkthdr.rcvif) {
 		if (ifa->ifa_addr == NULL)
 			continue;	/* just for safety */
 		if (ifa->ifa_addr->sa_family != AF_INET6)

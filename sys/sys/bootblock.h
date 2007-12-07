@@ -1,4 +1,4 @@
-/*	$NetBSD: bootblock.h,v 1.37.4.4 2007/09/03 14:45:58 yamt Exp $	*/
+/*	$NetBSD: bootblock.h,v 1.37.4.5 2007/12/07 17:34:52 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002-2004 The NetBSD Foundation, Inc.
@@ -695,7 +695,7 @@ struct mbr_bootsel {
 	uint8_t		mbrbs_defkey;
 	uint8_t		mbrbs_flags;
 	uint16_t	mbrbs_timeo;
-	uint8_t		mbrbs_nametab[MBR_PART_COUNT][MBR_BS_PARTNAMESIZE + 1];
+	char		mbrbs_nametab[MBR_PART_COUNT][MBR_BS_PARTNAMESIZE + 1];
 } __packed;
 
 /*

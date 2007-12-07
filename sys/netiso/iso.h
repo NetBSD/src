@@ -1,4 +1,4 @@
-/*	$NetBSD: iso.h,v 1.15.12.3 2007/09/03 14:44:03 yamt Exp $	*/
+/*	$NetBSD: iso.h,v 1.15.12.4 2007/12/07 17:34:41 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -242,12 +242,12 @@ sockaddr_iso_alloc(const struct iso_addr *addr, int flags)
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-struct iso_addr *iso_addr __P((const char *));
-char           *iso_ntoa __P((const struct iso_addr *));
+struct iso_addr *iso_addr(const char *);
+char           *iso_ntoa(const struct iso_addr *);
 
 /* THESE DON'T EXIST YET */
-struct hostent *iso_gethostbyname __P((const char *));
-struct hostent *iso_gethostbyaddr __P((const char *, int, int));
+struct hostent *iso_gethostbyname(const char *);
+struct hostent *iso_gethostbyaddr(const char *, int, int);
 __END_DECLS
 
 #endif /* _KERNEL */

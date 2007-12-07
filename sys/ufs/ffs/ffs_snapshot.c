@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.17.2.5 2007/10/27 11:36:42 yamt Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.17.2.6 2007/12/07 17:35:19 yamt Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.17.2.5 2007/10/27 11:36:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.17.2.6 2007/12/07 17:35:19 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -116,7 +116,7 @@ static int readvnblk(struct vnode *, void *, ufs2_daddr_t);
 
 static void si_mount_dtor(void *);
 static struct snap_info *si_mount_init(struct mount *);
-static int ffs_copyonwrite(void *, struct buf *);
+static int ffs_copyonwrite(void *, struct buf *, bool);
 static int readfsblk(struct vnode *, void *, ufs2_daddr_t);
 static int writevnblk(struct vnode *, void *, ufs2_daddr_t);
 static inline int cow_enter(void);
@@ -343,7 +343,7 @@ ffs_snapshot(struct mount *mp, struct vnode *vp,
 	 * Since we have marked it as a snapshot it is safe to
 	 * unlock it as no process will be allowed to write to it.
 	 */
-	if ((error = VOP_FSYNC(vp, KERNCRED, FSYNC_WAIT, 0, 0, l)) != 0)
+	if ((error = VOP_FSYNC(vp, KERNCRED, FSYNC_WAIT, 0, 0)) != 0)
 		goto out;
 	VOP_UNLOCK(vp, 0);
 	/*
@@ -454,7 +454,7 @@ loop:
 		if (snapdebug)
 			vprint("ffs_snapshot: busy vnode", xvp);
 #endif
-		if (VOP_GETATTR(xvp, &vat, l->l_cred, l) == 0 &&
+		if (VOP_GETATTR(xvp, &vat, l->l_cred) == 0 &&
 		    vat.va_nlink > 0) {
 			MNT_ILOCK(mp);
 			continue;
@@ -1883,7 +1883,7 @@ ffs_snapshot_unmount(struct mount *mp)
  * copying the block if necessary.
  */
 static int
-ffs_copyonwrite(void *v, struct buf *bp)
+ffs_copyonwrite(void *v, struct buf *bp, bool data_valid)
 {
 	struct buf *ibp;
 	struct fs *fs;
@@ -1933,6 +1933,8 @@ ffs_copyonwrite(void *v, struct buf *bp)
 	/*
 	 * Not in the precomputed list, so check the snapshots.
 	 */
+	 if (data_valid && bp->b_bcount == fs->fs_bsize)
+		saved_data = bp->b_data;
 retry:
 	gen = si->si_gen;
 	TAILQ_FOREACH(ip, &si->si_snapshots, i_nextsnap) {
@@ -2043,7 +2045,7 @@ retry:
 	 * a crash, to ensure their integrity.
 	 */
 	mutex_exit(&si->si_lock);
-	if (saved_data)
+	if (saved_data && saved_data != bp->b_data)
 		free(saved_data, M_UFSMNT);
 	if (snapshot_locked)
 		VOP_UNLOCK(vp, 0);

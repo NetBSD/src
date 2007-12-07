@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.16.2.4 2007/11/15 11:45:28 yamt Exp $	*/
+/*	$NetBSD: vm.c,v 1.16.2.5 2007/12/07 17:34:48 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -63,8 +63,22 @@
   (((((len) + PAGE_MASK) & ~(PAGE_MASK)) >> PAGE_SHIFT)			\
     + (((off & PAGE_MASK) + (len & PAGE_MASK)) > PAGE_SIZE))
 
-struct uvm_pagerops uvm_vnodeops;
-struct uvm_pagerops aobj_pager;
+static int vn_get(struct uvm_object *, voff_t, struct vm_page **,
+	int *, int, vm_prot_t, int, int);
+static int vn_put(struct uvm_object *, voff_t, voff_t, int);
+static int ao_get(struct uvm_object *, voff_t, struct vm_page **,
+	int *, int, vm_prot_t, int, int);
+static int ao_put(struct uvm_object *, voff_t, voff_t, int);
+
+const struct uvm_pagerops uvm_vnodeops = {
+	.pgo_get = vn_get,
+	.pgo_put = vn_put,
+};
+const struct uvm_pagerops aobj_pager = {
+	.pgo_get = ao_get,
+	.pgo_put = ao_put,
+};
+
 struct uvmexp uvmexp;
 struct uvm uvm;
 
@@ -403,11 +417,6 @@ ubc_uiomove(struct uvm_object *uobj, struct uio *uio, vsize_t todo,
 void
 rumpvm_init()
 {
-
-	uvm_vnodeops.pgo_get = vn_get;
-	uvm_vnodeops.pgo_put = vn_put;
-	aobj_pager.pgo_get = ao_get;
-	aobj_pager.pgo_put = ao_put;
 
 	uvmexp.free = 1024*1024; /* XXX */
 	uvm.pagedaemon_lwp = NULL; /* doesn't match curlwp */

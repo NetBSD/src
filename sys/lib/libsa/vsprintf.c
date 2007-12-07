@@ -1,4 +1,4 @@
-/*	$NetBSD: vsprintf.c,v 1.2 2003/08/07 16:32:31 agc Exp $	*/
+/*	$NetBSD: vsprintf.c,v 1.2.16.1 2007/12/07 17:33:57 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -45,5 +45,5 @@ int
 vsprintf(char *buf, const char *fmt, va_list ap)
 {
 
-	return (vsnprintf(buf, -(size_t)buf, fmt, ap));
+	return vsnprintf(buf, -(size_t)buf, fmt, ap);
 }

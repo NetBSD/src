@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.72.2.6 2007/11/15 11:45:15 yamt Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.72.2.7 2007/12/07 17:34:38 yamt Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.72.2.6 2007/11/15 11:45:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.72.2.7 2007/12/07 17:34:38 yamt Exp $");
 
 #include "opt_ipsec.h"
 
@@ -562,7 +562,7 @@ rip6_ctloutput(int op, struct socket *so, int level, int optname,
 		if (op == PRCO_GETOPT) {
 			*mp = m_intopt(so, 1);
 			return 0;
-		} else if (*mp == NULL || (*mp)->m_len < sizeof(int))
+		} else if (*mp == NULL || (*mp)->m_len != sizeof(int))
 			error = EINVAL;
 		else if (*mtod(*mp, int *) == 0)
 			error = EINVAL;
