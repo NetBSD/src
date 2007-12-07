@@ -1,4 +1,4 @@
-/* $NetBSD: bioctl.c,v 1.5 2007/12/05 16:29:48 xtraeme Exp $ */
+/* $NetBSD: bioctl.c,v 1.6 2007/12/07 11:51:21 xtraeme Exp $ */
 /* $OpenBSD: bioctl.c,v 1.52 2007/03/20 15:26:06 jmc Exp $       */
 
 /*
@@ -30,7 +30,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: bioctl.c,v 1.5 2007/12/05 16:29:48 xtraeme Exp $");
+__RCSID("$NetBSD: bioctl.c,v 1.6 2007/12/07 11:51:21 xtraeme Exp $");
 #endif
 
 #include <sys/ioctl.h>
@@ -262,6 +262,9 @@ bio_inq(int fd, char *name)
 			break;
 		case BIOC_SVREBUILD:
 			status = BIOC_SVREBUILD_S;
+			break;
+		case BIOC_SVMIGRATING:
+			status = BIOC_SVMIGRATING_S;
 			break;
 		case BIOC_SVSCRUB:
 			status = BIOC_SVSCRUB_S;
