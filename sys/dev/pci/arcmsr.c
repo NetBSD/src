@@ -1,4 +1,4 @@
-/*	$NetBSD: arcmsr.c,v 1.6 2007/12/05 23:20:27 gmcgarry Exp $ */
+/*	$NetBSD: arcmsr.c,v 1.7 2007/12/07 08:50:36 xtraeme Exp $ */
 /*	$OpenBSD: arc.c,v 1.68 2007/10/27 03:28:27 dlg Exp $ */
 
 /*
@@ -20,13 +20,14 @@
 #include "bio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arcmsr.c,v 1.6 2007/12/05 23:20:27 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcmsr.c,v 1.7 2007/12/07 08:50:36 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
+#include <sys/kmem.h>
 #include <sys/kthread.h>
 #include <sys/mutex.h>
 #include <sys/condvar.h>
@@ -192,9 +193,13 @@ arc_attach(device_t parent, device_t self, void *aux)
 	    ~(ARC_REG_INTRMASK_POSTQUEUE|ARC_REG_INTRSTAT_DOORBELL));
 
 #if NBIO > 0
+	/*
+	 * Register the driver to bio(4) and setup the sensors.
+	 */
 	if (bio_register(self, arc_bioctl) != 0)
 		panic("%s: bioctl registration failed\n", device_xname(self));
-	/*
+
+	/* 
 	 * you need to talk to the firmware to get volume info. our firmware
 	 * interface relies on being able to sleep, so we need to use a thread
 	 * to do the work.
@@ -218,7 +223,6 @@ arc_detach(device_t self, int flags)
 
 	shutdownhook_disestablish(sc->sc_shutdownhook);
 
-	mutex_enter(&sc->sc_mutex);
 	if (arc_msg0(sc, ARC_REG_INB_MSG0_STOP_BGRB) != 0)
 		aprint_error("%s: timeout waiting to stop bg rebuild\n",
 		    device_xname(&sc->sc_dev));
@@ -226,7 +230,6 @@ arc_detach(device_t self, int flags)
 	if (arc_msg0(sc, ARC_REG_INB_MSG0_FLUSH_CACHE) != 0)
 		aprint_error("%s: timeout waiting to flush cache\n",
 		    device_xname(&sc->sc_dev));
-	mutex_exit(&sc->sc_mutex);
 
 	return 0;
 }
@@ -236,7 +239,6 @@ arc_shutdown(void *xsc)
 {
 	struct arc_softc		*sc = xsc;
 
-	mutex_enter(&sc->sc_mutex);
 	if (arc_msg0(sc, ARC_REG_INB_MSG0_STOP_BGRB) != 0)
 		aprint_error("%s: timeout waiting to stop bg rebuild\n",
 		    device_xname(&sc->sc_dev));
@@ -244,7 +246,6 @@ arc_shutdown(void *xsc)
 	if (arc_msg0(sc, ARC_REG_INB_MSG0_FLUSH_CACHE) != 0)
 		aprint_error("%s: timeout waiting to flush cache\n",
 		    device_xname(&sc->sc_dev));
-	mutex_exit(&sc->sc_mutex);
 }
 
 static void
@@ -264,10 +265,10 @@ arc_intr(void *arg)
 	struct arc_io_cmd		*cmd;
 	uint32_t			reg, intrstat;
 
-	mutex_enter(&sc->sc_mutex);
+	mutex_spin_enter(&sc->sc_mutex);
 	intrstat = arc_read(sc, ARC_REG_INTRSTAT);
 	if (intrstat == 0x0) {
-		mutex_exit(&sc->sc_mutex);
+		mutex_spin_exit(&sc->sc_mutex);
 		return 0;
 	}
 
@@ -289,7 +290,7 @@ arc_intr(void *arg)
 				    ARC_REG_INB_DOORBELL_READ_OK);
 		}
 	}
-	mutex_exit(&sc->sc_mutex);
+	mutex_spin_exit(&sc->sc_mutex);
 
 	while ((reg = arc_pop(sc)) != 0xffffffff) {
 		cmd = (struct arc_io_cmd *)(kva +
@@ -330,6 +331,8 @@ arc_scsi_cmd(struct scsipi_channel *chan, scsipi_adapter_req_t req, void *arg)
 		break;
 	}
 
+	mutex_spin_enter(&sc->sc_mutex);
+
 	xs = arg;
 	periph = xs->xs_periph;
 	target = periph->periph_target;
@@ -341,6 +344,7 @@ arc_scsi_cmd(struct scsipi_channel *chan, scsipi_adapter_req_t req, void *arg)
 		xs->sense.scsi_sense.asc = 0x20;
 		xs->error = XS_SENSE;
 		xs->status = SCSI_CHECK;
+		mutex_spin_exit(&sc->sc_mutex);
 		scsipi_done(xs);
 		return;
 	}
@@ -348,6 +352,7 @@ arc_scsi_cmd(struct scsipi_channel *chan, scsipi_adapter_req_t req, void *arg)
 	ccb = arc_get_ccb(sc);
 	if (ccb == NULL) {
 		xs->error = XS_RESOURCE_SHORTAGE;
+		mutex_spin_exit(&sc->sc_mutex);
 		scsipi_done(xs);
 		return;
 	}
@@ -357,6 +362,7 @@ arc_scsi_cmd(struct scsipi_channel *chan, scsipi_adapter_req_t req, void *arg)
 	if (arc_load_xs(ccb) != 0) {
 		xs->error = XS_DRIVER_STUFFUP;
 		arc_put_ccb(sc, ccb);
+		mutex_spin_exit(&sc->sc_mutex);
 		scsipi_done(xs);
 		return;
 	}
@@ -392,9 +398,13 @@ arc_scsi_cmd(struct scsipi_channel *chan, scsipi_adapter_req_t req, void *arg)
 	if (xs->xs_control & XS_CTL_POLL) {
 		if (arc_complete(sc, ccb, xs->timeout) != 0) {
 			xs->error = XS_DRIVER_STUFFUP;
+			mutex_spin_exit(&sc->sc_mutex);
 			scsipi_done(xs);
+			return;
 		}
 	}
+
+	mutex_spin_exit(&sc->sc_mutex);
 }
 
 int
@@ -577,29 +587,24 @@ arc_query_firmware(struct arc_softc *sc)
 	struct arc_msg_firmware_info	fwinfo;
 	char				string[81]; /* sizeof(vendor)*2+1 */
 
-	mutex_enter(&sc->sc_mutex);
 	if (arc_wait_eq(sc, ARC_REG_OUTB_ADDR1, ARC_REG_OUTB_ADDR1_FIRMWARE_OK,
 	    ARC_REG_OUTB_ADDR1_FIRMWARE_OK) != 0) {
 		aprint_debug("%s: timeout waiting for firmware ok\n",
 		    device_xname(&sc->sc_dev));
-		mutex_exit(&sc->sc_mutex);
 		return 1;
 	}
 
 	if (arc_msg0(sc, ARC_REG_INB_MSG0_GET_CONFIG) != 0) {
 		aprint_debug("%s: timeout waiting for get config\n",
 		    device_xname(&sc->sc_dev));
-		mutex_exit(&sc->sc_mutex);
 		return 1;
 	}
 
 	if (arc_msg0(sc, ARC_REG_INB_MSG0_START_BGRB) != 0) {
 		aprint_debug("%s: timeout waiting to start bg rebuild\n",
 		    device_xname(&sc->sc_dev));
-		mutex_exit(&sc->sc_mutex);
 		return 1;
 	}
-	mutex_exit(&sc->sc_mutex);
 
 	arc_read_region(sc, ARC_REG_MSGBUF, &fwinfo, sizeof(fwinfo));
 
@@ -717,10 +722,7 @@ arc_bio_alarm(struct arc_softc *sc, struct bioc_alarm *ba)
 		return EOPNOTSUPP;
 	}
 
-	arc_lock(sc);
 	error = arc_msgbuf(sc, request, len, reply, sizeof(reply));
-	arc_unlock(sc);
-
 	if (error != 0)
 		return error;
 
@@ -741,15 +743,11 @@ arc_bio_alarm_state(struct arc_softc *sc, struct bioc_alarm *ba)
 	struct arc_fw_sysinfo	*sysinfo;
 	int			error = 0;
 
-	sysinfo = malloc(sizeof(struct arc_fw_sysinfo), M_DEVBUF,
-	    M_WAITOK|M_ZERO);
+	sysinfo = kmem_zalloc(sizeof(struct arc_fw_sysinfo), KM_SLEEP);
 
 	request = ARC_FW_SYSINFO;
-
-	arc_lock(sc);
 	error = arc_msgbuf(sc, &request, sizeof(request),
 	    sysinfo, sizeof(struct arc_fw_sysinfo));
-	arc_unlock(sc);
 
 	if (error != 0)
 		goto out;
@@ -757,7 +755,7 @@ arc_bio_alarm_state(struct arc_softc *sc, struct bioc_alarm *ba)
 	ba->ba_status = sysinfo->alarm;
 
 out:
-	free(sysinfo, M_DEVBUF);
+	kmem_free(sysinfo, sizeof(*sysinfo));
 	return error;
 }
 
@@ -771,12 +769,8 @@ arc_bio_inq(struct arc_softc *sc, struct bioc_inq *bi)
 	int			maxvols, nvols = 0, i;
 	int			error = 0;
 
-	sysinfo = malloc(sizeof(struct arc_fw_sysinfo), M_DEVBUF,
-	    M_WAITOK|M_ZERO);
-	volinfo = malloc(sizeof(struct arc_fw_volinfo), M_DEVBUF,
-	    M_WAITOK|M_ZERO);
-
-	arc_lock(sc);
+	sysinfo = kmem_zalloc(sizeof(struct arc_fw_sysinfo), KM_SLEEP);
+	volinfo = kmem_zalloc(sizeof(struct arc_fw_volinfo), KM_SLEEP);
 
 	request[0] = ARC_FW_SYSINFO;
 	error = arc_msgbuf(sc, request, 1, sysinfo,
@@ -807,9 +801,8 @@ arc_bio_inq(struct arc_softc *sc, struct bioc_inq *bi)
 	strlcpy(bi->bi_dev, device_xname(&sc->sc_dev), sizeof(bi->bi_dev));
 	bi->bi_novol = nvols;
 out:
-	arc_unlock(sc);
-	free(volinfo, M_DEVBUF);
-	free(sysinfo, M_DEVBUF);
+	kmem_free(volinfo, sizeof(*volinfo));
+	kmem_free(sysinfo, sizeof(*sysinfo));
 	return error;
 }
 
@@ -821,10 +814,10 @@ arc_bio_getvol(struct arc_softc *sc, int vol, struct arc_fw_volinfo *volinfo)
 	int			error = 0;
 	int			maxvols, nvols = 0, i;
 
-	sysinfo = malloc(sizeof(struct arc_fw_sysinfo), M_DEVBUF,
-	    M_WAITOK|M_ZERO);
+	sysinfo = kmem_zalloc(sizeof(struct arc_fw_sysinfo), KM_SLEEP);
 
 	request[0] = ARC_FW_SYSINFO;
+
 	error = arc_msgbuf(sc, request, 1, sysinfo,
 	    sizeof(struct arc_fw_sysinfo));
 	if (error != 0)
@@ -858,7 +851,7 @@ arc_bio_getvol(struct arc_softc *sc, int vol, struct arc_fw_volinfo *volinfo)
 	}
 
 out:
-	free(sysinfo, M_DEVBUF);
+	kmem_free(sysinfo, sizeof(*sysinfo));
 	return error;
 }
 
@@ -870,13 +863,9 @@ arc_bio_vol(struct arc_softc *sc, struct bioc_vol *bv)
 	uint32_t		status;
 	int			error = 0;
 
-	volinfo = malloc(sizeof(struct arc_fw_volinfo), M_DEVBUF,
-	    M_WAITOK|M_ZERO);
+	volinfo = kmem_zalloc(sizeof(struct arc_fw_volinfo), KM_SLEEP);
 
-	arc_lock(sc);
 	error = arc_bio_getvol(sc, bv->bv_volid, volinfo);
-	arc_unlock(sc);
-
 	if (error != 0)
 		goto out;
 
@@ -931,7 +920,7 @@ arc_bio_vol(struct arc_softc *sc, struct bioc_vol *bv)
 	strlcpy(bv->bv_dev, volinfo->set_name, sizeof(bv->bv_dev));
 
 out:
-	free(volinfo, M_DEVBUF);
+	kmem_free(volinfo, sizeof(*volinfo));
 	return error;
 }
 
@@ -948,14 +937,9 @@ arc_bio_disk(struct arc_softc *sc, struct bioc_disk *bd)
 	char			serial[41];
 	char			rev[17];
 
-	volinfo = malloc(sizeof(struct arc_fw_volinfo), M_DEVBUF,
-	    M_WAITOK|M_ZERO);
-	raidinfo = malloc(sizeof(struct arc_fw_raidinfo), M_DEVBUF,
-	    M_WAITOK|M_ZERO);
-	diskinfo = malloc(sizeof(struct arc_fw_diskinfo), M_DEVBUF,
-	    M_WAITOK|M_ZERO);
-
-	arc_lock(sc);
+	volinfo = kmem_zalloc(sizeof(struct arc_fw_volinfo), KM_SLEEP);
+	raidinfo = kmem_zalloc(sizeof(struct arc_fw_raidinfo), KM_SLEEP);
+	diskinfo = kmem_zalloc(sizeof(struct arc_fw_diskinfo), KM_SLEEP);
 
 	error = arc_bio_getvol(sc, bd->bd_volid, volinfo);
 	if (error != 0)
@@ -963,6 +947,7 @@ arc_bio_disk(struct arc_softc *sc, struct bioc_disk *bd)
 
 	request[0] = ARC_FW_RAIDINFO;
 	request[1] = volinfo->raid_set_number;
+
 	error = arc_msgbuf(sc, request, sizeof(request), raidinfo,
 	    sizeof(struct arc_fw_raidinfo));
 	if (error != 0)
@@ -1020,10 +1005,9 @@ arc_bio_disk(struct arc_softc *sc, struct bioc_disk *bd)
 	strlcpy(bd->bd_serial, serial, sizeof(bd->bd_serial));
 
 out:
-	arc_unlock(sc);
-	free(diskinfo, M_DEVBUF);
-	free(raidinfo, M_DEVBUF);
-	free(volinfo, M_DEVBUF);
+	kmem_free(diskinfo, sizeof(*diskinfo));
+	kmem_free(raidinfo, sizeof(*raidinfo));
+	kmem_free(volinfo, sizeof(*volinfo));
 	return error;
 }
 #endif /* NBIO > 0 */
@@ -1057,17 +1041,16 @@ arc_msgbuf(struct arc_softc *sc, void *wptr, size_t wbuflen, void *rptr,
 	int			i;
 #endif
 
+	wbuf = rbuf = NULL;
+
 	DNPRINTF(ARC_D_DB, "%s: arc_msgbuf wbuflen: %d rbuflen: %d\n",
 	    device_xname(&sc->sc_dev), wbuflen, rbuflen);
 
-	if (arc_read(sc, ARC_REG_OUTB_DOORBELL) != 0)
-		return EBUSY;
-
 	wlen = sizeof(struct arc_fw_bufhdr) + wbuflen + 1; /* 1 for cksum */
-	wbuf = malloc(wlen, M_TEMP, M_WAITOK);
+	wbuf = kmem_alloc(wlen, KM_SLEEP);
 
 	rlen = sizeof(struct arc_fw_bufhdr) + rbuflen + 1; /* 1 for cksum */
-	rbuf = malloc(rlen, M_TEMP, M_WAITOK);
+	rbuf = kmem_alloc(rlen, KM_SLEEP);
 
 	DNPRINTF(ARC_D_DB, "%s: arc_msgbuf wlen: %d rlen: %d\n",
 	    device_xname(&sc->sc_dev), wlen, rlen);
@@ -1077,6 +1060,12 @@ arc_msgbuf(struct arc_softc *sc, void *wptr, size_t wbuflen, void *rptr,
 	bufhdr->len = htole16(wbuflen);
 	memcpy(wbuf + sizeof(struct arc_fw_bufhdr), wptr, wbuflen);
 	wbuf[wlen - 1] = arc_msg_cksum(wptr, wbuflen);
+
+	arc_lock(sc);
+	if (arc_read(sc, ARC_REG_OUTB_DOORBELL) != 0) {
+		error = EBUSY;
+		goto out;
+	}
 
 	reg = ARC_REG_OUTB_DOORBELL_READ_OK;
 
@@ -1174,8 +1163,9 @@ arc_msgbuf(struct arc_softc *sc, void *wptr, size_t wbuflen, void *rptr,
 	}
 
 out:
-	free(wbuf, M_TEMP);
-	free(rbuf, M_TEMP);
+	arc_unlock(sc);
+	kmem_free(wbuf, wlen);
+	kmem_free(rbuf, rlen);
 
 	return error;
 }
@@ -1184,7 +1174,7 @@ void
 arc_lock(struct arc_softc *sc)
 {
 	rw_enter(&sc->sc_rwlock, RW_WRITER);
-	mutex_enter(&sc->sc_mutex);
+	mutex_spin_enter(&sc->sc_mutex);
 	arc_write(sc, ARC_REG_INTRMASK, ~ARC_REG_INTRMASK_POSTQUEUE);
 	sc->sc_talking = 1;
 }
@@ -1197,7 +1187,7 @@ arc_unlock(struct arc_softc *sc)
 	sc->sc_talking = 0;
 	arc_write(sc, ARC_REG_INTRMASK,
 	    ~(ARC_REG_INTRMASK_POSTQUEUE|ARC_REG_INTRMASK_DOORBELL));
-	mutex_exit(&sc->sc_mutex);
+	mutex_spin_exit(&sc->sc_mutex);
 	rw_exit(&sc->sc_rwlock);
 }
 
@@ -1221,6 +1211,7 @@ arc_create_sensors(void *arg)
 	struct bioc_inq		bi;
 	struct bioc_vol		bv;
 	int			i;
+	size_t			slen;
 
 	memset(&bi, 0, sizeof(bi));
 	if (arc_bio_inq(sc, &bi) != 0) {
@@ -1237,8 +1228,8 @@ arc_create_sensors(void *arg)
 		kthread_exit(0);
 
 	sc->sc_sme = sysmon_envsys_create();
-	sc->sc_sensors = malloc(sizeof(envsys_data_t) * sc->sc_nsensors,
-	    M_DEVBUF, M_WAITOK | M_ZERO);
+	slen = sizeof(envsys_data_t) * sc->sc_nsensors;
+	sc->sc_sensors = kmem_zalloc(slen, KM_SLEEP);
 
 	for (i = 0; i < sc->sc_nsensors; i++) {
 		memset(&bv, 0, sizeof(bv));
@@ -1266,7 +1257,7 @@ arc_create_sensors(void *arg)
 	kthread_exit(0);
 
 bad:
-	free(sc->sc_sensors, M_DEVBUF);
+	kmem_free(sc->sc_sensors, slen);
 	sysmon_envsys_destroy(sc->sc_sme);
 	kthread_exit(0);
 }
@@ -1319,8 +1310,6 @@ arc_read(struct arc_softc *sc, bus_size_t r)
 {
 	uint32_t			v;
 
-	KASSERT(mutex_owned(&sc->sc_mutex));
-
 	bus_space_barrier(sc->sc_iot, sc->sc_ioh, r, 4,
 	    BUS_SPACE_BARRIER_READ);
 	v = bus_space_read_4(sc->sc_iot, sc->sc_ioh, r);
@@ -1343,8 +1332,6 @@ arc_read_region(struct arc_softc *sc, bus_size_t r, void *buf, size_t len)
 void
 arc_write(struct arc_softc *sc, bus_size_t r, uint32_t v)
 {
-	KASSERT(mutex_owned(&sc->sc_mutex));
-
 	DNPRINTF(ARC_D_RW, "%s: arc_write 0x%lx 0x%08x\n",
 	    device_xname(&sc->sc_dev), r, v);
 
@@ -1367,8 +1354,6 @@ arc_wait_eq(struct arc_softc *sc, bus_size_t r, uint32_t mask,
 	    uint32_t target)
 {
 	int i;
-
-	KASSERT(mutex_owned(&sc->sc_mutex));
 
 	DNPRINTF(ARC_D_RW, "%s: arc_wait_eq 0x%lx 0x%08x 0x%08x\n",
 	    device_xname(&sc->sc_dev), r, mask, target);
@@ -1403,8 +1388,6 @@ arc_wait_ne(struct arc_softc *sc, bus_size_t r, uint32_t mask,
 int
 arc_msg0(struct arc_softc *sc, uint32_t m)
 {
-	KASSERT(mutex_owned(&sc->sc_mutex));
-
 	/* post message */
 	arc_write(sc, ARC_REG_INB_MSG0, m);
 	/* wait for the fw to do it */
@@ -1424,7 +1407,7 @@ arc_dmamem_alloc(struct arc_softc *sc, size_t size)
 	struct arc_dmamem		*adm;
 	int				nsegs;
 
-	adm = malloc(sizeof(*adm), M_DEVBUF, M_NOWAIT|M_ZERO);
+	adm = kmem_zalloc(sizeof(*adm), KM_NOSLEEP);
 	if (adm == NULL)
 		return NULL;
 
@@ -1457,7 +1440,7 @@ free:
 destroy:
 	bus_dmamap_destroy(sc->sc_dmat, adm->adm_map);
 admfree:
-	free(adm, M_DEVBUF);
+	kmem_free(adm, sizeof(*adm));
 
 	return NULL;
 }
@@ -1469,7 +1452,7 @@ arc_dmamem_free(struct arc_softc *sc, struct arc_dmamem *adm)
 	bus_dmamem_unmap(sc->sc_dmat, adm->adm_kva, adm->adm_size);
 	bus_dmamem_free(sc->sc_dmat, &adm->adm_seg, 1);
 	bus_dmamap_destroy(sc->sc_dmat, adm->adm_map);
-	free(adm, M_DEVBUF);
+	kmem_free(adm, sizeof(*adm));
 }
 
 int
@@ -1478,11 +1461,12 @@ arc_alloc_ccbs(struct arc_softc *sc)
 	struct arc_ccb		*ccb;
 	uint8_t			*cmd;
 	int			i;
+	size_t			ccbslen;
 
 	TAILQ_INIT(&sc->sc_ccb_free);
 
-	sc->sc_ccbs = malloc(sizeof(struct arc_ccb) * sc->sc_req_count,
-	    M_DEVBUF, M_WAITOK|M_ZERO);
+	ccbslen = sizeof(struct arc_ccb) * sc->sc_req_count;
+	sc->sc_ccbs = kmem_zalloc(ccbslen, KM_SLEEP);
 
 	sc->sc_requests = arc_dmamem_alloc(sc,
 	    ARC_MAX_IOCMDLEN * sc->sc_req_count);
@@ -1522,7 +1506,7 @@ free_maps:
 	arc_dmamem_free(sc, sc->sc_requests);
 
 free_ccbs:
-	free(sc->sc_ccbs, M_DEVBUF);
+	kmem_free(sc->sc_ccbs, ccbslen);
 
 	return 1;
 }
@@ -1532,11 +1516,9 @@ arc_get_ccb(struct arc_softc *sc)
 {
 	struct arc_ccb			*ccb;
 
-	mutex_enter(&sc->sc_mutex);
 	ccb = TAILQ_FIRST(&sc->sc_ccb_free);
 	if (ccb != NULL)
 		TAILQ_REMOVE(&sc->sc_ccb_free, ccb, ccb_link);
-	mutex_exit(&sc->sc_mutex);
 	
 	return ccb;
 }
@@ -1544,9 +1526,7 @@ arc_get_ccb(struct arc_softc *sc)
 void
 arc_put_ccb(struct arc_softc *sc, struct arc_ccb *ccb)
 {
-	mutex_enter(&sc->sc_mutex);
 	ccb->ccb_xs = NULL;
 	memset(ccb->ccb_cmd, 0, ARC_MAX_IOCMDLEN);
 	TAILQ_INSERT_TAIL(&sc->sc_ccb_free, ccb, ccb_link);
-	mutex_exit(&sc->sc_mutex);
 }
