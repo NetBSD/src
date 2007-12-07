@@ -1,4 +1,4 @@
-/*	$NetBSD: psshfs.h,v 1.32 2007/12/07 14:54:08 pooka Exp $	*/
+/*	$NetBSD: psshfs.h,v 1.33 2007/12/07 14:59:22 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -206,7 +206,7 @@ void	psbuf_req_data(struct puffs_framebuf *, int, uint32_t,
 		       const void *, uint32_t);
 void	psbuf_req_str(struct puffs_framebuf *, int, uint32_t, const char *);
 
-int	sftp_readdir(struct puffs_cc *, struct psshfs_ctx *,
+int	sftp_readdir(struct puffs_usermount *, struct psshfs_ctx *,
 		     struct puffs_node *);
 
 struct psshfs_dir *lookup(struct psshfs_dir *, size_t, const char *);
