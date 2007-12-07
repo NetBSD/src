@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.34 2007/03/08 13:51:37 bouyer Exp $
+# $NetBSD: Makefile,v 1.35 2007/12/07 18:35:21 tsutsui Exp $
 #
 # Consult "*.conf" for the configuration variables; this Makefile is typically
 # not edited for basic configuration changes.
@@ -451,10 +451,10 @@ ${IMAGEDIR}/${image}.iso: size-${image}
 	rm -f $@.raw $@.tmp
 .endif
 	@echo Rounding up to 32k boundary and padding 32k....
-	@size=`ls -l $@ | awk '{print $$5}'` && \
-	newsize=$$(($$(($$size + 32767)) / 32768 * 32768)) && \
-	dd if=/dev/zero bs=512 count=$$(($$(($$newsize - $$size)) / 512)) >>$@ 2>/dev/null
-	dd if=${EASTER_EGG} bs=32768 count=1 conv=sync >>$@ 2>/dev/null
+	@size=$$(${TOOL_STAT} -f '%z' $@); \
+	    pad=$$(( 32768 - ( $$size & 32767 ) )); \
+	    [ $$pad = 32768 ] || \
+	    dd if=/dev/zero bs=1 count=$$pad >>$@ 2>/dev/null
 
 .endfor		# image in ${CD_IMAGES}		# }
 
