@@ -1,4 +1,4 @@
-#	$NetBSD: ROADMAP,v 1.21 2007/11/24 12:25:17 jmmv Exp $
+#	$NetBSD: ROADMAP,v 1.22 2007/12/07 14:37:31 rmind Exp $
 
 A high-level roadmap for NetBSD
 
@@ -79,7 +79,7 @@ aa. Scheduler works
 	Responsible: yamt
 	ETA: 5.0 (yamt-idlelwp branch)
     Generic scheduler API for modular implementations.
-	Responsible: Daniel Sieger
+	Responsible: dsieger
 	ETA: 5.0 (merged in yamt-idlelwp branch)
     New scheduler supporting POSIX Real-time features, CPU affinity and
     having a better support for MP systems.
@@ -90,8 +90,8 @@ ab. Reduction of the giant lock
     There are several proposals for the best way forward on this, but
     we really need a couple of people with time to step forward and
     lead us here.
-	Responsible: TBD
-	ETA: ?
+	Responsible: ad
+	ETA: 5.0 (vmlocking2 branch)
 
 ac. Expansion of wedge support
     Complete the development of wedges and retire disklabels except
@@ -128,8 +128,8 @@ ag. Generic device hotplug support
 ah. Suspend and resume support
     We should be able to fully use suspend and resume on PCs, macppc,
     and anyone else who supports it in hardware (sparc, hpcsh, hpcarm, etc).
-	Responsible: TBD
-	ETA: ?
+	Responsible: jmcneill, joerg
+	ETA: 5.0
 
 ai. Complete support for LWPs
     There are still vestiges of the kernel that predate LWPification
@@ -171,10 +171,10 @@ an. Update the locking mechanisms in the kernel
 ao. Review TCP/IP developments
     Fix NewReno
 	Responsible: mycroft
-	ETA: (3.0)
+	ETA: 3.0
     Add SACK support to the kernel.
 	Responsible: kurahone
-	ETA: (3.0)
+	ETA: 3.0
     Add ECN support to the kernel.
 	Responsible: rpaulo
 	ETA: 5.0
@@ -190,8 +190,8 @@ ap. Kernel linker (ala FreeBSD's kld)
 aq. CARP/VRRP
     Functionality is great, but there might be some concern here over
     Cisco patents.
-	Responsible: Liam Foy
-	ETA: (4.0)
+	Responsible: liamfoy
+	ETA: 4.0
 
 ar. UDF filesystem support
     OpenBSD has recently added this.
@@ -247,16 +247,16 @@ ac. gcc updates
     This requires some work to rework the gcc4 builds to work with BSD
     make(1) or update BSD make(1) or consider the unthinkable.
 	Responsible: mrg, matt
-	ETA: 4.0?
+	ETA: 4.0
 
 ad. gdb updates
-	Responsible: TBD
-	ETA: 5.0?
+	Responsible: skrll
+	ETA: 5.0
 
 ae. binutils updates
     Probably go along with gdb updates.
 	Responsible: skrll
-	ETA: 4.0?
+	ETA: 4.0
 
 af. Better post-mortem debugging tools
     It would be useful to have something between ps/*stat/etc. and
