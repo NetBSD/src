@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsrvcache.h,v 1.15.16.1 2007/12/04 13:03:37 ad Exp $	*/
+/*	$NetBSD: nfsrvcache.h,v 1.15.16.2 2007/12/08 17:58:06 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993

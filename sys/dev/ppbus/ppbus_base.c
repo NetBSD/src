@@ -1,4 +1,4 @@
-/* $NetBSD: ppbus_base.c,v 1.13 2007/03/04 06:02:28 christos Exp $ */
+/* $NetBSD: ppbus_base.c,v 1.13.24.1 2007/12/08 17:57:28 ad Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 1999 Nicolas Souchu
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppbus_base.c,v 1.13 2007/03/04 06:02:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppbus_base.c,v 1.13.24.1 2007/12/08 17:57:28 ad Exp $");
 
 #include "opt_ppbus_1284.h"
 #include "opt_ppbus.h"
@@ -371,9 +371,7 @@ ppbus_request_bus(struct device * dev, struct device * busdev, int how,
 
 	/* Loop until lock acquired (if PPBUS_WAIT) or an error occurs */
 	for(;;) {
-		error = lockmgr(&(bus->sc_lock), LK_EXCLUSIVE | LK_RECURSEFAIL,
-			NULL);
-		if(!error)
+		if (mutex_tryenter(&(bus->sc_lock)))
 			break;
 
 		if(how & PPBUS_WAIT) {
@@ -389,6 +387,7 @@ ppbus_request_bus(struct device * dev, struct device * busdev, int how,
 			}
 		}
 		else {
+			error = EWOULDBLOCK;
 			goto end;
 		}
 	}
@@ -403,7 +402,7 @@ ppbus_request_bus(struct device * dev, struct device * busdev, int how,
 	}
 
 	/* Release lock */
-	lockmgr(&(bus->sc_lock), LK_RELEASE, NULL);
+	mutex_exit(&(bus->sc_lock));
 
 end:
 	return error;
@@ -424,9 +423,7 @@ ppbus_release_bus(struct device * dev, struct device * busdev, int how,
 
 	/* Loop until lock acquired (if PPBUS_WAIT) or an error occurs */
 	for(;;) {
-		error = lockmgr(&(bus->sc_lock), LK_EXCLUSIVE | LK_RECURSEFAIL,
-			NULL);
-		if(!error)
+		if (mutex_tryenter(&(bus->sc_lock)))
 			break;
 
 		if(how & PPBUS_WAIT) {
@@ -442,6 +439,7 @@ ppbus_release_bus(struct device * dev, struct device * busdev, int how,
 			}
 		}
 		else {
+			error = EWOULDBLOCK;
 			goto end;
 		}
 	}
@@ -456,7 +454,7 @@ ppbus_release_bus(struct device * dev, struct device * busdev, int how,
 	}
 
 	/* Release lock */
-	lockmgr(&(bus->sc_lock), LK_RELEASE, NULL);
+	mutex_exit(&(bus->sc_lock));
 
 end:
 	return error;

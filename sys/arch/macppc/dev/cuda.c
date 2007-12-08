@@ -1,4 +1,4 @@
-/*	$NetBSD: cuda.c,v 1.5 2007/11/07 19:47:00 garbled Exp $ */
+/*	$NetBSD: cuda.c,v 1.5.2.1 2007/12/08 17:56:25 ad Exp $ */
 
 /*-
  * Copyright (c) 2006 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cuda.c,v 1.5 2007/11/07 19:47:00 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cuda.c,v 1.5.2.1 2007/12/08 17:56:25 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,7 +81,6 @@ struct cuda_softc {
 	struct todr_chip_handle sc_todr;
 	struct adb_bus_accessops sc_adbops;
 	struct i2c_controller sc_i2c;
-	struct lock sc_buslock;
 	bus_space_tag_t sc_memt;
 	bus_space_handle_t sc_memh;
 	int sc_node;

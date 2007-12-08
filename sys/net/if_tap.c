@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.33 2007/09/10 10:35:54 cube Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.33.8.1 2007/12/08 17:57:53 ad Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004 The NetBSD Foundation.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.33 2007/09/10 10:35:54 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.33.8.1 2007/12/08 17:57:53 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "bpfilter.h"
@@ -56,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.33 2007/09/10 10:35:54 cube Exp $");
 #include <sys/sockio.h>
 #include <sys/sysctl.h>
 #include <sys/kauth.h>
+#include <sys/mutex.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -105,7 +106,7 @@ struct tap_softc {
 #define TAP_GOING	0x00000008	/* interface is being destroyed */
 	struct selinfo	sc_rsel;
 	pid_t		sc_pgid; /* For async. IO */
-	struct lock	sc_rdlock;
+	kmutex_t	sc_rdlock;
 	struct simplelock	sc_kqlock;
 };
 
@@ -344,7 +345,7 @@ tap_attach(struct device *parent, struct device *self,
 	 * to be protected, too, but we don't need the same level of
 	 * complexity for that lock, so a simple spinning lock is fine.
 	 */
-	lockinit(&sc->sc_rdlock, PSOCK|PCATCH, "tapl", 0, LK_SLEEPFAIL);
+	mutex_init(&sc->sc_rdlock, MUTEX_DEFAULT, IPL_NONE);
 	simple_lock_init(&sc->sc_kqlock);
 }
 
@@ -359,19 +360,11 @@ tap_detach(struct device* self, int flags)
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
 	int error, s;
 
-	/*
-	 * Some processes might be sleeping on "tap", so we have to make
-	 * them release their hold on the device.
-	 *
-	 * The LK_DRAIN operation will wait for every locked process to
-	 * release their hold.
-	 */
 	sc->sc_flags |= TAP_GOING;
 	s = splnet();
 	tap_stop(ifp, 1);
 	if_down(ifp);
 	splx(s);
-	lockmgr(&sc->sc_rdlock, LK_DRAIN, NULL);
 
 	/*
 	 * Destroying a single leaf is a very straightforward operation using
@@ -385,6 +378,7 @@ tap_detach(struct device* self, int flags)
 	ether_ifdetach(ifp);
 	if_detach(ifp);
 	ifmedia_delete_instance(&sc->sc_im, IFM_INST_ANY);
+	mutex_destroy(&sc->sc_rdlock);
 
 	return (0);
 }
@@ -837,12 +831,12 @@ tap_dev_read(int unit, struct uio *uio, int flags)
 	/*
 	 * In the TAP_NBIO case, we have to make sure we won't be sleeping
 	 */
-	if ((sc->sc_flags & TAP_NBIO) &&
-	    lockstatus(&sc->sc_rdlock) == LK_EXCLUSIVE)
-		return (EWOULDBLOCK);
-	error = lockmgr(&sc->sc_rdlock, LK_EXCLUSIVE, NULL);
-	if (error != 0)
-		return (error);
+	if ((sc->sc_flags & TAP_NBIO) != 0) {
+		if (!mutex_tryenter(&sc->sc_rdlock))
+			return (EWOULDBLOCK);
+	} else {
+		mutex_enter(&sc->sc_rdlock);
+	}
 
 	s = splnet();
 	if (IFQ_IS_EMPTY(&ifp->if_snd)) {
@@ -852,23 +846,22 @@ tap_dev_read(int unit, struct uio *uio, int flags)
 		 * We must release the lock before sleeping, and re-acquire it
 		 * after.
 		 */
-		(void)lockmgr(&sc->sc_rdlock, LK_RELEASE, NULL);
+		mutex_exit(&sc->sc_rdlock);
 		if (sc->sc_flags & TAP_NBIO)
 			error = EWOULDBLOCK;
 		else
 			error = tsleep(sc, PSOCK|PCATCH, "tap", 0);
-
 		if (error != 0)
 			return (error);
 		/* The device might have been downed */
 		if ((ifp->if_flags & IFF_UP) == 0)
 			return (EHOSTDOWN);
-		if ((sc->sc_flags & TAP_NBIO) &&
-		    lockstatus(&sc->sc_rdlock) == LK_EXCLUSIVE)
-			return (EWOULDBLOCK);
-		error = lockmgr(&sc->sc_rdlock, LK_EXCLUSIVE, NULL);
-		if (error != 0)
-			return (error);
+		if ((sc->sc_flags & TAP_NBIO)) {
+			if (!mutex_tryenter(&sc->sc_rdlock))
+				return (EWOULDBLOCK);
+		} else {
+			mutex_enter(&sc->sc_rdlock);
+		}
 		s = splnet();
 	}
 
@@ -900,7 +893,7 @@ tap_dev_read(int unit, struct uio *uio, int flags)
 		m_freem(m);
 
 out:
-	(void)lockmgr(&sc->sc_rdlock, LK_RELEASE, NULL);
+	mutex_exit(&sc->sc_rdlock);
 	return (error);
 }
 
@@ -1128,7 +1121,7 @@ tap_dev_kqfilter(int unit, struct knote *kn)
 		kn->kn_fop = &tap_seltrue_filterops;
 		break;
 	default:
-		return (1);
+		return (EINVAL);
 	}
 
 	kn->kn_hook = sc;

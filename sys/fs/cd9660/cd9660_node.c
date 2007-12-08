@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_node.c,v 1.18.2.1 2007/12/04 13:03:02 ad Exp $	*/
+/*	$NetBSD: cd9660_node.c,v 1.18.2.2 2007/12/08 17:57:37 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_node.c,v 1.18.2.1 2007/12/04 13:03:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_node.c,v 1.18.2.2 2007/12/08 17:57:37 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

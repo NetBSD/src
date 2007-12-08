@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_sys.h,v 1.65.2.1 2007/12/04 13:03:07 ad Exp $	*/
+/*	$NetBSD: puffs_sys.h,v 1.65.2.2 2007/12/08 17:57:38 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -202,6 +202,8 @@ void	puffs_msg_enqueue(struct puffs_mount *, struct puffs_msgpark *);
 int	puffs_msg_wait(struct puffs_mount *, struct puffs_msgpark *);
 int	puffs_msg_wait2(struct puffs_mount *, struct puffs_msgpark *,
 			struct puffs_node *, struct puffs_node *);
+
+void	puffs_msg_sendresp(struct puffs_mount *, struct puffs_req *, int);
 
 int	puffs_getvnode(struct mount *, void *, enum vtype, voff_t, dev_t,
 		       struct vnode **);

@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_if.c,v 1.12 2007/03/12 18:18:31 ad Exp $	*/
+/*	$NetBSD: pf_if.c,v 1.12.22.1 2007/12/08 17:57:36 ad Exp $	*/
 /*	$OpenBSD: pf_if.c,v 1.23 2004/12/22 17:17:55 dhartmei Exp $ */
 
 /*
@@ -446,7 +446,7 @@ pfi_instance_add(struct ifnet *ifp, int net, int flags)
 
 	if (ifp == NULL)
 		return;
-	TAILQ_FOREACH(ia, &ifp->if_addrlist, ifa_list) {
+	IFADDR_FOREACH(ia, ifp) {
 		if (ia->ifa_addr == NULL)
 			continue;
 		af = ia->ifa_addr->sa_family;

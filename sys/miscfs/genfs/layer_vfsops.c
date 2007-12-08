@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vfsops.c,v 1.27.2.1 2007/12/06 21:03:39 ad Exp $	*/
+/*	$NetBSD: layer_vfsops.c,v 1.27.2.2 2007/12/08 17:57:51 ad Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_vfsops.c,v 1.27.2.1 2007/12/06 21:03:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_vfsops.c,v 1.27.2.2 2007/12/08 17:57:51 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>

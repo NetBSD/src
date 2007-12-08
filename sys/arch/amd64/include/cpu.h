@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.33 2007/11/22 16:16:45 bouyer Exp $	*/
+/*	$NetBSD: cpu.h,v 1.33.2.1 2007/12/08 17:56:16 ad Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -120,6 +120,7 @@ struct cpu_info {
 	uint32_t	ci_feature2_flags;
 	uint32_t	ci_vendor[4];	 /* vendor string */
 	u_int64_t	ci_tsc_freq;
+	volatile uint32_t	ci_lapic_counter;
 
 	const struct cpu_functions *ci_func;
 	void (*cpu_setup)(struct cpu_info *);

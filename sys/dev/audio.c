@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.225 2007/12/01 05:11:08 jmcneill Exp $	*/
+/*	$NetBSD: audio.c,v 1.225.2.1 2007/12/08 17:57:14 ad Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.225 2007/12/01 05:11:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.225.2.1 2007/12/08 17:57:14 ad Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -2336,7 +2336,7 @@ audio_kqfilter(struct audio_softc *sc, struct knote *kn)
 		break;
 
 	default:
-		return 1;
+		return EINVAL;
 	}
 
 	kn->kn_hook = sc;

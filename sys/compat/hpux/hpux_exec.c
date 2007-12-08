@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_exec.c,v 1.53 2007/10/19 12:16:37 ad Exp $	*/
+/*	$NetBSD: hpux_exec.c,v 1.53.4.1 2007/12/08 17:56:36 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_exec.c,v 1.53 2007/10/19 12:16:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_exec.c,v 1.53.4.1 2007/12/08 17:56:36 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -109,9 +109,9 @@ extern const char * const hpux_syscallnames[];
 extern char sigcode[], esigcode[];
 extern int native_to_hpux_errno[];
 #ifdef __HAVE_SYSCALL_INTERN
-void hpux_syscall_intern __P((struct proc *));
+void hpux_syscall_intern(struct proc *);
 #else
-void syscall __P((void));
+void syscall(void);
 #endif
 
 struct uvm_object *emul_hpux_object;

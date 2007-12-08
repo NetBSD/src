@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.147 2007/11/24 07:49:03 dyoung Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.147.2.1 2007/12/08 17:57:49 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.147 2007/11/24 07:49:03 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.147.2.1 2007/12/08 17:57:49 ad Exp $");
 
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
@@ -452,7 +452,7 @@ void
 soinit(void)
 {
 
-	mutex_init(&so_pendfree_lock, MUTEX_DRIVER, IPL_VM);
+	mutex_init(&so_pendfree_lock, MUTEX_DEFAULT, IPL_VM);
 	cv_init(&socurkva_cv, "sokva");
 
 	/* Set the initial adjusted socket buffer size. */
@@ -1795,7 +1795,7 @@ soo_kqfilter(struct file *fp, struct knote *kn)
 		sb = &so->so_snd;
 		break;
 	default:
-		return (1);
+		return (EINVAL);
 	}
 	SLIST_INSERT_HEAD(&sb->sb_sel.sel_klist, kn, kn_selnext);
 	sb->sb_flags |= SB_KNOTE;

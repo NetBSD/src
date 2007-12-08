@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.100 2007/11/26 19:02:07 pooka Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.100.2.1 2007/12/08 17:57:50 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.100 2007/11/26 19:02:07 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.100.2.1 2007/12/08 17:57:50 ad Exp $");
 
 #include "opt_systrace.h"
 #include "opt_magiclinks.h"
@@ -120,6 +120,8 @@ symlink_magic(struct proc *p, char *cp, int *len)
 	char *tmp;
 	int change, i, newlen;
 	int termchar = '/';
+	char uidtmp[11]; /* XXX elad */
+
 
 	tmp = PNBUF_GET();
 	for (change = i = newlen = 0; i < *len; ) {
@@ -165,11 +167,13 @@ symlink_magic(struct proc *p, char *cp, int *len)
 			SUBSTITUTE("ostype", ostype,
 			    strlen(ostype));
 		} else if (MATCH("uid")) {
-			char uidtmp[11]; /* XXX elad */
-
 			(void)snprintf(uidtmp, sizeof(uidtmp), "%u",
 			    kauth_cred_geteuid(kauth_cred_get()));
 			SUBSTITUTE("uid", uidtmp, strlen(uidtmp));
+		} else if (MATCH("ruid")) {
+			(void)snprintf(uidtmp, sizeof(uidtmp), "%u",
+			    kauth_cred_getuid(kauth_cred_get()));
+			SUBSTITUTE("ruid", uidtmp, strlen(uidtmp));
 		} else {
 			tmp[newlen++] = '@';
 			if (termchar == VC)

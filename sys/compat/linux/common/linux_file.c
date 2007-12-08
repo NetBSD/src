@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.86 2007/11/26 19:01:31 pooka Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.86.2.1 2007/12/08 17:56:47 ad Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.86 2007/11/26 19:01:31 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.86.2.1 2007/12/08 17:56:47 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,13 +75,13 @@ __KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.86 2007/11/26 19:01:31 pooka Exp $"
 
 #include <compat/linux/linux_syscallargs.h>
 
-static int linux_to_bsd_ioflags __P((int));
-static int bsd_to_linux_ioflags __P((int));
-static void bsd_to_linux_flock __P((struct flock *, struct linux_flock *));
-static void linux_to_bsd_flock __P((struct linux_flock *, struct flock *));
+static int linux_to_bsd_ioflags(int);
+static int bsd_to_linux_ioflags(int);
+static void bsd_to_linux_flock(struct flock *, struct linux_flock *);
+static void linux_to_bsd_flock(struct linux_flock *, struct flock *);
 #ifndef __amd64__
-static void bsd_to_linux_stat __P((struct stat *, struct linux_stat *));
-static int linux_stat1 __P((struct lwp *, void *, register_t *, int));
+static void bsd_to_linux_stat(struct stat *, struct linux_stat *);
+static int linux_stat1(struct lwp *, void *, register_t *, int);
 #endif
 
 /*
@@ -301,7 +301,7 @@ linux_sys_fcntl(l, v, retval)
 	const struct cdevsw *cdev;
 	long pgid;
 	struct pgrp *pgrp;
-	struct tty *tp, *(*d_tty) __P((dev_t));
+	struct tty *tp, *(*d_tty)(dev_t);
 
 	fd = SCARG(uap, fd);
 	cmd = SCARG(uap, cmd);

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.29 2007/12/03 15:34:04 ad Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.29.2.1 2007/12/08 17:56:26 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.29 2007/12/03 15:34:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.29.2.1 2007/12/08 17:56:26 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -183,7 +183,7 @@ findroot(void)
 	/*
 	 * XXX assumes only one controller exists.
 	 */
-	for (dv = alldevs.tqh_first; dv; dv=dv->dv_list.tqe_next) {
+	for (dv = TAILQ_FIRST(&alldevs); dv; dv = TAILQ_NEXT(dv, dv_list)) {
 #if NSCSIBUS > 0
 		if (strcmp(dv->dv_xname, "scsibus0") == 0) {
 			struct scsibus_softc *sdv = (void *)dv;

@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.c,v 1.60 2007/11/26 12:57:26 pooka Exp $	*/
+/*	$NetBSD: puffs_msgif.c,v 1.60.2.1 2007/12/08 17:57:37 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.60 2007/11/26 12:57:26 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.60.2.1 2007/12/08 17:57:37 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -327,7 +327,8 @@ puffs_msg_enqueue(struct puffs_mount *pmp, struct puffs_msgpark *park)
 	mp = PMPTOMP(pmp);
 	preq = park->park_preq;
 	preq->preq_buflen = park->park_maxlen;
-	KASSERT(preq->preq_id == 0);
+	KASSERT(preq->preq_id == 0
+	    || (preq->preq_opclass & PUFFSOPFLAG_ISRESPONSE));
 
 	if ((park->park_flags & PARKFLAG_WANTREPLY) == 0)
 		preq->preq_opclass |= PUFFSOPFLAG_FAF;
@@ -548,6 +549,28 @@ puffs_msg_wait2(struct puffs_mount *pmp, struct puffs_msgpark *park,
 
 	return rv;
 
+}
+
+/*
+ * XXX: lazy bum.  please, for the love of foie gras, fix me.
+ * This should *NOT* depend on setfaf.  Also "memcpy" could
+ * be done more nicely.
+ */
+void
+puffs_msg_sendresp(struct puffs_mount *pmp, struct puffs_req *origpreq, int rv)
+{
+	struct puffs_msgpark *park;
+	struct puffs_req *preq;
+
+	puffs_msgmem_alloc(sizeof(struct puffs_req), &park, (void **)&preq, 1);
+	puffs_msg_setfaf(park); /* XXXXXX: avoids reqid override */
+
+	memcpy(preq, origpreq, sizeof(struct puffs_req));
+	preq->preq_rv = rv;
+	preq->preq_opclass |= PUFFSOPFLAG_ISRESPONSE;
+
+	puffs_msg_enqueue(pmp, park);
+	puffs_msgmem_release(park);
 }
 
 /*
@@ -830,17 +853,23 @@ puffsop_suspend(struct puffs_mount *pmp)
 	/* XXX: "return" rv */
 }
 
-static int
+static void
 puffsop_flush(struct puffs_mount *pmp, struct puffs_flush *pf)
 {
 	struct vnode *vp;
 	voff_t offlo, offhi;
 	int rv, flags = 0;
 
+	if (pf->pf_req.preq_pth.pth_framelen != sizeof(struct puffs_flush)) {
+		rv = EINVAL;
+		goto out;
+	}
+
 	/* XXX: slurry */
 	if (pf->pf_op == PUFFS_INVAL_NAMECACHE_ALL) {
 		cache_purgevfs(PMPTOMP(pmp));
-		return 0;
+		rv = 0;
+		goto out;
 	}
 
 	/*
@@ -855,8 +884,8 @@ puffsop_flush(struct puffs_mount *pmp, struct puffs_flush *pf)
 	rv = puffs_cookie2vnode(pmp, pf->pf_cookie, 0, 0, &vp);
 	if (rv) {
 		if (rv == PUFFS_NOSUCHCOOKIE)
-			return ENOENT;
-		return rv;
+			rv = ENOENT;
+		goto out;
 	}
 
 	switch (pf->pf_op) {
@@ -908,7 +937,8 @@ puffsop_flush(struct puffs_mount *pmp, struct puffs_flush *pf)
 
 	vrele(vp);
 
-	return rv;
+ out:
+	puffs_msg_sendresp(pmp, &pf->pf_req, rv);
 }
 
 int
@@ -918,24 +948,28 @@ puffs_msgif_dispatch(void *this, struct putter_hdr *pth)
 	struct puffs_req *preq = (struct puffs_req *)pth;
 
 	/* XXX: need to send error to userspace */
-	if (pth->pth_framelen < sizeof(struct puffs_req))
-		return EINVAL; /* E2SMALL */
+	if (pth->pth_framelen < sizeof(struct puffs_req)) {
+		puffs_msg_sendresp(pmp, preq, EINVAL); /* E2SMALL */
+		return 0;
+	}
 
 	switch (PUFFSOP_OPCLASS(preq->preq_opclass)) {
 	case PUFFSOP_VN:
 	case PUFFSOP_VFS:
+		DPRINTF(("dispatch: vn/vfs message 0x%x\n", preq->preq_optype));
 		puffsop_msg(pmp, preq);
 		break;
 	case PUFFSOP_FLUSH:
-		if (pth->pth_framelen != sizeof(struct puffs_flush))
-			return EINVAL;
+		DPRINTF(("dispatch: flush 0x%x\n", preq->preq_optype));
 		puffsop_flush(pmp, (struct puffs_flush *)preq);
 		break;
 	case PUFFSOP_SUSPEND:
+		DPRINTF(("dispatch: suspend\n"));
 		puffsop_suspend(pmp);
 		break;
 	default:
-		/* XXX: send error */
+		DPRINTF(("dispatch: invalid class 0x%x\n", preq->preq_opclass));
+		puffs_msg_sendresp(pmp, preq, EINVAL);
 		break;
 	}
 
@@ -998,18 +1032,18 @@ puffs_msgif_close(void *this)
 	 * wait for syncer_mutex.  Otherwise the mointpoint can be
 	 * wiped out while we wait.
 	 */
-	simple_lock(&mp->mnt_slock);
+	mutex_enter(&mp->mnt_mutex);
 	mp->mnt_wcnt++;
-	simple_unlock(&mp->mnt_slock);
+	mutex_exit(&mp->mnt_mutex);
 
 	mutex_enter(&syncer_mutex);
 
-	simple_lock(&mp->mnt_slock);
+	mutex_enter(&mp->mnt_mutex);
 	mp->mnt_wcnt--;
 	if (mp->mnt_wcnt == 0)
 		wakeup(&mp->mnt_wcnt);
 	gone = mp->mnt_iflag & IMNT_GONE;
-	simple_unlock(&mp->mnt_slock);
+	mutex_exit(&mp->mnt_mutex);
 	if (gone) {
 		mutex_exit(&syncer_mutex);
 		return 0;

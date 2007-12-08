@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_mman.c,v 1.15 2007/11/28 18:50:10 pooka Exp $ */
+/*	$NetBSD: irix_mman.c,v 1.15.2.1 2007/12/08 17:56:41 ad Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_mman.c,v 1.15 2007/11/28 18:50:10 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_mman.c,v 1.15.2.1 2007/12/08 17:56:41 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: irix_mman.c,v 1.15 2007/11/28 18:50:10 pooka Exp $")
 #include <sys/vnode.h>
 #include <sys/vnode_if.h>
 #include <sys/mount.h>
-#include <sys/lock.h>
+#include <sys/rwlock.h>
 #include <sys/systm.h>
 #include <sys/syscallargs.h>
 
@@ -70,8 +70,8 @@ __KERNEL_RCSID(0, "$NetBSD: irix_mman.c,v 1.15 2007/11/28 18:50:10 pooka Exp $")
 #include <compat/irix/irix_exec.h>
 #include <compat/irix/irix_syscallargs.h>
 
-static int irix_mmap __P((struct lwp *, void *, size_t, int ,
-		int, int, off_t, register_t *));
+static int irix_mmap(struct lwp *, void *, size_t, int ,
+		int, int, off_t, register_t *);
 
 int
 irix_sys_mmap(l, v, retval)

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.137.2.1 2007/12/04 13:03:58 ad Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.137.2.2 2007/12/08 17:58:09 ad Exp $	*/
 
 /*
  *
@@ -202,15 +202,6 @@ typedef voff_t pgoff_t;		/* XXX: number of pages within a uvm object */
  * flags for ubc_uiomve()
  */
 #define	UBC_PARTIALOK	0x100
-
-/*
- * helpers for calling ubc_release()
- */
-#ifdef PMAP_CACHE_VIVT
-#define UBC_WANT_UNMAP(vp) (((vp)->v_flag & VTEXT) != 0)
-#else
-#define UBC_WANT_UNMAP(vp) false
-#endif
 
 /*
  * flags for uvn_findpages().
@@ -478,6 +469,15 @@ extern struct uvmexp uvmexp;
 #include <uvm/uvm_pager.h>
 
 /*
+ * helpers for calling ubc_release()
+ */
+#ifdef PMAP_CACHE_VIVT
+#define UBC_WANT_UNMAP(vp) (((vp)->v_iflag & VI_TEXT) != 0)
+#else
+#define UBC_WANT_UNMAP(vp) false
+#endif
+
+/*
  * Shareable process virtual address space.
  * May eventually be merged with vm_map.
  * Several fields are temporary (text, data stuff).
@@ -715,7 +715,6 @@ void			uvm_deallocate(struct vm_map *, vaddr_t, vsize_t);
 /* uvm_vnode.c */
 void			uvm_vnp_setsize(struct vnode *, voff_t);
 void			uvm_vnp_setwritesize(struct vnode *, voff_t);
-void			uvm_vnp_sync(struct mount *);
 int			uvn_findpages(struct uvm_object *, voff_t,
 			    int *, struct vm_page **, int);
 void			uvm_vnp_zerorange(struct vnode *, off_t, size_t);

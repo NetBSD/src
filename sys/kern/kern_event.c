@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.42 2007/12/03 15:21:57 pooka Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.42.2.1 2007/12/08 17:57:39 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.42 2007/12/03 15:21:57 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.42.2.1 2007/12/08 17:57:39 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -600,7 +600,7 @@ seltrue_kqfilter(dev_t dev, struct knote *kn)
 		kn->kn_fop = &seltrue_filtops;
 		break;
 	default:
-		return (1);
+		return (EINVAL);
 	}
 
 	/* Nothing more to do */

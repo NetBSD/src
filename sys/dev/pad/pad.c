@@ -1,4 +1,4 @@
-/* $NetBSD: pad.c,v 1.2 2007/11/11 19:53:38 jmcneill Exp $ */
+/* $NetBSD: pad.c,v 1.2.10.1 2007/12/08 17:57:25 ad Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.2 2007/11/11 19:53:38 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.2.10.1 2007/12/08 17:57:25 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -265,7 +265,7 @@ pad_attach(struct device *parent, struct device *self, void *opaque)
 	}
 
 	cv_init(&sc->sc_condvar, device_xname(self));
-	mutex_init(&sc->sc_mutex, MUTEX_DRIVER, IPL_AUDIO);
+	mutex_init(&sc->sc_mutex, MUTEX_DEFAULT, IPL_SCHED);
 
 	sc->sc_swvol = 255;
 	sc->sc_buflen = 0;

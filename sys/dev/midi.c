@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.57 2007/12/01 23:40:28 jmcneill Exp $	*/
+/*	$NetBSD: midi.c,v 1.57.2.1 2007/12/08 17:57:17 ad Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.57 2007/12/01 23:40:28 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.57.2.1 2007/12/08 17:57:17 ad Exp $");
 
 #include "midi.h"
 #include "sequencer.h"
@@ -1764,7 +1764,7 @@ midikqfilter(dev_t dev, struct knote *kn)
 		break;
 
 	default:
-		return (1);
+		return (EINVAL);
 	}
 
 	kn->kn_hook = sc;

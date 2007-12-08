@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_43.c,v 1.44 2007/06/30 15:31:49 dsl Exp $	*/
+/*	$NetBSD: netbsd32_compat_43.c,v 1.44.16.1 2007/12/08 17:56:58 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_43.c,v 1.44 2007/06/30 15:31:49 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_43.c,v 1.44.16.1 2007/12/08 17:56:58 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_43.h"
@@ -64,11 +64,11 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_43.c,v 1.44 2007/06/30 15:31:49 dsl 
 #include <compat/sys/signalvar.h>
 #include <compat/sys/socket.h>
 
-int compat_43_netbsd32_sethostid __P((struct lwp *, void *, register_t *));
-int compat_43_netbsd32_killpg __P((struct lwp *, void *, register_t *retval));
-int compat_43_netbsd32_sigblock __P((struct lwp *, void *, register_t *retval));
-int compat_43_netbsd32_sigblock __P((struct lwp *, void *, register_t *retval));
-int compat_43_netbsd32_sigsetmask __P((struct lwp *, void *, register_t *retval));
+int compat_43_netbsd32_sethostid(struct lwp *, void *, register_t *);
+int compat_43_netbsd32_killpg(struct lwp *, void *, register_t *retval);
+int compat_43_netbsd32_sigblock(struct lwp *, void *, register_t *retval);
+int compat_43_netbsd32_sigblock(struct lwp *, void *, register_t *retval);
+int compat_43_netbsd32_sigsetmask(struct lwp *, void *, register_t *retval);
 
 static void
 netbsd32_from_stat(const struct stat *sb, struct netbsd32_stat43 *sp32)

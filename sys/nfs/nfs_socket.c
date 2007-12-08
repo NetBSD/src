@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.164.4.2 2007/12/04 18:05:19 yamt Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.164.4.3 2007/12/08 17:58:04 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.164.4.2 2007/12/04 18:05:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.164.4.3 2007/12/08 17:58:04 ad Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"

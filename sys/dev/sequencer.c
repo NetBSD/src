@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencer.c,v 1.42 2007/10/08 16:18:02 ad Exp $	*/
+/*	$NetBSD: sequencer.c,v 1.42.6.1 2007/12/08 17:57:17 ad Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.42 2007/10/08 16:18:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.42.6.1 2007/12/08 17:57:17 ad Exp $");
 
 #include "sequencer.h"
 
@@ -728,7 +728,7 @@ sequencerkqfilter(dev_t dev, struct knote *kn)
 		break;
 
 	default:
-		return (1);
+		return (EINVAL);
 	}
 
 	kn->kn_hook = sc;

@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_sig.c,v 1.35 2007/06/09 21:25:49 ad Exp $	*/
+/*	$NetBSD: hpux_sig.c,v 1.35.16.1 2007/12/08 17:56:37 ad Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_sig.c,v 1.35 2007/06/09 21:25:49 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_sig.c,v 1.35.16.1 2007/12/08 17:56:37 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,9 +123,9 @@ hpux_sys_sigvec(l, v, retval)
 
 	/* XXX */
 	extern void compat_43_sigvec_to_sigaction
-	    __P((const struct sigvec *, struct sigaction *));
+(const struct sigvec *, struct sigaction *);
 	extern void compat_43_sigaction_to_sigvec
-	    __P((const struct sigaction *, struct sigvec *));
+(const struct sigaction *, struct sigvec *);
 
 	/*
 	 * XXX We don't handle HPUXSV_RESET!
