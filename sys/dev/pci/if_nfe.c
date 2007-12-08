@@ -1,4 +1,4 @@
-/*	$NetBSD: if_nfe.c,v 1.16.6.7 2007/11/14 19:04:29 joerg Exp $	*/
+/*	$NetBSD: if_nfe.c,v 1.16.6.8 2007/12/08 16:21:28 jmcneill Exp $	*/
 /*	$OpenBSD: if_nfe.c,v 1.52 2006/03/02 09:04:00 jsg Exp $	*/
 
 /*-
@@ -21,7 +21,7 @@
 /* Driver for NVIDIA nForce MCP Fast Ethernet and Gigabit Ethernet */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.16.6.7 2007/11/14 19:04:29 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.16.6.8 2007/12/08 16:21:28 jmcneill Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -366,10 +366,10 @@ nfe_attach(struct device *parent, struct device *self, void *aux)
 	callout_init(&sc->sc_tick_ch, 0);
 	callout_setfunc(&sc->sc_tick_ch, nfe_tick, sc);
 
-	if (!pnp_device_register(self, NULL, NULL))
+	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 	else
-		pnp_class_network_register(self, ifp);
+		pmf_class_network_register(self, ifp);
 }
 
 void

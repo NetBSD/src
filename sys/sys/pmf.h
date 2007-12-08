@@ -1,4 +1,4 @@
-/* $NetBSD: pnp.h,v 1.1.2.9 2007/12/05 14:47:07 joerg Exp $ */
+/* $NetBSD: pmf.h,v 1.1.2.1 2007/12/08 16:21:41 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -32,67 +32,67 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _SYS_PNP_H
-#define _SYS_PNP_H
+#ifndef _SYS_PMF_H
+#define _SYS_PMF_H
 
 #include <sys/callout.h>
 
 typedef enum {
-	PNP_DISPLAY_POWER_ON = 0x01,
-	PNP_DISPLAY_POWER_REDUCED = 0x02,
-	PNP_DISPLAY_POWER_STANDBY = 0x04,
-	PNP_DISPLAY_POWER_SUSPEND = 0x08,
-	PNP_DISPLAY_POWER_OFF = 0x10
-} pnp_display_power_t;
+	PMF_DISPLAY_POWER_ON = 0x01,
+	PMF_DISPLAY_POWER_REDUCED = 0x02,
+	PMF_DISPLAY_POWER_STANDBY = 0x04,
+	PMF_DISPLAY_POWER_SUSPEND = 0x08,
+	PMF_DISPLAY_POWER_OFF = 0x10
+} pmf_display_power_t;
 
-void	pnp_event_display_power_set(device_t, pnp_display_power_t);
-bool	pnp_event_display_power_get(device_t, pnp_display_power_t);
+void	pmf_event_display_power_set(device_t, pmf_display_power_t);
+bool	pmf_event_display_power_get(device_t, pmf_display_power_t);
 
 typedef enum {
-	PNPE_DISPLAY_ON,
-	PNPE_DISPLAY_REDUCED,
-	PNPE_DISPLAY_STANDBY,
-	PNPE_DISPLAY_SUSPEND,
-	PNPE_DISPLAY_OFF,
-	PNPE_DISPLAY_BRIGHTNESS_UP,
-	PNPE_DISPLAY_BRIGHTNESS_DOWN,
-	PNPE_AUDIO_VOLUME_UP,
-	PNPE_AUDIO_VOLUME_DOWN,
-	PNPE_AUDIO_VOLUME_TOGGLE,
-	PNPE_CHASSIS_LID_CLOSE,
-	PNPE_CHASSIS_LID_OPEN
-} pnp_generic_event_t;
+	PMFE_DISPLAY_ON,
+	PMFE_DISPLAY_REDUCED,
+	PMFE_DISPLAY_STANDBY,
+	PMFE_DISPLAY_SUSPEND,
+	PMFE_DISPLAY_OFF,
+	PMFE_DISPLAY_BRIGHTNESS_UP,
+	PMFE_DISPLAY_BRIGHTNESS_DOWN,
+	PMFE_AUDIO_VOLUME_UP,
+	PMFE_AUDIO_VOLUME_DOWN,
+	PMFE_AUDIO_VOLUME_TOGGLE,
+	PMFE_CHASSIS_LID_CLOSE,
+	PMFE_CHASSIS_LID_OPEN
+} pmf_generic_event_t;
 
-void	pnp_init(void);
+void	pmf_init(void);
 
-bool	pnp_event_inject(device_t, pnp_generic_event_t);
-bool	pnp_event_register(device_t, pnp_generic_event_t,
+bool	pmf_event_inject(device_t, pmf_generic_event_t);
+bool	pmf_event_register(device_t, pmf_generic_event_t,
 			   void (*)(device_t), bool);
-void	pnp_event_deregister(device_t, pnp_generic_event_t,
+void	pmf_event_deregister(device_t, pmf_generic_event_t,
 			     void (*)(device_t), bool);
 
-bool		pnp_set_platform(const char *, const char *);
-const char	*pnp_get_platform(const char *);
+bool		pmf_set_platform(const char *, const char *);
+const char	*pmf_get_platform(const char *);
 
-bool		pnp_system_resume(void);
-bool		pnp_system_suspend(void);
-void		pnp_system_shutdown(void);
+bool		pmf_system_resume(void);
+bool		pmf_system_suspend(void);
+void		pmf_system_shutdown(void);
 
-bool		pnp_device_register(device_t,
+bool		pmf_device_register(device_t,
 		    bool (*)(device_t),
 		    bool (*)(device_t));
-void		pnp_device_deregister(device_t);
-bool		pnp_device_suspend(device_t);
-bool		pnp_device_resume(device_t);
+void		pmf_device_deregister(device_t);
+bool		pmf_device_suspend(device_t);
+bool		pmf_device_resume(device_t);
 
-bool		pnp_device_recursive_suspend(device_t);
-bool		pnp_device_recursive_resume(device_t);
-bool		pnp_device_resume_subtree(device_t);
+bool		pmf_device_recursive_suspend(device_t);
+bool		pmf_device_recursive_resume(device_t);
+bool		pmf_device_resume_subtree(device_t);
 
 struct ifnet;
-void		pnp_class_network_register(device_t, struct ifnet *);
+void		pmf_class_network_register(device_t, struct ifnet *);
 
-bool		pnp_class_input_register(device_t);
-bool		pnp_class_display_register(device_t);
+bool		pmf_class_input_register(device_t);
+bool		pmf_class_display_register(device_t);
 
-#endif /* !_SYS_PNP_H */
+#endif /* !_SYS_PMF_H */

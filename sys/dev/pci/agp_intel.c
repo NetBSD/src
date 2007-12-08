@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_intel.c,v 1.22.8.4 2007/11/06 14:27:20 joerg Exp $	*/
+/*	$NetBSD: agp_intel.c,v 1.22.8.5 2007/12/08 16:21:22 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_intel.c,v 1.22.8.4 2007/11/06 14:27:20 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_intel.c,v 1.22.8.5 2007/12/08 16:21:22 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -188,7 +188,7 @@ agp_intel_attach(struct device *parent, struct device *self, void *aux)
 	}
 	isc->gatt = gatt;
 
-	if (!pnp_device_register(self, NULL, agp_intel_resume))
+	if (!pmf_device_register(self, NULL, agp_intel_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	return agp_intel_init(sc);

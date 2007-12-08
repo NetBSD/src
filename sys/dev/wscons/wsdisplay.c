@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.108.14.4 2007/11/21 21:55:52 joerg Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.108.14.5 2007/12/08 16:21:38 jmcneill Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.108.14.4 2007/11/21 21:55:52 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.108.14.5 2007/12/08 16:21:38 jmcneill Exp $");
 
 #include "opt_wsdisplay_compat.h"
 #include "opt_wsmsgattrs.h"
@@ -714,7 +714,7 @@ wsdisplay_common_attach(struct wsdisplay_softc *sc, int console, int kbdmux,
 	if (i > start)
 		wsdisplay_addscreen_print(sc, start, i-start);
 
-	if (!pnp_device_register(sc->sc_dev, wsdisplay_suspend, wsdisplay_resume))
+	if (!pmf_device_register(sc->sc_dev, wsdisplay_suspend, wsdisplay_resume))
 		aprint_error_dev(sc->sc_dev, "couldn't establish power handler\n");
 
 	if (hookset == 0)

@@ -1,4 +1,4 @@
-/* $NetBSD: pcppi_acpi.c,v 1.5.22.4 2007/11/06 14:27:13 joerg Exp $ */
+/* $NetBSD: pcppi_acpi.c,v 1.5.22.5 2007/12/08 16:21:05 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcppi_acpi.c,v 1.5.22.4 2007/11/06 14:27:13 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcppi_acpi.c,v 1.5.22.5 2007/12/08 16:21:05 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,7 +121,7 @@ pcppi_acpi_attach(struct device *parent, struct device *self,
 
 	pcppi_attach(sc);
 
-	if (!pnp_device_register(self, NULL, NULL))
+	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
  out:

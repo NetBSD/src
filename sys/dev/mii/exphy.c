@@ -1,4 +1,4 @@
-/*	$NetBSD: exphy.c,v 1.44.22.1 2007/11/27 09:28:21 joerg Exp $	*/
+/*	$NetBSD: exphy.c,v 1.44.22.2 2007/12/08 16:21:15 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exphy.c,v 1.44.22.1 2007/11/27 09:28:21 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exphy.c,v 1.44.22.2 2007/12/08 16:21:15 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -159,7 +159,7 @@ exphyattach(struct device *parent, struct device *self, void *aux)
 		mii_phy_add_media(sc);
 	aprint_normal("\n");
 
-	if (!pnp_device_register(self, NULL, mii_phy_resume))
+	if (!pmf_device_register(self, NULL, mii_phy_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 

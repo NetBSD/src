@@ -1,4 +1,4 @@
-/* 	$NetBSD: ioapic.c,v 1.19.8.15 2007/12/02 06:52:10 jmcneill Exp $	*/
+/* 	$NetBSD: ioapic.c,v 1.19.8.16 2007/12/08 16:21:00 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.19.8.15 2007/12/02 06:52:10 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.19.8.16 2007/12/08 16:21:00 jmcneill Exp $");
 
 #include "opt_ddb.h"
 
@@ -391,7 +391,7 @@ ioapic_attach(struct device *parent, struct device *self, void *aux)
 		}
 	}
 
-	if (!pnp_device_register(self, NULL, NULL))
+	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
 #if 0

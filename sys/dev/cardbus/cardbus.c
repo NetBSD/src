@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.75.16.8 2007/12/01 17:57:26 jmcneill Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.75.16.9 2007/12/08 16:21:07 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.75.16.8 2007/12/01 17:57:26 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.75.16.9 2007/12/08 16:21:07 jmcneill Exp $");
 
 #include "opt_cardbus.h"
 
@@ -144,7 +144,7 @@ cardbusattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_rbus_memt = cba->cba_rbus_memt;
 #endif
 
-	if (!pnp_device_register(self, NULL, NULL))
+	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
@@ -408,7 +408,7 @@ cardbus_attach_card(struct cardbus_softc *sc)
 		return (0);
 	}
 
-	device_pnp_driver_set_child_register(&sc->sc_dev, cardbus_child_register);
+	device_pmf_driver_set_child_register(&sc->sc_dev, cardbus_child_register);
 	cardbus_rescan(&sc->sc_dev, "cardbus", wildcard);
 	return (1); /* XXX */
 }
@@ -1150,7 +1150,7 @@ struct cardbus_child_power {
 static bool
 cardbus_child_suspend(device_t dv)
 {
-	struct cardbus_child_power *priv = device_pnp_bus_private(dv);
+	struct cardbus_child_power *priv = device_pmf_bus_private(dv);
 
 	cardbus_conf_capture(priv->p_cc, priv->p_cf, priv->p_tag,
 	    &priv->p_cardbusconf);
@@ -1170,7 +1170,7 @@ cardbus_child_suspend(device_t dv)
 static bool
 cardbus_child_resume(device_t dv)
 {
-	struct cardbus_child_power *priv = device_pnp_bus_private(dv);
+	struct cardbus_child_power *priv = device_pmf_bus_private(dv);
 
 	Cardbus_function_enable(priv->p_ct);
 
@@ -1190,7 +1190,7 @@ cardbus_child_resume(device_t dv)
 static void
 cardbus_child_deregister(device_t dv)
 {
-	struct cardbus_child_power *priv = device_pnp_bus_private(dv);
+	struct cardbus_child_power *priv = device_pmf_bus_private(dv);
 
 	free(priv, M_DEVBUF);
 }
@@ -1225,7 +1225,7 @@ cardbus_child_register(device_t child)
 		priv->p_pm_offset = -1;
 	}
 
-	device_pnp_bus_register(child, priv, cardbus_child_suspend,
+	device_pmf_bus_register(child, priv, cardbus_child_suspend,
 	    cardbus_child_resume, cardbus_child_deregister);
 
 	return true;

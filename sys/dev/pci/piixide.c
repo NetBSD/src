@@ -1,4 +1,4 @@
-/*	$NetBSD: piixide.c,v 1.37.14.5 2007/11/06 14:27:28 joerg Exp $	*/
+/*	$NetBSD: piixide.c,v 1.37.14.6 2007/12/08 16:21:31 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piixide.c,v 1.37.14.5 2007/11/06 14:27:28 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piixide.c,v 1.37.14.6 2007/12/08 16:21:31 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -278,7 +278,7 @@ piixide_attach(struct device *parent, struct device *self, void *aux)
 	pciide_common_attach(sc, pa,
 	    pciide_lookup_product(pa->pa_id, pciide_intel_products));
 
-	if (!pnp_device_register(self, piixide_suspend, piixide_resume))
+	if (!pmf_device_register(self, piixide_suspend, piixide_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 

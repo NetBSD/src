@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.90.6.3 2007/11/06 14:27:14 joerg Exp $	*/
+/*	$NetBSD: ata.c,v 1.90.6.4 2007/12/08 16:21:06 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.90.6.3 2007/11/06 14:27:14 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.90.6.4 2007/12/08 16:21:06 jmcneill Exp $");
 
 #include "opt_ata.h"
 
@@ -417,7 +417,7 @@ atabus_attach(struct device *parent, struct device *self, void *aux)
 		aprint_error("%s: unable to create kernel thread: error %d\n",
 		    sc->sc_dev.dv_xname, error);
 
-	if (!pnp_device_register(self, atabus_suspend, atabus_resume))
+	if (!pmf_device_register(self, atabus_suspend, atabus_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 

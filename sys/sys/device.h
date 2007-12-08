@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.96.6.6 2007/11/07 01:14:14 joerg Exp $ */
+/* $NetBSD: device.h,v 1.96.6.7 2007/12/08 16:21:41 jmcneill Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -81,7 +81,7 @@
 #include <sys/queue.h>
 
 typedef struct device *device_t;
-#include <sys/pnp.h>
+#include <sys/pmf.h>
 
 #include <prop/proplib.h>
 
@@ -439,36 +439,36 @@ void		device_active_deregister(device_t,
 
 bool		device_is_a(device_t, const char *);
 
-bool		device_pnp_is_registered(device_t);
+bool		device_pmf_is_registered(device_t);
 
-bool		device_pnp_driver_suspend(device_t);
-bool		device_pnp_driver_resume(device_t);
+bool		device_pmf_driver_suspend(device_t);
+bool		device_pmf_driver_resume(device_t);
 
-void		device_pnp_driver_register(device_t,
+void		device_pmf_driver_register(device_t,
 		    bool (*)(device_t), bool (*)(device_t));
-void		device_pnp_driver_deregister(device_t);
+void		device_pmf_driver_deregister(device_t);
 
-bool		device_pnp_driver_child_register(device_t);
-void		device_pnp_driver_set_child_register(device_t,
+bool		device_pmf_driver_child_register(device_t);
+void		device_pmf_driver_set_child_register(device_t,
 		    bool (*)(device_t));
 
-void		*device_pnp_bus_private(device_t);
-bool		device_pnp_bus_suspend(device_t);
-bool		device_pnp_bus_resume(device_t);
+void		*device_pmf_bus_private(device_t);
+bool		device_pmf_bus_suspend(device_t);
+bool		device_pmf_bus_resume(device_t);
 
-void		device_pnp_bus_register(device_t, void *,
+void		device_pmf_bus_register(device_t, void *,
 		    bool (*)(device_t), bool (*)(device_t),
 		    void (*)(device_t));
-void		device_pnp_bus_deregister(device_t);
+void		device_pmf_bus_deregister(device_t);
 
-void		*device_pnp_class_private(device_t);
-bool		device_pnp_class_suspend(device_t);
-bool		device_pnp_class_resume(device_t);
+void		*device_pmf_class_private(device_t);
+bool		device_pmf_class_suspend(device_t);
+bool		device_pmf_class_resume(device_t);
 
-void		device_pnp_class_register(device_t, void *,
+void		device_pmf_class_register(device_t, void *,
 		    bool (*)(device_t), bool (*)(device_t),
 		    void (*)(device_t));
-void		device_pnp_class_deregister(device_t);
+void		device_pmf_class_deregister(device_t);
 
 #endif /* _KERNEL */
 

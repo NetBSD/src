@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.163.2.8 2007/11/27 19:38:05 joerg Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.163.2.9 2007/12/08 16:21:39 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2006 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.163.2.8 2007/11/27 19:38:05 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.163.2.9 2007/12/08 16:21:39 jmcneill Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -114,7 +114,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.163.2.8 2007/11/27 19:38:05 joerg Ex
 #include <sys/fcntl.h>
 #include <sys/kauth.h>
 #include <sys/vnode.h>
-#include <sys/pnp.h>
+#include <sys/pmf.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -502,7 +502,7 @@ doshutdownhooks(void)
 #endif
 	}
 
-	pnp_system_shutdown();
+	pmf_system_shutdown();
 }
 
 /*

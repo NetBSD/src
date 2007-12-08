@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.145.6.7 2007/12/01 05:42:31 jmcneill Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.145.6.8 2007/12/08 16:21:30 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.145.6.7 2007/12/01 05:42:31 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.145.6.8 2007/12/08 16:21:30 jmcneill Exp $");
 
 /*
 #define CBB_DEBUG
@@ -509,7 +509,7 @@ pccbbattach(struct device *parent, struct device *self, void *aux)
 		break;
 	}
 
-	if (!pnp_device_register(self, pccbb_suspend, pccbb_resume))
+	if (!pmf_device_register(self, pccbb_suspend, pccbb_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	config_defer(self, pccbb_pci_callback);

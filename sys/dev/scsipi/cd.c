@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.267.4.5 2007/12/03 16:14:39 joerg Exp $	*/
+/*	$NetBSD: cd.c,v 1.267.4.6 2007/12/08 16:21:35 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.267.4.5 2007/12/03 16:14:39 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.267.4.6 2007/12/08 16:21:35 jmcneill Exp $");
 
 #include "rnd.h"
 
@@ -290,7 +290,7 @@ cdattach(struct device *parent, struct device *self, void *aux)
 			  RND_TYPE_DISK, 0);
 #endif
 
-	if (!pnp_device_register(self, NULL, NULL))
+	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 

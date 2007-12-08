@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ath_cardbus.c,v 1.18.22.6 2007/11/21 21:54:25 joerg Exp $ */
+/*	$NetBSD: if_ath_cardbus.c,v 1.18.22.7 2007/12/08 16:21:08 jmcneill Exp $ */
 /*
  * Copyright (c) 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ath_cardbus.c,v 1.18.22.6 2007/11/21 21:54:25 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ath_cardbus.c,v 1.18.22.7 2007/12/08 16:21:08 jmcneill Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -202,10 +202,10 @@ ath_cardbus_attach(struct device *parent, struct device *self,
 	/* Remember which interrupt line. */
 	csc->sc_intrline = ca->ca_intrline;
 
-	if (!pnp_device_register(self, NULL, ath_cardbus_resume))
+	if (!pmf_device_register(self, NULL, ath_cardbus_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 	else
-		pnp_class_network_register(self, &sc->sc_if);
+		pmf_class_network_register(self, &sc->sc_if);
 
 	/*
 	 * Finish off the attach.
@@ -230,7 +230,7 @@ ath_cardbus_detach(struct device *self, int flags)
 	if (rv)
 		return (rv);
 
-	pnp_device_deregister(self);
+	pmf_device_deregister(self);
 
 	/*
 	 * Unhook the interrupt handler.

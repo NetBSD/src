@@ -1,4 +1,4 @@
-/* $NetBSD: if_an_pcmcia.c,v 1.31.22.3 2007/11/06 14:27:30 joerg Exp $ */
+/* $NetBSD: if_an_pcmcia.c,v 1.31.22.4 2007/12/08 16:21:33 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2000, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_an_pcmcia.c,v 1.31.22.3 2007/11/06 14:27:30 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_an_pcmcia.c,v 1.31.22.4 2007/12/08 16:21:33 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -163,10 +163,10 @@ an_pcmcia_attach(struct device  *parent, struct device *self,
 		goto fail2;
 	}
 
-	if (!pnp_device_register(self, NULL, NULL))
+	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 	else
-		pnp_class_network_register(self, &sc->sc_if);
+		pmf_class_network_register(self, &sc->sc_if);
 
 	an_pcmcia_disable(sc);
 	sc->sc_enabled = 0;
@@ -190,7 +190,7 @@ an_pcmcia_detach(struct device *self, int flags)
 	if (psc->sc_state != AN_PCMCIA_ATTACHED)
 		return (0);
 
-	pnp_device_deregister(self);
+	pmf_device_deregister(self);
 
 	error = an_detach(&psc->sc_an);
 	if (error)

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_re_pci.c,v 1.28.4.4 2007/11/06 14:27:25 joerg Exp $	*/
+/*	$NetBSD: if_re_pci.c,v 1.28.4.5 2007/12/08 16:21:28 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -300,8 +300,8 @@ re_pci_attach(struct device *parent, struct device *self, void *aux)
 		}
 	}
 
-	if (!pnp_device_register(self, NULL, NULL))
+	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 	else
-		pnp_class_network_register(self, &sc->ethercom.ec_if);
+		pmf_class_network_register(self, &sc->ethercom.ec_if);
 }

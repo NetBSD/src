@@ -1,4 +1,4 @@
-/*	$NetBSD: ikphy.c,v 1.3.28.1 2007/11/27 09:28:22 joerg Exp $	*/
+/*	$NetBSD: ikphy.c,v 1.3.28.2 2007/12/08 16:21:17 jmcneill Exp $	*/
 
 /*******************************************************************************
 Copyright (c) 2001-2005, Intel Corporation 
@@ -64,7 +64,7 @@ POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ikphy.c,v 1.3.28.1 2007/11/27 09:28:22 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ikphy.c,v 1.3.28.2 2007/12/08 16:21:17 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -149,7 +149,7 @@ ikphyattach(struct device *parent, struct device *self, void *aux)
 		mii_phy_add_media(sc);
 	aprint_normal("\n");
 
-	if (!pnp_device_register(self, NULL, mii_phy_resume))
+	if (!pmf_device_register(self, NULL, mii_phy_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 

@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.2.6.19 2007/12/03 16:14:21 joerg Exp $ */
+/* $NetBSD: cpu.c,v 1.2.6.20 2007/12/08 16:21:00 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.2.6.19 2007/12/03 16:14:21 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.2.6.20 2007/12/08 16:21:00 jmcneill Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -401,7 +401,7 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 
 	cpus_attached |= ci->ci_cpumask;
 
-	if (!pnp_device_register(self, cpu_suspend, cpu_resume))
+	if (!pmf_device_register(self, cpu_suspend, cpu_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
 #if defined(MULTIPROCESSOR)

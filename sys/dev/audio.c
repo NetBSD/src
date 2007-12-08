@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.222.6.10 2007/12/06 14:20:47 joerg Exp $	*/
+/*	$NetBSD: audio.c,v 1.222.6.11 2007/12/08 16:21:01 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.222.6.10 2007/12/06 14:20:47 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.222.6.11 2007/12/08 16:21:01 jmcneill Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -486,18 +486,18 @@ audioattach(struct device *parent, struct device *self, void *aux)
 	callout_init(&sc->sc_idle_counter, 0);
 	callout_setfunc(&sc->sc_idle_counter, audio_idle, self);
 
-	if (!pnp_device_register(self, audio_suspend, audio_resume))
+	if (!pmf_device_register(self, audio_suspend, audio_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 	if (!device_active_register(self, audio_activity))
 		aprint_error_dev(self, "couldn't register activity handler\n");
 
-	if (!pnp_event_register(self, PNPE_AUDIO_VOLUME_DOWN,
+	if (!pmf_event_register(self, PMFE_AUDIO_VOLUME_DOWN,
 	    audio_volume_down, true))
 		aprint_error_dev(self, "couldn't add volume down handler\n");
-	if (!pnp_event_register(self, PNPE_AUDIO_VOLUME_UP,
+	if (!pmf_event_register(self, PMFE_AUDIO_VOLUME_UP,
 	    audio_volume_up, true))
 		aprint_error_dev(self, "couldn't add volume up handler\n");
-	if (!pnp_event_register(self, PNPE_AUDIO_VOLUME_TOGGLE,
+	if (!pmf_event_register(self, PMFE_AUDIO_VOLUME_TOGGLE,
 	    audio_volume_toggle, true))
 		aprint_error_dev(self, "couldn't add volume toggle handler\n");
 
@@ -533,16 +533,16 @@ audiodetach(struct device *self, int flags)
 
 	sc->sc_dying = true;
 
-	pnp_event_deregister(self, PNPE_AUDIO_VOLUME_DOWN,
+	pmf_event_deregister(self, PMFE_AUDIO_VOLUME_DOWN,
 	    audio_volume_down, true);
-	pnp_event_deregister(self, PNPE_AUDIO_VOLUME_UP,
+	pmf_event_deregister(self, PMFE_AUDIO_VOLUME_UP,
 	    audio_volume_up, true);
-	pnp_event_deregister(self, PNPE_AUDIO_VOLUME_TOGGLE,
+	pmf_event_deregister(self, PMFE_AUDIO_VOLUME_TOGGLE,
 	    audio_volume_toggle, true);
 
 	callout_stop(&sc->sc_idle_counter);
 
-	pnp_device_deregister(self);
+	pmf_device_deregister(self);
 
 	wakeup(&sc->sc_wchan);
 	wakeup(&sc->sc_rchan);
@@ -3960,12 +3960,12 @@ audio_idle(void *arg)
 		printf("%s: idle handler called\n", device_xname(dv));
 #endif
 
-	/* XXX joerg Make pnp_device_suspend handle children? */
-	if (!pnp_device_suspend(dv))
+	/* XXX joerg Make pmf_device_suspend handle children? */
+	if (!pmf_device_suspend(dv))
 		return;
 
-	if (!pnp_device_suspend(sc->sc_dev))
-		pnp_device_resume(dv);
+	if (!pmf_device_suspend(sc->sc_dev))
+		pmf_device_resume(dv);
 }
 
 static void
@@ -3980,8 +3980,8 @@ audio_activity(device_t dv, devactive_t type)
 
 	if (!device_is_active(dv)) {
 		/* XXX joerg How to deal with a failing resume... */
-		pnp_device_resume(sc->sc_dev);
-		pnp_device_resume(dv);
+		pmf_device_resume(sc->sc_dev);
+		pmf_device_resume(dv);
 	}
 }
 
