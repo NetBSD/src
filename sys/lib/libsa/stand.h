@@ -1,4 +1,4 @@
-/*	$NetBSD: stand.h,v 1.61 2006/01/25 22:44:37 uwe Exp $	*/
+/*	$NetBSD: stand.h,v 1.61.50.1 2007/12/08 18:20:57 mjf Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -261,7 +261,7 @@ int	stat(const char *, struct stat *);
 int	fstat(int, struct stat *);
 
 typedef int cmp_t __P((const void *, const void *));
-void	qsort(void *, size_t, size_t, cmp_t * cmp);
+void	qsort(void *, size_t, size_t, cmp_t *);
 
 extern int opterr, optind, optopt, optreset;
 extern char *optarg;

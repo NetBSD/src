@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_pathname.c,v 1.28 2007/04/25 12:54:26 matt Exp $	*/
+/*	$NetBSD: ultrix_pathname.c,v 1.28.14.1 2007/12/08 18:19:14 mjf Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_pathname.c,v 1.28 2007/04/25 12:54:26 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_pathname.c,v 1.28.14.1 2007/12/08 18:19:14 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -237,7 +237,7 @@ ultrix_sys_statfs(struct lwp *l, void *v, register_t *retval)
 	mp = nd.ni_vp->v_mount;
 	sp = &mp->mnt_stat;
 	vrele(nd.ni_vp);
-	if ((error = VFS_STATVFS(mp, sp, l)) != 0)
+	if ((error = VFS_STATVFS(mp, sp)) != 0)
 		return (error);
 	sp->f_flag = mp->mnt_flag & MNT_VISFLAGMASK;
 	return ultrixstatfs(sp, (void *)SCARG(uap, buf));
@@ -263,7 +263,7 @@ ultrix_sys_fstatfs(struct lwp *l, void *v, register_t *retval)
 		return (error);
 	mp = ((struct vnode *)fp->f_data)->v_mount;
 	sp = &mp->mnt_stat;
-	if ((error = VFS_STATVFS(mp, sp, l)) != 0)
+	if ((error = VFS_STATVFS(mp, sp)) != 0)
 		goto out;
 	sp->f_flag = mp->mnt_flag & MNT_VISFLAGMASK;
 	error = ultrixstatfs(sp, (void *)SCARG(uap, buf));

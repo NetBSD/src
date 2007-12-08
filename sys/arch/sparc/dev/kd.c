@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.46 2007/10/18 18:54:58 joerg Exp $	*/
+/*	$NetBSD: kd.c,v 1.46.2.1 2007/12/08 18:17:52 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.46 2007/10/18 18:54:58 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.46.2.1 2007/12/08 18:17:52 mjf Exp $");
 
 #include "opt_kgdb.h"
 #include "fb.h"
@@ -351,7 +351,7 @@ kdstart(struct tty *tp)
 		goto out;
 
 	cl = &tp->t_outq;
-	if (cl->c_cc) {
+	if (ttypull(tp)) {
 		tp->t_state |= TS_BUSY;
 		if ((s1 & PSR_PIL) == 0) {
 			/* called at level zero - update screen now. */
@@ -363,13 +363,6 @@ kdstart(struct tty *tp)
 			/* called at interrupt level - do it later */
 			callout_schedule(&tp->t_rstrt_ch, 0);
 		}
-	}
-	if (cl->c_cc <= tp->t_lowat) {
-		if (tp->t_state & TS_ASLEEP) {
-			tp->t_state &= ~TS_ASLEEP;
-			wakeup((void *)cl);
-		}
-		selwakeup(&tp->t_wsel);
 	}
 out:
 	splx(s2);

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.128 2007/10/08 15:13:12 ad Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.128.4.1 2007/12/08 18:20:28 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.128 2007/10/08 15:13:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.128.4.1 2007/12/08 18:20:28 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -200,13 +200,9 @@ static void
 ktd_callout(void *arg)
 {
 
-	/*
-	 * XXXSMP Should be acquiring ktrace_lock, but that
-	 * is not yet possible from a callout.  For now, we'll
-	 * rely on the callout & ktrace thread both holding the
-	 * kernel_lock.
-	 */
+	mutex_enter(&ktrace_lock);
 	ktd_wakeup(arg);
+	mutex_exit(&ktrace_lock);
 }
 
 static void

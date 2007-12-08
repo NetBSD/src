@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.70.22.1 2007/11/19 00:48:26 mjf Exp $	*/
+/*	$NetBSD: ucom.c,v 1.70.22.2 2007/12/08 18:20:03 mjf Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.70.22.1 2007/11/19 00:48:26 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.70.22.2 2007/12/08 18:20:03 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -913,15 +913,8 @@ ucomstart(struct tty *tp)
 	if (sc->sc_tx_stopped)
 		goto out;
 
-	if (tp->t_outq.c_cc <= tp->t_lowat) {
-		if (ISSET(tp->t_state, TS_ASLEEP)) {
-			CLR(tp->t_state, TS_ASLEEP);
-			wakeup(&tp->t_outq);
-		}
-		selwakeup(&tp->t_wsel);
-		if (tp->t_outq.c_cc == 0)
-			goto out;
-	}
+	if (!ttypull(tp)) 
+		goto out;
 
 	/* Grab the first contiguous region of buffer space. */
 	data = tp->t_outq.c_cf;

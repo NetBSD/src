@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_4bsd.c,v 1.7.4.1 2007/11/19 00:48:46 mjf Exp $	*/
+/*	$NetBSD: sched_4bsd.c,v 1.7.4.2 2007/12/08 18:20:34 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.7.4.1 2007/11/19 00:48:46 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.7.4.2 2007/12/08 18:20:34 mjf Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -477,7 +477,7 @@ sched_rqinit()
 {
 
 	runqueue_init(&global_queue);
-	mutex_init(&sched_mutex, MUTEX_SPIN, IPL_SCHED);
+	mutex_init(&sched_mutex, MUTEX_DEFAULT, IPL_SCHED);
 	/* Initialize the lock pointer for lwp0 */
 	lwp0.l_mutex = &curcpu()->ci_schedstate.spc_lwplock;
 }

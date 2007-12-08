@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_resource.c,v 1.10 2007/05/13 15:56:17 dsl Exp $ */
+/*	$NetBSD: irix_resource.c,v 1.10.14.1 2007/12/08 18:18:42 mjf Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_resource.c,v 1.10 2007/05/13 15:56:17 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_resource.c,v 1.10.14.1 2007/12/08 18:18:42 mjf Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -56,7 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: irix_resource.c,v 1.10 2007/05/13 15:56:17 dsl Exp $
 #include <compat/irix/irix_resource.h>
 #include <compat/irix/irix_syscallargs.h>
 
-static int irix_to_native_resource __P((int));
+static int irix_to_native_resource(int);
 
 static int
 irix_to_native_resource(irix_res)

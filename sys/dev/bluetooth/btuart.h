@@ -1,4 +1,4 @@
-/*	$NetBSD: btuart.h,v 1.2 2007/09/30 04:07:42 kiyohara Exp $	*/
+/*	$NetBSD: btuart.h,v 1.2.4.1 2007/12/08 18:19:25 mjf Exp $	*/
 /*
  * Copyright (c) 2006 KIYOHARA Takashi
  * All rights reserved.
@@ -37,9 +37,10 @@
 #define BTUART_HCITYPE_SWAVE		5
 #define BTUART_HCITYPE_ST		6
 #define BTUART_HCITYPE_STLC2500		7
-#define BTUART_HCITYPE_BT2000C		8
+#define BTUART_HCITYPE_BT2000C		8	/* XXX obsoleted */
 #define BTUART_HCITYPE_BCM2035		9
 #define BTUART_HCITYPE_BCSP		10
+#define BTUART_HCITYPE_BGB2XX		11
 
 #define BTUART_INITSPEED	_IOW ('H', 2, uint32_t)
 #define BTUART_START		_IO  ('H', 3)

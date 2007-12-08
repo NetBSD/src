@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_ioctl.h,v 1.3 2007/03/04 06:01:36 christos Exp $	 */
+/*	$NetBSD: svr4_32_ioctl.h,v 1.3.22.1 2007/12/08 18:19:12 mjf Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -41,17 +41,17 @@
 
 #include <compat/svr4/svr4_ioctl.h>
 
-int	svr4_32_stream_ti_ioctl __P((struct file *, struct lwp *, register_t *,
-			          int, u_long, void *));
-int	svr4_32_stream_ioctl    __P((struct file *, struct lwp *, register_t *,
-				  int, u_long, void *));
-int	svr4_32_term_ioctl      __P((struct file *, struct lwp *, register_t *,
-				  int, u_long, void *));
-int	svr4_32_ttold_ioctl     __P((struct file *, struct lwp *, register_t *,
-				  int, u_long, void *));
-int	svr4_32_fil_ioctl	__P((struct file *, struct lwp *, register_t *,
-				  int, u_long, void *));
-int	svr4_32_sock_ioctl	__P((struct file *, struct lwp *, register_t *,
-				  int, u_long, void *));
+int	svr4_32_stream_ti_ioctl(struct file *, struct lwp *, register_t *,
+			          int, u_long, void *);
+int	svr4_32_stream_ioctl(struct file *, struct lwp *, register_t *,
+				  int, u_long, void *);
+int	svr4_32_term_ioctl(struct file *, struct lwp *, register_t *,
+				  int, u_long, void *);
+int	svr4_32_ttold_ioctl(struct file *, struct lwp *, register_t *,
+				  int, u_long, void *);
+int	svr4_32_fil_ioctl(struct file *, struct lwp *, register_t *,
+				  int, u_long, void *);
+int	svr4_32_sock_ioctl(struct file *, struct lwp *, register_t *,
+				  int, u_long, void *);
 
 #endif /* !_SVR4_32_IOCTL_H_ */

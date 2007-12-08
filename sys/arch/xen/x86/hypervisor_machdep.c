@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor_machdep.c,v 1.19 2007/10/17 19:58:18 garbled Exp $	*/
+/*	$NetBSD: hypervisor_machdep.c,v 1.1.4.1 2007/12/08 18:18:23 mjf Exp $	*/
 
 /*
  *
@@ -59,14 +59,14 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.19 2007/10/17 19:58:18 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.1.4.1 2007/12/08 18:18:23 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 
-#include <machine/xen.h>
-#include <machine/hypervisor.h>
-#include <machine/evtchn.h>
+#include <xen/xen.h>
+#include <xen/hypervisor.h>
+#include <xen/evtchn.h>
 #include <machine/atomic.h>
 
 #include "opt_xen.h"

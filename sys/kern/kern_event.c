@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.41 2007/10/08 15:12:07 ad Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.41.4.1 2007/12/08 18:20:26 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.41 2007/10/08 15:12:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.41.4.1 2007/12/08 18:20:26 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -588,7 +588,7 @@ filt_seltruedetach(struct knote *kn)
 	/* Nothing to do */
 }
 
-static const struct filterops seltrue_filtops =
+const struct filterops seltrue_filtops =
 	{ 1, NULL, filt_seltruedetach, filt_seltrue };
 
 int
@@ -600,7 +600,7 @@ seltrue_kqfilter(dev_t dev, struct knote *kn)
 		kn->kn_fop = &seltrue_filtops;
 		break;
 	default:
-		return (1);
+		return (EINVAL);
 	}
 
 	/* Nothing more to do */

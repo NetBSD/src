@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.190.2.1 2007/11/19 00:48:37 mjf Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.190.2.2 2007/12/08 18:20:27 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.190.2.1 2007/11/19 00:48:37 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.190.2.2 2007/12/08 18:20:27 mjf Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -116,6 +116,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.190.2.1 2007/11/19 00:48:37 mjf Exp 
 #include <sys/ktrace.h>
 #include <sys/cpu.h>
 #include <sys/lwpctl.h>
+#include <sys/atomic.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -227,7 +228,7 @@ exit1(struct lwp *l, int rv)
 		KERNEL_UNLOCK_ALL(l, &l->l_biglocks);
 		sigclearall(p, &contsigmask, &kq);
 		p->p_waited = 0;
-		mb_write();
+		membar_producer();
 		p->p_stat = SSTOP;
 		lwp_lock(l);
 		p->p_nrlwps--;

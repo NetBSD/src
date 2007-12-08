@@ -1,4 +1,4 @@
-/*	$NetBSD: if_agr.c,v 1.16 2007/09/02 19:42:21 dyoung Exp $	*/
+/*	$NetBSD: if_agr.c,v 1.16.6.1 2007/12/08 18:21:08 mjf Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.16 2007/09/02 19:42:21 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.16.6.1 2007/12/08 18:21:08 mjf Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -491,7 +491,7 @@ agr_addport(struct ifnet *ifp, struct ifnet *ifp_port)
 	}
 	port->port_flags = AGRPORT_LARVAL;
 
-	if (TAILQ_NEXT(TAILQ_FIRST(&ifp_port->if_addrlist), ifa_list) != NULL) {
+	if (IFADDR_NEXT(IFADDR_FIRST(ifp_port)) != NULL) {
 		error = EBUSY;
 		goto out;
 	}
@@ -530,7 +530,7 @@ agr_addport(struct ifnet *ifp, struct ifnet *ifp_port)
 	 */
 
 	error = (*ifp_port->if_ioctl)(ifp_port, SIOCSIFADDR,
-	    (void *)TAILQ_FIRST(&ifp->if_addrlist));
+	    (void *)IFADDR_FIRST(ifp));
 
 	if (error) {
 		printf("%s: SIOCSIFADDR error %d\n", __func__, error);
@@ -620,7 +620,7 @@ agr_remport(struct ifnet *ifp, struct ifnet *ifp_port)
 
 #if 0
 	if (sc->sc_nports == 1 &&
-	    TAILQ_NEXT(TAILQ_FIRST(&ifp->if_addrlist), ifa_list) != NULL) {
+	    IFADDR_NEXT(IFADDR_FIRST(ifp)) != NULL) {
 		error = EBUSY;
 		return error;
 	}

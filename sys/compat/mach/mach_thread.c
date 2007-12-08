@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_thread.c,v 1.41.14.1 2007/11/19 00:47:32 mjf Exp $ */
+/*	$NetBSD: mach_thread.c,v 1.41.14.2 2007/12/08 18:18:56 mjf Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,14 +37,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_thread.c,v 1.41.14.1 2007/11/19 00:47:32 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_thread.c,v 1.41.14.2 2007/12/08 18:18:56 mjf Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/signal.h>
-#include <sys/lock.h>
+#include <sys/rwlock.h>
 #include <sys/queue.h>
 #include <sys/proc.h>
 #include <sys/resource.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: at_extern.h,v 1.15 2007/03/04 06:03:19 christos Exp $	*/
+/*	$NetBSD: at_extern.h,v 1.15.22.1 2007/12/08 18:21:10 mjf Exp $	*/
 
 /*
  * Copyright (c) 1990,1994 Regents of The University of Michigan.
@@ -50,7 +50,7 @@ int	at_broadcast(const struct sockaddr_at *);
 void	aarp_clean(void);
 int	at_control(u_long, void *, struct ifnet *, struct lwp *);
 int	at_inithead(void **, int);
-void	at_purgeaddr(struct ifaddr *, struct ifnet *);
+void	at_purgeaddr(struct ifaddr *);
 void	at_purgeif(struct ifnet *);
 u_int16_t
 	at_cksum(struct mbuf *, int);

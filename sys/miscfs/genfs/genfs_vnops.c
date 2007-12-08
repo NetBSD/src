@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.158 2007/10/17 16:45:00 pooka Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.158.4.1 2007/12/08 18:21:00 mjf Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.158 2007/10/17 16:45:00 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.158.4.1 2007/12/08 18:21:00 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -461,7 +461,7 @@ genfs_kqfilter(void *v)
 		kn->kn_fop = &genfsvnode_filtops;
 		break;
 	default:
-		return (1);
+		return (EINVAL);
 	}
 
 	kn->kn_hook = vp;

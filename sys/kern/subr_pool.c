@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.133.4.1 2007/11/19 00:48:50 mjf Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.133.4.2 2007/12/08 18:20:37 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002, 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.133.4.1 2007/11/19 00:48:50 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.133.4.2 2007/12/08 18:20:37 mjf Exp $");
 
 #include "opt_pool.h"
 #include "opt_poollog.h"
@@ -802,7 +802,14 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 	pp->pr_entered_file = NULL;
 	pp->pr_entered_line = 0;
 
-	mutex_init(&pp->pr_lock, MUTEX_DEFAULT, ipl);
+	/*
+	 * XXXAD hack to prevent IP input processing from blocking.
+	 */
+	if (ipl == IPL_SOFTNET) {
+		mutex_init(&pp->pr_lock, MUTEX_DEFAULT, IPL_VM);
+	} else {
+		mutex_init(&pp->pr_lock, MUTEX_DEFAULT, ipl);
+	}
 	cv_init(&pp->pr_cv, wchan);
 	pp->pr_ipl = ipl;
 
@@ -2040,7 +2047,14 @@ pool_cache_bootstrap(pool_cache_t pc, size_t size, u_int align,
 		palloc = &pool_allocator_nointr;
 	pool_init(pp, size, align, align_offset, flags, wchan, palloc, ipl);
 
-	mutex_init(&pc->pc_lock, MUTEX_DEFAULT, pp->pr_ipl);
+	/*
+	 * XXXAD hack to prevent IP input processing from blocking.
+	 */
+	if (ipl == IPL_SOFTNET) {
+		mutex_init(&pc->pc_lock, MUTEX_DEFAULT, IPL_VM);
+	} else {
+		mutex_init(&pc->pc_lock, MUTEX_DEFAULT, ipl);
+	}
 
 	if (ctor == NULL) {
 		ctor = (int (*)(void *, void *, int))nullop;

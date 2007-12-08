@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.184.2.1 2007/11/19 00:47:28 mjf Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.184.2.2 2007/12/08 18:18:49 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.184.2.1 2007/11/19 00:47:28 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.184.2.2 2007/12/08 18:18:49 mjf Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ptrace.h"
@@ -184,10 +184,10 @@ const int linux_fstypes_cnt = sizeof(linux_fstypes) / sizeof(linux_fstypes[0]);
 # endif
 
 /* Local linux_misc.c functions: */
-static void linux_to_bsd_mmap_args __P((struct sys_mmap_args *,
-    const struct linux_sys_mmap_args *));
-static int linux_mmap __P((struct lwp *, struct linux_sys_mmap_args *,
-    register_t *, off_t));
+static void linux_to_bsd_mmap_args(struct sys_mmap_args *,
+    const struct linux_sys_mmap_args *);
+static int linux_mmap(struct lwp *, struct linux_sys_mmap_args *,
+    register_t *, off_t);
 
 
 /*
@@ -763,7 +763,7 @@ linux_sys_getdents(l, v, retval)
 		goto out1;
 	}
 
-	if ((error = VOP_GETATTR(vp, &va, l->l_cred, l)))
+	if ((error = VOP_GETATTR(vp, &va, l->l_cred)))
 		goto out1;
 
 	nbytes = SCARG(uap, count);

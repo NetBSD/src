@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_fcntl.c,v 1.17 2007/02/09 21:55:18 ad Exp $ */
+/*	$NetBSD: irix_fcntl.c,v 1.17.26.1 2007/12/08 18:18:41 mjf Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_fcntl.c,v 1.17 2007/02/09 21:55:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_fcntl.c,v 1.17.26.1 2007/12/08 18:18:41 mjf Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -68,9 +68,9 @@ __KERNEL_RCSID(0, "$NetBSD: irix_fcntl.c,v 1.17 2007/02/09 21:55:18 ad Exp $");
 #include <compat/svr4/svr4_fcntl.h>
 #include <compat/svr4/svr4_syscallargs.h>
 
-static int fd_truncate __P((struct lwp *, int, int, off_t, register_t *));
-static int bsd_to_irix_fcntl_flags __P((int));
-static int irix_to_bsd_fcntl_flags __P((int));
+static int fd_truncate(struct lwp *, int, int, off_t, register_t *);
+static int bsd_to_irix_fcntl_flags(int);
+static int irix_to_bsd_fcntl_flags(int);
 
 int
 irix_sys_lseek64(l, v, retval)
@@ -265,7 +265,7 @@ fd_truncate(l, fd, whence, start, retval)
 		break;
 
 	case SEEK_END:
-		if ((error = VOP_GETATTR(vp, &vattr, l->l_cred, l)) != 0)
+		if ((error = VOP_GETATTR(vp, &vattr, l->l_cred)) != 0)
 			return error;
 		SCARG(&ft, length) = vattr.va_size + start;
 		break;

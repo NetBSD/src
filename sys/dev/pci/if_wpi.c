@@ -1,4 +1,4 @@
-/*  $NetBSD: if_wpi.c,v 1.26.2.1 2007/11/19 00:48:12 mjf Exp $    */
+/*  $NetBSD: if_wpi.c,v 1.26.2.2 2007/12/08 18:19:43 mjf Exp $    */
 
 /*-
  * Copyright (c) 2006, 2007
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.26.2.1 2007/11/19 00:48:12 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.26.2.2 2007/12/08 18:19:43 mjf Exp $");
 
 /*
  * Driver for Intel PRO/Wireless 3945ABG 802.11 network adapters.
@@ -201,6 +201,7 @@ wpi_attach(device_t parent __unused, device_t self, void *aux)
 	pcireg_t data;
 	int error, ac, revision;
 
+	sc->sc_dev = self;
 	sc->sc_pct = pa->pa_pc;
 	sc->sc_pcitag = pa->pa_tag;
 
@@ -257,10 +258,8 @@ wpi_attach(device_t parent __unused, device_t self, void *aux)
  	/*
 	 * Allocate DMA memory for firmware transfers.
 	 */
-	if ((error = wpi_alloc_fwmem(sc)) != 0) {
-		aprint_error("could not allocate firmware memory\n");
+	if ((error = wpi_alloc_fwmem(sc)) != 0)
 		return;
-	}
 
 	/*
 	 * Allocate shared page and Tx/Rx rings.
@@ -2105,7 +2104,7 @@ wpi_read_eeprom(struct wpi_softc *sc)
 
 	/* read and print regulatory domain */
 	wpi_read_prom_data(sc, WPI_EEPROM_DOMAIN, domain, 4);
-	aprint_normal(", %.4s", domain);
+	aprint_normal_dev(sc->sc_dev, "%.4s", domain);
 
 	/* read and print MAC address */
 	wpi_read_prom_data(sc, WPI_EEPROM_MAC, ic->ic_myaddr, 6);
@@ -3061,6 +3060,17 @@ wpi_init(struct ifnet *ifp)
 
 	if ((error = wpi_load_firmware(sc)) != 0) {
 		aprint_error_dev(sc->sc_dev, "could not load firmware\n");
+		goto fail1;
+	}
+
+	/* Check the status of the radio switch */
+	wpi_mem_lock(sc);
+	tmp = wpi_mem_read(sc, WPI_MEM_RFKILL);
+	wpi_mem_unlock(sc);
+
+	if (!(tmp & 0x01)) {
+		aprint_error_dev(sc->sc_dev, "Radio is disabled by hardware switch\n");
+		error = EPERM; // XXX
 		goto fail1;
 	}
 

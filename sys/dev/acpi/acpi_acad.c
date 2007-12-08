@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_acad.c,v 1.28.2.1 2007/11/19 00:47:41 mjf Exp $	*/
+/*	$NetBSD: acpi_acad.c,v 1.28.2.2 2007/12/08 18:19:21 mjf Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_acad.c,v 1.28.2.1 2007/11/19 00:47:41 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_acad.c,v 1.28.2.2 2007/12/08 18:19:21 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,7 +127,7 @@ acpiacad_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": ACPI AC Adapter\n");
 
 	sc->sc_node = aa->aa_node;
-	mutex_init(&sc->sc_mtx, MUTEX_DRIVER, IPL_NONE);
+	mutex_init(&sc->sc_mtx, MUTEX_DEFAULT, IPL_NONE);
 
 	sc->sc_smpsw.smpsw_name = device_xname(self);
 	sc->sc_smpsw.smpsw_type = PSWITCH_TYPE_ACADAPTER;

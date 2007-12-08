@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vfsops.c,v 1.17 2007/10/10 20:42:25 ad Exp $	*/
+/*	$NetBSD: sysvbfs_vfsops.c,v 1.17.4.1 2007/12/08 18:20:20 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vfsops.c,v 1.17 2007/10/10 20:42:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vfsops.c,v 1.17.4.1 2007/12/08 18:20:20 mjf Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -74,9 +74,9 @@ struct pool sysvbfs_node_pool;
 int sysvbfs_mountfs(struct vnode *, struct mount *, struct lwp *);
 
 int
-sysvbfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
-    struct lwp *l)
+sysvbfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 {
+	struct lwp *l = curlwp;
 	struct nameidata nd;
 	struct sysvbfs_args *args = data;
 	struct sysvbfs_mount *bmp = NULL;
@@ -143,7 +143,7 @@ sysvbfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
 		    (mp->mnt_flag & MNT_RDONLY) == 0)
 			accessmode |= VWRITE;
 		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-		error = VOP_ACCESS(devvp, accessmode, l->l_cred, l);
+		error = VOP_ACCESS(devvp, accessmode, l->l_cred);
 		VOP_UNLOCK(devvp, 0);
 	}
 
@@ -184,11 +184,11 @@ sysvbfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 		return error;
 
 	/* Open block device */
-	if ((error = VOP_OPEN(devvp, FREAD, NOCRED, l)) != 0)
+	if ((error = VOP_OPEN(devvp, FREAD, NOCRED)) != 0)
 		return error;
 
 	/* Get partition information */
-	if ((error = VOP_IOCTL(devvp, DIOCGPART, &dpart, FREAD, cred, l)) != 0)
+	if ((error = VOP_IOCTL(devvp, DIOCGPART, &dpart, FREAD, cred)) != 0)
 		return error;
 
 	bmp = malloc(sizeof(struct sysvbfs_mount), M_SYSVBFS_VFS, M_WAITOK);
@@ -217,7 +217,7 @@ sysvbfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 }
 
 int
-sysvbfs_start(struct mount *mp, int flags, struct lwp *l)
+sysvbfs_start(struct mount *mp, int flags)
 {
 
 	DPRINTF("%s:\n", __FUNCTION__);
@@ -226,7 +226,7 @@ sysvbfs_start(struct mount *mp, int flags, struct lwp *l)
 }
 
 int
-sysvbfs_unmount(struct mount *mp, int mntflags, struct lwp *l)
+sysvbfs_unmount(struct mount *mp, int mntflags)
 {
 	struct sysvbfs_mount *bmp = (void *)mp->mnt_data;
 	int error;
@@ -238,7 +238,7 @@ sysvbfs_unmount(struct mount *mp, int mntflags, struct lwp *l)
 		return error;
 
 	vn_lock(bmp->devvp, LK_EXCLUSIVE | LK_RETRY);
-	error = VOP_CLOSE(bmp->devvp, FREAD, NOCRED, l);
+	error = VOP_CLOSE(bmp->devvp, FREAD, NOCRED);
 	vput(bmp->devvp);
 
 	sysvbfs_bfs_fini(bmp->bfs);
@@ -265,17 +265,7 @@ sysvbfs_root(struct mount *mp, struct vnode **vpp)
 }
 
 int
-sysvbfs_quotactl(struct mount *mp, int cmd, uid_t uid, void *arg,
-    struct lwp *l)
-{
-
-	DPRINTF("%s:\n", __FUNCTION__);
-	/* Don't support. */
-	return 0;
-}
-
-int
-sysvbfs_statvfs(struct mount *mp, struct statvfs *f, struct lwp *l)
+sysvbfs_statvfs(struct mount *mp, struct statvfs *f)
 {
 	struct sysvbfs_mount *bmp = mp->mnt_data;
 	struct bfs *bfs = bmp->bfs;
@@ -308,8 +298,7 @@ sysvbfs_statvfs(struct mount *mp, struct statvfs *f, struct lwp *l)
 }
 
 int
-sysvbfs_sync(struct mount *mp, int waitfor, kauth_cred_t cred,
-    struct lwp *l)
+sysvbfs_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
 {
 	struct sysvbfs_mount *bmp = mp->mnt_data;
 	struct sysvbfs_node *bnode;
@@ -325,7 +314,7 @@ sysvbfs_sync(struct mount *mp, int waitfor, kauth_cred_t cred,
 		v = bnode->vnode;
 		err = vget(v, LK_EXCLUSIVE | LK_NOWAIT | LK_INTERLOCK);
 		if (err == 0) {
-			err = VOP_FSYNC(v, cred, FSYNC_WAIT, 0, 0, l);
+			err = VOP_FSYNC(v, cred, FSYNC_WAIT, 0, 0);
 			vput(v);
 		}
 		if (err != 0)

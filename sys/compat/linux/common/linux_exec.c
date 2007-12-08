@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.c,v 1.97.2.1 2007/11/19 00:47:27 mjf Exp $	*/
+/*	$NetBSD: linux_exec.c,v 1.97.2.2 2007/12/08 18:18:47 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995, 1998, 2000, 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec.c,v 1.97.2.1 2007/11/19 00:47:27 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec.c,v 1.97.2.2 2007/12/08 18:18:47 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,10 +81,10 @@ extern struct sysent linux_sysent[];
 extern const char * const linux_syscallnames[];
 extern char linux_sigcode[], linux_esigcode[];
 
-static void linux_e_proc_exec __P((struct proc *, struct exec_package *));
-static void linux_e_proc_fork __P((struct proc *, struct proc *, int));
-static void linux_e_proc_exit __P((struct proc *));
-static void linux_e_proc_init __P((struct proc *, struct proc *, int));
+static void linux_e_proc_exec(struct proc *, struct exec_package *);
+static void linux_e_proc_fork(struct proc *, struct proc *, int);
+static void linux_e_proc_exit(struct proc *);
+static void linux_e_proc_init(struct proc *, struct proc *, int);
 
 #ifdef LINUX_NPTL
 void linux_userret(void);

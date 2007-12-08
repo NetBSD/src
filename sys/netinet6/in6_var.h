@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_var.h,v 1.55 2007/10/17 04:35:34 jld Exp $	*/
+/*	$NetBSD: in6_var.h,v 1.55.4.1 2007/12/08 18:21:16 mjf Exp $	*/
 /*	$KAME: in6_var.h,v 1.81 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -494,7 +494,7 @@ ifp_to_ia6(struct ifnet *ifp)
 {
 	struct ifaddr *ifa;
 
-	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
+	IFADDR_FOREACH(ifa, ifp) {
 		if (ifa->ifa_addr == NULL)
 			continue;
 		if (ifa->ifa_addr->sa_family == AF_INET6)

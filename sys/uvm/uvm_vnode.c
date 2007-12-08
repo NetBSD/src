@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.87 2007/10/11 19:53:43 ad Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.87.4.1 2007/12/08 18:21:47 mjf Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.87 2007/10/11 19:53:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.87.4.1 2007/12/08 18:21:47 mjf Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -91,13 +91,11 @@ static int	uvn_findpage(struct uvm_object *, voff_t, struct vm_page **,
  * master pager structure
  */
 
-struct uvm_pagerops uvm_vnodeops = {
-	NULL,
-	uvn_reference,
-	uvn_detach,
-	NULL,
-	uvn_get,
-	uvn_put,
+const struct uvm_pagerops uvm_vnodeops = {
+	.pgo_reference = uvn_reference,
+	.pgo_detach = uvn_detach,
+	.pgo_get = uvn_get,
+	.pgo_put = uvn_put,
 };
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.132 2006/12/28 09:12:38 elad Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.132.26.1 2007/12/08 18:21:01 mjf Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.132 2006/12/28 09:12:38 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.132.26.1 2007/12/08 18:21:01 mjf Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -705,7 +705,6 @@ kernfs_open(v)
 		struct vnode *a_vp;
 		int a_mode;
 		kauth_cred_t a_cred;
-		struct lwp *a_l;
 	} */ *ap = v;
 	struct kernfs_node *kfs = VTOKERN(ap->a_vp);
 #ifdef IPSEC
@@ -746,7 +745,6 @@ kernfs_close(v)
 		struct vnode *a_vp;
 		int a_fflag;
 		kauth_cred_t a_cred;
-		struct lwp *a_l;
 	} */ *ap = v;
 	struct kernfs_node *kfs = VTOKERN(ap->a_vp);
 
@@ -773,12 +771,11 @@ kernfs_access(v)
 		struct vnode *a_vp;
 		int a_mode;
 		kauth_cred_t a_cred;
-		struct lwp *a_l;
 	} */ *ap = v;
 	struct vattr va;
 	int error;
 
-	if ((error = VOP_GETATTR(ap->a_vp, &va, ap->a_cred, ap->a_l)) != 0)
+	if ((error = VOP_GETATTR(ap->a_vp, &va, ap->a_cred)) != 0)
 		return (error);
 
 	return (vaccess(va.va_type, va.va_mode, va.va_uid, va.va_gid,
@@ -793,7 +790,6 @@ kernfs_default_fileop_getattr(v)
 		struct vnode *a_vp;
 		struct vattr *a_vap;
 		kauth_cred_t a_cred;
-		struct lwp *a_l;
 	} */ *ap = v;
 	struct vattr *vap = ap->a_vap;
 
@@ -811,7 +807,6 @@ kernfs_getattr(v)
 		struct vnode *a_vp;
 		struct vattr *a_vap;
 		kauth_cred_t a_cred;
-		struct lwp *a_l;
 	} */ *ap = v;
 	struct kernfs_node *kfs = VTOKERN(ap->a_vp);
 	struct kernfs_subdir *ks;
@@ -1026,7 +1021,6 @@ kernfs_ioctl(v)
 		void *a_data;
 		int a_fflag;
 		kauth_cred_t a_cred;
-		struct lwp *a_l;
 	} */ *ap = v;
 	struct kernfs_node *kfs = VTOKERN(ap->a_vp);
 
@@ -1048,7 +1042,7 @@ kernfs_setdirentfileno_kt(struct dirent *d, const struct kern_target *kt,
 	if (kt->kt_tag == KFSdevice) {
 		struct vattr va;
 
-		error = VOP_GETATTR(vp, &va, ap->a_cred, curlwp);
+		error = VOP_GETATTR(vp, &va, ap->a_cred);
 		if (error != 0) {
 			return error;
 		}
@@ -1413,7 +1407,6 @@ kernfs_inactive(v)
 {
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
-		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	const struct kernfs_node *kfs = VTOKERN(ap->a_vp);

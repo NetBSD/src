@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.44.2.1 2007/11/19 00:48:23 mjf Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.44.2.2 2007/12/08 18:19:58 mjf Exp $ */
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.44.2.1 2007/11/19 00:48:23 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.44.2.2 2007/12/08 18:19:58 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -63,7 +63,7 @@ static const struct sme_sensor_event sme_sensor_event[] = {
 };
 
 kmutex_t sme_mtx, sme_events_mtx, sme_callout_mtx;
-kcondvar_t sme_cv, sme_callout_cv;
+kcondvar_t sme_cv;
 static bool sysmon_low_power = false;
 
 #define SME_EVTIMO	(SME_EVENTS_DEFTIMEOUT * hz)
@@ -413,7 +413,6 @@ sme_events_check(void *arg)
 	KASSERT(sme != NULL);
 
 	mutex_enter(&sme_callout_mtx);
-	sme->sme_flags |= SME_CALLOUT_BUSY;
 
 	LIST_FOREACH(see, &sme->sme_events_list, see_list)
 		workqueue_enqueue(sme->sme_wq, &see->see_wk, NULL);
@@ -429,11 +428,9 @@ sme_events_check(void *arg)
 	else
 		timo = SME_EVTIMO;
 
-	sme->sme_flags &= ~SME_CALLOUT_BUSY;
 	if (!sysmon_low_power)
 		callout_schedule(&sme->sme_callout, timo);
 
-	cv_broadcast(&sme_callout_cv);
 	mutex_exit(&sme_callout_mtx);
 }
 

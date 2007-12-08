@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.13 2007/01/29 01:52:46 hubertf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.13.30.1 2007/12/08 18:18:24 mjf Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -125,7 +125,7 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.13 2007/01/29 01:52:46 hubertf Exp $");
 #include <machine/i8259.h>
 #include <machine/cpu.h>
 #include <machine/pio.h>
-#include <machine/evtchn.h>
+#include <xen/evtchn.h>
 
 #ifdef XEN3
 #include "acpi.h"
@@ -183,21 +183,6 @@ struct intrhand fake_softnet_intrhand;
 struct intrhand fake_softserial_intrhand;
 struct intrhand fake_timer_intrhand;
 struct intrhand fake_ipi_intrhand;
-#if defined(DOM0OPS)
-struct intrhand fake_softxenevt_intrhand;
-
-extern void Xsoftxenevt(void);
-#endif
-
-/*
- * Event counters for the software interrupts.
- */
-struct evcnt softclock_evtcnt;
-struct evcnt softnet_evtcnt;
-struct evcnt softserial_evtcnt;
-#if defined(DOM0OPS)
-struct evcnt softxenevt_evtcnt;
-#endif
 
 /*
  * Initialize all handlers that aren't dynamically allocated, and exist
@@ -206,66 +191,19 @@ struct evcnt softxenevt_evtcnt;
 void
 cpu_intr_init(struct cpu_info *ci)
 {
-	struct iplsource *ipl;
-	char *cp;
 	int i;
+#if defined(INTRSTACKSIZE)
+	char *cp;
+#endif
 
 	ci->ci_iunmask[0] = 0xfffffffe;
 	for (i = 1; i < NIPL; i++)
 		ci->ci_iunmask[i] = ci->ci_iunmask[i - 1] & ~(1 << i);
 
-	MALLOC(ipl, struct iplsource *, sizeof (struct iplsource), M_DEVBUF,
-	    M_WAITOK|M_ZERO);
-	if (ipl == NULL)
-		panic("can't allocate fixed interrupt source");
-	ipl->ipl_recurse = Xsoftclock;
-	ipl->ipl_resume = Xsoftclock;
-	fake_softclock_intrhand.ih_level = IPL_SOFTCLOCK;
-	ipl->ipl_handlers = &fake_softclock_intrhand;
-	ci->ci_isources[SIR_CLOCK] = ipl;
-	evcnt_attach_dynamic(&softclock_evtcnt, EVCNT_TYPE_INTR, NULL,
-	    ci->ci_dev->dv_xname, "softclock");
-
-	MALLOC(ipl, struct iplsource *, sizeof (struct iplsource), M_DEVBUF,
-	    M_WAITOK|M_ZERO);
-	if (ipl == NULL)
-		panic("can't allocate fixed interrupt source");
-	ipl->ipl_recurse = Xsoftnet;
-	ipl->ipl_resume = Xsoftnet;
-	fake_softnet_intrhand.ih_level = IPL_SOFTNET;
-	ipl->ipl_handlers = &fake_softnet_intrhand;
-	ci->ci_isources[SIR_NET] = ipl;
-	evcnt_attach_dynamic(&softnet_evtcnt, EVCNT_TYPE_INTR, NULL,
-	    ci->ci_dev->dv_xname, "softnet");
-
-	MALLOC(ipl, struct iplsource *, sizeof (struct iplsource), M_DEVBUF,
-	    M_WAITOK|M_ZERO);
-	if (ipl == NULL)
-		panic("can't allocate fixed interrupt source");
-	ipl->ipl_recurse = Xsoftserial;
-	ipl->ipl_resume = Xsoftserial;
-	fake_softserial_intrhand.ih_level = IPL_SOFTSERIAL;
-	ipl->ipl_handlers = &fake_softserial_intrhand;
-	ci->ci_isources[SIR_SERIAL] = ipl;
-	evcnt_attach_dynamic(&softserial_evtcnt, EVCNT_TYPE_INTR, NULL,
-	    ci->ci_dev->dv_xname, "softserial");
-
-#if defined(DOM0OPS)
-	MALLOC(ipl, struct iplsource *, sizeof (struct iplsource), M_DEVBUF,
-	    M_WAITOK|M_ZERO);
-	if (ipl == NULL)
-		panic("can't allocate fixed interrupt source");
-	ipl->ipl_recurse = Xsoftxenevt;
-	ipl->ipl_resume = Xsoftxenevt;
-	fake_softxenevt_intrhand.ih_level = IPL_SOFTXENEVT;
-	ipl->ipl_handlers = &fake_softxenevt_intrhand;
-	ci->ci_isources[SIR_XENEVT] = ipl;
-	evcnt_attach_dynamic(&softxenevt_evtcnt, EVCNT_TYPE_INTR, NULL,
-	    ci->ci_dev->dv_xname, "xenevt");
-#endif /* defined(DOM0OPS) */
-
+#if defined(INTRSTACKSIZE)
 	cp = (char *)uvm_km_alloc(kernel_map, INTRSTACKSIZE, 0, UVM_KMF_WIRED);
 	ci->ci_intrstack = cp + INTRSTACKSIZE - sizeof(register_t);
+#endif
 	ci->ci_idepth = -1;
 }
 

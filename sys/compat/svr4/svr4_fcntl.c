@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_fcntl.c,v 1.60 2007/10/10 20:42:22 ad Exp $	 */
+/*	$NetBSD: svr4_fcntl.c,v 1.60.4.1 2007/12/08 18:19:07 mjf Exp $	 */
 
 /*-
  * Copyright (c) 1994, 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_fcntl.c,v 1.60 2007/10/10 20:42:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_fcntl.c,v 1.60.4.1 2007/12/08 18:19:07 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,14 +63,14 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_fcntl.c,v 1.60 2007/10/10 20:42:22 ad Exp $");
 #include <compat/svr4/svr4_util.h>
 #include <compat/svr4/svr4_fcntl.h>
 
-static int svr4_to_bsd_flags __P((int));
-static int bsd_to_svr4_flags __P((int));
-static void bsd_to_svr4_flock __P((struct flock *, struct svr4_flock *));
-static void svr4_to_bsd_flock __P((struct svr4_flock *, struct flock *));
-static void bsd_to_svr4_flock64 __P((struct flock *, struct svr4_flock64 *));
-static void svr4_to_bsd_flock64 __P((struct svr4_flock64 *, struct flock *));
-static int fd_revoke __P((struct lwp *, int, register_t *));
-static int fd_truncate __P((struct lwp *, int, struct flock *, register_t *));
+static int svr4_to_bsd_flags(int);
+static int bsd_to_svr4_flags(int);
+static void bsd_to_svr4_flock(struct flock *, struct svr4_flock *);
+static void svr4_to_bsd_flock(struct svr4_flock *, struct flock *);
+static void bsd_to_svr4_flock64(struct flock *, struct svr4_flock64 *);
+static void svr4_to_bsd_flock64(struct svr4_flock64 *, struct flock *);
+static int fd_revoke(struct lwp *, int, register_t *);
+static int fd_truncate(struct lwp *, int, struct flock *, register_t *);
 
 
 static int
@@ -255,7 +255,7 @@ fd_revoke(struct lwp *l, int fd, register_t *retval)
 		goto out;
 	}
 
-	if ((error = VOP_GETATTR(vp, &vattr, l->l_cred, l)) != 0)
+	if ((error = VOP_GETATTR(vp, &vattr, l->l_cred)) != 0)
 		goto out;
 
 	if (kauth_cred_geteuid(l->l_cred) != vattr.va_uid &&
@@ -302,7 +302,7 @@ fd_truncate(l, fd, flp, retval)
 		return ESPIPE;
 	}
 	FILE_USE(fp);
-	if ((error = VOP_GETATTR(vp, &vattr, l->l_cred, l)) != 0) {
+	if ((error = VOP_GETATTR(vp, &vattr, l->l_cred)) != 0) {
 		FILE_UNUSE(fp, l);
 		return error;
 	}
