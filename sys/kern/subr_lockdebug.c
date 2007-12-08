@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_lockdebug.c,v 1.22.2.4 2007/12/05 23:59:58 ad Exp $	*/
+/*	$NetBSD: subr_lockdebug.c,v 1.22.2.5 2007/12/08 14:58:51 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.22.2.4 2007/12/05 23:59:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.22.2.5 2007/12/08 14:58:51 ad Exp $");
 
 #include "opt_ddb.h"
 
@@ -168,7 +168,7 @@ lockdebug_lock_init(lockdebuglk_t *lk)
 }
 
 static void
-lockdebug_lock_wr(lockdebuglk_t *lk)
+lockdebug_lock(lockdebuglk_t *lk)
 {
 	int s;
 	
@@ -183,7 +183,7 @@ lockdebug_lock_wr(lockdebuglk_t *lk)
 }
 
 static void
-lockdebug_unlock_wr(lockdebuglk_t *lk)
+lockdebug_unlock(lockdebuglk_t *lk)
 {
 	int s;
 
@@ -235,7 +235,7 @@ lockdebug_lookup1(volatile void *lock, lockdebuglk_t **lk)
 	else
 		*lk = &ld_spinner_lk;
 
-	lockdebug_lock_wr(*lk);
+	lockdebug_lock(*lk);
 	return ld;
 }
 
@@ -315,14 +315,14 @@ lockdebug_alloc(volatile void *lock, lockops_t *lo, uintptr_t initaddr)
 	 * satisfy kmem_alloc().  If we can't provide a structure, not to
 	 * worry: we'll just mark the lock as not having an ID.
 	 */
-	lockdebug_lock_wr(&ld_free_lk);
+	lockdebug_lock(&ld_free_lk);
 	ci = curcpu();
 	ci->ci_lkdebug_recurse++;
 
 	if (TAILQ_EMPTY(&ld_free)) {
 		if (ci->ci_lkdebug_recurse > 1 || ld_nomore) {
 			ci->ci_lkdebug_recurse--;
-			lockdebug_unlock_wr(&ld_free_lk);
+			lockdebug_unlock(&ld_free_lk);
 			return false;
 		}
 		lockdebug_more();
@@ -330,7 +330,7 @@ lockdebug_alloc(volatile void *lock, lockops_t *lo, uintptr_t initaddr)
 		lockdebug_more();
 
 	if ((ld = TAILQ_FIRST(&ld_free)) == NULL) {
-		lockdebug_unlock_wr(&ld_free_lk);
+		lockdebug_unlock(&ld_free_lk);
 		return false;
 	}
 
@@ -338,15 +338,15 @@ lockdebug_alloc(volatile void *lock, lockops_t *lo, uintptr_t initaddr)
 	ld_nfree--;
 
 	ci->ci_lkdebug_recurse--;
-	lockdebug_unlock_wr(&ld_free_lk);
+	lockdebug_unlock(&ld_free_lk);
 
 	if (ld->ld_lock != NULL)
 		panic("lockdebug_alloc: corrupt table");
 
 	if (lo->lo_sleeplock)
-		lockdebug_lock_wr(&ld_sleeper_lk);
+		lockdebug_lock(&ld_sleeper_lk);
 	else
-		lockdebug_lock_wr(&ld_spinner_lk);
+		lockdebug_lock(&ld_spinner_lk);
 
 	/* Initialise the structure. */
 	ld->ld_lock = lock;
@@ -356,16 +356,16 @@ lockdebug_alloc(volatile void *lock, lockops_t *lo, uintptr_t initaddr)
 	ld->ld_lwp = NULL;
 	ld->ld_initaddr = initaddr;
 
-	lockdebug_lock_wr(&ld_tree_lk);
+	lockdebug_lock(&ld_tree_lk);
 	rb_tree_insert_node(&ld_rb_tree, __UNVOLATILE(&ld->ld_rb_node));
-	lockdebug_unlock_wr(&ld_tree_lk);
+	lockdebug_unlock(&ld_tree_lk);
 
 	if (lo->lo_sleeplock) {
 		ld->ld_flags = LD_SLEEPER;
-		lockdebug_unlock_wr(&ld_sleeper_lk);
+		lockdebug_unlock(&ld_sleeper_lk);
 	} else {
 		ld->ld_flags = 0;
-		lockdebug_unlock_wr(&ld_spinner_lk);
+		lockdebug_unlock(&ld_spinner_lk);
 	}
 
 	return true;
@@ -394,16 +394,16 @@ lockdebug_free(volatile void *lock)
 	}
 	if ((ld->ld_flags & LD_LOCKED) != 0 || ld->ld_shares != 0)
 		lockdebug_abort1(ld, lk, __func__, "is locked", true);
-	lockdebug_lock_wr(&ld_tree_lk);
+	lockdebug_lock(&ld_tree_lk);
 	rb_tree_remove_node(&ld_rb_tree, __UNVOLATILE(&ld->ld_rb_node));
-	lockdebug_unlock_wr(&ld_tree_lk);
+	lockdebug_unlock(&ld_tree_lk);
 	ld->ld_lock = NULL;
-	lockdebug_unlock_wr(lk);
+	lockdebug_unlock(lk);
 
-	lockdebug_lock_wr(&ld_free_lk);
+	lockdebug_lock(&ld_free_lk);
 	TAILQ_INSERT_TAIL(&ld_free, ld, ld_chain);
 	ld_nfree++;
-	lockdebug_unlock_wr(&ld_free_lk);
+	lockdebug_unlock(&ld_free_lk);
 }
 
 /*
@@ -420,18 +420,18 @@ lockdebug_more(void)
 	int i, base, m;
 
 	while (ld_nfree < LD_SLOP) {
-		lockdebug_unlock_wr(&ld_free_lk);
+		lockdebug_unlock(&ld_free_lk);
 		block = kmem_zalloc(LD_BATCH * sizeof(lockdebug_t), KM_SLEEP);
-		lockdebug_lock_wr(&ld_free_lk);
+		lockdebug_lock(&ld_free_lk);
 
 		if (block == NULL)
 			return;
 
 		if (ld_nfree > LD_SLOP) {
 			/* Somebody beat us to it. */
-			lockdebug_unlock_wr(&ld_free_lk);
+			lockdebug_unlock(&ld_free_lk);
 			kmem_free(block, LD_BATCH * sizeof(lockdebug_t));
-			lockdebug_lock_wr(&ld_free_lk);
+			lockdebug_lock(&ld_free_lk);
 			continue;
 		}
 
@@ -500,7 +500,7 @@ lockdebug_wantlock(volatile void *lock, uintptr_t where, int shared)
 		lockdebug_abort1(ld, lk, __func__, "locking against myself",
 		    true);
 
-	lockdebug_unlock_wr(lk);
+	lockdebug_unlock(lk);
 }
 
 /*
@@ -545,7 +545,7 @@ lockdebug_locked(volatile void *lock, uintptr_t where, int shared)
 		}
 	}
 
-	lockdebug_unlock_wr(lk);
+	lockdebug_unlock(lk);
 }
 
 /*
@@ -601,7 +601,7 @@ lockdebug_unlocked(volatile void *lock, uintptr_t where, int shared)
 		}
 	}
 
-	lockdebug_unlock_wr(lk);
+	lockdebug_unlock(lk);
 }
 
 /*
@@ -693,7 +693,7 @@ lockdebug_mem_check(const char *func, void *base, size_t sz)
 	else
 		lk = &ld_spinner_lk;
 
-	lockdebug_lock_wr(lk);
+	lockdebug_lock(lk);
 	lockdebug_abort1(ld, lk, func,
 	    "allocation contains active lock", !cold);
 	return;
@@ -747,7 +747,7 @@ lockdebug_abort1(lockdebug_t *ld, lockdebuglk_t *lk, const char *func,
 	printf_nolog("%s error: %s: %s\n\n", ld->ld_lockops->lo_name,
 	    func, msg);
 	lockdebug_dump(ld, printf_nolog);
-	lockdebug_unlock_wr(lk);
+	lockdebug_unlock(lk);
 	printf_nolog("\n");
 	if (dopanic)
 		panic("LOCKDEBUG");
