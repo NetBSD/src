@@ -138,20 +138,40 @@ static int      async_msg_i(initiator_session_t *, uint8_t *);
 static int      session_init_i(initiator_session_t **, uint64_t );
 static int      session_destroy_i(initiator_session_t *);
 static int      wait_callback_i(void *);
+static int      discovery_phase(int, strv_t *);
 
 
 /*
  * Private Functions
  */
 
+#if 0
+static void
+dump_session(initiator_session_t * sess)
+{
+        iscsi_parameter_value_t *vp;
+        iscsi_parameter_t       *ip;
+
+                for (ip = sess->params ; ip ; ip = ip->next) {
+                        printf("Key: %s Type: %d\n",ip->key,ip->type);
+                        for (vp = ip->value_l ; vp ; vp = vp->next) {
+                                printf("Value: %s\n",vp->value);
+                        }
+        }
+}
+#endif
 /* This function reads the target IP and target name information */
 /* from the input configuration file, and populates the */
 /* g_target data structure  fields. */
 static int 
 get_target_config(const char *hostname, int port)
 {
-	(void) strlcpy(g_target[0].name, hostname, sizeof(g_target[0].name));
-	g_target[0].port = port;
+	int i;
+
+	for (i = 0 ; i < CONFIG_INITIATOR_NUM_TARGETS ; i++) {
+		(void) strlcpy(g_target[i].name, hostname, sizeof(g_target[i].name));
+		g_target[i].port = port;
+	}
 	return 0;
 }
 
@@ -535,6 +555,57 @@ full_feature_negotiation_phase_i(initiator_session_t * sess, char *text, int tex
 }
 
 #define DISCOVERY_PHASE_TEXT_LEN	1024
+#define DP_CLEANUP {if (text != NULL) iscsi_free_atomic(text);}
+#define DP_ERROR {DP_CLEANUP; return -1;}
+
+int
+initiator_set_target_name(int target, char *target_name)
+{
+	(void) strlcpy(g_target[target].iqnwanted, target_name, sizeof(g_target[target].iqnwanted));
+	(void) strlcpy(g_target[target].TargetName, target_name, sizeof(g_target[target].TargetName));
+	return 0;
+}
+
+
+int
+initiator_get_targets(int target, strv_t *svp)
+{
+        initiator_session_t *sess = g_target[target].sess;
+        iscsi_parameter_value_t *vp;
+        iscsi_parameter_t       *ip;
+        char           *text = NULL;
+        int             text_len = 0;
+        int             i;
+
+        if ((text = iscsi_malloc_atomic(DISCOVERY_PHASE_TEXT_LEN)) == NULL) {
+                iscsi_trace_error(__FILE__, __LINE__, "iscsi_malloc_atomic() failed\n");
+                return -1;
+        }
+
+        text_len = 0;
+        text[0] = 0x0;
+
+        PARAM_TEXT_ADD(sess->params, "SendTargets", "all", text, &text_len, DISCOVERY_PHASE_TEXT_LEN, 1, DP_ERROR);
+        PARAM_TEXT_PARSE(sess->params, &sess->sess_params.cred, text, text_len, NULL, NULL, DISCOVERY_PHASE_TEXT_LEN, 1, DP_ERROR);
+        if (full_feature_negotiation_phase_i(sess, text, text_len) != 0) {
+                iscsi_trace_error(__FILE__, __LINE__, "full_feature_negotiation_phase_i() failed\n");
+                DP_ERROR;
+        }       
+	i=0;
+        for (ip = sess->params ; ip ; ip = ip->next) {
+                if (strcmp(ip->key, "TargetName") == 0) {
+                        for (vp = ip->value_l ; vp ; vp = vp->next) {
+                                ALLOC(char *, svp->v, svp->size, svp->c, 10, 10, "igt", return -1);
+                                svp->v[svp->c++] = strdup(vp->value);
+                                ALLOC(char *, svp->v, svp->size, svp->c, 10, 10, "igt2", return -1);
+                                svp->v[svp->c++] = strdup(param_val(sess->params, "TargetAddress"));
+                        }
+                }
+        }
+
+	return 1;
+}
+
 
 static int 
 discovery_phase(int target, strv_t *svp)
@@ -552,8 +623,6 @@ discovery_phase(int target, strv_t *svp)
 		iscsi_trace_error(__FILE__, __LINE__, "iscsi_malloc_atomic() failed\n");
 		return -1;
 	}
-#define DP_CLEANUP {if (text != NULL) iscsi_free_atomic(text);}
-#define DP_ERROR {DP_CLEANUP; return -1;}
 	/* Login to target */
 
 	iscsi_trace(TRACE_ISCSI_DEBUG, __FILE__, __LINE__, "entering Discovery login phase with target %d (sock %#x)\n", target, (int) sess->sock);
