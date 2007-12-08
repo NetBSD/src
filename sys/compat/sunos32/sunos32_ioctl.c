@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_ioctl.c,v 1.24 2007/12/04 18:40:22 dsl Exp $	*/
+/*	$NetBSD: sunos32_ioctl.c,v 1.25 2007/12/08 18:36:23 dsl Exp $	*/
 /* from: NetBSD: sunos_ioctl.c,v 1.35 2001/02/03 22:20:02 mrg Exp 	*/
 
 /*
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_ioctl.c,v 1.24 2007/12/04 18:40:22 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_ioctl.c,v 1.25 2007/12/08 18:36:23 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd32.h"
@@ -161,9 +161,7 @@ static void stio2stios(struct sunos_termio *, struct sunos_termios *);
  */
 
 static void
-stios2btios(st, bt)
-	struct sunos_termios *st;
-	struct termios *bt;
+stios2btios(struct sunos_termios *st, struct termios *bt)
 {
 	netbsd32_u_long l, r;
 
@@ -283,9 +281,7 @@ stios2btios(st, bt)
 
 
 static void
-btios2stios(bt, st)
-	struct termios *bt;
-	struct sunos_termios *st;
+btios2stios(struct termios *bt, struct sunos_termios *st)
 {
 	netbsd32_u_long l, r;
 	int s;
@@ -412,9 +408,7 @@ btios2stios(bt, st)
 }
 
 static void
-stios2stio(ts, t)
-	struct sunos_termios *ts;
-	struct sunos_termio *t;
+stios2stio(struct sunos_termios *ts, struct sunos_termio *t)
 {
 	t->c_iflag = ts->c_iflag;
 	t->c_oflag = ts->c_oflag;
@@ -425,9 +419,7 @@ stios2stio(ts, t)
 }
 
 static void
-stio2stios(t, ts)
-	struct sunos_termio *t;
-	struct sunos_termios *ts;
+stio2stios(struct sunos_termio *t, struct sunos_termios *ts)
 {
 	ts->c_iflag = t->c_iflag;
 	ts->c_oflag = t->c_oflag;
@@ -438,10 +430,7 @@ stio2stios(t, ts)
 }
 
 int
-sunos32_sys_ioctl(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sunos32_sys_ioctl(struct lwp *l, void *v, register_t *retval)
 {
 	struct sunos32_sys_ioctl_args /* {
 		int	fd;
@@ -945,9 +934,7 @@ static void sunos_to_bsd_flock(struct sunos_flock *, struct flock *);
 #define SUNOS_F_UNLCK	3
 
 static void
-bsd_to_sunos_flock(iflp, oflp)
-	struct flock		*iflp;
-	struct sunos_flock	*oflp;
+bsd_to_sunos_flock(struct flock *iflp, struct sunos_flock *oflp)
 {
 	switch (iflp->l_type) {
 	case F_RDLCK:
@@ -973,9 +960,7 @@ bsd_to_sunos_flock(iflp, oflp)
 
 
 static void
-sunos_to_bsd_flock(iflp, oflp)
-	struct sunos_flock	*iflp;
-	struct flock		*oflp;
+sunos_to_bsd_flock(struct sunos_flock *iflp, struct flock *oflp)
 {
 	switch (iflp->l_type) {
 	case SUNOS_F_RDLCK:
@@ -1020,10 +1005,7 @@ static struct {
 };
 
 int
-sunos32_sys_fcntl(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sunos32_sys_fcntl(struct lwp *l, void *v, register_t *retval)
 {
 	struct sunos32_sys_fcntl_args /* {
 		syscallarg(int) fd;

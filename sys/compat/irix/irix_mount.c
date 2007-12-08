@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_mount.c,v 1.18 2007/11/28 10:34:37 he Exp $ */
+/*	$NetBSD: irix_mount.c,v 1.19 2007/12/08 18:36:03 dsl Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_mount.c,v 1.18 2007/11/28 10:34:37 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_mount.c,v 1.19 2007/12/08 18:36:03 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -58,10 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: irix_mount.c,v 1.18 2007/11/28 10:34:37 he Exp $");
 #include <compat/irix/irix_syscallargs.h>
 
 int
-irix_sys_getmountid(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+irix_sys_getmountid(struct lwp *l, void *v, register_t *retval)
 {
 	struct irix_sys_getmountid_args /* {
 		syscallarg(const char *) path;

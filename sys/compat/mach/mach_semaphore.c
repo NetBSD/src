@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_semaphore.c,v 1.16 2007/12/05 08:33:30 ad Exp $ */
+/*	$NetBSD: mach_semaphore.c,v 1.17 2007/12/08 18:36:16 dsl Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_semaphore.c,v 1.16 2007/12/05 08:33:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_semaphore.c,v 1.17 2007/12/08 18:36:16 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -146,8 +146,7 @@ mach_sys_semaphore_signal_trap(struct lwp *l, void *v,
 }
 
 int
-mach_semaphore_create(args)
-	struct mach_trap_args *args;
+mach_semaphore_create(struct mach_trap_args *args)
 {
 	mach_semaphore_create_request_t *req = args->smsg;
 	mach_semaphore_create_reply_t *rep = args->rmsg;
@@ -174,8 +173,7 @@ mach_semaphore_create(args)
 }
 
 int
-mach_semaphore_destroy(args)
-	struct mach_trap_args *args;
+mach_semaphore_destroy(struct mach_trap_args *args)
 {
 	mach_semaphore_destroy_request_t *req = args->smsg;
 	mach_semaphore_destroy_reply_t *rep = args->rmsg;
@@ -220,9 +218,7 @@ mach_semaphore_init(void)
 }
 
 static struct mach_semaphore *
-mach_semaphore_get(value, policy)
-	int value;
-	int policy;
+mach_semaphore_get(int value, int policy)
 {
 	struct mach_semaphore *ms;
 
@@ -241,8 +237,7 @@ mach_semaphore_get(value, policy)
 }
 
 static void
-mach_semaphore_put(ms)
-	struct mach_semaphore *ms;
+mach_semaphore_put(struct mach_semaphore *ms)
 {
 	struct mach_waiting_lwp *mwl;
 
@@ -262,9 +257,7 @@ mach_semaphore_put(ms)
 }
 
 static struct mach_waiting_lwp *
-mach_waiting_lwp_get(l, ms)
-	struct lwp *l;
-	struct mach_semaphore *ms;
+mach_waiting_lwp_get(struct lwp *l, struct mach_semaphore *ms)
 {
 	struct mach_waiting_lwp *mwl;
 
@@ -280,10 +273,7 @@ mach_waiting_lwp_get(l, ms)
 }
 
 static void
-mach_waiting_lwp_put(mwl, ms, locked)
-	struct mach_waiting_lwp *mwl;
-	struct mach_semaphore *ms;
-	int locked;
+mach_waiting_lwp_put(struct mach_waiting_lwp *mwl, struct mach_semaphore *ms, int locked)
 {
 	if (!locked)
 		rw_enter(&ms->ms_lock, RW_WRITER);
@@ -300,8 +290,7 @@ mach_waiting_lwp_put(mwl, ms, locked)
  * can be some memory leaks here.
  */
 void
-mach_semaphore_cleanup(l)
-	struct lwp *l;
+mach_semaphore_cleanup(struct lwp *l)
 {
 	struct mach_semaphore *ms;
 	struct mach_waiting_lwp *mwl;
@@ -324,10 +313,7 @@ mach_semaphore_cleanup(l)
 }
 
 int
-mach_sys_semaphore_wait_signal_trap(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+mach_sys_semaphore_wait_signal_trap(struct lwp *l, void *v, register_t *retval)
 {
 	struct mach_sys_semaphore_wait_signal_trap_args /* {
 		syscallarg(mach_port_name_t) wait_name;

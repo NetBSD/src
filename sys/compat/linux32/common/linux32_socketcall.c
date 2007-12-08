@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_socketcall.c,v 1.4 2007/08/15 12:07:30 ad Exp $ */
+/*	$NetBSD: linux32_socketcall.c,v 1.5 2007/12/08 18:36:12 dsl Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -31,7 +31,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_socketcall.c,v 1.4 2007/08/15 12:07:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_socketcall.c,v 1.5 2007/12/08 18:36:12 dsl Exp $");
 
 #include "opt_ktrace.h"
 #include <sys/types.h>
@@ -85,10 +85,7 @@ static const struct {
 #undef s
 
 int
-linux32_sys_socketcall(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_socketcall(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux32_sys_socketcall_args /* {
 		syscallarg(int) what;

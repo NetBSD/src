@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm_14.c,v 1.12 2007/12/04 18:40:07 dsl Exp $	*/
+/*	$NetBSD: sysv_shm_14.c,v 1.13 2007/12/08 18:35:55 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_shm_14.c,v 1.12 2007/12/04 18:40:07 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_shm_14.c,v 1.13 2007/12/08 18:35:55 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,9 +59,7 @@ static void shmid_ds14_to_native(struct shmid_ds14 *, struct shmid_ds *);
 static void native_to_shmid_ds14(struct shmid_ds *, struct shmid_ds14 *);
 
 static void
-shmid_ds14_to_native(oshmbuf, shmbuf)
-	struct shmid_ds14 *oshmbuf;
-	struct shmid_ds *shmbuf;
+shmid_ds14_to_native(struct shmid_ds14 *oshmbuf, struct shmid_ds *shmbuf)
 {
 
 	ipc_perm14_to_native(&oshmbuf->shm_perm, &shmbuf->shm_perm);
@@ -78,9 +76,7 @@ shmid_ds14_to_native(oshmbuf, shmbuf)
 }
 
 static void
-native_to_shmid_ds14(shmbuf, oshmbuf)
-	struct shmid_ds *shmbuf;
-	struct shmid_ds14 *oshmbuf;
+native_to_shmid_ds14(struct shmid_ds *shmbuf, struct shmid_ds14 *oshmbuf)
 {
 
 	native_to_ipc_perm14(&shmbuf->shm_perm, &oshmbuf->shm_perm);

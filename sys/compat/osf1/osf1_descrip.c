@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_descrip.c,v 1.23 2007/06/02 10:09:05 dsl Exp $ */
+/* $NetBSD: osf1_descrip.c,v 1.24 2007/12/08 18:36:20 dsl Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_descrip.c,v 1.23 2007/06/02 10:09:05 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_descrip.c,v 1.24 2007/12/08 18:36:20 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,10 +87,7 @@ __KERNEL_RCSID(0, "$NetBSD: osf1_descrip.c,v 1.23 2007/06/02 10:09:05 dsl Exp $"
 #include <compat/osf1/osf1_cvt.h>
 
 int
-osf1_sys_fcntl(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+osf1_sys_fcntl(struct lwp *l, void *v, register_t *retval)
 {
 	struct osf1_sys_fcntl_args *uap = v;
 	struct sys_fcntl_args a;
@@ -198,10 +195,7 @@ osf1_sys_fcntl(l, v, retval)
 }
 
 int
-osf1_sys_fpathconf(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+osf1_sys_fpathconf(struct lwp *l, void *v, register_t *retval)
 {
 	struct osf1_sys_fpathconf_args *uap = v;
 	struct sys_fpathconf_args a;
@@ -222,10 +216,7 @@ osf1_sys_fpathconf(l, v, retval)
  * Return status information about a file descriptor.
  */
 int
-osf1_sys_fstat(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+osf1_sys_fstat(struct lwp *l, void *v, register_t *retval)
 {
 	struct osf1_sys_fstat_args *uap = v;
 	struct proc *p = l->l_proc;
@@ -254,10 +245,7 @@ osf1_sys_fstat(l, v, retval)
  * Return status information about a file descriptor.
  */
 int
-osf1_sys_fstat2(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+osf1_sys_fstat2(struct lwp *l, void *v, register_t *retval)
 {
 	struct osf1_sys_fstat2_args *uap = v;
 	struct proc *p = l->l_proc;
@@ -283,10 +271,7 @@ osf1_sys_fstat2(l, v, retval)
 }
 
 int
-osf1_sys_ftruncate(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+osf1_sys_ftruncate(struct lwp *l, void *v, register_t *retval)
 {
 	struct osf1_sys_ftruncate_args *uap = v;
 	struct sys_ftruncate_args a;
@@ -299,10 +284,7 @@ osf1_sys_ftruncate(l, v, retval)
 }
 
 int
-osf1_sys_lseek(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+osf1_sys_lseek(struct lwp *l, void *v, register_t *retval)
 {
 	struct osf1_sys_lseek_args *uap = v;
 	struct sys_lseek_args a;

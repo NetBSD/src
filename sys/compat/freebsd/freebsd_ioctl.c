@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_ioctl.c,v 1.13 2007/05/29 21:32:27 christos Exp $	*/
+/*	$NetBSD: freebsd_ioctl.c,v 1.14 2007/12/08 18:35:58 dsl Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_ioctl.c,v 1.13 2007/05/29 21:32:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_ioctl.c,v 1.14 2007/12/08 18:35:58 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,9 +58,7 @@ static void freebsd_to_oss(struct freebsd_sys_ioctl_args *,
 			   struct oss_sys_ioctl_args *);
 
 static void
-freebsd_to_oss(uap, rap)
-struct freebsd_sys_ioctl_args *uap;
-struct oss_sys_ioctl_args *rap;
+freebsd_to_oss(struct freebsd_sys_ioctl_args *uap, struct oss_sys_ioctl_args *rap)
 {
 	u_long ocmd, ncmd;
 
@@ -82,9 +80,7 @@ static void freebsd_to_netbsd_ifioctl(struct freebsd_sys_ioctl_args *uap,
 				      struct sys_ioctl_args *nap);
 
 static void
-freebsd_to_netbsd_ifioctl(uap, nap)
-	struct freebsd_sys_ioctl_args *uap;
-	struct sys_ioctl_args *nap;
+freebsd_to_netbsd_ifioctl(struct freebsd_sys_ioctl_args *uap, struct sys_ioctl_args *nap)
 {
 	u_long ocmd, ncmd;
 	ocmd = SCARG(uap, com);
@@ -114,10 +110,7 @@ freebsd_to_netbsd_ifioctl(uap, nap)
 }
 
 int
-freebsd_sys_ioctl(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+freebsd_sys_ioctl(struct lwp *l, void *v, register_t *retval)
 {
 	struct freebsd_sys_ioctl_args /* {
 		syscallarg(int) fd;

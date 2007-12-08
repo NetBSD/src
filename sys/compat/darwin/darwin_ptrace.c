@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_ptrace.c,v 1.12 2007/03/04 06:01:14 christos Exp $ */
+/*	$NetBSD: darwin_ptrace.c,v 1.13 2007/12/08 18:35:57 dsl Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_ptrace.c,v 1.12 2007/03/04 06:01:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_ptrace.c,v 1.13 2007/12/08 18:35:57 dsl Exp $");
 
 #include "opt_ptrace.h"
 
@@ -64,10 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_ptrace.c,v 1.12 2007/03/04 06:01:14 christos 
 #define ISSET(t, f)     ((t) & (f))
 
 int
-darwin_sys_ptrace(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+darwin_sys_ptrace(struct lwp *l, void *v, register_t *retval)
 {
 #if defined(PTRACE) || defined(_LKM)
 	struct darwin_sys_ptrace_args /* {

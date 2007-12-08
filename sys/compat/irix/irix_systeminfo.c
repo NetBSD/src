@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_systeminfo.c,v 1.13 2007/02/15 20:32:48 ad Exp $ */
+/*	$NetBSD: irix_systeminfo.c,v 1.14 2007/12/08 18:36:04 dsl Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_systeminfo.c,v 1.13 2007/02/15 20:32:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_systeminfo.c,v 1.14 2007/12/08 18:36:04 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -76,10 +76,7 @@ char irix_si_version[128] = "04131232";
 #define BUF_SIZE 16
 
 int
-irix_sys_systeminfo(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+irix_sys_systeminfo(struct lwp *l, void *v, register_t *retval)
 {
 	struct irix_sys_systeminfo_args /* {
 		syscallarg(int) what;

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_resource.c,v 1.6 2007/05/12 21:07:02 dsl Exp $ */
+/*	$NetBSD: linux32_resource.c,v 1.7 2007/12/08 18:36:11 dsl Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_resource.c,v 1.6 2007/05/12 21:07:02 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_resource.c,v 1.7 2007/12/08 18:36:11 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -72,10 +72,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_resource.c,v 1.6 2007/05/12 21:07:02 dsl Exp
 #include <compat/linux32/linux32_syscallargs.h>
 
 int
-linux32_sys_getrlimit(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_getrlimit(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux32_sys_getrlimit_args /* {
 		syscallarg(int) which;
@@ -94,10 +91,7 @@ linux32_sys_getrlimit(l, v, retval)
 }
 
 int
-linux32_sys_setrlimit(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_setrlimit(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux32_sys_setrlimit_args /* {
 		syscallarg(int) which;
@@ -121,10 +115,7 @@ linux32_sys_setrlimit(l, v, retval)
 }
 
 int
-linux32_sys_ugetrlimit(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_ugetrlimit(struct lwp *l, void *v, register_t *retval)
 {
 	return linux32_sys_getrlimit(l, v, retval);
 }

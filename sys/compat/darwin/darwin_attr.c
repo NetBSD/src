@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_attr.c,v 1.19 2007/11/26 19:01:29 pooka Exp $ */
+/*	$NetBSD: darwin_attr.c,v 1.20 2007/12/08 18:35:55 dsl Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_attr.c,v 1.19 2007/11/26 19:01:29 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_attr.c,v 1.20 2007/12/08 18:35:55 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,11 +76,7 @@ static int darwin_attr_append(const char *, size_t, char **, size_t *);
 
 
 static int
-darwin_attr_append(x, size, bp, len)
-	const char *x;
-	size_t size;
-	char **bp;
-	size_t *len;
+darwin_attr_append(const char *x, size_t size, char **bp, size_t *len)
 {
 	if (*len < size)
 		return -1;
@@ -94,10 +90,7 @@ darwin_attr_append(x, size, bp, len)
 }
 
 int
-darwin_sys_getattrlist(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+darwin_sys_getattrlist(struct lwp *l, void *v, register_t *retval)
 {
 	struct darwin_sys_getattrlist_args /* {
 		syscallarg(const char *) path;
