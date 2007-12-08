@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_43.c,v 1.42 2007/12/04 18:40:08 dsl Exp $	*/
+/*	$NetBSD: vfs_syscalls_43.c,v 1.43 2007/12/08 18:35:55 dsl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.42 2007/12/04 18:40:08 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.43 2007/12/08 18:35:55 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_union.h"
@@ -76,9 +76,7 @@ static void cvtstat(struct stat *, struct stat43 *);
  * Convert from an old to a new stat structure.
  */
 static void
-cvtstat(st, ost)
-	struct stat *st;
-	struct stat43 *ost;
+cvtstat(struct stat *st, struct stat43 *ost)
 {
 
 	ost->st_dev = st->st_dev;

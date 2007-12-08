@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_sockio.c,v 1.32 2007/12/05 01:10:47 dyoung Exp $	 */
+/*	$NetBSD: svr4_sockio.c,v 1.33 2007/12/08 18:36:26 dsl Exp $	 */
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_sockio.c,v 1.32 2007/12/05 01:10:47 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_sockio.c,v 1.33 2007/12/08 18:36:26 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -73,8 +73,7 @@ static int bsd_to_svr4_flags(int);
 	if (bf & __CONCAT(I,a))	sf |= __CONCAT(SVR4_I,a)
 
 static int
-bsd_to_svr4_flags(bf)
-	int bf;
+bsd_to_svr4_flags(int bf)
 {
 	int sf = 0;
 	bsd_to_svr4_flag(FF_UP);

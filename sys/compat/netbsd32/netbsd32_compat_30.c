@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_30.c,v 1.21 2007/04/30 08:32:15 dsl Exp $	*/
+/*	$NetBSD: netbsd32_compat_30.c,v 1.22 2007/12/08 18:36:18 dsl Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_30.c,v 1.21 2007/04/30 08:32:15 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_30.c,v 1.22 2007/12/08 18:36:18 dsl Exp $");
 
 #include "opt_nfsserver.h"
 
@@ -61,10 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_30.c,v 1.21 2007/04/30 08:32:15 dsl 
 
 
 int
-compat_30_netbsd32_getdents(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+compat_30_netbsd32_getdents(struct lwp *l, void *v, register_t *retval)
 {
 	struct compat_30_netbsd32_getdents_args /* {
 		syscallarg(int) fd;
@@ -100,10 +97,7 @@ compat_30_netbsd32_getdents(l, v, retval)
 }
 
 int
-compat_30_netbsd32___stat13(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+compat_30_netbsd32___stat13(struct lwp *l, void *v, register_t *retval)
 {
 	struct compat_30_netbsd32___stat13_args /* {
 		syscallarg(const netbsd32_charp) path;
@@ -125,10 +119,7 @@ compat_30_netbsd32___stat13(l, v, retval)
 }
 
 int
-compat_30_netbsd32___fstat13(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+compat_30_netbsd32___fstat13(struct lwp *l, void *v, register_t *retval)
 {
 	struct compat_30_netbsd32___fstat13_args /* {
 		syscallarg(int) fd;
@@ -157,10 +148,7 @@ compat_30_netbsd32___fstat13(l, v, retval)
 }
 
 int
-compat_30_netbsd32___lstat13(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+compat_30_netbsd32___lstat13(struct lwp *l, void *v, register_t *retval)
 {
 	struct compat_30_netbsd32___lstat13_args /* {
 		syscallarg(const netbsd32_charp) path;
@@ -182,10 +170,7 @@ compat_30_netbsd32___lstat13(l, v, retval)
 }
 
 int
-compat_30_netbsd32_fhstat(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+compat_30_netbsd32_fhstat(struct lwp *l, void *v, register_t *retval)
 {
 	struct compat_30_netbsd32_fhstat_args /* {
 		syscallarg(const netbsd32_fhandlep_t) fhp;
@@ -224,10 +209,7 @@ compat_30_netbsd32_fhstat(l, v, retval)
 }
 
 int
-compat_30_netbsd32_fhstatvfs1(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+compat_30_netbsd32_fhstatvfs1(struct lwp *l, void *v, register_t *retval)
 {
 	struct compat_30_netbsd32_fhstatvfs1_args /* {
 		syscallarg(const netbsd32_fhandlep_t) fhp;
@@ -254,10 +236,7 @@ compat_30_netbsd32_fhstatvfs1(l, v, retval)
 }
 
 int
-compat_30_netbsd32_socket(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+compat_30_netbsd32_socket(struct lwp *l, void *v, register_t *retval)
 {
 	struct compat_30_netbsd32_socket_args /* {
 		syscallarg(int) domain;
@@ -273,10 +252,7 @@ compat_30_netbsd32_socket(l, v, retval)
 }
 
 int
-compat_30_netbsd32_getfh(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+compat_30_netbsd32_getfh(struct lwp *l, void *v, register_t *retval)
 {
 	struct compat_30_netbsd32_getfh_args /* {
 		syscallarg(const netbsd32_charp) fname;
@@ -320,10 +296,7 @@ int compat_30_netbsd32_sys___fhstat30(l, v, retval)
  * and call the device open routine if any.
  */
 int
-compat_30_netbsd32_fhopen(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+compat_30_netbsd32_fhopen(struct lwp *l, void *v, register_t *retval)
 {
 	struct compat_30_netbsd32_fhopen_args /* {
 		syscallarg(const fhandle_t *) fhp;

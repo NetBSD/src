@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_dirent.c,v 1.19 2007/03/06 12:43:08 tsutsui Exp $ */
+/*	$NetBSD: irix_dirent.c,v 1.20 2007/12/08 18:36:02 dsl Exp $ */
 
 /*-
  * Copyright (c) 1994, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_dirent.c,v 1.19 2007/03/06 12:43:08 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_dirent.c,v 1.20 2007/12/08 18:36:02 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -71,10 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: irix_dirent.c,v 1.19 2007/03/06 12:43:08 tsutsui Exp
 #define SVR4_NAMEOFF(dp)       ((char *)&(dp)->d_name - (char *)dp)
 
 int
-irix_sys_ngetdents(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+irix_sys_ngetdents(struct lwp *l, void *v, register_t *retval)
 {
 	struct irix_sys_ngetdents_args /* {
 		syscallarg(int) fildes;
@@ -203,10 +200,7 @@ out1:
 }
 
 int
-irix_sys_getdents(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+irix_sys_getdents(struct lwp *l, void *v, register_t *retval)
 {
 	struct irix_sys_ngetdents_args /* {
 		syscallarg(int) fildes;
@@ -230,10 +224,7 @@ irix_sys_getdents(l, v, retval)
  * 32 bit versions (only 3 lines of diff)
  */
 int
-irix_sys_ngetdents64(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+irix_sys_ngetdents64(struct lwp *l, void *v, register_t *retval)
 {
 	struct irix_sys_ngetdents64_args /* {
 		syscallarg(int) fildes;
@@ -361,10 +352,7 @@ out1:
 }
 
 int
-irix_sys_getdents64(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+irix_sys_getdents64(struct lwp *l, void *v, register_t *retval)
 {
 	struct irix_sys_ngetdents64_args /* {
 		syscallarg(int) fildes;

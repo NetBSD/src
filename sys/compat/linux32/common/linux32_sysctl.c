@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_sysctl.c,v 1.6 2007/08/15 12:07:30 ad Exp $ */
+/*	$NetBSD: linux32_sysctl.c,v 1.7 2007/12/08 18:36:12 dsl Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -31,7 +31,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_sysctl.c,v 1.6 2007/08/15 12:07:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_sysctl.c,v 1.7 2007/12/08 18:36:12 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -146,10 +146,7 @@ SYSCTL_SETUP(linux32_sysctl_setup, "linux32 emulated sysctl subtree setup")
 }
 
 int
-linux32_sys___sysctl(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys___sysctl(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux32_sys___sysctl_args /* {
 		syscallarg(linux32___sysctlp_t) lsp;

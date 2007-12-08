@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_misc.c,v 1.53 2007/12/04 18:40:22 dsl Exp $	*/
+/*	$NetBSD: sunos32_misc.c,v 1.54 2007/12/08 18:36:24 dsl Exp $	*/
 /* from :NetBSD: sunos_misc.c,v 1.107 2000/12/01 19:25:10 jdolecek Exp	*/
 
 /*
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.53 2007/12/04 18:40:22 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.54 2007/12/08 18:36:24 dsl Exp $");
 
 #define COMPAT_SUNOS 1
 
@@ -150,9 +150,7 @@ static void sunos32_sigvec_from_sigaction(struct netbsd32_sigvec *, const struct
 static int sunstatfs(struct statvfs *, void *);
 
 static void
-sunos32_sigvec_to_sigaction(sv, sa)
-	const struct netbsd32_sigvec *sv;
-	struct sigaction *sa;
+sunos32_sigvec_to_sigaction(const struct netbsd32_sigvec *sv, struct sigaction *sa)
 {
 /*XXX*/ extern void compat_43_sigmask_to_sigset(const int *, sigset_t *);
 
@@ -174,10 +172,7 @@ void sunos32_sigvec_from_sigaction(sv, sa)
 }
 
 int
-sunos32_sys_stime(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sunos32_sys_stime(struct lwp *l, void *v, register_t *retval)
 {
 	struct sunos32_sys_stime_args /* {
 		syscallarg(sunos32_time_tp) tp;
@@ -196,10 +191,7 @@ sunos32_sys_stime(l, v, retval)
 }
 
 int
-sunos32_sys_wait4(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sunos32_sys_wait4(struct lwp *l, void *v, register_t *retval)
 {
 	struct sunos32_sys_wait4_args /* {
 		syscallarg(int) pid;
@@ -214,10 +206,7 @@ sunos32_sys_wait4(l, v, retval)
 }
 
 int
-sunos32_sys_creat(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sunos32_sys_creat(struct lwp *l, void *v, register_t *retval)
 {
 	struct sunos32_sys_creat_args /* {
 		syscallarg(const netbsd32_charp) path;
@@ -233,10 +222,7 @@ sunos32_sys_creat(l, v, retval)
 }
 
 int
-sunos32_sys_access(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sunos32_sys_access(struct lwp *l, void *v, register_t *retval)
 {
 	struct sunos32_sys_access_args /* {
 		syscallarg(const netbsd32_charp) path;
@@ -253,9 +239,7 @@ sunos32_sys_access(l, v, retval)
 static inline void sunos32_from___stat13(struct stat *, struct netbsd32_stat43 *);
 
 static inline void
-sunos32_from___stat13(sbp, sb32p)
-	struct stat *sbp;
-	struct netbsd32_stat43 *sb32p;
+sunos32_from___stat13(struct stat *sbp, struct netbsd32_stat43 *sb32p)
 {
 	sb32p->st_dev = sbp->st_dev;
 	sb32p->st_ino = sbp->st_ino;
@@ -282,10 +266,7 @@ sunos32_from___stat13(sbp, sb32p)
 
 
 int
-sunos32_sys_stat(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sunos32_sys_stat(struct lwp *l, void *v, register_t *retval)
 {
 	struct sunos32_sys_stat_args /* {
 		syscallarg(const netbsd32_charp) path;
@@ -307,10 +288,7 @@ sunos32_sys_stat(l, v, retval)
 }
 
 int
-sunos32_sys_lstat(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sunos32_sys_lstat(struct lwp *l, void *v, register_t *retval)
 {
 	struct sunos32_sys_lstat_args /* {
 		syscallarg(const netbsd32_charp) path;
@@ -394,10 +372,7 @@ sunos32_execve_fetch_element(char * const *array, size_t index, char **value)
 }
 
 int
-sunos32_sys_execv(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sunos32_sys_execv(struct lwp *l, void *v, register_t *retval)
 {
 	struct sunos32_sys_execv_args /* {
 		syscallarg(const char *) path;
@@ -410,10 +385,7 @@ sunos32_sys_execv(l, v, retval)
 }
 
 int
-sunos32_sys_execve(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sunos32_sys_execve(struct lwp *l, void *v, register_t *retval)
 {
 	struct sunos32_sys_execve_args /* {
 		syscallarg(const char *) path;
@@ -428,10 +400,7 @@ sunos32_sys_execve(l, v, retval)
 }
 
 int
-sunos32_sys_omsync(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sunos32_sys_omsync(struct lwp *l, void *v, register_t *retval)
 {
 	struct sunos32_sys_omsync_args /* {
 		syscallarg(netbsd32_caddr_t) addr;
@@ -448,10 +417,7 @@ sunos32_sys_omsync(l, v, retval)
 }
 
 int
-sunos32_sys_unmount(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sunos32_sys_unmount(struct lwp *l, void *v, register_t *retval)
 {
 	struct sunos32_sys_unmount_args /* {
 		syscallarg(netbsd32_charp) path;
@@ -489,10 +455,7 @@ static struct {
 };
 
 int
-sunos32_sys_mount(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sunos32_sys_mount(struct lwp *l, void *v, register_t *retval)
 {
 	struct sunos32_sys_mount_args /* {
 		syscallarg(netbsd32_charp) type;
@@ -566,10 +529,7 @@ sunos32_sys_mount(l, v, retval)
 
 #if defined(NFS)
 int
-async_daemon(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+async_daemon(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_nfssvc_args ouap;
 
@@ -584,17 +544,13 @@ void	native_to_sunos_sigset(const sigset_t *, int *);
 void	sunos_to_native_sigset(const int, sigset_t *);
 
 inline void
-native_to_sunos_sigset(ss, mask)
-	const sigset_t *ss;
-	int *mask;
+native_to_sunos_sigset(const sigset_t *ss, int *mask)
 {
 	*mask = ss->__bits[0];
 }
 
 inline void
-sunos_to_native_sigset(mask, ss)
-	const int mask;
-	sigset_t *ss;
+sunos_to_native_sigset(const int mask, sigset_t *ss)
 {
 
 	ss->__bits[0] = mask;
@@ -604,10 +560,7 @@ sunos_to_native_sigset(mask, ss)
 }
 
 int
-sunos32_sys_sigpending(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sunos32_sys_sigpending(struct lwp *l, void *v, register_t *retval)
 {
 	struct sunos32_sys_sigpending_args /* {
 		syscallarg(netbsd32_intp) mask;
@@ -622,10 +575,7 @@ sunos32_sys_sigpending(l, v, retval)
 }
 
 int
-sunos32_sys_sigsuspend(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sunos32_sys_sigsuspend(struct lwp *l, void *v, register_t *retval)
 {
 	struct sunos32_sys_sigsuspend_args /* {
 		syscallarg(int) mask;
@@ -646,10 +596,7 @@ sunos32_sys_sigsuspend(l, v, retval)
  * This is quite ugly, but what do you expect from compatibility code?
  */
 int
-sunos32_sys_getdents(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sunos32_sys_getdents(struct lwp *l, void *v, register_t *retval)
 {
 	struct sunos32_sys_getdents_args /* {
 		syscallarg(int) fd;
@@ -781,10 +728,7 @@ out:
 #define	SUNOS32__MAP_NEW	0x80000000	/* if not, old mmap & cannot handle */
 
 int
-sunos32_sys_mmap(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sunos32_sys_mmap(struct lwp *l, void *v, register_t *retval)
 {
 	struct sunos32_sys_mmap_args /* {
 		syscallarg(netbsd32_voidp) addr;
@@ -831,10 +775,7 @@ sunos32_sys_mmap(l, v, retval)
 #define	MC_UNLOCKAS	6
 
 int
-sunos32_sys_mctl(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sunos32_sys_mctl(struct lwp *l, void *v, register_t *retval)
 {
 	struct sunos32_sys_mctl_args /* {
 		syscallarg(netbsd32_voidp) addr;
@@ -854,10 +795,7 @@ sunos32_sys_mctl(l, v, retval)
 }
 
 int
-sunos32_sys_setsockopt(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sunos32_sys_setsockopt(struct lwp *l, void *v, register_t *retval)
 {
 	struct sunos32_sys_setsockopt_args /* {
 		syscallarg(int) s;
@@ -926,10 +864,7 @@ sunos32_sys_setsockopt(l, v, retval)
 static inline int sunos32_sys_socket_common(struct lwp *, register_t *,
 					      int type);
 static inline int
-sunos32_sys_socket_common(l, retval, type)
-	struct lwp *l;
-	register_t *retval;
-	int type;
+sunos32_sys_socket_common(struct lwp *l, register_t *retval, int type)
 {
 	struct socket *so;
 	struct proc *p = l->l_proc;
@@ -948,10 +883,7 @@ sunos32_sys_socket_common(l, retval, type)
 }
 
 int
-sunos32_sys_socket(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sunos32_sys_socket(struct lwp *l, void *v, register_t *retval)
 {
 	struct sunos32_sys_socket_args /* {
 		syscallarg(int) domain;
@@ -967,10 +899,7 @@ sunos32_sys_socket(l, v, retval)
 }
 
 int
-sunos32_sys_socketpair(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sunos32_sys_socketpair(struct lwp *l, void *v, register_t *retval)
 {
 	struct sunos32_sys_socketpair_args /* {
 		syscallarg(int) domain;
@@ -991,19 +920,13 @@ sunos32_sys_socketpair(l, v, retval)
  * XXX: This needs cleaning up.
  */
 int
-sunos32_sys_auditsys(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sunos32_sys_auditsys(struct lwp *l, void *v, register_t *retval)
 {
 	return 0;
 }
 
 int
-sunos32_sys_uname(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sunos32_sys_uname(struct lwp *l, void *v, register_t *retval)
 {
 	struct sunos32_sys_uname_args /* {
 		syscallarg(sunos32_utsnamep_t) name;
@@ -1024,10 +947,7 @@ sunos32_sys_uname(l, v, retval)
 }
 
 int
-sunos32_sys_setpgrp(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sunos32_sys_setpgrp(struct lwp *l, void *v, register_t *retval)
 {
 	struct sunos32_sys_setpgrp_args /* {
 		syscallarg(int) pid;
@@ -1049,10 +969,7 @@ sunos32_sys_setpgrp(l, v, retval)
 }
 
 int
-sunos32_sys_open(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sunos32_sys_open(struct lwp *l, void *v, register_t *retval)
 {
 	struct sunos32_sys_open_args /* {
 		syscallarg(const netbsd32_charp) path;
@@ -1096,10 +1013,7 @@ sunos32_sys_open(l, v, retval)
 
 #if defined (NFSSERVER)
 int
-sunos32_sys_nfssvc(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sunos32_sys_nfssvc(struct lwp *l, void *v, register_t *retval)
 {
 #if 0
 	struct sunos32_sys_nfssvc_args *uap = v;
@@ -1130,10 +1044,7 @@ sunos32_sys_nfssvc(l, v, retval)
 #endif /* NFSSERVER */
 
 int
-sunos32_sys_ustat(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sunos32_sys_ustat(struct lwp *l, void *v, register_t *retval)
 {
 	struct sunos32_sys_ustat_args /* {
 		syscallarg(int) dev;
@@ -1155,20 +1066,14 @@ sunos32_sys_ustat(l, v, retval)
 }
 
 int
-sunos32_sys_quotactl(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sunos32_sys_quotactl(struct lwp *l, void *v, register_t *retval)
 {
 
 	return EINVAL;
 }
 
 int
-sunos32_sys_vhangup(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sunos32_sys_vhangup(struct lwp *l, void *v, register_t *retval)
 {
 	struct proc *p = l->l_proc;
 	struct session *sp = p->p_session;
@@ -1190,9 +1095,7 @@ sunos32_sys_vhangup(l, v, retval)
 }
 
 static int
-sunstatfs(sp, sbuf)
-	struct statvfs *sp;
-	void *sbuf;
+sunstatfs(struct statvfs *sp, void *sbuf)
 {
 	struct sunos_statfs ssfs;
 
@@ -1209,10 +1112,7 @@ sunstatfs(sp, sbuf)
 }
 
 int
-sunos32_sys_statfs(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sunos32_sys_statfs(struct lwp *l, void *v, register_t *retval)
 {
 	struct sunos32_sys_statfs_args /* {
 		syscallarg(const netbsd32_charp) path;
@@ -1239,10 +1139,7 @@ sunos32_sys_statfs(l, v, retval)
 }
 
 int
-sunos32_sys_fstatfs(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sunos32_sys_fstatfs(struct lwp *l, void *v, register_t *retval)
 {
 	struct sunos32_sys_fstatfs_args /* {
 		syscallarg(int) fd;
@@ -1269,10 +1166,7 @@ sunos32_sys_fstatfs(l, v, retval)
 }
 
 int
-sunos32_sys_exportfs(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sunos32_sys_exportfs(struct lwp *l, void *v, register_t *retval)
 {
 	/*
 	 * XXX: should perhaps translate into a mount(2)
@@ -1282,10 +1176,7 @@ sunos32_sys_exportfs(l, v, retval)
 }
 
 int
-sunos32_sys_mknod(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sunos32_sys_mknod(struct lwp *l, void *v, register_t *retval)
 {
 	struct sunos32_sys_mknod_args /* {
 		syscallarg(const netbsd32_charp) path;
@@ -1315,10 +1206,7 @@ sunos32_sys_mknod(l, v, retval)
 #define SUNOS_SC_VERSION	8
 
 int
-sunos32_sys_sysconf(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sunos32_sys_sysconf(struct lwp *l, void *v, register_t *retval)
 {
 	struct sunos32_sys_sysconf_args /* {
 		syscallarg(int) name;
@@ -1364,10 +1252,7 @@ sunos32_sys_sysconf(l, v, retval)
 #define SUNOS_RLIM_NLIMITS	7
 
 int
-sunos32_sys_getrlimit(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sunos32_sys_getrlimit(struct lwp *l, void *v, register_t *retval)
 {
 	struct sunos32_sys_getrlimit_args /* {
 		syscallarg(u_int) which;
@@ -1384,10 +1269,7 @@ sunos32_sys_getrlimit(l, v, retval)
 }
 
 int
-sunos32_sys_setrlimit(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sunos32_sys_setrlimit(struct lwp *l, void *v, register_t *retval)
 {
 	struct sunos32_sys_setrlimit_args /* {
 		syscallarg(u_int) which;
@@ -1422,10 +1304,7 @@ static const int nreqs = sizeof(sreq2breq) / sizeof(sreq2breq[0]);
 #endif
 
 int
-sunos32_sys_ptrace(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sunos32_sys_ptrace(struct lwp *l, void *v, register_t *retval)
 {
 #if defined(PTRACE) || defined(_LKM)
 	struct sunos32_sys_ptrace_args /* {
@@ -1490,10 +1369,7 @@ static struct sunos_howto_conv {
 };
 
 int
-sunos32_sys_reboot(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sunos32_sys_reboot(struct lwp *l, void *v, register_t *retval)
 {
 	struct sunos32_sys_reboot_args /* {
 		syscallarg(int) howto;
@@ -1540,10 +1416,7 @@ sunos32_sys_reboot(l, v, retval)
  */
 /* ARGSUSED */
 int
-sunos32_sys_sigvec(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sunos32_sys_sigvec(struct lwp *l, void *v, register_t *retval)
 {
 	struct sunos32_sys_sigvec_args /* {
 		syscallarg(int) signum;

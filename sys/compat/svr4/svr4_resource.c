@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_resource.c,v 1.13 2007/12/04 18:40:23 dsl Exp $	 */
+/*	$NetBSD: svr4_resource.c,v 1.14 2007/12/08 18:36:25 dsl Exp $	 */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_resource.c,v 1.13 2007/12/04 18:40:23 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_resource.c,v 1.14 2007/12/08 18:36:25 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,8 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_resource.c,v 1.13 2007/12/04 18:40:23 dsl Exp $
 static inline int svr4_to_native_rl(int);
 
 static inline int
-svr4_to_native_rl(rl)
-	int rl;
+svr4_to_native_rl(int rl)
 {
 	switch (rl) {
 	case SVR4_RLIMIT_CPU:

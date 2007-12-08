@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_thread.c,v 1.43 2007/12/05 08:33:30 ad Exp $ */
+/*	$NetBSD: mach_thread.c,v 1.44 2007/12/08 18:36:16 dsl Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_thread.c,v 1.43 2007/12/05 08:33:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_thread.c,v 1.44 2007/12/08 18:36:16 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -142,8 +142,7 @@ mach_sys_swtch(struct lwp *l, void *v, register_t *retval)
 
 
 int
-mach_thread_policy(args)
-	struct mach_trap_args *args;
+mach_thread_policy(struct mach_trap_args *args)
 {
 	mach_thread_policy_request_t *req = args->smsg;
 	mach_thread_policy_reply_t *rep = args->rmsg;
@@ -170,8 +169,7 @@ mach_thread_policy(args)
 
 /* XXX it might be possible to use this on another task */
 int
-mach_thread_create_running(args)
-	struct mach_trap_args *args;
+mach_thread_create_running(struct mach_trap_args *args)
 {
 	mach_thread_create_running_request_t *req = args->smsg;
 	mach_thread_create_running_reply_t *rep = args->rmsg;
@@ -250,8 +248,7 @@ mach_thread_create_running(args)
 }
 
 int
-mach_thread_info(args)
-	struct mach_trap_args *args;
+mach_thread_info(struct mach_trap_args *args)
 {
 	mach_thread_info_request_t *req = args->smsg;
 	mach_thread_info_reply_t *rep = args->rmsg;
@@ -343,8 +340,7 @@ mach_thread_info(args)
 }
 
 int
-mach_thread_get_state(args)
-	struct mach_trap_args *args;
+mach_thread_get_state(struct mach_trap_args *args)
 {
 	mach_thread_get_state_request_t *req = args->smsg;
 	mach_thread_get_state_reply_t *rep = args->rmsg;
@@ -370,8 +366,7 @@ mach_thread_get_state(args)
 }
 
 int
-mach_thread_set_state(args)
-	struct mach_trap_args *args;
+mach_thread_set_state(struct mach_trap_args *args)
 {
 	mach_thread_set_state_request_t *req = args->smsg;
 	mach_thread_set_state_reply_t *rep = args->rmsg;
@@ -400,8 +395,7 @@ mach_thread_set_state(args)
 }
 
 int
-mach_thread_suspend(args)
-	struct mach_trap_args *args;
+mach_thread_suspend(struct mach_trap_args *args)
 {
 	mach_thread_suspend_request_t *req = args->smsg;
 	mach_thread_suspend_reply_t *rep = args->rmsg;
@@ -425,8 +419,7 @@ mach_thread_suspend(args)
 }
 
 int
-mach_thread_resume(args)
-	struct mach_trap_args *args;
+mach_thread_resume(struct mach_trap_args *args)
 {
 	mach_thread_resume_request_t *req = args->smsg;
 	mach_thread_resume_reply_t *rep = args->rmsg;
@@ -448,8 +441,7 @@ mach_thread_resume(args)
 }
 
 int
-mach_thread_abort(args)
-	struct mach_trap_args *args;
+mach_thread_abort(struct mach_trap_args *args)
 {
 	mach_thread_abort_request_t *req = args->smsg;
 	mach_thread_abort_reply_t *rep = args->rmsg;
@@ -467,8 +459,7 @@ mach_thread_abort(args)
 }
 
 int
-mach_thread_set_policy(args)
-	struct mach_trap_args *args;
+mach_thread_set_policy(struct mach_trap_args *args)
 {
 	mach_thread_set_policy_request_t *req = args->smsg;
 	mach_thread_set_policy_reply_t *rep = args->rmsg;
