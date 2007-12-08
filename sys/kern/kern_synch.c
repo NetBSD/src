@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.211.2.1 2007/12/04 13:03:15 ad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.211.2.2 2007/12/08 14:51:15 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.211.2.1 2007/12/04 13:03:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.211.2.2 2007/12/08 14:51:15 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_lockdebug.h"
@@ -951,6 +951,7 @@ void
 sched_init(void)
 {
 
+	cv_init(&lbolt, "lbolt");
 	callout_init(&sched_pstats_ch, CALLOUT_MPSAFE);
 	callout_setfunc(&sched_pstats_ch, sched_pstats, NULL);
 	sched_setup();
