@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_fs.c,v 1.43.2.1 2007/12/04 13:02:54 ad Exp $	*/
+/*	$NetBSD: ultrix_fs.c,v 1.43.2.2 2007/12/08 14:45:26 ad Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_fs.c,v 1.43.2.1 2007/12/04 13:02:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_fs.c,v 1.43.2.2 2007/12/08 14:45:26 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -404,7 +404,7 @@ ultrix_sys_mount(struct lwp *l, void *v, register_t *retval)
 		na.timeo = una.timeo;
 		na.retrans = una.retrans;
 		na.hostname = una.hostname;
-		return do_sys_mount(l, vfs_getopsbyname("ngs"), NULL,
+		return do_sys_mount(l, vfs_getopsbyname("nfs"), NULL,
 		    SCARG(uap, special), nflags, &na, UIO_SYSSPACE,
 		    sizeof na, &dummy);
 	}
