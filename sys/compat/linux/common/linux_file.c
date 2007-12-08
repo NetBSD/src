@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.88 2007/12/08 18:36:07 dsl Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.89 2007/12/08 19:29:39 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.88 2007/12/08 18:36:07 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.89 2007/12/08 19:29:39 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -581,7 +581,7 @@ linux_sys_unlink(l, v, retval)
 	 * is the case.
 	 */
 	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF | TRYEMULROOT, UIO_USERSPACE,
-	    SCARG(uap, path), l);
+	    SCARG(uap, path));
 	if (namei(&nd) == 0) {
 		struct stat sb;
 
