@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.h,v 1.98 2007/12/04 21:24:11 pooka Exp $	*/
+/*	$NetBSD: puffs.h,v 1.99 2007/12/08 19:57:03 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -52,7 +52,6 @@ struct puffs_cc;
 
 struct puffs_getreq;
 struct puffs_cred;
-struct puffs_cid;
 struct puffs_newinfo;
 
 /* paths */
@@ -119,9 +118,7 @@ struct puffs_usermount;
 
 struct puffs_cn {
 	struct puffs_kcn	*pcn_pkcnp;	/* kernel input */
-
 	struct puffs_cred	*pcn_cred;	/* cred used for lookup */
-	struct puffs_cid	*pcn_cid;	/* the who called	*/
 
 	struct puffs_pathobj	pcn_po_full;	/* PUFFS_FLAG_BUILDPATH */
 };
@@ -357,7 +354,7 @@ enum {
 
 PUFFSOP_PROTOS(puffs_null)	/* XXX */
 
-#define PUFFS_DEVEL_LIBVERSION 31
+#define PUFFS_DEVEL_LIBVERSION 32
 #define puffs_init(a,b,c,d,e) \
     _puffs_init(PUFFS_DEVEL_LIBVERSION,a,b,c,d,e)
 
@@ -503,11 +500,6 @@ bool	puffs_cred_isregular(const struct puffs_cred *);
 bool	puffs_cred_iskernel(const struct puffs_cred *);
 bool	puffs_cred_isfs(const struct puffs_cred *);
 bool	puffs_cred_isjuggernaut(const struct puffs_cred *);
-
-/* Caller ID */
-int	puffs_cid_getpid(const struct puffs_cid *, pid_t *);
-int	puffs_cid_getlwpid(const struct puffs_cid *, lwpid_t *);
-bool	puffs_cid_isequal(const struct puffs_cid *, const struct puffs_cid *);
 
 /* misc */
 int	puffs_access(enum vtype, mode_t, uid_t, gid_t, mode_t,
