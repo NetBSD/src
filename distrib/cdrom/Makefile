@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.36 2007/12/07 21:08:58 tsutsui Exp $
+# $NetBSD: Makefile,v 1.37 2007/12/08 12:30:18 tsutsui Exp $
 #
 # Consult "*.conf" for the configuration variables; this Makefile is typically
 # not edited for basic configuration changes.
@@ -417,15 +417,15 @@ size-${image}: stage-${image} extfileprep fileprep-${image}
 		size=$$(($$(($$size + 327679)) / 327680 * 327680)) && \
 		bootfiles=`for f in ${SUN_BOOT_ARGS.${image}:N-:O}; do echo $$f; done | uniq` && \
 		for f in $$bootfiles; do \
-			bfsize=`ls -l $$f | awk '{print $$5}'` && \
+			bfsize=$$(${TOOL_STAT} -f '%z' $$f) && \
 			size=$$(($$size + $$(($$(($$bfsize + 327679)) / 327680 * 327680)))); \
 		done; \
 	fi && \
 	if [ "${BASE_PORTS.${image}:Mpmax}" != "" ]; then \
-		size=$$(($$size + $$(($$((`ls -l ${BOOTFILE.pmax} | awk '{print $$5}'` + 511)) / 512 * 512)))); \
+		size=$$(($$size + $$(($$(($$(${TOOL_STAT} -f '%z' ${BOOTFILE.pmax}) + 511)) / 512 * 512)))); \
 	fi && \
 	if [ "${BASE_PORTS.${image}:Mvax}" != "" ]; then \
-		size=$$(($$size + $$(($$((`ls -l ${BOOTFILE.vax} | awk '{print $$5}'` + 511)) / 512 * 512)))); \
+		size=$$(($$size + $$(($$(($$(${TOOL_STAT} -f '%z' ${BOOTFILE.vax})  + 511)) / 512 * 512)))); \
 	fi && \
 	if [ "${BASE_PORTS.${image}:Msgimips}" != "" -a \
 	    "${EXTFILES.sgimips}" != "" ]; then \
