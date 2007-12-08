@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_priv.h,v 1.34 2007/12/05 12:11:56 pooka Exp $	*/
+/*	$NetBSD: puffs_priv.h,v 1.35 2007/12/08 19:57:03 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006 Antti Kantee.  All Rights Reserved.
@@ -205,16 +205,6 @@ struct puffs_newinfo {
 	/*LINTED: tnilxnaht, the cast is ok */				\
 	const struct puffs_cred *to = (const void *)from
 #define PUFFS_KCREDTOCRED(to, from)					\
-	/*LINTED: tnilxnaht, the cast is ok */				\
-	to = (void *)from
-
-#define PUFFS_MAKEKCID(to, from)					\
-	/*LINTED: tnilxnaht, the cast is ok */				\
-	const struct puffs_kcid *to = (const void *)from
-#define PUFFS_MAKECID(to, from)						\
-	/*LINTED: tnilxnaht, the cast is ok */				\
-	const struct puffs_cid *to = (const void *)from
-#define PUFFS_KCIDTOCID(to, from)					\
 	/*LINTED: tnilxnaht, the cast is ok */				\
 	to = (void *)from
 

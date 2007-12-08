@@ -1,4 +1,4 @@
-/*	$NetBSD: creds.c,v 1.13 2007/10/18 13:48:04 pooka Exp $	*/
+/*	$NetBSD: creds.c,v 1.14 2007/12/08 19:57:02 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: creds.c,v 1.13 2007/10/18 13:48:04 pooka Exp $");
+__RCSID("$NetBSD: creds.c,v 1.14 2007/12/08 19:57:02 pooka Exp $");
 #endif /* !lint */
 
 /*
@@ -151,51 +151,6 @@ puffs_cred_isjuggernaut(const struct puffs_cred *pcr)
 
 	return puffs_cred_isuid(pcr, 0) || puffs_cred_iskernel(pcr)
 	    || puffs_cred_isfs(pcr);
-}
-
-int
-puffs_cid_getpid(const struct puffs_cid *pcid, pid_t *pid)
-{
-	PUFFS_MAKEKCID(pkcid, pcid);
-
-	if (pkcid->pkcid_type == PUFFCID_TYPE_REAL) {
-		*pid = pkcid->pkcid_pid;
-		return 0;
-	} else {
-		errno = ESRCH;
-		return -1;
-	}
-}
-
-int
-puffs_cid_getlwpid(const struct puffs_cid *pcid, lwpid_t *lid)
-{
-	PUFFS_MAKEKCID(pkcid, pcid);
-
-	if (pkcid->pkcid_type == PUFFCID_TYPE_REAL) {
-		*lid = pkcid->pkcid_lwpid;
-		return 0;
-	} else {
-		errno = ESRCH;
-		return -1;
-	}
-}
-
-bool
-puffs_cid_isequal(const struct puffs_cid *pc1, const struct puffs_cid *pc2)
-{
-	PUFFS_MAKEKCID(pkc1, pc1);
-	PUFFS_MAKEKCID(pkc2, pc2);
-
-	if (pkc1->pkcid_type != PUFFCID_TYPE_REAL
-	    || pkc2->pkcid_type != PUFFCID_TYPE_REAL)
-		return false;
-
-	if (pkc1->pkcid_lwpid == pkc1->pkcid_lwpid
-	    && pkc2->pkcid_pid == pkc2->pkcid_pid)
-		return true;
-
-	return false;
 }
 
 /*

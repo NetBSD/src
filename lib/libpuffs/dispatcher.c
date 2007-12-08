@@ -1,4 +1,4 @@
-/*	$NetBSD: dispatcher.c,v 1.25 2007/12/04 21:24:10 pooka Exp $	*/
+/*	$NetBSD: dispatcher.c,v 1.26 2007/12/08 19:57:03 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: dispatcher.c,v 1.25 2007/12/04 21:24:10 pooka Exp $");
+__RCSID("$NetBSD: dispatcher.c,v 1.26 2007/12/08 19:57:03 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -362,7 +362,6 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 
 			pcn.pcn_pkcnp = &auxt->pvnr_cn;
 			PUFFS_KCREDTOCRED(pcn.pcn_cred, &auxt->pvnr_cn_cred);
-			PUFFS_KCIDTOCID(pcn.pcn_cid, &auxt->pvnr_cn_cid);
 			pni.pni_cookie = &auxt->pvnr_newnode;
 			pni.pni_vtype = &auxt->pvnr_vtype;
 			pni.pni_size = &auxt->pvnr_size;
@@ -413,7 +412,6 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 
 			pcn.pcn_pkcnp = &auxt->pvnr_cn;
 			PUFFS_KCREDTOCRED(pcn.pcn_cred, &auxt->pvnr_cn_cred);
-			PUFFS_KCIDTOCID(pcn.pcn_cid, &auxt->pvnr_cn_cid);
 
 			memset(&pni, 0, sizeof(pni));
 			pni.pni_cookie = &auxt->pvnr_newnode;
@@ -454,7 +452,6 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 
 			pcn.pcn_pkcnp = &auxt->pvnr_cn;
 			PUFFS_KCREDTOCRED(pcn.pcn_cred, &auxt->pvnr_cn_cred);
-			PUFFS_KCIDTOCID(pcn.pcn_cid, &auxt->pvnr_cn_cid);
 
 			memset(&pni, 0, sizeof(pni));
 			pni.pni_cookie = &auxt->pvnr_newnode;
@@ -615,7 +612,6 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 
 			pcn.pcn_pkcnp = &auxt->pvnr_cn;
 			PUFFS_KCREDTOCRED(pcn.pcn_cred, &auxt->pvnr_cn_cred);
-			PUFFS_KCIDTOCID(pcn.pcn_cid, &auxt->pvnr_cn_cid);
 
 			error = pops->puffs_node_remove(pu,
 			    opcookie, auxt->pvnr_cookie_targ, &pcn);
@@ -633,7 +629,6 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 
 			pcn.pcn_pkcnp = &auxt->pvnr_cn;
 			PUFFS_KCREDTOCRED(pcn.pcn_cred, &auxt->pvnr_cn_cred);
-			PUFFS_KCIDTOCID(pcn.pcn_cid, &auxt->pvnr_cn_cid);
 
 			if (buildpath) {
 				error = puffs_path_pcnbuild(pu, &pcn, opcookie);
@@ -663,14 +658,10 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 			pcn_src.pcn_pkcnp = &auxt->pvnr_cn_src;
 			PUFFS_KCREDTOCRED(pcn_src.pcn_cred,
 			    &auxt->pvnr_cn_src_cred);
-			PUFFS_KCIDTOCID(pcn_src.pcn_cid,
-			    &auxt->pvnr_cn_src_cid);
 
 			pcn_targ.pcn_pkcnp = &auxt->pvnr_cn_targ;
 			PUFFS_KCREDTOCRED(pcn_targ.pcn_cred,
 			    &auxt->pvnr_cn_targ_cred);
-			PUFFS_KCIDTOCID(pcn_targ.pcn_cid,
-			    &auxt->pvnr_cn_targ_cid);
 
 			if (buildpath) {
 				pn_src = auxt->pvnr_cookie_src;
@@ -732,7 +723,6 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 
 			pcn.pcn_pkcnp = &auxt->pvnr_cn;
 			PUFFS_KCREDTOCRED(pcn.pcn_cred, &auxt->pvnr_cn_cred);
-			PUFFS_KCIDTOCID(pcn.pcn_cid, &auxt->pvnr_cn_cid);
 
 			memset(&pni, 0, sizeof(pni));
 			pni.pni_cookie = &auxt->pvnr_newnode;
@@ -771,7 +761,6 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 
 			pcn.pcn_pkcnp = &auxt->pvnr_cn;
 			PUFFS_KCREDTOCRED(pcn.pcn_cred, &auxt->pvnr_cn_cred);
-			PUFFS_KCIDTOCID(pcn.pcn_cid, &auxt->pvnr_cn_cid);
 
 			error = pops->puffs_node_rmdir(pu,
 			    opcookie, auxt->pvnr_cookie_targ, &pcn);
@@ -791,7 +780,6 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 
 			pcn.pcn_pkcnp = &auxt->pvnr_cn;
 			PUFFS_KCREDTOCRED(pcn.pcn_cred, &auxt->pvnr_cn_cred);
-			PUFFS_KCIDTOCID(pcn.pcn_cid, &auxt->pvnr_cn_cid);
 
 			memset(&pni, 0, sizeof(pni));
 			pni.pni_cookie = &auxt->pvnr_newnode;
