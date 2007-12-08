@@ -1,7 +1,8 @@
-/*	$NetBSD: sys_aio.c,v 1.7.8.1 2007/11/19 00:48:52 mjf Exp $	*/
+/*	$NetBSD: sys_aio.c,v 1.7.8.2 2007/12/08 18:20:38 mjf Exp $	*/
 
 /*
  * Copyright (c) 2007, Mindaugas Rasiukevicius <rmind at NetBSD org>
+ * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.7.8.1 2007/11/19 00:48:52 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.7.8.2 2007/12/08 18:20:38 mjf Exp $");
 
 #include "opt_ddb.h"
 
@@ -54,12 +55,12 @@ __KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.7.8.1 2007/11/19 00:48:52 mjf Exp $");
 #include <sys/systm.h>
 #include <sys/types.h>
 #include <sys/vnode.h>
+#include <sys/atomic.h>
 
 #include <uvm/uvm_extern.h>
 
 /*
  * System-wide limits and counter of AIO operations.
- * XXXSMP: We should spin-lock it, or modify atomically.
  */
 static u_int aio_listio_max = AIO_LISTIO_MAX;
 static u_int aio_max = AIO_MAX;
@@ -144,7 +145,7 @@ aio_init(struct proc *p)
 	p->p_nrlwps++;
 	lwp_lock(l);
 	l->l_stat = LSRUN;
-	l->l_priority = PRI_KERNEL - 1;
+	l->l_priority = MAXPRI_USER;
 	sched_enqueue(l, false);
 	lwp_unlock(l);
 	mutex_exit(&p->p_smutex);
@@ -168,7 +169,7 @@ aio_exit(struct proc *p, struct aioproc *aio)
 		a_job = TAILQ_FIRST(&aio->jobs_queue);
 		TAILQ_REMOVE(&aio->jobs_queue, a_job, list);
 		pool_put(&aio_job_pool, a_job);
-		aio_jobs_count--; /* XXXSMP */
+		atomic_dec_uint(&aio_jobs_count);
 	}
 
 	/* Destroy and free the entire AIO data structure */
@@ -223,7 +224,7 @@ aio_worker(void *arg)
 		aio->curjob = a_job;
 		TAILQ_REMOVE(&aio->jobs_queue, a_job, list);
 
-		aio_jobs_count--; /* XXXSMP */
+		atomic_dec_uint(&aio_jobs_count);
 		aio->jobs_count--;
 
 		mutex_exit(&aio->aio_mtx);
@@ -353,10 +354,10 @@ aio_process(struct aio_job *a_job)
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 		if (a_job->aio_op & AIO_DSYNC) {
 			error = VOP_FSYNC(vp, fp->f_cred,
-			    FSYNC_WAIT | FSYNC_DATAONLY, 0, 0, curlwp);
+			    FSYNC_WAIT | FSYNC_DATAONLY, 0, 0);
 		} else if (a_job->aio_op & AIO_SYNC) {
 			error = VOP_FSYNC(vp, fp->f_cred,
-			    FSYNC_WAIT, 0, 0, curlwp);
+			    FSYNC_WAIT, 0, 0);
 			if (error == 0 && bioopsp != NULL &&
 			    vp->v_mount &&
 			    (vp->v_mount->mnt_flag & MNT_SOFTDEP))
@@ -410,8 +411,8 @@ aio_enqueue_job(int op, void *aiocb_uptr, struct lio_req *lio)
 	struct sigevent *sig;
 	int error;
 
-	/* Check for the limit */
-	if (aio_jobs_count + 1 > aio_max) /* XXXSMP */
+	/* Non-accurate check for the limit */
+	if (aio_jobs_count + 1 > aio_max)
 		return EAGAIN;
 
 	/* Get the data structure from user-space */
@@ -508,14 +509,15 @@ aio_enqueue_job(int op, void *aiocb_uptr, struct lio_req *lio)
 	mutex_enter(&aio->aio_mtx);
 
 	/* Fail, if the limit was reached */
-	if (aio->jobs_count >= aio_listio_max) {
+	if (atomic_inc_uint_nv(&aio_jobs_count) > aio_max ||
+	    aio->jobs_count >= aio_listio_max) {
+		atomic_dec_uint(&aio_jobs_count);
 		mutex_exit(&aio->aio_mtx);
 		pool_put(&aio_job_pool, a_job);
 		return EAGAIN;
 	}
 
 	TAILQ_INSERT_TAIL(&aio->jobs_queue, a_job, list);
-	aio_jobs_count++; /* XXXSMP */
 	aio->jobs_count++;
 	if (lio)
 		lio->refcnt++;
@@ -585,7 +587,7 @@ sys_aio_cancel(struct lwp *l, void *v, register_t *retval)
 		TAILQ_INSERT_TAIL(&tmp_jobs_list, a_job, list);
 
 		/* Decrease the counters */
-		aio_jobs_count--; /* XXXSMP */
+		atomic_dec_uint(&aio_jobs_count);
 		aio->jobs_count--;
 		lio = a_job->lio;
 		if (lio != NULL && --lio->refcnt != 0)
@@ -851,10 +853,10 @@ sys_lio_listio(struct lwp *l, void *v, register_t *retval)
 	mode = SCARG(uap, mode);
 	nent = SCARG(uap, nent);
 
-	/* Check for the limits, and invalid values */
+	/* Non-accurate checks for the limit and invalid values */
 	if (nent < 1 || nent > aio_listio_max)
 		return EINVAL;
-	if (aio_jobs_count + nent > aio_max) /* XXXSMP */
+	if (aio_jobs_count + nent > aio_max)
 		return EAGAIN;
 
 	/* Check if AIO structure is initialized, if not - initialize it */
@@ -968,7 +970,6 @@ sysctl_aio_listio_max(SYSCTLFN_ARGS)
 	if (error || newp == NULL)
 		return error;
 
-	/* XXXSMP */
 	if (newsize < 1 || newsize > aio_max)
 		return EINVAL;
 	aio_listio_max = newsize;
@@ -990,7 +991,6 @@ sysctl_aio_max(SYSCTLFN_ARGS)
 	if (error || newp == NULL)
 		return error;
 
-	/* XXXSMP */
 	if (newsize < 1 || newsize < aio_listio_max)
 		return EINVAL;
 	aio_max = newsize;

@@ -1,4 +1,4 @@
-/* $NetBSD: ofw_consinit.c,v 1.4.2.1 2007/11/19 00:46:46 mjf Exp $ */
+/* $NetBSD: ofw_consinit.c,v 1.4.2.2 2007/12/08 18:17:40 mjf Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_consinit.c,v 1.4.2.1 2007/11/19 00:46:46 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_consinit.c,v 1.4.2.2 2007/12/08 18:17:40 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -137,7 +137,7 @@ void ofprint(const char *blah, ...)
 void
 cninit(void)
 {
-	char type[16];
+	char name[32];
 
 	ofwoea_bootstrap_console();
 
@@ -146,19 +146,14 @@ cninit(void)
 	if (console_node == -1)
 		goto nocons;
 
-	memset(type, 0, sizeof(type));
-	if (OF_getprop(console_node, "device_type", type, sizeof(type)) == -1)
+	memset(name, 0, sizeof(name));
+	if (OF_getprop(console_node, "device_type", name, sizeof(name)) == -1)
 		goto nocons;
 
-	OFPRINTF("console type: %s\n", type);
-	if (strcmp(type, "display") == 0) {
-		cninit_kd();
-		return;
-	}
+	OFPRINTF("console type: %s\n", name);
 
-	if (strcmp(type, "serial") == 0) {
+	if (strcmp(name, "serial") == 0) {
 		struct consdev *cp;
-		char name[32];
 
 #ifdef PMAC_G5
 		/* The MMU hasn't been initialized yet, use failsafe for now */
@@ -181,14 +176,13 @@ cninit(void)
 		return;
 #endif /* NZTTY */
 
-		OF_getprop(console_node, "name", name, sizeof(name));
-		/* fallback to ofwbootcons */
-		if (strcmp(name, "serial") == 0) {
-			cp = &consdev_ofwbootcons;
-			cn_tab = cp;
-		}
+		/* fallback to OFW boot console */
+		cp = &consdev_ofwbootcons;
+		cn_tab = cp;
 		return;
 	}
+	else
+		cninit_kd();
 nocons:
 	return;
 }
@@ -212,7 +206,7 @@ cninit_kd(void)
 	 * if any).
 	 */
 #if NWSDISPLAY > 0
-	ofb_cnattach();
+	rascons_cnattach();
 #endif
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.19.44.1 2007/11/19 00:46:39 mjf Exp $	*/
+/*	$NetBSD: zs.c,v 1.19.44.2 2007/12/08 18:17:26 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.19.44.1 2007/11/19 00:46:39 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.19.44.2 2007/12/08 18:17:26 mjf Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -60,8 +60,9 @@ __KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.19.44.1 2007/11/19 00:46:39 mjf Exp $");
 #include <sys/tty.h>
 #include <sys/time.h>
 #include <sys/syslog.h>
+#include <sys/cpu.h>
+#include <sys/intr.h>
 
-#include <machine/cpu.h>
 #include <machine/mainboard.h>
 #include <machine/autoconf.h>
 #include <machine/prom.h>
@@ -291,7 +292,7 @@ zs_attach(parent, self, aux)
 	}
 
 
-	zsc->sc_si = softintr_establish(IPL_SOFTSERIAL, zssoft, zsc);
+	zsc->sc_si = softint_establish(SOFTINT_SERIAL, zssoft, zsc);
 	bus_intr_establish(zsc->zsc_bustag, SYS_INTR_SCC0, 0, 0, zshard, NULL);
 
 	evcnt_attach_dynamic(&zsc->zs_intrcnt, EVCNT_TYPE_INTR, NULL,
@@ -347,7 +348,7 @@ zshard(arg)
 		softreq |= zsc->zsc_cs[1]->cs_softreq;
 		if (softreq && (zssoftpending == 0)) {
 		    zssoftpending = 1;
-		    softintr_schedule(zsc->sc_si);
+		    softint_schedule(zsc->sc_si);
 		}
 		zsc->zs_intrcnt.ev_count++;
 	}

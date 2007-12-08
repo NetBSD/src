@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.27 2007/10/17 19:58:18 garbled Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.1.4.1 2007/12/08 18:18:22 mjf Exp $	*/
 /*	NetBSD: autoconf.c,v 1.75 2003/12/30 12:33:22 pk Exp 	*/
 
 /*-
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.27 2007/10/17 19:58:18 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.1.4.1 2007/12/08 18:18:22 mjf Exp $");
 
 #include "opt_xen.h"
 #include "opt_compat_oldboot.h"
@@ -81,7 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.27 2007/10/17 19:58:18 garbled Exp $"
 #include <nfs/nfs.h>
 #include <nfs/nfsmount.h>
 #include <nfs/nfsdiskless.h>
-#include <machine/if_xennetvar.h>
+#include <xen/if_xennetvar.h>
 #endif
 
 #include <machine/pte.h>

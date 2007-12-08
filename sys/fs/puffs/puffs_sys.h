@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_sys.h,v 1.59.4.1 2007/11/19 00:48:29 mjf Exp $	*/
+/*	$NetBSD: puffs_sys.h,v 1.59.4.2 2007/12/08 18:20:18 mjf Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -204,6 +204,8 @@ int	puffs_msg_wait(struct puffs_mount *, struct puffs_msgpark *);
 int	puffs_msg_wait2(struct puffs_mount *, struct puffs_msgpark *,
 			struct puffs_node *, struct puffs_node *);
 
+void	puffs_msg_sendresp(struct puffs_mount *, struct puffs_req *, int);
+
 int	puffs_getvnode(struct mount *, void *, enum vtype, voff_t, dev_t,
 		       struct vnode **);
 int	puffs_newnode(struct mount *, struct vnode *, struct vnode **,
@@ -244,8 +246,6 @@ void	puffs_updatenode(struct puffs_node *, int, voff_t);
 void	puffs_userdead(struct puffs_mount *);
 
 extern int (**puffs_vnodeop_p)(void *);
-
-MALLOC_DECLARE(M_PUFFS);
 
 /* for putter */
 int	puffs_msgif_getout(void *, size_t, int, uint8_t **, size_t *, void **);

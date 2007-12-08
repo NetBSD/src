@@ -1,4 +1,4 @@
-#	$NetBSD: files.x68k,v 1.62 2007/03/04 02:08:08 tsutsui Exp $
+#	$NetBSD: files.x68k,v 1.62.26.1 2007/12/08 18:18:05 mjf Exp $
 #
 # new style config file for x68k architecture
 #
@@ -39,7 +39,6 @@ file	arch/m68k/m68k/cacheops.c
 file	arch/m68k/m68k/db_memrw.c	ddb
 file	arch/m68k/m68k/pmap_motorola.c
 file	arch/m68k/m68k/procfs_machdep.c	procfs
-file	arch/m68k/m68k/softintr.c
 file	arch/m68k/m68k/sys_machdep.c
 file	arch/m68k/m68k/vm_machdep.c
 

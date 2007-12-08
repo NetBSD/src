@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile.c,v 1.25 2006/12/09 22:11:36 chs Exp $ */
+/* $NetBSD: loadfile.c,v 1.25.26.1 2007/12/08 18:20:53 mjf Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -105,17 +105,17 @@ loadfile(fname, marks, flags)
 	/* Open the file. */
 	if ((fd = open(fname, 0)) < 0) {
 		WARN(("open %s", fname ? fname : "<default>"));
-		return (-1);
+		return -1;
 	}
 
 	/* Load it; save the value of errno across the close() call */
 	if ((error = fdloadfile(fd, marks, flags)) != 0) {
 		(void)close(fd);
 		errno = error;
-		return (-1);
+		return -1;
 	}
 
-	return (fd);
+	return fd;
 }
 
 /*
@@ -195,8 +195,8 @@ fdloadfile(fd, marks, flags)
 		if ((flags & LOAD_ALL) != 0)
 			PROGRESS(("=0x%lx\n",
 				  marks[MARK_END] - marks[MARK_START]));
-		return (0);
+		return 0;
 	}
 err:
-	return (errno);
+	return errno;
 }

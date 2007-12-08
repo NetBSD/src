@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_port.c,v 1.61 2007/03/12 18:18:29 ad Exp $ */
+/*	$NetBSD: mach_port.c,v 1.61.20.1 2007/12/08 18:18:55 mjf Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include "opt_compat_darwin.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.61 2007/03/12 18:18:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.61.20.1 2007/12/08 18:18:55 mjf Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -471,7 +471,7 @@ mach_port_move_member(args)
 	if (mrs == NULL)
 		return mach_msg_error(args, EPERM);
 
-	lockmgr(&med->med_rightlock, LK_EXCLUSIVE, NULL);
+	rw_enter(&med->med_rightlock, RW_WRITER);
 
 	/* Remove it from an existing port set */
 	if (mrr->mr_sethead != mrr)
@@ -481,7 +481,7 @@ mach_port_move_member(args)
 	LIST_INSERT_HEAD(&mrs->mr_set, mrr, mr_setlist);
 	mrr->mr_sethead = mrs;
 
-	lockmgr(&med->med_rightlock, LK_RELEASE, NULL);
+	rw_exit(&med->med_rightlock);
 
 	*msglen = sizeof(*rep);
 	mach_set_header(rep, req, *msglen);
@@ -675,7 +675,7 @@ mach_port_get(void)
 	mp->mp_datatype = MACH_MP_NONE;
 	mp->mp_data = NULL;
 	TAILQ_INIT(&mp->mp_msglist);
-	lockinit(&mp->mp_msglock, PZERO|PCATCH, "mach_port", 0, 0);
+	rw_init(&mp->mp_msglock);
 
 	return mp;
 }
@@ -693,11 +693,11 @@ mach_port_put(mp)
 	}
 #endif
 
-	lockmgr(&mp->mp_msglock, LK_EXCLUSIVE, NULL);
+	rw_enter(&mp->mp_msglock, RW_WRITER);
 	while ((mm = TAILQ_FIRST(&mp->mp_msglist)) != NULL)
 		mach_message_put_exclocked(mm);
-	lockmgr(&mp->mp_msglock, LK_RELEASE, NULL);
-	lockmgr(&mp->mp_msglock, LK_DRAIN, NULL);
+	rw_exit(&mp->mp_msglock);
+	rw_destroy(&mp->mp_msglock);
 
 	if (mp->mp_flags & MACH_MP_DATA_ALLOCATED)
 		free(mp->mp_data, M_EMULDATA);
@@ -730,12 +730,12 @@ mach_right_get(mp, l, type, hint)
 	/* Send and receive right must return an existing right */
 	rights = (MACH_PORT_TYPE_SEND | MACH_PORT_TYPE_RECEIVE);
 	if (type & rights) {
-		lockmgr(&med->med_rightlock, LK_SHARED, NULL);
+		rw_enter(&med->med_rightlock, RW_READER);
 		LIST_FOREACH(mr, &med->med_right, mr_list) {
 			if ((mr->mr_port == mp) && (mr->mr_type & rights))
 				break;
 		}
-		lockmgr(&med->med_rightlock, LK_RELEASE, NULL);
+		rw_exit(&med->med_rightlock);
 
 		if (mr != NULL) {
 			mr->mr_type |= type;
@@ -760,14 +760,14 @@ mach_right_get(mp, l, type, hint)
 
 	/* Insert the right in the right lists */
 	if (type & MACH_PORT_TYPE_ALL_RIGHTS) {
-		lockmgr(&med->med_rightlock, LK_EXCLUSIVE, NULL);
+		rw_enter(&med->med_rightlock, RW_WRITER);
 		mr->mr_name = mach_right_newname(l, hint);
 #ifdef DEBUG_MACH_RIGHT
 		printf("mach_right_get: insert right %x(%x)\n",
 		    mr->mr_name, mr->mr_type);
 #endif
 		LIST_INSERT_HEAD(&med->med_right, mr, mr_list);
-		lockmgr(&med->med_rightlock, LK_RELEASE, NULL);
+		rw_exit(&med->med_rightlock);
 	}
 
 rcvck:
@@ -791,9 +791,9 @@ mach_right_put(mr, right)
 {
 	struct mach_emuldata *med = mr->mr_lwp->l_proc->p_emuldata;
 
-	lockmgr(&med->med_rightlock, LK_EXCLUSIVE, NULL);
+	rw_enter(&med->med_rightlock, RW_WRITER);
 	mach_right_put_exclocked(mr, right);
-	lockmgr(&med->med_rightlock, LK_RELEASE, NULL);
+	rw_exit(&med->med_rightlock);
 
 	return;
 }
@@ -805,9 +805,13 @@ mach_right_put_shlocked(mr, right)
 {
 	struct mach_emuldata *med = mr->mr_lwp->l_proc->p_emuldata;
 
-	lockmgr(&med->med_rightlock, LK_UPGRADE, NULL);
+	if (!rw_tryupgrade(&med->med_rightlock)) {
+		/* XXX */
+		rw_exit(&med->med_rightlock);
+		rw_enter(&med->med_rightlock, RW_WRITER);
+	}
 	mach_right_put_exclocked(mr, right);
-	lockmgr(&med->med_rightlock, LK_DOWNGRADE, NULL);
+	rw_downgrade(&med->med_rightlock);
 
 	return;
 }
@@ -927,7 +931,7 @@ mach_right_check(mn, l, type)
 
 	med = (struct mach_emuldata *)l->l_proc->p_emuldata;
 
-	lockmgr(&med->med_rightlock, LK_SHARED, NULL);
+	rw_enter(&med->med_rightlock, RW_READER);
 
 #ifdef DEBUG_MACH_RIGHT
 	printf("mach_right_check: type = %x, mn = %x\n", type, mn);
@@ -943,7 +947,7 @@ mach_right_check(mn, l, type)
 			break;
 	}
 
-	lockmgr(&med->med_rightlock, LK_RELEASE, NULL);
+	rw_exit(&med->med_rightlock);
 
 	return cmr;
 }

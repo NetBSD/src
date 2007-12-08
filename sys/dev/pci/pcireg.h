@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.54.14.1 2007/11/19 00:48:17 mjf Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.54.14.2 2007/12/08 18:19:47 mjf Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -72,8 +72,8 @@ typedef u_int16_t pci_product_id_t;
 #define	PCI_STATUS_MASK				0xffff
 
 #define PCI_COMMAND_STATUS_CODE(cmd,stat)			\
-	((((cmd) & PCI_COMMAND_MASK) >> PCI_COMMAND_SHIFT) |	\
-	 (((stat) & PCI_STATUS_MASK) >> PCI_STATUS_SHIFT))	\
+	((((cmd) & PCI_COMMAND_MASK) << PCI_COMMAND_SHIFT) |	\
+	 (((stat) & PCI_STATUS_MASK) << PCI_STATUS_SHIFT))	\
 
 #define	PCI_COMMAND_IO_ENABLE			0x00000001
 #define	PCI_COMMAND_MEM_ENABLE			0x00000002

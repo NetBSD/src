@@ -1,8 +1,11 @@
-/*	$NetBSD: _que.c,v 1.3 2005/12/11 12:24:37 christos Exp $	*/
+/*	$NetBSD: patch.c,v 1.1.14.1 2007/12/08 18:16:18 mjf Exp $	*/
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Andrew Doran and Jason R. Thorpe.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -34,51 +37,71 @@
  */
 
 /*
- * Use <sys/queue.h> macros for new code, queue functions provided here
- * are obsolete. Once the remaining code using this would be converted
- * to use <sys/queue.h>, this would be removed.
+ * Patch kernel code at boot time, depending on available CPU features
+ * and configuration.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.1.14.1 2007/12/08 18:16:18 mjf Exp $");
+
+#include "opt_multiprocessor.h"
 
 #include <sys/types.h>
 #include <sys/systm.h>
 
-struct queue {
-	struct queue *q_next, *q_prev;
-};
+#include <machine/cpu.h>
+#include <machine/alpha.h>
+#include <machine/intr.h>
 
-/*
- * insert an element into a queue
- */
+void	_membar_producer(void);
+void	_membar_producer_end(void);
+void	_membar_producer_mp(void);
+void	_membar_producer_mp_end(void);
 
-void
-_insque(v1, v2)
-	void *v1;
-	void *v2;
+void	_membar_sync(void);
+void	_membar_sync_end(void);
+void	_membar_sync_mp(void);
+void	_membar_sync_mp_end(void);
+
+static void __attribute__((__unused__))
+patchfunc(void *from_s, void *from_e, void *to_s, void *to_e)
 {
-	struct queue *elem = v1, *head = v2;
-	struct queue *next;
+	int s;
 
-	next = head->q_next;
-	elem->q_next = next;
-	head->q_next = elem;
-	elem->q_prev = head;
-	next->q_prev = elem;
+	s = splhigh();
+
+	if ((uintptr_t)from_e - (uintptr_t)from_s !=
+	    (uintptr_t)to_e - (uintptr_t)to_s)
+	    	panic("patchfunc: sizes do not match (from=%p)", from_s);
+	
+	memcpy(to_s, from_s, (uintptr_t)to_e - (uintptr_t)to_s);
+	alpha_pal_imb();
+
+	splx(s);
 }
 
-/*
- * remove an element from a queue
- */
-
 void
-_remque(v)
-	void *v;
+alpha_patch(bool is_mp)
 {
-	struct queue *elem = v;
-	struct queue *next, *prev;
 
-	next = elem->q_next;
-	prev = elem->q_prev;
-	next->q_prev = prev;
-	prev->q_next = next;
-	elem->q_prev = 0;
+	/*
+	 * We allow this function to be called multiple times
+	 * (there is no harm in doing so), so long as other
+	 * CPUs have not yet actually hatched to start running
+	 * kernel code.
+	 */
+
+	KASSERT(curcpu()->ci_flags & CPUF_PRIMARY);
+	KASSERT((cpus_running & ~(1UL << cpu_number())) == 0);
+
+#if defined(MULTIPROCESSOR)
+	if (is_mp) {
+		patchfunc(_membar_producer_mp, _membar_producer_mp_end,
+			  _membar_producer, _membar_producer_end);
+		patchfunc(_membar_sync_mp, _membar_sync_mp_end,
+			  _membar_sync, _membar_sync_end);
+	}
+#else
+	KASSERT(is_mp == false);
+#endif /* MULTIPROCESSOR */
 }

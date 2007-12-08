@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_exec.c,v 1.68 2007/04/22 08:29:56 dsl Exp $	*/
+/*	$NetBSD: ibcs2_exec.c,v 1.68.14.1 2007/12/08 18:18:38 mjf Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec.c,v 1.68 2007/04/22 08:29:56 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec.c,v 1.68.14.1 2007/12/08 18:18:38 mjf Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -61,13 +61,13 @@ __KERNEL_RCSID(0, "$NetBSD: ibcs2_exec.c,v 1.68 2007/04/22 08:29:56 dsl Exp $");
 #include <compat/ibcs2/ibcs2_errno.h>
 #include <compat/ibcs2/ibcs2_syscall.h>
 
-static void ibcs2_e_proc_exec __P((struct proc *, struct exec_package *));
+static void ibcs2_e_proc_exec(struct proc *, struct exec_package *);
 
 extern struct sysent ibcs2_sysent[];
 extern const char * const ibcs2_syscallnames[];
 extern char ibcs2_sigcode[], ibcs2_esigcode[];
 #ifndef __HAVE_SYSCALL_INTERN
-void syscall __P((void));
+void syscall(void);
 #endif
 
 #ifdef IBCS2_DEBUG

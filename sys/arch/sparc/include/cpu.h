@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.82 2007/10/17 19:57:13 garbled Exp $ */
+/*	$NetBSD: cpu.h,v 1.82.2.1 2007/12/08 18:17:52 mjf Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -121,10 +121,7 @@ extern int eintstack[];
 #define	CLKF_INTR(framep)	((framep)->fp < (u_int)eintstack)
 #endif
 
-void	softintr_init(void);
-extern void *softnet_cookie;
-
-#define setsoftnet()	softintr_schedule(softnet_cookie);
+void	sparc_softintr_init(void);
 
 /*
  * Preempt the current process on the target CPU if in interrupt from

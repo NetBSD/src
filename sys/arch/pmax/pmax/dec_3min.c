@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3min.c,v 1.57 2006/12/21 15:55:24 yamt Exp $ */
+/* $NetBSD: dec_3min.c,v 1.57.30.1 2007/12/08 18:17:36 mjf Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -106,7 +106,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.57 2006/12/21 15:55:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.57.30.1 2007/12/08 18:17:36 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -154,22 +154,17 @@ static unsigned latched_cycle_cnt;
 
 static const int dec_3min_ipl2spl_table[] = {
 	[IPL_NONE] = 0,
-	[IPL_SOFT] = _SPL_SOFT,
 	[IPL_SOFTCLOCK] = _SPL_SOFTCLOCK,
 	[IPL_SOFTNET] = _SPL_SOFTNET,
-	[IPL_SOFTSERIAL] = _SPL_SOFTSERIAL,
 	/*
 	 * Since all the motherboard interrupts come through the
 	 * IOASIC, it has to be turned off for all the spls and
 	 * since we don't know what kinds of devices are in the
 	 * TURBOchannel option slots, just splhigh().
 	 */
-	[IPL_BIO] = MIPS_SPL_0_1_2_3,
-	[IPL_NET] = MIPS_SPL_0_1_2_3,
-	[IPL_TTY] = MIPS_SPL_0_1_2_3,
 	[IPL_VM] = MIPS_SPL_0_1_2_3,
-	[IPL_CLOCK] = MIPS_SPL_0_1_2_3,
-	[IPL_STATCLOCK] = MIPS_SPL_0_1_2_3,
+	[IPL_SCHED] = MIPS_SPL_0_1_2_3,
+	[IPL_HIGH] = MIPS_SPL_0_1_2_3,
 };
 
 void

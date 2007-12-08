@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.33.2.1 2007/11/19 00:47:07 mjf Exp $	*/
+/*	$NetBSD: pmap.c,v 1.33.2.2 2007/12/08 18:18:18 mjf Exp $	*/
 /*	NetBSD: pmap.c,v 1.179 2004/10/10 09:55:24 yamt Exp		*/
 
 /*
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.33.2.1 2007/11/19 00:47:07 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.33.2.2 2007/12/08 18:18:18 mjf Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_largepages.h"
@@ -77,10 +77,10 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.33.2.1 2007/11/19 00:47:07 mjf Exp $");
 #include <sys/pool.h>
 #include <sys/user.h>
 #include <sys/kernel.h>
+#include <sys/atomic.h>
 
 #include <uvm/uvm.h>
 
-#include <machine/atomic.h>
 #include <machine/cpu.h>
 #include <machine/specialreg.h>
 #include <machine/gdt.h>
@@ -465,7 +465,6 @@ static void *csrcp, *cdstp, *zerop, *ptpp;
  */
 
 struct pool_cache pmap_pdp_cache;
-u_int pmap_pdp_cache_generation;
 
 int	pmap_pdp_ctor(void *, void *, int);
 void	pmap_pdp_dtor(void *, void *);
@@ -763,10 +762,10 @@ pte_atomic_update_ma(pt_entry_t *pte, pt_entry_t *mapte, pt_entry_t npte)
 		/* must remove opte unchecked */
 		if (npte > pmap_mem_end)
 			/* must set npte unchecked */
-			xpq_queue_unchecked_pte_update(mapte, npte);
+			xpq_queue_pte_update(mapte, npte);
 		else {
 			/* must set npte checked */
-			xpq_queue_unchecked_pte_update(mapte, 0);
+			xpq_queue_pte_update(mapte, 0);
 			xpq_queue_pte_update(mapte, npte);
 		}
 	} else {
@@ -774,7 +773,7 @@ pte_atomic_update_ma(pt_entry_t *pte, pt_entry_t *mapte, pt_entry_t npte)
 		if (npte > pmap_mem_end) {
 			/* must set npte unchecked */
 			xpq_queue_pte_update(mapte, 0);
-			xpq_queue_unchecked_pte_update(mapte, npte);
+			xpq_queue_pte_update(mapte, npte);
 		} else
 			/* must set npte checked */
 			xpq_queue_pte_update(mapte, npte);
@@ -1744,6 +1743,7 @@ pmap_pdp_ctor(void *arg, void *object, int flags)
 {
 	pd_entry_t *pdir = object;
 	paddr_t pdirpa;
+	u_int npde;
 	int s;
 
 	/*
@@ -1763,19 +1763,20 @@ pmap_pdp_ctor(void *arg, void *object, int flags)
 	pdir[PDSLOT_PTE] = xpmap_ptom(pdirpa | PG_V /* | PG_KW */);
 
 	/* put in kernel VM PDEs */
+	npde = nkpde;
 	memcpy(&pdir[PDSLOT_KERN], &PDP_BASE[PDSLOT_KERN],
-	    nkpde * sizeof(pd_entry_t));
+	    npde * sizeof(pd_entry_t));
 
 	/* zero the rest */
-	memset(&pdir[PDSLOT_KERN + nkpde], 0,
-	    PAGE_SIZE - ((PDSLOT_KERN + nkpde) * sizeof(pd_entry_t)));
+	memset(&pdir[PDSLOT_KERN + npde], 0,
+	    PAGE_SIZE - ((PDSLOT_KERN + npde) * sizeof(pd_entry_t)));
 
 	pmap_kenter_pa((vaddr_t)pdir, pdirpa, VM_PROT_READ);
 	pmap_update(pmap_kernel());
 
 	/* pin page type */
 	s = splvm();
-	xpq_queue_pin_table(xpmap_ptom(pdirpa), XPQ_PIN_L2_TABLE);
+	xpq_queue_pin_table(xpmap_ptom(pdirpa));
 	xpq_flush_queue();
 	splx(s);
 
@@ -1814,7 +1815,6 @@ struct pmap *
 pmap_create()
 {
 	struct pmap *pmap;
-	u_int gen;
 
 	XENPRINTF(("pmap_create\n"));
 	pmap = pool_get(&pmap_pmap_pool, PR_WAITOK);
@@ -1850,12 +1850,11 @@ pmap_create()
 	 */
 
  try_again:
-	gen = pmap_pdp_cache_generation;
 	pmap->pm_pdir = pool_cache_get(&pmap_pdp_cache, PR_WAITOK);
 
 	simple_lock(&pmaps_lock);
 
-	if (gen != pmap_pdp_cache_generation) {
+	if (pmap->pm_pdir[PDSLOT_KERN + nkpde - 1] == 0) {
 		simple_unlock(&pmaps_lock);
 		pool_cache_destruct_object(&pmap_pdp_cache, pmap->pm_pdir);
 		goto try_again;
@@ -2141,7 +2140,7 @@ pmap_reactivate(struct pmap *pmap)
 	s = splvm();
 #endif /* defined(MULTIPROCESSOR) */
 	oldcpus = pmap->pm_cpus;
-	x86_atomic_setbits_l(&pmap->pm_cpus, cpumask);
+	atomic_or_32(&pmap->pm_cpus, cpumask);
 	if (oldcpus & cpumask) {
 		KASSERT(ci->ci_tlbstate == TLBSTATE_LAZY);
 		/* got it */
@@ -2207,7 +2206,7 @@ pmap_load()
 	 * actually switch pmap.
 	 */
 
-	x86_atomic_clearbits_l(&oldpmap->pm_cpus, cpumask);
+	atomic_and_32(&oldpmap->pm_cpus, ~cpumask);
 
 	KASSERT((pmap->pm_cpus & cpumask) == 0);
 
@@ -2224,7 +2223,7 @@ pmap_load()
 #else /* defined(MULTIPROCESSOR) */
 	s = splvm();
 #endif /* defined(MULTIPROCESSOR) */
-	x86_atomic_setbits_l(&pmap->pm_cpus, cpumask);
+	atomic_or_32(&pmap->pm_cpus, cpumask);
 	ci->ci_pmap = pmap;
 	ci->ci_tlbstate = TLBSTATE_VALID;
 	splx(s);
@@ -3776,7 +3775,7 @@ pmap_growkernel(maxkvaddr)
 	s = splhigh();	/* to be safe */
 	simple_lock(&kpm->pm_obj.vmobjlock);
 
-	for (/*null*/ ; nkpde < needed_kpde ; nkpde++) {
+	for (/*null*/ ; nkpde < needed_kpde ;) {
 
 		mapdp = (pt_entry_t *)vtomach((vaddr_t)&kpm->pm_pdir[PDSLOT_KERN + nkpde]);
 		if (uvm.page_init_done == false) {
@@ -3796,6 +3795,7 @@ pmap_growkernel(maxkvaddr)
 
 			/* count PTP as resident */
 			kpm->pm_stats.resident_count++;
+			nkpde++;
 			continue;
 		}
 
@@ -3822,12 +3822,11 @@ pmap_growkernel(maxkvaddr)
 			PDE_COPY(&pm->pm_pdir[PDSLOT_KERN + nkpde], maptp,
 			    &kpm->pm_pdir[PDSLOT_KERN + nkpde]);
 		}
+		nkpde++;
+		simple_unlock(&pmaps_lock);
 
 		/* Invalidate the PDP cache. */
 		pool_cache_invalidate(&pmap_pdp_cache);
-		pmap_pdp_cache_generation++;
-
-		simple_unlock(&pmaps_lock);
 	}
 
 	simple_unlock(&kpm->pm_obj.vmobjlock);
@@ -3937,8 +3936,8 @@ pmap_tlb_shootnow(int32_t cpumask)
 			continue;
 		if (cpumask & (1U << ci->ci_cpuid))
 			if (x86_send_ipi(ci, X86_IPI_TLB) != 0)
-				x86_atomic_clearbits_l(&self->ci_tlb_ipi_mask,
-				    (1U << ci->ci_cpuid));
+				atomic_and_32(&self->ci_tlb_ipi_mask,
+				    ~(1U << ci->ci_cpuid));
 	}
 
 	while (self->ci_tlb_ipi_mask != 0) {
@@ -4073,8 +4072,8 @@ pmap_do_tlb_shootdown_checktlbstate(struct cpu_info *ci)
 		 * mark the pmap no longer in use by this processor.
 		 */
 
-		x86_atomic_clearbits_l(&ci->ci_pmap->pm_cpus,
-		    1U << ci->ci_cpuid);
+		atomic_and_32(&ci->ci_pmap->pm_cpus,
+		    ~(1U << ci->ci_cpuid));
 		ci->ci_tlbstate = TLBSTATE_STALE;
 	}
 
@@ -4148,8 +4147,8 @@ pmap_do_tlb_shootdown(struct cpu_info *self)
 
 #ifdef MULTIPROCESSOR
 	for (CPU_INFO_FOREACH(cii, ci))
-		x86_atomic_clearbits_l(&ci->ci_tlb_ipi_mask,
-		    (1U << cpu_id));
+		atomic_and_32(&ci->ci_tlb_ipi_mask,
+		    ~(1U << cpu_id));
 #endif /* MULTIPROCESSOR */
 	__cpu_simple_unlock(&pq->pq_slock);
 

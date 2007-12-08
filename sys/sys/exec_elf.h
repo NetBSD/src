@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.91 2007/08/19 03:38:52 matt Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.91.8.1 2007/12/08 18:21:31 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -583,6 +583,7 @@ typedef struct {
 
 #define	DT_LOOS		0x60000000	/* Operating system specific range */
 #define DT_VERSYM	0x6ffffff0	/* Symbol versions */
+#define	DT_FLAGS_1	0x6ffffffb	/* ELF dynamic flags */
 #define DT_VERDEF	0x6ffffffc	/* Versions defined by file */
 #define DT_VERDEFNUM	0x6ffffffd	/* Number of versions defined by file */
 #define DT_VERNEED	0x6ffffffe	/* Versions needed by file */
@@ -590,6 +591,9 @@ typedef struct {
 #define	DT_HIOS		0x6fffffff
 #define	DT_LOPROC	0x70000000	/* Processor-specific range */
 #define	DT_HIPROC	0x7fffffff
+
+/* Flag values for DT_FLAGS_1 (incomplete) */
+#define	DF_1_INITFIRST	0x00000020	/* Object's init/fini take priority */
 
 /*
  * Auxiliary Vectors
@@ -806,7 +810,7 @@ struct netbsd_elfcore_procinfo {
 
 #ifdef _KERNEL
 
-#define ELF_AUX_ENTRIES	12		/* Size of aux array passed to loader */
+#define ELF_AUX_ENTRIES	14	/* Max size of aux array passed to loader */
 #define ELF32_NO_ADDR	(~(Elf32_Addr)0) /* Indicates addr. not yet filled in */
 #define ELF32_LINK_ADDR	((Elf32_Addr)-2) /* advises to use link address */
 #define ELF64_NO_ADDR	(~(Elf64_Addr)0) /* Indicates addr. not yet filled in */

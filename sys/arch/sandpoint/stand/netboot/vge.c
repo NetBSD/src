@@ -1,4 +1,4 @@
-/* $NetBSD: vge.c,v 1.8 2007/11/02 02:31:12 nisimura Exp $ */
+/* $NetBSD: vge.c,v 1.8.2.1 2007/12/08 18:17:45 mjf Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -107,8 +107,8 @@ int vge_recv(void *, char *, unsigned, unsigned);
 #define T0_OWC		(1U << 5)	/* found out of window collision */
 #define T0_COLS		(1U << 4)	/* collision detected */
 #define T0_NCRMASK	0xf		/* number of collision retries */
-#define T1_EOF		(1U << 25)	/* last frame segment */
-#define T1_SOF		(1U << 24)	/* first frame segment */
+#define T1_EOF		(1U << 25)	/* TCP large last segment */
+#define T1_SOF		(1U << 24)	/* TCP large first segment */
 #define T1_TIC		(1U << 13)	/* post Tx done interrupt */
 #define T1_PIC		(1U << 22)	/* post priority interrupt */
 #define T1_VTAG		(1U << 21)	/* insert VLAG tag */
@@ -121,6 +121,7 @@ int vge_recv(void *, char *, unsigned, unsigned);
 #define T1_CFI		(1U << 12)	/* VLAN CFI */
 #define T1_VID		0x00000fff	/* VLAN ID 11:0 */
 #define T_FLMASK	0x00003fff	/* Tx frame/segment length */
+#define TF0_Q		(1U << 31)	/* "Q" bit of tf[0].hi */
 
 struct tdesc {
 	uint32_t t0, t1;
@@ -142,25 +143,25 @@ struct rdesc {
 #define VGE_PAR5	0x05		/* SA [5] */
 #define VGE_CAM0	0x10
 #define VGE_RCR		0x06		/* Rx control */
-#define	 RCR_AP		(1U << 6)	/* accept unicast frame */
-#define	 RCR_AL		(1U << 5)	/* accept large frame */
-#define	 RCR_PROM	(1U << 4)	/* accept any frame */
-#define	 RCR_AB		(1U << 3)	/* accept broadcast frame */
-#define	 RCR_AM		(1U << 2)	/* use multicast filter */  
+#define  RCR_AP		(1U << 6)	/* accept unicast frame */
+#define  RCR_AL		(1U << 5)	/* accept large frame */
+#define  RCR_PROM	(1U << 4)	/* accept any frame */
+#define  RCR_AB		(1U << 3)	/* accept broadcast frame */
+#define  RCR_AM		(1U << 2)	/* use multicast filter */  
 #define VGE_CTL0	0x08		/* control #0 */
-#define	 CTL0_TXON	(1U << 4)
-#define	 CTL0_RXON	(1U << 3)
-#define	 CTL0_STOP	(1U << 2)
-#define	 CTL0_START	(1U << 1)
+#define  CTL0_TXON	(1U << 4)
+#define  CTL0_RXON	(1U << 3)
+#define  CTL0_STOP	(1U << 2)
+#define  CTL0_START	(1U << 1)
 #define VGE_CTL1	0x09		/* control #1 */
-#define	 CTL1_RESET	(1U << 7)
+#define  CTL1_RESET	(1U << 7)
 #define VGE_CTL2	0x0a		/* control #2 */
-#define	 CTL2_3XFLC	(1U << 7)	/* 802.3x PAUSE flow control */
-#define	 CTL2_TPAUSE	(1U << 6)	/* handle PAUSE on transmit side */
-#define	 CTL2_RPAUSE	(1U << 5)	/* handle PAUSE on receive side */
-#define	 CTL2_HDXFLC	(1U << 4)	/* HDX jabber flow control */
+#define  CTL2_3XFLC	(1U << 7)	/* 802.3x PAUSE flow control */
+#define  CTL2_TPAUSE	(1U << 6)	/* handle PAUSE on transmit side */
+#define  CTL2_RPAUSE	(1U << 5)	/* handle PAUSE on receive side */
+#define  CTL2_HDXFLC	(1U << 4)	/* HDX jabber flow control */
 #define VGE_CTL3	0x0b		/* control #3 */
-#define	 CTL3_GINTMASK	(1U << 1)
+#define  CTL3_GINTMASK	(1U << 1)
 #define VGE_TCR		0x07		/* Tx control */
 #define VGE_DESCHI	0x18		/* RDES/TDES base high 63:32 */
 #define VGE_DATAHI	0x1c		/* frame data base high 63:32 */
@@ -178,22 +179,22 @@ struct rdesc {
 #define VGE_MIICFG	0x6c		/* PHY number 4:0 */
 #define VGE_PHYSR0	0x6e		/* PHY status */
 #define VGE_MIICR	0x70		/* MII control */
-#define	 MIICR_RCMD	(1U << 6)	/* MII read operation */
-#define	 MIICR_WCMD	(1U << 5)	/* MII write operation */
+#define  MIICR_RCMD	(1U << 6)	/* MII read operation */
+#define  MIICR_WCMD	(1U << 5)	/* MII write operation */
 #define VGE_MIIADR	0x71		/* MII indirect */
 #define VGE_MIIDATA	0x72		/* MII read/write */
 #define VGE_CAMADR	0x68
-#define	 CAMADR_EN	(1U << 7)	/* enable to manipulate */
+#define  CAMADR_EN	(1U << 7)	/* enable to manipulate */
 #define VGE_CAMCTL	0x69
-#define	 CAMCTL_RD	(1U << 3)	/* CAM read op, W1S */
-#define	 CAMCTL_WR	(1U << 2)	/* CAM write op, W1S */
+#define  CAMCTL_RD	(1U << 3)	/* CAM read op, W1S */
+#define  CAMCTL_WR	(1U << 2)	/* CAM write op, W1S */
 #define VGE_CHIPGCR	0x9f		/* chip global control */
 
 #define FRAMESIZE	1536
 
 struct local {
-	struct tdesc TxD;
-	struct rdesc RxD[2];
+	struct tdesc txd;
+	struct rdesc rxd[2];
 	uint8_t rxstore[2][FRAMESIZE];
 	unsigned csr, rx;
 	unsigned phy, bmsr, anlpar;
@@ -209,8 +210,8 @@ vge_init(unsigned tag, void *data)
 {
 	unsigned val, i, loop, chipgcr;
 	struct local *l;
-	struct tdesc *TxD;
-	struct rdesc *RxD;
+	struct tdesc *txd;
+	struct rdesc *rxd;
 	uint8_t *en;
 
 	val = pcicfgread(tag, PCI_ID_REG);
@@ -242,18 +243,18 @@ vge_init(unsigned tag, void *data)
 		en[0], en[1], en[2], en[3], en[4], en[5]);
 #endif
 
-	TxD = &l->TxD;
-	RxD = &l->RxD[0];
-	RxD[0].r0 = htole32(R0_OWN);
-	RxD[0].r1 = 0;
-	RxD[0].r2 = htole32(VTOPHYS(l->rxstore[0]));
-	RxD[0].r3 = htole32(FRAMESIZE << 16);
-	RxD[1].r0 = htole32(R0_OWN);
-	RxD[1].r1 = 0;
-	RxD[1].r2 = htole32(VTOPHYS(l->rxstore[1]));
-	RxD[1].r3 = htole32(FRAMESIZE << 16);
-	wbinv(TxD, sizeof(struct tdesc));
-	wbinv(RxD, 2 * sizeof(struct rdesc));
+	txd = &l->txd;
+	rxd = &l->rxd[0];
+	rxd[0].r0 = htole32(R0_OWN);
+	rxd[0].r1 = 0;
+	rxd[0].r2 = htole32(VTOPHYS(l->rxstore[0]));
+	rxd[0].r3 = htole32(FRAMESIZE << 16);
+	rxd[1].r0 = htole32(R0_OWN);
+	rxd[1].r1 = 0;
+	rxd[1].r2 = htole32(VTOPHYS(l->rxstore[1]));
+	rxd[1].r3 = htole32(FRAMESIZE << 16);
+	wbinv(txd, sizeof(struct tdesc));
+	wbinv(rxd, 2 * sizeof(struct rdesc));
 	l->rx = 0;
 
 	/* set own station address into CAM index #0 */	 
@@ -274,11 +275,14 @@ vge_init(unsigned tag, void *data)
 	/* prepare descriptor lists */
 	CSR_WRITE_2(l, VGE_DATAHI, 0);
 	CSR_WRITE_4(l, VGE_DESCHI, 0);
-	CSR_WRITE_4(l, VGE_RDB, VTOPHYS(RxD));
+	CSR_WRITE_4(l, VGE_RDB, VTOPHYS(rxd));
 	CSR_WRITE_2(l, VGE_RDCSIZE, 1);
 	CSR_WRITE_2(l, VGE_RBRDU, 1);
-	CSR_WRITE_4(l, VGE_TDB0, VTOPHYS(TxD));
+	CSR_WRITE_4(l, VGE_TDB0, VTOPHYS(txd));
 	CSR_WRITE_2(l, VGE_TDCSIZE, 0);
+	CSR_WRITE_2(l, VGE_RDCSR, 01);
+	CSR_WRITE_2(l, VGE_RDCSR, 04);
+	CSR_WRITE_2(l, VGE_TDCSR, 01);
 
 	/* determine speed and duplexity */
 	val = vge_mii_read(l, l->phy, 31);
@@ -298,14 +302,12 @@ vge_init(unsigned tag, void *data)
 	/* enable transmitter and receiver */
 	l->rcr = RCR_AP;
 	l->ctl0 |= (CTL0_TXON | CTL0_RXON | CTL0_START);
-	CSR_WRITE_2(l, VGE_RDCSR, 05);
-	CSR_WRITE_2(l, VGE_TDCSR, 01);
 	CSR_WRITE_1(l, VGE_RCR, l->rcr);
 	CSR_WRITE_1(l, VGE_TCR, 0);
 	CSR_WRITE_4(l, VGE_ISR, ~0);
 	CSR_WRITE_4(l, VGE_IEN, 0);
-	CSR_WRITE_2(l, VGE_CTL0, CTL0_START);
-	CSR_WRITE_2(l, VGE_CTL0, l->ctl0);
+	CSR_WRITE_1(l, VGE_CTL0, CTL0_START);
+	CSR_WRITE_1(l, VGE_CTL0, l->ctl0);
 
 	return l;
 }
@@ -314,23 +316,25 @@ int
 vge_send(void *dev, char *buf, unsigned len)
 {
 	struct local *l = dev;
-	struct tdesc *TxD;
-	int loop;
+	struct tdesc *txd;
+	unsigned loop;
 	
 	wbinv(buf, len);
 	len = (len & T_FLMASK);
-	TxD = &l->TxD;
-	TxD->tf[0].lo = htole32(VTOPHYS(buf));
-	TxD->tf[0].hi = htole32(len << 16);
-	TxD->t1 = htole32(T1_SOF | T1_EOF | 1 << 28);
-	TxD->t0 = htole32(T0_OWN | len << 16);
-	wbinv(TxD, sizeof(struct tdesc));
+	txd = &l->txd;
+	txd->tf[0].lo = htole32(VTOPHYS(buf));
+	txd->tf[0].hi = htole32(len << 16);
+	txd->t1 = htole32(T1_SOF | T1_EOF | (2 << 28));
+	txd->t0 = htole32(T0_OWN | len << 16);
+	txd->tf[0].hi |= htole32(TF0_Q);
+	wbinv(txd, sizeof(struct tdesc));
+	CSR_WRITE_2(l, VGE_TDCSR, 04);
 	loop = 100;
 	do {
-		if ((le32toh(TxD->t0) & T0_OWN) == 0)
+		if ((le32toh(txd->t0) & T0_OWN) == 0)
 			goto done;
 		DELAY(10);
-		inv(TxD, sizeof(struct tdesc));
+		inv(txd, sizeof(struct tdesc));
 	} while (--loop > 0);
 	printf("xmit failed\n");
 	return -1;
@@ -342,40 +346,40 @@ int
 vge_recv(void *dev, char *buf, unsigned maxlen, unsigned timo)
 {
 	struct local *l = dev;
-	struct rdesc *RxD;
+	struct rdesc *rxd;
 	unsigned bound, rxstat, len;
 	uint8_t *ptr;
 
 	bound = 1000 * timo;
 printf("recving with %u sec. timeout\n", timo);
   again:
-	RxD = &l->RxD[l->rx];
+	rxd = &l->rxd[l->rx];
 	do {
-		inv(RxD, sizeof(struct rdesc));
-		rxstat = le32toh(RxD->r0);
+		inv(rxd, sizeof(struct rdesc));
+		rxstat = le32toh(rxd->r0);
 		if ((rxstat & R0_OWN) == 0)
 			goto gotone;
 		DELAY(1000);	/* 1 milli second */
-	} while (bound-- > 0);
+	} while (--bound > 0);
 	errno = 0;
 	return -1;
   gotone:
 	if ((rxstat & R0_RXOK) == 0) {
-		RxD->r0 = htole32(R0_OWN);
-		RxD->r1 = 0;
-		wbinv(RxD, sizeof(struct rdesc));
+		rxd->r0 = htole32(R0_OWN);
+		rxd->r1 = 0;
+		wbinv(rxd, sizeof(struct rdesc));
 		l->rx ^= 1;
 		goto again;
 	}
-	len = (rxstat & R0_FLMASK) >> 16;
+	len = ((rxstat & R0_FLMASK) >> 16) - 4 /* HASFCS */;
 	if (len > maxlen)
 		len = maxlen;
 	ptr = l->rxstore[l->rx];
 	inv(ptr, len);
 	memcpy(buf, ptr, len);
-	RxD->r0 = htole32(R0_OWN);
-	RxD->r1 = 0;
-	wbinv(RxD, sizeof(struct rdesc));
+	rxd->r0 = htole32(R0_OWN);
+	rxd->r1 = 0;
+	wbinv(rxd, sizeof(struct rdesc));
 	l->rx ^= 1;
 	return len;
 }

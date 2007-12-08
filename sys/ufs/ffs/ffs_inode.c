@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.89 2007/10/08 18:01:28 ad Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.89.4.1 2007/12/08 18:21:38 mjf Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.89 2007/10/08 18:01:28 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.89.4.1 2007/12/08 18:21:38 mjf Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -307,7 +307,7 @@ ffs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred,
 			 * so that it will have no data structures left.
 			 */
 			if ((error = VOP_FSYNC(ovp, cred, FSYNC_WAIT,
-			    0, 0, l)) != 0) {
+			    0, 0)) != 0) {
 				genfs_node_unlock(ovp);
 				return (error);
 			}

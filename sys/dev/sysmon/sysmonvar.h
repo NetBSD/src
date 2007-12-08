@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmonvar.h,v 1.20.2.1 2007/11/19 00:48:25 mjf Exp $	*/
+/*	$NetBSD: sysmonvar.h,v 1.20.2.2 2007/12/08 18:19:59 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -71,7 +71,6 @@ struct sysmon_envsys {
 #define SME_FLAG_BUSY 		0x00000001 	/* device busy */
 #define SME_DISABLE_REFRESH	0x00000002	/* disable sme_refresh */
 #define SME_CALLOUT_INITIALIZED	0x00000004	/* callout was initialized */
-#define SME_CALLOUT_BUSY	0x00000008	/* callout is busy */
 
 	void *sme_cookie;		/* for ENVSYS back-end */
 

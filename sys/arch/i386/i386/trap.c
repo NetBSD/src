@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.223.2.1 2007/11/19 00:46:29 mjf Exp $	*/
+/*	$NetBSD: trap.c,v 1.223.2.2 2007/12/08 18:17:11 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2005 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.223.2.1 2007/11/19 00:46:29 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.223.2.2 2007/12/08 18:17:11 mjf Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -230,6 +230,30 @@ xmm_si_code(struct lwp *l)
         }
 }
 
+static void *
+onfault_handler(const struct pcb *pcb, const struct trapframe *tf)
+{
+	struct onfault_table {
+		uintptr_t start;
+		uintptr_t end;
+		void *handler;
+	};
+	extern const struct onfault_table onfault_table[];
+	const struct onfault_table *p;
+	uintptr_t pc;
+
+	if (pcb->pcb_onfault != NULL) {
+		return pcb->pcb_onfault;
+	}
+
+	pc = tf->tf_eip;
+	for (p = onfault_table; p->start; p++) {
+		if (p->start <= pc && pc < p->end) {
+			return p->handler;
+		}
+	}
+	return NULL;
+}
 
 /*
  * trap(frame):
@@ -351,11 +375,12 @@ trap(frame)
 		if (p == NULL)
 			goto we_re_toast;
 		/* Check for copyin/copyout fault. */
-		if (pcb->pcb_onfault != 0) {
+		onfault = onfault_handler(pcb, frame);
+		if (onfault != NULL) {
 copyefault:
 			error = EFAULT;
 copyfault:
-			frame->tf_eip = (int)pcb->pcb_onfault;
+			frame->tf_eip = (uintptr_t)onfault;
 			frame->tf_eax = error;
 			return;
 		}
@@ -505,15 +530,11 @@ copyfault:
 		uvmexp.softs++;
 		if (l->l_pflag & LP_OWEUPC) {
 			l->l_pflag &= ~LP_OWEUPC;
-			KERNEL_LOCK(1, l);
 			ADDUPROF(l);
-			KERNEL_UNLOCK_LAST(l);
 		}
 		/* Allow a forced task switch. */
-		if (curcpu()->ci_want_resched) { /* XXX CSE me? */
-			curcpu()->ci_want_resched = 0;
+		if (curcpu()->ci_want_resched)
 			preempt();
-		}
 		goto out;
 
 	case T_DNA|T_USER: {
@@ -570,15 +591,27 @@ copyfault:
 		 * fusubail is used by [fs]uswintr() to prevent page faulting
 		 * from inside the profiling interrupt.
 		 */
-		if (pcb->pcb_onfault == fusubail)
+		if ((onfault = pcb->pcb_onfault) == fusubail) {
 			goto copyefault;
+		}
 
 #if 0
 		/* XXX - check only applies to 386's and 486's with WP off */
 		if (frame->tf_err & PGEX_P)
 			goto we_re_toast;
 #endif
-		cr2 = rcr2();
+
+		/*
+		 * XXXhack: xen2 hypervisor pushes cr2 onto guest's stack
+		 * and Xtrap0e passes it to us as an extra hidden argument.
+		 */
+#if defined(XEN) && !defined(XEN3)
+#define	FETCH_CR2	(((uint32_t *)(void *)&frame)[1])
+#else /* defined(XEN) && !defined(XEN3) */
+#define	FETCH_CR2	rcr2()
+#endif /* defined(XEN) && !defined(XEN3) */
+
+		cr2 = FETCH_CR2;
 		KERNEL_LOCK(1, NULL);
 		goto faultcommon;
 
@@ -589,7 +622,7 @@ copyfault:
 		vm_prot_t ftype;
 		extern struct vm_map *kernel_map;
 
-		cr2 = rcr2();
+		cr2 = FETCH_CR2;
 		KERNEL_LOCK(1, l);
 	faultcommon:
 		vm = p->p_vmspace;
@@ -641,9 +674,13 @@ copyfault:
 				 * it never touch userspace.
 				 */
 
-				if (onfault != kcopy_fault &&
-				    curcpu()->ci_want_pmapload)
-					pmap_load();
+				if (curcpu()->ci_want_pmapload) {
+					onfault = onfault_handler(pcb, frame);
+					if (onfault != NULL &&
+					    onfault != kcopy_fault) {
+						pmap_load();
+					}
+				}
 				return;
 			}
 			KERNEL_UNLOCK_LAST(l);
@@ -660,7 +697,8 @@ copyfault:
 		}
 
 		if (type == T_PAGEFLT) {
-			if (pcb->pcb_onfault != 0) {
+			onfault = onfault_handler(pcb, frame);
+			if (onfault != NULL) {
 				KERNEL_UNLOCK_ONE(NULL);
 				goto copyfault;
 			}
@@ -720,7 +758,7 @@ copyfault:
 		}
 		break;
 
-#if	NISA > 0 || NMCA > 0
+#if !defined(XEN) && (NISA > 0 || NMCA > 0)
 	case T_NMI:
 #if defined(KGDB) || defined(DDB)
 		/* NMI can be hooked up to a pushbutton for debugging */
@@ -749,7 +787,7 @@ copyfault:
 		else
 			return;
 #endif /* NMCA > 0 */
-#endif /* NISA > 0 || NMCA > 0 */
+#endif /* !defined(XEN) && (NISA > 0 || NMCA > 0) */
 	}
 
 	if ((type & T_USER) == 0)

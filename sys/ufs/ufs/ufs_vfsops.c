@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vfsops.c,v 1.34 2007/06/30 09:37:54 pooka Exp $	*/
+/*	$NetBSD: ufs_vfsops.c,v 1.34.14.1 2007/12/08 18:21:43 mjf Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.34 2007/06/30 09:37:54 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.34.14.1 2007/12/08 18:21:43 mjf Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -74,7 +74,7 @@ struct pool ufs_direct_pool;
  */
 /* ARGSUSED */
 int
-ufs_start(struct mount *mp, int flags, struct lwp *l)
+ufs_start(struct mount *mp, int flags)
 {
 
 	return (0);
@@ -99,8 +99,9 @@ ufs_root(struct mount *mp, struct vnode **vpp)
  * Do operations associated with quotas
  */
 int
-ufs_quotactl(struct mount *mp, int cmds, uid_t uid, void *arg, struct lwp *l)
+ufs_quotactl(struct mount *mp, int cmds, uid_t uid, void *arg)
 {
+	struct lwp *l = curlwp;
 
 #ifndef QUOTA
 	(void) mp;

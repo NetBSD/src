@@ -1,3 +1,5 @@
+/* $NetBSD: drm_drawable.c,v 1.1.22.1 2007/12/08 18:19:28 mjf Exp $ */
+
 /* drm_drawable.h -- IOCTLs for drawables -*- linux-c -*-
  * Created: Tue Feb  2 08:37:54 1999 by faith@valinux.com
  */

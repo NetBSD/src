@@ -1,4 +1,4 @@
-/* $NetBSD: unichromefb.c,v 1.8 2007/10/19 12:00:56 ad Exp $ */
+/* $NetBSD: unichromefb.c,v 1.8.2.1 2007/12/08 18:19:48 mjf Exp $ */
 
 /*-
  * Copyright (c) 2006 Jared D. McNeill <jmcneill@invisible.ca>
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: unichromefb.c,v 1.8 2007/10/19 12:00:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: unichromefb.c,v 1.8.2.1 2007/12/08 18:19:48 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_node.c,v 1.11 2007/09/24 00:42:12 rumble Exp $	*/
+/*	$NetBSD: filecore_node.c,v 1.11.4.1 2007/12/08 18:20:13 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1994
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_node.c,v 1.11 2007/09/24 00:42:12 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_node.c,v 1.11.4.1 2007/12/08 18:20:13 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -229,7 +229,6 @@ filecore_inactive(v)
 		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
-	struct lwp *l = ap->a_l;
 	struct filecore_node *ip = VTOI(vp);
 	int error = 0;
 
@@ -243,7 +242,7 @@ filecore_inactive(v)
 	 * so that it can be reused immediately.
 	 */
 	if (filecore_staleinode(ip))
-		vrecycle(vp, (struct simplelock *)0, l);
+		vrecycle(vp, (struct simplelock *)0, curlwp);
 	return error;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: uscanner.c,v 1.57.6.1 2007/11/19 00:48:27 mjf Exp $	*/
+/*	$NetBSD: uscanner.c,v 1.57.6.2 2007/12/08 18:20:09 mjf Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.57.6.1 2007/11/19 00:48:27 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.57.6.2 2007/12/08 18:20:09 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -744,7 +744,7 @@ uscannerkqfilter(dev_t dev, struct knote *kn)
 	USB_GET_SC(uscanner, USCANNERUNIT(dev), sc);
 
 	if (sc->sc_dying)
-		return (1);
+		return (ENXIO);
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
@@ -759,7 +759,7 @@ uscannerkqfilter(dev_t dev, struct knote *kn)
 		break;
 
 	default:
-		return (1);
+		return (EINVAL);
 	}
 
 	kn->kn_hook = sc;

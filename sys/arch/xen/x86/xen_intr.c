@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_intr.c,v 1.5 2007/09/26 19:48:39 ad Exp $	*/
+/*	$NetBSD: xen_intr.c,v 1.1.4.1 2007/12/08 18:18:24 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_intr.c,v 1.5 2007/09/26 19:48:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_intr.c,v 1.1.4.1 2007/12/08 18:18:24 mjf Exp $");
 
 #include <sys/param.h>
 
@@ -85,6 +85,8 @@ spllower(int nlevel)
 	}
 }
 
+#ifndef __x86_64__
+
 /*
  * Software interrupt registration
  *
@@ -99,6 +101,7 @@ softintr(int sir)
 
 	__asm volatile("orl %1, %0" : "=m"(ci->ci_ipending) : "ir" (1 << sir));
 }
+#endif
 
 void
 x86_disable_intr(void)

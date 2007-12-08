@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.122 2007/10/05 02:34:58 dyoung Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.122.4.1 2007/12/08 18:20:42 mjf Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.122 2007/10/05 02:34:58 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.122.4.1 2007/12/08 18:20:42 mjf Exp $");
 
 #include "opt_pipe.h"
 
@@ -897,7 +897,7 @@ sys_setsockopt(struct lwp *l, void *v, register_t *retval)
 		goto out;
 	}
 	if (SCARG(uap, val)) {
-		m = getsombuf(so);
+		m = getsombuf(so, MT_SOOPTS);
 		if (len > MLEN)
 			m_clget(m, M_WAIT);
 		error = copyin(SCARG(uap, val), mtod(m, void *), len);

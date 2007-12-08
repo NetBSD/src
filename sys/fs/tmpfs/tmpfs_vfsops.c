@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vfsops.c,v 1.29.2.1 2007/11/19 00:48:32 mjf Exp $	*/
+/*	$NetBSD: tmpfs_vfsops.c,v 1.29.2.2 2007/12/08 18:20:21 mjf Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.29.2.1 2007/11/19 00:48:32 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.29.2.2 2007/12/08 18:20:21 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -67,18 +67,15 @@ MALLOC_JUSTDEFINE(M_TMPFSTMP, "tmpfs temp", "tmpfs temporary structures");
 
 /* --------------------------------------------------------------------- */
 
-static int	tmpfs_mount(struct mount *, const char *, void *, size_t *,
-		    struct lwp *);
-static int	tmpfs_start(struct mount *, int, struct lwp *);
-static int	tmpfs_unmount(struct mount *, int, struct lwp *);
+static int	tmpfs_mount(struct mount *, const char *, void *, size_t *);
+static int	tmpfs_start(struct mount *, int);
+static int	tmpfs_unmount(struct mount *, int);
 static int	tmpfs_root(struct mount *, struct vnode **);
-static int	tmpfs_quotactl(struct mount *, int, uid_t, void *,
-		    struct lwp *);
 static int	tmpfs_vget(struct mount *, ino_t, struct vnode **);
 static int	tmpfs_fhtovp(struct mount *, struct fid *, struct vnode **);
 static int	tmpfs_vptofh(struct vnode *, struct fid *, size_t *);
-static int	tmpfs_statvfs(struct mount *, struct statvfs *, struct lwp *);
-static int	tmpfs_sync(struct mount *, int, kauth_cred_t, struct lwp *);
+static int	tmpfs_statvfs(struct mount *, struct statvfs *);
+static int	tmpfs_sync(struct mount *, int, kauth_cred_t);
 static void	tmpfs_init(void);
 static void	tmpfs_done(void);
 static int	tmpfs_snapshot(struct mount *, struct vnode *,
@@ -87,9 +84,9 @@ static int	tmpfs_snapshot(struct mount *, struct vnode *,
 /* --------------------------------------------------------------------- */
 
 static int
-tmpfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
-    struct lwp *l)
+tmpfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 {
+	struct lwp *l = curlwp;
 	int error;
 	ino_t nodes;
 	size_t pages;
@@ -190,8 +187,7 @@ tmpfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
 /* --------------------------------------------------------------------- */
 
 static int
-tmpfs_start(struct mount *mp, int flags,
-    struct lwp *l)
+tmpfs_start(struct mount *mp, int flags)
 {
 
 	return 0;
@@ -201,7 +197,7 @@ tmpfs_start(struct mount *mp, int flags,
 
 /* ARGSUSED2 */
 static int
-tmpfs_unmount(struct mount *mp, int mntflags, struct lwp *l)
+tmpfs_unmount(struct mount *mp, int mntflags)
 {
 	int error;
 	int flags = 0;
@@ -282,17 +278,6 @@ tmpfs_root(struct mount *mp, struct vnode **vpp)
 /* --------------------------------------------------------------------- */
 
 static int
-tmpfs_quotactl(struct mount *mp, int cmd, uid_t uid,
-    void *arg, struct lwp *l)
-{
-
-	printf("tmpfs_quotactl called; need for it unknown yet\n");
-	return EOPNOTSUPP;
-}
-
-/* --------------------------------------------------------------------- */
-
-static int
 tmpfs_vget(struct mount *mp, ino_t ino,
     struct vnode **vpp) 
 {
@@ -361,7 +346,7 @@ tmpfs_vptofh(struct vnode *vp, struct fid *fhp, size_t *fh_size)
 
 /* ARGSUSED2 */
 static int
-tmpfs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l)
+tmpfs_statvfs(struct mount *mp, struct statvfs *sbp)
 {
 	fsfilcnt_t freenodes, usednodes;
 	struct tmpfs_mount *tmp;
@@ -398,7 +383,7 @@ tmpfs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l)
 /* ARGSUSED0 */
 static int
 tmpfs_sync(struct mount *mp, int waitfor,
-    kauth_cred_t uc, struct lwp *l)
+    kauth_cred_t uc)
 {
 
 	return 0;
@@ -458,7 +443,7 @@ struct vfsops tmpfs_vfsops = {
 	tmpfs_start,			/* vfs_start */
 	tmpfs_unmount,			/* vfs_unmount */
 	tmpfs_root,			/* vfs_root */
-	tmpfs_quotactl,			/* vfs_quotactl */
+	(void *)eopnotsupp,		/* vfs_quotactl */
 	tmpfs_statvfs,			/* vfs_statvfs */
 	tmpfs_sync,			/* vfs_sync */
 	tmpfs_vget,			/* vfs_vget */

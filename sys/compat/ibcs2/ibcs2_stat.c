@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_stat.c,v 1.39 2007/04/22 08:29:56 dsl Exp $	*/
+/*	$NetBSD: ibcs2_stat.c,v 1.39.14.1 2007/12/08 18:18:40 mjf Exp $	*/
 /*
  * Copyright (c) 1995, 1998 Scott Bartram
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_stat.c,v 1.39 2007/04/22 08:29:56 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_stat.c,v 1.39.14.1 2007/12/08 18:18:40 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,9 +53,9 @@ __KERNEL_RCSID(0, "$NetBSD: ibcs2_stat.c,v 1.39 2007/04/22 08:29:56 dsl Exp $");
 #include <compat/ibcs2/ibcs2_util.h>
 #include <compat/ibcs2/ibcs2_utsname.h>
 
-static void bsd_stat2ibcs_stat __P((struct stat *, struct ibcs2_stat *));
-static int cvt_statfs __P((struct statvfs *, void *, int));
-static int cvt_statvfs __P((struct statvfs *, void *, int));
+static void bsd_stat2ibcs_stat(struct stat *, struct ibcs2_stat *);
+static int cvt_statfs(struct statvfs *, void *, int);
+static int cvt_statvfs(struct statvfs *, void *, int);
 
 static void
 bsd_stat2ibcs_stat(st, st4)
@@ -155,7 +155,7 @@ ibcs2_sys_statfs(struct lwp *l, void *v, register_t *retval)
 	mp = nd.ni_vp->v_mount;
 	sp = &mp->mnt_stat;
 	vrele(nd.ni_vp);
-	if ((error = VFS_STATVFS(mp, sp, l)) != 0)
+	if ((error = VFS_STATVFS(mp, sp)) != 0)
 		return (error);
 	sp->f_flag = mp->mnt_flag & MNT_VISFLAGMASK;
 	return cvt_statfs(sp, (void *)SCARG(uap, buf), SCARG(uap, len));
@@ -181,7 +181,7 @@ ibcs2_sys_fstatfs(struct lwp *l, void *v, register_t *retval)
 		return (error);
 	mp = ((struct vnode *)fp->f_data)->v_mount;
 	sp = &mp->mnt_stat;
-	if ((error = VFS_STATVFS(mp, sp, l)) != 0)
+	if ((error = VFS_STATVFS(mp, sp)) != 0)
 		goto out;
 	sp->f_flag = mp->mnt_flag & MNT_VISFLAGMASK;
 	error = cvt_statfs(sp, (void *)SCARG(uap, buf), SCARG(uap, len));
@@ -208,7 +208,7 @@ ibcs2_sys_statvfs(struct lwp *l, void *v, register_t *retval)
 	mp = nd.ni_vp->v_mount;
 	sp = &mp->mnt_stat;
 	vrele(nd.ni_vp);
-	if ((error = VFS_STATVFS(mp, sp, l)) != 0)
+	if ((error = VFS_STATVFS(mp, sp)) != 0)
 		return (error);
 	sp->f_flag = mp->mnt_flag & MNT_VISFLAGMASK;
 	return cvt_statvfs(sp, (void *)SCARG(uap, buf),
@@ -233,7 +233,7 @@ ibcs2_sys_fstatvfs(struct lwp *l, void *v, register_t *retval)
 		return (error);
 	mp = ((struct vnode *)fp->f_data)->v_mount;
 	sp = &mp->mnt_stat;
-	if ((error = VFS_STATVFS(mp, sp, l)) != 0)
+	if ((error = VFS_STATVFS(mp, sp)) != 0)
 		goto out;
 	sp->f_flag = mp->mnt_flag & MNT_VISFLAGMASK;
 	error = cvt_statvfs(sp, SCARG(uap, buf), sizeof(struct ibcs2_statvfs));

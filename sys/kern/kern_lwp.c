@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.74.4.1 2007/11/19 00:48:39 mjf Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.74.4.2 2007/12/08 18:20:29 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -205,7 +205,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.74.4.1 2007/11/19 00:48:39 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.74.4.2 2007/12/08 18:20:29 mjf Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -225,6 +225,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.74.4.1 2007/11/19 00:48:39 mjf Exp $"
 #include <sys/kmem.h>
 #include <sys/intr.h>
 #include <sys/lwpctl.h>
+#include <sys/atomic.h>
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_object.h>
@@ -571,6 +572,7 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, bool inmem, int flags,
 	l2->l_refcnt = 1;
 	l2->l_class = sclass;
 	l2->l_kpriority = l1->l_kpriority;
+	l2->l_kpribase = PRI_KERNEL;
 	l2->l_priority = l1->l_priority;
 	l2->l_inheritedprio = -1;
 	l2->l_mutex = l1->l_cpu->ci_schedstate.spc_mutex;
@@ -627,9 +629,7 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, bool inmem, int flags,
 	mutex_exit(&p2->p_smutex);
 
 	mutex_enter(&proclist_lock);
-	mutex_enter(&proclist_mutex);
 	LIST_INSERT_HEAD(&alllwp, l2, l_list);
-	mutex_exit(&proclist_mutex);
 	mutex_exit(&proclist_lock);
 
 	SYSCALL_TIME_LWP_INIT(l2);
@@ -650,7 +650,14 @@ lwp_startup(struct lwp *prev, struct lwp *new)
 {
 
 	if (prev != NULL) {
-		lwp_unlock(prev);
+		/*
+		 * Normalize the count of the spin-mutexes, it was
+		 * increased in mi_switch().  Unmark the state of
+		 * context switch - it is finished for previous LWP.
+		 */
+		curcpu()->ci_mtx_count++;
+		membar_exit();
+		prev->l_ctxswtch = 0;
 	}
 	spl0();
 	pmap_activate(new);
@@ -1139,7 +1146,7 @@ lwp_setlock(struct lwp *l, kmutex_t *new)
 
 	KASSERT(mutex_owned(l->l_mutex));
 
-	mb_write();
+	membar_producer();
 	l->l_mutex = new;
 }
 
@@ -1155,7 +1162,7 @@ lwp_unlock_to(struct lwp *l, kmutex_t *new)
 	KASSERT(mutex_owned(l->l_mutex));
 
 	old = l->l_mutex;
-	mb_write();
+	membar_producer();
 	l->l_mutex = new;
 	mutex_spin_exit(old);
 }
@@ -1285,7 +1292,7 @@ lwp_need_userret(struct lwp *l)
 	 * that the condition will be seen before forcing the LWP to enter
 	 * kernel mode.
 	 */
-	mb_write();
+	membar_producer();
 	cpu_signotify(l);
 }
 
@@ -1439,8 +1446,11 @@ lwp_ctl_alloc(vaddr_t *uaddr)
 	l = curlwp;
 	p = l->l_proc;
 
-	if (l->l_lcpage != NULL)
+	if (l->l_lcpage != NULL) {
+		lcp = l->l_lcpage;
+		*uaddr = lcp->lcp_uaddr + (vaddr_t)l->l_lwpctl - lcp->lcp_kaddr;
 		return (EINVAL);
+	}
 
 	/* First time around, allocate header structure for the process. */
 	if ((lp = p->p_lwpctl) == NULL) {

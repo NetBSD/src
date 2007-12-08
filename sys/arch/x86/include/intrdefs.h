@@ -1,42 +1,17 @@
-/*	$NetBSD: intrdefs.h,v 1.10 2007/10/17 19:58:15 garbled Exp $	*/
+/*	$NetBSD: intrdefs.h,v 1.10.2.1 2007/12/08 18:18:09 mjf Exp $	*/
 
 #ifndef _X86_INTRDEFS_H_
 #define _X86_INTRDEFS_H_
 
-/*
- * Interrupt priority levels.
- * 
- * There are tty, network and disk drivers that use free() at interrupt
- * time, so imp > (tty | net | bio).
- *
- * Since run queues may be manipulated by both the statclock and tty,
- * network, and disk drivers, clock > imp.
- *
- * IPL_HIGH must block everything that can manipulate a run queue.
- *
- * We need serial drivers to run at the absolute highest priority to
- * avoid overruns, so serial > high.
- *
- * The level numbers are picked to fit into APIC vector priorities.
- *
- */
+/* Interrupt priority levels. */
 #define	IPL_NONE	0x0	/* nothing */
 #define	IPL_SOFTCLOCK	0x1	/* timeouts */
-#define	IPL_SOFTBIO	0x2	/* block I/O */
+#define	IPL_SOFTBIO	0x2	/* block I/O passdown */
 #define	IPL_SOFTNET	0x3	/* protocol stacks */
-#define	IPL_SOFTSERIAL	0x4	/* serial */
-#define	IPL_BIO		0x5	/* block I/O */
-#define	IPL_NET		0x5	/* network */
-#define	IPL_TTY		0x5	/* terminal */
-#define	IPL_LPT		0x5
-#define	IPL_VM		0x5	/* memory allocation */
-#define	IPL_AUDIO	0x5	/* audio */
-#define	IPL_CLOCK	0x6	/* clock */
-#define	IPL_STATCLOCK	0x6
-#define IPL_SCHED	0x6
-#define	IPL_HIGH	0x7	/* everything */
-#define	IPL_SERIAL	0x7	/* serial */
-#define IPL_IPI		0x7	/* inter-processor interrupts */
+#define	IPL_SOFTSERIAL	0x4	/* serial passdown */
+#define	IPL_VM		0x5	/* low I/O, memory allocation */
+#define IPL_SCHED	0x6	/* medium I/O, scheduler, clock */
+#define	IPL_HIGH	0x7	/* high I/O, statclock, IPIs */
 #define	NIPL		8
 
 /* Interrupt sharing types. */

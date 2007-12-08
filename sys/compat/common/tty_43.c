@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_43.c,v 1.22 2007/03/04 06:01:13 christos Exp $	*/
+/*	$NetBSD: tty_43.c,v 1.22.22.1 2007/12/08 18:18:34 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_43.c,v 1.22 2007/03/04 06:01:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_43.c,v 1.22.22.1 2007/12/08 18:18:34 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,9 +84,9 @@ static const int compatspcodes[] = {
 	1800, 2400, 4800, 9600, 19200, 38400, 57600, 115200
 };
 
-int ttcompatgetflags __P((struct tty *));
-void ttcompatsetflags __P((struct tty *, struct termios *));
-void ttcompatsetlflags __P((struct tty *, struct termios *));
+int ttcompatgetflags(struct tty *);
+void ttcompatsetflags(struct tty *, struct termios *);
+void ttcompatsetlflags(struct tty *, struct termios *);
 
 /*ARGSUSED*/
 int

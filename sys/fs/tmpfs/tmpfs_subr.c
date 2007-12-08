@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.38.4.1 2007/11/19 00:48:31 mjf Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.38.4.2 2007/12/08 18:20:21 mjf Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.38.4.1 2007/11/19 00:48:31 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.38.4.2 2007/12/08 18:20:21 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -1247,7 +1247,7 @@ tmpfs_chtimes(struct vnode *vp, struct timespec *atime, struct timespec *mtime,
 	if (kauth_cred_geteuid(cred) != node->tn_uid &&
 	    (error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
 	    NULL)) && ((vaflags & VA_UTIMES_NULL) == 0 ||
-	    (error = VOP_ACCESS(vp, VWRITE, cred, l))))
+	    (error = VOP_ACCESS(vp, VWRITE, cred))))
 		return error;
 
 	if (atime->tv_sec != VNOVAL && atime->tv_nsec != VNOVAL)

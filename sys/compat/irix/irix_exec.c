@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_exec.c,v 1.46 2007/03/06 12:43:08 tsutsui Exp $ */
+/*	$NetBSD: irix_exec.c,v 1.46.22.1 2007/12/08 18:18:41 mjf Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.46 2007/03/06 12:43:08 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.46.22.1 2007/12/08 18:18:41 mjf Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_syscall_debug.h"
@@ -46,7 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.46 2007/03/06 12:43:08 tsutsui Exp $
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/lock.h>
+#include <sys/rwlock.h>
 #include <sys/exec.h>
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -65,18 +65,18 @@ __KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.46 2007/03/06 12:43:08 tsutsui Exp $
 
 extern const int native_to_svr4_signo[];
 
-static void irix_e_proc_exec __P((struct proc *, struct exec_package *));
-static void irix_e_proc_fork __P((struct proc *, struct proc *, int));
-static void irix_e_proc_exit __P((struct proc *));
-static void irix_e_proc_init __P((struct proc *, struct vmspace *));
+static void irix_e_proc_exec(struct proc *, struct exec_package *);
+static void irix_e_proc_fork(struct proc *, struct proc *, int);
+static void irix_e_proc_exit(struct proc *);
+static void irix_e_proc_init(struct proc *, struct vmspace *);
 
 extern struct sysent irix_sysent[];
 extern const char * const irix_syscallnames[];
 
 #ifndef __HAVE_SYSCALL_INTERN
-void irix_syscall __P((void));
+void irix_syscall(void);
 #else
-void irix_syscall_intern __P((struct proc *));
+void irix_syscall_intern(struct proc *);
 #endif
 
 /*
@@ -218,7 +218,7 @@ irix_e_proc_exit(p)
 	ied = (struct irix_emuldata *)(p->p_emuldata);
 
 	if ((isg = ied->ied_share_group) != NULL) {
-		lockmgr(&isg->isg_lock, LK_EXCLUSIVE, NULL);
+		rw_enter(&isg->isg_lock, RW_WRITER);
 		LIST_REMOVE(ied, ied_sglist);
 		isg->isg_refcount--;
 
@@ -234,6 +234,7 @@ irix_e_proc_exit(p)
 			  * Free the share group structure (no need to free
 			  * the lock since we destroy it now).
 			  */
+			rw_destroy(&isg->isg_lock);
 			free(isg, M_EMULDATA);
 			ied->ied_share_group = NULL;
 		} else {
@@ -245,7 +246,7 @@ irix_e_proc_exit(p)
 			 */
 			irix_usema_exit_cleanup(p,
 			    LIST_FIRST(&isg->isg_head)->ied_p);
-			lockmgr(&isg->isg_lock, LK_RELEASE, NULL);
+			rw_exit(&isg->isg_lock);
 		}
 
 	} else {

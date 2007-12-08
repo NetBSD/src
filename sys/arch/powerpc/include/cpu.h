@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.59 2007/10/17 19:56:40 garbled Exp $	*/
+/*	$NetBSD: cpu.h,v 1.59.2.1 2007/12/08 18:17:38 mjf Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -73,6 +73,7 @@ struct cpu_info {
 	volatile int ci_tickspending;
 	volatile int ci_cpl;
 	volatile int ci_iactive;
+	volatile int ci_idepth;
 	volatile int ci_ipending;
 	int ci_intrdepth;
 	int ci_mtx_oldspl;

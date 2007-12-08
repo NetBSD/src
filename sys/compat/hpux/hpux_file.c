@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_file.c,v 1.38 2007/10/19 12:16:37 ad Exp $	*/
+/*	$NetBSD: hpux_file.c,v 1.38.2.1 2007/12/08 18:18:37 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -119,7 +119,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_file.c,v 1.38 2007/10/19 12:16:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_file.c,v 1.38.2.1 2007/12/08 18:18:37 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,9 +156,9 @@ __KERNEL_RCSID(0, "$NetBSD: hpux_file.c,v 1.38 2007/10/19 12:16:37 ad Exp $");
 #include <compat/hpux/hpux_syscall.h>
 #include <compat/hpux/hpux_syscallargs.h>
 
-static int	hpux_stat1 __P((struct lwp *, void *, register_t *, int));
-static void	bsd_to_hpux_stat __P((struct stat *, struct hpux_stat *));
-static void	bsd_to_hpux_ostat __P((struct stat *, struct hpux_ostat *));
+static int	hpux_stat1(struct lwp *, void *, register_t *, int);
+static void	bsd_to_hpux_stat(struct stat *, struct hpux_stat *);
+static void	bsd_to_hpux_ostat(struct stat *, struct hpux_ostat *);
 
 /*
  * HP-UX creat(2) system call.

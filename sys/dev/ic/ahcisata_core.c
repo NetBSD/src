@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.5.6.1 2007/11/19 00:47:51 mjf Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.5.6.2 2007/12/08 18:19:32 mjf Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.5.6.1 2007/11/19 00:47:51 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.5.6.2 2007/12/08 18:19:32 mjf Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>

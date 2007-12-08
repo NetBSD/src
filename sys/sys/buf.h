@@ -1,4 +1,4 @@
-/*     $NetBSD: buf.h,v 1.98 2007/10/08 18:04:06 ad Exp $ */
+/*     $NetBSD: buf.h,v 1.98.4.1 2007/12/08 18:21:29 mjf Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -200,6 +200,7 @@ do {									\
 #define	B_DELWRI	0x00000080	/* Delay I/O until buffer reused. */
 #define	B_DIRTY		0x00000100	/* Dirty page to be pushed out async. */
 #define	B_DONE		0x00000200	/* I/O completed. */
+#define	B_COWDONE	0x00000400	/* Copy-on-write already done. */
 #define	B_GATHERED	0x00001000	/* LFS: already in a segment. */
 #define	B_INVAL		0x00002000	/* Does not contain valid info. */
 #define	B_LOCKED	0x00004000	/* Locked in core (not reusable). */
@@ -217,7 +218,7 @@ do {									\
 
 #define BUF_FLAGBITS \
     "\20\1AGE\3ASYNC\4BAD\5BUSY\6SCANNED\7CALL\10DELWRI" \
-    "\11DIRTY\12DONE\15GATHERED\16INVAL\17LOCKED\20NOCACHE" \
+    "\11DIRTY\12DONE\13COWDONE\15GATHERED\16INVAL\17LOCKED\20NOCACHE" \
     "\22CACHE\23PHYS\24RAW\25READ\26TAPE\30WANTED\31FSPRIVATE\32DEVPRIVATE" \
     "\33VFLUSH"
 
@@ -225,6 +226,10 @@ do {									\
 #define	BC_AGE		B_AGE
 #define	BC_INVAL	B_INVAL
 #define	BC_NOCACHE	B_NOCACHE
+
+/* Avoid weird code due to B_WRITE being a "pseudo flag" */
+#define BUF_ISREAD(bp)	(((bp)->b_flags & B_READ) == B_READ)
+#define BUF_ISWRITE(bp)	(((bp)->b_flags & B_READ) == B_WRITE)
 
 /*
  * This structure describes a clustered I/O.  It is stored in the b_saveaddr

@@ -1,4 +1,4 @@
-/* $NetBSD: envsys.h,v 1.18.2.1 2007/11/19 00:49:27 mjf Exp $ */
+/* $NetBSD: envsys.h,v 1.18.2.2 2007/12/08 18:21:30 mjf Exp $ */
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -115,7 +115,8 @@ enum envsys_drive_states {
 	ENVSYS_DRIVE_REBUILD,		/* drive is rebuilding */
 	ENVSYS_DRIVE_POWERDOWN,		/* drive is powered down */
 	ENVSYS_DRIVE_FAIL,		/* drive failed */
-	ENVSYS_DRIVE_PFAIL		/* drive is degraded */
+	ENVSYS_DRIVE_PFAIL,		/* drive is degraded */
+	ENVSYS_DRIVE_MIGRATING		/* drive is migrating */
 };
 
 /* sensor battery capacity states */

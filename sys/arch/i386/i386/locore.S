@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.53.2.1 2007/11/19 00:46:27 mjf Exp $	*/
+/*	$NetBSD: locore.S,v 1.53.2.2 2007/12/08 18:17:10 mjf Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -722,7 +722,8 @@ ENTRY(longjmp)
 	ret
 
 /*
- * struct lwp *cpu_switchto(struct lwp *oldlwp, struct newlwp)
+ * struct lwp *cpu_switchto(struct lwp *oldlwp, struct newlwp,
+ *			    bool returning)
  *
  *	1. if (oldlwp != NULL), save its context.
  *	2. then, restore context of newlwp.
@@ -738,6 +739,7 @@ ENTRY(cpu_switchto)
 
 	movl	16(%esp),%esi		# oldlwp
 	movl	20(%esp),%edi		# newlwp
+	movl	24(%esp),%edx		# returning
 	testl	%esi,%esi
 	jz	1f
 
@@ -751,6 +753,13 @@ ENTRY(cpu_switchto)
 	movl	PCB_EBP(%ebx),%ebp
 	movl	PCB_ESP(%ebx),%esp
 
+	/* Set curlwp. */
+	movl	%edi,CPUVAR(CURLWP)
+
+	/* Skip the rest if returning to a pinned LWP. */
+	testl	%edx,%edx
+	jnz	4f
+
 	/* Switch TSS.  Reset "task busy" flag before loading. */
 	movl	%cr3,%eax
 	movl	%eax,PCB_CR3(%ebx)	# for TSS gates
@@ -758,9 +767,6 @@ ENTRY(cpu_switchto)
 	movl	L_MD_TSS_SEL(%edi),%edx
 	andl	$~0x0200,4(%ecx,%edx, 1)
 	ltr	%dx
-
-	/* Set curlwp. */
-	movl	%edi,CPUVAR(CURLWP)
 
 	/* Don't bother with the rest if switching to a system process. */
 	testl	$LW_SYSTEM,L_FLAG(%edi)
@@ -905,10 +911,9 @@ syscall1:
 	pushl	$4f
 	call	_C_LABEL(printf)
 	addl	$4,%esp
-#ifdef DDB
-	int	$3
-#endif /* DDB */
-	movl	$IPL_NONE,CPUVAR(ILEVEL)
+	pushl	$IPL_NONE
+	call	_C_LABEL(spllower)
+	addl	$4,%esp
 	jmp	.Lsyscall_checkast
 4:	.asciz	"WARNING: SPL NOT LOWERED ON SYSCALL EXIT\n"
 5:	.asciz	"WARNING: SPL NOT ZERO ON SYSCALL ENTRY\n"

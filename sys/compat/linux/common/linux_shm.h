@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_shm.h,v 1.8 2006/02/09 19:18:56 manu Exp $	*/
+/*	$NetBSD: linux_shm.h,v 1.8.46.1 2007/12/08 18:18:50 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -124,17 +124,17 @@ struct linux_sys_shmctl_args {
 #ifdef SYSVSHM
 #ifdef _KERNEL
 __BEGIN_DECLS
-int linux_sys_shmget __P((struct lwp *, void *, register_t *));
-int linux_sys_shmat __P((struct lwp *, void *, register_t *));
-int linux_sys_shmctl __P((struct lwp *, void *, register_t *));
-void linux_to_bsd_shmid_ds __P((struct linux_shmid_ds *,
-    struct shmid_ds *));
-void linux_to_bsd_shmid64_ds __P((struct linux_shmid64_ds *,
-    struct shmid_ds *));
-void bsd_to_linux_shmid_ds __P((struct shmid_ds *,
-    struct linux_shmid_ds *));
-void bsd_to_linux_shmid64_ds __P((struct shmid_ds *,
-    struct linux_shmid64_ds *));
+int linux_sys_shmget(struct lwp *, void *, register_t *);
+int linux_sys_shmat(struct lwp *, void *, register_t *);
+int linux_sys_shmctl(struct lwp *, void *, register_t *);
+void linux_to_bsd_shmid_ds(struct linux_shmid_ds *,
+    struct shmid_ds *);
+void linux_to_bsd_shmid64_ds(struct linux_shmid64_ds *,
+    struct shmid_ds *);
+void bsd_to_linux_shmid_ds(struct shmid_ds *,
+    struct linux_shmid_ds *);
+void bsd_to_linux_shmid64_ds(struct shmid_ds *,
+    struct linux_shmid64_ds *);
 __END_DECLS
 #endif	/* !_KERNEL */
 #endif	/* !SYSVSHM */

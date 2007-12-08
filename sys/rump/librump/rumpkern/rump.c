@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.15.2.1 2007/11/19 00:49:23 mjf Exp $	*/
+/*	$NetBSD: rump.c,v 1.15.2.2 2007/12/08 18:21:27 mjf Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -129,24 +129,23 @@ rump_mnt_init(struct vfsops *vfsops, int mntflags)
 }
 
 int
-rump_mnt_mount(struct mount *mp, const char *path, void *data, size_t *dlen,
-	struct lwp *l)
+rump_mnt_mount(struct mount *mp, const char *path, void *data, size_t *dlen)
 {
 	int rv;
 
-	rv = VFS_MOUNT(mp, path, data, dlen, l);
+	rv = VFS_MOUNT(mp, path, data, dlen);
 	if (rv)
 		return rv;
 
-	rv = VFS_STATVFS(mp, &mp->mnt_stat, l);
+	rv = VFS_STATVFS(mp, &mp->mnt_stat);
 	if (rv) {
-		VFS_UNMOUNT(mp, MNT_FORCE, l);
+		VFS_UNMOUNT(mp, MNT_FORCE);
 		return rv;
 	}
 
-	rv =  VFS_START(mp, 0, l);
+	rv =  VFS_START(mp, 0);
 	if (rv)
-		VFS_UNMOUNT(mp, MNT_FORCE, l);
+		VFS_UNMOUNT(mp, MNT_FORCE);
 
 	return rv;
 }
@@ -442,10 +441,10 @@ rump_vp_islocked(struct vnode *vp)
 }
 
 int
-rump_vfs_unmount(struct mount *mp, int mntflags, struct lwp *l)
+rump_vfs_unmount(struct mount *mp, int mntflags)
 {
 
-	return VFS_UNMOUNT(mp, mntflags, l);
+	return VFS_UNMOUNT(mp, mntflags);
 }
 
 int
@@ -466,18 +465,18 @@ rump_vfs_root(struct mount *mp, struct vnode **vpp, int lock)
 /* XXX: statvfs is different from system to system */
 #if 0
 int
-rump_vfs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l)
+rump_vfs_statvfs(struct mount *mp, struct statvfs *sbp)
 {
 
-	return VFS_STATVFS(mp, sbp, l);
+	return VFS_STATVFS(mp, sbp);
 }
 #endif
 
 int
-rump_vfs_sync(struct mount *mp, int wait, kauth_cred_t cred, struct lwp *l)
+rump_vfs_sync(struct mount *mp, int wait, kauth_cred_t cred)
 {
 
-	return VFS_SYNC(mp, wait ? MNT_WAIT : MNT_NOWAIT, cred, l);
+	return VFS_SYNC(mp, wait ? MNT_WAIT : MNT_NOWAIT, cred);
 }
 
 int

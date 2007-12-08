@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.40 2007/10/17 19:54:27 garbled Exp $	*/
+/*	$NetBSD: machdep.c,v 1.40.2.1 2007/12/08 18:17:00 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.40 2007/10/17 19:54:27 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.40.2.1 2007/12/08 18:17:00 mjf Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -102,8 +102,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.40 2007/10/17 19:54:27 garbled Exp $")
 #include <sys/kcore.h>
 #include <sys/extent.h>
 #include <sys/ksyms.h>
-
 #include <sys/mount.h>
+#include <sys/mutex.h>
 #include <sys/syscallargs.h>
 
 #include <uvm/uvm_page.h>
@@ -421,6 +421,8 @@ const struct hppa_cpu_info hppa_cpu_pa8600 = {
 	  _HPPA_CPU_UNSUPP
 #endif /* !HP8600_CPU */
 };
+
+extern kmutex_t vmmap_lock;
 
 void
 hppa_init(paddr_t start)
@@ -904,6 +906,8 @@ cpu_startup(void)
 	 */
 	vmmap = uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
 	    UVM_KMF_VAONLY | UVM_KMF_WAITVA);
+
+	mutex_init(&vmmap_lock, MUTEX_DEFAULT, IPL_NONE);
 }
 
 /*

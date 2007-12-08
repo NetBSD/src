@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.128.4.1 2007/11/19 00:47:32 mjf Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.128.4.2 2007/12/08 18:18:59 mjf Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.128.4.1 2007/11/19 00:47:32 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.128.4.2 2007/12/08 18:18:59 mjf Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -103,9 +103,9 @@ extern struct sysent netbsd32_sysent[];
 extern const char * const netbsd32_syscallnames[];
 #endif
 #ifdef __HAVE_SYSCALL_INTERN
-void netbsd32_syscall_intern __P((struct proc *));
+void netbsd32_syscall_intern(struct proc *);
 #else
-void syscall __P((void));
+void syscall(void);
 #endif
 
 #define LIMITCHECK(a, b) ((a) != RLIM_INFINITY && (a) > (b))

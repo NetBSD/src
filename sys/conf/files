@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.869.4.1 2007/11/19 00:47:38 mjf Exp $
+#	$NetBSD: files,v 1.869.4.2 2007/12/08 18:19:15 mjf Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -1228,6 +1228,11 @@ defpseudo cpuctl
 # pass-to-userspace transporter
 defpseudo putter
 file	dev/putter/putter.c		putter
+
+# userspace block/char device drivers
+defpseudo pud
+file	dev/pud/pud.c			pud
+file	dev/pud/pud_dev.c		pud
 
 #
 # File systems

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.187 2007/10/28 22:24:29 yamt Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.187.2.1 2007/12/08 18:21:25 mjf Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.187 2007/10/28 22:24:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.187.2.1 2007/12/08 18:21:25 mjf Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -108,7 +108,7 @@ struct vfsops nfs_vfsops = {
 	nfs_start,
 	nfs_unmount,
 	nfs_root,
-	nfs_quotactl,
+	(void *)eopnotsupp,	/* vfs_quotactl */
 	nfs_statvfs,
 	nfs_sync,
 	nfs_vget,
@@ -137,11 +137,11 @@ static int nfs_mount_diskless __P((struct nfs_dlmount *, const char *,
  * nfs statvfs call
  */
 int
-nfs_statvfs(mp, sbp, l)
+nfs_statvfs(mp, sbp)
 	struct mount *mp;
 	struct statvfs *sbp;
-	struct lwp *l;
 {
+	struct lwp *l = curlwp;
 	struct vnode *vp;
 	struct nfs_statfs *sfp;
 	char *cp;
@@ -372,7 +372,7 @@ nfs_mountroot()
 	vfs_unbusy(mp);
 
 	/* Get root attributes (for the time). */
-	error = VOP_GETATTR(vp, &attr, l->l_cred, l);
+	error = VOP_GETATTR(vp, &attr, l->l_cred);
 	if (error)
 		panic("nfs_mountroot: getattr for root");
 	n = attr.va_atime.tv_sec;
@@ -577,9 +577,9 @@ nfs_decode_args(nmp, argp, l)
  */
 /* ARGSUSED */
 int
-nfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
-    struct lwp *l)
+nfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 {
+	struct lwp *l = curlwp;
 	int error;
 	struct nfs_args *args = data;
 	struct mbuf *nam;
@@ -789,7 +789,7 @@ mountnfs(argp, mp, nam, pth, hst, vpp, l)
 		goto bad;
 	*vpp = NFSTOV(np);
 	MALLOC(attrs, struct vattr *, sizeof(struct vattr), M_TEMP, M_WAITOK);
-	VOP_GETATTR(*vpp, attrs, l->l_cred, l);
+	VOP_GETATTR(*vpp, attrs, l->l_cred);
 	if ((nmp->nm_flag & NFSMNT_NFSV3) && ((*vpp)->v_type == VDIR)) {
 		cr = kauth_cred_alloc();
 		kauth_cred_setuid(cr, attrs->va_uid);
@@ -836,7 +836,7 @@ bad:
  * unmount system call
  */
 int
-nfs_unmount(struct mount *mp, int mntflags, struct lwp *l)
+nfs_unmount(struct mount *mp, int mntflags)
 {
 	struct nfsmount *nmp;
 	struct vnode *vp;
@@ -940,11 +940,10 @@ extern int syncprt;
  */
 /* ARGSUSED */
 int
-nfs_sync(mp, waitfor, cred, l)
+nfs_sync(mp, waitfor, cred)
 	struct mount *mp;
 	int waitfor;
 	kauth_cred_t cred;
-	struct lwp *l;
 {
 	struct vnode *vp, *nvp;
 	int error, allerror = 0;
@@ -972,7 +971,7 @@ loop:
 		if (vget(vp, LK_EXCLUSIVE))
 			goto loop;
 		error = VOP_FSYNC(vp, cred,
-		    waitfor == MNT_WAIT ? FSYNC_WAIT : 0, 0, 0, l);
+		    waitfor == MNT_WAIT ? FSYNC_WAIT : 0, 0, 0);
 		if (error)
 			allerror = error;
 		vput(vp);
@@ -1078,7 +1077,7 @@ nfs_fhtovp(struct mount *mp, struct fid *fid, struct vnode **vpp)
 		return error;
 	}
 	*vpp = NFSTOV(np);
-	error = VOP_GETATTR(*vpp, &va, kauth_cred_get(), curlwp);
+	error = VOP_GETATTR(*vpp, &va, kauth_cred_get());
 	if (error != 0) {
 		vput(*vpp);
 	}
@@ -1117,19 +1116,8 @@ nfs_vptofh(struct vnode *vp, struct fid *buf, size_t *bufsize)
  */
 /* ARGSUSED */
 int
-nfs_start(struct mount *mp, int flags, struct lwp *l)
+nfs_start(struct mount *mp, int flags)
 {
 
 	return (0);
-}
-
-/*
- * Do operations associated with quotas, not supported
- */
-/* ARGSUSED */
-int
-nfs_quotactl(struct mount *mp, int cmd, uid_t uid, void *arg, struct lwp *l)
-{
-
-	return (EOPNOTSUPP);
 }

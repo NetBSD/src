@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.246.4.1 2007/11/19 00:49:37 mjf Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.246.4.2 2007/12/08 18:21:40 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.246.4.1 2007/11/19 00:49:37 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.246.4.2 2007/12/08 18:21:40 mjf Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -331,7 +331,7 @@ lfs_mountroot()
 {
 	extern struct vnode *rootvp;
 	struct mount *mp;
-	struct lwp *l = curlwp;	/* XXX */
+	struct lwp *l = curlwp;
 	int error;
 
 	if (device_class(root_device) != DV_DISK)
@@ -346,13 +346,13 @@ lfs_mountroot()
 	if ((error = lfs_mountfs(rootvp, mp, l))) {
 		mp->mnt_op->vfs_refcount--;
 		vfs_unbusy(mp);
-		free(mp, M_MOUNT);
+		vfs_destroy(mp);
 		return (error);
 	}
 	mutex_enter(&mountlist_lock);
 	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
 	mutex_exit(&mountlist_lock);
-	(void)lfs_statvfs(mp, &mp->mnt_stat, l);
+	(void)lfs_statvfs(mp, &mp->mnt_stat);
 	vfs_unbusy(mp);
 	setrootfstime((time_t)(VFSTOUFS(mp)->um_lfs->lfs_tstamp));
 	return (0);
@@ -364,9 +364,9 @@ lfs_mountroot()
  * mount system call
  */
 int
-lfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
-    struct lwp *l)
+lfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 {
+	struct lwp *l = curlwp;
 	struct nameidata nd;
 	struct vnode *devvp;
 	struct ufs_args *args = data;
@@ -441,7 +441,7 @@ lfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
 		    (mp->mnt_flag & MNT_RDONLY) == 0)
 			accessmode |= VWRITE;
 		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-		error = VOP_ACCESS(devvp, accessmode, l->l_cred, l);
+		error = VOP_ACCESS(devvp, accessmode, l->l_cred);
 		VOP_UNLOCK(devvp, 0);
 	}
 
@@ -470,13 +470,13 @@ lfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
 			flags = FREAD;
 		else
 			flags = FREAD|FWRITE;
-		error = VOP_OPEN(devvp, flags, FSCRED, l);
+		error = VOP_OPEN(devvp, flags, FSCRED);
 		if (error)
 			goto fail;
 		error = lfs_mountfs(devvp, mp, l);		/* LFS */
 		if (error) {
 			vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-			(void)VOP_CLOSE(devvp, flags, NOCRED, l);
+			(void)VOP_CLOSE(devvp, flags, NOCRED);
 			VOP_UNLOCK(devvp, 0);
 			goto fail;
 		}
@@ -558,7 +558,7 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 		return (error);
 
 	ronly = (mp->mnt_flag & MNT_RDONLY) != 0;
-	if (VOP_IOCTL(devvp, DIOCGPART, &dpart, FREAD, cred, l) != 0)
+	if (VOP_IOCTL(devvp, DIOCGPART, &dpart, FREAD, cred) != 0)
 		secsize = DEV_BSIZE;
 	else
 		secsize = dpart.disklab->d_secsize;
@@ -895,8 +895,9 @@ out:
  * unmount system call
  */
 int
-lfs_unmount(struct mount *mp, int mntflags, struct lwp *l)
+lfs_unmount(struct mount *mp, int mntflags)
 {
+	struct lwp *l = curlwp;
 	struct ufsmount *ump;
 	struct lfs *fs;
 	int error, flags, ronly;
@@ -940,7 +941,7 @@ lfs_unmount(struct mount *mp, int mntflags, struct lwp *l)
 #endif
 	if ((error = vflush(mp, fs->lfs_ivnode, flags)) != 0)
 		return (error);
-	if ((error = VFS_SYNC(mp, 1, l->l_cred, l)) != 0)
+	if ((error = VFS_SYNC(mp, 1, l->l_cred)) != 0)
 		return (error);
 	s = splbio();
 	if (LIST_FIRST(&fs->lfs_ivnode->v_dirtyblkhd))
@@ -966,7 +967,7 @@ lfs_unmount(struct mount *mp, int mntflags, struct lwp *l)
 		ump->um_devvp->v_specmountpoint = NULL;
 	vn_lock(ump->um_devvp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_CLOSE(ump->um_devvp,
-	    ronly ? FREAD : FREAD|FWRITE, NOCRED, l);
+	    ronly ? FREAD : FREAD|FWRITE, NOCRED);
 	vput(ump->um_devvp);
 
 	/* Complain about page leakage */
@@ -996,7 +997,7 @@ lfs_unmount(struct mount *mp, int mntflags, struct lwp *l)
  * really that important if we get it wrong.
  */
 int
-lfs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l)
+lfs_statvfs(struct mount *mp, struct statvfs *sbp)
 {
 	struct lfs *fs;
 	struct ufsmount *ump;
@@ -1040,8 +1041,7 @@ lfs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l)
  * Note: we are always called with the filesystem marked `MPBUSY'.
  */
 int
-lfs_sync(struct mount *mp, int waitfor, kauth_cred_t cred,
-    struct lwp *l)
+lfs_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
 {
 	int error;
 	struct lfs *fs;

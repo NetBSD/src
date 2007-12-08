@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vfsops.c,v 1.72 2007/10/10 20:42:25 ad Exp $	*/
+/*	$NetBSD: smbfs_vfsops.c,v 1.72.4.1 2007/12/08 18:20:19 mjf Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.72 2007/10/10 20:42:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.72.4.1 2007/12/08 18:20:19 mjf Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_quota.h"
@@ -115,7 +115,7 @@ struct vfsops smbfs_vfsops = {
 	smbfs_start,
 	smbfs_unmount,
 	smbfs_root,
-	smbfs_quotactl,
+	(void *)eopnotsupp,	/* vfs_quotactl */
 	smbfs_statvfs,
 	smbfs_sync,
 	smbfs_vget,
@@ -135,9 +135,9 @@ struct vfsops smbfs_vfsops = {
 VFS_ATTACH(smbfs_vfsops);
 
 int
-smbfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
-    struct lwp *l)
+smbfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 {
+	struct lwp *l = curlwp;
 	struct smbfs_args *args = data; 	  /* holds data from mount request */
 	struct smbmount *smp = NULL;
 	struct smb_vc *vcp;
@@ -210,8 +210,9 @@ smbfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
 
 /* Unmount the filesystem described by mp. */
 int
-smbfs_unmount(struct mount *mp, int mntflags, struct lwp *l)
+smbfs_unmount(struct mount *mp, int mntflags)
 {
+	struct lwp *l = curlwp;
 	struct smbmount *smp = VFSTOSMBFS(mp);
 	struct smb_cred scred;
 	int error, flags;
@@ -322,23 +323,10 @@ smbfs_root(struct mount *mp, struct vnode **vpp)
  */
 /* ARGSUSED */
 int
-smbfs_start(struct mount *mp, int flags,
-    struct lwp *l)
+smbfs_start(struct mount *mp, int flags)
 {
 	SMBVDEBUG("flags=%04x\n", flags);
 	return 0;
-}
-
-/*
- * Do operations associated with quotas, not supported
- */
-/* ARGSUSED */
-int
-smbfs_quotactl(struct mount *mp, int cmd, uid_t uid,
-    void *arg, struct lwp *l)
-{
-	SMBVDEBUG("return EOPNOTSUPP\n");
-	return EOPNOTSUPP;
 }
 
 void
@@ -379,8 +367,9 @@ smbfs_done(void)
  * smbfs_statvfs call
  */
 int
-smbfs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l)
+smbfs_statvfs(struct mount *mp, struct statvfs *sbp)
 {
+	struct lwp *l = curlwp;
 	struct smbmount *smp = VFSTOSMBFS(mp);
 	struct smb_share *ssp = smp->sm_share;
 	struct smb_cred scred;
@@ -403,7 +392,7 @@ smbfs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l)
  * Flush out the buffer cache
  */
 int
-smbfs_sync(struct mount *mp, int waitfor, kauth_cred_t cred, struct lwp *l)
+smbfs_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
 {
 	struct vnode *vp, *nvp;
 	struct smbnode *np;
@@ -448,7 +437,7 @@ loop:
 			continue;
 		}
 		error = VOP_FSYNC(vp, cred,
-		    waitfor == MNT_WAIT ? FSYNC_WAIT : 0, 0, 0, l);
+		    waitfor == MNT_WAIT ? FSYNC_WAIT : 0, 0, 0);
 		if (error)
 			allerror = error;
 		vput(vp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.112.4.1 2007/11/19 00:48:40 mjf Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.112.4.2 2007/12/08 18:20:29 mjf Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.112.4.1 2007/11/19 00:48:40 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.112.4.2 2007/12/08 18:20:29 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -559,7 +559,8 @@ free(void *addr, struct malloc_type *ksp)
 	size = 1 << kup->ku_indx;
 	kbp = &kmembuckets[kup->ku_indx];
 
-	LOCKDEBUG_MEM_CHECK(addr, size);
+	LOCKDEBUG_MEM_CHECK(addr,
+	    size <= MAXALLOCSAVE ? size : ctob(kup->ku_pagecnt));
 
 	mutex_spin_enter(&malloc_lock);
 #ifdef MALLOCLOG
@@ -890,7 +891,7 @@ kmeminit(void)
 	if (sizeof(struct freelist) > (1 << MINBUCKET))
 		panic("minbucket too small/struct freelist too big");
 
-	mutex_init(&malloc_lock, MUTEX_DRIVER, IPL_VM);
+	mutex_init(&malloc_lock, MUTEX_DEFAULT, IPL_VM);
 
 	/*
 	 * Compute the number of kmem_map pages, if we have not

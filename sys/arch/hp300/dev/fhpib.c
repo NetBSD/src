@@ -1,4 +1,4 @@
-/*	$NetBSD: fhpib.c,v 1.36 2007/10/17 19:54:22 garbled Exp $	*/
+/*	$NetBSD: fhpib.c,v 1.36.2.1 2007/12/08 18:16:57 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fhpib.c,v 1.36 2007/10/17 19:54:22 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fhpib.c,v 1.36.2.1 2007/12/08 18:16:57 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -476,7 +476,7 @@ fhpibdmadone(void *arg)
 		hs->sc_flags &= ~(HPIBF_DONE|HPIBF_IO|HPIBF_READ|HPIBF_TIMO);
 		dmafree(hs->sc_dq);
 
-		hq = hs->sc_queue.tqh_first;
+		hq = TAILQ_FIRST(&hs->sc_queue);
 		(hq->hq_intr)(hq->hq_softc);
 	}
 	splx(s);
@@ -557,7 +557,7 @@ fhpibintr(void *arg)
 	    fhpibdebugunit == device_unit(&sc->sc_dev))
 		printf("fhpibintr: flags %x\n", hs->sc_flags);
 #endif
-	hq = hs->sc_queue.tqh_first;
+	hq = TAILQ_FIRST(&hs->sc_queue);
 	if (hs->sc_flags & HPIBF_IO) {
 		if (hs->sc_flags & HPIBF_TIMO)
 			callout_stop(&sc->sc_dmadone_ch);
@@ -661,7 +661,7 @@ fhpibppwatch(void *arg)
 
 	if ((hs->sc_flags & HPIBF_PPOLL) == 0)
 		return;
-	slave = (0x80 >> hs->sc_queue.tqh_first->hq_slave);
+	slave = (0x80 >> TAILQ_FIRST(&hs->sc_queue)->hq_slave);
 #ifdef DEBUG
 	if (!doppollint) {
 		if (fhpibppoll(hs) & slave) {

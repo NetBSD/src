@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_subr.c,v 1.9 2007/10/10 20:42:24 ad Exp $	*/
+/*	$NetBSD: ptyfs_subr.c,v 1.9.4.1 2007/12/08 18:20:16 mjf Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_subr.c,v 1.9 2007/10/10 20:42:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_subr.c,v 1.9.4.1 2007/12/08 18:20:16 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,7 +147,7 @@ ptyfs_getinfo(struct ptyfsnode *ptyfs, struct lwp *l)
 		if ((error = namei(&nd)) != 0)
 			goto out;
 		cred = kauth_cred_alloc();
-		error = VOP_GETATTR(nd.ni_vp, &va, cred, l);
+		error = VOP_GETATTR(nd.ni_vp, &va, cred);
 		kauth_cred_free(cred);
 		VOP_UNLOCK(nd.ni_vp, 0);
 		vrele(nd.ni_vp);

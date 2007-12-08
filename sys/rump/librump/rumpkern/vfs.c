@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs.c,v 1.17.4.1 2007/11/19 00:49:24 mjf Exp $	*/
+/*	$NetBSD: vfs.c,v 1.17.4.2 2007/12/08 18:21:27 mjf Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -194,9 +194,9 @@ vrecycle(struct vnode *vp, struct simplelock *inter_lkp, struct lwp *l)
 			simple_unlock(inter_lkp);
 		VOP_LOCK(vp, LK_EXCLUSIVE | LK_INTERLOCK);
 		vinvalbuf(vp, V_SAVE, NOCRED, l, 0, 0);
-		VOP_INACTIVE(vp, l);
+		VOP_INACTIVE(vp);
 
-		VOP_RECLAIM(vp, l);
+		VOP_RECLAIM(vp);
 		TAILQ_REMOVE(&mp->mnt_vnodelist, vp, v_mntvnodes);
 	}
 
@@ -213,7 +213,7 @@ vcount(struct vnode *vp)
 
 int
 vfs_stdextattrctl(struct mount *mp, int cmt, struct vnode *vp,
-	int attrnamespace, const char *attrname, struct lwp *l)
+	int attrnamespace, const char *attrname)
 {
 
 	if (vp != NULL)

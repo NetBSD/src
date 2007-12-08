@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.37 2007/10/17 19:54:22 garbled Exp $	*/
+/*	$NetBSD: dma.c,v 1.37.2.1 2007/12/08 18:16:57 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dma.c,v 1.37 2007/10/17 19:54:22 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dma.c,v 1.37.2.1 2007/12/08 18:16:57 mjf Exp $");
 
 #include <machine/hp300spu.h>	/* XXX param.h includes cpu.h */
 
@@ -375,8 +375,8 @@ dmafree(struct dmaqueue *dq)
 	 */
 	dc->dm_job = NULL;
 	chan = 1 << unit;
-	for (dn = sc->sc_queue.tqh_first; dn != NULL;
-	    dn = dn->dq_list.tqe_next) {
+	for (dn = TAILQ_FIRST(&sc->sc_queue); dn != NULL;
+	    dn = TAILQ_NEXT(dn, dq_list)) {
 		if (dn->dq_chan & chan) {
 			/* Found one... */
 			TAILQ_REMOVE(&sc->sc_queue, dn, dq_list);

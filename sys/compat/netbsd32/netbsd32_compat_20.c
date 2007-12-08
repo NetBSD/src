@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_20.c,v 1.15 2007/10/10 22:00:53 ad Exp $	*/
+/*	$NetBSD: netbsd32_compat_20.c,v 1.15.4.1 2007/12/08 18:18:58 mjf Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_20.c,v 1.15 2007/10/10 22:00:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_20.c,v 1.15.4.1 2007/12/08 18:18:58 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -126,7 +126,7 @@ compat_20_netbsd32_getfsstat(l, v, retval)
 			    SCARG(uap, flags) != MNT_LAZY &&
 			    (SCARG(uap, flags) == MNT_WAIT ||
 			     SCARG(uap, flags) == 0) &&
-			    (error = VFS_STATVFS(mp, sp, l)) != 0) {
+			    (error = VFS_STATVFS(mp, sp)) != 0) {
 				mutex_enter(&mountlist_lock);
 				nmp = mp->mnt_list.cqe_next;
 				vfs_unbusy(mp);
@@ -176,7 +176,7 @@ compat_20_netbsd32_statfs(l, v, retval)
 	mp = nd.ni_vp->v_mount;
 	sp = &mp->mnt_stat;
 	vrele(nd.ni_vp);
-	if ((error = VFS_STATVFS(mp, sp, l)) != 0)
+	if ((error = VFS_STATVFS(mp, sp)) != 0)
 		return (error);
 	sp->f_flag = mp->mnt_flag & MNT_VISFLAGMASK;
 	compat_20_netbsd32_from_statvfs(sp, &s32);
@@ -205,7 +205,7 @@ compat_20_netbsd32_fstatfs(l, v, retval)
 		return (error);
 	mp = ((struct vnode *)fp->f_data)->v_mount;
 	sp = &mp->mnt_stat;
-	if ((error = VFS_STATVFS(mp, sp, l)) != 0)
+	if ((error = VFS_STATVFS(mp, sp)) != 0)
 		goto out;
 	sp->f_flag = mp->mnt_flag & MNT_VISFLAGMASK;
 	compat_20_netbsd32_from_statvfs(sp, &s32);

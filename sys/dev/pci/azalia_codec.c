@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia_codec.c,v 1.47.2.1 2007/11/19 00:48:06 mjf Exp $	*/
+/*	$NetBSD: azalia_codec.c,v 1.47.2.2 2007/12/08 18:19:41 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.47.2.1 2007/11/19 00:48:06 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.47.2.2 2007/12/08 18:19:41 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -3359,14 +3359,19 @@ stac9200_mixer_init(codec_t *this)
 #define STAC9200_DELL_INSPIRON6400_ID	0x01bd1028
 #define STAC9200_DELL_INSPIRON9400_ID	0x01cd1028
 #define STAC9200_DELL_640M_ID		0x01d81028
+#define STAC9200_DELL_LATITUDE_D420_ID	0x01d61028
 #define STAC9200_DELL_LATITUDE_D430_ID	0x02011028
+
 #define STAC9200_EVENT_HP	0
 #define STAC9200_NID_HP		0x0d
 #define STAC9200_NID_SPEAKER	0x0e
-	if (this->subid == STAC9200_DELL_INSPIRON6400_ID ||
-	    this->subid == STAC9200_DELL_INSPIRON9400_ID ||
-	    this->subid == STAC9200_DELL_640M_ID ||
-	    this->subid == STAC9200_DELL_LATITUDE_D430_ID) {
+
+	switch (this->subid) {
+	case STAC9200_DELL_INSPIRON6400_ID:
+	case STAC9200_DELL_INSPIRON9400_ID:
+	case STAC9200_DELL_640M_ID:
+	case STAC9200_DELL_LATITUDE_D420_ID:
+	case STAC9200_DELL_LATITUDE_D430_ID:
 		/* Does every DELL model have the same pin configuration?
 		 * I'm not sure. */
 
@@ -3381,6 +3386,9 @@ stac9200_mixer_init(codec_t *this)
 			generic_mixer_pinctrl(this,
 			    STAC9200_NID_SPEAKER, CORB_PWC_OUTPUT);
 		}
+		break;
+	default:
+		break;
 	}
 	return 0;
 }

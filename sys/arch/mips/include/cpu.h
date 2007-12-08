@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.85 2007/10/19 11:41:27 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.85.2.1 2007/12/08 18:17:22 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -65,6 +65,7 @@ struct cpu_info {
 	int ci_want_resched;		/* user preemption pending */
 	int ci_mtx_count;		/* negative count of held mutexes */
 	int ci_mtx_oldspl;		/* saved SPL value */
+	int ci_idepth;			/* hardware interrupt depth */
 };
 
 #define	CPU_INFO_ITERATOR		int
@@ -121,8 +122,8 @@ do {									\
 #endif
 
 #ifdef _KERNEL
-#ifdef _LKM
-/* Assume all CPU architectures are valid for LKM's */
+#if defined(_LKM) || defined(_STANDALONE)
+/* Assume all CPU architectures are valid for LKM's and standlone progs */
 #define	MIPS1	1
 #define	MIPS3	1
 #define	MIPS4	1

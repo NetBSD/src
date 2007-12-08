@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.152 2007/10/08 15:12:05 ad Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.152.4.1 2007/12/08 18:19:05 mjf Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.152 2007/10/08 15:12:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.152.4.1 2007/12/08 18:19:05 mjf Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -110,7 +110,7 @@ __KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.152 2007/10/08 15:12:05 ad Exp $");
 #include <nfs/nfs.h>
 #include <nfs/nfsmount.h>
 
-static int sunstatfs __P((struct statvfs *, void *));
+static int sunstatfs(struct statvfs *, void *);
 
 int
 sunos_sys_stime(l, v, retval)
@@ -372,8 +372,8 @@ async_daemon(l, v, retval)
 }
 #endif /* NFS */
 
-void	native_to_sunos_sigset __P((const sigset_t *, int *));
-void	sunos_to_native_sigset __P((const int, sigset_t *));
+void	native_to_sunos_sigset(const sigset_t *, int *);
+void	sunos_to_native_sigset(const int, sigset_t *);
 
 inline void
 native_to_sunos_sigset(ss, mask)
@@ -974,7 +974,7 @@ sunos_sys_statfs(l, v, retval)
 	mp = nd.ni_vp->v_mount;
 	sp = &mp->mnt_stat;
 	vrele(nd.ni_vp);
-	if ((error = VFS_STATVFS(mp, sp, l)) != 0)
+	if ((error = VFS_STATVFS(mp, sp)) != 0)
 		return (error);
 	sp->f_flag = mp->mnt_flag & MNT_VISFLAGMASK;
 	return sunstatfs(sp, (void *)SCARG(uap, buf));
@@ -998,7 +998,7 @@ sunos_sys_fstatfs(l, v, retval)
 		return (error);
 	mp = ((struct vnode *)fp->f_data)->v_mount;
 	sp = &mp->mnt_stat;
-	if ((error = VFS_STATVFS(mp, sp, l)) != 0)
+	if ((error = VFS_STATVFS(mp, sp)) != 0)
 		goto out;
 	sp->f_flag = mp->mnt_flag & MNT_VISFLAGMASK;
 	error = sunstatfs(sp, (void *)SCARG(uap, buf));
@@ -1275,9 +1275,9 @@ sunos_sys_sigvec(l, v, retval)
 	struct sigaction nsa, osa;
 	int error;
 /*XXX*/extern	void compat_43_sigvec_to_sigaction
-		__P((const struct sigvec *, struct sigaction *));
+(const struct sigvec *, struct sigaction *);
 /*XXX*/extern	void compat_43_sigaction_to_sigvec
-		__P((const struct sigaction *, struct sigvec *));
+(const struct sigaction *, struct sigvec *);
 
 	if (SCARG(uap, nsv)) {
 		error = copyin(SCARG(uap, nsv), &nsv, sizeof(nsv));

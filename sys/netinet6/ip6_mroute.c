@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_mroute.c,v 1.84.2.1 2007/11/19 00:49:13 mjf Exp $	*/
+/*	$NetBSD: ip6_mroute.c,v 1.84.2.2 2007/12/08 18:21:17 mjf Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.49 2001/07/25 09:21:18 jinmei Exp $	*/
 
 /*
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.84.2.1 2007/11/19 00:49:13 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.84.2.2 2007/12/08 18:21:17 mjf Exp $");
 
 #include "opt_inet.h"
 #include "opt_mrouting.h"
@@ -306,29 +306,29 @@ ip6_mrouter_set(int cmd, struct socket *so, struct mbuf *m)
 	case MRT6_OINIT:
 #endif
 	case MRT6_INIT:
-		if (m == NULL || m->m_len < sizeof(int))
+		if (m == NULL || m->m_len != sizeof(int))
 			return (EINVAL);
 		return (ip6_mrouter_init(so, *mtod(m, int *), cmd));
 	case MRT6_DONE:
 		return (ip6_mrouter_done());
 	case MRT6_ADD_MIF:
-		if (m == NULL || m->m_len < sizeof(struct mif6ctl))
+		if (m == NULL || m->m_len != sizeof(struct mif6ctl))
 			return (EINVAL);
 		return (add_m6if(mtod(m, struct mif6ctl *)));
 	case MRT6_DEL_MIF:
-		if (m == NULL || m->m_len < sizeof(mifi_t))
+		if (m == NULL || m->m_len != sizeof(mifi_t))
 			return (EINVAL);
 		return (del_m6if(mtod(m, mifi_t *)));
 	case MRT6_ADD_MFC:
-		if (m == NULL || m->m_len < sizeof(struct mf6cctl))
+		if (m == NULL || m->m_len != sizeof(struct mf6cctl))
 			return (EINVAL);
 		return (add_m6fc(mtod(m, struct mf6cctl *)));
 	case MRT6_DEL_MFC:
-		if (m == NULL || m->m_len < sizeof(struct mf6cctl))
+		if (m == NULL || m->m_len != sizeof(struct mf6cctl))
 			return (EINVAL);
 		return (del_m6fc(mtod(m,  struct mf6cctl *)));
 	case MRT6_PIM:
-		if (m == NULL || m->m_len < sizeof(int))
+		if (m == NULL || m->m_len != sizeof(int))
 			return (EINVAL);
 		return (set_pim6(mtod(m, int *)));
 	default:

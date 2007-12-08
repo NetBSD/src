@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe_tty.c,v 1.44.14.1 2007/11/19 00:48:00 mjf Exp $	*/
+/*	$NetBSD: irframe_tty.c,v 1.44.14.2 2007/12/08 18:19:36 mjf Exp $	*/
 
 /*
  * TODO
@@ -48,14 +48,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irframe_tty.c,v 1.44.14.1 2007/11/19 00:48:00 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irframe_tty.c,v 1.44.14.2 2007/12/08 18:19:36 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/ioctl.h>
 #include <sys/tty.h>
 #include <sys/kernel.h>
-#include <sys/lock.h>
+#include <sys/mutex.h>
 #include <sys/malloc.h>
 #include <sys/conf.h>
 #include <sys/systm.h>
@@ -101,7 +101,7 @@ struct irframet_softc {
 #define	IRT_WSLP		0x02	/* waiting for data (write) */
 #define IRT_CLOSING		0x04	/* waiting for output to drain */
 #endif
-	struct lock sc_wr_lk;
+	kmutex_t sc_wr_lk;
 
 	struct irda_params sc_params;
 
@@ -533,6 +533,7 @@ irframet_open(void *h, int flag, int mode,
 {
 	struct tty *tp = h;
 	struct irframet_softc *sc = (struct irframet_softc *)tp->t_sc;
+	static bool again;
 
 	DPRINTF(("%s: tp=%p\n", __FUNCTION__, tp));
 
@@ -543,8 +544,13 @@ irframet_open(void *h, int flag, int mode,
 	sc->sc_nframes = 0;
 	sc->sc_framei = 0;
 	sc->sc_frameo = 0;
-	callout_init(&sc->sc_timeout, 0);
-	lockinit(&sc->sc_wr_lk, PZERO, "irfrtl", 0, 0);
+
+	/* XXX */
+	if (!again) {
+		again = true;
+		callout_init(&sc->sc_timeout, 0);
+		mutex_init(&sc->sc_wr_lk, MUTEX_DEFAULT, IPL_NONE);
+	}
 
 	return (0);
 }
@@ -650,7 +656,6 @@ irt_putc(struct tty *tp, int c)
 			mutex_spin_exit(&tty_lock);
 			goto go;
 		}
-		SET(tp->t_state, TS_ASLEEP);
 		error = ttysleep(tp, &tp->t_outq.c_cv, true, 0);
 		mutex_spin_exit(&tty_lock);
 		if (error)
@@ -694,11 +699,11 @@ irt_write_frame(struct tty *tp, u_int8_t *tbuf, size_t len)
 
 	DPRINTF(("%s: tp=%p len=%zd\n", __FUNCTION__, tp, len));
 
-	lockmgr(&sc->sc_wr_lk, LK_EXCLUSIVE, NULL);
+	mutex_enter(&sc->sc_wr_lk);
 	error = 0;
 	for (i = 0; !error && i < len; i++)
 		error = irt_putc(tp, tbuf[i]);
-	lockmgr(&sc->sc_wr_lk, LK_RELEASE, NULL);
+	mutex_exit(&sc->sc_wr_lk);
 
 	irframetstart(tp);
 
@@ -810,7 +815,7 @@ irframet_kqfilter(void *h, struct knote *kn)
 		kn->kn_fop = &irframetwrite_filtops;
 		break;
 	default:
-		return (1);
+		return (EINVAL);
 	}
 
 	kn->kn_hook = tp;
@@ -834,9 +839,9 @@ irframet_set_params(void *h, struct irda_params *p)
 
 	if (p->speed != sc->sc_params.speed) {
 		/* Checked in irframe.c */
-		lockmgr(&sc->sc_wr_lk, LK_EXCLUSIVE, NULL);
+		mutex_enter(&sc->sc_wr_lk);
 		irt_dongles[sc->sc_dongle].setspeed(tp, p->speed);
-		lockmgr(&sc->sc_wr_lk, LK_RELEASE, NULL);
+		mutex_exit(&sc->sc_wr_lk);
 		sc->sc_params.speed = p->speed;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.234.2.1 2007/11/19 00:48:21 mjf Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.234.2.2 2007/12/08 18:19:54 mjf Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -146,7 +146,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.234.2.1 2007/11/19 00:48:21 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.234.2.2 2007/12/08 18:19:54 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -367,7 +367,7 @@ raidattach(int num)
 		raidPtrs[i] = NULL;
 	rc = rf_BootRaidframe();
 	if (rc == 0)
-		printf("Kernelized RAIDframe activated\n");
+		aprint_normal("Kernelized RAIDframe activated\n");
 	else
 		panic("Serious error booting RAID!!");
 
@@ -378,7 +378,7 @@ raidattach(int num)
 		malloc(num * sizeof(struct raid_softc),
 		       M_RAIDFRAME, M_NOWAIT);
 	if (raid_softc == NULL) {
-		printf("WARNING: no memory for RAIDframe driver\n");
+		aprint_error("WARNING: no memory for RAIDframe driver\n");
 		return;
 	}
 
@@ -390,14 +390,14 @@ raidattach(int num)
 		RF_Malloc(raidPtrs[raidID], sizeof(RF_Raid_t),
 			  (RF_Raid_t *));
 		if (raidPtrs[raidID] == NULL) {
-			printf("WARNING: raidPtrs[%d] is NULL\n", raidID);
+			aprint_error("WARNING: raidPtrs[%d] is NULL\n", raidID);
 			numraid = raidID;
 			return;
 		}
 	}
 
 	if (config_cfattach_attach(raid_cd.cd_name, &raid_ca)) {
-		printf("config_cfattach_attach failed?\n");
+		aprint_error("raidattach: config_cfattach_attach failed?\n");
 	}
 
 #ifdef RAID_AUTOCONFIG
@@ -409,7 +409,7 @@ raidattach(int num)
 	 * sets once all real hardware devices have been found.
 	 */
 	if (config_finalize_register(NULL, rf_autoconfig) != 0)
-		printf("WARNING: unable to register RAIDframe finalizer\n");
+		aprint_error("WARNING: unable to register RAIDframe finalizer\n");
 }
 
 int
@@ -2656,7 +2656,7 @@ rf_close_component(RF_Raid_t *raidPtr, struct vnode *vp, int auto_configured)
 	if (vp != NULL) {
 		if (auto_configured == 1) {
 			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-			VOP_CLOSE(vp, FREAD | FWRITE, NOCRED, 0);
+			VOP_CLOSE(vp, FREAD | FWRITE, NOCRED);
 			vput(vp);
 
 		} else {
@@ -2832,7 +2832,7 @@ oomem:
 		/* cleanup */
 		free(clabel, M_RAIDFRAME);
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-		VOP_CLOSE(vp, FREAD | FWRITE, NOCRED, 0);
+		VOP_CLOSE(vp, FREAD | FWRITE, NOCRED);
 		vput(vp);
 	}
 	return ac_list;
@@ -2895,7 +2895,7 @@ rf_find_raid_components()
 		if (bdevvp(dev, &vp))
 			panic("RAID can't alloc vnode");
 
-		error = VOP_OPEN(vp, FREAD, NOCRED, 0);
+		error = VOP_OPEN(vp, FREAD, NOCRED);
 
 		if (error) {
 			/* "Who cares."  Continue looking
@@ -2907,9 +2907,9 @@ rf_find_raid_components()
 		if (wedge) {
 			struct dkwedge_info dkw;
 			error = VOP_IOCTL(vp, DIOCGWEDGEINFO, &dkw, FREAD,
-			    NOCRED, 0);
+			    NOCRED);
 			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-			VOP_CLOSE(vp, FREAD | FWRITE, NOCRED, 0);
+			VOP_CLOSE(vp, FREAD | FWRITE, NOCRED);
 			vput(vp);
 			if (error) {
 				printf("RAIDframe: can't get wedge info for "
@@ -2926,7 +2926,7 @@ rf_find_raid_components()
 		}
 
 		/* Ok, the disk exists.  Go get the disklabel. */
-		error = VOP_IOCTL(vp, DIOCGDINFO, &label, FREAD, NOCRED, 0);
+		error = VOP_IOCTL(vp, DIOCGDINFO, &label, FREAD, NOCRED);
 		if (error) {
 			/*
 			 * XXX can't happen - open() would
@@ -2940,7 +2940,7 @@ rf_find_raid_components()
 		/* don't need this any more.  We'll allocate it again
 		   a little later if we really do... */
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-		VOP_CLOSE(vp, FREAD | FWRITE, NOCRED, 0);
+		VOP_CLOSE(vp, FREAD | FWRITE, NOCRED);
 		vput(vp);
 
 		if (error)
@@ -2957,7 +2957,7 @@ rf_find_raid_components()
 			if (bdevvp(dev, &vp))
 				panic("RAID can't alloc vnode");
 
-			error = VOP_OPEN(vp, FREAD, NOCRED, 0);
+			error = VOP_OPEN(vp, FREAD, NOCRED);
 			if (error) {
 				/* Whatever... */
 				vput(vp);
@@ -3360,7 +3360,7 @@ rf_release_all_vps(RF_ConfigSet_t *cset)
 		/* Close the vp, and give it back */
 		if (ac->vp) {
 			vn_lock(ac->vp, LK_EXCLUSIVE | LK_RETRY);
-			VOP_CLOSE(ac->vp, FREAD, NOCRED, 0);
+			VOP_CLOSE(ac->vp, FREAD, NOCRED);
 			vput(ac->vp);
 			ac->vp = NULL;
 		}
@@ -3566,7 +3566,7 @@ rf_getdisksize(struct vnode *vp, struct lwp *l, RF_RaidDisk_t *diskPtr)
 	struct dkwedge_info dkw;
 	int error;
 
-	error = VOP_IOCTL(vp, DIOCGPART, &dpart, FREAD, l->l_cred, l);
+	error = VOP_IOCTL(vp, DIOCGPART, &dpart, FREAD, l->l_cred);
 	if (error == 0) {
 		diskPtr->blockSize = dpart.disklab->d_secsize;
 		diskPtr->numBlocks = dpart.part->p_size - rf_protectedSectors;
@@ -3574,7 +3574,7 @@ rf_getdisksize(struct vnode *vp, struct lwp *l, RF_RaidDisk_t *diskPtr)
 		return 0;
 	}
 
-	error = VOP_IOCTL(vp, DIOCGWEDGEINFO, &dkw, FREAD, l->l_cred, l);
+	error = VOP_IOCTL(vp, DIOCGWEDGEINFO, &dkw, FREAD, l->l_cred);
 	if (error == 0) {
 		diskPtr->blockSize = 512;	/* XXX */
 		diskPtr->numBlocks = dkw.dkw_size - rf_protectedSectors;

@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile_ecoff.c,v 1.8 2007/06/06 07:56:39 martin Exp $ */
+/* $NetBSD: loadfile_ecoff.c,v 1.8.14.1 2007/12/08 18:20:53 mjf Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -66,6 +66,7 @@ loadfile_coff(fd, coff, marks, flags)
 {
 	paddr_t offset = marks[MARK_START];
 	paddr_t minp = ~0, maxp = 0, pos;
+	ssize_t nr;
 
 	/* some ports dont use the offset */
 	offset = offset;
@@ -79,8 +80,12 @@ loadfile_coff(fd, coff, marks, flags)
 	if (coff->a.tsize != 0) {
 		if (flags & LOAD_TEXT) {
 			PROGRESS(("%lu", coff->a.tsize));
-			if (READ(fd, coff->a.text_start, coff->a.tsize) !=
-			    coff->a.tsize) {
+			nr = READ(fd, coff->a.text_start, coff->a.tsize);
+			if (nr == -1) {
+				return 1;
+			}
+			if (nr != coff->a.tsize) {
+				errno = EIO;
 				return 1;
 			}
 		}
@@ -104,8 +109,13 @@ loadfile_coff(fd, coff, marks, flags)
 	if (coff->a.dsize != 0) {
 		if (flags & LOAD_DATA) {
 			PROGRESS(("+%lu", coff->a.dsize));
-			if (READ(fd, coff->a.data_start, coff->a.dsize) !=
-			    coff->a.dsize) {
+			nr = READ(fd, coff->a.data_start, coff->a.dsize);
+			if (nr == -1) {
+				WARN(("read data"));
+				return 1;
+			}
+			if (nr != coff->a.dsize) {
+				errno = EIO;
 				WARN(("read data"));
 				return 1;
 			}

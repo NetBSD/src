@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.123.4.1 2007/11/19 00:48:42 mjf Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.123.4.2 2007/12/08 18:20:30 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.123.4.1 2007/11/19 00:48:42 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.123.4.2 2007/12/08 18:20:30 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,7 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.123.4.1 2007/11/19 00:48:42 mjf 
 #include <sys/proc.h>
 #include <sys/sysctl.h>
 #include <sys/kauth.h>
-
+#include <sys/atomic.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 
@@ -572,9 +572,7 @@ lim_copy(struct plimit *lim)
 void
 lim_addref(struct plimit *lim)
 {
-	mutex_enter(&lim->pl_lock);
-	lim->pl_refcnt++;
-	mutex_exit(&lim->pl_lock);
+	atomic_inc_uint(&lim->pl_refcnt);
 }
 
 /*
@@ -624,18 +622,10 @@ void
 limfree(struct plimit *lim)
 {
 	struct plimit *sv_lim;
-	int n;
 
 	do {
-		mutex_enter(&lim->pl_lock);
-		n = --lim->pl_refcnt;
-		mutex_exit(&lim->pl_lock);
-		if (n > 0)
+		if (atomic_dec_uint_nv(&lim->pl_refcnt) > 0)
 			return;
-#ifdef DIAGNOSTIC
-		if (n < 0)
-			panic("limfree");
-#endif
 		if (lim->pl_corename != defcorename)
 			free(lim->pl_corename, M_TEMP);
 		sv_lim = lim->pl_sv_limit;
@@ -1009,7 +999,7 @@ uid_init(void)
 	 * XXXSMP This could be at IPL_SOFTNET, but for now we want
 	 * to to be deadlock free, so it must be at IPL_VM.
 	 */
-	mutex_init(&uihashtbl_lock, MUTEX_DRIVER, IPL_VM);
+	mutex_init(&uihashtbl_lock, MUTEX_DEFAULT, IPL_VM);
 
 	/*
 	 * Ensure that uid 0 is always in the user hash table, as
@@ -1043,7 +1033,7 @@ again:
 		/* Must not be called from interrupt context. */
 		newuip = malloc(sizeof(*uip), M_PROC, M_WAITOK | M_ZERO);
 		/* XXX this could be IPL_SOFTNET */
-		mutex_init(&newuip->ui_lock, MUTEX_DRIVER, IPL_VM);
+		mutex_init(&newuip->ui_lock, MUTEX_DEFAULT, IPL_VM);
 		goto again;
 	}
 	uip = newuip;

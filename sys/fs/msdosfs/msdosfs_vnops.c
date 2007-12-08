@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.42.4.1 2007/11/19 00:48:27 mjf Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.42.4.2 2007/12/08 18:20:16 mjf Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.42.4.1 2007/11/19 00:48:27 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.42.4.2 2007/12/08 18:20:16 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -195,7 +195,6 @@ msdosfs_open(void *v)
 		struct vnode *a_vp;
 		int a_mode;
 		kauth_cred_t a_cred;
-		struct lwp *a_l;
 	} */ *ap;
 #endif
 
@@ -210,7 +209,6 @@ msdosfs_close(v)
 		struct vnode *a_vp;
 		int a_fflag;
 		kauth_cred_t a_cred;
-		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct denode *dep = VTODE(vp);
@@ -230,7 +228,6 @@ msdosfs_access(v)
 		struct vnode *a_vp;
 		int a_mode;
 		kauth_cred_t a_cred;
-		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct denode *dep = VTODE(vp);
@@ -271,7 +268,6 @@ msdosfs_getattr(v)
 		struct vnode *a_vp;
 		struct vattr *a_vap;
 		kauth_cred_t a_cred;
-		struct lwp *a_l;
 	} */ *ap = v;
 	struct denode *dep = VTODE(ap->a_vp);
 	struct msdosfsmount *pmp = dep->de_pmp;
@@ -339,7 +335,6 @@ msdosfs_setattr(v)
 		struct vnode *a_vp;
 		struct vattr *a_vap;
 		kauth_cred_t a_cred;
-		struct lwp *a_l;
 	} */ *ap = v;
 	int error = 0, de_changed = 0;
 	struct denode *dep = VTODE(ap->a_vp);
@@ -380,7 +375,7 @@ msdosfs_setattr(v)
 	if (vap->va_size != VNOVAL) {
 		if (vp->v_mount->mnt_flag & MNT_RDONLY)
 			return (EROFS);
-		error = detrunc(dep, (u_long)vap->va_size, 0, cred, ap->a_l);
+		error = detrunc(dep, (u_long)vap->va_size, 0, cred);
 		if (error)
 			return (error);
 		de_changed = 1;
@@ -392,7 +387,7 @@ msdosfs_setattr(v)
 		    (error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
 		    NULL)) &&
 		    ((vap->va_vaflags & VA_UTIMES_NULL) == 0 ||
-		    (error = VOP_ACCESS(ap->a_vp, VWRITE, cred, ap->a_l))))
+		    (error = VOP_ACCESS(ap->a_vp, VWRITE, cred))))
 			return (error);
 		if ((pmp->pm_flags & MSDOSFSMNT_NOWIN95) == 0 &&
 		    vap->va_atime.tv_sec != VNOVAL)
@@ -683,7 +678,7 @@ errexit:
 	if (resid > uio->uio_resid)
 		VN_KNOTE(vp, NOTE_WRITE | (extended ? NOTE_EXTEND : 0));
 	if (error) {
-		detrunc(dep, osize, ioflag & IO_SYNC, NOCRED, NULL);
+		detrunc(dep, osize, ioflag & IO_SYNC, NOCRED);
 		uio->uio_offset -= resid - uio->uio_resid;
 		uio->uio_resid = resid;
 	} else if ((ioflag & IO_SYNC) == IO_SYNC)
@@ -856,7 +851,6 @@ msdosfs_rename(v)
 	struct vnode *fdvp = ap->a_fdvp;
 	struct componentname *tcnp = ap->a_tcnp;
 	struct componentname *fcnp = ap->a_fcnp;
-	struct lwp *l = tcnp->cn_lwp;
 	struct denode *ip, *xp, *dp, *zp;
 	u_char toname[11], oldname[11];
 	u_long from_diroffset, to_diroffset;
@@ -961,7 +955,7 @@ abortit:
 	 * to namei, as the parent directory is unlocked by the
 	 * call to doscheckpath().
 	 */
-	error = VOP_ACCESS(fvp, VWRITE, tcnp->cn_cred, l);
+	error = VOP_ACCESS(fvp, VWRITE, tcnp->cn_cred);
 	VOP_UNLOCK(fvp, 0);
 	if (VTODE(fdvp)->de_StartCluster != VTODE(tdvp)->de_StartCluster)
 		newparent = 1;
@@ -1390,7 +1384,7 @@ msdosfs_rmdir(v)
 	/*
 	 * Truncate the directory that is being deleted.
 	 */
-	error = detrunc(ip, (u_long)0, IO_SYNC, cnp->cn_cred, cnp->cn_lwp);
+	error = detrunc(ip, (u_long)0, IO_SYNC, cnp->cn_cred);
 	cache_purge(vp);
 out:
 	VN_KNOTE(vp, NOTE_DELETE);
@@ -1871,7 +1865,6 @@ msdosfs_fsync(v)
 		int a_flags;
 		off_t offlo;
 		off_t offhi;
-		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	int wait;
@@ -1890,7 +1883,7 @@ msdosfs_fsync(v)
 
 		int l = 0;
 		error = VOP_IOCTL(devvp, DIOCCACHESYNC, &l, FWRITE,
-					  ap->a_l->l_cred, ap->a_l);
+					  curlwp->l_cred);
 	}
 
 	return (error);

@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vfsops.c,v 1.67 2007/10/10 20:42:29 ad Exp $	*/
+/*	$NetBSD: portal_vfsops.c,v 1.67.4.1 2007/12/08 18:21:02 mjf Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.67 2007/10/10 20:42:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.67.4.1 2007/12/08 18:21:02 mjf Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -88,10 +88,9 @@ portal_mount(
     struct mount *mp,
     const char *path,
     void *data,
-    size_t *data_len,
-    struct lwp *l
-)
+    size_t *data_len)
 {
+	struct lwp *l = curlwp;
 	struct file *fp;
 	struct portal_args *args = data;
 	struct portalmount *fmp;
@@ -159,15 +158,14 @@ portal_mount(
 }
 
 int
-portal_start(struct mount *mp, int flags,
-    struct lwp *l)
+portal_start(struct mount *mp, int flags)
 {
 
 	return (0);
 }
 
 int
-portal_unmount(struct mount *mp, int mntflags, struct lwp *l)
+portal_unmount(struct mount *mp, int mntflags)
 {
 	struct vnode *rtvp = VFSTOPORTAL(mp)->pm_root;
 	int error, flags = 0;
@@ -227,15 +225,7 @@ portal_root(mp, vpp)
 }
 
 int
-portal_quotactl(struct mount *mp, int cmd, uid_t uid,
-    void *arg, struct lwp *l)
-{
-
-	return (EOPNOTSUPP);
-}
-
-int
-portal_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l)
+portal_statvfs(struct mount *mp, struct statvfs *sbp)
 {
 
 	sbp->f_bsize = DEV_BSIZE;
@@ -256,7 +246,7 @@ portal_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l)
 /*ARGSUSED*/
 int
 portal_sync(struct mount *mp, int waitfor,
-    kauth_cred_t uc, struct lwp *l)
+    kauth_cred_t uc)
 {
 
 	return (0);
@@ -305,7 +295,7 @@ struct vfsops portal_vfsops = {
 	portal_start,
 	portal_unmount,
 	portal_root,
-	portal_quotactl,
+	(void *)eopnotsupp,		/* vfs_quotactl */
 	portal_statvfs,
 	portal_sync,
 	portal_vget,

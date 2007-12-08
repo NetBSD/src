@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_fcntl.c,v 1.24 2007/10/10 21:59:11 ad Exp $	 */
+/*	$NetBSD: svr4_32_fcntl.c,v 1.24.4.1 2007/12/08 18:19:11 mjf Exp $	 */
 
 /*-
  * Copyright (c) 1994, 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_fcntl.c,v 1.24 2007/10/10 21:59:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_fcntl.c,v 1.24.4.1 2007/12/08 18:19:11 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,14 +63,14 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_32_fcntl.c,v 1.24 2007/10/10 21:59:11 ad Exp $"
 #include <compat/svr4_32/svr4_32_util.h>
 #include <compat/svr4_32/svr4_32_fcntl.h>
 
-static int svr4_32_to_bsd_flags __P((int));
-static int bsd_to_svr4_32_flags __P((int));
-static void bsd_to_svr4_32_flock __P((struct flock *, struct svr4_32_flock *));
-static void svr4_32_to_bsd_flock __P((struct svr4_32_flock *, struct flock *));
-static void bsd_to_svr4_32_flock64 __P((struct flock *, struct svr4_32_flock64 *));
-static void svr4_32_to_bsd_flock64 __P((struct svr4_32_flock64 *, struct flock *));
-static int fd_revoke __P((struct lwp *, int, register_t *));
-static int fd_truncate __P((struct lwp *, int, struct flock *, register_t *));
+static int svr4_32_to_bsd_flags(int);
+static int bsd_to_svr4_32_flags(int);
+static void bsd_to_svr4_32_flock(struct flock *, struct svr4_32_flock *);
+static void svr4_32_to_bsd_flock(struct svr4_32_flock *, struct flock *);
+static void bsd_to_svr4_32_flock64(struct flock *, struct svr4_32_flock64 *);
+static void svr4_32_to_bsd_flock64(struct svr4_32_flock64 *, struct flock *);
+static int fd_revoke(struct lwp *, int, register_t *);
+static int fd_truncate(struct lwp *, int, struct flock *, register_t *);
 
 
 static int
@@ -255,7 +255,7 @@ fd_revoke(struct lwp *l, int fd, register_t *retval)
 		goto out;
 	}
 
-	if ((error = VOP_GETATTR(vp, &vattr, l->l_cred, l)) != 0)
+	if ((error = VOP_GETATTR(vp, &vattr, l->l_cred)) != 0)
 		goto out;
 
 	if (kauth_cred_geteuid(l->l_cred) != vattr.va_uid &&
@@ -299,7 +299,7 @@ fd_truncate(l, fd, flp, retval)
 		return ESPIPE;
 	}
 	FILE_USE(fp);
-	if ((error = VOP_GETATTR(vp, &vattr, l->l_cred, l)) != 0) {
+	if ((error = VOP_GETATTR(vp, &vattr, l->l_cred)) != 0) {
 		FILE_UNUSE(fp, l);
 		return error;
 	}

@@ -1,4 +1,4 @@
-/* $NetBSD: rge.c,v 1.6 2007/11/02 02:31:12 nisimura Exp $ */
+/* $NetBSD: rge.c,v 1.6.2.1 2007/12/08 18:17:44 mjf Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -55,10 +55,10 @@
 #define CSR_READ_1(l, r)	*(volatile uint8_t *)((l)->csr+(r))
 #define CSR_WRITE_2(l, r, v)	out16rb((l)->csr+(r), (v))
 #define CSR_READ_2(l, r)	in16rb((l)->csr+(r))
-#define CSR_WRITE_4(l, r, v) 	out32rb((l)->csr+(r), (v))
+#define CSR_WRITE_4(l, r, v)	out32rb((l)->csr+(r), (v))
 #define CSR_READ_4(l, r)	in32rb((l)->csr+(r))
-#define VTOPHYS(va) 		(uint32_t)(va)
-#define DEVTOV(pa) 		(uint32_t)(pa)
+#define VTOPHYS(va)		(uint32_t)(va)
+#define DEVTOV(pa)		(uint32_t)(pa)
 #define wbinv(adr, siz)		_wbinv(VTOPHYS(adr), (uint32_t)(siz))
 #define inv(adr, siz)		_inv(VTOPHYS(adr), (uint32_t)(siz))
 #define DELAY(n)		delay(n)
@@ -112,50 +112,42 @@ struct desc {
 #define RGE_TNPDS	0x20		/* Tx descriptor base paddr */
 #define RGE_THPDS	0x28		/* high pro. Tx des. base paddr */
 #define RGE_CR		0x37		/* command */
-#define	 CR_RESET	(1U << 4)	/* reset S1C */
-#define	 CR_RXEN	(1U << 3)	/* Rx enable */
-#define	 CR_TXEN	(1U << 2)	/* Tx enable */
+#define  CR_RESET	(1U << 4)	/* reset S1C */
+#define  CR_RXEN	(1U << 3)	/* Rx enable */
+#define  CR_TXEN	(1U << 2)	/* Tx enable */
+#define RGE_TXPOLL	0x38		/* activate desc polling */
 #define RGE_IMR		0x3c		/* interrupt mask */
 #define RGE_ISR		0x3e		/* interrupt status */
-#define	 ISR_TXERR	0x0088		/* Tx error conditions */
-#define	 ISR_RXERR	0x0072		/* Rx error conditions */
-#define	 ISR_LNKCHG	(1U << 5)	/* link status change found */
-#define	 ISR_TXOK	(1U << 2)	/* Tx done */
-#define	 ISR_RXOK	(1U << 0)	/* Rx frame available */
+#define  ISR_TXERR	0x0088		/* Tx error conditions */
+#define  ISR_RXERR	0x0072		/* Rx error conditions */
+#define  ISR_LNKCHG	(1U << 5)	/* link status change found */
+#define  ISR_TXOK	(1U << 2)	/* Tx done */
+#define  ISR_RXOK	(1U << 0)	/* Rx frame available */
 #define RGE_TCR		0x40		/* Tx control */
-#define	 TCR_MAXDMA	0x0700		/* 10:8 Tx DMA burst size */
+#define  TCR_MAXDMA	0x0700		/* 10:8 Tx DMA burst size */
 #define RGE_RCR		0x44		/* Rx control */
-#define	 RCR_RXTFH	0xe000		/* 15:13 Rx FIFO threshold */
-#define	 RCR_MAXDMA	0x0700		/* 10:8 Rx DMA burst size */
-#define	 RCR_AE		(1U << 5)	/* accept error frame */
-#define	 RCR_RE		(1U << 4)	/* accept runt frame */
-#define	 RCR_AB		(1U << 3)	/* accept broadcast frame */
-#define	 RCR_AM		(1U << 2)	/* accept multicast frame */
-#define	 RCR_APM	(1U << 1)	/* accept unicast frame */
-#define	 RCR_AAP	(1U << 0)	/* promiscuous */
-#define RGE_CNR0	0x51		/* configuration #0 */
-#define RGE_CNR1	0x52		/* configuration #1 */
-#define RGE_CNR2	0x53		/* configuration #2 */
-#define RGE_CNR3	0x54		/* configuration #3 */
-#define RGE_CNR4	0x55		/* configuration #4 */
-#define RGE_CNR5	0x56		/* configuration #5 */
+#define  RCR_RXTFH	0xe000		/* 15:13 Rx FIFO threshold */
+#define  RCR_MAXDMA	0x0700		/* 10:8 Rx DMA burst size */
+#define  RCR_AE		(1U << 5)	/* accept error frame */
+#define  RCR_RE		(1U << 4)	/* accept runt frame */
+#define  RCR_AB		(1U << 3)	/* accept broadcast frame */
+#define  RCR_AM		(1U << 2)	/* accept multicast frame */
+#define  RCR_APM	(1U << 1)	/* accept unicast frame */
+#define  RCR_AAP	(1U << 0)	/* promiscuous */
 #define RGE_PHYAR	0x60		/* PHY access */
-#define RGE_TBICSR0	0x64		/* TBI control and status */
-#define RGE_TBIANAR	0x68		/* TBI AN advertise */
-#define RGE_TBILNAR	0x6c		/* TBI link partner ability */
 #define RGE_PHYSR	0x6d		/* PHY status */
 #define RGE_RMS		0xda		/* Rx maximum frame size */
 #define RGE_CCCR	0xe0		/* C+CR */
-#define	 CCCR_VLAN	(1U << 6)	/* Rx VTAG removal */
-#define	 CCCR_CSUM	(1U << 5)	/* Rx checksum offload */
+#define  CCCR_VLAN	(1U << 6)	/* Rx VTAG removal */
+#define  CCCR_CSUM	(1U << 5)	/* Rx checksum offload */
 #define RGE_RDSAR	0xe4		/* Rx descriptor base paddr */
 #define RGE_ETTHR	0xec		/* Tx threshold */
 
 #define FRAMESIZE	1536
 
 struct local {
-	struct desc TxD;
-	struct desc RxD[2];
+	struct desc txd;
+	struct desc rxd[2];
 	uint8_t rxstore[2][FRAMESIZE];
 	unsigned csr, rx;
 	unsigned phy, bmsr, anlpar;
@@ -171,14 +163,14 @@ rge_init(unsigned tag, void *data)
 {
 	unsigned val;
 	struct local *l;
-	struct desc *TxD, *RxD;
+	struct desc *txd, *rxd;
 	uint8_t *en = data;
 
 	val = pcicfgread(tag, PCI_ID_REG);
 	if (PCI_VENDOR(val) != 0x10ec && PCI_PRODUCT(val) != 0x8169)
 		return NULL;
 
-	l = ALLOC(struct local, 256);   /* desc alignment */
+	l = ALLOC(struct local, 256);	/* desc alignment */
 	memset(l, 0, sizeof(struct local));
 	l->csr = DEVTOV(pcicfgread(tag, 0x14)); /* use mem space */
 
@@ -201,28 +193,28 @@ rge_init(unsigned tag, void *data)
 		en[0], en[1], en[2], en[3], en[4], en[5]);
 #endif
 
-	TxD = &l->TxD;
-	RxD = &l->RxD[0];
-	RxD[0].xd0 = htole32(R0_OWN | FRAMESIZE);
-	RxD[0].xd2 = htole32(VTOPHYS(l->rxstore[0]));
-	RxD[1].xd0 = htole32(R0_OWN | R0_EOR | FRAMESIZE);
-	RxD[1].xd2 = htole32(VTOPHYS(l->rxstore[1]));
+	txd = &l->txd;
+	rxd = &l->rxd[0];
+	rxd[0].xd0 = htole32(R0_OWN | FRAMESIZE);
+	rxd[0].xd2 = htole32(VTOPHYS(l->rxstore[0]));
+	rxd[1].xd0 = htole32(R0_OWN | R0_EOR | FRAMESIZE);
+	rxd[1].xd2 = htole32(VTOPHYS(l->rxstore[1]));
 	wbinv(l, sizeof(struct local));
 	l->rx = 0;
 
 	l->tcr = (03 << 24) | (07 << 8);
 	l->rcr = (07 << 13) | (07 << 8) | RCR_APM;
-        CSR_WRITE_1(l, RGE_CR, CR_TXEN | CR_RXEN);
-        CSR_WRITE_1(l, RGE_ETTHR, 0x3f);
-        CSR_WRITE_2(l, RGE_RMS, 0x8000);
-        CSR_WRITE_4(l, RGE_TCR, l->tcr);
-        CSR_WRITE_4(l, RGE_RCR, l->rcr);
-        CSR_WRITE_4(l, RGE_TNPDS, VTOPHYS(TxD));
-        CSR_WRITE_4(l, RGE_RDSAR, VTOPHYS(RxD));
-        CSR_WRITE_4(l, RGE_TNPDS + 4, 0); 
-        CSR_WRITE_4(l, RGE_RDSAR + 4, 0); 
-        CSR_WRITE_2(l, RGE_ISR, ~0);
-        CSR_WRITE_2(l, RGE_IMR, 0);
+	CSR_WRITE_1(l, RGE_CR, CR_TXEN | CR_RXEN);
+	CSR_WRITE_1(l, RGE_ETTHR, 0x3f);
+	CSR_WRITE_2(l, RGE_RMS, 0x8000);
+	CSR_WRITE_4(l, RGE_TCR, l->tcr);
+	CSR_WRITE_4(l, RGE_RCR, l->rcr);
+	CSR_WRITE_4(l, RGE_TNPDS, VTOPHYS(txd));
+	CSR_WRITE_4(l, RGE_RDSAR, VTOPHYS(rxd));
+	CSR_WRITE_4(l, RGE_TNPDS + 4, 0); 
+	CSR_WRITE_4(l, RGE_RDSAR + 4, 0); 
+	CSR_WRITE_2(l, RGE_ISR, ~0);
+	CSR_WRITE_2(l, RGE_IMR, 0);
 
 	return l;
 }
@@ -231,21 +223,22 @@ int
 rge_send(void *dev, char *buf, unsigned len)
 {
 	struct local *l = dev;
-	struct desc *TxD;
+	struct desc *txd;
 	unsigned loop;
 
 	wbinv(buf, len);
-	TxD = &l->TxD;
-	TxD->xd2 = htole32(VTOPHYS(buf));
-	TxD->xd1 = 0;
-	TxD->xd0 = htole32(T0_OWN|T0_EOR|T0_FS|T0_LS| (len & T0_FRMASK));
-	wbinv(TxD, sizeof(struct desc));
+	txd = &l->txd;
+	txd->xd2 = htole32(VTOPHYS(buf));
+	txd->xd1 = 0;
+	txd->xd0 = htole32(T0_OWN|T0_EOR|T0_FS|T0_LS| (len & T0_FRMASK));
+	wbinv(txd, sizeof(struct desc));
+	CSR_WRITE_1(l, RGE_TXPOLL, 0x40);
 	loop = 100;
 	do {
-		if ((le32toh(TxD->xd0) & T0_OWN) == 0)
+		if ((le32toh(txd->xd0) & T0_OWN) == 0)
 			goto done;
 		DELAY(10);
-		inv(TxD, sizeof(struct desc));
+		inv(txd, sizeof(struct desc));
 	} while (--loop > 0);
 	printf("xmit failed\n");
 	return -1;
@@ -257,28 +250,28 @@ int
 rge_recv(void *dev, char *buf, unsigned maxlen, unsigned timo)
 {
 	struct local *l = dev;
-	struct desc *RxD;
+	struct desc *rxd;
 	unsigned bound, rxstat, len;
 	uint8_t *ptr;
 
 	bound = 1000 * timo;
 printf("recving with %u sec. timeout\n", timo);
   again:
-	RxD = &l->RxD[l->rx];
+	rxd = &l->rxd[l->rx];
 	do {
-		inv(RxD, sizeof(struct desc));
-		rxstat = le32toh(RxD->xd0);
+		inv(rxd, sizeof(struct desc));
+		rxstat = le32toh(rxd->xd0);
 		if ((rxstat & R0_OWN) == 0)
 			goto gotone;
 		DELAY(1000);	/* 1 milli second */
-	} while (bound-- > 0);
+	} while (--bound > 0);
 	errno = 0;
 	return -1;
   gotone:
 	if (rxstat & R0_RES) {
-		RxD->xd0 &= htole32(R0_EOR);
-		RxD->xd0 |= htole32(R0_OWN | FRAMESIZE);
-		wbinv(RxD, sizeof(struct desc));
+		rxd->xd0 &= htole32(R0_EOR);
+		rxd->xd0 |= htole32(R0_OWN | FRAMESIZE);
+		wbinv(rxd, sizeof(struct desc));
 		l->rx ^= 1;
 		goto again;
 	}
@@ -288,9 +281,9 @@ printf("recving with %u sec. timeout\n", timo);
 	ptr = l->rxstore[l->rx];
 	inv(ptr, len);
 	memcpy(buf, ptr, len);
-	RxD->xd0 &= htole32(R0_EOR);
-	RxD->xd0 |= htole32(R0_OWN | FRAMESIZE);
-	wbinv(RxD, sizeof(struct desc));
+	rxd->xd0 &= htole32(R0_EOR);
+	rxd->xd0 |= htole32(R0_OWN | FRAMESIZE);
+	wbinv(rxd, sizeof(struct desc));
 	l->rx ^= 1;
 	return len;
 }
@@ -321,7 +314,7 @@ rge_mii_write(struct local *l, int phy, int reg, int data)
 	} while (v & (1U << 31)); /* wait for 1 -> 0 */
 }
 
-#define MII_BMCR	0x00 	/* Basic mode control register (rw) */
+#define MII_BMCR	0x00	/* Basic mode control register (rw) */
 #define  BMCR_RESET	0x8000	/* reset */
 #define  BMCR_AUTOEN	0x1000	/* autonegotiation enable */
 #define  BMCR_ISO	0x0400	/* isolate */
