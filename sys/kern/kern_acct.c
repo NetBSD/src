@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_acct.c,v 1.78 2007/11/26 19:02:00 pooka Exp $	*/
+/*	$NetBSD: kern_acct.c,v 1.79 2007/12/08 19:29:47 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.78 2007/11/26 19:02:00 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.79 2007/12/08 19:29:47 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -301,8 +301,8 @@ sys_acct(struct lwp *l, void *v, register_t *retval)
 	if (SCARG(uap, path) != NULL) {
 		struct vattr va;
 		size_t pad;
-		NDINIT(&nd, LOOKUP, NOFOLLOW | TRYEMULROOT, UIO_USERSPACE, SCARG(uap, path),
-		    l);
+		NDINIT(&nd, LOOKUP, NOFOLLOW | TRYEMULROOT, UIO_USERSPACE,
+		    SCARG(uap, path));
 		if ((error = vn_open(&nd, FWRITE|O_APPEND, 0)) != 0)
 			return (error);
 		if (nd.ni_vp->v_type != VREG) {

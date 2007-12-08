@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_misc.c,v 1.54 2007/12/08 18:36:24 dsl Exp $	*/
+/*	$NetBSD: sunos32_misc.c,v 1.55 2007/12/08 19:29:40 pooka Exp $	*/
 /* from :NetBSD: sunos_misc.c,v 1.107 2000/12/01 19:25:10 jdolecek Exp	*/
 
 /*
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.54 2007/12/08 18:36:24 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.55 2007/12/08 19:29:40 pooka Exp $");
 
 #define COMPAT_SUNOS 1
 
@@ -306,7 +306,7 @@ sunos32_sys_lstat(struct lwp *l, void *v, register_t *retval)
 
 	ndflags = NOFOLLOW | LOCKLEAF | LOCKPARENT | TRYEMULROOT;
 again:
-	NDINIT(&nd, LOOKUP, ndflags, UIO_USERSPACE, path, l);
+	NDINIT(&nd, LOOKUP, ndflags, UIO_USERSPACE, path);
 	if ((error = namei(&nd))) {
 		if (error == EISDIR && (ndflags & LOCKPARENT) != 0) {
 			/*
@@ -1126,7 +1126,8 @@ sunos32_sys_statfs(struct lwp *l, void *v, register_t *retval)
 
 	SUNOS32TOP_UAP(path, const char);
 
-	NDINIT(&nd, LOOKUP, FOLLOW | TRYEMULROOT, UIO_USERSPACE, SCARG(&ua, path), l);
+	NDINIT(&nd, LOOKUP, FOLLOW | TRYEMULROOT, UIO_USERSPACE,
+	    SCARG(&ua, path));
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	mp = nd.ni_vp->v_mount;

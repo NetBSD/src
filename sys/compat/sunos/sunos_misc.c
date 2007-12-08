@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.155 2007/12/08 18:36:23 dsl Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.156 2007/12/08 19:29:39 pooka Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.155 2007/12/08 18:36:23 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.156 2007/12/08 19:29:39 pooka Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -872,7 +872,8 @@ sunos_sys_statfs(struct lwp *l, void *v, register_t *retval)
 	int error;
 	struct nameidata nd;
 
-	NDINIT(&nd, LOOKUP, FOLLOW | TRYEMULROOT, UIO_USERSPACE, SCARG(uap, path), l);
+	NDINIT(&nd, LOOKUP, FOLLOW | TRYEMULROOT, UIO_USERSPACE,
+	    SCARG(uap, path));
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	mp = nd.ni_vp->v_mount;
