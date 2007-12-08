@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.92 2007/12/08 17:31:12 apb Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.93 2007/12/08 17:52:34 apb Exp $
 #
 # Copyright (c) 2003,2007 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -506,7 +506,7 @@ wrap_makedev()
 		# "optional" tells pax(1) not to create the directory itself.
 		echo ". type=dir optional"
 	fi
-	eval "$@"
+	"$@"
 }
 
 # makedev special [...]
@@ -1880,17 +1880,17 @@ create_mfs_dev()
 
 #
 # MAIN: If MAKEDEV_AS_LIBRARY is set, then we are being used as a
-# function library, so just return.  Otherwise, call the setup function
-# to parse command line args and set some other variables; then call the
-# makedev function to create requested devices.
+# function library, so just return.  Otherwise, do all the real work.
 #
 [ -n "${MAKEDEV_AS_LIBRARY}" ] && return
 
+# Parse command line options
 setup ${1+"$@"}
 shift $((${OPTIND}-1))
 
 if $do_create_mfs; then
-	# Count inodes and create mfs file system
+	# Count inodes and create mfs file system.
+	# The makedev call merely updates $count_nodes.
 	count_nodes=0
 	makedev ${1+"$@"}
 	create_mfs_dev $count_nodes
@@ -1898,8 +1898,8 @@ if $do_create_mfs; then
 fi
 
 if $do_pax ; then
-	# wrap_makedev will print an mtree specification;
-	# pax will create device nodes.
+	# wrap_makedev will print an mtree specification because
+	# do_pax implies do_specfile.  pax will create device nodes.
 	wrap_makedev makedev ${1+"$@"} | ${TOOL_PAX} -r -w -M .
 else
 	wrap_makedev makedev ${1+"$@"}
