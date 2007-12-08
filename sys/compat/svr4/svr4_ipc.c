@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_ipc.c,v 1.23 2007/12/04 18:40:23 dsl Exp $	*/
+/*	$NetBSD: svr4_ipc.c,v 1.24 2007/12/08 18:36:25 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_ipc.c,v 1.23 2007/12/04 18:40:23 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_ipc.c,v 1.24 2007/12/08 18:36:25 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -109,9 +109,7 @@ static int svr4_shmctl(struct lwp *, void *, register_t *);
 #if defined(SYSVMSG) || defined(SYSVSHM) || defined(SYSVSEM)
 
 static void
-svr4_to_bsd_ipc_perm(spp, bpp)
-	const struct svr4_ipc_perm *spp;
-	struct ipc_perm *bpp;
+svr4_to_bsd_ipc_perm(const struct svr4_ipc_perm *spp, struct ipc_perm *bpp)
 {
 	bpp->_key = spp->key;
 	bpp->uid = spp->uid;
@@ -123,9 +121,7 @@ svr4_to_bsd_ipc_perm(spp, bpp)
 }
 
 static void
-bsd_to_svr4_ipc_perm(bpp, spp)
-	const struct ipc_perm *bpp;
-	struct svr4_ipc_perm *spp;
+bsd_to_svr4_ipc_perm(const struct ipc_perm *bpp, struct svr4_ipc_perm *spp)
 {
 	spp->key = bpp->_key;
 	spp->uid = bpp->uid;
@@ -139,9 +135,7 @@ bsd_to_svr4_ipc_perm(bpp, spp)
 
 #ifdef SYSVSEM
 static void
-bsd_to_svr4_semid_ds(bds, sds)
-	const struct semid_ds *bds;
-	struct svr4_semid_ds *sds;
+bsd_to_svr4_semid_ds(const struct semid_ds *bds, struct svr4_semid_ds *sds)
 {
 	bsd_to_svr4_ipc_perm(&bds->sem_perm, &sds->sem_perm);
 	sds->sem_base = (struct svr4_sem *) bds->_sem_base;
@@ -151,9 +145,7 @@ bsd_to_svr4_semid_ds(bds, sds)
 }
 
 static void
-svr4_to_bsd_semid_ds(sds, bds)
-	const struct svr4_semid_ds *sds;
-	struct semid_ds *bds;
+svr4_to_bsd_semid_ds(const struct svr4_semid_ds *sds, struct semid_ds *bds)
 {
 	svr4_to_bsd_ipc_perm(&sds->sem_perm, &bds->sem_perm);
 	bds->_sem_base = (struct __sem *) sds->sem_base;
@@ -171,10 +163,7 @@ struct svr4_sys_semctl_args {
 };
 
 static int
-svr4_semctl(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_semctl(struct lwp *l, void *v, register_t *retval)
 {
 	struct svr4_sys_semctl_args *uap = v;
 	struct semid_ds sembuf;
@@ -260,10 +249,7 @@ struct svr4_sys_semget_args {
 };
 
 static int
-svr4_semget(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_semget(struct lwp *l, void *v, register_t *retval)
 {
 	struct svr4_sys_semget_args *uap = v;
 	struct sys_semget_args ap;
@@ -283,10 +269,7 @@ struct svr4_sys_semop_args {
 };
 
 static int
-svr4_semop(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_semop(struct lwp *l, void *v, register_t *retval)
 {
 	struct svr4_sys_semop_args *uap = v;
 	struct sys_semop_args ap;
@@ -300,10 +283,7 @@ svr4_semop(l, v, retval)
 }
 
 int
-svr4_sys_semsys(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_sys_semsys(struct lwp *l, void *v, register_t *retval)
 {
 	struct svr4_sys_semsys_args *uap = v;
 
@@ -324,9 +304,7 @@ svr4_sys_semsys(l, v, retval)
 
 #ifdef SYSVMSG
 static void
-bsd_to_svr4_msqid_ds(bds, sds)
-	const struct msqid_ds *bds;
-	struct svr4_msqid_ds *sds;
+bsd_to_svr4_msqid_ds(const struct msqid_ds *bds, struct svr4_msqid_ds *sds)
 {
 	bsd_to_svr4_ipc_perm(&bds->msg_perm, &sds->msg_perm);
 	sds->msg_first = (struct svr4_msg *) bds->_msg_first;
@@ -348,9 +326,7 @@ bsd_to_svr4_msqid_ds(bds, sds)
 }
 
 static void
-svr4_to_bsd_msqid_ds(sds, bds)
-	const struct svr4_msqid_ds *sds;
-	struct msqid_ds *bds;
+svr4_to_bsd_msqid_ds(const struct svr4_msqid_ds *sds, struct msqid_ds *bds)
 {
 	svr4_to_bsd_ipc_perm(&sds->msg_perm, &bds->msg_perm);
 	bds->_msg_first = (struct __msg *) sds->msg_first;
@@ -379,10 +355,7 @@ struct svr4_sys_msgsnd_args {
 };
 
 static int
-svr4_msgsnd(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_msgsnd(struct lwp *l, void *v, register_t *retval)
 {
 	struct svr4_sys_msgsnd_args *uap = v;
 	struct sys_msgsnd_args ap;
@@ -405,10 +378,7 @@ struct svr4_sys_msgrcv_args {
 };
 
 static int
-svr4_msgrcv(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_msgrcv(struct lwp *l, void *v, register_t *retval)
 {
 	struct svr4_sys_msgrcv_args *uap = v;
 	struct sys_msgrcv_args ap;
@@ -429,10 +399,7 @@ struct svr4_sys_msgget_args {
 };
 
 static int
-svr4_msgget(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_msgget(struct lwp *l, void *v, register_t *retval)
 {
 	struct svr4_sys_msgget_args *uap = v;
 	struct sys_msgget_args ap;
@@ -451,10 +418,7 @@ struct svr4_sys_msgctl_args {
 };
 
 static int
-svr4_msgctl(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_msgctl(struct lwp *l, void *v, register_t *retval)
 {
 	struct svr4_sys_msgctl_args *uap = v;
 	struct svr4_msqid_ds ss;
@@ -486,10 +450,7 @@ svr4_msgctl(l, v, retval)
 }
 
 int
-svr4_sys_msgsys(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_sys_msgsys(struct lwp *l, void *v, register_t *retval)
 {
 	struct svr4_sys_msgsys_args *uap = v;
 
@@ -513,9 +474,7 @@ svr4_sys_msgsys(l, v, retval)
 #ifdef SYSVSHM
 
 static void
-bsd_to_svr4_shmid_ds(bds, sds)
-	const struct shmid_ds *bds;
-	struct svr4_shmid_ds *sds;
+bsd_to_svr4_shmid_ds(const struct shmid_ds *bds, struct svr4_shmid_ds *sds)
 {
 	bsd_to_svr4_ipc_perm(&bds->shm_perm, &sds->shm_perm);
 	sds->shm_segsz = bds->shm_segsz;
@@ -534,9 +493,7 @@ bsd_to_svr4_shmid_ds(bds, sds)
 }
 
 static void
-svr4_to_bsd_shmid_ds(sds, bds)
-	const struct svr4_shmid_ds *sds;
-	struct shmid_ds *bds;
+svr4_to_bsd_shmid_ds(const struct svr4_shmid_ds *sds, struct shmid_ds *bds)
 {
 	svr4_to_bsd_ipc_perm(&sds->shm_perm, &bds->shm_perm);
 	bds->shm_segsz = sds->shm_segsz;
@@ -557,10 +514,7 @@ struct svr4_sys_shmat_args {
 };
 
 static int
-svr4_shmat(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_shmat(struct lwp *l, void *v, register_t *retval)
 {
 	struct svr4_sys_shmat_args *uap = v;
 	struct sys_shmat_args ap;
@@ -578,10 +532,7 @@ struct svr4_sys_shmdt_args {
 };
 
 static int
-svr4_shmdt(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_shmdt(struct lwp *l, void *v, register_t *retval)
 {
 	struct svr4_sys_shmdt_args *uap = v;
 	struct sys_shmdt_args ap;
@@ -599,10 +550,7 @@ struct svr4_sys_shmget_args {
 };
 
 static int
-svr4_shmget(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_shmget(struct lwp *l, void *v, register_t *retval)
 {
 	struct svr4_sys_shmget_args *uap = v;
 	struct sys_shmget_args ap;
@@ -622,10 +570,7 @@ struct svr4_sys_shmctl_args {
 };
 
 int
-svr4_shmctl(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_shmctl(struct lwp *l, void *v, register_t *retval)
 {
 	struct svr4_sys_shmctl_args *uap = v;
 	struct shmid_ds bs;
@@ -663,10 +608,7 @@ svr4_shmctl(l, v, retval)
 }
 
 int
-svr4_sys_shmsys(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_sys_shmsys(struct lwp *l, void *v, register_t *retval)
 {
 	struct svr4_sys_shmsys_args *uap = v;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_20.c,v 1.16 2007/11/27 09:47:15 dogcow Exp $	*/
+/*	$NetBSD: netbsd32_compat_20.c,v 1.17 2007/12/08 18:36:17 dsl Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_20.c,v 1.16 2007/11/27 09:47:15 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_20.c,v 1.17 2007/12/08 18:36:17 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,9 +54,7 @@ static inline void compat_20_netbsd32_from_statvfs(struct statvfs *,
     struct netbsd32_statfs *);
 
 static inline void
-compat_20_netbsd32_from_statvfs(sbp, sb32p)
-	struct statvfs *sbp;
-	struct netbsd32_statfs *sb32p;
+compat_20_netbsd32_from_statvfs(struct statvfs *sbp, struct netbsd32_statfs *sb32p)
 {
 	sb32p->f_flags = sbp->f_flag;
 	sb32p->f_bsize = (netbsd32_long)sbp->f_bsize;
@@ -90,10 +88,7 @@ compat_20_netbsd32_from_statvfs(sbp, sb32p)
 }
 
 int
-compat_20_netbsd32_getfsstat(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+compat_20_netbsd32_getfsstat(struct lwp *l, void *v, register_t *retval)
 {
 	struct compat_20_netbsd32_getfsstat_args /* {
 		syscallarg(netbsd32_statfsp_t) buf;
@@ -155,10 +150,7 @@ compat_20_netbsd32_getfsstat(l, v, retval)
 }
 
 int
-compat_20_netbsd32_statfs(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+compat_20_netbsd32_statfs(struct lwp *l, void *v, register_t *retval)
 {
 	struct compat_20_netbsd32_statfs_args /* {
 		syscallarg(const netbsd32_charp) path;
@@ -184,10 +176,7 @@ compat_20_netbsd32_statfs(l, v, retval)
 }
 
 int
-compat_20_netbsd32_fstatfs(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+compat_20_netbsd32_fstatfs(struct lwp *l, void *v, register_t *retval)
 {
 	struct compat_20_netbsd32_fstatfs_args /* {
 		syscallarg(int) fd;
@@ -216,10 +205,7 @@ compat_20_netbsd32_fstatfs(l, v, retval)
 }
 
 int
-compat_20_netbsd32_fhstatfs(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+compat_20_netbsd32_fhstatfs(struct lwp *l, void *v, register_t *retval)
 {
 	struct compat_20_netbsd32_fhstatfs_args /* {
 		syscallarg(const netbsd32_fhandlep_t) fhp;

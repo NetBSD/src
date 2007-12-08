@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_ipc.c,v 1.9 2007/12/04 18:40:09 dsl Exp $	*/
+/*	$NetBSD: hpux_ipc.c,v 1.10 2007/12/08 18:35:59 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_ipc.c,v 1.9 2007/12/04 18:40:09 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_ipc.c,v 1.10 2007/12/08 18:35:59 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -81,9 +81,7 @@ void	hpux_to_bsd_oipc_perm(const struct hpux_oipc_perm *,
 	    struct ipc_perm *);
 
 void
-bsd_to_hpux_ipc_perm(bp, hp)
-	const struct ipc_perm *bp;
-	struct hpux_ipc_perm *hp;
+bsd_to_hpux_ipc_perm(const struct ipc_perm *bp, struct hpux_ipc_perm *hp)
 {
 
 	hp->uid = bp->uid;
@@ -96,9 +94,7 @@ bsd_to_hpux_ipc_perm(bp, hp)
 }
 
 void
-bsd_to_hpux_oipc_perm(bp, hp)
-	const struct ipc_perm *bp;
-	struct hpux_oipc_perm *hp;
+bsd_to_hpux_oipc_perm(const struct ipc_perm *bp, struct hpux_oipc_perm *hp)
 {
 
 	hp->uid = bp->uid;
@@ -111,9 +107,7 @@ bsd_to_hpux_oipc_perm(bp, hp)
 }
 
 void
-hpux_to_bsd_ipc_perm(hp, bp)
-	const struct hpux_ipc_perm *hp;
-	struct ipc_perm *bp;
+hpux_to_bsd_ipc_perm(const struct hpux_ipc_perm *hp, struct ipc_perm *bp)
 {
 
 	bp->uid = hp->uid;
@@ -126,9 +120,7 @@ hpux_to_bsd_ipc_perm(hp, bp)
 }
 
 void
-hpux_to_bsd_oipc_perm(hp, bp)
-	const struct hpux_oipc_perm *hp;
-	struct ipc_perm *bp;
+hpux_to_bsd_oipc_perm(const struct hpux_oipc_perm *hp, struct ipc_perm *bp)
 {
 
 	bp->uid = hp->uid;
@@ -153,9 +145,7 @@ void	hpux_to_bsd_omsqid_ds(const struct hpux_omsqid_ds *,
 	    struct msqid_ds *);
 
 void
-bsd_to_hpux_msqid_ds(bp, hp)
-	const struct msqid_ds *bp;
-	struct hpux_msqid_ds *hp;
+bsd_to_hpux_msqid_ds(const struct msqid_ds *bp, struct hpux_msqid_ds *hp)
 {
 
 	bsd_to_hpux_ipc_perm(&bp->msg_perm, &hp->msg_perm);
@@ -172,9 +162,7 @@ bsd_to_hpux_msqid_ds(bp, hp)
 }
 
 void
-bsd_to_hpux_omsqid_ds(bp, hp)
-	const struct msqid_ds *bp;
-	struct hpux_omsqid_ds *hp;
+bsd_to_hpux_omsqid_ds(const struct msqid_ds *bp, struct hpux_omsqid_ds *hp)
 {
 
 	bsd_to_hpux_oipc_perm(&bp->msg_perm, &hp->msg_perm);
@@ -190,9 +178,7 @@ bsd_to_hpux_omsqid_ds(bp, hp)
 }
 
 void
-hpux_to_bsd_msqid_ds(hp, bp)
-	const struct hpux_msqid_ds *hp;
-	struct msqid_ds *bp;
+hpux_to_bsd_msqid_ds(const struct hpux_msqid_ds *hp, struct msqid_ds *bp)
 {
 
 	hpux_to_bsd_ipc_perm(&hp->msg_perm, &bp->msg_perm);
@@ -209,9 +195,7 @@ hpux_to_bsd_msqid_ds(hp, bp)
 }
 
 void
-hpux_to_bsd_omsqid_ds(hp, bp)
-	const struct hpux_omsqid_ds *hp;
-	struct msqid_ds *bp;
+hpux_to_bsd_omsqid_ds(const struct hpux_omsqid_ds *hp, struct msqid_ds *bp)
 {
 
 	hpux_to_bsd_oipc_perm(&hp->msg_perm, &bp->msg_perm);
@@ -228,10 +212,7 @@ hpux_to_bsd_omsqid_ds(hp, bp)
 }
 
 int
-hpux_sys_omsgctl(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+hpux_sys_omsgctl(struct lwp *l, void *v, register_t *retval)
 {
 	struct hpux_sys_omsgctl_args /* {
 		syscallarg(int) msqid;
@@ -263,10 +244,7 @@ hpux_sys_omsgctl(l, v, retval)
 }
 
 int
-hpux_sys_msgctl(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+hpux_sys_msgctl(struct lwp *l, void *v, register_t *retval)
 {
 	struct hpux_sys_msgctl_args /* {
 		syscallarg(int) msqid;
@@ -310,9 +288,7 @@ void	hpux_to_bsd_osemid_ds(const struct hpux_osemid_ds *,
 	    struct semid_ds *);
 
 void
-bsd_to_hpux_semid_ds(bp, hp)
-	const struct semid_ds *bp;
-	struct hpux_semid_ds *hp;
+bsd_to_hpux_semid_ds(const struct semid_ds *bp, struct hpux_semid_ds *hp)
 {
 
 	bsd_to_hpux_ipc_perm(&bp->sem_perm, &hp->sem_perm);
@@ -323,9 +299,7 @@ bsd_to_hpux_semid_ds(bp, hp)
 }
 
 void
-bsd_to_hpux_osemid_ds(bp, hp)
-	const struct semid_ds *bp;
-	struct hpux_osemid_ds *hp;
+bsd_to_hpux_osemid_ds(const struct semid_ds *bp, struct hpux_osemid_ds *hp)
 {
 
 	bsd_to_hpux_oipc_perm(&bp->sem_perm, &hp->sem_perm);
@@ -336,9 +310,7 @@ bsd_to_hpux_osemid_ds(bp, hp)
 }
 
 void
-hpux_to_bsd_semid_ds(hp, bp)
-	const struct hpux_semid_ds *hp;
-	struct semid_ds *bp;
+hpux_to_bsd_semid_ds(const struct hpux_semid_ds *hp, struct semid_ds *bp)
 {
 
 	hpux_to_bsd_ipc_perm(&hp->sem_perm, &bp->sem_perm);
@@ -349,9 +321,7 @@ hpux_to_bsd_semid_ds(hp, bp)
 }
 
 void
-hpux_to_bsd_osemid_ds(hp, bp)
-	const struct hpux_osemid_ds *hp;
-	struct semid_ds *bp;
+hpux_to_bsd_osemid_ds(const struct hpux_osemid_ds *hp, struct semid_ds *bp)
 {
 
 	hpux_to_bsd_oipc_perm(&hp->sem_perm, &bp->sem_perm);
@@ -362,10 +332,7 @@ hpux_to_bsd_osemid_ds(hp, bp)
 }
 
 int
-hpux_sys_osemctl(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+hpux_sys_osemctl(struct lwp *l, void *v, register_t *retval)
 {
 	struct hpux_sys_osemctl_args /* {
 		syscallarg(int) semid;
@@ -412,10 +379,7 @@ hpux_sys_osemctl(l, v, retval)
 }
 
 int
-hpux_sys_semctl(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+hpux_sys_semctl(struct lwp *l, void *v, register_t *retval)
 {
 	struct hpux_sys_semctl_args /* {
 		syscallarg(int) semid;
@@ -474,9 +438,7 @@ void	hpux_to_bsd_oshmid_ds(const struct hpux_oshmid_ds *,
 	    struct shmid_ds *);
 
 void
-bsd_to_hpux_shmid_ds(bp, hp)
-	const struct shmid_ds *bp;
-	struct hpux_shmid_ds *hp;
+bsd_to_hpux_shmid_ds(const struct shmid_ds *bp, struct hpux_shmid_ds *hp)
 {
 
 	bsd_to_hpux_ipc_perm(&bp->shm_perm, &hp->shm_perm);
@@ -492,9 +454,7 @@ bsd_to_hpux_shmid_ds(bp, hp)
 }
 
 void
-bsd_to_hpux_oshmid_ds(bp, hp)
-	const struct shmid_ds *bp;
-	struct hpux_oshmid_ds *hp;
+bsd_to_hpux_oshmid_ds(const struct shmid_ds *bp, struct hpux_oshmid_ds *hp)
 {
 
 	bsd_to_hpux_oipc_perm(&bp->shm_perm, &hp->shm_perm);
@@ -510,9 +470,7 @@ bsd_to_hpux_oshmid_ds(bp, hp)
 }
 
 void
-hpux_to_bsd_shmid_ds(hp, bp)
-	const struct hpux_shmid_ds *hp;
-	struct shmid_ds *bp;
+hpux_to_bsd_shmid_ds(const struct hpux_shmid_ds *hp, struct shmid_ds *bp)
 {
 
 	hpux_to_bsd_ipc_perm(&hp->shm_perm, &bp->shm_perm);
@@ -527,9 +485,7 @@ hpux_to_bsd_shmid_ds(hp, bp)
 }
 
 void
-hpux_to_bsd_oshmid_ds(hp, bp)
-	const struct hpux_oshmid_ds *hp;
-	struct shmid_ds *bp;
+hpux_to_bsd_oshmid_ds(const struct hpux_oshmid_ds *hp, struct shmid_ds *bp)
 {
 
 	hpux_to_bsd_oipc_perm(&hp->shm_perm, &bp->shm_perm);
@@ -544,10 +500,7 @@ hpux_to_bsd_oshmid_ds(hp, bp)
 }
 
 int
-hpux_sys_oshmctl(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+hpux_sys_oshmctl(struct lwp *l, void *v, register_t *retval)
 {
 	struct hpux_sys_oshmctl_args /* {
 		syscallarg(int) shmid;
@@ -579,10 +532,7 @@ hpux_sys_oshmctl(l, v, retval)
 }
 
 int
-hpux_sys_shmctl(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+hpux_sys_shmctl(struct lwp *l, void *v, register_t *retval)
 {
 	struct hpux_sys_shmctl_args /* {
 		syscallarg(int) shmid;

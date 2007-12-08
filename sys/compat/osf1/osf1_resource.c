@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_resource.c,v 1.9 2007/05/12 18:10:20 dsl Exp $ */
+/* $NetBSD: osf1_resource.c,v 1.10 2007/12/08 18:36:21 dsl Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_resource.c,v 1.9 2007/05/12 18:10:20 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_resource.c,v 1.10 2007/12/08 18:36:21 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,10 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: osf1_resource.c,v 1.9 2007/05/12 18:10:20 dsl Exp $"
 #include <compat/osf1/osf1_cvt.h>
 
 int
-osf1_sys_getrlimit(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+osf1_sys_getrlimit(struct lwp *l, void *v, register_t *retval)
 {
 	struct osf1_sys_getrlimit_args *uap = v;
 	struct sys_getrlimit_args a;
@@ -88,10 +85,7 @@ osf1_sys_getrlimit(l, v, retval)
 }
 
 int
-osf1_sys_getrusage(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+osf1_sys_getrusage(struct lwp *l, void *v, register_t *retval)
 {
 	struct osf1_sys_getrusage_args *uap = v;
 	struct osf1_rusage osf1_rusage;
@@ -122,10 +116,7 @@ osf1_sys_getrusage(l, v, retval)
 }
 
 int
-osf1_sys_setrlimit(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+osf1_sys_setrlimit(struct lwp *l, void *v, register_t *retval)
 {
 	struct osf1_sys_setrlimit_args *uap = v;
 	struct sys_setrlimit_args a;

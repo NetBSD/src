@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_signal.c,v 1.27 2007/12/04 18:40:11 dsl Exp $	*/
+/*	$NetBSD: ibcs2_signal.c,v 1.28 2007/12/08 18:36:01 dsl Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Bartram
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_signal.c,v 1.27 2007/12/04 18:40:11 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_signal.c,v 1.28 2007/12/08 18:36:01 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,9 +61,7 @@ void ibcs2_to_native_sigaction(const struct ibcs2_sigaction *, struct sigaction 
 void native_to_ibcs2_sigaction(const struct sigaction *, struct ibcs2_sigaction *);
 
 void
-ibcs2_to_native_sigset(iss, bss)
-	const ibcs2_sigset_t *iss;
-	sigset_t *bss;
+ibcs2_to_native_sigset(const ibcs2_sigset_t *iss, sigset_t *bss)
 {
 	int i, newsig;
 
@@ -78,9 +76,7 @@ ibcs2_to_native_sigset(iss, bss)
 }
 
 void
-native_to_ibcs2_sigset(bss, iss)
-	const sigset_t *bss;
-	ibcs2_sigset_t *iss;
+native_to_ibcs2_sigset(const sigset_t *bss, ibcs2_sigset_t *iss)
 {
 	int i, newsig;
 
@@ -95,9 +91,7 @@ native_to_ibcs2_sigset(bss, iss)
 }
 
 void
-ibcs2_to_native_sigaction(isa, bsa)
-	const struct ibcs2_sigaction *isa;
-	struct sigaction *bsa;
+ibcs2_to_native_sigaction(const struct ibcs2_sigaction *isa, struct sigaction *bsa)
 {
 
 	bsa->sa_handler = isa->ibcs2_sa_handler;
@@ -122,9 +116,7 @@ ibcs2_to_native_sigaction(isa, bsa)
 }
 
 void
-native_to_ibcs2_sigaction(bsa, isa)
-	const struct sigaction *bsa;
-	struct ibcs2_sigaction *isa;
+native_to_ibcs2_sigaction(const struct sigaction *bsa, struct ibcs2_sigaction *isa)
 {
 
 	isa->ibcs2_sa_handler = bsa->sa_handler;
@@ -191,10 +183,7 @@ ibcs2_sys_sigaltstack(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-ibcs2_sys_sigsys(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ibcs2_sys_sigsys(struct lwp *l, void *v, register_t *retval)
 {
 	struct ibcs2_sys_sigsys_args /* {
 		syscallarg(int) sig;
@@ -339,10 +328,7 @@ ibcs2_sys_pause(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-ibcs2_sys_kill(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ibcs2_sys_kill(struct lwp *l, void *v, register_t *retval)
 {
 	struct ibcs2_sys_kill_args /* {
 		syscallarg(int) pid;

@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_resource.c,v 1.11 2007/12/04 18:40:12 dsl Exp $ */
+/*	$NetBSD: irix_resource.c,v 1.12 2007/12/08 18:36:03 dsl Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_resource.c,v 1.11 2007/12/04 18:40:12 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_resource.c,v 1.12 2007/12/08 18:36:03 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -59,8 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: irix_resource.c,v 1.11 2007/12/04 18:40:12 dsl Exp $
 static int irix_to_native_resource(int);
 
 static int
-irix_to_native_resource(irix_res)
-	int irix_res;
+irix_to_native_resource(int irix_res)
 {
 	int bsd_res;
 
@@ -97,10 +96,7 @@ irix_to_native_resource(irix_res)
 }
 
 int
-irix_sys_getrlimit(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+irix_sys_getrlimit(struct lwp *l, void *v, register_t *retval)
 {
 	struct irix_sys_getrlimit_args /* {
 		syscallarg(int) resource;
@@ -130,10 +126,7 @@ irix_sys_getrlimit(l, v, retval)
 }
 
 int
-irix_sys_getrlimit64(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+irix_sys_getrlimit64(struct lwp *l, void *v, register_t *retval)
 {
 	struct irix_sys_getrlimit64_args /* {
 		syscallarg(int) resource;
@@ -163,10 +156,7 @@ irix_sys_getrlimit64(l, v, retval)
 }
 
 int
-irix_sys_setrlimit(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+irix_sys_setrlimit(struct lwp *l, void *v, register_t *retval)
 {
 	struct irix_sys_getrlimit_args /* {
 		syscallarg(int) resource;
@@ -198,10 +188,7 @@ irix_sys_setrlimit(l, v, retval)
 }
 
 int
-irix_sys_setrlimit64(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+irix_sys_setrlimit64(struct lwp *l, void *v, register_t *retval)
 {
 	struct irix_sys_getrlimit_args /* {
 		syscallarg(int) resource;

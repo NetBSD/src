@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_fcntl.c,v 1.30 2007/12/04 18:40:10 dsl Exp $	*/
+/*	$NetBSD: ibcs2_fcntl.c,v 1.31 2007/12/08 18:36:01 dsl Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Bartram
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_fcntl.c,v 1.30 2007/12/04 18:40:10 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_fcntl.c,v 1.31 2007/12/08 18:36:01 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,8 +58,7 @@ static int ioflags2oflags(int);
 static int oflags2ioflags(int);
 
 static int
-cvt_o_flags(flags)
-	int flags;
+cvt_o_flags(int flags)
 {
 	int r = 0;
 
@@ -76,9 +75,7 @@ cvt_o_flags(flags)
 }
 
 static void
-cvt_flock2iflock(flp, iflp)
-	struct flock *flp;
-	struct ibcs2_flock *iflp;
+cvt_flock2iflock(struct flock *flp, struct ibcs2_flock *iflp)
 {
 	switch (flp->l_type) {
 	case F_RDLCK:
@@ -99,9 +96,7 @@ cvt_flock2iflock(flp, iflp)
 }
 
 static void
-cvt_iflock2flock(iflp, flp)
-	struct ibcs2_flock *iflp;
-	struct flock *flp;
+cvt_iflock2flock(struct ibcs2_flock *iflp, struct flock *flp)
 {
 	flp->l_start = (off_t)iflp->l_start;
 	flp->l_len = (off_t)iflp->l_len;
@@ -122,8 +117,7 @@ cvt_iflock2flock(iflp, flp)
 
 /* convert iBCS2 mode into NetBSD mode */
 static int
-ioflags2oflags(flags)
-	int flags;
+ioflags2oflags(int flags)
 {
 	int r = 0;
 
@@ -143,8 +137,7 @@ ioflags2oflags(flags)
 
 /* convert NetBSD mode into iBCS2 mode */
 static int
-oflags2ioflags(flags)
-	int flags;
+oflags2ioflags(int flags)
 {
 	int r = 0;
 
@@ -163,10 +156,7 @@ oflags2ioflags(flags)
 }
 
 int
-ibcs2_sys_open(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ibcs2_sys_open(struct lwp *l, void *v, register_t *retval)
 {
 	struct ibcs2_sys_open_args /* {
 		syscallarg(char *) path;
@@ -196,10 +186,7 @@ ibcs2_sys_open(l, v, retval)
 }
 
 int
-ibcs2_sys_creat(l, v, retval)
-        struct lwp *l;
-	void *v;
-	register_t *retval;
+ibcs2_sys_creat(struct lwp *l, void *v, register_t *retval)
 {
 	struct ibcs2_sys_creat_args /* {
 		syscallarg(char *) path;
@@ -214,10 +201,7 @@ ibcs2_sys_creat(l, v, retval)
 }
 
 int
-ibcs2_sys_access(l, v, retval)
-        struct lwp *l;
-	void *v;
-        register_t *retval;
+ibcs2_sys_access(struct lwp *l, void *v, register_t *retval)
 {
 	struct ibcs2_sys_access_args /* {
 		syscallarg(char *) path;
@@ -264,10 +248,7 @@ ibcs2_sys_eaccess(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-ibcs2_sys_fcntl(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ibcs2_sys_fcntl(struct lwp *l, void *v, register_t *retval)
 {
 	struct ibcs2_sys_fcntl_args /* {
 		syscallarg(int) fd;

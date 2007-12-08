@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_wait.c,v 1.3 2007/03/18 21:38:33 dsl Exp $ */
+/*	$NetBSD: linux32_wait.c,v 1.4 2007/12/08 18:36:13 dsl Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_wait.c,v 1.3 2007/03/18 21:38:33 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_wait.c,v 1.4 2007/12/08 18:36:13 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -70,10 +70,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_wait.c,v 1.3 2007/03/18 21:38:33 dsl Exp $")
 #include <compat/linux32/linux32_syscallargs.h>
 
 int
-linux32_sys_waitpid(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_waitpid(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux32_sys_waitpid_args /* {
 		syscallarg(int) pid;
@@ -91,10 +88,7 @@ linux32_sys_waitpid(l, v, retval)
 }
 
 int
-linux32_sys_wait4(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_wait4(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux32_sys_wait4_args /* {
 		syscallarg(int) pid;

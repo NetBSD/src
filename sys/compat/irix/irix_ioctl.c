@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_ioctl.c,v 1.15 2007/11/27 23:30:56 dogcow Exp $ */
+/*	$NetBSD: irix_ioctl.c,v 1.16 2007/12/08 18:36:03 dsl Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_ioctl.c,v 1.15 2007/11/27 23:30:56 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_ioctl.c,v 1.16 2007/12/08 18:36:03 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -71,10 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: irix_ioctl.c,v 1.15 2007/11/27 23:30:56 dogcow Exp $
 #include <compat/irix/irix_syscallargs.h>
 
 int
-irix_sys_ioctl(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+irix_sys_ioctl(struct lwp *l, void *v, register_t *retval)
 {
 	struct irix_sys_ioctl_args /* {
 		syscallarg(int) fd;

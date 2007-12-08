@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig_13.c,v 1.15 2007/06/16 20:04:28 dsl Exp $	*/
+/*	$NetBSD: kern_sig_13.c,v 1.16 2007/12/08 18:35:54 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig_13.c,v 1.15 2007/06/16 20:04:28 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig_13.c,v 1.16 2007/12/08 18:35:54 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -56,9 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sig_13.c,v 1.15 2007/06/16 20:04:28 dsl Exp $")
 #include <compat/common/compat_sigaltstack.h>
 
 void
-native_sigset13_to_sigset(oss, ss)
-	const sigset13_t *oss;
-	sigset_t *ss;
+native_sigset13_to_sigset(const sigset13_t *oss, sigset_t *ss)
 {
 
 	ss->__bits[0] = *oss;
@@ -68,18 +66,14 @@ native_sigset13_to_sigset(oss, ss)
 }
 
 void
-native_sigset_to_sigset13(ss, oss)
-	const sigset_t *ss;
-	sigset13_t *oss;
+native_sigset_to_sigset13(const sigset_t *ss, sigset13_t *oss)
 {
 
 	*oss = ss->__bits[0];
 }
 
 void
-native_sigaction13_to_sigaction(osa, sa)
-	const struct sigaction13 *osa;
-	struct sigaction *sa;
+native_sigaction13_to_sigaction(const struct sigaction13 *osa, struct sigaction *sa)
 {
 
 	sa->sa_handler = osa->osa_handler;
@@ -88,9 +82,7 @@ native_sigaction13_to_sigaction(osa, sa)
 }
 
 void
-native_sigaction_to_sigaction13(sa, osa)
-	const struct sigaction *sa;
-	struct sigaction13 *osa;
+native_sigaction_to_sigaction13(const struct sigaction *sa, struct sigaction13 *osa)
 {
 
 	osa->osa_handler = sa->sa_handler;
