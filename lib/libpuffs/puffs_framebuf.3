@@ -1,4 +1,4 @@
-.\"	$NetBSD: puffs_framebuf.3,v 1.20 2007/12/04 19:40:45 pooka Exp $
+.\"	$NetBSD: puffs_framebuf.3,v 1.21 2007/12/08 10:56:06 wiz Exp $
 .\"
 .\" Copyright (c) 2007 Antti Kantee.  All rights reserved.
 .\"
@@ -196,7 +196,7 @@ only if the socket has been enabled for reading.
 File descriptors are treated like sockets: they have two sides, a read
 side and a write side.
 The framework determines that one side of the descriptor has been
-close if the supplied I/O callbacks return an error or if the I/O
+closed if the supplied I/O callbacks return an error or if the I/O
 multiplexing call says a side has been closed.
 It is still possible, from the framework perspective, to write to a
 file descriptor whose read side is closed.
@@ -512,7 +512,7 @@ Called when no outstanding request matches an incoming frame.
 The incoming buffer must not be destroyed.
 May not block.
 .It Fn puffs_framev_fdnotify_fn pu fd what
-Is called when the read- or write side of the file descriptor
+Is called when the read or write side of the file descriptor
 .Ar fd
 is closed.
 It is called once for each side, the bitmask parameter
@@ -553,12 +553,12 @@ If not specified, the descriptor will be in a disabled state.
 .It Fn puffs_framev_enablefd pu fd error
 Enable events of type
 .Ar what
-for
+for file descriptor
 .Ar fd .
 .It Fn puffs_framev_disablefd pu fd error
 Disable events of type
 .Ar what
-for
+for file descriptor
 .Ar fd .
 .It Fn puffs_framev_removefd pu fd error
 Remove file descriptor
