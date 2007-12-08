@@ -1,10 +1,10 @@
-/*	$NetBSD: namei.h,v 1.57 2007/12/08 19:29:52 pooka Exp $	*/
+/*	$NetBSD: namei.h,v 1.58 2007/12/08 19:30:19 pooka Exp $	*/
 
 /*
  * WARNING: GENERATED FILE.  DO NOT EDIT
  * (edit namei.src and run make namei)
  *   by:   NetBSD: gennameih.awk,v 1.1 2007/08/15 14:08:11 pooka Exp 
- *   from: NetBSD: namei.src,v 1.5 2007/11/27 15:52:26 pooka Exp 
+ *   from: NetBSD: namei.src,v 1.6 2007/12/08 19:29:52 pooka Exp 
  */
 
 /*
