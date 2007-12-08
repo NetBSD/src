@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.c,v 1.61 2007/07/09 21:00:29 ad Exp $	*/
+/*	$NetBSD: verified_exec.c,v 1.62 2007/12/08 19:29:41 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -30,9 +30,9 @@
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.61 2007/07/09 21:00:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.62 2007/12/08 19:29:41 pooka Exp $");
 #else
-__RCSID("$Id: verified_exec.c,v 1.61 2007/07/09 21:00:29 ad Exp $\n$NetBSD: verified_exec.c,v 1.61 2007/07/09 21:00:29 ad Exp $");
+__RCSID("$Id: verified_exec.c,v 1.62 2007/12/08 19:29:41 pooka Exp $\n$NetBSD: verified_exec.c,v 1.62 2007/12/08 19:29:41 pooka Exp $");
 #endif
 
 #include <sys/param.h>
@@ -135,7 +135,7 @@ veriexec_delete(prop_dictionary_t dict, struct lwp *l)
 	int error;
 
 	NDINIT(&nid, LOOKUP, FOLLOW, UIO_SYSSPACE,
-	    prop_string_cstring_nocopy(prop_dictionary_get(dict, "file")), l);
+	    prop_string_cstring_nocopy(prop_dictionary_get(dict, "file")));
 	error = namei(&nid);
 	if (error)
 		return (error);
@@ -158,7 +158,7 @@ veriexec_query(prop_dictionary_t dict, prop_dictionary_t rdict, struct lwp *l)
 	int error;
 
 	NDINIT(&nid, LOOKUP, FOLLOW, UIO_SYSSPACE,
-	    prop_string_cstring_nocopy(prop_dictionary_get(dict, "file")), l);
+	    prop_string_cstring_nocopy(prop_dictionary_get(dict, "file")));
 	error = namei(&nid);
 	if (error)
 		return (error);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_subr.c,v 1.10 2007/11/26 19:01:48 pooka Exp $	*/
+/*	$NetBSD: ptyfs_subr.c,v 1.11 2007/12/08 19:29:44 pooka Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_subr.c,v 1.10 2007/11/26 19:01:48 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_subr.c,v 1.11 2007/12/08 19:29:44 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -142,8 +142,7 @@ ptyfs_getinfo(struct ptyfsnode *ptyfs, struct lwp *l)
 			ptyfs->ptyfs_pty, ptyfs->ptyfs_type == PTYFSpts ? 't'
 			: 'p')) != 0)
 				goto out;
-		NDINIT(&nd, LOOKUP, NOFOLLOW|LOCKLEAF, UIO_SYSSPACE, ttyname,
-		     l);
+		NDINIT(&nd, LOOKUP, NOFOLLOW|LOCKLEAF, UIO_SYSSPACE, ttyname);
 		if ((error = namei(&nd)) != 0)
 			goto out;
 		cred = kauth_cred_alloc();

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.193 2007/11/26 19:02:21 pooka Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.194 2007/12/08 19:29:51 pooka Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.193 2007/11/26 19:02:21 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.194 2007/12/08 19:29:51 pooka Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -2188,7 +2188,6 @@ nfs_namei(ndp, nsfh, len, slp, nam, mdp, dposp, retdirp, l, kerbflag, pubflag)
 		cnp->cn_flags |= NOCROSSMOUNT;
 	}
 
-	cnp->cn_lwp = l;
 	VREF(dp);
 	vn_lock(dp, LK_EXCLUSIVE | LK_RETRY);
 

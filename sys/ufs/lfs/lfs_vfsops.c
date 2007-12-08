@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.249 2007/11/26 19:02:31 pooka Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.250 2007/12/08 19:29:56 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.249 2007/11/26 19:02:31 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.250 2007/12/08 19:29:56 pooka Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -394,7 +394,7 @@ lfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 		/*
 		 * Look up the name and verify that it's sane.
 		 */
-		NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, args->fspec, l);
+		NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, args->fspec);
 		if ((error = namei(&nd)) != 0)
 			return (error);
 		devvp = nd.ni_vp;
@@ -2081,7 +2081,7 @@ lfs_resize_fs(struct lfs *fs, int newnsegs)
 	/* Truncate Ifile if necessary */
 	if (noff < 0)
 		lfs_truncate(ivp, ivp->v_size + (noff << fs->lfs_bshift), 0,
-			     NOCRED, curlwp);
+		    NOCRED);
 
 	/* Update cleaner info so the cleaner can die */
 	bread(ivp, 0, fs->lfs_bsize, NOCRED, &bp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_lookup.c,v 1.54 2007/11/26 19:02:27 pooka Exp $	*/
+/*	$NetBSD: ext2fs_lookup.c,v 1.55 2007/12/08 19:29:53 pooka Exp $	*/
 
 /*
  * Modified for NetBSD 1.2E
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.54 2007/11/26 19:02:27 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.55 2007/12/08 19:29:53 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -870,7 +870,7 @@ ext2fs_direnter(struct inode *ip, struct vnode *dvp, struct componentname *cnp)
 	dp->i_flag |= IN_CHANGE | IN_UPDATE;
 	if (!error && dp->i_endoff && dp->i_endoff < ext2fs_size(dp))
 		error = ext2fs_truncate(dvp, (off_t)dp->i_endoff, IO_SYNC,
-		    cnp->cn_cred, cnp->cn_lwp->l_proc);
+		    cnp->cn_cred);
 	return (error);
 }
 

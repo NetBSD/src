@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.129 2007/12/04 09:08:58 ad Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.130 2007/12/08 19:29:48 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.129 2007/12/04 09:08:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.130 2007/12/08 19:29:48 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1234,8 +1234,7 @@ sys_ktrace(lwp_t *l, void *v, register_t *retval)
 		/*
 		 * an operation which requires a file argument.
 		 */
-		NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, fname),
-		    l);
+		NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, fname));
 		if ((error = vn_open(&nd, FREAD|FWRITE, 0)) != 0) {
 			ktrexit(l);
 			return (error);

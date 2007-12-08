@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_subr.c,v 1.60 2007/11/17 21:55:29 pooka Exp $	*/
+/*	$NetBSD: puffs_subr.c,v 1.61 2007/12/08 19:29:44 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.60 2007/11/17 21:55:29 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.61 2007/12/08 19:29:44 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -52,7 +52,6 @@ puffs_makecn(struct puffs_kcn *pkcn, struct puffs_kcred *pkcr,
 
 	pkcn->pkcn_nameiop = cn->cn_nameiop;
 	pkcn->pkcn_flags = cn->cn_flags;
-	puffs_cidcvt(pkcid, cn->cn_lwp);
 
 	if (full) {
 		(void)strcpy(pkcn->pkcn_name, cn->cn_nameptr);

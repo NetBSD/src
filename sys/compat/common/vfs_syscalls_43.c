@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_43.c,v 1.43 2007/12/08 18:35:55 dsl Exp $	*/
+/*	$NetBSD: vfs_syscalls_43.c,v 1.44 2007/12/08 19:29:38 pooka Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.43 2007/12/08 18:35:55 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.44 2007/12/08 19:29:38 pooka Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_union.h"
@@ -142,7 +142,7 @@ compat_43_sys_lstat(struct lwp *l, void *v, register_t *retval)
 
 	ndflags = NOFOLLOW | LOCKLEAF | LOCKPARENT | TRYEMULROOT;
 again:
-	NDINIT(&nd, LOOKUP, ndflags, UIO_USERSPACE, SCARG(uap, path), l);
+	NDINIT(&nd, LOOKUP, ndflags, UIO_USERSPACE, SCARG(uap, path));
 	if ((error = namei(&nd))) {
 		if (error == EISDIR && (ndflags & LOCKPARENT) != 0) {
 			/*

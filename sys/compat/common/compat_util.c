@@ -1,4 +1,4 @@
-/* 	$NetBSD: compat_util.c,v 1.38 2007/12/08 18:35:54 dsl Exp $	*/
+/* 	$NetBSD: compat_util.c,v 1.39 2007/12/08 19:29:37 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_util.c,v 1.38 2007/12/08 18:35:54 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_util.c,v 1.39 2007/12/08 19:29:37 pooka Exp $");
 
 #include "opt_systrace.h"
 
@@ -56,7 +56,6 @@ __KERNEL_RCSID(0, "$NetBSD: compat_util.c,v 1.38 2007/12/08 18:35:54 dsl Exp $")
 #include <sys/syslog.h>
 #include <sys/mount.h>
 
-
 #include <compat/common/compat_util.h>
 
 void
@@ -74,7 +73,7 @@ emul_find_root(struct lwp *l, struct exec_package *epp)
 		/* Emulation doesn't have a root */
 		return;
 
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, emul_path, l);
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, emul_path);
 	if (namei(&nd) != 0)
 		/* emulation root doesn't exist */
 		return;
@@ -112,7 +111,7 @@ emul_find_interp(struct lwp *l, struct exec_package *epp, const char *itp)
 		flags = FOLLOW | TRYEMULROOT | EMULROOTSET;
 	}
 
-	NDINIT(&nd, LOOKUP, flags, UIO_SYSSPACE, itp, l);
+	NDINIT(&nd, LOOKUP, flags, UIO_SYSSPACE, itp);
 	error = namei(&nd);
 	if (error != 0) {
 		epp->ep_interp = NULL;

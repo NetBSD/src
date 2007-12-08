@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.70 2007/11/26 19:02:34 pooka Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.71 2007/12/08 19:29:56 pooka Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.70 2007/11/26 19:02:34 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.71 2007/12/08 19:29:56 pooka Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -107,7 +107,7 @@ ufs_inactive(void *v)
 		ufs_extattr_vnode_inactive(vp, l);
 #endif
 		if (ip->i_size != 0) {
-			error = UFS_TRUNCATE(vp, (off_t)0, 0, NOCRED, l);
+			error = UFS_TRUNCATE(vp, (off_t)0, 0, NOCRED);
 		}
 		/*
 		 * Setting the mode to zero needs to wait for the inode
