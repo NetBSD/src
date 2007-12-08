@@ -1,4 +1,4 @@
-/*	$NetBSD: fifo_vnops.c,v 1.58 2007/11/26 19:02:13 pooka Exp $	*/
+/*	$NetBSD: fifo_vnops.c,v 1.58.2.1 2007/12/08 17:57:50 ad Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993, 1995
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.58 2007/11/26 19:02:13 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.58.2.1 2007/12/08 17:57:50 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -592,7 +592,7 @@ fifo_kqfilter(void *v)
 		sb = &so->so_snd;
 		break;
 	default:
-		return (1);
+		return (EINVAL);
 	}
 
 	ap->a_kn->kn_hook = so;

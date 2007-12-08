@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.127 2007/09/13 18:54:57 gdt Exp $	*/
+/*	$NetBSD: if.h,v 1.127.8.1 2007/12/08 17:57:53 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -800,9 +800,14 @@ do {									\
 MALLOC_DECLARE(M_IFADDR);
 MALLOC_DECLARE(M_IFMADDR);
 
-#define	IFNET_FOREACH(ifp)		TAILQ_FOREACH(ifp, &ifnet, if_list)
-#define	IFADDR_FOREACH(ifa, ifp)	TAILQ_FOREACH(ifa, \
-					    &(ifp)->if_addrlist, ifa_list)
+#define	IFNET_FIRST()			TAILQ_FIRST(&ifnet)
+#define	IFNET_NEXT(__ifp)		TAILQ_NEXT((__ifp), if_list)
+#define	IFNET_FOREACH(__ifp)		TAILQ_FOREACH(__ifp, &ifnet, if_list)
+#define	IFADDR_FIRST(__ifp)		TAILQ_FIRST(&(__ifp)->if_addrlist)
+#define	IFADDR_NEXT(__ifa)		TAILQ_NEXT((__ifa), ifa_list)
+#define	IFADDR_FOREACH(__ifa, __ifp)	TAILQ_FOREACH(__ifa, \
+					    &(__ifp)->if_addrlist, ifa_list)
+#define	IFADDR_EMPTY(__ifp)		TAILQ_EMPTY(&(__ifp)->if_addrlist)
 
 extern struct ifnet_head ifnet;
 extern struct ifnet **ifindex2ifnet;
@@ -819,6 +824,7 @@ void	if_attach(struct ifnet *);
 void	if_attachdomain(void);
 void	if_attachdomain1(struct ifnet *);
 void	if_deactivate(struct ifnet *);
+void	if_purgeaddrs(struct ifnet *, int, void (*)(struct ifaddr *));
 void	if_detach(struct ifnet *);
 void	if_down(struct ifnet *);
 void	if_link_state_change(struct ifnet *, int);
@@ -829,6 +835,9 @@ void	ifinit(void);
 int	ifioctl(struct socket *, u_long, void *, struct lwp *);
 int	ifpromisc(struct ifnet *, int);
 struct	ifnet *ifunit(const char *);
+
+void ifa_insert(struct ifnet *, struct ifaddr *);
+void ifa_remove(struct ifnet *, struct ifaddr *);
 
 struct	ifaddr *ifa_ifwithaddr(const struct sockaddr *);
 struct	ifaddr *ifa_ifwithaf(int);

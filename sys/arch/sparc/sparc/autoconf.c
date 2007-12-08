@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.225 2007/12/03 15:34:21 ad Exp $ */
+/*	$NetBSD: autoconf.c,v 1.225.2.1 2007/12/08 17:56:28 ad Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.225 2007/12/03 15:34:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.225.2.1 2007/12/08 17:56:28 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1471,7 +1471,7 @@ romgetcursoraddr(int **rowp, int **colp)
 struct device *
 getdevunit(const char *name, int unit)
 {
-	struct device *dev = alldevs.tqh_first;
+	struct device *dev = TAILQ_FIRST(&alldevs);
 	char num[10], fullname[16];
 	int lunit;
 
@@ -1485,7 +1485,7 @@ getdevunit(const char *name, int unit)
 	strcat(fullname, num);
 
 	while (strcmp(dev->dv_xname, fullname) != 0) {
-		if ((dev = dev->dv_list.tqe_next) == NULL)
+		if ((dev = TAILQ_NEXT(dev, dv_list)) == NULL)
 			return NULL;
 	}
 	return dev;

@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.27.2.1 2007/12/04 13:03:04 ad Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.27.2.2 2007/12/08 17:57:37 ad Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.27.2.1 2007/12/04 13:03:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.27.2.2 2007/12/08 17:57:37 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

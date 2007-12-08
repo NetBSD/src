@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.21 2007/12/01 11:41:20 tsutsui Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.21.2.1 2007/12/08 17:56:30 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.21 2007/12/01 11:41:20 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.21.2.1 2007/12/08 17:56:30 ad Exp $");
 
 #include "opt_kgdb.h"
 
@@ -96,12 +96,6 @@ cpu_configure(void)
 		Debugger();
 #endif	/* KGDB */
 	}
-
-	/*
-	 * Install handlers for our "soft" interrupts.
-	 * There might be a better place to do this?
-	 */
-	softintr_init();
 
 	/* General device autoconfiguration. */
 	if (config_rootfound("mainbus", NULL) == NULL)
@@ -446,8 +440,8 @@ find_dev_byname(char *name)
 {
 	struct device *dv;
 
-	for (dv = alldevs.tqh_first; dv != NULL;
-	    dv = dv->dv_list.tqe_next) {
+	for (dv = TAILQ_FIRST(&alldevs); dv != NULL;
+	    dv = TAILQ_NEXT(dv, dv_list)) {
 		if (!strcmp(dv->dv_xname, name)) {
 			return dv;
 		}

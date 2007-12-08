@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.261 2007/11/12 23:12:00 ad Exp $	*/
+/*	$NetBSD: proc.h,v 1.261.2.1 2007/12/08 17:58:07 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -476,7 +476,8 @@ CURCPU_IDLE_P(void)
 #define	curproc		(curlwp->l_proc)
 
 extern struct proc	proc0;		/* Process slot for swapper */
-extern int		nprocs, maxproc; /* Current and max number of procs */
+extern u_int		nprocs;		/* Current number of procs */
+extern int		maxproc;	/* Max number of procs */
 #define	vmspace_kernel()	(proc0.p_vmspace)
 
 /* Process list locks; see kern_proc.c for locking protocol details */

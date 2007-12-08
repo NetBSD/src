@@ -1,4 +1,4 @@
-/*	$NetBSD: ki2c.c,v 1.10 2007/10/17 19:55:18 garbled Exp $	*/
+/*	$NetBSD: ki2c.c,v 1.10.4.1 2007/12/08 17:56:25 ad Exp $	*/
 /*	Id: ki2c.c,v 1.7 2002/10/05 09:56:05 tsubai Exp	*/
 
 /*-
@@ -30,6 +30,7 @@
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/systm.h>
+#include <sys/mutex.h>
 
 #include <dev/ofw/openfirm.h>
 #include <uvm/uvm_extern.h>
@@ -116,7 +117,7 @@ ki2c_attach(parent, self, aux)
 	ki2c_setmode(sc, I2C_STDSUBMODE);
 	ki2c_setspeed(sc, I2C_100kHz);		/* XXX rate */
 	
-	lockinit(&sc->sc_buslock, PRIBIO|PCATCH, sc->sc_dev.dv_xname, 0, 0);
+	mutex_init(&sc->sc_buslock, MUTEX_DEFAULT, IPL_NONE);
 	ki2c_writereg(sc, IER,I2C_INT_DATA|I2C_INT_ADDR|I2C_INT_STOP);
 	
 	/* fill in the i2c tag */
@@ -410,7 +411,8 @@ ki2c_i2c_acquire_bus(void *cookie, int flags)
 {
 	struct ki2c_softc *sc = cookie;
 
-	return (lockmgr(&sc->sc_buslock, LK_EXCLUSIVE, NULL));
+	mutex_enter(&sc->sc_buslock);
+	return 0;
 }
 
 static void
@@ -418,7 +420,7 @@ ki2c_i2c_release_bus(void *cookie, int flags)
 {
 	struct ki2c_softc *sc = cookie;
 
-	(void) lockmgr(&sc->sc_buslock, LK_RELEASE, NULL);
+	mutex_exit(&sc->sc_buslock);
 }
 
 int

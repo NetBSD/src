@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.13 2007/11/25 07:55:21 xtraeme Exp $ */
+/*	$NetBSD: apm.c,v 1.13.2.1 2007/12/08 17:57:19 ad Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.13 2007/11/25 07:55:21 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.13.2.1 2007/12/08 17:57:19 ad Exp $");
 
 #include "opt_apm.h"
 
@@ -102,9 +102,9 @@ int	apmdebug = 0;
  * user context.
  */
 #define	APM_LOCK(apmsc)						\
-	(void) lockmgr(&(apmsc)->sc_lock, LK_EXCLUSIVE, NULL)
+	(void) mutex_enter(&(apmsc)->sc_lock)
 #define	APM_UNLOCK(apmsc)						\
-	(void) lockmgr(&(apmsc)->sc_lock, LK_RELEASE, NULL)
+	(void) mutex_exit(&(apmsc)->sc_lock)
 
 static void	apm_event_handle(struct apm_softc *, u_int, u_int);
 static void	apm_periodic_check(struct apm_softc *);
@@ -671,7 +671,7 @@ apm_attach(struct apm_softc *sc)
 	if (sc->sc_ops->aa_cpu_busy)
 		(*sc->sc_ops->aa_cpu_busy)(sc->sc_cookie);
 
-	lockinit(&sc->sc_lock, PWAIT, "apmlk", 0, 0);
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
 
 	/* Initial state is `resumed'. */
 	sc->sc_power_state = PWR_RESUME;
@@ -941,7 +941,7 @@ apmkqfilter(dev_t dev, struct knote *kn)
 		break;
 
 	default:
-		return (1);
+		return (EINVAL);
 	}
 
 	kn->kn_hook = sc;

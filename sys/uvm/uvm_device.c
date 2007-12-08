@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_device.c,v 1.51.2.2 2007/12/08 15:30:59 ad Exp $	*/
+/*	$NetBSD: uvm_device.c,v 1.51.2.3 2007/12/08 17:58:08 ad Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_device.c,v 1.51.2.2 2007/12/08 15:30:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_device.c,v 1.51.2.3 2007/12/08 17:58:08 ad Exp $");
 
 #include "opt_uvmhist.h"
 

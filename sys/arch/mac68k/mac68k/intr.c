@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.25 2007/12/03 15:33:53 ad Exp $	*/
+/*	$NetBSD: intr.c,v 1.25.2.1 2007/12/08 17:56:24 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.25 2007/12/03 15:33:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.25.2.1 2007/12/08 17:56:24 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -133,6 +133,12 @@ intr_init(void)
 		/* Standard spl(9) interrupt priorities */
 		mac68k_ipls[IPL_VM]        = (PSL_S | PSL_IPL2);
 		mac68k_ipls[IPL_SCHED]     = (PSL_S | PSL_IPL3);
+
+		if (current_mac_model->class == MACH_CLASSAV) {
+			inames = AV_INAMES;
+			mac68k_ipls[IPL_VM]    = (PSL_S | PSL_IPL4);
+			mac68k_ipls[IPL_SCHED] = (PSL_S | PSL_IPL4);
+		}
 	}
 
 	memcpy(g_inames, inames, MAX_INAME_LENGTH);

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rwlock.c,v 1.12 2007/11/21 10:19:10 yamt Exp $	*/
+/*	$NetBSD: kern_rwlock.c,v 1.12.2.1 2007/12/08 17:57:42 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.12 2007/11/21 10:19:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.12.2.1 2007/12/08 17:57:42 ad Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -254,6 +254,7 @@ rw_vector_enter(krwlock_t *rw, const krw_t op)
 	l = curlwp;
 	curthread = (uintptr_t)l;
 
+	RW_ASSERT(rw, !cpu_intr_p());
 	RW_ASSERT(rw, curthread != 0);
 	RW_WANTLOCK(rw, op);
 

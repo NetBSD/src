@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_turnstile.c,v 1.12 2007/11/07 00:23:22 ad Exp $	*/
+/*	$NetBSD: kern_turnstile.c,v 1.12.2.1 2007/12/08 17:57:44 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.12 2007/11/07 00:23:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.12.2.1 2007/12/08 17:57:44 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/lock.h>
@@ -104,7 +104,7 @@ turnstile_init(void)
 	for (i = 0; i < TS_HASH_SIZE; i++) {
 		tc = &turnstile_tab[i];
 		LIST_INIT(&tc->tc_chain);
-		mutex_init(&tc->tc_mutex, MUTEX_SPIN, IPL_SCHED);
+		mutex_init(&tc->tc_mutex, MUTEX_DEFAULT, IPL_SCHED);
 	}
 
 	turnstile_cache = pool_cache_init(sizeof(turnstile_t), 0, 0, 0,

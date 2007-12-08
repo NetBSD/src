@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.52 2007/11/12 19:01:07 xtraeme Exp $	*/
+/*	$NetBSD: ld.c,v 1.52.2.1 2007/12/08 17:57:16 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.52 2007/11/12 19:01:07 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.52.2.1 2007/12/08 17:57:16 ad Exp $");
 
 #include "rnd.h"
 
@@ -108,7 +108,7 @@ ldattach(struct ld_softc *sc)
 {
 	char tbuf[9];
 
-	mutex_init(&sc->sc_mutex, MUTEX_DRIVER, IPL_BIO);
+	mutex_init(&sc->sc_mutex, MUTEX_DEFAULT, IPL_VM);
 
 	if ((sc->sc_flags & LDF_ENABLED) == 0) {
 		aprint_normal("%s: disabled\n", sc->sc_dv.dv_xname);

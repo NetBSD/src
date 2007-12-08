@@ -1,4 +1,4 @@
-/* $NetBSD: drmP.h,v 1.10 2007/11/21 19:22:12 bjs Exp $ */
+/* $NetBSD: drmP.h,v 1.10.2.1 2007/12/08 17:57:20 ad Exp $ */
 
 /* drmP.h -- Private header for Direct Rendering Manager -*- linux-c -*-
  * Created: Mon Jan  4 10:05:05 1999 by faith@precisioninsight.com
@@ -598,14 +598,11 @@ typedef struct drm_freelist {
 typedef struct drm_dma_handle {
 	void *vaddr;
 	bus_addr_t busaddr;
-#if defined(__FreeBSD__)
-	bus_dma_tag_t tag;
+	bus_dma_tag_t dmat;
 	bus_dmamap_t map;
-#elif defined(__NetBSD__)
 	bus_dma_segment_t seg;
+	size_t size;
 	void *addr;
-	bus_addr_t dmaaddr;
-#endif
 } drm_dma_handle_t;
 
 typedef struct drm_buf_entry {
@@ -821,7 +818,7 @@ typedef struct {
  */
 struct drm_device {
 #if defined(__NetBSD__) || defined(__OpenBSD__)
-	struct device	  device; /* softc is an extension of struct device */
+	struct device		device;
 #endif
 
 	struct drm_driver_info driver;

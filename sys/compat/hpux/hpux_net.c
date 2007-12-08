@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_net.c,v 1.35 2007/08/15 12:07:29 ad Exp $	*/
+/*	$NetBSD: hpux_net.c,v 1.35.10.1 2007/12/08 17:56:37 ad Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_net.c,v 1.35 2007/08/15 12:07:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_net.c,v 1.35.10.1 2007/12/08 17:56:37 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,10 +120,10 @@ struct hpux_sys_getsockopt_args {
 	syscallarg(int *) avalsize;
 };
 
-int	hpux_sys_setsockopt	__P((struct lwp *, void *, register_t *));
-int	hpux_sys_getsockopt	__P((struct lwp *, void *, register_t *));
+int	hpux_sys_setsockopt(struct lwp *, void *, register_t *);
+int	hpux_sys_getsockopt(struct lwp *, void *, register_t *);
 
-void	socksetsize __P((int, struct mbuf *));
+void	socksetsize(int, struct mbuf *);
 
 
 #define MINBSDIPCCODE	0x3EE
@@ -135,7 +135,7 @@ void	socksetsize __P((int, struct mbuf *));
  */
 
 struct hpuxtobsdipc {
-	int (*rout) __P((struct lwp *, void *, register_t *));
+	int (*rout)(struct lwp *, void *, register_t *);
 	int nargs;
 } hpuxtobsdipc[NUMBSDIPC] = {
 	{ compat_30_sys_socket,		3 }, /* 3ee */

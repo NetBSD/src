@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_timeout.c,v 1.29 2007/11/23 19:43:32 joerg Exp $	*/
+/*	$NetBSD: kern_timeout.c,v 1.29.2.1 2007/12/08 17:57:44 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.29 2007/11/23 19:43:32 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.29.2.1 2007/12/08 17:57:44 ad Exp $");
 
 /*
  * Timeouts are kept in a hierarchical timing wheel.  The c_time is the
@@ -260,7 +260,7 @@ callout_startup(void)
 	for (b = 0; b < BUCKETS; b++)
 		CIRCQ_INIT(&timeout_wheel[b]);
 
-	mutex_init(&callout_lock, MUTEX_SPIN, IPL_SCHED);
+	mutex_init(&callout_lock, MUTEX_DEFAULT, IPL_SCHED);
 	sleepq_init(&callout_sleepq, &callout_lock);
 
 	evcnt_attach_dynamic(&callout_ev_late, EVCNT_TYPE_MISC,

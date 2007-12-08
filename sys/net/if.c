@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.203 2007/11/01 20:37:48 dyoung Exp $	*/
+/*	$NetBSD: if.c,v 1.203.4.1 2007/12/08 17:57:52 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.203 2007/11/01 20:37:48 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.203.4.1 2007/12/08 17:57:52 ad Exp $");
 
 #include "opt_inet.h"
 
@@ -299,10 +299,8 @@ if_alloc_sadl(struct ifnet *ifp)
 
 	ifnet_addrs[ifp->if_index] = ifa;
 	IFAREF(ifa);
-	ifa->ifa_ifp = ifp;
+	ifa_insert(ifp, ifa);
 	ifa->ifa_rtrequest = link_rtrequest;
-	TAILQ_INSERT_HEAD(&ifp->if_addrlist, ifa, ifa_list);
-	IFAREF(ifa);
 	ifa->ifa_addr = (struct sockaddr *)sdl;
 	ifp->if_sadl = sdl;
 	ifa->ifa_netmask = (struct sockaddr *)mask;
@@ -329,8 +327,7 @@ if_free_sadl(struct ifnet *ifp)
 
 	s = splnet();
 	rtinit(ifa, RTM_DELETE, 0);
-	TAILQ_REMOVE(&ifp->if_addrlist, ifa, ifa_list);
-	IFAFREE(ifa);
+	ifa_remove(ifp, ifa);
 
 	ifp->if_sadl = NULL;
 
@@ -521,6 +518,20 @@ if_deactivate(struct ifnet *ifp)
 	splx(s);
 }
 
+void
+if_purgeaddrs(struct ifnet *ifp, int family,
+    void (*purgeaddr)(struct ifaddr *))
+{
+	struct ifaddr *ifa, *nifa;
+
+	for (ifa = IFADDR_FIRST(ifp); ifa != NULL; ifa = nifa) {
+		nifa = IFADDR_NEXT(ifa);
+		if (ifa->ifa_addr->sa_family != family)
+			continue;
+		(*purgeaddr)(ifa);
+	}
+}
+
 /*
  * Detach an interface from the list of "active" interfaces,
  * freeing any resources as we go along.
@@ -581,7 +592,7 @@ if_detach(struct ifnet *ifp)
 	 * least one ifaddr.
 	 */
 again:
-	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
+	IFADDR_FOREACH(ifa, ifp) {
 		family = ifa->ifa_addr->sa_family;
 #ifdef IFAREF_DEBUG
 		printf("if_detach: ifaddr %p, family %d, refcnt %d\n",
@@ -623,7 +634,7 @@ again:
 			 */
 			printf("if_detach: WARNING: AF %d not purged\n",
 			    family);
-			TAILQ_REMOVE(&ifp->if_addrlist, ifa, ifa_list);
+			ifa_remove(ifp, ifa);
 		}
 		goto again;
 	}
@@ -887,6 +898,22 @@ if_clone_list(struct if_clonereq *ifcr)
 	return error;
 }
 
+void
+ifa_insert(struct ifnet *ifp, struct ifaddr *ifa)
+{
+	ifa->ifa_ifp = ifp;
+	TAILQ_INSERT_TAIL(&ifp->if_addrlist, ifa, ifa_list);
+	IFAREF(ifa);
+}
+
+void
+ifa_remove(struct ifnet *ifp, struct ifaddr *ifa)
+{
+	KASSERT(ifa->ifa_ifp == ifp);
+	TAILQ_REMOVE(&ifp->if_addrlist, ifa, ifa_list);
+	IFAFREE(ifa);
+}
+
 static inline int
 equal(const struct sockaddr *sa1, const struct sockaddr *sa2)
 {
@@ -906,7 +933,7 @@ ifa_ifwithaddr(const struct sockaddr *addr)
 	IFNET_FOREACH(ifp) {
 		if (ifp->if_output == if_nulloutput)
 			continue;
-		TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
+		IFADDR_FOREACH(ifa, ifp) {
 			if (ifa->ifa_addr->sa_family != addr->sa_family)
 				continue;
 			if (equal(addr, ifa->ifa_addr))
@@ -937,7 +964,7 @@ ifa_ifwithdstaddr(const struct sockaddr *addr)
 			continue;
 		if ((ifp->if_flags & IFF_POINTOPOINT) == 0)
 			continue;
-		TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
+		IFADDR_FOREACH(ifa, ifp) {
 			if (ifa->ifa_addr->sa_family != addr->sa_family ||
 			    ifa->ifa_dstaddr == NULL)
 				continue;
@@ -993,7 +1020,7 @@ ifa_ifwithnet(const struct sockaddr *addr)
 	IFNET_FOREACH(ifp) {
 		if (ifp->if_output == if_nulloutput)
 			continue;
-		TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
+		IFADDR_FOREACH(ifa, ifp) {
 			const char *cp, *cp2, *cp3;
 
 			if (ifa->ifa_addr->sa_family != af ||
@@ -1045,7 +1072,7 @@ ifa_ifwithaf(int af)
 	IFNET_FOREACH(ifp) {
 		if (ifp->if_output == if_nulloutput)
 			continue;
-		TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
+		IFADDR_FOREACH(ifa, ifp) {
 			if (ifa->ifa_addr->sa_family == af)
 				return ifa;
 		}
@@ -1072,7 +1099,7 @@ ifaof_ifpforaddr(const struct sockaddr *addr, struct ifnet *ifp)
 	if (af >= AF_MAX)
 		return NULL;
 
-	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
+	IFADDR_FOREACH(ifa, ifp) {
 		if (ifa->ifa_addr->sa_family != af)
 			continue;
 		ifa_maybe = ifa;
@@ -1148,7 +1175,7 @@ if_down(struct ifnet *ifp)
 
 	ifp->if_flags &= ~IFF_UP;
 	microtime(&ifp->if_lastchange);
-	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list)
+	IFADDR_FOREACH(ifa, ifp)
 		pfctlinput(PRC_IFDOWN, ifa->ifa_addr);
 	IFQ_PURGE(&ifp->if_snd);
 #if NCARP > 0
@@ -1174,7 +1201,7 @@ if_up(struct ifnet *ifp)
 	microtime(&ifp->if_lastchange);
 #ifdef notyet
 	/* this has no effect on IP, and will kill all ISO connections XXX */
-	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list)
+	IFADDR_FOREACH(ifa, ifp)
 		pfctlinput(PRC_IFUP, ifa->ifa_addr);
 #endif
 #if NCARP > 0
@@ -1642,7 +1669,7 @@ ifconf(u_long cmd, void *data)
 		    sizeof(ifr.ifr_name));
 		if (ifr.ifr_name[sizeof(ifr.ifr_name) - 1] != '\0')
 			return ENAMETOOLONG;
-		if (TAILQ_EMPTY(&ifp->if_addrlist)) {
+		if (IFADDR_EMPTY(ifp)) {
 			/* Interface with no addresses - send zero sockaddr. */
 			memset(&ifr.ifr_addr, 0, sizeof(ifr.ifr_addr));
 			if (ifrp != NULL)
@@ -1659,7 +1686,7 @@ ifconf(u_long cmd, void *data)
 			continue;
 		}
 
-		TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
+		IFADDR_FOREACH(ifa, ifp) {
 			struct sockaddr *sa = ifa->ifa_addr;
 			/* all sockaddrs must fit in sockaddr_storage */
 			KASSERT(sa->sa_len <= sizeof(ifr.ifr_ifru));

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig_43.c,v 1.27 2007/10/19 12:16:36 ad Exp $	*/
+/*	$NetBSD: kern_sig_43.c,v 1.27.4.1 2007/12/08 17:56:34 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig_43.c,v 1.27 2007/10/19 12:16:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig_43.c,v 1.27.4.1 2007/12/08 17:56:34 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -72,12 +72,12 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sig_43.c,v 1.27 2007/10/19 12:16:36 ad Exp $");
 
 #include <compat/sys/signal.h>
 
-void compat_43_sigmask_to_sigset __P((const int *, sigset_t *));
-void compat_43_sigset_to_sigmask __P((const sigset_t *, int *));
-void compat_43_sigvec_to_sigaction __P((const struct sigvec *, struct sigaction *));
-void compat_43_sigaction_to_sigvec __P((const struct sigaction *, struct sigvec *));
-void compat_43_sigstack_to_sigaltstack __P((const struct sigstack *, struct sigaltstack *));
-void compat_43_sigaltstack_to_sigstack __P((const struct sigaltstack *, struct sigstack *));
+void compat_43_sigmask_to_sigset(const int *, sigset_t *);
+void compat_43_sigset_to_sigmask(const sigset_t *, int *);
+void compat_43_sigvec_to_sigaction(const struct sigvec *, struct sigaction *);
+void compat_43_sigaction_to_sigvec(const struct sigaction *, struct sigvec *);
+void compat_43_sigstack_to_sigaltstack(const struct sigstack *, struct sigaltstack *);
+void compat_43_sigaltstack_to_sigstack(const struct sigaltstack *, struct sigstack *);
 
 void
 compat_43_sigmask_to_sigset(sm, ss)

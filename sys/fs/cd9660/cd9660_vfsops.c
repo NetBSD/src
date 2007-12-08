@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.50.2.1 2007/12/04 13:03:03 ad Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.50.2.2 2007/12/08 17:57:37 ad Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.50.2.1 2007/12/04 13:03:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.50.2.2 2007/12/08 17:57:37 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"

@@ -1,13 +1,11 @@
-/* $NetBSD: cpu.c,v 1.10 2007/12/02 20:34:41 ad Exp $ */
+/*	$NetBSD: cpu.c,v 1.10.2.1 2007/12/08 17:56:32 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by RedBack Networks Inc.
- *
- * Author: Bill Sommerfeld
+ * by Bill Sommerfeld of RedBack Networks Inc, and by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -71,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.10 2007/12/02 20:34:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.10.2.1 2007/12/08 17:56:32 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -576,7 +574,7 @@ cpu_start_secondary(ci)
 	 * wait for it to become ready
 	 */
 	for (i = 100000; (!(ci->ci_flags & CPUF_PRESENT)) && i>0;i--) {
-		delay(10);
+		i8254_delay(10);
 	}
 	if ((ci->ci_flags & CPUF_PRESENT) == 0) {
 		aprint_error("%s: failed to become ready\n",
@@ -598,7 +596,7 @@ cpu_boot_secondary(ci)
 
 	atomic_or_32(&ci->ci_flags, CPUF_GO);
 	for (i = 100000; (!(ci->ci_flags & CPUF_RUNNING)) && i>0;i--) {
-		DELAY(10);
+		i8254_delay(10);
 	}
 	if ((ci->ci_flags & CPUF_RUNNING) == 0) {
 		aprint_error("%s: failed to start\n", ci->ci_dev->dv_xname);
@@ -829,7 +827,7 @@ mp_cpu_start(struct cpu_info *ci)
 		if ((error = x86_ipi_init(ci->ci_apicid)) != 0)
 			return error;
 
-		delay(10000);
+		i8254_delay(10000);
 
 		if (cpu_feature & CPUID_APIC) {
 
@@ -837,13 +835,13 @@ mp_cpu_start(struct cpu_info *ci)
 					     ci->ci_apicid,
 					     LAPIC_DLMODE_STARTUP)) != 0)
 				return error;
-			delay(200);
+			i8254_delay(200);
 
 			if ((error = x86_ipi(MP_TRAMPOLINE/PAGE_SIZE,
 					     ci->ci_apicid,
 					     LAPIC_DLMODE_STARTUP)) != 0)
 				return error;
-			delay(200);
+			i8254_delay(200);
 		}
 	}
 #endif

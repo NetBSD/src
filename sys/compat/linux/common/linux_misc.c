@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.187 2007/11/26 19:01:32 pooka Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.187.2.1 2007/12/08 17:56:49 ad Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.187 2007/11/26 19:01:32 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.187.2.1 2007/12/08 17:56:49 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ptrace.h"
@@ -184,10 +184,10 @@ const int linux_fstypes_cnt = sizeof(linux_fstypes) / sizeof(linux_fstypes[0]);
 # endif
 
 /* Local linux_misc.c functions: */
-static void linux_to_bsd_mmap_args __P((struct sys_mmap_args *,
-    const struct linux_sys_mmap_args *));
-static int linux_mmap __P((struct lwp *, struct linux_sys_mmap_args *,
-    register_t *, off_t));
+static void linux_to_bsd_mmap_args(struct sys_mmap_args *,
+    const struct linux_sys_mmap_args *);
+static int linux_mmap(struct lwp *, struct linux_sys_mmap_args *,
+    register_t *, off_t);
 
 
 /*

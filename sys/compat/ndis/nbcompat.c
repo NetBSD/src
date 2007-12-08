@@ -51,17 +51,15 @@ bus_release_resource(device_t dev, int type, int rid,
 void
 mtx_lock(struct mtx *mutex)
 {
-	/* I'm not sure if this is needed or not.  NetBSD kernel
-	 * threads aren't preempted, but there still may be a need
-	 * for lockmgr locks.
-	 */
-	//lockmgr(mutex, LK_EXCLUSIVE, NULL);
+	/* XXXSMP needs doing
+	*/
+	//mutex_enter(mutex);
 }
 
 void
 mtx_unlock(struct mtx *mutex)
 {
-	//lockmgr(mutex, LK_RELEASE, NULL);
+	//mutex_exit(mutex);
 }
 
 int

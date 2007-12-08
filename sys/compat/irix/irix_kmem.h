@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_kmem.h,v 1.2 2002/09/06 13:18:43 gehenna Exp $ */
+/*	$NetBSD: irix_kmem.h,v 1.2.90.1 2007/12/08 17:56:41 ad Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 #include <sys/device.h>
 
 #ifdef _KERNEL
-void    irix_kmemattach __P((struct device *, struct device *, void *));
+void    irix_kmemattach(struct device *, struct device *, void *);
 #endif
 
 /* IRIX well-known kernel structures referenced by sysmp() */
