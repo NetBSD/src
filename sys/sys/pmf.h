@@ -1,4 +1,4 @@
-/* $NetBSD: pmf.h,v 1.1.2.1 2007/12/08 16:21:41 jmcneill Exp $ */
+/* $NetBSD: pmf.h,v 1.1.2.2 2007/12/08 19:31:41 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -36,17 +36,6 @@
 #define _SYS_PMF_H
 
 #include <sys/callout.h>
-
-typedef enum {
-	PMF_DISPLAY_POWER_ON = 0x01,
-	PMF_DISPLAY_POWER_REDUCED = 0x02,
-	PMF_DISPLAY_POWER_STANDBY = 0x04,
-	PMF_DISPLAY_POWER_SUSPEND = 0x08,
-	PMF_DISPLAY_POWER_OFF = 0x10
-} pmf_display_power_t;
-
-void	pmf_event_display_power_set(device_t, pmf_display_power_t);
-bool	pmf_event_display_power_get(device_t, pmf_display_power_t);
 
 typedef enum {
 	PMFE_DISPLAY_ON,
