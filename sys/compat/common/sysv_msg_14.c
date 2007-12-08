@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_msg_14.c,v 1.14 2007/12/04 18:40:07 dsl Exp $	*/
+/*	$NetBSD: sysv_msg_14.c,v 1.15 2007/12/08 18:35:54 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_msg_14.c,v 1.14 2007/12/04 18:40:07 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_msg_14.c,v 1.15 2007/12/08 18:35:54 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,9 +59,7 @@ static void msqid_ds14_to_native(struct msqid_ds14 *, struct msqid_ds *);
 static void native_to_msqid_ds14(struct msqid_ds *, struct msqid_ds14 *);
 
 static void
-msqid_ds14_to_native(omsqbuf, msqbuf)
-	struct msqid_ds14 *omsqbuf;
-	struct msqid_ds *msqbuf;
+msqid_ds14_to_native(struct msqid_ds14 *omsqbuf, struct msqid_ds *msqbuf)
 {
 
 	ipc_perm14_to_native(&omsqbuf->msg_perm, &msqbuf->msg_perm);
@@ -78,9 +76,7 @@ msqid_ds14_to_native(omsqbuf, msqbuf)
 }
 
 static void
-native_to_msqid_ds14(msqbuf, omsqbuf)
-	struct msqid_ds *msqbuf;
-	struct msqid_ds14 *omsqbuf;
+native_to_msqid_ds14(struct msqid_ds *msqbuf, struct msqid_ds14 *omsqbuf)
 {
 
 	native_to_ipc_perm14(&msqbuf->msg_perm, &omsqbuf->msg_perm);

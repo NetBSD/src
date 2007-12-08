@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ioctl.c,v 1.50 2007/11/26 19:01:31 pooka Exp $	*/
+/*	$NetBSD: linux_ioctl.c,v 1.51 2007/12/08 18:36:07 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ioctl.c,v 1.50 2007/11/26 19:01:31 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ioctl.c,v 1.51 2007/12/08 18:36:07 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "sequencer.h"
@@ -76,10 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_ioctl.c,v 1.50 2007/11/26 19:01:31 pooka Exp $
  * values need some massaging.
  */
 int
-linux_sys_ioctl(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_ioctl(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux_sys_ioctl_args /* {
 		syscallarg(int) fd;

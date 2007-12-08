@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_exec_elf32.c,v 1.16 2007/12/04 18:40:10 dsl Exp $	*/
+/*	$NetBSD: ibcs2_exec_elf32.c,v 1.17 2007/12/08 18:36:00 dsl Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec_elf32.c,v 1.16 2007/12/04 18:40:10 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec_elf32.c,v 1.17 2007/12/08 18:36:00 dsl Exp $");
 
 #define ELFSIZE		32
 
@@ -74,10 +74,7 @@ static int ibcs2_elf32_signature(struct lwp *l, struct exec_package *,
 #define SCO_SIGNATURE	"\004\0\0\0\014\0\0\0\001\0\0\0SCO\0"
 
 static int
-ibcs2_elf32_signature(l, epp, eh)
-	struct lwp *l;
-	struct exec_package *epp;
-	Elf32_Ehdr *eh;
+ibcs2_elf32_signature(struct lwp *l, struct exec_package *epp, Elf32_Ehdr *eh)
 {
 	size_t shsize = sizeof(Elf32_Shdr) * eh->e_shnum;
 	size_t i;

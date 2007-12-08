@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_misc.c,v 1.9 2007/03/04 06:01:17 christos Exp $ */
+/*	$NetBSD: irix_misc.c,v 1.10 2007/12/08 18:36:03 dsl Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_misc.c,v 1.9 2007/03/04 06:01:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_misc.c,v 1.10 2007/12/08 18:36:03 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -66,10 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: irix_misc.c,v 1.9 2007/03/04 06:01:17 christos Exp $
  * Maybe consider moving this to sys/compat/common/compat_util.c?
  */
 int
-irix_sys_setpgrp(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+irix_sys_setpgrp(struct lwp *l, void *v, register_t *retval)
 {
 	struct irix_sys_setpgrp_args /* {
 		syscallarg(int) pid;
@@ -93,10 +90,7 @@ irix_sys_setpgrp(l, v, retval)
 #define BUF_SIZE 16
 
 int
-irix_sys_uname(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+irix_sys_uname(struct lwp *l, void *v, register_t *retval)
 {
 	struct irix_sys_uname_args /* {
 		syscallarg(struct irix_utsname *) name;
@@ -128,10 +122,7 @@ irix_sys_uname(l, v, retval)
 }
 
 int
-irix_sys_utssys(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+irix_sys_utssys(struct lwp *l, void *v, register_t *retval)
 {
 	struct irix_sys_utssys_args /* {
 		syscallarg(void *) a1;

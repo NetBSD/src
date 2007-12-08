@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_stat.c,v 1.41 2007/12/04 18:40:11 dsl Exp $	*/
+/*	$NetBSD: ibcs2_stat.c,v 1.42 2007/12/08 18:36:02 dsl Exp $	*/
 /*
  * Copyright (c) 1995, 1998 Scott Bartram
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_stat.c,v 1.41 2007/12/04 18:40:11 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_stat.c,v 1.42 2007/12/08 18:36:02 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,9 +58,7 @@ static int cvt_statfs(struct statvfs *, void *, int);
 static int cvt_statvfs(struct statvfs *, void *, int);
 
 static void
-bsd_stat2ibcs_stat(st, st4)
-	struct stat *st;
-	struct ibcs2_stat *st4;
+bsd_stat2ibcs_stat(struct stat *st, struct ibcs2_stat *st4)
 {
 	memset(st4, 0, sizeof(*st4));
 	st4->st_dev = (ibcs2_dev_t)st->st_dev;
@@ -80,10 +78,7 @@ bsd_stat2ibcs_stat(st, st4)
 }
 
 static int
-cvt_statfs(sp, tbuf, len)
-	struct statvfs *sp;
-	void *tbuf;
-	int len;
+cvt_statfs(struct statvfs *sp, void *tbuf, int len)
 {
 	struct ibcs2_statfs ssfs;
 
@@ -106,10 +101,7 @@ cvt_statfs(sp, tbuf, len)
 }
 
 static int
-cvt_statvfs(sp, tbuf, len)
-	struct statvfs *sp;
-	void *tbuf;
-	int len;
+cvt_statvfs(struct statvfs *sp, void *tbuf, int len)
 {
 	struct ibcs2_statvfs ssvfs;
 
@@ -243,10 +235,7 @@ ibcs2_sys_fstatvfs(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-ibcs2_sys_stat(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ibcs2_sys_stat(struct lwp *l, void *v, register_t *retval)
 {
 	struct ibcs2_sys_stat_args /* {
 		syscallarg(const char *) path;
@@ -265,10 +254,7 @@ ibcs2_sys_stat(l, v, retval)
 }
 
 int
-ibcs2_sys_lstat(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ibcs2_sys_lstat(struct lwp *l, void *v, register_t *retval)
 {
 	struct ibcs2_sys_lstat_args /* {
 		syscallarg(const char *) path;
@@ -288,10 +274,7 @@ ibcs2_sys_lstat(l, v, retval)
 }
 
 int
-ibcs2_sys_fstat(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ibcs2_sys_fstat(struct lwp *l, void *v, register_t *retval)
 {
 	struct ibcs2_sys_fstat_args /* {
 		syscallarg(int) fd;

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_signal.c,v 1.56 2007/12/04 18:40:17 dsl Exp $	*/
+/*	$NetBSD: linux_signal.c,v 1.57 2007/12/08 18:36:09 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.56 2007/12/04 18:40:17 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.57 2007/12/08 18:36:09 dsl Exp $");
 
 #define COMPAT_LINUX 1
 
@@ -107,10 +107,7 @@ extern const int linux_to_native_signo[];
  */
 #if LINUX__NSIG_WORDS > 1
 void
-linux_old_extra_to_native_sigset(bss, lss, extra)
-	sigset_t *bss;
-	const linux_old_sigset_t *lss;
-	const unsigned long *extra;
+linux_old_extra_to_native_sigset(sigset_t *bss, const linux_old_sigset_t *lss, const unsigned long *extra)
 {
 	linux_sigset_t lsnew;
 
@@ -125,10 +122,7 @@ linux_old_extra_to_native_sigset(bss, lss, extra)
 }
 
 void
-native_to_linux_old_extra_sigset(lss, extra, bss)
-	linux_old_sigset_t *lss;
-	unsigned long *extra;
-	const sigset_t *bss;
+native_to_linux_old_extra_sigset(linux_old_sigset_t *lss, unsigned long *extra, const sigset_t *bss)
 {
 	linux_sigset_t lsnew;
 
@@ -143,9 +137,7 @@ native_to_linux_old_extra_sigset(lss, extra, bss)
 #endif /* LINUX__NSIG_WORDS > 1 */
 
 void
-linux_to_native_sigset(bss, lss)
-	sigset_t *bss;
-	const linux_sigset_t *lss;
+linux_to_native_sigset(sigset_t *bss, const linux_sigset_t *lss)
 {
 	int i, newsig;
 
@@ -160,9 +152,7 @@ linux_to_native_sigset(bss, lss)
 }
 
 void
-native_to_linux_sigset(lss, bss)
-	linux_sigset_t *lss;
-	const sigset_t *bss;
+native_to_linux_sigset(linux_sigset_t *lss, const sigset_t *bss)
 {
 	int i, newsig;
 
@@ -177,8 +167,7 @@ native_to_linux_sigset(lss, bss)
 }
 
 unsigned int
-native_to_linux_sigflags(bsf)
-	const int bsf;
+native_to_linux_sigflags(const int bsf)
 {
 	unsigned int lsf = 0;
 	if ((bsf & SA_NOCLDSTOP) != 0)
@@ -199,8 +188,7 @@ native_to_linux_sigflags(bsf)
 }
 
 int
-linux_to_native_sigflags(lsf)
-	const unsigned long lsf;
+linux_to_native_sigflags(const unsigned long lsf)
 {
 	int bsf = 0;
 	if ((lsf & LINUX_SA_NOCLDSTOP) != 0)
@@ -228,9 +216,7 @@ linux_to_native_sigflags(lsf)
  * Convert between Linux and BSD sigaction structures.
  */
 void
-linux_old_to_native_sigaction(bsa, lsa)
-	struct sigaction *bsa;
-	const struct linux_old_sigaction *lsa;
+linux_old_to_native_sigaction(struct sigaction *bsa, const struct linux_old_sigaction *lsa)
 {
 	bsa->sa_handler = lsa->linux_sa_handler;
 	linux_old_to_native_sigset(&bsa->sa_mask, &lsa->linux_sa_mask);
@@ -238,9 +224,7 @@ linux_old_to_native_sigaction(bsa, lsa)
 }
 
 void
-native_to_linux_old_sigaction(lsa, bsa)
-	struct linux_old_sigaction *lsa;
-	const struct sigaction *bsa;
+native_to_linux_old_sigaction(struct linux_old_sigaction *lsa, const struct sigaction *bsa)
 {
 	lsa->linux_sa_handler = bsa->sa_handler;
 	native_to_linux_old_sigset(&lsa->linux_sa_mask, &bsa->sa_mask);
@@ -252,9 +236,7 @@ native_to_linux_old_sigaction(lsa, bsa)
 
 /* ...and the new sigaction conversion funcs. */
 void
-linux_to_native_sigaction(bsa, lsa)
-	struct sigaction *bsa;
-	const struct linux_sigaction *lsa;
+linux_to_native_sigaction(struct sigaction *bsa, const struct linux_sigaction *lsa)
 {
 	bsa->sa_handler = lsa->linux_sa_handler;
 	linux_to_native_sigset(&bsa->sa_mask, &lsa->linux_sa_mask);
@@ -262,9 +244,7 @@ linux_to_native_sigaction(bsa, lsa)
 }
 
 void
-native_to_linux_sigaction(lsa, bsa)
-	struct linux_sigaction *lsa;
-	const struct sigaction *bsa;
+native_to_linux_sigaction(struct linux_sigaction *lsa, const struct sigaction *bsa)
 {
 	lsa->linux_sa_handler = bsa->sa_handler;
 	native_to_linux_sigset(&lsa->linux_sa_mask, &bsa->sa_mask);
@@ -350,11 +330,7 @@ linux_sys_rt_sigaction(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-linux_sigprocmask1(l, how, set, oset)
-	struct lwp *l;
-	int how;
-	const linux_old_sigset_t *set;
-	linux_old_sigset_t *oset;
+linux_sigprocmask1(struct lwp *l, int how, const linux_old_sigset_t *set, linux_old_sigset_t *oset)
 {
 	struct proc *p = l->l_proc;
 	linux_old_sigset_t nlss, olss;
@@ -526,10 +502,7 @@ linux_sys_rt_sigsuspend(struct lwp *l, void *v, register_t *retval)
  * Note: also used as sys_rt_queueinfo.  The info field is ignored.
  */
 int
-linux_sys_rt_queueinfo(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_rt_queueinfo(struct lwp *l, void *v, register_t *retval)
 {
 	/* XXX XAX This isn't this really int, int, siginfo_t *, is it? */
 #if 0
@@ -546,10 +519,7 @@ linux_sys_rt_queueinfo(l, v, retval)
 }
 
 int
-linux_sys_kill(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_kill(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux_sys_kill_args /* {
 		syscallarg(int) pid;
@@ -572,9 +542,7 @@ static void linux_to_native_sigaltstack(struct sigaltstack *,
     const struct linux_sigaltstack *);
 
 static void
-linux_to_native_sigaltstack(bss, lss)
-	struct sigaltstack *bss;
-	const struct linux_sigaltstack *lss;
+linux_to_native_sigaltstack(struct sigaltstack *bss, const struct linux_sigaltstack *lss)
 {
 	bss->ss_sp = lss->ss_sp;
 	bss->ss_size = lss->ss_size;
@@ -587,9 +555,7 @@ linux_to_native_sigaltstack(bss, lss)
 }
 
 void
-native_to_linux_sigaltstack(lss, bss)
-	struct linux_sigaltstack *lss;
-	const struct sigaltstack *bss;
+native_to_linux_sigaltstack(struct linux_sigaltstack *lss, const struct sigaltstack *bss)
 {
 	lss->ss_sp = bss->ss_sp;
 	lss->ss_size = bss->ss_size;
@@ -646,10 +612,7 @@ linux_sys_sigaltstack(struct lwp *l, void *v, register_t *retval)
 
 #ifdef LINUX_NPTL
 int
-linux_sys_tkill(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_tkill(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux_sys_tkill_args /* {
 		syscallarg(int) tid;
@@ -665,10 +628,7 @@ linux_sys_tkill(l, v, retval)
 }
 
 int
-linux_sys_tgkill(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_tgkill(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux_sys_tgkill_args /* {
 		syscallarg(int) tgid;

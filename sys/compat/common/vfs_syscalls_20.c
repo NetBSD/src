@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_20.c,v 1.20 2007/11/26 19:01:29 pooka Exp $	*/
+/*	$NetBSD: vfs_syscalls_20.c,v 1.21 2007/12/08 18:35:55 dsl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_20.c,v 1.20 2007/11/26 19:01:29 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_20.c,v 1.21 2007/12/08 18:35:55 dsl Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -201,10 +201,7 @@ compat_20_sys_fstatfs(struct lwp *l, void *v, register_t *retval)
  * Get statistics on all filesystems.
  */
 int
-compat_20_sys_getfsstat(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+compat_20_sys_getfsstat(struct lwp *l, void *v, register_t *retval)
 {
 	struct compat_20_sys_getfsstat_args /* {
 		syscallarg(struct statfs12 *) buf;

@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls_43.c,v 1.37 2007/09/11 19:59:18 gdt Exp $	*/
+/*	$NetBSD: uipc_syscalls_43.c,v 1.38 2007/12/08 18:35:55 dsl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_43.c,v 1.37 2007/09/11 19:59:18 gdt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_43.c,v 1.38 2007/12/08 18:35:55 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -371,8 +371,7 @@ compat_43_sys_sendmsg(struct lwp *l, void *v, register_t *retval)
 }
 
 static int
-compat_43_sa_put(from)
-	void *from;
+compat_43_sa_put(void *from)
 {
 	struct osockaddr *osa = (struct osockaddr *) from;
 	struct sockaddr sa;

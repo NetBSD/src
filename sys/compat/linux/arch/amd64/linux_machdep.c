@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.25 2007/10/19 18:52:10 njoly Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.26 2007/12/08 18:36:05 dsl Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.25 2007/10/19 18:52:10 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.26 2007/12/08 18:36:05 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -132,9 +132,7 @@ linux_setregs(l, epp, stack)
 }
 
 void    
-linux_sendsig(ksi, mask)
-	const ksiginfo_t *ksi;
-	const sigset_t *mask;
+linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 {
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
@@ -357,9 +355,7 @@ linux_sys_ioperm(l, v, retval)
 }
 
 dev_t
-linux_fakedev(dev, raw)
-        dev_t dev;
-	int raw;
+linux_fakedev(dev_t dev, int raw)
 {
 
        extern const struct cdevsw ptc_cdevsw, pts_cdevsw;
@@ -516,10 +512,7 @@ linux_sys_rt_sigreturn(l, v, retval)
 }
 
 int
-linux_sys_arch_prctl(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_arch_prctl(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux_sys_arch_prctl_args /* {
 		syscallarg(int) code;
@@ -659,8 +652,7 @@ linux_buildcontext(struct lwp *l, void *catcher, void *f)
 }
 
 void *
-linux_get_newtls(l)
-	struct lwp *l;
+linux_get_newtls(struct lwp *l)
 {
 	struct trapframe *tf = l->l_md.md_regs;
 
@@ -668,9 +660,7 @@ linux_get_newtls(l)
 }
 
 int
-linux_set_newtls(l, tls)
-	struct lwp *l;
-	void *tls;
+linux_set_newtls(struct lwp *l, void *tls)
 {
 	struct linux_sys_arch_prctl_args cup;
 	register_t retval;

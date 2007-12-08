@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_signal.c,v 1.60 2007/12/04 18:40:23 dsl Exp $	 */
+/*	$NetBSD: svr4_signal.c,v 1.61 2007/12/08 18:36:25 dsl Exp $	 */
 
 /*-
  * Copyright (c) 1994, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_signal.c,v 1.60 2007/12/04 18:40:23 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_signal.c,v 1.61 2007/12/08 18:36:25 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,8 +81,7 @@ extern const int native_to_svr4_signo[];
 extern const int svr4_to_native_signo[];
 
 static inline void
-svr4_sigfillset(s)
-	svr4_sigset_t *s;
+svr4_sigfillset(svr4_sigset_t *s)
 {
 	int i;
 
@@ -93,9 +92,7 @@ svr4_sigfillset(s)
 }
 
 void
-svr4_to_native_sigset(sss, bss)
-	const svr4_sigset_t *sss;
-	sigset_t *bss;
+svr4_to_native_sigset(const svr4_sigset_t *sss, sigset_t *bss)
 {
 	int i, newsig;
 
@@ -111,9 +108,7 @@ svr4_to_native_sigset(sss, bss)
 
 
 void
-native_to_svr4_sigset(bss, sss)
-	const sigset_t *bss;
-	svr4_sigset_t *sss;
+native_to_svr4_sigset(const sigset_t *bss, svr4_sigset_t *sss)
 {
 	int i, newsig;
 
@@ -131,9 +126,7 @@ native_to_svr4_sigset(bss, sss)
  * XXX: Only a subset of the flags is currently implemented.
  */
 void
-svr4_to_native_sigaction(ssa, bsa)
-	const struct svr4_sigaction *ssa;
-	struct sigaction *bsa;
+svr4_to_native_sigaction(const struct svr4_sigaction *ssa, struct sigaction *bsa)
 {
 
 	bsa->sa_handler = (sig_t) ssa->svr4_sa_handler;
@@ -160,9 +153,7 @@ svr4_to_native_sigaction(ssa, bsa)
 }
 
 void
-native_to_svr4_sigaction(bsa, ssa)
-	const struct sigaction *bsa;
-	struct svr4_sigaction *ssa;
+native_to_svr4_sigaction(const struct sigaction *bsa, struct svr4_sigaction *ssa)
 {
 
 	ssa->svr4_sa_handler = (svr4_sig_t) bsa->sa_handler;
@@ -227,10 +218,7 @@ svr4_sys_sigaltstack(struct lwp *l, void *v, register_t *retval)
  * Stolen from the ibcs2 one
  */
 int
-svr4_sys_signal(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_sys_signal(struct lwp *l, void *v, register_t *retval)
 {
 	struct svr4_sys_signal_args /* {
 		syscallarg(int) signum;
@@ -405,10 +393,7 @@ svr4_sys_pause(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-svr4_sys_kill(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_sys_kill(struct lwp *l, void *v, register_t *retval)
 {
 	struct svr4_sys_kill_args /* {
 		syscallarg(int) pid;
@@ -422,9 +407,7 @@ svr4_sys_kill(l, v, retval)
 }
 
 void
-svr4_getcontext(l, uc)
-	struct lwp *l;
-	struct svr4_ucontext *uc;
+svr4_getcontext(struct lwp *l, struct svr4_ucontext *uc)
 {
 	sigset_t mask;
 	struct proc *p = l->l_proc;
@@ -455,9 +438,7 @@ svr4_getcontext(l, uc)
 
 
 int
-svr4_setcontext(l, uc)
-	struct lwp *l;
-	struct svr4_ucontext *uc;
+svr4_setcontext(struct lwp *l, struct svr4_ucontext *uc)
 {
 	struct proc *p = l->l_proc;
 	sigset_t mask;
@@ -478,10 +459,7 @@ svr4_setcontext(l, uc)
 }
 
 int
-svr4_sys_context(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_sys_context(struct lwp *l, void *v, register_t *retval)
 {
 	struct svr4_sys_context_args /* {
 		syscallarg(int) func;

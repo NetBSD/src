@@ -1,4 +1,4 @@
-/*	$NetBSD: vax1k_exec.c,v 1.13 2007/12/04 18:40:27 dsl Exp $	*/
+/*	$NetBSD: vax1k_exec.c,v 1.14 2007/12/08 18:36:29 dsl Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vax1k_exec.c,v 1.13 2007/12/04 18:40:27 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vax1k_exec.c,v 1.14 2007/12/08 18:36:29 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,9 +75,7 @@ int	exec_vax1k_prep_anymagic(struct lwp *l, struct exec_package *epp,
  */
 
 int
-exec_vax1k_makecmds(l, epp)
-	struct lwp *l;
-	struct exec_package *epp;
+exec_vax1k_makecmds(struct lwp *l, struct exec_package *epp)
 {
 	u_long midmag, magic;
 	u_short mid;

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ipc.c,v 1.12 2007/06/03 10:55:10 dsl Exp $	*/
+/*	$NetBSD: netbsd32_ipc.c,v 1.13 2007/12/08 18:36:19 dsl Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ipc.c,v 1.12 2007/06/03 10:55:10 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ipc.c,v 1.13 2007/12/08 18:36:19 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -54,10 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_ipc.c,v 1.12 2007/06/03 10:55:10 dsl Exp $"
 #if defined(SYSVSEM)
 
 int
-netbsd32___semctl14(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32___semctl14(struct lwp *l, void *v, register_t *retval)
 {
 	return do_netbsd32___semctl14(l, v, retval, NULL);
 }
@@ -138,10 +135,7 @@ do_netbsd32___semctl14(struct lwp *l, void *v, register_t *retval, void *vkarg)
 }
 
 int
-netbsd32_semget(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_semget(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_semget_args /* {
 		syscallarg(netbsd32_key_t) key;
@@ -157,10 +151,7 @@ netbsd32_semget(l, v, retval)
 }
 
 int
-netbsd32_semop(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_semop(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_semop_args /* {
 		syscallarg(int) semid;
@@ -176,10 +167,7 @@ netbsd32_semop(l, v, retval)
 }
 
 int
-netbsd32_semconfig(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_semconfig(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_semconfig_args /* {
 		syscallarg(int) flag;
@@ -194,10 +182,7 @@ netbsd32_semconfig(l, v, retval)
 #if defined(SYSVMSG)
 
 int
-netbsd32___msgctl13(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32___msgctl13(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32___msgctl13_args /* {
 		syscallarg(int) msqid;
@@ -228,10 +213,7 @@ netbsd32___msgctl13(l, v, retval)
 }
 
 int
-netbsd32_msgget(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_msgget(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_msgget_args /* {
 		syscallarg(netbsd32_key_t) key;
@@ -260,10 +242,7 @@ netbsd32_msgsnd_fetch_type(const void *src, void *dst, size_t size)
 }
 
 int
-netbsd32_msgsnd(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_msgsnd(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_msgsnd_args /* {
 		syscallarg(int) msqid;
@@ -291,10 +270,7 @@ netbsd32_msgrcv_put_type(const void *src, void *dst, size_t size)
 }
 
 int
-netbsd32_msgrcv(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_msgrcv(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_msgrcv_args /* {
 		syscallarg(int) msqid;
@@ -314,10 +290,7 @@ netbsd32_msgrcv(l, v, retval)
 #if defined(SYSVSHM)
 
 int
-netbsd32_shmat(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_shmat(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_shmat_args /* {
 		syscallarg(int) shmid;
@@ -333,10 +306,7 @@ netbsd32_shmat(l, v, retval)
 }
 
 int
-netbsd32___shmctl13(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32___shmctl13(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32___shmctl13_args /* {
 		syscallarg(int) shmid;
@@ -367,10 +337,7 @@ netbsd32___shmctl13(l, v, retval)
 }
 
 int
-netbsd32_shmdt(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_shmdt(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_shmdt_args /* {
 		syscallarg(const netbsd32_voidp) shmaddr;
@@ -382,10 +349,7 @@ netbsd32_shmdt(l, v, retval)
 }
 
 int
-netbsd32_shmget(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_shmget(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_shmget_args /* {
 		syscallarg(netbsd32_key_t) key;

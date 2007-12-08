@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.133 2007/12/04 18:40:23 dsl Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.134 2007/12/08 18:36:25 dsl Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_misc.c,v 1.133 2007/12/04 18:40:23 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_misc.c,v 1.134 2007/12/08 18:36:25 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,10 +116,7 @@ static int svr4_mknod(struct lwp *, register_t *, const char *,
     svr4_mode_t, svr4_dev_t);
 
 int
-svr4_sys_wait(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_sys_wait(struct lwp *l, void *v, register_t *retval)
 {
 	struct svr4_sys_wait_args *uap = v;
 	int error, was_zombie;
@@ -156,10 +153,7 @@ svr4_sys_wait(l, v, retval)
 
 
 int
-svr4_sys_execv(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_sys_execv(struct lwp *l, void *v, register_t *retval)
 {
 	struct svr4_sys_execv_args /* {
 		syscallarg(char *) path;
@@ -176,10 +170,7 @@ svr4_sys_execv(l, v, retval)
 
 
 int
-svr4_sys_execve(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_sys_execve(struct lwp *l, void *v, register_t *retval)
 {
 	struct svr4_sys_execve_args /* {
 		syscallarg(const char *) path;
@@ -221,10 +212,7 @@ svr4_sys_time(struct lwp *l, void *v, register_t *retval)
  * This is quite ugly, but what do you expect from compatibility code?
  */
 int
-svr4_sys_getdents64(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_sys_getdents64(struct lwp *l, void *v, register_t *retval)
 {
 	struct svr4_sys_getdents64_args *uap = v;
 	struct proc *p = l->l_proc;
@@ -346,10 +334,7 @@ out:
 
 
 int
-svr4_sys_getdents(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_sys_getdents(struct lwp *l, void *v, register_t *retval)
 {
 	struct svr4_sys_getdents_args *uap = v;
 	struct proc *p = l->l_proc;
@@ -472,8 +457,7 @@ out:
 
 
 static int
-svr4_to_bsd_mmap_flags(f)
-	int f;
+svr4_to_bsd_mmap_flags(int f)
 {
 	int type = f & SVR4_MAP_TYPE;
 	int nf;
@@ -490,10 +474,7 @@ svr4_to_bsd_mmap_flags(f)
 
 
 int
-svr4_sys_mmap(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_sys_mmap(struct lwp *l, void *v, register_t *retval)
 {
 	struct svr4_sys_mmap_args	*uap = v;
 	struct sys_mmap_args	 mm;
@@ -520,10 +501,7 @@ svr4_sys_mmap(l, v, retval)
 
 
 int
-svr4_sys_mmap64(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_sys_mmap64(struct lwp *l, void *v, register_t *retval)
 {
 	struct svr4_sys_mmap64_args	*uap = v;
 	struct sys_mmap_args	 mm;
@@ -550,12 +528,7 @@ svr4_sys_mmap64(l, v, retval)
 
 
 static int
-svr4_mknod(l, retval, path, mode, dev)
-	struct lwp *l;
-	register_t *retval;
-	const char *path;
-	svr4_mode_t mode;
-	svr4_dev_t dev;
+svr4_mknod(struct lwp *l, register_t *retval, const char *path, svr4_mode_t mode, svr4_dev_t dev)
 {
 	if (S_ISFIFO(mode)) {
 		struct sys_mkfifo_args ap;
@@ -573,10 +546,7 @@ svr4_mknod(l, retval, path, mode, dev)
 
 
 int
-svr4_sys_mknod(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_sys_mknod(struct lwp *l, void *v, register_t *retval)
 {
 	struct svr4_sys_mknod_args *uap = v;
 	return svr4_mknod(l, retval,
@@ -586,10 +556,7 @@ svr4_sys_mknod(l, v, retval)
 
 
 int
-svr4_sys_xmknod(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_sys_xmknod(struct lwp *l, void *v, register_t *retval)
 {
 	struct svr4_sys_xmknod_args *uap = v;
 	return svr4_mknod(l, retval,
@@ -782,18 +749,14 @@ svr4_sys_break(struct lwp *l, void *v, register_t *retval)
 
 
 static inline clock_t
-timeval_to_clock_t(tv)
-	struct timeval *tv;
+timeval_to_clock_t(struct timeval *tv)
 {
 	return tv->tv_sec * hz + tv->tv_usec / (1000000 / hz);
 }
 
 
 int
-svr4_sys_times(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_sys_times(struct lwp *l, void *v, register_t *retval)
 {
 	struct svr4_sys_times_args *uap = v;
 	struct tms		 tms;
@@ -821,10 +784,7 @@ svr4_sys_times(l, v, retval)
 
 
 int
-svr4_sys_ulimit(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_sys_ulimit(struct lwp *l, void *v, register_t *retval)
 {
 	struct svr4_sys_ulimit_args *uap = v;
 	struct proc *p = l->l_proc;
@@ -869,10 +829,7 @@ svr4_sys_ulimit(l, v, retval)
 
 
 int
-svr4_sys_pgrpsys(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_sys_pgrpsys(struct lwp *l, void *v, register_t *retval)
 {
 	struct svr4_sys_pgrpsys_args *uap = v;
 	struct proc *p = l->l_proc;
@@ -984,10 +941,7 @@ svr4_hrtcntl(struct lwp *l, struct svr4_hrtcntl_args *uap,
 
 
 int
-svr4_sys_hrtsys(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_sys_hrtsys(struct lwp *l, void *v, register_t *retval)
 {
 	struct svr4_sys_hrtsys_args *uap = v;
 
@@ -1061,10 +1015,7 @@ svr4_setinfo(int pid, struct rusage *ru, int st, svr4_siginfo_t *s)
 
 
 int
-svr4_sys_waitsys(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_sys_waitsys(struct lwp *l, void *v, register_t *retval)
 {
 	struct svr4_sys_waitsys_args *uap = v;
 	int options, status;
@@ -1181,10 +1132,7 @@ svr4_copyout_statvfs64(const struct statvfs *bfs, struct svr4_statvfs64 *sufs)
 
 
 int
-svr4_sys_statvfs(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_sys_statvfs(struct lwp *l, void *v, register_t *retval)
 {
 	struct svr4_sys_statvfs_args *uap = v;
 	struct statvfs *sb;
@@ -1200,10 +1148,7 @@ svr4_sys_statvfs(l, v, retval)
 
 
 int
-svr4_sys_fstatvfs(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_sys_fstatvfs(struct lwp *l, void *v, register_t *retval)
 {
 	struct svr4_sys_fstatvfs_args *uap = v;
 	struct statvfs *sb;
@@ -1219,10 +1164,7 @@ svr4_sys_fstatvfs(l, v, retval)
 
 
 int
-svr4_sys_statvfs64(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_sys_statvfs64(struct lwp *l, void *v, register_t *retval)
 {
 	struct svr4_sys_statvfs64_args *uap = v;
 	struct statvfs *sb;
@@ -1238,10 +1180,7 @@ svr4_sys_statvfs64(l, v, retval)
 
 
 int
-svr4_sys_fstatvfs64(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_sys_fstatvfs64(struct lwp *l, void *v, register_t *retval)
 {
 	struct svr4_sys_fstatvfs64_args *uap = v;
 	struct statvfs *sb;
@@ -1256,10 +1195,7 @@ svr4_sys_fstatvfs64(l, v, retval)
 }
 
 int
-svr4_sys_alarm(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_sys_alarm(struct lwp *l, void *v, register_t *retval)
 {
 	struct svr4_sys_alarm_args *uap = v;
         struct itimerval tp;
@@ -1320,10 +1256,7 @@ svr4_sys_facl(struct lwp *l, void *v, register_t *retval)
 
 
 int
-svr4_sys_acl(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_sys_acl(struct lwp *l, void *v, register_t *retval)
 {
 	return svr4_sys_facl(l, v, retval);	/* XXX: for now the same */
 }
@@ -1341,10 +1274,7 @@ svr4_sys_auditsys(struct lwp *l, void *v,
 
 
 int
-svr4_sys_memcntl(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_sys_memcntl(struct lwp *l, void *v, register_t *retval)
 {
 	struct svr4_sys_memcntl_args *uap = v;
 	switch (SCARG(uap, cmd)) {
@@ -1380,10 +1310,7 @@ svr4_sys_memcntl(l, v, retval)
 
 
 int
-svr4_sys_nice(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_sys_nice(struct lwp *l, void *v, register_t *retval)
 {
 	struct svr4_sys_nice_args *uap = v;
 	struct sys_setpriority_args ap;
@@ -1404,10 +1331,7 @@ svr4_sys_nice(l, v, retval)
 
 
 int
-svr4_sys_resolvepath(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_sys_resolvepath(struct lwp *l, void *v, register_t *retval)
 {
 	struct svr4_sys_resolvepath_args *uap = v;
 	struct nameidata nd;

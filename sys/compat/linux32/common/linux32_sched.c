@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_sched.c,v 1.4 2007/11/07 00:24:31 njoly Exp $ */
+/*	$NetBSD: linux32_sched.c,v 1.5 2007/12/08 18:36:11 dsl Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_sched.c,v 1.4 2007/11/07 00:24:31 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_sched.c,v 1.5 2007/12/08 18:36:11 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -70,10 +70,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_sched.c,v 1.4 2007/11/07 00:24:31 njoly Exp 
 #include <compat/linux32/linux32_syscallargs.h>
 
 int
-linux32_sys_clone(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_clone(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux32_sys_clone_args /* {
 		syscallarg(int) flags;
@@ -92,10 +89,7 @@ linux32_sys_clone(l, v, retval)
 }
 
 int
-linux32_sys_sched_getscheduler(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_sched_getscheduler(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux32_sys_sched_getscheduler_args /* {
 		syscallarg(pid_t) pid;
@@ -108,10 +102,7 @@ linux32_sys_sched_getscheduler(l, v, retval)
 }
 
 int
-linux32_sys_sched_setscheduler(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_sched_setscheduler(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux32_sys_sched_setscheduler_args /* {
 		syscallarg(int) pid;
@@ -128,10 +119,7 @@ linux32_sys_sched_setscheduler(l, v, retval)
 }
 
 int
-linux32_sys_sched_getparam(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_sched_getparam(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux32_sys_sched_getparam_args /* {
 		syscallarg(pid_t) pid;
@@ -146,10 +134,7 @@ linux32_sys_sched_getparam(l, v, retval)
 }
 
 int
-linux32_sys_exit_group(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_exit_group(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux32_sys_exit_group_args /* {
 		syscallarg(int) error_code;

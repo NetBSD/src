@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_sysctl.c,v 1.9 2007/08/15 12:07:28 ad Exp $	*/
+/*	$NetBSD: freebsd_sysctl.c,v 1.10 2007/12/08 18:35:59 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_sysctl.c,v 1.9 2007/08/15 12:07:28 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_sysctl.c,v 1.10 2007/12/08 18:35:59 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,10 +82,7 @@ SYSCTL_SETUP(freebsd_sysctl_setup, "freebsd emulated sysctl setup")
 }
 
 int
-freebsd_sys_sysctl(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+freebsd_sys_sysctl(struct lwp *l, void *v, register_t *retval)
 {
 	struct freebsd_sys_sysctl_args /* {
 		syscallarg(int *) name;

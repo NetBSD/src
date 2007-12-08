@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file64.c,v 1.42 2007/12/04 18:40:15 dsl Exp $	*/
+/*	$NetBSD: linux_file64.c,v 1.43 2007/12/08 18:36:07 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.42 2007/12/04 18:40:15 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.43 2007/12/08 18:36:07 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,9 +90,7 @@ static int linux_do_stat64(struct lwp *, void *, register_t *, int);
  * things against constant major device numbers? sigh)
  */
 static void
-bsd_to_linux_stat(bsp, lsp)
-	struct stat *bsp;
-	struct linux_stat64 *lsp;
+bsd_to_linux_stat(struct stat *bsp, struct linux_stat64 *lsp)
 {
 	lsp->lst_dev     = linux_fakedev(bsp->st_dev, 0);
 	lsp->lst_ino     = bsp->st_ino;
@@ -125,10 +123,7 @@ bsd_to_linux_stat(bsp, lsp)
  * by one function to avoid code duplication.
  */
 int
-linux_sys_fstat64(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_fstat64(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux_sys_fstat64_args /* {
 		syscallarg(int) fd;
@@ -148,11 +143,7 @@ linux_sys_fstat64(l, v, retval)
 }
 
 static int
-linux_do_stat64(l, v, retval, flags)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
-	int flags;
+linux_do_stat64(struct lwp *l, void *v, register_t *retval, int flags)
 {
 	struct linux_stat64 tmplst;
 	struct stat tmpst;
@@ -169,10 +160,7 @@ linux_do_stat64(l, v, retval, flags)
 }
 
 int
-linux_sys_stat64(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_stat64(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux_sys_stat64_args /* {
 		syscallarg(const char *) path;
@@ -183,10 +171,7 @@ linux_sys_stat64(l, v, retval)
 }
 
 int
-linux_sys_lstat64(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_lstat64(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux_sys_lstat64_args /* {
 		syscallarg(const char *) path;
@@ -197,10 +182,7 @@ linux_sys_lstat64(l, v, retval)
 }
 
 int
-linux_sys_truncate64(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_truncate64(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux_sys_truncate64_args /* {
 		syscallarg(const char *) path;
@@ -217,10 +199,7 @@ linux_sys_truncate64(l, v, retval)
 }
 
 int
-linux_sys_ftruncate64(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_ftruncate64(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux_sys_ftruncate64_args /* {
 		syscallarg(unsigned int) fd;
@@ -244,9 +223,7 @@ static void linux_to_bsd_flock64(struct flock *,
     const struct linux_flock64 *);
 
 static void
-bsd_to_linux_flock64(lfp, bfp)
-	struct linux_flock64 *lfp;
-	const struct flock *bfp;
+bsd_to_linux_flock64(struct linux_flock64 *lfp, const struct flock *bfp)
 {
 
 	lfp->l_start = bfp->l_start;
@@ -267,9 +244,7 @@ bsd_to_linux_flock64(lfp, bfp)
 }
 
 static void
-linux_to_bsd_flock64(bfp, lfp)
-	struct flock *bfp;
-	const struct linux_flock64 *lfp;
+linux_to_bsd_flock64(struct flock *bfp, const struct linux_flock64 *lfp)
 {
 
 	bfp->l_start = lfp->l_start;
@@ -290,10 +265,7 @@ linux_to_bsd_flock64(bfp, lfp)
 }
 
 int
-linux_sys_fcntl64(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_fcntl64(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux_sys_fcntl64_args /* {
 		syscallarg(int) fd;
@@ -348,10 +320,7 @@ linux_sys_fcntl64(l, v, retval)
  */
 #ifndef COMPAT_LINUX32
 int
-linux_sys_getdents64(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_getdents64(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux_sys_getdents_args /* {
 		syscallarg(int) fd;

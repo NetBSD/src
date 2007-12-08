@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_ioctl.c,v 1.31 2007/12/04 18:40:23 dsl Exp $	 */
+/*	$NetBSD: svr4_ioctl.c,v 1.32 2007/12/08 18:36:24 dsl Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_ioctl.c,v 1.31 2007/12/04 18:40:23 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_ioctl.c,v 1.32 2007/12/08 18:36:24 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -98,10 +98,7 @@ svr4_decode_cmd(cmd, dir, c, num, argsiz)
 #endif
 
 int
-svr4_sys_ioctl(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_sys_ioctl(struct lwp *l, void *v, register_t *retval)
 {
 	struct svr4_sys_ioctl_args *uap = v;
 	struct proc *p = l->l_proc;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.94 2007/07/17 20:34:40 christos Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.95 2007/12/08 18:36:01 dsl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.94 2007/07/17 20:34:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.95 2007/12/08 18:36:01 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -157,10 +157,7 @@ __KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.94 2007/07/17 20:34:40 christos Exp
 #include <compat/sys/mount.h>
 
 int
-ibcs2_sys_ulimit(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ibcs2_sys_ulimit(struct lwp *l, void *v, register_t *retval)
 {
 	struct ibcs2_sys_ulimit_args /* {
 		syscallarg(int) cmd;
@@ -208,10 +205,7 @@ ibcs2_sys_ulimit(l, v, retval)
 }
 
 int
-ibcs2_sys_waitsys(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ibcs2_sys_waitsys(struct lwp *l, void *v, register_t *retval)
 {
 #if defined(__i386__)
 	struct ibcs2_sys_waitsys_args /* {
@@ -245,10 +239,7 @@ ibcs2_sys_waitsys(l, v, retval)
 }
 
 int
-ibcs2_sys_execv(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ibcs2_sys_execv(struct lwp *l, void *v, register_t *retval)
 {
 	struct ibcs2_sys_execv_args /* {
 		syscallarg(const char *) path;
@@ -264,10 +255,7 @@ ibcs2_sys_execv(l, v, retval)
 }
 
 int
-ibcs2_sys_execve(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ibcs2_sys_execve(struct lwp *l, void *v, register_t *retval)
 {
 	struct ibcs2_sys_execve_args /* {
 		syscallarg(const char *) path;
@@ -284,10 +272,7 @@ ibcs2_sys_execve(l, v, retval)
 }
 
 int
-ibcs2_sys_umount(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ibcs2_sys_umount(struct lwp *l, void *v, register_t *retval)
 {
 	struct ibcs2_sys_umount_args /* {
 		syscallarg(char *) name;
@@ -379,10 +364,7 @@ ibcs2_sys_mount(struct lwp *l, void *v,
  */
 
 int
-ibcs2_sys_getdents(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ibcs2_sys_getdents(struct lwp *l, void *v, register_t *retval)
 {
 	struct ibcs2_sys_getdents_args /* {
 		syscallarg(int) fd;
@@ -509,10 +491,7 @@ out1:
 }
 
 int
-ibcs2_sys_read(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ibcs2_sys_read(struct lwp *l, void *v, register_t *retval)
 {
 	struct ibcs2_sys_read_args /* {
 		syscallarg(int) fd;
@@ -642,10 +621,7 @@ out1:
 }
 
 int
-ibcs2_sys_mknod(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ibcs2_sys_mknod(struct lwp *l, void *v, register_t *retval)
 {
 	struct ibcs2_sys_mknod_args /* {
 		syscallarg(const char *) path;
@@ -668,10 +644,7 @@ ibcs2_sys_mknod(l, v, retval)
 }
 
 int
-ibcs2_sys_getgroups(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ibcs2_sys_getgroups(struct lwp *l, void *v, register_t *retval)
 {
 	struct ibcs2_sys_getgroups_args /* {
 		syscallarg(int) gidsetsize;
@@ -713,10 +686,7 @@ ibcs2_sys_getgroups(l, v, retval)
 #define COMPAT_NGROUPS16 16
 
 int
-ibcs2_sys_setgroups(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ibcs2_sys_setgroups(struct lwp *l, void *v, register_t *retval)
 {
 	struct ibcs2_sys_setgroups_args /* {
 		syscallarg(int) gidsetsize;
@@ -750,10 +720,7 @@ ibcs2_sys_setgroups(l, v, retval)
 }
 
 int
-ibcs2_sys_setuid(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ibcs2_sys_setuid(struct lwp *l, void *v, register_t *retval)
 {
 	struct ibcs2_sys_setuid_args /* {
 		syscallarg(int) uid;
@@ -765,10 +732,7 @@ ibcs2_sys_setuid(l, v, retval)
 }
 
 int
-ibcs2_sys_setgid(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ibcs2_sys_setgid(struct lwp *l, void *v, register_t *retval)
 {
 	struct ibcs2_sys_setgid_args /* {
 		syscallarg(int) gid;
@@ -798,10 +762,7 @@ xenix_sys_ftime(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-ibcs2_sys_time(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ibcs2_sys_time(struct lwp *l, void *v, register_t *retval)
 {
 	struct ibcs2_sys_time_args /* {
 		syscallarg(ibcs2_time_t *) tp;
@@ -819,10 +780,7 @@ ibcs2_sys_time(l, v, retval)
 }
 
 int
-ibcs2_sys_pathconf(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ibcs2_sys_pathconf(struct lwp *l, void *v, register_t *retval)
 {
 	struct ibcs2_sys_pathconf_args /* {
 		syscallarg(char *) path;
@@ -833,10 +791,7 @@ ibcs2_sys_pathconf(l, v, retval)
 }
 
 int
-ibcs2_sys_fpathconf(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ibcs2_sys_fpathconf(struct lwp *l, void *v, register_t *retval)
 {
 	struct ibcs2_sys_fpathconf_args /* {
 		syscallarg(int) fd;
@@ -847,10 +802,7 @@ ibcs2_sys_fpathconf(l, v, retval)
 }
 
 int
-ibcs2_sys_sysconf(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ibcs2_sys_sysconf(struct lwp *l, void *v, register_t *retval)
 {
 	struct ibcs2_sys_sysconf_args /* {
 		syscallarg(int) name;
@@ -918,10 +870,7 @@ ibcs2_sys_sysconf(l, v, retval)
 }
 
 int
-ibcs2_sys_alarm(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ibcs2_sys_alarm(struct lwp *l, void *v, register_t *retval)
 {
 	struct ibcs2_sys_alarm_args /* {
 		syscallarg(unsigned) sec;
@@ -981,10 +930,7 @@ ibcs2_sys_putmsg(struct lwp *l, void *v,
 }
 
 int
-ibcs2_sys_times(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ibcs2_sys_times(struct lwp *l, void *v, register_t *retval)
 {
 	struct ibcs2_sys_times_args /* {
 		syscallarg(struct tms *) tp;
@@ -1012,10 +958,7 @@ ibcs2_sys_times(l, v, retval)
 }
 
 int
-ibcs2_sys_stime(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ibcs2_sys_stime(struct lwp *l, void *v, register_t *retval)
 {
 	struct ibcs2_sys_stime_args /* {
 		syscallarg(long *) timep;
@@ -1031,10 +974,7 @@ ibcs2_sys_stime(l, v, retval)
 }
 
 int
-ibcs2_sys_utime(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ibcs2_sys_utime(struct lwp *l, void *v, register_t *retval)
 {
 	struct ibcs2_sys_utime_args /* {
 		syscallarg(const char *) path;
@@ -1063,10 +1003,7 @@ ibcs2_sys_utime(l, v, retval)
 }
 
 int
-ibcs2_sys_nice(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ibcs2_sys_nice(struct lwp *l, void *v, register_t *retval)
 {
 	struct ibcs2_sys_nice_args /* {
 		syscallarg(int) incr;
@@ -1088,10 +1025,7 @@ ibcs2_sys_nice(l, v, retval)
  */
 
 int
-ibcs2_sys_pgrpsys(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ibcs2_sys_pgrpsys(struct lwp *l, void *v, register_t *retval)
 {
 	struct ibcs2_sys_pgrpsys_args /* {
 		syscallarg(int) type;
@@ -1241,10 +1175,7 @@ ibcs2_sys_sysfs(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-xenix_sys_rdchk(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+xenix_sys_rdchk(struct lwp *l, void *v, register_t *retval)
 {
 	struct xenix_sys_rdchk_args /* {
 		syscallarg(int) fd;
@@ -1267,10 +1198,7 @@ xenix_sys_rdchk(l, v, retval)
 }
 
 int
-xenix_sys_chsize(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+xenix_sys_chsize(struct lwp *l, void *v, register_t *retval)
 {
 	struct xenix_sys_chsize_args /* {
 		syscallarg(int) fd;
@@ -1285,10 +1213,7 @@ xenix_sys_chsize(l, v, retval)
 }
 
 int
-xenix_sys_nap(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+xenix_sys_nap(struct lwp *l, void *v, register_t *retval)
 {
 	struct xenix_sys_nap_args /* {
 		syscallarg(long) millisec;
@@ -1308,10 +1233,7 @@ xenix_sys_nap(l, v, retval)
 }
 
 int
-ibcs2_sys_unlink(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ibcs2_sys_unlink(struct lwp *l, void *v, register_t *retval)
 {
 	struct ibcs2_sys_unlink_args /* {
 		syscallarg(const char *) path;
@@ -1321,10 +1243,7 @@ ibcs2_sys_unlink(l, v, retval)
 }
 
 int
-ibcs2_sys_chdir(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ibcs2_sys_chdir(struct lwp *l, void *v, register_t *retval)
 {
 	struct ibcs2_sys_chdir_args /* {
 		syscallarg(const char *) path;
@@ -1334,10 +1253,7 @@ ibcs2_sys_chdir(l, v, retval)
 }
 
 int
-ibcs2_sys_chmod(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ibcs2_sys_chmod(struct lwp *l, void *v, register_t *retval)
 {
 	struct ibcs2_sys_chmod_args /* {
 		syscallarg(const char *) path;
@@ -1348,10 +1264,7 @@ ibcs2_sys_chmod(l, v, retval)
 }
 
 int
-ibcs2_sys_chown(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ibcs2_sys_chown(struct lwp *l, void *v, register_t *retval)
 {
 	struct ibcs2_sys_chown_args /* {
 		syscallarg(const char *) path;
@@ -1363,10 +1276,7 @@ ibcs2_sys_chown(l, v, retval)
 }
 
 int
-ibcs2_sys_rmdir(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ibcs2_sys_rmdir(struct lwp *l, void *v, register_t *retval)
 {
 	struct ibcs2_sys_rmdir_args /* {
 		syscallarg(const char *) path;
@@ -1376,10 +1286,7 @@ ibcs2_sys_rmdir(l, v, retval)
 }
 
 int
-ibcs2_sys_mkdir(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ibcs2_sys_mkdir(struct lwp *l, void *v, register_t *retval)
 {
 	struct ibcs2_sys_mkdir_args /* {
 		syscallarg(const char *) path;
@@ -1390,10 +1297,7 @@ ibcs2_sys_mkdir(l, v, retval)
 }
 
 int
-ibcs2_sys_symlink(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ibcs2_sys_symlink(struct lwp *l, void *v, register_t *retval)
 {
 	struct ibcs2_sys_symlink_args /* {
 		syscallarg(const char *) path;
@@ -1404,10 +1308,7 @@ ibcs2_sys_symlink(l, v, retval)
 }
 
 int
-ibcs2_sys_rename(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ibcs2_sys_rename(struct lwp *l, void *v, register_t *retval)
 {
 	struct ibcs2_sys_rename_args /* {
 		syscallarg(const char *) from;
@@ -1418,10 +1319,7 @@ ibcs2_sys_rename(l, v, retval)
 }
 
 int
-ibcs2_sys_readlink(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ibcs2_sys_readlink(struct lwp *l, void *v, register_t *retval)
 {
 	struct ibcs2_sys_readlink_args /* {
 		syscallarg(const char *) path;
@@ -1438,10 +1336,7 @@ ibcs2_sys_readlink(l, v, retval)
  */
 
 int
-ibcs2_sys_mmap(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ibcs2_sys_mmap(struct lwp *l, void *v, register_t *retval)
 {
 	struct ibcs2_sys_mmap_args /* {
 		syscallarg(ibcs2_void *) addr;
@@ -1471,10 +1366,7 @@ ibcs2_sys_mmap(l, v, retval)
 }
 
 int
-ibcs2_sys_memcntl(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ibcs2_sys_memcntl(struct lwp *l, void *v, register_t *retval)
 {
 	struct ibcs2_sys_memcntl_args /* {
 		syscallarg(ibcs2_void *) addr;
@@ -1537,10 +1429,7 @@ ibcs2_sys_gettimeofday(struct lwp *l, void *v,
 }
 
 int
-ibcs2_sys_settimeofday(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ibcs2_sys_settimeofday(struct lwp *l, void *v, register_t *retval)
 {
 	struct ibcs2_sys_settimeofday_args /* {
 		syscallarg(struct timeval *) tp;
@@ -1588,10 +1477,7 @@ ibcs2_sys_scoinfo(struct lwp *l, void *v, register_t *retval)
 #define X_LK_TESTLK 8
 
 int
-xenix_sys_locking(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+xenix_sys_locking(struct lwp *l, void *v, register_t *retval)
 {
 	struct xenix_sys_locking_args /* {
 	      syscallarg(int) fd;

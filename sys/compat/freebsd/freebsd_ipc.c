@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_ipc.c,v 1.13 2007/02/09 21:55:16 ad Exp $	*/
+/*	$NetBSD: freebsd_ipc.c,v 1.14 2007/12/08 18:35:58 dsl Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass and Charles M. Hannum.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_ipc.c,v 1.13 2007/02/09 21:55:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_ipc.c,v 1.14 2007/12/08 18:35:58 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -52,10 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: freebsd_ipc.c,v 1.13 2007/02/09 21:55:16 ad Exp $");
 
 #ifdef SYSVSEM
 int
-freebsd_sys_semsys(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+freebsd_sys_semsys(struct lwp *l, void *v, register_t *retval)
 {
 	struct freebsd_sys_semsys_args /* {
 		syscallarg(int) which;
@@ -116,10 +113,7 @@ freebsd_sys_semsys(l, v, retval)
 
 #ifdef SYSVSHM
 int
-freebsd_sys_shmsys(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+freebsd_sys_shmsys(struct lwp *l, void *v, register_t *retval)
 {
 	struct freebsd_sys_shmsys_args /* {
 		syscallarg(int) which;
@@ -181,10 +175,7 @@ freebsd_sys_shmsys(l, v, retval)
 
 #ifdef SYSVMSG
 int
-freebsd_sys_msgsys(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+freebsd_sys_msgsys(struct lwp *l, void *v, register_t *retval)
 {
 	struct freebsd_sys_msgsys_args /* {
 		syscallarg(int) which;

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_sysinfo.c,v 1.4 2007/07/21 23:39:46 xtraeme Exp $ */
+/*	$NetBSD: linux32_sysinfo.c,v 1.5 2007/12/08 18:36:12 dsl Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_sysinfo.c,v 1.4 2007/07/21 23:39:46 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_sysinfo.c,v 1.5 2007/12/08 18:36:12 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -60,10 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_sysinfo.c,v 1.4 2007/07/21 23:39:46 xtraeme 
 
 /* ARGSUSED */
 int
-linux32_sys_sysinfo(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_sysinfo(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux32_sys_sysinfo_args /* {
 		syscallarg(struct linux32_sysinfo *) arg;

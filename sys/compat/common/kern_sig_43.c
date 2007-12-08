@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig_43.c,v 1.28 2007/12/04 18:40:07 dsl Exp $	*/
+/*	$NetBSD: kern_sig_43.c,v 1.29 2007/12/08 18:35:54 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig_43.c,v 1.28 2007/12/04 18:40:07 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig_43.c,v 1.29 2007/12/08 18:35:54 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -80,9 +80,7 @@ void compat_43_sigstack_to_sigaltstack(const struct sigstack *, struct sigaltsta
 void compat_43_sigaltstack_to_sigstack(const struct sigaltstack *, struct sigstack *);
 
 void
-compat_43_sigmask_to_sigset(sm, ss)
-	const int *sm;
-	sigset_t *ss;
+compat_43_sigmask_to_sigset(const int *sm, sigset_t *ss)
 {
 
 	ss->__bits[0] = *sm;
@@ -92,18 +90,14 @@ compat_43_sigmask_to_sigset(sm, ss)
 }
 
 void
-compat_43_sigset_to_sigmask(ss, sm)
-	const sigset_t *ss;
-	int *sm;
+compat_43_sigset_to_sigmask(const sigset_t *ss, int *sm)
 {
 
 	*sm = ss->__bits[0];
 }
 
 void
-compat_43_sigvec_to_sigaction(sv, sa)
-	const struct sigvec *sv;
-	struct sigaction *sa;
+compat_43_sigvec_to_sigaction(const struct sigvec *sv, struct sigaction *sa)
 {
 	sa->sa_handler = sv->sv_handler;
 	compat_43_sigmask_to_sigset(&sv->sv_mask, &sa->sa_mask);
@@ -111,9 +105,7 @@ compat_43_sigvec_to_sigaction(sv, sa)
 }
 
 void
-compat_43_sigaction_to_sigvec(sa, sv)
-	const struct sigaction *sa;
-	struct sigvec *sv;
+compat_43_sigaction_to_sigvec(const struct sigaction *sa, struct sigvec *sv)
 {
 	sv->sv_handler = sa->sa_handler;
 	compat_43_sigset_to_sigmask(&sa->sa_mask, &sv->sv_mask);
@@ -121,9 +113,7 @@ compat_43_sigaction_to_sigvec(sa, sv)
 }
 
 void
-compat_43_sigstack_to_sigaltstack(ss, sa)
-	const struct sigstack *ss;
-	struct sigaltstack *sa;
+compat_43_sigstack_to_sigaltstack(const struct sigstack *ss, struct sigaltstack *sa)
 {
 	sa->ss_sp = ss->ss_sp;
 	sa->ss_size = SIGSTKSZ;	/* Use the recommended size */
@@ -133,9 +123,7 @@ compat_43_sigstack_to_sigaltstack(ss, sa)
 }
 
 void
-compat_43_sigaltstack_to_sigstack(sa, ss)
-	const struct sigaltstack *sa;
-	struct sigstack *ss;
+compat_43_sigaltstack_to_sigstack(const struct sigaltstack *sa, struct sigstack *ss)
 {
 	ss->ss_sp = sa->ss_sp;
 	if (sa->ss_flags & SS_ONSTACK)

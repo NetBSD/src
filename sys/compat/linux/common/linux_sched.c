@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sched.c,v 1.44 2007/10/19 18:52:11 njoly Exp $	*/
+/*	$NetBSD: linux_sched.c,v 1.45 2007/12/08 18:36:09 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.44 2007/10/19 18:52:11 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.45 2007/12/08 18:36:09 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -69,10 +69,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.44 2007/10/19 18:52:11 njoly Exp $
 #include <compat/linux/common/linux_sched.h>
 
 int
-linux_sys_clone(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_clone(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux_sys_clone_args /* {
 		syscallarg(int) flags;
@@ -266,10 +263,7 @@ linux_sys_sched_setscheduler(struct lwp *cl, void *v,
 }
 
 int
-linux_sys_sched_getscheduler(cl, v, retval)
-	struct lwp *cl;
-	void *v;
-	register_t *retval;
+linux_sys_sched_getscheduler(struct lwp *cl, void *v, register_t *retval)
 {
 	struct linux_sys_sched_getscheduler_args /* {
 		syscallarg(linux_pid_t) pid;
@@ -354,10 +348,7 @@ linux_sys_sched_get_priority_min(struct lwp *cl, void *v,
 #ifndef __m68k__
 /* Present on everything but m68k */
 int
-linux_sys_exit_group(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_exit_group(struct lwp *l, void *v, register_t *retval)
 {
 #ifdef LINUX_NPTL
 	struct linux_sys_exit_group_args /* {
@@ -422,10 +413,7 @@ linux_sys_exit_group(l, v, retval)
 
 #ifdef LINUX_NPTL
 int
-linux_sys_set_tid_address(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_set_tid_address(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux_sys_set_tid_address_args /* {
 		syscallarg(int *) tidptr;
@@ -444,10 +432,7 @@ linux_sys_set_tid_address(l, v, retval)
 
 /* ARGUSED1 */
 int
-linux_sys_gettid(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_gettid(struct lwp *l, void *v, register_t *retval)
 {
 	/* The Linux kernel does it exactly that way */
 	*retval = l->l_proc->p_pid;
@@ -457,10 +442,7 @@ linux_sys_gettid(l, v, retval)
 #ifdef LINUX_NPTL
 /* ARGUSED1 */
 int
-linux_sys_getpid(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_getpid(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux_emuldata *led = l->l_proc->p_emuldata;
 
@@ -476,10 +458,7 @@ linux_sys_getpid(l, v, retval)
 
 /* ARGUSED1 */
 int
-linux_sys_getppid(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_getppid(struct lwp *l, void *v, register_t *retval)
 {
 	struct proc *p = l->l_proc;
 	struct linux_emuldata *led = p->p_emuldata;
@@ -516,10 +495,7 @@ linux_sys_getppid(l, v, retval)
 #endif /* LINUX_NPTL */
 
 int
-linux_sys_sched_getaffinity(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_sched_getaffinity(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux_sys_sched_getaffinity_args /* {
 		syscallarg(pid_t) pid;
@@ -560,10 +536,7 @@ linux_sys_sched_getaffinity(l, v, retval)
 }
 
 int
-linux_sys_sched_setaffinity(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_sched_setaffinity(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux_sys_sched_setaffinity_args /* {
 		syscallarg(pid_t) pid;

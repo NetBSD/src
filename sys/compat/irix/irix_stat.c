@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_stat.c,v 1.20 2007/12/04 18:40:12 dsl Exp $ */
+/*	$NetBSD: irix_stat.c,v 1.21 2007/12/08 18:36:04 dsl Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_stat.c,v 1.20 2007/12/04 18:40:12 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_stat.c,v 1.21 2007/12/08 18:36:04 dsl Exp $");
 
 #include <sys/errno.h>
 #include <sys/types.h>
@@ -66,9 +66,7 @@ static void bsd_to_irix_stat(struct stat *, struct irix_stat *);
 static void bsd_to_irix_stat64(struct stat *, struct irix_stat64 *);
 
 static void
-bsd_to_irix_stat(bsp, isp)
-	struct stat *bsp;
-	struct irix_stat *isp;
+bsd_to_irix_stat(struct stat *bsp, struct irix_stat *isp)
 {
 	memset(isp, 0, sizeof(*isp));
 	isp->ist_dev = (irix_dev_t)bsd_to_svr4_dev_t(bsp->st_dev);
@@ -98,9 +96,7 @@ bsd_to_irix_stat(bsp, isp)
 }
 
 static void
-bsd_to_irix_stat64(bsp, isp)
-	struct stat *bsp;
-	struct irix_stat64 *isp;
+bsd_to_irix_stat64(struct stat *bsp, struct irix_stat64 *isp)
 {
 	memset(isp, 0, sizeof(*isp));
 	isp->ist_dev = (irix_dev_t)bsd_to_svr4_dev_t(bsp->st_dev);
@@ -154,10 +150,7 @@ convert_irix_stat(struct stat *st, void *buf, int stat_version)
 }
 
 int
-irix_sys_xstat(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+irix_sys_xstat(struct lwp *l, void *v, register_t *retval)
 {
 	struct irix_sys_xstat_args /* {
 		syscallarg(const int) version;
@@ -175,10 +168,7 @@ irix_sys_xstat(l, v, retval)
 }
 
 int
-irix_sys_lxstat(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+irix_sys_lxstat(struct lwp *l, void *v, register_t *retval)
 {
 	struct irix_sys_lxstat_args /* {
 		syscallarg(const int) version;
@@ -195,10 +185,7 @@ irix_sys_lxstat(l, v, retval)
 }
 
 int
-irix_sys_fxstat(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+irix_sys_fxstat(struct lwp *l, void *v, register_t *retval)
 {
 	struct irix_sys_fxstat_args /* {
 		syscallarg(const int) version;
