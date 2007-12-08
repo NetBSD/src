@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_cas.S,v 1.2 2007/11/29 02:01:22 ad Exp $	*/
+/*	$NetBSD: atomic_cas.S,v 1.3 2007/12/08 22:42:46 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -40,18 +40,20 @@
 
 #if defined(_KERNEL)
 
+#include <machine/psl.h>
+
 #include "opt_multiprocessor.h"
 
 #define	DISABLE_INTERRUPTS						 \
-	rd	%psr, %o4			! disable interrupts	;\
-	or	%o4, PSR_IPL, %o5					;\
+	rd	%psr, %o4			/* disable interrupts */;\
+	or	%o4, PSR_PIL, %o5					;\
 	wr	%o5, 0, %psr						;\
 	nop								;\
 	nop								;\
 	nop
 
 #define	RESTORE_INTERRUPTS						 \
-	wr	%o4, 0, %psr			! re-enable interrupts	;\
+	wr	%o4, 0, %psr			/* enable interrupts */	;\
 	nop								;\
 	nop								;\
 	nop
@@ -65,27 +67,26 @@ _C_LABEL(_atomic_cas_locktab):
 
 #define	ACQUIRE_INTERLOCK						 \
 	DISABLE_INTERRUPTS						;\
-	srl	%o0, 3, %o5			! get interlock address	;\
+	srl	%o0, 3, %o5			/* get lock address */	;\
 	and	%o5, 1023, %o5						;\
-	set	_C_LABEL(_atomic_cas_locktab), %o3			;\
+	sethi	%hi(_C_LABEL(_atomic_cas_locktab)), %o3			;\
 	add	%o5, %o3, %o5						;\
 									;\
-	! %o5 has interlock address					;\
+	/* %o5 has interlock address */					;\
 									;\
-1:	ldstub	[%o5], %o3			! acquire interlock	;\
+1:	ldstub	[%o5], %o3			/* acquire lock */	;\
 	tst	%o3							;\
 	bz,a	2f							;\
 	 nop								;\
 	nop								;\
 	nop								;\
-	b,a	1b				! spin			;\
+	b,a	1b				/* spin	*/		;\
 	 nop								;\
-									;\
-	! We now hold the interlock					;\
+	/* We now hold the interlock */					;\
 2:
 
 #define	RELEASE_INTERLOCK						 \
-	stb	%g0, [%o5]			! release interlock	;\
+	stb	%g0, [%o5]			/* release interlock */	;\
 	RESTORE_INTERRUPTS
 
 #else /* ! MULTIPROCESSOR */
