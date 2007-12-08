@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs.h,v 1.28.2.1 2007/12/04 13:03:09 ad Exp $	*/
+/*	$NetBSD: tmpfs.h,v 1.28.2.2 2007/12/08 14:42:24 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -296,19 +296,16 @@ LIST_HEAD(tmpfs_node_list, tmpfs_node);
  * Internal representation of a tmpfs mount point.
  */
 struct tmpfs_mount {
-	/* Lock on global data */
-	kmutex_t		tm_lock;
-
 	/* Maximum number of memory pages available for use by the file
 	 * system, set during mount time.  This variable must never be
 	 * used directly as it may be bigger than the current amount of
 	 * free memory; in the extreme case, it will hold the SIZE_MAX
 	 * value.  Instead, use the TMPFS_PAGES_MAX macro. */
-	size_t			tm_pages_max;
+	u_int			tm_pages_max;
 
 	/* Number of pages in use by the file system.  Cannot be bigger
 	 * than the value returned by TMPFS_PAGES_MAX in any case. */
-	size_t			tm_pages_used;
+	u_int			tm_pages_used;
 
 	/* Pointer to the node representing the root directory of this
 	 * file system. */
@@ -320,14 +317,15 @@ struct tmpfs_mount {
 	 * cannot be released until the file system is unmounted.
 	 * Otherwise, we could easily run out of memory by creating lots
 	 * of empty files and then simply removing them. */
-	ino_t			tm_nodes_max;
+	u_int			tm_nodes_max;
 
 	/* Number of nodes currently allocated.  This number only grows.
 	 * When it reaches tm_nodes_max, no more new nodes can be allocated.
 	 * Of course, the old, unused ones can be reused. */
-	ino_t			tm_nodes_cnt;
+	u_int			tm_nodes_cnt;
 
 	/* Node list. */
+	kmutex_t		tm_lock;
 	struct tmpfs_node_list	tm_nodes;
 
 	/* Pools used to store file system meta data.  These are not shared
