@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_device.c,v 1.51 2007/12/01 10:40:28 yamt Exp $	*/
+/*	$NetBSD: uvm_device.c,v 1.52 2007/12/08 15:33:09 ad Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_device.c,v 1.51 2007/12/01 10:40:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_device.c,v 1.52 2007/12/08 15:33:09 ad Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -131,11 +131,13 @@ udv_attach(void *arg, vm_prot_t accessprot,
 	 */
 
 	cdev = cdevsw_lookup(device);
-	if (cdev == NULL)
+	if (cdev == NULL) {
 		return (NULL);
+	}
 	mapfn = cdev->d_mmap;
-	if (mapfn == NULL || mapfn == nommap || mapfn == nullmmap)
+	if (mapfn == NULL || mapfn == nommap || mapfn == nullmmap) {
 		return(NULL);
+	}
 
 	/*
 	 * Negative offsets on the object are not allowed.
@@ -153,8 +155,9 @@ udv_attach(void *arg, vm_prot_t accessprot,
 	 */
 
 	while (size != 0) {
-		if ((*mapfn)(device, off, accessprot) == -1)
+		if (cdev_mmap(device, off, accessprot) == -1) {
 			return (NULL);
+		}
 		off += PAGE_SIZE; size -= PAGE_SIZE;
 	}
 
@@ -356,13 +359,11 @@ udv_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, struct vm_page **pps,
 	struct vm_map_entry *entry = ufi->entry;
 	struct uvm_object *uobj = entry->object.uvm_obj;
 	struct uvm_device *udv = (struct uvm_device *)uobj;
-	const struct cdevsw *cdev;
 	vaddr_t curr_va;
 	off_t curr_offset;
 	paddr_t paddr, mdpgno;
 	int lcv, retval;
 	dev_t device;
-	paddr_t (*mapfn)(dev_t, off_t, int);
 	vm_prot_t mapprot;
 	UVMHIST_FUNC("udv_fault"); UVMHIST_CALLED(maphist);
 	UVMHIST_LOG(maphist,"  flags=%d", flags,0,0,0);
@@ -384,12 +385,11 @@ udv_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, struct vm_page **pps,
 	 */
 
 	device = udv->u_device;
-	cdev = cdevsw_lookup(device);
-	if (cdev == NULL) {
+	if (cdevsw_lookup(device) == NULL) {
+		/* XXX This should not happen */
 		uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, uobj, NULL);
 		return (EIO);
 	}
-	mapfn = cdev->d_mmap;
 
 	/*
 	 * now we must determine the offset in udv to use and the VA to
@@ -416,7 +416,7 @@ udv_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, struct vm_page **pps,
 		if (pps[lcv] == PGO_DONTCARE)
 			continue;
 
-		mdpgno = (*mapfn)(device, curr_offset, access_type);
+		mdpgno = cdev_mmap(device, curr_offset, access_type);
 		if (mdpgno == -1) {
 			retval = EIO;
 			break;
