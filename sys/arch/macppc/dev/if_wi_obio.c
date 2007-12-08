@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wi_obio.c,v 1.13.26.3 2007/11/06 14:27:09 joerg Exp $	*/
+/*	$NetBSD: if_wi_obio.c,v 1.13.26.4 2007/12/08 16:20:58 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2001 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_obio.c,v 1.13.26.3 2007/11/06 14:27:09 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_obio.c,v 1.13.26.4 2007/12/08 16:20:58 jmcneill Exp $");
 
 #include "opt_inet.h"
 
@@ -116,7 +116,7 @@ wi_obio_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	if (!pnp_device_register(self, NULL, NULL))
+	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 	else
 		pnp_class_network_register(self, &sc->sc_wi.sc_if);

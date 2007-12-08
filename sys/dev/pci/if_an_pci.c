@@ -1,4 +1,4 @@
-/*	$NetBSD: if_an_pci.c,v 1.22.8.4 2007/11/06 14:27:23 joerg Exp $	*/
+/*	$NetBSD: if_an_pci.c,v 1.22.8.5 2007/12/08 16:21:26 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_an_pci.c,v 1.22.8.4 2007/11/06 14:27:23 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_an_pci.c,v 1.22.8.5 2007/12/08 16:21:26 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -177,8 +177,8 @@ an_pci_attach(struct device *parent, struct device *self, void *aux)
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, iosize);
 	}
 
-	if (!pnp_device_register(self, NULL, NULL))
+	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 	else
-		pnp_class_network_register(self, &sc->sc_if);
+		pmf_class_network_register(self, &sc->sc_if);
 }

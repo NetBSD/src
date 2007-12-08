@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4280.c,v 1.46.6.3 2007/11/06 14:27:22 joerg Exp $	*/
+/*	$NetBSD: cs4280.c,v 1.46.6.4 2007/12/08 16:21:24 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Tatoku Ogaito.  All rights reserved.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.46.6.3 2007/11/06 14:27:22 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.46.6.4 2007/12/08 16:21:24 jmcneill Exp $");
 
 #include "midi.h"
 
@@ -365,7 +365,7 @@ cs4280_attach(struct device *parent, struct device *self, void *aux)
 	midi_attach_mi(&cs4280_midi_hw_if, sc, &sc->sc_dev);
 #endif
 
-	if (!pnp_device_register(self, cs4280_suspend, cs4280_resume))
+	if (!pmf_device_register(self, cs4280_suspend, cs4280_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 

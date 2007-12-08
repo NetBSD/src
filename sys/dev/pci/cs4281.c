@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4281.c,v 1.34.6.3 2007/11/06 14:27:22 joerg Exp $	*/
+/*	$NetBSD: cs4281.c,v 1.34.6.4 2007/12/08 16:21:25 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.34.6.3 2007/11/06 14:27:22 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.34.6.4 2007/12/08 16:21:25 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -293,7 +293,7 @@ cs4281_attach(struct device *parent, struct device *self, void *aux)
 	midi_attach_mi(&cs4281_midi_hw_if, sc, &sc->sc_dev);
 #endif
 
-	if (!pnp_device_register(self, cs4281_suspend, cs4281_resume))
+	if (!pmf_device_register(self, cs4281_suspend, cs4281_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 

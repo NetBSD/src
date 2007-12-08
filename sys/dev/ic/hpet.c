@@ -1,4 +1,4 @@
-/* $NetBSD: hpet.c,v 1.1.16.4 2007/11/06 14:27:17 joerg Exp $ */
+/* $NetBSD: hpet.c,v 1.1.16.5 2007/12/08 16:21:10 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2006 Nicolas Joly
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpet.c,v 1.1.16.4 2007/11/06 14:27:17 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpet.c,v 1.1.16.5 2007/12/08 16:21:10 jmcneill Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -77,7 +77,7 @@ hpet_attach_subr(struct hpet_softc *sc) {
 	tc->tc_priv = sc;
 	tc_init(tc);
 
-	if (!pnp_device_register(&sc->sc_dev, NULL, hpet_resume))
+	if (!pmf_device_register(&sc->sc_dev, NULL, hpet_resume))
 		aprint_error_dev(&sc->sc_dev, "couldn't establish power handler\n");
 }
 

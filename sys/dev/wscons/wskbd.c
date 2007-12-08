@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.104.6.6 2007/12/01 05:22:51 jmcneill Exp $ */
+/* $NetBSD: wskbd.c,v 1.104.6.7 2007/12/08 16:21:38 jmcneill Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.104.6.6 2007/12/01 05:22:51 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.104.6.7 2007/12/08 16:21:38 jmcneill Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -465,9 +465,9 @@ wskbd_attach(struct device *parent, struct device *self, void *aux)
 	}
 #endif
 
-	if (!pnp_device_register(self, NULL, NULL))
+	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
-	else if (!pnp_class_input_register(self))
+	else if (!pmf_class_input_register(self))
 		aprint_error_dev(self, "couldn't register as input device\n");
 }
 
@@ -1462,15 +1462,15 @@ internal_command(struct wskbd_softc *sc, u_int *type, keysym_t ksym,
 	switch (ksym) {
 	case KS_Cmd_VolumeToggle:
 		if (*type == WSCONS_EVENT_KEY_DOWN)
-			pnp_event_inject(NULL, PNPE_AUDIO_VOLUME_TOGGLE);
+			pmf_event_inject(NULL, PMFE_AUDIO_VOLUME_TOGGLE);
 		break;
 	case KS_Cmd_VolumeUp:
 		if (*type == WSCONS_EVENT_KEY_DOWN)
-			pnp_event_inject(NULL, PNPE_AUDIO_VOLUME_UP);
+			pmf_event_inject(NULL, PMFE_AUDIO_VOLUME_UP);
 		break;
 	case KS_Cmd_VolumeDown:
 		if (*type == WSCONS_EVENT_KEY_DOWN)
-			pnp_event_inject(NULL, PNPE_AUDIO_VOLUME_DOWN);
+			pmf_event_inject(NULL, PMFE_AUDIO_VOLUME_DOWN);
 		break;
 #ifdef WSDISPLAY_SCROLLSUPPORT
 	case KS_Cmd_ScrollFastUp:

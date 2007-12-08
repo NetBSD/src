@@ -1,4 +1,4 @@
-/* $NetBSD: piixpcib.c,v 1.10.26.2 2007/11/12 19:20:02 joerg Exp $ */
+/* $NetBSD: piixpcib.c,v 1.10.26.3 2007/12/08 16:20:57 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2004, 2006 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piixpcib.c,v 1.10.26.2 2007/11/12 19:20:02 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piixpcib.c,v 1.10.26.3 2007/12/08 16:20:57 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -155,7 +155,7 @@ piixpcibattach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	if (!pnp_device_register(self, piixpcib_suspend, piixpcib_resume))
+	if (!pmf_device_register(self, piixpcib_suspend, piixpcib_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	return;

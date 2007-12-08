@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipw.c,v 1.32.14.4 2007/11/06 14:27:24 joerg Exp $	*/
+/*	$NetBSD: if_ipw.c,v 1.32.14.5 2007/12/08 16:21:27 jmcneill Exp $	*/
 /*	FreeBSD: src/sys/dev/ipw/if_ipw.c,v 1.15 2005/11/13 17:17:40 damien Exp 	*/
 
 /*-
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.32.14.4 2007/11/06 14:27:24 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.32.14.5 2007/12/08 16:21:27 jmcneill Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2100 MiniPCI driver
@@ -334,10 +334,10 @@ ipw_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	sc->dwelltime = 100;
 
-	if (!pnp_device_register(self, NULL, ipw_resume))
+	if (!pmf_device_register(self, NULL, ipw_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 	else
-		pnp_class_network_register(self, ifp);
+		pmf_class_network_register(self, ifp);
 
 	ieee80211_announce(ic);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sony_acpi.c,v 1.5.26.6 2007/11/06 14:27:08 joerg Exp $	*/
+/*	$NetBSD: sony_acpi.c,v 1.5.26.7 2007/12/08 16:20:56 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sony_acpi.c,v 1.5.26.6 2007/11/06 14:27:08 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sony_acpi.c,v 1.5.26.7 2007/12/08 16:20:56 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -312,14 +312,14 @@ sony_acpi_attach(struct device *parent, struct device *self, void *aux)
 		    device_xname(self), rv);
 #endif
 
-	if (!pnp_device_register(self, sony_acpi_suspend, sony_acpi_resume))
+	if (!pmf_device_register(self, sony_acpi_suspend, sony_acpi_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
-	if (!pnp_event_register(self, PNPE_DISPLAY_BRIGHTNESS_UP,
+	if (!pmf_event_register(self, PMFE_DISPLAY_BRIGHTNESS_UP,
 				 sony_acpi_brightness_up, true))
 		aprint_error_dev(self, "couldn't register BRIGHTNESS UP handler\n");
 
-	if (!pnp_event_register(self, PNPE_DISPLAY_BRIGHTNESS_DOWN,
+	if (!pmf_event_register(self, PMFE_DISPLAY_BRIGHTNESS_DOWN,
 				 sony_acpi_brightness_down, true))
 		aprint_error_dev(self, "couldn't register BRIGHTNESS DOWN handler\n");
 

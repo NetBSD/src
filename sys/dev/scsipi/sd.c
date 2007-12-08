@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.265.2.4 2007/11/06 14:27:31 joerg Exp $	*/
+/*	$NetBSD: sd.c,v 1.265.2.5 2007/12/08 16:21:36 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.265.2.4 2007/11/06 14:27:31 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.265.2.5 2007/12/08 16:21:36 jmcneill Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -306,7 +306,7 @@ sdattach(struct device *parent, struct device *self, void *aux)
 	}
 	aprint_normal("\n");
 
-	if (!pnp_device_register(self, sd_suspend, NULL))
+	if (!pmf_device_register(self, sd_suspend, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
 #if NRND > 0
@@ -381,7 +381,7 @@ sddetach(struct device *self, int flags)
 	disk_detach(&sd->sc_dk);
 	disk_destroy(&sd->sc_dk);
 
-	pnp_device_deregister(self);
+	pmf_device_deregister(self);
 
 #if NRND > 0
 	/* Unhook the entropy source. */

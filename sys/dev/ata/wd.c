@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.343.4.6 2007/11/11 16:47:29 joerg Exp $ */
+/*	$NetBSD: wd.c,v 1.343.4.7 2007/12/08 16:21:06 jmcneill Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.343.4.6 2007/11/11 16:47:29 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.343.4.7 2007/12/08 16:21:06 jmcneill Exp $");
 
 #include "opt_ata.h"
 
@@ -423,7 +423,7 @@ wdattach(struct device *parent, struct device *self, void *aux)
 	/* Discover wedges on this disk. */
 	dkwedge_discover(&wd->sc_dk);
 
-	if (!pnp_device_register(self, wd_suspend, NULL))
+	if (!pmf_device_register(self, wd_suspend, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
@@ -500,7 +500,7 @@ wddetach(struct device *self, int flags)
 	sc->sc_bscount = 0;
 #endif
 
-	pnp_device_deregister(self);
+	pmf_device_deregister(self);
 
 #if NRND > 0
 	/* Unhook the entropy source. */

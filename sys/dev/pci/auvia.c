@@ -1,4 +1,4 @@
-/*	$NetBSD: auvia.c,v 1.60.14.2 2007/11/06 14:27:21 joerg Exp $	*/
+/*	$NetBSD: auvia.c,v 1.60.14.3 2007/12/08 16:21:24 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.60.14.2 2007/11/06 14:27:21 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.60.14.3 2007/12/08 16:21:24 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -453,7 +453,7 @@ auvia_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	if (!pnp_device_register(self, NULL, auvia_resume))
+	if (!pmf_device_register(self, NULL, auvia_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	audio_attach_mi(&auvia_hw_if, sc, &sc->sc_dev);

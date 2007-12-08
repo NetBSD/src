@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ath_pci.c,v 1.21.6.3 2007/11/06 14:27:24 joerg Exp $	*/
+/*	$NetBSD: if_ath_pci.c,v 1.21.6.4 2007/12/08 16:21:26 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath_pci.c,v 1.11 2005/01/18 18:08:16 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: if_ath_pci.c,v 1.21.6.3 2007/11/06 14:27:24 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ath_pci.c,v 1.21.6.4 2007/12/08 16:21:26 jmcneill Exp $");
 #endif
 
 /*
@@ -239,10 +239,10 @@ ath_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_dmat = pa->pa_dmat;
 
-	if (!pnp_device_register(self, NULL, ath_pci_resume))
+	if (!pmf_device_register(self, NULL, ath_pci_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 	else
-		pnp_class_network_register(self, &sc->sc_if);
+		pmf_class_network_register(self, &sc->sc_if);
 
 	if (ath_attach(PCI_PRODUCT(pa->pa_id), sc) == 0)
 		return;
@@ -260,7 +260,7 @@ ath_pci_detach(struct device *self, int flags)
 	struct ath_pci_softc *psc = (struct ath_pci_softc *)self;
 
 	ath_detach(&psc->sc_sc);
-	pnp_device_deregister(self);
+	pmf_device_deregister(self);
 	pci_intr_disestablish(psc->sc_pc, psc->sc_ih);
 
 	return (0);

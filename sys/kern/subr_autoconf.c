@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.119.4.8 2007/11/27 19:38:09 joerg Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.119.4.9 2007/12/08 16:21:40 jmcneill Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.119.4.8 2007/11/27 19:38:09 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.119.4.9 2007/12/08 16:21:40 jmcneill Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_ddb.h"
@@ -362,7 +362,7 @@ configure(void)
 
 	/* Initialize data structures. */
 	config_init();
-	pnp_init();
+	pmf_init();
 
 #ifdef USERCONF
 	if (boothowto & RB_USERCONF)
@@ -1272,7 +1272,7 @@ config_attach_loc(device_t parent, cfdata_t cf,
 		splash_progress_update(splash_progress_state);
 #endif
 
-	if (!device_pnp_is_registered(dev))
+	if (!device_pmf_is_registered(dev))
 		aprint_error_dev(dev, "WARNING: power management not supported\n");
 
 	config_process_deferred(&deferred_config_queue, dev);
@@ -1776,13 +1776,13 @@ device_is_a(device_t dev, const char *dname)
  */
 
 bool
-device_pnp_is_registered(device_t dev)
+device_pmf_is_registered(device_t dev)
 {
 	return (dev->dv_flags & DVF_POWER_HANDLERS) != 0;
 }
 
 bool
-device_pnp_driver_suspend(device_t dev)
+device_pmf_driver_suspend(device_t dev)
 {
 	if ((dev->dv_flags & DVF_DRIVER_SUSPENDED) != 0)
 		return true;
@@ -1797,7 +1797,7 @@ device_pnp_driver_suspend(device_t dev)
 }
 
 bool
-device_pnp_driver_resume(device_t dev)
+device_pmf_driver_resume(device_t dev)
 {
 	if ((dev->dv_flags & DVF_DRIVER_SUSPENDED) == 0)
 		return true;
@@ -1812,7 +1812,7 @@ device_pnp_driver_resume(device_t dev)
 }
 
 void
-device_pnp_driver_register(device_t dev,
+device_pmf_driver_register(device_t dev,
     bool (*suspend)(device_t), bool (*resume)(device_t))
 {
 	dev->dv_driver_suspend = suspend;
@@ -1821,7 +1821,7 @@ device_pnp_driver_register(device_t dev,
 }
 
 void
-device_pnp_driver_deregister(device_t dev)
+device_pmf_driver_deregister(device_t dev)
 {
 	dev->dv_driver_suspend = NULL;
 	dev->dv_driver_resume = NULL;
@@ -1829,7 +1829,7 @@ device_pnp_driver_deregister(device_t dev)
 }
 
 bool
-device_pnp_driver_child_register(device_t dev)
+device_pmf_driver_child_register(device_t dev)
 {
 	device_t parent = device_parent(dev);
 
@@ -1839,20 +1839,20 @@ device_pnp_driver_child_register(device_t dev)
 }
 
 void
-device_pnp_driver_set_child_register(device_t dev,
+device_pmf_driver_set_child_register(device_t dev,
     bool (*child_register)(device_t))
 {
 	dev->dv_driver_child_register = child_register;
 }
 
 void *
-device_pnp_bus_private(device_t dev)
+device_pmf_bus_private(device_t dev)
 {
 	return dev->dv_bus_private;
 }
 
 bool
-device_pnp_bus_suspend(device_t dev)
+device_pmf_bus_suspend(device_t dev)
 {
 	if ((dev->dv_flags & DVF_BUS_SUSPENDED) != 0)
 		return true;
@@ -1868,7 +1868,7 @@ device_pnp_bus_suspend(device_t dev)
 }
 
 bool
-device_pnp_bus_resume(device_t dev)
+device_pmf_bus_resume(device_t dev)
 {
 	if ((dev->dv_flags & DVF_BUS_SUSPENDED) == 0)
 		return true;
@@ -1881,7 +1881,7 @@ device_pnp_bus_resume(device_t dev)
 }
 
 void
-device_pnp_bus_register(device_t dev, void *priv,
+device_pmf_bus_register(device_t dev, void *priv,
     bool (*suspend)(device_t), bool (*resume)(device_t),
     void (*deregister)(device_t))
 {
@@ -1892,7 +1892,7 @@ device_pnp_bus_register(device_t dev, void *priv,
 }
 
 void
-device_pnp_bus_deregister(device_t dev)
+device_pmf_bus_deregister(device_t dev)
 {
 	if (dev->dv_bus_deregister == NULL)
 		return;
@@ -1904,13 +1904,13 @@ device_pnp_bus_deregister(device_t dev)
 }
 
 void *
-device_pnp_class_private(device_t dev)
+device_pmf_class_private(device_t dev)
 {
 	return dev->dv_class_private;
 }
 
 bool
-device_pnp_class_suspend(device_t dev)
+device_pmf_class_suspend(device_t dev)
 {
 	if ((dev->dv_flags & DVF_CLASS_SUSPENDED) != 0)
 		return true;
@@ -1923,7 +1923,7 @@ device_pnp_class_suspend(device_t dev)
 }
 
 bool
-device_pnp_class_resume(device_t dev)
+device_pmf_class_resume(device_t dev)
 {
 	if ((dev->dv_flags & DVF_CLASS_SUSPENDED) == 0)
 		return true;
@@ -1939,7 +1939,7 @@ device_pnp_class_resume(device_t dev)
 }
 
 void
-device_pnp_class_register(device_t dev, void *priv,
+device_pmf_class_register(device_t dev, void *priv,
     bool (*suspend)(device_t), bool (*resume)(device_t),
     void (*deregister)(device_t))
 {
@@ -1950,7 +1950,7 @@ device_pnp_class_register(device_t dev, void *priv,
 }
 
 void
-device_pnp_class_deregister(device_t dev)
+device_pmf_class_deregister(device_t dev)
 {
 	if (dev->dv_class_deregister == NULL)
 		return;

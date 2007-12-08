@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.41.6.12 2007/11/27 19:37:08 joerg Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.41.6.13 2007/12/08 16:21:22 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.41.6.12 2007/11/27 19:37:08 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.41.6.13 2007/12/08 16:21:22 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -332,7 +332,7 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 
 	gatt->ag_entries = AGP_GET_APERTURE(sc) >> AGP_PAGE_SHIFT;
 
-	if (!pnp_device_register(self, NULL, agp_i810_resume))
+	if (!pmf_device_register(self, NULL, agp_i810_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	return agp_i810_init(sc);

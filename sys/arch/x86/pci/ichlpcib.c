@@ -1,4 +1,4 @@
-/*	$NetBSD: ichlpcib.c,v 1.4.6.16 2007/11/27 19:35:55 joerg Exp $	*/
+/*	$NetBSD: ichlpcib.c,v 1.4.6.17 2007/12/08 16:20:58 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.4.6.16 2007/11/27 19:35:55 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.4.6.17 2007/12/08 16:20:58 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -255,7 +255,7 @@ lpcibattach(struct device *parent, struct device *self, void *aux)
 #endif
 
 	/* Install power handler */
-	if (!pnp_device_register(self, lpcib_suspend, lpcib_resume))
+	if (!pmf_device_register(self, lpcib_suspend, lpcib_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 

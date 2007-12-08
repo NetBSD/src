@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fwip.c,v 1.8.6.3 2007/11/28 01:08:24 jmcneill Exp $	*/
+/*	$NetBSD: if_fwip.c,v 1.8.6.4 2007/12/08 16:21:12 jmcneill Exp $	*/
 /*-
  * Copyright (c) 2004
  *	Doug Rabson
@@ -314,10 +314,10 @@ FW_ATTACH(fwip)
 	splx(s);
 
 #if defined(__NetBSD__)
-	if (!pnp_device_register(self, NULL, NULL))
+	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 	else
-		pnp_class_network_register(self, ifp);
+		pmf_class_network_register(self, ifp);
 #endif
 
 	FWIPDEBUG(ifp, "interface created\n");

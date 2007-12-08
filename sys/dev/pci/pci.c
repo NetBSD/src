@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.103.22.12 2007/12/04 00:43:12 jmcneill Exp $	*/
+/*	$NetBSD: pci.c,v 1.103.22.13 2007/12/08 16:21:31 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.103.22.12 2007/12/04 00:43:12 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.103.22.13 2007/12/08 16:21:31 jmcneill Exp $");
 
 #include "opt_pci.h"
 
@@ -197,19 +197,19 @@ do {									\
 	sc->sc_intrtag = pba->pba_intrtag;
 	sc->sc_flags = pba->pba_flags;
 
-	device_pnp_driver_set_child_register(&sc->sc_dev, pci_child_register);
+	device_pmf_driver_set_child_register(&sc->sc_dev, pci_child_register);
 
 	pcirescan(&sc->sc_dev, "pci", wildcard);
 
 fail:
-	if (!pnp_device_register(self, NULL, NULL))
+	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
 static int
 pcidetach(struct device *self, int flags)
 {
-	pnp_device_deregister(self);
+	pmf_device_deregister(self);
 	return 0;
 }
 
@@ -813,7 +813,7 @@ struct pci_child_power {
 static bool
 pci_child_suspend(device_t dv)
 {
-	struct pci_child_power *priv = device_pnp_bus_private(dv);
+	struct pci_child_power *priv = device_pmf_bus_private(dv);
 
 	pci_conf_capture(priv->p_pc, priv->p_tag, &priv->p_pciconf);
 
@@ -830,7 +830,7 @@ pci_child_suspend(device_t dv)
 static bool
 pci_child_resume(device_t dv)
 {
-	struct pci_child_power *priv = device_pnp_bus_private(dv);
+	struct pci_child_power *priv = device_pmf_bus_private(dv);
 
 	if (priv->p_has_pm &&
 	    pci_set_powerstate_int(priv->p_pc, priv->p_tag,
@@ -847,7 +847,7 @@ pci_child_resume(device_t dv)
 static void
 pci_child_deregister(device_t dv)
 {
-	struct pci_child_power *priv = device_pnp_bus_private(dv);
+	struct pci_child_power *priv = device_pmf_bus_private(dv);
 
 	free(priv, M_DEVBUF);
 }
@@ -881,7 +881,7 @@ pci_child_register(device_t child)
 		priv->p_pm_offset = -1;
 	}
 
-	device_pnp_bus_register(child, priv, pci_child_suspend,
+	device_pmf_bus_register(child, priv, pci_child_suspend,
 	    pci_child_resume, pci_child_deregister);
 
 	return true;

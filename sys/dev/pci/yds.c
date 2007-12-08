@@ -1,4 +1,4 @@
-/*	$NetBSD: yds.c,v 1.37.22.3 2007/11/06 14:27:29 joerg Exp $	*/
+/*	$NetBSD: yds.c,v 1.37.22.4 2007/12/08 16:21:33 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Kazuki Sakamoto and Minoura Makoto.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.37.22.3 2007/11/06 14:27:29 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.37.22.4 2007/12/08 16:21:33 jmcneill Exp $");
 
 #include "mpu.h"
 
@@ -912,7 +912,7 @@ detected:
 	sc->sc_legacy_iot = pa->pa_iot;
 	config_defer((struct device*) sc, yds_configure_legacy);
 
-	if (!pnp_device_register(self, yds_suspend, yds_resume))
+	if (!pmf_device_register(self, yds_suspend, yds_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 

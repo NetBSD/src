@@ -1,4 +1,4 @@
-/*	$NetBSD: spic.c,v 1.8.6.3 2007/11/06 14:27:18 joerg Exp $	*/
+/*	$NetBSD: spic.c,v 1.8.6.4 2007/12/08 16:21:11 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spic.c,v 1.8.6.3 2007/11/06 14:27:18 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spic.c,v 1.8.6.4 2007/12/08 16:21:11 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -209,10 +209,10 @@ spic_intr(void *v) {
 		dz -= 0x20;
 		break;
 	case SPIC_EVENT_BRIGHTNESS_UP:
-		pnp_event_inject(&sc->sc_dev, PNPE_DISPLAY_BRIGHTNESS_UP);
+		pmf_event_inject(&sc->sc_dev, PMFE_DISPLAY_BRIGHTNESS_UP);
 		break;
 	case SPIC_EVENT_BRIGHTNESS_DOWN:
-		pnp_event_inject(&sc->sc_dev, PNPE_DISPLAY_BRIGHTNESS_DOWN);
+		pmf_event_inject(&sc->sc_dev, PMFE_DISPLAY_BRIGHTNESS_DOWN);
 		break;
 	default:
 		printf("spic0: v1=0x%02x v2=0x%02x\n", v1, v2);

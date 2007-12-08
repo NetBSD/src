@@ -1,4 +1,4 @@
-/*      $NetBSD: esm.c,v 1.42.14.3 2007/11/06 14:27:23 joerg Exp $      */
+/*      $NetBSD: esm.c,v 1.42.14.4 2007/12/08 16:21:25 jmcneill Exp $      */
 
 /*-
  * Copyright (c) 2002, 2003 Matt Fredette
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.42.14.3 2007/11/06 14:27:23 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.42.14.4 2007/12/08 16:21:25 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1700,7 +1700,7 @@ esm_attach(struct device *parent, struct device *self, void *aux)
 
 	audio_attach_mi(&esm_hw_if, self, &ess->sc_dev);
 
-	if (!pnp_device_register(self, esm_suspend, esm_resume))
+	if (!pmf_device_register(self, esm_suspend, esm_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 

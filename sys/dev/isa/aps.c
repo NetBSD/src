@@ -1,4 +1,4 @@
-/*	$NetBSD: aps.c,v 1.1.4.6 2007/11/21 21:55:01 joerg Exp $	*/
+/*	$NetBSD: aps.c,v 1.1.4.7 2007/12/08 16:21:12 jmcneill Exp $	*/
 /*	$OpenBSD: aps.c,v 1.15 2007/05/19 19:14:11 tedu Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aps.c,v 1.1.4.6 2007/11/21 21:55:01 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aps.c,v 1.1.4.7 2007/12/08 16:21:12 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -251,7 +251,7 @@ aps_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	if (!pnp_device_register(self, aps_suspend, aps_resume))
+	if (!pmf_device_register(self, aps_suspend, aps_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	/* Refresh sensor data every 0.5 seconds */

@@ -1,4 +1,4 @@
-/*      $NetBSD: if_wi_pci.c,v 1.41.22.4 2007/11/06 14:27:25 joerg Exp $  */
+/*      $NetBSD: if_wi_pci.c,v 1.41.22.5 2007/12/08 16:21:29 jmcneill Exp $  */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pci.c,v 1.41.22.4 2007/11/06 14:27:25 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pci.c,v 1.41.22.5 2007/12/08 16:21:29 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -382,8 +382,8 @@ wi_pci_attach(struct device *parent, struct device *self, void *aux)
 	if (!wpp->wpp_chip)
 		sc->sc_reset = wi_pci_reset;
 
-	if (!pnp_device_register(self, NULL, NULL))
+	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 	else
-		pnp_class_network_register(self, &sc->sc_if);
+		pmf_class_network_register(self, &sc->sc_if);
 }

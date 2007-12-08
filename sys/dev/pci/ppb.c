@@ -1,4 +1,4 @@
-/*	$NetBSD: ppb.c,v 1.34.22.9 2007/11/06 14:27:28 joerg Exp $	*/
+/*	$NetBSD: ppb.c,v 1.34.22.10 2007/12/08 16:21:32 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.34.22.9 2007/11/06 14:27:28 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.34.22.10 2007/12/08 16:21:32 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -135,7 +135,7 @@ ppbattach(struct device *parent, struct device *self, void *aux)
 		    pa->pa_bus, PPB_BUSINFO_PRIMARY(busdata));
 #endif
 
-	if (!pnp_device_register(self, ppb_suspend, ppb_resume))
+	if (!pmf_device_register(self, ppb_suspend, ppb_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	/*

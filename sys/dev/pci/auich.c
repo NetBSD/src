@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.117.14.6 2007/11/11 17:33:29 joerg Exp $	*/
+/*	$NetBSD: auich.c,v 1.117.14.7 2007/12/08 16:21:23 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.117.14.6 2007/11/11 17:33:29 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.117.14.7 2007/12/08 16:21:23 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -640,7 +640,7 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* Watch for power change */
-	if (!pnp_device_register(self, NULL, auich_resume))
+	if (!pmf_device_register(self, NULL, auich_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	config_interrupts(self, auich_finish_attach);

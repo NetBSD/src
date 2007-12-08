@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_pci.c,v 1.1.12.3 2007/11/06 14:27:20 joerg Exp $	*/
+/*	$NetBSD: ahcisata_pci.c,v 1.1.12.4 2007/12/08 16:21:22 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.1.12.3 2007/11/06 14:27:20 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.1.12.4 2007/12/08 16:21:22 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -39,7 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.1.12.3 2007/11/06 14:27:20 joerg 
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/disklabel.h>
-#include <sys/pnp.h>
+#include <sys/pmf.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -131,7 +131,7 @@ ahci_pci_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_dmat = pa->pa_dmat;
 	ahci_attach(sc);
 
-	if (!pnp_device_register(self, NULL, ahci_pci_resume))
+	if (!pmf_device_register(self, NULL, ahci_pci_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 

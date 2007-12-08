@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.12.6.5 2007/11/27 19:37:00 joerg Exp $ */
+/*	$NetBSD: apm.c,v 1.12.6.6 2007/12/08 16:21:05 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.12.6.5 2007/11/27 19:37:00 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.12.6.6 2007/12/08 16:21:05 jmcneill Exp $");
 
 #include "opt_apm.h"
 
@@ -316,7 +316,7 @@ apm_suspend(struct apm_softc *sc)
 	sc->sc_power_state = PWR_SUSPEND;
  
 	if (!(sc->sc_hwflags & APM_F_DONT_RUN_HOOKS)) {
-		pnp_system_suspend();
+		pmf_system_suspend();
 		apm_spl = splhigh();
 	}
 
@@ -342,7 +342,7 @@ apm_standby(struct apm_softc *sc)
 	sc->sc_power_state = PWR_STANDBY;
 
 	if (!(sc->sc_hwflags & APM_F_DONT_RUN_HOOKS)) {
-		pnp_system_suspend();
+		pmf_system_suspend();
 		apm_spl = splhigh();
 	}
 	error = (*sc->sc_ops->aa_set_powstate)(sc->sc_cookie, APM_DEV_ALLDEVS,
@@ -374,7 +374,7 @@ apm_resume(struct apm_softc *sc, u_int event_type, u_int event_info)
 	inittodr(time_second);
 	if (!(sc->sc_hwflags & APM_F_DONT_RUN_HOOKS)) {
 		splx(apm_spl);
-		pnp_system_resume();
+		pmf_system_resume();
 	}
 
 	apm_record_event(sc, event_type);
@@ -686,7 +686,7 @@ apm_attach(struct apm_softc *sc)
 		    sc->sc_dev.dv_xname);
 	}
 
-	if (!pnp_device_register(&sc->sc_dev, NULL, NULL))
+	if (!pmf_device_register(&sc->sc_dev, NULL, NULL))
 		aprint_error_dev(&sc->sc_dev, "couldn't establish power handler\n");
 }
 

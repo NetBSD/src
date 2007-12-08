@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci_pci.c,v 1.25.22.4 2007/12/01 05:28:59 jmcneill Exp $	*/
+/*	$NetBSD: fwohci_pci.c,v 1.25.22.5 2007/12/08 16:21:26 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci_pci.c,v 1.25.22.4 2007/12/01 05:28:59 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci_pci.c,v 1.25.22.5 2007/12/08 16:21:26 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -145,7 +145,7 @@ fwohci_pci_attach(struct device *parent, struct device *self,
 	}
 	aprint_normal("%s: interrupting at %s\n", self->dv_xname, intrstr);
 
-	if (!pnp_device_register(self, fwohci_pci_suspend, fwohci_pci_resume))
+	if (!pmf_device_register(self, fwohci_pci_suspend, fwohci_pci_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	if (fwohci_init(&(psc->psc_sc), &(psc->psc_sc.fc._dev)) != 0) {
@@ -158,7 +158,7 @@ fwohci_pci_attach(struct device *parent, struct device *self,
 
 fail:
 	/* In the event that we fail to attach, register a null pnp handler */
-	if (!pnp_device_register(self, NULL, NULL))
+	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	return;

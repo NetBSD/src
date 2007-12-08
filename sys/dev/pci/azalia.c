@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia.c,v 1.50.6.5 2007/11/07 01:14:13 joerg Exp $	*/
+/*	$NetBSD: azalia.c,v 1.50.6.6 2007/12/08 16:21:24 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.50.6.5 2007/11/07 01:14:13 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.50.6.6 2007/12/08 16:21:24 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -344,7 +344,7 @@ azalia_pci_attach(struct device *parent, struct device *self,
 	}
 	aprint_normal("%s: interrupting at %s\n", XNAME(sc), intrrupt_str);
 
-	if (!pnp_device_register(self, NULL, azalia_pci_resume))
+	if (!pmf_device_register(self, NULL, azalia_pci_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	sc->pciid = pa->pa_id;
