@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.106.6.1 2007/12/04 13:03:49 ad Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.106.6.2 2007/12/08 15:52:18 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.106.6.1 2007/12/04 13:03:49 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.106.6.2 2007/12/08 15:52:18 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -767,7 +767,7 @@ lfs_newbuf(struct lfs *fs, struct vnode *vp, daddr_t daddr, size_t size, int typ
 	ASSERT_MAYBE_SEGLOCK(fs);
 	nbytes = roundup(size, fsbtob(fs, 1));
 
-	bp = getiobuf(vp, true);
+	bp = getiobuf(NULL, true);
 	if (nbytes) {
 		bp->b_data = lfs_malloc(fs, nbytes, type);
 		/* memset(bp->b_data, 0, nbytes); */
@@ -778,9 +778,11 @@ lfs_newbuf(struct lfs *fs, struct vnode *vp, daddr_t daddr, size_t size, int typ
 	if (bp == NULL)
 		panic("bp is NULL after malloc in lfs_newbuf");
 #endif
+	mutex_enter(&bufcache_lock);
 	mutex_enter(&vp->v_interlock);
 	bgetvp(vp, bp);
 	mutex_exit(&vp->v_interlock);
+	mutex_exit(&bufcache_lock);
 
 	bp->b_bufsize = size;
 	bp->b_bcount = size;
@@ -801,9 +803,11 @@ lfs_freebuf(struct lfs *fs, struct buf *bp)
 	struct vnode *vp;
 
 	if ((vp = bp->b_vp) != NULL) {
+		mutex_enter(&bufcache_lock);
 		mutex_enter(&vp->v_interlock);
 		brelvp(bp);
 		mutex_exit(&vp->v_interlock);
+		mutex_exit(&bufcache_lock);
 	}
 	if (!(bp->b_cflags & BC_INVAL)) { /* BC_INVAL indicates a "fake" buffer */
 		lfs_free(fs, bp->b_data, LFS_NB_UNKNOWN);
