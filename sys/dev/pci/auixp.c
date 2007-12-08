@@ -1,4 +1,4 @@
-/* $NetBSD: auixp.c,v 1.23.6.4 2007/11/06 14:27:21 joerg Exp $ */
+/* $NetBSD: auixp.c,v 1.23.6.5 2007/12/08 16:21:23 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Reinoud Zandijk <reinoud@netbsd.org>
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.23.6.4 2007/11/06 14:27:21 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.23.6.5 2007/12/08 16:21:23 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -1195,7 +1195,7 @@ auixp_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	if (!pnp_device_register(self, NULL, auixp_resume))
+	if (!pmf_device_register(self, NULL, auixp_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	/*
@@ -1367,7 +1367,7 @@ auixp_detach(struct device *self, int flags)
 	if (sc->sc_ios)
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_ios);
 
-	pnp_device_deregister(self);
+	pmf_device_deregister(self);
 
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.14.6.3 2007/11/23 21:01:04 joerg Exp $	*/
+/*	$NetBSD: i2c.c,v 1.14.6.4 2007/12/08 16:21:09 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -152,7 +152,7 @@ iic_attach(struct device *parent, struct device *self, void *aux)
 	}
 #endif
 
-	if (!pnp_device_register(self, NULL, NULL))
+	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	/*

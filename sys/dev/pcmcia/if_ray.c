@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ray.c,v 1.65.6.4 2007/11/06 14:27:30 joerg Exp $	*/
+/*	$NetBSD: if_ray.c,v 1.65.6.5 2007/12/08 16:21:33 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2000 Christian E. Hopps
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.65.6.4 2007/11/06 14:27:30 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.65.6.5 2007/12/08 16:21:33 jmcneill Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -604,10 +604,10 @@ ray_attach(struct device *parent, struct device *self, void *aux)
 	else
 		ifmedia_set(&sc->sc_media, IFM_INFRA);
 
-	if (!pnp_device_register(self, NULL, NULL))
+	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 	else
-		pnp_class_network_register(self, ifp);
+		pmf_class_network_register(self, ifp);
 
 	/* The attach is successful. */
 	sc->sc_attached = 1;
@@ -659,7 +659,7 @@ ray_detach(struct device *self, int flags)
 	if (!sc->sc_attached)
                 return (0);
 
-	pnp_device_deregister(self);
+	pmf_device_deregister(self);
 
 	if (sc->sc_if.if_flags & IFF_UP)
 		ray_disable(sc);

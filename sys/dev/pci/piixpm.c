@@ -1,4 +1,4 @@
-/* $NetBSD: piixpm.c,v 1.13.14.5 2007/11/06 14:27:28 joerg Exp $ */
+/* $NetBSD: piixpm.c,v 1.13.14.6 2007/12/08 16:21:32 jmcneill Exp $ */
 /*	$OpenBSD: piixpm.c,v 1.20 2006/02/27 08:25:02 grange Exp $	*/
 
 /*
@@ -149,7 +149,7 @@ piixpm_attach(struct device *parent, struct device *self, void *aux)
 	aprint_normal("\n%s: %s (rev. 0x%02x)\n",
 		      device_xname(self), devinfo, PCI_REVISION(pa->pa_class));
 
-	if (!pnp_device_register(self, piixpm_suspend, piixpm_resume))
+	if (!pmf_device_register(self, piixpm_suspend, piixpm_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	/* Read configuration */

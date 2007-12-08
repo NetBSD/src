@@ -1,4 +1,4 @@
-/*	$NetBSD: vga_pci.c,v 1.32.8.5 2007/12/01 05:22:51 jmcneill Exp $	*/
+/*	$NetBSD: vga_pci.c,v 1.32.8.6 2007/12/08 16:21:32 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_pci.c,v 1.32.8.5 2007/12/01 05:22:51 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_pci.c,v 1.32.8.6 2007/12/08 16:21:32 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -226,7 +226,7 @@ vga_pci_attach(struct device *parent, struct device *self, void *aux)
 	 * XXX it would power down the device when the console
 	 * XXX is still using it.
 	 */
-	if (!pnp_device_register(self, NULL, vga_pci_resume))
+	if (!pmf_device_register(self, NULL, vga_pci_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 	config_found_ia(self, "drm", aux, vga_drm_print);
 }

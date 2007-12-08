@@ -1,4 +1,4 @@
-/* $NetBSD: kern_pnp.c,v 1.1.2.18 2007/12/05 14:47:07 joerg Exp $ */
+/* $NetBSD: kern_pmf.c,v 1.1.2.1 2007/12/08 16:21:39 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_pnp.c,v 1.1.2.18 2007/12/05 14:47:07 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_pmf.c,v 1.1.2.1 2007/12/08 16:21:39 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -42,84 +42,84 @@ __KERNEL_RCSID(0, "$NetBSD: kern_pnp.c,v 1.1.2.18 2007/12/05 14:47:07 joerg Exp 
 #include <sys/callout.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/pnp.h>
+#include <sys/pmf.h>
 #include <sys/queue.h>
 #include <sys/kmem.h>
 #include <sys/syscallargs.h> /* for sys_sync */
 #include <sys/workqueue.h>
 #include <prop/proplib.h>
 
-#ifdef PNP_DEBUG
-int pnp_debug_event;
-int pnp_debug_idle;
-int pnp_debug_transition;
+#ifdef PMF_DEBUG
+int pmf_debug_event;
+int pmf_debug_idle;
+int pmf_debug_transition;
 
-#define	PNP_EVENT_PRINTF(x)		if (pnp_debug_event) printf x
-#define	PNP_IDLE_PRINTF(x)		if (pnp_debug_idle) printf x
-#define	PNP_TRANSITION_PRINTF(x)	if (pnp_debug_transition) printf x
-#define	PNP_TRANSITION_PRINTF2(y,x)	if (pnp_debug_transition>y) printf x
+#define	PMF_EVENT_PRINTF(x)		if (pmf_debug_event) printf x
+#define	PMF_IDLE_PRINTF(x)		if (pmf_debug_idle) printf x
+#define	PMF_TRANSITION_PRINTF(x)	if (pmf_debug_transition) printf x
+#define	PMF_TRANSITION_PRINTF2(y,x)	if (pmf_debug_transition>y) printf x
 #else
-#define	PNP_EVENT_PRINTF(x)		do { } while (0)
-#define	PNP_IDLE_PRINTF(x)		do { } while (0)
-#define	PNP_TRANSITION_PRINTF(x)	do { } while (0)
-#define	PNP_TRANSITION_PRINTF2(y,x)	do { } while (0)
+#define	PMF_EVENT_PRINTF(x)		do { } while (0)
+#define	PMF_IDLE_PRINTF(x)		do { } while (0)
+#define	PMF_TRANSITION_PRINTF(x)	do { } while (0)
+#define	PMF_TRANSITION_PRINTF2(y,x)	do { } while (0)
 #endif
 
-/* #define PNP_DEBUG */
+/* #define PMF_DEBUG */
 
-MALLOC_DEFINE(M_PNP, "pnp", "device pnp messaging memory");
+MALLOC_DEFINE(M_PMF, "pmf", "device pmf messaging memory");
 
-static prop_dictionary_t pnp_platform = NULL;
-static struct workqueue *pnp_event_workqueue;
+static prop_dictionary_t pmf_platform = NULL;
+static struct workqueue *pmf_event_workqueue;
 
-typedef struct pnp_event_handler {
-	TAILQ_ENTRY(pnp_event_handler) pnp_link;
-	pnp_generic_event_t pnp_event;
-	void (*pnp_handler)(device_t);
-	device_t pnp_device;
-	bool pnp_global;
-} pnp_event_handler_t;
+typedef struct pmf_event_handler {
+	TAILQ_ENTRY(pmf_event_handler) pmf_link;
+	pmf_generic_event_t pmf_event;
+	void (*pmf_handler)(device_t);
+	device_t pmf_device;
+	bool pmf_global;
+} pmf_event_handler_t;
 
-static TAILQ_HEAD(, pnp_event_handler) pnp_all_events =
-    TAILQ_HEAD_INITIALIZER(pnp_all_events);
+static TAILQ_HEAD(, pmf_event_handler) pmf_all_events =
+    TAILQ_HEAD_INITIALIZER(pmf_all_events);
 
-typedef struct pnp_event_workitem {
+typedef struct pmf_event_workitem {
 	struct work		pew_work;
-	pnp_generic_event_t	pew_event;
+	pmf_generic_event_t	pew_event;
 	device_t		pew_device;
-} pnp_event_workitem_t;
+} pmf_event_workitem_t;
 
 static void
-pnp_event_worker(struct work *wk, void *dummy)
+pmf_event_worker(struct work *wk, void *dummy)
 {
-	pnp_event_workitem_t *pew;
-	pnp_event_handler_t *event;
+	pmf_event_workitem_t *pew;
+	pmf_event_handler_t *event;
 
 	pew = (void *)wk;
 	KASSERT(wk == &pew->pew_work);
 	KASSERT(pew != NULL);
 	
-	TAILQ_FOREACH(event, &pnp_all_events, pnp_link) {
-		if (event->pnp_event != pew->pew_event)
+	TAILQ_FOREACH(event, &pmf_all_events, pmf_link) {
+		if (event->pmf_event != pew->pew_event)
 			continue;
-		if (event->pnp_device != pew->pew_device || event->pnp_global)
-			(*event->pnp_handler)(event->pnp_device);
+		if (event->pmf_device != pew->pew_device || event->pmf_global)
+			(*event->pmf_handler)(event->pmf_device);
 	}
 
-	kmem_free(pew, sizeof(pnp_event_workitem_t));
+	kmem_free(pew, sizeof(pmf_event_workitem_t));
 
 	return;
 }
 
 static bool
-pnp_check_system_drivers(void)
+pmf_check_system_drivers(void)
 {
 	device_t curdev;
 	bool unsupported_devs;
 
 	unsupported_devs = false;
 	TAILQ_FOREACH(curdev, &alldevs, dv_list) {
-		if (device_pnp_is_registered(curdev))
+		if (device_pmf_is_registered(curdev))
 			continue;
 		if (!unsupported_devs)
 			printf("Devices without power management support:");
@@ -134,13 +134,13 @@ pnp_check_system_drivers(void)
 }
 
 bool
-pnp_system_resume(void)
+pmf_system_resume(void)
 {
 	int depth, maxdepth;
 	bool rv;
 	device_t curdev, parent;
 
-	if (!pnp_check_system_drivers())
+	if (!pmf_check_system_drivers())
 		return false;
 
 	maxdepth = 0;
@@ -168,7 +168,7 @@ pnp_system_resume(void)
 
 			aprint_debug(" %s", device_xname(curdev));
 
-			if (!pnp_device_resume(curdev)) {
+			if (!pmf_device_resume(curdev)) {
 				rv = false;
 				aprint_debug("(failed)");
 			}
@@ -180,12 +180,12 @@ pnp_system_resume(void)
 }
 
 bool
-pnp_system_suspend(void)
+pmf_system_suspend(void)
 {
 	int depth, maxdepth;
 	device_t curdev;
 
-	if (!pnp_check_system_drivers())
+	if (!pmf_check_system_drivers())
 		return false;
 
 	/*
@@ -219,7 +219,7 @@ pnp_system_suspend(void)
 			aprint_debug(" %s", device_xname(curdev));
 
 			/* XXX joerg check return value and abort suspend */
-			if (!pnp_device_suspend(curdev))
+			if (!pmf_device_suspend(curdev))
 				aprint_debug("(failed)");
 		}
 	}
@@ -230,12 +230,12 @@ pnp_system_suspend(void)
 }
 
 void
-pnp_system_shutdown(void)
+pmf_system_shutdown(void)
 {
 	int depth, maxdepth;
 	device_t curdev;
 
-	if (!pnp_check_system_drivers())
+	if (!pmf_check_system_drivers())
 		delay(2000000);
 
 	aprint_debug("Shutting down devices:");
@@ -255,13 +255,13 @@ pnp_system_shutdown(void)
 
 			aprint_debug(" %s", device_xname(curdev));
 
-			if (!device_pnp_is_registered(curdev))
+			if (!device_pmf_is_registered(curdev))
 				continue;
-			if (!device_pnp_class_suspend(curdev)) {
+			if (!device_pmf_class_suspend(curdev)) {
 				aprint_debug("(failed)");
 				continue;
 			}
-			if (!device_pnp_driver_suspend(curdev)) {
+			if (!device_pmf_driver_suspend(curdev)) {
 				aprint_debug("(failed)");
 				continue;
 			}
@@ -272,38 +272,38 @@ pnp_system_shutdown(void)
 }
 
 bool
-pnp_set_platform(const char *key, const char *value)
+pmf_set_platform(const char *key, const char *value)
 {
-	if (pnp_platform == NULL)
-		pnp_platform = prop_dictionary_create();
-	if (pnp_platform == NULL)
+	if (pmf_platform == NULL)
+		pmf_platform = prop_dictionary_create();
+	if (pmf_platform == NULL)
 		return false;
 
-	return prop_dictionary_set_cstring(pnp_platform, key, value);
+	return prop_dictionary_set_cstring(pmf_platform, key, value);
 }
 
 const char *
-pnp_get_platform(const char *key)
+pmf_get_platform(const char *key)
 {
 	const char *value;
 
-	if (pnp_platform == NULL)
+	if (pmf_platform == NULL)
 		return NULL;
 
-	if (!prop_dictionary_get_cstring_nocopy(pnp_platform, key, &value))
+	if (!prop_dictionary_get_cstring_nocopy(pmf_platform, key, &value))
 		return NULL;
 
 	return value;
 }
 
 bool
-pnp_device_register(device_t dev,
+pmf_device_register(device_t dev,
     bool (*suspend)(device_t), bool (*resume)(device_t))
 {
-	device_pnp_driver_register(dev, suspend, resume);
+	device_pmf_driver_register(dev, suspend, resume);
 
-	if (!device_pnp_driver_child_register(dev)) {
-		device_pnp_driver_deregister(dev);
+	if (!device_pmf_driver_child_register(dev)) {
+		device_pmf_driver_deregister(dev);
 		return false;
 	}
 
@@ -311,53 +311,53 @@ pnp_device_register(device_t dev,
 }
 
 void
-pnp_device_deregister(device_t dev)
+pmf_device_deregister(device_t dev)
 {
-	device_pnp_class_deregister(dev);
-	device_pnp_bus_deregister(dev);
-	device_pnp_driver_deregister(dev);
+	device_pmf_class_deregister(dev);
+	device_pmf_bus_deregister(dev);
+	device_pmf_driver_deregister(dev);
 }
 
 bool
-pnp_device_suspend(device_t dev)
+pmf_device_suspend(device_t dev)
 {
-	PNP_TRANSITION_PRINTF(("%s: suspend enter\n", device_xname(dev)));
-	if (!device_pnp_is_registered(dev))
+	PMF_TRANSITION_PRINTF(("%s: suspend enter\n", device_xname(dev)));
+	if (!device_pmf_is_registered(dev))
 		return false;
-	PNP_TRANSITION_PRINTF2(1, ("%s: class suspend\n", device_xname(dev)));
-	if (!device_pnp_class_suspend(dev))
+	PMF_TRANSITION_PRINTF2(1, ("%s: class suspend\n", device_xname(dev)));
+	if (!device_pmf_class_suspend(dev))
 		return false;
-	PNP_TRANSITION_PRINTF2(1, ("%s: driver suspend\n", device_xname(dev)));
-	if (!device_pnp_driver_suspend(dev))
+	PMF_TRANSITION_PRINTF2(1, ("%s: driver suspend\n", device_xname(dev)));
+	if (!device_pmf_driver_suspend(dev))
 		return false;
-	PNP_TRANSITION_PRINTF2(1, ("%s: bus suspend\n", device_xname(dev)));
-	if (!device_pnp_bus_suspend(dev))
+	PMF_TRANSITION_PRINTF2(1, ("%s: bus suspend\n", device_xname(dev)));
+	if (!device_pmf_bus_suspend(dev))
 		return false;
-	PNP_TRANSITION_PRINTF(("%s: suspend exit\n", device_xname(dev)));
+	PMF_TRANSITION_PRINTF(("%s: suspend exit\n", device_xname(dev)));
 	return true;
 }
 
 bool
-pnp_device_resume(device_t dev)
+pmf_device_resume(device_t dev)
 {
-	PNP_TRANSITION_PRINTF(("%s: resume enter\n", device_xname(dev)));
-	if (!device_pnp_is_registered(dev))
+	PMF_TRANSITION_PRINTF(("%s: resume enter\n", device_xname(dev)));
+	if (!device_pmf_is_registered(dev))
 		return false;
-	PNP_TRANSITION_PRINTF2(1, ("%s: bus resume\n", device_xname(dev)));
-	if (!device_pnp_bus_resume(dev))
+	PMF_TRANSITION_PRINTF2(1, ("%s: bus resume\n", device_xname(dev)));
+	if (!device_pmf_bus_resume(dev))
 		return false;
-	PNP_TRANSITION_PRINTF2(1, ("%s: driver resume\n", device_xname(dev)));
-	if (!device_pnp_driver_resume(dev))
+	PMF_TRANSITION_PRINTF2(1, ("%s: driver resume\n", device_xname(dev)));
+	if (!device_pmf_driver_resume(dev))
 		return false;
-	PNP_TRANSITION_PRINTF2(1, ("%s: class resume\n", device_xname(dev)));
-	if (!device_pnp_class_resume(dev))
+	PMF_TRANSITION_PRINTF2(1, ("%s: class resume\n", device_xname(dev)));
+	if (!device_pmf_class_resume(dev))
 		return false;
-	PNP_TRANSITION_PRINTF(("%s: resume exit\n", device_xname(dev)));
+	PMF_TRANSITION_PRINTF(("%s: resume exit\n", device_xname(dev)));
 	return true;
 }
 
 bool
-pnp_device_recursive_suspend(device_t dv)
+pmf_device_recursive_suspend(device_t dv)
 {
 	device_t curdev;
 
@@ -367,15 +367,15 @@ pnp_device_recursive_suspend(device_t dv)
 	TAILQ_FOREACH(curdev, &alldevs, dv_list) {
 		if (device_parent(curdev) != dv)
 			continue;
-		if (!pnp_device_recursive_suspend(curdev))
+		if (!pmf_device_recursive_suspend(curdev))
 			return false;
 	}
 
-	return pnp_device_suspend(dv);
+	return pmf_device_suspend(dv);
 }
 
 bool
-pnp_device_recursive_resume(device_t dv)
+pmf_device_recursive_resume(device_t dv)
 {
 	device_t parent;
 
@@ -384,25 +384,25 @@ pnp_device_recursive_resume(device_t dv)
 
 	parent = device_parent(dv);
 	if (parent != NULL) {
-		if (!pnp_device_recursive_resume(parent))
+		if (!pmf_device_recursive_resume(parent))
 			return false;
 	}
 
-	return pnp_device_resume(dv);
+	return pmf_device_resume(dv);
 }
 
 bool
-pnp_device_resume_subtree(device_t dv)
+pmf_device_resume_subtree(device_t dv)
 {
 	device_t curdev;
 
-	if (!pnp_device_recursive_resume(dv))
+	if (!pmf_device_recursive_resume(dv))
 		return false;
 
 	TAILQ_FOREACH(curdev, &alldevs, dv_list) {
 		if (device_parent(curdev) != dv)
 			continue;
-		if (!pnp_device_resume_subtree(curdev))
+		if (!pmf_device_resume_subtree(curdev))
 			return false;
 	}
 	return true;
@@ -411,9 +411,9 @@ pnp_device_resume_subtree(device_t dv)
 #include <net/if.h>
 
 static bool
-pnp_class_network_suspend(device_t dev)
+pmf_class_network_suspend(device_t dev)
 {
-	struct ifnet *ifp = device_pnp_class_private(dev);
+	struct ifnet *ifp = device_pmf_class_private(dev);
 	int s;
 
 	s = splnet();
@@ -424,9 +424,9 @@ pnp_class_network_suspend(device_t dev)
 }
 
 static bool
-pnp_class_network_resume(device_t dev)
+pmf_class_network_resume(device_t dev)
 {
-	struct ifnet *ifp = device_pnp_class_private(dev);
+	struct ifnet *ifp = device_pmf_class_private(dev);
 	int s;
 
 	s = splnet();
@@ -441,20 +441,20 @@ pnp_class_network_resume(device_t dev)
 }
 
 void
-pnp_class_network_register(device_t dev, struct ifnet *ifp)
+pmf_class_network_register(device_t dev, struct ifnet *ifp)
 {
-	device_pnp_class_register(dev, ifp, pnp_class_network_suspend,
-	    pnp_class_network_resume, NULL);
+	device_pmf_class_register(dev, ifp, pmf_class_network_suspend,
+	    pmf_class_network_resume, NULL);
 }
 
 bool
-pnp_event_inject(device_t dv, pnp_generic_event_t ev)
+pmf_event_inject(device_t dv, pmf_generic_event_t ev)
 {
-	pnp_event_workitem_t *pew;
+	pmf_event_workitem_t *pew;
 
-	pew = kmem_alloc(sizeof(pnp_event_workitem_t), KM_NOSLEEP);
+	pew = kmem_alloc(sizeof(pmf_event_workitem_t), KM_NOSLEEP);
 	if (pew == NULL) {
-		PNP_EVENT_PRINTF(("%s: PNP event %d dropped (no memory)\n",
+		PMF_EVENT_PRINTF(("%s: PMF event %d dropped (no memory)\n",
 		    dv ? device_xname(dv) : "<anonymous>", ev));
 		return false;
 	}
@@ -462,45 +462,45 @@ pnp_event_inject(device_t dv, pnp_generic_event_t ev)
 	pew->pew_event = ev;
 	pew->pew_device = dv;
 
-	workqueue_enqueue(pnp_event_workqueue, (void *)pew, NULL);
-	PNP_EVENT_PRINTF(("%s: PNP event %d injected\n",
+	workqueue_enqueue(pmf_event_workqueue, (void *)pew, NULL);
+	PMF_EVENT_PRINTF(("%s: PMF event %d injected\n",
 	    dv ? device_xname(dv) : "<anonymous>", ev));
 
 	return true;
 }
 
 bool
-pnp_event_register(device_t dv, pnp_generic_event_t ev,
+pmf_event_register(device_t dv, pmf_generic_event_t ev,
     void (*handler)(device_t), bool global)
 {
-	pnp_event_handler_t *event; 
+	pmf_event_handler_t *event; 
 	
 	event = malloc(sizeof(*event), M_DEVBUF, M_WAITOK);
-	event->pnp_event = ev;
-	event->pnp_handler = handler;
-	event->pnp_device = dv;
-	event->pnp_global = global;
-	TAILQ_INSERT_TAIL(&pnp_all_events, event, pnp_link);
+	event->pmf_event = ev;
+	event->pmf_handler = handler;
+	event->pmf_device = dv;
+	event->pmf_global = global;
+	TAILQ_INSERT_TAIL(&pmf_all_events, event, pmf_link);
 
 	return true;
 }
 
 void
-pnp_event_deregister(device_t dv, pnp_generic_event_t ev,
+pmf_event_deregister(device_t dv, pmf_generic_event_t ev,
     void (*handler)(device_t), bool global)
 {
-	pnp_event_handler_t *event;
+	pmf_event_handler_t *event;
 
-	TAILQ_FOREACH(event, &pnp_all_events, pnp_link) {
-		if (event->pnp_event != ev)
+	TAILQ_FOREACH(event, &pmf_all_events, pmf_link) {
+		if (event->pmf_event != ev)
 			continue;
-		if (event->pnp_device != dv)
+		if (event->pmf_device != dv)
 			continue;
-		if (event->pnp_global != global)
+		if (event->pmf_global != global)
 			continue;
-		if (event->pnp_handler != handler)
+		if (event->pmf_handler != handler)
 			continue;
-		TAILQ_REMOVE(&pnp_all_events, event, pnp_link);
+		TAILQ_REMOVE(&pmf_all_events, event, pmf_link);
 		free(event, M_WAITOK);
 	}
 }
@@ -517,8 +517,8 @@ static int idle_timeout = 30;
 static void
 input_idle(void *dummy)
 {
-	PNP_IDLE_PRINTF(("Input idle handler called\n"));
-	pnp_event_inject(NULL, PNPE_DISPLAY_OFF);
+	PMF_IDLE_PRINTF(("Input idle handler called\n"));
+	pmf_event_inject(NULL, PMFE_DISPLAY_OFF);
 }
 
 static void
@@ -529,27 +529,27 @@ input_activity_handler(device_t dv, devactive_t type)
 }
 
 static void
-pnp_class_input_deregister(device_t dv)
+pmf_class_input_deregister(device_t dv)
 {
 	device_active_deregister(dv, input_activity_handler);
 }
 
 bool
-pnp_class_input_register(device_t dv)
+pmf_class_input_register(device_t dv)
 {
 	if (!device_active_register(dv, input_activity_handler))
 		return false;
 	
-	device_pnp_class_register(dv, NULL, NULL, NULL,
-	    pnp_class_input_deregister);
+	device_pmf_class_register(dv, NULL, NULL, NULL,
+	    pmf_class_input_deregister);
 
 	return true;
 }
 
 static void
-pnp_class_display_deregister(device_t dv)
+pmf_class_display_deregister(device_t dv)
 {
-	struct display_class_softc *sc = device_pnp_class_private(dv);
+	struct display_class_softc *sc = device_pmf_class_private(dv);
 	int s;
 
 	s = splsoftclock();
@@ -562,7 +562,7 @@ pnp_class_display_deregister(device_t dv)
 }
 
 bool
-pnp_class_display_register(device_t dv)
+pmf_class_display_register(device_t dv)
 {
 	struct display_class_softc *sc;
 	int s;
@@ -576,22 +576,22 @@ pnp_class_display_register(device_t dv)
 	TAILQ_INSERT_HEAD(&all_displays, sc, dc_link);
 	splx(s);
 
-	device_pnp_class_register(dv, sc, NULL, NULL,
-	    pnp_class_display_deregister);
+	device_pmf_class_register(dv, sc, NULL, NULL,
+	    pmf_class_display_deregister);
 
 	return true;
 }
 
 void
-pnp_init(void)
+pmf_init(void)
 {
 	int err;
 
-	KASSERT(pnp_event_workqueue == NULL);
-	err = workqueue_create(&pnp_event_workqueue, "pnpevent",
-	    pnp_event_worker, NULL, PRI_IDLE, IPL_VM, 0);
+	KASSERT(pmf_event_workqueue == NULL);
+	err = workqueue_create(&pmf_event_workqueue, "pmfevent",
+	    pmf_event_worker, NULL, PRI_IDLE, IPL_VM, 0);
 	if (err)
-		panic("couldn't create pnpevent workqueue");
+		panic("couldn't create pmfevent workqueue");
 
 	callout_init(&global_idle_counter, 0);
 	callout_setfunc(&global_idle_counter, input_idle, NULL);

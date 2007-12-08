@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.51.6.9 2007/11/21 21:54:04 joerg Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.51.6.10 2007/12/08 16:21:03 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.51.6.9 2007/11/21 21:54:04 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.51.6.10 2007/12/08 16:21:03 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -239,7 +239,7 @@ acpibat_attach(device_t parent, device_t self, void *aux)
 	ABAT_SET(sc, ABAT_F_VERBOSE);
 #endif
 
-	if (!pnp_device_register(self, NULL, NULL))
+	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	acpibat_init_envsys(self);

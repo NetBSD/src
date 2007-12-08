@@ -1,4 +1,4 @@
-/* $NetBSD: esa.c,v 1.41.14.3 2007/11/06 14:27:23 joerg Exp $ */
+/* $NetBSD: esa.c,v 1.41.14.4 2007/12/08 16:21:25 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2006 Jared D. McNeill <jmcneill@invisible.ca>
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esa.c,v 1.41.14.3 2007/11/06 14:27:23 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esa.c,v 1.41.14.4 2007/12/08 16:21:25 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -1135,7 +1135,7 @@ esa_attach(struct device *parent, struct device *self, void *aux)
 		    audio_attach_mi(&esa_hw_if, &sc->voice[i], &sc->sc_dev);
 	}
 
-	if (!pnp_device_register(self, esa_suspend, esa_resume))
+	if (!pmf_device_register(self, esa_suspend, esa_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	return;

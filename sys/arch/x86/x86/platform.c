@@ -1,4 +1,4 @@
-/* $NetBSD: platform.c,v 1.1.2.1 2007/08/03 22:17:11 jmcneill Exp $ */
+/* $NetBSD: platform.c,v 1.1.2.2 2007/12/08 16:21:00 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,13 +33,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: platform.c,v 1.1.2.1 2007/08/03 22:17:11 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: platform.c,v 1.1.2.2 2007/12/08 16:21:00 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
-#include <sys/pnp.h>
+#include <sys/pmf.h>
 
 #include <arch/x86/include/smbiosvar.h>
 
@@ -72,9 +72,9 @@ platform_print(void)
 {
 	const char *manuf, *prod, *ver;
 
-	manuf = pnp_get_platform("system-manufacturer");
-	prod = pnp_get_platform("system-product-name");
-	ver = pnp_get_platform("system-version");
+	manuf = pmf_get_platform("system-manufacturer");
+	prod = pmf_get_platform("system-product-name");
+	ver = pmf_get_platform("system-version");
 
 	if (manuf == NULL)
 		aprint_normal("Generic");
@@ -97,7 +97,7 @@ platform_add(struct smbtable *tbl, const char *key, int idx)
 	char tmpbuf[128]; /* XXX is this long enough? */
 
 	if (smbios_get_string(tbl, idx, tmpbuf, 128) != NULL)
-		pnp_set_platform(key, tmpbuf);
+		pmf_set_platform(key, tmpbuf);
 
 	return;
 }

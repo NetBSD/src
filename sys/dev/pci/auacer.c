@@ -1,4 +1,4 @@
-/*	$NetBSD: auacer.c,v 1.16.14.3 2007/11/06 14:27:20 joerg Exp $	*/
+/*	$NetBSD: auacer.c,v 1.16.14.4 2007/12/08 16:21:22 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auacer.c,v 1.16.14.3 2007/11/06 14:27:20 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auacer.c,v 1.16.14.4 2007/12/08 16:21:22 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -350,7 +350,7 @@ auacer_attach(struct device *parent, struct device *self, void *aux)
 
 	auacer_reset(sc);
 
-	if (!pnp_device_register(self, NULL, auacer_resume))
+	if (!pmf_device_register(self, NULL, auacer_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 

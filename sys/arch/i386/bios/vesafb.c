@@ -1,4 +1,4 @@
-/* $NetBSD: vesafb.c,v 1.22.12.3 2007/11/06 14:27:09 joerg Exp $ */
+/* $NetBSD: vesafb.c,v 1.22.12.4 2007/12/08 16:20:56 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2006 Jared D. McNeill <jmcneill@invisible.ca>
@@ -37,7 +37,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vesafb.c,v 1.22.12.3 2007/11/06 14:27:09 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vesafb.c,v 1.22.12.4 2007/12/08 16:20:56 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -338,30 +338,30 @@ vesafb_attach(struct device *parent, struct device *dev, void *aux)
 
 	sc->sc_isconsole = 1;
 
-	if (!pnp_device_register(dev, NULL, NULL))
+	if (!pmf_device_register(dev, NULL, NULL))
 		aprint_error_dev(dev, "couldn't establish power handler\n");
-	else if (!pnp_class_display_register(dev))
+	else if (!pmf_class_display_register(dev))
 		aprint_error_dev(dev, "couldn't set display class\n");
 
-	if (!pnp_event_register(dev, PNPE_DISPLAY_ON, vesafb_display_on, true))
+	if (!pmf_event_register(dev, PMFE_DISPLAY_ON, vesafb_display_on, true))
 		aprint_error_dev(dev, "couldn't register DISPLAY ON event\n");
 	if ((sc->sc_pmstates & 1) != 0 &&
-	    !pnp_event_register(dev, PNPE_DISPLAY_STANDBY,
+	    !pmf_event_register(dev, PMFE_DISPLAY_STANDBY,
 				vesafb_display_standby, true))
 		aprint_error_dev(dev,
 		    "couldn't register DISPLAY STANDBY event\n");
 	if ((sc->sc_pmstates & 2) != 0 &&
-	    !pnp_event_register(dev, PNPE_DISPLAY_SUSPEND,
+	    !pmf_event_register(dev, PMFE_DISPLAY_SUSPEND,
 				vesafb_display_suspend, true))
 		aprint_error_dev(dev,
 		    "couldn't register DISPLAY SUSPEND event\n");
 	if ((sc->sc_pmstates & 4) != 0 &&
-	    !pnp_event_register(dev, PNPE_DISPLAY_OFF,
+	    !pmf_event_register(dev, PMFE_DISPLAY_OFF,
 				vesafb_display_off, true))
 		aprint_error_dev(dev,
 		    "couldn't register DISPLAY OFF event\n");
 	if ((sc->sc_pmstates & 8) != 0 &&
-	    !pnp_event_register(dev, PNPE_DISPLAY_REDUCED,
+	    !pmf_event_register(dev, PMFE_DISPLAY_REDUCED,
 				vesafb_display_reduced, true))
 		aprint_error_dev(dev,
 		    "couldn't register DISPLAY REDUCED event\n");

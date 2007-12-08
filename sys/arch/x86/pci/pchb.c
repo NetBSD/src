@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.1.4.6 2007/11/27 19:35:55 joerg Exp $ */
+/*	$NetBSD: pchb.c,v 1.1.4.7 2007/12/08 16:20:59 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 1996, 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.1.4.6 2007/11/27 19:35:55 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.1.4.7 2007/12/08 16:20:59 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -354,7 +354,7 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 	pchb_attach_rnd(sc, pa);
 #endif
 
-	if (!pnp_device_register(self, pchb_suspend, pchb_resume))
+	if (!pmf_device_register(self, pchb_suspend, pchb_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	/*

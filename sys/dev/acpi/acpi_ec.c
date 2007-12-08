@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.41.6.12 2007/11/06 14:27:12 joerg Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.41.6.13 2007/12/08 16:21:04 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.41.6.12 2007/11/06 14:27:12 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.41.6.13 2007/12/08 16:21:04 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -224,7 +224,7 @@ acpiec_attach(device_t parent, device_t self, void *aux)
 	if (ec_singleton != NULL) {
 		aprint_naive(": ACPI Embedded Controller (disabled)\n");
 		aprint_normal(": ACPI Embedded Controller (disabled)\n");
-		if (!pnp_device_register(self, NULL, NULL))
+		if (!pmf_device_register(self, NULL, NULL))
 			aprint_error_dev(self, "couldn't establish power handler\n");
 		return;
 	}
@@ -342,7 +342,7 @@ acpiec_common_attach(device_t parent, device_t self,
 
 	ec_singleton = self;
 
-	if (!pnp_device_register(self, acpiec_suspend, acpiec_resume))
+	if (!pmf_device_register(self, acpiec_suspend, acpiec_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	return;

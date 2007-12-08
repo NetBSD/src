@@ -1,4 +1,4 @@
-/* $NetBSD: pckbd.c,v 1.15.14.4 2007/12/01 14:40:38 jmcneill Exp $ */
+/* $NetBSD: pckbd.c,v 1.15.14.5 2007/12/08 16:21:33 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbd.c,v 1.15.14.4 2007/12/01 14:40:38 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbd.c,v 1.15.14.5 2007/12/08 16:21:33 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -401,7 +401,7 @@ pckbdattach(struct device *parent, struct device *self, void *aux)
 	a.accessops = &pckbd_accessops;
 	a.accesscookie = sc;
 
-	if (!pnp_device_register(self, pckbd_suspend, pckbd_resume))
+	if (!pmf_device_register(self, pckbd_suspend, pckbd_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	/*

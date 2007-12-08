@@ -1,4 +1,4 @@
-/*	$NetBSD: igphy.c,v 1.11.16.2 2007/11/27 09:28:22 joerg Exp $	*/
+/*	$NetBSD: igphy.c,v 1.11.16.3 2007/12/08 16:21:16 jmcneill Exp $	*/
 
 /*
  * The Intel copyright applies to the analog register setup, and the
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igphy.c,v 1.11.16.2 2007/11/27 09:28:22 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igphy.c,v 1.11.16.3 2007/12/08 16:21:16 jmcneill Exp $");
 
 #include "opt_mii.h"
 
@@ -175,7 +175,7 @@ igphyattach(struct device *parent, struct device *self, void *aux)
 		mii_phy_add_media(sc);
 	aprint_normal("\n");
 
-	if (!pnp_device_register(self, NULL, mii_phy_resume))
+	if (!pmf_device_register(self, NULL, mii_phy_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 

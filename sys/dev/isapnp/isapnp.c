@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnp.c,v 1.52.22.4 2007/12/03 16:14:35 joerg Exp $	*/
+/*	$NetBSD: isapnp.c,v 1.52.22.5 2007/12/08 16:21:13 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isapnp.c,v 1.52.22.4 2007/12/03 16:14:35 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isapnp.c,v 1.52.22.5 2007/12/08 16:21:13 jmcneill Exp $");
 
 #include "isadma.h"
 
@@ -961,7 +961,7 @@ isapnp_attach(struct device *parent, struct device *self, void *aux)
 	isapnp_callback(self);
 #endif
 
-	if (!pnp_device_register(self, NULL, NULL))
+	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 

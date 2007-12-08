@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtk_pci.c,v 1.32.8.5 2007/11/06 19:25:23 joerg Exp $	*/
+/*	$NetBSD: if_rtk_pci.c,v 1.32.8.6 2007/12/08 16:21:28 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtk_pci.c,v 1.32.8.5 2007/11/06 19:25:23 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtk_pci.c,v 1.32.8.6 2007/12/08 16:21:28 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -218,10 +218,10 @@ rtk_pci_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dmat = pa->pa_dmat;
 	sc->sc_flags |= RTK_ENABLED;
 
-	if (!pnp_device_register(self, NULL, NULL))
+	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 	else
-		pnp_class_network_register(self, &sc->ethercom.ec_if);
+		pmf_class_network_register(self, &sc->ethercom.ec_if);
 
 	rtk_attach(sc);
 }

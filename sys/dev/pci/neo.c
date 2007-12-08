@@ -1,4 +1,4 @@
-/*	$NetBSD: neo.c,v 1.35.22.3 2007/11/06 14:27:26 joerg Exp $	*/
+/*	$NetBSD: neo.c,v 1.35.22.4 2007/12/08 16:21:29 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1999 Cameron Grant <gandalf@vilnya.demon.co.uk>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: neo.c,v 1.35.22.3 2007/11/06 14:27:26 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: neo.c,v 1.35.22.4 2007/12/08 16:21:29 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -630,7 +630,7 @@ neo_attach(struct device *parent, struct device *self, void *aux)
 	if (ac97_attach(&sc->host_if, self) != 0)
 		return;
 
-	if (!pnp_device_register(self, NULL, neo_resume))
+	if (!pmf_device_register(self, NULL, neo_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	audio_attach_mi(&neo_hw_if, sc, &sc->dev);

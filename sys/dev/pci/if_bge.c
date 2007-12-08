@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.132.6.9 2007/11/11 16:47:38 joerg Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.132.6.10 2007/12/08 16:21:27 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.132.6.9 2007/11/11 16:47:38 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.132.6.10 2007/12/08 16:21:27 jmcneill Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -2766,10 +2766,10 @@ bge_attach(device_t parent, device_t self, void *aux)
 	DPRINTFN(5, ("callout_init\n"));
 	callout_init(&sc->bge_timeout, 0);
 
-	if (!pnp_device_register(self, NULL, NULL))
+	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 	else
-		pnp_class_network_register(self, ifp);
+		pmf_class_network_register(self, ifp);
 }
 
 static void
