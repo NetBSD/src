@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.90 2007/11/26 19:02:28 pooka Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.91 2007/12/08 15:23:32 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.90 2007/11/26 19:02:28 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.91 2007/12/08 15:23:32 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -311,8 +311,10 @@ ffs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred,
 				genfs_node_unlock(ovp);
 				return (error);
 			}
+			mutex_enter(&ump->um_lock);
 			if (oip->i_flag & IN_SPACECOUNTED)
 				fs->fs_pendingblocks -= DIP(oip, blocks);
+			mutex_exit(&ump->um_lock);
 		} else {
 			uvm_vnp_setsize(ovp, length);
 #ifdef QUOTA
