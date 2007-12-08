@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.91 2007/11/20 18:58:46 pooka Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.92 2007/12/08 17:31:12 apb Exp $
 #
 # Copyright (c) 2003,2007 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -344,6 +344,17 @@ hexprint()
 		val="$(($val / 16))"
 	done
 	echo "${hex:-0}"
+}
+
+# linecount multiline_string
+#	count the number of lines in the string
+#
+linecount()
+{
+	local IFS='
+' # just a newline, no other white space between the quotes
+	set -- $1
+	echo $#
 }
 
 setup()
@@ -1708,10 +1719,8 @@ local)
 	if [ -f "$0.local" ]; then
 		umask 0
 		if [ -n "$count_nodes" ]; then
-			sh "$0.local" $opts -s all | \
-			while read l; do
-				count_nodes=$((count_nodes + 1))
-			done
+			count_nodes=$((count_nodes + \
+			    $(linecount "$(sh "$0.local" $opts -s all)") ))
 		else
 			sh "$0.local" $opts all
 		fi
