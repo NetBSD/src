@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_cas.S,v 1.3 2007/12/08 22:42:46 ad Exp $	*/
+/*	$NetBSD: atomic_cas.S,v 1.4 2007/12/08 22:53:33 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -57,6 +57,14 @@
 	nop								;\
 	nop								;\
 	nop
+
+#else	/* _KERNEL */
+
+#define	MULTIPROCESSOR	1
+#define	DISABLE_INTERRUPTS		/* nothing */
+#define	RESTORE_INTERRUPTS		/* nothing */
+
+#endif	/* _KERNEL */
 
 #if defined(MULTIPROCESSOR)
 	.section .bss
@@ -131,7 +139,3 @@ ATOMIC_OP_ALIAS(atomic_cas_ulong,_atomic_cas_32)
 STRONG_ALIAS(_atomic_cas_ulong,_atomic_cas_32)
 ATOMIC_OP_ALIAS(atomic_cas_ptr,_atomic_cas_32)
 STRONG_ALIAS(_atomic_cas_ptr,_atomic_cas_32)
-
-#else /* _KERNEL */
-
-#endif /* _KERNEL */
