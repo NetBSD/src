@@ -1,4 +1,4 @@
-/*	$NetBSD: if_agr.c,v 1.18 2007/12/08 13:31:03 elad Exp $	*/
+/*	$NetBSD: if_agr.c,v 1.19 2007/12/08 15:04:29 ad Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.18 2007/12/08 13:31:03 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.19 2007/12/08 15:04:29 ad Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -802,7 +802,6 @@ agr_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct sockaddr *sa;
 	struct agrreq ar;
-	struct proc *p;
 	int error = 0;
 	int s;
 
