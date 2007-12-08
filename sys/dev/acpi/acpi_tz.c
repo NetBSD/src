@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_tz.c,v 1.30 2007/12/05 07:06:51 ad Exp $ */
+/* $NetBSD: acpi_tz.c,v 1.31 2007/12/08 23:01:30 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2003 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.30 2007/12/05 07:06:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.31 2007/12/08 23:01:30 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -169,15 +169,13 @@ acpitz_attach(struct device *parent, struct device *self, void *aux)
 	aprint_naive("\n");
 
 	rv = acpi_eval_integer(sc->sc_devnode->ad_handle, "_TZP", &v);
-	if (ACPI_FAILURE(rv)) {
-		aprint_verbose("%s: unable to get polling interval; using default of",
-		    sc->sc_dev.dv_xname);
+	if (ACPI_FAILURE(rv))
 		sc->sc_zone.tzp = ATZ_TZP_RATE;
-	} else {
+	else
 		sc->sc_zone.tzp = v;
-		aprint_verbose("%s: polling interval is", sc->sc_dev.dv_xname);
-	}
-	aprint_verbose(" %d.%ds\n", sc->sc_zone.tzp / 10, sc->sc_zone.tzp % 10);
+
+	aprint_debug(" sample rate %d.%ds\n",
+	    sc->sc_zone.tzp / 10, sc->sc_zone.tzp % 10);
 
 	/* XXX a value of 0 means "polling is not necessary" */
 	if (sc->sc_zone.tzp == 0)
