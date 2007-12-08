@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.41.2.1 2007/12/04 13:03:10 ad Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.41.2.2 2007/12/08 14:42:25 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.41.2.1 2007/12/04 13:03:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.41.2.2 2007/12/08 14:42:25 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -57,6 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.41.2.1 2007/12/04 13:03:10 ad Exp $
 #include <sys/vnode.h>
 #include <sys/kauth.h>
 #include <sys/proc.h>
+#include <sys/atomic.h>
 
 #include <uvm/uvm.h>
 
@@ -107,19 +108,14 @@ tmpfs_alloc_node(struct tmpfs_mount *tmp, enum vtype type,
 	KASSERT(uid != VNOVAL && gid != VNOVAL && mode != VNOVAL);
 
 	nnode = NULL;
-	mutex_enter(&tmp->tm_lock);
-	if (tmp->tm_nodes_cnt >= tmp->tm_nodes_max) {
-		mutex_exit(&tmp->tm_lock);
+	if (atomic_inc_uint_nv(&tmp->tm_nodes_cnt) >= tmp->tm_nodes_max) {
+		atomic_dec_uint(&tmp->tm_nodes_cnt);
 		return ENOSPC;
 	}
-	tmp->tm_nodes_cnt++;
-	mutex_exit(&tmp->tm_lock);
 
 	nnode = (struct tmpfs_node *)TMPFS_POOL_GET(&tmp->tm_node_pool, 0);
 	if (nnode == NULL) {
-		mutex_enter(&tmp->tm_lock);
-		tmp->tm_nodes_cnt--;
-		mutex_exit(&tmp->tm_lock);
+		atomic_dec_uint(&tmp->tm_nodes_cnt);
 		return ENOSPC;
 	}
 
@@ -178,9 +174,7 @@ tmpfs_alloc_node(struct tmpfs_mount *tmp, enum vtype type,
 		nnode->tn_spec.tn_lnk.tn_link =
 		    tmpfs_str_pool_get(&tmp->tm_str_pool, nnode->tn_size, 0);
 		if (nnode->tn_spec.tn_lnk.tn_link == NULL) {
-			mutex_enter(&tmp->tm_lock);
-			tmp->tm_nodes_cnt--;
-			mutex_exit(&tmp->tm_lock);
+			atomic_dec_uint(&tmp->tm_nodes_cnt);
 			TMPFS_POOL_PUT(&tmp->tm_node_pool, nnode);
 			return ENOSPC;
 		}
@@ -236,9 +230,9 @@ tmpfs_free_node(struct tmpfs_mount *tmp, struct tmpfs_node *node)
 	else
 		pages = 0;
 
+	atomic_add_int(&tmp->tm_pages_used, -pages);
+	atomic_dec_uint(&tmp->tm_nodes_cnt);
 	mutex_enter(&tmp->tm_lock);
-	tmp->tm_pages_used -= pages;
-	tmp->tm_nodes_cnt--;
 	LIST_REMOVE(node, tn_entries);
 	mutex_exit(&tmp->tm_lock);
 
@@ -882,7 +876,7 @@ int
 tmpfs_reg_resize(struct vnode *vp, off_t newsize)
 {
 	int error;
-	size_t newpages, oldpages;
+	u_int newpages, oldpages;
 	struct tmpfs_mount *tmp;
 	struct tmpfs_node *node;
 	off_t oldsize;
@@ -902,15 +896,12 @@ tmpfs_reg_resize(struct vnode *vp, off_t newsize)
 	KASSERT(oldpages == node->tn_spec.tn_reg.tn_aobj_pages);
 	newpages = round_page(newsize) / PAGE_SIZE;
 
-	mutex_enter(&tmp->tm_lock);
 	if (newpages > oldpages &&
 	    newpages - oldpages > TMPFS_PAGES_AVAIL(tmp)) {
 		error = ENOSPC;
-		mutex_exit(&tmp->tm_lock);
 		goto out;
 	}
-	tmp->tm_pages_used += (newpages - oldpages);
-	mutex_exit(&tmp->tm_lock);
+	atomic_add_int(&tmp->tm_pages_used, newpages - oldpages);
 
 	if (newsize < oldsize) {
 		int zerolen = MIN(round_page(newsize), node->tn_size) - newsize;

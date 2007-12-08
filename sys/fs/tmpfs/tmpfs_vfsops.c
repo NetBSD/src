@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vfsops.c,v 1.32.2.1 2007/12/04 13:03:10 ad Exp $	*/
+/*	$NetBSD: tmpfs_vfsops.c,v 1.32.2.2 2007/12/08 14:42:25 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.32.2.1 2007/12/04 13:03:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.32.2.2 2007/12/08 14:42:25 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -101,11 +101,9 @@ tmpfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 		tmp = VFS_TO_TMPFS(mp);
 
 		args->ta_version = TMPFS_ARGS_VERSION;
-		mutex_enter(&tmp->tm_lock);
 		args->ta_nodes_max = tmp->tm_nodes_max;
 		args->ta_size_max = tmp->tm_pages_max * PAGE_SIZE;
 		root = tmp->tm_root;
-		mutex_exit(&tmp->tm_lock);
 
 		args->ta_root_uid = root->tn_uid;
 		args->ta_root_gid = root->tn_gid;
@@ -291,13 +289,11 @@ tmpfs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
 
 	memcpy(&tfh, fhp, sizeof(struct tmpfs_fid));
 
-	mutex_enter(&tmp->tm_lock);
-	if (tfh.tf_id >= tmp->tm_nodes_max) {
-		mutex_exit(&tmp->tm_lock);
+	if (tfh.tf_id >= tmp->tm_nodes_max)
 		return EINVAL;
-	}
 
 	found = false;
+	mutex_enter(&tmp->tm_lock);
 	LIST_FOREACH(node, &tmp->tm_nodes, tn_entries) {
 		if (node->tn_id == tfh.tf_id &&
 		    node->tn_gen == tfh.tf_gen) {
@@ -346,8 +342,6 @@ tmpfs_statvfs(struct mount *mp, struct statvfs *sbp)
 
 	tmp = VFS_TO_TMPFS(mp);
 
-	mutex_enter(&tmp->tm_lock);
-
 	sbp->f_iosize = sbp->f_frsize = sbp->f_bsize = PAGE_SIZE;
 
 	sbp->f_blocks = TMPFS_PAGES_MAX(tmp);
@@ -360,8 +354,6 @@ tmpfs_statvfs(struct mount *mp, struct statvfs *sbp)
 	sbp->f_files = tmp->tm_nodes_cnt + freenodes;
 	sbp->f_favail = sbp->f_ffree = freenodes;
 	sbp->f_fresvd = 0;
-
-	mutex_exit(&tmp->tm_lock);
 
 	copy_statvfs_info(sbp, mp);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_pool.c,v 1.11.2.1 2007/12/04 13:03:10 ad Exp $	*/
+/*	$NetBSD: tmpfs_pool.c,v 1.11.2.2 2007/12/08 14:42:24 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,10 +42,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_pool.c,v 1.11.2.1 2007/12/04 13:03:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_pool.c,v 1.11.2.2 2007/12/08 14:42:24 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/pool.h>
+#include <sys/atomic.h>
 
 #include <uvm/uvm.h>
 
@@ -155,18 +156,17 @@ tmpfs_pool_page_alloc(struct pool *pp, int flags)
 {
 	struct tmpfs_pool *tpp;
 	struct tmpfs_mount *tmp;
+	u_int pages;
 	void *page;
 
 	tpp = (struct tmpfs_pool *)pp;
 	tmp = tpp->tp_mount;
 
-	mutex_enter(&tmp->tm_lock);
-	if (TMPFS_PAGES_MAX(tmp) - tmp->tm_pages_used == 0) {
-		mutex_exit(&tmp->tm_lock);
+	pages = atomic_inc_uint_nv(&tmp->tm_pages_used);
+	if (TMPFS_PAGES_MAX(tmp) - pages == 0) {
+		atomic_dec_uint(&tmp->tm_pages_used);
 		return NULL;
 	}
-	tmp->tm_pages_used += 1;
-	mutex_exit(&tmp->tm_lock);
 	/*
 	 * tmpfs never specifies PR_WAITOK as we enforce local limits
 	 * on memory allocation.  However, we should wait for memory
@@ -175,9 +175,7 @@ tmpfs_pool_page_alloc(struct pool *pp, int flags)
 	 */
 	page = pool_page_alloc_nointr(pp, flags | PR_WAITOK);
 	if (page == NULL) {
-		mutex_enter(&tmp->tm_lock);
-		tmp->tm_pages_used -= 1;
-		mutex_exit(&tmp->tm_lock);
+		atomic_dec_uint(&tmp->tm_pages_used);
 	}
 
 	return page;
@@ -194,10 +192,7 @@ tmpfs_pool_page_free(struct pool *pp, void *v)
 	tpp = (struct tmpfs_pool *)pp;
 	tmp = tpp->tp_mount;
 
-	mutex_enter(&tmp->tm_lock);
-	tmp->tm_pages_used -= 1;
-	mutex_exit(&tmp->tm_lock);
-
+	atomic_dec_uint(&tmp->tm_pages_used);
 	pool_page_free_nointr(pp, v);
 }
 
