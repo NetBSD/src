@@ -1,4 +1,4 @@
-/*   $NetBSD: get_wch.c,v 1.4 2007/11/18 10:01:04 jdc Exp $ */
+/*   $NetBSD: get_wch.c,v 1.5 2007/12/08 18:38:11 jdc Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: get_wch.c,v 1.4 2007/11/18 10:01:04 jdc Exp $");
+__RCSID("$NetBSD: get_wch.c,v 1.5 2007/12/08 18:38:11 jdc Exp $");
 #endif						  /* not lint */
 
 #include <string.h>
@@ -93,22 +93,14 @@ inkey(wchar_t *wc, int to, int delay)
 				*end = &_cursesi_screen->cbuf_tail;
 	char		*inbuf = &_cursesi_screen->cbuf[ 0 ];
 
-/*  int	ESCDELAY = 300;*/	/* Delay in ms between keys for esc seq's */
-	ESCDELAY = 300;
-
+#ifdef DEBUG
+	__CTRACE(__CTRACE_INPUT, "inkey (%p, %d, %d)\n", wc, to, delay);
+#endif
 	for (;;) { /* loop until we get a complete key sequence */
 		if (wstate == INKEY_NORM) {
 			if (delay && __timeout(delay) == ERR)
 				return ERR;
 			c = getchar();
-			if (_cursesi_screen->resized) {
-				if (c != WEOF) /* was -1 */
-					unget_wch(c);
-				_cursesi_screen->resized = 0;
-				clearerr(infd);
-				*wc = KEY_RESIZE;
-				return KEY_CODE_YES;
-			}
 			if (c == WEOF) {
 				clearerr(infd);
 				return ERR;
@@ -157,14 +149,6 @@ inkey(wchar_t *wc, int to, int delay)
 			}
 
 			c = getchar();
-			if (_cursesi_screen->resized) {
-				if (c != -1)
-					unget_wch(c);
-				_cursesi_screen->resized = 0;
-				clearerr(infd);
-				*wc = KEY_RESIZE;
-				return KEY_CODE_YES;
-			}
 			if (ferror(infd)) {
 				clearerr(infd);
 				return ERR;
@@ -215,14 +199,6 @@ inkey(wchar_t *wc, int to, int delay)
 			}
 
 			c = getchar();
-			if (_cursesi_screen->resized) {
-				if (c != -1)
-					unget_wch(c);
-				_cursesi_screen->resized = 0;
-				clearerr(infd);
-				*wc = KEY_RESIZE;
-				return KEY_CODE_YES;
-			}
 			if (ferror(infd)) {
 				clearerr(infd);
 				return ERR;
@@ -548,6 +524,25 @@ wget_wch(WINDOW *win, wint_t *ch)
 	    "__rawmode = %d, __nl = %d, flags = %#.4x\n",
 	    __echoit, __rawmode, _cursesi_screen->nl, win->flags);
 #endif
+	if (_cursesi_screen->resized) {
+		_cursesi_screen->resized = 0;
+		*ch = KEY_RESIZE;
+		return KEY_CODE_YES;
+	}
+	if (_cursesi_screen->unget_pos) {
+#ifdef DEBUG
+		__CTRACE(__CTRACE_INPUT, "wget_wch returning char at %d\n",
+		    _cursesi_screen->unget_pos);
+#endif
+		_cursesi_screen->unget_pos--;
+		*ch = _cursesi_screen->unget_list[_cursesi_screen->unget_pos];
+		if (__echoit) {
+			ws[0] = *ch, ws[1] = L'\0';
+			setcchar(&wc, ws, win->wattr, 0, NULL);
+			wadd_wch(win, &wc);
+		}
+		return KEY_CODE_YES;
+	}
 	if (__echoit && !__rawmode) {
 		cbreak();
 		weset = 1;
@@ -596,15 +591,6 @@ wget_wch(WINDOW *win, wint_t *ch)
 		}
 
 		c = getwchar();
-		if (_cursesi_screen->resized) {
-			if (c != -1)
-				unget_wch(c);
-			_cursesi_screen->resized = 0;
-			clearerr(infd);
-			__restore_termios();
-			*ch = KEY_RESIZE;
-			return KEY_CODE_YES;
-		}
 		if (feof(infd)) {
 			clearerr(infd);
 			__restore_termios();
@@ -615,7 +601,7 @@ wget_wch(WINDOW *win, wint_t *ch)
 			clearerr(infd);
 			return ERR;
 		} else {
-            ret = c;
+			ret = c;
 			inp = c;
 		}
 	}
@@ -677,7 +663,5 @@ wget_wch(WINDOW *win, wint_t *ch)
 int
 unget_wch(const wchar_t c)
 {
-	return
-		( int )((ungetwc((wint_t)c, _cursesi_screen->infd) == WEOF) ?
-				ERR : OK);
+	return __unget((wint_t) c);
 }
