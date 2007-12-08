@@ -1,4 +1,4 @@
-/* $NetBSD: kern_tc.c,v 1.21.2.1 2007/11/19 00:48:44 mjf Exp $ */
+/* $NetBSD: kern_tc.c,v 1.21.2.2 2007/12/08 18:20:33 mjf Exp $ */
 
 /*-
  * ----------------------------------------------------------------------------
@@ -11,7 +11,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_tc.c,v 1.166 2005/09/19 22:16:31 andre Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.21.2.1 2007/11/19 00:48:44 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.21.2.2 2007/12/08 18:20:33 mjf Exp $");
 
 #include "opt_ntp.h"
 
@@ -28,6 +28,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.21.2.1 2007/11/19 00:48:44 mjf Exp $")
 #include <sys/evcnt.h>
 #include <sys/kauth.h>
 #include <sys/mutex.h>
+#include <sys/atomic.h>
 
 /*
  * A large step happens on boot.  This constant detects such steps.
@@ -131,8 +132,9 @@ sysctl_kern_timecounter_hardware(SYSCTLFN_ARGS)
 	    strncmp(newname, tc->tc_name, sizeof(newname)) == 0)
 		return error;
 
-	if (l != NULL && (error = kauth_authorize_generic(l->l_cred, 
-	    KAUTH_GENERIC_ISSUSER, NULL)) != 0)
+	if (l != NULL && (error = kauth_authorize_system(l->l_cred, 
+	    KAUTH_SYSTEM_TIME, KAUTH_REQ_SYSTEM_TIME_TIMECOUNTERS, newname,
+	    NULL, NULL)) != 0)
 		return (error);
 
 	if (!cold)
@@ -527,7 +529,7 @@ tc_windup(void)
 	th = tho->th_next;
 	ogen = th->th_generation;
 	th->th_generation = 0;
-	mb_write();
+	membar_producer();
 	bcopy(tho, th, offsetof(struct timehands, th_generation));
 
 	/*
@@ -627,7 +629,7 @@ tc_windup(void)
 	 */
 	if (++ogen == 0)
 		ogen = 1;
-	mb_write();
+	membar_producer();
 	th->th_generation = ogen;
 
 	/*
@@ -636,7 +638,7 @@ tc_windup(void)
 	 */
 	time_second = th->th_microtime.tv_sec;
 	time_uptime = th->th_offset.sec;
-	mb_write();
+	membar_producer();
 	timehands = th;
 
 	/*

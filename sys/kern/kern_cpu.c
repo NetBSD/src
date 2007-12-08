@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cpu.c,v 1.12.2.1 2007/11/19 00:48:36 mjf Exp $	*/
+/*	$NetBSD: kern_cpu.c,v 1.12.2.2 2007/12/08 18:20:26 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.12.2.1 2007/11/19 00:48:36 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.12.2.2 2007/12/08 18:20:26 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,7 +107,7 @@ mi_cpu_attach(struct cpu_info *ci)
 
 	ci->ci_index = ncpu;
 
-	mutex_init(&spc->spc_lwplock, MUTEX_SPIN, IPL_SCHED);
+	mutex_init(&spc->spc_lwplock, MUTEX_DEFAULT, IPL_SCHED);
 	sched_cpuattach(ci);
 	uvm_cpu_attach(ci);
 

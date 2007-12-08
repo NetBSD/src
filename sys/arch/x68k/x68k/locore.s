@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.81 2007/10/17 19:58:04 garbled Exp $	*/
+/*	$NetBSD: locore.s,v 1.81.2.1 2007/12/08 18:18:08 mjf Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -543,8 +543,8 @@ Lbrkpt3:
  * specially, to improve performance
  */
 
-#define INTERRUPT_SAVEREG	moveml	#0xC0C0,%sp@-
-#define INTERRUPT_RESTOREREG	moveml	%sp@+,#0x0303
+#define INTERRUPT_SAVEREG	moveml	#0xC0C0,%sp@- ; addql #1,_C_LABEL(idepth)
+#define INTERRUPT_RESTOREREG	subql #1,_C_LABEL(idepth) ; moveml	%sp@+,#0x0303
 
 ENTRY_NOPROFILE(spurintr)	/* level 0 */
 	addql	#1,_C_LABEL(intrcnt)+0

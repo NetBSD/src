@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.150.2.1 2007/11/19 00:48:13 mjf Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.150.2.2 2007/12/08 18:19:44 mjf Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.150.2.1 2007/11/19 00:48:13 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.150.2.2 2007/12/08 18:19:44 mjf Exp $");
 
 /*
 #define CBB_DEBUG
@@ -429,10 +429,13 @@ pccbbattach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_chipset = cb_chipset(pa->pa_id, &flags);
 
+	aprint_naive("\n");
+
 	pci_devinfo(pa->pa_id, 0, 0, devinfo, sizeof(devinfo));
-	printf(": %s (rev. 0x%02x)", devinfo, PCI_REVISION(pa->pa_class));
+	aprint_normal(": %s (rev. 0x%02x)", devinfo,
+	    PCI_REVISION(pa->pa_class));
 	DPRINTF((" (chipflags %x)", flags));
-	printf("\n");
+	aprint_normal("\n");
 
 	TAILQ_INIT(&sc->sc_memwindow);
 	TAILQ_INIT(&sc->sc_iowindow);
@@ -478,7 +481,7 @@ pccbbattach(struct device *parent, struct device *self, void *aux)
 		/* The address must be valid. */
 		if (pci_mapreg_map(pa, PCI_SOCKBASE, PCI_MAPREG_TYPE_MEM, 0,
 		    &sc->sc_base_memt, &sc->sc_base_memh, &sockbase, NULL)) {
-			printf("%s: can't map socket base address 0x%lx\n",
+			aprint_error("%s: can't map socket base address 0x%lx\n",
 			    sc->sc_dev.dv_xname, (unsigned long)sock_base);
 			/*
 			 * I think it's funny: socket base registers must be
@@ -487,7 +490,7 @@ pccbbattach(struct device *parent, struct device *self, void *aux)
 			if (pci_mapreg_map(pa, PCI_SOCKBASE, PCI_MAPREG_TYPE_IO,
 			    0, &sc->sc_base_memt, &sc->sc_base_memh, &sockbase,
 			    NULL)) {
-				printf("%s: can't map socket base address"
+				aprint_error("%s: can't map socket base address"
 				    " 0x%lx: io mode\n", sc->sc_dev.dv_xname,
 				    (unsigned long)sockbase);
 				/* give up... allocate reg space via rbus. */
@@ -629,7 +632,8 @@ pccbb_pci_callback(struct device *self)
 
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(&sc->sc_pa, &ih)) {
-		printf("%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
+		aprint_error("%s: couldn't map interrupt\n",
+		    sc->sc_dev.dv_xname);
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
@@ -641,15 +645,16 @@ pccbb_pci_callback(struct device *self)
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_BIO, pccbbintr, sc);
 
 	if (sc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt", sc->sc_dev.dv_xname);
+		aprint_error("%s: couldn't establish interrupt",
+		    sc->sc_dev.dv_xname);
 		if (intrstr != NULL) {
-			printf(" at %s", intrstr);
+			aprint_normal(" at %s", intrstr);
 		}
-		printf("\n");
+		aprint_normal("\n");
 		return;
 	}
 
-	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
+	aprint_normal("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
 	powerhook_establish(sc->sc_dev.dv_xname, pccbb_powerhook, sc);
 
 	{
@@ -1037,7 +1042,24 @@ pccbbintr(void *arg)
 	bus_space_write_4(memt, memh, CB_SOCKET_EVENT, sockevent);
 	Pcic_read(ph, PCIC_CSC);
 
-	if (sockevent == 0) {
+	if (sockevent != 0) {
+		aprint_debug("%s: enter sockevent %" PRIx32 "\n", __func__,
+		    sockevent);
+	}
+
+	/* Sometimes a change of CSTSCHG# accompanies the first
+	 * interrupt from an Atheros WLAN.  That generates a
+	 * CB_SOCKET_EVENT_CSTS event on the bridge.  The event
+	 * isn't interesting to pccbb(4), so we used to ignore the
+	 * interrupt.  Now, let the child devices try to handle
+	 * the interrupt, instead.  The Atheros NIC produces
+	 * interrupts more reliably, now: used to be that it would
+	 * only interrupt if the driver avoided powering down the
+	 * NIC's cardslot, and then the NIC would only work after
+	 * it was reset a second time.
+	 */
+	if (sockevent == 0 ||
+	    (sockevent & ~(CB_SOCKET_EVENT_POWER|CB_SOCKET_EVENT_CD)) != 0) {
 		/* This intr is not for me: it may be for my child devices. */
 		if (sc->sc_pil_intr_enable) {
 			return pccbbintr_function(sc);
@@ -1045,8 +1067,6 @@ pccbbintr(void *arg)
 			return 0;
 		}
 	}
-
-	aprint_debug("%s: enter sockevent %" PRIx32 "\n", __func__, sockevent);
 
 	if (sockevent & CB_SOCKET_EVENT_CD) {
 		sockstate = bus_space_read_4(memt, memh, CB_SOCKET_STAT);
@@ -1095,6 +1115,7 @@ pccbbintr(void *arg)
 		}
 	}
 
+	/* XXX sockevent == 9 does occur in the wild.  handle it. */
 	if (sockevent & CB_SOCKET_EVENT_POWER) {
 		DPRINTF(("Powercycling because of socket event\n"));
 		/* XXX: Does not happen when attaching a 16-bit card */
@@ -1506,17 +1527,22 @@ cb_reset(struct pccbb_softc *sc)
 	int reset_duration =
 	    (sc->sc_chipset == CB_RX5C47X ? 400 : 50);
 	u_int32_t bcr = pci_conf_read(sc->sc_pc, sc->sc_tag, PCI_BRIDGE_CONTROL_REG);
+	aprint_debug("%s: enter bcr %" PRIx32 "\n", __func__, bcr);
 
 	/* Reset bit Assert (bit 6 at 0x3E) */
-	bcr |= CB_BCR_RESET_ENABLE;
+	bcr |= PCI_BRIDGE_CONTROL_SECBR << PCI_BRIDGE_CONTROL_SHIFT;
 	pci_conf_write(sc->sc_pc, sc->sc_tag, PCI_BRIDGE_CONTROL_REG, bcr);
+	aprint_debug("%s: wrote bcr %" PRIx32 "\n", __func__, bcr);
 	delay_ms(reset_duration, sc);
 
 	if (CBB_CARDEXIST & sc->sc_flags) {	/* A card exists.  Reset it! */
 		/* Reset bit Deassert (bit 6 at 0x3E) */
-		bcr &= ~CB_BCR_RESET_ENABLE;
-		pci_conf_write(sc->sc_pc, sc->sc_tag, PCI_BRIDGE_CONTROL_REG, bcr);
+		bcr &= ~(PCI_BRIDGE_CONTROL_SECBR << PCI_BRIDGE_CONTROL_SHIFT);
+		pci_conf_write(sc->sc_pc, sc->sc_tag, PCI_BRIDGE_CONTROL_REG,
+		    bcr);
+		aprint_debug("%s: wrote bcr %" PRIx32 "\n", __func__, bcr);
 		delay_ms(reset_duration, sc);
+		aprint_debug("%s: end of delay\n", __func__);
 	}
 	/* No card found on the slot. Keep Reset. */
 	return 1;
@@ -3086,15 +3112,14 @@ pccbb_winlist_insert(struct pccbb_win_chain_head *head, bus_addr_t start,
 	elem->wc_handle = bsh;
 	elem->wc_flags = flags;
 
-	for (chainp = TAILQ_FIRST(head); chainp != NULL;
-	    chainp = TAILQ_NEXT(chainp, wc_list)) {
-		if (chainp->wc_end < start)
-			continue;
-		TAILQ_INSERT_AFTER(head, chainp, elem, wc_list);
-		return (0);
+	TAILQ_FOREACH(chainp, head, wc_list) {
+		if (chainp->wc_end >= start)
+			break;
 	}
-
-	TAILQ_INSERT_TAIL(head, elem, wc_list);
+	if (chainp != NULL)
+		TAILQ_INSERT_AFTER(head, chainp, elem, wc_list);
+	else
+		TAILQ_INSERT_TAIL(head, elem, wc_list);
 	return (0);
 }
 
@@ -3104,26 +3129,26 @@ pccbb_winlist_delete(struct pccbb_win_chain_head *head, bus_space_handle_t bsh,
 {
 	struct pccbb_win_chain *chainp;
 
-	for (chainp = TAILQ_FIRST(head); chainp != NULL;
-	     chainp = TAILQ_NEXT(chainp, wc_list)) {
-		if (memcmp(&chainp->wc_handle, &bsh, sizeof(bsh)))
-			continue;
-		if ((chainp->wc_end - chainp->wc_start) != (size - 1)) {
-			printf("pccbb_winlist_delete: window 0x%lx size "
-			    "inconsistent: 0x%lx, 0x%lx\n",
-			    (unsigned long)chainp->wc_start,
-			    (unsigned long)(chainp->wc_end - chainp->wc_start),
-			    (unsigned long)(size - 1));
-			return 1;
-		}
+	TAILQ_FOREACH(chainp, head, wc_list) {
+		if (memcmp(&chainp->wc_handle, &bsh, sizeof(bsh)) == 0)
+			break;
+	}
+	if (chainp == NULL)
+		return 1;	       /* fail: no candidate to remove */
 
-		TAILQ_REMOVE(head, chainp, wc_list);
-		free(chainp, M_DEVBUF);
-
-		return 0;
+	if ((chainp->wc_end - chainp->wc_start) != (size - 1)) {
+		printf("pccbb_winlist_delete: window 0x%lx size "
+		    "inconsistent: 0x%lx, 0x%lx\n",
+		    (unsigned long)chainp->wc_start,
+		    (unsigned long)(chainp->wc_end - chainp->wc_start),
+		    (unsigned long)(size - 1));
+		return 1;
 	}
 
-	return 1;	       /* fail: no candidate to remove */
+	TAILQ_REMOVE(head, chainp, wc_list);
+	free(chainp, M_DEVBUF);
+
+	return 0;
 }
 
 static void

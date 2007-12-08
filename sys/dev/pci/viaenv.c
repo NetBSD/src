@@ -1,4 +1,4 @@
-/*	$NetBSD: viaenv.c,v 1.24.2.1 2007/11/19 00:48:19 mjf Exp $	*/
+/*	$NetBSD: viaenv.c,v 1.24.2.2 2007/12/08 18:19:48 mjf Exp $	*/
 
 /*
  * Copyright (c) 2000 Johan Danielsson
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viaenv.c,v 1.24.2.1 2007/11/19 00:48:19 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viaenv.c,v 1.24.2.2 2007/12/08 18:19:48 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -316,17 +316,6 @@ viaenv_attach(struct device *parent, struct device *self, void *aux)
 		goto nohwm;
 	}
 
-	sc->sc_sme = sysmon_envsys_create();
-
-	/* Initialize sensors */
-	for (i = 0; i < VIANUMSENSORS; i++) {
-		if (sysmon_envsys_sensor_attach(sc->sc_sme,
-						&sc->sc_sensor[i])) {
-			sysmon_envsys_destroy(sc->sc_sme);
-			return;
-		}
-	}
-
 	for (i = 0; i < 3; i++)
 		sc->sc_sensor[i].units = ENVSYS_STEMP;
 
@@ -355,6 +344,17 @@ viaenv_attach(struct device *parent, struct device *self, void *aux)
 	COPYDESCR(sc->sc_sensor[9].desc, "VSENS4");	/* VSENS4 (12V) */
 
 #undef COPYDESCR
+
+	sc->sc_sme = sysmon_envsys_create();
+
+	/* Initialize sensors */
+	for (i = 0; i < VIANUMSENSORS; i++) {
+		if (sysmon_envsys_sensor_attach(sc->sc_sme,
+						&sc->sc_sensor[i])) {
+			sysmon_envsys_destroy(sc->sc_sme);
+			return;
+		}
+	}
 
 	/*
 	 * Hook into the System Monitor.

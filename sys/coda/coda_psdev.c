@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_psdev.c,v 1.36 2007/03/04 06:01:11 christos Exp $	*/
+/*	$NetBSD: coda_psdev.c,v 1.36.22.1 2007/12/08 18:18:32 mjf Exp $	*/
 
 /*
  *
@@ -54,7 +54,7 @@
 /* These routines are the device entry points for Venus. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_psdev.c,v 1.36 2007/03/04 06:01:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_psdev.c,v 1.36.22.1 2007/12/08 18:18:32 mjf Exp $");
 
 extern int coda_nc_initialized;    /* Set if cache has been initialized */
 
@@ -521,7 +521,7 @@ vc_nb_kqfilter(dev_t dev, struct knote *kn)
 		break;
 
 	default:
-		return (1);
+		return (EINVAL);
 	}
 
 	kn->kn_hook = vcp;

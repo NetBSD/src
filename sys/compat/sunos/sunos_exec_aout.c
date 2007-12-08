@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_exec_aout.c,v 1.15 2007/10/19 12:16:40 ad Exp $	*/
+/*	$NetBSD: sunos_exec_aout.c,v 1.15.2.1 2007/12/08 18:19:04 mjf Exp $	*/
 
 /*
  * Copyright (c) 1993 Theo de Raadt
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_exec_aout.c,v 1.15 2007/10/19 12:16:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_exec_aout.c,v 1.15.2.1 2007/12/08 18:19:04 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,9 +60,9 @@ __KERNEL_RCSID(0, "$NetBSD: sunos_exec_aout.c,v 1.15 2007/10/19 12:16:40 ad Exp 
 #define	sunos_exec_aout_prep_omagic exec_aout_prep_omagic
 #endif
 
-int sunos_exec_aout_prep_zmagic __P((struct lwp *, struct exec_package *));
-int sunos_exec_aout_prep_nmagic __P((struct lwp *, struct exec_package *));
-int sunos_exec_aout_prep_omagic __P((struct lwp *, struct exec_package *));
+int sunos_exec_aout_prep_zmagic(struct lwp *, struct exec_package *);
+int sunos_exec_aout_prep_nmagic(struct lwp *, struct exec_package *);
+int sunos_exec_aout_prep_omagic(struct lwp *, struct exec_package *);
 
 int
 exec_sunos_aout_makecmds(l, epp)

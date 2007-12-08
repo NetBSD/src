@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.61.2.1 2007/11/19 00:47:41 mjf Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.61.2.2 2007/12/08 18:19:22 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.61.2.1 2007/11/19 00:47:41 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.61.2.2 2007/12/08 18:19:22 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -223,7 +223,7 @@ acpibat_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": ACPI Battery (Control Method)\n");
 
 	sc->sc_node = aa->aa_node;
-	mutex_init(&sc->sc_mtx, MUTEX_DRIVER, IPL_NONE);
+	mutex_init(&sc->sc_mtx, MUTEX_DEFAULT, IPL_NONE);
 
 	rv = AcpiInstallNotifyHandler(sc->sc_node->ad_handle,
 				      ACPI_ALL_NOTIFY,

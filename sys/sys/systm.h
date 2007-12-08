@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.200.4.1 2007/11/19 00:49:33 mjf Exp $	*/
+/*	$NetBSD: systm.h,v 1.200.4.2 2007/12/08 18:21:36 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -132,13 +132,6 @@ extern int boothowto;		/* reboot flags, from console subsystem */
 #define	bootquiet	(boothowto & AB_QUIET)
 
 extern void (*v_putc)(int); /* Virtual console putc routine */
-
-extern	void	_insque(void *, void *);
-extern	void	_remque(void *);
-
-/* casts to keep lint happy, but it should be happy with void **/
-#define	insque(q,p)	_insque(q, p)
-#define	remque(q)	_remque(q)
 
 /*
  * General function declarations.

@@ -1,4 +1,4 @@
-/*	$NetBSD: ofb_cons.c,v 1.8 2007/10/17 19:55:19 garbled Exp $	*/
+/*	$NetBSD: ofw_rascons.c,v 1.1.10.2 2007/12/08 18:17:40 mjf Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofb_cons.c,v 1.8 2007/10/17 19:55:19 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_rascons.c,v 1.1.10.2 2007/12/08 18:17:40 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -52,19 +52,19 @@ __KERNEL_RCSID(0, "$NetBSD: ofb_cons.c,v 1.8 2007/10/17 19:55:19 garbled Exp $")
 #include <dev/wsfont/wsfont.h>
 #include <dev/wscons/wsdisplay_vconsvar.h>
 
-#include <macppc/dev/ofbvar.h>
+#include <powerpc/oea/ofw_rasconsvar.h>
 #include "wsdisplay.h"
 
 /* we need a wsdisplay to do anything halfway useful */
 #if NWSDISPLAY > 0
 
 #if defined(PPC_OEA64) || defined (PPC_OEA64_BRIDGE)
-int ofb_enable_cache = 0;
+int rascons_enable_cache = 0;
 #else
 #ifdef OFB_ENABLE_CACHE
-int ofb_enable_cache = 1;
+int rascons_enable_cache = 1;
 #else
-int ofb_enable_cache = 0;
+int rascons_enable_cache = 0;
 #endif
 #endif /* PPC_OEA64 */
 
@@ -73,9 +73,9 @@ static struct wsdisplay_font openfirm6x11;
 static vaddr_t fbaddr;
 static int romfont_loaded = 0;
 
-struct vcons_screen ofb_console_screen;
+struct vcons_screen rascons_console_screen;
 
-struct wsscreen_descr ofb_stdscreen = {
+struct wsscreen_descr rascons_stdscreen = {
 	"std",
 	0, 0,	/* will be filled in -- XXX shouldn't, it's global */
 	0,
@@ -84,9 +84,9 @@ struct wsscreen_descr ofb_stdscreen = {
 };
 
 int
-ofb_cnattach()
+rascons_cnattach(void)
 {
-	struct rasops_info *ri = &ofb_console_screen.scr_ri;
+	struct rasops_info *ri = &rascons_console_screen.scr_ri;
 	long defattr;
 	int crow = 0;
 	char type[16];
@@ -107,7 +107,7 @@ ofb_cnattach()
 	}
 	
 	/* set up rasops */
-	ofb_init_rasops(console_node, ri);
+	rascons_init_rasops(console_node, ri);
 
 	/*
 	 * no need to clear the screen here when we're mimicing firmware
@@ -123,17 +123,17 @@ ofb_cnattach()
 	}
 #endif
 	
-	ofb_stdscreen.nrows = ri->ri_rows;
-	ofb_stdscreen.ncols = ri->ri_cols;
-	ofb_stdscreen.textops = &ri->ri_ops;
-	ofb_stdscreen.capabilities = ri->ri_caps;
+	rascons_stdscreen.nrows = ri->ri_rows;
+	rascons_stdscreen.ncols = ri->ri_cols;
+	rascons_stdscreen.textops = &ri->ri_ops;
+	rascons_stdscreen.capabilities = ri->ri_caps;
 
 	ri->ri_ops.allocattr(ri, 0, 0, 0, &defattr);
-	wsdisplay_preattach(&ofb_stdscreen, ri, 0, max(0,
+	wsdisplay_preattach(&rascons_stdscreen, ri, 0, max(0,
 	    min(crow, ri->ri_rows - 1)), defattr);
 	
 #if notyet
-	ofb_init_cmap(NULL);
+	rascons_init_cmap(NULL);
 #endif
 
 	return 0;
@@ -179,7 +179,7 @@ copy_rom_font()
 }
 
 int
-ofb_init_rasops(int node, struct rasops_info *ri)
+rascons_init_rasops(int node, struct rasops_info *ri)
 {
 	int32_t width, height, linebytes, depth;
 
@@ -201,7 +201,7 @@ ofb_init_rasops(int node, struct rasops_info *ri)
 
 	/* Enable write-through cache. */
 #if defined (PPC_OEA) && !defined (PPC_OEA64) && !defined (PPC_OEA64_BRIDGE)
-	if (ofb_enable_cache) {
+	if (rascons_enable_cache) {
 		vaddr_t va;
 		/*
 		 * Let's try to find an empty BAT to use 
@@ -261,7 +261,7 @@ ofb_init_rasops(int node, struct rasops_info *ri)
 }
 #else	/* NWSDISPLAY > 0 */
 int
-ofb_cnattach()
+rascons_cnattach()
 {
 	return -1;
 }

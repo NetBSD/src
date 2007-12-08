@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_misc.c,v 1.51 2007/07/17 20:53:49 christos Exp $	*/
+/*	$NetBSD: sunos32_misc.c,v 1.51.14.1 2007/12/08 18:19:06 mjf Exp $	*/
 /* from :NetBSD: sunos_misc.c,v 1.107 2000/12/01 19:25:10 jdolecek Exp	*/
 
 /*
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.51 2007/07/17 20:53:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.51.14.1 2007/12/08 18:19:06 mjf Exp $");
 
 #define COMPAT_SUNOS 1
 
@@ -147,14 +147,14 @@ __KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.51 2007/07/17 20:53:49 christos E
 static void sunos32_sigvec_to_sigaction(const struct netbsd32_sigvec *, struct sigaction *);
 static void sunos32_sigvec_from_sigaction(struct netbsd32_sigvec *, const struct sigaction *);
 
-static int sunstatfs __P((struct statvfs *, void *));
+static int sunstatfs(struct statvfs *, void *);
 
 static void
 sunos32_sigvec_to_sigaction(sv, sa)
 	const struct netbsd32_sigvec *sv;
 	struct sigaction *sa;
 {
-/*XXX*/ extern void compat_43_sigmask_to_sigset __P((const int *, sigset_t *));
+/*XXX*/ extern void compat_43_sigmask_to_sigset(const int *, sigset_t *);
 
 	sa->sa_handler = NETBSD32PTR64(sv->sv_handler);
 	compat_43_sigmask_to_sigset(&sv->sv_mask, &sa->sa_mask);
@@ -166,7 +166,7 @@ void sunos32_sigvec_from_sigaction(sv, sa)
 	struct netbsd32_sigvec *sv;
 	const struct sigaction *sa;
 {
-/*XXX*/ extern void compat_43_sigset_to_sigmask __P((const sigset_t *, int *));
+/*XXX*/ extern void compat_43_sigset_to_sigmask(const sigset_t *, int *);
 
 	NETBSD32PTR32(sv->sv_handler, sa->sa_handler);
 	compat_43_sigset_to_sigmask(&sa->sa_mask, &sv->sv_mask);
@@ -250,7 +250,7 @@ sunos32_sys_access(l, v, retval)
 	return (sys_access(l, &ua, retval));
 }
 
-static inline void sunos32_from___stat13 __P((struct stat *, struct netbsd32_stat43 *));
+static inline void sunos32_from___stat13(struct stat *, struct netbsd32_stat43 *);
 
 static inline void
 sunos32_from___stat13(sbp, sb32p)
@@ -580,8 +580,8 @@ async_daemon(l, v, retval)
 }
 #endif /* NFS */
 
-void	native_to_sunos_sigset __P((const sigset_t *, int *));
-void	sunos_to_native_sigset __P((const int, sigset_t *));
+void	native_to_sunos_sigset(const sigset_t *, int *);
+void	sunos_to_native_sigset(const int, sigset_t *);
 
 inline void
 native_to_sunos_sigset(ss, mask)
@@ -1232,7 +1232,7 @@ sunos32_sys_statfs(l, v, retval)
 	mp = nd.ni_vp->v_mount;
 	sp = &mp->mnt_stat;
 	vrele(nd.ni_vp);
-	if ((error = VFS_STATVFS(mp, sp, l)) != 0)
+	if ((error = VFS_STATVFS(mp, sp)) != 0)
 		return (error);
 	sp->f_flag = mp->mnt_flag & MNT_VISFLAGMASK;
 	return sunstatfs(sp, SCARG_P32(uap, buf));
@@ -1259,7 +1259,7 @@ sunos32_sys_fstatfs(l, v, retval)
 		return (error);
 	mp = ((struct vnode *)fp->f_data)->v_mount;
 	sp = &mp->mnt_stat;
-	if ((error = VFS_STATVFS(mp, sp, l)) != 0)
+	if ((error = VFS_STATVFS(mp, sp)) != 0)
 		goto out;
 	sp->f_flag = mp->mnt_flag & MNT_VISFLAGMASK;
 	error = sunstatfs(sp, SCARG_P32(uap, buf));

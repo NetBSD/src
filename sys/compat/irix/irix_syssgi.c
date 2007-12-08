@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_syssgi.c,v 1.43 2007/02/09 21:55:18 ad Exp $ */
+/*	$NetBSD: irix_syssgi.c,v 1.43.26.1 2007/12/08 18:18:43 mjf Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.43 2007/02/09 21:55:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.43.26.1 2007/12/08 18:18:43 mjf Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -85,10 +85,10 @@ __KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.43 2007/02/09 21:55:18 ad Exp $");
 void	ELFNAME(load_psection)(struct exec_vmcmd_set *, struct vnode *,
 	    const Elf_Phdr *, Elf_Addr *, u_long *, int *, int);
 
-static int irix_syssgi_mapelf __P((int, Elf_Phdr *, int,
-    struct lwp *, register_t *));
-static int irix_syssgi_sysconf __P((int name, struct lwp *, register_t *));
-static int irix_syssgi_pathconf __P((char *, int, struct lwp *, register_t *));
+static int irix_syssgi_mapelf(int, Elf_Phdr *, int,
+    struct lwp *, register_t *);
+static int irix_syssgi_sysconf(int name, struct lwp *, register_t *);
+static int irix_syssgi_pathconf(char *, int, struct lwp *, register_t *);
 
 int
 irix_sys_syssgi(l, v, retval)

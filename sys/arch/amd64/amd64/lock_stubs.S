@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.6.2.1 2007/11/19 00:46:07 mjf Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.6.2.2 2007/12/08 18:16:24 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -49,6 +49,7 @@
 #include "opt_lockdebug.h"
 
 #include <machine/asm.h>
+#include <machine/frameasm.h>
 
 #include "assym.h"
 
@@ -136,11 +137,11 @@ NENTRY(mutex_spin_exit)
 	cmpl	CPU_INFO_ILEVEL(%r8), %edi
 	jae	1f
 	movl	CPU_INFO_IUNMASK(%r8,%rdi,4), %esi
-	cli	
+	CLI(ax,10)
 	testl	CPU_INFO_IPENDING(%r8), %esi
 	jnz	_C_LABEL(Xspllower)
 	movl	%edi, CPU_INFO_ILEVEL(%r8)
-	sti
+	STI(ax,10)
 1:	rep					/* double byte ret as branch */
 	ret					/* target: see AMD docs */
 
@@ -289,38 +290,12 @@ ENTRY(sse2_mb_memory)
 END(sse2_mb_memory_end, 8)
 
 /*
- * Make sure code after the ret is properly encoded with nopness
- * by gas, or could stall newer processors.
- */
-
-ENTRY(x86_mb_nop)
-	nop
-	ret
-END(x86_mb_nop_end, 8)
-
-/*
- * XXX Don't belong here.
- */
-ENTRY(atomic_inc_uint)
-	LOCK(lockpatch9)
-	incl	(%rdi)
-	ret
-
-ENTRY(atomic_dec_uint_nv)
-	movl	$-1, %eax
-	LOCK(lockpatch10)
-	xaddl	%eax, (%rdi)
-	decl	%eax
-	ret
-
-/*
  * Patchpoints to replace with NOP when ncpu == 1.
  */
 #ifndef LOCKDEBUG
 LABEL(x86_lockpatch)
 	.quad	lockpatch1, lockpatch2, lockpatch3, lockpatch4
 	.quad	lockpatch5, lockpatch6, lockpatch7, lockpatch8
-	.quad	lockpatch9, lockpatch10
 #ifdef FULL
 	.quad	lockpatch11
 #endif

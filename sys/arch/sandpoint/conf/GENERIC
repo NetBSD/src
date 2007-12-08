@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.37 2007/10/17 19:56:54 garbled Exp $
+# $NetBSD: GENERIC,v 1.37.2.1 2007/12/08 18:17:42 mjf Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/sandpoint/conf/std.sandpoint"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.37 $"
+#ident 		"GENERIC-$Revision: 1.37.2.1 $"
 
 maxusers	32
 
@@ -230,7 +230,7 @@ midi*		at pcppi?		# MIDI interface to the PC speaker
 com0	at isa? port 0x3f8 irq 4	# standard PC serial ports
 com1	at isa? port 0x2f8 irq 3
 
-lpt0	at isa? port 0x278 irq 7	# standard PC parallel ports
+#lpt0	at isa? port 0x278 irq 7	# standard PC parallel ports
 
 #fdc0	at isa? port 0x3f0 irq 6 drq 2	# standard PC floppy controllers
 #fd*	at fdc? drive ?			# the drives themselves

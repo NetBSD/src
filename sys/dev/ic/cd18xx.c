@@ -1,4 +1,4 @@
-/*	$NetBSD: cd18xx.c,v 1.21 2007/10/19 11:59:49 ad Exp $	*/
+/*	$NetBSD: cd18xx.c,v 1.21.2.1 2007/12/08 18:19:34 mjf Exp $	*/
 
 /* XXXad does this even compile? */
 
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd18xx.c,v 1.21 2007/10/19 11:59:49 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd18xx.c,v 1.21.2.1 2007/12/08 18:19:34 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -689,15 +689,8 @@ cdttystart(tp)
 	if (p->p_tx_stopped)
 		goto out;
 
-	if (tp->t_outq.c_cc <= tp->t_lowat) {
-		if (ISSET(tp->t_state, TS_ASLEEP)) {
-			CLR(tp->t_state, TS_ASLEEP);
-			wakeup((void *)&tp->t_outq);
-		}
-		selwakeup(&tp->t_wsel);
-		if (tp->t_outq.c_cc == 0)
-			goto out;
-	}
+	if (!ttypull(tp))
+		goto out;
 
 	/* Grab the first contiguous region of buffer space. */
 	{

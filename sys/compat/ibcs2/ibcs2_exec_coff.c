@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_exec_coff.c,v 1.20 2007/10/19 12:16:37 ad Exp $	*/
+/*	$NetBSD: ibcs2_exec_coff.c,v 1.20.2.1 2007/12/08 18:18:39 mjf Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec_coff.c,v 1.20 2007/10/19 12:16:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec_coff.c,v 1.20.2.1 2007/12/08 18:18:39 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,23 +61,23 @@ __KERNEL_RCSID(0, "$NetBSD: ibcs2_exec_coff.c,v 1.20 2007/10/19 12:16:37 ad Exp 
 #include <compat/ibcs2/ibcs2_util.h>
 
 
-int exec_ibcs2_coff_prep_omagic __P((struct lwp *, struct exec_package *,
+int exec_ibcs2_coff_prep_omagic(struct lwp *, struct exec_package *,
 				     struct coff_filehdr *,
-				     struct coff_aouthdr *));
-int exec_ibcs2_coff_prep_nmagic __P((struct lwp *, struct exec_package *,
+				     struct coff_aouthdr *);
+int exec_ibcs2_coff_prep_nmagic(struct lwp *, struct exec_package *,
 				     struct coff_filehdr *,
-				     struct coff_aouthdr *));
-int exec_ibcs2_coff_prep_zmagic __P((struct lwp *, struct exec_package *,
+				     struct coff_aouthdr *);
+int exec_ibcs2_coff_prep_zmagic(struct lwp *, struct exec_package *,
 				     struct coff_filehdr *,
-				     struct coff_aouthdr *));
-void cpu_exec_ibcs2_coff_setup __P((int, struct proc *, struct exec_package *,
-				    void *));
+				     struct coff_aouthdr *);
+void cpu_exec_ibcs2_coff_setup(int, struct proc *, struct exec_package *,
+				    void *);
 
-static int coff_load_shlib __P((struct lwp *, const char *,
-		struct exec_package *));
-static int coff_find_section __P((struct lwp *, struct vnode *,
+static int coff_load_shlib(struct lwp *, const char *,
+		struct exec_package *);
+static int coff_find_section(struct lwp *, struct vnode *,
 				  struct coff_filehdr *, struct coff_scnhdr *,
-				  int));
+				  int);
 
 /*
  * exec_ibcs2_coff_makecmds(): Check if it's an coff-format executable.

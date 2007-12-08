@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.4 2007/10/17 19:58:41 garbled Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.4.2.1 2007/12/08 18:18:32 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.4 2007/10/17 19:58:41 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.4.2.1 2007/12/08 18:18:32 mjf Exp $");
 
 #include "opt_md.h"
 
@@ -66,8 +66,6 @@ cpu_configure(void)
 
 	splhigh();
 	splserial();
-
-	softintr_init();
 
 	config_hook_init();
 

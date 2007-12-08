@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.254.4.1 2007/11/19 00:49:10 mjf Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.254.4.2 2007/12/08 18:21:13 mjf Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.254.4.1 2007/11/19 00:49:10 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.254.4.2 2007/12/08 18:21:13 mjf Exp $");
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
@@ -1776,12 +1776,15 @@ ip_srcroute(void)
 }
 
 const int inetctlerrmap[PRC_NCMDS] = {
-	0,		0,		0,		0,
-	0,		EMSGSIZE,	EHOSTDOWN,	EHOSTUNREACH,
-	EHOSTUNREACH,	EHOSTUNREACH,	ECONNREFUSED,	ECONNREFUSED,
-	EMSGSIZE,	EHOSTUNREACH,	0,		0,
-	0,		0,		0,		0,
-	ENOPROTOOPT
+	[PRC_MSGSIZE] = EMSGSIZE,
+	[PRC_HOSTDEAD] = EHOSTDOWN,
+	[PRC_HOSTUNREACH] = EHOSTUNREACH,
+	[PRC_UNREACH_NET] = EHOSTUNREACH,
+	[PRC_UNREACH_HOST] = EHOSTUNREACH,
+	[PRC_UNREACH_PROTOCOL] = ECONNREFUSED,
+	[PRC_UNREACH_PORT] = ECONNREFUSED,
+	[PRC_UNREACH_SRCFAIL] = EHOSTUNREACH,
+	[PRC_PARAMPROB] = ENOPROTOOPT,
 };
 
 /*

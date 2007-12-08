@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.s,v 1.3 2007/03/11 16:46:52 thorpej Exp $	*/
+/*	$NetBSD: lock_stubs.s,v 1.3.24.1 2007/12/08 18:17:17 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -41,10 +41,6 @@
 #include <machine/asm.h>
 
 #include "assym.h"
-
-#if defined(DIAGNOSTIC)
-#define	FULL
-#endif
 
 	.file	"lock_stubs.s"
 	.text

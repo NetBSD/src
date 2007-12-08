@@ -1,4 +1,4 @@
-/*	$NetBSD: fs.h,v 1.47 2007/09/24 16:20:50 pooka Exp $	*/
+/*	$NetBSD: fs.h,v 1.47.4.1 2007/12/08 18:21:40 mjf Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -310,7 +310,7 @@ struct fs {
 	struct	csum fs_old_cstotal;	/* cylinder summary information */
 /* these fields are cleared at mount time */
 	int8_t	 fs_fmod;		/* super block modified flag */
-	int8_t	 fs_clean;		/* file system is clean flag */
+	uint8_t	 fs_clean;		/* file system is clean flag */
 	int8_t	 fs_ronly;		/* mounted read-only flag */
 	uint8_t	 fs_old_flags;		/* see FS_ flags below */
 	u_char	 fs_fsmnt[MAXMNTLEN];	/* name mounted on */

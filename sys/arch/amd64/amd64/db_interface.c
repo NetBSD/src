@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.11.2.1 2007/11/19 00:46:07 mjf Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.11.2.2 2007/12/08 18:16:22 mjf Exp $	*/
 
 /*
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.11.2.1 2007/11/19 00:46:07 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.11.2.2 2007/12/08 18:16:22 mjf Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.11.2.1 2007/11/19 00:46:07 mjf Ex
 #include <sys/proc.h>
 #include <sys/reboot.h>
 #include <sys/systm.h>
+#include <sys/atomic.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -53,7 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.11.2.1 2007/11/19 00:46:07 mjf Ex
 #include <machine/i82093var.h>
 #include <machine/i82489reg.h>
 #include <machine/i82489var.h>
-#include <machine/atomic.h>
 
 #include <ddb/db_sym.h>
 #include <ddb/db_command.h>
@@ -146,7 +146,7 @@ db_resume_others(void)
 		if (ci == NULL)
 			continue;
 		if (ci->ci_flags & CPUF_PAUSE)
-			x86_atomic_clearbits_l(&ci->ci_flags, CPUF_PAUSE);
+			atomic_and_32(&ci->ci_flags, ~CPUF_PAUSE);
 	}
 
 }
@@ -261,7 +261,7 @@ ddb_suspend(struct trapframe *frame)
 
 	ci->ci_ddb_regs = &regs;
 
-	x86_atomic_setbits_l(&ci->ci_flags, CPUF_PAUSE);
+	atomic_or_32(&ci->ci_flags, CPUF_PAUSE);
 
 	while (ci->ci_flags & CPUF_PAUSE)
 		;

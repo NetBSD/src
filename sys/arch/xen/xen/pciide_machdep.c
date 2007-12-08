@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_machdep.c,v 1.6.34.1 2007/11/19 00:47:10 mjf Exp $	*/
+/*	$NetBSD: pciide_machdep.c,v 1.6.34.2 2007/12/08 18:18:27 mjf Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_machdep.c,v 1.6.34.1 2007/11/19 00:47:10 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_machdep.c,v 1.6.34.2 2007/12/08 18:18:27 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,7 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: pciide_machdep.c,v 1.6.34.1 2007/11/19 00:47:10 mjf 
 #include <dev/pci/pciidereg.h>
 #include <dev/pci/pciidevar.h>
 
-#include <machine/evtchn.h>
+#include <xen/evtchn.h>
 
 #ifdef XEN3
 #include "ioapic.h"

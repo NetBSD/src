@@ -1,4 +1,4 @@
-/*	$NetBSD: agpreg.h,v 1.14.8.1 2007/11/19 00:48:06 mjf Exp $	*/
+/*	$NetBSD: agpreg.h,v 1.14.8.2 2007/12/08 18:19:40 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -205,7 +205,7 @@
 #define AGP_I855_GCC1_DEV2		0x08
 #define AGP_I855_GCC1_DEV2_ENABLED	0x00
 #define AGP_I855_GCC1_DEV2_DISABLED	0x08
-#define AGP_I855_GCC1_GMS		0x70
+#define AGP_I855_GCC1_GMS		0xf0	/* Top bit reserved pre-G33 */
 #define AGP_I855_GCC1_GMS_STOLEN_0M	0x00
 #define AGP_I855_GCC1_GMS_STOLEN_1M	0x10
 #define AGP_I855_GCC1_GMS_STOLEN_4M	0x20
@@ -245,6 +245,9 @@
 #define AGP_G33_PGTBL_SIZE_MASK		(3U << 8)
 #define AGP_G33_PGTBL_SIZE_1M		(1U << 8)
 #define AGP_G33_PGTBL_SIZE_2M		(2U << 8)
+
+#define AGP_G33_GCC1_GMS_STOLEN_128M	0x80
+#define AGP_G33_GCC1_GMS_STOLEN_256M	0x90
 
 /*
  * AMD64 GART registers

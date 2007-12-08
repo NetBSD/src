@@ -27,7 +27,7 @@
  *	i4b_i4bdrv.c - i4b userland interface driver
  *	--------------------------------------------
  *
- *	$Id: i4b_i4bdrv.c,v 1.31 2007/03/04 06:03:30 christos Exp $
+ *	$Id: i4b_i4bdrv.c,v 1.31.22.1 2007/12/08 18:21:19 mjf Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_i4bdrv.c,v 1.31 2007/03/04 06:03:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_i4bdrv.c,v 1.31.22.1 2007/12/08 18:21:19 mjf Exp $");
 
 #include "isdn.h"
 
@@ -1004,7 +1004,7 @@ isdnkqfilter(dev_t dev, struct knote *kn)
 		break;
 
 	default:
-		return (1);
+		return (EINVAL);
 	}
 
 	kn->kn_hook = NULL;

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_object.h,v 1.22 2006/10/12 10:14:20 yamt Exp $	*/
+/*	$NetBSD: uvm_object.h,v 1.22.30.1 2007/12/08 18:21:46 mjf Exp $	*/
 
 /*
  *
@@ -47,7 +47,7 @@
 
 struct uvm_object {
 	struct simplelock	vmobjlock;	/* lock on memq */
-	struct uvm_pagerops	*pgops;		/* pager ops */
+	const struct uvm_pagerops *pgops;	/* pager ops */
 	struct pglist		memq;		/* pages in this object */
 	int			uo_npages;	/* # of pages in memq */
 	int			uo_refs;	/* reference count */
@@ -72,10 +72,10 @@ struct uvm_object {
 
 #ifdef _KERNEL
 
-extern struct uvm_pagerops uvm_vnodeops;
-extern struct uvm_pagerops uvm_deviceops;
-extern struct uvm_pagerops ubc_pager;
-extern struct uvm_pagerops aobj_pager;
+extern const struct uvm_pagerops uvm_vnodeops;
+extern const struct uvm_pagerops uvm_deviceops;
+extern const struct uvm_pagerops ubc_pager;
+extern const struct uvm_pagerops aobj_pager;
 
 #define	UVM_OBJ_IS_VNODE(uobj)						\
 	((uobj)->pgops == &uvm_vnodeops)

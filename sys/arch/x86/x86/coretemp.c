@@ -1,4 +1,4 @@
-/* $NetBSD: coretemp.c,v 1.1.4.1 2007/11/19 00:47:01 mjf Exp $ */
+/* $NetBSD: coretemp.c,v 1.1.4.2 2007/12/08 18:18:11 mjf Exp $ */
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coretemp.c,v 1.1.4.1 2007/11/19 00:47:01 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coretemp.c,v 1.1.4.2 2007/12/08 18:18:11 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -154,14 +154,16 @@ static void
 coretemp_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 {
 	struct coretemp_softc *sc = sme->sme_cookie;
+	uint64_t where;
 
 	/*
 	 * No need to cross-call if we are running on the same CPU.
 	 */
-	if (curcpu() != sc->sc_ci)
-		(void)xc_unicast(0, coretemp_refresh_xcall,
+	if (curcpu() != sc->sc_ci) {
+		where = xc_unicast(0, coretemp_refresh_xcall,
 		    sc, edata, sc->sc_ci);
-	else
+		xc_wait(where);
+	} else
 		coretemp_refresh_xcall(sc, edata);
 }
 

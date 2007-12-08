@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_misc.c,v 1.51 2007/10/19 12:16:40 ad Exp $	 */
+/*	$NetBSD: svr4_32_misc.c,v 1.51.2.1 2007/12/08 18:19:12 mjf Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_misc.c,v 1.51 2007/10/19 12:16:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_misc.c,v 1.51.2.1 2007/12/08 18:19:12 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,18 +102,18 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_32_misc.c,v 1.51 2007/10/19 12:16:40 ad Exp $")
 
 #include <uvm/uvm_extern.h>
 
-static int svr4_to_bsd_mmap_flags __P((int));
+static int svr4_to_bsd_mmap_flags(int);
 
-static inline clock_t timeval_to_clock_t __P((struct timeval *));
+static inline clock_t timeval_to_clock_t(struct timeval *);
 static int svr4_32_setinfo(int, struct rusage *, int, svr4_32_siginfo_tp);
 
 struct svr4_32_hrtcntl_args;
-static int svr4_32_hrtcntl	__P((struct proc *, struct svr4_32_hrtcntl_args *,
-    register_t *));
+static int svr4_32_hrtcntl(struct proc *, struct svr4_32_hrtcntl_args *,
+    register_t *);
 #define svr4_32_pfind(pid) p_find((pid), PFIND_UNLOCK | PFIND_ZOMBIE)
 
-static int svr4_32_mknod __P((struct lwp *, register_t *, const char *,
-    svr4_32_mode_t, svr4_32_dev_t));
+static int svr4_32_mknod(struct lwp *, register_t *, const char *,
+    svr4_32_mode_t, svr4_32_dev_t);
 
 int
 svr4_32_sys_wait(l, v, retval)
