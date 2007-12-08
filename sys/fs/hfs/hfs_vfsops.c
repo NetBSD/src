@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_vfsops.c,v 1.12 2007/11/26 19:01:45 pooka Exp $	*/
+/*	$NetBSD: hfs_vfsops.c,v 1.13 2007/12/08 19:29:43 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hfs_vfsops.c,v 1.12 2007/11/26 19:01:45 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hfs_vfsops.c,v 1.13 2007/12/08 19:29:43 pooka Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -217,7 +217,7 @@ hfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 		/*
 		 * Look up the name and verify that it's sane.
 		 */
-		NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, args->fspec, l);
+		NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, args->fspec);
 		if ((error = namei(&nd)) != 0)
 			return error;
 		devvp = nd.ni_vp;

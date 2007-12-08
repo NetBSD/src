@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_fcntl.c,v 1.31 2007/12/08 18:36:01 dsl Exp $	*/
+/*	$NetBSD: ibcs2_fcntl.c,v 1.32 2007/12/08 19:29:38 pooka Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Bartram
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_fcntl.c,v 1.31 2007/12/08 18:36:01 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_fcntl.c,v 1.32 2007/12/08 19:29:38 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -226,7 +226,7 @@ ibcs2_sys_eaccess(struct lwp *l, void *v, register_t *retval)
         struct nameidata nd;
 
         NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF | TRYEMULROOT, UIO_USERSPACE,
-            SCARG(uap, path), l);
+            SCARG(uap, path));
         if ((error = namei(&nd)) != 0)
                 return error;
         vp = nd.ni_vp;

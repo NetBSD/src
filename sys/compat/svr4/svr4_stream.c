@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stream.c,v 1.71 2007/12/08 18:36:26 dsl Exp $	 */
+/*	$NetBSD: svr4_stream.c,v 1.72 2007/12/08 19:29:40 pooka Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_stream.c,v 1.71 2007/12/08 18:36:26 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_stream.c,v 1.72 2007/12/08 19:29:40 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -311,7 +311,7 @@ clean_pipe(struct lwp *l, const char *path)
 	int error;
 
 	NDINIT(&nd, DELETE, NOFOLLOW | LOCKPARENT | LOCKLEAF | TRYEMULROOT,
-	    UIO_SYSSPACE, path, l);
+	    UIO_SYSSPACE, path);
 
 	error = namei(&nd);
 	if (error != 0)

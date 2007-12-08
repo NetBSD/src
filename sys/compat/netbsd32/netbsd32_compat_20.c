@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_20.c,v 1.17 2007/12/08 18:36:17 dsl Exp $	*/
+/*	$NetBSD: netbsd32_compat_20.c,v 1.18 2007/12/08 19:29:39 pooka Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_20.c,v 1.17 2007/12/08 18:36:17 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_20.c,v 1.18 2007/12/08 19:29:39 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,7 +162,8 @@ compat_20_netbsd32_statfs(struct lwp *l, void *v, register_t *retval)
 	int error;
 	struct nameidata nd;
 
-	NDINIT(&nd, LOOKUP, FOLLOW | TRYEMULROOT, UIO_USERSPACE, SCARG_P32(uap, path), l);
+	NDINIT(&nd, LOOKUP, FOLLOW | TRYEMULROOT, UIO_USERSPACE,
+	    SCARG_P32(uap, path));
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	mp = nd.ni_vp->v_mount;

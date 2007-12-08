@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_attr.c,v 1.20 2007/12/08 18:35:55 dsl Exp $ */
+/*	$NetBSD: darwin_attr.c,v 1.21 2007/12/08 19:29:38 pooka Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_attr.c,v 1.20 2007/12/08 18:35:55 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_attr.c,v 1.21 2007/12/08 19:29:38 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -148,7 +148,7 @@ darwin_sys_getattrlist(struct lwp *l, void *v, register_t *retval)
 	kauth_cred_setegid(cred, kauth_cred_getgid(l->l_cred));
 
 	NDINIT(&nd, LOOKUP, follow | LOCKLEAF | TRYEMULROOT, UIO_USERSPACE,
-	    SCARG(uap, path), l);
+	    SCARG(uap, path));
 	if ((error = namei(&nd)) != 0)
 		goto out2;
 
