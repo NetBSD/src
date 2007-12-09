@@ -1,4 +1,4 @@
-/*	$NetBSD: node.c,v 1.52 2007/12/07 14:59:22 pooka Exp $	*/
+/*	$NetBSD: node.c,v 1.53 2007/12/09 18:05:42 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: node.c,v 1.52 2007/12/07 14:59:22 pooka Exp $");
+__RCSID("$NetBSD: node.c,v 1.53 2007/12/09 18:05:42 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -159,8 +159,9 @@ psshfs_node_setattr(struct puffs_usermount *pu, void *opc,
 }
 
 int
-psshfs_node_create(struct puffs_usermount *pu, void *opc, struct puffs_newinfo *pni,
-	const struct puffs_cn *pcn, const struct vattr *va)
+psshfs_node_create(struct puffs_usermount *pu, void *opc,
+	struct puffs_newinfo *pni, const struct puffs_cn *pcn,
+	const struct vattr *va)
 {
 	PSSHFSAUTOVAR(pu);
 	struct puffs_node *pn = opc;
@@ -168,29 +169,40 @@ psshfs_node_create(struct puffs_usermount *pu, void *opc, struct puffs_newinfo *
 	char *fhand = NULL;
 	uint32_t fhandlen;
 
-	pn_new = allocnode(pu, pn, pcn->pcn_name, va);
-	if (!pn_new) {
-		rv = ENOMEM;
-		goto out;
-	}
-
+	/* Create node on server first */
 	psbuf_req_str(pb, SSH_FXP_OPEN, reqid, PCNPATH(pcn));
 	psbuf_put_4(pb, SSH_FXF_WRITE | SSH_FXF_CREAT | SSH_FXF_TRUNC);
 	psbuf_put_vattr(pb, va);
 	GETRESPONSE(pb);
-
 	rv = psbuf_expect_handle(pb, &fhand, &fhandlen);
-	if (rv == 0)
-		puffs_newinfo_setcookie(pni, pn_new);
-	else
+	if (rv)
 		goto out;
+
+	/*
+	 * Do *not* create the local node before getting a response
+	 * from the server.  Otherwise we might screw up consistency,
+	 * namely that the node can be looked up before create has
+	 * returned (mind you, the kernel will unlock the directory
+	 * before the create call from userspace returns).
+	 */
+	pn_new = allocnode(pu, pn, pcn->pcn_name, va);
+	if (!pn_new) {
+		struct puffs_framebuf *pb2 = psbuf_makeout();
+		reqid = NEXTREQ(pctx);
+		psbuf_req_str(pb2, SSH_FXP_REMOVE, reqid, PCNPATH(pcn));
+		JUSTSEND(pb2);
+		rv = ENOMEM;
+	}
+
+	if (pn_new)
+		puffs_newinfo_setcookie(pni, pn_new);
 
 	reqid = NEXTREQ(pctx);
 	psbuf_recycleout(pb);
 	psbuf_req_data(pb, SSH_FXP_CLOSE, reqid, fhand, fhandlen);
 	JUSTSEND(pb);
 	free(fhand);
-	return 0;
+	return rv;
 
  out:
 	free(fhand);
@@ -692,38 +704,42 @@ psshfs_node_rmdir(struct puffs_usermount *pu, void *opc, void *targ,
 }
 
 int
-psshfs_node_mkdir(struct puffs_usermount *pu, void *opc,  struct puffs_newinfo *pni,
-	const struct puffs_cn *pcn, const struct vattr *va)
+psshfs_node_mkdir(struct puffs_usermount *pu, void *opc,
+	struct puffs_newinfo *pni, const struct puffs_cn *pcn,
+	const struct vattr *va)
 {
 	PSSHFSAUTOVAR(pu);
 	struct puffs_node *pn = opc;
 	struct puffs_node *pn_new;
-
-	pn_new = allocnode(pu, pn, pcn->pcn_name, va);
-	if (!pn_new) {
-		rv = ENOMEM;
-		goto out;
-	}
 
 	psbuf_req_str(pb, SSH_FXP_MKDIR, reqid, PCNPATH(pcn));
 	psbuf_put_vattr(pb, va);
 	GETRESPONSE(pb);
 
 	rv = psbuf_expect_status(pb);
+	if (rv)
+		goto out;
 
-	if (rv == 0)
+	pn_new = allocnode(pu, pn, pcn->pcn_name, va);
+	if (pn_new) {
 		puffs_newinfo_setcookie(pni, pn_new);
-	else
-		nukenode(pn_new, pcn->pcn_name, 1);
+	} else {
+		struct puffs_framebuf *pb2 = psbuf_makeout();
+		reqid = NEXTREQ(pctx);
+		psbuf_recycleout(pb2);
+		psbuf_req_str(pb2, SSH_FXP_RMDIR, reqid, PCNPATH(pcn));
+		JUSTSEND(pb2);
+		rv = ENOMEM;
+	}
 
  out:
 	PSSHFSRETURN(rv);
 }
 
 int
-psshfs_node_symlink(struct puffs_usermount *pu, void *opc, struct puffs_newinfo *pni,
-	const struct puffs_cn *pcn, const struct vattr *va,
-	const char *link_target)
+psshfs_node_symlink(struct puffs_usermount *pu, void *opc,
+	struct puffs_newinfo *pni, const struct puffs_cn *pcn,
+	const struct vattr *va, const char *link_target)
 {
 	PSSHFSAUTOVAR(pu);
 	struct puffs_node *pn = opc;
@@ -731,12 +747,6 @@ psshfs_node_symlink(struct puffs_usermount *pu, void *opc, struct puffs_newinfo 
 
 	if (pctx->protover < 3) {
 		rv = EOPNOTSUPP;
-		goto out;
-	}
-
-	pn_new = allocnode(pu, pn, pcn->pcn_name, va);
-	if (!pn_new) {
-		rv = ENOMEM;
 		goto out;
 	}
 
@@ -749,10 +759,20 @@ psshfs_node_symlink(struct puffs_usermount *pu, void *opc, struct puffs_newinfo 
 	GETRESPONSE(pb);
 
 	rv = psbuf_expect_status(pb);
-	if (rv == 0)
+	if (rv)
+		goto out;
+
+	pn_new = allocnode(pu, pn, pcn->pcn_name, va);
+	if (pn_new) {
 		puffs_newinfo_setcookie(pni, pn_new);
-	else
-		nukenode(pn_new, pcn->pcn_name, 1);
+	} else {
+		struct puffs_framebuf *pb2 = psbuf_makeout();
+		reqid = NEXTREQ(pctx);
+		psbuf_recycleout(pb2);
+		psbuf_req_str(pb2, SSH_FXP_REMOVE, reqid, PCNPATH(pcn));
+		JUSTSEND(pb2);
+		rv = ENOMEM;
+	}
 
  out:
 	PSSHFSRETURN(rv);
