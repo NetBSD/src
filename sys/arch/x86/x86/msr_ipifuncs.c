@@ -1,4 +1,4 @@
-/* $NetBSD: msr_ipifuncs.c,v 1.11 2007/10/17 19:58:17 garbled Exp $ */
+/* $NetBSD: msr_ipifuncs.c,v 1.12 2007/12/09 15:33:13 ad Exp $ */
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -34,13 +34,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msr_ipifuncs.c,v 1.11 2007/10/17 19:58:17 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msr_ipifuncs.c,v 1.12 2007/12/09 15:33:13 ad Exp $");
 
 #include "opt_multiprocessor.h"
 
 #include <sys/param.h>
 #include <sys/mutex.h>
 #include <sys/lock.h>
+#include <sys/atomic.h>
 
 #include <x86/cpu_msr.h>
 
@@ -108,7 +109,7 @@ msr_cpu_broadcast(struct msr_cpu_broadcast *mcb)
 	 * Issue a full memory barrier, to make sure the operations
 	 * are done in a serialized way.
 	 */
-	mb_memory();
+	membar_sync();
 
 	/* Run the IPI write handler in the CPUs. */
 	msr_write_ipi(curcpu());
