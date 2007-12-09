@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.333.2.1 2007/12/04 13:03:22 ad Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.333.2.2 2007/12/09 22:24:49 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.333.2.1 2007/12/04 13:03:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.333.2.2 2007/12/09 22:24:49 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -435,6 +435,7 @@ do_sys_mount(struct lwp *l, struct vfsops *vfsops, const char *type,
 	struct vnode *vp;
 	struct nameidata nd;
 	void *data_buf = data;
+	u_int recurse;
 	int error;
 
 	/*
@@ -449,7 +450,8 @@ do_sys_mount(struct lwp *l, struct vfsops *vfsops, const char *type,
 	 * A lookup in VFS_MOUNT might result in an attempt to
 	 * lock this vnode again, so make the lock recursive.
 	 */
-	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY | LK_SETRECURSE);
+	recurse = vn_setrecurse(vp);
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
   
 	if (vfsops == NULL) {
 		if (flags & (MNT_GETARGS | MNT_UPDATE))
@@ -506,8 +508,8 @@ do_sys_mount(struct lwp *l, struct vfsops *vfsops, const char *type,
 	}
 
     done:
-	if (vp)
-		vput(vp);
+    	vn_restorerecurse(vp, recurse);
+	vput(vp);
 	if (data_buf != data)
 		free(data_buf, M_TEMP);
 	return (error);
