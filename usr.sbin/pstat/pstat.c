@@ -1,4 +1,4 @@
-/*	$NetBSD: pstat.c,v 1.103 2007/11/19 19:00:30 ad Exp $	*/
+/*	$NetBSD: pstat.c,v 1.104 2007/12/09 12:04:06 dogcow Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)pstat.c	8.16 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: pstat.c,v 1.103 2007/11/19 19:00:30 ad Exp $");
+__RCSID("$NetBSD: pstat.c,v 1.104 2007/12/09 12:04:06 dogcow Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,7 +55,6 @@ __RCSID("$NetBSD: pstat.c,v 1.103 2007/11/19 19:00:30 ad Exp $");
 #include <sys/mount.h>
 #undef NFS
 #include <sys/uio.h>
-#include <sys/namei.h>
 #include <miscfs/genfs/layer.h>
 #include <miscfs/union/union.h>
 #undef _KERNEL
