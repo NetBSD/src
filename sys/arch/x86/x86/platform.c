@@ -1,4 +1,4 @@
-/* $NetBSD: platform.c,v 1.2 2007/12/09 20:27:50 jmcneill Exp $ */
+/* $NetBSD: platform.c,v 1.3 2007/12/09 21:14:26 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: platform.c,v 1.2 2007/12/09 20:27:50 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: platform.c,v 1.3 2007/12/09 21:14:26 xtraeme Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -87,8 +87,6 @@ platform_print(void)
 	if (ver != NULL)
 		aprint_normal(" (%s)", ver);
 	aprint_normal("\n");
-
-	return;
 }
 
 static void
@@ -98,6 +96,4 @@ platform_add(struct smbtable *tbl, const char *key, int idx)
 
 	if (smbios_get_string(tbl, idx, tmpbuf, 128) != NULL)
 		pmf_set_platform(key, tmpbuf);
-
-	return;
 }
