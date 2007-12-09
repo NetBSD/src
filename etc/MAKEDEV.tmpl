@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.93 2007/12/08 17:52:34 apb Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.94 2007/12/09 08:46:16 apb Exp $
 #
 # Copyright (c) 2003,2007 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -305,10 +305,12 @@
 usage()
 {
 	cat 1>&2 << _USAGE_
-Usage: ${0##*/} [-f] [-m mknod] [-s]  special [...]
+Usage: ${0##*/} [-fMs] [-m mknod] [-p pax] special [...]
 	Create listed special devices.  Options:
 	-f		Force permissions to be updated on existing devices.
+	-M		Create memory file system.
 	-m mknod	Name of mknod(8) program.  [\$TOOL_MKNOD or mknod]
+	-p pax  	Name of pax(2) program.  [\$TOOL_PAX or pax]
 	-s		Generate mtree(8) specfile instead of creating devices.
 
 _USAGE_
@@ -363,6 +365,7 @@ setup()
 
 	do_create_mfs=false
 	do_force=false
+	do_mknod=false
 	do_pax=false
 	do_redirect=false
 	do_specfile=false
@@ -373,7 +376,7 @@ setup()
 		case ${ch} in
 		M)
 			# "-M" sets do_create_mfs;
-			# "-M -M" also sets do_redirect
+			# "-M -M" is for use from init(8), and sets do_redirect
 			do_redirect=$do_create_mfs
 			do_create_mfs=true
 			;;
@@ -381,14 +384,18 @@ setup()
 			opts="${opts} -f"
 			;;
 		m)	TOOL_MKNOD=${OPTARG}
+			do_mknod=true
 			opts="${opts} -m ${OPTARG}"
 			;;
 		p)	TOOL_PAX="${OPTARG}"
 			if ( echo "" | "${TOOL_PAX}" -w -M ); then
 				do_pax=true
+				# do not add this to $opts; we will later
+				# add "-s" instead.
 			else
 				warn "Ignored -p option:" \
 					"${TOOL_PAX} is missing or broken"
+				do_mknod=true
 			fi
 			;;
 		s)	do_specfile=true
@@ -400,13 +407,6 @@ setup()
 
 	shift $((${OPTIND} - 1))
 	[ $# -gt 0 ] || usage
-
-	MKNOD="${TOOL_MKNOD:-mknod} -F netbsd"
-	if $do_force; then
-		MKNOD="${MKNOD} -R"
-	else
-		MKNOD="${MKNOD} -r"
-	fi
 
 	u_root="%uid_root%"
 	u_uucp="%uid_uucp%"
@@ -431,6 +431,49 @@ setup()
 		nofdesc=true
 	fi
 
+	# do_force requires mknod
+	if $do_force; then
+		if $do_pax || $do_specfile; then
+			warn "-f option works only with mknod"
+		fi
+		do_mknod=true
+	fi
+
+	# If no other options take precedence, then default to
+	# using pax, if it appears to work.
+	if ! $do_mknod && ! $do_specfile && ! $do_pax; then
+		: ${TOOL_PAX:=pax}
+		if ( echo "" | "${TOOL_PAX}" -w -M 2>/dev/null ); then
+			do_pax=true
+		else
+			do_mknod=true
+		fi
+	fi
+
+	# Now we need exactly one of do_pax, do_mknod, or do_specfile.
+	case $(( $($do_pax && echo 1 || echo 0) + \
+		$($do_mknod && echo 1 || echo 0) + \
+		$($do_specfile && echo 1 || echo 0) ))
+	in
+	1)	: OK ;;
+	*)	
+		warn "-m, -p, and -s options are mutually exclusive"
+		exit 1
+		;;
+	esac
+
+	# If we are using mknod, then decide what options to pass it.
+	if $do_mknod; then
+		MKNOD="${TOOL_MKNOD:-mknod} -F netbsd"
+		if $do_force; then
+			MKNOD="${MKNOD} -R"
+		else
+			MKNOD="${MKNOD} -r"
+		fi
+	fi
+
+	# do_pax internally implies do_specfile.  This happens after
+	# checking for mutually-exclusive options.
 	if $do_pax && ! $do_specfile; then
 		do_specfile=true
 		opts="${opts} -s"
