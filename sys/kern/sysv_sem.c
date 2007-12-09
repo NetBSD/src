@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_sem.c,v 1.68 2007/03/04 06:03:10 christos Exp $	*/
+/*	$NetBSD: sysv_sem.c,v 1.68.6.1 2007/12/09 16:04:02 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.68 2007/03/04 06:03:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.68.6.1 2007/12/09 16:04:02 reinoud Exp $");
 
 #define SYSVSEM
 
@@ -577,6 +577,35 @@ sys_semop(struct lwp *l, void *v, register_t *retval)
 	int do_wakeup, do_undos;
 
 	SEM_PRINTF(("call to semop(%d, %p, %zd)\n", semid, SCARG(uap,sops), nsops));
+restart:
+	if (nsops <= SMALL_SOPS) {
+		sops = small_sops;
+	} else if (nsops <= seminfo.semopm) {
+		KERNEL_LOCK(1, l);		/* XXXSMP */
+		sops = kmem_alloc(nsops * sizeof(*sops), KM_SLEEP);
+		KERNEL_UNLOCK_ONE(l);		/* XXXSMP */
+	} else {
+		SEM_PRINTF(("too many sops (max=%d, nsops=%zd)\n",
+		    seminfo.semopm, nsops));
+		return (E2BIG);
+	}
+
+	error = copyin(SCARG(uap, sops), sops, nsops * sizeof(sops[0]));
+	if (error) {
+		SEM_PRINTF(("error = %d from copyin(%p, %p, %zd)\n", error,
+		    SCARG(uap, sops), &sops, nsops * sizeof(sops[0])));
+		if (sops != small_sops) {
+			KERNEL_LOCK(1, l);		/* XXXSMP */
+			kmem_free(sops, nsops * sizeof(*sops));
+			KERNEL_UNLOCK_ONE(l);		/* XXXSMP */
+		}
+		return error;
+	}
+
+	mutex_enter(&semlock);
+	/* In case of reallocation, we will wait for completion */
+	while (__predict_false(sem_realloc_state))
+		cv_wait(&sem_realloc_cv, &semlock);
 
 	semid = IPCID_TO_IX(semid);	/* Convert back to zero origin */
 	if (semid < 0 || semid >= seminfo.semmni)
@@ -601,13 +630,6 @@ sys_semop(struct lwp *l, void *v, register_t *retval)
 		SEM_PRINTF(("too many sops (max=%d, nsops=%zd)\n",
 		    seminfo.semopm, nsops));
 		return (E2BIG);
-	}
-
-	if ((eval = copyin(SCARG(uap, sops),
-	    sops, nsops * sizeof(sops[0]))) != 0) {
-		SEM_PRINTF(("eval = %d from copyin(%p, %p, %zd)\n", eval,
-		    SCARG(uap, sops), &sops, nsops * sizeof(sops[0])));
-		goto out;
 	}
 
 	for (i = 0; i < nsops; i++)

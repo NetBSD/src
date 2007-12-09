@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.c,v 1.10 2007/02/22 04:54:36 thorpej Exp $	*/
+/*	$NetBSD: gdt.c,v 1.10.8.1 2007/12/09 16:03:51 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -44,14 +44,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.10 2007/02/22 04:54:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.10.8.1 2007/12/09 16:03:51 reinoud Exp $");
 
 #include "opt_multiprocessor.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/lock.h>
+#include <sys/mutex.h>
 #include <sys/user.h>
 
 #include <uvm/uvm.h>
@@ -64,7 +64,7 @@ int gdt_dynavail;
 int gdt_next;		/* next available slot for sweeping */
 int gdt_free;		/* next free slot; terminated with GNULL_SEL */
 
-struct lock gdt_lock_store;
+kmutex_t gdt_lock_store;
 
 static inline void gdt_lock __P((void));
 static inline void gdt_unlock __P((void));
@@ -85,15 +85,14 @@ void gdt_put_slot __P((int));
 static inline void
 gdt_lock()
 {
-
-	(void) lockmgr(&gdt_lock_store, LK_EXCLUSIVE, NULL);
+	mutex_enter(&gdt_lock_store);
 }
 
 static inline void
 gdt_unlock()
 {
 
-	(void) lockmgr(&gdt_lock_store, LK_RELEASE, NULL);
+	mutex_exit(&gdt_lock_store);
 }
 
 void
@@ -156,7 +155,7 @@ gdt_init()
 	vaddr_t va;
 	struct cpu_info *ci = &cpu_info_primary;
 
-	lockinit(&gdt_lock_store, PZERO, "gdtlck", 0, 0);
+	mutex_init(&gdt_lock_store, MUTEX_DEFAULT, IPL_NONE);
 
 	gdt_size = MINGDTSIZ;
 	gdt_dyncount = 0;

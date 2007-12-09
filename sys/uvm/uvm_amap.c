@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.80 2007/03/12 18:18:38 ad Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.80.4.1 2007/12/09 16:04:15 reinoud Exp $	*/
 
 /*
  *
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.80 2007/03/12 18:18:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.80.4.1 2007/12/09 16:04:15 reinoud Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -57,16 +57,13 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.80 2007/03/12 18:18:38 ad Exp $");
 #include <uvm/uvm_swap.h>
 
 /*
- * pool for allocation of vm_map structures.  note that the pool has
- * its own simplelock for its protection.  also note that in order to
- * avoid an endless loop, the amap pool's allocator cannot allocate
+ * cache for allocation of vm_map structures.  note that in order to
+ * avoid an endless loop, the amap cache's allocator cannot allocate
  * memory from an amap (it currently goes through the kernel uobj, so
  * we are ok).
  */
-POOL_INIT(uvm_amap_pool, sizeof(struct vm_amap), 0, 0, 0, "amappl",
-    &pool_allocator_nointr, IPL_NONE);
-
-static struct simplelock amap_list_lock = SIMPLELOCK_INITIALIZER;
+static struct pool_cache uvm_amap_cache;
+static kmutex_t amap_list_lock;
 static LIST_HEAD(, vm_amap) amap_list;
 
 /*
@@ -182,7 +179,7 @@ amap_alloc1(int slots, int padslots, int waitf)
 	int totalslots;
 	km_flag_t kmflags;
 
-	amap = pool_get(&uvm_amap_pool,
+	amap = pool_cache_get(&uvm_amap_cache,
 	    ((waitf & UVM_FLAG_NOWAIT) != 0) ? PR_NOWAIT : PR_WAITOK);
 	if (amap == NULL)
 		return(NULL);
@@ -219,7 +216,8 @@ fail3:
 fail2:
 	kmem_free(amap->am_slots, totalslots * sizeof(int));
 fail1:
-	pool_put(&uvm_amap_pool, amap);
+	mutex_destroy(&amap->am_l);
+	pool_cache_put(&uvm_amap_cache, amap);
 
 	/*
 	 * XXX hack to tell the pagedaemon how many pages we need,
@@ -263,6 +261,18 @@ amap_alloc(vaddr_t sz, vaddr_t padsz, int waitf)
 	return(amap);
 }
 
+/*
+ * uvm_amap_init: initialize the amap system.
+ */
+void
+uvm_amap_init(void)
+{
+
+	mutex_init(&amap_list_lock, MUTEX_DEFAULT, IPL_NONE);
+
+	pool_cache_bootstrap(&uvm_amap_cache, sizeof(struct vm_amap), 0, 0, 0,
+	    "amappl", NULL, IPL_NONE, NULL, NULL, NULL);
+}
 
 /*
  * amap_free: free an amap
@@ -288,7 +298,8 @@ amap_free(struct vm_amap *amap)
 	if (amap->am_ppref && amap->am_ppref != PPREF_NONE)
 		kmem_free(amap->am_ppref, slots * sizeof(*amap->am_ppref));
 #endif
-	pool_put(&uvm_amap_pool, amap);
+	mutex_destroy(&amap->am_l);
+	pool_cache_put(&uvm_amap_cache, amap);
 	UVMHIST_LOG(maphist,"<- done, freed amap = 0x%x", amap, 0, 0, 0);
 }
 

@@ -1,4 +1,4 @@
-/* $NetBSD: envsys.h,v 1.10 2006/03/15 11:22:23 lukem Exp $ */
+/* $NetBSD: envsys.h,v 1.10.24.1 2007/12/09 16:04:10 reinoud Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -54,7 +54,53 @@ struct envsys_range {
 };
 typedef struct envsys_range envsys_range_t;
 
-#define ENVSYS_GRANGE _IOWR('E', 1, envsys_range_t)
+/* sensor drive states */
+enum envsys_drive_states {
+	ENVSYS_DRIVE_EMPTY	= 1,	/* drive is empty */
+	ENVSYS_DRIVE_READY,		/* drive is ready */
+	ENVSYS_DRIVE_POWERUP,		/* drive is powered up */
+	ENVSYS_DRIVE_ONLINE,		/* drive is online */
+	ENVSYS_DRIVE_IDLE,		/* drive is idle */
+	ENVSYS_DRIVE_ACTIVE,		/* drive is active */
+	ENVSYS_DRIVE_REBUILD,		/* drive is rebuilding */
+	ENVSYS_DRIVE_POWERDOWN,		/* drive is powered down */
+	ENVSYS_DRIVE_FAIL,		/* drive failed */
+	ENVSYS_DRIVE_PFAIL,		/* drive is degraded */
+	ENVSYS_DRIVE_MIGRATING		/* drive is migrating */
+};
+
+/* sensor battery capacity states */
+enum envsys_battery_capacity_states {
+	ENVSYS_BATTERY_CAPACITY_NORMAL	= 1,	/* normal cap in battery */
+	ENVSYS_BATTERY_CAPACITY_WARNING,	/* warning cap in battery */
+	ENVSYS_BATTERY_CAPACITY_CRITICAL,	/* critical cap in battery */
+	ENVSYS_BATTERY_CAPACITY_LOW		/* low cap in battery */
+};
+
+/* sensor flags */
+#define ENVSYS_FPERCENT 	0x00000001	/* sensor wants a percentage */
+#define ENVSYS_FVALID_MAX	0x00000002	/* max value is ok */
+#define ENVSYS_FVALID_MIN	0x00000004	/* min value is ok */
+#define ENVSYS_FVALID_AVG	0x00000008	/* avg value is ok */
+#define ENVSYS_FCHANGERFACT	0x00000010	/* sensor can change rfact */
+
+/* monitoring flags */
+#define ENVSYS_FMONCRITICAL	0x00000020	/* monitor a critical state */
+#define ENVSYS_FMONCRITUNDER	0x00000040	/* monitor a critunder state */
+#define ENVSYS_FMONCRITOVER	0x00000080	/* monitor a critover state */
+#define ENVSYS_FMONWARNUNDER	0x00000100	/* monitor a warnunder state */
+#define ENVSYS_FMONWARNOVER	0x00000200	/* monitor a warnover state */
+#define ENVSYS_FMONSTCHANGED	0x00000400	/* monitor a battery/drive state */
+#define ENVSYS_FMONNOTSUPP	0x00000800	/* monitoring not supported */
+
+#define ENVSYS_GETDICTIONARY	_IOWR('E', 0, struct plistref)
+#define ENVSYS_SETDICTIONARY	_IOWR('E', 1, struct plistref)
+#define ENVSYS_REMOVEPROPS	_IOWR('E', 2, struct plistref)
+
+/*
+ * Compatibility with old interface. Only ENVSYS_GTREDATA
+ * and ENVSYS_GTREINFO ioctls are supported.
+ */
 
 /* get sensor data */
 

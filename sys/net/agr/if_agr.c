@@ -1,4 +1,4 @@
-/*	$NetBSD: if_agr.c,v 1.11 2007/03/04 06:03:18 christos Exp $	*/
+/*	$NetBSD: if_agr.c,v 1.11.6.1 2007/12/09 16:04:05 reinoud Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.11 2007/03/04 06:03:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.11.6.1 2007/12/09 16:04:05 reinoud Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -819,7 +819,6 @@ agr_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct sockaddr *sa;
 	struct agrreq ar;
-	struct proc *p;
 	int error = 0;
 	int s;
 
@@ -860,8 +859,7 @@ agr_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	case SIOCSETAGR:
 		splx(s);
-		p = curproc; /* XXX */
-		error = kauth_authorize_network(p->p_cred,
+		error = kauth_authorize_network(kauth_cred_get(),
 		    KAUTH_NETWORK_INTERFACE,
 		    KAUTH_REQ_NETWORK_INTERFACE_SETPRIV, ifp, (void *)cmd,
 		    NULL);

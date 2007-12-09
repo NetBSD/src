@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.42.6.1 2007/03/29 19:28:01 reinoud Exp $	*/
+/*	$NetBSD: key.c,v 1.42.6.2 2007/12/09 16:04:07 reinoud Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.42.6.1 2007/03/29 19:28:01 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.42.6.2 2007/12/09 16:04:07 reinoud Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -1930,9 +1930,9 @@ key_spdadd(so, m, mhp)
 
 #if defined(GATEWAY)
 	/* Invalidate the ipflow cache, as well. */
-	ipflow_invalidate_all();
+	ipflow_invalidate_all(0);
 #ifdef INET6
-	ip6flow_invalidate_all();
+	ip6flow_invalidate_all(0);
 #endif /* INET6 */
 #endif /* GATEWAY */
 #endif /* __NetBSD__ */
