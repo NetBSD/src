@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.15.6.6 2007/12/03 16:14:51 joerg Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.15.6.7 2007/12/09 19:38:18 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.15.6.6 2007/12/03 16:14:51 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.15.6.7 2007/12/09 19:38:18 jmcneill Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -333,13 +333,12 @@ mutex_init(kmutex_t *mtx, kmutex_type_t type, int ipl)
 		break;
 	case MUTEX_DEFAULT:
 	case MUTEX_DRIVER:
-		switch (ipl) {
-		case IPL_NONE:
+		if (ipl == IPL_NONE || ipl == IPL_SOFTCLOCK ||
+		    ipl == IPL_SOFTBIO || ipl == IPL_SOFTNET ||
+		    ipl == IPL_SOFTSERIAL) {
 			type = MUTEX_ADAPTIVE;
-			break;
-		default:
+		} else {
 			type = MUTEX_SPIN;
-			break;
 		}
 		break;
 	default:

@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_socket.c,v 1.15 2007/06/24 18:07:34 dsl Exp $ */
+/*	$NetBSD: darwin_socket.c,v 1.15.6.1 2007/12/09 19:36:41 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_socket.c,v 1.15 2007/06/24 18:07:34 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_socket.c,v 1.15.6.1 2007/12/09 19:36:41 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -180,10 +180,7 @@ darwin_to_native_sockaddr(struct mbuf *nam)
 }
 
 int
-darwin_sys_socket(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+darwin_sys_socket(struct lwp *l, void *v, register_t *retval)
 {
 	struct darwin_sys_socket_args /* {
 		syscallarg(int) domain;
@@ -203,10 +200,7 @@ darwin_sys_socket(l, v, retval)
 }
 
 int
-darwin_sys_recvfrom(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+darwin_sys_recvfrom(struct lwp *l, void *v, register_t *retval)
 {
 	struct darwin_sys_recvfrom_args /* {
 		syscallarg(int) s;
@@ -243,10 +237,7 @@ darwin_sys_recvfrom(l, v, retval)
 }
 
 int
-darwin_sys_accept(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+darwin_sys_accept(struct lwp *l, void *v, register_t *retval)
 {
 	struct darwin_sys_accept_args /* {
 		syscallarg(int) s;
@@ -272,10 +263,7 @@ darwin_sys_accept(l, v, retval)
 }
 
 int
-darwin_sys_getpeername(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+darwin_sys_getpeername(struct lwp *l, void *v, register_t *retval)
 {
 	struct darwin_sys_getpeername_args /* {
 		syscallarg(int) fdes;
@@ -299,10 +287,7 @@ darwin_sys_getpeername(l, v, retval)
 }
 
 int
-darwin_sys_getsockname(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+darwin_sys_getsockname(struct lwp *l, void *v, register_t *retval)
 {
 	struct darwin_sys_getsockname_args /* {
 		syscallarg(int) fdes;
@@ -326,10 +311,7 @@ darwin_sys_getsockname(l, v, retval)
 }
 
 int
-darwin_sys_connect(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+darwin_sys_connect(struct lwp *l, void *v, register_t *retval)
 {
 	struct darwin_sys_connect_args /* {
 		syscallarg(int) s;
@@ -350,10 +332,7 @@ darwin_sys_connect(l, v, retval)
 }
 
 int
-darwin_sys_bind(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+darwin_sys_bind(struct lwp *l, void *v, register_t *retval)
 {
 	struct darwin_sys_bind_args /* {
 		syscallarg(int) s;
@@ -374,10 +353,7 @@ darwin_sys_bind(l, v, retval)
 }
 
 int
-darwin_sys_sendto(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+darwin_sys_sendto(struct lwp *l, void *v, register_t *retval)
 {
 	struct darwin_sys_sendto_args /* {
 		syscallarg(int) s;

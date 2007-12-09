@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_utsname.c,v 1.3.8.1 2007/11/11 16:47:18 joerg Exp $ */
+/*	$NetBSD: linux32_utsname.c,v 1.3.8.2 2007/12/09 19:37:10 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_utsname.c,v 1.3.8.1 2007/11/11 16:47:18 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_utsname.c,v 1.3.8.2 2007/12/09 19:37:10 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -70,10 +70,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_utsname.c,v 1.3.8.1 2007/11/11 16:47:18 joer
 #include <compat/linux32/linux32_syscallargs.h>
 
 int
-linux32_sys_uname(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_uname(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux32_sys_uname_args /* {
 		syscallarg(linux32_utsnamep) up;
@@ -94,10 +91,7 @@ linux32_sys_uname(l, v, retval)
 }
 
 int   
-linux32_sys_oldolduname(l, v, retval)
-        struct lwp *l;
-        void *v;
-        register_t *retval;
+linux32_sys_oldolduname(struct lwp *l, void *v, register_t *retval)
 {
         struct linux32_sys_uname_args /* {
                 syscallarg(linux32_oldoldutsnamep_t) up;

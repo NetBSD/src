@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_kq.c,v 1.15.6.1 2007/11/27 19:39:00 joerg Exp $	*/
+/*	$NetBSD: nfs_kq.c,v 1.15.6.2 2007/12/09 19:38:43 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_kq.c,v 1.15.6.1 2007/11/27 19:39:00 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_kq.c,v 1.15.6.2 2007/12/09 19:38:43 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -264,7 +264,7 @@ nfs_kqfilter(void *v)
 		kn->kn_fop = &nfsvnode_filtops;
 		break;
 	default:
-		return (1);
+		return (EINVAL);
 	}
 
 	kn->kn_hook = vp;

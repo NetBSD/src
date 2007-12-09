@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_net.c,v 1.34.14.1 2007/08/16 11:02:46 jmcneill Exp $	*/
+/*	$NetBSD: hpux_net.c,v 1.34.14.2 2007/12/09 19:36:46 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_net.c,v 1.34.14.1 2007/08/16 11:02:46 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_net.c,v 1.34.14.2 2007/12/09 19:36:46 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,10 +120,10 @@ struct hpux_sys_getsockopt_args {
 	syscallarg(int *) avalsize;
 };
 
-int	hpux_sys_setsockopt	__P((struct lwp *, void *, register_t *));
-int	hpux_sys_getsockopt	__P((struct lwp *, void *, register_t *));
+int	hpux_sys_setsockopt(struct lwp *, void *, register_t *);
+int	hpux_sys_getsockopt(struct lwp *, void *, register_t *);
 
-void	socksetsize __P((int, struct mbuf *));
+void	socksetsize(int, struct mbuf *);
 
 
 #define MINBSDIPCCODE	0x3EE
@@ -135,7 +135,7 @@ void	socksetsize __P((int, struct mbuf *));
  */
 
 struct hpuxtobsdipc {
-	int (*rout) __P((struct lwp *, void *, register_t *));
+	int (*rout)(struct lwp *, void *, register_t *);
 	int nargs;
 } hpuxtobsdipc[NUMBSDIPC] = {
 	{ compat_30_sys_socket,		3 }, /* 3ee */
@@ -177,10 +177,7 @@ struct hpuxtobsdipc {
  * Gleened from disassembled libbsdipc.a syscall entries.
  */
 int
-hpux_sys_netioctl(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+hpux_sys_netioctl(struct lwp *l, void *v, register_t *retval)
 {
 	struct hpux_sys_netioctl_args *uap = v;
 	int *args, i;
@@ -203,9 +200,7 @@ hpux_sys_netioctl(l, v, retval)
 }
 
 void
-socksetsize(size, m)
-	int size;
-	struct mbuf *m;
+socksetsize(int size, struct mbuf *m)
 {
 	int tmp;
 
@@ -231,10 +226,7 @@ socksetsize(size, m)
 
 /* ARGSUSED */
 int
-hpux_sys_setsockopt(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+hpux_sys_setsockopt(struct lwp *l, void *v, register_t *retval)
 {
 	struct hpux_sys_setsockopt_args *uap = v;
 	struct proc *p = l->l_proc;
@@ -279,10 +271,7 @@ hpux_sys_setsockopt(l, v, retval)
 
 /* ARGSUSED */
 int
-hpux_sys_setsockopt2(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+hpux_sys_setsockopt2(struct lwp *l, void *v, register_t *retval)
 {
 	struct hpux_sys_setsockopt2_args *uap = v;
 	struct proc *p = l->l_proc;
@@ -315,10 +304,7 @@ hpux_sys_setsockopt2(l, v, retval)
 }
 
 int
-hpux_sys_getsockopt(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+hpux_sys_getsockopt(struct lwp *l, void *v, register_t *retval)
 {
 	struct hpux_sys_getsockopt_args *uap = v;
 	struct proc *p = l->l_proc;

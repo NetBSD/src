@@ -1,4 +1,4 @@
-/*	$NetBSD: audio_if.h,v 1.63 2007/03/04 06:01:41 christos Exp $	*/
+/*	$NetBSD: audio_if.h,v 1.63.14.1 2007/12/09 19:37:39 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1994 Havard Eidnes.
@@ -270,11 +270,6 @@ int	audioprint(void *, const char *);
 #define ISDEVAUDIO(x)		(AUDIODEV((x)) == AUDIO_DEVICE)
 #define ISDEVAUDIOCTL(x)	(AUDIODEV((x)) == AUDIOCTL_DEVICE)
 #define ISDEVMIXER(x)		(AUDIODEV((x)) == MIXER_DEVICE)
-
-#if !defined(__i386__) && !defined(__arm32__) && !defined(IPL_AUDIO)
-#define splaudio splbio		/* XXX */
-#define IPL_AUDIO IPL_BIO	/* XXX */
-#endif
 
 /*
  * USB Audio specification defines 12 channels:

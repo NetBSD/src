@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.155.4.3 2007/11/27 19:39:31 joerg Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.155.4.4 2007/12/09 19:38:56 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.155.4.3 2007/11/27 19:39:31 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.155.4.4 2007/12/09 19:38:56 jmcneill Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -475,7 +475,7 @@ ufs_setattr(void *v)
 				error = EPERM;
 				goto out;
 			}
-			error = UFS_TRUNCATE(vp, vap->va_size, 0, cred, l);
+			error = UFS_TRUNCATE(vp, vap->va_size, 0, cred);
 			if (error)
 				goto out;
 			break;
@@ -1154,7 +1154,7 @@ ufs_rename(void *v)
 			DIP_ASSIGN(xp, nlink, xp->i_nlink);
 			xp->i_flag |= IN_CHANGE;
 			if ((error = UFS_TRUNCATE(tvp, (off_t)0, IO_SYNC,
-			    tcnp->cn_cred, tcnp->cn_lwp)))
+			    tcnp->cn_cred)))
 				goto bad;
 		}
 		VN_KNOTE(tdvp, NOTE_WRITE);
@@ -1527,8 +1527,7 @@ ufs_rmdir(void *v)
 		ip->i_ffs_effnlink--;
 		DIP_ASSIGN(ip, nlink, ip->i_nlink);
 		ip->i_flag |= IN_CHANGE;
-		error = UFS_TRUNCATE(vp, (off_t)0, IO_SYNC, cnp->cn_cred,
-		    cnp->cn_lwp);
+		error = UFS_TRUNCATE(vp, (off_t)0, IO_SYNC, cnp->cn_cred);
 	}
 	cache_purge(vp);
 #ifdef UFS_DIRHASH

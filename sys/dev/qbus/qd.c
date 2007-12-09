@@ -1,4 +1,4 @@
-/*	$NetBSD: qd.c,v 1.38.4.2 2007/11/21 21:55:46 joerg Exp $	*/
+/*	$NetBSD: qd.c,v 1.38.4.3 2007/12/09 19:37:56 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1988 Regents of the University of California.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qd.c,v 1.38.4.2 2007/11/21 21:55:46 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qd.c,v 1.38.4.3 2007/12/09 19:37:56 jmcneill Exp $");
 
 #include "opt_ddb.h"
 
@@ -1623,7 +1623,7 @@ qdkqfilter(dev_t dev, struct knote *kn)
 		break;
 
 	default:
-		return (1);
+		return (EINVAL);
 	}
 
 	kn->kn_hook = (void *)(intptr_t) dev;

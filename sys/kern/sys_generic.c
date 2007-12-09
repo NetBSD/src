@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.103.6.4 2007/10/26 15:48:42 joerg Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.103.6.5 2007/12/09 19:38:25 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.103.6.4 2007/10/26 15:48:42 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.103.6.5 2007/12/09 19:38:25 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1195,7 +1195,7 @@ void
 selsysinit(void)
 {
 
-	mutex_init(&select_lock, MUTEX_DRIVER, IPL_VM);
+	mutex_init(&select_lock, MUTEX_DEFAULT, IPL_VM);
 	cv_init(&select_cv, "select");
 }
 

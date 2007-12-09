@@ -1,4 +1,4 @@
-/* $NetBSD: lapic.c,v 1.20.22.10 2007/11/14 19:04:16 joerg Exp $ */
+/* $NetBSD: lapic.c,v 1.20.22.11 2007/12/09 19:36:29 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.20.22.10 2007/11/14 19:04:16 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.20.22.11 2007/12/09 19:36:29 jmcneill Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -244,6 +244,60 @@ uint32_t lapic_frac_usec_per_cycle;
 uint64_t lapic_frac_cycle_per_usec;
 uint32_t lapic_delaytab[26];
 
+static u_int
+lapic_get_timecount(struct timecounter *tc)
+{
+	struct cpu_info *ci;
+	uint32_t cur_timer;
+	int s;
+
+	s = splhigh();
+	ci = curcpu();
+
+	/*
+	 * Check for a race against the clockinterrupt.
+	 * The update of ci_lapic_counter is blocked by splhigh() and
+	 * the check for a pending clockinterrupt compensates for that.
+	 *
+	 * If the current tick is almost the Initial Counter, explicitly
+	 * check for the pending interrupt bit as the interrupt delivery
+	 * could be asynchronious and compensate as well.
+	 *
+	 * This can't be done without splhigh() as the calling code might
+	 * have masked the clockinterrupt already.
+	 *
+	 * This code assumes that clockinterrupts are not missed.
+	 */
+	cur_timer = lapic_gettick();
+	if (cur_timer >= lapic_tval - 1) {
+		uint16_t reg = LAPIC_IRR + LAPIC_TIMER_VECTOR / 32 * 16;
+
+		if (i82489_readreg(reg) & (1 << (LAPIC_TIMER_VECTOR % 32))) {
+			cur_timer -= lapic_tval;
+		}
+	} else if (ci->ci_istate.ipending & (1 << LIR_TIMER))
+		cur_timer = lapic_gettick() - lapic_tval;
+	cur_timer = ci->ci_lapic_counter - cur_timer;
+	splx(s);
+
+	return cur_timer;
+}
+
+static struct timecounter lapic_timecounter = {
+	lapic_get_timecount,
+	NULL,
+	~0u,
+	0,
+	"lapic",
+#ifndef MULTIPROCESSOR
+	2100,
+#else
+	-100, /* per CPU state */
+#endif
+	NULL,
+	NULL,
+};
+
 extern u_int i8254_get_timecount(struct timecounter *);
 
 void
@@ -258,6 +312,7 @@ lapic_clockintr(void *arg, struct intrframe *frame)
 #endif /* TIMECOUNTER_DEBUG */
 	struct cpu_info *ci = curcpu();
 
+	ci->ci_lapic_counter += lapic_tval;
 	ci->ci_isources[LIR_TIMER]->is_evcnt.ev_count++;
 
 #if defined(TIMECOUNTER_DEBUG)
@@ -448,6 +503,15 @@ lapic_calibrate_timer(struct cpu_info *ci)
 		delay_func = lapic_delay;
 		initclock_func = lapic_initclocks;
 		initrtclock(0);
+
+		if (lapic_timecounter.tc_frequency == 0) {
+			/*
+			 * Hook up time counter.
+			 * This assume that all LAPICs have the same frequency.
+			 */
+			lapic_timecounter.tc_frequency = lapic_per_second;
+			tc_init(&lapic_timecounter);
+		}
 	}
 }
 

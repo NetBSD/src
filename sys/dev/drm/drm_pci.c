@@ -1,4 +1,4 @@
-/* $NetBSD: drm_pci.c,v 1.4.12.1 2007/11/21 21:54:36 joerg Exp $ */
+/* $NetBSD: drm_pci.c,v 1.4.12.2 2007/12/09 19:37:46 jmcneill Exp $ */
 
 /*
  * Copyright 2003 Eric Anholt.
@@ -30,25 +30,12 @@ __FBSDID("$FreeBSD: src/sys/dev/drm/drm_pci.c,v 1.2 2005/11/28 23:13:52 anholt E
 
 #include "drmP.h"
 
-/* What might happen in age of Aquarius:
- *
- *
- * Allocate a physically contiguous DMA-accessible consistent 
- * memory block.
- */
-
-/* NetBSD reality:
- *
- * XXX We must fix this mess! This is a horrible misuse of bus_dma(9),
- *     and I am surprised it works at all.  			 
- */
-
 drm_dma_handle_t *
 drm_pci_alloc(drm_device_t *dev, size_t size, size_t align, dma_addr_t maxaddr)
 {
-	drm_dma_handle_t *dmah;
-	int ret;
-	int nsegs;
+	drm_dma_handle_t *h;
+	int error, rseg;
+
 
 	/* Need power-of-two alignment, so fail the allocation if it isn't. */
 	if ((align & (align - 1)) != 0) {
@@ -57,40 +44,45 @@ drm_pci_alloc(drm_device_t *dev, size_t size, size_t align, dma_addr_t maxaddr)
 		return NULL;
 	}
 
-	dmah = malloc(sizeof(drm_dma_handle_t), M_DRM, M_ZERO | M_NOWAIT);
-	if (dmah == NULL)
+	h = malloc(sizeof(drm_dma_handle_t), M_DRM, M_ZERO | M_NOWAIT);
+	if (!h)
 		return NULL;
-
-	ret = bus_dmamem_alloc(dev->pa.pa_dmat, size, align, 0,
-	    &dmah->seg, 1, &nsegs, BUS_DMA_NOWAIT);
-	if (ret != 0) {
-		aprint_error("%s: bus_dmamem_alloc(%zd, %zd) returned %d\n",
-		    __func__, size, align, ret);
-		free(dmah, M_DRM);
-		return NULL;
+	h->size = size;
+	if ((error = bus_dmamem_alloc(dev->pa.pa_dmat, size, align, 0,
+	    &h->seg, 1, &rseg, BUS_DMA_NOWAIT)) != 0) {
+		printf("drm: Unable to allocate DMA, error %d\n", error);
+		goto fail;
 	}
-	if(nsegs != 1) {
-		aprint_error("%s: bus_dmamem_alloc(%zd) returned %d segments\n",
-		    __func__, size, nsegs);
-		bus_dmamem_free(dev->pa.pa_dmat, &dmah->seg, nsegs);
-		free(dmah, M_DRM);
-		return NULL;
+	if ((error = bus_dmamem_map(dev->pa.pa_dmat, &h->seg, rseg, size, 
+	     &h->addr, BUS_DMA_NOWAIT | BUS_DMA_COHERENT)) != 0) {
+		printf("drm: Unable to map DMA, error %d\n", error);
+	     	goto free;
 	}
-
-	ret = bus_dmamem_map(dev->pa.pa_dmat, &dmah->seg, 1, size, &dmah->addr,
-	    BUS_DMA_NOWAIT);
-	if (ret != 0) {
-		bus_dmamem_free(dev->pa.pa_dmat, &dmah->seg, 1);
-		aprint_error("%s: bus_dmamem_map() failed %d\n", __func__,
-		    ret);
-		free(dmah, M_DRM);
-		return NULL;
+	if ((error = bus_dmamap_create(dev->pa.pa_dmat, size, 1, size, 0,
+	     BUS_DMA_NOWAIT, &h->map)) != 0) {
+		printf("drm: Unable to create DMA map, error %d\n", error);
+		goto unmap;
 	}
+	if ((error = bus_dmamap_load(dev->pa.pa_dmat, h->map, h->addr, size,
+	     NULL, BUS_DMA_NOWAIT)) != 0) {
+		printf("drm: Unable to load DMA map, error %d\n", error);
+		goto destroy;
+	}
+	h->busaddr = h->seg.ds_addr;
+	h->vaddr = h->addr;
 
-	dmah->busaddr = dmah->seg.ds_addr;
-	dmah->vaddr = dmah->addr;
+	return h;
 
-	return dmah;
+destroy:
+	bus_dmamap_destroy(dev->pa.pa_dmat, h->map);
+unmap:
+	bus_dmamem_unmap(dev->pa.pa_dmat, h->addr, size);
+free:
+	bus_dmamem_free(dev->pa.pa_dmat, h->addr, 1);
+fail:
+	free(h, M_DRM);
+	return NULL;
+	
 }
 
 /*
@@ -98,12 +90,14 @@ drm_pci_alloc(drm_device_t *dev, size_t size, size_t align, dma_addr_t maxaddr)
  */
 
 void
-drm_pci_free(drm_device_t *dev, drm_dma_handle_t *dmah)
+drm_pci_free(drm_device_t *dev, drm_dma_handle_t *h)
 {
-	if (dmah == NULL)
+	if (!h)
 		return;
+	bus_dmamap_unload(dev->pa.pa_dmat, h->map);
+	bus_dmamap_destroy(dev->pa.pa_dmat, h->map);
+	bus_dmamem_unmap(dev->pa.pa_dmat, h->addr, h->size);
+	bus_dmamem_free(dev->pa.pa_dmat, &h->seg, 1);
 
-	bus_dmamem_free(dev->pa.pa_dmat, &dmah->seg, 1);
-
-	free(dmah, M_DRM);
+	free(h, M_DRM);
 }

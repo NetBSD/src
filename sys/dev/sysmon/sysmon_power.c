@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_power.c,v 1.20.6.9 2007/12/08 16:21:36 jmcneill Exp $	*/
+/*	$NetBSD: sysmon_power.c,v 1.20.6.10 2007/12/09 19:38:00 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.20.6.9 2007/12/08 16:21:36 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.20.6.10 2007/12/09 19:38:00 jmcneill Exp $");
 
 #include "opt_compat_netbsd.h"
 #include <sys/param.h>
@@ -190,7 +190,7 @@ static void sysmon_power_destroy_dictionary(struct power_event_dictionary *);
 void
 sysmon_power_init(void)
 {
-	mutex_init(&sysmon_power_event_queue_mtx, MUTEX_DRIVER, IPL_NONE);
+	mutex_init(&sysmon_power_event_queue_mtx, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&sysmon_power_event_queue_cv, "smpower");
 }
 
@@ -520,7 +520,7 @@ sysmonkqfilter_power(dev_t dev, struct knote *kn)
 		break;
 
 	default:
-		return 1;
+		return EINVAL;
 	}
 
 	mutex_enter(&sysmon_power_event_queue_mtx);

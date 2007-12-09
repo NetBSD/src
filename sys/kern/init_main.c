@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.311.4.10 2007/11/21 21:55:57 joerg Exp $	*/
+/*	$NetBSD: init_main.c,v 1.311.4.11 2007/12/09 19:38:14 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.311.4.10 2007/11/21 21:55:57 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.311.4.11 2007/12/09 19:38:14 jmcneill Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_ntp.h"
@@ -678,7 +678,7 @@ check_console(struct lwp *l)
 	struct nameidata nd;
 	int error;
 
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, "/dev/console", l);
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, "/dev/console");
 	error = namei(&nd);
 	if (error == 0)
 		vrele(nd.ni_vp);

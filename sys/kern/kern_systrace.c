@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_systrace.c,v 1.74.6.2 2007/11/11 16:48:05 joerg Exp $	*/
+/*	$NetBSD: kern_systrace.c,v 1.74.6.3 2007/12/09 19:38:21 jmcneill Exp $	*/
 
 /*
  * Copyright 2002, 2003 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.74.6.2 2007/11/11 16:48:05 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.74.6.3 2007/12/09 19:38:21 jmcneill Exp $");
 
 #include "opt_systrace.h"
 
@@ -1521,7 +1521,7 @@ systrace_namei(struct nameidata *ndp)
 	int hamper = 0;
 
 	systrace_lock();
-	strp = cnp->cn_lwp->l_proc->p_systrace;
+	strp = curlwp->l_proc->p_systrace;
 	if (strp != NULL) {
 		fst = strp->parent;
 		SYSTRACE_LOCK(fst, curlwp);

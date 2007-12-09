@@ -1,4 +1,4 @@
-/*	$NetBSD: kloader.c,v 1.12 2007/02/21 22:59:58 thorpej Exp $	*/
+/*	$NetBSD: kloader.c,v 1.12.16.1 2007/12/09 19:37:41 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kloader.c,v 1.12 2007/02/21 22:59:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kloader.c,v 1.12.16.1 2007/12/09 19:37:41 jmcneill Exp $");
 
 #include "debug_kloader.h"
 
@@ -600,7 +600,7 @@ kloader_open(const char *filename)
 	struct nameidata nid;
 	int error;
 
-	NDINIT(&nid, LOOKUP, FOLLOW, UIO_SYSSPACE, filename, l);
+	NDINIT(&nid, LOOKUP, FOLLOW, UIO_SYSSPACE, filename);
 
 	error = namei(&nid);
 	if (error != 0) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_09.c,v 1.15 2007/03/18 21:38:33 dsl Exp $	*/
+/*	$NetBSD: netbsd32_compat_09.c,v 1.15.8.1 2007/12/09 19:37:17 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_09.c,v 1.15 2007/03/18 21:38:33 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_09.c,v 1.15.8.1 2007/12/09 19:37:17 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,10 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_09.c,v 1.15 2007/03/18 21:38:33 dsl 
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 
 int
-compat_09_netbsd32_ogetdomainname(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+compat_09_netbsd32_ogetdomainname(struct lwp *l, void *v, register_t *retval)
 {
 	struct compat_09_netbsd32_ogetdomainname_args /* {
 		syscallarg(netbsd32_charp) domainname;
@@ -64,10 +61,7 @@ compat_09_netbsd32_ogetdomainname(l, v, retval)
 }
 
 int
-compat_09_netbsd32_osetdomainname(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+compat_09_netbsd32_osetdomainname(struct lwp *l, void *v, register_t *retval)
 {
 	struct compat_09_netbsd32_osetdomainname_args /* {
 		syscallarg(netbsd32_charp) domainname;
@@ -82,10 +76,7 @@ compat_09_netbsd32_osetdomainname(l, v, retval)
 }
 
 int
-compat_09_netbsd32_uname(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+compat_09_netbsd32_uname(struct lwp *l, void *v, register_t *retval)
 {
 	struct compat_09_netbsd32_uname_args /* {
 		syscallarg(netbsd32_outsnamep_t) name;

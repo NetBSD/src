@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.31.6.2 2007/11/11 16:47:13 joerg Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.31.6.3 2007/12/09 19:36:57 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 1995, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.31.6.2 2007/11/11 16:47:13 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.31.6.3 2007/12/09 19:36:57 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,10 +102,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.31.6.2 2007/11/11 16:47:13 joerg
  * entry uses NetBSD's native setregs instead of linux_setregs
  */
 void
-linux_setregs(l, pack, stack)
-	struct lwp *l;
-	struct exec_package *pack;
-	u_long stack;
+linux_setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 {
 	setregs(l, pack, stack);
 	return;
@@ -121,9 +118,7 @@ linux_setregs(l, pack, stack)
  */
 
 void
-linux_sendsig(ksi, mask)
-	const ksiginfo_t *ksi;
-	const sigset_t *mask;
+linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 {
 	const int sig = ksi->ksi_signo;
 	struct lwp *l = curlwp;
@@ -240,10 +235,7 @@ linux_sendsig(ksi, mask)
  * stack state from context left by sendsig (above).
  */
 int
-linux_sys_sigreturn(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_sigreturn(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux_sys_sigreturn_args /* {
 		syscallarg(struct linux_sigframe *) sf;
@@ -294,10 +286,7 @@ linux_sys_sigreturn(l, v, retval)
 
 
 int
-linux_sys_rt_sigreturn(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_rt_sigreturn(struct lwp *l, void *v, register_t *retval)
 {
 	return (ENOSYS);
 }
@@ -305,10 +294,7 @@ linux_sys_rt_sigreturn(l, v, retval)
 
 #if 0
 int
-linux_sys_modify_ldt(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_modify_ldt(struct lwp *l, void *v, register_t *retval)
 {
 	/*
 	 * This syscall is not implemented in Linux/Mips: we should not
@@ -325,9 +311,7 @@ linux_sys_modify_ldt(l, v, retval)
  * major device numbers remapping
  */
 dev_t
-linux_fakedev(dev, raw)
-	dev_t dev;
-	int raw;
+linux_fakedev(dev_t dev, int raw)
 {
 	/* XXX write me */
 	return dev;
@@ -337,10 +321,7 @@ linux_fakedev(dev, raw)
  * We come here in a last attempt to satisfy a Linux ioctl() call
  */
 int
-linux_machdepioctl(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_machdepioctl(struct lwp *l, void *v, register_t *retval)
 {
 	return 0;
 }
@@ -350,10 +331,7 @@ linux_machdepioctl(l, v, retval)
  * just let it have the whole range.
  */
 int
-linux_sys_ioperm(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_ioperm(struct lwp *l, void *v, register_t *retval)
 {
 	/*
 	 * This syscall is not implemented in Linux/Mips: we should not be here
@@ -368,10 +346,7 @@ linux_sys_ioperm(l, v, retval)
  * wrapper linux_sys_new_uname() -> linux_sys_uname()
  */
 int
-linux_sys_new_uname(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_new_uname(struct lwp *l, void *v, register_t *retval)
 {
 /*
  * Use this if you want to try Linux emulation with a glibc-2.2
@@ -402,10 +377,7 @@ linux_sys_new_uname(l, v, retval)
  * we emulate this broken beahior.
  */
 int
-linux_sys_cacheflush(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_cacheflush(struct lwp *l, void *v, register_t *retval)
 {
 	mips_icache_sync_all();
 	mips_dcache_wbinv_all();
@@ -417,10 +389,7 @@ linux_sys_cacheflush(l, v, retval)
  * some binaries and some libraries use it.
  */
 int
-linux_sys_sysmips(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_sysmips(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux_sys_sysmips_args {
 		syscallarg(int) cmd;

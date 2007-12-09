@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.99 2007/06/12 03:34:29 mhitch Exp $	*/
+/*	$NetBSD: locore.s,v 1.99.8.1 2007/12/09 19:34:41 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990 The Regents of the University of California.
@@ -758,7 +758,7 @@ ENTRY_NOPROFILE(lev1intr)
 	movl	_C_LABEL(stio_addr),%a0 |  get KVA of ST-IO area
 	moveb	#0, %a0@(SCU_SOFTINT)	|  Turn off software interrupt
 	addql	#1,_C_LABEL(intrcnt)+16	|  add another software interrupt
-	jbsr	_C_LABEL(softintr_dispatch) |  XXX handle software interrupts
+	jbsr	_C_LABEL(nullop)	|  XXX handle software interrupts
 	moveml	%sp@+,%d0-%d1/%a0-%a1
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
 	jra	_ASM_LABEL(rei)

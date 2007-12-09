@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_extern.h,v 1.58.2.1 2007/08/16 11:03:59 jmcneill Exp $	*/
+/*	$NetBSD: ffs_extern.h,v 1.58.2.2 2007/12/09 19:38:52 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -104,7 +104,7 @@ int	ffs_balloc(struct vnode *, off_t, int, kauth_cred_t, int,
 /* ffs_inode.c */
 int	ffs_update(struct vnode *, const struct timespec *,
     const struct timespec *, int);
-int	ffs_truncate(struct vnode *, off_t, int, kauth_cred_t, struct lwp *);
+int	ffs_truncate(struct vnode *, off_t, int, kauth_cred_t);
 
 /* ffs_vfsops.c */
 VFS_PROTOS(ffs);

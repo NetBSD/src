@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.70.18.1 2007/12/03 16:14:19 joerg Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.70.18.2 2007/12/09 19:36:21 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.70.18.1 2007/12/03 16:14:19 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.70.18.2 2007/12/09 19:36:21 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,12 +79,6 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.70.18.1 2007/12/03 16:14:19 joerg Exp
 void 
 cpu_configure(void)
 {
-
-	/*
-	 * Install handlers for our "soft" interrupts.
-	 * There might be a better place to do this?
-	 */
-	softintr_init();
 
 	/* General device autoconfiguration. */
 	if (config_rootfound("mainbus", NULL) == NULL)
@@ -319,8 +313,8 @@ find_dev_byname(char *name)
 {
 	struct device *dv;
 
-	for (dv = alldevs.tqh_first; dv != NULL;
-	    dv = dv->dv_list.tqe_next) {
+	for (dv = TAILQ_FIRST(&alldevs); dv != NULL;
+	    dv = TAILQ_NEXT(dv, dv_list)) {
 		if (!strcmp(dv->dv_xname, name)) {
 			return dv;
 		}

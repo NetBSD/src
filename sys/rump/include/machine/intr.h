@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.4.2.4 2007/11/11 16:48:44 joerg Exp $	*/
+/*	$NetBSD: intr.h,v 1.4.2.5 2007/12/09 19:38:46 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -42,13 +42,12 @@ void rump_splx(int);
 #define splraise(x) 0
 #define splsoftnet() rump_splfoo()
 #define splhigh() rump_splfoo()
-#define splclock() rump_splfoo()
-#define splbio() rump_splfoo()
+#define splsched() rump_splfoo()
 #define splvm() rump_splfoo()
 #define splx(x) rump_splx(x)
 
 #define IPL_NONE 0
-#define IPL_BIO 0
+#define IPL_SCHED 0
 #define IPL_VM 0
 
 #endif /* _SYS_RUMP_INTR_H_ */

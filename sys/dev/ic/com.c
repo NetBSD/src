@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.261.6.3 2007/11/21 21:54:49 joerg Exp $	*/
+/*	$NetBSD: com.c,v 1.261.6.4 2007/12/09 19:37:48 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.261.6.3 2007/11/21 21:54:49 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.261.6.4 2007/12/09 19:37:48 jmcneill Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -382,7 +382,7 @@ com_attach_subr(struct com_softc *sc)
 	aprint_naive("\n");
 
 	callout_init(&sc->sc_diag_callout, 0);
-	mutex_init(&sc->sc_lock, MUTEX_SPIN, IPL_SERIAL);
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_HIGH);
 
 	/* Disable interrupts before configuring the device. */
 	if (sc->sc_type == COM_TYPE_PXA2x0)

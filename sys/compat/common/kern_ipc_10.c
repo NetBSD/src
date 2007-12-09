@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ipc_10.c,v 1.21 2007/06/17 10:24:21 dsl Exp $	*/
+/*	$NetBSD: kern_ipc_10.c,v 1.21.6.1 2007/12/09 19:36:36 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass and Charles M. Hannum.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ipc_10.c,v 1.21 2007/06/17 10:24:21 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ipc_10.c,v 1.21.6.1 2007/12/09 19:36:36 jmcneill Exp $");
 
 #include "opt_sysv.h"
 
@@ -50,10 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_ipc_10.c,v 1.21 2007/06/17 10:24:21 dsl Exp $")
 
 #if defined(SYSVSEM) && !defined(_LP64)
 int
-compat_10_sys_semsys(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+compat_10_sys_semsys(struct lwp *l, void *v, register_t *retval)
 {
 	struct compat_10_sys_semsys_args /* {
 		syscallarg(int) which;
@@ -130,10 +127,7 @@ compat_10_sys_semsys(l, v, retval)
 
 #if defined(SYSVSHM) && !defined(_LP64)
 int
-compat_10_sys_shmsys(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+compat_10_sys_shmsys(struct lwp *l, void *v, register_t *retval)
 {
 	struct compat_10_sys_shmsys_args /* {
 		syscallarg(int) which;
@@ -194,10 +188,7 @@ compat_10_sys_shmsys(l, v, retval)
 
 #if defined(SYSVMSG) && !defined(_LP64)
 int
-compat_10_sys_msgsys(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+compat_10_sys_msgsys(struct lwp *l, void *v, register_t *retval)
 {
 	struct compat_10_sys_msgsys_args /* {
 		syscallarg(int) which;

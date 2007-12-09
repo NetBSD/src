@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_stat.c,v 1.9 2007/04/30 14:05:47 dsl Exp $ */
+/*	$NetBSD: darwin_stat.c,v 1.9.6.1 2007/12/09 19:36:41 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_stat.c,v 1.9 2007/04/30 14:05:47 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_stat.c,v 1.9.6.1 2007/12/09 19:36:41 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -64,10 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_stat.c,v 1.9 2007/04/30 14:05:47 dsl Exp $");
 #include <compat/darwin/darwin_syscallargs.h>
 
 int
-darwin_sys_stat(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+darwin_sys_stat(struct lwp *l, void *v, register_t *retval)
 {
 	struct darwin_sys_stat_args /* {
 		syscallarg(char *) path;
@@ -89,10 +86,7 @@ darwin_sys_stat(l, v, retval)
 }
 
 int
-darwin_sys_fstat(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+darwin_sys_fstat(struct lwp *l, void *v, register_t *retval)
 {
 	struct darwin_sys_fstat_args /* {
 		syscallarg(int) fd;
@@ -114,10 +108,7 @@ darwin_sys_fstat(l, v, retval)
 }
 
 int
-darwin_sys_lstat(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+darwin_sys_lstat(struct lwp *l, void *v, register_t *retval)
 {
 	struct darwin_sys_lstat_args /* {
 		syscallarg(char *) path;
@@ -139,10 +130,7 @@ darwin_sys_lstat(l, v, retval)
 }
 
 int
-darwin_sys_mknod(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+darwin_sys_mknod(struct lwp *l, void *v, register_t *retval)
 {
 	struct darwin_sys_mknod_args /* {
 		syscallarg(char) path;

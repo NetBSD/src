@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.46.6.5 2007/12/03 16:15:23 joerg Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.46.6.6 2007/12/09 19:38:52 jmcneill Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.46.6.5 2007/12/03 16:15:23 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.46.6.6 2007/12/09 19:38:52 jmcneill Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -252,7 +252,7 @@ ffs_snapshot(struct mount *mp, struct vnode *vp,
 		return EACCES;
 
 	if (vp->v_size != 0) {
-		error = ffs_truncate(vp, 0, 0, NOCRED, l);
+		error = ffs_truncate(vp, 0, 0, NOCRED);
 		if (error)
 			return error;
 	}
@@ -739,7 +739,7 @@ out:
 	}
 	mp->mnt_flag = flag;
 	if (error)
-		(void) ffs_truncate(vp, (off_t)0, 0, NOCRED, l);
+		(void) ffs_truncate(vp, (off_t)0, 0, NOCRED);
 	else
 		vref(vp);
 	return (error);

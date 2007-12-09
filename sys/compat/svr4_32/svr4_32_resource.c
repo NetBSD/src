@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_resource.c,v 1.11 2007/03/16 22:21:43 dsl Exp $	 */
+/*	$NetBSD: svr4_32_resource.c,v 1.11.8.1 2007/12/09 19:37:36 jmcneill Exp $	 */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_resource.c,v 1.11 2007/03/16 22:21:43 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_resource.c,v 1.11.8.1 2007/12/09 19:37:36 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,11 +56,10 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_32_resource.c,v 1.11 2007/03/16 22:21:43 dsl Ex
 #include <compat/svr4_32/svr4_32_syscallargs.h>
 #include <compat/svr4_32/svr4_32_util.h>
 
-static inline int svr4_to_native_rl __P((int));
+static inline int svr4_to_native_rl(int);
 
 static inline int
-svr4_to_native_rl(rl)
-	int rl;
+svr4_to_native_rl(int rl)
 {
 	switch (rl) {
 	case SVR4_RLIMIT_CPU:
@@ -97,10 +96,7 @@ svr4_to_native_rl(rl)
 	((svr4_rlim64_t)(l)) != SVR4_RLIM64_SAVED_MAX)
 
 int
-svr4_32_sys_getrlimit(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_32_sys_getrlimit(struct lwp *l, void *v, register_t *retval)
 {
 	struct svr4_32_sys_getrlimit_args *uap = v;
 	struct proc *p = l->l_proc;
@@ -162,10 +158,7 @@ svr4_32_sys_getrlimit(l, v, retval)
 
 
 int
-svr4_32_sys_setrlimit(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_32_sys_setrlimit(struct lwp *l, void *v, register_t *retval)
 {
 	struct svr4_32_sys_setrlimit_args *uap = v;
 	struct proc *p = l->l_proc;
@@ -215,10 +208,7 @@ svr4_32_sys_setrlimit(l, v, retval)
 
 
 int
-svr4_32_sys_getrlimit64(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_32_sys_getrlimit64(struct lwp *l, void *v, register_t *retval)
 {
 	struct svr4_32_sys_getrlimit64_args *uap = v;
 	struct proc *p = l->l_proc;
@@ -264,10 +254,7 @@ svr4_32_sys_getrlimit64(l, v, retval)
 
 
 int
-svr4_32_sys_setrlimit64(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_32_sys_setrlimit64(struct lwp *l, void *v, register_t *retval)
 {
 	struct svr4_32_sys_setrlimit64_args *uap = v;
 	struct proc *p = l->l_proc;

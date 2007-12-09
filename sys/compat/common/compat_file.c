@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_file.c,v 1.23 2007/07/14 15:47:27 dsl Exp $ */
+/*	$NetBSD: compat_file.c,v 1.23.6.1 2007/12/09 19:36:36 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_file.c,v 1.23 2007/07/14 15:47:27 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_file.c,v 1.23.6.1 2007/12/09 19:36:36 jmcneill Exp $");
 
 #include "opt_compat_darwin.h"
 #include "opt_nfsserver.h"
@@ -72,10 +72,7 @@ __KERNEL_RCSID(0, "$NetBSD: compat_file.c,v 1.23 2007/07/14 15:47:27 dsl Exp $")
 #include <compat/common/compat_util.h>
 
 int
-bsd_sys_open(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+bsd_sys_open(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_open_args /* {
 		syscallarg(char *) path;
@@ -87,10 +84,7 @@ bsd_sys_open(l, v, retval)
 }
 
 int
-bsd_compat_43_sys_creat(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+bsd_compat_43_sys_creat(struct lwp *l, void *v, register_t *retval)
 {
 	struct compat_43_sys_creat_args /* {
 		syscallarg(char *) path;
@@ -101,10 +95,7 @@ bsd_compat_43_sys_creat(l, v, retval)
 }
 
 int
-bsd_sys_link(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+bsd_sys_link(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_link_args /* {
 		syscallarg(char *) path;
@@ -115,10 +106,7 @@ bsd_sys_link(l, v, retval)
 }
 
 int
-bsd_sys_unlink(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+bsd_sys_unlink(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_unlink_args /* {
 		syscallarg(char *) path;
@@ -128,10 +116,7 @@ bsd_sys_unlink(l, v, retval)
 }
 
 int
-bsd_sys_chdir(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+bsd_sys_chdir(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_chdir_args /* {
 		syscallarg(char *) path;
@@ -141,10 +126,7 @@ bsd_sys_chdir(l, v, retval)
 }
 
 int
-bsd_sys_mknod(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+bsd_sys_mknod(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_mknod_args /* {
 		syscallarg(char *) path;
@@ -156,10 +138,7 @@ bsd_sys_mknod(l, v, retval)
 }
 
 int
-bsd_sys_chmod(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+bsd_sys_chmod(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_chmod_args /* {
 		syscallarg(char *) path;
@@ -170,10 +149,7 @@ bsd_sys_chmod(l, v, retval)
 }
 
 int
-bsd_sys_chown(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+bsd_sys_chown(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_chown_args /* {
 		syscallarg(char *) path;
@@ -185,10 +161,7 @@ bsd_sys_chown(l, v, retval)
 }
 
 int
-bsd_sys_mount(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+bsd_sys_mount(struct lwp *l, void *v, register_t *retval)
 {
 	struct compat_40_sys_mount_args /* {
 		syscallarg(char *) type;
@@ -201,10 +174,7 @@ bsd_sys_mount(l, v, retval)
 }
 
 int
-bsd_sys_unmount(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+bsd_sys_unmount(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_unmount_args /* {
 		syscallarg(char *) path;
@@ -215,10 +185,7 @@ bsd_sys_unmount(l, v, retval)
 }
 
 int
-bsd_sys_access(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+bsd_sys_access(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_access_args /* {
 		syscallarg(char *) path;
@@ -229,10 +196,7 @@ bsd_sys_access(l, v, retval)
 }
 
 int
-bsd_sys_chflags(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+bsd_sys_chflags(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_chflags_args /* {
 		syscallarg(char *) path;
@@ -243,10 +207,7 @@ bsd_sys_chflags(l, v, retval)
 }
 
 int
-bsd_compat_43_sys_stat(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+bsd_compat_43_sys_stat(struct lwp *l, void *v, register_t *retval)
 {
 	struct compat_43_sys_stat_args /* {
 		syscallarg(char *) path;
@@ -257,10 +218,7 @@ bsd_compat_43_sys_stat(l, v, retval)
 }
 
 int
-bsd_compat_43_sys_lstat(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+bsd_compat_43_sys_lstat(struct lwp *l, void *v, register_t *retval)
 {
 	struct compat_43_sys_lstat_args /* {
 		syscallarg(char *) path;
@@ -271,10 +229,7 @@ bsd_compat_43_sys_lstat(l, v, retval)
 }
 
 int
-bsd_sys_acct(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+bsd_sys_acct(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_acct_args /* {
 		syscallarg(char *) path;
@@ -284,10 +239,7 @@ bsd_sys_acct(l, v, retval)
 }
 
 int
-bsd_sys_revoke(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+bsd_sys_revoke(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_revoke_args /* {
 		syscallarg(char *) path;
@@ -297,10 +249,7 @@ bsd_sys_revoke(l, v, retval)
 }
 
 int
-bsd_sys_symlink(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+bsd_sys_symlink(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_symlink_args /* {
 		syscallarg(char *) path;
@@ -311,10 +260,7 @@ bsd_sys_symlink(l, v, retval)
 }
 
 int
-bsd_sys_readlink(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+bsd_sys_readlink(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_readlink_args /* {
 		syscallarg(char *) path;
@@ -326,10 +272,7 @@ bsd_sys_readlink(l, v, retval)
 }
 
 int
-bsd_sys_execve(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+bsd_sys_execve(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_execve_args /* {
 		syscallarg(char *) path;
@@ -346,10 +289,7 @@ bsd_sys_execve(l, v, retval)
 }
 
 int
-bsd_sys_chroot(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+bsd_sys_chroot(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_chroot_args /* {
 		syscallarg(char *) path;
@@ -359,10 +299,7 @@ bsd_sys_chroot(l, v, retval)
 }
 
 int
-bsd_compat_12_sys_swapon(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+bsd_compat_12_sys_swapon(struct lwp *l, void *v, register_t *retval)
 {
 	struct compat_12_sys_swapon_args /* {
 		syscallarg(char *) name;
@@ -372,10 +309,7 @@ bsd_compat_12_sys_swapon(l, v, retval)
 }
 
 int
-bsd_sys_bind(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+bsd_sys_bind(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_bind_args /* {
 		syscallarg(int) s;
@@ -387,10 +321,7 @@ bsd_sys_bind(l, v, retval)
 }
 
 int
-bsd_sys_connect(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+bsd_sys_connect(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_connect_args /* {
 		syscallarg(int) s;
@@ -402,10 +333,7 @@ bsd_sys_connect(l, v, retval)
 }
 
 int
-bsd_sys_rename(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+bsd_sys_rename(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_rename_args /* {
 		syscallarg(char *) from;
@@ -416,10 +344,7 @@ bsd_sys_rename(l, v, retval)
 }
 
 int
-bsd_compat_43_sys_truncate(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+bsd_compat_43_sys_truncate(struct lwp *l, void *v, register_t *retval)
 {
 	struct compat_43_sys_truncate_args /* {
 		syscallarg(char *) path;
@@ -430,10 +355,7 @@ bsd_compat_43_sys_truncate(l, v, retval)
 }
 
 int
-bsd_sys_mkfifo(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+bsd_sys_mkfifo(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_mkfifo_args /* {
 		syscallarg(char *) path;
@@ -444,10 +366,7 @@ bsd_sys_mkfifo(l, v, retval)
 }
 
 int
-bsd_sys_mkdir(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+bsd_sys_mkdir(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_mkdir_args /* {
 		syscallarg(char *) path;
@@ -458,10 +377,7 @@ bsd_sys_mkdir(l, v, retval)
 }
 
 int
-bsd_sys_rmdir(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+bsd_sys_rmdir(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_rmdir_args /* {
 		syscallarg(char *) path;
@@ -471,10 +387,7 @@ bsd_sys_rmdir(l, v, retval)
 }
 
 int
-bsd_sys_utimes(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+bsd_sys_utimes(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_utimes_args /* {
 		syscallarg(char *) path;
@@ -485,10 +398,7 @@ bsd_sys_utimes(l, v, retval)
 }
 
 int
-bsd_sys_quotactl(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+bsd_sys_quotactl(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_quotactl_args /* {
 		syscallarg(char *) path;
@@ -501,10 +411,7 @@ bsd_sys_quotactl(l, v, retval)
 }
 
 int
-bsd_sys_statfs(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+bsd_sys_statfs(struct lwp *l, void *v, register_t *retval)
 {
 	struct compat_20_sys_statfs_args /* {
 		syscallarg(char *) path;
@@ -516,10 +423,7 @@ bsd_sys_statfs(l, v, retval)
 
 #if defined(NFS) || defined(NFSSERVER)
 int
-bsd_sys_getfh(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+bsd_sys_getfh(struct lwp *l, void *v, register_t *retval)
 {
 	struct compat_30_sys_getfh_args /* {
 		syscallarg(char *) fname;
@@ -531,10 +435,7 @@ bsd_sys_getfh(l, v, retval)
 #endif /* NFS || NFSSERVER */
 
 int
-bsd_compat_12_sys_stat(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+bsd_compat_12_sys_stat(struct lwp *l, void *v, register_t *retval)
 {
 	struct compat_12_sys_stat_args /* {
 		syscallarg(char *) path;
@@ -545,10 +446,7 @@ bsd_compat_12_sys_stat(l, v, retval)
 }
 
 int
-bsd_compat_12_sys_lstat(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+bsd_compat_12_sys_lstat(struct lwp *l, void *v, register_t *retval)
 {
 	struct compat_12_sys_lstat_args /* {
 		syscallarg(char *) path;
@@ -559,10 +457,7 @@ bsd_compat_12_sys_lstat(l, v, retval)
 }
 
 int
-bsd_sys_pathconf(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+bsd_sys_pathconf(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_pathconf_args /* {
 		syscallarg(char *) path;
@@ -573,10 +468,7 @@ bsd_sys_pathconf(l, v, retval)
 }
 
 int
-bsd_sys_truncate(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+bsd_sys_truncate(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_truncate_args /* {
 		syscallarg(char *) path;
@@ -588,10 +480,7 @@ bsd_sys_truncate(l, v, retval)
 }
 
 int
-bsd_sys_undelete(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+bsd_sys_undelete(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_undelete_args /* {
 		syscallarg(char *) path;
@@ -601,10 +490,7 @@ bsd_sys_undelete(l, v, retval)
 }
 
 int
-bsd_sys_lchmod(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+bsd_sys_lchmod(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_lchmod_args /* {
 		syscallarg(char *) path;
@@ -615,10 +501,7 @@ bsd_sys_lchmod(l, v, retval)
 }
 
 int
-bsd_sys_lchown(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+bsd_sys_lchown(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_lchown_args /* {
 		syscallarg(char *) path;
@@ -630,10 +513,7 @@ bsd_sys_lchown(l, v, retval)
 }
 
 int
-bsd_sys_lutimes(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+bsd_sys_lutimes(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_lutimes_args /* {
 		syscallarg(char *) path;
@@ -644,10 +524,7 @@ bsd_sys_lutimes(l, v, retval)
 }
 
 int
-bsd_sys___stat30(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+bsd_sys___stat30(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys___stat30_args /* {
 		syscallarg(char *) path;
@@ -658,10 +535,7 @@ bsd_sys___stat30(l, v, retval)
 }
 
 int
-bsd_sys___lstat30(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+bsd_sys___lstat30(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys___lstat30_args /* {
 		syscallarg(char *) path;
@@ -672,10 +546,7 @@ bsd_sys___lstat30(l, v, retval)
 }
 
 int
-bsd_sys___posix_chown(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+bsd_sys___posix_chown(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys___posix_chown_args /* {
 		syscallarg(char *) path;
@@ -687,10 +558,7 @@ bsd_sys___posix_chown(l, v, retval)
 }
 
 int
-bsd_sys___posix_lchown(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+bsd_sys___posix_lchown(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys___posix_lchown_args /* {
 		syscallarg(char *) path;
@@ -702,10 +570,7 @@ bsd_sys___posix_lchown(l, v, retval)
 }
 
 int
-bsd_sys_lchflags(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+bsd_sys_lchflags(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_lchflags_args /* {
 		syscallarg(char *) path;

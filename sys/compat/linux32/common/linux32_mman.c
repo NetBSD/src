@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_mman.c,v 1.3.18.1 2007/10/31 23:14:04 joerg Exp $ */
+/*	$NetBSD: linux32_mman.c,v 1.3.18.2 2007/12/09 19:37:08 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_mman.c,v 1.3.18.1 2007/10/31 23:14:04 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_mman.c,v 1.3.18.2 2007/12/09 19:37:08 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -70,10 +70,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_mman.c,v 1.3.18.1 2007/10/31 23:14:04 joerg 
 #include <compat/linux32/linux32_syscallargs.h>
 
 int
-linux32_sys_old_mmap(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_old_mmap(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux32_sys_old_mmap_args /* {
 		syscallarg(linux32_oldmmapp) lmp;
@@ -104,10 +101,7 @@ linux32_sys_mprotect(l, v, retval)
 }
 
 int
-linux32_sys_mremap(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_mremap(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux32_sys_mremap_args /* {
 		syscallarg(netbsd32_voidp) old_address;
@@ -126,10 +120,7 @@ linux32_sys_mremap(l, v, retval)
 }
 
 int
-linux32_sys_mmap2(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_mmap2(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux32_sys_mmap2_args /* {
 		syscallarg(netbsd32_u_long) addr;

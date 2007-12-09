@@ -1,4 +1,4 @@
-/*	$NetBSD: timer.c,v 1.22 2006/06/07 22:38:50 kardel Exp $ */
+/*	$NetBSD: timer.c,v 1.22.34.1 2007/12/09 19:36:18 jmcneill Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: timer.c,v 1.22 2006/06/07 22:38:50 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timer.c,v 1.22.34.1 2007/12/09 19:36:18 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -215,7 +215,7 @@ timerattach(volatile int *cntreg, volatile int *limreg)
 	intr_establish(14, 0, &level14, NULL);
 
 	/* Establish a soft interrupt at a lower level for schedclock */
-	sched_cookie = softintr_establish(IPL_SCHED, schedintr, NULL);
+	sched_cookie = sparc_softintr_establish(IPL_SCHED, schedintr, NULL);
 	if (sched_cookie == NULL)
 		panic("timerattach: cannot establish schedintr");
 

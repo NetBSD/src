@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_time.c,v 1.13.6.1 2007/11/27 19:36:48 joerg Exp $ */
+/*	$NetBSD: linux32_time.c,v 1.13.6.2 2007/12/09 19:37:10 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_time.c,v 1.13.6.1 2007/11/27 19:36:48 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_time.c,v 1.13.6.2 2007/12/09 19:37:10 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -75,10 +75,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_time.c,v 1.13.6.1 2007/11/27 19:36:48 joerg 
 
 extern struct timezone linux_sys_tz;
 int
-linux32_sys_gettimeofday(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_gettimeofday(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux32_sys_gettimeofday_args /* {
 		syscallarg(netbsd32_timevalp_t) tp;
@@ -107,10 +104,7 @@ linux32_sys_gettimeofday(l, v, retval)
 }
 
 int
-linux32_sys_settimeofday(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_settimeofday(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux32_sys_settimeofday_args /* {
 		syscallarg(netbsd32_timevalp_t) tp;
@@ -125,10 +119,7 @@ linux32_sys_settimeofday(l, v, retval)
 }
 
 int
-linux32_sys_time(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_time(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux32_sys_time_args /* {
 		syscallcarg(linux32_timep_t) t;
@@ -158,10 +149,7 @@ timeval_to_clock_t(struct timeval *tv)
 }
 
 int
-linux32_sys_times(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_times(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux32_sys_times_args /* {
 		syscallarg(linux32_tmsp_t) tms;
@@ -191,10 +179,7 @@ linux32_sys_times(l, v, retval)
 }
 
 int
-linux32_sys_stime(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_stime(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux32_sys_stime_args /* {
 		syscallarg(linux32_timep_t) t;
@@ -213,10 +198,7 @@ linux32_sys_stime(l, v, retval)
 }
 
 int
-linux32_sys_utime(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_utime(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux32_sys_utime_args /* {
 		syscallarg(const netbsd32_charp) path;

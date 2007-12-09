@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_socket.c,v 1.26.6.1 2007/08/16 11:02:56 jmcneill Exp $	*/
+/*	$NetBSD: netbsd32_socket.c,v 1.26.6.2 2007/12/09 19:37:21 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_socket.c,v 1.26.6.1 2007/08/16 11:02:56 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_socket.c,v 1.26.6.2 2007/12/09 19:37:21 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,14 +52,11 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_socket.c,v 1.26.6.1 2007/08/16 11:02:56 jmc
 #include <compat/netbsd32/netbsd32_conv.h>
 
 /* note that the netbsd32_msghdr's iov really points to a struct iovec, not a netbsd32_iovec. */
-static int recvit32 __P((struct lwp *, int, struct netbsd32_msghdr *, struct iovec *, void *,
-			 register_t *));
+static int recvit32(struct lwp *, int, struct netbsd32_msghdr *, struct iovec *, void *,
+			 register_t *);
 
 int
-netbsd32_recvmsg(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_recvmsg(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_recvmsg_args /* {
 		syscallarg(int) s;
@@ -99,13 +96,7 @@ done:
 }
 
 int
-recvit32(l, s, mp, iov, namelenp, retsize)
-	struct lwp *l;
-	int s;
-	struct netbsd32_msghdr *mp;
-	struct iovec *iov;
-	void *namelenp;
-	register_t *retsize;
+recvit32(struct lwp *l, int s, struct netbsd32_msghdr *mp, struct iovec *iov, void *namelenp, register_t *retsize)
 {
 	struct file *fp;
 	struct uio auio;
@@ -227,10 +218,7 @@ recvit32(l, s, mp, iov, namelenp, retsize)
 }
 
 int
-netbsd32_sendmsg(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_sendmsg(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_sendmsg_args /* {
 		syscallarg(int) s;
@@ -275,10 +263,7 @@ done:
 }
 
 int
-netbsd32_recvfrom(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_recvfrom(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_recvfrom_args /* {
 		syscallarg(int) s;
@@ -311,10 +296,7 @@ netbsd32_recvfrom(l, v, retval)
 }
 
 int
-netbsd32_sendto(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_sendto(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_sendto_args /* {
 		syscallarg(int) s;

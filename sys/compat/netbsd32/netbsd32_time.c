@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_time.c,v 1.27.8.1 2007/11/27 19:36:49 joerg Exp $	*/
+/*	$NetBSD: netbsd32_time.c,v 1.27.8.2 2007/12/09 19:37:22 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.27.8.1 2007/11/27 19:36:49 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.27.8.2 2007/12/09 19:37:22 jmcneill Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -56,10 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.27.8.1 2007/11/27 19:36:49 joerg
 #ifdef NTP
 
 int
-netbsd32_ntp_gettime(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_ntp_gettime(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_ntp_gettime_args /* {
 		syscallarg(netbsd32_ntptimevalp_t) ntvp;
@@ -88,10 +85,7 @@ netbsd32_ntp_gettime(l, v, retval)
 
 #ifdef COMPAT_30
 int
-compat_30_netbsd32_ntp_gettime(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+compat_30_netbsd32_ntp_gettime(struct lwp *l, void *v, register_t *retval)
 {
 	struct compat_30_netbsd32_ntp_gettime_args /* {
 		syscallarg(netbsd32_ntptimevalp_t) ntvp;
@@ -118,10 +112,7 @@ compat_30_netbsd32_ntp_gettime(l, v, retval)
 #endif
 
 int
-netbsd32_ntp_adjtime(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_ntp_adjtime(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_ntp_adjtime_args /* {
 		syscallarg(netbsd32_timexp_t) tp;
@@ -158,10 +149,7 @@ netbsd32_ntp_adjtime(l, v, retval)
 }
 #else /* !NTP */
 int
-netbsd32_ntp_gettime(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_ntp_gettime(struct lwp *l, void *v, register_t *retval)
 {
 
 	return (ENOSYS);
@@ -169,10 +157,7 @@ netbsd32_ntp_gettime(l, v, retval)
 
 #ifdef COMPAT_30
 int
-compat_30_netbsd32_ntp_gettime(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+compat_30_netbsd32_ntp_gettime(struct lwp *l, void *v, register_t *retval)
 {
 
 	return (ENOSYS);
@@ -180,10 +165,7 @@ compat_30_netbsd32_ntp_gettime(l, v, retval)
 #endif
 
 int
-netbsd32_ntp_adjtime(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_ntp_adjtime(struct lwp *l, void *v, register_t *retval)
 {
 
 	return (ENOSYS);
@@ -191,10 +173,7 @@ netbsd32_ntp_adjtime(l, v, retval)
 #endif /* NTP */
 
 int
-netbsd32_setitimer(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_setitimer(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_setitimer_args /* {
 		syscallarg(int) which;
@@ -229,10 +208,7 @@ netbsd32_setitimer(l, v, retval)
 }
 
 int
-netbsd32_getitimer(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_getitimer(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_getitimer_args /* {
 		syscallarg(int) which;
@@ -252,10 +228,7 @@ netbsd32_getitimer(l, v, retval)
 }
 
 int
-netbsd32_gettimeofday(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_gettimeofday(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_gettimeofday_args /* {
 		syscallarg(netbsd32_timevalp_t) tp;
@@ -286,10 +259,7 @@ netbsd32_gettimeofday(l, v, retval)
 }
 
 int
-netbsd32_settimeofday(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_settimeofday(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_settimeofday_args /* {
 		syscallarg(const netbsd32_timevalp_t) tv;
@@ -323,10 +293,7 @@ netbsd32_settimeofday(l, v, retval)
 }
 
 int
-netbsd32_adjtime(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_adjtime(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_adjtime_args /* {
 		syscallarg(const netbsd32_timevalp_t) delta;
@@ -422,10 +389,7 @@ netbsd32_adjtime(l, v, retval)
 }
 
 int
-netbsd32_clock_gettime(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_clock_gettime(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_clock_gettime_args /* {
 		syscallarg(netbsd32_clockid_t) clock_id;
@@ -446,10 +410,7 @@ netbsd32_clock_gettime(l, v, retval)
 }
 
 int
-netbsd32_clock_settime(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_clock_settime(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_clock_settime_args /* {
 		syscallarg(netbsd32_clockid_t) clock_id;
@@ -472,10 +433,7 @@ netbsd32_clock_settime(l, v, retval)
 }
 
 int
-netbsd32_clock_getres(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_clock_getres(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_clock_getres_args /* {
 		syscallarg(netbsd32_clockid_t) clock_id;
@@ -502,10 +460,7 @@ netbsd32_clock_getres(l, v, retval)
 }
 
 int
-netbsd32_nanosleep(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_nanosleep(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_nanosleep_args /* {
 		syscallarg(const netbsd32_timespecp_t) rqtp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: i82489var.h,v 1.5.42.2 2007/09/03 16:47:45 jmcneill Exp $	*/
+/*	$NetBSD: i82489var.h,v 1.5.42.3 2007/12/09 19:36:26 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.

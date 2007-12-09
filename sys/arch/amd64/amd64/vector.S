@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.10.22.4 2007/11/27 19:35:27 joerg Exp $	*/
+/*	$NetBSD: vector.S,v 1.10.22.5 2007/12/09 19:34:18 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -84,8 +84,6 @@
 #include <machine/segments.h>
 #include <machine/trap.h>
 #include <machine/specialreg.h>
-
-#include <net/netisr.h>
 
 #include "ioapic.h"
 #include "lapic.h"
@@ -263,10 +261,8 @@ calltrap:
 	movl	%ebx,%edx
 	xorq	%rax,%rax
 	call	_C_LABEL(printf)
-#ifdef DDB
-	int	$3
-#endif /* DDB */
-	movl	%ebx,CPUVAR(ILEVEL)
+	movl	%ebx,%edi
+	call	_C_LABEL(spllower)
 	jmp	.Lalltraps_checkast
 4:	.asciz	"WARNING: SPL NOT LOWERED ON TRAP EXIT %x %x\n"
 #endif /* DIAGNOSTIC */
@@ -320,12 +316,12 @@ IDTVEC(intr_lapic_ipi)
 	INTRENTRY		
 	movl	$0,_C_LABEL(local_apic)+LAPIC_EOI
 	movl	CPUVAR(ILEVEL),%ebx
-	cmpl	$IPL_IPI,%ebx
+	cmpl	$IPL_HIGH,%ebx
 	jae	2f
 IDTVEC(resume_lapic_ipi)
 1:
 	incl	CPUVAR(IDEPTH)
-	movl	$IPL_IPI,CPUVAR(ILEVEL)
+	movl	$IPL_HIGH,CPUVAR(ILEVEL)
         sti
 	pushq	%rbx
 	call	_C_LABEL(x86_ipi_handler)
@@ -964,112 +960,6 @@ _C_LABEL(xenev_stubs):
   	.quad _C_LABEL(Xrecurse_xenev29), _C_LABEL(Xresume_xenev29)
   	.quad _C_LABEL(Xrecurse_xenev30), _C_LABEL(Xresume_xenev30)
   	.quad _C_LABEL(Xrecurse_xenev31), _C_LABEL(Xresume_xenev31)
-#endif	/* !XEN */
-
-/*
- * Soft interrupt handlers
- */
-
-#ifdef XEN
-#define EVCNTL(x) _C_LABEL(x) + EV_EVCNTL
-#endif
-
-
-IDTVEC(softserial)
-	movl	$IPL_SOFTSERIAL, CPUVAR(ILEVEL)
-  	STI(si,di)
-	incl	CPUVAR(IDEPTH)
-#ifdef MULTIPROCESSOR
-	call	_C_LABEL(x86_softintlock)
-#endif
-#ifndef XEN
-	movq	CPUVAR(ISOURCES) + SIR_SERIAL * 8, %r12
-	incq	IS_EVCNT(%r12)
-#else
-	incq	EVCNTL(softserial_evtcnt)
-#endif
-	movl	$X86_SOFTINTR_SOFTSERIAL,%edi
-	call	_C_LABEL(softintr_dispatch)
-#ifdef MULTIPROCESSOR	
-	call	_C_LABEL(x86_softintunlock)
-#endif
-	decl	CPUVAR(IDEPTH)
-	jmp	*%r13
-
-IDTVEC(softnet)
-	movl	$IPL_SOFTNET, CPUVAR(ILEVEL)
-  	STI(si,di)
-	incl	CPUVAR(IDEPTH)
-#ifdef MULTIPROCESSOR	
-	call	_C_LABEL(x86_softintlock)
-#endif
-#ifndef XEN
-	movq	CPUVAR(ISOURCES) + SIR_NET * 8, %r12
-	incq    IS_EVCNT(%r12)
-#else
-	incq	EVCNTL(softnet_evtcnt)
-#endif
-
-	xorq	%r12,%r12
-	xchgl	_C_LABEL(netisr),%r12d
-
-	/* XXX Do the legacy netisrs here for now. */
-#define DONETISR(s, c) \
-	.globl  _C_LABEL(c)	;\
-	testl	$(1 << s),%r12d	;\
-	jz	1f		;\
-	call	_C_LABEL(c)	;\
-1:
-#include <net/netisr_dispatch.h>
-	
-	movl	$X86_SOFTINTR_SOFTNET,%edi
-	call	_C_LABEL(softintr_dispatch)
-#ifdef MULTIPROCESSOR	
-	call	_C_LABEL(x86_softintunlock)	
-#endif
-	decl	CPUVAR(IDEPTH)
-	jmp	*%r13
-
-IDTVEC(softclock)
-	movl	$IPL_SOFTCLOCK, CPUVAR(ILEVEL)
-  	STI(si,di)
-	incl	CPUVAR(IDEPTH)
-#ifdef MULTIPROCESSOR	
-	call	_C_LABEL(x86_softintlock)
-#endif
-#ifndef XEN
-	movq	CPUVAR(ISOURCES) + SIR_CLOCK * 8, %r12
-	incq	IS_EVCNT(%r12)
-#else
-	incq	EVCNTL(softclock_evtcnt)
-#endif
-
-	movl	$X86_SOFTINTR_SOFTCLOCK,%edi
-	call	_C_LABEL(softintr_dispatch)
-#ifdef MULTIPROCESSOR	
-	call	_C_LABEL(x86_softintunlock)		
-#endif
-	decl	CPUVAR(IDEPTH)
-	jmp	*%r13
-
-#ifdef XEN
-#ifdef DOM0OPS
-IDTVEC(softxenevt)
-	movl	$IPL_SOFTXENEVT, CPUVAR(ILEVEL)
-  	STI(si,di)
-	incl	CPUVAR(IDEPTH)
-#ifdef MULTIPROCESSOR	
-	call	_C_LABEL(x86_softintlock)
-#endif
-	incq	EVCNTL(softxenevt_evtcnt)
-
-	call	_C_LABEL(xenevt_notify)
-#ifdef MULTIPROCESSOR	
-	call	_C_LABEL(x86_softintunlock)		
-#endif
-	decl	CPUVAR(IDEPTH)
-	jmp	*%r13
-#endif /* DOM0OPS */
 
 # Xen callbacks
 
@@ -1105,5 +995,4 @@ NENTRY(failsafe_callback)
 	INTRFASTEXIT
 #	jmp	HYPERVISOR_iret
 
-#endif
-
+#endif	/* !XEN */

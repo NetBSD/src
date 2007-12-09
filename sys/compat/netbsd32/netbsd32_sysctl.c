@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_sysctl.c,v 1.24.8.1 2007/08/16 11:02:59 jmcneill Exp $	*/
+/*	$NetBSD: netbsd32_sysctl.c,v 1.24.8.2 2007/12/09 19:37:22 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_sysctl.c,v 1.24.8.1 2007/08/16 11:02:59 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_sysctl.c,v 1.24.8.2 2007/12/09 19:37:22 jmcneill Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -150,10 +150,7 @@ SYSCTL_SETUP(netbsd32_sysctl_emul_setup, "sysctl netbsd32 shadow tree setup")
 }
 
 int
-netbsd32___sysctl(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32___sysctl(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32___sysctl_args /* {
 		syscallarg(netbsd32_intp) name;

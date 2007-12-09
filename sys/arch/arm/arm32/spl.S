@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.4.84.1 2007/08/16 11:02:12 jmcneill Exp $	*/
+/*	$NetBSD: spl.S,v 1.4.84.2 2007/12/09 19:34:29 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1996-1998 Mark Brinicombe.
@@ -74,7 +74,9 @@ ENTRY(lowerspl)
 					/* stack alignment is 8 bytes */
 	stmfd	sp!, {r0, lr}		/* Preserve registers */
 	bl	_C_LABEL(irq_setmasks)	/* Update the actual masks */
+#ifdef __HAVE_FAST_SOFTINTS
 	bl	_C_LABEL(dosoftints)	/* Process any pending soft ints */
+#endif
 	ldmfd	sp!, {r0, pc}		/* Exit */
 
 ENTRY(splx)
@@ -90,5 +92,7 @@ ENTRY(splx)
 	stmfd	sp!, {r0, lr}		/* Preserve registers */
 
 	bl	_C_LABEL(irq_setmasks)	/* Update the actual masks */
+#ifdef __HAVE_FAST_SOFTINTS
 	bl	_C_LABEL(dosoftints)	/* Process any pending soft ints */
+#endif
 	ldmfd	sp!, {r0, pc}		/* Exit */

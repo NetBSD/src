@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_signal.c,v 1.25.6.1 2007/10/26 15:44:02 joerg Exp $	*/
+/*	$NetBSD: netbsd32_signal.c,v 1.25.6.2 2007/12/09 19:37:20 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.25.6.1 2007/10/26 15:44:02 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.25.6.2 2007/12/09 19:37:20 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,10 +60,7 @@ static void netbsd32_si32_to_si(siginfo_t *, const siginfo32_t *);
 
 
 int
-netbsd32_sigaction(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_sigaction(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_sigaction_args /* {
 		syscallarg(int) signum;
@@ -103,10 +100,7 @@ netbsd32_sigaction(l, v, retval)
 }
 
 int
-netbsd32___sigaltstack14(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32___sigaltstack14(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32___sigaltstack14_args /* {
 		syscallarg(const netbsd32_sigaltstackp_t) nss;
@@ -117,10 +111,7 @@ netbsd32___sigaltstack14(l, v, retval)
 
 /* ARGSUSED */
 int
-netbsd32___sigaction14(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32___sigaction14(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32___sigaction14_args /* {
 		syscallarg(int) signum;
@@ -158,10 +149,7 @@ netbsd32___sigaction14(l, v, retval)
 
 /* ARGSUSED */
 int
-netbsd32___sigaction_sigtramp(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32___sigaction_sigtramp(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32___sigaction_sigtramp_args /* {
 		syscallarg(int) signum;

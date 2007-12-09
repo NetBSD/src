@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_mount.c,v 1.11.6.1 2007/11/27 19:36:41 joerg Exp $ */
+/*	$NetBSD: darwin_mount.c,v 1.11.6.2 2007/12/09 19:36:40 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_mount.c,v 1.11.6.1 2007/11/27 19:36:41 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_mount.c,v 1.11.6.2 2007/12/09 19:36:40 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -96,10 +96,7 @@ out:
 }
 
 int
-darwin_sys_getfsstat(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+darwin_sys_getfsstat(struct lwp *l, void *v, register_t *retval)
 {
 	struct darwin_sys_getfsstat_args /* {
 		syscallarg(struct darwin_statfs *) buf;
@@ -157,7 +154,8 @@ darwin_sys_statfs(struct lwp *l, void *v, register_t *retval)
 	struct nameidata nd;
 	int error;
 
-	NDINIT(&nd, LOOKUP, FOLLOW | TRYEMULROOT, UIO_USERSPACE, SCARG(uap, path), l);
+	NDINIT(&nd, LOOKUP, FOLLOW | TRYEMULROOT, UIO_USERSPACE,
+	    SCARG(uap, path));
 	if ((error = namei(&nd)) != 0)
 		return error;
 
@@ -177,9 +175,7 @@ darwin_sys_statfs(struct lwp *l, void *v, register_t *retval)
 
 
 static void
-native_to_darwin_statvfs(bs, ds)
-	const struct statvfs *bs;
-	struct darwin_statfs *ds;
+native_to_darwin_statvfs(const struct statvfs *bs, struct darwin_statfs *ds)
 {
 	long dflags = 0;
 	long sflags = bs->f_flag & MNT_VISFLAGMASK;

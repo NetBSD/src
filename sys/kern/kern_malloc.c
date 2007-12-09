@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.111.6.4 2007/11/27 19:38:04 joerg Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.111.6.5 2007/12/09 19:38:18 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.111.6.4 2007/11/27 19:38:04 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.111.6.5 2007/12/09 19:38:18 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -891,7 +891,7 @@ kmeminit(void)
 	if (sizeof(struct freelist) > (1 << MINBUCKET))
 		panic("minbucket too small/struct freelist too big");
 
-	mutex_init(&malloc_lock, MUTEX_DRIVER, IPL_VM);
+	mutex_init(&malloc_lock, MUTEX_DEFAULT, IPL_VM);
 
 	/*
 	 * Compute the number of kmem_map pages, if we have not

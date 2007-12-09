@@ -1,4 +1,4 @@
-/* $NetBSD: pci_kn20aa.c,v 1.46 2005/12/11 12:16:17 christos Exp $ */
+/* $NetBSD: pci_kn20aa.c,v 1.46.48.1 2007/12/09 19:34:13 jmcneill Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_kn20aa.c,v 1.46 2005/12/11 12:16:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_kn20aa.c,v 1.46.48.1 2007/12/09 19:34:13 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -232,7 +232,8 @@ dec_kn20aa_intr_establish(ccv, ih, level, func, arg)
 
 	if (cookie != NULL &&
 	    alpha_shared_intr_firstactive(kn20aa_pci_intr, ih)) {
-		scb_set(0x900 + SCB_IDXTOVEC(ih), kn20aa_iointr, NULL);
+		scb_set(0x900 + SCB_IDXTOVEC(ih), kn20aa_iointr, NULL,
+		    level);
 		kn20aa_enable_intr(ih);
 	}
 	return (cookie);

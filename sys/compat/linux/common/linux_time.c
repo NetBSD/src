@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_time.c,v 1.18.6.2 2007/11/27 19:36:47 joerg Exp $ */
+/*	$NetBSD: linux_time.c,v 1.18.6.3 2007/12/09 19:37:06 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_time.c,v 1.18.6.2 2007/11/27 19:36:47 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_time.c,v 1.18.6.3 2007/12/09 19:37:06 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/ucred.h>
@@ -84,10 +84,7 @@ static int linux_to_native_clockid(clockid_t *, clockid_t);
 struct timezone linux_sys_tz;
 
 int
-linux_sys_gettimeofday(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_gettimeofday(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux_sys_gettimeofday_args /* {
 		syscallarg(struct timeval *) tz;
@@ -111,10 +108,7 @@ linux_sys_gettimeofday(l, v, retval)
 }
 
 int
-linux_sys_settimeofday(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_settimeofday(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux_sys_settimeofday_args /* {
 		syscallarg(struct timeval *) tp;
@@ -178,10 +172,7 @@ linux_to_native_clockid(clockid_t *n, clockid_t l)
 }
 
 int
-linux_sys_clock_gettime(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_clock_gettime(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux_sys_clock_gettime_args /* {
 		syscallarg(clockid_t) which;
@@ -206,10 +197,7 @@ linux_sys_clock_gettime(l, v, retval)
 }
 
 int
-linux_sys_clock_settime(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_clock_settime(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux_sys_clock_settime_args /* {
 		syscallarg(clockid_t) which;
@@ -236,10 +224,7 @@ linux_sys_clock_settime(l, v, retval)
 }
 
 int
-linux_sys_clock_getres(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_clock_getres(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux_sys_clock_gettime_args /* {
 		syscallarg(clockid_t) which;
@@ -261,10 +246,7 @@ linux_sys_clock_getres(l, v, retval)
 }
 
 int
-linux_sys_clock_nanosleep(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_clock_nanosleep(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux_sys_clock_nanosleep_args /* {
 		syscallarg(clockid_t) which;

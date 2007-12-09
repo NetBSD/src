@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.14.2.6 2007/11/27 19:39:06 joerg Exp $	*/
+/*	$NetBSD: rump.c,v 1.14.2.7 2007/12/09 19:38:46 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -176,7 +176,6 @@ rump_makecn(u_long nameiop, u_long flags, const char *name, size_t namelen,
 	cnp->cn_namelen = namelen;
 
 	cnp->cn_cred = creds;
-	cnp->cn_lwp = l;
 
 	return cnp;
 }

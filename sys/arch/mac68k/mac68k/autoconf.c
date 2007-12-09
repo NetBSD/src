@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.66.18.1 2007/09/03 16:47:30 jmcneill Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.66.18.2 2007/12/09 19:35:32 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.66.18.1 2007/09/03 16:47:30 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.66.18.2 2007/12/09 19:35:32 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,7 +84,6 @@ void
 cpu_configure(void)
 {
 
-	softintr_init();
 	mrg_init();		/* Init Mac ROM Glue */
 	startrtclock();		/* start before ADB attached */
 
@@ -152,7 +151,8 @@ findbootdev(void)
 	}
 
 	sprintf(buf, "%s%d", name, unit);
-	for (dv = alldevs.tqh_first; dv != NULL; dv = dv->dv_list.tqe_next) {
+	for (dv = TAILQ_FIRST(&alldevs); dv != NULL;
+	    dv = TAILQ_NEXT(dv, dv_list)) {
 		if (strcmp(buf, dv->dv_xname) == 0) {
 			booted_device = dv;
 			return;

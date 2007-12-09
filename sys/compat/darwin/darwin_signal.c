@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_signal.c,v 1.26 2007/06/17 20:15:19 dsl Exp $ */
+/*	$NetBSD: darwin_signal.c,v 1.26.6.1 2007/12/09 19:36:41 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_signal.c,v 1.26 2007/06/17 20:15:19 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_signal.c,v 1.26.6.1 2007/12/09 19:36:41 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -63,10 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_signal.c,v 1.26 2007/06/17 20:15:19 dsl Exp $
 #include <compat/darwin/darwin_syscallargs.h>
 
 int
-darwin_sys_sigaction(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+darwin_sys_sigaction(struct lwp *l, void *v, register_t *retval)
 {
 	struct darwin_sys_sigaction_args /* {
 		syscallarg(int) signum;
@@ -107,9 +104,7 @@ darwin_sys_sigaction(l, v, retval)
 }
 
 void
-darwin_trapsignal(l, ksi)
-	struct lwp *l;
-	struct ksiginfo *ksi;
+darwin_trapsignal(struct lwp *l, struct ksiginfo *ksi)
 {
 	if (mach_trapsignal1(l, ksi) != 0)
 		trapsignal(l, ksi);
@@ -118,9 +113,7 @@ darwin_trapsignal(l, ksi)
 }
 
 int
-darwin_tracesig(p, signo)
-	struct proc *p;
-	int signo;
+darwin_tracesig(struct proc *p, int signo)
 {
 	struct darwin_emuldata *ded;
 	struct lwp *l;
@@ -146,10 +139,7 @@ darwin_tracesig(p, signo)
 }
 
 int
-darwin_sys_sigprocmask(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+darwin_sys_sigprocmask(struct lwp *l, void *v, register_t *retval)
 {
 	struct darwin_sys_sigprocmask_args /* {
 		syscallarg(int) how;
@@ -177,9 +167,7 @@ darwin_sys_sigprocmask(l, v, retval)
 }
 
 void
-native_to_darwin_siginfo(ksi, dsi)
-	const struct ksiginfo *ksi;
-	struct darwin___siginfo *dsi;
+native_to_darwin_siginfo(const struct ksiginfo *ksi, struct darwin___siginfo *dsi)
 {
 	dsi->darwin_si_signo = ksi->ksi_signo;
 	dsi->darwin_si_errno = ksi->ksi_errno;

@@ -1568,8 +1568,9 @@ static int radeon_do_init_cp(drm_device_t * dev, drm_radeon_init_t * init)
 		if (dev_priv->flags & CHIP_IS_AGP) {
 			base = dev->agp->base;
 			/* Check if valid */
-			if ((base + dev_priv->gart_size) > dev_priv->fb_location &&
-			    base < (dev_priv->fb_location + dev_priv->fb_size)) {
+		if ((base + dev_priv->gart_size - 1) >= dev_priv->fb_location &&
+      		     + base < (dev_priv->fb_location + dev_priv->fb_size - 1)) {
+
 				DRM_INFO("Can't use AGP base @0x%08lx, won't fit\n",
 					 dev->agp->base);
 				base = 0;
@@ -1579,8 +1580,8 @@ static int radeon_do_init_cp(drm_device_t * dev, drm_radeon_init_t * init)
 		/* If not or if AGP is at 0 (Macs), try to put it elsewhere */
 		if (base == 0) {
 			base = dev_priv->fb_location + dev_priv->fb_size;
-			if (((base + dev_priv->gart_size) & 0xfffffffful)
-			    < base)
+		if (base < dev_priv->fb_location ||
+		    + ((base + dev_priv->gart_size) & 0xfffffffful) < base)
 				base = dev_priv->fb_location
 					- dev_priv->gart_size;
 		}		
@@ -1632,7 +1633,7 @@ static int radeon_do_init_cp(drm_device_t * dev, drm_radeon_init_t * init)
 			dev_priv->gart_info.bus_addr =
 			    dev_priv->pcigart_offset + dev_priv->fb_location;
 			dev_priv->gart_info.mapping.offset =
-			    dev_priv->gart_info.bus_addr;
+			    dev_priv->pcigart_offset + dev_priv->fb_aper_offset;
 			dev_priv->gart_info.mapping.size =
 			    RADEON_PCIGART_TABLE_SIZE;
 
@@ -2242,7 +2243,8 @@ int radeon_driver_firstopen(struct drm_device *dev)
 	if (ret != 0)
 		return ret;
 
-	ret = drm_addmap(dev, drm_get_resource_start(dev, 0),
+	dev_priv->fb_aper_offset = drm_get_resource_start(dev, 0);
+	ret = drm_addmap(dev, dev_priv->fb_aper_offset,
 			 drm_get_resource_len(dev, 0), _DRM_FRAME_BUFFER,
 			 _DRM_WRITE_COMBINING, &map);
 	if (ret != 0)

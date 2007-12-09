@@ -1,5 +1,5 @@
 /*	$OpenBSD: ts102.c,v 1.14 2005/01/27 17:03:23 millert Exp $	*/
-/*	$NetBSD: ts102.c,v 1.8 2007/07/09 20:52:30 ad Exp $ */
+/*	$NetBSD: ts102.c,v 1.8.8.1 2007/12/09 19:36:16 jmcneill Exp $ */
 /*
  * Copyright (c) 2003, 2004, Miodrag Vallat.
  *
@@ -914,7 +914,7 @@ tslot_slot_intr(struct tslot_data *td, int intreg)
 		if (td->td_intr != NULL) {
 
 			if (td->td_softint != NULL)
-				softintr_schedule(td->td_softint);
+				sparc_softintr_schedule(td->td_softint);
 			/*
 			 * Disable this sbus interrupt, until the soft-int
 			 * handler had a chance to run
@@ -934,7 +934,7 @@ tslot_intr_disestablish(pcmcia_chipset_handle_t pch, void *ih)
 	td->td_intr = NULL;
 	td->td_intrarg = NULL;
 	if (td->td_softint) {
-		softintr_disestablish(td->td_softint);
+		sparc_softintr_disestablish(td->td_softint);
 		td->td_softint = NULL;
 	}
 }
@@ -956,7 +956,7 @@ tslot_intr_establish(pcmcia_chipset_handle_t pch, struct pcmcia_function *pf,
 
 	td->td_intr = handler;
 	td->td_intrarg = arg;
-	td->td_softint = softintr_establish(ipl, tslot_intr_dispatch, td);
+	td->td_softint = sparc_softintr_establish(ipl, tslot_intr_dispatch, td);
 
 	return (td);
 }

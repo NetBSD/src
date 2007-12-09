@@ -1,4 +1,4 @@
-/*	$NetBSD: c_magnum.c,v 1.15.8.1 2007/08/09 02:36:50 jmcneill Exp $	*/
+/*	$NetBSD: c_magnum.c,v 1.15.8.2 2007/12/09 19:34:24 jmcneill Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: c_magnum.c,v 1.15.8.1 2007/08/09 02:36:50 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: c_magnum.c,v 1.15.8.2 2007/12/09 19:34:24 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,33 +122,17 @@ struct timer_jazzio_config timer_magnum_conf = {
  */
 static const uint32_t magnum_ipl_sr_bits[_IPL_N] = {
 	[IPL_NONE] = 0,
-	[IPL_SOFT] =
-	    MIPS_SOFT_INT_MASK_0,
 	[IPL_SOFTCLOCK] =
 	    MIPS_SOFT_INT_MASK_0,
 	[IPL_SOFTNET] = 
 	    MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1,
-	[IPL_SOFTSERIAL] =
-	    MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1,
-	[IPL_BIO] =
-	    MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1 |
-	    MIPS_INT_MASK_0|
-	    MIPS_INT_MASK_1|
-	    MIPS_INT_MASK_2|
-	    MIPS_INT_MASK_3,
-	[IPL_NET] =
+	[IPL_VM] =
 	    MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1 |
 	    MIPS_INT_MASK_0 |
 	    MIPS_INT_MASK_1 |
 	    MIPS_INT_MASK_2 |
 	    MIPS_INT_MASK_3,
-	[IPL_TTY] =
-	    MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1 |
-	    MIPS_INT_MASK_0 |
-	    MIPS_INT_MASK_1 |
-	    MIPS_INT_MASK_2 |
-	    MIPS_INT_MASK_3,
-	[IPL_CLOCK] =
+	[IPL_SCHED] =
 	    MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1 |
 	    MIPS_INT_MASK_0 |
 	    MIPS_INT_MASK_1 |

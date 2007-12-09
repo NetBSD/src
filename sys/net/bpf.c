@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.130 2007/07/11 21:26:53 xtraeme Exp $	*/
+/*	$NetBSD: bpf.c,v 1.130.6.1 2007/12/09 19:38:33 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.130 2007/07/11 21:26:53 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.130.6.1 2007/12/09 19:38:33 jmcneill Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -1145,7 +1145,7 @@ bpf_kqfilter(struct file *fp, struct knote *kn)
 		break;
 
 	default:
-		return (1);
+		return (EINVAL);
 	}
 
 	kn->kn_hook = d;

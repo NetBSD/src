@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_mount.c,v 1.17.6.1 2007/12/03 16:14:28 joerg Exp $ */
+/*	$NetBSD: irix_mount.c,v 1.17.6.2 2007/12/09 19:36:51 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_mount.c,v 1.17.6.1 2007/12/03 16:14:28 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_mount.c,v 1.17.6.2 2007/12/09 19:36:51 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -58,10 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: irix_mount.c,v 1.17.6.1 2007/12/03 16:14:28 joerg Ex
 #include <compat/irix/irix_syscallargs.h>
 
 int
-irix_sys_getmountid(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+irix_sys_getmountid(struct lwp *l, void *v, register_t *retval)
 {
 	struct irix_sys_getmountid_args /* {
 		syscallarg(const char *) path;
@@ -80,7 +77,7 @@ irix_sys_getmountid(l, v, retval)
 
 	/* Get the vnode for the requested path */
 	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF | TRYEMULROOT, UIO_USERSPACE,
-	    SCARG(uap, path), l);
+	    SCARG(uap, path));
 	nd.ni_cnd.cn_cred = cred;
 	if ((error = namei(&nd)) != 0)
 		goto out;

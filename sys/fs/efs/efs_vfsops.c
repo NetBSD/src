@@ -1,4 +1,4 @@
-/*	$NetBSD: efs_vfsops.c,v 1.8.2.4 2007/11/27 19:37:35 joerg Exp $	*/
+/*	$NetBSD: efs_vfsops.c,v 1.8.2.5 2007/12/09 19:38:07 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble <rumble@ephemeral.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efs_vfsops.c,v 1.8.2.4 2007/11/27 19:37:35 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efs_vfsops.c,v 1.8.2.5 2007/12/09 19:38:07 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -191,8 +191,7 @@ efs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 		return (EOPNOTSUPP);	/* XXX read-only */
 
 	/* look up our device's vnode. it is returned locked */
-	NDINIT(&devndp, LOOKUP, FOLLOW | LOCKLEAF,
-	    UIO_USERSPACE, args->fspec, l);
+	NDINIT(&devndp, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE, args->fspec);
 	if ((err = namei(&devndp)))
 		return (err);
 

@@ -5,6 +5,7 @@
 #include <sys/lkm.h>
 #include <sys/cdefs.h>
 #include <sys/queue.h>
+#include <sys/mutex.h>
 #ifdef _KERNEL
 #include <sys/device.h>
 #else
@@ -13,17 +14,17 @@ typedef struct device *device_t;
 
 #define CTLFLAG_RW			CTLFLAG_READWRITE
 
-#define mtx				lock
-#define mtx_init(mtx, desc, type, opts)	lockinit(mtx, PWAIT, desc, 0, 0/*LK_CANRECURSE*/)
+#define mtx				kmutex
+#define mtx_init(mtx, desc, type, opts)	mutex_init(mtx, MUTEX_DEFAULT, IPL_NONE)
 /*
-#define mtx_lock(mtx)		ndis_mtx_ipl = splnet() lockmgr(mtx, LK_EXCLUSIVE? LK_SHARED, NULL)
-#define mtx_unlock(mtx)         splx(ndis_mtx_ipl)	lockmgr(mtx, LK_RELEASE, NULL)
+#define mtx_lock(mtx)		ndis_mtx_ipl = splnet() mutex_enter(mtx)
+#define mtx_unlock(mtx)         splx(ndis_mtx_ipl)	mutex_exit(mtx)
 */
 
 void mtx_lock(struct mtx *mutex);
 void mtx_unlock(struct mtx *mutex);
 
-#define mtx_destroy(mtx)
+#define mtx_destroy(mtx)		mutex_destroy(mtx)
 
 /* I don't think this is going to work
 struct sysctl_ctx_entry {

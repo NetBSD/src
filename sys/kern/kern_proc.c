@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.113.6.7 2007/11/14 19:04:42 joerg Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.113.6.8 2007/12/09 19:38:18 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.113.6.7 2007/11/14 19:04:42 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.113.6.8 2007/12/09 19:38:18 jmcneill Exp $");
 
 #include "opt_kstack.h"
 #include "opt_maxuprc.h"
@@ -98,6 +98,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.113.6.7 2007/11/14 19:04:42 joerg Ex
 #include "sys/syscall_stats.h"
 #include <sys/kauth.h>
 #include <sys/sleepq.h>
+#include <sys/atomic.h>
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_extern.h>
@@ -129,12 +130,12 @@ struct proclist zombproc;	/* resources have been freed */
  *	x				proc::p_pptr
  *	x				proc::p_sibling
  *	x				proc::p_children
+ *	x				alllwp
  *	x		x		allproc
  *	x		x		proc::p_pgrp
  *	x		x		proc::p_pglist
  *	x		x		proc::p_session
  *	x		x		proc::p_list
- *			x		alllwp
  *			x		lwp::l_list
  *
  * The lock order for processes and LWPs is approximately as following:
@@ -317,7 +318,7 @@ procinit(void)
 		LIST_INIT(pd->pd_list);
 
 	mutex_init(&proclist_lock, MUTEX_DEFAULT, IPL_NONE);
-	mutex_init(&proclist_mutex, MUTEX_SPIN, IPL_SCHED);
+	mutex_init(&proclist_mutex, MUTEX_DEFAULT, IPL_SCHED);
 
 	pid_table = malloc(INITIAL_PID_TABLE_SIZE * sizeof *pid_table,
 			    M_PROC, M_WAITOK);
@@ -362,8 +363,8 @@ proc0_init(void)
 
 	KASSERT(l->l_lid == p->p_nlwpid);
 
-	mutex_init(&p->p_smutex, MUTEX_SPIN, IPL_SCHED);
-	mutex_init(&p->p_stmutex, MUTEX_SPIN, IPL_HIGH);
+	mutex_init(&p->p_smutex, MUTEX_DEFAULT, IPL_SCHED);
+	mutex_init(&p->p_stmutex, MUTEX_DEFAULT, IPL_HIGH);
 	mutex_init(&p->p_raslock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&p->p_mutex, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&l->l_swaplock, MUTEX_DEFAULT, IPL_NONE);
@@ -430,8 +431,8 @@ proc0_init(void)
 
 	l->l_addr = proc0paddr;				/* XXX */
 
-	/* Initialize signal state for proc0. */
-	mutex_init(&p->p_sigacts->sa_mutex, MUTEX_SPIN, IPL_NONE);
+	/* Initialize signal state for proc0. XXX IPL_SCHED */
+	mutex_init(&p->p_sigacts->sa_mutex, MUTEX_DEFAULT, IPL_SCHED);
 	siginit(p);
 
 	proc_initspecific(p);
@@ -706,7 +707,7 @@ proc_free_pid(struct proc *p)
 	}
 	mutex_exit(&proclist_mutex);
 
-	nprocs--;
+	atomic_dec_uint(&nprocs);
 }
 
 /*

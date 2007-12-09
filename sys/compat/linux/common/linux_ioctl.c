@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ioctl.c,v 1.48.6.2 2007/11/27 19:36:45 joerg Exp $	*/
+/*	$NetBSD: linux_ioctl.c,v 1.48.6.3 2007/12/09 19:36:59 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ioctl.c,v 1.48.6.2 2007/11/27 19:36:45 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ioctl.c,v 1.48.6.3 2007/12/09 19:36:59 jmcneill Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "sequencer.h"
@@ -76,10 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_ioctl.c,v 1.48.6.2 2007/11/27 19:36:45 joerg E
  * values need some massaging.
  */
 int
-linux_sys_ioctl(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_ioctl(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux_sys_ioctl_args /* {
 		syscallarg(int) fd;

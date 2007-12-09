@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_sem.c,v 1.70.6.4 2007/11/27 19:38:11 joerg Exp $	*/
+/*	$NetBSD: sysv_sem.c,v 1.70.6.5 2007/12/09 19:38:26 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.70.6.4 2007/11/27 19:38:11 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.70.6.5 2007/12/09 19:38:26 jmcneill Exp $");
 
 #define SYSVSEM
 
@@ -773,6 +773,18 @@ restart:
 		return (E2BIG);
 	}
 
+	error = copyin(SCARG(uap, sops), sops, nsops * sizeof(sops[0]));
+	if (error) {
+		SEM_PRINTF(("error = %d from copyin(%p, %p, %zd)\n", error,
+		    SCARG(uap, sops), &sops, nsops * sizeof(sops[0])));
+		if (sops != small_sops) {
+			KERNEL_LOCK(1, l);		/* XXXSMP */
+			kmem_free(sops, nsops * sizeof(*sops));
+			KERNEL_UNLOCK_ONE(l);		/* XXXSMP */
+		}
+		return error;
+	}
+
 	mutex_enter(&semlock);
 	/* In case of reallocation, we will wait for completion */
 	while (__predict_false(sem_realloc_state))
@@ -794,13 +806,6 @@ restart:
 
 	if ((error = ipcperm(cred, &semaptr->sem_perm, IPC_W))) {
 		SEM_PRINTF(("error = %d from ipaccess\n", error));
-		goto out;
-	}
-
-	if ((error = copyin(SCARG(uap, sops),
-	    sops, nsops * sizeof(sops[0]))) != 0) {
-		SEM_PRINTF(("error = %d from copyin(%p, %p, %zd)\n", error,
-		    SCARG(uap, sops), &sops, nsops * sizeof(sops[0])));
 		goto out;
 	}
 

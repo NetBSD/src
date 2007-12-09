@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.91.4.3 2007/11/27 19:39:30 joerg Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.91.4.4 2007/12/09 19:38:55 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.91.4.3 2007/11/27 19:39:30 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.91.4.4 2007/12/09 19:38:55 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -763,7 +763,7 @@ ufs_direnter(struct vnode *dvp, struct vnode *tvp, struct direct *dirp,
 
 	error = 0;
 	cr = cnp->cn_cred;
-	l = cnp->cn_lwp;
+	l = curlwp;
 
 	dp = VTOI(dvp);
 	newentrysize = DIRSIZ(0, dirp, 0);
@@ -1009,7 +1009,7 @@ ufs_direnter(struct vnode *dvp, struct vnode *tvp, struct direct *dirp,
 		if (dp->i_dirhash != NULL)
 			ufsdirhash_dirtrunc(dp, dp->i_endoff);
 #endif
-		(void) UFS_TRUNCATE(dvp, (off_t)dp->i_endoff, IO_SYNC, cr, l);
+		(void) UFS_TRUNCATE(dvp, (off_t)dp->i_endoff, IO_SYNC, cr);
 		if (DOINGSOFTDEP(dvp) && (tvp != NULL))
 			vn_lock(tvp, LK_EXCLUSIVE | LK_RETRY);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_sched.c,v 1.9.14.1 2007/10/26 15:43:51 joerg Exp $	*/
+/*	$NetBSD: freebsd_sched.c,v 1.9.14.2 2007/12/09 19:36:44 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_sched.c,v 1.9.14.1 2007/10/26 15:43:51 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_sched.c,v 1.9.14.2 2007/12/09 19:36:44 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -192,10 +192,7 @@ freebsd_sys_sched_setscheduler(struct lwp *l, void *v,
 }
 
 int
-freebsd_sys_sched_getscheduler(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+freebsd_sys_sched_getscheduler(struct lwp *l, void *v, register_t *retval)
 {
 	struct freebsd_sys_sched_getscheduler_args /* {
 		syscallarg(pid_t) pid;

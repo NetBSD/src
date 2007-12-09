@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.16.8.3 2007/11/11 16:46:33 joerg Exp $	*/
+/*	$NetBSD: spl.S,v 1.16.8.4 2007/12/09 19:35:23 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -61,24 +61,14 @@ ENTRY(splraise)
 	ret
 
 /*
- * void softintr(int sir);
- *
- * Software interrupt registration.
- */
-ENTRY(softintr)
-	movl	4(%esp),%ecx
-	movl	$1,%eax
-	shll	%cl,%eax
-	orl	%eax,CPUVAR(IPENDING)
-	ret
-
-/*
  * void spllower(int s);
  *
  * spllower() for i486 and Pentium.  Must be the same size as
  * i686_spllower().  This must use pushf/cli/popf as it is used
  * early in boot where interrupts are disabled via eflags/IE.
  */
+	.align 64
+
 ENTRY(spllower)
 	movl	4(%esp), %ecx
 	cmpl	CPUVAR(ILEVEL), %ecx
@@ -274,3 +264,66 @@ IDTVEC(doreti)
 	call	_C_LABEL(panic)
 1:	.asciz	"DORETI: INTERRUPT ENABLED"
 #endif /* defined(DEBUG) */
+
+/*
+ * softintr()
+ *
+ * Switch to the LWP assigned to handle interrupts from the given
+ * source.  We borrow the VM context from the interrupted LWP.
+ *
+ * On entry:
+ *
+ *	%eax		intrsource
+ *	%esi		address to return to
+ */
+IDTVEC(softintr)
+	pushl	$_C_LABEL(softintr_ret)	/* set up struct switchframe */
+	pushl	%ebx
+	pushl	%esi
+	pushl	%edi
+	movl	$IPL_HIGH,CPUVAR(ILEVEL)
+	movl	CPUVAR(CURLWP),%esi
+	movl	IS_LWP(%eax),%edi	/* switch to handler LWP */
+	movl	%edi,CPUVAR(CURLWP)
+	movl	L_ADDR(%edi),%edx
+	movl	L_ADDR(%esi),%ecx
+	movl	%esp,PCB_ESP(%ecx)
+	movl	%ebp,PCB_EBP(%ecx)
+	movl	PCB_ESP0(%edx),%esp	/* onto new stack */
+	sti
+	pushl	IS_MAXLEVEL(%eax)	/* ipl to run at */
+	pushl	%esi
+	call	_C_LABEL(softint_dispatch)/* run handlers */
+	addl	$8,%esp
+	movl	L_ADDR(%esi),%ecx
+	movl	PCB_ESP(%ecx),%esp
+	movl	%esi,CPUVAR(CURLWP)
+	popl	%edi			/* unwind switchframe */
+	popl	%esi
+	addl	$8,%esp
+	cli
+	jmp	*%esi			/* back to splx/doreti */
+
+/*
+ * softintr_ret()
+ *
+ * Trampoline function that gets returned to by cpu_switchto() when
+ * an interrupt handler blocks.  On entry:
+ *
+ *	%eax		prevlwp from cpu_switchto()
+ */
+NENTRY(softintr_ret)
+	incl	CPUVAR(MTX_COUNT)	/* re-adjust after mi_switch */
+	movl	$0, L_CTXSWTCH(%eax)	/* %eax from cpu_switchto */
+	cli
+	jmp	*%esi			/* back to splx/doreti */
+
+/*
+ * void softint_trigger(uintptr_t machdep);
+ *
+ * Software interrupt registration.
+ */
+NENTRY(softint_trigger)
+	movl	4(%esp),%eax
+	orl	%eax,CPUVAR(IPENDING)	/* atomic on local cpu */
+	ret

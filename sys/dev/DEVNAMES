@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.229.6.4 2007/12/03 16:14:30 joerg Exp $
+#	$NetBSD: DEVNAMES,v 1.229.6.5 2007/12/09 19:37:39 jmcneill Exp $
 #
 # This file contains all used device names and defined attributes in
 # alphabetical order. New devices added to the system somewhere should first
@@ -83,9 +83,11 @@ an			MI
 ap			newsmips
 apecs			alpha
 apm			i386
+aps			MI
 arbus			evbmips
 arc			MI		Attribute
 arckbd			acorn26
+arcmsr			MI
 arcpp			acorn26
 arcvideo		acorn26
 arcwskbd		acorn26

@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.15.16.3 2007/11/27 19:36:34 joerg Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.15.16.4 2007/12/09 19:36:34 jmcneill Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -44,6 +44,7 @@
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/device.h>
+#include <sys/intr.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -273,7 +274,7 @@ xennetback_xenbus_create(struct xenbus_device *xbusd)
 	xbusd->xbusd_u.b.b_detach = xennetback_xenbus_destroy;
 	xneti->xni_xbusd = xbusd;
 
-	xneti->xni_softintr = softintr_establish(IPL_SOFTNET,
+	xneti->xni_softintr = softint_establish(SOFTINT_NET,
 	    xennetback_ifsoftstart, xneti);
 	if (xneti->xni_softintr == NULL) {
 		err = ENOMEM;
@@ -359,7 +360,7 @@ xennetback_xenbus_destroy(void *arg)
 	printf("%s: disconnecting\n", xneti->xni_if.if_xname);
 	hypervisor_mask_event(xneti->xni_evtchn);
 	event_remove_handler(xneti->xni_evtchn, xennetback_evthandler, xneti);
-	softintr_disestablish(xneti->xni_softintr);
+	softint_disestablish(xneti->xni_softintr);
 
 	SLIST_REMOVE(&xnetback_instances,
 	    xneti, xnetback_instance, next);
@@ -781,7 +782,7 @@ so always copy for now.
 	xneti->xni_txring.req_cons = req_cons;
 	x86_sfence();
 	/* check to see if we can transmit more packets */
-	softintr_schedule(xneti->xni_softintr);
+	softint_schedule(xneti->xni_softintr);
 
 	return 1;
 }
@@ -831,7 +832,7 @@ xennetback_ifstart(struct ifnet *ifp)
 	 * stack will enqueue all pending mbufs in the interface's send queue
 	 * before it is processed by xennet_softstart().
 	 */
-	softintr_schedule(xneti->xni_softintr);
+	softint_schedule(xneti->xni_softintr);
 }
 
 static void

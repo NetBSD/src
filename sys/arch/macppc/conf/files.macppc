@@ -1,4 +1,4 @@
-#	$NetBSD: files.macppc,v 1.84.10.5 2007/11/27 19:35:42 joerg Exp $
+#	$NetBSD: files.macppc,v 1.84.10.6 2007/12/09 19:35:34 jmcneill Exp $
 #
 # macppc-specific configuration info
 
@@ -40,7 +40,6 @@ file arch/macppc/macppc/ipi_hammerhead.c	ipi_hammerhead	needs-flag
 file arch/powerpc/powerpc/bus_dma.c
 file arch/powerpc/powerpc/bus_space.c
 file arch/powerpc/powerpc/procfs_machdep.c	procfs
-file arch/powerpc/powerpc/softintr.c
 file dev/cons.c
 
 #Early serial console for G5 (uses RMCI mode of 970 */

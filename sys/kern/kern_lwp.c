@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.69.2.6 2007/12/03 16:14:49 joerg Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.69.2.7 2007/12/09 19:38:17 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -205,7 +205,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.69.2.6 2007/12/03 16:14:49 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.69.2.7 2007/12/09 19:38:17 jmcneill Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -572,6 +572,7 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, bool inmem, int flags,
 	l2->l_refcnt = 1;
 	l2->l_class = sclass;
 	l2->l_kpriority = l1->l_kpriority;
+	l2->l_kpribase = PRI_KERNEL;
 	l2->l_priority = l1->l_priority;
 	l2->l_inheritedprio = -1;
 	l2->l_mutex = l1->l_cpu->ci_schedstate.spc_mutex;
@@ -628,9 +629,7 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, bool inmem, int flags,
 	mutex_exit(&p2->p_smutex);
 
 	mutex_enter(&proclist_lock);
-	mutex_enter(&proclist_mutex);
 	LIST_INSERT_HEAD(&alllwp, l2, l_list);
-	mutex_exit(&proclist_mutex);
 	mutex_exit(&proclist_lock);
 
 	SYSCALL_TIME_LWP_INIT(l2);

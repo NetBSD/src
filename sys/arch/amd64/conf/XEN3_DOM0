@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.2.2.2 2007/11/27 19:35:30 joerg Exp $
+# $NetBSD: XEN3_DOM0,v 1.2.2.3 2007/12/09 19:34:20 jmcneill Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -11,7 +11,6 @@ options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 maxusers	32		# estimated number of users
 
 #
-options 	MAXPHYS=32768   #xbd doesn't handle 64k transfers
 options 	DOM0OPS
 # boot messages with MPBIOS, acpi and ioapic can be quite large
 options		MSGBUFSIZE=24576
@@ -427,6 +426,7 @@ uk*	at scsibus? target ? lun ?	# SCSI unknown
 # RAID controllers and devices
 aac*	at pci? dev ? function ?	# Adaptec AAC family
 amr*	at pci? dev ? function ?	# AMI/LSI Logic MegaRAID
+arcmsr*	at pci? dev ? function ? 	# Areca SATA RAID controllers
 cac*	at pci? dev ? function ?	# Compaq PCI array controllers
 ciss*	at pci? dev ? function ?	# HP Smart Array controllers
 icp*	at pci? dev ? function ?	# ICP-Vortex GDT & Intel RAID

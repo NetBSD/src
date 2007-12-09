@@ -1,4 +1,4 @@
-/*	$NetBSD: p_dti_arcstation.c,v 1.10.8.1 2007/08/09 02:36:51 jmcneill Exp $	*/
+/*	$NetBSD: p_dti_arcstation.c,v 1.10.8.2 2007/12/09 19:34:26 jmcneill Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: p_dti_arcstation.c,v 1.10.8.1 2007/08/09 02:36:51 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: p_dti_arcstation.c,v 1.10.8.2 2007/12/09 19:34:26 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -139,23 +139,11 @@ struct platform platform_desktech_arcstation_i = {
 /* XXX see comments in p_dti_arcstation_init() */
 static const uint32_t dti_arcstation_ipl_sr_bits[_IPL_N] = {
 	[IPL_NONE] = 0,
-	[IPL_SOFT] =
-	    MIPS_SOFT_INT_MASK_0,
 	[IPL_SOFTCLOCK] =
 	    MIPS_SOFT_INT_MASK_0,
 	[IPL_SOFTNET] =
 	    MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1,
-	[IPL_SOFTSERIAL] =
-	    MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1,
-	[IPL_BIO] =	/* XXX */
-	    MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1 |
-	    MIPS_INT_MASK_0 |
-	    MIPS_INT_MASK_1 |
-	    MIPS_INT_MASK_2 |
-	    MIPS_INT_MASK_3 |
-	    MIPS_INT_MASK_4 |
-	    MIPS_INT_MASK_5,
-	[IPL_NET] =	/* XXX */
+	[IPL_VM] =	/* XXX */
 	    MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1 |
 	    MIPS_INT_MASK_0|
 	    MIPS_INT_MASK_1|
@@ -163,7 +151,7 @@ static const uint32_t dti_arcstation_ipl_sr_bits[_IPL_N] = {
 	    MIPS_INT_MASK_3|
 	    MIPS_INT_MASK_4|
 	    MIPS_INT_MASK_5,
-	[IPL_CLOCK] =	/* XXX */
+	[IPL_SCHED] =	/* XXX */
 	    MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1 |
 	    MIPS_INT_MASK_0|
 	    MIPS_INT_MASK_1|

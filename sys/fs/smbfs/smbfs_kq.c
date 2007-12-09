@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_kq.c,v 1.15.6.1 2007/11/27 19:37:50 joerg Exp $	*/
+/*	$NetBSD: smbfs_kq.c,v 1.15.6.2 2007/12/09 19:38:11 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_kq.c,v 1.15.6.1 2007/11/27 19:37:50 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_kq.c,v 1.15.6.2 2007/12/09 19:38:11 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -415,7 +415,7 @@ smbfs_kqfilter(void *v)
 		kn->kn_fop = &smbfsvnode_filtops;
 		break;
 	default:
-		return (1);
+		return (EINVAL);
 	}
 
 	/* Find out if we can use directory change notify for this file */

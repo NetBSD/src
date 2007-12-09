@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_tty.c,v 1.31 2007/03/04 06:01:16 christos Exp $	*/
+/*	$NetBSD: hpux_tty.c,v 1.31.14.1 2007/12/09 19:36:47 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_tty.c,v 1.31 2007/03/04 06:01:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_tty.c,v 1.31.14.1 2007/12/09 19:36:47 jmcneill Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_43.h"
@@ -423,10 +423,7 @@ hpux_termio(fd, com, data, l)
 }
 
 void
-termiototermios(tio, tios, bsdtios)
-	struct hpux_termio *tio;
-	struct hpux_termios *tios;
-	struct termios *bsdtios;
+termiototermios(struct hpux_termio *tio, struct hpux_termios *tios, struct termios *bsdtios)
 {
 	int i;
 
@@ -455,9 +452,7 @@ termiototermios(tio, tios, bsdtios)
 }
 
 void
-termiostotermio(tios, tio)
-	struct hpux_termios *tios;
-	struct hpux_termio *tio;
+termiostotermio(struct hpux_termios *tios, struct hpux_termio *tio)
 {
 	int i;
 
@@ -478,8 +473,7 @@ termiostotermio(tios, tio)
 }
 
 int
-bsdtohpuxbaud(bsdspeed)
-	long bsdspeed;
+bsdtohpuxbaud(long bsdspeed)
 {
 	switch (bsdspeed) {
 	case B0:     return(TIO_B0);
@@ -503,8 +497,7 @@ bsdtohpuxbaud(bsdspeed)
 }
 
 int
-hpuxtobsdbaud(hpux_speed)
-	int hpux_speed;
+hpuxtobsdbaud(int hpux_speed)
 {
 	static const int hpuxtobsdbaudtab[32] = {
 		B0,	B50,	B75,	B110,	B134,	B150,	B200,	B300,
@@ -519,10 +512,7 @@ hpuxtobsdbaud(hpux_speed)
 }
 
 int
-hpux_sys_stty_6x(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+hpux_sys_stty_6x(struct lwp *l, void *v, register_t *retval)
 {
 	struct hpux_sys_stty_6x_args /* {
 		syscallarg(int) fd;
@@ -533,10 +523,7 @@ hpux_sys_stty_6x(l, v, retval)
 }
 
 int
-hpux_sys_gtty_6x(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+hpux_sys_gtty_6x(struct lwp *l, void *v, register_t *retval)
 {
 	struct hpux_sys_gtty_6x_args /* {
 		syscallarg(int) fd;

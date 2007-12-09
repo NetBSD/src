@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.56.2.2 2007/11/27 19:37:44 joerg Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.56.2.3 2007/12/09 19:38:09 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.56.2.2 2007/11/27 19:37:44 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.56.2.3 2007/12/09 19:38:09 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -291,7 +291,7 @@ ntfs_mount (
 #ifdef __FreeBSD__
 	NDINIT(ndp, LOOKUP, FOLLOW, UIO_USERSPACE, args->fspec, p);
 #else
-	NDINIT(ndp, LOOKUP, FOLLOW, UIO_USERSPACE, args->fspec, l);
+	NDINIT(ndp, LOOKUP, FOLLOW, UIO_USERSPACE, args->fspec);
 #endif
 	err = namei(ndp);
 	if (err) {

@@ -1,4 +1,4 @@
-/* $NetBSD: ppbus_conf.h,v 1.7.14.1 2007/10/26 15:47:23 joerg Exp $ */
+/* $NetBSD: ppbus_conf.h,v 1.7.14.2 2007/12/09 19:37:56 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 1999 Nicolas Souchu
@@ -32,7 +32,7 @@
 #define __PPBUS_CONF_H
 
 #include <sys/device.h>
-#include <sys/lock.h>
+#include <sys/mutex.h>
 #include <sys/queue.h>
 
 #include <sys/bus.h>
@@ -87,7 +87,7 @@ struct ppbus_softc {
 	struct device sc_dev;
 
 	/* Lock for critical section when requesting/releasing the bus */
-	struct lock sc_lock;
+	kmutex_t sc_lock;
 
 #define PPBUS_OK 1
 #define PPBUS_NOK 0

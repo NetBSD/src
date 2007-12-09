@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_ipc.c,v 1.24 2007/06/17 16:32:51 dsl Exp $	*/
+/*	$NetBSD: ibcs2_ipc.c,v 1.24.6.1 2007/12/09 19:36:48 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Bartram
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_ipc.c,v 1.24 2007/06/17 16:32:51 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_ipc.c,v 1.24.6.1 2007/12/09 19:36:48 jmcneill Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -163,10 +163,7 @@ cvt_imsqid2msqid(struct ibcs2_msqid_ds *ibp, struct msqid_ds *bp)
 }
 
 int
-ibcs2_sys_msgsys(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ibcs2_sys_msgsys(struct lwp *l, void *v, register_t *retval)
 {
 #ifdef SYSVMSG
 	struct ibcs2_sys_msgsys_args /* {
@@ -246,13 +243,11 @@ struct ibcs2_sem {
 };
 
 #ifdef notdef
-static void cvt_sem2isem __P((struct sem *, struct ibcs2_sem *));
-static void cvt_isem2sem __P((struct ibcs2_sem *, struct sem *));
+static void cvt_sem2isem(struct sem *, struct ibcs2_sem *);
+static void cvt_isem2sem(struct ibcs2_sem *, struct sem *);
 
 static void
-cvt_sem2isem(bp, ibp)
-	struct __sem *bp;
-	struct ibcs2_sem *ibp;
+cvt_sem2isem(struct __sem *bp, struct ibcs2_sem *ibp)
 {
 	ibp->semval = bp->semval;
 	ibp->sempid = bp->sempid;
@@ -261,9 +256,7 @@ cvt_sem2isem(bp, ibp)
 }
 
 static void
-cvt_isem2sem(ibp, bp)
-	struct ibcs2_sem *ibp;
-	struct __sem *bp;
+cvt_isem2sem(struct ibcs2_sem *ibp, struct __sem *bp)
 {
 	bp->semval = ibp->semval;
 	bp->sempid = ibp->sempid;
@@ -294,10 +287,7 @@ cvt_isemid2semid(const struct ibcs2_semid_ds *ibp, struct semid_ds *bp)
 }
 
 int
-ibcs2_sys_semsys(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ibcs2_sys_semsys(struct lwp *l, void *v, register_t *retval)
 {
 #ifdef SYSVSEM
 	struct ibcs2_sys_semsys_args /* {
@@ -399,10 +389,7 @@ cvt_ishmid2shmid(const struct ibcs2_shmid_ds *ibp, struct shmid_ds *bp)
 }
 
 int
-ibcs2_sys_shmsys(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ibcs2_sys_shmsys(struct lwp *l, void *v, register_t *retval)
 {
 #ifdef SYSVSHM
 	struct ibcs2_sys_shmsys_args /* {

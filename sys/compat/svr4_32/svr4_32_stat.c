@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_stat.c,v 1.29 2007/05/12 17:28:20 dsl Exp $	 */
+/*	$NetBSD: svr4_32_stat.c,v 1.29.6.1 2007/12/09 19:37:37 jmcneill Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_stat.c,v 1.29 2007/05/12 17:28:20 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_stat.c,v 1.29.6.1 2007/12/09 19:37:37 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,10 +84,10 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_32_stat.c,v 1.29 2007/05/12 17:28:20 dsl Exp $"
 # define SVR4_NO_OSTAT
 #endif
 
-static void bsd_to_svr4_32_xstat __P((struct stat *, struct svr4_32_xstat *));
-static void bsd_to_svr4_32_stat64 __P((struct stat *, struct svr4_32_stat64 *));
-int svr4_32_ustat __P((struct lwp *, void *, register_t *));
-static int svr4_32_to_bsd_pathconf __P((int));
+static void bsd_to_svr4_32_xstat(struct stat *, struct svr4_32_xstat *);
+static void bsd_to_svr4_32_stat64(struct stat *, struct svr4_32_stat64 *);
+int svr4_32_ustat(struct lwp *, void *, register_t *);
+static int svr4_32_to_bsd_pathconf(int);
 
 /*
  * SVR4 uses named pipes as named sockets, so we tell programs
@@ -97,12 +97,10 @@ static int svr4_32_to_bsd_pathconf __P((int));
 
 
 #ifndef SVR4_NO_OSTAT
-static void bsd_to_svr4_32_stat __P((struct stat *, struct svr4_32_stat *));
+static void bsd_to_svr4_32_stat(struct stat *, struct svr4_32_stat *);
 
 static void
-bsd_to_svr4_32_stat(st, st4)
-	struct stat		*st;
-	struct svr4_32_stat 	*st4;
+bsd_to_svr4_32_stat(struct stat *st, struct svr4_32_stat *st4)
 {
 	memset(st4, 0, sizeof(*st4));
 	st4->st_dev = bsd_to_svr4_odev_t(st->st_dev);
@@ -121,9 +119,7 @@ bsd_to_svr4_32_stat(st, st4)
 
 
 static void
-bsd_to_svr4_32_xstat(st, st4)
-	struct stat		*st;
-	struct svr4_32_xstat	*st4;
+bsd_to_svr4_32_xstat(struct stat *st, struct svr4_32_xstat *st4)
 {
 	memset(st4, 0, sizeof(*st4));
 	st4->st_dev = bsd_to_svr4_dev_t(st->st_dev);
@@ -147,9 +143,7 @@ bsd_to_svr4_32_xstat(st, st4)
 
 
 static void
-bsd_to_svr4_32_stat64(st, st4)
-	struct stat		*st;
-	struct svr4_32_stat64	*st4;
+bsd_to_svr4_32_stat64(struct stat *st, struct svr4_32_stat64 *st4)
 {
 	memset(st4, 0, sizeof(*st4));
 	st4->st_dev = bsd_to_svr4_dev_t(st->st_dev);
@@ -172,10 +166,7 @@ bsd_to_svr4_32_stat64(st, st4)
 
 
 int
-svr4_32_sys_stat(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_32_sys_stat(struct lwp *l, void *v, register_t *retval)
 {
 	struct svr4_32_sys_stat_args *uap = v;
 #ifdef SVR4_NO_OSTAT
@@ -210,10 +201,7 @@ svr4_32_sys_stat(l, v, retval)
 
 
 int
-svr4_32_sys_lstat(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_32_sys_lstat(struct lwp *l, void *v, register_t *retval)
 {
 	struct svr4_32_sys_lstat_args *uap = v;
 #ifdef SVR4_NO_OSTAT
@@ -248,10 +236,7 @@ svr4_32_sys_lstat(l, v, retval)
 
 
 int
-svr4_32_sys_fstat(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_32_sys_fstat(struct lwp *l, void *v, register_t *retval)
 {
 	struct svr4_32_sys_fstat_args *uap = v;
 #ifdef SVR4_NO_OSTAT
@@ -279,10 +264,7 @@ svr4_32_sys_fstat(l, v, retval)
 
 
 int
-svr4_32_sys_xstat(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_32_sys_xstat(struct lwp *l, void *v, register_t *retval)
 {
 	struct svr4_32_sys_xstat_args *uap = v;
 	struct stat		st;
@@ -305,10 +287,7 @@ svr4_32_sys_xstat(l, v, retval)
 
 
 int
-svr4_32_sys_lxstat(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_32_sys_lxstat(struct lwp *l, void *v, register_t *retval)
 {
 	struct svr4_32_sys_lxstat_args *uap = v;
 	struct stat		st;
@@ -331,10 +310,7 @@ svr4_32_sys_lxstat(l, v, retval)
 
 
 int
-svr4_32_sys_fxstat(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_32_sys_fxstat(struct lwp *l, void *v, register_t *retval)
 {
 	struct svr4_32_sys_fxstat_args *uap = v;
 	struct stat		st;
@@ -353,10 +329,7 @@ svr4_32_sys_fxstat(l, v, retval)
 
 
 int
-svr4_32_sys_stat64(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_32_sys_stat64(struct lwp *l, void *v, register_t *retval)
 {
 	struct svr4_32_sys_stat64_args *uap = v;
 	struct stat		st;
@@ -379,10 +352,7 @@ svr4_32_sys_stat64(l, v, retval)
 
 
 int
-svr4_32_sys_lstat64(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_32_sys_lstat64(struct lwp *l, void *v, register_t *retval)
 {
 	struct svr4_32_sys_lstat64_args *uap = v;
 	struct stat		st;
@@ -405,10 +375,7 @@ svr4_32_sys_lstat64(l, v, retval)
 
 
 int
-svr4_32_sys_fstat64(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_32_sys_fstat64(struct lwp *l, void *v, register_t *retval)
 {
 	struct svr4_32_sys_fstat64_args *uap = v;
 	struct stat		st;
@@ -432,10 +399,7 @@ struct svr4_32_ustat_args {
 };
 
 int
-svr4_32_ustat(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_32_ustat(struct lwp *l, void *v, register_t *retval)
 {
 	struct svr4_32_ustat_args /* {
 		syscallarg(svr4_dev_t)		dev;
@@ -460,10 +424,7 @@ svr4_32_ustat(l, v, retval)
 
 
 int
-svr4_32_sys_uname(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_32_sys_uname(struct lwp *l, void *v, register_t *retval)
 {
 	struct svr4_32_sys_uname_args *uap = v;
 	struct svr4_utsname	sut;
@@ -491,10 +452,7 @@ svr4_32_sys_uname(l, v, retval)
 
 
 int
-svr4_32_sys_systeminfo(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_32_sys_systeminfo(struct lwp *l, void *v, register_t *retval)
 {
 	struct svr4_32_sys_systeminfo_args *uap = v;
 	const char *str = NULL;
@@ -632,10 +590,7 @@ svr4_32_sys_systeminfo(l, v, retval)
 
 
 int
-svr4_32_sys_utssys(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_32_sys_utssys(struct lwp *l, void *v, register_t *retval)
 {
 	struct svr4_32_sys_utssys_args *uap = v;
 
@@ -666,10 +621,7 @@ svr4_32_sys_utssys(l, v, retval)
 
 
 int
-svr4_32_sys_utime(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_32_sys_utime(struct lwp *l, void *v, register_t *retval)
 {
 	struct svr4_32_sys_utime_args *uap = v;
 	struct svr4_32_utimbuf ub;
@@ -694,10 +646,7 @@ svr4_32_sys_utime(l, v, retval)
 
 
 int
-svr4_32_sys_utimes(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_32_sys_utimes(struct lwp *l, void *v, register_t *retval)
 {
 	struct svr4_32_sys_utimes_args *uap = v;
 	struct sys_utimes_args ua;
@@ -709,8 +658,7 @@ svr4_32_sys_utimes(l, v, retval)
 
 
 static int
-svr4_32_to_bsd_pathconf(name)
-	int name;
+svr4_32_to_bsd_pathconf(int name)
 {
 	switch (name) {
 	case SVR4_PC_LINK_MAX:
@@ -759,10 +707,7 @@ svr4_32_to_bsd_pathconf(name)
 
 
 int
-svr4_32_sys_pathconf(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_32_sys_pathconf(struct lwp *l, void *v, register_t *retval)
 {
 	struct svr4_32_sys_pathconf_args *uap = v;
 	struct sys_pathconf_args /* {
@@ -787,10 +732,7 @@ svr4_32_sys_pathconf(l, v, retval)
 
 
 int
-svr4_32_sys_fpathconf(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_32_sys_fpathconf(struct lwp *l, void *v, register_t *retval)
 {
 	struct svr4_32_sys_fpathconf_args *uap = v;
 

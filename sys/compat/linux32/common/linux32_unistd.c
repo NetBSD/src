@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_unistd.c,v 1.10.6.4 2007/11/21 21:53:58 joerg Exp $ */
+/*	$NetBSD: linux32_unistd.c,v 1.10.6.5 2007/12/09 19:37:10 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_unistd.c,v 1.10.6.4 2007/11/21 21:53:58 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_unistd.c,v 1.10.6.5 2007/12/09 19:37:10 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -73,10 +73,7 @@ static int linux32_select1(struct lwp *, register_t *,
     int, fd_set *, fd_set *, fd_set *, struct timeval *);
 
 int
-linux32_sys_brk(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_brk(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux32_sys_brk_args /* {
 		syscallarg(netbsd32_charp) nsize;
@@ -88,10 +85,7 @@ linux32_sys_brk(l, v, retval)
 }
 
 int
-linux32_sys_llseek(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_llseek(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux32_sys_llseek_args /* {
 		syscallcarg(int) fd;
@@ -112,10 +106,7 @@ linux32_sys_llseek(l, v, retval)
 }
 
 int
-linux32_sys_select(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_select(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux32_sys_select_args /* {
 		syscallarg(int) nfds;
@@ -133,10 +124,7 @@ linux32_sys_select(l, v, retval)
 }
 
 int
-linux32_sys_oldselect(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_oldselect(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux32_sys_oldselect_args /* {
 		syscallarg(linux32_oldselectp_t) lsp;
@@ -234,10 +222,7 @@ linux32_select1(l, retval, nfds, readfds, writefds, exceptfds, timeout)
 }
 
 int
-linux32_sys_pipe(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_pipe(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux32_sys_pipe_args /* {
 		syscallarg(netbsd32_intp) fd;
@@ -262,10 +247,7 @@ linux32_sys_pipe(l, v, retval)
 
 
 int
-linux32_sys_unlink(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_unlink(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux32_sys_unlink_args /* {
 		syscallarg(const netbsd32_charp) path;
@@ -278,10 +260,7 @@ linux32_sys_unlink(l, v, retval)
 }
 
 int
-linux32_sys_creat(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_creat(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux32_sys_creat_args /* {
 		syscallarg(const netbsd32_charp) path;
@@ -297,10 +276,7 @@ linux32_sys_creat(l, v, retval)
 }
 
 int
-linux32_sys_mknod(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_mknod(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux32_sys_mknod_args /* {
 		syscallarg(const netbsd32_charp) path;
@@ -317,10 +293,7 @@ linux32_sys_mknod(l, v, retval)
 }
 
 int
-linux32_sys_chown16(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_chown16(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux32_sys_chown16_args /* {
 		syscallarg(const netbsd32_charp) path;
@@ -345,10 +318,7 @@ linux32_sys_chown16(l, v, retval)
 }
 
 int
-linux32_sys_lchown16(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_lchown16(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux32_sys_lchown16_args /* {
 		syscallarg(const netbsd32_charp) path;
@@ -373,10 +343,7 @@ linux32_sys_lchown16(l, v, retval)
 }
 
 int
-linux32_sys_break(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_break(struct lwp *l, void *v, register_t *retval)
 {
 #if 0
 	struct linux32_sys_break_args /* {
@@ -388,10 +355,7 @@ linux32_sys_break(l, v, retval)
 }
 
 int
-linux32_sys_rename(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_rename(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux32_sys_rename_args /* {
 		syscallarg(const netbsd32_charp) from;
@@ -406,10 +370,7 @@ linux32_sys_rename(l, v, retval)
 }
 
 int
-linux32_sys_getgroups16(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_getgroups16(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux32_sys_getgroups16_args /* {
 		syscallarg(int) gidsetsize;
@@ -424,10 +385,7 @@ linux32_sys_getgroups16(l, v, retval)
 }
 
 int
-linux32_sys_setgroups16(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_setgroups16(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux32_sys_setgroups16_args /* {
 		syscallarg(int) gidsetsize;
@@ -442,10 +400,7 @@ linux32_sys_setgroups16(l, v, retval)
 }
 
 int
-linux32_sys_swapon(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_swapon(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux32_sys_swapon_args /* {
 		syscallarg(const netbsd32_charp) name;
@@ -459,10 +414,7 @@ linux32_sys_swapon(l, v, retval)
 }
 
 int
-linux32_sys_swapoff(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_swapoff(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux32_sys_swapoff_args /* {
 		syscallarg(const netbsd32_charp) path;
@@ -477,10 +429,7 @@ linux32_sys_swapoff(l, v, retval)
 
 
 int
-linux32_sys_reboot(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_reboot(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux32_sys_reboot_args /* {
 		syscallarg(int) magic1;
@@ -499,10 +448,7 @@ linux32_sys_reboot(l, v, retval)
 }
 
 int
-linux32_sys_truncate(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_truncate(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux32_sys_truncate_args /* {
 		syscallarg(const netbsd32_charp) path;
@@ -518,10 +464,7 @@ linux32_sys_truncate(l, v, retval)
 }
 
 int
-linux32_sys_fchown16(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_fchown16(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux32_sys_fchown16_args /* {
 		syscallarg(int) fd;
@@ -546,10 +489,7 @@ linux32_sys_fchown16(l, v, retval)
 }
 
 int
-linux32_sys_setresuid(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_setresuid(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux32_sys_setresuid_args /* {
 		syscallarg(uid_t) ruid;
@@ -566,10 +506,7 @@ linux32_sys_setresuid(l, v, retval)
 }
 
 int
-linux32_sys_setresgid(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_setresgid(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux32_sys_setresgid_args /* {
 		syscallarg(gid_t) rgid;
@@ -586,10 +523,7 @@ linux32_sys_setresgid(l, v, retval)
 }
 
 int
-linux32_sys_nice(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_nice(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux32_sys_nice_args /* {
 		syscallarg(int) incr;
@@ -604,10 +538,7 @@ linux32_sys_nice(l, v, retval)
 }
 
 int
-linux32_sys_alarm(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_alarm(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux32_sys_alarm_args /* {
 		syscallarg(unsigned int) secs;
@@ -620,10 +551,7 @@ linux32_sys_alarm(l, v, retval)
 }
 
 int
-linux32_sys_fdatasync(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_fdatasync(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux32_sys_fdatasync_args /* {
 		syscallarg(int) fd;
@@ -636,10 +564,7 @@ linux32_sys_fdatasync(l, v, retval)
 }
 
 int
-linux32_sys_setfsuid(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_setfsuid(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux32_sys_setfsuid_args /* {
 		syscallarg(uid_t) uid;
@@ -652,10 +577,7 @@ linux32_sys_setfsuid(l, v, retval)
 }
 
 int
-linux32_sys_setreuid16(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_setreuid16(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux32_sys_setreuid16_args /* {
 		syscallarg(int) ruid;
@@ -676,10 +598,7 @@ linux32_sys_setreuid16(l, v, retval)
 }
 
 int
-linux32_sys_setregid16(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_setregid16(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux32_sys_setregid16_args /* {
 		syscallarg(int) rgid;
@@ -700,10 +619,7 @@ linux32_sys_setregid16(l, v, retval)
 }
 
 int
-linux32_sys_setresuid16(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_setresuid16(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux32_sys_setresuid16_args /* {
 		syscallarg(uid_t) ruid;
@@ -729,10 +645,7 @@ linux32_sys_setresuid16(l, v, retval)
 }
 
 int
-linux32_sys_setresgid16(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_setresgid16(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux32_sys_setresgid16_args /* {
 		syscallarg(gid_t) rgid;

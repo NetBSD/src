@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_signal.c,v 1.32 2007/06/16 20:04:28 dsl Exp $	*/
+/*	$NetBSD: osf1_signal.c,v 1.32.6.1 2007/12/09 19:37:25 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_signal.c,v 1.32 2007/06/16 20:04:28 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_signal.c,v 1.32.6.1 2007/12/09 19:37:25 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,10 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: osf1_signal.c,v 1.32 2007/06/16 20:04:28 dsl Exp $")
 
 #if 0
 int
-osf1_sys_kill(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+osf1_sys_kill(struct lwp *l, void *v, register_t *retval)
 {
 	struct osf1_sys_kill_args *uap = v;
 	struct sys_kill_args ka;
@@ -73,10 +70,7 @@ osf1_sys_kill(l, v, retval)
 #endif
 
 int
-osf1_sys_sigaction(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+osf1_sys_sigaction(struct lwp *l, void *v, register_t *retval)
 {
 	struct osf1_sys_sigaction_args *uap = v;
 	struct osf1_sigaction *nosa, *oosa, tmposa;
@@ -111,10 +105,7 @@ osf1_sys_sigaction(l, v, retval)
 }
 
 int
-osf1_sys_sigaltstack(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+osf1_sys_sigaltstack(struct lwp *l, void *v, register_t *retval)
 {
 	struct osf1_sys_sigaltstack_args *uap = v;
 	/* We silently ignore OSF1_SS_NOMASK and OSF1_SS_UCONTEXT */
@@ -124,10 +115,7 @@ osf1_sys_sigaltstack(l, v, retval)
 
 #if 0
 int
-osf1_sys_signal(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+osf1_sys_signal(struct lwp *l, void *v, register_t *retval)
 {
 	struct osf1_sys_signal_args *uap = v;
 	struct proc *p = l->l_proc;
@@ -230,10 +218,7 @@ osf1_sys_signal(l, v, retval)
 }
 
 int
-osf1_sys_sigpending(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+osf1_sys_sigpending(struct lwp *l, void *v, register_t *retval)
 {
 	struct osf1_sys_sigpending_args *uap = v;
 	struct proc *p = l->l_proc;
@@ -247,10 +232,7 @@ osf1_sys_sigpending(l, v, retval)
 }
 
 int
-osf1_sys_sigprocmask(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+osf1_sys_sigprocmask(struct lwp *l, void *v, register_t *retval)
 {
 	struct osf1_sys_sigprocmask_args *uap = v;
 	struct proc *p = l->l_proc;
@@ -306,10 +288,7 @@ osf1_sys_sigprocmask(l, v, retval)
 }
 
 int
-osf1_sys_sigsuspend(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+osf1_sys_sigsuspend(struct lwp *l, void *v, register_t *retval)
 {
 	struct osf1_sys_sigsuspend_args *uap = v;
 	osf1_sigset_t oss;

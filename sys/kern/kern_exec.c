@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.246.4.8 2007/12/03 16:14:48 joerg Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.246.4.9 2007/12/09 19:38:16 jmcneill Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.246.4.8 2007/12/03 16:14:48 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.246.4.9 2007/12/09 19:38:16 jmcneill Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -466,7 +466,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 		goto clrflg;
 	}
 
-	NDINIT(&nid, LOOKUP, NOFOLLOW | TRYEMULROOT, UIO_SYSSPACE, pathbuf, l);
+	NDINIT(&nid, LOOKUP, NOFOLLOW | TRYEMULROOT, UIO_SYSSPACE, pathbuf);
 
 	/*
 	 * initialize the fields of the exec package.

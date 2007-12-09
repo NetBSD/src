@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_socksys.c,v 1.16 2007/03/04 06:01:17 christos Exp $	*/
+/*	$NetBSD: ibcs2_socksys.c,v 1.16.14.1 2007/12/09 19:36:49 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_socksys.c,v 1.16 2007/03/04 06:01:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_socksys.c,v 1.16.14.1 2007/12/09 19:36:49 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,10 +57,7 @@ struct ibcs2_socksys_args {
 };
 
 int
-ibcs2_socksys(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ibcs2_socksys(struct lwp *l, void *v, register_t *retval)
 {
 	struct ibcs2_socksys_args *uap = v;
 	int error;

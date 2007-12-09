@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_fcntl.c,v 1.17.18.1 2007/12/03 16:14:28 joerg Exp $ */
+/*	$NetBSD: irix_fcntl.c,v 1.17.18.2 2007/12/09 19:36:50 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_fcntl.c,v 1.17.18.1 2007/12/03 16:14:28 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_fcntl.c,v 1.17.18.2 2007/12/09 19:36:50 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -68,15 +68,12 @@ __KERNEL_RCSID(0, "$NetBSD: irix_fcntl.c,v 1.17.18.1 2007/12/03 16:14:28 joerg E
 #include <compat/svr4/svr4_fcntl.h>
 #include <compat/svr4/svr4_syscallargs.h>
 
-static int fd_truncate __P((struct lwp *, int, int, off_t, register_t *));
-static int bsd_to_irix_fcntl_flags __P((int));
-static int irix_to_bsd_fcntl_flags __P((int));
+static int fd_truncate(struct lwp *, int, int, off_t, register_t *);
+static int bsd_to_irix_fcntl_flags(int);
+static int irix_to_bsd_fcntl_flags(int);
 
 int
-irix_sys_lseek64(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+irix_sys_lseek64(struct lwp *l, void *v, register_t *retval)
 {
 	/*
 	 * Note: we have an alignement problem here. If pad2, pad3 and pad4
@@ -109,10 +106,7 @@ irix_sys_lseek64(l, v, retval)
 }
 
 int
-irix_sys_fcntl(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+irix_sys_fcntl(struct lwp *l, void *v, register_t *retval)
 {
 	struct irix_sys_fcntl_args /* {
 		syscallarg(int) fd;
@@ -238,12 +232,7 @@ irix_sys_fcntl(l, v, retval)
 }
 
 static int
-fd_truncate(l, fd, whence, start, retval)
-	struct lwp *l;
-	int fd;
-	int whence;
-	off_t start;
-	register_t *retval;
+fd_truncate(struct lwp *l, int fd, int whence, off_t start, register_t *retval)
 {
 	struct filedesc *fdp = l->l_proc->p_fd;
 	struct file *fp;
@@ -284,10 +273,7 @@ fd_truncate(l, fd, whence, start, retval)
 }
 
 int
-irix_sys_open(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+irix_sys_open(struct lwp *l, void *v, register_t *retval)
 {
 	struct irix_sys_open_args /* {
 		syscallarg(char *) path;
@@ -354,8 +340,7 @@ irix_sys_open(l, v, retval)
 }
 
 static int
-irix_to_bsd_fcntl_flags(flags)
-	int flags;
+irix_to_bsd_fcntl_flags(int flags)
 {
 	int ret = 0;
 
@@ -381,8 +366,7 @@ irix_to_bsd_fcntl_flags(flags)
 }
 
 static int
-bsd_to_irix_fcntl_flags(flags)
-	int flags;
+bsd_to_irix_fcntl_flags(int flags)
 {
 	int ret = 0;
 

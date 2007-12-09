@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.10.12.3 2007/11/14 19:04:17 joerg Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.10.12.4 2007/12/09 19:36:30 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.10.12.3 2007/11/14 19:04:17 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.10.12.4 2007/12/09 19:36:30 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -170,4 +170,11 @@ cpu_need_proftick(struct lwp *l)
 
 	l->l_pflag |= LP_OWEUPC;
 	aston(l);
+}
+
+bool
+cpu_intr_p(void)
+{
+
+	return (curcpu()->ci_idepth >= 0);
 }

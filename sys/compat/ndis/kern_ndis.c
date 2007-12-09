@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sys/compat/ndis/kern_ndis.c,v 1.60.2.5 2005/04/01 17:14:20 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: kern_ndis.c,v 1.11.6.1 2007/10/26 15:44:01 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ndis.c,v 1.11.6.2 2007/12/09 19:37:16 jmcneill Exp $");
 #endif
 
 #include <sys/param.h>
@@ -561,7 +561,9 @@ ndis_destroy_kthreads()
 	}
 
 	mtx_destroy(&ndis_req_mtx);
+#ifndef __NetBSD__
 	mtx_destroy(&ndis_thr_mtx);
+#endif
 
 	return;
 }

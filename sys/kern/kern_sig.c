@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.254.6.6 2007/12/03 16:14:53 joerg Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.254.6.7 2007/12/09 19:38:19 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.254.6.6 2007/12/03 16:14:53 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.254.6.7 2007/12/09 19:38:19 jmcneill Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_multiprocessor.h"
@@ -215,7 +215,8 @@ sigactsinit(struct proc *pp, int share)
 		ps2 = ps;
 	} else {
 		ps2 = pool_get(&sigacts_pool, PR_WAITOK);
-		mutex_init(&ps2->sa_mutex, MUTEX_SPIN, IPL_SCHED);
+		/* XXX IPL_SCHED to match p_smutex */
+		mutex_init(&ps2->sa_mutex, MUTEX_DEFAULT, IPL_SCHED);
 		mutex_enter(&ps->sa_mutex);
 		memcpy(&ps2->sa_sigdesc, ps->sa_sigdesc,
 		    sizeof(ps2->sa_sigdesc));
@@ -241,7 +242,8 @@ sigactsunshare(struct proc *p)
 	if (oldps->sa_refcnt == 1)
 		return;
 	ps = pool_get(&sigacts_pool, PR_WAITOK);
-	mutex_init(&ps->sa_mutex, MUTEX_SPIN, IPL_SCHED);
+	/* XXX IPL_SCHED to match p_smutex */
+	mutex_init(&ps->sa_mutex, MUTEX_DEFAULT, IPL_SCHED);
 	memset(&ps->sa_sigdesc, 0, sizeof(ps->sa_sigdesc));
 	p->p_sigacts = ps;
 	sigactsfree(oldps);
@@ -2073,6 +2075,7 @@ proc_stop_callout(void *cookie)
 		restart = false;
 		more = false;
 
+		mutex_enter(&proclist_lock);
 		mutex_enter(&proclist_mutex);
 		PROCLIST_FOREACH(p, &allproc) {
 			mutex_enter(&p->p_smutex);
@@ -2122,6 +2125,7 @@ proc_stop_callout(void *cookie)
 				break;
 		}
 		mutex_exit(&proclist_mutex);
+		mutex_exit(&proclist_lock);
 	} while (restart);
 
 	/*

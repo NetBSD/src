@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.56.6.2 2007/11/27 19:36:51 joerg Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.56.6.3 2007/12/09 19:37:26 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ossaudio.c,v 1.56.6.2 2007/11/27 19:36:51 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ossaudio.c,v 1.56.6.3 2007/12/09 19:37:26 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -63,12 +63,12 @@ int ossdebug = 0;
 #define TO_OSSVOL(x)	(((x) * 100 + 127) / 255)
 #define FROM_OSSVOL(x)	((((x) > 100 ? 100 : (x)) * 255 + 50) / 100)
 
-static struct audiodevinfo *getdevinfo __P((struct file *, struct lwp *));
+static struct audiodevinfo *getdevinfo(struct file *, struct lwp *);
 static int opaque_to_enum(struct audiodevinfo *di, audio_mixer_name_t *label, int opq);
 static int enum_to_ord(struct audiodevinfo *di, int enm);
 static int enum_to_mask(struct audiodevinfo *di, int enm);
 
-static void setblocksize __P((struct file *, struct audio_info *, struct lwp *));
+static void setblocksize(struct file *, struct audio_info *, struct lwp *);
 
 
 int
@@ -607,9 +607,7 @@ enum_to_mask(struct audiodevinfo *di, int enm)
  * to collect the information.
  */
 static struct audiodevinfo *
-getdevinfo(fp, l)
-	struct file *fp;
-	struct lwp *l;
+getdevinfo(struct file *fp, struct lwp *l)
 {
 	mixer_devinfo_t mi;
 	int i, j, e;
@@ -1163,10 +1161,7 @@ oss_ioctl_sequencer(l, uap, retval)
  * If not, set it to be.
  */
 static void
-setblocksize(fp, info, l)
-	struct file *fp;
-	struct audio_info *info;
-	struct lwp *l;
+setblocksize(struct file *fp, struct audio_info *info, struct lwp *l)
 {
 	struct audio_info set;
 	int s;

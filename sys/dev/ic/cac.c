@@ -1,4 +1,4 @@
-/*	$NetBSD: cac.c,v 1.41.6.1 2007/10/26 15:44:39 joerg Exp $	*/
+/*	$NetBSD: cac.c,v 1.41.6.2 2007/12/09 19:37:48 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cac.c,v 1.41.6.1 2007/10/26 15:44:39 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cac.c,v 1.41.6.2 2007/12/09 19:37:48 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,7 +108,7 @@ cac_init(struct cac_softc *sc, const char *intrstr, int startfw)
 
 	SIMPLEQ_INIT(&sc->sc_ccb_free);
 	SIMPLEQ_INIT(&sc->sc_ccb_queue);
-	mutex_init(&sc->sc_mutex, MUTEX_DRIVER, IPL_BIO);
+	mutex_init(&sc->sc_mutex, MUTEX_DEFAULT, IPL_VM);
 	cv_init(&sc->sc_ccb_cv, "cacccb");
 
         size = sizeof(struct cac_ccb) * CAC_MAX_CCBS;

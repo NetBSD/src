@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ipccall.c,v 1.28 2007/03/04 06:01:23 christos Exp $	*/
+/*	$NetBSD: linux_ipccall.c,v 1.28.14.1 2007/12/09 19:37:00 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ipccall.c,v 1.28 2007/03/04 06:01:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ipccall.c,v 1.28.14.1 2007/12/09 19:37:00 jmcneill Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -86,10 +86,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_ipccall.c,v 1.28 2007/03/04 06:01:23 christos 
  */
 
 int
-linux_sys_ipc(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_ipc(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux_sys_ipc_args /* {
 		syscallarg(int) what;

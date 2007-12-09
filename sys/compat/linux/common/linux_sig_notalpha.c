@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sig_notalpha.c,v 1.33.18.1 2007/10/26 15:43:59 joerg Exp $	*/
+/*	$NetBSD: linux_sig_notalpha.c,v 1.33.18.2 2007/12/09 19:37:04 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sig_notalpha.c,v 1.33.18.1 2007/10/26 15:43:59 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sig_notalpha.c,v 1.33.18.2 2007/12/09 19:37:04 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,10 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_sig_notalpha.c,v 1.33.18.1 2007/10/26 15:43:59
  * sigaction() apply.
  */
 int
-linux_sys_signal(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_signal(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux_sys_signal_args /* {
 		syscallarg(int) signum;
@@ -127,10 +124,7 @@ linux_sys_siggetmask(struct lwp *l, void *v,
  * they are here, and have not been mapped directly.
  */
 int
-linux_sys_sigsetmask(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_sigsetmask(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux_sys_sigsetmask_args /* {
 		syscallarg(linux_old_sigset_t) mask;

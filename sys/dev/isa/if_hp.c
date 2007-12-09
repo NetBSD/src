@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hp.c,v 1.41.14.1 2007/10/26 15:45:18 joerg Exp $	*/
+/*	$NetBSD: if_hp.c,v 1.41.14.2 2007/12/09 19:37:50 jmcneill Exp $	*/
 
 /* XXX THIS DRIVER IS BROKEN.  IT WILL NOT EVEN COMPILE. */
 
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_hp.c,v 1.41.14.1 2007/10/26 15:45:18 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_hp.c,v 1.41.14.2 2007/12/09 19:37:50 jmcneill Exp $");
 
 #include "hp.h"
 #if NHP > 0
@@ -475,7 +475,7 @@ hpinit(unit)
 	char   *cp;
 	int hpc = ns->ns_port;
 
-	if (ifp->if_addrlist == (struct ifaddr *) 0)
+	if (IFADDR_EMPTY(ifp))
 		return;
 	if (ifp->if_flags & IFF_RUNNING)
 		return;

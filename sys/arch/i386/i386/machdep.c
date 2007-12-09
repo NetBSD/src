@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.606.8.14 2007/11/21 21:53:16 joerg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.606.8.15 2007/12/09 19:35:22 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.606.8.14 2007/11/21 21:53:16 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.606.8.15 2007/12/09 19:35:22 jmcneill Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -1981,9 +1981,6 @@ init386(paddr_t first_avail)
 #endif
 
 	intr_default_setup();
-
-	/* Initialize software interrupts. */
-	softintr_init();
 
 	splraise(IPL_IPI);
 	x86_enable_intr();
