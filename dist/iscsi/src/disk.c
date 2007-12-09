@@ -1,4 +1,4 @@
-/* $NetBSD: disk.c,v 1.35 2007/12/04 16:25:37 oster Exp $ */
+/* $NetBSD: disk.c,v 1.36 2007/12/09 09:21:05 agc Exp $ */
 
 /*
  * Copyright © 2006 Alistair Crooks.  All rights reserved.
@@ -142,7 +142,7 @@ enum {
 
 #define MB(x)	((x) * 1024 * 1024)
 
-/* this struct describes an iscsi disk */
+/* this struct describes an iscsi LUN */
 typedef struct iscsi_disk_t {
 	int		 type;				/* type of disk - fs/mmap and fs */
 	char		 filename[MAXPATHLEN];		/* filename for the disk itself */
@@ -626,101 +626,6 @@ de_getsize(disc_de_t *dp)
 	}
 }
 
-/* mmap on the extent */
-static void *
-extent_mmap(void *addr, size_t len, int prot, int flags, disc_extent_t *xp, off_t offset)
-{
-	return mmap(addr, len, prot, flags, xp->fd, (off_t)(xp->sacred + offset));
-}
-
-/* (recursively) mmap on the device's devices */
-static void *
-device_mmap(void *addr, size_t len, int prot, int flags, disc_device_t *dp, off_t offset)
-{
-	void	*ret;
-	int	i;
-
-	for (ret = MAP_FAILED, i = 0 ; i < dp->c ; i++) {
-		switch (dp->xv[i].type) {
-		case DE_DEVICE:
-			if ((ret = device_mmap(addr, len, prot, flags, dp->xv[i].u.dp, offset)) == MAP_FAILED) {
-				return MAP_FAILED;
-			}
-			break;
-		case DE_EXTENT:
-			if ((ret = extent_mmap(addr, len, prot, flags, dp->xv[i].u.xp, offset)) == MAP_FAILED) {
-				return MAP_FAILED;
-			}
-			break;
-		default:
-			break;
-		}
-	}
-	return ret;
-}
-
-/* and for the undecided... */
-static void *
-de_mmap(void *addr, size_t len, int prot, int flags, disc_de_t *dp, off_t offset)
-{
-	switch(dp->type) {
-	case DE_DEVICE:
-		return device_mmap(addr, len, prot, flags, dp->u.dp, offset);
-	case DE_EXTENT:
-		return extent_mmap(addr, len, prot, flags, dp->u.xp, offset);
-	default:
-		return MAP_FAILED;
-	}
-}
-
-/* munmap the extent's device */
-/* ARGSUSED */
-static int
-extent_munmap(disc_extent_t *xp, void *addr, size_t len)
-{
-	return munmap(addr, len);
-}
-
-/* (recursively) munmap the device's devices */
-static int
-device_munmap(disc_device_t *dp, void *addr, size_t len)
-{
-	int	ret;
-	int	i;
-
-	for (ret = -1, i = 0 ; i < dp->c ; i++) {
-		switch (dp->xv[i].type) {
-		case DE_DEVICE:
-			if ((ret = device_munmap(dp->xv[i].u.dp, addr, len)) < 0) {
-				return -1;
-			}
-			break;
-		case DE_EXTENT:
-			if ((ret = extent_munmap(dp->xv[i].u.xp, addr, len)) < 0) {
-				return -1;
-			}
-			break;
-		default:
-			break;
-		}
-	}
-	return ret;
-}
-
-/* and for the undecided... */
-static int
-de_munmap(disc_de_t *dp, void *addr, size_t len)
-{
-	switch(dp->type) {
-	case DE_DEVICE:
-		return device_munmap(dp->u.dp, addr, len);
-	case DE_EXTENT:
-		return extent_munmap(dp->u.xp, addr, len);
-	default:
-		return -1;
-	}
-}
-
 /* return a filename for the device or extent */
 static char *
 disc_get_filename(disc_de_t *de)
@@ -888,31 +793,23 @@ device_init(globals_t *gp __attribute__((__unused__)), targv_t *tvp, disc_target
 		iscsi_trace_error(__FILE__, __LINE__, "Invalid block len %" PRIu64 ". Choose one of 512, 1024, 2048, 4096.\n", disks.v[disks.c].blocklen);
 		return -1;
 	}
-#if 0
-	disks.v[disks.c].type = (disks.v[disks.c].size > MB(100)) ?
-		ISCSI_FS : (disks.v[disks.c].size > MB(50)) ?
-		ISCSI_FS_MMAP : ISCSI_RAMDISK;
-#else
 	disks.v[disks.c].type = ISCSI_FS;
-#endif
 	printf("DISK: %" PRIu64 " logical unit%s (%" PRIu64 " blocks, %" PRIu64 " bytes/block), type %s\n",
 	      disks.v[disks.c].luns,
 	      (disks.v[disks.c].luns == 1) ? "" : "s",
 	      disks.v[disks.c].blockc, disks.v[disks.c].blocklen,
 	      (disks.v[disks.c].type == ISCSI_FS) ? "iscsi fs" : "iscsi fs mmap");
-	for (i = 0; i < disks.v[disks.c].luns; i++) {
-		printf("DISK: LUN %d: ", i);
-		(void) strlcpy(disks.v[disks.c].filename, disc_get_filename(&tp->de), sizeof(disks.v[disks.c].filename));
-		if (de_open(&tp->de, O_CREAT | O_RDWR, 0666) == -1) {
-			iscsi_trace_error(__FILE__, __LINE__, "error opening \"%s\"\n", disks.v[disks.c].filename);
-			return -1;
-		}
-		if (!allocate_space(tp)) {
-			iscsi_trace_error(__FILE__, __LINE__, "error allocating space for \"%s\"", tp->target);
-			return -1;
-		}
-		printf("%" PRIu64 " MB disk storage for \"%s\"\n", (de_getsize(&tp->de) / MB(1)), tp->target);
+	printf("DISK: LUN %d: ", i);
+	(void) strlcpy(disks.v[disks.c].filename, disc_get_filename(&tp->de), sizeof(disks.v[disks.c].filename));
+	if (de_open(&tp->de, O_CREAT | O_RDWR, 0666) == -1) {
+		iscsi_trace_error(__FILE__, __LINE__, "error opening \"%s\"\n", disks.v[disks.c].filename);
+		return -1;
 	}
+	if (!allocate_space(tp)) {
+		iscsi_trace_error(__FILE__, __LINE__, "error allocating space for \"%s\"", tp->target);
+		return -1;
+	}
+	printf("%" PRIu64 " MB disk storage for \"%s\"\n", (de_getsize(&tp->de) / MB(1)), tp->target);
 	return disks.c++;
 }
 
@@ -931,26 +828,6 @@ device_command(target_session_t * sess, target_cmd_t * cmd)
 	uint8_t			lun = (uint8_t) (args->lun >> 32);
 	size_t			mode_data_len;
 
-#if (CONFIG_DISK_INITIAL_CHECK_CONDITION==1)
-	static int      initialized = 0;
-	static int      flag[disks.v[sess->d].luns];
-	int             i;
-
-	if (!initialized) {
-		for (i = 0; i < disks.v[sess->d].luns; i++) {
-			flag[i] = 0;
-		}
-		initialized = 1;
-	}
-	if (!flag[lun]) {
-		printf("DISK: Simulating CHECK CONDITION with sense data (cdb %#x, lun %d)\n", cdb[0], lun);
-		flag[lun]++;
-		args->status = SCSI_CHECK_CONDITION;
-		args->length = 1024;
-		return 0;
-	}
-#endif
-
 	totsize = &cdb[4];
 
 	/*
@@ -961,8 +838,7 @@ device_command(target_session_t * sess, target_cmd_t * cmd)
 		data = args->send_data;
 		(void) memset(data, 0x0, (size_t) *totsize);
 		/*
-		 * data[0] = 0x7F;
-		 * / no device
+		 * data[0] = 0x7F; means no device
 		 */
 		data[0] = 0x1F;	/* device type */
 		data[0] |= 0x60;/* peripheral qualifier */
@@ -972,7 +848,7 @@ device_command(target_session_t * sess, target_cmd_t * cmd)
 		return 0;
 	}
 
-	lun = sess->d;
+	lun = (uint8_t) sess->d;
 	iscsi_trace(TRACE_SCSI_CMD, __FILE__, __LINE__, "SCSI op %#x (lun %d): \n", cdb[0], lun);
 
 	switch (cdb[0]) {
@@ -1316,26 +1192,13 @@ disk_write(target_session_t *sess, iscsi_scsi_cmd_args_t *args, uint8_t lun, uin
 	uint64_t        num_bytes = len * disks.v[sess->d].blocklen;
 	uint8_t        *ptr = NULL;
 	struct iovec    sg;
-	uint64_t        extra = 0;
 
 	iscsi_trace(TRACE_SCSI_DATA, __FILE__, __LINE__, "writing %" PRIu64 " bytes from socket into device at byte offset %" PRIu64 "\n", num_bytes, byte_offset);
 
 	/* Assign ptr for write data */
 
-	switch(disks.v[sess->d].type) {
-	case ISCSI_FS:
-		RETURN_GREATER("num_bytes (FIX ME)", (unsigned) num_bytes, MB(1), NO_CLEANUP, -1);
-		ptr = disks.v[sess->d].buffer[lun];
-		break;
-	case ISCSI_FS_MMAP:
-		extra = byte_offset % 4096;
-		if ((ptr = de_mmap(0, (size_t) (num_bytes + extra), PROT_WRITE, MAP_SHARED, &disks.v[sess->d].tv->v[lun].de, (off_t)(byte_offset - extra))) == NULL) {
-			iscsi_trace_error(__FILE__, __LINE__, "mmap() failed\n");
-			return -1;
-		} else {
-			ptr += (uint32_t) extra;
-		}
-	}
+	RETURN_GREATER("num_bytes (FIX ME)", (unsigned) num_bytes, MB(1), NO_CLEANUP, -1);
+	ptr = disks.v[sess->d].buffer[lun];
 
 	/* Have target do data transfer */
 
@@ -1345,27 +1208,17 @@ disk_write(target_session_t *sess, iscsi_scsi_cmd_args_t *args, uint8_t lun, uin
 		iscsi_trace_error(__FILE__, __LINE__, "target_transfer_data() failed\n");
 	}
 	/* Finish up write */
-	switch(disks.v[sess->d].type) {
-	case ISCSI_FS:
-		if (de_lseek(&disks.v[sess->d].tv->v[lun].de, (off_t) byte_offset, SEEK_SET) == -1) {
-			iscsi_trace_error(__FILE__, __LINE__, "lseek() to offset %" PRIu64 " failed\n", byte_offset);
-			return -1;
-		}
-		if (!target_writable(&disks.v[sess->d].tv->v[lun])) {
-			iscsi_trace_error(__FILE__, __LINE__, "write() of %" PRIu64 " bytes failed at offset %" PRIu64 ", size %" PRIu64 "[READONLY TARGET]\n", num_bytes, byte_offset, de_getsize(&disks.v[sess->d].tv->v[lun].de));
-			return -1;
-		}
-		if (de_write(&disks.v[sess->d].tv->v[lun].de, ptr, (unsigned) num_bytes) != num_bytes) {
-			iscsi_trace_error(__FILE__, __LINE__, "write() of %" PRIu64 " bytes failed at offset %" PRIu64 ", size %" PRIu64 "\n", num_bytes, byte_offset, de_getsize(&disks.v[sess->d].tv->v[lun].de));
-			return -1;
-		}
-		break;
-	case ISCSI_FS_MMAP:
-		ptr -= (uint32_t) extra;
-		if (de_munmap(&disks.v[sess->d].tv->v[lun].de, ptr, (size_t)(num_bytes + extra)) != 0) {
-			iscsi_trace_error(__FILE__, __LINE__, "munmap() failed\n");
-			return -1;
-		}
+	if (de_lseek(&disks.v[sess->d].tv->v[lun].de, (off_t) byte_offset, SEEK_SET) == -1) {
+		iscsi_trace_error(__FILE__, __LINE__, "lseek() to offset %" PRIu64 " failed\n", byte_offset);
+		return -1;
+	}
+	if (!target_writable(&disks.v[sess->d].tv->v[lun])) {
+		iscsi_trace_error(__FILE__, __LINE__, "write() of %" PRIu64 " bytes failed at offset %" PRIu64 ", size %" PRIu64 "[READONLY TARGET]\n", num_bytes, byte_offset, de_getsize(&disks.v[sess->d].tv->v[lun].de));
+		return -1;
+	}
+	if (de_write(&disks.v[sess->d].tv->v[lun].de, ptr, (unsigned) num_bytes) != num_bytes) {
+		iscsi_trace_error(__FILE__, __LINE__, "write() of %" PRIu64 " bytes failed at offset %" PRIu64 ", size %" PRIu64 "\n", num_bytes, byte_offset, de_getsize(&disks.v[sess->d].tv->v[lun].de));
+		return -1;
 	}
 	iscsi_trace(TRACE_SCSI_DATA, __FILE__, __LINE__, "wrote %" PRIu64 " bytes to device OK\n", num_bytes);
 	return 0;
@@ -1404,50 +1257,24 @@ disk_read(target_session_t * sess, iscsi_scsi_cmd_args_t * args, uint32_t lba, u
 		iscsi_trace_error(__FILE__, __LINE__, "max_lba = %" PRIu64 ", requested lba = %u, len = %u\n", disks.v[sess->d].blockc - 1, lba, len);
 		return -1;
 	}
-	switch (disks.v[sess->d].type) {
-	case ISCSI_FS:
-		RETURN_GREATER("num_bytes (FIX ME)", (unsigned) num_bytes, MB(1), NO_CLEANUP, -1);
-		ptr = disks.v[sess->d].buffer[lun];
-		n = 0;
-		do {
-			if (de_lseek(&disks.v[sess->d].tv->v[lun].de, (off_t)(n + byte_offset), SEEK_SET) == -1) {
-				iscsi_trace_error(__FILE__, __LINE__, "lseek() failed\n");
-				return -1;
-			}
-			rc = de_read(&disks.v[sess->d].tv->v[lun].de, ptr + n, (size_t)(num_bytes - n));
-			if (rc <= 0) {
-				iscsi_trace_error(__FILE__, __LINE__, "read() failed: rc %d errno %d\n", rc, errno);
-				return -1;
-			}
-			n += rc;
-			if (n < num_bytes) {
-				iscsi_trace_error(__FILE__, __LINE__, "Got partial file read: %d bytes of %" PRIu64 "\n", rc, num_bytes - n + rc);
-			}
-		} while (n < num_bytes);
-		break;
-	case ISCSI_FS_MMAP:
-		if (last_ptr[lun]) {
-			if (de_munmap(&disks.v[sess->d].tv->v[lun].de, last_ptr[lun], (unsigned)(last_extra[lun] + last_num_bytes[lun])) != 0) {
-				iscsi_trace_error(__FILE__, __LINE__, "munmap() failed\n");
-				return -1;
-			}
-			last_ptr[lun] = NULL;
-			last_num_bytes[lun] = 0;
-			last_extra[lun] = 0;
-		}
-		extra = byte_offset % 4096;
-		if ((ptr = de_mmap(0, (size_t)(num_bytes + extra), PROT_READ, MAP_SHARED, &disks.v[sess->d].tv->v[lun].de, (off_t)(byte_offset - extra))) == NULL) {
-			iscsi_trace_error(__FILE__, __LINE__, "mmap() failed\n");
+	RETURN_GREATER("num_bytes (FIX ME)", (unsigned) num_bytes, MB(1), NO_CLEANUP, -1);
+	ptr = disks.v[sess->d].buffer[lun];
+	n = 0;
+	do {
+		if (de_lseek(&disks.v[sess->d].tv->v[lun].de, (off_t)(n + byte_offset), SEEK_SET) == -1) {
+			iscsi_trace_error(__FILE__, __LINE__, "lseek() failed\n");
 			return -1;
 		}
-		/* Need to replace this with a callback */
-
-		last_ptr[lun] = ptr;
-		last_num_bytes[lun] = num_bytes;
-		last_extra[lun] = extra;
-		break;
-	}
-
+		rc = de_read(&disks.v[sess->d].tv->v[lun].de, ptr + n, (size_t)(num_bytes - n));
+		if (rc <= 0) {
+			iscsi_trace_error(__FILE__, __LINE__, "read() failed: rc %d errno %d\n", rc, errno);
+			return -1;
+		}
+		n += rc;
+		if (n < num_bytes) {
+			iscsi_trace_error(__FILE__, __LINE__, "Got partial file read: %d bytes of %" PRIu64 "\n", rc, num_bytes - n + rc);
+		}
+	} while (n < num_bytes);
 
 	((struct iovec *) (void *)args->send_data)[0].iov_base = ptr + (unsigned) extra;
 	((struct iovec *) (void *)args->send_data)[0].iov_len = (unsigned) num_bytes;

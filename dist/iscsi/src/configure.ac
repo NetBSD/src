@@ -1,6 +1,6 @@
 dnl Process this file with autoconf to produce a configure script.
 AC_PREREQ(2.57)
-AC_INIT([netbsd-iscsi],[20071206],[Alistair Crooks <agc@NetBSD.org>])
+AC_INIT([netbsd-iscsi],[20071208],[Alistair Crooks <agc@NetBSD.org>])
 AC_CONFIG_SRCDIR([iscsi.c])
 AC_CONFIG_HEADER(../include/config.h)
 
@@ -34,7 +34,7 @@ AC_CHECK_LIB(socket, connect)
 AC_CHECK_LIB(resolv, inet_aton)
 
 dnl Check for functionality
-AC_CHECK_FUNCS(__bswap64 asprintf asnprintf bswap64 daemon fsync_range getaddrinfo getnameinfo htobe64 poll snprintf strlcpy strtoll syslog uuid_create uuid_to_string vasprintf vasnprintf vsnprintf)
+AC_CHECK_FUNCS(__bswap64 asprintf asnprintf bswap64 daemon fsync_range getaddrinfo getnameinfo htobe64 memset bcopy poll snprintf strlcpy strtoll syslog uuid_create uuid_to_string vasprintf vasnprintf vsnprintf)
 
 dnl that's it for now...
 AC_OUTPUT(Makefile)
