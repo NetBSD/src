@@ -84,7 +84,7 @@
 #include "iscsi.h"
 #include "target.h"
 #include "device.h"
-#include "md5.h"
+#include "iscsi-md5.h"
 #include "parameters.h"
 
 enum {
@@ -106,6 +106,17 @@ static iscsi_mutex_t	g_session_q_mutex;
  * Private Functions *
  *********************/
 
+static char *
+get_iqn(target_session_t *sess, int t, char *buf, size_t size)
+{
+	if (sess->globals->tv->v[t].iqn != NULL) {
+		(void) strlcpy(buf, sess->globals->tv->v[t].iqn, size);
+		return buf;
+	}
+	(void) snprintf(buf, size, "%s:%s", sess->globals->targetname,
+			sess->globals->tv->v[t].target);
+	return buf;
+}
 
 static int 
 reject_t(target_session_t * sess, uint8_t *header, uint8_t reason)
@@ -653,7 +664,7 @@ text_command_t(target_session_t * sess, uint8_t *header)
 				for (i = 0 ; i < sess->globals->tv->c ; i++) {
 					if (sess->address_family == ISCSI_IPv6 ||
 					    (sess->address_family == ISCSI_IPv4 && allow_netmask(sess->globals->tv->v[i].mask, sess->initiator))) {
-						(void) snprintf(buf, sizeof(buf), "%s:%s", sess->globals->targetname, sess->globals->tv->v[i].target);
+						(void) get_iqn(sess, i, buf, sizeof(buf));
 						PARAM_TEXT_ADD(sess->params, "TargetName", buf, text_out, &len_out, 2048, 0, TC_ERROR);
 						PARAM_TEXT_ADD(sess->params, "TargetAddress", sess->globals->targetaddress, text_out, &len_out, 2048, 0, TC_ERROR);
 					} else {
@@ -714,10 +725,9 @@ find_target_iqn(target_session_t *sess)
 	int	i;
 
 	for (i = 0 ; i < sess->globals->tv->c ; i++) {
-		(void) snprintf(buf, sizeof(buf), "%s:%s", sess->globals->targetname, sess->globals->tv->v[i].target);
-		if (param_equiv(sess->params, "TargetName", buf)) {
-			sess->d = i;
-			return i;
+		if (param_equiv(sess->params, "TargetName",
+				get_iqn(sess, i, buf, sizeof(buf)))) {
+			return sess->d = i;
 		}
 	}
 	return -1;

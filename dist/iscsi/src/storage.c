@@ -1,4 +1,4 @@
-/* $NetBSD: storage.c,v 1.8 2007/11/12 23:25:42 agc Exp $ */
+/* $NetBSD: storage.c,v 1.9 2007/12/09 09:16:42 agc Exp $ */
 
 /*
  * Copyright © 2006 Alistair Crooks.  All rights reserved.
@@ -243,12 +243,20 @@ do_target(conffile_t *cf, targv_t *tvp, devv_t *devvp, extv_t *evp, ent_t *ep)
 	disc_extent_t	*xp;
 	disc_device_t	*dp;
 	const char	*flags;
+	char		 tgt[256];
+	char		*iqn;
 	int		 netmaskcol;
 	int		 devcol;
 
-	if (find_target(tvp, ep->sv.v[TARGET_NAME_COL]) != NULL) {
+	if ((iqn = strchr(ep->sv.v[TARGET_NAME_COL], '=')) == NULL) {
+		(void) strlcpy(tgt, ep->sv.v[TARGET_NAME_COL], sizeof(tgt));
+	} else {
+		(void) snprintf(tgt, sizeof(tgt), "%.*s", (int)(iqn - ep->sv.v[TARGET_NAME_COL]), ep->sv.v[TARGET_NAME_COL]);
+		iqn += 1;
+	}
+	if (find_target(tvp, tgt) != NULL) {
 		(void) fprintf(stderr, "%s:%d: ", conffile_get_name(cf), conffile_get_lineno(cf));
-		(void) fprintf(stderr, "Error: attempt to re-define target `%s'\n", ep->sv.v[TARGET_NAME_COL]);
+		(void) fprintf(stderr, "Error: attempt to re-define target `%s'\n", tgt);
 		return 0;
 	}
 	ALLOC(disc_target_t, tvp->v, tvp->size, tvp->c, 14, 14, "do_target", exit(EXIT_FAILURE));
@@ -263,10 +271,13 @@ do_target(conffile_t *cf, targv_t *tvp, devv_t *devvp, extv_t *evp, ent_t *ep)
 		flags = ep->sv.v[TARGET_V2_FLAGS_COL];
 		netmaskcol = TARGET_V2_NETMASK_COL;
 	}
+	if (iqn != NULL) {
+		tvp->v[tvp->c].iqn = strdup(iqn);
+	}
 	if ((dp = find_device(devvp, ep->sv.v[devcol])) != NULL) {
 		tvp->v[tvp->c].de.type = DE_DEVICE;
 		tvp->v[tvp->c].de.u.dp = dp;
-		tvp->v[tvp->c].target = strdup(ep->sv.v[TARGET_NAME_COL]);
+		tvp->v[tvp->c].target = strdup(tgt);
 		tvp->v[tvp->c].mask = strdup(ep->sv.v[netmaskcol]);
 		if (strcmp(flags, "readonly") == 0 || strcmp(flags, "ro") == 0 || strcmp(flags, "r") == 0) {
 			tvp->v[tvp->c].flags |= TARGET_READONLY;
@@ -277,7 +288,7 @@ do_target(conffile_t *cf, targv_t *tvp, devv_t *devvp, extv_t *evp, ent_t *ep)
 	if ((xp = find_extent(evp, ep->sv.v[devcol])) != NULL) {
 		tvp->v[tvp->c].de.type = DE_EXTENT;
 		tvp->v[tvp->c].de.u.xp = xp;
-		tvp->v[tvp->c].target = strdup(ep->sv.v[TARGET_NAME_COL]);
+		tvp->v[tvp->c].target = strdup(tgt);
 		tvp->v[tvp->c].mask = strdup(ep->sv.v[netmaskcol]);
 		if (strcmp(flags, "readonly") == 0 || strcmp(flags, "ro") == 0 || strcmp(flags, "r") == 0) {
 			tvp->v[tvp->c].flags |= TARGET_READONLY;

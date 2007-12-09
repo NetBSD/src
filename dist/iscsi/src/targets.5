@@ -1,4 +1,4 @@
-.\" $NetBSD: targets.5,v 1.4 2006/02/24 21:01:19 wiz Exp $
+.\" $NetBSD: targets.5,v 1.5 2007/12/09 09:16:42 agc Exp $
 .\"
 .\" Copyright © 2006 Alistair Crooks.  All rights reserved.
 .\"
@@ -26,7 +26,7 @@
 .\" NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 .\" SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd February 16, 2006
+.Dd December 6, 2007
 .Dt TARGETS 5
 .Os
 .Sh NAME
@@ -116,9 +116,17 @@ definition specifies an iSCSI target, which is presented to the iSCSI
 initiator.
 Multiple targets can be specified.
 The first field in the definition is the target name, which must
-begin with the word
+begin with either of the words
 .Dq target
+or
+.Dq lun
 and be followed by a number.
+Optionally, if a target is followed by an
+.Dq =
+sign and some text,
+the text is taken to be that of the iSCSI Qualified Name
+of the target.
+This IQN is used by the initiator to connect to the appropriate target.
 The next field is a selector for whether the storage should be presented
 as writable, or merely as read-only storage.
 The field of
