@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.210 2007/12/09 20:12:54 martin Exp $ */
+/*	$NetBSD: machdep.c,v 1.211 2007/12/09 22:04:32 martin Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.210 2007/12/09 20:12:54 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.211 2007/12/09 22:04:32 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -558,6 +558,7 @@ sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 }
 
 int	waittime = -1;
+struct pcb dumppcb;
 
 void
 cpu_reboot(register int howto, char *user_boot_string)
@@ -716,6 +717,7 @@ dumpsys()
 	/* copy registers to memory */
 	snapshot(curpcb);
 	stackdump();
+	memcpy(&dumppcb, curpcb, sizeof(struct pcb));
 
 	if (dumpdev == NODEV)
 		return;
