@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.11 2007/12/09 15:29:53 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.12 2007/12/09 15:31:03 ad Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.11 2007/12/09 15:29:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.12 2007/12/09 15:31:03 ad Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -4068,9 +4068,9 @@ pmap_tlb_shootdown(struct pmap *pm, vaddr_t sva, vaddr_t eva, pt_entry_t pte)
 						SPINLOCK_BACKOFF(count);
 					s = splvm();
 				}
-			} while (!atomic_cas_ulong(
+			} while (atomic_cas_ulong(
 			    (volatile u_long *)&mb->mb_head,
-			    head, head + ncpu - 1));
+			    head, head + ncpu - 1) != head);
 
 			/*
 			 * Once underway we must stay at IPL_VM until the
@@ -4110,9 +4110,9 @@ pmap_tlb_shootdown(struct pmap *pm, vaddr_t sva, vaddr_t eva, pt_entry_t pte)
 				selfmb->mb_head++;
 				mb = &ci->ci_pmap_cpu->pc_mbox;
 				count = SPINLOCK_BACKOFF_MIN;
-				while (!atomic_cas_ulong(
+				while (atomic_cas_ulong(
 				    (u_long *)&mb->mb_pointer,
-				    0, (u_long)&selfmb->mb_tail)) {
+				    0, (u_long)&selfmb->mb_tail) != 0) {
 				    	splx(s);
 					while (mb->mb_pointer != 0)
 						SPINLOCK_BACKOFF(count);
