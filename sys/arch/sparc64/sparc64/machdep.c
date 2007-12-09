@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.209 2007/10/17 19:57:31 garbled Exp $ */
+/*	$NetBSD: machdep.c,v 1.210 2007/12/09 20:12:54 martin Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.209 2007/10/17 19:57:31 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.210 2007/12/09 20:12:54 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -1950,4 +1950,11 @@ cpu_need_resched(struct cpu_info *ci, int flags)
 	if ((flags & RESCHED_IMMED) || ci->ci_index != cpu_number())
 		sparc64_send_ipi(ci->ci_cpuid, sparc64_ipi_nop);
 #endif
+}
+
+bool
+cpu_intr_p(void)
+{
+
+	return curcpu()->ci_idepth >= 0;
 }
