@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.225 2007/12/09 18:47:44 wiz Exp $
+#	$NetBSD: BRANCHES,v 1.226 2007/12/09 22:04:06 jmcneill Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -314,15 +314,6 @@ Notes:		To check out the kernel source tree,
 			cvs checkout -ritohy-usb1 src/sys/dev/usb/filelist
 		2. update files in the branch
 			sh -e src/sys/dev/usb/filelist
-
-Branch:		jmcneill-pm
-Description:	Power management framework overhaul, ACPI improvements
-Status:		Active
-Start Date:	3 Aug 2007
-End Date:	
-Base Tag:	jmcneill-pm-base
-Scope:		kernel
-Notes:		
 
 Branch:		kame
 Description:	KAME Project
@@ -803,6 +794,16 @@ Base Tag:	is-newarp-base
 Maintainer:	Ignatios Souvatzis <is@NetBSD.org>
 Scope:		kernel
 Notes:
+
+Branch:		jmcneill-pm
+Description:	Power management framework overhaul, ACPI improvements
+Status:		Terminated; merged before NetBSD 5.0
+Start Date:	3 Aug 2007
+End Date:	9 Dec 2007
+Base Tag:	jmcneill-pm-base
+Maintainer:	Jared D. McNeill <jmcneill@NetBSD.org>
+Scope:		kernel
+Notes:		
 
 Branch:		kenh-if-detach
 Description:	Interface detach support.
