@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.S,v 1.4 2007/11/29 17:29:40 ad Exp $	*/
+/*	$NetBSD: atomic.S,v 1.5 2007/12/09 17:38:51 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -260,3 +260,51 @@ ALIAS(membar_producer,_membar_producer)
 ALIAS(membar_enter,_membar_enter)
 ALIAS(membar_exit,_membar_exit)
 ALIAS(membar_sync,_membar_sync)
+
+STRONG_ALIAS(_atomic_add_int,_atomic_add_32)
+STRONG_ALIAS(_atomic_add_long,_atomic_add_32)
+STRONG_ALIAS(_atomic_add_ptr,_atomic_add_32)
+
+STRONG_ALIAS(_atomic_add_int_nv,_atomic_add_32_nv)
+STRONG_ALIAS(_atomic_add_long_nv,_atomic_add_32_nv)
+STRONG_ALIAS(_atomic_add_ptr_nv,_atomic_add_32_nv)
+
+STRONG_ALIAS(_atomic_and_uint,_atomic_and_32)
+STRONG_ALIAS(_atomic_and_ulong,_atomic_and_32)
+STRONG_ALIAS(_atomic_and_ptr,_atomic_and_32)
+
+STRONG_ALIAS(_atomic_and_uint_nv,_atomic_and_32_nv)
+STRONG_ALIAS(_atomic_and_ulong_nv,_atomic_and_32_nv)
+STRONG_ALIAS(_atomic_and_ptr_nv,_atomic_and_32_nv)
+
+STRONG_ALIAS(_atomic_dec_uint,_atomic_dec_32)
+STRONG_ALIAS(_atomic_dec_ulong,_atomic_dec_32)
+STRONG_ALIAS(_atomic_dec_ptr,_atomic_dec_32)
+
+STRONG_ALIAS(_atomic_dec_uint_nv,_atomic_dec_32_nv)
+STRONG_ALIAS(_atomic_dec_ulong_nv,_atomic_dec_32_nv)
+STRONG_ALIAS(_atomic_dec_ptr_nv,_atomic_dec_32_nv)
+
+STRONG_ALIAS(_atomic_inc_uint,_atomic_inc_32)
+STRONG_ALIAS(_atomic_inc_ulong,_atomic_inc_32)
+STRONG_ALIAS(_atomic_inc_ptr,_atomic_inc_32)
+
+STRONG_ALIAS(_atomic_inc_uint_nv,_atomic_inc_32_nv)
+STRONG_ALIAS(_atomic_inc_ulong_nv,_atomic_inc_32_nv)
+STRONG_ALIAS(_atomic_inc_ptr_nv,_atomic_inc_32_nv)
+
+STRONG_ALIAS(_atomic_or_uint,_atomic_or_32)
+STRONG_ALIAS(_atomic_or_ulong,_atomic_or_32)
+STRONG_ALIAS(_atomic_or_ptr,_atomic_or_32)
+
+STRONG_ALIAS(_atomic_or_uint_nv,_atomic_or_32_nv)
+STRONG_ALIAS(_atomic_or_ulong_nv,_atomic_or_32_nv)
+STRONG_ALIAS(_atomic_or_ptr_nv,_atomic_or_32_nv)
+
+STRONG_ALIAS(_atomic_swap_uint,_atomic_swap_32)
+STRONG_ALIAS(_atomic_swap_ulong,_atomic_swap_32)
+STRONG_ALIAS(_atomic_swap_ptr,_atomic_swap_32)
+
+STRONG_ALIAS(_atomic_cas_uint,_atomic_cas_32)
+STRONG_ALIAS(_atomic_cas_ulong,_atomic_cas_32)
+STRONG_ALIAS(_atomic_cas_ptr,_atomic_cas_32)
