@@ -1,4 +1,4 @@
-# $NetBSD: VIRTUALPC,v 1.57 2007/11/14 17:54:58 ad Exp $
+# $NetBSD: VIRTUALPC,v 1.58 2007/12/09 20:27:46 jmcneill Exp $
 #
 # VIRTUALPC machine description file --
 #
@@ -11,7 +11,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"VIRTUALPC-$Revision: 1.57 $"
+#ident 		"VIRTUALPC-$Revision: 1.58 $"
 
 maxusers	32		# estimated number of users
 
@@ -277,7 +277,8 @@ cpu* at mainbus?
 #acpiacad* 	at acpi?		# ACPI AC Adapter
 #acpibat* 	at acpi?		# ACPI Battery
 #acpibut* 	at acpi?		# ACPI Button
-#acpiec* 	at acpi?		# ACPI Embedded Controller
+#acpiec* 	at acpi?		# ACPI Embedded Controller (late binding)
+#acpiecdt* 	at acpi?		# ACPI Embedded Controller (early binding)
 #acpilid* 	at acpi?		# ACPI Lid Switch
 #acpitz* 	at acpi?		# ACPI Thermal Zone
 

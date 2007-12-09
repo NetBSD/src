@@ -1,4 +1,4 @@
-#	$NetBSD: files.acpi,v 1.46 2007/08/23 10:04:07 tnn Exp $
+#	$NetBSD: files.acpi,v 1.47 2007/12/09 20:27:53 jmcneill Exp $
 
 include "dev/acpi/acpica/files.acpica"
 
@@ -8,8 +8,9 @@ defparam opt_acpi.h	ACPI_DSDT_FILE := "\"/dev/null\""
 
 define	acpiapmbus { }
 define	acpinodebus { }
+define	acpiecdtbus { }
 
-device	acpi: acpiapmbus, acpinodebus, sysmon_power, sysmon_taskq
+device	acpi: acpiapmbus, acpinodebus, acpiecdtbus, sysmon_power, sysmon_taskq
 attach	acpi at acpibus
 file	dev/acpi/acpi.c			acpi		needs-flag
 file	dev/acpi/acpi_resource.c	acpi
@@ -26,7 +27,9 @@ file	dev/acpi/acpi_apm.c		acpiapm
 # ACPI Embedded Controller
 device	acpiec
 attach	acpiec at acpinodebus
-file	dev/acpi/acpi_ec.c		acpiec		needs-flag
+device	acpiecdt
+attach	acpiecdt at acpiecdtbus
+file	dev/acpi/acpi_ec.c		acpiec|acpiecdt
 
 # ACPI Lid Switch
 device	acpilid: sysmon_power

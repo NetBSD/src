@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.71 2007/03/05 16:51:02 drochner Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.72 2007/12/09 20:27:47 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.71 2007/03/05 16:51:02 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.72 2007/12/09 20:27:47 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -373,6 +373,9 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 	if (apm_busprobe())
 		config_found_ia(self, "apmbus", 0, 0);
 #endif
+
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
 int
