@@ -1,4 +1,4 @@
-/*	$NetBSD: mke2fs.c,v 1.5 2007/11/21 13:14:06 tsutsui Exp $	*/
+/*	$NetBSD: mke2fs.c,v 1.6 2007/12/09 17:39:51 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2007 Izumi Tsutsui.
@@ -108,7 +108,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mke2fs.c,v 1.5 2007/11/21 13:14:06 tsutsui Exp $");
+__RCSID("$NetBSD: mke2fs.c,v 1.6 2007/12/09 17:39:51 tsutsui Exp $");
 #endif
 #endif /* not lint */
 
@@ -843,7 +843,7 @@ zap_old_sblock(daddr_t sec)
  * uint cgoverhead(uint c)
  *
  * 	Return a number of reserved blocks on the specified group.
- * 	XXX: should be shared with src/sbin/newfs_ext2fs/setup.c
+ * 	XXX: should be shared with src/sbin/fsck_ext2fs/setup.c
  */
 uint
 cgoverhead(uint c)
