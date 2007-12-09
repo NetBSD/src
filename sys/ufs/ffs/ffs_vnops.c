@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.93.2.1 2007/12/04 13:03:47 ad Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.93.2.2 2007/12/09 22:58:04 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.93.2.1 2007/12/04 13:03:47 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.93.2.2 2007/12/09 22:58:04 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -742,7 +742,7 @@ ffs_lock(void *v)
 		return (lockmgr(vp->v_vnlock, flags, &vp->v_interlock));
 
 	KASSERT((flags & ~(LK_SHARED | LK_EXCLUSIVE | LK_SLEEPFAIL |
-	    LK_INTERLOCK | LK_NOWAIT | LK_SETRECURSE | LK_CANRECURSE)) == 0);
+	    LK_INTERLOCK | LK_NOWAIT | LK_CANRECURSE)) == 0);
 	for (;;) {
 		if ((flags & LK_INTERLOCK) == 0) {
 			mutex_enter(&vp->v_interlock);
