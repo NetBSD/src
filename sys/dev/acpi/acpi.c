@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.101.16.26 2007/12/08 16:21:02 jmcneill Exp $	*/
+/*	$NetBSD: acpi.c,v 1.101.16.27 2007/12/09 19:37:43 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.101.16.26 2007/12/08 16:21:02 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.101.16.27 2007/12/09 19:37:43 jmcneill Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -193,8 +193,8 @@ acpi_probe(void)
 		panic("acpi_probe: ACPI has already been probed");
 	beenhere = 1;
 
-	mutex_init(&acpi_slock, MUTEX_DRIVER, IPL_NONE);
-	mutex_init(&acpi_interrupt_list_mtx, MUTEX_DRIVER, IPL_NONE);
+	mutex_init(&acpi_slock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&acpi_interrupt_list_mtx, MUTEX_DEFAULT, IPL_NONE);
 	acpi_locked = 0;
 
 	/*

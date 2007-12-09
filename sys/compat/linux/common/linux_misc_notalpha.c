@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc_notalpha.c,v 1.94.6.3 2007/11/27 19:36:46 joerg Exp $	*/
+/*	$NetBSD: linux_misc_notalpha.c,v 1.94.6.4 2007/12/09 19:37:02 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.94.6.3 2007/11/27 19:36:46 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.94.6.4 2007/12/09 19:37:02 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,10 +96,7 @@ static void bsd_to_linux_statfs64(const struct statvfs *,
  * Fiddle with the timers to make it work.
  */
 int
-linux_sys_alarm(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_alarm(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux_sys_alarm_args /* {
 		syscallarg(unsigned int) secs;
@@ -190,10 +187,7 @@ linux_sys_alarm(l, v, retval)
 
 #if !defined(__amd64__)
 int
-linux_sys_nice(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_nice(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux_sys_nice_args /* {
 		syscallarg(int) incr;
@@ -219,10 +213,7 @@ linux_sys_nice(l, v, retval)
  * really is the reclen, not the namelength.
  */
 int
-linux_sys_readdir(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_readdir(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux_sys_readdir_args /* {
 		syscallarg(int) fd;
@@ -264,10 +255,7 @@ linux_sys_time(struct lwp *l, void *v, register_t *retval)
  * and pass it on.
  */
 int
-linux_sys_utime(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_utime(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux_sys_utime_args /* {
 		syscallarg(const char *) path;
@@ -296,10 +284,7 @@ linux_sys_utime(l, v, retval)
  * waitpid(2).  Just forward on to linux_sys_wait4 with a NULL rusage.
  */
 int
-linux_sys_waitpid(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_waitpid(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux_sys_waitpid_args /* {
 		syscallarg(int) pid;
@@ -406,9 +391,7 @@ linux_sys_stime(struct lwp *l, void *v, register_t *retval)
  * statvfs() doesn't use statfs64().
  */
 static void
-bsd_to_linux_statfs64(bsp, lsp)
-	const struct statvfs *bsp;
-	struct linux_statfs64 *lsp;
+bsd_to_linux_statfs64(const struct statvfs *bsp, struct linux_statfs64 *lsp)
 {
 	int i, div;
 
@@ -446,10 +429,7 @@ bsd_to_linux_statfs64(bsp, lsp)
  * Implement the fs stat functions. Straightforward.
  */
 int
-linux_sys_statfs64(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_statfs64(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux_sys_statfs64_args /* {
 		syscallarg(const char *) path;
@@ -474,10 +454,7 @@ linux_sys_statfs64(l, v, retval)
 }
 
 int
-linux_sys_fstatfs64(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_fstatfs64(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux_sys_fstatfs64_args /* {
 		syscallarg(int) fd;

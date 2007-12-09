@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.92.14.3 2007/12/08 16:21:36 jmcneill Exp $	*/
+/*	$NetBSD: ugen.c,v 1.92.14.4 2007/12/09 19:38:04 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.92.14.3 2007/12/08 16:21:36 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.92.14.4 2007/12/09 19:38:04 jmcneill Exp $");
 
 #include "opt_ugen_bulk_ra_wb.h"
 #include "opt_compat_netbsd.h"
@@ -2045,13 +2045,13 @@ ugenkqfilter(dev_t dev, struct knote *kn)
 	USB_GET_SC(ugen, UGENUNIT(dev), sc);
 
 	if (sc->sc_dying)
-		return (1);
+		return (ENXIO);
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
 		sce = &sc->sc_endpoints[UGENENDPOINT(dev)][IN];
 		if (sce == NULL)
-			return (1);
+			return (EINVAL);
 
 		klist = &sce->rsel.sel_klist;
 		switch (sce->edesc->bmAttributes & UE_XFERTYPE) {
@@ -2075,21 +2075,21 @@ ugenkqfilter(dev_t dev, struct knote *kn)
 #endif
 			break;
 		default:
-			return (1);
+			return (EINVAL);
 		}
 		break;
 
 	case EVFILT_WRITE:
 		sce = &sc->sc_endpoints[UGENENDPOINT(dev)][OUT];
 		if (sce == NULL)
-			return (1);
+			return (EINVAL);
 
 		klist = &sce->rsel.sel_klist;
 		switch (sce->edesc->bmAttributes & UE_XFERTYPE) {
 		case UE_INTERRUPT:
 		case UE_ISOCHRONOUS:
 			/* XXX poll doesn't support this */
-			return (1);
+			return (EINVAL);
 
 		case UE_BULK:
 #ifdef UGEN_BULK_RA_WB
@@ -2104,12 +2104,12 @@ ugenkqfilter(dev_t dev, struct knote *kn)
 #endif
 			break;
 		default:
-			return (1);
+			return (EINVAL);
 		}
 		break;
 
 	default:
-		return (1);
+		return (EINVAL);
 	}
 
 	kn->kn_hook = sce;

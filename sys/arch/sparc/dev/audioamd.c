@@ -1,4 +1,4 @@
-/*	$NetBSD: audioamd.c,v 1.21.48.1 2007/12/03 16:14:15 joerg Exp $	*/
+/*	$NetBSD: audioamd.c,v 1.21.48.2 2007/12/09 19:36:15 jmcneill Exp $	*/
 /*	NetBSD: am7930_sparc.c,v 1.44 1999/03/14 22:29:00 jonathan Exp 	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audioamd.c,v 1.21.48.1 2007/12/03 16:14:15 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audioamd.c,v 1.21.48.2 2007/12/09 19:36:15 jmcneill Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: audioamd.c,v 1.21.48.1 2007/12/03 16:14:15 joerg Exp
 #include <sys/device.h>
 #include <sys/bus.h>
 #include <sys/intr.h>
+#include <sys/mutex.h>
 
 #include <machine/autoconf.h>
 
@@ -96,6 +97,7 @@ struct audioamd_softc {
 	struct  auio sc_au;		/* recv and xmit buffers, etc */
 #define sc_intrcnt	sc_au.au_intrcnt	/* statistics */
 	void	*sc_sicookie;		/* softintr(9) cookie */
+	kmutex_t	sc_lock;
 };
 
 void	audioamd_mainbus_attach(struct device *, struct device *, void *);
@@ -294,6 +296,7 @@ audioamd_attach(struct audioamd_softc *sc, int pri)
 	 * Set up glue for MI code early; we use some of it here.
 	 */
 	sc->sc_am7930.sc_glue = &audioamd_glue;
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_HIGH);
 
 	am7930_init(&sc->sc_am7930, AUDIOAMD_POLL_MODE);
 
@@ -302,7 +305,7 @@ audioamd_attach(struct audioamd_softc *sc, int pri)
 	/* Copy bus tag & handle for use by am7930_trap */
 	sc->sc_au.au_bt = sc->sc_bt;
 	sc->sc_au.au_bh = sc->sc_bh;
-	(void)bus_intr_establish2(sc->sc_bt, pri, IPL_AUDIO,
+	(void)bus_intr_establish2(sc->sc_bt, pri, IPL_HIGH,
 				  am7930hwintr, sc, amd7930_trap);
 
 	sc->sc_sicookie = softint_establish(SOFTINT_SERIAL, am7930swintr, sc);
@@ -328,14 +331,16 @@ audioamd_onopen(struct am7930_softc *sc)
 	struct audioamd_softc *mdsc;
 
 	mdsc = (struct audioamd_softc *)sc;
+
 	/* reset pdma state */
+	mutex_spin_enter(&mdsc->sc_lock);
 	mdsc->sc_rintr = 0;
 	mdsc->sc_rarg = 0;
 	mdsc->sc_pintr = 0;
 	mdsc->sc_parg = 0;
-
 	mdsc->sc_au.au_rdata = 0;
 	mdsc->sc_au.au_pdata = 0;
+	mutex_spin_exit(&mdsc->sc_lock);
 }
 
 
@@ -355,13 +360,17 @@ audioamd_start_output(void *addr, void *p, int cc,
 
 	DPRINTFN(1, ("sa_start_output: cc=%d %p (%p)\n", cc, intr, arg));
 	sc = addr;
+
+	mutex_spin_enter(&sc->sc_lock);
 	audioamd_codec_iwrite(&sc->sc_am7930,
 	    AM7930_IREG_INIT, AM7930_INIT_PMS_ACTIVE);
-	DPRINTF(("sa_start_output: started intrs.\n"));
 	sc->sc_pintr = intr;
 	sc->sc_parg = arg;
 	sc->sc_au.au_pdata = p;
 	sc->sc_au.au_pend = (char *)p + cc - 1;
+	mutex_spin_exit(&sc->sc_lock);
+
+	DPRINTF(("sa_start_output: started intrs.\n"));
 	return(0);
 }
 
@@ -373,13 +382,18 @@ audioamd_start_input(void *addr, void *p, int cc,
 
 	DPRINTFN(1, ("sa_start_input: cc=%d %p (%p)\n", cc, intr, arg));
 	sc = addr;
+
+	mutex_spin_enter(&sc->sc_lock);
 	audioamd_codec_iwrite(&sc->sc_am7930,
 	    AM7930_IREG_INIT, AM7930_INIT_PMS_ACTIVE);
-	DPRINTF(("sa_start_input: started intrs.\n"));
 	sc->sc_rintr = intr;
 	sc->sc_rarg = arg;
 	sc->sc_au.au_rdata = p;
 	sc->sc_au.au_rend = (char *)p + cc -1;
+	mutex_spin_exit(&sc->sc_lock);
+
+	DPRINTF(("sa_start_input: started intrs.\n"));
+
 	return(0);
 }
 
@@ -398,11 +412,15 @@ am7930hwintr(void *v)
 
 	sc = v;
 	au = &sc->sc_au;
+	mutex_spin_enter(&sc->sc_lock);
+
 	/* clear interrupt */
 	k = audioamd_codec_dread(sc, AM7930_DREG_IR);
 	if ((k & (AM7930_IR_DTTHRSH|AM7930_IR_DRTHRSH|AM7930_IR_DSRI|
-		  AM7930_IR_DERI|AM7930_IR_BBUFF)) == 0)
+		  AM7930_IR_DERI|AM7930_IR_BBUFF)) == 0) {
+		mutex_spin_exit(&sc->sc_lock);
 		return 0;
+	}
 
 	/* receive incoming data */
 	d = au->au_rdata;
@@ -429,6 +447,8 @@ am7930hwintr(void *v)
 	}
 
 	au->au_intrcnt.ev_count++;
+	mutex_spin_exit(&sc->sc_lock);
+
 	return 1;
 }
 
@@ -437,23 +457,22 @@ am7930swintr(void *sc0)
 {
 	struct audioamd_softc *sc;
 	struct auio *au;
-	int s;
+	bool pint;
 
 	sc = sc0;
 	DPRINTFN(1, ("audiointr: sc=%p\n", sc););
 
 	au = &sc->sc_au;
-	s = splaudio();
+	mutex_spin_enter(&sc->sc_lock);
 	if (au->au_rdata > au->au_rend && sc->sc_rintr != NULL) {
-		splx(s);
+		mutex_spin_exit(&sc->sc_lock);
 		(*sc->sc_rintr)(sc->sc_rarg);
-		s = splaudio();
+		mutex_spin_enter(&sc->sc_lock);
 	}
-	if (au->au_pdata > au->au_pend && sc->sc_pintr != NULL) {
-		splx(s);
+	pint = (au->au_pdata > au->au_pend && sc->sc_pintr != NULL);
+	mutex_spin_exit(&sc->sc_lock);
+	if (pint)
 		(*sc->sc_pintr)(sc->sc_parg);
-	} else
-		splx(s);
 }
 
 

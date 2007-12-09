@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.2 2007/06/29 16:03:04 tsutsui Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.2.8.1 2007/12/09 19:35:05 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.2 2007/06/29 16:03:04 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.2.8.1 2007/12/09 19:35:05 jmcneill Exp $");
 
 #include "opt_sbd.h"
 
@@ -117,7 +117,8 @@ cpu_rootconf(void)
 
 	dv = 0;
 	if (bootdev_name) {
-		for (dv = alldevs.tqh_first; dv; dv = dv->dv_list.tqe_next) {
+		for (dv = TAILQ_FIRST(&alldevs); dv;
+		    dv = TAILQ_NEXT(dv, dv_list)) {
 			if (strcmp(dv->dv_xname, bootdev_name) == 0) {
 				setroot(dv, partition);
 				break;

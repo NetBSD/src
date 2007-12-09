@@ -1,4 +1,4 @@
-/*	$NetBSD: stuirda.c,v 1.2 2007/05/11 13:12:14 is Exp $	*/
+/*	$NetBSD: stuirda.c,v 1.2.12.1 2007/12/09 19:38:03 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2001,2007 The NetBSD Foundation, Inc.
@@ -298,7 +298,7 @@ stuirda_write(void *h, struct uio *uio, int flag)
 		return (EINVAL);
 
 	sc->sc_refcnt++;
-	lockmgr(&sc->sc_wr_buf_lk, LK_EXCLUSIVE, NULL);
+	mutex_enter(&sc->sc_wr_buf_lk);
 
 	sc->sc_wr_buf[0] = UIRDA_EB_NO_CHANGE | UIRDA_NO_SPEED;
 
@@ -328,7 +328,7 @@ stuirda_write(void *h, struct uio *uio, int flag)
 		}
 	}
 
-	lockmgr(&sc->sc_wr_buf_lk, LK_RELEASE, NULL);
+	mutex_exit(&sc->sc_wr_buf_lk);
 	if (--sc->sc_refcnt < 0)
 		usb_detach_wakeup(USBDEV(sc->sc_dev));
 

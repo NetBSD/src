@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.129.6.1 2007/10/26 15:43:54 joerg Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.129.6.2 2007/12/09 19:36:55 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.129.6.1 2007/10/26 15:43:54 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.129.6.2 2007/12/09 19:36:55 jmcneill Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -113,16 +113,16 @@ __KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.129.6.1 2007/10/26 15:43:54 joer
 #define DPRINTF(a)
 #endif
 
-static struct biosdisk_info *fd2biosinfo __P((struct proc *, struct file *));
+static struct biosdisk_info *fd2biosinfo(struct proc *, struct file *);
 extern struct disklist *x86_alldisks;
-static void linux_save_ucontext __P((struct lwp *, struct trapframe *,
-    const sigset_t *, struct sigaltstack *, struct linux_ucontext *));
-static void linux_save_sigcontext __P((struct lwp *, struct trapframe *,
-    const sigset_t *, struct linux_sigcontext *));
-static int linux_restore_sigcontext __P((struct lwp *,
-    struct linux_sigcontext *, register_t *));
-static void linux_rt_sendsig __P((const ksiginfo_t *, const sigset_t *));
-static void linux_old_sendsig __P((const ksiginfo_t *, const sigset_t *));
+static void linux_save_ucontext(struct lwp *, struct trapframe *,
+    const sigset_t *, struct sigaltstack *, struct linux_ucontext *);
+static void linux_save_sigcontext(struct lwp *, struct trapframe *,
+    const sigset_t *, struct linux_sigcontext *);
+static int linux_restore_sigcontext(struct lwp *,
+    struct linux_sigcontext *, register_t *);
+static void linux_rt_sendsig(const ksiginfo_t *, const sigset_t *);
+static void linux_old_sendsig(const ksiginfo_t *, const sigset_t *);
 
 extern char linux_sigcode[], linux_rt_sigcode[];
 /*
@@ -130,10 +130,7 @@ extern char linux_sigcode[], linux_rt_sigcode[];
  */
 
 void
-linux_setregs(l, epp, stack)
-	struct lwp *l;
-	struct exec_package *epp;
-	u_long stack;
+linux_setregs(struct lwp *l, struct exec_package *epp, u_long stack)
 {
 	struct pcb *pcb = &l->l_addr->u_pcb;
 	struct trapframe *tf;
@@ -197,12 +194,7 @@ linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 
 
 static void
-linux_save_ucontext(l, tf, mask, sas, uc)
-	struct lwp *l;
-	struct trapframe *tf;
-	const sigset_t *mask;
-	struct sigaltstack *sas;
-	struct linux_ucontext *uc;
+linux_save_ucontext(struct lwp *l, struct trapframe *tf, const sigset_t *mask, struct sigaltstack *sas, struct linux_ucontext *uc)
 {
 	uc->uc_flags = 0;
 	uc->uc_link = NULL;
@@ -213,11 +205,7 @@ linux_save_ucontext(l, tf, mask, sas, uc)
 }
 
 static void
-linux_save_sigcontext(l, tf, mask, sc)
-	struct lwp *l;
-	struct trapframe *tf;
-	const sigset_t *mask;
-	struct linux_sigcontext *sc;
+linux_save_sigcontext(struct lwp *l, struct trapframe *tf, const sigset_t *mask, struct linux_sigcontext *sc)
 {
 	/* Save register context. */
 #ifdef VM86
@@ -449,10 +437,7 @@ linux_old_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
  * a machine fault.
  */
 int
-linux_sys_rt_sigreturn(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_rt_sigreturn(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux_sys_rt_sigreturn_args /* {
 		syscallarg(struct linux_ucontext *) ucp;
@@ -473,10 +458,7 @@ linux_sys_rt_sigreturn(l, v, retval)
 }
 
 int
-linux_sys_sigreturn(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_sigreturn(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux_sys_sigreturn_args /* {
 		syscallarg(struct linux_sigcontext *) scp;
@@ -509,7 +491,7 @@ linux_restore_sigcontext(struct lwp *l, struct linux_sigcontext *scp,
 	DPRINTF(("sigreturn enter esp=%x eip=%x\n", tf->tf_esp, tf->tf_eip));
 #ifdef VM86
 	if (scp->sc_eflags & PSL_VM) {
-		void syscall_vm86 __P((struct trapframe *));
+		void syscall_vm86(struct trapframe *);
 
 		tf->tf_vm86_gs = scp->sc_gs;
 		tf->tf_vm86_fs = scp->sc_fs;
@@ -725,9 +707,7 @@ linux_sys_modify_ldt(struct lwp *l, void *v,
  * array for all major device numbers, and map linux_mknod too.
  */
 dev_t
-linux_fakedev(dev, raw)
-	dev_t dev;
-	int raw;
+linux_fakedev(dev_t dev, int raw)
 {
 	extern const struct cdevsw ptc_cdevsw, pts_cdevsw;
 	const struct cdevsw *cd = cdevsw_lookup(dev);
@@ -865,10 +845,7 @@ fd2biosinfo(struct proc *p, struct file *fp)
  * We come here in a last attempt to satisfy a Linux ioctl() call
  */
 int
-linux_machdepioctl(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_machdepioctl(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux_sys_ioctl_args /* {
 		syscallarg(int) fd;
@@ -1120,10 +1097,7 @@ linux_sys_iopl(struct lwp *l, void *v, register_t *retval)
  * just let it have the whole range.
  */
 int
-linux_sys_ioperm(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_ioperm(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux_sys_ioperm_args /* {
 		syscallarg(unsigned int) lo;
@@ -1161,8 +1135,7 @@ linux_get_uname_arch(void)
 
 #ifdef LINUX_NPTL
 void *
-linux_get_newtls(l)
-	struct lwp *l;
+linux_get_newtls(struct lwp *l)
 {
 	struct trapframe *tf = l->l_md.md_regs;
 
@@ -1171,9 +1144,7 @@ linux_get_newtls(l)
 }
 
 int
-linux_set_newtls(l, tls)
-	struct lwp *l;
-	void *tls;
+linux_set_newtls(struct lwp *l, void *tls)
 {
 	/* XXX: Implement me */
 	return 0;

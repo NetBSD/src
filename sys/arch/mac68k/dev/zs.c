@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.53.18.1 2007/11/11 16:46:36 joerg Exp $	*/
+/*	$NetBSD: zs.c,v 1.53.18.2 2007/12/09 19:35:31 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1996-1998 Bill Studenmund
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.53.18.1 2007/11/11 16:46:36 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.53.18.2 2007/12/09 19:35:31 jmcneill Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mac68k.h"
@@ -70,9 +70,10 @@ __KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.53.18.1 2007/11/11 16:46:36 joerg Exp $");
 #include <sys/time.h>
 #include <sys/kernel.h>
 #include <sys/syslog.h>
+#include <sys/cpu.h>
+#include <sys/intr.h>
 
 #include <machine/autoconf.h>
-#include <machine/cpu.h>
 #include <machine/psc.h>
 #include <machine/viareg.h>
 
@@ -382,7 +383,7 @@ zsc_attach(struct device *parent, struct device *self, void *aux)
 	} else {
 		intr_establish(zshard, zsc, ZSHARD_PRI);
 	}
-	zsc->zsc_softintr_cookie = softintr_establish(IPL_SOFTSERIAL,
+	zsc->zsc_softintr_cookie = softint_establish(SOFTINT_SERIAL,
 	    (void (*)(void *))zsc_intr_soft, zsc);
 
 	/* Now safe to enable interrupts. */
@@ -454,7 +455,7 @@ zshard(void *arg)
 
 	rval = zsc_intr_hard(zsc);
 	if ((zsc->zsc_cs[0]->cs_softreq) || (zsc->zsc_cs[1]->cs_softreq)) {
-		softintr_schedule(zsc->zsc_softintr_cookie);
+		softint_schedule(zsc->zsc_softintr_cookie);
 	}
 	return (rval);
 }

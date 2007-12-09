@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.207.2.3 2007/11/27 19:39:23 joerg Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.207.2.4 2007/12/09 19:38:53 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.207.2.3 2007/11/27 19:39:23 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.207.2.4 2007/12/09 19:38:53 jmcneill Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -219,7 +219,7 @@ ffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 		/*
 		 * Look up the name and verify that it's sane.
 		 */
-		NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, args->fspec, l);
+		NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, args->fspec);
 		if ((error = namei(&nd)) != 0)
 			return (error);
 		devvp = nd.ni_vp;

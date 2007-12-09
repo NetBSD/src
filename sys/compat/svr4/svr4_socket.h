@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_socket.h,v 1.4 2005/12/11 12:20:26 christos Exp $	*/
+/*	$NetBSD: svr4_socket.h,v 1.4.44.1 2007/12/09 19:37:32 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -43,9 +43,9 @@ struct sockaddr_un;
 struct proc;
 struct file;
 
-struct sockaddr_un *svr4_find_socket __P((struct proc *, struct file *,
-    dev_t, svr4_ino_t));
-void svr4_delete_socket __P((struct proc *, struct file *));
-int svr4_add_socket __P((struct proc *, const char *, struct stat *));
+struct sockaddr_un *svr4_find_socket(struct proc *, struct file *,
+    dev_t, svr4_ino_t);
+void svr4_delete_socket(struct proc *, struct file *);
+int svr4_add_socket(struct proc *, const char *, struct stat *);
 
 #endif /* _SVR4_SOCKET_H_ */

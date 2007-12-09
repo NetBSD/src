@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_clock.c,v 1.16 2006/11/16 01:32:44 christos Exp $ */
+/*	$NetBSD: mach_clock.c,v 1.16.22.1 2007/12/09 19:37:11 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_clock.c,v 1.16 2006/11/16 01:32:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_clock.c,v 1.16.22.1 2007/12/09 19:37:11 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -123,8 +123,7 @@ mach_sys_timebase_info(struct lwp *l, void *v,
 
 
 int
-mach_clock_get_time(args)
-	struct mach_trap_args *args;
+mach_clock_get_time(struct mach_trap_args *args)
 {
 	mach_clock_get_time_request_t *req = args->smsg;
 	mach_clock_get_time_reply_t *rep = args->rmsg;

@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_sysctl.c,v 1.52.6.1 2007/08/16 11:02:45 jmcneill Exp $ */
+/*	$NetBSD: darwin_sysctl.c,v 1.52.6.2 2007/12/09 19:36:41 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.52.6.1 2007/08/16 11:02:45 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.52.6.2 2007/12/09 19:36:41 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -739,9 +739,7 @@ again:
  * Native struct proc to Darwin's struct kinfo_proc
  */
 static void
-darwin_fill_kproc(p, dkp)
-	struct proc *p;
-	struct darwin_kinfo_proc *dkp;
+darwin_fill_kproc(struct proc *p, struct darwin_kinfo_proc *dkp)
 {
 	struct lwp *l;
 	struct darwin_extern_proc *dep;

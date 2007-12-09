@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.32.8.1 2007/11/11 16:46:57 joerg Exp $	*/
+/*	$NetBSD: zs.c,v 1.32.8.2 2007/12/09 19:36:24 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1998 Minoura Makoto
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.32.8.1 2007/11/11 16:46:57 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.32.8.2 2007/12/09 19:36:24 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,9 +60,10 @@ __KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.32.8.1 2007/11/11 16:46:57 joerg Exp $");
 #include <sys/tty.h>
 #include <sys/time.h>
 #include <sys/syslog.h>
+#include <sys/cpu.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
-#include <machine/cpu.h>
-#include <machine/bus.h>
 #include <arch/x68k/dev/intiovar.h>
 #include <machine/z8530var.h>
 
@@ -276,7 +277,7 @@ zs_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	if (intio_intr_establish(ia->ia_intr, "zs", zshard, zsc))
 		panic("zs_attach: interrupt vector busy");
-	zsc->zsc_softintr_cookie = softintr_establish(IPL_SOFTSERIAL,
+	zsc->zsc_softintr_cookie = softint_establish(SOFTINT_SERIAL,
 	    (void (*)(void *))zsc_intr_soft, zsc);
 	/* XXX; evcnt_attach() ? */
 
@@ -330,7 +331,7 @@ zshard(void *arg)
 
 	/* We are at splzs here, so no need to lock. */
 	if (zsc->zsc_cs[0]->cs_softreq || zsc->zsc_cs[1]->cs_softreq)
-		softintr_schedule(zsc->zsc_softintr_cookie);
+		softint_schedule(zsc->zsc_softintr_cookie);
 
 	return (rval);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.125.6.3 2007/11/11 16:47:19 joerg Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.125.6.4 2007/12/09 19:37:20 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.125.6.3 2007/11/11 16:47:19 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.125.6.4 2007/12/09 19:37:20 jmcneill Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -103,9 +103,9 @@ extern struct sysent netbsd32_sysent[];
 extern const char * const netbsd32_syscallnames[];
 #endif
 #ifdef __HAVE_SYSCALL_INTERN
-void netbsd32_syscall_intern __P((struct proc *));
+void netbsd32_syscall_intern(struct proc *);
 #else
-void syscall __P((void));
+void syscall(void);
 #endif
 
 #define LIMITCHECK(a, b) ((a) != RLIM_INFINITY && (a) > (b))
@@ -172,10 +172,7 @@ const struct emul emul_netbsd32 = {
  */
 
 int
-netbsd32_exit(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_exit(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_exit_args /* {
 		syscallarg(int) rval;
@@ -187,10 +184,7 @@ netbsd32_exit(l, v, retval)
 }
 
 int
-netbsd32_read(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_read(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_read_args /* {
 		syscallarg(int) fd;
@@ -206,10 +200,7 @@ netbsd32_read(l, v, retval)
 }
 
 int
-netbsd32_write(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_write(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_write_args /* {
 		syscallarg(int) fd;
@@ -225,10 +216,7 @@ netbsd32_write(l, v, retval)
 }
 
 int
-netbsd32_close(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_close(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_close_args /* {
 		syscallarg(int) fd;
@@ -240,10 +228,7 @@ netbsd32_close(l, v, retval)
 }
 
 int
-netbsd32_open(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_open(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_open_args /* {
 		syscallarg(const netbsd32_charp) path;
@@ -260,10 +245,7 @@ netbsd32_open(l, v, retval)
 }
 
 int
-netbsd32_link(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_link(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_link_args /* {
 		syscallarg(const netbsd32_charp) path;
@@ -277,10 +259,7 @@ netbsd32_link(l, v, retval)
 }
 
 int
-netbsd32_unlink(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_unlink(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_unlink_args /* {
 		syscallarg(const netbsd32_charp) path;
@@ -293,10 +272,7 @@ netbsd32_unlink(l, v, retval)
 }
 
 int
-netbsd32_chdir(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_chdir(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_chdir_args /* {
 		syscallarg(const netbsd32_charp) path;
@@ -309,10 +285,7 @@ netbsd32_chdir(l, v, retval)
 }
 
 int
-netbsd32_fchdir(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_fchdir(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_fchdir_args /* {
 		syscallarg(int) fd;
@@ -325,10 +298,7 @@ netbsd32_fchdir(l, v, retval)
 }
 
 int
-netbsd32_mknod(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_mknod(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_mknod_args /* {
 		syscallarg(const netbsd32_charp) path;
@@ -345,10 +315,7 @@ netbsd32_mknod(l, v, retval)
 }
 
 int
-netbsd32_chmod(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_chmod(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_chmod_args /* {
 		syscallarg(const netbsd32_charp) path;
@@ -363,10 +330,7 @@ netbsd32_chmod(l, v, retval)
 }
 
 int
-netbsd32_chown(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_chown(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_chown_args /* {
 		syscallarg(const netbsd32_charp) path;
@@ -383,10 +347,7 @@ netbsd32_chown(l, v, retval)
 }
 
 int
-netbsd32_break(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_break(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_break_args /* {
 		syscallarg(netbsd32_charp) nsize;
@@ -399,10 +360,7 @@ netbsd32_break(l, v, retval)
 }
 
 int
-netbsd32_mount(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_mount(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_mount_args /* {
 		syscallarg(const netbsd32_charp) type;
@@ -420,10 +378,7 @@ netbsd32_mount(l, v, retval)
 }
 
 int
-netbsd32_unmount(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_unmount(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_unmount_args /* {
 		syscallarg(const netbsd32_charp) path;
@@ -437,10 +392,7 @@ netbsd32_unmount(l, v, retval)
 }
 
 int
-netbsd32_setuid(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_setuid(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_setuid_args /* {
 		syscallarg(uid_t) uid;
@@ -452,10 +404,7 @@ netbsd32_setuid(l, v, retval)
 }
 
 int
-netbsd32_ptrace(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_ptrace(struct lwp *l, void *v, register_t *retval)
 {
 #if defined(PTRACE) || defined(_LKM)
 	struct netbsd32_ptrace_args /* {
@@ -481,10 +430,7 @@ netbsd32_ptrace(l, v, retval)
 }
 
 int
-netbsd32_accept(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_accept(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_accept_args /* {
 		syscallarg(int) s;
@@ -500,10 +446,7 @@ netbsd32_accept(l, v, retval)
 }
 
 int
-netbsd32_getpeername(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_getpeername(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_getpeername_args /* {
 		syscallarg(int) fdes;
@@ -520,10 +463,7 @@ netbsd32_getpeername(l, v, retval)
 }
 
 int
-netbsd32_getsockname(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_getsockname(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_getsockname_args /* {
 		syscallarg(int) fdes;
@@ -539,10 +479,7 @@ netbsd32_getsockname(l, v, retval)
 }
 
 int
-netbsd32_access(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_access(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_access_args /* {
 		syscallarg(const netbsd32_charp) path;
@@ -557,10 +494,7 @@ netbsd32_access(l, v, retval)
 }
 
 int
-netbsd32_chflags(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_chflags(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_chflags_args /* {
 		syscallarg(const netbsd32_charp) path;
@@ -575,10 +509,7 @@ netbsd32_chflags(l, v, retval)
 }
 
 int
-netbsd32_fchflags(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_fchflags(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_fchflags_args /* {
 		syscallarg(int) fd;
@@ -593,10 +524,7 @@ netbsd32_fchflags(l, v, retval)
 }
 
 int
-netbsd32_lchflags(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_lchflags(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_lchflags_args /* {
 		syscallarg(const char *) path;
@@ -611,10 +539,7 @@ netbsd32_lchflags(l, v, retval)
 }
 
 int
-netbsd32_kill(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_kill(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_kill_args /* {
 		syscallarg(int) pid;
@@ -629,10 +554,7 @@ netbsd32_kill(l, v, retval)
 }
 
 int
-netbsd32_dup(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_dup(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_dup_args /* {
 		syscallarg(int) fd;
@@ -645,10 +567,7 @@ netbsd32_dup(l, v, retval)
 }
 
 int
-netbsd32_profil(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_profil(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_profil_args /* {
 		syscallarg(netbsd32_caddr_t) samples;
@@ -666,10 +585,7 @@ netbsd32_profil(l, v, retval)
 }
 
 int
-netbsd32_ktrace(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_ktrace(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_ktrace_args /* {
 		syscallarg(const netbsd32_charp) fname;
@@ -687,10 +603,7 @@ netbsd32_ktrace(l, v, retval)
 }
 
 int
-netbsd32_utrace(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_utrace(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_utrace_args /* {
 		syscallarg(const netbsd32_charp) label;
@@ -706,10 +619,7 @@ netbsd32_utrace(l, v, retval)
 }
 
 int
-netbsd32___getlogin(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32___getlogin(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32___getlogin_args /* {
 		syscallarg(netbsd32_charp) namebuf;
@@ -723,10 +633,7 @@ netbsd32___getlogin(l, v, retval)
 }
 
 int
-netbsd32_setlogin(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_setlogin(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_setlogin_args /* {
 		syscallarg(const netbsd32_charp) namebuf;
@@ -738,10 +645,7 @@ netbsd32_setlogin(l, v, retval)
 }
 
 int
-netbsd32_acct(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_acct(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_acct_args /* {
 		syscallarg(const netbsd32_charp) path;
@@ -753,10 +657,7 @@ netbsd32_acct(l, v, retval)
 }
 
 int
-netbsd32_revoke(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_revoke(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_revoke_args /* {
 		syscallarg(const netbsd32_charp) path;
@@ -769,10 +670,7 @@ netbsd32_revoke(l, v, retval)
 }
 
 int
-netbsd32_symlink(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_symlink(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_symlink_args /* {
 		syscallarg(const netbsd32_charp) path;
@@ -787,10 +685,7 @@ netbsd32_symlink(l, v, retval)
 }
 
 int
-netbsd32_readlink(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_readlink(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_readlink_args /* {
 		syscallarg(const netbsd32_charp) path;
@@ -807,10 +702,7 @@ netbsd32_readlink(l, v, retval)
 }
 
 int
-netbsd32_umask(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_umask(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_umask_args /* {
 		syscallarg(mode_t) newmask;
@@ -822,10 +714,7 @@ netbsd32_umask(l, v, retval)
 }
 
 int
-netbsd32_chroot(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_chroot(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_chroot_args /* {
 		syscallarg(const netbsd32_charp) path;
@@ -837,10 +726,7 @@ netbsd32_chroot(l, v, retval)
 }
 
 int
-netbsd32_sbrk(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_sbrk(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_sbrk_args /* {
 		syscallarg(int) incr;
@@ -852,10 +738,7 @@ netbsd32_sbrk(l, v, retval)
 }
 
 int
-netbsd32_sstk(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_sstk(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_sstk_args /* {
 		syscallarg(int) incr;
@@ -867,10 +750,7 @@ netbsd32_sstk(l, v, retval)
 }
 
 int
-netbsd32_munmap(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_munmap(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_munmap_args /* {
 		syscallarg(netbsd32_voidp) addr;
@@ -884,10 +764,7 @@ netbsd32_munmap(l, v, retval)
 }
 
 int
-netbsd32_mprotect(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_mprotect(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_mprotect_args /* {
 		syscallarg(netbsd32_voidp) addr;
@@ -903,10 +780,7 @@ netbsd32_mprotect(l, v, retval)
 }
 
 int
-netbsd32_madvise(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_madvise(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_madvise_args /* {
 		syscallarg(netbsd32_voidp) addr;
@@ -922,10 +796,7 @@ netbsd32_madvise(l, v, retval)
 }
 
 int
-netbsd32_mincore(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_mincore(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_mincore_args /* {
 		syscallarg(netbsd32_caddr_t) addr;
@@ -942,10 +813,7 @@ netbsd32_mincore(l, v, retval)
 
 /* XXX MOVE ME XXX ? */
 int
-netbsd32_getgroups(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_getgroups(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_getgroups_args /* {
 		syscallarg(int) gidsetsize;
@@ -961,10 +829,7 @@ netbsd32_getgroups(l, v, retval)
 }
 
 int
-netbsd32_setgroups(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_setgroups(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_setgroups_args /* {
 		syscallarg(int) gidsetsize;
@@ -978,10 +843,7 @@ netbsd32_setgroups(l, v, retval)
 }
 
 int
-netbsd32_setpgid(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_setpgid(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_setpgid_args /* {
 		syscallarg(int) pid;
@@ -995,10 +857,7 @@ netbsd32_setpgid(l, v, retval)
 }
 
 int
-netbsd32_fcntl(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_fcntl(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_fcntl_args /* {
 		syscallarg(int) fd;
@@ -1015,10 +874,7 @@ netbsd32_fcntl(l, v, retval)
 }
 
 int
-netbsd32_dup2(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_dup2(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_dup2_args /* {
 		syscallarg(int) from;
@@ -1032,10 +888,7 @@ netbsd32_dup2(l, v, retval)
 }
 
 int
-netbsd32_fsync(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_fsync(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_fsync_args /* {
 		syscallarg(int) fd;
@@ -1047,10 +900,7 @@ netbsd32_fsync(l, v, retval)
 }
 
 int
-netbsd32_setpriority(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_setpriority(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_setpriority_args /* {
 		syscallarg(int) which;
@@ -1066,10 +916,7 @@ netbsd32_setpriority(l, v, retval)
 }
 
 int
-netbsd32_sys___socket30(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_sys___socket30(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_sys___socket30_args /* {
 		syscallarg(int) domain;
@@ -1085,10 +932,7 @@ netbsd32_sys___socket30(l, v, retval)
 }
 
 int
-netbsd32_connect(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_connect(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_connect_args /* {
 		syscallarg(int) s;
@@ -1104,10 +948,7 @@ netbsd32_connect(l, v, retval)
 }
 
 int
-netbsd32_getpriority(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_getpriority(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_getpriority_args /* {
 		syscallarg(int) which;
@@ -1121,10 +962,7 @@ netbsd32_getpriority(l, v, retval)
 }
 
 int
-netbsd32_bind(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_bind(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_bind_args /* {
 		syscallarg(int) s;
@@ -1140,10 +978,7 @@ netbsd32_bind(l, v, retval)
 }
 
 int
-netbsd32_setsockopt(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_setsockopt(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_setsockopt_args /* {
 		syscallarg(int) s;
@@ -1164,10 +999,7 @@ netbsd32_setsockopt(l, v, retval)
 }
 
 int
-netbsd32_listen(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_listen(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_listen_args /* {
 		syscallarg(int) s;
@@ -1181,10 +1013,7 @@ netbsd32_listen(l, v, retval)
 }
 
 int
-netbsd32_fchown(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_fchown(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_fchown_args /* {
 		syscallarg(int) fd;
@@ -1200,10 +1029,7 @@ netbsd32_fchown(l, v, retval)
 }
 
 int
-netbsd32_fchmod(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_fchmod(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_fchmod_args /* {
 		syscallarg(int) fd;
@@ -1217,10 +1043,7 @@ netbsd32_fchmod(l, v, retval)
 }
 
 int
-netbsd32_setreuid(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_setreuid(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_setreuid_args /* {
 		syscallarg(uid_t) ruid;
@@ -1234,10 +1057,7 @@ netbsd32_setreuid(l, v, retval)
 }
 
 int
-netbsd32_setregid(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_setregid(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_setregid_args /* {
 		syscallarg(gid_t) rgid;
@@ -1251,10 +1071,7 @@ netbsd32_setregid(l, v, retval)
 }
 
 int
-netbsd32_getsockopt(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_getsockopt(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_getsockopt_args /* {
 		syscallarg(int) s;
@@ -1274,10 +1091,7 @@ netbsd32_getsockopt(l, v, retval)
 }
 
 int
-netbsd32_rename(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_rename(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_rename_args /* {
 		syscallarg(const netbsd32_charp) from;
@@ -1292,10 +1106,7 @@ netbsd32_rename(l, v, retval)
 }
 
 int
-netbsd32_flock(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_flock(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_flock_args /* {
 		syscallarg(int) fd;
@@ -1310,10 +1121,7 @@ netbsd32_flock(l, v, retval)
 }
 
 int
-netbsd32_mkfifo(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_mkfifo(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_mkfifo_args /* {
 		syscallarg(const netbsd32_charp) path;
@@ -1327,10 +1135,7 @@ netbsd32_mkfifo(l, v, retval)
 }
 
 int
-netbsd32_shutdown(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_shutdown(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_shutdown_args /* {
 		syscallarg(int) s;
@@ -1344,10 +1149,7 @@ netbsd32_shutdown(l, v, retval)
 }
 
 int
-netbsd32_socketpair(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_socketpair(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_socketpair_args /* {
 		syscallarg(int) domain;
@@ -1366,10 +1168,7 @@ netbsd32_socketpair(l, v, retval)
 }
 
 int
-netbsd32_mkdir(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_mkdir(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_mkdir_args /* {
 		syscallarg(const netbsd32_charp) path;
@@ -1383,10 +1182,7 @@ netbsd32_mkdir(l, v, retval)
 }
 
 int
-netbsd32_rmdir(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_rmdir(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_rmdir_args /* {
 		syscallarg(const netbsd32_charp) path;
@@ -1398,10 +1194,7 @@ netbsd32_rmdir(l, v, retval)
 }
 
 int
-netbsd32_quotactl(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_quotactl(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_quotactl_args /* {
 		syscallarg(const netbsd32_charp) path;
@@ -1420,10 +1213,7 @@ netbsd32_quotactl(l, v, retval)
 
 #if defined(NFS) || defined(NFSSERVER)
 int
-netbsd32_nfssvc(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_nfssvc(struct lwp *l, void *v, register_t *retval)
 {
 #if 0
 	struct netbsd32_nfssvc_args /* {
@@ -1443,10 +1233,7 @@ netbsd32_nfssvc(l, v, retval)
 #endif
 
 int
-netbsd32___getfh30(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32___getfh30(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32___getfh30_args /* {
 		syscallarg(const netbsd32_charp) fname;
@@ -1469,7 +1256,7 @@ netbsd32___getfh30(l, v, retval)
 		return (error);
 	fh = NULL;
 	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF | TRYEMULROOT, UIO_USERSPACE,
-	    SCARG_P32(uap, fname), l);
+	    SCARG_P32(uap, fname));
 	error = namei(&nd);
 	if (error)
 		return (error);
@@ -1498,10 +1285,7 @@ netbsd32___getfh30(l, v, retval)
 }
 
 int
-netbsd32_pread(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_pread(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_pread_args /* {
 		syscallarg(int) fd;
@@ -1525,10 +1309,7 @@ netbsd32_pread(l, v, retval)
 }
 
 int
-netbsd32_pwrite(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_pwrite(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_pwrite_args /* {
 		syscallarg(int) fd;
@@ -1552,10 +1333,7 @@ netbsd32_pwrite(l, v, retval)
 }
 
 int
-netbsd32_setgid(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_setgid(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_setgid_args /* {
 		syscallarg(gid_t) gid;
@@ -1567,10 +1345,7 @@ netbsd32_setgid(l, v, retval)
 }
 
 int
-netbsd32_setegid(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_setegid(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_setegid_args /* {
 		syscallarg(gid_t) egid;
@@ -1582,10 +1357,7 @@ netbsd32_setegid(l, v, retval)
 }
 
 int
-netbsd32_seteuid(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_seteuid(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_seteuid_args /* {
 		syscallarg(gid_t) euid;
@@ -1598,40 +1370,28 @@ netbsd32_seteuid(l, v, retval)
 
 #ifdef LFS
 int
-netbsd32_sys_lfs_bmapv(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_sys_lfs_bmapv(struct lwp *l, void *v, register_t *retval)
 {
 
 	return (ENOSYS);	/* XXX */
 }
 
 int
-netbsd32_sys_lfs_markv(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_sys_lfs_markv(struct lwp *l, void *v, register_t *retval)
 {
 
 	return (ENOSYS);	/* XXX */
 }
 
 int
-netbsd32_sys_lfs_segclean(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_sys_lfs_segclean(struct lwp *l, void *v, register_t *retval)
 {
 
 	return (ENOSYS);	/* XXX */
 }
 
 int
-netbsd32_sys_lfs_segwait(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_sys_lfs_segwait(struct lwp *l, void *v, register_t *retval)
 {
 
 	return (ENOSYS);	/* XXX */
@@ -1639,10 +1399,7 @@ netbsd32_sys_lfs_segwait(l, v, retval)
 #endif
 
 int
-netbsd32_pathconf(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_pathconf(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_pathconf_args /* {
 		syscallarg(int) fd;
@@ -1660,10 +1417,7 @@ netbsd32_pathconf(l, v, retval)
 }
 
 int
-netbsd32_fpathconf(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_fpathconf(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_fpathconf_args /* {
 		syscallarg(int) fd;
@@ -1681,10 +1435,7 @@ netbsd32_fpathconf(l, v, retval)
 }
 
 int
-netbsd32_getrlimit(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_getrlimit(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_getrlimit_args /* {
 		syscallarg(int) which;
@@ -1699,10 +1450,7 @@ netbsd32_getrlimit(l, v, retval)
 }
 
 int
-netbsd32_setrlimit(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_setrlimit(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_setrlimit_args /* {
 		syscallarg(int) which;
@@ -1737,10 +1485,7 @@ netbsd32_setrlimit(l, v, retval)
 }
 
 int
-netbsd32_mmap(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_mmap(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_mmap_args /* {
 		syscallarg(netbsd32_voidp) addr;
@@ -1771,10 +1516,7 @@ netbsd32_mmap(l, v, retval)
 }
 
 int
-netbsd32_lseek(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_lseek(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_lseek_args /* {
 		syscallarg(int) fd;
@@ -1798,10 +1540,7 @@ netbsd32_lseek(l, v, retval)
 }
 
 int
-netbsd32_truncate(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_truncate(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_truncate_args /* {
 		syscallarg(const netbsd32_charp) path;
@@ -1817,10 +1556,7 @@ netbsd32_truncate(l, v, retval)
 }
 
 int
-netbsd32_ftruncate(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_ftruncate(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_ftruncate_args /* {
 		syscallarg(int) fd;
@@ -1836,10 +1572,7 @@ netbsd32_ftruncate(l, v, retval)
 }
 
 int
-netbsd32_mlock(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_mlock(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_mlock_args /* {
 		syscallarg(const netbsd32_voidp) addr;
@@ -1853,10 +1586,7 @@ netbsd32_mlock(l, v, retval)
 }
 
 int
-netbsd32_munlock(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_munlock(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_munlock_args /* {
 		syscallarg(const netbsd32_voidp) addr;
@@ -1870,10 +1600,7 @@ netbsd32_munlock(l, v, retval)
 }
 
 int
-netbsd32_undelete(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_undelete(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_undelete_args /* {
 		syscallarg(const netbsd32_charp) path;
@@ -1885,10 +1612,7 @@ netbsd32_undelete(l, v, retval)
 }
 
 int
-netbsd32_getpgid(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_getpgid(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_getpgid_args /* {
 		syscallarg(pid_t) pid;
@@ -1900,10 +1624,7 @@ netbsd32_getpgid(l, v, retval)
 }
 
 int
-netbsd32_reboot(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_reboot(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_reboot_args /* {
 		syscallarg(int) opt;
@@ -1918,10 +1639,7 @@ netbsd32_reboot(l, v, retval)
 
 #include <sys/poll.h>
 int
-netbsd32_poll(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_poll(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_poll_args /* {
 		syscallarg(netbsd32_pollfdp_t) fds;
@@ -1938,10 +1656,7 @@ netbsd32_poll(l, v, retval)
 }
 
 int
-netbsd32_fdatasync(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_fdatasync(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_fdatasync_args /* {
 		syscallarg(int) fd;
@@ -1953,10 +1668,7 @@ netbsd32_fdatasync(l, v, retval)
 }
 
 int
-netbsd32___posix_rename(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32___posix_rename(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32___posix_rename_args /* {
 		syscallarg(const netbsd32_charp) from;
@@ -1970,10 +1682,7 @@ netbsd32___posix_rename(l, v, retval)
 }
 
 int
-netbsd32_swapctl(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_swapctl(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_swapctl_args /* {
 		syscallarg(int) cmd;
@@ -1989,10 +1698,7 @@ netbsd32_swapctl(l, v, retval)
 }
 
 int
-netbsd32_minherit(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_minherit(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_minherit_args /* {
 		syscallarg(netbsd32_voidp) addr;
@@ -2008,10 +1714,7 @@ netbsd32_minherit(l, v, retval)
 }
 
 int
-netbsd32_lchmod(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_lchmod(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_lchmod_args /* {
 		syscallarg(const netbsd32_charp) path;
@@ -2025,10 +1728,7 @@ netbsd32_lchmod(l, v, retval)
 }
 
 int
-netbsd32_lchown(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_lchown(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_lchown_args /* {
 		syscallarg(const netbsd32_charp) path;
@@ -2044,10 +1744,7 @@ netbsd32_lchown(l, v, retval)
 }
 
 int
-netbsd32___msync13(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32___msync13(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32___msync13_args /* {
 		syscallarg(netbsd32_voidp) addr;
@@ -2063,10 +1760,7 @@ netbsd32___msync13(l, v, retval)
 }
 
 int
-netbsd32___posix_chown(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32___posix_chown(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32___posix_chown_args /* {
 		syscallarg(const netbsd32_charp) path;
@@ -2082,10 +1776,7 @@ netbsd32___posix_chown(l, v, retval)
 }
 
 int
-netbsd32___posix_fchown(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32___posix_fchown(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32___posix_fchown_args /* {
 		syscallarg(int) fd;
@@ -2101,10 +1792,7 @@ netbsd32___posix_fchown(l, v, retval)
 }
 
 int
-netbsd32___posix_lchown(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32___posix_lchown(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32___posix_lchown_args /* {
 		syscallarg(const netbsd32_charp) path;
@@ -2120,10 +1808,7 @@ netbsd32___posix_lchown(l, v, retval)
 }
 
 int
-netbsd32_getsid(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_getsid(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_getsid_args /* {
 		syscallarg(pid_t) pid;
@@ -2135,10 +1820,7 @@ netbsd32_getsid(l, v, retval)
 }
 
 int
-netbsd32_fktrace(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_fktrace(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_fktrace_args /* {
 		syscallarg(const int) fd;
@@ -2232,10 +1914,7 @@ int netbsd32_fchroot(l, v, retval)
  * and call the device open routine if any.
  */
 int
-netbsd32___fhopen40(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32___fhopen40(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32___fhopen40_args /* {
 		syscallarg(const netbsd32_pointer_t *) fhp;
@@ -2252,10 +1931,7 @@ netbsd32___fhopen40(l, v, retval)
 
 /* virtual memory syscalls */
 int
-netbsd32_ovadvise(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_ovadvise(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_ovadvise_args /* {
 		syscallarg(int) anom;
@@ -2573,10 +2249,7 @@ netbsd32_extattr_list_link(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-netbsd32_mlockall(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_mlockall(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_mlockall_args /* {
 		syscallarg(int) flags;

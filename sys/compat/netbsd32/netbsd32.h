@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.66.6.1 2007/10/02 18:28:13 joerg Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.66.6.2 2007/12/09 19:37:17 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -149,6 +149,7 @@ typedef netbsd32_pointer_t netbsd32_fsid_tp_t;
 typedef netbsd32_pointer_t netbsd32_lwpidp;
 typedef netbsd32_pointer_t netbsd32_ucontextp;
 typedef netbsd32_pointer_t netbsd32_caddr_t;
+typedef netbsd32_pointer_t netbsd32_lwpctlp;
 
 /*
  * now, the compatibility structures and their fake pointer types.

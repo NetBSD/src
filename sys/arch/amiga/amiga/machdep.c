@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.205 2007/07/14 21:48:17 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.205.8.1 2007/12/09 19:34:21 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -85,7 +85,7 @@
 #include "opt_panicbutton.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.205 2007/07/14 21:48:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.205.8.1 2007/12/09 19:34:21 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,7 +108,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.205 2007/07/14 21:48:17 ad Exp $");
 #include <sys/core.h>
 #include <sys/kcore.h>
 #include <sys/ksyms.h>
-
+#include <sys/cpu.h>
 #include <sys/exec.h>
 
 #if defined(DDB) && defined(__ELF__)
@@ -117,7 +117,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.205 2007/07/14 21:48:17 ad Exp $");
 
 #include <sys/exec_aout.h>
 
-#include <net/netisr.h>
 #undef PS	/* XXX netccitt/pk.h conflict with machine/reg.h? */
 
 #define	MAXMEM	64*1024	/* XXX - from cmap.h */
@@ -129,7 +128,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.205 2007/07/14 21:48:17 ad Exp $");
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
 
-#include <machine/cpu.h>
 #include <machine/reg.h>
 #include <machine/psl.h>
 #include <machine/pte.h>
@@ -155,9 +153,7 @@ vm_offset_t reserve_dumppages(vm_offset_t);
 void dumpsys(void);
 void initcpu(void);
 void straytrap(int, u_short);
-static void netintr(void);
 static void call_sicallbacks(void);
-static void _softintr_callit(void *, void *);
 void intrhand(int);
 #if NSER > 0
 void ser_outintr(void);
@@ -982,23 +978,6 @@ badbaddr(addr)
 	return(0);
 }
 
-static void
-netintr()
-{
-
-#define DONETISR(bit, fn) do {		\
-	if (netisr & (1 << bit)) {	\
-		netisr &= ~(1 << bit);	\
-		fn();			\
-	}				\
-} while (0)
-
-#include <net/netisr_dispatch.h>
-
-#undef DONETISR
-}
-
-
 /*
  * this is a handy package to have asynchronously executed
  * function calls executed at very low interrupt priority.
@@ -1028,59 +1007,6 @@ static int ncb;		/* number of callback blocks allocated */
 static int ncbd;	/* number of callback blocks dynamically allocated */
 #endif
 
-/*
- * these are generic soft interrupt wrappers; will be replaced
- * once by the real thing once all drivers are converted.
- *
- * to help performance for converted drivers, the YYY_sicallback() function
- * family can be implemented in terms of softintr_XXX() as an intermediate
- * measure.
- */
-
-static void
-_softintr_callit(rock1, rock2)
-	void *rock1, *rock2;
-{
-	struct softintr *si = rock1;
-
-	si->pending = 0;
-	si->function(si->arg);
-}
-
-void *
-softintr_establish(ipl, func, arg)
-	int ipl;
-	void func(void *);
-	void *arg;
-{
-	struct softintr *si;
-
-	si = malloc(sizeof *si, M_TEMP, M_NOWAIT);
-	if (si == NULL)
-		return si;
-
-	si->pending = 0;
-	si->function = func;
-	si->arg = arg;
-
-	alloc_sicallback();
-	return ((void *)si);
-}
-
-void
-softintr_disestablish(hook)
-	void *hook;
-{
-	/*
-	 * XXX currently, there is a memory leak here; we can't free the
-	 * sicallback structure.
-	 * this will be automatically repaired once we rewrite the soft
-	 * interrupt functions.
-	 */
-
-	free(hook, M_TEMP);
-}
-
 void
 alloc_sicallback()
 {
@@ -1097,18 +1023,6 @@ alloc_sicallback()
 #ifdef DIAGNOSTIC
 	++ncb;
 #endif
-}
-
-void
-softintr_schedule(vsi)
-	void *vsi;
-{
-	struct softintr *si = vsi;
-
-	if (si->pending == 0) {
-		si->pending = 1;
-		add_sicallback(_softintr_callit, si, NULL);
-	}
 }
 
 void
@@ -1349,6 +1263,8 @@ remove_isr(isr)
 	}
 }
 
+static int idepth;
+
 void
 intrhand(sr)
 	int sr;
@@ -1357,6 +1273,7 @@ intrhand(sr)
 	register unsigned short ireq;
 	register struct isr **p, *q;
 
+	idepth++;
 	ipl = (sr >> 8) & 7;
 #ifdef REALLYDEBUG
 	printf("intrhand: got int. %d\n", ipl);
@@ -1407,13 +1324,6 @@ intrhand(sr)
 			ssir_active = ssir;
 			siroff(SIR_NET | SIR_CBACK);
 			splx(s);
-			if (ssir_active & SIR_NET) {
-#ifdef REALLYDEBUG
-				printf("calling netintr\n");
-#endif
-				uvmexp.softs++;
-				netintr();
-			}
 			if (ssir_active & SIR_CBACK) {
 #ifdef REALLYDEBUG
 				printf("calling softcallbacks\n");
@@ -1505,6 +1415,14 @@ intrhand(sr)
 #ifdef REALLYDEBUG
 	printf("intrhand: leaving.\n");
 #endif
+	idepth--;
+}
+
+bool
+cpu_intr_p(void)
+{
+
+	return idepth != 0;
 }
 
 #if defined(DEBUG) && !defined(PANICBUTTON)

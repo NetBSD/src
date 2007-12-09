@@ -1,4 +1,4 @@
-/* $NetBSD: nsclpcsio_isa.c,v 1.17.6.5 2007/11/21 21:55:25 joerg Exp $ */
+/* $NetBSD: nsclpcsio_isa.c,v 1.17.6.6 2007/12/09 19:37:51 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2002
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsclpcsio_isa.c,v 1.17.6.5 2007/11/21 21:55:25 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nsclpcsio_isa.c,v 1.17.6.6 2007/12/09 19:37:51 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -310,7 +310,7 @@ nsclpcsio_isa_attach(struct device *parent, struct device *self, void *aux)
 #endif
 	int i, iobase;
 
-	mutex_init(&sc->sc_lock, MUTEX_DRIVER, IPL_NONE);
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
 
 	sc->sc_iot = ia->ia_iot;
 	iobase = ia->ia_io[0].ir_addr;

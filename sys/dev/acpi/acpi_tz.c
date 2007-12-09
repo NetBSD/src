@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_tz.c,v 1.23.6.12 2007/12/08 16:21:04 jmcneill Exp $ */
+/* $NetBSD: acpi_tz.c,v 1.23.6.13 2007/12/09 19:37:44 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2003 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.23.6.12 2007/12/08 16:21:04 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.23.6.13 2007/12/09 19:37:44 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -159,7 +159,7 @@ acpitz_attach(struct device *parent, struct device *self, void *aux)
 	ACPI_STATUS rv;
 	ACPI_INTEGER v;
 
-	mutex_init(&sc->sc_mtx, MUTEX_DRIVER, IPL_NONE);
+	mutex_init(&sc->sc_mtx, MUTEX_DEFAULT, IPL_NONE);
 
 #if 0
 	sc->sc_flags = ATZ_F_VERBOSE;
@@ -173,6 +173,9 @@ acpitz_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_zone.tzp = ATZ_TZP_RATE;
 	else
 		sc->sc_zone.tzp = v;
+
+	aprint_debug(" sample rate %d.%ds\n",
+	    sc->sc_zone.tzp / 10, sc->sc_zone.tzp % 10);
 
 	/* XXX a value of 0 means "polling is not necessary" */
 	if (sc->sc_zone.tzp == 0)

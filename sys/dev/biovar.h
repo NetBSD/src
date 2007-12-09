@@ -1,4 +1,4 @@
-/*	$NetBSD: biovar.h,v 1.1.14.1 2007/11/04 21:03:21 jmcneill Exp $ */
+/*	$NetBSD: biovar.h,v 1.1.14.2 2007/12/09 19:37:40 jmcneill Exp $ */
 /*	$OpenBSD: biovar.h,v 1.26 2007/03/19 03:02:08 marco Exp $	*/
 
 /*
@@ -118,6 +118,8 @@ struct bioc_vol {
 #define BIOC_SVSCRUB_S		"Scrubbing"
 #define BIOC_SVREBUILD		0x05
 #define BIOC_SVREBUILD_S	"Rebuild"
+#define BIOC_SVMIGRATING	0x06
+#define BIOC_SVMIGRATING_S	"Migrating"
 #define BIOC_SVINVALID		0xff
 #define BIOC_SVINVALID_S	"Invalid"
 	uint64_t	bv_size;	/* size of the disk */

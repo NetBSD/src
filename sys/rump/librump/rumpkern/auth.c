@@ -1,4 +1,4 @@
-/*	$NetBSD: auth.c,v 1.2.14.2 2007/11/02 12:43:50 joerg Exp $	*/
+/*	$NetBSD: auth.c,v 1.2.14.3 2007/12/09 19:38:46 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -148,4 +148,11 @@ kauth_cred_group(kauth_cred_t cred, u_int idx)
 	KASSERT(idx < cred->cr_ngroups);
 
 	return cred->cr_groups[idx];
+}
+
+kauth_cred_t
+kauth_cred_get()
+{
+
+	return curlwp->l_cred;
 }

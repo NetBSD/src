@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socketcall.h,v 1.12 2007/03/04 06:01:24 christos Exp $	*/
+/*	$NetBSD: linux_socketcall.h,v 1.12.14.1 2007/12/09 19:37:06 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -230,21 +230,21 @@ struct linux_sys_shutdown_args {
 
 # ifdef _KERNEL
 __BEGIN_DECLS
-int linux_sys_socket __P((struct lwp *, void *, register_t *));
-int linux_sys_socketpair __P((struct lwp *, void *, register_t *));
-int linux_sys_sendto __P((struct lwp *, void *, register_t *));
-int linux_sys_recvfrom __P((struct lwp *, void *, register_t *));
-int linux_sys_setsockopt __P((struct lwp *, void *, register_t *));
-int linux_sys_getsockopt __P((struct lwp *, void *, register_t *));
-int linux_sys_connect __P((struct lwp *, void *, register_t *));
-int linux_sys_bind __P((struct lwp *, void *, register_t *));
-int linux_sys_getsockname __P((struct lwp *, void *, register_t *));
-int linux_sys_getpeername __P((struct lwp *, void *, register_t *));
-int linux_sys_sendmsg __P((struct lwp *, void *, register_t *));
-int linux_sys_recvmsg __P((struct lwp *, void *, register_t *));
-int linux_sys_recv __P((struct lwp *, void *, register_t *));
-int linux_sys_send __P((struct lwp *, void *, register_t *));
-int linux_sys_accept __P((struct lwp *, void *, register_t *));
+int linux_sys_socket(struct lwp *, void *, register_t *);
+int linux_sys_socketpair(struct lwp *, void *, register_t *);
+int linux_sys_sendto(struct lwp *, void *, register_t *);
+int linux_sys_recvfrom(struct lwp *, void *, register_t *);
+int linux_sys_setsockopt(struct lwp *, void *, register_t *);
+int linux_sys_getsockopt(struct lwp *, void *, register_t *);
+int linux_sys_connect(struct lwp *, void *, register_t *);
+int linux_sys_bind(struct lwp *, void *, register_t *);
+int linux_sys_getsockname(struct lwp *, void *, register_t *);
+int linux_sys_getpeername(struct lwp *, void *, register_t *);
+int linux_sys_sendmsg(struct lwp *, void *, register_t *);
+int linux_sys_recvmsg(struct lwp *, void *, register_t *);
+int linux_sys_recv(struct lwp *, void *, register_t *);
+int linux_sys_send(struct lwp *, void *, register_t *);
+int linux_sys_accept(struct lwp *, void *, register_t *);
 __END_DECLS
 # endif /* !_KERNEL */
 

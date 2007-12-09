@@ -1,4 +1,4 @@
-/*	$NetBSD: union.h,v 1.15 2006/05/14 21:31:52 elad Exp $	*/
+/*	$NetBSD: union.h,v 1.15.32.1 2007/12/09 19:38:13 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -141,8 +141,7 @@ extern int union_copyfile(struct vnode *, struct vnode *, kauth_cred_t,
 extern int union_copyup(struct union_node *, int, kauth_cred_t,
     struct lwp *);
 extern void union_diruncache(struct union_node *);
-extern int union_dowhiteout(struct union_node *, kauth_cred_t,
-    struct lwp *);
+extern int union_dowhiteout(struct union_node *, kauth_cred_t);
 extern int union_mkshadow(struct union_mount *, struct vnode *,
     struct componentname *, struct vnode **);
 extern int union_mkwhiteout(struct union_mount *, struct vnode *,

@@ -1,4 +1,4 @@
-/* $NetBSD: vfs_getcwd.c,v 1.35.18.3 2007/12/03 16:14:59 joerg Exp $ */
+/* $NetBSD: vfs_getcwd.c,v 1.35.18.4 2007/12/09 19:38:28 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_getcwd.c,v 1.35.18.3 2007/12/03 16:14:59 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_getcwd.c,v 1.35.18.4 2007/12/09 19:38:28 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -134,7 +134,6 @@ getcwd_scandir(struct vnode **lvpp, struct vnode **uvpp, char **bpp,
 	 */
 	cn.cn_nameiop = LOOKUP;
 	cn.cn_flags = ISLASTCN | ISDOTDOT | RDONLY;
-	cn.cn_lwp = l;
 	cn.cn_cred = cred;
 	cn.cn_pnbuf = NULL;
 	cn.cn_nameptr = "..";

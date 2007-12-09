@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.125.6.5 2007/11/27 19:38:07 joerg Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.125.6.6 2007/12/09 19:38:21 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2007 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.125.6.5 2007/11/27 19:38:07 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.125.6.6 2007/12/09 19:38:21 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -140,8 +140,8 @@ settime1(struct proc *p, struct timespec *ts, bool check_kauth)
 	timersub(&tv, &time, &delta);
 #endif /* !__HAVE_TIMECOUNTER */
 
-	if (check_kauth && kauth_authorize_system(p->p_cred, KAUTH_SYSTEM_TIME,
-	    KAUTH_REQ_SYSTEM_TIME_SYSTEM, ts, &delta,
+	if (check_kauth && kauth_authorize_system(kauth_cred_get(),
+	    KAUTH_SYSTEM_TIME, KAUTH_REQ_SYSTEM_TIME_SYSTEM, ts, &delta,
 	    KAUTH_ARG(check_kauth ? false : true)) != 0) {
 		splx(s);
 		return (EPERM);

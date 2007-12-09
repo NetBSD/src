@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.12.48.2 2007/11/02 13:34:50 joerg Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.12.48.3 2007/12/09 19:36:04 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.12.48.2 2007/11/02 13:34:50 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.12.48.3 2007/12/09 19:36:04 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,7 +127,8 @@ findroot(void)
 	unit = (bootdev >> B_UNITSHIFT) & B_UNITMASK;
 
 	sprintf(buf, "%s%d", name, unit);
-	for (dv = alldevs.tqh_first; dv != NULL; dv = dv->dv_list.tqe_next) {
+	for (dv = TAILQ_FIRST(&alldevs); dv != NULL;
+	    dv = TAILQ_NEXT(dv, dv_list)) {
 		if (strcmp(buf, dv->dv_xname) == 0) {
 			booted_device = dv;
 			booted_partition = part;

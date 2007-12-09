@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.197.6.7 2007/11/27 19:38:12 joerg Exp $	*/
+/*	$NetBSD: tty.c,v 1.197.6.8 2007/12/09 19:38:26 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.197.6.7 2007/11/27 19:38:12 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.197.6.8 2007/12/09 19:38:26 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -905,7 +905,7 @@ ttioctl(struct tty *tp, u_long cmd, void *data, int flag, struct lwp *l)
 				return EBUSY;
 
 			NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_SYSSPACE,
-			    "/dev/console", l);
+			    "/dev/console");
 			if ((error = namei(&nd)) != 0)
 				return error;
 			error = VOP_ACCESS(nd.ni_vp, VREAD, l->l_cred);
@@ -2648,7 +2648,7 @@ ttysigintr(void *cookie)
 	struct session *sess;
 	int sig;
 
-	/* XXXSMP notyet mutex_enter(&proclist_lock); */
+	mutex_enter(&proclist_lock);
 	for (;;) {
 		mutex_spin_enter(&tty_lock);
 		if ((tp = TAILQ_FIRST(&tty_sigqueue)) == NULL) {
@@ -2689,7 +2689,5 @@ ttysigintr(void *cookie)
 		}
 		mutex_exit(&proclist_mutex);
 	}
-
-
-	/* XXXSMP notyet mutex_exit(&proclist_lock); */
+	mutex_exit(&proclist_lock);
 }

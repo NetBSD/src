@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.35.8.2 2007/11/06 19:25:00 joerg Exp $	*/
+/*	$NetBSD: trap.c,v 1.35.8.3 2007/12/09 19:34:49 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.35.8.2 2007/11/06 19:25:00 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.35.8.3 2007/12/09 19:34:49 jmcneill Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -582,7 +582,9 @@ trap(fp, type, code, v)
 	case T_SSIR:		/* software interrupt */
 	case T_SSIR|T_USER:
 
+#ifdef __HAVE_FAST_SOFTINTS
 		softintr_dispatch();
+#endif
 
 		/*
 		 * If this was not an AST trap, we are all done.

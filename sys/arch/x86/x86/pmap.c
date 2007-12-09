@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.2.4.6 2007/12/03 16:14:23 joerg Exp $	*/
+/*	$NetBSD: pmap.c,v 1.2.4.7 2007/12/09 19:36:29 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.2.4.6 2007/12/03 16:14:23 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.2.4.7 2007/12/09 19:36:29 jmcneill Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -2248,17 +2248,18 @@ pmap_reactivate(struct pmap *pmap)
 	 * synchronize with TLB shootdown interrupts.  declare
 	 * interest in invalidations (TLBSTATE_VALID) and then
 	 * check the cpumask, which the IPIs can change only
-	 * when the state is !TLBSTATE_VALID.
+	 * when the state is TLBSTATE_LAZY.
 	 */
 
 	ci->ci_tlbstate = TLBSTATE_VALID;
 	oldcpus = pmap->pm_cpus;
-	atomic_or_32(&pmap->pm_cpus, cpumask);
 	KASSERT((pmap->pm_kernel_cpus & cpumask) != 0);
 	if (oldcpus & cpumask) {
 		/* got it */
 		result = true;
 	} else {
+		/* must reload */
+		atomic_or_32(&pmap->pm_cpus, cpumask);
 		result = false;
 	}
 
@@ -3857,8 +3858,6 @@ pmap_alloc_level(pd_entry_t **pdes, vaddr_t kva, int lvl, long *needed_ptps)
 #ifdef XEN
 	splx(s);
 #endif
-	/* For nkptp vs pmap_pdp_cache. */
-	mb_write();
 }
 
 /*
@@ -4006,7 +4005,6 @@ void
 pmap_tlb_shootdown(struct pmap *pm, vaddr_t sva, vaddr_t eva, pt_entry_t pte)
 {
 #ifdef MULTIPROCESSOR
-	extern int _lock_cas(volatile uintptr_t *, uintptr_t, uintptr_t);
 	extern bool x86_mp_online;
 	struct cpu_info *ci;
 	struct pmap_mbox *mb, *selfmb;
@@ -4070,8 +4068,9 @@ pmap_tlb_shootdown(struct pmap *pm, vaddr_t sva, vaddr_t eva, pt_entry_t pte)
 						SPINLOCK_BACKOFF(count);
 					s = splvm();
 				}
-			} while (!_lock_cas(&mb->mb_head, head,
-			    head + ncpu - 1));
+			} while (atomic_cas_ulong(
+			    (volatile u_long *)&mb->mb_head,
+			    head, head + ncpu - 1) != head);
 
 			/*
 			 * Once underway we must stay at IPL_VM until the
@@ -4111,8 +4110,9 @@ pmap_tlb_shootdown(struct pmap *pm, vaddr_t sva, vaddr_t eva, pt_entry_t pte)
 				selfmb->mb_head++;
 				mb = &ci->ci_pmap_cpu->pc_mbox;
 				count = SPINLOCK_BACKOFF_MIN;
-				while (!_lock_cas((uintptr_t *)&mb->mb_pointer,
-				    0, (uintptr_t)&selfmb->mb_tail)) {
+				while (atomic_cas_ulong(
+				    (u_long *)&mb->mb_pointer,
+				    0, (u_long)&selfmb->mb_tail) != 0) {
 				    	splx(s);
 					while (mb->mb_pointer != 0)
 						SPINLOCK_BACKOFF(count);

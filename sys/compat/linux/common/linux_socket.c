@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.76.6.3 2007/10/26 15:44:00 joerg Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.76.6.4 2007/12/09 19:37:05 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.76.6.3 2007/10/26 15:44:00 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.76.6.4 2007/12/09 19:37:05 jmcneill Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -117,19 +117,19 @@ __KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.76.6.3 2007/10/26 15:44:00 joerg 
  * than a normal syscall.
  */
 
-static int linux_to_bsd_domain __P((int));
-static int bsd_to_linux_domain __P((int));
-int linux_to_bsd_sopt_level __P((int));
-int linux_to_bsd_so_sockopt __P((int));
-int linux_to_bsd_ip_sockopt __P((int));
-int linux_to_bsd_tcp_sockopt __P((int));
-int linux_to_bsd_udp_sockopt __P((int));
-int linux_getifhwaddr __P((struct lwp *, register_t *, u_int, void *));
+static int linux_to_bsd_domain(int);
+static int bsd_to_linux_domain(int);
+int linux_to_bsd_sopt_level(int);
+int linux_to_bsd_so_sockopt(int);
+int linux_to_bsd_ip_sockopt(int);
+int linux_to_bsd_tcp_sockopt(int);
+int linux_to_bsd_udp_sockopt(int);
+int linux_getifhwaddr(struct lwp *, register_t *, u_int, void *);
 static int linux_get_sa(struct lwp *, int, struct mbuf **,
 		const struct osockaddr *, int);
-static int linux_sa_put __P((struct osockaddr *osa));
-static int linux_to_bsd_msg_flags __P((int));
-static int bsd_to_linux_msg_flags __P((int));
+static int linux_sa_put(struct osockaddr *osa);
+static int linux_to_bsd_msg_flags(int);
+static int bsd_to_linux_msg_flags(int);
 
 static const int linux_to_bsd_domain_[LINUX_AF_MAX] = {
 	AF_UNSPEC,
@@ -220,8 +220,7 @@ static const struct {
  * Convert between Linux and BSD socket domain values
  */
 static int
-linux_to_bsd_domain(ldom)
-	int ldom;
+linux_to_bsd_domain(int ldom)
 {
 	if (ldom < 0 || ldom >= LINUX_AF_MAX)
 		return (-1);
@@ -233,8 +232,7 @@ linux_to_bsd_domain(ldom)
  * Convert between BSD and Linux socket domain values
  */
 static int
-bsd_to_linux_domain(bdom)
-	int bdom;
+bsd_to_linux_domain(int bdom)
 {
 	if (bdom < 0 || bdom >= AF_MAX)
 		return (-1);
@@ -243,8 +241,7 @@ bsd_to_linux_domain(bdom)
 }
 
 static int
-linux_to_bsd_msg_flags(lflag)
-	int lflag;
+linux_to_bsd_msg_flags(int lflag)
 {
 	int i, lfl, bfl;
 	int bflag = 0;
@@ -271,8 +268,7 @@ linux_to_bsd_msg_flags(lflag)
 }
 
 static int
-bsd_to_linux_msg_flags(bflag)
-	int bflag;
+bsd_to_linux_msg_flags(int bflag)
 {
 	int i, lfl, bfl;
 	int lflag = 0;
@@ -299,10 +295,7 @@ bsd_to_linux_msg_flags(bflag)
 }
 
 int
-linux_sys_socket(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_socket(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux_sys_socket_args /* {
 		syscallarg(int)	domain;
@@ -349,10 +342,7 @@ linux_sys_socket(l, v, retval)
 }
 
 int
-linux_sys_socketpair(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_socketpair(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux_sys_socketpair_args /* {
 		syscallarg(int) domain;
@@ -373,10 +363,7 @@ linux_sys_socketpair(l, v, retval)
 }
 
 int
-linux_sys_sendto(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_sendto(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux_sys_sendto_args /* {
 		syscallarg(int)				s;
@@ -417,10 +404,7 @@ linux_sys_sendto(l, v, retval)
 }
 
 int
-linux_sys_sendmsg(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_sendmsg(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux_sys_sendmsg_args /* {
 		syscallarg(int) s;
@@ -578,10 +562,7 @@ done:
 }
 
 int
-linux_sys_recvfrom(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_recvfrom(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux_sys_recvfrom_args /* {
 		syscallarg(int) s;
@@ -703,10 +684,7 @@ linux_copyout_msg_control(struct lwp *l, struct msghdr *mp, struct mbuf *control
 }
 
 int
-linux_sys_recvmsg(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_recvmsg(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux_sys_recvmsg_args /* {
 		syscallarg(int) s;
@@ -764,8 +742,7 @@ linux_sys_recvmsg(l, v, retval)
  * is different, the rest matches IPPROTO_* on both systems.
  */
 int
-linux_to_bsd_sopt_level(llevel)
-	int llevel;
+linux_to_bsd_sopt_level(int llevel)
 {
 
 	switch (llevel) {
@@ -786,8 +763,7 @@ linux_to_bsd_sopt_level(llevel)
  * Convert Linux socket level socket option numbers to NetBSD values.
  */
 int
-linux_to_bsd_so_sockopt(lopt)
-	int lopt;
+linux_to_bsd_so_sockopt(int lopt)
 {
 
 	switch (lopt) {
@@ -831,8 +807,7 @@ linux_to_bsd_so_sockopt(lopt)
  * Convert Linux IP level socket option number to NetBSD values.
  */
 int
-linux_to_bsd_ip_sockopt(lopt)
-	int lopt;
+linux_to_bsd_ip_sockopt(int lopt)
 {
 
 	switch (lopt) {
@@ -859,8 +834,7 @@ linux_to_bsd_ip_sockopt(lopt)
  * Convert Linux TCP level socket option number to NetBSD values.
  */
 int
-linux_to_bsd_tcp_sockopt(lopt)
-	int lopt;
+linux_to_bsd_tcp_sockopt(int lopt)
 {
 
 	switch (lopt) {
@@ -877,8 +851,7 @@ linux_to_bsd_tcp_sockopt(lopt)
  * Convert Linux UDP level socket option number to NetBSD values.
  */
 int
-linux_to_bsd_udp_sockopt(lopt)
-	int lopt;
+linux_to_bsd_udp_sockopt(int lopt)
 {
 
 	switch (lopt) {
@@ -894,10 +867,7 @@ linux_to_bsd_udp_sockopt(lopt)
  * need conversion, as they are the same on both systems.
  */
 int
-linux_sys_setsockopt(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_setsockopt(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux_sys_setsockopt_args /* {
 		syscallarg(int) s;
@@ -966,10 +936,7 @@ linux_sys_setsockopt(l, v, retval)
  * getsockopt(2) is very much the same as setsockopt(2) (see above)
  */
 int
-linux_sys_getsockopt(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_getsockopt(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux_sys_getsockopt_args /* {
 		syscallarg(int) s;
@@ -1059,31 +1026,31 @@ linux_getifhwaddr(struct lwp *l, register_t *retval, u_int fd,
 	/*
 	 * Try real interface name first, then fake "ethX"
 	 */
-	for (ifp = ifnet.tqh_first, found = 0;
-	     ifp != 0 && !found;
-	     ifp = ifp->if_list.tqe_next) {
+	found = 0;
+	IFNET_FOREACH(ifp) {
+		if (found)
+			break;
 		if (strcmp(lreq.if_name, ifp->if_xname))
 			/* not this interface */
 			continue;
 		found=1;
-		if ((ifa = ifp->if_addrlist.tqh_first) != 0) {
-			for (; ifa != 0; ifa = ifa->ifa_list.tqe_next) {
-				sadl = satosdl(ifa->ifa_addr);
-				/* only return ethernet addresses */
-				/* XXX what about FDDI, etc. ? */
-				if (sadl->sdl_family != AF_LINK ||
-				    sadl->sdl_type != IFT_ETHER)
-					continue;
-				memcpy(&lreq.hwaddr.sa_data, CLLADDR(sadl),
-				       MIN(sadl->sdl_alen,
-					   sizeof(lreq.hwaddr.sa_data)));
-				lreq.hwaddr.sa_family =
-					sadl->sdl_family;
-				error = copyout(&lreq, data, sizeof(lreq));
-				goto out;
-			}
-		} else {
+		if (IFADDR_EMPTY(ifp)) {
 			error = ENODEV;
+			goto out;
+		}
+		IFADDR_FOREACH(ifa, ifp) {
+			sadl = satosdl(ifa->ifa_addr);
+			/* only return ethernet addresses */
+			/* XXX what about FDDI, etc. ? */
+			if (sadl->sdl_family != AF_LINK ||
+			    sadl->sdl_type != IFT_ETHER)
+				continue;
+			memcpy(&lreq.hwaddr.sa_data, CLLADDR(sadl),
+			       MIN(sadl->sdl_alen,
+				   sizeof(lreq.hwaddr.sa_data)));
+			lreq.hwaddr.sa_family =
+				sadl->sdl_family;
+			error = copyout(&lreq, data, sizeof(lreq));
 			goto out;
 		}
 	}
@@ -1097,35 +1064,32 @@ linux_getifhwaddr(struct lwp *l, register_t *retval, u_int fd,
 		}
 
 		error = EINVAL;			/* in case we don't find one */
-		for (ifp = ifnet.tqh_first, found = 0;
-		     ifp != 0 && !found;
-		     ifp = ifp->if_list.tqe_next) {
+		found = 0;
+		IFNET_FOREACH(ifp) {
+			if (found)
+				break;
 			memcpy(lreq.if_name, ifp->if_xname,
 			       MIN(IF_NAME_LEN, IFNAMSIZ));
-			if ((ifa = ifp->if_addrlist.tqh_first) == 0)
-				/* no addresses on this interface */
-				continue;
-			else
-				for (; ifa != 0; ifa = ifa->ifa_list.tqe_next) {
-					sadl = satosdl(ifa->ifa_addr);
-					/* only return ethernet addresses */
-					/* XXX what about FDDI, etc. ? */
-					if (sadl->sdl_family != AF_LINK ||
-					    sadl->sdl_type != IFT_ETHER)
-						continue;
-					if (ifnum--)
-						/* not the reqested iface */
-						continue;
-					memcpy(&lreq.hwaddr.sa_data,
-					       CLLADDR(sadl),
-					       MIN(sadl->sdl_alen,
-						   sizeof(lreq.hwaddr.sa_data)));
-					lreq.hwaddr.sa_family =
-						sadl->sdl_family;
-					error = copyout(&lreq, data, sizeof(lreq));
-					found = 1;
-					break;
-				}
+			IFADDR_FOREACH(ifa, ifp) {
+				sadl = satosdl(ifa->ifa_addr);
+				/* only return ethernet addresses */
+				/* XXX what about FDDI, etc. ? */
+				if (sadl->sdl_family != AF_LINK ||
+				    sadl->sdl_type != IFT_ETHER)
+					continue;
+				if (ifnum--)
+					/* not the reqested iface */
+					continue;
+				memcpy(&lreq.hwaddr.sa_data,
+				       CLLADDR(sadl),
+				       MIN(sadl->sdl_alen,
+					   sizeof(lreq.hwaddr.sa_data)));
+				lreq.hwaddr.sa_family =
+					sadl->sdl_family;
+				error = copyout(&lreq, data, sizeof(lreq));
+				found = 1;
+				break;
+			}
 		}
 	} else {
 		/* unknown interface, not even an "eth*" name */
@@ -1247,10 +1211,7 @@ out:
 }
 
 int
-linux_sys_connect(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_connect(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux_sys_connect_args /* {
 		syscallarg(int) s;
@@ -1296,10 +1257,7 @@ linux_sys_connect(l, v, retval)
 }
 
 int
-linux_sys_bind(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_bind(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux_sys_bind_args /* {
 		syscallarg(int) s;
@@ -1318,10 +1276,7 @@ linux_sys_bind(l, v, retval)
 }
 
 int
-linux_sys_getsockname(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_getsockname(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux_sys_getsockname_args /* {
 		syscallarg(int) fdes;
@@ -1340,10 +1295,7 @@ linux_sys_getsockname(l, v, retval)
 }
 
 int
-linux_sys_getpeername(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_getpeername(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_getpeername_args /* {
 		syscallarg(int) fdes;
@@ -1480,8 +1432,7 @@ linux_get_sa(struct lwp *l, int s, struct mbuf **mp, const struct osockaddr *osa
 }
 
 static int
-linux_sa_put(osa)
-	struct osockaddr *osa;
+linux_sa_put(struct osockaddr *osa)
 {
 	struct sockaddr sa;
 	struct osockaddr *kosa;
@@ -1513,10 +1464,7 @@ linux_sa_put(osa)
 
 #ifndef __amd64__
 int
-linux_sys_recv(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_recv(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux_sys_recv_args /* {
 		syscallarg(int) s;
@@ -1538,10 +1486,7 @@ linux_sys_recv(l, v, retval)
 }
 
 int
-linux_sys_send(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_send(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux_sys_send_args /* {
 		syscallarg(int) s;
@@ -1563,10 +1508,7 @@ linux_sys_send(l, v, retval)
 #endif
 
 int
-linux_sys_accept(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_accept(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux_sys_accept_args /* {
 		syscallarg(int) s;

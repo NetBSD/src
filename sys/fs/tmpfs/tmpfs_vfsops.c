@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vfsops.c,v 1.27.2.6 2007/11/27 19:37:55 joerg Exp $	*/
+/*	$NetBSD: tmpfs_vfsops.c,v 1.27.2.7 2007/12/09 19:38:12 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.27.2.6 2007/11/27 19:37:55 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.27.2.7 2007/12/09 19:38:12 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -169,7 +169,7 @@ tmpfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	/* Allocate the root node. */
 	error = tmpfs_alloc_node(tmp, VDIR, args->ta_root_uid,
 	    args->ta_root_gid, args->ta_root_mode & ALLPERMS, NULL, NULL,
-	    VNOVAL, l->l_proc, &root);
+	    VNOVAL, &root);
 	KASSERT(error == 0 && root != NULL);
 	tmp->tm_root = root;
 

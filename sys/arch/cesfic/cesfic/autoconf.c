@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.17 2007/03/05 13:06:43 tsutsui Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.17.18.1 2007/12/09 19:34:48 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.17 2007/03/05 13:06:43 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.17.18.1 2007/12/09 19:34:48 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -155,7 +155,6 @@ cpu_configure()
 	isrinit();
 
 	(void)splhigh();
-	softintr_init();
 	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("no mainbus found");
 

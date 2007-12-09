@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.223 2007/05/17 14:51:29 yamt Exp $ */
+/*	$NetBSD: autoconf.c,v 1.223.8.1 2007/12/09 19:36:17 jmcneill Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.223 2007/05/17 14:51:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.223.8.1 2007/12/09 19:36:17 jmcneill Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -915,7 +915,7 @@ cpu_configure(void)
 {
 
 	/* initialise the softintr system */
-	softintr_init();
+	sparc_softintr_init();
 
 	/* build the bootpath */
 	bootpath_build();
@@ -1471,7 +1471,7 @@ romgetcursoraddr(int **rowp, int **colp)
 struct device *
 getdevunit(const char *name, int unit)
 {
-	struct device *dev = alldevs.tqh_first;
+	struct device *dev = TAILQ_FIRST(&alldevs);
 	char num[10], fullname[16];
 	int lunit;
 
@@ -1485,7 +1485,7 @@ getdevunit(const char *name, int unit)
 	strcat(fullname, num);
 
 	while (strcmp(dev->dv_xname, fullname) != 0) {
-		if ((dev = dev->dv_list.tqe_next) == NULL)
+		if ((dev = TAILQ_NEXT(dev, dv_list)) == NULL)
 			return NULL;
 	}
 	return dev;

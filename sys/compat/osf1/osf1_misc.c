@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_misc.c,v 1.79 2007/06/16 20:04:28 dsl Exp $ */
+/* $NetBSD: osf1_misc.c,v 1.79.6.1 2007/12/09 19:37:24 jmcneill Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_misc.c,v 1.79 2007/06/16 20:04:28 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_misc.c,v 1.79.6.1 2007/12/09 19:37:24 jmcneill Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -102,10 +102,7 @@ extern int scdebug;
 #endif
 
 int
-osf1_sys_classcntl(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+osf1_sys_classcntl(struct lwp *l, void *v, register_t *retval)
 {
 
 	/* XXX */
@@ -113,10 +110,7 @@ osf1_sys_classcntl(l, v, retval)
 }
 
 int
-osf1_sys_reboot(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+osf1_sys_reboot(struct lwp *l, void *v, register_t *retval)
 {
 	struct osf1_sys_reboot_args *uap = v;
 	struct sys_reboot_args a;
@@ -134,10 +128,7 @@ osf1_sys_reboot(l, v, retval)
 }
 
 int
-osf1_sys_set_program_attributes(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+osf1_sys_set_program_attributes(struct lwp *l, void *v, register_t *retval)
 {
 	struct osf1_sys_set_program_attributes_args *uap = v;
 	struct proc *p = l->l_proc;
@@ -251,10 +242,7 @@ osf1_sys_getsysinfo(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-osf1_sys_setsysinfo(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+osf1_sys_setsysinfo(struct lwp *l, void *v, register_t *retval)
 {
 	struct osf1_sys_setsysinfo_args *uap = v;
 	u_int64_t temp;
@@ -280,10 +268,7 @@ osf1_sys_setsysinfo(l, v, retval)
 }
 
 int
-osf1_sys_sysinfo(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+osf1_sys_sysinfo(struct lwp *l, void *v, register_t *retval)
 {
 	struct osf1_sys_sysinfo_args *uap = v;
 	const char *string;
@@ -357,10 +342,7 @@ dont_care:
 }
 
 int
-osf1_sys_uname(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+osf1_sys_uname(struct lwp *l, void *v, register_t *retval)
 {
 	struct osf1_sys_uname_args *uap = v;
         struct osf1_utsname u;
@@ -386,10 +368,7 @@ osf1_sys_uname(l, v, retval)
 }
 
 int
-osf1_sys_usleep_thread(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+osf1_sys_usleep_thread(struct lwp *l, void *v, register_t *retval)
 {
 	struct osf1_sys_usleep_thread_args *uap = v;
 	struct osf1_timeval otv, endotv;
@@ -424,10 +403,7 @@ osf1_sys_usleep_thread(l, v, retval)
 }
 
 int
-osf1_sys_wait4(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+osf1_sys_wait4(struct lwp *l, void *v, register_t *retval)
 {
 	struct osf1_sys_wait4_args *uap = v;
 	struct osf1_rusage osf1_rusage;

@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.115.4.14 2007/12/03 16:14:01 joerg Exp $
+# $NetBSD: ALL,v 1.115.4.15 2007/12/09 19:35:18 jmcneill Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.115.4.14 $"
+#ident 		"ALL-$Revision: 1.115.4.15 $"
 
 maxusers	32		# estimated number of users
 
@@ -754,6 +754,7 @@ se* at scsibus? target ? lun ?
 # RAID controllers and devices
 aac*	at pci? dev ? function ?	# Adaptec AAC family
 amr*	at pci? dev ? function ?	# AMI/LSI Logic MegaRAID
+arcmsr* at pci? dev ? function ?	# Areca SATA RAID controllers
 cac*	at eisa? slot ?			# Compaq EISA array controllers
 cac*	at pci? dev ? function ?	# Compaq PCI array controllers
 ciss*	at pci? dev ? function ?	# HP Smart Array controllers
