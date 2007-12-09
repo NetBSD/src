@@ -1,4 +1,4 @@
-/* $NetBSD: pmf.h,v 1.2 2007/12/09 20:28:44 jmcneill Exp $ */
+/* $NetBSD: pmf.h,v 1.3 2007/12/09 23:21:39 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -34,6 +34,8 @@
 
 #ifndef _SYS_PMF_H
 #define _SYS_PMF_H
+
+#ifdef _KERNEL
 
 #include <sys/callout.h>
 
@@ -83,5 +85,7 @@ void		pmf_class_network_register(device_t, struct ifnet *);
 
 bool		pmf_class_input_register(device_t);
 bool		pmf_class_display_register(device_t);
+
+#endif /* !_KERNEL */
 
 #endif /* !_SYS_PMF_H */
