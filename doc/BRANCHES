@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.224 2007/12/08 18:15:29 mjf Exp $
+#	$NetBSD: BRANCHES,v 1.225 2007/12/09 18:47:44 wiz Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -211,7 +211,7 @@ Notes:
 Branch:		ad-audiomp
 Description:	Add MP locking to the audio drivers
 Status:		Active
-Start Date:	28 Febuary 2007
+Start Date:	28 February 2007
 End Date:
 Base Tag:	ad-audiomp-base
 Maintainer:	Andrew Doran <ad@NetBSD.org>
@@ -232,7 +232,7 @@ Notes:		Making the audio drivers MP safe is necessary before efforts
 		methods which were called at splaudio() before (e.g.
 		trigger_output). The character device lock is held across
 		calls to nearly all of the methods, excluding some only
-		used for initializtion, e.g. get_locks. This needs to be
+		used for initialization, e.g. get_locks. This needs to be
 		documented at merge time.
 
 		To test on a multi way x86 system, search for "mpsafe" in
@@ -260,7 +260,7 @@ Status:		Active
 Start Date:	11 Aug 2007
 End Date:
 Base Tag:	chris-arm-intr-rework-base
-Maintainer:	Chris Gilbert <chrisNetBSD.org>
+Maintainer:	Chris Gilbert <chris@NetBSD.org>
 Scope:		sys/arch/arm sys/arch/cats (other arm archs to follow)
 Notes:		Rework arm interrupt code to provide a shared set of interrupt
 		routines, and allow improvements to be shared across all arm
@@ -274,7 +274,7 @@ End Date:
 Base Tag:	gmcgarry_ctxsw_base
 Maintainer:	Gregory McGarry <gmcgarry@NetBSD.org>
 Scope:		kernel
-Notes:		Removing knowledge of the schedular and its run queues
+Notes:		Removing knowledge of the scheduler and its run queues
 		from the machine-dependent context switch code is the
 		first step in cleaning up the scheduler.  It is necessary
 		for the newlock branch, making the scheduler SMP friendly,
@@ -373,7 +373,7 @@ Notes:
 
 Branch:		matt-armv6
 Description:	Rototill the arm code to support features present in the
-		v6 of the ARM Architecure.  Additionally, clean up things
+		v6 of the ARM Architecture.  Additionally, clean up things
 		along the way to use common practices.
 Status:		Active
 Start Date:	2007-08-27
@@ -384,7 +384,7 @@ Scope:		kernel & userland
 Notes:	
 
 Branch:		mjf-devfs
-Description:	device filesystem supporting dynamic device nodes
+Description:	device file system supporting dynamic device nodes
 Status:		Active
 Start Date:	12 November 2007
 End Date:
@@ -397,7 +397,7 @@ Notes:		This branch will move away from the static device nodes that
 		from the machine.
 
 Branch:		mjf-ufs-trans
-Description:	filesystem transactions for ufs
+Description:	file system transactions for ufs
 Status:		Active
 Start Date:	12 March 2007
 End Date:
@@ -436,7 +436,7 @@ Notes:		No longer active due to the lack of time. If you plan to
 		kernel fine-grained locking).
 		To continue this branch, one needs to read all the relevant
 		inpcb/in6pcb source files and change the function names,
-		structure names, structure fileds according to the new
+		structure names, structure fields according to the new
 		layout (in6pcb is gone).
 		Don't try to build a kernel from this branch because it won't
 		work. The missing pieces required to do a complete build
@@ -494,7 +494,7 @@ Notes:		Superseded by vmlocking2 branch.
 Branch:		vmlocking2
 Description:	Make VM and file system framework MP safe
 Status:		Active
-Start Date:	4 Decenber 2007
+Start Date:	4 December 2007
 End Date:
 Base Tag:	vmlocking2-base1
 Maintainer:	Andrew Doran <ad@NetBSD.org>
@@ -575,7 +575,7 @@ Description:	implement and evaluate struct buf usage cleanup strategies.
 			1. use of bio_ops per buffer.
 			2. allow chaining/overloading of functions in bio_ops
 			   and provide some private context.
-			3. extend the bio_ops with commenly used functionality
+			3. extend the bio_ops with commonly used functionality
 			   like pending action counting, custom context passing,
 			   last minute processing of buffer data, buffer cache
 			   etc.
@@ -586,7 +586,7 @@ Description:	implement and evaluate struct buf usage cleanup strategies.
 		b)
 			1. all sequencing use of B_CALL replaced by
 			   device-threads, if possible generic code around BUFQ
-			2. possibly use kcont() for async IO finished signalling
+			2. possibly use kcont() for async IO finished signaling
 			3. counter of pending and queued actions requestable
 			   by IOCTL interface?
 			4. implement `last minute buffer fixup' calls and maybe
@@ -598,8 +598,8 @@ End Date:
 Base Tag:	reinoud-bufcleanup-base
 Maintainer:	Reinoud Zandijk <reinoud@NetBSD.org>
 Scope:		src/sys and src/common
-Notes:		Used as expiriment sandbox and if successful hopefully one day
-		to be intergrated.
+Notes:		Used as experiment sandbox and if successful hopefully one day
+		to be integrated.
 
 Branch:		thorpej-atomic
 Description:	Implementation of an atomic memory operations API modeled
@@ -885,7 +885,7 @@ Notes:		Citrus Project is developing dynamically-loadable, codeset-
 
 Branch:		mrg-vm-swap
 Description:	dynamic swap allocation, swap-to-files support
-Status:		Terminated; abondoned for mrg-vm-swap2
+Status:		Terminated; abandoned for mrg-vm-swap2
 Start Date:	12 February 1997
 End Date:	15 March 1997
 Base Tag:	[none]
@@ -942,20 +942,20 @@ Branch:		newlock
 Description:	New locking primitives, based on Solaris's
 Status:		Terminated
 Start Date:	March 9, 2002
-End Date:	Febuary 12, 2007
+End Date:	February 12, 2007
 Base Tag:	newlock-base
 Maintainer:	Jason R. Thorpe <thorpej@NetBSD.org>
 Scope:		Kernel
 Notes:		The goal is to replace the existing lockmgr() and
 		simple_lock() based locking mechanisms with the
 		primitives found in Solaris: mutexes and rwlocks.
-		Superseeded by the newlock2 branch.
+		Superseded by the newlock2 branch.
 
 Branch:		newlock2
 Description:	New locking primitives, based on Solaris's
 Status:		Terminated
 Start Date:	September 9, 2006
-End Date:	Febuary 12, 2007
+End Date:	February 12, 2007
 Base Tag:	newlock2-base
 Maintainer:	Andrew Doran <ad@NetBSD.org>
 Scope:		Kernel
@@ -1056,8 +1056,8 @@ Notes:
 		Only the maintainer should move tags.
 
 		Note that this branch uses a DIFFERENT scheme for 
-		synching with the mainline.  the maintainer uses some private
-		scripts for keeping them in synch; if you make commits 
+		syncing with the mainline.  the maintainer uses some private
+		scripts for keeping them in sync; if you make commits 
 		to the branch to "resynchronize" things, you'll
 		probably do it wrong; instead, ask the maintainer to
 		resynchronize things.
