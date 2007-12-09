@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia.c,v 1.83 2007/12/01 14:36:57 jmcneill Exp $	*/
+/*	$NetBSD: pcmcia.c,v 1.84 2007/12/09 20:28:14 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2004 Charles M. Hannum.  All rights reserved.
@@ -48,13 +48,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.83 2007/12/01 14:36:57 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.84 2007/12/09 20:28:14 jmcneill Exp $");
 
 #include "opt_pcmciaverbose.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+
+#include <net/if.h>
 
 #include <dev/pcmcia/pcmciareg.h>
 #include <dev/pcmcia/pcmciachip.h>
@@ -138,6 +140,9 @@ pcmcia_attach(struct device *parent, struct device *self, void *aux)
 	sc->iosize = paa->iosize;
 
 	sc->ih = NULL;
+
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
 int

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.179 2007/12/05 00:19:40 xtraeme Exp $
+# $NetBSD: GENERIC,v 1.180 2007/12/09 20:27:43 jmcneill Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.179 $"
+#ident 		"GENERIC-$Revision: 1.180 $"
 
 maxusers	32		# estimated number of users
 
@@ -255,7 +255,11 @@ options 	MPBIOS_SCANPCI		# MPBIOS configures PCI roots
 acpiacad* 	at acpi?		# ACPI AC Adapter
 acpibat* 	at acpi?		# ACPI Battery
 acpibut* 	at acpi?		# ACPI Button
-acpiec* 	at acpi?		# ACPI Embedded Controller
+# The ACPI Embedded Controller is generally configured via the special ECDT.
+# This is required as parts of the DSDT can reference the EC before the normal
+# attach phase.
+acpiec* 	at acpi?		# ACPI Embedded Controller (late binding)
+acpiecdt* 	at acpi?		# ACPI Embedded Controller (early binding)
 acpilid* 	at acpi?		# ACPI Lid Switch
 acpitz* 	at acpi?		# ACPI Thermal Zone
 
@@ -270,6 +274,7 @@ joy*		at acpi?		# Joystick/Game port
 #lpt* 		at acpi?		# Parallel port
 mpu*		at acpi?		# Roland MPU-401 MIDI UART
 pckbc*  	at acpi?		# PC keyboard controller
+attimer*	at acpi?		# AT Timer
 pcppi*  	at acpi?                # AT-style speaker sound
 ug* 		at acpi?		# Abit uGuru Hardware monitor
 wss* 		at acpi?		# NeoMagic 256AV in wss mode
@@ -325,6 +330,8 @@ cardslot*	at cbb?
 cardbus*	at cardslot?
 pcmcia* 	at cardslot?
 
+# Coprocessor Support
+
 # Console Devices
 
 # wscons
@@ -358,7 +365,7 @@ cz*	at pci? dev ? function ?	# Cyclades-Z multi-port serial boards
 # PCMCIA serial interfaces
 com*	at pcmcia? function ?		# Modems and serial cards
 
-pcmcom* at pcmcia? function ?		# PCMCIA multi-port serial cards
+pcmcom*	at pcmcia? function ?		# PCMCIA multi-port serial cards
 com*	at pcmcom? slave ?		# ...and the slave devices
 
 # CardBus serial interfaces
@@ -519,9 +526,6 @@ viaide* at pci? dev ? function ?	# VIA/AMD/Nvidia IDE controllers
 # PCMCIA IDE controllers
 wdc*	at pcmcia? function ?
 
-# CardBus IDE controllers
-njata*	at cardbus? function ? flags 0x01	# Workbit NinjaATA-32
-
 # ISA ST506, ESDI, and IDE controllers
 # Use flags 0x01 if you want to try to use 32bits data I/O (the driver will
 # fall back to 16bits I/O if 32bits I/O are not functional).
@@ -626,7 +630,6 @@ xge*	at pci? dev ? function ?	# Neterion (S2io) Xframe-I 10GbE
 an*	at pcmcia? function ?		# Aironet PC4500/PC4800 (802.11)
 awi*	at pcmcia? function ?		# BayStack 650/660 (802.11FH/DS)
 cnw*	at pcmcia? function ?		# Xircom/Netwave AirSurfer
-cs*	at pcmcia? function ?		# CS89xx Ethernet
 ep*	at pcmcia? function ?		# 3Com 3c589 and 3c562 Ethernet
 mbe*	at pcmcia? function ?		# MB8696x based Ethernet
 ne*	at pcmcia? function ?		# NE2000-compatible Ethernet
@@ -645,14 +648,12 @@ sm*	at mhzc?
 
 # CardBus network cards
 ath*	at cardbus? function ?	# Atheros 5210/5211/5212 802.11
-atw*	at cardbus? function ?	# ADMtek ADM8211 (802.11)
 ex*	at cardbus? function ?	# 3Com 3C575TX
 fxp*	at cardbus? function ?	# Intel i8255x
-ral*	at cardbus? function ?	# Ralink Technology RT25x0 802.11a/b/g
-re*	at cardbus? function ?	# Realtek 8139C+/8169/8169S/8110S
 rtk*	at cardbus? function ?	# Realtek 8129/8139
 rtw*	at cardbus? function ?	# Realtek 8180L (802.11)
 tlp*	at cardbus? function ?	# DECchip 21143
+ral* 	at cardbus? function ?	# Ralink Technology RT25x0 802.11a/b/g
 
 # MII/PHY support
 acphy*	at mii? phy ?			# DAltima AC101 and AMD Am79c874 PHYs
@@ -695,19 +696,18 @@ uhci*	at pci?	dev ? function ?	# Universal Host Controller (Intel)
 # CardBus USB controllers
 ehci*	at cardbus? function ?	# Enhanced Host Controller
 ohci*	at cardbus? function ?	# Open Host Controller
-uhci*	at cardbus? function ?		# Universal Host Controller (Intel)
 
 # ISA USB controllers
 #slhci0	at isa? port 0x300 irq 5	# ScanLogic SL811HS
 
 # PCMCIA USB controllers
-slhci*	at pcmcia? function ?		# ScanLogic SL811HS
+#slhci*	at pcmcia? function ?		# ScanLogic SL811HS
 
 # USB bus support
 usb*	at ehci?
 usb*	at ohci?
 usb*	at uhci?
-usb*	at slhci?
+#usb*	at slhci?
 
 # USB Hubs
 uhub*	at usb?
@@ -852,7 +852,7 @@ ucom*	at ugensa?
 fwohci*	at pci? dev ? function ?	# IEEE1394 Open Host Controller
  
 # CardBus IEEE1394 controllers 
-fwohci*	at cardbus? function ?		# IEEE1394 Open Host Controller
+fwohci*	at cardbus? function ?	# IEEE1394 Open Host Controller
 
 ieee1394if* at fwohci?
 fwip*	at ieee1394if?			# IP over IEEE1394

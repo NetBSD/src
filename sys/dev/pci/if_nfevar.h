@@ -1,4 +1,4 @@
-/*	$NetBSD: if_nfevar.h,v 1.3 2007/09/24 13:17:54 cube Exp $	*/
+/*	$NetBSD: if_nfevar.h,v 1.4 2007/12/09 20:28:09 jmcneill Exp $	*/
 /*	$OpenBSD: if_nfevar.h,v 1.11 2006/02/19 13:57:02 damien Exp $	*/
 
 /*-
@@ -76,7 +76,6 @@ struct nfe_softc {
 	bus_dma_tag_t		sc_dmat;
 	struct mii_data		sc_mii;
 	struct callout		sc_tick_ch;
-	void			*sc_powerhook;
 
 	int			sc_if_flags;
 	u_int			sc_flags;

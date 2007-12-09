@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.148 2007/10/30 07:49:40 simonb Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.149 2007/12/09 20:28:10 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.148 2007/10/30 07:49:40 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.149 2007/12/09 20:28:10 jmcneill Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -268,11 +268,8 @@ struct wm_softc {
 	bus_space_handle_t sc_flashh;	/* flash registers space handle */
 	bus_dma_tag_t sc_dmat;		/* bus DMA tag */
 	struct ethercom sc_ethercom;	/* ethernet common data */
-	void *sc_sdhook;		/* shutdown hook */
-	void *sc_powerhook;		/* power hook */
 	pci_chipset_tag_t sc_pc;
 	pcitag_t sc_pcitag;
-	struct pci_conf_state sc_pciconf;
 
 	wm_chip_type sc_type;		/* chip type */
 	int sc_flags;			/* flags; see below */
@@ -522,9 +519,6 @@ static void	wm_watchdog(struct ifnet *);
 static int	wm_ioctl(struct ifnet *, u_long, void *);
 static int	wm_init(struct ifnet *);
 static void	wm_stop(struct ifnet *, int);
-
-static void	wm_shutdown(void *);
-static void	wm_powerhook(int, void *);
 
 static void	wm_reset(struct wm_softc *);
 static void	wm_rxdrain(struct wm_softc *);
@@ -1617,19 +1611,11 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 	    NULL, sc->sc_dev.dv_xname, "rx_macctl");
 #endif /* WM_EVENT_COUNTERS */
 
-	/*
-	 * Make sure the interface is shutdown during reboot.
-	 */
-	sc->sc_sdhook = shutdownhook_establish(wm_shutdown, sc);
-	if (sc->sc_sdhook == NULL)
-		aprint_error("%s: WARNING: unable to establish shutdown hook\n",
-		    sc->sc_dev.dv_xname);
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+	else
+		pmf_class_network_register(self, ifp);
 
-	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
-	    wm_powerhook, sc);
-	if (sc->sc_powerhook == NULL)
-		aprint_error("%s: can't establish powerhook\n",
-		    sc->sc_dev.dv_xname);
 	return;
 
 	/*
@@ -1657,48 +1643,6 @@ wm_attach(struct device *parent, struct device *self, void *aux)
  fail_1:
 	bus_dmamem_free(sc->sc_dmat, &seg, rseg);
  fail_0:
-	return;
-}
-
-/*
- * wm_shutdown:
- *
- *	Make sure the interface is stopped at reboot time.
- */
-static void
-wm_shutdown(void *arg)
-{
-	struct wm_softc *sc = arg;
-
-	wm_stop(&sc->sc_ethercom.ec_if, 1);
-}
-
-static void
-wm_powerhook(int why, void *arg)
-{
-	struct wm_softc *sc = arg;
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
-	pci_chipset_tag_t pc = sc->sc_pc;
-	pcitag_t tag = sc->sc_pcitag;
-
-	switch (why) {
-	case PWR_SOFTSUSPEND:
-		wm_shutdown(sc);
-		break;
-	case PWR_SOFTRESUME:
-		ifp->if_flags &= ~IFF_RUNNING;
-		wm_init(ifp);
-		if (ifp->if_flags & IFF_RUNNING)
-			wm_start(ifp);
-		break;
-	case PWR_SUSPEND:
-		pci_conf_capture(pc, tag, &sc->sc_pciconf);
-		break;
-	case PWR_RESUME:
-		pci_conf_restore(pc, tag, &sc->sc_pciconf);
-		break;
-	}
-
 	return;
 }
 

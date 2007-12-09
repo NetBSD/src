@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.34 2007/12/03 22:17:27 joerg Exp $	*/
+/*	$NetBSD: cpu.h,v 1.35 2007/12/09 20:27:44 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -307,7 +307,7 @@ void	i8254_microtime(struct timeval *);
 void	i8254_initclocks(void);
 #endif
 
-void cpu_init_msrs(struct cpu_info *);
+void cpu_init_msrs(struct cpu_info *, bool);
 
 
 /* vm_machdep.c */

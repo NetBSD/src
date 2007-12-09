@@ -1,4 +1,4 @@
-/*	$NetBSD: audiovar.h,v 1.39 2007/02/21 22:59:58 thorpej Exp $	*/
+/*	$NetBSD: audiovar.h,v 1.40 2007/12/09 20:27:52 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -225,7 +225,12 @@ struct audio_softc {
 	long	sc_rblktime;	/* nominal time between interrupts */
 #endif
 
-	void		*sc_powerhook;
+	u_int	sc_lastgain;
+
+	mixer_ctrl_t	*sc_mixer_state;
+	int		sc_nmixer_states;
+
+	callout_t	sc_idle_counter;
 };
 
 #endif /* _SYS_DEV_AUDIOVAR_H_ */

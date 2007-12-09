@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.74 2007/07/09 21:00:31 ad Exp $	*/
+/*	$NetBSD: atavar.h,v 1.75 2007/12/09 20:27:54 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -102,7 +102,6 @@ struct atabus_softc {
 	struct ata_channel *sc_chan;
 	int sc_flags;
 #define ATABUSCF_OPEN	0x01
-	void *sc_powerhook;
 };
 
 /*

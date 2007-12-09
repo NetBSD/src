@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.12 2007/12/09 15:31:03 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.13 2007/12/09 20:27:51 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.12 2007/12/09 15:31:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.13 2007/12/09 20:27:51 jmcneill Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -4194,4 +4194,68 @@ pmap_update(struct pmap *pm)
 	crit_enter();
 	pmap_tlb_shootwait();
 	crit_exit();
+}
+
+#if PTP_LEVELS > 4
+#error "Unsupported number of page table mappings"
+#endif
+
+paddr_t
+pmap_init_tmp_pgtbl(paddr_t pg)
+{
+	static bool maps_loaded;
+	static const paddr_t x86_tmp_pml_paddr[] = {
+	    4 * PAGE_SIZE,
+	    5 * PAGE_SIZE,
+	    6 * PAGE_SIZE,
+	    7 * PAGE_SIZE
+	};
+	static vaddr_t x86_tmp_pml_vaddr[] = { 0, 0, 0, 0 };
+
+	pd_entry_t *tmp_pml, *kernel_pml;
+	
+	int level;
+
+	if (!maps_loaded) {
+		for (level = 0; level < PTP_LEVELS; ++level) {
+			x86_tmp_pml_vaddr[level] =
+			    uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
+			    UVM_KMF_VAONLY);
+
+			if (x86_tmp_pml_vaddr[level] == 0)
+				panic("mapping of real mode PML failed\n");
+			pmap_kenter_pa(x86_tmp_pml_vaddr[level],
+			    x86_tmp_pml_paddr[level],
+			    VM_PROT_READ | VM_PROT_WRITE);
+			pmap_update(pmap_kernel());
+		}
+		maps_loaded = true;
+	}
+
+	/* Zero levels 1-3 */
+	for (level = 0; level < PTP_LEVELS - 1; ++level) {
+		tmp_pml = (void *)x86_tmp_pml_vaddr[level];
+		memset(tmp_pml, 0, PAGE_SIZE);
+	}
+
+	/* Copy PML4 */
+	kernel_pml = pmap_kernel()->pm_pdir;
+	tmp_pml = (void *)x86_tmp_pml_vaddr[PTP_LEVELS - 1];
+	memcpy(tmp_pml, kernel_pml, PAGE_SIZE);
+
+	/* Hook our own level 3 in */
+	tmp_pml[pl_i(pg, PTP_LEVELS)] =
+	    (x86_tmp_pml_paddr[PTP_LEVELS - 2] & PG_FRAME) | PG_RW | PG_V;
+
+	for (level = PTP_LEVELS - 1; level > 0; --level) {
+		tmp_pml = (void *)x86_tmp_pml_vaddr[level];
+
+		tmp_pml[pl_i(pg, level + 1)] =
+		    (x86_tmp_pml_paddr[level - 1] & PG_FRAME) | PG_RW | PG_V;
+	}
+
+	tmp_pml = (void *)x86_tmp_pml_vaddr[0];
+	tmp_pml[pl_i(pg, 1)] = (pg & PG_FRAME) | PG_RW | PG_V;
+
+	return x86_tmp_pml_paddr[PTP_LEVELS - 1];
 }

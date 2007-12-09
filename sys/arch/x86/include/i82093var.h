@@ -1,4 +1,4 @@
-/* $NetBSD: i82093var.h,v 1.3 2005/05/29 21:37:02 christos Exp $ */
+/* $NetBSD: i82093var.h,v 1.4 2007/12/09 20:27:48 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -94,6 +94,7 @@ struct ioapic_softc *ioapic_find(int);
 struct ioapic_softc *ioapic_find_bybase(int);
 
 void ioapic_enable(void);
+void ioapic_reenable(void);
 void lapic_vectorset(void); /* XXX */
 
 extern int ioapic_bsp_id;

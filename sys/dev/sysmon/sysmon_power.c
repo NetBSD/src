@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_power.c,v 1.32 2007/12/05 17:19:54 pooka Exp $	*/
+/*	$NetBSD: sysmon_power.c,v 1.33 2007/12/09 20:28:23 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.32 2007/12/05 17:19:54 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.33 2007/12/09 20:28:23 jmcneill Exp $");
 
 #include "opt_compat_netbsd.h"
 #include <sys/param.h>
@@ -895,6 +895,23 @@ sysmon_pswitch_event(struct sysmon_pswitch *smpsw, int event)
 	struct power_event_dictionary *ped = NULL;
 
 	KASSERT(smpsw != NULL);
+
+	/*
+	 * For pnp specific events, we don't care if the power daemon
+	 * is running or not
+	 */
+	if (smpsw->smpsw_type == PSWITCH_TYPE_LID) {
+		switch (event) {
+		case PSWITCH_EVENT_PRESSED:
+			pmf_event_inject(NULL, PMFE_CHASSIS_LID_CLOSE);
+			break;
+		case PSWITCH_EVENT_RELEASED:
+			pmf_event_inject(NULL, PMFE_CHASSIS_LID_OPEN);
+			break;
+		default:
+			break;
+		}
+	}
 
 	if (sysmon_power_daemon != NULL) {
 		/*

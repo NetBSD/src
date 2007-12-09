@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdSynch.c,v 1.8 2007/12/05 07:06:51 ad Exp $	*/
+/*	$NetBSD: OsdSynch.c,v 1.9 2007/12/09 20:27:54 jmcneill Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdSynch.c,v 1.8 2007/12/05 07:06:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdSynch.c,v 1.9 2007/12/09 20:27:54 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -165,7 +165,7 @@ AcpiOsDeleteSemaphore(ACPI_HANDLE Handle)
  *	Wait for units from a semaphore.
  */
 ACPI_STATUS
-AcpiOsWaitSemaphore(ACPI_HANDLE Handle, UINT32 Units, UINT16 Timeout)
+AcpiOsWaitSemaphore(ACPI_SEMAPHORE Handle, UINT32 Units, UINT16 Timeout)
 {
 	struct acpi_semaphore *as = (void *) Handle;
 	ACPI_STATUS rv;
@@ -181,6 +181,8 @@ AcpiOsWaitSemaphore(ACPI_HANDLE Handle, UINT32 Units, UINT16 Timeout)
 
 	if (as == NULL)
 		return_ACPI_STATUS(AE_BAD_PARAMETER);
+	if (cold)
+		return_ACPI_STATUS(AE_OK);
 
 	/* A timeout of 0xFFFF means "forever". */
 	if (Timeout == 0xFFFF)
@@ -285,7 +287,7 @@ AcpiOsCreateLock(ACPI_HANDLE *OutHandle)
  *	Delete a lock.
  */
 void
-AcpiOsDeleteLock(ACPI_HANDLE Handle)
+AcpiOsDeleteLock(ACPI_SPINLOCK Handle)
 {
 	struct acpi_lock *al = (void *) Handle;
 
@@ -308,7 +310,7 @@ AcpiOsDeleteLock(ACPI_HANDLE Handle)
  *	Acquire a lock.
  */
 ACPI_NATIVE_UINT
-AcpiOsAcquireLock(ACPI_HANDLE Handle)
+AcpiOsAcquireLock(ACPI_SPINLOCK Handle)
 {
 	struct acpi_lock *al = (void *) Handle;
 

@@ -2,7 +2,7 @@
 /******************************************************************************
  *
  * Module Name: exstore - AML Interpreter object store support
- *              xRevision: 1.199 $
+ *              $Revision: 1.2 $
  *
  *****************************************************************************/
 
@@ -10,7 +10,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2007, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -115,17 +115,14 @@
  *
  *****************************************************************************/
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exstore.c,v 1.1 2006/03/23 13:36:31 kochi Exp $");
-
 #define __EXSTORE_C__
 
-#include "acpi.h"
-#include "acdispat.h"
-#include "acinterp.h"
-#include "amlcode.h"
-#include "acnamesp.h"
-#include "acparser.h"
+#include <dist/acpica/acpi.h>
+#include <dist/acpica/acdispat.h>
+#include <dist/acpica/acinterp.h>
+#include <dist/acpica/amlcode.h>
+#include <dist/acpica/acnamesp.h>
+#include <dist/acpica/acparser.h>
 
 
 #define _COMPONENT          ACPI_EXECUTER
@@ -169,7 +166,7 @@ AcpiExDoDebugObject (
     UINT32                  i;
 
 
-    ACPI_FUNCTION_TRACE_PTR ("ExDoDebugObject", SourceDesc);
+    ACPI_FUNCTION_TRACE_PTR (ExDoDebugObject, SourceDesc);
 
 
     ACPI_DEBUG_PRINT_RAW ((ACPI_DB_DEBUG_OBJECT, "[ACPI Debug] %*s",
@@ -236,7 +233,7 @@ AcpiExDoDebugObject (
         ACPI_DEBUG_PRINT_RAW ((ACPI_DB_DEBUG_OBJECT, "[0x%.2X]\n",
             (UINT32) SourceDesc->Buffer.Length));
         ACPI_DUMP_BUFFER (SourceDesc->Buffer.Pointer,
-            (SourceDesc->Buffer.Length < 32) ? SourceDesc->Buffer.Length : 32);
+            (SourceDesc->Buffer.Length < 256) ? SourceDesc->Buffer.Length : 256);
         break;
 
     case ACPI_TYPE_STRING:
@@ -337,7 +334,7 @@ AcpiExStore (
     ACPI_OPERAND_OBJECT     *RefDesc = DestDesc;
 
 
-    ACPI_FUNCTION_TRACE_PTR ("ExStore", DestDesc);
+    ACPI_FUNCTION_TRACE_PTR (ExStore, DestDesc);
 
 
     /* Validate parameters */
@@ -407,7 +404,6 @@ AcpiExStore (
      */
     switch (RefDesc->Reference.Opcode)
     {
-    case AML_NAME_OP:
     case AML_REF_OF_OP:
 
         /* Storing an object into a Name "container" */
@@ -491,7 +487,7 @@ AcpiExStoreObjectToIndex (
     UINT32                  i;
 
 
-    ACPI_FUNCTION_TRACE ("ExStoreObjectToIndex");
+    ACPI_FUNCTION_TRACE (ExStoreObjectToIndex);
 
 
     /*
@@ -656,7 +652,7 @@ AcpiExStoreObjectToNode (
     ACPI_OBJECT_TYPE        TargetType;
 
 
-    ACPI_FUNCTION_TRACE_PTR ("ExStoreObjectToNode", SourceDesc);
+    ACPI_FUNCTION_TRACE_PTR (ExStoreObjectToNode, SourceDesc);
 
 
     /* Get current type of the node, and object attached to Node */

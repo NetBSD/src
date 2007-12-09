@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.119 2007/11/14 17:51:36 ad Exp $	*/
+/*	$NetBSD: npx.c,v 1.120 2007/12/09 20:27:47 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.119 2007/11/14 17:51:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.120 2007/12/09 20:27:47 jmcneill Exp $");
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -303,6 +303,9 @@ npxattach(struct npx_softc *sc)
 		npxdna_func = npxdna_xmm;
 	else
 		npxdna_func = npxdna_s87;
+
+	if (!pmf_device_register(&sc->sc_dev, NULL, NULL))
+		aprint_error_dev(&sc->sc_dev, "couldn't establish power handler\n");
 }
 
 /*

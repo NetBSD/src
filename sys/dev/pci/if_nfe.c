@@ -1,4 +1,4 @@
-/*	$NetBSD: if_nfe.c,v 1.23 2007/11/14 14:59:50 xtraeme Exp $	*/
+/*	$NetBSD: if_nfe.c,v 1.24 2007/12/09 20:28:09 jmcneill Exp $	*/
 /*	$OpenBSD: if_nfe.c,v 1.52 2006/03/02 09:04:00 jsg Exp $	*/
 
 /*-
@@ -21,7 +21,7 @@
 /* Driver for NVIDIA nForce MCP Fast Ethernet and Gigabit Ethernet */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.23 2007/11/14 14:59:50 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.24 2007/12/09 20:28:09 jmcneill Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -323,6 +323,7 @@ nfe_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_ioctl = nfe_ioctl;
 	ifp->if_start = nfe_start;
+	ifp->if_stop = nfe_stop;
 	ifp->if_watchdog = nfe_watchdog;
 	ifp->if_init = nfe_init;
 	ifp->if_baudrate = IF_Gbps(1);
@@ -365,25 +366,10 @@ nfe_attach(struct device *parent, struct device *self, void *aux)
 	callout_init(&sc->sc_tick_ch, 0);
 	callout_setfunc(&sc->sc_tick_ch, nfe_tick, sc);
 
-	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
-	    nfe_power, sc);
-}
-
-void
-nfe_power(int why, void *arg)
-{
-	struct nfe_softc *sc = arg;
-	struct ifnet *ifp;
-
-	if (why == PWR_RESUME) {
-		ifp = &sc->sc_ethercom.ec_if;
-		if (ifp->if_flags & IFF_UP) {
-			ifp->if_flags &= ~IFF_RUNNING;
-			nfe_init(ifp);
-			if (ifp->if_flags & IFF_RUNNING)
-				nfe_start(ifp);
-		}
-	}
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+	else
+		pmf_class_network_register(self, ifp);
 }
 
 void
