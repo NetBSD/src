@@ -1,4 +1,4 @@
-/*	$NetBSD: sony_acpi.c,v 1.6 2007/12/09 20:27:45 jmcneill Exp $	*/
+/*	$NetBSD: sony_acpi.c,v 1.7 2007/12/09 21:52:05 smb Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sony_acpi.c,v 1.6 2007/12/09 20:27:45 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sony_acpi.c,v 1.7 2007/12/09 21:52:05 smb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -340,7 +340,7 @@ sony_acpi_quirk_setup(struct sony_acpi_softc *sc)
 
 	hdl = sc->sc_node->ad_handle;
 
-	product_name = pnp_get_platform("system-product-name");
+	product_name = pmf_get_platform("system-product-name");
 	if (product_name == NULL)
 		return;
 
