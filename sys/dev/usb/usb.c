@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.103 2007/12/05 17:19:56 pooka Exp $	*/
+/*	$NetBSD: usb.c,v 1.104 2007/12/09 20:28:25 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.103 2007/12/05 17:19:56 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.104 2007/12/09 20:28:25 jmcneill Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -247,6 +247,9 @@ USB_ATTACH(usb)
 
 	config_pending_incr();
 	usb_kthread_create(usb_create_event_thread, sc);
+
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	USB_ATTACH_SUCCESS_RETURN;
 }

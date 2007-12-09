@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.119 2007/10/19 12:00:40 ad Exp $	*/
+/*	$NetBSD: auich.c,v 1.120 2007/12/09 20:28:05 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.119 2007/10/19 12:00:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.120 2007/12/09 20:28:05 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -217,12 +217,6 @@ struct auich_softc {
 	/* 440MX workaround */
 	int  sc_dmamap_flags;
 
-	/* Power Management */
-	void *sc_powerhook;
-	int sc_suspend;
-	int sc_powerstate;
-	struct pci_conf_state sc_pciconf;
-
 	/* sysctl */
 	struct sysctllog *sc_log;
 	uint32_t sc_ac97_clock;
@@ -291,7 +285,7 @@ static int	auich_allocmem(struct auich_softc *, size_t, size_t,
 		    struct auich_dma *);
 static int	auich_freemem(struct auich_softc *, struct auich_dma *);
 
-static void	auich_powerhook(int, void *);
+static bool	auich_resume(device_t);
 static int	auich_set_rate(struct auich_softc *, int, u_long);
 static int	auich_sysctl_verify(SYSCTLFN_ARGS);
 static void	auich_finish_attach(struct device *);
@@ -645,11 +639,9 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 			return;
 	}
 
-
 	/* Watch for power change */
-	sc->sc_suspend = PWR_RESUME;
-	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
-	    auich_powerhook, sc);
+	if (!pmf_device_register(self, NULL, auich_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	config_interrupts(self, auich_finish_attach);
 
@@ -776,10 +768,6 @@ auich_finish_attach(struct device *self)
 		auich_calibrate(sc);
 
 	sc->sc_audiodev = audio_attach_mi(&auich_hw_if, sc, &sc->sc_dev);
-
-#if notyet
-	auich_powerhook(PWR_SUSPEND, sc);
-#endif
 
 	return;
 }
@@ -1245,6 +1233,10 @@ auich_intr(void *v)
 #endif
 
 	sc = v;
+
+	if (!device_has_power(&sc->sc_dev))
+		return (0);
+
 	ret = 0;
 #ifdef DIAGNOSTIC
 	csts = pci_conf_read(sc->sc_pc, sc->sc_pt, PCI_COMMAND_STATUS_REG);
@@ -1479,31 +1471,7 @@ auich_trigger_input(void *v, void *start, void *end, int blksize,
 static int
 auich_powerstate(void *v, int state)
 {
-#if notyet
-	struct auich_softc *sc;
-	int rv;
-
-	sc = (struct auich_softc *)v;
-	rv = 0;
-
-	switch (state) {
-	case AUDIOPOWER_OFF:
-		auich_powerhook(PWR_SUSPEND, sc);
-		break;
-	case AUDIOPOWER_ON:
-		auich_powerhook(PWR_RESUME, sc);
-		break;
-	default:
-		aprint_error("%s: unknown power state %d\n",
-		    sc->sc_dev.dv_xname, state);
-		rv = 1;
-		break;
-	}
-
-	return rv;
-#else
 	return 0;
-#endif
 }
 
 static int
@@ -1615,62 +1583,15 @@ auich_alloc_cdata(struct auich_softc *sc)
 	return error;
 }
 
-static void
-auich_powerhook(int why, void *addr)
+static bool
+auich_resume(device_t dv)
 {
-	struct auich_softc *sc;
+	struct auich_softc *sc = device_private(dv);
 
-	sc = (struct auich_softc *)addr;
-	switch (why) {
-	case PWR_SUSPEND:
-	case PWR_STANDBY:
-		/* Power down */
-		DPRINTF(1, ("%s: power down\n", sc->sc_dev.dv_xname));
-
-		/* if we're already asleep, don't try to sleep again */
-		if (sc->sc_suspend == PWR_SUSPEND ||
-		    sc->sc_suspend == PWR_STANDBY)
-			break;
-		sc->sc_suspend = why;
-
-		DELAY(1000);
-		pci_conf_capture(sc->sc_pc, sc->sc_pt, &sc->sc_pciconf);
-
-		if (sc->sc_ih != NULL)
-			pci_intr_disestablish(sc->sc_pc, sc->sc_ih);
-
-		break;
-
-	case PWR_RESUME:
-		/* Wake up */
-		DPRINTF(1, ("%s: power resume\n", sc->sc_dev.dv_xname));
-		if (sc->sc_suspend == PWR_RESUME) {
-			printf("%s: resume without suspend.\n",
-			    sc->sc_dev.dv_xname);
-			sc->sc_suspend = why;
-			return;
-		}
-
-		sc->sc_ih = pci_intr_establish(sc->sc_pc, sc->intrh, IPL_AUDIO,
-		    auich_intr, sc);
-		if (sc->sc_ih == NULL) {
-			aprint_error("%s: can't establish interrupt",
-			    sc->sc_dev.dv_xname);
-			/* XXX jmcneill what should we do here? */
-			return;
-		}
-		pci_conf_restore(sc->sc_pc, sc->sc_pt, &sc->sc_pciconf);
-		sc->sc_suspend = why;
-		auich_reset_codec(sc);
-		DELAY(1000);
-		(sc->codec_if->vtbl->restore_ports)(sc->codec_if);
-		break;
-
-	case PWR_SOFTSUSPEND:
-	case PWR_SOFTSTANDBY:
-	case PWR_SOFTRESUME:
-		break;
-	}
+	auich_reset_codec(sc);
+	DELAY(1000);
+	(sc->codec_if->vtbl->restore_ports)(sc->codec_if);
+	return true;
 }
 
 /*

@@ -1,4 +1,4 @@
-/* $NetBSD: if_rtw_cardbus.c,v 1.18 2007/11/16 18:47:41 dyoung Exp $ */
+/* $NetBSD: if_rtw_cardbus.c,v 1.19 2007/12/09 20:27:56 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtw_cardbus.c,v 1.18 2007/11/16 18:47:41 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtw_cardbus.c,v 1.19 2007/12/09 20:27:56 jmcneill Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -464,15 +464,13 @@ rtw_cardbus_power(struct rtw_softc *sc, int why)
 void
 rtw_cardbus_setup(struct rtw_cardbus_softc *csc)
 {
-	struct rtw_softc *sc = &csc->sc_rtw;
 	cardbustag_t tag = csc->sc_tag;
 	cardbus_devfunc_t ct = csc->sc_ct;
 	cardbus_chipset_tag_t cc = ct->ct_cc;
 	cardbusreg_t bhlc, csr, lattimer;
 	cardbus_function_tag_t cf = ct->ct_cf;
 
-	(void)cardbus_setpowerstate(device_xname(&sc->sc_dev), ct, tag,
-	    PCI_PWR_D0);
+	(void)cardbus_set_powerstate(ct, tag, PCI_PWR_D0);
 
 	/* I believe the datasheet tries to warn us that the RTL8180
 	 * wants for 16 (0x10) to divide the latency timer.

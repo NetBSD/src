@@ -1,4 +1,4 @@
-/*	$NetBSD: wivar.h,v 1.59 2007/03/04 06:02:04 christos Exp $	*/
+/*	$NetBSD: wivar.h,v 1.60 2007/12/09 20:28:00 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -285,5 +285,3 @@ int	wi_attach(struct wi_softc *, const u_int8_t *);
 int	wi_detach(struct wi_softc *);
 int	wi_activate(struct device *, enum devact);
 int	wi_intr(void *arg);
-void	wi_power(struct wi_softc *, int);
-void	wi_shutdown(struct wi_softc *);

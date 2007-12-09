@@ -1,0 +1,204 @@
+/*	$NetBSD: acpi_wakeup_low.S,v 1.2 2007/12/09 20:27:42 jmcneill Exp $	*/
+
+/*-
+ * Copyright (c) 2007 Joerg Sonnenberger <joerg@netbsd.org>
+ * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
+ * Copyright (c) 2001 Mitsuru IWASAKI <iwasaki@jp.freebsd.org>
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
+
+#include "assym.h"
+#include <machine/asm.h>
+#include <machine/specialreg.h>
+
+	.text
+	.p2align 2, 0x90
+	.globl acpi_md_sleep_exit
+acpi_md_sleep_exit:
+	lgdt	r_gdt
+
+	xorw	%ax,%ax
+	movw	%ax,%fs
+	movw	%ax,%gs
+
+	movl	$MSR_EFER,%ecx
+	movl	r_msr_efer,%eax
+	wrmsr
+
+	movl	$MSR_FSBASE,%ecx
+	movl	r_fs_base_l,%eax
+	movl	r_fs_base_h,%edx
+	wrmsr
+
+	movl	$MSR_GSBASE,%ecx
+	movl	r_gs_base_l,%eax
+	movl	r_gs_base_h,%edx
+	wrmsr
+
+	movl	$MSR_KERNELGSBASE,%ecx
+	movl	r_gs_kernelbase_l,%eax
+	movl	r_gs_kernelbase_h,%edx
+	wrmsr
+
+	movq	r_cr8,%rax
+	movq	%rax,%cr8
+	movq	r_cr4,%rax
+	movq	%rax,%cr4
+	movq	r_cr3,%rax
+	movq	%rax,%cr3
+	movq	r_cr2,%rax
+	movq	%rax,%cr2
+	movq	r_cr0,%rax
+	movq	%rax,%cr0
+
+	jmp 1f
+1:
+
+	movq	CPUVAR(GDT),%rax
+	movq	%rax, r_save_gdt
+	movzwq	r_tr,%rdx
+	andq	$~0x0200,4(%rax,%rdx, 1)
+
+	ltr	%dx
+	lldt 	r_ldt
+	lidt	r_idt
+
+	movq	r_rsp,%rsp
+
+	movq	r_rbx,%rbx
+	movq	r_rbp,%rbp
+	movq	r_r12,%r12
+	movq	r_r13,%r13
+	movq	r_r14,%r14
+	movq	r_r15,%r15
+
+	movq ret_addr,%rax
+	movq %rax,(%rsp)
+	xorq	%rax,%rax
+
+	pushq	r_rfl
+	popfq
+	ret
+
+	.p2align 2, 0x90
+	.type acpi_md_sleep_prepare, @function
+	.globl acpi_md_sleep_prepare
+acpi_md_sleep_prepare:
+	movq	%rbx,r_rbx
+	movq	%rbp,r_rbp
+	movq	%r12,r_r12
+	movq	%r13,r_r13
+	movq	%r14,r_r14
+	movq	%r15,r_r15
+
+	movq	%cr0,%rax
+	movq	%rax,r_cr0
+	movq	%cr2,%rax
+	movq	%rax,r_cr2
+	movq	%cr3,%rax
+	movq	%rax,r_cr3
+	movq	%cr4,%rax
+	movq	%rax,r_cr4
+	movq	%cr8,%rax
+	movq	%rax,r_cr8
+
+	pushfq
+	popq	r_rfl
+
+	movq	%rsp,r_rsp
+
+	movl	$MSR_FSBASE,%ecx
+	rdmsr
+	movl	%eax,r_fs_base_l
+	movl	%edx,r_fs_base_h
+
+	movl	$MSR_GSBASE,%ecx
+	rdmsr
+	movl	%eax,r_gs_base_l
+	movl	%edx,r_gs_base_h
+
+	movl	$MSR_KERNELGSBASE,%ecx
+	rdmsr
+	movl	%eax,r_gs_kernelbase_l
+	movl	%edx,r_gs_kernelbase_h
+
+	movl	$MSR_EFER,%ecx
+	rdmsr
+	movl	%eax,r_msr_efer
+
+	sgdt	r_gdt
+	sidt	r_idt
+	sldt	r_ldt
+	str	r_tr
+
+	movq	(%rsp),%rax
+	movq	%rax,ret_addr
+
+	call	acpi_md_sleep_enter
+	/* acpi_md_sleep_enter only returns on failure. */
+	movl	$-1,%eax
+	ret
+
+	.data
+	.align 16
+
+r_tr:		.word	0
+r_ldt:		.word	0
+
+r_fs_base_l:
+		.long	0
+r_fs_base_h:
+		.long	0
+r_gs_base_l:
+		.long	0
+r_gs_base_h:
+		.long	0
+r_gs_kernelbase_l:
+		.long	0
+r_gs_kernelbase_h:
+		.long	0
+r_msr_efer:
+		.long	0
+r_rbx:		.quad	0
+r_rbp:		.quad	0
+r_rsp:		.quad	0
+r_r12:		.quad	0
+r_r13:		.quad	0
+r_r14:		.quad	0
+r_r15:		.quad	0
+r_rfl:		.quad	0
+
+r_cr0:		.quad	0
+r_cr2:		.quad	0
+r_cr3:		.quad	0
+r_cr4:		.quad	0
+r_cr8:		.quad	0
+
+r_gdt:		.word	0
+		.quad	0
+r_idt:		.word	0
+		.quad	0
+
+ret_addr:	.quad	0
+r_save_gdt:	.quad	0

@@ -1,4 +1,4 @@
-#	$NetBSD: files.x86,v 1.35 2007/12/03 15:34:27 ad Exp $
+#	$NetBSD: files.x86,v 1.36 2007/12/09 20:27:48 jmcneill Exp $
 
 # options for MP configuration through the MP spec
 defflag opt_mpbios.h MPBIOS MPVERBOSE MPDEBUG MPBIOS_SCANPCI
@@ -54,6 +54,7 @@ file	arch/x86/x86/ipi.c		multiprocessor
 file	arch/x86/x86/msr_ipifuncs.c
 file	arch/x86/x86/mtrr_i686.c	mtrr
 file 	arch/x86/x86/patch.c
+file	arch/x86/x86/platform.c
 file 	arch/x86/x86/pmap.c
 file	arch/x86/x86/sys_machdep.c
 file	arch/x86/x86/x86_autoconf.c
