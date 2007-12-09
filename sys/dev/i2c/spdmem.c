@@ -1,4 +1,4 @@
-/* $NetBSD: spdmem.c,v 1.3 2007/09/20 23:09:59 xtraeme Exp $ */
+/* $NetBSD: spdmem.c,v 1.4 2007/12/09 20:59:37 xtraeme Exp $ */
 
 /*
  * Copyright (c) 2007 Nicolas Joly
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.3 2007/09/20 23:09:59 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.4 2007/12/09 20:59:37 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -390,7 +390,7 @@ spdmem_attach(struct device *parent, struct device *self, void *aux)
 		aprint_verbose(" (self-refreshing)");
 	aprint_verbose("\n");
 
-	return;
+	pmf_device_register(self, NULL, NULL);
 }
 
 static uint8_t
