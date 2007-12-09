@@ -1,8 +1,8 @@
-#	$NetBSD: idea.inc,v 1.6 2006/03/17 23:10:48 dsl Exp $
+#	$NetBSD: idea.inc,v 1.7 2007/12/09 22:44:17 adrianp Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
-#	SRCS extracted from /users/itojun/NetBSD/basesrc/lib/libcrypto/../../crypto/dist/openssl/crypto/idea/Makefile.ssl
+#	SRCS extracted from src/crypto/dist/openssl/crypto/idea/Makefile
 #
 
 .PATH:	${OPENSSLSRC}/crypto/idea
