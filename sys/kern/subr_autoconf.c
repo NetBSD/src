@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.124 2007/12/09 20:28:44 jmcneill Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.125 2007/12/09 21:11:57 jmcneill Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.124 2007/12/09 20:28:44 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.125 2007/12/09 21:11:57 jmcneill Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_ddb.h"
@@ -1273,7 +1273,7 @@ config_attach_loc(device_t parent, cfdata_t cf,
 #endif
 
 	if (!device_pmf_is_registered(dev))
-		aprint_error_dev(dev, "WARNING: power management not supported\n");
+		aprint_debug_dev(dev, "WARNING: power management not supported\n");
 
 	config_process_deferred(&deferred_config_queue, dev);
 	return (dev);
