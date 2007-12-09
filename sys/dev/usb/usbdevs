@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.489 2007/11/29 21:07:59 xtraeme Exp $
+$NetBSD: usbdevs,v 1.490 2007/12/09 21:21:21 smb Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -1972,6 +1972,8 @@ product SIEMENS2 WL54G		0x3c06	54g USB Network Adapter
 
 /* Sierra Wireless products */
 product SIERRA AIRCARD580	0x0112	Sierra Wireless AirCard 580
+product SIERRA MINI5725		0x0220	Sierra Wireless miniPCI 5275
+product	SIERRA_MINI5725		0x0220	Sierra Wireless miniPCI 5275
 
 /* Sigmatel products */
 product SIGMATEL SIR4116	0x4116	StIR4116 SIR
