@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.110 2007/03/04 06:20:25 christos Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.110.6.1 2007/12/09 16:04:00 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2006 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.110 2007/03/04 06:20:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.110.6.1 2007/12/09 16:04:00 reinoud Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_ddb.h"
@@ -407,9 +407,9 @@ lockpanic(volatile struct lock *lkp, const char *fmt, ...)
 	char s[150], b[150];
 #ifdef LOCKDEBUG
 	static const char *locktype[] = {
-	    "*0*", "shared", "exclusive", "upgrade", "exclupgrade",
-	    "downgrade", "release", "drain", "exclother", "*9*",
-	    "*10*", "*11*", "*12*", "*13*", "*14*", "*15*"
+	    "*0*", "shared", "exclusive", "*3*", "*4*", "downgrade",
+	    "*release*", "drain", "exclother", "*9*", "*10*",
+	    "*11*", "*12*", "*13*", "*14*", "*15*"
 	};
 #endif
 
@@ -517,7 +517,7 @@ lockstatus(struct lock *lkp)
 			lock_type = LK_EXCLOTHER;
 	} else if (lkp->lk_sharecount != 0)
 		lock_type = LK_SHARED;
-	else if (lkp->lk_flags & (LK_WANT_EXCL | LK_WANT_UPGRADE))
+	else if (lkp->lk_flags & LK_WANT_EXCL)
 		lock_type = LK_EXCLOTHER;
 	INTERLOCK_RELEASE(lkp, lkp->lk_flags, s);
 	return (lock_type);
@@ -597,7 +597,7 @@ spinlock_switchcheck(void)
  *
  * Shared requests increment the shared count. Exclusive requests set the
  * LK_WANT_EXCL flag (preventing further shared locks), and wait for already
- * accepted shared locks and shared-to-exclusive upgrades to go away.
+ * accepted shared locks to go away.
  */
 int
 #if defined(LOCKDEBUG)
@@ -689,15 +689,15 @@ lockmgr(volatile struct lock *lkp, u_int flags,
 			 * If just polling, check to see if we will block.
 			 */
 			if ((extflags & LK_NOWAIT) && (lkp->lk_flags &
-			    (LK_HAVE_EXCL | LK_WANT_EXCL | LK_WANT_UPGRADE))) {
+			    (LK_HAVE_EXCL | LK_WANT_EXCL))) {
 				error = EBUSY;
 				break;
 			}
 			/*
-			 * Wait for exclusive locks and upgrades to clear.
+			 * Wait for exclusive locks to clear.
 			 */
 			error = acquire(&lkp, &s, extflags, 0,
-			    LK_HAVE_EXCL | LK_WANT_EXCL | LK_WANT_UPGRADE,
+			    LK_HAVE_EXCL | LK_WANT_EXCL,
 			    RETURN_ADDRESS);
 			if (error)
 				break;
@@ -733,84 +733,6 @@ lockmgr(volatile struct lock *lkp, u_int flags,
 		WAKEUP_WAITER(lkp);
 		break;
 
-	case LK_EXCLUPGRADE:
-		/*
-		 * If another process is ahead of us to get an upgrade,
-		 * then we want to fail rather than have an intervening
-		 * exclusive access.
-		 */
-		if (lkp->lk_flags & LK_WANT_UPGRADE) {
-			lkp->lk_sharecount--;
-			if (lkp->lk_sharecount == 0)
-				lkp->lk_flags &= ~LK_SHARE_NONZERO;
-			COUNT(lkp, l, cpu_num, -1);
-			error = EBUSY;
-			break;
-		}
-		/* fall into normal upgrade */
-
-	case LK_UPGRADE:
-		/*
-		 * Upgrade a shared lock to an exclusive one. If another
-		 * shared lock has already requested an upgrade to an
-		 * exclusive lock, our shared lock is released and an
-		 * exclusive lock is requested (which will be granted
-		 * after the upgrade). If we return an error, the file
-		 * will always be unlocked.
-		 */
-		if (WEHOLDIT(lkp, pid, lid, cpu_num) || lkp->lk_sharecount <= 0)
-			lockpanic(lkp, "lockmgr: upgrade exclusive lock");
-		lkp->lk_sharecount--;
-		if (lkp->lk_sharecount == 0)
-			lkp->lk_flags &= ~LK_SHARE_NONZERO;
-		COUNT(lkp, l, cpu_num, -1);
-		/*
-		 * If we are just polling, check to see if we will block.
-		 */
-		if ((extflags & LK_NOWAIT) &&
-		    ((lkp->lk_flags & LK_WANT_UPGRADE) ||
-		     lkp->lk_sharecount > 1)) {
-			error = EBUSY;
-			break;
-		}
-		if ((lkp->lk_flags & LK_WANT_UPGRADE) == 0) {
-			/*
-			 * We are first shared lock to request an upgrade, so
-			 * request upgrade and wait for the shared count to
-			 * drop to zero, then take exclusive lock.
-			 */
-			lkp->lk_flags |= LK_WANT_UPGRADE;
-			error = acquire(&lkp, &s, extflags, 0, LK_SHARE_NONZERO,
-			    RETURN_ADDRESS);
-			lkp->lk_flags &= ~LK_WANT_UPGRADE;
-			if (error) {
-				WAKEUP_WAITER(lkp);
-				break;
-			}
-			lkp->lk_flags |= LK_HAVE_EXCL;
-			SETHOLDER(lkp, pid, lid, cpu_num);
-#if defined(LOCKDEBUG)
-			lkp->lk_lock_file = file;
-			lkp->lk_lock_line = line;
-#endif
-			HAVEIT(lkp);
-			if (lkp->lk_exclusivecount != 0)
-				lockpanic(lkp, "lockmgr: non-zero exclusive count");
-			lkp->lk_exclusivecount = 1;
-			if (extflags & LK_SETRECURSE)
-				lkp->lk_recurselevel = 1;
-			COUNT(lkp, l, cpu_num, 1);
-			break;
-		}
-		/*
-		 * Someone else has requested upgrade. Release our shared
-		 * lock, awaken upgrade requestor if we are the last shared
-		 * lock, then request an exclusive lock.
-		 */
-		if (lkp->lk_sharecount == 0)
-			WAKEUP_WAITER(lkp);
-		/* fall into exclusive request */
-
 	case LK_EXCLUSIVE:
 		if (WEHOLDIT(lkp, pid, lid, cpu_num)) {
 			/*
@@ -835,8 +757,7 @@ lockmgr(volatile struct lock *lkp, u_int flags,
 		 * If we are just polling, check to see if we will sleep.
 		 */
 		if ((extflags & LK_NOWAIT) && (lkp->lk_flags &
-		     (LK_HAVE_EXCL | LK_WANT_EXCL | LK_WANT_UPGRADE |
-		     LK_SHARE_NONZERO))) {
+		     (LK_HAVE_EXCL | LK_WANT_EXCL | LK_SHARE_NONZERO))) {
 			error = EBUSY;
 			break;
 		}
@@ -849,10 +770,10 @@ lockmgr(volatile struct lock *lkp, u_int flags,
 			break;
 		lkp->lk_flags |= LK_WANT_EXCL;
 		/*
-		 * Wait for shared locks and upgrades to finish.
+		 * Wait for shared locks to finish.
 		 */
 		error = acquire(&lkp, &s, extflags, 0,
-		    LK_HAVE_EXCL | LK_WANT_UPGRADE | LK_SHARE_NONZERO,
+		    LK_HAVE_EXCL | LK_SHARE_NONZERO,
 		    RETURN_ADDRESS);
 		lkp->lk_flags &= ~LK_WANT_EXCL;
 		if (error) {
@@ -928,13 +849,13 @@ lockmgr(volatile struct lock *lkp, u_int flags,
 		 * If we are just polling, check to see if we will sleep.
 		 */
 		if ((extflags & LK_NOWAIT) && (lkp->lk_flags &
-		     (LK_HAVE_EXCL | LK_WANT_EXCL | LK_WANT_UPGRADE |
+		     (LK_HAVE_EXCL | LK_WANT_EXCL |
 		     LK_SHARE_NONZERO | LK_WAIT_NONZERO))) {
 			error = EBUSY;
 			break;
 		}
 		error = acquire(&lkp, &s, extflags, 1,
-		    LK_HAVE_EXCL | LK_WANT_EXCL | LK_WANT_UPGRADE |
+		    LK_HAVE_EXCL | LK_WANT_EXCL |
 		    LK_SHARE_NONZERO | LK_WAIT_NONZERO,
 		    RETURN_ADDRESS);
 		if (error)
@@ -961,7 +882,7 @@ lockmgr(volatile struct lock *lkp, u_int flags,
 	}
 	if ((lkp->lk_flags & (LK_WAITDRAIN|LK_SPIN)) == LK_WAITDRAIN &&
 	    ((lkp->lk_flags &
-	      (LK_HAVE_EXCL | LK_WANT_EXCL | LK_WANT_UPGRADE |
+	      (LK_HAVE_EXCL | LK_WANT_EXCL |
 	      LK_SHARE_NONZERO | LK_WAIT_NONZERO)) == 0)) {
 		lkp->lk_flags &= ~LK_WAITDRAIN;
 		wakeup(&lkp->lk_flags);
