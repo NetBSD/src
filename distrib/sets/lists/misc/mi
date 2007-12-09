@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.149 2007/11/29 12:35:04 mjf Exp $
+# $NetBSD: mi,v 1.150 2007/12/09 22:14:40 tls Exp $
 ./etc/mtree/set.misc				misc-sys-root
 ./usr/share/dict/README				misc-reference-share	share
 ./usr/share/dict/american			misc-reference-share	share
@@ -11,7 +11,7 @@
 ./usr/share/dict/web2				misc-reference-share	share
 ./usr/share/dict/web2a				misc-reference-share	share
 ./usr/share/dict/words				misc-reference-share	share
-./usr/share/doc/atf				misc-atf-doc		doc
+./usr/share/doc/atf				misc-atf-doc
 ./usr/share/doc/atf/AUTHORS			misc-atf-doc		doc
 ./usr/share/doc/atf/COPYING			misc-atf-doc		doc
 ./usr/share/doc/atf/NEWS			misc-atf-doc		doc
