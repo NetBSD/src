@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.132 2007/12/08 18:36:19 dsl Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.133 2007/12/09 12:50:29 wiz Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.132 2007/12/08 18:36:19 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.133 2007/12/09 12:50:29 wiz Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -1256,7 +1256,7 @@ netbsd32___getfh30(struct lwp *l, void *v, register_t *retval)
 		return (error);
 	fh = NULL;
 	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF | TRYEMULROOT, UIO_USERSPACE,
-	    SCARG_P32(uap, fname), l);
+	    SCARG_P32(uap, fname));
 	error = namei(&nd);
 	if (error)
 		return (error);
