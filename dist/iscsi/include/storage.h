@@ -1,4 +1,4 @@
-/* $NetBSD: storage.h,v 1.4 2007/10/26 18:36:46 agc Exp $ */
+/* $NetBSD: storage.h,v 1.5 2007/12/09 09:16:42 agc Exp $ */
 
 /*
  * Copyright © 2006 Alistair Crooks.  All rights reserved.
@@ -85,6 +85,7 @@ typedef struct disc_target_t {
 	char		*mask;		/* mask to export it to */
 	uint32_t	 flags;		/* any flags */
 	uint16_t	 tsih;		/* target session identifying handle */
+	char		*iqn;		/* assigned iqn - can be NULL */
 } disc_target_t;
 
 DEFINE_ARRAY(targv_t, disc_target_t);
