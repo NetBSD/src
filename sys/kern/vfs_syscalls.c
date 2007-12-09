@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.333.2.2 2007/12/09 22:24:49 ad Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.333.2.3 2007/12/09 22:57:20 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.333.2.2 2007/12/09 22:24:49 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.333.2.3 2007/12/09 22:57:20 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -261,7 +261,7 @@ mount_get_vfsops(const char *fstype, struct vfsops **vfsops)
 
 static int
 mount_domount(struct lwp *l, struct vnode **vpp, struct vfsops *vfsops,
-    const char *path, int flags, void *data, size_t *data_len)
+    const char *path, int flags, void *data, size_t *data_len, u_int recurse)
 {
 	struct mount *mp = NULL;
 	struct vnode *vp = *vpp;
@@ -346,6 +346,7 @@ mount_domount(struct lwp *l, struct vnode **vpp, struct vfsops *vfsops,
 	mutex_enter(&mountlist_lock);
 	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
 	mutex_exit(&mountlist_lock);
+    	vn_restorerecurse(vp, recurse);
 	VOP_UNLOCK(vp, 0);
 	checkdirs(vp);
 	if ((mp->mnt_flag & (MNT_RDONLY | MNT_ASYNC)) == 0)
@@ -450,8 +451,8 @@ do_sys_mount(struct lwp *l, struct vfsops *vfsops, const char *type,
 	 * A lookup in VFS_MOUNT might result in an attempt to
 	 * lock this vnode again, so make the lock recursive.
 	 */
-	recurse = vn_setrecurse(vp);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	recurse = vn_setrecurse(vp);
   
 	if (vfsops == NULL) {
 		if (flags & (MNT_GETARGS | MNT_UPDATE))
@@ -504,12 +505,14 @@ do_sys_mount(struct lwp *l, struct vfsops *vfsops, const char *type,
 	} else {
 		/* Locking is handled internally in mount_domount(). */
 		error = mount_domount(l, &vp, vfsops, path, flags, data_buf,
-		    &data_len);
+		    &data_len, recurse);
 	}
 
     done:
-    	vn_restorerecurse(vp, recurse);
-	vput(vp);
+    	if (vp != NULL) {
+	    	vn_restorerecurse(vp, recurse);
+	    	vput(vp);
+	}
 	if (data_buf != data)
 		free(data_buf, M_TEMP);
 	return (error);
