@@ -45,7 +45,7 @@ all-initiator: ${INITIATORS}
 #
 COMPATOBJS= strlcpy.o snprintf.o strtoll.o uuid.o
 
-USER_TARGET_OBJS = target.o iscsi.o util.o parameters.o netmask.o conffile.o storage.o ${COMPATOBJS}
+USER_TARGET_OBJS = target.o iscsi.o util.o parameters.o netmask.o conffile.o storage.o md5c.o md5hl.c ${COMPATOBJS}
 iscsi-target: iscsi-target.c disk.c $(USER_TARGET_OBJS)
 	$(CC) $(CFLAGS) iscsi-target.c disk.c $(USER_TARGET_OBJS) ${PTHREAD_LDFLAGS} ${PTHREAD_LIBS} ${LIBS} -o iscsi-target
 osd: osd-target.c osd.c $(USER_TARGET_OBJS)

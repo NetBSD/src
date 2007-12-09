@@ -47,10 +47,10 @@
 #include <netinet/in.h>
 #endif
 
+#include "iscsi-md5.h"
 #include "iscsiutil.h"
 #include "parameters.h"
 #include "conffile.h"
-#include "md5.c"
 
 
 int 
@@ -458,7 +458,7 @@ param_parse_security(iscsi_parameter_t * head,
 	static uint8_t chapdata[ISCSI_CHAP_DATA_LENGTH];
 	static uint8_t respdata[ISCSI_CHAP_DATA_LENGTH];
 	char           *chapstring = NULL;
-	MD5Context_t   *context = NULL;
+	iSCSI_MD5_CTX   *context = NULL;
 	iscsi_parameter_t *param = NULL;
 	int             ret = 1;
 
@@ -466,7 +466,7 @@ param_parse_security(iscsi_parameter_t * head,
 		iscsi_trace_error(__FILE__, __LINE__, "iscsi_malloc() failed\n");
 		return -1;
 	}
-	if ((context = iscsi_malloc(sizeof(MD5Context_t))) == NULL) {
+	if ((context = iscsi_malloc(sizeof(*context))) == NULL) {
 		iscsi_trace_error(__FILE__, __LINE__, "iscsi_malloc() failed\n");
 		if (chapstring != NULL)
 			iscsi_free(chapstring);
@@ -561,20 +561,20 @@ param_parse_security(iscsi_parameter_t * head,
 		}
 		param->tx_offer = 1;	/* sending an offer */
 		param->rx_offer = 0;	/* reset */
-		MD5Init(context);
-		MD5Update(context, &idData, 1);
+		iSCSI_MD5Init(context);
+		iSCSI_MD5Update(context, &idData, 1);
 
 		if (cred->shared_secret == NULL) {
 			iscsi_trace_error(__FILE__, __LINE__, "null shared secret\n");
 			PPS_ERROR;
 		} else {
-			MD5Update(context, cred->shared_secret, strlen(cred->shared_secret));
+			iSCSI_MD5Update(context, (const uint8_t *)cred->shared_secret, strlen(cred->shared_secret));
 		}
 
 		HexDataToText(chapdata, ISCSI_CHAP_DATA_LENGTH,
 			      param->offer_tx, ISCSI_CHAP_STRING_LENGTH);
-		MD5Update(context, chapdata, ISCSI_CHAP_DATA_LENGTH);
-		MD5Final(chapdata, context);
+		iSCSI_MD5Update(context, chapdata, ISCSI_CHAP_DATA_LENGTH);
+		iSCSI_MD5Final(chapdata, context);
 		HexDataToText(chapdata, ISCSI_CHAP_DATA_LENGTH,
 			      param->offer_tx, ISCSI_CHAP_STRING_LENGTH);
 
@@ -620,9 +620,9 @@ param_parse_security(iscsi_parameter_t * head,
 
 	} else if (strcmp(param_in->key, "CHAP_R") == 0) {
 
-		MD5Init(context);
+		iSCSI_MD5Init(context);
 
-		MD5Update(context, &idData, 1);
+		iSCSI_MD5Update(context, &idData, 1);
 
 		HexDataToText(&idData, 1, param_in->offer_tx, ISCSI_CHAP_STRING_LENGTH);
 		HexDataToText(chapdata, ISCSI_CHAP_DATA_LENGTH,
@@ -632,11 +632,11 @@ param_parse_security(iscsi_parameter_t * head,
 			iscsi_trace_error(__FILE__, __LINE__, "Null shared secret in initiator\n");
 			PPS_ERROR;
 		} else {
-			MD5Update(context, cred->shared_secret, strlen(cred->shared_secret));
+			iSCSI_MD5Update(context, (const uint8_t *)cred->shared_secret, strlen(cred->shared_secret));
 		}
 
-		MD5Update(context, chapdata, ISCSI_CHAP_DATA_LENGTH);
-		MD5Final(chapdata, context);
+		iSCSI_MD5Update(context, chapdata, ISCSI_CHAP_DATA_LENGTH);
+		iSCSI_MD5Final(chapdata, context);
 
 		HexTextToData((param_in->rx_offer) ? param_in->offer_rx : param_in->answer_rx, ISCSI_CHAP_STRING_LENGTH,
 				      respdata, ISCSI_CHAP_DATA_LENGTH);
