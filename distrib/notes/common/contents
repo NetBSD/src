@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.130 2007/12/02 23:56:57 ad Exp $
+.\"	$NetBSD: contents,v 1.131 2007/12/09 23:10:00 pavel Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -283,7 +283,7 @@ Netbootable RAM disk kernel and the file system in the RAM disk; see below.
 .if \n[alpha] \{\
 .		It Pa diskimage/
 .		It Pa tapeimage/
-.\&an image file
+an image file
 .Pa cdhdtape
 is included for the case where the installer is written to
 a CD, hard drive, or tape.
