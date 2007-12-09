@@ -1,4 +1,4 @@
-/*	$NetBSD: arcmsrvar.h,v 1.5 2007/12/08 16:53:19 xtraeme Exp $ */
+/*	$NetBSD: arcmsrvar.h,v 1.6 2007/12/09 00:24:46 xtraeme Exp $ */
 /*	Derived from $OpenBSD: arc.c,v 1.68 2007/10/27 03:28:27 dlg Exp $ */
 
 /*
@@ -181,8 +181,8 @@ struct arc_fw_bufhdr {
 #define ARC_FW_SET_MAXATA_MODE	0x35	/* opcode + 1 byte mode */
 #define  ARC_FW_SET_MAXATA_MODE_133		(1<<0)
 #define  ARC_FW_SET_MAXATA_MODE_100		(1<<1)
-#define  ARC_FW_SET_MAXATA_MODE_66		(2<<1)
-#define  ARC_FW_SET_MAXATA_MODE_33		(3<<1)
+#define  ARC_FW_SET_MAXATA_MODE_66		(1<<2)
+#define  ARC_FW_SET_MAXATA_MODE_33		(1<<3)
 #define ARC_FW_NOP		0x38	/* opcode only */
 
 /* Status codes for the firmware command codes */
