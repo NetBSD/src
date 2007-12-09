@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.374 2007/11/27 22:56:07 rhaen Exp $
+.\"	$NetBSD: main,v 1.375 2007/12/09 19:23:57 wiz Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -436,10 +436,11 @@ The
 system architectures.
 (A few ports are not fully supported at this time 
 and are thus not part of the binary distribution.
-For information on them, please see the
+Please see the
 .Nx
 web site at
-.Lk http://www.NetBSD.org/ . )
+.Lk http://www.NetBSD.org/
+for information on them.)
 .Pp
 .Nx
 is a completely integrated system.
@@ -463,8 +464,8 @@ wouldn't exist.
 .Ss Changes Between The NetBSD 3.0 and 4.0 Releases
 .Pp
 The
-.Nx 4.0
-release
+.Nx
+\*V release
 provides numerous significant functional enhancements, including
 support for many new devices, integration of hundreds of bug fixes,
 new and updated kernel subsystems, and many user-land enhancements.
@@ -1228,7 +1229,7 @@ directory, in the format produced by the command:
 digests for the various files in that
 directory, in the format produced by the command:
 .br
-.Ic cksum Fl m Ar file .
+.Ic cksum -m Ar file .
 .It Li SYSVSUM
 Historic AT\*&T System V
 .Ux
