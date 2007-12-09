@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.257 2007/12/09 08:31:58 yamt Exp $
+#       $NetBSD: Makefile,v 1.258 2007/12/09 20:37:42 jmcneill Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -38,7 +38,7 @@ MAN=	altq.9 arc4random.9 arp.9 audio.9 autoconf.9 \
 	mstohz.9 mutex.9 m_tag.9 namecache.9 \
 	namei.9 opencrypto.9 optstr.9 \
 	panic.9 pci.9 pci_configure_bus.9 pci_intr.9 pckbport.9 \
-	pcmcia.9 pfil.9 physio.9 pmap.9 pmatch.9 pmc.9 \
+	pcmcia.9 pfil.9 physio.9 pmap.9 pmatch.9 pmc.9 pmf.9 \
 	pool.9 pool_cache.9 powerhook_establish.9 ppsratecheck.9 \
 	preempt.9 putter.9 \
 	radio.9 ras.9 rasops.9 ratecheck.9 resettodr.9 rnd.9 rssadapt.9 \
