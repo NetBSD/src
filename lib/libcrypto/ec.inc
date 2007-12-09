@@ -1,8 +1,8 @@
-#	$NetBSD: ec.inc,v 1.3 2006/03/17 20:47:45 dsl Exp $
+#	$NetBSD: ec.inc,v 1.4 2007/12/09 22:44:16 adrianp Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
-#	SRCS extracted from /home/current/src/lib/libcrypto/../../crypto/dist/openssl/crypto/ec/Makefile.ssl
+#	SRCS extracted from src/crypto/dist/openssl/crypto/ec/Makefile
 #
 
 .PATH:	${OPENSSLSRC}/crypto/ec
