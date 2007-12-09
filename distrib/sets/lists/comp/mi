@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1098 2007/12/09 08:37:48 yamt Exp $
+#	$NetBSD: mi,v 1.1099 2007/12/09 20:37:42 jmcneill Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -7481,6 +7481,7 @@
 ./usr/share/man/cat9/pmc_save_context.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/pmc_start_profiling.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/pmc_stop_profiling.0	comp-sys-catman		.cat
+./usr/share/man/cat9/pmf.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/pool.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/pool_cache.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/pool_cache_destroy.0	comp-sys-catman		.cat
@@ -12073,6 +12074,7 @@
 ./usr/share/man/man9/pmc_save_context.9		comp-sys-man		.man
 ./usr/share/man/man9/pmc_start_profiling.9	comp-sys-man		.man
 ./usr/share/man/man9/pmc_stop_profiling.9	comp-sys-man		.man
+./usr/share/man/man9/pmf.9			comp-sys-man		.man
 ./usr/share/man/man9/pool.9			comp-sys-man		.man
 ./usr/share/man/man9/pool_cache.9		comp-sys-man		.man
 ./usr/share/man/man9/pool_cache_destroy.9	comp-sys-man		.man
