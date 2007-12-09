@@ -1,4 +1,4 @@
-/*	$NetBSD: overlay_vfsops.c,v 1.37 2007/01/19 14:49:11 hannken Exp $	*/
+/*	$NetBSD: overlay_vfsops.c,v 1.37.10.1 2007/12/09 16:04:03 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 National Aeronautics & Space Administration
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.37 2007/01/19 14:49:11 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.37.10.1 2007/12/09 16:04:03 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -245,6 +245,7 @@ ov_unmount(struct mount *mp, int mntflags, struct lwp *l)
 	/*
 	 * Finally, throw away the overlay_mount structure
 	 */
+	mutex_destroy(&((struct overlay_mount *)mp->mnt_data)->ovm_hashlock);
 	free(mp->mnt_data, M_UFSMNT);	/* XXX */
 	mp->mnt_data = 0;
 	return 0;
