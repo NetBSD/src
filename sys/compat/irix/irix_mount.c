@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_mount.c,v 1.19 2007/12/08 18:36:03 dsl Exp $ */
+/*	$NetBSD: irix_mount.c,v 1.20 2007/12/09 13:34:23 dogcow Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_mount.c,v 1.19 2007/12/08 18:36:03 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_mount.c,v 1.20 2007/12/09 13:34:23 dogcow Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -77,7 +77,7 @@ irix_sys_getmountid(struct lwp *l, void *v, register_t *retval)
 
 	/* Get the vnode for the requested path */
 	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF | TRYEMULROOT, UIO_USERSPACE,
-	    SCARG(uap, path), l);
+	    SCARG(uap, path));
 	nd.ni_cnd.cn_cred = cred;
 	if ((error = namei(&nd)) != 0)
 		goto out;

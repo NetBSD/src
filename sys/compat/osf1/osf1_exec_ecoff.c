@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_exec_ecoff.c,v 1.19 2007/12/08 18:36:20 dsl Exp $ */
+/* $NetBSD: osf1_exec_ecoff.c,v 1.20 2007/12/09 13:34:24 dogcow Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_exec_ecoff.c,v 1.19 2007/12/08 18:36:20 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_exec_ecoff.c,v 1.20 2007/12/09 13:34:24 dogcow Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -213,7 +213,7 @@ osf1_exec_ecoff_dynamic(struct lwp *l, struct exec_package *epp)
 	 * load it up.
 	 */
 	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF | TRYEMULROOT, UIO_SYSSPACE,
-	    emul_arg->loader_name, l);
+	    emul_arg->loader_name);
 	if ((error = namei(&nd)) != 0)
 		goto bad_no_vp;
 	ldr_vp = nd.ni_vp;
