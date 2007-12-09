@@ -1,4 +1,4 @@
-/*	$NetBSD: opdump.c,v 1.20 2007/12/04 20:03:40 pooka Exp $	*/
+/*	$NetBSD: opdump.c,v 1.21 2007/12/09 16:54:17 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: opdump.c,v 1.20 2007/12/04 20:03:40 pooka Exp $");
+__RCSID("$NetBSD: opdump.c,v 1.21 2007/12/09 16:54:17 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -207,6 +207,12 @@ puffsdump_rv(struct puffs_req *preq)
 		case PUFFS_VN_LOOKUP:
 			puffsdump_lookup_rv(preq);
 			break;
+		case PUFFS_VN_CREATE:
+		case PUFFS_VN_MKDIR:
+		case PUFFS_VN_MKNOD:
+		case PUFFS_VN_SYMLINK:
+			puffsdump_create_rv(preq);
+			break;
 		default:
 			break;
 		}
@@ -257,6 +263,15 @@ puffsdump_lookup_rv(struct puffs_req *preq)
 	printf("\t\tnew node %p, type 0x%x,\n\t\tsize 0x%"PRIu64", dev 0x%x\n",
 	    lookup_msg->pvnr_newnode, lookup_msg->pvnr_vtype,
 	    lookup_msg->pvnr_size, lookup_msg->pvnr_rdev);
+}
+
+void
+puffsdump_create_rv(struct puffs_req *preq)
+{
+	/* XXX: wrong type, but we know it fits the slot */
+	struct puffs_vnmsg_create *create_msg = (void *)preq;
+
+	printf("\t\tnew node %p\n", create_msg->pvnr_newnode);
 }
 
 void
