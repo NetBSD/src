@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.30 2007/11/26 19:01:37 pooka Exp $	*/
+/*	$NetBSD: dk.c,v 1.31 2007/12/09 20:27:56 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.30 2007/11/26 19:01:37 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.31 2007/12/09 20:27:56 jmcneill Exp $");
 
 #include "opt_dkwedge.h"
 
@@ -150,7 +150,8 @@ dkwedge_attach(struct device *parent, struct device *self,
     void *aux)
 {
 
-	/* Nothing to do. */
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
 /*
@@ -162,6 +163,7 @@ static int
 dkwedge_detach(struct device *self, int flags)
 {
 
+	pmf_device_deregister(self);
 	/* Always succeeds. */
 	return (0);
 }

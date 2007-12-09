@@ -1,4 +1,4 @@
-/*	$NetBSD: amhphy.c,v 1.15 2006/11/16 21:24:06 christos Exp $	*/
+/*	$NetBSD: amhphy.c,v 1.16 2007/12/09 20:28:02 jmcneill Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amhphy.c,v 1.15 2006/11/16 21:24:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amhphy.c,v 1.16 2007/12/09 20:28:02 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,6 +120,9 @@ amhphyattach(struct device *parent, struct device *self, void *aux)
 	else
 		mii_phy_add_media(sc);
 	aprint_normal("\n");
+
+	if (!pmf_device_register(self, NULL, mii_phy_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
 static int

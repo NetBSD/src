@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.91 2007/10/19 11:59:36 ad Exp $	*/
+/*	$NetBSD: ata.c,v 1.92 2007/12/09 20:27:54 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.91 2007/10/19 11:59:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.92 2007/12/09 20:27:54 jmcneill Exp $");
 
 #include "opt_ata.h"
 
@@ -106,7 +106,8 @@ const struct cdevsw atabus_cdevsw = {
 
 extern struct cfdriver atabus_cd;
 
-static void atabus_powerhook(int, void *);
+static bool atabus_resume(device_t);
+static bool atabus_suspend(device_t);
 
 /*
  * atabusprint:
@@ -416,11 +417,8 @@ atabus_attach(struct device *parent, struct device *self, void *aux)
 		aprint_error("%s: unable to create kernel thread: error %d\n",
 		    sc->sc_dev.dv_xname, error);
 
-	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
-	    atabus_powerhook, sc);
-	if (sc->sc_powerhook == NULL)
-		printf("%s: WARNING: unable to establish power hook\n",
-		    sc->sc_dev.dv_xname);
+	if (!pmf_device_register(self, atabus_suspend, atabus_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
 /*
@@ -501,10 +499,6 @@ atabus_detach(struct device *self, int flags)
 	wakeup(&chp->ch_thread);
 	while (chp->ch_thread != NULL)
 		(void) tsleep(&chp->ch_flags, PRIBIO, "atadown", 0);
-
-	/* power hook */
-	if (sc->sc_powerhook)
-		powerhook_disestablish(sc->sc_powerhook);
 
 	/*
 	 * Detach atapibus and its children.
@@ -1475,33 +1469,38 @@ atabusioctl(dev_t dev, u_long cmd, void *addr, int flag,
 	return (error);
 };
 
-static void
-atabus_powerhook(int why, void *hdl)
+static bool
+atabus_suspend(device_t dv)
 {
-	struct atabus_softc *sc = (struct atabus_softc *)hdl;
+	struct atabus_softc *sc = device_private(dv);
+	struct ata_channel *chp = sc->sc_chan;
+
+	ata_queue_idle(chp->ch_queue);
+
+	return true;
+}
+
+static bool
+atabus_resume(device_t dv)
+{
+	struct atabus_softc *sc = device_private(dv);
 	struct ata_channel *chp = sc->sc_chan;
 	int s;
 
-	switch (why) {
-	case PWR_SOFTSUSPEND:
-	case PWR_SOFTSTANDBY:
-		/* freeze the queue and wait for the controller to be idle */
-		ata_queue_idle(chp->ch_queue);
-		break;
-	case PWR_RESUME:
-		printf("%s: resuming...\n", sc->sc_dev.dv_xname);
-		s = splbio();
-		KASSERT(chp->ch_queue->queue_freeze > 0);
-		/* unfreeze the queue and reset drives (to wake them up) */
-		chp->ch_queue->queue_freeze--;
-		ata_reset_channel(chp, AT_WAIT);
+	/*
+	 * XXX joerg: with wdc, the first channel unfreezes the controler.
+	 * Move this the reset and queue idling into wdc.
+	 */
+	s = splbio();
+	if (chp->ch_queue->queue_freeze == 0) {
 		splx(s);
-		break;
-	case PWR_SUSPEND:
-	case PWR_STANDBY:
-	case PWR_SOFTRESUME:
-		break;
+		return true;
 	}
+	KASSERT(chp->ch_queue->queue_freeze > 0);
+	/* unfreeze the queue and reset drives */
+	chp->ch_queue->queue_freeze--;
+	ata_reset_channel(chp, AT_WAIT);
+	splx(s);
 
-	return;
+	return true;
 }

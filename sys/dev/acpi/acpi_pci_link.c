@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_pci_link.c,v 1.9 2007/11/07 15:29:15 joerg Exp $	*/
+/*	$NetBSD: acpi_pci_link.c,v 1.10 2007/12/09 20:27:53 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2002 Mitsuru IWASAKI <iwasaki@jp.freebsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_pci_link.c,v 1.9 2007/11/07 15:29:15 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_pci_link.c,v 1.10 2007/12/09 20:27:53 jmcneill Exp $");
 
 #include "opt_acpi.h"
 #include <sys/param.h>
@@ -384,7 +384,7 @@ link_valid_irq(struct link *link, int irq)
 	 * For links routed via an ISA interrupt, if the SCI is routed via
 	 * an ISA interrupt, the SCI is always treated as a valid IRQ.
 	 */
-	if (link->l_isa_irq && AcpiGbl_FADT->SciInt == irq &&
+	if (link->l_isa_irq && AcpiGbl_FADT.SciInterrupt == irq &&
 	    irq < NUM_ISA_INTERRUPTS)
 		return (TRUE);
 
@@ -1039,7 +1039,7 @@ acpi_pci_link_choose_irq(struct acpi_pci_link_softc *sc, struct link *link)
 	 * interrupt as a fallback.
 	 */
 	if (link->l_isa_irq && !PCI_INTERRUPT_VALID(best_irq)) {
-		pos_irq = AcpiGbl_FADT->SciInt;
+		pos_irq = AcpiGbl_FADT.SciInterrupt;
 		pos_weight = pci_link_interrupt_weights[pos_irq];
 		if (pos_weight < best_weight) {
 			best_weight = pos_weight;
@@ -1136,8 +1136,8 @@ acpi_pci_link_init(struct acpi_pci_link_softc *sc)
 	 * if we are using the APIC, we also shouldn't be having any PCI
 	 * interrupts routed via ISA IRQs, so this is probably ok.
 	 */
-	if (AcpiGbl_FADT->SciInt < NUM_ISA_INTERRUPTS)
-		pci_link_bios_isa_irqs |= (1 << AcpiGbl_FADT->SciInt);
+	if (AcpiGbl_FADT.SciInterrupt < NUM_ISA_INTERRUPTS)
+		pci_link_bios_isa_irqs |= (1 << AcpiGbl_FADT.SciInterrupt);
 
         sc->pl_powerhook = powerhook_establish(acpipcilinkname,
 	    acpi_pci_link_resume, sc);
