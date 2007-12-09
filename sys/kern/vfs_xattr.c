@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_xattr.c,v 1.12.8.1 2007/11/27 19:38:20 joerg Exp $	*/
+/*	$NetBSD: vfs_xattr.c,v 1.12.8.2 2007/12/09 19:38:29 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_xattr.c,v 1.12.8.1 2007/11/27 19:38:20 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_xattr.c,v 1.12.8.2 2007/12/09 19:38:29 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -171,14 +171,14 @@ sys_extattrctl(struct lwp *l, void *v, register_t *retval)
 	vp = NULL;
 	if (SCARG(uap, filename) != NULL) {
 		NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
-		    SCARG(uap, filename), l);
+		    SCARG(uap, filename));
 		error = namei(&nd);
 		if (error)
 			return (error);
 		vp = nd.ni_vp;
 	}
 
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), l);
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path));
 	error = namei(&nd);
 	if (error) {
 		if (vp != NULL)
@@ -433,7 +433,7 @@ sys_extattr_set_file(struct lwp *l, void *v, register_t *retval)
 	if (error)
 		return (error);
 
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), l);
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path));
 	error = namei(&nd);
 	if (error)
 		return (error);
@@ -464,7 +464,7 @@ sys_extattr_set_link(struct lwp *l, void *v, register_t *retval)
 	if (error)
 		return (error);
 
-	NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_USERSPACE, SCARG(uap, path), l);
+	NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_USERSPACE, SCARG(uap, path));
 	error = namei(&nd);
 	if (error)
 		return (error);
@@ -527,7 +527,7 @@ sys_extattr_get_file(struct lwp *l, void *v, register_t *retval)
 	if (error)
 		return (error);
 
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), l);
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path));
 	error = namei(&nd);
 	if (error)
 		return (error);
@@ -558,7 +558,7 @@ sys_extattr_get_link(struct lwp *l, void *v, register_t *retval)
 	if (error)
 		return (error);
 
-	NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_USERSPACE, SCARG(uap, path), l);
+	NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_USERSPACE, SCARG(uap, path));
 	error = namei(&nd);
 	if (error)
 		return (error);
@@ -616,7 +616,7 @@ sys_extattr_delete_file(struct lwp *l, void *v, register_t *retval)
 	if (error)
 		return (error);
 
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), l);
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path));
 	error = namei(&nd);
 	if (error)
 		return (error);
@@ -645,7 +645,7 @@ sys_extattr_delete_link(struct lwp *l, void *v, register_t *retval)
 	if (error)
 		return (error);
 
-	NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_USERSPACE, SCARG(uap, path), l);
+	NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_USERSPACE, SCARG(uap, path));
 	error = namei(&nd);
 	if (error)
 		return (error);
@@ -694,7 +694,7 @@ sys_extattr_list_file(struct lwp *l, void *v, register_t *retval)
 	struct nameidata nd;
 	int error;
 
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), l);
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path));
 	error = namei(&nd);
 	if (error)
 		return (error);
@@ -718,7 +718,7 @@ sys_extattr_list_link(struct lwp *l, void *v, register_t *retval)
 	struct nameidata nd;
 	int error;
 
-	NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_USERSPACE, SCARG(uap, path), l);
+	NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_USERSPACE, SCARG(uap, path));
 	error = namei(&nd);
 	if (error)
 		return (error);
@@ -753,7 +753,7 @@ sys_setxattr(struct lwp *l, void *v, register_t *retval)
 	if (error)
 		return (error);
 
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), l);
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path));
 	error = namei(&nd);
 	if (error)
 		return (error);
@@ -786,7 +786,7 @@ sys_lsetxattr(struct lwp *l, void *v, register_t *retval)
 	if (error)
 		return (error);
 
-	NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_USERSPACE, SCARG(uap, path), l);
+	NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_USERSPACE, SCARG(uap, path));
 	error = namei(&nd);
 	if (error)
 		return (error);
@@ -852,7 +852,7 @@ sys_getxattr(struct lwp *l, void *v, register_t *retval)
 	if (error)
 		return (error);
 
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), l);
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path));
 	error = namei(&nd);
 	if (error)
 		return (error);
@@ -882,7 +882,7 @@ sys_lgetxattr(struct lwp *l, void *v, register_t *retval)
 	if (error)
 		return (error);
 
-	NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_USERSPACE, SCARG(uap, path), l);
+	NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_USERSPACE, SCARG(uap, path));
 	error = namei(&nd);
 	if (error)
 		return (error);
@@ -936,7 +936,7 @@ sys_listxattr(struct lwp *l, void *v, register_t *retval)
 	struct nameidata nd;
 	int error;
 
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), l);
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path));
 	error = namei(&nd);
 	if (error)
 		return (error);
@@ -959,7 +959,7 @@ sys_llistxattr(struct lwp *l, void *v, register_t *retval)
 	struct nameidata nd;
 	int error;
 
-	NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_USERSPACE, SCARG(uap, path), l);
+	NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_USERSPACE, SCARG(uap, path));
 	error = namei(&nd);
 	if (error)
 		return (error);
@@ -1011,7 +1011,7 @@ sys_removexattr(struct lwp *l, void *v, register_t *retval)
 	if (error)
 		return (error);
 
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), l);
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path));
 	error = namei(&nd);
 	if (error)
 		return (error);
@@ -1039,7 +1039,7 @@ sys_lremovexattr(struct lwp *l, void *v, register_t *retval)
 	if (error)
 		return (error);
 
-	NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_USERSPACE, SCARG(uap, path), l);
+	NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_USERSPACE, SCARG(uap, path));
 	error = namei(&nd);
 	if (error)
 		return (error);

@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_ioctl.c,v 1.56 2007/06/01 11:36:35 he Exp $	*/
+/*	$NetBSD: sunos_ioctl.c,v 1.56.6.1 2007/12/09 19:37:27 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1993 Markus Wild.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_ioctl.c,v 1.56 2007/06/01 11:36:35 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_ioctl.c,v 1.56.6.1 2007/12/09 19:37:27 jmcneill Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_execfmt.h"
@@ -106,10 +106,10 @@ static const u_long s2btab[] = {
 	38400,
 };
 
-static void stios2btios __P((struct sunos_termios *, struct termios *));
-static void btios2stios __P((struct termios *, struct sunos_termios *));
-static void stios2stio __P((struct sunos_termios *, struct sunos_termio *));
-static void stio2stios __P((struct sunos_termio *, struct sunos_termios *));
+static void stios2btios(struct sunos_termios *, struct termios *);
+static void btios2stios(struct termios *, struct sunos_termios *);
+static void stios2stio(struct sunos_termios *, struct sunos_termio *);
+static void stio2stios(struct sunos_termio *, struct sunos_termios *);
 
 /*
  * These two conversion functions have mostly been done
@@ -127,9 +127,7 @@ static void stio2stios __P((struct sunos_termio *, struct sunos_termios *));
  */
 
 static void
-stios2btios(st, bt)
-	struct sunos_termios *st;
-	struct termios *bt;
+stios2btios(struct sunos_termios *st, struct termios *bt)
 {
 	u_long l, r;
 
@@ -249,9 +247,7 @@ stios2btios(st, bt)
 
 
 static void
-btios2stios(bt, st)
-	struct termios *bt;
-	struct sunos_termios *st;
+btios2stios(struct termios *bt, struct sunos_termios *st)
 {
 	u_long l, r;
 	int s;
@@ -378,9 +374,7 @@ btios2stios(bt, st)
 }
 
 static void
-stios2stio(ts, t)
-	struct sunos_termios *ts;
-	struct sunos_termio *t;
+stios2stio(struct sunos_termios *ts, struct sunos_termio *t)
 {
 	t->c_iflag = ts->c_iflag;
 	t->c_oflag = ts->c_oflag;
@@ -391,9 +385,7 @@ stios2stio(ts, t)
 }
 
 static void
-stio2stios(t, ts)
-	struct sunos_termio *t;
-	struct sunos_termios *ts;
+stio2stios(struct sunos_termio *t, struct sunos_termios *ts)
 {
 	ts->c_iflag = t->c_iflag;
 	ts->c_oflag = t->c_oflag;
@@ -404,10 +396,7 @@ stio2stios(t, ts)
 }
 
 int
-sunos_sys_ioctl(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sunos_sys_ioctl(struct lwp *l, void *v, register_t *retval)
 {
 	struct sunos_sys_ioctl_args /* {
 		int	fd;
@@ -935,17 +924,15 @@ struct sunos_flock {
 	short	l_xxx;
 };
 
-static void bsd_to_sunos_flock __P((struct flock *, struct sunos_flock *));
-static void sunos_to_bsd_flock __P((struct sunos_flock *, struct flock *));
+static void bsd_to_sunos_flock(struct flock *, struct sunos_flock *);
+static void sunos_to_bsd_flock(struct sunos_flock *, struct flock *);
 
 #define SUNOS_F_RDLCK	1
 #define	SUNOS_F_WRLCK	2
 #define SUNOS_F_UNLCK	3
 
 static void
-bsd_to_sunos_flock(iflp, oflp)
-	struct flock		*iflp;
-	struct sunos_flock	*oflp;
+bsd_to_sunos_flock(struct flock *iflp, struct sunos_flock *oflp)
 {
 	switch (iflp->l_type) {
 	case F_RDLCK:
@@ -971,9 +958,7 @@ bsd_to_sunos_flock(iflp, oflp)
 
 
 static void
-sunos_to_bsd_flock(iflp, oflp)
-	struct sunos_flock	*iflp;
-	struct flock		*oflp;
+sunos_to_bsd_flock(struct sunos_flock *iflp, struct flock *oflp)
 {
 	switch (iflp->l_type) {
 	case SUNOS_F_RDLCK:
@@ -1018,10 +1003,7 @@ static struct {
 };
 
 int
-sunos_sys_fcntl(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sunos_sys_fcntl(struct lwp *l, void *v, register_t *retval)
 {
 	struct sunos_sys_fcntl_args *uap = v;
 	long flg;

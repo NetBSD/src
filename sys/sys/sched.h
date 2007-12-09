@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.h,v 1.35.6.6 2007/11/06 21:16:25 joerg Exp $	*/
+/*	$NetBSD: sched.h,v 1.35.6.7 2007/12/09 19:38:49 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2007 The NetBSD Foundation, Inc.
@@ -198,7 +198,6 @@ struct lwp *	sched_nextlwp(void);
 
 /* Priority adjustment */
 void		sched_nice(struct proc *, int);
-pri_t		sched_kpri(struct lwp *);
 
 /* Handlers of fork and exit */
 void		sched_proc_fork(struct proc *, struct proc *);

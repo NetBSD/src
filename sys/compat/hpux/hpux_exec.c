@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_exec.c,v 1.52.6.1 2007/10/26 15:43:52 joerg Exp $	*/
+/*	$NetBSD: hpux_exec.c,v 1.52.6.2 2007/12/09 19:36:45 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_exec.c,v 1.52.6.1 2007/10/26 15:43:52 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_exec.c,v 1.52.6.2 2007/12/09 19:36:45 jmcneill Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -109,9 +109,9 @@ extern const char * const hpux_syscallnames[];
 extern char sigcode[], esigcode[];
 extern int native_to_hpux_errno[];
 #ifdef __HAVE_SYSCALL_INTERN
-void hpux_syscall_intern __P((struct proc *));
+void hpux_syscall_intern(struct proc *);
 #else
-void syscall __P((void));
+void syscall(void);
 #endif
 
 struct uvm_object *emul_hpux_object;
@@ -161,10 +161,7 @@ const struct emul emul_hpux = {
  * execve().
  */
 int
-hpux_sys_execv(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+hpux_sys_execv(struct lwp *l, void *v, register_t *retval)
 {
 	struct hpux_sys_execv_args /* {
 		syscallarg(const char *) path;
@@ -180,10 +177,7 @@ hpux_sys_execv(l, v, retval)
 }
 
 int
-hpux_sys_execve(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+hpux_sys_execve(struct lwp *l, void *v, register_t *retval)
 {
 	struct hpux_sys_execve_args /* {
 		syscallarg(const char *) path;

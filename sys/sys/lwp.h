@@ -1,4 +1,4 @@
-/* 	$NetBSD: lwp.h,v 1.62.6.7 2007/12/03 16:15:20 joerg Exp $	*/
+/* 	$NetBSD: lwp.h,v 1.62.6.8 2007/12/09 19:38:48 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -89,6 +89,7 @@ struct lwp {
 	int		l_biglocks;	/* l: biglock count before sleep */
 	int		l_class;	/* l: scheduling class */
 	int		l_kpriority;	/* !: has kernel priority boost */
+	pri_t		l_kpribase;	/* !: kernel priority base level */
 	pri_t		l_priority;	/* l: scheduler priority */
 	pri_t		l_inheritedprio;/* l: inherited priority */
 	SLIST_HEAD(, turnstile) l_pi_lenders; /* l: ts lending us priority */
@@ -354,7 +355,7 @@ lwp_eprio(lwp_t *l)
 
 	pri = l->l_priority;
 	if (l->l_kpriority && pri < PRI_KERNEL)
-		pri = (pri >> 1) + PRI_KERNEL;
+		pri = (pri >> 1) + l->l_kpribase;
 	return MAX(l->l_inheritedprio, pri);
 }
 

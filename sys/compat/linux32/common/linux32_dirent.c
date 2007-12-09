@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_dirent.c,v 1.2 2007/02/09 21:55:21 ad Exp $ */
+/*	$NetBSD: linux32_dirent.c,v 1.2.18.1 2007/12/09 19:37:07 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_dirent.c,v 1.2 2007/02/09 21:55:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_dirent.c,v 1.2.18.1 2007/12/09 19:37:07 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -70,10 +70,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_dirent.c,v 1.2 2007/02/09 21:55:21 ad Exp $"
 #include <compat/linux32/linux32_syscallargs.h>
 
 int
-linux32_sys_getdents(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_getdents(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux32_sys_getdents_args /* {
 		syscallcarg(int) fd;
@@ -91,10 +88,7 @@ linux32_sys_getdents(l, v, retval)
 
 
 int
-linux32_sys_getdents64(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_getdents64(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux32_sys_getdents64_args /* {
 		syscallcarg(int) fd;

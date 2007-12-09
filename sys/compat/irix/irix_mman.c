@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_mman.c,v 1.13.18.1 2007/12/03 16:14:28 joerg Exp $ */
+/*	$NetBSD: irix_mman.c,v 1.13.18.2 2007/12/09 19:36:51 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_mman.c,v 1.13.18.1 2007/12/03 16:14:28 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_mman.c,v 1.13.18.2 2007/12/09 19:36:51 jmcneill Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: irix_mman.c,v 1.13.18.1 2007/12/03 16:14:28 joerg Ex
 #include <sys/vnode.h>
 #include <sys/vnode_if.h>
 #include <sys/mount.h>
-#include <sys/lock.h>
+#include <sys/rwlock.h>
 #include <sys/systm.h>
 #include <sys/syscallargs.h>
 
@@ -70,14 +70,11 @@ __KERNEL_RCSID(0, "$NetBSD: irix_mman.c,v 1.13.18.1 2007/12/03 16:14:28 joerg Ex
 #include <compat/irix/irix_exec.h>
 #include <compat/irix/irix_syscallargs.h>
 
-static int irix_mmap __P((struct lwp *, void *, size_t, int ,
-		int, int, off_t, register_t *));
+static int irix_mmap(struct lwp *, void *, size_t, int ,
+		int, int, off_t, register_t *);
 
 int
-irix_sys_mmap(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+irix_sys_mmap(struct lwp *l, void *v, register_t *retval)
 {
 	struct irix_sys_mmap_args /* {
 		syscallarg(void *) addr;
@@ -94,10 +91,7 @@ irix_sys_mmap(l, v, retval)
 }
 
 int
-irix_sys_mmap64(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+irix_sys_mmap64(struct lwp *l, void *v, register_t *retval)
 {
 	struct irix_sys_mmap64_args /* {
 		syscallarg(void *) addr;
@@ -115,15 +109,7 @@ irix_sys_mmap64(l, v, retval)
 }
 
 static int
-irix_mmap(l, addr, len, prot, flags, fd, pos, retval)
-	struct lwp *l;
-	void *addr;
-	size_t len;
-	int prot;
-	int flags;
-	int fd;
-	off_t pos;
-	register_t *retval;
+irix_mmap(struct lwp *l, void *addr, size_t len, int prot, int flags, int fd, off_t pos, register_t *retval)
 {
 	struct proc *p = l->l_proc;
 	struct sys_mmap_args cup;
@@ -241,10 +227,7 @@ out:
 
 
 int
-irix_sys_munmap(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+irix_sys_munmap(struct lwp *l, void *v, register_t *retval)
 {
 	struct irix_sys_munmap_args /* {
 		syscallarg(void *) addr;
@@ -262,10 +245,7 @@ irix_sys_munmap(l, v, retval)
 }
 
 int
-irix_sys_break(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+irix_sys_break(struct lwp *l, void *v, register_t *retval)
 {
 	struct proc *p = l->l_proc;
 	int error;
@@ -276,10 +256,7 @@ irix_sys_break(l, v, retval)
 
 #ifdef SYSVSHM
 int
-irix_sys_shmsys(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+irix_sys_shmsys(struct lwp *l, void *v, register_t *retval)
 {
 	struct proc *p = l->l_proc;
 	int error;
@@ -290,10 +267,7 @@ irix_sys_shmsys(l, v, retval)
 #endif
 
 int
-irix_sys_mprotect(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+irix_sys_mprotect(struct lwp *l, void *v, register_t *retval)
 {
 	struct proc *p = l->l_proc;
 	int error;

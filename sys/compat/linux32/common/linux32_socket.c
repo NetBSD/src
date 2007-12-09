@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_socket.c,v 1.3 2007/02/09 21:55:21 ad Exp $ */
+/*	$NetBSD: linux32_socket.c,v 1.3.18.1 2007/12/09 19:37:09 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_socket.c,v 1.3 2007/02/09 21:55:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_socket.c,v 1.3.18.1 2007/12/09 19:37:09 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -70,10 +70,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_socket.c,v 1.3 2007/02/09 21:55:21 ad Exp $"
 #include <compat/linux32/linux32_syscallargs.h>
 
 int
-linux32_sys_socketpair(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_socketpair(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux32_sys_socketpair_args /* {
 		syscallarg(int) domain;
@@ -92,10 +89,7 @@ linux32_sys_socketpair(l, v, retval)
 }
 
 int
-linux32_sys_sendto(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_sendto(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux32_sys_sendto_args /* {
 		syscallarg(int) s;
@@ -119,10 +113,7 @@ linux32_sys_sendto(l, v, retval)
 
 
 int
-linux32_sys_recvfrom(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_recvfrom(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux32_sys_recvfrom_args /* {
 		syscallarg(int) s;
@@ -145,10 +136,7 @@ linux32_sys_recvfrom(l, v, retval)
 }
 
 int
-linux32_sys_setsockopt(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_setsockopt(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux32_sys_setsockopt_args /* {
 		syscallarg(int) s;
@@ -170,10 +158,7 @@ linux32_sys_setsockopt(l, v, retval)
 
 
 int
-linux32_sys_getsockopt(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_getsockopt(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux32_sys_getsockopt_args /* {
 		syscallarg(int) s;
@@ -194,10 +179,7 @@ linux32_sys_getsockopt(l, v, retval)
 }
 
 int
-linux32_sys_socket(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_socket(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux32_sys_socket_args /* {
 		syscallarg(int) domain;
@@ -214,10 +196,7 @@ linux32_sys_socket(l, v, retval)
 }
 
 int
-linux32_sys_bind(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_bind(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux32_sys_bind_args /* {
 		syscallarg(int) s;
@@ -234,10 +213,7 @@ linux32_sys_bind(l, v, retval)
 }
 
 int
-linux32_sys_connect(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_connect(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux32_sys_connect_args /* {
 		syscallarg(int) s;
@@ -259,10 +235,7 @@ linux32_sys_connect(l, v, retval)
 }
 
 int
-linux32_sys_accept(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_accept(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux32_sys_accept_args /* {
 		syscallarg(int) s;
@@ -279,10 +252,7 @@ linux32_sys_accept(l, v, retval)
 }
 
 int
-linux32_sys_getpeername(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_getpeername(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux32_sys_getpeername_args /* {
 		syscallarg(int) fdes;
@@ -299,10 +269,7 @@ linux32_sys_getpeername(l, v, retval)
 }
 
 int
-linux32_sys_getsockname(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_getsockname(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux32_sys_getsockname_args /* {
 		syscallarg(int) fdec;
@@ -319,10 +286,7 @@ linux32_sys_getsockname(l, v, retval)
 }
 
 int
-linux32_sys_sendmsg(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_sendmsg(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux32_sys_sendmsg_args /* {
 		syscallarg(int) s;
@@ -339,10 +303,7 @@ linux32_sys_sendmsg(l, v, retval)
 }
 
 int
-linux32_sys_recvmsg(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_recvmsg(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux32_sys_recvmsg_args /* {
 		syscallarg(int) s;
@@ -359,10 +320,7 @@ linux32_sys_recvmsg(l, v, retval)
 }
 
 int
-linux32_sys_send(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_send(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux32_sys_send_args /* {
 		syscallarg(int) s;
@@ -383,10 +341,7 @@ linux32_sys_send(l, v, retval)
 }
 
 int
-linux32_sys_recv(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_recv(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux32_sys_recv_args /* {
 		syscallarg(int) s;

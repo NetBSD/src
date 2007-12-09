@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.153.8.16 2007/12/03 16:13:54 joerg Exp $
+# $NetBSD: GENERIC,v 1.153.8.17 2007/12/09 19:34:19 jmcneill Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.153.8.16 $"
+#ident 		"GENERIC-$Revision: 1.153.8.17 $"
 
 maxusers	32		# estimated number of users
 
@@ -478,6 +478,7 @@ uk*	at scsibus? target ? lun ?	# SCSI unknown
 # RAID controllers and devices
 aac*	at pci? dev ? function ?	# Adaptec AAC family
 amr*	at pci? dev ? function ?	# AMI/LSI Logic MegaRAID
+arcmsr*	at pci? dev ? function ?	# Areca SATA RAID controllers
 cac*	at pci? dev ? function ?	# Compaq PCI array controllers
 ciss*	at pci? dev ? function ?	# HP Smart Array controllers
 icp*	at pci? dev ? function ?	# ICP-Vortex GDT & Intel RAID

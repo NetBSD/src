@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.101.6.2 2007/11/21 21:56:04 joerg Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.101.6.3 2007/12/09 19:38:27 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.101.6.2 2007/11/21 21:56:04 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.101.6.3 2007/12/09 19:38:27 jmcneill Exp $");
 
 #include "opt_compat_sunos.h"
 #include "opt_ptm.h"
@@ -951,7 +951,7 @@ ptckqfilter(dev_t dev, struct knote *kn)
 		kn->kn_fop = &ptcwrite_filtops;
 		break;
 	default:
-		return (1);
+		return (EINVAL);
 	}
 
 	kn->kn_hook = pti;

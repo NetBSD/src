@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.34.4.4 2007/12/03 16:14:30 joerg Exp $	*/
+/*	$NetBSD: fss.c,v 1.34.4.5 2007/12/09 19:37:41 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.34.4.4 2007/12/03 16:14:30 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.34.4.5 2007/12/09 19:37:41 jmcneill Exp $");
 
 #include "fss.h"
 
@@ -163,7 +163,7 @@ fssattach(int num)
 		sc->sc_unit = i;
 		sc->sc_bdev = NODEV;
 		simple_lock_init(&sc->sc_slock);
-		mutex_init(&sc->sc_lock, MUTEX_DRIVER, IPL_NONE);
+		mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
 		bufq_alloc(&sc->sc_bufq, "fcfs", 0);
 	}
 }
@@ -540,7 +540,7 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
 	 * Get the mounted file system.
 	 */
 
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, fss->fss_mount, l);
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, fss->fss_mount);
 	if ((error = namei(&nd)) != 0)
 		return error;
 
@@ -558,7 +558,7 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
 	 * Check for file system internal snapshot.
 	 */
 
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, fss->fss_bstore, l);
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, fss->fss_bstore);
 	if ((error = namei(&nd)) != 0)
 		return error;
 
@@ -566,7 +566,7 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
 		vrele(nd.ni_vp);
 		sc->sc_flags |= FSS_PERSISTENT;
 
-		NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, fss->fss_bstore, l);
+		NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, fss->fss_bstore);
 		if ((error = vn_open(&nd, FREAD, 0)) != 0)
 			return error;
 		sc->sc_bs_vp = nd.ni_vp;
@@ -599,7 +599,7 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
 	 */
 
 	NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE,
-	    sc->sc_mount->mnt_stat.f_mntfromname, l);
+	    sc->sc_mount->mnt_stat.f_mntfromname);
 	if ((error = namei(&nd)) != 0)
 		return error;
 
@@ -622,7 +622,7 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
 	 * Get the backing store
 	 */
 
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, fss->fss_bstore, l);
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, fss->fss_bstore);
 	if ((error = vn_open(&nd, FREAD|FWRITE, 0)) != 0)
 		return error;
 	VOP_UNLOCK(nd.ni_vp, 0);

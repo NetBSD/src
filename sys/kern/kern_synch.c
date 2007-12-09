@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.192.2.12 2007/12/03 16:14:54 joerg Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.192.2.13 2007/12/09 19:38:20 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.192.2.12 2007/12/03 16:14:54 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.192.2.13 2007/12/09 19:38:20 jmcneill Exp $");
 
 #include "opt_kstack.h"
 #include "opt_lockdebug.h"
@@ -760,37 +760,6 @@ suspendsched(void)
 }
 
 /*
- * sched_kpri:
- *
- *	Scale a priority level to a kernel priority level, usually
- *	for an LWP that is about to sleep.
- */
-pri_t
-sched_kpri(struct lwp *l)
-{
-	pri_t pri;
-
-#ifndef __HAVE_FAST_SOFTINTS
-	/*
-	 * Hack: if a user thread is being used to run a soft
-	 * interrupt, we need to boost the priority here.
-	 */
-	if ((l->l_pflag & LP_INTR) != 0 && l->l_priority < PRI_KERNEL_RT)
-		return softint_kpri(l);
-#endif
-
-	/*
-	 * Scale user priorities (0 -> 63) up to kernel priorities
-	 * in the range (64 -> 95).  This makes assumptions about
-	 * the priority space and so should be kept in sync with
-	 * param.h.
-	 */
-	if ((pri = l->l_priority) >= PRI_KERNEL)
-		return pri;
-	return (pri >> 1) + PRI_KERNEL;
-}
-
-/*
  * sched_unsleep:
  *
  *	The is called when the LWP has not been awoken normally but instead
@@ -911,7 +880,7 @@ sched_pstats(void *arg)
 
 	sched_pstats_ticks++;
 
-	mutex_enter(&proclist_mutex);
+	mutex_enter(&proclist_lock);
 	PROCLIST_FOREACH(p, &allproc) {
 		/*
 		 * Increment time in/out of memory and sleep time (if
@@ -972,7 +941,7 @@ sched_pstats(void *arg)
 			psignal(p, sig);
 		}
 	}
-	mutex_exit(&proclist_mutex);
+	mutex_exit(&proclist_lock);
 	uvm_meter();
 	cv_wakeup(&lbolt);
 	callout_schedule(&sched_pstats_ch, hz);

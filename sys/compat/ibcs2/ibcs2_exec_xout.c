@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_exec_xout.c,v 1.15.14.1 2007/10/26 15:43:53 joerg Exp $	*/
+/*	$NetBSD: ibcs2_exec_xout.c,v 1.15.14.2 2007/12/09 19:36:48 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec_xout.c,v 1.15.14.1 2007/10/26 15:43:53 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec_xout.c,v 1.15.14.2 2007/12/09 19:36:48 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,15 +61,13 @@ __KERNEL_RCSID(0, "$NetBSD: ibcs2_exec_xout.c,v 1.15.14.1 2007/10/26 15:43:53 jo
 #include <compat/ibcs2/ibcs2_util.h>
 #include <compat/ibcs2/ibcs2_syscall.h>
 
-int exec_ibcs2_xout_prep_nmagic __P((struct lwp *, struct exec_package *,
-				     struct xexec *, struct xext *));
-int exec_ibcs2_xout_prep_zmagic __P((struct lwp *, struct exec_package *,
-				     struct xexec *, struct xext *));
+int exec_ibcs2_xout_prep_nmagic(struct lwp *, struct exec_package *,
+				     struct xexec *, struct xext *);
+int exec_ibcs2_xout_prep_zmagic(struct lwp *, struct exec_package *,
+				     struct xexec *, struct xext *);
 
 int
-exec_ibcs2_xout_makecmds(l, epp)
-	struct lwp *l;
-	struct exec_package *epp;
+exec_ibcs2_xout_makecmds(struct lwp *l, struct exec_package *epp)
 {
 	int error;
 	struct xexec *xp = epp->ep_hdr;
@@ -103,11 +101,7 @@ exec_ibcs2_xout_makecmds(l, epp)
  */
 
 int
-exec_ibcs2_xout_prep_nmagic(l, epp, xp, xep)
-	struct lwp *l;
-	struct exec_package *epp;
-	struct xexec *xp;
-	struct xext *xep;
+exec_ibcs2_xout_prep_nmagic(struct lwp *l, struct exec_package *epp, struct xexec *xp, struct xext *xep)
 {
 	int error;
 	size_t nseg, i;

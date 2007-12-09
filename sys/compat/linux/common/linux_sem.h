@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sem.h,v 1.6 2006/02/09 19:18:56 manu Exp $	*/
+/*	$NetBSD: linux_sem.h,v 1.6.38.1 2007/12/09 19:37:04 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -90,11 +90,11 @@ struct linux_sys_semctl_args {
 #ifdef SYSVSEM
 #ifdef _KERNEL
 __BEGIN_DECLS
-int linux_sys_semctl __P((struct lwp *, void *, register_t *));
-void bsd_to_linux_semid_ds __P((struct semid_ds *,
-    struct linux_semid_ds *));
-void linux_to_bsd_semid_ds __P((struct linux_semid_ds *,
-    struct semid_ds *));
+int linux_sys_semctl(struct lwp *, void *, register_t *);
+void bsd_to_linux_semid_ds(struct semid_ds *,
+    struct linux_semid_ds *);
+void linux_to_bsd_semid_ds(struct linux_semid_ds *,
+    struct semid_ds *);
 __END_DECLS
 #endif	/* !_KERNEL */
 #endif	/* !SYSVSEM */

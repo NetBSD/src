@@ -1,4 +1,4 @@
-/*	$NetBSD: putter.c,v 1.4.2.3 2007/11/21 21:55:45 joerg Exp $	*/
+/*	$NetBSD: putter.c,v 1.4.2.4 2007/12/09 19:37:56 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: putter.c,v 1.4.2.3 2007/11/21 21:55:45 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: putter.c,v 1.4.2.4 2007/12/09 19:37:56 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -383,7 +383,7 @@ filt_putterdetach(struct knote *kn)
 }
 
 static int
-filt_putterioctl(struct knote *kn, long hint)
+filt_putter(struct knote *kn, long hint)
 {
 	struct putter_instance *pi = kn->kn_hook;
 	int error;
@@ -401,8 +401,8 @@ filt_putterioctl(struct knote *kn, long hint)
 	return kn->kn_data != 0;
 }
 
-static const struct filterops putterioctl_filtops =
-	{ 1, NULL, filt_putterdetach, filt_putterioctl };
+static const struct filterops putter_filtops =
+	{ 1, NULL, filt_putterdetach, filt_putter };
 
 static int
 putter_fop_kqfilter(struct file *fp, struct knote *kn)
@@ -410,20 +410,26 @@ putter_fop_kqfilter(struct file *fp, struct knote *kn)
 	struct putter_instance *pi = fp->f_data;
 	struct klist *klist;
 
-	if (kn->kn_filter != EVFILT_READ)
-		return 1;
+	switch (kn->kn_filter) {
+	case EVFILT_READ:
+		klist = &pi->pi_sel.sel_klist;
+		kn->kn_fop = &putter_filtops;
+		kn->kn_hook = pi;
 
-	klist = &pi->pi_sel.sel_klist;
-	kn->kn_fop = &putterioctl_filtops;
-	kn->kn_hook = pi;
+		mutex_enter(&pi_mtx);
+		SLIST_INSERT_HEAD(klist, kn, kn_selnext);
+		mutex_exit(&pi_mtx);
 
-	mutex_enter(&pi_mtx);
-	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
-	mutex_exit(&pi_mtx);
+		break;
+	case EVFILT_WRITE:
+		kn->kn_fop = &seltrue_filtops;
+		break;
+	default:
+		return EINVAL;
+	}
 
 	return 0;
 }
-
 
 /*
  * Device routines.  These are for when /dev/puffs is initially

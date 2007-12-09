@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.81.4.2 2007/10/26 15:49:39 joerg Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.81.4.3 2007/12/09 19:38:55 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.81.4.2 2007/10/26 15:49:39 joerg Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.81.4.3 2007/12/09 19:38:55 jmcneill Exp $");
 
 #ifdef LFS_READWRITE
 #define	FS			struct lfs
@@ -506,8 +506,7 @@ out:
 	if (resid > uio->uio_resid)
 		VN_KNOTE(vp, NOTE_WRITE | (extended ? NOTE_EXTEND : 0));
 	if (error) {
-		(void) UFS_TRUNCATE(vp, osize, ioflag & IO_SYNC, ap->a_cred,
-		    curlwp);
+		(void) UFS_TRUNCATE(vp, osize, ioflag & IO_SYNC, ap->a_cred);
 		uio->uio_offset -= resid - uio->uio_resid;
 		uio->uio_resid = resid;
 	} else if (resid > uio->uio_resid && (ioflag & IO_SYNC) == IO_SYNC)

@@ -1,4 +1,4 @@
-/* $NetBSD: drm_lock.c,v 1.1.12.2 2007/11/21 21:54:35 joerg Exp $ */
+/* $NetBSD: drm_lock.c,v 1.1.12.3 2007/12/09 19:37:46 jmcneill Exp $ */
 
 /* lock.c -- IOCTLs for locking -*- linux-c -*-
  * Created: Tue Feb  2 08:37:54 1999 by faith@valinux.com
@@ -164,6 +164,10 @@ int drm_unlock(DRM_IOCTL_ARGS)
 		    DRM_CURRENTPID, lock.context);
 		return EINVAL;
 	}
+
+	if (!_DRM_LOCK_IS_HELD(dev->lock.hw_lock->lock) ||
+	    _DRM_LOCKING_CONTEXT(dev->lock.hw_lock->lock) != lock.context)
+		return EINVAL;
 
 	atomic_inc(&dev->counts[_DRM_STAT_UNLOCKS]);
 

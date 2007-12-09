@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_machdep.h,v 1.1 2006/02/09 19:18:57 manu Exp $ */
+/*	$NetBSD: linux32_machdep.h,v 1.1.46.1 2007/12/09 19:37:07 jmcneill Exp $ */
 
 #ifndef _AMD64_LINUX32_MACHDEP_H
 #define _AMD64_LINUX32_MACHDEP_H
@@ -7,7 +7,7 @@
 
 #ifdef _KERNEL
 __BEGIN_DECLS
-void linux32_syscall_intern __P((struct proc *));
+void linux32_syscall_intern(struct proc *);
 __END_DECLS
 #endif /* !_KERNEL */
 

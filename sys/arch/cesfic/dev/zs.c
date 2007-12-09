@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.11.18.1 2007/11/11 16:46:27 joerg Exp $	*/
+/*	$NetBSD: zs.c,v 1.11.18.2 2007/12/09 19:34:49 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.11.18.1 2007/11/11 16:46:27 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.11.18.2 2007/12/09 19:34:49 jmcneill Exp $");
 
 #include "opt_ddb.h"
 
@@ -216,7 +216,7 @@ zshard(arg)
 		rval |= zsc_intr_hard(zsc);
 		if ((zsc->zsc_cs[0]->cs_softreq) ||
 		    (zsc->zsc_cs[1]->cs_softreq)) {
-			softintr_schedule(zsc->zsc_softintr_cookie);
+			softint_schedule(zsc->zsc_softintr_cookie);
 		}
 	}
 	return (rval);

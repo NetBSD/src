@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.57 2007/06/03 19:46:23 uwe Exp $	*/
+/*	$NetBSD: machdep.c,v 1.57.8.1 2007/12/09 19:35:18 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.57 2007/06/03 19:46:23 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.57.8.1 2007/12/09 19:35:18 jmcneill Exp $");
 
 #include "opt_md.h"
 #include "opt_ddb.h"
@@ -599,11 +599,14 @@ void
 intc_intr(int ssr, int spc, int ssp)
 {
 	struct intc_intrhand *ih;
+	struct cpu_info *ci;
 	int evtcode;
 	uint16_t r;
 
 	evtcode = _reg_read_4(CPU_IS_SH3 ? SH7709_INTEVT2 : SH4_INTEVT);
 
+	ci = curcpu();
+	ci->ci_idepth++;
 	ih = EVTCODE_IH(evtcode);
 	KDASSERT(ih->ih_func);
 	/*
@@ -630,6 +633,7 @@ intc_intr(int ssr, int spc, int ssp)
 		if (cause == 0) {
 			printf("masked HD6446x interrupt.0x%04x\n", r);
 			_reg_write_2(HD6446X_NIRR, 0x0000);
+			ci->ci_idepth--;
 			return;
 		}
 		/* Enable higher level interrupt*/
@@ -641,4 +645,5 @@ intc_intr(int ssr, int spc, int ssp)
 		(*ih->ih_func)(ih->ih_arg);
 		__dbg_heart_beat(HEART_BEAT_BLUE);
 	}
+	ci->ci_idepth--;
 }

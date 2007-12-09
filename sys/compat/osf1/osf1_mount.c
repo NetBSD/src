@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_mount.c,v 1.35.6.1 2007/11/27 19:36:50 joerg Exp $	*/
+/*	$NetBSD: osf1_mount.c,v 1.35.6.2 2007/12/09 19:37:24 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_mount.c,v 1.35.6.1 2007/11/27 19:36:50 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_mount.c,v 1.35.6.2 2007/12/09 19:37:24 jmcneill Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -109,10 +109,7 @@ static int	osf1_mount_mfs(struct lwp *, struct osf1_sys_mount_args *);
 static int	osf1_mount_nfs(struct lwp *, struct osf1_sys_mount_args *);
 
 int
-osf1_sys_fstatfs(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+osf1_sys_fstatfs(struct lwp *l, void *v, register_t *retval)
 {
 	struct osf1_sys_fstatfs_args *uap = v;
 	struct proc *p = l->l_proc;
@@ -139,10 +136,7 @@ osf1_sys_fstatfs(l, v, retval)
 }
 
 int
-osf1_sys_getfsstat(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+osf1_sys_getfsstat(struct lwp *l, void *v, register_t *retval)
 {
 	struct osf1_sys_getfsstat_args *uap = v;
 	struct mount *mp, *nmp;
@@ -187,10 +181,7 @@ osf1_sys_getfsstat(l, v, retval)
 }
 
 int
-osf1_sys_mount(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+osf1_sys_mount(struct lwp *l, void *v, register_t *retval)
 {
 	struct osf1_sys_mount_args *uap = v;
 
@@ -213,10 +204,7 @@ osf1_sys_mount(l, v, retval)
 }
 
 int
-osf1_sys_statfs(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+osf1_sys_statfs(struct lwp *l, void *v, register_t *retval)
 {
 	struct osf1_sys_statfs_args *uap = v;
 	struct mount *mp;
@@ -225,7 +213,8 @@ osf1_sys_statfs(l, v, retval)
 	int error;
 	struct nameidata nd;
 
-	NDINIT(&nd, LOOKUP, FOLLOW | TRYEMULROOT, UIO_USERSPACE, SCARG(uap, path), l);
+	NDINIT(&nd, LOOKUP, FOLLOW | TRYEMULROOT, UIO_USERSPACE,
+	    SCARG(uap, path));
 	if ((error = namei(&nd)))
 		return (error);
 	mp = nd.ni_vp->v_mount;
@@ -240,10 +229,7 @@ osf1_sys_statfs(l, v, retval)
 }
 
 int
-osf1_sys_unmount(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+osf1_sys_unmount(struct lwp *l, void *v, register_t *retval)
 {
 	struct osf1_sys_unmount_args *uap = v;
 	struct sys_unmount_args a;

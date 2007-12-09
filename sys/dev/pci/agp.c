@@ -1,4 +1,4 @@
-/*	$NetBSD: agp.c,v 1.46.14.11 2007/12/08 16:21:21 jmcneill Exp $	*/
+/*	$NetBSD: agp.c,v 1.46.14.12 2007/12/09 19:37:52 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -65,7 +65,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.46.14.11 2007/12/08 16:21:21 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.46.14.12 2007/12/09 19:37:52 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -324,7 +324,7 @@ agpattach(struct device *parent, struct device *self, void *aux)
 	 * The mutex is used to prevent re-entry to
 	 * agp_generic_bind_memory() since that function can sleep.
 	 */
-	mutex_init(&sc->as_mtx, MUTEX_DRIVER, IPL_NONE);
+	mutex_init(&sc->as_mtx, MUTEX_DEFAULT, IPL_NONE);
 
 	TAILQ_INIT(&sc->as_memory);
 

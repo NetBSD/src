@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_pathname.c,v 1.28.6.1 2007/11/27 19:36:56 joerg Exp $	*/
+/*	$NetBSD: ultrix_pathname.c,v 1.28.6.2 2007/12/09 19:37:38 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_pathname.c,v 1.28.6.1 2007/11/27 19:36:56 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_pathname.c,v 1.28.6.2 2007/12/09 19:37:38 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -230,7 +230,8 @@ ultrix_sys_statfs(struct lwp *l, void *v, register_t *retval)
 	int error;
 	struct nameidata nd;
 
-	NDINIT(&nd, LOOKUP, FOLLOW | TRYEMULROOT, UIO_USERSPACE, SCARG(uap, path), l);
+	NDINIT(&nd, LOOKUP, FOLLOW | TRYEMULROOT, UIO_USERSPACE,
+	    SCARG(uap, path));
 	if ((error = namei(&nd)) != 0)
 		return (error);
 

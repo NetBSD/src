@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_43.c,v 1.39.6.2 2007/11/27 19:36:40 joerg Exp $	*/
+/*	$NetBSD: vfs_syscalls_43.c,v 1.39.6.3 2007/12/09 19:36:38 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.39.6.2 2007/11/27 19:36:40 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.39.6.3 2007/12/09 19:36:38 jmcneill Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_union.h"
@@ -70,15 +70,13 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.39.6.2 2007/11/27 19:36:40 joe
 #include <compat/sys/stat.h>
 #include <compat/sys/mount.h>
 
-static void cvtstat __P((struct stat *, struct stat43 *));
+static void cvtstat(struct stat *, struct stat43 *);
 
 /*
  * Convert from an old to a new stat structure.
  */
 static void
-cvtstat(st, ost)
-	struct stat *st;
-	struct stat43 *ost;
+cvtstat(struct stat *st, struct stat43 *ost)
 {
 
 	ost->st_dev = st->st_dev;
@@ -144,7 +142,7 @@ compat_43_sys_lstat(struct lwp *l, void *v, register_t *retval)
 
 	ndflags = NOFOLLOW | LOCKLEAF | LOCKPARENT | TRYEMULROOT;
 again:
-	NDINIT(&nd, LOOKUP, ndflags, UIO_USERSPACE, SCARG(uap, path), l);
+	NDINIT(&nd, LOOKUP, ndflags, UIO_USERSPACE, SCARG(uap, path));
 	if ((error = namei(&nd))) {
 		if (error == EISDIR && (ndflags & LOCKPARENT) != 0) {
 			/*
@@ -442,8 +440,8 @@ unionread:
 
 #ifdef UNION
 {
-	extern int (**union_vnodeop_p) __P((void *));
-	extern struct vnode *union_dircache __P((struct vnode *));
+	extern int (**union_vnodeop_p)(void *);
+	extern struct vnode *union_dircache(struct vnode *);
 
 	if ((count == auio.uio_resid) &&
 	    (vp->v_op == union_vnodeop_p)) {

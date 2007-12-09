@@ -1,4 +1,4 @@
-/*	$NetBSD: dhu.c,v 1.47.14.3 2007/11/21 21:55:45 joerg Exp $	*/
+/*	$NetBSD: dhu.c,v 1.47.14.4 2007/12/09 19:37:56 jmcneill Exp $	*/
 /*
  * Copyright (c) 2003, Hugh Graham.
  * Copyright (c) 1992, 1993
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dhu.c,v 1.47.14.3 2007/11/21 21:55:45 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dhu.c,v 1.47.14.4 2007/12/09 19:37:56 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -438,9 +438,6 @@ dhuopen(dev, flag, mode, l)
 	if (line >= sc->sc_lines)
 		return ENXIO;
 
-	if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN, tp))
-		return (EBUSY);
-
 	mutex_spin_enter(&tty_lock);
 	if (sc->sc_type == IS_DHU) {
 		/* CSR 3:0 must be 0 */
@@ -452,6 +449,10 @@ dhuopen(dev, flag, mode, l)
 	sc->sc_dhu[line].dhu_modem = DHU_READ_WORD(DHU_UBA_STAT);
 
 	tp = sc->sc_dhu[line].dhu_tty;
+
+	if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN, tp))
+		return (EBUSY);
+
 	tp->t_oproc   = dhustart;
 	tp->t_param   = dhuparam;
 	tp->t_hwiflow = dhuiflow;

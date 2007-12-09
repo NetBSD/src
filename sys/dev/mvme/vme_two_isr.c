@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_two_isr.c,v 1.6.44.1 2007/10/26 15:45:47 joerg Exp $	*/
+/*	$NetBSD: vme_two_isr.c,v 1.6.44.2 2007/12/09 19:37:52 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme_two_isr.c,v 1.6.44.1 2007/10/26 15:45:47 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme_two_isr.c,v 1.6.44.2 2007/12/09 19:37:52 jmcneill Exp $");
 
 #include "vmetwo.h"
 
@@ -86,7 +86,9 @@ static struct vme_two_handler {
 				 sizeof(struct vme_two_handler))
 
 static	int  vmetwo_local_isr_trampoline(void *);
+#ifdef notyet
 static	void vmetwo_softintr_assert(void);
+#endif
 
 static	struct vmetwo_softc *vmetwo_sc;
 
@@ -217,9 +219,11 @@ vmetwo_intr_init(struct vmetwo_softc *sc)
 #endif
 
 	/* Setup hardware assisted soft interrupts */
+#ifdef notyet
 	vmetwo_intr_establish(sc, 1, 1, VME2_VEC_SOFT0, 1,
 	    (int (*)(void *))softintr_dispatch, NULL, NULL);
 	_softintr_chipset_assert = vmetwo_softintr_assert;
+#endif
 }
 
 static int
@@ -428,9 +432,11 @@ vmetwo_intr_disestablish(csc, lvl, vec, last, evcnt)
 	splx(s);
 }
 
+#ifdef notyet
 static void
 vmetwo_softintr_assert(void)
 {
 
 	vme2_lcsr_write(vmetwo_sc, VME2LCSR_SOFTINT_SET, VME2_SOFTINT_SET(0));
 }
+#endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: est.c,v 1.2.10.5 2007/10/28 20:11:00 joerg Exp $	*/
+/*	$NetBSD: est.c,v 1.2.10.6 2007/12/09 19:36:28 jmcneill Exp $	*/
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -88,7 +88,7 @@
 /* #define EST_DEBUG */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.2.10.5 2007/10/28 20:11:00 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.2.10.6 2007/12/09 19:36:28 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1101,7 +1101,7 @@ est_init_main(int vendor)
 	}
 
 	if (bus_clock == 0) {
-		aprint_normal("%s: unknown system bus clock\n", __func__);
+		aprint_debug("%s: unknown system bus clock\n", __func__);
 		return;
 	}
 
@@ -1134,16 +1134,14 @@ est_init_main(int vendor)
 		 * Do complain about other weirdness, because we first want to
 		 * know about it, before we decide what to do with it
 		 */
-		aprint_normal("%s: EST: strange msr value 0x%" PRIu64 "\n",
-		    cpuname, msr);
+		aprint_debug("%s: strange msr value 0x%" PRIu64 "\n",
+		    __func__, msr);
 		return;
 	}
 #endif
 
 	msr = rdmsr(MSR_PERF_STATUS);
 	mv = MSR2MV(msr);
-	aprint_normal("%s: %s (%d mV) ", cpuname, est_desc, mv);
-	aprint_normal("%d MHz\n", MSR2MHZ(msr, bus_clock));
 
 #ifdef __i386__
 	/*
@@ -1164,29 +1162,28 @@ est_init_main(int vendor)
 		int j, tablesize, freq, volt;
 		int minfreq, minvolt, maxfreq, maxvolt, freqinc, voltinc;
 
-                aprint_normal("%s: unknown Enhanced SpeedStep CPU.\n",
-                    cpuname);
-
 		/*
 		 * Some CPUs report the same frequency in idhi and idlo,
 		 * so do not run est on them.
 		 */
-		if (idhi == idlo)
+		if (idhi == idlo) {
+			aprint_debug("%s: idhi == idlo\n", __func__);
 			return;
+		}
 
 #ifdef EST_DEBUG
-		printf("%s: bus_clock = %d\n", __FUNCTION__, bus_clock);
-		printf("%s: idlo = 0x%x\n", __FUNCTION__, idlo);
-		printf("%s: lo  %4d mV, %4d MHz\n", __FUNCTION__,
+		printf("%s: bus_clock = %d\n", __func__, bus_clock);
+		printf("%s: idlo = 0x%x\n", __func__, idlo);
+		printf("%s: lo  %4d mV, %4d MHz\n", __func__,
 		    MSR2MV(idlo), MSR2MHZ(idlo, bus_clock));
-		printf("%s: raw %4d   , %4d    \n", __FUNCTION__,
+		printf("%s: raw %4d   , %4d    \n", __func__,
 		    (idlo & 0xff), ((idlo >> 8) & 0xff));
-		printf("%s: idhi = 0x%x\n", __FUNCTION__, idhi);
-		printf("%s: hi  %4d mV, %4d MHz\n", __FUNCTION__,
+		printf("%s: idhi = 0x%x\n", __func__, idhi);
+		printf("%s: hi  %4d mV, %4d MHz\n", __func__,
 		    MSR2MV(idhi), MSR2MHZ(idhi, bus_clock));
-		printf("%s: raw %4d   , %4d    \n", __FUNCTION__,
+		printf("%s: raw %4d   , %4d    \n", __func__,
 		    (idhi & 0xff), ((idhi >> 8) & 0xff));
-		printf("%s: cur  = 0x%x\n", __FUNCTION__, cur);
+		printf("%s: cur  = 0x%x\n", __func__, cur);
 #endif
 
                 /*
@@ -1230,7 +1227,7 @@ est_init_main(int vendor)
 #ifdef EST_DEBUG
 			printf("%s: fake entry %d: %4d mV, %4d MHz  "
 			    "MSR*100 mV = %4d freq = %4d\n",
-			    __FUNCTION__, j, MSR2MV(fake_table[j]),
+			    __func__, j, MSR2MV(fake_table[j]),
 			    MSR2MHZ(fake_table[j], bus_clock),
 			    volt, freq);
 #endif /* EST_DEBUG */
@@ -1254,6 +1251,9 @@ est_init_main(int vendor)
 		    MSR2MHZ(est_fqlist->table[i], bus_clock),
 		    i < est_fqlist->n - 1 ? " " : "");
 	}
+
+	aprint_normal("%s: %s (%d mV) ", cpuname, est_desc, mv);
+	aprint_normal("%d MHz\n", MSR2MHZ(msr, bus_clock));
 	aprint_normal("%s: %s frequencies available (MHz): %s\n",
 	    cpuname, est_desc, freq_names);
 
@@ -1296,5 +1296,5 @@ est_init_main(int vendor)
 
  err:
 	free(freq_names, M_SYSCTLDATA);
-	aprint_normal("%s: sysctl_createv failed (rc = %d)\n", __func__, rc);
+	aprint_error("%s: sysctl_createv failed (rc = %d)\n", __func__, rc);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.98.6.6 2007/12/08 16:21:37 jmcneill Exp $	*/
+/*	$NetBSD: usb.c,v 1.98.6.7 2007/12/09 19:38:05 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.98.6.6 2007/12/08 16:21:37 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.98.6.7 2007/12/09 19:38:05 jmcneill Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -733,7 +733,7 @@ usbkqfilter(dev_t dev, struct knote *kn)
 		break;
 
 	default:
-		return (1);
+		return (EINVAL);
 	}
 
 	kn->kn_hook = NULL;

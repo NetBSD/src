@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.129.4.2 2007/11/27 19:39:33 joerg Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.129.4.3 2007/12/09 19:38:57 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.129.4.2 2007/11/27 19:39:33 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.129.4.3 2007/12/09 19:38:57 jmcneill Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -569,7 +569,8 @@ sys_swapctl(struct lwp *l, void *v, register_t *retval)
 			space = UIO_USERSPACE;
 			where = (char *)SCARG(uap, arg);
 		}
-		NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF | TRYEMULROOT, space, where, l);
+		NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF | TRYEMULROOT,
+		    space, where);
 		if ((error = namei(&nd)))
 			goto out;
 		vp = nd.ni_vp;

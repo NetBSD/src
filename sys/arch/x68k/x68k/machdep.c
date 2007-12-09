@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.144 2007/07/14 09:50:04 isaki Exp $	*/
+/*	$NetBSD: machdep.c,v 1.144.8.1 2007/12/09 19:36:25 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.144 2007/07/14 09:50:04 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.144.8.1 2007/12/09 19:36:25 jmcneill Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -111,6 +111,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.144 2007/07/14 09:50:04 isaki Exp $");
 #include <sys/core.h>
 #include <sys/kcore.h>
 #include <sys/ksyms.h>
+#include <sys/cpu.h>
 
 #include "ksyms.h"
 
@@ -118,14 +119,11 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.144 2007/07/14 09:50:04 isaki Exp $");
 #include <sys/exec_elf.h>
 #endif
 
-#include <net/netisr.h>
-
 #include <machine/db_machdep.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
 
 #include <m68k/cacheops.h>
-#include <machine/cpu.h>
 #include <machine/reg.h>
 #include <machine/psl.h>
 #include <machine/pte.h>
@@ -913,16 +911,12 @@ intrhand(int sr)
 
 static const int ipl2psl_table[] = {
 	[IPL_NONE]       = PSL_IPL0,
-	[IPL_SOFT]       = PSL_IPL1,
+	[IPL_SOFTBIO]    = PSL_IPL1,
 	[IPL_SOFTCLOCK]  = PSL_IPL1,
 	[IPL_SOFTNET]    = PSL_IPL1,
 	[IPL_SOFTSERIAL] = PSL_IPL1,
-	[IPL_BIO]        = PSL_IPL3,
-	[IPL_NET]        = PSL_IPL4,
-	[IPL_TTY]        = PSL_IPL4,
 	[IPL_VM]         = PSL_IPL4,
-	[IPL_CLOCK]      = PSL_IPL6,
-	[IPL_HIGH]       = PSL_IPL7,
+	[IPL_SCHED]      = PSL_IPL6,
 };
 
 ipl_cookie_t
@@ -1254,3 +1248,13 @@ setmemrange(void)
 	physmem = m68k_btop(mem_size);
 }
 #endif
+
+volatile int ssir;
+int idepth;
+
+bool
+cpu_intr_p(void)
+{
+
+	return idepth != 0;
+}

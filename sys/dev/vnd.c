@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.169.4.2 2007/11/27 19:36:59 joerg Exp $	*/
+/*	$NetBSD: vnd.c,v 1.169.4.3 2007/12/09 19:37:43 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -137,7 +137,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.169.4.2 2007/11/27 19:36:59 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.169.4.3 2007/12/09 19:37:43 jmcneill Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -977,7 +977,7 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		fflags = FREAD;
 		if ((vio->vnd_flags & VNDIOF_READONLY) == 0)
 			fflags |= FWRITE;
-		NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, vio->vnd_file, l);
+		NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, vio->vnd_file);
 		if ((error = vn_open(&nd, fflags, 0)) != 0)
 			goto unlock_and_exit;
 		KASSERT(l);

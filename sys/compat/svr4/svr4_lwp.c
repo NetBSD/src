@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_lwp.c,v 1.14 2007/02/09 21:55:24 ad Exp $	*/
+/*	$NetBSD: svr4_lwp.c,v 1.14.18.1 2007/12/09 19:37:31 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_lwp.c,v 1.14 2007/02/09 21:55:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_lwp.c,v 1.14.18.1 2007/12/09 19:37:31 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -67,19 +67,13 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_lwp.c,v 1.14 2007/02/09 21:55:24 ad Exp $");
 
 
 int
-svr4_sys__lwp_self(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_sys__lwp_self(struct lwp *l, void *v, register_t *retval)
 {
 	return sys__lwp_self(l, v, retval);
 }
 
 int
-svr4_sys__lwp_create(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_sys__lwp_create(struct lwp *l, void *v, register_t *retval)
 {
 	struct svr4_sys__lwp_create_args *uap = v;
 	struct sys__lwp_create_args lc;
@@ -108,10 +102,7 @@ svr4_sys__lwp_create(l, v, retval)
 }
 
 int
-svr4_sys__lwp_kill(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_sys__lwp_kill(struct lwp *l, void *v, register_t *retval)
 {
 	struct svr4_sys__lwp_kill_args *uap = v;
 	struct sys_kill_args ap;
@@ -147,10 +138,7 @@ svr4_sys__lwp_exit(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-svr4_sys__lwp_wait(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_sys__lwp_wait(struct lwp *l, void *v, register_t *retval)
 {
 	struct svr4_sys__lwp_wait_args *uap = v;
 	struct sys__lwp_wait_args ap;
@@ -162,10 +150,7 @@ svr4_sys__lwp_wait(l, v, retval)
 }
 
 int
-svr4_sys__lwp_suspend(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_sys__lwp_suspend(struct lwp *l, void *v, register_t *retval)
 {
 	struct svr4_sys__lwp_suspend_args *uap = v;
 	struct sys__lwp_suspend_args ap;
@@ -177,10 +162,7 @@ svr4_sys__lwp_suspend(l, v, retval)
 
 
 int
-svr4_sys__lwp_continue(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_sys__lwp_continue(struct lwp *l, void *v, register_t *retval)
 {
 	struct svr4_sys__lwp_continue_args *uap = v;
 	struct sys__lwp_continue_args ap;

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_select.c,v 1.12 2007/03/18 21:38:34 dsl Exp $	*/
+/*	$NetBSD: netbsd32_select.c,v 1.12.8.1 2007/12/09 19:37:20 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_select.c,v 1.12 2007/03/18 21:38:34 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_select.c,v 1.12.8.1 2007/12/09 19:37:20 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,10 +79,7 @@ netbsd32_select(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-netbsd32_pselect(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_pselect(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_pselect_args /* {
 		syscallarg(int) nd;
@@ -119,10 +116,7 @@ netbsd32_pselect(l, v, retval)
 }
 
 int
-netbsd32_pollts(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_pollts(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_pollts_args /* {
 		syscallarg(struct netbsd32_pollfdp_t) fds;

@@ -1,4 +1,4 @@
-#	$NetBSD: files.ev64260,v 1.9.12.1 2007/10/26 15:42:26 joerg Exp $
+#	$NetBSD: files.ev64260,v 1.9.12.2 2007/12/09 19:35:01 jmcneill Exp $
 #
 # Marvell (Galileo) "EV64260" evaluation board's specific configuration info
 #
@@ -12,7 +12,6 @@ file	arch/evbppc/ev64260/machdep.c
 #file	arch/evbppc/ev64260/pci_machdep.c
 
 file	arch/powerpc/powerpc/clock.c
-#file	arch/powerpc/powerpc/softintr.c
 file	arch/powerpc/marvell/extintr.c
 
 #options	PIC_DISCOVERY
