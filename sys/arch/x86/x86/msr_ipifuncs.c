@@ -1,4 +1,4 @@
-/* $NetBSD: msr_ipifuncs.c,v 1.12 2007/12/09 15:33:13 ad Exp $ */
+/* $NetBSD: msr_ipifuncs.c,v 1.13 2007/12/09 15:35:15 ad Exp $ */
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msr_ipifuncs.c,v 1.12 2007/12/09 15:33:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msr_ipifuncs.c,v 1.13 2007/12/09 15:35:15 ad Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -42,15 +42,16 @@ __KERNEL_RCSID(0, "$NetBSD: msr_ipifuncs.c,v 1.12 2007/12/09 15:33:13 ad Exp $")
 #include <sys/mutex.h>
 #include <sys/lock.h>
 #include <sys/atomic.h>
+#include <sys/cpu.h>
 
 #include <x86/cpu_msr.h>
 
-#include <machine/cpu.h>
 #include <machine/intrdefs.h>
 
 static kmutex_t msr_mtx;
 static volatile uint64_t msr_setvalue, msr_setmask;
-static volatile int msr_type, msr_runcount, msr_read;
+static volatile int msr_type, msr_read;
+static volatile u_int msr_runcount;
 
 
 /*
@@ -79,7 +80,7 @@ msr_write_ipi(struct cpu_info *ci)
 	wrmsr(msr_type, msr);
 
 	/* This cpu has finished making all tasks, update the counter. */
-	__asm volatile ("lock; incl (%0)" :: "r" (&msr_runcount));
+	atomic_inc_uint(&msr_runcount);
 }
 
 /*
@@ -133,5 +134,6 @@ msr_cpu_broadcast(struct msr_cpu_broadcast *mcb)
 void
 msr_cpu_broadcast_initmtx(void)
 {
-	mutex_init(&msr_mtx, MUTEX_DRIVER, IPL_NONE);
+
+	mutex_init(&msr_mtx, MUTEX_DEFAULT, IPL_NONE);
 }
