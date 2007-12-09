@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_misc.c,v 1.53 2007/12/08 18:36:28 dsl Exp $	 */
+/*	$NetBSD: svr4_32_misc.c,v 1.54 2007/12/09 13:34:24 dogcow Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_misc.c,v 1.53 2007/12/08 18:36:28 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_misc.c,v 1.54 2007/12/09 13:34:24 dogcow Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1356,7 +1356,7 @@ svr4_32_sys_resolvepath(struct lwp *l, void *v, register_t *retval)
 	size_t len;
 
 	NDINIT(&nd, LOOKUP, NOFOLLOW | SAVENAME | TRYEMULROOT, UIO_USERSPACE,
-	    SCARG_P32(uap, path), l);
+	    SCARG_P32(uap, path));
 
 	if ((error = namei(&nd)) != 0)
 		return error;
