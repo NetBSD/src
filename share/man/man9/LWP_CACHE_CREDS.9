@@ -1,4 +1,4 @@
-.\"	$NetBSD: LWP_CACHE_CREDS.9,v 1.1 2007/12/09 08:31:58 yamt Exp $
+.\"	$NetBSD: LWP_CACHE_CREDS.9,v 1.2 2007/12/09 08:53:57 yamt Exp $
 .\"
 .\" Copyright (c)2007 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -45,7 +45,7 @@
 updates the LWP's cached credential to match with the process' credential
 if the latter has been changed after the last synchronization.
 .Pp
-Each LWPs have its cached credential so that it should be used without
+Each LWPs have its cached credential so that it can be used without
 worrying about potential of other LWP changing the process' credential.
 .Fn kauth_cred_get
 returns the cached credential.
