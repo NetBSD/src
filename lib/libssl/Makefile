@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2007/05/29 13:55:31 tls Exp $
+#	$NetBSD: Makefile,v 1.16 2007/12/09 21:57:35 adrianp Exp $
 
 # RCSid:
 #	Id: Makefile,v 1.33 1998/11/11 11:53:53 sjg Exp
@@ -53,7 +53,7 @@ INCSDIR=/usr/include/openssl
 # we patch `ssl.inc' as we need to be able to turn off SSLv2.
 update_inc:
 	(cd ${.CURDIR}; \
-	find ${OPENSSLSRC}/ssl -name Makefile.ssl | \
+	find ${OPENSSLSRC}/ssl -name Makefile | \
 		perl ${OPENSSLSRC}/extsrcs.pl 2> srcs.inc; \
 	patch -s ssl.inc < ssl.diff )
 
