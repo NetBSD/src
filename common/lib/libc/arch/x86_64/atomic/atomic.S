@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.S,v 1.6 2007/12/09 17:33:56 ad Exp $	*/
+/*	$NetBSD: atomic.S,v 1.7 2007/12/10 14:13:12 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -210,7 +210,7 @@ NENTRY(_atomic_swap_64)
 NENTRY(_atomic_cas_64)
 	movq	%rsi, %rax
 	LOCK(24)
-	cmpxchgl %edx, (%rdi)
+	cmpxchgq %rdx, (%rdi)
 	/* %eax now contains the old value */
 	ret
 
