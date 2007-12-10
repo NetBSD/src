@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.109 2007/12/09 20:28:25 jmcneill Exp $ */
+/* $NetBSD: wskbd.c,v 1.110 2007/12/10 01:11:49 jmcneill Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.109 2007/12/09 20:28:25 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.110 2007/12/10 01:11:49 jmcneill Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -581,6 +581,8 @@ wskbd_detach(struct device  *self, int flags)
 		KASSERT(wskbd_console_device == sc);
 		wskbd_console_device = NULL;
 	}
+
+	pmf_class_input_deregister(self);
 
 	evar = sc->sc_base.me_evp;
 	if (evar != NULL && evar->io != NULL) {
