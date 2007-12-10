@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.147.2.2 2007/12/09 22:24:49 ad Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.147.2.3 2007/12/10 19:28:06 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.147.2.2 2007/12/09 22:24:49 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.147.2.3 2007/12/10 19:28:06 ad Exp $");
 
 #include "fs_union.h"
 #include "veriexec.h"
@@ -676,8 +676,8 @@ vn_lock(struct vnode *vp, int flags)
 	    || (vp->v_iflag & VI_ONWORKLST) != 0);
 #endif
 	KASSERT((flags &
-	    ~(LK_INTERLOCK|LK_SHARED|LK_EXCLUSIVE|LK_DRAIN|LK_NOWAIT|LK_RETRY|
-	    LK_SETRECURSE|LK_CANRECURSE))
+	    ~(LK_INTERLOCK|LK_SHARED|LK_EXCLUSIVE|LK_NOWAIT|LK_RETRY|
+	    LK_CANRECURSE))
 	    == 0);
 
 	do {
