@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.116 2007/12/05 07:06:52 ad Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.116.2.1 2007/12/10 12:56:09 yamt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.116 2007/12/05 07:06:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.116.2.1 2007/12/10 12:56:09 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -76,11 +76,14 @@ __KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.116 2007/12/05 07:06:52 ad Exp $")
 #include <sys/debug.h>
 #include <sys/mutex.h>
 #include <sys/lockdebug.h>
+#include <sys/kmem.h>
 
 #include <uvm/uvm_extern.h>
 
+#if 0
 static struct vm_map_kernel kmem_map_store;
 struct vm_map *kmem_map = NULL;
+#endif
 
 #include "opt_kmempages.h"
 
@@ -165,8 +168,10 @@ struct kmembuckets kmembuckets[MINBUCKET + 16];
 struct kmemusage *kmemusage;
 char *kmembase, *kmemlimit;
 
+#if 0
 #ifdef DEBUG
 static void *malloc_freecheck;
+#endif
 #endif
 
 /*
@@ -304,6 +309,10 @@ MALLOC_DEFINE(M_1394DATA, "1394data", "IEEE 1394 data buffers");
 
 kmutex_t malloc_lock;
 
+struct malloc_header {
+	size_t mh_size;
+};
+
 /*
  * Allocate a block of memory
  */
@@ -316,6 +325,24 @@ void *
 malloc(unsigned long size, struct malloc_type *ksp, int flags)
 #endif /* MALLOCLOG */
 {
+	struct malloc_header *mh;
+	int kmflags = (flags & M_NOWAIT) != 0 ? KM_NOSLEEP : KM_SLEEP;
+	size_t allocsize = sizeof(struct malloc_header) + size;
+	void *p;
+
+	if ((flags & M_ZERO) != 0) {
+		p = kmem_zalloc(allocsize, kmflags);
+	} else {
+		p = kmem_alloc(allocsize, kmflags);
+	}
+	if (p == NULL) {
+		return NULL;
+	}
+	mh = (void *)p;
+	mh->mh_size = allocsize;
+
+	return mh + 1;
+#if 0
 	struct kmembuckets *kbp;
 	struct kmemusage *kup;
 	struct freelist *freep;
@@ -515,6 +542,7 @@ out:
 		memset(va, 0, size);
 	FREECHECK_OUT(&malloc_freecheck, (void *)va);
 	return ((void *) va);
+#endif
 }
 
 /*
@@ -528,6 +556,12 @@ void
 free(void *addr, struct malloc_type *ksp)
 #endif /* MALLOCLOG */
 {
+	struct malloc_header *mh;
+
+	mh = addr;
+	mh--;
+	kmem_free(mh, mh->mh_size);
+#if 0
 	struct kmembuckets *kbp;
 	struct kmemusage *kup;
 	struct freelist *freep;
@@ -657,6 +691,7 @@ free(void *addr, struct malloc_type *ksp)
 	freep->next = NULL;
 	kbp->kb_last = addr;
 	mutex_spin_exit(&malloc_lock);
+#endif
 }
 
 /*
@@ -766,8 +801,10 @@ void
 malloc_type_attach(struct malloc_type *type)
 {
 
+#if 0
 	if (nkmempages == 0)
 		panic("malloc_type_attach: nkmempages == 0");
+#endif
 
 	if (type->ks_magic != M_MAGIC)
 		panic("malloc_type_attach: bad magic");
@@ -871,6 +908,7 @@ kmeminit_nkmempages(void)
 void
 kmeminit(void)
 {
+#if 0
 	__link_set_decl(malloc_types, struct malloc_type);
 	struct malloc_type * const *ksp;
 	vaddr_t kmb, kml;
@@ -923,6 +961,7 @@ kmeminit(void)
 	/* Attach all of the statically-linked malloc types. */
 	__link_set_foreach(ksp, malloc_types)
 		malloc_type_attach(*ksp);
+#endif
 }
 
 #ifdef DDB
