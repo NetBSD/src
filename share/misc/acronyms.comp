@@ -184,6 +184,7 @@ LZW	Lempel Ziv Welch
 MAC	medium access control
 MBR	master boot record
 MDRAM	multibank dynamic random access memory
+MFC	merge from current
 MFM	modified frequency modulation
 MIDI	musical instrument digital interface
 MIME	multipurpose internet mail extensions
