@@ -1,8 +1,0 @@
-Content-Type: application/X-atf-atffile; version="1"
-
-# This is a comment on a line of its own.
-# And this is another one.
-
-	    # Another after some whitespace.
-
-# The last one after an empty line.
