@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.h,v 1.58 2007/07/22 21:07:47 he Exp $	*/
+/*	$NetBSD: uvm_map.h,v 1.58.16.1 2007/12/10 08:41:13 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -290,6 +290,15 @@ struct uvm_map_args {
 
 #ifdef PMAP_GROWKERNEL
 extern vaddr_t	uvm_maxkaddr;
+
+static inline void
+uvm_growkernel(vaddr_t endva)
+{
+
+	if (__predict_false(uvm_maxkaddr < endva)) {
+		uvm_maxkaddr = pmap_growkernel(endva);
+	}
+}
 #endif
 
 /*
