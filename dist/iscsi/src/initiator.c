@@ -1055,10 +1055,9 @@ enqueue_worker_proc(void *arg)
 	iscsi_nop_out_args_t *nop_out;
 	iscsi_worker_t *me = (iscsi_worker_t *) arg;
 	uint64_t	target;
+	uint32_t        tag;
 	strv_t		sv;
 	int             rc;
-	uint32_t        tag;
-	int		i;
 
 
 	ISCSI_THREAD_START("enqueue_worker");
@@ -1123,10 +1122,6 @@ initialize:
 				iscsi_trace(TRACE_ISCSI_DEBUG, __FILE__, __LINE__, "enqueue_worker: entering Discovery phase with target %llu\n", target);
 				rc = discovery_phase(target, &sv);
 				iscsi_trace(TRACE_ISCSI_DEBUG, __FILE__, __LINE__, "enqueue_worker: Discovery phase complete\n");
-
-				for (i = 0 ; i < sv.c ; i += 2) {
-					printf("%s: %s %s\n", cmd->targetname, sv.v[i + 1], sv.v[i]);
-				}
 
 				/* Destroy session */
 
