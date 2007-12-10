@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.226 2007/12/09 22:04:06 jmcneill Exp $
+#	$NetBSD: BRANCHES,v 1.227 2007/12/10 13:27:09 yamt Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -536,6 +536,18 @@ Notes:		Goals:
 		- Unmount erroneously reports busy sometimes. Why?
 
 		- usl_detachtimeout warning occasionally.
+
+Branch:		yamt-kmem
+Description:	
+		- separate kernel va allocation from kernel fault handling.
+		- make kmem_alloc interrupt-safe.
+Status:		Active
+Start Date:	Sun Dec  9 2007
+End Date:	
+Base Tag:	yamt-kmem-base
+Maintainer:	YAMAMOTO Takashi <yamt@NetBSD.org>
+Scope:		src/sys  (src/common is tagged but not branched)
+Notes:		
 
 Branch:		yamt-lazymbuf
 Description:	implement and evaluate lazy mapping of mbuf external data pages
