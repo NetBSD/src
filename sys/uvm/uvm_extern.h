@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.139 2007/12/05 09:37:34 yamt Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.139.2.1 2007/12/10 12:56:12 yamt Exp $	*/
 
 /*
  *
@@ -459,6 +459,9 @@ extern struct uvmexp uvmexp;
  * Finally, bring in standard UVM headers.
  */
 #include <sys/vmmeter.h>
+#if defined(_KERNEL)
+#include <sys/vmem.h>
+#endif /* defined(_KERNEL) */
 #include <sys/queue.h>
 #include <sys/lock.h>
 #include <uvm/uvm_param.h>
@@ -467,6 +470,10 @@ extern struct uvmexp uvmexp;
 #include <uvm/uvm_pmap.h>
 #include <uvm/uvm_map.h>
 #include <uvm/uvm_pager.h>
+
+#if defined(_KERNEL)
+extern vmem_t *kernel_va_arena;
+#endif /* defined(_KERNEL) */
 
 /*
  * helpers for calling ubc_release()

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.246 2007/11/26 08:22:32 xtraeme Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.246.4.1 2007/12/10 12:56:13 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.246 2007/11/26 08:22:32 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.246.4.1 2007/12/10 12:56:13 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -83,6 +83,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.246 2007/11/26 08:22:32 xtraeme Exp $"
 #include <sys/mman.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/pool.h>
 #include <sys/kernel.h>
 #include <sys/mount.h>
@@ -178,7 +179,7 @@ extern struct vm_map *pager_map; /* XXX */
 #define	VM_MAP_USE_KMAPENT_FLAGS(flags) \
 	(((flags) & VM_MAP_INTRSAFE) != 0)
 #define	VM_MAP_USE_KMAPENT(map) \
-	(VM_MAP_USE_KMAPENT_FLAGS((map)->flags) || (map) == kernel_map)
+	(VM_MAP_USE_KMAPENT_FLAGS((map)->flags) /*|| (map) == kernel_map*/)
 
 /*
  * UVM_ET_ISCOMPATIBLE: check some requirements for map entry merging
@@ -635,9 +636,12 @@ static struct vm_map_entry *
 uvm_mapent_alloc(struct vm_map *map, int flags)
 {
 	struct vm_map_entry *me;
+#if 0
 	int pflags = (flags & UVM_FLAG_NOWAIT) ? PR_NOWAIT : PR_WAITOK;
+#endif
 	UVMHIST_FUNC("uvm_mapent_alloc"); UVMHIST_CALLED(maphist);
 
+#if 0
 	if (VM_MAP_USE_KMAPENT(map)) {
 		me = uvm_kmapent_alloc(map, flags);
 	} else {
@@ -646,6 +650,14 @@ uvm_mapent_alloc(struct vm_map *map, int flags)
 			return NULL;
 		me->flags = 0;
 	}
+#else
+	me = kmem_alloc(sizeof(*me),
+	    (flags & UVM_FLAG_NOWAIT) ? KM_NOSLEEP : KM_SLEEP);
+	if (__predict_false(me == NULL)) {
+		return NULL;
+	}
+	me->flags = 0;
+#endif
 
 	UVMHIST_LOG(maphist, "<- new entry=0x%x [kentry=%d]", me,
 	    ((map->flags & VM_MAP_INTRSAFE) != 0 || map == kernel_map), 0, 0);
@@ -693,11 +705,14 @@ uvm_mapent_free(struct vm_map_entry *me)
 
 	UVMHIST_LOG(maphist,"<- freeing map entry=0x%x [flags=%d]",
 		me, me->flags, 0, 0);
+#if 0
 	if (me->flags & UVM_MAP_KERNEL) {
 		uvm_kmapent_free(me);
 	} else {
 		pool_put(&uvm_map_entry_pool, me);
 	}
+#endif
+	kmem_free(me, sizeof(*me));
 }
 
 /*
@@ -1026,7 +1041,7 @@ uvm_map(struct vm_map *map, vaddr_t *startp /* IN/OUT */, vsize_t size,
 
 	new_entry = NULL;
 	if (VM_MAP_USE_KMAPENT(map) || (flags & UVM_FLAG_QUANTUM) ||
-	    map == pager_map) {
+	    map == pager_map || map == kernel_map) {
 		new_entry = uvm_mapent_alloc(map, (flags & UVM_FLAG_NOWAIT));
 		if (__predict_false(new_entry == NULL))
 			return ENOMEM;
@@ -1108,50 +1123,66 @@ retry:
 		}
 		vm_map_lock(map); /* could sleep here */
 	}
-	prev_entry = uvm_map_findspace(map, start, size, &start,
-	    uobj, uoffset, align, flags);
-	if (prev_entry == NULL) {
-		unsigned int timestamp;
-
-		timestamp = map->timestamp;
-		UVMHIST_LOG(maphist,"waiting va timestamp=0x%x",
-			    timestamp,0,0,0);
-		map->flags |= VM_MAP_WANTVA;
-		vm_map_unlock(map);
-
-		/*
-		 * try to reclaim kva and wait until someone does unmap.
-		 * fragile locking here, so we awaken every second to
-		 * recheck the condition.
-		 */
-
-		vm_map_drain(map, flags);
-
-		mutex_enter(&map->misc_lock);
-		while ((map->flags & VM_MAP_WANTVA) != 0 &&
-		   map->timestamp == timestamp) {
-			if ((flags & UVM_FLAG_WAITVA) == 0) {
-				mutex_exit(&map->misc_lock);
-				UVMHIST_LOG(maphist,
-				    "<- uvm_map_findspace failed!", 0,0,0,0);
-				return ENOMEM;
-			} else {
-				cv_timedwait(&map->cv, &map->misc_lock, hz);
-			}
+	if (map == kernel_map) {
+		KASSERT((flags & UVM_FLAG_FIXED) == 0);
+		if (align == 1) {
+			align = 0; /* XXX */
 		}
-		mutex_exit(&map->misc_lock);
-		goto retry;
+#if defined(PMAP_PREFER)
+		XXX
+#else /* defined(PMAP_PREFER) */
+		start = (vaddr_t)vmem_xalloc(kernel_va_arena, size, align,
+		    0, 0, 0, 0,
+		    ((flags & UVM_FLAG_NOWAIT) ? VM_NOSLEEP : VM_SLEEP) |
+		    VM_INSTANTFIT);
+#endif /* defined(PMAP_PREFER) */
+		if (start == 0) {
+			return ENOMEM;
+		}
+		if (uvm_map_lookup_entry(map, start, &prev_entry)) {
+			panic("%s: va %p in use", __func__, (void *)start);
+		}
+		goto done;
+	} else {
+		prev_entry = uvm_map_findspace(map, start, size, &start,
+		    uobj, uoffset, align, flags);
+		if (prev_entry == NULL) {
+			unsigned int timestamp;
+
+			timestamp = map->timestamp;
+			UVMHIST_LOG(maphist,"waiting va timestamp=0x%x",
+				    timestamp,0,0,0);
+			map->flags |= VM_MAP_WANTVA;
+			vm_map_unlock(map);
+
+			/*
+			 * try to reclaim kva and wait until someone does unmap.
+			 * fragile locking here, so we awaken every second to
+			 * recheck the condition.
+			 */
+
+			vm_map_drain(map, flags);
+
+			mutex_enter(&map->misc_lock);
+			while ((map->flags & VM_MAP_WANTVA) != 0 &&
+			   map->timestamp == timestamp) {
+				if ((flags & UVM_FLAG_WAITVA) == 0) {
+					mutex_exit(&map->misc_lock);
+					UVMHIST_LOG(maphist,
+					    "<- uvm_map_findspace failed!",
+					    0,0,0,0);
+					return ENOMEM;
+				} else {
+					cv_timedwait(&map->cv, &map->misc_lock,
+					hz);
+				}
+			}
+			mutex_exit(&map->misc_lock);
+			goto retry;
+		}
 	}
 
-#ifdef PMAP_GROWKERNEL
-	/*
-	 * If the kernel pmap can't map the requested space,
-	 * then allocate more resources for it.
-	 */
-	if (map == kernel_map && uvm_maxkaddr < (start + size))
-		uvm_maxkaddr = pmap_growkernel(start + size);
-#endif
-
+done:
 	UVMMAP_EVCNT_INCR(map_call);
 
 	/*
@@ -2223,6 +2254,10 @@ uvm_unmap_remove(struct vm_map *map, vaddr_t start, vaddr_t end,
 			}
 		}
 #endif /* defined(DEBUG) */
+		if (map == kernel_map) {
+			vmem_xfree(kernel_va_arena, (vmem_addr_t)entry->start,
+			    entry->end - entry->start);
+		}
 
 		/*
 		 * remove entry from map and put it on our list of entries

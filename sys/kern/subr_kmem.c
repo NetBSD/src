@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kmem.c,v 1.17 2007/11/07 00:23:23 ad Exp $	*/
+/*	$NetBSD: subr_kmem.c,v 1.17.4.1 2007/12/10 12:56:10 yamt Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.17 2007/11/07 00:23:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.17.4.1 2007/12/10 12:56:10 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/callback.h>
@@ -105,6 +105,10 @@ kmem_alloc(size_t size, km_flag_t kmflags)
 		kmem_poison_check(p, size);
 		FREECHECK_OUT(&kmem_freecheck, p);
 	}
+#if 1
+	if (p == NULL && (kmflags & KM_SLEEP) != 0)
+		panic("kmem_alloc");
+#endif
 	return p;
 }
 
@@ -148,7 +152,7 @@ kmem_init(void)
 
 	kmem_arena = vmem_create("kmem", 0, 0, KMEM_QUANTUM_SIZE,
 	    kmem_backend_alloc, kmem_backend_free, NULL,
-	    KMEM_QUANTUM_SIZE * 32, VM_SLEEP, IPL_NONE);
+	    KMEM_QUANTUM_SIZE * 32, VM_SLEEP|VMC_KMEM, IPL_VM);
 	callback_register(&vm_map_to_kernel(kernel_map)->vmk_reclaim_callback,
 	    &kmem_kva_reclaim_entry, kmem_arena, kmem_kva_reclaim_callback);
 }
@@ -158,6 +162,13 @@ kmem_roundup_size(size_t size)
 {
 
 	return vmem_roundup_size(kmem_arena, size);
+}
+
+bool
+kmem_running_p(void)
+{
+
+	return kmem_arena != NULL;
 }
 
 /* ---- uvm glue */

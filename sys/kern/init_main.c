@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.331 2007/12/08 19:29:46 pooka Exp $	*/
+/*	$NetBSD: init_main.c,v 1.331.2.1 2007/12/10 12:56:08 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.331 2007/12/08 19:29:46 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.331.2.1 2007/12/10 12:56:08 yamt Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_ntp.h"
@@ -99,7 +99,6 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.331 2007/12/08 19:29:46 pooka Exp $"
 #include <sys/callout.h>
 #include <sys/cpu.h>
 #include <sys/kernel.h>
-#include <sys/kmem.h>
 #include <sys/mount.h>
 #include <sys/proc.h>
 #include <sys/kthread.h>
@@ -285,8 +284,6 @@ main(void)
 	kernel_lock_init();
 
 	uvm_init();
-
-	kmem_init();
 
 	/* Initialize the extent manager. */
 	extent_init();

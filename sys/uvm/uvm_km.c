@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.96 2007/07/21 20:52:59 ad Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.96.16.1 2007/12/10 12:56:13 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.96 2007/07/21 20:52:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.96.16.1 2007/12/10 12:56:13 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -139,6 +139,8 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.96 2007/07/21 20:52:59 ad Exp $");
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/pool.h>
+#include <sys/vmem.h>
+#include <sys/kmem.h>
 
 #include <uvm/uvm.h>
 
@@ -146,6 +148,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.96 2007/07/21 20:52:59 ad Exp $");
  * global data structures
  */
 
+vmem_t *kernel_va_arena;
 struct vm_map *kernel_map = NULL;
 
 /*
@@ -290,6 +293,12 @@ void
 uvm_km_init(vaddr_t start, vaddr_t end)
 {
 	vaddr_t base = VM_MIN_KERNEL_ADDRESS;
+	kernel_va_arena = vmem_create("kernelva",
+	    start, end - start, PAGE_SIZE,
+	    NULL, NULL, NULL, 0, VM_NOSLEEP|VMC_KVA, IPL_VM);
+	if (kernel_va_arena == NULL) {
+		panic("failed to create kernel_va_arena");
+	}
 
 	/*
 	 * next, init kernel memory objects.
@@ -334,6 +343,10 @@ uvm_km_init(vaddr_t start, vaddr_t end)
 
 	kernel_map = &kernel_map_store.vmk_map;
 	uvm_km_vacache_init(kernel_map, "kvakernel", 0);
+
+	printf("%s aa\n", __func__);
+	kmem_init();
+	printf("%s bb\n", __func__);
 }
 
 /*
@@ -381,7 +394,7 @@ uvm_km_suballoc(struct vm_map *map, vaddr_t *vmin /* IN/OUT */,
 
 	pmap_reference(vm_map_pmap(map));
 	if (submap == NULL) {
-		submap = malloc(sizeof(*submap), M_VMMAP, M_WAITOK);
+		submap = kmem_alloc(sizeof(*submap), KM_SLEEP);
 		if (submap == NULL)
 			panic("uvm_km_suballoc: unable to create submap");
 	}
@@ -545,6 +558,9 @@ uvm_km_alloc(struct vm_map *map, vsize_t size, vsize_t align, uvm_flag_t flags)
 	vm_prot_t prot;
 	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
 
+	if (map == NULL) { /* XXX kmem_map */
+		map = kernel_map;
+	}
 	KASSERT(vm_map_pmap(map) == pmap_kernel());
 	KASSERT((flags & UVM_KMF_TYPEMASK) == UVM_KMF_WIRED ||
 		(flags & UVM_KMF_TYPEMASK) == UVM_KMF_PAGEABLE ||
@@ -554,7 +570,6 @@ uvm_km_alloc(struct vm_map *map, vsize_t size, vsize_t align, uvm_flag_t flags)
 	 * setup for call
 	 */
 
-	kva = vm_map_min(map);	/* hint */
 	size = round_page(size);
 	obj = (flags & UVM_KMF_PAGEABLE) ? uvm_kernel_object : NULL;
 	UVMHIST_LOG(maphist,"  (map=0x%x, obj=0x%x, size=0x%x, flags=%d)",
@@ -564,13 +579,24 @@ uvm_km_alloc(struct vm_map *map, vsize_t size, vsize_t align, uvm_flag_t flags)
 	 * allocate some virtual space
 	 */
 
-	if (__predict_false(uvm_map(map, &kva, size, obj, UVM_UNKNOWN_OFFSET,
-	    align, UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_NONE,
-	    UVM_ADV_RANDOM,
-	    (flags & (UVM_KMF_TRYLOCK | UVM_KMF_NOWAIT | UVM_KMF_WAITVA))
-	    | UVM_FLAG_QUANTUM)) != 0)) {
-		UVMHIST_LOG(maphist, "<- done (no VM)",0,0,0,0);
-		return(0);
+	if ((flags & UVM_KMF_PAGEABLE) != 0) {
+		kva = vm_map_min(map);	/* hint */
+		if (__predict_false(uvm_map(map, &kva, size, obj, UVM_UNKNOWN_OFFSET,
+		    align, UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_NONE,
+		    UVM_ADV_RANDOM,
+		    (flags & (UVM_KMF_TRYLOCK | UVM_KMF_NOWAIT | UVM_KMF_WAITVA))
+		    | UVM_FLAG_QUANTUM)) != 0)) {
+			UVMHIST_LOG(maphist, "<- done (no VM)",0,0,0,0);
+			return(0);
+		}
+	} else {
+		kva = (vaddr_t)vmem_xalloc(kernel_va_arena, size,
+		    align, 0, 0, 0, 0,
+		    ((flags & UVM_KMF_NOWAIT) ? VM_NOSLEEP : VM_SLEEP)
+		    | VM_INSTANTFIT);
+		if (kva == 0) {
+			return 0;
+		}
 	}
 
 	/*
@@ -652,6 +678,9 @@ void
 uvm_km_free(struct vm_map *map, vaddr_t addr, vsize_t size, uvm_flag_t flags)
 {
 
+	if (map == NULL) { /* XXX kmem_map */
+		map = kernel_map;
+	}
 	KASSERT((flags & UVM_KMF_TYPEMASK) == UVM_KMF_WIRED ||
 		(flags & UVM_KMF_TYPEMASK) == UVM_KMF_PAGEABLE ||
 		(flags & UVM_KMF_TYPEMASK) == UVM_KMF_VAONLY);
@@ -663,12 +692,15 @@ uvm_km_free(struct vm_map *map, vaddr_t addr, vsize_t size, uvm_flag_t flags)
 	if (flags & UVM_KMF_PAGEABLE) {
 		uvm_km_pgremove(addr, addr + size);
 		pmap_remove(pmap_kernel(), addr, addr + size);
-	} else if (flags & UVM_KMF_WIRED) {
-		uvm_km_pgremove_intrsafe(addr, addr + size);
-		pmap_kremove(addr, size);
+		uvm_unmap1(map, addr, addr + size,
+		    UVM_FLAG_QUANTUM|UVM_FLAG_VAONLY);
+	} else {
+		if (flags & UVM_KMF_WIRED) {
+			uvm_km_pgremove_intrsafe(addr, addr + size);
+			pmap_kremove(addr, size);
+		}
+		vmem_xfree(kernel_va_arena, addr, size);
 	}
-
-	uvm_unmap1(map, addr, addr + size, UVM_FLAG_QUANTUM|UVM_FLAG_VAONLY);
 }
 
 /* Sanity; must specify both or none. */
@@ -687,7 +719,7 @@ uvm_km_free(struct vm_map *map, vaddr_t addr, vsize_t size, uvm_flag_t flags)
 vaddr_t
 uvm_km_alloc_poolpage_cache(struct vm_map *map, bool waitok)
 {
-#if defined(PMAP_MAP_POOLPAGE)
+#if defined(PMAP_MAP_POOLPAGE) || 1
 	return uvm_km_alloc_poolpage(map, waitok);
 #else
 	struct vm_page *pg;
@@ -751,16 +783,13 @@ uvm_km_alloc_poolpage(struct vm_map *map, bool waitok)
 	return (va);
 #else
 	vaddr_t va;
-	int s = 0xdeadbeaf; /* XXX: gcc */
-	const bool intrsafe = (map->flags & VM_MAP_INTRSAFE) != 0;
+	int s;
 
-	if (intrsafe)
-		s = splvm();
-	va = uvm_km_alloc(map, PAGE_SIZE, 0,
-	    (waitok ? 0 : UVM_KMF_NOWAIT | UVM_KMF_TRYLOCK) | UVM_KMF_WIRED);
-	if (intrsafe)
-		splx(s);
-	return (va);
+	s = splvm();
+	va = (vaddr_t)uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
+	    (waitok ? 0 : UVM_KMF_NOWAIT) | UVM_KMF_WIRED);
+	splx(s);
+	return va;
 #endif /* PMAP_MAP_POOLPAGE */
 }
 
@@ -774,7 +803,7 @@ uvm_km_alloc_poolpage(struct vm_map *map, bool waitok)
 void
 uvm_km_free_poolpage_cache(struct vm_map *map, vaddr_t addr)
 {
-#if defined(PMAP_UNMAP_POOLPAGE)
+#if defined(PMAP_UNMAP_POOLPAGE) || 1
 	uvm_km_free_poolpage(map, addr);
 #else
 	struct pool *pp;
