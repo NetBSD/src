@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.308.2.3 2007/12/10 19:31:48 ad Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.308.2.4 2007/12/10 19:37:49 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.308.2.3 2007/12/10 19:31:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.308.2.4 2007/12/10 19:37:49 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -1500,7 +1500,7 @@ loop:
 	mutex_enter(&spechash_lock);
 	mutex_enter(&vp->v_interlock);
 	if ((vp->v_iflag & VI_ALIASED) == 0) {
-		count = vp->v_usecount + ((vp->v_iflag & VI_INACTPEND) != 0);
+		count = vp->v_usecount - ((vp->v_iflag & VI_INACTPEND) != 0);
 		mutex_exit(&vp->v_interlock);
 		mutex_exit(&spechash_lock);
 		return (count);
