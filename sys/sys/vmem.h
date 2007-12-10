@@ -1,4 +1,4 @@
-/*	$NetBSD: vmem.h,v 1.7 2007/07/09 21:11:34 ad Exp $	*/
+/*	$NetBSD: vmem.h,v 1.7.18.1 2007/12/10 11:51:06 yamt Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -63,5 +63,8 @@ void vmem_rehash_start(void);
 #define	VM_NOSLEEP	0x00000002
 #define	VM_INSTANTFIT	0x00001000
 #define	VM_BESTFIT	0x00002000
+
+#define	VMC_KVA		0x00010000	/* kernel_va_arena */
+#define	VMC_KMEM	0x00020000	/* kmem_arena */
 
 #endif /* !_SYS_VMEM_H_ */
