@@ -1,4 +1,4 @@
-/* $NetBSD: aiboost.c,v 1.18 2007/11/16 08:00:13 xtraeme Exp $ */
+/* $NetBSD: aiboost.c,v 1.19 2007/12/10 23:25:59 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aiboost.c,v 1.18 2007/11/16 08:00:13 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aiboost.c,v 1.19 2007/12/10 23:25:59 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -138,7 +138,7 @@ aiboost_acpi_attach(device_t parent, device_t self, void *aux)
 	sc->sc_sensor = kmem_zalloc(sizeof(envsys_data_t) * maxsens,
 	    KM_NOSLEEP);
 	if (!sc->sc_sensor)
-		return;
+		goto bad2;
 
 	/*
 	 * Set properties in sensors.
@@ -167,10 +167,12 @@ aiboost_acpi_attach(device_t parent, device_t self, void *aux)
 		goto bad;
 	}
 
+	pmf_device_register(self, NULL, NULL);
 	return;
 
 bad:
 	kmem_free(sc->sc_sensor, sizeof(*sc->sc_sensor));
+bad2:
 	sysmon_envsys_destroy(sc->sc_sme);
 	mutex_destroy(&sc->sc_mtx);
 }
