@@ -1,4 +1,4 @@
-/*	$NetBSD: kmem.h,v 1.2 2006/06/25 08:10:04 yamt Exp $	*/
+/*	$NetBSD: kmem.h,v 1.2.50.1 2007/12/10 12:56:07 yamt Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -38,6 +38,7 @@ void *kmem_zalloc(size_t, km_flag_t);
 void kmem_free(void *, size_t);
 void kmem_init(void);
 size_t kmem_roundup_size(size_t);
+bool kmem_running_p(void);
 
 /* km_flag_t */
 #define	KM_SLEEP	0x00000001	/* can sleep */

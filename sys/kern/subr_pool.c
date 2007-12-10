@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.138.2.1 2007/12/10 08:56:56 yamt Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.138.2.2 2007/12/10 12:56:10 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002, 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.138.2.1 2007/12/10 08:56:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.138.2.2 2007/12/10 12:56:10 yamt Exp $");
 
 #include "opt_pool.h"
 #include "opt_poollog.h"
@@ -101,7 +101,7 @@ static void pool_page_free_meta(struct pool *, void *);
 /* allocator for pool metadata */
 struct pool_allocator pool_allocator_meta = {
 	pool_page_alloc_meta, pool_page_free_meta,
-	.pa_backingmapptr = &kmem_map,
+	.pa_backingmapptr = &kernel_map,
 };
 
 /* # of seconds to retain page after last use */
@@ -790,7 +790,7 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 
 #ifdef POOL_DIAGNOSTIC
 	if (flags & PR_LOGGING) {
-		if (kmem_map == NULL ||
+		if (kernel_map == NULL ||
 		    (pp->pr_log = malloc(pool_logsize * sizeof(struct pool_log),
 		     M_TEMP, M_NOWAIT)) == NULL)
 			pp->pr_roflags &= ~PR_LOGGING;
@@ -2755,12 +2755,12 @@ void	pool_page_free(struct pool *, void *);
 #ifdef POOL_SUBPAGE
 struct pool_allocator pool_allocator_kmem_fullpage = {
 	pool_page_alloc, pool_page_free, 0,
-	.pa_backingmapptr = &kmem_map,
+	.pa_backingmapptr = &kernel_map,
 };
 #else
 struct pool_allocator pool_allocator_kmem = {
 	pool_page_alloc, pool_page_free, 0,
-	.pa_backingmapptr = &kmem_map,
+	.pa_backingmapptr = &kernel_map,
 };
 #endif
 
@@ -2785,7 +2785,7 @@ void	pool_subpage_free(struct pool *, void *);
 
 struct pool_allocator pool_allocator_kmem = {
 	pool_subpage_alloc, pool_subpage_free, POOL_SUBPAGE,
-	.pa_backingmapptr = &kmem_map,
+	.pa_backingmapptr = &kernel_map,
 };
 
 void	*pool_subpage_alloc_nointr(struct pool *, int);
@@ -2793,7 +2793,7 @@ void	pool_subpage_free_nointr(struct pool *, void *);
 
 struct pool_allocator pool_allocator_nointr = {
 	pool_subpage_alloc, pool_subpage_free, POOL_SUBPAGE,
-	.pa_backingmapptr = &kmem_map,
+	.pa_backingmapptr = &kernel_map,
 };
 #endif /* POOL_SUBPAGE */
 
@@ -2831,14 +2831,14 @@ pool_page_alloc(struct pool *pp, int flags)
 {
 	bool waitok = (flags & PR_WAITOK) ? true : false;
 
-	return ((void *) uvm_km_alloc_poolpage_cache(kmem_map, waitok));
+	return ((void *) uvm_km_alloc_poolpage_cache(kernel_map, waitok));
 }
 
 void
 pool_page_free(struct pool *pp, void *v)
 {
 
-	uvm_km_free_poolpage_cache(kmem_map, (vaddr_t) v);
+	uvm_km_free_poolpage_cache(kernel_map, (vaddr_t) v);
 }
 
 static void *
@@ -2846,14 +2846,14 @@ pool_page_alloc_meta(struct pool *pp, int flags)
 {
 	bool waitok = (flags & PR_WAITOK) ? true : false;
 
-	return ((void *) uvm_km_alloc_poolpage(kmem_map, waitok));
+	return ((void *) uvm_km_alloc_poolpage(kernel_map, waitok));
 }
 
 static void
 pool_page_free_meta(struct pool *pp, void *v)
 {
 
-	uvm_km_free_poolpage(kmem_map, (vaddr_t) v);
+	uvm_km_free_poolpage(kernel_map, (vaddr_t) v);
 }
 
 #ifdef POOL_SUBPAGE
