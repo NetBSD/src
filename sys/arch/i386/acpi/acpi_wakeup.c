@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.41 2007/12/09 20:27:44 jmcneill Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.42 2007/12/10 03:12:46 dogcow Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.41 2007/12/09 20:27:44 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.42 2007/12/10 03:12:46 dogcow Exp $");
 
 /*-
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
@@ -77,6 +77,8 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.41 2007/12/09 20:27:44 jmcneill Ex
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_page.h>
+
+#include "opt_mtrr.h"
 
 #include "ioapic.h"
 #include "lapic.h"
@@ -313,8 +315,10 @@ out:
 	x86_enable_intr();
 	splx(s);
 
+#ifdef MTRR
 	if (mtrr_funcs != NULL)
 		mtrr_commit();
+#endif
 
 	return (ret);
 #undef WAKECODE_FIXUP
