@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.10.4.1 2007/12/10 12:21:11 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.10.4.2 2007/12/10 12:23:24 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.10.4.1 2007/12/10 12:21:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.10.4.2 2007/12/10 12:23:24 yamt Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -380,6 +380,7 @@ pd_entry_t *alternate_pdes[] = APDES_INITIALIZER;
 #define kmutex_t		struct simplelock
 
 static kmutex_t pmaps_lock;
+static kmutex_t growkernel_lock;
 static krwlock_t pmap_main_lock;
 
 static vaddr_t pmap_maxkvaddr;
@@ -1359,7 +1360,8 @@ pmap_bootstrap(vaddr_t kva_start)
 	 */
 
 	rw_init(&pmap_main_lock);
-	mutex_init(&pmaps_lock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&pmaps_lock, MUTEX_DEFAULT, IPL_VM);
+	mutex_init(&growkernel_lock, MUTEX_DEFAULT, IPL_VM);
 	LIST_INIT(&pmaps);
 	pmap_cpu_init_early(curcpu());
 
@@ -3866,17 +3868,13 @@ vaddr_t
 pmap_growkernel(vaddr_t maxkvaddr)
 {
 	struct pmap *kpm = pmap_kernel(), *pm;
-	int s, i;
+	int i;
 	unsigned newpdes;
 	long needed_kptp[PTP_LEVELS], target_nptp, old;
-	bool invalidate = false;
 
-	s = splvm();	/* to be safe */
-	mutex_enter(&kpm->pm_lock);
-
+	mutex_enter(&growkernel_lock);
 	if (maxkvaddr <= pmap_maxkvaddr) {
-		mutex_exit(&kpm->pm_lock);
-		splx(s);
+		mutex_exit(&growkernel_lock);
 		return pmap_maxkvaddr;
 	}
 
@@ -3913,16 +3911,9 @@ pmap_growkernel(vaddr_t maxkvaddr)
 			       newpdes * sizeof (pd_entry_t));
 		}
 		mutex_exit(&pmaps_lock);
-		invalidate = true;
 	}
 	pmap_maxkvaddr = maxkvaddr;
-	mutex_exit(&kpm->pm_lock);
-	splx(s);
-
-	if (invalidate) {
-		/* Invalidate the PDP cache. */
-		pool_cache_invalidate(&pmap_pdp_cache);
-	}
+	mutex_exit(&growkernel_lock);
 
 	return maxkvaddr;
 }
