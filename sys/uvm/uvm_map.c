@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.246.4.1 2007/12/10 12:56:13 yamt Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.246.4.2 2007/12/10 13:00:24 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.246.4.1 2007/12/10 12:56:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.246.4.2 2007/12/10 13:00:24 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -3846,6 +3846,25 @@ uvm_map_checkprot(struct vm_map *map, vaddr_t start, vaddr_t end,
 	struct vm_map_entry *tmp_entry;
 
 	if (!uvm_map_lookup_entry(map, start, &tmp_entry)) {
+		if (VM_MAP_IS_KERNEL(map)) {
+			/*
+			 * XXX a kludge for mem(4).
+			 * non-pageable mappings don't have
+			 * corresponding entries in vm_map.
+			 *
+			 * maybe we can iterate segments in kernel_va_arena,
+			 * but don't try too hard to be correct here,
+			 * because uiomove() will pick an error anyway...
+			 */
+			vaddr_t va;
+
+			for (va = start; va < end; va += PAGE_SIZE) {
+				if (!pmap_extract(pmap_kernel(), va, NULL)) {
+					return false;
+				}
+			}
+			return true;
+		}
 		return (false);
 	}
 	entry = tmp_entry;
