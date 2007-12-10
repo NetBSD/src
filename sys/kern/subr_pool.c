@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.138 2007/12/05 06:52:01 ad Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.138.2.1 2007/12/10 08:56:56 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002, 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.138 2007/12/05 06:52:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.138.2.1 2007/12/10 08:56:56 yamt Exp $");
 
 #include "opt_pool.h"
 #include "opt_poollog.h"
@@ -2111,6 +2111,20 @@ pool_cache_bootstrap(pool_cache_t pc, size_t size, u_int align,
 void
 pool_cache_destroy(pool_cache_t pc)
 {
+
+	pool_cache_bootstrap_destroy(pc);
+	pool_put(&cache_pool, pc);
+}
+
+/*
+ * pool_cache_bootstrap_destroy:
+ *
+ *	Kernel-private version of pool_cache_destroy().
+ *	Destroy a pool cache initialized by pool_cache_bootstrap.
+ */
+void
+pool_cache_bootstrap_destroy(pool_cache_t pc)
+{
 	struct pool *pp = &pc->pc_pool;
 	pool_cache_cpu_t *cc;
 	pcg_t *pcg;
@@ -2150,7 +2164,6 @@ pool_cache_destroy(pool_cache_t pc)
 	/* Finally, destroy it. */
 	mutex_destroy(&pc->pc_lock);
 	pool_destroy(pp);
-	pool_put(&cache_pool, pc);
 }
 
 /*
