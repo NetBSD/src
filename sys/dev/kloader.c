@@ -1,4 +1,4 @@
-/*	$NetBSD: kloader.c,v 1.13 2007/12/08 19:29:41 pooka Exp $	*/
+/*	$NetBSD: kloader.c,v 1.14 2007/12/10 08:57:36 he Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kloader.c,v 1.13 2007/12/08 19:29:41 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kloader.c,v 1.14 2007/12/10 08:57:36 he Exp $");
 
 #include "debug_kloader.h"
 
@@ -596,7 +596,6 @@ kloader_load_segment(Elf_Phdr *p)
 struct vnode *
 kloader_open(const char *filename)
 {
-	struct lwp *l = KLOADER_LWP;
 	struct nameidata nid;
 	int error;
 
