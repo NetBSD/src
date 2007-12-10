@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.75.6.2 2007/12/08 17:58:07 ad Exp $	*/
+/*	$NetBSD: lock.h,v 1.75.6.3 2007/12/10 19:28:07 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -148,7 +148,6 @@ struct lock {
 #define	LK_SLEEPFAIL	0x00000020	/* sleep, then return failure */
 #define	LK_CANRECURSE	0x00000040	/* this may be recursive lock attempt */
 #define	LK_REENABLE	0x00000080	/* lock is be reenabled after drain */
-#define	LK_SETRECURSE	0x00100000	/* other locks while we have it OK */
 #define	LK_RECURSEFAIL  0x00200000	/* attempt at recursive lock fails */
 #define	LK_RESURRECT	0x00800000	/* immediately reenable drained lock */
 /*
@@ -178,7 +177,6 @@ struct lock {
 #define __LK_FLAG_BITS \
 	"\20" \
 	"\22LK_RECURSEFAIL" \
-	"\21LK_SETRECURSE" \
 	"\20LK_WAIT_NOZERO" \
 	"\19LK_SHARE_NOZERO" \
 	"\18LK_RETRY" \

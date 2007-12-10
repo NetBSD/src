@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.128.2.2 2007/12/08 17:57:40 ad Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.128.2.3 2007/12/10 19:28:05 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.128.2.2 2007/12/08 17:57:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.128.2.3 2007/12/10 19:28:05 ad Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -438,9 +438,6 @@ lockmgr(struct lock *lkp, u_int flags, kmutex_t *interlkp)
 					lockpanic(lkp, "lockmgr: locking against myself");
 			}
 			lkp->lk_exclusivecount++;
-			if (extflags & LK_SETRECURSE &&
-			    lkp->lk_recurselevel == 0)
-				lkp->lk_recurselevel = lkp->lk_exclusivecount;
 			COUNT(lkp, l, cpu_num, 1);
 			break;
 		}
@@ -479,8 +476,6 @@ lockmgr(struct lock *lkp, u_int flags, kmutex_t *interlkp)
 		if (lkp->lk_exclusivecount != 0)
 			lockpanic(lkp, "lockmgr: non-zero exclusive count");
 		lkp->lk_exclusivecount = 1;
-		if (extflags & LK_SETRECURSE)
-			lkp->lk_recurselevel = 1;
 		COUNT(lkp, l, cpu_num, 1);
 		break;
 
@@ -549,9 +544,6 @@ lockmgr(struct lock *lkp, u_int flags, kmutex_t *interlkp)
 		lkp->lk_lock_addr = RETURN_ADDRESS;
 #endif
 		lkp->lk_exclusivecount = 1;
-		/* XXX unlikely that we'd want this */
-		if (extflags & LK_SETRECURSE)
-			lkp->lk_recurselevel = 1;
 		COUNT(lkp, l, cpu_num, 1);
 		break;
 

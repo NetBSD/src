@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.23.2.1 2007/12/04 13:03:12 ad Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.23.2.2 2007/12/10 19:28:08 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.23.2.1 2007/12/04 13:03:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.23.2.2 2007/12/10 19:28:08 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1677,9 +1677,6 @@ union_lock(v)
 	int flags = ap->a_flags;
 	struct union_node *un;
 	int error;
-#ifdef DIAGNOSTIC
-	int drain = 0;
-#endif
 
 	/* XXX unionfs can't handle shared locks yet */
 	if ((flags & LK_TYPE_MASK) == LK_SHARED) {
@@ -1699,30 +1696,6 @@ union_lock(v)
 	flags &= ~LK_INTERLOCK;
 
 	un = VTOUNION(vp);
-#ifdef DIAGNOSTIC
-	if (un->un_flags & (UN_DRAINING|UN_DRAINED)) {
-		if (un->un_flags & UN_DRAINED)
-			panic("union: %p: warning: locking decommissioned lock", vp);
-		if ((flags & LK_TYPE_MASK) != LK_RELEASE)
-			panic("union: %p: non-release on draining lock: %d",
-			    vp, flags & LK_TYPE_MASK);
-		un->un_flags &= ~UN_DRAINING;
-		if ((flags & LK_REENABLE) == 0)
-			un->un_flags |= UN_DRAINED;
-	}
-#endif
-
-	/*
-	 * Don't pass DRAIN through to sub-vnode lock; keep track of
-	 * DRAIN state at this level, and just get an exclusive lock
-	 * on the underlying vnode.
-	 */
-	if ((flags & LK_TYPE_MASK) == LK_DRAIN) {
-#ifdef DIAGNOSTIC
-		drain = 1;
-#endif
-		flags = LK_EXCLUSIVE | (flags & ~LK_TYPE_MASK);
-	}
 start:
 	un = VTOUNION(vp);
 
@@ -1764,8 +1737,6 @@ start:
 		un->un_pid = curproc->p_pid;
 	else
 		un->un_pid = -1;
-	if (drain)
-		un->un_flags |= UN_DRAINING;
 #endif
 
 	un->un_flags |= UN_LOCKED;
@@ -1799,8 +1770,6 @@ union_unlock(v)
 	if (curproc && un->un_pid != curproc->p_pid &&
 			curproc->p_pid > -1 && un->un_pid > -1)
 		panic("union: unlocking other process's union node");
-	if (un->un_flags & UN_DRAINED)
-		panic("union: %p: warning: unlocking decommissioned lock", ap->a_vp);
 #endif
 
 	un->un_flags &= ~UN_LOCKED;
@@ -1817,10 +1786,6 @@ union_unlock(v)
 
 #ifdef DIAGNOSTIC
 	un->un_pid = 0;
-	if (un->un_flags & UN_DRAINING) {
-		un->un_flags |= UN_DRAINED;
-		un->un_flags &= ~UN_DRAINING;
-	}
 #endif
 	genfs_nounlock(ap);
 
