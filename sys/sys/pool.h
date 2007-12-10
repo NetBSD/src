@@ -1,4 +1,4 @@
-/*	$NetBSD: pool.h,v 1.58 2007/11/18 16:27:42 ad Exp $	*/
+/*	$NetBSD: pool.h,v 1.58.4.1 2007/12/10 08:56:56 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2007 The NetBSD Foundation, Inc.
@@ -331,6 +331,7 @@ void		pool_cache_bootstrap(pool_cache_t, size_t, u_int, u_int, u_int,
 		    int (*)(void *, void *, int), void (*)(void *, void *),
 		    void *);
 void		pool_cache_destroy(pool_cache_t);
+void		pool_cache_bootstrap_destroy(pool_cache_t);
 void		*pool_cache_get_paddr(pool_cache_t, int, paddr_t *);
 void		pool_cache_put_paddr(pool_cache_t, void *, paddr_t);
 void		pool_cache_destruct_object(pool_cache_t, void *);
