@@ -1,4 +1,4 @@
-/* $NetBSD: kern_pmf.c,v 1.2 2007/12/09 20:28:43 jmcneill Exp $ */
+/* $NetBSD: kern_pmf.c,v 1.3 2007/12/10 23:50:25 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_pmf.c,v 1.2 2007/12/09 20:28:43 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_pmf.c,v 1.3 2007/12/10 23:50:25 xtraeme Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -107,8 +107,6 @@ pmf_event_worker(struct work *wk, void *dummy)
 	}
 
 	kmem_free(pew, sizeof(pmf_event_workitem_t));
-
-	return;
 }
 
 static bool
@@ -595,6 +593,4 @@ pmf_init(void)
 
 	callout_init(&global_idle_counter, 0);
 	callout_setfunc(&global_idle_counter, input_idle, NULL);
-
-	return;
 }
