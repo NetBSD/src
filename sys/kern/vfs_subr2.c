@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr2.c,v 1.8.2.1 2007/12/04 13:03:21 ad Exp $	*/
+/*	$NetBSD: vfs_subr2.c,v 1.8.2.2 2007/12/10 19:31:48 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>  
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr2.c,v 1.8.2.1 2007/12/04 13:03:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr2.c,v 1.8.2.2 2007/12/10 19:31:48 ad Exp $");
 
 #include "opt_ddb.h"
 
@@ -95,6 +95,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_subr2.c,v 1.8.2.1 2007/12/04 13:03:21 ad Exp $")
 #include <sys/systm.h>
 #include <sys/vnode.h>
 #include <sys/proc.h>
+#include <sys/kthread.h>
 
 #include <miscfs/syncfs/syncfs.h>
 #include <miscfs/specfs/specdev.h>
@@ -167,10 +168,9 @@ vntblinit(void)
 
 	mount_specificdata_domain = specificdata_domain_create();
 
-	/*
-	 * Initialize the filesystem syncer.
-	 */
+	/* Initialize the filesystem syncer. */
 	vn_initialize_syncerd();
+	vn_init1();
 }
 
 /*

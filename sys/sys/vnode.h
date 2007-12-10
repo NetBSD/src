@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.177.2.1 2007/12/04 13:03:39 ad Exp $	*/
+/*	$NetBSD: vnode.h,v 1.177.2.2 2007/12/10 19:31:49 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -98,7 +98,7 @@ TAILQ_HEAD(vnodelst, vnode);
  * lock.  Field markings and the corresponding locks:
  *
  *	:	stable, reference to the vnode is is required
- *	f	vnode_free_list_lock
+ *	f	vnode_free_list_lock, or vrele_lock if VI_INACTPEND
  *	i	v_interlock
  *	m	mntvnode_lock
  *	n	namecache_lock
@@ -199,6 +199,7 @@ typedef struct vnode vnode_t;
 #define	VI_LAYER	0x00020000	/* vnode is on a layer filesystem */
 #define	VI_MAPPED	0x00040000	/* duplicate of VV_MAPPED */
 #define	VI_CLEAN	0x00080000	/* has been reclaimed */
+#define	VI_INACTPEND	0x00100000	/* inactivation is pending */
 
 /*
  * The third set are locked by the underlying file system.
@@ -208,7 +209,7 @@ typedef struct vnode vnode_t;
 #define	VNODE_FLAGBITS \
     "\20\1ROOT\2SYSTEM\3ISTTY\4MAPPED\5MPSAFE\6LOCKSWORK\11TEXT\12EXECMAP" \
     "\13WRMAP\14WRMAPDIRTY\15XLOCK\16ALIASED\17ONWORKLST\20MARKER" \
-    "\22LAYER\23MAPPED\24CLEAN\25XWANT\26BWAIT\31DIROP" 
+    "\22LAYER\23MAPPED\24CLEAN\25INACTPEND\31DIROP" 
 
 #define	VSIZENOTSET	((voff_t)-1)
 
@@ -569,6 +570,7 @@ struct	vnode *valloc(struct mount *);
 void	vfree(struct vnode *);
 void	vmark(struct vnode *, struct vnode *);
 struct	vnode *vunmark(struct vnode *);
+void	vn_init1(void);
 
 /* see vnsubr(9) */
 int	vn_bwrite(void *);
