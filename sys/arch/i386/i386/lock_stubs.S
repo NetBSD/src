@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.10 2007/11/28 18:19:20 ad Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.11 2007/12/11 23:06:13 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -43,11 +43,13 @@
  * alignment with 'objdump -d' after making changes.
  */
 
+#include <machine/asm.h>
+__KERNEL_RCSID(0, "$NetBSD: lock_stubs.S,v 1.11 2007/12/11 23:06:13 lukem Exp $");
+
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
 #include "opt_ddb.h"
 
-#include <machine/asm.h>
 #include <machine/cputypes.h>
 
 #include "assym.h"

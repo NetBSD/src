@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup_low.S,v 1.2 2007/12/09 20:27:44 jmcneill Exp $	*/
+/*	$NetBSD: acpi_wakeup_low.S,v 1.3 2007/12/11 23:06:11 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@netbsd.org>
@@ -28,8 +28,10 @@
  * SUCH DAMAGE.
  */
 
-#include "assym.h"
 #include <machine/asm.h>
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup_low.S,v 1.3 2007/12/11 23:06:11 lukem Exp $");
+
+#include "assym.h"
 
 	.text
 	.p2align 2, 0x90
