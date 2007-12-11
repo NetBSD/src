@@ -1,4 +1,4 @@
-.\"	$NetBSD: netboot,v 1.30 2007/12/11 07:47:44 jnemeth Exp $
+.\"	$NetBSD: netboot,v 1.31 2007/12/11 18:22:25 jnemeth Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -792,7 +792,7 @@ Set up swap
 .(disp
 .No # Ic "mkdir /export/client/root/swap"
 .No # Ic "dd if=/dev/zero of=/export/client/swap bs=4k count=4k"
-.No # Ic "echo '/export/client/swap -maproot=root:wheel client.test.net' | cat \*>\*> /etc/exports"
+.No # Ic "echo '/export/client/swap -maproot=root:wheel client.test.net' | cat \*[Gt]\*[Gt] /etc/exports"
 .No # Ic "/etc/rc.d/mountd restart"
 .disp)
 This creates a 16 MB swap file and exports it to the client.
