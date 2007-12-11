@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.95 2007/12/11 10:02:24 apb Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.96 2007/12/11 11:51:19 apb Exp $
 #
 # Copyright (c) 2003,2007 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -359,6 +359,20 @@ linecount()
 	echo $#
 }
 
+# check_pax path_to_pax
+#	Check whether pax supports the command line options we
+#	will want to use.
+#
+check_pax()
+{
+	local pax="$1"
+	echo ". type=dir optional" | "${pax}" -r -w -M -pe . 2>/dev/null
+}
+
+# setup args...
+#	Parse command line arguments, exit on error.
+#	Callers should shift $((OPTIND - 1)) afterwards.
+#
 setup()
 {
 	PATH=/sbin:/usr/sbin:/bin:/usr/bin:/rescue
@@ -388,7 +402,7 @@ setup()
 			opts="${opts} -m ${OPTARG}"
 			;;
 		p)	TOOL_PAX="${OPTARG}"
-			if ( echo "" | "${TOOL_PAX}" -w -M ); then
+			if check_pax "${TOOL_PAX}"; then
 				do_pax=true
 				# do not add this to $opts; we will later
 				# add "-s" instead.
@@ -435,6 +449,7 @@ setup()
 	if $do_force; then
 		if $do_pax || $do_specfile; then
 			warn "-f option works only with mknod"
+			exit 1
 		fi
 		do_mknod=true
 	fi
@@ -443,7 +458,7 @@ setup()
 	# using pax, if it appears to work.
 	if ! $do_mknod && ! $do_specfile && ! $do_pax; then
 		: ${TOOL_PAX:=pax}
-		if ( echo "" | "${TOOL_PAX}" -w -M 2>/dev/null ); then
+		if check_pax "${TOOL_PAX}"; then
 			do_pax=true
 		else
 			do_mknod=true
@@ -1904,6 +1919,7 @@ makedisk_minimal()
 create_mfs_dev()
 {
 	ninode=$((${1-1200} * 11 / 10))
+	[ "$ninode" -lt 10 ] && ninode=10
 	fs_size=$((8192 + 2 * 8192 + 4096 + ninode*(128+18) + 8192))
 	fs_size=$((fs_size/512))
 	[ "$fs_size" -lt 80 ] && fs_size=80
