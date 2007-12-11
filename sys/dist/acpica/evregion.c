@@ -1,7 +1,9 @@
+/*	$NetBSD: evregion.c,v 1.5 2007/12/11 13:16:06 lukem Exp $	*/
+
 /******************************************************************************
  *
  * Module Name: evregion - ACPI AddressSpace (OpRegion) handler dispatch
- *              $Revision: 1.4 $
+ *              $Revision: 1.5 $
  *
  *****************************************************************************/
 
@@ -114,6 +116,8 @@
  *
  *****************************************************************************/
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: evregion.c,v 1.5 2007/12/11 13:16:06 lukem Exp $");
 
 #define __EVREGION_C__
 
