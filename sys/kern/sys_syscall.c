@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_syscall.c,v 1.1 2007/11/09 14:50:51 dsl Exp $	*/
+/*	$NetBSD: sys_syscall.c,v 1.2 2007/12/11 12:16:34 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sys_syscall.c,v 1.1 2007/11/09 14:50:51 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_syscall.c,v 1.2 2007/12/11 12:16:34 lukem Exp $");
 
 #include <sys/syscall_stats.h>
 
