@@ -1,3 +1,5 @@
+/*	$NetBSD: mach64_dma.c,v 1.3 2007/12/11 11:48:41 lukem Exp $	*/
+
 /* mach64_dma.c -- DMA support for mach64 (Rage Pro) driver -*- linux-c -*- */
 /**
  * \file mach64_dma.c
@@ -35,6 +37,7 @@
  */
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mach64_dma.c,v 1.3 2007/12/11 11:48:41 lukem Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/mach64_dma.c,v 1.2 2005/11/28 23:13:53 anholt Exp $");
 */

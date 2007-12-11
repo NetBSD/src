@@ -1,3 +1,5 @@
+/*	$NetBSD: mga_warp.c,v 1.3 2007/12/11 11:48:43 lukem Exp $	*/
+
 /* mga_warp.c -- Matrox G200/G400 WARP engine management -*- linux-c -*-
  * Created: Thu Jan 11 21:29:32 2001 by gareth@valinux.com
  */
@@ -29,6 +31,7 @@
  */
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mga_warp.c,v 1.3 2007/12/11 11:48:43 lukem Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/mga_warp.c,v 1.8 2005/11/28 23:13:53 anholt Exp $");
 */

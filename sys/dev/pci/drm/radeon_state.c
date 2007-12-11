@@ -1,3 +1,5 @@
+/*	$NetBSD: radeon_state.c,v 1.5 2007/12/11 11:48:45 lukem Exp $	*/
+
 /* radeon_state.c -- State support for Radeon -*- linux-c -*- */
 /*-
  * Copyright 2000 VA Linux Systems, Inc., Fremont, California.
@@ -28,6 +30,7 @@
  */
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: radeon_state.c,v 1.5 2007/12/11 11:48:45 lukem Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/radeon_state.c,v 1.22 2006/09/07 23:04:47 anholt Exp $");
 */

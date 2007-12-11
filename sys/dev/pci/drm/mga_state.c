@@ -1,3 +1,5 @@
+/*	$NetBSD: mga_state.c,v 1.4 2007/12/11 11:48:43 lukem Exp $	*/
+
 /* mga_state.c -- State support for MGA G200/G400 -*- linux-c -*-
  * Created: Thu Jan 27 02:53:43 2000 by jhartmann@precisioninsight.com
  */
@@ -34,6 +36,7 @@
  */
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mga_state.c,v 1.4 2007/12/11 11:48:43 lukem Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/mga_state.c,v 1.11 2005/11/28 23:13:53 anholt Exp $");
 */

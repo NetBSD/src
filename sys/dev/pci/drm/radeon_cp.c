@@ -1,3 +1,5 @@
+/*	$NetBSD: radeon_cp.c,v 1.6 2007/12/11 11:48:44 lukem Exp $	*/
+
 /* radeon_cp.c -- CP support for Radeon -*- linux-c -*- */
 /*-
  * Copyright 2000 Precision Insight, Inc., Cedar Park, Texas.
@@ -29,6 +31,7 @@
  */
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: radeon_cp.c,v 1.6 2007/12/11 11:48:44 lukem Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/radeon_cp.c,v 1.19 2006/09/07 23:04:47 anholt Exp $");
 */
