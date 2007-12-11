@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fwip.c,v 1.11 2007/12/09 20:28:01 jmcneill Exp $	*/
+/*	$NetBSD: if_fwip.c,v 1.12 2007/12/11 11:34:09 lukem Exp $	*/
 /*-
  * Copyright (c) 2004
  *	Doug Rabson
@@ -36,6 +36,9 @@
  * 
  * $FreeBSD: src/sys/dev/firewire/if_fwip.c,v 1.16 2007/06/06 14:31:36 simokawa Exp $
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_fwip.c,v 1.12 2007/12/11 11:34:09 lukem Exp $");
 
 #ifdef HAVE_KERNEL_OPTION_HEADERS
 #include "opt_device_polling.h"
