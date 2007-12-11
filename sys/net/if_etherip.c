@@ -1,4 +1,4 @@
-/*      $NetBSD: if_etherip.c,v 1.14 2007/10/08 16:18:04 ad Exp $        */
+/*      $NetBSD: if_etherip.c,v 1.15 2007/12/11 12:37:46 lukem Exp $        */
 
 /*
  *  Copyright (c) 2006, Hans Rosenfeld <rosenfeld@grumpf.hope-2000.org>
@@ -86,6 +86,7 @@
  */
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_etherip.c,v 1.15 2007/12/11 12:37:46 lukem Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"

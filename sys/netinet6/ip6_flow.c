@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_flow.c,v 1.9 2007/08/20 19:42:34 dyoung Exp $	*/
+/*	$NetBSD: ip6_flow.c,v 1.10 2007/12/11 12:30:20 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -45,6 +45,7 @@
  */
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ip6_flow.c,v 1.10 2007/12/11 12:30:20 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
