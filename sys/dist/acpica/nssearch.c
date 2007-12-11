@@ -1,7 +1,9 @@
+/*	$NetBSD: nssearch.c,v 1.5 2007/12/11 13:16:13 lukem Exp $	*/
+
 /*******************************************************************************
  *
  * Module Name: nssearch - Namespace search
- *              $Revision: 1.4 $
+ *              $Revision: 1.5 $
  *
  ******************************************************************************/
 
@@ -113,6 +115,9 @@
  * such license, approval or letter.
  *
  *****************************************************************************/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: nssearch.c,v 1.5 2007/12/11 13:16:13 lukem Exp $");
 
 #define __NSSEARCH_C__
 

@@ -1,7 +1,9 @@
+/*	$NetBSD: tbxfroot.c,v 1.3 2007/12/11 13:16:17 lukem Exp $	*/
+
 /******************************************************************************
  *
  * Module Name: tbxfroot - Find the root ACPI table (RSDT)
- *              $Revision: 1.2 $
+ *              $Revision: 1.3 $
  *
  *****************************************************************************/
 
@@ -113,6 +115,9 @@
  * such license, approval or letter.
  *
  *****************************************************************************/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: tbxfroot.c,v 1.3 2007/12/11 13:16:17 lukem Exp $");
 
 #define __TBXFROOT_C__
 

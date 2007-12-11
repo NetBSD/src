@@ -1,7 +1,9 @@
+/*	$NetBSD: rslist.c,v 1.3 2007/12/11 13:16:16 lukem Exp $	*/
+
 /*******************************************************************************
  *
  * Module Name: rslist - Linked list utilities
- *              $Revision: 1.2 $
+ *              $Revision: 1.3 $
  *
  ******************************************************************************/
 
@@ -113,6 +115,9 @@
  * such license, approval or letter.
  *
  *****************************************************************************/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rslist.c,v 1.3 2007/12/11 13:16:16 lukem Exp $");
 
 #define __RSLIST_C__
 

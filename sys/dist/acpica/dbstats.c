@@ -1,7 +1,9 @@
+/*	$NetBSD: dbstats.c,v 1.5 2007/12/11 13:16:01 lukem Exp $	*/
+
 /*******************************************************************************
  *
  * Module Name: dbstats - Generation and display of ACPI table statistics
- *              $Revision: 1.4 $
+ *              $Revision: 1.5 $
  *
  ******************************************************************************/
 
@@ -114,6 +116,8 @@
  *
  *****************************************************************************/
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: dbstats.c,v 1.5 2007/12/11 13:16:01 lukem Exp $");
 
 #include <dist/acpica/acpi.h>
 #include <dist/acpica/acdebug.h>

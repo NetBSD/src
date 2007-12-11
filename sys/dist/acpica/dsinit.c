@@ -1,7 +1,9 @@
+/*	$NetBSD: dsinit.c,v 1.5 2007/12/11 13:16:03 lukem Exp $	*/
+
 /******************************************************************************
  *
  * Module Name: dsinit - Object initialization namespace walk
- *              $Revision: 1.4 $
+ *              $Revision: 1.5 $
  *
  *****************************************************************************/
 
@@ -113,6 +115,9 @@
  * such license, approval or letter.
  *
  *****************************************************************************/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: dsinit.c,v 1.5 2007/12/11 13:16:03 lukem Exp $");
 
 #define __DSINIT_C__
 

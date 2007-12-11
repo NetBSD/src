@@ -1,7 +1,9 @@
+/*	$NetBSD: dswstate.c,v 1.3 2007/12/11 13:16:05 lukem Exp $	*/
+
 /******************************************************************************
  *
  * Module Name: dswstate - Dispatcher parse tree walk management routines
- *              $Revision: 1.2 $
+ *              $Revision: 1.3 $
  *
  *****************************************************************************/
 
@@ -114,6 +116,8 @@
  *
  *****************************************************************************/
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: dswstate.c,v 1.3 2007/12/11 13:16:05 lukem Exp $");
 
 #define __DSWSTATE_C__
 

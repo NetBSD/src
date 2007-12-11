@@ -1,8 +1,9 @@
+/*	$NetBSD: exstore.c,v 1.3 2007/12/11 13:16:10 lukem Exp $	*/
 
 /******************************************************************************
  *
  * Module Name: exstore - AML Interpreter object store support
- *              $Revision: 1.2 $
+ *              $Revision: 1.3 $
  *
  *****************************************************************************/
 
@@ -114,6 +115,9 @@
  * such license, approval or letter.
  *
  *****************************************************************************/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: exstore.c,v 1.3 2007/12/11 13:16:10 lukem Exp $");
 
 #define __EXSTORE_C__
 
