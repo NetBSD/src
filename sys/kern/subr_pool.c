@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.138 2007/12/05 06:52:01 ad Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.139 2007/12/11 19:07:27 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002, 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.138 2007/12/05 06:52:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.139 2007/12/11 19:07:27 ad Exp $");
 
 #include "opt_pool.h"
 #include "opt_poollog.h"
@@ -2081,7 +2081,7 @@ pool_cache_bootstrap(pool_cache_t pc, size_t size, u_int align,
 	/* Allocate per-CPU caches. */
 	memset(pc->pc_cpus, 0, sizeof(pc->pc_cpus));
 	pc->pc_ncpu = 0;
-	if (ncpu == 0) {
+	if (ncpu < 2) {
 		/* XXX For sparc: boot CPU is not attached yet. */
 		pool_cache_cpu_init1(curcpu(), pc);
 	} else {
