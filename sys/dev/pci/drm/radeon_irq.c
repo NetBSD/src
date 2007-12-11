@@ -1,3 +1,5 @@
+/*	$NetBSD: radeon_irq.c,v 1.3 2007/12/11 11:48:45 lukem Exp $	*/
+
 /* radeon_irq.c -- IRQ handling for radeon -*- linux-c -*- */
 /*-
  * Copyright (C) The Weather Channel, Inc.  2002.  All Rights Reserved.
@@ -31,6 +33,7 @@
  */
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: radeon_irq.c,v 1.3 2007/12/11 11:48:45 lukem Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/radeon_irq.c,v 1.7 2005/11/28 23:13:54 anholt Exp $");
 */
