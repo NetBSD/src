@@ -1,4 +1,4 @@
-/*	$NetBSD: fwdma.c,v 1.10 2007/11/05 19:08:56 kiyohara Exp $	*/
+/*	$NetBSD: fwdma.c,v 1.10.6.1 2007/12/11 15:29:17 yamt Exp $	*/
 /*-
  * Copyright (c) 2003
  * 	Hidetoshi Shimokawa. All rights reserved.
@@ -35,7 +35,8 @@
  */
 
 #include <sys/cdefs.h>
-#ifdef __FBSDID
+__KERNEL_RCSID(0, "$NetBSD: fwdma.c,v 1.10.6.1 2007/12/11 15:29:17 yamt Exp $");
+#if defined(__FreeBSD__)
 __FBSDID("$FreeBSD: src/sys/dev/firewire/fwdma.c,v 1.9 2007/06/06 14:31:36 simokawa Exp $");
 #endif
 

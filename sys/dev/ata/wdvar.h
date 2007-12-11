@@ -1,4 +1,4 @@
-/*	$NetBSD: wdvar.h,v 1.32 2005/12/11 12:21:14 christos Exp $	*/
+/*	$NetBSD: wdvar.h,v 1.32.58.1 2007/12/11 15:25:31 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -65,8 +65,6 @@ struct wd_softc {
 	u_int64_t sc_capacity;
 
 	int retries; /* number of xfer retry */
-
-	void *sc_sdhook;		/* our shutdown hook */
 
 #ifdef WD_SOFTBADSECT
 	SLIST_HEAD(, disk_badsectors)	sc_bslist;
