@@ -31,6 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cxgb_offload.c,v 1.4 2007/12/11 11:25:48 lukem Exp $");
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/dev/cxgb/cxgb_offload.c,v 1.5 2007/06/17 04:33:38 kmacy Exp $");
 #endif
