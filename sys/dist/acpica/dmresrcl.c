@@ -1,7 +1,9 @@
+/*	$NetBSD: dmresrcl.c,v 1.5 2007/12/11 13:16:02 lukem Exp $	*/
+
 /*******************************************************************************
  *
  * Module Name: dmresrcl.c - "Large" Resource Descriptor disassembly
- *              $Revision: 1.4 $
+ *              $Revision: 1.5 $
  *
  ******************************************************************************/
 
@@ -114,6 +116,8 @@
  *
  *****************************************************************************/
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: dmresrcl.c,v 1.5 2007/12/11 13:16:02 lukem Exp $");
 
 #include <dist/acpica/acpi.h>
 #include <dist/acpica/acdisasm.h>

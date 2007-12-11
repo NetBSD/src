@@ -1,8 +1,10 @@
+/*	$NetBSD: tbxface.c,v 1.3 2007/12/11 13:16:17 lukem Exp $	*/
+
 /******************************************************************************
  *
  * Module Name: tbxface - Public interfaces to the ACPI subsystem
  *                         ACPI table oriented interfaces
- *              $Revision: 1.2 $
+ *              $Revision: 1.3 $
  *
  *****************************************************************************/
 
@@ -114,6 +116,9 @@
  * such license, approval or letter.
  *
  *****************************************************************************/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: tbxface.c,v 1.3 2007/12/11 13:16:17 lukem Exp $");
 
 #define __TBXFACE_C__
 

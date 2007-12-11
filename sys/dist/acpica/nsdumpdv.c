@@ -1,7 +1,9 @@
+/*	$NetBSD: nsdumpdv.c,v 1.3 2007/12/11 13:16:12 lukem Exp $	*/
+
 /******************************************************************************
  *
  * Module Name: nsdump - table dumping routines for debug
- *              $Revision: 1.2 $
+ *              $Revision: 1.3 $
  *
  *****************************************************************************/
 
@@ -114,6 +116,9 @@
  * such license, approval or letter.
  *
  *****************************************************************************/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: nsdumpdv.c,v 1.3 2007/12/11 13:16:12 lukem Exp $");
 
 #define __NSDUMPDV_C__
 

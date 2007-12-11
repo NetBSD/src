@@ -1,8 +1,9 @@
+/*	$NetBSD: hwsleep.c,v 1.3 2007/12/11 13:16:11 lukem Exp $	*/
 
 /******************************************************************************
  *
  * Name: hwsleep.c - ACPI Hardware Sleep/Wake Interface
- *              $Revision: 1.2 $
+ *              $Revision: 1.3 $
  *
  *****************************************************************************/
 
@@ -114,6 +115,9 @@
  * such license, approval or letter.
  *
  *****************************************************************************/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: hwsleep.c,v 1.3 2007/12/11 13:16:11 lukem Exp $");
 
 #include <dist/acpica/acpi.h>
 #include <dist/acpica/actables.h>

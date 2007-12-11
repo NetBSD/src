@@ -1,9 +1,10 @@
+/*	$NetBSD: exstoren.c,v 1.3 2007/12/11 13:16:10 lukem Exp $	*/
 
 /******************************************************************************
  *
  * Module Name: exstoren - AML Interpreter object store support,
  *                        Store to Node (namespace object)
- *              $Revision: 1.2 $
+ *              $Revision: 1.3 $
  *
  *****************************************************************************/
 
@@ -115,6 +116,9 @@
  * such license, approval or letter.
  *
  *****************************************************************************/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: exstoren.c,v 1.3 2007/12/11 13:16:10 lukem Exp $");
 
 #define __EXSTOREN_C__
 

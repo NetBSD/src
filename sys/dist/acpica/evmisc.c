@@ -1,7 +1,9 @@
+/*	$NetBSD: evmisc.c,v 1.5 2007/12/11 13:16:06 lukem Exp $	*/
+
 /******************************************************************************
  *
  * Module Name: evmisc - Miscellaneous event manager support functions
- *              $Revision: 1.4 $
+ *              $Revision: 1.5 $
  *
  *****************************************************************************/
 
@@ -113,6 +115,9 @@
  * such license, approval or letter.
  *
  *****************************************************************************/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: evmisc.c,v 1.5 2007/12/11 13:16:06 lukem Exp $");
 
 #include <dist/acpica/acpi.h>
 #include <dist/acpica/acevents.h>

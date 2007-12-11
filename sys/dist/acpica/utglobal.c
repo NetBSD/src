@@ -1,7 +1,9 @@
+/*	$NetBSD: utglobal.c,v 1.3 2007/12/11 13:16:17 lukem Exp $	*/
+
 /******************************************************************************
  *
  * Module Name: utglobal - Global variables for the ACPI subsystem
- *              $Revision: 1.2 $
+ *              $Revision: 1.3 $
  *
  *****************************************************************************/
 
@@ -115,7 +117,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: utglobal.c,v 1.2 2007/12/09 20:28:42 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: utglobal.c,v 1.3 2007/12/11 13:16:17 lukem Exp $");
 
 #define __UTGLOBAL_C__
 #define DEFINE_ACPI_GLOBALS
