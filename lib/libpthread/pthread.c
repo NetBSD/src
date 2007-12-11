@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.92 2007/12/04 16:08:28 yamt Exp $	*/
+/*	$NetBSD: pthread.c,v 1.93 2007/12/11 03:21:30 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.92 2007/12/04 16:08:28 yamt Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.93 2007/12/11 03:21:30 ad Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -976,19 +976,6 @@ pthread__park(pthread_t self, pthread_spin_t *lock,
 	 * interlock, or do an explicit barrier).
 	 */
 	self->pt_blocking++;
-
-	/* 
-	 * Kernels before 4.99.27 can't park and unpark in one step,
-	 * so take care of it now if on an old kernel.
-	 *
-	 * XXX Remove this check before NetBSD 5.0 is released.
-	 * It's for compatibility with recent -current only.
-	 */
-	if (__predict_false(pthread__osrev < 499002700) &&
-	    self->pt_unpark != 0) {
-		_lwp_unpark(self->pt_unpark, self->pt_unparkhint);
-		self->pt_unpark = 0;
-	}
 
 	/*
 	 * Wait until we are awoken by a pending unpark operation,
