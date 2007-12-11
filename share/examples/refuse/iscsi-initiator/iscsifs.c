@@ -56,9 +56,7 @@ enum {
 	ProductLen = 16,
 	VersionLen = 4,
 
-	SGsize = 131072,
-
-	MaxTargets = CONFIG_INITIATOR_NUM_TARGETS
+	SGsize = 131072
 };
 
 
@@ -79,15 +77,17 @@ typedef struct targetinfo_t {
 	 char			*serial;	/* unit serial number */
 } targetinfo_t;
 
-static targetinfo_t	tv[MaxTargets];
-static uint32_t		tc;
+DEFINE_ARRAY(targetv_t, targetinfo_t);
 
-static strv_t all_targets;
+static targetv_t	tv;	/* target vector of targetinfo_t structs */
+
+/* iqns and target addresses are returned as pairs in this dynamic array */
+static strv_t		all_targets;
 
 /* Small Target Info... */
 typedef struct sti_t {
-	struct stat             st;
-	uint64_t                target;
+	struct stat             st;		/* normal stat info */
+	uint64_t                target;		/* cached target number, so we don't have an expensive pathname-based lookup */
 } sti_t;
 
 /* read the capacity (maximum LBA and blocksize) from the target */
@@ -297,18 +297,18 @@ targetop(uint32_t t, uint64_t offset, uint32_t length, uint32_t request, char *b
 			}
 		}
 
-		if (sgblockop(tv[t].target, tv[t].lun, offset / tv[t].blocksize, (length / tv[t].blocksize), tv[t].blocksize, (uint8_t *) iov, ioc, writing) != 0) {
+		if (sgblockop(tv.v[t].target, tv.v[t].lun, offset / tv.v[t].blocksize, (length / tv.v[t].blocksize), tv.v[t].blocksize, (uint8_t *) iov, ioc, writing) != 0) {
 			iscsi_free(iov);
 			iscsi_trace_error(__FILE__, __LINE__, "read_10() failed\n");
 			return -1;
 		}
 		iscsi_free(iov);
 	} else {
-		req_len = length / tv[t].blocksize;
-		if ((req_len * tv[t].blocksize) < length)
+		req_len = length / tv.v[t].blocksize;
+		if ((req_len * tv.v[t].blocksize) < length)
 			req_len++;
-		if (blockop(tv[t].target, tv[t].lun, offset / tv[t].blocksize, 
-				req_len, tv[t].blocksize, (uint8_t *) buf, writing) != 0) {
+		if (blockop(tv.v[t].target, tv.v[t].lun, offset / tv.v[t].blocksize, 
+				req_len, tv.v[t].blocksize, (uint8_t *) buf, writing) != 0) {
 			iscsi_trace_error(__FILE__, __LINE__, "read_10() failed\n");
 			return -1;
 		}
@@ -612,16 +612,23 @@ main(int argc, char **argv)
 				all_targets.v[i+1]);
 		}
 
-                exit(0);
+                exit(EXIT_SUCCESS);
         }
 
-	sti.st.st_ino = 0x15c51;
 	if (all_targets.c/2 > CONFIG_INITIATOR_NUM_TARGETS) {
-		iscsi_trace_error(__FILE__, __LINE__, "CONFIG_INITIATOR_NUM_TARGETS too small.  %d targets available, only %d configurable.\n",all_targets.c/2, CONFIG_INITIATOR_NUM_TARGETS);
+		(void) fprintf(stderr, "CONFIG_INITIATOR_NUM_TARGETS in initiator.h is too small.  %d targets available, only %d configurable.\n", all_targets.c/2, CONFIG_INITIATOR_NUM_TARGETS);
+		(void) fprintf(stderr, "Truncating number of targets to %d.\n", CONFIG_INITIATOR_NUM_TARGETS);
+		all_targets.c = CONFIG_INITIATOR_NUM_TARGETS;
 	}
 
-	for (i = 0 ; i < all_targets.c/2 ; i++) {
-		initiator_set_target_name(i,all_targets.v[i*2]);
+
+	sti.st.st_ino = 0x15c51;
+
+	for (i = 0 ; i < all_targets.c / 2 ; i++) {
+
+		ALLOC(targetinfo_t, tv.v, tv.size, tv.c, 10, 10, "iscsifs", exit(EXIT_FAILURE));
+
+		initiator_set_target_name(i, all_targets.v[i * 2]);
 
 		if (initiator_discover(host, i, 0) < 0) {
 			printf("initiator_discover() failed\n");
@@ -640,25 +647,25 @@ main(int argc, char **argv)
 		sti.st.st_size = ((uint64_t)lbac + 1) * blocksize;
 		sti.target = i;
 
-		tv[tc].host = strdup(tinfo.name);
-		tv[tc].ip = strdup(tinfo.ip);
-		tv[tc].targetname = strdup(tinfo.TargetName);
-		tv[tc].stargetname = strdup(colon);
-		tv[tc].target = i;
-		tv[tc].lun = 0;
-		tv[tc].lbac = lbac;
-		tv[tc].blocksize = blocksize;
+		tv.v[tv.c].host = strdup(tinfo.name);
+		tv.v[tv.c].ip = strdup(tinfo.ip);
+		tv.v[tv.c].targetname = strdup(tinfo.TargetName);
+		tv.v[tv.c].stargetname = strdup(colon);
+		tv.v[tv.c].target = i;
+		tv.v[tv.c].lun = 0;
+		tv.v[tv.c].lbac = lbac;
+		tv.v[tv.c].blocksize = blocksize;
 
 		/* get iSCSI target information */
 		(void) memset(data, 0x0, sizeof(data));
 		inquiry(i, 0, 0, 0, data);
-		tv[tc].devicetype = (data[0] & 0x1f);
-		(void) memcpy(tv[tc].vendor, &data[8], VendorLen);
-		(void) memcpy(tv[tc].product, &data[8 + VendorLen], ProductLen);
-		(void) memcpy(tv[tc].version, &data[8 + VendorLen + ProductLen], VersionLen);
+		tv.v[tv.c].devicetype = (data[0] & 0x1f);
+		(void) memcpy(tv.v[tv.c].vendor, &data[8], VendorLen);
+		(void) memcpy(tv.v[tv.c].product, &data[8 + VendorLen], ProductLen);
+		(void) memcpy(tv.v[tv.c].version, &data[8 + VendorLen + ProductLen], VersionLen);
 		(void) memset(data, 0x0, sizeof(data));
 		inquiry(i, 0, INQUIRY_EVPD_BIT, INQUIRY_UNIT_SERIAL_NUMBER_VPD, data);
-		tv[tc].serial = strdup((char *)&data[4]);
+		tv.v[tv.c].serial = strdup((char *)&data[4]);
 
 		cc = snprintf(name, sizeof(name), "/%s/%s", host, colon);
 		virtdir_add(&iscsi, name, cc, 'd', name, cc);
@@ -671,18 +678,18 @@ main(int argc, char **argv)
 		cc = snprintf(name, sizeof(name), "/%s/%s/targetname", host, colon);
 		virtdir_add(&iscsi, name, cc, 'l', tinfo.TargetName, strlen(tinfo.TargetName));
 		cc = snprintf(name, sizeof(name), "/%s/%s/vendor", host, colon);
-		virtdir_add(&iscsi, name, cc, 'l', tv[tc].vendor, strlen(tv[tc].vendor));
+		virtdir_add(&iscsi, name, cc, 'l', tv.v[tv.c].vendor, strlen(tv.v[tv.c].vendor));
 		cc = snprintf(name, sizeof(name), "/%s/%s/product", host, colon);
-		virtdir_add(&iscsi, name, cc, 'l', tv[tc].product, strlen(tv[tc].product));
+		virtdir_add(&iscsi, name, cc, 'l', tv.v[tv.c].product, strlen(tv.v[tv.c].product));
 		cc = snprintf(name, sizeof(name), "/%s/%s/version", host, colon);
-		virtdir_add(&iscsi, name, cc, 'l', tv[tc].version, strlen(tv[tc].version));
-		if (tv[tc].serial[0] && tv[tc].serial[0] != ' ') {
+		virtdir_add(&iscsi, name, cc, 'l', tv.v[tv.c].version, strlen(tv.v[tv.c].version));
+		if (tv.v[tv.c].serial[0] && tv.v[tv.c].serial[0] != ' ') {
 			cc = snprintf(name, sizeof(name), "/%s/%s/serial", host, colon);
-			virtdir_add(&iscsi, name, cc, 'l', tv[tc].serial, strlen(tv[tc].serial));
+			virtdir_add(&iscsi, name, cc, 'l', tv.v[tv.c].serial, strlen(tv.v[tv.c].serial));
 		}
 
 
-		tc += 1;
+		tv.c += 1;
 	}
 	return fuse_main(argc, argv, &iscsiops, NULL);
 }
