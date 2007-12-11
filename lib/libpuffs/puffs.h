@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.h,v 1.99 2007/12/08 19:57:03 pooka Exp $	*/
+/*	$NetBSD: puffs.h,v 1.100 2007/12/11 20:17:26 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -124,7 +124,6 @@ struct puffs_cn {
 };
 #define pcn_nameiop	pcn_pkcnp->pkcn_nameiop
 #define pcn_flags	pcn_pkcnp->pkcn_flags
-#define pcn_pid		pcn_pkcnp->pkcn_pid
 #define pcn_name	pcn_pkcnp->pkcn_name
 #define pcn_namelen	pcn_pkcnp->pkcn_namelen
 #define pcn_consume	pcn_pkcnp->pkcn_consume
