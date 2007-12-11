@@ -1,4 +1,4 @@
-/*      $NetBSD: ip6_etherip.c,v 1.5 2007/05/02 20:40:26 dyoung Exp $        */
+/*      $NetBSD: ip6_etherip.c,v 1.5.18.1 2007/12/11 15:45:39 yamt Exp $        */
 
 /*
  *  Copyright (c) 2006, Hans Rosenfeld <rosenfeld@grumpf.hope-2000.org>
@@ -58,6 +58,7 @@
  */
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ip6_etherip.c,v 1.5.18.1 2007/12/11 15:45:39 yamt Exp $");
 
 #include "opt_inet.h"
 
