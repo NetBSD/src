@@ -610,15 +610,22 @@ initiator_get_targets(int target, strv_t *svp)
 static int 
 discovery_phase(int target, strv_t *svp)
 {
-	initiator_session_t *sess = g_target[target].sess;
+	initiator_session_t	*sess;
 	iscsi_parameter_value_t	*vp;
 	iscsi_parameter_t	*ip;
-	char           *ptr, *colon_ptr, *comma_ptr;
-	char            port[64];
-	char           *text = NULL;
-	int             text_len = 0;
-	int		i;
+	char           		*ptr;
+	char           		*colon_ptr;
+	char           		*comma_ptr;
+	char            	 port[64];
+	char           		*text = NULL;
+	int             	 text_len = 0;
+	int			 i;
 
+	if (target >= CONFIG_INITIATOR_NUM_TARGETS) {
+		iscsi_trace_error(__FILE__, __LINE__, "target (%d) out of range [0..%d]\n", target, CONFIG_INITIATOR_NUM_TARGETS);
+		return -1;
+	}
+	sess = g_target[target].sess;
 	if ((text = iscsi_malloc_atomic(DISCOVERY_PHASE_TEXT_LEN)) == NULL) {
 		iscsi_trace_error(__FILE__, __LINE__, "iscsi_malloc_atomic() failed\n");
 		return -1;
@@ -990,12 +997,17 @@ initiator_command(initiator_cmd_t * cmd)
 int 
 initiator_enqueue(initiator_cmd_t * cmd)
 {
-	initiator_session_t *sess = g_target[cmd->isid].sess;
+	initiator_session_t *sess;
 	iscsi_scsi_cmd_args_t *scsi_cmd;
 	iscsi_nop_out_args_t *nop_out;
-	uint64_t target = cmd->isid;
+	uint64_t target;
 	uint32_t        tag;
 
+	if ((target = cmd->isid) >= CONFIG_INITIATOR_NUM_TARGETS) {
+		iscsi_trace_error(__FILE__, __LINE__, "target (%d) out of range [0..%d]\n", target, CONFIG_INITIATOR_NUM_TARGETS);
+		return -1;
+	}
+	sess = g_target[target].sess;
 	if (g_target[target].has_session && (sess->state == INITIATOR_SESSION_STATE_LOGGED_IN_NORMAL)) {
 
 		/* Give command directly to tx worker */
