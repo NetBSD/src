@@ -1,4 +1,4 @@
-/*	$NetBSD: est.c,v 1.6 2007/12/07 20:33:27 xtraeme Exp $	*/
+/*	$NetBSD: est.c,v 1.6.2.1 2007/12/11 15:22:14 yamt Exp $	*/
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -85,8 +85,10 @@
  *   ACPI objects: _PCT is MSR location, _PSS is freq/voltage, _PPC is caps.
  */
 
+/* #define EST_DEBUG */
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.6 2007/12/07 20:33:27 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.6.2.1 2007/12/11 15:22:14 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

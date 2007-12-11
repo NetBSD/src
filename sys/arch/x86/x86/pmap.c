@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.10.4.2 2007/12/10 12:23:24 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.10.4.3 2007/12/11 15:22:17 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.10.4.2 2007/12/10 12:23:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.10.4.3 2007/12/11 15:22:17 yamt Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -2250,17 +2250,18 @@ pmap_reactivate(struct pmap *pmap)
 	 * synchronize with TLB shootdown interrupts.  declare
 	 * interest in invalidations (TLBSTATE_VALID) and then
 	 * check the cpumask, which the IPIs can change only
-	 * when the state is !TLBSTATE_VALID.
+	 * when the state is TLBSTATE_LAZY.
 	 */
 
 	ci->ci_tlbstate = TLBSTATE_VALID;
 	oldcpus = pmap->pm_cpus;
-	atomic_or_32(&pmap->pm_cpus, cpumask);
 	KASSERT((pmap->pm_kernel_cpus & cpumask) != 0);
 	if (oldcpus & cpumask) {
 		/* got it */
 		result = true;
 	} else {
+		/* must reload */
+		atomic_or_32(&pmap->pm_cpus, cpumask);
 		result = false;
 	}
 
@@ -3853,8 +3854,6 @@ pmap_alloc_level(pd_entry_t **pdes, vaddr_t kva, int lvl, long *needed_ptps)
 #ifdef XEN
 	splx(s);
 #endif
-	/* For nkptp vs pmap_pdp_cache. */
-	mb_write();
 }
 
 /*
@@ -3991,7 +3990,6 @@ void
 pmap_tlb_shootdown(struct pmap *pm, vaddr_t sva, vaddr_t eva, pt_entry_t pte)
 {
 #ifdef MULTIPROCESSOR
-	extern int _lock_cas(volatile uintptr_t *, uintptr_t, uintptr_t);
 	extern bool x86_mp_online;
 	struct cpu_info *ci;
 	struct pmap_mbox *mb, *selfmb;
@@ -4055,8 +4053,9 @@ pmap_tlb_shootdown(struct pmap *pm, vaddr_t sva, vaddr_t eva, pt_entry_t pte)
 						SPINLOCK_BACKOFF(count);
 					s = splvm();
 				}
-			} while (!_lock_cas(&mb->mb_head, head,
-			    head + ncpu - 1));
+			} while (atomic_cas_ulong(
+			    (volatile u_long *)&mb->mb_head,
+			    head, head + ncpu - 1) != head);
 
 			/*
 			 * Once underway we must stay at IPL_VM until the
@@ -4096,8 +4095,9 @@ pmap_tlb_shootdown(struct pmap *pm, vaddr_t sva, vaddr_t eva, pt_entry_t pte)
 				selfmb->mb_head++;
 				mb = &ci->ci_pmap_cpu->pc_mbox;
 				count = SPINLOCK_BACKOFF_MIN;
-				while (!_lock_cas((uintptr_t *)&mb->mb_pointer,
-				    0, (uintptr_t)&selfmb->mb_tail)) {
+				while (atomic_cas_ulong(
+				    (u_long *)&mb->mb_pointer,
+				    0, (u_long)&selfmb->mb_tail) != 0) {
 				    	splx(s);
 					while (mb->mb_pointer != 0)
 						SPINLOCK_BACKOFF(count);
@@ -4179,4 +4179,68 @@ pmap_update(struct pmap *pm)
 	crit_enter();
 	pmap_tlb_shootwait();
 	crit_exit();
+}
+
+#if PTP_LEVELS > 4
+#error "Unsupported number of page table mappings"
+#endif
+
+paddr_t
+pmap_init_tmp_pgtbl(paddr_t pg)
+{
+	static bool maps_loaded;
+	static const paddr_t x86_tmp_pml_paddr[] = {
+	    4 * PAGE_SIZE,
+	    5 * PAGE_SIZE,
+	    6 * PAGE_SIZE,
+	    7 * PAGE_SIZE
+	};
+	static vaddr_t x86_tmp_pml_vaddr[] = { 0, 0, 0, 0 };
+
+	pd_entry_t *tmp_pml, *kernel_pml;
+	
+	int level;
+
+	if (!maps_loaded) {
+		for (level = 0; level < PTP_LEVELS; ++level) {
+			x86_tmp_pml_vaddr[level] =
+			    uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
+			    UVM_KMF_VAONLY);
+
+			if (x86_tmp_pml_vaddr[level] == 0)
+				panic("mapping of real mode PML failed\n");
+			pmap_kenter_pa(x86_tmp_pml_vaddr[level],
+			    x86_tmp_pml_paddr[level],
+			    VM_PROT_READ | VM_PROT_WRITE);
+			pmap_update(pmap_kernel());
+		}
+		maps_loaded = true;
+	}
+
+	/* Zero levels 1-3 */
+	for (level = 0; level < PTP_LEVELS - 1; ++level) {
+		tmp_pml = (void *)x86_tmp_pml_vaddr[level];
+		memset(tmp_pml, 0, PAGE_SIZE);
+	}
+
+	/* Copy PML4 */
+	kernel_pml = pmap_kernel()->pm_pdir;
+	tmp_pml = (void *)x86_tmp_pml_vaddr[PTP_LEVELS - 1];
+	memcpy(tmp_pml, kernel_pml, PAGE_SIZE);
+
+	/* Hook our own level 3 in */
+	tmp_pml[pl_i(pg, PTP_LEVELS)] =
+	    (x86_tmp_pml_paddr[PTP_LEVELS - 2] & PG_FRAME) | PG_RW | PG_V;
+
+	for (level = PTP_LEVELS - 1; level > 0; --level) {
+		tmp_pml = (void *)x86_tmp_pml_vaddr[level];
+
+		tmp_pml[pl_i(pg, level + 1)] =
+		    (x86_tmp_pml_paddr[level - 1] & PG_FRAME) | PG_RW | PG_V;
+	}
+
+	tmp_pml = (void *)x86_tmp_pml_vaddr[0];
+	tmp_pml[pl_i(pg, 1)] = (pg & PG_FRAME) | PG_RW | PG_V;
+
+	return x86_tmp_pml_paddr[PTP_LEVELS - 1];
 }

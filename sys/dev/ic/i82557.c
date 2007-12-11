@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.105 2007/12/08 15:45:43 tsutsui Exp $	*/
+/*	$NetBSD: i82557.c,v 1.105.2.1 2007/12/11 15:27:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.105 2007/12/08 15:45:43 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.105.2.1 2007/12/11 15:27:40 yamt Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -208,7 +208,6 @@ void	fxp_mc_setup(struct fxp_softc *);
 void	fxp_load_ucode(struct fxp_softc *);
 
 void	fxp_shutdown(void *);
-void	fxp_power(int, void *);
 
 int	fxp_copy_small = 0;
 
@@ -447,14 +446,6 @@ fxp_attach(struct fxp_softc *sc)
 	if (sc->sc_sdhook == NULL)
 		aprint_error("%s: WARNING: unable to establish shutdown hook\n",
 		    sc->sc_dev.dv_xname);
-	/*
-  	 * Add suspend hook, for similar reasons..
-	 */
-	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
-	    fxp_power, sc);
-	if (sc->sc_powerhook == NULL)
-		aprint_error("%s: WARNING: unable to establish power hook\n",
-		    sc->sc_dev.dv_xname);
 
 	/* The attach is successful. */
 	sc->sc_flags |= FXPF_ATTACHED;
@@ -550,36 +541,6 @@ fxp_shutdown(void *arg)
 	 * freeing mbufs.
 	 */
 	fxp_stop(&sc->sc_ethercom.ec_if, 0);
-}
-/*
- * Power handler routine. Called when the system is transitioning
- * into/out of power save modes.  As with fxp_shutdown, the main
- * purpose of this routine is to shut off receiver DMA so it doesn't
- * clobber kernel memory at the wrong time.
- */
-void
-fxp_power(int why, void *arg)
-{
-	struct fxp_softc *sc = arg;
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
-	int s;
-
-	s = splnet();
-	switch (why) {
-	case PWR_SUSPEND:
-	case PWR_STANDBY:
-		fxp_stop(ifp, 0);
-		break;
-	case PWR_RESUME:
-		if (ifp->if_flags & IFF_UP)
-			fxp_init(ifp);
-		break;
-	case PWR_SOFTSUSPEND:
-	case PWR_SOFTSTANDBY:
-	case PWR_SOFTRESUME:
-		break;
-	}
-	splx(s);
 }
 
 /*
@@ -2513,7 +2474,6 @@ fxp_detach(struct fxp_softc *sc)
 	bus_dmamem_free(sc->sc_dmat, &sc->sc_cdseg, sc->sc_cdnseg);
 
 	shutdownhook_disestablish(sc->sc_sdhook);
-	powerhook_disestablish(sc->sc_powerhook);
 
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbc_acpi.c,v 1.22 2007/10/19 11:59:35 ad Exp $	*/
+/*	$NetBSD: pckbc_acpi.c,v 1.22.6.1 2007/12/11 15:22:35 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_acpi.c,v 1.22 2007/10/19 11:59:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_acpi.c,v 1.22.6.1 2007/12/11 15:22:35 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -232,10 +232,14 @@ pckbc_acpi_attach(struct device *parent, struct device *self,
 		t->t_sc = &first->sc_pckbc;
 		first->sc_pckbc.id = t;
 
+		if (!pmf_device_register(self, NULL, pckbc_resume))
+			aprint_error_dev(self, "couldn't establish power handler\n");
+
 		first->sc_pckbc.intr_establish = pckbc_acpi_intr_establish;
 		config_defer(&first->sc_pckbc.sc_dv,
 			     (void(*)(struct device *))pckbc_attach);
-	}
+	} else if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
  out:
 	acpi_resource_cleanup(&res);
 }
