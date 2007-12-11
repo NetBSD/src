@@ -1,3 +1,5 @@
+/*	$NetBSD: via_video.c,v 1.2 2007/12/11 11:48:49 lukem Exp $	*/
+
 /*
  * Copyright 2005 Thomas Hellstrom. All Rights Reserved.
  *
@@ -24,6 +26,9 @@
  *
  * Video and XvMC related functions.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: via_video.c,v 1.2 2007/12/11 11:48:49 lukem Exp $");
 
 #include <dev/drm/drmP.h>
 #include <dev/pci/drm/via_drm.h>

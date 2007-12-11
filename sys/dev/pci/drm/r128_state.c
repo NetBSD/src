@@ -1,3 +1,5 @@
+/*	$NetBSD: r128_state.c,v 1.3 2007/12/11 11:48:44 lukem Exp $	*/
+
 /* r128_state.c -- State support for r128 -*- linux-c -*-
  * Created: Thu Jan 27 02:53:43 2000 by gareth@valinux.com
  */
@@ -29,6 +31,7 @@
  */
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: r128_state.c,v 1.3 2007/12/11 11:48:44 lukem Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/r128_state.c,v 1.13 2005/11/28 23:13:53 anholt Exp $");
 */

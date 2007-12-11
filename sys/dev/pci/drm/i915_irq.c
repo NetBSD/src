@@ -1,3 +1,5 @@
+/*	$NetBSD: i915_irq.c,v 1.2 2007/12/11 11:48:41 lukem Exp $	*/
+
 /* i915_irq.c -- IRQ support for the I915 -*- linux-c -*-
  */
 /*-
@@ -27,6 +29,7 @@
  */
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: i915_irq.c,v 1.2 2007/12/11 11:48:41 lukem Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/i915_irq.c,v 1.4 2006/09/07 23:04:47 anholt Exp $");
 */
