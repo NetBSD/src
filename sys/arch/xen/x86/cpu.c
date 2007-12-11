@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.2 2007/11/22 16:17:03 bouyer Exp $	*/
+/*	$NetBSD: cpu.c,v 1.2.10.1 2007/12/11 15:22:18 yamt Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.2 2007/11/22 16:17:03 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.2.10.1 2007/12/11 15:22:18 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -853,11 +853,13 @@ mp_cpu_start_cleanup(struct cpu_info *ci)
 #ifdef __x86_64__
 
 void
-cpu_init_msrs(struct cpu_info *ci)
+cpu_init_msrs(struct cpu_info *ci, bool full)
 {
-	HYPERVISOR_set_segment_base (SEGBASE_FS, 0);
-	HYPERVISOR_set_segment_base (SEGBASE_GS_KERNEL, (u_int64_t) ci);
-	HYPERVISOR_set_segment_base (SEGBASE_GS_USER, 0);
+	if (full) {
+		HYPERVISOR_set_segment_base (SEGBASE_FS, 0);
+		HYPERVISOR_set_segment_base (SEGBASE_GS_KERNEL, (u_int64_t) ci);
+		HYPERVISOR_set_segment_base (SEGBASE_GS_USER, 0);
+	}
 }
 #endif	/* __x86_64__ */
 

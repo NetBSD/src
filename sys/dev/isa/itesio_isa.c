@@ -1,4 +1,4 @@
-/*	$NetBSD: itesio_isa.c,v 1.6 2007/12/01 23:40:28 jmcneill Exp $ */
+/*	$NetBSD: itesio_isa.c,v 1.6.6.1 2007/12/11 15:29:20 yamt Exp $ */
 /*	Derived from $OpenBSD: it.c,v 1.19 2006/04/10 00:57:54 deraadt Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: itesio_isa.c,v 1.6 2007/12/01 23:40:28 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: itesio_isa.c,v 1.6.6.1 2007/12/11 15:29:20 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -240,6 +240,7 @@ itesio_isa_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	sc->sc_hwmon_enabled = true;
+	pmf_device_register(self, NULL, NULL);
 }
 
 static int
