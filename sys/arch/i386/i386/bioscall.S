@@ -1,4 +1,4 @@
-/*	$NetBSD: bioscall.S,v 1.5 2005/12/11 12:17:41 christos Exp $ */
+/*	$NetBSD: bioscall.S,v 1.6 2007/12/11 23:06:11 lukem Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -36,9 +36,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <machine/bioscall.h>
-
 #include <machine/asm.h>
+__KERNEL_RCSID(0, "$NetBSD: bioscall.S,v 1.6 2007/12/11 23:06:11 lukem Exp $");
+
+#include <machine/bioscall.h>
 
 #include "assym.h"
 
