@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.S,v 1.3 2007/11/12 18:42:00 ad Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.4 2007/12/11 23:06:12 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -42,9 +42,11 @@
  * These are shared with NetBSD/xen.
  */
 
+#include <machine/asm.h>
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.S,v 1.4 2007/12/11 23:06:12 lukem Exp $");
+
 #include "opt_xen.h"
 
-#include <machine/asm.h>
 #include <machine/specialreg.h>
 #include <machine/segments.h>
 
