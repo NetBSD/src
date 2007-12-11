@@ -1,4 +1,4 @@
-/* $NetBSD: paxctl.c,v 1.3 2007/12/08 19:56:55 christos Exp $ */
+/* $NetBSD: paxctl.c,v 1.4 2007/12/11 01:40:27 christos Exp $ */
 
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -33,7 +33,7 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #ifdef __RCSID
-__RCSID("$NetBSD: paxctl.c,v 1.3 2007/12/08 19:56:55 christos Exp $");
+__RCSID("$NetBSD: paxctl.c,v 1.4 2007/12/11 01:40:27 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -91,7 +91,7 @@ static const struct paxflag {
 static void
 usage(void)
 {
-	(void)fprintf(stderr, "Usage: %s [ <-|+><G|g|M|m> ] <file>\n",
+	(void)fprintf(stderr, "Usage: %s [ <-|+><G|g|M|m> ] <file> ...\n",
 #if HAVE_NBTOOL_CONFIG_H
 	    "paxctl"
 #else
