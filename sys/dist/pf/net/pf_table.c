@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_table.c,v 1.12 2007/03/12 18:18:31 ad Exp $	*/
+/*	$NetBSD: pf_table.c,v 1.12.24.1 2007/12/11 15:44:09 yamt Exp $	*/
 /*	$OpenBSD: pf_table.c,v 1.62 2004/12/07 18:02:04 mcbride Exp $	*/
 
 /*
@@ -30,6 +30,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pf_table.c,v 1.12.24.1 2007/12/11 15:44:09 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
