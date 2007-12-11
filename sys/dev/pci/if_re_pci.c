@@ -1,4 +1,4 @@
-/*	$NetBSD: if_re_pci.c,v 1.31 2007/12/09 20:28:09 jmcneill Exp $	*/
+/*	$NetBSD: if_re_pci.c,v 1.32 2007/12/11 11:25:52 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -46,6 +46,7 @@
  */
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_re_pci.c,v 1.32 2007/12/11 11:25:52 lukem Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"

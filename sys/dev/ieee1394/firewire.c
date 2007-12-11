@@ -1,4 +1,4 @@
-/*	$NetBSD: firewire.c,v 1.17 2007/12/09 20:28:01 jmcneill Exp $	*/
+/*	$NetBSD: firewire.c,v 1.18 2007/12/11 11:34:08 lukem Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -35,6 +35,9 @@
  * $FreeBSD: src/sys/dev/firewire/firewire.c,v 1.101 2007/10/20 23:23:14 julian Exp $
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: firewire.c,v 1.18 2007/12/11 11:34:08 lukem Exp $");
 
 #if defined(__FreeBSD__)
 #include <sys/param.h>

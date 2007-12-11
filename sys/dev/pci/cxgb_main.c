@@ -28,6 +28,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cxgb_main.c,v 1.9 2007/12/11 11:25:47 lukem Exp $");
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/dev/cxgb/cxgb_main.c,v 1.21 2007/05/29 04:18:21 kmacy Exp $");
 #endif
