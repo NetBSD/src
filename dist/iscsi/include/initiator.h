@@ -37,7 +37,7 @@
 #include "parameters.h"
 #include "defs.h"
 
-#define CONFIG_INITIATOR_NUM_TARGETS 1
+#define CONFIG_INITIATOR_NUM_TARGETS 16
 
 /***********
  * Private *
