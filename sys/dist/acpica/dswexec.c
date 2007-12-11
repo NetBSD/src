@@ -1,8 +1,10 @@
+/*	$NetBSD: dswexec.c,v 1.3 2007/12/11 13:16:04 lukem Exp $	*/
+
 /******************************************************************************
  *
  * Module Name: dswexec - Dispatcher method execution callbacks;
  *                        dispatch to interpreter.
- *              $Revision: 1.2 $
+ *              $Revision: 1.3 $
  *
  *****************************************************************************/
 
@@ -114,6 +116,9 @@
  * such license, approval or letter.
  *
  *****************************************************************************/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: dswexec.c,v 1.3 2007/12/11 13:16:04 lukem Exp $");
 
 #define __DSWEXEC_C__
 

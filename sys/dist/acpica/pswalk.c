@@ -1,7 +1,9 @@
+/*	$NetBSD: pswalk.c,v 1.3 2007/12/11 13:16:15 lukem Exp $	*/
+
 /******************************************************************************
  *
  * Module Name: pswalk - Parser routines to walk parsed op tree(s)
- *              $Revision: 1.2 $
+ *              $Revision: 1.3 $
  *
  *****************************************************************************/
 
@@ -114,6 +116,8 @@
  *
  *****************************************************************************/
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pswalk.c,v 1.3 2007/12/11 13:16:15 lukem Exp $");
 
 #include <dist/acpica/acpi.h>
 #include <dist/acpica/acparser.h>

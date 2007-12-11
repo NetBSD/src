@@ -1,8 +1,9 @@
+/*	$NetBSD: exregion.c,v 1.5 2007/12/11 13:16:09 lukem Exp $	*/
 
 /******************************************************************************
  *
  * Module Name: exregion - ACPI default OpRegion (address space) handlers
- *              $Revision: 1.4 $
+ *              $Revision: 1.5 $
  *
  *****************************************************************************/
 
@@ -115,6 +116,8 @@
  *
  *****************************************************************************/
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: exregion.c,v 1.5 2007/12/11 13:16:09 lukem Exp $");
 
 #define __EXREGION_C__
 
