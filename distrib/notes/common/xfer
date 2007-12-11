@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.58 2007/12/11 02:28:42 jnemeth Exp $
+.\"	$NetBSD: xfer,v 1.59 2007/12/11 02:38:33 jnemeth Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -729,7 +729,7 @@ by the machine on which you are installing or upgrading
 .Nx .
 This will probably require modifying the
 .Pa /etc/exports
-file on of the NFS server and resetting its mount daemon (mountd).
+file on the NFS server and resetting its mount daemon (mountd).
 (Both of these actions will probably require superuser
 privileges on the server.)
 .Pp
@@ -802,14 +802,14 @@ are the
 distribution sets' directories, for the distribution sets you
 wish to place on the tape.
 For instance, to put the
-.Sy misc, base, No and Sy etc
+.Sy kern-GENERIC, base, No and Sy etc
 distributions on tape (in
 order to do the absolute minimum installation to a new disk),
 you would do the following:
 .Pp
 .Dl # Ic "cd \&.../NetBSD-\*V"
 .Dl # Ic "cd \*M/binary"
-.Dl # Ic "tar -cf" Ar tape_device Ic "misc etc kern"
+.Dl # Ic "tar -cf" Ar tape_device Ic "kern-GENERIC base etc"
 .Pp
 .(Note
 You still need to fill in
