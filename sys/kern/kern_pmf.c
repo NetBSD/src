@@ -1,4 +1,4 @@
-/* $NetBSD: kern_pmf.c,v 1.4 2007/12/11 01:00:45 jmcneill Exp $ */
+/* $NetBSD: kern_pmf.c,v 1.5 2007/12/11 01:20:06 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_pmf.c,v 1.4 2007/12/11 01:00:45 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_pmf.c,v 1.5 2007/12/11 01:20:06 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -588,7 +588,7 @@ pmf_init(void)
 
 	KASSERT(pmf_event_workqueue == NULL);
 	err = workqueue_create(&pmf_event_workqueue, "pmfevent",
-	    pmf_event_worker, NULL, PRI_IDLE, IPL_VM, 0);
+	    pmf_event_worker, NULL, PRI_NONE, IPL_VM, 0);
 	if (err)
 		panic("couldn't create pmfevent workqueue");
 
