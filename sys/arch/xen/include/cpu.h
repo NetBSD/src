@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.24 2007/11/22 16:16:56 bouyer Exp $	*/
+/*	$NetBSD: cpu.h,v 1.24.6.1 2007/12/11 23:03:01 bouyer Exp $	*/
 /*	NetBSD: cpu.h,v 1.113 2004/02/20 17:35:01 yamt Exp 	*/
 
 /*-
@@ -80,6 +80,7 @@ struct cpu_info {
 	 * Public members.
 	 */
 	struct lwp *ci_curlwp;		/* current owner of the processor */
+	struct pmap_cpu *ci_pmap_cpu;	/* per-CPU pmap data */
 	struct simplelock ci_slock;	/* lock on this data structure */
 	cpuid_t ci_cpuid;		/* our CPU ID */
 	int ci_cpumask;			/* (1 << CPU ID) */
@@ -89,6 +90,7 @@ struct cpu_info {
 	/*
 	 * Private members.
 	 */
+	struct evcnt ci_tlb_evcnt;      /* tlb shootdown counter */
 	struct lwp *ci_fpcurlwp;	/* current owner of the FPU */
 	int	ci_fpsaving;		/* save in progress */
 	int	ci_fpused;		/* FPU was used by curlwp */
@@ -97,6 +99,7 @@ struct cpu_info {
 
 	struct pmap *ci_pmap;		/* current pmap */
 	int ci_want_pmapload;		/* pmap_load() is needed */
+	int ci_need_tlbwait;		/* need to wait for TLB invalidations */
 	volatile int ci_tlbstate;	/* one of TLBSTATE_ states. see below */
 #define	TLBSTATE_VALID	0	/* all user tlbs are valid */
 #define	TLBSTATE_LAZY	1	/* tlbs are valid but won't be kept uptodate */

@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_xpmap.c,v 1.3 2007/11/23 09:54:33 bouyer Exp $	*/
+/*	$NetBSD: x86_xpmap.c,v 1.3.12.1 2007/12/11 23:03:02 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2006 Mathieu Ropert <mro@adviseo.fr>
@@ -79,9 +79,11 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.3 2007/11/23 09:54:33 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.3.12.1 2007/12/11 23:03:02 bouyer Exp $");
 
 #include "opt_xen.h"
+#include "opt_ddb.h"
+#include "ksyms.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -510,7 +512,14 @@ vaddr_t xen_pmap_bootstrap (void);
 vaddr_t
 xen_pmap_bootstrap()
 {
-	int count, iocount = 0;
+	int count, extracount, iocount = 0;
+#ifdef __x86_64__
+	int l2_4_count = 1;
+#else
+	int l2_4_count = 3;
+	extern long end;
+	extern long esym;
+#endif
 	vaddr_t bootstrap_tables, init_tables;
 
 	xpmap_phys_to_machine_mapping = (paddr_t *) xen_start_info.mfn_list;
@@ -522,7 +531,20 @@ xen_pmap_bootstrap()
 		(xen_start_info.nr_pt_frames * PAGE_SIZE);
 
 	/* Calculate how many tables we need */
+#ifdef __x86_64__
 	count = TABLE_L2_ENTRIES;
+#else
+#if (NKSYMS || defined(DDB) || defined(LKM)) && !defined(SYMTAB_SPACE)
+	if (esym)
+		count = ((esym - KERNBASE) + PGOFSET) & ~PGOFSET;
+	else
+#endif
+		count = ((end - KERNBASE) + PGOFSET) & ~PGOFSET;
+	count = ((count + ~L2_FRAME) >> L2_SHIFT) + 1;
+	count++; /* one more ptp for VAs stolen by bootstrap */
+	nkptp[1] = count;
+#endif /* __x86_64__ */
+	
 
 #ifdef DOM0OPS
 	if (xen_start_info.flags & SIF_INITDOMAIN) {
@@ -530,15 +552,16 @@ xen_pmap_bootstrap()
 		iocount = IOM_SIZE / PAGE_SIZE;
 	}
 #endif
+	extracount = iocount + l2_4_count;
 
 	/* 
 	 * Xen space we'll reclaim may not be enough for our new page tables,
 	 * move bootstrap tables if necessary
 	 */
 
-	if (bootstrap_tables < init_tables + ((count+3+iocount) * PAGE_SIZE))
+	if (bootstrap_tables < init_tables + ((count + extracount) * PAGE_SIZE))
 		bootstrap_tables = init_tables +
-					((count+3+iocount) * PAGE_SIZE);
+					((count + extracount) * PAGE_SIZE);
 
 	/* Create temporary tables */
 	xen_bootstrap_tables(xen_start_info.pt_base, bootstrap_tables,
@@ -548,9 +571,9 @@ xen_pmap_bootstrap()
 
 	/* Create final tables */
 	xen_bootstrap_tables(bootstrap_tables, init_tables,
-	    count + 3, count, 1);
+	    count + l2_4_count, count, 1);
 
-	return (init_tables + ((count + 3) * PAGE_SIZE));
+	return (init_tables + ((count + l2_4_count) * PAGE_SIZE));
 }
 
 
@@ -804,4 +827,4 @@ xen_bt_set_readonly (vaddr_t page)
 
 	HYPERVISOR_update_va_mapping (page, entry, UVMF_INVLPG);
 }
-#endif /* x86_64 */
+#endif /* __x86_64__ */
