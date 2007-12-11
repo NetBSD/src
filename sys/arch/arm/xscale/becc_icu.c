@@ -1,4 +1,4 @@
-/*	$NetBSD: becc_icu.c,v 1.8 2007/12/11 17:03:35 ad Exp $	*/
+/*	$NetBSD: becc_icu.c,v 1.9 2007/12/11 17:12:26 ad Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: becc_icu.c,v 1.8 2007/12/11 17:03:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: becc_icu.c,v 1.9 2007/12/11 17:12:26 ad Exp $");
 
 #ifndef EVBARM_SPL_NOINLINE
 #define	EVBARM_SPL_NOINLINE
@@ -453,10 +453,10 @@ becc_intr_dispatch(struct irqframe *frame)
 		becc_set_intrmask();
 	}
 
+	ci->ci_idepth--;
+
 	if (becc_ipending & ~pcpl) {
 		intr_enabled |= (becc_ipending & ~pcpl);
 		becc_set_intrmask();
 	}
-
-	ci->ci_idepth--;
 }
