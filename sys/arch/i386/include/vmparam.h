@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.64 2007/10/18 15:28:37 yamt Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.64.8.1 2007/12/11 23:02:57 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -126,13 +126,21 @@
 /* virtual sizes (bytes) for various kernel submaps */
 #define VM_PHYS_SIZE		(USRIOSIZE*PAGE_SIZE)
 
+#ifdef XEN
+#define VM_PHYSSEG_MAX		1
+#else
 #define VM_PHYSSEG_MAX		10	/* 1 "hole" + 9 free lists */
+#endif /* XEN */
 #define VM_PHYSSEG_STRAT	VM_PSTRAT_BIGFIRST
 #define VM_PHYSSEG_NOADD		/* can't add RAM after vm_mem_init */
 
+#ifdef XEN
+#define	VM_NFREELIST		1
+#else
 #define	VM_NFREELIST		2
-#define	VM_FREELIST_DEFAULT	0
 #define	VM_FREELIST_FIRST16	1
+#endif /* XEN */
+#define	VM_FREELIST_DEFAULT	0
 
 #define	__HAVE_VM_PAGE_MD
 #define	VM_MDPAGE_INIT(pg)							\

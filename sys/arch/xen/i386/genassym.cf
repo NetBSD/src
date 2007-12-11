@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.18 2007/12/03 15:34:28 ad Exp $
+#	$NetBSD: genassym.cf,v 1.18.6.1 2007/12/11 23:02:59 bouyer Exp $
 #	NetBSD: genassym.cf,v 1.40 2004/02/20 17:35:01 yamt Exp 
 
 #
@@ -157,9 +157,8 @@ define	PG_V			PG_V
 define	PG_KW			PG_KW
 define	PG_KR			PG_KR
 
-define	PDSLOT_PTE		PDSLOT_PTE
-define	PDSLOT_APTE		PDSLOT_APTE
-define	PDSLOT_KERN		PDSLOT_KERN
+define	PDIR_SLOT_PTE		PDIR_SLOT_PTE
+define	PDIR_SLOT_KERN		PDIR_SLOT_KERN
 define	NKPTP_MIN		NKPTP_MIN
 define	NKPTP_MAX		NKPTP_MAX
 

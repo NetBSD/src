@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.49 2007/12/03 15:34:28 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.49.6.1 2007/12/11 23:03:00 bouyer Exp $	*/
 /*	NetBSD: machdep.c,v 1.559 2004/07/22 15:12:46 mycroft Exp 	*/
 
 /*-
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.49 2007/12/03 15:34:28 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.49.6.1 2007/12/11 23:03:00 bouyer Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -201,10 +201,6 @@ void ddb_trap_hook(int);
 #define	XENPRINTK(x)
 #endif
 #define	PRINTK(x) printf x
-
-#ifdef XENDEBUG_LOW
-void xen_dbglow_init(void);
-#endif
 
 /* the following is used externally (sysctl_hw) */
 char machine[] = "i386";		/* CPU "architecture" */
@@ -544,11 +540,6 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 		       CTLTYPE_INT, "biosextmem", NULL,
 		       NULL, 0, &biosextmem, 0,
 		       CTL_MACHDEP, CPU_BIOSEXTMEM, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_INT, "nkpde", NULL,
-		       NULL, 0, &nkpde, 0,
-		       CTL_MACHDEP, CPU_NKPDE, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRING, "booted_kernel", NULL,
@@ -1407,9 +1398,6 @@ init386(paddr_t first_avail)
 		    xenstore_interface, xen_start_info.store_mfn));
 	}
 #endif
-#ifdef XENDEBUG_LOW
-	xen_dbglow_init();
-#endif
 
 	cpu_probe_features(&cpu_info_primary);
 	cpu_feature = cpu_info_primary.ci_feature_flags;
@@ -1419,11 +1407,20 @@ init386(paddr_t first_avail)
 
 	proc0paddr = UAREA_TO_USER(proc0uarea);
 	lwp0.l_addr = proc0paddr;
+#ifdef XEN
+#if 0
+	lwp0.l_addr->u_pcb.pcb_cr3 = xen_start_info.pt_base - KERNBASE;
+#endif
+	lwp0.l_addr->u_pcb.pcb_cr3 = PDPpaddr - KERNBASE;
+	__PRINTK(("pcb_cr3 0x%lx cr3 0x%lx\n",
+	    PDPpaddr - KERNBASE, xpmap_ptom(PDPpaddr - KERNBASE)));
+#endif
 
-	XENPRINTK(("proc0paddr %p pcb %p first_avail %p\n",
-	    proc0paddr, cpu_info_primary.ci_curpcb, (void *)first_avail));
+
+	XENPRINTK(("proc0paddr %p first_avail %p\n",
+	    proc0paddr, (void *)first_avail));
 	XENPRINTK(("ptdpaddr %p atdevbase %p\n", (void *)PDPpaddr,
-		      (void *)atdevbase));
+	    (void *)atdevbase));
 
 #if defined(XEN) && (NISA > 0 || NPCI > 0)
 	x86_bus_space_init();

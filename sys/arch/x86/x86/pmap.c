@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.13 2007/12/09 20:27:51 jmcneill Exp $	*/
+/*	$NetBSD: pmap.c,v 1.13.2.1 2007/12/11 23:02:58 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.13 2007/12/09 20:27:51 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.13.2.1 2007/12/11 23:02:58 bouyer Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -194,7 +194,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.13 2007/12/09 20:27:51 jmcneill Exp $");
 #endif
 
 /* flag to be used for kernel mappings: PG_u on Xen/amd64, 0 otherwise */
-#ifdef XEN
+#if defined(XEN) && defined(__x86_64__)
 #define PG_k PG_u
 #else
 #define PG_k 0
@@ -441,13 +441,15 @@ paddr_t avail_end;	/* PA of last available physical page */
 #ifdef XEN
 /* First avail vaddr in bootstrap space, needed by pmap_bootstrap() */
 vaddr_t first_bt_vaddr;
+#ifdef __x86_64__
 /* Dummy PGD for user cr3, used between pmap_deacivate() and pmap_activate() */
 static paddr_t xen_dummy_user_pgd;
 /* Currently active user PGD (can't use rcr3()) */
 static paddr_t xen_current_user_pgd = 0;
+#endif /* __x86_64__ */
 paddr_t pmap_pa_start; /* PA of first physical page for this domain */
 paddr_t pmap_pa_end;   /* PA of last physical page for this domain */
-#endif
+#endif /* XEN */
 
 
 /*
@@ -610,14 +612,14 @@ static bool		 pmap_reactivate(struct pmap *);
 inline static bool
 pmap_is_curpmap(struct pmap *pmap)
 {
-#ifdef XEN
+#if defined(XEN) && defined(__x86_64__)
 	/*
 	 * Only kernel pmap is physically loaded.
 	 * User PGD may be active, but TLB will be flushed
 	 * with HYPERVISOR_iret anyway, so let's say no
 	 */
 	return(pmap == pmap_kernel());
-#else /* XEN */
+#else /* XEN && __x86_64__*/
 	return((pmap == pmap_kernel()) ||
 	       (pmap == curcpu()->ci_pmap));
 #endif
@@ -683,14 +685,14 @@ pmap_map_ptes(struct pmap *pmap, struct pmap **pmap2,
 	ncsw = l->l_ncsw;
  	ourpmap = NULL;
 	ci = curcpu();
-#ifdef XEN
+#if defined(XEN) && defined(__x86_64__)
 	/*
 	 * curmap can only be pmap_kernel so at this point
 	 * pmap_is_curpmap is always false
 	 */
 	iscurrent = 0;
 	ourpmap = pmap_kernel();
-#else /* XEN */
+#else /* XEN && __x86_64__*/
 	if (ci->ci_want_pmapload &&
 	    vm_map_pmap(&l->l_proc->p_vmspace->vm_map) == pmap) {
 		pmap_load();
@@ -709,7 +711,7 @@ pmap_map_ptes(struct pmap *pmap, struct pmap **pmap2,
 		goto out;
 	}
 	ourpmap = ci->ci_pmap;
-#endif /* XEN */
+#endif /* XEN && __x86_64__ */
 
 	/* need to lock both curpmap and pmap: use ordered locking */
 	if ((uintptr_t) pmap < (uintptr_t) ourpmap) {
@@ -768,7 +770,7 @@ pmap_map_ptes(struct pmap *pmap, struct pmap **pmap2,
 	*ptepp = APTE_BASE;
 	*pdeppp = alternate_pdes;
 	KASSERT(l->l_ncsw == ncsw);
-#ifndef XEN
+#if !defined(XEN) || !defined(__x86_64__)
  out:
 #endif
  	/*
@@ -793,7 +795,7 @@ pmap_map_ptes(struct pmap *pmap, struct pmap **pmap2,
 static void
 pmap_unmap_ptes(struct pmap *pmap, struct pmap *pmap2)
 {
-#ifdef XEN
+#if defined(XEN) && defined(__x86_64__)
 	int s;
 #endif
 
@@ -803,7 +805,7 @@ pmap_unmap_ptes(struct pmap *pmap, struct pmap *pmap2)
 	if (pmap2 == NULL) {
 		mutex_exit(&pmap->pm_lock);
 	} else {
-#ifdef XEN	
+#if defined(XEN) && defined(__x86_64__)
 		KASSERT(pmap2 == pmap_kernel());
 #else
 		KASSERT(curcpu()->ci_pmap == pmap2);
@@ -813,7 +815,7 @@ pmap_unmap_ptes(struct pmap *pmap, struct pmap *pmap2)
 		pmap_pte_flush();
 		pmap_apte_flush(pmap2);
 #endif
-#ifdef XEN
+#if defined(XEN) && defined(__x86_64__)
 		/* Invalid recursive entry in user PGD */
 		pmap_pte_set(&pmap->pm_pdir[PDIR_SLOT_PTE],
 		    pmap->pm_pdir[PDIR_SLOT_PTE] & ~PG_V);
@@ -827,7 +829,7 @@ pmap_unmap_ptes(struct pmap *pmap, struct pmap *pmap2)
 			xen_current_user_pgd = pmap->pm_pdirpa;
 		}
 		splx(s);
-#endif /* XEN */
+#endif /* XEN && __x86_64 */
 		COUNT(apdp_pde_unmap);
 		mutex_exit(&pmap->pm_lock);
 		mutex_exit(&pmap2->pm_lock);
@@ -932,8 +934,8 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 #ifdef DOM0OPS
 	if (pa < pmap_pa_start || pa >= pmap_pa_end) {
 #ifdef DEBUG
-		/* printf("pmap_kenter_pa: pa 0x%lx for va 0x%lx outside range\n",
-		    pa, va); */
+		printk("pmap_kenter_pa: pa 0x%lx for va 0x%lx outside range\n",
+		    pa, va);
 #endif /* DEBUG */
 		npte = pa;
 	} else
@@ -1294,6 +1296,7 @@ pmap_bootstrap(vaddr_t kva_start)
 	virtual_avail += PAGE_SIZE; pte++;
 
 #ifdef XEN
+#ifdef __x86_64__
 	/*
 	 * We want a dummy page directory for Xen:
 	 * when deactivate a pmap, Xen will still consider it active.
@@ -1310,6 +1313,7 @@ pmap_bootstrap(vaddr_t kva_start)
 	    pmap_pa2pte(xen_dummy_user_pgd) | PG_u | PG_V, UVMF_INVLPG);
 	/* Pin as L4 */
 	xpq_queue_pin_table(xpmap_ptom_masked(xen_dummy_user_pgd));
+#endif /* __x86_64__ */
 	idt_vaddr = virtual_avail;                      /* don't need pte */
 	idt_paddr = avail_start;                        /* steal a page */
 	/*
@@ -1661,7 +1665,7 @@ pmap_free_ptp(struct pmap *pmap, struct vm_page *ptp, vaddr_t va,
 	do {
 		index = pl_i(va, level + 1);
 		opde = pmap_pte_testset(&pdes[level - 1][index], 0);
-#ifdef XEN
+#if defined(XEN) && defined(__x86_64__)
 		/*
 		 * If ptp is a L3 currently mapped in kernel space,
 		 * clear it before freeing
@@ -1669,7 +1673,7 @@ pmap_free_ptp(struct pmap *pmap, struct vm_page *ptp, vaddr_t va,
 		if (pmap->pm_pdirpa == xen_current_user_pgd
 		    && level == PTP_LEVELS - 1)
 			pmap_pte_set(&pmap_kernel()->pm_pdir[index], 0);
-#endif /* XEN */
+#endif /* XEN && __x86_64__ */
 		pmap_freepage(pmap, ptp, level, empty_ptps);
 		invaladdr = level == 1 ? (vaddr_t)ptes :
 		    (vaddr_t)pdes[level - 2];
@@ -1751,7 +1755,7 @@ pmap_get_ptp(struct pmap *pmap, vaddr_t va, pd_entry_t **pdes)
 		pa = VM_PAGE_TO_PHYS(ptp);
 		pmap_pte_set(&pva[index], (pd_entry_t)
 		        (pmap_pa2pte(pa) | PG_u | PG_RW | PG_V));
-#ifdef XEN
+#if defined(XEN) && defined(__x86_64__)
 		/*
 		 * In Xen we must enter the mapping in kernel map too
 		 * if pmap is curmap and modifying top level (PGD)
@@ -1761,7 +1765,7 @@ pmap_get_ptp(struct pmap *pmap, vaddr_t va, pd_entry_t **pdes)
 		                (pd_entry_t) (pmap_pa2pte(pa)
 		                        | PG_u | PG_RW | PG_V));
 		}
-#endif /* XEN */
+#endif /* XEN && __x86_64__ */
 		pmap_pte_flush();
 		pmap->pm_stats.resident_count++;
 		/*
@@ -1811,7 +1815,7 @@ pmap_pdp_ctor(void *arg, void *object, int flags)
 {
 	pd_entry_t *pdir = object;
 	paddr_t pdirpa = 0;	/* XXX: GCC */
-#ifndef XEN
+#if !defined(XEN) || !defined(__x86_64__)
 	int npde;
 #endif
 
@@ -1823,7 +1827,7 @@ pmap_pdp_ctor(void *arg, void *object, int flags)
 	(void) pmap_extract(pmap_kernel(), (vaddr_t) pdir, &pdirpa);
 
 	/* zero init area */
-#ifdef XEN
+#if defined(XEN) && defined(__x86_64__)
 	memset (pdir, 0, PAGE_SIZE); /* Xen wants a clean page */
 	/*
 	 * this pdir will NEVER be active in kernel mode
@@ -1838,10 +1842,13 @@ pmap_pdp_ctor(void *arg, void *object, int flags)
 	 */
 	pdir[PDIR_SLOT_KERN + nkptp[PTP_LEVELS - 1] - 1] =
 	     (unsigned long)-1 & PG_FRAME;
-#else
+#else /* XEN  && __x86_64__*/
 	memset(pdir, 0, PDIR_SLOT_PTE * sizeof(pd_entry_t));
 	/* put in recursive PDE to map the PTEs */
-	pdir[PDIR_SLOT_PTE] = pdirpa | PG_V | PG_KW;
+	pdir[PDIR_SLOT_PTE] = pmap_pa2pte(pdirpa) | PG_V;
+#ifndef XEN
+	pdir[PDIR_SLOT_PTE] |= PG_KW;
+#endif
 
 	npde = nkptp[PTP_LEVELS - 1];
 
@@ -1863,7 +1870,12 @@ pmap_pdp_ctor(void *arg, void *object, int flags)
 
 		pdir[idx] = PDP_BASE[idx];
 	}
+#ifdef XEN
+	/* remap this page RO */
+	pmap_kenter_pa((vaddr_t)pdir, pdirpa, VM_PROT_READ);
+	pmap_update(pmap_kernel());
 #endif
+#endif /* XEN  && __x86_64__*/
 
 	return (0);
 }
@@ -2233,10 +2245,10 @@ pmap_reactivate(struct pmap *pmap)
 	ci = curcpu();
 	cpumask = ci->ci_cpumask;
 
-#ifdef XEN
+#if defined(XEN) && defined(__x86_64__)
 	KASSERT(pmap->pm_pdirpa == xen_current_user_pgd);
 #else
-	KASSERT(pmap->pm_pdirpa == rcr3());
+	KASSERT(pmap->pm_pdirpa == pmap_pte2pa(rcr3()));
 #endif
 
 	/*
@@ -2334,11 +2346,11 @@ pmap_load(void)
 	atomic_and_32(&oldpmap->pm_cpus, ~cpumask);
 	atomic_and_32(&oldpmap->pm_kernel_cpus, ~cpumask);
 
-#ifdef XEN
+#if defined(XEN) && defined(__x86_64__)
 	KASSERT(oldpmap->pm_pdirpa == xen_current_user_pgd ||
 	    oldpmap == pmap_kernel());
 #else
-	KASSERT(oldpmap->pm_pdirpa == rcr3());
+	KASSERT(oldpmap->pm_pdirpa == pmap_pte2pa(rcr3()));
 #endif
 	KASSERT((pmap->pm_cpus & cpumask) == 0);
 	KASSERT((pmap->pm_kernel_cpus & cpumask) == 0);
@@ -2361,7 +2373,7 @@ pmap_load(void)
 	 */
 
 	pcb->pcb_cr3 = pmap->pm_pdirpa;
-#ifdef XEN
+#if defined(XEN) && defined(__x86_64__)
 	/* kernel pmap always in cr3 and should never go in user cr3 */
 	if (pmap->pm_pdirpa != pmap_kernel()->pm_pdirpa) {
 		/*
@@ -2388,10 +2400,10 @@ pmap_load(void)
 		xen_current_user_pgd = pmap->pm_pdirpa;
 		splx(s);
 	}
-#else
+#else /* XEN && x86_64 */
 	lldt(pcb->pcb_ldt_sel);
 	lcr3(pcb->pcb_cr3);
-#endif
+#endif /* XEN && x86_64 */
 
 	ci->ci_want_pmapload = 0;
 
@@ -2456,10 +2468,10 @@ pmap_deactivate(struct lwp *l)
 		return;
 	}
 
-#ifdef XEN
+#if defined(XEN) && defined(__x86_64__)
 	KASSERT(pmap->pm_pdirpa == xen_current_user_pgd);
 #else
-	KASSERT(pmap->pm_pdirpa == rcr3());
+	KASSERT(pmap->pm_pdirpa == pmap_pte2pa(rcr3()));
 #endif
 	KASSERT(ci->ci_pmap == pmap);
 
@@ -3872,7 +3884,6 @@ pmap_growkernel(vaddr_t maxkvaddr)
 {
 	struct pmap *kpm = pmap_kernel(), *pm;
 	int s, i;
-	unsigned newpdes;
 	long needed_kptp[PTP_LEVELS], target_nptp, old;
 	bool invalidate = false;
 
@@ -3910,6 +3921,29 @@ pmap_growkernel(vaddr_t maxkvaddr)
 	 * pmaps.
 	 */
 	if (needed_kptp[PTP_LEVELS - 1] != 0) {
+#ifdef XEN
+#ifdef __x86_64__
+		/* nothing, kernel entries are never entered in user pmap */
+#else /* __x86_64__ */
+		mutex_enter(&pmaps_lock);
+		s = splvm();
+		LIST_FOREACH(pm, &pmaps, pm_list) {
+			int pdkidx;
+			for (pdkidx =  PDIR_SLOT_KERN + old;
+			    pdkidx < PDIR_SLOT_KERN + nkptp[PTP_LEVELS - 1];
+			    pdkidx++) {
+				xpq_queue_pte_update(
+				    (void *)xpmap_ptom(pm->pm_pdirpa +
+				    pdkidx * sizeof(pd_entry_t)),
+				    kpm->pm_pdir[pdkidx]);
+			}
+			xpq_flush_queue();
+		}
+		splx(s);
+		mutex_exit(&pmaps_lock);
+#endif /* __x86_64__ */
+#else /* XEN */
+		unsigned newpdes;
 		newpdes = nkptp[PTP_LEVELS - 1] - old;
 		mutex_enter(&pmaps_lock);
 		LIST_FOREACH(pm, &pmaps, pm_list) {
@@ -3918,6 +3952,7 @@ pmap_growkernel(vaddr_t maxkvaddr)
 			       newpdes * sizeof (pd_entry_t));
 		}
 		mutex_exit(&pmaps_lock);
+#endif
 		invalidate = true;
 	}
 	pmap_maxkvaddr = maxkvaddr;

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.35 2007/11/15 19:18:34 ad Exp $	*/
+/*	$NetBSD: locore.S,v 1.35.6.1 2007/12/11 23:02:59 bouyer Exp $	*/
 /*	NetBSD: locore.S,v 1.31 2004/08/26 10:12:33 junyoung Exp	*/
 
 /*
@@ -320,7 +320,7 @@ start:
 #define	PROC0PDIR	((0)              * PAGE_SIZE)
 #define	PROC0STACK	((1)              * PAGE_SIZE)
 #define	SYSMAP		((1+UPAGES)       * PAGE_SIZE)
-#define	TABLESIZE	((1+UPAGES) * PAGE_SIZE) /* + nkpde * PAGE_SIZE */
+#define	TABLESIZE	((1+UPAGES) * PAGE_SIZE) /* + nkptp[1] * PAGE_SIZE */
 
 	/* Find end of kernel image. */
 	movl	RELOC(avail_start),%edi
@@ -331,7 +331,7 @@ start:
 	 * Calculate the size of the kernel page table directory, and
 	 * how many entries it will have.
 	 */
-	movl	RELOC(nkpde),%ecx		# get nkpde
+	movl	RELOC(nkptp+1*4),%ecx		# get nkpde
 	cmpl	$NKPTP_MIN,%ecx			# larger than min?
 	jge	1f
 	movl	$NKPTP_MIN,%ecx			# set at min
@@ -340,6 +340,7 @@ start:
 	jle	2f
 	movl	$NKPTP_MAX,%ecx
 2:
+	movl	%ecx,RELOC(nkptp+1*4)
 
 	/* Clear memory for bootstrap tables. */
 	shll	$PGSHIFT,%ecx
@@ -433,14 +434,14 @@ start:
  * Construct a page table directory.
  */
 	/* Map kernel PDEs. */
-	movl	RELOC(nkpde),%ecx			# for this many pde s,
-	leal	(PROC0PDIR+PDSLOT_KERN*4)(%esi),%ebx	# kernel pde offset
+	movl	RELOC(nkptp+1*4),%ecx			# for this many pde s,
+	leal	(PROC0PDIR+PDIR_SLOT_KERN*4)(%esi),%ebx	# kernel pde offset
 	leal	(SYSMAP+PG_V|PG_KW)(%esi),%eax		# pte for KPT in proc 0,
 	fillkpt
 
 	/* Install a PDE recursively mapping page directory as a page table! */
 	leal	(PROC0PDIR+PG_V/*|PG_KW*/)(%esi),%eax	# pte for ptd
-	movl	%eax,(PROC0PDIR+PDSLOT_PTE*4)(%esi)	# recursive PD slot
+	movl	%eax,(PROC0PDIR+PDIR_SLOT_PTE*4)(%esi)	# recursive PD slot
 
 	/* Save phys. addr of PDP, for libkvm. */
 	movl	%esi,RELOC(PDPpaddr)
@@ -872,3 +873,64 @@ NENTRY(npx586bug1)
 	popl	%eax
 	ret
 #endif /* NNPX > 0 */
+/*
+ * void sse2_zero_page(void *pg)
+ *
+ * Zero a page without polluting the cache.
+ */
+ENTRY(sse2_zero_page)
+	pushl	%ebp
+	movl	%esp,%ebp
+	movl	8(%esp), %edx
+	movl	$PAGE_SIZE, %ecx
+	xorl	%eax, %eax
+	.align	16
+1:
+	movnti	%eax, 0(%edx)
+	movnti	%eax, 4(%edx)
+	movnti	%eax, 8(%edx)
+	movnti	%eax, 12(%edx)
+	movnti	%eax, 16(%edx)
+	movnti	%eax, 20(%edx)
+	movnti	%eax, 24(%edx)
+	movnti	%eax, 28(%edx)
+	subl	$32, %ecx
+	leal	32(%edx), %edx
+	jnz	1b
+	sfence
+	pop	%ebp
+	ret
+
+/*
+ * void sse2_copy_page(void *src, void *dst)
+ *
+ * Copy a page without polluting the cache.
+ */
+ENTRY(sse2_copy_page)
+	pushl	%ebp
+	pushl	%ebx
+	pushl	%esi
+	pushl	%edi
+	movl	20(%esp), %esi
+	movl	24(%esp), %edi
+	movl	$PAGE_SIZE, %ebp
+	.align	16
+1:
+	movl	0(%esi), %eax
+	movl	4(%esi), %ebx
+	movl	8(%esi), %ecx
+	movl	12(%esi), %edx
+	movnti	%eax, 0(%edi)
+	movnti	%ebx, 4(%edi)
+	movnti	%ecx, 8(%edi)
+	movnti	%edx, 12(%edi)
+	subl	$16, %ebp
+	leal	16(%esi), %esi
+	leal	16(%edi), %edi
+	jnz	1b
+	sfence
+	popl	%edi
+	popl	%esi
+	popl	%ebx
+	popl	%ebp
+	ret

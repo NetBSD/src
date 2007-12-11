@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.6 2007/12/09 20:27:48 jmcneill Exp $	*/
+/*	$NetBSD: pmap.h,v 1.6.2.1 2007/12/11 23:02:57 bouyer Exp $	*/
 
 /*
  *
@@ -384,7 +384,12 @@ void	sse2_copy_page(void *, void *);
 #ifdef XEN
 
 #define XPTE_MASK	L1_FRAME
+/* XPTE_SHIFT = L1_SHIFT - log2(sizeof(pt_entry_t)) */
+#ifdef __x86_64__
 #define XPTE_SHIFT	9
+#else
+#define XPTE_SHIFT	10
+#endif
 
 /* PTE access inline fuctions */
 
