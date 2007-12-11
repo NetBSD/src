@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.94 2007/12/09 08:46:16 apb Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.95 2007/12/11 10:02:24 apb Exp $
 #
 # Copyright (c) 2003,2007 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1943,7 +1943,7 @@ fi
 if $do_pax ; then
 	# wrap_makedev will print an mtree specification because
 	# do_pax implies do_specfile.  pax will create device nodes.
-	wrap_makedev makedev ${1+"$@"} | ${TOOL_PAX} -r -w -M .
+	wrap_makedev makedev ${1+"$@"} | ${TOOL_PAX} -r -w -M -pe .
 else
 	wrap_makedev makedev ${1+"$@"}
 fi
