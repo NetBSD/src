@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_norm.c,v 1.16 2007/03/12 18:18:31 ad Exp $	*/
+/*	$NetBSD: pf_norm.c,v 1.17 2007/12/11 11:08:21 lukem Exp $	*/
 /*	$OpenBSD: pf_norm.c,v 1.97 2004/09/21 16:59:12 aaron Exp $ */
 
 /*
@@ -25,6 +25,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pf_norm.c,v 1.17 2007/12/11 11:08:21 lukem Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
