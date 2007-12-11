@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.227 2007/12/10 13:27:09 yamt Exp $
+#	$NetBSD: BRANCHES,v 1.228 2007/12/11 22:57:44 bouyer Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -253,6 +253,16 @@ Scope:		sys/arch/arm sys/arch/acorn32
 Notes:		This code was on a branch because it involves changes to
 		cpuswitch.S which would otherwise make merging the
 		nathanw_sa branch difficult.
+
+Branch:		bouyer-xeni386
+Description:	switch xen on i386 to the x86 pmap and the xen/x86/x86_xpmap.c bootstrap, and add i386 PAE support
+Status:		Active
+Start Date:	10 Dec 2007
+End Date:
+Base Tag:	bouyer-xeni386-base
+Maintainer:	Manuel Bouyer <bouyer@NetBSD.org>
+Scope:		kernel
+Notes:		
 
 Branch:		chris-arm-intr-rework
 Description:	Rework arm interrupt handling code
@@ -708,6 +718,16 @@ Status:		Terminated
 Start Date:	18 Oct 2007
 End Date:	22 Nov 2007
 Base Tag:	bouyer-xenamd64-base
+Maintainer:	Manuel Bouyer <bouyer@NetBSD.org>
+Scope:		kernel
+Notes:		
+
+Branch:		bouyer-xeni386
+Description:	switch xen on i386 to the x86 pmap and the xen/x86/x86_xpmap.c bootstrap, and add i386 PAE support
+Status:		active
+Start Date:	10 Dec 2007
+End Date:
+Base Tag:	bouyer-xeni386-base
 Maintainer:	Manuel Bouyer <bouyer@NetBSD.org>
 Scope:		kernel
 Notes:		
