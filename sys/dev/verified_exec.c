@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.c,v 1.62 2007/12/08 19:29:41 pooka Exp $	*/
+/*	$NetBSD: verified_exec.c,v 1.63 2007/12/11 12:16:14 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -29,11 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-#if defined(__NetBSD__)
-__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.62 2007/12/08 19:29:41 pooka Exp $");
-#else
-__RCSID("$Id: verified_exec.c,v 1.62 2007/12/08 19:29:41 pooka Exp $\n$NetBSD: verified_exec.c,v 1.62 2007/12/08 19:29:41 pooka Exp $");
-#endif
+__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.63 2007/12/11 12:16:14 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
