@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.343.4.8 2007/12/11 01:49:45 jmcneill Exp $ */
+/*	$NetBSD: wd.c,v 1.343.4.9 2007/12/11 01:50:47 jmcneill Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.343.4.8 2007/12/11 01:49:45 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.343.4.9 2007/12/11 01:50:47 jmcneill Exp $");
 
 #include "opt_ata.h"
 
@@ -430,12 +430,10 @@ wdattach(struct device *parent, struct device *self, void *aux)
 static bool
 wd_suspend(device_t dv)
 {
-#if notyet
 	struct wd_softc *sc = device_private(dv);
 
 	wd_flushcache(sc, AT_WAIT | AT_POLL);
 	wd_standby(sc, AT_WAIT | AT_POLL);
-#endif
 
 	return true;
 }
