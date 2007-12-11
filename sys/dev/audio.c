@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.227 2007/12/09 20:27:51 jmcneill Exp $	*/
+/*	$NetBSD: audio.c,v 1.228 2007/12/11 00:08:14 martin Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.227 2007/12/09 20:27:51 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.228 2007/12/11 00:08:14 martin Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -3919,6 +3919,7 @@ audio_mixer_capture(struct audio_softc *sc)
 		mc = &sc->sc_mixer_state[mi.index];
 		mc->dev = mi.index;
 		mc->type = mi.type;
+		mc->un.value.num_channels = mi.un.v.num_channels;
 		(void)sc->hw_if->get_port(sc->hw_hdl, mc);
 	}
 
