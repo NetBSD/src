@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_rfw.c,v 1.7 2007/12/12 03:10:47 ad Exp $	*/
+/*	$NetBSD: lfs_rfw.c,v 1.8 2007/12/12 18:35:21 he Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_rfw.c,v 1.7 2007/12/12 03:10:47 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_rfw.c,v 1.8 2007/12/12 18:35:21 he Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -131,7 +131,7 @@ lfs_rf_valloc(struct lfs *fs, ino_t ino, int vers, struct lwp *l,
 		if (ip->i_gen == vers)
 			return 0;
 		else if (ip->i_gen < vers) {
-			lfs_truncate(vp, (off_t)0, 0, NOCRED, l);
+			lfs_truncate(vp, (off_t)0, 0, NOCRED);
 			ip->i_gen = ip->i_ffs1_gen = vers;
 			LFS_SET_UINO(ip, IN_CHANGE | IN_UPDATE);
 			return 0;
@@ -341,7 +341,7 @@ update_inoblk(struct lfs *fs, daddr_t offset, kauth_cred_t cred,
 			}
 			ip = VTOI(vp);
 			if (dip->di_size != ip->i_size)
-				lfs_truncate(vp, dip->di_size, 0, NOCRED, l);
+				lfs_truncate(vp, dip->di_size, 0, NOCRED);
 			/* Get mode, link count, size, and times */
 			memcpy(ip->i_din.ffs1_din, dip,
 			       offsetof(struct ufs1_dinode, di_db[0]));
@@ -469,11 +469,11 @@ check_segsum(struct lfs *fs, daddr_t offset, u_int64_t nextserial,
 
 	ninos = howmany(ssp->ss_ninos, INOPB(fs));
 	/* XXX ondisk32 */
-	iaddr = (int32_t *)(bp->b_data + fs->lfs_sumsize - sizeof(int32_t));
+	iaddr = (int32_t *)((char*)bp->b_data + fs->lfs_sumsize - sizeof(int32_t));
 	if (flags & CHECK_CKSUM) {
 		/* Count blocks */
 		nblocks = 0;
-		fip = (FINFO *)(bp->b_data + SEGSUM_SIZE(fs));
+		fip = (FINFO *)((char*)bp->b_data + SEGSUM_SIZE(fs));
 		for (i = 0; i < ssp->ss_nfinfo; ++i) {
 			nblocks += fip->fi_nblocks;
 			if (fip->fi_nblocks <= 0)
@@ -489,7 +489,7 @@ check_segsum(struct lfs *fs, daddr_t offset, u_int64_t nextserial,
 	}
 
 	/* Handle individual blocks */
-	fip = (FINFO *)(bp->b_data + SEGSUM_SIZE(fs));
+	fip = (FINFO *)((char*)bp->b_data + SEGSUM_SIZE(fs));
 	for (i = 0; i < ssp->ss_nfinfo || ninos; ++i) {
 		/* Inode block? */
 		if (ninos && *iaddr == offset) {
@@ -652,9 +652,10 @@ lfs_roll_forward(struct lfs *fs, struct mount *mp, struct lwp *l)
 			if (flags & SS_DIROP) {
 				DLOG((DLOG_RF, "lfs_mountfs: dirops at 0x%"
 				      PRIx64 "\n", oldoffset));
-				if (!(flags & SS_CONT))
+				if (!(flags & SS_CONT)) {
 				     DLOG((DLOG_RF, "lfs_mountfs: dirops end "
 					   "at 0x%" PRIx64 "\n", oldoffset));
+				}
 			}
 			if (!(flags & SS_CONT))
 				lastgoodpseg = offset;
