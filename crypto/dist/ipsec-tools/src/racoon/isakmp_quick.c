@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_quick.c,v 1.16 2007/12/12 04:46:00 mgrooms Exp $	*/
+/*	$NetBSD: isakmp_quick.c,v 1.17 2007/12/12 05:08:28 mgrooms Exp $	*/
 
 /* Id: isakmp_quick.c,v 1.29 2006/08/22 18:17:17 manubsd Exp */
 
@@ -504,7 +504,7 @@ quick_i2recv(iph2, msg0)
 			struct sockaddr *daddr;
 			u_int8_t prefix;
 			u_int16_t ul_proto;
-			vchar_t *vp;
+			vchar_t *vp = NULL;
 
 			if (isakmp_p2ph(&vp, pa->ptr) < 0)
 				goto end;
@@ -1184,7 +1184,7 @@ quick_r1recv(iph2, msg0)
 			struct sockaddr *daddr;
 			u_int8_t prefix;
 			u_int16_t ul_proto;
-			vchar_t *vp;
+			vchar_t *vp = NULL;
 
 			if (isakmp_p2ph(&vp, pa->ptr) < 0)
 				goto end;
