@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.23 2006/03/17 22:24:28 christos Exp $ */
+/* $NetBSD: lex.c,v 1.23.4.1 2007/12/12 23:06:08 gmcgarry Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)lex.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: lex.c,v 1.23 2006/03/17 22:24:28 christos Exp $");
+__RCSID("$NetBSD: lex.c,v 1.23.4.1 2007/12/12 23:06:08 gmcgarry Exp $");
 #endif
 #endif /* not lint */
 
@@ -1392,7 +1392,7 @@ bgetc(void)
     numleft = 0; 
 #else /* FILEC */
     char tbuf[BUFSIZE + 1];
-    int c, buf, off;        
+    int c, buf, off, roomleft;        
 #endif /* !FILEC */
 
     if (cantell) {
@@ -1466,17 +1466,19 @@ again:
 		}
 #ifdef FILEC
 	    }
-#endif
 	    if (c >= 0)
 		break;
+#endif
 	    if (errno == EWOULDBLOCK) {
 		int     iooff = 0;
 
 		(void)ioctl(SHIN, FIONBIO, (ioctl_t) & iooff);
 	    }
+#ifdef FILEC
 	    else if (errno != EINTR)
 		break;
 	}
+#endif
 	if (c <= 0)
 	    return (-1);
 	feobp += c;
