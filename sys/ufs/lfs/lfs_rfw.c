@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_rfw.c,v 1.6 2007/12/12 02:56:03 lukem Exp $	*/
+/*	$NetBSD: lfs_rfw.c,v 1.7 2007/12/12 03:10:47 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_rfw.c,v 1.6 2007/12/12 02:56:03 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_rfw.c,v 1.7 2007/12/12 03:10:47 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -582,8 +582,7 @@ check_segsum(struct lfs *fs, daddr_t offset, u_int64_t nextserial,
 	if (flags & CHECK_CKSUM)
 		free(datap, M_SEGMENT);
     err1:
-	bp->b_flags |= B_AGE;
-	brelse(bp);
+	brelse(bp, BC_AGE);
 
 	/* XXX should we update the serial number even for bad psegs? */
 	if ((flags & CHECK_UPDATE) && offset > 0 && fs->lfs_version > 1)
