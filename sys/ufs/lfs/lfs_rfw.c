@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_rfw.c,v 1.5 2007/10/10 20:42:35 ad Exp $	*/
+/*	$NetBSD: lfs_rfw.c,v 1.6 2007/12/12 02:56:03 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -36,10 +36,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifdef LFS_KERNEL_RFW
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_rfw.c,v 1.5 2007/10/10 20:42:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_rfw.c,v 1.6 2007/12/12 02:56:03 lukem Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -709,4 +707,3 @@ lfs_roll_forward(struct lfs *fs, struct mount *mp, struct lwp *l)
 		DLOG((DLOG_RF, "LFS roll forward complete\n"));
 	}
 }
-#endif /* LFS_KERNEL_RFW */
