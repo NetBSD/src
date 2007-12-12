@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.6 2007/01/13 23:47:36 christos Exp $	*/
+/*	$NetBSD: util.c,v 1.7 2007/12/12 00:03:34 lukem Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -281,4 +281,17 @@ cfgvxmsg(const char *file, int line, const char *msgclass, const char *fmt,
 	(void)fprintf(stderr, "%s:%d: %s", file, line, msgclass);
 	(void)vfprintf(stderr, fmt, ap);
 	(void)putc('\n', stderr);
+}
+
+void
+autogen_comment(FILE *fp, const char *targetfile)
+{
+
+	(void)fprintf(fp,
+	    "/*\n"
+	    " * MACHINE GENERATED: DO NOT EDIT\n"
+	    " *\n"
+	    " * %s, from \"%s\"\n"
+	    " */\n\n",
+	    targetfile, conffile);
 }
