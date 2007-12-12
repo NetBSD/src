@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5 2005/01/10 03:11:17 lukem Exp $
+# $NetBSD: Makefile,v 1.5.2.1 2007/12/12 19:48:43 bouyer Exp $
 
 NOLINT=		# defined
 
@@ -10,6 +10,11 @@ DIST=		${NETBSDSRCDIR}/crypto/dist
 WARNS?=		1
 
 LIB=		ss
+
+LIBDPLIBS=	edit ${.CURDIR}/../libedit \
+		termcap ${.CURDIR}/../libterm \
+		com_err	${.CURDIR}/../libcom_err
+
 SRCS=		sl.c ss.c
 INCS=		ss.h
 INCSDIR=	/usr/include/krb5
