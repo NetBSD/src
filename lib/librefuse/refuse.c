@@ -1,4 +1,4 @@
-/*	$NetBSD: refuse.c,v 1.85 2007/11/30 19:02:29 pooka Exp $	*/
+/*	$NetBSD: refuse.c,v 1.86 2007/12/12 16:37:56 xtraeme Exp $	*/
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: refuse.c,v 1.85 2007/11/30 19:02:29 pooka Exp $");
+__RCSID("$NetBSD: refuse.c,v 1.86 2007/12/12 16:37:56 xtraeme Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -746,7 +746,7 @@ puffs_fuse_node_create(struct puffs_usermount *pu, void *opc,
 
 	created = 0;
 	if (fuse->op.create) {
-		ret = fuse->op.create(path, mode, &fi);
+		ret = fuse->op.create(path, mode | S_IFREG, &fi);
 		if (ret == 0)
 			created = 1;
 
