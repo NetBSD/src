@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_subr.c,v 1.22.6.2 2007/12/06 21:03:38 ad Exp $	*/
+/*	$NetBSD: layer_subr.c,v 1.22.6.3 2007/12/12 01:16:08 ad Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_subr.c,v 1.22.6.2 2007/12/06 21:03:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_subr.c,v 1.22.6.3 2007/12/12 01:16:08 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -213,6 +213,8 @@ layer_node_alloc(mp, lowervp, vpp)
 	}
 
 	vp->v_data = xp;
+	vp->v_vflag = (vp->v_vflag & ~VV_MPSAFE) |
+	    (lowervp->v_vflag & VV_MPSAFE);
 	xp->layer_vnode = vp;
 	xp->layer_lowervp = lowervp;
 	xp->layer_flags = 0;
