@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.229 2007/12/12 09:02:04 cube Exp $
+#	$NetBSD: BRANCHES,v 1.230 2007/12/12 19:24:13 bouyer Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -728,16 +728,6 @@ Status:		Terminated
 Start Date:	18 Oct 2007
 End Date:	22 Nov 2007
 Base Tag:	bouyer-xenamd64-base
-Maintainer:	Manuel Bouyer <bouyer@NetBSD.org>
-Scope:		kernel
-Notes:		
-
-Branch:		bouyer-xeni386
-Description:	switch xen on i386 to the x86 pmap and the xen/x86/x86_xpmap.c bootstrap, and add i386 PAE support
-Status:		active
-Start Date:	10 Dec 2007
-End Date:
-Base Tag:	bouyer-xeni386-base
 Maintainer:	Manuel Bouyer <bouyer@NetBSD.org>
 Scope:		kernel
 Notes:		
