@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdHardware.c,v 1.3 2007/12/09 20:27:54 jmcneill Exp $	*/
+/*	$NetBSD: OsdHardware.c,v 1.4 2007/12/12 23:33:22 jmcneill Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdHardware.c,v 1.3 2007/12/09 20:27:54 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdHardware.c,v 1.4 2007/12/12 23:33:22 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -205,6 +205,9 @@ AcpiOsReadPciConfiguration(ACPI_PCI_ID *PciId, UINT32 Register, void *Value,
 	pcireg_t tmp;
 
 	/* XXX Need to deal with "segment" ("hose" in Alpha terminology). */
+
+	if (PciId->Bus >= 256 || PciId->Device >= 32 || PciId->Function >= 8)
+		return AE_BAD_PARAMETER;
 
 	tag = pci_make_tag(acpi_softc->sc_pc, PciId->Bus, PciId->Device,
 	    PciId->Function);
