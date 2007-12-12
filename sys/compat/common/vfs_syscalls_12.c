@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_12.c,v 1.22 2007/04/30 14:05:47 dsl Exp $	*/
+/*	$NetBSD: vfs_syscalls_12.c,v 1.23 2007/12/12 21:37:30 dsl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_12.c,v 1.22 2007/04/30 14:05:47 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_12.c,v 1.23 2007/12/12 21:37:30 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,7 +57,6 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_12.c,v 1.22 2007/04/30 14:05:47 dsl Exp
 #include <sys/syscallargs.h>
 
 #include <compat/sys/stat.h>
-#include <compat/common/compat_file.h>
 
 /*
  * Convert from a new to an old stat structure.
