@@ -1,4 +1,7 @@
-/*	$NetBSD: fmt.c,v 1.20 2004/03/27 12:44:08 simonb Exp $	*/
+/*	$NetBSD: fmt.c,v 1.21 2007/12/12 22:55:43 lukem Exp $	*/
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: fmt.c,v 1.21 2007/12/12 22:55:43 lukem Exp $");
 
 #include <kvm.h>
 #include <stdio.h>
