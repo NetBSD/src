@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vnops.c,v 1.32.6.3 2007/12/10 19:28:08 ad Exp $	*/
+/*	$NetBSD: layer_vnops.c,v 1.32.6.4 2007/12/12 01:15:17 ad Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -232,7 +232,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.32.6.3 2007/12/10 19:28:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.32.6.4 2007/12/12 01:15:17 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -867,8 +867,6 @@ layer_reclaim(v)
 	mutex_exit(&lmp->layerm_hashlock);
 	kmem_free(vp->v_data, lmp->layerm_size);
 	vp->v_data = NULL;
-
-	/* Defer vrele() to a kthread; we are in a critical section. */
 	vrele(lowervp);
 
 	return (0);
