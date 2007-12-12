@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.308.2.4 2007/12/10 19:37:49 ad Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.308.2.5 2007/12/12 02:50:30 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.308.2.4 2007/12/10 19:37:49 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.308.2.5 2007/12/12 02:50:30 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -128,6 +128,7 @@ static vnodelst_t vrele_list = TAILQ_HEAD_INITIALIZER(vrele_list);
 static int vrele_pending;
 static kmutex_t	vrele_lock;
 static kcondvar_t vrele_cv;
+static lwp_t *vrele_lwp;
 
 pool_cache_t vnode_cache;
 
@@ -142,7 +143,6 @@ static void insmntque(vnode_t *, struct mount *);
 static int getdevvp(dev_t, vnode_t **, enum vtype);
 static vnode_t *getcleanvnode(void);;
 void vpanic(vnode_t *, const char *);
-static void vrelenow(vnode_t *);
 
 #ifdef DIAGNOSTIC
 void
@@ -164,7 +164,7 @@ vn_init1(void)
 	mutex_init(&vrele_lock, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&vrele_cv, "vrele");
 	if (kthread_create(PRI_VM, KTHREAD_MPSAFE, NULL, vrele_thread,
-	    NULL, NULL, "vrele"))
+	    NULL, &vrele_lwp, "vrele"))
 		panic("fork vrele");
 }
 
@@ -220,7 +220,7 @@ try_nextlist:
 			continue;
 		/*
 		 * Our lwp might hold the underlying vnode
-		 * locked, so don't try to reclaim a VLAYER
+		 * locked, so don't try to reclaim a VI_LAYER
 		 * node if it's locked.
 		 */
 		if ((vp->v_iflag & VI_XLOCK) == 0 &&
@@ -918,6 +918,8 @@ vput(vnode_t *vp)
 void
 vrelel(vnode_t *vp, int doinactive, int onhead)
 {
+	bool recycle, defer;
+	int error;
 
 	KASSERT(mutex_owned(&vp->v_interlock));
 	KASSERT((vp->v_iflag & VI_MARKER) == 0);
@@ -932,94 +934,115 @@ vrelel(vnode_t *vp, int doinactive, int onhead)
 	 */
 	if (vp->v_usecount > 1) {
 		vp->v_usecount--;
+		vp->v_iflag |= VI_INACTREDO;
 		mutex_exit(&vp->v_interlock);
 		return;
 	}
-
-	/*
-	 * If the vnode has been cleaned out, release it now.
-	 */
-	if ((vp->v_iflag & VI_CLEAN) != 0) {
-		vrelenow(vp);
-		return;
-	}
-
-	/*
-	 * Otherwise, defer reclaim to the kthread; we donate it our
-	 * last reference.
-	 */
 	if (vp->v_usecount <= 0 || vp->v_writecount != 0) {
 		vpanic(vp, "vput: bad ref count");
 	}
-	if ((vp->v_iflag & VI_INACTPEND) == 0) {
-		vp->v_iflag |= VI_INACTPEND;
-		mutex_enter(&vrele_lock);
-		TAILQ_INSERT_TAIL(&vrele_list, vp, v_freelist);
-		if (++vrele_pending > (desiredvnodes >> 8))
-			cv_signal(&vrele_cv); 
-		mutex_exit(&vrele_lock);
-	}
-	mutex_exit(&vp->v_interlock);
-}
-
-static void
-vrelenow(vnode_t *vp)
-{
-	bool recycle;
-	int error;
-
-	KASSERT(mutex_owned(&vp->v_interlock));
 
 	/*
 	 * If not clean, deactivate the vnode, but preserve
 	 * our reference across the call to VOP_INACTIVE().
 	 */
-	recycle = false;
+ retry:
 	if ((vp->v_iflag & VI_CLEAN) == 0) {
-		error = vn_lock(vp, LK_EXCLUSIVE | LK_INTERLOCK | LK_RETRY);
-		if (error == 0) {
-			VOP_INACTIVE(vp, &recycle);
-		} else {
-			/* XXX */
-			vprint("vrelenow: unable to lock %p", vp); 
-		}
+		recycle = false;
 		/*
-		 * The vnode may have gained another reference
-		 * while being deactivated.
+		 * XXX This ugly block can be largely eliminated if
+		 * locking is pushed down into the file systems.
 		 */
+		if (curlwp == uvm.pagedaemon_lwp) {
+			/* The pagedaemon can't wait around; defer. */
+			defer = true;
+		} else if (curlwp == vrele_lwp) {
+			/* We have to try harder. */
+			vp->v_iflag &= ~VI_INACTREDO;
+			error = vn_lock(vp, LK_EXCLUSIVE | LK_INTERLOCK |
+			    LK_RETRY);
+			if (error != 0) {
+				/* XXX */
+				vpanic(vp, "vrele: unable to lock %p");
+			}
+			defer = false;
+		} else if ((vp->v_iflag & VI_LAYER) != 0) {
+			/* 
+			 * Acquiring the stack's lock in vclean() even
+			 * for an honest vput/vrele is dangerous because
+			 * our caller may hold other vnode locks; defer.
+			 */
+			defer = true;
+		} else {		
+			/* If we can't acquire the lock, then defer. */
+			vp->v_iflag &= ~VI_INACTREDO;
+			error = vn_lock(vp, LK_EXCLUSIVE | LK_INTERLOCK |
+			    LK_NOWAIT);
+			if (error != 0) {
+				defer = true;
+				mutex_enter(&vp->v_interlock);
+			} else {
+				defer = false;
+			}
+		}
+
+		if (defer) {
+			/*
+			 * Defer reclaim to the kthread; it's not safe to
+			 * clean it here.  We donate it our last reference.
+			 */
+			KASSERT(mutex_owned(&vp->v_interlock));
+			KASSERT((vp->v_iflag & VI_INACTPEND) == 0);
+			KASSERT(vp->v_usecount == 1);
+			vp->v_iflag |= VI_INACTPEND;
+			mutex_enter(&vrele_lock);
+			TAILQ_INSERT_TAIL(&vrele_list, vp, v_freelist);
+			if (++vrele_pending > (desiredvnodes >> 8))
+				cv_signal(&vrele_cv); 
+			mutex_exit(&vrele_lock);
+			mutex_exit(&vp->v_interlock);
+			return;
+		}
+
+		/*
+		 * The vnode may gain another reference while being
+		 * deactivated.  Note that VOP_INACTIVE() will drop
+		 * the vnode lock.
+		 */
+		VOP_INACTIVE(vp, &recycle);
 		mutex_enter(&vp->v_interlock);
 		if (vp->v_usecount > 1) {
 			vp->v_usecount--;
 			mutex_exit(&vp->v_interlock);
 			return;
 		}
-	}
 
-	/*
-	 * Take care of space accounting.
-	 *
-	 * XXXAD may need to re-inactivate due to race w/another
-	 * thread gaining and dropping a reference above.
-	 */
-	if (vp->v_iflag & VI_EXECMAP) {
-		atomic_add_int(&uvmexp.execpages, -vp->v_uobj.uo_npages);
-		atomic_add_int(&uvmexp.filepages, vp->v_uobj.uo_npages);
-	}
-	vp->v_iflag &= ~(VI_TEXT|VI_EXECMAP|VI_WRMAP|VI_MAPPED);
-	vp->v_vflag &= ~VV_MAPPED;
+		/*
+		 * If we grew another reference while VOP_INACTIVE()
+		 * was underway, then retry.
+		 */
+		if ((vp->v_iflag & VI_INACTREDO) != 0) {
+			goto retry;
+		}
 
-	/*
-	 * Recycle the vnode if the file is now unused (unlinked),
-	 * otherwise just free it.
-	 */
-	if (recycle) {
-		vclean(vp, DOCLOSE);
-	}
-	KASSERT(vp->v_usecount > 0);
+		/* Take care of space accounting. */
+		if (vp->v_iflag & VI_EXECMAP) {
+			atomic_add_int(&uvmexp.execpages,
+			    -vp->v_uobj.uo_npages);
+			atomic_add_int(&uvmexp.filepages,
+			    vp->v_uobj.uo_npages);
+		}
+		vp->v_iflag &= ~(VI_TEXT|VI_EXECMAP|VI_WRMAP|VI_MAPPED);
+		vp->v_vflag &= ~VV_MAPPED;
 
-	if (vp->v_op == dead_vnodeop_p &&
-	    (vp->v_iflag & VI_CLEAN) == 0) {
-		vpanic(vp, "dead but not clean");
+		/*
+		 * Recycle the vnode if the file is now unused (unlinked),
+		 * otherwise just free it.
+		 */
+		if (recycle) {
+			vclean(vp, DOCLOSE);
+		}
+		KASSERT(vp->v_usecount > 0);
 	}
 
 	if (--vp->v_usecount != 0) {
@@ -1093,9 +1116,7 @@ vrele_thread(void *cookie)
 			mutex_exit(&vp->v_interlock);
 			continue;
 		}
-
-		/* Otherwise, release it. */
-		vrelenow(vp);
+		vrelel(vp, 1, 0);
 	}
 }
 
@@ -1309,6 +1330,8 @@ vclean(vnode_t *vp, int flags)
 	}
 	vp->v_iflag &= ~(VI_TEXT|VI_EXECMAP);
 	active = (vp->v_usecount > 1);
+
+	/* XXXAD should not lock vnode under layer */
 	VOP_LOCK(vp, LK_EXCLUSIVE | LK_INTERLOCK);
 
 	/*
@@ -1326,6 +1349,7 @@ vclean(vnode_t *vp, int flags)
 		KASSERT(error == 0);
 		KASSERT((vp->v_iflag & VI_ONWORKLST) == 0);
 
+		/* XXXAD close should not happen on layered vnode */
 		if (active)
 			VOP_CLOSE(vp, FNONBLOCK, NOCRED);
 
