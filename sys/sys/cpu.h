@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.13 2007/11/06 00:42:44 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.13.2.1 2007/12/12 22:05:40 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 YAMAMOTO Takashi,
@@ -61,6 +61,7 @@ lwp_t	*cpu_switchto(lwp_t *, lwp_t *, bool);
 struct	cpu_info *cpu_lookup(cpuid_t);
 int	cpu_setonline(struct cpu_info *, bool);
 bool	cpu_intr_p(void);
+void	cpu_panic_enter(void);
 
 extern kmutex_t cpu_lock;
   

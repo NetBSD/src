@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.616 2007/12/03 15:33:46 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.616.2.1 2007/12/12 22:05:40 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.616 2007/12/03 15:33:46 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.616.2.1 2007/12/12 22:05:40 ad Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -818,6 +818,16 @@ int	waittime = -1;
 struct pcb dumppcb;
 
 void
+cpu_panic_enter(void)
+{
+
+	if (dumppcb.pcb_ldt_sel == 0) {
+		dumppcb.pcb_ldt_sel = -3;
+		savectx(&dumppcb);
+	}
+}
+
+void
 cpu_reboot(int howto, char *bootstr)
 {
 
@@ -1077,14 +1087,17 @@ dumpsys()
 	int error;
 
 	/* Save registers. */
-	savectx(&dumppcb);
+	if (dumppcb.pcb_ldt_sel == 0) {
+		dumppcb.pcb_ldt_sel = -1;
+		savectx(&dumppcb);
+	}
 
 	if (dumpdev == NODEV)
-		return;
+		goto out;
 
 	bdev = bdevsw_lookup(dumpdev);
 	if (bdev == NULL || bdev->d_psize == NULL)
-		return;
+		goto out;
 
 	/*
 	 * For dumps during autoconfiguration,
@@ -1095,7 +1108,7 @@ dumpsys()
 	if (dumplo <= 0 || dumpsize == 0) {
 		printf("\ndump to dev %u,%u not possible\n", major(dumpdev),
 		    minor(dumpdev));
-		return;
+		goto out;
 	}
 	printf("\ndumping to dev %u,%u offset %ld\n", major(dumpdev),
 	    minor(dumpdev), dumplo);
@@ -1104,7 +1117,7 @@ dumpsys()
 	printf("dump ");
 	if (psize == -1) {
 		printf("area unavailable\n");
-		return;
+		goto out;
 	}
 
 #if 0	/* XXX this doesn't work.  grr. */
@@ -1188,6 +1201,10 @@ dumpsys()
 	}
 	printf("\n\n");
 	delay(5000000);		/* 5 seconds */
+
+ out:
+ 	if (dumppcb.pcb_ldt_sel == -1)
+ 		dumppcb.pcb_ldt_sel = 0;
 }
 
 /*
