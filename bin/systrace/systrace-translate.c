@@ -1,4 +1,4 @@
-/*	$NetBSD: systrace-translate.c,v 1.21 2007/05/16 20:49:35 christos Exp $	*/
+/*	$NetBSD: systrace-translate.c,v 1.22 2007/12/12 22:55:43 lukem Exp $	*/
 /*	$OpenBSD: systrace-translate.c,v 1.10 2002/08/01 20:50:17 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -29,6 +29,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: systrace-translate.c,v 1.22 2007/12/12 22:55:43 lukem Exp $");
 
 #include <sys/types.h>
 #include <sys/wait.h>

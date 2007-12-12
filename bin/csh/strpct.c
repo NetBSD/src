@@ -1,4 +1,4 @@
-/* $NetBSD: strpct.c,v 1.5 2001/09/14 14:04:01 wiz Exp $ */
+/* $NetBSD: strpct.c,v 1.6 2007/12/12 22:55:42 lukem Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -45,6 +45,9 @@
  *
  * Erik E. Fair <fair@clock.org>, May 8, 1997
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: strpct.c,v 1.6 2007/12/12 22:55:42 lukem Exp $");
 
 #include <sys/types.h>
 
