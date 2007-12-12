@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_pool.c,v 1.11.2.3 2007/12/12 17:33:15 ad Exp $	*/
+/*	$NetBSD: tmpfs_pool.c,v 1.11.2.4 2007/12/12 17:38:40 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_pool.c,v 1.11.2.3 2007/12/12 17:33:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_pool.c,v 1.11.2.4 2007/12/12 17:38:40 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/pool.h>
@@ -255,6 +255,7 @@ tmpfs_str_pool_get(struct tmpfs_str_pool *tsp, size_t len, int flags)
 	else if (len <= 512)  p = &tsp->tsp_pool_512;
 	else if (len <= 1024) p = &tsp->tsp_pool_1024;
 	else {
+		KASSERT(0);
 		p = NULL; /* Silence compiler warnings */
 	}
 

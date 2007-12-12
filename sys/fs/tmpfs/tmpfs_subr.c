@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.41.2.3 2007/12/12 17:33:15 ad Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.41.2.4 2007/12/12 17:38:40 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.41.2.3 2007/12/12 17:33:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.41.2.4 2007/12/12 17:38:40 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -628,7 +628,7 @@ tmpfs_dir_lookup(struct tmpfs_node *node, struct componentname *cnp)
 		KASSERT(cnp->cn_namelen < 0xffff);
 		if (de->td_namelen == (uint16_t)cnp->cn_namelen &&
 		    memcmp(de->td_name, cnp->cn_nameptr, de->td_namelen) == 0) {
-		    	found = 1;
+			found = 1;
 			break;
 		}
 	}

@@ -1,7 +1,7 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.44.2.2 2007/12/12 17:33:15 ad Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.44.2.3 2007/12/12 17:38:40 ad Exp $	*/
 
 /*
- * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
+ * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.44.2.2 2007/12/12 17:33:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.44.2.3 2007/12/12 17:38:40 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
