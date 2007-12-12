@@ -1,4 +1,4 @@
-/*	$NetBSD: handler.c,v 1.16 2007/09/12 23:39:50 mgrooms Exp $	*/
+/*	$NetBSD: handler.c,v 1.17 2007/12/12 04:45:59 mgrooms Exp $	*/
 
 /* Id: handler.c,v 1.28 2006/05/26 12:17:29 manubsd Exp */
 
@@ -656,13 +656,23 @@ delph2(iph2)
 		iph2->dst = NULL;
 	}
 	if (iph2->src_id) {
-	      racoon_free(iph2->src_id);
-	      iph2->src_id = NULL;
+		racoon_free(iph2->src_id);
+		iph2->src_id = NULL;
 	}
 	if (iph2->dst_id) {
-	      racoon_free(iph2->dst_id);
-	      iph2->dst_id = NULL;
+		racoon_free(iph2->dst_id);
+		iph2->dst_id = NULL;
 	}
+#ifdef ENABLE_NATT
+	if (iph2->natoa_src) {
+		racoon_free(iph2->natoa_src);
+		iph2->natoa_src = NULL;
+	}
+	if (iph2->natoa_dst) {
+		racoon_free(iph2->natoa_dst);
+		iph2->natoa_dst = NULL;
+	}
+#endif
 
 	if (iph2->proposal) {
 		flushsaprop(iph2->proposal);
