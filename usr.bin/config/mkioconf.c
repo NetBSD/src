@@ -1,4 +1,4 @@
-/*	$NetBSD: mkioconf.c,v 1.9 2007/01/13 23:47:36 christos Exp $	*/
+/*	$NetBSD: mkioconf.c,v 1.10 2007/12/12 00:03:33 lukem Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -137,11 +137,7 @@ emithdr(FILE *ofp)
 	char ifnbuf[200], buf[BUFSIZ];
 	char *ifn;
 
-	fprintf(ofp, "/*\n"
-		    " * MACHINE GENERATED: DO NOT EDIT\n"
-		    " *\n"
-		    " * ioconf.c, from \"%s\"\n"
-		    " */\n\n", conffile);
+	autogen_comment(ofp, "ioconf.c");
 
 	(void)snprintf(ifnbuf, sizeof(ifnbuf), "arch/%s/conf/ioconf.incl.%s",
 	    machine, machine);

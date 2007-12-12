@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.21 2007/11/09 23:41:08 cube Exp $	*/
+/*	$NetBSD: defs.h,v 1.22 2007/12/12 00:03:33 lukem Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -555,6 +555,7 @@ struct nvlist *newnv(const char *, const char *, void *, int, struct nvlist *);
 void	nvfree(struct nvlist *);
 void	nvfreel(struct nvlist *);
 struct nvlist *nvcat(struct nvlist *, struct nvlist *);
+void	autogen_comment(FILE *, const char *);
 
 /* liby */
 void	yyerror(const char *);
