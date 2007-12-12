@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1043 2007/12/12 20:09:27 macallan Exp $
+# $NetBSD: mi,v 1.1044 2007/12/12 20:26:23 xtraeme Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -733,7 +733,7 @@
 ./usr/share/man/cat4/axe.0			man-sys-catman		.cat
 ./usr/share/man/cat4/az.0			man-sys-catman		.cat
 ./usr/share/man/cat4/azalia.0			man-sys-catman		.cat
-./usr/share/man/cat4/battery.0                  man-sys-catman          .cat
+./usr/share/man/cat4/battery_pmu.0		man-sys-catman		.cat
 ./usr/share/man/cat4/bba.0			man-sys-catman		.cat
 ./usr/share/man/cat4/bce.0			man-sys-catman		.cat
 ./usr/share/man/cat4/bcsp.0			man-sys-catman		.cat
@@ -3249,7 +3249,7 @@
 ./usr/share/man/man4/axe.4			man-sys-man		.man
 ./usr/share/man/man4/az.4			man-sys-man		.man
 ./usr/share/man/man4/azalia.4			man-sys-man		.man
-./usr/share/man/man4/battery.4                  man-sys-man             .man
+./usr/share/man/man4/battery_pmu.4		man-sys-man		.man
 ./usr/share/man/man4/bba.4			man-sys-man		.man
 ./usr/share/man/man4/bce.4			man-sys-man		.man
 ./usr/share/man/man4/bcsp.4			man-sys-man		.man

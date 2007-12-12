@@ -1,4 +1,4 @@
-.\" $NetBSD: battery.4,v 1.1 2007/12/12 20:09:27 macallan Exp $
+.\" $NetBSD: battery_pmu.4,v 1.1 2007/12/12 20:26:25 xtraeme Exp $
 .\"
 .\" Copyright (c) 2007
 .\" 	Michael Lorenz.  All rights reserved.
@@ -29,17 +29,19 @@
 .Dt BATTERY 4
 .Sh NAME
 .Nm battery
-.Nd support for batteries and related functionality in Apple Powerbook 2400, 3400 and 3500 ( also known as Original PowerBook G3 )
+.Nd support for batteries and related functionality in Apple Powerbook 2400,
+3400 and 3500 (also known as Original PowerBook G3)
 .Sh SYNOPSIS
 .Cd "battery* at pmu?"
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for batteries and hardware sensors found in 1st generation PCI-based PowerBooks, currently it only exports a few sensors
-via 
-.Xr envsys 4 ,
-including battery charge, voltage, CPU and battery temperature and AC power
-availability.
+driver provides support for batteries and hardware sensors found in 1st
+generation PCI-based PowerBooks, currently it only exports a few sensors
+via the
+.Xr envsys 4
+interface, including battery charge, voltage, CPU and battery temperature
+and AC power availability.
 .Sh SEE ALSO
 .Xr envsys 4 ,
 .Xr pmu 4 ,
