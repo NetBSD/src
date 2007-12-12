@@ -31,19 +31,19 @@
 
 #
 # Usage:
-# 1) ssh releng.netbsd.org
-# 2) cd /pub/NetBSD/netbsd-2-0
+# 1) ssh ftp.netbsd.org
+# 2) cd /ftp/pub/NetBSD/<release>
 # 3) sh list-setsizes.sh base
 # 4) paste values into s"Binary distribution sets" section of
 #    src/distrib/common/notes/contents
 #
 
-ports="acorn26 acorn32 algor alpha amd64 amiga arc atari bebox cats cesfic
-	cobalt dreamcast evbarm evbmips-eb evbppc evbsh3-eb
-	hp300 hp700 hpcarm hpcmips hpcsh i386 ibmnws luna68k
+ports="acorn26 acorn32 algor alpha amd64 amiga arc atari cats cesfic
+	cobalt dreamcast evbarm evbmips evbppc evbsh3
+	hp300 hp700 hpcarm hpcmips hpcsh i386 ibmnws iyonix landisk luna68k
 	mac68k macppc mipsco mmeye mvme68k mvmeppc netwinder news68k newsmips
-	next68k ofppc pmax prep sandpoint sbmips-eb sgimips
-	shark sparc sparc64 sun2 sun3 vax x68k xen-i386"
+	next68k ofppc pmax prep sandpoint sbmips sgimips
+	shark sparc sparc64 sun2 sun3 vax x68k"
 
 set="$1"
 
@@ -55,14 +55,13 @@ fi
 
 for port in $ports
 do
-	set -- `gzip -l */$port/binary/sets/${set}.tgz | tail -2 | head -1`
+	set -- `gzip -l $port/binary/sets/${set}.tgz | tail -1`
 	compressed=`expr \( "$1" + 1048575 \) / 1048576`
 	uncompressed=`expr \( "$2" + 1048575 \) / 1048576`
 	setfile=$4
-	nport=`echo $port | sed s,-eb,,`
 
 	if [ "$compressed"   = "0" ]; then compressed="-unknown-" ; fi
 	if [ "$uncompressed" = "0" ]; then uncompressed="-unknown-" ; fi
 
-	echo ".if \\n[$nport] .setsize $compressed $uncompressed"
+	echo ".if \\n[$port] .setsize $compressed $uncompressed"
 done
