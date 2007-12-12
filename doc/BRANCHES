@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.228 2007/12/11 22:57:44 bouyer Exp $
+#	$NetBSD: BRANCHES,v 1.229 2007/12/12 09:02:04 cube Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -275,6 +275,16 @@ Scope:		sys/arch/arm sys/arch/cats (other arm archs to follow)
 Notes:		Rework arm interrupt code to provide a shared set of interrupt
 		routines, and allow improvements to be shared across all arm
 		based hardware.
+
+Branch:		cube-autoconf
+Description:	Renovate autoconf(9) API
+Status:		Active
+Start Date:	11 Dec 2007
+End Date:
+Base Tag:	cube-autoconf-base
+Maintainer:	Quentin Garnier <cube@NetBSD.org>
+Scope:		kernel usr.bin/config (and some other userland bits)
+Notes:		Address a number of issues the current autoconf(9) API has.
 
 Branch:		gmcgarry_ctxsw
 Description:	Separate scheduler from context-switch code
