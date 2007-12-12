@@ -1,4 +1,4 @@
-/*	$NetBSD: alloc.c,v 1.9 2006/04/01 23:36:28 christos Exp $	*/
+/*	$NetBSD: alloc.c,v 1.10 2007/12/12 22:55:42 lukem Exp $	*/
 
 /*
  * Copyright (c) 2002 Marc Espie.
@@ -28,6 +28,8 @@
 /*
  * area-based allocation built on malloc/free
  */
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: alloc.c,v 1.10 2007/12/12 22:55:42 lukem Exp $");
 
 #include "sh.h"
 

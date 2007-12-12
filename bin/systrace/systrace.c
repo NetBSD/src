@@ -1,4 +1,4 @@
-/*	$NetBSD: systrace.c,v 1.35 2007/04/29 20:23:35 msaitoh Exp $	*/
+/*	$NetBSD: systrace.c,v 1.36 2007/12/12 22:55:43 lukem Exp $	*/
 /*	$OpenBSD: systrace.c,v 1.32 2002/08/05 23:27:53 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -29,6 +29,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: systrace.c,v 1.36 2007/12/12 22:55:43 lukem Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

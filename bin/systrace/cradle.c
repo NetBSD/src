@@ -23,6 +23,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: cradle.c,v 1.4 2007/12/12 22:55:43 lukem Exp $");
+
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/socket.h>
