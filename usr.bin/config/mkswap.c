@@ -1,4 +1,4 @@
-/*	$NetBSD: mkswap.c,v 1.3 2007/01/13 23:47:36 christos Exp $	*/
+/*	$NetBSD: mkswap.c,v 1.4 2007/12/12 00:03:34 lukem Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -98,6 +98,9 @@ mkoneswap(struct config *cf)
 		warn("cannot open %s", fname);
 		return (1);
 	}
+
+	autogen_comment(fp, fname);
+
 	fputs("#include <sys/param.h>\n"
 		"#include <sys/conf.h>\n\n", fp);
 	/*

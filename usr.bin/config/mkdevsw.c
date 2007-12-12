@@ -1,4 +1,4 @@
-/*	$NetBSD: mkdevsw.c,v 1.4 2007/01/13 23:47:36 christos Exp $	*/
+/*	$NetBSD: mkdevsw.c,v 1.5 2007/12/12 00:03:33 lukem Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -87,8 +87,7 @@ mkdevsw(void)
 static void
 emitheader(FILE *fp)
 {
-	fprintf(fp, "/*\n * MACHINE GENERATED: DO NOT EDIT\n *\n"
-		    " * devsw.c, from \"%s\"\n */\n\n", conffile);
+	autogen_comment(fp, "devsw.c");
 
 	fputs("#include <sys/param.h>\n"
 		  "#include <sys/conf.h>\n"
