@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vfsops.c,v 1.32.2.3 2007/12/12 17:33:15 ad Exp $	*/
+/*	$NetBSD: tmpfs_vfsops.c,v 1.32.2.4 2007/12/12 17:38:40 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.32.2.3 2007/12/12 17:33:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.32.2.4 2007/12/12 17:38:40 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -222,9 +222,7 @@ tmpfs_unmount(struct mount *mp, int mntflags)
 	node = LIST_FIRST(&tmp->tm_nodes);
 	while (node != NULL) {
 		struct tmpfs_node *next;
-		next = LIST_NEXT(node, tn_entries);
-		tmpfs_free_node(tmp, node);
-		node = next;
+
 		if (node->tn_type == VDIR) {
 			struct tmpfs_dirent *de;
 
@@ -239,6 +237,7 @@ tmpfs_unmount(struct mount *mp, int mntflags)
 				node->tn_size -= sizeof(struct tmpfs_dirent);
 			}
 		}
+
 		next = LIST_NEXT(node, tn_entries);
 		tmpfs_free_node(tmp, node);
 		node = next;
