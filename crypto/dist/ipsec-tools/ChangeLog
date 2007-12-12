@@ -1,3 +1,10 @@
+2007-12-11  Matthew Grooms
+	From Timo Teras <timo.teras@iki.fi>:
+	* src/racoon/handler.c
+	  src/racoon/handler.h
+	  src/racoon/isakmp_quick.c
+	  src/racoon/pfkey.c: add support for nat-t oa payload handling.
+	
 2007-12-04  Matthew Grooms
 	From Timo Teras <timo.teras@iki.fi>:
 	* src/racoon/ipsec_doi.c
