@@ -1,4 +1,4 @@
-/*	$NetBSD: alias.c,v 1.3 2007/03/10 01:19:55 hubertf Exp $	*/
+/*	$NetBSD: alias.c,v 1.4 2007/12/12 22:57:54 lukem Exp $	*/
 /*	$OpenBSD: alias.c,v 1.4 2002/07/30 05:55:08 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -29,6 +29,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: alias.c,v 1.4 2007/12/12 22:57:54 lukem Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
