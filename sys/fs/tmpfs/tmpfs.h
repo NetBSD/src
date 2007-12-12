@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs.h,v 1.28.2.2 2007/12/08 14:42:24 ad Exp $	*/
+/*	$NetBSD: tmpfs.h,v 1.28.2.3 2007/12/12 17:33:14 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -221,10 +221,8 @@ struct tmpfs_node {
 	 *
 	 * May be NULL when the node is unused (that is, no vnode has been
 	 * allocated for it or it has been reclaimed). */
-	struct vnode *		tn_vnode;
-
-	/* Lock on tn_vnode. */
 	kmutex_t		tn_vlock;
+	struct vnode *		tn_vnode;
 
 	/* Pointer to the node returned by tmpfs_lookup() after doing a
 	 * delete or a rename lookup; its value is only valid in these two

@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.41.2.2 2007/12/08 14:42:25 ad Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.41.2.3 2007/12/12 17:33:15 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.41.2.2 2007/12/08 14:42:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.41.2.3 2007/12/12 17:33:15 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -223,14 +223,11 @@ tmpfs_alloc_node(struct tmpfs_mount *tmp, enum vtype type,
 void
 tmpfs_free_node(struct tmpfs_mount *tmp, struct tmpfs_node *node)
 {
-	size_t pages;
 
-	if (node->tn_type == VREG)
-		pages = node->tn_spec.tn_reg.tn_aobj_pages;
-	else
-		pages = 0;
-
-	atomic_add_int(&tmp->tm_pages_used, -pages);
+	if (node->tn_type == VREG) {
+		atomic_add_int(&tmp->tm_pages_used,
+		    -node->tn_spec.tn_reg.tn_aobj_pages);
+	}
 	atomic_dec_uint(&tmp->tm_nodes_cnt);
 	mutex_enter(&tmp->tm_lock);
 	LIST_REMOVE(node, tn_entries);
@@ -354,7 +351,7 @@ tmpfs_alloc_vp(struct mount *mp, struct tmpfs_node *node, struct vnode **vpp)
 		if ((vp = node->tn_vnode) != NULL) {
 			mutex_enter(&vp->v_interlock);
 			mutex_exit(&node->tn_vlock);
-			error = vget(vp, LK_EXCLUSIVE | LK_RETRY | LK_INTERLOCK);
+			error = vget(vp, LK_EXCLUSIVE | LK_INTERLOCK);
 			if (error == ENOENT) {
 				/* vnode was reclaimed. */
 				continue;
@@ -410,7 +407,8 @@ tmpfs_alloc_vp(struct mount *mp, struct tmpfs_node *node, struct vnode **vpp)
 		break;
 
 	case VDIR:
-		vp->v_vflag |= (node->tn_spec.tn_dir.tn_parent == node ? VV_ROOT : 0);
+		vp->v_vflag |= node->tn_spec.tn_dir.tn_parent == node ?
+		    VV_ROOT : 0;
 		break;
 
 	case VFIFO:
@@ -435,6 +433,7 @@ tmpfs_alloc_vp(struct mount *mp, struct tmpfs_node *node, struct vnode **vpp)
 	*vpp = vp;
 
 	KASSERT(IFF(error == 0, *vpp != NULL && VOP_ISLOCKED(*vpp)));
+	KASSERT(*vpp == node->tn_vnode);
 
 	return error;
 }
@@ -614,6 +613,7 @@ tmpfs_dir_detach(struct vnode *vp, struct tmpfs_dirent *de)
 struct tmpfs_dirent *
 tmpfs_dir_lookup(struct tmpfs_node *node, struct componentname *cnp)
 {
+	bool found;
 	struct tmpfs_dirent *de;
 
 	KASSERT(IMPLIES(cnp->cn_namelen == 1, cnp->cn_nameptr[0] != '.'));
@@ -623,14 +623,17 @@ tmpfs_dir_lookup(struct tmpfs_node *node, struct componentname *cnp)
 
 	node->tn_status |= TMPFS_NODE_ACCESSED;
 
+	found = 0;
 	TAILQ_FOREACH(de, &node->tn_spec.tn_dir.tn_dir, td_entries) {
 		KASSERT(cnp->cn_namelen < 0xffff);
 		if (de->td_namelen == (uint16_t)cnp->cn_namelen &&
-		    memcmp(de->td_name, cnp->cn_nameptr, de->td_namelen) == 0)
+		    memcmp(de->td_name, cnp->cn_nameptr, de->td_namelen) == 0) {
+		    	found = 1;
 			break;
+		}
 	}
 
-	return de;
+	return found ? de : NULL;
 }
 
 /* --------------------------------------------------------------------- */
