@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_pool.c,v 1.11.2.2 2007/12/08 14:42:24 ad Exp $	*/
+/*	$NetBSD: tmpfs_pool.c,v 1.11.2.3 2007/12/12 17:33:15 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_pool.c,v 1.11.2.2 2007/12/08 14:42:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_pool.c,v 1.11.2.3 2007/12/12 17:33:15 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/pool.h>
@@ -129,7 +129,7 @@ tmpfs_pool_init(struct tmpfs_pool *tpp, size_t size, const char *what,
 	int cnt;
 
 	cnt = snprintf(tpp->tp_name, sizeof(tpp->tp_name),
-	    "%s_pool_%p", what, tmp);
+	    "%s_tmpfs_%p", what, tmp);
 	KASSERT(cnt < sizeof(tpp->tp_name));
 
 	pool_init(&tpp->tp_pool, size, 0, 0, 0, tpp->tp_name,
@@ -245,6 +245,8 @@ tmpfs_str_pool_get(struct tmpfs_str_pool *tsp, size_t len, int flags)
 {
 	struct tmpfs_pool *p;
 
+	KASSERT(len <= 1024);
+
 	if      (len <= 16)   p = &tsp->tsp_pool_16;
 	else if (len <= 32)   p = &tsp->tsp_pool_32;
 	else if (len <= 64)   p = &tsp->tsp_pool_64;
@@ -253,7 +255,7 @@ tmpfs_str_pool_get(struct tmpfs_str_pool *tsp, size_t len, int flags)
 	else if (len <= 512)  p = &tsp->tsp_pool_512;
 	else if (len <= 1024) p = &tsp->tsp_pool_1024;
 	else {
-		return NULL;
+		p = NULL; /* Silence compiler warnings */
 	}
 
 	return (char *)TMPFS_POOL_GET(p, flags);

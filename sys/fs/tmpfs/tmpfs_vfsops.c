@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vfsops.c,v 1.32.2.2 2007/12/08 14:42:25 ad Exp $	*/
+/*	$NetBSD: tmpfs_vfsops.c,v 1.32.2.3 2007/12/12 17:33:15 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.32.2.2 2007/12/08 14:42:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.32.2.3 2007/12/12 17:33:15 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -103,8 +103,8 @@ tmpfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 		args->ta_version = TMPFS_ARGS_VERSION;
 		args->ta_nodes_max = tmp->tm_nodes_max;
 		args->ta_size_max = tmp->tm_pages_max * PAGE_SIZE;
-		root = tmp->tm_root;
 
+		root = tmp->tm_root;
 		args->ta_root_uid = root->tn_uid;
 		args->ta_root_gid = root->tn_gid;
 		args->ta_root_mode = root->tn_mode;
@@ -219,7 +219,12 @@ tmpfs_unmount(struct mount *mp, int mntflags)
 	 * a directory, we free all its directory entries.  Note that after
 	 * freeing a node, it will automatically go to the available list,
 	 * so we will later have to iterate over it to release its items. */
-	while ((node = LIST_FIRST(&tmp->tm_nodes)) != NULL) {
+	node = LIST_FIRST(&tmp->tm_nodes);
+	while (node != NULL) {
+		struct tmpfs_node *next;
+		next = LIST_NEXT(node, tn_entries);
+		tmpfs_free_node(tmp, node);
+		node = next;
 		if (node->tn_type == VDIR) {
 			struct tmpfs_dirent *de;
 
@@ -234,8 +239,9 @@ tmpfs_unmount(struct mount *mp, int mntflags)
 				node->tn_size -= sizeof(struct tmpfs_dirent);
 			}
 		}
-
+		next = LIST_NEXT(node, tn_entries);
 		tmpfs_free_node(tmp, node);
+		node = next;
 	}
 
 	tmpfs_pool_destroy(&tmp->tm_dirent_pool);

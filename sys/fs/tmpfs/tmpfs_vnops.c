@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.44.2.1 2007/12/04 13:03:11 ad Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.44.2.2 2007/12/12 17:33:15 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.44.2.1 2007/12/04 13:03:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.44.2.2 2007/12/12 17:33:15 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -1075,7 +1075,7 @@ tmpfs_rmdir(void *v)
 	 * reclaimed. */
 	tmpfs_free_dirent(tmp, de, true);
 
-	/* KASSERT(node->tn_links == 1); */
+	KASSERT(node->tn_links == 1);
  out:
 	/* Release the nodes. */
 	vput(dvp);
