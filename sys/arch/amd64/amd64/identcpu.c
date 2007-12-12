@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.31 2007/11/22 16:16:42 bouyer Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.32 2007/12/12 14:36:21 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.31 2007/11/22 16:16:42 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.32 2007/12/12 14:36:21 xtraeme Exp $");
 
 #include "opt_enhanced_speedstep.h"
 #include "opt_intel_coretemp.h"
@@ -153,8 +153,9 @@ identifycpu(struct cpu_info *ci)
 
 #ifdef POWERNOW_K8
 	if (CPUID2FAMILY(ci->ci_signature) == 15 &&
-	    (cpu_model[0] == 'A' || cpu_model[0] == 'O') &&
-	    powernow_probe(ci))
+	    (cpu_model[0] == 'A' || cpu_model[0] == 'O' ||
+	     cpu_model[0] == 'D') &&
+	     powernow_probe(ci))
 		k8_powernow_init();
 #endif
 
