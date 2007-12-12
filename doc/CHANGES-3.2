@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.2,v 1.1.2.115 2007/12/12 19:48:42 bouyer Exp $
+#	$NetBSD: CHANGES-3.2,v 1.1.2.116 2007/12/12 19:51:40 bouyer Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.2
 release:
@@ -3861,4 +3861,10 @@ lib/libkrb/Makefile				patch
 	Properly reference libraries libkrb needs, so they don't need to be
 	included on their own
 	[gendalia, ticket #1886]
+
+lib/libss/Makefile				1.6
+
+	Add proper DT_NEEDED dependencies so libraries needed by libss don't
+	have to be included on their own. From Jukka Salmi
+	[gendalia, ticket #1887]
 
