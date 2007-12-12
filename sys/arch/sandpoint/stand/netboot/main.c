@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.9 2007/11/29 04:00:17 nisimura Exp $ */
+/* $NetBSD: main.c,v 1.10 2007/12/12 04:17:49 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -131,7 +131,10 @@ main()
 		_rtt();
 	}
 
-	howto = RB_SINGLE | AB_VERBOSE | RB_KDB;
+	howto = RB_SINGLE | AB_VERBOSE;
+#ifdef START_DDB_SESSION
+	howto |= RB_KDB;
+#endif
 
 	bootinfo = (void *)0x4000;
 	bi_init(bootinfo);
