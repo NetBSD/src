@@ -1,4 +1,4 @@
-/*      $NetBSD: subr.c,v 1.41 2007/12/07 14:59:22 pooka Exp $        */
+/*      $NetBSD: subr.c,v 1.42 2007/12/12 16:04:35 pooka Exp $        */
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: subr.c,v 1.41 2007/12/07 14:59:22 pooka Exp $");
+__RCSID("$NetBSD: subr.c,v 1.42 2007/12/12 16:04:35 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -336,14 +336,45 @@ sftp_readdir(struct puffs_usermount *pu, struct psshfs_ctx *pctx,
 			free(longname);
 			longname = NULL;
 
+			/*
+			 * Check if we already have a psshfs_dir for the
+			 * name we are processing.  If so, use the old one.
+			 * If not, create a new one
+			 */
 			testd = lookup(olddir, nent, psn->dir[idx].entryname);
 			if (testd) {
 				psn->dir[idx].entry = testd->entry;
-				if (testd->entry)
+				/*
+				 * Has entry.  Update attributes to what
+				 * we just got from the server.
+				 */
+				if (testd->entry) {
 					setpnva(pu, testd->entry,
 					    &psn->dir[idx].va);
-				else
+
+				/*
+				 * No entry.  This can happen in two cases:
+				 * 1) the file was created "behind our back"
+				 *    on the server
+				 * 2) we do two readdirs before we instantiate
+				 *    the node (or run with -t 0).
+				 *
+				 * Cache attributes from the server in
+				 * case we want to instantiate this node
+				 * soon.  Also give it a new inode number
+				 * (the node has not been instantiated
+				 * yet so this doesn't matter).
+				 *
+				 * XXX: theoretically we can make the inode
+				 * space wrap because of this.
+				 */
+				} else {
 					testd->va = psn->dir[idx].va;
+					psn->dir[idx].va.va_fileid
+					    = pctx->nextino++;
+				}
+
+			/* No previous entry?  Initialize this one. */
 			} else {
 				psn->dir[idx].entry = NULL;
 				psn->dir[idx].va.va_fileid = pctx->nextino++;
