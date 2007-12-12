@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.177.2.2 2007/12/10 19:31:49 ad Exp $	*/
+/*	$NetBSD: vnode.h,v 1.177.2.3 2007/12/12 02:50:29 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -200,6 +200,7 @@ typedef struct vnode vnode_t;
 #define	VI_MAPPED	0x00040000	/* duplicate of VV_MAPPED */
 #define	VI_CLEAN	0x00080000	/* has been reclaimed */
 #define	VI_INACTPEND	0x00100000	/* inactivation is pending */
+#define	VI_INACTREDO	0x00200000	/* need to redo VOP_INACTIVE() */
 
 /*
  * The third set are locked by the underlying file system.
@@ -209,7 +210,7 @@ typedef struct vnode vnode_t;
 #define	VNODE_FLAGBITS \
     "\20\1ROOT\2SYSTEM\3ISTTY\4MAPPED\5MPSAFE\6LOCKSWORK\11TEXT\12EXECMAP" \
     "\13WRMAP\14WRMAPDIRTY\15XLOCK\16ALIASED\17ONWORKLST\20MARKER" \
-    "\22LAYER\23MAPPED\24CLEAN\25INACTPEND\31DIROP" 
+    "\22LAYER\23MAPPED\24CLEAN\25INACTPEND\26INACTREDO\31DIROP" 
 
 #define	VSIZENOTSET	((voff_t)-1)
 
