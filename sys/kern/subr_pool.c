@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.137.2.1 2007/12/08 17:57:46 ad Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.137.2.2 2007/12/12 22:03:31 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002, 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.137.2.1 2007/12/08 17:57:46 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.137.2.2 2007/12/12 22:03:31 ad Exp $");
 
 #include "opt_pool.h"
 #include "opt_poollog.h"
@@ -76,10 +76,6 @@ __KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.137.2.1 2007/12/08 17:57:46 ad Exp $
 
 /* List of all pools */
 LIST_HEAD(,pool) pool_head = LIST_HEAD_INITIALIZER(pool_head);
-
-/* List of all caches. */
-LIST_HEAD(,pool_cache) pool_cache_head =
-    LIST_HEAD_INITIALIZER(pool_cache_head);
 
 /* Private pool for page header structures */
 #define	PHPOOL_MAX	8
@@ -184,6 +180,13 @@ struct pool_item {
 static struct pool pcgpool;
 static struct pool cache_pool;
 static struct pool cache_cpu_pool;
+
+/* List of all caches. */
+LIST_HEAD(,pool_cache) pool_cache_head =
+    LIST_HEAD_INITIALIZER(pool_cache_head);
+
+int pool_cache_disable;
+
 
 static pool_cache_cpu_t *pool_cache_put_slow(pool_cache_cpu_t *, int *,
 					     void *, paddr_t);
@@ -2590,7 +2593,11 @@ pool_cache_put_slow(pool_cache_cpu_t *cc, int *s, void *object, paddr_t pa)
 	 * If we can't allocate a new group, just throw the
 	 * object away.
 	 */
-	pcg = pool_get(&pcgpool, PR_NOWAIT);
+	if (pool_cache_disable) {
+		pcg = NULL;
+	} else {
+		pcg = pool_get(&pcgpool, PR_NOWAIT);
+	}
 	if (pcg == NULL) {
 		pool_cache_destruct_object(pc, object);
 		return NULL;
