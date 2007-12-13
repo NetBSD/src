@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.139 2007/12/11 19:07:27 ad Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.140 2007/12/13 01:22:50 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002, 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.139 2007/12/11 19:07:27 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.140 2007/12/13 01:22:50 yamt Exp $");
 
 #include "opt_pool.h"
 #include "opt_poollog.h"
@@ -381,12 +381,14 @@ pr_item_notouch_get(const struct pool *pp, struct pool_item_header *ph)
 }
 
 static inline void
-pr_item_notouch_init(const struct pool *pp, struct pool_item_header *ph)
+pr_item_notouch_init(const struct pool *pp, struct pool_item_header *ph,
+    unsigned int offset)
 {
 	pool_item_bitmap_t *bitmap = ph->ph_bitmap;
 	const int n = howmany(pp->pr_itemsperpage, BITMAP_SIZE);
 	int i;
 
+	ph->ph_off = offset;
 	for (i = 0; i < n; i++) {
 		bitmap[i] = (pool_item_bitmap_t)-1;
 	}
@@ -1455,7 +1457,7 @@ pool_prime_page(struct pool *pp, void *storage, struct pool_item_header *ph)
 	pp->pr_nitems += n;
 
 	if (pp->pr_roflags & PR_NOTOUCH) {
-		pr_item_notouch_init(pp, ph);
+		pr_item_notouch_init(pp, ph, (char *)cp - (char *)storage);
 	} else {
 		while (n--) {
 			pi = (struct pool_item *)cp;
