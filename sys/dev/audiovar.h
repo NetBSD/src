@@ -1,4 +1,4 @@
-/*	$NetBSD: audiovar.h,v 1.41 2007/12/13 14:02:53 jmcneill Exp $	*/
+/*	$NetBSD: audiovar.h,v 1.42 2007/12/13 14:40:37 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -156,6 +156,7 @@ struct audio_softc {
 
 	bool		sc_rbus;	/* input DMA in progress */
 	bool		sc_pbus;	/* output DMA in progress */
+	bool		sc_idle;	/* suspended due to idleness */
 
 	/**
 	 *  userland
