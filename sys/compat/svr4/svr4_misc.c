@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.132.4.1 2007/12/08 17:57:07 ad Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.132.4.2 2007/12/13 18:01:39 ad Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_misc.c,v 1.132.4.1 2007/12/08 17:57:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_misc.c,v 1.132.4.2 2007/12/13 18:01:39 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -610,7 +610,6 @@ int
 svr4_sys_sysconfig(struct lwp *l, void *v, register_t *retval)
 {
 	struct svr4_sys_sysconfig_args *uap = v;
-	extern int	maxfiles;
 	int active;
 
 	switch (SCARG(uap, name)) {
