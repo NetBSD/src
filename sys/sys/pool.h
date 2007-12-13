@@ -1,4 +1,4 @@
-/*	$NetBSD: pool.h,v 1.58 2007/11/18 16:27:42 ad Exp $	*/
+/*	$NetBSD: pool.h,v 1.58.6.1 2007/12/13 21:56:59 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2007 The NetBSD Foundation, Inc.
@@ -347,6 +347,7 @@ void		pool_cache_cpu_init(struct cpu_info *);
 #define		pool_cache_put(pc, o) pool_cache_put_paddr((pc), (o), \
 				          POOL_PADDR_INVALID)
 
+void 		pool_whatis(uintptr_t, void (*)(const char *, ...));
 #endif /* _KERNEL */
 
 #endif /* _SYS_POOL_H_ */

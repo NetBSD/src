@@ -1,4 +1,4 @@
-/* $NetBSD: kern_pmf.c,v 1.2 2007/12/09 20:28:43 jmcneill Exp $ */
+/* $NetBSD: kern_pmf.c,v 1.2.2.1 2007/12/13 21:56:53 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_pmf.c,v 1.2 2007/12/09 20:28:43 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_pmf.c,v 1.2.2.1 2007/12/13 21:56:53 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -44,7 +44,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_pmf.c,v 1.2 2007/12/09 20:28:43 jmcneill Exp $"
 #include <sys/device.h>
 #include <sys/pmf.h>
 #include <sys/queue.h>
-#include <sys/kmem.h>
 #include <sys/syscallargs.h> /* for sys_sync */
 #include <sys/workqueue.h>
 #include <prop/proplib.h>
@@ -106,7 +105,7 @@ pmf_event_worker(struct work *wk, void *dummy)
 			(*event->pmf_handler)(event->pmf_device);
 	}
 
-	kmem_free(pew, sizeof(pmf_event_workitem_t));
+	free(pew, M_TEMP);
 
 	return;
 }
@@ -452,7 +451,7 @@ pmf_event_inject(device_t dv, pmf_generic_event_t ev)
 {
 	pmf_event_workitem_t *pew;
 
-	pew = kmem_alloc(sizeof(pmf_event_workitem_t), KM_NOSLEEP);
+	pew = malloc(sizeof(pmf_event_workitem_t), M_TEMP, M_NOWAIT);
 	if (pew == NULL) {
 		PMF_EVENT_PRINTF(("%s: PMF event %d dropped (no memory)\n",
 		    dv ? device_xname(dv) : "<anonymous>", ev));
@@ -589,12 +588,10 @@ pmf_init(void)
 
 	KASSERT(pmf_event_workqueue == NULL);
 	err = workqueue_create(&pmf_event_workqueue, "pmfevent",
-	    pmf_event_worker, NULL, PRI_IDLE, IPL_VM, 0);
+	    pmf_event_worker, NULL, PRI_NONE, IPL_VM, 0);
 	if (err)
 		panic("couldn't create pmfevent workqueue");
 
 	callout_init(&global_idle_counter, 0);
 	callout_setfunc(&global_idle_counter, input_idle, NULL);
-
-	return;
 }

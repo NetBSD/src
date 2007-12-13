@@ -28,6 +28,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cxgb_xgmac.c,v 1.1.26.1 2007/12/13 21:55:46 bouyer Exp $");
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/dev/cxgb/common/cxgb_xgmac.c,v 1.4 2007/05/28 22:57:26 kmacy Exp $");
 #endif

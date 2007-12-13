@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.181 2007/12/10 12:35:27 jmcneill Exp $
+# $NetBSD: GENERIC,v 1.181.2.1 2007/12/13 21:54:33 bouyer Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.181 $"
+#ident 		"GENERIC-$Revision: 1.181.2.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -255,12 +255,15 @@ options 	MPBIOS_SCANPCI		# MPBIOS configures PCI roots
 acpiacad* 	at acpi?		# ACPI AC Adapter
 acpibat* 	at acpi?		# ACPI Battery
 acpibut* 	at acpi?		# ACPI Button
-acpiec* 	at acpi?		# ACPI Embedded Controller
+# The ACPI Embedded Controller is generally configured via the special ECDT.
+# This is required as parts of the DSDT can reference the EC before the normal
+# attach phase.
+acpiec* 	at acpi?		# ACPI Embedded Controller (late binding)
+acpiecdt* 	at acpi?		# ACPI Embedded Controller (early binding)
 acpilid* 	at acpi?		# ACPI Lid Switch
 acpitz* 	at acpi?		# ACPI Thermal Zone
 
 # Mainboard devices
-apm*		at acpi?		# ACPI apm emulation
 aiboost* 	at acpi?		# ASUS AI Booster Hardware monitor
 attimer*	at acpi?		# AT Timer
 #com* 		at acpi?		# Serial communications interface

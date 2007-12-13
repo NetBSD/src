@@ -1,7 +1,9 @@
+/*	$NetBSD: evgpeblk.c,v 1.4.2.1 2007/12/13 21:56:16 bouyer Exp $	*/
+
 /******************************************************************************
  *
  * Module Name: evgpeblk - GPE block creation and initialization.
- *              $Revision: 1.4 $
+ *              $Revision: 1.4.2.1 $
  *
  *****************************************************************************/
 
@@ -113,6 +115,9 @@
  * such license, approval or letter.
  *
  *****************************************************************************/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: evgpeblk.c,v 1.4.2.1 2007/12/13 21:56:16 bouyer Exp $");
 
 #include <dist/acpica/acpi.h>
 #include <dist/acpica/acevents.h>

@@ -1,7 +1,9 @@
+/*	$NetBSD: psparse.c,v 1.2.2.1 2007/12/13 21:56:30 bouyer Exp $	*/
+
 /******************************************************************************
  *
  * Module Name: psparse - Parser top level AML parse routines
- *              $Revision: 1.2 $
+ *              $Revision: 1.2.2.1 $
  *
  *****************************************************************************/
 
@@ -123,6 +125,9 @@
  * fairly compact by parsing based on a list of AML opcode
  * templates in AmlOpInfo[]
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: psparse.c,v 1.2.2.1 2007/12/13 21:56:30 bouyer Exp $");
 
 #include <dist/acpica/acpi.h>
 #include <dist/acpica/acparser.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: fwdev.c,v 1.13 2007/11/05 19:08:56 kiyohara Exp $	*/
+/*	$NetBSD: fwdev.c,v 1.13.8.1 2007/12/13 21:55:38 bouyer Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -35,6 +35,9 @@
  * $FreeBSD: src/sys/dev/firewire/fwdev.c,v 1.52 2007/06/06 14:31:36 simokawa Exp $
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: fwdev.c,v 1.13.8.1 2007/12/13 21:55:38 bouyer Exp $");
 
 #if defined(__FreeBSD__)
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.113 2007/11/06 00:42:40 ad Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.113.6.1 2007/12/13 21:56:52 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.113 2007/11/06 00:42:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.113.6.1 2007/12/13 21:56:52 bouyer Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
@@ -1150,7 +1150,7 @@ sysctl_kern_rtc_offset(SYSCTLFN_ARGS)
 
 	if (kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_TIME,
 	    KAUTH_REQ_SYSTEM_TIME_RTCOFFSET,
-	    (void *)(u_long)new_rtc_offset, NULL, NULL))
+	    KAUTH_ARG(new_rtc_offset), NULL, NULL))
 		return (EPERM);
 	if (rtc_offset == new_rtc_offset)
 		return (0);
@@ -1161,9 +1161,7 @@ sysctl_kern_rtc_offset(SYSCTLFN_ARGS)
 	delta.tv_nsec = 0;
 	timespecadd(&ts, &delta, &ts);
 	rtc_offset = new_rtc_offset;
-	settime(l->l_proc, &ts);
-
-	return (0);
+	return (settime(l->l_proc, &ts));
 }
 
 /*

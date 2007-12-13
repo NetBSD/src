@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.36 2007/12/05 07:06:54 ad Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.36.4.1 2007/12/13 21:56:55 bouyer Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -38,10 +38,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.36 2007/12/05 07:06:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.36.4.1 2007/12/13 21:56:55 bouyer Exp $");
 
 #define	VMEM_DEBUG
 #if defined(_KERNEL)
+#include "opt_ddb.h"
 #define	QCACHE
 #endif /* defined(_KERNEL) */
 
@@ -1202,6 +1203,44 @@ vmem_rehash_start(void)
 #endif /* defined(_KERNEL) */
 
 /* ---- debug */
+
+#if defined(DDB)
+static bt_t *
+vmem_whatis_lookup(vmem_t *vm, uintptr_t addr)
+{
+	int i;
+
+	for (i = 0; i < vm->vm_hashsize; i++) {
+		bt_t *bt;
+
+		LIST_FOREACH(bt, &vm->vm_hashlist[i], bt_hashlist) {
+			if (bt->bt_start <= addr && addr < BT_END(bt)) {
+				return bt;
+			}
+		}
+	}
+
+	return NULL;
+}
+
+void
+vmem_whatis(uintptr_t addr, void (*pr)(const char *, ...))
+{
+	vmem_t *vm;
+
+	LIST_FOREACH(vm, &vmem_list, vm_alllist) {
+		bt_t *bt;
+
+		bt = vmem_whatis_lookup(vm, addr);
+		if (bt == NULL) {
+			continue;
+		}
+		(*pr)("%p is %p+%zu from VMEM '%s'\n",
+		    (void *)addr, (void *)bt->bt_start,
+		    (size_t)(addr - bt->bt_start), vm->vm_name);
+	}
+}
+#endif /* defined(DDB) */
 
 #if defined(VMEM_DEBUG)
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_pptp_pxy.c,v 1.7 2007/04/14 20:34:38 martin Exp $	*/
+/*	$NetBSD: ip_pptp_pxy.c,v 1.7.20.1 2007/12/13 21:56:45 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2002-2003 by Darren Reed
@@ -9,6 +9,10 @@
  * Id: ip_pptp_pxy.c,v 2.10.2.15 2006/10/31 12:11:23 darrenr Exp
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(1, "$NetBSD: ip_pptp_pxy.c,v 1.7.20.1 2007/12/13 21:56:45 bouyer Exp $");
+
 #define	IPF_PPTP_PROXY
 
 typedef	struct pptp_hdr {

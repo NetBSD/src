@@ -1,3 +1,5 @@
+/*	$NetBSD: savage_state.c,v 1.2.26.1 2007/12/13 21:56:01 bouyer Exp $	*/
+
 /* savage_state.c -- State and drawing support for Savage
  *
  * Copyright 2004  Felix Kuehling
@@ -24,6 +26,7 @@
  */
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: savage_state.c,v 1.2.26.1 2007/12/13 21:56:01 bouyer Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/savage_state.c,v 1.3 2006/04/09 20:45:45 anholt Exp $");
 */

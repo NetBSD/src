@@ -1,4 +1,4 @@
-/* $NetBSD: des_cbc.S,v 1.5 2005/12/11 12:20:52 christos Exp $ */
+/* $NetBSD: des_cbc.S,v 1.5.60.1 2007/12/13 21:55:16 bouyer Exp $ */
 
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
@@ -63,6 +63,7 @@
  */
 
 #include <i386/include/asm.h>
+__KERNEL_RCSID(0, "$NetBSD: des_cbc.S,v 1.5.60.1 2007/12/13 21:55:16 bouyer Exp $");
 
 ENTRY(des_ncbc_encrypt)
 

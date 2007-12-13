@@ -1,7 +1,9 @@
+/*	$NetBSD: dsmethod.c,v 1.4.2.1 2007/12/13 21:56:13 bouyer Exp $	*/
+
 /******************************************************************************
  *
  * Module Name: dsmethod - Parser/Interpreter interface - control method parsing
- *              $Revision: 1.4 $
+ *              $Revision: 1.4.2.1 $
  *
  *****************************************************************************/
 
@@ -113,6 +115,9 @@
  * such license, approval or letter.
  *
  *****************************************************************************/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: dsmethod.c,v 1.4.2.1 2007/12/13 21:56:13 bouyer Exp $");
 
 #define __DSMETHOD_C__
 

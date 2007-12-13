@@ -1,3 +1,5 @@
+/*	$NetBSD: sis_mm.c,v 1.2.26.1 2007/12/13 21:56:02 bouyer Exp $	*/
+
 /* sis_mm.c -- Private header for Direct Rendering Manager -*- linux-c -*-
  * Created: Mon Jan  4 10:05:05 1999 by sclin@sis.com.tw
  *
@@ -29,6 +31,7 @@
  */
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sis_mm.c,v 1.2.26.1 2007/12/13 21:56:02 bouyer Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/sis_mm.c,v 1.9 2006/04/09 20:45:45 anholt Exp $");
 */

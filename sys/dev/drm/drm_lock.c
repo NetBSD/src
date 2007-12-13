@@ -1,4 +1,4 @@
-/* $NetBSD: drm_lock.c,v 1.4 2007/12/07 08:02:48 bjs Exp $ */
+/* $NetBSD: drm_lock.c,v 1.4.4.1 2007/12/13 21:55:29 bouyer Exp $ */
 
 /* lock.c -- IOCTLs for locking -*- linux-c -*-
  * Created: Tue Feb  2 08:37:54 1999 by faith@valinux.com
@@ -34,6 +34,7 @@
  */
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: drm_lock.c,v 1.4.4.1 2007/12/13 21:55:29 bouyer Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/drm_lock.c,v 1.2 2005/11/28 23:13:52 anholt Exp $");
 */

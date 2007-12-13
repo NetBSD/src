@@ -1,3 +1,5 @@
+/*	$NetBSD: mga_irq.c,v 1.2.26.1 2007/12/13 21:55:57 bouyer Exp $	*/
+
 /* mga_irq.c -- IRQ handling for radeon -*- linux-c -*-
  */
 /*-
@@ -32,6 +34,7 @@
  */
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mga_irq.c,v 1.2.26.1 2007/12/13 21:55:57 bouyer Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/mga_irq.c,v 1.6 2005/11/28 23:13:53 anholt Exp $");
 */

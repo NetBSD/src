@@ -1,4 +1,4 @@
-/*	$NetBSD: scope6.c,v 1.5 2007/10/24 06:37:22 dyoung Exp $	*/
+/*	$NetBSD: scope6.c,v 1.5.8.1 2007/12/13 21:56:58 bouyer Exp $	*/
 /*	$KAME$	*/
 
 /*-
@@ -29,6 +29,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: scope6.c,v 1.5.8.1 2007/12/13 21:56:58 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>

@@ -1,8 +1,9 @@
+/*	$NetBSD: exresnte.c,v 1.2.2.1 2007/12/13 21:56:21 bouyer Exp $	*/
 
 /******************************************************************************
  *
  * Module Name: exresnte - AML Interpreter object resolution
- *              $Revision: 1.2 $
+ *              $Revision: 1.2.2.1 $
  *
  *****************************************************************************/
 
@@ -114,6 +115,9 @@
  * such license, approval or letter.
  *
  *****************************************************************************/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: exresnte.c,v 1.2.2.1 2007/12/13 21:56:21 bouyer Exp $");
 
 #define __EXRESNTE_C__
 

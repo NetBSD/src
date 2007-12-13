@@ -1,8 +1,10 @@
+/*	$NetBSD: nsxfeval.c,v 1.2.2.1 2007/12/13 21:56:28 bouyer Exp $	*/
+
 /*******************************************************************************
  *
  * Module Name: nsxfeval - Public interfaces to the ACPI subsystem
  *                         ACPI Object evaluation interfaces
- *              $Revision: 1.2 $
+ *              $Revision: 1.2.2.1 $
  *
  ******************************************************************************/
 
@@ -115,6 +117,8 @@
  *
  *****************************************************************************/
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: nsxfeval.c,v 1.2.2.1 2007/12/13 21:56:28 bouyer Exp $");
 
 #define __NSXFEVAL_C__
 

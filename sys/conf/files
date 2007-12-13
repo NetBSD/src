@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.876 2007/12/09 20:27:51 jmcneill Exp $
+#	$NetBSD: files,v 1.876.2.1 2007/12/13 21:55:13 bouyer Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -1563,3 +1563,8 @@ include "dev/onewire/files.onewire"
 # Pseudo audio device
 #
 include "dev/pad/files.pad"
+
+#
+# Intel 386 Real Mode emulator
+#
+include "lib/libx86emu/files.x86emu"

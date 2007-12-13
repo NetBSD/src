@@ -1,7 +1,9 @@
+/*	$NetBSD: nsparse.c,v 1.4.2.1 2007/12/13 21:56:27 bouyer Exp $	*/
+
 /******************************************************************************
  *
  * Module Name: nsparse - namespace interface to AML parser
- *              $Revision: 1.4 $
+ *              $Revision: 1.4.2.1 $
  *
  *****************************************************************************/
 
@@ -113,6 +115,9 @@
  * such license, approval or letter.
  *
  *****************************************************************************/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: nsparse.c,v 1.4.2.1 2007/12/13 21:56:27 bouyer Exp $");
 
 #define __NSPARSE_C__
 

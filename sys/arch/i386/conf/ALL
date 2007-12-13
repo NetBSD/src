@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.146 2007/12/09 20:27:45 jmcneill Exp $
+# $NetBSD: ALL,v 1.146.2.1 2007/12/13 21:54:38 bouyer Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.146 $"
+#ident 		"ALL-$Revision: 1.146.2.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -151,6 +151,8 @@ options 	EXEC_MACHO	# exec MACH-O binaries
 options 	COMPAT_NDIS	# NDIS network driver
 options 	COMPAT_PECOFF	# kernel support to run Win32 apps
 options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
+
+options		X86EMU		# 386 Real Mode emulator
 
 # File systems
 file-system 	FFS		# UFS

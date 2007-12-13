@@ -1,3 +1,5 @@
+/*	$NetBSD: radeon_mem.c,v 1.2.28.1 2007/12/13 21:56:00 bouyer Exp $	*/
+
 /* radeon_mem.c -- Simple GART/fb memory manager for radeon -*- linux-c -*- */
 /*-
  * Copyright (C) The Weather Channel, Inc.  2002.  All Rights Reserved.
@@ -30,6 +32,7 @@
  */
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: radeon_mem.c,v 1.2.28.1 2007/12/13 21:56:00 bouyer Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/radeon_mem.c,v 1.8 2005/11/28 23:13:54 anholt Exp $");
 */

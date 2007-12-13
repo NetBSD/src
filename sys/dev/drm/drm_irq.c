@@ -1,4 +1,4 @@
-/* $NetBSD: drm_irq.c,v 1.5 2007/11/21 19:22:13 bjs Exp $ */
+/* $NetBSD: drm_irq.c,v 1.5.6.1 2007/12/13 21:55:29 bouyer Exp $ */
 
 /* drm_irq.c -- IRQ IOCTL and function support
  * Created: Fri Oct 18 2003 by anholt@FreeBSD.org
@@ -31,6 +31,7 @@
  */
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: drm_irq.c,v 1.5.6.1 2007/12/13 21:55:29 bouyer Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/drm_irq.c,v 1.2 2005/11/28 23:13:52 anholt Exp $");
 */

@@ -1,8 +1,9 @@
+/*	$NetBSD: hwacpi.c,v 1.2.2.1 2007/12/13 21:56:23 bouyer Exp $	*/
 
 /******************************************************************************
  *
  * Module Name: hwacpi - ACPI Hardware Initialization/Mode Interface
- *              $Revision: 1.2 $
+ *              $Revision: 1.2.2.1 $
  *
  *****************************************************************************/
 
@@ -114,6 +115,9 @@
  * such license, approval or letter.
  *
  *****************************************************************************/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: hwacpi.c,v 1.2.2.1 2007/12/13 21:56:23 bouyer Exp $");
 
 #define __HWACPI_C__
 

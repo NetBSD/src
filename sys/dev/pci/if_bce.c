@@ -1,4 +1,4 @@
-/* $NetBSD: if_bce.c,v 1.17 2007/07/19 22:04:22 dsl Exp $	 */
+/* $NetBSD: if_bce.c,v 1.17.18.1 2007/12/13 21:55:46 bouyer Exp $	 */
 
 /*
  * Copyright (c) 2003 Clifford Wright. All rights reserved.
@@ -35,6 +35,7 @@
  */
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_bce.c,v 1.17.18.1 2007/12/13 21:55:46 bouyer Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"

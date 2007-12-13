@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.44 2007/12/09 20:27:52 jmcneill Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.44.2.1 2007/12/13 21:55:24 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.44 2007/12/09 20:27:52 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.44.2.1 2007/12/13 21:55:24 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -126,7 +126,7 @@ static ACPI_STATUS acpiec_space_setup(ACPI_HANDLE, UINT32, void *, void **);
 static ACPI_STATUS acpiec_space_handler(UINT32, ACPI_PHYSICAL_ADDRESS,
     UINT32, ACPI_INTEGER *, void *, void *);
 
-static void acpiec_gpe_state_maschine(device_t);
+static void acpiec_gpe_state_machine(device_t);
 
 CFATTACH_DECL_NEW(acpiec, sizeof(struct acpiec_softc),
     acpiec_match, acpiec_attach, NULL, NULL);
@@ -526,7 +526,7 @@ retry:
 	sc->sc_state = EC_STATE_READ;
 
 	for (i = 0; i < EC_POLL_TIMEOUT; ++i) {
-		acpiec_gpe_state_maschine(dv);
+		acpiec_gpe_state_machine(dv);
 		if (sc->sc_state == EC_STATE_FREE)
 			goto done;
 		delay(1);
@@ -535,7 +535,7 @@ retry:
 	if (cold || acpiec_cold) {
 		while (sc->sc_state != EC_STATE_FREE) {
 			delay(1);
-			acpiec_gpe_state_maschine(dv);
+			acpiec_gpe_state_machine(dv);
 		}
 	} else while (cv_timedwait(&sc->sc_cv, &sc->sc_mtx, hz)) {
 		mutex_exit(&sc->sc_mtx);
@@ -572,7 +572,7 @@ retry:
 	sc->sc_state = EC_STATE_WRITE;
 
 	for (i = 0; i < EC_POLL_TIMEOUT; ++i) {
-		acpiec_gpe_state_maschine(dv);
+		acpiec_gpe_state_machine(dv);
 		if (sc->sc_state == EC_STATE_FREE)
 			goto done;
 		delay(1);
@@ -581,7 +581,7 @@ retry:
 	if (cold || acpiec_cold) {
 		while (sc->sc_state != EC_STATE_FREE) {
 			delay(1);
-			acpiec_gpe_state_maschine(dv);
+			acpiec_gpe_state_machine(dv);
 		}
 	} else while (cv_timedwait(&sc->sc_cv, &sc->sc_mtx, hz)) {
 		mutex_exit(&sc->sc_mtx);
@@ -673,7 +673,7 @@ loop:
 	sc->sc_state = EC_STATE_QUERY;
 
 	for (i = 0; i < EC_POLL_TIMEOUT; ++i) {
-		acpiec_gpe_state_maschine(dv);
+		acpiec_gpe_state_machine(dv);
 		if (sc->sc_state == EC_STATE_FREE)
 			goto done;
 		delay(1);
@@ -704,7 +704,7 @@ done:
 }
 
 static void
-acpiec_gpe_state_maschine(device_t dv)
+acpiec_gpe_state_machine(device_t dv)
 {
 	struct acpiec_softc *sc = device_private(dv);
 	uint8_t reg;
@@ -799,7 +799,7 @@ acpiec_gpe_handler(void *arg)
 	AcpiClearGpe(sc->sc_gpeh, sc->sc_gpebit, ACPI_ISR);
 
 	mutex_enter(&sc->sc_mtx);
-	acpiec_gpe_state_maschine(dv);
+	acpiec_gpe_state_machine(dv);
 	mutex_exit(&sc->sc_mtx);
 
 	return 0;

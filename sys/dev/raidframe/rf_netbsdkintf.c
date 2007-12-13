@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.239 2007/12/01 18:10:48 jmcneill Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.239.6.1 2007/12/13 21:56:05 bouyer Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -146,7 +146,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.239 2007/12/01 18:10:48 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.239.6.1 2007/12/13 21:56:05 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -264,7 +264,7 @@ struct raid_softc {
 int numraid = 0;
 
 extern struct cfdriver raid_cd;
-CFATTACH_DECL(raid, sizeof(struct raid_softc),
+CFATTACH_DECL_NEW(raid, sizeof(struct raid_softc),
     raid_match, raid_attach, raid_detach, NULL);
 
 /*

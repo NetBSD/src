@@ -1,7 +1,9 @@
+/*	$NetBSD: nsnames.c,v 1.3.2.1 2007/12/13 21:56:27 bouyer Exp $	*/
+
 /*******************************************************************************
  *
  * Module Name: nsnames - Name manipulation and search
- *              $Revision: 1.3 $
+ *              $Revision: 1.3.2.1 $
  *
  ******************************************************************************/
 
@@ -113,6 +115,9 @@
  * such license, approval or letter.
  *
  *****************************************************************************/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: nsnames.c,v 1.3.2.1 2007/12/13 21:56:27 bouyer Exp $");
 
 #define __NSNAMES_C__
 
