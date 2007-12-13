@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.113 2007/12/09 20:28:25 jmcneill Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.114 2007/12/13 15:14:48 joerg Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.113 2007/12/09 20:28:25 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.114 2007/12/13 15:14:48 joerg Exp $");
 
 #include "opt_wsdisplay_compat.h"
 #include "opt_wsmsgattrs.h"
@@ -104,11 +104,9 @@ struct wsscreen *wsscreen_attach(struct wsdisplay_softc *, int,
 				 int, int, long);
 void wsscreen_detach(struct wsscreen *);
 int wsdisplay_addscreen(struct wsdisplay_softc *, int, const char *, const char *);
-static void wsdisplay_shutdownhook(void *);
 static void wsdisplay_addscreen_print(struct wsdisplay_softc *, int, int);
 static void wsdisplay_closescreen(struct wsdisplay_softc *, struct wsscreen *);
 int wsdisplay_delscreen(struct wsdisplay_softc *, int, int);
-static void wsdisplay_switchto(int);
 
 #define WSDISPLAY_MAXSCREEN 8
 
@@ -132,6 +130,7 @@ struct wsdisplay_softc {
 	int	sc_isconsole;
 
 	int sc_flags;
+	int sc_suspended_screen;
 #define SC_SWITCHPENDING 1
 	int sc_screenwanted, sc_oldscreen; /* valid with SC_SWITCHPENDING */
 
@@ -604,7 +603,16 @@ wsdisplay_noemul_attach(device_t parent, device_t self, void *aux)
 static bool
 wsdisplay_suspend(device_t dv)
 {
-	wsdisplay_switchtoconsole();
+	struct wsdisplay_softc *sc = device_private(dv);
+	int s;
+
+	sc->sc_suspended_screen = wsdisplay_getactivescreen(sc);
+
+	wsdisplay_switch(dv, 0, 1);
+	s = spltty();
+	if (sc->sc_focus && wsdisplay_getactivescreen(sc) != 0)
+		wsscreen_switchwait(sc, 0);
+	splx(s);
 
 	return true;
 }
@@ -612,6 +620,9 @@ wsdisplay_suspend(device_t dv)
 static bool
 wsdisplay_resume(device_t dv)
 {
+	struct wsdisplay_softc *sc = device_private(dv);
+
+	wsdisplay_switch(dv, sc->sc_suspended_screen, 1);
 
 	return true;
 }
@@ -636,7 +647,6 @@ wsdisplay_common_attach(struct wsdisplay_softc *sc, int console, int kbdmux,
 	const struct wsdisplay_accessops *accessops,
 	void *accesscookie)
 {
-	static int hookset;
 	int i, start=0;
 #if NWSKBD > 0
 	struct wsevsrc *kme;
@@ -716,10 +726,6 @@ wsdisplay_common_attach(struct wsdisplay_softc *sc, int console, int kbdmux,
 
 	if (!pmf_device_register(sc->sc_dev, wsdisplay_suspend, wsdisplay_resume))
 		aprint_error_dev(sc->sc_dev, "couldn't establish power handler\n");
-
-	if (hookset == 0)
-		shutdownhook_establish(wsdisplay_shutdownhook, NULL);
-	hookset = 1;
 }
 
 void
@@ -2076,39 +2082,4 @@ wsdisplay_unset_cons_kbd(void)
 	wsdisplay_cons.cn_getc = wsdisplay_getc_dummy;
 	wsdisplay_cons.cn_bell = NULL;
 	wsdisplay_cons_kbd_pollc = 0;
-}
-
-static void
-wsdisplay_switchto(int no)
-{
-	struct wsdisplay_softc *sc;
-	struct wsscreen *scr;
-
-	if (wsdisplay_console_device != NULL) {
-		sc = wsdisplay_console_device;
-		if ((scr = sc->sc_scr[no]) == NULL)
-			return;
-		(*sc->sc_accessops->show_screen)(sc->sc_accesscookie,
-						 scr->scr_dconf->emulcookie,
-						 0, NULL, NULL);
-	}
-}
-
-/*
- * Switch the console display to it's first screen.
- */
-void
-wsdisplay_switchtoconsole(void)
-{
-	wsdisplay_switchto(0);
-}
-
-/*
- * Switch the console at shutdown.
- */
-static void
-wsdisplay_shutdownhook(void *arg)
-{
-
-	wsdisplay_switchtoconsole();
 }
