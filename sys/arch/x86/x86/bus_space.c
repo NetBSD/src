@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.13 2007/11/28 16:44:47 ad Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.13.6.1 2007/12/13 18:59:34 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.13 2007/11/28 16:44:47 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.13.6.1 2007/12/13 18:59:34 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -328,9 +328,6 @@ x86_mem_add_mapping(bpa, size, cacheable, bshp)
 	u_long pa, endpa;
 	vaddr_t va, sva;
 	pt_entry_t *pte, xpte;
-#if defined(XEN) && defined(i386)
-	int32_t cpumask = 0;
-#endif
 
 	pa = x86_trunc_page(bpa);
 	endpa = x86_round_page(bpa + size);
@@ -365,20 +362,6 @@ x86_mem_add_mapping(bpa, size, cacheable, bshp)
 		 * XXX should hand this bit to pmap_kenter_pa to
 		 * save the extra invalidate!
 		 */
-#if defined(XEN) && defined(i386)
-		pmap_kenter_ma(va, pa, VM_PROT_READ | VM_PROT_WRITE);
-		pte = kvtopte(va);
-		pt_entry_t *maptp;
-		maptp = (pt_entry_t *)vtomach((vaddr_t)pte);
-		if (cacheable)
-			PTE_CLEARBITS(pte, maptp, PG_N);
-		else
-			PTE_SETBITS(pte, maptp, PG_N);
-		pmap_tlb_shootdown(pmap_kernel(), va, *pte,
-		    &cpumask);
-	}
-	pmap_tlb_shootnow(cpumask);
-#else	/* XEN && i386 */
 #ifdef XEN
 		pmap_kenter_ma(va, pa, VM_PROT_READ | VM_PROT_WRITE);
 #else
@@ -393,7 +376,6 @@ x86_mem_add_mapping(bpa, size, cacheable, bshp)
 		xpte |= *pte;
 	}
 	pmap_tlb_shootdown(pmap_kernel(), sva, sva + (endpa - pa), xpte);
-#endif	/* XEN && i386 */
 	pmap_update(pmap_kernel());
 
 	return 0;
