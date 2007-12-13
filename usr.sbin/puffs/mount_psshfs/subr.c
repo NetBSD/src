@@ -1,4 +1,4 @@
-/*      $NetBSD: subr.c,v 1.44 2007/12/13 14:32:47 pooka Exp $        */
+/*      $NetBSD: subr.c,v 1.45 2007/12/13 14:59:00 pooka Exp $        */
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: subr.c,v 1.44 2007/12/13 14:32:47 pooka Exp $");
+__RCSID("$NetBSD: subr.c,v 1.45 2007/12/13 14:59:00 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -351,6 +351,8 @@ sftp_readdir(struct puffs_usermount *pu, struct psshfs_ctx *pctx,
 				if (testd->entry) {
 					setpnva(pu, testd->entry,
 					    &psn->dir[idx].va);
+					psn->dir[idx].va.va_fileid
+					    = testd->entry->pn_va.va_fileid;
 
 				/*
 				 * No entry.  This can happen in two cases:
