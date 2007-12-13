@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.107 2007/12/01 19:43:42 wiz Exp $
+.\"	$NetBSD: ddb.4,v 1.108 2007/12/13 02:45:51 yamt Exp $
 .\"
 .\" Copyright (c) 1997 - 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -63,7 +63,7 @@
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
 .\"
-.Dd March 28, 2007
+.Dd December 13, 2007
 .Dt DDB 4
 .Os
 .Sh NAME
@@ -962,6 +962,13 @@ rejected with an error message.
 Warning: attempts to watch wired kernel memory may cause
 an unrecoverable error in some systems such as i386.
 Watchpoints on user addresses work the best.
+.It Xo
+.Ic whatis
+.Sm off
+.Ar address
+.Sm on
+.Xc
+Describe what an address is.
 .It Xo
 .Ic write Ns Op Cm /bhl
 .Ar address
