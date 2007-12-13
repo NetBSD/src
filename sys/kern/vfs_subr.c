@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.308.2.5 2007/12/12 02:50:30 ad Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.308.2.6 2007/12/13 15:22:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.308.2.5 2007/12/12 02:50:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.308.2.6 2007/12/13 15:22:00 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -482,7 +482,6 @@ getnewvnode(enum vtagtype tag, struct mount *mp, int (**vops)(void *),
 
 	vp->v_type = VNON;
 	vp->v_vnlock = &vp->v_lock;
-	lockinit(vp->v_vnlock, PVFS, "vnlock", 0, 0);
 	vp->v_tag = tag;
 	vp->v_op = vops;
 	insmntque(vp, mp);
@@ -554,6 +553,8 @@ valloc(struct mount *mp)
 		vp->v_mount = mp;
 		vp->v_type = VBAD;
 		vp->v_iflag = VI_MARKER;
+	} else {
+		lockinit(&vp->v_lock, PVFS, "vnlock", 0, 0);
 	}
 
 	return vp;
