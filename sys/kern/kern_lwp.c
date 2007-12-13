@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.84 2007/12/13 02:45:10 yamt Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.85 2007/12/13 05:25:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -205,7 +205,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.84 2007/12/13 02:45:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.85 2007/12/13 05:25:03 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -222,6 +222,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.84 2007/12/13 02:45:10 yamt Exp $");
 #include <sys/syscall_stats.h>
 #include <sys/kauth.h>
 #include <sys/sleepq.h>
+#include <sys/user.h>
 #include <sys/lockdebug.h>
 #include <sys/kmem.h>
 #include <sys/intr.h>
