@@ -1,4 +1,4 @@
-/*      $NetBSD: subr.c,v 1.43 2007/12/13 14:31:44 pooka Exp $        */
+/*      $NetBSD: subr.c,v 1.44 2007/12/13 14:32:47 pooka Exp $        */
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: subr.c,v 1.43 2007/12/13 14:31:44 pooka Exp $");
+__RCSID("$NetBSD: subr.c,v 1.44 2007/12/13 14:32:47 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -361,12 +361,8 @@ sftp_readdir(struct puffs_usermount *pu, struct psshfs_ctx *pctx,
 				 *
 				 * Cache attributes from the server in
 				 * case we want to instantiate this node
-				 * soon.  Also give it a new inode number
-				 * (the node has not been instantiated
-				 * yet so this doesn't matter).
-				 *
-				 * XXX: theoretically we can make the inode
-				 * space wrap because of this.
+				 * soon.  Also preserve the old inode number
+				 * which was given when the dirent was created.
 				 */
 				} else {
 					psn->dir[idx].va.va_fileid
