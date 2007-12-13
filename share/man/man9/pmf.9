@@ -1,4 +1,4 @@
-.\" $NetBSD: pmf.9,v 1.2 2007/12/10 12:49:10 jmcneill Exp $
+.\" $NetBSD: pmf.9,v 1.3 2007/12/13 15:37:33 xtraeme Exp $
 .\"
 .\" Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
 .\" All rights reserved.
@@ -30,7 +30,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 10, 2007
+.Dd December 13, 2007
 .Dt PMF 9
 .Os
 .Sh NAME
@@ -56,7 +56,7 @@
 .Nd power management and inter-driver messaging framework
 .Sh SYNOPSIS
 .In sys/device.h
-.Ft void
+.Ft bool
 .Fn pmf_device_register "device_t dev" "bool (*suspend)(device_t dev)" "bool (*resume)(device_t dev)"
 .Ft void
 .Fn pmf_device_deregister "device_t dev"
@@ -131,7 +131,7 @@ is
 .Dv NULL
 then it is assumed that device state does not need to be captured and
 resumed on a power transition. Bus and class-level power management
-will still be performed.
+will still be performed. Returns true if there was an error.
 .It Fn pmf_device_deregister "dev"
 Deregister a device with the power management framework.
 .It Fn pmf_device_suspend "dev"
