@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr2.c,v 1.8.2.2 2007/12/10 19:31:48 ad Exp $	*/
+/*	$NetBSD: vfs_subr2.c,v 1.8.2.3 2007/12/13 20:08:09 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>  
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr2.c,v 1.8.2.2 2007/12/10 19:31:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr2.c,v 1.8.2.3 2007/12/13 20:08:09 ad Exp $");
 
 #include "opt_ddb.h"
 
@@ -145,7 +145,7 @@ struct device *root_device;			/* root device */
 void printlockedvnodes(void);
 #endif
 
-long numvnodes;
+u_int numvnodes;
 
 /*
  * Initialize the vnode management data structures.
