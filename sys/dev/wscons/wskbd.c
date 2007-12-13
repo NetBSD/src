@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.111 2007/12/10 01:13:38 jmcneill Exp $ */
+/* $NetBSD: wskbd.c,v 1.112 2007/12/13 14:49:42 joerg Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.111 2007/12/10 01:13:38 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.112 2007/12/13 14:49:42 joerg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -318,6 +318,7 @@ struct wssrcops wskbd_srcops = {
 };
 #endif
 
+static bool wskbd_suspend(device_t dv);
 static void wskbd_repeat(void *v);
 
 static int wskbd_console_initted;
@@ -465,10 +466,21 @@ wskbd_attach(struct device *parent, struct device *self, void *aux)
 	}
 #endif
 
-	if (!pmf_device_register(self, NULL, NULL))
+	if (!pmf_device_register(self, wskbd_suspend, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 	else if (!pmf_class_input_register(self))
 		aprint_error_dev(self, "couldn't register as input device\n");
+}
+
+static bool
+wskbd_suspend(device_t dv)
+{
+	struct wskbd_softc *sc = device_private(dv);
+
+	sc->sc_repeating = 0;
+	callout_stop(&sc->sc_repeat_ch);
+
+	return true;
 }
 
 void
