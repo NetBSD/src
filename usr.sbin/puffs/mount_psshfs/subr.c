@@ -1,4 +1,4 @@
-/*      $NetBSD: subr.c,v 1.42 2007/12/12 16:04:35 pooka Exp $        */
+/*      $NetBSD: subr.c,v 1.43 2007/12/13 14:31:44 pooka Exp $        */
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: subr.c,v 1.42 2007/12/12 16:04:35 pooka Exp $");
+__RCSID("$NetBSD: subr.c,v 1.43 2007/12/13 14:31:44 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -369,9 +369,9 @@ sftp_readdir(struct puffs_usermount *pu, struct psshfs_ctx *pctx,
 				 * space wrap because of this.
 				 */
 				} else {
-					testd->va = psn->dir[idx].va;
 					psn->dir[idx].va.va_fileid
-					    = pctx->nextino++;
+					    = testd->va.va_fileid;
+					testd->va = psn->dir[idx].va;
 				}
 
 			/* No previous entry?  Initialize this one. */
