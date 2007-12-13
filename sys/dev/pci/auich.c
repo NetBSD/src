@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.121 2007/12/13 15:11:31 jmcneill Exp $	*/
+/*	$NetBSD: auich.c,v 1.122 2007/12/13 16:53:28 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.121 2007/12/13 15:11:31 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.122 2007/12/13 16:53:28 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -470,8 +470,6 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_codectype = AC97_CODEC_TYPE_AUDIO;
 	} else
 		panic("auich_attach: impossible");
-
-	sc->sc_devtype = d->id;
 
 	if (sc->sc_codectype == AC97_CODEC_TYPE_AUDIO)
 		aprint_naive(": Audio controller\n");
@@ -1595,8 +1593,8 @@ auich_resume(device_t dv)
 	pcireg_t v;
 
 	if (sc->sc_native_mode) {
-		v = pci_conf_read(pa->pa_pc, pa->pa_tag, ICH_CFG);
-		pci_conf_write(pa->pa_pc, pa->pa_tag, ICH_CFG,
+		v = pci_conf_read(sc->sc_pc, sc->sc_pt, ICH_CFG);
+		pci_conf_write(sc->sc_pc, sc->sc_pt, ICH_CFG,
 			       v | ICH_CFG_IOSE);
 	}
 
