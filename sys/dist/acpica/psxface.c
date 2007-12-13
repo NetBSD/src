@@ -1,7 +1,9 @@
+/*	$NetBSD: psxface.c,v 1.1.58.2 2007/12/13 05:05:52 yamt Exp $	*/
+
 /******************************************************************************
  *
  * Module Name: psxface - Parser external interfaces
- *              $Revision: 1.1.58.1 $
+ *              $Revision: 1.1.58.2 $
  *
  *****************************************************************************/
 
@@ -113,6 +115,9 @@
  * such license, approval or letter.
  *
  *****************************************************************************/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: psxface.c,v 1.1.58.2 2007/12/13 05:05:52 yamt Exp $");
 
 #define __PSXFACE_C__
 

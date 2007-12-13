@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_sigcode.S,v 1.3 2005/12/11 12:17:41 christos Exp $	*/
+/*	$NetBSD: freebsd_sigcode.S,v 1.3.62.1 2007/12/13 05:05:16 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -70,13 +70,15 @@
  *	@(#)locore.s	7.3 (Berkeley) 5/13/91
  */
 
+#include <machine/asm.h>
+__KERNEL_RCSID(0, "$NetBSD: freebsd_sigcode.S,v 1.3.62.1 2007/12/13 05:05:16 yamt Exp $");
+
 #include "assym.h"
 
 #include <sys/errno.h>
 #include <sys/syscall.h>
 
 #include <compat/freebsd/freebsd_syscall.h>
-#include <machine/asm.h>
 
 /*
  * Signal trampoline; copied to top of user stack.

@@ -1,4 +1,4 @@
-/*	$NetBSD: busfunc.S,v 1.3 2007/11/12 18:42:00 ad Exp $	*/
+/*	$NetBSD: busfunc.S,v 1.3.4.1 2007/12/13 05:05:15 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,6 +37,7 @@
  */
 
 #include <machine/asm.h>
+__KERNEL_RCSID(0, "$NetBSD: busfunc.S,v 1.3.4.1 2007/12/13 05:05:15 yamt Exp $");
 
 #include "assym.h"
 

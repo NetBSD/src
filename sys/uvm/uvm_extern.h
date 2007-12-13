@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.139.2.1 2007/12/10 12:56:12 yamt Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.139.2.2 2007/12/13 05:06:04 yamt Exp $	*/
 
 /*
  *
@@ -647,6 +647,7 @@ void			uvmspace_free(struct vmspace *);
 void			uvmspace_share(struct proc *, struct proc *);
 void			uvmspace_unshare(struct lwp *);
 
+void			uvm_whatis(uintptr_t, void (*)(const char *, ...));
 
 /* uvm_meter.c */
 void			uvm_meter(void);

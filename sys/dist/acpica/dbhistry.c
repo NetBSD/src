@@ -1,7 +1,9 @@
+/*	$NetBSD: dbhistry.c,v 1.1.58.2 2007/12/13 05:05:33 yamt Exp $	*/
+
 /******************************************************************************
  *
  * Module Name: dbhistry - debugger HISTORY command
- *              $Revision: 1.1.58.1 $
+ *              $Revision: 1.1.58.2 $
  *
  *****************************************************************************/
 
@@ -114,6 +116,8 @@
  *
  *****************************************************************************/
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: dbhistry.c,v 1.1.58.2 2007/12/13 05:05:33 yamt Exp $");
 
 #include <dist/acpica/acpi.h>
 #include <dist/acpica/acdebug.h>

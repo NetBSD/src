@@ -1,7 +1,9 @@
+/*	$NetBSD: uttrack.c,v 1.1.10.2 2007/12/13 05:06:00 yamt Exp $	*/
+
 /******************************************************************************
  *
  * Module Name: uttrack - Memory allocation tracking routines (debug only)
- *              $Revision: 1.1.10.1 $
+ *              $Revision: 1.1.10.2 $
  *
  *****************************************************************************/
 
@@ -124,6 +126,9 @@
  * AcpiUtTrackAllocation to add an element to the list; deletion
  * occurs in the body of AcpiUtFree.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: uttrack.c,v 1.1.10.2 2007/12/13 05:06:00 yamt Exp $");
 
 #define __UTTRACK_C__
 

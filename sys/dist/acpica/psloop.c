@@ -1,7 +1,9 @@
+/*	$NetBSD: psloop.c,v 1.1.58.2 2007/12/13 05:05:50 yamt Exp $	*/
+
 /******************************************************************************
  *
  * Module Name: psloop - Main AML parse loop
- *              $Revision: 1.1.58.1 $
+ *              $Revision: 1.1.58.2 $
  *
  *****************************************************************************/
 
@@ -114,7 +116,6 @@
  *
  *****************************************************************************/
 
-
 /*
  * Parse the AML and build an operation tree as most interpreters, (such as
  * Perl) do. Parsing is done by hand rather than with a YACC generated parser
@@ -122,6 +123,9 @@
  * flexible and the code fairly compact by parsing based on a list of AML
  * opcode templates in AmlOpInfo[].
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: psloop.c,v 1.1.58.2 2007/12/13 05:05:50 yamt Exp $");
 
 #include <dist/acpica/acpi.h>
 #include <dist/acpica/acparser.h>

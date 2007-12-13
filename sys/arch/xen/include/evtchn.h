@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.h,v 1.13 2006/12/08 15:05:18 yamt Exp $	*/
+/*	$NetBSD: evtchn.h,v 1.13.34.1 2007/12/13 05:05:24 yamt Exp $	*/
 
 /*
  *
@@ -44,6 +44,9 @@ unsigned int evtchn_do_event(int, struct intrframe *);
 void call_evtchn_do_event(int, struct intrframe *);
 int event_set_handler(int, int (*func)(void *), void *, int, const char *);
 int event_remove_handler(int, int (*func)(void *), void *);
+
+extern int debug_port;
+extern int xen_debug_handler(void *);
 
 int bind_virq_to_evtch(int);
 int bind_pirq_to_evtch(int);

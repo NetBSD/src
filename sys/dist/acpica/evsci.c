@@ -1,8 +1,10 @@
+/*	$NetBSD: evsci.c,v 1.1.58.2 2007/12/13 05:05:40 yamt Exp $	*/
+
 /*******************************************************************************
  *
  * Module Name: evsci - System Control Interrupt configuration and
  *                      legacy to ACPI mode state transition functions
- *              $Revision: 1.1.58.1 $
+ *              $Revision: 1.1.58.2 $
  *
  ******************************************************************************/
 
@@ -115,6 +117,9 @@
  * such license, approval or letter.
  *
  *****************************************************************************/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: evsci.c,v 1.1.58.2 2007/12/13 05:05:40 yamt Exp $");
 
 #include <dist/acpica/acpi.h>
 #include <dist/acpica/acevents.h>

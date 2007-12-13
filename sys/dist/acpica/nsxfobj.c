@@ -1,8 +1,10 @@
+/*	$NetBSD: nsxfobj.c,v 1.1.58.2 2007/12/13 05:05:49 yamt Exp $	*/
+
 /*******************************************************************************
  *
  * Module Name: nsxfobj - Public interfaces to the ACPI subsystem
  *                         ACPI Object oriented interfaces
- *              $Revision: 1.1.58.1 $
+ *              $Revision: 1.1.58.2 $
  *
  ******************************************************************************/
 
@@ -115,6 +117,8 @@
  *
  *****************************************************************************/
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: nsxfobj.c,v 1.1.58.2 2007/12/13 05:05:49 yamt Exp $");
 
 #define __NSXFOBJ_C__
 

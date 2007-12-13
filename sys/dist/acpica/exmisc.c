@@ -1,8 +1,9 @@
+/*	$NetBSD: exmisc.c,v 1.3.36.2 2007/12/13 05:05:42 yamt Exp $	*/
 
 /******************************************************************************
  *
  * Module Name: exmisc - ACPI AML (p-code) execution - specific opcodes
- *              $Revision: 1.3.36.1 $
+ *              $Revision: 1.3.36.2 $
  *
  *****************************************************************************/
 
@@ -115,6 +116,9 @@
  * such license, approval or letter.
  *
  *****************************************************************************/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: exmisc.c,v 1.3.36.2 2007/12/13 05:05:42 yamt Exp $");
 
 #define __EXMISC_C__
 

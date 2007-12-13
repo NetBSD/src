@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_intr.c,v 1.12 2007/12/03 15:33:20 ad Exp $	*/
+/*	$NetBSD: pxa2x0_intr.c,v 1.12.4.1 2007/12/13 05:05:14 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_intr.c,v 1.12 2007/12/03 15:33:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_intr.c,v 1.12.4.1 2007/12/13 05:05:14 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -175,7 +175,10 @@ pxa2x0_irq_handler(void *arg)
 	uint32_t irqbits;
 	int irqno;
 	int saved_spl_level;
+	struct cpu_info *ci;
 
+	ci = curcpu();
+	ci->ci_idepth++;
 	saved_spl_level = current_spl_level;
 
 	/* get pending IRQs */
@@ -209,6 +212,8 @@ pxa2x0_irq_handler(void *arg)
 
 	/* restore spl to that was when this interrupt happen */
 	pxa2x0_setipl(saved_spl_level);
+
+	ci->ci_idepth--;
 			
 	if(softint_pending & intr_mask)
 		pxa2x0_do_pending();

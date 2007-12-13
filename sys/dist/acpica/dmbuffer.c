@@ -1,7 +1,9 @@
+/*	$NetBSD: dmbuffer.c,v 1.1.58.2 2007/12/13 05:05:34 yamt Exp $	*/
+
 /*******************************************************************************
  *
  * Module Name: dmbuffer - AML disassembler, buffer and string support
- *              $Revision: 1.1.58.1 $
+ *              $Revision: 1.1.58.2 $
  *
  ******************************************************************************/
 
@@ -114,6 +116,8 @@
  *
  *****************************************************************************/
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: dmbuffer.c,v 1.1.58.2 2007/12/13 05:05:34 yamt Exp $");
 
 #include <dist/acpica/acpi.h>
 #include <dist/acpica/acdisasm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.54.4.1 2007/12/11 15:22:16 yamt Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.54.4.2 2007/12/13 05:05:23 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.54.4.1 2007/12/11 15:22:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.54.4.2 2007/12/13 05:05:23 yamt Exp $");
 
 #include "acpi.h"
 #include "opt_acpi.h"
@@ -547,7 +547,7 @@ mpacpi_derive_bus(ACPI_HANDLE handle, struct acpi_softc *acpi)
 	 */
 	TAILQ_FOREACH(dev, &dev_list, list) {
 		rv = acpi_eval_integer(dev->handle, METHOD_NAME__ADR, &val);
-		if (ACPI_FAILURE(rv))
+		if (ACPI_FAILURE(rv) || val == 0xffffffff)
 			return -1;
 
 		tag = pci_make_tag(acpi->sc_pc, bus,

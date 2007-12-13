@@ -1,8 +1,9 @@
+/*	$NetBSD: exoparg3.c,v 1.1.58.2 2007/12/13 05:05:43 yamt Exp $	*/
 
 /******************************************************************************
  *
  * Module Name: exoparg3 - AML execution - opcodes with 3 arguments
- *              $Revision: 1.1.58.1 $
+ *              $Revision: 1.1.58.2 $
  *
  *****************************************************************************/
 
@@ -115,6 +116,9 @@
  * such license, approval or letter.
  *
  *****************************************************************************/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: exoparg3.c,v 1.1.58.2 2007/12/13 05:05:43 yamt Exp $");
 
 #define __EXOPARG3_C__
 
