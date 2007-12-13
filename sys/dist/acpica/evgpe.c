@@ -1,9 +1,9 @@
-/*	$NetBSD: evgpe.c,v 1.3 2007/12/11 13:16:05 lukem Exp $	*/
+/*	$NetBSD: evgpe.c,v 1.4 2007/12/13 18:04:50 jmcneill Exp $	*/
 
 /******************************************************************************
  *
  * Module Name: evgpe - General Purpose Event handling and dispatch
- *              $Revision: 1.3 $
+ *              $Revision: 1.4 $
  *
  *****************************************************************************/
 
@@ -117,7 +117,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evgpe.c,v 1.3 2007/12/11 13:16:05 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evgpe.c,v 1.4 2007/12/13 18:04:50 jmcneill Exp $");
 
 #include <dist/acpica/acpi.h>
 #include <dist/acpica/acevents.h>
@@ -494,7 +494,7 @@ AcpiEvGpeDetect (
     UINT8                   EnabledStatusByte;
     UINT32                  StatusReg;
     UINT32                  EnableReg;
-    ACPI_CPU_FLAGS          Flags;
+    ACPI_CPU_FLAGS          Flags = 0;
     ACPI_NATIVE_UINT        i;
     ACPI_NATIVE_UINT        j;
 
@@ -513,7 +513,8 @@ AcpiEvGpeDetect (
      * Note: Not necessary to obtain the hardware lock, since the GPE registers
      * are owned by the GpeLock.
      */
-    Flags = AcpiOsAcquireLock (AcpiGbl_GpeLock);
+    if (AcpiGbl_SystemAwakeAndRunning)
+        Flags = AcpiOsAcquireLock (AcpiGbl_GpeLock);
 
     /* Examine all GPE blocks attached to this interrupt level */
 
@@ -587,7 +588,8 @@ AcpiEvGpeDetect (
 
 UnlockAndExit:
 
-    AcpiOsReleaseLock (AcpiGbl_GpeLock, Flags);
+    if (AcpiGbl_SystemAwakeAndRunning)
+        AcpiOsReleaseLock (AcpiGbl_GpeLock, Flags);
     return (IntStatus);
 }
 
