@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.26 2007/12/12 22:16:32 bouyer Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.27 2007/12/13 21:42:06 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -64,7 +64,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.26 2007/12/12 22:16:32 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.27 2007/12/13 21:42:06 bouyer Exp $");
 
 #include "opt_xen.h"
 #include "isa.h"
@@ -154,9 +154,6 @@ init_events()
 {
 #ifndef XEN3
 	int evtch;
-
-	/* no debug port, it doesn't work any more for some reason ... */
-	debug_port = -1;
 
 	evtch = bind_virq_to_evtch(VIRQ_MISDIRECT);
 	aprint_verbose("misdirect virtual interrupt using event channel %d\n",
