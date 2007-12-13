@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.164.2.1 2007/12/13 17:53:59 ad Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.164.2.2 2007/12/13 18:01:03 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.164.2.1 2007/12/13 17:53:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.164.2.2 2007/12/13 18:01:03 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1011,7 +1011,7 @@ int
 falloc(struct lwp *l, struct file **resultfp, int *resultfd)
 {
 	struct filedesc	*fdp;
-	struct file	*fp, *fq;
+	struct file	*fp;
 	struct proc	*p;
 	int		error, i;
 
