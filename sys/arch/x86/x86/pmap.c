@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.13.2.2 2007/12/13 19:00:13 bouyer Exp $	*/
+/*	$NetBSD: pmap.c,v 1.13.2.3 2007/12/13 21:26:36 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.13.2.2 2007/12/13 19:00:13 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.13.2.3 2007/12/13 21:26:36 bouyer Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -733,16 +733,6 @@ pmap_map_ptes(struct pmap *pmap, struct pmap **pmap2,
 	if (!pmap_valid_entry(opde) || pmap_pte2pa(opde) != pmap->pm_pdirpa) {
 		int s;
 		s = splvm();
-		/*
-		 * Hack: force validation of pgd as a l2/l4 page early,
-		 * otherwise APDP mapping will end marking it as a l1/l3
-		 * and fail subsequent validations
-		 */
-		if ((pmap->pm_flags & PMF_USER_XPIN) == 0) {
-			xpq_queue_pin_table(
-			    xpmap_ptom_masked(pmap->pm_pdirpa));
-			pmap->pm_flags |= PMF_USER_XPIN;
-		}
 		/* Make recursive entry usable in user PGD */
 		xpq_queue_pte_update((void *)xpmap_ptom(pmap->pm_pdirpa +
 		    PDIR_SLOT_PTE * sizeof(pd_entry_t)), npde);
@@ -1818,6 +1808,9 @@ pmap_pdp_ctor(void *arg, void *object, int flags)
 #if !defined(XEN) || !defined(__x86_64__)
 	int npde;
 #endif
+#ifdef XEN
+	int s;
+#endif
 
 	/*
 	 * NOTE: The `pmap_lock' is held when the PDP is allocated.
@@ -1870,12 +1863,17 @@ pmap_pdp_ctor(void *arg, void *object, int flags)
 
 		pdir[idx] = PDP_BASE[idx];
 	}
+#endif /* XEN  && __x86_64__*/
 #ifdef XEN
 	/* remap this page RO */
 	pmap_kenter_pa((vaddr_t)pdir, pdirpa, VM_PROT_READ);
 	pmap_update(pmap_kernel());
+	/* pin as L2/L4 page */
+	s = splvm();
+	xpq_queue_pin_table(xpmap_ptom_masked(pdirpa));
+	xpq_flush_queue();
+	splx(s);
 #endif
-#endif /* XEN  && __x86_64__*/
 
 	return (0);
 }
@@ -1888,9 +1886,15 @@ pmap_pdp_ctor(void *arg, void *object, int flags)
 void
 pmap_pdp_dtor(void *arg, void *object)
 {
+	paddr_t pdirpa = 0;	/* XXX: GCC */
 	int s = splvm();
-	/* Set page RW again */
 	pt_entry_t *pte = kvtopte((vaddr_t)object);
+
+	/* fetch the physical address of the page directory. */
+	(void) pmap_extract(pmap_kernel(), (vaddr_t)object, &pdirpa);
+	/* unpin page table */
+	xpq_queue_unpin_table(xpmap_ptom_masked(pdirpa));
+	/* Set page RW again */
 	xpq_queue_pte_update((pt_entry_t *)xpmap_ptetomach(pte), *pte | PG_RW);
 	xpq_queue_invlpg((vaddr_t)object);
 	xpq_flush_queue();
@@ -1946,13 +1950,6 @@ pmap_create(void)
 	}
 
 	pmap->pm_pdirpa = pmap_pte2pa(pmap->pm_pdir[PDIR_SLOT_PTE]);
-#ifdef XEN
-	/* Xen want PDP R/O */
-	{
-	pt_entry_t *pte = kvtopte((vaddr_t)pmap->pm_pdir);
-	pmap_pte_set(pte, (*pte) & ~PG_RW);
-	}
-#endif
 
 	LIST_INSERT_HEAD(&pmaps, pmap, pm_list);
 
@@ -2000,12 +1997,6 @@ pmap_destroy(struct pmap *pmap)
 	if (xpmap_ptom_masked(pmap->pm_pdirpa) == (*APDP_PDE & PG_FRAME)) {
 	        xpmap_update(APDP_PDE, 0);
 	        pmap_apte_flush(pmap_kernel());
-	}
-	if (pmap->pm_flags & PMF_USER_XPIN) {
-	        int s = splvm();
-	        xpq_queue_unpin_table(xpmap_ptom_masked(pmap->pm_pdirpa));
-	        pmap->pm_flags &= ~PMF_USER_XPIN;
-	        splx(s);
 	}
 #endif
 
@@ -2247,7 +2238,7 @@ pmap_reactivate(struct pmap *pmap)
 
 #if defined(XEN) && defined(__x86_64__)
 	KASSERT(pmap->pm_pdirpa == xen_current_user_pgd);
-#elsif !defined(XEN) || (defined(XEN) && defined(XEN3))
+#elif !defined(XEN) || (defined(XEN) && defined(XEN3))
 	KASSERT(pmap->pm_pdirpa == pmap_pte2pa(rcr3()));
 #endif
 
@@ -2349,7 +2340,7 @@ pmap_load(void)
 #if defined(XEN) && defined(__x86_64__)
 	KASSERT(oldpmap->pm_pdirpa == xen_current_user_pgd ||
 	    oldpmap == pmap_kernel());
-#elsif !defined(XEN) || (defined(XEN) && defined(XEN3))
+#elif !defined(XEN) || (defined(XEN) && defined(XEN3))
 	KASSERT(oldpmap->pm_pdirpa == pmap_pte2pa(rcr3()));
 #endif
 	KASSERT((pmap->pm_cpus & cpumask) == 0);
@@ -2390,12 +2381,6 @@ pmap_load(void)
 			xpq_queue_pte_update(addr, pgd[i]);
 		xpq_flush_queue();
 		tlbflush();
-		/* Pin before installing */
-		if ((pmap->pm_flags & PMF_USER_XPIN) == 0) {
-			xpq_queue_pin_table(
-			    xpmap_ptom_masked(pmap->pm_pdirpa));
-			pmap->pm_flags |= PMF_USER_XPIN;
-		}
 		xen_set_user_pgd(pmap->pm_pdirpa);
 		xen_current_user_pgd = pmap->pm_pdirpa;
 		splx(s);
@@ -2406,11 +2391,6 @@ pmap_load(void)
 	 * clear APDP slot, in case it points to a page table that has 
 	 * been freed
 	 */
-	if ((pmap->pm_flags & PMF_USER_XPIN) == 0) {
-		xpq_queue_pin_table(
-		    xpmap_ptom_masked(pmap->pm_pdirpa));
-		pmap->pm_flags |= PMF_USER_XPIN;
-	}
 	if (pmap->pm_pdir[PDIR_SLOT_APTE])
 	        pmap_pte_set(&pmap->pm_pdir[PDIR_SLOT_APTE], 0);
 	/* lldt() does pmap_pte_flush() */
@@ -2484,7 +2464,7 @@ pmap_deactivate(struct lwp *l)
 
 #if defined(XEN) && defined(__x86_64__)
 	KASSERT(pmap->pm_pdirpa == xen_current_user_pgd);
-#elsif !defined(XEN) || (defined(XEN) && defined(XEN3))
+#elif !defined(XEN) || (defined(XEN) && defined(XEN3))
 	KASSERT(pmap->pm_pdirpa == pmap_pte2pa(rcr3()));
 #endif
 	KASSERT(ci->ci_pmap == pmap);
@@ -3896,7 +3876,10 @@ pmap_alloc_level(pd_entry_t **pdes, vaddr_t kva, int lvl, long *needed_ptps)
 vaddr_t
 pmap_growkernel(vaddr_t maxkvaddr)
 {
-	struct pmap *kpm = pmap_kernel(), *pm;
+	struct pmap *kpm = pmap_kernel();
+#if !defined(XEN) || !defined(__x86_64__)
+	struct pmap *pm;
+#endif
 	int s, i;
 	long needed_kptp[PTP_LEVELS], target_nptp, old;
 	bool invalidate = false;
