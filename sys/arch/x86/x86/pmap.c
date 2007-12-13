@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.13.2.1 2007/12/11 23:02:58 bouyer Exp $	*/
+/*	$NetBSD: pmap.c,v 1.13.2.2 2007/12/13 19:00:13 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.13.2.1 2007/12/11 23:02:58 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.13.2.2 2007/12/13 19:00:13 bouyer Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -734,8 +734,8 @@ pmap_map_ptes(struct pmap *pmap, struct pmap **pmap2,
 		int s;
 		s = splvm();
 		/*
-		 * Hack: force validation of pgd as a l4 page early,
-		 * otherwise APDP mapping will end marking it as a l3
+		 * Hack: force validation of pgd as a l2/l4 page early,
+		 * otherwise APDP mapping will end marking it as a l1/l3
 		 * and fail subsequent validations
 		 */
 		if ((pmap->pm_flags & PMF_USER_XPIN) == 0) {
@@ -2247,7 +2247,7 @@ pmap_reactivate(struct pmap *pmap)
 
 #if defined(XEN) && defined(__x86_64__)
 	KASSERT(pmap->pm_pdirpa == xen_current_user_pgd);
-#else
+#elsif !defined(XEN) || (defined(XEN) && defined(XEN3))
 	KASSERT(pmap->pm_pdirpa == pmap_pte2pa(rcr3()));
 #endif
 
@@ -2349,7 +2349,7 @@ pmap_load(void)
 #if defined(XEN) && defined(__x86_64__)
 	KASSERT(oldpmap->pm_pdirpa == xen_current_user_pgd ||
 	    oldpmap == pmap_kernel());
-#else
+#elsif !defined(XEN) || (defined(XEN) && defined(XEN3))
 	KASSERT(oldpmap->pm_pdirpa == pmap_pte2pa(rcr3()));
 #endif
 	KASSERT((pmap->pm_cpus & cpumask) == 0);
@@ -2401,6 +2401,20 @@ pmap_load(void)
 		splx(s);
 	}
 #else /* XEN && x86_64 */
+#ifdef XEN
+	/*
+	 * clear APDP slot, in case it points to a page table that has 
+	 * been freed
+	 */
+	if ((pmap->pm_flags & PMF_USER_XPIN) == 0) {
+		xpq_queue_pin_table(
+		    xpmap_ptom_masked(pmap->pm_pdirpa));
+		pmap->pm_flags |= PMF_USER_XPIN;
+	}
+	if (pmap->pm_pdir[PDIR_SLOT_APTE])
+	        pmap_pte_set(&pmap->pm_pdir[PDIR_SLOT_APTE], 0);
+	/* lldt() does pmap_pte_flush() */
+#endif
 	lldt(pcb->pcb_ldt_sel);
 	lcr3(pcb->pcb_cr3);
 #endif /* XEN && x86_64 */
@@ -2470,7 +2484,7 @@ pmap_deactivate(struct lwp *l)
 
 #if defined(XEN) && defined(__x86_64__)
 	KASSERT(pmap->pm_pdirpa == xen_current_user_pgd);
-#else
+#elsif !defined(XEN) || (defined(XEN) && defined(XEN3))
 	KASSERT(pmap->pm_pdirpa == pmap_pte2pa(rcr3()));
 #endif
 	KASSERT(ci->ci_pmap == pmap);
@@ -3926,7 +3940,6 @@ pmap_growkernel(vaddr_t maxkvaddr)
 		/* nothing, kernel entries are never entered in user pmap */
 #else /* __x86_64__ */
 		mutex_enter(&pmaps_lock);
-		s = splvm();
 		LIST_FOREACH(pm, &pmaps, pm_list) {
 			int pdkidx;
 			for (pdkidx =  PDIR_SLOT_KERN + old;
@@ -3939,7 +3952,6 @@ pmap_growkernel(vaddr_t maxkvaddr)
 			}
 			xpq_flush_queue();
 		}
-		splx(s);
 		mutex_exit(&pmaps_lock);
 #endif /* __x86_64__ */
 #else /* XEN */
