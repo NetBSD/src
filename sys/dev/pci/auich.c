@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.120 2007/12/09 20:28:05 jmcneill Exp $	*/
+/*	$NetBSD: auich.c,v 1.121 2007/12/13 15:11:31 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.120 2007/12/09 20:28:05 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.121 2007/12/13 15:11:31 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -216,6 +216,8 @@ struct auich_softc {
 	int  sc_sts_reg;
 	/* 440MX workaround */
 	int  sc_dmamap_flags;
+	/* Native mode? */
+	int  sc_native_mode;
 
 	/* sysctl */
 	struct sysctllog *sc_log;
@@ -469,6 +471,8 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 	} else
 		panic("auich_attach: impossible");
 
+	sc->sc_devtype = d->id;
+
 	if (sc->sc_codectype == AC97_CODEC_TYPE_AUDIO)
 		aprint_naive(": Audio controller\n");
 	else
@@ -482,6 +486,7 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 	if (d->id == PCIID_ICH4 || d->id == PCIID_ICH5 || d->id == PCIID_ICH6
 	    || d->id == PCIID_ICH7 || d->id == PCIID_I6300ESB
 	    || d->id == PCIID_ICH4MODEM) {
+		sc->sc_native_mode = 1;
 		/*
 		 * Use native mode for Intel 6300ESB and ICH4/ICH5/ICH6/ICH7
 		 */
@@ -1587,10 +1592,18 @@ static bool
 auich_resume(device_t dv)
 {
 	struct auich_softc *sc = device_private(dv);
+	pcireg_t v;
+
+	if (sc->sc_native_mode) {
+		v = pci_conf_read(pa->pa_pc, pa->pa_tag, ICH_CFG);
+		pci_conf_write(pa->pa_pc, pa->pa_tag, ICH_CFG,
+			       v | ICH_CFG_IOSE);
+	}
 
 	auich_reset_codec(sc);
 	DELAY(1000);
 	(sc->codec_if->vtbl->restore_ports)(sc->codec_if);
+
 	return true;
 }
 
