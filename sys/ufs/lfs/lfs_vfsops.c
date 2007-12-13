@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.250 2007/12/08 19:29:56 pooka Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.250.4.1 2007/12/13 21:57:02 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007 The NetBSD Foundation, Inc.
@@ -67,9 +67,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.250 2007/12/08 19:29:56 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.250.4.1 2007/12/13 21:57:02 bouyer Exp $");
 
 #if defined(_KERNEL_OPT)
+#include "opt_lfs.h"
 #include "opt_quota.h"
 #endif
 

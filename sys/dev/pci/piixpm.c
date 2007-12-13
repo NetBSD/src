@@ -1,4 +1,4 @@
-/* $NetBSD: piixpm.c,v 1.18 2007/12/09 20:28:13 jmcneill Exp $ */
+/* $NetBSD: piixpm.c,v 1.18.2.1 2007/12/13 21:55:53 bouyer Exp $ */
 /*	$OpenBSD: piixpm.c,v 1.20 2006/02/27 08:25:02 grange Exp $	*/
 
 /*
@@ -20,6 +20,9 @@
 /*
  * Intel PIIX and compatible Power Management controller driver.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.18.2.1 2007/12/13 21:55:53 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

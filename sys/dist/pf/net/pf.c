@@ -1,4 +1,4 @@
-/*	$NetBSD: pf.c,v 1.41 2007/11/28 04:23:33 dyoung Exp $	*/
+/*	$NetBSD: pf.c,v 1.41.6.1 2007/12/13 21:56:48 bouyer Exp $	*/
 /*	$OpenBSD: pf.c,v 1.487 2005/04/22 09:53:18 dhartmei Exp $ */
 
 /*
@@ -35,6 +35,9 @@
  * Materiel Command, USAF, under agreement number F30602-01-2-0537.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pf.c,v 1.41.6.1 2007/12/13 21:56:48 bouyer Exp $");
 
 #include "bpfilter.h"
 #include "pflog.h"

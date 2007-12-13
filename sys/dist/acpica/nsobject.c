@@ -1,8 +1,10 @@
+/*	$NetBSD: nsobject.c,v 1.2.2.1 2007/12/13 21:56:27 bouyer Exp $	*/
+
 /*******************************************************************************
  *
  * Module Name: nsobject - Utilities for objects attached to namespace
  *                         table entries
- *              $Revision: 1.2 $
+ *              $Revision: 1.2.2.1 $
  *
  ******************************************************************************/
 
@@ -115,6 +117,8 @@
  *
  *****************************************************************************/
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: nsobject.c,v 1.2.2.1 2007/12/13 21:56:27 bouyer Exp $");
 
 #define __NSOBJECT_C__
 

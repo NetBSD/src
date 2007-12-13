@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.2 2007/11/26 19:01:26 pooka Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.2.6.1 2007/12/13 21:54:48 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.2 2007/11/26 19:01:26 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.2.6.1 2007/12/13 21:54:48 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,7 +57,6 @@ cpu_configure(void)
 
 	/* Start configuration */
 	splhigh();
-	softintr_init();
 	intr_init();
 
 	if (config_rootfound("mainbus", NULL) == NULL)

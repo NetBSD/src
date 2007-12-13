@@ -1,7 +1,9 @@
+/*	$NetBSD: evevent.c,v 1.2.2.1 2007/12/13 21:56:15 bouyer Exp $	*/
+
 /******************************************************************************
  *
  * Module Name: evevent - Fixed Event handling and dispatch
- *              $Revision: 1.2 $
+ *              $Revision: 1.2.2.1 $
  *
  *****************************************************************************/
 
@@ -113,6 +115,9 @@
  * such license, approval or letter.
  *
  *****************************************************************************/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: evevent.c,v 1.2.2.1 2007/12/13 21:56:15 bouyer Exp $");
 
 #include <dist/acpica/acpi.h>
 #include <dist/acpica/acevents.h>

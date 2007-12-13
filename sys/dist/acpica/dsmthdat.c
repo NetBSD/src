@@ -1,7 +1,9 @@
+/*	$NetBSD: dsmthdat.c,v 1.2.2.1 2007/12/13 21:56:13 bouyer Exp $	*/
+
 /*******************************************************************************
  *
  * Module Name: dsmthdat - control method arguments and local variables
- *              $Revision: 1.2 $
+ *              $Revision: 1.2.2.1 $
  *
  ******************************************************************************/
 
@@ -113,6 +115,9 @@
  * such license, approval or letter.
  *
  *****************************************************************************/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: dsmthdat.c,v 1.2.2.1 2007/12/13 21:56:13 bouyer Exp $");
 
 #define __DSMTHDAT_C__
 

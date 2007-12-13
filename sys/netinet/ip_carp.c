@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.c,v 1.19 2007/12/04 10:33:11 dyoung Exp $	*/
+/*	$NetBSD: ip_carp.c,v 1.19.4.1 2007/12/13 21:56:56 bouyer Exp $	*/
 /*	$OpenBSD: ip_carp.c,v 1.113 2005/11/04 08:11:54 mcbride Exp $	*/
 
 /*
@@ -26,6 +26,9 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.19.4.1 2007/12/13 21:56:56 bouyer Exp $");
 
 /*
  * TODO:

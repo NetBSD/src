@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_softint.c,v 1.6 2007/12/03 17:15:00 ad Exp $	*/
+/*	$NetBSD: kern_softint.c,v 1.6.6.1 2007/12/13 21:56:54 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -184,7 +184,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.6 2007/12/03 17:15:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.6.6.1 2007/12/13 21:56:54 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -363,10 +363,18 @@ softint_establish(u_int flags, void (*func)(void *), void *arg)
 	}
 
 	/* Set up the handler on each CPU. */
-	for (CPU_INFO_FOREACH(cii, ci)) {
+	if (ncpu < 2) {
+		/* XXX hack for machines with no CPU_INFO_FOREACH() early on */
+		sc = curcpu()->ci_data.cpu_softcpu;
+		sh = &sc->sc_hand[index];
+		sh->sh_isr = &sc->sc_int[level];
+		sh->sh_func = func;
+		sh->sh_arg = arg;
+		sh->sh_flags = flags;
+		sh->sh_pending = 0;
+	} else for (CPU_INFO_FOREACH(cii, ci)) {
 		sc = ci->ci_data.cpu_softcpu;
 		sh = &sc->sc_hand[index];
-		
 		sh->sh_isr = &sc->sc_int[level];
 		sh->sh_func = func;
 		sh->sh_arg = arg;

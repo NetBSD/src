@@ -1,8 +1,9 @@
+/*	$NetBSD: exmisc.c,v 1.4.2.1 2007/12/13 21:56:19 bouyer Exp $	*/
 
 /******************************************************************************
  *
  * Module Name: exmisc - ACPI AML (p-code) execution - specific opcodes
- *              $Revision: 1.4 $
+ *              $Revision: 1.4.2.1 $
  *
  *****************************************************************************/
 
@@ -115,6 +116,9 @@
  * such license, approval or letter.
  *
  *****************************************************************************/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: exmisc.c,v 1.4.2.1 2007/12/13 21:56:19 bouyer Exp $");
 
 #define __EXMISC_C__
 

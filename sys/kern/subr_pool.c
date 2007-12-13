@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.138 2007/12/05 06:52:01 ad Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.138.4.1 2007/12/13 21:56:54 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002, 2007 The NetBSD Foundation, Inc.
@@ -38,8 +38,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.138 2007/12/05 06:52:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.138.4.1 2007/12/13 21:56:54 bouyer Exp $");
 
+#include "opt_ddb.h"
 #include "opt_pool.h"
 #include "opt_poollog.h"
 #include "opt_lockdebug.h"
@@ -127,6 +128,7 @@ struct pool_item_header {
 	void *			ph_page;	/* this page's address */
 	struct timeval		ph_time;	/* last referenced */
 	uint16_t		ph_nmissing;	/* # of chunks in use */
+	uint16_t		ph_off;		/* start offset in page */
 	union {
 		/* !PR_NOTOUCH */
 		struct {
@@ -135,13 +137,11 @@ struct pool_item_header {
 		} phu_normal;
 		/* PR_NOTOUCH */
 		struct {
-			uint16_t phu_off;	/* start offset in page */
-			pool_item_bitmap_t phu_bitmap[];
+			pool_item_bitmap_t phu_bitmap[1];
 		} phu_notouch;
 	} ph_u;
 };
 #define	ph_itemlist	ph_u.phu_normal.phu_itemlist
-#define	ph_off		ph_u.phu_notouch.phu_off
 #define	ph_bitmap	ph_u.phu_notouch.phu_bitmap
 
 struct pool_item {
@@ -412,6 +412,24 @@ phtree_compare(struct pool_item_header *a, struct pool_item_header *b)
 SPLAY_PROTOTYPE(phtree, pool_item_header, ph_node, phtree_compare);
 SPLAY_GENERATE(phtree, pool_item_header, ph_node, phtree_compare);
 
+static inline struct pool_item_header *
+pr_find_pagehead_noalign(struct pool *pp, void *v)
+{
+	struct pool_item_header *ph, tmp;
+
+	tmp.ph_page = (void *)(uintptr_t)v;
+	ph = SPLAY_FIND(phtree, &pp->pr_phtree, &tmp);
+	if (ph == NULL) {
+		ph = SPLAY_ROOT(&pp->pr_phtree);
+		if (ph != NULL && phtree_compare(&tmp, ph) >= 0) {
+			ph = SPLAY_NEXT(phtree, &pp->pr_phtree, ph);
+		}
+		KASSERT(ph == NULL || phtree_compare(&tmp, ph) < 0);
+	}
+
+	return ph;
+}
+
 /*
  * Return the pool page header based on item address.
  */
@@ -421,15 +439,7 @@ pr_find_pagehead(struct pool *pp, void *v)
 	struct pool_item_header *ph, tmp;
 
 	if ((pp->pr_roflags & PR_NOALIGN) != 0) {
-		tmp.ph_page = (void *)(uintptr_t)v;
-		ph = SPLAY_FIND(phtree, &pp->pr_phtree, &tmp);
-		if (ph == NULL) {
-			ph = SPLAY_ROOT(&pp->pr_phtree);
-			if (ph != NULL && phtree_compare(&tmp, ph) >= 0) {
-				ph = SPLAY_NEXT(phtree, &pp->pr_phtree, ph);
-			}
-			KASSERT(ph == NULL || phtree_compare(&tmp, ph) < 0);
-		}
+		ph = pr_find_pagehead_noalign(pp, v);
 	} else {
 		void *page =
 		    (void *)((uintptr_t)v & pp->pr_alloc->pa_pagemask);
@@ -1436,7 +1446,8 @@ pool_prime_page(struct pool *pp, void *storage, struct pool_item_header *ph)
 	/*
 	 * Color this page.
 	 */
-	cp = (char *)cp + pp->pr_curcolor;
+	ph->ph_off = pp->pr_curcolor;
+	cp = (char *)cp + ph->ph_off;
 	if ((pp->pr_curcolor += align) > pp->pr_maxcolor)
 		pp->pr_curcolor = 0;
 
@@ -2081,7 +2092,7 @@ pool_cache_bootstrap(pool_cache_t pc, size_t size, u_int align,
 	/* Allocate per-CPU caches. */
 	memset(pc->pc_cpus, 0, sizeof(pc->pc_cpus));
 	pc->pc_ncpu = 0;
-	if (ncpu == 0) {
+	if (ncpu < 2) {
 		/* XXX For sparc: boot CPU is not attached yet. */
 		pool_cache_cpu_init1(curcpu(), pc);
 	} else {
@@ -2886,3 +2897,49 @@ pool_page_free_nointr(struct pool *pp, void *v)
 
 	uvm_km_free_poolpage_cache(kernel_map, (vaddr_t) v);
 }
+
+#if defined(DDB)
+static bool
+pool_in_page(struct pool *pp, struct pool_item_header *ph, uintptr_t addr)
+{
+
+	return (uintptr_t)ph->ph_page <= addr &&
+	    addr < (uintptr_t)ph->ph_page + pp->pr_alloc->pa_pagesz;
+}
+
+void
+pool_whatis(uintptr_t addr, void (*pr)(const char *, ...))
+{
+	struct pool *pp;
+
+	LIST_FOREACH(pp, &pool_head, pr_poollist) {
+		struct pool_item_header *ph;
+		uintptr_t item;
+
+		if ((pp->pr_roflags & PR_PHINPAGE) != 0) {
+			LIST_FOREACH(ph, &pp->pr_fullpages, ph_pagelist) {
+				if (pool_in_page(pp, ph, addr)) {
+					goto found;
+				}
+			}
+			LIST_FOREACH(ph, &pp->pr_partpages, ph_pagelist) {
+				if (pool_in_page(pp, ph, addr)) {
+					goto found;
+				}
+			}
+			continue;
+		} else {
+			ph = pr_find_pagehead_noalign(pp, (void *)addr);
+			if (ph == NULL || !pool_in_page(pp, ph, addr)) {
+				continue;
+			}
+		}
+found:
+		item = (uintptr_t)ph->ph_page + ph->ph_off;
+		item = item + rounddown(addr - item, pp->pr_size);
+		(*pr)("%p is %p+%zu from POOL '%s'\n",
+		    (void *)addr, item, (size_t)(addr - item),
+		    pp->pr_wchan);
+	}
+}
+#endif /* defined(DDB) */

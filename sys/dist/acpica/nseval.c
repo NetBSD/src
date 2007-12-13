@@ -1,7 +1,9 @@
+/*	$NetBSD: nseval.c,v 1.2.2.1 2007/12/13 21:56:26 bouyer Exp $	*/
+
 /*******************************************************************************
  *
  * Module Name: nseval - Object evaluation, includes control method execution
- *              $Revision: 1.2 $
+ *              $Revision: 1.2.2.1 $
  *
  ******************************************************************************/
 
@@ -114,6 +116,9 @@
  * such license, approval or letter.
  *
  *****************************************************************************/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: nseval.c,v 1.2.2.1 2007/12/13 21:56:26 bouyer Exp $");
 
 #define __NSEVAL_C__
 

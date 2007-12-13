@@ -1,7 +1,9 @@
+/*	$NetBSD: evxfevnt.c,v 1.4.2.1 2007/12/13 21:56:17 bouyer Exp $	*/
+
 /******************************************************************************
  *
  * Module Name: evxfevnt - External Interfaces, ACPI event disable/enable
- *              $Revision: 1.4 $
+ *              $Revision: 1.4.2.1 $
  *
  *****************************************************************************/
 
@@ -114,6 +116,8 @@
  *
  *****************************************************************************/
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: evxfevnt.c,v 1.4.2.1 2007/12/13 21:56:17 bouyer Exp $");
 
 #define __EVXFEVNT_C__
 

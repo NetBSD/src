@@ -1,3 +1,5 @@
+/*	$NetBSD: i915_mem.c,v 1.1.28.1 2007/12/13 21:55:55 bouyer Exp $	*/
+
 /* i915_mem.c -- Simple agp/fb memory manager for i915 -*- linux-c -*-
  */
 /*-
@@ -27,6 +29,7 @@
  */
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: i915_mem.c,v 1.1.28.1 2007/12/13 21:55:55 bouyer Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/i915_mem.c,v 1.3 2006/04/09 20:45:45 anholt Exp $");
 */

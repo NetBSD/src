@@ -1,7 +1,9 @@
+/*	$NetBSD: dbexec.c,v 1.4.2.1 2007/12/13 21:56:09 bouyer Exp $	*/
+
 /*******************************************************************************
  *
  * Module Name: dbexec - debugger control method execution
- *              $Revision: 1.4 $
+ *              $Revision: 1.4.2.1 $
  *
  ******************************************************************************/
 
@@ -114,6 +116,8 @@
  *
  *****************************************************************************/
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: dbexec.c,v 1.4.2.1 2007/12/13 21:56:09 bouyer Exp $");
 
 #include <dist/acpica/acpi.h>
 #include <dist/acpica/acdebug.h>

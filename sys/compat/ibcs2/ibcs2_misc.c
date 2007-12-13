@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.95 2007/12/08 18:36:01 dsl Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.95.4.1 2007/12/13 21:55:08 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.95 2007/12/08 18:36:01 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.95.4.1 2007/12/13 21:55:08 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1231,105 +1231,6 @@ xenix_sys_nap(struct lwp *l, void *v, register_t *retval)
 	*retval = rmt.tv_nsec / 1000;
 	return 0;
 }
-
-int
-ibcs2_sys_unlink(struct lwp *l, void *v, register_t *retval)
-{
-	struct ibcs2_sys_unlink_args /* {
-		syscallarg(const char *) path;
-	} */ *uap = v;
-
-	return sys_unlink(l, uap, retval);
-}
-
-int
-ibcs2_sys_chdir(struct lwp *l, void *v, register_t *retval)
-{
-	struct ibcs2_sys_chdir_args /* {
-		syscallarg(const char *) path;
-	} */ *uap = v;
-
-	return sys_chdir(l, uap, retval);
-}
-
-int
-ibcs2_sys_chmod(struct lwp *l, void *v, register_t *retval)
-{
-	struct ibcs2_sys_chmod_args /* {
-		syscallarg(const char *) path;
-		syscallarg(int) mode;
-	} */ *uap = v;
-
-	return sys_chmod(l, uap, retval);
-}
-
-int
-ibcs2_sys_chown(struct lwp *l, void *v, register_t *retval)
-{
-	struct ibcs2_sys_chown_args /* {
-		syscallarg(const char *) path;
-		syscallarg(int) uid;
-		syscallarg(int) gid;
-	} */ *uap = v;
-
-	return sys___posix_chown(l, uap, retval);
-}
-
-int
-ibcs2_sys_rmdir(struct lwp *l, void *v, register_t *retval)
-{
-	struct ibcs2_sys_rmdir_args /* {
-		syscallarg(const char *) path;
-	} */ *uap = v;
-
-	return sys_rmdir(l, uap, retval);
-}
-
-int
-ibcs2_sys_mkdir(struct lwp *l, void *v, register_t *retval)
-{
-	struct ibcs2_sys_mkdir_args /* {
-		syscallarg(const char *) path;
-		syscallarg(int) mode;
-	} */ *uap = v;
-
-	return sys_mkdir(l, uap, retval);
-}
-
-int
-ibcs2_sys_symlink(struct lwp *l, void *v, register_t *retval)
-{
-	struct ibcs2_sys_symlink_args /* {
-		syscallarg(const char *) path;
-		syscallarg(const char *) link;
-	} */ *uap = v;
-
-	return sys_symlink(l, uap, retval);
-}
-
-int
-ibcs2_sys_rename(struct lwp *l, void *v, register_t *retval)
-{
-	struct ibcs2_sys_rename_args /* {
-		syscallarg(const char *) from;
-		syscallarg(const char *) to;
-	} */ *uap = v;
-
-	return sys___posix_rename(l, uap, retval);
-}
-
-int
-ibcs2_sys_readlink(struct lwp *l, void *v, register_t *retval)
-{
-	struct ibcs2_sys_readlink_args /* {
-		syscallarg(const char *) path;
-		syscallarg(char *) buf;
-		syscallarg(int) count;
-	} */ *uap = v;
-
-	return sys_readlink(l, uap, retval);
-}
-
 
 /*
  * mmap compat code borrowed from svr4/svr4_misc.c

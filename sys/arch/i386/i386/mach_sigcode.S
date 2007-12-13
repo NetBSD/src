@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_sigcode.S,v 1.9 2007/10/18 15:28:35 yamt Exp $	*/
+/*	$NetBSD: mach_sigcode.S,v 1.9.8.1 2007/12/13 21:54:43 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -70,6 +70,9 @@
  *	@(#)locore.s	7.3 (Berkeley) 5/13/91
  */
 
+#include <machine/asm.h>
+__KERNEL_RCSID(0, "$NetBSD: mach_sigcode.S,v 1.9.8.1 2007/12/13 21:54:43 bouyer Exp $");
+
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
 #endif
@@ -79,7 +82,6 @@
 #include <machine/segments.h>
 #include <machine/trap.h>
 #include <compat/mach/mach_syscall.h>
-#include <machine/asm.h>
 #include <machine/frameasm.h>
 
 /*

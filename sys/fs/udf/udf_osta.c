@@ -1,4 +1,7 @@
-/* $NetBSD: udf_osta.c,v 1.4 2007/02/22 06:37:01 thorpej Exp $ */
+/* $NetBSD: udf_osta.c,v 1.4.30.1 2007/12/13 21:56:51 bouyer Exp $ */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: udf_osta.c,v 1.4.30.1 2007/12/13 21:56:51 bouyer Exp $");
 
 /*
  * Various routines from the OSTA 2.01 specs.  Copyrights are included with
