@@ -1,4 +1,4 @@
-/*	$NetBSD: x86emu.c,v 1.2 2007/12/04 17:32:22 joerg Exp $	*/
+/*	$NetBSD: x86emu.c,v 1.3 2007/12/13 16:41:59 joerg Exp $	*/
 
 /****************************************************************************
 *
@@ -176,6 +176,22 @@ static uint32_t	pop_long (struct X86EMU *);
 REMARKS:
 Handles any pending asychronous interrupts.
 ****************************************************************************/
+static void
+x86emu_intr_dispatch(struct X86EMU *emu, uint8_t intno)
+{
+	if (emu->_X86EMU_intrTab[intno]) {
+		(*emu->_X86EMU_intrTab[intno]) (emu, intno);
+	} else {
+		push_word(emu, (uint16_t) emu->x86.R_FLG);
+		CLEAR_FLAG(F_IF);
+		CLEAR_FLAG(F_TF);
+		push_word(emu, emu->x86.R_CS);
+		emu->x86.R_CS = fetch_word(emu, 0, intno * 4 + 2);
+		push_word(emu, emu->x86.R_IP);
+		emu->x86.R_IP = fetch_word(emu, 0, intno * 4);
+	}
+}
+
 static void 
 x86emu_intr_handle(struct X86EMU *emu)
 {
@@ -183,18 +199,8 @@ x86emu_intr_handle(struct X86EMU *emu)
 
 	if (emu->x86.intr & INTR_SYNCH) {
 		intno = emu->x86.intno;
-		if (emu->_X86EMU_intrTab[intno]) {
-			(*emu->_X86EMU_intrTab[intno]) (emu, intno);
-		} else {
-			push_word(emu, (uint16_t) emu->x86.R_FLG);
-			CLEAR_FLAG(F_IF);
-			CLEAR_FLAG(F_TF);
-			push_word(emu, emu->x86.R_CS);
-			emu->x86.R_CS = fetch_word(emu, 0, intno * 4 + 2);
-			push_word(emu, emu->x86.R_IP);
-			emu->x86.R_IP = fetch_word(emu, 0, intno * 4);
-			emu->x86.intr = 0;
-		}
+		emu->x86.intr = 0;
+		x86emu_intr_dispatch(emu, intno);
 	}
 }
 /****************************************************************************
@@ -3246,17 +3252,7 @@ Handles opcode 0xcc
 static void
 x86emuOp_int3(struct X86EMU *emu)
 {
-	if (emu->_X86EMU_intrTab[3]) {
-		(*emu->_X86EMU_intrTab[3]) (emu, 3);
-	} else {
-		push_word(emu, (uint16_t) emu->x86.R_FLG);
-		CLEAR_FLAG(F_IF);
-		CLEAR_FLAG(F_TF);
-		push_word(emu, emu->x86.R_CS);
-		emu->x86.R_CS = fetch_word(emu, 0, 3 * 4 + 2);
-		push_word(emu, emu->x86.R_IP);
-		emu->x86.R_IP = fetch_word(emu, 0, 3 * 4);
-	}
+	x86emu_intr_dispatch(emu, 3);
 }
 /****************************************************************************
 REMARKS:
@@ -3268,17 +3264,7 @@ x86emuOp_int_IMM(struct X86EMU *emu)
 	uint8_t intnum;
 
 	intnum = fetch_byte_imm(emu);
-	if (emu->_X86EMU_intrTab[intnum]) {
-		(*emu->_X86EMU_intrTab[intnum]) (emu, intnum);
-	} else {
-		push_word(emu, (uint16_t) emu->x86.R_FLG);
-		CLEAR_FLAG(F_IF);
-		CLEAR_FLAG(F_TF);
-		push_word(emu, emu->x86.R_CS);
-		emu->x86.R_CS = fetch_word(emu, 0, intnum * 4 + 2);
-		push_word(emu, emu->x86.R_IP);
-		emu->x86.R_IP = fetch_word(emu, 0, intnum * 4);
-	}
+	x86emu_intr_dispatch(emu, intnum);
 }
 /****************************************************************************
 REMARKS:
@@ -3287,19 +3273,8 @@ Handles opcode 0xce
 static void
 x86emuOp_into(struct X86EMU *emu)
 {
-	if (ACCESS_FLAG(F_OF)) {
-		if (emu->_X86EMU_intrTab[4]) {
-			(*emu->_X86EMU_intrTab[4]) (emu, 4);
-		} else {
-			push_word(emu, (uint16_t) emu->x86.R_FLG);
-			CLEAR_FLAG(F_IF);
-			CLEAR_FLAG(F_TF);
-			push_word(emu, emu->x86.R_CS);
-			emu->x86.R_CS = fetch_word(emu, 0, 4 * 4 + 2);
-			push_word(emu, emu->x86.R_IP);
-			emu->x86.R_IP = fetch_word(emu, 0, 4 * 4);
-		}
-	}
+	if (ACCESS_FLAG(F_OF))
+		x86emu_intr_dispatch(emu, 4);
 }
 /****************************************************************************
 REMARKS:
