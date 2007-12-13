@@ -1,7 +1,9 @@
+/*	$NetBSD: exdump.c,v 1.3.36.2 2007/12/13 05:05:41 yamt Exp $	*/
+
 /******************************************************************************
  *
  * Module Name: exdump - Interpreter debug output routines
- *              $Revision: 1.3.36.1 $
+ *              $Revision: 1.3.36.2 $
  *
  *****************************************************************************/
 
@@ -113,6 +115,9 @@
  * such license, approval or letter.
  *
  *****************************************************************************/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: exdump.c,v 1.3.36.2 2007/12/13 05:05:41 yamt Exp $");
 
 #define __EXDUMP_C__
 

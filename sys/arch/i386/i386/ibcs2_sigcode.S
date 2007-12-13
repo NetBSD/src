@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_sigcode.S,v 1.3 2005/12/11 12:17:41 christos Exp $	*/
+/*	$NetBSD: ibcs2_sigcode.S,v 1.3.62.1 2007/12/13 05:05:16 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -70,13 +70,15 @@
  *	@(#)locore.s	7.3 (Berkeley) 5/13/91
  */
 
+#include <machine/asm.h>
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_sigcode.S,v 1.3.62.1 2007/12/13 05:05:16 yamt Exp $");
+
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
 #endif
 
 #include "assym.h"
 
-#include <machine/asm.h>
 #include <compat/ibcs2/ibcs2_syscall.h>
 
 /* LINTSTUB: Var: char ibcs2_sigcode[1], ibcs2_esigcode[1]; */

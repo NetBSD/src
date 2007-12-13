@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.22 2007/12/04 08:03:46 ad Exp $	*/
+/*	$NetBSD: spl.S,v 1.22.2.1 2007/12/13 05:05:18 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -36,10 +36,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <machine/asm.h>
+__KERNEL_RCSID(0, "$NetBSD: spl.S,v 1.22.2.1 2007/12/13 05:05:18 yamt Exp $");
+
 #include "opt_vm86.h"
 #include "opt_ddb.h"
 
-#include <machine/asm.h>
 #include <machine/trap.h>
 #include <machine/segments.h>
 #include <machine/frameasm.h>

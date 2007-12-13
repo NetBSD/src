@@ -1,8 +1,10 @@
+/*	$NetBSD: dsopcode.c,v 1.1.58.2 2007/12/13 05:05:37 yamt Exp $	*/
+
 /******************************************************************************
  *
  * Module Name: dsopcode - Dispatcher Op Region support and handling of
  *                         "control" opcodes
- *              $Revision: 1.1.58.1 $
+ *              $Revision: 1.1.58.2 $
  *
  *****************************************************************************/
 
@@ -114,6 +116,9 @@
  * such license, approval or letter.
  *
  *****************************************************************************/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: dsopcode.c,v 1.1.58.2 2007/12/13 05:05:37 yamt Exp $");
 
 #define __DSOPCODE_C__
 

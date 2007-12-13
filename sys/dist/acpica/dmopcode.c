@@ -1,7 +1,9 @@
+/*	$NetBSD: dmopcode.c,v 1.1.58.2 2007/12/13 05:05:35 yamt Exp $	*/
+
 /*******************************************************************************
  *
  * Module Name: dmopcode - AML disassembler, specific AML opcodes
- *              $Revision: 1.1.58.1 $
+ *              $Revision: 1.1.58.2 $
  *
  ******************************************************************************/
 
@@ -113,6 +115,9 @@
  * such license, approval or letter.
  *
  *****************************************************************************/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: dmopcode.c,v 1.1.58.2 2007/12/13 05:05:35 yamt Exp $");
 
 #include <dist/acpica/acpi.h>
 #include <dist/acpica/acparser.h>

@@ -1,8 +1,9 @@
+/*	$NetBSD: exoparg1.c,v 1.1.58.2 2007/12/13 05:05:42 yamt Exp $	*/
 
 /******************************************************************************
  *
  * Module Name: exoparg1 - AML execution - opcodes with 1 argument
- *              $Revision: 1.1.58.1 $
+ *              $Revision: 1.1.58.2 $
  *
  *****************************************************************************/
 
@@ -114,6 +115,9 @@
  * such license, approval or letter.
  *
  *****************************************************************************/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: exoparg1.c,v 1.1.58.2 2007/12/13 05:05:42 yamt Exp $");
 
 #define __EXOPARG1_C__
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.47 2007/10/17 19:53:41 garbled Exp $	*/
+/*	$NetBSD: cpu.h,v 1.47.6.1 2007/12/13 05:05:13 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -220,6 +220,7 @@ struct cpu_info {
 	int32_t ci_mtx_count;
 	int ci_mtx_oldspl;
 	int ci_want_resched;
+	int ci_idepth;
 #ifdef MULTIPROCESSOR
 	MP_CPU_INFO_MEMBERS
 #endif

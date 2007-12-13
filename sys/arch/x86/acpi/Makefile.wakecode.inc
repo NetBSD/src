@@ -1,10 +1,11 @@
-# $NetBSD: Makefile.wakecode.inc,v 1.1.12.1 2007/12/11 15:20:48 yamt Exp $
+# $NetBSD: Makefile.wakecode.inc,v 1.1.12.2 2007/12/13 05:05:23 yamt Exp $
 # FreeBSD: src/sys/i386/acpica/Makefile,v 1.3 2002/05/01 21:54:07 peter Exp
 
 ACPI_WAKECODE_S=	${S}/arch/${MACHINE}/acpi/acpi_wakecode.S
 ACPI_GENWAKECODE=	${S}/arch/x86/acpi/genwakecode.sh
 
 acpi_wakecode.h: ${ACPI_WAKECODE_S} ${ACPI_GENWAKECODE}
+	${_MKTARGET_CREATE}
 	${CC} -I${.CURDIR} -c ${ACPI_WAKECODE_S}
 	${LD} -M -Map acpi_wakecode.bin.map -z defs -nostdlib \
 	    --oformat binary -e wakeup_16 -Ttext 0 \

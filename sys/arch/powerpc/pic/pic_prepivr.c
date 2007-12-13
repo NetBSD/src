@@ -1,4 +1,4 @@
-/* $NetBSD: pic_prepivr.c,v 1.2 2007/10/17 19:56:46 garbled Exp $ */
+/* $NetBSD: pic_prepivr.c,v 1.2.12.1 2007/12/13 05:05:21 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_prepivr.c,v 1.2 2007/10/17 19:56:46 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_prepivr.c,v 1.2.12.1 2007/12/13 05:05:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -53,8 +53,8 @@ __KERNEL_RCSID(0, "$NetBSD: pic_prepivr.c,v 1.2 2007/10/17 19:56:46 garbled Exp 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
 
-static int  prepivr_get_irq(struct pic_ops *);
-static int  motivr_get_irq(struct pic_ops *);
+static int  prepivr_get_irq(struct pic_ops *, int);
+static int  motivr_get_irq(struct pic_ops *, int);
 static void prepivr_establish_irq(struct pic_ops *, int, int, int);
 
 vaddr_t prep_intr_reg;		/* PReP interrupt vector register */
@@ -128,41 +128,28 @@ prepivr_establish_irq(struct pic_ops *pic, int irq, int type, int maxlevel)
 }
 
 static int
-motivr_get_irq(struct pic_ops *pic)
+motivr_get_irq(struct pic_ops *pic, int mode)
 {
-	static int lirq;
 	int irq;
 
-	irq = i8259_get_irq(pic);
+	irq = i8259_get_irq(pic, mode);
 	/* read the IVR to ack it */
 	(void)inb(pic->pic_cookie);
 
-	if (lirq == 7 && irq == lirq) {
-		lirq = -1;
-		return 255;
-	}
-
-	lirq = irq;
-	if (irq == 0)
-		return 255;
-
+	/* i8259_get_irq will return 255 by itself, so just pass it on */
 	return irq;
 }
 
 static int
-prepivr_get_irq(struct pic_ops *pic)
+prepivr_get_irq(struct pic_ops *pic, int mode)
 {
-	static int lirq;
 	int irq;
 
 	irq = inb(pic->pic_cookie);
-	if (lirq == 7 && irq == lirq) {
-		lirq = -1;
-		return 255;
-	}
 
-	lirq = irq;
-	if (irq == 0)
+	if (irq == 0 && mode == PIC_GET_IRQ)
+		return 255;
+	if (irq == 7 && mode == PIC_GET_RECHECK)
 		return 255;
 
 	return irq;

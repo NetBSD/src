@@ -1,8 +1,10 @@
+/*	$NetBSD: nsxfname.c,v 1.1.58.2 2007/12/13 05:05:49 yamt Exp $	*/
+
 /******************************************************************************
  *
  * Module Name: nsxfname - Public interfaces to the ACPI subsystem
  *                         ACPI Namespace oriented interfaces
- *              $Revision: 1.1.58.1 $
+ *              $Revision: 1.1.58.2 $
  *
  *****************************************************************************/
 
@@ -114,6 +116,9 @@
  * such license, approval or letter.
  *
  *****************************************************************************/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: nsxfname.c,v 1.1.58.2 2007/12/13 05:05:49 yamt Exp $");
 
 #define __NSXFNAME_C__
 
