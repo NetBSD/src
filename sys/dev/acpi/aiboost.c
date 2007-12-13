@@ -1,4 +1,4 @@
-/* $NetBSD: aiboost.c,v 1.19 2007/12/10 23:25:59 xtraeme Exp $ */
+/* $NetBSD: aiboost.c,v 1.20 2007/12/13 15:36:29 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aiboost.c,v 1.19 2007/12/10 23:25:59 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aiboost.c,v 1.20 2007/12/13 15:36:29 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -167,7 +167,9 @@ aiboost_acpi_attach(device_t parent, device_t self, void *aux)
 		goto bad;
 	}
 
-	pmf_device_register(self, NULL, NULL);
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+
 	return;
 
 bad:
