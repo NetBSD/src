@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.83 2007/12/03 20:26:25 ad Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.83.6.1 2007/12/13 21:56:53 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -205,8 +205,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.83 2007/12/03 20:26:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.83.6.1 2007/12/13 21:56:53 bouyer Exp $");
 
+#include "opt_ddb.h"
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
 
@@ -221,6 +222,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.83 2007/12/03 20:26:25 ad Exp $");
 #include <sys/syscall_stats.h>
 #include <sys/kauth.h>
 #include <sys/sleepq.h>
+#include <sys/user.h>
 #include <sys/lockdebug.h>
 #include <sys/kmem.h>
 #include <sys/intr.h>
@@ -1621,3 +1623,22 @@ lwp_ctl_exit(void)
 	kmem_free(lp, sizeof(*lp));
 	p->p_lwpctl = NULL;
 }
+
+#if defined(DDB)
+void
+lwp_whatis(uintptr_t addr, void (*pr)(const char *, ...))
+{
+	lwp_t *l;
+
+	LIST_FOREACH(l, &alllwp, l_list) {
+		uintptr_t stack = (uintptr_t)KSTACK_LOWEST_ADDR(l);
+
+		if (addr < stack || stack + KSTACK_SIZE <= addr) {
+			continue;
+		}
+		(*pr)("%p is %p+%zu, LWP %p's stack\n",
+		    (void *)addr, (void *)stack,
+		    (size_t)(addr - stack), l);
+	}
+}
+#endif /* defined(DDB) */

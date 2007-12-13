@@ -1,7 +1,9 @@
+/*	$NetBSD: dbxface.c,v 1.2.2.1 2007/12/13 21:56:10 bouyer Exp $	*/
+
 /*******************************************************************************
  *
  * Module Name: dbxface - AML Debugger external interfaces
- *              $Revision: 1.2 $
+ *              $Revision: 1.2.2.1 $
  *
  ******************************************************************************/
 
@@ -114,6 +116,8 @@
  *
  *****************************************************************************/
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: dbxface.c,v 1.2.2.1 2007/12/13 21:56:10 bouyer Exp $");
 
 #include <dist/acpica/acpi.h>
 #include <dist/acpica/amlcode.h>

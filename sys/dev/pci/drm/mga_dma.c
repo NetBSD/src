@@ -1,3 +1,5 @@
+/*	$NetBSD: mga_dma.c,v 1.2.26.1 2007/12/13 21:55:56 bouyer Exp $	*/
+
 /* mga_dma.c -- DMA support for mga g200/g400 -*- linux-c -*-
  * Created: Mon Dec 13 01:50:01 1999 by jhartmann@precisioninsight.com
  */
@@ -26,6 +28,7 @@
  */
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mga_dma.c,v 1.2.26.1 2007/12/13 21:55:56 bouyer Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/mga_dma.c,v 1.13 2005/11/28 23:13:53 anholt Exp $");
 */

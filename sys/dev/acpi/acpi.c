@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.104 2007/12/09 20:27:52 jmcneill Exp $	*/
+/*	$NetBSD: acpi.c,v 1.104.2.1 2007/12/13 21:55:23 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.104 2007/12/09 20:27:52 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.104.2.1 2007/12/13 21:55:23 bouyer Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -1175,13 +1175,13 @@ acpi_enter_sleep_state(struct acpi_softc *sc, int state)
 	case ACPI_STATE_S3:
 	case ACPI_STATE_S4:
 		if (!is_available_state(sc, state)) {
-			aprint_error("%s: cannot enter the sleep state (%d).\n",
+			aprint_error("%s: cannot enter the sleep state (%d)\n",
 			    sc->sc_dev.dv_xname, state);
 			break;
 		}
 
 		if (state != ACPI_STATE_S1 && !pmf_system_suspend()) {
-			aprint_error_dev(&sc->sc_dev, "aborting suspend");
+			aprint_error_dev(&sc->sc_dev, "aborting suspend\n");
 			break;
 		}
 

@@ -1,7 +1,9 @@
+/*	$NetBSD: rsaddr.c,v 1.2.2.1 2007/12/13 21:56:32 bouyer Exp $	*/
+
 /*******************************************************************************
  *
  * Module Name: rsaddr - Address resource descriptors (16/32/64)
- *              $Revision: 1.2 $
+ *              $Revision: 1.2.2.1 $
  *
  ******************************************************************************/
 
@@ -113,6 +115,9 @@
  * such license, approval or letter.
  *
  *****************************************************************************/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rsaddr.c,v 1.2.2.1 2007/12/13 21:56:32 bouyer Exp $");
 
 #define __RSADDR_C__
 

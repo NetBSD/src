@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.106 2007/12/10 16:15:02 degroote Exp $	*/
+/*	$NetBSD: i82557.c,v 1.106.2.1 2007/12/13 21:55:35 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.106 2007/12/10 16:15:02 degroote Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.106.2.1 2007/12/13 21:55:35 bouyer Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -206,8 +206,6 @@ void	fxp_get_info(struct fxp_softc *, u_int8_t *);
 void	fxp_tick(void *);
 void	fxp_mc_setup(struct fxp_softc *);
 void	fxp_load_ucode(struct fxp_softc *);
-
-void	fxp_shutdown(void *);
 
 int	fxp_copy_small = 0;
 
@@ -437,16 +435,6 @@ fxp_attach(struct fxp_softc *sc)
 	}
 #endif /* FXP_EVENT_COUNTERS */
 
-	/*
-	 * Add shutdown hook so that DMA is disabled prior to reboot. Not
-	 * doing do could allow DMA to corrupt kernel memory during the
-	 * reboot before the driver initializes.
-	 */
-	sc->sc_sdhook = shutdownhook_establish(fxp_shutdown, sc);
-	if (sc->sc_sdhook == NULL)
-		aprint_error("%s: WARNING: unable to establish shutdown hook\n",
-		    sc->sc_dev.dv_xname);
-
 	/* The attach is successful. */
 	sc->sc_flags |= FXPF_ATTACHED;
 
@@ -524,23 +512,6 @@ fxp_80c24_initmedia(struct fxp_softc *sc)
 	    fxp_80c24_mediastatus);
 	ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_MANUAL, 0, NULL);
 	ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_MANUAL);
-}
-
-/*
- * Device shutdown routine. Called at system shutdown after sync. The
- * main purpose of this routine is to shut off receiver DMA so that
- * kernel memory doesn't get clobbered during warmboot.
- */
-void
-fxp_shutdown(void *arg)
-{
-	struct fxp_softc *sc = arg;
-
-	/*
-	 * Since the system's going to halt shortly, don't bother
-	 * freeing mbufs.
-	 */
-	fxp_stop(&sc->sc_ethercom.ec_if, 0);
 }
 
 /*
@@ -2472,8 +2443,6 @@ fxp_detach(struct fxp_softc *sc)
 	bus_dmamem_unmap(sc->sc_dmat, (void *)sc->sc_control_data,
 	    sizeof(struct fxp_control_data));
 	bus_dmamem_free(sc->sc_dmat, &sc->sc_cdseg, sc->sc_cdnseg);
-
-	shutdownhook_disestablish(sc->sc_sdhook);
 
 	return (0);
 }

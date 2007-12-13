@@ -1,4 +1,4 @@
-/* $NetBSD: gscpcib.c,v 1.8 2006/11/16 01:32:39 christos Exp $ */
+/*	$NetBSD: gscpcib.c,v 1.8.42.1 2007/12/13 21:54:47 bouyer Exp $	*/
 /*	$OpenBSD: gscpcib.c,v 1.3 2004/10/05 19:02:33 grange Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
@@ -21,6 +21,9 @@
  * that attaches instead of pcib(4). In addition to the core pcib(4)
  * functionality this driver provides support for the GPIO interface.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: gscpcib.c,v 1.8.42.1 2007/12/13 21:54:47 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

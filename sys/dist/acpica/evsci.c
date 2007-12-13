@@ -1,8 +1,10 @@
+/*	$NetBSD: evsci.c,v 1.2.2.1 2007/12/13 21:56:16 bouyer Exp $	*/
+
 /*******************************************************************************
  *
  * Module Name: evsci - System Control Interrupt configuration and
  *                      legacy to ACPI mode state transition functions
- *              $Revision: 1.2 $
+ *              $Revision: 1.2.2.1 $
  *
  ******************************************************************************/
 
@@ -115,6 +117,9 @@
  * such license, approval or letter.
  *
  *****************************************************************************/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: evsci.c,v 1.2.2.1 2007/12/13 21:56:16 bouyer Exp $");
 
 #include <dist/acpica/acpi.h>
 #include <dist/acpica/acevents.h>

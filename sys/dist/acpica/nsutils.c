@@ -1,8 +1,10 @@
+/*	$NetBSD: nsutils.c,v 1.2.2.1 2007/12/13 21:56:28 bouyer Exp $	*/
+
 /******************************************************************************
  *
  * Module Name: nsutils - Utilities for accessing ACPI namespace, accessing
  *                        parents and siblings and Scope manipulation
- *              $Revision: 1.2 $
+ *              $Revision: 1.2.2.1 $
  *
  *****************************************************************************/
 
@@ -114,6 +116,9 @@
  * such license, approval or letter.
  *
  *****************************************************************************/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: nsutils.c,v 1.2.2.1 2007/12/13 21:56:28 bouyer Exp $");
 
 #define __NSUTILS_C__
 

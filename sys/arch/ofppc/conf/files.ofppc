@@ -1,4 +1,4 @@
-#	$NetBSD: files.ofppc,v 1.35 2007/12/03 15:34:07 ad Exp $
+#	$NetBSD: files.ofppc,v 1.35.6.1 2007/12/13 21:54:51 bouyer Exp $
 #
 # NetBSD/ofppc configuration info
 #
@@ -135,4 +135,4 @@ file	arch/ofppc/ofppc/cpu.c			cpu
 #file	arch/ofppc/ofwgen/ofwgen.c
 #file	arch/ofppc/ofwgen/ofwgen_intr.c
 
-include "arch/ofppc/conf/majors.ofppc"
+include "arch/powerpc/conf/majors.powerpc"

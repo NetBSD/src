@@ -1,8 +1,9 @@
+/*	$NetBSD: exprep.c,v 1.2.2.1 2007/12/13 21:56:20 bouyer Exp $	*/
 
 /******************************************************************************
  *
  * Module Name: exprep - ACPI AML (p-code) execution - field prep utilities
- *              $Revision: 1.2 $
+ *              $Revision: 1.2.2.1 $
  *
  *****************************************************************************/
 
@@ -114,6 +115,9 @@
  * such license, approval or letter.
  *
  *****************************************************************************/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: exprep.c,v 1.2.2.1 2007/12/13 21:56:20 bouyer Exp $");
 
 #define __EXPREP_C__
 

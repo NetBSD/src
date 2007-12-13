@@ -1,4 +1,4 @@
-/* $NetBSD: drm_scatter.c,v 1.2 2007/11/21 19:22:13 bjs Exp $ */
+/* $NetBSD: drm_scatter.c,v 1.2.6.1 2007/12/13 21:55:30 bouyer Exp $ */
 
 /* drm_scatter.h -- IOCTLs to manage scatter/gather memory -*- linux-c -*-
  * Created: Mon Dec 18 23:20:54 2000 by gareth@valinux.com */
@@ -32,6 +32,7 @@
  */
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: drm_scatter.c,v 1.2.6.1 2007/12/13 21:55:30 bouyer Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/drm_scatter.c,v 1.3 2006/05/17 06:29:36 anholt Exp $");
 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.3 2007/12/03 15:34:14 ad Exp $ */
+/*	$NetBSD: intr.c,v 1.3.6.1 2007/12/13 21:54:53 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.3 2007/12/03 15:34:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.3.6.1 2007/12/13 21:54:53 bouyer Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -586,7 +586,7 @@ pic_handle_intr(void *cookie)
 	int irq, realirq;
 	int pcpl, msr, r_imen, bail;
 
-	realirq = pic->pic_get_irq(pic);
+	realirq = pic->pic_get_irq(pic, PIC_GET_IRQ);
 	if (realirq == 255)
 		return 0;
 
@@ -600,7 +600,7 @@ start:
 	while (realirq == ipiops.ppc_ipi_vector) {
 		ppcipi_intr(NULL);
 		pic->pic_ack_irq(pic, realirq);
-		realirq = pic->pic_get_irq(pic);
+		realirq = pic->pic_get_irq(pic, PIC_GET_IRQ);
 	}
 	if (realirq == 255) {
 		return 0;
@@ -657,7 +657,7 @@ start:
 boo:
 #endif /* PIC_DEBUG */
 	pic->pic_ack_irq(pic, realirq);
-	realirq = pic->pic_get_irq(pic);
+	realirq = pic->pic_get_irq(pic, PIC_GET_RECHECK);
 	if (realirq != 255)
 		goto start;
 

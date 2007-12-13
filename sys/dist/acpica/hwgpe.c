@@ -1,8 +1,9 @@
+/*	$NetBSD: hwgpe.c,v 1.4.2.1 2007/12/13 21:56:24 bouyer Exp $	*/
 
 /******************************************************************************
  *
  * Module Name: hwgpe - Low level GPE enable/disable/clear functions
- *              $Revision: 1.4 $
+ *              $Revision: 1.4.2.1 $
  *
  *****************************************************************************/
 
@@ -114,6 +115,9 @@
  * such license, approval or letter.
  *
  *****************************************************************************/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: hwgpe.c,v 1.4.2.1 2007/12/13 21:56:24 bouyer Exp $");
 
 #include <dist/acpica/acpi.h>
 #include <dist/acpica/acevents.h>

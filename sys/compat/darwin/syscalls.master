@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.34 2007/11/10 13:23:18 dsl Exp $
+	$NetBSD: syscalls.master,v 1.34.6.1 2007/12/13 21:55:08 bouyer Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -53,7 +53,6 @@
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 
-#include <compat/common/compat_file.h>
 #include <compat/sys/signal.h>
 
 #include <compat/mach/mach_types.h>
@@ -72,23 +71,23 @@
 3	NOARGS		{ ssize_t sys_read(int fd, void *buf, size_t nbyte); }
 4	NOARGS		{ ssize_t sys_write(int fd, const void *buf, \
 			    size_t nbyte); }
-5	NODEF		{ int bsd_sys_open(const char *path, \
+5	NOARGS		{ int sys_open(const char *path, \
 			    int flags, ... mode_t mode); }
 6	NOARGS		{ int sys_close(int fd); }
 7	NOARGS		{ int sys_wait4(int pid, int *status, int options, \
 			    struct rusage *rusage); }
-8	NODEF		{ int bsd_compat_43_sys_creat(const char *path, \
+8	NOARGS		{ int compat_43_sys_creat(const char *path, \
 			    mode_t mode); } ocreat
-9	NODEF		{ int bsd_sys_link(const char *path, \
+9	NOARGS		{ int sys_link(const char *path, \
 			    const char *link); }
-10	NODEF		{ int bsd_sys_unlink(const char *path); }
+10	NOARGS		{ int sys_unlink(const char *path); }
 11	UNIMPL		execv
-12	NODEF		{ int bsd_sys_chdir(const char *path); }
+12	NOARGS		{ int sys_chdir(const char *path); }
 13	NOARGS		{ int sys_fchdir(int fd); }
 14	STD		{ int darwin_sys_mknod(const char *path, \
 			    mode_t mode, dev_t dev); }
-15	NODEF		{ int bsd_sys_chmod(const char *path, mode_t mode); }
-16	NODEF		{ int bsd_sys_chown(const char *path, uid_t uid, \
+15	NOARGS		{ int sys_chmod(const char *path, mode_t mode); }
+16	NOARGS		{ int sys_chown(const char *path, uid_t uid, \
 			    gid_t gid); }
 17	NOARGS		{ int sys_obreak(char *nsize); } break
 18	STD		{ int darwin_sys_getfsstat(struct darwin_statfs *buf, \
@@ -96,9 +95,9 @@
 19	NOARGS		{ long compat_43_sys_lseek(int fd, long offset, \
 			    int whence); } olseek
 20	STD		{ pid_t darwin_sys_getpid(void); }
-21	NODEF		{ int bsd_sys_mount(const char *type, \
+21	NOARGS		{ int compat_40_sys_mount(const char *type, \
 			    const char *path, int flags, void *data); }
-22	NODEF		{ int bsd_sys_unmount(const char *path, int flags); }
+22	NOARGS		{ int sys_unmount(const char *path, int flags); }
 23	NOARGS		{ int sys_setuid(uid_t uid); }
 #ifdef COMPAT_43
 24	NOARGS		{ uid_t sys_getuid_with_euid(void); } getuid
@@ -121,17 +120,17 @@
 			    struct sockaddr *asa, unsigned int *alen); }
 32	STD		{ int darwin_sys_getsockname(int fdes, \
 			    struct sockaddr *asa, unsigned int *alen); }
-33	NODEF		{ int bsd_sys_access(const char *path, \
+33	NOARGS		{ int sys_access(const char *path, \
 			    int flags); }
-34	NODEF		{ int bsd_sys_chflags(const char *path, \
+34	NOARGS		{ int sys_chflags(const char *path, \
 			    u_long flags); }
 35	NOARGS		{ int sys_fchflags(int fd, u_long flags); }
 36	NOARGS		{ void sys_sync(void); }
 37	NOARGS		{ int sys_kill(int pid, int signum); }
-38	NODEF		{ int bsd_compat_43_sys_stat(const char *path, \
+38	NOARGS		{ int compat_43_sys_stat(const char *path, \
 			    struct stat43 *ub); } stat43
 39	NOARGS		{ pid_t sys_getppid(void); }
-40	NODEF		{ int bsd_compat_43_sys_lstat(const char *path, \
+40	NOARGS		{ int compat_43_sys_lstat(const char *path, \
 			    struct stat43 *ub); } lstat43
 41	NOARGS		{ int sys_dup(int fd); }
 42	NOARGS		{ int sys_pipe(void); }
@@ -156,7 +155,7 @@
 			    sigset13_t *set, sigset13_t *oset); }
 49	NOARGS		{ int sys___getlogin(char *namebuf, size_t namelen); }
 50	NOARGS		{ int sys___setlogin(const char *namebuf); }
-51	NODEF		{ int bsd_sys_acct(const char *path); }
+51	NOARGS		{ int sys_acct(const char *path); }
 52	NOARGS    	{ int compat_13_sys_sigpending(void); } sigpending13
 53	NOARGS    	{ int compat_13_sys_sigaltstack( \
 			    const struct sigaltstack13 *nss, \
@@ -164,15 +163,15 @@
 54	STD		{ int darwin_sys_ioctl(int fd, \
 			    u_long com, ... void *data); }
 55	NOARGS		{ int sys_reboot(int opt); } oreboot
-56	NODEF		{ int bsd_sys_revoke(const char *path); }
-57	NODEF		{ int bsd_sys_symlink(const char *path, \
+56	NOARGS		{ int sys_revoke(const char *path); }
+57	NOARGS		{ int sys_symlink(const char *path, \
 			    const char *link); }
-58	NODEF		{ int bsd_sys_readlink(const char *path, \
+58	NOARGS		{ int sys_readlink(const char *path, \
 			    char *buf, size_t count); }
-59	NODEF		{ int bsd_sys_execve(const char *path, \
+59	NOARGS		{ int sys_execve(const char *path, \
 			    char * const *argp, char * const *envp); }
 60	NOARGS		{ mode_t sys_umask(mode_t newmask); }
-61	NODEF		{ int bsd_sys_chroot(const char *path); }
+61	NOARGS		{ int sys_chroot(const char *path); }
 62	NOARGS		{ int compat_43_sys_fstat(int fd, \
 			    struct stat43 *sb); } fstat43
 63	UNIMPL
@@ -205,7 +204,7 @@
 			    const struct itimerval *itv, \
 			    struct itimerval *oitv); }
 84	NOARGS    	{ int compat_43_sys_wait(void); } owait
-85	NODEF    	{ int bsd_compat_12_sys_swapon(const char *name); }
+85	NOARGS    	{ int compat_12_sys_swapon(const char *name); }
 86	NOARGS		{ int sys_getitimer(int which, \
 			    struct itimerval *itv); }
 87	NOARGS    	{ int compat_43_sys_gethostname(char *hostname, \
@@ -275,15 +274,15 @@
 			    int *fromlenaddr); } orecvfrom
 126	NOARGS		{ int sys_setreuid(uid_t ruid, uid_t euid); }
 127	NOARGS		{ int sys_setregid(gid_t rgid, gid_t egid); }
-128	NODEF		{ int bsd_sys_rename(const char *from, \
+128	NOARGS		{ int sys_rename(const char *from, \
 			    const char *to); }
-129	NODEF		{ int bsd_compat_43_sys_truncate(const \
+129	NOARGS		{ int compat_43_sys_truncate(const \
 			    char *path, long length); } \
 			    otruncate
 130	NOARGS    	{ int compat_43_sys_ftruncate(int fd, \
 			    long length); } oftruncate
 131	NOARGS		{ int sys_flock(int fd, int how); }
-132	NODEF		{ int bsd_sys_mkfifo(const char *path, \
+132	NOARGS		{ int sys_mkfifo(const char *path, \
 			    mode_t mode); }
 133	STD		{ ssize_t darwin_sys_sendto(int s, const void *buf, \
 			    size_t len, int flags, const struct sockaddr *to, \
@@ -291,9 +290,9 @@
 134	NOARGS		{ int sys_shutdown(int s, int how); }
 135	NOARGS		{ int sys_socketpair(int domain, int type, \
 			    int protocol, int *rsv); }
-136	NODEF		{ int bsd_sys_mkdir(const char *path, mode_t mode); }
-137	NODEF		{ int bsd_sys_rmdir(const char *path); }
-138	NODEF		{ int bsd_sys_utimes(const char *path, \
+136	NOARGS		{ int sys_mkdir(const char *path, mode_t mode); }
+137	NOARGS		{ int sys_rmdir(const char *path); }
+138	NOARGS		{ int sys_utimes(const char *path, \
 			    const struct timeval *tptr); }
 139	UNIMPL		futimes
 140	NOARGS		{ int sys_adjtime(const struct timeval *delta, \
@@ -331,7 +330,7 @@
 159	UNIMPL		unmount
 160	UNIMPL
 #if defined(NFS) || defined(NFSSERVER) || !defined(_KERNEL)
-161	NODEF		{ int bsd_sys_getfh(const char *fname, \
+161	NOARGS		{ int compat_30_sys_getfh(const char *fname, \
 			    fhandle_t *fhp); }
 #else
 161	EXCL		getfh
@@ -372,7 +371,7 @@
 			    struct stat12 *sb); }
 190	STD		{ int darwin_sys_lstat(const char *path, \
 			    struct stat12 *ub); } lstat12
-191	NODEF		{ long bsd_sys_pathconf(const char *path, \
+191	NOARGS		{ long sys_pathconf(const char *path, \
 			    int name); }
 192	NOARGS		{ long sys_fpathconf(int fd, int name); }
 193	UNIMPL		getfsstat
@@ -387,7 +386,7 @@
 198	UNIMPL
 199	STD	    	{ off_t darwin_sys_lseek(int fd, long off1, \
 			    long off2, int whence); }
-200	NODEF		{ int bsd_sys_truncate(const char *path, \
+200	NOARGS		{ int sys_truncate(const char *path, \
 			    int pad, off_t length); }
 201	NOARGS		{ int sys_ftruncate(int fd, int pad, off_t length); }
 202	STD		{ int darwin_sys___sysctl(int *name, u_int namelen, \
@@ -395,7 +394,7 @@
 			    size_t newlen); }
 203	NOARGS		{ int sys_mlock(const void *addr, size_t len); }
 204	NOARGS		{ int sys_munlock(const void *addr, size_t len); }
-205	STD		{ int bsd_sys_undelete(const char *path); }
+205	NOARGS		{ int sys_undelete(const char *path); }
 206	UNIMPL		atsocket
 207	UNIMPL		atgetmsg
 208	UNIMPL		atputmsg

@@ -1,3 +1,5 @@
+/*	$NetBSD: i915_dma.c,v 1.2.28.1 2007/12/13 21:55:54 bouyer Exp $	*/
+
 /* i915_dma.c -- DMA support for the I915 -*- linux-c -*-
  */
 /*-
@@ -27,6 +29,7 @@
  */
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: i915_dma.c,v 1.2.28.1 2007/12/13 21:55:54 bouyer Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/i915_dma.c,v 1.4 2006/09/07 23:04:47 anholt Exp $");
 */

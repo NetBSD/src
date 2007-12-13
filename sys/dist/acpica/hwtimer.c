@@ -1,8 +1,9 @@
+/*	$NetBSD: hwtimer.c,v 1.2.2.1 2007/12/13 21:56:25 bouyer Exp $	*/
 
 /******************************************************************************
  *
  * Name: hwtimer.c - ACPI Power Management Timer Interface
- *              $Revision: 1.2 $
+ *              $Revision: 1.2.2.1 $
  *
  *****************************************************************************/
 
@@ -114,6 +115,9 @@
  * such license, approval or letter.
  *
  *****************************************************************************/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: hwtimer.c,v 1.2.2.1 2007/12/13 21:56:25 bouyer Exp $");
 
 #include <dist/acpica/acpi.h>
 

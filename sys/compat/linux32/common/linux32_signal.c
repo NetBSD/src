@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_signal.c,v 1.5 2007/12/08 18:36:12 dsl Exp $ */
+/*	$NetBSD: linux32_signal.c,v 1.5.4.1 2007/12/13 21:55:10 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -30,6 +30,10 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: linux32_signal.c,v 1.5.4.1 2007/12/13 21:55:10 bouyer Exp $");
+
 #include <sys/param.h>
 #include <sys/ucred.h>
 #include <sys/signalvar.h>

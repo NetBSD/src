@@ -1,3 +1,5 @@
+/*	$NetBSD: via_dma.c,v 1.1.28.1 2007/12/13 21:56:02 bouyer Exp $	*/
+
 /* via_dma.c -- DMA support for the VIA Unichrome/Pro
  * 
  * Copyright 2003 Tungsten Graphics, Inc., Cedar Park, Texas.
@@ -33,6 +35,9 @@
  *    Erdi Chen, 
  *    Thomas Hellstrom.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: via_dma.c,v 1.1.28.1 2007/12/13 21:56:02 bouyer Exp $");
 
 #include <dev/drm/drmP.h>
 #include <dev/drm/drm.h>

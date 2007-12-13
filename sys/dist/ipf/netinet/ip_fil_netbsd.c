@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.41 2007/09/17 06:25:23 martti Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.41.12.1 2007/12/13 21:56:41 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -6,8 +6,13 @@
  * See the IPFILTER.LICENCE file for details on licencing.
  */
 #if !defined(lint)
+#if defined(__NetBSD__)
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ip_fil_netbsd.c,v 1.41.12.1 2007/12/13 21:56:41 bouyer Exp $");
+#else
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 2.55.2.51 2007/05/31 12:27:35 darrenr Exp";
+#endif
 #endif
 
 #if defined(KERNEL) || defined(_KERNEL)

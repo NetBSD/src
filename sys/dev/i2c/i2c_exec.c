@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c_exec.c,v 1.5 2006/03/27 23:59:38 jmcneill Exp $	*/
+/*	$NetBSD: i2c_exec.c,v 1.5.48.1 2007/12/13 21:55:32 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -34,6 +34,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: i2c_exec.c,v 1.5.48.1 2007/12/13 21:55:32 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

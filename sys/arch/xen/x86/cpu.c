@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.3 2007/12/10 13:39:06 bouyer Exp $	*/
+/*	$NetBSD: cpu.c,v 1.3.2.1 2007/12/13 21:55:02 bouyer Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.3 2007/12/10 13:39:06 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.3.2.1 2007/12/13 21:55:02 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -161,6 +161,7 @@ struct cpu_info cpu_info_primary = {
 #ifndef __x86_64__
 	.ci_self150 = (uint8_t *)&cpu_info_primary + 0x150,
 #endif
+	.ci_idepth = -1,
 	.ci_curlwp = &lwp0,
 #ifdef TRAPLOG
 	.ci_tlog = &tlog_primary,

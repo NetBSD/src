@@ -1,8 +1,10 @@
+/*	$NetBSD: evxfregn.c,v 1.4.2.1 2007/12/13 21:56:17 bouyer Exp $	*/
+
 /******************************************************************************
  *
  * Module Name: evxfregn - External Interfaces, ACPI Operation Regions and
  *                         Address Spaces.
- *              $Revision: 1.4 $
+ *              $Revision: 1.4.2.1 $
  *
  *****************************************************************************/
 
@@ -114,6 +116,9 @@
  * such license, approval or letter.
  *
  *****************************************************************************/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: evxfregn.c,v 1.4.2.1 2007/12/13 21:56:17 bouyer Exp $");
 
 #define __EVXFREGN_C__
 

@@ -1,7 +1,9 @@
+/*	$NetBSD: exdump.c,v 1.4.2.1 2007/12/13 21:56:18 bouyer Exp $	*/
+
 /******************************************************************************
  *
  * Module Name: exdump - Interpreter debug output routines
- *              $Revision: 1.4 $
+ *              $Revision: 1.4.2.1 $
  *
  *****************************************************************************/
 
@@ -113,6 +115,9 @@
  * such license, approval or letter.
  *
  *****************************************************************************/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: exdump.c,v 1.4.2.1 2007/12/13 21:56:18 bouyer Exp $");
 
 #define __EXDUMP_C__
 

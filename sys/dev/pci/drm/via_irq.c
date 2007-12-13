@@ -1,3 +1,5 @@
+/*	$NetBSD: via_irq.c,v 1.1.28.1 2007/12/13 21:56:03 bouyer Exp $	*/
+
 /* via_irq.c
  *
  * Copyright 2004 BEAM Ltd.
@@ -34,6 +36,9 @@
  * interrupt, as well as an infrastructure to handle other interrupts of the chip.
  * The refresh rate is also calculated for video playback sync purposes.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: via_irq.c,v 1.1.28.1 2007/12/13 21:56:03 bouyer Exp $");
 
 #include <dev/drm/drmP.h>
 #include <dev/drm/drm.h>

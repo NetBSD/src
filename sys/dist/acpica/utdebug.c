@@ -1,7 +1,9 @@
+/*	$NetBSD: utdebug.c,v 1.4.2.1 2007/12/13 21:56:38 bouyer Exp $	*/
+
 /******************************************************************************
  *
  * Module Name: utdebug - Debug print routines
- *              $Revision: 1.4 $
+ *              $Revision: 1.4.2.1 $
  *
  *****************************************************************************/
 
@@ -113,6 +115,9 @@
  * such license, approval or letter.
  *
  *****************************************************************************/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: utdebug.c,v 1.4.2.1 2007/12/13 21:56:38 bouyer Exp $");
 
 #define __UTDEBUG_C__
 

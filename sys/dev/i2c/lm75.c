@@ -1,4 +1,4 @@
-/*	$NetBSD: lm75.c,v 1.16 2007/11/16 08:00:14 xtraeme Exp $	*/
+/*	$NetBSD: lm75.c,v 1.16.6.1 2007/12/13 21:55:32 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -34,6 +34,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: lm75.c,v 1.16.6.1 2007/12/13 21:55:32 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
