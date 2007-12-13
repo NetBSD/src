@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.44.2.4 2007/12/13 14:58:31 yamt Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.44.2.5 2007/12/13 16:59:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.44.2.4 2007/12/13 14:58:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.44.2.5 2007/12/13 16:59:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -241,7 +241,8 @@ tmpfs_lookup(void *v)
 	/* Store the result of this lookup in the cache.  Avoid this if the
 	 * request was for creation, as it does not improve timings on
 	 * emprical tests. */
-	if ((cnp->cn_flags & MAKEENTRY) && cnp->cn_nameiop != CREATE)
+	if ((cnp->cn_flags & MAKEENTRY) && cnp->cn_nameiop != CREATE &&
+	    (cnp->cn_flags & ISDOTDOT) == 0)
 		cache_enter(dvp, *vpp, cnp);
 
 out:
