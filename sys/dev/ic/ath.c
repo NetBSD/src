@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.93 2007/12/09 20:27:57 jmcneill Exp $	*/
+/*	$NetBSD: ath.c,v 1.94 2007/12/13 09:04:39 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.104 2005/09/16 10:09:23 ru Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.93 2007/12/09 20:27:57 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.94 2007/12/13 09:04:39 dyoung Exp $");
 #endif
 
 /*
@@ -947,6 +947,9 @@ ath_init(struct ath_softc *sc)
 
 	DPRINTF(sc, ATH_DEBUG_ANY, "%s: if_flags 0x%x\n",
 		__func__, ifp->if_flags);
+
+	if (!device_is_active(&sc->sc_dev))
+		return EBUSY;
 
 	ATH_LOCK(sc);
 
