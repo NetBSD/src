@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.44.2.5 2007/12/13 16:59:01 yamt Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.44.2.6 2007/12/13 17:55:19 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.44.2.5 2007/12/13 16:59:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.44.2.6 2007/12/13 17:55:19 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -169,11 +169,9 @@ tmpfs_lookup(void *v)
 		    dnode->tn_spec.tn_dir.tn_parent, vpp);
 
 		vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
-		dnode->tn_spec.tn_dir.tn_parent->tn_lookup_dirent = NULL;
 	} else if (cnp->cn_namelen == 1 && cnp->cn_nameptr[0] == '.') {
 		VREF(dvp);
 		*vpp = dvp;
-		dnode->tn_lookup_dirent = NULL;
 		error = 0;
 	} else {
 		de = tmpfs_dir_lookup(dnode, cnp);
@@ -234,7 +232,6 @@ tmpfs_lookup(void *v)
 
 			/* Allocate a new vnode on the matching entry. */
 			error = tmpfs_alloc_vp(dvp->v_mount, tnode, vpp);
-			tnode->tn_lookup_dirent = de;
 		}
 	}
 
@@ -653,6 +650,7 @@ tmpfs_remove(void *v)
 {
 	struct vnode *dvp = ((struct vop_remove_args *)v)->a_dvp;
 	struct vnode *vp = ((struct vop_remove_args *)v)->a_vp;
+	struct componentname *cnp = (((struct vop_remove_args *)v)->a_cnp);
 
 	int error;
 	struct tmpfs_dirent *de;
@@ -671,8 +669,12 @@ tmpfs_remove(void *v)
 	dnode = VP_TO_TMPFS_DIR(dvp);
 	node = VP_TO_TMPFS_NODE(vp);
 	tmp = VFS_TO_TMPFS(vp->v_mount);
-	de = node->tn_lookup_dirent;
-	KASSERT(de != NULL);
+	de = tmpfs_dir_lookup(dnode, cnp);
+	if (de == NULL) {
+		error = ENOENT;
+		goto out;
+	}
+	KASSERT(de->td_node == node);
 
 	/* Files marked as immutable or append-only cannot be deleted. */
 	if (node->tn_flags & (IMMUTABLE | APPEND)) {
@@ -810,7 +812,12 @@ tmpfs_rename(void *v)
 	fdnode = VP_TO_TMPFS_DIR(fdvp);
 	fnode = VP_TO_TMPFS_NODE(fvp);
 	tnode = (tvp == NULL) ? NULL : VP_TO_TMPFS_NODE(tvp);
-	de = fnode->tn_lookup_dirent;
+	de = tmpfs_dir_lookup(fdnode, fcnp);
+	if (de == NULL) {
+		error = ENOENT;
+		goto out;
+	}
+	KASSERT(de->td_node == fnode);
 
 	/* Disallow cross-device renames.
 	 * XXX Why isn't this done by the caller? */
@@ -866,22 +873,6 @@ tmpfs_rename(void *v)
 		if (error != 0)
 			goto out;
 	}
-
-	/* Make sure we have the correct cached dirent */
-	fcnp->cn_flags &= ~(MODMASK | SAVESTART);
-	fcnp->cn_flags |= LOCKPARENT | LOCKLEAF;
-	if ((error = relookup(fdvp, &fvp, fcnp))) {
-		goto out_locked;
-	}
-	KASSERT(fvp != NULL);
-	/* Relookup always returns with vpp locked and 1UP referenced */
-	VOP_UNLOCK(fvp, 0);
-	vrele(((struct vop_rename_args *)v)->a_fvp);
-
-	/* Reacquire values.  fvp might have changed.  Since we only
-	 * used fvp to sanitycheck fcnp values above, we can do this. */
-	fnode = VP_TO_TMPFS_NODE(fvp);
-	de = fnode->tn_lookup_dirent;
 
 	/* Ensure that we have enough memory to hold the new name, if it
 	 * has to be changed. */
@@ -959,8 +950,12 @@ tmpfs_rename(void *v)
 	if (tvp != NULL) {
 		KASSERT(tnode != NULL);
 
-		/* Remove the old entry from the target directory. */
-		de = tnode->tn_lookup_dirent;
+		/* Remove the old entry from the target directory.
+		 * Note! This relies on tmpfs_dir_attach() putting the new
+		 * node on the end of the target's node list. */
+		de = tmpfs_dir_lookup(tdnode, tcnp);
+		KASSERT(de != NULL);
+		KASSERT(de->td_node == tnode);
 		tmpfs_dir_detach(tdvp, de);
 
 		/* Free the directory entry we just deleted.  Note that the
@@ -1019,6 +1014,7 @@ tmpfs_rmdir(void *v)
 {
 	struct vnode *dvp = ((struct vop_rmdir_args *)v)->a_dvp;
 	struct vnode *vp = ((struct vop_rmdir_args *)v)->a_vp;
+	struct componentname *cnp = ((struct vop_rmdir_args *)v)->a_cnp;
 
 	int error;
 	struct tmpfs_dirent *de;
@@ -1045,12 +1041,13 @@ tmpfs_rmdir(void *v)
 	 * We checked for that above so this is safe now. */
 	KASSERT(node->tn_spec.tn_dir.tn_parent == dnode);
 
-	/* Get the directory entry associated with node (vp).  This was
-	 * filled by tmpfs_lookup while looking up the entry. */
-	de = node->tn_lookup_dirent;
-	KASSERT(TMPFS_DIRENT_MATCHES(de,
-	    ((struct vop_rmdir_args *)v)->a_cnp->cn_nameptr,
-	    ((struct vop_rmdir_args *)v)->a_cnp->cn_namelen));
+	/* Get the directory entry associated with node (vp). */
+	de = tmpfs_dir_lookup(dnode, cnp);
+	if (de == NULL) {
+		error = ENOENT;
+		goto out;
+	}
+	KASSERT(de->td_node == node);
 
 	/* Check flags to see if we are allowed to remove the directory. */
 	if (dnode->tn_flags & APPEND || node->tn_flags & (IMMUTABLE | APPEND)) {
