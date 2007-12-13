@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.228 2007/12/11 00:08:14 martin Exp $	*/
+/*	$NetBSD: audio.c,v 1.229 2007/12/13 14:02:53 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.228 2007/12/11 00:08:14 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.229 2007/12/13 14:02:53 jmcneill Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -329,6 +329,7 @@ audioattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_dev = parent;
 	sc->sc_opencnt = 0;
 	sc->sc_writing = sc->sc_waitcomp = 0;
+	sc->sc_lastinfovalid = false;
 
 	error = audio_alloc_ring(sc, &sc->sc_pr, AUMODE_PLAY, AU_RING_SIZE);
 	if (error) {
@@ -3544,6 +3545,9 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 			goto cleanup;
 	}
 
+	sc->sc_lastinfo = *ai;
+	sc->sc_lastinfovalid = true;
+
 cleanup:
 	if (cleared || pausechange) {
 		int init_error;
@@ -4012,6 +4016,8 @@ audio_resume(device_t dv)
 	int s;
 
 	s = splaudio();
+	if (sc->sc_lastinfovalid)
+		audiosetinfo(sc, &sc->sc_lastinfo);
 	audio_mixer_restore(sc);
 	if (sc->sc_pbus == true)
 		audiostartp(sc);
