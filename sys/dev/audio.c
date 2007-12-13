@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.229 2007/12/13 14:02:53 jmcneill Exp $	*/
+/*	$NetBSD: audio.c,v 1.230 2007/12/13 14:40:36 joerg Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.229 2007/12/13 14:02:53 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.230 2007/12/13 14:40:36 joerg Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -1060,8 +1060,6 @@ audioread(dev_t dev, struct uio *uio, int ioflag)
 	if (sc->sc_dying)
 		return EIO;
 
-	device_active(&sc->dev, DVA_SYSTEM);
-
 	sc->sc_refcnt++;
 	switch (AUDIODEV(dev)) {
 	case SOUND_DEVICE:
@@ -1093,8 +1091,6 @@ audiowrite(dev_t dev, struct uio *uio, int ioflag)
 
 	if (sc->sc_dying)
 		return EIO;
-
-	device_active(&sc->dev, DVA_SYSTEM);
 
 	sc->sc_refcnt++;
 	switch (AUDIODEV(dev)) {
@@ -1155,8 +1151,6 @@ audiopoll(dev_t dev, int events, struct lwp *l)
 	if (sc->sc_dying)
 		return POLLHUP;
 
-	device_active(&sc->dev, DVA_SYSTEM);
-
 	sc->sc_refcnt++;
 	switch (AUDIODEV(dev)) {
 	case SOUND_DEVICE:
@@ -1185,8 +1179,6 @@ audiokqfilter(dev_t dev, struct knote *kn)
 	sc = audio_cd.cd_devs[AUDIOUNIT(dev)];
 	if (sc->sc_dying)
 		return 1;
-
-	device_active(&sc->dev, DVA_SYSTEM);
 
 	sc->sc_refcnt++;
 	switch (AUDIODEV(dev)) {
@@ -1643,6 +1635,9 @@ audio_read(struct audio_softc *sc, struct uio *uio, int ioflag)
 	DPRINTFN(1,("audio_read: cc=%zu mode=%d\n",
 		    uio->uio_resid, sc->sc_mode));
 
+	if (device_is_active(&sc->dev) || sc->sc_idle)
+		device_active(&sc->dev, DVA_SYSTEM);
+
 	error = 0;
 	/*
 	 * If hardware is half-duplex and currently playing, return
@@ -1935,6 +1930,9 @@ audio_write(struct audio_softc *sc, struct uio *uio, int ioflag)
 		sc->sc_eof++;
 		return 0;
 	}
+
+	if (device_is_active(&sc->dev) || sc->sc_idle)
+		device_active(&sc->dev, DVA_SYSTEM);
 
 	/*
 	 * If half-duplex and currently recording, throw away data.
@@ -3965,6 +3963,8 @@ audio_idle(void *arg)
 		printf("%s: idle handler called\n", device_xname(dv));
 #endif
 
+	sc->sc_idle = true;
+
 	/* XXX joerg Make pmf_device_suspend handle children? */
 	if (!pmf_device_suspend(dv))
 		return;
@@ -3983,6 +3983,7 @@ audio_activity(device_t dv, devactive_t type)
 
 	callout_schedule(&sc->sc_idle_counter, audio_idle_timeout * hz);
 
+	sc->sc_idle = false;
 	if (!device_is_active(dv)) {
 		/* XXX joerg How to deal with a failing resume... */
 		pmf_device_resume(sc->sc_dev);
