@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.17 2007/10/17 19:54:31 garbled Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.18 2007/12/13 21:34:18 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -111,11 +111,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.17 2007/10/17 19:54:31 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.18 2007/12/13 21:34:18 skrll Exp $");
 
 #include "opt_compat_netbsd.h"
-
-#define __HPPA_SIGNAL_PRIVATE
 
 #include <sys/param.h>
 #include <sys/systm.h>
