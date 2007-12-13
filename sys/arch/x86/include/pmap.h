@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.6.2.1 2007/12/11 23:02:57 bouyer Exp $	*/
+/*	$NetBSD: pmap.h,v 1.6.2.2 2007/12/13 21:26:35 bouyer Exp $	*/
 
 /*
  *
@@ -159,7 +159,6 @@ struct pmap {
 
 /* pm_flags */
 #define	PMF_USER_LDT	0x01	/* pmap has user-set LDT */
-#define	PMF_USER_XPIN	0x02	/* pmap pdirpa is pinned (Xen) */
 #define	PMF_USER_RELOAD	0x04	/* reload user pmap on PTE unmap (Xen) */
 
 
