@@ -1,6 +1,6 @@
 #undef DEBUG_DARWIN
 #undef DEBUG_MACH
-/*	$NetBSD: darwin_mman.c,v 1.25 2007/12/12 21:37:31 dsl Exp $ */
+/*	$NetBSD: darwin_mman.c,v 1.26 2007/12/13 07:54:22 dsl Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_mman.c,v 1.25 2007/12/12 21:37:31 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_mman.c,v 1.26 2007/12/13 07:54:22 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -121,7 +121,7 @@ darwin_sys_load_shared_file(struct lwp *l, void *v, register_t *retval)
 	SCARG(&open_cup, path) = SCARG(uap, filename);
 	SCARG(&open_cup, flags) = O_RDONLY;
 	SCARG(&open_cup, mode) = 0;
-	if ((error = bsd_sys_open(l, &open_cup, &fdc)) != 0)
+	if ((error = sys_open(l, &open_cup, &fdc)) != 0)
 		goto bad1;
 
 	fd = (int)fdc;
