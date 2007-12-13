@@ -1,7 +1,9 @@
+/*	$NetBSD: exconfig.c,v 1.1.58.2 2007/12/13 05:05:41 yamt Exp $	*/
+
 /******************************************************************************
  *
  * Module Name: exconfig - Namespace reconfiguration (Load/Unload opcodes)
- *              $Revision: 1.1.58.1 $
+ *              $Revision: 1.1.58.2 $
  *
  *****************************************************************************/
 
@@ -114,6 +116,9 @@
  * such license, approval or letter.
  *
  *****************************************************************************/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: exconfig.c,v 1.1.58.2 2007/12/13 05:05:41 yamt Exp $");
 
 #define __EXCONFIG_C__
 

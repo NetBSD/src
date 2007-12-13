@@ -1,7 +1,9 @@
+/*	$NetBSD: utalloc.c,v 1.4.36.2 2007/12/13 05:05:57 yamt Exp $	*/
+
 /******************************************************************************
  *
  * Module Name: utalloc - local memory allocation routines
- *              $Revision: 1.4.36.1 $
+ *              $Revision: 1.4.36.2 $
  *
  *****************************************************************************/
 
@@ -113,6 +115,9 @@
  * such license, approval or letter.
  *
  *****************************************************************************/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: utalloc.c,v 1.4.36.2 2007/12/13 05:05:57 yamt Exp $");
 
 #define __UTALLOC_C__
 

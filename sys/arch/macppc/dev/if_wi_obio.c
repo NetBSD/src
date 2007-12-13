@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wi_obio.c,v 1.15.6.1 2007/12/11 15:20:38 yamt Exp $	*/
+/*	$NetBSD: if_wi_obio.c,v 1.15.6.2 2007/12/13 05:05:20 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_obio.c,v 1.15.6.1 2007/12/11 15:20:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_obio.c,v 1.15.6.2 2007/12/13 05:05:20 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -60,7 +60,6 @@ static void wi_obio_disable(struct wi_softc *);
 
 struct wi_obio_softc {
 	struct wi_softc sc_wi;
-	pnp_state_t sc_state;
 	bus_space_tag_t sc_tag;
 	bus_space_handle_t sc_bsh;
 	bus_space_handle_t sc_fcr2h;
@@ -119,7 +118,7 @@ wi_obio_attach(struct device *parent, struct device *self, void *aux)
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 	else
-		pnp_class_network_register(self, &sc->sc_wi.sc_if);
+		pmf_class_network_register(self, &sc->sc_wi.sc_if);
 
 	/* Disable the card. */
 	wisc->sc_enabled = 0;

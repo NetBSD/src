@@ -1,9 +1,12 @@
-/*	$NetBSD: bf_enc.S,v 1.3 2005/12/11 12:20:52 christos Exp $	*/
+/*	$NetBSD: bf_enc.S,v 1.3.58.1 2007/12/13 05:05:30 yamt Exp $	*/
 
 /*
  * Written by Jason R. Thorpe <thorpej@zembu.com> and Thor Lancelot Simon
  * <tls@NetBSD.org>.  Public domain.
  */
+
+#include <i386/include/asm.h>
+__KERNEL_RCSID(0, "$NetBSD: bf_enc.S,v 1.3.58.1 2007/12/13 05:05:30 yamt Exp $");
 
 /*
  * XXX Should use CPP symbols defined as a result of

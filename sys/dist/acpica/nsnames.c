@@ -1,7 +1,9 @@
+/*	$NetBSD: nsnames.c,v 1.2.50.2 2007/12/13 05:05:48 yamt Exp $	*/
+
 /*******************************************************************************
  *
  * Module Name: nsnames - Name manipulation and search
- *              $Revision: 1.2.50.1 $
+ *              $Revision: 1.2.50.2 $
  *
  ******************************************************************************/
 
@@ -113,6 +115,9 @@
  * such license, approval or letter.
  *
  *****************************************************************************/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: nsnames.c,v 1.2.50.2 2007/12/13 05:05:48 yamt Exp $");
 
 #define __NSNAMES_C__
 

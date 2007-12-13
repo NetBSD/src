@@ -1,4 +1,4 @@
-/*	$NetBSD: picvar.h,v 1.2 2007/10/17 19:56:46 garbled Exp $ */
+/*	$NetBSD: picvar.h,v 1.2.12.1 2007/12/13 05:05:21 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: picvar.h,v 1.2 2007/10/17 19:56:46 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: picvar.h,v 1.2.12.1 2007/12/13 05:05:21 yamt Exp $");
 
 #ifndef PIC_VAR_H
 #define PIC_VAR_H
@@ -48,7 +48,7 @@ struct pic_ops {
 	void (*pic_enable_irq)(struct pic_ops *, int, int);
 	void (*pic_reenable_irq)(struct pic_ops *, int, int);
 	void (*pic_disable_irq)(struct pic_ops *, int);
-	int (*pic_get_irq)(struct pic_ops *);
+	int (*pic_get_irq)(struct pic_ops *, int); /* PIC_GET_* */
 	void (*pic_ack_irq)(struct pic_ops *, int); /* IRQ numbner */
 	/* IRQ number, type, priority */
 	void (*pic_establish_irq)(struct pic_ops *, int, int, int);
@@ -98,6 +98,8 @@ void pic_finish_setup(void);
 /* address, enable passthrough */
 #define PIC_IVR_IBM	0
 #define PIC_IVR_MOT	1
+#define PIC_GET_IRQ	0
+#define PIC_GET_RECHECK	1
 struct pic_ops *setup_openpic(void *, int);
 struct pic_ops *setup_prepivr(int);
 struct pic_ops *setup_i8259(void);
@@ -107,7 +109,7 @@ void i8259_initialize(void);
 void i8259_enable_irq(struct pic_ops *, int, int);
 void i8259_disable_irq(struct pic_ops *, int);
 void i8259_ack_irq(struct pic_ops *, int);
-int i8259_get_irq(struct pic_ops *);
+int i8259_get_irq(struct pic_ops *, int);
 
 /* IPI handler */
 int cpuintr(void *);

@@ -1,7 +1,9 @@
+/*	$NetBSD: psutils.c,v 1.1.58.2 2007/12/13 05:05:52 yamt Exp $	*/
+
 /******************************************************************************
  *
  * Module Name: psutils - Parser miscellaneous utilities (Parser only)
- *              $Revision: 1.1.58.1 $
+ *              $Revision: 1.1.58.2 $
  *
  *****************************************************************************/
 
@@ -114,6 +116,8 @@
  *
  *****************************************************************************/
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: psutils.c,v 1.1.58.2 2007/12/13 05:05:52 yamt Exp $");
 
 #include <dist/acpica/acpi.h>
 #include <dist/acpica/acparser.h>

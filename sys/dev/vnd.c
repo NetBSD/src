@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.172 2007/12/08 19:29:41 pooka Exp $	*/
+/*	$NetBSD: vnd.c,v 1.172.2.1 2007/12/13 05:05:31 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -137,7 +137,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.172 2007/12/08 19:29:41 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.172.2.1 2007/12/13 05:05:31 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -286,6 +286,8 @@ vnd_attach(struct device *parent, struct device *self,
 	sc->sc_comp_decombuf = NULL;
 	bufq_alloc(&sc->sc_tab, "disksort", BUFQ_SORT_RAWBLOCK);
 	disk_init(&sc->sc_dkdev, self->dv_xname, NULL);
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
 static int
@@ -295,6 +297,7 @@ vnd_detach(struct device *self, int flags)
 	if (sc->sc_flags & VNF_INITED)
 		return EBUSY;
 
+	pmf_device_deregister(self);
 	bufq_free(sc->sc_tab);
 	disk_destroy(&sc->sc_dkdev);
 

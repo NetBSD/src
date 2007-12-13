@@ -1,7 +1,9 @@
+/*	$NetBSD: psopcode.c,v 1.3.36.2 2007/12/13 05:05:50 yamt Exp $	*/
+
 /******************************************************************************
  *
  * Module Name: psopcode - Parser/Interpreter opcode information table
- *              $Revision: 1.3.36.1 $
+ *              $Revision: 1.3.36.2 $
  *
  *****************************************************************************/
 
@@ -114,6 +116,8 @@
  *
  *****************************************************************************/
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: psopcode.c,v 1.3.36.2 2007/12/13 05:05:50 yamt Exp $");
 
 #include <dist/acpica/acpi.h>
 #include <dist/acpica/acparser.h>
