@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.13 2007/12/09 20:27:51 jmcneill Exp $	*/
+/*	$NetBSD: pmap.c,v 1.14 2007/12/13 21:22:15 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.13 2007/12/09 20:27:51 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.14 2007/12/13 21:22:15 bouyer Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -668,6 +668,9 @@ pmap_map_ptes(struct pmap *pmap, struct pmap **pmap2,
 	struct lwp *l;
 	bool iscurrent;
 	uint64_t ncsw;
+#ifdef XEN
+	int s;
+#endif
 
 	/* the kernel's pmap is always accessible */
 	if (pmap == pmap_kernel()) {
@@ -729,7 +732,6 @@ pmap_map_ptes(struct pmap *pmap, struct pmap **pmap2,
 #ifdef XEN
 	npde = pmap_pa2pte(pmap->pm_pdirpa) | PG_k | PG_V;
 	if (!pmap_valid_entry(opde) || pmap_pte2pa(opde) != pmap->pm_pdirpa) {
-		int s;
 		s = splvm();
 		/*
 		 * Hack: force validation of pgd as a l4 page early,
@@ -744,16 +746,13 @@ pmap_map_ptes(struct pmap *pmap, struct pmap **pmap2,
 		/* Make recursive entry usable in user PGD */
 		xpq_queue_pte_update((void *)xpmap_ptom(pmap->pm_pdirpa +
 		    PDIR_SLOT_PTE * sizeof(pd_entry_t)), npde);
+		xpq_queue_pte_update((pt_entry_t *)xpmap_ptetomach(APDP_PDE),
+		    npde);
 		xpq_queue_invlpg((vaddr_t)&pmap->pm_pdir[PDIR_SLOT_PTE]);
-		pmap_pte_set(APDP_PDE, npde);
-		pmap_pte_flush();
+		xpq_flush_queue();
 		if (pmap_valid_entry(opde))
 			pmap_apte_flush(ourpmap);
 		splx(s);
-	} else {
-		/* make sure the recursive entry is usable */
-		pmap_pte_set(&pmap->pm_pdir[PDIR_SLOT_PTE], npde);
-		pmap_pte_flush();
 	}
 #else /* XEN */
 	npde = pmap_pa2pte(pmap->pm_pdirpa) | PG_RW | PG_V;
@@ -814,19 +813,14 @@ pmap_unmap_ptes(struct pmap *pmap, struct pmap *pmap2)
 		pmap_apte_flush(pmap2);
 #endif
 #ifdef XEN
-		/* Invalid recursive entry in user PGD */
-		pmap_pte_set(&pmap->pm_pdir[PDIR_SLOT_PTE],
-		    pmap->pm_pdir[PDIR_SLOT_PTE] & ~PG_V);
-		pmap_pte_flush();
 		/* Reload user PGD if we had to clear it, and no other pmap was loaded*/
-		s = splvm();
 		if ((pmap->pm_flags & PMF_USER_RELOAD) &&  xen_current_user_pgd == 0) {
-
+			s = splvm();
 			xen_set_user_pgd(pmap->pm_pdirpa);
 			pmap->pm_flags &= ~PMF_USER_RELOAD;
 			xen_current_user_pgd = pmap->pm_pdirpa;
+			splx(s);
 		}
-		splx(s);
 #endif /* XEN */
 		COUNT(apdp_pde_unmap);
 		mutex_exit(&pmap->pm_lock);
@@ -2376,7 +2370,7 @@ pmap_load(void)
 		    xpmap_ptom(pmap_kernel()->pm_pdirpa);
 		for (i = 0; i < PDIR_SLOT_PTE; i++, addr++)
 			xpq_queue_pte_update(addr, pgd[i]);
-		xpq_flush_queue();
+		xpq_flush_queue(); /* XXXtlb */
 		tlbflush();
 		/* Pin before installing */
 		if ((pmap->pm_flags & PMF_USER_XPIN) == 0) {
@@ -3582,15 +3576,6 @@ pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 	 */
 
 	if (pmap_valid_entry(opte) && ((opte & PG_FRAME) == ma)) {
-
-		/*
-		 * first, calculate pm_stats updates.  resident count will not
-		 * change since we are replacing/changing a valid mapping.
-		 * wired count might change...
-		 */
-		pmap->pm_stats.wired_count +=
-		    ((npte & PG_W) ? 1 : 0 - (opte & PG_W) ? 1 : 0);
-
 		npte |= (opte & PG_PVLIST);
 
 		/* zap! */
@@ -3598,17 +3583,30 @@ pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 		if (domid != DOMID_SELF) {
 			int s = splvm();
 			opte = *ptep;
-			xpq_update_foreign((pt_entry_t *)vtomach((vaddr_t)ptep),
-			    npte, domid);
+			error = xpq_update_foreign(
+			    (pt_entry_t *)vtomach((vaddr_t)ptep), npte, domid);
 			splx(s);
+			if (error)
+			    goto out;
 		} else
 #endif /* XEN */
 			opte = pmap_pte_testset(ptep, npte);
 
 		/*
+		 * calculate pm_stats updates.  resident count will not
+		 * change since we are replacing/changing a valid mapping.
+		 * wired count might change...
+		 */
+		pmap->pm_stats.wired_count +=
+		    ((npte & PG_W) ? 1 : 0 - (opte & PG_W) ? 1 : 0);
+
+		/*
 		 * if this is on the PVLIST, sync R/M bit
 		 */
 		if (opte & PG_PVLIST) {
+#ifdef XEN
+			KASSERT(domid == DOMID_SELF);
+#endif
 			pg = PHYS_TO_VM_PAGE(pa);
 #ifdef DIAGNOSTIC
 			if (pg == NULL)
@@ -3684,8 +3682,25 @@ pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 			/* new_pvh is NULL if page will not be managed */
 			pmap_lock_pvhs(old_pvh, new_pvh);
 
-			/* zap! */
-			opte = pmap_pte_testset(ptep, npte);
+#ifdef XEN
+			if (domid != DOMID_SELF) {
+				int s = splvm();
+				opte = *ptep;
+				error = xpq_update_foreign(
+				    (pt_entry_t *)vtomach((vaddr_t)ptep),
+				    npte, domid);
+				if (error) {
+					pmap->pm_stats.wired_count -=
+					    ((npte & PG_W) ? 1 : 0 -
+					    (opte & PG_W) ? 1 : 0);
+					splx(s);
+					mutex_spin_exit(&old_pvh->pvh_lock);
+					goto out;
+				}
+				splx(s);
+			} else
+#endif /* XEN */
+				opte = pmap_pte_testset(ptep, npte); /* zap !*/
 
 			pve = pmap_remove_pv(old_pvh, pmap, va);
 			KASSERT(pve != 0);
@@ -3708,22 +3723,37 @@ pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 			ptp->wire_count++;
 	}
 
-	if (new_pvh) {
-		mutex_spin_enter(&new_pvh->pvh_lock);
-		pmap_enter_pv(new_pvh, pve, pmap, va, ptp);
-		mutex_spin_exit(&new_pvh->pvh_lock);
-	}
 
 #ifdef XEN
 	if (domid != DOMID_SELF) {
 		int s = splvm();
 		opte = *ptep;
-		xpq_update_foreign((pt_entry_t *)vtomach((vaddr_t)ptep),
+		error = xpq_update_foreign((pt_entry_t *)vtomach((vaddr_t)ptep),
 		    npte, domid);
 		splx(s);
+		if (error) {
+			if (pmap_valid_entry(opte)) {
+				pmap->pm_stats.wired_count -=
+				    ((npte & PG_W) ? 1 : 0 -
+				    (opte & PG_W) ? 1 : 0);
+			} else {	/* opte not valid */
+				pmap->pm_stats.resident_count--;
+				if (wired) 
+					pmap->pm_stats.wired_count--;
+				if (ptp)
+					ptp->wire_count--;
+			}
+			goto out;
+		}
 	} else
 #endif /* XEN */
 		opte = pmap_pte_testset(ptep, npte);   /* zap! */
+
+	if (new_pvh) {
+		mutex_spin_enter(&new_pvh->pvh_lock);
+		pmap_enter_pv(new_pvh, pve, pmap, va, ptp);
+		mutex_spin_exit(&new_pvh->pvh_lock);
+	}
 
 shootdown_test:
 	/* Update page attributes if needed */
