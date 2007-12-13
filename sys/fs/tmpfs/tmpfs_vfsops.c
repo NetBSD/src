@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vfsops.c,v 1.32.2.4 2007/12/12 17:38:40 ad Exp $	*/
+/*	$NetBSD: tmpfs_vfsops.c,v 1.32.2.5 2007/12/13 16:21:59 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.32.2.4 2007/12/12 17:38:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.32.2.5 2007/12/13 16:21:59 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -169,6 +169,7 @@ tmpfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	    args->ta_root_gid, args->ta_root_mode & ALLPERMS, NULL, NULL,
 	    VNOVAL, l->l_proc, &root);
 	KASSERT(error == 0 && root != NULL);
+	root->tn_links++;
 	tmp->tm_root = root;
 
 	mp->mnt_data = tmp;

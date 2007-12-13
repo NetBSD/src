@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.41.2.4 2007/12/12 17:38:40 ad Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.41.2.5 2007/12/13 16:21:58 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.41.2.4 2007/12/12 17:38:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.41.2.5 2007/12/13 16:21:58 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -156,11 +156,6 @@ tmpfs_alloc_node(struct tmpfs_mount *tmp, enum vtype type,
 		nnode->tn_spec.tn_dir.tn_readdir_lastn = 0;
 		nnode->tn_spec.tn_dir.tn_readdir_lastp = NULL;
 		nnode->tn_links++;
-		nnode->tn_spec.tn_dir.tn_parent->tn_links++;
-		if (parent != NULL) {
-			KASSERT(parent->tn_vnode != NULL);
-			VN_KNOTE(parent->tn_vnode, NOTE_LINK);
-		}
 		break;
 
 	case VFIFO:
@@ -530,6 +525,11 @@ tmpfs_alloc_file(struct vnode *dvp, struct vnode **vpp, struct vattr *vap,
 	 * insert the new node into the directory, an operation that
 	 * cannot fail. */
 	tmpfs_dir_attach(dvp, de);
+	if (vap->va_type == VDIR) {
+		VN_KNOTE(dvp, NOTE_LINK);
+		dnode->tn_links++;
+		KASSERT(dnode->tn_links <= LINK_MAX);
+	}
 
 out:
 	if (error != 0 || !(cnp->cn_flags & SAVESTART))
