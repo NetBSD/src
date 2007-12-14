@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1100 2007/12/09 23:09:06 jmcneill Exp $
+#	$NetBSD: mi,v 1.1101 2007/12/14 20:22:45 explorer Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -4533,6 +4533,7 @@
 ./usr/share/man/cat3/dcngettext.0		comp-c-catman		.cat
 ./usr/share/man/cat3/def_prog_mode.0		comp-c-catman		.cat
 ./usr/share/man/cat3/def_shell_mode.0		comp-c-catman		.cat
+./usr/share/man/cat3/dehumanize_number.0	comp-c-catman		.cat
 ./usr/share/man/cat3/delay_output.0		comp-c-catman		.cat
 ./usr/share/man/cat3/delch.0			comp-c-catman		.cat
 ./usr/share/man/cat3/deleteln.0			comp-c-catman		.cat
@@ -9131,6 +9132,7 @@
 ./usr/share/man/man3/dcngettext.3		comp-c-man		.man
 ./usr/share/man/man3/def_prog_mode.3		comp-c-man		.man
 ./usr/share/man/man3/def_shell_mode.3		comp-c-man		.man
+./usr/share/man/man3/dehumanize_number.3	comp-c-man		.man
 ./usr/share/man/man3/delay_output.3		comp-c-man		.man
 ./usr/share/man/man3/delch.3			comp-c-man		.man
 ./usr/share/man/man3/deleteln.3			comp-c-man		.man
