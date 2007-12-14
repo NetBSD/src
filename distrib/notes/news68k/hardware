@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.4 2003/07/26 17:07:13 salo Exp $
+.\"	$NetBSD: hardware,v 1.5 2007/12/14 21:15:59 pavel Exp $
 .
 .Nx*M
 \*V will run on single m68030-based Sony NEWS workstations.
@@ -54,4 +54,4 @@ If it's not on this list, there is no official support for it in this release.
 More information can also be found at the
 .Nx*M
 homepage:
-.Lk http://www.NetBSD.org/Ports/\*M/
+.Lk http://www.NetBSD.org/ports/\*M/
