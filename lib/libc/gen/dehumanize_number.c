@@ -1,4 +1,4 @@
-/*	$NetBSD: dehumanize_number.c,v 1.1 2007/12/14 17:26:19 christos Exp $	*/
+/*	$NetBSD: dehumanize_number.c,v 1.2 2007/12/14 17:32:47 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: dehumanize_number.c,v 1.1 2007/12/14 17:26:19 christos Exp $");
+__RCSID("$NetBSD: dehumanize_number.c,v 1.2 2007/12/14 17:32:47 xtraeme Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -52,7 +52,7 @@ __RCSID("$NetBSD: dehumanize_number.c,v 1.1 2007/12/14 17:26:19 christos Exp $")
 /*
  * Converts the number given in 'str', which may be given in a humanized
  * form (as described in humanize_number(3), but with some limitations),
- * to a file size (off_t) without units.
+ * to an int64_t without units.
  * In case of success, 0 is returned and *size holds the value.
  * Otherwise, -1 is returned and *size is untouched.
  *
