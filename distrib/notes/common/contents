@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.132 2007/12/14 00:11:55 jnemeth Exp $
+.\"	$NetBSD: contents,v 1.133 2007/12/14 21:15:53 pavel Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1293,7 +1293,7 @@ Firmware-compatible video cards.  Acceleration and depths
 greater than 256 colors are not supported.  
 .Pp
 See the X11 FAQ for help using X on macppc systems.
-.Lk http://www.NetBSD.org/Ports/macppc/x11.html
+.Lk http://www.NetBSD.org/ports/macppc/x11.html
 .\}
 .if \n[pmax] \{\
 This includes the Xpmax server with man page.

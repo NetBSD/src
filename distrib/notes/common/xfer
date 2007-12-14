@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.59 2007/12/11 02:38:33 jnemeth Exp $
+.\"	$NetBSD: xfer,v 1.60 2007/12/14 21:15:58 pavel Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -243,7 +243,7 @@ diskless.
 No file transfer is needed, and all you have to do is to prepare files on
 the server.
 More information about diskless setting can be found at
-.Lk http://www.NetBSD.org/Documentation/network/netboot/
+.Lk http://www.NetBSD.org/docs/network/netboot/
 .Pp
 .if \n[ews4800mips] \{\
 The PROM uses the ordinary tftp protocol, so

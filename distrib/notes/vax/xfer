@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.12 2006/11/25 22:53:35 mishka Exp $
+.\"	$NetBSD: xfer,v 1.13 2007/12/14 21:16:01 pavel Exp $
 .
 .so ../common/xfer
 .
@@ -137,7 +137,7 @@ on
 .Tn SunOS . )
 .Pp
 There is also very useful documentation at
-.Lk http://www.NetBSD.org/Documentation/network/netboot/
+.Lk http://www.NetBSD.org/docs/network/netboot/
 .Pp
 You also must install a MOP loader.
 If you are booting from another

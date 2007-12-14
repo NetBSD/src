@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.3 2007/09/28 18:27:42 tsutsui Exp $
+.\"	$NetBSD: hardware,v 1.4 2007/12/14 21:15:59 pavel Exp $
 .
 .Nx*M
 \*V will run on single MIPS-based Sony NEWS workstations.
@@ -60,4 +60,4 @@ If it's not on this list, there is no official support for it in this release.
 More information can also be found at the
 .Nx*M
 homepage:
-.Lk http://www.NetBSD.org/Ports/\*M/
+.Lk http://www.NetBSD.org/ports/\*M/

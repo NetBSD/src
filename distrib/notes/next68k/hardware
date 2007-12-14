@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.7 2003/07/26 17:07:14 salo Exp $
+.\"	$NetBSD: hardware,v 1.8 2007/12/14 21:15:59 pavel Exp $
 .
 .Nx*M
 \*V will run on the 25 MHz 68040-based
@@ -15,7 +15,7 @@ capable of netbooting
 .Nx*M .
 Serial consoles are poorly supported by the hardware, see the FAQ for help.
 Typically it is just easier to use the NeXT monitor and keyboard.
-.Lk http://www.NetBSD.org/Ports/next68k/faq.html
+.Lk http://www.NetBSD.org/ports/next68k/faq.html
 .
 .Ss2 Supported hardware
 .(bullet -offset indent
