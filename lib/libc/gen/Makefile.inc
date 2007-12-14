@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.158 2007/02/22 22:08:20 drochner Exp $
+#	$NetBSD: Makefile.inc,v 1.159 2007/12/14 17:26:19 christos Exp $
 #	from: @(#)Makefile.inc	8.6 (Berkeley) 5/4/95
 
 # gen sources
@@ -6,9 +6,9 @@
 
 SRCS+= 	_errno.c alarm.c alphasort.c arc4random.c assert.c basename.c clock.c \
 	closedir.c closefrom.c confstr.c ctermid.c ctype_.c daemon.c \
-	devname.c dirname.c disklabel.c err.c errx.c errlist.c \
-	errno.c execl.c execle.c execlp.c execv.c execvp.c extattr.c \
-	fmtcheck.c fmtmsg.c fnmatch.c fstab.c ftok.c \
+	dehumanize_number.c devname.c dirname.c disklabel.c err.c errx.c \
+	errlist.c errno.c execl.c execle.c execlp.c execv.c execvp.c \
+	extattr.c fmtcheck.c fmtmsg.c fnmatch.c fstab.c ftok.c \
 	fts.c ftw.c getbsize.c getcap.c getcwd.c \
 	getdevmajor.c getdomainname.c getgrent.c \
 	getgrouplist.c getgroupmembership.c gethostname.c \
@@ -122,6 +122,7 @@ MLINKS+=getttyent.3 endttyent.3 getttyent.3 getttynam.3 \
 	getttyent.3 setttyent.3 getttyent.3 setttyentpath.3
 MLINKS+=getusershell.3 endusershell.3 getusershell.3 setusershell.3
 MLINKS+=glob.3 globfree.3
+MLINKS+=humanize_number.3 dehumanize_number.3
 MLINKS+=makecontext.3 swapcontext.3
 MLINKS+=popen.3 pclose.3
 MLINKS+=psignal.3 sys_siglist.3 psignal.3 sys_signame.3

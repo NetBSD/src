@@ -1,4 +1,4 @@
-#	$NetBSD: shlib_version,v 1.191 2007/11/27 21:06:41 ad Exp $
+#	$NetBSD: shlib_version,v 1.192 2007/12/14 17:26:19 christos Exp $
 #	Remember to update distrib/sets/lists/base/shl.* when changing
 #
 # things we wish to do on next major version bump:
@@ -17,4 +17,4 @@
 # - libc/net/getnet{ent,namadr}.c, netdb.h: remove __n_pad0
 #
 major=12
-minor=156
+minor=157
