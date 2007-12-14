@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.105 2007/12/10 22:56:29 reinoud Exp $	*/
+/*	$NetBSD: acpi.c,v 1.106 2007/12/14 01:29:29 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.105 2007/12/10 22:56:29 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.106 2007/12/14 01:29:29 jmcneill Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -1202,6 +1202,7 @@ acpi_enter_sleep_state(struct acpi_softc *sc, int state)
 			err = acpi_md_sleep(state);
 			if (state == ACPI_STATE_S4)
 				AcpiEnable();
+			pmf_system_bus_resume();
 			AcpiLeaveSleepState((UINT8)state);
 			pmf_system_resume();
 		}

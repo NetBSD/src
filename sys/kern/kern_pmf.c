@@ -1,4 +1,4 @@
-/* $NetBSD: kern_pmf.c,v 1.5 2007/12/11 01:20:06 jmcneill Exp $ */
+/* $NetBSD: kern_pmf.c,v 1.6 2007/12/14 01:29:29 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_pmf.c,v 1.5 2007/12/11 01:20:06 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_pmf.c,v 1.6 2007/12/14 01:29:29 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -130,6 +130,45 @@ pmf_check_system_drivers(void)
 		return false;
 	}
 	return true;
+}
+
+bool
+pmf_system_bus_resume(void)
+{
+	int depth, maxdepth;
+	bool rv;
+	device_t curdev;
+
+	maxdepth = 0;
+	TAILQ_FOREACH(curdev, &alldevs, dv_list) {
+		if (curdev->dv_depth > maxdepth)
+			maxdepth = curdev->dv_depth;
+	}
+	++maxdepth;
+
+	aprint_debug("Powering devices:");
+	/* D0 handlers are run in order */
+	depth = 0;
+	rv = true;
+	for (depth = 0; depth < maxdepth; ++depth) {
+		TAILQ_FOREACH(curdev, &alldevs, dv_list) {
+			if (!device_pmf_is_registered(curdev))
+				continue;
+			if (device_is_active(curdev) ||
+			    !device_is_enabled(curdev))
+				continue;
+			if (curdev->dv_depth != depth)
+				continue;
+
+			aprint_debug(" %s", device_xname(curdev));
+
+			if (!device_pmf_bus_resume(curdev))
+				aprint_debug("(failed)");
+		}
+	}
+	aprint_debug("\n");
+
+	return rv;
 }
 
 bool
