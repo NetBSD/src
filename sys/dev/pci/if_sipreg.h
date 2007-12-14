@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sipreg.h,v 1.15 2005/12/11 12:22:49 christos Exp $	*/
+/*	$NetBSD: if_sipreg.h,v 1.16 2007/12/14 01:55:35 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -101,16 +101,15 @@
  * must be aligned to 4-byte (8-byte on DP83820) boundaries.
  */
 struct sip_desc {
-#ifdef DP83820
 	u_int32_t	sipd_link;	/* link to next descriptor */
+#ifdef DP83820
 	u_int32_t	sipd_bufptr;	/* pointer to DMA segment */
 	u_int32_t	sipd_cmdsts;	/* command/status word */
-	u_int32_t	sipd_extsts;	/* extended status */
 #else
-	u_int32_t	sipd_link;	/* link to next descriptor */
 	u_int32_t	sipd_cmdsts;	/* command/status word */
 	u_int32_t	sipd_bufptr;	/* pointer to DMA segment */
 #endif /* DP83820 */
+	u_int32_t	sipd_extsts;	/* extended status */
 };
 
 /*
@@ -166,7 +165,6 @@ struct sip_desc {
 #define	CMDSTS_Rx_DEST_MUL 0x01000000	/* multicast address */
 #define	CMDSTS_Rx_DEST_BRD 0x01800000	/* broadcast address */
 
-#ifdef DP83820
 /*
  * EXTSTS bits.
  */
@@ -178,7 +176,6 @@ struct sip_desc {
 #define	EXTSTS_IPPKT	 0x00020000	/* perform IP header checksum */
 #define	EXTSTS_VPKT	 0x00010000	/* insert VLAN tag */
 #define	EXTSTS_VTCI	 0x0000ffff	/* VLAN tag control information */
-#endif /* DP83820 */
 
 /*
  * PCI Configuration space registers.
@@ -223,9 +220,9 @@ struct sip_desc {
 
 #define	SIP_CFG		0x04	/* configuration register */
 #define	CFG_LNKSTS	0x80000000	/* link status (83815) */
-#ifdef DP83820
+/* #ifdef DP83820 */
 #define	CFG_SPEED1000	0x40000000	/* 1000Mb/s input pin */
-#define	CFG_SPEED100	0x20000000	/* 100Mb/s input pin */
+#define	CFG83820_SPEED100	0x20000000	/* 100Mb/s input pin */
 #define	CFG_DUPSTS	0x10000000	/* full-duplex status */
 #define	CFG_TBI_EN	0x01000000	/* ten-bit interface enable */
 #define	CFG_MODE_1000	0x00400000	/* 1000Mb/s mode enable */
@@ -239,8 +236,8 @@ struct sip_desc {
 #define	CFG_PCI64_DET	0x00002000	/* 64-bit PCI bus detected */
 #define	CFG_DATA64_EN	0x00001000	/* 64-bit data enable */
 #define	CFG_M64ADDR	0x00000800	/* master 64-bit addressing enable */
-#else
-#define	CFG_SPEED100	0x40000000	/* 100Mb/s (83815) */
+/* #else */
+#define	CFG83815_SPEED100	0x40000000	/* 100Mb/s (83815) */
 #define	CFG_FDUP	0x20000000	/* full duplex (83815) */
 #define	CFG_POL		0x10000000	/* 10Mb/s polarity (83815) */
 #define	CFG_ANEG_DN	0x08000000	/* autonegotiation done (83815) */
@@ -248,14 +245,14 @@ struct sip_desc {
 #define	CFG_PINT_ACEN	0x00020000	/* PHY interrupt auto clear (83815) */
 #define	CFG_PAUSE_ADV	0x00010000	/* pause advertise (83815) */
 #define	CFG_ANEG_SEL	0x0000e000	/* autonegotiation select (83815) */
-#endif /* DP83820 */
+/* #endif DP83820 */
 #define	CFG_PHY_RST	0x00000400	/* PHY reset (83815) */
 #define	CFG_PHY_DIS	0x00000200	/* PHY disable (83815) */
-#ifdef DP83820
+/* #ifdef DP83820 */
 #define	CFG_EXTSTS_EN	0x00000100	/* extended status enable */
-#else
+/* #else */
 #define	CFG_EUPHCOMP	0x00000100	/* 83810 descriptor compat (83815) */
-#endif /* DP83820 */
+/* #endif DP83820 */
 #define	CFG_EDBMASTEN	0x00002000	/* 635,900B ?? from linux driver */
 #define	CFG_RNDCNT	0x00000400	/* 635,900B ?? from linux driver */
 #define	CFG_FAIRBO	0x00000200	/* 635,900B ?? from linux driver */
@@ -264,18 +261,16 @@ struct sip_desc {
 #define	CFG_POW		0x00000020	/* program out of window timer */
 #define	CFG_EXD		0x00000010	/* excessive defferal timer disable */
 #define	CFG_PESEL	0x00000008	/* parity error detection action */
-#ifdef DP83820
+/* #ifdef DP83820 */
 #define	CFG_BROM_DIS	0x00000004	/* boot ROM disable */
 #define	CFG_EXT_125	0x00000002	/* external 125MHz reference select */
-#endif /* DP83820 */
+/* #endif DP83820 */
 #define	CFG_BEM		0x00000001	/* big-endian mode */
 
 #define	SIP_EROMAR	0x08	/* EEPROM access register */
-#ifndef DP83820
 #define	EROMAR_REQ	0x00000400	/* SiS 96x specific */
 #define	EROMAR_DONE	0x00000200	/* SiS 96x specific */
 #define	EROMAR_GNT	0x00000100	/* SiS 96x specific */
-#endif /* DP83820 */
 #define	EROMAR_MDC	0x00000040	/* MII clock */
 #define	EROMAR_MDDIR	0x00000020	/* MII direction (1 == MAC->PHY) */
 #define	EROMAR_MDIO	0x00000010	/* MII data */
@@ -285,7 +280,6 @@ struct sip_desc {
 #define	EROMAR_EEDI	0x00000001	/* data in */
 
 #define	SIP_PTSCR	0x0c	/* PCI test control register */
-#ifdef DP83820
 #define	PTSCR_RBIST_RST	    0x00002000	/* SRAM BIST reset */
 #define	PTSCR_RBIST_EN	    0x00000400	/* SRAM BIST enable */
 #define	PTSCR_RBIST_DONE    0x00000200	/* SRAM BIST done */
@@ -297,7 +291,6 @@ struct sip_desc {
 #define	PTSCR_EELOAD_EN	    0x00000004	/* EEPROM load initiate */
 #define	PTSCR_EEBIST_EN	    0x00000002	/* EEPROM BIST enable */
 #define	PTSCR_EEBIST_FAIL   0x00000001	/* EEPROM BIST failed */
-#else
 #define	PTSCR_DIS_TEST	0x40000000	/* discard timer test mode */
 #define	PTSCR_EROM_TACC	0x0f000000	/* boot rom access time */
 #define	PTSCR_TRRAMADR	0x001ff000	/* TX/RX RAM address */
@@ -306,7 +299,6 @@ struct sip_desc {
 #define	PTSCR_TRTMEN	0x00000040	/* transmit RAM test mode enable */
 #define	PTSCR_SRTMEN	0x00000020	/* status RAM test mode enable */
 #define	PTSCR_SRAMADR	0x0000001f	/* status RAM address */
-#endif /* DP83820 */
 
 #define	SIP_ISR		0x10	/* interrupt status register */
 #ifdef DP83820
@@ -326,8 +318,6 @@ struct sip_desc {
 #define	ISR_RTABT	0x00020000	/* received target abort */
 #else
 #define	ISR_WAKEEVT	0x10000000	/* wake up event */
-#define	ISR_PAUSE_END	0x08000000	/* end of transmission pause */
-#define	ISR_PAUSE_ST	0x04000000	/* start of transmission pause */
 #define	ISR_TXRCMP	0x02000000	/* transmit reset complete */
 #define	ISR_RXRCMP	0x01000000	/* receive reset complete */
 #define	ISR_DPERR	0x00800000	/* detected parity error */
@@ -335,6 +325,11 @@ struct sip_desc {
 #define	ISR_RMABT	0x00200000	/* received master abort */
 #define	ISR_RTABT	0x00100000	/* received target abort */
 #endif /* DP83820 */
+
+/* SiS 900 only */
+#define	ISR_PAUSE_END	0x08000000	/* end of transmission pause */
+#define	ISR_PAUSE_ST	0x04000000	/* start of transmission pause */
+
 #define	ISR_RXSOVR	0x00010000	/* Rx status FIFO overrun */
 #define	ISR_HIBERR	0x00008000	/* high bits error set */
 #ifdef DP83820
@@ -363,11 +358,11 @@ struct sip_desc {
 #define	SIP_IER		0x18	/* interrupt enable register */
 #define	IER_IE		0x00000001	/* master interrupt enable */
 
-#ifdef DP83820
+/* #ifdef DP83820 */
 #define	SIP_IHR		0x1c	/* interrupt hold-off register */
 #define	IHR_IHCTL	0x00000100	/* interrupt hold-off control */
 #define	IHR_IH		0x000000ff	/* interrupt hold-off timer (100us) */
-#else
+/* #else */
 #define	SIP_ENPHY	0x1c	/* enhanced PHY access register */
 #define	ENPHY_PHYDATA	0xffff0000	/* PHY data */
 #define	ENPHY_DATA_SHIFT 16
@@ -377,7 +372,7 @@ struct sip_desc {
 #define	ENPHY_REGADDR_SHIFT 6
 #define	ENPHY_RWCMD	0x00000020	/* 1 == read, 0 == write */
 #define	ENPHY_ACCESS	0x00000010	/* PHY access enable */
-#endif /* DP83820 */
+/* #endif DP83820 */
 
 #define	SIP_TXDP	0x20	/* transmit descriptor pointer reg */
 
@@ -424,7 +419,6 @@ struct sip_desc {
 #define	TXCFG_DRTH	0x0000003f	/* Tx drain threshold */
 #endif /* DP83820 */
 
-#ifdef DP83820
 #define	SIP_GPIOR	0x2c	/* general purpose i/o register */
 #define	GPIOR_GP5_IN	0x00004000	/* GP 5 in */
 #define	GPIOR_GP4_IN	0x00002000	/* GP 4 in */
@@ -441,7 +435,6 @@ struct sip_desc {
 #define	GPIOR_GP3_OUT	0x00000004	/* GP 3 out */
 #define	GPIOR_GP2_OUT	0x00000002	/* GP 2 out */
 #define	GPIOR_GP1_OUT	0x00000001	/* GP 1 out */
-#endif /* DP83820 */
 
 #define	SIP_RXDP	0x30	/* receive descriptor pointer reg */
 
@@ -494,15 +487,17 @@ struct sip_desc {
 #define	PQCR_TXFAIR	0x00000002	/* Tx fairness enable */
 #define	PQCR_TXPQEN	0x00000001	/* Tx priority queueing enable */
 #else
-#define	SIP_FLOWCTL	0x38	/* flow control register */
-#define	FLOWCTL_PAUSE	0x00000002	/* PAUSE flag */
-#define	FLOWCTL_FLOWEN	0x00000001	/* enable flow control */
 
-#define	SIP_NS_CCSR	0x3c	/* CLKRUN control/status register (83815) */
+#define	SIP83815_NS_CCSR	0x3c	/* CLKRUN control/status register (83815) */
 #define	CCSR_PMESTS	0x00008000	/* PME status */
 #define	CCSR_PMEEN	0x00000100	/* PME enable */
 #define	CCSR_CLKRUN_EN	0x00000001	/* clkrun enable */
 #endif /* DP83820 */
+
+/* SiS 900 only */
+#define	SIP_FLOWCTL	0x38	/* flow control register */
+#define	FLOWCTL_PAUSE	0x00000002	/* PAUSE flag */
+#define	FLOWCTL_FLOWEN	0x00000001	/* enable flow control */
 
 #define	SIP_NS_WCSR	0x40	/* WoL control/status register (83815/83820) */
 
@@ -512,7 +507,7 @@ struct sip_desc {
 #define	PCR_PS_DA	0x20000000 /* pause on DA */
 #define	PCR_PS_ACT	0x10000000 /* pause active */
 #define	PCR_PS_RCVD	0x08000000 /* pause packet recieved */
-#ifdef DP83820
+/* #ifdef DP83820 */
 #define	PCR_PS_STHI_8	0x03000000 /* Status FIFO Hi Threshold (8packets) */
 #define	PCR_PS_STHI_4	0x02000000 /* Status FIFO Hi Threshold (4packets) */
 #define	PCR_PS_STHI_2	0x01000000 /* Status FIFO Hi Threshold (2packets) */
@@ -530,10 +525,10 @@ struct sip_desc {
 #define	PCR_PS_FFLO_2	0x00040000 /* Data FIFO Lo Threshold (2Kbyte) */
 #define	PCR_PS_FFLO_0	0x00000000 /* Data FIFO Lo Threshold (disable) */
 #define	PCR_PS_TX	0x00020000 /* Transmit PAUSE frame manually */
-#else
+/* #else */
 #define	PCR_PSNEG	0x00200000 /* Pause Negoticated (83815) */
 #define	PCR_MLD_EN	0x00010000 /* Manual Load Enable (83815) */
-#endif /* DP83820 */
+/* #endif DP83820 */
 #define PCR_PAUSE_CNT_MASK 0x0000ffff /* pause count mask */
 #define PCR_PAUSE_CNT	   65535      /* pause count (512bit-time) */
 
@@ -632,12 +627,11 @@ struct sip_desc {
 #define	MIB_RXTXSQEErrors	0x18
 #endif /* DP83820 */
 
-#ifndef DP83820
+/* 83815 only */
 #define	SIP_NS_PHY(miireg)	/* PHY registers (83815) */		\
 	(0x80 + ((miireg) << 2))
-#endif
 
-#ifdef DP83820
+/* #ifdef DP83820 */
 #define	SIP_TXDP1	0xa0	/* transmit descriptor pointer (pri 1) */
 
 #define	SIP_TXDP2	0xa4	/* transmit descriptor pointer (pri 2) */
@@ -670,10 +664,12 @@ struct sip_desc {
 #define	VDR_VTCI	0xffff0000	/* VLAN tag control information */
 #define	VDR_VTYPE	0x0000ffff	/* VLAN type field */
 
-#define	SIP_NS_CCSR	0xcc	/* CLKRUN control/status register (83815) */
+#define	SIP83820_NS_CCSR	0xcc	/* CLKRUN control/status register (83820) */
+#if 0
 #define	CCSR_PMESTS	0x00008000	/* PME status */
 #define	CCSR_PMEEN	0x00000100	/* PME enable */
 #define	CCSR_CLKRUN_EN	0x00000001	/* clkrun enable */
+#endif
 
 #define	SIP_TBICR	0xe0	/* TBI control register */
 #define	TBICR_MR_LOOPBACK   0x00004000	/* TBI PCS loopback enable */
@@ -703,7 +699,7 @@ struct sip_desc {
 #define	SIP_TESR	0xf4	/* TBI extended status register */
 #define	TESR_1000FDX	0x00008000	/* we support 1000base FDX */
 #define	TESR_1000HDX	0x00004000	/* we support 1000base HDX */
-#else
+/* #else */
 #define	SIP_PMCTL	0xb0	/* power management control register */
 #define	PMCTL_GATECLK	0x80000000	/* gate dual clock enable */
 #define	PMCTL_WAKEALL	0x40000000	/* wake on all Rx OK */
@@ -737,7 +733,7 @@ struct sip_desc {
 #define	SIP_WAKEMASK5	0xe4
 #define	SIP_WAKEMASK6	0xe8
 #define	SIP_WAKEMASK7	0xec
-#endif /* DP83820 */
+/* #endif DP83820 */
 
 /*
  * Revision codes for the SiS 630 chipset built-in Ethernet.
