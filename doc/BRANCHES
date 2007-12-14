@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.230 2007/12/12 19:24:13 bouyer Exp $
+#	$NetBSD: BRANCHES,v 1.231 2007/12/14 14:59:04 yamt Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -564,7 +564,7 @@ Description:
 Status:		Active
 Start Date:	Sun Dec  9 2007
 End Date:	
-Base Tag:	yamt-kmem-base
+Base Tag:	yamt-kmem-base3
 Maintainer:	YAMAMOTO Takashi <yamt@NetBSD.org>
 Scope:		src/sys  (src/common is tagged but not branched)
 Notes:		
