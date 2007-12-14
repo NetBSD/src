@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.5 2007/12/04 01:00:54 jmcneill Exp $
+.\"	$NetBSD: boot.8,v 1.6 2007/12/14 12:03:53 apb Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,9 +32,9 @@
 .\"
 .\"     @(#)boot_i386.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd December 3, 2007
-.Dt BOOT 8
+.Dd December 14, 2007
 .Os
+.Dt BOOT 8
 .Sh NAME
 .Nm boot
 .Nd
@@ -43,11 +43,16 @@ system bootstrapping procedures
 This document provides information on using common features in the
 .Nx
 boot loader.
+Additional information may be found in
+architecture-specific
+.Xr boot 8
+manual pages.
 .Ss Interactive mode
 In interactive mode, the boot loader will present a prompt, allowing
 input of these commands:
-.\" NOTE: much of this text is duplicated in dosboot.8; please try to
-.\" keep both files synchronized.
+.\" NOTE: much of this text is duplicated in architecture-specific
+.\" man pages (man8/man8.*/*boot*.8);
+.\" please try to keep all relevant files synchronized.
 .Bl -tag -width 04n -offset 04n
 .It Xo Ic boot
 .Op Va device : Ns
@@ -166,6 +171,9 @@ can be used.
 .Bl -tag -width /usr/mdec/bootxx_fstype -compact
 .It Pa /boot
 boot program code loaded by the primary bootstrap
+.\" .It Pa /boot.cfg
+.\" optional configuration file
+.\" (used only on i386 and amd64 architectures)
 .It Pa /netbsd
 system code
 .It Pa /netbsd.gz
@@ -180,14 +188,18 @@ partition by
 .Xr installboot 8 .
 .El
 .Sh SEE ALSO
+Architecture-specific
+.Xr boot 8
+manual pages,
 .Xr ddb 4 ,
 .Xr userconf 4 ,
+.\" .Xr boot.cfg 5 ,
 .Xr boot_console 8 ,
 .Xr halt 8 ,
 .Xr installboot 8 ,
 .Xr reboot 8 ,
 .Xr shutdown 8
-.Pp
+.Sh BUGS
 Any
 .Ar filename
 specified after the boot options, e.g.:
