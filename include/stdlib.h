@@ -1,4 +1,4 @@
-/*	$NetBSD: stdlib.h,v 1.78 2007/11/19 14:48:41 ad Exp $	*/
+/*	$NetBSD: stdlib.h,v 1.79 2007/12/14 16:36:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -260,6 +260,18 @@ int	 cgetustr(char *, const char *, char **);
 
 int	 daemon(int, int);
 __aconst char *devname(dev_t, mode_t);
+
+#define	HN_DECIMAL		0x01
+#define	HN_NOSPACE		0x02
+#define	HN_B			0x04
+#define	HN_DIVISOR_1000		0x08
+
+#define	HN_GETSCALE		0x10
+#define	HN_AUTOSCALE		0x20
+
+int	 humanize_number(char *, size_t, int64_t, const char *, int, int);
+int	 dehumanize_number(const char *, int64_t *);
+
 dev_t	 getdevmajor(const char *, mode_t);
 int	 getloadavg(double [], int);
 
