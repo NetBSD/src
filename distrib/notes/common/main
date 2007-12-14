@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.380 2007/12/14 21:15:53 pavel Exp $
+.\"	$NetBSD: main,v 1.381 2007/12/14 23:38:22 jnemeth Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1668,15 +1668,14 @@ which runs the CVSweb interface to the
 .Nx
 source tree.
 .It
-The Helsinki University of Technology in Finland for hosting the
-.Nx
-backup CVS and backup server.
+The Lule\[oa] Academic Computer Society for providing the backup
+services server.
 .It
-SSH Communications Security in Finland for operating
-the backup server. 
+The Columbia University Computer Science Department for hosting
+the NYC build cluster.
 .It
 The Western Washington University Computer Science Department
-for running a build cluster that produces daily snapshots.
+for running the WWU build cluster that produces daily snapshots.
 .It
 The many organizations that provide
 .Nx
