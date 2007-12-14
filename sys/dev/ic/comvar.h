@@ -1,4 +1,4 @@
-/*	$NetBSD: comvar.h,v 1.57 2007/10/17 17:44:19 ad Exp $	*/
+/*	$NetBSD: comvar.h,v 1.58 2007/12/14 03:36:55 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -229,6 +229,7 @@ int comintr(void *);
 void com_attach_subr(struct com_softc *);
 int com_probe_subr(struct com_regs *);
 int com_detach(struct device *, int);
+bool com_resume(device_t);
 int com_activate(struct device *, enum devact);
 void com_cleanup(void *);
 
