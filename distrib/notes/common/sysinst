@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysinst,v 1.81 2007/09/28 18:26:47 tsutsui Exp $
+.\"	$NetBSD: sysinst,v 1.82 2007/12/14 04:28:14 jnemeth Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -427,7 +427,7 @@ After language selection, the main menu will be displayed.
   .***********************************************.
   * NetBSD-\*V Install System                     *
   *                                               *
-  *\*>a: Install NetBSD to hard disk                *
+  *\*[Gt]a: Install NetBSD to hard disk                *
   * b: Upgrade NetBSD on a hard disk              *
   * c: Re-install sets or install additional sets *
   * d: Reboot the computer                        *
@@ -1653,15 +1653,19 @@ you have selected.
 In the latter case, you will be shown the currently selected sets,
 and given the opportunity to select the sets you want.
 Some sets always need to be installed
-.Pq Sy kern, base
+.Po Sy kern, base,
 and
 .Sy etc
+.Pc
 they will not be shown in this selection menu.
 .Pp
 Before extraction begins, you can elect to watch the files being
 extracted; the name of each file that is extracted will be shown.
 This can slow down the installation process considerably, especially
 on machines with slow graphics consoles or serial consoles.
+Alternatively, you will be asked if you wish to have a progress bar.
+This is the preferred option as it shows progress without significantly
+slowing down the installation process.
 .Pp
 .ie \n[macppc] \{\
 If you are installing using the
@@ -1755,7 +1759,7 @@ Now you ned to mount the location of your distribution sets:
 .Pp
 Congratulations, you have successfully installed
 .Nx
-\*V .
+\*V.
 .if \n[cats] \{\
 .Pp
 To finalize the installation of
