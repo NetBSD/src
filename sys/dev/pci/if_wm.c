@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.149 2007/12/09 20:28:10 jmcneill Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.150 2007/12/14 00:23:49 tls Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.149 2007/12/09 20:28:10 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.150 2007/12/14 00:23:49 tls Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -3032,8 +3032,8 @@ wm_init(struct ifnet *ifp)
 		CSR_WRITE(sc, WMREG_TDLEN, WM_TXDESCSIZE(sc));
 		CSR_WRITE(sc, WMREG_TDH, 0);
 		CSR_WRITE(sc, WMREG_TDT, 0);
-		CSR_WRITE(sc, WMREG_TIDV, 64);
-		CSR_WRITE(sc, WMREG_TADV, 128);
+		CSR_WRITE(sc, WMREG_TIDV, 375);		/* ITR / 4 */
+		CSR_WRITE(sc, WMREG_TADV, 375);		/* should be same */
 
 		CSR_WRITE(sc, WMREG_TXDCTL, TXDCTL_PTHRESH(0) |
 		    TXDCTL_HTHRESH(0) | TXDCTL_WTHRESH(0));
@@ -3074,8 +3074,8 @@ wm_init(struct ifnet *ifp)
 		CSR_WRITE(sc, WMREG_RDLEN, sizeof(sc->sc_rxdescs));
 		CSR_WRITE(sc, WMREG_RDH, 0);
 		CSR_WRITE(sc, WMREG_RDT, 0);
-		CSR_WRITE(sc, WMREG_RDTR, 0 | RDTR_FPD);
-		CSR_WRITE(sc, WMREG_RADV, 128);
+		CSR_WRITE(sc, WMREG_RDTR, 375 | RDTR_FPD);	/* ITR/4 */
+		CSR_WRITE(sc, WMREG_RADV, 375);		/* MUST be same */
 	}
 	for (i = 0; i < WM_NRXDESC; i++) {
 		rxs = &sc->sc_rxsoft[i];
@@ -3191,8 +3191,18 @@ wm_init(struct ifnet *ifp)
 	CSR_WRITE(sc, WMREG_TIPG, sc->sc_tipg);
 
 	if (sc->sc_type >= WM_T_82543) {
-		/* Set up the interrupt throttling register (units of 256ns) */
-		sc->sc_itr = 1000000000 / (7000 * 256);
+		/*
+		 * Set up the interrupt throttling register (units of 256ns)
+		 * Note that a footnote in Intel's documentation says this
+		 * ticker runs at 1/4 the rate when the chip is in 100Mbit
+		 * or 10Mbit mode.  Empirically, it appears to be the case
+		 * that that is also true for the 1024ns units of the other
+		 * interrupt-related timer registers -- so, really, we ought
+		 * to divide this value by 4 when the link speed is low.
+		 *
+		 * XXX implement this division at link speed change!
+		 */
+		sc->sc_itr = 1000000000 / (1500 * 256);	/* 2604 ints/sec */
 		CSR_WRITE(sc, WMREG_ITR, sc->sc_itr);
 	}
 
