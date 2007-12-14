@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1101 2007/12/14 20:22:45 explorer Exp $
+#	$NetBSD: mi,v 1.1102 2007/12/14 22:01:52 yamt Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -3373,12 +3373,15 @@
 ./usr/share/man/cat2/_exit.0			comp-c-catman		.cat
 ./usr/share/man/cat2/_lwp_continue.0		comp-c-catman		.cat
 ./usr/share/man/cat2/_lwp_create.0		comp-c-catman		.cat
+./usr/share/man/cat2/_lwp_ctl.0			comp-c-catman		.cat
 ./usr/share/man/cat2/_lwp_detach.0		comp-c-catman		.cat
 ./usr/share/man/cat2/_lwp_exit.0		comp-c-catman		.cat
+./usr/share/man/cat2/_lwp_getname.0		comp-c-catman		.cat
 ./usr/share/man/cat2/_lwp_getprivate.0		comp-c-catman		.cat
 ./usr/share/man/cat2/_lwp_kill.0		comp-c-catman		.cat
 ./usr/share/man/cat2/_lwp_park.0		comp-c-catman		.cat
 ./usr/share/man/cat2/_lwp_self.0		comp-c-catman		.cat
+./usr/share/man/cat2/_lwp_setname.0		comp-c-catman		.cat
 ./usr/share/man/cat2/_lwp_setprivate.0		comp-c-catman		.cat
 ./usr/share/man/cat2/_lwp_suspend.0		comp-c-catman		.cat
 ./usr/share/man/cat2/_lwp_unpark.0		comp-c-catman		.cat
@@ -5882,10 +5885,12 @@
 ./usr/share/man/cat3/pthread_attr.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_attr_destroy.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_attr_getdetachstate.0	comp-c-catman		.cat
+./usr/share/man/cat3/pthread_attr_getname_np.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_attr_getschedparam.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_attr_init.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_attr_setcreatesuspend_np.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_attr_setdetachstate.0	comp-c-catman		.cat
+./usr/share/man/cat3/pthread_attr_setname_np.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_attr_setschedparam.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_barierattr_destroy.0	comp-obsolete		obsolete
 ./usr/share/man/cat3/pthread_barierattr_init.0		comp-obsolete		obsolete
@@ -5911,6 +5916,7 @@
 ./usr/share/man/cat3/pthread_detach.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_equal.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_exit.0		comp-c-catman		.cat
+./usr/share/man/cat3/pthread_getname_np.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_getschedparam.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_getspecific.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_join.0		comp-c-catman		.cat
@@ -5945,6 +5951,7 @@
 ./usr/share/man/cat3/pthread_self.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_setcancelstate.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_setcanceltype.0	comp-c-catman		.cat
+./usr/share/man/cat3/pthread_setname_np.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_setschedparam.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_setspecific.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_sigmask.0		comp-c-catman		.cat
@@ -7974,12 +7981,15 @@
 ./usr/share/man/man2/_exit.2			comp-c-man		.man
 ./usr/share/man/man2/_lwp_continue.2		comp-c-man		.man
 ./usr/share/man/man2/_lwp_create.2		comp-c-man		.man
+./usr/share/man/man2/_lwp_ctl.2			comp-c-man		.man
 ./usr/share/man/man2/_lwp_detach.2		comp-c-man		.man
 ./usr/share/man/man2/_lwp_exit.2		comp-c-man		.man
+./usr/share/man/man2/_lwp_getname.2		comp-c-man		.man
 ./usr/share/man/man2/_lwp_getprivate.2		comp-c-man		.man
 ./usr/share/man/man2/_lwp_kill.2		comp-c-man		.man
 ./usr/share/man/man2/_lwp_park.2		comp-c-man		.man
 ./usr/share/man/man2/_lwp_self.2		comp-c-man		.man
+./usr/share/man/man2/_lwp_setname.2		comp-c-man		.man
 ./usr/share/man/man2/_lwp_setprivate.2		comp-c-man		.man
 ./usr/share/man/man2/_lwp_suspend.2		comp-c-man		.man
 ./usr/share/man/man2/_lwp_unpark.2		comp-c-man		.man
@@ -10481,10 +10491,12 @@
 ./usr/share/man/man3/pthread_attr.3		comp-c-man		.man
 ./usr/share/man/man3/pthread_attr_destroy.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_attr_getdetachstate.3	comp-c-man		.man
+./usr/share/man/man3/pthread_attr_getname_np.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_attr_getschedparam.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_attr_init.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_attr_setcreatesuspend_np.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_attr_setdetachstate.3	comp-c-man		.man
+./usr/share/man/man3/pthread_attr_setname_np.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_attr_setschedparam.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_barierattr_destroy.3	comp-obsolete		obsolete
 ./usr/share/man/man3/pthread_barierattr_init.3		comp-obsolete		obsolete
@@ -10510,6 +10522,7 @@
 ./usr/share/man/man3/pthread_detach.3		comp-c-man		.man
 ./usr/share/man/man3/pthread_equal.3		comp-c-man		.man
 ./usr/share/man/man3/pthread_exit.3		comp-c-man		.man
+./usr/share/man/man3/pthread_getname_np.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_getschedparam.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_getspecific.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_join.3		comp-c-man		.man
@@ -10544,6 +10557,7 @@
 ./usr/share/man/man3/pthread_self.3		comp-c-man		.man
 ./usr/share/man/man3/pthread_setcancelstate.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_setcanceltype.3	comp-c-man		.man
+./usr/share/man/man3/pthread_setname_np.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_setschedparam.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_setspecific.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_sigmask.3		comp-c-man		.man
