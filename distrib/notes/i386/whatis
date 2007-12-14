@@ -1,0 +1,29 @@
+.\"	$NetBSD: whatis,v 1.22.2.2 2007/12/14 07:07:30 jnemeth Exp $
+.
+This is the twelfth major release of
+.Nx
+for the \*M.
+.Pp
+As is usual between releases, the \*M port has had many improvements
+made to it \(em too many to detail all of them here.
+.Pp
+Numerous new drivers have been added.
+See the supported hardware list for details.
+.Pp
+Some (but not all!) notable \*M-specific improvements include:
+.(bullet
+Default kernels now have ACPI enabled by default. If this causes problems
+on your hardware, use userconf and
+.Ic disable acpi
+to boot without ACPI support.
+You can also boot a legacy kernel from cdrom using:
+.Ic boot Ar nbnoacpi ,
+and choose to install the GENERIC.NOACPI kernel set from sysinst.
+.bullet)
+.Pp
+.Nx \*V
+on \*M is, as usual, also fully backward compatible with old
+.Nx*M
+binaries, so you don't need to recompile all your local programs
+provided you set the appropriate binary compatibility options in your
+kernel configuration.
