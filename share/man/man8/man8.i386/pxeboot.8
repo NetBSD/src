@@ -1,4 +1,4 @@
-.\"	$NetBSD: pxeboot.8,v 1.9 2005/11/12 16:43:07 wiz Exp $
+.\"	$NetBSD: pxeboot.8,v 1.10 2007/12/14 12:03:53 apb Exp $
 .\"
 .\" Copyright (c) 2003
 .\" 	Matthias Drochner.  All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd November 12, 2005
+.Dd December 14, 2007
 .Os
 .Dt PXEBOOT 8 i386
 .Sh NAME
@@ -186,12 +186,14 @@ kernel's behaviour.
 .El
 .Pp
 The commands accepted in interactive mode are:
-.\" NOTE: much of this text is duplicated in boot.8; please try to
-.\" keep both files synchronized.
+.\" NOTE: some of this text is duplicated in the MI boot.8
+.\" and in other i386-specific *boot.8 files;
+.\" please try to keep all relevant files synchronized.
 .Bl -tag -width 04n -offset 04n
 .It Xo Ic boot
+.Op Va device : Ns
 .Op Va filename
-.Op Fl adqsv
+.Op Fl acdqsvxz
 .Xc
 Boot
 .Nx .
