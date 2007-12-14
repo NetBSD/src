@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs_ext2fs.c,v 1.1 2007/11/17 16:50:26 tsutsui Exp $	*/
+/*	$NetBSD: newfs_ext2fs.c,v 1.2 2007/12/14 13:19:35 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.13 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: newfs_ext2fs.c,v 1.1 2007/11/17 16:50:26 tsutsui Exp $");
+__RCSID("$NetBSD: newfs_ext2fs.c,v 1.2 2007/12/14 13:19:35 tsutsui Exp $");
 #endif
 #endif /* not lint */
 
@@ -171,11 +171,11 @@ main(int argc, char *argv[])
 			break;
 		case 'b':
 			bsize = strsuftoi64("block size",
-			    optarg, MINBSIZE, MAXBSIZE, NULL);
+			    optarg, MINBSIZE, EXT2_MAXBSIZE, NULL);
 			break;
 		case 'f':
 			fsize = strsuftoi64("fragment size",
-			    optarg, 1, MAXBSIZE, NULL);
+			    optarg, MINBSIZE, EXT2_MAXBSIZE, NULL);
 			break;
 		case 'i':
 			density = strsuftoi64("bytes per inode",

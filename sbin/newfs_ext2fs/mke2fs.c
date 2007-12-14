@@ -1,4 +1,4 @@
-/*	$NetBSD: mke2fs.c,v 1.6 2007/12/09 17:39:51 tsutsui Exp $	*/
+/*	$NetBSD: mke2fs.c,v 1.7 2007/12/14 13:19:35 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2007 Izumi Tsutsui.
@@ -108,7 +108,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mke2fs.c,v 1.6 2007/12/09 17:39:51 tsutsui Exp $");
+__RCSID("$NetBSD: mke2fs.c,v 1.7 2007/12/14 13:19:35 tsutsui Exp $");
 #endif
 #endif /* not lint */
 
@@ -228,7 +228,7 @@ mke2fs(const char *fsys, int fi, int fo)
 		    "block size %u is too small, minimum is %u\n",
 		    bsize, MINBSIZE);
 	}
-	if (bsize > MAXBSIZE) {
+	if (bsize > EXT2_MAXBSIZE) {
 		errx(EXIT_FAILURE,
 		    "block size %u is too large, maximum is %u\n",
 		    bsize, MAXBSIZE);
@@ -553,8 +553,7 @@ mke2fs(const char *fsys, int fi, int fo)
 	 */
 
 	if (!Nflag) {
-		static const uint pbsize[] =
-		    { 1024, 2048, 4096, 8192, 16384, 0 };
+		static const uint pbsize[] = { 1024, 2048, 4096, 0 };
 		uint pblock, epblock;
 		/*
 		 * Validate the given file system size.
