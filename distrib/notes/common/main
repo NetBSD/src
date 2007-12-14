@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.378 2007/12/14 06:33:30 jnemeth Exp $
+.\"	$NetBSD: main,v 1.379 2007/12/14 10:18:30 jnemeth Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1080,9 +1080,6 @@ promotional activities.
 periodically organizing workshops for developers and other
 interested people to discuss ongoing work.
 .bullet)
-.Pp
-We intend to begin narrowing the time delay between releases.
-Our ambition is to provide a full release every six to eight months.
 .Pp
 We hope to support even
 .Em more
