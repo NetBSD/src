@@ -1,4 +1,4 @@
-/* $NetBSD: spdmem.c,v 1.5 2007/12/13 15:36:29 xtraeme Exp $ */
+/* $NetBSD: spdmem.c,v 1.6 2007/12/14 13:18:43 njoly Exp $ */
 
 /*
  * Copyright (c) 2007 Nicolas Joly
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.5 2007/12/13 15:36:29 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.6 2007/12/14 13:18:43 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -124,7 +124,7 @@ spdmem_match(struct device *parent, struct cfdata *match, void *aux)
 	int cksum = 0;
 	uint8_t i, val;
 
-	if (ia->ia_addr < 0x50)
+	if (ia->ia_addr < 0x50 || ia->ia_addr > 0x57)
 		return 0;
 
 	sc.sc_tag = ia->ia_tag;
