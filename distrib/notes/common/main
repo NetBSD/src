@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.376 2007/12/11 18:16:16 phx Exp $
+.\"	$NetBSD: main,v 1.377 2007/12/14 04:24:49 jnemeth Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -520,7 +520,7 @@ imported Common Address Redundancy Protocol to allow multiple hosts to share a s
 ALTQ support for the PF packet filter.
 .It
 .Xr etherip 4 :
-new EtherIP tunneling device to tunnel Ethernet traffic over IPv4 and IPv6 using the EtherIP protocol specified in RFC 3378.
+new EtherIP tunneling device. It's able to tunnel Ethernet traffic over IPv4 and IPv6 using the EtherIP protocol specified in RFC 3378.
 .It
 .Xr ftpd 8
 can now run in standalone mode, instead of from
@@ -603,7 +603,7 @@ new driver for the 1-Wire temperature sensors.
 new driver for the Texas Instruments TMP121 temperature sensor.
 .It
 .Xr ug 4 :
-new driver for ASUS Abit uGuru hardware monitor found on newer ASUS motherboards.
+new driver for Abit uGuru hardware monitor found on newer Abit motherboards.
 .bullet)
 .
 .It
@@ -762,7 +762,7 @@ evbmips: added support for Alchemy Au1550 processors, DBAu1550 boards, Alchemy A
 New port
 ews4800mips: NEC's MIPS based EWS4800 workstations.
 .It
-cobalt: added support from booting off raidframe RAID1 mirrors.
+cobalt: added support for booting off raidframe RAID1 mirrors.
 .It
 hpcmips: added the
 .Xr teliosio 4
@@ -775,7 +775,7 @@ macppc: this port has gained support to use accelerated wsdisplay drivers by def
 .It
 prep: this port has been modernized, and support for five additional machines has been added, among them the IBM 7024-E20 and 7025-F30 models and Motorola Powerstack E1. Additionally, sysinst support was added, and the bootloader process was improved, allowing easy installation and upgrade to future releases.
 .It
-sparc: added support from booting off RAID1 mirrors.
+sparc: added support for booting off raidframe RAID1 mirrors.
 .It
 Xen: support for Xen3 domU and dom0 (Unprivileged domain and domain 0), including support for hardware virtualization on CPUs that support it.
 .bullet)
@@ -881,9 +881,9 @@ NetBSD's kernel authorization is a hybrid clean-room implementation of a similar
 .(bullet
 BIND 9.4.1-P1
 .It
-OpenSSL 0.9.8d
+OpenSSL 0.9.8e
 .It
-CVS 1.11.21
+CVS 1.11.22
 .It
 OpenSSH 4.4
 .It
@@ -907,7 +907,9 @@ GNU groff 1.19.2
 .It
 IPFilter 4.1.23
 .It
-GNU gcc 4.1.1
+GNU gcc 4.1.2 prerelease
+.It
+GNU gdb 6.5 (some architectures)
 .It
 NTP 4.2.4p2
 .It
@@ -991,7 +993,7 @@ for making connections to Bluetooth headsets.
 .bullet)
 .
 .Pp
-Besides this list, there there have also been innumerable bug fixes and other miscellaneous enhancements of course.
+Besides this list, there have also been innumerable bug fixes and other miscellaneous enhancements of course.
 .Ss2 Components removed from NetBSD
 .Pp
 In this release of NetBSD, some software components known from previous releases were removed from the system. In some cases those were components that are not useful anymore or their utility does not justify maintenance overhead. Other components were not working properly and there was lack of interest in fixing them.
@@ -1002,8 +1004,7 @@ Vinum was removed due to lack of interest and maintenance. At the time of remova
 .Xr raid 4 ,
 .Xr raidctl 8 ,
 and the
-NetBSD
-      Guide:
+NetBSD Guide:
 .Lk http://www.NetBSD.org/docs/guide/en/chap-rf.html .
 .It
 Sendmail was removed. Postfix is the MTA and provides the
@@ -1109,7 +1110,7 @@ exists.
 .Pp
 .
 Refer to
-.Lk http://www.NetBSD.org/mirrors/ .
+.Lk http://www.NetBSD.org/mirrors/.
 .br_ne 10P
 .
 .Ss "NetBSD \*V Release Contents
@@ -1123,7 +1124,15 @@ The root directory of the
 .Pa .../NetBSD-\*V/
 .(tag README.files
 .It Li CHANGES
-Changes since earlier
+Changes between
+.Nx
+3.0 and branching 4.0.
+.It Li CHANGES-4.0
+Changes since
+.Nx
+4.0 was branched.
+.It Li CHANGES.prev
+Changes in earlier
 .Nx
 releases.
 .It Li LAST_MINUTE
@@ -1159,19 +1168,14 @@ This set contains the
 .Dq gnu
 sources, including the source for the compiler, assembler, groff,
 and the other GNU utilities in the binary distribution sets.
-.showsize 79 367
-.It Sy pkgsrc
-This set contains the
-.Dq pkgsrc
-sources, which contain the infrastructure to build third-party packages.
-.showsize 24 200
+.showsize 95 484
 .It Sy sharesrc
 This set contains the
 .Dq share
 sources, which include the sources for the man pages not associated
 with any particular program; the sources for the typesettable document
 set; the dictionaries; and more.
-.showsize 5 20
+.showsize 6 25
 .It Sy src
 This set contains all of the base
 .Nx
@@ -1180,7 +1184,7 @@ This set contains all of the base
 .Sy sharesrc ,
 or
 .Sy syssrc .
-.showsize 37 176
+.showsize 45 214
 .It Sy syssrc
 This set contains the sources to the
 .Nx
@@ -1188,10 +1192,10 @@ This set contains the sources to the
 .Xr config 1 ;
 and
 .Xr dbsym 8 .
-.showsize 26 140
+.showsize 33 165
 .It Sy xsrc
 This set contains the sources to the X Window System.
-.showsize 84 450
+.showsize 95 502
 .tag)
 .Pp
 All the above source sets are located in the
@@ -1229,7 +1233,13 @@ directory, in the format produced by the command:
 digests for the various files in that
 directory, in the format produced by the command:
 .br
-.Ic cksum -m Ar file .
+.Ic cksum -a MD5 Ar file .
+.It Li SHA512
+.Tn SHA512
+digests for the various files in that
+directory, in the format produced by the command:
+.br
+.Ic cksum -a SHA512 Ar file .
 .It Li SYSVSUM
 Historic AT\*&T System V
 .Ux
@@ -1239,10 +1249,10 @@ the command:
 .Ic cksum -o 2 Ar file .
 .tag)
 .Pp
-The MD5 digest is the safest checksum, followed by the POSIX
-checksum.
+The SHA512 digest is the safest checksum, followed by the MD5 digest,
+and finally the POSIX checksum.
 The other two checksums are provided only to ensure
-that the widest possible range of system can check the integrity
+that the widest possible range of systems can check the integrity
 of the release files.
 .\}
 .el \{\
@@ -1336,13 +1346,13 @@ It is
 .Sy very important
 that you populate the directory
 .Pa /etc/pam.d
-with appropriate configuration files for the Pluggable Authentication Modules
+with appropriate configuration files for Pluggable Authentication Modules
 (PAM) because you will not be able to login any more otherwise. Using
 .Em postinstall
 as described below will take care of this. Please refer to
 .Lk http://www.netbsd.org/guide/en/chap-pam.html
 for documentation about PAM.
-
+.Pp
 The following issues can generally be resolved by running
 .Em postinstall
 with the
@@ -1399,7 +1409,7 @@ need to be created.
 .bullet)
 .
 .Ss2 Issues affecting an upgrade from NetBSD 3.x releases.
-
+.Pp
 The following issues can generally be resolved by running
 .Em postinstall
 with the
@@ -1512,7 +1522,7 @@ Unfortunately support for debugging programs using the SA (scheduler
 activation) based thread library, is incomplete in this gdb version.
 Furthermore kernel crashdumps can not be debugged due to a missing
 identification in the kernel binaries.
-.Pa
+.Pp
 Both issues have been addressed on the wrstuden-fixsa branch, but did not
 make it into the
 .Nx
@@ -1668,6 +1678,9 @@ backup CVS and backup server.
 SSH Communications Security in Finland for operating
 the backup server. 
 .It
+The Western Washington University Computer Science Department
+for running a build cluster that produces daily snapshots.
+.It
 The many organizations that provide
 .Nx
 mirror sites.
@@ -1680,7 +1693,7 @@ We list the individuals and organizations
 that have made donations or loans of hardware and/or money, to support
 .Nx
 development, and deserve credit for it at
-.Lk http://www.NetBSD.org/donations .
+.Lk http://www.NetBSD.org/donations/.
 (If you're not on that list and should be, tell us!
 We probably were not able to get in touch with you, to verify that you
 wanted to be listed.)
@@ -1690,7 +1703,7 @@ developing
 .Nx
 since its inception in January, 1993.
 (Obviously, there are a lot more people who deserve thanks here.
-If you're one of them, and would like to mentioned, tell us!)
+If you're one of them, and would like to be mentioned, tell us!)
 .bullet)
 .
 .Ss "We are..."
@@ -1717,16 +1730,15 @@ If you're one of them, and would like to mentioned, tell us!)
 .\"
 .\" XXX created by list-portmasters.pl
 .\"
-.It Ta Ta Ta
 .It Ta Anders Magnusson               Ta Mt                ragge Ta Sy vax
+.It Ta Andrew Doran                   Ta Mt                   ad Ta Sy amd64
+.It Ta Andrew Doran                   Ta Mt                   ad Ta Sy i386
 .It Ta Andrey Petrov                  Ta Mt               petrov Ta Sy sparc64
 .It Ta Ben Harris                     Ta Mt                bjh21 Ta Sy acorn26
 .It Ta Cherry G. Mathew               Ta Mt               cherry Ta Sy ia64
 .It Ta Chris Gilbert                  Ta Mt                chris Ta Sy cats
 .It Ta Darrin Jewell                  Ta Mt                  dbj Ta Sy next68k
 .It Ta Erik Berls                     Ta Mt                cyber Ta Sy cobalt
-.It Ta Frank van der Linden           Ta Mt                 fvdl Ta Sy amd64
-.It Ta Frank van der Linden           Ta Mt                 fvdl Ta Sy i386
 .It Ta Gavan Fantom                   Ta Mt                gavan Ta Sy iyonix
 .It Ta IWAMOTO Toshihiro              Ta Mt               toshii Ta Sy hpcarm
 .It Ta Ichiro FUKUHARA                Ta Mt               ichiro Ta Sy hpcarm
@@ -1734,6 +1746,7 @@ If you're one of them, and would like to mentioned, tell us!)
 .It Ta Izumi Tsutsui                  Ta Mt              tsutsui Ta Sy ews4800mips
 .It Ta Izumi Tsutsui                  Ta Mt              tsutsui Ta Sy hp300
 .It Ta Izumi Tsutsui                  Ta Mt              tsutsui Ta Sy news68k
+.It Ta Jaime A Fournier               Ta Mt                 ober Ta Sy bebox
 .It Ta Jaime A Fournier               Ta Mt                 ober Ta Sy zaurus
 .It Ta Jason Thorpe                   Ta Mt              thorpej Ta Sy algor
 .It Ta Jason Thorpe                   Ta Mt              thorpej Ta Sy evbarm
@@ -1769,11 +1782,8 @@ If you're one of them, and would like to mentioned, tell us!)
 .It Ta Tim Rightnour                  Ta Mt              garbled Ta Sy prep
 .It Ta Tohru Nishimura                Ta Mt             nisimura Ta Sy luna68k
 .It Ta Tohru Nishimura                Ta Mt             nisimura Ta Sy sandpoint
-.It Ta UCHIYAMA Yasushi               Ta Mt                  uch Ta Sy hpcsh
-.It Ta UCHIYAMA Yasushi               Ta Mt                  uch Ta Sy playstation2
 .It Ta Wayne Knowles                  Ta Mt                  wdk Ta Sy mipsco
 .It Ta Wolfgang Solfrank              Ta Mt                   ws Ta Sy ofppc
-.It Ta Ta Ta
 .
 .br_ne 1i
 .It Em "The NetBSD \*V Release Engineering team:"
