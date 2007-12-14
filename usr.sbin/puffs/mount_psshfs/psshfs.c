@@ -1,4 +1,4 @@
-/*	$NetBSD: psshfs.c,v 1.46 2007/11/30 16:24:04 pooka Exp $	*/
+/*	$NetBSD: psshfs.c,v 1.47 2007/12/14 10:56:22 jmmv Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: psshfs.c,v 1.46 2007/11/30 16:24:04 pooka Exp $");
+__RCSID("$NetBSD: psshfs.c,v 1.47 2007/12/14 10:56:22 jmmv Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -86,7 +86,8 @@ usage()
 {
 
 	fprintf(stderr, "usage: %s "
-	    "[-es] [-O sshopt=value] [-o opts] user@host:path mountpath\n",
+	    "[-es] [-F configfile] [-O sshopt=value] [-o opts] "
+	    "user@host:path mountpath\n",
 	    getprogname());
 	exit(1);
 }
@@ -126,10 +127,14 @@ main(int argc, char *argv[])
 	add_ssharg(&sshargs, &nargs, "-axs");
 	add_ssharg(&sshargs, &nargs, "-oClearAllForwardings=yes");
 
-	while ((ch = getopt(argc, argv, "eo:O:r:st:")) != -1) {
+	while ((ch = getopt(argc, argv, "eF:o:O:r:st:")) != -1) {
 		switch (ch) {
 		case 'e':
 			exportfs = 1;
+			break;
+		case 'F':
+			add_ssharg(&sshargs, &nargs, "-F");
+			add_ssharg(&sshargs, &nargs, optarg);
 			break;
 		case 'O':
 			add_ssharg(&sshargs, &nargs, "-o");
