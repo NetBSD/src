@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.66 2007/10/17 19:57:09 garbled Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.67 2007/12/14 00:58:37 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2002 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.66 2007/10/17 19:57:09 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.67 2007/12/14 00:58:37 uwe Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_memsize.h"
@@ -150,6 +150,10 @@ uint32_t dumpmag = 0x8fca0101;	/* magic number */
 int dumpsize;			/* pages */
 long dumplo;	 		/* blocks */
 
+vaddr_t intstack, intfp, intsp;
+static const vsize_t intstacksize = 3 * NBPG;
+
+
 void
 sh_cpu_init(int arch, int product)
 {
@@ -201,6 +205,7 @@ sh_cpu_init(int arch, int product)
 	uvm_setpagesize();
 }
 
+
 /*
  * void sh_proc0_init(void):
  *	Setup proc0 u-area.
@@ -210,6 +215,12 @@ sh_proc0_init()
 {
 	struct switchframe *sf;
 	vaddr_t u;
+
+	/* Steal interrupt stack */
+	intstack = uvm_pageboot_alloc(intstacksize);
+	memset((void *)intstack, 0, intstacksize);
+	intsp = intstack + intstacksize; /* interrupt stack bottom */
+	intfp = intstack + NBPG; /* interrupt frame stack bottom */
 
 	/* Steal process0 u-area */
 	u = uvm_pageboot_alloc(USPACE);
@@ -222,9 +233,9 @@ sh_proc0_init()
 	 * u-area map:
 	 * |user| .... | .................. |
 	 * | PAGE_SIZE | USPACE - PAGE_SIZE |
-         *        frame top        stack top
+         *        frame bot        stack bot
 	 * current frame ... r6_bank
-	 * stack top     ... r7_bank
+	 * stack bottom  ... r7_bank
 	 * current stack ... r15
 	 */
 	curpcb = lwp0.l_md.md_pcb = &lwp0.l_addr->u_pcb;
