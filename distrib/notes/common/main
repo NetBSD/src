@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.377 2007/12/14 04:24:49 jnemeth Exp $
+.\"	$NetBSD: main,v 1.378 2007/12/14 06:33:30 jnemeth Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -123,7 +123,7 @@ appropriate pair of boot floppy images from the
 .Pa \*M/installation/floppy/
 directory, or a CD-ROM image (the images from
 .Pa \*M/installation/cdrom/
-are bootable, but do no contain binary sets - these are intended for network
+are bootable, but do not contain binary sets - these are intended for network
 installs, or when different bootblocks are needed).
 Most people will need the
 .Pa boot1.fs
