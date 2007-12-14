@@ -1,4 +1,4 @@
-# $NetBSD: PARALLELS,v 1.17 2007/11/14 17:54:58 ad Exp $
+# $NetBSD: PARALLELS,v 1.18 2007/12/14 10:57:48 jmmv Exp $
 #
 # PARALLELS machine description file
 #
@@ -113,6 +113,7 @@ file-system 	SMBFS		# experimental - CIFS; also needs nsmb (below)
 file-system 	PTYFS		# /dev/ptm support
 file-system 	TMPFS		# Efficient memory file-system
 #file-system 	UDF		# experimental - OSTA UDF CD/DVD file-system
+file-system 	PUFFS		# experimental - Userspace file system support
 
 # File system options
 options 	QUOTA		# UFS quotas
@@ -381,6 +382,9 @@ pseudo-device	nsmb			# experimental - SMB requester
 # wscons pseudo-devices
 pseudo-device	wsmux			# mouse & keyboard multiplexor
 pseudo-device	wsfont
+
+# Pass-to-Userspace Transporter
+pseudo-device	putter
 
 #options	FILEASSOC		# fileassoc(9) - required for Veriexec 
 #options	FILEASSOC_NHOOKS=4	# Default number of storage slots
