@@ -1,4 +1,4 @@
-/*	$NetBSD: humanize_number.c,v 1.12 2007/03/13 02:52:10 enami Exp $	*/
+/*	$NetBSD: humanize_number.c,v 1.13 2007/12/14 17:26:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: humanize_number.c,v 1.12 2007/03/13 02:52:10 enami Exp $");
+__RCSID("$NetBSD: humanize_number.c,v 1.13 2007/12/14 17:26:19 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -49,7 +49,6 @@ __RCSID("$NetBSD: humanize_number.c,v 1.12 2007/03/13 02:52:10 enami Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <locale.h>
-#include <util.h>
 
 int
 humanize_number(char *buf, size_t len, int64_t bytes,
