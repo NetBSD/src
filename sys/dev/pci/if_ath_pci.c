@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ath_pci.c,v 1.23 2007/12/14 00:55:52 mjf Exp $	*/
+/*	$NetBSD: if_ath_pci.c,v 1.24 2007/12/14 02:57:22 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath_pci.c,v 1.11 2005/01/18 18:08:16 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: if_ath_pci.c,v 1.23 2007/12/14 00:55:52 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ath_pci.c,v 1.24 2007/12/14 02:57:22 mjf Exp $");
 #endif
 
 /*
@@ -242,10 +242,10 @@ ath_pci_attach(struct device *parent, struct device *self, void *aux)
 	if (!pmf_device_register(self, NULL, ath_pci_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
-	if (ath_attach(PCI_PRODUCT(pa->pa_id), sc) != 0)
+	if (ath_attach(PCI_PRODUCT(pa->pa_id), sc) == 0) { 
+		pmf_class_network_register(self, &sc->sc_if);
 		return;
-
-	pmf_class_network_register(self, &sc->sc_if);
+	}
 
 	pci_intr_disestablish(pc, psc->sc_ih);
 bad2:	/* XXX */
