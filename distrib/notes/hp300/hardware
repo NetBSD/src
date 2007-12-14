@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.18 2006/03/25 13:24:49 tsutsui Exp $
+.\"	$NetBSD: hardware,v 1.19 2007/12/14 21:15:58 pavel Exp $
 .
 .Nx*M
 \*V will run on most HP 9000/300- and 400-series machines.
@@ -135,7 +135,7 @@ Built-in Apollo 4-port on Series 400 workstations
 .bullet)
 .(Note
 See the FAQ for more detailed specs and information on configuring:
-.Lk http://www.NetBSD.org/Ports/hp300/faq.html#serialinfo
+.Lk http://www.NetBSD.org/ports/hp300/faq.html#serialinfo
 .Note)
 .It
 Network interfaces
@@ -213,7 +213,7 @@ Each serial interface has its own quirks, and some of them use
 non-standard pins.
 The FAQ describes how to configure and connect serial
 consoles to \*M systems.
-.Lk http://www.NetBSD.org/Ports/hp300/faq.html#serialconsole
+.Lk http://www.NetBSD.org/ports/hp300/faq.html#serialconsole
 .Pp
 When you try booting from a system with a framebuffer that is not
 supported by
