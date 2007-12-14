@@ -1,4 +1,4 @@
-.\"	$NetBSD: postinstall,v 1.63 2007/07/25 22:01:13 pavel Exp $
+.\"	$NetBSD: postinstall,v 1.64 2007/12/14 04:27:03 jnemeth Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -383,13 +383,13 @@ from source and precompiled binaries.
 .Pp
 .(bullet
 More information on the package system is at
-.Lk http://www.NetBSD.org/Documentation/software/packages.html
+.Lk http://www.NetBSD.org/docs/software/packages.html
 .It
 A list of available packages suitable for browsing is at
 .Lk ftp://ftp.NetBSD.org/pub/NetBSD/packages/pkgsrc/README.html
 .It
 Precompiled binaries can be found at
-.Lk ftp://ftp.NetBSD.org/pub/NetBSD/packages/ ,
+.Lk ftp://ftp.NetBSD.org/pub/NetBSD/packages/
 usually in the
 .Pa \*V/\*M/All
 subdir.
@@ -424,7 +424,7 @@ as well as all the packages they depend on.
 .It
 Package sources for compiling packages on your own can be obtained by
 retrieving the file
-.Lk ftp://ftp.NetBSD.org/pub/NetBSD/NetBSD-current/tar_files/pkgsrc.tar.gz
+.Lk ftp://ftp.NetBSD.org/pub/NetBSD/packages/pkgsrc.tar.gz
 They are typically extracted into
 .Pa /usr/pkgsrc
 (though other locations work fine), with the commands:
@@ -452,14 +452,11 @@ Don't forget to run
 afterwards.
 .It
 The
-.Pa /etc/mail/sendmail.cf
-file will almost definitely need to be adjusted;
-files aiding in this can be found in
-.Pa /usr/share/sendmail .
-See the
-.Li README
-file there for more information.
-If you prefer postfix as MTA, adjust
+.Pa /etc/postfix/main.cf
+file will almost definitely need to be adjusted.
+If you prefer a different MTA, then install it using the
+.Nx
+package system or by hand and adjust
 .Pa /etc/mailer.conf .
 .It
 Edit
