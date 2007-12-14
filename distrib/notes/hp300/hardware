@@ -1,0 +1,266 @@
+.\"	$NetBSD: hardware,v 1.19.2.2 2007/12/14 21:15:59 pavel Exp $
+.
+.Nx*M
+\*V will run on most HP 9000/300- and 400-series machines.
+The smallest amount of RAM that has been tested is 4 MB.
+If you wish to run X, more RAM is recommended.
+.
+.Ss2 Supported hardware
+.(bullet -offset indent
+CPUs
+.(bullet -compact
+318 (16 MHz 68020, with built-in monochrome framebuffer, no expansion)
+.It
+319 (16 MHz 68020, with built-in 6 bit color framebuffer, no expansion)
+.It
+320 (16 MHz 68020, 16 KB L2 cache, up to 7.5 MB RAM)
+.br
+.Em "Requires Human Interface board"
+.It
+330 (16 MHz 68020, 4 MB on motherboard, up to 8 MB RAM)
+.br
+.Em "Requires Human Interface board"
+.It
+340 (16 MHz 68030, up to 16 MB RAM)
+.It
+345 (50 MHz 68030 with 32 KB L2 cache, up to 128 MB RAM, built-in SCSI)
+.It
+350 (25 MHz 68020, 32 KB L2 cache, up to 48 MB RAM)
+.br
+.Em "Requires Human Interface board"
+.It
+360 (25 MHz 68030, with 4 MB RAM built-in, up to 48 MB RAM)
+.br
+.Em "Requires System Interface board"
+.It
+362 (25 MHz 68030, up to 16 MB RAM, built-in SCSI)
+.br
+.Em "Framebuffer is unsupported, you must use a serial console"
+.It
+370 (33 MHz 68030, 64 KB L2 cache, up to 48 MB RAM)
+.br
+.Em "Requires System Interface board"
+.It
+375 (50 MHz 68030 with 32 KB L2 cache, up to 128 MB RAM, built-in SCSI)
+.It
+380 (25 MHz 68040, up to 128 MB RAM, built-in SCSI)
+.It
+382 (25 MHz 68040, up to 32 MB RAM, built-in SCSI)
+.br
+.Em "Framebuffer is unsupported, you must use a serial console"
+.It
+385 (33 MHz 68040, up to 128 MB RAM, built-in SCSI)
+.It
+400s, 400t, 400dl (50 MHz 68030 with 32 KB L2 cache, built-in SCSI,
+up to 128 MB RAM)
+.It
+425s, 425t, 425dl (25 MHz 68040 with built-in SCSI, up to 128 MB RAM)
+.It
+425e (25 MHz 68040, built-in SCSI)
+.br
+.Em "The BootROM does not support serial console and"
+.Nx*M
+.Em "does not support the 425e framebuffer.  When the"
+.Nx
+.Em "kernel begins to boot it will default to using the serial port for console"
+.It
+433s, 433t, 433dl (33 MHz 68040 with built-in SCSI, up to 128 MB RAM)
+.bullet)
+.It
+HP-IB devices
+.(bullet -compact
+.Em rd ;
+CS80 disks: 2200, 2203, 7912, 7914, 7933, 7936, 7937, 7945, 7946,
+7957, 7958, and 7959
+.It
+.Em rd ;
+CS80 floppy disks: 9122, 9134 (possibly others)
+.br
+.Em "Requires use of HP-UX LIF utilities via HP-UX emulation"
+.It
+.Em ct ;
+CS80 Low-density 16 track cartridge (67 MB): 7912, 7914, 7946, and 9144
+.br
+.Em "Cannot read or write to 32 track tapes"
+.It
+.Em ct ;
+CS80 High-density 32 track cartridge (134 MB): 9145
+.br
+.Em "Cannot write to 16 track tapes (read only)"
+.It
+.Em mt ;
+CS80 Half-inch tape: 7974A, 7978A/B, 7979A, 7980A, and 7980XC.
+.(Note
+You should connect HP-IB tape drives and printers to the slow HP-IB
+interface and hard drives to the fast HP-IB interface (if present).
+.Note)
+.bullet)
+.It
+SCSI devices
+.(bullet -compact
+.Em sd ;
+SCSI hard drives
+.It
+.Em cd ;
+SCSI CD-ROM drives
+.It
+.Em sd ;
+SCSI Magneto-optical drives
+.It
+.Em st ;
+SCSI tape drives: HP 35450A (DDS-1 DAT), Exabyte EXB-8200 (8mm), Archive
+(QIC-24), Archive Viper (QIC-60), Archive Viper (QIC-150), Archive Python
+25501 (DAT), and Archive Python 28849 (DAT)
+.It
+.Em ch ;
+SCSI autochangers
+.bullet)
+.It
+Serial interfaces
+.(bullet -compact
+.Em com ;
+Built-in single serial port on System Interface board and Human Interface board
+.It
+.Em com ;
+Built-in Apollo 4-port on Series 400 workstations
+.It
+.Em dcm ;
+98638 8-port (DIO-II board, appears to kernel as two 98642 devices)
+.It
+.Em dcm ;
+98642 4-port (DIO-I board)
+.It
+.Em com ;
+98626, 98644 built-in or add-on (DIO-I board) single serial port
+.bullet)
+.(Note
+See the FAQ for more detailed specs and information on configuring:
+.Lk http://www.NetBSD.org/ports/hp300/faq.html#serialinfo
+.Note)
+.It
+Network interfaces
+.(bullet -compact
+.Em le ;
+98643 built-in and add-on (DIO-I board) ethernet cards.
+.bullet)
+.It
+Graphics Devices
+.(bullet -compact
+98544 monochrome Topcat (1024x768, 1 bit, DIO-II)
+.It
+98545A color Topcat (1024x768, 4 bits, DIO-II)
+.It
+98547 color Topcat (1024x768, 6 bits)
+.It
+98548A monochrome Catseye (1024x768, 1 bit)
+.It
+98549A color Catseye (1024x768, 6 bits)
+.It
+98550A Catseye Hi-Res Color (a.k.a. CH) (1280x1024 @ 60 Hz, 8 bits, DIO-II)
+.It
+98700 and 98710 Gatorbox (1280x1024 @ 60 Hz, 4 or 8 bits)
+.br
+.Em "Requires 98287 (DIO-I board) to connect to workstation"
+.It
+98720 and 98721 color Renaissance SRX (1280x1024 @ 60 Hz, 8, 12 or 24 bits)
+.br
+.Em "Requires 98724 (DIO-I board) or 98725 (DIO-II board) to connect to workstation"
+.It
+98730 and 98731 DaVinci TurboSRX (1280x1024 @ 60 Hz, 8, 16, or 24 bits)
+.br
+.Em "Requires 98726A (DIO-II board) to connect to workstation"
+.It
+A1096A monochrome Hyperion (1280x1024, 1 bit)
+.It
+A1416A Kathmandu (a.k.a. Color VRX) (1280x1024 @ 60 hz, 8 bits, DIO-II)
+.bullet)
+.It
+HP-HIL devices
+.(bullet -compact
+Keyboards
+.It
+Two and three button mice
+.It
+46094 Quadrature Port (supports normal serial mice)
+.It
+Graphics tablets
+.It
+Dial boxes
+.It
+ID modules
+.bullet)
+.It
+Miscellaneous boards/interfaces
+.(bullet -compact
+98265A/98652 SCSI interface (DIO-I board, daughtercard for 98562, or built-in)
+.It
+98561 Human Interface board (DIO-I board with serial port, HP-HIL, and HP-IB)
+.It
+98562 System Interface board (DIO-II board with serial port,
+HP-HIL, HP-IB, DMA, and ethernet, has optional fast HP-IB or SCSI
+daughterboard)
+.It
+98620 DMA card (DIO-I board, for use with 98561)
+.It
+98624 HP-IB interface (DIO-I board or built-in)
+.It
+98625A and 98625B 'fast' HP-IB interface (DIO-I board or
+daughtercard for 98562)
+.bullet)
+.bullet)
+.Pp
+Each serial interface has its own quirks, and some of them use
+non-standard pins.
+The FAQ describes how to configure and connect serial
+consoles to \*M systems.
+.Lk http://www.NetBSD.org/ports/hp300/faq.html#serialconsole
+.Pp
+When you try booting from a system with a framebuffer that is not
+supported by
+.Nx*M ,
+the screen will turn black, and it will try using the serial port for the
+console.
+.
+.Ss2 Unsupported hardware
+.(bullet -offset indent
+CPUs
+.(bullet -compact
+310 (10 MHz 68010, with built-in monochrome framebuffer, rs232
+(25 pin), hil, and slow hpib)
+.It
+332 (16? MHz 68030, with no floating point unit)
+.bullet)
+.It
+Graphics Devices
+.(bullet -compact
+SGC support (for 425e built-in EVRX framebuffer)
+.It
+SGC support (for some rare configurations of 4XXt and 4XXdl workstations)
+.It
+98702 TurboVRX DIO-II graphics device
+.It
+98705 Tigershark PersonalVRX DIO-II graphics device
+.It
+internal video on models 362/382
+.bullet)
+.It
+Miscellaneous boards/interfaces
+.(bullet -compact
+domain keyboard and mouse, on Series 400 workstations.
+Needs wscons
+.It
+parallel port, on 345, 362, 375, 380, 382, 382, and Series 400 workstations
+.It
+EISA support, on Series 400 workstations
+.It
+Token Ring cards (a.k.a. ATR)
+.It
+VME bus adapter, on Series 300 workstations
+.It
+98628A single port dcl (DIO-I board)
+.It
+98625C fast HP-IB option on models 345 and 375
+.It
+internal SCSI floppy drive on 362, 382, and 425e
+.bullet)
+.bullet)
