@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.181 2007/11/22 21:11:30 dsl Exp $
+#	$NetBSD: Makefile.inc,v 1.182 2007/12/14 21:52:17 yamt Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -180,9 +180,12 @@ MAN+=	accept.2 access.2 acct.2 adjtime.2 bind.2 brk.2 chdir.2 \
 	getsockopt.2 gettimeofday.2 getuid.2 intro.2 ioctl.2 issetugid.2 \
 	kill.2 kqueue.2 ktrace.2 \
 	lfs_bmapv.2 lfs_markv.2 lfs_segclean.2 lfs_segwait.2 \
-	link.2 listen.2 lseek.2 _lwp_create.2 _lwp_detach.2 _lwp_exit.2 \
-	_lwp_self.2 _lwp_suspend.2 _lwp_wakeup.2 _lwp_wait.2 _lwp_kill.2 \
-	_lwp_getprivate.2 _lwp_park.2 _lwp_unpark.2 _lwp_unpark_all.2 \
+	link.2 listen.2 lseek.2 \
+	_lwp_create.2 _lwp_ctl.2 _lwp_detach.2 _lwp_exit.2 \
+	_lwp_self.2 _lwp_setname.2 \
+	_lwp_suspend.2 _lwp_wakeup.2 _lwp_wait.2 _lwp_kill.2 \
+	_lwp_getname.2 _lwp_getprivate.2 \
+	_lwp_park.2 _lwp_unpark.2 _lwp_unpark_all.2 \
 	mkdir.2 mkfifo.2 mknod.2 \
 	madvise.2 mincore.2 minherit.2 mlock.2 mlockall.2 mmap.2 mount.2 \
 	mprotect.2 mremap.2 msgctl.2 msgget.2 msgrcv.2 msgsnd.2 msync.2 \
