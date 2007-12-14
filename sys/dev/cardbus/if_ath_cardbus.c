@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ath_cardbus.c,v 1.22 2007/12/14 03:18:46 dyoung Exp $ */
+/*	$NetBSD: if_ath_cardbus.c,v 1.23 2007/12/14 03:22:19 dyoung Exp $ */
 /*
  * Copyright (c) 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ath_cardbus.c,v 1.22 2007/12/14 03:18:46 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ath_cardbus.c,v 1.23 2007/12/14 03:22:19 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -125,9 +125,6 @@ static bool
 ath_cardbus_resume(device_t dv)
 {
 	struct ath_cardbus_softc *csc = device_private(dv);
-	cardbus_devfunc_t ct = csc->sc_ct;
-	cardbus_chipset_tag_t cc = ct->ct_cc;
-	cardbus_function_tag_t cf = ct->ct_cf;
 
 	/* Insofar as I understand what the PCI retry timeout is
 	 * (it does not appear to be documented in any PCI standard,
@@ -147,6 +144,9 @@ ath_cardbus_resume(device_t dv)
 	 * the timeout.  That is, the device will *never* timeout.
 	 */
 #if 0
+	cardbus_devfunc_t ct = csc->sc_ct;
+	cardbus_chipset_tag_t cc = ct->ct_cc;
+	cardbus_function_tag_t cf = ct->ct_cf;
 	cardbus_disable_retry(cc, cf, csc->sc_tag);
 #endif
 	ath_resume(&csc->sc_ath);
