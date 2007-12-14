@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.116 2007/12/14 01:55:35 dyoung Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.117 2007/12/14 03:38:19 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.116 2007/12/14 01:55:35 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.117 2007/12/14 03:38:19 dyoung Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -327,8 +327,6 @@ struct sip_softc {
 	int sc_nrxdesc_mask;
 	int sc_rxbuf_len;
 
-	int sc_suspended;
-
 #if NRND > 0
 	rndsource_element_t rnd_source;	/* random source */
 #endif
@@ -473,7 +471,6 @@ static void	sipcom_attach(struct device *, struct device *, void *);
 static void	sipcom_do_detach(device_t, enum sip_attach_stage);
 static int	sipcom_detach(device_t, int);
 static bool	sipcom_resume(device_t);
-static bool	sipcom_suspend(device_t);
 
 int	SIP_DECL(copy_small) = 0;
 
@@ -789,24 +786,11 @@ sipcom_do_detach(device_t self, enum sip_attach_stage stage)
 }
 
 static bool
-sipcom_suspend(device_t self)
-{
-	struct sip_softc *sc = device_private(self);
-
-	sc->sc_suspended = 1;
-	return true;
-}
-
-static bool
 sipcom_resume(device_t self)
 {
 	struct sip_softc *sc = device_private(self);
 
-	if (!sipcom_reset(sc))
-		return false;
-
-	sc->sc_suspended = 0;
-	return true;
+	return sipcom_reset(sc);
 }
 
 static void
@@ -1199,7 +1183,7 @@ sipcom_attach(struct device *parent, struct device *self, void *aux)
 	}
 #endif /* SIP_EVENT_COUNTERS */
 
-	if (!pmf_device_register(self, sipcom_suspend, sipcom_resume))
+	if (!pmf_device_register(self, NULL, sipcom_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 	else
 		pmf_class_network_register(self, ifp);
@@ -2400,7 +2384,7 @@ sipcom_init(struct ifnet *ifp)
 	struct sip_desc *sipd;
 	int i, error = 0;
 
-	if (sc->sc_suspended)
+	if (!device_has_power(&sc->sc_dev))
 		return EBUSY;
 
 	/*
