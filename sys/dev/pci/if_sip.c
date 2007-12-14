@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.117 2007/12/14 03:38:19 dyoung Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.118 2007/12/14 08:14:27 dogcow Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.117 2007/12/14 03:38:19 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.118 2007/12/14 08:14:27 dogcow Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1216,6 +1216,9 @@ sipcom_set_extsts(struct sip_softc *sc, int lasttx, struct mbuf *m0,
 {
 	struct m_tag *mtag;
 	u_int32_t extsts;
+#ifdef DEBUG
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+#endif
 	/*
 	 * If VLANs are enabled and the packet has a VLAN tag, set
 	 * up the descriptor to encapsulate the packet for us.
