@@ -1,0 +1,135 @@
+.\"	$NetBSD: hardware,v 1.3.2.2 2007/12/14 21:15:59 pavel Exp $
+.
+.Nx*M
+is a port of
+.Nx
+to PowerPC based evaluation board.
+At the present time, the IBM PowerPC 405GP based walnut evaluation board
+is the only board supported by this port.
+As a result, this documentation is specific to installing
+.Nx*M
+on that particular piece of hardware.
+More evaluation boards will be added in due course, and this documentation
+will be updated accordingly.
+.
+.Ss2 Supported devices
+.(bullet -offset indent
+Ethernet:
+The built-in Ethernet card is not supported, so another PCI
+Ethernet card supported by
+.Nx
+must be provided if you want to use
+.Nx*M
+on a network.
+Any PCI Ethernet card supported by
+.Nx
+should work.
+.It
+SCSI:
+Any PCI SCSI card supported by
+.Nx
+should work, as should most SCSI disk/tape/CD-ROM devices.
+.It
+IDE:
+.(bullet -compact
+.\" XXXX
+Promise Ultra66
+.Pq Em pciide
+.It
+Other PCI IDE controllers should work, but there are no reports.
+.It
+Most IDE disk/CD-ROM/ATAPI devices should work.
+.bullet)
+.It
+Audio
+.(bullet -compact
+PCI audio cards, although none have been tested.
+.bullet)
+.It
+Serial ports
+.(bullet -compact
+On-board serial ports
+.Pq Em com0
+and
+.Pq Em com1
+.It
+Some PCI serial ports should work, but no one has tried them
+.bullet)
+.It
+PCI cards
+.(bullet -compact
+Most MI PCI cards should work, although very few have been tested with
+.Nx*M
+.Lk http://www.NetBSD.org/support/hardware/pci.html
+.bullet)
+.bullet)
+.
+.Ss2 Unsupported devices
+.(bullet -offset indent
+On-board Ethernet
+.Pp
+.Em Note :
+This does not concern booting the kernel itself, since that
+is done by the firmware.
+For using an NFS root you will have to provide a supported network card,
+though.
+.bullet)
+.
+.Ss2 Supported boot devices and media
+.
+The firmware only supports booting from network or the serial port,
+so you cannot boot from disk even if you install a disk controller.
+Instructions for booting from serial port are not provided; in the
+following we will describe how to setup netbooting.
+.Pp
+The first step is setting the IP addresses of both the walnut itself
+and the host that will be serving the kernel image.
+From the main menu, choose 3 to set the IP address of the machine:
+.(disp
+  1 - Enable/disable tests
+  2 - Enable/disable boot devices
+  3 - Change IP addresses
+  4 - Ping test
+  5 - Toggle ROM monitor debugger
+  6 - Toggle automatic menu
+  7 - Display configuration
+  8 - Save changes to configuration
+  9 - Set baud rate for s1 boot
+  A - Enable/disable I cache (Enabled )
+  B - Enable/disable D cache (Enabled )
+  0 - Exit menu and continue
+-> 3
+.disp)
+.Pp
+Set the IP address for the local Ethernet with 1:
+.(disp
+---   CHANGE IP ADDRESS   ---
+ Device List:
+   001  Enabled   Ethernet      [ENET]
+                  local=0.0.0.0  remote=0.0.0.0  hwaddr=0004ace312bd
+   004  Disabled  Serial Port 2 [S2]
+                  local=8.1.1.2  remote=255.255.255.255  hwaddr=ffffffffffff
+ ----------------------------
+select device to change ->1
+  1 - Change local address
+  2 - Change remote address
+  0 - Return to main menu
+->1
+Current IP address = (0.0.0.0)
+Enter new IP address ->Enter IP address in dot notation, (eg. 8.1.1.2)
+.disp)
+.Pp
+Here you enter the machine's IP address, e.g. 10.0.0.1.
+Now you need to do the same thing to set the host IP address (choice 2
+from the menu above).
+.Pp
+Once both the local and remote addresses are set, you can use
+the ping test to make sure the ethernet is working; or you can
+simply use option 0, "Exit menu and continue" to try to boot the
+machine, if you already set up the remote machine to provide
+a kernel image.
+For details on how to do that, see the
+.Sx Booting from the network
+section below.
+.Pp
+You should now be able to boot the operating system.
