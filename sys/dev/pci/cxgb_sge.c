@@ -28,7 +28,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cxgb_sge.c,v 1.7 2007/12/11 11:25:49 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cxgb_sge.c,v 1.8 2007/12/14 08:14:27 dogcow Exp $");
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/dev/cxgb/cxgb_sge.c,v 1.18 2007/05/28 22:57:26 kmacy Exp $");
 #endif
@@ -1300,7 +1300,7 @@ t3_encap(struct port_info *p, struct mbuf **m)
 			if (m0->m_len == m0->m_pkthdr.len)
 				memcpy(&txd->flit[2], m0->m_data, mlen);
 			else
-				m_copydata(m0, 0, mlen, (caddr_t)&txd->flit[2]);
+				m_copydata(m0, 0, mlen, (void *)&txd->flit[2]);
 
 			flits = (mlen + 7) / 8 + 2;
 			cpl->wr.wr_hi = htonl(V_WR_BCNTLFLT(mlen & 7) |
