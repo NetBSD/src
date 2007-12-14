@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_atfork.c,v 1.5 2005/09/13 01:44:09 christos Exp $	*/
+/*	$NetBSD: pthread_atfork.c,v 1.6 2007/12/14 19:51:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: pthread_atfork.c,v 1.5 2005/09/13 01:44:09 christos Exp $");
+__RCSID("$NetBSD: pthread_atfork.c,v 1.6 2007/12/14 19:51:37 yamt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -137,7 +137,7 @@ fork(void)
 
 	mutex_lock(&atfork_lock);
 	SIMPLEQ_FOREACH(iter, &prepareq, next)
-	    (*iter->fn)();
+		(*iter->fn)();
 
 	ret = __fork();
 
@@ -147,12 +147,12 @@ fork(void)
 		 * the fork call succeeded or failed.
 		 */
 		SIMPLEQ_FOREACH(iter, &parentq, next)
-		    (*iter->fn)();
+			(*iter->fn)();
 		mutex_unlock(&atfork_lock);
 	} else {
 		/* We are the child */
 		SIMPLEQ_FOREACH(iter, &childq, next)
-		    (*iter->fn)();
+			(*iter->fn)();
 		/*
 		 * Note: We are explicitly *not* unlocking
 		 * atfork_lock.  Unlocking atfork_lock is problematic,
