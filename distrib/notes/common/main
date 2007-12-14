@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.379 2007/12/14 10:18:30 jnemeth Exp $
+.\"	$NetBSD: main,v 1.380 2007/12/14 21:15:53 pavel Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -290,7 +290,7 @@ kernel, which contains all the tools required to install
 Determine your machine's model, quirks, and Open Firmware version from the
 .Nx*M
 Model Support webpage.
-.Lk http://www.NetBSD.org/Ports/macppc/models.html
+.Lk http://www.NetBSD.org/ports/macppc/models.html
 .Pp
 At present,
 .Nx*M
@@ -1347,7 +1347,7 @@ with appropriate configuration files for Pluggable Authentication Modules
 (PAM) because you will not be able to login any more otherwise. Using
 .Em postinstall
 as described below will take care of this. Please refer to
-.Lk http://www.netbsd.org/guide/en/chap-pam.html
+.Lk http://www.NetBSD.org/docs/guide/en/chap-pam.html
 for documentation about PAM.
 .Pp
 The following issues can generally be resolved by running
@@ -1625,7 +1625,7 @@ There are also port-specific mailing lists, to discuss aspects of
 each port of
 .Nx .
 Use majordomo to find their addresses, or visit
-.Lk http://www.NetBSD.org/MailingLists/ .
+.Lk http://www.NetBSD.org/mailinglists/ .
 If
 you're interested in doing a serious amount of work on a specific
 port, you probably should contact the

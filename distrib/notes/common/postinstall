@@ -1,4 +1,4 @@
-.\"	$NetBSD: postinstall,v 1.64 2007/12/14 04:27:03 jnemeth Exp $
+.\"	$NetBSD: postinstall,v 1.65 2007/12/14 21:15:55 pavel Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -326,14 +326,14 @@ Also, you may want to read through the
 .Nx*M
 FAQ entry on X11.
 .br
-.Lk http://www.NetBSD.org/Ports/hp300/faq.html#x11
+.Lk http://www.NetBSD.org/ports/hp300/faq.html#x11
 .\}
 .if \n[macppc] \{\
 Also, you may want to read through the
 .Nx*M
 X11R6 FAQ.
 .br
-.Lk http://www.NetBSD.org/Ports/macppc/x11.html
+.Lk http://www.NetBSD.org/ports/macppc/x11.html
 .\}
 .\} \" ! !\n[next68k]
 .if \n[i386]:\n[shark] \{\
