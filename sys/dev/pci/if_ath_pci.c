@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ath_pci.c,v 1.25 2007/12/14 03:18:46 dyoung Exp $	*/
+/*	$NetBSD: if_ath_pci.c,v 1.26 2007/12/15 23:56:54 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath_pci.c,v 1.11 2005/01/18 18:08:16 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: if_ath_pci.c,v 1.25 2007/12/14 03:18:46 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ath_pci.c,v 1.26 2007/12/15 23:56:54 dyoung Exp $");
 #endif
 
 /*
@@ -87,6 +87,7 @@ struct ath_pci_softc {
 	void			*sc_ih;		/* interrupt handler */
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
+	bus_size_t		sc_mapsz;
 };
 
 #define	BS_BAR	0x10
@@ -230,7 +231,7 @@ ath_pci_attach(struct device *parent, struct device *self, void *aux)
 		goto bad;
 	}
 	if (pci_mapreg_map(pa, BS_BAR, mem_type, 0, &psc->sc_iot,
-		&psc->sc_ioh, NULL, NULL)) {
+		&psc->sc_ioh, NULL, &psc->sc_mapsz)) {
 		aprint_error("cannot map register space\n");
 		goto bad;
 	}
@@ -270,8 +271,9 @@ ath_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	pci_intr_disestablish(pc, psc->sc_ih);
 bad2:	/* XXX */
-bad1:	/* XXX */
-bad:
+bad1:
+	bus_space_unmap(psc->sc_iot, psc->sc_ioh, psc->sc_mapsz);
+bad:	/* XXX */
 	return;
 }
 
@@ -283,6 +285,7 @@ ath_pci_detach(struct device *self, int flags)
 	ath_detach(&psc->sc_sc);
 	pmf_device_deregister(self);
 	pci_intr_disestablish(psc->sc_pc, psc->sc_ih);
+	bus_space_unmap(psc->sc_iot, psc->sc_ioh, psc->sc_mapsz);
 
 	return (0);
 }
