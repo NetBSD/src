@@ -1,4 +1,4 @@
-/*	$NetBSD: driver_netbsd.c,v 1.3 2007/05/27 03:15:34 christos Exp $	*/
+/*	$NetBSD: driver_netbsd.c,v 1.4 2007/12/15 00:14:23 perry Exp $	*/
 
 /*
  * WPA Supplicant - driver interaction with BSD net80211 layer
@@ -228,7 +228,7 @@ wpa_driver_bsd_set_wpa_internal(void *priv, int wpa, int privacy)
 	int ret = 0;
 
 	wpa_printf(MSG_DEBUG, "%s: wpa=%d privacy=%d",
-		__FUNCTION__, wpa, privacy);
+		__func__, wpa, privacy);
 
 	if (!wpa && wpa_driver_bsd_set_wpa_ie(drv, NULL, 0) < 0)
 		ret = -1;
@@ -243,7 +243,7 @@ wpa_driver_bsd_set_wpa_internal(void *priv, int wpa, int privacy)
 static int
 wpa_driver_bsd_set_wpa(void *priv, int enabled)
 {
-	wpa_printf(MSG_DEBUG, "%s: enabled=%d", __FUNCTION__, enabled);
+	wpa_printf(MSG_DEBUG, "%s: enabled=%d", __func__, enabled);
 
 	return wpa_driver_bsd_set_wpa_internal(priv, enabled ? 3 : 0, enabled);
 }
