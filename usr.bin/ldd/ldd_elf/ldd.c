@@ -1,4 +1,4 @@
-/*	$NetBSD: ldd.c,v 1.30 2007/10/08 12:51:21 christos Exp $	*/
+/*	$NetBSD: ldd.c,v 1.31 2007/12/15 19:44:51 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ldd.c,v 1.30 2007/10/08 12:51:21 christos Exp $");
+__RCSID("$NetBSD: ldd.c,v 1.31 2007/12/15 19:44:51 perry Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -109,7 +109,7 @@ Library_Xform *_rtld_xforms;
 static void fmtprint(const char *, Obj_Entry *, const char *, const char *);
 static void print_needed(Obj_Entry *, const char *, const char *);
 static int ldd_aout(char *, char *, char *, int);
-static void usage(void) __attribute__((__noreturn__));
+static void usage(void) __dead;
 static char *main_local;
 static char *main_progname;
 

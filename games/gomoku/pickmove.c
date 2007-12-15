@@ -1,4 +1,4 @@
-/*	$NetBSD: pickmove.c,v 1.11 2004/01/27 20:26:20 jsm Exp $	*/
+/*	$NetBSD: pickmove.c,v 1.12 2007/12/15 19:44:40 perry Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)pickmove.c	8.2 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: pickmove.c,v 1.11 2004/01/27 20:26:20 jsm Exp $");
+__RCSID("$NetBSD: pickmove.c,v 1.12 2007/12/15 19:44:40 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -1050,7 +1050,7 @@ updatecombo(cbp, color)
 void
 appendcombo(cbp, color)
 	struct combostr *cbp;
-	int color __attribute__((__unused__));
+	int color __unused;
 {
 	struct combostr *pcbp, *ncbp;
 

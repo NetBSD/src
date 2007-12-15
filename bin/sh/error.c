@@ -1,4 +1,4 @@
-/*	$NetBSD: error.c,v 1.33 2006/10/04 15:00:38 christos Exp $	*/
+/*	$NetBSD: error.c,v 1.34 2007/12/15 19:44:37 perry Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)error.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: error.c,v 1.33 2006/10/04 15:00:38 christos Exp $");
+__RCSID("$NetBSD: error.c,v 1.34 2007/12/15 19:44:37 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -72,7 +72,7 @@ char *commandname;
 
 
 static void exverror(int, const char *, va_list)
-    __attribute__((__noreturn__));
+    __dead;
 
 /*
  * Called to raise an exception.  Since C doesn't include exceptions, we

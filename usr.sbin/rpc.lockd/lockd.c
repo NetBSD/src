@@ -1,4 +1,4 @@
-/*	$NetBSD: lockd.c,v 1.9 2007/11/04 23:12:50 christos Exp $	*/
+/*	$NetBSD: lockd.c,v 1.10 2007/12/15 19:44:56 perry Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: lockd.c,v 1.9 2007/11/04 23:12:50 christos Exp $");
+__RCSID("$NetBSD: lockd.c,v 1.10 2007/12/15 19:44:56 perry Exp $");
 #endif
 
 /*
@@ -74,7 +74,7 @@ void	nlm_prog_0(struct svc_req *, SVCXPRT *);
 void	nlm_prog_1(struct svc_req *, SVCXPRT *);
 void	nlm_prog_3(struct svc_req *, SVCXPRT *);
 void	nlm_prog_4(struct svc_req *, SVCXPRT *);
-static void	usage(void) __attribute__((__noreturn__));
+static void	usage(void) __dead;
 
 static void sigalarm_handler(int);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.save.c,v 1.8 2003/04/02 18:36:40 jsm Exp $	*/
+/*	$NetBSD: hack.save.c,v 1.9 2007/12/15 19:44:41 perry Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.save.c,v 1.8 2003/04/02 18:36:40 jsm Exp $");
+__RCSID("$NetBSD: hack.save.c,v 1.9 2007/12/15 19:44:41 perry Exp $");
 #endif				/* not lint */
 
 #include <signal.h>
@@ -87,7 +87,7 @@ dosave()
 #ifndef NOSAVEONHANGUP
 void
 hangup(n)
-	int n __attribute__((__unused__));
+	int n __unused;
 {
 	(void) dosave0(1);
 	exit(1);

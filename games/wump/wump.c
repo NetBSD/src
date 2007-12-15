@@ -1,4 +1,4 @@
-/*	$NetBSD: wump.c,v 1.20 2006/01/19 21:20:35 garbled Exp $	*/
+/*	$NetBSD: wump.c,v 1.21 2007/12/15 19:44:45 perry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)wump.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: wump.c,v 1.20 2006/01/19 21:20:35 garbled Exp $");
+__RCSID("$NetBSD: wump.c,v 1.21 2007/12/15 19:44:45 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -133,7 +133,7 @@ void	pit_survive(void);
 int	shoot(char *);
 void	shoot_self(void);
 int	take_action(void);
-void	usage(void) __attribute__((__noreturn__));
+void	usage(void) __dead;
 void	wump_kill(void);
 int	wump_nearby(void);
 

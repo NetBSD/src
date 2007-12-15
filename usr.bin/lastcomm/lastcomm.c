@@ -1,4 +1,4 @@
-/*	$NetBSD: lastcomm.c,v 1.18 2005/03/28 23:33:22 christos Exp $	*/
+/*	$NetBSD: lastcomm.c,v 1.19 2007/12/15 19:44:51 perry Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)lastcomm.c	8.2 (Berkeley) 4/29/95";
 #endif
-__RCSID("$NetBSD: lastcomm.c,v 1.18 2005/03/28 23:33:22 christos Exp $");
+__RCSID("$NetBSD: lastcomm.c,v 1.19 2007/12/15 19:44:51 perry Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -65,7 +65,7 @@ static time_t	 	 expand(u_int);
 static char		*flagbits(int);
 static const char	*getdev(dev_t);
 static int	 	 requested(char *[], struct acct *);
-static void	 	 usage(void) __attribute__((__noreturn__));
+static void	 	 usage(void) __dead;
 
 int	main(int, char **);
 

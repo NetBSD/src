@@ -1,4 +1,4 @@
-/*	$NetBSD: who.c,v 1.20 2006/09/28 15:24:31 christos Exp $	*/
+/*	$NetBSD: who.c,v 1.21 2007/12/15 19:44:54 perry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)who.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: who.c,v 1.20 2006/09/28 15:24:31 christos Exp $");
+__RCSID("$NetBSD: who.c,v 1.21 2007/12/15 19:44:54 perry Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -68,7 +68,7 @@ __RCSID("$NetBSD: who.c,v 1.20 2006/09/28 15:24:31 christos Exp $");
 
 static void output_labels(void);
 static void who_am_i(const char *, int);
-static void usage(void) __attribute__((__noreturn__));
+static void usage(void) __dead;
 static void process(const char *, int);
 static void eprint(const struct utmpentry *);
 static void print(const char *, const char *, time_t, const char *, pid_t pid,

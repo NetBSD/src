@@ -1,4 +1,4 @@
-/*	$NetBSD: record.c,v 1.44 2007/10/05 07:27:41 lukem Exp $	*/
+/*	$NetBSD: record.c,v 1.45 2007/12/15 19:44:49 perry Exp $	*/
 
 /*
  * Copyright (c) 1999, 2002 Matthew R. Green
@@ -34,7 +34,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: record.c,v 1.44 2007/10/05 07:27:41 lukem Exp $");
+__RCSID("$NetBSD: record.c,v 1.45 2007/12/15 19:44:49 perry Exp $");
 #endif
 
 
@@ -83,7 +83,7 @@ void (*conv_func) (u_char *, int);
 void usage (void);
 int main (int, char *[]);
 int timeleft (struct timeval *, struct timeval *);
-void cleanup (int) __attribute__((__noreturn__));
+void cleanup (int) __dead;
 int write_header_sun (void **, size_t *, int *);
 int write_header_wav (void **, size_t *, int *);
 void write_header (void);

@@ -1,4 +1,4 @@
-/*	$NetBSD: iwictl.c,v 1.7 2006/08/09 11:57:51 skrll Exp $	*/
+/*	$NetBSD: iwictl.c,v 1.8 2007/12/15 19:44:55 perry Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: iwictl.c,v 1.7 2006/08/09 11:57:51 skrll Exp $");
+__RCSID("$NetBSD: iwictl.c,v 1.8 2007/12/15 19:44:55 perry Exp $");
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -50,7 +50,7 @@ __RCSID("$NetBSD: iwictl.c,v 1.7 2006/08/09 11:57:51 skrll Exp $");
 #define SIOCGRADIO	_IOWR('i', 139, struct ifreq)
 #define SIOCGTABLE0	_IOWR('i', 140, struct ifreq)
 
-static void usage(void) __attribute__((__noreturn__));
+static void usage(void) __dead;
 static int do_req(const char *, unsigned long, void *);
 static void get_radio_state(const char *);
 static void get_statistics(const char *);

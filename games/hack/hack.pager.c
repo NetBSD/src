@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.pager.c,v 1.10 2006/04/24 20:08:54 christos Exp $	*/
+/*	$NetBSD: hack.pager.c,v 1.11 2007/12/15 19:44:41 perry Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.pager.c,v 1.10 2006/04/24 20:08:54 christos Exp $");
+__RCSID("$NetBSD: hack.pager.c,v 1.11 2007/12/15 19:44:41 perry Exp $");
 #endif				/* not lint */
 
 /* This file contains the command routine dowhatis() and a pager. */
@@ -131,7 +131,7 @@ static int      got_intrup;
 
 void
 intruph(n)
-	int n __attribute__((__unused__));
+	int n __unused;
 {
 	got_intrup++;
 }
