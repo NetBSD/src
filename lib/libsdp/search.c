@@ -1,4 +1,4 @@
-/*	$NetBSD: search.c,v 1.2 2007/11/16 19:35:08 plunky Exp $	*/
+/*	$NetBSD: search.c,v 1.3 2007/12/15 16:03:29 perry Exp $	*/
 
 /*
  * search.c
@@ -27,12 +27,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: search.c,v 1.2 2007/11/16 19:35:08 plunky Exp $
+ * $Id: search.c,v 1.3 2007/12/15 16:03:29 perry Exp $
  * $FreeBSD: src/lib/libsdp/search.c,v 1.8 2007/11/16 15:13:12 emax Exp $
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: search.c,v 1.2 2007/11/16 19:35:08 plunky Exp $");
+__RCSID("$NetBSD: search.c,v 1.3 2007/12/15 16:03:29 perry Exp $");
 
 #include <sys/uio.h>
 #include <netinet/in.h>
@@ -56,7 +56,7 @@ sdp_search(void *xss,
 	struct sdp_xpdu {
 		sdp_pdu_t		 pdu;
 		uint16_t		 len;
-	} __attribute__ ((packed))	 xpdu;
+	} __packed	 xpdu;
 
 	sdp_session_p			 ss = (sdp_session_p) xss;
 	uint8_t				*req = NULL, *rsp = NULL, *rsp_tmp = NULL;
