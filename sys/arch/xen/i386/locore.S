@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.35.6.1 2007/12/11 23:02:59 bouyer Exp $	*/
+/*	$NetBSD: locore.S,v 1.35.6.2 2007/12/15 22:56:54 bouyer Exp $	*/
 /*	NetBSD: locore.S,v 1.31 2004/08/26 10:12:33 junyoung Exp	*/
 
 /*
@@ -264,6 +264,10 @@ tmpstk:
 
 	.globl	start
 start:
+	/* First, reset the PSL. */
+	pushl	$PSL_MBO
+	popfl
+
 	cld
 #ifdef XEN3
 	movl	%esp, %ebx		# save start of available space
@@ -279,26 +283,15 @@ start:
 	subl	%edi,%ecx
 	rep stosb
 
+#if 0
 	movl	%ebx,RELOC(avail_start) # now init avail_start in bbs
+#endif
 
 	/* Copy the necessary stuff from start_info structure. */
         /* We need to copy shared_info early, so that sti/cli work */
 	movl	$RELOC(start_info_union),%edi
 	movl	$128,%ecx
 	rep movsl
-
-    	/* (howto, [bootdev], bootinfo, basemem, extmem). */
-	xorl	%eax,%eax
-	movl	%eax,RELOC(boothowto)
-#ifdef COMPAT_OLDBOOT
-	movl	%eax,RELOC(bootdev)
-#endif
-	movl	$0x20000,%eax
-	movl	%eax,RELOC(boothowto)
-
-	/* First, reset the PSL. */
-	pushl	$PSL_MBO
-	popfl
 
 	/* Clear segment registers; always null in proc0. */
 	xorl	%eax,%eax
@@ -311,172 +304,23 @@ start:
 	cpuid
 	movl	%eax,RELOC(cpu_info_primary)+CPU_INFO_LEVEL
 
-/*
- * Virtual address space of kernel:
- *
- * text | data | bss | [syms] | page dir | proc0 kstack
- *			      0          1       2      3
- */
-#define	PROC0PDIR	((0)              * PAGE_SIZE)
-#define	PROC0STACK	((1)              * PAGE_SIZE)
-#define	SYSMAP		((1+UPAGES)       * PAGE_SIZE)
-#define	TABLESIZE	((1+UPAGES) * PAGE_SIZE) /* + nkptp[1] * PAGE_SIZE */
-
-	/* Find end of kernel image. */
-	movl	RELOC(avail_start),%edi
-	/* Calculate where to start the bootstrap tables. */
-	movl	%edi,%esi
-
+	call	xen_pmap_bootstrap
 	/*
-	 * Calculate the size of the kernel page table directory, and
-	 * how many entries it will have.
+	 * First avail returned by xen_pmap_bootstrap in %eax
 	 */
-	movl	RELOC(nkptp+1*4),%ecx		# get nkpde
-	cmpl	$NKPTP_MIN,%ecx			# larger than min?
-	jge	1f
-	movl	$NKPTP_MIN,%ecx			# set at min
-	jmp	2f
-1:	cmpl	$NKPTP_MAX,%ecx			# larger than max?
-	jle	2f
-	movl	$NKPTP_MAX,%ecx
-2:
-	movl	%ecx,RELOC(nkptp+1*4)
+	movl	%eax, %esi;
+	movl	%esi, _C_LABEL(proc0uarea)
 
-	/* Clear memory for bootstrap tables. */
-	shll	$PGSHIFT,%ecx
-	addl	$TABLESIZE,%ecx
-	addl	%esi,%ecx			# end of tables
-	movl	%ecx,RELOC(gdt)
-	addl	$PAGE_SIZE,%ecx
-	movl	%ecx,RELOC(avail_start)
-	subl	%edi,%ecx			# size of tables
-	shrl	$2,%ecx
-	xorl	%eax,%eax
-	cld
-	rep
-	stosl
-
-/*
- * fillkpt
- *	eax = pte (page frame | control | status)
- *	ebx = page table address
- *	ecx = number of pages to map
- */
-#define	fillkpt		\
-1:	movl	%eax,(%ebx)	; \
-	addl	$PAGE_SIZE,%eax	; /* increment physical address */ \
-	addl	$4,%ebx		; /* next pte */ \
-	loop	1b		;
-
-/*
- * Build initial page tables.
- */
-	/* Calculate end of text segment. */
-	leal	(RELOC(__data_start)),%edx
-	andl	$~PGOFSET,%edx
-
-	/* Skip over the first 1MB. */
-	movl	$KERNTEXTOFF,%eax
-	movl	%eax,%ecx
-	subl	$KERNBASE,%ecx
-	shrl	$PGSHIFT,%ecx
-	leal	(SYSMAP)(%esi,%ecx,4),%ebx
-
-	/* Map the kernel text read-only. */
-	movl	%edx,%ecx
-	subl	%eax,%ecx
-	shrl	$PGSHIFT,%ecx
-	orl	$(PG_V|PG_KR),%eax
-	fillkpt
-
-	/* Map the data, BSS, and bootstrap tables read-write. */
-	movl	RELOC(avail_start),%ecx
-						    # end of tables
-	subl	%edx,%ecx				# subtract end of text
-	shrl	$PGSHIFT,%ecx
-	leal	(PG_V|PG_KW)(%edx),%eax
-	fillkpt
-
-	/* map the shared_info page read/write */
-	movl	RELOC(start_info_union)+START_INFO_SHARED_INFO,%eax
-	orl	$(PG_V|PG_RW), %eax;
-	movl	%eax, (%ebx)
-	addl	$4,%ebx
-#ifdef XEN3
-	/* map the console page if not domain0 */
-	movl	RELOC(start_info_union)+START_INFO_FLAGS,%eax
-	testl	$SIF_INITDOMAIN, %eax;
-	jnz	1f
-	movl	RELOC(start_info_union)+START_INFO_CONSOLE_MFN,%eax
-	shll	$PGSHIFT,%eax
-	orl	$(PG_V|PG_RW), %eax;
-	movl	%eax, (%ebx)
-	addl	$4,%ebx
-	movl	RELOC(start_info_union)+START_INFO_STORE_MFN,%eax
-	shll	$PGSHIFT,%eax
-	orl	$(PG_V|PG_RW), %eax;
-	movl	%eax, (%ebx)
-	addl	$4,%ebx
-	jmp	2f
-1:
-#endif
-#if defined(XEN3) || defined (DOM0OPS)
-	/* map ISA hole */
-	movl    $(IOM_BEGIN|PG_V|PG_KW/*|PG_N*/),%eax   # having these bits set
-	movl    $(IOM_SIZE>>PGSHIFT),%ecx               # for this many pte s,
-	fillkpt
-#endif
-#ifdef XEN3
-2:
-#endif
-
-/*
- * Construct a page table directory.
- */
-	/* Map kernel PDEs. */
-	movl	RELOC(nkptp+1*4),%ecx			# for this many pde s,
-	leal	(PROC0PDIR+PDIR_SLOT_KERN*4)(%esi),%ebx	# kernel pde offset
-	leal	(SYSMAP+PG_V|PG_KW)(%esi),%eax		# pte for KPT in proc 0,
-	fillkpt
-
-	/* Install a PDE recursively mapping page directory as a page table! */
-	leal	(PROC0PDIR+PG_V/*|PG_KW*/)(%esi),%eax	# pte for ptd
-	movl	%eax,(PROC0PDIR+PDIR_SLOT_PTE*4)(%esi)	# recursive PD slot
-
-	/* Save phys. addr of PDP, for libkvm. */
-	movl	%esi,RELOC(PDPpaddr)
-
-    	call	xpmap_init
-
-	/* cr0 is 0x8005003b */
-
-	/* Relocate atdevbase. */
-	movl	_C_LABEL(avail_start),%edx
-	movl	%edx,_C_LABEL(HYPERVISOR_shared_info)
-	addl	$PAGE_SIZE,%edx			# shared_inf
-#ifdef XEN3
-	/* set console and xenstore pages virtual address if not domain0 */
-	movl	RELOC(start_info_union)+START_INFO_FLAGS,%eax
-	testl	$SIF_INITDOMAIN, %eax;
-	jnz	1f
-	movl	%edx,_C_LABEL(xencons_interface)
-	addl	$PAGE_SIZE,%edx			# xencons_interface
-	movl	%edx,_C_LABEL(xenstore_interface)
-	addl	$PAGE_SIZE,%edx			# xenstore_interface
-1:
-#endif
-	movl	%edx,_C_LABEL(atdevbase)
+#define PROC0PDIR       ((0)              * PAGE_SIZE)
+#define PROC0STACK      ((1)              * PAGE_SIZE)
 
 	/* Set up bootstrap stack. */
-	leal	(PROC0STACK)(%esi),%eax
-	movl	%eax,_C_LABEL(proc0uarea)
 	leal	(KSTACK_SIZE-FRAMESIZE)(%eax),%esp
-	subl	$KERNBASE,%esi
-	movl	%esi,(KSTACK_SIZE+PCB_CR3)(%eax)	# pcb->pcb_cr3
 	xorl	%ebp,%ebp               # mark end of frames
 
-	movl	_C_LABEL(atdevbase),%eax
-	pushl	%eax
+	addl	$USPACE, %esi
+	subl	$KERNBASE, %esi		#init386 want a physical address
+	pushl	%esi
 	call	_C_LABEL(init386)	# wire 386 chip for unix operation
 	addl	$4,%esp
 
@@ -824,7 +668,7 @@ syscall1:
 	int	$3
 #endif /* DDB */
 	movl	$IPL_NONE,CPUVAR(ILEVEL)
-	jmp	2b
+	jmp	.Lsyscall_checkast
 4:	.asciz	"WARNING: SPL NOT LOWERED ON SYSCALL EXIT\n"
 5:	.asciz	"WARNING: SPL NOT ZERO ON SYSCALL ENTRY\n"
 6:	.asciz	"WARNING: WANT PMAPLOAD ON SYSCALL ENTRY\n"

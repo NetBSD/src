@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.49.6.1 2007/12/11 23:03:00 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.49.6.2 2007/12/15 22:56:55 bouyer Exp $	*/
 /*	NetBSD: machdep.c,v 1.559 2004/07/22 15:12:46 mycroft Exp 	*/
 
 /*-
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.49.6.1 2007/12/11 23:03:00 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.49.6.2 2007/12/15 22:56:55 bouyer Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -1456,9 +1456,12 @@ init386(paddr_t first_avail)
 	 */
 	avail_start = PAGE_SIZE;
 #else
+	/* steal one page for gdt */
+	gdt = (void *)(first_avail + KERNBASE);
+	first_avail += PAGE_SIZE;
 	/* Make sure the end of the space used by the kernel is rounded. */
 	first_avail = round_page(first_avail);
-	avail_start = first_avail - KERNBASE;
+	avail_start = first_avail;
 	avail_end = ptoa(xen_start_info.nr_pages) + XPMAP_OFFSET;
 	pmap_pa_start = (KERNTEXTOFF - KERNBASE);
 	pmap_pa_end = avail_end;
