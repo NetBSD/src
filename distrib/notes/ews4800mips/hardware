@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.1.2.2 2007/09/29 17:05:18 pavel Exp $
+.\"	$NetBSD: hardware,v 1.1.2.3 2007/12/15 19:34:04 bouyer Exp $
 .
 .Nx*M
 \*V will run on some models of MIPS-based NEC EWS4800 workstations,
@@ -57,4 +57,4 @@ If it's not on this list, there is no official support for it in this release.
 More information can also be found at the
 .Nx*M
 homepage:
-.Lk http://www.NetBSD.org/Ports/\*M/
+.Lk http://www.NetBSD.org/ports/\*M/

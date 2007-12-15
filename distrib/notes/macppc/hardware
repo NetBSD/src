@@ -1,4 +1,4 @@
-.\"$NetBSD: hardware,v 1.42.10.2 2007/09/29 17:05:21 pavel Exp $
+.\"$NetBSD: hardware,v 1.42.10.3 2007/12/15 19:34:08 bouyer Exp $
 .
 Currently,
 .Nx*M
@@ -186,7 +186,7 @@ Most CPU upgrades are supported.
 Some older models will not automatically enable the L2 and/or L3 caches on
 a G3 or G4 processor.
 See the FAQ entry
-.Lk http://www.NetBSD.org/Ports/macppc/faq.html#cpu-upgrade
+.Lk http://www.NetBSD.org/ports/macppc/faq.html#cpu-upgrade
 .bullet)
 .It
 Ethernet
@@ -457,7 +457,7 @@ USB devices
 .(bullet -compact
 Most MI USB devices should work (such as disks, printers, input devices,
 SCSI adapters, and ethernet interfaces)
-.Lk http://www.NetBSD.org/Hardware/usb.html
+.Lk http://www.NetBSD.org/support/hardware/usb.html
 .bullet)
 .It
 PCMCIA and Cardbus cards
@@ -465,15 +465,15 @@ PCMCIA and Cardbus cards
 Most MI PCMCIA and Cardbus cards should work, although very few have been
 tested with
 .Nx*M
-.Lk http://www.NetBSD.org/Hardware/cardbus.html
-.Lk http://www.NetBSD.org/Hardware/pcmcia.html
+.Lk http://www.NetBSD.org/support/hardware/cardbus.html
+.Lk http://www.NetBSD.org/support/hardware/pcmcia.html
 .bullet)
 .It
 PCI cards
 .(bullet -compact
 Most MI PCI cards should work, although very few have been tested with
 .Nx*M
-.Lk http://www.NetBSD.org/Hardware/pci.html
+.Lk http://www.NetBSD.org/support/hardware/pci.html
 .bullet)
 .Pp
 .(Note
@@ -532,4 +532,4 @@ Go to the
 Model Support webpage and look up your system.
 Take note of the comments about your model and keep these in
 mind during the rest of this installation procedure.
-.Lk http://www.NetBSD.org/Ports/macppc/models.html
+.Lk http://www.NetBSD.org/ports/macppc/models.html

@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.32 2004/06/17 08:07:50 mbw Exp $
+.\"	$NetBSD: hardware,v 1.32.10.1 2007/12/15 19:34:13 bouyer Exp $
 .
 .Pp
 The minimum configuration requires 4 MB of RAM and 60 MB of disk space.
@@ -137,7 +137,7 @@ UltraSPARC based machines in 32-bit or 64-bit mode are supported by the
 .Nx Ns /sparc64
 port.
 Refer to
-.Lk http://www.NetBSD.org/Ports/sparc64/index.html
+.Lk http://www.NetBSD.org/ports/sparc64/index.html
 .It
 Solbourne machines
 .bullet)
@@ -154,7 +154,7 @@ All single-CPU systems are supported
 All hardware compatible dual-, tri- and quad-CPU SuperSPARC-I,
 SuperSPARC-II, and hyperSPARC systems are supported with the SMP kernel
 .Pq Pa GENERIC.MP
-.Lk http://www.NetBSD.org/Ports/sparc/faq.html#smp-cpus
+.Lk http://www.NetBSD.org/ports/sparc/faq.html#smp-cpus
 .bullet)
 .It
 sun4c and sun4m video; Sbus card, on-board, or optional
@@ -377,10 +377,10 @@ On-board (SPARCstation Voyager) and Sbus card.
 All devices listed in the Machine-independent PCMCIA drivers page
 should work, but very few have been tested with
 .Nx*M .
-.Lk http://www.NetBSD.org/Hardware/pcmcia.html
+.Lk http://www.NetBSD.org/support/hardware/pcmcia.html
 .(Note
 See the FAQ for more information.
-.Lk http://www.NetBSD.org/Ports/sparc/faq.html#nell
+.Lk http://www.NetBSD.org/ports/sparc/faq.html#nell
 .Note)
 .bullet)
 .It
