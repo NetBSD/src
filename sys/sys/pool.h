@@ -1,4 +1,4 @@
-/*	$NetBSD: pool.h,v 1.58 2007/11/18 16:27:42 ad Exp $	*/
+/*	$NetBSD: pool.h,v 1.58.2.1 2007/12/15 02:22:22 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2007 The NetBSD Foundation, Inc.
@@ -92,7 +92,7 @@ struct pool_allocator {
 LIST_HEAD(pool_pagelist,pool_item_header);
 
 struct pool {
-	LIST_ENTRY(pool)
+	TAILQ_ENTRY(pool)
 			pr_poollist;
 	struct pool_pagelist
 			pr_emptypages;	/* Empty pages */
@@ -219,7 +219,7 @@ struct pool_cache {
 	
 	/* Cache layer. */
 	kmutex_t	pc_lock;	/* locks cache layer */
-	LIST_ENTRY(pool_cache)
+	TAILQ_ENTRY(pool_cache)
 			pc_cachelist;	/* entry on global cache list */
 	pcg_t		*pc_emptygroups;/* list of empty cache groups */
 	pcg_t		*pc_fullgroups;	/* list of full cache groups */
