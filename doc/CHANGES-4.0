@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.374 2007/12/15 15:29:10 pavel Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.375 2007/12/15 18:13:38 jdc Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -10685,4 +10685,11 @@ share/man/man9/kauth.9				1.58
 	still under active development and its ABI (and possibly API) may
 	change between NetBSD versions.
 	[elad, ticket #1003]
+
+share/man/man8/compat_30.8			1.6-1.7
+
+	Complete the list of libraries needed for 3.0 binary compatibility.
+	From the emulators/compat30 package, suggested by Johnny Lam.
+	Note the socket(2) syscall change.
+	[pavel, ticket #1016]
 
