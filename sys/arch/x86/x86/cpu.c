@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.12 2007/12/09 20:27:49 jmcneill Exp $	*/
+/*	$NetBSD: cpu.c,v 1.13 2007/12/15 09:18:59 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.12 2007/12/09 20:27:49 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.13 2007/12/15 09:18:59 joerg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -902,25 +902,17 @@ cpu_suspend(device_t dv)
 	struct cpu_info *ci = sc->sc_info;
 	int err;
 
-	if (ci->ci_flags & CPUF_PRIMARY) {
-		x86_mp_online = false;
+	if (ci->ci_flags & CPUF_PRIMARY)
 		return true;
-	}
-
 	if (ci->ci_data.cpu_idlelwp == NULL)
 		return true;
 	if ((ci->ci_flags & CPUF_PRESENT) == 0)
 		return true;
 
-	ci->ci_flags &= ~CPUF_GO;
-	ci->ci_flags &= ~CPUF_RUNNING;
-
 	mutex_enter(&cpu_lock);
 	err = cpu_setonline(ci, false);
 	mutex_exit(&cpu_lock);
-	if (err)
-		return false;
-	return true;
+	return err == 0;
 }
 
 static bool
@@ -930,25 +922,8 @@ cpu_resume(device_t dv)
 	struct cpu_info *ci = sc->sc_info;
 	int err;
 
-	if (ci->ci_flags & CPUF_PRIMARY) {
-#ifdef MULTIPROCESSOR
-		struct cpu_info *sci;
-		CPU_INFO_ITERATOR cii;
-		int s;
-
-		s = splhigh();
-		for (CPU_INFO_FOREACH(cii, sci)) {
-			if (sci->ci_flags & CPUF_PRIMARY)
-				continue;
-			cpu_start_secondary(sci);
-			cpu_init_idle_lwp(sci);
-		}
-		splx(s);
-		cpu_boot_secondary_processors();
-#endif
+	if (ci->ci_flags & CPUF_PRIMARY)
 		return true;
-	}
-
 	if (ci->ci_data.cpu_idlelwp == NULL)
 		return true;
 	if ((ci->ci_flags & CPUF_PRESENT) == 0)
@@ -957,9 +932,8 @@ cpu_resume(device_t dv)
 	mutex_enter(&cpu_lock);
 	err = cpu_setonline(ci, true);
 	mutex_exit(&cpu_lock);
-	if (err)
-		return false;
-	return true;
+
+	return err == 0;
 }
 
 void
