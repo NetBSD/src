@@ -1,4 +1,4 @@
-/*	$NetBSD: wsconsctl.c,v 1.14 2006/02/05 18:11:46 jmmv Exp $ */
+/*	$NetBSD: wsconsctl.c,v 1.15 2007/12/15 16:32:06 perry Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -36,6 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #include <err.h>
 #include <fcntl.h>
 #include <string.h>

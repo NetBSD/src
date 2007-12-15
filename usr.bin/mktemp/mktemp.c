@@ -1,4 +1,4 @@
-/* $NetBSD: mktemp.c,v 1.8 2006/09/19 19:01:56 wiz Exp $ */
+/* $NetBSD: mktemp.c,v 1.9 2007/12/15 16:32:06 perry Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1996, 1998 Peter Wemm <peter@netplex.com.au>
@@ -40,6 +40,7 @@
 #include "nbtool_config.h"
 #endif
 
+#include <sys/cdefs.h>
 #include <sys/types.h>
 #include <err.h>
 #include <paths.h>
@@ -49,7 +50,7 @@
 #include <unistd.h>
 
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: mktemp.c,v 1.8 2006/09/19 19:01:56 wiz Exp $");
+__RCSID("$NetBSD: mktemp.c,v 1.9 2007/12/15 16:32:06 perry Exp $");
 #endif /* !__lint */
 
 static void usage(void) __attribute__((__noreturn__));

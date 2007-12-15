@@ -1,4 +1,4 @@
-/*	$NetBSD: screen.c,v 1.19 2004/01/27 20:30:30 jsm Exp $	*/
+/*	$NetBSD: screen.c,v 1.20 2007/12/15 16:32:05 perry Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,6 +38,7 @@
  * Tetris screen control.
  */
 
+#include <sys/cdefs.h>
 #include <sys/ioctl.h>
 
 #include <setjmp.h>

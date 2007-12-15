@@ -1,4 +1,4 @@
-/*	$NetBSD: spellprog.c,v 1.6 2006/10/22 16:36:44 christos Exp $	*/
+/*	$NetBSD: spellprog.c,v 1.7 2007/12/15 16:32:07 perry Exp $	*/
 
 /* derived from OpenBSD: spellprog.c,v 1.4 2003/06/03 02:56:16 millert Exp */
 
@@ -65,6 +65,8 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
 
 #ifndef lint
 static const char copyright[] =

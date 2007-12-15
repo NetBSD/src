@@ -1,4 +1,4 @@
-/*	$NetBSD: deroff.c,v 1.3 2005/07/06 07:57:19 wiz Exp $	*/
+/*	$NetBSD: deroff.c,v 1.4 2007/12/15 16:32:06 perry Exp $	*/
 
 /* taken from: OpenBSD: deroff.c,v 1.6 2004/06/02 14:58:46 tom Exp */
 
@@ -74,10 +74,11 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)deroff.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$NetBSD: deroff.c,v 1.3 2005/07/06 07:57:19 wiz Exp $";
+static const char rcsid[] = "$NetBSD: deroff.c,v 1.4 2007/12/15 16:32:06 perry Exp $";
 #endif
 #endif /* not lint */
 
+#include <sys/cdefs.h>
 #include <err.h>
 #include <limits.h>
 #include <stdio.h>
