@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs.h,v 1.28.2.4 2007/12/13 17:55:19 ad Exp $	*/
+/*	$NetBSD: tmpfs.h,v 1.28.2.5 2007/12/15 00:17:31 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -449,7 +449,8 @@ TMPFS_PAGES_MAX(struct tmpfs_mount *tmp)
 }
 
 /* Returns the available space for the given file system. */
-#define TMPFS_PAGES_AVAIL(tmp) (TMPFS_PAGES_MAX(tmp) - (tmp)->tm_pages_used)
+#define TMPFS_PAGES_AVAIL(tmp)		\
+    ((ssize_t)(TMPFS_PAGES_MAX(tmp) - (tmp)->tm_pages_used))
 
 /* --------------------------------------------------------------------- */
 
