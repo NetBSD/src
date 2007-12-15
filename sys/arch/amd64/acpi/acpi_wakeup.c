@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.4 2007/12/09 20:27:42 jmcneill Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.5 2007/12/15 09:15:38 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.4 2007/12/09 20:27:42 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.5 2007/12/15 09:15:38 joerg Exp $");
 
 /*-
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
@@ -171,6 +171,11 @@ acpi_md_sleep(int state)
 
 	KASSERT(acpi_wakeup_paddr != 0);
 	KASSERT(sizeof(wakecode) <= PAGE_SIZE);
+
+	if (ncpu > 1) {
+		printf("acpi: sleep is not supported on MP.\n");
+		return -1;
+	}
 
 	if (acpi_wakeup_vaddr == 0) {
 		/* Map ACPI wakecode */
