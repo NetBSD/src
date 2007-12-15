@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdSchedule.c,v 1.2 2007/12/09 20:27:54 jmcneill Exp $	*/
+/*	$NetBSD: OsdSchedule.c,v 1.3 2007/12/15 00:39:25 perry Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdSchedule.c,v 1.2 2007/12/09 20:27:54 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdSchedule.c,v 1.3 2007/12/15 00:39:25 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -68,7 +68,7 @@ void
 acpi_osd_sched_init(void)
 {
 
-	ACPI_FUNCTION_TRACE(__FUNCTION__);
+	ACPI_FUNCTION_TRACE(__func__);
 
 	sysmon_task_queue_init();
 
@@ -84,7 +84,7 @@ void
 acpi_osd_sched_fini(void)
 {
 
-	ACPI_FUNCTION_TRACE(__FUNCTION__);
+	ACPI_FUNCTION_TRACE(__func__);
 
 	sysmon_task_queue_fini();
 
@@ -119,7 +119,7 @@ AcpiOsExecute(ACPI_EXECUTE_TYPE Type, ACPI_OSD_EXEC_CALLBACK Function,
 {
 	int pri;
 
-	ACPI_FUNCTION_TRACE(__FUNCTION__);
+	ACPI_FUNCTION_TRACE(__func__);
 
 	switch (Type) {
 	case OSL_GPE_HANDLER:
@@ -162,7 +162,7 @@ AcpiOsSleep(ACPI_INTEGER Milliseconds)
 {
 	int timo;
 
-	ACPI_FUNCTION_TRACE(__FUNCTION__);
+	ACPI_FUNCTION_TRACE(__func__);
 
 	timo = Milliseconds * hz / 1000;
 	if (timo == 0)
@@ -182,7 +182,7 @@ void
 AcpiOsStall(UINT32 Microseconds)
 {
 
-	ACPI_FUNCTION_TRACE(__FUNCTION__);
+	ACPI_FUNCTION_TRACE(__func__);
 
 	/*
 	 * sleep(9) isn't safe because AcpiOsStall may be called

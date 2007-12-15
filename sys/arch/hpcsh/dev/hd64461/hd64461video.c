@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461video.c,v 1.43 2007/10/17 19:54:30 garbled Exp $	*/
+/*	$NetBSD: hd64461video.c,v 1.44 2007/12/15 00:39:19 perry Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64461video.c,v 1.43 2007/10/17 19:54:30 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64461video.c,v 1.44 2007/12/15 00:39:19 perry Exp $");
 
 #include "opt_hd64461video.h"
 // #define HD64461VIDEO_HWACCEL
@@ -347,7 +347,7 @@ hd64461video_setup_hpcfbif(struct hd64461video_chip *hvc)
 
 	switch (depth) {
 	default:
-		panic("%s: not supported color depth", __FUNCTION__);
+		panic("%s: not supported color depth", __func__);
 		/* NOTREACHED */
 	case 16:
 		fb->hf_class = HPCFB_CLASS_RGBCOLOR;

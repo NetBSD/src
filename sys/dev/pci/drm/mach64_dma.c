@@ -1,4 +1,4 @@
-/*	$NetBSD: mach64_dma.c,v 1.3 2007/12/11 11:48:41 lukem Exp $	*/
+/*	$NetBSD: mach64_dma.c,v 1.4 2007/12/15 00:39:31 perry Exp $	*/
 
 /* mach64_dma.c -- DMA support for mach64 (Rage Pro) driver -*- linux-c -*- */
 /**
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach64_dma.c,v 1.3 2007/12/11 11:48:41 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach64_dma.c,v 1.4 2007/12/15 00:39:31 perry Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/mach64_dma.c,v 1.2 2005/11/28 23:13:53 anholt Exp $");
 */
@@ -76,7 +76,7 @@ int mach64_do_wait_for_fifo(drm_mach64_private_t * dev_priv, int entries)
 		DRM_UDELAY(1);
 	}
 
-	DRM_INFO("%s failed! slots=%d entries=%d\n", __FUNCTION__, slots,
+	DRM_INFO("%s failed! slots=%d entries=%d\n", __func__, slots,
 		 entries);
 	return DRM_ERR(EBUSY);
 }
@@ -99,7 +99,7 @@ int mach64_do_wait_for_idle(drm_mach64_private_t * dev_priv)
 		DRM_UDELAY(1);
 	}
 
-	DRM_INFO("%s failed! GUI_STAT=0x%08x\n", __FUNCTION__,
+	DRM_INFO("%s failed! GUI_STAT=0x%08x\n", __func__,
 		 MACH64_READ(MACH64_GUI_STAT));
 	mach64_dump_ring_info(dev_priv);
 	return DRM_ERR(EBUSY);
@@ -133,7 +133,7 @@ int mach64_wait_ring(drm_mach64_private_t * dev_priv, int n)
 		mach64_update_ring_snapshot(dev_priv);
 		if (ring->space >= n) {
 			if (i > 0) {
-				DRM_DEBUG("%s: %d usecs\n", __FUNCTION__, i);
+				DRM_DEBUG("%s: %d usecs\n", __func__, i);
 			}
 			return 0;
 		}
@@ -164,7 +164,7 @@ static int mach64_ring_idle(drm_mach64_private_t * dev_priv)
 		if (ring->head == ring->tail &&
 		    !(MACH64_READ(MACH64_GUI_STAT) & MACH64_GUI_ACTIVE)) {
 			if (i > 0) {
-				DRM_DEBUG("%s: %d usecs\n", __FUNCTION__, i);
+				DRM_DEBUG("%s: %d usecs\n", __func__, i);
 			}
 			return 0;
 		}
@@ -177,7 +177,7 @@ static int mach64_ring_idle(drm_mach64_private_t * dev_priv)
 		DRM_UDELAY(1);
 	}
 
-	DRM_INFO("%s failed! GUI_STAT=0x%08x\n", __FUNCTION__,
+	DRM_INFO("%s failed! GUI_STAT=0x%08x\n", __func__,
 		 MACH64_READ(MACH64_GUI_STAT));
 	mach64_dump_ring_info(dev_priv);
 	return DRM_ERR(EBUSY);
@@ -225,7 +225,7 @@ int mach64_do_dma_idle(drm_mach64_private_t * dev_priv)
 	/* wait for completion */
 	if ((ret = mach64_ring_idle(dev_priv)) < 0) {
 		DRM_ERROR("%s failed BM_GUI_TABLE=0x%08x tail: %u\n",
-			  __FUNCTION__, MACH64_READ(MACH64_BM_GUI_TABLE),
+			  __func__, MACH64_READ(MACH64_BM_GUI_TABLE),
 			  dev_priv->ring.tail);
 		return ret;
 	}
@@ -244,7 +244,7 @@ int mach64_do_engine_reset(drm_mach64_private_t * dev_priv)
 {
 	u32 tmp;
 
-	DRM_DEBUG("%s\n", __FUNCTION__);
+	DRM_DEBUG("%s\n", __func__);
 
 	/* Kill off any outstanding DMA transfers.
 	 */
@@ -590,7 +590,7 @@ static int mach64_bm_dma_test(drm_device_t * dev)
 	u32 src_cntl, pat_reg0, pat_reg1;
 	int i, count, failed;
 
-	DRM_DEBUG("%s\n", __FUNCTION__);
+	DRM_DEBUG("%s\n", __func__);
 
 	table = (u32 *) dev_priv->ring.start;
 
@@ -766,7 +766,7 @@ static int mach64_do_dma_init(drm_device_t * dev, drm_mach64_init_t * init)
 	u32 tmp;
 	int i, ret;
 
-	DRM_DEBUG("%s\n", __FUNCTION__);
+	DRM_DEBUG("%s\n", __func__);
 
 	dev_priv = drm_alloc(sizeof(drm_mach64_private_t), DRM_MEM_DRIVER);
 	if (dev_priv == NULL)
@@ -1010,7 +1010,7 @@ int mach64_do_dispatch_pseudo_dma(drm_mach64_private_t * dev_priv)
 	if ((ret = mach64_do_wait_for_idle(dev_priv)) < 0) {
 		DRM_INFO
 		    ("%s: idle failed before pseudo-dma dispatch, resetting engine\n",
-		     __FUNCTION__);
+		     __func__);
 		mach64_dump_engine_info(dev_priv);
 		mach64_do_engine_reset(dev_priv);
 		return ret;
@@ -1131,7 +1131,7 @@ int mach64_do_dispatch_pseudo_dma(drm_mach64_private_t * dev_priv)
 	MACH64_WRITE(MACH64_BM_GUI_TABLE_CMD,
 		     ring->head_addr | MACH64_CIRCULAR_BUF_SIZE_16KB);
 
-	DRM_DEBUG("%s completed\n", __FUNCTION__);
+	DRM_DEBUG("%s completed\n", __func__);
 	return 0;
 }
 
@@ -1144,7 +1144,7 @@ int mach64_do_dispatch_pseudo_dma(drm_mach64_private_t * dev_priv)
 
 int mach64_do_cleanup_dma(drm_device_t * dev)
 {
-	DRM_DEBUG("%s\n", __FUNCTION__);
+	DRM_DEBUG("%s\n", __func__);
 
 	/* Make sure interrupts are disabled here because the uninstall ioctl
 	 * may not have been called from userspace and after dev_private
@@ -1192,7 +1192,7 @@ int mach64_dma_init(DRM_IOCTL_ARGS)
 	DRM_DEVICE;
 	drm_mach64_init_t init;
 
-	DRM_DEBUG("%s\n", __FUNCTION__);
+	DRM_DEBUG("%s\n", __func__);
 
 	LOCK_TEST_WITH_RETURN(dev, filp);
 
@@ -1214,7 +1214,7 @@ int mach64_dma_idle(DRM_IOCTL_ARGS)
 	DRM_DEVICE;
 	drm_mach64_private_t *dev_priv = dev->dev_private;
 
-	DRM_DEBUG("%s\n", __FUNCTION__);
+	DRM_DEBUG("%s\n", __func__);
 
 	LOCK_TEST_WITH_RETURN(dev, filp);
 
@@ -1226,7 +1226,7 @@ int mach64_dma_flush(DRM_IOCTL_ARGS)
 	DRM_DEVICE;
 	drm_mach64_private_t *dev_priv = dev->dev_private;
 
-	DRM_DEBUG("%s\n", __FUNCTION__);
+	DRM_DEBUG("%s\n", __func__);
 
 	LOCK_TEST_WITH_RETURN(dev, filp);
 
@@ -1238,7 +1238,7 @@ int mach64_engine_reset(DRM_IOCTL_ARGS)
 	DRM_DEVICE;
 	drm_mach64_private_t *dev_priv = dev->dev_private;
 
-	DRM_DEBUG("%s\n", __FUNCTION__);
+	DRM_DEBUG("%s\n", __func__);
 
 	LOCK_TEST_WITH_RETURN(dev, filp);
 
@@ -1260,7 +1260,7 @@ int mach64_init_freelist(drm_device_t * dev)
 	struct list_head *ptr;
 	int i;
 
-	DRM_DEBUG("%s: adding %d buffers to freelist\n", __FUNCTION__,
+	DRM_DEBUG("%s: adding %d buffers to freelist\n", __func__,
 		  dma->buf_count);
 
 	for (i = 0; i < dma->buf_count; i++) {
@@ -1285,7 +1285,7 @@ void mach64_destroy_freelist(drm_device_t * dev)
 	struct list_head *ptr;
 	struct list_head *tmp;
 
-	DRM_DEBUG("%s\n", __FUNCTION__);
+	DRM_DEBUG("%s\n", __func__);
 
 	list_for_each_safe(ptr, tmp, &dev_priv->pending) {
 		list_del(ptr);
@@ -1330,7 +1330,7 @@ int mach64_do_release_used_buffers(drm_mach64_private_t * dev_priv)
 		}
 	}
 
-	DRM_DEBUG("%s: released %d buffers from pending list\n", __FUNCTION__,
+	DRM_DEBUG("%s: released %d buffers from pending list\n", __func__,
 		  i);
 
 	return 0;
@@ -1377,7 +1377,7 @@ drm_buf_t *mach64_freelist_get(drm_mach64_private_t * dev_priv)
 				mach64_do_release_used_buffers(dev_priv);
 				DRM_DEBUG
 				    ("%s: idle engine, freed all buffers.\n",
-				     __FUNCTION__);
+				     __func__);
 				if (list_empty(&dev_priv->free_list)) {
 					DRM_ERROR
 					    ("Freelist empty with idle engine\n");
@@ -1429,7 +1429,7 @@ drm_buf_t *mach64_freelist_get(drm_mach64_private_t * dev_priv)
 					DRM_DEBUG
 					    ("%s: freed processed buffer (head=%d tail=%d "
 					     "buf ring ofs=%d).\n",
-					     __FUNCTION__, head, tail, ofs);
+					     __func__, head, tail, ofs);
 					return entry->buf;
 				}
 			}

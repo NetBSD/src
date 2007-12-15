@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep_common.c,v 1.2 2007/10/17 19:56:44 garbled Exp $ */
+/* $NetBSD: pci_machdep_common.c,v 1.3 2007/12/15 00:39:23 perry Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep_common.c,v 1.2 2007/10/17 19:56:44 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep_common.c,v 1.3 2007/12/15 00:39:23 perry Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -167,7 +167,7 @@ genppc_pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 	int line = pa->pa_intrline;
 	
 #if DEBUG
-	printf("%s: pin: %d, line: %d\n", __FUNCTION__, pin, line);
+	printf("%s: pin: %d, line: %d\n", __func__, pin, line);
 #endif
 
 	if (pin == 0) {

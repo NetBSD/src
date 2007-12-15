@@ -1,4 +1,4 @@
-/*	$NetBSD: ucbio.c,v 1.9 2005/12/11 12:17:33 christos Exp $	*/
+/*	$NetBSD: ucbio.c,v 1.10 2007/12/15 00:39:18 perry Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucbio.c,v 1.9 2005/12/11 12:17:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucbio.c,v 1.10 2007/12/15 00:39:18 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -159,7 +159,7 @@ betty_intr_establish(hpcio_chip_t hc, int port, int mode, int (*func)(void *),
 	struct ucbio_softc *sc = hc->hc_sc;
 
 	printf("%s: %s not implemented.\n", sc->sc_dev.dv_xname,
-	    __FUNCTION__);
+	    __func__);
 
 	return (0);
 }
@@ -170,7 +170,7 @@ betty_intr_disestablish(hpcio_chip_t hc, void *ih)
 	struct ucbio_softc *sc = hc->hc_sc;
 
 	printf("%s: %s not implemented.\n", sc->sc_dev.dv_xname,
-	    __FUNCTION__);
+	    __func__);
 }
 
 /* debug */

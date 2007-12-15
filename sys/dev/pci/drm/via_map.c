@@ -1,4 +1,4 @@
-/*	$NetBSD: via_map.c,v 1.2 2007/12/11 11:48:48 lukem Exp $	*/
+/*	$NetBSD: via_map.c,v 1.3 2007/12/15 00:39:35 perry Exp $	*/
 
 /*
  * Copyright 1998-2003 VIA Technologies, Inc. All Rights Reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: via_map.c,v 1.2 2007/12/11 11:48:48 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: via_map.c,v 1.3 2007/12/15 00:39:35 perry Exp $");
 
 #include <dev/drm/drmP.h>
 #include <dev/pci/drm/via_drm.h>
@@ -36,7 +36,7 @@ static int via_do_init_map(drm_device_t * dev, drm_via_init_t * init)
 	drm_via_private_t *dev_priv = dev->dev_private;
 	int ret = 0;
 
-	DRM_DEBUG("%s\n", __FUNCTION__);
+	DRM_DEBUG("%s\n", __func__);
 
 	DRM_GETSAREA();
 	if (!dev_priv->sarea) {
@@ -102,7 +102,7 @@ int via_map_init(DRM_IOCTL_ARGS)
 	DRM_DEVICE;
 	drm_via_init_t init;
 
-	DRM_DEBUG("%s\n", __FUNCTION__);
+	DRM_DEBUG("%s\n", __func__);
 
 	DRM_COPY_FROM_USER_IOCTL(init, (drm_via_init_t __user *) data,
 				 sizeof(init));

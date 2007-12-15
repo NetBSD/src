@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smap.c,v 1.9 2007/03/04 06:00:30 christos Exp $	*/
+/*	$NetBSD: if_smap.c,v 1.10 2007/12/15 00:39:21 perry Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_smap.c,v 1.9 2007/03/04 06:00:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_smap.c,v 1.10 2007/12/15 00:39:21 perry Exp $");
 
 #include "debug_playstation2.h"
 
@@ -89,16 +89,16 @@ __KERNEL_RCSID(0, "$NetBSD: if_smap.c,v 1.9 2007/03/04 06:00:30 christos Exp $")
 int	smap_debug = 0;
 #define	DPRINTF(fmt, args...)						\
 	if (smap_debug)							\
-		printf("%s: " fmt, __FUNCTION__ , ##args) 
+		printf("%s: " fmt, __func__ , ##args) 
 #define	DPRINTFN(n, arg)						\
 	if (smap_debug > (n))						\
-		printf("%s: " fmt, __FUNCTION__ , ##args) 
+		printf("%s: " fmt, __func__ , ##args) 
 #define STATIC
 struct smap_softc *__sc;
 void __smap_status(int);
 void __smap_lock_check(const char *, int);
-#define FUNC_ENTER()	__smap_lock_check(__FUNCTION__, 1)
-#define FUNC_EXIT()	__smap_lock_check(__FUNCTION__, 0)
+#define FUNC_ENTER()	__smap_lock_check(__func__, 1)
+#define FUNC_EXIT()	__smap_lock_check(__func__, 0)
 #else
 #define	DPRINTF(arg...)		((void)0)
 #define DPRINTFN(n, arg...)	((void)0)

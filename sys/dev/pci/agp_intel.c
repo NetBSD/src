@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_intel.c,v 1.25 2007/12/09 20:28:05 jmcneill Exp $	*/
+/*	$NetBSD: agp_intel.c,v 1.26 2007/12/15 00:39:28 perry Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_intel.c,v 1.25 2007/12/09 20:28:05 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_intel.c,v 1.26 2007/12/15 00:39:28 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -286,7 +286,7 @@ agp_intel_detach(struct agp_softc *sc)
 	/* XXX i845/i855PM/i840/i850E */
 	reg = pci_conf_read(sc->as_pc, sc->as_tag, AGP_INTEL_NBXCFG);
 	reg &= ~(1 << 9);
-	printf("%s: set NBXCFG to %x\n", __FUNCTION__, reg);
+	printf("%s: set NBXCFG to %x\n", __func__, reg);
 	pci_conf_write(sc->as_pc, sc->as_tag, AGP_INTEL_NBXCFG, reg);
 	pci_conf_write(sc->as_pc, sc->as_tag, AGP_INTEL_ATTBASE, 0);
 	AGP_SET_APERTURE(sc, isc->initial_aperture);

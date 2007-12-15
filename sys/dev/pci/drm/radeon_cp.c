@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_cp.c,v 1.6 2007/12/11 11:48:44 lukem Exp $	*/
+/*	$NetBSD: radeon_cp.c,v 1.7 2007/12/15 00:39:33 perry Exp $	*/
 
 /* radeon_cp.c -- CP support for Radeon -*- linux-c -*- */
 /*-
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_cp.c,v 1.6 2007/12/11 11:48:44 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_cp.c,v 1.7 2007/12/15 00:39:33 perry Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/radeon_cp.c,v 1.19 2006/09/07 23:04:47 anholt Exp $");
 */
@@ -841,7 +841,7 @@ static int RADEON_READ_PCIE(drm_radeon_private_t *dev_priv, int addr)
 #if RADEON_FIFO_DEBUG
 static void radeon_status(drm_radeon_private_t * dev_priv)
 {
-	printf("%s:\n", __FUNCTION__);
+	printf("%s:\n", __func__);
 	printf("RBBM_STATUS = 0x%08x\n",
 	       (unsigned int)RADEON_READ(RADEON_RBBM_STATUS));
 	printf("CP_RB_RTPR = 0x%08x\n",
@@ -1808,12 +1808,12 @@ int radeon_cp_start(DRM_IOCTL_ARGS)
 	LOCK_TEST_WITH_RETURN(dev, filp);
 
 	if (dev_priv->cp_running) {
-		DRM_DEBUG("%s while CP running\n", __FUNCTION__);
+		DRM_DEBUG("%s while CP running\n", __func__);
 		return 0;
 	}
 	if (dev_priv->cp_mode == RADEON_CSQ_PRIDIS_INDDIS) {
 		DRM_DEBUG("%s called with bogus CP mode (%d)\n",
-			  __FUNCTION__, dev_priv->cp_mode);
+			  __func__, dev_priv->cp_mode);
 		return 0;
 	}
 
@@ -1929,7 +1929,7 @@ int radeon_cp_reset(DRM_IOCTL_ARGS)
 	LOCK_TEST_WITH_RETURN(dev, filp);
 
 	if (!dev_priv) {
-		DRM_DEBUG("%s called before init done\n", __FUNCTION__);
+		DRM_DEBUG("%s called before init done\n", __func__);
 		return DRM_ERR(EINVAL);
 	}
 

@@ -226,7 +226,7 @@ extern void kdb_backtrace(void);
 
 #define WARN_ON(condition) do { \
         if (unlikely((condition)!=0)) { \
-                log(LOG_WARNING, "BUG: warning at %s:%d/%s()\n", __FILE__, __LINE__, __FUNCTION__); \
+                log(LOG_WARNING, "BUG: warning at %s:%d/%s()\n", __FILE__, __LINE__, __func__); \
                 kdb_backtrace(); \
         } \
 } while (0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: r128_state.c,v 1.3 2007/12/11 11:48:44 lukem Exp $	*/
+/*	$NetBSD: r128_state.c,v 1.4 2007/12/15 00:39:33 perry Exp $	*/
 
 /* r128_state.c -- State support for r128 -*- linux-c -*-
  * Created: Thu Jan 27 02:53:43 2000 by gareth@valinux.com
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: r128_state.c,v 1.3 2007/12/11 11:48:44 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: r128_state.c,v 1.4 2007/12/15 00:39:33 perry Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/r128_state.c,v 1.13 2005/11/28 23:13:53 anholt Exp $");
 */
@@ -50,7 +50,7 @@ static void r128_emit_clip_rects(drm_r128_private_t * dev_priv,
 {
 	u32 aux_sc_cntl = 0x00000000;
 	RING_LOCALS;
-	DRM_DEBUG("    %s\n", __FUNCTION__);
+	DRM_DEBUG("    %s\n", __func__);
 
 	BEGIN_RING((count < 3 ? count : 3) * 5 + 2);
 
@@ -93,7 +93,7 @@ static __inline__ void r128_emit_core(drm_r128_private_t * dev_priv)
 	drm_r128_sarea_t *sarea_priv = dev_priv->sarea_priv;
 	drm_r128_context_regs_t *ctx = &sarea_priv->context_state;
 	RING_LOCALS;
-	DRM_DEBUG("    %s\n", __FUNCTION__);
+	DRM_DEBUG("    %s\n", __func__);
 
 	BEGIN_RING(2);
 
@@ -108,7 +108,7 @@ static __inline__ void r128_emit_context(drm_r128_private_t * dev_priv)
 	drm_r128_sarea_t *sarea_priv = dev_priv->sarea_priv;
 	drm_r128_context_regs_t *ctx = &sarea_priv->context_state;
 	RING_LOCALS;
-	DRM_DEBUG("    %s\n", __FUNCTION__);
+	DRM_DEBUG("    %s\n", __func__);
 
 	BEGIN_RING(13);
 
@@ -134,7 +134,7 @@ static __inline__ void r128_emit_setup(drm_r128_private_t * dev_priv)
 	drm_r128_sarea_t *sarea_priv = dev_priv->sarea_priv;
 	drm_r128_context_regs_t *ctx = &sarea_priv->context_state;
 	RING_LOCALS;
-	DRM_DEBUG("    %s\n", __FUNCTION__);
+	DRM_DEBUG("    %s\n", __func__);
 
 	BEGIN_RING(3);
 
@@ -150,7 +150,7 @@ static __inline__ void r128_emit_masks(drm_r128_private_t * dev_priv)
 	drm_r128_sarea_t *sarea_priv = dev_priv->sarea_priv;
 	drm_r128_context_regs_t *ctx = &sarea_priv->context_state;
 	RING_LOCALS;
-	DRM_DEBUG("    %s\n", __FUNCTION__);
+	DRM_DEBUG("    %s\n", __func__);
 
 	BEGIN_RING(5);
 
@@ -169,7 +169,7 @@ static __inline__ void r128_emit_window(drm_r128_private_t * dev_priv)
 	drm_r128_sarea_t *sarea_priv = dev_priv->sarea_priv;
 	drm_r128_context_regs_t *ctx = &sarea_priv->context_state;
 	RING_LOCALS;
-	DRM_DEBUG("    %s\n", __FUNCTION__);
+	DRM_DEBUG("    %s\n", __func__);
 
 	BEGIN_RING(2);
 
@@ -186,7 +186,7 @@ static __inline__ void r128_emit_tex0(drm_r128_private_t * dev_priv)
 	drm_r128_texture_regs_t *tex = &sarea_priv->tex_state[0];
 	int i;
 	RING_LOCALS;
-	DRM_DEBUG("    %s\n", __FUNCTION__);
+	DRM_DEBUG("    %s\n", __func__);
 
 	BEGIN_RING(7 + R128_MAX_TEXTURE_LEVELS);
 
@@ -212,7 +212,7 @@ static __inline__ void r128_emit_tex1(drm_r128_private_t * dev_priv)
 	drm_r128_texture_regs_t *tex = &sarea_priv->tex_state[1];
 	int i;
 	RING_LOCALS;
-	DRM_DEBUG("    %s\n", __FUNCTION__);
+	DRM_DEBUG("    %s\n", __func__);
 
 	BEGIN_RING(5 + R128_MAX_TEXTURE_LEVELS);
 
@@ -234,7 +234,7 @@ static __inline__ void r128_emit_state(drm_r128_private_t * dev_priv)
 	drm_r128_sarea_t *sarea_priv = dev_priv->sarea_priv;
 	unsigned int dirty = sarea_priv->dirty;
 
-	DRM_DEBUG("%s: dirty=0x%08x\n", __FUNCTION__, dirty);
+	DRM_DEBUG("%s: dirty=0x%08x\n", __func__, dirty);
 
 	if (dirty & R128_UPLOAD_CORE) {
 		r128_emit_core(dev_priv);
@@ -370,7 +370,7 @@ static void r128_cce_dispatch_clear(drm_device_t * dev,
 	unsigned int flags = clear->flags;
 	int i;
 	RING_LOCALS;
-	DRM_DEBUG("%s\n", __FUNCTION__);
+	DRM_DEBUG("%s\n", __func__);
 
 	if (dev_priv->page_flipping && dev_priv->current_page == 1) {
 		unsigned int tmp = flags;
@@ -474,7 +474,7 @@ static void r128_cce_dispatch_swap(drm_device_t * dev)
 	drm_clip_rect_t *pbox = sarea_priv->boxes;
 	int i;
 	RING_LOCALS;
-	DRM_DEBUG("%s\n", __FUNCTION__);
+	DRM_DEBUG("%s\n", __func__);
 
 #if R128_PERFORMANCE_BOXES
 	/* Do some trivial performance monitoring...
@@ -537,7 +537,7 @@ static void r128_cce_dispatch_flip(drm_device_t * dev)
 	drm_r128_private_t *dev_priv = dev->dev_private;
 	RING_LOCALS;
 	DRM_DEBUG("%s: page=%d pfCurrentPage=%d\n",
-		  __FUNCTION__,
+		  __func__,
 		  dev_priv->current_page, dev_priv->sarea_priv->pfCurrentPage);
 
 #if R128_PERFORMANCE_BOXES
@@ -1163,7 +1163,7 @@ static int r128_cce_dispatch_read_pixels(drm_device_t * dev,
 	int count, *x, *y;
 	int i, xbuf_size, ybuf_size;
 	RING_LOCALS;
-	DRM_DEBUG("%s\n", __FUNCTION__);
+	DRM_DEBUG("%s\n", __func__);
 
 	count = depth->n;
 	if (count > 4096 || count <= 0)
@@ -1233,7 +1233,7 @@ static void r128_cce_dispatch_stipple(drm_device_t * dev, u32 * stipple)
 	drm_r128_private_t *dev_priv = dev->dev_private;
 	int i;
 	RING_LOCALS;
-	DRM_DEBUG("%s\n", __FUNCTION__);
+	DRM_DEBUG("%s\n", __func__);
 
 	BEGIN_RING(33);
 
@@ -1321,7 +1321,7 @@ static int r128_cce_flip(DRM_IOCTL_ARGS)
 {
 	DRM_DEVICE;
 	drm_r128_private_t *dev_priv = dev->dev_private;
-	DRM_DEBUG("%s\n", __FUNCTION__);
+	DRM_DEBUG("%s\n", __func__);
 
 	LOCK_TEST_WITH_RETURN(dev, filp);
 
@@ -1341,7 +1341,7 @@ static int r128_cce_swap(DRM_IOCTL_ARGS)
 	DRM_DEVICE;
 	drm_r128_private_t *dev_priv = dev->dev_private;
 	drm_r128_sarea_t *sarea_priv = dev_priv->sarea_priv;
-	DRM_DEBUG("%s\n", __FUNCTION__);
+	DRM_DEBUG("%s\n", __func__);
 
 	LOCK_TEST_WITH_RETURN(dev, filp);
 
@@ -1370,7 +1370,7 @@ static int r128_cce_vertex(DRM_IOCTL_ARGS)
 	LOCK_TEST_WITH_RETURN(dev, filp);
 
 	if (!dev_priv) {
-		DRM_ERROR("%s called with no initialization\n", __FUNCTION__);
+		DRM_ERROR("%s called with no initialization\n", __func__);
 		return DRM_ERR(EINVAL);
 	}
 
@@ -1430,7 +1430,7 @@ static int r128_cce_indices(DRM_IOCTL_ARGS)
 	LOCK_TEST_WITH_RETURN(dev, filp);
 
 	if (!dev_priv) {
-		DRM_ERROR("%s called with no initialization\n", __FUNCTION__);
+		DRM_ERROR("%s called with no initialization\n", __func__);
 		return DRM_ERR(EINVAL);
 	}
 
@@ -1590,7 +1590,7 @@ static int r128_cce_indirect(DRM_IOCTL_ARGS)
 	LOCK_TEST_WITH_RETURN(dev, filp);
 
 	if (!dev_priv) {
-		DRM_ERROR("%s called with no initialization\n", __FUNCTION__);
+		DRM_ERROR("%s called with no initialization\n", __func__);
 		return DRM_ERR(EINVAL);
 	}
 
@@ -1658,7 +1658,7 @@ static int r128_getparam(DRM_IOCTL_ARGS)
 	int value;
 
 	if (!dev_priv) {
-		DRM_ERROR("%s called with no initialization\n", __FUNCTION__);
+		DRM_ERROR("%s called with no initialization\n", __func__);
 		return DRM_ERR(EINVAL);
 	}
 

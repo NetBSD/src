@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.39 2007/11/26 08:33:11 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.40 2007/12/15 00:39:20 perry Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.39 2007/11/26 08:33:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.40 2007/12/15 00:39:20 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -229,7 +229,7 @@ int pmapdebug = 0
 	;
 #define PMAP_PRINTF_MASK(m,v,x) do {	\
   if ((pmapdebug & (m)) == (v)) {	\
-    printf("%s", __FUNCTION__);		\
+    printf("%s", __func__);		\
     printf x;				\
   }					\
 } while(/* CONSTCOND */ 0)

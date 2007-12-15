@@ -274,7 +274,7 @@ opcic_read(struct sapcic_socket *__so, int which)
 		return 1;
 
 	default:
-		panic("%s: bogus register", __FUNCTION__);
+		panic("%s: bogus register", __func__);
 	}
 }
 
@@ -307,7 +307,7 @@ opcic_write(struct sapcic_socket *__so, int which, int arg)
 		break;
 
 	default:
-		panic("%s: bogus register", __FUNCTION__);
+		panic("%s: bogus register", __func__);
 	}
 }
 
