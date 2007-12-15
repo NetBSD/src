@@ -1,4 +1,4 @@
-/*	$NetBSD: pmc.c,v 1.15 2006/10/22 16:25:19 christos Exp $	*/
+/*	$NetBSD: pmc.c,v 1.16 2007/12/15 19:44:52 perry Exp $	*/
 
 /*
  * Copyright 2000 Wasabi Systems, Inc.
@@ -37,7 +37,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: pmc.c,v 1.15 2006/10/22 16:25:19 christos Exp $");
+__RCSID("$NetBSD: pmc.c,v 1.16 2007/12/15 19:44:52 perry Exp $");
 #endif
 
 #include <sys/types.h>
@@ -369,7 +369,7 @@ list_pmc_names(const struct pmc_name2val_cpus *pncp)
 		(void)printf("\t%37s\n", pncp->pmc_names[n - 1].name);
 }
 
-static void usage(void) __attribute__((__noreturn__));
+static void usage(void) __dead;
 static void usage(void)
 {
 

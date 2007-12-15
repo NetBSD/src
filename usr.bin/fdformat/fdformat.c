@@ -1,4 +1,4 @@
-/*	$NetBSD: fdformat.c,v 1.13 2006/07/21 23:05:14 mishka Exp $	*/
+/*	$NetBSD: fdformat.c,v 1.14 2007/12/15 19:44:50 perry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdformat.c,v 1.13 2006/07/21 23:05:14 mishka Exp $");
+__RCSID("$NetBSD: fdformat.c,v 1.14 2007/12/15 19:44:50 perry Exp $");
 #endif
 
 #include <sys/types.h>
@@ -74,7 +74,7 @@ static const char *fdb_array[2] = {_PATH_FLOPPYTAB, 0};
 #define ALLPARMS (MASK_NBPS|MASK_NCYL|MASK_NSPT|MASK_NTRK|MASK_STEPSPERCYL|MASK_GAPLEN|MASK_FILLBYTE|MASK_XFER_RATE|MASK_INTERLEAVE)
 
 static int	confirm(int);
-static void	usage(void) __attribute__((__noreturn__));
+static void	usage(void) __dead;
 static int	verify_track(int, int, int, struct fdformat_parms *, char *);
 
 int	main(int, char **);

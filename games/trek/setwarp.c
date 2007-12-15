@@ -1,4 +1,4 @@
-/*	$NetBSD: setwarp.c,v 1.6 2003/08/07 09:37:54 agc Exp $	*/
+/*	$NetBSD: setwarp.c,v 1.7 2007/12/15 19:44:45 perry Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setwarp.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: setwarp.c,v 1.6 2003/08/07 09:37:54 agc Exp $");
+__RCSID("$NetBSD: setwarp.c,v 1.7 2007/12/15 19:44:45 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,7 +52,7 @@ __RCSID("$NetBSD: setwarp.c,v 1.6 2003/08/07 09:37:54 agc Exp $");
 /*ARGSUSED*/
 void
 setwarp(v)
-	int v __attribute__((__unused__));
+	int v __unused;
 {
 	double	warpfac;
 

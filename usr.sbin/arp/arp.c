@@ -1,4 +1,4 @@
-/*	$NetBSD: arp.c,v 1.44 2006/10/22 20:54:38 christos Exp $ */
+/*	$NetBSD: arp.c,v 1.45 2007/12/15 19:44:54 perry Exp $ */
 
 /*
  * Copyright (c) 1984, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1984, 1993\n\
 #if 0
 static char sccsid[] = "@(#)arp.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: arp.c,v 1.44 2006/10/22 20:54:38 christos Exp $");
+__RCSID("$NetBSD: arp.c,v 1.45 2007/12/15 19:44:54 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -93,7 +93,7 @@ static int getinetaddr(const char *, struct in_addr *);
 static void getsocket(void);
 static int rtmsg(int);
 static int set(int, char **);
-static void usage(void) __attribute__((__noreturn__));
+static void usage(void) __dead;
 
 static pid_t pid;
 static int aflag, nflag, vflag;

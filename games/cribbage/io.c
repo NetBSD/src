@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.20 2005/07/02 08:32:32 jmc Exp $	*/
+/*	$NetBSD: io.c,v 1.21 2007/12/15 19:44:39 perry Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: io.c,v 1.20 2005/07/02 08:32:32 jmc Exp $");
+__RCSID("$NetBSD: io.c,v 1.21 2007/12/15 19:44:39 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -557,7 +557,7 @@ getline(void)
 }
 
 void
-receive_intr(int signo __attribute__((__unused__)))
+receive_intr(int signo __unused)
 {
 	bye();
 	exit(1);

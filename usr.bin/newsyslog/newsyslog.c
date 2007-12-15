@@ -1,4 +1,4 @@
-/*	$NetBSD: newsyslog.c,v 1.49 2007/07/22 17:03:13 christos Exp $	*/
+/*	$NetBSD: newsyslog.c,v 1.50 2007/12/15 19:44:52 perry Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Andrew Doran <ad@NetBSD.org>
@@ -55,7 +55,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: newsyslog.c,v 1.49 2007/07/22 17:03:13 christos Exp $");
+__RCSID("$NetBSD: newsyslog.c,v 1.50 2007/12/15 19:44:52 perry Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -119,7 +119,7 @@ static time_t	parse_iso8601(char *);
 static time_t	parse_dwm(char *);
 static int	parse_userspec(const char *, struct passwd **, struct group **);
 static pid_t	readpidfile(const char *);
-static void	usage(void) __attribute__((__noreturn__));
+static void	usage(void) __dead;
 
 static void	log_compress(struct conf_entry *, const char *);
 static void	log_create(struct conf_entry *);

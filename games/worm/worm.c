@@ -1,4 +1,4 @@
-/*	$NetBSD: worm.c,v 1.25 2004/01/27 20:30:31 jsm Exp $	*/
+/*	$NetBSD: worm.c,v 1.26 2007/12/15 19:44:45 perry Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)worm.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: worm.c,v 1.25 2004/01/27 20:30:31 jsm Exp $");
+__RCSID("$NetBSD: worm.c,v 1.26 2007/12/15 19:44:45 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -80,10 +80,10 @@ int visible_len;
 int lastch;
 char outbuf[BUFSIZ];
 
-void	crash(void) __attribute__((__noreturn__));
+void	crash(void) __dead;
 void	display(const struct body *, char);
 int	main(int, char **);
-void	leave(int) __attribute__((__noreturn__));
+void	leave(int) __dead;
 void	life(void);
 void	newpos(struct body *);
 void	process(int);
@@ -213,7 +213,7 @@ leave(dummy)
 
 void
 wake(dummy)
-	int dummy __attribute__((__unused__));
+	int dummy __unused;
 {
 	signal(SIGALRM, wake);
 	fflush(stdout);

@@ -1,4 +1,4 @@
-/*	$NetBSD: pkill.c,v 1.21 2007/03/21 20:05:18 erh Exp $	*/
+/*	$NetBSD: pkill.c,v 1.22 2007/12/15 19:44:52 perry Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pkill.c,v 1.21 2007/03/21 20:05:18 erh Exp $");
+__RCSID("$NetBSD: pkill.c,v 1.22 2007/12/15 19:44:52 perry Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -108,7 +108,7 @@ static struct listhead tdevlist = SLIST_HEAD_INITIALIZER(list);
 static struct listhead sidlist = SLIST_HEAD_INITIALIZER(list);
 
 int	main(int, char **);
-static void	usage(void) __attribute__((__noreturn__));
+static void	usage(void) __dead;
 static int	killact(const struct kinfo_proc2 *);
 static int	grepact(const struct kinfo_proc2 *);
 static void	makelist(struct listhead *, enum listtype, char *);

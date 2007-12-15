@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs_ext2fs.c,v 1.2 2007/12/14 13:19:35 tsutsui Exp $	*/
+/*	$NetBSD: newfs_ext2fs.c,v 1.3 2007/12/15 19:44:47 perry Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.13 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: newfs_ext2fs.c,v 1.2 2007/12/14 13:19:35 tsutsui Exp $");
+__RCSID("$NetBSD: newfs_ext2fs.c,v 1.3 2007/12/15 19:44:47 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -71,7 +71,7 @@ __RCSID("$NetBSD: newfs_ext2fs.c,v 1.2 2007/12/14 13:19:35 tsutsui Exp $");
 #include "partutil.h"
 
 static int64_t strsuftoi64(const char *, const char *, int64_t, int64_t, int *);
-static void usage(void) __attribute__((__noreturn__));
+static void usage(void) __dead;
 
 /*
  * For file systems smaller than SMALL_FSSIZE we use the S_DFL_* defaults,

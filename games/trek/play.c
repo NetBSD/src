@@ -1,4 +1,4 @@
-/*	$NetBSD: play.c,v 1.8 2003/08/07 09:37:53 agc Exp $	*/
+/*	$NetBSD: play.c,v 1.9 2007/12/15 19:44:45 perry Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)play.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: play.c,v 1.8 2003/08/07 09:37:53 agc Exp $");
+__RCSID("$NetBSD: play.c,v 1.9 2007/12/15 19:44:45 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -87,7 +87,7 @@ const struct cvntab	Comtab[] =
 /*ARGSUSED*/
 void
 myreset(v)
-	int v __attribute__((__unused__));
+	int v __unused;
 {
 
 	longjmp(env, 1);

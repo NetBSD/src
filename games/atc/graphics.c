@@ -1,4 +1,4 @@
-/*	$NetBSD: graphics.c,v 1.13 2006/06/07 09:22:52 jnemeth Exp $	*/
+/*	$NetBSD: graphics.c,v 1.14 2007/12/15 19:44:38 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -46,7 +46,7 @@
 #if 0
 static char sccsid[] = "@(#)graphics.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: graphics.c,v 1.13 2006/06/07 09:22:52 jnemeth Exp $");
+__RCSID("$NetBSD: graphics.c,v 1.14 2007/12/15 19:44:38 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -282,7 +282,7 @@ ioerror(int pos, int len, const char *str)
 
 /* ARGSUSED */
 void
-quit(int dummy __attribute__((__unused__)))
+quit(int dummy __unused)
 {
 	int			c, y, x;
 #ifdef BSD

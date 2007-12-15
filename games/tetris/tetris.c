@@ -1,4 +1,4 @@
-/*	$NetBSD: tetris.c,v 1.17 2004/01/27 20:30:30 jsm Exp $	*/
+/*	$NetBSD: tetris.c,v 1.18 2007/12/15 19:44:43 perry Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -77,8 +77,8 @@ int	showpreview;
 static	void	elide(void);
 static	void	setup_board(void);
 	int	main(int, char **);
-	void	onintr(int) __attribute__((__noreturn__));
-	void	usage(void) __attribute__((__noreturn__));
+	void	onintr(int) __dead;
+	void	usage(void) __dead;
 
 /*
  * Set up the initial board.  The bottom display row is completely set,
@@ -322,7 +322,7 @@ main(argc, argv)
 
 void
 onintr(signo)
-	int signo __attribute__((__unused__));
+	int signo __unused;
 {
 	scr_clear();
 	scr_end();
