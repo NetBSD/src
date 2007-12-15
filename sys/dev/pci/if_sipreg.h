@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sipreg.h,v 1.16 2007/12/14 01:55:35 dyoung Exp $	*/
+/*	$NetBSD: if_sipreg.h,v 1.17 2007/12/15 01:25:12 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -376,9 +376,8 @@ struct sip_desc {
 
 #define	SIP_TXDP	0x20	/* transmit descriptor pointer reg */
 
-#ifdef DP83820
+/* DP83820 only */
 #define	SIP_TXDP_HI	0x24	/* transmit descriptor pointer (high) reg */
-#endif /* DP83820 */
 
 #ifdef DP83820
 #define	SIP_TXCFG	0x28	/* transmit configuration register */
@@ -438,9 +437,8 @@ struct sip_desc {
 
 #define	SIP_RXDP	0x30	/* receive descriptor pointer reg */
 
-#ifdef DP83820
+/* DP83820 only */
 #define	SIP_RXDP_HI	0x34	/* receive descriptor pointer (high) reg */
-#endif /* DP83820 */
 
 #ifdef DP83820
 #define	SIP_RXCFG	0x38	/* receive configuration register */
@@ -449,9 +447,9 @@ struct sip_desc {
 #endif
 #define	RXCFG_AEP	0x80000000	/* accept error packets */
 #define	RXCFG_ARP	0x40000000	/* accept runt packets */
-#ifdef DP83820
+/* DP83820 only */
 #define	RXCFG_STRIPCRC	0x20000000	/* strip CRC */
-#endif /* DP83820 */
+
 #define	RXCFG_ATX	0x10000000	/* accept transmit packets */
 #define	RXCFG_ALP	0x08000000	/* accept long packets */
 #ifdef DP83820
