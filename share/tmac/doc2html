@@ -1,4 +1,4 @@
-.\" $NetBSD: doc2html,v 1.50 2006/06/19 15:44:44 gdamore Exp $
+.\" $NetBSD: doc2html,v 1.51 2007/12/15 14:48:40 apb Exp $
 .\"
 .\" Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -724,9 +724,8 @@ Unknown .Bl list type \\$1 (#\\n(.c)
 ..
 .de Fl
 .DEBUG .tm .Fl \\$*
-.	as doc-pcresult <b>-</b>
-.	nr doc-dosep 0
 .	mode-bold-on
+.	doc-sep-append \-
 .	recurse \\$@
 .	mode-bold-off
 .	pc-fin
