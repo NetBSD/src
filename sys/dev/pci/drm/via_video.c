@@ -1,4 +1,4 @@
-/*	$NetBSD: via_video.c,v 1.2 2007/12/11 11:48:49 lukem Exp $	*/
+/*	$NetBSD: via_video.c,v 1.3 2007/12/15 00:39:35 perry Exp $	*/
 
 /*
  * Copyright 2005 Thomas Hellstrom. All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: via_video.c,v 1.2 2007/12/11 11:48:49 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: via_video.c,v 1.3 2007/12/15 00:39:35 perry Exp $");
 
 #include <dev/drm/drmP.h>
 #include <dev/pci/drm/via_drm.h>
@@ -38,7 +38,7 @@ void via_init_futex(drm_via_private_t * dev_priv)
 {
 	unsigned int i;
 
-	DRM_DEBUG("%s\n", __FUNCTION__);
+	DRM_DEBUG("%s\n", __func__);
 
 	for (i = 0; i < VIA_NR_XVMC_LOCKS; ++i) {
 		DRM_INIT_WAITQUEUE(&(dev_priv->decoder_queue[i]));
@@ -79,7 +79,7 @@ int via_decoder_futex(DRM_IOCTL_ARGS)
 	drm_via_sarea_t *sAPriv = dev_priv->sarea_priv;
 	int ret = 0;
 
-	DRM_DEBUG("%s\n", __FUNCTION__);
+	DRM_DEBUG("%s\n", __func__);
 
 	DRM_COPY_FROM_USER_IOCTL(fx, (drm_via_futex_t __user *) data,
 				 sizeof(fx));
