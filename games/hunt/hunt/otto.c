@@ -1,4 +1,4 @@
-/*	$NetBSD: otto.c,v 1.10 2006/03/19 00:00:19 christos Exp $	*/
+/*	$NetBSD: otto.c,v 1.11 2007/12/15 19:44:41 perry Exp $	*/
 # ifdef OTTO
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
@@ -45,7 +45,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: otto.c,v 1.10 2006/03/19 00:00:19 christos Exp $");
+__RCSID("$NetBSD: otto.c,v 1.11 2007/12/15 19:44:41 perry Exp $");
 #endif /* not lint */
 
 # include	<sys/time.h>
@@ -156,7 +156,7 @@ extern	int	Otto_count;
 
 STATIC SIGNAL_TYPE
 nothing(dummy)
-	int dummy __attribute__((__unused__));
+	int dummy __unused;
 {
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: resize_ffs.c,v 1.11 2007/12/15 16:32:06 perry Exp $	*/
+/*	$NetBSD: resize_ffs.c,v 1.12 2007/12/15 19:44:47 perry Exp $	*/
 /* From sources sent on February 17, 2003 */
 /*-
  * As its sole author, I explicitly place this code in the public
@@ -62,7 +62,7 @@
 	  ( (__GNUC__ == 2) &&				\
 	    defined(__GNUC_MINOR__) &&			\
 	    (__GNUC_MINOR__ >= 7) ) )
-#define UNUSED_ARG(x) x __attribute__((__unused__))
+#define UNUSED_ARG(x) x __unused
 #define INLINE inline
 #else
 #define UNUSED_ARG(x) x

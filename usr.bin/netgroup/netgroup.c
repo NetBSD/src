@@ -1,4 +1,4 @@
-/*	$NetBSD: netgroup.c,v 1.4 2004/01/05 23:23:36 jmmv Exp $	*/
+/*	$NetBSD: netgroup.c,v 1.5 2007/12/15 19:44:52 perry Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,14 +37,14 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: netgroup.c,v 1.4 2004/01/05 23:23:36 jmmv Exp $");
+__RCSID("$NetBSD: netgroup.c,v 1.5 2007/12/15 19:44:52 perry Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <netgroup.h>
 
-static void usage __P((void)) __attribute__((__noreturn__));
+static void usage __P((void)) __dead;
 int main __P((int, char *[]));
 
 static void

@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.11 2003/08/07 09:37:26 agc Exp $	*/
+/*	$NetBSD: print.c,v 1.12 2007/12/15 19:44:42 perry Exp $	*/
 
 /*
  * Copyright (c) 1982, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: print.c,v 1.11 2003/08/07 09:37:26 agc Exp $");
+__RCSID("$NetBSD: print.c,v 1.12 2007/12/15 19:44:42 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -121,7 +121,7 @@ prscore(for_real)
 #ifdef EXTRAP
 	bool	for_real;
 #else
-	bool	for_real __attribute__((__unused__));
+	bool	for_real __unused;
 #endif
 {
 	PLAY	*pp;

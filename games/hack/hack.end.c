@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.end.c,v 1.7 2006/05/13 22:45:11 christos Exp $	*/
+/*	$NetBSD: hack.end.c,v 1.8 2007/12/15 19:44:41 perry Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.end.c,v 1.7 2006/05/13 22:45:11 christos Exp $");
+__RCSID("$NetBSD: hack.end.c,v 1.8 2007/12/15 19:44:41 perry Exp $");
 #endif				/* not lint */
 
 #include <signal.h>
@@ -86,7 +86,7 @@ dodone()
 /*ARGSUSED*/
 void
 done1(n)
-	int n __attribute__((__unused__));
+	int n __unused;
 {
 	(void) signal(SIGINT, SIG_IGN);
 	pline("Really quit?");
@@ -108,7 +108,7 @@ int             done_hup;
 /*ARGSUSED*/
 void
 done_intr(n)
-	int n __attribute__((__unused__));
+	int n __unused;
 {
 	done_stopprint++;
 	(void) signal(SIGINT, SIG_IGN);

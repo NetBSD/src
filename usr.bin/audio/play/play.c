@@ -1,4 +1,4 @@
-/*	$NetBSD: play.c,v 1.47 2007/10/05 07:27:41 lukem Exp $	*/
+/*	$NetBSD: play.c,v 1.48 2007/12/15 19:44:48 perry Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -30,7 +30,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: play.c,v 1.47 2007/10/05 07:27:41 lukem Exp $");
+__RCSID("$NetBSD: play.c,v 1.48 2007/12/15 19:44:48 perry Exp $");
 #endif
 
 
@@ -58,7 +58,7 @@ void usage(void);
 void play(char *);
 void play_fd(const char *, int);
 ssize_t audioctl_write_fromhdr(void *, size_t, int, size_t *, const char *);
-void cleanup(int) __attribute__((__noreturn__));
+void cleanup(int) __dead;
 
 audio_info_t	info;
 int	volume;

@@ -1,4 +1,4 @@
-/*	$NetBSD: deroff.c,v 1.4 2007/12/15 16:32:06 perry Exp $	*/
+/*	$NetBSD: deroff.c,v 1.5 2007/12/15 19:44:50 perry Exp $	*/
 
 /* taken from: OpenBSD: deroff.c,v 1.6 2004/06/02 14:58:46 tom Exp */
 
@@ -74,7 +74,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)deroff.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$NetBSD: deroff.c,v 1.4 2007/12/15 16:32:06 perry Exp $";
+static const char rcsid[] = "$NetBSD: deroff.c,v 1.5 2007/12/15 19:44:50 perry Exp $";
 #endif
 #endif /* not lint */
 
@@ -270,7 +270,7 @@ static void	 comline(void);
 static void	 buildtab(const struct mactab **, int *);
 static FILE	*opn(char *);
 static struct mactab *macfill(struct mactab *, const struct mactab *);
-static void usage(void) __attribute__((__noreturn__));
+static void usage(void) __dead;
 
 int
 main(int ac, char **av)

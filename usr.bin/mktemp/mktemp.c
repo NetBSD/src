@@ -1,4 +1,4 @@
-/* $NetBSD: mktemp.c,v 1.9 2007/12/15 16:32:06 perry Exp $ */
+/* $NetBSD: mktemp.c,v 1.10 2007/12/15 19:44:52 perry Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1996, 1998 Peter Wemm <peter@netplex.com.au>
@@ -50,10 +50,10 @@
 #include <unistd.h>
 
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: mktemp.c,v 1.9 2007/12/15 16:32:06 perry Exp $");
+__RCSID("$NetBSD: mktemp.c,v 1.10 2007/12/15 19:44:52 perry Exp $");
 #endif /* !__lint */
 
-static void usage(void) __attribute__((__noreturn__));
+static void usage(void) __dead;
 
 int
 main(int argc, char **argv)

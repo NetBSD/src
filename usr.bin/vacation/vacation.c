@@ -1,4 +1,4 @@
-/*	$NetBSD: vacation.c,v 1.34 2007/07/13 14:52:15 christos Exp $	*/
+/*	$NetBSD: vacation.c,v 1.35 2007/12/15 19:44:54 perry Exp $	*/
 
 /*
  * Copyright (c) 1983, 1987, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vacation.c	8.2 (Berkeley) 1/26/94";
 #endif
-__RCSID("$NetBSD: vacation.c,v 1.34 2007/07/13 14:52:15 christos Exp $");
+__RCSID("$NetBSD: vacation.c,v 1.35 2007/12/15 19:44:54 perry Exp $");
 #endif /* not lint */
 
 /*
@@ -115,7 +115,7 @@ static void getfrom(char *);
 static void sendmessage(const char *);
 static void setinterval(time_t);
 static void setreply(void);
-static void usage(void) __attribute__((__noreturn__));
+static void usage(void) __dead;
 
 int
 main(int argc, char **argv)

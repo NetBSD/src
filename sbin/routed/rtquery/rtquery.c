@@ -1,4 +1,4 @@
-/*	$NetBSD: rtquery.c,v 1.19 2007/09/16 18:42:02 ragge Exp $	*/
+/*	$NetBSD: rtquery.c,v 1.20 2007/12/15 19:44:47 perry Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -53,7 +53,7 @@
 #include <bstring.h>
 #endif
 
-#define UNUSED __attribute__((unused))
+#define UNUSED __unused
 #ifndef __RCSID
 #define __RCSID(_s) static const char rcsid[] UNUSED = _s
 #endif
@@ -64,7 +64,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\n"
 	    "The Regents of the University of California."
 	    "  All rights reserved.\n");
 #ifdef __NetBSD__
-__RCSID("$NetBSD: rtquery.c,v 1.19 2007/09/16 18:42:02 ragge Exp $");
+__RCSID("$NetBSD: rtquery.c,v 1.20 2007/12/15 19:44:47 perry Exp $");
 #elif defined(__FreeBSD__)
 __RCSID("$FreeBSD$");
 #else
@@ -128,8 +128,8 @@ static char *default_argv[] = {localhost_str, 0};
 
 static void rip_input(struct sockaddr_in*, int);
 static int out(const char *);
-static void trace_loop(char *argv[]) __attribute__((__noreturn__));
-static void query_loop(char *argv[], int) __attribute__((__noreturn__));
+static void trace_loop(char *argv[]) __dead;
+static void query_loop(char *argv[], int) __dead;
 static int getnet(char *, struct netinfo *);
 static u_int std_mask(u_int);
 static int parse_quote(char **, const char *, char *, char *, int);

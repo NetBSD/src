@@ -1,4 +1,4 @@
-/*	$NetBSD: visual.c,v 1.6 2003/08/07 09:37:55 agc Exp $	*/
+/*	$NetBSD: visual.c,v 1.7 2007/12/15 19:44:45 perry Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)visual.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: visual.c,v 1.6 2003/08/07 09:37:55 agc Exp $");
+__RCSID("$NetBSD: visual.c,v 1.7 2007/12/15 19:44:45 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -70,7 +70,7 @@ struct xy	Visdelta[11] =
 /*ARGSUSED*/
 void
 visual(z)
-	int z __attribute__((__unused__));
+	int z __unused;
 {
 	int		ix, iy;
 	int		co;
