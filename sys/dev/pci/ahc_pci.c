@@ -39,7 +39,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: ahc_pci.c,v 1.60 2007/10/19 12:00:39 ad Exp $
+ * $Id: ahc_pci.c,v 1.61 2007/12/15 14:23:14 tsutsui Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx_pci.c#57 $
  *
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahc_pci.c,v 1.60 2007/10/19 12:00:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahc_pci.c,v 1.61 2007/12/15 14:23:14 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1005,8 +1005,8 @@ ahc_pci_attach(struct device *parent, struct device *self, void *aux)
 	 * that fail here but are perfectly capable of ultra speeds.
 	 */
 	override_ultra = FALSE;
-	prop_dictionary_get_bool(device_properties(self), "override_ultra",
-	    &override_ultra);
+	prop_dictionary_get_bool(device_properties(self),
+	    "aic7xxx-override-ultra", &override_ultra);
 
 	if (((ahc->features & AHC_ULTRA) != 0) && (!override_ultra)) {
 		uint32_t dvconfig;
