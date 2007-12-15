@@ -1,4 +1,4 @@
-/* $NetBSD: pipe.h,v 1.21 2007/03/12 21:31:03 ad Exp $ */
+/* $NetBSD: pipe.h,v 1.21.20.1 2007/12/15 01:42:43 ad Exp $ */
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -104,7 +104,7 @@ struct pipemapping {
  * Two of these are linked together to produce bi-directional pipes.
  */
 struct pipe {
-	kmutex_t pipe_lock;		/* pipe mutex */
+	kmutex_t *pipe_lock;		/* pipe mutex */
 	kcondvar_t pipe_cv;		/* general synchronization */
 	kcondvar_t pipe_lkcv;		/* locking */
 	struct	pipebuf pipe_buffer;	/* data storage */
