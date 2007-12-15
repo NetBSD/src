@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.256 2007/12/03 02:20:24 christos Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.256.2.1 2007/12/15 03:16:55 ad Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.256 2007/12/03 02:20:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.256.2.1 2007/12/15 03:16:55 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -811,7 +811,9 @@ execve1(struct lwp *l, const char *path, char * const *args,
 
 
 	p->p_acflag &= ~AFORK;
+	mutex_enter(&p->p_mutex);
 	p->p_flag |= PK_EXEC;
+	mutex_exit(&p->p_mutex);
 
 	/*
 	 * Stop profiling.
@@ -948,7 +950,9 @@ execve1(struct lwp *l, const char *path, char * const *args,
 		emul_find_root(l, &pack);
 
 	/* Any old emulation root got removed by fdcloseexec */
+	rw_enter(&p->p_cwdi->cwdi_lock, RW_WRITER);
 	p->p_cwdi->cwdi_edir = pack.ep_emul_root;
+	rw_exit(&p->p_cwdi->cwdi_lock);
 	pack.ep_emul_root = NULL;
 	if (pack.ep_interp != NULL)
 		vrele(pack.ep_interp);
@@ -1083,6 +1087,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 		vrele(pack.ep_interp);
 
 	/* Acquire the sched-state mutex (exit1() will release it). */
+	KERNEL_LOCK(1, NULL);	/* XXXSMP */
 	mutex_enter(&p->p_smutex);
 	exit1(l, W_EXITCODE(error, SIGABRT));
 

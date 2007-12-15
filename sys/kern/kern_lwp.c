@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.83.2.1 2007/12/04 13:03:14 ad Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.83.2.2 2007/12/15 03:16:56 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -205,7 +205,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.83.2.1 2007/12/04 13:03:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.83.2.2 2007/12/15 03:16:56 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -232,11 +232,10 @@ __KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.83.2.1 2007/12/04 13:03:14 ad Exp $")
 
 struct lwplist	alllwp = LIST_HEAD_INITIALIZER(alllwp);
 
-POOL_INIT(lwp_pool, sizeof(struct lwp), MIN_LWP_ALIGNMENT, 0, 0, "lwppl",
-    &pool_allocator_nointr, IPL_NONE);
 POOL_INIT(lwp_uc_pool, sizeof(ucontext_t), 0, 0, 0, "lwpucpl",
     &pool_allocator_nointr, IPL_NONE);
 
+static pool_cache_t lwp_cache;
 static specificdata_domain_t lwp_specificdata_domain;
 
 void
@@ -246,6 +245,8 @@ lwpinit(void)
 	lwp_specificdata_domain = specificdata_domain_create();
 	KASSERT(lwp_specificdata_domain != NULL);
 	lwp_sys_init();
+	lwp_cache = pool_cache_init(sizeof(lwp_t), MIN_LWP_ALIGNMENT, 0, 0,
+	    "lwppl", NULL, IPL_NONE, NULL, NULL, NULL);
 }
 
 /*
@@ -554,7 +555,7 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, bool inmem, int flags,
 			mutex_exit(&p2->p_smutex);
 	}
 	if (isfree == NULL) {
-		l2 = pool_get(&lwp_pool, PR_WAITOK);
+		l2 = pool_cache_get(lwp_cache, PR_WAITOK);
 		memset(l2, 0, sizeof(*l2));
 		l2->l_ts = pool_cache_get(turnstile_cache, PR_WAITOK);
 		SLIST_INIT(&l2->l_pi_lenders);
@@ -924,7 +925,7 @@ lwp_free(struct lwp *l, bool recycle, bool last)
 	KASSERT(SLIST_EMPTY(&l->l_pi_lenders));
 	KASSERT(l->l_inheritedprio == -1);
 	if (!recycle)
-		pool_put(&lwp_pool, l);
+		pool_cache_put(lwp_cache, l);
 }
 
 /*

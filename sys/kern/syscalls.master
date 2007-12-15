@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.180.2.4 2007/12/15 01:45:24 ad Exp $
+	$NetBSD: syscalls.master,v 1.180.2.5 2007/12/15 03:16:58 ad Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -129,12 +129,12 @@
 39	STD MPSAFE	{ pid_t sys_getppid(void); }
 40	COMPAT_43 MPSAFE	{ int sys_lstat(const char *path, \
 			    struct stat43 *ub); } lstat43
-41	STD		{ int sys_dup(int fd); }
-42	STD		{ int sys_pipe(void); }
+41	STD MPSAFE	{ int sys_dup(int fd); }
+42	STD MPSAFE	{ int sys_pipe(void); }
 43	STD MPSAFE	{ gid_t sys_getegid(void); }
 44	STD MPSAFE	{ int sys_profil(char *samples, size_t size, \
 			    u_long offset, u_int scale); }
-45	STD		{ int sys_ktrace(const char *fname, int ops, \
+45	STD MPSAFE	{ int sys_ktrace(const char *fname, int ops, \
 			    int facs, int pid); }
 46	COMPAT_13 MPSAFE	{ int sys_sigaction(int signum, \
 			    const struct sigaction13 *nsa, \
@@ -153,25 +153,25 @@
 53	COMPAT_13 MPSAFE	{ int sys_sigaltstack( \
 			    const struct sigaltstack13 *nss, \
 			    struct sigaltstack13 *oss); } sigaltstack13
-54	STD		{ int sys_ioctl(int fd, \
+54	STD MPSAFE	{ int sys_ioctl(int fd, \
 			    u_long com, ... void *data); }
 55	COMPAT_12	{ int sys_reboot(int opt); } oreboot
-56	STD		{ int sys_revoke(const char *path); }
+56	STD MPSAFE	{ int sys_revoke(const char *path); }
 57	STD MPSAFE	{ int sys_symlink(const char *path, \
 			    const char *link); }
-58	STD		{ ssize_t sys_readlink(const char *path, char *buf, \
+58	STD MPSAFE	{ ssize_t sys_readlink(const char *path, char *buf, \
 			    size_t count); }
-59	STD		{ int sys_execve(const char *path, \
+59	STD MPSAFE	{ int sys_execve(const char *path, \
 			    char * const *argp, char * const *envp); }
-60	STD		{ mode_t sys_umask(mode_t newmask); }
-61	STD		{ int sys_chroot(const char *path); }
+60	STD MPSAFE	{ mode_t sys_umask(mode_t newmask); }
+61	STD 		{ int sys_chroot(const char *path); }
 62	COMPAT_43	{ int sys_fstat(int fd, struct stat43 *sb); } fstat43
 63	COMPAT_43	{ int sys_getkerninfo(int op, char *where, int *size, \
 			    int arg); } ogetkerninfo
 64	COMPAT_43	{ int sys_getpagesize(void); } ogetpagesize
 65	COMPAT_12	{ int sys_msync(void *addr, size_t len); }
 ; XXX COMPAT_??? for 4.4BSD-compatible vfork(2)?
-66	STD		{ int sys_vfork(void); }
+66	STD MPSAFE	{ int sys_vfork(void); }
 67	OBSOL		vread
 68	OBSOL		vwrite
 69	STD		{ int sys_sbrk(intptr_t incr); }
@@ -586,7 +586,7 @@
 281	STD MPSAFE	{ int sys___sigaltstack14( \
 			    const struct sigaltstack *nss, \
 			    struct sigaltstack *oss); }
-282	STD		{ int sys___vfork14(void); }
+282	STD MPSAFE	{ int sys___vfork14(void); }
 283	STD MPSAFE	{ int sys___posix_chown(const char *path, uid_t uid, \
 			    gid_t gid); }
 284	STD MPSAFE	{ int sys___posix_fchown(int fd, uid_t uid, \
