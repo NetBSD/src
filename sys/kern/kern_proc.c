@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.125.2.1 2007/12/08 17:57:41 ad Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.125.2.2 2007/12/15 03:16:57 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.125.2.1 2007/12/08 17:57:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.125.2.2 2007/12/15 03:16:57 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_maxuprc.h"
@@ -273,17 +273,6 @@ int nofile = NOFILE;
 int maxuprc = MAXUPRC;
 int cmask = CMASK;
 
-POOL_INIT(proc_pool, sizeof(struct proc), 0, 0, 0, "procpl",
-    &pool_allocator_nointr, IPL_NONE);
-POOL_INIT(pgrp_pool, sizeof(struct pgrp), 0, 0, 0, "pgrppl",
-    &pool_allocator_nointr, IPL_NONE);
-POOL_INIT(plimit_pool, sizeof(struct plimit), 0, 0, 0, "plimitpl",
-    &pool_allocator_nointr, IPL_NONE);
-POOL_INIT(pstats_pool, sizeof(struct pstats), 0, 0, 0, "pstatspl",
-    &pool_allocator_nointr, IPL_NONE);
-POOL_INIT(session_pool, sizeof(struct session), 0, 0, 0, "sessionpl",
-    &pool_allocator_nointr, IPL_NONE);
-
 MALLOC_DEFINE(M_EMULDATA, "emuldata", "Per-process emulation data");
 MALLOC_DEFINE(M_PROC, "proc", "Proc structures");
 MALLOC_DEFINE(M_SUBPROC, "subproc", "Proc sub-structures");
@@ -303,6 +292,10 @@ static void orphanpg(struct pgrp *);
 static void pg_delete(pid_t);
 
 static specificdata_domain_t proc_specificdata_domain;
+
+static pool_cache_t proc_cache;
+static pool_cache_t pgrp_cache;
+static pool_cache_t session_cache;
 
 /*
  * Initialize global process hashing structures.
@@ -342,6 +335,13 @@ procinit(void)
 
 	proc_specificdata_domain = specificdata_domain_create();
 	KASSERT(proc_specificdata_domain != NULL);
+
+	proc_cache = pool_cache_init(sizeof(struct proc), 0, 0, 0,
+	    "procpl", NULL, IPL_NONE, NULL, NULL, NULL);
+	pgrp_cache = pool_cache_init(sizeof(struct pgrp), 0, 0, 0,
+	    "pgrppl", NULL, IPL_NONE, NULL, NULL, NULL);
+        session_cache = pool_cache_init(sizeof(struct session), 0, 0, 0,
+            "sessionpl", NULL, IPL_NONE, NULL, NULL, NULL);
 }
 
 /*
@@ -633,7 +633,7 @@ proc_alloc(void)
 	pid_t pid;
 	struct pid_table *pt;
 
-	p = pool_get(&proc_pool, PR_WAITOK);
+	p = pool_cache_get(proc_cache, PR_WAITOK);
 	p->p_stat = SIDL;			/* protect against others */
 
 	proc_initspecific(p);
@@ -710,6 +710,13 @@ proc_free_pid(struct proc *p)
 	atomic_dec_uint(&nprocs);
 }
 
+void
+proc_free_mem(struct proc *p)
+{
+
+	pool_cache_put(proc_cache, p);
+}
+
 /*
  * Move p to a new or existing process group (and session)
  *
@@ -732,7 +739,7 @@ enterpgrp(struct proc *curp, pid_t pid, pid_t pgid, int mksess)
 	pid_t pg_id = NO_PGID;
 
 	if (mksess)
-		sess = pool_get(&session_pool, PR_WAITOK);
+		sess = pool_cache_get(session_cache, PR_WAITOK);
 	else
 		sess = NULL;
 
@@ -740,7 +747,7 @@ enterpgrp(struct proc *curp, pid_t pid, pid_t pgid, int mksess)
 	mutex_enter(&proclist_lock);		/* Because pid_table might change */
 	if (pid_table[pgid & pid_tbl_mask].pt_pgrp == 0) {
 		mutex_exit(&proclist_lock);
-		new_pgrp = pool_get(&pgrp_pool, PR_WAITOK);
+		new_pgrp = pool_cache_get(pgrp_cache, PR_WAITOK);
 		mutex_enter(&proclist_lock);
 	} else
 		new_pgrp = NULL;
@@ -886,9 +893,9 @@ enterpgrp(struct proc *curp, pid_t pid, pid_t pgid, int mksess)
 		pg_delete(pg_id);
 	mutex_exit(&proclist_lock);
 	if (sess != NULL)
-		pool_put(&session_pool, sess);
+		pool_cache_put(session_cache, sess);
 	if (new_pgrp != NULL)
-		pool_put(&pgrp_pool, new_pgrp);
+		pool_cache_put(pgrp_cache, new_pgrp);
 #ifdef DEBUG_PGRP
 	if (__predict_false(rval))
 		printf("enterpgrp(%d,%d,%d), curproc %d, rval %d\n",
@@ -969,7 +976,7 @@ pg_free(pid_t pg_id)
 		last_free_pt = pg_id;
 		pid_alloc_cnt--;
 	}
-	pool_put(&pgrp_pool, pgrp);
+	pool_cache_put(pgrp_cache, pgrp);
 }
 
 /*
@@ -1032,7 +1039,7 @@ sessdelete(struct session *ss)
 	 * must be a 'zombie' pgrp by now.
 	 */
 	pg_free(ss->s_sid);
-	pool_put(&session_pool, ss);
+	pool_cache_put(session_cache, ss);
 }
 
 /*

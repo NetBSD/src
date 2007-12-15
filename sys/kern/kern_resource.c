@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.126.2.1 2007/12/08 17:57:42 ad Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.126.2.2 2007/12/15 03:16:57 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.126.2.1 2007/12/08 17:57:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.126.2.2 2007/12/15 03:16:57 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,6 +66,19 @@ rlim_t maxsmap = MAXSSIZ;
 struct uihashhead *uihashtbl;
 u_long uihash;		/* size of hash table - 1 */
 kmutex_t uihashtbl_lock;
+
+static pool_cache_t plimit_cache;
+static pool_cache_t pstats_cache;
+
+void
+resource_init(void)
+{
+
+	plimit_cache = pool_cache_init(sizeof(struct plimit), 0, 0, 0,
+	    "plimitpl", NULL, IPL_NONE, NULL, NULL, NULL);
+	pstats_cache = pool_cache_init(sizeof(struct pstats), 0, 0, 0,
+	    "pstatspl", NULL, IPL_NONE, NULL, NULL, NULL);
+}
 
 /*
  * Resource controls and accounting.
@@ -532,7 +545,7 @@ lim_copy(struct plimit *lim)
 	char *corename;
 	size_t alen, len;
 
-	newlim = pool_get(&plimit_pool, PR_WAITOK);
+	newlim = pool_cache_get(plimit_cache, PR_WAITOK);
 	mutex_init(&newlim->pl_lock, MUTEX_DEFAULT, IPL_NONE);
 	newlim->pl_flags = 0;
 	newlim->pl_refcnt = 1;
@@ -630,7 +643,7 @@ limfree(struct plimit *lim)
 			free(lim->pl_corename, M_TEMP);
 		sv_lim = lim->pl_sv_limit;
 		mutex_destroy(&lim->pl_lock);
-		pool_put(&plimit_pool, lim);
+		pool_cache_put(plimit_cache, lim);
 	} while ((lim = sv_lim) != NULL);
 }
 
@@ -640,7 +653,7 @@ pstatscopy(struct pstats *ps)
 
 	struct pstats *newps;
 
-	newps = pool_get(&pstats_pool, PR_WAITOK);
+	newps = pool_cache_get(pstats_cache, PR_WAITOK);
 
 	memset(&newps->pstat_startzero, 0,
 	(unsigned) ((char *)&newps->pstat_endzero -
@@ -657,7 +670,7 @@ void
 pstatsfree(struct pstats *ps)
 {
 
-	pool_put(&pstats_pool, ps);
+	pool_cache_put(pstats_cache, ps);
 }
 
 /*
