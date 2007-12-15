@@ -1,4 +1,4 @@
-.\"	$NetBSD: netboot,v 1.27.4.3 2007/12/15 19:34:02 bouyer Exp $
+.\"	$NetBSD: netboot,v 1.27.4.4 2007/12/15 20:44:04 bouyer Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -48,7 +48,7 @@ manual page and the manual pages for each daemon you'll be configuring.
 If the server(s) are another operating system, you should consult the
 NetBSD Diskless HOW-TO, which will walk you through the steps necessary to
 configure the netboot services on a variety of platforms.
-.Lk http://www.NetBSD.org/Documentation/network/netboot/
+.Lk http://www.NetBSD.org/docs/network/netboot/
 .if !\n[hp700]:\n[next68k] \{\
 .Pp
 You may either netboot the installer so you can install onto a locally
@@ -243,7 +243,7 @@ package instead of native
 .Xr rbootd 8 .
 Please refer the "Setting up the rbootd server" section
 in the NetBSD Diskless HOW-TO
-.Lk http://www.NetBSD.org/Documentation/network/netboot/rbootd/
+.Lk http://www.NetBSD.org/docs/network/netboot/rbootd/
 for details.
 .Pp
 .It
@@ -774,7 +774,7 @@ need to extract and set up the client's installation of
 .Nx .
 The Diskless HOW-TO describes how to provide better security and save
 space on the NFS server over the procedure listed here.
-.Lk http://www.NetBSD.org/Documentation/network/netboot/nfs.html
+.Lk http://www.NetBSD.org/docs/network/netboot/nfs.html
 .(bullet -compact
 Extracting distribution sets
 .Pp
