@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.87.2.2 2007/12/15 01:42:43 ad Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.87.2.3 2007/12/15 04:37:18 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.87.2.2 2007/12/15 01:42:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.87.2.3 2007/12/15 04:37:18 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,11 +104,12 @@ __KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.87.2.2 2007/12/15 01:42:43 ad Exp $")
 #include <sys/select.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
-#include <uvm/uvm.h>
 #include <sys/sysctl.h>
 #include <sys/kauth.h>
-
+#include <sys/atomic.h>
 #include <sys/pipe.h>
+
+#include <uvm/uvm.h>
 
 /*
  * Use this define if you want to disable *fancy* VM things.  Expect an
@@ -158,26 +159,26 @@ struct pipe_mutex {
  * is there so that on large systems, we don't exhaust it.
  */
 #define MAXPIPEKVA (8*1024*1024)
-static int maxpipekva = MAXPIPEKVA;
+static u_int maxpipekva = MAXPIPEKVA;
 
 /*
  * Limit for direct transfers, we cannot, of course limit
  * the amount of kva for pipes in general though.
  */
 #define LIMITPIPEKVA (16*1024*1024)
-static int limitpipekva = LIMITPIPEKVA;
+static u_int limitpipekva = LIMITPIPEKVA;
 
 /*
  * Limit the number of "big" pipes
  */
 #define LIMITBIGPIPES  32
-static int maxbigpipes = LIMITBIGPIPES;
-static int nbigpipe = 0;
+static u_int maxbigpipes = LIMITBIGPIPES;
+static u_int nbigpipe = 0;
 
 /*
  * Amount of KVA consumed by pipe buffers.
  */
-static int amountpipekva = 0;
+static u_int amountpipekva = 0;
 
 MALLOC_DEFINE(M_PIPE, "pipe", "Pipe structures");
 
@@ -336,7 +337,7 @@ pipespace(struct pipe *pipe, int size)
 	pipe->pipe_buffer.in = 0;
 	pipe->pipe_buffer.out = 0;
 	pipe->pipe_buffer.cnt = 0;
-	amountpipekva += pipe->pipe_buffer.size;
+	atomic_add_int(&amountpipekva, pipe->pipe_buffer.size);
 	return (0);
 }
 
@@ -658,7 +659,7 @@ pipe_loan_alloc(struct pipe *wpipe, int npages)
 	if (wpipe->pipe_map.kva == 0)
 		return (ENOMEM);
 
-	amountpipekva += len;
+	atomic_add_int(&amountpipekva, len);
 	wpipe->pipe_map.npages = npages;
 	wpipe->pipe_map.pgs = malloc(npages * sizeof(struct vm_page *), M_PIPE,
 	    M_WAITOK);
@@ -676,7 +677,7 @@ pipe_loan_free(struct pipe *wpipe)
 	len = (vsize_t)wpipe->pipe_map.npages << PAGE_SHIFT;
 	uvm_km_free(kernel_map, wpipe->pipe_map.kva, len, UVM_KMF_VAONLY);
 	wpipe->pipe_map.kva = 0;
-	amountpipekva -= len;
+	atomic_add_int(&amountpipekva, -len);
 	free(wpipe->pipe_map.pgs, M_PIPE);
 	wpipe->pipe_map.pgs = NULL;
 }
@@ -888,7 +889,7 @@ pipe_write(struct file *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 	    (bp->size <= PIPE_SIZE) && (bp->cnt == 0)) {
 
 		if (pipespace(wpipe, BIG_PIPE_SIZE) == 0)
-			nbigpipe++;
+			atomic_inc_uint(&nbigpipe);
 	}
 
 	while (uio->uio_resid) {
@@ -1271,8 +1272,8 @@ pipe_free_kmem(struct pipe *pipe)
 
 	if (pipe->pipe_buffer.buffer != NULL) {
 		if (pipe->pipe_buffer.size > PIPE_SIZE)
-			--nbigpipe;
-		amountpipekva -= pipe->pipe_buffer.size;
+			atomic_dec_uint(&nbigpipe);
+		atomic_add_int(&amountpipekva, -pipe->pipe_buffer.size);
 		uvm_km_free(kernel_map,
 			(vaddr_t)pipe->pipe_buffer.buffer,
 			pipe->pipe_buffer.size, UVM_KMF_PAGEABLE);
