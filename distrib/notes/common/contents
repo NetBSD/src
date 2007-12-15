@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.133 2007/12/14 21:15:53 pavel Exp $
+.\"	$NetBSD: contents,v 1.134 2007/12/15 12:08:01 pavel Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1082,7 +1082,7 @@ currently does not ship with an X server or X clients.
 .\}
 .el \{\
 These sources are based on XFree86, and tightly track XFree86 releases.
-They are currently equivalent to XFree86 4.4.0.
+They are currently equivalent to XFree86 4.5.0.
 .\}
 Binary sets for the X Window System are distributed with
 .Nx .
