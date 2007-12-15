@@ -1,4 +1,4 @@
-.\" $NetBSD: MAKEDEV.local.8,v 1.4 2007/03/11 15:54:54 apb Exp $
+.\" $NetBSD: MAKEDEV.local.8,v 1.5 2007/12/15 17:28:09 apb Exp $
 .\"
 .\" Copyright (c) 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -31,7 +31,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 11, 2007
+.Dd December 15, 2007
 .Dt MAKEDEV.LOCAL 8
 .Os
 .Sh NAME
@@ -39,8 +39,9 @@
 .Nd create site-specific device special files
 .Sh SYNOPSIS
 .Nm
-.Op Fl fs
+.Op Fl fMs
 .Op Fl m Ar mknod
+.Op Fl p Ar pax
 .Bro Pa all | site-specific-argument Brc Op Ar ...
 .Sh DESCRIPTION
 .Nm
@@ -63,21 +64,7 @@ directory.
 Supported options for
 .Nm
 are the same as for
-.Xr MAKEDEV 8 ,
-as follows:
-.Bl -tag -width XmXmknodXX
-.It Fl f
-Force permissions to be updated on existing devices.
-.It Fl m Ar mknod
-Name of
-.Xr mknod 8
-program.
-[Usually, $TOOL_MKNOD or mknod.]
-.It Fl s
-Generate
-.Xr mtree 8
-specfile instead of creating devices.
-.El
+.Xr MAKEDEV 8 .
 .Sh FILES
 .Bl -tag -width "/dev/MAKEDEV.local" -compact
 .It Pa /dev
@@ -107,13 +94,6 @@ and the use of
 .Xr MAKEDEV 8
 as a function library, was added in
 .Nx 5.0 .
-.Sh BUGS
-.Xr MAKEDEV 8 Ap s
-.Fl M
-and
-.Fl p
-options are not supported by
-.Nm .
 .Sh NOTES
 The relationship between
 .Nm
