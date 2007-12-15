@@ -1,4 +1,4 @@
-/*	$NetBSD: elan520.c,v 1.16 2006/11/16 01:32:38 christos Exp $	*/
+/*	$NetBSD: elan520.c,v 1.17 2007/12/15 05:37:03 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: elan520.c,v 1.16 2006/11/16 01:32:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elan520.c,v 1.17 2007/12/15 05:37:03 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -175,6 +175,9 @@ elansc_wdog_setmode(struct sysmon_wdog *smw)
 	int i;
 	uint16_t exp_sel = 0; /* XXX: gcc */
 
+	if (!device_has_power(&sc->sc_dev))
+		return EBUSY;
+
 	if ((smw->smw_mode & WDOG_MODE_MASK) == WDOG_MODE_DISARMED) {
 		elansc_wdogctl_write(sc,
 		    WDTMRCTL_WRST_ENB | WDTMRCTL_EXP_SEL30);
@@ -205,6 +208,9 @@ elansc_wdog_tickle(struct sysmon_wdog *smw)
 {
 	struct elansc_softc *sc = smw->smw_cookie;
 
+	if (!device_has_power(&sc->sc_dev))
+		return EBUSY;
+
 	elansc_wdogctl_reset(sc);
 	return (0);
 }
@@ -229,10 +235,36 @@ static const char *elansc_speeds[] = {
 	"(reserved 11)",
 };
 
+static bool
+elansc_suspend(device_t dev)
+{
+	struct elansc_softc *sc = device_private(dev);
+
+	if ((sc->sc_smw.smw_mode & WDOG_MODE_MASK) != WDOG_MODE_DISARMED) {
+		aprint_debug_dev(dev, "watchdog enabled, suspend forbidden");
+		return false;
+	}
+	return true;
+}
+
+static bool
+elansc_resume(device_t dev)
+{
+	struct elansc_softc *sc = device_private(dev);
+
+	/* Set up the watchdog registers with some defaults. */
+	elansc_wdogctl_write(sc, WDTMRCTL_WRST_ENB | WDTMRCTL_EXP_SEL30);
+
+	/* ...and clear it. */
+	elansc_wdogctl_reset(sc);
+
+	return true;
+}
+
 static void
 elansc_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct elansc_softc *sc = (void *) self;
+	struct elansc_softc *sc = device_private(self);
 	struct pci_attach_args *pa = aux;
 	uint16_t rev;
 	uint8_t ressta, cpuctl;
@@ -309,6 +341,8 @@ elansc_attach(struct device *parent, struct device *self, void *aux)
 
 	/* ...and clear it. */
 	elansc_wdogctl_reset(sc);
+
+	pmf_device_register(self, elansc_suspend, elansc_resume);
 
 #if NGPIO > 0
 	/* Initialize GPIO pins array */
