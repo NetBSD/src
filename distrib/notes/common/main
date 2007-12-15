@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.381 2007/12/14 23:38:22 jnemeth Exp $
+.\"	$NetBSD: main,v 1.382 2007/12/15 12:29:16 pavel Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -154,7 +154,7 @@ issues on a few older machines which have buggy ACPI tables. To boot with
 ACPI disabled, interrupt the 
 .Nx
 boot loader, and enter:
-.Ic boot Fl c .
+.Ic boot -c .
 At the userconf prompt, enter:
 .Ic disable acpi
 followed by:
