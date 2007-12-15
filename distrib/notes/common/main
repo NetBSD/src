@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.383 2007/12/15 19:16:57 agc Exp $
+.\"	$NetBSD: main,v 1.384 2007/12/15 19:48:16 pavel Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -57,7 +57,7 @@
 .as MACHINE_LIST " sgimips shark sparc sparc64 sun2 sun3 vax x68k xen zaurus .
 .so \*[.CURDIR]/../common/macros
 .
-.Dd October 29, 2007
+.Dd December 15, 2007
 .Dt INSTALL 8
 .Os NetBSD
 .Sh NAME
@@ -477,7 +477,6 @@ went into the
 .Nx
 \*V release.
 .\" {BEGIN from htdocs/releases/formal-4/NetBSD-4.0.xml#major-changes
-.Pp
 The complete list of changes can be found in the
 CHANGES:
 .Lk ftp://ftp.NetBSD.org/pub/NetBSD/NetBSD-4.0/CHANGES
