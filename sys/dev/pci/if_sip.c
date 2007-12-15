@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.118 2007/12/14 08:14:27 dogcow Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.119 2007/12/15 01:27:13 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.118 2007/12/14 08:14:27 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.119 2007/12/15 01:27:13 dyoung Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -542,7 +542,7 @@ static const struct sip_product {
 	pci_product_id_t	sip_product;
 	const char		*sip_name;
 	const struct sip_variant *sip_variant;
-	const int		sip_gigabit;
+	int			sip_gigabit;
 } sipcom_products[] = {
 	{ PCI_VENDOR_NS,	PCI_PRODUCT_NS_DP83820,
 	  "NatSemi DP83820 Gigabit Ethernet",
@@ -564,16 +564,17 @@ static const struct sip_product {
 };
 
 static const struct sip_product *
-sipcom_lookup(const struct pci_attach_args *pa)
+sipcom_lookup(const struct pci_attach_args *pa, bool gigabit)
 {
 	const struct sip_product *sip;
 
 	for (sip = sipcom_products; sip->sip_name != NULL; sip++) {
 		if (PCI_VENDOR(pa->pa_id) == sip->sip_vendor &&
-		    PCI_PRODUCT(pa->pa_id) == sip->sip_product)
-			return (sip);
+		    PCI_PRODUCT(pa->pa_id) == sip->sip_product &&
+		    sip->sip_gigabit == gigabit)
+			return sip;
 	}
-	return (NULL);
+	return NULL;
 }
 
 /*
@@ -627,15 +628,14 @@ sipcom_check_64bit(const struct pci_attach_args *pa)
 }
 
 static int
-sipcom_match(struct device *parent, struct cfdata *cf,
-    void *aux)
+sipcom_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
-	if (sipcom_lookup(pa) != NULL)
-		return (1);
+	if (sipcom_lookup(pa, strcmp(cf->cf_name, "gsip") == 0) != NULL)
+		return 1;
 
-	return (0);
+	return 0;
 }
 
 static void
@@ -794,7 +794,7 @@ sipcom_resume(device_t self)
 }
 
 static void
-sipcom_attach(struct device *parent, struct device *self, void *aux)
+sipcom_attach(device_t parent, device_t self, void *aux)
 {
 	struct sip_softc *sc = (struct sip_softc *) self;
 	struct pci_attach_args *pa = aux;
@@ -812,10 +812,11 @@ sipcom_attach(struct device *parent, struct device *self, void *aux)
 	pcireg_t memtype;
 	bus_size_t tx_dmamap_size;
 	int ntxsegs_alloc;
+	cfdata_t cf = device_cfdata(self);
 
 	callout_init(&sc->sc_tick_ch, 0);
 
-	sip = sipcom_lookup(pa);
+	sip = sipcom_lookup(pa, strcmp(cf->cf_name, "gsip") == 0);
 	if (sip == NULL) {
 		printf("\n");
 		panic("%s: impossible", __func__);
