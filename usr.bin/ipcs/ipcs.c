@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcs.c,v 1.37 2006/11/25 21:40:06 christos Exp $	*/
+/*	$NetBSD: ipcs.c,v 1.38 2007/12/15 16:32:06 perry Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -61,6 +61,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #include <sys/param.h>
 #include <sys/sysctl.h>
 #include <sys/ipc.h>
