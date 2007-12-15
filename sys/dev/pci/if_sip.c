@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.120 2007/12/15 05:46:21 dyoung Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.121 2007/12/15 07:05:57 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.120 2007/12/15 05:46:21 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.121 2007/12/15 07:05:57 dyoung Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -205,7 +205,8 @@ enum sip_attach_stage {
 	, SIP_ATTACH_CREATE_MAP
 	, SIP_ATTACH_MAP_MEM
 	, SIP_ATTACH_ALLOC_MEM
-	, SIP_ATTACH_BEGIN
+	, SIP_ATTACH_INTR
+	, SIP_ATTACH_MAP
 };
 
 /*
@@ -215,6 +216,7 @@ struct sip_softc {
 	struct device sc_dev;		/* generic device information */
 	bus_space_tag_t sc_st;		/* bus space tag */
 	bus_space_handle_t sc_sh;	/* bus space handle */
+	bus_size_t sc_sz;		/* bus space size */
 	bus_dma_tag_t sc_dmat;		/* bus DMA tag */
 	pci_chipset_tag_t sc_pc;
 	bus_dma_segment_t sc_seg;
@@ -863,7 +865,12 @@ sipcom_dp83820_attach(struct sip_softc *sc, struct pci_attach_args *pa)
 static int
 sipcom_detach(device_t self, int flags)
 {
+	int s;
+
+	s = splnet();
 	sipcom_do_detach(self, SIP_ATTACH_FIN);
+	splx(s);
+
 	return 0;
 }
 
@@ -882,8 +889,38 @@ sipcom_do_detach(device_t self, enum sip_attach_stage stage)
 	case SIP_ATTACH_FIN:
 		sipcom_stop(ifp, 1);
 		pmf_device_deregister(self);
+#ifdef SIP_EVENT_COUNTERS
+		/*
+		 * Attach event counters.
+		 */
+		evcnt_detach(&sc->sc_ev_txforceintr);
+		evcnt_detach(&sc->sc_ev_txdstall);
+		evcnt_detach(&sc->sc_ev_txsstall);
+		evcnt_detach(&sc->sc_ev_hiberr);
+		evcnt_detach(&sc->sc_ev_rxintr);
+		evcnt_detach(&sc->sc_ev_txiintr);
+		evcnt_detach(&sc->sc_ev_txdintr);
+		if (!sc->sc_gigabit) {
+			evcnt_detach(&sc->sc_ev_rxpause);
+		} else {
+			evcnt_detach(&sc->sc_ev_txudpsum);
+			evcnt_detach(&sc->sc_ev_txtcpsum);
+			evcnt_detach(&sc->sc_ev_txipsum);
+			evcnt_detach(&sc->sc_ev_rxudpsum);
+			evcnt_detach(&sc->sc_ev_rxtcpsum);
+			evcnt_detach(&sc->sc_ev_rxipsum);
+			evcnt_detach(&sc->sc_ev_txpause);
+			evcnt_detach(&sc->sc_ev_rxpause);
+		}
+#endif /* SIP_EVENT_COUNTERS */
+
+#if NRND > 0
+		rnd_detach_source(&sc->rnd_source);
+#endif
+
+		ether_ifdetach(ifp);
+		if_detach(ifp);
 		mii_detach(&sc->sc_mii, MII_PHY_ANY, MII_OFFSET_ANY);
-		pci_intr_disestablish(sc->sc_pc, sc->sc_ih);
 
 		if (sc->sc_sdhook != NULL)
 			shutdownhook_disestablish(sc->sc_sdhook);
@@ -915,6 +952,12 @@ sipcom_do_detach(device_t self, enum sip_attach_stage stage)
 		/*FALLTHROUGH*/
 	case SIP_ATTACH_ALLOC_MEM:
 		bus_dmamem_free(sc->sc_dmat, &sc->sc_seg, 1);
+		/* FALLTHROUGH*/
+	case SIP_ATTACH_INTR:
+		pci_intr_disestablish(sc->sc_pc, sc->sc_ih);
+		/* FALLTHROUGH*/
+	case SIP_ATTACH_MAP:
+		bus_space_unmap(sc->sc_st, sc->sc_sh, sc->sc_sz);
 		break;
 	default:
 		break;
@@ -941,6 +984,7 @@ sipcom_attach(device_t parent, device_t self, void *aux)
 	const char *intrstr = NULL;
 	bus_space_tag_t iot, memt;
 	bus_space_handle_t ioh, memh;
+	bus_size_t iosz, memsz;
 	int ioh_valid, memh_valid;
 	int i, rseg, error;
 	const struct sip_product *sip;
@@ -997,14 +1041,14 @@ sipcom_attach(device_t parent, device_t self, void *aux)
 	 */
 	ioh_valid = (pci_mapreg_map(pa, SIP_PCI_CFGIOA,
 	    PCI_MAPREG_TYPE_IO, 0,
-	    &iot, &ioh, NULL, NULL) == 0);
+	    &iot, &ioh, NULL, &iosz) == 0);
 	if (sc->sc_gigabit) {
 		memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, SIP_PCI_CFGMA);
 		switch (memtype) {
 		case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT:
 		case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_64BIT:
 			memh_valid = (pci_mapreg_map(pa, SIP_PCI_CFGMA,
-			    memtype, 0, &memt, &memh, NULL, NULL) == 0);
+			    memtype, 0, &memt, &memh, NULL, &memsz) == 0);
 			break;
 		default:
 			memh_valid = 0;
@@ -1012,15 +1056,17 @@ sipcom_attach(device_t parent, device_t self, void *aux)
 	} else {
 		memh_valid = (pci_mapreg_map(pa, SIP_PCI_CFGMA,
 		    PCI_MAPREG_TYPE_MEM|PCI_MAPREG_MEM_TYPE_32BIT, 0,
-		    &memt, &memh, NULL, NULL) == 0);
+		    &memt, &memh, NULL, &memsz) == 0);
 	}
 
 	if (memh_valid) {
 		sc->sc_st = memt;
 		sc->sc_sh = memh;
+		sc->sc_sz = memsz;
 	} else if (ioh_valid) {
 		sc->sc_st = iot;
 		sc->sc_sh = ioh;
+		sc->sc_sz = iosz;
 	} else {
 		printf("%s: unable to map device registers\n",
 		    sc->sc_dev.dv_xname);
@@ -1062,7 +1108,7 @@ sipcom_attach(device_t parent, device_t self, void *aux)
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
-		return;
+		return sipcom_do_detach(self, SIP_ATTACH_MAP);
 	}
 	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
 
@@ -1078,7 +1124,7 @@ sipcom_attach(device_t parent, device_t self, void *aux)
 	    &rseg, 0)) != 0) {
 		printf("%s: unable to allocate control data, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
-		return sipcom_do_detach(self, -1);
+		return sipcom_do_detach(self, SIP_ATTACH_INTR);
 	}
 
 	if ((error = bus_dmamem_map(sc->sc_dmat, &sc->sc_seg, rseg,
