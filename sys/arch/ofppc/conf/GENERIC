@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.106 2007/11/06 19:22:59 garbled Exp $
+# $NetBSD: GENERIC,v 1.107 2007/12/15 16:09:08 phx Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/ofppc/conf/std.ofppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.106 $"
+#ident 		"GENERIC-$Revision: 1.107 $"
 
 maxusers	32
 
@@ -160,7 +160,8 @@ options		WS_DEFAULT_FG=WSCOL_BLACK
 options		WS_DEFAULT_BG=WSCOL_LIGHT_WHITE
 options		WS_KERNEL_FG=WSCOL_GREEN
 options		WS_KERNEL_BG=WSCOL_LIGHT_WHITE
-options		FONT_GALLANT12x22
+#options		FONT_GALLANT12x22
+options		FONT_BOLD8x16
 
 # Kernel root file system and dump configuration
 config		netbsd	root on ? type ?
@@ -342,6 +343,7 @@ pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	openfirm		# /dev/openfirm
 pseudo-device	ksyms			# /dev/ksyms
+pseudo-device	wsmux			# mouse and keyboard multiplexor
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
 
