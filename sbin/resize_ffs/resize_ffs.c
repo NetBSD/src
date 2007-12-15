@@ -1,4 +1,4 @@
-/*	$NetBSD: resize_ffs.c,v 1.10 2007/07/08 16:54:40 bouyer Exp $	*/
+/*	$NetBSD: resize_ffs.c,v 1.11 2007/12/15 16:32:06 perry Exp $	*/
 /* From sources sent on February 17, 2003 */
 /*-
  * As its sole author, I explicitly place this code in the public
@@ -40,6 +40,7 @@
  *
  */
 
+#include <sys/cdefs.h>
 #include <stdio.h>
 #include <errno.h>
 #include <fcntl.h>

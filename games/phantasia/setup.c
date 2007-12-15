@@ -1,8 +1,9 @@
-/*	$NetBSD: setup.c,v 1.14 2004/12/09 05:15:59 jmc Exp $	*/
+/*	$NetBSD: setup.c,v 1.15 2007/12/15 16:32:05 perry Exp $	*/
 
 /*
  * setup.c - set up all files for Phantasia
  */
+#include <sys/cdefs.h>
 #include <sys/param.h>
 #include <sys/stat.h>
 #include <fcntl.h>
