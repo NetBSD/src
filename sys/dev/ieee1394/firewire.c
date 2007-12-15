@@ -1,4 +1,4 @@
-/*	$NetBSD: firewire.c,v 1.18 2007/12/11 11:34:08 lukem Exp $	*/
+/*	$NetBSD: firewire.c,v 1.19 2007/12/15 00:39:28 perry Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: firewire.c,v 1.18 2007/12/11 11:34:08 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: firewire.c,v 1.19 2007/12/15 00:39:28 perry Exp $");
 
 #if defined(__FreeBSD__)
 #include <sys/param.h>
@@ -1148,7 +1148,7 @@ fw_tl_free(struct firewire_comm *fc, struct fw_xfer *xfer)
 	if (txfer == NULL) {
 		printf("%s: the xfer is not in the queue "
 		    "(tlabel=%d, flag=0x%x)\n",
-		    __FUNCTION__, xfer->tl, xfer->flag);
+		    __func__, xfer->tl, xfer->flag);
 		fw_dump_hdr(&xfer->send.hdr, "send");
 		fw_dump_hdr(&xfer->recv.hdr, "recv");
 		kdb_backtrace();
@@ -1185,7 +1185,7 @@ fw_tl2xfer(struct firewire_comm *fc, int node, int tlabel, int tcode)
 			req = xfer->send.hdr.mode.hdr.tcode;
 			if (xfer->fc->tcode[req].valid_res != tcode) {
 				printf("%s: invalid response tcode "
-				    "(0x%x for 0x%x)\n", __FUNCTION__,
+				    "(0x%x for 0x%x)\n", __func__,
 				    tcode, req);
 				return(NULL);
 			}
@@ -1595,7 +1595,7 @@ fw_explore_csrblock(struct fw_device *fwdev, int offset, int recur)
 
 		off = offset + reg[i].val * sizeof(uint32_t);
 		if (off > CROMSIZE) {
-			printf("%s: invalid offset %d\n", __FUNCTION__, off);
+			printf("%s: invalid offset %d\n", __func__, off);
 			return(-1);
 		}
 		err = fw_explore_csrblock(fwdev, off, recur);
@@ -1764,7 +1764,7 @@ fw_explore(struct firewire_comm *fc)
 				nodes[todo2++] = nodes[i];
 			if (firewire_debug)
 				printf("%s: node %d, err = %d\n",
-					__FUNCTION__, node, err);
+					__func__, node, err);
 		}
 		todo = todo2;
 	}

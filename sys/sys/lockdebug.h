@@ -1,4 +1,4 @@
-/*	$NetBSD: lockdebug.h,v 1.6 2007/11/21 10:19:11 yamt Exp $	*/
+/*	$NetBSD: lockdebug.h,v 1.7 2007/12/15 00:39:36 perry Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@ void	lockdebug_mem_check(const char *, void *, size_t);
     if (dodebug) lockdebug_unlocked(lock, where, s)
 #define	LOCKDEBUG_BARRIER(lock, slp)		lockdebug_barrier(lock, slp)
 #define	LOCKDEBUG_MEM_CHECK(base, sz)	\
-    lockdebug_mem_check(__FUNCTION__, base, sz)
+    lockdebug_mem_check(__func__, base, sz)
 
 #else	/* LOCKDEBUG */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: plumpcmcia.c,v 1.22 2007/10/17 19:54:29 garbled Exp $ */
+/*	$NetBSD: plumpcmcia.c,v 1.23 2007/12/15 00:39:17 perry Exp $ */
 
 /*
  * Copyright (c) 1999, 2000 UCHIYAMA Yasushi. All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plumpcmcia.c,v 1.22 2007/10/17 19:54:29 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plumpcmcia.c,v 1.23 2007/12/15 00:39:17 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -876,10 +876,10 @@ plum_csc_intr(void *arg)
 	/* read and clear interrupt status */
 	reg = plum_conf_read(regt, regh, PLUM_PCMCIA_CSCINT_STAT);
 	if (reg & PLUM_PCMCIA_CSCINT_CARD_DETECT) {
-		DPRINTF(("%s: card status change.\n", __FUNCTION__));
+		DPRINTF(("%s: card status change.\n", __func__));
 	} else {
 		DPRINTF(("%s: unhandled csc event. 0x%02x\n",
-		    __FUNCTION__, reg));
+		    __func__, reg));
 		return (0);
 	}
 
@@ -897,7 +897,7 @@ plum_csc_intr(void *arg)
 	/* queue event to event thread and wakeup. */
 	pe = plumpcmcia_event_alloc();
 	if (pe == 0) {
-		printf("%s: event FIFO overflow (%d).\n", __FUNCTION__,
+		printf("%s: event FIFO overflow (%d).\n", __func__,
 		    PLUM_PCMCIA_EVENT_QUEUE_MAX);
 		return (0);
 	}
@@ -944,14 +944,14 @@ plumpcmcia_event_thread(void *arg)
 			splx(s);
 			switch (pe->pe_type) {
 			default:
-				printf("%s: unknown event.\n", __FUNCTION__);
+				printf("%s: unknown event.\n", __func__);
 				break;
 			case PLUM_PCMCIA_EVENT_INSERT:
-				DPRINTF(("%s: insert event.\n", __FUNCTION__));
+				DPRINTF(("%s: insert event.\n", __func__));
 				pcmcia_card_attach(pe->pe_ph->ph_pcmcia);
 				break;
 			case PLUM_PCMCIA_EVENT_REMOVE:
-				DPRINTF(("%s: remove event.\n", __FUNCTION__));
+				DPRINTF(("%s: remove event.\n", __func__));
 				pcmcia_card_detach(pe->pe_ph->ph_pcmcia,
 				    DETACH_FORCE);
 				break;

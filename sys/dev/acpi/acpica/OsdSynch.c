@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdSynch.c,v 1.9 2007/12/09 20:27:54 jmcneill Exp $	*/
+/*	$NetBSD: OsdSynch.c,v 1.10 2007/12/15 00:39:25 perry Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdSynch.c,v 1.9 2007/12/09 20:27:54 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdSynch.c,v 1.10 2007/12/15 00:39:25 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -111,7 +111,7 @@ AcpiOsCreateSemaphore(UINT32 MaxUnits, UINT32 InitialUnits,
 {
 	struct acpi_semaphore *as;
 
-	ACPI_FUNCTION_TRACE(__FUNCTION__);
+	ACPI_FUNCTION_TRACE(__func__);
 
 	if (OutHandle == NULL)
 		return_ACPI_STATUS(AE_BAD_PARAMETER);
@@ -145,7 +145,7 @@ AcpiOsDeleteSemaphore(ACPI_HANDLE Handle)
 {
 	struct acpi_semaphore *as = (void *) Handle;
 
-	ACPI_FUNCTION_TRACE(__FUNCTION__);
+	ACPI_FUNCTION_TRACE(__func__);
 
 	if (as == NULL)
 		return_ACPI_STATUS(AE_BAD_PARAMETER);
@@ -177,7 +177,7 @@ AcpiOsWaitSemaphore(ACPI_SEMAPHORE Handle, UINT32 Units, UINT16 Timeout)
 	 * would adjust the amount of time left after being awakened.
 	 */
 
-	ACPI_FUNCTION_TRACE(__FUNCTION__);
+	ACPI_FUNCTION_TRACE(__func__);
 
 	if (as == NULL)
 		return_ACPI_STATUS(AE_BAD_PARAMETER);
@@ -232,7 +232,7 @@ AcpiOsSignalSemaphore(ACPI_HANDLE Handle, UINT32 Units)
 {
 	struct acpi_semaphore *as = (void *) Handle;
 
-	ACPI_FUNCTION_TRACE(__FUNCTION__);
+	ACPI_FUNCTION_TRACE(__func__);
 
 	if (as == NULL)
 		return_ACPI_STATUS(AE_BAD_PARAMETER);
@@ -263,7 +263,7 @@ AcpiOsCreateLock(ACPI_HANDLE *OutHandle)
 {
 	struct acpi_lock *al;
 
-	ACPI_FUNCTION_TRACE(__FUNCTION__);
+	ACPI_FUNCTION_TRACE(__func__);
 
 	if (OutHandle == NULL)
 		return_ACPI_STATUS(AE_BAD_PARAMETER);
@@ -291,7 +291,7 @@ AcpiOsDeleteLock(ACPI_SPINLOCK Handle)
 {
 	struct acpi_lock *al = (void *) Handle;
 
-	ACPI_FUNCTION_TRACE(__FUNCTION__);
+	ACPI_FUNCTION_TRACE(__func__);
 
 	if (al == NULL)
 		return;
@@ -314,7 +314,7 @@ AcpiOsAcquireLock(ACPI_SPINLOCK Handle)
 {
 	struct acpi_lock *al = (void *) Handle;
 
-	ACPI_FUNCTION_TRACE(__FUNCTION__);
+	ACPI_FUNCTION_TRACE(__func__);
 
 	if (al == NULL)
 		return 0;
@@ -334,7 +334,7 @@ AcpiOsReleaseLock(ACPI_HANDLE Handle, ACPI_NATIVE_UINT Flags)
 {
 	struct acpi_lock *al = (void *) Handle;
 
-	ACPI_FUNCTION_TRACE(__FUNCTION__);
+	ACPI_FUNCTION_TRACE(__func__);
 
 	if (al == NULL)
 		return;
