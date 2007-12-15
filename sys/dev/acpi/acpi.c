@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.106 2007/12/14 01:29:29 jmcneill Exp $	*/
+/*	$NetBSD: acpi.c,v 1.107 2007/12/15 02:19:55 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.106 2007/12/14 01:29:29 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.107 2007/12/15 02:19:55 jmcneill Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -187,6 +187,7 @@ int
 acpi_probe(void)
 {
 	static int beenhere;
+	ACPI_TABLE_HEADER xsdt;
 	ACPI_STATUS rv;
 
 	if (beenhere != 0)
@@ -241,19 +242,22 @@ acpi_probe(void)
 		return 0;
 	}
 
-#if notyet
+	if (ACPI_FAILURE(AcpiGetTableHeader(ACPI_SIG_XSDT, 0, &xsdt)))
+		memset(&xsdt, 0, sizeof(xsdt));
+
 	if (!acpi_force_load && (acpi_find_quirks() & ACPI_QUIRK_BROKEN)) {
 		printf("ACPI: BIOS implementation in listed as broken:\n");
 		printf("ACPI: X/RSDT: OemId <%6.6s,%8.8s,%08x>, "
 		       "AslId <%4.4s,%08x>\n",
-			AcpiGbl_XSDT->OemId, AcpiGbl_XSDT->OemTableId,
-		        AcpiGbl_XSDT->OemRevision,
-			AcpiGbl_XSDT->AslCompilerId,
-		        AcpiGbl_XSDT->AslCompilerRevision);
+			xsdt.OemId, xsdt.OemTableId,
+		        xsdt.OemRevision,
+			xsdt.AslCompilerId,
+		        xsdt.AslCompilerRevision);
 		printf("ACPI: not used. set acpi_force_load to use anyway.\n");
 		return 0;
 	}
 
+#if notyet
 	/* Install the default address space handlers. */
 	rv = AcpiInstallAddressSpaceHandler(ACPI_ROOT_OBJECT,
 	    ACPI_ADR_SPACE_SYSTEM_MEMORY, ACPI_DEFAULT_HANDLER, NULL, NULL);
@@ -360,6 +364,7 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	struct acpi_softc *sc = (void *) self;
 	struct acpibus_attach_args *aa = aux;
 	ACPI_STATUS rv;
+	ACPI_TABLE_HEADER xsdt;
 
 	aprint_naive(": Advanced Configuration and Power Interface\n");
 	aprint_normal(": Advanced Configuration and Power Interface\n");
@@ -372,13 +377,14 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	aprint_verbose("%s: using Intel ACPI CA subsystem version %08x\n",
 	    sc->sc_dev.dv_xname, ACPI_CA_VERSION);
 
-#if 0
+	if (ACPI_FAILURE(AcpiGetTableHeader(ACPI_SIG_XSDT, 0, &xsdt)))
+		memset(&xsdt, 0, sizeof(xsdt));
+
 	aprint_verbose("%s: X/RSDT: OemId <%6.6s,%8.8s,%08x>, AslId <%4.4s,%08x>\n",
 	    sc->sc_dev.dv_xname,
-	    AcpiGbl_XSDT->OemId, AcpiGbl_XSDT->OemTableId,
-	    AcpiGbl_XSDT->OemRevision,
-	    AcpiGbl_XSDT->AslCompilerId, AcpiGbl_XSDT->AslCompilerRevision);
-#endif
+	    xsdt.OemId, xsdt.OemTableId,
+	    xsdt.OemRevision,
+	    xsdt.AslCompilerId, xsdt.AslCompilerRevision);
 
 	sc->sc_quirks = acpi_find_quirks();
 
