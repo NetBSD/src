@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.97 2007/12/15 17:28:09 apb Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.98 2007/12/15 21:33:13 apb Exp $
 #
 # Copyright (c) 2003,2007 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1968,25 +1968,59 @@ makedisk_minimal()
 	mkdev r${name}${unit}$rn c $chr $(($unit * $doff + $ro)) 640 $g_operator
 }
 
+# create_mfs_dev nodes
+#       Create a memory file system for a given number of device nodes,
+#       and mount it.  Attempts to use mount_tmpfs, or falls back to
+#       mount_mfs.
+#
+#       If do_redirect, then also redirect output to the console.
+#
 create_mfs_dev()
 {
-	ninode=$((${1-1200} * 11 / 10))
-	[ "$ninode" -lt 10 ] && ninode=10
-	fs_size=$((8192 + 2 * 8192 + 4096 + ninode*(128+18) + 8192))
-	fs_size=$((fs_size/512))
-	[ "$fs_size" -lt 80 ] && fs_size=80
-
+	ndevnodes=${1-1200}
 	dev_mountpoint=${PWD:-/dev}
-	mount_mfs -b 4096 -f 512 -s $fs_size -n $ninode -p 07555 -o union swap $dev_mountpoint
 
-	cd $dev_mountpoint
+	# Number of inodes is the specified number of device nodes, plus
+	# a margin to allow for extra device nodes created later.
+	ninode=$((ndevnodes * 11 / 10))
+	# Add 2 reserved inodes (needed for both mfs and tmpfs), and round
+	# up to a multiple of 32 (needed for mfs, not needed for tmpfs).
+	ninode=$(( (ninode + 2 + 31) / 32 * 32 ))
+	# This file system size calculation is exact for mount_mfs(8)
+	# with 512-byte sectors; it's larger than necessary
+	# for mount_tmpfs(8).  40960 bytes (80 blocks) is the minimum size
+	# allowed by mount_mfs.
+	fs_bytes=$((8192 + 2 * 8192 + 4096 + ninode*(128+18) + 8192))
+	[ "$fs_bytes" -lt 40960 ] && fs_bytes=40960
+	fs_blocks=$((fs_bytes/512))
+
+	# Try tmpfs; if that fails try mfs.
+	if mount_tmpfs -s $fs_bytes -n $ninode -m 07555 \
+		-o union tmpfs "$dev_mountpoint"
+	then
+	    fstype=tmpfs
+	elif mount_mfs -b 4096 -f 512 -s $fs_blocks -n $ninode -p 07555 \
+		-o union swap "$dev_mountpoint"
+	then
+	    fstype=mfs
+	else
+	    warn "Failed to create memory file system"
+	    exit 1
+	fi
+
+	# Our current directory was in the lower file system; change it to
+	# the newly mounted upper file system.
+	cd "$dev_mountpoint"
+
 	if $do_redirect; then
 		# Redirect stdout and stderr to console
 		mknod -m 600 -g 0 -u 0 temp_console c 0 0
 		exec >temp_console 2>&1
 		rm temp_console
 	fi
-	echo "Created mfs $dev_mountpoint ($fs_size blocks, $ninode inodes)"
+
+	echo "Created $fstype $dev_mountpoint" \
+		"($fs_blocks blocks, $ninode inodes)"
 }
 
 #

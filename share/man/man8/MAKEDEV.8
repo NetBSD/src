@@ -6,7 +6,7 @@
 .\" *** DO NOT EDIT - any changes will be lost!!!
 .\" *** ------------------------------------------------------------------
 .\"
-.\" $NetBSD: MAKEDEV.8,v 1.25 2007/12/09 08:46:57 apb Exp $
+.\" $NetBSD: MAKEDEV.8,v 1.26 2007/12/15 21:33:13 apb Exp $
 .\"
 .\" Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -42,7 +42,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December  9, 2007
+.Dd December 15, 2007
 .Dt MAKEDEV 8
 .Os
 .Sh NAME
@@ -99,8 +99,12 @@ or
 .Fl s
 options.
 .It Fl M
-Create a memory filesystem, union mounted over the current directory,
+Create a memory file system, union mounted over the current directory,
 to contain the device special files.
+The memory file system is created using either
+.Xr mount_tmpfs 8
+or
+.Xr mount_mfs 8 .
 .Pp
 If the
 .Fl M
@@ -827,6 +831,8 @@ you can get more debugging output by using
 .Xr MAKEDEV.local 8 ,
 .Xr diskless 8 ,
 .Xr mknod 8 ,
+.Xr mount_mfs 8 ,
+.Xr mount_tmpfs 8 ,
 .Xr mtree 8
 .Sh HISTORY
 The
