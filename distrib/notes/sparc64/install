@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.26.2.2 2007/09/29 17:05:22 pavel Exp $
+.\"	$NetBSD: install,v 1.26.2.3 2007/12/15 19:34:14 bouyer Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -369,7 +369,9 @@ command.
 .Pp
 This is not a necessary step.  If your 
 .Pa /dev
-directory is empty, the kernel will create a RAM disk with all of the 
+directory is empty,
+.Xr init 8
+will create a RAM disk with all of the 
 essential device nodes each time the system boots.  If you want to create 
 the device nodes on disk, you will need to use the Solaris
 .Xr mknod 1M

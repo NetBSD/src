@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.22 2003/07/26 17:07:05 salo Exp $
+.\"	$NetBSD: hardware,v 1.22.16.1 2007/12/15 19:34:07 bouyer Exp $
 .
 .Nx*M
 \*V runs on several of the older Macintosh computers.
@@ -124,7 +124,7 @@ is often fairly different from that of the \*M port.  If you are
 interested in this, you might want to take a look at the new
 .Nx Ns /macppc
 port:
-.Lk http://www.NetBSD.org/Ports/macppc/index.html
+.Lk http://www.NetBSD.org/ports/macppc/index.html
 .bullet)
 .
 .Ss2 Known hardware issues with this release
