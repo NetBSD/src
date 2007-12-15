@@ -1,4 +1,4 @@
-/*	$NetBSD: kloader.c,v 1.14 2007/12/10 08:57:36 he Exp $	*/
+/*	$NetBSD: kloader.c,v 1.15 2007/12/15 00:39:26 perry Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kloader.c,v 1.14 2007/12/10 08:57:36 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kloader.c,v 1.15 2007/12/15 00:39:26 perry Exp $");
 
 #include "debug_kloader.h"
 
@@ -58,13 +58,13 @@ __KERNEL_RCSID(0, "$NetBSD: kloader.c,v 1.14 2007/12/10 08:57:36 he Exp $");
 int	kloader_debug = 1;
 #define	DPRINTF(fmt, args...)						\
 	if (kloader_debug)						\
-		printf("%s: " fmt, __FUNCTION__ , ##args)
+		printf("%s: " fmt, __func__ , ##args)
 #define	_DPRINTF(fmt, args...)						\
 	if (kloader_debug)						\
 		printf(fmt, ##args)
 #define	DPRINTFN(n, fmt, args...)					\
 	if (kloader_debug > (n))					\
-		printf("%s: " fmt, __FUNCTION__ , ##args)
+		printf("%s: " fmt, __func__ , ##args)
 #define	_DPRINTFN(n, fmt, args...)					\
 	if (kloader_debug > (n))					\
 		printf(fmt, ##args)
