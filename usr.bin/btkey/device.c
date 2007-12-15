@@ -1,4 +1,4 @@
-/*	$NetBSD: device.c,v 1.1 2007/11/09 21:18:25 plunky Exp $	*/
+/*	$NetBSD: device.c,v 1.2 2007/12/15 16:03:30 perry Exp $	*/
 
 /*-
  * Copyright (c) 2007 Iain Hibbert
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: device.c,v 1.1 2007/11/09 21:18:25 plunky Exp $");
+__RCSID("$NetBSD: device.c,v 1.2 2007/12/15 16:03:30 perry Exp $");
 
 #include <bluetooth.h>
 #include <stdbool.h>
@@ -46,7 +46,7 @@ struct stored_link_keys {
 		bdaddr_t addr;
 		uint8_t	 key[HCI_KEY_SIZE];
 	} key[1];
-} __attribute__ ((__packed__));
+} __packed;
 
 /*
  * generic request

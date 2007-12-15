@@ -1,4 +1,4 @@
-/*	$NetBSD: server.c,v 1.3 2007/03/18 10:00:42 plunky Exp $	*/
+/*	$NetBSD: server.c,v 1.4 2007/12/15 16:03:30 perry Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -55,12 +55,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: server.c,v 1.3 2007/03/18 10:00:42 plunky Exp $
+ * $Id: server.c,v 1.4 2007/12/15 16:03:30 perry Exp $
  * $FreeBSD: src/usr.sbin/bluetooth/sdpd/server.c,v 1.2 2005/12/06 17:56:36 emax Exp $
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: server.c,v 1.3 2007/03/18 10:00:42 plunky Exp $");
+__RCSID("$NetBSD: server.c,v 1.4 2007/12/15 16:03:30 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/select.h>
@@ -576,7 +576,7 @@ server_send_error_response(server_p srv, int32_t fd, uint16_t error)
 	struct {
 		sdp_pdu_t		pdu;
 		uint16_t		error;
-	} __attribute__ ((packed))	rsp;
+	} __packed	rsp;
 
 	/* Prepare and send SDP error response */
 	rsp.pdu.pid = SDP_PDU_ERROR_RESPONSE;

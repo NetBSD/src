@@ -1,4 +1,4 @@
-/*	$NetBSD: atactl.c,v 1.48 2007/11/18 17:48:21 christos Exp $	*/
+/*	$NetBSD: atactl.c,v 1.49 2007/12/15 16:03:29 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: atactl.c,v 1.48 2007/11/18 17:48:21 christos Exp $");
+__RCSID("$NetBSD: atactl.c,v 1.49 2007/12/15 16:03:29 perry Exp $");
 #endif
 
 
@@ -85,7 +85,7 @@ struct ata_smart_error {
 		u_int8_t state;
 		u_int8_t lifetime[2];
 	} error_data;
-} __attribute__((packed));
+} __packed;
 
 struct ata_smart_errorlog {
 	u_int8_t		data_structure_revision;
@@ -94,7 +94,7 @@ struct ata_smart_errorlog {
 	u_int16_t		device_error_count;
 	u_int8_t		reserved[57];
 	u_int8_t		checksum;
-} __attribute__((packed));
+} __packed;
 
 struct command {
 	const char *cmd_name;
