@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.122 2007/12/15 21:51:45 he Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.123 2007/12/15 23:04:57 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.122 2007/12/15 21:51:45 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.123 2007/12/15 23:04:57 dyoung Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -613,10 +613,8 @@ static void	sipcom_do_detach(device_t, enum sip_attach_stage);
 static int	sipcom_detach(device_t, int);
 static bool	sipcom_resume(device_t);
 
-static int	gsip_copy_small = 0; /* XXX make non-static! */
-#ifdef __NO_STRICT_ALIGNMENT
-static int	sip_copy_small = 0; /* XXX make non-static! */
-#endif
+int	gsip_copy_small = 0;
+int	sip_copy_small = 0;
 
 CFATTACH_DECL(gsip, sizeof(struct sip_softc),
     sipcom_match, sipcom_attach, sipcom_detach, NULL);
