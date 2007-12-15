@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_wdog.c,v 1.22 2007/12/05 06:52:27 ad Exp $	*/
+/*	$NetBSD: sysmon_wdog.c,v 1.23 2007/12/15 04:58:39 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_wdog.c,v 1.22 2007/12/05 06:52:27 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_wdog.c,v 1.23 2007/12/15 04:58:39 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -276,8 +276,7 @@ sysmon_wdog_register(struct sysmon_wdog *smw)
 
 	mutex_enter(&sysmon_wdog_list_mtx);
 
-	for (lsmw = LIST_FIRST(&sysmon_wdog_list); lsmw != NULL;
-	     lsmw = LIST_NEXT(lsmw, smw_list)) {
+	LIST_FOREACH(lsmw, &sysmon_wdog_list, smw_list) {
 		if (strcmp(lsmw->smw_name, smw->smw_name) == 0) {
 			error = EEXIST;
 			goto out;
@@ -323,8 +322,7 @@ sysmon_wdog_find(const char *name)
 
 	mutex_enter(&sysmon_wdog_list_mtx);
 
-	for (smw = LIST_FIRST(&sysmon_wdog_list); smw != NULL;
-	     smw = LIST_NEXT(smw, smw_list)) {
+	LIST_FOREACH(smw, &sysmon_wdog_list, smw_list) {
 		if (strcmp(smw->smw_name, name) == 0)
 			break;
 	}
