@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.41.2.5 2007/12/13 16:21:58 yamt Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.41.2.6 2007/12/15 00:17:32 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.41.2.5 2007/12/13 16:21:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.41.2.6 2007/12/15 00:17:32 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -900,7 +900,7 @@ tmpfs_reg_resize(struct vnode *vp, off_t newsize)
 	newpages = round_page(newsize) / PAGE_SIZE;
 
 	if (newpages > oldpages &&
-	    newpages - oldpages > TMPFS_PAGES_AVAIL(tmp)) {
+	    (ssize_t)(newpages - oldpages) > TMPFS_PAGES_AVAIL(tmp)) {
 		error = ENOSPC;
 		goto out;
 	}

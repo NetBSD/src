@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_pool.c,v 1.11.2.4 2007/12/12 17:38:40 ad Exp $	*/
+/*	$NetBSD: tmpfs_pool.c,v 1.11.2.5 2007/12/15 00:17:32 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_pool.c,v 1.11.2.4 2007/12/12 17:38:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_pool.c,v 1.11.2.5 2007/12/15 00:17:32 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/pool.h>
@@ -163,7 +163,7 @@ tmpfs_pool_page_alloc(struct pool *pp, int flags)
 	tmp = tpp->tp_mount;
 
 	pages = atomic_inc_uint_nv(&tmp->tm_pages_used);
-	if (TMPFS_PAGES_MAX(tmp) - pages == 0) {
+	if (pages >= TMPFS_PAGES_MAX(tmp)) {
 		atomic_dec_uint(&tmp->tm_pages_used);
 		return NULL;
 	}
