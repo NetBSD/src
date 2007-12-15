@@ -1,4 +1,4 @@
-/* 	$NetBSD: lwp.h,v 1.71 2007/12/03 17:14:59 ad Exp $	*/
+/* 	$NetBSD: lwp.h,v 1.71.2.1 2007/12/15 00:26:55 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@ struct lwp {
 	struct timeval 	l_rtime;	/* l: real time */
 	struct timeval	l_stime;	/* l: start time (while ONPROC) */
 	u_int		l_swtime;	/* l: time swapped in or out */
-	int		l_holdcnt;	/* l: if non-zero, don't swap */
+	u_int		l_holdcnt;	/* l: if non-zero, don't swap */
 	int		l_biglocks;	/* l: biglock count before sleep */
 	int		l_class;	/* l: scheduling class */
 	int		l_kpriority;	/* !: has kernel priority boost */
