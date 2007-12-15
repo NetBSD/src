@@ -1,4 +1,4 @@
-.\" $NetBSD: kauth.9,v 1.36.2.6 2007/02/02 06:46:27 tron Exp $
+.\" $NetBSD: kauth.9,v 1.36.2.7 2007/12/15 15:11:51 pavel Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 28, 2007
+.Dd November 27, 2007
 .Dt KAUTH 9
 .Os
 .Sh NAME
@@ -1049,6 +1049,18 @@ first appeared in
 .Nx 4.0 ,
 and is a clean-room implementation based on Apple TN2127, available at
 http://developer.apple.com/technotes/tn2005/tn2127.html
+.Sh NOTES
+As
+.Nm
+in
+.Nx
+is still under active development, it is likely that the ABI, and possibly the
+API, will differ between
+.Nx
+versions.
+Developers are to take notice of this fact in order to avoid building code
+that expects one version of the ABI and running it in a system with a different
+one.
 .Sh AUTHORS
 .An Elad Efrat Aq elad@NetBSD.org
 implemented the kernel authorization framework in
