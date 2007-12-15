@@ -1,4 +1,4 @@
-/*	$NetBSD: screen.c,v 1.20 2007/12/15 16:32:05 perry Exp $	*/
+/*	$NetBSD: screen.c,v 1.21 2007/12/15 19:44:43 perry Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -64,7 +64,7 @@ static struct termios oldtt;
 static void (*tstp)(int);
 
 static	void	scr_stop(int);
-static	void	stopset(int) __attribute__((__noreturn__));
+static	void	stopset(int) __dead;
 
 
 /*

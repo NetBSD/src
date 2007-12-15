@@ -1,4 +1,4 @@
-/*	$NetBSD: list.c,v 1.22 2007/10/30 02:28:31 christos Exp $	*/
+/*	$NetBSD: list.c,v 1.23 2007/12/15 19:44:51 perry Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)list.c	8.4 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: list.c,v 1.22 2007/10/30 02:28:31 christos Exp $");
+__RCSID("$NetBSD: list.c,v 1.23 2007/12/15 19:44:51 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -1314,7 +1314,7 @@ first(int f, int m)
 /*
  * Show all headers without paging.  (-H flag)
  */
-__attribute__((__noreturn__))
+__dead
 PUBLIC int
 show_headers_and_exit(int flags)
 {

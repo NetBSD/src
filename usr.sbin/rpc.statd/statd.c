@@ -1,4 +1,4 @@
-/*	$NetBSD: statd.c,v 1.27 2006/03/28 15:21:00 tron Exp $	*/
+/*	$NetBSD: statd.c,v 1.28 2007/12/15 19:44:56 perry Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas. All rights reserved.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: statd.c,v 1.27 2006/03/28 15:21:00 tron Exp $");
+__RCSID("$NetBSD: statd.c,v 1.28 2007/12/15 19:44:56 perry Exp $");
 #endif
 
 /* main() function for status monitor daemon.  Some of the code in this	*/
@@ -88,7 +88,7 @@ static int unmon_host __P((DBT *, HostInfo *, void *));
 static int notify_one __P((DBT *, HostInfo *, void *));
 static void init_file __P((char *));
 static int notify_one_host __P((char *));
-static void die __P((int)) __attribute__((__noreturn__));
+static void die __P((int)) __dead;
 
 int main __P((int, char **));
 

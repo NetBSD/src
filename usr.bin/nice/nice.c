@@ -1,4 +1,4 @@
-/*	$NetBSD: nice.c,v 1.13 2005/10/05 21:20:46 christos Exp $	*/
+/*	$NetBSD: nice.c,v 1.14 2007/12/15 19:44:52 perry Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)nice.c	5.4 (Berkeley) 6/1/90";
 #endif
-__RCSID("$NetBSD: nice.c,v 1.13 2005/10/05 21:20:46 christos Exp $");
+__RCSID("$NetBSD: nice.c,v 1.14 2007/12/15 19:44:52 perry Exp $");
 #endif /* not lint */
 
 #include <sys/time.h>
@@ -58,7 +58,7 @@ __RCSID("$NetBSD: nice.c,v 1.13 2005/10/05 21:20:46 christos Exp $");
 
 #define	DEFNICE	10
 
-static void usage(void) __attribute__((__noreturn__));
+static void usage(void) __dead;
 
 int
 main(int argc, char **argv)

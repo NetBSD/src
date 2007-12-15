@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.24 2007/11/09 05:21:30 cube Exp $	*/
+/*	$NetBSD: main.c,v 1.25 2007/12/15 19:44:49 perry Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -96,7 +96,7 @@ static struct nvlist **nextmkopt;
 static struct nvlist **nextappmkopt;
 static struct nvlist **nextfsopt;
 
-static	void	usage(void) __attribute__((__noreturn__));
+static	void	usage(void) __dead;
 static	void	dependopts(void);
 static	void	do_depend(struct nvlist *);
 static	void	stop(void);

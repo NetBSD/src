@@ -1,4 +1,4 @@
-/*	$NetBSD: fish.c,v 1.17 2005/07/02 08:38:24 jmc Exp $	*/
+/*	$NetBSD: fish.c,v 1.18 2007/12/15 19:44:40 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fish.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: fish.c,v 1.17 2005/07/02 08:38:24 jmc Exp $");
+__RCSID("$NetBSD: fish.c,v 1.18 2007/12/15 19:44:40 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -91,7 +91,7 @@ int	nrandom(int);
 void	printhand(const int *);
 void	printplayer(int);
 int	promove(void);
-void	usage(void) __attribute__((__noreturn__));
+void	usage(void) __dead;
 int	usermove(void);
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: xargs.c,v 1.16 2007/04/18 15:56:07 christos Exp $	*/
+/*	$NetBSD: xargs.c,v 1.17 2007/12/15 19:44:54 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993\n\
 static char sccsid[] = "@(#)xargs.c	8.1 (Berkeley) 6/6/93";
 __FBSDID("$FreeBSD: src/usr.bin/xargs/xargs.c,v 1.62 2006/01/01 22:59:54 jmallett Exp $");
 #endif
-__RCSID("$NetBSD: xargs.c,v 1.16 2007/04/18 15:56:07 christos Exp $");
+__RCSID("$NetBSD: xargs.c,v 1.17 2007/12/15 19:44:54 perry Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -67,7 +67,7 @@ static void	parse_input(int, char *[]);
 static void	prerun(int, char *[]);
 static int	prompt(void);
 static void	run(char **);
-static void	usage(void) __attribute__((__noreturn__));
+static void	usage(void) __dead;
 void		strnsubst(char **, const char *, const char *, size_t);
 static void	waitchildren(const char *, int);
 

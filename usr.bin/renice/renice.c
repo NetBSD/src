@@ -1,4 +1,4 @@
-/*	$NetBSD: renice.c,v 1.16 2005/10/09 18:23:52 christos Exp $	*/
+/*	$NetBSD: renice.c,v 1.17 2007/12/15 19:44:52 perry Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993
@@ -37,7 +37,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993\n\
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)renice.c	8.1 (Berkeley) 6/9/93";*/
-__RCSID("$NetBSD: renice.c,v 1.16 2005/10/09 18:23:52 christos Exp $");
+__RCSID("$NetBSD: renice.c,v 1.17 2007/12/15 19:44:52 perry Exp $");
 #endif /* not lint */
 
 #include <sys/resource.h>
@@ -53,7 +53,7 @@ __RCSID("$NetBSD: renice.c,v 1.16 2005/10/09 18:23:52 christos Exp $");
 
 static int	getnum(const char *, const char *, int *);
 static int	donice(int, id_t, int, int);
-static void	usage(void) __attribute__((__noreturn__));
+static void	usage(void) __dead;
 
 /*
  * Change the priority (nice) of processes

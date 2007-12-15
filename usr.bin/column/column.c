@@ -1,4 +1,4 @@
-/*	$NetBSD: column.c,v 1.16 2006/12/09 21:42:40 christos Exp $	*/
+/*	$NetBSD: column.c,v 1.17 2007/12/15 19:44:49 perry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)column.c	8.4 (Berkeley) 5/4/95";
 #endif
-__RCSID("$NetBSD: column.c,v 1.16 2006/12/09 21:42:40 christos Exp $");
+__RCSID("$NetBSD: column.c,v 1.17 2007/12/15 19:44:49 perry Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -63,7 +63,7 @@ static void  input(FILE *);
 static void  maketbl(void);
 static void  print(void);
 static void  r_columnate(void);
-static void  usage(void) __attribute__((__noreturn__));
+static void  usage(void) __dead;
 
 static int termwidth = 80;		/* default terminal width */
 

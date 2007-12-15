@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.15 2007/12/15 16:32:05 perry Exp $	*/
+/*	$NetBSD: setup.c,v 1.16 2007/12/15 19:44:42 perry Exp $	*/
 
 /*
  * setup.c - set up all files for Phantasia
@@ -10,7 +10,7 @@
 #include "include.h"
 
 int main(int, char *[]);
-void Error(const char *, const char *) __attribute__((__noreturn__));
+void Error(const char *, const char *) __dead;
 double drandom(void);
 
 /**/

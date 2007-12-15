@@ -1,4 +1,4 @@
-/*	$NetBSD: spellprog.c,v 1.7 2007/12/15 16:32:07 perry Exp $	*/
+/*	$NetBSD: spellprog.c,v 1.8 2007/12/15 19:44:53 perry Exp $	*/
 
 /* derived from OpenBSD: spellprog.c,v 1.4 2003/06/03 02:56:16 millert Exp */
 
@@ -113,7 +113,7 @@ static void	 ise(void);
 static void	 print_word(FILE *);
 static void	 ztos(char *);
 static int	 monosyl(char *, char *);
-static void 	 usage(void) __attribute__((__noreturn__));
+static void 	 usage(void) __dead;
 static void	 getderiv(size_t);
 
 static int	 an(char *, const char *, const char *, size_t);

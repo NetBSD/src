@@ -1,4 +1,4 @@
-/*      $NetBSD: whois.c,v 1.31 2007/09/09 18:31:45 christos Exp $   */
+/*      $NetBSD: whois.c,v 1.32 2007/12/15 19:44:54 perry Exp $   */
 /*	$OpenBSD: whois.c,v 1.28 2003/09/18 22:16:15 fgsch Exp $	*/
 
 /*
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static const char sccsid[] = "@(#)whois.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: whois.c,v 1.31 2007/09/09 18:31:45 christos Exp $");
+__RCSID("$NetBSD: whois.c,v 1.32 2007/12/15 19:44:54 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -86,7 +86,7 @@ static const char *port_whois = WHOIS_PORT;
 static const char *ip_whois[] =
     { LNICHOST, RNICHOST, PNICHOST, FNICHOST, BNICHOST, NULL };
 
-static void usage(void) __attribute__((__noreturn__));
+static void usage(void) __dead;
 static int whois(const char *, const char *, const char *, int);
 static char *choose_server(const char *, const char *);
 

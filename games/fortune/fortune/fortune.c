@@ -1,4 +1,4 @@
-/*	$NetBSD: fortune.c,v 1.49 2006/05/13 22:28:04 christos Exp $	*/
+/*	$NetBSD: fortune.c,v 1.50 2007/12/15 19:44:40 perry Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fortune.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: fortune.c,v 1.49 2006/05/13 22:28:04 christos Exp $");
+__RCSID("$NetBSD: fortune.c,v 1.50 2007/12/15 19:44:40 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -158,7 +158,7 @@ void	 print_file_list(void);
 void	 print_list(FILEDESC *, int);
 void	 sum_noprobs(FILEDESC *);
 void	 sum_tbl(STRFILE *, STRFILE *);
-void	 usage(void) __attribute__((__noreturn__));
+void	 usage(void) __dead;
 void	 zero_tbl(STRFILE *);
 
 #ifndef	NO_REGEX
@@ -808,7 +808,7 @@ is_fortfile(file, datp, posp, check_for_offend)
 	const char	*file;
 	char		**datp, **posp
 # ifndef OK_TO_WRITE_DISK
-	__attribute__((__unused__))
+	__unused
 # endif
 	;
 	int	check_for_offend;

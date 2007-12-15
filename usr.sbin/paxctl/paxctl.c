@@ -1,4 +1,4 @@
-/* $NetBSD: paxctl.c,v 1.4 2007/12/11 01:40:27 christos Exp $ */
+/* $NetBSD: paxctl.c,v 1.5 2007/12/15 19:44:56 perry Exp $ */
 
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -33,7 +33,7 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #ifdef __RCSID
-__RCSID("$NetBSD: paxctl.c,v 1.4 2007/12/11 01:40:27 christos Exp $");
+__RCSID("$NetBSD: paxctl.c,v 1.5 2007/12/15 19:44:56 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -50,7 +50,7 @@ __RCSID("$NetBSD: paxctl.c,v 1.4 2007/12/11 01:40:27 christos Exp $");
 #include <stdlib.h>
 #include <string.h>
 
-static void usage(void) __attribute__((__noreturn__));
+static void usage(void) __dead;
 static int pax_flag(const char *);
 static int pax_flags_sane(u_long);
 static int pax_haveflags(u_long);

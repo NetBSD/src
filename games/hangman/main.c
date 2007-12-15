@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.11 2003/08/07 09:37:22 agc Exp $	*/
+/*	$NetBSD: main.c,v 1.12 2007/12/15 19:44:41 perry Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.11 2003/08/07 09:37:22 agc Exp $");
+__RCSID("$NetBSD: main.c,v 1.12 2007/12/15 19:44:41 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -92,7 +92,7 @@ main(argc, argv)
  */
 void
 die(dummy)
-	int dummy __attribute__((__unused__));
+	int dummy __unused;
 {
 	mvcur(0, COLS - 1, LINES - 1, 0);
 	endwin();

@@ -1,4 +1,4 @@
-/*	$NetBSD: random.c,v 1.10 2005/08/10 14:02:26 rpaulo Exp $	*/
+/*	$NetBSD: random.c,v 1.11 2007/12/15 19:44:43 perry Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1994\n\
 #if 0
 static char sccsid[] = "@(#)random.c	8.6 (Berkeley) 6/1/94";
 #else
-__RCSID("$NetBSD: random.c,v 1.10 2005/08/10 14:02:26 rpaulo Exp $");
+__RCSID("$NetBSD: random.c,v 1.11 2007/12/15 19:44:43 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,7 +60,7 @@ __RCSID("$NetBSD: random.c,v 1.10 2005/08/10 14:02:26 rpaulo Exp $");
 #define MAXRANDOM	2147483647
 
 int  main(int, char **);
-void usage(void) __attribute__((__noreturn__));
+void usage(void) __dead;
 
 int
 main(argc, argv)

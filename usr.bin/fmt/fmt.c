@@ -1,4 +1,4 @@
-/*	$NetBSD: fmt.c,v 1.27 2007/06/03 22:39:21 christos Exp $	*/
+/*	$NetBSD: fmt.c,v 1.28 2007/12/15 19:44:50 perry Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fmt.c	8.1 (Berkeley) 7/20/93";
 #endif
-__RCSID("$NetBSD: fmt.c,v 1.27 2007/06/03 22:39:21 christos Exp $");
+__RCSID("$NetBSD: fmt.c,v 1.28 2007/12/15 19:44:50 perry Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -76,7 +76,7 @@ static struct buffer outbuf;
 
 static const char	*headnames[] = {"To", "Subject", "Cc", 0};
 
-static void	usage(void) __attribute__((__noreturn__));
+static void	usage(void) __dead;
 static int 	getnum(const char *, const char *, size_t *, int);
 static void	fmt(FILE *);
 static int	ispref(const char *, const char *);

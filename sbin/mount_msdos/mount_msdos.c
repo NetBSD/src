@@ -1,4 +1,4 @@
-/* $NetBSD: mount_msdos.c,v 1.43 2007/07/16 17:06:53 pooka Exp $ */
+/* $NetBSD: mount_msdos.c,v 1.44 2007/12/15 19:44:46 perry Exp $ */
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mount_msdos.c,v 1.43 2007/07/16 17:06:53 pooka Exp $");
+__RCSID("$NetBSD: mount_msdos.c,v 1.44 2007/12/15 19:44:46 perry Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -66,7 +66,7 @@ static const struct mntopt mopts[] = {
 };
 
 int	mount_msdos(int argc, char **argv);
-static void	usage(void) __attribute__((__noreturn__));
+static void	usage(void) __dead;
 
 #ifndef MOUNT_NOMAIN
 int

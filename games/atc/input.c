@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.21 2006/10/07 18:29:02 elad Exp $	*/
+/*	$NetBSD: input.c,v 1.22 2007/12/15 19:44:38 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -46,7 +46,7 @@
 #if 0
 static char sccsid[] = "@(#)input.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: input.c,v 1.21 2006/10/07 18:29:02 elad Exp $");
+__RCSID("$NetBSD: input.c,v 1.22 2007/12/15 19:44:38 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -371,7 +371,7 @@ setplane(int c)
 
 /* ARGSUSED */
 const char *
-turn(int c __attribute__((__unused__)))
+turn(int c __unused)
 {
 	if (p.altitude == 0)
 		return ("Planes at airports may not change direction");
@@ -380,7 +380,7 @@ turn(int c __attribute__((__unused__)))
 
 /* ARGSUSED */
 const char *
-circle(int c __attribute__((__unused__)))
+circle(int c __unused)
 {
 	if (p.altitude == 0)
 		return ("Planes cannot circle on the ground");
@@ -390,7 +390,7 @@ circle(int c __attribute__((__unused__)))
 
 /* ARGSUSED */
 const char *
-left(int c __attribute__((__unused__)))
+left(int c __unused)
 {
 	dir = D_LEFT;
 	p.new_dir = p.dir - 1;
@@ -401,7 +401,7 @@ left(int c __attribute__((__unused__)))
 
 /* ARGSUSED */
 const char *
-right(int c __attribute__((__unused__)))
+right(int c __unused)
 {
 	dir = D_RIGHT;
 	p.new_dir = p.dir + 1;
@@ -412,7 +412,7 @@ right(int c __attribute__((__unused__)))
 
 /* ARGSUSED */
 const char *
-Left(int c __attribute__((__unused__)))
+Left(int c __unused)
 {
 	p.new_dir = p.dir - 2;
 	if (p.new_dir < 0)
@@ -422,7 +422,7 @@ Left(int c __attribute__((__unused__)))
 
 /* ARGSUSED */
 const char *
-Right(int c __attribute__((__unused__)))
+Right(int c __unused)
 {
 	p.new_dir = p.dir + 2;
 	if (p.new_dir >= MAXDIR)
@@ -476,7 +476,7 @@ delayb(int c)
 
 /* ARGSUSED */
 const char *
-beacon(int c __attribute__((__unused__)))
+beacon(int c __unused)
 {
 	dest_type = T_BEACON;
 	return (NULL);
@@ -484,7 +484,7 @@ beacon(int c __attribute__((__unused__)))
 
 /* ARGSUSED */
 const char *
-ex_it(int c __attribute__((__unused__)))
+ex_it(int c __unused)
 {
 	dest_type = T_EXIT;
 	return (NULL);
@@ -492,7 +492,7 @@ ex_it(int c __attribute__((__unused__)))
 
 /* ARGSUSED */
 const char *
-airport(int c __attribute__((__unused__)))
+airport(int c __unused)
 {
 	dest_type = T_AIRPORT;
 	return (NULL);
@@ -500,7 +500,7 @@ airport(int c __attribute__((__unused__)))
 
 /* ARGSUSED */
 const char *
-climb(int c __attribute__((__unused__)))
+climb(int c __unused)
 {
 	dir = D_UP;
 	return (NULL);
@@ -508,7 +508,7 @@ climb(int c __attribute__((__unused__)))
 
 /* ARGSUSED */
 const char *
-descend(int c __attribute__((__unused__)))
+descend(int c __unused)
 {
 	dir = D_DOWN;
 	return (NULL);
@@ -620,7 +620,7 @@ rel_dir(int c)
 
 /* ARGSUSED */
 const char *
-mark(int c __attribute__((__unused__)))
+mark(int c __unused)
 {
 	if (p.altitude == 0)
 		return ("Cannot mark planes on the ground");
@@ -632,7 +632,7 @@ mark(int c __attribute__((__unused__)))
 
 /* ARGSUSED */
 const char *
-unmark(int c __attribute__((__unused__)))
+unmark(int c __unused)
 {
 	if (p.altitude == 0)
 		return ("Cannot unmark planes on the ground");
@@ -644,7 +644,7 @@ unmark(int c __attribute__((__unused__)))
 
 /* ARGSUSED */
 const char *
-ignore(int c __attribute__((__unused__)))
+ignore(int c __unused)
 {
 	if (p.altitude == 0)
 		return ("Cannot ignore planes on the ground");

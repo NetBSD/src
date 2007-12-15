@@ -1,4 +1,4 @@
-/*	$NetBSD: impulse.c,v 1.6 2003/08/07 09:37:52 agc Exp $	*/
+/*	$NetBSD: impulse.c,v 1.7 2007/12/15 19:44:44 perry Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)impulse.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: impulse.c,v 1.6 2003/08/07 09:37:52 agc Exp $");
+__RCSID("$NetBSD: impulse.c,v 1.7 2007/12/15 19:44:44 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -49,7 +49,7 @@ __RCSID("$NetBSD: impulse.c,v 1.6 2003/08/07 09:37:52 agc Exp $");
 /*ARGSUSED*/
 void
 impulse(v)
-	int v __attribute__((__unused__));
+	int v __unused;
 {
 	int		course;
 	int		power;

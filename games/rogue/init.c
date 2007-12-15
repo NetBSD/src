@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.13 2003/08/07 09:37:38 agc Exp $	*/
+/*	$NetBSD: init.c,v 1.14 2007/12/15 19:44:43 perry Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)init.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: init.c,v 1.13 2003/08/07 09:37:38 agc Exp $");
+__RCSID("$NetBSD: init.c,v 1.14 2007/12/15 19:44:43 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -218,7 +218,7 @@ stop_window()
 
 void
 byebye(dummy)
-	int dummy __attribute__((__unused__));
+	int dummy __unused;
 {
 	md_ignore_signals();
 	if (ask_quit) {
@@ -231,7 +231,7 @@ byebye(dummy)
 
 void
 onintr(dummy)
-	int dummy __attribute__((__unused__));
+	int dummy __unused;
 {
 	md_ignore_signals();
 	if (cant_int) {
@@ -245,7 +245,7 @@ onintr(dummy)
 
 void
 error_save(dummy)
-	int dummy __attribute__((__unused__));
+	int dummy __unused;
 {
 	save_is_interactive = 0;
 	save_into_file(error_file);

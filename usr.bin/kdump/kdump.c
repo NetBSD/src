@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.94 2007/11/07 22:22:31 dsl Exp $	*/
+/*	$NetBSD: kdump.c,v 1.95 2007/12/15 19:44:51 perry Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.94 2007/11/07 22:22:31 dsl Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.95 2007/12/15 19:44:51 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -116,7 +116,7 @@ static void	ktruser(struct ktr_user *, int);
 static void	ktrmmsg(struct ktr_mmsg *, int);
 static void	ktrmool(struct ktr_mool *, int);
 static void	ktrmib(int *, int);
-static void	usage(void) __attribute__((__noreturn__));
+static void	usage(void) __dead;
 static void	eprint(int);
 static void	rprint(register_t);
 static const char *signame(long, int);

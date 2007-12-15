@@ -1,4 +1,4 @@
-/*	$NetBSD: fstat.c,v 1.76 2007/09/09 01:26:55 dyoung Exp $	*/
+/*	$NetBSD: fstat.c,v 1.77 2007/12/15 19:44:50 perry Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fstat.c	8.3 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: fstat.c,v 1.76 2007/09/09 01:26:55 dyoung Exp $");
+__RCSID("$NetBSD: fstat.c,v 1.77 2007/12/15 19:44:50 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -157,7 +157,7 @@ static const char *inet6_addrstr(struct in6_addr *);
 static void	socktrans(struct socket *, int);
 static void	kqueuetrans(void *, int);
 static int	ufs_filestat(struct vnode *, struct filestat *);
-static void	usage(void) __attribute__((__noreturn__));
+static void	usage(void) __dead;
 static const char   *vfilestat(struct vnode *, struct filestat *);
 static void	vtrans(struct vnode *, int, int);
 static void	ftrans(struct file *, int);

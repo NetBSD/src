@@ -1,4 +1,4 @@
-/*	$NetBSD: wsconsctl.c,v 1.15 2007/12/15 16:32:06 perry Exp $ */
+/*	$NetBSD: wsconsctl.c,v 1.16 2007/12/15 19:44:48 perry Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@ extern int keyboard_field_tab_len;
 extern int mouse_field_tab_len;
 extern int display_field_tab_len;
 
-static void usage(const char *) __attribute__((__noreturn__));
+static void usage(const char *) __dead;
 
 static void
 usage(const char *msg)

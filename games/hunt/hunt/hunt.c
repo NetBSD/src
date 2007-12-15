@@ -1,4 +1,4 @@
-/*	$NetBSD: hunt.c,v 1.24 2006/05/09 20:18:06 mrg Exp $	*/
+/*	$NetBSD: hunt.c,v 1.25 2007/12/15 19:44:41 perry Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hunt.c,v 1.24 2006/05/09 20:18:06 mrg Exp $");
+__RCSID("$NetBSD: hunt.c,v 1.25 2007/12/15 19:44:41 perry Exp $");
 #endif /* not lint */
 
 # include	<sys/param.h>
@@ -111,8 +111,8 @@ extern int	cur_row, cur_col;
 void	dump_scores(SOCKET);
 long	env_init(long);
 void	fill_in_blanks(void);
-void	leave(int, char *) __attribute__((__noreturn__));
-void	leavex(int, char *) __attribute__((__noreturn__));
+void	leave(int, char *) __dead;
+void	leavex(int, char *) __dead;
 void	fincurs(void);
 int	main(int, char *[]);
 # ifdef INTERNET
@@ -752,7 +752,7 @@ bad_ver()
  */
 SIGNAL_TYPE
 sigterm(dummy)
-	int dummy __attribute__((__unused__));
+	int dummy __unused;
 {
 	leavex(0, (char *) NULL);
 	/* NOTREACHED */
@@ -765,7 +765,7 @@ sigterm(dummy)
  */
 SIGNAL_TYPE
 sigusr1(dummy)
-	int dummy __attribute__((__unused__));
+	int dummy __unused;
 {
 	leavex(1, "Unable to start driver.  Try again.");
 	/* NOTREACHED */
@@ -778,7 +778,7 @@ sigusr1(dummy)
  */
 SIGNAL_TYPE
 sigalrm(dummy)
-	int dummy __attribute__((__unused__));
+	int dummy __unused;
 {
 	return;
 }
@@ -805,7 +805,7 @@ rmnl(s)
  */
 SIGNAL_TYPE
 intr(dummy)
-	int dummy __attribute__((__unused__));
+	int dummy __unused;
 {
 	int	ch;
 	int	explained;

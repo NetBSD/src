@@ -1,4 +1,4 @@
-/* $NetBSD: sunlabel.c,v 1.17 2005/12/24 21:35:57 perry Exp $ */
+/* $NetBSD: sunlabel.c,v 1.18 2007/12/15 19:44:57 perry Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: sunlabel.c,v 1.17 2005/12/24 21:35:57 perry Exp $");
+__RCSID("$NetBSD: sunlabel.c,v 1.18 2007/12/15 19:44:57 perry Exp $");
 #endif
 
 #include <stdio.h>
@@ -288,7 +288,7 @@ setdisk(const char *s)
 	errx(1, "Can't find device for disk `%s'", s);
 }
 
-static void usage(void) __attribute__((__noreturn__));
+static void usage(void) __dead;
 static void
 usage(void)
 {
@@ -927,7 +927,7 @@ update_spc(void)
  */
 static int
 /*ARGSUSED*/
-print_ascii(struct field *f, int sofar __attribute__((__unused__)))
+print_ascii(struct field *f, int sofar __unused)
 {
 	printf("%s: %.128s\n", f->tag, (char *)f->loc);
 	return 0;
