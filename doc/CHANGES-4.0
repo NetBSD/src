@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.376 2007/12/15 19:54:32 bouyer Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.377 2007/12/15 20:00:10 bouyer Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -10741,4 +10741,10 @@ share/man/man8/man8.macppc/ofwboot.8		1.8
 	Update URLs after website reorganization. patch by OKANO Takayoshi,
 	from PR 37070.
 	[pavel, ticket #1018]
+
+distrib/notes/common/main			1.384
+
+	Remove a spurious paragraph break from the start of the generated
+	text. Bump date.
+	[pavel, ticket #1019]
 
