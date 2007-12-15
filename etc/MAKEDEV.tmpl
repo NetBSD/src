@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.96 2007/12/11 11:51:19 apb Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.97 2007/12/15 17:28:09 apb Exp $
 #
 # Copyright (c) 2003,2007 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -359,6 +359,23 @@ linecount()
 	echo $#
 }
 
+# nooutput -12 cmd [args...]
+#	run a command with stdout and/or stderr ignored.
+#	"nooutput -2 cmd" is like "cmd 2>/dev/null",
+#	except it should work even if /dev/null doesn't [yet] exist.
+#
+nooutput()
+{
+	local flags="$1" ; shift
+	local junk
+	case "$flags" in
+	"-1")	junk="$( "$@" )" ;;
+	"-2")	exec 4>&1 ; junk="$( "$@" 2>&1 1>&4 )" ; exec 4>&- ;;
+	"-12")	junk="$( "$@" 2>&1 )" ;;
+	*)	warn "Incorrect use of nooutput" ;;
+	esac
+}
+
 # check_pax path_to_pax
 #	Check whether pax supports the command line options we
 #	will want to use.
@@ -366,7 +383,7 @@ linecount()
 check_pax()
 {
 	local pax="$1"
-	echo ". type=dir optional" | "${pax}" -r -w -M -pe . 2>/dev/null
+	echo ". type=dir optional" | nooutput -12 "${pax}" -r -w -M -pe .
 }
 
 # setup args...
@@ -495,6 +512,51 @@ setup()
 	fi
 }
 
+# wrap_makedev makedev_name ...
+#	Invoke a makedev-like function, with additional processing
+#	as appropriate for use from the outer level.
+#
+wrap_makedev()
+{
+	if $do_specfile; then
+		# "optional" tells pax(1) not to create the directory itself.
+		echo ". type=dir optional"
+	fi
+	"$@"
+}
+
+# makedev_main makedev_name args...
+#	Perform most of the work of the main program.  makedev_name is
+#	the name of a makedev-like function, and the other args are
+#	command line args with which the MAKEDEV (or MAKEDEV.local)
+#	script was invoked.
+#
+makedev_main()
+{
+	local makedev="$1" ; shift
+
+	# Parse command line args
+	setup ${1+"$@"}
+	shift $((${OPTIND}-1))
+
+	if $do_create_mfs; then
+		# Count inodes and create mfs file system.
+		# The makedev call merely updates $count_nodes.
+		count_nodes=0
+		$makedev ${1+"$@"}
+		create_mfs_dev $count_nodes
+		unset count_nodes
+	fi
+
+	if $do_pax ; then
+		# wrap_makedev will print an mtree specification because
+		# do_pax implies do_specfile.  pax will create device nodes.
+		wrap_makedev $makedev ${1+"$@"} | ${TOOL_PAX} -r -w -M -pe .
+	else
+		wrap_makedev $makedev ${1+"$@"}
+	fi
+}
+
 #
 # functions available to create nodes:
 #
@@ -547,7 +609,7 @@ makedir()
 	if $do_specfile; then
 		echo "./$1 type=dir mode=$2 gid=$g_wheel uid=$u_root"
 	else
-		mkdir $1 2>/dev/null
+		nooutput -2 mkdir $1
 		chmod $2 $1
 	fi
 }
@@ -555,16 +617,6 @@ makedir()
 warn()
 {
 	echo 1>&2 "$0: $*"
-}
-
-# wrap_makedev makedev ...
-wrap_makedev()
-{
-	if $do_specfile; then
-		# "optional" tells pax(1) not to create the directory itself.
-		echo ". type=dir optional"
-	fi
-	"$@"
 }
 
 # makedev special [...]
@@ -1942,24 +1994,4 @@ create_mfs_dev()
 # function library, so just return.  Otherwise, do all the real work.
 #
 [ -n "${MAKEDEV_AS_LIBRARY}" ] && return
-
-# Parse command line options
-setup ${1+"$@"}
-shift $((${OPTIND}-1))
-
-if $do_create_mfs; then
-	# Count inodes and create mfs file system.
-	# The makedev call merely updates $count_nodes.
-	count_nodes=0
-	makedev ${1+"$@"}
-	create_mfs_dev $count_nodes
-	unset count_nodes
-fi
-
-if $do_pax ; then
-	# wrap_makedev will print an mtree specification because
-	# do_pax implies do_specfile.  pax will create device nodes.
-	wrap_makedev makedev ${1+"$@"} | ${TOOL_PAX} -r -w -M -pe .
-else
-	wrap_makedev makedev ${1+"$@"}
-fi
+makedev_main makedev ${1+"$@"}
