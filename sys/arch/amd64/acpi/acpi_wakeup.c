@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.5 2007/12/15 09:15:38 joerg Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.6 2007/12/15 11:26:40 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.5 2007/12/15 09:15:38 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.6 2007/12/15 11:26:40 joerg Exp $");
 
 /*-
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
@@ -177,19 +177,6 @@ acpi_md_sleep(int state)
 		return -1;
 	}
 
-	if (acpi_wakeup_vaddr == 0) {
-		/* Map ACPI wakecode */
-		acpi_wakeup_vaddr = uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
-		    UVM_KMF_VAONLY);
-		if (acpi_wakeup_vaddr == 0) {
-			printf("acpi: can't allocate address for wakecode.\n");
-			return -1;
-		}
-		pmap_kenter_pa(acpi_wakeup_vaddr, acpi_wakeup_paddr,
-		    VM_PROT_READ | VM_PROT_WRITE);
-		pmap_update(pmap_kernel());
-	}
-
 	if (!CPU_IS_PRIMARY(curcpu())) {
 		printf("acpi0: WARNING: ignoring sleep from secondary CPU\n");
 		return -1;
@@ -238,6 +225,20 @@ out:
 		mtrr_commit();
 
 	return (ret);
+}
+
+void
+acpi_md_sleep_init(void)
+{
+	/* Map ACPI wakecode */
+	acpi_wakeup_vaddr = uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
+	    UVM_KMF_VAONLY);
+	if (acpi_wakeup_vaddr == 0)
+		panic("acpi: can't allocate address for wakecode.\n");
+
+	pmap_kenter_pa(acpi_wakeup_vaddr, acpi_wakeup_paddr,
+	    VM_PROT_READ | VM_PROT_WRITE);
+	pmap_update(pmap_kernel());
 }
 
 SYSCTL_SETUP(sysctl_md_acpi_setup, "acpi amd64 sysctl setup")
