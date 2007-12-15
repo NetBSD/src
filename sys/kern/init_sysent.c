@@ -1,4 +1,4 @@
-/* $NetBSD: init_sysent.c,v 1.201.2.3 2007/12/05 21:18:41 rmind Exp $ */
+/* $NetBSD: init_sysent.c,v 1.201.2.4 2007/12/15 01:45:24 ad Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysent.c,v 1.201.2.3 2007/12/05 21:18:41 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysent.c,v 1.201.2.4 2007/12/15 01:45:24 ad Exp $");
 
 #include "opt_nfsserver.h"
 #include "opt_ntp.h"
@@ -105,7 +105,7 @@ struct sysent sysent[] = {
 	    sys_syscall },			/* 0 = syscall */
 	{ ns(struct sys_exit_args), 0,
 	    sys_exit },				/* 1 = exit */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_MPSAFE | 0,
 	    sys_fork },				/* 2 = fork */
 	{ ns(struct sys_read_args), SYCALL_MPSAFE | 0,
 	    sys_read },				/* 3 = read */
@@ -183,9 +183,9 @@ struct sysent sysent[] = {
 	    sys_chflags },			/* 34 = chflags */
 	{ ns(struct sys_fchflags_args), SYCALL_MPSAFE | 0,
 	    sys_fchflags },			/* 35 = fchflags */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_MPSAFE | 0,
 	    sys_sync },				/* 36 = sync */
-	{ ns(struct sys_kill_args), 0,
+	{ ns(struct sys_kill_args), SYCALL_MPSAFE | 0,
 	    sys_kill },				/* 37 = kill */
 	{ ns(struct compat_43_sys_stat_args), SYCALL_MPSAFE | 0,
 	    compat_43(sys_stat) },		/* 38 = compat_43_stat43 */
