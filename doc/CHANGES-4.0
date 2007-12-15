@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.379 2007/12/15 20:19:10 bouyer Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.380 2007/12/15 20:44:54 bouyer Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -10753,6 +10753,11 @@ distrib/notes/common/main			1.383
 	Update the number of packages in pkgsrc to match reality.
 	Dedicate the 4.0 release to the memory of itojun.
 	[agc, ticket #1020]
+
+distrib/notes/common/netboot			1.30
+
+	update URLs
+	[pavel, ticket #1021]
 
 gnu/usr.bin/groff/tmac/mdoc.local		patch
 sys/sys/param.h					patch
