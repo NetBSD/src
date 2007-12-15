@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.377 2007/12/15 20:00:10 bouyer Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.378 2007/12/15 20:12:22 bouyer Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -10747,4 +10747,10 @@ distrib/notes/common/main			1.384
 	Remove a spurious paragraph break from the start of the generated
 	text. Bump date.
 	[pavel, ticket #1019]
+
+distrib/notes/common/main			1.383
+
+	Update the number of packages in pkgsrc to match reality.
+	Dedicate the 4.0 release to the memory of itojun.
+	[agc, ticket #1020]
 
