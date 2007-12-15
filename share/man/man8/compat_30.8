@@ -1,4 +1,4 @@
-.\" $NetBSD: compat_30.8,v 1.6 2007/12/15 16:15:26 pavel Exp $
+.\" $NetBSD: compat_30.8,v 1.7 2007/12/15 16:25:46 pavel Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -167,6 +167,17 @@ This changes the API and ABI of those syscalls,
 enables binary compatibility with the old ABI.
 Source compatibility is not provided, as use of those syscalls is
 supposed to be rare.
+.Pp
+The error code from the
+.Xr socket 2
+syscall changed from
+.Er EPROTONOSUPPORT
+to
+.Er EAFNOSUPPORT
+in the case of an unsupported address family.
+.Dv COMPAT_30
+enables binary compatibility with the old ABI.
+Source compatiblility is not provided.
 .Pp
 The
 .Vt struct ntptimeval
