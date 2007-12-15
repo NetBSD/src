@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysinst,v 1.77.2.3 2007/09/29 17:05:17 pavel Exp $
+.\"	$NetBSD: sysinst,v 1.77.2.4 2007/12/15 19:34:03 bouyer Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -427,7 +427,7 @@ After language selection, the main menu will be displayed.
   .***********************************************.
   * NetBSD-\*V Install System                     *
   *                                               *
-  *\*>a: Install NetBSD to hard disk                *
+  *\*[Gt]a: Install NetBSD to hard disk                *
   * b: Upgrade NetBSD on a hard disk              *
   * c: Re-install sets or install additional sets *
   * d: Reboot the computer                        *
@@ -541,7 +541,7 @@ Further information can be found on
 .\}
 .if \n[macppc] \{\
 Further information can be found on
-.Lk http://www.NetBSD.org/Ports/macppc/x11.html
+.Lk http://www.NetBSD.org/ports/macppc/x11.html
 .\}
 .bullet)
 .bullet)
@@ -591,7 +591,7 @@ ROM issues which prevent you from enabling 32-bit addressing.
 Please see the
 .Nx*M
 FAQ at
-.Lk http://www.NetBSD.org/Ports/mac68k/faq/
+.Lk http://www.NetBSD.org/ports/mac68k/faq/
 for more information.
 .tag)
 .Pp
@@ -1029,7 +1029,7 @@ reports
 .Dl "I can not find any hard disk for use by NetBSD"
 or the drive you wish to install onto is missing, then you should look at
 the FAQ entry
-.Lk http://www.NetBSD.org/Ports/macppc/faq.html#nodisk
+.Lk http://www.NetBSD.org/ports/macppc/faq.html#nodisk
 .\}
 .\}
 .It
@@ -1653,15 +1653,19 @@ you have selected.
 In the latter case, you will be shown the currently selected sets,
 and given the opportunity to select the sets you want.
 Some sets always need to be installed
-.Pq Sy kern, base
+.Po Sy kern, base,
 and
 .Sy etc
+.Pc
 they will not be shown in this selection menu.
 .Pp
 Before extraction begins, you can elect to watch the files being
 extracted; the name of each file that is extracted will be shown.
 This can slow down the installation process considerably, especially
 on machines with slow graphics consoles or serial consoles.
+Alternatively, you will be asked if you wish to have a progress bar.
+This is the preferred option as it shows progress without significantly
+slowing down the installation process.
 .Pp
 .ie \n[macppc] \{\
 If you are installing using the
@@ -1755,7 +1759,7 @@ Now you ned to mount the location of your distribution sets:
 .Pp
 Congratulations, you have successfully installed
 .Nx
-\*V .
+\*V.
 .if \n[cats] \{\
 .Pp
 To finalize the installation of
