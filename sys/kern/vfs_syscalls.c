@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.333.2.3 2007/12/09 22:57:20 ad Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.333.2.4 2007/12/15 01:04:33 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.333.2.3 2007/12/09 22:57:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.333.2.4 2007/12/15 01:04:33 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -755,7 +755,14 @@ sys_sync(struct lwp *l, void *v, register_t *retval)
 		if ((mp->mnt_flag & MNT_RDONLY) == 0) {
 			asyncflag = mp->mnt_flag & MNT_ASYNC;
 			mp->mnt_flag &= ~MNT_ASYNC;
+			/* XXXSMP hack, sync is slow. */
+			if ((mp->mnt_iflag & IMNT_MPSAFE) == 0) {
+				KERNEL_LOCK(1, NULL);
+			}
 			VFS_SYNC(mp, MNT_NOWAIT, l->l_cred);
+			if ((mp->mnt_iflag & IMNT_MPSAFE) == 0) {
+				KERNEL_UNLOCK_ONE(NULL);
+			}
 			if (asyncflag)
 				 mp->mnt_flag |= MNT_ASYNC;
 		}
