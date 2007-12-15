@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.375 2007/12/15 18:13:38 jdc Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.376 2007/12/15 19:54:32 bouyer Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -10692,4 +10692,53 @@ share/man/man8/compat_30.8			1.6-1.7
 	From the emulators/compat30 package, suggested by Johnny Lam.
 	Note the socket(2) syscall change.
 	[pavel, ticket #1016]
+
+distrib/notes/common/contents			patch
+distrib/notes/common/list-setsizes.sh		patch
+distrib/notes/pmppc/hardware			patch
+distrib/notes/Makefile.inc			1.39, 1.40
+distrib/notes/acorn32/prep.RISCOS		1.18
+distrib/notes/alpha/install			1.32
+distrib/notes/common/main			1.367, 1.368, 1.370 - 1.382
+distrib/notes/common/netboot			1.31
+distrib/notes/common/postinstall		1.64, 1.65
+distrib/notes/common/sysinst			1.82, 1.83
+distrib/notes/common/xfer			1.58 - 1.60
+distrib/notes/evbppc/hardware			1.3
+distrib/notes/ews4800mips/hardware		1.2
+distrib/notes/hp300/hardware			1.19
+distrib/notes/hp300/prep			1.21
+distrib/notes/hp700/hardware			1.3
+distrib/notes/i386/hardware			1.121
+distrib/notes/i386/whatis			1.22
+distrib/notes/mac68k/hardware			1.23
+distrib/notes/mac68k/install			1.28
+distrib/notes/macppc/hardware			1.44
+distrib/notes/macppc/install			1.36
+distrib/notes/macppc/prep			1.42
+distrib/notes/macppc/prep.OPENFIRMWARE 		1.9
+distrib/notes/news68k/hardware			1.5
+distrib/notes/newsmips/hardware			1.4
+distrib/notes/next68k/hardware			1.8
+distrib/notes/pmax/install			1.39
+distrib/notes/sandpoint/hardware		1.6
+distrib/notes/sparc/hardware			1.33
+distrib/notes/sparc64/hardware			1.23
+distrib/notes/sparc64/install			1.28
+distrib/notes/vax/xfer				1.13
+
+	Sync release notes with reality
+	[jnemeth, ticket #1017]
+
+distrib/notes/sparc/install			1.53
+doc/README.files				1.4
+share/doc/papers/bus_dma/about.me		1.4
+share/man/man8/afterboot.8			1.34
+share/man/man8/compat_hpux.8			1.5
+share/man/man8/man8.macppc/boot.8		1.5
+share/man/man8/man8.macppc/ofwboot.8		1.8
+
+	Update URLs after website reorganization. patch by OKANO Takayoshi,
+	from PR 37070.
+	[pavel, ticket #1018]
 
