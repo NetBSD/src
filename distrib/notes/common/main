@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.320.2.9 2007/12/15 19:59:37 bouyer Exp $
+.\"	$NetBSD: main,v 1.320.2.10 2007/12/15 20:11:43 bouyer Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -412,7 +412,7 @@ For third-party programs which are not part of the base
 .Nx
 distribution, you will want to explore the
 .Ic pkgsrc
-system with its more than 5400 program packages.
+system with its more than 7200 program packages.
 .El
 .\}
 .Ss "What is NetBSD?"
@@ -2107,6 +2107,29 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Waldi Ravens Ta Mt waldi@moacs.indiv.nl.net
 .
 .El
+.
+.Ss "Dedication"
+.Pp
+.
+.Nx
+4.0 is dedicated to the memory of Jun-Ichiro "itojun" Hagino,
+who died in October 2007.
+Itojun was a member of the KAME project,
+which provided IPv6 and IPsec support; he was also a member
+of the
+.Nx
+core team (the technical management for the project), and
+one of the Security Officers.
+Due to Itojun's efforts,
+.Nx
+was the
+first open source operating system with a production ready IPv6
+networking stack, which was included in the base system before many
+people knew what IPv6 was.
+We are grateful to have known and worked
+with Itojun, and we know that he will be missed.
+This release is
+therefore dedicated, with thanks, to his memory.
 .
 .Ss "Legal Mumbo-Jumbo"
 .Pp
