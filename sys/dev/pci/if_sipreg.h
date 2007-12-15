@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sipreg.h,v 1.17 2007/12/15 01:25:12 dyoung Exp $	*/
+/*	$NetBSD: if_sipreg.h,v 1.18 2007/12/15 05:46:21 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -84,11 +84,8 @@
  *
  * On the DP83820, we have an 8KB transmit FIFO.
  */
-#ifdef DP83820
-#define	SIP_TXFIFO_SIZE	8192
-#else
-#define	SIP_TXFIFO_SIZE	(512 * 4)
-#endif
+#define	DP83820_SIP_TXFIFO_SIZE	8192
+#define	OTHER_SIP_TXFIFO_SIZE	(512 * 4)
 
 /*
  * The SiS900 uses a single descriptor format for both transmit
@@ -102,13 +99,9 @@
  */
 struct sip_desc {
 	u_int32_t	sipd_link;	/* link to next descriptor */
-#ifdef DP83820
-	u_int32_t	sipd_bufptr;	/* pointer to DMA segment */
-	u_int32_t	sipd_cmdsts;	/* command/status word */
-#else
-	u_int32_t	sipd_cmdsts;	/* command/status word */
-	u_int32_t	sipd_bufptr;	/* pointer to DMA segment */
-#endif /* DP83820 */
+	uint32_t	sipd_cbs[2];	/* command/status and pointer to
+					 * DMA segment
+					 */
 	u_int32_t	sipd_extsts;	/* extended status */
 };
 
@@ -120,13 +113,10 @@ struct sip_desc {
 #define	CMDSTS_INTR	0x20000000	/* interrupt when ownership changes */
 #define	CMDSTS_SUPCRC	0x10000000	/* suppress CRC */
 #define	CMDSTS_OK	0x08000000	/* packet ok */
-#ifdef DP83820
-#define	CMDSTS_SIZE_MASK 0x0000ffff	/* packet size */
-#else
-#define	CMDSTS_SIZE_MASK 0x000007ff	/* packet size */
-#endif /* DP83820 */
+#define	DP83820_CMDSTS_SIZE_MASK 0x0000ffff	/* packet size */
+#define	OTHER_CMDSTS_SIZE_MASK 0x000007ff	/* packet size */
 
-#define	CMDSTS_SIZE(x)	((x) & CMDSTS_SIZE_MASK)
+#define	CMDSTS_SIZE(sc, x)	((x) & sc->sc_bits.b_cmdsts_size_mask)
 
 /*
  * CMDSTS bits for transmit.
@@ -154,11 +144,11 @@ struct sip_desc {
 #define	CMDSTS_Rx_CRCE	0x00080000	/* CRC error */
 #define	CMDSTS_Rx_FAE	0x00040000	/* frame alignment error */
 #define	CMDSTS_Rx_LBP	0x00020000	/* loopback packet */
-#ifdef DP83820
+/* #ifdef DP83820 */
 #define	CMDSTS_Rx_IRL	0x00010000	/* in-range length error */
-#else
+/* #else */
 #define	CMDSTS_Rx_COL	0x00010000	/* collision activity */
-#endif /* DP83820 */
+/* #endif DP83820 */
 
 #define	CMDSTS_Rx_DEST_REJ 0x00000000	/* packet rejected */
 #define	CMDSTS_Rx_DEST_STA 0x00800000	/* matched station address */
@@ -184,9 +174,8 @@ struct sip_desc {
 
 #define	SIP_PCI_CFGMA	(PCI_MAPREG_START + 0x04)
 
-#ifdef DP83820
+/* DP83820 only */
 #define	SIP_PCI_CFGMA1	(PCI_MAPREG_START + 0x08)
-#endif /* DP83820 */
 
 #define	SIP_PCI_CFGEROMA 0x30		/* expansion ROM address */
 
@@ -198,7 +187,8 @@ struct sip_desc {
  * MAC Operation Registers
  */
 #define	SIP_CR		0x00	/* command register */
-#ifdef DP83820
+
+/* DP83820 only */
 #define	CR_RXPRI3	0x00010000	/* Rx priority queue select */
 #define	CR_RXPRI2	0x00008000	/* Rx priority queue select */
 #define	CR_RXPRI1	0x00004000	/* Rx priority queue select */
@@ -207,7 +197,7 @@ struct sip_desc {
 #define	CR_TXPRI2	0x00000800	/* Tx priority queue select */
 #define	CR_TXPRI1	0x00000400	/* Tx priority queue select */
 #define	CR_TXPRI0	0x00000200	/* Tx priority queue select */
-#endif /* DP83820 */
+
 #define	CR_RLD		0x00000400	/* reload from NVRAM */
 #define	CR_RST		0x00000100	/* software reset */
 #define	CR_SWI		0x00000080	/* software interrupt */
@@ -301,7 +291,7 @@ struct sip_desc {
 #define	PTSCR_SRAMADR	0x0000001f	/* status RAM address */
 
 #define	SIP_ISR		0x10	/* interrupt status register */
-#ifdef DP83820
+/* DP83820 only */
 #define	ISR_TXDESC3	0x40000000	/* Tx queue 3 */
 #define	ISR_TXDESC2	0x20000000	/* Tx queue 2 */
 #define	ISR_TXDESC1	0x10000000	/* Tx queue 1 */
@@ -310,6 +300,12 @@ struct sip_desc {
 #define	ISR_RXDESC2	0x02000000	/* Rx queue 2 */
 #define	ISR_RXDESC1	0x01000000	/* Rx queue 1 */
 #define	ISR_RXDESC0	0x00800000	/* Rx queue 0 */
+
+/* non-DP83820 only */
+#define	ISR_WAKEEVT	0x10000000	/* wake up event */
+
+#if 0
+#ifdef DP83820
 #define	ISR_TXRCMP	0x00400000	/* transmit reset complete */
 #define	ISR_RXRCMP	0x00200000	/* receive reset complete */
 #define	ISR_DPERR	0x00100000	/* detected parity error */
@@ -317,7 +313,6 @@ struct sip_desc {
 #define	ISR_RMABT	0x00040000	/* received master abort */
 #define	ISR_RTABT	0x00020000	/* received target abort */
 #else
-#define	ISR_WAKEEVT	0x10000000	/* wake up event */
 #define	ISR_TXRCMP	0x02000000	/* transmit reset complete */
 #define	ISR_RXRCMP	0x01000000	/* receive reset complete */
 #define	ISR_DPERR	0x00800000	/* detected parity error */
@@ -325,6 +320,7 @@ struct sip_desc {
 #define	ISR_RMABT	0x00200000	/* received master abort */
 #define	ISR_RTABT	0x00100000	/* received target abort */
 #endif /* DP83820 */
+#endif /* 0 */
 
 /* SiS 900 only */
 #define	ISR_PAUSE_END	0x08000000	/* end of transmission pause */
@@ -332,14 +328,16 @@ struct sip_desc {
 
 #define	ISR_RXSOVR	0x00010000	/* Rx status FIFO overrun */
 #define	ISR_HIBERR	0x00008000	/* high bits error set */
-#ifdef DP83820
+
+/* DP83820 only */
 #define	ISR_PHY		0x00004000	/* PHY interrupt */
 #define	ISR_PME		0x00002000	/* power management event */
-#endif /* DP83820 */
+
 #define	ISR_SWI		0x00001000	/* software interrupt */
-#ifdef DP83820
+
+/* DP83820 only */
 #define	ISR_MIB		0x00000800	/* MIB service */
-#endif /* DP83820 */
+
 #define	ISR_TXURN	0x00000400	/* Tx underrun */
 #define	ISR_TXIDLE	0x00000200	/* Tx idle */
 #define	ISR_TXERR	0x00000100	/* Tx error */
@@ -379,19 +377,23 @@ struct sip_desc {
 /* DP83820 only */
 #define	SIP_TXDP_HI	0x24	/* transmit descriptor pointer (high) reg */
 
-#ifdef DP83820
-#define	SIP_TXCFG	0x28	/* transmit configuration register */
-#else
-#define	SIP_TXCFG	0x24	/* transmit configuration register */
-#endif /* DP83820 */
+#define	DP83820_SIP_TXCFG	0x28	/* transmit configuration register */
+#define	OTHER_SIP_TXCFG	0x24	/* transmit configuration register */
+
 #define	TXCFG_CSI	0x80000000	/* carrier sense ignore */
 #define	TXCFG_HBI	0x40000000	/* heartbeat ignore */
 #define	TXCFG_MLB	0x20000000	/* MAC loopback */
 #define	TXCFG_ATP	0x10000000	/* automatic transmit padding */
-#ifdef DP83820
+#define	TXCFG_MXDMA	0x00700000	/* max DMA burst size */
+
+/* DP83820 only */
 #define	TXCFG_ECRETRY	0x008000000	/* excessive collision retry enable */
-#define	TXCFG_MXDMA	 0x00700000	/* max DMA burst size */
+#define	TXCFG_BRST_DIS	0x00080000	/* 1000Mb/s burst disable */
+
+/* DP83820 only */
 #define	TXCFG_MXDMA_1024 0x00000000	/*    1024 bytes */
+#if 0
+#ifdef DP83820
 #define	TXCFG_MXDMA_8	 0x00100000	/*       8 bytes */
 #define	TXCFG_MXDMA_16	 0x00200000	/*      16 bytes */
 #define	TXCFG_MXDMA_32	 0x00300000	/*      32 bytes */
@@ -399,24 +401,23 @@ struct sip_desc {
 #define	TXCFG_MXDMA_128	 0x00500000	/*     128 bytes */
 #define	TXCFG_MXDMA_256	 0x00600000	/*     256 bytes */
 #define	TXCFG_MXDMA_512	 0x00700000	/*     512 bytes */
-#define	TXCFG_BRST_DIS	0x00080000	/* 1000Mb/s burst disable */
-#define	TXCFG_FLTH	0x0000ff00	/* Fx fill threshold */
-#define	TXCFG_FLTH_SHIFT 8
-#define	TXCFG_DRTH	0x000000ff	/* Tx drain threshold */
+#define	TXCFG_FLTH_MASK	0x0000ff00	/* Fx fill threshold */
+#define	TXCFG_DRTH_MASK	0x000000ff	/* Tx drain threshold */
 #else
-#define	TXCFG_MXDMA	0x00700000	/* max DMA burst size */
 #define	TXCFG_MXDMA_512	0x00000000	/*     512 bytes */
-#define	TXCFG_MXDMA_4	0x00100000	/*       4 bytes */
 #define	TXCFG_MXDMA_8	0x00200000	/*       8 bytes */
 #define	TXCFG_MXDMA_16	0x00300000	/*      16 bytes */
 #define	TXCFG_MXDMA_32	0x00400000	/*      32 bytes */
 #define	TXCFG_MXDMA_64	0x00500000	/*      64 bytes */
 #define	TXCFG_MXDMA_128	0x00600000	/*     128 bytes */
 #define	TXCFG_MXDMA_256	0x00700000	/*     256 bytes */
-#define	TXCFG_FLTH	0x00003f00	/* Tx fill threshold */
-#define	TXCFG_FLTH_SHIFT 8
-#define	TXCFG_DRTH	0x0000003f	/* Tx drain threshold */
+#define	TXCFG_FLTH_MASK	0x00003f00	/* Tx fill threshold */
+#define	TXCFG_DRTH_MASK	0x0000003f	/* Tx drain threshold */
 #endif /* DP83820 */
+#endif /* 0 */
+
+/* non-DP83820 only */
+#define	TXCFG_MXDMA_4	0x00100000	/*       4 bytes */
 
 #define	SIP_GPIOR	0x2c	/* general purpose i/o register */
 #define	GPIOR_GP5_IN	0x00004000	/* GP 5 in */
@@ -440,11 +441,8 @@ struct sip_desc {
 /* DP83820 only */
 #define	SIP_RXDP_HI	0x34	/* receive descriptor pointer (high) reg */
 
-#ifdef DP83820
-#define	SIP_RXCFG	0x38	/* receive configuration register */
-#else
-#define	SIP_RXCFG	0x34	/* receive configuration register */
-#endif
+#define	DP83820_SIP_RXCFG	0x38	/* receive configuration register */
+#define	OTHER_SIP_RXCFG	0x34	/* receive configuration register */
 #define	RXCFG_AEP	0x80000000	/* accept error packets */
 #define	RXCFG_ARP	0x40000000	/* accept runt packets */
 /* DP83820 only */
@@ -452,10 +450,17 @@ struct sip_desc {
 
 #define	RXCFG_ATX	0x10000000	/* accept transmit packets */
 #define	RXCFG_ALP	0x08000000	/* accept long packets */
-#ifdef DP83820
+
+/* DP83820 only */
 #define	RXCFG_AIRL	0x04000000	/* accept in-range length err packets */
+
 #define	RXCFG_MXDMA	 0x00700000	/* max DMA burst size */
+
+/* DP83820 only */
 #define	RXCFG_MXDMA_1024 0x00000000	/*    1024 bytes */
+
+#if 0
+#ifdef DP83820
 #define	RXCFG_MXDMA_8	 0x00100000	/*       8 bytes */
 #define	RXCFG_MXDMA_16	 0x00200000	/*      16 bytes */
 #define	RXCFG_MXDMA_32	 0x00300000	/*      32 bytes */
@@ -464,9 +469,7 @@ struct sip_desc {
 #define	RXCFG_MXDMA_256	 0x00600000	/*     256 bytes */
 #define	RXCFG_MXDMA_512	 0x00700000	/*     512 bytes */
 #else
-#define	RXCFG_MXDMA	0x00700000	/* max DMA burst size */
 #define	RXCFG_MXDMA_512	0x00000000	/*     512 bytes */
-#define	RXCFG_MXDMA_4	0x00100000	/*       4 bytes */
 #define	RXCFG_MXDMA_8	0x00200000	/*       8 bytes */
 #define	RXCFG_MXDMA_16	0x00300000	/*      16 bytes */
 #define	RXCFG_MXDMA_32	0x00400000	/*      32 bytes */
@@ -474,23 +477,25 @@ struct sip_desc {
 #define	RXCFG_MXDMA_128	0x00600000	/*     128 bytes */
 #define	RXCFG_MXDMA_256	0x00700000	/*     256 bytes */
 #endif /* DP83820 */
-#define	RXCFG_DRTH	0x0000003e
-#define	RXCFG_DRTH_SHIFT 1
+#endif /* 0 */
 
-#ifdef DP83820
+/* non-DP83820 only */
+#define	RXCFG_MXDMA_4	0x00100000	/*       4 bytes */
+#define	RXCFG_DRTH_MASK	0x0000003e
+
+/* DP83820 only */
 #define	SIP_PQCR	0x3c	/* priority queueing control register */
 #define	PQCR_RXPQ_4	0x0000000c	/* 4 Rx queues */
 #define	PQCR_RXPQ_3	0x00000008	/* 3 Rx queues */
 #define	PQCR_RXPQ_2	0x00000004	/* 2 Rx queues */
 #define	PQCR_TXFAIR	0x00000002	/* Tx fairness enable */
 #define	PQCR_TXPQEN	0x00000001	/* Tx priority queueing enable */
-#else
 
+/* DP83815 only */
 #define	SIP83815_NS_CCSR	0x3c	/* CLKRUN control/status register (83815) */
 #define	CCSR_PMESTS	0x00008000	/* PME status */
 #define	CCSR_PMEEN	0x00000100	/* PME enable */
 #define	CCSR_CLKRUN_EN	0x00000001	/* clkrun enable */
-#endif /* DP83820 */
 
 /* SiS 900 only */
 #define	SIP_FLOWCTL	0x38	/* flow control register */
@@ -568,16 +573,16 @@ struct sip_desc {
 #define	RFCR_NS_RFADDR_PMATCH2	0x0002	/* perfect match octets 3-2 */
 #define	RFCR_NS_RFADDR_PMATCH4	0x0004	/* perfect match octets 5-4 */
 #define	RFCR_NS_RFADDR_PCOUNT	0x0006	/* pattern count */
-#ifdef DP83820
+
+/* DP83820 only */
 #define	RFCR_NS_RFADDR_PCOUNT2	0x0008	/* pattern count 2, 3 */
 #define	RFCR_NS_RFADDR_SOPAS0	0x000a	/* SecureOn 0, 1 */
 #define	RFCR_NS_RFADDR_SOPAS2	0x000c	/* SecureOn 2, 3 */
 #define	RFCR_NS_RFADDR_SOPAS4	0x000e	/* SecureOn 4, 5 */
-#define	RFCR_NS_RFADDR_FILTMEM	0x0100	/* hash memory */
 #define	RFCR_NS_RFADDR_PATMEM	0x0200	/* pattern memory */
-#else
-#define	RFCR_NS_RFADDR_FILTMEM	0x0200	/* filter memory (hash/pattern) */
-#endif /* DP83820 */
+
+#define	DP83820_RFCR_NS_RFADDR_FILTMEM	0x0100	/* hash memory */
+#define	OTHER_RFCR_NS_RFADDR_FILTMEM	0x0200	/* filter memory (hash/pattern) */
 
 #define	SIP_RFDR	0x4c	/* receive filter data register */
 #define	RFDR_BMASK	0x00030000	/* byte mask (83815) */
@@ -590,16 +595,16 @@ struct sip_desc {
 #define	SIP_NS_BRDR	0x54	/* boot rom data (83815) */
 
 #define	SIP_NS_SRR	0x58	/* silicon revision register (83815) */
-#ifdef DP83820
+/* #ifdef DP83820 */
 #define	SRR_REV_B	0x00000103
-#else
+/* #else */
 #define	SRR_REV_A	0x00000101
 #define	SRR_REV_B_1	0x00000200
 #define	SRR_REV_B_2	0x00000201
 #define	SRR_REV_B_3	0x00000203
 #define	SRR_REV_C_1	0x00000300
 #define	SRR_REV_C_2	0x00000302
-#endif /* DP83820 */
+/* #endif DP83820 */
 
 #define	SIP_NS_MIBC	0x5c	/* mib control register (83815) */
 #define	MIBC_MIBS	0x00000008	/* mib counter strobe */
@@ -615,15 +620,15 @@ struct sip_desc {
 #define	MIB_RXFAErrors		0x0c
 #define	MIB_RXSymbolErrors	0x10
 #define	MIB_RXFrameTooLong	0x14
-#ifdef DP83820
+/* #ifdef DP83820 */
 #define	MIB_RXIRLErrors		0x18
 #define	MIB_RXBadOpcodes	0x1c
 #define	MIB_RXPauseFrames	0x20
 #define	MIB_TXPauseFrames	0x24
 #define	MIB_TXSQEErrors		0x28
-#else
+/* #else */
 #define	MIB_RXTXSQEErrors	0x18
-#endif /* DP83820 */
+/* #endif DP83820 */
 
 /* 83815 only */
 #define	SIP_NS_PHY(miireg)	/* PHY registers (83815) */		\

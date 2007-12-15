@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.119 2007/12/15 01:27:13 dyoung Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.120 2007/12/15 05:46:21 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.119 2007/12/15 01:27:13 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.120 2007/12/15 05:46:21 dyoung Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -125,12 +125,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.119 2007/12/15 01:27:13 dyoung Exp $");
 #include <dev/pci/pcidevs.h>
 
 #include <dev/pci/if_sipreg.h>
-
-#ifdef DP83820		/* DP83820 Gigabit Ethernet */
-#define	SIP_DECL(x)	__CONCAT(gsip_,x)
-#else			/* SiS900 and DP83815 */
-#define	SIP_DECL(x)	__CONCAT(sip_,x)
-#endif
 
 /*
  * Transmit descriptor list size.  This is arbitrary, but allocate
@@ -321,15 +315,137 @@ struct sip_softc {
 
 	int sc_ntxdesc;
 	int sc_ntxdesc_mask;
-	int sc_ntxsegs;
 
-	int sc_nrxdesc;
 	int sc_nrxdesc_mask;
-	int sc_rxbuf_len;
+
+	const struct sip_parm {
+		const struct sip_regs {
+			int r_rxcfg;
+			int r_txcfg;
+		} p_regs;
+
+		const struct sip_bits {
+			uint32_t b_txcfg_mxdma_8;
+			uint32_t b_txcfg_mxdma_16;
+			uint32_t b_txcfg_mxdma_32;
+			uint32_t b_txcfg_mxdma_64;
+			uint32_t b_txcfg_mxdma_128;
+			uint32_t b_txcfg_mxdma_256;
+			uint32_t b_txcfg_mxdma_512;
+			uint32_t b_txcfg_flth_mask;
+			uint32_t b_txcfg_drth_mask;
+
+			uint32_t b_rxcfg_mxdma_8;
+			uint32_t b_rxcfg_mxdma_16;
+			uint32_t b_rxcfg_mxdma_32;
+			uint32_t b_rxcfg_mxdma_64;
+			uint32_t b_rxcfg_mxdma_128;
+			uint32_t b_rxcfg_mxdma_256;
+			uint32_t b_rxcfg_mxdma_512;
+
+			uint32_t b_isr_txrcmp;
+			uint32_t b_isr_rxrcmp;
+			uint32_t b_isr_dperr;
+			uint32_t b_isr_sserr;
+			uint32_t b_isr_rmabt;
+			uint32_t b_isr_rtabt;
+
+			uint32_t b_cmdsts_size_mask;
+		} p_bits;
+		int		p_filtmem;
+		int		p_rxbuf_len;
+		bus_size_t	p_tx_dmamap_size;
+		int		p_ntxsegs;
+		int		p_ntxsegs_alloc;
+		int		p_nrxdesc;
+	} *sc_parm;
+
+	void (*sc_rxintr)(struct sip_softc *);
 
 #if NRND > 0
 	rndsource_element_t rnd_source;	/* random source */
 #endif
+};
+
+#define	sc_bits	sc_parm->p_bits
+#define	sc_regs	sc_parm->p_regs
+
+static const struct sip_parm sip_parm = {
+	  .p_filtmem = OTHER_RFCR_NS_RFADDR_FILTMEM
+	, .p_rxbuf_len = MCLBYTES - 1	/* field width */
+	, .p_tx_dmamap_size = MCLBYTES
+	, .p_ntxsegs = 16
+	, .p_ntxsegs_alloc = SIP_NTXSEGS_ALLOC
+	, .p_nrxdesc = SIP_NRXDESC
+	, .p_bits = {
+		  .b_txcfg_mxdma_8	= 0x00200000	/*       8 bytes */
+		, .b_txcfg_mxdma_16	= 0x00300000	/*      16 bytes */
+		, .b_txcfg_mxdma_32	= 0x00400000	/*      32 bytes */
+		, .b_txcfg_mxdma_64	= 0x00500000	/*      64 bytes */
+		, .b_txcfg_mxdma_128	= 0x00600000	/*     128 bytes */
+		, .b_txcfg_mxdma_256	= 0x00700000	/*     256 bytes */
+		, .b_txcfg_mxdma_512	= 0x00000000	/*     512 bytes */
+		, .b_txcfg_flth_mask	= 0x00003f00	/* Tx fill threshold */
+		, .b_txcfg_drth_mask	= 0x0000003f	/* Tx drain threshold */
+
+		, .b_rxcfg_mxdma_8	= 0x00200000	/*       8 bytes */
+		, .b_rxcfg_mxdma_16	= 0x00300000	/*      16 bytes */
+		, .b_rxcfg_mxdma_32	= 0x00400000	/*      32 bytes */
+		, .b_rxcfg_mxdma_64	= 0x00500000	/*      64 bytes */
+		, .b_rxcfg_mxdma_128	= 0x00600000	/*     128 bytes */
+		, .b_rxcfg_mxdma_256	= 0x00700000	/*     256 bytes */
+		, .b_rxcfg_mxdma_512	= 0x00000000	/*     512 bytes */
+
+		, .b_isr_txrcmp	= 0x02000000	/* transmit reset complete */
+		, .b_isr_rxrcmp	= 0x01000000	/* receive reset complete */
+		, .b_isr_dperr	= 0x00800000	/* detected parity error */
+		, .b_isr_sserr	= 0x00400000	/* signalled system error */
+		, .b_isr_rmabt	= 0x00200000	/* received master abort */
+		, .b_isr_rtabt	= 0x00100000	/* received target abort */
+		, .b_cmdsts_size_mask = OTHER_CMDSTS_SIZE_MASK
+	}
+	, .p_regs = {
+		.r_rxcfg = OTHER_SIP_RXCFG,
+		.r_txcfg = OTHER_SIP_TXCFG
+	}
+}, gsip_parm = {
+	  .p_filtmem = DP83820_RFCR_NS_RFADDR_FILTMEM
+	, .p_rxbuf_len = MCLBYTES - 8
+	, .p_tx_dmamap_size = ETHER_MAX_LEN_JUMBO
+	, .p_ntxsegs = 64
+	, .p_ntxsegs_alloc = GSIP_NTXSEGS_ALLOC
+	, .p_nrxdesc = GSIP_NRXDESC
+	, .p_bits = {
+		  .b_txcfg_mxdma_8	= 0x00100000	/*       8 bytes */
+		, .b_txcfg_mxdma_16	= 0x00200000	/*      16 bytes */
+		, .b_txcfg_mxdma_32	= 0x00300000	/*      32 bytes */
+		, .b_txcfg_mxdma_64	= 0x00400000	/*      64 bytes */
+		, .b_txcfg_mxdma_128	= 0x00500000	/*     128 bytes */
+		, .b_txcfg_mxdma_256	= 0x00600000	/*     256 bytes */
+		, .b_txcfg_mxdma_512	= 0x00700000	/*     512 bytes */
+		, .b_txcfg_flth_mask	= 0x0000ff00	/* Fx fill threshold */
+		, .b_txcfg_drth_mask	= 0x000000ff	/* Tx drain threshold */
+
+		, .b_rxcfg_mxdma_8	= 0x00100000	/*       8 bytes */
+		, .b_rxcfg_mxdma_16	= 0x00200000	/*      16 bytes */
+		, .b_rxcfg_mxdma_32	= 0x00300000	/*      32 bytes */
+		, .b_rxcfg_mxdma_64	= 0x00400000	/*      64 bytes */
+		, .b_rxcfg_mxdma_128	= 0x00500000	/*     128 bytes */
+		, .b_rxcfg_mxdma_256	= 0x00600000	/*     256 bytes */
+		, .b_rxcfg_mxdma_512	= 0x00700000	/*     512 bytes */
+
+		, .b_isr_txrcmp	= 0x00400000	/* transmit reset complete */
+		, .b_isr_rxrcmp	= 0x00200000	/* receive reset complete */
+		, .b_isr_dperr	= 0x00100000	/* detected parity error */
+		, .b_isr_sserr	= 0x00080000	/* signalled system error */
+		, .b_isr_rmabt	= 0x00040000	/* received master abort */
+		, .b_isr_rtabt	= 0x00020000	/* received target abort */
+		, .b_cmdsts_size_mask = DP83820_CMDSTS_SIZE_MASK
+	}
+	, .p_regs = {
+		.r_rxcfg = DP83820_SIP_RXCFG,
+		.r_txcfg = DP83820_SIP_TXCFG
+	}
 };
 
 static inline int
@@ -393,6 +509,28 @@ do {									\
 	bus_dmamap_sync((sc)->sc_dmat, (sc)->sc_cddmamap,		\
 	    SIP_CDRXOFF((x)), sizeof(struct sip_desc), (ops))
 
+#if 0
+#ifdef DP83820
+	u_int32_t	sipd_bufptr;	/* pointer to DMA segment */
+	u_int32_t	sipd_cmdsts;	/* command/status word */
+#else
+	u_int32_t	sipd_cmdsts;	/* command/status word */
+	u_int32_t	sipd_bufptr;	/* pointer to DMA segment */
+#endif /* DP83820 */
+#endif /* 0 */
+
+static inline volatile uint32_t *
+sipd_cmdsts(struct sip_softc *sc, struct sip_desc *sipd)
+{
+	return &sipd->sipd_cbs[(sc->sc_gigabit) ? 1 : 0];
+}
+
+static inline volatile uint32_t *
+sipd_bufptr(struct sip_softc *sc, struct sip_desc *sipd)
+{
+	return &sipd->sipd_cbs[(sc->sc_gigabit) ? 0 : 1];
+}
+
 static inline void
 SIP_INIT_RXDESC(struct sip_softc *sc, int x)
 {
@@ -400,9 +538,9 @@ SIP_INIT_RXDESC(struct sip_softc *sc, int x)
 	struct sip_desc *sipd = &sc->sc_rxdescs[x];
 
 	sipd->sipd_link = htole32(SIP_CDRXADDR(sc, sip_nextrx(sc, x)));
-	sipd->sipd_bufptr = htole32(rxs->rxs_dmamap->dm_segs[0].ds_addr);
-	sipd->sipd_cmdsts = htole32(CMDSTS_INTR |
-	    (sc->sc_rxbuf_len & CMDSTS_SIZE_MASK));
+	*sipd_bufptr(sc, sipd) = htole32(rxs->rxs_dmamap->dm_segs[0].ds_addr);
+	*sipd_cmdsts(sc, sipd) = htole32(CMDSTS_INTR |
+	    (sc->sc_parm->p_rxbuf_len & sc->sc_bits.b_cmdsts_size_mask));
 	sipd->sipd_extsts = 0;
 	SIP_CDRXSYNC(sc, x, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 }
@@ -431,7 +569,7 @@ static void	sipcom_shutdown(void *);
 
 static bool	sipcom_reset(struct sip_softc *);
 static void	sipcom_rxdrain(struct sip_softc *);
-static int	SIP_DECL(add_rxbuf)(struct sip_softc *, int);
+static int	sipcom_add_rxbuf(struct sip_softc *, int);
 static void	sipcom_read_eeprom(struct sip_softc *, int, int,
 				      u_int16_t *);
 static void	sipcom_tick(void *);
@@ -449,7 +587,8 @@ static void	sipcom_dp83815_read_macaddr(struct sip_softc *,
 
 static int	sipcom_intr(void *);
 static void	sipcom_txintr(struct sip_softc *);
-static void	SIP_DECL(rxintr)(struct sip_softc *);
+static void	sip_rxintr(struct sip_softc *);
+static void	gsip_rxintr(struct sip_softc *);
 
 static int	sipcom_dp83820_mii_readreg(struct device *, int, int);
 static void	sipcom_dp83820_mii_writereg(struct device *, int, int, int);
@@ -472,15 +611,13 @@ static void	sipcom_do_detach(device_t, enum sip_attach_stage);
 static int	sipcom_detach(device_t, int);
 static bool	sipcom_resume(device_t);
 
-int	SIP_DECL(copy_small) = 0;
+static int	gsip_copy_small = 0; /* XXX make non-static! */
+static int	sip_copy_small = 0; /* XXX make non-static! */
 
-#ifdef DP83820
 CFATTACH_DECL(gsip, sizeof(struct sip_softc),
     sipcom_match, sipcom_attach, sipcom_detach, NULL);
-#else
 CFATTACH_DECL(sip, sizeof(struct sip_softc),
     sipcom_match, sipcom_attach, sipcom_detach, NULL);
-#endif
 
 /*
  * Descriptions of the variants of the SiS900.
@@ -753,7 +890,7 @@ sipcom_do_detach(device_t self, enum sip_attach_stage stage)
 
 		/*FALLTHROUGH*/
 	case SIP_ATTACH_CREATE_RXMAP:
-		for (i = 0; i < sc->sc_nrxdesc; i++) {
+		for (i = 0; i < sc->sc_parm->p_nrxdesc; i++) {
 			if (sc->sc_rxsoft[i].rxs_dmamap != NULL)
 				bus_dmamap_destroy(sc->sc_dmat,
 				    sc->sc_rxsoft[i].rxs_dmamap);
@@ -826,21 +963,17 @@ sipcom_attach(device_t parent, device_t self, void *aux)
 	sc->sc_pc = pc;
 
 	if (sc->sc_gigabit) {
-		sc->sc_rxbuf_len = MCLBYTES - 8;
-		tx_dmamap_size = ETHER_MAX_LEN_JUMBO;
-		sc->sc_ntxsegs = 64;
-		ntxsegs_alloc = GSIP_NTXSEGS_ALLOC;
-		sc->sc_nrxdesc = GSIP_NRXDESC;
+		sc->sc_rxintr = gsip_rxintr;
+		sc->sc_parm = &gsip_parm;
 	} else {
-		sc->sc_rxbuf_len = MCLBYTES - 1;	/* field width */
-		tx_dmamap_size = MCLBYTES;
-		sc->sc_ntxsegs = 16;
-		ntxsegs_alloc = SIP_NTXSEGS_ALLOC;
-		sc->sc_nrxdesc = SIP_NRXDESC;
+		sc->sc_rxintr = sip_rxintr;
+		sc->sc_parm = &sip_parm;
 	}
+	tx_dmamap_size = sc->sc_parm->p_tx_dmamap_size;
+	ntxsegs_alloc = sc->sc_parm->p_ntxsegs_alloc;
 	sc->sc_ntxdesc = SIP_TXQUEUELEN * ntxsegs_alloc;
 	sc->sc_ntxdesc_mask = sc->sc_ntxdesc - 1;
-	sc->sc_nrxdesc_mask = sc->sc_nrxdesc - 1;
+	sc->sc_nrxdesc_mask = sc->sc_parm->p_nrxdesc - 1;
 
 	sc->sc_rev = PCI_REVISION(pa->pa_class);
 
@@ -977,7 +1110,7 @@ sipcom_attach(device_t parent, device_t self, void *aux)
 	 */
 	for (i = 0; i < SIP_TXQUEUELEN; i++) {
 		if ((error = bus_dmamap_create(sc->sc_dmat, tx_dmamap_size,
-		    sc->sc_ntxsegs, MCLBYTES, 0, 0,
+		    sc->sc_parm->p_ntxsegs, MCLBYTES, 0, 0,
 		    &sc->sc_txsoft[i].txs_dmamap)) != 0) {
 			printf("%s: unable to create tx DMA map %d, "
 			    "error = %d\n", sc->sc_dev.dv_xname, i, error);
@@ -988,7 +1121,7 @@ sipcom_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Create the receive buffer DMA maps.
 	 */
-	for (i = 0; i < sc->sc_nrxdesc; i++) {
+	for (i = 0; i < sc->sc_parm->p_nrxdesc; i++) {
 		if ((error = bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1,
 		    MCLBYTES, 0, 0, &sc->sc_rxsoft[i].rxs_dmamap)) != 0) {
 			printf("%s: unable to create rx DMA map %d, "
@@ -1425,9 +1558,9 @@ sipcom_start(struct ifnet *ifp)
 			 * yet.  That could cause a race condition.
 			 * We'll do it below.
 			 */
-			sc->sc_txdescs[nexttx].sipd_bufptr =
+			*sipd_bufptr(sc, &sc->sc_txdescs[nexttx]) =
 			    htole32(dmamap->dm_segs[seg].ds_addr);
-			sc->sc_txdescs[nexttx].sipd_cmdsts =
+			*sipd_cmdsts(sc, &sc->sc_txdescs[nexttx]) =
 			    htole32((nexttx == sc->sc_txnext ? 0 : CMDSTS_OWN) |
 			    CMDSTS_MORE | dmamap->dm_segs[seg].ds_len);
 			sc->sc_txdescs[nexttx].sipd_extsts = 0;
@@ -1435,7 +1568,8 @@ sipcom_start(struct ifnet *ifp)
 		}
 
 		/* Clear the MORE bit on the last segment. */
-		sc->sc_txdescs[lasttx].sipd_cmdsts &= htole32(~CMDSTS_MORE);
+		*sipd_cmdsts(sc, &sc->sc_txdescs[lasttx]) &=
+		    htole32(~CMDSTS_MORE);
 
 		/*
 		 * If we're in the interrupt delay window, delay the
@@ -1443,7 +1577,7 @@ sipcom_start(struct ifnet *ifp)
 		 */
 		if (++sc->sc_txwin >= (SIP_TXQUEUELEN * 2 / 3)) {
 			SIP_EVCNT_INCR(&sc->sc_ev_txforceintr);
-			sc->sc_txdescs[lasttx].sipd_cmdsts |=
+			*sipd_cmdsts(sc, &sc->sc_txdescs[lasttx]) |=
 			    htole32(CMDSTS_INTR);
 			sc->sc_txwin = 0;
 		}
@@ -1459,7 +1593,7 @@ sipcom_start(struct ifnet *ifp)
 		 * The entire packet is set up.  Give the first descrptor
 		 * to the chip now.
 		 */
-		sc->sc_txdescs[sc->sc_txnext].sipd_cmdsts |=
+		*sipd_cmdsts(sc, &sc->sc_txdescs[sc->sc_txnext]) |=
 		    htole32(CMDSTS_OWN);
 		SIP_CDTXSYNC(sc, sc->sc_txnext, 1,
 		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
@@ -1687,7 +1821,7 @@ sipcom_intr(void *arg)
 			SIP_EVCNT_INCR(&sc->sc_ev_rxintr);
 
 			/* Grab any new packets. */
-			SIP_DECL(rxintr)(sc);
+			(*sc->sc_rxintr)(sc);
 
 			if (isr & ISR_RXORN) {
 				printf("%s: receive FIFO overrun\n",
@@ -1721,13 +1855,15 @@ sipcom_intr(void *arg)
 
 			if (isr & ISR_TXURN) {
 				u_int32_t thresh;
+				int txfifo_size = (sc->sc_gigabit)
+				    ? DP83820_SIP_TXFIFO_SIZE
+				    : OTHER_SIP_TXFIFO_SIZE;
 
 				printf("%s: transmit FIFO underrun",
 				    sc->sc_dev.dv_xname);
-
 				thresh = sc->sc_tx_drain_thresh + 1;
-				if (thresh <= TXCFG_DRTH &&
-				    (thresh * 32) <= (SIP_TXFIFO_SIZE -
+				if (thresh <= __SHIFTOUT_MASK(sc->sc_bits.b_txcfg_drth_mask)
+				&& (thresh * 32) <= (txfifo_size -
 				     (sc->sc_tx_fill_thresh * 32))) {
 					printf("; increasing Tx drain "
 					    "threshold to %u bytes\n",
@@ -1768,10 +1904,10 @@ sipcom_intr(void *arg)
 				}					\
 			} while (/*CONSTCOND*/0)
 
-			PRINTERR(ISR_DPERR, "parity error");
-			PRINTERR(ISR_SSERR, "system error");
-			PRINTERR(ISR_RMABT, "master abort");
-			PRINTERR(ISR_RTABT, "target abort");
+			PRINTERR(sc->sc_bits.b_isr_dperr, "parity error");
+			PRINTERR(sc->sc_bits.b_isr_sserr, "system error");
+			PRINTERR(sc->sc_bits.b_isr_rmabt, "master abort");
+			PRINTERR(sc->sc_bits.b_isr_rtabt, "target abort");
 			PRINTERR(ISR_RXSOVR, "receive status FIFO overrun");
 			/*
 			 * Ignore:
@@ -1816,7 +1952,7 @@ sipcom_txintr(struct sip_softc *sc)
 		SIP_CDTXSYNC(sc, txs->txs_firstdesc, txs->txs_dmamap->dm_nsegs,
 		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 
-		cmdsts = le32toh(sc->sc_txdescs[txs->txs_lastdesc].sipd_cmdsts);
+		cmdsts = le32toh(*sipd_cmdsts(sc, &sc->sc_txdescs[txs->txs_lastdesc]));
 		if (cmdsts & CMDSTS_OWN)
 			break;
 
@@ -1865,14 +2001,13 @@ sipcom_txintr(struct sip_softc *sc)
 	}
 }
 
-#if defined(DP83820)
 /*
- * sip_rxintr:
+ * gsip_rxintr:
  *
- *	Helper; handle receive interrupts.
+ *	Helper; handle receive interrupts on gigabit parts.
  */
 static void
-SIP_DECL(rxintr)(struct sip_softc *sc)
+gsip_rxintr(struct sip_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct sip_rxsoft *rxs;
@@ -1885,9 +2020,9 @@ SIP_DECL(rxintr)(struct sip_softc *sc)
 
 		SIP_CDRXSYNC(sc, i, BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 
-		cmdsts = le32toh(sc->sc_rxdescs[i].sipd_cmdsts);
+		cmdsts = le32toh(*sipd_cmdsts(sc, &sc->sc_rxdescs[i]));
 		extsts = le32toh(sc->sc_rxdescs[i].sipd_extsts);
-		len = CMDSTS_SIZE(cmdsts);
+		len = CMDSTS_SIZE(sc, cmdsts);
 
 		/*
 		 * NOTE: OWN is set if owned by _consumer_.  We're the
@@ -1918,7 +2053,7 @@ SIP_DECL(rxintr)(struct sip_softc *sc)
 		/*
 		 * Add a new receive buffer to the ring.
 		 */
-		if (SIP_DECL(add_rxbuf)(sc, i) != 0) {
+		if (sipcom_add_rxbuf(sc, i) != 0) {
 			/*
 			 * Failed, throw away what we've done so
 			 * far, and discard the rest of the packet.
@@ -1992,7 +2127,7 @@ SIP_DECL(rxintr)(struct sip_softc *sc)
 		 * memory consumption when we receive lots
 		 * of small packets.
 		 */
-		if (SIP_DECL(copy_small) != 0 && len <= (MHLEN - 2)) {
+		if (gsip_copy_small != 0 && len <= (MHLEN - 2)) {
 			struct mbuf *nm;
 			MGETHDR(nm, M_DONTWAIT, MT_DATA);
 			if (nm == NULL) {
@@ -2088,14 +2223,14 @@ SIP_DECL(rxintr)(struct sip_softc *sc)
 	/* Update the receive pointer. */
 	sc->sc_rxptr = i;
 }
-#else /* ! DP83820 */
+
 /*
  * sip_rxintr:
  *
- *	Helper; handle receive interrupts.
+ *	Helper; handle receive interrupts on 10/100 parts.
  */
 static void
-SIP_DECL(rxintr)(struct sip_softc *sc)
+sip_rxintr(struct sip_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct sip_rxsoft *rxs;
@@ -2108,7 +2243,7 @@ SIP_DECL(rxintr)(struct sip_softc *sc)
 
 		SIP_CDRXSYNC(sc, i, BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 
-		cmdsts = le32toh(sc->sc_rxdescs[i].sipd_cmdsts);
+		cmdsts = le32toh(*sipd_cmdsts(sc, &sc->sc_rxdescs[i]));
 
 		/*
 		 * NOTE: OWN is set if owned by _consumer_.  We're the
@@ -2162,7 +2297,7 @@ SIP_DECL(rxintr)(struct sip_softc *sc)
 		 * No errors; receive the packet.  Note, the SiS 900
 		 * includes the CRC with every packet.
 		 */
-		len = CMDSTS_SIZE(cmdsts) - ETHER_CRC_LEN;
+		len = CMDSTS_SIZE(sc, cmdsts) - ETHER_CRC_LEN;
 
 #ifdef __NO_STRICT_ALIGNMENT
 		/*
@@ -2176,7 +2311,7 @@ SIP_DECL(rxintr)(struct sip_softc *sc)
 		 * chain.  If this fails, we drop the packet and
 		 * recycle the old buffer.
 		 */
-		if (SIP_DECL(copy_small) != 0 && len <= MHLEN) {
+		if (sip_copy_small != 0 && len <= MHLEN) {
 			MGETHDR(m, M_DONTWAIT, MT_DATA);
 			if (m == NULL)
 				goto dropit;
@@ -2189,7 +2324,7 @@ SIP_DECL(rxintr)(struct sip_softc *sc)
 			    BUS_DMASYNC_PREREAD);
 		} else {
 			m = rxs->rxs_mbuf;
-			if (SIP_DECL(add_rxbuf)(sc, i) != 0) {
+			if (sipcom_add_rxbuf(sc, i) != 0) {
  dropit:
 				ifp->if_ierrors++;
 				SIP_INIT_RXDESC(sc, i);
@@ -2258,7 +2393,6 @@ SIP_DECL(rxintr)(struct sip_softc *sc)
 	/* Update the receive pointer. */
 	sc->sc_rxptr = i;
 }
-#endif /* DP83820 */
 
 /*
  * sip_tick:
@@ -2460,10 +2594,10 @@ sipcom_init(struct ifnet *ifp)
 	 * Initialize the receive descriptor and receive job
 	 * descriptor rings.
 	 */
-	for (i = 0; i < sc->sc_nrxdesc; i++) {
+	for (i = 0; i < sc->sc_parm->p_nrxdesc; i++) {
 		rxs = &sc->sc_rxsoft[i];
 		if (rxs->rxs_mbuf == NULL) {
-			if ((error = SIP_DECL(add_rxbuf)(sc, i)) != 0) {
+			if ((error = sipcom_add_rxbuf(sc, i)) != 0) {
 				printf("%s: unable to allocate or map rx "
 				    "buffer %d, error = %d\n",
 				    sc->sc_dev.dv_xname, i, error);
@@ -2491,23 +2625,23 @@ sipcom_init(struct ifnet *ifp)
 	 * Initialize the prototype TXCFG register.
 	 */
 	if (sc->sc_gigabit) {
-		sc->sc_txcfg = TXCFG_MXDMA_512;
-		sc->sc_rxcfg = RXCFG_MXDMA_512;
+		sc->sc_txcfg = sc->sc_bits.b_txcfg_mxdma_512;
+		sc->sc_rxcfg = sc->sc_bits.b_rxcfg_mxdma_512;
 	} else if ((SIP_SIS900_REV(sc, SIS_REV_635) ||
 	     SIP_SIS900_REV(sc, SIS_REV_960) ||
 	     SIP_SIS900_REV(sc, SIS_REV_900B)) &&
 	    (sc->sc_cfg & CFG_EDBMASTEN)) {
-		sc->sc_txcfg = TXCFG_MXDMA_64;
-		sc->sc_rxcfg = RXCFG_MXDMA_64;
+		sc->sc_txcfg = sc->sc_bits.b_txcfg_mxdma_64;
+		sc->sc_rxcfg = sc->sc_bits.b_rxcfg_mxdma_64;
 	} else {
-		sc->sc_txcfg = TXCFG_MXDMA_512;
-		sc->sc_rxcfg = RXCFG_MXDMA_512;
+		sc->sc_txcfg = sc->sc_bits.b_txcfg_mxdma_512;
+		sc->sc_rxcfg = sc->sc_bits.b_rxcfg_mxdma_512;
 	}
 
 	sc->sc_txcfg |= TXCFG_ATP |
-	    (sc->sc_tx_fill_thresh << TXCFG_FLTH_SHIFT) |
+	    __SHIFTIN(sc->sc_tx_fill_thresh, sc->sc_bits.b_txcfg_flth_mask) |
 	    sc->sc_tx_drain_thresh;
-	bus_space_write_4(st, sh, SIP_TXCFG, sc->sc_txcfg);
+	bus_space_write_4(st, sh, sc->sc_regs.r_txcfg, sc->sc_txcfg);
 
 	/*
 	 * Initialize the receive drain threshold if we have never
@@ -2521,13 +2655,13 @@ sipcom_init(struct ifnet *ifp)
 		 * set this value lower than 2; 14 bytes are required to
 		 * filter the packet).
 		 */
-		sc->sc_rx_drain_thresh = RXCFG_DRTH >> RXCFG_DRTH_SHIFT;
+		sc->sc_rx_drain_thresh = __SHIFTOUT_MASK(RXCFG_DRTH_MASK);
 	}
 
 	/*
 	 * Initialize the prototype RXCFG register.
 	 */
-	sc->sc_rxcfg |= (sc->sc_rx_drain_thresh << RXCFG_DRTH_SHIFT);
+	sc->sc_rxcfg |= __SHIFTIN(sc->sc_rx_drain_thresh, RXCFG_DRTH_MASK);
 	/*
 	 * Accept long packets (including FCS) so we can handle
 	 * 802.1q-tagged frames and jumbo frames properly.
@@ -2557,7 +2691,7 @@ sipcom_init(struct ifnet *ifp)
 		ifp->if_csum_flags_rx = 0;
 	}
 
-	bus_space_write_4(st, sh, SIP_RXCFG, sc->sc_rxcfg);
+	bus_space_write_4(st, sh, sc->sc_regs.r_rxcfg, sc->sc_rxcfg);
 
 	if (sc->sc_gigabit)
 		sipcom_dp83820_init(sc, ifp->if_capenable);
@@ -2571,7 +2705,10 @@ sipcom_init(struct ifnet *ifp)
 	/*
 	 * Initialize the interrupt mask.
 	 */
-	sc->sc_imr = ISR_DPERR|ISR_SSERR|ISR_RMABT|ISR_RTABT|ISR_RXSOVR|
+	sc->sc_imr = sc->sc_bits.b_isr_dperr |
+	             sc->sc_bits.b_isr_sserr |
+		     sc->sc_bits.b_isr_rmabt |
+		     sc->sc_bits.b_isr_rtabt | ISR_RXSOVR |
 	    ISR_TXURN|ISR_TXDESC|ISR_TXIDLE|ISR_RXORN|ISR_RXIDLE|ISR_RXDESC;
 	bus_space_write_4(st, sh, SIP_IMR, sc->sc_imr);
 
@@ -2642,7 +2779,7 @@ sipcom_rxdrain(struct sip_softc *sc)
 	struct sip_rxsoft *rxs;
 	int i;
 
-	for (i = 0; i < sc->sc_nrxdesc; i++) {
+	for (i = 0; i < sc->sc_parm->p_nrxdesc; i++) {
 		rxs = &sc->sc_rxsoft[i];
 		if (rxs->rxs_mbuf != NULL) {
 			bus_dmamap_unload(sc->sc_dmat, rxs->rxs_dmamap);
@@ -2690,7 +2827,7 @@ sipcom_stop(struct ifnet *ifp, int disable)
 	while ((txs = SIMPLEQ_FIRST(&sc->sc_txdirtyq)) != NULL) {
 		if ((ifp->if_flags & IFF_DEBUG) != 0 &&
 		    SIMPLEQ_NEXT(txs, txs_q) == NULL &&
-		    (le32toh(sc->sc_txdescs[txs->txs_lastdesc].sipd_cmdsts) &
+		    (le32toh(*sipd_cmdsts(sc, &sc->sc_txdescs[txs->txs_lastdesc])) &
 		     CMDSTS_INTR) == 0)
 			printf("%s: sip_stop: last descriptor does not "
 			    "have INTR bit set\n", sc->sc_dev.dv_xname);
@@ -2703,7 +2840,7 @@ sipcom_stop(struct ifnet *ifp, int disable)
 		}
 #endif
 		cmdsts |=		/* DEBUG */
-		    le32toh(sc->sc_txdescs[txs->txs_lastdesc].sipd_cmdsts);
+		    le32toh(*sipd_cmdsts(sc, &sc->sc_txdescs[txs->txs_lastdesc]));
 		bus_dmamap_unload(sc->sc_dmat, txs->txs_dmamap);
 		m_freem(txs->txs_mbuf);
 		txs->txs_mbuf = NULL;
@@ -2792,12 +2929,12 @@ sipcom_read_eeprom(struct sip_softc *sc, int word, int wordcnt,
 }
 
 /*
- * sip_add_rxbuf:
+ * sipcom_add_rxbuf:
  *
  *	Add a receive buffer to the indicated descriptor.
  */
 static int
-SIP_DECL(add_rxbuf)(struct sip_softc *sc, int idx)
+sipcom_add_rxbuf(struct sip_softc *sc, int idx)
 {
 	struct sip_rxsoft *rxs = &sc->sc_rxsoft[idx];
 	struct mbuf *m;
@@ -2815,9 +2952,8 @@ SIP_DECL(add_rxbuf)(struct sip_softc *sc, int idx)
 	}
 
 	/* XXX I don't believe this is necessary. --dyoung */
-#if 0 || defined(DP83820)
-	m->m_len = sc->sc_rxbuf_len;
-#endif /* DP83820 */
+	if (sc->sc_gigabit)
+		m->m_len = sc->sc_parm->p_rxbuf_len;
 
 	if (rxs->rxs_mbuf != NULL)
 		bus_dmamap_unload(sc->sc_dmat, rxs->rxs_dmamap);
@@ -3101,8 +3237,7 @@ sipcom_dp83815_set_filter(struct sip_softc *sc)
 		 * Program the multicast hash table.
 		 */
 		for (i = 0; i < nwords; i++) {
-			FILTER_EMIT(RFCR_NS_RFADDR_FILTMEM + (i * 2),
-			    mchash[i]);
+			FILTER_EMIT(sc->sc_parm->p_filtmem + (i * 2), mchash[i]);
 		}
 	}
 #undef FILTER_EMIT
@@ -3269,8 +3404,10 @@ sipcom_dp83820_mii_statchg(struct device *self)
 	}
 
 	bus_space_write_4(sc->sc_st, sc->sc_sh, SIP_CFG, cfg);
-	bus_space_write_4(sc->sc_st, sc->sc_sh, SIP_TXCFG, sc->sc_txcfg);
-	bus_space_write_4(sc->sc_st, sc->sc_sh, SIP_RXCFG, sc->sc_rxcfg);
+	bus_space_write_4(sc->sc_st, sc->sc_sh, sc->sc_regs.r_txcfg,
+	    sc->sc_txcfg);
+	bus_space_write_4(sc->sc_st, sc->sc_sh, sc->sc_regs.r_rxcfg,
+	    sc->sc_rxcfg);
 	bus_space_write_4(sc->sc_st, sc->sc_sh, SIP_NS_PCR, pcr);
 }
 
@@ -3420,8 +3557,10 @@ sipcom_sis900_mii_statchg(struct device *self)
 		flowctl = 0;
 	}
 
-	bus_space_write_4(sc->sc_st, sc->sc_sh, SIP_TXCFG, sc->sc_txcfg);
-	bus_space_write_4(sc->sc_st, sc->sc_sh, SIP_RXCFG, sc->sc_rxcfg);
+	bus_space_write_4(sc->sc_st, sc->sc_sh, sc->sc_regs.r_txcfg,
+	    sc->sc_txcfg);
+	bus_space_write_4(sc->sc_st, sc->sc_sh, sc->sc_regs.r_rxcfg,
+	    sc->sc_rxcfg);
 	bus_space_write_4(sc->sc_st, sc->sc_sh, SIP_IMR, sc->sc_imr);
 	bus_space_write_4(sc->sc_st, sc->sc_sh, SIP_FLOWCTL, flowctl);
 }
@@ -3512,8 +3651,10 @@ sipcom_dp83815_mii_statchg(struct device *self)
 	 * XXX 802.3x flow control.
 	 */
 
-	bus_space_write_4(sc->sc_st, sc->sc_sh, SIP_TXCFG, sc->sc_txcfg);
-	bus_space_write_4(sc->sc_st, sc->sc_sh, SIP_RXCFG, sc->sc_rxcfg);
+	bus_space_write_4(sc->sc_st, sc->sc_sh, sc->sc_regs.r_txcfg,
+	    sc->sc_txcfg);
+	bus_space_write_4(sc->sc_st, sc->sc_sh, sc->sc_regs.r_rxcfg,
+	    sc->sc_rxcfg);
 
 	/*
 	 * Some DP83815s experience problems when used with short
