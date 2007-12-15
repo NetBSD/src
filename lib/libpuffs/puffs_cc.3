@@ -1,4 +1,4 @@
-.\"	$NetBSD: puffs_cc.3,v 1.9 2007/12/07 14:55:12 pooka Exp $
+.\"	$NetBSD: puffs_cc.3,v 1.10 2007/12/15 20:08:06 pooka Exp $
 .\"
 .\" Copyright (c) 2007 Antti Kantee.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd December 7, 2007
+.Dd December 15, 2007
 .Dt PUFFS_CC 3
 .Os
 .Sh NAME
@@ -39,6 +39,10 @@
 .Fn puffs_cc_continue "struct puffs_cc *pcc"
 .Ft void
 .Fn puffs_cc_schedule "struct puffs_cc *pcc"
+.Ft struct puffs_cc *
+.Fn puffs_cc_getcc "struct puffs_usermount *pu"
+.Ft void *
+.Fn puffs_docc "void *arg"
 .Sh DESCRIPTION
 .Em IMPORTANT NOTE!
 This document describes interfaces which are not yet guaranteed to be
@@ -49,34 +53,16 @@ If your sources are out-of-sync, incorrect operation may result.
 The interfaces in this document will most likely be hugely simplified
 in later versions or made transparent to the implementation.
 .Pp
-These functions enable the use of continuations within the framework.
-Every operation callback within a file system implementation is
-automatically passed an opaque cookie,
-.Va pcc ,
-to be used as a continuation handle.
-.Pp
-File systems using continuations should define their own event loop
-instead of using
-.Fn puffs_mainloop .
+These routines are used for the cooperative multitasking suite present
+in puffs.
 .Pp
 .Bl -tag -width xxxx
-.It Fn puffs_cc_getusermount "pcc"
-Returns a pointer to the file system structure
-.Va struct puffs_usermount
-the context is associated with.
-.It Fn puffs_cc_getspecific "pcc"
-Returns a pointer to file system private data.
-This is shorthand for
-calling
-.Fn puffs_getspecific
-with the result from
-.Fn puffs_cc_getusermount .
 .It Fn puffs_cc_yield "pcc"
 Suspend and save the current execution context and return control
 to the previous point.
 In practice, from the file system author perspective, control returns
 back to where either
-.Fn puffs_req_handle
+.Fn puffs_dopufbuf
 or
 .Fn puffs_docc
 was called.
@@ -84,7 +70,8 @@ was called.
 Will suspend current execution and return control to where it was
 before before calling
 .Fn puffs_cc_yield .
-This is rarely called directly.
+This is rarely called directly but rather through
+.Fn puffs_docc .
 .It Fn puffs_cc_schedule "pcc"
 Schedule a continuation.
 As opposed to
@@ -92,12 +79,27 @@ As opposed to
 this call returns immediately.
 .Fa pcc
 will be scheduled sometime in the future.
-.It Fn puffs_docc "pcc" "ppr"
+.It Fn puffs_cc_getcc "pu"
+Returns the current pcc or
+.Dv NULL
+if this is the main thread.
+.Em NOTE:
+The argument
+.Ar pu
+will most likely disappear at some point.
+.It Fn puffs_docc "arg"
 Continues request suspended with
 .Fn puffs_cc_yield .
-If the request completes without yielding again, the result can be
-found from
-.Fa ppr .
+If the request completes without yielding again, the result is put
+into the file server response queue.
+.Pp
+The argument must be of type
+.Vt "struct puffs_cc *" .
+The return value is ignored.
+The signature of this function is intended to match
+.Fn start_routine
+of
+.Fn pthread_create .
 .El
 .Pp
 Before calling
@@ -107,12 +109,9 @@ own internal bookkeeping.
 This cookie should be hooked to the
 .Va pcc
 so that the correct continuation can be continued when the event it
-was waiting for triggers.
-.Pp
-The puffs ssh file system is supposed to be the canonical example
-for the use of the continuation framework.
+was waiting for triggers.  Alternatively, the
+.Xr puffs_framebuf 3
+framework can be used for handling this automatically.
 .Sh SEE ALSO
 .Xr puffs 3 ,
-.Xr puffs_framebuf 3 ,
-.Xr puffs_req 3 ,
-.Xr mount_psshfs 8
+.Xr puffs_framebuf 3
