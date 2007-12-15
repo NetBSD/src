@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.9 2005/02/15 12:58:21 jsm Exp $	*/
+/*	$NetBSD: io.c,v 1.10 2007/12/15 16:32:05 perry Exp $	*/
 
 /*
  * io.c - input/output routines for Phantasia
@@ -6,6 +6,7 @@
 
 #include "include.h"
 #undef bool
+#include <sys/cdefs.h>
 #include <curses.h>
 
 void
