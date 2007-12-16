@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.119 2007/08/21 08:34:33 dyoung Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.120 2007/12/16 14:12:34 elad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.119 2007/08/21 08:34:33 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.120 2007/12/16 14:12:34 elad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -226,6 +226,7 @@ in_pcbbind(void *v, struct mbuf *nam, struct lwp *l)
 	struct sockaddr_in *sin = NULL; /* XXXGCC */
 	u_int16_t lport = 0;
 	int wild = 0, reuseport = (so->so_options & SO_REUSEPORT);
+	kauth_cred_t cred = l->l_cred;
 
 	if (inp->inp_af != AF_INET)
 		return (EINVAL);
@@ -272,10 +273,10 @@ in_pcbbind(void *v, struct mbuf *nam, struct lwp *l)
 #ifndef IPNOPRIVPORTS
 		/* GROSS */
 		if (ntohs(lport) < IPPORT_RESERVED &&
-		    (l == 0 || kauth_authorize_network(l->l_cred,
+		    kauth_authorize_network(cred,
 		    KAUTH_NETWORK_BIND,
 		    KAUTH_REQ_NETWORK_BIND_PRIVPORT, so, sin,
-		    NULL)))
+		    NULL))
 			return (EACCES);
 #endif
 #ifdef INET6
@@ -316,7 +317,7 @@ noname:
 
 		if (inp->inp_flags & INP_LOWPORT) {
 #ifndef IPNOPRIVPORTS
-			if (l == 0 || kauth_authorize_network(l->l_cred,
+			if (kauth_authorize_network(cred,
 			    KAUTH_NETWORK_BIND,
 			    KAUTH_REQ_NETWORK_BIND_PRIVPORT, so,
 			    sin, NULL))
