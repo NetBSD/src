@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.123 2007/12/15 23:04:57 dyoung Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.124 2007/12/16 21:17:00 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.123 2007/12/15 23:04:57 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.124 2007/12/16 21:17:00 dyoung Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -463,19 +463,21 @@ sip_nextrx(const struct sip_softc *sc, int x)
 }
 
 /* 83820 only */
-#define	SIP_RXCHAIN_RESET(sc)						\
-do {									\
-	(sc)->sc_rxtailp = &(sc)->sc_rxhead;				\
-	*(sc)->sc_rxtailp = NULL;					\
-	(sc)->sc_rxlen = 0;						\
-} while (/*CONSTCOND*/0)
+static inline void
+sip_rxchain_reset(struct sip_softc *sc)
+{
+	sc->sc_rxtailp = &sc->sc_rxhead;
+	*sc->sc_rxtailp = NULL;
+	sc->sc_rxlen = 0;
+}
 
 /* 83820 only */
-#define	SIP_RXCHAIN_LINK(sc, m)						\
-do {									\
-	*(sc)->sc_rxtailp = (sc)->sc_rxtail = (m);			\
-	(sc)->sc_rxtailp = &(m)->m_next;				\
-} while (/*CONSTCOND*/0)
+static inline void
+sip_rxchain_link(struct sip_softc *sc, struct mbuf *m)
+{
+	*sc->sc_rxtailp = sc->sc_rxtail = m;
+	sc->sc_rxtailp = &m->m_next;
+}
 
 #ifdef SIP_EVENT_COUNTERS
 #define	SIP_EVCNT_INCR(ev)	(ev)->ev_count++
@@ -486,30 +488,34 @@ do {									\
 #define	SIP_CDTXADDR(sc, x)	((sc)->sc_cddma + SIP_CDTXOFF((x)))
 #define	SIP_CDRXADDR(sc, x)	((sc)->sc_cddma + SIP_CDRXOFF((x)))
 
-#define	SIP_CDTXSYNC(sc, x, n, ops)					\
-do {									\
-	int __x, __n;							\
-									\
-	__x = (x);							\
-	__n = (n);							\
-									\
-	/* If it will wrap around, sync to the end of the ring. */	\
-	if ((__x + __n) > sc->sc_ntxdesc) {				\
-		bus_dmamap_sync((sc)->sc_dmat, (sc)->sc_cddmamap,	\
-		    SIP_CDTXOFF(__x), sizeof(struct sip_desc) *		\
-		    (sc->sc_ntxdesc - __x), (ops));			\
-		__n -= (sc->sc_ntxdesc - __x);				\
-		__x = 0;						\
-	}								\
-									\
-	/* Now sync whatever is left. */				\
-	bus_dmamap_sync((sc)->sc_dmat, (sc)->sc_cddmamap,		\
-	    SIP_CDTXOFF(__x), sizeof(struct sip_desc) * __n, (ops));	\
-} while (0)
+static inline void
+sip_cdtxsync(struct sip_softc *sc, const int x0, const int n0, const int ops)
+{
+	int x, n;
 
-#define	SIP_CDRXSYNC(sc, x, ops)					\
-	bus_dmamap_sync((sc)->sc_dmat, (sc)->sc_cddmamap,		\
-	    SIP_CDRXOFF((x)), sizeof(struct sip_desc), (ops))
+	x = x0;
+	n = n0;
+
+	/* If it will wrap around, sync to the end of the ring. */
+	if (x + n > sc->sc_ntxdesc) {
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_cddmamap,
+		    SIP_CDTXOFF(x), sizeof(struct sip_desc) *
+		    (sc->sc_ntxdesc - x), ops);
+		n -= (sc->sc_ntxdesc - x);
+		x = 0;
+	}
+
+	/* Now sync whatever is left. */
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_cddmamap,
+	    SIP_CDTXOFF(x), sizeof(struct sip_desc) * n, ops);
+}
+
+static inline void
+sip_cdrxsync(struct sip_softc *sc, int x, int ops)
+{
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_cddmamap,
+	    SIP_CDRXOFF(x), sizeof(struct sip_desc), ops);
+}
 
 #if 0
 #ifdef DP83820
@@ -534,7 +540,7 @@ sipd_bufptr(struct sip_softc *sc, struct sip_desc *sipd)
 }
 
 static inline void
-SIP_INIT_RXDESC(struct sip_softc *sc, int x)
+sip_init_rxdesc(struct sip_softc *sc, int x)
 {
 	struct sip_rxsoft *rxs = &sc->sc_rxsoft[x];
 	struct sip_desc *sipd = &sc->sc_rxdescs[x];
@@ -544,7 +550,7 @@ SIP_INIT_RXDESC(struct sip_softc *sc, int x)
 	*sipd_cmdsts(sc, sipd) = htole32(CMDSTS_INTR |
 	    (sc->sc_parm->p_rxbuf_len & sc->sc_bits.b_cmdsts_size_mask));
 	sipd->sipd_extsts = 0;
-	SIP_CDRXSYNC(sc, x, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+	sip_cdrxsync(sc, x, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 }
 
 #define	SIP_CHIP_VERS(sc, v, p, r)					\
@@ -1632,7 +1638,7 @@ sipcom_start(struct ifnet *ifp)
 			sipcom_set_extsts(sc, lasttx, m0, ifp->if_capenable);
 
 		/* Sync the descriptors we're using. */
-		SIP_CDTXSYNC(sc, sc->sc_txnext, dmamap->dm_nsegs,
+		sip_cdtxsync(sc, sc->sc_txnext, dmamap->dm_nsegs,
 		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
 		/*
@@ -1641,7 +1647,7 @@ sipcom_start(struct ifnet *ifp)
 		 */
 		*sipd_cmdsts(sc, &sc->sc_txdescs[sc->sc_txnext]) |=
 		    htole32(CMDSTS_OWN);
-		SIP_CDTXSYNC(sc, sc->sc_txnext, 1,
+		sip_cdtxsync(sc, sc->sc_txnext, 1,
 		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
 		/*
@@ -1995,7 +2001,7 @@ sipcom_txintr(struct sip_softc *sc)
 	 * frames which have been transmitted.
 	 */
 	while ((txs = SIMPLEQ_FIRST(&sc->sc_txdirtyq)) != NULL) {
-		SIP_CDTXSYNC(sc, txs->txs_firstdesc, txs->txs_dmamap->dm_nsegs,
+		sip_cdtxsync(sc, txs->txs_firstdesc, txs->txs_dmamap->dm_nsegs,
 		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 
 		cmdsts = le32toh(*sipd_cmdsts(sc, &sc->sc_txdescs[txs->txs_lastdesc]));
@@ -2064,7 +2070,7 @@ gsip_rxintr(struct sip_softc *sc)
 	for (i = sc->sc_rxptr;; i = sip_nextrx(sc, i)) {
 		rxs = &sc->sc_rxsoft[i];
 
-		SIP_CDRXSYNC(sc, i, BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+		sip_cdrxsync(sc, i, BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 
 		cmdsts = le32toh(*sipd_cmdsts(sc, &sc->sc_rxdescs[i]));
 		extsts = le32toh(sc->sc_rxdescs[i].sipd_extsts);
@@ -2083,7 +2089,7 @@ gsip_rxintr(struct sip_softc *sc)
 		}
 
 		if (__predict_false(sc->sc_rxdiscard)) {
-			SIP_INIT_RXDESC(sc, i);
+			sip_init_rxdesc(sc, i);
 			if ((cmdsts & CMDSTS_MORE) == 0) {
 				/* Reset our state. */
 				sc->sc_rxdiscard = 0;
@@ -2107,16 +2113,16 @@ gsip_rxintr(struct sip_softc *sc)
 			ifp->if_ierrors++;
 			bus_dmamap_sync(sc->sc_dmat, rxs->rxs_dmamap, 0,
 			    rxs->rxs_dmamap->dm_mapsize, BUS_DMASYNC_PREREAD);
-			SIP_INIT_RXDESC(sc, i);
+			sip_init_rxdesc(sc, i);
 			if (cmdsts & CMDSTS_MORE)
 				sc->sc_rxdiscard = 1;
 			if (sc->sc_rxhead != NULL)
 				m_freem(sc->sc_rxhead);
-			SIP_RXCHAIN_RESET(sc);
+			sip_rxchain_reset(sc);
 			continue;
 		}
 
-		SIP_RXCHAIN_LINK(sc, m);
+		sip_rxchain_link(sc, m);
 
 		m->m_len = len;
 
@@ -2139,7 +2145,7 @@ gsip_rxintr(struct sip_softc *sc)
 		len = m->m_len + sc->sc_rxlen;
 		m = sc->sc_rxhead;
 
-		SIP_RXCHAIN_RESET(sc);
+		sip_rxchain_reset(sc);
 
 		/*
 		 * If an error occurred, update stats and drop the packet.
@@ -2287,7 +2293,7 @@ sip_rxintr(struct sip_softc *sc)
 	for (i = sc->sc_rxptr;; i = sip_nextrx(sc, i)) {
 		rxs = &sc->sc_rxsoft[i];
 
-		SIP_CDRXSYNC(sc, i, BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+		sip_cdrxsync(sc, i, BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 
 		cmdsts = le32toh(*sipd_cmdsts(sc, &sc->sc_rxdescs[i]));
 
@@ -2332,7 +2338,7 @@ sip_rxintr(struct sip_softc *sc)
 			PRINTERR(CMDSTS_Rx_CRCE, "CRC error");
 			PRINTERR(CMDSTS_Rx_FAE, "frame alignment error");
 #undef PRINTERR
-			SIP_INIT_RXDESC(sc, i);
+			sip_init_rxdesc(sc, i);
 			continue;
 		}
 
@@ -2364,7 +2370,7 @@ sip_rxintr(struct sip_softc *sc)
 			MCLAIM(m, &sc->sc_ethercom.ec_rx_mowner);
 			memcpy(mtod(m, void *),
 			    mtod(rxs->rxs_mbuf, void *), len);
-			SIP_INIT_RXDESC(sc, i);
+			sip_init_rxdesc(sc, i);
 			bus_dmamap_sync(sc->sc_dmat, rxs->rxs_dmamap, 0,
 			    rxs->rxs_dmamap->dm_mapsize,
 			    BUS_DMASYNC_PREREAD);
@@ -2373,7 +2379,7 @@ sip_rxintr(struct sip_softc *sc)
 			if (sipcom_add_rxbuf(sc, i) != 0) {
  dropit:
 				ifp->if_ierrors++;
-				SIP_INIT_RXDESC(sc, i);
+				sip_init_rxdesc(sc, i);
 				bus_dmamap_sync(sc->sc_dmat,
 				    rxs->rxs_dmamap, 0,
 				    rxs->rxs_dmamap->dm_mapsize,
@@ -2392,7 +2398,7 @@ sip_rxintr(struct sip_softc *sc)
 		if (m == NULL) {
  dropit:
 			ifp->if_ierrors++;
-			SIP_INIT_RXDESC(sc, i);
+			sip_init_rxdesc(sc, i);
 			bus_dmamap_sync(sc->sc_dmat, rxs->rxs_dmamap, 0,
 			    rxs->rxs_dmamap->dm_mapsize, BUS_DMASYNC_PREREAD);
 			continue;
@@ -2414,7 +2420,7 @@ sip_rxintr(struct sip_softc *sc)
 		memcpy(mtod(m, void *), mtod(rxs->rxs_mbuf, void *), len);
 
 		/* Allow the receive descriptor to continue using its mbuf. */
-		SIP_INIT_RXDESC(sc, i);
+		sip_init_rxdesc(sc, i);
 		bus_dmamap_sync(sc->sc_dmat, rxs->rxs_dmamap, 0,
 		    rxs->rxs_dmamap->dm_mapsize, BUS_DMASYNC_PREREAD);
 #endif /* __NO_STRICT_ALIGNMENT */
@@ -2619,7 +2625,7 @@ sipcom_init(struct ifnet *ifp)
 		memset(sipd, 0, sizeof(struct sip_desc));
 		sipd->sipd_link = htole32(SIP_CDTXADDR(sc, sip_nexttx(sc, i)));
 	}
-	SIP_CDTXSYNC(sc, 0, sc->sc_ntxdesc,
+	sip_cdtxsync(sc, 0, sc->sc_ntxdesc,
 	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 	sc->sc_txfree = sc->sc_ntxdesc;
 	sc->sc_txnext = 0;
@@ -2655,11 +2661,11 @@ sipcom_init(struct ifnet *ifp)
 				goto out;
 			}
 		} else
-			SIP_INIT_RXDESC(sc, i);
+			sip_init_rxdesc(sc, i);
 	}
 	sc->sc_rxptr = 0;
 	sc->sc_rxdiscard = 0;
-	SIP_RXCHAIN_RESET(sc);
+	sip_rxchain_reset(sc);
 
 	/*
 	 * Set the configuration register; it's already initialized
@@ -3018,7 +3024,7 @@ sipcom_add_rxbuf(struct sip_softc *sc, int idx)
 	bus_dmamap_sync(sc->sc_dmat, rxs->rxs_dmamap, 0,
 	    rxs->rxs_dmamap->dm_mapsize, BUS_DMASYNC_PREREAD);
 
-	SIP_INIT_RXDESC(sc, idx);
+	sip_init_rxdesc(sc, idx);
 
 	return (0);
 }
