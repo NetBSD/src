@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.376 2007/12/11 18:16:16 phx Exp $
+.\"	$NetBSD: main,v 1.375 2007/12/09 19:23:57 wiz Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -2075,7 +2075,6 @@ If you're one of them, and would like to mentioned, tell us!)
 .It Ta Leo Weppelman Ta Mt leo@NetBSD.org
 .It Ta Assar Westerlund Ta Mt assar@NetBSD.org
 .It Ta Todd Whitesel Ta Mt toddpw@NetBSD.org
-.It Ta Frank Wille Ta Mt phx@NetBSD.org
 .It Ta Nathan Williams Ta Mt nathanw@NetBSD.org
 .It Ta Rob Windsor Ta Mt windsor@NetBSD.org
 .It Ta Dan Winship Ta Mt danw@NetBSD.org

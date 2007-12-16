@@ -1,7 +1,7 @@
 #
 #  Makefile for FreeBSD
 #
-#	@(#)Makefile.FreeBSD	8.1 (Berkeley) 2/26/94
+#	@(#)Makefile	8.2 (Berkeley) 8/15/93
 
 PROG=	sendmail
 
@@ -27,9 +27,8 @@ DPADD=
 LDADD=	$(LIBUTIL)
 #
 # FreeBSD 1.0 RELEASE has GNU man and doesn't need preformatted man pages anymore
-#	(assuming you consider a slower "man" command a feature)
 #
-MAN1=	mailq.1 newaliases.1
+MAN1=	newaliases.1
 MAN5=	aliases.5
 MAN8=	sendmail.8 
 LINKS=	/usr/sbin/sendmail /usr/bin/newaliases \
