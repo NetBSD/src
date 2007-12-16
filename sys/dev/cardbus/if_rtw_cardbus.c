@@ -1,4 +1,4 @@
-/* $NetBSD: if_rtw_cardbus.c,v 1.19 2007/12/09 20:27:56 jmcneill Exp $ */
+/* $NetBSD: if_rtw_cardbus.c,v 1.20 2007/12/16 00:04:07 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtw_cardbus.c,v 1.19 2007/12/09 20:27:56 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtw_cardbus.c,v 1.20 2007/12/16 00:04:07 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -255,7 +255,6 @@ rtw_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	sc->sc_enable = rtw_cardbus_enable;
 	sc->sc_disable = rtw_cardbus_disable;
-	sc->sc_power = rtw_cardbus_power;
 
 	sc->sc_intr_ack = rtw_cardbus_intr_ack;
 
@@ -438,27 +437,6 @@ rtw_cardbus_disable(struct rtw_softc *sc)
 
 	/* Power down the socket. */
 	Cardbus_function_disable(ct);
-}
-
-void
-rtw_cardbus_power(struct rtw_softc *sc, int why)
-{
-	struct rtw_cardbus_softc *csc = (void *) sc;
-
-	RTW_DPRINTF(RTW_DEBUG_ATTACH,
-	    ("%s: rtw_cardbus_power\n", sc->sc_dev.dv_xname));
-
-	if (why == PWR_RESUME) {
-		/*
-		 * Give the PCI configuration registers a kick
-		 * in the head.
-		 */
-#ifdef DIAGNOSTIC
-		if ((sc->sc_flags & RTW_F_ENABLED) == 0)
-			panic("rtw_cardbus_power");
-#endif
-		rtw_cardbus_setup(csc);
-	}
 }
 
 void

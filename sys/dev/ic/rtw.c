@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.94 2007/11/18 12:40:15 jnemeth Exp $ */
+/* $NetBSD: rtw.c,v 1.95 2007/12/16 00:04:07 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 David Young.  All rights
  * reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.94 2007/11/18 12:40:15 jnemeth Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.95 2007/12/16 00:04:07 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -73,12 +73,6 @@ __KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.94 2007/11/18 12:40:15 jnemeth Exp $");
 #include <dev/ic/rtwphy.h>
 
 #include <dev/ic/smc93cx6var.h>
-
-#define	KASSERT2(__cond, __msg)		\
-	do {				\
-		if (!(__cond))		\
-			panic __msg ;	\
-	} while (0)
 
 static int rtw_rfprog_fallback = 0;
 static int rtw_host_rfio = 0;
@@ -1141,9 +1135,10 @@ rtw_chan2txpower(struct rtw_srom *sr, struct ieee80211com *ic,
     struct ieee80211_channel *chan)
 {
 	u_int idx = RTW_SR_TXPOWER1 + ieee80211_chan2ieee(ic, chan) - 1;
-	KASSERT2(idx >= RTW_SR_TXPOWER1 && idx <= RTW_SR_TXPOWER14,
-	    ("%s: channel %d out of range", __func__,
-	     idx - RTW_SR_TXPOWER1 + 1));
+	if (idx >= RTW_SR_TXPOWER1 && idx <= RTW_SR_TXPOWER14) {
+		panic("%s: channel %d out of range", __func__,
+		    idx - RTW_SR_TXPOWER1 + 1);
+	}
 	return RTW_SR_GET(sr, idx);
 }
 
@@ -3697,41 +3692,6 @@ rtw_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 	ieee80211_media_status(ifp, imr);
 }
 
-void
-rtw_power(int why, void *arg)
-{
-	struct rtw_softc *sc = arg;
-	struct ifnet *ifp = &sc->sc_if;
-	int s;
-
-	DPRINTF(sc, RTW_DEBUG_PWR,
-	    ("%s: rtw_power(%d,)\n", sc->sc_dev.dv_xname, why));
-
-	s = splnet();
-	switch (why) {
-	case PWR_STANDBY:
-		/* XXX do nothing. */
-		break;
-	case PWR_SUSPEND:
-		rtw_stop(ifp, 0);
-		if (sc->sc_power != NULL)
-			(*sc->sc_power)(sc, why);
-		break;
-	case PWR_RESUME:
-		if (ifp->if_flags & IFF_UP) {
-			if (sc->sc_power != NULL)
-				(*sc->sc_power)(sc, why);
-			rtw_init(ifp);
-		}
-		break;
-	case PWR_SOFTSUSPEND:
-	case PWR_SOFTSTANDBY:
-	case PWR_SOFTRESUME:
-		break;
-	}
-	splx(s);
-}
-
 /* rtw_shutdown: make sure the interface is stopped at reboot time. */
 void
 rtw_shutdown(void *arg)
@@ -3806,15 +3766,6 @@ rtw_establish_hooks(struct rtw_hooks *hooks, const char *dvname,
 	if (hooks->rh_shutdown == NULL)
 		printf("%s: WARNING: unable to establish shutdown hook\n",
 		    dvname);
-
-	/*
-	 * Add a suspend hook to make sure we come back up after a
-	 * resume.
-	 */
-	hooks->rh_power = powerhook_establish(dvname, rtw_power, arg);
-	if (hooks->rh_power == NULL)
-		printf("%s: WARNING: unable to establish power hook\n",
-		    dvname);
 }
 
 static inline void
@@ -3823,9 +3774,6 @@ rtw_disestablish_hooks(struct rtw_hooks *hooks, const char *dvname,
 {
 	if (hooks->rh_shutdown != NULL)
 		shutdownhook_disestablish(hooks->rh_shutdown);
-
-	if (hooks->rh_power != NULL)
-		powerhook_disestablish(hooks->rh_power);
 }
 
 static inline void
@@ -4203,6 +4151,12 @@ rtw_attach(struct rtw_softc *sc)
 
 	rtw_establish_hooks(&sc->sc_hooks, sc->sc_dev.dv_xname, (void*)sc);
 
+	if (!pmf_device_register(&sc->sc_dev, NULL, NULL)) {
+		aprint_error_dev(&sc->sc_dev,
+		    "couldn't establish power handler\n");
+	} else
+		pmf_class_network_register(&sc->sc_dev, &sc->sc_if);
+
 	NEXT_ATTACH_STATE(sc, FINISHED);
 
 	ieee80211_announce(ic);
@@ -4216,14 +4170,16 @@ int
 rtw_detach(struct rtw_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_if;
-	int pri;
+	int pri, s;
 
+	s = splnet();
 	sc->sc_flags |= RTW_F_INVALID;
 
 	switch (sc->sc_attach_state) {
 	case FINISHED:
 		rtw_stop(ifp, 1);
 
+		pmf_device_deregister(&sc->sc_dev);
 		rtw_disestablish_hooks(&sc->sc_hooks, sc->sc_dev.dv_xname,
 		    (void*)sc);
 		callout_stop(&sc->sc_scan_ch);
@@ -4273,6 +4229,7 @@ rtw_detach(struct rtw_softc *sc)
 		NEXT_ATTACH_STATE(sc, DETACHED);
 		break;
 	}
+	splx(s);
 	return 0;
 }
 
