@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_machdep.c,v 1.16 2007/12/11 17:02:32 ad Exp $	*/
+/*	$NetBSD: arm_machdep.c,v 1.17 2007/12/16 07:31:47 mrg Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -77,7 +77,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.16 2007/12/11 17:02:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.17 2007/12/16 07:31:47 mrg Exp $");
 
 #include <sys/exec.h>
 #include <sys/proc.h>
@@ -179,11 +179,4 @@ startlwp(void *arg)
 	pool_put(&lwp_uc_pool, uc);
 
 	userret(l);
-}
-
-bool
-cpu_intr_p(void)
-{
-
-	return curcpu()->ci_idepth != 0;
 }
