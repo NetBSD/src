@@ -1,4 +1,4 @@
-/*	$NetBSD: evcnt.h,v 1.4 2007/08/26 18:15:14 matt Exp $	*/
+/*	$NetBSD: evcnt.h,v 1.5 2007/12/16 20:45:59 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -76,6 +76,7 @@
 #define	_SYS_EVCNT_H_
 
 #include <sys/queue.h>
+#include <sys/stdint.h>
 
 /*
  * event counters
