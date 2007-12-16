@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.100 2007/12/16 20:49:52 dyoung Exp $ */
+/* $NetBSD: device.h,v 1.101 2007/12/16 23:24:21 drochner Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -81,7 +81,9 @@
 #include <sys/queue.h>
 
 typedef struct device *device_t;
+#ifdef _KERNEL
 #include <sys/pmf.h>
+#endif
 
 #include <prop/proplib.h>
 
