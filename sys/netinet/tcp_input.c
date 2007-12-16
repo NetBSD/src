@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.272 2007/11/09 23:55:58 dyoung Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.273 2007/12/16 14:12:34 elad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.272 2007/11/09 23:55:58 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.273 2007/12/16 14:12:34 elad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -174,6 +174,7 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.272 2007/11/09 23:55:58 dyoung Exp $
 #ifdef TCP_SIGNATURE
 #include <sys/md5.h>
 #endif
+#include <sys/lwp.h> /* for lwp0 */
 
 #include <net/if.h>
 #include <net/route.h>
@@ -3723,7 +3724,7 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst,
 	am->m_len = src->sa_len;
 	bcopy(src, mtod(am, void *), src->sa_len);
 	if (inp) {
-		if (in_pcbconnect(inp, am, NULL)) {
+		if (in_pcbconnect(inp, am, &lwp0)) {
 			(void) m_free(am);
 			goto resetandabort;
 		}
