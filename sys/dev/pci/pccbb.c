@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.157 2007/12/11 11:11:22 martin Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.158 2007/12/16 21:28:31 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.157 2007/12/11 11:11:22 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.158 2007/12/16 21:28:31 dyoung Exp $");
 
 /*
 #define CBB_DEBUG
@@ -110,6 +110,7 @@ delay_ms(int millis, void *param)
 
 int pcicbbmatch(struct device *, struct cfdata *, void *);
 void pccbbattach(struct device *, struct device *, void *);
+int pccbbdetach(device_t, int);
 int pccbbintr(void *);
 static void pci113x_insert(void *);
 static int pccbbintr_function(struct pccbb_softc *);
@@ -225,7 +226,7 @@ static void cb_show_regs(pci_chipset_tag_t pc, pcitag_t tag,
 #endif
 
 CFATTACH_DECL(cbb_pci, sizeof(struct pccbb_softc),
-    pcicbbmatch, pccbbattach, NULL, NULL);
+    pcicbbmatch, pccbbattach, pccbbdetach, NULL);
 
 static struct pcmcia_chip_functions pccbb_pcmcia_funcs = {
 	pccbb_pcmcia_mem_alloc,
@@ -434,7 +435,7 @@ pccbbattach(struct device *parent, struct device *self, void *aux)
 	    PCI_MAPREG_MEM_ADDR(sock_base) != 0xfffffff0) {
 		/* The address must be valid. */
 		if (pci_mapreg_map(pa, PCI_SOCKBASE, PCI_MAPREG_TYPE_MEM, 0,
-		    &sc->sc_base_memt, &sc->sc_base_memh, &sockbase, NULL)) {
+		    &sc->sc_base_memt, &sc->sc_base_memh, &sockbase, &sc->sc_base_size)) {
 			aprint_error("%s: can't map socket base address 0x%lx\n",
 			    sc->sc_dev.dv_xname, (unsigned long)sock_base);
 			/*
@@ -443,7 +444,7 @@ pccbbattach(struct device *parent, struct device *self, void *aux)
 			 */
 			if (pci_mapreg_map(pa, PCI_SOCKBASE, PCI_MAPREG_TYPE_IO,
 			    0, &sc->sc_base_memt, &sc->sc_base_memh, &sockbase,
-			    NULL)) {
+			    &sc->sc_base_size)) {
 				aprint_error("%s: can't map socket base address"
 				    " 0x%lx: io mode\n", sc->sc_dev.dv_xname,
 				    (unsigned long)sockbase);
@@ -515,8 +516,60 @@ pccbbattach(struct device *parent, struct device *self, void *aux)
 	config_defer(self, pccbb_pci_callback);
 }
 
+int
+pccbbdetach(device_t self, int flags)
+{
+	struct pccbb_softc *sc = device_private(self);
+	pci_chipset_tag_t pc = sc->sc_pa.pa_pc;
+	bus_space_tag_t bmt = sc->sc_base_memt;
+	bus_space_handle_t bmh = sc->sc_base_memh;
+	uint32_t sockmask;
+	int rc;
 
+	if ((rc = config_detach_children(self, flags)) != 0)
+		return rc;
 
+	if (sc->sc_ih != NULL) {
+		pci_intr_disestablish(pc, sc->sc_ih);
+		sc->sc_ih = NULL;
+	}
+
+	/* CSC Interrupt: turn off card detect and power cycle interrupts */
+	sockmask = bus_space_read_4(bmt, bmh, CB_SOCKET_MASK);
+	sockmask &= ~(CB_SOCKET_MASK_CD | CB_SOCKET_MASK_POWER);
+	bus_space_write_4(bmt, bmh, CB_SOCKET_MASK, sockmask);
+	/* reset interrupt */
+	bus_space_write_4(bmt, bmh, CB_SOCKET_EVENT,
+	    bus_space_read_4(bmt, bmh, CB_SOCKET_EVENT));
+
+	switch (sc->sc_flags & (CBB_MEMHMAPPED|CBB_SPECMAPPED)) {
+	case CBB_MEMHMAPPED:
+		bus_space_unmap(bmt, bmh, sc->sc_base_size);
+		break;
+	case CBB_MEMHMAPPED|CBB_SPECMAPPED:
+#if rbus
+	{
+		pcireg_t sockbase;
+
+		sockbase = pci_conf_read(pc, sc->sc_tag, PCI_SOCKBASE);
+		rbus_space_free(sc->sc_rbus_memt, bmh, 0x1000,
+		    NULL);
+	}
+#else
+		bus_space_free(bmt, bmh, 0x1000);
+#endif
+	}
+	sc->sc_flags &= ~(CBB_MEMHMAPPED|CBB_SPECMAPPED);
+
+	if (!TAILQ_EMPTY(&sc->sc_iowindow))
+		aprint_error_dev(self, "i/o windows not empty");
+	if (!TAILQ_EMPTY(&sc->sc_memwindow))
+		aprint_error_dev(self, "memory windows not empty");
+
+	callout_stop(&sc->sc_insert_ch);
+	callout_destroy(&sc->sc_insert_ch);
+	return 0;
+}
 
 /*
  * static void pccbb_pci_callback(struct device *self)

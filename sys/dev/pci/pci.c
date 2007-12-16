@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.107 2007/12/09 20:28:11 jmcneill Exp $	*/
+/*	$NetBSD: pci.c,v 1.108 2007/12/16 21:28:32 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.107 2007/12/09 20:28:11 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.108 2007/12/16 21:28:32 dyoung Exp $");
 
 #include "opt_pci.h"
 
@@ -209,6 +209,10 @@ fail:
 static int
 pcidetach(struct device *self, int flags)
 {
+	int rc;
+
+	if ((rc = config_detach_children(self, flags)) != 0)
+		return rc;
 	pmf_device_deregister(self);
 	return 0;
 }
