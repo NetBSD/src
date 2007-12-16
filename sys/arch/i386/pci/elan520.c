@@ -1,4 +1,4 @@
-/*	$NetBSD: elan520.c,v 1.17 2007/12/15 05:37:03 dyoung Exp $	*/
+/*	$NetBSD: elan520.c,v 1.18 2007/12/16 00:00:08 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: elan520.c,v 1.17 2007/12/15 05:37:03 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elan520.c,v 1.18 2007/12/16 00:00:08 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -261,6 +261,25 @@ elansc_resume(device_t dev)
 	return true;
 }
 
+static int
+elansc_detach(device_t self, int flags)
+{
+	struct elansc_softc *sc = device_private(self);
+
+	pmf_device_deregister(self);
+
+	sysmon_wdog_unregister(&sc->sc_smw);
+
+	/* Set up the watchdog registers with some defaults. */
+	elansc_wdogctl_write(sc, WDTMRCTL_WRST_ENB | WDTMRCTL_EXP_SEL30);
+
+	/* ...and clear it. */
+	elansc_wdogctl_reset(sc);
+
+	bus_space_unmap(sc->sc_memt, sc->sc_memh, PAGE_SIZE);
+	return 0;
+}
+
 static void
 elansc_attach(struct device *parent, struct device *self, void *aux)
 {
@@ -381,7 +400,7 @@ elansc_attach(struct device *parent, struct device *self, void *aux)
 }
 
 CFATTACH_DECL(elansc, sizeof(struct elansc_softc),
-    elansc_match, elansc_attach, NULL, NULL);
+    elansc_match, elansc_attach, elansc_detach, NULL);
 
 #if NGPIO > 0
 static int
