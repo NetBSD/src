@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.98 2007/12/15 21:33:13 apb Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.99 2007/12/16 16:09:27 apb Exp $
 #
 # Copyright (c) 2003,2007 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1995,11 +1995,11 @@ create_mfs_dev()
 	fs_blocks=$((fs_bytes/512))
 
 	# Try tmpfs; if that fails try mfs.
-	if mount_tmpfs -s $fs_bytes -n $ninode -m 07555 \
+	if mount_tmpfs -s $fs_bytes -n $ninode -m 0755 \
 		-o union tmpfs "$dev_mountpoint"
 	then
 	    fstype=tmpfs
-	elif mount_mfs -b 4096 -f 512 -s $fs_blocks -n $ninode -p 07555 \
+	elif mount_mfs -b 4096 -f 512 -s $fs_blocks -n $ninode -p 0755 \
 		-o union swap "$dev_mountpoint"
 	then
 	    fstype=mfs
