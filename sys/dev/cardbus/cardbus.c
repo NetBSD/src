@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.81 2007/12/09 20:27:55 jmcneill Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.82 2007/12/16 21:28:30 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.81 2007/12/09 20:27:55 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.82 2007/12/16 21:28:30 dyoung Exp $");
 
 #include "opt_cardbus.h"
 
@@ -70,6 +70,7 @@ __KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.81 2007/12/09 20:27:55 jmcneill Exp $"
 
 
 STATIC void cardbusattach(struct device *, struct device *, void *);
+STATIC int cardbusdetach(device_t, int);
 STATIC int cardbusmatch(struct device *, struct cfdata *, void *);
 int cardbus_rescan(struct device *, const char *, const int *);
 void cardbus_childdetached(struct device *, struct device *);
@@ -91,7 +92,7 @@ static void disable_function(struct cardbus_softc *, int);
 static bool cardbus_child_register(device_t);
 
 CFATTACH_DECL2(cardbus, sizeof(struct cardbus_softc),
-    cardbusmatch, cardbusattach, NULL, NULL,
+    cardbusmatch, cardbusattach, cardbusdetach, NULL,
     cardbus_rescan, cardbus_childdetached);
 
 #ifndef __NetBSD_Version__
@@ -146,6 +147,18 @@ cardbusattach(struct device *parent, struct device *self, void *aux)
 
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
+}
+
+STATIC int
+cardbusdetach(device_t self, int flags)
+{
+	int rc;
+
+	if ((rc = config_detach_children(self, flags)) != 0)
+		return rc;
+
+	pmf_device_deregister(self);
+	return 0;
 }
 
 static int
