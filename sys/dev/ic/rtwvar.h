@@ -1,4 +1,4 @@
-/* $NetBSD: rtwvar.h,v 1.32 2007/11/16 23:35:19 dyoung Exp $ */
+/* $NetBSD: rtwvar.h,v 1.33 2007/12/16 00:04:08 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -283,7 +283,6 @@ enum rtw_attach_state {FINISHED, FINISH_DESCMAP_LOAD, FINISH_DESCMAP_CREATE,
 
 struct rtw_hooks {
 	void			*rh_shutdown;	/* shutdown hook */
-	void			*rh_power;	/* power management hook */
 };
 
 struct rtw_mtbl {
@@ -466,7 +465,6 @@ struct rtw_softc {
 
 	int			(*sc_enable)(struct rtw_softc *);
 	void			(*sc_disable)(struct rtw_softc *);
-	void			(*sc_power)(struct rtw_softc *, int);
 	struct rtw_mtbl		sc_mtbl;
 	struct rtw_hooks	sc_hooks;
 
@@ -518,7 +516,6 @@ void rtw_disable(struct rtw_softc *);
 int rtw_enable(struct rtw_softc *);
 
 int rtw_activate(struct device *, enum devact);
-void rtw_power(int, void *);
 void rtw_shutdown(void *);
 
 const char *rtw_pwrstate_string(enum rtw_pwrstate);
