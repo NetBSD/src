@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.95 2007/12/16 00:04:07 dyoung Exp $ */
+/* $NetBSD: rtw.c,v 1.96 2007/12/16 21:39:33 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 David Young.  All rights
  * reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.95 2007/12/16 00:04:07 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.96 2007/12/16 21:39:33 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -1135,7 +1135,7 @@ rtw_chan2txpower(struct rtw_srom *sr, struct ieee80211com *ic,
     struct ieee80211_channel *chan)
 {
 	u_int idx = RTW_SR_TXPOWER1 + ieee80211_chan2ieee(ic, chan) - 1;
-	if (idx >= RTW_SR_TXPOWER1 && idx <= RTW_SR_TXPOWER14) {
+	if (idx < RTW_SR_TXPOWER1 || idx > RTW_SR_TXPOWER14) {
 		panic("%s: channel %d out of range", __func__,
 		    idx - RTW_SR_TXPOWER1 + 1);
 	}
@@ -4185,7 +4185,7 @@ rtw_detach(struct rtw_softc *sc)
 		callout_stop(&sc->sc_scan_ch);
 		ieee80211_ifdetach(&sc->sc_ic);
 		if_detach(ifp);
-		break;
+		/*FALLTHROUGH*/
 	case FINISH_ID_STA:
 	case FINISH_RF_ATTACH:
 		rtw_rf_destroy(sc->sc_rf);
