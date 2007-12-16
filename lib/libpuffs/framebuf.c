@@ -1,4 +1,4 @@
-/*	$NetBSD: framebuf.c,v 1.25 2007/12/04 21:24:11 pooka Exp $	*/
+/*	$NetBSD: framebuf.c,v 1.26 2007/12/16 20:02:57 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: framebuf.c,v 1.25 2007/12/04 21:24:11 pooka Exp $");
+__RCSID("$NetBSD: framebuf.c,v 1.26 2007/12/16 20:02:57 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -355,7 +355,7 @@ int
 puffs_framev_enqueue_cc(struct puffs_cc *pcc, int fd,
 	struct puffs_framebuf *pufbuf, int flags)
 {
-	struct puffs_usermount *pu = puffs_cc_getusermount(pcc);
+	struct puffs_usermount *pu = pcc->pcc_pu;
 	struct puffs_fctrl_io *fio;
 
 	/*
@@ -444,7 +444,7 @@ int
 puffs_framev_enqueue_directreceive(struct puffs_cc *pcc, int fd,
 	struct puffs_framebuf *pufbuf, int flags /* used in the future */)
 {
-	struct puffs_usermount *pu = puffs_cc_getusermount(pcc);
+	struct puffs_usermount *pu = pcc->pcc_pu;
 	struct puffs_fctrl_io *fio;
 
 	fio = getfiobyfd(pu, fd);
@@ -478,7 +478,7 @@ int
 puffs_framev_enqueue_directsend(struct puffs_cc *pcc, int fd,
 	struct puffs_framebuf *pufbuf, int flags)
 {
-	struct puffs_usermount *pu = puffs_cc_getusermount(pcc);
+	struct puffs_usermount *pu = pcc->pcc_pu;
 	struct puffs_fctrl_io *fio;
 
 	if (flags & PUFFS_FBQUEUE_URGENT)
@@ -528,7 +528,7 @@ puffs_framev_framebuf_ccpromote(struct puffs_framebuf *pufbuf,
 int
 puffs_framev_enqueue_waitevent(struct puffs_cc *pcc, int fd, int *what)
 {
-	struct puffs_usermount *pu = puffs_cc_getusermount(pcc);
+	struct puffs_usermount *pu = pcc->pcc_pu;
 	struct puffs_fctrl_io *fio;
 	struct puffs_fbevent feb;
 	struct kevent kev;
