@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.c,v 1.4 2007/12/15 16:32:05 perry Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.5 2007/12/16 02:38:24 perry Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.137 2006/05/17 08:37:36 mrg Exp $	*/
 
@@ -126,7 +126,6 @@
  * And so it begins ..
  */
 
-#include <sys/cdefs.h>
 #include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/time.h>
