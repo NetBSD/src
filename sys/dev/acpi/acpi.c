@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.107 2007/12/15 02:19:55 jmcneill Exp $	*/
+/*	$NetBSD: acpi.c,v 1.108 2007/12/16 21:10:34 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.107 2007/12/15 02:19:55 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.108 2007/12/16 21:10:34 jmcneill Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -174,6 +174,9 @@ static ACPI_STATUS	acpi_make_devnode(ACPI_HANDLE, UINT32, void *, void **);
 
 static void		acpi_enable_fixed_events(struct acpi_softc *);
 
+static ACPI_TABLE_HEADER *acpi_map_rsdt(void);
+static void		acpi_unmap_rsdt(ACPI_TABLE_HEADER *);
+
 /*
  * acpi_probe:
  *
@@ -187,7 +190,7 @@ int
 acpi_probe(void)
 {
 	static int beenhere;
-	ACPI_TABLE_HEADER xsdt;
+	ACPI_TABLE_HEADER *rsdt;
 	ACPI_STATUS rv;
 
 	if (beenhere != 0)
@@ -242,20 +245,26 @@ acpi_probe(void)
 		return 0;
 	}
 
-	if (ACPI_FAILURE(AcpiGetTableHeader(ACPI_SIG_XSDT, 0, &xsdt)))
-		memset(&xsdt, 0, sizeof(xsdt));
+	rsdt = acpi_map_rsdt();
+	if (rsdt == NULL) {
+		printf("ACPI: unable to map RSDT\n");
+		return 0;
+	}
 
 	if (!acpi_force_load && (acpi_find_quirks() & ACPI_QUIRK_BROKEN)) {
 		printf("ACPI: BIOS implementation in listed as broken:\n");
 		printf("ACPI: X/RSDT: OemId <%6.6s,%8.8s,%08x>, "
 		       "AslId <%4.4s,%08x>\n",
-			xsdt.OemId, xsdt.OemTableId,
-		        xsdt.OemRevision,
-			xsdt.AslCompilerId,
-		        xsdt.AslCompilerRevision);
+			rsdt->OemId, rsdt->OemTableId,
+		        rsdt->OemRevision,
+			rsdt->AslCompilerId,
+		        rsdt->AslCompilerRevision);
 		printf("ACPI: not used. set acpi_force_load to use anyway.\n");
+		acpi_unmap_rsdt(rsdt);
 		return 0;
 	}
+
+	acpi_unmap_rsdt(rsdt);
 
 #if notyet
 	/* Install the default address space handlers. */
@@ -364,7 +373,7 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	struct acpi_softc *sc = (void *) self;
 	struct acpibus_attach_args *aa = aux;
 	ACPI_STATUS rv;
-	ACPI_TABLE_HEADER xsdt;
+	ACPI_TABLE_HEADER *rsdt;
 
 	aprint_naive(": Advanced Configuration and Power Interface\n");
 	aprint_normal(": Advanced Configuration and Power Interface\n");
@@ -377,14 +386,16 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	aprint_verbose("%s: using Intel ACPI CA subsystem version %08x\n",
 	    sc->sc_dev.dv_xname, ACPI_CA_VERSION);
 
-	if (ACPI_FAILURE(AcpiGetTableHeader(ACPI_SIG_XSDT, 0, &xsdt)))
-		memset(&xsdt, 0, sizeof(xsdt));
-
-	aprint_verbose("%s: X/RSDT: OemId <%6.6s,%8.8s,%08x>, AslId <%4.4s,%08x>\n",
-	    sc->sc_dev.dv_xname,
-	    xsdt.OemId, xsdt.OemTableId,
-	    xsdt.OemRevision,
-	    xsdt.AslCompilerId, xsdt.AslCompilerRevision);
+	rsdt = acpi_map_rsdt();
+	if (rsdt) {
+		aprint_verbose("%s: X/RSDT: OemId <%6.6s,%8.8s,%08x>, AslId <%4.4s,%08x>\n",
+		    sc->sc_dev.dv_xname,
+		    rsdt->OemId, rsdt->OemTableId,
+		    rsdt->OemRevision,
+		    rsdt->AslCompilerId, rsdt->AslCompilerRevision);
+	} else
+		aprint_error("%s: X/RSDT: Not found\n", sc->sc_dev.dv_xname);
+	acpi_unmap_rsdt(rsdt);
 
 	sc->sc_quirks = acpi_find_quirks();
 
@@ -1392,4 +1403,38 @@ sysctl_hw_acpi_sleepstate(SYSCTLFN_ARGS)
 	acpi_enter_sleep_state(acpi_softc, t);
 
 	return 0;
+}
+
+static ACPI_TABLE_HEADER *
+acpi_map_rsdt(void)
+{
+	ACPI_PHYSICAL_ADDRESS paddr;
+	ACPI_TABLE_RSDP *rsdp;
+
+	paddr = AcpiOsGetRootPointer();
+	if (paddr == 0) {
+		printf("ACPI: couldn't get root pointer\n");
+		return NULL;
+	}
+	rsdp = AcpiOsMapMemory(paddr, sizeof(ACPI_TABLE_RSDP));
+	if (rsdp == NULL) {
+		printf("ACPI: couldn't map RSDP\n");
+		return NULL;
+	}
+	if (rsdp->Revision > 1 && rsdp->XsdtPhysicalAddress)
+		paddr = (ACPI_PHYSICAL_ADDRESS)rsdp->XsdtPhysicalAddress;
+	else
+		paddr = (ACPI_PHYSICAL_ADDRESS)rsdp->RsdtPhysicalAddress;
+	AcpiOsUnmapMemory(rsdp, sizeof(ACPI_TABLE_RSDP));
+
+	return AcpiOsMapMemory(paddr, sizeof(ACPI_TABLE_HEADER));
+}
+
+static void
+acpi_unmap_rsdt(ACPI_TABLE_HEADER *rsdt)
+{
+	if (rsdt == NULL)
+		return;
+
+	AcpiOsUnmapMemory(rsdt, sizeof(ACPI_TABLE_HEADER));
 }
