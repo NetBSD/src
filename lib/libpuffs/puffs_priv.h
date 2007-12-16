@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_priv.h,v 1.35 2007/12/08 19:57:03 pooka Exp $	*/
+/*	$NetBSD: puffs_priv.h,v 1.36 2007/12/16 20:02:58 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006 Antti Kantee.  All Rights Reserved.
@@ -242,9 +242,6 @@ int	puffs_fsframe_cmp(struct puffs_usermount *, struct puffs_framebuf *,
 			  struct puffs_framebuf *, int *);
 void	puffs_fsframe_gotframe(struct puffs_usermount *,
 			       struct puffs_framebuf *);
-
-int	puffs_dopufbuf(struct puffs_usermount *, struct puffs_framebuf *);
-void	*puffs_docc(void *);
 
 uint64_t	puffs__nextreq(struct puffs_usermount *pu);
 

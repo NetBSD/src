@@ -1,4 +1,4 @@
-/*	$NetBSD: dispatcher.c,v 1.26 2007/12/08 19:57:03 pooka Exp $	*/
+/*	$NetBSD: dispatcher.c,v 1.27 2007/12/16 20:02:57 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: dispatcher.c,v 1.26 2007/12/08 19:57:03 pooka Exp $");
+__RCSID("$NetBSD: dispatcher.c,v 1.27 2007/12/16 20:02:57 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -49,7 +49,7 @@ __RCSID("$NetBSD: dispatcher.c,v 1.26 2007/12/08 19:57:03 pooka Exp $");
 
 #include "puffs_priv.h"
 
-static void processresult(struct puffs_cc *, int);
+static void processresult(struct puffs_usermount *, int);
 
 /*
  * Set the following to 1 to not handle each request on a separate
@@ -1013,13 +1013,13 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 	 * off of the continuation stack.  Otherwise puffs_goto() would
 	 * not work.
 	 */
-	processresult(pcc, rv);
+	processresult(pu, rv);
 }
 
 static void
-processresult(struct puffs_cc *pcc, int how)
+processresult(struct puffs_usermount *pu, int how)
 {
-	struct puffs_usermount *pu = puffs_cc_getusermount(pcc);
+	struct puffs_cc *pcc = puffs_cc_getcc(pu);
 	struct puffs_req *preq = puffs__framebuf_getdataptr(pcc->pcc_pb);
 	int pccflags = pcc->pcc_flags;
 
