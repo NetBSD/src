@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.123 2007/11/24 07:49:04 dyoung Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.124 2007/12/16 21:26:00 elad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.123 2007/11/24 07:49:04 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.124 2007/12/16 21:26:00 elad Exp $");
 
 #include "opt_pipe.h"
 
@@ -131,7 +131,7 @@ sys_listen(struct lwp *l, void *v, register_t *retval)
 	/* getsock() will use the descriptor for us */
 	if ((error = getsock(l->l_proc->p_fd, SCARG(uap, s), &fp)) != 0)
 		return (error);
-	error = solisten(fp->f_data, SCARG(uap, backlog));
+	error = solisten(fp->f_data, SCARG(uap, backlog), l);
 	FILE_UNUSE(fp, l);
 	return error;
 }
