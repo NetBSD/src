@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.961 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.962 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -9,16 +9,17 @@ containing just the word `help' to `majordomo@NetBSD.org'.]
 
 Changes from NetBSD 4.0 to NetBSD 5.0:
 	evbppc: add support for Xilinx Virtex II-Pro/4-FX. [freza 20061202]
-	mac68k: add support for four more Nubus video cards, including the 
+	mac68k: add support for four more Nubus video cards, including the
 		VillageTronic MacPicasso 340. [hauke 20061206]
 	ixp425: add support for NPE Ethernet. [scw 20061210]
 	nfs: Remove NQNFS support from kernel. [yamt 20061227]
 	mount_psshfs(8): add puffs sshfs [pooka 20061229]
-  	zaurus: add support for Sharp C3x00 PDA. [ober 20070105]
+	zaurus: add support for Sharp C3x00 PDA. [ober 20070105]
 	i386: add support for Microsoft Xbox. [jmcneill 20070105]
-	ntp: Import ntp 4.2.4 (20061228). Tracking of network interface address
-		changes is now supported - no more ntpd restarts when interface
-		addresses are re-configured (WLAN/DSL/ppp/...). [kardel 20070106]
+	ntp: Import ntp 4.2.4 (20061228). Tracking of network interface
+		address changes is now supported - no more ntpd
+		restarts when interface addresses are re-configured
+		(WLAN/DSL/ppp/...). [kardel 20070106]
 	kernel: global 'securelevel' variable removed; it is now internal to
 		the secmodel. [elad 20070110]
 	GCC: Updated to version 4.1.2-20070110.  [mrg 20070111]
@@ -41,7 +42,7 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		[kiyohara 20070221]
 	btuartd(8): Add support for Bluetooth HCI UART (H4) daemon.
 		[kiyohara 20070221]
-        mutex(9), rwlock(9): Support priority inheritance. [yamt 20070226]
+	mutex(9), rwlock(9): Support priority inheritance. [yamt 20070226]
 	eeprom(8): Add the missing kernel bits on arm and powerpc that kept
 		eeprom from actually changing firmware settings
 		[macallan 20070228]
@@ -85,9 +86,9 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	kernel: Added support for POSIX Asynchronous I/O. [rmind 20070430]
 	puffs(3): Add puffs_framebuf(3), which abstracts the buffer
 		management and event loop for networked file systems
-		using puffs_cc(3).  Convert mount_psshfs(8) and 
+		using puffs_cc(3).  Convert mount_psshfs(8) and
 		mount_9p(8) to use it.  [pooka 20070505]
-	kernel: Add the TFTPROOT kernel option for TFTP'ing root RAMdisk 
+	kernel: Add the TFTPROOT kernel option for TFTP'ing root RAMdisk
 		at root mount time. [manu 20070508]
 	pf(4): Make 'nat' and 'rdr' translation rules obey state
 		policy flags ('if-bound', 'group-bound', 'floating').
@@ -127,8 +128,8 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		[christos 20070625]
 	fast_ipsec(4): Add support for IPsec NAT-T [degroote 20070627]
 	efs: Added read-only Silicon Graphics EFS file system. [rumble 20070629]
-	envsys(4), sysmon_envsys(9): Imported envsys2. New API with the following
-		features:
+	envsys(4), sysmon_envsys(9): Imported envsys2. New API with the
+		following features:
 		- Cleaned up the API for simplicity and efficiency.
 		- Ability to send capacity/critical/warning events to powerd(8).
 		- Added support for a 'dictionary based communication channel'
@@ -199,7 +200,7 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		simultaneous client threads on a 4xCPU i386 system before
 		serious performance drop-off occurs. [ad 20070907]
 	kernel: Added support for POSIX message queues. [rmind 20070907]
-	aps(4): driver for IBM Thinkpad Active Protection System, 
+	aps(4): driver for IBM Thinkpad Active Protection System,
 		provides support for some sensors exported through
 		the envsys(4) framework. Ported by Pierre Pronchery
 		from OpenBSD. [xtraeme 20070911]
