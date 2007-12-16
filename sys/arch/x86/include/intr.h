@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.29 2007/12/03 15:34:27 ad Exp $	*/
+/*	$NetBSD: intr.h,v 1.29.8.1 2007/12/16 18:54:04 cube Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -45,6 +45,7 @@
 
 #ifndef _LOCORE
 #include <machine/pic.h>
+#include <sys/evcnt.h>
 
 /*
  * Struct describing an interrupt source for a CPU. struct cpu_info
