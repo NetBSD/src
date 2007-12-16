@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.99 2007/12/09 20:28:44 jmcneill Exp $ */
+/* $NetBSD: device.h,v 1.100 2007/12/16 20:49:52 dyoung Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -402,9 +402,11 @@ int	config_match(device_t, cfdata_t, void *);
 device_t config_attach_pseudo(cfdata_t);
 
 int	config_detach(device_t, int);
+int	config_detach_children(device_t, int flags);
 int	config_activate(device_t);
 int	config_deactivate(device_t);
 void	config_defer(device_t, void (*)(device_t));
+void	config_deferred(device_t);
 void	config_interrupts(device_t, void (*)(device_t));
 void	config_pending_incr(void);
 void	config_pending_decr(void);
@@ -424,6 +426,8 @@ cfattach_t	device_cfattach(device_t);
 int		device_unit(device_t);
 const char	*device_xname(device_t);
 device_t	device_parent(device_t);
+bool		device_foreach_child(device_t, bool (*)(device_t, void *),
+		                     void *);
 bool		device_is_active(device_t);
 bool		device_is_enabled(device_t);
 bool		device_has_power(device_t);
