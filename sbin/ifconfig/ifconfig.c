@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.180 2007/01/09 09:19:02 dyoung Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.181 2007/12/16 13:49:22 degroote Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.180 2007/01/09 09:19:02 dyoung Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.181 2007/12/16 13:49:22 degroote Exp $");
 #endif
 #endif /* not lint */
 
@@ -239,6 +239,7 @@ const struct cmd {
 	{ "ipdst",	NEXTARG,	0,		setifipdst },
 	{ "prefixlen",	NEXTARG,	0,		setifprefixlen},
 	{ "preference",	NEXTARG,	0,		setifpreference},
+	{ "list",	NEXTARG,	0,		setiflist},
 #ifndef INET_ONLY
 	/* CARP */
 	{ "advbase",	NEXTARG,	0,		setcarp_advbase },
@@ -1585,6 +1586,7 @@ usage(void)
 		"\t\t[ alias | -alias ] ]\n"
 		"\t[ up ] [ down ] [ metric n ] [ mtu n ]\n"
 		"\t[ nwid network_id ] [ nwkey network_key | -nwkey ]\n"
+		"\t[ list scan ]\n"
 		"\t[ powersave | -powersave ] [ powersavesleep duration ]\n"
 		"\t[ hidessid | -hidessid ] [ apbridge | -apbridge ]\n"
 		"\t[ [ af ] tunnel src_addr dest_addr ] [ deletetunnel ]\n"
