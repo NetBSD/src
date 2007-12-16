@@ -1,4 +1,4 @@
-/*	$NetBSD: callcontext.c,v 1.15 2007/12/04 21:24:10 pooka Exp $	*/
+/*	$NetBSD: callcontext.c,v 1.16 2007/12/16 20:02:57 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006 Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: callcontext.c,v 1.15 2007/12/04 21:24:10 pooka Exp $");
+__RCSID("$NetBSD: callcontext.c,v 1.16 2007/12/16 20:02:57 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -96,20 +96,6 @@ puffs_cc_schedule(struct puffs_cc *pcc)
 
 	assert(pu->pu_state & PU_INLOOP);
 	TAILQ_INSERT_TAIL(&pu->pu_sched, pcc, entries);
-}
-
-struct puffs_usermount *
-puffs_cc_getusermount(struct puffs_cc *pcc)
-{
-
-	return pcc->pcc_pu;
-}
-
-void *
-puffs_cc_getspecific(struct puffs_cc *pcc)
-{
-
-	return puffs_getspecific(pcc->pcc_pu);
 }
 
 int
