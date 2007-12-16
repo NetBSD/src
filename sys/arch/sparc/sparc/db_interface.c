@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.74 2007/11/05 20:43:04 ad Exp $ */
+/*	$NetBSD: db_interface.c,v 1.75 2007/12/16 02:23:55 mrg Exp $ */
 
 /*
  * Mach Operating System
@@ -33,12 +33,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.74 2007/11/05 20:43:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.75 2007/12/16 02:23:55 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_multiprocessor.h"
-#include "opt_lockdebug.h"
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -479,14 +478,7 @@ db_simple_lock_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 	}
 
 	l = (struct simplelock *)addr;
-	db_printf("lock_data=%d", l->lock_data);
-#ifdef LOCKDEBUG
-	db_printf(" holder=%ld\n"
-	    " last locked=%s:%d\n last unlocked=%s:%d\n",
-	    l->lock_holder, l->lock_file, l->lock_line, l->unlock_file,
-	    l->unlock_line);
-#endif
-	db_printf("\n");
+	db_printf("lock_data=%d\n", l->lock_data);
 }
 
 #if defined(MULTIPROCESSOR)
