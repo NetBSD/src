@@ -1,4 +1,4 @@
-/* $NetBSD: sunlabel.c,v 1.19 2007/12/17 18:18:21 apb Exp $ */
+/* $NetBSD: sunlabel.c,v 1.20 2007/12/17 23:04:37 apb Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: sunlabel.c,v 1.19 2007/12/17 18:18:21 apb Exp $");
+__RCSID("$NetBSD: sunlabel.c,v 1.20 2007/12/17 23:04:37 apb Exp $");
 #endif
 
 #include <stdio.h>
@@ -240,7 +240,7 @@ trydisk(const char *s, int mustsucceed)
 
 	diskname = s;
 	if ((diskfd = open(s, O_RDWR)) == -1 ||
-	    (diskfd = open(s, O_RDWR | O_NDELAY)) == -1) {
+	    (diskfd = open(s, O_RDWR | O_NONBLOCK)) == -1) {
 		if ((diskfd = open(s, O_RDONLY)) == -1) {
 			if (mustsucceed)
 				err(1, "Cannot open `%s'", s);
