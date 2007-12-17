@@ -1,0 +1,80 @@
+#	$NetBSD: files.rs6000,v 1.1 2007/12/17 19:09:04 garbled Exp $
+#
+# rs6000-specific configuration info
+#
+maxpartitions 16
+
+maxusers 2 8 64
+
+include "arch/powerpc/pic/files.pic"
+
+# IBM quirk functions
+#file	arch/rs6000/rs6000/platform.c
+
+file	arch/rs6000/rs6000/autoconf.c
+file	arch/powerpc/powerpc/clock.c
+file	arch/rs6000/rs6000/consinit.c
+file	kern/subr_disk_mbr.c			disk
+file	arch/rs6000/rs6000/machdep.c
+
+file	arch/powerpc/powerpc/bus_dma.c
+file	arch/powerpc/powerpc/bus_space.c
+file	arch/powerpc/powerpc/procfs_machdep.c	procfs
+
+#interrupt controllers
+define pic_iocc
+
+defflag opt_interrupt.h PIC_IOCC: pic_iocc
+
+file arch/rs6000/rs6000/pic_iocc.c	pic_iocc	needs-flag
+
+# General files
+file	dev/cons.c
+
+#
+# Machine-independent I2O drivers
+#
+include "dev/i2o/files.i2o"
+
+#
+# Machine-independent SCSI drivers
+#
+include "dev/scsipi/files.scsipi"
+
+#
+# Memory Disk for install floppy
+#
+file	dev/md_root.c		memory_disk_hooks
+
+#
+# System bus types
+#
+define	mainbus {}
+device	mainbus: mcabus, mainbus
+attach	mainbus at root
+file	arch/rs6000/rs6000/mainbus.c	mainbus
+
+device	cpu
+attach	cpu at mainbus
+file	arch/rs6000/rs6000/cpu.c	cpu
+
+device	mca {[slot = -1]}
+include "dev/mca/files.mca"
+file	arch/rs6000/mca/mca_machdep.c	mca
+#file	arch/rs6000/mca/mcadma_machdep.c	mca
+
+# IO/Planar devices
+
+define	ioplanar { [index = -1] }
+device	ioplanar: ioplanar
+attach	ioplanar at mca with ioplanar
+file	arch/rs6000/mca/ioplanar.c	ioplanar needs-flag
+
+attach	com at ioplanar with com_iop
+file	arch/rs6000/ioplanar/com_iop.c	com_iop needs-flag
+
+include "dev/wscons/files.wscons"
+include "dev/wsfont/files.wsfont"
+include "dev/rasops/files.rasops"
+
+include "arch/powerpc/conf/majors.powerpc"
