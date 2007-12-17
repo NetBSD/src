@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.962 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.963 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -278,6 +278,9 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		[bouyer 20071202]
 	arcmsr(4): Areca Technology Corporation SATA RAID controller driver,
 		ported from OpenBSD. [xtraeme 20071204]
+	acpi: Updated ACPI-CA to 20070320. [jmcneill 20071211]
+	pmf(9): Added a new power management framework, see pmf(9) for details.
+		[jmcneill,joerg 20071211]
 	MAKEDEV(8): Use pax(1) in preference to mknod(8) to create device
 		nodes more efficiently; use mount_tmpfs(8) in preference to
 		mount_mfs(8) when creating a memory file system. [apb 20071215]
