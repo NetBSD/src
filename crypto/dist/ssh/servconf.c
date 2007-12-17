@@ -1,5 +1,5 @@
-/*	$NetBSD: servconf.c,v 1.1.1.22 2007/03/10 22:35:45 christos Exp $	*/
-/* $OpenBSD: servconf.c,v 1.170 2007/03/01 10:28:02 dtucker Exp $ */
+/*	$NetBSD: servconf.c,v 1.1.1.23 2007/12/17 20:15:22 christos Exp $	*/
+/* $OpenBSD: servconf.c,v 1.172 2007/04/23 10:15:39 dtucker Exp $ */
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -556,7 +556,6 @@ match_cfg_line(char **condition, int line, const char *user, const char *host,
 				debug("connection from %.100s matched 'Host "
 				    "%.100s' at line %d", host, arg, line);
 		} else if (strcasecmp(attrib, "address") == 0) {
-			debug("address '%s' arg '%s'", address, arg);
 			if (!address) {
 				result = 0;
 				continue;
@@ -1345,8 +1344,4 @@ parse_server_config(ServerOptions *options, const char *filename, Buffer *conf,
 	if (bad_options > 0)
 		fatal("%s: terminating, %d bad configuration options",
 		    filename, bad_options);
-
-	/* challenge-response is implemented via keyboard interactive */
-	if (options->challenge_response_authentication == 1)
-		options->kbd_interactive_authentication = 1;
 }

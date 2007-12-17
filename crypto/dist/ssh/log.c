@@ -1,5 +1,5 @@
-/*	$NetBSD: log.c,v 1.1.1.11 2006/09/28 21:15:10 christos Exp $	*/
-/* $OpenBSD: log.c,v 1.39 2006/08/18 09:13:25 deraadt Exp $ */
+/*	$NetBSD: log.c,v 1.1.1.12 2007/12/17 20:15:15 christos Exp $	*/
+/* $OpenBSD: log.c,v 1.40 2007/05/17 07:50:31 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -43,6 +43,7 @@
 #include <string.h>
 #include <syslog.h>
 #include <unistd.h>
+#include <errno.h>
 #include <vis.h>
 
 #include "xmalloc.h"
@@ -278,6 +279,7 @@ do_log(LogLevel level, const char *fmt, va_list args)
 	char fmtbuf[MSGBUFSIZ];
 	char *txt = NULL;
 	int pri = LOG_INFO;
+	int saved_errno = errno;
 
 	if (level > log_level)
 		return;
@@ -331,4 +333,5 @@ do_log(LogLevel level, const char *fmt, va_list args)
 		syslog_r(pri, &sdata, "%.500s", fmtbuf);
 		closelog_r(&sdata);
 	}
+	errno = saved_errno;
 }

@@ -1,5 +1,5 @@
-/*	$NetBSD: sshd.c,v 1.1.1.25 2007/03/10 22:35:57 christos Exp $	*/
-/* $OpenBSD: sshd.c,v 1.349 2007/02/21 11:00:05 dtucker Exp $ */
+/*	$NetBSD: sshd.c,v 1.1.1.26 2007/12/17 20:15:36 christos Exp $	*/
+/* $OpenBSD: sshd.c,v 1.351 2007/05/22 10:18:52 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -52,7 +52,6 @@
 #include <sys/time.h>
 
 #include <errno.h>
-#include <signal.h>
 #include <fcntl.h>
 #include <netdb.h>
 #include <paths.h>
@@ -1359,6 +1358,10 @@ main(int ac, char **av)
 
 	/* Fill in default values for those options not explicitly set. */
 	fill_default_server_options(&options);
+
+	/* challenge-response is implemented via keyboard interactive */
+	if (options.challenge_response_authentication)
+		options.kbd_interactive_authentication = 1;
 
 	/* set default channel AF */
 	channel_set_af(options.address_family);
