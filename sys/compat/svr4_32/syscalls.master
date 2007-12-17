@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.14 2007/12/17 21:48:23 dsl Exp $
+	$NetBSD: syscalls.master,v 1.15 2007/12/17 21:58:34 dsl Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -364,8 +364,12 @@
 			    netbsd32_size_t nbyte, svr4_32_off64_t off); }
 223	STD		{ netbsd32_ssize_t svr4_32_sys_pwrite64(int fd, \
 			    const netbsd32_voidp buf, netbsd32_size_t nbyte, svr4_32_off64_t off); }
-224	STD		{ int svr4_32_sys_creat64(netbsd32_charp path, int mode); }
-225	STD		{ int svr4_32_sys_open64(netbsd32_charp path, int flags, \
+#define svr4_32_sys_creat64 svr4_32_sys_creat
+#define svr4_32_sys_creat64_args svr4_32_sys_creat_args
+224	NOARGS		{ int svr4_32_sys_creat64(netbsd32_charp path, int mode); }
+#define svr4_32_sys_open64 svr4_32_sys_open
+#define svr4_32_sys_open64_args svr4_32_sys_open_args
+225	NOARGS		{ int svr4_32_sys_open64(netbsd32_charp path, int flags, \
 			    int mode); }
 226	UNIMPL		rpcsys
 227	UNIMPL
