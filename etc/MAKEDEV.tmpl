@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.99 2007/12/16 16:09:27 apb Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.100 2007/12/17 04:29:50 riz Exp $
 #
 # Copyright (c) 2003,2007 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -652,6 +652,7 @@ all)
 	makedev bthub
 	makedev cfs
 	makedev putter
+	makedev drvctl
 	makedev local # do this last
 	;;
 
