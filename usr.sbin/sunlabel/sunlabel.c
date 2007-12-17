@@ -1,4 +1,4 @@
-/* $NetBSD: sunlabel.c,v 1.18 2007/12/15 19:44:57 perry Exp $ */
+/* $NetBSD: sunlabel.c,v 1.19 2007/12/17 18:18:21 apb Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -36,9 +36,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: sunlabel.c,v 1.18 2007/12/15 19:44:57 perry Exp $");
+__RCSID("$NetBSD: sunlabel.c,v 1.19 2007/12/17 18:18:21 apb Exp $");
 #endif
 
 #include <stdio.h>
