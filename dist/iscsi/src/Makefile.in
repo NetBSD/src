@@ -64,7 +64,7 @@ iscsifs: iscsifs.o iscsi.o util.o initiator.o parameters.o conffile.o virtdir.o
 
 osd_ops.o: $(INCLUDE)/iscsiutil.h $(INCLUDE)/osd.h $(INCLUDE)/osd_ops.h osd_ops.c
 util.o: util.c $(INCLUDE)/iscsiutil.h
-parameters.o: parameters.c $(INCLUDE)/parameters.h $(INCLUDE)/iscsiutil.h md5.c 
+parameters.o: parameters.c $(INCLUDE)/parameters.h $(INCLUDE)/iscsiutil.h 
 usocktest.o: usocktest.c $(INCLUDE)/iscsiutil.h
 disk.o: disk.c  $(INCLUDE)/device.h $(INCLUDE)/iscsiutil.h $(INCLUDE)/iscsi.h
 osd.o: osd.c $(INCLUDE)/osd.h $(INCLUDE)/device.h $(INCLUDE)/iscsiutil.h $(INCLUDE)/iscsi.h
