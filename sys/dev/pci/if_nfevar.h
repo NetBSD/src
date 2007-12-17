@@ -1,4 +1,4 @@
-/*	$NetBSD: if_nfevar.h,v 1.4 2007/12/09 20:28:09 jmcneill Exp $	*/
+/*	$NetBSD: if_nfevar.h,v 1.5 2007/12/17 12:41:07 tsutsui Exp $	*/
 /*	$OpenBSD: if_nfevar.h,v 1.11 2006/02/19 13:57:02 damien Exp $	*/
 
 /*-
@@ -79,11 +79,12 @@ struct nfe_softc {
 
 	int			sc_if_flags;
 	u_int			sc_flags;
-#define NFE_JUMBO_SUP	0x01
-#define NFE_40BIT_ADDR	0x02
-#define NFE_HW_CSUM	0x04
-#define NFE_HW_VLAN	0x08
-#define NFE_USE_JUMBO	0x10
+#define NFE_JUMBO_SUP		0x01
+#define NFE_40BIT_ADDR		0x02
+#define NFE_HW_CSUM		0x04
+#define NFE_HW_VLAN		0x08
+#define NFE_USE_JUMBO		0x10
+#define NFE_CORRECT_MACADDR	0x20
 
 	uint32_t		rxtxctl;
 	uint8_t			mii_phyaddr;
