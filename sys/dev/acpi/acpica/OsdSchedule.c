@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdSchedule.c,v 1.3 2007/12/15 00:39:25 perry Exp $	*/
+/*	$NetBSD: OsdSchedule.c,v 1.4 2007/12/17 15:02:31 jmcneill Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdSchedule.c,v 1.3 2007/12/15 00:39:25 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdSchedule.c,v 1.4 2007/12/17 15:02:31 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -202,7 +202,7 @@ AcpiOsStall(UINT32 Microseconds)
 }
 
 /*
- * AcpiOsStall:
+ * AcpiOsGetTimer:
  *
  *	Get the current system time in 100 nanosecond units
  */
