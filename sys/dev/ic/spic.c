@@ -1,4 +1,4 @@
-/*	$NetBSD: spic.c,v 1.10 2007/12/09 20:28:00 jmcneill Exp $	*/
+/*	$NetBSD: spic.c,v 1.11 2007/12/17 19:51:10 christos Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spic.c,v 1.10 2007/12/09 20:28:00 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spic.c,v 1.11 2007/12/17 19:51:10 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -298,6 +298,28 @@ spic_attach(struct spic_softc *sc)
 	return;
 }
 
+bool
+spic_suspend(device_t dev)
+{
+	struct spic_softc *sc = device_private(dev);
+
+	callout_stop(&sc->sc_poll);
+
+	return true;
+}
+
+bool
+spic_resume(device_t dev)
+{
+	struct spic_softc *sc = device_private(dev);
+
+	spic_call1(sc, 0x82);
+	spic_call2(sc, 0x81, 0xff);
+	spic_call1(sc, 0x92);	/* or 0x82 */
+
+	callout_reset(&sc->sc_poll, POLLRATE, spictimeout, sc);
+	return true;
+}
 
 static int
 spic_enable(void *v)
