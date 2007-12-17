@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.168 2007/12/17 14:38:40 joerg Exp $
+$NetBSD: UPDATING,v 1.169 2007/12/17 23:59:41 wiz Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -19,7 +19,7 @@ Recent changes:
 20071209:
 	The acpiec(4) driver has been split into two attachments. If you
 	get ACPI errors before the attachment, please update your kernel
-	configuration file appropiately or see GENERIC for more details.
+	configuration file appropriately or see GENERIC for more details.
 
 20071115:
 	The it(4) driver has been renamed to itesio(4) and the old port
