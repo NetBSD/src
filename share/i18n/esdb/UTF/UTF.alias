@@ -1,7 +1,7 @@
-# $NetBSD: UTF.alias,v 1.4 2005/10/16 19:49:16 wiz Exp $
+# $NetBSD: UTF.alias,v 1.5 2007/12/17 14:06:57 joerg Exp $
 
 7		utf-7
-8		utf-8
+8		utf-8 utf8
 16		utf-16 ucs-2 unicode
 16LE		utf-16le ucs-2le unicodelittle
 16BE		utf-16be ucs-2be unicodebig
