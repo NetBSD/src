@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.1 2007/12/17 19:09:45 garbled Exp $	*/
+/*	$NetBSD: boot.c,v 1.2 2007/12/17 19:54:32 garbled Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -38,11 +38,10 @@
 #include <sys/boot_flag.h>
 #include <machine/bootinfo.h>
 #include <machine/cpu.h>
-#include <machine/residual.h>
+#include <machine/iplcb.h>
 #include <powerpc/spr.h>
 
 #include "boot.h"
-#include "iplcb.h"
 
 char *names[] = {
 	"in()",
