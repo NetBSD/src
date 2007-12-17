@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootfloppy,v 1.7 2006/06/02 22:11:52 hubertf Exp $
+#	$NetBSD: Makefile.bootfloppy,v 1.8 2007/12/17 13:47:30 joerg Exp $
 #
 # Makefile snippet to create a set of USTAR floppies
 #
@@ -18,7 +18,6 @@
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
 
-FLOPPYMAX?=		1
 FLOPPYSIZE?=		2880
 .if defined(FLOPPYSIZE) && (${FLOPPYSIZE} != 2880)
 FLOPPYMETAFILE!=	printf "USTAR.volsize.%o" ${FLOPPYSIZE}
