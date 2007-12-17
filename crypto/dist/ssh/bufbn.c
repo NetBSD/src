@@ -1,5 +1,5 @@
-/*	$NetBSD: bufbn.c,v 1.1.1.2 2007/03/10 22:35:30 christos Exp $	*/
-/* $OpenBSD: bufbn.c,v 1.5 2007/02/14 14:32:00 stevesk Exp $*/
+/*	$NetBSD: bufbn.c,v 1.1.1.3 2007/12/17 20:15:07 christos Exp $	*/
+/* $OpenBSD: bufbn.c,v 1.6 2007/06/02 09:04:58 djm Exp $*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -200,12 +200,14 @@ buffer_get_bignum2_ret(Buffer *buffer, BIGNUM *value)
 		return (-1);
 	}
 	if (len > 8 * 1024) {
-		error("buffer_get_bignum2_ret: cannot handle BN of size %d", len);
+		error("buffer_get_bignum2_ret: cannot handle BN of size %d",
+		    len);
 		xfree(bin);
 		return (-1);
 	}
 	if (BN_bin2bn(bin, len, value) == NULL) {
 		error("buffer_get_bignum2_ret: BN_bin2bn failed");
+		xfree(bin);
 		return (-1);
 	}
 	xfree(bin);
