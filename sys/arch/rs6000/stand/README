@@ -1,0 +1,17 @@
+$NetBSD: README,v 1.1.2.2 2007/12/17 19:12:00 garbled Exp $
+
+Contents.
+	boot        NetBSD/rs6000 boot-loader
+	mkbootimage Make bootable netboot image.
+
+
+How to make bootable floppy disk image.
+
+	 $ cd /sys/arch/rs6000/stand
+	 $ make
+	    For cross compile environment:
+	        $ for i in common boot; do (cd $i; ppc-make); done
+	        $ (cd mkbootimage; make)
+	 $ mkbootimage/mkbootimage boot/boot /tmp/boot.fs
+	    To make kernel attached bootable network image:
+		    $ mkbootimage/mkbootimage -b boot/boot -k ../compile/YOUR_KERNEL/netbsd /tmp/boot.fs
