@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.107 2007/12/13 19:58:42 degroote Exp $	*/
+/*	$NetBSD: i82557.c,v 1.108 2007/12/17 12:18:31 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.107 2007/12/13 19:58:42 degroote Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.108 2007/12/17 12:18:31 tsutsui Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -753,7 +753,7 @@ fxp_write_eeprom(struct fxp_softc *sc, u_int16_t *data, int offset, int words)
 		/* Shift in write opcode, address, data. */
 		CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, FXP_EEPROM_EECS);
 		fxp_eeprom_shiftin(sc, FXP_EEPROM_OPC_WRITE, 3);
-		fxp_eeprom_shiftin(sc, offset, sc->sc_eeprom_size);
+		fxp_eeprom_shiftin(sc, i + offset, sc->sc_eeprom_size);
 		fxp_eeprom_shiftin(sc, data[i], 16);
 		CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, 0);
 		DELAY(4);
