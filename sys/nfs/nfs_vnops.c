@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.261 2007/12/08 19:29:52 pooka Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.262 2007/12/17 16:04:31 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.261 2007/12/08 19:29:52 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.262 2007/12/17 16:04:31 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_nfs.h"
@@ -1654,9 +1654,10 @@ nfs_create(v)
 	struct nfsnode *dnp, *np = (struct nfsnode *)0;
 	struct vnode *newvp = (struct vnode *)0;
 	char *bpos, *dpos, *cp2;
-	int error, wccflag = NFSV3_WCCRATTR, gotvp = 0, fmode = 0;
+	int error, wccflag = NFSV3_WCCRATTR, gotvp = 0;
 	struct mbuf *mreq, *mrep, *md, *mb;
 	const int v3 = NFS_ISV3(dvp);
+	u_int32_t excl_mode = NFSV3CREATE_UNCHECKED;
 
 	/*
 	 * Oops, not for me..
@@ -1667,8 +1668,9 @@ nfs_create(v)
 	KASSERT(vap->va_type == VREG);
 
 #ifdef VA_EXCLUSIVE
-	if (vap->va_vaflags & VA_EXCLUSIVE)
-		fmode |= O_EXCL;
+	if (vap->va_vaflags & VA_EXCLUSIVE) {
+		excl_mode = NFSV3CREATE_EXCLUSIVE;
+	}
 #endif
 again:
 	error = 0;
@@ -1681,7 +1683,7 @@ again:
 #ifndef NFS_V2_ONLY
 	if (v3) {
 		nfsm_build(tl, u_int32_t *, NFSX_UNSIGNED);
-		if (fmode & O_EXCL) {
+		if (excl_mode == NFSV3CREATE_EXCLUSIVE) {
 			*tl = txdr_unsigned(NFSV3CREATE_EXCLUSIVE);
 			nfsm_build(tl, u_int32_t *, NFSX_V3CREATEVERF);
 #ifdef INET
@@ -1695,7 +1697,7 @@ again:
 #endif
 			*tl = ++create_verf;
 		} else {
-			*tl = txdr_unsigned(NFSV3CREATE_UNCHECKED);
+			*tl = txdr_unsigned(excl_mode);
 			nfsm_v3attrbuild(vap, false);
 		}
 	} else
@@ -1728,11 +1730,16 @@ again:
 		/*
 		 * nfs_request maps NFSERR_NOTSUPP to ENOTSUP.
 		 */
-		if (v3 && (fmode & O_EXCL) && error == ENOTSUP) {
-			fmode &= ~O_EXCL;
-			goto again;
+		if (v3 && error == ENOTSUP) {
+			if (excl_mode == NFSV3CREATE_EXCLUSIVE) {
+				excl_mode = NFSV3CREATE_GUARDED;
+				goto again;
+			} else if (excl_mode == NFSV3CREATE_GUARDED) {
+				excl_mode = NFSV3CREATE_UNCHECKED;
+				goto again;
+			}
 		}
-	} else if (v3 && (fmode & O_EXCL)) {
+	} else if (v3 && (excl_mode == NFSV3CREATE_EXCLUSIVE)) {
 		struct timespec ts;
 
 		getnanotime(&ts);
