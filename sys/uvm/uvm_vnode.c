@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.89.2.1 2007/12/04 13:04:07 ad Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.89.2.2 2007/12/18 15:24:32 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.89.2.1 2007/12/04 13:04:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.89.2.2 2007/12/18 15:24:32 ad Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -180,20 +180,16 @@ uvn_get(struct uvm_object *uobj, voff_t offset,
 	UVMHIST_LOG(ubchist, "vp %p off 0x%x", vp, (int)offset, 0,0);
 
 	if ((access_type & VM_PROT_WRITE) == 0 && (flags & PGO_LOCKED) == 0) {
-		mutex_exit(&vp->v_interlock);
 		vn_ra_allocctx(vp);
 		uvm_ra_request(vp->v_ractx, advice, uobj, offset,
 		    *npagesp << PAGE_SHIFT);
-		mutex_enter(&vp->v_interlock);
 	}
 
 	error = VOP_GETPAGES(vp, offset, pps, npagesp, centeridx,
 			     access_type, advice, flags);
 
-	KASSERT(((flags & PGO_LOCKED) != 0 &&
-		     mutex_owned(&vp->v_interlock)) ||
-		    ((flags & PGO_LOCKED) == 0 &&
-		     !mutex_owned(&vp->v_interlock)));
+	KASSERT(((flags & PGO_LOCKED) != 0 && mutex_owned(&vp->v_interlock)) ||
+	    (flags & PGO_LOCKED) == 0);
 	return error;
 }
 
