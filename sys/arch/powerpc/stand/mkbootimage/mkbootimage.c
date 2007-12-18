@@ -1,11 +1,11 @@
-/*	$NetBSD: mkbootimage.c,v 1.1 2007/12/18 18:19:07 garbled Exp $	*/
+/*	$NetBSD: mkbootimage.c,v 1.2 2007/12/18 18:26:36 garbled Exp $	*/
 
 /*-
- * Copyright (C) 2006 Tim Rightnour
- * Copyright (C) 1999, 2000 NONAKA Kimihiro (nonaka@NetBSD.org)
- * Copyright (C) 1996, 1997, 1998, 1999 Cort Dougan (cort@fsmlasb.com)
- * Copyright (C) 1996, 1997, 1998, 1999 Paul Mackeras (paulus@linuxcare.com)
+ * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Tim Rightnour and NONAKA Kimihiro
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -17,20 +17,23 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Gary Thomas.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
 
 #if HAVE_NBTOOL_CONFIG_H
@@ -52,12 +55,17 @@
 #include <sys/types.h>
 #include <sys/uio.h>
 
+#ifdef __NetBSD__
+#include <sys/sysctl.h>
+#include <sys/utsname.h>
+#endif
+
 /* BFD ELF headers */
 #include <elf/common.h>
 #include <elf/external.h>
 
 #include "byteorder.h"
-#include "magic.h"
+#include "prep_magic.h"
 
 /* Globals */
 
@@ -65,6 +73,10 @@ int saloneflag = 0;
 Elf32_External_Ehdr hdr, khdr;
 struct stat elf_stat;
 unsigned char mbr[512];
+char *sup_plats[] = {
+	"prep",
+	NULL,
+};
 
 /*
  * Macros to get values from multi-byte ELF header fields.  These assume
@@ -79,13 +91,19 @@ static void usage(void);
 static int open_file(const char *, char *, Elf32_External_Ehdr *,
     struct stat *);
 static void check_mbr(int, int, char *);
+static int prep_build_image(char *, char *, char *, char *, int);
 int main(int, char **);
 
 static void
 usage(void)
 {
-	fprintf(stderr, "usage: %s [-ls] [-b bootfile] [-k kernel] [-r rawdev]"
-	    " bootimage\n", getprogname());
+#ifdef __NetBSD__
+	fprintf(stderr, "usage: %s [-ls] [-m machine_arch] [-b bootfile] "
+	    "[-k kernel] [-r rawdev] bootimage\n", getprogname());
+#else
+	fprintf(stderr, "usage: %s [-ls] -m machine_arch [-b bootfile] "
+	    "[-k kernel] [-r rawdev] bootimage\n", getprogname());
+#endif
 	exit(1);
 }
 
@@ -121,7 +139,7 @@ open_file(const char *ftype, char *file, Elf32_External_Ehdr *hdr,
 }
 
 static void
-check_mbr(int prep_fd, int lfloppyflag, char *rawdev)
+prep_check_mbr(int prep_fd, int lfloppyflag, char *rawdev)
 {
 	int raw_fd;
 	unsigned long entry, length;
@@ -239,60 +257,23 @@ check_mbr(int prep_fd, int lfloppyflag, char *rawdev)
 	write(prep_fd, &length, sizeof(length));  
 }
 
-int
-main(int argc, char **argv)
+static int
+prep_build_image(char *kernel, char *boot, char *rawdev, char *outname,
+    int lflag)
 {
 	unsigned char *elf_img = NULL, *kern_img = NULL;
-	int i, ch, tmp, kgzlen, err, lfloppyflag=0;
+	int i, ch, tmp, kgzlen, err;
 	int elf_fd, prep_fd, kern_fd, elf_img_len = 0;
 	off_t lenpos, kstart, kend;
 	unsigned long length;
 	long flength;
 	gzFile gzf;
 	struct stat kern_stat;
-	char *kernel = NULL, *boot = NULL, *rawdev = NULL;
 	Elf32_External_Phdr phdr;
-
-	setprogname(argv[0]);
-	kern_len = 0;
-
-	while ((ch = getopt(argc, argv, "b:k:lr:s")) != -1)
-		switch (ch) {
-		case 'b':
-			boot = optarg;
-			break;
-		case 'k':
-			kernel = optarg;
-			break;
-		case 'l':
-			lfloppyflag = 1;
-			break;
-		case 'r':
-			rawdev = optarg;
-			break;
-		case 's':
-			saloneflag = 1;
-			break;
-		case '?':
-		default:
-			usage();
-			/* NOTREACHED */
-		}
-	argc -= optind;
-	argv += optind;
-
-	if (argc < 1)
-		usage();
-
-	if (kernel == NULL)
-		kernel = "/netbsd";
-
-	if (boot == NULL)
-		boot = "/usr/mdec/boot";
 
 	elf_fd = open_file("bootloader", boot, &hdr, &elf_stat);
 	kern_fd = open_file("kernel", kernel, &khdr, &kern_stat);
-	kern_len = kern_stat.st_size + MAGICSIZE + KERNLENSIZE;
+	kern_len = kern_stat.st_size + PREP_MAGICSIZE + KERNLENSIZE;
 
 	for (i = 0; i < ELFGET16(hdr.e_phnum); i++) {
 		lseek(elf_fd, ELFGET32(hdr.e_phoff) + sizeof(phdr) * i,
@@ -311,15 +292,15 @@ main(int argc, char **argv)
 
 		break;
 	}
-	if ((prep_fd = open(argv[0], O_RDWR|O_TRUNC, 0)) < 0) {
+	if ((prep_fd = open(outname, O_RDWR|O_TRUNC, 0)) < 0) {
 		/* we couldn't open it, it must be new */
-		prep_fd = creat(argv[0], 0644);
+		prep_fd = creat(outname, 0644);
 		if (prep_fd < 0)
-			errx(2, "Can't open output '%s': %s", argv[0],
+			errx(2, "Can't open output '%s': %s", outname,
 			    strerror(errno));
 	}
 
-	check_mbr(prep_fd, lfloppyflag, rawdev);
+	prep_check_mbr(prep_fd, lflag, rawdev);
 
 	/* Set file pos. to 2nd sector where image will be written */
 	lseek(prep_fd, 0x400, SEEK_SET);
@@ -353,7 +334,7 @@ main(int argc, char **argv)
 		errx(3, "%s", gzerror(gzf, &err));
 
 	/* write a magic number and size before the kernel */
-	write(prep_fd, (void *)magic, MAGICSIZE);
+	write(prep_fd, (void *)prep_magic, PREP_MAGICSIZE);
 	lenpos = lseek(prep_fd, 0, SEEK_CUR);
 	tmp = sa_htobe32(0);
 	write(prep_fd, (void *)&tmp, KERNLENSIZE);
@@ -375,19 +356,108 @@ main(int argc, char **argv)
 	write(prep_fd, &length, sizeof(length));
 
 	flength = 0x400 + elf_img_len + 8 + kgzlen;
-	if (lfloppyflag)
+	if (lflag)
 		flength -= (5760 * 512);
 	else
 		flength -= (2880 * 512);
 	if (flength > 0 && !saloneflag)
 		fprintf(stderr, "%s: Image %s is %d bytes larger than single"
 		    " floppy. Can only be used for netboot.\n", getprogname(),
-		    argv[0], flength);
+		    outname, flength);
 
 	free(kern_img);
 	close(kern_fd);
 	close(prep_fd);
 	close(elf_fd);
 
-	return 0;
+	return(0);
+}	
+
+int
+main(int argc, char **argv)
+{
+	int ch, lfloppyflag=0;
+	char *kernel = NULL, *boot = NULL, *rawdev = NULL, *outname = NULL;
+	char *march = NULL;
+#ifdef __NetBSD__	
+	char machine_arch[SYS_NMLN];
+	int mib[2] = { CTL_HW, HW_MACHINE_ARCH };
+#endif
+	
+	setprogname(argv[0]);
+	kern_len = 0;
+
+	while ((ch = getopt(argc, argv, "b:k:lm:r:s")) != -1)
+		switch (ch) {
+		case 'b':
+			boot = optarg;
+			break;
+		case 'k':
+			kernel = optarg;
+			break;
+		case 'l':
+			lfloppyflag = 1;
+			break;
+		case 'm':
+			march = optarg;
+			break;
+		case 'r':
+			rawdev = optarg;
+			break;
+		case 's':
+			saloneflag = 1;
+			break;
+		case '?':
+		default:
+			usage();
+			/* NOTREACHED */
+		}
+	argc -= optind;
+	argv += optind;
+
+	if (argc < 1)
+		usage();
+
+	if (kernel == NULL)
+		kernel = "/netbsd";
+
+	if (boot == NULL)
+		boot = "/usr/mdec/boot";
+
+	if (march == NULL) {
+		int i;
+#ifdef __NetBSD__
+		size_t len = sizeof(machine_arch);
+
+		if (sysctl(mib, sizeof (mib) / sizeof (mib[0]), machine_arch,
+			&len, NULL, 0) != -1) {
+			for (i=0; sup_plats[i] != NULL; i++) {
+				if (strcmp(sup_plats[i], machine_arch) == 0) {
+					march = strdup(sup_plats[i]);
+					break;
+				}
+			}
+		}
+		if (march == NULL) {
+#endif
+			fprintf(stderr, "You are not running this program on"
+			    " the target machine.  You must supply the\n"
+			    "machine architecture with the -m flag\n");
+			fprintf(stderr, "Supported architectures: ");
+			for (i=0; sup_plats[i] != NULL; i++)
+				fprintf(stderr, " %s", sup_plats[i]);
+			fprintf(stderr, "\n\n");
+			usage();
+#ifdef __NetBSD__
+		}
+#endif
+	}
+		
+	outname = argv[0];
+
+	if (strcmp(march, "prep") == 0)
+		return(prep_build_image(kernel, boot, rawdev, outname,
+			   lfloppyflag));
+
+	return(0);
 }
