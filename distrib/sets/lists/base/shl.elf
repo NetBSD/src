@@ -1,0 +1,228 @@
+# $NetBSD: shl.elf,v 1.134.2.2 2007/12/18 09:17:22 dogcow Exp $
+# Note: libtermcap and libtermlib are hardlinked and share the same version.
+./lib/libc.so					base-sys-shlib
+./lib/libc.so.12				base-sys-shlib
+./lib/libcrypt.so				base-sys-shlib
+./lib/libcrypt.so.0				base-sys-shlib
+./lib/libcrypto.so				base-crypto-shlib	crypto
+./lib/libcrypto.so.3				base-crypto-shlib	crypto
+./lib/libedit.so				base-sys-shlib
+./lib/libedit.so.2				base-sys-shlib
+./lib/libevent.so				base-sys-shlib
+./lib/libevent.so.1				base-sys-shlib
+./lib/libipsec.so				base-net-shlib
+./lib/libipsec.so.2				base-net-shlib
+./lib/libkvm.so					base-sys-shlib
+./lib/libkvm.so.5				base-sys-shlib
+./lib/libm.so					base-sys-shlib
+./lib/libm.so.0					base-sys-shlib
+./lib/libprop.so				base-sys-shlib
+./lib/libprop.so.0				base-sys-shlib
+./lib/libradius.so				base-sys-shlib
+./lib/libradius.so.1				base-sys-shlib
+./lib/libtermcap.so				base-sys-shlib
+./lib/libtermcap.so.0				base-sys-shlib
+./lib/libtermlib.so				base-sys-shlib
+./lib/libtermlib.so.0				base-sys-shlib
+./lib/libutil.so				base-sys-shlib
+./lib/libutil.so.7				base-sys-shlib
+./lib/libz.so					base-sys-shlib
+./lib/libz.so.1					base-sys-shlib
+./libexec/ld.elf_so				base-sys-shlib
+./usr/lib/i18n/libBIG5.so			base-i18n-shlib
+./usr/lib/i18n/libBIG5.so.4			base-i18n-shlib
+./usr/lib/i18n/libDECHanyu.so			base-i18n-shlib
+./usr/lib/i18n/libDECHanyu.so.4			base-i18n-shlib
+./usr/lib/i18n/libEUC.so			base-i18n-shlib
+./usr/lib/i18n/libEUC.so.4			base-i18n-shlib
+./usr/lib/i18n/libEUCTW.so			base-i18n-shlib
+./usr/lib/i18n/libEUCTW.so.4			base-i18n-shlib
+./usr/lib/i18n/libGBK2K.so			base-i18n-shlib
+./usr/lib/i18n/libGBK2K.so.4			base-i18n-shlib
+./usr/lib/i18n/libHZ.so				base-i18n-shlib
+./usr/lib/i18n/libHZ.so.4			base-i18n-shlib
+./usr/lib/i18n/libISO2022.so			base-i18n-shlib
+./usr/lib/i18n/libISO2022.so.4			base-i18n-shlib
+./usr/lib/i18n/libJOHAB.so			base-i18n-shlib
+./usr/lib/i18n/libJOHAB.so.4			base-i18n-shlib
+./usr/lib/i18n/libMSKanji.so			base-i18n-shlib
+./usr/lib/i18n/libMSKanji.so.4			base-i18n-shlib
+./usr/lib/i18n/libUES.so			base-i18n-shlib
+./usr/lib/i18n/libUES.so.4			base-i18n-shlib
+./usr/lib/i18n/libUTF1632.so			base-i18n-shlib
+./usr/lib/i18n/libUTF1632.so.4			base-i18n-shlib
+./usr/lib/i18n/libUTF7.so			base-i18n-shlib
+./usr/lib/i18n/libUTF7.so.4			base-i18n-shlib
+./usr/lib/i18n/libUTF8.so			base-i18n-shlib
+./usr/lib/i18n/libUTF8.so.4			base-i18n-shlib
+./usr/lib/i18n/libVIQR.so			base-i18n-shlib
+./usr/lib/i18n/libVIQR.so.4			base-i18n-shlib
+./usr/lib/i18n/libZW.so				base-i18n-shlib
+./usr/lib/i18n/libZW.so.4			base-i18n-shlib
+./usr/lib/i18n/libiconv_none.so			base-i18n-shlib
+./usr/lib/i18n/libiconv_none.so.4		base-i18n-shlib
+./usr/lib/i18n/libiconv_std.so			base-i18n-shlib
+./usr/lib/i18n/libiconv_std.so.4		base-i18n-shlib
+./usr/lib/i18n/libmapper_646.so			base-i18n-shlib
+./usr/lib/i18n/libmapper_646.so.4		base-i18n-shlib
+./usr/lib/i18n/libmapper_none.so		base-i18n-shlib
+./usr/lib/i18n/libmapper_none.so.4		base-i18n-shlib
+./usr/lib/i18n/libmapper_parallel.so		base-i18n-shlib
+./usr/lib/i18n/libmapper_parallel.so.4		base-i18n-shlib
+./usr/lib/i18n/libmapper_serial.so		base-i18n-shlib
+./usr/lib/i18n/libmapper_serial.so.4		base-i18n-shlib
+./usr/lib/i18n/libmapper_std.so			base-i18n-shlib
+./usr/lib/i18n/libmapper_std.so.4		base-i18n-shlib
+./usr/lib/i18n/libmapper_zone.so		base-i18n-shlib
+./usr/lib/i18n/libmapper_zone.so.4		base-i18n-shlib
+./usr/lib/libamu.so.2				base-obsolete		obsolete
+./usr/lib/libamu.so.3				base-amd-shlib
+./usr/lib/libarchive.so				base-sys-shlib
+./usr/lib/libarchive.so.2			base-sys-shlib
+./usr/lib/libasn1.so				base-krb5-shlib		kerberos
+./usr/lib/libasn1.so.6				base-krb5-shlib		kerberos
+./usr/lib/libbfd.so.8				base-sys-shlib		bfd
+./usr/lib/libbind9.so				base-bind-shlib
+./usr/lib/libbind9.so.0				base-bind-shlib
+./usr/lib/libbluetooth.so			base-sys-shlib
+./usr/lib/libbluetooth.so.3			base-sys-shlib
+./usr/lib/libbsdmalloc.so			base-sys-shlib
+./usr/lib/libbsdmalloc.so.0			base-sys-shlib
+./usr/lib/libbz2.so				base-sys-shlib
+./usr/lib/libbz2.so.1				base-sys-shlib
+./usr/lib/libc.so				base-sys-shlib
+./usr/lib/libc.so.12				base-sys-shlib
+./usr/lib/libcdk.so				base-obsolete		obsolete
+./usr/lib/libcdk.so.1				base-obsolete		obsolete
+./usr/lib/libcom_err.so				base-krb5-shlib		kerberos
+./usr/lib/libcom_err.so.4			base-krb5-shlib		kerberos
+./usr/lib/libcrypt.so				base-sys-shlib
+./usr/lib/libcrypt.so.0				base-sys-shlib
+./usr/lib/libcrypto.so				base-crypto-shlib	crypto
+./usr/lib/libcrypto.so.3			base-crypto-shlib	crypto
+./usr/lib/libcurses.so				base-sys-shlib
+./usr/lib/libcurses.so.6			base-sys-shlib
+./usr/lib/libdes.so				base-crypto-shlib	crypto
+./usr/lib/libdes.so.7				base-crypto-shlib	crypto
+./usr/lib/libdns.so				base-bind-shlib
+./usr/lib/libdns.so.0				base-bind-shlib
+./usr/lib/libedit.so				base-sys-shlib
+./usr/lib/libedit.so.2				base-sys-shlib
+./usr/lib/libevent.so				base-sys-shlib
+./usr/lib/libevent.so.1				base-sys-shlib
+./usr/lib/libform.so				base-sys-shlib
+./usr/lib/libform.so.5				base-sys-shlib
+./usr/lib/libg2c.so				base-sys-shlib		gcc=3
+./usr/lib/libg2c.so.2				base-sys-shlib		gcc=3
+./usr/lib/libgcc_s.so				base-sys-shlib		gcc
+./usr/lib/libgcc_s.so.1				base-sys-shlib		gcc
+./usr/lib/libgnumalloc.so			base-sys-shlib
+./usr/lib/libgnumalloc.so.0			base-sys-shlib
+./usr/lib/libgssapi.so				base-krb5-shlib		kerberos
+./usr/lib/libgssapi.so.5			base-krb5-shlib		kerberos
+./usr/lib/libhdb.so				base-krb5-shlib		kerberos
+./usr/lib/libhdb.so.9				base-krb5-shlib		kerberos
+./usr/lib/libintl.so				base-sys-shlib
+./usr/lib/libintl.so.0				base-sys-shlib
+./usr/lib/libipsec.so				base-net-shlib
+./usr/lib/libipsec.so.2				base-net-shlib
+./usr/lib/libisc.so				base-bind-shlib
+./usr/lib/libisc.so.0				base-bind-shlib
+./usr/lib/libisccc.so				base-bind-shlib
+./usr/lib/libisccc.so.0				base-bind-shlib
+./usr/lib/libisccfg.so				base-bind-shlib
+./usr/lib/libisccfg.so.0			base-bind-shlib
+./usr/lib/libiscsi.so				base-iscsi-shlib	iscsi
+./usr/lib/libiscsi.so.0				base-iscsi-shlib	iscsi
+./usr/lib/libkadm.so				base-obsolete		obsolete
+./usr/lib/libkadm.so.5				base-obsolete		obsolete
+./usr/lib/libkadm5clnt.so			base-krb5-shlib		kerberos
+./usr/lib/libkadm5clnt.so.8			base-krb5-shlib		kerberos
+./usr/lib/libkadm5srv.so			base-krb5-shlib		kerberos
+./usr/lib/libkadm5srv.so.9			base-krb5-shlib		kerberos
+./usr/lib/libkafs.so				base-krb5-shlib		kerberos
+./usr/lib/libkafs.so.7				base-krb5-shlib		kerberos
+./usr/lib/libkdb.so				base-obsolete		obsolete
+./usr/lib/libkdb.so.5				base-obsolete		obsolete
+./usr/lib/libkrb.so				base-obsolete		obsolete
+./usr/lib/libkrb.so.6				base-obsolete		obsolete
+./usr/lib/libkrb5.so				base-krb5-shlib		kerberos
+./usr/lib/libkrb5.so.20				base-krb5-shlib		kerberos
+./usr/lib/libkstream.so				base-obsolete		obsolete
+./usr/lib/libkstream.so.2			base-obsolete		obsolete
+./usr/lib/libkvm.so				base-sys-shlib
+./usr/lib/libkvm.so.5				base-sys-shlib
+./usr/lib/liblwres.so				base-bind-shlib
+./usr/lib/liblwres.so.0				base-bind-shlib
+./usr/lib/libm.so				base-sys-shlib
+./usr/lib/libm.so.0				base-sys-shlib
+./usr/lib/libmagic.so				base-sys-shlib
+./usr/lib/libmagic.so.1				base-sys-shlib
+./usr/lib/libmenu.so				base-sys-shlib
+./usr/lib/libmenu.so.5				base-sys-shlib
+./usr/lib/libobjc.so				base-sys-shlib		gcc
+./usr/lib/libobjc.so.2				base-sys-shlib		gcc
+./usr/lib/libossaudio.so			base-sys-shlib
+./usr/lib/libossaudio.so.0			base-sys-shlib
+./usr/lib/libpam.so				base-sys-shlib		pam
+./usr/lib/libpam.so.0				base-sys-shlib		pam
+./usr/lib/libpcap.so				base-net-shlib
+./usr/lib/libpcap.so.2				base-net-shlib
+./usr/lib/libpci.so				base-sys-shlib
+./usr/lib/libpci.so.1				base-sys-shlib
+./usr/lib/libposix.so				base-sys-shlib
+./usr/lib/libposix.so.0				base-sys-shlib
+./usr/lib/libprop.so				base-sys-shlib
+./usr/lib/libprop.so.0				base-sys-shlib
+./usr/lib/libpthread.so				base-sys-shlib
+./usr/lib/libpthread.so.0			base-sys-shlib
+./usr/lib/libpthread_dbg.so			base-sys-shlib
+./usr/lib/libpthread_dbg.so.0			base-obsolete		obsolete
+./usr/lib/libpthread_dbg.so.1			base-sys-shlib
+./usr/lib/libpuffs.so				base-sys-shlib
+./usr/lib/libpuffs.so.0				base-sys-shlib
+./usr/lib/libradius.so				base-net-shlib
+./usr/lib/libradius.so.1			base-net-shlib
+./usr/lib/librefuse.so				base-sys-shlib		puffs
+./usr/lib/librefuse.so.0			base-sys-shlib		puffs
+./usr/lib/libresolv.so				base-net-shlib
+./usr/lib/libresolv.so.1			base-net-shlib
+./usr/lib/libroken.so				base-krb5-shlib		kerberos
+./usr/lib/libroken.so.12			base-krb5-shlib		kerberos
+./usr/lib/librpcsvc.so				base-net-shlib
+./usr/lib/librpcsvc.so.0			base-net-shlib
+./usr/lib/librt.so				base-sys-shlib
+./usr/lib/librt.so.0				base-sys-shlib
+./usr/lib/libsdp.so				base-sys-shlib
+./usr/lib/libsdp.so.2				base-sys-shlib
+./usr/lib/libskey.so				base-sys-shlib		skey
+./usr/lib/libskey.so.1				base-sys-shlib		skey
+./usr/lib/libsl.so				base-krb5-shlib		kerberos
+./usr/lib/libsl.so.2				base-krb5-shlib		kerberos
+./usr/lib/libss.so				base-krb5-shlib		kerberos
+./usr/lib/libss.so.4				base-krb5-shlib		kerberos
+./usr/lib/libssh.so				base-secsh-shlib	crypto
+./usr/lib/libssh.so.2				base-obsolete		obsolete
+./usr/lib/libssh.so.3				base-obsolete		obsolete
+./usr/lib/libssh.so.4				base-obsolete		obsolete
+./usr/lib/libssh.so.5				base-obsolete		obsolete
+./usr/lib/libssh.so.6				base-obsolete		obsolete
+./usr/lib/libssh.so.7				base-secsh-shlib	crypto
+./usr/lib/libssl.so				base-crypto-shlib	crypto
+./usr/lib/libssl.so.4				base-crypto-shlib	crypto
+./usr/lib/libstdc++.so				base-sys-shlib		gcc
+./usr/lib/libstdc++.so.5			base-sys-shlib		gcc=3
+./usr/lib/libstdc++.so.6			base-sys-shlib		gcc=4
+./usr/lib/libtermcap.so				base-sys-shlib
+./usr/lib/libtermcap.so.0			base-sys-shlib
+./usr/lib/libtermlib.so				base-sys-shlib
+./usr/lib/libtermlib.so.0			base-sys-shlib
+./usr/lib/libusbhid.so				base-sys-shlib
+./usr/lib/libusbhid.so.1			base-sys-shlib
+./usr/lib/libutil.so				base-sys-shlib
+./usr/lib/libutil.so.7				base-sys-shlib
+./usr/lib/libwrap.so				base-net-shlib
+./usr/lib/libwrap.so.0				base-net-shlib
+./usr/lib/libz.so				base-sys-shlib
+./usr/lib/libz.so.1				base-sys-shlib
+./usr/libexec/ld.elf_so				base-sys-shlib
