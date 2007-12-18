@@ -1,5 +1,5 @@
-/*	$NetBSD: sshconnect2.c,v 1.30 2006/09/29 14:34:25 he Exp $	*/
-/* $OpenBSD: sshconnect2.c,v 1.162 2006/08/30 00:06:51 dtucker Exp $ */
+/*	$NetBSD: sshconnect2.c,v 1.31 2007/12/18 02:35:32 christos Exp $	*/
+/* $OpenBSD: sshconnect2.c,v 1.164 2007/05/17 23:53:41 jolan Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshconnect2.c,v 1.30 2006/09/29 14:34:25 he Exp $");
+__RCSID("$NetBSD: sshconnect2.c,v 1.31 2007/12/18 02:35:32 christos Exp $");
 
 #include <sys/queue.h>
 
@@ -39,6 +39,7 @@ __RCSID("$NetBSD: sshconnect2.c,v 1.30 2006/09/29 14:34:25 he Exp $");
 #include <sys/stat.h>
 
 #include <errno.h>
+#include <netdb.h>
 #include <stdio.h>
 #include <string.h>
 #include <signal.h>
@@ -1320,7 +1321,7 @@ userauth_hostbased(Authctxt *authctxt)
 	Sensitive *sensitive = authctxt->sensitive;
 	Buffer b;
 	u_char *signature, *blob;
-	char *chost, *pkalg, *p;
+	char *chost, *pkalg, *p, myname[NI_MAXHOST];
 	const char *service;
 	u_int blen, slen;
 	int ok, i, len, found = 0;
@@ -1344,7 +1345,16 @@ userauth_hostbased(Authctxt *authctxt)
 		return 0;
 	}
 	/* figure out a name for the client host */
-	p = get_local_name(packet_get_connection_in());
+	p = NULL;
+	if (packet_connection_is_on_socket())
+		p = get_local_name(packet_get_connection_in());
+	if (p == NULL) {
+		if (gethostname(myname, sizeof(myname)) == -1) {
+			verbose("userauth_hostbased: gethostname: %s", 
+			    strerror(errno));
+		} else
+			p = xstrdup(myname);
+	}
 	if (p == NULL) {
 		error("userauth_hostbased: cannot get local ipaddr/name");
 		key_free(private);

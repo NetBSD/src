@@ -1,5 +1,5 @@
-/*	$NetBSD: readconf.c,v 1.32 2007/03/10 23:05:25 christos Exp $	*/
-/* $OpenBSD: readconf.c,v 1.161 2007/01/21 01:45:35 stevesk Exp $ */
+/*	$NetBSD: readconf.c,v 1.33 2007/12/18 02:35:29 christos Exp $	*/
+/* $OpenBSD: readconf.c,v 1.162 2007/03/20 03:56:12 tedu Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -14,7 +14,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: readconf.c,v 1.32 2007/03/10 23:05:25 christos Exp $");
+__RCSID("$NetBSD: readconf.c,v 1.33 2007/12/18 02:35:29 christos Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
@@ -1281,7 +1281,7 @@ parse_forward(Forward *fwd, const char *fwdspec)
 	cp = p = xstrdup(fwdspec);
 
 	/* skip leading spaces */
-	while (*cp && isspace((unsigned char)*cp))
+	while (isspace((unsigned char)*cp))
 		cp++;
 
 	for (i = 0; i < 4; ++i)
