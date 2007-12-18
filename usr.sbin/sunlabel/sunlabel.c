@@ -1,4 +1,4 @@
-/* $NetBSD: sunlabel.c,v 1.20 2007/12/17 23:04:37 apb Exp $ */
+/* $NetBSD: sunlabel.c,v 1.21 2007/12/18 07:33:54 dogcow Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: sunlabel.c,v 1.20 2007/12/17 23:04:37 apb Exp $");
+__RCSID("$NetBSD: sunlabel.c,v 1.21 2007/12/18 07:33:54 dogcow Exp $");
 #endif
 
 #include <stdio.h>
@@ -930,10 +930,10 @@ update_spc(void)
  *  label, but we don't depend on that.
  */
 static int
-/*ARGSUSED*/
-print_ascii(struct field *f, int sofar __unused)
+print_ascii(struct field *f, int sofar)
 {
 	printf("%s: %.128s\n", f->tag, (char *)f->loc);
+	sofar = 0;
 	return 0;
 }
 
