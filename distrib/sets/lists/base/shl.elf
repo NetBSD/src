@@ -1,4 +1,4 @@
-# $NetBSD: shl.elf,v 1.133 2007/11/04 23:28:16 tls Exp $
+# $NetBSD: shl.elf,v 1.134 2007/12/18 09:17:21 dogcow Exp $
 # Note: libtermcap and libtermlib are hardlinked and share the same version.
 ./lib/libc.so					base-sys-shlib
 ./lib/libc.so.12				base-sys-shlib
@@ -206,7 +206,8 @@
 ./usr/lib/libssh.so.3				base-obsolete		obsolete
 ./usr/lib/libssh.so.4				base-obsolete		obsolete
 ./usr/lib/libssh.so.5				base-obsolete		obsolete
-./usr/lib/libssh.so.6				base-secsh-shlib	crypto
+./usr/lib/libssh.so.6				base-obsolete		obsolete
+./usr/lib/libssh.so.7				base-secsh-shlib	crypto
 ./usr/lib/libssl.so				base-crypto-shlib	crypto
 ./usr/lib/libssl.so.4				base-crypto-shlib	crypto
 ./usr/lib/libstdc++.so				base-sys-shlib		gcc
