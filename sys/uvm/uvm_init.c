@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_init.c,v 1.30.2.1 2007/12/04 13:04:00 ad Exp $	*/
+/*	$NetBSD: uvm_init.c,v 1.30.2.2 2007/12/18 15:24:28 ad Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.30.2.1 2007/12/04 13:04:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.30.2.2 2007/12/18 15:24:28 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.30.2.1 2007/12/04 13:04:00 ad Exp $")
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_pdpolicy.h>
+#include <uvm/uvm_readahead.h>
 
 /*
  * struct uvm: we store most global vars in this structure to make them
@@ -175,4 +176,10 @@ uvm_init(void)
 	 */
 
 	uvm_anon_init();
+
+	/*
+	 * init readahead module
+	 */
+
+	uvm_ra_init();
 }

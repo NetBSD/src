@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.147.2.3 2007/12/10 19:28:06 ad Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.147.2.4 2007/12/18 15:24:25 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.147.2.3 2007/12/10 19:28:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.147.2.4 2007/12/18 15:24:25 ad Exp $");
 
 #include "fs_union.h"
 #include "veriexec.h"
@@ -841,13 +841,14 @@ vn_ra_allocctx(struct vnode *vp)
 {
 	struct uvm_ractx *ra = NULL;
 
+	KASSERT(mutex_owned(&vp->v_interlock));
+
 	if (vp->v_type != VREG) {
 		return;
 	}
 	if (vp->v_ractx != NULL) {
 		return;
 	}
-	mutex_enter(&vp->v_interlock);
 	if (vp->v_ractx == NULL) {
 		mutex_exit(&vp->v_interlock);
 		ra = uvm_ra_allocctx();
@@ -857,7 +858,6 @@ vn_ra_allocctx(struct vnode *vp)
 			ra = NULL;
 		}
 	}
-	mutex_exit(&vp->v_interlock);
 	if (ra != NULL) {
 		uvm_ra_freectx(ra);
 	}
