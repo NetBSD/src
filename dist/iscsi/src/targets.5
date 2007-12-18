@@ -1,4 +1,4 @@
-.\" $NetBSD: targets.5,v 1.5 2007/12/09 09:16:42 agc Exp $
+.\" $NetBSD: targets.5,v 1.6 2007/12/18 20:31:50 agc Exp $
 .\"
 .\" Copyright © 2006 Alistair Crooks.  All rights reserved.
 .\"
@@ -26,7 +26,7 @@
 .\" NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 .\" SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 6, 2007
+.Dd December 18, 2007
 .Dt TARGETS 5
 .Os
 .Sh NAME
@@ -79,6 +79,10 @@ can be used for kilobytes (1024 bytes),
 megabytes (1024 kilobytes), gigabytes
 (1024 megabytes), and
 terabytes (1024 gigabytes) respectively.
+It is possible to use the word
+.Dq size
+to use the full size of the pre-existing regular file
+given in the extent name.
 .Pp
 The
 .Ar device
