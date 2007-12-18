@@ -1,4 +1,4 @@
-/*	$NetBSD: strfile.c,v 1.24 2007/12/15 19:44:40 perry Exp $	*/
+/*	$NetBSD: strfile.c,v 1.25 2007/12/18 08:45:03 dogcow Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -43,10 +43,12 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)strfile.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: strfile.c,v 1.24 2007/12/15 19:44:40 perry Exp $");
+__RCSID("$NetBSD: strfile.c,v 1.25 2007/12/18 08:45:03 dogcow Exp $");
 #endif
 #endif /* not lint */
 #endif /* __NetBSD__ */
+
+/* n.b.: this file is used at build-time - i.e. during build.sh. */
 
 # include	<sys/types.h>
 # include	<sys/param.h>
@@ -147,6 +149,10 @@ STR	*Firstch;			/* first chars of each string */
 #define NORETURN	__dead
 #else
 #define NORETURN
+#endif
+
+#ifndef __dead /* not NetBSD, presumably */
+#define __dead ;
 #endif
 
 void	add_offset(FILE *, off_t);
