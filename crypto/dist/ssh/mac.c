@@ -1,4 +1,4 @@
-/*	$NetBSD: mac.c,v 1.10 2007/12/18 02:35:28 christos Exp $	*/
+/*	$NetBSD: mac.c,v 1.11 2007/12/18 07:22:32 dogcow Exp $	*/
 /* $OpenBSD: mac.c,v 1.14 2007/06/07 19:37:34 pvalchev Exp $ */
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: mac.c,v 1.10 2007/12/18 02:35:28 christos Exp $");
+__RCSID("$NetBSD: mac.c,v 1.11 2007/12/18 07:22:32 dogcow Exp $");
 #include <sys/types.h>
 
 #include <openssl/hmac.h>
@@ -127,7 +127,7 @@ mac_compute(Mac *mac, u_int32_t seqno, u_char *data, int datalen)
 	u_char b[4], nonce[8];
 
 	if (mac->mac_len > sizeof(m))
-		fatal("mac_compute: mac too long %u %lu",
+		fatal("mac_compute: mac too long %u %zu",
 		    mac->mac_len, sizeof(m));
 
 	switch (mac->type) {
