@@ -1,4 +1,4 @@
-/*	$NetBSD: ipifuncs.c,v 1.12 2007/10/17 19:53:00 garbled Exp $ */
+/*	$NetBSD: ipifuncs.c,v 1.13 2007/12/18 07:17:10 joerg Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.12 2007/10/17 19:53:00 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.13 2007/12/18 07:17:10 joerg Exp $");
 
 /*
  * Interprocessor interrupt handlers.
@@ -69,6 +69,8 @@ __KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.12 2007/10/17 19:53:00 garbled Exp $"
 
 #include <ddb/db_output.h>
 
+#include "acpi.h"
+
 void x86_64_ipi_halt(struct cpu_info *);
 
 void x86_64_ipi_synch_fpu(struct cpu_info *);
@@ -80,6 +82,12 @@ void x86_64_reload_mtrr(struct cpu_info *);
 #define x86_64_reload_mtrr NULL
 #endif
 
+#if NACPI > 0
+void acpi_cpu_sleep(struct cpu_info *);
+#else
+#define	acpu_cpu_sleep NULL
+#endif
+
 void (*ipifunc[X86_NIPI])(struct cpu_info *) =
 {
 	x86_64_ipi_halt,
@@ -88,7 +96,8 @@ void (*ipifunc[X86_NIPI])(struct cpu_info *) =
 	x86_64_ipi_synch_fpu,
 	x86_64_reload_mtrr,
 	gdt_reload_cpu,
-	msr_write_ipi
+	msr_write_ipi,
+	acpi_cpu_sleep,
 };
 
 void
