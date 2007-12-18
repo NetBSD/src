@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.963 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.964 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -284,3 +284,4 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	MAKEDEV(8): Use pax(1) in preference to mknod(8) to create device
 		nodes more efficiently; use mount_tmpfs(8) in preference to
 		mount_mfs(8) when creating a memory file system. [apb 20071215]
+	openssh: import 4.7 [christos 20071217]
