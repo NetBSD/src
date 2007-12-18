@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakecode.S,v 1.2 2007/12/09 20:27:42 jmcneill Exp $	*/
+/*	$NetBSD: acpi_wakecode.S,v 1.3 2007/12/18 07:17:08 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@netbsd.org>
@@ -73,8 +73,8 @@
 #define _LOCORE
 
 #include <machine/psl.h>
-#include <machine/specialreg.h>
 #include <machine/segments.h>
+#include <machine/specialreg.h>
 
 #define	ACPI_WAKEUP_ADDR	0x3000
 
@@ -175,8 +175,7 @@ wakeup_32:
 	/* Enable SYSCALL extension and Long Mode */
 	movl	$MSR_EFER,%ecx
 	rdmsr
-	xorl	%eax,%eax
-	orl	$(EFER_LME|EFER_SCE),%eax
+	movl	WAKEUP_msr_efer + ACPI_WAKEUP_ADDR,%eax
 	wrmsr
 
 	/* Load temporary PML4, code will switch to full PML4 later */
@@ -199,12 +198,11 @@ wakeup_32:
 	.code64
 wakeup_64:
 
-	/* Reload normal segment registers with correct values */
+	/* Reload data segment with default value */
 	movw	$GSEL(GDATA_SEL, SEL_KPL),%ax
 	movw	%ax,%ds
-	movw	%ax,%es
-	movw	%ax,%ss
 
+	movq	WAKEUP_curcpu + ACPI_WAKEUP_ADDR,%r8
 	movq	WAKEUP_restorecpu + ACPI_WAKEUP_ADDR,%rbx
 
 	/* Continue with wakeup in the high-level wakeup code */
@@ -247,3 +245,8 @@ WAKEUP_restorecpu:	.quad 0
 WAKEUP_vbios_reset:	.byte 0
 	.global WAKEUP_beep_on_reset
 WAKEUP_beep_on_reset:	.byte 0
+
+	.global WAKEUP_curcpu
+WAKEUP_curcpu:		.quad 0
+	.global WAKEUP_msr_efer
+WAKEUP_msr_efer:	.long 0
