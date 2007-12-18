@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.87.2.3 2007/12/15 04:37:18 ad Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.87.2.4 2007/12/18 15:23:03 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.87.2.3 2007/12/15 04:37:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.87.2.4 2007/12/18 15:23:03 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -395,7 +395,6 @@ pipelock(struct pipe *pipe, int catch)
 	}
 
 	pipe->pipe_state |= PIPE_LOCKFL;
-	mutex_exit(pipe->pipe_lock);
 
 	return 0;
 }
@@ -488,7 +487,9 @@ again:
 			if (size > uio->uio_resid)
 				size = uio->uio_resid;
 
+			mutex_exit(rpipe->pipe_lock);
 			error = uiomove((char *)bp->buffer + bp->out, size, uio);
+			mutex_enter(rpipe->pipe_lock);
 			if (error)
 				break;
 
@@ -511,9 +512,6 @@ again:
 			continue;
 		}
 
-		/* Lock to see up-to-date value of pipe_status. */
-		mutex_enter(rpipe->pipe_lock);
-
 #ifndef PIPE_NODIRECT
 		if ((rpipe->pipe_state & PIPE_DIRECTR) != 0) {
 			/*
@@ -522,24 +520,23 @@ again:
 			void *	va;
 
 			KASSERT(rpipe->pipe_state & PIPE_DIRECTW);
-			mutex_exit(rpipe->pipe_lock);
 
 			size = rpipe->pipe_map.cnt;
 			if (size > uio->uio_resid)
 				size = uio->uio_resid;
 
 			va = (char *)rpipe->pipe_map.kva + rpipe->pipe_map.pos;
+			mutex_exit(rpipe->pipe_lock);
 			error = uiomove(va, size, uio);
+			mutex_enter(rpipe->pipe_lock);
 			if (error)
 				break;
 			nread += size;
 			rpipe->pipe_map.pos += size;
 			rpipe->pipe_map.cnt -= size;
 			if (rpipe->pipe_map.cnt == 0) {
-				mutex_enter(rpipe->pipe_lock);
 				rpipe->pipe_state &= ~PIPE_DIRECTR;
 				cv_broadcast(&rpipe->pipe_cv);
-				mutex_exit(rpipe->pipe_lock);
 			}
 			continue;
 		}
@@ -547,25 +544,20 @@ again:
 		/*
 		 * Break if some data was read.
 		 */
-		if (nread > 0) {
-			mutex_exit(rpipe->pipe_lock);
+		if (nread > 0)
 			break;
-		}
 
 		/*
 		 * detect EOF condition
 		 * read returns 0 on EOF, no need to set error
 		 */
-		if (rpipe->pipe_state & PIPE_EOF) {
-			mutex_exit(rpipe->pipe_lock);
+		if (rpipe->pipe_state & PIPE_EOF)
 			break;
-		}
 
 		/*
 		 * don't block on non-blocking I/O
 		 */
 		if (fp->f_flag & FNONBLOCK) {
-			mutex_exit(rpipe->pipe_lock);
 			error = EAGAIN;
 			break;
 		}
@@ -606,8 +598,6 @@ again:
 
 	if (error == 0)
 		getmicrotime(&rpipe->pipe_atime);
-
-	mutex_enter(rpipe->pipe_lock);
 	pipeunlock(rpipe);
 
 unlocked_error:
@@ -701,7 +691,10 @@ pipe_direct_write(struct file *fp, struct pipe *wpipe, struct uio *uio)
 	vsize_t blen, bcnt;
 	voff_t bpos;
 
+	KASSERT(mutex_owned(wpipe->pipe_lock));
 	KASSERT(wpipe->pipe_map.cnt == 0);
+
+	mutex_exit(wpipe->pipe_lock);
 
 	/*
 	 * Handle first PIPE_CHUNK_SIZE bytes of buffer. Deal with buffers
@@ -797,6 +790,7 @@ pipe_direct_write(struct file *fp, struct pipe *wpipe, struct uio *uio)
 
 	/* Acquire the pipe lock and cleanup */
 	(void)pipelock(wpipe, 0);
+	mutex_exit(wpipe->pipe_lock);
 
 	if (pgs != NULL) {
 		pmap_kremove(wpipe->pipe_map.kva, blen);
@@ -805,6 +799,7 @@ pipe_direct_write(struct file *fp, struct pipe *wpipe, struct uio *uio)
 	if (error || amountpipekva > maxpipekva)
 		pipe_loan_free(wpipe);
 
+	mutex_enter(wpipe->pipe_lock);
 	if (error) {
 		pipeselwakeup(wpipe, wpipe, POLL_ERR);
 
@@ -817,6 +812,7 @@ pipe_direct_write(struct file *fp, struct pipe *wpipe, struct uio *uio)
 		if (wpipe->pipe_map.cnt == bcnt) {
 			wpipe->pipe_map.cnt = 0;
 			cv_broadcast(&wpipe->pipe_cv);
+			mutex_exit(wpipe->pipe_lock);
 			return (error);
 		}
 
@@ -905,7 +901,6 @@ pipe_write(struct file *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 		 * We break out if a signal occurs or the reader goes away.
 		 */
 		while (error == 0 && wpipe->pipe_state & PIPE_DIRECTW) {
-			mutex_enter(wpipe->pipe_lock);
 			if (wpipe->pipe_state & PIPE_WANTR) {
 				wpipe->pipe_state &= ~PIPE_WANTR;
 				cv_broadcast(&wpipe->pipe_cv);
@@ -913,7 +908,6 @@ pipe_write(struct file *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 			pipeunlock(wpipe);
 			error = cv_wait_sig(&wpipe->pipe_cv,
 			    wpipe->pipe_lock);
-
 			(void)pipelock(wpipe, 0);
 			if (wpipe->pipe_state & PIPE_EOF)
 				error = EPIPE;
@@ -980,6 +974,7 @@ pipe_write(struct file *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 				segsize = size;
 
 			/* Transfer first segment */
+			mutex_exit(wpipe->pipe_lock);
 			error = uiomove((char *)bp->buffer + bp->in, segsize,
 			    uio);
 
@@ -997,6 +992,7 @@ pipe_write(struct file *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 				error = uiomove(bp->buffer,
 				    size - segsize, uio);
 			}
+			mutex_enter(wpipe->pipe_lock);
 			if (error)
 				break;
 
@@ -1018,12 +1014,10 @@ pipe_write(struct file *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 			/*
 			 * If the "read-side" has been blocked, wake it up now.
 			 */
-			mutex_enter(wpipe->pipe_lock);
 			if (wpipe->pipe_state & PIPE_WANTR) {
 				wpipe->pipe_state &= ~PIPE_WANTR;
 				cv_broadcast(&wpipe->pipe_cv);
 			}
-			mutex_exit(wpipe->pipe_lock);
 
 			/*
 			 * don't block on non-blocking I/O
@@ -1040,7 +1034,6 @@ pipe_write(struct file *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 			if (bp->cnt)
 				pipeselwakeup(wpipe, wpipe, POLL_OUT);
 
-			mutex_enter(wpipe->pipe_lock);
 			pipeunlock(wpipe);
 			wpipe->pipe_state |= PIPE_WANTW;
 			error = cv_wait_sig(&wpipe->pipe_cv, wpipe->pipe_lock);
@@ -1058,7 +1051,6 @@ pipe_write(struct file *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 		}
 	}
 
-	mutex_enter(wpipe->pipe_lock);
 	--wpipe->pipe_busy;
 	if ((wpipe->pipe_busy == 0) && (wpipe->pipe_state & PIPE_WANTCLOSE)) {
 		wpipe->pipe_state &= ~(PIPE_WANTCLOSE | PIPE_WANTR);
