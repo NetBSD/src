@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.44 2007/12/15 11:26:40 joerg Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.1 2007/12/18 07:17:16 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.44 2007/12/15 11:26:40 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.1 2007/12/18 07:17:16 joerg Exp $");
 
 /*-
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
@@ -78,8 +78,9 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.44 2007/12/15 11:26:40 joerg Exp $
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_page.h>
 
+#ifdef __i386__
 #include "opt_mtrr.h"
-
+#endif
 #include "ioapic.h"
 #include "lapic.h"
 
@@ -99,8 +100,14 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.44 2007/12/15 11:26:40 joerg Exp $
 #define ACPI_MACHDEP_PRIVATE
 #include <machine/acpi_machdep.h>
 #include <machine/cpu.h>
-#include <machine/npx.h>
+#ifdef __i386__
+#  include <machine/npx.h>
+#else
+#  include <machine/fpu.h>
+#endif
 #include <machine/mtrr.h>
+
+#include <x86/cpuvar.h>
 
 #include "acpi_wakecode.h"
 
@@ -115,6 +122,64 @@ static int acpi_md_beep_on_reset = 1;
 static int	sysctl_md_acpi_vbios_reset(SYSCTLFN_ARGS);
 static int	sysctl_md_acpi_beep_on_reset(SYSCTLFN_ARGS);
 
+/* Implemented in acpi_wakeup_low.S. */
+int	acpi_md_sleep_prepare(int);
+int	acpi_md_sleep_exit(int);	
+/* Referenced by acpi_wakeup_low.S. */
+void	acpi_md_sleep_enter(int);
+
+#ifdef MULTIPROCESSOR
+/* Referenced in ipifuncs.c. */
+void	acpi_cpu_sleep(struct cpu_info *);
+#endif
+
+static void
+acpi_md_sleep_patch(struct cpu_info *ci)
+{
+#define WAKECODE_FIXUP(offset, type, val) do	{		\
+	type	*addr;						\
+	addr = (type *)(acpi_wakeup_vaddr + offset);		\
+	*addr = val;						\
+} while (0)
+
+#define WAKECODE_BCOPY(offset, type, val) do	{		\
+	void	**addr;						\
+	addr = (void **)(acpi_wakeup_vaddr + offset);		\
+	bcopy(&(val), addr, sizeof(type));			\
+} while (0)
+
+	paddr_t				tmp_pdir;
+
+	tmp_pdir = pmap_init_tmp_pgtbl(acpi_wakeup_paddr);
+
+	/* Execute Sleep */
+	bcopy(wakecode, (void *)acpi_wakeup_vaddr, sizeof(wakecode));
+
+	if (CPU_IS_PRIMARY(ci)) {
+		WAKECODE_FIXUP(WAKEUP_vbios_reset, uint8_t, acpi_md_vbios_reset);
+		WAKECODE_FIXUP(WAKEUP_beep_on_reset, uint8_t, acpi_md_beep_on_reset);
+	} else {
+		WAKECODE_FIXUP(WAKEUP_vbios_reset, uint8_t, 0);
+		WAKECODE_FIXUP(WAKEUP_beep_on_reset, uint8_t, 0);
+	}
+
+#ifdef __i386__
+	WAKECODE_FIXUP(WAKEUP_r_cr4, uint32_t, ci->ci_suspend_cr4);
+#else
+	WAKECODE_FIXUP(WAKEUP_msr_efer, uint32_t, ci->ci_suspend_msr_efer);
+#endif
+
+	WAKECODE_FIXUP(WAKEUP_curcpu, void *, ci);
+#ifdef __i386__
+	WAKECODE_FIXUP(WAKEUP_r_cr3, uint32_t, tmp_pdir);
+#else
+	WAKECODE_FIXUP(WAKEUP_r_cr3, uint64_t, tmp_pdir);
+#endif
+	WAKECODE_FIXUP(WAKEUP_restorecpu, void *, acpi_md_sleep_exit);
+#undef WAKECODE_FIXUP
+#undef WAKECODE_BCOPY
+}
+
 /*
  * S4 sleep using S4BIOS support, from FreeBSD.
  *
@@ -126,7 +191,6 @@ enter_s4_with_bios(void)
 {
 	ACPI_OBJECT_LIST	ArgList;
 	ACPI_OBJECT		Arg;
-	u_long			ef;
 	UINT32			ret;
 	ACPI_STATUS		status;
 
@@ -146,9 +210,6 @@ enter_s4_with_bios(void)
 	/* clear wake status */
 
 	AcpiSetRegister(ACPI_BITREG_WAKE_STATUS, 1);
-
-	ef = x86_read_psl();
-	x86_disable_intr();
 
 	AcpiHwDisableAllGpes();
 	AcpiHwEnableAllWakeupGpes();
@@ -172,60 +233,35 @@ enter_s4_with_bios(void)
 	AcpiHwDisableAllGpes();
 	AcpiHwEnableAllRuntimeGpes();
 
-	x86_write_psl(ef);
-
 	return (AE_OK);
 }
-
-extern uint8_t acpi_wakeup_gdt[6];
-extern uint32_t acpi_wakeup_ds;
-extern uint32_t acpi_wakeup_cr0;
-extern uint32_t acpi_wakeup_cr4;
-/* XXX shut gcc up */
-extern int	acpi_md_sleep_prepare(int state);
-extern int	acpi_md_sleep_exit(void);
-
-void	acpi_md_sleep_enter(int);
 
 void
 acpi_md_sleep_enter(int state)
 {
-#define WAKECODE_FIXUP(offset, type, val) do	{		\
-	type	*addr;						\
-	addr = (type *)(acpi_wakeup_vaddr + offset);		\
-	*addr = val;						\
-} while (0)
-
-#define WAKECODE_BCOPY(offset, type, val) do	{		\
-	void	**addr;						\
-	addr = (void **)(acpi_wakeup_vaddr + offset);		\
-	bcopy(&(val), addr, sizeof(type));			\
-} while (0)
-
 	ACPI_STATUS			status;
-	ACPI_TABLE_FACS			*facs;
-	paddr_t				tmp_pdir;
+	struct cpu_info			*ci;
 
-	tmp_pdir = pmap_init_tmp_pgtbl(acpi_wakeup_paddr);
+	ci = curcpu();
 
-	/* Execute Sleep */
-	bcopy(wakecode, (void *)acpi_wakeup_vaddr, sizeof(wakecode));
-	WAKECODE_FIXUP(WAKEUP_vbios_reset, uint8_t, acpi_md_vbios_reset);
-	WAKECODE_FIXUP(WAKEUP_beep_on_reset, uint8_t, acpi_md_beep_on_reset);
+#ifdef MULTIPROCESSOR
+	if (!CPU_IS_PRIMARY(ci)) {
+		atomic_and_32(&ci->ci_flags, ~CPUF_RUNNING);
+		atomic_and_32(&cpus_running, ~ci->ci_cpumask);
 
-	WAKECODE_FIXUP(WAKEUP_r_cr0, uint32_t, acpi_wakeup_cr0);
-	WAKECODE_FIXUP(WAKEUP_r_cr3, uint32_t, tmp_pdir);
-	WAKECODE_FIXUP(WAKEUP_r_cr4, uint32_t, acpi_wakeup_cr4);
+		ACPI_FLUSH_CPU_CACHE();
 
-	WAKECODE_BCOPY(WAKEUP_r_gdt, struct region_descriptor, acpi_wakeup_gdt);
+		for (;;)
+			x86_hlt();
+	}
+#endif
 
-	WAKECODE_FIXUP(WAKEUP_restorecpu, void *, acpi_md_sleep_exit);
-
-	WAKECODE_FIXUP(WAKEUP_r_ds,  uint16_t, acpi_wakeup_ds);
+	acpi_md_sleep_patch(ci);
 
 	ACPI_FLUSH_CPU_CACHE();
 
 	if (state == ACPI_STATE_S4) {
+		ACPI_TABLE_FACS *facs;
 		status = AcpiGetTable(ACPI_SIG_FACS, 0, (ACPI_TABLE_HEADER **)&facs);
 		if (ACPI_FAILURE(status)) {
 			printf("acpi: S4BIOS not supported: cannot load FACS\n");
@@ -247,47 +283,89 @@ acpi_md_sleep_enter(int state)
 		return;
 	}
 
-	for (;;) ;
+	for (;;)
+		x86_hlt();
 }
+
+#ifdef MULTIPROCESSOR
+void
+acpi_cpu_sleep(struct cpu_info *ci)
+{
+	KASSERT(!CPU_IS_PRIMARY(ci));
+	KASSERT(ci == curcpu());
+
+	x86_disable_intr();
+
+	if (acpi_md_sleep_prepare(-1))
+		return;
+
+	/* Execute Wakeup */
+#ifdef __i386__
+	npxinit(ci);
+#else
+	cpu_init_msrs(ci, false);
+	fpuinit(ci);
+#endif
+#if NLAPIC > 0
+	lapic_enable();
+	lapic_set_lvt();
+	lapic_initclocks();
+#endif
+
+	atomic_or_32(&ci->ci_flags, CPUF_RUNNING);
+	atomic_or_32(&cpus_running, ci->ci_cpumask);
+
+	x86_enable_intr();
+}
+#endif
 
 int
 acpi_md_sleep(int state)
 {
-	int				s, ret = 0;
+	int s, ret = 0;
+#ifdef MULTIPROCESSOR
+	struct cpu_info *ci;
+	CPU_INFO_ITERATOR cii;
+#endif
 
 	KASSERT(acpi_wakeup_paddr != 0);
 	KASSERT(sizeof(wakecode) <= PAGE_SIZE);
 
-	if (ncpu > 1) {
-		printf("acpi: sleep is not supported on MP.\n");
-		return -1;
-	}
-
 	if (!CPU_IS_PRIMARY(curcpu())) {
-		printf("acpi: apci_md_sleep called from secondary CPU ignored\n");
+		printf("acpi0: WARNING: ignoring sleep from secondary CPU\n");
 		return -1;
 	}
 
 	AcpiSetFirmwareWakingVector(acpi_wakeup_paddr);
 
-#ifdef MULTIPROCESSOR
-	/* Shutdown all other CPUs */
-	x86_broadcast_ipi(X86_IPI_HALT);
-#endif
-
 	s = splipi();
+#ifdef __i386__
 	npxsave_cpu(curcpu(), 1);
+#else
+	fpusave_cpu(curcpu(), 1);
+#endif
 	splx(s);
 
 	s = splhigh();
 	x86_disable_intr();
 
+#ifdef MULTIPROCESSOR
+	/* Save and suspend Application Processors */
+	x86_broadcast_ipi(X86_IPI_ACPI_CPU_SLEEP);
+	while (cpus_running != curcpu()->ci_cpumask)
+		delay(1); 
+#endif
+
 	if (acpi_md_sleep_prepare(state))
 		goto out;
 
 	/* Execute Wakeup */
-
+#ifdef __i386__
 	npxinit(&cpu_info_primary);
+#else
+	cpu_init_msrs(&cpu_info_primary, false);
+	fpuinit(&cpu_info_primary);
+#endif
 	i8259_reinit();
 #if NLAPIC > 0
 	lapic_enable();
@@ -304,6 +382,21 @@ acpi_md_sleep(int state)
 	AcpiClearEvent(ACPI_EVENT_POWER_BUTTON);
 
 out:
+
+#ifdef MULTIPROCESSOR
+	for (CPU_INFO_FOREACH(cii, ci)) {
+		if (CPU_IS_PRIMARY(ci))
+			continue;
+		acpi_md_sleep_patch(ci);
+
+		CPU_STARTUP(ci, acpi_wakeup_paddr);
+		CPU_START_CLEANUP(ci);
+
+		while ((ci->ci_flags & CPUF_RUNNING) == 0)
+			x86_pause();
+	}
+#endif
+
 	x86_enable_intr();
 	splx(s);
 
@@ -313,8 +406,6 @@ out:
 #endif
 
 	return (ret);
-#undef WAKECODE_FIXUP
-#undef WAKECODE_BCOPY
 }
 
 void
@@ -331,7 +422,7 @@ acpi_md_sleep_init(void)
 	pmap_update(pmap_kernel());
 }
 
-SYSCTL_SETUP(sysctl_md_acpi_setup, "acpi i386 sysctl setup")
+SYSCTL_SETUP(sysctl_md_acpi_setup, "acpi x86 sysctl setup")
 {
 	const struct sysctlnode *node;
 	const struct sysctlnode *ssnode;

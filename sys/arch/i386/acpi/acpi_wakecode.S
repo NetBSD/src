@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakecode.S,v 1.10 2007/12/09 20:27:44 jmcneill Exp $	*/
+/*	$NetBSD: acpi_wakecode.S,v 1.11 2007/12/18 07:17:11 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -122,7 +122,7 @@ wakeup_16:
 
 	/* Disable beep again if machdep.acpi_beep_on_reset=1 */
 	cmpb	$1,WAKEUP_beep_on_reset
-	jne	1
+	jne	1f
 	inb	$0x61,%al
 	andb	$0xfc,%al
 	outb	%al,$0x61
@@ -159,7 +159,8 @@ wakeup_32:
 	/* Enable paging (assumes identical mapping) */
 	movl	WAKEUP_r_cr3 + ACPI_WAKEUP_ADDR,%eax
 	movl	%eax,%cr3
-	movl	WAKEUP_r_cr0 + ACPI_WAKEUP_ADDR,%eax
+	movl	%cr0,%eax
+	orl	$(CR0_PE|CR0_PG|CR0_NE|CR0_TS|CR0_EM|CR0_MP|CR0_WP),%eax
 	movl	%eax,%cr0
 
 	/* Flush the prefetch queue */
@@ -170,11 +171,9 @@ wakeup_32:
 	nop
 
 	/* Restore registers */
-	lgdt	WAKEUP_r_gdt + ACPI_WAKEUP_ADDR
-
+	movl	WAKEUP_curcpu + ACPI_WAKEUP_ADDR,%edx
 	movl	WAKEUP_restorecpu + ACPI_WAKEUP_ADDR,%ebx
-	movw	WAKEUP_r_ds + ACPI_WAKEUP_ADDR,%ax
-	movw	%ax,%ds
+
 	jmp	*%ebx
 
 	.align	8
@@ -195,18 +194,13 @@ tmp_gdtable:
 	.byte	0, 0x93, 0xcf, 0
 
 	.align	16, 0
-	.global WAKEUP_r_cr0
-WAKEUP_r_cr0:		.long 0
 	.global WAKEUP_r_cr3
 WAKEUP_r_cr3:		.long 0
 	.global WAKEUP_r_cr4
 WAKEUP_r_cr4:		.long 0
 
-	.global WAKEUP_r_gdt
-WAKEUP_r_gdt:		.word 0
-			.long 0
-	.global WAKEUP_r_ds
-WAKEUP_r_ds:		.word 0
+	.global WAKEUP_curcpu
+WAKEUP_curcpu:		.long 0
 	.global WAKEUP_restorecpu
 WAKEUP_restorecpu:	.long 0
 

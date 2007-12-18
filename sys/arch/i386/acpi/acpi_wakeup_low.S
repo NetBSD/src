@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup_low.S,v 1.3 2007/12/11 23:06:11 lukem Exp $	*/
+/*	$NetBSD: acpi_wakeup_low.S,v 1.4 2007/12/18 07:17:13 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@netbsd.org>
@@ -29,55 +29,56 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup_low.S,v 1.3 2007/12/11 23:06:11 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup_low.S,v 1.4 2007/12/18 07:17:13 joerg Exp $");
 
 #include "assym.h"
+#include <machine/segments.h>
 
 	.text
 	.p2align 2, 0x90
 	.globl acpi_md_sleep_exit
 acpi_md_sleep_exit:
-	movw	r_es,%ax
+	lgdt	ACPI_SUSPEND_GDT(%edx)
+
+	/* Reload fixed descriptors for new GDT */
+	movw	$GSEL(GDATA_SEL, SEL_KPL),%ax
+	movw	%ax,%ds
 	movw	%ax,%es
-	movw	r_fs,%ax
-	movw	%ax,%fs
-	movw	r_gs,%ax
-	movw	%ax,%gs
-	movw	r_ss,%ax
 	movw	%ax,%ss
 
-	movl	r_cr2,%eax
+	movw	ACPI_SUSPEND_FS(%edx),%ax
+	movw	%ax,%fs
+	movw	ACPI_SUSPEND_GS(%edx),%ax
+	movw	%ax,%gs
+
+	movl	ACPI_SUSPEND_CR2(%edx),%eax
 	movl	%eax,%cr2
-	movl	r_cr4,%eax
+
+	movl	ACPI_SUSPEND_CR4(%edx),%eax
 	movl	%eax,%cr4
-	movl	r_cr3,%eax
+	movl	ACPI_SUSPEND_CR3(%edx),%eax
 	movl	%eax,%cr3
 
 	jmp 1f
 1:
 
-	lidt	r_idt
-	lldt	r_ldt
+	lidt	ACPI_SUSPEND_IDT(%edx)
+	lldt	ACPI_SUSPEND_LDT(%edx)
 
 	movl	CPUVAR(GDT),%eax
-	movzwl	r_tr,%edx
-	andl	$~0x0200,4(%eax,%edx, 1)
-	ltr	%dx
+	movzwl	ACPI_SUSPEND_TR(%edx),%ecx
+	andl	$~0x0200,4(%eax,%ecx, 1)
+	ltr	%cx
 
-	movl	r_esp,%esp
+	movl	ACPI_SUSPEND_EBX(%edx),%ebx
+	movl	ACPI_SUSPEND_ESI(%edx),%esi
+	movl	ACPI_SUSPEND_EDI(%edx),%edi
+	movl	ACPI_SUSPEND_EBP(%edx),%ebp
+	movl	ACPI_SUSPEND_ESP(%edx),%esp
 
-	movl	r_ebx,%ebx
-	movl	r_ecx,%ecx
-	movl	r_edx,%edx
-	movl	r_ebp,%ebp
-	movl	r_esi,%esi
-	movl	r_edi,%edi
-
-	pushl	r_efl
+	pushl	ACPI_SUSPEND_EFL(%edx)
 	popfl
 
-	movl	ret_addr,%eax
-	movl	%eax,(%esp)
 	xorl	%eax,%eax
 
 	ret
@@ -86,40 +87,33 @@ acpi_md_sleep_exit:
 	.type acpi_md_sleep_prepare, @function
 	.globl acpi_md_sleep_prepare
 acpi_md_sleep_prepare:
-	movw	%ds,r_ds
-	movw	%es,r_es
-	movw	%fs,r_fs
-	movw	%gs,r_gs
-	movw	%ss,r_ss
+	movl	CPUVAR(SELF),%edx
+	movw	%fs,ACPI_SUSPEND_FS(%edx)
+	movw	%gs,ACPI_SUSPEND_GS(%edx)
 
-	movl	%ebx,r_ebx
-	movl	%ecx,r_ecx
-	movl	%edx,r_edx
-	movl	%ebp,r_ebp
-	movl	%esi,r_esi
-	movl	%edi,r_edi
+	movl	%ebx,ACPI_SUSPEND_EBX(%edx)
+	movl	%esi,ACPI_SUSPEND_ESI(%edx)
+	movl	%edi,ACPI_SUSPEND_EDI(%edx)
+	movl	%ebp,ACPI_SUSPEND_EBP(%edx)
+	movl	%esp,ACPI_SUSPEND_ESP(%edx)
 
 	movl	%cr0,%eax
-	movl	%eax,r_cr0
+	movl	%eax,ACPI_SUSPEND_CR0(%edx)
 	movl	%cr2,%eax
-	movl	%eax,r_cr2
+	movl	%eax,ACPI_SUSPEND_CR2(%edx)
 	movl	%cr3,%eax
-	movl	%eax,r_cr3
+	movl	%eax,ACPI_SUSPEND_CR3(%edx)
 	movl	%cr4,%eax
-	movl	%eax,r_cr4
+	movl	%eax,ACPI_SUSPEND_CR4(%edx)
 
 	pushfl
-	popl	r_efl
+	popl	ACPI_SUSPEND_EFL(%edx)
 
-	movl	%esp,r_esp
+	sgdt	ACPI_SUSPEND_GDT(%edx)
+	sidt	ACPI_SUSPEND_IDT(%edx)
+	sldt	ACPI_SUSPEND_LDT(%edx)
+	str	ACPI_SUSPEND_TR(%edx)
 
-	sgdt	r_gdt
-	sidt	r_idt
-	sldt	r_ldt
-	str	r_tr
-
-	movl	(%esp),%eax
-	movl	%eax,ret_addr
 	movl	4(%esp),%eax
 	pushl	%eax
 	call	acpi_md_sleep_enter
@@ -127,42 +121,3 @@ acpi_md_sleep_prepare:
 	popl	%eax
 	movl	$-1,%eax
 	ret
-
-	.data
-	.align 16
-	.globl acpi_wakeup_ds
-acpi_wakeup_ds:
-r_ds:		.word	0
-r_es:		.word	0
-r_fs:		.word	0
-r_gs:		.word	0
-r_ss:		.word	0
-r_tr:		.word	0
-r_ldt:		.word	0
-
-r_ebx:		.long	0
-r_ecx:		.long	0
-r_edx:		.long	0
-r_ebp:		.long	0
-r_esi:		.long	0
-r_edi:		.long	0
-r_esp:		.long	0
-r_efl:		.long	0
-
-	.globl acpi_wakeup_cr0
-acpi_wakeup_cr0:
-r_cr0:		.long	0
-r_cr2:		.long	0
-r_cr3:		.long	0
-	.globl acpi_wakeup_cr4
-acpi_wakeup_cr4:
-r_cr4:		.long	0
-
-	.globl acpi_wakeup_gdt
-acpi_wakeup_gdt:
-r_gdt:		.word	0
-		.long	0
-r_idt:		.word	0
-		.long	0
-
-ret_addr:	.long	0

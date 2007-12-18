@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.13 2007/12/15 09:18:59 joerg Exp $	*/
+/*	$NetBSD: cpu.c,v 1.14 2007/12/18 07:17:17 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.13 2007/12/15 09:18:59 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.14 2007/12/18 07:17:17 joerg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -131,7 +131,7 @@ struct cpu_softc {
 	struct cpu_info *sc_info;	/* pointer to CPU info */
 };
 
-int mp_cpu_start(struct cpu_info *); 
+int mp_cpu_start(struct cpu_info *, paddr_t); 
 void mp_cpu_start_cleanup(struct cpu_info *);
 const struct cpu_functions mp_cpu_funcs = { mp_cpu_start, NULL,
 					    mp_cpu_start_cleanup };
@@ -178,6 +178,8 @@ extern char x86_64_doubleflt_stack[];
 bool x86_mp_online;
 paddr_t mp_trampoline_paddr = MP_TRAMPOLINE;
 
+static vaddr_t cmos_data_mapping;
+
 #ifdef MULTIPROCESSOR
 /*
  * Array of CPU info structures.  Must be statically-allocated because
@@ -208,6 +210,12 @@ cpu_init_first(void)
 
 	cpu_info_primary.ci_cpuid = cpunum;
 	cpu_copy_trampoline();
+
+	cmos_data_mapping = uvm_km_alloc(kernel_map, PAGE_SIZE, 0, UVM_KMF_VAONLY);
+	if (cmos_data_mapping == 0)
+		panic("No KVA for page 0");
+	pmap_kenter_pa(cmos_data_mapping, 0, VM_PROT_READ|VM_PROT_WRITE);
+	pmap_update(pmap_kernel());
 }
 #endif
 
@@ -563,7 +571,7 @@ cpu_start_secondary(struct cpu_info *ci)
 	aprint_debug("%s: starting\n", ci->ci_dev->dv_xname);
 
 	ci->ci_curlwp = ci->ci_data.cpu_idlelwp;
-	CPU_STARTUP(ci);
+	CPU_STARTUP(ci, mp_trampoline_paddr);
 
 	/*
 	 * wait for it to become ready
@@ -793,15 +801,19 @@ cpu_set_tss_gates(struct cpu_info *ci)
 }
 #endif	/* i386 */
 
-
 int
-mp_cpu_start(struct cpu_info *ci)
+mp_cpu_start(struct cpu_info *ci, paddr_t target)
 {
 #if NLAPIC > 0
 	int error;
 #endif
 	unsigned short dwordptr[2];
-	vaddr_t kva;
+
+	/*
+	 * Bootstrap code must be addressable in real mode
+	 * and it must be page aligned.
+	 */
+	KASSERT(target < 0x10000 && target % PAGE_SIZE == 0);
 
 	/*
 	 * "The BSP must initialize CMOS shutdown code to 0Ah ..."
@@ -816,17 +828,9 @@ mp_cpu_start(struct cpu_info *ci)
 	 */
 
 	dwordptr[0] = 0;
-	dwordptr[1] = mp_trampoline_paddr >> 4;
+	dwordptr[1] = target >> 4;
 
-	kva = uvm_km_alloc(kernel_map, PAGE_SIZE, 0, UVM_KMF_VAONLY);
-	if ((void *)kva == NULL)
-		return ENOMEM;
-	pmap_kenter_pa(kva, 0, VM_PROT_READ|VM_PROT_WRITE);
-	pmap_update(pmap_kernel());
-	memcpy((uint8_t *)(kva + 0x467), dwordptr, 4);
-	pmap_kremove(kva, PAGE_SIZE);
-	pmap_update(pmap_kernel());
-	uvm_km_free(kernel_map, kva, PAGE_SIZE, UVM_KMF_VAONLY);
+	memcpy((uint8_t *)(cmos_data_mapping + 0x467), dwordptr, 4);
 
 #if NLAPIC > 0
 	/*
@@ -841,13 +845,13 @@ mp_cpu_start(struct cpu_info *ci)
 
 		if (cpu_feature & CPUID_APIC) {
 
-			if ((error = x86_ipi(mp_trampoline_paddr / PAGE_SIZE,
+			if ((error = x86_ipi(target / PAGE_SIZE,
 					     ci->ci_apicid,
 					     LAPIC_DLMODE_STARTUP)) != 0)
 				return error;
 			i8254_delay(200);
 
-			if ((error = x86_ipi(mp_trampoline_paddr / PAGE_SIZE,
+			if ((error = x86_ipi(target / PAGE_SIZE,
 					     ci->ci_apicid,
 					     LAPIC_DLMODE_STARTUP)) != 0)
 				return error;
