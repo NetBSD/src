@@ -1,4 +1,4 @@
-/* $NetBSD: disk.c,v 1.36 2007/12/09 09:21:05 agc Exp $ */
+/* $NetBSD: disk.c,v 1.37 2007/12/18 20:31:50 agc Exp $ */
 
 /*
  * Copyright © 2006 Alistair Crooks.  All rights reserved.
@@ -136,8 +136,8 @@
 enum {
 	MAX_RESERVATIONS = 32,
 
-	ISCSI_FS_MMAP = 0x02,
-	ISCSI_FS =	0x03
+	ISCSI_FS =	0x03,
+	ISCSI_CONTROL = 0x04
 };
 
 #define MB(x)	((x) * 1024 * 1024)
@@ -146,7 +146,7 @@ enum {
 typedef struct iscsi_disk_t {
 	int		 type;				/* type of disk - fs/mmap and fs */
 	char		 filename[MAXPATHLEN];		/* filename for the disk itself */
-	uint8_t		 **buffer;			/* buffer for fs and fs/mmap options */
+	uint8_t		*buffer;			/* buffer for disk read/write ops */
 	uint64_t	 blockc;			/* # of blocks */
 	uint64_t	 blocklen;			/* block size */
 	uint64_t	 luns;				/* # of luns */
@@ -767,7 +767,7 @@ persistent_reserve_in(uint8_t action, uint8_t *data)
 int 
 device_init(globals_t *gp __attribute__((__unused__)), targv_t *tvp, disc_target_t *tp)
 {
-	int   	i;
+	int	mode;
 
 	ALLOC(iscsi_disk_t, disks.v, disks.size, disks.c, 10, 10, "device_init", ;);
 	disks.v[disks.c].tv = tvp;
@@ -779,10 +779,7 @@ device_init(globals_t *gp __attribute__((__unused__)), targv_t *tvp, disc_target
 	}
 	disks.v[disks.c].size = de_getsize(&tp->de);
 	disks.v[disks.c].blockc = disks.v[disks.c].size / disks.v[disks.c].blocklen;
-	NEWARRAY(uint8_t *, disks.v[disks.c].buffer, CONFIG_DISK_MAX_LUNS, "buffer1", ;);
-	for (i = 0 ; i < CONFIG_DISK_MAX_LUNS ; i++) {
-		NEWARRAY(uint8_t, disks.v[disks.c].buffer[i], MB(1), "buffer2", ;);
-	}
+	NEWARRAY(uint8_t, disks.v[disks.c].buffer, MB(1), "buffer1", ;);
 	switch(disks.v[disks.c].blocklen) {
 	case 512:
 	case 1024:
@@ -799,17 +796,21 @@ device_init(globals_t *gp __attribute__((__unused__)), targv_t *tvp, disc_target
 	      (disks.v[disks.c].luns == 1) ? "" : "s",
 	      disks.v[disks.c].blockc, disks.v[disks.c].blocklen,
 	      (disks.v[disks.c].type == ISCSI_FS) ? "iscsi fs" : "iscsi fs mmap");
-	printf("DISK: LUN %d: ", i);
+	printf("DISK: LUN 0: ");
 	(void) strlcpy(disks.v[disks.c].filename, disc_get_filename(&tp->de), sizeof(disks.v[disks.c].filename));
-	if (de_open(&tp->de, O_CREAT | O_RDWR, 0666) == -1) {
+	mode = (tp->flags & TARGET_READONLY) ? O_RDONLY : (O_CREAT | O_RDWR);
+	if (de_open(&tp->de, mode, 0666) == -1) {
 		iscsi_trace_error(__FILE__, __LINE__, "error opening \"%s\"\n", disks.v[disks.c].filename);
 		return -1;
 	}
-	if (!allocate_space(tp)) {
+	if (!(tp->flags & TARGET_READONLY) && !allocate_space(tp)) {
 		iscsi_trace_error(__FILE__, __LINE__, "error allocating space for \"%s\"", tp->target);
 		return -1;
 	}
-	printf("%" PRIu64 " MB disk storage for \"%s\"\n", (de_getsize(&tp->de) / MB(1)), tp->target);
+	printf("%" PRIu64 " MB %sdisk storage for \"%s\"\n",
+		(de_getsize(&tp->de) / MB(1)),
+		(tp->flags & TARGET_READONLY) ? "readonly " : "",
+		tp->target);
 	return disks.c++;
 }
 
@@ -1198,7 +1199,7 @@ disk_write(target_session_t *sess, iscsi_scsi_cmd_args_t *args, uint8_t lun, uin
 	/* Assign ptr for write data */
 
 	RETURN_GREATER("num_bytes (FIX ME)", (unsigned) num_bytes, MB(1), NO_CLEANUP, -1);
-	ptr = disks.v[sess->d].buffer[lun];
+	ptr = disks.v[sess->d].buffer;
 
 	/* Have target do data transfer */
 
@@ -1233,23 +1234,6 @@ disk_read(target_session_t * sess, iscsi_scsi_cmd_args_t * args, uint32_t lba, u
 	uint8_t        *ptr = NULL;
 	uint32_t        n;
 	int             rc;
-	static void    *last_ptr[CONFIG_DISK_MAX_LUNS];
-	static uint64_t last_extra[CONFIG_DISK_MAX_LUNS];
-	static uint64_t last_num_bytes[CONFIG_DISK_MAX_LUNS];
-	static int      initialized = 0;
-
-	/* Need to replace this with a callback (when the iSCSI read is done)  */
-	/* that munmaps the ptrs for us. */
-
-	if (disks.v[sess->d].type == ISCSI_FS_MMAP && !initialized) {
-		int             i;
-		for (i = 0; i < disks.v[sess->d].luns; i++) {
-			last_ptr[i] = NULL;
-			last_extra[i] = 0;
-			last_num_bytes[i] = 0;
-		}
-		initialized++;
-	}
 
 	RETURN_EQUAL("len", len, 0, NO_CLEANUP, -1);
 	if ((lba > (disks.v[sess->d].blockc - 1)) || ((lba + len) > disks.v[sess->d].blockc)) {
@@ -1258,7 +1242,7 @@ disk_read(target_session_t * sess, iscsi_scsi_cmd_args_t * args, uint32_t lba, u
 		return -1;
 	}
 	RETURN_GREATER("num_bytes (FIX ME)", (unsigned) num_bytes, MB(1), NO_CLEANUP, -1);
-	ptr = disks.v[sess->d].buffer[lun];
+	ptr = disks.v[sess->d].buffer;
 	n = 0;
 	do {
 		if (de_lseek(&disks.v[sess->d].tv->v[lun].de, (off_t)(n + byte_offset), SEEK_SET) == -1) {
