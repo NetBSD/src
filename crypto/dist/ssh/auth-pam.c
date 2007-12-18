@@ -50,7 +50,7 @@
 /*
  * NetBSD local changes
  */
-__RCSID("$NetBSD: auth-pam.c,v 1.9 2007/06/25 01:42:31 christos Exp $");
+__RCSID("$NetBSD: auth-pam.c,v 1.10 2007/12/18 02:35:25 christos Exp $");
 #undef USE_POSIX_THREADS /* Not yet */
 #define HAVE_SECURITY_PAM_APPL_H
 #define HAVE_PAM_GETENVLIST
@@ -64,14 +64,13 @@ void sshpam_password_change_required(int);
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
-#include <sys/socket.h>
 
-#include <pwd.h>
 #include <errno.h>
 #include <signal.h>
 #include <stdarg.h>
 #include <string.h>
 #include <unistd.h>
+#include <pwd.h>
 
 #ifdef USE_PAM
 #if defined(HAVE_SECURITY_PAM_APPL_H)
@@ -178,9 +177,9 @@ sshpam_sigchld_handler(int sig)
 	    WTERMSIG(sshpam_thread_status) == SIGTERM)
 		return;	/* terminated by pthread_cancel */
 	if (!WIFEXITED(sshpam_thread_status))
-		fatal("PAM: authentication thread exited unexpectedly");
+		sigdie("PAM: authentication thread exited unexpectedly");
 	if (WEXITSTATUS(sshpam_thread_status) != 0)
-		fatal("PAM: authentication thread exited uncleanly");
+		sigdie("PAM: authentication thread exited uncleanly");
 }
 
 /* ARGSUSED */
@@ -702,8 +701,7 @@ sshpam_init_ctx(Authctxt *authctxt)
 		return (NULL);
 	}
 
-	ctxt = xmalloc(sizeof *ctxt);
-	memset(ctxt, 0, sizeof(*ctxt));
+	ctxt = xcalloc(1, sizeof *ctxt);
 
 	/* Start the authentication thread */
 	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, socks) == -1) {
@@ -796,6 +794,7 @@ sshpam_query(void *ctx, char **name, char **info,
 			}
 			if (type == PAM_SUCCESS) {
 				if (!sshpam_authctxt->valid ||
+/*###797 [cc] error: dereferencing pointer to incomplete type%%%*/
 				    (sshpam_authctxt->pw->pw_uid == 0 &&
 				    options.permit_root_login != PERMIT_YES))
 					fatal("Internal error: PAM auth "
@@ -847,6 +846,7 @@ sshpam_respond(void *ctx, u_int num, char **resp)
 	}
 	buffer_init(&buffer);
 	if (sshpam_authctxt->valid &&
+/*###848 [cc] error: dereferencing pointer to incomplete type%%%*/
 	    (sshpam_authctxt->pw->pw_uid != 0 ||
 	    options.permit_root_login == PERMIT_YES))
 		buffer_put_cstring(&buffer, *resp);
@@ -1001,7 +1001,8 @@ sshpam_tty_conv(int n, sshpam_const struct pam_message **msg,
 			break;
 		case PAM_PROMPT_ECHO_ON:
 			fprintf(stderr, "%s\n", PAM_MSG_MEMBER(msg, i, msg));
-			fgets(input, sizeof input, stdin);
+			if (fgets(input, sizeof input, stdin) == NULL)
+				input[0] = '\0';
 			if ((reply[i].resp = strdup(input)) == NULL)
 				goto fail;
 			reply[i].resp_retcode = PAM_SUCCESS;
@@ -1146,9 +1147,8 @@ sshpam_passwd_conv(int n, sshpam_const struct pam_message **msg,
 	if (n <= 0 || n > PAM_MAX_NUM_MSG)
 		return (PAM_CONV_ERR);
 
-	if ((reply = malloc(n * sizeof(*reply))) == NULL)
+	if ((reply = calloc(n, sizeof(*reply))) == NULL)
 		return (PAM_CONV_ERR);
-	memset(reply, 0, n * sizeof(*reply));
 
 	for (i = 0; i < n; ++i) {
 		switch (PAM_MSG_MEMBER(msg, i, msg_style)) {
@@ -1210,6 +1210,7 @@ sshpam_auth_passwd(Authctxt *authctxt, const char *password)
 	 * by PermitRootLogin, use an invalid password to prevent leaking
 	 * information via timing (eg if the PAM config has a delay on fail).
 	 */
+/*###1211 [cc] error: dereferencing pointer to incomplete type%%%*/
 	if (!authctxt->valid || (authctxt->pw->pw_uid == 0 &&
 	    options.permit_root_login != PERMIT_YES))
 		sshpam_password = badpw;

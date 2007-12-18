@@ -1,4 +1,4 @@
-/*	$NetBSD: umac.c,v 1.1.1.1 2007/12/17 20:15:38 christos Exp $	*/
+/*	$NetBSD: umac.c,v 1.2 2007/12/18 02:35:33 christos Exp $	*/
 /* $OpenBSD: umac.c,v 1.1 2007/06/07 19:37:34 pvalchev Exp $ */
 /* -----------------------------------------------------------------------
  * 
@@ -123,7 +123,7 @@ typedef unsigned int	UWORD;  /* Register */
 /* --- Endian Conversion --- Forcing assembly on some platforms           */
 /* ---------------------------------------------------------------------- */
 
-#if 0
+#if !defined(__OpenBSD__)
 static UINT32 LOAD_UINT32_REVERSED(void *ptr)
 {
     UINT32 temp = *(UINT32 *)ptr;
@@ -138,14 +138,14 @@ static void STORE_UINT32_REVERSED(void *ptr, UINT32 x)
     *(UINT32 *)ptr = (i >> 24) | ((i & 0x00FF0000) >> 8 )
                    | ((i & 0x0000FF00) << 8 ) | (i << 24);
 }
-#endif
-
+#else
 /* The following definitions use the above reversal-primitives to do the right
  * thing on endian specific load and stores.
  */
 
 #define LOAD_UINT32_REVERSED(p)		(swap32(*(UINT32 *)(p)))
 #define STORE_UINT32_REVERSED(p,v) 	(*(UINT32 *)(p) = swap32(v))
+#endif
 
 #if (__LITTLE_ENDIAN__)
 #define LOAD_UINT32_LITTLE(ptr)     (*(UINT32 *)(ptr))

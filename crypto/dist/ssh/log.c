@@ -1,5 +1,5 @@
-/*	$NetBSD: log.c,v 1.9 2006/09/28 21:22:14 christos Exp $	*/
-/* $OpenBSD: log.c,v 1.39 2006/08/18 09:13:25 deraadt Exp $ */
+/*	$NetBSD: log.c,v 1.10 2007/12/18 02:35:28 christos Exp $	*/
+/* $OpenBSD: log.c,v 1.40 2007/05/17 07:50:31 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -36,7 +36,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: log.c,v 1.9 2006/09/28 21:22:14 christos Exp $");
+__RCSID("$NetBSD: log.c,v 1.10 2007/12/18 02:35:28 christos Exp $");
 
 #include <sys/types.h>
 
@@ -46,6 +46,7 @@ __RCSID("$NetBSD: log.c,v 1.9 2006/09/28 21:22:14 christos Exp $");
 #include <string.h>
 #include <syslog.h>
 #include <unistd.h>
+#include <errno.h>
 #include <vis.h>
 
 #include "xmalloc.h"
@@ -283,6 +284,7 @@ do_log(LogLevel level, const char *fmt, va_list args)
 	char fmtbuf[4 * sizeof(msgbuf) + 1];
 	char *txt = NULL;
 	int pri = LOG_INFO;
+	int saved_errno = errno;
 
 	if (level > log_level)
 		return;
@@ -342,4 +344,5 @@ do_log(LogLevel level, const char *fmt, va_list args)
 		closelog();
 #endif
 	}
+	errno = saved_errno;
 }
