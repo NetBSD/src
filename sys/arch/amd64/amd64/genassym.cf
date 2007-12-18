@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.19 2007/12/03 15:33:09 ad Exp $
+#	$NetBSD: genassym.cf,v 1.20 2007/12/18 07:17:10 joerg Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007 The NetBSD Foundation, Inc.
@@ -259,6 +259,31 @@ define	CPU_INFO_MTX_COUNT	offsetof(struct cpu_info, ci_mtx_count)
 define	CPU_INFO_MTX_OLDSPL	offsetof(struct cpu_info, ci_mtx_oldspl)
 define  CPU_INFO_CPUID		offsetof(struct cpu_info, ci_cpuid)
 define	CPU_INFO_ISTATE		offsetof(struct cpu_info, ci_istate)
+
+define	ACPI_SUSPEND_GDT		offsetof(struct cpu_info, ci_suspend_gdt)
+define	ACPI_SUSPEND_IDT		offsetof(struct cpu_info, ci_suspend_idt)
+define	ACPI_SUSPEND_TR			offsetof(struct cpu_info, ci_suspend_tr)
+define	ACPI_SUSPEND_LDT		offsetof(struct cpu_info, ci_suspend_ldt)
+define	ACPI_SUSPEND_FS_BASE_L		offsetof(struct cpu_info, ci_suspend_fs_base_l)
+define	ACPI_SUSPEND_FS_BASE_H		offsetof(struct cpu_info, ci_suspend_fs_base_h)
+define	ACPI_SUSPEND_GS_BASE_L		offsetof(struct cpu_info, ci_suspend_gs_base_l)
+define	ACPI_SUSPEND_GS_BASE_H		offsetof(struct cpu_info, ci_suspend_gs_base_h)
+define	ACPI_SUSPEND_GS_KERNELBASE_L	offsetof(struct cpu_info, ci_suspend_gs_kernelbase_l)
+define	ACPI_SUSPEND_GS_KERNELBASE_H	offsetof(struct cpu_info, ci_suspend_gs_kernelbase_h)
+define	ACPI_SUSPEND_MSR_EFER		offsetof(struct cpu_info, ci_suspend_msr_efer)
+define	ACPI_SUSPEND_RBX		offsetof(struct cpu_info, ci_suspend_rbx)
+define	ACPI_SUSPEND_RBP		offsetof(struct cpu_info, ci_suspend_rbp)
+define	ACPI_SUSPEND_RSP		offsetof(struct cpu_info, ci_suspend_rsp)
+define	ACPI_SUSPEND_R12		offsetof(struct cpu_info, ci_suspend_r12)
+define	ACPI_SUSPEND_R13		offsetof(struct cpu_info, ci_suspend_r13)
+define	ACPI_SUSPEND_R14		offsetof(struct cpu_info, ci_suspend_r14)
+define	ACPI_SUSPEND_R15		offsetof(struct cpu_info, ci_suspend_r15)
+define	ACPI_SUSPEND_RFL		offsetof(struct cpu_info, ci_suspend_rfl)
+define	ACPI_SUSPEND_CR0		offsetof(struct cpu_info, ci_suspend_cr0)
+define	ACPI_SUSPEND_CR2		offsetof(struct cpu_info, ci_suspend_cr2)
+define	ACPI_SUSPEND_CR3		offsetof(struct cpu_info, ci_suspend_cr3)
+define	ACPI_SUSPEND_CR4		offsetof(struct cpu_info, ci_suspend_cr4)
+define	ACPI_SUSPEND_CR8		offsetof(struct cpu_info, ci_suspend_cr8)
 
 if NIOAPIC > 0
 define		IOAPIC_SC_REG		offsetof(struct ioapic_softc, sc_reg)
