@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh.c,v 1.39 2007/12/18 02:35:31 christos Exp $	*/
+/*	$NetBSD: ssh.c,v 1.40 2007/12/18 09:00:30 dogcow Exp $	*/
 /* $OpenBSD: ssh.c,v 1.301 2007/08/07 07:32:53 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -42,7 +42,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh.c,v 1.39 2007/12/18 02:35:31 christos Exp $");
+__RCSID("$NetBSD: ssh.c,v 1.40 2007/12/18 09:00:30 dogcow Exp $");
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/resource.h>
@@ -1454,10 +1454,10 @@ control_client(const char *path)
 	close(sock);
 	leave_raw_mode();
 	if (i > (int)sizeof(int))
-		fatal("%s: master returned too much data (%d > %lu)",
+		fatal("%s: master returned too much data (%d > %zu)",
 		    __func__, i, sizeof(int));
 	if (control_client_terminate) {
-		debug2("Exiting on signal %d", control_client_terminate);
+		debug2("Exiting on signal %ld", (long)control_client_terminate);
 		exitval[0] = 255;
 	} else if (i < (int)sizeof(int)) {
 		debug2("Control master terminated unexpectedly");
