@@ -1,4 +1,4 @@
-/* $NetBSD: storage.c,v 1.9 2007/12/09 09:16:42 agc Exp $ */
+/* $NetBSD: storage.c,v 1.10 2007/12/18 20:31:50 agc Exp $ */
 
 /*
  * Copyright © 2006 Alistair Crooks.  All rights reserved.
@@ -28,6 +28,9 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "config.h"
+
+#include <sys/types.h>
+#include <sys/stat.h>
 
 #ifdef HAVE_INTTYPES_H
 #include <inttypes.h>
@@ -96,7 +99,8 @@ find_extent(extv_t *evp, char *s)
 static int
 do_extent(conffile_t *cf, extv_t *evp, ent_t *ep)
 {
-	char	*cp;
+	struct stat	 st;
+	char		*cp;
 
 	if (find_extent(evp, ep->sv.v[EXTENT_NAME_COL]) != NULL) {
 		(void) fprintf(stderr, "%s:%d: ", conffile_get_name(cf), conffile_get_lineno(cf));
@@ -107,21 +111,27 @@ do_extent(conffile_t *cf, extv_t *evp, ent_t *ep)
 	evp->v[evp->c].extent = strdup(ep->sv.v[EXTENT_NAME_COL]);
 	evp->v[evp->c].dev = strdup(ep->sv.v[EXTENT_DEVICE_COL]);
 	evp->v[evp->c].sacred = strtoll(ep->sv.v[EXTENT_SACRED_COL], NULL, 10);
-	evp->v[evp->c].len = strtoll(ep->sv.v[EXTENT_LENGTH_COL], &cp, 10);
-	if (cp != NULL) {
-		switch(tolower((unsigned)*cp)) {
-		case 't':
-			evp->v[evp->c].len *= (uint64_t)(1024ULL * 1024ULL * 1024ULL * 1024ULL);
-			break;
-		case 'g':
-			evp->v[evp->c].len *= (uint64_t)(1024ULL * 1024ULL * 1024ULL);
-			break;
-		case 'm':
-			evp->v[evp->c].len *= (uint64_t)(1024ULL * 1024ULL);
-			break;
-		case 'k':
-			evp->v[evp->c].len *= (uint64_t)1024ULL;
-			break;
+	if (strcasecmp(ep->sv.v[EXTENT_LENGTH_COL], "size") == 0) {
+		if (stat(ep->sv.v[EXTENT_DEVICE_COL], &st) == 0) {
+			evp->v[evp->c].len = st.st_size;
+		}
+	} else {
+		evp->v[evp->c].len = strtoll(ep->sv.v[EXTENT_LENGTH_COL], &cp, 10);
+		if (cp != NULL) {
+			switch(tolower((unsigned)*cp)) {
+			case 't':
+				evp->v[evp->c].len *= (uint64_t)(1024ULL * 1024ULL * 1024ULL * 1024ULL);
+				break;
+			case 'g':
+				evp->v[evp->c].len *= (uint64_t)(1024ULL * 1024ULL * 1024ULL);
+				break;
+			case 'm':
+				evp->v[evp->c].len *= (uint64_t)(1024ULL * 1024ULL);
+				break;
+			case 'k':
+				evp->v[evp->c].len *= (uint64_t)1024ULL;
+				break;
+			}
 		}
 	}
 	evp->c += 1;
