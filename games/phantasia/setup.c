@@ -1,13 +1,18 @@
-/*	$NetBSD: setup.c,v 1.16 2007/12/15 19:44:42 perry Exp $	*/
+/*	$NetBSD: setup.c,v 1.17 2007/12/18 08:45:04 dogcow Exp $	*/
 
 /*
  * setup.c - set up all files for Phantasia
+ * n.b.: this is used at build-time - i.e. during build.sh.
  */
 #include <sys/cdefs.h>
 #include <sys/param.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include "include.h"
+
+#ifndef __dead /* Not NetBSD */
+#define __dead ;
+#endif
 
 int main(int, char *[]);
 void Error(const char *, const char *) __dead;
