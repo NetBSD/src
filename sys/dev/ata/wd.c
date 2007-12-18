@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.353 2007/12/11 02:02:31 jmcneill Exp $ */
+/*	$NetBSD: wd.c,v 1.354 2007/12/18 15:30:40 joerg Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.353 2007/12/11 02:02:31 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.354 2007/12/18 15:30:40 joerg Exp $");
 
 #include "opt_ata.h"
 
@@ -88,6 +88,7 @@ __KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.353 2007/12/11 02:02:31 jmcneill Exp $");
 #include <sys/disk.h>
 #include <sys/syslog.h>
 #include <sys/proc.h>
+#include <sys/reboot.h>
 #include <sys/vnode.h>
 #if NRND > 0
 #include <sys/rnd.h>
@@ -139,10 +140,8 @@ int	wdactivate(struct device *, enum devact);
 int	wdprint(void *, char *);
 void	wdperror(const struct wd_softc *);
 
-#if notyet
 static bool	wd_suspend(device_t);
 static int	wd_standby(struct wd_softc *, int);
-#endif
 
 CFATTACH_DECL(wd, sizeof(struct wd_softc),
     wdprobe, wdattach, wddetach, wdactivate);
@@ -425,22 +424,28 @@ wdattach(struct device *parent, struct device *self, void *aux)
 	/* Discover wedges on this disk. */
 	dkwedge_discover(&wd->sc_dk);
 
-	if (!pmf_device_register(self, NULL, NULL))
+	if (!pmf_device_register(self, wd_suspend, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
-#if notyet
 static bool
 wd_suspend(device_t dv)
 {
 	struct wd_softc *sc = device_private(dv);
+	/* For shutdown and panic processing, use polling. */
+	int modus = doing_shutdown ? AT_POLL : AT_WAIT;
 
-	wd_flushcache(sc, AT_WAIT | AT_POLL);
-	wd_standby(sc, AT_WAIT | AT_POLL);
+	wd_flushcache(sc, modus);
+	/*
+	 * Only put the disk into standby mode if this not a shutdown or
+	 * if this is an explicit halt -p.
+	 */
+	if (doing_shutdown == 0 ||
+	    (boothowto & RB_POWERDOWN) == RB_POWERDOWN)
+		wd_standby(sc, modus);
 
 	return true;
 }
-#endif
 
 int
 wdactivate(struct device *self, enum devact act)
@@ -1870,7 +1875,6 @@ wd_setcache(struct wd_softc *wd, int bits)
 	return 0;
 }
 
-#if notyet
 static int
 wd_standby(struct wd_softc *wd, int flags)
 {
@@ -1899,7 +1903,6 @@ wd_standby(struct wd_softc *wd, int flags)
 	}
 	return 0;
 }
-#endif
 
 int
 wd_flushcache(struct wd_softc *wd, int flags)
