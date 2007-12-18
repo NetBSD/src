@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_fcntl.c,v 1.27 2007/12/08 18:36:27 dsl Exp $	 */
+/*	$NetBSD: svr4_32_fcntl.c,v 1.28 2007/12/18 11:05:53 martin Exp $	 */
 
 /*-
  * Copyright (c) 1994, 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_fcntl.c,v 1.27 2007/12/08 18:36:27 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_fcntl.c,v 1.28 2007/12/18 11:05:53 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -361,14 +361,6 @@ svr4_32_sys_open(struct lwp *l, void *v, register_t *retval)
 	return 0;
 }
 
-
-int
-svr4_32_sys_open64(struct lwp *l, void *v, register_t *retval)
-{
-	return svr4_32_sys_open(l, v, retval);
-}
-
-
 int
 svr4_32_sys_creat(struct lwp *l, void *v, register_t *retval)
 {
@@ -381,14 +373,6 @@ svr4_32_sys_creat(struct lwp *l, void *v, register_t *retval)
 
 	return sys_open(l, &cup, retval);
 }
-
-
-int
-svr4_32_sys_creat64(struct lwp *l, void *v, register_t *retval)
-{
-	return svr4_32_sys_creat(l, v, retval);
-}
-
 
 int
 svr4_32_sys_llseek(struct lwp *l, void *v, register_t *retval)
