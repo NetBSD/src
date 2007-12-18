@@ -1,4 +1,4 @@
-/*	$NetBSD: umac.c,v 1.2 2007/12/18 02:35:33 christos Exp $	*/
+/*	$NetBSD: umac.c,v 1.3 2007/12/18 08:32:21 dogcow Exp $	*/
 /* $OpenBSD: umac.c,v 1.1 2007/06/07 19:37:34 pvalchev Exp $ */
 /* -----------------------------------------------------------------------
  * 
@@ -119,6 +119,14 @@ typedef unsigned int	UWORD;  /* Register */
 
 #define MUL64(a,b) ((UINT64)((UINT64)(UINT32)(a) * (UINT64)(UINT32)(b)))
 
+#if defined(__NetBSD__)
+#include <sys/endian.h>
+#define LOAD_UINT32_LITTLE(ptr)	le32toh(*ptr)
+#define STORE_UINT32_BIG(ptr,x)	(*(UINT32 *)(ptr) = htobe32(x))
+#define LOAD_UINT32_REVERSED(p)		(bswap32(*(UINT32 *)(p)))
+#define STORE_UINT32_REVERSED(p,v) 	(*(UINT32 *)(p) = bswap32(v))
+#else /* !NetBSD */
+
 /* ---------------------------------------------------------------------- */
 /* --- Endian Conversion --- Forcing assembly on some platforms           */
 /* ---------------------------------------------------------------------- */
@@ -154,7 +162,7 @@ static void STORE_UINT32_REVERSED(void *ptr, UINT32 x)
 #define LOAD_UINT32_LITTLE(ptr)     LOAD_UINT32_REVERSED(ptr)
 #define STORE_UINT32_BIG(ptr,x)     (*(UINT32 *)(ptr) = (UINT32)(x))
 #endif
-
+#endif /*!NetBSD*/
 
 
 /* ---------------------------------------------------------------------- */
@@ -541,7 +549,8 @@ static void nh_transform(nh_ctx *hc, UINT8 *buf, UINT32 nbytes)
 }
 
 /* ---------------------------------------------------------------------- */
-
+#if (__LITTLE_ENDIAN__)
+#define endian_convert_if_le(x,y,z) endian_convert((x),(y),(z))
 static void endian_convert(void *buf, UWORD bpw, UINT32 num_bytes)
 /* We endian convert the keys on little-endian computers to               */
 /* compensate for the lack of big-endian memory reads during hashing.     */
@@ -564,8 +573,6 @@ static void endian_convert(void *buf, UWORD bpw, UINT32 num_bytes)
         } while (--iters);
     }
 }
-#if (__LITTLE_ENDIAN__)
-#define endian_convert_if_le(x,y,z) endian_convert((x),(y),(z))
 #else
 #define endian_convert_if_le(x,y,z) do{}while(0)  /* Do nothing */
 #endif
