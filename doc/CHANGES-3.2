@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.2,v 1.1.2.118 2007/12/19 17:24:44 msaitoh Exp $
+#	$NetBSD: CHANGES-3.2,v 1.1.2.119 2007/12/19 18:32:00 ghen Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.2
 release:
@@ -3874,3 +3874,14 @@ crypto/dist/openssl/ssl/ssl_lib.c		1.4
 	in an older security fix, see
 	http://www.securityfocus.com/archive/1/480855/30/0/threaded
 	[drochner, ticket #1891]
+
+sys/dev/raidframe/rf_netbsdkintf.c		1.231 via patch
+
+	Implement dumping kernel cores to RAID 1 sets.  The component used
+	for the dump is selected in this order of preference:
+	   1) the master
+	   2) a used_spare of the master
+	   3) the slave
+	   4) a used_spare of the slave
+	[sborrill, ticket #1892]
+
