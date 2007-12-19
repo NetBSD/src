@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmi.c,v 1.4.4.1 2007/09/27 15:07:06 xtraeme Exp $ */
+/*	$NetBSD: ipmi.c,v 1.4.4.2 2007/12/19 19:38:52 ghen Exp $ */
 /*
  * Copyright (c) 2006 Manuel Bouyer.
  *
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.4.4.1 2007/09/27 15:07:06 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.4.4.2 2007/12/19 19:38:52 ghen Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -906,8 +906,8 @@ void
 ipmi_smbios_probe(struct smbios_ipmi *pipmi, struct ipmi_attach_args *ia)
 {
 
-	dbg_printf(1, "ipmi_smbios_probe: %02x %02x %02x %02x %08llx %02x "
-	    "%02x\n",
+	dbg_printf(1, "ipmi_smbios_probe: %02x %02x %02x %02x "
+	    "%08" PRIx64 " %02x %02x\n",
 	    pipmi->smipmi_if_type,
 	    pipmi->smipmi_if_rev,
 	    pipmi->smipmi_i2c_address,
@@ -1519,12 +1519,26 @@ add_sdr_sensor(struct ipmi_softc *sc, u_int8_t *psdr)
 	return rc;
 }
 
+static int
+ipmi_is_dupname(char *name)
+{
+	struct ipmi_sensor *ipmi_s;
+
+	SLIST_FOREACH(ipmi_s, &ipmi_sensor_list, i_list) {
+		if (strcmp(ipmi_s->i_envdesc, name) == 0) {
+			return 1;
+		}
+	}
+	return 0;
+}
+
 int
 add_child_sensors(struct ipmi_softc *sc, u_int8_t *psdr, int count,
     int sensor_num, int sensor_type, int ext_type, int sensor_base,
     int entity, const char *name)
 {
-	int			typ, idx;
+	int			typ, idx, dupcnt, c;
+	char			*e;
 	struct ipmi_sensor	*psensor;
 	struct sdrtype1		*s1 = (struct sdrtype1 *)psdr;
 
@@ -1534,6 +1548,7 @@ add_child_sensors(struct ipmi_softc *sc, u_int8_t *psdr, int count,
 		    "name:%s\n", sensor_type, ext_type, sensor_num, name);
 		return 0;
 	}
+	dupcnt = 0;
 	sc->sc_nsensors += count;
 	sc->sc_nsensors_typ[typ] += count;
 	for (idx = 0; idx < count; idx++) {
@@ -1557,6 +1572,32 @@ add_child_sensors(struct ipmi_softc *sc, u_int8_t *psdr, int count,
 		else
 			strlcpy(psensor->i_envdesc, name,
 			    sizeof(psensor->i_envdesc));
+
+		/*
+		 * Check for duplicates.  If there are duplicates,
+		 * make sure there is space in the name (if not,
+		 * truncate to make space) for a count (1-99) to
+		 * add to make the name unique.  If we run the
+		 * counter out, just accept the duplicate (@name99)
+		 * for now.
+		 */
+		if (ipmi_is_dupname(psensor->i_envdesc)) {
+			if (strlen(psensor->i_envdesc) >=
+			    sizeof(psensor->i_envdesc) - 3) {
+				e = psensor->i_envdesc +
+				    sizeof(psensor->i_envdesc) - 3;
+			} else {
+				e = psensor->i_envdesc +
+				    strlen(psensor->i_envdesc);
+			}
+			c = psensor->i_envdesc +
+			    sizeof(psensor->i_envdesc) - e;
+			do {
+				dupcnt++;
+				snprintf(e, c, "%d", dupcnt);
+			} while (dupcnt < 100 &&
+			         ipmi_is_dupname(psensor->i_envdesc));
+		}
 
 		dbg_printf(5, "add sensor:%.4x %.2x:%d ent:%.2x:%.2x %s\n",
 		    s1->sdrhdr.record_id, s1->sensor_type,
