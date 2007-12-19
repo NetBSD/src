@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_exec.c,v 1.10 2005/12/11 12:24:48 christos Exp $ */
+/* $NetBSD: lkminit_exec.c,v 1.11 2007/12/19 20:31:37 dsl Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_exec.c,v 1.10 2005/12/11 12:24:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_exec.c,v 1.11 2007/12/19 20:31:37 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: lkminit_exec.c,v 1.10 2005/12/11 12:24:48 christos E
 
 #include <compat/ibcs2/ibcs2_exec.h>
 
-int exec_ibcs2_elf_lkmentry __P((struct lkm_table *, int, int));
+int exec_ibcs2_elf_lkmentry(struct lkm_table *, int, int);
 
 static struct execsw exec_ibcs2_elf =
 	/* SCO Elf32 */

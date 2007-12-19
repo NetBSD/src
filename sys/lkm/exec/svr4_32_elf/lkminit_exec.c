@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_exec.c,v 1.8 2005/12/11 12:24:49 christos Exp $ */
+/* $NetBSD: lkminit_exec.c,v 1.9 2007/12/19 20:31:39 dsl Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_exec.c,v 1.8 2005/12/11 12:24:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_exec.c,v 1.9 2007/12/19 20:31:39 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,7 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: lkminit_exec.c,v 1.8 2005/12/11 12:24:49 christos Ex
 #include <compat/svr4_32/svr4_32_types.h>
 #include <compat/svr4_32/svr4_32_exec.h>
 
-int exec_svr4_32_elf_lkmentry __P((struct lkm_table *, int, int));
+int exec_svr4_32_elf_lkmentry(struct lkm_table *, int, int);
 
 static struct execsw exec_svr4_32_elf =
 	/* SVR4 Elf32 on 64-bit */

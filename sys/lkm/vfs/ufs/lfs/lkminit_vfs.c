@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_vfs.c,v 1.12 2007/02/09 21:55:36 ad Exp $ */
+/* $NetBSD: lkminit_vfs.c,v 1.13 2007/12/19 20:31:41 dsl Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_vfs.c,v 1.12 2007/02/09 21:55:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_vfs.c,v 1.13 2007/12/19 20:31:41 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -56,10 +56,10 @@ __KERNEL_RCSID(0, "$NetBSD: lkminit_vfs.c,v 1.12 2007/02/09 21:55:36 ad Exp $");
 
 #include <ufs/lfs/lfs_extern.h>
 
-int lfs_lkmentry __P((struct lkm_table *, int, int));
+int lfs_lkmentry(struct lkm_table *, int, int);
 
-static int lfs_load __P((struct lkm_table *, int));
-static int lfs_unload __P((struct lkm_table *, int));
+static int lfs_load(struct lkm_table *, int);
+static int lfs_unload(struct lkm_table *, int);
 static struct sysctllog *_lfs_log;
 
 #define LFS_SYSENT_CNT		4

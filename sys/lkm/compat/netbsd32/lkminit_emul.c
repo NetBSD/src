@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_emul.c,v 1.8 2005/12/11 12:24:47 christos Exp $ */
+/* $NetBSD: lkminit_emul.c,v 1.9 2007/12/19 20:31:36 dsl Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_emul.c,v 1.8 2005/12/11 12:24:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_emul.c,v 1.9 2007/12/19 20:31:36 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -54,7 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: lkminit_emul.c,v 1.8 2005/12/11 12:24:47 christos Ex
 
 extern const struct emul emul_netbsd32;
 
-int compat_netbsd32_lkmentry __P((struct lkm_table *, int, int));
+int compat_netbsd32_lkmentry(struct lkm_table *, int, int);
 
 /*
  * declare the emulation
@@ -64,8 +64,8 @@ MOD_COMPAT("compat_netbsd32", -1, &emul_netbsd32);
 /*
  * take care of emulation specific sysctl nodes
  */
-static int load __P((struct lkm_table *, int));
-static int unload __P((struct lkm_table *, int));
+static int load(struct lkm_table *, int);
+static int unload(struct lkm_table *, int);
 static struct sysctllog *_emul_netbsd32_log;
 
 /*
