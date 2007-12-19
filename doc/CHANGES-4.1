@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.1 2007/12/17 12:49:10 ghen Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.2 2007/12/19 19:39:39 ghen Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -9,4 +9,20 @@ gnu/usr.bin/groff/tmac/mdoc.local		patch
 sys/sys/param.h					patch
 
 	Welcome to 4.0_STABLE
+
+sys/arch/amd64/amd64/bios32.c			1.6
+sys/arch/amd64/amd64/mainbus.c			1.17
+sys/arch/amd64/conf/GENERIC			1.151
+sys/arch/amd64/conf/files.amd64			1.39 via patch
+sys/arch/x86/x86/ipmi.c				1.12
+sys/arch/x86/x86/ipmi.c				1.8
+sys/dev/DEVNAMES				1.228
+
+	Use PRIx64 for a 64-bit quantity instead of llx in a debug print.
+	Add (commented-out) support for IPMI on amd64--pretty much copied straight
+	from i386.
+	Check for duplicate sensor names in the IPMI table.  If a duplicate name
+	is found, try to make it unique by appending a count (1-99) to the sensor
+	description (truncating, if necessary).
+	[briggs, ticket #989]
 
