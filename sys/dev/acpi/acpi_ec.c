@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.46 2007/12/15 09:30:59 joerg Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.47 2007/12/19 20:48:56 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.46 2007/12/15 09:30:59 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.47 2007/12/19 20:48:56 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -825,6 +825,8 @@ acpiec_callout(void *arg)
 {
 	device_t dv = arg;
 	struct acpiec_softc *sc = device_private(dv);
+
+	AcpiClearGpe(sc->sc_gpeh, sc->sc_gpebit, ACPI_NOT_ISR);
 
 	mutex_enter(&sc->sc_mtx);
 	acpiec_gpe_state_machine(dv);
