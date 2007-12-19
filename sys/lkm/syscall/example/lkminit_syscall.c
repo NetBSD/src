@@ -1,4 +1,4 @@
-/*	$NetBSD: lkminit_syscall.c,v 1.7 2005/12/11 12:24:49 christos Exp $	*/
+/*	$NetBSD: lkminit_syscall.c,v 1.8 2007/12/19 20:31:39 dsl Exp $	*/
 
 /*
  * Makefile for newsyscall
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_syscall.c,v 1.7 2005/12/11 12:24:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_syscall.c,v 1.8 2007/12/19 20:31:39 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -51,10 +51,10 @@ __KERNEL_RCSID(0, "$NetBSD: lkminit_syscall.c,v 1.7 2005/12/11 12:24:49 christos
 #include <sys/errno.h>
 
 
-int	example_syscall __P((struct lwp *, void *, register_t *));
-int	syscall_example_lkmentry __P((struct lkm_table *, int, int));
+int	example_syscall(struct lwp *, void *, register_t *);
+int	syscall_example_lkmentry(struct lkm_table *, int, int);
 
-static int syscall_load __P((struct lkm_table *, int));
+static int syscall_load(struct lkm_table *, int);
 
 /*
  * These two entries define our system call and module information.  We
