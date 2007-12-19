@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.124.6.2 2007/12/19 00:02:01 ad Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.124.6.3 2007/12/19 19:16:45 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.124.6.2 2007/12/19 00:02:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.124.6.3 2007/12/19 19:16:45 ad Exp $");
 
 #ifndef LFS
 # define LFS		/* for prototypes in syscallargs.h */
@@ -366,7 +366,7 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov,
 
 		/* Past this point we are guaranteed that vp, ip are valid. */
 
-		/* Can't clean VDIROP directories in case of truncation */
+		/* Can't clean VU_DIROP directories in case of truncation */
 		/* XXX - maybe we should mark removed dirs specially? */
 		if (vp->v_type == VDIR && (vp->v_uflag & VU_DIROP)) {
 			do_again++;
@@ -1022,7 +1022,7 @@ lfs_fasthashget(dev_t dev, ino_t ino, struct vnode **vpp)
 		mutex_enter(&vp->v_interlock);
 		mutex_exit(&ufs_ihash_lock);
 		if (vp->v_iflag & VI_XLOCK) {
-			DLOG((DLOG_CLEAN, "lfs_fastvget: ino %d VXLOCK\n",
+			DLOG((DLOG_CLEAN, "lfs_fastvget: ino %d VI_XLOCK\n",
 			      ino));
 			lfs_stats.clean_vnlocked++;
 			mutex_exit(&vp->v_interlock);
