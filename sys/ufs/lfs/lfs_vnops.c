@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.213.2.2 2007/12/19 00:02:02 ad Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.213.2.3 2007/12/19 19:16:46 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.213.2.2 2007/12/19 00:02:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.213.2.3 2007/12/19 19:16:46 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -380,11 +380,11 @@ lfs_inactive(void *v)
  * identify all the pages touched during directory ops which need to
  * be ordered and flushed atomically, so that they may be recovered.
  *
- * Because we have to mark nodes VDIROP in order to prevent
+ * Because we have to mark nodes VU_DIROP in order to prevent
  * the cache from reclaiming them while a dirop is in progress, we must
  * also manage the number of nodes so marked (otherwise we can run out).
  * We do this by setting lfs_dirvcount to the number of marked vnodes; it
- * is decremented during segment write, when VDIROP is taken off.
+ * is decremented during segment write, when VU_DIROP is taken off.
  */
 #define	MARK_VNODE(vp)			lfs_mark_vnode(vp)
 #define	UNMARK_VNODE(vp)		lfs_unmark_vnode(vp)
@@ -652,7 +652,7 @@ lfs_mknod(void *v)
 
 	/*
 	 * Call fsync to write the vnode so that we don't have to deal with
-	 * flushing it when it's marked VDIROP|VXLOCK.
+	 * flushing it when it's marked VU_DIROP|VI_XLOCK.
 	 *
 	 * XXX KS - If we can't flush we also can't call vgone(), so must
 	 * return.  But, that leaves this vnode in limbo, also not good.
@@ -671,7 +671,6 @@ lfs_mknod(void *v)
 	/* Used to be vput, but that causes us to call VOP_INACTIVE twice. */
 
 	VOP_UNLOCK(*vpp, 0);
-	lfs_vunref(*vpp);	/* XXXAD */
 	(*vpp)->v_type = VNON;
 	vgone(*vpp);
 	error = VFS_VGET(mp, ino, vpp);
@@ -1115,7 +1114,7 @@ lfs_reclaim(void *v)
 		TAILQ_REMOVE(&fs->lfs_pchainhd, ip, i_lfs_pchain);
 	}
 	if (vp->v_uflag & VU_DIROP) {
-		panic("reclaimed vnode is VDIROP");
+		panic("reclaimed vnode is VU_DIROP");
 		vp->v_uflag &= ~VU_DIROP;
 		TAILQ_REMOVE(&fs->lfs_dchainhd, ip, i_lfs_dchain);
 	}
@@ -1338,7 +1337,7 @@ lfs_flush_dirops(struct lfs *fs)
 
 /*
  * Flush all vnodes for which the pagedaemon has requested pageouts.
- * Skip over any files that are marked VDIROP (since lfs_flush_dirop()
+ * Skip over any files that are marked VU_DIROP (since lfs_flush_dirop()
  * has just run, this would be an error).  If we have to skip a vnode
  * for any reason, just skip it; if we have to wait for the cleaner,
  * abort.  The writer daemon will call us again later.
@@ -2219,7 +2218,7 @@ lfs_putpages(void *v)
 	    (vp->v_uflag & VU_DIROP)) {
 		int locked;
 
-		DLOG((DLOG_PAGE, "lfs_putpages: flushing VDIROP\n"));
+		DLOG((DLOG_PAGE, "lfs_putpages: flushing VU_DIROP\n"));
 		locked = (VOP_ISLOCKED(vp) == LK_EXCLUSIVE);
 		mutex_exit(&vp->v_interlock);
 		lfs_writer_enter(fs, "ppdirop");

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.206.6.2 2007/12/19 00:02:01 ad Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.206.6.3 2007/12/19 19:16:44 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.206.6.2 2007/12/19 00:02:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.206.6.3 2007/12/19 19:16:44 ad Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -289,7 +289,7 @@ lfs_vflush(struct vnode *vp)
 	}
 	mutex_exit(&vp->v_interlock);
 
-	/* Protect against VXLOCK deadlock in vinvalbuf() */
+	/* Protect against VI_XLOCK deadlock in vinvalbuf() */
 	lfs_seglock(fs, SEGM_SYNC);
 
 	/* If we're supposed to flush a freed inode, just toss it */
@@ -380,8 +380,8 @@ lfs_vflush(struct vnode *vp)
 
 #ifdef DIAGNOSTIC
 	if (vp->v_uflag & VU_DIROP) {
-		DLOG((DLOG_VNODE, "lfs_vflush: flushing VDIROP\n"));
-		/* panic("lfs_vflush: VDIROP being flushed...this can\'t happen"); */
+		DLOG((DLOG_VNODE, "lfs_vflush: flushing VU_DIROP\n"));
+		/* panic("lfs_vflush: VU_DIROP being flushed...this can\'t happen"); */
 	}
 	if (vp->v_usecount < 0) {
 		printf("usecount=%ld\n", (long)vp->v_usecount);
@@ -572,6 +572,7 @@ lfs_writevnodes(struct lfs *fs, struct mount *mp, struct segment *sp, int op)
 							LFS_SET_UINO(ip, IN_MODIFIED);
 							mutex_exit(&fs->lfs_interlock);
 						}
+						mutex_enter(&mntvnode_lock);
 						break;
 					}
 					error = 0; /* XXX not quite right */
@@ -778,7 +779,7 @@ lfs_segwrite(struct mount *mp, int flags)
 		mutex_enter(&vp->v_interlock);
 		if (LIST_EMPTY(&vp->v_dirtyblkhd)) {
 			LFS_CLR_UINO(ip, IN_ALLMOD);
-		}	
+		}
 #ifdef DIAGNOSTIC
 		else if (do_ckp) {
 			int do_panic = 0;
@@ -1124,7 +1125,7 @@ lfs_writeinode(struct lfs *fs, struct segment *sp, struct inode *ip)
 		((int32_t *)(sp->segsum))[ndx] = daddr;
 	}
 
-	/* Check VDIROP in case there is a new file with no data blocks */
+	/* Check VU_DIROP in case there is a new file with no data blocks */
 	if (ITOV(ip)->v_uflag & VU_DIROP)
 		((SEGSUM *)(sp->segsum))->ss_flags |= (SS_DIROP|SS_CONT);
 
@@ -1154,7 +1155,7 @@ lfs_writeinode(struct lfs *fs, struct segment *sp, struct inode *ip)
 	/*
 	 * If cleaning, link counts and directory file sizes cannot change,
 	 * since those would be directory operations---even if the file
-	 * we are writing is marked VDIROP we should write the old values.
+	 * we are writing is marked VU_DIROP we should write the old values.
 	 * If we're not cleaning, of course, update the values so we get
 	 * current values the next time we clean.
 	 */
@@ -1344,7 +1345,7 @@ lfs_gather(struct lfs *fs, struct segment *sp, struct vnode *vp,
 		return 0;
 	KASSERT(sp->vp == NULL);
 	sp->vp = vp;
-	mutex_enter(&vp->v_interlock);
+	mutex_enter(&bufcache_lock);
 
 #ifndef LFS_NO_BACKBUF_HACK
 /* This is a hack to see if ordering the blocks in LFS makes a difference. */
@@ -1400,12 +1401,12 @@ loop:
 			panic("lfs_gather: bp not BC_LOCKED");
 		}
 #endif
-		if (lfs_gatherblock(sp, bp, &vp->v_interlock)) {
+		if (lfs_gatherblock(sp, bp, &bufcache_lock)) {
 			goto loop;
 		}
 		count++;
 	}
-	mutex_exit(&vp->v_interlock);
+	mutex_exit(&bufcache_lock);
 	lfs_updatemeta(sp);
 	KASSERT(sp->vp == vp);
 	sp->vp = NULL;
@@ -2474,8 +2475,8 @@ lfs_super_aiodone(struct buf *bp)
 	fs->lfs_sbactive = 0;
 	if (--fs->lfs_iocount <= 1)
 		wakeup(&fs->lfs_iocount);
-	mutex_exit(&fs->lfs_interlock);
 	wakeup(&fs->lfs_sbactive);
+	mutex_exit(&fs->lfs_interlock);
 	lfs_freebuf(fs, bp);
 	KERNEL_UNLOCK_LAST(curlwp);
 }
@@ -2726,7 +2727,7 @@ lfs_shellsort(struct buf **bp_array, int32_t *lb_array, int nmemb, int size)
 }
 
 /*
- * Call vget with LK_NOWAIT.  If we are the one who holds VXLOCK/VFREEING,
+ * Call vget with LK_NOWAIT.  If we are the one who holds VI_XLOCK,
  * however, we must press on.  Just fake success in that case.
  */
 int

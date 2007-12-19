@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.106.6.3 2007/12/19 00:01:59 ad Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.106.6.4 2007/12/19 19:16:44 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.106.6.3 2007/12/19 00:01:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.106.6.4 2007/12/19 19:16:44 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -513,10 +513,10 @@ lfs_bwrite_ext(struct buf *bp, int flags)
 		bp->b_error = 0;
 		reassignbuf(bp, bp->b_vp);
 		mutex_exit(&vp->v_interlock);
-		mutex_exit(&bufcache_lock);
+	} else {
+		mutex_enter(&bufcache_lock);
 	}
 
-	mutex_enter(&bufcache_lock);
 	if (bp->b_iodone != NULL)
 		bp->b_cflags &= ~BC_BUSY;
 	else
@@ -535,7 +535,6 @@ lfs_flush_fs(struct lfs *fs, int flags)
 {
 	ASSERT_NO_SEGLOCK(fs);
 	KASSERT(mutex_owned(&fs->lfs_interlock));
-	KASSERT(!mutex_owned(&lfs_subsys_lock));
 	if (fs->lfs_ronly)
 		return;
 

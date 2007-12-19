@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.114.6.2 2007/12/19 00:02:00 ad Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.114.6.3 2007/12/19 19:16:44 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.114.6.2 2007/12/19 00:02:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.114.6.3 2007/12/19 19:16:44 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -167,7 +167,7 @@ lfs_update(struct vnode *vp, const struct timespec *acc,
 
 	/* If sync, push back the vnode and any dirty blocks it may have. */
 	if ((updflags & (UPDATE_WAIT|UPDATE_DIROP)) == UPDATE_WAIT) {
-		/* Avoid flushing VDIROP. */
+		/* Avoid flushing VU_DIROP. */
 		mutex_enter(&fs->lfs_interlock);
 		++fs->lfs_diropwait;
 		while (vp->v_uflag & VU_DIROP) {
@@ -895,7 +895,6 @@ restart:
 		mutex_exit(bp->b_objlock);
 		LFS_UNLOCK_BUF(bp);
 		brelsel(bp, BC_INVAL | BC_VFLUSH);
-		mutex_enter(&vp->v_interlock);
 	}
 	mutex_exit(&bufcache_lock);
 
