@@ -31,7 +31,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/gpt.c,v 1.16 2006/07/07 02:44:23 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: gpt.c,v 1.5 2007/12/18 21:46:46 riz Exp $");
+__RCSID("$NetBSD: gpt.c,v 1.6 2007/12/19 05:48:33 dogcow Exp $");
 #endif
 
 #include <sys/param.h>
@@ -756,7 +756,7 @@ usage(void)
 	    getprogname(), destroymsg,
 	    getprogname(), labelmsg1,
 	    getprogname(), labelmsg2,
-	    strlen(getprogname()), "", labelmsg3,
+	    (int)strlen(getprogname()), "", labelmsg3,
 	    getprogname(), migratemsg,
 	    getprogname(), recovermsg,
 	    getprogname(), removemsg1,

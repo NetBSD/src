@@ -29,7 +29,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/label.c,v 1.3 2006/10/04 18:20:25 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: label.c,v 1.5 2007/12/18 21:46:46 riz Exp $");
+__RCSID("$NetBSD: label.c,v 1.6 2007/12/19 05:48:34 dogcow Exp $");
 #endif
 
 #include <sys/types.h>
@@ -61,7 +61,7 @@ usage_label(void)
 	    "usage: %s %s\n"
 	    "       %s %s\n"
 	    "       %*s %s\n", getprogname(), labelmsg1,
-	    getprogname(), labelmsg2, strlen(getprogname()), "", labelmsg3);
+	    getprogname(), labelmsg2, (int)strlen(getprogname()), "", labelmsg3);
 	exit(1);
 }
 
