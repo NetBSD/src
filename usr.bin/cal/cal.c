@@ -1,4 +1,4 @@
-/*	$NetBSD: cal.c,v 1.19 2005/06/02 01:38:50 lukem Exp $	*/
+/*	$NetBSD: cal.c,v 1.20 2007/12/19 15:52:50 joerg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)cal.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: cal.c,v 1.19 2005/06/02 01:38:50 lukem Exp $");
+__RCSID("$NetBSD: cal.c,v 1.20 2007/12/19 15:52:50 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -219,10 +219,11 @@ main(int argc, char **argv)
 {
 	struct tm *local_time;
 	time_t now;
-	int ch, month, year, yflag;
+	int ch, yflag;
+	long month, year;
 	int before, after, use_reform;
 	int yearly = 0;
-	char *when;
+	char *when, *eoi;
 
 	before = after = 0;
 	use_reform = yflag = year = 0;
@@ -276,12 +277,22 @@ main(int argc, char **argv)
 	month = 0;
 	switch (argc) {
 	case 2:
-		if ((month = atoi(*argv++)) < 1 || month > 12)
+		month = strtol(*argv++, &eoi, 10);
+		if (month < 1 || month > 12 || *eoi != '\0')
 			errx(1, "illegal month value: use 1-12");
-		/* FALLTHROUGH */
-	case 1:
-		if ((year = atoi(*argv)) < 1 || year > 9999)
+		year = strtol(*argv, &eoi, 10);
+		if (year < 1 || year > 9999 || *eoi != '\0')
 			errx(1, "illegal year value: use 1-9999");
+		break;
+	case 1:
+		year = strtol(*argv, &eoi, 10);
+		if (year < 1 || year > 9999 || (*eoi != '\0' && *eoi != '/'))
+			errx(1, "illegal year value: use 1-9999");
+		if (*eoi == '/') {
+			month = strtol(eoi + 1, &eoi, 10);
+			if (month < 1 || month > 12 || *eoi != '\0')
+				errx(1, "illegal month value: use 1-12");
+		}
 		break;
 	case 0:
 		(void)time(&now);
