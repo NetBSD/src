@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.c,v 1.21 2007/11/30 19:02:29 pooka Exp $	*/
+/*	$NetBSD: subr.c,v 1.22 2007/12/19 14:01:16 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006 Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: subr.c,v 1.21 2007/11/30 19:02:29 pooka Exp $");
+__RCSID("$NetBSD: subr.c,v 1.22 2007/12/19 14:01:16 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -107,6 +107,17 @@ puffs_fsnop_statvfs(struct puffs_usermount *dontuse1, struct statvfs *sbp)
 	sbp->f_bfree=sbp->f_bavail=sbp->f_bresvd=sbp->f_blocks = (fsblkcnt_t)0;
 	sbp->f_ffree=sbp->f_favail=sbp->f_fresvd=sbp->f_files = (fsfilcnt_t)0;
 
+	return 0;
+}
+
+/*ARGSUSED3*/
+int
+puffs_genfs_node_getattr(struct puffs_usermount *pu, void *opc,
+	struct vattr *va, const struct puffs_cred *pcr)
+{
+	struct puffs_node *pn = PU_CMAP(pu, opc);
+
+	memcpy(va, &pn->pn_va, sizeof(struct vattr));
 	return 0;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.h,v 1.101 2007/12/16 20:02:58 pooka Exp $	*/
+/*	$NetBSD: puffs.h,v 1.102 2007/12/19 14:01:16 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -471,6 +471,9 @@ int  puffs_fsnop_statvfs(struct puffs_usermount *, struct statvfs *);
 void puffs_zerostatvfs(struct statvfs *);
 int  puffs_fsnop_sync(struct puffs_usermount *, int waitfor,
 		      const struct puffs_cred *);
+
+int  puffs_genfs_node_getattr(struct puffs_usermount *, void *,
+			      struct vattr *, const struct puffs_cred *);
 int  puffs_genfs_node_reclaim(struct puffs_usermount *, void *);
 
 /*
