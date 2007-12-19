@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs_vnops.c,v 1.41 2007/11/30 19:02:37 pooka Exp $	*/
+/*	$NetBSD: dtfs_vnops.c,v 1.42 2007/12/19 14:01:30 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -92,17 +92,6 @@ dtfs_node_access(struct puffs_usermount *pu, void *opc, int acc_mode,
 
 	return puffs_access(pn->pn_va.va_type, pn->pn_va.va_mode,
 	    pn->pn_va.va_uid, pn->pn_va.va_gid, acc_mode, pcr);
-}
-
-int
-dtfs_node_getattr(struct puffs_usermount *pu, void *opc,
-	struct vattr *va, const struct puffs_cred *pcr)
-{
-	struct puffs_node *pn = opc;
-
-	memcpy(va, &pn->pn_va, sizeof(struct vattr));
-
-	return 0;
 }
 
 int

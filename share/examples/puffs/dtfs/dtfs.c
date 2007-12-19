@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs.c,v 1.38 2007/11/16 18:39:01 pooka Exp $	*/
+/*	$NetBSD: dtfs.c,v 1.39 2007/12/19 14:01:30 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -202,7 +202,7 @@ main(int argc, char *argv[])
 
 	PUFFSOP_SET(pops, dtfs, node, lookup);
 	PUFFSOP_SET(pops, dtfs, node, access);
-	PUFFSOP_SET(pops, dtfs, node, getattr);
+	PUFFSOP_SET(pops, puffs_genfs, node, getattr);
 	PUFFSOP_SET(pops, dtfs, node, setattr);
 	PUFFSOP_SET(pops, dtfs, node, create);
 	PUFFSOP_SET(pops, dtfs, node, remove);
