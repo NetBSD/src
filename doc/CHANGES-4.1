@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.2 2007/12/19 19:39:39 ghen Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.3 2007/12/19 20:08:46 ghen Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -25,4 +25,14 @@ sys/dev/DEVNAMES				1.228
 	is found, try to make it unique by appending a count (1-99) to the sensor
 	description (truncating, if necessary).
 	[briggs, ticket #989]
+
+sys/dev/raidframe/rf_netbsdkintf.c		1.231 via patch
+
+	Implement dumping kernel cores to RAID 1 sets.  The component used
+	for the dump is selected in this order of preference:
+	   1) the master
+	   2) a used_spare of the master
+	   3) the slave
+	   4) a used_spare of the slave
+	[oster, ticket #1014]
 
