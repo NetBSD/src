@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.122.6.1 2007/12/04 13:03:47 ad Exp $	*/
+/*	$NetBSD: lfs.h,v 1.122.6.2 2007/12/19 21:27:11 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -194,10 +194,10 @@ typedef struct lfs_res_blk {
 # define LFS_LOCK_BUF(bp) do {						\
 	KASSERT(mutex_owned(&bufcache_lock));				\
 	if (((bp)->b_cflags & BC_LOCKED) == 0 && bp->b_iodone == NULL) {\
-		mutex_enter(&lfs_subsys_lock);				\
+		mutex_enter(&lfs_lock);					\
 		++locked_queue_count;					\
 		locked_queue_bytes += bp->b_bufsize;			\
-		mutex_exit(&lfs_subsys_lock);				\
+		mutex_exit(&lfs_lock);					\
 	}								\
 	(bp)->b_cflags |= BC_LOCKED;					\
 } while (0)
@@ -205,13 +205,13 @@ typedef struct lfs_res_blk {
 # define LFS_UNLOCK_BUF(bp) do {					\
 	KASSERT(mutex_owned(&bufcache_lock));				\
 	if (((bp)->b_cflags & BC_LOCKED) != 0 && bp->b_iodone == NULL) {\
-		mutex_enter(&lfs_subsys_lock);				\
+		mutex_enter(&lfs_lock);					\
 		--locked_queue_count;					\
 		locked_queue_bytes -= bp->b_bufsize;			\
 		if (locked_queue_count < LFS_WAIT_BUFS &&		\
 		    locked_queue_bytes < LFS_WAIT_BYTES)		\
 			wakeup(&locked_queue_count);			\
-		mutex_exit(&lfs_subsys_lock);				\
+		mutex_exit(&lfs_lock);					\
 	}								\
 	(bp)->b_cflags &= ~BC_LOCKED;					\
 } while (0)
@@ -249,7 +249,7 @@ extern struct lfs_log_entry lfs_log[LFS_LOGLENGTH];
 #  define LFS_ENTER_LOG(theop, thefile, theline, lbn, theflags, thepid) do {\
 	int _s;								\
 									\
-	mutex_enter(&lfs_subsys_lock);					\
+	mutex_enter(&lfs_lock);						\
 	_s = splbio();							\
 	lfs_log[lfs_lognum].op = theop;					\
 	lfs_log[lfs_lognum].file = thefile;				\
@@ -259,7 +259,7 @@ extern struct lfs_log_entry lfs_log[LFS_LOGLENGTH];
 	lfs_log[lfs_lognum].flags = (theflags);				\
 	lfs_lognum = (lfs_lognum + 1) % LFS_LOGLENGTH;			\
 	splx(_s);							\
-	mutex_exit(&lfs_subsys_lock);				\
+	mutex_exit(&lfs_lock);						\
 } while (0)
 
 #  define LFS_BCLEAN_LOG(fs, bp) do {					\
@@ -523,7 +523,7 @@ typedef struct _cleanerinfo {
  * Synchronize the Ifile cleaner info with current avail and bfree.
  */
 #define LFS_SYNC_CLEANERINFO(cip, fs, bp, w) do {		 	\
-    mutex_enter(&(fs)->lfs_interlock);					\
+    mutex_enter(&lfs_lock);						\
     if ((w) || (cip)->bfree != (fs)->lfs_bfree ||		 	\
 	(cip)->avail != (fs)->lfs_avail - (fs)->lfs_ravail - 		\
 	(fs)->lfs_favail) {	 					\
@@ -533,10 +533,10 @@ typedef struct _cleanerinfo {
 	if (((bp)->b_flags & B_GATHERED) == 0) {		 	\
 		(fs)->lfs_flags |= LFS_IFDIRTY;			 	\
 	}								\
-	mutex_exit(&(fs)->lfs_interlock);				\
+	mutex_exit(&lfs_lock);						\
 	(void) LFS_BWRITE_LOG(bp); /* Ifile */			 	\
     } else {							 	\
-	mutex_exit(&(fs)->lfs_interlock);				\
+	mutex_exit(&lfs_lock);						\
 	brelse(bp, 0);						 	\
     }									\
 } while (0)
@@ -560,9 +560,9 @@ typedef struct _cleanerinfo {
 		LFS_CLEANERINFO((CIP), (FS), (BP));			\
 		(CIP)->free_head = (VAL);				\
 		LFS_BWRITE_LOG(BP);					\
-		mutex_enter(&fs->lfs_interlock);			\
+		mutex_enter(&lfs_lock);					\
 		(FS)->lfs_flags |= LFS_IFDIRTY;				\
-		mutex_exit(&fs->lfs_interlock);				\
+		mutex_exit(&lfs_lock);					\
 	}								\
 } while (0)
 
@@ -576,9 +576,9 @@ typedef struct _cleanerinfo {
 	LFS_CLEANERINFO((CIP), (FS), (BP));				\
 	(CIP)->free_tail = (VAL);					\
 	LFS_BWRITE_LOG(BP);						\
-	mutex_enter(&fs->lfs_interlock);				\
+	mutex_enter(&lfs_lock);						\
 	(FS)->lfs_flags |= LFS_IFDIRTY;					\
-	mutex_exit(&fs->lfs_interlock);					\
+	mutex_exit(&lfs_lock);						\
 } while (0)
 
 /*
@@ -841,7 +841,6 @@ struct lfs {
 #define LFS_MAX_CLEANIND 64
 	int32_t  lfs_cleanint[LFS_MAX_CLEANIND]; /* Active cleaning intervals */
 	int 	 lfs_cleanind;		/* Index into intervals */
-	kmutex_t lfs_interlock;		/* lock for lfs_seglock */
 	int lfs_sleepers;		/* # procs sleeping this fs */
 	int lfs_pages;			/* dirty pages blaming this fs */
 	lfs_bm_t *lfs_ino_bitmap;	/* Inuse inodes bitmap */

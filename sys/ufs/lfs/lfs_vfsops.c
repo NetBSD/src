@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.249.2.3 2007/12/19 19:16:45 ad Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.249.2.4 2007/12/19 21:27:18 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.249.2.3 2007/12/19 19:16:45 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.249.2.4 2007/12/19 21:27:18 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -203,10 +203,10 @@ lfs_writerd(void *arg)
 
 	lfs_writer_daemon = curproc->p_pid;
 
-	mutex_enter(&lfs_subsys_lock);
+	mutex_enter(&lfs_lock);
 	for (;;) {
 		mtsleep(&lfs_writer_daemon, PVM | PNORELOCK, "lfswriter", hz/10,
-		    &lfs_subsys_lock);
+		    &lfs_lock);
 
 		/*
 		 * Look through the list of LFSs to see if any of them
@@ -222,7 +222,7 @@ lfs_writerd(void *arg)
 			if (strncmp(mp->mnt_stat.f_fstypename, MOUNT_LFS,
 			    sizeof(mp->mnt_stat.f_fstypename)) == 0) {
 				fs = VFSTOUFS(mp)->um_lfs;
-				mutex_enter(&fs->lfs_interlock);
+				mutex_enter(&lfs_lock);
 				fsflags = 0;
 				if ((fs->lfs_dirvcount > LFS_MAX_FSDIROP(fs) ||
 				     lfs_dirvcount > LFS_MAX_DIROP) &&
@@ -232,15 +232,15 @@ lfs_writerd(void *arg)
 					DLOG((DLOG_FLUSH, "lfs_writerd: pdflush set\n"));
 					fs->lfs_pdflush = 0;
 					lfs_flush_fs(fs, fsflags);
-					mutex_exit(&fs->lfs_interlock);
+					mutex_exit(&lfs_lock);
 				} else if (!TAILQ_EMPTY(&fs->lfs_pchainhd)) {
 					DLOG((DLOG_FLUSH, "lfs_writerd: pchain non-empty\n"));
-					mutex_exit(&fs->lfs_interlock);
+					mutex_exit(&lfs_lock);
 					lfs_writer_enter(fs, "wrdirop");
 					lfs_flush_pchain(fs);
 					lfs_writer_leave(fs);
 				} else
-					mutex_exit(&fs->lfs_interlock);
+					mutex_exit(&lfs_lock);
 			}
 
 			mutex_enter(&mountlist_lock);
@@ -252,7 +252,7 @@ lfs_writerd(void *arg)
 		/*
 		 * If global state wants a flush, flush everything.
 		 */
-		mutex_enter(&lfs_subsys_lock);
+		mutex_enter(&lfs_lock);
 		loopcount = 0;
 		if (lfs_do_flush || locked_queue_count > LFS_MAX_BUFS ||
 			locked_queue_bytes > LFS_MAX_BYTES ||
@@ -302,7 +302,7 @@ lfs_init()
 #ifdef DEBUG
 	memset(lfs_log, 0, sizeof(lfs_log));
 #endif
-	mutex_init(&lfs_subsys_lock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&lfs_lock, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&locked_queue_cv, "lfsbuf");
 	cv_init(&lfs_writing_cv, "lfsflush");
 }
@@ -317,7 +317,7 @@ void
 lfs_done()
 {
 	ufs_done();
-	mutex_destroy(&lfs_subsys_lock);
+	mutex_destroy(&lfs_lock);
 	cv_destroy(&locked_queue_cv);
 	cv_destroy(&lfs_writing_cv);
 	pool_destroy(&lfs_inode_pool);
@@ -738,7 +738,6 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	fs->lfs_pdflush = 0;
 	fs->lfs_sleepers = 0;
 	fs->lfs_pages = 0;
-	mutex_init(&fs->lfs_interlock, MUTEX_DEFAULT, IPL_NONE);
 	rw_init(&fs->lfs_fraglock);
 	rw_init(&fs->lfs_iflock);
 	cv_init(&fs->lfs_stopcv, "lfsstop");
@@ -920,11 +919,11 @@ lfs_unmount(struct mount *mp, int mntflags)
 
 	/* wake up the cleaner so it can die */
 	lfs_wakeup_cleaner(fs);
-	mutex_enter(&fs->lfs_interlock);
+	mutex_enter(&lfs_lock);
 	while (fs->lfs_sleepers)
 		mtsleep(&fs->lfs_sleepers, PRIBIO + 1, "lfs_sleepers", 0,
-			&fs->lfs_interlock);
-	mutex_exit(&fs->lfs_interlock);
+			&lfs_lock);
+	mutex_exit(&lfs_lock);
 
 #ifdef QUOTA
 	if (mp->mnt_flag & MNT_QUOTA) {
@@ -957,11 +956,11 @@ lfs_unmount(struct mount *mp, int mntflags)
 	fs->lfs_pflags |= LFS_PF_CLEAN;
 	lfs_writesuper(fs, fs->lfs_sboffs[0]);
 	lfs_writesuper(fs, fs->lfs_sboffs[1]);
-	mutex_enter(&fs->lfs_interlock);
+	mutex_enter(&lfs_lock);
 	while (fs->lfs_iocount)
 		mtsleep(&fs->lfs_iocount, PRIBIO + 1, "lfs_umount", 0,
-			&fs->lfs_interlock);
-	mutex_exit(&fs->lfs_interlock);
+			&lfs_lock);
+	mutex_exit(&lfs_lock);
 
 	/* Finish with the Ifile, now that we're done with it */
 	vgone(fs->lfs_ivnode);
@@ -988,7 +987,6 @@ lfs_unmount(struct mount *mp, int mntflags)
 	cv_destroy(&fs->lfs_stopcv);
 	rw_destroy(&fs->lfs_fraglock);
 	rw_destroy(&fs->lfs_iflock);
-	mutex_destroy(&fs->lfs_interlock);
 	free(fs, M_UFSMNT);
 	free(ump, M_UFSMNT);
 
@@ -1064,12 +1062,12 @@ lfs_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
 	 * XXX than a segment and lfs_nextseg is close to the end of
 	 * XXX the log, we'll likely block.
 	 */
-	mutex_enter(&fs->lfs_interlock);
+	mutex_enter(&lfs_lock);
 	if (fs->lfs_nowrap && fs->lfs_nextseg < fs->lfs_curseg) {
-		mutex_exit(&fs->lfs_interlock);
+		mutex_exit(&lfs_lock);
 		return 0;
 	}
-	mutex_exit(&fs->lfs_interlock);
+	mutex_exit(&lfs_lock);
 
 	lfs_writer_enter(fs, "lfs_dirops");
 
@@ -1115,11 +1113,11 @@ lfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 	 * If the filesystem is not completely mounted yet, suspend
 	 * any access requests (wait for roll-forward to complete).
 	 */
-	mutex_enter(&fs->lfs_interlock);
+	mutex_enter(&lfs_lock);
 	while ((fs->lfs_flags & LFS_NOTYET) && curproc->p_pid != fs->lfs_rfpid)
 		mtsleep(&fs->lfs_flags, PRIBIO+1, "lfs_notyet", 0,
-			&fs->lfs_interlock);
-	mutex_exit(&fs->lfs_interlock);
+			&lfs_lock);
+	mutex_exit(&lfs_lock);
 
 retry:
 	if ((*vpp = ufs_ihashget(dev, ino, LK_EXCLUSIVE)) != NULL)
@@ -1207,7 +1205,7 @@ retry:
 #ifdef DEBUG
 			/* If the seglock is held look at the bpp to see
 			   what is there anyway */
-			mutex_enter(&fs->lfs_interlock);
+			mutex_enter(&lfs_lock);
 			if (fs->lfs_seglock > 0) {
 				struct buf **bpp;
 				struct ufs1_dinode *dp;
@@ -1228,18 +1226,18 @@ retry:
 					}
 				}
 			}
-			mutex_exit(&fs->lfs_interlock);
+			mutex_exit(&lfs_lock);
 #endif /* DEBUG */
 			panic("lfs_vget: dinode not found");
 		}
-		mutex_enter(&fs->lfs_interlock);
+		mutex_enter(&lfs_lock);
 		if (fs->lfs_iocount) {
 			DLOG((DLOG_VNODE, "lfs_vget: dinode %d not found, retrying...\n", ino));
 			(void)mtsleep(&fs->lfs_iocount, PRIBIO + 1,
-				      "lfs ifind", 1, &fs->lfs_interlock);
+				      "lfs ifind", 1, &lfs_lock);
 		} else
 			retries = LFS_IFIND_RETRIES;
-		mutex_exit(&fs->lfs_interlock);
+		mutex_exit(&lfs_lock);
 		goto again;
 	}
 	*ip->i_din.ffs1_din = *dip;

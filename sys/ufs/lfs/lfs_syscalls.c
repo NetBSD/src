@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.124.6.3 2007/12/19 19:16:45 ad Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.124.6.4 2007/12/19 21:27:18 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.124.6.3 2007/12/19 19:16:45 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.124.6.4 2007/12/19 21:27:18 ad Exp $");
 
 #ifndef LFS
 # define LFS		/* for prototypes in syscallargs.h */
@@ -380,9 +380,9 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov,
 			if (blkp->bi_inode != LFS_IFILE_INUM) {
 				LFS_IENTRY(ifp, fs, blkp->bi_inode, bp);
 				if (ifp->if_daddr == blkp->bi_daddr) {
-					mutex_enter(&fs->lfs_interlock);
+					mutex_enter(&lfs_lock);
 					LFS_SET_UINO(ip, IN_CLEANING);
-					mutex_exit(&fs->lfs_interlock);
+					mutex_exit(&lfs_lock);
 				}
 				brelse(bp, 0);
 			}
@@ -909,14 +909,14 @@ lfs_do_segclean(struct lfs *fs, unsigned long segnum)
 	if (fs->lfs_version > 1 && segnum == 0 &&
 	    fs->lfs_start < btofsb(fs, LFS_LABELPAD))
 		fs->lfs_avail -= btofsb(fs, LFS_LABELPAD) - fs->lfs_start;
-	mutex_enter(&fs->lfs_interlock);
+	mutex_enter(&lfs_lock);
 	fs->lfs_bfree += sup->su_nsums * btofsb(fs, fs->lfs_sumsize) +
 		btofsb(fs, sup->su_ninos * fs->lfs_ibsize);
 	fs->lfs_dmeta -= sup->su_nsums * btofsb(fs, fs->lfs_sumsize) +
 		btofsb(fs, sup->su_ninos * fs->lfs_ibsize);
 	if (fs->lfs_dmeta < 0)
 		fs->lfs_dmeta = 0;
-	mutex_exit(&fs->lfs_interlock);
+	mutex_exit(&lfs_lock);
 	sup->su_flags &= ~SEGUSE_DIRTY;
 	LFS_WRITESEGENTRY(sup, fs, segnum, bp);
 
@@ -925,10 +925,10 @@ lfs_do_segclean(struct lfs *fs, unsigned long segnum)
 	--cip->dirty;
 	fs->lfs_nclean = cip->clean;
 	cip->bfree = fs->lfs_bfree;
-	mutex_enter(&fs->lfs_interlock);
+	mutex_enter(&lfs_lock);
 	cip->avail = fs->lfs_avail - fs->lfs_ravail - fs->lfs_favail;
 	wakeup(&fs->lfs_avail);
-	mutex_exit(&fs->lfs_interlock);
+	mutex_exit(&lfs_lock);
 	(void) LFS_BWRITE_LOG(bp);
 
 	if (lfs_dostats)
@@ -1063,12 +1063,12 @@ lfs_fastvget(struct mount *mp, ino_t ino, daddr_t daddr, struct vnode **vpp,
 	 * Wait until the filesystem is fully mounted before allowing vget
 	 * to complete.	 This prevents possible problems with roll-forward.
 	 */
-	mutex_enter(&fs->lfs_interlock);
+	mutex_enter(&lfs_lock);
 	while (fs->lfs_flags & LFS_NOTYET) {
 		mtsleep(&fs->lfs_flags, PRIBIO+1, "lfs_fnotyet", 0,
-			&fs->lfs_interlock);
+			&lfs_lock);
 	}
-	mutex_exit(&fs->lfs_interlock);
+	mutex_exit(&lfs_lock);
 
 	/*
 	 * This is playing fast and loose.  Someone may have the inode
@@ -1206,9 +1206,9 @@ lfs_fakebuf(struct lfs *fs, struct vnode *vp, int lbn, size_t size, void *uaddr)
 	KDASSERT(bp->b_iodone == lfs_callback);
 
 #if 0
-	mutex_enter(&fs->lfs_interlock);
+	mutex_enter(&lfs_lock);
 	++fs->lfs_iocount;
-	mutex_exit(&fs->lfs_interlock);
+	mutex_exit(&lfs_lock);
 #endif
 	bp->b_bufsize = size;
 	bp->b_bcount = size;
