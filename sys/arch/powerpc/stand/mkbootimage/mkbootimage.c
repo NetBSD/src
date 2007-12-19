@@ -1,4 +1,4 @@
-/*	$NetBSD: mkbootimage.c,v 1.2 2007/12/18 18:26:36 garbled Exp $	*/
+/*	$NetBSD: mkbootimage.c,v 1.3 2007/12/19 19:45:33 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 #include <elf/external.h>
 
 #include "byteorder.h"
-#include "prep_magic.h"
+#include "magic.h"
 
 /* Globals */
 
