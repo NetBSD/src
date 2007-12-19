@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1.2,v 1.1.2.14 2007/11/22 19:09:41 bouyer Exp $
+#	$NetBSD: CHANGES-3.1.2,v 1.1.2.15 2007/12/19 18:18:11 msaitoh Exp $
 
 A complete list of changes from the NetBSD 3.1.1 release to the NetBSD 3.1.2
 release:
@@ -167,3 +167,10 @@ sys/netinet6/ipcomp_input.c			1.28
 	Should fix PR 37410.
 	[jdc, ticket #1879]
 
+crypto/dist/openssl/ssl/ssl_lib.c		1.4
+
+	apply a patch from openssl CVS to fix a remaining off-by-one error
+	in an older security fix, see
+	http://www.securityfocus.com/archive/1/480855/30/0/threaded
+	(CVE-2007-4995)
+	[drochner, ticket #1891]
