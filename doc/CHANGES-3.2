@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.2,v 1.1.2.117 2007/12/12 19:56:10 bouyer Exp $
+#	$NetBSD: CHANGES-3.2,v 1.1.2.118 2007/12/19 17:24:44 msaitoh Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.2
 release:
@@ -3868,3 +3868,9 @@ lib/libss/Makefile				1.6
 	have to be included on their own. From Jukka Salmi
 	[gendalia, ticket #1887]
 
+crypto/dist/openssl/ssl/ssl_lib.c		1.4
+
+	apply a patch from openssl CVS to fix a remaining off-by-one error
+	in an older security fix, see
+	http://www.securityfocus.com/archive/1/480855/30/0/threaded
+	[drochner, ticket #1891]
