@@ -1,4 +1,4 @@
-/*	$NetBSD: prep_magic.h,v 1.2 2007/12/18 18:26:36 garbled Exp $	*/
+/*	$NetBSD: magic.h,v 1.1 2007/12/19 19:45:32 garbled Exp $	*/
 
 char prep_magic[] = "KMA";
 int kern_len;
