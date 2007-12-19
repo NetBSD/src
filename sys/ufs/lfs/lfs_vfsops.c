@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.249.2.1 2007/12/04 13:03:52 ad Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.249.2.2 2007/12/19 00:02:02 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.249.2.1 2007/12/04 13:03:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.249.2.2 2007/12/19 00:02:02 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -905,7 +905,7 @@ lfs_unmount(struct mount *mp, int mntflags)
 	struct ufsmount *ump;
 	struct lfs *fs;
 	int error, flags, ronly;
-	int s;
+	vnode_t *vp;
 
 	flags = 0;
 	if (mntflags & MNT_FORCE)
@@ -947,10 +947,11 @@ lfs_unmount(struct mount *mp, int mntflags)
 		return (error);
 	if ((error = VFS_SYNC(mp, 1, l->l_cred)) != 0)
 		return (error);
-	s = splbio();
-	if (LIST_FIRST(&fs->lfs_ivnode->v_dirtyblkhd))
+	vp = fs->lfs_ivnode;
+	mutex_enter(&vp->v_interlock);
+	if (LIST_FIRST(&vp->v_dirtyblkhd))
 		panic("lfs_unmount: still dirty blocks on ifile vnode");
-	splx(s);
+	mutex_exit(&vp->v_interlock);
 
 	/* Explicitly write the superblock, to update serial and pflags */
 	fs->lfs_pflags |= LFS_PF_CLEAN;
@@ -1269,6 +1270,7 @@ lfs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
 	IFILE *ifp;
 	int32_t daddr;
 	struct lfs *fs;
+	vnode_t *vp;
 
 	if (fhp->fid_len != sizeof(struct lfid))
 		return EINVAL;
@@ -1286,7 +1288,10 @@ lfs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
 	     fs->lfs_cleansz - fs->lfs_segtabsz) * fs->lfs_ifpb)
 		return ESTALE;
 
-	if (ufs_ihashlookup(VFSTOUFS(mp)->um_dev, lfh.lfid_ino) == NULLVP) {
+	mutex_enter(&ufs_ihash_lock);
+	vp = ufs_ihashlookup(VFSTOUFS(mp)->um_dev, lfh.lfid_ino);
+	mutex_exit(&ufs_ihash_lock);
+	if (vp == NULL) {
 		LFS_IENTRY(ifp, fs, lfh.lfid_ino, bp);
 		daddr = ifp->if_daddr;
 		brelse(bp, 0);
@@ -1530,7 +1535,7 @@ static int
 lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
     int flags)
 {
-	int i, s, error, run, haveeof = 0;
+	int i, error, run, haveeof = 0;
 	int fs_bshift;
 	vaddr_t kva;
 	off_t eof, offset, startoffset = 0;
@@ -1667,7 +1672,7 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
 	vp->v_numoutput += 2; /* one for biodone, one for aiodone */
 	mutex_exit(&vp->v_interlock);
 
-	mbp = getiobuf(vp, true);
+	mbp = getiobuf(NULL, true);
 	UVMHIST_LOG(ubchist, "vp %p mbp %p num now %d bytes 0x%x",
 	    vp, mbp, vp->v_numoutput, bytes);
 	mbp->b_bufsize = npages << PAGE_SHIFT;
@@ -1728,7 +1733,7 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
 			--vp->v_numoutput;
 			mutex_exit(&vp->v_interlock);
 		} else {
-			bp = getiobuf(vp, true);
+			bp = getiobuf(NULL, true);
 			UVMHIST_LOG(ubchist, "vp %p bp %p num now %d",
 			    vp, bp, vp->v_numoutput, 0);
 			bp->b_data = (char *)kva +
@@ -1739,9 +1744,11 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
 		}
 
 		/* XXX This is silly ... is this necessary? */
+		mutex_enter(&bufcache_lock);
 		mutex_enter(&vp->v_interlock);
 		bgetvp(vp, bp);
 		mutex_exit(&vp->v_interlock);
+		mutex_exit(&bufcache_lock);
 
 		bp->b_lblkno = lblkno(fs, offset);
 		bp->b_private = mbp;
@@ -1755,15 +1762,15 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
 
 	if (skipbytes) {
 		UVMHIST_LOG(ubchist, "skipbytes %d", skipbytes, 0,0,0);
-		s = splbio();
+		mutex_enter(mbp->b_objlock);
 		if (error) {
 			mbp->b_error = error;
 		}
 		mbp->b_resid -= skipbytes;
+		mutex_exit(mbp->b_objlock);
 		if (mbp->b_resid == 0) {
 			biodone(mbp);
 		}
-		splx(s);
 	}
 	UVMHIST_LOG(ubchist, "returning 0", 0,0,0,0);
 	return (0);

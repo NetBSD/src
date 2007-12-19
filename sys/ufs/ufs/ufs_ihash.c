@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_ihash.c,v 1.23.16.1 2007/12/04 13:03:54 ad Exp $	*/
+/*	$NetBSD: ufs_ihash.c,v 1.23.16.2 2007/12/19 00:02:03 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_ihash.c,v 1.23.16.1 2007/12/04 13:03:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_ihash.c,v 1.23.16.2 2007/12/19 00:02:03 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,13 +116,13 @@ ufs_ihashlookup(dev_t dev, ino_t inum)
 	struct inode *ip;
 	struct ihashhead *ipp;
 
-	mutex_enter(&ufs_ihash_lock);
+	KASSERT(mutex_owned(&ufs_ihash_lock));
+
 	ipp = &ihashtbl[INOHASH(dev, inum)];
 	LIST_FOREACH(ip, ipp, i_hash) {
 		if (inum == ip->i_number && dev == ip->i_dev)
 			break;
 	}
-	mutex_exit(&ufs_ihash_lock);
 	if (ip)
 		return (ITOV(ip));
 	return (NULLVP);

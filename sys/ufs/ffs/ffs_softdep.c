@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.101.2.1 2007/12/04 13:03:46 ad Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.101.2.2 2007/12/19 00:01:58 ad Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.101.2.1 2007/12/04 13:03:46 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.101.2.2 2007/12/19 00:01:58 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -186,9 +186,7 @@ static	void softdep_collect_pagecache(struct inode *);
 static	void softdep_free_pagecache(struct inode *);
 static	struct vnode *softdep_lookupvp(struct fs *, ino_t);
 static	struct buf *softdep_lookup_pcbp(struct vnode *, daddr_t);
-#ifdef UVMHIST
 void softdep_pageiodone1(struct buf *);
-#endif
 void softdep_pageiodone(struct buf *);
 void softdep_flush_vnode(struct vnode *, daddr_t);
 static void softdep_trackbufs(int, bool);
@@ -435,6 +433,17 @@ worklist_insert(head, item)
 	struct workhead *head;
 	struct worklist *item;
 {
+#ifdef DIAGNOSTIC
+	struct worklist *test;
+
+	if (item->wk_type == D_FREEFILE) {
+		LIST_FOREACH(test, head, wk_list) {
+			if (test->wk_type == D_FREEFILE) {
+				panic("worklist_insert: freefile");
+			}
+		}
+	}
+#endif
 
 	KASSERT(mutex_owned(&bufcache_lock));
 	KASSERT((item->wk_state & ONWORKLIST) == 0);
@@ -5718,13 +5727,17 @@ softdep_lookupvp(fs, ino)
 {
 	struct mount *mp;
 	extern struct vfsops ffs_vfsops;
+	vnode_t *vp;
 
 	mutex_enter(&mountlist_lock);
 	CIRCLEQ_FOREACH(mp, &mountlist, mnt_list) {
 		if (mp->mnt_op == &ffs_vfsops &&
 		    VFSTOUFS(mp)->um_fs == fs) {
 		    	mutex_exit(&mountlist_lock);
-			return (ufs_ihashlookup(VFSTOUFS(mp)->um_dev, ino));
+		    	mutex_enter(&ufs_ihash_lock);
+			vp = ufs_ihashlookup(VFSTOUFS(mp)->um_dev, ino);
+			mutex_exit(&ufs_ihash_lock);
+			return vp;
 		}
 	}
 	mutex_exit(&mountlist_lock);
@@ -5777,10 +5790,13 @@ softdep_lookup_pcbp(vp, lbn)
 void
 softdep_pageiodone(bp)
 	struct buf *bp;
-#ifdef UVMHIST
 {
 	struct vnode *vp = bp->b_vp;
 
+	if (vp == NULL) {
+		/* XXX LFS */
+		return;
+	}
 	if (DOINGSOFTDEP(vp))
 		softdep_pageiodone1(bp);
 }
@@ -5788,7 +5804,6 @@ softdep_pageiodone(bp)
 void
 softdep_pageiodone1(bp)
 	struct buf *bp;
-#endif
 {
 	int npages = bp->b_bufsize >> PAGE_SHIFT;
 	struct vnode *vp = bp->b_vp;
