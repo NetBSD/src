@@ -1,4 +1,4 @@
-/*	$NetBSD: inkernel.c,v 1.7 2007/12/19 18:28:50 garbled Exp $	*/
+/*	$NetBSD: inkernel.c,v 1.8 2007/12/19 19:47:08 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #include <sys/param.h>
 
 #include "boot.h"
-#include "prep_magic.h"
+#include "magic.h"
 
 #define	KERNENTRY	(RELOC - 0x200000)
 
