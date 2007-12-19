@@ -1,4 +1,4 @@
-/*	$NetBSD: cal.c,v 1.20 2007/12/19 15:52:50 joerg Exp $	*/
+/*	$NetBSD: cal.c,v 1.21 2007/12/19 16:45:41 joerg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)cal.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: cal.c,v 1.20 2007/12/19 15:52:50 joerg Exp $");
+__RCSID("$NetBSD: cal.c,v 1.21 2007/12/19 16:45:41 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -286,9 +286,9 @@ main(int argc, char **argv)
 		break;
 	case 1:
 		year = strtol(*argv, &eoi, 10);
-		if (year < 1 || year > 9999 || (*eoi != '\0' && *eoi != '/'))
+		if (year < 1 || year > 9999 || (*eoi != '\0' && *eoi != '/' && *eoi != '-'))
 			errx(1, "illegal year value: use 1-9999");
-		if (*eoi == '/') {
+		if (*eoi != '\0') {
 			month = strtol(eoi + 1, &eoi, 10);
 			if (month < 1 || month > 12 || *eoi != '\0')
 				errx(1, "illegal month value: use 1-12");
