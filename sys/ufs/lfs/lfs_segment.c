@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.206.6.3 2007/12/19 19:16:44 ad Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.206.6.4 2007/12/19 21:27:16 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.206.6.3 2007/12/19 19:16:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.206.6.4 2007/12/19 21:27:16 ad Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -215,10 +215,10 @@ lfs_vflush(struct vnode *vp)
 	ASSERT_NO_SEGLOCK(fs);
 	if (ip->i_flag & IN_CLEANING) {
 		ivndebug(vp,"vflush/in_cleaning");
-		mutex_enter(&fs->lfs_interlock);
+		mutex_enter(&lfs_lock);
 		LFS_CLR_UINO(ip, IN_CLEANING);
 		LFS_SET_UINO(ip, IN_MODIFIED);
-		mutex_exit(&fs->lfs_interlock);
+		mutex_exit(&lfs_lock);
 
 		/*
 		 * Toss any cleaning buffers that have real counterparts
@@ -402,9 +402,9 @@ lfs_vflush(struct vnode *vp)
 					 */
 					KDASSERT(ip->i_number != LFS_IFILE_INUM);
 					lfs_writeinode(fs, sp, ip);
-					mutex_enter(&fs->lfs_interlock);
+					mutex_enter(&lfs_lock);
 					LFS_SET_UINO(ip, IN_MODIFIED);
-					mutex_exit(&fs->lfs_interlock);
+					mutex_exit(&lfs_lock);
 					lfs_writeseg(fs, sp);
 					lfs_segunlock(fs);
 					lfs_segunlock_relock(fs);
@@ -452,13 +452,13 @@ lfs_vflush(struct vnode *vp)
 	 * We compare the iocount against 1, not 0, because it is
 	 * artificially incremented by lfs_seglock().
 	 */
-	mutex_enter(&fs->lfs_interlock);
+	mutex_enter(&lfs_lock);
 	if (fs->lfs_seglock > 1) {
 		while (fs->lfs_iocount > 1)
 			(void)mtsleep(&fs->lfs_iocount, PRIBIO + 1,
-				     "lfs_vflush", 0, &fs->lfs_interlock);
+				     "lfs_vflush", 0, &lfs_lock);
 	}
-	mutex_exit(&fs->lfs_interlock);
+	mutex_exit(&lfs_lock);
 
 	lfs_segunlock(fs);
 
@@ -568,9 +568,9 @@ lfs_writevnodes(struct lfs *fs, struct mount *mp, struct segment *sp, int op)
 						if (!VPISEMPTY(vp) &&
 						    !WRITEINPROG(vp) &&
 						    !(ip->i_flag & IN_ALLMOD)) {
-							mutex_enter(&fs->lfs_interlock);
+							mutex_enter(&lfs_lock);
 							LFS_SET_UINO(ip, IN_MODIFIED);
-							mutex_exit(&fs->lfs_interlock);
+							mutex_exit(&lfs_lock);
 						}
 						mutex_enter(&mntvnode_lock);
 						break;
@@ -584,9 +584,9 @@ lfs_writevnodes(struct lfs *fs, struct mount *mp, struct segment *sp, int op)
 					if (WRITEINPROG(vp)) {
 						ivndebug(vp,"writevnodes/write2");
 					} else if (!(ip->i_flag & IN_ALLMOD)) {
-						mutex_enter(&fs->lfs_interlock);
+						mutex_enter(&lfs_lock);
 						LFS_SET_UINO(ip, IN_MODIFIED);
-						mutex_exit(&fs->lfs_interlock);
+						mutex_exit(&lfs_lock);
 					}
 				}
 				(void) lfs_writeinode(fs, sp, ip);
@@ -731,9 +731,9 @@ lfs_segwrite(struct mount *mp, int flags)
 #ifdef DEBUG
 			LFS_ENTER_LOG("pretend", __FILE__, __LINE__, 0, 0, curproc->p_pid);
 #endif
-			mutex_enter(&fs->lfs_interlock);
+			mutex_enter(&lfs_lock);
 			fs->lfs_flags &= ~LFS_IFDIRTY;
-			mutex_exit(&fs->lfs_interlock);
+			mutex_exit(&lfs_lock);
 
 			ip = VTOI(vp);
 
@@ -759,9 +759,9 @@ lfs_segwrite(struct mount *mp, int flags)
 			redo = lfs_writeinode(fs, sp, ip);
 #endif
 			redo += lfs_writeseg(fs, sp);
-			mutex_enter(&fs->lfs_interlock);
+			mutex_enter(&lfs_lock);
 			redo += (fs->lfs_flags & LFS_IFDIRTY);
-			mutex_exit(&fs->lfs_interlock);
+			mutex_exit(&lfs_lock);
 #ifdef DEBUG
 			if (++loopcount > 2)
 				log(LOG_NOTICE, "lfs_segwrite: looping count=%d\n",
@@ -1022,9 +1022,9 @@ lfs_update_iaddr(struct lfs *fs, struct segment *sp, struct inode *ip, daddr_t n
 		redo_ifile |=
 			(ino == LFS_IFILE_INUM && !(bp->b_flags & B_GATHERED));
 		if (redo_ifile) {
-			mutex_enter(&fs->lfs_interlock);
+			mutex_enter(&lfs_lock);
 			fs->lfs_flags |= LFS_IFDIRTY;
-			mutex_exit(&fs->lfs_interlock);
+			mutex_exit(&lfs_lock);
 			/* Don't double-account */
 			fs->lfs_idaddr = 0x0;
 		}
@@ -1251,9 +1251,9 @@ lfs_writeinode(struct lfs *fs, struct segment *sp, struct inode *ip)
 			(sp->ninodes % INOPB(fs));
 
 		/* Not dirty any more */
-		mutex_enter(&fs->lfs_interlock);
+		mutex_enter(&lfs_lock);
 		fs->lfs_flags &= ~LFS_IFDIRTY;
-		mutex_exit(&fs->lfs_interlock);
+		mutex_exit(&lfs_lock);
 	}
 
 	if (gotblk) {
@@ -1553,9 +1553,9 @@ lfs_update_single(struct lfs *fs, struct segment *sp,
 		      ip->i_number, lbn, daddr));
 		sup->su_nbytes -= osize;
 		if (!(bp->b_flags & B_GATHERED)) {
-			mutex_enter(&fs->lfs_interlock);
+			mutex_enter(&lfs_lock);
 			fs->lfs_flags |= LFS_IFDIRTY;
-			mutex_exit(&fs->lfs_interlock);
+			mutex_exit(&lfs_lock);
 		}
 		LFS_WRITESEGENTRY(sup, fs, oldsn, bp);
 	}
@@ -1779,12 +1779,12 @@ lfs_initseg(struct lfs *fs)
 		fs->lfs_cleanint[fs->lfs_cleanind] = fs->lfs_offset;
 		if (++fs->lfs_cleanind >= LFS_MAX_CLEANIND) {
 			/* "1" is the artificial inc in lfs_seglock */
-			mutex_enter(&fs->lfs_interlock);
+			mutex_enter(&lfs_lock);
 			while (fs->lfs_iocount > 1) {
 				mtsleep(&fs->lfs_iocount, PRIBIO + 1,
-				    "lfs_initseg", 0, &fs->lfs_interlock);
+				    "lfs_initseg", 0, &lfs_lock);
 			}
-			mutex_exit(&fs->lfs_interlock);
+			mutex_exit(&lfs_lock);
 			fs->lfs_cleanind = 0;
 		}
 	}
@@ -1861,7 +1861,7 @@ lfs_newseg(struct lfs *fs)
 	ASSERT_SEGLOCK(fs);
 
 	/* Honor LFCNWRAPSTOP */
-	mutex_enter(&fs->lfs_interlock);
+	mutex_enter(&lfs_lock);
 	while (fs->lfs_nextseg < fs->lfs_curseg && fs->lfs_nowrap) {
 		if (fs->lfs_wrappass) {
 			log(LOG_NOTICE, "%s: wrappass=%d\n",
@@ -1873,10 +1873,10 @@ lfs_newseg(struct lfs *fs)
 		wakeup(&fs->lfs_nowrap);
 		log(LOG_NOTICE, "%s: waiting at log wrap\n", fs->lfs_fsmnt);
 		mtsleep(&fs->lfs_wrappass, PVFS, "newseg", 10 * hz,
-			&fs->lfs_interlock);
+			&lfs_lock);
 	}
 	fs->lfs_wrapstatus = LFS_WRAP_GOING;
-	mutex_exit(&fs->lfs_interlock);
+	mutex_exit(&lfs_lock);
 
 	LFS_SEGENTRY(sup, fs, dtosn(fs, fs->lfs_nextseg), bp);
 	DLOG((DLOG_SU, "lfs_newseg: seg %d := 0 in newseg\n",
@@ -2188,12 +2188,12 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 	ssp->ss_sumsum = cksum(&ssp->ss_datasum,
 	    fs->lfs_sumsize - sizeof(ssp->ss_sumsum));
 
-	mutex_enter(&fs->lfs_interlock);
+	mutex_enter(&lfs_lock);
 	fs->lfs_bfree -= (btofsb(fs, ninos * fs->lfs_ibsize) +
 			  btofsb(fs, fs->lfs_sumsize));
 	fs->lfs_dmeta += (btofsb(fs, ninos * fs->lfs_ibsize) +
 			  btofsb(fs, fs->lfs_sumsize));
-	mutex_exit(&fs->lfs_interlock);
+	mutex_exit(&lfs_lock);
 
 	/*
 	 * When we simply write the blocks we lose a rotation for every block
@@ -2230,9 +2230,9 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 		/*
 		 * Construct the cluster.
 		 */
-		mutex_enter(&fs->lfs_interlock);
+		mutex_enter(&lfs_lock);
 		++fs->lfs_iocount;
-		mutex_exit(&fs->lfs_interlock);
+		mutex_exit(&lfs_lock);
 		while (i && cbp->b_bcount < CHUNKSIZE) {
 			bp = *bpp;
 
@@ -2346,15 +2346,15 @@ lfs_writesuper(struct lfs *fs, daddr_t daddr)
 	 * progress, we risk not having a complete checkpoint if we crash.
 	 * So, block here if a superblock write is in progress.
 	 */
-	mutex_enter(&fs->lfs_interlock);
+	mutex_enter(&lfs_lock);
 	s = splbio();
 	while (fs->lfs_sbactive) {
 		mtsleep(&fs->lfs_sbactive, PRIBIO+1, "lfs sb", 0,
-			&fs->lfs_interlock);
+			&lfs_lock);
 	}
 	fs->lfs_sbactive = daddr;
 	splx(s);
-	mutex_exit(&fs->lfs_interlock);
+	mutex_exit(&lfs_lock);
 
 	/* Set timestamp of this version of the superblock */
 	if (fs->lfs_version == 1)
@@ -2385,9 +2385,9 @@ lfs_writesuper(struct lfs *fs, daddr_t daddr)
 	devvp->v_numoutput++;
 	mutex_exit(&devvp->v_interlock);
 
-	mutex_enter(&fs->lfs_interlock);
+	mutex_enter(&lfs_lock);
 	++fs->lfs_iocount;
-	mutex_exit(&fs->lfs_interlock);
+	mutex_exit(&lfs_lock);
 	VOP_STRATEGY(devvp, bp);
 }
 
@@ -2471,12 +2471,12 @@ lfs_super_aiodone(struct buf *bp)
 	KERNEL_LOCK(1, curlwp);
 	fs = bp->b_private;
 	ASSERT_NO_SEGLOCK(fs);
-	mutex_enter(&fs->lfs_interlock);
+	mutex_enter(&lfs_lock);
 	fs->lfs_sbactive = 0;
 	if (--fs->lfs_iocount <= 1)
 		wakeup(&fs->lfs_iocount);
 	wakeup(&fs->lfs_sbactive);
-	mutex_exit(&fs->lfs_interlock);
+	mutex_exit(&lfs_lock);
 	lfs_freebuf(fs, bp);
 	KERNEL_UNLOCK_LAST(curlwp);
 }
@@ -2574,7 +2574,7 @@ lfs_cluster_aiodone(struct buf *bp)
 		 * XXX KS - Shouldn't we set *both* if both types
 		 * of blocks are present (traverse the dirty list?)
 		 */
-		mutex_enter(&fs->lfs_interlock);
+		mutex_enter(&lfs_lock);
 		mutex_enter(&vp->v_interlock);
 		if (vp != devvp && vp->v_numoutput == 0 &&
 		    (fbp = LIST_FIRST(&vp->v_dirtyblkhd)) != NULL) {
@@ -2588,7 +2588,7 @@ lfs_cluster_aiodone(struct buf *bp)
 		}
 		cv_broadcast(&vp->v_cv);
 		mutex_exit(&vp->v_interlock);
-		mutex_exit(&fs->lfs_interlock);
+		mutex_exit(&lfs_lock);
 	}
 
 	/* Fix up the cluster buffer, and release it */
@@ -2601,14 +2601,14 @@ lfs_cluster_aiodone(struct buf *bp)
 		if (--cl->seg->seg_iocount == 0)
 			wakeup(&cl->seg->seg_iocount);
 	}
-	mutex_enter(&fs->lfs_interlock);
+	mutex_enter(&lfs_lock);
 #ifdef DIAGNOSTIC
 	if (fs->lfs_iocount == 0)
 		panic("lfs_cluster_aiodone: zero iocount");
 #endif
 	if (--fs->lfs_iocount <= 1)
 		wakeup(&fs->lfs_iocount);
-	mutex_exit(&fs->lfs_interlock);
+	mutex_exit(&lfs_lock);
 
 	KERNEL_UNLOCK_LAST(curlwp);
 

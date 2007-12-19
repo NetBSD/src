@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_itimes.c,v 1.10.40.1 2007/12/04 13:03:50 ad Exp $	*/
+/*	$NetBSD: lfs_itimes.c,v 1.10.40.2 2007/12/19 21:27:16 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_itimes.c,v 1.10.40.1 2007/12/04 13:03:50 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_itimes.c,v 1.10.40.2 2007/12/19 21:27:16 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -87,13 +87,13 @@ lfs_itimes(struct inode *ip, const struct timespec *acc,
 			ifp->if_atime_sec = acc->tv_sec;
 			ifp->if_atime_nsec = acc->tv_nsec;
 			LFS_BWRITE_LOG(ibp);
-			mutex_enter(&fs->lfs_interlock);
+			mutex_enter(&lfs_lock);
 			fs->lfs_flags |= LFS_IFDIRTY;
-			mutex_exit(&fs->lfs_interlock);
+			mutex_exit(&lfs_lock);
 		} else {
-			mutex_enter(&ip->i_lfs->lfs_interlock);
+			mutex_enter(&lfs_lock);
 			LFS_SET_UINO(ip, IN_ACCESSED);
-			mutex_exit(&ip->i_lfs->lfs_interlock);
+			mutex_exit(&lfs_lock);
 		}
 	}
 	if (ip->i_flag & (IN_CHANGE | IN_UPDATE | IN_MODIFY)) {
@@ -114,12 +114,12 @@ lfs_itimes(struct inode *ip, const struct timespec *acc,
 			ip->i_ffs1_ctime = cre->tv_sec;
 			ip->i_ffs1_ctimensec = cre->tv_nsec;
 		}
-		mutex_enter(&ip->i_lfs->lfs_interlock);
+		mutex_enter(&lfs_lock);
 		if (ip->i_flag & (IN_CHANGE | IN_UPDATE))
 			LFS_SET_UINO(ip, IN_MODIFIED);
 		if (ip->i_flag & IN_MODIFY)
 			LFS_SET_UINO(ip, IN_ACCESSED);
-		mutex_exit(&ip->i_lfs->lfs_interlock);
+		mutex_exit(&lfs_lock);
 	}
 	ip->i_flag &= ~(IN_ACCESS | IN_CHANGE | IN_UPDATE | IN_MODIFY);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.114.6.3 2007/12/19 19:16:44 ad Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.114.6.4 2007/12/19 21:27:15 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.114.6.3 2007/12/19 19:16:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.114.6.4 2007/12/19 21:27:15 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -168,7 +168,7 @@ lfs_update(struct vnode *vp, const struct timespec *acc,
 	/* If sync, push back the vnode and any dirty blocks it may have. */
 	if ((updflags & (UPDATE_WAIT|UPDATE_DIROP)) == UPDATE_WAIT) {
 		/* Avoid flushing VU_DIROP. */
-		mutex_enter(&fs->lfs_interlock);
+		mutex_enter(&lfs_lock);
 		++fs->lfs_diropwait;
 		while (vp->v_uflag & VU_DIROP) {
 			DLOG((DLOG_DIROP, "lfs_update: sleeping on inode %d"
@@ -181,12 +181,12 @@ lfs_update(struct vnode *vp, const struct timespec *acc,
 				lfs_flush_fs(fs, SEGM_SYNC);
 			else
 				mtsleep(&fs->lfs_writer, PRIBIO+1, "lfs_fsync",
-					0, &fs->lfs_interlock);
+					0, &lfs_lock);
 			/* XXX KS - by falling out here, are we writing the vn
 			twice? */
 		}
 		--fs->lfs_diropwait;
-		mutex_exit(&fs->lfs_interlock);
+		mutex_exit(&lfs_lock);
 		return lfs_vflush(vp);
 	}
 	return 0;
@@ -365,9 +365,9 @@ lfs_truncate(struct vnode *ovp, off_t length, int ioflag,
 			       (u_int)(size - offset));
 		allocbuf(bp, size, 1);
 		if ((bp->b_cflags & BC_LOCKED) != 0 && bp->b_iodone == NULL) {
-			mutex_enter(&lfs_subsys_lock);
+			mutex_enter(&lfs_lock);
 			locked_queue_bytes -= obufsize - bp->b_bufsize;
-			mutex_exit(&lfs_subsys_lock);
+			mutex_exit(&lfs_lock);
 		}
 		if (bp->b_oflags & BO_DELWRI)
 			fs->lfs_avail += odb - btofsb(fs, size);
@@ -564,9 +564,9 @@ done:
 	oip->i_size = oip->i_ffs1_size = length;
 	oip->i_lfs_effnblks -= blocksreleased;
 	oip->i_ffs1_blocks -= real_released;
-	mutex_enter(&fs->lfs_interlock);
+	mutex_enter(&lfs_lock);
 	fs->lfs_bfree += blocksreleased;
-	mutex_exit(&fs->lfs_interlock);
+	mutex_exit(&lfs_lock);
 #ifdef DIAGNOSTIC
 	if (oip->i_size == 0 &&
 	    (oip->i_ffs1_blocks != 0 || oip->i_lfs_effnblks != 0)) {
@@ -579,12 +579,12 @@ done:
 	/*
 	 * If we truncated to zero, take us off the paging queue.
 	 */
-	mutex_enter(&fs->lfs_interlock);
+	mutex_enter(&lfs_lock);
 	if (oip->i_size == 0 && oip->i_flags & IN_PAGING) {
 		oip->i_flags &= ~IN_PAGING;
 		TAILQ_REMOVE(&fs->lfs_pchainhd, oip, i_lfs_pchain);
 	}
-	mutex_exit(&fs->lfs_interlock);
+	mutex_exit(&lfs_lock);
 
 	oip->i_flag |= IN_CHANGE;
 #ifdef QUOTA
