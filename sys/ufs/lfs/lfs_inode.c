@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.114.6.1 2007/12/04 13:03:50 ad Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.114.6.2 2007/12/19 00:02:00 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.114.6.1 2007/12/04 13:03:50 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.114.6.2 2007/12/19 00:02:00 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -135,7 +135,6 @@ lfs_update(struct vnode *vp, const struct timespec *acc,
 {
 	struct inode *ip;
 	struct lfs *fs = VFSTOUFS(vp->v_mount)->um_lfs;
-	int s;
 	int flags;
 
 	ASSERT_NO_SEGLOCK(fs);
@@ -150,16 +149,14 @@ lfs_update(struct vnode *vp, const struct timespec *acc,
 	 * will cause a panic.	So, we must wait until any pending write
 	 * for our inode completes, if we are called with UPDATE_WAIT set.
 	 */
-	s = splbio();
 	mutex_enter(&vp->v_interlock);
 	while ((updflags & (UPDATE_WAIT|UPDATE_DIROP)) == UPDATE_WAIT &&
 	    WRITEINPROG(vp)) {
 		DLOG((DLOG_SEG, "lfs_update: sleeping on ino %d"
 		      " (in progress)\n", ip->i_number));
-		mtsleep(vp, (PRIBIO+1), "lfs_update", 0, &vp->v_interlock);
+		cv_wait(&vp->v_cv, &vp->v_interlock);
 	}
 	mutex_exit(&vp->v_interlock);
-	splx(s);
 	LFS_ITIMES(ip, acc, mod, NULL);
 	if (updflags & UPDATE_CLOSE)
 		flags = ip->i_flag & (IN_MODIFIED | IN_ACCESSED | IN_CLEANING);

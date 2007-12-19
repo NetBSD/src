@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.213.2.1 2007/12/04 13:03:53 ad Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.213.2.2 2007/12/19 00:02:02 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.213.2.1 2007/12/04 13:03:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.213.2.2 2007/12/19 00:02:02 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -553,6 +553,7 @@ lfs_mark_vnode(struct vnode *vp)
 	mutex_enter(&fs->lfs_interlock);
 	if (!(ip->i_flag & IN_ADIROP)) {
 		if (!(vp->v_uflag & VU_DIROP)) {
+			mutex_enter(&vp->v_interlock);
 			(void)lfs_vref(vp);
 			mutex_enter(&lfs_subsys_lock);
 			++lfs_dirvcount;
@@ -1391,10 +1392,15 @@ lfs_flush_pchain(struct lfs *fs)
 		if (!(ip->i_flags & IN_PAGING))
 			goto top;
 
-		if ((vp->v_iflag & VI_XLOCK) || (vp->v_uflag & VU_DIROP) != 0)
+		mutex_enter(&vp->v_interlock);
+		if ((vp->v_iflag & VI_XLOCK) || (vp->v_uflag & VU_DIROP) != 0) {
+			mutex_exit(&vp->v_interlock);
 			continue;
-		if (vp->v_type != VREG)
+		}
+		if (vp->v_type != VREG) {
+			mutex_exit(&vp->v_interlock);
 			continue;
+		}
 		if (lfs_vref(vp))
 			continue;
 		mutex_exit(&fs->lfs_interlock);
@@ -1660,6 +1666,7 @@ lfs_fcntl(void *v)
 		wakeup(&fs->lfs_wrappass);
 		/* Wait for the log to wrap, if asked */
 		if (*(int *)ap->a_data) {
+			mutex_enter(&ap->a_vp->v_interlock);
 			lfs_vref(ap->a_vp);
 			VTOI(ap->a_vp)->i_lfs_iflags |= LFSI_WRAPWAIT;
 			log(LOG_NOTICE, "LFCNPASS waiting for log wrap\n");

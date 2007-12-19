@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.124.6.1 2007/12/04 13:03:52 ad Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.124.6.2 2007/12/19 00:02:01 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.124.6.1 2007/12/04 13:03:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.124.6.2 2007/12/19 00:02:01 ad Exp $");
 
 #ifndef LFS
 # define LFS		/* for prototypes in syscallargs.h */
@@ -727,15 +727,19 @@ lfs_bmapv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 			 * A regular call to VFS_VGET could deadlock
 			 * here.  Instead, we try an unlocked access.
 			 */
+			mutex_enter(&ufs_ihash_lock);
 			vp = ufs_ihashlookup(ump->um_dev, blkp->bi_inode);
 			if (vp != NULL && !(vp->v_iflag & VI_XLOCK)) {
 				ip = VTOI(vp);
+				mutex_enter(&vp->v_interlock);
+				mutex_exit(&ufs_ihash_lock);
 				if (lfs_vref(vp)) {
 					v_daddr = LFS_UNUSED_DADDR;
 					continue;
 				}
 				numrefed++;
 			} else {
+				mutex_exit(&ufs_ihash_lock);
 				/*
 				 * Don't VFS_VGET if we're being unmounted,
 				 * since we hold vfs_busy().
@@ -1011,21 +1015,29 @@ extern kmutex_t ufs_hashlock;
 int
 lfs_fasthashget(dev_t dev, ino_t ino, struct vnode **vpp)
 {
-	if ((*vpp = ufs_ihashlookup(dev, ino)) != NULL) {
-		if ((*vpp)->v_iflag & VI_XLOCK) {
+	struct vnode *vp;
+
+	mutex_enter(&ufs_ihash_lock);
+	if ((vp = ufs_ihashlookup(dev, ino)) != NULL) {
+		mutex_enter(&vp->v_interlock);
+		mutex_exit(&ufs_ihash_lock);
+		if (vp->v_iflag & VI_XLOCK) {
 			DLOG((DLOG_CLEAN, "lfs_fastvget: ino %d VXLOCK\n",
 			      ino));
 			lfs_stats.clean_vnlocked++;
+			mutex_exit(&vp->v_interlock);
 			return EAGAIN;
 		}
-		if (lfs_vref(*vpp)) {
+		if (lfs_vref(vp)) {
 			DLOG((DLOG_CLEAN, "lfs_fastvget: lfs_vref failed"
 			      " for ino %d\n", ino));
 			lfs_stats.clean_inlocked++;
 			return EAGAIN;
 		}
-	} else
-		*vpp = NULL;
+	} else {
+		mutex_exit(&ufs_ihash_lock);
+	}
+	*vpp = vp;
 
 	return (0);
 }

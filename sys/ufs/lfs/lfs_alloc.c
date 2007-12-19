@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.103.6.1 2007/12/04 13:03:48 ad Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.103.6.2 2007/12/19 00:01:59 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.103.6.1 2007/12/04 13:03:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.103.6.2 2007/12/19 00:01:59 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -436,7 +436,6 @@ lfs_vfree(struct vnode *vp, ino_t ino, int mode)
 	struct lfs *fs;
 	daddr_t old_iaddr;
 	ino_t otail;
-	int s;
 
 	/* Get the inode number and file system. */
 	ip = VTOI(vp);
@@ -448,10 +447,9 @@ lfs_vfree(struct vnode *vp, ino_t ino, int mode)
 
 	/* Drain of pending writes */
 	mutex_enter(&vp->v_interlock);
-	s = splbio();
-	if (fs->lfs_version > 1 && WRITEINPROG(vp))
-		mtsleep(vp, (PRIBIO+1), "lfs_vfree", 0, &vp->v_interlock);
-	splx(s);
+	while (fs->lfs_version > 1 && WRITEINPROG(vp)) {
+		cv_wait(&vp->v_cv, &vp->v_interlock);
+	}
 	mutex_exit(&vp->v_interlock);
 
 	lfs_seglock(fs, SEGM_PROT);
