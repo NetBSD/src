@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.15 2007/04/12 06:41:36 macallan Exp $
+# $NetBSD: md.sparc64,v 1.16 2007/12/19 17:33:55 macallan Exp $
 ./usr/X11R6/bin/X
 ./usr/X11R6/bin/XFree86
 ./usr/X11R6/bin/Xsun
@@ -72,6 +72,7 @@
 ./usr/X11R6/lib/libxf86config.a
 ./usr/X11R6/lib/modules/drivers/ati_drv.o
 ./usr/X11R6/lib/modules/drivers/atimisc_drv.o
+./usr/X11R6/lib/modules/drivers/glint_drv.o
 ./usr/X11R6/lib/modules/drivers/r128_drv.o
 ./usr/X11R6/lib/modules/drivers/radeon_drv.o
 ./usr/X11R6/lib/modules/drivers/sunbw2_drv.o
@@ -162,6 +163,7 @@
 ./usr/X11R6/man/cat4/elographics.0		-unknown-		.cat
 ./usr/X11R6/man/cat4/fbdevhw.0			-unknown-		.cat
 ./usr/X11R6/man/cat4/fpit.0			-unknown-		.cat
+./usr/X11R6/man/cat4/glint.0			-unknown-		.cat
 ./usr/X11R6/man/cat4/js_x.0			-unknown-		.cat
 ./usr/X11R6/man/cat4/kbd.0			-unknown-		.cat
 ./usr/X11R6/man/cat4/keyboard.0			-unknown-		.cat
@@ -206,6 +208,7 @@
 ./usr/X11R6/man/man4/elographics.4		-unknown-		.man
 ./usr/X11R6/man/man4/fbdevhw.4			-unknown-		.man
 ./usr/X11R6/man/man4/fpit.4			-unknown-		.man
+./usr/X11R6/man/man4/glint.4			-unknown-		.man
 ./usr/X11R6/man/man4/js_x.4			-unknown-		.man
 ./usr/X11R6/man/man4/kbd.4			-unknown-		.man
 ./usr/X11R6/man/man4/keyboard.4			-unknown-		.man
