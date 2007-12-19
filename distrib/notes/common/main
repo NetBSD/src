@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.384 2007/12/15 19:48:16 pavel Exp $
+.\"	$NetBSD: main,v 1.385 2007/12/19 15:03:26 rillig Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1914,6 +1914,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Martin Husemann Ta Mt martin@NetBSD.org
 .It Ta Dean Huxley Ta Mt dean@NetBSD.org
 .It Ta Love H\(:ornquist \(oAstrand Ta Mt lha@NetBSD.org
+.It Ta Roland Illig Ta Mt rillig@NetBSD.org
 .It Ta Bernardo Innocenti Ta Mt bernie@NetBSD.org
 .It Ta Tetsuya Isaki Ta Mt isaki@NetBSD.org
 .It Ta ITOH Yasufumi Ta Mt itohy@NetBSD.org
