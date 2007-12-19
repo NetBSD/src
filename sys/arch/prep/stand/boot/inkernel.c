@@ -1,4 +1,4 @@
-/*	$NetBSD: inkernel.c,v 1.6 2006/04/10 18:40:06 garbled Exp $	*/
+/*	$NetBSD: inkernel.c,v 1.7 2007/12/19 18:28:50 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #include <sys/param.h>
 
 #include "boot.h"
-#include "magic.h"
+#include "prep_magic.h"
 
 #define	KERNENTRY	(RELOC - 0x200000)
 
@@ -52,10 +52,10 @@ init_in(u_long ladr)
 	u_int i;
 
 	for (i = 0; i < 4096; i++, p++) {
-		if (memcmp(p, magic, MAGICSIZE) == 0) {
-			kern_len = *(int *)(p + MAGICSIZE);
+		if (memcmp(p, prep_magic, PREP_MAGICSIZE) == 0) {
+			kern_len = *(int *)(p + PREP_MAGICSIZE);
 			memmove((char *)KERNENTRY,
-				p + MAGICSIZE + KERNLENSIZE, kern_len);
+				p + PREP_MAGICSIZE + KERNLENSIZE, kern_len);
 			return;
 		}
 	}
