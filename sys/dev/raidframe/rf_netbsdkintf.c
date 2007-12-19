@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.186.2.3 2006/01/11 17:18:00 tron Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.186.2.4 2007/12/19 18:31:14 ghen Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -146,7 +146,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.186.2.3 2006/01/11 17:18:00 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.186.2.4 2007/12/19 18:31:14 ghen Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -543,10 +543,141 @@ raidsize(dev_t dev)
 }
 
 int
-raiddump(dev_t dev, daddr_t blkno, caddr_t va, size_t  size)
+raiddump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
 {
-	/* Not implemented. */
-	return ENXIO;
+	int     unit = raidunit(dev);
+	struct raid_softc *rs;
+	const struct bdevsw *bdev;
+	struct disklabel *lp;
+	RF_Raid_t *raidPtr;
+	daddr_t offset;
+	int     part, c, sparecol, j, scol, dumpto;
+	int     error = 0;
+
+	if (unit >= numraid)
+		return (ENXIO);
+
+	rs = &raid_softc[unit];
+	raidPtr = raidPtrs[unit];
+
+	if ((rs->sc_flags & RAIDF_INITED) == 0)
+		return ENXIO;
+
+	/* we only support dumping to RAID 1 sets */
+	if (raidPtr->Layout.numDataCol != 1 || 
+	    raidPtr->Layout.numParityCol != 1)
+		return EINVAL;
+
+
+	if ((error = raidlock(rs)) != 0)
+		return error;
+
+	if (size % DEV_BSIZE != 0) {
+		error = EINVAL;
+		goto out;
+	}
+
+	if (blkno + size / DEV_BSIZE > rs->sc_size) {
+		printf("%s: blkno (%" PRIu64 ") + size / DEV_BSIZE (%zu) > "
+		    "sc->sc_size (%zu)\n", __func__, blkno,
+		    size / DEV_BSIZE, rs->sc_size);
+		error = EINVAL;
+		goto out;
+	}
+
+	part = DISKPART(dev);
+	lp = rs->sc_dkdev.dk_label;
+	offset = lp->d_partitions[part].p_offset + RF_PROTECTED_SECTORS;
+
+	/* figure out what device is alive.. */
+
+	/* 
+	   Look for a component to dump to.  The preference for the
+	   component to dump to is as follows:
+	   1) the master
+	   2) a used_spare of the master
+	   3) the slave
+	   4) a used_spare of the slave
+	*/
+
+	dumpto = -1;
+	for (c = 0; c < raidPtr->numCol; c++) {
+		if (raidPtr->Disks[c].status == rf_ds_optimal) {
+			/* this might be the one */
+			dumpto = c;
+			break;
+		}
+	}
+	
+	/* 
+	   At this point we have possibly selected a live master or a
+	   live slave.  We now check to see if there is a spared
+	   master (or a spared slave), if we didn't find a live master
+	   or a live slave.  
+	*/
+
+	for (c = 0; c < raidPtr->numSpare; c++) {
+		sparecol = raidPtr->numCol + c;
+		if (raidPtr->Disks[sparecol].status ==  rf_ds_used_spare) {
+			/* How about this one? */
+			scol = -1;
+			for(j=0;j<raidPtr->numCol;j++) {
+				if (raidPtr->Disks[j].spareCol == sparecol) {
+					scol = j;
+					break;
+				}
+			}
+			if (scol == 0) {
+				/* 
+				   We must have found a spared master!
+				   We'll take that over anything else
+				   found so far.  (We couldn't have
+				   found a real master before, since
+				   this is a used spare, and it's
+				   saying that it's replacing the
+				   master.)  On reboot (with
+				   autoconfiguration turned on)
+				   sparecol will become the 1st
+				   component (component0) of this set.  
+				*/
+				dumpto = sparecol;
+				break;
+			} else if (scol != -1) {
+				/* 
+				   Must be a spared slave.  We'll dump
+				   to that if we havn't found anything
+				   else so far. 
+				*/
+				if (dumpto == -1)
+					dumpto = sparecol;
+			}
+		}
+	}
+
+	if (dumpto == -1) {
+		/* we couldn't find any live components to dump to!?!?
+		 */
+		error = EINVAL;
+		goto out;
+	}
+
+	bdev = bdevsw_lookup(raidPtr->Disks[dumpto].dev);
+
+	/* 
+	   Note that blkno is relative to this particular partition.
+	   By adding the offset of this partition in the RAID
+	   set, and also adding RF_PROTECTED_SECTORS, we get a
+	   value that is relative to the partition used for the
+	   underlying component.
+	*/
+
+	error = (*bdev->d_dump)(raidPtr->Disks[dumpto].dev, 
+				blkno + offset, va, size);
+
+out:
+	raidunlock(rs);
+
+	return error;
 }
 /* ARGSUSED */
 int
