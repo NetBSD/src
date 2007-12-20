@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.155 2007/12/05 09:20:56 yamt Exp $ */
+/* $NetBSD: vmstat.c,v 1.156 2007/12/20 23:49:11 ad Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.155 2007/12/05 09:20:56 yamt Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.156 2007/12/20 23:49:11 ad Exp $");
 #endif
 #endif /* not lint */
 
@@ -1317,13 +1317,14 @@ dopoolcache(void)
 
 		if (first) {
 			(void)printf("Pool cache statistics.\n");
-			(void)printf("%-*s%*s%*s%*s%*s%*s%*s%*s%*s\n",
+			(void)printf("%-*s%*s%*s%*s%*s%*s%*s%*s%*s%*s\n",
 			    12, "Name",
 			    6, "Spin",
-			    6, "Full",
-			    6, "Empty",
-			    12, "PoolLayer",
-			    12, "CacheLayer",
+			    6, "GrpSz",
+			    5, "Full",
+			    5, "Emty",
+			    10, "PoolLayer",
+			    11, "CacheLayer",
 			    6, "Hit%",
 			    12, "CpuLayer",
 			    6, "Hit%"
@@ -1334,14 +1335,14 @@ dopoolcache(void)
 		ovflw = 0;
 		PRWORD(ovflw, "%-*s", 13, 1, name);
 		PRWORD(ovflw, " %*llu", 6, 1, (long long)pc->pc_contended);
-		PRWORD(ovflw, " %*u", 6, 1, pc->pc_nfull);
-		PRWORD(ovflw, " %*u", 6, 1, pc->pc_nempty);
-
-		PRWORD(ovflw, " %*llu", 12, 1, (long long)pc->pc_misses);
+		PRWORD(ovflw, " %*u", 6, 1, pc->pc_pcgsize);
+		PRWORD(ovflw, " %*u", 5, 1, pc->pc_nfull);
+		PRWORD(ovflw, " %*u", 5, 1, pc->pc_nempty);
+		PRWORD(ovflw, " %*llu", 10, 1, (long long)pc->pc_misses);
 
 		tot = pc->pc_hits + pc->pc_misses;
 		p = pc->pc_hits * 100.0 / (tot);
-		PRWORD(ovflw, " %*llu", 12, 1, (long long)tot);
+		PRWORD(ovflw, " %*llu", 11, 1, (long long)tot);
 		PRWORD(ovflw, " %*.1f", 6, 1, p);
 
 		tot = cpuhit + cpumiss;

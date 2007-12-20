@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.141 2007/12/13 02:45:10 yamt Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.142 2007/12/20 23:49:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002, 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.141 2007/12/13 02:45:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.142 2007/12/20 23:49:10 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pool.h"
@@ -181,7 +181,8 @@ struct pool_item {
  * from it.
  */
 
-static struct pool pcgpool;
+static struct pool pcg_normal_pool;
+static struct pool pcg_large_pool;
 static struct pool cache_pool;
 static struct pool cache_cpu_pool;
 
@@ -850,8 +851,16 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 		pool_init(&psppool, POOL_SUBPAGE, POOL_SUBPAGE, 0,
 		    PR_RECURSIVE, "psppool", &pool_allocator_meta, IPL_VM);
 #endif
-		pool_init(&pcgpool, sizeof(pcg_t), CACHE_LINE_SIZE, 0, 0,
-		    "cachegrp", &pool_allocator_meta, IPL_VM);
+
+		size = sizeof(pcg_t) +
+		    (PCG_NOBJECTS_NORMAL - 1) * sizeof(pcgpair_t);
+		pool_init(&pcg_normal_pool, size, CACHE_LINE_SIZE, 0, 0,
+		    "pcgnormal", &pool_allocator_meta, IPL_VM);
+
+		size = sizeof(pcg_t) +
+		    (PCG_NOBJECTS_LARGE - 1) * sizeof(pcgpair_t);
+		pool_init(&pcg_large_pool, size, CACHE_LINE_SIZE, 0, 0,
+		    "pcglarge", &pool_allocator_meta, IPL_VM);
 	}
 
 	if (__predict_true(!cold)) {
@@ -1877,7 +1886,7 @@ pool_print1(struct pool *pp, const char *modif, void (*pr)(const char *, ...))
 
 #define PR_GROUPLIST(pcg)						\
 	(*pr)("\t\tgroup %p: avail %d\n", pcg, pcg->pcg_avail);		\
-	for (i = 0; i < PCG_NOBJECTS; i++) {				\
+	for (i = 0; i < pcg->pcg_size; i++) {				\
 		if (pcg->pcg_objects[i].pcgo_pa !=			\
 		    POOL_PADDR_INVALID) {				\
 			(*pr)("\t\t\t%p, 0x%llx\n",			\
@@ -2089,6 +2098,12 @@ pool_cache_bootstrap(pool_cache_t pc, size_t size, u_int align,
 	pc->pc_refcnt = 0;
 	pc->pc_freecheck = NULL;
 
+	if ((flags & PR_LARGECACHE) != 0) {
+		pc->pc_pcgsize = PCG_NOBJECTS_LARGE;
+	} else {
+		pc->pc_pcgsize = PCG_NOBJECTS_NORMAL;
+	}
+
 	/* Allocate per-CPU caches. */
 	memset(pc->pc_cpus, 0, sizeof(pc->pc_cpus));
 	pc->pc_ncpu = 0;
@@ -2290,7 +2305,12 @@ pool_cache_invalidate_groups(pool_cache_t pc, pcg_t *pcg)
 			pool_cache_destruct_object1(pc, object);
 		}
 
-		pool_put(&pcgpool, pcg);
+		if (pcg->pcg_size == PCG_NOBJECTS_LARGE) {
+			pool_put(&pcg_large_pool, pcg);
+		} else {
+			KASSERT(pcg->pcg_size == PCG_NOBJECTS_NORMAL);
+			pool_put(&pcg_normal_pool, pcg);
+		}
 	}
 }
 
@@ -2430,7 +2450,7 @@ pool_cache_get_slow(pool_cache_cpu_t *cc, int *s, void **objectp,
 			pc->pc_emptygroups = cur;
 			pc->pc_nempty++;
 		}
-		KASSERT(pcg->pcg_avail == PCG_NOBJECTS);
+		KASSERT(pcg->pcg_avail == pcg->pcg_size);
 		cc->cc_current = pcg;
 		pc->pc_fullgroups = pcg->pcg_next;
 		pc->pc_hits++;
@@ -2502,7 +2522,7 @@ pool_cache_get_paddr(pool_cache_t pc, int flags, paddr_t *pap)
 			if (pap != NULL)
 				*pap = pcg->pcg_objects[pcg->pcg_avail].pcgo_pa;
 			pcg->pcg_objects[pcg->pcg_avail].pcgo_va = NULL;
-			KASSERT(pcg->pcg_avail <= PCG_NOBJECTS);
+			KASSERT(pcg->pcg_avail <= pcg->pcg_size);
 			KASSERT(object != NULL);
 			cc->cc_hits++;
 			pool_cache_cpu_exit(cc, &s);
@@ -2542,6 +2562,7 @@ pool_cache_put_slow(pool_cache_cpu_t *cc, int *s, void *object, paddr_t pa)
 	pcg_t *pcg, *cur;
 	uint64_t ncsw;
 	pool_cache_t pc;
+	u_int nobj;
 
 	pc = cc->cc_cache;
 	cc->cc_misses++;
@@ -2574,7 +2595,7 @@ pool_cache_put_slow(pool_cache_cpu_t *cc, int *s, void *object, paddr_t pa)
 		 * group as cc_current and return.
 		 */
 		if ((cur = cc->cc_current) != NULL) {
-			KASSERT(cur->pcg_avail == PCG_NOBJECTS);
+			KASSERT(cur->pcg_avail == pcg->pcg_size);
 			cur->pcg_next = pc->pc_fullgroups;
 			pc->pc_fullgroups = cur;
 			pc->pc_nfull++;
@@ -2601,16 +2622,18 @@ pool_cache_put_slow(pool_cache_cpu_t *cc, int *s, void *object, paddr_t pa)
 	 * If we can't allocate a new group, just throw the
 	 * object away.
 	 */
-	pcg = pool_get(&pcgpool, PR_NOWAIT);
+	nobj = pc->pc_pcgsize;
+	if (nobj == PCG_NOBJECTS_LARGE) {
+		pcg = pool_get(&pcg_large_pool, PR_NOWAIT);
+	} else {
+		pcg = pool_get(&pcg_normal_pool, PR_NOWAIT);
+	}
 	if (pcg == NULL) {
 		pool_cache_destruct_object(pc, object);
 		return NULL;
 	}
-#ifdef DIAGNOSTIC
-	memset(pcg, 0, sizeof(*pcg));
-#else
 	pcg->pcg_avail = 0;
-#endif
+	pcg->pcg_size = nobj;
 
 	/*
 	 * Add the empty group to the cache and try again.
@@ -2643,9 +2666,7 @@ pool_cache_put_paddr(pool_cache_t pc, void *object, paddr_t pa)
 	do {
 		/* If the current group isn't full, release it there. */
 	 	pcg = cc->cc_current;
-		if (pcg != NULL && pcg->pcg_avail < PCG_NOBJECTS) {
-			KASSERT(pcg->pcg_objects[pcg->pcg_avail].pcgo_va
-			    == NULL);
+		if (pcg != NULL && pcg->pcg_avail < pcg->pcg_size) {
 			pcg->pcg_objects[pcg->pcg_avail].pcgo_va = object;
 			pcg->pcg_objects[pcg->pcg_avail].pcgo_pa = pa;
 			pcg->pcg_avail++;
@@ -2703,7 +2724,7 @@ pool_cache_xcall(pool_cache_t pc)
 	s = splvm();
 	mutex_enter(&pc->pc_lock);
 	if (cur != NULL) {
-		if (cur->pcg_avail == PCG_NOBJECTS) {
+		if (cur->pcg_avail == cur->pcg_size) {
 			list = &pc->pc_fullgroups;
 			pc->pc_nfull++;
 		} else if (cur->pcg_avail == 0) {
@@ -2717,7 +2738,7 @@ pool_cache_xcall(pool_cache_t pc)
 		*list = cur;
 	}
 	if (prev != NULL) {
-		if (prev->pcg_avail == PCG_NOBJECTS) {
+		if (prev->pcg_avail == prev->pcg_size) {
 			list = &pc->pc_fullgroups;
 			pc->pc_nfull++;
 		} else if (prev->pcg_avail == 0) {
