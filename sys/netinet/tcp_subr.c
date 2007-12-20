@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.219 2007/12/20 19:53:33 dyoung Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.220 2007/12/20 20:24:50 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.219 2007/12/20 19:53:33 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.220 2007/12/20 20:24:50 martin Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -597,7 +597,9 @@ int
 tcp_respond(struct tcpcb *tp, struct mbuf *template, struct mbuf *m,
     struct tcphdr *th0, tcp_seq ack, tcp_seq seq, int flags)
 {
+#ifdef INET6
 	struct rtentry *rt;
+#endif
 	struct route *ro;
 	int error, tlen, win = 0;
 	int hlen;
@@ -985,7 +987,9 @@ tcp_tcpcb_template(void)
 struct tcpcb *
 tcp_newtcpcb(int family, void *aux)
 {
+#ifdef INET6
 	struct rtentry *rt;
+#endif
 	struct tcpcb *tp;
 	int i;
 

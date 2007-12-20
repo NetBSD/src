@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.274 2007/12/20 19:53:32 dyoung Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.275 2007/12/20 20:24:49 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.274 2007/12/20 19:53:32 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.275 2007/12/20 20:24:49 martin Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -4150,7 +4150,9 @@ syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 int
 syn_cache_respond(struct syn_cache *sc, struct mbuf *m)
 {
+#ifdef INET6
 	struct rtentry *rt;
+#endif
 	struct route *ro;
 	u_int8_t *optp;
 	int optlen, error;
