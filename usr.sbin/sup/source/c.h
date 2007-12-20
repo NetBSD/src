@@ -1,4 +1,4 @@
-/*	$NetBSD: c.h,v 1.4 2002/07/10 23:47:01 wiz Exp $	*/
+/*	$NetBSD: c.h,v 1.5 2007/12/20 20:12:12 christos Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -66,5 +66,13 @@
 #endif	/* TRUE */
 
 #define sizeofA(array)	(sizeof(array)/sizeof(array[0]))
+
+#ifndef __unused
+#ifndef __GNUC__
+#define __unused
+#else
+#define __unused __attribute__((__unused__))
+#endif
+#endif
 
 #endif	/* _C_INCLUDE_ */
