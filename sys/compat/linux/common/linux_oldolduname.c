@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_oldolduname.c,v 1.64 2007/11/08 21:07:23 njoly Exp $	*/
+/*	$NetBSD: linux_oldolduname.c,v 1.65 2007/12/20 23:02:55 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_oldolduname.c,v 1.64 2007/11/08 21:07:23 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_oldolduname.c,v 1.65 2007/12/20 23:02:55 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,12 +58,11 @@ __KERNEL_RCSID(0, "$NetBSD: linux_oldolduname.c,v 1.64 2007/11/08 21:07:23 njoly
 /* Not used on: alpha, m68k, sparc, sparc64 */
 
 int
-linux_sys_oldolduname(struct lwp *l, void *v,
-    register_t *retval)
+linux_sys_oldolduname(struct lwp *l, const struct linux_sys_oldolduname_args *uap, register_t *retval)
 {
-	struct linux_sys_uname_args /* {
+	/* {
 		syscallarg(struct linux_oldoldutsname *) up;
-	} */ *uap = v;
+	} */
 	struct linux_oldoldutsname luts;
 
 	strlcpy(luts.l_sysname, linux_sysname, sizeof(luts.l_sysname));

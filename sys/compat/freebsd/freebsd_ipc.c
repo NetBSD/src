@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_ipc.c,v 1.14 2007/12/08 18:35:58 dsl Exp $	*/
+/*	$NetBSD: freebsd_ipc.c,v 1.15 2007/12/20 23:02:47 dsl Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass and Charles M. Hannum.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_ipc.c,v 1.14 2007/12/08 18:35:58 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_ipc.c,v 1.15 2007/12/20 23:02:47 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -52,15 +52,15 @@ __KERNEL_RCSID(0, "$NetBSD: freebsd_ipc.c,v 1.14 2007/12/08 18:35:58 dsl Exp $")
 
 #ifdef SYSVSEM
 int
-freebsd_sys_semsys(struct lwp *l, void *v, register_t *retval)
+freebsd_sys_semsys(struct lwp *l, const struct freebsd_sys_semsys_args *uap, register_t *retval)
 {
-	struct freebsd_sys_semsys_args /* {
+	/* {
 		syscallarg(int) which;
 		syscallarg(int) a2;
 		syscallarg(int) a3;
 		syscallarg(int) a4;
 		syscallarg(int) a5;
-	} */ *uap = v;
+	} */
 	struct compat_14_sys___semctl_args /* {
 		syscallarg(int) semid;
 		syscallarg(int) semnum;
@@ -113,14 +113,14 @@ freebsd_sys_semsys(struct lwp *l, void *v, register_t *retval)
 
 #ifdef SYSVSHM
 int
-freebsd_sys_shmsys(struct lwp *l, void *v, register_t *retval)
+freebsd_sys_shmsys(struct lwp *l, const struct freebsd_sys_shmsys_args *uap, register_t *retval)
 {
-	struct freebsd_sys_shmsys_args /* {
+	/* {
 		syscallarg(int) which;
 		syscallarg(int) a2;
 		syscallarg(int) a3;
 		syscallarg(int) a4;
-	} */ *uap = v;
+	} */
 	struct sys_shmat_args /* {
 		syscallarg(int) shmid;
 		syscallarg(void *) shmaddr;
@@ -175,16 +175,16 @@ freebsd_sys_shmsys(struct lwp *l, void *v, register_t *retval)
 
 #ifdef SYSVMSG
 int
-freebsd_sys_msgsys(struct lwp *l, void *v, register_t *retval)
+freebsd_sys_msgsys(struct lwp *l, const struct freebsd_sys_msgsys_args *uap, register_t *retval)
 {
-	struct freebsd_sys_msgsys_args /* {
+	/* {
 		syscallarg(int) which;
 		syscallarg(int) a2;
 		syscallarg(int) a3;
 		syscallarg(int) a4;
 		syscallarg(int) a5;
 		syscallarg(int) a6;
-	} */ *uap = v;
+	} */
 	struct compat_14_sys_msgctl_args /* {
 		syscallarg(int) msqid;
 		syscallarg(int) cmd;

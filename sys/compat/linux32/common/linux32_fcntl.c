@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_fcntl.c,v 1.3 2007/12/08 18:36:11 dsl Exp $ */
+/*	$NetBSD: linux32_fcntl.c,v 1.4 2007/12/20 23:02:57 dsl Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_fcntl.c,v 1.3 2007/12/08 18:36:11 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_fcntl.c,v 1.4 2007/12/20 23:02:57 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -70,13 +70,13 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_fcntl.c,v 1.3 2007/12/08 18:36:11 dsl Exp $"
 #include <compat/linux32/linux32_syscallargs.h>
 
 int
-linux32_sys_open(struct lwp *l, void *v, register_t *retval)
+linux32_sys_open(struct lwp *l, const struct linux32_sys_open_args *uap, register_t *retval)
 {
-	struct linux32_sys_open_args /* {
+	/* {
 		syscallarg(const netbsd32_charp) path;
 		syscallarg(int) flags;
 		syscallarg(int) mode;
-	} */ *uap = v;
+	} */
 	struct linux_sys_open_args ua;
 
 	NETBSD32TOP_UAP(path, const char);
@@ -87,13 +87,13 @@ linux32_sys_open(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-linux32_sys_fcntl64(struct lwp *l, void *v, register_t *retval)
+linux32_sys_fcntl64(struct lwp *l, const struct linux32_sys_fcntl64_args *uap, register_t *retval)
 {
-	struct linux32_sys_fcntl64_args /* {
+	/* {
 		syscallcarg(int) fd;
                 syscallarg(int) cmd;
-		syscallarg(netbsd32_voidp) arg; 
-	} */ *uap = v;
+		syscallarg(netbsd32_voidp) arg;
+	} */
 	struct linux_sys_fcntl64_args ua;
 
 	NETBSD32TO64_UAP(fd);
@@ -104,13 +104,13 @@ linux32_sys_fcntl64(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-linux32_sys_fcntl(struct lwp *l, void *v, register_t *retval)
+linux32_sys_fcntl(struct lwp *l, const struct linux32_sys_fcntl_args *uap, register_t *retval)
 {
-	struct linux32_sys_fcntl_args /* {
+	/* {
 		syscallcarg(int) fd;
                 syscallarg(int) cmd;
-		syscallarg(netbsd32_voidp) arg; 
-	} */ *uap = v;
+		syscallarg(netbsd32_voidp) arg;
+	} */
 	struct linux_sys_fcntl_args ua;
 
 	NETBSD32TO64_UAP(fd);

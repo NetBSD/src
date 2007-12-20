@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.100 2007/04/29 20:23:36 msaitoh Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.101 2007/12/20 23:03:12 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.100 2007/04/29 20:23:36 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.101 2007/12/20 23:03:12 dsl Exp $");
 
 #define SYSVSHM
 
@@ -128,9 +128,9 @@ static int shm_find_segment_by_key(key_t);
 static void shm_deallocate_segment(struct shmid_ds *);
 static void shm_delete_mapping(struct vmspace *, struct shmmap_state *,
 			       struct shmmap_entry *);
-static int shmget_existing(struct lwp *, struct sys_shmget_args *,
+static int shmget_existing(struct lwp *, const struct sys_shmget_args *,
 			   int, int, register_t *);
-static int shmget_allocate_segment(struct lwp *, struct sys_shmget_args *,
+static int shmget_allocate_segment(struct lwp *, const struct sys_shmget_args *,
 				   int, register_t *);
 static struct shmmap_state *shmmap_getprivate(struct proc *);
 static struct shmmap_entry *shm_find_mapping(struct shmmap_state *, vaddr_t);
@@ -268,11 +268,11 @@ shm_find_mapping(struct shmmap_state *map, vaddr_t va)
 }
 
 int
-sys_shmdt(struct lwp *l, void *v, register_t *retval)
+sys_shmdt(struct lwp *l, const struct sys_shmdt_args *uap, register_t *retval)
 {
-	struct sys_shmdt_args /* {
+	/* {
 		syscallarg(const void *) shmaddr;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 	struct shmmap_state *shmmap_s, *shmmap_s1;
 	struct shmmap_entry *shmmap_se;
@@ -301,13 +301,13 @@ sys_shmdt(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-sys_shmat(struct lwp *l, void *v, register_t *retval)
+sys_shmat(struct lwp *l, const struct sys_shmat_args *uap, register_t *retval)
 {
-	struct sys_shmat_args /* {
+	/* {
 		syscallarg(int) shmid;
 		syscallarg(const void *) shmaddr;
 		syscallarg(int) shmflg;
-	} */ *uap = v;
+	} */
 	int error, flags = 0;
 	struct proc *p = l->l_proc;
 	kauth_cred_t cred = l->l_cred;
@@ -389,13 +389,13 @@ out:
 }
 
 int
-sys___shmctl13(struct lwp *l, void *v, register_t *retval)
+sys___shmctl13(struct lwp *l, const struct sys___shmctl13_args *uap, register_t *retval)
 {
-	struct sys___shmctl13_args /* {
+	/* {
 		syscallarg(int) shmid;
 		syscallarg(int) cmd;
 		syscallarg(struct shmid_ds *) buf;
-	} */ *uap = v;
+	} */
 	struct shmid_ds shmbuf;
 	int cmd, error;
 
@@ -519,7 +519,7 @@ shmctl1(struct lwp *l, int shmid, int cmd, struct shmid_ds *shmbuf)
 }
 
 static int
-shmget_existing(struct lwp *l, struct sys_shmget_args *uap, int mode,
+shmget_existing(struct lwp *l, const struct sys_shmget_args *uap, int mode,
     int segnum, register_t *retval)
 {
 	struct shmid_ds *shmseg;
@@ -551,7 +551,7 @@ shmget_existing(struct lwp *l, struct sys_shmget_args *uap, int mode,
 }
 
 static int
-shmget_allocate_segment(struct lwp *l, struct sys_shmget_args *uap, int mode,
+shmget_allocate_segment(struct lwp *l, const struct sys_shmget_args *uap, int mode,
     register_t *retval)
 {
 	int i, segnum, shmid, size;
@@ -629,13 +629,13 @@ shmget_allocate_segment(struct lwp *l, struct sys_shmget_args *uap, int mode,
 }
 
 int
-sys_shmget(struct lwp *l, void *v, register_t *retval)
+sys_shmget(struct lwp *l, const struct sys_shmget_args *uap, register_t *retval)
 {
-	struct sys_shmget_args /* {
+	/* {
 		syscallarg(key_t) key;
 		syscallarg(int) size;
 		syscallarg(int) shmflg;
-	} */ *uap = v;
+	} */
 	int segnum, mode, error;
 
 	mode = SCARG(uap, shmflg) & ACCESSPERMS;

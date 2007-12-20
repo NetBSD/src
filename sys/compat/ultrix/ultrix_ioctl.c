@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_ioctl.c,v 1.31 2007/06/01 11:36:35 he Exp $ */
+/*	$NetBSD: ultrix_ioctl.c,v 1.32 2007/12/20 23:03:07 dsl Exp $ */
 /*	from : NetBSD: sunos_ioctl.c,v 1.21 1995/10/07 06:27:31 mycroft Exp */
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_ioctl.c,v 1.31 2007/06/01 11:36:35 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_ioctl.c,v 1.32 2007/12/20 23:03:07 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_ultrix.h"
@@ -441,9 +441,8 @@ stio2stios(struct emul_termio *t, struct emul_termios *ts)
 }
 
 int
-ultrix_sys_ioctl(struct lwp *l, void *v, register_t *retval)
+ultrix_sys_ioctl(struct lwp *l, const struct ultrix_sys_ioctl_args *uap, register_t *retval)
 {
-	struct ultrix_sys_ioctl_args *uap = v;
 	struct proc *p = l->l_proc;
 	struct filedesc *fdp = p->p_fd;
 	struct file *fp;

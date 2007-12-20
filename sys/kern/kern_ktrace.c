@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.130 2007/12/08 19:29:48 pooka Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.131 2007/12/20 23:03:08 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.130 2007/12/08 19:29:48 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.131 2007/12/20 23:03:08 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1179,14 +1179,14 @@ done:
  */
 /* ARGSUSED */
 int
-sys_fktrace(lwp_t *l, void *v, register_t *retval)
+sys_fktrace(struct lwp *l, const struct sys_fktrace_args *uap, register_t *retval)
 {
-	struct sys_fktrace_args /* {
+	/* {
 		syscallarg(int) fd;
 		syscallarg(int) ops;
 		syscallarg(int) facs;
 		syscallarg(int) pid;
-	} */ *uap = v;
+	} */
 	struct file *fp = NULL;
 	struct filedesc *fdp = l->l_proc->p_fd;
 	int error;
@@ -1213,14 +1213,14 @@ sys_fktrace(lwp_t *l, void *v, register_t *retval)
  */
 /* ARGSUSED */
 int
-sys_ktrace(lwp_t *l, void *v, register_t *retval)
+sys_ktrace(struct lwp *l, const struct sys_ktrace_args *uap, register_t *retval)
 {
-	struct sys_ktrace_args /* {
+	/* {
 		syscallarg(const char *) fname;
 		syscallarg(int) ops;
 		syscallarg(int) facs;
 		syscallarg(int) pid;
-	} */ *uap = v;
+	} */
 	struct vnode *vp = NULL;
 	struct file *fp = NULL;
 	struct nameidata nd;
@@ -1538,13 +1538,13 @@ ktrcanset(lwp_t *calll, struct proc *targetp)
  * Put user defined entry to ktrace records.
  */
 int
-sys_utrace(lwp_t *l, void *v, register_t *retval)
+sys_utrace(struct lwp *l, const struct sys_utrace_args *uap, register_t *retval)
 {
-	struct sys_utrace_args /* {
+	/* {
 		syscallarg(const char *) label;
 		syscallarg(void *) addr;
 		syscallarg(size_t) len;
-	} */ *uap = v;
+	} */
 
 	return ktruser(SCARG(uap, label), SCARG(uap, addr),
 	    SCARG(uap, len), 1);

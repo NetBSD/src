@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.203 2007/11/22 22:56:16 plunky Exp $	*/
+/*	$NetBSD: systm.h,v 1.204 2007/12/20 23:03:14 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -107,7 +107,7 @@ extern struct vnode *swapdev_vp;/* vnode equivalent to above */
 
 extern const dev_t zerodev;	/* /dev/zero */
 
-typedef int	sy_call_t(struct lwp *, void *, register_t *);
+typedef int	sy_call_t(struct lwp *, const void *, register_t *);
 
 extern struct sysent {		/* system call table */
 	short	sy_narg;	/* number of args */
@@ -152,7 +152,7 @@ struct malloc_type;
 void	*hashinit(u_int, enum hashtype, struct malloc_type *, int, u_long *);
 void	hashdone(void *, struct malloc_type *);
 int	seltrue(dev_t, int, struct lwp *);
-int	sys_nosys(struct lwp *, void *, register_t *);
+int	sys_nosys(struct lwp *, const void *, register_t *);
 
 
 #ifdef _KERNEL

@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_signal.c,v 1.45 2007/12/08 18:36:04 dsl Exp $ */
+/*	$NetBSD: irix_signal.c,v 1.46 2007/12/20 23:02:51 dsl Exp $ */
 
 /*-
  * Copyright (c) 1994, 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.45 2007/12/08 18:36:04 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.46 2007/12/20 23:02:51 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -502,13 +502,13 @@ irix_set_ucontext(struct irix_ucontext *ucp, const sigset_t *mask, int code, str
 }
 
 int
-irix_sys_sigreturn(struct lwp *l, void *v, register_t *retval)
+irix_sys_sigreturn(struct lwp *l, const struct irix_sys_sigreturn_args *uap, register_t *retval)
 {
-	struct irix_sys_sigreturn_args /* {
+	/* {
 		syscallarg(struct irix_sigcontext *) scp;
 		syscallarg(struct irix_ucontext *) ucp;
 		syscallarg(int) signo;
-	} */ *uap = v;
+	} */
 	void *usf;
 	struct irix_sigframe ksf;
 	struct proc *p = l->l_proc;
@@ -677,11 +677,11 @@ irix_get_sigcontext(struct irix_sigcontext *scp, struct lwp *l)
 
 
 int
-irix_sys_sginap(struct lwp *l, void *v, register_t *retval)
+irix_sys_sginap(struct lwp *l, const struct irix_sys_sginap_args *uap, register_t *retval)
 {
-	struct irix_sys_sginap_args /* {
+	/* {
 		syscallarg(long) ticks;
-	} */ *uap = v;
+	} */
 	int rticks = SCARG(uap, ticks);
 	struct timeval tvb, tve, tvd;
 	long long delta;
@@ -705,11 +705,11 @@ irix_sys_sginap(struct lwp *l, void *v, register_t *retval)
  * XXX Untested. Expect bugs and security problems here
  */
 int
-irix_sys_getcontext(struct lwp *l, void *v, register_t *retval)
+irix_sys_getcontext(struct lwp *l, const struct irix_sys_getcontext_args *uap, register_t *retval)
 {
-	struct irix_sys_getcontext_args /* {
+	/* {
 		syscallarg(struct irix_ucontext *) ucp;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 	struct frame *f;
 	struct irix_ucontext kucp;
@@ -749,11 +749,11 @@ irix_sys_getcontext(struct lwp *l, void *v, register_t *retval)
  * XXX Untested. Expect bugs and security problems here
  */
 int
-irix_sys_setcontext(struct lwp *l, void *v, register_t *retval)
+irix_sys_setcontext(struct lwp *l, const struct irix_sys_setcontext_args *uap, register_t *retval)
 {
-	struct irix_sys_setcontext_args /* {
+	/* {
 		syscallarg(struct irix_ucontext *) ucp;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 	struct frame *f;
 	struct irix_ucontext kucp;
@@ -811,30 +811,31 @@ out:
  * from svr4_misc.c, or push the irix_irix5_siginfo into svr4_siginfo.h
  */
 int
-irix_sys_waitsys(struct lwp *l, void *v, register_t *retval)
+irix_sys_waitsys(struct lwp *l, const struct irix_sys_waitsys_args *uap, register_t *retval)
 {
-	struct irix_sys_waitsys_args /* {
+	/* {
 		syscallarg(int) type;
 		syscallarg(int) pid;
 		syscallarg(struct irix_irix5_siginfo *) info;
 		syscallarg(int) options;
 		syscallarg(struct rusage *) ru;
-	} */ *uap = v;
+	} */
 	struct proc *parent = l->l_proc;
 	int options, status, error;
 	int was_zombie;
 	struct rusage ru;
+	int pid = SCARG(uap, pid);
 
 	switch (SCARG(uap, type)) {
 	case SVR4_P_PID:
 		break;
 
 	case SVR4_P_PGID:
-		SCARG(uap, pid) = -parent->p_pgid;
+		pid = -parent->p_pgid;
 		break;
 
 	case SVR4_P_ALL:
-		SCARG(uap, pid) = WAIT_ANY;
+		pid = WAIT_ANY;
 		break;
 
 	default:
@@ -843,7 +844,7 @@ irix_sys_waitsys(struct lwp *l, void *v, register_t *retval)
 
 #ifdef DEBUG_IRIX
 	printf("waitsys(%d, %d, %p, %x, %p)\n",
-		 SCARG(uap, type), SCARG(uap, pid),
+		 SCARG(uap, type), pid,
 		 SCARG(uap, info), SCARG(uap, options), SCARG(uap, ru));
 #endif
 
@@ -858,8 +859,7 @@ irix_sys_waitsys(struct lwp *l, void *v, register_t *retval)
 	if (SCARG(uap, options) & (SVR4_WSTOPPED|SVR4_WCONTINUED))
 		options |= WUNTRACED;
 
-	error = do_sys_wait(l, &SCARG(uap,pid), &status, options, &ru,
-	    &was_zombie);
+	error = do_sys_wait(l, &pid, &status, options, &ru, &was_zombie);
 
 	if (error != 0)
 		return error;
@@ -871,17 +871,17 @@ irix_sys_waitsys(struct lwp *l, void *v, register_t *retval)
 			return error;
 	}
 
-	return irix_wait_siginfo(SCARG(uap, pid), &ru, status, SCARG(uap,info));
+	return irix_wait_siginfo(pid, &ru, status, SCARG(uap,info));
 }
 
 int
-irix_sys_sigprocmask(struct lwp *l, void *v, register_t *retval)
+irix_sys_sigprocmask(struct lwp *l, const struct irix_sys_sigprocmask_args *uap, register_t *retval)
 {
-	struct irix_sys_sigprocmask_args /* {
+	/* {
 		syscallarg(int) how;
 		syscallarg(const irix_sigset_t *) set;
 		syscallarg(irix_sigset_t *) oset;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 	struct svr4_sys_sigprocmask_args cup;
 	int error;
@@ -921,14 +921,14 @@ irix_sys_sigprocmask(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-irix_sys_sigaction(struct lwp *l, void *v, register_t *retval)
+irix_sys_sigaction(struct lwp *l, const struct irix_sys_sigaction_args *uap, register_t *retval)
 {
-	struct irix_sys_sigaction_args /* {
+	/* {
 		syscallarg(int) signum;
 		syscallarg(const struct svr4_sigaction *) nsa;
 		syscallarg(struct svr4_sigaction *) osa;
 		syscallarg(void *) sigtramp;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 	int signum;
 	struct svr4_sys_sigaction_args cup;

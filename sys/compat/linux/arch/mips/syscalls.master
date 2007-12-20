@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.24 2007/11/16 12:51:55 njoly Exp $  
+	$NetBSD: syscalls.master,v 1.25 2007/12/20 23:02:53 dsl Exp $  
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -363,6 +363,7 @@
 207	UNIMPL		sendfile
 208	UNIMPL
 209	UNIMPL
+#define linux_sys_mmap2_args linux_sys_mmap_args
 210	NOARGS		{ linux_off_t linux_sys_mmap2(unsigned long addr, \
 			    size_t len, int prot, int flags, int fd, \
 			    linux_off_t offset); }

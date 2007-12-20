@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.40 2007/12/08 18:36:05 dsl Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.41 2007/12/20 23:02:51 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.40 2007/12/08 18:36:05 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.41 2007/12/20 23:02:51 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -427,11 +427,11 @@ linux_restore_sigcontext(struct lwp *l, struct linux_sigcontext context,
 }
 
 int
-linux_sys_rt_sigreturn(struct lwp *l, void *v, register_t *retval)
+linux_sys_rt_sigreturn(struct lwp *l, const struct linux_sys_rt_sigreturn_args *uap, register_t *retval)
 {
-	struct linux_sys_rt_sigreturn_args /* {
+	/* {
 		syscallarg(struct linux_rt_sigframe *) sfp;
-	} */ *uap = v;
+	} */
 	struct linux_rt_sigframe *sfp, sigframe;
 	sigset_t mask;
 
@@ -461,11 +461,11 @@ linux_sys_rt_sigreturn(struct lwp *l, void *v, register_t *retval)
 
 
 int
-linux_sys_sigreturn(struct lwp *l, void *v, register_t *retval)
+linux_sys_sigreturn(struct lwp *l, const struct linux_sys_sigreturn_args *uap, register_t *retval)
 {
-	struct linux_sys_sigreturn_args /* {
+	/* {
 		syscallarg(struct linux_sigframe *) sfp;
-	} */ *uap = v;
+	} */
 	struct linux_sigframe *sfp, frame;
 	sigset_t mask;
 
@@ -497,13 +497,13 @@ linux_sys_sigreturn(struct lwp *l, void *v, register_t *retval)
  */
 /* XXX XAX update this, add maps, etc... */
 int
-linux_machdepioctl(struct lwp *l, void *v, register_t *retval)
+linux_machdepioctl(struct lwp *l, const struct linux_sys_ioctl_args *uap, register_t *retval)
 {
-	struct linux_sys_ioctl_args /* {
+	/* {
 		syscallarg(int) fd;
 		syscallarg(u_long) com;
 		syscallarg(void *) data;
-	} */ *uap = v;
+	} */
 	struct sys_ioctl_args bia;
 	u_long com;
 

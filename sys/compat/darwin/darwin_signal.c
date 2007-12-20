@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_signal.c,v 1.27 2007/12/08 18:35:57 dsl Exp $ */
+/*	$NetBSD: darwin_signal.c,v 1.28 2007/12/20 23:02:46 dsl Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_signal.c,v 1.27 2007/12/08 18:35:57 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_signal.c,v 1.28 2007/12/20 23:02:46 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -63,13 +63,13 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_signal.c,v 1.27 2007/12/08 18:35:57 dsl Exp $
 #include <compat/darwin/darwin_syscallargs.h>
 
 int
-darwin_sys_sigaction(struct lwp *l, void *v, register_t *retval)
+darwin_sys_sigaction(struct lwp *l, const struct darwin_sys_sigaction_args *uap, register_t *retval)
 {
-	struct darwin_sys_sigaction_args /* {
+	/* {
 		syscallarg(int) signum;
 		syscallarg(struct darwin___sigaction *) nsa;
 		syscallarg(struct sigaction13 *) osa;
-	} */ *uap = v;
+	} */
 	struct darwin___sigaction dsa;
 	struct sigaction nsa, osa;
 	struct sigaction13 sa13;
@@ -139,13 +139,13 @@ darwin_tracesig(struct proc *p, int signo)
 }
 
 int
-darwin_sys_sigprocmask(struct lwp *l, void *v, register_t *retval)
+darwin_sys_sigprocmask(struct lwp *l, const struct darwin_sys_sigprocmask_args *uap, register_t *retval)
 {
-	struct darwin_sys_sigprocmask_args /* {
+	/* {
 		syscallarg(int) how;
 		syscallarg(sigset13_t *) set;
 		syscallarg(sigset13_t *) oset;
-	} */ *uap = v;
+	} */
 	int error;
 	sigset13_t kdset;
 	sigset_t kbset, kboset;

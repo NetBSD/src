@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_message.c,v 1.54 2007/12/08 18:36:14 dsl Exp $ */
+/*	$NetBSD: mach_message.c,v 1.55 2007/12/20 23:02:59 dsl Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.54 2007/12/08 18:36:14 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.55 2007/12/20 23:02:59 dsl Exp $");
 
 #include "opt_compat_mach.h" /* For COMPAT_MACH in <sys/ktrace.h> */
 #include "opt_compat_darwin.h"
@@ -83,9 +83,9 @@ static inline
     int mach_trade_rights_complex(struct lwp *, struct mach_message *);
 
 int
-mach_sys_msg_overwrite_trap(struct lwp *l, void *v, register_t *retval)
+mach_sys_msg_overwrite_trap(struct lwp *l, const struct mach_sys_msg_overwrite_trap_args *uap, register_t *retval)
 {
-	struct mach_sys_msg_overwrite_trap_args /* {
+	/* {
 		syscallarg(mach_msg_header_t *) msg;
 		syscallarg(mach_msg_option_t) option;
 		syscallarg(mach_msg_size_t) send_size;
@@ -95,7 +95,7 @@ mach_sys_msg_overwrite_trap(struct lwp *l, void *v, register_t *retval)
 		syscallarg(mach_port_name_t) notify;
 		syscallarg(mach_msg_header_t *) rcv_msg;
 		syscallarg(mach_msg_size_t) scatter_list_size;
-	} */ *uap = v;
+	} */
 	size_t send_size, recv_size;
 	mach_msg_header_t *msg;
 	int opt;
@@ -648,9 +648,9 @@ unlock:
 
 
 int
-mach_sys_msg_trap(struct lwp *l, void *v, register_t *retval)
+mach_sys_msg_trap(struct lwp *l, const struct mach_sys_msg_trap_args *uap, register_t *retval)
 {
-	struct mach_sys_msg_trap_args /* {
+	/* {
 		syscallarg(mach_msg_header_t *) msg;
 		syscallarg(mach_msg_option_t) option;
 		syscallarg(mach_msg_size_t) send_size;
@@ -658,7 +658,7 @@ mach_sys_msg_trap(struct lwp *l, void *v, register_t *retval)
 		syscallarg(mach_port_name_t) rcv_name;
 		syscallarg(mach_msg_timeout_t) timeout;
 		syscallarg(mach_port_name_t) notify;
-	} */ *uap = v;
+	} */
 	struct mach_sys_msg_overwrite_trap_args cup;
 
 	SCARG(&cup, msg) = SCARG(uap, msg);

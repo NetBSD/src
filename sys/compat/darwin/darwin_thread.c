@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_thread.c,v 1.14 2007/12/08 18:35:57 dsl Exp $ */
+/*	$NetBSD: darwin_thread.c,v 1.15 2007/12/20 23:02:46 dsl Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_thread.c,v 1.14 2007/12/08 18:35:57 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_thread.c,v 1.15 2007/12/20 23:02:46 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -66,7 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_thread.c,v 1.14 2007/12/08 18:35:57 dsl Exp $
  * the parent as well as the child.
  */
 int
-darwin_sys_fork(struct lwp *l, void *v, register_t *retval)
+darwin_sys_fork(struct lwp *l, const void *v, register_t *retval)
 {
 	int error;
 
@@ -78,7 +78,7 @@ darwin_sys_fork(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-darwin_sys_vfork(struct lwp *l, void *v, register_t *retval)
+darwin_sys_vfork(struct lwp *l, const void *v, register_t *retval)
 {
 	int error;
 
@@ -90,11 +90,11 @@ darwin_sys_vfork(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-darwin_sys_pthread_exit(struct lwp *l, void *v, register_t *retval)
+darwin_sys_pthread_exit(struct lwp *l, const struct darwin_sys_pthread_exit_args *uap, register_t *retval)
 {
-	struct darwin_sys_pthread_exit_args /* {
+	/* {
 		syscallarg(void *) value_ptr;
-	} */ *uap = v;
+	} */
 	struct sys_exit_args cup;
 	struct mach_emuldata *med;
 	struct proc *p = l->l_proc;

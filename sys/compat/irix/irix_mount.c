@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_mount.c,v 1.20 2007/12/09 13:34:23 dogcow Exp $ */
+/*	$NetBSD: irix_mount.c,v 1.21 2007/12/20 23:02:50 dsl Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_mount.c,v 1.20 2007/12/09 13:34:23 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_mount.c,v 1.21 2007/12/20 23:02:50 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -58,12 +58,12 @@ __KERNEL_RCSID(0, "$NetBSD: irix_mount.c,v 1.20 2007/12/09 13:34:23 dogcow Exp $
 #include <compat/irix/irix_syscallargs.h>
 
 int
-irix_sys_getmountid(struct lwp *l, void *v, register_t *retval)
+irix_sys_getmountid(struct lwp *l, const struct irix_sys_getmountid_args *uap, register_t *retval)
 {
-	struct irix_sys_getmountid_args /* {
+	/* {
 		syscallarg(const char *) path;
 		syscallarg(irix_mountid_t *) buf;
-	} */ *uap = v;
+	} */
 	kauth_cred_t cred;
 	struct vnode *vp;
 	int error = 0;

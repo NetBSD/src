@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_acct.c,v 1.79 2007/12/08 19:29:47 pooka Exp $	*/
+/*	$NetBSD: kern_acct.c,v 1.80 2007/12/20 23:03:07 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.79 2007/12/08 19:29:47 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.80 2007/12/20 23:03:07 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -281,11 +281,11 @@ acct_init(void)
  * previous implementation done by Mark Tinguely.
  */
 int
-sys_acct(struct lwp *l, void *v, register_t *retval)
+sys_acct(struct lwp *l, const struct sys_acct_args *uap, register_t *retval)
 {
-	struct sys_acct_args /* {
+	/* {
 		syscallarg(const char *) path;
-	} */ *uap = v;
+	} */
 	struct nameidata nd;
 	int error;
 

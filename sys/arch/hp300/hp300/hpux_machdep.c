@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_machdep.c,v 1.47 2007/03/04 05:59:49 christos Exp $	*/
+/*	$NetBSD: hpux_machdep.c,v 1.48 2007/12/20 23:02:39 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_machdep.c,v 1.47 2007/03/04 05:59:49 christos Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: hpux_machdep.c,v 1.48 2007/12/20 23:02:39 dsl Exp $");                                                  
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -262,9 +262,8 @@ hpux_cpu_sysconf_arch(void)
  * HP-UX advise(2) system call.
  */
 int
-hpux_sys_advise(struct lwp *l, void *v, register_t *retval)
+hpux_sys_advise(struct lwp *l, const struct hpux_sys_advise_args *uap, register_t *retval)
 {
-	struct hpux_sys_advise_args *uap = v;
 	int error = 0;
 
 	switch (SCARG(uap, arg)) {
@@ -293,11 +292,10 @@ hpux_sys_advise(struct lwp *l, void *v, register_t *retval)
  * Man page lies, behaviour here is based on observed behaviour.
  */
 int
-hpux_sys_getcontext(struct lwp *lp, void *v, register_t *retval)
+hpux_sys_getcontext(struct lwp *l, const struct hpux_sys_getcontext_args *uap, register_t *retval)
 {
-	struct hpux_sys_getcontext_args *uap = v;
 	const char *str;
-	int l, i, error = 0;
+	int str_len, i, error = 0;
 	int len;
 
 	if (SCARG(uap, len) <= 0)
@@ -312,13 +310,13 @@ hpux_sys_getcontext(struct lwp *lp, void *v, register_t *retval)
 		str = context_table[i].str;
 
 	/* + 1 ... count the terminating \0. */
-	l = strlen(str) + 1;
-	len = min(SCARG(uap, len), l);
+	str_len = strlen(str) + 1;
+	len = min(SCARG(uap, len), str_len);
 
 	if (len)
 		error = copyout(str, SCARG(uap, buf), len);
 	if (error == 0)
-		*retval = l;
+		*retval = str_len;
 	return 0;
 }
 
@@ -583,11 +581,11 @@ hpux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
  */
 /* ARGSUSED */
 int
-hpux_sys_sigreturn(struct lwp *l, void *v, register_t *retval)
+hpux_sys_sigreturn(struct lwp *l, const struct hpux_sys_sigreturn_args *uap, register_t *retval)
 {
-	struct hpux_sys_sigreturn_args /* {
+	/* {
 		syscallarg(struct hpuxsigcontext *) sigcntxp;
-	} */ *uap = v;
+	} */
 	struct hpuxsigcontext *scp;
 	struct frame *frame;
 	struct hpuxsigcontext tsigc;

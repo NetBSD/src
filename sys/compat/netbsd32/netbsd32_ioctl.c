@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.36 2007/12/08 18:36:18 dsl Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.37 2007/12/20 23:03:01 dsl Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.36 2007/12/08 18:36:18 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.37 2007/12/20 23:03:01 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -302,13 +302,13 @@ netbsd32_from_sioc_sg_req(struct sioc_sg_req *p, struct netbsd32_sioc_sg_req *s3
  * on the ioctl command before and afterwards.
  */
 int
-netbsd32_ioctl(struct lwp *l, void *v, register_t *retval)
+netbsd32_ioctl(struct lwp *l, const struct netbsd32_ioctl_args *uap, register_t *retval)
 {
-	struct netbsd32_ioctl_args /* {
+	/* {
 		syscallarg(int) fd;
 		syscallarg(netbsd32_u_long) com;
 		syscallarg(netbsd32_voidp) data;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 	struct file *fp;
 	struct filedesc *fdp;

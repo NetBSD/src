@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_misc.c,v 1.80 2007/12/08 18:36:21 dsl Exp $ */
+/* $NetBSD: osf1_misc.c,v 1.81 2007/12/20 23:03:03 dsl Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_misc.c,v 1.80 2007/12/08 18:36:21 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_misc.c,v 1.81 2007/12/20 23:03:03 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -102,7 +102,7 @@ extern int scdebug;
 #endif
 
 int
-osf1_sys_classcntl(struct lwp *l, void *v, register_t *retval)
+osf1_sys_classcntl(struct lwp *l, const struct osf1_sys_classcntl_args *uap, register_t *retval)
 {
 
 	/* XXX */
@@ -110,9 +110,8 @@ osf1_sys_classcntl(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-osf1_sys_reboot(struct lwp *l, void *v, register_t *retval)
+osf1_sys_reboot(struct lwp *l, const struct osf1_sys_reboot_args *uap, register_t *retval)
 {
-	struct osf1_sys_reboot_args *uap = v;
 	struct sys_reboot_args a;
 	unsigned long leftovers;
 
@@ -128,9 +127,8 @@ osf1_sys_reboot(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-osf1_sys_set_program_attributes(struct lwp *l, void *v, register_t *retval)
+osf1_sys_set_program_attributes(struct lwp *l, const struct osf1_sys_set_program_attributes_args *uap, register_t *retval)
 {
-	struct osf1_sys_set_program_attributes_args *uap = v;
 	struct proc *p = l->l_proc;
 	segsz_t tsize, dsize;
 
@@ -151,10 +149,9 @@ osf1_sys_set_program_attributes(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-osf1_sys_getsysinfo(struct lwp *l, void *v, register_t *retval)
+osf1_sys_getsysinfo(struct lwp *l, const struct osf1_sys_getsysinfo_args *uap, register_t *retval)
 {
 	extern int ncpus;
-	struct osf1_sys_getsysinfo_args *uap = v;
 	int error;
 	int unit;
 	long percpu;
@@ -242,9 +239,8 @@ osf1_sys_getsysinfo(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-osf1_sys_setsysinfo(struct lwp *l, void *v, register_t *retval)
+osf1_sys_setsysinfo(struct lwp *l, const struct osf1_sys_setsysinfo_args *uap, register_t *retval)
 {
-	struct osf1_sys_setsysinfo_args *uap = v;
 	u_int64_t temp;
 	int error;
 
@@ -268,9 +264,8 @@ osf1_sys_setsysinfo(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-osf1_sys_sysinfo(struct lwp *l, void *v, register_t *retval)
+osf1_sys_sysinfo(struct lwp *l, const struct osf1_sys_sysinfo_args *uap, register_t *retval)
 {
-	struct osf1_sys_sysinfo_args *uap = v;
 	const char *string;
 	size_t slen;
 	int error;
@@ -342,9 +337,8 @@ dont_care:
 }
 
 int
-osf1_sys_uname(struct lwp *l, void *v, register_t *retval)
+osf1_sys_uname(struct lwp *l, const struct osf1_sys_uname_args *uap, register_t *retval)
 {
-	struct osf1_sys_uname_args *uap = v;
         struct osf1_utsname u;
         const char *cp;
         char *dp, *ep;
@@ -368,9 +362,8 @@ osf1_sys_uname(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-osf1_sys_usleep_thread(struct lwp *l, void *v, register_t *retval)
+osf1_sys_usleep_thread(struct lwp *l, const struct osf1_sys_usleep_thread_args *uap, register_t *retval)
 {
-	struct osf1_sys_usleep_thread_args *uap = v;
 	struct osf1_timeval otv, endotv;
 	struct timeval tv, ntv, endtv;
 	u_long ticks;
@@ -403,26 +396,26 @@ osf1_sys_usleep_thread(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-osf1_sys_wait4(struct lwp *l, void *v, register_t *retval)
+osf1_sys_wait4(struct lwp *l, const struct osf1_sys_wait4_args *uap, register_t *retval)
 {
-	struct osf1_sys_wait4_args *uap = v;
 	struct osf1_rusage osf1_rusage;
 	struct rusage netbsd_rusage;
 	unsigned long leftovers;
 	int error, status, was_zombie;
+	int options = SCARG(uap, options);
+	int pid = SCARG(uap, pid);
 
 	/* translate options */
-	SCARG(uap, options) = emul_flags_translate(osf1_wait_options_xtab,
-	    SCARG(uap, options), &leftovers);
+	options = emul_flags_translate(osf1_wait_options_xtab,
+	    options, &leftovers);
 	if (leftovers != 0)
 		return (EINVAL);
 
-	error = do_sys_wait(l, & SCARG(uap, pid), &status,
-	    SCARG(uap, options) | WOPTSCHECKED,
+	error = do_sys_wait(l, & pid, &status, options | WOPTSCHECKED,
 	    SCARG(uap, rusage) != NULL ? &netbsd_rusage : NULL, &was_zombie);
 
-	retval[0] = SCARG(uap, pid);
-	if (SCARG(uap, pid) == 0)
+	retval[0] = pid;
+	if (pid == 0)
 		return error;
 
 	if (SCARG(uap, rusage)) {

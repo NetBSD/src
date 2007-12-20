@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_ioctl.c,v 1.8 2007/12/08 18:36:11 dsl Exp $ */
+/*	$NetBSD: linux32_ioctl.c,v 1.9 2007/12/20 23:02:58 dsl Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_ioctl.c,v 1.8 2007/12/08 18:36:11 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_ioctl.c,v 1.9 2007/12/20 23:02:58 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -57,13 +57,13 @@ extern int linux_ioctl_socket(struct lwp *,
     struct linux_sys_ioctl_args *, register_t *);
 
 int
-linux32_sys_ioctl(struct lwp *l, void *v, register_t *retval)
+linux32_sys_ioctl(struct lwp *l, const struct linux32_sys_ioctl_args *uap, register_t *retval)
 {
-	struct linux32_sys_ioctl_args /* {
+	/* {
 		syscallarg(int) fd;
 		syscallarg(netbsd32_u_long) com;
 		syscallarg(netbsd32_charp) data;
-	} */ *uap = v;
+	} */
 	int group;
 	int error;
 

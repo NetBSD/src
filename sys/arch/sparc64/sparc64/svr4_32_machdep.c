@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_machdep.c,v 1.30 2007/10/17 19:57:32 garbled Exp $	 */
+/*	$NetBSD: svr4_32_machdep.c,v 1.31 2007/12/20 23:02:43 dsl Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_machdep.c,v 1.30 2007/10/17 19:57:32 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_machdep.c,v 1.31 2007/12/20 23:02:43 dsl Exp $");
 
 #ifndef _LKM
 #include "opt_ddb.h"
@@ -668,9 +668,8 @@ svr4_32_trap(int type, struct lwp *l)
 /*
  */
 int
-svr4_32_sys_sysarch(struct lwp *l, void *v, register_t *retval)
+svr4_32_sys_sysarch(struct lwp *l, const struct svr4_32_sys_sysarch_args *uap, register_t *retval)
 {
-	struct svr4_32_sys_sysarch_args *uap = v;
 
 	switch (SCARG(uap, op)) {
 	default:

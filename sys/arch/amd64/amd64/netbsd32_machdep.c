@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.44 2007/10/17 19:53:01 garbled Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.45 2007/12/20 23:02:38 dsl Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.44 2007/10/17 19:53:01 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.45 2007/12/20 23:02:38 dsl Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_coredump.h"
@@ -103,7 +103,7 @@ cpu_exec_aout_makecmds(struct lwp *p, struct exec_package *e)
  * COMPAT_16 is useful for i386 emulation (COMPAT_NETBSD32) only.
  */
 int
-compat_16_sys___sigreturn14(struct lwp *l, void *v, register_t *retval)
+compat_16_sys___sigreturn14(struct lwp *l, const struct compat_16_sys___sigreturn14_args *uap, register_t *retval)
 {
 
 	return ENOSYS;
@@ -361,11 +361,11 @@ netbsd32_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 }
 
 int
-compat_16_netbsd32___sigreturn14(struct lwp *l, void *v, register_t *retval)
+compat_16_netbsd32___sigreturn14(struct lwp *l, const struct compat_16_netbsd32___sigreturn14_args *uap, register_t *retval)
 {
-	struct compat_16_netbsd32___sigreturn14_args /* {
+	/* {
 		syscallarg(netbsd32_sigcontextp_t) sigcntxp;
-	} */ *uap = v;
+	} */
 	struct netbsd32_sigcontext *scp, context;
 	struct proc *p = l->l_proc;
 	struct trapframe *tf;
@@ -580,12 +580,12 @@ netbsd32_process_read_fpregs(struct lwp *l, struct fpreg32 *regs)
 }
 
 int
-netbsd32_sysarch(struct lwp *l, void *v, register_t *retval)
+netbsd32_sysarch(struct lwp *l, const struct netbsd32_sysarch_args *uap, register_t *retval)
 {
-	struct netbsd32_sysarch_args /* {
+	/* {
 		syscallarg(int) op;
 		syscallarg(netbsd32_voidp) parms;
-	} */ *uap = v;
+	} */
 	int error;
 
 	switch (SCARG(uap, op)) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.34 2007/12/08 18:36:06 dsl Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.35 2007/12/20 23:02:53 dsl Exp $ */
 
 /*-
  * Copyright (c) 1995, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.34 2007/12/08 18:36:06 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.35 2007/12/20 23:02:53 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -235,11 +235,11 @@ linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
  * stack state from context left by sendsig (above).
  */
 int
-linux_sys_sigreturn(struct lwp *l, void *v, register_t *retval)
+linux_sys_sigreturn(struct lwp *l, const struct linux_sys_sigreturn_args *uap, register_t *retval)
 {
-	struct linux_sys_sigreturn_args /* {
+	/* {
 		syscallarg(struct linux_sigframe *) sf;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 	struct linux_sigframe *sf, ksf;
 	struct frame *f;
@@ -286,7 +286,7 @@ linux_sys_sigreturn(struct lwp *l, void *v, register_t *retval)
 
 
 int
-linux_sys_rt_sigreturn(struct lwp *l, void *v, register_t *retval)
+linux_sys_rt_sigreturn(struct lwp *l, const void *v, register_t *retval)
 {
 	return (ENOSYS);
 }
@@ -294,7 +294,7 @@ linux_sys_rt_sigreturn(struct lwp *l, void *v, register_t *retval)
 
 #if 0
 int
-linux_sys_modify_ldt(struct lwp *l, void *v, register_t *retval)
+linux_sys_modify_ldt(struct lwp *l, const struct linux_sys_modify_ldt_args *uap, register_t *retval)
 {
 	/*
 	 * This syscall is not implemented in Linux/Mips: we should not
@@ -321,7 +321,7 @@ linux_fakedev(dev_t dev, int raw)
  * We come here in a last attempt to satisfy a Linux ioctl() call
  */
 int
-linux_machdepioctl(struct lwp *l, void *v, register_t *retval)
+linux_machdepioctl(struct lwp *l, const struct linux_sys_ioctl_args *uap, register_t *retval)
 {
 	return 0;
 }
@@ -331,7 +331,7 @@ linux_machdepioctl(struct lwp *l, void *v, register_t *retval)
  * just let it have the whole range.
  */
 int
-linux_sys_ioperm(struct lwp *l, void *v, register_t *retval)
+linux_sys_ioperm(struct lwp *l, const struct linux_sys_ioperm_args *uap, register_t *retval)
 {
 	/*
 	 * This syscall is not implemented in Linux/Mips: we should not be here
@@ -346,7 +346,7 @@ linux_sys_ioperm(struct lwp *l, void *v, register_t *retval)
  * wrapper linux_sys_new_uname() -> linux_sys_uname()
  */
 int
-linux_sys_new_uname(struct lwp *l, void *v, register_t *retval)
+linux_sys_new_uname(struct lwp *l, const struct linux_sys_new_uname_args *uap, register_t *retval)
 {
 /*
  * Use this if you want to try Linux emulation with a glibc-2.2
@@ -367,7 +367,7 @@ linux_sys_new_uname(struct lwp *l, void *v, register_t *retval)
 
         return copyout(&luts, SCARG(uap, up), sizeof(luts));
 #else
-	return linux_sys_uname(l, v, retval);
+	return linux_sys_uname(l, (const void *)uap, retval);
 #endif
 }
 
@@ -377,7 +377,7 @@ linux_sys_new_uname(struct lwp *l, void *v, register_t *retval)
  * we emulate this broken beahior.
  */
 int
-linux_sys_cacheflush(struct lwp *l, void *v, register_t *retval)
+linux_sys_cacheflush(struct lwp *l, const struct linux_sys_cacheflush_args *uap, register_t *retval)
 {
 	mips_icache_sync_all();
 	mips_dcache_wbinv_all();
@@ -389,14 +389,16 @@ linux_sys_cacheflush(struct lwp *l, void *v, register_t *retval)
  * some binaries and some libraries use it.
  */
 int
-linux_sys_sysmips(struct lwp *l, void *v, register_t *retval)
+linux_sys_sysmips(struct lwp *l, const struct linux_sys_sysmips_args *uap, register_t *retval)
 {
+#if 0
 	struct linux_sys_sysmips_args {
 		syscallarg(int) cmd;
 		syscallarg(int) arg1;
 		syscallarg(int) arg2;
 		syscallarg(int) arg3;
 	} *uap = v;
+#endif
 	int error;
 
 	switch (SCARG(uap, cmd)) {

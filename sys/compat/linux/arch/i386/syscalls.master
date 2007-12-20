@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.85 2007/11/16 12:51:55 njoly Exp $
+	$NetBSD: syscalls.master,v 1.86 2007/12/20 23:02:52 dsl Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -335,6 +335,7 @@
 190	NOARGS		{ int sys___vfork14(void); }
 191	STD		{ int linux_sys_ugetrlimit(int which, \
 			    struct orlimit *rlp); }
+#define linux_sys_mmap2_args linux_sys_mmap_args
 192	NOARGS		{ linux_off_t linux_sys_mmap2(unsigned long addr, \
 			    size_t len, int prot, int flags, int fd, \
 			    linux_off_t offset); }

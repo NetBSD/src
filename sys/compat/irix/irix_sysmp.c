@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_sysmp.c,v 1.19 2007/12/08 18:36:04 dsl Exp $ */
+/*	$NetBSD: irix_sysmp.c,v 1.20 2007/12/20 23:02:51 dsl Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_sysmp.c,v 1.19 2007/12/08 18:36:04 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_sysmp.c,v 1.20 2007/12/20 23:02:51 dsl Exp $");
 
 #include <sys/errno.h>
 #include <sys/param.h>
@@ -69,15 +69,15 @@ extern struct loadavg averunnable;
 extern long irix_kernel_var[32];
 
 int
-irix_sys_sysmp(struct lwp *l, void *v, register_t *retval)
+irix_sys_sysmp(struct lwp *l, const struct irix_sys_sysmp_args *uap, register_t *retval)
 {
-	struct irix_sys_sysmp_args /* {
+	/* {
 		syscallarg(int) cmd;
 		syscallarg(void *) arg1;
 		syscallarg(void *) arg2;
 		syscallarg(void *) arg3;
 		syscallarg(void *) arg4;
-	} */ *uap = v;
+	} */
 	int cmd = SCARG(uap, cmd);
 
 #ifdef DEBUG_IRIX

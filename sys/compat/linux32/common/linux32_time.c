@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_time.c,v 1.15 2007/12/08 18:36:12 dsl Exp $ */
+/*	$NetBSD: linux32_time.c,v 1.16 2007/12/20 23:02:59 dsl Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_time.c,v 1.15 2007/12/08 18:36:12 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_time.c,v 1.16 2007/12/20 23:02:59 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -75,12 +75,12 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_time.c,v 1.15 2007/12/08 18:36:12 dsl Exp $"
 
 extern struct timezone linux_sys_tz;
 int
-linux32_sys_gettimeofday(struct lwp *l, void *v, register_t *retval)
+linux32_sys_gettimeofday(struct lwp *l, const struct linux32_sys_gettimeofday_args *uap, register_t *retval)
 {
-	struct linux32_sys_gettimeofday_args /* {
+	/* {
 		syscallarg(netbsd32_timevalp_t) tp;
 		syscallarg(netbsd32_timezonep_t) tzp;
-	} */ *uap = v;
+	} */
 	struct timeval tv;
 	struct netbsd32_timeval tv32;
 	int error;
@@ -104,12 +104,12 @@ linux32_sys_gettimeofday(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-linux32_sys_settimeofday(struct lwp *l, void *v, register_t *retval)
+linux32_sys_settimeofday(struct lwp *l, const struct linux32_sys_settimeofday_args *uap, register_t *retval)
 {
-	struct linux32_sys_settimeofday_args /* {
+	/* {
 		syscallarg(netbsd32_timevalp_t) tp;
 		syscallarg(netbsd32_timezonep_t) tzp;
-	} */ *uap = v;
+	} */
 	struct linux_sys_settimeofday_args ua;
 
 	NETBSD32TOP_UAP(tp, struct timeval);
@@ -119,11 +119,11 @@ linux32_sys_settimeofday(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-linux32_sys_time(struct lwp *l, void *v, register_t *retval)
+linux32_sys_time(struct lwp *l, const struct linux32_sys_time_args *uap, register_t *retval)
 {
-	struct linux32_sys_time_args /* {
+	/* {
 		syscallcarg(linux32_timep_t) t;
-	} */ *uap = v;
+	} */
         struct timeval atv;
         linux32_time_t tt;
         int error;
@@ -149,11 +149,11 @@ timeval_to_clock_t(struct timeval *tv)
 }
 
 int
-linux32_sys_times(struct lwp *l, void *v, register_t *retval)
+linux32_sys_times(struct lwp *l, const struct linux32_sys_times_args *uap, register_t *retval)
 {
-	struct linux32_sys_times_args /* {
+	/* {
 		syscallarg(linux32_tmsp_t) tms;
-	} */ *uap = v;
+	} */
 	struct linux32_tms ltms32;
 
 	struct timeval		 t;
@@ -179,11 +179,11 @@ linux32_sys_times(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-linux32_sys_stime(struct lwp *l, void *v, register_t *retval)
+linux32_sys_stime(struct lwp *l, const struct linux32_sys_stime_args *uap, register_t *retval)
 {
-	struct linux32_sys_stime_args /* {
+	/* {
 		syscallarg(linux32_timep_t) t;
-	} */ *uap = v;
+	} */
 	struct timespec ts;
 	linux32_time_t tt32;
 	int error;
@@ -198,12 +198,12 @@ linux32_sys_stime(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-linux32_sys_utime(struct lwp *l, void *v, register_t *retval)
+linux32_sys_utime(struct lwp *l, const struct linux32_sys_utime_args *uap, register_t *retval)
 {
-	struct linux32_sys_utime_args /* {
+	/* {
 		syscallarg(const netbsd32_charp) path;
 		syscallarg(linux32_utimbufp_t) times;
-	} */ *uap = v;
+	} */
         struct timeval tv[2], *tvp;
         struct linux32_utimbuf lut;
         int error;

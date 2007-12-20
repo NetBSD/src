@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_20.c,v 1.22 2007/12/08 19:29:37 pooka Exp $	*/
+/*	$NetBSD: vfs_syscalls_20.c,v 1.23 2007/12/20 23:02:45 dsl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_20.c,v 1.22 2007/12/08 19:29:37 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_20.c,v 1.23 2007/12/20 23:02:45 dsl Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -137,12 +137,12 @@ vfs2fs(struct statfs12 *bfs, const struct statvfs *fs)
  */
 /* ARGSUSED */
 int
-compat_20_sys_statfs(struct lwp *l, void *v, register_t *retval)
+compat_20_sys_statfs(struct lwp *l, const struct compat_20_sys_statfs_args *uap, register_t *retval)
 {
-	struct compat_20_sys_statfs_args /* {
+	/* {
 		syscallarg(const char *) path;
 		syscallarg(struct statfs12 *) buf;
-	} */ *uap = v;
+	} */
 	struct mount *mp;
 	struct statvfs *sbuf;
 	int error = 0;
@@ -171,12 +171,12 @@ done:
  */
 /* ARGSUSED */
 int
-compat_20_sys_fstatfs(struct lwp *l, void *v, register_t *retval)
+compat_20_sys_fstatfs(struct lwp *l, const struct compat_20_sys_fstatfs_args *uap, register_t *retval)
 {
-	struct compat_20_sys_fstatfs_args /* {
+	/* {
 		syscallarg(int) fd;
 		syscallarg(struct statfs12 *) buf;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 	struct file *fp;
 	struct mount *mp;
@@ -202,13 +202,13 @@ compat_20_sys_fstatfs(struct lwp *l, void *v, register_t *retval)
  * Get statistics on all filesystems.
  */
 int
-compat_20_sys_getfsstat(struct lwp *l, void *v, register_t *retval)
+compat_20_sys_getfsstat(struct lwp *l, const struct compat_20_sys_getfsstat_args *uap, register_t *retval)
 {
-	struct compat_20_sys_getfsstat_args /* {
+	/* {
 		syscallarg(struct statfs12 *) buf;
 		syscallarg(long) bufsize;
 		syscallarg(int) flags;
-	} */ *uap = v;
+	} */
 	int root = 0;
 	struct mount *mp, *nmp;
 	struct statvfs *sbuf;
@@ -270,12 +270,12 @@ out:
 }
 
 int
-compat_20_sys_fhstatfs(struct lwp *l, void *v, register_t *retval)
+compat_20_sys_fhstatfs(struct lwp *l, const struct compat_20_sys_fhstatfs_args *uap, register_t *retval)
 {
-	struct compat_20_sys_fhstatfs_args /*
+	/* {
 		syscallarg(const struct compat_30_fhandle *) fhp;
 		syscallarg(struct statfs12 *) buf;
-	} */ *uap = v;
+	} */
 	struct statvfs *sbuf;
 	struct compat_30_fhandle fh;
 	struct mount *mp;

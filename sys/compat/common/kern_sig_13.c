@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig_13.c,v 1.16 2007/12/08 18:35:54 dsl Exp $	*/
+/*	$NetBSD: kern_sig_13.c,v 1.17 2007/12/20 23:02:44 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig_13.c,v 1.16 2007/12/08 18:35:54 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig_13.c,v 1.17 2007/12/20 23:02:44 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -91,23 +91,23 @@ native_sigaction_to_sigaction13(const struct sigaction *sa, struct sigaction13 *
 }
 
 int
-compat_13_sys_sigaltstack(struct lwp *l, void *v, register_t *retval)
+compat_13_sys_sigaltstack(struct lwp *l, const struct compat_13_sys_sigaltstack_args *uap, register_t *retval)
 {
-	struct compat_13_sys_sigaltstack_args /* {
+	/* {
 		syscallarg(const struct sigaltstack13 *) nss;
 		syscallarg(struct sigaltstack13 *) oss;
-	} */ *uap = v;
+	} */
 	compat_sigaltstack(uap, sigaltstack13, SS_ONSTACK, SS_DISABLE);
 }
 
 int
-compat_13_sys_sigaction(struct lwp *l, void *v, register_t *retval)
+compat_13_sys_sigaction(struct lwp *l, const struct compat_13_sys_sigaction_args *uap, register_t *retval)
 {
-	struct compat_13_sys_sigaction_args /* {
+	/* {
 		syscallarg(int) signum;
 		syscallarg(const struct sigaction13 *) nsa;
 		syscallarg(struct sigaction13 *) osa;
-	} */ *uap = v;
+	} */
 	struct sigaction13 nesa, oesa;
 	struct sigaction nbsa, obsa;
 	int error;
@@ -133,12 +133,12 @@ compat_13_sys_sigaction(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-compat_13_sys_sigprocmask(struct lwp *l, void *v, register_t *retval)
+compat_13_sys_sigprocmask(struct lwp *l, const struct compat_13_sys_sigprocmask_args *uap, register_t *retval)
 {
-	struct compat_13_sys_sigprocmask_args /* {
+	/* {
 		syscallarg(int) how;
 		syscallarg(int) mask;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 	sigset13_t ness, oess;
 	sigset_t nbss, obss;
@@ -157,7 +157,7 @@ compat_13_sys_sigprocmask(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-compat_13_sys_sigpending(struct lwp *l, void *v, register_t *retval)
+compat_13_sys_sigpending(struct lwp *l, const void *v, register_t *retval)
 {
 	sigset13_t ess;
 	sigset_t bss;
@@ -169,11 +169,11 @@ compat_13_sys_sigpending(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-compat_13_sys_sigsuspend(struct lwp *l, void *v, register_t *retval)
+compat_13_sys_sigsuspend(struct lwp *l, const struct compat_13_sys_sigsuspend_args *uap, register_t *retval)
 {
-	struct compat_13_sys_sigsuspend_args /* {
+	/* {
 		syscallarg(sigset13_t) mask;
-	} */ *uap = v;
+	} */
 	sigset13_t ess;
 	sigset_t bss;
 

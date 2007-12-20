@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_sem_14.c,v 1.12 2007/06/17 10:23:27 dsl Exp $	*/
+/*	$NetBSD: sysv_sem_14.c,v 1.13 2007/12/20 23:02:44 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_sem_14.c,v 1.12 2007/06/17 10:23:27 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_sem_14.c,v 1.13 2007/12/20 23:02:44 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,14 +83,14 @@ native_to_semid_ds14(struct semid_ds *sembuf, struct semid_ds14 *osembuf)
 }
 
 int
-compat_14_sys___semctl(struct lwp *l, void *v, register_t *retval)
+compat_14_sys___semctl(struct lwp *l, const struct compat_14_sys___semctl_args *uap, register_t *retval)
 {
-	struct compat_14_sys___semctl_args /* {
+	/* {
 		syscallarg(int) semid;
 		syscallarg(int) semnum;
 		syscallarg(int) cmd;
 		syscallarg(union __semun *) arg;
-	} */ *uap = v;
+	} */
 	union __semun arg;
 	struct semid_ds sembuf;
 	struct semid_ds14 osembuf;

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.257 2007/12/08 19:29:47 pooka Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.258 2007/12/20 23:03:08 dsl Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.257 2007/12/08 19:29:47 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.258 2007/12/20 23:03:08 dsl Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -397,13 +397,13 @@ execve_fetch_element(char * const *array, size_t index, char **value)
  */
 /* ARGSUSED */
 int
-sys_execve(struct lwp *l, void *v, register_t *retval)
+sys_execve(struct lwp *l, const struct sys_execve_args *uap, register_t *retval)
 {
-	struct sys_execve_args /* {
+	/* {
 		syscallarg(const char *)	path;
 		syscallarg(char * const *)	argp;
 		syscallarg(char * const *)	envp;
-	} */ *uap = v;
+	} */
 
 	return execve1(l, SCARG(uap, path), SCARG(uap, argp),
 	    SCARG(uap, envp), execve_fetch_element);
