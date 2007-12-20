@@ -1,4 +1,4 @@
-/* $NetBSD: netmask.c,v 1.9 2007/11/12 23:25:42 agc Exp $ */
+/* $NetBSD: netmask.c,v 1.10 2007/12/20 23:17:05 agc Exp $ */
 
 /*
  * Copyright © 2006 Alistair Crooks.  All rights reserved.
@@ -113,7 +113,8 @@ allow_netmask(const char *netmaskarg, const char *addr)
 		}
 	}
 	for ( ; i < 3 ; i++) {
-		(void) strlcat(maskaddr, ".0", sizeof(maskaddr));
+		(void) snprintf(cp, sizeof(maskaddr) - (int)(cp - maskaddr), ".0");
+		cp += 2;
 	}
 
 	/* translate netmask to in_addr */
