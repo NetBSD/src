@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_wait.c,v 1.5 2007/12/17 18:10:37 njoly Exp $ */
+/*	$NetBSD: linux32_wait.c,v 1.6 2007/12/20 23:02:59 dsl Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_wait.c,v 1.5 2007/12/17 18:10:37 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_wait.c,v 1.6 2007/12/20 23:02:59 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -71,13 +71,13 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_wait.c,v 1.5 2007/12/17 18:10:37 njoly Exp $
 #include <compat/linux32/linux32_syscallargs.h>
 
 int
-linux32_sys_waitpid(struct lwp *l, void *v, register_t *retval)
+linux32_sys_waitpid(struct lwp *l, const struct linux32_sys_waitpid_args *uap, register_t *retval)
 {
-	struct linux32_sys_waitpid_args /* {
+	/* {
 		syscallarg(int) pid;
 		syscallarg(netbsd32_intp) status;
 		syscallarg(int) options;
-	} */ *uap = v;
+	} */
 	struct linux32_sys_wait4_args ua;
 
 	SCARG(&ua, pid) = SCARG(uap, pid);
@@ -89,17 +89,18 @@ linux32_sys_waitpid(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-linux32_sys_wait4(struct lwp *l, void *v, register_t *retval)
+linux32_sys_wait4(struct lwp *l, const struct linux32_sys_wait4_args *uap, register_t *retval)
 {
-	struct linux32_sys_wait4_args /* {
+	/* {
 		syscallarg(int) pid;
 		syscallarg(netbsd32_intp) status;
 		syscallarg(int) options;
 		syscallarg(netbsd32_rusagep_t) rusage;
-	} */ *uap = v;
+	} */
 	int error, status, linux_options, options, was_zombie;
 	struct rusage ru;
 	struct netbsd32_rusage ru32;
+	int pid;
 
 	linux_options = SCARG(uap, options);
 	options = WOPTSCHECKED;
@@ -115,10 +116,11 @@ linux32_sys_wait4(struct lwp *l, void *v, register_t *retval)
 	if (linux_options & LINUX_WAIT4_WCLONE)
 		options |= WALTSIG;
 
-	error = do_sys_wait(l, &SCARG(uap, pid), &status, options,
+	pid = SCARG(uap, pid);
+	error = do_sys_wait(l, &pid, &status, options,
 	    SCARG_P32(uap, rusage) != NULL ? &ru : NULL, &was_zombie);
-	retval[0] = SCARG(uap, pid);
-	if (SCARG(uap, pid) == 0)
+	retval[0] = pid;
+	if (pid == 0)
 		return error;
 
 	/* XXXAD ksiginfo leak */

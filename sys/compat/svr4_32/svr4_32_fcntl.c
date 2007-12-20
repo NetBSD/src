@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_fcntl.c,v 1.28 2007/12/18 11:05:53 martin Exp $	 */
+/*	$NetBSD: svr4_32_fcntl.c,v 1.29 2007/12/20 23:03:06 dsl Exp $	 */
 
 /*-
  * Copyright (c) 1994, 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_fcntl.c,v 1.28 2007/12/18 11:05:53 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_fcntl.c,v 1.29 2007/12/20 23:03:06 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -326,9 +326,8 @@ fd_truncate(struct lwp *l, int fd, struct flock *flp, register_t *retval)
 
 
 int
-svr4_32_sys_open(struct lwp *l, void *v, register_t *retval)
+svr4_32_sys_open(struct lwp *l, const struct svr4_32_sys_open_args *uap, register_t *retval)
 {
-	struct svr4_32_sys_open_args	*uap = v;
 	int			error;
 	struct sys_open_args	cup;
 
@@ -361,10 +360,10 @@ svr4_32_sys_open(struct lwp *l, void *v, register_t *retval)
 	return 0;
 }
 
+
 int
-svr4_32_sys_creat(struct lwp *l, void *v, register_t *retval)
+svr4_32_sys_creat(struct lwp *l, const struct svr4_32_sys_creat_args *uap, register_t *retval)
 {
-	struct svr4_32_sys_creat_args *uap = v;
 	struct sys_open_args cup;
 
 	SCARG(&cup, path) = SCARG_P32(uap, path);
@@ -374,10 +373,10 @@ svr4_32_sys_creat(struct lwp *l, void *v, register_t *retval)
 	return sys_open(l, &cup, retval);
 }
 
+
 int
-svr4_32_sys_llseek(struct lwp *l, void *v, register_t *retval)
+svr4_32_sys_llseek(struct lwp *l, const struct svr4_32_sys_llseek_args *uap, register_t *retval)
 {
-	struct svr4_32_sys_llseek_args *uap = v;
 	struct sys_lseek_args ap;
 
 	SCARG(&ap, fd) = SCARG(uap, fd);
@@ -395,9 +394,8 @@ svr4_32_sys_llseek(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-svr4_32_sys_access(struct lwp *l, void *v, register_t *retval)
+svr4_32_sys_access(struct lwp *l, const struct svr4_32_sys_access_args *uap, register_t *retval)
 {
-	struct svr4_32_sys_access_args *uap = v;
 	struct sys_access_args cup;
 
 	SCARG(&cup, path) = SCARG_P32(uap, path);
@@ -408,9 +406,8 @@ svr4_32_sys_access(struct lwp *l, void *v, register_t *retval)
 
 
 int
-svr4_32_sys_pread(struct lwp *l, void *v, register_t *retval)
+svr4_32_sys_pread(struct lwp *l, const struct svr4_32_sys_pread_args *uap, register_t *retval)
 {
-	struct svr4_32_sys_pread_args *uap = v;
 	struct sys_pread_args pra;
 
 	/*
@@ -427,10 +424,8 @@ svr4_32_sys_pread(struct lwp *l, void *v, register_t *retval)
 
 
 int
-svr4_32_sys_pread64(struct lwp *l, void *v, register_t *retval)
+svr4_32_sys_pread64(struct lwp *l, const struct svr4_32_sys_pread64_args *uap, register_t *retval)
 {
-
-	struct svr4_32_sys_pread64_args *uap = v;
 	struct sys_pread_args pra;
 
 	/*
@@ -447,9 +442,8 @@ svr4_32_sys_pread64(struct lwp *l, void *v, register_t *retval)
 
 
 int
-svr4_32_sys_pwrite(struct lwp *l, void *v, register_t *retval)
+svr4_32_sys_pwrite(struct lwp *l, const struct svr4_32_sys_pwrite_args *uap, register_t *retval)
 {
-	struct svr4_32_sys_pwrite_args *uap = v;
 	struct sys_pwrite_args pwa;
 
 	/*
@@ -466,9 +460,8 @@ svr4_32_sys_pwrite(struct lwp *l, void *v, register_t *retval)
 
 
 int
-svr4_32_sys_pwrite64(struct lwp *l, void *v, register_t *retval)
+svr4_32_sys_pwrite64(struct lwp *l, const struct svr4_32_sys_pwrite64_args *uap, register_t *retval)
 {
-	struct svr4_32_sys_pwrite64_args *uap = v;
 	struct sys_pwrite_args pwa;
 
 	/*
@@ -485,9 +478,8 @@ svr4_32_sys_pwrite64(struct lwp *l, void *v, register_t *retval)
 
 
 int
-svr4_32_sys_fcntl(struct lwp *l, void *v, register_t *retval)
+svr4_32_sys_fcntl(struct lwp *l, const struct svr4_32_sys_fcntl_args *uap, register_t *retval)
 {
-	struct svr4_32_sys_fcntl_args	*uap = v;
 	struct sys_fcntl_args	fa;
 	register_t		flags;
 	struct svr4_32_flock64	ifl64;

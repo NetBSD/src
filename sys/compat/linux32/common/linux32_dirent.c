@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_dirent.c,v 1.3 2007/12/08 18:36:10 dsl Exp $ */
+/*	$NetBSD: linux32_dirent.c,v 1.4 2007/12/20 23:02:57 dsl Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_dirent.c,v 1.3 2007/12/08 18:36:10 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_dirent.c,v 1.4 2007/12/20 23:02:57 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -70,13 +70,13 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_dirent.c,v 1.3 2007/12/08 18:36:10 dsl Exp $
 #include <compat/linux32/linux32_syscallargs.h>
 
 int
-linux32_sys_getdents(struct lwp *l, void *v, register_t *retval)
+linux32_sys_getdents(struct lwp *l, const struct linux32_sys_getdents_args *uap, register_t *retval)
 {
-	struct linux32_sys_getdents_args /* {
+	/* {
 		syscallcarg(int) fd;
 		syscallcarg(linux32_direntp_t) dent;
 		syscallcarg(unsigned int) count;
-	} */ *uap = v;
+	} */
 	struct linux_sys_getdents_args ua;
 
 	NETBSD32TO64_UAP(fd);
@@ -88,13 +88,13 @@ linux32_sys_getdents(struct lwp *l, void *v, register_t *retval)
 
 
 int
-linux32_sys_getdents64(struct lwp *l, void *v, register_t *retval)
+linux32_sys_getdents64(struct lwp *l, const struct linux32_sys_getdents64_args *uap, register_t *retval)
 {
-	struct linux32_sys_getdents64_args /* {
+	/* {
 		syscallcarg(int) fd;
 		syscallcarg(linux32_dirent64p_t) dent;
 		syscallcarg(unsigned int) count;
-	} */ *uap = v;
+	} */
 	struct linux_sys_getdents64_args ua;
 
 	NETBSD32TO64_UAP(fd);

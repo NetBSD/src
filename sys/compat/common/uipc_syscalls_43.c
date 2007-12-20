@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls_43.c,v 1.38 2007/12/08 18:35:55 dsl Exp $	*/
+/*	$NetBSD: uipc_syscalls_43.c,v 1.39 2007/12/20 23:02:45 dsl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_43.c,v 1.38 2007/12/08 18:35:55 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_43.c,v 1.39 2007/12/20 23:02:45 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,16 +82,16 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_43.c,v 1.38 2007/12/08 18:35:55 dsl Ex
 static int compat_43_sa_put(void *);
 
 int
-compat_43_sys_accept(struct lwp *l, void *v, register_t *retval)
+compat_43_sys_accept(struct lwp *l, const struct compat_43_sys_accept_args *uap, register_t *retval)
 {
-	struct compat_43_sys_accept_args /* {
+	/* {
 		syscallarg(int) s;
 		syscallarg(void *) name;
 		syscallarg(int *) anamelen;
-	} */ *uap = v;
+	} */
 	int error;
 
-	if ((error = sys_accept(l, v, retval)) != 0)
+	if ((error = sys_accept(l, (const void *)uap, retval)) != 0)
 		return error;
 
 	if (SCARG(uap, name)
@@ -102,17 +102,17 @@ compat_43_sys_accept(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-compat_43_sys_getpeername(struct lwp *l, void *v, register_t *retval)
+compat_43_sys_getpeername(struct lwp *l, const struct compat_43_sys_getpeername_args *uap, register_t *retval)
 {
-	struct compat_43_sys_getpeername_args /* {
+	/* {
 		syscallarg(int) fdes;
 		syscallarg(void *) asa;
 		syscallarg(int *) alen;
-	} */ *uap = v;
+	} */
 
 	int error;
 
-	if ((error = sys_getpeername(l, v, retval)) != 0)
+	if ((error = sys_getpeername(l, (const void *)uap, retval)) != 0)
 		return error;
 
 	if ((error = compat_43_sa_put(SCARG(uap, asa))))
@@ -122,16 +122,16 @@ compat_43_sys_getpeername(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-compat_43_sys_getsockname(struct lwp *l, void *v, register_t *retval)
+compat_43_sys_getsockname(struct lwp *l, const struct compat_43_sys_getsockname_args *uap, register_t *retval)
 {
-	struct compat_43_sys_getsockname_args /* {
+	/* {
 		syscallarg(int) fdes;
 		syscallarg(void *) asa;
 		syscallarg(int *) alen;
-	} */ *uap = v;
+	} */
 	int error;
 
-	if ((error = sys_getsockname(l, v, retval)) != 0)
+	if ((error = sys_getsockname(l, (const void *)uap, retval)) != 0)
 		return error;
 
 	if ((error = compat_43_sa_put(SCARG(uap, asa))))
@@ -141,14 +141,14 @@ compat_43_sys_getsockname(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-compat_43_sys_recv(struct lwp *l, void *v, register_t *retval)
+compat_43_sys_recv(struct lwp *l, const struct compat_43_sys_recv_args *uap, register_t *retval)
 {
-	struct compat_43_sys_recv_args /* {
+	/* {
 		syscallarg(int) s;
 		syscallarg(void *) buf;
 		syscallarg(int) len;
 		syscallarg(int) flags;
-	} */ *uap = v;
+	} */
 	struct sys_recvfrom_args bra;
 
 	SCARG(&bra, s) = SCARG(uap, s);
@@ -162,19 +162,19 @@ compat_43_sys_recv(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-compat_43_sys_recvfrom(struct lwp *l, void *v, register_t *retval)
+compat_43_sys_recvfrom(struct lwp *l, const struct compat_43_sys_recvfrom_args *uap, register_t *retval)
 {
-	struct compat_43_sys_recvfrom_args /* {
+	/* {
 		syscallarg(int) s;
 		syscallarg(void *) buf;
 		syscallarg(size_t) len;
 		syscallarg(int) flags;
 		syscallarg(void *) from;
 		syscallarg(int *) fromlenaddr;
-	} */ *uap = v;
+	} */
 	int error;
 
-	if ((error = sys_recvfrom(l, v, retval)))
+	if ((error = sys_recvfrom(l, (const void *)uap, retval)))
 		return (error);
 
 	if (SCARG(uap, from) && (error = compat_43_sa_put(SCARG(uap, from))))
@@ -188,13 +188,13 @@ compat_43_sys_recvfrom(struct lwp *l, void *v, register_t *retval)
  * adjusts results accordingly.
  */
 int
-compat_43_sys_recvmsg(struct lwp *l, void *v, register_t *retval)
+compat_43_sys_recvmsg(struct lwp *l, const struct compat_43_sys_recvmsg_args *uap, register_t *retval)
 {
-	struct compat_43_sys_recvmsg_args /* {
+	/* {
 		syscallarg(int) s;
 		syscallarg(struct omsghdr *) msg;
 		syscallarg(int) flags;
-	} */ *uap = v;
+	} */
 	struct omsghdr omsg;
 	struct msghdr msg;
 	struct mbuf *from, *control;
@@ -259,14 +259,14 @@ compat_43_sys_recvmsg(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-compat_43_sys_send(struct lwp *l, void *v, register_t *retval)
+compat_43_sys_send(struct lwp *l, const struct compat_43_sys_send_args *uap, register_t *retval)
 {
-	struct compat_43_sys_send_args /* {
+	/* {
 		syscallarg(int) s;
 		syscallarg(void *) buf;
 		syscallarg(int) len;
 		syscallarg(int) flags;
-	} */ *uap = v;
+	} */
 	struct sys_sendto_args bsa;
 
 	SCARG(&bsa, s)		= SCARG(uap, s);
@@ -322,13 +322,13 @@ compat43_set_accrights(struct msghdr *msg, void *accrights, int accrightslen)
  * adjust the results accordingly for old code.
  */
 int
-compat_43_sys_sendmsg(struct lwp *l, void *v, register_t *retval)
+compat_43_sys_sendmsg(struct lwp *l, const struct compat_43_sys_sendmsg_args *uap, register_t *retval)
 {
-	struct compat_43_sys_sendmsg_args /* {
+	/* {
 		syscallarg(int) s;
 		syscallarg(void *) msg;
 		syscallarg(int) flags;
-	} */ *uap = v;
+	} */
 	struct omsghdr omsg;
 	struct msghdr msg;
 	int error;

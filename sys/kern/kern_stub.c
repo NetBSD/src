@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_stub.c,v 1.4 2007/08/27 13:33:45 dsl Exp $	*/
+/*	$NetBSD: kern_stub.c,v 1.5 2007/12/20 23:03:09 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.4 2007/08/27 13:33:45 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.5 2007/12/20 23:03:09 dsl Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_ktrace.h"
@@ -134,7 +134,7 @@ __strong_alias(sys_sa_unblockyield,sys_nosys);
 
 /* ARGSUSED */
 int
-sys_nosys(struct lwp *l, void *v, register_t *retval)
+sys_nosys(struct lwp *l, const void *v, register_t *retval)
 {
 
 	mutex_enter(&proclist_mutex);

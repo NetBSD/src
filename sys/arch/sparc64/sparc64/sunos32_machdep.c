@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_machdep.c,v 1.24 2007/03/04 07:54:07 christos Exp $	*/
+/*	$NetBSD: sunos32_machdep.c,v 1.25 2007/12/20 23:02:42 dsl Exp $	*/
 /* from: NetBSD: sunos_machdep.c,v 1.14 2001/01/29 01:37:56 mrg Exp 	*/
 
 /*
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_machdep.c,v 1.24 2007/03/04 07:54:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_machdep.c,v 1.25 2007/12/20 23:02:42 dsl Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -110,9 +110,9 @@ sunos32_setregs(l, pack, stack)
 	struct exec_package *pack;
 	u_long stack; /* XXX */
 {
-	register struct trapframe64 *tf = l->l_md.md_tf;
-	register struct fpstate64 *fs;
-	register int64_t tstate;
+	struct trapframe64 *tf = l->l_md.md_tf;
+	struct fpstate64 *fs;
+	int64_t tstate;
 	struct proc *p = l->l_proc;
 
 	/* Don't allow misaligned code by default */
@@ -303,14 +303,11 @@ sunos32_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 }
 
 int
-sunos32_sys_sigreturn(l, v, retval)
-        register struct lwp *l;
-	void *v;
-	register_t *retval;
+sunos32_sys_sigreturn(struct lwp *l, const struct sunos32_sys_sigreturn_args *uap, register_t *retval)
 {
-	struct sunos32_sys_sigreturn_args /* 
+	/* {
 		syscallarg(netbsd32_sigcontextp_t) sigcntxp;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 	struct sunos32_sigcontext sc, *scp;
 	sigset_t mask;

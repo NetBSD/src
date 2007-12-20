@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.7 2007/02/09 21:55:13 ad Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.8 2007/12/20 23:02:43 dsl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.7 2007/02/09 21:55:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.8 2007/12/20 23:02:43 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,12 +52,12 @@ __KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.7 2007/02/09 21:55:13 ad Exp $");
 #include <sun2/sun2/machdep.h>
 
 int 
-sys_sysarch(struct lwp *l, void *v, register_t *retval)
+sys_sysarch(struct lwp *l, const struct sys_sysarch_args *uap, register_t *retval)
 {
-	struct sys_sysarch_args /* {
+	/* {
 		syscallarg(int) op;
 		syscallarg(void *) parms;
-	} */ *uap = v;
+	} */
 
 	(void)uap->op;	/* kill warning */
 	return (ENOSYS);

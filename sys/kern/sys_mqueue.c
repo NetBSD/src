@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_mqueue.c,v 1.5 2007/11/28 19:30:56 rmind Exp $	*/
+/*	$NetBSD: sys_mqueue.c,v 1.6 2007/12/20 23:03:10 dsl Exp $	*/
 
 /*
  * Copyright (c) 2007, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_mqueue.c,v 1.5 2007/11/28 19:30:56 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_mqueue.c,v 1.6 2007/12/20 23:03:10 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -267,14 +267,14 @@ mq_close_fop(struct file *fp, struct lwp *l)
  */
 
 int
-sys_mq_open(struct lwp *l, void *v, register_t *retval)
+sys_mq_open(struct lwp *l, const struct sys_mq_open_args *uap, register_t *retval)
 {
-	struct sys_mq_open_args /* {
+	/* {
 		syscallarg(const char *) name;
 		syscallarg(int) oflag;
 		syscallarg(mode_t) mode;
 		syscallarg(struct mq_attr) attr;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 	struct mqueue *mq, *mq_new = NULL;
 	struct file *fp;
@@ -426,10 +426,10 @@ exit:
 }
 
 int
-sys_mq_close(struct lwp *l, void *v, register_t *retval)
+sys_mq_close(struct lwp *l, const struct sys_mq_close_args *uap, register_t *retval)
 {
 
-	return sys_close(l, v, retval);
+	return sys_close(l, (const void *)uap, retval);
 }
 
 /*
@@ -508,14 +508,14 @@ error:
 }
 
 int
-sys_mq_receive(struct lwp *l, void *v, register_t *retval)
+sys_mq_receive(struct lwp *l, const struct sys_mq_receive_args *uap, register_t *retval)
 {
-	struct sys_mq_receive_args /* {
+	/* {
 		syscallarg(mqd_t) mqdes;
 		syscallarg(char *) msg_ptr;
 		syscallarg(size_t) msg_len;
 		syscallarg(unsigned *) msg_prio;
-	} */ *uap = v;
+	} */
 	int error;
 	ssize_t mlen;
 
@@ -528,15 +528,15 @@ sys_mq_receive(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-sys_mq_timedreceive(struct lwp *l, void *v, register_t *retval)
+sys_mq_timedreceive(struct lwp *l, const struct sys_mq_timedreceive_args *uap, register_t *retval)
 {
-	struct sys_mq_timedreceive_args /* {
+	/* {
 		syscallarg(mqd_t) mqdes;
 		syscallarg(char *) msg_ptr;
 		syscallarg(size_t) msg_len;
 		syscallarg(unsigned *) msg_prio;
 		syscallarg(const struct timespec *) abs_timeout;
-	} */ *uap = v;
+	} */
 	int error, t;
 	ssize_t mlen;
 
@@ -669,29 +669,29 @@ error:
 }
 
 int
-sys_mq_send(struct lwp *l, void *v, register_t *retval)
+sys_mq_send(struct lwp *l, const struct sys_mq_send_args *uap, register_t *retval)
 {
-	struct sys_mq_send_args /* {
+	/* {
 		syscallarg(mqd_t) mqdes;
 		syscallarg(const char *) msg_ptr;
 		syscallarg(size_t) msg_len;
 		syscallarg(unsigned) msg_prio;
-	} */ *uap = v;
+	} */
 
 	return mq_send1(l, SCARG(uap, mqdes), SCARG(uap, msg_ptr),
 	    SCARG(uap, msg_len), SCARG(uap, msg_prio), 0);
 }
 
 int
-sys_mq_timedsend(struct lwp *l, void *v, register_t *retval)
+sys_mq_timedsend(struct lwp *l, const struct sys_mq_timedsend_args *uap, register_t *retval)
 {
-	struct sys_mq_timedsend_args /* {
+	/* {
 		syscallarg(mqd_t) mqdes;
 		syscallarg(const char *) msg_ptr;
 		syscallarg(size_t) msg_len;
 		syscallarg(unsigned) msg_prio;
 		syscallarg(const struct timespec *) abs_timeout;
-	} */ *uap = v;
+	} */
 	int t;
 
 	/* Get and convert time value */
@@ -707,12 +707,12 @@ sys_mq_timedsend(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-sys_mq_notify(struct lwp *l, void *v, register_t *retval)
+sys_mq_notify(struct lwp *l, const struct sys_mq_notify_args *uap, register_t *retval)
 {
-	struct sys_mq_notify_args /* {
+	/* {
 		syscallarg(mqd_t) mqdes;
 		syscallarg(const struct sigevent *) notification;
-	} */ *uap = v;
+	} */
 	struct file *fp = NULL;
 	struct mqueue *mq;
 	struct sigevent sig;
@@ -752,12 +752,12 @@ sys_mq_notify(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-sys_mq_getattr(struct lwp *l, void *v, register_t *retval)
+sys_mq_getattr(struct lwp *l, const struct sys_mq_getattr_args *uap, register_t *retval)
 {
-	struct sys_mq_getattr_args /* {
+	/* {
 		syscallarg(mqd_t) mqdes;
 		syscallarg(struct mq_attr *) mqstat;
-	} */ *uap = v;
+	} */
 	struct file *fp = NULL;
 	struct mqueue *mq;
 	struct mq_attr attr;
@@ -776,13 +776,13 @@ sys_mq_getattr(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-sys_mq_setattr(struct lwp *l, void *v, register_t *retval)
+sys_mq_setattr(struct lwp *l, const struct sys_mq_setattr_args *uap, register_t *retval)
 {
-	struct sys_mq_setattr_args /* {
+	/* {
 		syscallarg(mqd_t) mqdes;
 		syscallarg(const struct mq_attr *) mqstat;
 		syscallarg(struct mq_attr *) omqstat;
-	} */ *uap = v;
+	} */
 	struct file *fp = NULL;
 	struct mqueue *mq;
 	struct mq_attr attr;
@@ -825,11 +825,11 @@ sys_mq_setattr(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-sys_mq_unlink(struct lwp *l, void *v, register_t *retval)
+sys_mq_unlink(struct lwp *l, const struct sys_mq_unlink_args *uap, register_t *retval)
 {
-	struct sys_mq_unlink_args /* {
+	/* {
 		syscallarg(const char *) name;
-	} */ *uap = v;
+	} */
 	struct mqueue *mq;
 	char *name;
 	int error, refcnt = 0;

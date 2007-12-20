@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.132 2007/12/08 19:29:57 pooka Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.133 2007/12/20 23:03:15 dsl Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.132 2007/12/08 19:29:57 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.133 2007/12/20 23:03:15 dsl Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -446,13 +446,13 @@ swapdrum_getsdp(int pgno)
  * 	[with two helper functions: swap_on and swap_off]
  */
 int
-sys_swapctl(struct lwp *l, void *v, register_t *retval)
+sys_swapctl(struct lwp *l, const struct sys_swapctl_args *uap, register_t *retval)
 {
-	struct sys_swapctl_args /* {
+	/* {
 		syscallarg(int) cmd;
 		syscallarg(void *) arg;
 		syscallarg(int) misc;
-	} */ *uap = (struct sys_swapctl_args *)v;
+	} */
 	struct vnode *vp;
 	struct nameidata nd;
 	struct swappri *spp;

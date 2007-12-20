@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_sem.c,v 1.77 2007/12/08 15:02:46 ad Exp $	*/
+/*	$NetBSD: sysv_sem.c,v 1.78 2007/12/20 23:03:12 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.77 2007/12/08 15:02:46 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.78 2007/12/20 23:03:12 dsl Exp $");
 
 #define SYSVSEM
 
@@ -278,7 +278,7 @@ semrealloc(int newsemmni, int newsemmns, int newsemmnu)
  */
 
 int
-sys_semconfig(struct lwp *l, void *v, register_t *retval)
+sys_semconfig(struct lwp *l, const struct sys_semconfig_args *uap, register_t *retval)
 {
 
 	*retval = 0;
@@ -448,14 +448,14 @@ semundo_clear(int semid, int semnum)
 }
 
 int
-sys_____semctl13(struct lwp *l, void *v, register_t *retval)
+sys_____semctl13(struct lwp *l, const struct sys_____semctl13_args *uap, register_t *retval)
 {
-	struct sys_____semctl13_args /* {
+	/* {
 		syscallarg(int) semid;
 		syscallarg(int) semnum;
 		syscallarg(int) cmd;
 		syscallarg(union __semun *) arg;
-	} */ *uap = v;
+	} */
 	struct semid_ds sembuf;
 	int cmd, error;
 	void *pass_arg;
@@ -639,13 +639,13 @@ semctl1(struct lwp *l, int semid, int semnum, int cmd, void *v,
 }
 
 int
-sys_semget(struct lwp *l, void *v, register_t *retval)
+sys_semget(struct lwp *l, const struct sys_semget_args *uap, register_t *retval)
 {
-	struct sys_semget_args /* {
+	/* {
 		syscallarg(key_t) key;
 		syscallarg(int) nsems;
 		syscallarg(int) semflg;
-	} */ *uap = v;
+	} */
 	int semid, error = 0;
 	int key = SCARG(uap, key);
 	int nsems = SCARG(uap, nsems);
@@ -739,13 +739,13 @@ sys_semget(struct lwp *l, void *v, register_t *retval)
 #define SMALL_SOPS 8
 
 int
-sys_semop(struct lwp *l, void *v, register_t *retval)
+sys_semop(struct lwp *l, const struct sys_semop_args *uap, register_t *retval)
 {
-	struct sys_semop_args /* {
+	/* {
 		syscallarg(int) semid;
 		syscallarg(struct sembuf *) sops;
 		syscallarg(size_t) nsops;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 	int semid = SCARG(uap, semid), seq;
 	size_t nsops = SCARG(uap, nsops);

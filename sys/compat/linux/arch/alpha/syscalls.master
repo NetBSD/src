@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.58 2007/11/16 12:51:54 njoly Exp $
+	$NetBSD: syscalls.master,v 1.59 2007/12/20 23:02:51 dsl Exp $
 ;
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -387,7 +387,7 @@
 210	NOARGS		{ int linux_sys_shmctl(int shmid, int cmd, \
 			    struct linux_shmid_ds *buf); }
 211	NOARGS		{ int sys_shmdt(const void *shmaddr); }
-212	STD		{ int linux_sys_shmget(key_t key, size_t size, int shmflg); }
+212	NOARGS		{ int linux_sys_shmget(key_t key, size_t size, int shmflg); }
 #else
 209	UNIMPL		shmat
 210	UNIMPL		shmctl
