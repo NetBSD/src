@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.108 2007/05/13 11:06:41 dsl Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.109 2007/12/20 23:03:07 dsl Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.108 2007/05/13 11:06:41 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.109 2007/12/20 23:03:07 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -203,9 +203,8 @@ const struct emul emul_ultrix = {
 #define GSI_PROG_ENV 1
 
 int
-ultrix_sys_getsysinfo(struct lwp *l, void *v, register_t *retval)
+ultrix_sys_getsysinfo(struct lwp *l, const struct ultrix_sys_getsysinfo_args *uap, register_t *retval)
 {
-	struct ultrix_sys_getsysinfo_args *uap = v;
 	static short progenv = 0;
 
 	switch (SCARG(uap, op)) {
@@ -222,21 +221,16 @@ ultrix_sys_getsysinfo(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-ultrix_sys_setsysinfo(struct lwp *l, void *v, register_t *retval)
+ultrix_sys_setsysinfo(struct lwp *l, const struct ultrix_sys_setsysinfo_args *uap, register_t *retval)
 {
-
-#ifdef notyet
-	struct ultrix_sys_setsysinfo_args *uap = v;
-#endif
 
 	*retval = 0;
 	return 0;
 }
 
 int
-ultrix_sys_waitpid(struct lwp *l, void *v, register_t *retval)
+ultrix_sys_waitpid(struct lwp *l, const struct ultrix_sys_waitpid_args *uap, register_t *retval)
 {
-	struct ultrix_sys_waitpid_args *uap = v;
 	struct sys_wait4_args ua;
 
 	SCARG(&ua, pid) = SCARG(uap, pid);
@@ -248,9 +242,8 @@ ultrix_sys_waitpid(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-ultrix_sys_wait3(struct lwp *l, void *v, register_t *retval)
+ultrix_sys_wait3(struct lwp *l, const struct ultrix_sys_wait3_args *uap, register_t *retval)
 {
-	struct ultrix_sys_wait3_args *uap = v;
 	struct sys_wait4_args ua;
 
 	SCARG(&ua, pid) = -1;
@@ -269,9 +262,8 @@ ultrix_sys_wait3(struct lwp *l, void *v, register_t *retval)
  * limit nfds to at most FD_MAX.
  */
 int
-ultrix_sys_select(struct lwp *l, void *v, register_t *retval)
+ultrix_sys_select(struct lwp *l, const struct sys_select_args *uap, register_t *retval)
 {
-	struct sys_select_args *uap = v;
 	struct timeval atv;
 	int error;
 
@@ -304,7 +296,7 @@ done:
 
 #if defined(NFS)
 int
-async_daemon(struct lwp *l, void *v, register_t *retval)
+async_daemon(struct lwp *l, const void *v, register_t *retval)
 {
 	struct sys_nfssvc_args ouap;
 
@@ -319,9 +311,8 @@ async_daemon(struct lwp *l, void *v, register_t *retval)
 #define	SUN__MAP_NEW	0x80000000	/* if not, old mmap & cannot handle */
 
 int
-ultrix_sys_mmap(struct lwp *l, void *v, register_t *retval)
+ultrix_sys_mmap(struct lwp *l, const struct ultrix_sys_mmap_args *uap, register_t *retval)
 {
-	struct ultrix_sys_mmap_args *uap = v;
 	struct sys_mmap_args ouap;
 
 	/*
@@ -344,9 +335,8 @@ ultrix_sys_mmap(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-ultrix_sys_setsockopt(struct lwp *l, void *v, register_t *retval)
+ultrix_sys_setsockopt(struct lwp *l, const struct ultrix_sys_setsockopt_args *uap, register_t *retval)
 {
-	struct ultrix_sys_setsockopt_args *uap = v;
 	struct proc *p = l->l_proc;
 	struct file *fp;
 	struct mbuf *m = NULL;
@@ -414,9 +404,8 @@ struct ultrix_utsname {
 };
 
 int
-ultrix_sys_uname(struct lwp *l, void *v, register_t *retval)
+ultrix_sys_uname(struct lwp *l, const struct ultrix_sys_uname_args *uap, register_t *retval)
 {
-	struct ultrix_sys_uname_args *uap = v;
 	struct ultrix_utsname sut;
 	const char *cp;
 	char *dp, *ep;
@@ -444,9 +433,8 @@ ultrix_sys_uname(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-ultrix_sys_setpgrp(struct lwp *l, void *v, register_t *retval)
+ultrix_sys_setpgrp(struct lwp *l, const struct ultrix_sys_setpgrp_args *uap, register_t *retval)
 {
-	struct ultrix_sys_setpgrp_args *uap = v;
 	struct proc *p = l->l_proc;
 
 	/*
@@ -464,7 +452,7 @@ ultrix_sys_setpgrp(struct lwp *l, void *v, register_t *retval)
 
 #if defined (NFSSERVER)
 int
-ultrix_sys_nfssvc(struct lwp *l, void *v, register_t *retval)
+ultrix_sys_nfssvc(struct lwp *l, const void *v, register_t *retval)
 {
 
 #if 0	/* XXX */
@@ -503,9 +491,8 @@ struct ultrix_ustat {
 };
 
 int
-ultrix_sys_ustat(struct lwp *l, void *v, register_t *retval)
+ultrix_sys_ustat(struct lwp *l, const struct ultrix_sys_ustat_args *uap, register_t *retval)
 {
-	struct ultrix_sys_ustat_args *uap = v;
 	struct ultrix_ustat us;
 	int error;
 
@@ -522,18 +509,14 @@ ultrix_sys_ustat(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-ultrix_sys_quotactl(struct lwp *l, void *v, register_t *retval)
+ultrix_sys_quotactl(struct lwp *l, const struct ultrix_sys_quotactl_args *uap, register_t *retval)
 {
-
-#ifdef notyet
-	struct ultrix_sys_quotactl_args *uap = v;
-#endif
 
 	return EINVAL;
 }
 
 int
-ultrix_sys_vhangup(struct lwp *l, void *v, register_t *retval)
+ultrix_sys_vhangup(struct lwp *l, const struct ultrix_sys_vhangup_args *uap, register_t *retval)
 {
 
 	return 0;
@@ -545,13 +528,13 @@ ultrix_sys_vhangup(struct lwp *l, void *v, register_t *retval)
  */
 #ifdef __mips
 int
-ultrix_sys_cacheflush(struct lwp *l, void *v, register_t *retval)
+ultrix_sys_cacheflush(struct lwp *l, const struct ultrix_sys_cacheflush_args *uap, register_t *retval)
 {
-	struct ultrix_sys_cacheflush_args /* {
+	/* {
 		syscallarg(void *) addr;
 		syscallarg(unsigned) nbytes;
 		syscallarg(int) flag;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 	vaddr_t va  = (vaddr_t)SCARG(uap, addr);
 	int nbytes     = SCARG(uap, nbytes);
@@ -562,13 +545,13 @@ ultrix_sys_cacheflush(struct lwp *l, void *v, register_t *retval)
 
 
 int
-ultrix_sys_cachectl(struct lwp *l, void *v, register_t *retval)
+ultrix_sys_cachectl(struct lwp *l, const struct ultrix_sys_cachectl_args *uap, register_t *retval)
 {
-	struct ultrix_sys_cachectl_args /* {
+	/* {
 		syscallarg(void *) addr;
 		syscallarg(int) nbytes;
 		syscallarg(int) cacheop;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 	vaddr_t va  = (vaddr_t)SCARG(uap, addr);
 	int nbytes  = SCARG(uap, nbytes);
@@ -581,11 +564,8 @@ ultrix_sys_cachectl(struct lwp *l, void *v, register_t *retval)
 
 
 int
-ultrix_sys_exportfs(struct lwp *l, void *v, register_t *retval)
+ultrix_sys_exportfs(struct lwp *l, const struct ultrix_sys_exportfs_args *uap, register_t *retval)
 {
-#ifdef notyet
-	struct ultrix_sys_exportfs_args *uap = v;
-#endif
 
 	/*
 	 * XXX: should perhaps translate into a mount(2)
@@ -595,9 +575,8 @@ ultrix_sys_exportfs(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-ultrix_sys_sigpending(struct lwp *l, void *v, register_t *retval)
+ultrix_sys_sigpending(struct lwp *l, const struct ultrix_sys_sigpending_args *uap, register_t *retval)
 {
-	struct ultrix_sys_sigpending_args *uap = v;
 	sigset_t ss;
 	int mask;
 
@@ -608,9 +587,8 @@ ultrix_sys_sigpending(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-ultrix_sys_sigreturn(struct lwp *l, void *v, register_t *retval)
+ultrix_sys_sigreturn(struct lwp *l, const struct ultrix_sys_sigreturn_args *uap, register_t *retval)
 {
-	struct ultrix_sys_sigreturn_args *uap = v;
 
 	/* struct sigcontext13 is close enough to Ultrix */
 
@@ -618,9 +596,8 @@ ultrix_sys_sigreturn(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-ultrix_sys_sigcleanup(struct lwp *l, void *v, register_t *retval)
+ultrix_sys_sigcleanup(struct lwp *l, const struct ultrix_sys_sigcleanup_args *uap, register_t *retval)
 {
-	struct ultrix_sys_sigcleanup_args *uap = v;
 
 	/* struct sigcontext13 is close enough to Ultrix */
 
@@ -628,9 +605,8 @@ ultrix_sys_sigcleanup(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-ultrix_sys_sigsuspend(struct lwp *l, void *v, register_t *retval)
+ultrix_sys_sigsuspend(struct lwp *l, const struct ultrix_sys_sigsuspend_args *uap, register_t *retval)
 {
-	struct ultrix_sys_sigsuspend_args *uap = v;
 	int mask = SCARG(uap, mask);
 	sigset_t ss;
 
@@ -647,9 +623,8 @@ ultrix_sys_sigsuspend(struct lwp *l, void *v, register_t *retval)
 #define ULTRIX_SV_OLDSIG 0x1000  /* Emulate old signal() for POSIX */
 
 int
-ultrix_sys_sigvec(struct lwp *l, void *v, register_t *retval)
+ultrix_sys_sigvec(struct lwp *l, const struct ultrix_sys_sigvec_args *uap, register_t *retval)
 {
-	struct ultrix_sys_sigvec_args *uap = v;
 	struct sigvec nsv, osv;
 	struct sigaction nsa, osa;
 	int error;
@@ -692,12 +667,11 @@ ultrix_sys_sigvec(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-ultrix_sys_shmsys(struct lwp *l, void *v, register_t *retval)
+ultrix_sys_shmsys(struct lwp *l, const struct ultrix_sys_shmsys_args *uap, register_t *retval)
 {
 
 #ifdef SYSVSHM
 	/* Ultrix SVSHM weirndess: */
-	struct ultrix_sys_shmsys_args *uap = v;
 	struct sys_shmat_args shmat_args;
 	struct compat_14_sys_shmctl_args shmctl_args;
 	struct sys_shmdt_args shmdt_args;
@@ -785,9 +759,8 @@ bsd_to_ultrix_flock(struct flock *fl, struct ultrix_flock *ufl)
 }
 
 int
-ultrix_sys_fcntl(struct lwp *l, void *v, register_t *retval)
+ultrix_sys_fcntl(struct lwp *l, const struct ultrix_sys_fcntl_args *uap, register_t *retval)
 {
-	struct ultrix_sys_fcntl_args *uap = v;
 	int error;
 	struct ultrix_flock ufl;
 	struct flock fl;
@@ -812,5 +785,5 @@ ultrix_sys_fcntl(struct lwp *l, void *v, register_t *retval)
 		break;
 	}
 
-	return sys_fcntl(l, v, retval);
+	return sys_fcntl(l, (const void *)uap, retval);
 }

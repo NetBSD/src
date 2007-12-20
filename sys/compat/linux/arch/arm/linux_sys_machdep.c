@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sys_machdep.c,v 1.12 2006/05/11 11:54:36 yamt Exp $	*/
+/*	$NetBSD: linux_sys_machdep.c,v 1.13 2007/12/20 23:02:52 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2002 Ben Harris
@@ -29,7 +29,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_sys_machdep.c,v 1.12 2006/05/11 11:54:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sys_machdep.c,v 1.13 2007/12/20 23:02:52 dsl Exp $");
 
 #include <sys/systm.h>
 #include <sys/signalvar.h>
@@ -43,7 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_sys_machdep.c,v 1.12 2006/05/11 11:54:36 yamt 
 #include <arm/cpufunc.h>
 
 int
-linux_sys_breakpoint(struct lwp *l, void *v, register_t *retval)
+linux_sys_breakpoint(struct lwp *l, const void *v, register_t *retval)
 {
 	ksiginfo_t ksi;
 
@@ -55,13 +55,13 @@ linux_sys_breakpoint(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-linux_sys_cacheflush(struct lwp *l, void *v, register_t *retval)
+linux_sys_cacheflush(struct lwp *l, const struct linux_sys_cacheflush_args *uap, register_t *retval)
 {
 #ifndef acorn26
-	struct linux_sys_cacheflush_args /* {
+	/* {
 		syscallarg(uintptr_t) from;
 		syscallarg(uintptr_t) to;
-	} */ *uap = v;
+	} */
 
 	cpu_icache_sync_range(SCARG(uap, from),
 	    SCARG(uap, to) - SCARG(uap, from) + 1);

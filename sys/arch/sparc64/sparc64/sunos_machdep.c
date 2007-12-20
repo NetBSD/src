@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_machdep.c,v 1.26 2007/03/08 22:35:53 he Exp $	*/
+/*	$NetBSD: sunos_machdep.c,v 1.27 2007/12/20 23:02:42 dsl Exp $	*/
 
 /*
  * Copyright (c) 1995 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_machdep.c,v 1.26 2007/03/08 22:35:53 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_machdep.c,v 1.27 2007/12/20 23:02:42 dsl Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -83,9 +83,7 @@ struct sunos_sigframe {
 };
 
 void
-sunos_sendsig(ksi, mask)
-	const ksiginfo_t *ksi;
-	const sigset_t *mask;
+sunos_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 {
 	register struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
@@ -214,10 +212,7 @@ sunos_sendsig(ksi, mask)
 }
 
 int
-sunos_sys_sigreturn(l, v, retval)
-        register struct lwp *l;
-	void *v;
-	register_t *retval;
+sunos_sys_sigreturn(register struct lwp *l, void *v, register_t *retval)
 {
 	struct sunos_sys_sigreturn_args /* 
 		syscallarg(struct sigcontext13 *) sigcntxp;

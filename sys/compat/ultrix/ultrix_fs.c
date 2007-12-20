@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_fs.c,v 1.43 2007/11/27 09:47:16 dogcow Exp $	*/
+/*	$NetBSD: ultrix_fs.c,v 1.44 2007/12/20 23:03:07 dsl Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_fs.c,v 1.43 2007/11/27 09:47:16 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_fs.c,v 1.44 2007/12/20 23:03:07 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -204,9 +204,8 @@ make_ultrix_mntent(struct statvfs *sp, struct ultrix_fs_data *tem)
 }
 
 int
-ultrix_sys_getmnt(struct lwp *l, void *v, register_t *retval)
+ultrix_sys_getmnt(struct lwp *l, const struct ultrix_sys_getmnt_args *uap, register_t *retval)
 {
-	struct ultrix_sys_getmnt_args *uap = v;
 	struct mount *mp, *nmp;
 	struct statvfs *sp;
 	struct ultrix_fs_data *sfsp;
@@ -344,9 +343,8 @@ struct ultrix_ufs_args {
 };
 
 int
-ultrix_sys_mount(struct lwp *l, void *v, register_t *retval)
+ultrix_sys_mount(struct lwp *l, const struct ultrix_sys_mount_args *uap, register_t *retval)
 {
-	struct ultrix_sys_mount_args *uap = v;
 	int error;
 	int otype = SCARG(uap, type);
 	char fsname[MFSNAMELEN];

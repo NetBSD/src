@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.127 2007/12/05 07:06:53 ad Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.128 2007/12/20 23:03:09 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.127 2007/12/05 07:06:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.128 2007/12/20 23:03:09 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,12 +72,12 @@ kmutex_t uihashtbl_lock;
  */
 
 int
-sys_getpriority(struct lwp *l, void *v, register_t *retval)
+sys_getpriority(struct lwp *l, const struct sys_getpriority_args *uap, register_t *retval)
 {
-	struct sys_getpriority_args /* {
+	/* {
 		syscallarg(int) which;
 		syscallarg(id_t) who;
-	} */ *uap = v;
+	} */
 	struct proc *curp = l->l_proc, *p;
 	int low = NZERO + PRIO_MAX + 1;
 	int who = SCARG(uap, who);
@@ -133,13 +133,13 @@ sys_getpriority(struct lwp *l, void *v, register_t *retval)
 
 /* ARGSUSED */
 int
-sys_setpriority(struct lwp *l, void *v, register_t *retval)
+sys_setpriority(struct lwp *l, const struct sys_setpriority_args *uap, register_t *retval)
 {
-	struct sys_setpriority_args /* {
+	/* {
 		syscallarg(int) which;
 		syscallarg(id_t) who;
 		syscallarg(int) prio;
-	} */ *uap = v;
+	} */
 	struct proc *curp = l->l_proc, *p;
 	int found = 0, error = 0;
 	int who = SCARG(uap, who);
@@ -236,12 +236,12 @@ donice(struct lwp *l, struct proc *chgp, int n)
 
 /* ARGSUSED */
 int
-sys_setrlimit(struct lwp *l, void *v, register_t *retval)
+sys_setrlimit(struct lwp *l, const struct sys_setrlimit_args *uap, register_t *retval)
 {
-	struct sys_setrlimit_args /* {
+	/* {
 		syscallarg(int) which;
 		syscallarg(const struct rlimit *) rlp;
-	} */ *uap = v;
+	} */
 	int which = SCARG(uap, which);
 	struct rlimit alim;
 	int error;
@@ -369,12 +369,12 @@ dosetrlimit(struct lwp *l, struct proc *p, int which, struct rlimit *limp)
 
 /* ARGSUSED */
 int
-sys_getrlimit(struct lwp *l, void *v, register_t *retval)
+sys_getrlimit(struct lwp *l, const struct sys_getrlimit_args *uap, register_t *retval)
 {
-	struct sys_getrlimit_args /* {
+	/* {
 		syscallarg(int) which;
 		syscallarg(struct rlimit *) rlp;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 	int which = SCARG(uap, which);
 	struct rlimit rl;
@@ -472,12 +472,12 @@ calcru(struct proc *p, struct timeval *up, struct timeval *sp,
 
 /* ARGSUSED */
 int
-sys_getrusage(struct lwp *l, void *v, register_t *retval)
+sys_getrusage(struct lwp *l, const struct sys_getrusage_args *uap, register_t *retval)
 {
-	struct sys_getrusage_args /* {
+	/* {
 		syscallarg(int) who;
 		syscallarg(struct rusage *) rusage;
-	} */ *uap = v;
+	} */
 	struct rusage ru;
 	struct proc *p = l->l_proc;
 

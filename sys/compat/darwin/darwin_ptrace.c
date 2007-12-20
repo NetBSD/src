@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_ptrace.c,v 1.13 2007/12/08 18:35:57 dsl Exp $ */
+/*	$NetBSD: darwin_ptrace.c,v 1.14 2007/12/20 23:02:46 dsl Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_ptrace.c,v 1.13 2007/12/08 18:35:57 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_ptrace.c,v 1.14 2007/12/20 23:02:46 dsl Exp $");
 
 #include "opt_ptrace.h"
 
@@ -64,19 +64,20 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_ptrace.c,v 1.13 2007/12/08 18:35:57 dsl Exp $
 #define ISSET(t, f)     ((t) & (f))
 
 int
-darwin_sys_ptrace(struct lwp *l, void *v, register_t *retval)
+darwin_sys_ptrace(struct lwp *l, const struct darwin_sys_ptrace_args *uap, register_t *retval)
 {
 #if defined(PTRACE) || defined(_LKM)
-	struct darwin_sys_ptrace_args /* {
+	/* {
 		syscallarg(int) req;
 		syscallarg(pid_t) pid;
 		syscallarg(void *) addr;
 		syscallarg(int) data;
-	} */ *uap = v;
+	} */
 	int req = SCARG(uap, req);
 	struct proc *p = l->l_proc;
 	struct darwin_emuldata *ded = NULL;
 	struct proc *t;			/* target process */
+	struct sys_ptrace_args bsd_ua;
 	int error;
 
 #ifdef _LKM
@@ -86,6 +87,11 @@ darwin_sys_ptrace(struct lwp *l, void *v, register_t *retval)
 #endif
 
 	/* XXXAD locking */
+	SCARG(&bsd_ua, req) = SCARG(uap, req);
+	SCARG(&bsd_ua, pid) = SCARG(uap, pid);
+	SCARG(&bsd_ua, addr) = SCARG(uap, addr);
+	SCARG(&bsd_ua, data) = SCARG(uap, data);
+
 
 	ded = (struct darwin_emuldata *)p->p_emuldata;
 
@@ -103,8 +109,8 @@ darwin_sys_ptrace(struct lwp *l, void *v, register_t *retval)
 
 		ded->ded_flags |= DARWIN_DED_SIGEXC;
 
-		SCARG(uap, req) = PT_ATTACH;
-		if ((error = sys_ptrace(l, v, retval)) != 0)
+		SCARG(&bsd_ua, req) = PT_ATTACH;
+		if ((error = sys_ptrace(l, &bsd_ua, retval)) != 0)
 			 ded->ded_flags &= ~DARWIN_DED_SIGEXC;
 
 		return error;
@@ -143,7 +149,7 @@ darwin_sys_ptrace(struct lwp *l, void *v, register_t *retval)
 		mutex_exit(&t->p_smutex);
 		mutex_exit(&proclist_mutex);
 
-		if ((error = sys_ptrace(l, v, retval)) != 0) {
+		if ((error = sys_ptrace(l, &bsd_ua, retval)) != 0) {
 			mutex_enter(&proclist_mutex);
 			mutex_enter(&t->p_smutex);
 			proc_unstop(t);
@@ -196,7 +202,7 @@ darwin_sys_ptrace(struct lwp *l, void *v, register_t *retval)
 
 	/* The other ptrace commands are the same on NetBSD */
 	default:
-		return sys_ptrace(l, v, retval);
+		return sys_ptrace(l, &bsd_ua, retval);
 		break;
 	}
 
@@ -207,17 +213,16 @@ darwin_sys_ptrace(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-darwin_sys_kdebug_trace(struct lwp *l, void *v,
-    register_t *retval)
+darwin_sys_kdebug_trace(struct lwp *l, const struct darwin_sys_kdebug_trace_args *uap, register_t *retval)
 {
-	struct darwin_sys_kdebug_trace_args /* {
+	/* {
 		syscallarg(int) debugid;
 		syscallarg(int) arg1;
 		syscallarg(int) arg2;
 		syscallarg(int) arg3;
 		syscallarg(int) arg4;
 		syscallarg(int) arg5;
-	} */ *uap = v;
+	} */
 	int args[4];
 	char *str;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_tty.c,v 1.32 2007/12/08 18:36:00 dsl Exp $	*/
+/*	$NetBSD: hpux_tty.c,v 1.33 2007/12/20 23:02:48 dsl Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_tty.c,v 1.32 2007/12/08 18:36:00 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_tty.c,v 1.33 2007/12/20 23:02:48 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_43.h"
@@ -390,25 +390,25 @@ hpux_termio(fd, com, data, l)
 			 * were implemented.
 			 */
 			{
-				struct hpux_sys_fcntl_args {
-					int fdes, cmd, arg;
-				} args;
+				struct hpux_sys_fcntl_args /* {
+					int fd, cmd, arg;
+				} */ args;
 				int flags, nbio;
 
 				nbio = (htios.c_cc[HPUXVMINS] == 0 &&
 					htios.c_cc[HPUXVTIMES] == 0);
 				if ((nbio && (fp->f_flag & FNONBLOCK) == 0) ||
 				    (!nbio && (fp->f_flag & FNONBLOCK))) {
-					args.fdes = fd;
-					args.cmd = F_GETFL;
-					args.arg = 0;
+					SCARG(&args, fd) = fd;
+					SCARG(&args, cmd) = F_GETFL;
+					SCARG(&args, arg) = 0;
 					(void) hpux_sys_fcntl(l, &args, &flags);
 					if (nbio)
 						flags |= HPUXNDELAY;
 					else
 						flags &= ~HPUXNDELAY;
-					args.cmd = F_SETFL;
-					args.arg = flags;
+					SCARG(&args, cmd) = F_SETFL;
+					SCARG(&args, arg) = flags;
 					(void) hpux_sys_fcntl(l, &args, &flags);
 				}
 			}
@@ -512,23 +512,23 @@ hpuxtobsdbaud(int hpux_speed)
 }
 
 int
-hpux_sys_stty_6x(struct lwp *l, void *v, register_t *retval)
+hpux_sys_stty_6x(struct lwp *l, const struct hpux_sys_stty_6x_args *uap, register_t *retval)
 {
-	struct hpux_sys_stty_6x_args /* {
+	/* {
 		syscallarg(int) fd;
 		syscallarg(void *) arg;
-	} */ *uap = v;
+	} */
 
 	return (getsettty(l, SCARG(uap, fd), HPUXTIOCGETP, SCARG(uap, arg)));
 }
 
 int
-hpux_sys_gtty_6x(struct lwp *l, void *v, register_t *retval)
+hpux_sys_gtty_6x(struct lwp *l, const struct hpux_sys_gtty_6x_args *uap, register_t *retval)
 {
-	struct hpux_sys_gtty_6x_args /* {
+	/* {
 		syscallarg(int) fd;
 		syscallarg(void *) arg;
-	} */ *uap = v;
+	} */
 
 	return (getsettty(l, SCARG(uap, fd), HPUXTIOCSETP, SCARG(uap, arg)));
 }

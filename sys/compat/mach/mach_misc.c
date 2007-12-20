@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_misc.c,v 1.25 2007/02/09 21:55:21 ad Exp $	 */
+/*	$NetBSD: mach_misc.c,v 1.26 2007/12/20 23:02:59 dsl Exp $	 */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_misc.c,v 1.25 2007/02/09 21:55:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_misc.c,v 1.26 2007/12/20 23:02:59 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,161 +87,138 @@ __KERNEL_RCSID(0, "$NetBSD: mach_misc.c,v 1.25 2007/02/09 21:55:21 ad Exp $");
 
 
 int
-mach_sys_semaphore_timedwait_trap(struct lwp *l, void *v,
-    register_t *r)
+mach_sys_semaphore_timedwait_trap(struct lwp *l, const struct mach_sys_semaphore_timedwait_trap_args *uap, register_t *retval)
 {
-#ifdef DEBUG_MACH
-	struct mach_sys_semaphore_timedwait_trap_args *ap = v;
-#endif
-	*r = 0;
+
+	*retval = 0;
 	DPRINTF(("mach_sys_semaphore_timedwait_trap(0x%x, %d, %d);\n",
-	    SCARG(ap, wait_name), SCARG(ap, sec), SCARG(ap, nsec)));
+	    SCARG(uap, wait_name), SCARG(ap, sec), SCARG(ap, nsec)));
 	return 0;
 }
 
 
 int
-mach_sys_semaphore_timedwait_signal_trap(struct lwp *l, void *v,
-    register_t *r)
+mach_sys_semaphore_timedwait_signal_trap(struct lwp *l, const struct mach_sys_semaphore_timedwait_signal_trap_args *uap, register_t *retval)
 {
-#ifdef DEBUG_MACH
-	struct mach_sys_semaphore_timedwait_signal_trap_args *ap = v;
-#endif
-	*r = 0;
+
+	*retval = 0;
 	DPRINTF((
 	    "mach_sys_semaphore_timedwait_signal_trap(0x%x, 0x%x, %d, %d);\n",
-	    SCARG(ap, wait_name), SCARG(ap, signal_name), SCARG(ap, sec),
-	    SCARG(ap, nsec)));
+	    SCARG(uap, wait_name), SCARG(ap, signal_name), SCARG(ap, sec),
+	    SCARG(uap, nsec)));
 	return 0;
 }
 
 
 int
-mach_sys_init_process(struct lwp *l, void *v, register_t *r)
+mach_sys_init_process(struct lwp *l, const void *v, register_t *retval)
 {
-	*r = 0;
+	*retval = 0;
 	DPRINTF(("mach_sys_init_process();\n"));
 	return 0;
 }
 
 
 int
-mach_sys_pid_for_task(struct lwp *l, void *v, register_t *r)
+mach_sys_pid_for_task(struct lwp *l, const struct mach_sys_pid_for_task_args *uap, register_t *retval)
 {
-#ifdef DEBUG_MACH
-	struct mach_sys_pid_for_task_args *ap = v;
-#endif
-	*r = 0;
+
+	*retval = 0;
 	DPRINTF(("mach_sys_pid_for_task(0x%x, %p);\n",
-	    SCARG(ap, t), SCARG(ap, x)));
+	    SCARG(uap, t), SCARG(ap, x)));
 	return 0;
 }
 
 
 int
-mach_sys_macx_swapon(struct lwp *l, void *v, register_t *r)
+mach_sys_macx_swapon(struct lwp *l, const struct mach_sys_macx_swapon_args *uap, register_t *retval)
 {
-#ifdef DEBUG_MACH
-	struct mach_sys_macx_swapon_args *ap = v;
-#endif
-	*r = 0;
+
+	*retval = 0;
 	DPRINTF(("mach_sys_macx_swapon(%p, %d, %d, %d);\n",
-	    SCARG(ap, name), SCARG(ap, flags), SCARG(ap, size),
-	    SCARG(ap, priority)));
+	    SCARG(uap, name), SCARG(ap, flags), SCARG(ap, size),
+	    SCARG(uap, priority)));
 	return 0;
 }
 
 int
-mach_sys_macx_swapoff(struct lwp *l, void *v, register_t *r)
+mach_sys_macx_swapoff(struct lwp *l, const struct mach_sys_macx_swapoff_args *uap, register_t *retval)
 {
-#ifdef DEBUG_MACH
-	struct mach_sys_macx_swapoff_args *ap = v;
-#endif
-	*r = 0;
+
+	*retval = 0;
 	DPRINTF(("mach_sys_macx_swapoff(%p, %d);\n",
-	    SCARG(ap, name), SCARG(ap, flags)));
+	    SCARG(uap, name), SCARG(ap, flags)));
 	return 0;
 }
 
 int
-mach_sys_macx_triggers(struct lwp *l, void *v, register_t *r)
+mach_sys_macx_triggers(struct lwp *l, const struct mach_sys_macx_triggers_args *uap, register_t *retval)
 {
-#ifdef DEBUG_MACH
-	struct mach_sys_macx_triggers_args *ap = v;
-#endif
-	*r = 0;
+
+	*retval = 0;
 	DPRINTF(("mach_sys_macx_triggers(%d, %d, %d, 0x%x);\n",
-	    SCARG(ap, hi_water), SCARG(ap, low_water), SCARG(ap, flags),
-	    SCARG(ap, alert_port)));
+	    SCARG(uap, hi_water), SCARG(ap, low_water), SCARG(ap, flags),
+	    SCARG(uap, alert_port)));
 	return 0;
 }
 
 
 int
-mach_sys_wait_until(struct lwp *l, void *v, register_t *r)
+mach_sys_wait_until(struct lwp *l, const struct mach_sys_wait_until_args *uap, register_t *retval)
 {
-#ifdef DEBUG_MACH
-	struct mach_sys_wait_until_args *ap = v;
-#endif
-	*r = 0;
+
+	*retval = 0;
 	DPRINTF(("mach_sys_wait_until(%lld);\n",
-	    SCARG(ap, deadline)));
+	    SCARG(uap, deadline)));
 	return 0;
 }
 
 
 int
-mach_sys_timer_create(struct lwp *l, void *v, register_t *r)
+mach_sys_timer_create(struct lwp *l, const void *v, register_t *retval)
 {
-	*r = 0;
+	*retval = 0;
 	DPRINTF(("mach_sys_timer_create();\n"));
 	return 0;
 }
 
 
 int
-mach_sys_timer_destroy(struct lwp *l, void *v, register_t *r)
+mach_sys_timer_destroy(struct lwp *l, const struct mach_sys_timer_destroy_args *uap, register_t *retval)
 {
-#ifdef DEBUG_MACH
-	struct mach_sys_timer_destroy_args *ap = v;
-#endif
-	*r = 0;
-	DPRINTF(("mach_sys_timer_destroy(0x%x);\n", SCARG(ap, name)));
+
+	*retval = 0;
+	DPRINTF(("mach_sys_timer_destroy(0x%x);\n", SCARG(uap, name)));
 	return 0;
 }
 
 
 int
-mach_sys_timer_arm(struct lwp *l, void *v, register_t *r)
+mach_sys_timer_arm(struct lwp *l, const struct mach_sys_timer_arm_args *uap, register_t *retval)
 {
-#ifdef DEBUG_MACH
-	struct mach_sys_timer_arm_args *ap = v;
-#endif
-	*r = 0;
+
+	*retval = 0;
 	DPRINTF(("mach_sys_timer_arm(0x%x, %d);\n",
-	    SCARG(ap, name), SCARG(ap, expire_time)));
+	    SCARG(uap, name), SCARG(ap, expire_time)));
 	return 0;
 }
 
 
 int
-mach_sys_timer_cancel(struct lwp *l, void *v, register_t *r)
+mach_sys_timer_cancel(struct lwp *l, const struct mach_sys_timer_cancel_args *uap, register_t *retval)
 {
-#ifdef DEBUG_MACH
-	struct mach_sys_timer_cancel_args *ap = v;
-#endif
-	*r = 0;
+
+	*retval = 0;
 	DPRINTF(("mach_sys_timer_cancel(0x%x, %p);\n",
-	    SCARG(ap, name), SCARG(ap, result_time)));
+	    SCARG(uap, name), SCARG(ap, result_time)));
 	return 0;
 }
 
 
 int
-mach_sys_get_time_base_info(struct lwp *l, void *v,
-    register_t *r)
+mach_sys_get_time_base_info(struct lwp *l, const void *v, register_t *retval)
 {
-	*r = 0;
+	*retval = 0;
 	DPRINTF(("mach_sys_get_time_base_info();\n"));
 	return 0;
 }

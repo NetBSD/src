@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stream.c,v 1.72 2007/12/08 19:29:40 pooka Exp $	 */
+/*	$NetBSD: svr4_stream.c,v 1.73 2007/12/20 23:03:05 dsl Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_stream.c,v 1.72 2007/12/08 19:29:40 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_stream.c,v 1.73 2007/12/20 23:03:05 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1040,7 +1040,7 @@ static int
 _i_bind_rsvd(struct file *fp, struct lwp *l, register_t *retval,
     int fd, u_long cmd, void *dat)
 {
-	struct sys_mknod_args ap;
+	struct sys_mkfifo_args ap;
 
 	/*
 	 * This is a supposed to be a kernel and library only ioctl.
@@ -1369,9 +1369,8 @@ svr4_stream_ioctl(struct file *fp, struct lwp *l, register_t *retval, int fd, u_
 
 
 int
-svr4_sys_putmsg(struct lwp *l, void *v, register_t *retval)
+svr4_sys_putmsg(struct lwp *l, const struct svr4_sys_putmsg_args *uap, register_t *retval)
 {
-	struct svr4_sys_putmsg_args *uap = v;
 	struct proc *p = l->l_proc;
 	struct filedesc	*fdp = p->p_fd;
 	struct file	*fp;
@@ -1533,9 +1532,8 @@ svr4_sys_putmsg(struct lwp *l, void *v, register_t *retval)
 
 
 int
-svr4_sys_getmsg(struct lwp *l, void *v, register_t *retval)
+svr4_sys_getmsg(struct lwp *l, const struct svr4_sys_getmsg_args *uap, register_t *retval)
 {
-	struct svr4_sys_getmsg_args *uap = v;
 	struct proc *p = l->l_proc;
 	struct filedesc	*fdp = p->p_fd;
 	struct file	*fp;

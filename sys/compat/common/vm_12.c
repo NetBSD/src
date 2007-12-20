@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_12.c,v 1.16 2007/03/04 06:01:13 christos Exp $	*/
+/*	$NetBSD: vm_12.c,v 1.17 2007/12/20 23:02:45 dsl Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_12.c,v 1.16 2007/03/04 06:01:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_12.c,v 1.17 2007/12/20 23:02:45 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,12 +40,12 @@ __KERNEL_RCSID(0, "$NetBSD: vm_12.c,v 1.16 2007/03/04 06:01:13 christos Exp $");
 #include <sys/mman.h>
 
 int
-compat_12_sys_swapon(struct lwp *l, void *v, register_t *retval)
+compat_12_sys_swapon(struct lwp *l, const struct compat_12_sys_swapon_args *uap, register_t *retval)
 {
-	struct sys_swapctl_args ua;
-	struct compat_12_sys_swapon_args /* {
+	/* {
 		syscallarg(const char *) name;
-	} */ *uap = v;
+	} */
+	struct sys_swapctl_args ua;
 
 	SCARG(&ua, cmd) = SWAP_ON;
 	/*XXXUNCONST*/
@@ -55,13 +55,13 @@ compat_12_sys_swapon(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-compat_12_sys_msync(struct lwp *l, void *v, register_t *retval)
+compat_12_sys_msync(struct lwp *l, const struct compat_12_sys_msync_args *uap, register_t *retval)
 {
-	struct sys___msync13_args ua;
-	struct compat_12_sys_msync_args /* {
+	/* {
 		syscallarg(void *) addr;
 		syscallarg(size_t) len;
-	} */ *uap = v;
+	} */
+	struct sys___msync13_args ua;
 
 	SCARG(&ua, addr) = SCARG(uap, addr);
 	SCARG(&ua, len) = SCARG(uap, len);

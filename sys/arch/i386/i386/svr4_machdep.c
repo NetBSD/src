@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.87 2007/10/17 19:54:47 garbled Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.88 2007/12/20 23:02:40 dsl Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.87 2007/10/17 19:54:47 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.88 2007/12/20 23:02:40 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -85,9 +85,7 @@ static void svr4_printmcontext(const char *, svr4_mcontext_t *);
 
 
 static void
-svr4_printmcontext(fun, mc)
-	const char *fun;
-	svr4_mcontext_t *mc;
+svr4_printmcontext(const char *fun, svr4_mcontext_t *mc)
 {
 	svr4_greg_t *r = mc->greg;
 
@@ -118,10 +116,7 @@ svr4_printmcontext(fun, mc)
 #endif
 
 void
-svr4_setregs(l, epp, stack)
-	struct lwp *l;
-	struct exec_package *epp;
-	u_long stack;
+svr4_setregs(struct lwp *l, struct exec_package *epp, u_long stack)
 {
 	struct pcb *pcb = &l->l_addr->u_pcb;
 	struct trapframe *tf = l->l_md.md_regs;
@@ -135,10 +130,7 @@ svr4_setregs(l, epp, stack)
 }
 
 void *
-svr4_getmcontext(l, mc, flags)
-	struct lwp *l;
-	svr4_mcontext_t *mc;
-	u_long *flags;
+svr4_getmcontext(struct lwp *l, svr4_mcontext_t *mc, u_long *flags)
 {
 	struct trapframe *tf = l->l_md.md_regs;
 	svr4_greg_t *r = mc->greg;
@@ -195,10 +187,7 @@ svr4_getmcontext(l, mc, flags)
  * a machine fault.
  */
 int
-svr4_setmcontext(l, mc, flags)
-	struct lwp *l;
-	svr4_mcontext_t *mc;
-	u_long flags;
+svr4_setmcontext(struct lwp *l, svr4_mcontext_t *mc, u_long flags)
 {
 	struct trapframe *tf;
 	svr4_greg_t *r = mc->greg;
@@ -267,11 +256,7 @@ svr4_setmcontext(l, mc, flags)
 
 
 static void
-svr4_getsiginfo(si, sig, code, addr)
-	union svr4_siginfo	*si;
-	int			 sig;
-	u_long			 code;
-	void *			 addr;
+svr4_getsiginfo(union svr4_siginfo *si, int sig, u_long code, void * addr)
 {
 	si->si_signo = native_to_svr4_signo[sig];
 	si->si_errno = 0;
@@ -433,12 +418,8 @@ svr4_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
  * sysi86
  */
 int
-svr4_sys_sysarch(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_sys_sysarch(struct lwp *l, const struct svr4_sys_sysarch_args *uap, register_t *retval)
 {
-	struct svr4_sys_sysarch_args *uap = v;
 	*retval = 0;	/* XXX: What to do */
 
 	switch (SCARG(uap, op)) {
@@ -512,8 +493,7 @@ svr4_sys_sysarch(l, v, retval)
  * Fast syscall gate trap...
  */
 void
-svr4_fasttrap(frame)
-	struct trapframe frame;
+svr4_fasttrap(struct trapframe frame)
 {
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;

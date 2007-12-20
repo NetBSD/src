@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_13_machdep.c,v 1.14 2007/02/09 21:55:06 ad Exp $	*/
+/*	$NetBSD: compat_13_machdep.c,v 1.15 2007/12/20 23:02:40 dsl Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -15,7 +15,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.14 2007/02/09 21:55:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.15 2007/12/20 23:02:40 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,14 +40,11 @@ extern int sigdebug;
 #endif
 
 int
-compat_13_sys_sigreturn(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+compat_13_sys_sigreturn(struct lwp *l, const struct compat_13_sys_sigreturn_args *uap, register_t *retval)
 {
-	struct compat_13_sys_sigreturn_args /* {
+	/* {
 		syscallarg(struct sigcontext13 *) sigcntxp;
-	} */ *uap = v;
+	} */
 	struct sigcontext13 *scp, ksc;
 	struct proc *p = l->l_proc;
 	int error;
