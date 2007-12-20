@@ -1,4 +1,4 @@
-/* $NetBSD: rtwvar.h,v 1.33 2007/12/16 00:04:08 dyoung Exp $ */
+/* $NetBSD: rtwvar.h,v 1.34 2007/12/20 18:47:23 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -281,10 +281,6 @@ enum rtw_attach_state {FINISHED, FINISH_DESCMAP_LOAD, FINISH_DESCMAP_CREATE,
 	FINISH_RF_ATTACH, FINISH_ID_STA, FINISH_TXDESCBLK_SETUP,
 	FINISH_TXCTLBLK_SETUP, DETACHED};
 
-struct rtw_hooks {
-	void			*rh_shutdown;	/* shutdown hook */
-};
-
 struct rtw_mtbl {
 	int			(*mt_newstate)(struct ieee80211com *,
 					enum ieee80211_state, int);
@@ -466,7 +462,6 @@ struct rtw_softc {
 	int			(*sc_enable)(struct rtw_softc *);
 	void			(*sc_disable)(struct rtw_softc *);
 	struct rtw_mtbl		sc_mtbl;
-	struct rtw_hooks	sc_hooks;
 
 	void *			sc_radiobpf;
 
