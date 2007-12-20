@@ -1,4 +1,4 @@
-/*	$NetBSD: scan.c,v 1.25 2007/10/07 05:25:19 taca Exp $	*/
+/*	$NetBSD: scan.c,v 1.26 2007/12/20 20:15:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -83,8 +83,6 @@
  **********************************************************************
  */
 
-#include "libc.h"
-#include "c.h"
 #ifdef HAS_VIS
 #include <vis.h>
 #endif
@@ -102,6 +100,8 @@
 #include <unistd.h>
 #include "supcdefs.h"
 #include "supextern.h"
+#include "libc.h"
+#include "c.h"
 
 /*************************
  ***    M A C R O S    ***
@@ -966,18 +966,25 @@ makescanfile(char *scanfile)
 	(void) sprintf(tname, "%s.temp", fname);
 	scanF = fopen(tname, "w");
 	if (scanF == NULL)
-		goaway("Can't write scan file temp %s for %s", tname, collname);
-	fprintf(scanF, "V%d\n", SCANVERSION);
-	(void) Tprocess(listT, recordone, scanF);
-	(void) fclose(scanF);
-	if (rename(tname, fname) < 0)
+		goto out;
+	if (fprintf(scanF, "V%d\n", SCANVERSION) < 0)
+		goto out;
+	if (Tprocess(listT, recordone, scanF) != SCMOK)
+		goto out;
+	if (fclose(scanF) != 0)
+		goto out;
+	if (rename(tname, fname) < 0) {
+		(void)unlink(tname);
 		goaway("Can't change %s to %s", tname, fname);
-	(void) unlink(tname);
+	}
 	tbuf[0].tv_sec = time((time_t *) NULL);
 	tbuf[0].tv_usec = 0;
 	tbuf[1].tv_sec = scantime;
 	tbuf[1].tv_usec = 0;
 	(void) utimes(fname, tbuf);
+	return;
+out:
+	goaway("Can't write scan file temp %s for %s", tname, collname);
 }
 
 static int
@@ -992,13 +999,15 @@ recordone(TREE * t, void *v)
 #endif
 
 	if (t->Tflags & FBACKUP)
-		fprintf(scanF, "B");
+		if (fprintf(scanF, "B") < 0)
+			return SCMERR;
 	if (t->Tflags & FNOACCT)
-		fprintf(scanF, "N");
-	fprintf(scanF, "%o %d %d %s\n",
-	    t->Tmode, t->Tctime, t->Tmtime, fname);
-	(void) Tprocess(t->Texec, recordexec, scanF);
-	return (SCMOK);
+		if (fprintf(scanF, "N") < 0)
+			return SCMERR;
+	if (fprintf(scanF, "%o %d %d %s\n",
+	    t->Tmode, t->Tctime, t->Tmtime, fname) < 0)
+		return SCMERR;
+	return Tprocess(t->Texec, recordexec, scanF);
 }
 
 static int
@@ -1011,7 +1020,8 @@ recordexec(TREE * t, void *v)
 #else
 	char *fname = t->Tname;
 #endif
-	fprintf(scanF, "X%s\n", fname);
+	if (fprintf(scanF, "X%s\n", fname) < 0)
+		return SCMERR;
 	return (SCMOK);
 }
 
