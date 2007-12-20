@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.158 2007/12/16 21:28:31 dyoung Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.159 2007/12/20 20:48:24 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.158 2007/12/16 21:28:31 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.159 2007/12/20 20:48:24 dyoung Exp $");
 
 /*
 #define CBB_DEBUG
@@ -1143,8 +1143,7 @@ pccbbintr_function(struct pccbb_softc *sc)
 	struct pccbb_intrhand_list *pil;
 	int s;
 
-	for (pil = LIST_FIRST(&sc->sc_pil); pil != NULL;
-	     pil = LIST_NEXT(pil, pil_next)) {
+	LIST_FOREACH(pil, &sc->sc_pil, pil_next) {
 		s = splraiseipl(pil->pil_icookie);
 		val = (*pil->pil_func)(pil->pil_arg);
 		splx(s);
@@ -1863,8 +1862,7 @@ pccbb_intr_disestablish(struct pccbb_softc *sc, void *ih)
 	}
 
 #ifdef DIAGNOSTIC
-	for (pil = LIST_FIRST(&sc->sc_pil); pil != NULL;
-	     pil = LIST_NEXT(pil, pil_next)) {
+	LIST_FOREACH(pil, &sc->sc_pil, pil_next) {
 		DPRINTF(("pccbb_intr_disestablish: pil %p\n", pil));
 		if (pil == ih) {
 			DPRINTF(("pccbb_intr_disestablish frees one pil\n"));
