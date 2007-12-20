@@ -1,4 +1,4 @@
-/*	$NetBSD: myproposal.h,v 1.4 2007/12/18 02:35:29 christos Exp $	*/
+/*	$NetBSD: myproposal.h,v 1.5 2007/12/20 14:14:04 martin Exp $	*/
 /* $OpenBSD: myproposal.h,v 1.22 2007/06/07 19:37:34 pvalchev Exp $ */
 
 /*
@@ -35,10 +35,19 @@
 	"arcfour128,arcfour256,arcfour," \
 	"aes192-cbc,aes256-cbc,rijndael-cbc@lysator.liu.se," \
 	"aes128-ctr,aes192-ctr,aes256-ctr"
+
+#ifdef UMAC_HAS_BEEN_UNBROKEN
 #define	KEX_DEFAULT_MAC \
 	"hmac-md5,hmac-sha1,umac-64@openssh.com,hmac-ripemd160," \
 	"hmac-ripemd160@openssh.com," \
 	"hmac-sha1-96,hmac-md5-96"
+#else
+#define	KEX_DEFAULT_MAC \
+	"hmac-md5,hmac-sha1,hmac-ripemd160," \
+	"hmac-ripemd160@openssh.com," \
+	"hmac-sha1-96,hmac-md5-96"
+#endif
+
 #define	KEX_DEFAULT_COMP	"none,zlib@openssh.com,zlib"
 #define	KEX_DEFAULT_LANG	""
 
