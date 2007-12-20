@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.9 2007/11/22 21:23:42 bouyer Exp $
+#	$NetBSD: Makefile.inc,v 1.10 2007/12/20 23:32:24 ad Exp $
 #
 #	etc.amd64/Makefile.inc -- amd64-specific etc Makefile targets
 #
@@ -6,7 +6,7 @@
 # If you change the list of distributed kernels, don't forget
 # to update the release documentation in distrib/notes/common/contents
 
-KERNEL_SETS=		GENERIC GENERIC.MP
+KERNEL_SETS=		GENERIC
 KERNEL_SETS+=		XEN3_DOM0 XEN3_DOMU
 
 BUILD_KERNELS=		INSTALL INSTALL_XEN3_DOMU
