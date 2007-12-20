@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.40 2007/12/15 00:39:20 perry Exp $	*/
+/*	$NetBSD: pmap.c,v 1.41 2007/12/20 08:11:31 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.40 2007/12/15 00:39:20 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.41 2007/12/20 08:11:31 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1619,7 +1619,7 @@ pmap_unwire(pmap_t pmap, vaddr_t va)
 
 /*
  * pmap_extract(pmap, va, pap)
- *	fills in the physical address corrsponding to the
+ *	fills in the physical address corresponding to the
  *	virtual address specified by pmap and va into the
  *	storage pointed to by pap and returns true if the
  *	virtual address is mapped. returns false in not mapped.
