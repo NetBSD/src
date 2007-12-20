@@ -1,4 +1,4 @@
-/*	$NetBSD: mkbootimage.c,v 1.3 2007/12/19 19:45:33 garbled Exp $	*/
+/*	$NetBSD: mkbootimage.c,v 1.4 2007/12/20 17:58:49 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -64,17 +64,27 @@
 #include <elf/common.h>
 #include <elf/external.h>
 
+#include "rs6000_bootrec.h"
 #include "byteorder.h"
 #include "magic.h"
 
 /* Globals */
 
 int saloneflag = 0;
+int verboseflag = 0;
+int lfloppyflag = 0;
 Elf32_External_Ehdr hdr, khdr;
 struct stat elf_stat;
 unsigned char mbr[512];
+
+/* the boot and config records for rs6000 */
+rs6000_boot_record_t bootrec;
+rs6000_config_record_t confrec;
+
+/* supported platforms */
 char *sup_plats[] = {
 	"prep",
+	"rs6000",
 	NULL,
 };
 
@@ -87,16 +97,29 @@ char *sup_plats[] = {
 #define	ELFGET32(x)	(((x)[0] << 24) | ((x)[1] << 16) |		\
 			 ((x)[2] <<  8) |  (x)[3])
 
-static void usage(void);
+static void usage(int);
 static int open_file(const char *, char *, Elf32_External_Ehdr *,
     struct stat *);
-static void check_mbr(int, int, char *);
-static int prep_build_image(char *, char *, char *, char *, int);
+static void check_mbr(int, char *);
+static int prep_build_image(char *, char *, char *, char *);
+static void rs6000_build_records(int);
+static int rs6000_build_image(char *, char *, char *, char *);
 int main(int, char **);
 
 static void
-usage(void)
+usage(int extended)
 {
+	int i;
+
+	if (extended) {
+		fprintf(stderr, "You are not running this program on"
+		    " the target machine.  You must supply the\n"
+		    "machine architecture with the -m flag\n");
+		fprintf(stderr, "Supported architectures: ");
+		for (i=0; sup_plats[i] != NULL; i++)
+			fprintf(stderr, " %s", sup_plats[i]);
+		fprintf(stderr, "\n\n");
+	}
 #ifdef __NetBSD__
 	fprintf(stderr, "usage: %s [-ls] [-m machine_arch] [-b bootfile] "
 	    "[-k kernel] [-r rawdev] bootimage\n", getprogname());
@@ -139,7 +162,7 @@ open_file(const char *ftype, char *file, Elf32_External_Ehdr *hdr,
 }
 
 static void
-prep_check_mbr(int prep_fd, int lfloppyflag, char *rawdev)
+prep_check_mbr(int prep_fd, char *rawdev)
 {
 	int raw_fd;
 	unsigned long entry, length;
@@ -258,8 +281,7 @@ prep_check_mbr(int prep_fd, int lfloppyflag, char *rawdev)
 }
 
 static int
-prep_build_image(char *kernel, char *boot, char *rawdev, char *outname,
-    int lflag)
+prep_build_image(char *kernel, char *boot, char *rawdev, char *outname)
 {
 	unsigned char *elf_img = NULL, *kern_img = NULL;
 	int i, ch, tmp, kgzlen, err;
@@ -300,7 +322,7 @@ prep_build_image(char *kernel, char *boot, char *rawdev, char *outname,
 			    strerror(errno));
 	}
 
-	prep_check_mbr(prep_fd, lflag, rawdev);
+	prep_check_mbr(prep_fd, rawdev);
 
 	/* Set file pos. to 2nd sector where image will be written */
 	lseek(prep_fd, 0x400, SEEK_SET);
@@ -356,7 +378,7 @@ prep_build_image(char *kernel, char *boot, char *rawdev, char *outname,
 	write(prep_fd, &length, sizeof(length));
 
 	flength = 0x400 + elf_img_len + 8 + kgzlen;
-	if (lflag)
+	if (lfloppyflag)
 		flength -= (5760 * 512);
 	else
 		flength -= (2880 * 512);
@@ -370,8 +392,192 @@ prep_build_image(char *kernel, char *boot, char *rawdev, char *outname,
 	close(prep_fd);
 	close(elf_fd);
 
-	return(0);
+	return 0;
 }	
+
+/* Fill in the needed information on the boot and config records.  Most of
+ * this is just AIX garbage that we don't really need to boot.
+ */
+static void
+rs6000_build_records(int img_len)
+{
+	int bcl;
+
+	/* zero out all the fields, so we only have to set the ones
+	 * we care about, which are rather few.
+	 */
+	memset(&bootrec, 0, sizeof(rs6000_boot_record_t));
+	memset(&confrec, 0, sizeof(rs6000_config_record_t));
+
+	bootrec.ipl_record = IPLRECID;
+	bcl = img_len/512;
+	if (img_len%512 != 0)
+		bcl++;
+	bootrec.bootcode_len = bcl;
+	bootrec.bootcode_off = 0; /* XXX */
+	bootrec.bootpart_start = 2; /* skip bootrec and confrec */
+	bootrec.bootprg_start = 2;
+	bootrec.bootpart_len = bcl;
+	bootrec.boot_load_addr = 0x800000; /* XXX? */
+	bootrec.boot_frag = 1;
+	bootrec.boot_emul = 0x02; /* ?? */
+	/* service mode is a repeat of normal mode */
+	bootrec.servcode_len = bootrec.bootcode_len;
+	bootrec.servcode_off = bootrec.bootcode_off;
+	bootrec.servpart_start = bootrec.bootpart_start;
+	bootrec.servprg_start = bootrec.bootprg_start;
+	bootrec.servpart_len = bootrec.bootpart_len;
+	bootrec.serv_load_addr = bootrec.boot_load_addr;
+	bootrec.serv_frag = bootrec.boot_frag;
+	bootrec.serv_emul = bootrec.boot_emul;
+
+	/* now the config record */
+	confrec.conf_rec = CONFRECID;
+	confrec.sector_size = 0x02; /* 512 bytes */
+	confrec.last_cyl = 0x4f; /* 79 cyl, emulates floppy */
+}
+
+static int
+rs6000_build_image(char *kernel, char *boot, char *rawdev, char *outname)
+{
+	unsigned char *elf_img = NULL, *kern_img = NULL;
+	int i, ch, tmp, kgzlen, err;
+	int elf_fd, rs6000_fd, kern_fd, elf_img_len = 0, elf_pad;
+	uint32_t swapped[128];
+	off_t lenpos, kstart, kend;
+	unsigned long length;
+	long flength;
+	gzFile gzf;
+	struct stat kern_stat;
+	Elf32_External_Phdr phdr;
+
+	elf_fd = open_file("bootloader", boot, &hdr, &elf_stat);
+	kern_fd = open_file("kernel", kernel, &khdr, &kern_stat);
+	kern_len = kern_stat.st_size + RS6000_MAGICSIZE + KERNLENSIZE;
+
+	for (i = 0; i < ELFGET16(hdr.e_phnum); i++) {
+		lseek(elf_fd, ELFGET32(hdr.e_phoff) + sizeof(phdr) * i,
+			SEEK_SET);
+		if (read(elf_fd, &phdr, sizeof(phdr)) != sizeof(phdr))
+			errx(3, "Can't read input '%s' phdr : %s", boot,
+			    strerror(errno));
+
+		if ((ELFGET32(phdr.p_type) != PT_LOAD) ||
+		    !(ELFGET32(phdr.p_flags) & PF_X))
+			continue;
+
+		fstat(elf_fd, &elf_stat);
+		elf_img_len = elf_stat.st_size - ELFGET32(phdr.p_offset);
+		elf_pad = ELFGET32(phdr.p_memsz) - ELFGET32(phdr.p_filesz);
+		if (verboseflag)
+			printf("Padding %d\n", elf_pad);
+		lseek(elf_fd, ELFGET32(phdr.p_offset), SEEK_SET);
+
+		break;
+	}
+	if ((rs6000_fd = open(outname, O_RDWR|O_TRUNC, 0)) < 0) {
+		/* we couldn't open it, it must be new */
+		rs6000_fd = creat(outname, 0644);
+		if (rs6000_fd < 0)
+			errx(2, "Can't open output '%s': %s", outname,
+			    strerror(errno));
+	}
+
+	/* Set file pos. to 2nd sector where image will be written */
+	lseek(rs6000_fd, 0x400, SEEK_SET);
+
+	/* Copy boot image */
+	elf_img = (unsigned char *)malloc(elf_img_len);
+	if (!elf_img)
+		errx(3, "Can't malloc: %s", strerror(errno));
+	if (read(elf_fd, elf_img, elf_img_len) != elf_img_len)
+		errx(3, "Can't read file '%s' : %s", boot, strerror(errno));
+
+	write(rs6000_fd, elf_img, elf_img_len);
+	free(elf_img);
+
+	/* now dump in the padding space for the BSS */
+	elf_pad += 100; /* just a little extra for good luck */
+	lseek(rs6000_fd, elf_pad, SEEK_CUR);
+
+	/* Copy kernel */
+	kern_img = (unsigned char *)malloc(kern_stat.st_size);
+
+	if (kern_img == NULL)
+		errx(3, "Can't malloc: %s", strerror(errno));
+
+	/* we need to jump back after having read the headers */
+	lseek(kern_fd, 0, SEEK_SET);
+	if (read(kern_fd, (void *)kern_img, kern_stat.st_size) !=
+	    kern_stat.st_size)
+		errx(3, "Can't read kernel '%s' : %s", kernel, strerror(errno));
+
+	gzf = gzdopen(dup(rs6000_fd), "a");
+	if (gzf == NULL)
+		errx(3, "Can't init compression: %s", strerror(errno));
+	if (gzsetparams(gzf, Z_BEST_COMPRESSION, Z_DEFAULT_STRATEGY) != Z_OK)
+		errx(3, "%s", gzerror(gzf, &err));
+
+	/* write a magic number and size before the kernel */
+	write(rs6000_fd, (void *)rs6000_magic, RS6000_MAGICSIZE);
+	lenpos = lseek(rs6000_fd, 0, SEEK_CUR);
+	if (verboseflag)
+		printf("wrote magic at pos 0x%x\n", lenpos);
+	tmp = sa_htobe32(0);
+	write(rs6000_fd, (void *)&tmp, KERNLENSIZE);
+
+	/* write in the compressed kernel */
+	kstart = lseek(rs6000_fd, 0, SEEK_CUR);
+	if (verboseflag)
+		printf("kernel start at pos 0x%x\n", kstart);
+	kgzlen = gzwrite(gzf, kern_img, kern_stat.st_size);
+	gzclose(gzf);
+	kend = lseek(rs6000_fd, 0, SEEK_CUR);
+	if (verboseflag)
+		printf("kernel end at pos 0x%x\n", kend);
+
+	/* jump back to the length position now that we know the length */
+	lseek(rs6000_fd, lenpos, SEEK_SET);
+	kgzlen = kend - kstart;
+	tmp = sa_htobe32(kgzlen);
+	if (verboseflag)
+		printf("kernel len = 0x%x tmp = 0x%x\n", kgzlen, tmp);
+	write(rs6000_fd, (void *)&tmp, KERNLENSIZE);
+
+#if 0
+	lseek(rs6000_fd, sizeof(boot_record_t) + sizeof(config_record_t),
+	    SEEK_SET);
+	/* set entry and length */
+	length = sa_htole32(0x400);
+	write(rs6000_fd, &length, sizeof(length));
+	length = sa_htole32(0x400 + elf_img_len + 8 + kgzlen);
+	write(rs6000_fd, &length, sizeof(length));
+#endif
+
+	/* generate the header now that we know the kernel length */
+	if (verboseflag)
+		printf("building records\n");
+	rs6000_build_records(elf_img_len + 8 + kgzlen);
+	lseek(rs6000_fd, 0, SEEK_SET);
+	/* ROM wants it byteswapped in 32bit chunks */
+	if (verboseflag)
+		printf("writing records\n");
+	memcpy(swapped, &bootrec, sizeof(rs6000_boot_record_t));
+	for (i=0; i < 128; i++)
+		swapped[i] = htonl(swapped[i]);
+	write(rs6000_fd, swapped, sizeof(rs6000_boot_record_t));
+	memcpy(swapped, &confrec, sizeof(rs6000_config_record_t));
+	for (i=0; i < 128; i++)
+		swapped[i] = htonl(swapped[i]);
+	write(rs6000_fd, swapped, sizeof(rs6000_config_record_t));
+
+	free(kern_img);
+	close(kern_fd);
+	close(rs6000_fd);
+	close(elf_fd);
+
+	return 0;
+}
 
 int
 main(int argc, char **argv)
@@ -387,7 +593,7 @@ main(int argc, char **argv)
 	setprogname(argv[0]);
 	kern_len = 0;
 
-	while ((ch = getopt(argc, argv, "b:k:lm:r:s")) != -1)
+	while ((ch = getopt(argc, argv, "b:k:lm:r:sv")) != -1)
 		switch (ch) {
 		case 'b':
 			boot = optarg;
@@ -407,16 +613,19 @@ main(int argc, char **argv)
 		case 's':
 			saloneflag = 1;
 			break;
+		case 'v':
+			verboseflag = 1;
+			break;
 		case '?':
 		default:
-			usage();
+			usage(0);
 			/* NOTREACHED */
 		}
 	argc -= optind;
 	argv += optind;
 
 	if (argc < 1)
-		usage();
+		usage(0);
 
 	if (kernel == NULL)
 		kernel = "/netbsd";
@@ -424,6 +633,8 @@ main(int argc, char **argv)
 	if (boot == NULL)
 		boot = "/usr/mdec/boot";
 
+	if (strcmp(march, "") == 0)
+		march = NULL;
 	if (march == NULL) {
 		int i;
 #ifdef __NetBSD__
@@ -438,26 +649,18 @@ main(int argc, char **argv)
 				}
 			}
 		}
-		if (march == NULL) {
+		if (march == NULL)
 #endif
-			fprintf(stderr, "You are not running this program on"
-			    " the target machine.  You must supply the\n"
-			    "machine architecture with the -m flag\n");
-			fprintf(stderr, "Supported architectures: ");
-			for (i=0; sup_plats[i] != NULL; i++)
-				fprintf(stderr, " %s", sup_plats[i]);
-			fprintf(stderr, "\n\n");
-			usage();
-#ifdef __NetBSD__
-		}
-#endif
+			usage(1);
 	}
 		
 	outname = argv[0];
 
 	if (strcmp(march, "prep") == 0)
-		return(prep_build_image(kernel, boot, rawdev, outname,
-			   lfloppyflag));
+		return(prep_build_image(kernel, boot, rawdev, outname));
+	if (strcmp(march, "rs6000") == 0)
+		return(rs6000_build_image(kernel, boot, rawdev, outname));
 
+	usage(1);
 	return(0);
 }
