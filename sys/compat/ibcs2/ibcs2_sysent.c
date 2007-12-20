@@ -1,4 +1,4 @@
-/* $NetBSD: ibcs2_sysent.c,v 1.45 2007/12/13 05:19:09 uebayasi Exp $ */
+/* $NetBSD: ibcs2_sysent.c,v 1.46 2007/12/20 23:10:43 dsl Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_sysent.c,v 1.45 2007/12/13 05:19:09 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_sysent.c,v 1.46 2007/12/20 23:10:43 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -29,148 +29,148 @@ __KERNEL_RCSID(0, "$NetBSD: ibcs2_sysent.c,v 1.45 2007/12/13 05:19:09 uebayasi E
 
 struct sysent ibcs2_sysent[] = {
 	{ 0, 0, 0,
-	    sys_nosys },			/* 0 = syscall */
+	    (sy_call_t *)sys_nosys },		/* 0 = syscall */
 	{ ns(struct sys_exit_args), 0,
-	    sys_exit },				/* 1 = exit */
+	    (sy_call_t *)sys_exit },		/* 1 = exit */
 	{ 0, 0, 0,
-	    sys_fork },				/* 2 = fork */
+	    (sy_call_t *)sys_fork },		/* 2 = fork */
 	{ ns(struct ibcs2_sys_read_args), 0,
-	    ibcs2_sys_read },			/* 3 = read */
+	    (sy_call_t *)ibcs2_sys_read },	/* 3 = read */
 	{ ns(struct sys_write_args), 0,
-	    sys_write },			/* 4 = write */
+	    (sy_call_t *)sys_write },		/* 4 = write */
 	{ ns(struct ibcs2_sys_open_args), 0,
-	    ibcs2_sys_open },			/* 5 = open */
+	    (sy_call_t *)ibcs2_sys_open },	/* 5 = open */
 	{ ns(struct sys_close_args), 0,
-	    sys_close },			/* 6 = close */
+	    (sy_call_t *)sys_close },		/* 6 = close */
 	{ ns(struct ibcs2_sys_waitsys_args), 0,
-	    ibcs2_sys_waitsys },		/* 7 = waitsys */
+	    (sy_call_t *)ibcs2_sys_waitsys },	/* 7 = waitsys */
 	{ ns(struct ibcs2_sys_creat_args), 0,
-	    ibcs2_sys_creat },			/* 8 = creat */
+	    (sy_call_t *)ibcs2_sys_creat },	/* 8 = creat */
 	{ ns(struct sys_link_args), 0,
-	    sys_link },				/* 9 = link */
+	    (sy_call_t *)sys_link },		/* 9 = link */
 	{ ns(struct sys_unlink_args), 0,
-	    sys_unlink },			/* 10 = unlink */
+	    (sy_call_t *)sys_unlink },		/* 10 = unlink */
 	{ ns(struct ibcs2_sys_execv_args), 0,
-	    ibcs2_sys_execv },			/* 11 = execv */
+	    (sy_call_t *)ibcs2_sys_execv },	/* 11 = execv */
 	{ ns(struct sys_chdir_args), 0,
-	    sys_chdir },			/* 12 = chdir */
+	    (sy_call_t *)sys_chdir },		/* 12 = chdir */
 	{ ns(struct ibcs2_sys_time_args), 0,
-	    ibcs2_sys_time },			/* 13 = time */
+	    (sy_call_t *)ibcs2_sys_time },	/* 13 = time */
 	{ ns(struct ibcs2_sys_mknod_args), 0,
-	    ibcs2_sys_mknod },			/* 14 = mknod */
+	    (sy_call_t *)ibcs2_sys_mknod },	/* 14 = mknod */
 	{ ns(struct sys_chmod_args), 0,
-	    sys_chmod },			/* 15 = chmod */
+	    (sy_call_t *)sys_chmod },		/* 15 = chmod */
 	{ ns(struct sys___posix_chown_args), 0,
-	    sys___posix_chown },		/* 16 = __posix_chown */
+	    (sy_call_t *)sys___posix_chown },	/* 16 = __posix_chown */
 	{ ns(struct sys_obreak_args), 0,
-	    sys_obreak },			/* 17 = obreak */
+	    (sy_call_t *)sys_obreak },		/* 17 = obreak */
 	{ ns(struct ibcs2_sys_stat_args), 0,
-	    ibcs2_sys_stat },			/* 18 = stat */
+	    (sy_call_t *)ibcs2_sys_stat },	/* 18 = stat */
 	{ ns(struct compat_43_sys_lseek_args), 0,
-	    compat_43_sys_lseek },		/* 19 = lseek */
+	    (sy_call_t *)compat_43_sys_lseek },	/* 19 = lseek */
 	{ 0, 0, 0,
-	    sys_getpid_with_ppid },		/* 20 = getpid_with_ppid */
+	    (sy_call_t *)sys_getpid_with_ppid },/* 20 = getpid_with_ppid */
 	{ ns(struct ibcs2_sys_mount_args), 0,
-	    ibcs2_sys_mount },			/* 21 = mount */
+	    (sy_call_t *)ibcs2_sys_mount },	/* 21 = mount */
 	{ ns(struct ibcs2_sys_umount_args), 0,
-	    ibcs2_sys_umount },			/* 22 = umount */
+	    (sy_call_t *)ibcs2_sys_umount },	/* 22 = umount */
 	{ ns(struct ibcs2_sys_setuid_args), 0,
-	    ibcs2_sys_setuid },			/* 23 = setuid */
+	    (sy_call_t *)ibcs2_sys_setuid },	/* 23 = setuid */
 	{ 0, 0, 0,
-	    sys_getuid_with_euid },		/* 24 = getuid_with_euid */
+	    (sy_call_t *)sys_getuid_with_euid },/* 24 = getuid_with_euid */
 	{ ns(struct ibcs2_sys_stime_args), 0,
-	    ibcs2_sys_stime },			/* 25 = stime */
+	    (sy_call_t *)ibcs2_sys_stime },	/* 25 = stime */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 26 = unimplemented ibcs2_ptrace */
 	{ ns(struct ibcs2_sys_alarm_args), 0,
-	    ibcs2_sys_alarm },			/* 27 = alarm */
+	    (sy_call_t *)ibcs2_sys_alarm },	/* 27 = alarm */
 	{ ns(struct ibcs2_sys_fstat_args), 0,
-	    ibcs2_sys_fstat },			/* 28 = fstat */
+	    (sy_call_t *)ibcs2_sys_fstat },	/* 28 = fstat */
 	{ 0, 0, 0,
-	    ibcs2_sys_pause },			/* 29 = pause */
+	    (sy_call_t *)ibcs2_sys_pause },	/* 29 = pause */
 	{ ns(struct ibcs2_sys_utime_args), 0,
-	    ibcs2_sys_utime },			/* 30 = utime */
+	    (sy_call_t *)ibcs2_sys_utime },	/* 30 = utime */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 31 = unimplemented was stty */
 	{ ns(struct ibcs2_sys_gtty_args), 0,
-	    ibcs2_sys_gtty },			/* 32 = gtty */
+	    (sy_call_t *)ibcs2_sys_gtty },	/* 32 = gtty */
 	{ ns(struct ibcs2_sys_access_args), 0,
-	    ibcs2_sys_access },			/* 33 = access */
+	    (sy_call_t *)ibcs2_sys_access },	/* 33 = access */
 	{ ns(struct ibcs2_sys_nice_args), 0,
-	    ibcs2_sys_nice },			/* 34 = nice */
+	    (sy_call_t *)ibcs2_sys_nice },	/* 34 = nice */
 	{ ns(struct ibcs2_sys_statfs_args), 0,
-	    ibcs2_sys_statfs },			/* 35 = statfs */
+	    (sy_call_t *)ibcs2_sys_statfs },	/* 35 = statfs */
 	{ 0, 0, 0,
-	    sys_sync },				/* 36 = sync */
+	    (sy_call_t *)sys_sync },		/* 36 = sync */
 	{ ns(struct ibcs2_sys_kill_args), 0,
-	    ibcs2_sys_kill },			/* 37 = kill */
+	    (sy_call_t *)ibcs2_sys_kill },	/* 37 = kill */
 	{ ns(struct ibcs2_sys_fstatfs_args), 0,
-	    ibcs2_sys_fstatfs },		/* 38 = fstatfs */
+	    (sy_call_t *)ibcs2_sys_fstatfs },	/* 38 = fstatfs */
 	{ ns(struct ibcs2_sys_pgrpsys_args), 0,
-	    ibcs2_sys_pgrpsys },		/* 39 = pgrpsys */
+	    (sy_call_t *)ibcs2_sys_pgrpsys },	/* 39 = pgrpsys */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 40 = unimplemented ibcs2_xenix */
 	{ ns(struct sys_dup_args), 0,
-	    sys_dup },				/* 41 = dup */
+	    (sy_call_t *)sys_dup },		/* 41 = dup */
 	{ 0, 0, 0,
-	    sys_pipe },				/* 42 = pipe */
+	    (sy_call_t *)sys_pipe },		/* 42 = pipe */
 	{ ns(struct ibcs2_sys_times_args), 0,
-	    ibcs2_sys_times },			/* 43 = times */
+	    (sy_call_t *)ibcs2_sys_times },	/* 43 = times */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 44 = unimplemented profil */
 	{ ns(struct ibcs2_sys_plock_args), 0,
-	    ibcs2_sys_plock },			/* 45 = plock */
+	    (sy_call_t *)ibcs2_sys_plock },	/* 45 = plock */
 	{ ns(struct ibcs2_sys_setgid_args), 0,
-	    ibcs2_sys_setgid },			/* 46 = setgid */
+	    (sy_call_t *)ibcs2_sys_setgid },	/* 46 = setgid */
 	{ 0, 0, 0,
-	    sys_getgid_with_egid },		/* 47 = getgid_with_egid */
+	    (sy_call_t *)sys_getgid_with_egid },/* 47 = getgid_with_egid */
 	{ ns(struct ibcs2_sys_sigsys_args), 0,
-	    ibcs2_sys_sigsys },			/* 48 = sigsys */
+	    (sy_call_t *)ibcs2_sys_sigsys },	/* 48 = sigsys */
 #ifdef SYSVMSG
 	{ ns(struct ibcs2_sys_msgsys_args), 0,
-	    ibcs2_sys_msgsys },			/* 49 = msgsys */
+	    (sy_call_t *)ibcs2_sys_msgsys },	/* 49 = msgsys */
 #else
 	{ 0, 0, 0,
 	    sys_nosys },			/* 49 = unimplemented msgsys */
 #endif
 	{ ns(struct ibcs2_sys_sysmachine_args), 0,
-	    ibcs2_sys_sysmachine },		/* 50 = sysmachine */
+	    (sy_call_t *)ibcs2_sys_sysmachine },/* 50 = sysmachine */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 51 = unimplemented ibcs2_acct */
 #ifdef SYSVSHM
 	{ ns(struct ibcs2_sys_shmsys_args), 0,
-	    ibcs2_sys_shmsys },			/* 52 = shmsys */
+	    (sy_call_t *)ibcs2_sys_shmsys },	/* 52 = shmsys */
 #else
 	{ 0, 0, 0,
 	    sys_nosys },			/* 52 = unimplemented shmsys */
 #endif
 #ifdef SYSVSEM
 	{ ns(struct ibcs2_sys_semsys_args), 0,
-	    ibcs2_sys_semsys },			/* 53 = semsys */
+	    (sy_call_t *)ibcs2_sys_semsys },	/* 53 = semsys */
 #else
 	{ 0, 0, 0,
 	    sys_nosys },			/* 53 = unimplemented semsys */
 #endif
 	{ ns(struct ibcs2_sys_ioctl_args), 0,
-	    ibcs2_sys_ioctl },			/* 54 = ioctl */
+	    (sy_call_t *)ibcs2_sys_ioctl },	/* 54 = ioctl */
 	{ ns(struct ibcs2_sys_uadmin_args), 0,
-	    ibcs2_sys_uadmin },			/* 55 = uadmin */
+	    (sy_call_t *)ibcs2_sys_uadmin },	/* 55 = uadmin */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 56 = unimplemented */
 	{ ns(struct ibcs2_sys_utssys_args), 0,
-	    ibcs2_sys_utssys },			/* 57 = utssys */
+	    (sy_call_t *)ibcs2_sys_utssys },	/* 57 = utssys */
 	{ ns(struct sys_fsync_args), 0,
-	    sys_fsync },			/* 58 = fsync */
+	    (sy_call_t *)sys_fsync },		/* 58 = fsync */
 	{ ns(struct ibcs2_sys_execve_args), 0,
-	    ibcs2_sys_execve },			/* 59 = execve */
+	    (sy_call_t *)ibcs2_sys_execve },	/* 59 = execve */
 	{ ns(struct sys_umask_args), 0,
-	    sys_umask },			/* 60 = umask */
+	    (sy_call_t *)sys_umask },		/* 60 = umask */
 	{ ns(struct sys_chroot_args), 0,
-	    sys_chroot },			/* 61 = chroot */
+	    (sy_call_t *)sys_chroot },		/* 61 = chroot */
 	{ ns(struct ibcs2_sys_fcntl_args), 0,
-	    ibcs2_sys_fcntl },			/* 62 = fcntl */
+	    (sy_call_t *)ibcs2_sys_fcntl },	/* 62 = fcntl */
 	{ ns(struct ibcs2_sys_ulimit_args), 0,
-	    ibcs2_sys_ulimit },			/* 63 = ulimit */
+	    (sy_call_t *)ibcs2_sys_ulimit },	/* 63 = ulimit */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 64 = unimplemented reserved for unix/pc */
 	{ 0, 0, 0,
@@ -202,43 +202,43 @@ struct sysent ibcs2_sysent[] = {
 	{ 0, 0, 0,
 	    sys_nosys },			/* 78 = unimplemented rfs_rfsys */
 	{ ns(struct sys_rmdir_args), 0,
-	    sys_rmdir },			/* 79 = rmdir */
+	    (sy_call_t *)sys_rmdir },		/* 79 = rmdir */
 	{ ns(struct sys_mkdir_args), 0,
-	    sys_mkdir },			/* 80 = mkdir */
+	    (sy_call_t *)sys_mkdir },		/* 80 = mkdir */
 	{ ns(struct ibcs2_sys_getdents_args), 0,
-	    ibcs2_sys_getdents },		/* 81 = getdents */
+	    (sy_call_t *)ibcs2_sys_getdents },	/* 81 = getdents */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 82 = unimplemented */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 83 = unimplemented */
 	{ ns(struct ibcs2_sys_sysfs_args), 0,
-	    ibcs2_sys_sysfs },			/* 84 = sysfs */
+	    (sy_call_t *)ibcs2_sys_sysfs },	/* 84 = sysfs */
 	{ ns(struct ibcs2_sys_getmsg_args), 0,
-	    ibcs2_sys_getmsg },			/* 85 = getmsg */
+	    (sy_call_t *)ibcs2_sys_getmsg },	/* 85 = getmsg */
 	{ ns(struct ibcs2_sys_putmsg_args), 0,
-	    ibcs2_sys_putmsg },			/* 86 = putmsg */
+	    (sy_call_t *)ibcs2_sys_putmsg },	/* 86 = putmsg */
 	{ ns(struct sys_poll_args), 0,
-	    sys_poll },				/* 87 = poll */
+	    (sy_call_t *)sys_poll },		/* 87 = poll */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 88 = unimplemented */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 89 = unimplemented */
 	{ ns(struct sys_symlink_args), 0,
-	    sys_symlink },			/* 90 = symlink */
+	    (sy_call_t *)sys_symlink },		/* 90 = symlink */
 	{ ns(struct ibcs2_sys_lstat_args), 0,
-	    ibcs2_sys_lstat },			/* 91 = lstat */
+	    (sy_call_t *)ibcs2_sys_lstat },	/* 91 = lstat */
 	{ ns(struct sys_readlink_args), 0,
-	    sys_readlink },			/* 92 = readlink */
+	    (sy_call_t *)sys_readlink },	/* 92 = readlink */
 	{ ns(struct sys_fchmod_args), 0,
-	    sys_fchmod },			/* 93 = fchmod */
+	    (sy_call_t *)sys_fchmod },		/* 93 = fchmod */
 	{ ns(struct sys___posix_fchown_args), 0,
-	    sys___posix_fchown },		/* 94 = fchown */
+	    (sy_call_t *)sys___posix_fchown },	/* 94 = fchown */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 95 = unimplemented */
 	{ ns(struct compat_16_sys___sigreturn14_args), 0,
-	    compat_16_sys___sigreturn14 },	/* 96 = sigreturn */
+	    (sy_call_t *)compat_16_sys___sigreturn14 },/* 96 = sigreturn */
 	{ ns(struct ibcs2_sys_sigaltstack_args), 0,
-	    ibcs2_sys_sigaltstack },		/* 97 = sigaltstack */
+	    (sy_call_t *)ibcs2_sys_sigaltstack },/* 97 = sigaltstack */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 98 = unimplemented */
 	{ 0, 0, 0,
@@ -250,9 +250,9 @@ struct sysent ibcs2_sysent[] = {
 	{ 0, 0, 0,
 	    sys_nosys },			/* 102 = unimplemented */
 	{ ns(struct ibcs2_sys_statvfs_args), 0,
-	    ibcs2_sys_statvfs },		/* 103 = statvfs */
+	    (sy_call_t *)ibcs2_sys_statvfs },	/* 103 = statvfs */
 	{ ns(struct ibcs2_sys_fstatvfs_args), 0,
-	    ibcs2_sys_fstatvfs },		/* 104 = fstatvfs */
+	    (sy_call_t *)ibcs2_sys_fstatvfs },	/* 104 = fstatvfs */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 105 = unimplemented */
 	{ 0, 0, 0,
@@ -274,21 +274,21 @@ struct sysent ibcs2_sysent[] = {
 	{ 0, 0, 0,
 	    sys_nosys },			/* 114 = unimplemented */
 	{ ns(struct ibcs2_sys_mmap_args), 0,
-	    ibcs2_sys_mmap },			/* 115 = mmap */
+	    (sy_call_t *)ibcs2_sys_mmap },	/* 115 = mmap */
 	{ ns(struct sys_mprotect_args), 0,
-	    sys_mprotect },			/* 116 = mprotect */
+	    (sy_call_t *)sys_mprotect },	/* 116 = mprotect */
 	{ ns(struct sys_munmap_args), 0,
-	    sys_munmap },			/* 117 = munmap */
+	    (sy_call_t *)sys_munmap },		/* 117 = munmap */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 118 = unimplemented */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 119 = unimplemented vfork */
 	{ ns(struct sys_fchdir_args), 0,
-	    sys_fchdir },			/* 120 = fchdir */
+	    (sy_call_t *)sys_fchdir },		/* 120 = fchdir */
 	{ ns(struct sys_readv_args), 0,
-	    sys_readv },			/* 121 = readv */
+	    (sy_call_t *)sys_readv },		/* 121 = readv */
 	{ ns(struct sys_writev_args), 0,
-	    sys_writev },			/* 122 = writev */
+	    (sy_call_t *)sys_writev },		/* 122 = writev */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 123 = unimplemented xstat */
 	{ 0, 0, 0,
@@ -306,7 +306,7 @@ struct sysent ibcs2_sysent[] = {
 	{ 0, 0, 0,
 	    sys_nosys },			/* 130 = unimplemented lchown */
 	{ ns(struct ibcs2_sys_memcntl_args), 0,
-	    ibcs2_sys_memcntl },		/* 131 = memcntl */
+	    (sy_call_t *)ibcs2_sys_memcntl },	/* 131 = memcntl */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 132 = unimplemented getpmsg */
 	{ 0, 0, 0,
@@ -386,9 +386,9 @@ struct sysent ibcs2_sysent[] = {
 	{ 0, 0, 0,
 	    sys_nosys },			/* 170 = unimplemented */
 	{ ns(struct ibcs2_sys_gettimeofday_args), 0,
-	    ibcs2_sys_gettimeofday },		/* 171 = gettimeofday */
+	    (sy_call_t *)ibcs2_sys_gettimeofday },/* 171 = gettimeofday */
 	{ ns(struct ibcs2_sys_settimeofday_args), 0,
-	    ibcs2_sys_settimeofday },		/* 172 = settimeofday */
+	    (sy_call_t *)ibcs2_sys_settimeofday },/* 172 = settimeofday */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 173 = unimplemented */
 	{ 0, 0, 0,
@@ -426,9 +426,9 @@ struct sysent ibcs2_sysent[] = {
 	{ 0, 0, 0,
 	    sys_nosys },			/* 190 = unimplemented */
 	{ ns(struct compat_43_sys_truncate_args), 0,
-	    compat_43_sys_truncate },		/* 191 = truncate */
+	    (sy_call_t *)compat_43_sys_truncate },/* 191 = truncate */
 	{ ns(struct compat_43_sys_ftruncate_args), 0,
-	    compat_43_sys_ftruncate },		/* 192 = ftruncate */
+	    (sy_call_t *)compat_43_sys_ftruncate },/* 192 = ftruncate */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 193 = unimplemented */
 	{ 0, 0, 0,
@@ -446,7 +446,7 @@ struct sysent ibcs2_sysent[] = {
 	{ 0, 0, 0,
 	    sys_nosys },			/* 200 = unimplemented */
 	{ ns(struct xenix_sys_locking_args), 0,
-	    xenix_sys_locking },		/* 201 = locking */
+	    (sy_call_t *)xenix_sys_locking },	/* 201 = locking */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 202 = unimplemented xenix_creatsem */
 	{ 0, 0, 0,
@@ -458,17 +458,17 @@ struct sysent ibcs2_sysent[] = {
 	{ 0, 0, 0,
 	    sys_nosys },			/* 206 = unimplemented xenix_nbwaitsem */
 	{ ns(struct xenix_sys_rdchk_args), 0,
-	    xenix_sys_rdchk },			/* 207 = rdchk */
+	    (sy_call_t *)xenix_sys_rdchk },	/* 207 = rdchk */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 208 = unimplemented */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 209 = unimplemented */
 	{ ns(struct xenix_sys_chsize_args), 0,
-	    xenix_sys_chsize },			/* 210 = chsize */
+	    (sy_call_t *)xenix_sys_chsize },	/* 210 = chsize */
 	{ ns(struct xenix_sys_ftime_args), 0,
-	    xenix_sys_ftime },			/* 211 = ftime */
+	    (sy_call_t *)xenix_sys_ftime },	/* 211 = ftime */
 	{ ns(struct xenix_sys_nap_args), 0,
-	    xenix_sys_nap },			/* 212 = nap */
+	    (sy_call_t *)xenix_sys_nap },	/* 212 = nap */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 213 = unimplemented xenix_sdget */
 	{ 0, 0, 0,
@@ -516,35 +516,35 @@ struct sysent ibcs2_sysent[] = {
 	{ 0, 0, 0,
 	    sys_nosys },			/* 235 = unimplemented */
 	{ ns(struct sys_select_args), 0,
-	    sys_select },			/* 236 = select */
+	    (sy_call_t *)sys_select },		/* 236 = select */
 	{ ns(struct ibcs2_sys_eaccess_args), 0,
-	    ibcs2_sys_eaccess },		/* 237 = eaccess */
+	    (sy_call_t *)ibcs2_sys_eaccess },	/* 237 = eaccess */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 238 = unimplemented xenix_paccess */
 	{ ns(struct ibcs2_sys_sigaction_args), 0,
-	    ibcs2_sys_sigaction },		/* 239 = sigaction */
+	    (sy_call_t *)ibcs2_sys_sigaction },	/* 239 = sigaction */
 	{ ns(struct ibcs2_sys_sigprocmask_args), 0,
-	    ibcs2_sys_sigprocmask },		/* 240 = sigprocmask */
+	    (sy_call_t *)ibcs2_sys_sigprocmask },/* 240 = sigprocmask */
 	{ ns(struct ibcs2_sys_sigpending_args), 0,
-	    ibcs2_sys_sigpending },		/* 241 = sigpending */
+	    (sy_call_t *)ibcs2_sys_sigpending },/* 241 = sigpending */
 	{ ns(struct ibcs2_sys_sigsuspend_args), 0,
-	    ibcs2_sys_sigsuspend },		/* 242 = sigsuspend */
+	    (sy_call_t *)ibcs2_sys_sigsuspend },/* 242 = sigsuspend */
 	{ ns(struct ibcs2_sys_getgroups_args), 0,
-	    ibcs2_sys_getgroups },		/* 243 = getgroups */
+	    (sy_call_t *)ibcs2_sys_getgroups },	/* 243 = getgroups */
 	{ ns(struct ibcs2_sys_setgroups_args), 0,
-	    ibcs2_sys_setgroups },		/* 244 = setgroups */
+	    (sy_call_t *)ibcs2_sys_setgroups },	/* 244 = setgroups */
 	{ ns(struct ibcs2_sys_sysconf_args), 0,
-	    ibcs2_sys_sysconf },		/* 245 = sysconf */
+	    (sy_call_t *)ibcs2_sys_sysconf },	/* 245 = sysconf */
 	{ ns(struct ibcs2_sys_pathconf_args), 0,
-	    ibcs2_sys_pathconf },		/* 246 = pathconf */
+	    (sy_call_t *)ibcs2_sys_pathconf },	/* 246 = pathconf */
 	{ ns(struct ibcs2_sys_fpathconf_args), 0,
-	    ibcs2_sys_fpathconf },		/* 247 = fpathconf */
+	    (sy_call_t *)ibcs2_sys_fpathconf },	/* 247 = fpathconf */
 	{ ns(struct sys___posix_rename_args), 0,
-	    sys___posix_rename },		/* 248 = __posix_rename */
+	    (sy_call_t *)sys___posix_rename },	/* 248 = __posix_rename */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 249 = unimplemented */
 	{ ns(struct ibcs2_sys_scoinfo_args), 0,
-	    ibcs2_sys_scoinfo },		/* 250 = scoinfo */
+	    (sy_call_t *)ibcs2_sys_scoinfo },	/* 250 = scoinfo */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 251 = unimplemented */
 	{ 0, 0, 0,

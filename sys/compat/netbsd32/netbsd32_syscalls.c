@@ -1,4 +1,4 @@
-/* $NetBSD: netbsd32_syscalls.c,v 1.70 2007/12/17 20:47:32 dsl Exp $ */
+/* $NetBSD: netbsd32_syscalls.c,v 1.71 2007/12/20 23:10:49 dsl Exp $ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_syscalls.c,v 1.70 2007/12/17 20:47:32 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_syscalls.c,v 1.71 2007/12/20 23:10:49 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #if defined(_KERNEL_OPT)
