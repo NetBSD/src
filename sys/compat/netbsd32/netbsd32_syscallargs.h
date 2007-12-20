@@ -1,4 +1,4 @@
-/* $NetBSD: netbsd32_syscallargs.h,v 1.71 2007/12/17 20:47:31 dsl Exp $ */
+/* $NetBSD: netbsd32_syscallargs.h,v 1.72 2007/12/20 23:10:49 dsl Exp $ */
 
 /*
  * System call argument lists.
@@ -1984,6 +1984,8 @@ struct netbsd32_sys___getdents30_args {
 };
 check_syscall_args(netbsd32_sys___getdents30)
 
+struct sys_posix_fadvise_args;
+
 struct compat_30_netbsd32_sys___fhstat30_args {
 	syscallarg(netbsd32_fhandlep_t) fhp;
 	syscallarg(netbsd32_statp_t) sb;
@@ -2035,693 +2037,693 @@ check_syscall_args(netbsd32___fhstat40)
  * System call prototypes.
  */
 
-int	netbsd32_sys_syscall(struct lwp *, void *, register_t *);
+int	netbsd32_sys_syscall(struct lwp *, const struct netbsd32_sys_syscall_args *, register_t *);
 
-int	netbsd32_exit(struct lwp *, void *, register_t *);
+int	netbsd32_exit(struct lwp *, const struct netbsd32_exit_args *, register_t *);
 
-int	sys_fork(struct lwp *, void *, register_t *);
+int	sys_fork(struct lwp *, const void *, register_t *);
 
-int	netbsd32_read(struct lwp *, void *, register_t *);
+int	netbsd32_read(struct lwp *, const struct netbsd32_read_args *, register_t *);
 
-int	netbsd32_write(struct lwp *, void *, register_t *);
+int	netbsd32_write(struct lwp *, const struct netbsd32_write_args *, register_t *);
 
-int	netbsd32_open(struct lwp *, void *, register_t *);
+int	netbsd32_open(struct lwp *, const struct netbsd32_open_args *, register_t *);
 
-int	netbsd32_close(struct lwp *, void *, register_t *);
+int	netbsd32_close(struct lwp *, const struct netbsd32_close_args *, register_t *);
 
-int	netbsd32_wait4(struct lwp *, void *, register_t *);
+int	netbsd32_wait4(struct lwp *, const struct netbsd32_wait4_args *, register_t *);
 
-int	compat_43_netbsd32_ocreat(struct lwp *, void *, register_t *);
+int	compat_43_netbsd32_ocreat(struct lwp *, const struct compat_43_netbsd32_ocreat_args *, register_t *);
 
-int	netbsd32_link(struct lwp *, void *, register_t *);
+int	netbsd32_link(struct lwp *, const struct netbsd32_link_args *, register_t *);
 
-int	netbsd32_unlink(struct lwp *, void *, register_t *);
+int	netbsd32_unlink(struct lwp *, const struct netbsd32_unlink_args *, register_t *);
 
-int	netbsd32_chdir(struct lwp *, void *, register_t *);
+int	netbsd32_chdir(struct lwp *, const struct netbsd32_chdir_args *, register_t *);
 
-int	netbsd32_fchdir(struct lwp *, void *, register_t *);
+int	netbsd32_fchdir(struct lwp *, const struct netbsd32_fchdir_args *, register_t *);
 
-int	netbsd32_mknod(struct lwp *, void *, register_t *);
+int	netbsd32_mknod(struct lwp *, const struct netbsd32_mknod_args *, register_t *);
 
-int	netbsd32_chmod(struct lwp *, void *, register_t *);
+int	netbsd32_chmod(struct lwp *, const struct netbsd32_chmod_args *, register_t *);
 
-int	netbsd32_chown(struct lwp *, void *, register_t *);
+int	netbsd32_chown(struct lwp *, const struct netbsd32_chown_args *, register_t *);
 
-int	netbsd32_break(struct lwp *, void *, register_t *);
+int	netbsd32_break(struct lwp *, const struct netbsd32_break_args *, register_t *);
 
-int	compat_20_netbsd32_getfsstat(struct lwp *, void *, register_t *);
+int	compat_20_netbsd32_getfsstat(struct lwp *, const struct compat_20_netbsd32_getfsstat_args *, register_t *);
 
-int	compat_43_netbsd32_olseek(struct lwp *, void *, register_t *);
+int	compat_43_netbsd32_olseek(struct lwp *, const struct compat_43_netbsd32_olseek_args *, register_t *);
 
-int	sys_getpid(struct lwp *, void *, register_t *);
+int	sys_getpid(struct lwp *, const void *, register_t *);
 
-int	netbsd32_mount(struct lwp *, void *, register_t *);
+int	netbsd32_mount(struct lwp *, const struct netbsd32_mount_args *, register_t *);
 
-int	netbsd32_unmount(struct lwp *, void *, register_t *);
+int	netbsd32_unmount(struct lwp *, const struct netbsd32_unmount_args *, register_t *);
 
-int	netbsd32_setuid(struct lwp *, void *, register_t *);
+int	netbsd32_setuid(struct lwp *, const struct netbsd32_setuid_args *, register_t *);
 
-int	sys_getuid(struct lwp *, void *, register_t *);
+int	sys_getuid(struct lwp *, const void *, register_t *);
 
-int	sys_geteuid(struct lwp *, void *, register_t *);
+int	sys_geteuid(struct lwp *, const void *, register_t *);
 
-int	netbsd32_ptrace(struct lwp *, void *, register_t *);
+int	netbsd32_ptrace(struct lwp *, const struct netbsd32_ptrace_args *, register_t *);
 
-int	netbsd32_recvmsg(struct lwp *, void *, register_t *);
+int	netbsd32_recvmsg(struct lwp *, const struct netbsd32_recvmsg_args *, register_t *);
 
-int	netbsd32_sendmsg(struct lwp *, void *, register_t *);
+int	netbsd32_sendmsg(struct lwp *, const struct netbsd32_sendmsg_args *, register_t *);
 
-int	netbsd32_recvfrom(struct lwp *, void *, register_t *);
+int	netbsd32_recvfrom(struct lwp *, const struct netbsd32_recvfrom_args *, register_t *);
 
-int	netbsd32_accept(struct lwp *, void *, register_t *);
+int	netbsd32_accept(struct lwp *, const struct netbsd32_accept_args *, register_t *);
 
-int	netbsd32_getpeername(struct lwp *, void *, register_t *);
+int	netbsd32_getpeername(struct lwp *, const struct netbsd32_getpeername_args *, register_t *);
 
-int	netbsd32_getsockname(struct lwp *, void *, register_t *);
+int	netbsd32_getsockname(struct lwp *, const struct netbsd32_getsockname_args *, register_t *);
 
-int	netbsd32_access(struct lwp *, void *, register_t *);
+int	netbsd32_access(struct lwp *, const struct netbsd32_access_args *, register_t *);
 
-int	netbsd32_chflags(struct lwp *, void *, register_t *);
+int	netbsd32_chflags(struct lwp *, const struct netbsd32_chflags_args *, register_t *);
 
-int	netbsd32_fchflags(struct lwp *, void *, register_t *);
+int	netbsd32_fchflags(struct lwp *, const struct netbsd32_fchflags_args *, register_t *);
 
-int	sys_sync(struct lwp *, void *, register_t *);
+int	sys_sync(struct lwp *, const void *, register_t *);
 
-int	netbsd32_kill(struct lwp *, void *, register_t *);
+int	netbsd32_kill(struct lwp *, const struct netbsd32_kill_args *, register_t *);
 
-int	compat_43_netbsd32_stat43(struct lwp *, void *, register_t *);
+int	compat_43_netbsd32_stat43(struct lwp *, const struct compat_43_netbsd32_stat43_args *, register_t *);
 
-int	sys_getppid(struct lwp *, void *, register_t *);
+int	sys_getppid(struct lwp *, const void *, register_t *);
 
-int	compat_43_netbsd32_lstat43(struct lwp *, void *, register_t *);
+int	compat_43_netbsd32_lstat43(struct lwp *, const struct compat_43_netbsd32_lstat43_args *, register_t *);
 
-int	netbsd32_dup(struct lwp *, void *, register_t *);
+int	netbsd32_dup(struct lwp *, const struct netbsd32_dup_args *, register_t *);
 
-int	sys_pipe(struct lwp *, void *, register_t *);
+int	sys_pipe(struct lwp *, const void *, register_t *);
 
-int	sys_getegid(struct lwp *, void *, register_t *);
+int	sys_getegid(struct lwp *, const void *, register_t *);
 
-int	netbsd32_profil(struct lwp *, void *, register_t *);
+int	netbsd32_profil(struct lwp *, const struct netbsd32_profil_args *, register_t *);
 
-int	netbsd32_ktrace(struct lwp *, void *, register_t *);
+int	netbsd32_ktrace(struct lwp *, const struct netbsd32_ktrace_args *, register_t *);
 
-int	netbsd32_sigaction(struct lwp *, void *, register_t *);
+int	netbsd32_sigaction(struct lwp *, const struct netbsd32_sigaction_args *, register_t *);
 
-int	sys_getgid(struct lwp *, void *, register_t *);
+int	sys_getgid(struct lwp *, const void *, register_t *);
 
-int	compat_13_netbsd32_sigprocmask(struct lwp *, void *, register_t *);
+int	compat_13_netbsd32_sigprocmask(struct lwp *, const struct compat_13_netbsd32_sigprocmask_args *, register_t *);
 
-int	netbsd32___getlogin(struct lwp *, void *, register_t *);
+int	netbsd32___getlogin(struct lwp *, const struct netbsd32___getlogin_args *, register_t *);
 
-int	netbsd32_setlogin(struct lwp *, void *, register_t *);
+int	netbsd32_setlogin(struct lwp *, const struct netbsd32_setlogin_args *, register_t *);
 
-int	netbsd32_acct(struct lwp *, void *, register_t *);
+int	netbsd32_acct(struct lwp *, const struct netbsd32_acct_args *, register_t *);
 
-int	compat_13_sys_sigpending(struct lwp *, void *, register_t *);
+int	compat_13_sys_sigpending(struct lwp *, const void *, register_t *);
 
-int	compat_13_netbsd32_sigaltstack13(struct lwp *, void *, register_t *);
+int	compat_13_netbsd32_sigaltstack13(struct lwp *, const struct compat_13_netbsd32_sigaltstack13_args *, register_t *);
 
-int	netbsd32_ioctl(struct lwp *, void *, register_t *);
+int	netbsd32_ioctl(struct lwp *, const struct netbsd32_ioctl_args *, register_t *);
 
-int	compat_12_netbsd32_reboot(struct lwp *, void *, register_t *);
+int	compat_12_netbsd32_reboot(struct lwp *, const struct compat_12_netbsd32_reboot_args *, register_t *);
 
-int	netbsd32_revoke(struct lwp *, void *, register_t *);
+int	netbsd32_revoke(struct lwp *, const struct netbsd32_revoke_args *, register_t *);
 
-int	netbsd32_symlink(struct lwp *, void *, register_t *);
+int	netbsd32_symlink(struct lwp *, const struct netbsd32_symlink_args *, register_t *);
 
-int	netbsd32_readlink(struct lwp *, void *, register_t *);
+int	netbsd32_readlink(struct lwp *, const struct netbsd32_readlink_args *, register_t *);
 
-int	netbsd32_execve(struct lwp *, void *, register_t *);
+int	netbsd32_execve(struct lwp *, const struct netbsd32_execve_args *, register_t *);
 
-int	netbsd32_umask(struct lwp *, void *, register_t *);
+int	netbsd32_umask(struct lwp *, const struct netbsd32_umask_args *, register_t *);
 
-int	netbsd32_chroot(struct lwp *, void *, register_t *);
+int	netbsd32_chroot(struct lwp *, const struct netbsd32_chroot_args *, register_t *);
 
-int	compat_43_netbsd32_fstat43(struct lwp *, void *, register_t *);
+int	compat_43_netbsd32_fstat43(struct lwp *, const struct compat_43_netbsd32_fstat43_args *, register_t *);
 
-int	compat_43_netbsd32_ogetkerninfo(struct lwp *, void *, register_t *);
+int	compat_43_netbsd32_ogetkerninfo(struct lwp *, const struct compat_43_netbsd32_ogetkerninfo_args *, register_t *);
 
-int	compat_43_sys_getpagesize(struct lwp *, void *, register_t *);
+int	compat_43_sys_getpagesize(struct lwp *, const void *, register_t *);
 
-int	compat_12_netbsd32_msync(struct lwp *, void *, register_t *);
+int	compat_12_netbsd32_msync(struct lwp *, const struct compat_12_netbsd32_msync_args *, register_t *);
 
-int	sys_vfork(struct lwp *, void *, register_t *);
+int	sys_vfork(struct lwp *, const void *, register_t *);
 
-int	netbsd32_sbrk(struct lwp *, void *, register_t *);
+int	netbsd32_sbrk(struct lwp *, const struct netbsd32_sbrk_args *, register_t *);
 
-int	netbsd32_sstk(struct lwp *, void *, register_t *);
+int	netbsd32_sstk(struct lwp *, const struct netbsd32_sstk_args *, register_t *);
 
-int	compat_43_netbsd32_ommap(struct lwp *, void *, register_t *);
+int	compat_43_netbsd32_ommap(struct lwp *, const struct compat_43_netbsd32_ommap_args *, register_t *);
 
-int	netbsd32_ovadvise(struct lwp *, void *, register_t *);
+int	netbsd32_ovadvise(struct lwp *, const struct netbsd32_ovadvise_args *, register_t *);
 
-int	netbsd32_munmap(struct lwp *, void *, register_t *);
+int	netbsd32_munmap(struct lwp *, const struct netbsd32_munmap_args *, register_t *);
 
-int	netbsd32_mprotect(struct lwp *, void *, register_t *);
+int	netbsd32_mprotect(struct lwp *, const struct netbsd32_mprotect_args *, register_t *);
 
-int	netbsd32_madvise(struct lwp *, void *, register_t *);
+int	netbsd32_madvise(struct lwp *, const struct netbsd32_madvise_args *, register_t *);
 
-int	netbsd32_mincore(struct lwp *, void *, register_t *);
+int	netbsd32_mincore(struct lwp *, const struct netbsd32_mincore_args *, register_t *);
 
-int	netbsd32_getgroups(struct lwp *, void *, register_t *);
+int	netbsd32_getgroups(struct lwp *, const struct netbsd32_getgroups_args *, register_t *);
 
-int	netbsd32_setgroups(struct lwp *, void *, register_t *);
+int	netbsd32_setgroups(struct lwp *, const struct netbsd32_setgroups_args *, register_t *);
 
-int	sys_getpgrp(struct lwp *, void *, register_t *);
+int	sys_getpgrp(struct lwp *, const void *, register_t *);
 
-int	netbsd32_setpgid(struct lwp *, void *, register_t *);
+int	netbsd32_setpgid(struct lwp *, const struct netbsd32_setpgid_args *, register_t *);
 
-int	netbsd32_setitimer(struct lwp *, void *, register_t *);
+int	netbsd32_setitimer(struct lwp *, const struct netbsd32_setitimer_args *, register_t *);
 
-int	compat_43_sys_wait(struct lwp *, void *, register_t *);
+int	compat_43_sys_wait(struct lwp *, const void *, register_t *);
 
-int	compat_12_netbsd32_oswapon(struct lwp *, void *, register_t *);
+int	compat_12_netbsd32_oswapon(struct lwp *, const struct compat_12_netbsd32_oswapon_args *, register_t *);
 
-int	netbsd32_getitimer(struct lwp *, void *, register_t *);
+int	netbsd32_getitimer(struct lwp *, const struct netbsd32_getitimer_args *, register_t *);
 
-int	compat_43_netbsd32_ogethostname(struct lwp *, void *, register_t *);
+int	compat_43_netbsd32_ogethostname(struct lwp *, const struct compat_43_netbsd32_ogethostname_args *, register_t *);
 
-int	compat_43_netbsd32_osethostname(struct lwp *, void *, register_t *);
+int	compat_43_netbsd32_osethostname(struct lwp *, const struct compat_43_netbsd32_osethostname_args *, register_t *);
 
-int	compat_43_sys_getdtablesize(struct lwp *, void *, register_t *);
+int	compat_43_sys_getdtablesize(struct lwp *, const void *, register_t *);
 
-int	netbsd32_dup2(struct lwp *, void *, register_t *);
+int	netbsd32_dup2(struct lwp *, const struct netbsd32_dup2_args *, register_t *);
 
-int	netbsd32_fcntl(struct lwp *, void *, register_t *);
+int	netbsd32_fcntl(struct lwp *, const struct netbsd32_fcntl_args *, register_t *);
 
-int	netbsd32_select(struct lwp *, void *, register_t *);
+int	netbsd32_select(struct lwp *, const struct netbsd32_select_args *, register_t *);
 
-int	netbsd32_fsync(struct lwp *, void *, register_t *);
+int	netbsd32_fsync(struct lwp *, const struct netbsd32_fsync_args *, register_t *);
 
-int	netbsd32_setpriority(struct lwp *, void *, register_t *);
+int	netbsd32_setpriority(struct lwp *, const struct netbsd32_setpriority_args *, register_t *);
 
-int	compat_30_netbsd32_socket(struct lwp *, void *, register_t *);
+int	compat_30_netbsd32_socket(struct lwp *, const struct compat_30_netbsd32_socket_args *, register_t *);
 
-int	netbsd32_connect(struct lwp *, void *, register_t *);
+int	netbsd32_connect(struct lwp *, const struct netbsd32_connect_args *, register_t *);
 
-int	compat_43_netbsd32_oaccept(struct lwp *, void *, register_t *);
+int	compat_43_netbsd32_oaccept(struct lwp *, const struct compat_43_netbsd32_oaccept_args *, register_t *);
 
-int	netbsd32_getpriority(struct lwp *, void *, register_t *);
+int	netbsd32_getpriority(struct lwp *, const struct netbsd32_getpriority_args *, register_t *);
 
-int	compat_43_netbsd32_osend(struct lwp *, void *, register_t *);
+int	compat_43_netbsd32_osend(struct lwp *, const struct compat_43_netbsd32_osend_args *, register_t *);
 
-int	compat_43_netbsd32_orecv(struct lwp *, void *, register_t *);
+int	compat_43_netbsd32_orecv(struct lwp *, const struct compat_43_netbsd32_orecv_args *, register_t *);
 
-int	compat_13_netbsd32_sigreturn(struct lwp *, void *, register_t *);
+int	compat_13_netbsd32_sigreturn(struct lwp *, const struct compat_13_netbsd32_sigreturn_args *, register_t *);
 
-int	netbsd32_bind(struct lwp *, void *, register_t *);
+int	netbsd32_bind(struct lwp *, const struct netbsd32_bind_args *, register_t *);
 
-int	netbsd32_setsockopt(struct lwp *, void *, register_t *);
+int	netbsd32_setsockopt(struct lwp *, const struct netbsd32_setsockopt_args *, register_t *);
 
-int	netbsd32_listen(struct lwp *, void *, register_t *);
+int	netbsd32_listen(struct lwp *, const struct netbsd32_listen_args *, register_t *);
 
-int	compat_43_netbsd32_osigvec(struct lwp *, void *, register_t *);
+int	compat_43_netbsd32_osigvec(struct lwp *, const struct compat_43_netbsd32_osigvec_args *, register_t *);
 
-int	compat_43_netbsd32_sigblock(struct lwp *, void *, register_t *);
+int	compat_43_netbsd32_sigblock(struct lwp *, const struct compat_43_netbsd32_sigblock_args *, register_t *);
 
-int	compat_43_netbsd32_sigsetmask(struct lwp *, void *, register_t *);
+int	compat_43_netbsd32_sigsetmask(struct lwp *, const struct compat_43_netbsd32_sigsetmask_args *, register_t *);
 
-int	compat_13_netbsd32_sigsuspend(struct lwp *, void *, register_t *);
+int	compat_13_netbsd32_sigsuspend(struct lwp *, const struct compat_13_netbsd32_sigsuspend_args *, register_t *);
 
-int	compat_43_netbsd32_osigstack(struct lwp *, void *, register_t *);
+int	compat_43_netbsd32_osigstack(struct lwp *, const struct compat_43_netbsd32_osigstack_args *, register_t *);
 
-int	compat_43_netbsd32_orecvmsg(struct lwp *, void *, register_t *);
+int	compat_43_netbsd32_orecvmsg(struct lwp *, const struct compat_43_netbsd32_orecvmsg_args *, register_t *);
 
-int	compat_43_netbsd32_osendmsg(struct lwp *, void *, register_t *);
+int	compat_43_netbsd32_osendmsg(struct lwp *, const struct compat_43_netbsd32_osendmsg_args *, register_t *);
 
-int	netbsd32_gettimeofday(struct lwp *, void *, register_t *);
+int	netbsd32_gettimeofday(struct lwp *, const struct netbsd32_gettimeofday_args *, register_t *);
 
-int	netbsd32_getrusage(struct lwp *, void *, register_t *);
+int	netbsd32_getrusage(struct lwp *, const struct netbsd32_getrusage_args *, register_t *);
 
-int	netbsd32_getsockopt(struct lwp *, void *, register_t *);
+int	netbsd32_getsockopt(struct lwp *, const struct netbsd32_getsockopt_args *, register_t *);
 
-int	netbsd32_readv(struct lwp *, void *, register_t *);
+int	netbsd32_readv(struct lwp *, const struct netbsd32_readv_args *, register_t *);
 
-int	netbsd32_writev(struct lwp *, void *, register_t *);
+int	netbsd32_writev(struct lwp *, const struct netbsd32_writev_args *, register_t *);
 
-int	netbsd32_settimeofday(struct lwp *, void *, register_t *);
+int	netbsd32_settimeofday(struct lwp *, const struct netbsd32_settimeofday_args *, register_t *);
 
-int	netbsd32_fchown(struct lwp *, void *, register_t *);
+int	netbsd32_fchown(struct lwp *, const struct netbsd32_fchown_args *, register_t *);
 
-int	netbsd32_fchmod(struct lwp *, void *, register_t *);
+int	netbsd32_fchmod(struct lwp *, const struct netbsd32_fchmod_args *, register_t *);
 
-int	compat_43_netbsd32_orecvfrom(struct lwp *, void *, register_t *);
+int	compat_43_netbsd32_orecvfrom(struct lwp *, const struct compat_43_netbsd32_orecvfrom_args *, register_t *);
 
-int	netbsd32_setreuid(struct lwp *, void *, register_t *);
+int	netbsd32_setreuid(struct lwp *, const struct netbsd32_setreuid_args *, register_t *);
 
-int	netbsd32_setregid(struct lwp *, void *, register_t *);
+int	netbsd32_setregid(struct lwp *, const struct netbsd32_setregid_args *, register_t *);
 
-int	netbsd32_rename(struct lwp *, void *, register_t *);
+int	netbsd32_rename(struct lwp *, const struct netbsd32_rename_args *, register_t *);
 
-int	compat_43_netbsd32_otruncate(struct lwp *, void *, register_t *);
+int	compat_43_netbsd32_otruncate(struct lwp *, const struct compat_43_netbsd32_otruncate_args *, register_t *);
 
-int	compat_43_netbsd32_oftruncate(struct lwp *, void *, register_t *);
+int	compat_43_netbsd32_oftruncate(struct lwp *, const struct compat_43_netbsd32_oftruncate_args *, register_t *);
 
-int	netbsd32_flock(struct lwp *, void *, register_t *);
+int	netbsd32_flock(struct lwp *, const struct netbsd32_flock_args *, register_t *);
 
-int	netbsd32_mkfifo(struct lwp *, void *, register_t *);
+int	netbsd32_mkfifo(struct lwp *, const struct netbsd32_mkfifo_args *, register_t *);
 
-int	netbsd32_sendto(struct lwp *, void *, register_t *);
+int	netbsd32_sendto(struct lwp *, const struct netbsd32_sendto_args *, register_t *);
 
-int	netbsd32_shutdown(struct lwp *, void *, register_t *);
+int	netbsd32_shutdown(struct lwp *, const struct netbsd32_shutdown_args *, register_t *);
 
-int	netbsd32_socketpair(struct lwp *, void *, register_t *);
+int	netbsd32_socketpair(struct lwp *, const struct netbsd32_socketpair_args *, register_t *);
 
-int	netbsd32_mkdir(struct lwp *, void *, register_t *);
+int	netbsd32_mkdir(struct lwp *, const struct netbsd32_mkdir_args *, register_t *);
 
-int	netbsd32_rmdir(struct lwp *, void *, register_t *);
+int	netbsd32_rmdir(struct lwp *, const struct netbsd32_rmdir_args *, register_t *);
 
-int	netbsd32_utimes(struct lwp *, void *, register_t *);
+int	netbsd32_utimes(struct lwp *, const struct netbsd32_utimes_args *, register_t *);
 
-int	netbsd32_adjtime(struct lwp *, void *, register_t *);
+int	netbsd32_adjtime(struct lwp *, const struct netbsd32_adjtime_args *, register_t *);
 
-int	compat_43_netbsd32_ogetpeername(struct lwp *, void *, register_t *);
+int	compat_43_netbsd32_ogetpeername(struct lwp *, const struct compat_43_netbsd32_ogetpeername_args *, register_t *);
 
-int	compat_43_sys_gethostid(struct lwp *, void *, register_t *);
+int	compat_43_sys_gethostid(struct lwp *, const void *, register_t *);
 
-int	compat_43_netbsd32_sethostid(struct lwp *, void *, register_t *);
+int	compat_43_netbsd32_sethostid(struct lwp *, const struct compat_43_netbsd32_sethostid_args *, register_t *);
 
-int	compat_43_netbsd32_ogetrlimit(struct lwp *, void *, register_t *);
+int	compat_43_netbsd32_ogetrlimit(struct lwp *, const struct compat_43_netbsd32_ogetrlimit_args *, register_t *);
 
-int	compat_43_netbsd32_osetrlimit(struct lwp *, void *, register_t *);
+int	compat_43_netbsd32_osetrlimit(struct lwp *, const struct compat_43_netbsd32_osetrlimit_args *, register_t *);
 
-int	compat_43_netbsd32_killpg(struct lwp *, void *, register_t *);
+int	compat_43_netbsd32_killpg(struct lwp *, const struct compat_43_netbsd32_killpg_args *, register_t *);
 
-int	sys_setsid(struct lwp *, void *, register_t *);
+int	sys_setsid(struct lwp *, const void *, register_t *);
 
-int	netbsd32_quotactl(struct lwp *, void *, register_t *);
+int	netbsd32_quotactl(struct lwp *, const struct netbsd32_quotactl_args *, register_t *);
 
-int	compat_43_sys_quota(struct lwp *, void *, register_t *);
+int	compat_43_sys_quota(struct lwp *, const void *, register_t *);
 
-int	compat_43_netbsd32_ogetsockname(struct lwp *, void *, register_t *);
+int	compat_43_netbsd32_ogetsockname(struct lwp *, const struct compat_43_netbsd32_ogetsockname_args *, register_t *);
 
 #if defined(NFS) || defined(NFSSERVER) || !defined(_KERNEL)
-int	netbsd32_nfssvc(struct lwp *, void *, register_t *);
+int	netbsd32_nfssvc(struct lwp *, const struct netbsd32_nfssvc_args *, register_t *);
 
 #else
 #endif
-int	compat_43_netbsd32_ogetdirentries(struct lwp *, void *, register_t *);
+int	compat_43_netbsd32_ogetdirentries(struct lwp *, const struct compat_43_netbsd32_ogetdirentries_args *, register_t *);
 
-int	compat_20_netbsd32_statfs(struct lwp *, void *, register_t *);
+int	compat_20_netbsd32_statfs(struct lwp *, const struct compat_20_netbsd32_statfs_args *, register_t *);
 
-int	compat_20_netbsd32_fstatfs(struct lwp *, void *, register_t *);
+int	compat_20_netbsd32_fstatfs(struct lwp *, const struct compat_20_netbsd32_fstatfs_args *, register_t *);
 
-int	compat_30_netbsd32_getfh(struct lwp *, void *, register_t *);
+int	compat_30_netbsd32_getfh(struct lwp *, const struct compat_30_netbsd32_getfh_args *, register_t *);
 
-int	compat_09_netbsd32_ogetdomainname(struct lwp *, void *, register_t *);
+int	compat_09_netbsd32_ogetdomainname(struct lwp *, const struct compat_09_netbsd32_ogetdomainname_args *, register_t *);
 
-int	compat_09_netbsd32_osetdomainname(struct lwp *, void *, register_t *);
+int	compat_09_netbsd32_osetdomainname(struct lwp *, const struct compat_09_netbsd32_osetdomainname_args *, register_t *);
 
-int	compat_09_netbsd32_uname(struct lwp *, void *, register_t *);
+int	compat_09_netbsd32_uname(struct lwp *, const struct compat_09_netbsd32_uname_args *, register_t *);
 
-int	netbsd32_sysarch(struct lwp *, void *, register_t *);
+int	netbsd32_sysarch(struct lwp *, const struct netbsd32_sysarch_args *, register_t *);
 
 #if defined(SYSVSEM) || !defined(_KERNEL)
-int	compat_10_netbsd32_sys_semsys(struct lwp *, void *, register_t *);
+int	compat_10_netbsd32_sys_semsys(struct lwp *, const struct compat_10_netbsd32_sys_semsys_args *, register_t *);
 
 #else
 #endif
 #if defined(SYSVMSG) || !defined(_KERNEL)
-int	compat_10_netbsd32_sys_msgsys(struct lwp *, void *, register_t *);
+int	compat_10_netbsd32_sys_msgsys(struct lwp *, const struct compat_10_netbsd32_sys_msgsys_args *, register_t *);
 
 #else
 #endif
 #if defined(SYSVSHM) || !defined(_KERNEL)
-int	compat_10_netbsd32_sys_shmsys(struct lwp *, void *, register_t *);
+int	compat_10_netbsd32_sys_shmsys(struct lwp *, const struct compat_10_netbsd32_sys_shmsys_args *, register_t *);
 
 #else
 #endif
-int	netbsd32_pread(struct lwp *, void *, register_t *);
+int	netbsd32_pread(struct lwp *, const struct netbsd32_pread_args *, register_t *);
 
-int	netbsd32_pwrite(struct lwp *, void *, register_t *);
+int	netbsd32_pwrite(struct lwp *, const struct netbsd32_pwrite_args *, register_t *);
 
-int	compat_30_netbsd32_ntp_gettime(struct lwp *, void *, register_t *);
+int	compat_30_netbsd32_ntp_gettime(struct lwp *, const struct compat_30_netbsd32_ntp_gettime_args *, register_t *);
 
-int	netbsd32_ntp_adjtime(struct lwp *, void *, register_t *);
+int	netbsd32_ntp_adjtime(struct lwp *, const struct netbsd32_ntp_adjtime_args *, register_t *);
 
-int	netbsd32_setgid(struct lwp *, void *, register_t *);
+int	netbsd32_setgid(struct lwp *, const struct netbsd32_setgid_args *, register_t *);
 
-int	netbsd32_setegid(struct lwp *, void *, register_t *);
+int	netbsd32_setegid(struct lwp *, const struct netbsd32_setegid_args *, register_t *);
 
-int	netbsd32_seteuid(struct lwp *, void *, register_t *);
+int	netbsd32_seteuid(struct lwp *, const struct netbsd32_seteuid_args *, register_t *);
 
 #if defined(LFS) || !defined(_KERNEL)
-int	netbsd32_sys_lfs_bmapv(struct lwp *, void *, register_t *);
+int	netbsd32_sys_lfs_bmapv(struct lwp *, const struct netbsd32_sys_lfs_bmapv_args *, register_t *);
 
-int	netbsd32_sys_lfs_markv(struct lwp *, void *, register_t *);
+int	netbsd32_sys_lfs_markv(struct lwp *, const struct netbsd32_sys_lfs_markv_args *, register_t *);
 
-int	netbsd32_sys_lfs_segclean(struct lwp *, void *, register_t *);
+int	netbsd32_sys_lfs_segclean(struct lwp *, const struct netbsd32_sys_lfs_segclean_args *, register_t *);
 
-int	netbsd32_sys_lfs_segwait(struct lwp *, void *, register_t *);
+int	netbsd32_sys_lfs_segwait(struct lwp *, const struct netbsd32_sys_lfs_segwait_args *, register_t *);
 
 #else
 #endif
-int	compat_12_netbsd32_stat12(struct lwp *, void *, register_t *);
+int	compat_12_netbsd32_stat12(struct lwp *, const struct compat_12_netbsd32_stat12_args *, register_t *);
 
-int	compat_12_netbsd32_fstat12(struct lwp *, void *, register_t *);
+int	compat_12_netbsd32_fstat12(struct lwp *, const struct compat_12_netbsd32_fstat12_args *, register_t *);
 
-int	compat_12_netbsd32_lstat12(struct lwp *, void *, register_t *);
+int	compat_12_netbsd32_lstat12(struct lwp *, const struct compat_12_netbsd32_lstat12_args *, register_t *);
 
-int	netbsd32_pathconf(struct lwp *, void *, register_t *);
+int	netbsd32_pathconf(struct lwp *, const struct netbsd32_pathconf_args *, register_t *);
 
-int	netbsd32_fpathconf(struct lwp *, void *, register_t *);
+int	netbsd32_fpathconf(struct lwp *, const struct netbsd32_fpathconf_args *, register_t *);
 
-int	netbsd32_getrlimit(struct lwp *, void *, register_t *);
+int	netbsd32_getrlimit(struct lwp *, const struct netbsd32_getrlimit_args *, register_t *);
 
-int	netbsd32_setrlimit(struct lwp *, void *, register_t *);
+int	netbsd32_setrlimit(struct lwp *, const struct netbsd32_setrlimit_args *, register_t *);
 
-int	compat_12_netbsd32_getdirentries(struct lwp *, void *, register_t *);
+int	compat_12_netbsd32_getdirentries(struct lwp *, const struct compat_12_netbsd32_getdirentries_args *, register_t *);
 
-int	netbsd32_mmap(struct lwp *, void *, register_t *);
+int	netbsd32_mmap(struct lwp *, const struct netbsd32_mmap_args *, register_t *);
 
-int	netbsd32_sys___syscall(struct lwp *, void *, register_t *);
+int	netbsd32_sys___syscall(struct lwp *, const struct netbsd32_sys___syscall_args *, register_t *);
 
-int	netbsd32_lseek(struct lwp *, void *, register_t *);
+int	netbsd32_lseek(struct lwp *, const struct netbsd32_lseek_args *, register_t *);
 
-int	netbsd32_truncate(struct lwp *, void *, register_t *);
+int	netbsd32_truncate(struct lwp *, const struct netbsd32_truncate_args *, register_t *);
 
-int	netbsd32_ftruncate(struct lwp *, void *, register_t *);
+int	netbsd32_ftruncate(struct lwp *, const struct netbsd32_ftruncate_args *, register_t *);
 
-int	netbsd32___sysctl(struct lwp *, void *, register_t *);
+int	netbsd32___sysctl(struct lwp *, const struct netbsd32___sysctl_args *, register_t *);
 
-int	netbsd32_mlock(struct lwp *, void *, register_t *);
+int	netbsd32_mlock(struct lwp *, const struct netbsd32_mlock_args *, register_t *);
 
-int	netbsd32_munlock(struct lwp *, void *, register_t *);
+int	netbsd32_munlock(struct lwp *, const struct netbsd32_munlock_args *, register_t *);
 
-int	netbsd32_undelete(struct lwp *, void *, register_t *);
+int	netbsd32_undelete(struct lwp *, const struct netbsd32_undelete_args *, register_t *);
 
-int	netbsd32_futimes(struct lwp *, void *, register_t *);
+int	netbsd32_futimes(struct lwp *, const struct netbsd32_futimes_args *, register_t *);
 
-int	netbsd32_getpgid(struct lwp *, void *, register_t *);
+int	netbsd32_getpgid(struct lwp *, const struct netbsd32_getpgid_args *, register_t *);
 
-int	netbsd32_reboot(struct lwp *, void *, register_t *);
+int	netbsd32_reboot(struct lwp *, const struct netbsd32_reboot_args *, register_t *);
 
-int	netbsd32_poll(struct lwp *, void *, register_t *);
+int	netbsd32_poll(struct lwp *, const struct netbsd32_poll_args *, register_t *);
 
 #if defined(LKM) || !defined(_KERNEL)
-int	sys_lkmnosys(struct lwp *, void *, register_t *);
+int	sys_lkmnosys(struct lwp *, const void *, register_t *);
 
 #else	/* !LKM || !_KERNEL */
 #endif	/* !LKM || !_KERNEL */
 #if defined(SYSVSEM) || !defined(_KERNEL)
-int	compat_14_netbsd32___semctl(struct lwp *, void *, register_t *);
+int	compat_14_netbsd32___semctl(struct lwp *, const struct compat_14_netbsd32___semctl_args *, register_t *);
 
-int	netbsd32_semget(struct lwp *, void *, register_t *);
+int	netbsd32_semget(struct lwp *, const struct netbsd32_semget_args *, register_t *);
 
-int	netbsd32_semop(struct lwp *, void *, register_t *);
+int	netbsd32_semop(struct lwp *, const struct netbsd32_semop_args *, register_t *);
 
-int	netbsd32_semconfig(struct lwp *, void *, register_t *);
+int	netbsd32_semconfig(struct lwp *, const struct netbsd32_semconfig_args *, register_t *);
 
 #else
 #endif
 #if defined(SYSVMSG) || !defined(_KERNEL)
-int	compat_14_netbsd32_msgctl(struct lwp *, void *, register_t *);
+int	compat_14_netbsd32_msgctl(struct lwp *, const struct compat_14_netbsd32_msgctl_args *, register_t *);
 
-int	netbsd32_msgget(struct lwp *, void *, register_t *);
+int	netbsd32_msgget(struct lwp *, const struct netbsd32_msgget_args *, register_t *);
 
-int	netbsd32_msgsnd(struct lwp *, void *, register_t *);
+int	netbsd32_msgsnd(struct lwp *, const struct netbsd32_msgsnd_args *, register_t *);
 
-int	netbsd32_msgrcv(struct lwp *, void *, register_t *);
+int	netbsd32_msgrcv(struct lwp *, const struct netbsd32_msgrcv_args *, register_t *);
 
 #else
 #endif
 #if defined(SYSVSHM) || !defined(_KERNEL)
-int	netbsd32_shmat(struct lwp *, void *, register_t *);
+int	netbsd32_shmat(struct lwp *, const struct netbsd32_shmat_args *, register_t *);
 
-int	compat_14_netbsd32_shmctl(struct lwp *, void *, register_t *);
+int	compat_14_netbsd32_shmctl(struct lwp *, const struct compat_14_netbsd32_shmctl_args *, register_t *);
 
-int	netbsd32_shmdt(struct lwp *, void *, register_t *);
+int	netbsd32_shmdt(struct lwp *, const struct netbsd32_shmdt_args *, register_t *);
 
-int	netbsd32_shmget(struct lwp *, void *, register_t *);
+int	netbsd32_shmget(struct lwp *, const struct netbsd32_shmget_args *, register_t *);
 
 #else
 #endif
-int	netbsd32_clock_gettime(struct lwp *, void *, register_t *);
+int	netbsd32_clock_gettime(struct lwp *, const struct netbsd32_clock_gettime_args *, register_t *);
 
-int	netbsd32_clock_settime(struct lwp *, void *, register_t *);
+int	netbsd32_clock_settime(struct lwp *, const struct netbsd32_clock_settime_args *, register_t *);
 
-int	netbsd32_clock_getres(struct lwp *, void *, register_t *);
+int	netbsd32_clock_getres(struct lwp *, const struct netbsd32_clock_getres_args *, register_t *);
 
-int	netbsd32_timer_create(struct lwp *, void *, register_t *);
+int	netbsd32_timer_create(struct lwp *, const struct netbsd32_timer_create_args *, register_t *);
 
-int	netbsd32_timer_delete(struct lwp *, void *, register_t *);
+int	netbsd32_timer_delete(struct lwp *, const struct netbsd32_timer_delete_args *, register_t *);
 
-int	netbsd32_timer_settime(struct lwp *, void *, register_t *);
+int	netbsd32_timer_settime(struct lwp *, const struct netbsd32_timer_settime_args *, register_t *);
 
-int	netbsd32_timer_gettime(struct lwp *, void *, register_t *);
+int	netbsd32_timer_gettime(struct lwp *, const struct netbsd32_timer_gettime_args *, register_t *);
 
-int	netbsd32_timer_getoverrun(struct lwp *, void *, register_t *);
+int	netbsd32_timer_getoverrun(struct lwp *, const struct netbsd32_timer_getoverrun_args *, register_t *);
 
-int	netbsd32_nanosleep(struct lwp *, void *, register_t *);
+int	netbsd32_nanosleep(struct lwp *, const struct netbsd32_nanosleep_args *, register_t *);
 
-int	netbsd32_fdatasync(struct lwp *, void *, register_t *);
+int	netbsd32_fdatasync(struct lwp *, const struct netbsd32_fdatasync_args *, register_t *);
 
-int	netbsd32_mlockall(struct lwp *, void *, register_t *);
+int	netbsd32_mlockall(struct lwp *, const struct netbsd32_mlockall_args *, register_t *);
 
-int	sys_munlockall(struct lwp *, void *, register_t *);
+int	sys_munlockall(struct lwp *, const void *, register_t *);
 
-int	netbsd32___sigtimedwait(struct lwp *, void *, register_t *);
+int	netbsd32___sigtimedwait(struct lwp *, const struct netbsd32___sigtimedwait_args *, register_t *);
 
 #if defined(P1003_1B_SEMAPHORE) || (!defined(_KERNEL) && defined(_LIBC))
-int	netbsd32__ksem_init(struct lwp *, void *, register_t *);
+int	netbsd32__ksem_init(struct lwp *, const struct netbsd32__ksem_init_args *, register_t *);
 
-int	netbsd32__ksem_open(struct lwp *, void *, register_t *);
+int	netbsd32__ksem_open(struct lwp *, const struct netbsd32__ksem_open_args *, register_t *);
 
-int	netbsd32__ksem_unlink(struct lwp *, void *, register_t *);
+int	netbsd32__ksem_unlink(struct lwp *, const struct netbsd32__ksem_unlink_args *, register_t *);
 
-int	netbsd32__ksem_close(struct lwp *, void *, register_t *);
+int	netbsd32__ksem_close(struct lwp *, const struct netbsd32__ksem_close_args *, register_t *);
 
-int	netbsd32__ksem_post(struct lwp *, void *, register_t *);
+int	netbsd32__ksem_post(struct lwp *, const struct netbsd32__ksem_post_args *, register_t *);
 
-int	netbsd32__ksem_wait(struct lwp *, void *, register_t *);
+int	netbsd32__ksem_wait(struct lwp *, const struct netbsd32__ksem_wait_args *, register_t *);
 
-int	netbsd32__ksem_trywait(struct lwp *, void *, register_t *);
+int	netbsd32__ksem_trywait(struct lwp *, const struct netbsd32__ksem_trywait_args *, register_t *);
 
-int	netbsd32__ksem_getvalue(struct lwp *, void *, register_t *);
+int	netbsd32__ksem_getvalue(struct lwp *, const struct netbsd32__ksem_getvalue_args *, register_t *);
 
-int	netbsd32__ksem_destroy(struct lwp *, void *, register_t *);
+int	netbsd32__ksem_destroy(struct lwp *, const struct netbsd32__ksem_destroy_args *, register_t *);
 
 #else
 #endif
-int	netbsd32___posix_rename(struct lwp *, void *, register_t *);
+int	netbsd32___posix_rename(struct lwp *, const struct netbsd32___posix_rename_args *, register_t *);
 
-int	netbsd32_swapctl(struct lwp *, void *, register_t *);
+int	netbsd32_swapctl(struct lwp *, const struct netbsd32_swapctl_args *, register_t *);
 
-int	compat_30_netbsd32_getdents(struct lwp *, void *, register_t *);
+int	compat_30_netbsd32_getdents(struct lwp *, const struct compat_30_netbsd32_getdents_args *, register_t *);
 
-int	netbsd32_minherit(struct lwp *, void *, register_t *);
+int	netbsd32_minherit(struct lwp *, const struct netbsd32_minherit_args *, register_t *);
 
-int	netbsd32_lchmod(struct lwp *, void *, register_t *);
+int	netbsd32_lchmod(struct lwp *, const struct netbsd32_lchmod_args *, register_t *);
 
-int	netbsd32_lchown(struct lwp *, void *, register_t *);
+int	netbsd32_lchown(struct lwp *, const struct netbsd32_lchown_args *, register_t *);
 
-int	netbsd32_lutimes(struct lwp *, void *, register_t *);
+int	netbsd32_lutimes(struct lwp *, const struct netbsd32_lutimes_args *, register_t *);
 
-int	netbsd32___msync13(struct lwp *, void *, register_t *);
+int	netbsd32___msync13(struct lwp *, const struct netbsd32___msync13_args *, register_t *);
 
-int	compat_30_netbsd32___stat13(struct lwp *, void *, register_t *);
+int	compat_30_netbsd32___stat13(struct lwp *, const struct compat_30_netbsd32___stat13_args *, register_t *);
 
-int	compat_30_netbsd32___fstat13(struct lwp *, void *, register_t *);
+int	compat_30_netbsd32___fstat13(struct lwp *, const struct compat_30_netbsd32___fstat13_args *, register_t *);
 
-int	compat_30_netbsd32___lstat13(struct lwp *, void *, register_t *);
+int	compat_30_netbsd32___lstat13(struct lwp *, const struct compat_30_netbsd32___lstat13_args *, register_t *);
 
-int	netbsd32___sigaltstack14(struct lwp *, void *, register_t *);
+int	netbsd32___sigaltstack14(struct lwp *, const struct netbsd32___sigaltstack14_args *, register_t *);
 
-int	sys___vfork14(struct lwp *, void *, register_t *);
+int	sys___vfork14(struct lwp *, const void *, register_t *);
 
-int	netbsd32___posix_chown(struct lwp *, void *, register_t *);
+int	netbsd32___posix_chown(struct lwp *, const struct netbsd32___posix_chown_args *, register_t *);
 
-int	netbsd32___posix_fchown(struct lwp *, void *, register_t *);
+int	netbsd32___posix_fchown(struct lwp *, const struct netbsd32___posix_fchown_args *, register_t *);
 
-int	netbsd32___posix_lchown(struct lwp *, void *, register_t *);
+int	netbsd32___posix_lchown(struct lwp *, const struct netbsd32___posix_lchown_args *, register_t *);
 
-int	netbsd32_getsid(struct lwp *, void *, register_t *);
+int	netbsd32_getsid(struct lwp *, const struct netbsd32_getsid_args *, register_t *);
 
-int	netbsd32___clone(struct lwp *, void *, register_t *);
+int	netbsd32___clone(struct lwp *, const struct netbsd32___clone_args *, register_t *);
 
-int	netbsd32_fktrace(struct lwp *, void *, register_t *);
+int	netbsd32_fktrace(struct lwp *, const struct netbsd32_fktrace_args *, register_t *);
 
-int	netbsd32_preadv(struct lwp *, void *, register_t *);
+int	netbsd32_preadv(struct lwp *, const struct netbsd32_preadv_args *, register_t *);
 
-int	netbsd32_pwritev(struct lwp *, void *, register_t *);
+int	netbsd32_pwritev(struct lwp *, const struct netbsd32_pwritev_args *, register_t *);
 
-int	netbsd32___sigaction14(struct lwp *, void *, register_t *);
+int	netbsd32___sigaction14(struct lwp *, const struct netbsd32___sigaction14_args *, register_t *);
 
-int	netbsd32___sigpending14(struct lwp *, void *, register_t *);
+int	netbsd32___sigpending14(struct lwp *, const struct netbsd32___sigpending14_args *, register_t *);
 
-int	netbsd32___sigprocmask14(struct lwp *, void *, register_t *);
+int	netbsd32___sigprocmask14(struct lwp *, const struct netbsd32___sigprocmask14_args *, register_t *);
 
-int	netbsd32___sigsuspend14(struct lwp *, void *, register_t *);
+int	netbsd32___sigsuspend14(struct lwp *, const struct netbsd32___sigsuspend14_args *, register_t *);
 
-int	compat_16_netbsd32___sigreturn14(struct lwp *, void *, register_t *);
+int	compat_16_netbsd32___sigreturn14(struct lwp *, const struct compat_16_netbsd32___sigreturn14_args *, register_t *);
 
-int	netbsd32___getcwd(struct lwp *, void *, register_t *);
+int	netbsd32___getcwd(struct lwp *, const struct netbsd32___getcwd_args *, register_t *);
 
-int	netbsd32_fchroot(struct lwp *, void *, register_t *);
+int	netbsd32_fchroot(struct lwp *, const struct netbsd32_fchroot_args *, register_t *);
 
-int	compat_30_netbsd32_fhopen(struct lwp *, void *, register_t *);
+int	compat_30_netbsd32_fhopen(struct lwp *, const struct compat_30_netbsd32_fhopen_args *, register_t *);
 
-int	compat_30_netbsd32_fhstat(struct lwp *, void *, register_t *);
+int	compat_30_netbsd32_fhstat(struct lwp *, const struct compat_30_netbsd32_fhstat_args *, register_t *);
 
-int	compat_20_netbsd32_fhstatfs(struct lwp *, void *, register_t *);
+int	compat_20_netbsd32_fhstatfs(struct lwp *, const struct compat_20_netbsd32_fhstatfs_args *, register_t *);
 
 #if defined(SYSVSEM) || !defined(_KERNEL)
-int	netbsd32___semctl14(struct lwp *, void *, register_t *);
+int	netbsd32___semctl14(struct lwp *, const struct netbsd32___semctl14_args *, register_t *);
 
 #else
 #endif
 #if defined(SYSVMSG) || !defined(_KERNEL)
-int	netbsd32___msgctl13(struct lwp *, void *, register_t *);
+int	netbsd32___msgctl13(struct lwp *, const struct netbsd32___msgctl13_args *, register_t *);
 
 #else
 #endif
 #if defined(SYSVSHM) || !defined(_KERNEL)
-int	netbsd32___shmctl13(struct lwp *, void *, register_t *);
+int	netbsd32___shmctl13(struct lwp *, const struct netbsd32___shmctl13_args *, register_t *);
 
 #else
 #endif
-int	netbsd32_lchflags(struct lwp *, void *, register_t *);
+int	netbsd32_lchflags(struct lwp *, const struct netbsd32_lchflags_args *, register_t *);
 
-int	sys_issetugid(struct lwp *, void *, register_t *);
+int	sys_issetugid(struct lwp *, const void *, register_t *);
 
-int	netbsd32_utrace(struct lwp *, void *, register_t *);
+int	netbsd32_utrace(struct lwp *, const struct netbsd32_utrace_args *, register_t *);
 
-int	netbsd32_getcontext(struct lwp *, void *, register_t *);
+int	netbsd32_getcontext(struct lwp *, const struct netbsd32_getcontext_args *, register_t *);
 
-int	netbsd32_setcontext(struct lwp *, void *, register_t *);
+int	netbsd32_setcontext(struct lwp *, const struct netbsd32_setcontext_args *, register_t *);
 
-int	netbsd32__lwp_create(struct lwp *, void *, register_t *);
+int	netbsd32__lwp_create(struct lwp *, const struct netbsd32__lwp_create_args *, register_t *);
 
-int	sys__lwp_exit(struct lwp *, void *, register_t *);
+int	sys__lwp_exit(struct lwp *, const void *, register_t *);
 
-int	sys__lwp_self(struct lwp *, void *, register_t *);
+int	sys__lwp_self(struct lwp *, const void *, register_t *);
 
-int	netbsd32__lwp_wait(struct lwp *, void *, register_t *);
+int	netbsd32__lwp_wait(struct lwp *, const struct netbsd32__lwp_wait_args *, register_t *);
 
-int	netbsd32__lwp_suspend(struct lwp *, void *, register_t *);
+int	netbsd32__lwp_suspend(struct lwp *, const struct netbsd32__lwp_suspend_args *, register_t *);
 
-int	netbsd32__lwp_continue(struct lwp *, void *, register_t *);
+int	netbsd32__lwp_continue(struct lwp *, const struct netbsd32__lwp_continue_args *, register_t *);
 
-int	netbsd32__lwp_wakeup(struct lwp *, void *, register_t *);
+int	netbsd32__lwp_wakeup(struct lwp *, const struct netbsd32__lwp_wakeup_args *, register_t *);
 
-int	sys__lwp_getprivate(struct lwp *, void *, register_t *);
+int	sys__lwp_getprivate(struct lwp *, const void *, register_t *);
 
-int	netbsd32__lwp_setprivate(struct lwp *, void *, register_t *);
+int	netbsd32__lwp_setprivate(struct lwp *, const struct netbsd32__lwp_setprivate_args *, register_t *);
 
-int	netbsd32__lwp_kill(struct lwp *, void *, register_t *);
+int	netbsd32__lwp_kill(struct lwp *, const struct netbsd32__lwp_kill_args *, register_t *);
 
-int	netbsd32__lwp_detach(struct lwp *, void *, register_t *);
+int	netbsd32__lwp_detach(struct lwp *, const struct netbsd32__lwp_detach_args *, register_t *);
 
-int	netbsd32__lwp_park(struct lwp *, void *, register_t *);
+int	netbsd32__lwp_park(struct lwp *, const struct netbsd32__lwp_park_args *, register_t *);
 
-int	netbsd32__lwp_unpark(struct lwp *, void *, register_t *);
+int	netbsd32__lwp_unpark(struct lwp *, const struct netbsd32__lwp_unpark_args *, register_t *);
 
-int	netbsd32__lwp_unpark_all(struct lwp *, void *, register_t *);
+int	netbsd32__lwp_unpark_all(struct lwp *, const struct netbsd32__lwp_unpark_all_args *, register_t *);
 
-int	netbsd32__lwp_setname(struct lwp *, void *, register_t *);
+int	netbsd32__lwp_setname(struct lwp *, const struct netbsd32__lwp_setname_args *, register_t *);
 
-int	netbsd32__lwp_getname(struct lwp *, void *, register_t *);
+int	netbsd32__lwp_getname(struct lwp *, const struct netbsd32__lwp_getname_args *, register_t *);
 
-int	netbsd32__lwp_ctl(struct lwp *, void *, register_t *);
+int	netbsd32__lwp_ctl(struct lwp *, const struct netbsd32__lwp_ctl_args *, register_t *);
 
-int	netbsd32___sigaction_sigtramp(struct lwp *, void *, register_t *);
+int	netbsd32___sigaction_sigtramp(struct lwp *, const struct netbsd32___sigaction_sigtramp_args *, register_t *);
 
-int	netbsd32_rasctl(struct lwp *, void *, register_t *);
+int	netbsd32_rasctl(struct lwp *, const struct netbsd32_rasctl_args *, register_t *);
 
-int	sys_kqueue(struct lwp *, void *, register_t *);
+int	sys_kqueue(struct lwp *, const void *, register_t *);
 
-int	netbsd32_kevent(struct lwp *, void *, register_t *);
+int	netbsd32_kevent(struct lwp *, const struct netbsd32_kevent_args *, register_t *);
 
-int	sys_sched_yield(struct lwp *, void *, register_t *);
+int	sys_sched_yield(struct lwp *, const void *, register_t *);
 
-int	netbsd32_fsync_range(struct lwp *, void *, register_t *);
+int	netbsd32_fsync_range(struct lwp *, const struct netbsd32_fsync_range_args *, register_t *);
 
-int	netbsd32_uuidgen(struct lwp *, void *, register_t *);
+int	netbsd32_uuidgen(struct lwp *, const struct netbsd32_uuidgen_args *, register_t *);
 
-int	netbsd32_getvfsstat(struct lwp *, void *, register_t *);
+int	netbsd32_getvfsstat(struct lwp *, const struct netbsd32_getvfsstat_args *, register_t *);
 
-int	netbsd32_statvfs1(struct lwp *, void *, register_t *);
+int	netbsd32_statvfs1(struct lwp *, const struct netbsd32_statvfs1_args *, register_t *);
 
-int	netbsd32_fstatvfs1(struct lwp *, void *, register_t *);
+int	netbsd32_fstatvfs1(struct lwp *, const struct netbsd32_fstatvfs1_args *, register_t *);
 
-int	compat_30_netbsd32_fhstatvfs1(struct lwp *, void *, register_t *);
+int	compat_30_netbsd32_fhstatvfs1(struct lwp *, const struct compat_30_netbsd32_fhstatvfs1_args *, register_t *);
 
-int	netbsd32_extattrctl(struct lwp *, void *, register_t *);
+int	netbsd32_extattrctl(struct lwp *, const struct netbsd32_extattrctl_args *, register_t *);
 
-int	netbsd32_extattr_set_file(struct lwp *, void *, register_t *);
+int	netbsd32_extattr_set_file(struct lwp *, const struct netbsd32_extattr_set_file_args *, register_t *);
 
-int	netbsd32_extattr_get_file(struct lwp *, void *, register_t *);
+int	netbsd32_extattr_get_file(struct lwp *, const struct netbsd32_extattr_get_file_args *, register_t *);
 
-int	netbsd32_extattr_delete_file(struct lwp *, void *, register_t *);
+int	netbsd32_extattr_delete_file(struct lwp *, const struct netbsd32_extattr_delete_file_args *, register_t *);
 
-int	netbsd32_extattr_set_fd(struct lwp *, void *, register_t *);
+int	netbsd32_extattr_set_fd(struct lwp *, const struct netbsd32_extattr_set_fd_args *, register_t *);
 
-int	netbsd32_extattr_get_fd(struct lwp *, void *, register_t *);
+int	netbsd32_extattr_get_fd(struct lwp *, const struct netbsd32_extattr_get_fd_args *, register_t *);
 
-int	netbsd32_extattr_delete_fd(struct lwp *, void *, register_t *);
+int	netbsd32_extattr_delete_fd(struct lwp *, const struct netbsd32_extattr_delete_fd_args *, register_t *);
 
-int	netbsd32_extattr_set_link(struct lwp *, void *, register_t *);
+int	netbsd32_extattr_set_link(struct lwp *, const struct netbsd32_extattr_set_link_args *, register_t *);
 
-int	netbsd32_extattr_get_link(struct lwp *, void *, register_t *);
+int	netbsd32_extattr_get_link(struct lwp *, const struct netbsd32_extattr_get_link_args *, register_t *);
 
-int	netbsd32_extattr_delete_link(struct lwp *, void *, register_t *);
+int	netbsd32_extattr_delete_link(struct lwp *, const struct netbsd32_extattr_delete_link_args *, register_t *);
 
-int	netbsd32_extattr_list_fd(struct lwp *, void *, register_t *);
+int	netbsd32_extattr_list_fd(struct lwp *, const struct netbsd32_extattr_list_fd_args *, register_t *);
 
-int	netbsd32_extattr_list_file(struct lwp *, void *, register_t *);
+int	netbsd32_extattr_list_file(struct lwp *, const struct netbsd32_extattr_list_file_args *, register_t *);
 
-int	netbsd32_extattr_list_link(struct lwp *, void *, register_t *);
+int	netbsd32_extattr_list_link(struct lwp *, const struct netbsd32_extattr_list_link_args *, register_t *);
 
-int	netbsd32_pselect(struct lwp *, void *, register_t *);
+int	netbsd32_pselect(struct lwp *, const struct netbsd32_pselect_args *, register_t *);
 
-int	netbsd32_pollts(struct lwp *, void *, register_t *);
+int	netbsd32_pollts(struct lwp *, const struct netbsd32_pollts_args *, register_t *);
 
-int	netbsd32_setxattr(struct lwp *, void *, register_t *);
+int	netbsd32_setxattr(struct lwp *, const struct netbsd32_setxattr_args *, register_t *);
 
-int	netbsd32_lsetxattr(struct lwp *, void *, register_t *);
+int	netbsd32_lsetxattr(struct lwp *, const struct netbsd32_lsetxattr_args *, register_t *);
 
-int	netbsd32_fsetxattr(struct lwp *, void *, register_t *);
+int	netbsd32_fsetxattr(struct lwp *, const struct netbsd32_fsetxattr_args *, register_t *);
 
-int	netbsd32_getxattr(struct lwp *, void *, register_t *);
+int	netbsd32_getxattr(struct lwp *, const struct netbsd32_getxattr_args *, register_t *);
 
-int	netbsd32_lgetxattr(struct lwp *, void *, register_t *);
+int	netbsd32_lgetxattr(struct lwp *, const struct netbsd32_lgetxattr_args *, register_t *);
 
-int	netbsd32_fgetxattr(struct lwp *, void *, register_t *);
+int	netbsd32_fgetxattr(struct lwp *, const struct netbsd32_fgetxattr_args *, register_t *);
 
-int	netbsd32_listxattr(struct lwp *, void *, register_t *);
+int	netbsd32_listxattr(struct lwp *, const struct netbsd32_listxattr_args *, register_t *);
 
-int	netbsd32_llistxattr(struct lwp *, void *, register_t *);
+int	netbsd32_llistxattr(struct lwp *, const struct netbsd32_llistxattr_args *, register_t *);
 
-int	netbsd32_flistxattr(struct lwp *, void *, register_t *);
+int	netbsd32_flistxattr(struct lwp *, const struct netbsd32_flistxattr_args *, register_t *);
 
-int	netbsd32_removexattr(struct lwp *, void *, register_t *);
+int	netbsd32_removexattr(struct lwp *, const struct netbsd32_removexattr_args *, register_t *);
 
-int	netbsd32_lremovexattr(struct lwp *, void *, register_t *);
+int	netbsd32_lremovexattr(struct lwp *, const struct netbsd32_lremovexattr_args *, register_t *);
 
-int	netbsd32_fremovexattr(struct lwp *, void *, register_t *);
+int	netbsd32_fremovexattr(struct lwp *, const struct netbsd32_fremovexattr_args *, register_t *);
 
-int	netbsd32_sys___stat30(struct lwp *, void *, register_t *);
+int	netbsd32_sys___stat30(struct lwp *, const struct netbsd32_sys___stat30_args *, register_t *);
 
-int	netbsd32_sys___fstat30(struct lwp *, void *, register_t *);
+int	netbsd32_sys___fstat30(struct lwp *, const struct netbsd32_sys___fstat30_args *, register_t *);
 
-int	netbsd32_sys___lstat30(struct lwp *, void *, register_t *);
+int	netbsd32_sys___lstat30(struct lwp *, const struct netbsd32_sys___lstat30_args *, register_t *);
 
-int	netbsd32_sys___getdents30(struct lwp *, void *, register_t *);
+int	netbsd32_sys___getdents30(struct lwp *, const struct netbsd32_sys___getdents30_args *, register_t *);
 
-int	sys_posix_fadvise(struct lwp *, void *, register_t *);
+int	sys_posix_fadvise(struct lwp *, const struct sys_posix_fadvise_args *, register_t *);
 
-int	compat_30_netbsd32_sys___fhstat30(struct lwp *, void *, register_t *);
+int	compat_30_netbsd32_sys___fhstat30(struct lwp *, const struct compat_30_netbsd32_sys___fhstat30_args *, register_t *);
 
-int	netbsd32_ntp_gettime(struct lwp *, void *, register_t *);
+int	netbsd32_ntp_gettime(struct lwp *, const struct netbsd32_ntp_gettime_args *, register_t *);
 
-int	netbsd32_sys___socket30(struct lwp *, void *, register_t *);
+int	netbsd32_sys___socket30(struct lwp *, const struct netbsd32_sys___socket30_args *, register_t *);
 
-int	netbsd32___getfh30(struct lwp *, void *, register_t *);
+int	netbsd32___getfh30(struct lwp *, const struct netbsd32___getfh30_args *, register_t *);
 
-int	netbsd32___fhopen40(struct lwp *, void *, register_t *);
+int	netbsd32___fhopen40(struct lwp *, const struct netbsd32___fhopen40_args *, register_t *);
 
-int	netbsd32___fhstatvfs140(struct lwp *, void *, register_t *);
+int	netbsd32___fhstatvfs140(struct lwp *, const struct netbsd32___fhstatvfs140_args *, register_t *);
 
-int	netbsd32___fhstat40(struct lwp *, void *, register_t *);
+int	netbsd32___fhstat40(struct lwp *, const struct netbsd32___fhstat40_args *, register_t *);
 
 #endif /* _NETBSD32_SYS_SYSCALLARGS_H_ */
