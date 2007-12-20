@@ -1,4 +1,4 @@
-/*	$NetBSD: mkbootimage.c,v 1.4 2007/12/20 17:58:49 garbled Exp $	*/
+/*	$NetBSD: mkbootimage.c,v 1.5 2007/12/20 18:00:18 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -121,10 +121,10 @@ usage(int extended)
 		fprintf(stderr, "\n\n");
 	}
 #ifdef __NetBSD__
-	fprintf(stderr, "usage: %s [-ls] [-m machine_arch] [-b bootfile] "
+	fprintf(stderr, "usage: %s [-lsv] [-m machine_arch] [-b bootfile] "
 	    "[-k kernel] [-r rawdev] bootimage\n", getprogname());
 #else
-	fprintf(stderr, "usage: %s [-ls] -m machine_arch [-b bootfile] "
+	fprintf(stderr, "usage: %s [-lsv] -m machine_arch [-b bootfile] "
 	    "[-k kernel] [-r rawdev] bootimage\n", getprogname());
 #endif
 	exit(1);
