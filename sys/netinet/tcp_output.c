@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.162 2007/09/02 03:12:23 dyoung Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.163 2007/12/20 19:53:32 dyoung Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -142,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.162 2007/09/02 03:12:23 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.163 2007/12/20 19:53:32 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -552,6 +552,7 @@ tcp_build_datapkt(struct tcpcb *tp, struct socket *so, int off,
 int
 tcp_output(struct tcpcb *tp)
 {
+	struct rtentry *rt;
 	struct socket *so;
 	struct route *ro;
 	long len, win;
@@ -637,9 +638,8 @@ tcp_output(struct tcpcb *tp)
 		  IPSEC_PCB_SKIP_IPSEC(tp->t_inpcb->inp_sp,
 		  		       IPSEC_DIR_OUTBOUND) &&
 #endif
-		  tp->t_inpcb->inp_route.ro_rt != NULL &&
-		  (tp->t_inpcb->inp_route.ro_rt->rt_ifp->if_capenable &
-		   IFCAP_TSOv4) != 0;
+		  (rt = rtcache_getrt(&tp->t_inpcb->inp_route)) != NULL &&
+		  (rt->rt_ifp->if_capenable & IFCAP_TSOv4) != 0;
 #endif /* defined(INET) */
 #if defined(INET6)
 	has_tso6 = tp->t_in6pcb != NULL &&
@@ -647,9 +647,8 @@ tcp_output(struct tcpcb *tp)
 		  IPSEC_PCB_SKIP_IPSEC(tp->t_in6pcb->in6p_sp,
 		  		       IPSEC_DIR_OUTBOUND) &&
 #endif
-		  tp->t_in6pcb->in6p_route.ro_rt != NULL &&
-		  (tp->t_in6pcb->in6p_route.ro_rt->rt_ifp->if_capenable &
-		   IFCAP_TSOv6) != 0;
+		  (rt = rtcache_getrt(&tp->t_in6pcb->in6p_route)) != NULL &&
+		  (rt->rt_ifp->if_capenable & IFCAP_TSOv6) != 0;
 #endif /* defined(INET6) */
 	has_tso = (has_tso4 || has_tso6) && !alwaysfrag;
 
@@ -1115,21 +1114,21 @@ send:
 	}
 	hdrlen = iphdrlen;
 	if (flags & TH_SYN) {
-		struct rtentry *rt;
+		struct rtentry *synrt;
 
-		rt = NULL;
+		synrt = NULL;
 #ifdef INET
 		if (tp->t_inpcb)
-			rt = in_pcbrtentry(tp->t_inpcb);
+			synrt = in_pcbrtentry(tp->t_inpcb);
 #endif
 #ifdef INET6
 		if (tp->t_in6pcb)
-			rt = in6_pcbrtentry(tp->t_in6pcb);
+			synrt = in6_pcbrtentry(tp->t_in6pcb);
 #endif
 
 		tp->snd_nxt = tp->iss;
-		tp->t_ourmss = tcp_mss_to_advertise(rt != NULL ?
-						    rt->rt_ifp : NULL, af);
+		tp->t_ourmss = tcp_mss_to_advertise(synrt != NULL ?
+						    synrt->rt_ifp : NULL, af);
 		if ((tp->t_flags & TF_NOOPT) == 0) {
 			opt[0] = TCPOPT_MAXSEG;
 			opt[1] = 4;
@@ -1592,7 +1591,8 @@ timer:
 			 * be changed via Neighbor Discovery.
 			 */
 			ip6->ip6_hlim = in6_selecthlim(tp->t_in6pcb,
-				ro->ro_rt ? ro->ro_rt->rt_ifp : NULL);
+				(rt = rtcache_getrt(ro)) != NULL ? rt->rt_ifp
+				                                 : NULL);
 		}
 		/* ip6->ip6_flow = ??? */
 		/* ip6_plen will be filled in ip6_output(). */
