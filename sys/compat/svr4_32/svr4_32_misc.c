@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_misc.c,v 1.55 2007/12/20 23:03:06 dsl Exp $	 */
+/*	$NetBSD: svr4_32_misc.c,v 1.56 2007/12/20 23:16:13 dsl Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_misc.c,v 1.55 2007/12/20 23:03:06 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_misc.c,v 1.56 2007/12/20 23:16:13 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1313,10 +1313,9 @@ svr4_32_sys_nice(struct lwp *l, const struct svr4_32_sys_nice_args *uap, registe
 
 	if ((error = sys_setpriority(l, &ap, retval)) != 0)
 		return error;
-#if 0   /* I (dsl) have NFI why this is here */
-	if ((error = sys_getpriority(l, &ap, retval)) != 0)
+
+	if ((error = sys_getpriority(l, (const void *)&ap, retval)) != 0)
 		return error;
-#endif
 
 	return 0;
 }
