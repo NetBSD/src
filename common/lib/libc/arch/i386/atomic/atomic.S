@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.S,v 1.5 2007/12/09 17:38:51 ad Exp $	*/
+/*	$NetBSD: atomic.S,v 1.6 2007/12/20 01:27:24 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -178,6 +178,48 @@ NENTRY(_membar_sync)
 END(membar_sync_end)
 
 #ifdef _KERNEL
+NENTRY(_atomic_cas_64)
+	cli
+	pushl	%edi
+	pushl	%ebx
+	movl	12(%esp), %edi
+	movl	16(%esp), %eax
+	movl	20(%esp), %edx
+	movl	24(%esp), %ebx
+	movl	28(%esp), %ecx
+	cmpl	0(%edi), %eax
+	jne	2f
+	cmpl	4(%edi), %edx
+	jne	2f
+	movl	%ebx, 0(%edi)
+	movl	%ecx, 4(%edi)
+1:
+	popl	%ebx
+	popl	%edi
+	sti
+	ret
+2:
+	movl	0(%edi), %eax
+	movl	4(%edi), %edx
+	jmp	1b
+END(_atomic_cas_64_end)
+
+NENTRY(_atomic_cas_cx8)
+	pushl	%edi
+	pushl	%ebx
+	movl	12(%esp), %edi
+	movl	16(%esp), %eax
+	movl	20(%esp), %edx
+	movl	24(%esp), %ebx
+	movl	28(%esp), %ecx
+	LOCK(15)
+	cmpxchg8b (%edi)
+	popl	%ebx
+	popl	%edi
+	ret
+	.space	16, 0x90
+END(_atomic_cas_cx8_end)
+
 NENTRY(sse2_lfence)
 	lfence
 	ret
@@ -192,7 +234,7 @@ atomic_lockpatch:
 	.globl	atomic_lockpatch
 	.long	.Lpatch1, .Lpatch2, .Lpatch3, .Lpatch4, .Lpatch5
 	.long	.Lpatch6, .Lpatch7, .Lpatch8, .Lpatch9, .Lpatch10
-	.long	.Lpatch12, .Lpatch13, .Lpatch14, 0
+	.long	.Lpatch12, .Lpatch13, .Lpatch14, .Lpatch15, 0
 #endif	/* _KERNEL */
 
 ALIAS(atomic_add_32,_atomic_add_32)
@@ -254,6 +296,8 @@ ALIAS(atomic_cas_32,_atomic_cas_32)
 ALIAS(atomic_cas_uint,_atomic_cas_32)
 ALIAS(atomic_cas_ulong,_atomic_cas_32)
 ALIAS(atomic_cas_ptr,_atomic_cas_32)
+
+ALIAS(atomic_cas_64,_atomic_cas_64)
 
 ALIAS(membar_consumer,_membar_consumer)
 ALIAS(membar_producer,_membar_producer)
