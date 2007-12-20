@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.96 2007/12/16 21:39:33 dyoung Exp $ */
+/* $NetBSD: rtw.c,v 1.97 2007/12/20 18:47:23 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 David Young.  All rights
  * reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.96 2007/12/16 21:39:33 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.97 2007/12/20 18:47:23 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -1135,10 +1135,7 @@ rtw_chan2txpower(struct rtw_srom *sr, struct ieee80211com *ic,
     struct ieee80211_channel *chan)
 {
 	u_int idx = RTW_SR_TXPOWER1 + ieee80211_chan2ieee(ic, chan) - 1;
-	if (idx < RTW_SR_TXPOWER1 || idx > RTW_SR_TXPOWER14) {
-		panic("%s: channel %d out of range", __func__,
-		    idx - RTW_SR_TXPOWER1 + 1);
-	}
+	KASSERT(idx >= RTW_SR_TXPOWER1 && idx <= RTW_SR_TXPOWER14);
 	return RTW_SR_GET(sr, idx);
 }
 
@@ -2420,8 +2417,7 @@ rtw_tune(struct rtw_softc *sc)
 	    dflantb = sc->sc_flags & RTW_F_DFLANTB;
 
 	chan = ieee80211_chan2ieee(ic, ic->ic_curchan);
-	if (chan == IEEE80211_CHAN_ANY)
-		panic("%s: chan == IEEE80211_CHAN_ANY\n", __func__);
+	KASSERT(chan != IEEE80211_CHAN_ANY);
 
 	rt->rt_chan_freq = htole16(ic->ic_curchan->ic_freq);
 	rt->rt_chan_flags = htole16(ic->ic_curchan->ic_flags);
@@ -3692,15 +3688,6 @@ rtw_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 	ieee80211_media_status(ifp, imr);
 }
 
-/* rtw_shutdown: make sure the interface is stopped at reboot time. */
-void
-rtw_shutdown(void *arg)
-{
-	struct rtw_softc *sc = arg;
-
-	rtw_stop(&sc->sc_if, 1);
-}
-
 static inline void
 rtw_setifprops(struct ifnet *ifp, const char *dvname, void *softc)
 {
@@ -3753,27 +3740,6 @@ rtw_set80211methods(struct rtw_mtbl *mtbl, struct ieee80211com *ic)
 	ic->ic_crypto.cs_key_set = rtw_key_set;
 	ic->ic_crypto.cs_key_update_begin = rtw_key_update_begin;
 	ic->ic_crypto.cs_key_update_end = rtw_key_update_end;
-}
-
-static inline void
-rtw_establish_hooks(struct rtw_hooks *hooks, const char *dvname,
-    void *arg)
-{
-	/*
-	 * Make sure the interface is shutdown during reboot.
-	 */
-	hooks->rh_shutdown = shutdownhook_establish(rtw_shutdown, arg);
-	if (hooks->rh_shutdown == NULL)
-		printf("%s: WARNING: unable to establish shutdown hook\n",
-		    dvname);
-}
-
-static inline void
-rtw_disestablish_hooks(struct rtw_hooks *hooks, const char *dvname,
-    void *arg)
-{
-	if (hooks->rh_shutdown != NULL)
-		shutdownhook_disestablish(hooks->rh_shutdown);
 }
 
 static inline void
@@ -4149,8 +4115,6 @@ rtw_attach(struct rtw_softc *sc)
 	    sizeof(struct ieee80211_frame) + 64, &sc->sc_radiobpf);
 #endif
 
-	rtw_establish_hooks(&sc->sc_hooks, sc->sc_dev.dv_xname, (void*)sc);
-
 	if (!pmf_device_register(&sc->sc_dev, NULL, NULL)) {
 		aprint_error_dev(&sc->sc_dev,
 		    "couldn't establish power handler\n");
@@ -4180,8 +4144,6 @@ rtw_detach(struct rtw_softc *sc)
 		rtw_stop(ifp, 1);
 
 		pmf_device_deregister(&sc->sc_dev);
-		rtw_disestablish_hooks(&sc->sc_hooks, sc->sc_dev.dv_xname,
-		    (void*)sc);
 		callout_stop(&sc->sc_scan_ch);
 		ieee80211_ifdetach(&sc->sc_ic);
 		if_detach(ifp);
