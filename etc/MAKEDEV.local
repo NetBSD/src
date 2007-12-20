@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.local,v 1.12 2007/12/15 17:28:09 apb Exp $
+#	$NetBSD: MAKEDEV.local,v 1.13 2007/12/20 07:30:25 apb Exp $
 #
 # Copyright (c) 2007 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -56,15 +56,15 @@ case $i in
 
 all)
 	# Customise this.  For example:
-	makedev_local foo
+	#makedev_local foo
 	;;
 
 # Add more cases here.  You can call functions defined in MAKEDEV.
 # For example:
-foo)
-	mkdev foo c 0 0 600
-	mkdev foo1 c 0 1 600
-	;;
+#foo)
+#	mkdev foo c 0 0 600
+#	mkdev foo1 c 0 1 600
+#	;;
 
 *)
 	warn "$i: unknown device"
