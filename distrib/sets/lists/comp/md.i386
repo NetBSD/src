@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.101 2007/11/14 17:59:44 ad Exp $
+# $NetBSD: md.i386,v 1.102 2007/12/20 23:46:10 ad Exp $
 ./usr/include/emmintrin.h			comp-c-include		gcccmds
 ./usr/include/i386				comp-c-include
 ./usr/include/i386/_G_config.h			comp-obsolete		obsolete
@@ -6,7 +6,7 @@
 ./usr/include/i386/aout_machdep.h		comp-c-include
 ./usr/include/i386/apmvar.h			comp-c-include
 ./usr/include/i386/asm.h			comp-c-include
-./usr/include/i386/atomic.h			comp-c-include
+./usr/include/i386/atomic.h			comp-obsolete		obsolete
 ./usr/include/i386/autoconf.h			comp-obsolete		obsolete
 ./usr/include/i386/bioscall.h			comp-c-include
 ./usr/include/i386/bootinfo.h			comp-c-include
