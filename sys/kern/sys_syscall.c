@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_syscall.c,v 1.2 2007/12/11 12:16:34 lukem Exp $	*/
+/*	$NetBSD: sys_syscall.c,v 1.3 2007/12/20 23:03:12 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_syscall.c,v 1.2 2007/12/11 12:16:34 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_syscall.c,v 1.3 2007/12/20 23:03:12 dsl Exp $");
 
 #include <sys/syscall_stats.h>
 
@@ -47,12 +47,12 @@ __KERNEL_RCSID(0, "$NetBSD: sys_syscall.c,v 1.2 2007/12/11 12:16:34 lukem Exp $"
 #define CONCAT(a,b) __CONCAT(a,b)
 
 int
-SYS_SYSCALL(struct lwp *l, void *v, register_t *rval)
+SYS_SYSCALL(struct lwp *l, const struct CONCAT(SYS_SYSCALL, _args) *uap, register_t *rval)
 {
-	struct CONCAT(SYS_SYSCALL, _args) /* {
+	/* {
 		syscallarg(int) code;
 		syscallarg(register_t) args[SYS_MAXSYSARGS];
-	} */ *uap = v;
+	} */
 	const struct sysent *callp;
 	struct proc *p = l->l_proc;
 	int code;

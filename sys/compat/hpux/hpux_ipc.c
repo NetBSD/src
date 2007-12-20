@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_ipc.c,v 1.10 2007/12/08 18:35:59 dsl Exp $	*/
+/*	$NetBSD: hpux_ipc.c,v 1.11 2007/12/20 23:02:48 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_ipc.c,v 1.10 2007/12/08 18:35:59 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_ipc.c,v 1.11 2007/12/20 23:02:48 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -212,13 +212,13 @@ hpux_to_bsd_omsqid_ds(const struct hpux_omsqid_ds *hp, struct msqid_ds *bp)
 }
 
 int
-hpux_sys_omsgctl(struct lwp *l, void *v, register_t *retval)
+hpux_sys_omsgctl(struct lwp *l, const struct hpux_sys_omsgctl_args *uap, register_t *retval)
 {
-	struct hpux_sys_omsgctl_args /* {
+	/* {
 		syscallarg(int) msqid;
 		syscallarg(int) cmd;
 		syscallarg(struct hpux_omsqid_ds *) buf;
-	} */ *uap = v;
+	} */
 	struct msqid_ds msqbuf;
 	struct hpux_omsqid_ds hmsqbuf;
 	int cmd, error;
@@ -244,13 +244,13 @@ hpux_sys_omsgctl(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-hpux_sys_msgctl(struct lwp *l, void *v, register_t *retval)
+hpux_sys_msgctl(struct lwp *l, const struct hpux_sys_msgctl_args *uap, register_t *retval)
 {
-	struct hpux_sys_msgctl_args /* {
+	/* {
 		syscallarg(int) msqid;
 		syscallarg(int) cmd;
 		syscallarg(struct hpux_msqid_ds *) buf;
-	} */ *uap = v;
+	} */
 	struct msqid_ds msqbuf;
 	struct hpux_msqid_ds hmsqbuf;
 	int cmd, error;
@@ -332,18 +332,19 @@ hpux_to_bsd_osemid_ds(const struct hpux_osemid_ds *hp, struct semid_ds *bp)
 }
 
 int
-hpux_sys_osemctl(struct lwp *l, void *v, register_t *retval)
+hpux_sys_osemctl(struct lwp *l, const struct hpux_sys_osemctl_args *uap, register_t *retval)
 {
-	struct hpux_sys_osemctl_args /* {
+	/* {
 		syscallarg(int) semid;
 		syscallarg(int) semnum;
 		syscallarg(int) cmd;
 		syscallarg(union __semun) arg;
-	} */ *uap = v;
+	} */
 	struct hpux_osemid_ds hsembuf;
 	struct semid_ds sembuf;
 	int cmd, error;
 	void *pass_arg = NULL;
+	union __semun arg = SCARG(uap, arg);
 
 	cmd = SCARG(uap, cmd);
 
@@ -356,12 +357,12 @@ hpux_sys_osemctl(struct lwp *l, void *v, register_t *retval)
 	case GETALL:
 	case SETVAL:
 	case SETALL:
-		pass_arg = &SCARG(uap, arg);
+		pass_arg = &arg;
 		break;
 	}
 
 	if (cmd == IPC_SET) {
-		error = copyin(SCARG(uap, arg).buf, &hsembuf, sizeof(hsembuf));
+		error = copyin(arg.buf, &hsembuf, sizeof(hsembuf));
 		if (error)
 			return (error);
 		hpux_to_bsd_osemid_ds(&hsembuf, &sembuf);
@@ -372,25 +373,26 @@ hpux_sys_osemctl(struct lwp *l, void *v, register_t *retval)
 
 	if (error == 0 && cmd == IPC_STAT) {
 		bsd_to_hpux_osemid_ds(&sembuf, &hsembuf);
-		error = copyout(&hsembuf, SCARG(uap, arg).buf, sizeof(hsembuf));
+		error = copyout(&hsembuf, arg.buf, sizeof(hsembuf));
 	}
 
 	return (error);
 }
 
 int
-hpux_sys_semctl(struct lwp *l, void *v, register_t *retval)
+hpux_sys_semctl(struct lwp *l, const struct hpux_sys_semctl_args *uap, register_t *retval)
 {
-	struct hpux_sys_semctl_args /* {
+	/* {
 		syscallarg(int) semid;
 		syscallarg(int) semnum;
 		syscallarg(int) cmd;
 		syscallarg(union __semun) arg;
-	} */ *uap = v;
+	} */
 	struct hpux_semid_ds hsembuf;
 	struct semid_ds sembuf;
 	int cmd, error;
 	void *pass_arg = NULL;
+	union __semun arg = SCARG(uap, arg);
 
 	cmd = SCARG(uap, cmd);
 
@@ -403,12 +405,12 @@ hpux_sys_semctl(struct lwp *l, void *v, register_t *retval)
 	case GETALL:
 	case SETVAL:
 	case SETALL:
-		pass_arg = &SCARG(uap, arg);
+		pass_arg = &arg;
 		break;
 	}
 
 	if (cmd == IPC_SET) {
-		error = copyin(SCARG(uap, arg).buf, &hsembuf, sizeof(hsembuf));
+		error = copyin(arg.buf, &hsembuf, sizeof(hsembuf));
 		if (error)
 			return (error);
 		hpux_to_bsd_semid_ds(&hsembuf, &sembuf);
@@ -419,7 +421,7 @@ hpux_sys_semctl(struct lwp *l, void *v, register_t *retval)
 
 	if (error == 0 && cmd == IPC_STAT) {
 		bsd_to_hpux_semid_ds(&sembuf, &hsembuf);
-		error = copyout(&hsembuf, SCARG(uap, arg).buf, sizeof(hsembuf));
+		error = copyout(&hsembuf, arg.buf, sizeof(hsembuf));
 	}
 
 	return (error);
@@ -500,13 +502,13 @@ hpux_to_bsd_oshmid_ds(const struct hpux_oshmid_ds *hp, struct shmid_ds *bp)
 }
 
 int
-hpux_sys_oshmctl(struct lwp *l, void *v, register_t *retval)
+hpux_sys_oshmctl(struct lwp *l, const struct hpux_sys_oshmctl_args *uap, register_t *retval)
 {
-	struct hpux_sys_oshmctl_args /* {
+	/* {
 		syscallarg(int) shmid;
 		syscallarg(int) cmd;
 		syscallarg(struct hpux_oshmid_ds *) buf;
-	} */ *uap = v;
+	} */
 	struct shmid_ds shmbuf;
 	struct hpux_oshmid_ds hshmbuf;
 	int cmd, error;
@@ -532,13 +534,13 @@ hpux_sys_oshmctl(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-hpux_sys_shmctl(struct lwp *l, void *v, register_t *retval)
+hpux_sys_shmctl(struct lwp *l, const struct hpux_sys_shmctl_args *uap, register_t *retval)
 {
-	struct hpux_sys_shmctl_args /* {
+	/* {
 		syscallarg(int) shmid;
 		syscallarg(int) cmd;
 		syscallarg(struct hpux_shmid_ds *) buf;
-	} */ *uap = v;
+	} */
 	struct shmid_ds shmbuf;
 	struct hpux_shmid_ds hshmbuf;
 	int cmd, error;

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.165 2007/12/08 19:29:47 pooka Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.166 2007/12/20 23:03:07 dsl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.165 2007/12/08 19:29:47 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.166 2007/12/20 23:03:07 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -291,11 +291,11 @@ filedesc_init(void)
  */
 /* ARGSUSED */
 int
-sys_dup(struct lwp *l, void *v, register_t *retval)
+sys_dup(struct lwp *l, const struct sys_dup_args *uap, register_t *retval)
 {
-	struct sys_dup_args /* {
+	/* {
 		syscallarg(int)	fd;
-	} */ *uap = v;
+	} */
 	struct file	*fp;
 	struct filedesc	*fdp;
 	struct proc	*p;
@@ -330,12 +330,12 @@ sys_dup(struct lwp *l, void *v, register_t *retval)
  */
 /* ARGSUSED */
 int
-sys_dup2(struct lwp *l, void *v, register_t *retval)
+sys_dup2(struct lwp *l, const struct sys_dup2_args *uap, register_t *retval)
 {
-	struct sys_dup2_args /* {
+	/* {
 		syscallarg(int)	from;
 		syscallarg(int)	to;
-	} */ *uap = v;
+	} */
 	struct file	*fp;
 	struct filedesc	*fdp;
 	struct proc	*p;
@@ -545,13 +545,13 @@ do_fcntl_lock(struct lwp *l, int fd, int cmd, struct flock *fl)
  */
 /* ARGSUSED */
 int
-sys_fcntl(struct lwp *l, void *v, register_t *retval)
+sys_fcntl(struct lwp *l, const struct sys_fcntl_args *uap, register_t *retval)
 {
-	struct sys_fcntl_args /* {
+	/* {
 		syscallarg(int)		fd;
 		syscallarg(int)		cmd;
 		syscallarg(void *)	arg;
-	} */ *uap = v;
+	} */
 	struct filedesc *fdp;
 	struct file	*fp;
 	struct proc	*p;
@@ -740,11 +740,11 @@ badf:
  */
 /* ARGSUSED */
 int
-sys_close(struct lwp *l, void *v, register_t *retval)
+sys_close(struct lwp *l, const struct sys_close_args *uap, register_t *retval)
 {
-	struct sys_close_args /* {
+	/* {
 		syscallarg(int)	fd;
-	} */ *uap = v;
+	} */
 	int		fd;
 	struct filedesc	*fdp;
 	struct proc *p;
@@ -787,12 +787,12 @@ do_sys_fstat(struct lwp *l, int fd, struct stat *sb)
  */
 /* ARGSUSED */
 int
-sys___fstat30(struct lwp *l, void *v, register_t *retval)
+sys___fstat30(struct lwp *l, const struct sys___fstat30_args *uap, register_t *retval)
 {
-	struct sys___fstat30_args /* {
+	/* {
 		syscallarg(int)			fd;
 		syscallarg(struct stat *)	sb;
-	} */ *uap = v;
+	} */
 	struct stat	sb;
 	int		error;
 
@@ -809,12 +809,12 @@ sys___fstat30(struct lwp *l, void *v, register_t *retval)
  */
 /* ARGSUSED */
 int
-sys_fpathconf(struct lwp *l, void *v, register_t *retval)
+sys_fpathconf(struct lwp *l, const struct sys_fpathconf_args *uap, register_t *retval)
 {
-	struct sys_fpathconf_args /* {
+	/* {
 		syscallarg(int)	fd;
 		syscallarg(int)	name;
-	} */ *uap = v;
+	} */
 	int		fd;
 	struct filedesc	*fdp;
 	struct file	*fp;
@@ -1567,12 +1567,12 @@ closef(struct file *fp, struct lwp *l)
  */
 /* ARGSUSED */
 int
-sys_flock(struct lwp *l, void *v, register_t *retval)
+sys_flock(struct lwp *l, const struct sys_flock_args *uap, register_t *retval)
 {
-	struct sys_flock_args /* {
+	/* {
 		syscallarg(int)	fd;
 		syscallarg(int)	how;
-	} */ *uap = v;
+	} */
 	int		fd, how, error;
 	struct proc	*p;
 	struct filedesc	*fdp;
@@ -1627,14 +1627,14 @@ sys_flock(struct lwp *l, void *v, register_t *retval)
 
 /* ARGSUSED */
 int
-sys_posix_fadvise(struct lwp *l, void *v, register_t *retval)
+sys_posix_fadvise(struct lwp *l, const struct sys_posix_fadvise_args *uap, register_t *retval)
 {
-	const struct sys_posix_fadvise_args /* {
+	/* {
 		syscallarg(int) fd;
 		syscallarg(off_t) offset;
 		syscallarg(off_t) len;
 		syscallarg(int) advice;
-	} */ *uap = v;
+	} */
 	const int fd = SCARG(uap, fd);
 	const int advice = SCARG(uap, advice);
 	struct proc *p = l->l_proc;

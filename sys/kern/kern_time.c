@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.134 2007/12/08 13:31:56 elad Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.135 2007/12/20 23:03:09 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2007 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.134 2007/12/08 13:31:56 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.135 2007/12/20 23:03:09 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -189,12 +189,12 @@ settime(struct proc *p, struct timespec *ts)
 
 /* ARGSUSED */
 int
-sys_clock_gettime(struct lwp *l, void *v, register_t *retval)
+sys_clock_gettime(struct lwp *l, const struct sys_clock_gettime_args *uap, register_t *retval)
 {
-	struct sys_clock_gettime_args /* {
+	/* {
 		syscallarg(clockid_t) clock_id;
 		syscallarg(struct timespec *) tp;
-	} */ *uap = v;
+	} */
 	clockid_t clock_id;
 	struct timespec ats;
 
@@ -215,12 +215,12 @@ sys_clock_gettime(struct lwp *l, void *v, register_t *retval)
 
 /* ARGSUSED */
 int
-sys_clock_settime(struct lwp *l, void *v, register_t *retval)
+sys_clock_settime(struct lwp *l, const struct sys_clock_settime_args *uap, register_t *retval)
 {
-	struct sys_clock_settime_args /* {
+	/* {
 		syscallarg(clockid_t) clock_id;
 		syscallarg(const struct timespec *) tp;
-	} */ *uap = v;
+	} */
 
 	return clock_settime1(l->l_proc, SCARG(uap, clock_id), SCARG(uap, tp),
 	    true);
@@ -252,12 +252,12 @@ clock_settime1(struct proc *p, clockid_t clock_id, const struct timespec *tp,
 }
 
 int
-sys_clock_getres(struct lwp *l, void *v, register_t *retval)
+sys_clock_getres(struct lwp *l, const struct sys_clock_getres_args *uap, register_t *retval)
 {
-	struct sys_clock_getres_args /* {
+	/* {
 		syscallarg(clockid_t) clock_id;
 		syscallarg(struct timespec *) tp;
-	} */ *uap = v;
+	} */
 	clockid_t clock_id;
 	struct timespec ts;
 	int error = 0;
@@ -284,12 +284,12 @@ sys_clock_getres(struct lwp *l, void *v, register_t *retval)
 
 /* ARGSUSED */
 int
-sys_nanosleep(struct lwp *l, void *v, register_t *retval)
+sys_nanosleep(struct lwp *l, const struct sys_nanosleep_args *uap, register_t *retval)
 {
-	struct sys_nanosleep_args/* {
+	/* {
 		syscallarg(struct timespec *) rqtp;
 		syscallarg(struct timespec *) rmtp;
-	} */ *uap = v;
+	} */
 	struct timespec rmt, rqt;
 	int error, error1;
 
@@ -384,12 +384,12 @@ nanosleep1(struct lwp *l, struct timespec *rqt, struct timespec *rmt)
 
 /* ARGSUSED */
 int
-sys_gettimeofday(struct lwp *l, void *v, register_t *retval)
+sys_gettimeofday(struct lwp *l, const struct sys_gettimeofday_args *uap, register_t *retval)
 {
-	struct sys_gettimeofday_args /* {
+	/* {
 		syscallarg(struct timeval *) tp;
-		syscallarg(void *) tzp;		really "struct timezone *"
-	} */ *uap = v;
+		syscallarg(void *) tzp;		really "struct timezone *";
+	} */
 	struct timeval atv;
 	int error = 0;
 	struct timezone tzfake;
@@ -414,12 +414,12 @@ sys_gettimeofday(struct lwp *l, void *v, register_t *retval)
 
 /* ARGSUSED */
 int
-sys_settimeofday(struct lwp *l, void *v, register_t *retval)
+sys_settimeofday(struct lwp *l, const struct sys_settimeofday_args *uap, register_t *retval)
 {
-	struct sys_settimeofday_args /* {
+	/* {
 		syscallarg(const struct timeval *) tv;
-		syscallarg(const void *) tzp;	really "const struct timezone *"
-	} */ *uap = v;
+		syscallarg(const void *) tzp;	really "const struct timezone *";
+	} */
 
 	return settimeofday1(SCARG(uap, tv), true, SCARG(uap, tzp), l, true);
 }
@@ -465,12 +465,12 @@ int	time_adjusted;			/* set if an adjustment is made */
 
 /* ARGSUSED */
 int
-sys_adjtime(struct lwp *l, void *v, register_t *retval)
+sys_adjtime(struct lwp *l, const struct sys_adjtime_args *uap, register_t *retval)
 {
-	struct sys_adjtime_args /* {
+	/* {
 		syscallarg(const struct timeval *) delta;
 		syscallarg(struct timeval *) olddelta;
-	} */ *uap = v;
+	} */
 	int error;
 
 	if ((error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_TIME,
@@ -589,13 +589,13 @@ adjtime1(const struct timeval *delta, struct timeval *olddelta, struct proc *p)
 
 /* Allocate a POSIX realtime timer. */
 int
-sys_timer_create(struct lwp *l, void *v, register_t *retval)
+sys_timer_create(struct lwp *l, const struct sys_timer_create_args *uap, register_t *retval)
 {
-	struct sys_timer_create_args /* {
+	/* {
 		syscallarg(clockid_t) clock_id;
 		syscallarg(struct sigevent *) evp;
 		syscallarg(timer_t *) timerid;
-	} */ *uap = v;
+	} */
 
 	return timer_create1(SCARG(uap, timerid), SCARG(uap, clock_id),
 	    SCARG(uap, evp), copyin, l);
@@ -676,11 +676,11 @@ timer_create1(timer_t *tid, clockid_t id, struct sigevent *evp,
 
 /* Delete a POSIX realtime timer */
 int
-sys_timer_delete(struct lwp *l, void *v, register_t *retval)
+sys_timer_delete(struct lwp *l, const struct sys_timer_delete_args *uap, register_t *retval)
 {
-	struct sys_timer_delete_args /*  {
+	/* {
 		syscallarg(timer_t) timerid;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 	timer_t timerid;
 	struct ptimer *pt, *ptn;
@@ -823,14 +823,14 @@ timer_gettime(struct ptimer *pt, struct itimerval *aitv)
 
 /* Set and arm a POSIX realtime timer */
 int
-sys_timer_settime(struct lwp *l, void *v, register_t *retval)
+sys_timer_settime(struct lwp *l, const struct sys_timer_settime_args *uap, register_t *retval)
 {
-	struct sys_timer_settime_args /* {
+	/* {
 		syscallarg(timer_t) timerid;
 		syscallarg(int) flags;
 		syscallarg(const struct itimerspec *) value;
 		syscallarg(struct itimerspec *) ovalue;
-	} */ *uap = v;
+	} */
 	int error;
 	struct itimerspec value, ovalue, *ovp = NULL;
 
@@ -928,12 +928,12 @@ dotimer_settime(int timerid, struct itimerspec *value,
 
 /* Return the time remaining until a POSIX timer fires. */
 int
-sys_timer_gettime(struct lwp *l, void *v, register_t *retval)
+sys_timer_gettime(struct lwp *l, const struct sys_timer_gettime_args *uap, register_t *retval)
 {
-	struct sys_timer_gettime_args /* {
+	/* {
 		syscallarg(timer_t) timerid;
 		syscallarg(struct itimerspec *) value;
-	} */ *uap = v;
+	} */
 	struct itimerspec its;
 	int error;
 
@@ -972,11 +972,11 @@ dotimer_gettime(int timerid, struct proc *p, struct itimerspec *its)
  * a timer expires and a notification can be posted.
  */
 int
-sys_timer_getoverrun(struct lwp *l, void *v, register_t *retval)
+sys_timer_getoverrun(struct lwp *l, const struct sys_timer_getoverrun_args *uap, register_t *retval)
 {
-	struct sys_timer_getoverrun_args /* {
+	/* {
 		syscallarg(timer_t) timerid;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 	int timerid;
 	struct ptimer *pt;
@@ -1061,12 +1061,12 @@ realtimerexpire(void *arg)
 /* BSD routine to get the value of an interval timer. */
 /* ARGSUSED */
 int
-sys_getitimer(struct lwp *l, void *v, register_t *retval)
+sys_getitimer(struct lwp *l, const struct sys_getitimer_args *uap, register_t *retval)
 {
-	struct sys_getitimer_args /* {
+	/* {
 		syscallarg(int) which;
 		syscallarg(struct itimerval *) itv;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 	struct itimerval aitv;
 	int error;
@@ -1100,13 +1100,13 @@ dogetitimer(struct proc *p, int which, struct itimerval *itvp)
 /* BSD routine to set/arm an interval timer. */
 /* ARGSUSED */
 int
-sys_setitimer(struct lwp *l, void *v, register_t *retval)
+sys_setitimer(struct lwp *l, const struct sys_setitimer_args *uap, register_t *retval)
 {
-	struct sys_setitimer_args /* {
+	/* {
 		syscallarg(int) which;
 		syscallarg(const struct itimerval *) itv;
 		syscallarg(struct itimerval *) oitv;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 	int which = SCARG(uap, which);
 	struct sys_getitimer_args getargs;

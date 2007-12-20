@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_prctl.c,v 1.43 2007/12/08 18:36:03 dsl Exp $ */
+/*	$NetBSD: irix_prctl.c,v 1.44 2007/12/20 23:02:50 dsl Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.43 2007/12/08 18:36:03 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.44 2007/12/20 23:02:50 dsl Exp $");
 
 #include <sys/errno.h>
 #include <sys/types.h>
@@ -89,12 +89,12 @@ static void irix_isrr_debug(struct proc *);
 static void irix_isrr_cleanup(struct proc *);
 
 int
-irix_sys_prctl(struct lwp *l, void *v, register_t *retval)
+irix_sys_prctl(struct lwp *l, const struct irix_sys_prctl_args *uap, register_t *retval)
 {
-	struct irix_sys_prctl_args /* {
+	/* {
 		syscallarg(unsigned) option;
 		syscallarg(void *) arg1;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 	unsigned int option = SCARG(uap, option);
 
@@ -206,16 +206,16 @@ irix_sys_prctl(struct lwp *l, void *v, register_t *retval)
 
 
 int
-irix_sys_pidsprocsp(struct lwp *l, void *v, register_t *retval)
+irix_sys_pidsprocsp(struct lwp *l, const struct irix_sys_pidsprocsp_args *uap, register_t *retval)
 {
-	struct irix_sys_pidsprocsp_args /* {
+	/* {
 		syscallarg(void *) entry;
 		syscallarg(unsigned) inh;
 		syscallarg(void *) arg;
 		syscallarg(void *) sp;
 		syscallarg(irix_size_t) len;
 		syscallarg(irix_pid_t) pid;
-	} */ *uap = v;
+	} */
 
 	/* pid is ignored for now */
 	printf("Warning: unsupported pid argument to IRIX sproc\n");
@@ -225,28 +225,28 @@ irix_sys_pidsprocsp(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-irix_sys_sprocsp(struct lwp *l, void *v, register_t *retval)
+irix_sys_sprocsp(struct lwp *l, const struct irix_sys_sprocsp_args *uap, register_t *retval)
 {
-	struct irix_sys_sprocsp_args /* {
+	/* {
 		syscallarg(void *) entry;
 		syscallarg(unsigned) inh;
 		syscallarg(void *) arg;
 		syscallarg(void *) sp;
 		syscallarg(irix_size_t) len;
-	} */ *uap = v;
+	} */
 
 	return irix_sproc(SCARG(uap, entry), SCARG(uap, inh), SCARG(uap, arg),
 	    SCARG(uap, sp), SCARG(uap, len), 0, l, retval);
 }
 
 int
-irix_sys_sproc(struct lwp *l, void *v, register_t *retval)
+irix_sys_sproc(struct lwp *l, const struct irix_sys_sproc_args *uap, register_t *retval)
 {
-	struct irix_sys_sproc_args /* {
+	/* {
 		syscallarg(void *) entry;
 		syscallarg(unsigned) inh;
 		syscallarg(void *) arg;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 
 	return irix_sproc(SCARG(uap, entry), SCARG(uap, inh), SCARG(uap, arg),
@@ -523,13 +523,13 @@ irix_sproc_child(struct irix_sproc_child_args *isc)
 }
 
 int
-irix_sys_procblk(struct lwp *l, void *v, register_t *retval)
+irix_sys_procblk(struct lwp *l, const struct irix_sys_procblk_args *uap, register_t *retval)
 {
-	struct irix_sys_procblk_args /* {
+	/* {
 		syscallarg(int) cmd;
 		syscallarg(pid_t) pid;
 		syscallarg(int) count;
-	} */ *uap = v;
+	} */
 	int cmd = SCARG(uap, cmd);
 	struct irix_emuldata *ied;
 	struct irix_emuldata *iedp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_machdep.c,v 1.5 2007/03/04 06:00:29 christos Exp $	*/
+/*	$NetBSD: compat_16_machdep.c,v 1.6 2007/12/20 23:02:41 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1987, 1990 The Regents of the University of California.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.5 2007/03/04 06:00:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.6 2007/12/20 23:02:41 dsl Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -198,11 +198,11 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
  */
 
 int
-compat_16_sys___sigreturn14(struct lwp *l, void *v, register_t *retval)
+compat_16_sys___sigreturn14(struct lwp *l, const struct compat_16_sys___sigreturn14_args *uap, register_t *retval)
 {
-	struct compat_16_sys___sigreturn14_args /* {
+	/* {
 		syscallarg(struct sigcontext *) sigcntxp;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 	struct sigcontext *scp, context;
 	struct reg *regs;

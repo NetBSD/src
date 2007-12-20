@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sysctl.c,v 1.32 2007/10/19 18:52:12 njoly Exp $	*/
+/*	$NetBSD: linux_sysctl.c,v 1.33 2007/12/20 23:02:57 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sysctl.c,v 1.32 2007/10/19 18:52:12 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sysctl.c,v 1.33 2007/12/20 23:02:57 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,9 +118,8 @@ SYSCTL_SETUP(linux_sysctl_setup, "linux emulated sysctl subtree setup")
  * linux sysctl system call
  */
 int
-linux_sys___sysctl(struct lwp *l, void *v, register_t *retval)
+linux_sys___sysctl(struct lwp *l, const struct linux_sys___sysctl_args *uap, register_t *retval)
 {
-	struct linux_sys___sysctl_args *uap = v;
 	struct linux___sysctl ls;
 	int error, nerror, name[CTL_MAXNAME];
 	size_t savelen = 0, oldlen = 0;

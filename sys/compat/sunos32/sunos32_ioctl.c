@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_ioctl.c,v 1.25 2007/12/08 18:36:23 dsl Exp $	*/
+/*	$NetBSD: sunos32_ioctl.c,v 1.26 2007/12/20 23:03:04 dsl Exp $	*/
 /* from: NetBSD: sunos_ioctl.c,v 1.35 2001/02/03 22:20:02 mrg Exp 	*/
 
 /*
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_ioctl.c,v 1.25 2007/12/08 18:36:23 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_ioctl.c,v 1.26 2007/12/20 23:03:04 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd32.h"
@@ -430,18 +430,23 @@ stio2stios(struct sunos_termio *t, struct sunos_termios *ts)
 }
 
 int
-sunos32_sys_ioctl(struct lwp *l, void *v, register_t *retval)
+sunos32_sys_ioctl(struct lwp *l, const struct sunos32_sys_ioctl_args *uap, register_t *retval)
 {
-	struct sunos32_sys_ioctl_args /* {
+	/* {
 		int	fd;
 		netbsd32_u_long	com;
 		netbsd32_caddr_t	data;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 	struct filedesc *fdp = p->p_fd;
 	struct file *fp;
 	int (*ctl)(struct file *, u_long, void *, struct lwp *);
+	struct netbsd32_ioctl_args bsd_ua;
 	int error;
+
+	SCARG(&bsd_ua, fd) = SCARG(uap, fd);
+	SCARG(&bsd_ua, com) = SCARG(uap, com);
+	SCARG(&bsd_ua, data) = SCARG(uap, data);
 
 	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
 		return EBADF;
@@ -453,7 +458,7 @@ sunos32_sys_ioctl(struct lwp *l, void *v, register_t *retval)
 
 	switch (SCARG(uap, com)) {
 	case _IOR('t', 0, int):
-		SCARG(uap, com) = TIOCGETD;
+		SCARG(&bsd_ua, com) = TIOCGETD;
 		break;
 	case _IOW('t', 1, int):
 	    {
@@ -519,7 +524,7 @@ sunos32_sys_ioctl(struct lwp *l, void *v, register_t *retval)
 		return copyout(&ss, SCARG_P32(uap, data), sizeof (ss));
 	    }
 	case _IOW('t', 130, int):	/* TIOCSETPGRP: posix variant */
-		SCARG(uap, com) = TIOCSPGRP;
+		SCARG(&bsd_ua, com) = TIOCSPGRP;
 		break;
 	case _IOR('t', 131, int):	/* TIOCGETPGRP: posix variant */
 	    {
@@ -540,7 +545,7 @@ sunos32_sys_ioctl(struct lwp *l, void *v, register_t *retval)
 		return copyout(&pgrp, SCARG_P32(uap, data), sizeof(pgrp));
 	    }
 	case _IO('t', 132):
-		SCARG(uap, com) = TIOCSCTTY;
+		SCARG(&bsd_ua, com) = TIOCSCTTY;
 		break;
 	case SUNOS_TCGETA:
 	case SUNOS_TCGETS:
@@ -907,7 +912,7 @@ sunos32_sys_ioctl(struct lwp *l, void *v, register_t *retval)
 	    }
 
 	}
-	return (netbsd32_ioctl(l, uap, retval));
+	return (netbsd32_ioctl(l, &bsd_ua, retval));
 }
 
 /* SunOS fcntl(2) cmds not implemented */
@@ -1005,15 +1010,20 @@ static struct {
 };
 
 int
-sunos32_sys_fcntl(struct lwp *l, void *v, register_t *retval)
+sunos32_sys_fcntl(struct lwp *l, const struct sunos32_sys_fcntl_args *uap, register_t *retval)
 {
-	struct sunos32_sys_fcntl_args /* {
+	/* {
 		syscallarg(int) fd;
 		syscallarg(int) cmd;
 		syscallarg(netbsd32_voidp) arg;
-	} */ *uap = v;
+	} */
+	struct sys_fcntl_args bsd_ua;
 	uintptr_t flg;
 	int n, ret;
+
+	SCARG(&bsd_ua, fd) = SCARG(uap, fd);
+	SCARG(&bsd_ua, cmd) = SCARG(uap, cmd);
+	SCARG(&bsd_ua, arg) = SCARG_P32(uap, arg);
 
 	switch (SCARG(uap, cmd)) {
 	case F_SETFL:
@@ -1025,7 +1035,7 @@ sunos32_sys_fcntl(struct lwp *l, void *v, register_t *retval)
 				flg |= sunfcntl_flgtab[n].bsd_flg;
 			}
 		}
-		NETBSD32PTR32(SCARG(uap, arg), (void *)flg);
+		SCARG(&bsd_ua, arg) = (void *)flg;
 		break;
 
 	case F_GETLK:
@@ -1056,19 +1066,23 @@ sunos32_sys_fcntl(struct lwp *l, void *v, register_t *retval)
 		return (EOPNOTSUPP);
 	}
 
-	ret = netbsd32_fcntl(l, uap, retval);
+	ret = sys_fcntl(l, &bsd_ua, retval);
+	if (ret != 0)
+		return ret;
 
 	switch (SCARG(uap, cmd)) {
 	case F_GETFL:
 		n = sizeof(sunfcntl_flgtab) / sizeof(sunfcntl_flgtab[0]);
+		ret = *retval;
 		while (--n >= 0) {
 			if (ret & sunfcntl_flgtab[n].bsd_flg) {
 				ret &= ~sunfcntl_flgtab[n].bsd_flg;
 				ret |= sunfcntl_flgtab[n].sun_flg;
 			}
 		}
+		*retval = ret;
 		break;
 	}
 
-	return (ret);
+	return 0;
 }

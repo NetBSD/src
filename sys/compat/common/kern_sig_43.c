@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig_43.c,v 1.29 2007/12/08 18:35:54 dsl Exp $	*/
+/*	$NetBSD: kern_sig_43.c,v 1.30 2007/12/20 23:02:44 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig_43.c,v 1.29 2007/12/08 18:35:54 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig_43.c,v 1.30 2007/12/20 23:02:44 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -133,11 +133,11 @@ compat_43_sigaltstack_to_sigstack(const struct sigaltstack *sa, struct sigstack 
 }
 
 int
-compat_43_sys_sigblock(struct lwp *l, void *v, register_t *retval)
+compat_43_sys_sigblock(struct lwp *l, const struct compat_43_sys_sigblock_args *uap, register_t *retval)
 {
-	struct compat_43_sys_sigblock_args /* {
+	/* {
 		syscallarg(int) mask;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 	int nsm, osm;
 	sigset_t nss, oss;
@@ -156,11 +156,11 @@ compat_43_sys_sigblock(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-compat_43_sys_sigsetmask(struct lwp *l, void *v, register_t *retval)
+compat_43_sys_sigsetmask(struct lwp *l, const struct compat_43_sys_sigsetmask_args *uap, register_t *retval)
 {
-	struct compat_43_sys_sigsetmask_args /* {
+	/* {
 		syscallarg(int) mask;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 	int nsm, osm;
 	sigset_t nss, oss;
@@ -180,12 +180,12 @@ compat_43_sys_sigsetmask(struct lwp *l, void *v, register_t *retval)
 
 /* ARGSUSED */
 int
-compat_43_sys_sigstack(struct lwp *l, void *v, register_t *retval)
+compat_43_sys_sigstack(struct lwp *l, const struct compat_43_sys_sigstack_args *uap, register_t *retval)
 {
-	struct compat_43_sys_sigstack_args /* {
+	/* {
 		syscallarg(struct sigstack *) nss;
 		syscallarg(struct sigstack *) oss;
-	} */ *uap = v;
+	} */
 	struct sigstack nss, oss;
 	struct sigaltstack nsa, osa;
 	int error;
@@ -214,13 +214,13 @@ compat_43_sys_sigstack(struct lwp *l, void *v, register_t *retval)
  */
 /* ARGSUSED */
 int
-compat_43_sys_sigvec(struct lwp *l, void *v, register_t *retval)
+compat_43_sys_sigvec(struct lwp *l, const struct compat_43_sys_sigvec_args *uap, register_t *retval)
 {
-	struct compat_43_sys_sigvec_args /* {
+	/* {
 		syscallarg(int) signum;
 		syscallarg(const struct sigvec *) nsv;
 		syscallarg(struct sigvec *) osv;
-	} */ *uap = v;
+	} */
 	struct sigvec nsv, osv;
 	struct sigaction nsa, osa;
 	int error;
@@ -248,16 +248,17 @@ compat_43_sys_sigvec(struct lwp *l, void *v, register_t *retval)
 
 /* ARGSUSED */
 int
-compat_43_sys_killpg(struct lwp *l, void *v, register_t *retval)
+compat_43_sys_killpg(struct lwp *l, const struct compat_43_sys_killpg_args *uap, register_t *retval)
 {
-	struct compat_43_sys_killpg_args /* {
+	/* {
 		syscallarg(int) pgid;
 		syscallarg(int) signum;
-	} */ *uap = v;
+	} */
 	ksiginfo_t ksi;
+	int pgid = SCARG(uap, pgid);
 
 #ifdef COMPAT_09
-	SCARG(uap, pgid) = (short) SCARG(uap, pgid);
+	pgid &= 0xffff;
 #endif
 
 	if ((u_int)SCARG(uap, signum) >= NSIG)
@@ -267,5 +268,5 @@ compat_43_sys_killpg(struct lwp *l, void *v, register_t *retval)
 	ksi.ksi_code = SI_USER;
 	ksi.ksi_pid = l->l_proc->p_pid;
 	ksi.ksi_uid = kauth_cred_geteuid(l->l_cred);
-	return (killpg1(l, &ksi, SCARG(uap, pgid), 0));
+	return killpg1(l, &ksi, pgid, 0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.210 2007/08/15 12:07:34 ad Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.211 2007/12/20 23:03:09 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.210 2007/08/15 12:07:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.211 2007/12/20 23:03:09 dsl Exp $");
 
 #include "opt_defcorename.h"
 #include "ksyms.h"
@@ -263,16 +263,16 @@ sysctl_init(void)
  * ********************************************************************
  */
 int
-sys___sysctl(struct lwp *l, void *v, register_t *retval)
+sys___sysctl(struct lwp *l, const struct sys___sysctl_args *uap, register_t *retval)
 {
-	struct sys___sysctl_args /* {
+	/* {
 		syscallarg(const int *) name;
 		syscallarg(u_int) namelen;
 		syscallarg(void *) old;
 		syscallarg(size_t *) oldlenp;
 		syscallarg(const void *) new;
 		syscallarg(size_t) newlen;
-	} */ *uap = v;
+	} */
 	int error, nerror, name[CTL_MAXNAME];
 	size_t oldlen, savelen, *oldlenp;
 
