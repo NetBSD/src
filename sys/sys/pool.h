@@ -1,4 +1,4 @@
-/*	$NetBSD: pool.h,v 1.59 2007/12/13 02:45:10 yamt Exp $	*/
+/*	$NetBSD: pool.h,v 1.60 2007/12/20 23:49:11 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2007 The NetBSD Foundation, Inc.
@@ -56,14 +56,6 @@
 #include <sys/tree.h>
 #include <sys/callback.h>
 #endif
-
-/*
- * 256 byte pool_cache_group if _LP64
- * 128 byte pool_cache_group if !_LP64 and sizeof(paddr_t) == 4
- *
- * Both will be aligned to CACHE_LINE_SIZE.
- */
-#define	PCG_NOBJECTS		15
 
 #define	POOL_PADDR_INVALID	((paddr_t) -1)
 
@@ -136,6 +128,7 @@ struct pool {
 #define PR_RECURSIVE	0x200	/* pool contains pools, for vmstat(8) */
 #define PR_NOTOUCH	0x400	/* don't use free items to keep internal state*/
 #define PR_NOALIGN	0x800	/* don't assume backend alignment */
+#define	PR_LARGECACHE	0x1000	/* use large cache groups */
 
 	/*
 	 * `pr_lock' protects the pool's data structures when removing
@@ -190,14 +183,29 @@ struct pool {
 	void		*pr_qcache;
 };
 
+/*
+ * Cache group sizes, assuming 4-byte paddr_t on !_LP64.
+ * All groups will be aligned to CACHE_LINE_SIZE.
+ */
+#ifdef _LP64
+#define	PCG_NOBJECTS_NORMAL	15	/* 256 byte group */
+#define	PCG_NOBJECTS_LARGE	63	/* 1024 byte group */
+#else
+#define	PCG_NOBJECTS_NORMAL	14	/* 124 byte group */
+#define	PCG_NOBJECTS_LARGE	62	/* 508 byte group */
+#endif
+
+typedef struct pcgpair {
+	void	*pcgo_va;		/* object virtual address */
+	paddr_t	pcgo_pa;		/* object physical address */
+} pcgpair_t;
+
 /* The pool cache group. */
 typedef struct pool_cache_group {
 	struct pool_cache_group	*pcg_next;	/* link to next group */
 	u_int			pcg_avail;	/* # available objects */
-	struct {
-		void	*pcgo_va;		/* object virtual address */
-		paddr_t	pcgo_pa;		/* object physical address */
-	} pcg_objects[PCG_NOBJECTS];
+	u_int			pcg_size;	/* max number objects */
+	pcgpair_t 		pcg_objects[1];	/* the objects */
 } pcg_t;
 
 typedef struct pool_cache_cpu {
@@ -224,6 +232,7 @@ struct pool_cache {
 	pcg_t		*pc_emptygroups;/* list of empty cache groups */
 	pcg_t		*pc_fullgroups;	/* list of full cache groups */
 	pcg_t		*pc_partgroups;	/* groups for reclamation */
+	int		pc_pcgsize;	/* Use large cache groups? */
 	int		pc_ncpu;	/* number cpus set up */
 	int		(*pc_ctor)(void *, void *, int);
 	void		(*pc_dtor)(void *, void *);
