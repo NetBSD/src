@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.120 2007/12/16 14:12:34 elad Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.121 2007/12/20 19:53:32 dyoung Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.120 2007/12/16 14:12:34 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.121 2007/12/20 19:53:32 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -638,6 +638,7 @@ in_pcbpurgeif0(struct inpcbtable *table, struct ifnet *ifp)
 void
 in_pcbpurgeif(struct inpcbtable *table, struct ifnet *ifp)
 {
+	struct rtentry *rt;
 	struct inpcb *inp, *ninp;
 
 	for (inp = (struct inpcb *)CIRCLEQ_FIRST(&table->inpt_queue);
@@ -646,8 +647,8 @@ in_pcbpurgeif(struct inpcbtable *table, struct ifnet *ifp)
 		ninp = (struct inpcb *)CIRCLEQ_NEXT(inp, inp_queue);
 		if (inp->inp_af != AF_INET)
 			continue;
-		if (inp->inp_route.ro_rt != NULL &&
-		    inp->inp_route.ro_rt->rt_ifp == ifp)
+		if ((rt = rtcache_getrt(&inp->inp_route)) != NULL &&
+		    rt->rt_ifp == ifp)
 			in_rtchange(inp, 0);
 	}
 }
@@ -667,7 +668,7 @@ in_losing(struct inpcb *inp)
 	if (inp->inp_af != AF_INET)
 		return;
 
-	if ((rt = inp->inp_route.ro_rt) != NULL) {
+	if ((rt = rtcache_getrt(&inp->inp_route)) != NULL) {
 		memset(&info, 0, sizeof(info));
 		info.rti_info[RTAX_DST] = rtcache_getdst(&inp->inp_route);
 		info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
@@ -886,6 +887,7 @@ struct sockaddr_in *
 in_selectsrc(struct sockaddr_in *sin, struct route *ro,
     int soopts, struct ip_moptions *mopts, int *errorp)
 {
+	struct rtentry *rt;
 	struct in_ifaddr *ia = NULL;
 
 	/*
@@ -911,8 +913,9 @@ in_selectsrc(struct sockaddr_in *sin, struct route *ro,
 	 *
 	 * XXX Is this still true?  Do we care?
 	 */
-	if (ro->ro_rt != NULL && !(ro->ro_rt->rt_ifp->if_flags & IFF_LOOPBACK))
-		ia = ifatoia(ro->ro_rt->rt_ifa);
+	if ((rt = rtcache_getrt(ro)) != NULL &&
+	    !(rt->rt_ifp->if_flags & IFF_LOOPBACK))
+		ia = ifatoia(rt->rt_ifa);
 	if (ia == NULL) {
 		u_int16_t fport = sin->sin_port;
 

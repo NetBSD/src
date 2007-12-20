@@ -1,4 +1,4 @@
-/*      $NetBSD: ip_etherip.c,v 1.6 2007/12/11 12:29:12 lukem Exp $        */
+/*      $NetBSD: ip_etherip.c,v 1.7 2007/12/20 19:53:32 dyoung Exp $        */
 
 /*
  *  Copyright (c) 2006, Hans Rosenfeld <rosenfeld@grumpf.hope-2000.org>
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_etherip.c,v 1.6 2007/12/11 12:29:12 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_etherip.c,v 1.7 2007/12/20 19:53:32 dyoung Exp $");
 
 #include "opt_inet.h"
 
@@ -93,6 +93,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip_etherip.c,v 1.6 2007/12/11 12:29:12 lukem Exp $")
 int
 ip_etherip_output(struct ifnet *ifp, struct mbuf *m)
 {
+	struct rtentry *rt;
 	struct etherip_softc *sc = (struct etherip_softc*)ifp->if_softc;
 	struct sockaddr_in *sin_src, *sin_dst;
 	struct ip iphdr;        /* capsule IP header, host byte ordered */
@@ -158,13 +159,13 @@ ip_etherip_output(struct ifnet *ifp, struct mbuf *m)
 	memcpy(mtod(m, struct ip *), &iphdr, sizeof(struct ip));
 
 	sockaddr_in_init(&u.dst4, &sin_dst->sin_addr, 0);
-	if (rtcache_lookup(&sc->sc_ro, &u.dst) == NULL) {
+	if ((rt = rtcache_lookup(&sc->sc_ro, &u.dst)) == NULL) {
 		m_freem(m);
 		return ENETUNREACH;
 	}
 
 	/* if it constitutes infinite encapsulation, punt. */
-	if (sc->sc_ro.ro_rt->rt_ifp == ifp) {
+	if (rt->rt_ifp == ifp) {
 		rtcache_free(&sc->sc_ro);
 		m_freem(m);
 		return ENETUNREACH;     /*XXX*/

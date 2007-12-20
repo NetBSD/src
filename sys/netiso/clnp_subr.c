@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_subr.c,v 1.29 2007/07/19 20:48:59 dyoung Exp $	*/
+/*	$NetBSD: clnp_subr.c,v 1.30 2007/12/20 19:53:34 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clnp_subr.c,v 1.29 2007/07/19 20:48:59 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clnp_subr.c,v 1.30 2007/12/20 19:53:34 dyoung Exp $");
 
 #include "opt_iso.h"
 
@@ -346,7 +346,7 @@ clnp_forward(
 	 */
 	if ((iso_systype & SNPA_IS) && (inbound_shp) &&
 	    (ifp == inbound_shp->snh_ifp))
-		esis_rdoutput(inbound_shp, m, oidx, dst, route.ro_rt);
+		esis_rdoutput(inbound_shp, m, oidx, dst, rtcache_getrt(&route));
 	/*
 	 *	If options are present, update them
 	 */
@@ -391,11 +391,11 @@ clnp_forward(
 	/*
 	 *	Dispatch the datagram if it is small enough, otherwise fragment
 	 */
-	if (len <= SN_MTU(ifp, route.ro_rt)) {
+	if (len <= SN_MTU(ifp, rtcache_getrt(&route))) {
 		iso_gen_csum(m, CLNP_CKSUM_OFF, (int) clnp->cnf_hdr_len);
-		(void) (*ifp->if_output) (ifp, m, next_hop, route.ro_rt);
+		(void) (*ifp->if_output) (ifp, m, next_hop, rtcache_getrt(&route));
 	} else {
-		(void) clnp_fragment(ifp, m, next_hop, len, seg_off, /* flags */ 0, route.ro_rt);
+		(void) clnp_fragment(ifp, m, next_hop, len, seg_off, /* flags */ 0, rtcache_getrt(&route));
 	}
 
 done:
@@ -464,6 +464,7 @@ clnp_route(
 					 	 * firsthop */
 	struct iso_ifaddr **ifa)	/* result: fill in with ptr to ifa */
 {
+	struct rtentry *rt;
 	int rc;
 	union {
 		struct sockaddr		dst;
@@ -492,17 +493,17 @@ clnp_route(
 	/* set up new route structure */
 	if ((rc = sockaddr_iso_init(&u.dsti, dst)) != 0)
 		return rc;
-	if (rtcache_lookup(ro, &u.dst) == NULL) {
+	if ((rt = rtcache_lookup(ro, &u.dst)) == NULL) {
 		rtcache_free(ro);
 		return ENETUNREACH;
 	}
-	ro->ro_rt->rt_use++;
+	rt->rt_use++;
 	if (ifa != NULL)
-		if ((*ifa = (struct iso_ifaddr *)ro->ro_rt->rt_ifa) == NULL)
+		if ((*ifa = (struct iso_ifaddr *)rt->rt_ifa) == NULL)
 			panic("clnp_route");
 	if (first_hop != NULL) {
-		if (ro->ro_rt->rt_flags & RTF_GATEWAY)
-			*first_hop = ro->ro_rt->rt_gateway;
+		if (rt->rt_flags & RTF_GATEWAY)
+			*first_hop = rt->rt_gateway;
 		else
 			*first_hop = rtcache_getdst(ro);
 	}

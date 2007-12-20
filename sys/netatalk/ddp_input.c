@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_input.c,v 1.15 2007/05/02 20:40:23 dyoung Exp $	 */
+/*	$NetBSD: ddp_input.c,v 1.16 2007/12/20 19:53:31 dyoung Exp $	 */
 
 /*
  * Copyright (c) 1990,1994 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_input.c,v 1.15 2007/05/02 20:40:23 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddp_input.c,v 1.16 2007/12/20 19:53:31 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -137,6 +137,7 @@ ddp_input(m, ifp, elh, phase)
 	struct elaphdr *elh;
 	int             phase;
 {
+	struct rtentry *rt;
 	struct sockaddr_at from, to;
 	struct ddpshdr *dsh, ddps;
 	struct at_ifaddr *aa;
@@ -284,7 +285,8 @@ ddp_input(m, ifp, elh, phase)
 		}
 #endif
 		if (ddp_firewall &&
-		    (forwro.ro_rt == NULL || forwro.ro_rt->rt_ifp != ifp)) {
+		    ((rt = rtcache_getrt(&forwro)) == NULL ||
+		     rt->rt_ifp != ifp)) {
 			m_freem(m);
 			return;
 		}

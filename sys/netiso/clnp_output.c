@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_output.c,v 1.20 2007/05/02 20:40:28 dyoung Exp $	*/
+/*	$NetBSD: clnp_output.c,v 1.21 2007/12/20 19:53:34 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clnp_output.c,v 1.20 2007/05/02 20:40:28 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clnp_output.c,v 1.21 2007/12/20 19:53:34 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -189,6 +189,7 @@ int             clnp_id = 0;	/* id for segmented dgrams */
 int
 clnp_output(struct mbuf *m0, ...)
 {
+	struct rtentry *rt;
 	struct isopcb  *isop;	/* iso pcb */
 	int             datalen;/* number of bytes of data in m0 */
 	int             flags;	/* flags */
@@ -242,10 +243,9 @@ clnp_output(struct mbuf *m0, ...)
 			printf("\tclc_dst %s\n", clnp_iso_addrp(&clcp->clc_dst));
 			printf("\tisop_opts %p, clc_opts %p\n",
 			    isop->isop_options, clcp->clc_options);
-			if (isop->isop_route.ro_rt != NULL)
-				printf("\tro_rt %p, rt_flags x%x\n",
-				    isop->isop_route.ro_rt,
-				    isop->isop_route.ro_rt->rt_flags);
+			if ((rt = rtcache_getrt(&isop->isop_route)) != NULL)
+				printf("\trt %p, rt_flags x%x\n",
+				    rt, rt->rt_flags);
 			printf("\tflags x%x, clc_flags x%x\n", flags,
 			    clcp->clc_flags);
 			printf("\tclc_hdr %p\n", clcp->clc_hdr);
@@ -255,9 +255,9 @@ clnp_output(struct mbuf *m0, ...)
 	if ((clcp != NULL) &&	/* cache exists */
 	    (isop->isop_options == clcp->clc_options) &&	/* same options */
 	    (iso_addrmatch1(dst, &clcp->clc_dst)) &&	/* dst still same */
-	    (isop->isop_route.ro_rt != NULL) &&	/* route exists */
-	    (isop->isop_route.ro_rt == clcp->clc_rt) &&	/* and is cached */
-	    (isop->isop_route.ro_rt->rt_flags & RTF_UP) &&	/* route still up */
+	    (rt = rtcache_getrt(&isop->isop_route)) != NULL &&	/* route exists */
+	    rt == clcp->clc_rt &&	/* and is cached */
+	    (rt->rt_flags & RTF_UP) &&	/* route still up */
 	    (flags == clcp->clc_flags) &&	/* same flags */
 	    (clcp->clc_hdr != NULL)) {	/* hdr mbuf exists */
 		/*
@@ -459,7 +459,7 @@ clnp_output(struct mbuf *m0, ...)
 #endif
 			goto bad;
 		}
-		clcp->clc_rt = isop->isop_route.ro_rt;	/* XXX */
+		clcp->clc_rt = rtcache_getrt(&isop->isop_route);/* XXX */
 		clcp->clc_ifp = clcp->clc_ifa->ia_ifp;	/* XXX */
 
 #ifdef ARGO_DEBUG

@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.208 2007/12/06 02:23:42 dyoung Exp $	*/
+/*	$NetBSD: if.c,v 1.209 2007/12/20 19:53:30 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.208 2007/12/06 02:23:42 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.209 2007/12/20 19:53:30 dyoung Exp $");
 
 #include "opt_inet.h"
 
@@ -300,6 +300,8 @@ if_alloc_sadl(struct ifnet *ifp)
 	ifnet_addrs[ifp->if_index] = ifa;
 	IFAREF(ifa);
 	ifa_insert(ifp, ifa);
+	ifp->if_dl = ifa;
+	IFAREF(ifa);
 	ifa->ifa_rtrequest = link_rtrequest;
 	ifa->ifa_addr = (struct sockaddr *)sdl;
 	ifp->if_sadl = sdl;
@@ -320,10 +322,12 @@ if_free_sadl(struct ifnet *ifp)
 	ifa = ifnet_addrs[ifp->if_index];
 	if (ifa == NULL) {
 		KASSERT(ifp->if_sadl == NULL);
+		KASSERT(ifp->if_dl == NULL);
 		return;
 	}
 
 	KASSERT(ifp->if_sadl != NULL);
+	KASSERT(ifp->if_dl != NULL);
 
 	s = splnet();
 	rtinit(ifa, RTM_DELETE, 0);
@@ -332,6 +336,8 @@ if_free_sadl(struct ifnet *ifp)
 	ifp->if_sadl = NULL;
 
 	ifnet_addrs[ifp->if_index] = NULL;
+	IFAFREE(ifa);
+	ifp->if_dl = NULL;
 	IFAFREE(ifa);
 	splx(s);
 }
