@@ -1,4 +1,4 @@
-/*	$NetBSD: log.c,v 1.8 2002/07/10 20:19:40 wiz Exp $	*/
+/*	$NetBSD: log.c,v 1.9 2007/12/20 20:17:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -48,9 +48,9 @@
 
 #include <stdio.h>
 #include <sys/syslog.h>
-#include "c.h"
 #include "supcdefs.h"
 #include "supextern.h"
+#include "c.h"
 
 static int opened = 0;
 

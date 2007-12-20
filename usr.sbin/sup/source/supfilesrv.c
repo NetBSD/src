@@ -1,4 +1,4 @@
-/*	$NetBSD: supfilesrv.c,v 1.40 2007/12/06 21:58:58 christos Exp $	*/
+/*	$NetBSD: supfilesrv.c,v 1.41 2007/12/20 20:17:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -208,13 +208,11 @@
  **********************************************************************
  */
 
-#include "libc.h"
 #ifdef AFS
 #include <afs/param.h>
 #undef MAXNAMLEN
 #endif
 #include <sys/param.h>
-#include "c.h"
 #include <signal.h>
 #include <errno.h>
 #include <setjmp.h>
@@ -259,6 +257,8 @@
 #include "supextern.h"
 #define MSGFILE
 #include "supmsg.h"
+#include "libc.h"
+#include "c.h"
 
 extern char *crypt(const char *, const char *);
 

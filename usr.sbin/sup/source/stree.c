@@ -1,4 +1,4 @@
-/*	$NetBSD: stree.c,v 1.11 2006/12/20 16:33:34 christos Exp $	*/
+/*	$NetBSD: stree.c,v 1.12 2007/12/20 20:17:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -52,12 +52,12 @@
  **********************************************************************
  */
 
-#include "libc.h"
-#include "c.h"
 #include <sys/param.h>
 #include <assert.h>
 #include "supcdefs.h"
 #include "supextern.h"
+#include "libc.h"
+#include "c.h"
 
 static TREE *Tmake(char *);
 static TREE *Trotll(TREE *, TREE *);
