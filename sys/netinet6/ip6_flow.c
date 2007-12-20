@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_flow.c,v 1.10 2007/12/11 12:30:20 lukem Exp $	*/
+/*	$NetBSD: ip6_flow.c,v 1.11 2007/12/20 19:53:33 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_flow.c,v 1.10 2007/12/11 12:30:20 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_flow.c,v 1.11 2007/12/20 19:53:33 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -270,7 +270,7 @@ ip6flow_fastforward(struct mbuf *m)
 	 * Route and interface still up?
 	 */
 	if (rtcache_down(&ip6f->ip6f_ro) ||
-	    (rt = ip6f->ip6f_ro.ro_rt) == NULL ||
+	    (rt = rtcache_getrt(&ip6f->ip6f_ro)) == NULL ||
 	    (rt->rt_ifp->if_flags & IFF_UP) == 0) {
 	    	/* Route or interface is down */
 		return 0;
@@ -315,8 +315,11 @@ ip6flow_fastforward(struct mbuf *m)
 static void
 ip6flow_addstats(struct ip6flow *ip6f)
 {
-	if (!rtcache_down(&ip6f->ip6f_ro) && ip6f->ip6f_ro.ro_rt != NULL)
-		ip6f->ip6f_ro.ro_rt->rt_use += ip6f->ip6f_uses;
+	struct rtentry *rt;
+
+	if (!rtcache_down(&ip6f->ip6f_ro) &&
+	    (rt = rtcache_getrt(&ip6f->ip6f_ro)) != NULL)
+		rt->rt_use += ip6f->ip6f_uses;
 	ip6stat.ip6s_fastforwardflows = ip6flow_inuse;
 	ip6stat.ip6s_cantforward += ip6f->ip6f_dropped;
 	ip6stat.ip6s_odropped += ip6f->ip6f_dropped;
@@ -365,7 +368,7 @@ ip6flow_reap(int just_one)
 			 * reclaim it.
 			 */
 			if (rtcache_down(&ip6f->ip6f_ro) ||
-			    ip6f->ip6f_ro.ro_rt == NULL)
+			    rtcache_getrt(&ip6f->ip6f_ro) == NULL)
 				goto done;
 			/*
 			 * choose the one that's been least recently
@@ -410,7 +413,7 @@ ip6flow_slowtimo(void)
 		next_ip6f = LIST_NEXT(ip6f, ip6f_list);
 		if (PRT_SLOW_ISEXPIRED(ip6f->ip6f_timer) ||
 		    rtcache_down(&ip6f->ip6f_ro) ||
-		    ip6f->ip6f_ro.ro_rt == NULL) {
+		    rtcache_getrt(&ip6f->ip6f_ro) == NULL) {
 			ip6flow_free(ip6f);
 		} else {
 			ip6f->ip6f_last_uses = ip6f->ip6f_uses;

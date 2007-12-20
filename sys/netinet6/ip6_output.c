@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.123 2007/11/06 23:48:24 dyoung Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.124 2007/12/20 19:53:34 dyoung Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.123 2007/11/06 23:48:24 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.124 2007/12/20 19:53:34 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -204,6 +204,7 @@ ip6_output(
 	int s;
 #endif
 
+	memset(&ip6route, 0, sizeof(ip6route));
 
 #ifdef  DIAGNOSTIC
 	if ((m->m_flags & M_PKTHDR) == 0)
@@ -567,7 +568,6 @@ skip_ipsec2:;
 	 */
 	/* initialize cached route */
 	if (ro == NULL) {
-		memset(&ip6route, 0, sizeof(ip6route));
 		ro = &ip6route;
 	}
 	ro_pmtu = ro;
@@ -731,7 +731,7 @@ skip_ipsec2:;
 		if (dst == NULL)
 			dst = satocsin6(rtcache_getdst(ro));
 		KASSERT(dst != NULL);
-	} else if (opt && opt->ip6po_nextroute.ro_rt != NULL) {
+	} else if (opt && rtcache_getrt(&opt->ip6po_nextroute) != NULL) {
 		/*
 		 * The nexthop is explicitly specified by the
 		 * application.  We assume the next hop is an IPv6
@@ -1171,11 +1171,7 @@ sendorfree:
 		ip6stat.ip6s_fragmented++;
 
 done:
-	/* XXX Second if is invariant? */
-	if (ro == &ip6route)
-		rtcache_free(ro);
-	else if (ro_pmtu == &ip6route)
-		rtcache_free(ro_pmtu);
+	rtcache_free(&ip6route);
 
 #ifdef IPSEC
 	if (sp != NULL)
@@ -1403,6 +1399,7 @@ static int
 ip6_getpmtu(struct route *ro_pmtu, struct route *ro, struct ifnet *ifp,
     const struct in6_addr *dst, u_long *mtup, int *alwaysfragp)
 {
+	struct rtentry *rt;
 	u_int32_t mtu = 0;
 	int alwaysfrag = 0;
 	int error = 0;
@@ -1417,13 +1414,13 @@ ip6_getpmtu(struct route *ro_pmtu, struct route *ro, struct ifnet *ifp,
 		sockaddr_in6_init(&u.dst6, dst, 0, 0, 0);
 		rtcache_lookup(ro_pmtu, &u.dst);
 	}
-	if (ro_pmtu->ro_rt != NULL) {
+	if ((rt = rtcache_getrt(ro_pmtu)) != NULL) {
 		u_int32_t ifmtu;
 
 		if (ifp == NULL)
-			ifp = ro_pmtu->ro_rt->rt_ifp;
+			ifp = rt->rt_ifp;
 		ifmtu = IN6_LINKMTU(ifp);
-		mtu = ro_pmtu->ro_rt->rt_rmx.rmx_mtu;
+		mtu = rt->rt_rmx.rmx_mtu;
 		if (mtu == 0)
 			mtu = ifmtu;
 		else if (mtu < IPV6_MMTU) {
@@ -1447,8 +1444,8 @@ ip6_getpmtu(struct route *ro_pmtu, struct route *ro, struct ifnet *ifp,
 			 * field isn't locked).
 			 */
 			mtu = ifmtu;
-			if (!(ro_pmtu->ro_rt->rt_rmx.rmx_locks & RTV_MTU))
-				ro_pmtu->ro_rt->rt_rmx.rmx_mtu = mtu;
+			if (!(rt->rt_rmx.rmx_locks & RTV_MTU))
+				rt->rt_rmx.rmx_mtu = mtu;
 		}
 	} else if (ifp) {
 		mtu = IN6_LINKMTU(ifp);
@@ -2586,6 +2583,7 @@ ip6_setmoptions(int optname, struct ip6_moptions **im6op, struct mbuf *m)
 		 * appropriate one according to the given multicast address.
 		 */
 		if (mreq->ipv6mr_interface == 0) {
+			struct rtentry *rt;
 			union {
 				struct sockaddr		dst;
 				struct sockaddr_in6	dst6;
@@ -2601,7 +2599,8 @@ ip6_setmoptions(int optname, struct ip6_moptions **im6op, struct mbuf *m)
 			    0, 0);
 			rtcache_setdst(&ro, &u.dst);
 			rtcache_init(&ro);
-			ifp = (ro.ro_rt != NULL) ? ro.ro_rt->rt_ifp : NULL;
+			ifp = (rt = rtcache_getrt(&ro)) != NULL ? rt->rt_ifp
+			                                        : NULL;
 			rtcache_free(&ro);
 		} else {
 			/*

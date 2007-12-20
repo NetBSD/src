@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.130 2007/12/06 00:23:09 dyoung Exp $	*/
+/*	$NetBSD: if.h,v 1.131 2007/12/20 19:53:30 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -272,6 +272,7 @@ struct ifnet {				/* and the entries */
 	void	(*if_drain)		/* routine to release resources */
 		    (struct ifnet *);
 	struct ifaltq if_snd;		/* output queue (includes altq) */
+	struct ifaddr	*if_dl;		/* identity of this interface. */
 	struct	sockaddr_dl *if_sadl;	/* pointer to our sockaddr_dl */
 	const uint8_t *if_broadcastaddr;/* linklevel broadcast bytestring */
 	void	*if_bridge;		/* bridge glue */
