@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.14 2007/12/13 21:22:15 bouyer Exp $	*/
+/*	$NetBSD: pmap.c,v 1.15 2007/12/20 23:46:11 ad Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.14 2007/12/13 21:22:15 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.15 2007/12/20 23:46:11 ad Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -172,16 +172,15 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.14 2007/12/13 21:22:15 bouyer Exp $");
 #include <sys/user.h>
 #include <sys/kernel.h>
 #include <sys/atomic.h>
+#include <sys/cpu.h>
+#include <sys/intr.h>
 
 #include <uvm/uvm.h>
 
 #include <dev/isa/isareg.h>
 
-#include <machine/atomic.h>
-#include <machine/cpu.h>
 #include <machine/specialreg.h>
 #include <machine/gdt.h>
-#include <machine/intr.h>
 #include <machine/isa_machdep.h>
 #include <machine/cpuvar.h>
 
@@ -539,9 +538,7 @@ static char *csrcp, *cdstp, *zerop, *ptpp, *early_zerop;
 static struct pool_cache pmap_pdp_cache;
 
 int	pmap_pdp_ctor(void *, void *, int);
-#ifdef XEN
-void   pmap_pdp_dtor(void *, void *);
-#endif
+void	pmap_pdp_dtor(void *, void *);
 
 void *vmmap; /* XXX: used by mem.c... it should really uvm_map_reserve it */
 
@@ -1361,18 +1358,13 @@ pmap_bootstrap(vaddr_t kva_start)
 	 * initialize caches.
 	 */
 
-	pool_cache_bootstrap(&pmap_cache, sizeof(struct pmap), 0, 0, 0, "pmappl",
-	    &pool_allocator_nointr, IPL_NONE, NULL, NULL, NULL);
-#ifdef XEN
-	pool_cache_bootstrap(&pmap_pdp_cache, PAGE_SIZE, 0, 0, 0, "pdppl",
-	    &pool_allocator_nointr, IPL_NONE,
-	    pmap_pdp_ctor, pmap_pdp_dtor, NULL);
-#else
-	pool_cache_bootstrap(&pmap_pdp_cache, PAGE_SIZE, 0, 0, 0, "pdppl",
-	    &pool_allocator_nointr, IPL_NONE, pmap_pdp_ctor, NULL, NULL);
-#endif
-	pool_cache_bootstrap(&pmap_pv_cache, sizeof(struct pv_entry), 0, 0, 0,
-	    "pvpl", &pool_allocator_meta, IPL_NONE, NULL, NULL, NULL);
+	pool_cache_bootstrap(&pmap_cache, sizeof(struct pmap), 0, 0, 0,
+	    "pmappl", NULL, IPL_NONE, NULL, NULL, NULL);
+	pool_cache_bootstrap(&pmap_pdp_cache, PAGE_SIZE, 0, 0, 0,
+	    "pdppl", NULL, IPL_NONE, pmap_pdp_ctor, pmap_pdp_dtor, NULL);
+	pool_cache_bootstrap(&pmap_pv_cache, sizeof(struct pv_entry), 0, 0,
+	    PR_LARGECACHE, "pvpl", &pool_allocator_meta, IPL_NONE, NULL,
+	    NULL, NULL);
 
 	/*
 	 * ensure the TLB is sync'd with reality by flushing it...
@@ -1862,7 +1854,6 @@ pmap_pdp_ctor(void *arg, void *object, int flags)
 	return (0);
 }
 
-#ifdef XEN
 /*
  * pmap_pdp_dtor: destructor for the PDP cache.
  */
@@ -1870,6 +1861,7 @@ pmap_pdp_ctor(void *arg, void *object, int flags)
 void
 pmap_pdp_dtor(void *arg, void *object)
 {
+#ifdef XEN
 	int s = splvm();
 	/* Set page RW again */
 	pt_entry_t *pte = kvtopte((vaddr_t)object);
@@ -1877,9 +1869,8 @@ pmap_pdp_dtor(void *arg, void *object)
 	xpq_queue_invlpg((vaddr_t)object);
 	xpq_flush_queue();
 	splx(s);
-}
 #endif  /* XEN */
-
+}
 
 /*
  * pmap_create: create a pmap
