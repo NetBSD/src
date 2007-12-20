@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.27 2007/12/20 20:16:34 christos Exp $
+#	$NetBSD: Makefile,v 1.28 2007/12/20 20:25:08 christos Exp $
 # Copyright (c) 1992,1991 Carnegie Mellon University
 # All Rights Reserved.
 # 
@@ -52,7 +52,7 @@ SITE1			!= uname -s | tr '[a-z]' '[A-Z]' | sed -e s/_.*//g
 SITE2			= $(shell uname -s | tr '[a-z]' '[A-Z]' \
 			    | sed -e s/_.*//g)
 SITE			= ${SITE1}${SITE2}
-TARDIR			= sup-0.0
+TARDIR			= sup-0.2
 
 LINUX_DEFINES		= -UMACH -DVAR_TMP -DHAS_DAEMON -DHAS_POSIX_DIR \
 			  -DNEED_SETPROCTITLE
