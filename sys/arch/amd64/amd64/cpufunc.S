@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.S,v 1.4 2007/12/06 14:40:28 ad Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.5 2007/12/20 23:46:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -236,33 +236,6 @@ NENTRY(rdpmc)
 
 NENTRY(breakpoint)
 	int	$0x03		/* paranoid, not 'int3' */
-	ret
-
-NENTRY(x86_atomic_testset_ul)
-	movq	%rsi, %rax
-	xchgq	%rax, (%rdi)
-	ret
-
-NENTRY(x86_atomic_testset_i)
-	movl	%esi, %eax
-	xchgl	%eax, (%rdi)
-	ret
-
-NENTRY(x86_atomic_testset_b)
-	movl	%esi, %eax
-	xchgb	%al, (%rdi)
-	andl	$0xff, %eax
-	ret
-
-NENTRY(x86_atomic_setbits_l)
-	lock
-	orq	%rsi, (%rdi)
-	ret
-
-NENTRY(x86_atomic_clearbits_l)
-	notq	%rsi
-	lock
-	andq	%rsi, (%rdi)
 	ret
 
 NENTRY(x86_curcpu)

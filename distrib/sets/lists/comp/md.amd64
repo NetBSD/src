@@ -1,9 +1,9 @@
-# $NetBSD: md.amd64,v 1.27 2007/12/02 18:10:20 bouyer Exp $
+# $NetBSD: md.amd64,v 1.28 2007/12/20 23:46:10 ad Exp $
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
 ./usr/include/amd64/aout_machdep.h		comp-c-include
 ./usr/include/amd64/asm.h			comp-c-include
-./usr/include/amd64/atomic.h			comp-c-include
+./usr/include/amd64/atomic.h			comp-obsolete		obsolete
 ./usr/include/amd64/autoconf.h			comp-obsolete		obsolete
 ./usr/include/amd64/bootinfo.h			comp-c-include
 ./usr/include/amd64/bswap.h			comp-c-include
