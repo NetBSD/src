@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.S,v 1.6 2007/12/20 01:27:24 ad Exp $	*/
+/*	$NetBSD: atomic.S,v 1.7 2007/12/20 23:46:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -217,7 +217,7 @@ NENTRY(_atomic_cas_cx8)
 	popl	%ebx
 	popl	%edi
 	ret
-	.space	16, 0x90
+	.space	32, 0x90
 END(_atomic_cas_cx8_end)
 
 NENTRY(sse2_lfence)
@@ -235,6 +235,20 @@ atomic_lockpatch:
 	.long	.Lpatch1, .Lpatch2, .Lpatch3, .Lpatch4, .Lpatch5
 	.long	.Lpatch6, .Lpatch7, .Lpatch8, .Lpatch9, .Lpatch10
 	.long	.Lpatch12, .Lpatch13, .Lpatch14, .Lpatch15, 0
+#else
+NENTRY(_atomic_cas_64)
+	pushl	%edi
+	pushl	%ebx
+	movl	12(%esp), %edi
+	movl	16(%esp), %eax
+	movl	20(%esp), %edx
+	movl	24(%esp), %ebx
+	movl	28(%esp), %ecx
+	lock
+	cmpxchg8b (%edi)
+	popl	%ebx
+	popl	%edi
+	ret
 #endif	/* _KERNEL */
 
 ALIAS(atomic_add_32,_atomic_add_32)

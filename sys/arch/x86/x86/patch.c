@@ -1,4 +1,4 @@
-/*	$NetBSD: patch.c,v 1.10 2007/12/20 01:27:25 ad Exp $	*/
+/*	$NetBSD: patch.c,v 1.11 2007/12/20 23:46:11 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.10 2007/12/20 01:27:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.11 2007/12/20 23:46:11 ad Exp $");
 
 #include "opt_lockdebug.h"
 
@@ -74,15 +74,6 @@ void	sse2_lfence(void);
 void	sse2_lfence_end(void);
 void	sse2_mfence(void);
 void	sse2_mfence_end(void);
-
-void	mb_read(void);
-void	mb_read_end(void);
-void	mb_memory(void);
-void	mb_memory_end(void);
-void	sse2_mb_read(void);
-void	sse2_mb_read_end(void);
-void	sse2_mb_memory(void);
-void	sse2_mb_memory_end(void);
 
 void	_atomic_cas_64(void);
 void	_atomic_cas_64_end(void);
@@ -175,16 +166,6 @@ x86_patch(void)
 #endif
 	} else if ((cpu_feature & CPUID_SSE2) != 0) {
 		/* Faster memory barriers. */
-		patchfunc(
-		    sse2_mb_read, sse2_mb_read_end,
-		    mb_read, mb_read_end,
-		    NULL
-		);
-		patchfunc(
-		    sse2_mb_memory, sse2_mb_memory_end,
-		    mb_memory, mb_memory_end,
-		    NULL
-		);
 		patchfunc(
 		    sse2_lfence, sse2_lfence_end,
 		    membar_consumer, membar_consumer_end,
