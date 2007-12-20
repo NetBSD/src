@@ -1,4 +1,6 @@
-# $NetBSD: Makefile,v 1.1 2007/11/12 15:02:58 jmmv Exp $
+# $NetBSD: Makefile,v 1.2 2007/12/20 16:53:59 apb Exp $
+
+.include <bsd.own.mk>
 
 SRCDIR=		${NETBSDSRCDIR}/dist/atf
 .PATH:		${SRCDIR}/data
