@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipw.c,v 1.35 2007/12/09 20:28:09 jmcneill Exp $	*/
+/*	$NetBSD: if_ipw.c,v 1.36 2007/12/20 21:08:19 dyoung Exp $	*/
 /*	FreeBSD: src/sys/dev/ipw/if_ipw.c,v 1.15 2005/11/13 17:17:40 damien Exp 	*/
 
 /*-
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.35 2007/12/09 20:28:09 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.36 2007/12/20 21:08:19 dyoung Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2100 MiniPCI driver
@@ -2029,7 +2029,7 @@ ipw_config(struct ipw_softc *sc)
 	}
 
 	DPRINTF(("Setting MAC to %s\n", ether_sprintf(ic->ic_myaddr)));
-	IEEE80211_ADDR_COPY(LLADDR(ifp->if_sadl), ic->ic_myaddr);
+	if_set_sadl(ifp, ic->ic_myaddr, IEEE80211_ADDR_LEN);
 	error = ipw_cmd(sc, IPW_CMD_SET_MAC_ADDRESS, ic->ic_myaddr,
 	    IEEE80211_ADDR_LEN);
 	if (error != 0)

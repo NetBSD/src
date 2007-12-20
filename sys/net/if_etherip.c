@@ -1,4 +1,4 @@
-/*      $NetBSD: if_etherip.c,v 1.15 2007/12/11 12:37:46 lukem Exp $        */
+/*      $NetBSD: if_etherip.c,v 1.16 2007/12/20 21:08:21 dyoung Exp $        */
 
 /*
  *  Copyright (c) 2006, Hans Rosenfeld <rosenfeld@grumpf.hope-2000.org>
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_etherip.c,v 1.15 2007/12/11 12:37:46 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_etherip.c,v 1.16 2007/12/20 21:08:21 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -689,11 +689,10 @@ etherip_sysctl_handler(SYSCTLFN_ARGS)
 		return EINVAL;
 
 	/* Commit change */
-	if (ether_nonstatic_aton(enaddr, addr) != 0 ||
-	    sockaddr_dl_setaddr(ifp->if_sadl, ifp->if_sadl->sdl_len,
-	                        enaddr, ETHER_ADDR_LEN) == NULL)
+	if (ether_nonstatic_aton(enaddr, addr) != 0)
 		return EINVAL;
 
+	if_set_sadl(ifp, enaddr, ETHER_ADDR_LEN);
 	return error;
 }
 

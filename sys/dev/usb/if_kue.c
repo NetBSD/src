@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kue.c,v 1.60 2007/03/13 13:51:54 drochner Exp $	*/
+/*	$NetBSD: if_kue.c,v 1.61 2007/12/20 21:08:19 dyoung Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.60 2007/03/13 13:51:54 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.61 2007/12/20 21:08:19 dyoung Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
@@ -948,7 +948,7 @@ kue_init(void *xsc)
 	struct kue_softc	*sc = xsc;
 	struct ifnet		*ifp = GET_IFP(sc);
 	int			s;
-	u_char			*eaddr;
+	u_char			eaddr[ETHER_ADDR_LEN];
 
 	DPRINTFN(5,("%s: %s: enter\n", USBDEVNAME(sc->kue_dev),__func__));
 
@@ -957,11 +957,7 @@ kue_init(void *xsc)
 
 	s = splnet();
 
-#if defined(__NetBSD__)
-	eaddr = LLADDR(ifp->if_sadl);
-#else
-	eaddr = sc->arpcom.ac_enaddr;
-#endif /* defined(__NetBSD__) */
+	memcpy(eaddr, CLLADDR(ifp->if_sadl), sizeof(eaddr));
 	/* Set MAC address */
 	kue_ctl(sc, KUE_CTL_WRITE, KUE_CMD_SET_MAC, 0, eaddr, ETHER_ADDR_LEN);
 

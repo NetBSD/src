@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.209 2007/12/20 19:53:30 dyoung Exp $	*/
+/*	$NetBSD: if.c,v 1.210 2007/12/20 21:08:20 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.209 2007/12/20 19:53:30 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.210 2007/12/20 21:08:20 dyoung Exp $");
 
 #include "opt_inet.h"
 
@@ -260,6 +260,20 @@ size_t if_indexlim = 0;
 struct ifaddr **ifnet_addrs = NULL;
 struct ifnet **ifindex2ifnet = NULL;
 struct ifnet *lo0ifp;
+
+void
+if_set_sadl(struct ifnet *ifp, const void *lla, u_char addrlen)
+{
+	struct ifaddr *ifa;
+	struct sockaddr_dl *sdl;
+
+	ifp->if_addrlen = addrlen;
+	if_alloc_sadl(ifp);
+	ifa = ifp->if_dl;
+	sdl = satosdl(ifa->ifa_addr);
+
+	(void)sockaddr_dl_setaddr(sdl, sdl->sdl_len, lla, ifp->if_addrlen);
+}
 
 /*
  * Allocate the link level name for the specified interface.  This

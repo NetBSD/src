@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.c,v 1.20 2007/12/11 12:29:11 lukem Exp $	*/
+/*	$NetBSD: ip_carp.c,v 1.21 2007/12/20 21:08:22 dyoung Exp $	*/
 /*	$OpenBSD: ip_carp.c,v 1.113 2005/11/04 08:11:54 mcbride Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.20 2007/12/11 12:29:11 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.21 2007/12/20 21:08:22 dyoung Exp $");
 
 /*
  * TODO:
@@ -1598,8 +1598,7 @@ carp_set_enaddr(struct carp_softc *sc)
 		enaddr[4] = 1;
 		enaddr[5] = sc->sc_vhid;
 	}
-	(void)sockaddr_dl_setaddr(sc->sc_if.if_sadl, sc->sc_if.if_sadl->sdl_len,
-	    enaddr, sizeof(enaddr));
+	if_set_sadl(&sc->sc_if, enaddr, sizeof(enaddr));
 }
 
 void
