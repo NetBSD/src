@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr.c,v 1.26 2007/12/16 19:01:36 christos Exp $	*/
+/*	$NetBSD: spkr.c,v 1.27 2007/12/20 18:45:32 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1990 Eric S. Raymond (esr@snark.thyrsus.com)
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.26 2007/12/16 19:01:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.27 2007/12/20 18:45:32 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -172,7 +172,7 @@ static const int pitchtab[] =
 /* 5 */ 2093, 2217, 2349, 2489, 2637, 2794, 2960, 3136, 3322, 3520, 3729, 3951,
 /* 6 */ 4186, 4435, 4698, 4978, 5274, 5588, 5920, 6272, 6644, 7040, 7459, 7902,
 };
-#define NOCTAVES (sizeof(pitchtab) / sizeof(pitchtab[0]) / OCTAVE_NOTES)
+#define NOCTAVES (__arraycount(pitchtab) / OCTAVE_NOTES)
 
 static void
 playinit()
