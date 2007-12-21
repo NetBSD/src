@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_time.c,v 1.30 2007/12/20 23:03:02 dsl Exp $	*/
+/*	$NetBSD: netbsd32_time.c,v 1.31 2007/12/21 17:36:09 dsl Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.30 2007/12/20 23:03:02 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.31 2007/12/21 17:36:09 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -149,7 +149,7 @@ netbsd32_ntp_adjtime(struct lwp *l, const struct netbsd32_ntp_adjtime_args *uap,
 }
 #else /* !NTP */
 int
-netbsd32_ntp_gettime(struct lwp *l, const void *v, register_t *retval)
+netbsd32_ntp_gettime(struct lwp *l, const struct netbsd32_ntp_gettime_args *uap, register_t *retval)
 {
 
 	return (ENOSYS);
@@ -157,7 +157,7 @@ netbsd32_ntp_gettime(struct lwp *l, const void *v, register_t *retval)
 
 #ifdef COMPAT_30
 int
-compat_30_netbsd32_ntp_gettime(struct lwp *l, const void *v, register_t *retval)
+compat_30_netbsd32_ntp_gettime(struct lwp *l, const struct compat_30_netbsd32_ntp_gettime_args *uap, register_t *retval)
 {
 
 	return (ENOSYS);
@@ -165,7 +165,7 @@ compat_30_netbsd32_ntp_gettime(struct lwp *l, const void *v, register_t *retval)
 #endif
 
 int
-netbsd32_ntp_adjtime(struct lwp *l, const void *v, register_t *retval)
+netbsd32_ntp_adjtime(struct lwp *l, const struct netbsd32_ntp_adjtime_args *uap, register_t *retval)
 {
 
 	return (ENOSYS);
