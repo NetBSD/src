@@ -1,4 +1,4 @@
-/* $NetBSD: thinkpad_acpi.c,v 1.2 2007/12/21 16:38:02 jmcneill Exp $ */
+/* $NetBSD: thinkpad_acpi.c,v 1.3 2007/12/21 16:38:59 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.2 2007/12/21 16:38:02 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.3 2007/12/21 16:38:59 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -125,7 +125,8 @@ thinkpad_match(device_t parent, struct cfdata *match, void *opaque)
 		return 0;
 
 	/* We only support hotkey version 0x0100 */
-	if (ACPI_FAILURE(AcpiGetHandle(aa->aa_node->ad_handle, "MHKV", &ver)))
+	if (ACPI_FAILURE(acpi_eval_integer(aa->aa_node->ad_handle, "MHKV",
+	    &ver)))
 		return 0;
 
 	if (ver != THINKPAD_HKEY_VERSION)
