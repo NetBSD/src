@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.87.2.4 2007/12/18 15:23:03 ad Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.87.2.5 2007/12/21 10:46:37 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.87.2.4 2007/12/18 15:23:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.87.2.5 2007/12/21 10:46:37 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -725,8 +725,10 @@ pipe_direct_write(struct file *fp, struct pipe *wpipe, struct uio *uio)
 	/* Allocate new kva. */
 	if (wpipe->pipe_map.kva == 0) {
 		error = pipe_loan_alloc(wpipe, npages);
-		if (error)
+		if (error) {
+			mutex_enter(wpipe->pipe_lock);
 			return (error);
+		}
 	}
 
 	/* Loan the write buffer memory from writer process */
@@ -735,6 +737,7 @@ pipe_direct_write(struct file *fp, struct pipe *wpipe, struct uio *uio)
 			 pgs, UVM_LOAN_TOPAGE);
 	if (error) {
 		pipe_loan_free(wpipe);
+		mutex_enter(wpipe->pipe_lock);
 		return (ENOMEM); /* so that caller fallback to ordinary write */
 	}
 
