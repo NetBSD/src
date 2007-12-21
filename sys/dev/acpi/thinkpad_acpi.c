@@ -1,4 +1,4 @@
-/* $NetBSD: thinkpad_acpi.c,v 1.1 2007/12/21 15:15:19 jmcneill Exp $ */
+/* $NetBSD: thinkpad_acpi.c,v 1.2 2007/12/21 16:38:02 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.1 2007/12/21 15:15:19 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.2 2007/12/21 16:38:02 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -86,6 +86,8 @@ typedef struct thinkpad_softc {
 #define	THINKPAD_CMOS_BRIGHTNESS_UP	0x04
 #define	THINKPAD_CMOS_BRIGHTNESS_DOWN	0x05
 
+#define THINKPAD_HKEY_VERSION		0x0100
+
 static int	thinkpad_match(device_t, struct cfdata *, void *);
 static void	thinkpad_attach(device_t, device_t, void *);
 
@@ -110,6 +112,7 @@ thinkpad_match(device_t parent, struct cfdata *match, void *opaque)
 {
 	struct acpi_attach_args *aa = (struct acpi_attach_args *)opaque;
 	ACPI_HANDLE hdl;
+	ACPI_INTEGER ver;
 
 	if (aa->aa_node->ad_type != ACPI_TYPE_DEVICE)
 		return 0;
@@ -119,6 +122,13 @@ thinkpad_match(device_t parent, struct cfdata *match, void *opaque)
 
 	/* No point in attaching if we can't find the CMOS method */
 	if (ACPI_FAILURE(AcpiGetHandle(NULL, "\\UCMS", &hdl)))
+		return 0;
+
+	/* We only support hotkey version 0x0100 */
+	if (ACPI_FAILURE(AcpiGetHandle(aa->aa_node->ad_handle, "MHKV", &ver)))
+		return 0;
+
+	if (ver != THINKPAD_HKEY_VERSION)
 		return 0;
 
 	/* Cool, looks like we're good to go */
@@ -219,63 +229,68 @@ thinkpad_notify_handler(ACPI_HANDLE hdl, UINT32 notify, void *opaque)
 		return;
 	}
 
-	rv = acpi_eval_integer(sc->sc_node->ad_handle, "MHKP", &val);
-	if (ACPI_FAILURE(rv)) {
-		aprint_error_dev(self, "couldn't evaluate MHKP: %s\n",
-		    AcpiFormatException(rv));
-		return;
-	}
+	for (;;) {
+		rv = acpi_eval_integer(sc->sc_node->ad_handle, "MHKP", &val);
+		if (ACPI_FAILURE(rv)) {
+			aprint_error_dev(self, "couldn't evaluate MHKP: %s\n",
+			    AcpiFormatException(rv));
+			return;
+		}
 
-	type = (val & 0xf000) >> 12;
-	event = val & 0x0fff;
+		if (val == 0)
+			return;
 
-	if (type != 1)
-		/* Only type 1 events are supported for now */
-		return;
+		type = (val & 0xf000) >> 12;
+		event = val & 0x0fff;
 
-	switch (event) {
-	case THINKPAD_NOTIFY_BrightnessUp:
-		thinkpad_brightness_up(self);
-		break;
-	case THINKPAD_NOTIFY_BrightnessDown:
-		thinkpad_brightness_down(self);
-		break;
-	case THINKPAD_NOTIFY_DisplayCycle:
-#if notyet
-		pmf_event_inject(NULL, PMFE_DISPLAY_CYCLE);
-#endif
-		break;
-	case THINKPAD_NOTIFY_SleepButton:
-		if (sc->sc_smpsw_valid == false)
+		if (type != 1)
+			/* Only type 1 events are supported for now */
+			continue;
+
+		switch (event) {
+		case THINKPAD_NOTIFY_BrightnessUp:
+			thinkpad_brightness_up(self);
 			break;
-		sysmon_pswitch_event(&sc->sc_smpsw[TP_PSW_SLEEP],
-		    PSWITCH_EVENT_PRESSED);
-		break;
-	case THINKPAD_NOTIFY_HibernateButton:
-#if notyet
-		if (sc->sc_smpsw_valid == false)
+		case THINKPAD_NOTIFY_BrightnessDown:
+			thinkpad_brightness_down(self);
 			break;
-		sysmon_pswitch_event(&sc->sc_smpsw[TP_PSW_HIBERNATE],
-		    PSWITCH_EVENT_PRESSED);
-		break;
+		case THINKPAD_NOTIFY_DisplayCycle:
+#if notyet
+			pmf_event_inject(NULL, PMFE_DISPLAY_CYCLE);
 #endif
-	case THINKPAD_NOTIFY_FnF1:
-	case THINKPAD_NOTIFY_LockScreen:
-	case THINKPAD_NOTIFY_BatteryInfo:
-	case THINKPAD_NOTIFY_WirelessSwitch:
-	case THINKPAD_NOTIFY_FnF6:
-	case THINKPAD_NOTIFY_PointerSwitch:
-	case THINKPAD_NOTIFY_EjectButton:
-	case THINKPAD_NOTIFY_FnF10:
-	case THINKPAD_NOTIFY_FnF11:
-	case THINKPAD_NOTIFY_ThinkLight:
-	case THINKPAD_NOTIFY_Zoom:
-	case THINKPAD_NOTIFY_ThinkVantage:
-		/* XXXJDM we should deliver unhandled hotkeys as keycodes */
-		break;
-	default:
-		aprint_debug_dev(self, "notify event 0x%03x\n", event);
-		break;
+			break;
+		case THINKPAD_NOTIFY_SleepButton:
+			if (sc->sc_smpsw_valid == false)
+				break;
+			sysmon_pswitch_event(&sc->sc_smpsw[TP_PSW_SLEEP],
+			    PSWITCH_EVENT_PRESSED);
+			break;
+		case THINKPAD_NOTIFY_HibernateButton:
+#if notyet
+			if (sc->sc_smpsw_valid == false)
+				break;
+			sysmon_pswitch_event(&sc->sc_smpsw[TP_PSW_HIBERNATE],
+			    PSWITCH_EVENT_PRESSED);
+			break;
+#endif
+		case THINKPAD_NOTIFY_FnF1:
+		case THINKPAD_NOTIFY_LockScreen:
+		case THINKPAD_NOTIFY_BatteryInfo:
+		case THINKPAD_NOTIFY_WirelessSwitch:
+		case THINKPAD_NOTIFY_FnF6:
+		case THINKPAD_NOTIFY_PointerSwitch:
+		case THINKPAD_NOTIFY_EjectButton:
+		case THINKPAD_NOTIFY_FnF10:
+		case THINKPAD_NOTIFY_FnF11:
+		case THINKPAD_NOTIFY_ThinkLight:
+		case THINKPAD_NOTIFY_Zoom:
+		case THINKPAD_NOTIFY_ThinkVantage:
+			/* XXXJDM we should deliver hotkeys as keycodes */
+			break;
+		default:
+			aprint_debug_dev(self, "notify event 0x%03x\n", event);
+			break;
+		}
 	}
 
 	return;
