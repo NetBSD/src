@@ -1,4 +1,4 @@
-/*	$NetBSD: newsyslog.c,v 1.50 2007/12/15 19:44:52 perry Exp $	*/
+/*	$NetBSD: newsyslog.c,v 1.51 2007/12/21 05:40:59 dogcow Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Andrew Doran <ad@NetBSD.org>
@@ -55,7 +55,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: newsyslog.c,v 1.50 2007/12/15 19:44:52 perry Exp $");
+__RCSID("$NetBSD: newsyslog.c,v 1.51 2007/12/21 05:40:59 dogcow Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -86,7 +86,10 @@ __RCSID("$NetBSD: newsyslog.c,v 1.50 2007/12/15 19:44:52 perry Exp $");
 #define	PRINFO(x)	\
     (/*LINTED*/(void)(verbose ? printf("  ") + printf x : 0))
 
-#define	CE_COMPRESS	0x01	/* Compress the archived log files */
+#ifndef __arraycount
+#define __arraycount(a) (sizeof(a) / sizeof(a[0]))
+#endif
+
 #define	CE_BINARY	0x02	/* Logfile is a binary file/non-syslog */
 #define	CE_NOSIGNAL	0x04	/* Don't send a signal when trimmed */
 #define	CE_CREATE	0x08	/* Create log file if none exists */
@@ -111,6 +114,7 @@ static int	noaction;			/* Take no action */
 static int	nosignal;			/* Do not send signals */
 static char	hostname[MAXHOSTNAMELEN + 1];	/* Hostname, no domain */
 static uid_t	myeuid;				/* EUID we are running with */
+static int	ziptype;			/* compression type, if any */
 
 static int	getsig(const char *);
 static int	isnumber(const char *);
@@ -142,6 +146,7 @@ main(int argc, char **argv)
 
 	force = 0;
 	needroot = 1;
+	ziptype = 0;
 	cfile = _PATH_NEWSYSLOGCONF;
 
 	(void)gethostname(hostname, sizeof(hostname));
@@ -344,21 +349,25 @@ parse_cfgline(struct conf_entry *log, FILE *fd, size_t *_lineno)
 	log->flags = (nosignal ? CE_NOSIGNAL : 0);
 
 	for (q = *ap++; q != NULL && *q != '\0'; q++) {
-		switch (tolower((unsigned char)*q)) {
-		case 'b':
+		char qq = toupper((unsigned char)*q);
+		switch (qq) {
+		case 'B':
 			log->flags |= CE_BINARY;
 			break;
-		case 'c':
+		case 'C':
 			log->flags |= CE_CREATE;
 			break;
-		case 'n':
+		case 'N':
 			log->flags |= CE_NOSIGNAL;
 			break;
-		case 'p':
+		case 'P':
 			log->flags |= CE_PLAIN0;
 			break;
-		case 'z':
-			log->flags |= CE_COMPRESS;
+		case 'J': case 'Z':
+			for (ziptype=__arraycount(compress); --ziptype; ) {
+				if (*compress[ziptype].flag == qq)
+				    break;
+			}
 			break;
 		case '-':
 			break;
@@ -400,6 +409,7 @@ log_examine(struct conf_entry *log, int force)
 	struct stat sb;
 	size_t size;
 	int age, trim;
+	unsigned int j;
 	char tmp[MAXPATHLEN];
 	const char *reason;
 	time_t now;
@@ -407,7 +417,7 @@ log_examine(struct conf_entry *log, int force)
 	now = time(NULL);
 
 	PRHDRINFO(("\n%s <%d%s>: ", log->logfile, log->numhist, 
-	    (log->flags & CE_COMPRESS) != 0 ? "Z" : ""));
+	    compress[ziptype].flag));
 
 	/*
 	 * stat() the logfile.  If it doesn't exist and the `c' flag has
@@ -444,16 +454,16 @@ log_examine(struct conf_entry *log, int force)
 	 * Get the age (expressed in hours) of the current log file with
 	 * respect to the newest historical log file.
 	 */
-	(void)strlcpy(tmp, log->logfile, sizeof(tmp));
-	(void)strlcat(tmp, ".0", sizeof(tmp));
-	if (stat(tmp, &sb) < 0) {
-		(void)strlcat(tmp, ".gz", sizeof(tmp));
-		if (stat(tmp, &sb) < 0)
-			age = -1;
-		else
+	age = -1;
+	for (j=0; j < __arraycount(compress); j++) {
+		(void)strlcpy(tmp, log->logfile, sizeof(tmp));
+		(void)strlcat(tmp, ".0", sizeof(tmp));
+		(void)strlcat(tmp, compress[j].suffix, sizeof(tmp));
+		if (!stat(tmp, &sb)) {
 			age = (int)(now - sb.st_mtime + 1800) / 3600;
-	} else
-		age = (int)(now - sb.st_mtime + 1800) / 3600;
+			break;
+		}
+	}
 
 	/*
 	 * Examine the set of given trim conditions and if any one is met,
@@ -496,35 +506,34 @@ static void
 log_trim(struct conf_entry *log)
 {
 	char file1[MAXPATHLEN], file2[MAXPATHLEN];
-	int i;
+	int i,j,k;
 	struct stat st;
 	pid_t pid;
 
 	if (log->numhist != 0) {
 		/* Remove oldest historical log. */
-		(void)snprintf(file1, sizeof(file1), "%s.%d", log->logfile,
-		    log->numhist - 1);
-
-		PRINFO(("rm -f %s\n", file1));
-		if (!noaction)
-			(void)unlink(file1);
-		(void)strlcat(file1, ".gz", sizeof(file1));
-		PRINFO(("rm -f %s\n", file1));
-		if (!noaction)
-			(void)unlink(file1);
+		for (j=0; j < (int)__arraycount(compress); j++) {
+			(void)snprintf(file1, sizeof(file1), "%s.%d",
+			    log->logfile, log->numhist - 1);
+			(void)strlcat(file1, compress[j].suffix,
+			    sizeof(file1));
+			PRINFO(("rm -f %s\n", file1));
+			if (!noaction)
+				(void)unlink(file1);
+		}
 	}
 
 	/* Move down log files. */
 	for (i = log->numhist - 1; i > 0; i--) {
-		snprintf(file1, sizeof(file1), "%s.%d", log->logfile, i - 1);
-		snprintf(file2, sizeof(file2), "%s.%d", log->logfile, i);
-
-		if (lstat(file1, &st) != 0) {
-			(void)strlcat(file1, ".gz", sizeof(file1));
-			(void)strlcat(file2, ".gz", sizeof(file2));
-			if (lstat(file1, &st) != 0)
-				continue;
+		for (j=0; j < (int)__arraycount(compress); j++) {
+			snprintf(file1, sizeof(file1), "%s.%d%s", log->logfile,
+			    i - 1, compress[ziptype].suffix);
+			snprintf(file2, sizeof(file2), "%s.%d%s", log->logfile,
+			    i, compress[ziptype].suffix);
+			k = lstat(file1, &st);
+			if (!k) break;
 		}
+		if (k) continue;
 
 		PRINFO(("mv %s %s\n", file1, file2));
 		if (!noaction)
@@ -547,12 +556,13 @@ log_trim(struct conf_entry *log)
 	 * if 'p' has been specified.)  It should be noted that gzip(1)
 	 * preserves file ownership and file mode.
 	 */
-	if ((log->flags & CE_COMPRESS) != 0) {
+	if (ziptype) {
 		for (i = (log->flags & CE_PLAIN0) != 0; i < log->numhist; i++) {
 			snprintf(file1, sizeof(file1), "%s.%d", log->logfile, i);
 			if (lstat(file1, &st) != 0)
 				continue;
-			snprintf(file2, sizeof(file2), "%s.gz", file1);
+			snprintf(file2, sizeof(file2), "%s%s", file1,
+			    compress[ziptype].suffix);
 			if (lstat(file2, &st) == 0)
 				continue;
 			log_compress(log, file1);
@@ -602,8 +612,7 @@ log_trim(struct conf_entry *log)
 	}
 
 	/* If the newest historical log is to be compressed, do it here. */
-	if ((log->flags & (CE_PLAIN0 | CE_COMPRESS)) == CE_COMPRESS
-	    && log->numhist != 0) {
+	if (ziptype && !(log->flags & CE_PLAIN0) && log->numhist != 0) {
 		snprintf(file1, sizeof(file1), "%s.0", log->logfile);
 		if ((log->flags & CE_NOSIGNAL) == 0) {
 			PRINFO(("sleep for 10 seconds before compressing...\n"));
@@ -669,7 +678,8 @@ log_compress(struct conf_entry *log, const char *fn)
 {
 	char tmp[MAXPATHLEN];
 
-	PRINFO(("gzip %s\n", fn));
+	PRINFO(("%s %s %s\n", compress[ziptype].path, compress[ziptype].args,
+	    fn));
 	if (!noaction) {
 		pid_t pid;
 		int status;
@@ -677,16 +687,18 @@ log_compress(struct conf_entry *log, const char *fn)
 		if ((pid = vfork()) < 0)
 			err(EXIT_FAILURE, "vfork");
 		else if (pid == 0) {
-			(void)execl(_PATH_GZIP, "gzip", "-f", fn, NULL);
+			(void)execl(compress[ziptype].path,
+			   compress[ziptype].path, compress[ziptype].args, fn,
+			   NULL);
 			_exit(EXIT_FAILURE);
 		}
 		while (waitpid(pid, &status, 0) != pid);
 
 		if (!WIFEXITED(status) || (WEXITSTATUS(status) != 0))
-			errx(EXIT_FAILURE, "gzip failed");
+			errx(EXIT_FAILURE, "%s failed", compress[ziptype].path);
 	}
 
-	(void)snprintf(tmp, sizeof(tmp), "%s.gz", fn);
+	(void)snprintf(tmp, sizeof(tmp), "%s%s", fn, compress[ziptype].suffix);
 	PRINFO(("chown %d:%d %s\n", log->uid, log->gid, tmp));
 	if (!noaction)
 		if (chown(tmp, log->uid, log->gid))
@@ -845,7 +857,7 @@ parse_dwm(char *s)
 {
 	char *t;
 	struct tm tm, *tmp;
-	u_long ul;
+	long ul;
 	time_t now;
 	static int mtab[] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
 	int wmseen, dseen, nd, save;
@@ -874,8 +886,8 @@ parse_dwm(char *s)
 				return (time_t)-1;
 			dseen++;
 			s++;
-			ul = strtoul(s, &t, 10);
-			if (ul > 23)
+			ul = strtol(s, &t, 10);
+			if (ul > 23 || ul < 0)
 				return (time_t)-1;
 			tm.tm_hour = ul;
 			break;
@@ -885,8 +897,8 @@ parse_dwm(char *s)
 				return (time_t)-1;
 			wmseen++;
 			s++;
-			ul = strtoul(s, &t, 10);
-			if (ul > 6)
+			ul = strtol(s, &t, 10);
+			if (ul > 6 || ul < 0)
 				return (-1);
 			if (ul != tm.tm_wday) {
 				if (ul < tm.tm_wday) {
@@ -913,7 +925,7 @@ parse_dwm(char *s)
 				s++;
 				t = s;
 			} else {
-				ul = strtoul(s, &t, 10);
+				ul = strtol(s, &t, 10);
 				if (ul < 1 || ul > 31)
 					return (time_t)-1;
 
