@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.20 2007/12/18 07:17:10 joerg Exp $
+#	$NetBSD: genassym.cf,v 1.21 2007/12/21 20:43:45 dsl Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007 The NetBSD Foundation, Inc.
@@ -231,6 +231,9 @@ define	TF_RFLAGS		offsetof(struct trapframe, tf_rflags)
 define	TF_RSP			offsetof(struct trapframe, tf_rsp)
 define	TF_SS			offsetof(struct trapframe, tf_ss)
 
+# Size of stack area needed for saving registers
+define	TF_REGSIZE		offsetof(struct trapframe, tf_trapno)
+# Total size includes regsisters pushed by hardware
 define	FRAMESIZE		sizeof(struct trapframe)
 
 define	CPU_INFO_SCRATCH	offsetof(struct cpu_info, ci_scratch)

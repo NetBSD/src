@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.36 2007/12/21 19:18:14 dsl Exp $	*/
+/*	$NetBSD: locore.S,v 1.37 2007/12/21 20:43:45 dsl Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1012,11 +1012,10 @@ IDTVEC(syscall)
 	 * ss:rsp, etc, so that all GP registers can be
 	 * saved. Then, fill in the rest.
 	 */
-	pushq	$(LSEL(LUDATA_SEL, SEL_UPL))
-	pushq	%r15
-	subq	$(TF_RSP-TF_TRAPNO),%rsp
+	pushq	$(LSEL(LUDATA_SEL, SEL_UPL))	/* Known to be user ss */
+	pushq	%r15				/* User space rsp */
 	movq	CPUVAR(SCRATCH),%r15
-	subq	$32,%rsp
+	subq	$TF_REGSIZE+(TF_RSP-TF_TRAPNO),%rsp
 	INTR_SAVE_GPRS
 	movw	%fs,TF_FS(%rsp)
 	movw	%gs,TF_GS(%rsp)
@@ -1024,7 +1023,7 @@ IDTVEC(syscall)
 	movw	$(LSEL(LUDATA_SEL, SEL_UPL)),TF_DS(%rsp)
 	movq	%r11, TF_RFLAGS(%rsp)	/* old rflags from syscall insn */
 	movq	$(LSEL(LUCODE_SEL, SEL_UPL)), TF_CS(%rsp)
-	movq	%rcx,TF_RIP(%rsp)
+	movq	%rcx,TF_RIP(%rsp)	/* syscall saves rip in rcx */
 	movq	$2,TF_ERR(%rsp)
 	movq	$T_ASTFLT, TF_TRAPNO(%rsp)
 #else
@@ -1032,10 +1031,10 @@ IDTVEC(syscall)
 	pushq	%rsi
 	STI(si)
 	popq	%rsi
-	addq $0x10,%rsp
-	pushq	$2	/* error code */
+	addq	$0x10,%rsp	/* gap to match cs:rip */
+	pushq	$2		/* error code */
 	pushq	$T_ASTFLT
-	subq	$32,%rsp
+	subq	$TF_REGSIZE,%rsp
 	INTR_SAVE_GPRS
 	movw	%fs,TF_FS(%rsp)
 	movw	%gs,TF_GS(%rsp)
@@ -1047,7 +1046,7 @@ IDTVEC(syscall)
 	movq	%rsp,L_MD_REGS(%r14)	# save pointer to frame
 	movq	L_PROC(%r14),%r15
 	andl	$~MDP_IRET,L_MD_FLAGS(%r14)
-	movq	%rsp,%rdi
+	movq	%rsp,%rdi		/* Pass frame as arg0 */
 	call	*P_MD_SYSCALL(%r15)
 .Lsyscall_checkast:
 	/* Check for ASTs on exit to user mode. */
@@ -1086,10 +1085,10 @@ syscall_return:
 	INTR_RESTORE_GPRS
 	movw	$(LSEL(LUDATA_SEL, SEL_UPL)),%r11
 	movw	%r11,%ds
-	addq	$48,%rsp
+	addq	$TF_REGSIZE+16,%rsp	/* + T_xxx and error code */
 #ifndef XEN
 	popq	%rcx	/* return rip */
-	addq	$8,%rsp
+	addq	$8,%rsp	/* discard cs */
 	popq	%r11	/* flags as set by sysret insn */
 	movq	%ss:(%rsp),%rsp
 	sysretq
