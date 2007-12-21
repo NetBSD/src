@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.11 2007/12/20 23:46:10 ad Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.12 2007/12/21 19:18:13 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -136,11 +136,11 @@ NENTRY(mutex_spin_exit)
 	cmpl	CPU_INFO_ILEVEL(%r8), %edi
 	jae	1f
 	movl	CPU_INFO_IUNMASK(%r8,%rdi,4), %esi
-	CLI(ax,10)
+	CLI(ax)
 	testl	CPU_INFO_IPENDING(%r8), %esi
 	jnz	_C_LABEL(Xspllower)
 	movl	%edi, CPU_INFO_ILEVEL(%r8)
-	STI(ax,10)
+	STI(ax)
 1:	rep					/* double byte ret as branch */
 	ret					/* target: see AMD docs */
 
