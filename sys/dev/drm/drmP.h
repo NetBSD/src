@@ -1,4 +1,4 @@
-/* $NetBSD: drmP.h,v 1.12 2007/12/15 00:39:26 perry Exp $ */
+/* $NetBSD: drmP.h,v 1.13 2007/12/21 10:40:12 ad Exp $ */
 
 /* drmP.h -- Private header for Direct Rendering Manager -*- linux-c -*-
  * Created: Mon Jan  4 10:05:05 1999 by faith@precisioninsight.com
@@ -120,6 +120,7 @@ typedef struct drm_file drm_file_t;
 #include <sys/kauth.h>
 #include <sys/types.h>
 #include <sys/file.h>
+#include <sys/atomic.h>
 #include <uvm/uvm.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
@@ -352,9 +353,9 @@ typedef u_int8_t u8;
 	below should be enough for x86, perhaps others. */
 
 #if defined(__NetBSD__) 
-#define DRM_READMEMORYBARRIER()		mb_read()
-#define DRM_WRITEMEMORYBARRIER()	mb_write()
-#define DRM_MEMORYBARRIER()		mb_memory()
+#define DRM_READMEMORYBARRIER()		membar_consumer()
+#define DRM_WRITEMEMORYBARRIER()	membar_producer()
+#define DRM_MEMORYBARRIER()		membar_memory()
 #elif defined(__i386__) 
 #define DRM_READMEMORYBARRIER()		__asm __volatile( \
 					"lock; addl $0,0(%%esp)" : : : "memory");
