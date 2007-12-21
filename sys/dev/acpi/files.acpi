@@ -1,4 +1,4 @@
-#	$NetBSD: files.acpi,v 1.47 2007/12/09 20:27:53 jmcneill Exp $
+#	$NetBSD: files.acpi,v 1.48 2007/12/21 15:15:20 jmcneill Exp $
 
 include "dev/acpi/acpica/files.acpica"
 
@@ -111,3 +111,8 @@ file	dev/acpi/aiboost.c		aiboost
 # Abit uGuru 2005
 attach	ug at acpinodebus with ug_acpi
 file	dev/acpi/ug_acpi.c		ug_acpi
+
+# IBM/Lenovo Thinkpad hotkey device
+device	thinkpad
+attach	thinkpad at acpinodebus
+file	dev/acpi/thinkpad_acpi.c	thinkpad
