@@ -1,4 +1,4 @@
-#	$NetBSD: sshd_config,v 1.27 2007/12/18 02:35:33 christos Exp $
+#	$NetBSD: sshd_config,v 1.28 2007/12/21 01:03:58 tnn Exp $
 #	$OpenBSD: sshd_config,v 1.75 2007/03/19 01:01:29 djm Exp $
 
 # This is the sshd server system-wide configuration file.  See
@@ -77,7 +77,7 @@ LoginGraceTime 600
 #AllowTcpForwarding yes
 #GatewayPorts no
 #X11Forwarding no
-# If you xorg from pkgsrc then uncomment the following line.
+# If you use xorg from pkgsrc then uncomment the following line.
 #XAuthLocation /usr/pkg/bin/xauth
 #X11DisplayOffset 10
 #X11UseLocalhost yes
