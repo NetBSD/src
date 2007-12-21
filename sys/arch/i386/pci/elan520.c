@@ -1,4 +1,4 @@
-/*	$NetBSD: elan520.c,v 1.19 2007/12/16 21:14:22 dyoung Exp $	*/
+/*	$NetBSD: elan520.c,v 1.20 2007/12/21 07:31:44 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: elan520.c,v 1.19 2007/12/16 21:14:22 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elan520.c,v 1.20 2007/12/21 07:31:44 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,7 +81,6 @@ struct elansc_softc {
 
 	kmutex_t sc_mtx;
 
-	bool sc_suspended;
 	struct sysmon_wdog sc_smw;
 #if NGPIO > 0
 	/* GPIO interface */
@@ -212,8 +211,6 @@ elansc_wdog_setmode(struct sysmon_wdog *smw)
 	mutex_enter(&sc->sc_mtx);
 
 	if (!device_is_active(&sc->sc_dev))
-		rc = ENXIO;
-	else if (!device_has_power(&sc->sc_dev) || sc->sc_suspended)
 		rc = EBUSY;
 	else if ((smw->smw_mode & WDOG_MODE_MASK) == WDOG_MODE_DISARMED) {
 		elansc_wdogctl_write(sc,
@@ -264,8 +261,6 @@ elansc_suspend(device_t dev)
 
 	mutex_enter(&sc->sc_mtx);
 	rc = ((sc->sc_smw.smw_mode & WDOG_MODE_MASK) == WDOG_MODE_DISARMED);
-	if (rc)
-		sc->sc_suspended = true;
 	mutex_exit(&sc->sc_mtx);
 	if (!rc)
 		aprint_debug_dev(dev, "watchdog enabled, suspend forbidden");
@@ -278,7 +273,6 @@ elansc_resume(device_t dev)
 	struct elansc_softc *sc = device_private(dev);
 
 	mutex_enter(&sc->sc_mtx);
-	sc->sc_suspended = false;
 	/* Set up the watchdog registers with some defaults. */
 	elansc_wdogctl_write(sc, WDTMRCTL_WRST_ENB | WDTMRCTL_EXP_SEL30);
 
