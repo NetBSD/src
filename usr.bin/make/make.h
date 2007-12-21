@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.70 2007/10/08 20:26:36 sjg Exp $	*/
+/*	$NetBSD: make.h,v 1.71 2007/12/21 20:32:24 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -162,6 +162,7 @@ typedef struct GNode {
 #define FORCE		0x4	/* children don't exist, and we pretend made */
 #define DONE_WAIT	0x8	/* Set by Make_ProcessWait() */
 #define DONE_ORDER	0x10	/* Build requested by .ORDER processing */
+#define FROM_DEPEND	0x20	/* Node created from .depend */
 #define CYCLE		0x1000  /* Used by MakePrintStatus */
 #define DONECYCLE	0x2000  /* Used by MakePrintStatus */
     enum enum_made {
@@ -363,6 +364,7 @@ extern Boolean 	touchFlag;    	/* TRUE if targets should just be 'touched'
 extern Boolean 	queryFlag;    	/* TRUE if we aren't supposed to really make
 				 * anything, just see if the targets are out-
 				 * of-date */
+extern Boolean	doing_depend;	/* TRUE if processing .depend */
 
 extern Boolean	checkEnvFirst;	/* TRUE if environment should be searched for
 				 * variables before the global context */
