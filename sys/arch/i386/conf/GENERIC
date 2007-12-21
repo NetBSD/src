@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.868 2007/12/17 04:36:16 riz Exp $
+# $NetBSD: GENERIC,v 1.869 2007/12/21 15:20:13 jmcneill Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.868 $"
+#ident 		"GENERIC-$Revision: 1.869 $"
 
 maxusers	32		# estimated number of users
 
@@ -360,6 +360,7 @@ mpu*		at acpi?		# Roland MPU-401 MIDI UART
 npx*		at acpi?		# Math coprocessor
 pckbc*  	at acpi?		# PC keyboard controller
 pcppi*		at acpi?                # AT-style speaker sound
+thinkpad*	at acpi?		# IBM/Lenovo Thinkpad hotkeys
 ug* 		at acpi?		# Abit uGuru Hardware monitor
 wss* 		at acpi?		# NeoMagic 256AV in wss mode
 ym* 		at acpi?		# Yamaha OPL3-SA[23] audio
