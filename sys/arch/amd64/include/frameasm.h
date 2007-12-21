@@ -1,4 +1,4 @@
-/*	$NetBSD: frameasm.h,v 1.8 2007/11/22 16:16:45 bouyer Exp $	*/
+/*	$NetBSD: frameasm.h,v 1.9 2007/12/21 19:18:15 dsl Exp $	*/
 
 #ifndef _AMD64_MACHINE_FRAMEASM_H
 #define _AMD64_MACHINE_FRAMEASM_H
@@ -137,21 +137,19 @@
 #define CLEAR_ASTPENDING(reg)	movl	$0, L_MD_ASTPENDING(reg)
 
 #ifdef XEN
-#define CLI(reg1,reg2) \
- 	movl CPUVAR(CPUID),%e/**/reg1 ;			\
- 	shlq $6,%r/**/reg1 ;					\
- 	movq _C_LABEL(HYPERVISOR_shared_info),%r/**/reg2 ;	\
- 	addq %r/**/reg1,%r/**/reg2 ;				\
- 	movb $1,EVTCHN_UPCALL_MASK(%r/**/reg2)
-#define STI(reg1,reg2) \
- 	movl CPUVAR(CPUID),%e/**/reg1 ;			\
- 	shlq $6,%r/**/reg1 ;					\
- 	movq _C_LABEL(HYPERVISOR_shared_info),%r/**/reg2 ;	\
- 	addq %r/**/reg1,%r/**/reg2 ;				\
- 	movb $0,EVTCHN_UPCALL_MASK(%r/**/reg2)
+#define CLI(temp_reg) \
+ 	movl CPUVAR(CPUID),%e/**/temp_reg ;			\
+ 	shlq $6,%r/**/temp_reg ;				\
+ 	addq _C_LABEL(HYPERVISOR_shared_info),%r/**/temp_reg ;	\
+ 	movb $1,EVTCHN_UPCALL_MASK(%r/**/temp_reg)
+#define STI(temp_reg) \
+ 	movl CPUVAR(CPUID),%e/**/temp_reg ;			\
+ 	shlq $6,%r/**/temp_reg ;				\
+ 	addq _C_LABEL(HYPERVISOR_shared_info),%r/**/temp_reg ;	\
+ 	movb $0,EVTCHN_UPCALL_MASK(%r/**/temp_reg)
 #else /* XEN */
-#define CLI(reg1,reg2) cli
-#define STI(reg1,reg2) sti
+#define CLI(temp_reg) cli
+#define STI(temp_reg) sti
 #endif	/* XEN */
 
 #endif /* _AMD64_MACHINE_FRAMEASM_H */

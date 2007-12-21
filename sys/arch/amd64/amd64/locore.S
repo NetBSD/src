@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.35 2007/12/03 20:21:32 ad Exp $	*/
+/*	$NetBSD: locore.S,v 1.36 2007/12/21 19:18:14 dsl Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1030,9 +1030,7 @@ IDTVEC(syscall)
 #else
 	/* Xen already switched to kernel stack */
 	pushq	%rsi
-	pushq	%rdi
-	STI(si,di)
-	popq	%rdi
+	STI(si)
 	popq	%rsi
 	addq $0x10,%rsp
 	pushq	$2	/* error code */
@@ -1053,19 +1051,19 @@ IDTVEC(syscall)
 	call	*P_MD_SYSCALL(%r15)
 .Lsyscall_checkast:
 	/* Check for ASTs on exit to user mode. */
-	CLI(si,di)
+	CLI(si)
 	CHECK_ASTPENDING(%r14)
 	je	1f
 	/* Always returning to user mode here. */
 	CLEAR_ASTPENDING(%r14)
-	STI(si,di)
+	STI(si)
 	/* Pushed T_ASTFLT into tf_trapno on entry. */
 	movq	%rsp,%rdi
 	call	_C_LABEL(trap)
 	jmp	.Lsyscall_checkast	/* re-check ASTs */
 1:	CHECK_DEFERRED_SWITCH
 	jnz	9f
-	STI(si,di)
+	STI(si)
 	testl	$MDP_IRET, L_MD_FLAGS(%r14)
 	jne	iret_return;
 syscall_return:
@@ -1114,7 +1112,7 @@ syscall_return:
 4:	.asciz	"WARNING: SPL NOT LOWERED ON SYSCALL %d %d EXIT %x %x\n"
 #endif
 
-9:	STI(si,di)
+9:	STI(si)
 	call	_C_LABEL(do_pmap_load)
 	jmp	.Lsyscall_checkast	/* re-check ASTs */
 
@@ -1188,7 +1186,7 @@ IDTVEC(osyscall)
 osyscall1:
 	pushq	$T_ASTFLT	# trap # for doing ASTs
 	INTRENTRY
-	STI(si,di)
+	STI(si)
 	movq	CPUVAR(CURLWP),%r14
 	movq	%rsp,L_MD_REGS(%r14)	# save pointer to frame
 	movq	L_PROC(%r14),%rdx
@@ -1197,12 +1195,12 @@ osyscall1:
 _C_LABEL(osyscall_return):
 .Losyscall_checkast:
 	/* Check for ASTs on exit to user mode. */
-	CLI(si,di)
+	CLI(si)
 	CHECK_ASTPENDING(%r14)
 	je	1f
 	/* Always returning to user mode here. */
 	CLEAR_ASTPENDING(%r14)
-	STI(si,di)
+	STI(si)
 	/* Pushed T_ASTFLT into tf_trapno on entry. */
 	movq	%rsp,%rdi
 	call	_C_LABEL(trap)
@@ -1217,7 +1215,7 @@ iret_return:
 	jne	3f
 	INTRFASTEXIT
 3:
-	STI(si,di)
+	STI(si)
 	movabsq	$4f, %rdi
 	xorq	%rax,%rax
 	call	_C_LABEL(printf)
@@ -1226,7 +1224,7 @@ iret_return:
 	jmp	.Losyscall_checkast
 4:	.asciz	"WARNING: SPL NOT LOWERED ON SYSCALL EXIT\n"
 #endif /* DIAGNOSTIC */
-9:	STI(si,di)
+9:	STI(si)
 	call	_C_LABEL(do_pmap_load)
 	jmp	.Losyscall_checkast	/* re-check ASTs */
 
