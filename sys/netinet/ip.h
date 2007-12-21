@@ -1,4 +1,4 @@
-/*	$NetBSD: ip.h,v 1.29 2006/12/17 20:07:36 christos Exp $	*/
+/*	$NetBSD: ip.h,v 1.30 2007/12/21 02:07:54 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -68,6 +68,7 @@ struct ip {
 } __attribute__((__packed__));
 
 #define	IP_MAXPACKET	65535		/* maximum packet size */
+#define	IP_MINFRAGSIZE	69		/* minumum size that can be fraged */
 
 /*
  * Definitions for IP type of service (ip_tos)

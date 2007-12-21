@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.c,v 1.21 2007/12/20 21:08:22 dyoung Exp $	*/
+/*	$NetBSD: ip_carp.c,v 1.22 2007/12/21 02:07:55 matt Exp $	*/
 /*	$OpenBSD: ip_carp.c,v 1.113 2005/11/04 08:11:54 mcbride Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.21 2007/12/20 21:08:22 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.22 2007/12/21 02:07:55 matt Exp $");
 
 /*
  * TODO:
@@ -973,7 +973,7 @@ carp_send_ad(void *v)
 		ip->ip_hl = sizeof(*ip) >> 2;
 		ip->ip_tos = IPTOS_LOWDELAY;
 		ip->ip_len = htons(len);
-		ip->ip_id = htons(ip_randomid());
+		ip->ip_id = 0;	/* no need for id, we don't support fragments */
 		ip->ip_off = htons(IP_DF);
 		ip->ip_ttl = CARP_DFLTTL;
 		ip->ip_p = IPPROTO_CARP;
