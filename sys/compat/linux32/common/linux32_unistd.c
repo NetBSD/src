@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_unistd.c,v 1.17 2007/12/20 23:02:59 dsl Exp $ */
+/*	$NetBSD: linux32_unistd.c,v 1.18 2007/12/21 22:26:22 njoly Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_unistd.c,v 1.17 2007/12/20 23:02:59 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_unistd.c,v 1.18 2007/12/21 22:26:22 njoly Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -574,6 +574,19 @@ linux32_sys_setfsuid(struct lwp *l, const struct linux32_sys_setfsuid_args *uap,
 	NETBSD32TO64_UAP(uid);
 
 	return linux_sys_setfsuid(l, &ua, retval);
+}
+
+int
+linux32_sys_setfsgid(struct lwp *l, const struct linux32_sys_setfsgid_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(gid_t) gid;
+	} */
+	struct linux_sys_setfsgid_args ua;
+
+	NETBSD32TO64_UAP(gid);
+
+	return linux_sys_setfsgid(l, &ua, retval);
 }
 
 int
