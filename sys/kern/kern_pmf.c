@@ -1,4 +1,4 @@
-/* $NetBSD: kern_pmf.c,v 1.6 2007/12/14 01:29:29 jmcneill Exp $ */
+/* $NetBSD: kern_pmf.c,v 1.7 2007/12/21 23:49:55 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_pmf.c,v 1.6 2007/12/14 01:29:29 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_pmf.c,v 1.7 2007/12/21 23:49:55 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -101,7 +101,7 @@ pmf_event_worker(struct work *wk, void *dummy)
 	TAILQ_FOREACH(event, &pmf_all_events, pmf_link) {
 		if (event->pmf_event != pew->pew_event)
 			continue;
-		if (event->pmf_device != pew->pew_device || event->pmf_global)
+		if (event->pmf_device == pew->pew_device || event->pmf_global)
 			(*event->pmf_handler)(event->pmf_device);
 	}
 
