@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ath_pci.c,v 1.26 2007/12/15 23:56:54 dyoung Exp $	*/
+/*	$NetBSD: if_ath_pci.c,v 1.27 2007/12/21 18:26:13 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath_pci.c,v 1.11 2005/01/18 18:08:16 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: if_ath_pci.c,v 1.26 2007/12/15 23:56:54 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ath_pci.c,v 1.27 2007/12/21 18:26:13 dyoung Exp $");
 #endif
 
 /*
@@ -261,6 +261,8 @@ ath_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_dmat = pa->pa_dmat;
 
+	ATH_LOCK_INIT(sc);
+
 	if (!pmf_device_register(self, NULL, ath_pci_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
@@ -268,6 +270,7 @@ ath_pci_attach(struct device *parent, struct device *self, void *aux)
 		pmf_class_network_register(self, &sc->sc_if);
 		return;
 	}
+	ATH_LOCK_DESTROY(sc);
 
 	pci_intr_disestablish(pc, psc->sc_ih);
 bad2:	/* XXX */
@@ -286,6 +289,8 @@ ath_pci_detach(struct device *self, int flags)
 	pmf_device_deregister(self);
 	pci_intr_disestablish(psc->sc_pc, psc->sc_ih);
 	bus_space_unmap(psc->sc_iot, psc->sc_ioh, psc->sc_mapsz);
+
+	ATH_LOCK_DESTROY(&psc->sc_sc);
 
 	return (0);
 }
