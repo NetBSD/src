@@ -1,4 +1,4 @@
-/*	$NetBSD: newsyslog.c,v 1.52 2007/12/21 06:25:19 simonb Exp $	*/
+/*	$NetBSD: newsyslog.c,v 1.53 2007/12/21 06:46:31 dogcow Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Andrew Doran <ad@NetBSD.org>
@@ -55,7 +55,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: newsyslog.c,v 1.52 2007/12/21 06:25:19 simonb Exp $");
+__RCSID("$NetBSD: newsyslog.c,v 1.53 2007/12/21 06:46:31 dogcow Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -78,8 +78,6 @@ __RCSID("$NetBSD: newsyslog.c,v 1.52 2007/12/21 06:25:19 simonb Exp $");
 #include <errno.h>
 #include <err.h>
 #include <paths.h>
-
-#include "pathnames.h"
 
 #define	PRHDRINFO(x)	\
     (/*LINTED*/(void)(verbose ? printf x : 0))
@@ -108,6 +106,23 @@ struct conf_entry {
 	char	pidfile[MAXPATHLEN];	/* File containing PID to signal */
 	char	logfile[MAXPATHLEN];	/* Path to log file */
 };
+
+struct compressor {
+	const char *path;
+	const char *args;
+	const char *suffix;
+	const char *flag; /* newsyslog.conf flag */
+};
+
+static struct compressor compress[] =
+{
+	{NULL, "", "", ""}, /* 0th compressor is "no compression" */
+	{"/usr/bin/gzip", "-f", ".gz", "Z"},
+	{"/usr/bin/bzip2", "-9f", ".bz2", "J"},
+};
+
+#define _PATH_NEWSYSLOGCONF	"/etc/newsyslog.conf"
+#define _PATH_SYSLOGDPID	_PATH_VARRUN"syslogd.pid"
 
 static int	verbose;			/* Be verbose */
 static int	noaction;			/* Take no action */
