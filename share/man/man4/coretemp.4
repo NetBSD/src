@@ -1,4 +1,4 @@
-.\" $NetBSD: coretemp.4,v 1.1 2007/10/29 00:42:28 xtraeme Exp $
+.\" $NetBSD: coretemp.4,v 1.2 2007/12/21 01:16:30 xtraeme Exp $
 .\"-
 .\" Copyright (c) 2007 Juan Romero Pardines.
 .\" Copyright (c) 2007 Dag-Erling Coïdan Smørgrav
@@ -27,7 +27,7 @@
 .\"
 .\" $FreeBSD: src/share/man/man4/coretemp.4,v 1.4 2007/10/15 20:00:19 netchild Exp $
 .\"
-.Dd October 29, 2007
+.Dd December 21, 2007
 .Dt CORETEMP 4
 .Os
 .Sh NAME
@@ -48,7 +48,7 @@ driver reports each core's temperature through the
 API. The driver has only 1 temperature sensor:
 .Bl -column "Sensor" "Units" "Typical" -offset indent
 .It Sy "Sensor" Ta Sy "Units" Ta Sy "Typical Use"
-.It Li "sensor0" Ta "uK" Ta "cpuN temperature"
+.It Li "sensor0" Ta "uK" Ta "coreN temperature"
 .El
 .Sh EVENTS
 The
