@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.186 2007/12/21 15:18:28 jmcneill Exp $
+# $NetBSD: GENERIC,v 1.187 2007/12/21 18:31:12 dsl Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.186 $"
+#ident 		"GENERIC-$Revision: 1.187 $"
 
 maxusers	32		# estimated number of users
 
@@ -111,8 +111,8 @@ options 	COMPAT_43	# and 4.3BSD
 
 options 	COMPAT_OSSAUDIO
 options 	COMPAT_NETBSD32
-#options 	COMPAT_LINUX
-#options 	COMPAT_LINUX32	# req. COMPAT_LINUX and COMPAT_NETBSD32
+options 	COMPAT_LINUX
+options 	COMPAT_LINUX32	# req. COMPAT_LINUX and COMPAT_NETBSD32
 options 	EXEC_ELF32
 options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
