@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.h,v 1.58 2007/07/22 21:07:47 he Exp $	*/
+/*	$NetBSD: uvm_map.h,v 1.58.14.1 2007/12/21 15:39:24 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -214,7 +214,6 @@ struct vm_map {
 	struct lwp *		busy;		/* LWP holding map busy */
 	kmutex_t		mutex;		/* INTRSAFE lock */
 	kmutex_t		misc_lock;	/* Lock for ref_count, cv */
-	kmutex_t		hint_lock;	/* lock for hint storage */
 	kcondvar_t		cv;		/* For signalling */
 	int			flags;		/* flags */
 	RB_HEAD(uvm_tree, vm_map_entry) rbhead;	/* Tree for entries */
