@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdSchedule.c,v 1.4 2007/12/17 15:02:31 jmcneill Exp $	*/
+/*	$NetBSD: OsdSchedule.c,v 1.5 2007/12/21 18:42:38 jmcneill Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -42,13 +42,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdSchedule.c,v 1.4 2007/12/17 15:02:31 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdSchedule.c,v 1.5 2007/12/21 18:42:38 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
+#include <sys/condvar.h>
+#include <sys/mutex.h>
 
 #include <dev/acpi/acpica.h>
 
@@ -58,6 +60,9 @@ __KERNEL_RCSID(0, "$NetBSD: OsdSchedule.c,v 1.4 2007/12/17 15:02:31 jmcneill Exp
 
 #define	_COMPONENT	ACPI_OS_SERVICES
 ACPI_MODULE_NAME("SCHEDULE")
+
+static kcondvar_t	acpi_osd_sleep_cv;
+static kmutex_t		acpi_osd_sleep_mtx;
 
 /*
  * acpi_osd_sched_init:
@@ -71,6 +76,8 @@ acpi_osd_sched_init(void)
 	ACPI_FUNCTION_TRACE(__func__);
 
 	sysmon_task_queue_init();
+	mutex_init(&acpi_osd_sleep_mtx, MUTEX_DEFAULT, IPL_NONE);
+	cv_init(&acpi_osd_sleep_cv, "acpislp");
 
 	return_VOID;
 }
@@ -160,17 +167,12 @@ AcpiOsExecute(ACPI_EXECUTE_TYPE Type, ACPI_OSD_EXEC_CALLBACK Function,
 void
 AcpiOsSleep(ACPI_INTEGER Milliseconds)
 {
-	int timo;
-
 	ACPI_FUNCTION_TRACE(__func__);
 
-	timo = Milliseconds * hz / 1000;
-	if (timo == 0)
-		timo = 1;
-
-	(void) tsleep(&timo, PVM, "acpislp", timo);
-
-	return_VOID;
+	mutex_enter(&acpi_osd_sleep_mtx);
+	cv_timedwait_sig(&acpi_osd_sleep_cv, &acpi_osd_sleep_mtx,
+	    MAX(mstohz(Milliseconds), 1));
+	mutex_exit(&acpi_osd_sleep_mtx);
 }
 
 /*
