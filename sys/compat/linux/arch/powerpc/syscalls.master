@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.33 2007/12/20 23:02:53 dsl Exp $  
+	$NetBSD: syscalls.master,v 1.34 2007/12/21 22:26:22 njoly Exp $  
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -269,7 +269,7 @@
 136	STD		{ int linux_sys_personality(int per); }
 137	UNIMPL		afs_syscall
 138	STD		{ int linux_sys_setfsuid(uid_t uid); }
-139	NOARGS		{ int linux_sys_getfsuid(void); }
+139	STD		{ int linux_sys_setfsgid(gid_t gid); }
 140	STD		{ int linux_sys_llseek(int fd, u_int32_t ohigh, \
 			    u_int32_t olow, void *res, int whence); }
 141	STD		{ int linux_sys_getdents(int fd, \
