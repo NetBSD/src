@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.125.2.2 2007/12/15 03:16:57 ad Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.125.2.3 2007/12/21 15:27:03 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.125.2.2 2007/12/15 03:16:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.125.2.3 2007/12/21 15:27:03 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_maxuprc.h"
@@ -853,17 +853,8 @@ enterpgrp(struct proc *curp, pid_t pid, pid_t pgid, int mksess)
 	} else
 		mutex_enter(&proclist_mutex);
 
-#ifdef notyet
-	/*
-	 * If there's a controlling terminal for the current session, we
-	 * have to interlock with it.  See ttread().
-	 */
-	if (p->p_session->s_ttyvp != NULL) {
-		tp = p->p_session->s_ttyp;
-		mutex_enter(&tp->t_mutex);
-	} else
-		tp = NULL;
-#endif
+	/* Interlock with tty subsystem. */
+	mutex_spin_enter(&tty_lock);
 
 	/*
 	 * Adjust eligibility of affected pgrps to participate in job control.
@@ -880,13 +871,11 @@ enterpgrp(struct proc *curp, pid_t pid, pid_t pgid, int mksess)
 		pg_id = p->p_pgrp->pg_id;
 	p->p_pgrp = pgrp;
 	LIST_INSERT_HEAD(&pgrp->pg_members, p, p_pglist);
-	mutex_exit(&proclist_mutex);
 
-#ifdef notyet
 	/* Done with the swap; we can release the tty mutex. */
-	if (tp != NULL)
-		mutex_exit(&tp->t_mutex);
-#endif
+	mutex_spin_exit(&tty_lock);
+
+	mutex_exit(&proclist_mutex);
 
     done:
 	if (pg_id != NO_PGID)
@@ -915,27 +904,12 @@ leavepgrp(struct proc *p)
 
 	KASSERT(mutex_owned(&proclist_lock));
 
-	/*
-	 * If there's a controlling terminal for the session, we have to
-	 * interlock with it.  See ttread().
-	 */
 	mutex_enter(&proclist_mutex);
-#ifdef notyet
-	if (p_>p_session->s_ttyvp != NULL) {
-		tp = p->p_session->s_ttyp;
-		mutex_enter(&tp->t_mutex);
-	} else
-		tp = NULL;
-#endif
-
+	mutex_spin_enter(&tty_lock);
 	pgrp = p->p_pgrp;
 	LIST_REMOVE(p, p_pglist);
 	p->p_pgrp = NULL;
-
-#ifdef notyet
-	if (tp != NULL)
-		mutex_exit(&tp->t_mutex);
-#endif
+	mutex_spin_exit(&tty_lock);
 	mutex_exit(&proclist_mutex);
 
 	if (LIST_EMPTY(&pgrp->pg_members))
@@ -1000,6 +974,7 @@ pg_delete(pid_t pg_id)
 	ss = pgrp->pg_session;
 
 	/* Remove reference (if any) from tty to this process group */
+	mutex_spin_enter(&tty_lock);
 	ttyp = ss->s_ttyp;
 	if (ttyp != NULL && ttyp->t_pgrp == pgrp) {
 		ttyp->t_pgrp = NULL;
@@ -1008,6 +983,7 @@ pg_delete(pid_t pg_id)
 			panic("pg_delete: wrong session on terminal");
 #endif
 	}
+	mutex_spin_exit(&tty_lock);
 
 	/*
 	 * The leading process group in a session is freed
