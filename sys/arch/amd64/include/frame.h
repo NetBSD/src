@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.10 2007/10/17 19:53:03 garbled Exp $	*/
+/*	$NetBSD: frame.h,v 1.11 2007/12/21 20:43:45 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@ struct trapframe {
 	uint64_t	tf_ds;
 	uint64_t	tf_trapno;
 	/* below portion defined in hardware */
-	uint64_t	tf_err;
+	uint64_t	tf_err;		/* Dummy inserted if not defined */
 	uint64_t	tf_rip;
 	uint64_t	tf_cs;
 	uint64_t	tf_rflags;
