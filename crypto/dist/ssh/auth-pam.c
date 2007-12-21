@@ -50,7 +50,7 @@
 /*
  * NetBSD local changes
  */
-__RCSID("$NetBSD: auth-pam.c,v 1.10 2007/12/18 02:35:25 christos Exp $");
+__RCSID("$NetBSD: auth-pam.c,v 1.11 2007/12/21 20:42:03 jnemeth Exp $");
 #undef USE_POSIX_THREADS /* Not yet */
 #define HAVE_SECURITY_PAM_APPL_H
 #define HAVE_PAM_GETENVLIST
@@ -64,6 +64,7 @@ void sshpam_password_change_required(int);
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
+#include <sys/socket.h>
 
 #include <errno.h>
 #include <signal.h>
