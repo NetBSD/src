@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_4bsd.c,v 1.10 2007/12/15 03:31:36 ad Exp $	*/
+/*	$NetBSD: sched_4bsd.c,v 1.11 2007/12/21 12:05:39 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.10 2007/12/15 03:31:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.11 2007/12/21 12:05:39 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -488,7 +488,7 @@ sched_cpuattach(struct cpu_info *ci)
 	runqueue_t *rq;
 
 	ci->ci_schedstate.spc_mutex = &runqueue_lock;
-	rq = kmem_zalloc(sizeof(*rq), KM_NOSLEEP);
+	rq = kmem_zalloc(sizeof(*rq), KM_SLEEP);
 	runqueue_init(rq);
 	ci->ci_schedstate.spc_sched_info = rq;
 }
