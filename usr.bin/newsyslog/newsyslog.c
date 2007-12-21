@@ -1,4 +1,4 @@
-/*	$NetBSD: newsyslog.c,v 1.51 2007/12/21 05:40:59 dogcow Exp $	*/
+/*	$NetBSD: newsyslog.c,v 1.52 2007/12/21 06:25:19 simonb Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Andrew Doran <ad@NetBSD.org>
@@ -55,7 +55,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: newsyslog.c,v 1.51 2007/12/21 05:40:59 dogcow Exp $");
+__RCSID("$NetBSD: newsyslog.c,v 1.52 2007/12/21 06:25:19 simonb Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -364,7 +364,7 @@ parse_cfgline(struct conf_entry *log, FILE *fd, size_t *_lineno)
 			log->flags |= CE_PLAIN0;
 			break;
 		case 'J': case 'Z':
-			for (ziptype=__arraycount(compress); --ziptype; ) {
+			for (ziptype = __arraycount(compress); --ziptype; ) {
 				if (*compress[ziptype].flag == qq)
 				    break;
 			}
@@ -455,7 +455,7 @@ log_examine(struct conf_entry *log, int force)
 	 * respect to the newest historical log file.
 	 */
 	age = -1;
-	for (j=0; j < __arraycount(compress); j++) {
+	for (j = 0; j < __arraycount(compress); j++) {
 		(void)strlcpy(tmp, log->logfile, sizeof(tmp));
 		(void)strlcat(tmp, ".0", sizeof(tmp));
 		(void)strlcat(tmp, compress[j].suffix, sizeof(tmp));
@@ -506,13 +506,13 @@ static void
 log_trim(struct conf_entry *log)
 {
 	char file1[MAXPATHLEN], file2[MAXPATHLEN];
-	int i,j,k;
+	int i, j, k;
 	struct stat st;
 	pid_t pid;
 
 	if (log->numhist != 0) {
 		/* Remove oldest historical log. */
-		for (j=0; j < (int)__arraycount(compress); j++) {
+		for (j = 0; j < (int)__arraycount(compress); j++) {
 			(void)snprintf(file1, sizeof(file1), "%s.%d",
 			    log->logfile, log->numhist - 1);
 			(void)strlcat(file1, compress[j].suffix,
@@ -525,7 +525,7 @@ log_trim(struct conf_entry *log)
 
 	/* Move down log files. */
 	for (i = log->numhist - 1; i > 0; i--) {
-		for (j=0; j < (int)__arraycount(compress); j++) {
+		for (j = 0; j < (int)__arraycount(compress); j++) {
 			snprintf(file1, sizeof(file1), "%s.%d%s", log->logfile,
 			    i - 1, compress[ziptype].suffix);
 			snprintf(file2, sizeof(file2), "%s.%d%s", log->logfile,
