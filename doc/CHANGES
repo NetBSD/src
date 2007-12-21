@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.965 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.966 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -287,3 +287,5 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	openssh: import 4.7 [christos 20071217]
 	x86: Add support for ACPI S3 (suspend-to-RAM) on MP systems.
 		[joerg 20071218]
+	newsyslog: newsyslog.conf flag 'J' will bzip2 logfiles.
+		[dogcow 20071221]
