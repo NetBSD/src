@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.246.2.1 2007/12/04 13:04:01 ad Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.246.2.2 2007/12/21 15:39:23 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.246.2.1 2007/12/04 13:04:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.246.2.2 2007/12/21 15:39:23 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -88,6 +88,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.246.2.1 2007/12/04 13:04:01 ad Exp $")
 #include <sys/mount.h>
 #include <sys/vnode.h>
 #include <sys/lockdebug.h>
+#include <sys/atomic.h>
 
 #ifdef SYSVSHM
 #include <sys/shm.h>
@@ -227,13 +228,10 @@ extern struct vm_map *pager_map; /* XXX */
 /*
  * SAVE_HINT: saves the specified entry as the hint for future lookups.
  *
- * => map need not be locked (protected by hint_lock).
+ * => map need not be locked.
  */
-#define SAVE_HINT(map,check,value) do { \
-	mutex_enter(&(map)->hint_lock); \
-	if ((map)->hint == (check)) \
-		(map)->hint = (value); \
-	mutex_exit(&(map)->hint_lock); \
+#define SAVE_HINT(map, check, value) do { \
+	atomic_cas_ptr(&(map)->hint, (check), (value)); \
 } while (/*CONSTCOND*/ 0)
 
 /*
@@ -1553,9 +1551,7 @@ uvm_map_lookup_entry(struct vm_map *map, vaddr_t address,
 	 * list, or from the hint.
 	 */
 
-	mutex_enter(&map->hint_lock);
 	cur = map->hint;
-	mutex_exit(&map->hint_lock);
 
 	if (cur == &map->header)
 		cur = cur->next;
@@ -4070,7 +4066,6 @@ uvmspace_free(struct vmspace *vm)
 	KASSERT(map->nentries == 0);
 	KASSERT(map->size == 0);
 	mutex_destroy(&map->misc_lock);
-	mutex_destroy(&map->hint_lock);
 	mutex_destroy(&map->mutex);
 	rw_destroy(&map->lock);
 	pmap_destroy(map->pmap);
@@ -4986,12 +4981,6 @@ uvm_map_setup(struct vm_map *map, vaddr_t vmin, vaddr_t vmax, int flags)
 	cv_init(&map->cv, "vm_map");
 	mutex_init(&map->misc_lock, MUTEX_DRIVER, ipl);
 	mutex_init(&map->mutex, MUTEX_DRIVER, ipl);
-
-	/*
-	 * The hint lock can get acquired with the pagequeue
-	 * lock held, so must be at IPL_VM.
-	 */
-	mutex_init(&map->hint_lock, MUTEX_DRIVER, IPL_VM);
 }
 
 
