@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.24 2007/12/20 23:02:52 dsl Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.25 2007/12/21 02:28:35 matt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.24 2007/12/20 23:02:52 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.25 2007/12/21 02:28:35 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -200,7 +200,8 @@ linux_sys_rt_sigreturn(struct proc *p, void *v, register_t *retval)
 #endif
 
 int
-linux_sys_sigreturn(struct lwp *l, const void *v, register_t *retval)
+linux_sys_sigreturn(struct lwp *l, const struct linux_sys_sigreturn_args *v,
+	register_t *retval)
 {
 	struct linux_sigframe *sfp, frame;
 	struct proc *p = l->l_proc;
