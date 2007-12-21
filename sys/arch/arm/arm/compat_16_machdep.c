@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_machdep.c,v 1.8 2007/12/20 23:02:39 dsl Exp $	*/
+/*	$NetBSD: compat_16_machdep.c,v 1.9 2007/12/21 02:27:57 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -45,7 +45,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.8 2007/12/20 23:02:39 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.9 2007/12/21 02:27:57 matt Exp $");
 
 #include <sys/mount.h>		/* XXX only needed by syscallargs.h */
 #include <sys/proc.h>
@@ -221,7 +221,7 @@ compat_16_sys___sigreturn14(struct lwp *l, const struct compat_16_sys___sigretur
 	/*
 	 * we do a rather scary test in userland
 	 */
-	if (v == NULL)
+	if (uap == NULL)
 		return (EFAULT);
 	
 	/*
