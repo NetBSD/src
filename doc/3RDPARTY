@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.571 2007/11/28 22:04:47 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.572 2007/12/21 18:04:18 xtraeme Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -117,7 +117,7 @@ Todo[4]: Re-entrant functions of net/*
 
 Package:	binutils
 Version:	2.16.1
-Current Vers:	2.17
+Current Vers:	2.18
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/binutils/
 Home Page:	http://www.gnu.org/software/binutils/
