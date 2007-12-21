@@ -1,4 +1,4 @@
-/* $NetBSD: coretemp.c,v 1.3 2007/11/22 16:27:06 xtraeme Exp $ */
+/* $NetBSD: coretemp.c,v 1.4 2007/12/21 01:10:54 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coretemp.c,v 1.3 2007/11/22 16:27:06 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coretemp.c,v 1.4 2007/12/21 01:10:54 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -127,7 +127,7 @@ coretemp_register(struct cpu_info *ci)
 	sc->sc_sensor.flags = ENVSYS_FMONCRITICAL;
 	sc->sc_sensor.monitor = true;
 	(void)snprintf(sc->sc_sensor.desc, sizeof(sc->sc_sensor.desc),
-	    "cpu%d temperature", (int)ci->ci_cpuid);
+	    "core%d temperature", (int)ci->ci_cpuid);
 
 	sc->sc_sme = sysmon_envsys_create();
 	if (sysmon_envsys_sensor_attach(sc->sc_sme, &sc->sc_sensor)) {
