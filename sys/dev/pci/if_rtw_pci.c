@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtw_pci.c,v 1.8 2007/10/19 12:00:47 ad Exp $	*/
+/*	$NetBSD: if_rtw_pci.c,v 1.9 2007/12/21 18:22:44 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtw_pci.c,v 1.8 2007/10/19 12:00:47 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtw_pci.c,v 1.9 2007/12/21 18:22:44 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,10 +96,10 @@ struct rtw_pci_softc {
 	pcitag_t		psc_pcitag;	/* our PCI tag */
 };
 
-static int	rtw_pci_match(struct device *, struct cfdata *, void *);
-static void	rtw_pci_attach(struct device *, struct device *, void *);
+static int	rtw_pci_match(device_t, struct cfdata *, void *);
+static void	rtw_pci_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(rtw_pci, sizeof(struct rtw_pci_softc),
+CFATTACH_DECL_NEW(rtw_pci, sizeof(struct rtw_pci_softc),
     rtw_pci_match, rtw_pci_attach, NULL, NULL);
 
 static const struct rtw_pci_product {
@@ -131,7 +131,7 @@ rtw_pci_lookup(const struct pci_attach_args *pa)
 }
 
 static int
-rtw_pci_match(struct device *parent, struct cfdata *match, void *aux)
+rtw_pci_match(device_t parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -150,8 +150,7 @@ rtw_pci_enable(struct rtw_softc *sc)
 	psc->psc_intrcookie = pci_intr_establish(psc->psc_pc, psc->psc_ih,
 	    IPL_NET, rtw_intr, sc);
 	if (psc->psc_intrcookie == NULL) {
-		aprint_error("%s: unable to establish interrupt\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(sc->sc_dev, "unable to establish interrupt\n");
 		return (1);
 	}
 
@@ -169,9 +168,9 @@ rtw_pci_disable(struct rtw_softc *sc)
 }
 
 static void
-rtw_pci_attach(struct device *parent, struct device *self, void *aux)
+rtw_pci_attach(device_t parent, device_t self, void *aux)
 {
-	struct rtw_pci_softc *psc = (void *) self;
+	struct rtw_pci_softc *psc = device_private(self);
 	struct rtw_softc *sc = &psc->psc_rtw;
 	struct rtw_regs *regs = &sc->sc_regs;
 	struct pci_attach_args *pa = aux;
@@ -183,6 +182,7 @@ rtw_pci_attach(struct device *parent, struct device *self, void *aux)
 	const struct rtw_pci_product *app;
 	int error;
 
+	sc->sc_dev = self;
 	psc->psc_pc = pa->pa_pc;
 	psc->psc_pcitag = pa->pa_tag;
 
@@ -208,8 +208,7 @@ rtw_pci_attach(struct device *parent, struct device *self, void *aux)
 	/* power up chip */
 	if ((error = pci_activate(pa->pa_pc, pa->pa_tag, sc,
 	    NULL)) && error != EOPNOTSUPP) {
-		aprint_error("%s: cannot activate %d\n", sc->sc_dev.dv_xname,
-		    error);
+		aprint_error_dev(self, "cannot activate %d\n", error);
 		return;
 	}
 
@@ -247,23 +246,21 @@ rtw_pci_attach(struct device *parent, struct device *self, void *aux)
 	 * Map and establish our interrupt.
 	 */
 	if (pci_intr_map(pa, &psc->psc_ih)) {
-		aprint_error("%s: unable to map interrupt\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(self, "unable to map interrupt\n");
 		return;
 	}
 	intrstr = pci_intr_string(pc, psc->psc_ih);
 	psc->psc_intrcookie = pci_intr_establish(pc, psc->psc_ih, IPL_NET,
 	    rtw_intr, sc);
 	if (psc->psc_intrcookie == NULL) {
-		aprint_error("%s: unable to establish interrupt",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(self, "unable to establish interrupt");
 		if (intrstr != NULL)
 			aprint_error(" at %s", intrstr);
-		printf("\n");
+		aprint_error("\n");
 		return;
 	}
 
-	aprint_normal("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
+	aprint_normal_dev(self, "interrupting at %s\n", intrstr);
 
 	sc->sc_enable = rtw_pci_enable;
 	sc->sc_disable = rtw_pci_disable;
