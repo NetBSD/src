@@ -1,4 +1,4 @@
-/*	$NetBSD: pathnames.h,v 1.2 2000/07/13 11:28:51 ad Exp $	*/
+/*	$NetBSD: pathnames.h,v 1.3 2007/12/21 05:40:59 dogcow Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Andrew Doran <ad@NetBSD.org>
@@ -29,4 +29,18 @@
 
 #define	_PATH_NEWSYSLOGCONF	"/etc/newsyslog.conf"
 #define _PATH_SYSLOGDPID	_PATH_VARRUN"syslogd.pid"
-#define _PATH_GZIP		"/usr/bin/gzip"
+
+struct compressor {
+	const char *path;
+	const char *args;
+	const char *suffix;
+	const char *flag; /* i.e. newsyslog flag to activate compressor */
+};
+
+struct compressor compress[] =
+{
+	{NULL, "", "", ""}, /* 0th compressor is "no compression" */
+	{"/usr/bin/gzip", "-f", ".gz", "Z"},
+	{"/usr/bin/bzip2", "-9f", ".bz2", "J"},
+};
+
