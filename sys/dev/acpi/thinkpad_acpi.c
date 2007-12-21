@@ -1,4 +1,4 @@
-/* $NetBSD: thinkpad_acpi.c,v 1.5 2007/12/21 21:24:45 jmcneill Exp $ */
+/* $NetBSD: thinkpad_acpi.c,v 1.6 2007/12/21 22:14:03 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.5 2007/12/21 21:24:45 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.6 2007/12/21 22:14:03 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -104,6 +104,8 @@ static void	thinkpad_get_hotkeys(void *);
 
 static void	thinkpad_temp_init(thinkpad_softc_t *);
 static void	thinkpad_temp_refresh(struct sysmon_envsys *, envsys_data_t *);
+
+static void	thinkpad_wireless_toggle(thinkpad_softc_t *);
 
 static void	thinkpad_brightness_up(device_t);
 static void	thinkpad_brightness_down(device_t);
@@ -299,6 +301,9 @@ thinkpad_get_hotkeys(void *opaque)
 			pmf_event_inject(NULL, PMFE_DISPLAY_CYCLE);
 #endif
 			break;
+		case THINKPAD_NOTIFY_WirelessSwitch:
+			thinkpad_wireless_toggle(sc);
+			break;
 		case THINKPAD_NOTIFY_SleepButton:
 			if (sc->sc_smpsw_valid == false)
 				break;
@@ -311,12 +316,11 @@ thinkpad_get_hotkeys(void *opaque)
 				break;
 			sysmon_pswitch_event(&sc->sc_smpsw[TP_PSW_HIBERNATE],
 			    PSWITCH_EVENT_PRESSED);
-			break;
 #endif
+			break;
 		case THINKPAD_NOTIFY_FnF1:
 		case THINKPAD_NOTIFY_LockScreen:
 		case THINKPAD_NOTIFY_BatteryInfo:
-		case THINKPAD_NOTIFY_WirelessSwitch:
 		case THINKPAD_NOTIFY_FnF6:
 		case THINKPAD_NOTIFY_PointerSwitch:
 		case THINKPAD_NOTIFY_EjectButton:
@@ -431,6 +435,14 @@ thinkpad_temp_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 
 	edata->value_cur = temp * 1000000 + 273150000;
 	edata->state = ENVSYS_SVALID;
+}
+
+static void
+thinkpad_wireless_toggle(thinkpad_softc_t *sc)
+{
+	/* XXXJDM this could be much smarter */
+	(void)AcpiEvaluateObject(sc->sc_node->ad_handle, "WTGL", NULL, NULL);
+	(void)AcpiEvaluateObject(sc->sc_node->ad_handle, "BTGL", NULL, NULL);
 }
 
 static uint8_t
