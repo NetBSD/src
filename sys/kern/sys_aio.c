@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_aio.c,v 1.14 2007/12/20 23:03:10 dsl Exp $	*/
+/*	$NetBSD: sys_aio.c,v 1.15 2007/12/21 12:04:19 ad Exp $	*/
 
 /*
  * Copyright (c) 2007, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.14 2007/12/20 23:03:10 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.15 2007/12/21 12:04:19 ad Exp $");
 
 #include "opt_ddb.h"
 
@@ -101,7 +101,7 @@ aio_init(struct proc *p)
 	vaddr_t uaddr;
 
 	/* Allocate and initialize AIO structure */
-	aio = kmem_zalloc(sizeof(struct aioproc), KM_NOSLEEP);
+	aio = kmem_zalloc(sizeof(struct aioproc), KM_SLEEP);
 	if (aio == NULL)
 		return EAGAIN;
 
