@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.186 2007/12/20 19:53:32 dyoung Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.187 2007/12/21 02:07:55 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.186 2007/12/20 19:53:32 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.187 2007/12/21 02:07:55 matt Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_inet.h"
@@ -262,7 +262,9 @@ ip_output(struct mbuf *m0, ...)
 	if ((flags & (IP_FORWARDING|IP_RAWOUTPUT)) == 0) {
 		ip->ip_v = IPVERSION;
 		ip->ip_off = htons(0);
-		if ((m->m_pkthdr.csum_flags & M_CSUM_TSOv4) == 0) {
+		if (m->m_pkthdr.len < IP_MINFRAGSIZE) {
+			ip->ip_id = 0;
+		} else if ((m->m_pkthdr.csum_flags & M_CSUM_TSOv4) == 0) {
 			ip->ip_id = ip_newid();
 		} else {
 

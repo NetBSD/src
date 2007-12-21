@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.101 2007/11/27 22:45:29 christos Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.102 2007/12/21 02:07:55 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.101 2007/11/27 22:45:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.102 2007/12/21 02:07:55 matt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -358,7 +358,7 @@ rip_output(struct mbuf *m, ...)
 		}
 		HTONS(ip->ip_len);
 		HTONS(ip->ip_off);
-		if (ip->ip_id == 0)
+		if (ip->ip_id == 0 && m->m_pkthdr.len >= IP_MINFRAGSIZE)
 			ip->ip_id = ip_newid();
 		opts = NULL;
 		/* XXX prevent ip_output from overwriting header fields */
