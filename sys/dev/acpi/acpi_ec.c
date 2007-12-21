@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.47 2007/12/19 20:48:56 joerg Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.48 2007/12/21 21:22:54 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.47 2007/12/19 20:48:56 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.48 2007/12/21 21:22:54 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,6 +72,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.47 2007/12/19 20:48:56 joerg Exp $");
 #include <sys/bus.h>
 
 #include <dev/acpi/acpivar.h>
+#include <dev/acpi/acpi_ecvar.h>
 
 /* Maximum time to wait for global ACPI lock in ms */
 #define	EC_LOCK_TIMEOUT		5
@@ -846,4 +847,24 @@ acpiec_gpe_handler(void *arg)
 	mutex_exit(&sc->sc_mtx);
 
 	return 0;
+}
+
+ACPI_STATUS
+acpiec_bus_read(device_t dv, u_int addr, ACPI_INTEGER *val, int width)
+{
+	return acpiec_space_handler(ACPI_READ, addr, width * 8, val, dv, NULL);
+}
+
+ACPI_STATUS
+acpiec_bus_write(device_t dv, u_int addr, ACPI_INTEGER val, int width)
+{
+	return acpiec_space_handler(ACPI_WRITE, addr, width * 8, &val, dv, NULL);
+}
+
+ACPI_HANDLE
+acpiec_get_handle(device_t dv)
+{
+	struct acpiec_softc *sc = device_private(dv);
+
+	return sc->sc_ech;
 }
