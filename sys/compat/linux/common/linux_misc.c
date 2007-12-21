@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.190 2007/12/20 23:02:55 dsl Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.191 2007/12/21 22:26:22 njoly Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.190 2007/12/20 23:02:55 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.191 2007/12/21 22:26:22 njoly Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ptrace.h"
@@ -1159,18 +1159,26 @@ linux_sys_setfsuid(struct lwp *l, const struct linux_sys_setfsuid_args *uap, reg
 	 uid = SCARG(uap, uid);
 	 if (kauth_cred_getuid(l->l_cred) != uid)
 		 return sys_nosys(l, uap, retval);
-	 else
-		 return (0);
+
+	 *retval = uid;
+	 return 0;
 }
 
-/* XXX XXX XXX */
-# ifndef alpha
 int
-linux_sys_getfsuid(struct lwp *l, const void *uap, register_t *retval)
+linux_sys_setfsgid(struct lwp *l, const struct linux_sys_setfsgid_args *uap, register_t *retval)
 {
-	return sys_getuid(l, uap, retval);
+	/* {
+		syscallarg(gid_t) gid;
+	} */
+	gid_t gid;
+
+	gid = SCARG(uap, gid);
+	if (kauth_cred_getgid(l->l_cred) != gid)
+		return sys_nosys(l, uap, retval);
+
+	*retval = gid;
+	return 0;
 }
-# endif
 
 int
 linux_sys_setresuid(struct lwp *l, const struct linux_sys_setresuid_args *uap, register_t *retval)
