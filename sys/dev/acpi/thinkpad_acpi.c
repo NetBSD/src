@@ -1,4 +1,4 @@
-/* $NetBSD: thinkpad_acpi.c,v 1.4 2007/12/21 18:43:39 jmcneill Exp $ */
+/* $NetBSD: thinkpad_acpi.c,v 1.5 2007/12/21 21:24:45 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.4 2007/12/21 18:43:39 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.5 2007/12/21 21:24:45 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -47,13 +47,17 @@ __KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.4 2007/12/21 18:43:39 jmcneill E
 #include <sys/kmem.h>
 
 #include <dev/acpi/acpivar.h>
+#include <dev/acpi/acpi_ecvar.h>
 
 #if defined(__i386__) || defined(__amd64__)
 #include <machine/pio.h>
 #endif
 
+#define THINKPAD_NSENSORS	8
+
 typedef struct thinkpad_softc {
 	device_t		sc_dev;
+	device_t		sc_ecdev;
 	struct acpi_devnode	*sc_node;
 	ACPI_HANDLE		sc_cmoshdl;
 	bool			sc_cmoshdl_valid;
@@ -62,6 +66,9 @@ typedef struct thinkpad_softc {
 #define TP_PSW_SLEEP		0
 #define	TP_PSW_HIBERNATE	1
 	bool			sc_smpsw_valid;
+
+	struct sysmon_envsys	*sc_sme;
+	envsys_data_t		sc_sensor[THINKPAD_NSENSORS];
 } thinkpad_softc_t;
 
 /* Hotkey events */
@@ -94,6 +101,9 @@ static void	thinkpad_attach(device_t, device_t, void *);
 static ACPI_STATUS thinkpad_mask_init(thinkpad_softc_t *, uint32_t);
 static void	thinkpad_notify_handler(ACPI_HANDLE, UINT32, void *);
 static void	thinkpad_get_hotkeys(void *);
+
+static void	thinkpad_temp_init(thinkpad_softc_t *);
+static void	thinkpad_temp_refresh(struct sysmon_envsys *, envsys_data_t *);
 
 static void	thinkpad_brightness_up(device_t);
 static void	thinkpad_brightness_down(device_t);
@@ -142,6 +152,7 @@ thinkpad_attach(device_t parent, device_t self, void *opaque)
 {
 	thinkpad_softc_t *sc = device_private(self);
 	struct acpi_attach_args *aa = (struct acpi_attach_args *)opaque;
+	device_t curdev;
 	ACPI_STATUS rv;
 	ACPI_INTEGER val;
 
@@ -159,6 +170,17 @@ thinkpad_attach(device_t parent, device_t self, void *opaque)
 		aprint_verbose_dev(self, "using CMOS at \\UCMS\n");
 		sc->sc_cmoshdl_valid = true;
 	}
+
+	sc->sc_ecdev = NULL;
+	TAILQ_FOREACH(curdev, &alldevs, dv_list)
+		if (device_is_a(curdev, "acpiecdt") ||
+		    device_is_a(curdev, "acpiec")) {
+			sc->sc_ecdev = curdev;
+			break;
+		}
+	if (sc->sc_ecdev)
+		aprint_verbose_dev(self, "using EC at %s\n",
+		    device_xname(sc->sc_ecdev));
 
 	/* Get the supported event mask */
 	rv = acpi_eval_integer(sc->sc_node->ad_handle, "MHKA", &val);
@@ -183,7 +205,7 @@ thinkpad_attach(device_t parent, device_t self, void *opaque)
 		aprint_error_dev(self, "couldn't install notify handler: %s\n",
 		    AcpiFormatException(rv));
 
-	/* Register with sysmon */
+	/* Register power switches with sysmon */
 	sc->sc_smpsw_valid = true;
 
 	sc->sc_smpsw[TP_PSW_SLEEP].smpsw_name = device_xname(self);
@@ -203,6 +225,9 @@ thinkpad_attach(device_t parent, device_t self, void *opaque)
 		sc->sc_smpsw_valid = false;
 	}
 #endif
+
+	/* Register temperature sensors with envsys */
+	thinkpad_temp_init(sc);
 
 fail:
 	if (!pmf_device_register(self, NULL, NULL))
@@ -349,6 +374,63 @@ thinkpad_mask_init(thinkpad_softc_t *sc, uint32_t mask)
 	(void)AcpiEvaluateObject(sc->sc_node->ad_handle, "PWMS", &params, NULL);
 
 	return AE_OK;
+}
+
+static void
+thinkpad_temp_init(thinkpad_softc_t *sc)
+{
+	char sname[5] = "TMP?";
+	int i, err;
+
+	if (sc->sc_ecdev == NULL)
+		return;	/* no chance of this working */
+
+	sc->sc_sme = sysmon_envsys_create();
+	for (i = 0; i < THINKPAD_NSENSORS; i++) {
+		sname[3] = '0' + i;
+		strcpy(sc->sc_sensor[i].desc, sname);
+		sc->sc_sensor[i].units = ENVSYS_STEMP;
+
+		if (sysmon_envsys_sensor_attach(sc->sc_sme, &sc->sc_sensor[i]))
+			aprint_error_dev(sc->sc_dev,
+			    "couldn't attach sensor %s\n", sname);
+	}
+
+	sc->sc_sme->sme_name = device_xname(sc->sc_dev);
+	sc->sc_sme->sme_cookie = sc;
+	sc->sc_sme->sme_refresh = thinkpad_temp_refresh;
+
+	err = sysmon_envsys_register(sc->sc_sme);
+	if (err) {
+		aprint_error_dev(sc->sc_dev,
+		    "couldn't register with sysmon: %d\n", err);
+		sysmon_envsys_destroy(sc->sc_sme);
+	}
+}
+
+static void
+thinkpad_temp_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
+{
+	thinkpad_softc_t *sc = sme->sme_cookie;
+	char sname[5] = "TMP?";
+	ACPI_INTEGER val;
+	ACPI_STATUS rv;
+	int temp;
+
+	sname[3] = '0' + edata->sensor;
+	rv = acpi_eval_integer(acpiec_get_handle(sc->sc_ecdev), sname, &val);
+	if (ACPI_FAILURE(rv)) {
+		edata->state = ENVSYS_SINVALID;
+		return;
+	}
+	temp = (int)val;
+	if (temp > 127 || temp < -127) {
+		edata->state = ENVSYS_SINVALID;
+		return;
+	}
+
+	edata->value_cur = temp * 1000000 + 273150000;
+	edata->state = ENVSYS_SVALID;
 }
 
 static uint8_t
