@@ -1,4 +1,4 @@
-/* $NetBSD: thinkpad_acpi.c,v 1.3 2007/12/21 16:38:59 jmcneill Exp $ */
+/* $NetBSD: thinkpad_acpi.c,v 1.4 2007/12/21 18:43:39 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.3 2007/12/21 16:38:59 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.4 2007/12/21 18:43:39 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -93,6 +93,7 @@ static void	thinkpad_attach(device_t, device_t, void *);
 
 static ACPI_STATUS thinkpad_mask_init(thinkpad_softc_t *, uint32_t);
 static void	thinkpad_notify_handler(ACPI_HANDLE, UINT32, void *);
+static void	thinkpad_get_hotkeys(void *);
 
 static void	thinkpad_brightness_up(device_t);
 static void	thinkpad_brightness_down(device_t);
@@ -222,14 +223,27 @@ thinkpad_notify_handler(ACPI_HANDLE hdl, UINT32 notify, void *opaque)
 	thinkpad_softc_t *sc = (thinkpad_softc_t *)opaque;
 	device_t self = sc->sc_dev;
 	ACPI_STATUS rv;
-	ACPI_INTEGER val;
-	int type, event;
  
 	if (notify != 0x80) {
 		aprint_debug_dev(self, "unknown notify 0x%02x\n", notify);
 		return;
 	}
 
+	rv = AcpiOsExecute(OSL_NOTIFY_HANDLER, thinkpad_get_hotkeys, sc);
+	if (ACPI_FAILURE(rv))
+		aprint_error_dev(self, "couldn't queue hotkey handler: %s\n",
+		    AcpiFormatException(rv));
+}
+
+static void
+thinkpad_get_hotkeys(void *opaque)
+{
+	thinkpad_softc_t *sc = (thinkpad_softc_t *)opaque;
+	device_t self = sc->sc_dev;
+	ACPI_STATUS rv;
+	ACPI_INTEGER val;
+	int type, event;
+	
 	for (;;) {
 		rv = acpi_eval_integer(sc->sc_node->ad_handle, "MHKP", &val);
 		if (ACPI_FAILURE(rv)) {
@@ -329,6 +343,10 @@ thinkpad_mask_init(thinkpad_softc_t *sc, uint32_t mask)
 		    AcpiFormatException(rv));
 		return rv;
 	}
+
+	/* Claim ownership of brightness control */
+	param[0].Integer.Value = 0;
+	(void)AcpiEvaluateObject(sc->sc_node->ad_handle, "PWMS", &params, NULL);
 
 	return AE_OK;
 }
