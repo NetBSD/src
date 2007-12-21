@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.258 2007/12/21 18:58:55 matt Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.259 2007/12/21 23:49:09 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.258 2007/12/21 18:58:55 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.259 2007/12/21 23:49:09 matt Exp $");
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
@@ -900,10 +900,11 @@ ours:
 		/*
 		 * Prevent TCP blind data attacks by not allowing non-initial
 		 * fragments to start at less than 68 bytes (minimal fragment
-		 * size).
+		 * size) and making sure the first fragment is at least 68
+		 * bytes.
 		 */
 		off = htons(ip->ip_off) & ~(IP_DF|IP_EF|IP_MF);
-		if (off > 0 && off + hlen < IP_MINFRAGSIZE - 1) {
+		if ((off > 0 ? off + hlen : len) < IP_MINFRAGSIZE - 1) {
 			ipstat.ips_badfrags++;
 			goto bad;
 		}
