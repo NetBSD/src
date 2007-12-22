@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.168 2007/12/22 11:38:54 dsl Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.169 2007/12/22 16:19:34 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2006 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.168 2007/12/22 11:38:54 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.169 2007/12/22 16:19:34 dsl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -1366,7 +1366,7 @@ trace_is_enabled(struct proc *p)
  */
 int
 trace_enter(struct lwp *l, register_t code, register_t realcode,
-    const struct sysent *callp, register_t *args)
+    const struct sysent *callp, const register_t *args)
 {
 #if defined(SYSCALL_DEBUG) || defined(KTRACE) || defined(PTRACE) || defined(SYSTRACE)
 	struct proc *p = l->l_proc;
