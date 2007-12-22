@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_or.S,v 1.2 2007/11/28 17:29:33 ad Exp $	*/
+/*	$NetBSD: atomic_or.S,v 1.3 2007/12/22 23:19:41 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -68,10 +68,12 @@ ENTRY_NOPROFILE(_atomic_or_64)
 	retl
 	 or	%o1, %o2, %o0
 ATOMIC_OP_ALIAS(atomic_or_64,_atomic_or_64)
-ATOMIC_OP_ALIAS(atomic_or_ulong,_atomic_or_64)
-STRONG_ALIAS(_atomic_or_ulong,_atomic_or_64)
 
 ATOMIC_OP_ALIAS(atomic_or_64_nv,_atomic_or_64)
 STRONG_ALIAS(_atomic_or_64_nv,_atomic_or_64)
-ATOMIC_OP_ALIAS(atomic_or_ulong_nv,_atomic_or_64)
-STRONG_ALIAS(_atomic_or_ulong_nv,_atomic_or_64)
+
+ATOMIC_OP_ALIAS_SIZE(atomic_or_ulong,_atomic_or)
+STRONG_ALIAS(_atomic_or_ulong,_atomic_or)
+
+ATOMIC_OP_ALIAS_SIZE(atomic_or_ulong_nv,_atomic_or)
+STRONG_ALIAS_SIZE(_atomic_or_ulong_nv,_atomic_or)

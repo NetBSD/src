@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_cas.S,v 1.2 2007/11/28 17:29:32 ad Exp $	*/
+/*	$NetBSD: atomic_cas.S,v 1.3 2007/12/22 23:19:40 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -53,7 +53,8 @@ ENTRY_NOPROFILE(_atomic_cas_64)
 	retl
 	 mov	%o2, %o0
 ATOMIC_OP_ALIAS(atomic_cas_64,_atomic_cas_64)
-ATOMIC_OP_ALIAS(atomic_cas_ulong,_atomic_cas_64)
-STRONG_ALIAS(_atomic_cas_ulong,_atomic_cas_64)
-ATOMIC_OP_ALIAS(atomic_cas_ptr,_atomic_cas_64)
-STRONG_ALIAS(_atomic_cas_ptr,_atomic_cas_64)
+
+ATOMIC_OP_ALIAS_SIZE(atomic_cas_ulong,_atomic_cas)
+STRONG_ALIAS_SIZE(_atomic_cas_ulong,_atomic_cas)
+ATOMIC_OP_ALIAS_SIZE(atomic_cas_ptr,_atomic_cas)
+STRONG_ALIAS_SIZE(_atomic_cas_ptr,_atomic_cas)
