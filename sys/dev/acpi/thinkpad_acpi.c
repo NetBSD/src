@@ -1,4 +1,4 @@
-/* $NetBSD: thinkpad_acpi.c,v 1.8 2007/12/22 13:06:30 jmcneill Exp $ */
+/* $NetBSD: thinkpad_acpi.c,v 1.9 2007/12/22 18:38:13 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.8 2007/12/22 13:06:30 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.9 2007/12/22 18:38:13 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -62,9 +62,16 @@ typedef struct thinkpad_softc {
 	ACPI_HANDLE		sc_cmoshdl;
 	bool			sc_cmoshdl_valid;
 
-	struct sysmon_pswitch	sc_smpsw[2];
 #define TP_PSW_SLEEP		0
 #define	TP_PSW_HIBERNATE	1
+#define	TP_PSW_DISPLAY_CYCLE	2
+#define	TP_PSW_LOCK_SCREEN	3
+#define	TP_PSW_BATTERY_INFO	4
+#define	TP_PSW_EJECT_BUTTON	5
+#define	TP_PSW_ZOOM_BUTTON	6
+#define	TP_PSW_VENDOR_BUTTON	7
+#define	TP_PSW_LAST		8
+	struct sysmon_pswitch	sc_smpsw[TP_PSW_LAST];
 	bool			sc_smpsw_valid;
 
 	struct sysmon_envsys	*sc_sme;
@@ -115,8 +122,6 @@ static void	thinkpad_temp_refresh(struct sysmon_envsys *, envsys_data_t *);
 
 static void	thinkpad_wireless_toggle(thinkpad_softc_t *);
 
-static void	thinkpad_display_cycle(thinkpad_softc_t *);
-
 static void	thinkpad_brightness_up(device_t);
 static void	thinkpad_brightness_down(device_t);
 static uint8_t	thinkpad_brightness_read(thinkpad_softc_t *sc);
@@ -164,9 +169,11 @@ thinkpad_attach(device_t parent, device_t self, void *opaque)
 {
 	thinkpad_softc_t *sc = device_private(self);
 	struct acpi_attach_args *aa = (struct acpi_attach_args *)opaque;
+	struct sysmon_pswitch *psw;
 	device_t curdev;
 	ACPI_STATUS rv;
 	ACPI_INTEGER val;
+	int i;
 
 	sc->sc_node = aa->aa_node;
 	sc->sc_dev = self;
@@ -219,25 +226,35 @@ thinkpad_attach(device_t parent, device_t self, void *opaque)
 		    AcpiFormatException(rv));
 
 	/* Register power switches with sysmon */
+	psw = sc->sc_smpsw;
 	sc->sc_smpsw_valid = true;
 
-	sc->sc_smpsw[TP_PSW_SLEEP].smpsw_name = device_xname(self);
-	sc->sc_smpsw[TP_PSW_SLEEP].smpsw_type = PSWITCH_TYPE_SLEEP;
+	psw[TP_PSW_SLEEP].smpsw_name = device_xname(self);
+	psw[TP_PSW_SLEEP].smpsw_type = PSWITCH_TYPE_SLEEP;
 #if notyet
-	sc->sc_smpsw[TP_PSW_HIBERNATE].smpsw_name = device_xname(self);
-	sc->sc_smpsw[TP_PSW_HIBERNATE].smpsw_type = PSWITCH_TYPE_HIBERNATE;
+	psw[TP_PSW_HIBERNATE].smpsw_name = device_xname(self);
+	mpsw[TP_PSW_HIBERNATE].smpsw_type = PSWITCH_TYPE_HIBERNATE;
 #endif
+	for (i = TP_PSW_DISPLAY_CYCLE; i < TP_PSW_LAST; i++)
+		sc->sc_smpsw[i].smpsw_type = PSWITCH_TYPE_HOTKEY;
+	psw[TP_PSW_DISPLAY_CYCLE].smpsw_name = PSWITCH_HK_DISPLAY_CYCLE;
+	psw[TP_PSW_LOCK_SCREEN].smpsw_name = PSWITCH_HK_LOCK_SCREEN;
+	psw[TP_PSW_BATTERY_INFO].smpsw_name = PSWITCH_HK_BATTERY_INFO;
+	psw[TP_PSW_EJECT_BUTTON].smpsw_name = PSWITCH_HK_EJECT_BUTTON;
+	psw[TP_PSW_ZOOM_BUTTON].smpsw_name = PSWITCH_HK_ZOOM_BUTTON;
+	psw[TP_PSW_VENDOR_BUTTON].smpsw_name = PSWITCH_HK_VENDOR_BUTTON;
 
-	if (sysmon_pswitch_register(&sc->sc_smpsw[TP_PSW_SLEEP]) != 0) {
-		aprint_error_dev(self, "couldn't register with sysmon\n");
-		sc->sc_smpsw_valid = false;
+	for (i = 0; i < TP_PSW_LAST; i++) {
+		/* not supported yet */
+		if (i == TP_PSW_HIBERNATE)
+			continue;
+		if (sysmon_pswitch_register(&sc->sc_smpsw[i]) != 0) {
+			aprint_error_dev(self,
+			    "couldn't register with sysmon\n");
+			sc->sc_smpsw_valid = false;
+			break;
+		}
 	}
-#if notyet
-	if (sysmon_pswitch_register(&sc->sc_smpsw[TP_PSW_HIBERNATE]) != 0) {
-		aprint_error_dev(self, "couldn't register with sysmon\n");
-		sc->sc_smpsw_valid = false;
-	}
-#endif
 
 	/* Register temperature sensors with envsys */
 	thinkpad_temp_init(sc);
@@ -307,9 +324,6 @@ thinkpad_get_hotkeys(void *opaque)
 		case THINKPAD_NOTIFY_BrightnessDown:
 			thinkpad_brightness_down(self);
 			break;
-		case THINKPAD_NOTIFY_DisplayCycle:
-			thinkpad_display_cycle(sc);
-			break;
 		case THINKPAD_NOTIFY_WirelessSwitch:
 			thinkpad_wireless_toggle(sc);
 			break;
@@ -327,17 +341,54 @@ thinkpad_get_hotkeys(void *opaque)
 			    PSWITCH_EVENT_PRESSED);
 #endif
 			break;
-		case THINKPAD_NOTIFY_FnF1:
+		case THINKPAD_NOTIFY_DisplayCycle:
+			if (sc->sc_smpsw_valid == false)
+				break;
+			sysmon_pswitch_event(
+			    &sc->sc_smpsw[TP_PSW_DISPLAY_CYCLE],
+			    PSWITCH_EVENT_PRESSED);
+			break;
 		case THINKPAD_NOTIFY_LockScreen:
+			if (sc->sc_smpsw_valid == false)
+				break;
+			sysmon_pswitch_event(
+			    &sc->sc_smpsw[TP_PSW_LOCK_SCREEN],
+			    PSWITCH_EVENT_PRESSED);
+			break;
 		case THINKPAD_NOTIFY_BatteryInfo:
+			if (sc->sc_smpsw_valid == false)
+				break;
+			sysmon_pswitch_event(
+			    &sc->sc_smpsw[TP_PSW_BATTERY_INFO],
+			    PSWITCH_EVENT_PRESSED);
+			break;
+		case THINKPAD_NOTIFY_EjectButton:
+			if (sc->sc_smpsw_valid == false)
+				break;
+			sysmon_pswitch_event(
+			    &sc->sc_smpsw[TP_PSW_EJECT_BUTTON],
+			    PSWITCH_EVENT_PRESSED);
+			break;
+		case THINKPAD_NOTIFY_Zoom:
+			if (sc->sc_smpsw_valid == false)
+				break;
+			sysmon_pswitch_event(
+			    &sc->sc_smpsw[TP_PSW_ZOOM_BUTTON],
+			    PSWITCH_EVENT_PRESSED);
+			break;
+		case THINKPAD_NOTIFY_ThinkVantage:
+			if (sc->sc_smpsw_valid == false)
+				break;
+			sysmon_pswitch_event(
+			    &sc->sc_smpsw[TP_PSW_VENDOR_BUTTON],
+			    PSWITCH_EVENT_PRESSED);
+			break;
+		case THINKPAD_NOTIFY_FnF1:
 		case THINKPAD_NOTIFY_FnF6:
 		case THINKPAD_NOTIFY_PointerSwitch:
-		case THINKPAD_NOTIFY_EjectButton:
 		case THINKPAD_NOTIFY_FnF10:
 		case THINKPAD_NOTIFY_FnF11:
 		case THINKPAD_NOTIFY_ThinkLight:
-		case THINKPAD_NOTIFY_Zoom:
-		case THINKPAD_NOTIFY_ThinkVantage:
 			/* XXXJDM we should deliver hotkeys as keycodes */
 			break;
 		default:
@@ -451,52 +502,6 @@ thinkpad_wireless_toggle(thinkpad_softc_t *sc)
 {
 	/* Ignore return value, as the hardware may not support bluetooth */
 	(void)AcpiEvaluateObject(sc->sc_node->ad_handle, "BTGL", NULL, NULL);
-}
-
-static void
-thinkpad_display_cycle(thinkpad_softc_t *sc)
-{
-	ACPI_OBJECT param[2];
-	ACPI_OBJECT_LIST params;
-	ACPI_STATUS rv;
-
-	/* Select the next display state */
-	switch (sc->sc_display_state) {
-	case THINKPAD_DISPLAY_LCD:
-		sc->sc_display_state = THINKPAD_DISPLAY_CRT;
-		aprint_normal_dev(sc->sc_dev, "switching to CRT\n");
-		break;
-	case THINKPAD_DISPLAY_CRT:
-		sc->sc_display_state = THINKPAD_DISPLAY_DVI;
-		aprint_normal_dev(sc->sc_dev, "switching to DVI\n");
-		break;
-	case THINKPAD_DISPLAY_DVI:
-		sc->sc_display_state = THINKPAD_DISPLAY_ALL;
-		aprint_normal_dev(sc->sc_dev, "switching to LCD,CRT,DVI\n");
-		break;
-	case THINKPAD_DISPLAY_ALL:
-		sc->sc_display_state = THINKPAD_DISPLAY_LCD;
-		aprint_normal_dev(sc->sc_dev, "switching to LCD\n");
-		break;
-	}
-
-	param[0].Type = param[1].Type = ACPI_TYPE_INTEGER;
-	params.Pointer = param;
-
-	params.Count = 1;
-	param[0].Integer.Value = 0x80;
-	rv = AcpiEvaluateObject(NULL, "\\VUPS", &params, NULL);
-	if (ACPI_FAILURE(rv))
-		aprint_error_dev(sc->sc_dev, "couldn't evaluate \\VUPS: %s\n",
-		    AcpiFormatException(rv));
-
-	params.Count = 2;
-	param[0].Integer.Value = sc->sc_display_state;
-	param[1].Integer.Value = 1;
-	rv = AcpiEvaluateObject(NULL, "\\VSDS", &params, NULL);
-	if (ACPI_FAILURE(rv))
-		aprint_error_dev(sc->sc_dev, "couldn't evaluate \\VSDS: %s\n",
-		    AcpiFormatException(rv));
 }
 
 static uint8_t
