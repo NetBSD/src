@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.36 2007/12/18 07:17:11 joerg Exp $	*/
+/*	$NetBSD: cpu.h,v 1.37 2007/12/22 18:35:00 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -257,8 +257,9 @@ struct clockframe {
 	struct intrframe cf_if;
 };
 
-#define	CLKF_USERMODE(frame)	USERMODE((frame)->cf_if.if_cs, (frame)->cf_if.if_rflags)
-#define CLKF_PC(frame)		((frame)->cf_if.if_rip)
+#define	CLKF_USERMODE(frame)	USERMODE((frame)->cf_if.if_tf.tf_cs, \
+				    (frame)->cf_if.if_tf.tf_rflags)
+#define CLKF_PC(frame)		((frame)->cf_if.if_tf.tf_rip)
 #define CLKF_INTR(frame)	(curcpu()->ci_idepth > 0)
 
 /*
