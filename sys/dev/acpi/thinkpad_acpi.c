@@ -1,4 +1,4 @@
-/* $NetBSD: thinkpad_acpi.c,v 1.6 2007/12/21 22:14:03 jmcneill Exp $ */
+/* $NetBSD: thinkpad_acpi.c,v 1.7 2007/12/22 03:19:29 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.6 2007/12/21 22:14:03 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.7 2007/12/22 03:19:29 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -440,8 +440,7 @@ thinkpad_temp_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 static void
 thinkpad_wireless_toggle(thinkpad_softc_t *sc)
 {
-	/* XXXJDM this could be much smarter */
-	(void)AcpiEvaluateObject(sc->sc_node->ad_handle, "WTGL", NULL, NULL);
+	/* Ignore return value, as the hardware may not support bluetooth */
 	(void)AcpiEvaluateObject(sc->sc_node->ad_handle, "BTGL", NULL, NULL);
 }
 
