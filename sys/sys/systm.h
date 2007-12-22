@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.204 2007/12/20 23:03:14 dsl Exp $	*/
+/*	$NetBSD: systm.h,v 1.205 2007/12/22 11:38:55 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -373,8 +373,9 @@ void	doforkhooks(struct proc *, struct proc *);
 #ifdef _KERNEL
 bool	trace_is_enabled(struct proc *);
 int	trace_enter(struct lwp *, register_t, register_t,
-	    const struct sysent *, void *);
-void	trace_exit(struct lwp *, register_t, void *, register_t [], int);
+	    const struct sysent *, register_t *);
+void	trace_exit(struct lwp *, register_t, const register_t *,
+	    register_t [], int);
 #endif
 
 int	uiomove(void *, size_t, struct uio *);

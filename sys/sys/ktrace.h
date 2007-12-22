@@ -1,4 +1,4 @@
-/*	$NetBSD: ktrace.h,v 1.50 2007/08/27 13:33:45 dsl Exp $	*/
+/*	$NetBSD: ktrace.h,v 1.51 2007/12/22 11:38:55 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -297,7 +297,7 @@ void ktr_namei(const char *, size_t);
 void ktr_namei2(const char *, size_t, const char *, size_t);
 void ktr_psig(int, sig_t, const sigset_t *, const ksiginfo_t *);
 void ktr_syscall(register_t, register_t, const struct sysent *,
-    register_t []);
+    const register_t []);
 void ktr_sysret(register_t, int, register_t *);
 void ktr_kuser(const char *, void *, size_t);
 void ktr_mmsg(const void *, size_t);
@@ -369,7 +369,7 @@ ktrpsig(int a, sig_t b, const sigset_t *c, const ksiginfo_t * d)
 }
 
 static inline void
-ktrsyscall(register_t a, register_t b, const struct sysent *c, register_t d[])
+ktrsyscall(register_t a, register_t b, const struct sysent *c, const register_t d[])
 {
 	if (__predict_false(ktrace_on))
 		ktr_syscall(a, b, c, d);
