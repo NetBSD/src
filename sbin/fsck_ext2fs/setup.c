@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.23 2007/12/22 01:15:49 tsutsui Exp $	*/
+/*	$NetBSD: setup.c,v 1.24 2007/12/22 01:19:52 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.5 (Berkeley) 11/23/94";
 #else
-__RCSID("$NetBSD: setup.c,v 1.23 2007/12/22 01:15:49 tsutsui Exp $");
+__RCSID("$NetBSD: setup.c,v 1.24 2007/12/22 01:19:52 tsutsui Exp $");
 #endif
 #endif /* not lint */
 
@@ -416,32 +416,32 @@ void
 copyback_sb(struct bufarea *bp)
 {
 	/* Copy the in-memory superblock back to buffer */
-	bp->b_un.b_fs->e2fs_icount = fs2h32(sblock.e2fs.e2fs_icount);
-	bp->b_un.b_fs->e2fs_bcount = fs2h32(sblock.e2fs.e2fs_bcount);
-	bp->b_un.b_fs->e2fs_rbcount = fs2h32(sblock.e2fs.e2fs_rbcount);
-	bp->b_un.b_fs->e2fs_fbcount = fs2h32(sblock.e2fs.e2fs_fbcount);
-	bp->b_un.b_fs->e2fs_ficount = fs2h32(sblock.e2fs.e2fs_ficount);
+	bp->b_un.b_fs->e2fs_icount = h2fs32(sblock.e2fs.e2fs_icount);
+	bp->b_un.b_fs->e2fs_bcount = h2fs32(sblock.e2fs.e2fs_bcount);
+	bp->b_un.b_fs->e2fs_rbcount = h2fs32(sblock.e2fs.e2fs_rbcount);
+	bp->b_un.b_fs->e2fs_fbcount = h2fs32(sblock.e2fs.e2fs_fbcount);
+	bp->b_un.b_fs->e2fs_ficount = h2fs32(sblock.e2fs.e2fs_ficount);
 	bp->b_un.b_fs->e2fs_first_dblock =
-	    fs2h32(sblock.e2fs.e2fs_first_dblock);
-	bp->b_un.b_fs->e2fs_log_bsize = fs2h32(sblock.e2fs.e2fs_log_bsize);
-	bp->b_un.b_fs->e2fs_fsize = fs2h32(sblock.e2fs.e2fs_fsize);
-	bp->b_un.b_fs->e2fs_bpg = fs2h32(sblock.e2fs.e2fs_bpg);
-	bp->b_un.b_fs->e2fs_fpg = fs2h32(sblock.e2fs.e2fs_fpg);
-	bp->b_un.b_fs->e2fs_ipg = fs2h32(sblock.e2fs.e2fs_ipg);
-	bp->b_un.b_fs->e2fs_mtime = fs2h32(sblock.e2fs.e2fs_mtime);
-	bp->b_un.b_fs->e2fs_wtime = fs2h32(sblock.e2fs.e2fs_wtime);
-	bp->b_un.b_fs->e2fs_lastfsck = fs2h32(sblock.e2fs.e2fs_lastfsck);
-	bp->b_un.b_fs->e2fs_fsckintv = fs2h32(sblock.e2fs.e2fs_fsckintv);
-	bp->b_un.b_fs->e2fs_creator = fs2h32(sblock.e2fs.e2fs_creator);
-	bp->b_un.b_fs->e2fs_rev = fs2h32(sblock.e2fs.e2fs_rev);
-	bp->b_un.b_fs->e2fs_mnt_count = fs2h16(sblock.e2fs.e2fs_mnt_count);
+	    h2fs32(sblock.e2fs.e2fs_first_dblock);
+	bp->b_un.b_fs->e2fs_log_bsize = h2fs32(sblock.e2fs.e2fs_log_bsize);
+	bp->b_un.b_fs->e2fs_fsize = h2fs32(sblock.e2fs.e2fs_fsize);
+	bp->b_un.b_fs->e2fs_bpg = h2fs32(sblock.e2fs.e2fs_bpg);
+	bp->b_un.b_fs->e2fs_fpg = h2fs32(sblock.e2fs.e2fs_fpg);
+	bp->b_un.b_fs->e2fs_ipg = h2fs32(sblock.e2fs.e2fs_ipg);
+	bp->b_un.b_fs->e2fs_mtime = h2fs32(sblock.e2fs.e2fs_mtime);
+	bp->b_un.b_fs->e2fs_wtime = h2fs32(sblock.e2fs.e2fs_wtime);
+	bp->b_un.b_fs->e2fs_lastfsck = h2fs32(sblock.e2fs.e2fs_lastfsck);
+	bp->b_un.b_fs->e2fs_fsckintv = h2fs32(sblock.e2fs.e2fs_fsckintv);
+	bp->b_un.b_fs->e2fs_creator = h2fs32(sblock.e2fs.e2fs_creator);
+	bp->b_un.b_fs->e2fs_rev = h2fs32(sblock.e2fs.e2fs_rev);
+	bp->b_un.b_fs->e2fs_mnt_count = h2fs16(sblock.e2fs.e2fs_mnt_count);
 	bp->b_un.b_fs->e2fs_max_mnt_count =
-	    fs2h16(sblock.e2fs.e2fs_max_mnt_count);
-	bp->b_un.b_fs->e2fs_magic = fs2h16(sblock.e2fs.e2fs_magic);
-	bp->b_un.b_fs->e2fs_state = fs2h16(sblock.e2fs.e2fs_state);
-	bp->b_un.b_fs->e2fs_beh = fs2h16(sblock.e2fs.e2fs_beh);
-	bp->b_un.b_fs->e2fs_ruid = fs2h16(sblock.e2fs.e2fs_ruid);
-	bp->b_un.b_fs->e2fs_rgid = fs2h16(sblock.e2fs.e2fs_rgid);
+	    h2fs16(sblock.e2fs.e2fs_max_mnt_count);
+	bp->b_un.b_fs->e2fs_magic = h2fs16(sblock.e2fs.e2fs_magic);
+	bp->b_un.b_fs->e2fs_state = h2fs16(sblock.e2fs.e2fs_state);
+	bp->b_un.b_fs->e2fs_beh = h2fs16(sblock.e2fs.e2fs_beh);
+	bp->b_un.b_fs->e2fs_ruid = h2fs16(sblock.e2fs.e2fs_ruid);
+	bp->b_un.b_fs->e2fs_rgid = h2fs16(sblock.e2fs.e2fs_rgid);
 }
 
 void
