@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.80 2007/10/02 20:35:04 dyoung Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.81 2007/12/22 15:40:02 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -94,6 +94,7 @@ struct ipq {
 	struct	  ipqehead ipq_fragq;	/* to ip fragment queue */
 	struct	  in_addr ipq_src, ipq_dst;
 	u_int16_t ipq_nfrags;		/* frags in this queue entry */
+	u_int8_t  ipq_tos;		/* TOS of this fragment */
 };
 
 /*
