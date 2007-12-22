@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.142 2007/12/20 23:49:10 ad Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.143 2007/12/22 03:28:48 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002, 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.142 2007/12/20 23:49:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.143 2007/12/22 03:28:48 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pool.h"
@@ -2928,6 +2928,52 @@ pool_in_page(struct pool *pp, struct pool_item_header *ph, uintptr_t addr)
 	    addr < (uintptr_t)ph->ph_page + pp->pr_alloc->pa_pagesz;
 }
 
+static bool
+pool_in_item(struct pool *pp, void *item, uintptr_t addr)
+{
+
+	return (uintptr_t)item <= addr && addr < (uintptr_t)item + pp->pr_size;
+}
+
+static bool
+pool_in_cg(struct pool *pp, struct pool_cache_group *pcg, uintptr_t addr)
+{
+	int i;
+
+	if (pcg == NULL) {
+		return false;
+	}
+	for (i = 0; i < pcg->pcg_size; i++) {
+		if (pool_in_item(pp, pcg->pcg_objects[i].pcgo_va, addr)) {
+			return true;
+		}
+	}
+	return false;
+}
+
+static bool
+pool_allocated(struct pool *pp, struct pool_item_header *ph, uintptr_t addr)
+{
+
+	if ((pp->pr_roflags & PR_NOTOUCH) != 0) {
+		unsigned int idx = pr_item_notouch_index(pp, ph, (void *)addr);
+		pool_item_bitmap_t *bitmap =
+		    ph->ph_bitmap + (idx / BITMAP_SIZE);
+		pool_item_bitmap_t mask = 1 << (idx & BITMAP_MASK);
+
+		return (*bitmap & mask) == 0;
+	} else {
+		struct pool_item *pi;
+
+		LIST_FOREACH(pi, &ph->ph_itemlist, pi_list) {
+			if (pool_in_item(pp, pi, addr)) {
+				return false;
+			}
+		}
+		return true;
+	}
+}
+
 void
 pool_whatis(uintptr_t addr, void (*pr)(const char *, ...))
 {
@@ -2936,6 +2982,10 @@ pool_whatis(uintptr_t addr, void (*pr)(const char *, ...))
 	LIST_FOREACH(pp, &pool_head, pr_poollist) {
 		struct pool_item_header *ph;
 		uintptr_t item;
+		bool allocated = true;
+		bool incache = false;
+		bool incpucache = false;
+		char cpucachestr[32];
 
 		if ((pp->pr_roflags & PR_PHINPAGE) != 0) {
 			LIST_FOREACH(ph, &pp->pr_fullpages, ph_pagelist) {
@@ -2945,6 +2995,14 @@ pool_whatis(uintptr_t addr, void (*pr)(const char *, ...))
 			}
 			LIST_FOREACH(ph, &pp->pr_partpages, ph_pagelist) {
 				if (pool_in_page(pp, ph, addr)) {
+					allocated =
+					    pool_allocated(pp, ph, addr);
+					goto found;
+				}
+			}
+			LIST_FOREACH(ph, &pp->pr_emptypages, ph_pagelist) {
+				if (pool_in_page(pp, ph, addr)) {
+					allocated = false;
 					goto found;
 				}
 			}
@@ -2954,13 +3012,49 @@ pool_whatis(uintptr_t addr, void (*pr)(const char *, ...))
 			if (ph == NULL || !pool_in_page(pp, ph, addr)) {
 				continue;
 			}
+			allocated = pool_allocated(pp, ph, addr);
 		}
 found:
+		if (allocated && pp->pr_cache) {
+			pool_cache_t pc = pp->pr_cache;
+			struct pool_cache_group *pcg;
+			int i;
+
+			for (pcg = pc->pc_fullgroups; pcg != NULL;
+			    pcg = pcg->pcg_next) {
+				if (pool_in_cg(pp, pcg, addr)) {
+					incache = true;
+					goto print;
+				}
+			}
+			for (i = 0; i < MAXCPUS; i++) {
+				pool_cache_cpu_t *cc;
+
+				if ((cc = pc->pc_cpus[i]) == NULL) {
+					continue;
+				}
+				if (pool_in_cg(pp, cc->cc_current, addr) ||
+				    pool_in_cg(pp, cc->cc_previous, addr)) {
+					struct cpu_info *ci =
+					    cpu_lookup_byindex(i);
+
+					incpucache = true;
+					snprintf(cpucachestr,
+					    sizeof(cpucachestr),
+					    "cached by CPU %u",
+					    (u_int)ci->ci_cpuid);
+					goto print;
+				}
+			}
+		}
+print:
 		item = (uintptr_t)ph->ph_page + ph->ph_off;
 		item = item + rounddown(addr - item, pp->pr_size);
-		(*pr)("%p is %p+%zu from POOL '%s'\n",
+		(*pr)("%p is %p+%zu in POOL '%s' (%s)\n",
 		    (void *)addr, item, (size_t)(addr - item),
-		    pp->pr_wchan);
+		    pp->pr_wchan,
+		    incpucache ? cpucachestr :
+		    incache ? "cached" : allocated ? "allocated" : "free");
 	}
 }
 #endif /* defined(DDB) */
