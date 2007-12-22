@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.331 2007/12/08 19:29:46 pooka Exp $	*/
+/*	$NetBSD: init_main.c,v 1.332 2007/12/22 01:14:53 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.331 2007/12/08 19:29:46 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.332 2007/12/22 01:14:53 yamt Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_ntp.h"
@@ -629,13 +629,13 @@ main(void)
 		p->p_stats->p_start = time;
 		LIST_FOREACH(l, &p->p_lwps, l_sibling) {
 			lwp_lock(l);
-			l->l_rtime.tv_sec = l->l_rtime.tv_usec = 0;
+			memset(&l->l_rtime, 0, sizeof(l->l_rtime));
 			lwp_unlock(l);
 		}
 		mutex_exit(&p->p_smutex);
 	}
 	mutex_exit(&proclist_lock);
-	curlwp->l_stime = time;
+	binuptime(&curlwp->l_stime);
 
 	for (CPU_INFO_FOREACH(cii, ci)) {
 		ci->ci_schedstate.spc_lastmod = time_second;

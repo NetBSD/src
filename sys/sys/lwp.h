@@ -1,4 +1,4 @@
-/* 	$NetBSD: lwp.h,v 1.72 2007/12/13 02:45:09 yamt Exp $	*/
+/* 	$NetBSD: lwp.h,v 1.73 2007/12/22 01:14:53 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -82,8 +82,8 @@ struct lwp {
 	struct mdlwp	l_md;		/* l: machine-dependent fields. */
 	int		l_flag;		/* l: misc flag values */
 	int		l_stat;		/* l: overall LWP status */
-	struct timeval 	l_rtime;	/* l: real time */
-	struct timeval	l_stime;	/* l: start time (while ONPROC) */
+	struct bintime 	l_rtime;	/* l: real time */
+	struct bintime	l_stime;	/* l: start time (while ONPROC) */
 	u_int		l_swtime;	/* l: time swapped in or out */
 	int		l_holdcnt;	/* l: if non-zero, don't swap */
 	int		l_biglocks;	/* l: biglock count before sleep */
