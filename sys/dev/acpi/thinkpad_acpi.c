@@ -1,4 +1,4 @@
-/* $NetBSD: thinkpad_acpi.c,v 1.7 2007/12/22 03:19:29 jmcneill Exp $ */
+/* $NetBSD: thinkpad_acpi.c,v 1.8 2007/12/22 13:06:30 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.7 2007/12/22 03:19:29 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.8 2007/12/22 13:06:30 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -69,6 +69,8 @@ typedef struct thinkpad_softc {
 
 	struct sysmon_envsys	*sc_sme;
 	envsys_data_t		sc_sensor[THINKPAD_NSENSORS];
+
+	int			sc_display_state;
 } thinkpad_softc_t;
 
 /* Hotkey events */
@@ -95,6 +97,12 @@ typedef struct thinkpad_softc {
 
 #define THINKPAD_HKEY_VERSION		0x0100
 
+#define	THINKPAD_DISPLAY_LCD		0x01
+#define	THINKPAD_DISPLAY_CRT		0x02
+#define	THINKPAD_DISPLAY_DVI		0x08
+#define	THINKPAD_DISPLAY_ALL \
+	(THINKPAD_DISPLAY_LCD | THINKPAD_DISPLAY_CRT | THINKPAD_DISPLAY_DVI)
+
 static int	thinkpad_match(device_t, struct cfdata *, void *);
 static void	thinkpad_attach(device_t, device_t, void *);
 
@@ -106,6 +114,8 @@ static void	thinkpad_temp_init(thinkpad_softc_t *);
 static void	thinkpad_temp_refresh(struct sysmon_envsys *, envsys_data_t *);
 
 static void	thinkpad_wireless_toggle(thinkpad_softc_t *);
+
+static void	thinkpad_display_cycle(thinkpad_softc_t *);
 
 static void	thinkpad_brightness_up(device_t);
 static void	thinkpad_brightness_down(device_t);
@@ -160,6 +170,7 @@ thinkpad_attach(device_t parent, device_t self, void *opaque)
 
 	sc->sc_node = aa->aa_node;
 	sc->sc_dev = self;
+	sc->sc_display_state = THINKPAD_DISPLAY_LCD;
 
 	aprint_naive("\n");
 	aprint_normal("\n");
@@ -297,9 +308,7 @@ thinkpad_get_hotkeys(void *opaque)
 			thinkpad_brightness_down(self);
 			break;
 		case THINKPAD_NOTIFY_DisplayCycle:
-#if notyet
-			pmf_event_inject(NULL, PMFE_DISPLAY_CYCLE);
-#endif
+			thinkpad_display_cycle(sc);
 			break;
 		case THINKPAD_NOTIFY_WirelessSwitch:
 			thinkpad_wireless_toggle(sc);
@@ -442,6 +451,52 @@ thinkpad_wireless_toggle(thinkpad_softc_t *sc)
 {
 	/* Ignore return value, as the hardware may not support bluetooth */
 	(void)AcpiEvaluateObject(sc->sc_node->ad_handle, "BTGL", NULL, NULL);
+}
+
+static void
+thinkpad_display_cycle(thinkpad_softc_t *sc)
+{
+	ACPI_OBJECT param[2];
+	ACPI_OBJECT_LIST params;
+	ACPI_STATUS rv;
+
+	/* Select the next display state */
+	switch (sc->sc_display_state) {
+	case THINKPAD_DISPLAY_LCD:
+		sc->sc_display_state = THINKPAD_DISPLAY_CRT;
+		aprint_normal_dev(sc->sc_dev, "switching to CRT\n");
+		break;
+	case THINKPAD_DISPLAY_CRT:
+		sc->sc_display_state = THINKPAD_DISPLAY_DVI;
+		aprint_normal_dev(sc->sc_dev, "switching to DVI\n");
+		break;
+	case THINKPAD_DISPLAY_DVI:
+		sc->sc_display_state = THINKPAD_DISPLAY_ALL;
+		aprint_normal_dev(sc->sc_dev, "switching to LCD,CRT,DVI\n");
+		break;
+	case THINKPAD_DISPLAY_ALL:
+		sc->sc_display_state = THINKPAD_DISPLAY_LCD;
+		aprint_normal_dev(sc->sc_dev, "switching to LCD\n");
+		break;
+	}
+
+	param[0].Type = param[1].Type = ACPI_TYPE_INTEGER;
+	params.Pointer = param;
+
+	params.Count = 1;
+	param[0].Integer.Value = 0x80;
+	rv = AcpiEvaluateObject(NULL, "\\VUPS", &params, NULL);
+	if (ACPI_FAILURE(rv))
+		aprint_error_dev(sc->sc_dev, "couldn't evaluate \\VUPS: %s\n",
+		    AcpiFormatException(rv));
+
+	params.Count = 2;
+	param[0].Integer.Value = sc->sc_display_state;
+	param[1].Integer.Value = 1;
+	rv = AcpiEvaluateObject(NULL, "\\VSDS", &params, NULL);
+	if (ACPI_FAILURE(rv))
+		aprint_error_dev(sc->sc_dev, "couldn't evaluate \\VSDS: %s\n",
+		    AcpiFormatException(rv));
 }
 
 static uint8_t
