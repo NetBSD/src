@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.37 2007/12/13 02:45:10 yamt Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.38 2007/12/22 01:11:37 yamt Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.37 2007/12/13 02:45:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.38 2007/12/22 01:11:37 yamt Exp $");
 
 #define	VMEM_DEBUG
 #if defined(_KERNEL)
@@ -848,15 +848,13 @@ vmem_roundup_size(vmem_t *vm, vmem_size_t size)
  */
 
 vmem_addr_t
-vmem_alloc(vmem_t *vm, vmem_size_t size0, vm_flag_t flags)
+vmem_alloc(vmem_t *vm, vmem_size_t size, vm_flag_t flags)
 {
-	const vmem_size_t size __unused = vmem_roundup_size(vm, size0);
 	const vm_flag_t strat __unused = flags & VM_FITMASK;
 
 	KASSERT((flags & (VM_SLEEP|VM_NOSLEEP)) != 0);
 	KASSERT((~flags & (VM_SLEEP|VM_NOSLEEP)) != 0);
 
-	KASSERT(size0 > 0);
 	KASSERT(size > 0);
 	KASSERT(strat == VM_BESTFIT || strat == VM_INSTANTFIT);
 	if ((flags & VM_SLEEP) != 0) {
@@ -865,7 +863,7 @@ vmem_alloc(vmem_t *vm, vmem_size_t size0, vm_flag_t flags)
 
 #if defined(QCACHE)
 	if (size <= vm->vm_qcache_max) {
-		int qidx = size >> vm->vm_quantum_shift;
+		int qidx = (size + vm->vm_quantum_mask) >> vm->vm_quantum_shift;
 		qcache_t *qc = vm->vm_qcache[qidx - 1];
 
 		return (vmem_addr_t)pool_cache_get(qc->qc_cache,
@@ -873,7 +871,7 @@ vmem_alloc(vmem_t *vm, vmem_size_t size0, vm_flag_t flags)
 	}
 #endif /* defined(QCACHE) */
 
-	return vmem_xalloc(vm, size0, 0, 0, 0, 0, 0, flags);
+	return vmem_xalloc(vm, size, 0, 0, 0, 0, 0, flags);
 }
 
 vmem_addr_t
