@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.196 2007/11/12 15:02:58 jmmv Exp $
+# $NetBSD: mi,v 1.197 2007/12/22 19:04:10 jmcneill Exp $
 #
 # Note: end-user configuration files that are moved to another location
 #	should not be marked "obsolete"; they should just be removed from
@@ -135,6 +135,7 @@
 ./etc/postfix/postfix-script			etc-postfix-etc		postfix
 ./etc/postinstall				etc-obsolete		obsolete
 ./etc/powerd/scripts/acadapter			etc-sysutil-etc
+./etc/powerd/scripts/hotkey_button		etc-sysutil-etc
 ./etc/powerd/scripts/lid_switch			etc-sysutil-etc
 ./etc/powerd/scripts/power_button		etc-sysutil-etc
 ./etc/powerd/scripts/reset_button		etc-sysutil-etc
