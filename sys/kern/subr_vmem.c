@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.38 2007/12/22 01:11:37 yamt Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.39 2007/12/22 03:27:10 yamt Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.38 2007/12/22 01:11:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.39 2007/12/22 03:27:10 yamt Exp $");
 
 #define	VMEM_DEBUG
 #if defined(_KERNEL)
@@ -1206,15 +1206,14 @@ vmem_rehash_start(void)
 static bt_t *
 vmem_whatis_lookup(vmem_t *vm, uintptr_t addr)
 {
-	int i;
+	bt_t *bt;
 
-	for (i = 0; i < vm->vm_hashsize; i++) {
-		bt_t *bt;
-
-		LIST_FOREACH(bt, &vm->vm_hashlist[i], bt_hashlist) {
-			if (bt->bt_start <= addr && addr < BT_END(bt)) {
-				return bt;
-			}
+	CIRCLEQ_FOREACH(bt, &vm->vm_seglist, bt_seglist) {
+		if (BT_ISSPAN_P(bt)) {
+			continue;
+		}
+		if (bt->bt_start <= addr && addr < BT_END(bt)) {
+			return bt;
 		}
 	}
 
@@ -1233,9 +1232,10 @@ vmem_whatis(uintptr_t addr, void (*pr)(const char *, ...))
 		if (bt == NULL) {
 			continue;
 		}
-		(*pr)("%p is %p+%zu from VMEM '%s'\n",
+		(*pr)("%p is %p+%zu in VMEM '%s' (%s)\n",
 		    (void *)addr, (void *)bt->bt_start,
-		    (size_t)(addr - bt->bt_start), vm->vm_name);
+		    (size_t)(addr - bt->bt_start), vm->vm_name,
+		    (bt->bt_type == BT_TYPE_BUSY) ? "allocated" : "free");
 	}
 }
 #endif /* defined(DDB) */
