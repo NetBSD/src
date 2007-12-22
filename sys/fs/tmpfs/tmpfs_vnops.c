@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.44.2.6 2007/12/13 17:55:19 ad Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.44.2.7 2007/12/22 00:31:15 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.44.2.6 2007/12/13 17:55:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.44.2.7 2007/12/22 00:31:15 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -797,21 +797,37 @@ tmpfs_rename(void *v)
 
 	char *newname;
 	int error;
-	struct tmpfs_dirent *de;
+	struct tmpfs_dirent *de, *de2;
 	struct tmpfs_mount *tmp;
 	struct tmpfs_node *fdnode;
 	struct tmpfs_node *fnode;
 	struct tmpfs_node *tnode;
 	struct tmpfs_node *tdnode;
+	size_t namelen;
 
 	KASSERT(VOP_ISLOCKED(tdvp));
 	KASSERT(IMPLIES(tvp != NULL, VOP_ISLOCKED(tvp) == LK_EXCLUSIVE));
 	KASSERT(fcnp->cn_flags & HASBUF);
 	KASSERT(tcnp->cn_flags & HASBUF);
 
-	fdnode = VP_TO_TMPFS_DIR(fdvp);
 	fnode = VP_TO_TMPFS_NODE(fvp);
+	fdnode = VP_TO_TMPFS_DIR(fdvp);
 	tnode = (tvp == NULL) ? NULL : VP_TO_TMPFS_NODE(tvp);
+	tdnode = VP_TO_TMPFS_DIR(tdvp);
+	tmp = VFS_TO_TMPFS(tdvp->v_mount);
+	newname = NULL;
+	namelen = 0;
+
+	/* If we need to move the directory between entries, lock the
+	 * source so that we can safely operate on it. */
+
+	/* XXX: this is a potential locking order violation! */
+	if (fdnode != tdnode) {
+		error = vn_lock(fdvp, LK_EXCLUSIVE | LK_RETRY);
+		if (error != 0)
+			goto out;
+	}
+
 	de = tmpfs_dir_lookup(fdnode, fcnp);
 	if (de == NULL) {
 		error = ENOENT;
@@ -826,9 +842,6 @@ tmpfs_rename(void *v)
 		error = EXDEV;
 		goto out;
 	}
-
-	tmp = VFS_TO_TMPFS(tdvp->v_mount);
-	tdnode = VP_TO_TMPFS_DIR(tdvp);
 
 	/* If source and target are the same file, there is nothing to do. */
 	if (fvp == tvp) {
@@ -864,28 +877,17 @@ tmpfs_rename(void *v)
 		}
 	}
 
-	/* If we need to move the directory between entries, lock the
-	 * source so that we can safely operate on it. */
-
-	/* XXX: this is a potential locking order violation! */
-	if (fdnode != tdnode) {
-		error = vn_lock(fdvp, LK_EXCLUSIVE | LK_RETRY);
-		if (error != 0)
-			goto out;
-	}
-
 	/* Ensure that we have enough memory to hold the new name, if it
 	 * has to be changed. */
+	namelen = tcnp->cn_namelen;
 	if (fcnp->cn_namelen != tcnp->cn_namelen ||
 	    memcmp(fcnp->cn_nameptr, tcnp->cn_nameptr, fcnp->cn_namelen) != 0) {
-		newname = tmpfs_str_pool_get(&tmp->tm_str_pool,
-		    tcnp->cn_namelen, 0);
+		newname = tmpfs_str_pool_get(&tmp->tm_str_pool, namelen, 0);
 		if (newname == NULL) {
 			error = ENOSPC;
-			goto out_locked;
+			goto out;
 		}
-	} else
-		newname = NULL;
+	}
 
 	/* If the node is being moved to another directory, we have to do
 	 * the move. */
@@ -902,7 +904,7 @@ tmpfs_rename(void *v)
 			while (n != n->tn_spec.tn_dir.tn_parent) {
 				if (n == fnode) {
 					error = EINVAL;
-					goto out_locked;
+					goto out;
 				}
 				n = n->tn_spec.tn_dir.tn_parent;
 			}
@@ -929,22 +931,6 @@ tmpfs_rename(void *v)
 		VN_KNOTE(fdvp, NOTE_WRITE);
 	}
 
-	/* If the name has changed, we need to make it effective by changing
-	 * it in the directory entry. */
-	if (newname != NULL) {
-		KASSERT(tcnp->cn_namelen < MAXNAMLEN);
-		KASSERT(tcnp->cn_namelen < 0xffff);
-
-		tmpfs_str_pool_put(&tmp->tm_str_pool, de->td_name,
-		    de->td_namelen);
-		de->td_namelen = (uint16_t)tcnp->cn_namelen;
-		memcpy(newname, tcnp->cn_nameptr, tcnp->cn_namelen);
-		de->td_name = newname;
-
-		fnode->tn_status |= TMPFS_NODE_CHANGED;
-		tdnode->tn_status |= TMPFS_NODE_MODIFIED;
-	}
-
 	/* If we are overwriting an entry, we have to remove the old one
 	 * from the target directory. */
 	if (tvp != NULL) {
@@ -953,15 +939,44 @@ tmpfs_rename(void *v)
 		/* Remove the old entry from the target directory.
 		 * Note! This relies on tmpfs_dir_attach() putting the new
 		 * node on the end of the target's node list. */
-		de = tmpfs_dir_lookup(tdnode, tcnp);
-		KASSERT(de != NULL);
-		KASSERT(de->td_node == tnode);
-		tmpfs_dir_detach(tdvp, de);
+		de2 = tmpfs_dir_lookup(tdnode, tcnp);
+		KASSERT(de2 != NULL);
+/* XXXREMOVEME */
+		if (de2 == de) {
+			panic("tmpfs_rename: to self 1");
+		}
+		if (de2->td_node == de->td_node) {
+			panic("tmpfs_rename: to self 2");
+		}
+		if (de2->td_node != tnode) {
+			panic("tmpfs_rename: found wrong entry [%s]",
+			    tcnp->cn_nameptr);
+		}
+/* XXXREMOVEME */
+		KASSERT(de2->td_node == tnode);
+		tmpfs_dir_detach(tdvp, de2);
 
 		/* Free the directory entry we just deleted.  Note that the
 		 * node referred by it will not be removed until the vnode is
 		 * really reclaimed. */
-		tmpfs_free_dirent(VFS_TO_TMPFS(tvp->v_mount), de, true);
+		tmpfs_free_dirent(VFS_TO_TMPFS(tvp->v_mount), de2, true);
+	}
+
+	/* If the name has changed, we need to make it effective by changing
+	 * it in the directory entry. */
+	if (newname != NULL) {
+		KASSERT(tcnp->cn_namelen < MAXNAMLEN);
+		KASSERT(tcnp->cn_namelen < 0xffff);
+
+		tmpfs_str_pool_put(&tmp->tm_str_pool, de->td_name,
+		    de->td_namelen);
+		de->td_namelen = (uint16_t)namelen;
+		memcpy(newname, tcnp->cn_nameptr, namelen);
+		de->td_name = newname;
+		newname = NULL;
+
+		fnode->tn_status |= TMPFS_NODE_CHANGED;
+		tdnode->tn_status |= TMPFS_NODE_MODIFIED;
 	}
 
 	/* Notify listeners of tdvp about the change in the directory (either
@@ -972,11 +987,10 @@ tmpfs_rename(void *v)
 
 	error = 0;
 
-out_locked:
+out:
 	if (fdnode != tdnode)
 		VOP_UNLOCK(fdvp, 0);
 
-out:
 	/* Release target nodes. */
 	if (tdvp == tvp)
 		vrele(tdvp);
@@ -988,6 +1002,9 @@ out:
 	/* Release source nodes. */
 	vrele(fdvp);
 	vrele(fvp);
+
+	if (newname != NULL)
+		tmpfs_str_pool_put(&tmp->tm_str_pool, newname, namelen);
 
 	return error;
 }
