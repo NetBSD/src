@@ -1,4 +1,4 @@
-/*	$NetBSD: df.c,v 1.77 2007/12/21 06:43:26 yamt Exp $ */
+/*	$NetBSD: df.c,v 1.78 2007/12/22 00:23:36 yamt Exp $ */
 
 /*
  * Copyright (c) 1980, 1990, 1993, 1994
@@ -45,7 +45,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)df.c	8.7 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: df.c,v 1.77 2007/12/21 06:43:26 yamt Exp $");
+__RCSID("$NetBSD: df.c,v 1.78 2007/12/22 00:23:36 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -487,7 +487,7 @@ prtstat(struct statvfs *sfsp, int maxwidth)
 	if (iflag) {
 		inodes = sfsp->f_files;
 		used = inodes - sfsp->f_ffree;
-		(void)printf(" %8" PRIdMAX " %8" PRIdMAX " %4s",
+		(void)printf(" %8jd %8jd %4s",
 		    (intmax_t)used, (intmax_t)sfsp->f_ffree,
 		    inodes == 0 ? (used == 0 ? empty : full) :
 		    strpct64((uint64_t)used, (uint64_t)inodes, 0));
