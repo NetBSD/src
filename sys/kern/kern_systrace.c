@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_systrace.c,v 1.78 2007/12/22 11:38:54 dsl Exp $	*/
+/*	$NetBSD: kern_systrace.c,v 1.79 2007/12/22 16:19:35 dsl Exp $	*/
 
 /*
  * Copyright 2002, 2003 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.78 2007/12/22 11:38:54 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.79 2007/12/22 16:19:35 dsl Exp $");
 
 #include "opt_systrace.h"
 
@@ -666,7 +666,7 @@ systrace_sys_fork(struct proc *oldproc, struct proc *p)
 }
 
 int
-systrace_enter(struct lwp *l, register_t code, register_t *args)
+systrace_enter(struct lwp *l, register_t code, const register_t *args)
 {
 	const struct sysent *callp;
 	struct str_process *strp;
@@ -762,7 +762,8 @@ systrace_enter(struct lwp *l, register_t code, register_t *args)
 			}
 			/* Replace the arguments if necessary */
 			if (strp->replace != NULL) {
-				error = systrace_replace(strp, argsize, args);
+				error = systrace_replace(strp, argsize,
+					__UNCONST(args));
 			}
 		}
 	}
