@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.167 2007/12/09 20:28:43 jmcneill Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.168 2007/12/22 11:38:54 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2006 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.167 2007/12/09 20:28:43 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.168 2007/12/22 11:38:54 dsl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -1365,8 +1365,8 @@ trace_is_enabled(struct proc *p)
  * system call number range for emulation the process runs under.
  */
 int
-trace_enter(struct lwp *l, register_t code,
-    register_t realcode, const struct sysent *callp, void *args)
+trace_enter(struct lwp *l, register_t code, register_t realcode,
+    const struct sysent *callp, register_t *args)
 {
 #if defined(SYSCALL_DEBUG) || defined(KTRACE) || defined(PTRACE) || defined(SYSTRACE)
 	struct proc *p = l->l_proc;
@@ -1404,8 +1404,8 @@ trace_enter(struct lwp *l, register_t code,
  * system call number range for emulation the process runs under.
  */
 void
-trace_exit(struct lwp *l, register_t code, void *args, register_t rval[],
-    int error)
+trace_exit(struct lwp *l, register_t code, const register_t *args, 
+    register_t rval[], int error)
 {
 #if defined(SYSCALL_DEBUG) || defined(KTRACE) || defined(PTRACE) || defined(SYSTRACE)
 	struct proc *p = l->l_proc;

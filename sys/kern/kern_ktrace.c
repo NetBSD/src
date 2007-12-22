@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.131 2007/12/20 23:03:08 dsl Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.132 2007/12/22 11:38:54 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.131 2007/12/20 23:03:08 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.132 2007/12/22 11:38:54 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -545,7 +545,7 @@ ktealloc(struct ktrace_entry **ktep, void **bufp, lwp_t *l, int type,
 
 void
 ktr_syscall(register_t code, register_t realcode,
-	    const struct sysent *callp, register_t args[])
+	    const struct sysent *callp, const register_t args[])
 {
 	lwp_t *l = curlwp;
 	struct proc *p = l->l_proc;
