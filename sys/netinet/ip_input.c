@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.259 2007/12/21 23:49:09 matt Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.260 2007/12/22 15:41:11 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.259 2007/12/21 23:49:09 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.260 2007/12/22 15:41:11 matt Exp $");
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
@@ -903,7 +903,7 @@ ours:
 		 * size) and making sure the first fragment is at least 68
 		 * bytes.
 		 */
-		off = htons(ip->ip_off) & ~(IP_DF|IP_EF|IP_MF);
+		off = (ntohs(ip->ip_off) & IP_OFFMASK) << 3;
 		if ((off > 0 ? off + hlen : len) < IP_MINFRAGSIZE - 1) {
 			ipstat.ips_badfrags++;
 			goto bad;
@@ -918,9 +918,17 @@ ours:
 			if (ip->ip_id == fp->ipq_id &&
 			    in_hosteq(ip->ip_src, fp->ipq_src) &&
 			    in_hosteq(ip->ip_dst, fp->ipq_dst) &&
-			    ip->ip_p == fp->ipq_p)
+			    ip->ip_p == fp->ipq_p) {
+				/*
+				 * Make sure the TOS is matches previous
+				 * fragments.
+				 */
+				if (ip->ip_tos != fp->ipq_tos) {
+					ipstat.ips_badfrags++;
+					goto bad;
+				}
 				goto found;
-
+			}
 		}
 		fp = 0;
 found:
@@ -1116,6 +1124,7 @@ ip_reass(struct ipqent *ipqe, struct ipq *fp, struct ipqhead *ipqhead)
 		fp->ipq_ttl = IPFRAGTTL;
 		fp->ipq_p = ipqe->ipqe_ip->ip_p;
 		fp->ipq_id = ipqe->ipqe_ip->ip_id;
+		fp->ipq_tos = ipqe->ipqe_ip->ip_tos;
 		TAILQ_INIT(&fp->ipq_fragq);
 		fp->ipq_src = ipqe->ipqe_ip->ip_src;
 		fp->ipq_dst = ipqe->ipqe_ip->ip_dst;
