@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.11 2007/12/21 20:43:45 dsl Exp $	*/
+/*	$NetBSD: frame.h,v 1.12 2007/12/22 18:35:00 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -122,35 +122,8 @@ struct trapframe {
  * Interrupt stack frame
  */
 struct intrframe {
-	uint64_t	if_ppl;
-	uint64_t	if_rdi;
-	uint64_t	if_rsi;
-	uint64_t	if_rdx;
-	uint64_t	if_rcx;
-	uint64_t	if_r8;
-	uint64_t	if_r9;
-	uint64_t	if_r10;
-	uint64_t	if_r11;
-	uint64_t	if_r12;
-	uint64_t	if_r13;
-	uint64_t	if_r14;
-	uint64_t	if_r15;
-	uint64_t	if_rbp;
-	uint64_t	if_rbx;
-	uint64_t	if_rax;
-	uint64_t	tf_gs;
-	uint64_t	tf_fs;
-	uint64_t	tf_es;
-	uint64_t	tf_ds;
-	u_int64_t __if_trapno; /* for compat with trap frame - trapno */
-	u_int64_t __if_err;	/* for compat with trap frame - err */
-	/* below portion defined in hardware */
-	uint64_t	if_rip;
-	uint64_t	if_cs;
-	uint64_t	if_rflags;
-	/* These are pushed unconditionally on the x86-64 */
-	uint64_t	if_rsp;
-	uint64_t	if_ss;
+	uint64_t	if_ppl;		/* Old interrupt mask level */
+	struct trapframe if_tf;
 };
 
 /*
