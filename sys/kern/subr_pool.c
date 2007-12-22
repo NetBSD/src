@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.143 2007/12/22 03:28:48 yamt Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.144 2007/12/22 04:31:34 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002, 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.143 2007/12/22 03:28:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.144 2007/12/22 04:31:34 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pool.h"
@@ -2943,7 +2943,7 @@ pool_in_cg(struct pool *pp, struct pool_cache_group *pcg, uintptr_t addr)
 	if (pcg == NULL) {
 		return false;
 	}
-	for (i = 0; i < pcg->pcg_size; i++) {
+	for (i = 0; i < pcg->pcg_avail; i++) {
 		if (pool_in_item(pp, pcg->pcg_objects[i].pcgo_va, addr)) {
 			return true;
 		}
