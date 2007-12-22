@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.105 2007/12/05 17:19:58 pooka Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.106 2007/12/22 02:21:29 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.105 2007/12/05 17:19:58 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.106 2007/12/22 02:21:29 ad Exp $");
 
 #include "opt_compat_sunos.h"
 #include "opt_ptm.h"
@@ -483,7 +483,7 @@ ptsstart(tp)
 	}
 
 	selnotify(&pti->pt_selr, NOTE_SUBMIT);
-	clwakeup(&tp->t_outq);
+	cv_broadcast(&tp->t_outq.c_cvf);
 }
 
 /*
@@ -509,11 +509,11 @@ ptsstop(tp, flush)
 	/* change of perspective */
 	if (flush & FREAD) {
 		selnotify(&pti->pt_selw, NOTE_SUBMIT);
-		clwakeup(&tp->t_rawq);
+		cv_broadcast(&tp->t_rawq.c_cvf);
 	}
 	if (flush & FWRITE) {
 		selnotify(&pti->pt_selr, NOTE_SUBMIT);
-		clwakeup(&tp->t_outq);
+		cv_broadcast(&tp->t_outq.c_cvf);
 	}
 }
 
@@ -527,11 +527,11 @@ ptcwakeup(tp, flag)
 	mutex_spin_enter(&tty_lock);
 	if (flag & FREAD) {
 		selnotify(&pti->pt_selr, NOTE_SUBMIT);
-		clwakeup(&tp->t_outq);
+		cv_broadcast(&tp->t_outq.c_cvf);
 	}
 	if (flag & FWRITE) {
 		selnotify(&pti->pt_selw, NOTE_SUBMIT);
-		clwakeup(&tp->t_rawq);
+		cv_broadcast(&tp->t_rawq.c_cvf);
 	}
 	mutex_spin_exit(&tty_lock);
 }
@@ -640,7 +640,7 @@ ptcread(dev, uio, flag)
 			error = EWOULDBLOCK;
 			goto out;
 		}
-		error = cv_wait_sig(&tp->t_outq.c_cv, &tty_lock);
+		error = cv_wait_sig(&tp->t_outq.c_cvf, &tty_lock);
 		if (error)
 			goto out;
 	}
