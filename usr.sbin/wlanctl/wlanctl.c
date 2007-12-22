@@ -1,4 +1,4 @@
-/* $NetBSD: wlanctl.c,v 1.9 2007/08/29 02:27:55 dogcow Exp $ */
+/* $NetBSD: wlanctl.c,v 1.10 2007/12/22 00:58:15 dyoung Exp $ */
 /*-
  * Copyright (c) 2005 David Young.  All rights reserved.
  *
@@ -48,10 +48,7 @@
 #include <netinet/if_ether.h>
 
 #include <net80211/ieee80211.h>
-#include <net80211/ieee80211_node.h>
 #include <net80211/ieee80211_sysctl.h>
-
-#define	NELTS(x)	(sizeof(x)/sizeof((x)[0]))
 
 struct flagname {
 	u_int32_t fn_flag;
@@ -125,7 +122,7 @@ print_node_flags(u_int32_t flags)
 	};
 	printf("\tnode flags %04x", flags);
 
-	print_flags(flags, nodeflags, NELTS(nodeflags));
+	print_flags(flags, nodeflags, __arraycount(nodeflags));
 }
 
 static void
@@ -147,7 +144,7 @@ print_capinfo(u_int16_t capinfo)
 
 	printf("\tcapabilities %04x", capinfo);
 
-	print_flags(capinfo, capflags, NELTS(capflags));
+	print_flags(capinfo, capflags, __arraycount(capflags));
 }
 
 static const char *
@@ -173,7 +170,7 @@ print_channel(u_int16_t chanidx, u_int16_t freq, u_int16_t flags)
 	};
 	printf("\tchan %d freq %dMHz flags %04x", chanidx, freq, flags);
 
-	print_flags(flags, chanflags, NELTS(chanflags));
+	print_flags(flags, chanflags, __arraycount(chanflags));
 }
 
 /*
@@ -203,7 +200,7 @@ dump_nodes(const char *ifname_arg, int hdr_type, struct cmdflags *cf)
 	struct ieee80211_node_sysctl *pns, *ns;
 	u_int64_t ts;
 
-	namelen = NELTS(name);
+	namelen = __arraycount(name);
 
 	if (sysctlnametomib("net.link.ieee80211.nodes", &name[0],
 	    &namelen) != 0) {
@@ -219,7 +216,7 @@ dump_nodes(const char *ifname_arg, int hdr_type, struct cmdflags *cf)
 	}
 
 	totallen = namelen + IEEE80211_SYSCTL_NODENAMELEN;
-	if (totallen >= NELTS(name)) {
+	if (totallen >= __arraycount(name)) {
 		warnx("Internal error finding sysctl mib");
 		return -1;
 	}
