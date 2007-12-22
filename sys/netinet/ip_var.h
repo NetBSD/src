@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.81 2007/12/22 15:40:02 matt Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.82 2007/12/22 16:04:45 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -279,6 +279,11 @@ ip_newid_range(unsigned int num)
 		return ip_randomid();
 	}
 
+	/*
+	 * never allow an ip_id of 0. (detect wrap)
+	 */
+	if ((uint16_t)(ip_id + num) < ip_id)
+		ip_id = 1;
 	id = htons(ip_id);
 	ip_id += num;
 
