@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.21 2007/11/13 17:25:43 tsutsui Exp $	*/
+/*	$NetBSD: setup.c,v 1.22 2007/12/22 00:28:21 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.5 (Berkeley) 11/23/94";
 #else
-__RCSID("$NetBSD: setup.c,v 1.21 2007/11/13 17:25:43 tsutsui Exp $");
+__RCSID("$NetBSD: setup.c,v 1.22 2007/12/22 00:28:21 tsutsui Exp $");
 #endif
 #endif /* not lint */
 
@@ -86,8 +86,6 @@ __RCSID("$NetBSD: setup.c,v 1.21 2007/11/13 17:25:43 tsutsui Exp $");
 #include "fsck.h"
 #include "extern.h"
 #include "fsutil.h"
-
-#define POWEROF2(num)	(((num) & ((num) - 1)) == 0)
 
 void badsb(int, const char *);
 int calcsb(const char *, int, struct m_ext2fs *);
