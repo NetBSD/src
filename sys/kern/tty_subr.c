@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_subr.c,v 1.31 2007/11/19 18:51:52 ad Exp $	*/
+/*	$NetBSD: tty_subr.c,v 1.32 2007/12/22 02:21:29 ad Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Theo de Raadt
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_subr.c,v 1.31 2007/11/19 18:51:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_subr.c,v 1.32 2007/12/22 02:21:29 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,6 +94,7 @@ clalloc(struct clist *clp, int size, int quot)
 	clp->c_cc = 0;
 
 	cv_init(&clp->c_cv, "tty");
+	cv_init(&clp->c_cvf, "ttyf");
 	return (0);
 }
 
@@ -106,6 +107,7 @@ clfree(struct clist *clp)
 		free(clp->c_cq, M_TTYS);
 	clp->c_cs = clp->c_cq = (u_char *)0;
 	cv_destroy(&clp->c_cv);
+	cv_destroy(&clp->c_cvf);
 }
 
 void
