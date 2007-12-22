@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.230 2007/12/13 14:40:36 joerg Exp $	*/
+/*	$NetBSD: audio.c,v 1.231 2007/12/22 18:34:56 christos Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.230 2007/12/13 14:40:36 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.231 2007/12/22 18:34:56 christos Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -911,7 +911,7 @@ audio_stream_ctor(audio_stream_t *stream, const audio_params_t *param, int size)
 
 	size = min(size, AU_RING_SIZE);
 	stream->bufsize = size;
-	stream->start = malloc(size, M_DEVBUF, M_WAITOK);
+	stream->start = malloc(size, M_DEVBUF, M_NOWAIT);
 	if (stream->start == NULL)
 		return ENOMEM;
 	frame_size = (param->precision + 7) / 8 * param->channels;
