@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_add.S,v 1.2 2007/11/28 17:29:31 ad Exp $	*/
+/*	$NetBSD: atomic_add.S,v 1.3 2007/12/22 23:19:40 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -68,14 +68,16 @@ ENTRY_NOPROFILE(_atomic_add_64)
 	retl
 	 add	%o1, %o2, %o0
 ATOMIC_OP_ALIAS(atomic_add_64,_atomic_add_64)
-ATOMIC_OP_ALIAS(atomic_add_long,_atomic_add_64)
-STRONG_ALIAS(_atomic_add_long,_atomic_add_64)
-ATOMIC_OP_ALIAS(atomic_add_ptr,_atomic_add_64)
-STRONG_ALIAS(_atomic_add_ptr,_atomic_add_64)
 
 ATOMIC_OP_ALIAS(atomic_add_64_nv,_atomic_add_64)
 STRONG_ALIAS(_atomic_add_64_nv,_atomic_add_64)
-ATOMIC_OP_ALIAS(atomic_add_long_nv,_atomic_add_64)
-STRONG_ALIAS(_atomic_add_long_nv,_atomic_add_64)
-ATOMIC_OP_ALIAS(atomic_add_ptr_nv,_atomic_add_64)
-STRONG_ALIAS(_atomic_add_ptr_nv,_atomic_add_64)
+
+ATOMIC_OP_ALIAS_SIZE(atomic_add_long,_atomic_add)
+STRONG_ALIAS_SIZE(_atomic_add_long,_atomic_add)
+ATOMIC_OP_ALIAS_SIZE(atomic_add_ptr,_atomic_add)
+STRONG_ALIAS_SIZE(_atomic_add_ptr,_atomic_add)
+
+ATOMIC_OP_ALIAS_SIZE(atomic_add_long_nv,_atomic_add)
+STRONG_ALIAS_SIZE(_atomic_add_long_nv,_atomic_add)
+ATOMIC_OP_ALIAS_SIZE(atomic_add_ptr_nv,_atomic_add)
+STRONG_ALIAS_SIZE(_atomic_add_ptr_nv,_atomic_add)

@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_op_asm.h,v 1.2 2007/11/28 17:29:32 ad Exp $	*/
+/*	$NetBSD: atomic_op_asm.h,v 1.3 2007/12/22 23:19:41 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -43,12 +43,30 @@
 
 #if defined(_KERNEL)
 
-#define	ATOMIC_OP_ALIAS(a,s)	STRONG_ALIAS(a,s)
+#define	ATOMIC_OP_ALIAS(a,s)		STRONG_ALIAS(a,s)
+
+#ifdef __sparc64__
+#define	ATOMIC_OP_ALIAS_SIZE(a,s)	STRONG_ALIAS(a,s/**/_64)
+#else
+#define	ATOMIC_OP_ALIAS_SIZE(a,s)	STRONG_ALIAS(a,s/**/_32)
+#endif
 
 #else /* _KERNEL */
 
-#define	ATOMIC_OP_ALIAS(a,s)	WEAK_ALIAS(a,s)
+#define	ATOMIC_OP_ALIAS(a,s)		WEAK_ALIAS(a,s)
+
+#ifdef __sparc64__
+#define	ATOMIC_OP_ALIAS_SIZE(a,s)	WEAK_ALIAS(a,s/**/_64)
+#else
+#define	ATOMIC_OP_ALIAS_SIZE(a,s)	WEAK_ALIAS(a,s/**/_32)
+#endif
 
 #endif /* _KERNEL */
+
+#ifdef __sparc64__
+#define	STRONG_ALIAS_SIZE(a,s)		STRONG_ALIAS(a,s/**/_64)
+#else
+#define	STRONG_ALIAS_SIZE(a,s)		STRONG_ALIAS(a,s/**/_32)
+#endif
 
 #endif /* _ATOMIC_OP_ASM_H_ */
