@@ -1,4 +1,4 @@
-/*      $NetBSD: procfs_linux.c,v 1.45 2007/11/12 14:11:47 ad Exp $      */
+/*      $NetBSD: procfs_linux.c,v 1.46 2007/12/22 01:04:55 yamt Exp $      */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.45 2007/11/12 14:11:47 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.46 2007/12/22 01:04:55 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -245,7 +245,6 @@ int
 procfs_docpustat(struct lwp *curl, struct proc *p,
     struct pfsnode *pfs, struct uio *uio)
 {
-	struct timeval	 runtime;
 	char		*bf;
 	int	 	 error;
 	int	 	 len;
@@ -289,7 +288,6 @@ procfs_docpustat(struct lwp *curl, struct proc *p,
 		i += 1;
 	}
 
-	timersub(&curlwp->l_stime, &boottime, &runtime);
 	len += snprintf(&bf[len], LBFSZ - len,
 			"disk 0 0 0 0\n"
 			"page %u %u\n"
