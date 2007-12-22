@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.44.2.7 2007/12/22 00:31:15 ad Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.44.2.8 2007/12/22 00:33:16 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.44.2.7 2007/12/22 00:31:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.44.2.8 2007/12/22 00:33:16 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -825,7 +825,7 @@ tmpfs_rename(void *v)
 	if (fdnode != tdnode) {
 		error = vn_lock(fdvp, LK_EXCLUSIVE | LK_RETRY);
 		if (error != 0)
-			goto out;
+			goto out_unlocked;
 	}
 
 	de = tmpfs_dir_lookup(fdnode, fcnp);
@@ -987,10 +987,11 @@ tmpfs_rename(void *v)
 
 	error = 0;
 
-out:
+ out:
 	if (fdnode != tdnode)
 		VOP_UNLOCK(fdvp, 0);
 
+ out_unlocked:
 	/* Release target nodes. */
 	if (tdvp == tvp)
 		vrele(tdvp);
