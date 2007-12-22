@@ -1,4 +1,4 @@
-/*      $NetBSD: procfs_linux.c,v 1.46 2007/12/22 01:04:55 yamt Exp $      */
+/*      $NetBSD: procfs_linux.c,v 1.47 2007/12/22 01:06:54 yamt Exp $      */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.46 2007/12/22 01:04:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.47 2007/12/22 01:06:54 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -530,7 +530,7 @@ procfs_douptime(struct lwp *curl, struct proc *p,
 
 	bf = malloc(LBFSZ, M_TEMP, M_WAITOK);
 
-	timersub(&curlwp->l_stime, &boottime, &runtime);
+	microuptime(&runtime);
 	idle = curcpu()->ci_schedstate.spc_cp_time[CP_IDLE];
 	len = snprintf(bf, LBFSZ,
 	    "%lu.%02lu %" PRIu64 ".%02" PRIu64 "\n",
