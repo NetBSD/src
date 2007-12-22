@@ -1,4 +1,4 @@
-/*      $NetBSD: if_qe.c,v 1.65 2007/10/19 12:01:08 ad Exp $ */
+/*      $NetBSD: if_qe.c,v 1.66 2007/12/22 08:23:01 tsutsui Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_qe.c,v 1.65 2007/10/19 12:01:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_qe.c,v 1.66 2007/12/22 08:23:01 tsutsui Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -775,7 +775,7 @@ qe_setup(struct qe_softc *sc)
 	struct ether_multistep step;
 	struct qe_cdata *qc = sc->sc_qedata;
 	struct ifnet *ifp = &sc->sc_if;
-	u_int8_t *enaddr = LLADDR(ifp->if_sadl);
+	u_int8_t enaddr[ETHER_ADDR_LEN];
 	int i, j, k, idx, s;
 
 	s = splnet();
@@ -789,6 +789,7 @@ qe_setup(struct qe_softc *sc)
 	 * Init the setup packet with valid info.
 	 */
 	memset(qc->qc_setup, 0xff, sizeof(qc->qc_setup)); /* Broadcast */
+	memcpy(enaddr, CLLADDR(ifp->if_sadl), sizeof(enaddr));
 	for (i = 0; i < ETHER_ADDR_LEN; i++)
 		qc->qc_setup[i * 8 + 1] = enaddr[i]; /* Own address */
 
