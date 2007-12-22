@@ -1,4 +1,4 @@
-/*	$NetBSD: __sigtramp2.S,v 1.2 2005/06/05 19:01:04 chs Exp $	*/
+/*	$NetBSD: __sigtramp2.S,v 1.3 2007/12/22 14:10:03 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998-2001 Michael Shalayeff
@@ -62,6 +62,26 @@
  */
 
 #include "SYS.h"
+
+/*
+ * The hppa signal trampoline is required to call the handler
+ * possibily via a PLABEL.
+ *
+ * On entry, stack looks like:
+ *
+ *	sp->					[x]
+ * r3,arg2->	ucontext structure
+ *    arg1->	siginfo structure		[0]
+ *
+ * where
+ *	x = HPPA_FRAME_ROUND(sizeof(sigframe_siginfo))
+ *
+ * and
+ * 	struct sigframe_siginfo {
+ *		siginfo_t sf_si;
+ *		ucontext_t sf_uc;
+ *	};
+ */
 
 ENTRY_NOPROFILE(__sigtramp_siginfo_2, 0)
 	.call
