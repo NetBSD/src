@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.85 2007/12/13 05:25:03 yamt Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.86 2007/12/22 01:14:54 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -205,7 +205,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.85 2007/12/13 05:25:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.86 2007/12/22 01:14:54 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -860,7 +860,7 @@ lwp_free(struct lwp *l, bool recycle, bool last)
 		 * Add the LWP's run time to the process' base value.
 		 * This needs to co-incide with coming off p_lwps.
 		 */
-		timeradd(&l->l_rtime, &p->p_rtime, &p->p_rtime);
+		bintime_add(&p->p_rtime, &l->l_rtime);
 		p->p_pctcpu += l->l_pctcpu;
 		LIST_REMOVE(l, l_sibling);
 		p->p_nlwps--;

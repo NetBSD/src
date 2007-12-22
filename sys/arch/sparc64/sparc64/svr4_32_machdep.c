@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_machdep.c,v 1.31 2007/12/20 23:02:43 dsl Exp $	 */
+/*	$NetBSD: svr4_32_machdep.c,v 1.32 2007/12/22 01:15:37 yamt Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_machdep.c,v 1.31 2007/12/20 23:02:43 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_machdep.c,v 1.32 2007/12/22 01:15:37 yamt Exp $");
 
 #ifndef _LKM
 #include "opt_ddb.h"
@@ -594,6 +594,7 @@ svr4_32_trap(int type, struct lwp *l)
 	struct trapframe64 *tf = l->l_md.md_tf;
 	struct timespec ts;
 	struct timeval tv;
+	struct timeval rtime, stime;
 	uint64_t tm;
 
 	if (p->p_emul != &emul_svr4_32)
@@ -640,11 +641,12 @@ svr4_32_trap(int type, struct lwp *l)
 		 * current runtime is the best we can do.
 		 */
 		microtime(&tv);
+		bintime2timeval(&l->l_rtime, &rtime);
+		bintime2timeval(&l->l_stime, &stime);
 
-		tm = (l->l_rtime.tv_sec + tv.tv_sec -
-		    l->l_stime.tv_sec) * 1000000ull;
-		tm += l->l_rtime.tv_usec + tv.tv_usec;
-		tm -= l->l_stime.tv_usec;
+		tm = (rtime.tv_sec + tv.tv_sec - stime.tv_sec) * 1000000ull;
+		tm += rtime.tv_usec + tv.tv_usec;
+		tm -= stime.tv_usec;
 		tm *= 1000u;
 		tf->tf_out[0] = (tm >> 32) & 0x00000000ffffffffffUL;
 		tf->tf_out[1] = tm & 0x00000000ffffffffffUL;

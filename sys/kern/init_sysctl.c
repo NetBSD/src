@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.114 2007/12/10 18:58:02 elad Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.115 2007/12/22 01:14:54 yamt Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.114 2007/12/10 18:58:02 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.115 2007/12/22 01:14:54 yamt Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
@@ -2890,6 +2890,7 @@ static void
 fill_lwp(struct lwp *l, struct kinfo_lwp *kl)
 {
 	struct proc *p = l->l_proc;
+	struct timeval tv;
 
 	kl->l_forw = 0;
 	kl->l_back = 0;
@@ -2916,8 +2917,9 @@ fill_lwp(struct lwp *l, struct kinfo_lwp *kl)
 #else
 	kl->l_cpuid = KI_NOCPU;
 #endif
-	kl->l_rtime_sec = l->l_rtime.tv_sec;
-	kl->l_rtime_usec = l->l_rtime.tv_usec;
+	bintime2timeval(&l->l_rtime, &tv);
+	kl->l_rtime_sec = tv.tv_sec;
+	kl->l_rtime_usec = tv.tv_usec;
 	kl->l_cpticks = l->l_cpticks;
 	kl->l_pctcpu = l->l_pctcpu;
 	kl->l_pid = p->p_pid;
