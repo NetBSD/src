@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_misc.c,v 1.26 2007/12/20 23:02:59 dsl Exp $	 */
+/*	$NetBSD: mach_misc.c,v 1.27 2007/12/22 17:49:32 christos Exp $	 */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_misc.c,v 1.26 2007/12/20 23:02:59 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_misc.c,v 1.27 2007/12/22 17:49:32 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,7 +92,7 @@ mach_sys_semaphore_timedwait_trap(struct lwp *l, const struct mach_sys_semaphore
 
 	*retval = 0;
 	DPRINTF(("mach_sys_semaphore_timedwait_trap(0x%x, %d, %d);\n",
-	    SCARG(uap, wait_name), SCARG(ap, sec), SCARG(ap, nsec)));
+	    SCARG(uap, wait_name), SCARG(uap, sec), SCARG(uap, nsec)));
 	return 0;
 }
 
@@ -104,7 +104,7 @@ mach_sys_semaphore_timedwait_signal_trap(struct lwp *l, const struct mach_sys_se
 	*retval = 0;
 	DPRINTF((
 	    "mach_sys_semaphore_timedwait_signal_trap(0x%x, 0x%x, %d, %d);\n",
-	    SCARG(uap, wait_name), SCARG(ap, signal_name), SCARG(ap, sec),
+	    SCARG(uap, wait_name), SCARG(uap, signal_name), SCARG(uap, sec),
 	    SCARG(uap, nsec)));
 	return 0;
 }
@@ -125,7 +125,7 @@ mach_sys_pid_for_task(struct lwp *l, const struct mach_sys_pid_for_task_args *ua
 
 	*retval = 0;
 	DPRINTF(("mach_sys_pid_for_task(0x%x, %p);\n",
-	    SCARG(uap, t), SCARG(ap, x)));
+	    SCARG(uap, t), SCARG(uap, x)));
 	return 0;
 }
 
@@ -136,7 +136,7 @@ mach_sys_macx_swapon(struct lwp *l, const struct mach_sys_macx_swapon_args *uap,
 
 	*retval = 0;
 	DPRINTF(("mach_sys_macx_swapon(%p, %d, %d, %d);\n",
-	    SCARG(uap, name), SCARG(ap, flags), SCARG(ap, size),
+	    SCARG(uap, name), SCARG(uap, flags), SCARG(uap, size),
 	    SCARG(uap, priority)));
 	return 0;
 }
@@ -147,7 +147,7 @@ mach_sys_macx_swapoff(struct lwp *l, const struct mach_sys_macx_swapoff_args *ua
 
 	*retval = 0;
 	DPRINTF(("mach_sys_macx_swapoff(%p, %d);\n",
-	    SCARG(uap, name), SCARG(ap, flags)));
+	    SCARG(uap, name), SCARG(uap, flags)));
 	return 0;
 }
 
@@ -157,7 +157,7 @@ mach_sys_macx_triggers(struct lwp *l, const struct mach_sys_macx_triggers_args *
 
 	*retval = 0;
 	DPRINTF(("mach_sys_macx_triggers(%d, %d, %d, 0x%x);\n",
-	    SCARG(uap, hi_water), SCARG(ap, low_water), SCARG(ap, flags),
+	    SCARG(uap, hi_water), SCARG(uap, low_water), SCARG(uap, flags),
 	    SCARG(uap, alert_port)));
 	return 0;
 }
@@ -199,7 +199,7 @@ mach_sys_timer_arm(struct lwp *l, const struct mach_sys_timer_arm_args *uap, reg
 
 	*retval = 0;
 	DPRINTF(("mach_sys_timer_arm(0x%x, %d);\n",
-	    SCARG(uap, name), SCARG(ap, expire_time)));
+	    SCARG(uap, name), SCARG(uap, expire_time)));
 	return 0;
 }
 
@@ -210,7 +210,7 @@ mach_sys_timer_cancel(struct lwp *l, const struct mach_sys_timer_cancel_args *ua
 
 	*retval = 0;
 	DPRINTF(("mach_sys_timer_cancel(0x%x, %p);\n",
-	    SCARG(uap, name), SCARG(ap, result_time)));
+	    SCARG(uap, name), SCARG(uap, result_time)));
 	return 0;
 }
 
