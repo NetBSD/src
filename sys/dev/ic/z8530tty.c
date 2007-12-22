@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.118 2007/12/22 15:36:37 ad Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.119 2007/12/22 15:45:15 ad Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -137,7 +137,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.118 2007/12/22 15:36:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.119 2007/12/22 15:45:15 ad Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_ntp.h"
@@ -1887,7 +1887,9 @@ zstty_stsoft(zst, tp)
 		/*
 		 * Inform the tty layer that carrier detect changed.
 		 */
+		mutex_spin_exit(&tty_lock);
 		(void) (*tp->t_linesw->l_modem)(tp, ISSET(rr0, ZSRR0_DCD));
+		mutex_spin_enter(&tty_lock);
 	}
 
 	if (ISSET(delta, cs->cs_rr0_cts)) {
