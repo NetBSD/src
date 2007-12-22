@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ath_cardbus.c,v 1.24 2007/12/21 18:26:13 dyoung Exp $ */
+/*	$NetBSD: if_ath_cardbus.c,v 1.25 2007/12/22 00:39:47 dyoung Exp $ */
 /*
  * Copyright (c) 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ath_cardbus.c,v 1.24 2007/12/21 18:26:13 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ath_cardbus.c,v 1.25 2007/12/22 00:39:47 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -256,9 +256,10 @@ ath_cardbus_detach(struct device *self, int flags)
 	/*
 	 * Unhook the interrupt handler.
 	 */
-	if (csc->sc_ih != NULL)
+	if (csc->sc_ih != NULL) {
 		cardbus_intr_disestablish(ct->ct_cc, ct->ct_cf, csc->sc_ih);
 		csc->sc_ih = NULL;
+	}
 
 	/*
 	 * Release bus space and close window.
