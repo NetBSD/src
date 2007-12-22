@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.211 2007/12/03 20:26:26 ad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.212 2007/12/22 01:14:54 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.211 2007/12/03 20:26:26 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.212 2007/12/22 01:14:54 yamt Exp $");
 
 #include "opt_kstack.h"
 #include "opt_lockdebug.h"
@@ -334,24 +334,15 @@ preempt(void)
  */
 
 void
-updatertime(lwp_t *l, const struct timeval *tv)
+updatertime(lwp_t *l, const struct bintime *now)
 {
-	long s, u;
 
 	if ((l->l_flag & LW_IDLE) != 0)
 		return;
 
-	u = l->l_rtime.tv_usec + (tv->tv_usec - l->l_stime.tv_usec);
-	s = l->l_rtime.tv_sec + (tv->tv_sec - l->l_stime.tv_sec);
-	if (u < 0) {
-		u += 1000000;
-		s--;
-	} else if (u >= 1000000) {
-		u -= 1000000;
-		s++;
-	}
-	l->l_rtime.tv_usec = u;
-	l->l_rtime.tv_sec = s;
+	/* rtime += now - stime */
+	bintime_add(&l->l_rtime, now);
+	bintime_sub(&l->l_rtime, &l->l_stime);
 }
 
 /*
@@ -366,7 +357,7 @@ mi_switch(lwp_t *l)
 	struct lwp *newl;
 	int retval, oldspl;
 	struct cpu_info *ci;
-	struct timeval tv;
+	struct bintime bt;
 	bool returning;
 
 	KASSERT(lwp_locked(l, NULL));
@@ -376,7 +367,7 @@ mi_switch(lwp_t *l)
 	kstack_check_magic(l);
 #endif
 
-	microtime(&tv);
+	binuptime(&bt);
 
 	KDASSERT(l->l_cpu == curcpu());
 	ci = l->l_cpu;
@@ -396,7 +387,7 @@ mi_switch(lwp_t *l)
 			returning = true;
 			softint_block(l);
 			if ((l->l_flag & LW_TIMEINTR) != 0)
-				updatertime(l, &tv);
+				updatertime(l, &bt);
 		}
 		newl = l->l_switchto;
 		l->l_switchto = NULL;
@@ -423,7 +414,7 @@ mi_switch(lwp_t *l)
 			pmc_save_context(l->l_proc);
 		}
 #endif
-		updatertime(l, &tv);
+		updatertime(l, &bt);
 	}
 
 	/*
@@ -474,7 +465,7 @@ mi_switch(lwp_t *l)
 	/* Items that must be updated with the CPU locked. */
 	if (!returning) {
 		/* Update the new LWP's start time. */
-		newl->l_stime = tv;
+		newl->l_stime = bt;
 
 		/*
 		 * ci_curlwp changes when a fast soft interrupt occurs.
@@ -889,12 +880,12 @@ sched_pstats(void *arg)
 		 */
 		mutex_enter(&p->p_smutex);
 		mutex_spin_enter(&p->p_stmutex);
-		runtm = p->p_rtime.tv_sec;
+		runtm = p->p_rtime.sec;
 		LIST_FOREACH(l, &p->p_lwps, l_sibling) {
 			if ((l->l_flag & LW_IDLE) != 0)
 				continue;
 			lwp_lock(l);
-			runtm += l->l_rtime.tv_sec;
+			runtm += l->l_rtime.sec;
 			l->l_swtime++;
 			sched_pstats_hook(l);
 			lwp_unlock(l);
