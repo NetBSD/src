@@ -1,4 +1,4 @@
-/* $NetBSD: aupcmcia.c,v 1.4 2007/10/17 19:55:35 garbled Exp $ */
+/* $NetBSD: aupcmcia.c,v 1.5 2007/12/22 01:21:41 ad Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -35,7 +35,7 @@
 /* #include "pci.h" */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aupcmcia.c,v 1.4 2007/10/17 19:55:35 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aupcmcia.c,v 1.5 2007/12/22 01:21:41 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: aupcmcia.c,v 1.4 2007/10/17 19:55:35 garbled Exp $")
 #include <sys/errno.h>
 #include <sys/kernel.h>
 #include <sys/kthread.h>
+#include <sys/intr.h>
 
 #include <dev/pcmcia/pcmciareg.h>
 #include <dev/pcmcia/pcmciavar.h>
@@ -320,15 +321,7 @@ aupcm_intr_establish(pcmcia_chipset_handle_t pch,
 	 */
 	sp->as_intr = handler;
 	sp->as_intrarg = arg;
-
-	/*
-	 * XXX: pil must be a software interrupt level.  That
-	 * automatically implies that it is lower than any other
-	 * hardware interrupts.  So trying to figure out which level
-	 * (IPL_SOFTNET, IPL_SOFTSERIAL, etc.) doesn't really do
-	 * anything for us.
-	 */
-	sp->as_softint = softintr_establish(IPL_SOFT, aupcm_softintr, sp);
+	sp->as_softint = softint_establish(IPL_SOFTNET, aupcm_softintr, sp);
 
 	/* set up hard interrupt handler for the card IRQs */
 	s = splhigh();
@@ -355,7 +348,7 @@ aupcm_intr_disestablish(pcmcia_chipset_handle_t pch, void *ih)
 	au_intr_disestablish(sp->as_hardint);
 	sp->as_hardint = 0;
 
-	softintr_disestablish(ih);
+	softint_disestablish(ih);
 	sp->as_softint = 0;
 	sp->as_intr = NULL;
 	sp->as_intrarg = NULL;
@@ -457,7 +450,7 @@ aupcm_card_intr(void *arg)
 	au_intr_disable(sp->as_card_irq);
 
 	if (sp->as_intr != NULL) {
-		softintr_schedule(sp->as_softint);
+		softint_schedule(sp->as_softint);
 	}
 
 	return 1;
