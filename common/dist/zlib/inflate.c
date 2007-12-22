@@ -1,4 +1,4 @@
-/*	$NetBSD: inflate.c,v 1.3 2006/05/13 22:05:04 christos Exp $	*/
+/*	$NetBSD: inflate.c,v 1.4 2007/12/22 00:52:03 tsutsui Exp $	*/
 
 /* inflate.c -- zlib decompression
  * Copyright (C) 1995-2005 Mark Adler
@@ -576,9 +576,16 @@ int flush;
     static const unsigned short order[19] = /* permutation of code lengths */
         {16, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15};
 
+#if defined(__NetBSD__) && defined(_STANDALONE)
+    /* Some kernels are loaded at address 0x0 so strm->next_out could be NULL */
+    if (strm == Z_NULL || strm->state == Z_NULL ||
+        (strm->next_in == Z_NULL && strm->avail_in != 0))
+        return Z_STREAM_ERROR;
+#else
     if (strm == Z_NULL || strm->state == Z_NULL || strm->next_out == Z_NULL ||
         (strm->next_in == Z_NULL && strm->avail_in != 0))
         return Z_STREAM_ERROR;
+#endif
 
     state = (struct inflate_state FAR *)strm->state;
     if (state->mode == TYPE) state->mode = TYPEDO;      /* skip check */
