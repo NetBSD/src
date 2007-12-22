@@ -1,4 +1,4 @@
-/* $NetBSD: drmP.h,v 1.13 2007/12/21 10:40:12 ad Exp $ */
+/* $NetBSD: drmP.h,v 1.14 2007/12/22 15:33:42 ad Exp $ */
 
 /* drmP.h -- Private header for Direct Rendering Manager -*- linux-c -*-
  * Created: Mon Jan  4 10:05:05 1999 by faith@precisioninsight.com
@@ -355,7 +355,7 @@ typedef u_int8_t u8;
 #if defined(__NetBSD__) 
 #define DRM_READMEMORYBARRIER()		membar_consumer()
 #define DRM_WRITEMEMORYBARRIER()	membar_producer()
-#define DRM_MEMORYBARRIER()		membar_memory()
+#define DRM_MEMORYBARRIER()		membar_sync()
 #elif defined(__i386__) 
 #define DRM_READMEMORYBARRIER()		__asm __volatile( \
 					"lock; addl $0,0(%%esp)" : : : "memory");
