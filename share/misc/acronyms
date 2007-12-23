@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.174 2007/11/20 12:26:12 sborrill Exp $
+$NetBSD: acronyms,v 1.175 2007/12/23 16:03:28 wiz Exp $
 
 AFAIC	as far as I'm concerned
 AFAICR	as far as I can recall
@@ -52,6 +52,7 @@ D/L	download
 DGAS	don't give a shit
 DIY	do it yourself
 DKDC	don't know, don't care
+DRY	don't repeat yourself
 DSTM	don't shoot the messenger
 DTRT	do the right thing
 DTWT	do the wrong thing
