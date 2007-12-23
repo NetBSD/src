@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2560.c,v 1.15 2007/12/09 20:27:58 jmcneill Exp $	*/
+/*	$NetBSD: rt2560.c,v 1.16 2007/12/23 22:21:56 joerg Exp $	*/
 /*	$OpenBSD: rt2560.c,v 1.15 2006/04/20 20:31:12 miod Exp $  */
 /*	$FreeBSD: rt2560.c,v 1.3 2006/03/21 21:15:43 damien Exp $*/
 
@@ -24,7 +24,7 @@
  * http://www.ralinktech.com/
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rt2560.c,v 1.15 2007/12/09 20:27:58 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rt2560.c,v 1.16 2007/12/23 22:21:56 joerg Exp $");
 
 #include "bpfilter.h"
 
@@ -1454,37 +1454,6 @@ rt2560_rx_intr(struct rt2560_softc *sc)
 	RAL_WRITE(sc, RT2560_SECCSR0, RT2560_KICK_DECRYPT);
 }
 
-#if 0
-void
-rt2560_shutdown(void *xsc)
-{
-	struct rt2560_softc *sc = xsc;
-
-	rt2560_stop(&sc->sc_if, 1);
-}
-
-void
-rt2560_suspend(void *xsc)
-{
-	struct rt2560_softc *sc = xsc;
-
-	rt2560_stop(&sc->sc_if, 1);
-}
-
-void
-rt2560_resume(void *xsc)
-{
-	struct rt2560_softc *sc = xsc;
-	struct ifnet *ifp = sc->sc_ic.ic_ifp;
-
-	if (ifp->if_flags & IFF_UP) {
-		ifp->if_init(ifp->if_softc);
-		if (ifp->if_flags & IFF_RUNNING)
-			ifp->if_start(ifp);
-	}
-}
-
-#endif
 /*
  * This function is called periodically in IBSS mode when a new beacon must be
  * sent out.
