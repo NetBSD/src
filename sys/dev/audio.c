@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.231 2007/12/22 18:34:56 christos Exp $	*/
+/*	$NetBSD: audio.c,v 1.232 2007/12/23 19:14:03 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.231 2007/12/22 18:34:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.232 2007/12/23 19:14:03 jmcneill Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -542,6 +542,8 @@ audiodetach(struct device *self, int flags)
 	    audio_volume_toggle, true);
 
 	callout_stop(&sc->sc_idle_counter);
+
+	device_active_deregister(self, audio_activity);
 
 	pmf_device_deregister(self);
 
