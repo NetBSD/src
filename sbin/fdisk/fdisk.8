@@ -1,4 +1,4 @@
-.\"	$NetBSD: fdisk.8,v 1.57 2007/12/23 08:58:34 apb Exp $
+.\"	$NetBSD: fdisk.8,v 1.58 2007/12/23 10:47:42 apb Exp $
 .\"
 .Dd December 23, 2007
 .Dt FDISK 8
@@ -508,8 +508,9 @@ This program is only available (and useful) on systems with PC-platform-style
 MBR partitioning.
 .Pp
 Traditionally the partition boundaries should be on cylinder boundaries
-using the BIOS geometry, all of the first track should be reserved
-for use by the BIOS.
+using the BIOS geometry, with the exception of the first partition,
+which traditionally begins in the second track of the first cylinder
+(cylinder 0, head 1, sector 1).
 Although the BIOS geometry is typically different from the geometry
 reported by the drive, neither will match the actual physical geometry
 for modern disks (the actual geometry will vary across the disk).
