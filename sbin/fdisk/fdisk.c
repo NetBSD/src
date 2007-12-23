@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.110 2007/11/29 23:19:25 dsl Exp $ */
+/*	$NetBSD: fdisk.c,v 1.111 2007/12/23 08:14:28 apb Exp $ */
 
 /*
  * Mach Operating System
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.110 2007/11/29 23:19:25 dsl Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.111 2007/12/23 08:14:28 apb Exp $");
 #endif /* not lint */
 
 #define MBRPTYPENAMES
@@ -745,6 +745,9 @@ print_mbr_partition(struct mbr_sector *boot, int part,
 		    MBR_PCYL(partp->mbrp_ecyl, partp->mbrp_esect),
 		    partp->mbrp_ehd, MBR_PSECT(partp->mbrp_esect));
 	}
+
+	if (partp->mbrp_type == 0 && start == 0 && v_flag < 3)
+		return;
 
 	if (! MBR_IS_EXTENDED(partp->mbrp_type))
 		print_pbr(start, indent + 8, partp->mbrp_type);
