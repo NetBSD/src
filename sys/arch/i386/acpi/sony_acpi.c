@@ -1,4 +1,4 @@
-/*	$NetBSD: sony_acpi.c,v 1.7 2007/12/09 21:52:05 smb Exp $	*/
+/*	$NetBSD: sony_acpi.c,v 1.8 2007/12/23 17:25:45 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sony_acpi.c,v 1.7 2007/12/09 21:52:05 smb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sony_acpi.c,v 1.8 2007/12/23 17:25:45 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,11 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: sony_acpi.c,v 1.7 2007/12/09 21:52:05 smb Exp $");
 
 #include <dev/acpi/acpica.h>
 #include <dev/acpi/acpivar.h>
-
-#include <dev/wscons/wsconsio.h>
-#include <dev/wscons/wskbdvar.h>
-#include <dev/wscons/wsksymdef.h>
-#include <dev/wscons/wsksymvar.h>
 
 #define SONY_NOTIFY_FnKeyEvent			0x92
 #define SONY_NOTIFY_BrightnessDownPressed	0x85
@@ -73,31 +68,16 @@ struct sony_acpi_softc {
 	struct sysctllog *sc_log;
 	struct acpi_devnode *sc_node;
 
-	struct device *sc_wskbddev;
-
-	struct sysmon_pswitch sc_smpsw;
+#define	SONY_PSW_SLEEP		0
+#define	SONY_PSW_DISPLAY_CYCLE	1
+#define	SONY_PSW_ZOOM		2
+#define	SONY_PSW_LAST		3
+	struct sysmon_pswitch sc_smpsw[SONY_PSW_LAST];
 	int sc_smpsw_valid;
 
 	struct sony_acpi_pmstate {
 		ACPI_INTEGER	brt;
 	} sc_pmstate;
-};
-
-static int	sony_acpi_wskbd_enable(void *, int);
-static void	sony_acpi_wskbd_set_leds(void *, int);
-static int	sony_acpi_wskbd_ioctl(void *, u_long, void *, int, struct lwp *);
-
-static const struct wskbd_accessops sony_acpi_accessops = {
-	sony_acpi_wskbd_enable,
-	sony_acpi_wskbd_set_leds,
-	sony_acpi_wskbd_ioctl,
-};
-
-extern const struct wscons_keydesc ukbd_keydesctab[];
-
-static const struct wskbd_mapdata sony_acpi_keymapdata = {
-	ukbd_keydesctab,
-	KB_US,
 };
 
 static const char * const sony_acpi_ids[] = {
@@ -275,8 +255,8 @@ sony_acpi_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct sony_acpi_softc *sc = (void *)self;
 	struct acpi_attach_args *aa = aux;
-	struct wskbddev_attach_args wska;
 	ACPI_STATUS rv;
+	int i;
 
 	aprint_naive(": Sony Miscellaneous Controller\n");
 	aprint_normal(": Sony Miscellaneous Controller\n");
@@ -285,16 +265,22 @@ sony_acpi_attach(struct device *parent, struct device *self, void *aux)
 
 	sony_acpi_quirk_setup(sc);
 
-	/* Configure suspend button */
-	sc->sc_smpsw.smpsw_name = sc->sc_dev.dv_xname;
-	sc->sc_smpsw.smpsw_type = PSWITCH_TYPE_SLEEP;
+	/* Configure suspend button and hotkeys */
+	sc->sc_smpsw[SONY_PSW_SLEEP].smpsw_name = sc->sc_dev.dv_xname;
+	sc->sc_smpsw[SONY_PSW_SLEEP].smpsw_type = PSWITCH_TYPE_SLEEP;
+	sc->sc_smpsw[SONY_PSW_DISPLAY_CYCLE].smpsw_name =
+	    PSWITCH_HK_DISPLAY_CYCLE;
+	sc->sc_smpsw[SONY_PSW_DISPLAY_CYCLE].smpsw_type = PSWITCH_TYPE_HOTKEY;
+	sc->sc_smpsw[SONY_PSW_ZOOM].smpsw_name = PSWITCH_HK_ZOOM_BUTTON;
+	sc->sc_smpsw[SONY_PSW_ZOOM].smpsw_type = PSWITCH_TYPE_HOTKEY;
 	sc->sc_smpsw_valid = 1;
 
-	if (sysmon_pswitch_register(&sc->sc_smpsw) != 0) {
-		aprint_error("%s: couldn't register with sysmon\n",
-		    device_xname(self));
-		sc->sc_smpsw_valid = 0;
-	}
+	for (i = 0; i < SONY_PSW_LAST; i++)
+		if (sysmon_pswitch_register(&sc->sc_smpsw[i]) != 0) {
+			aprint_error("%s: couldn't register %s with sysmon\n",
+			    device_xname(self), sc->sc_smpsw[i].smpsw_name);
+			sc->sc_smpsw_valid = 0;
+		}
 
 	/* Install notify handler */
 	rv = AcpiInstallNotifyHandler(sc->sc_node->ad_handle,
@@ -322,13 +308,6 @@ sony_acpi_attach(struct device *parent, struct device *self, void *aux)
 	if (!pmf_event_register(self, PMFE_DISPLAY_BRIGHTNESS_DOWN,
 				 sony_acpi_brightness_down, true))
 		aprint_error_dev(self, "couldn't register BRIGHTNESS DOWN handler\n");
-
-	wska.console = 0;
-	wska.keymap = &sony_acpi_keymapdata;
-	wska.accessops = &sony_acpi_accessops;
-	wska.accesscookie = sc;
-
-	sc->sc_wskbddev = config_found(self, &wska, wskbddevprint);
 }
 
 static void
@@ -395,19 +374,26 @@ sony_acpi_notify_handler(ACPI_HANDLE hdl, UINT32 notify, void *opaque)
 	case SONY_NOTIFY_SuspendPressed:
 		if (!sc->sc_smpsw_valid)
 			break;
-		sysmon_pswitch_event(&sc->sc_smpsw, PSWITCH_EVENT_PRESSED);
+		sysmon_pswitch_event(&sc->sc_smpsw[SONY_PSW_SLEEP],
+		    PSWITCH_EVENT_PRESSED);
 		break;
 	case SONY_NOTIFY_SuspendReleased:
 		break;
 	case SONY_NOTIFY_DisplaySwitchPressed:
-	case SONY_NOTIFY_DisplaySwitchReleased:
-	case SONY_NOTIFY_ZoomPressed:
-	case SONY_NOTIFY_ZoomReleased:
-		if (sc->sc_wskbddev == NULL)
+		if (!sc->sc_smpsw_valid)
 			break;
-		wskbd_input(sc->sc_wskbddev,
-		    notify & 0x80 ? WSCONS_EVENT_KEY_UP : WSCONS_EVENT_KEY_DOWN,
-		    notify); /* XXX */
+		sysmon_pswitch_event(&sc->sc_smpsw[SONY_PSW_DISPLAY_CYCLE],
+		    PSWITCH_EVENT_PRESSED);
+		break;
+	case SONY_NOTIFY_DisplaySwitchReleased:
+		break;
+	case SONY_NOTIFY_ZoomPressed:
+		if (!sc->sc_smpsw_valid)
+			break;
+		sysmon_pswitch_event(&sc->sc_smpsw[SONY_PSW_ZOOM],
+		    PSWITCH_EVENT_PRESSED);
+		break;
+	case SONY_NOTIFY_ZoomReleased:
 		break;
 	default:
 		printf("%s: unknown notify event 0x%x\n",
@@ -439,36 +425,6 @@ sony_acpi_resume(device_t dv)
 	sony_acpi_quirk_setup(sc);
 
 	return true;
-}
-
-static int
-sony_acpi_wskbd_enable(void *opaque, int on)
-{
-
-	return 0;
-}
-
-static void
-sony_acpi_wskbd_set_leds(void *opaque, int leds)
-{
-
-	return;
-}
-
-static int
-sony_acpi_wskbd_ioctl(void *opaque, u_long cmd, void *data, int flags,
-    struct lwp *l)
-{
-
-	switch (cmd) {
-	case WSKBDIO_GTYPE:
-		*(int *)data = WSKBD_TYPE_USB; /* close enough */
-		return 0;
-	default:
-		break;
-	}
-
-	return EPASSTHROUGH;
 }
 
 static void
