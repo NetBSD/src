@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.232 2007/12/14 15:02:02 yamt Exp $
+#	$NetBSD: BRANCHES,v 1.233 2007/12/23 03:52:44 ad Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -523,7 +523,7 @@ Notes:		Goals:
 		  amd64		done
 		  mips		done
 		  sparc			
-		  sparc64		
+		  sparc64	done
 		  arm			
 		  powerpc	partial: need pmap/trap locking changes
 		  hppa		done
@@ -534,24 +534,15 @@ Notes:		Goals:
 
 		Remaining MI work to do:
 
-		- Document locking around fields in struct mount.
-
 		- Check aliased vnode handling. There may be problems.
-
-		- Check layered file systems, LFS.
 
 		Remaining problems:
 
-		- tmpfs_rmdir occasionally leaks tmpfs_nodes.
-
-		- UVM_FLAG_TRYLOCK is not sufficient in uvm_km.c because
-		  allocations will fail too often. It's needed for !kmem_map
-		  because sometimes allocations are made by threads that
-		  hold the map locked, which could cause other threads to
-		  wait long term even if they are trying to make a NOWAIT
-		  allocation.
+		- LFS stalls due to v_numoutput leak.
 
 		- ext2fs dup alloc.
+
+		- tmpfs rename issue on pkgbuild
 
 		- Unmount erroneously reports busy sometimes. Why?
 
