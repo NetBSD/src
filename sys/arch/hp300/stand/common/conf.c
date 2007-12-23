@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.11 2005/12/11 12:17:19 christos Exp $	*/
+/*	$NetBSD: conf.c,v 1.12 2007/12/23 03:11:32 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -93,13 +93,13 @@ struct devsw devsw[] = {
 	{ "??",	xxstrategy,	xxopen,	xxclose,	noioctl }, /*5*/
 	{ "le",	netstrategy,	netopen, netclose,	netioctl },/*6*/
 };
-int	ndevs = (sizeof(devsw) / sizeof(devsw[0]));
+int	ndevs = __arraycount(devsw);
 
 #ifdef SUPPORT_ETHERNET
 struct netif_driver *netif_drivers[] = {
 	&le_driver,
 };
-int	n_netif_drivers = (sizeof(netif_drivers) / sizeof(netif_drivers[0]));
+int	n_netif_drivers = __arraycount(netif_drivers);
 #endif
 
 /*
@@ -132,7 +132,7 @@ struct punitsw punitsw[] = {
 	{ xxpunit },
 	{ lepunit },
 };
-int	npunit = (sizeof(punitsw) / sizeof(punitsw[0]));
+int	npunit = __arraycount(punitsw);
 
 /*
  * Filesystem configuration
