@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.111 2007/12/23 08:14:28 apb Exp $ */
+/*	$NetBSD: fdisk.c,v 1.112 2007/12/23 08:58:34 apb Exp $ */
 
 /*
  * Mach Operating System
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.111 2007/12/23 08:14:28 apb Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.112 2007/12/23 08:58:34 apb Exp $");
 #endif /* not lint */
 
 #define MBRPTYPENAMES
@@ -231,6 +231,7 @@ void	get_diskname(const char *, char *, size_t);
 #endif /* (defined(__i386__) || defined(__x86_64__)) && !HAVE_NBTOOL_CONFIG_H */
 int	change_part(int, int, int, daddr_t, daddr_t, char *);
 void	print_params(void);
+int	first_active(void);
 void	change_active(int);
 void	get_params_to_use(void);
 void	dos(int, unsigned char *, unsigned char *, unsigned char *);
@@ -597,7 +598,13 @@ print_s0(int which)
 			printf(".\n");
 		}
 #endif
-
+		if (!sh_flag) {
+			int active = first_active();
+			if (active == MBR_PART_COUNT)
+				printf("No active partition.\n");
+			else
+				printf("First active partition: %d\n", active);
+		}
 		if (!sh_flag && mboot.mbr_dsn != 0)
 			printf("Drive serial number: %"PRId32" (0x%08x)\n",
 			    le32toh(mboot.mbr_dsn),
@@ -2160,6 +2167,19 @@ print_params(void)
 	    dos_disksectors);
 }
 
+/* Find the first active partition, else return MBR_PART_COUNT */
+int
+first_active(void)
+{
+	struct mbr_partition *partp = &mboot.mbr_parts[0];
+	int part;
+
+	for (part = 0; part < MBR_PART_COUNT; part++)
+		if (partp[part].mbrp_flag & MBR_PFLAG_ACTIVE)
+			return part;
+	return MBR_PART_COUNT;
+}
+
 void
 change_active(int which)
 {
@@ -2171,11 +2191,8 @@ change_active(int which)
 
 	if (a_flag && which != -1)
 		active = which;
-	else {
-		for (part = 0; part < MBR_PART_COUNT; part++)
-			if (partp[part].mbrp_flag & MBR_PFLAG_ACTIVE)
-				active = part;
-	}
+	else
+		active = first_active();
 	if (!f_flag) {
 		if (yesno("Do you want to change the active partition?")) {
 			printf ("Choosing %d will make no partition active.\n",
