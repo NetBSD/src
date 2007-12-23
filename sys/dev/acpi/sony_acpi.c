@@ -1,4 +1,4 @@
-/*	$NetBSD: sony_acpi.c,v 1.1 2007/12/23 17:29:26 jmcneill Exp $	*/
+/*	$NetBSD: sony_acpi.c,v 1.2 2007/12/23 18:03:02 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sony_acpi.c,v 1.1 2007/12/23 17:29:26 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sony_acpi.c,v 1.2 2007/12/23 18:03:02 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,6 +75,10 @@ struct sony_acpi_softc {
 	struct sysmon_pswitch sc_smpsw[SONY_PSW_LAST];
 	int sc_smpsw_valid;
 
+#define SONY_ACPI_QUIRK_FNINIT	0x01
+	int sc_quirks;
+	bool sc_has_pic;
+
 	struct sony_acpi_pmstate {
 		ACPI_INTEGER	brt;
 	} sc_pmstate;
@@ -83,16 +87,6 @@ struct sony_acpi_softc {
 static const char * const sony_acpi_ids[] = {
 	"SNY5001",
 	NULL
-};
-
-#define SONY_ACPI_QUIRK_FNINIT	0x01
-
-static const struct sony_acpi_quirk_table {
-	const char *	product_name;
-	int		quirks;
-} sony_acpi_quirks[] = {
-	{ "VGN-N250E",	SONY_ACPI_QUIRK_FNINIT },
-	{ NULL, -1 }
 };
 
 static int	sony_acpi_match(struct device *, struct cfdata *, void *);
@@ -105,6 +99,7 @@ static bool	sony_acpi_suspend(device_t);
 static bool	sony_acpi_resume(device_t);
 static void	sony_acpi_brightness_down(device_t);
 static void	sony_acpi_brightness_up(device_t);
+static ACPI_STATUS sony_acpi_find_pic(ACPI_HANDLE, UINT32, void *, void **);
 
 CFATTACH_DECL(sony_acpi, sizeof(struct sony_acpi_softc),
     sony_acpi_match, sony_acpi_attach, NULL, NULL);
@@ -263,6 +258,19 @@ sony_acpi_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_node = aa->aa_node;
 
+	rv = AcpiWalkNamespace(ACPI_TYPE_DEVICE, ACPI_ROOT_OBJECT, 100,
+	    sony_acpi_find_pic, sc, NULL);
+	if (ACPI_FAILURE(rv))
+		aprint_error_dev(self, "couldn't walk namespace: %s\n",
+		    AcpiFormatException(rv));
+
+	/*
+	 * If we don't find an SNY6001 device, assume that we need the
+	 * Fn key initialization sequence.
+	 */
+	if (sc->sc_has_pic == false)
+		sc->sc_quirks |= SONY_ACPI_QUIRK_FNINIT;
+
 	sony_acpi_quirk_setup(sc);
 
 	/* Configure suspend button and hotkeys */
@@ -313,24 +321,9 @@ sony_acpi_attach(struct device *parent, struct device *self, void *aux)
 static void
 sony_acpi_quirk_setup(struct sony_acpi_softc *sc)
 {
-	const char *product_name;
-	ACPI_HANDLE hdl;
-	int i;
+	ACPI_HANDLE hdl = sc->sc_node->ad_handle;
 
-	hdl = sc->sc_node->ad_handle;
-
-	product_name = pmf_get_platform("system-product-name");
-	if (product_name == NULL)
-		return;
-
-	for (i = 0; sony_acpi_quirks[i].product_name != NULL; i++)
-		if (strcmp(sony_acpi_quirks[i].product_name, product_name) == 0)
-			break;
-
-	if (sony_acpi_quirks[i].product_name == NULL)
-		return;
-
-	if (sony_acpi_quirks[i].quirks & SONY_ACPI_QUIRK_FNINIT) {
+	if (sc->sc_quirks & SONY_ACPI_QUIRK_FNINIT) {
 		/* Initialize extra Fn keys */
 		sony_acpi_eval_set_integer(hdl, "SN02", 0x04, NULL);
 		sony_acpi_eval_set_integer(hdl, "SN07", 0x02, NULL);
@@ -339,8 +332,6 @@ sony_acpi_quirk_setup(struct sony_acpi_softc *sc)
 		sony_acpi_eval_set_integer(hdl, "SN03", 0x02, NULL);
 		sony_acpi_eval_set_integer(hdl, "SN07", 0x101, NULL);
 	}
-
-	return;
 }
 
 static void
@@ -401,8 +392,6 @@ sony_acpi_notify_handler(ACPI_HANDLE hdl, UINT32 notify, void *opaque)
 		break;
 	}
 	splx(s);
-
-	return;
 }
 
 static bool
@@ -439,8 +428,6 @@ sony_acpi_brightness_up(device_t dv)
 		return;
 	arg++;
 	sony_acpi_eval_set_integer(sc->sc_node->ad_handle, "SBRT", arg, NULL);
-
-	return;
 }
 
 static void
@@ -455,6 +442,27 @@ sony_acpi_brightness_down(device_t dv)
 		return;
 	arg--;
 	sony_acpi_eval_set_integer(sc->sc_node->ad_handle, "SBRT", arg, NULL);
+}
 
-	return;
+static ACPI_STATUS
+sony_acpi_find_pic(ACPI_HANDLE hdl, UINT32 level, void *opaque, void **status)
+{
+	struct sony_acpi_softc *sc = opaque;
+	ACPI_BUFFER buf;
+	ACPI_STATUS rv;
+	ACPI_DEVICE_INFO *devinfo;
+
+	buf.Pointer = NULL;
+	buf.Length = ACPI_ALLOCATE_BUFFER;
+	rv = AcpiGetObjectInfo(hdl, &buf);
+	if (ACPI_FAILURE(rv) || buf.Pointer == NULL)
+		return AE_OK;	/* we don't want to stop searching */
+
+	devinfo = buf.Pointer;
+	if (strncmp(devinfo->HardwareId.Value, "SNY6001", 7) == 0)
+		sc->sc_has_pic = true;
+
+	AcpiOsFree(buf.Pointer);
+
+	return AE_OK;
 }
