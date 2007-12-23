@@ -1,4 +1,4 @@
-/* $NetBSD: kern_pmf.c,v 1.8 2007/12/23 22:09:39 rmind Exp $ */
+/* $NetBSD: kern_pmf.c,v 1.9 2007/12/23 23:19:11 rmind Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_pmf.c,v 1.8 2007/12/23 22:09:39 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_pmf.c,v 1.9 2007/12/23 23:19:11 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -529,8 +529,7 @@ pmf_event_deregister(device_t dv, pmf_generic_event_t ev,
 {
 	pmf_event_handler_t *event;
 
-	while (!TAILQ_EMPTY(&pmf_all_events)) {
-		event = TAILQ_FIRST(&pmf_all_events);
+	TAILQ_FOREACH(event, &pmf_all_events, pmf_link) {
 		if (event->pmf_event != ev)
 			continue;
 		if (event->pmf_device != dv)
@@ -541,6 +540,7 @@ pmf_event_deregister(device_t dv, pmf_generic_event_t ev,
 			continue;
 		TAILQ_REMOVE(&pmf_all_events, event, pmf_link);
 		free(event, M_WAITOK);
+		return;
 	}
 }
 
