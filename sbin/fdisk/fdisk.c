@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.112 2007/12/23 08:58:34 apb Exp $ */
+/*	$NetBSD: fdisk.c,v 1.113 2007/12/23 10:43:57 apb Exp $ */
 
 /*
  * Mach Operating System
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.112 2007/12/23 08:58:34 apb Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.113 2007/12/23 10:43:57 apb Exp $");
 #endif /* not lint */
 
 #define MBRPTYPENAMES
@@ -1650,8 +1650,13 @@ check_overlap(int part, int sysid, daddr_t start, daddr_t size, int fix)
 	unsigned int p_s, p_e;
 
 	if (sysid != 0) {
+		if (start == 0)
+			return "Sector zero is reserved for the MBR";
+#if 0
 		if (start < dos_sectors)
+			/* This is just a convention, not a requirement */
 			return "Track zero is reserved for the BIOS";
+#endif
 		if (start + size > disksectors) 
 			return "Partition exceeds size of disk";
 		for (p = 0; p < MBR_PART_COUNT; p++) {
