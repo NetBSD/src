@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.324 2007/12/18 07:17:13 joerg Exp $
+#	$NetBSD: files.i386,v 1.325 2007/12/23 17:29:27 jmcneill Exp $
 #
 # new style config file for i386 architecture
 #
@@ -482,11 +482,6 @@ file	arch/i386/acpi/vald_acpi.c		vald_acpi
 # Sony SPIC (jog dial etc.)
 attach	spic at acpinodebus with spic_acpi
 file	arch/i386/acpi/spic_acpi.c		spic_acpi
-
-# Sony Misc (brightness etc.)
-device	sony: displaydev, wskbddev
-attach	sony at acpinodebus with sony_acpi
-file	arch/i386/acpi/sony_acpi.c		sony_acpi
 
 # Numeric Processing Extension; Math Co-processor
 attach	npx at acpinodebus with npx_acpi

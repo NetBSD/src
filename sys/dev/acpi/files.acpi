@@ -1,4 +1,4 @@
-#	$NetBSD: files.acpi,v 1.48 2007/12/21 15:15:20 jmcneill Exp $
+#	$NetBSD: files.acpi,v 1.49 2007/12/23 17:29:26 jmcneill Exp $
 
 include "dev/acpi/acpica/files.acpica"
 
@@ -50,6 +50,11 @@ file	dev/acpi/acpi_acad.c		acpiacad
 device	acpibat: sysmon_envsys
 attach	acpibat at acpinodebus
 file	dev/acpi/acpi_bat.c		acpibat
+
+# ACPI Display Device
+device	acpidisplay
+attach	acpidisplay at acpinodebus
+file	dev/acpi/acpi_display.c		acpidisplay
 
 # ACPI Thermal Zone
 device	acpitz: sysmon_envsys
@@ -111,6 +116,11 @@ file	dev/acpi/aiboost.c		aiboost
 # Abit uGuru 2005
 attach	ug at acpinodebus with ug_acpi
 file	dev/acpi/ug_acpi.c		ug_acpi
+
+# Sony Notebook Controller (brightness, hotkeys, etc.)
+device	sony: displaydev
+attach	sony at acpinodebus with sony_acpi
+file	dev/acpi/sony_acpi.c		sony_acpi
 
 # IBM/Lenovo Thinkpad hotkey device
 device	thinkpad

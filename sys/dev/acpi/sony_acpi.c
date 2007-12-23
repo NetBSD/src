@@ -1,4 +1,4 @@
-/*	$NetBSD: sony_acpi.c,v 1.8 2007/12/23 17:25:45 jmcneill Exp $	*/
+/*	$NetBSD: sony_acpi.c,v 1.1 2007/12/23 17:29:26 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sony_acpi.c,v 1.8 2007/12/23 17:25:45 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sony_acpi.c,v 1.1 2007/12/23 17:29:26 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
