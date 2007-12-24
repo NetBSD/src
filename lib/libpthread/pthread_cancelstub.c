@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cancelstub.c,v 1.16 2007/11/19 15:12:18 ad Exp $	*/
+/*	$NetBSD: pthread_cancelstub.c,v 1.17 2007/12/24 16:04:21 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_cancelstub.c,v 1.16 2007/11/19 15:12:18 ad Exp $");
+__RCSID("$NetBSD: pthread_cancelstub.c,v 1.17 2007/12/24 16:04:21 ad Exp $");
 
 /*
  * This is necessary because the names are always weak (they are not
@@ -116,7 +116,7 @@ int	__sigsuspend14(const sigset_t *);
 
 #define TESTCANCEL(id) 	do {						\
 	if (__predict_false((id)->pt_cancel))				\
-		pthread_exit(PTHREAD_CANCELED);				\
+		pthread__cancelled();					\
 	} while (/*CONSTCOND*/0)
 
 
