@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.22 2007/12/21 22:26:22 njoly Exp $
+	$NetBSD: syscalls.master,v 1.23 2007/12/24 14:25:30 njoly Exp $
 
 ; NetBSD i386 COMPAT_LINUX32 system call name/number "master" file.
 ; (See syscalls.conf to see what it is processed into.)
@@ -229,7 +229,7 @@
 129	UNIMPL	delete_module
 130	UNIMPL	get_kernel_syms
 131	UNIMPL	quotactl
-132	UNIMPL	getpgid
+132	NOARGS	{ int netbsd32_getpgid(pid_t pid); }
 133	NOARGS	{ int netbsd32_fchdir(int fd); }
 134	UNIMPL	bdflush
 135	UNIMPL	sysfs
