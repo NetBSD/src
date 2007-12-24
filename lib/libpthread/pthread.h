@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.h,v 1.23 2007/11/27 20:58:26 ad Exp $	*/
+/*	$NetBSD: pthread.h,v 1.24 2007/12/24 14:46:28 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -188,6 +188,16 @@ int	pthread_getschedparam(pthread_t, int * __restrict,
 int	pthread_setschedparam(pthread_t, int, const struct sched_param *);
 
 int 	*pthread__errno(void);
+
+#if defined(_NETBSD_SOURCE)
+int	pthread_mutex_held_np(pthread_mutex_t *);
+pthread_t pthread_mutex_owner_np(pthread_mutex_t *);
+
+int	pthread_rwlock_held_np(pthread_rwlock_t *);
+int	pthread_rwlock_wrheld_np(pthread_rwlock_t *);
+int	pthread_rwlock_rdheld_np(pthread_rwlock_t *);
+#endif	/* _NETBSD_SOURCE */
+
 __END_DECLS
 
 #define	PTHREAD_CREATE_JOINABLE	0

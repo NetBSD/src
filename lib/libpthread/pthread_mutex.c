@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_mutex.c,v 1.38 2007/11/19 15:14:13 ad Exp $	*/
+/*	$NetBSD: pthread_mutex.c,v 1.39 2007/12/24 14:46:29 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_mutex.c,v 1.38 2007/11/19 15:14:13 ad Exp $");
+__RCSID("$NetBSD: pthread_mutex.c,v 1.39 2007/12/24 14:46:29 ad Exp $");
 
 #include <errno.h>
 #include <limits.h>
@@ -53,6 +53,12 @@ __RCSID("$NetBSD: pthread_mutex.c,v 1.38 2007/11/19 15:14:13 ad Exp $");
 #ifndef	PTHREAD__HAVE_ATOMIC
 
 static int pthread_mutex_lock_slow(pthread_t, pthread_mutex_t *);
+
+int		_pthread_mutex_held_np(pthread_mutex_t *);
+pthread_t	_pthread_mutex_owner_np(pthread_mutex_t *);
+
+__weak_alias(pthread_mutex_held_np,_pthread_mutex_held_np)
+__weak_alias(pthread_mutex_owner_np,_pthread_mutex_owner_np)
 
 __strong_alias(__libc_mutex_init,pthread_mutex_init)
 __strong_alias(__libc_mutex_lock,pthread_mutex_lock)
@@ -467,6 +473,20 @@ pthread__mutex_deferwake(pthread_t thread, pthread_mutex_t *mutex)
 {
 
 	return mutex->ptm_owner == thread;
+}
+
+int
+_pthread_mutex_held_np(pthread_mutex_t *mutex)
+{
+
+	return mutex->ptm_owner == pthread__self();
+}
+
+pthread_t
+_pthread_mutex_owner_np(pthread_mutex_t *mutex)
+{
+
+	return (pthread_t)mutex->ptm_owner;
 }
 
 #endif	/* !PTHREAD__HAVE_ATOMIC */
