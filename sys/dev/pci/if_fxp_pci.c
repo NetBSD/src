@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp_pci.c,v 1.54 2007/12/10 16:15:02 degroote Exp $	*/
+/*	$NetBSD: if_fxp_pci.c,v 1.55 2007/12/24 17:07:40 hamajima Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fxp_pci.c,v 1.54 2007/12/10 16:15:02 degroote Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fxp_pci.c,v 1.55 2007/12/24 17:07:40 hamajima Exp $");
 
 #include "rnd.h"
 
@@ -160,6 +160,8 @@ static const struct fxp_pci_product {
 	  "Intel 82562EZ (ICH6)" },
 	{ PCI_PRODUCT_INTEL_82801G_LAN,
 	  "Intel 82801GB/GR (ICH7) Network Controller" },
+	{ PCI_PRODUCT_INTEL_82801GB_LAN,
+	  "Intel 82801GB 10/100 Network Controller" },
 	{ 0,
 	  NULL },
 };
