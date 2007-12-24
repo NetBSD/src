@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.38 2007/10/10 20:42:21 ad Exp $ */
+/*	$NetBSD: pmap.c,v 1.39 2007/12/24 19:52:37 ad Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pmap.c,v 1.38 2007/10/10 20:42:21 ad Exp $");
+__RCSID("$NetBSD: pmap.c,v 1.39 2007/12/24 19:52:37 ad Exp $");
 #endif
 
 #include <string.h>
@@ -391,33 +391,7 @@ PMAPFUNC(dump_vm_map_entry,VERSION)(kvm_t *kd,
 		case VT_ISOFS:
 			V_DATA_IS(vp, iso_node, i_dev, i_number);
 			break;
-		case VT_NON:
-		case VT_NFS:
-		case VT_MFS:
-		case VT_MSDOSFS:
-		case VT_LOFS:
-		case VT_FDESC:
-		case VT_PORTAL:
-		case VT_NULL:
-		case VT_UMAP:
-		case VT_KERNFS:
-		case VT_PROCFS:
-		case VT_AFS:
-		case VT_UNION:
-		case VT_ADOSFS:
-		case VT_CODA:
-		case VT_FILECORE:
-		case VT_NTFS:
-		case VT_VFS:
-		case VT_OVERLAY:
-		case VT_SMBFS:
-		case VT_PTYFS:
-		case VT_TMPFS:
-		case VT_UDF:
-		case VT_SYSVBFS:
-		case VT_PUFFS:
-		case VT_HFS:
-		case VT_EFS:
+		default:
 			break;
 		}
 	}
