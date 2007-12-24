@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep_common.c,v 1.4 2007/12/20 22:24:40 phx Exp $ */
+/* $NetBSD: pci_machdep_common.c,v 1.5 2007/12/24 01:31:08 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep_common.c,v 1.4 2007/12/20 22:24:40 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep_common.c,v 1.5 2007/12/24 01:31:08 macallan Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -60,7 +60,6 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep_common.c,v 1.4 2007/12/20 22:24:40 phx E
 #define _POWERPC_BUS_DMA_PRIVATE
 #include <machine/bus.h>
 #include <machine/intr.h>
-#include <machine/isa_machdep.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
@@ -76,7 +75,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep_common.c,v 1.4 2007/12/20 22:24:40 phx E
  * XXX for now macppc needs its own pci_bus_dma_tag
  * this will go away once we use the common bus_space stuff
  */
-#ifndef macppc 
+#ifndef __HAVE_PRIVATE_PCI_BUS_DMA_TAG 
 struct powerpc_bus_dma_tag pci_bus_dma_tag = {
 	0,			/* _bounce_thresh */
 	_bus_dmamap_create,
@@ -94,6 +93,7 @@ struct powerpc_bus_dma_tag pci_bus_dma_tag = {
 	_bus_dmamem_mmap,
 };
 #endif
+
 int
 genppc_pci_bus_maxdevs(pci_chipset_tag_t pc, int busno)
 {
@@ -216,6 +216,7 @@ bad:
 }
 
 #ifdef __HAVE_PCIIDE_MACHDEP_COMPAT_INTR_ESTABLISH
+#include <machine/isa_machdep.h>
 #include "isa.h"
 
 void *genppc_pciide_machdep_compat_intr_establish(struct device *,
