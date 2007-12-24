@@ -1,4 +1,4 @@
-/*	$NetBSD: mkbootimage.c,v 1.6 2007/12/20 23:00:00 garbled Exp $	*/
+/*	$NetBSD: mkbootimage.c,v 1.7 2007/12/24 19:34:41 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -877,7 +877,7 @@ main(int argc, char **argv)
 	if (boot == NULL)
 		boot = "/usr/mdec/boot";
 
-	if (strcmp(march, "") == 0)
+	if (march != NULL && strcmp(march, "") == 0)
 		march = NULL;
 	if (march == NULL) {
 		int i;
