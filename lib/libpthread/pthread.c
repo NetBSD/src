@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.94 2007/12/24 14:46:28 ad Exp $	*/
+/*	$NetBSD: pthread.c,v 1.95 2007/12/24 16:04:20 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.94 2007/12/24 14:46:28 ad Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.95 2007/12/24 16:04:20 ad Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -77,7 +77,6 @@ static int	pthread__stackalloc(pthread_t *);
 static void	pthread__initmain(pthread_t *);
 static void	pthread__fork_callback(void);
 static void	pthread__reap(pthread_t);
-static void	pthread__cancelled(void);
 
 void	pthread__init(void);
 
@@ -577,19 +576,13 @@ pthread_join(pthread_t thread, void **valptr)
 			self->pt_droplock = NULL;
 			return EINVAL;
 		}
-
-		/*
-		 * IEEE Std 1003.1, 2004 Edition:
-		 *
-		 * "The pthread_join() function shall not return an
-		 * error code of [EINTR]."
-		 */
 		error = pthread_cond_wait(&thread->pt_joiners,
 		    &thread->pt_lock);
-		if (error != 0 && error != EINTR) {
-			self->pt_droplock = NULL;
-			return error;
+		if (error != 0) {
+			pthread__errorfunc(__FILE__, __LINE__,
+			    __func__, "unexpected return from cond_wait()");
 		}
+
 	}
 	if (valptr != NULL)
 		*valptr = thread->pt_exitval;

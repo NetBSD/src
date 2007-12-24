@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cond.c,v 1.39 2007/11/19 15:14:12 ad Exp $	*/
+/*	$NetBSD: pthread_cond.c,v 1.40 2007/12/24 16:04:21 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_cond.c,v 1.39 2007/11/19 15:14:12 ad Exp $");
+__RCSID("$NetBSD: pthread_cond.c,v 1.40 2007/12/24 16:04:21 ad Exp $");
 
 #include <errno.h>
 #include <sys/time.h>
@@ -110,7 +110,7 @@ pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex)
 		return pthread_cond_wait_nothread(self, mutex, NULL);
 
 	if (__predict_false(self->pt_cancel))
-		pthread_exit(PTHREAD_CANCELED);
+		pthread__cancelled();
 
 	/*
 	 * Note this thread as waiting on the CV.  To ensure good
@@ -170,7 +170,7 @@ pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex)
 	if (__predict_false(self->pt_cancel)) {
 		if (self->pt_signalled)
 			pthread_cond_signal(cond);
-		pthread_exit(PTHREAD_CANCELED);
+		pthread__cancelled();
 	}
 
 	return 0;
@@ -200,7 +200,7 @@ pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
 		return pthread_cond_wait_nothread(self, mutex, abstime);
 
 	if (__predict_false(self->pt_cancel))
-		pthread_exit(PTHREAD_CANCELED);
+		pthread__cancelled();
 
 	/*
 	 * Note this thread as waiting on the CV.  To ensure good
@@ -261,7 +261,7 @@ pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
 		if (self->pt_signalled)
 			pthread_cond_signal(cond);
 		if (self->pt_cancel)
-			pthread_exit(PTHREAD_CANCELED);
+			pthread__cancelled();
 	}
 
 	return retval;
