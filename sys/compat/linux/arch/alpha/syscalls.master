@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.60 2007/12/21 22:26:20 njoly Exp $
+	$NetBSD: syscalls.master,v 1.61 2007/12/24 14:17:17 njoly Exp $
 ;
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -413,7 +413,7 @@
 230	UNIMPL
 231	UNIMPL
 232	UNIMPL
-233	STD		{ int linux_sys_getpgid(int pid); }
+233	NOARGS		{ pid_t sys_getpgid(pid_t pid); }
 234	NOARGS		{ pid_t sys_getsid(pid_t pid); }
 235	UNIMPL		sigaltstack
 236	UNIMPL

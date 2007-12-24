@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.31 2007/12/21 22:26:21 njoly Exp $
+	$NetBSD: syscalls.master,v 1.32 2007/12/24 14:17:17 njoly Exp $
 
 ; Derived from sys/compat/linux/arch/*/syscalls.master
 ; and from Linux 2.4.12 arch/arm/kernel/calls.S
@@ -229,7 +229,7 @@
 129	UNIMPL		delete_module
 130	UNIMPL		get_kernel_syms
 131	UNIMPL		quotactl
-132	STD		{ int linux_sys_getpgid(int pid); }
+132	NOARGS		{ pid_t sys_getpgid(pid_t pid); }
 133	NOARGS		{ int sys_fchdir(int fd); }
 134	UNIMPL		bdflush
 135	UNIMPL		sysfs
