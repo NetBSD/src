@@ -1,4 +1,4 @@
-#	$NetBSD: files.ofppc,v 1.36 2007/12/10 18:19:45 garbled Exp $
+#	$NetBSD: files.ofppc,v 1.37 2007/12/24 13:54:59 phx Exp $
 #
 # NetBSD/ofppc configuration info
 #
@@ -86,6 +86,9 @@ file	dev/ofw/ofw_subr.c			ofbus | openfirm
 device	rtas
 attach	rtas at mainbus
 file	arch/powerpc/powerpc/rtas.c		rtas needs-flag
+
+include "dev/usb/files.usb"
+include "dev/ieee1394/files.ieee1394"
 
 #
 # PCI bus support
