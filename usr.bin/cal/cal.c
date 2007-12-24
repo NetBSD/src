@@ -1,4 +1,4 @@
-/*	$NetBSD: cal.c,v 1.21 2007/12/19 16:45:41 joerg Exp $	*/
+/*	$NetBSD: cal.c,v 1.22 2007/12/24 13:56:55 wiz Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)cal.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: cal.c,v 1.21 2007/12/19 16:45:41 joerg Exp $");
+__RCSID("$NetBSD: cal.c,v 1.22 2007/12/24 13:56:55 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -910,7 +910,7 @@ usage(void)
 {
 
 	(void)fprintf(stderr,
-	    "usage: cal [-hjry3] [-d day-of-week] [-B before] [-A after] "
+	    "usage: cal [-3hjry] [-A after] [-B before] [-d day-of-week] "
 	    "[-R reform-spec]\n           [[month] year]\n");
 	exit(1);
 }
