@@ -1,4 +1,4 @@
-/*     $NetBSD: buf.h,v 1.100 2007/12/02 13:56:18 hannken Exp $ */
+/*     $NetBSD: buf.h,v 1.101 2007/12/24 15:11:19 ad Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -133,9 +133,7 @@ struct buf {
 	int	b_bcount;		/* Valid bytes in buffer. */
 	int	b_resid;		/* Remaining I/O. */
 	dev_t	b_dev;			/* Device associated with buffer. */
-	struct {
-		void *	b_addr;		/* Memory, superblocks, indirect etc. */
-	} b_un;
+	void	*b_data;		/* Memory, superblocks, indirect etc. */
 	daddr_t	b_blkno;		/* Underlying physical block number
 					   (partition relative) */
 	daddr_t	b_rawblkno;		/* Raw underlying physical block
@@ -153,12 +151,8 @@ struct buf {
 	 *  - non-buffer cache buffers are owned by subsystem which
 	 *    allocated them. (filesystem, disk driver, etc)
 	 */
-	union {
-		void *bf_private;
-		off_t bf_dcookie;	/* NFS: Offset cookie if dir block */
-	} b_fspriv;
-#define	b_private	b_fspriv.bf_private
-#define	b_dcookie	b_fspriv.bf_dcookie
+	void	*b_private;
+	off_t	b_dcookie;		/* NFS: Offset cookie if dir block */
 
 	/*
 	 * buffer cache specific data
@@ -184,9 +178,6 @@ do {									\
  * to be maintained in the `b_resid' field.
  */
 #define	b_cylinder b_resid		/* Cylinder number for disksort(). */
-
-/* Device driver compatibility definitions. */
-#define	b_data	 b_un.b_addr		/* b_un.b_addr is not changeable. */
 
 /*
  * These flags are kept in b_flags.
