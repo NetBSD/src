@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_mutex2.c,v 1.16 2007/12/07 01:38:38 ad Exp $	*/
+/*	$NetBSD: pthread_mutex2.c,v 1.17 2007/12/24 14:46:29 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_mutex2.c,v 1.16 2007/12/07 01:38:38 ad Exp $");
+__RCSID("$NetBSD: pthread_mutex2.c,v 1.17 2007/12/24 14:46:29 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/lwpctl.h>
@@ -84,6 +84,12 @@ static void	pthread__mutex_wakeup(pthread_t, pthread_mutex_t *);
 static int	pthread__mutex_lock_slow(pthread_mutex_t *);
 static int	pthread__mutex_unlock_slow(pthread_mutex_t *);
 static void	pthread__mutex_pause(void);
+
+int		_pthread_mutex_held_np(pthread_mutex_t *);
+pthread_t	_pthread_mutex_owner_np(pthread_mutex_t *);
+
+__weak_alias(pthread_mutex_held_np,_pthread_mutex_held_np)
+__weak_alias(pthread_mutex_owner_np,_pthread_mutex_owner_np)
 
 __strong_alias(__libc_mutex_init,pthread_mutex_init)
 __strong_alias(__libc_mutex_lock,pthread_mutex_lock)
@@ -598,6 +604,20 @@ pthread__mutex_deferwake(pthread_t thread, pthread_mutex_t *ptm)
 	    (uintptr_t)&ptm->ptm_owner,
 	    (unsigned long)MUTEX_DEFERRED_BIT);
 	return 1;	
+}
+
+int
+_pthread_mutex_held_np(pthread_mutex_t *ptm)
+{
+
+	return MUTEX_OWNER(ptm->ptm_owner) == (uintptr_t)pthread__self();
+}
+
+pthread_t
+_pthread_mutex_owner_np(pthread_mutex_t *ptm)
+{
+
+	return (pthread_t)MUTEX_OWNER(ptm->ptm_owner);
 }
 
 #endif	/* PTHREAD__HAVE_ATOMIC */
