@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.21 2007/10/17 19:55:46 garbled Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.22 2007/12/24 15:06:38 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.21 2007/10/17 19:55:46 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.22 2007/12/24 15:06:38 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,7 +100,7 @@ readdisklabel(dev, strat, lp, clp)
 		return "error reading disklabel";
 
 	/* Check for NetBSD label in second sector */
-	dlp = (struct disklabel *)((char *)bp->b_un.b_addr + LABELOFFSET);
+	dlp = (struct disklabel *)((char *)bp->b_data + LABELOFFSET);
 	if (dlp->d_magic == DISKMAGIC)
 		if (!dkcksum(dlp)) {
 			memcpy(lp, dlp, LABELSIZE(dlp));
@@ -120,7 +120,7 @@ readdisklabel(dev, strat, lp, clp)
 	if (err)
 		return "error reading volume header";
 
-	mvp = (struct mips_volheader *)bp->b_un.b_addr;
+	mvp = (struct mips_volheader *)bp->b_data;
 	/* Check for MIPS RISC/os volume header */
 	if (mvp->vh_magic == MIPS_VHMAGIC)
 		return disklabel_mips_to_bsd(mvp, lp);
