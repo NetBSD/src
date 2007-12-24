@@ -1,4 +1,4 @@
-/*	$NetBSD: perform.c,v 1.1.1.5 2007/11/03 14:14:12 joerg Exp $	*/
+/*	$NetBSD: perform.c,v 1.1.1.6 2007/12/24 00:03:04 joerg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -14,7 +14,7 @@
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.44 1997/10/13 15:03:46 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.1.1.5 2007/11/03 14:14:12 joerg Exp $");
+__RCSID("$NetBSD: perform.c,v 1.1.1.6 2007/12/24 00:03:04 joerg Exp $");
 #endif
 #endif
 
@@ -386,7 +386,6 @@ pkg_do(const char *pkg, lpkg_head_t *pkgs)
 	char   *buildinfo[BI_ENUM_COUNT];
 	int	replacing = 0;
 	char   dbdir[MaxPathSize];
-	const char *exact;
 	const char *tmppkg;
 	FILE   *cfile;
 	int     errc, err_prescan;
@@ -664,11 +663,23 @@ pkg_do(const char *pkg, lpkg_head_t *pkgs)
 			printf("Package `%s' conflicts with `%s'.\n", PkgName, p->name);
 		best_installed = find_best_matching_installed_pkg(p->name);
 		if (best_installed) {
-			warnx("Conflicting package `%s'installed, please use\n"
-			      "\t\"pkg_delete %s\" first to remove it!",
-			      best_installed, best_installed);
+			warnx("Package `%s' conflicts with `%s', and `%s' is installed.",
+			      PkgName, p->name, best_installed);
 			free(best_installed);
 			++errc;
+		}
+	}
+
+	/* See if any of the installed packages conflicts with this one. */
+	{
+		char *inst_pkgname, *inst_pattern;
+
+		if (some_installed_package_conflicts_with(PkgName, &inst_pkgname, &inst_pattern)) {
+			warnx("Installed package `%s' conflicts with `%s' when trying to install `%s'.",
+				inst_pkgname, inst_pattern, PkgName);
+			free(inst_pkgname);
+			free(inst_pattern);
+			errc++;
 		}
 	}
 
@@ -761,17 +772,11 @@ pkg_do(const char *pkg, lpkg_head_t *pkgs)
 	
 
 	/* Now check the packing list for dependencies */
-	for (exact = NULL, p = Plist.head; p; p = p->next) {
+	for (p = Plist.head; p; p = p->next) {
 		char *best_installed;
 
-		if (p->type == PLIST_BLDDEP) {
-			exact = p->name;
+		if (p->type != PLIST_PKGDEP)
 			continue;
-		}
-		if (p->type != PLIST_PKGDEP) {
-			exact = NULL;
-			continue;
-		}
 		if (Verbose)
 			printf("Package `%s' depends on `%s'.\n", PkgName, p->name);
 
@@ -789,13 +794,7 @@ pkg_do(const char *pkg, lpkg_head_t *pkgs)
 				int done = 0;
 				int errc0 = 0;
 
-				if (exact != NULL) {
-					/* first try the exact name, from the @blddep */
-					done = installprereq(exact, &errc0, (Replace > 1) ? 2 : 0);
-				}
-				if (!done) {
-					done = installprereq(p->name, &errc0, (Replace > 1) ? 2 : 0);
-				}
+				done = installprereq(p->name, &errc0, (Replace > 1) ? 2 : 0);
 				if (!done && !Force) {
 					errc += errc0;
 				}
