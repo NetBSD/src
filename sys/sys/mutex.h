@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.13 2007/12/05 07:06:55 ad Exp $	*/
+/*	$NetBSD: mutex.h,v 1.14 2007/12/24 14:57:56 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -207,6 +207,7 @@ void	mutex_spin_exit(kmutex_t *);
 int	mutex_tryenter(kmutex_t *);
 
 int	mutex_owned(kmutex_t *);
+lwp_t	*mutex_owner(kmutex_t *);
 
 #endif /* _KERNEL */
 
