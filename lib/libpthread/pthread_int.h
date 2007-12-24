@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.63 2007/12/24 14:46:29 ad Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.64 2007/12/24 16:04:21 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -282,6 +282,7 @@ void	pthread__assertfunc(const char *, int, const char *, const char *)
 void	pthread__errorfunc(const char *, int, const char *, const char *)
 			   PTHREAD_HIDE;
 char	*pthread__getenv(const char *) PTHREAD_HIDE;
+void	pthread__cancelled(void) PTHREAD_HIDE;
 
 void	*pthread__atomic_cas_ptr(volatile void *, const void *, const void *) PTHREAD_HIDE;
 void	*pthread__atomic_swap_ptr(volatile void *, const void *) PTHREAD_HIDE;
