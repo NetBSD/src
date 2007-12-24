@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.62 2007/11/19 15:14:13 ad Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.63 2007/12/24 14:46:29 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -106,6 +106,8 @@ struct	__pthread_st {
 	lwpid_t		pt_unpark;	/* Unpark this when parking */
 	void		*pt_unparkhint;	/* Hint for the above */
 	struct pthread_lock_ops pt_lockops;/* Cached to avoid PIC overhead */
+	pthread_mutex_t	*pt_droplock;	/* Drop this lock if cancelled */
+	pthread_cond_t	pt_joiners;	/* Threads waiting to join. */
 
 	/* Threads to defer waking, usually until pthread_mutex_unlock(). */
 	lwpid_t		pt_waiters[PTHREAD__UNPARK_MAX];
@@ -113,10 +115,6 @@ struct	__pthread_st {
 
 	/* Stack of cancellation cleanup handlers and their arguments */
 	PTQ_HEAD(, pt_clean_t)	pt_cleanup_stack;
-
-	/* For debugger: LWPs waiting to join. */
-	pthread_queue_t	pt_joiners;
-	PTQ_ENTRY(__pthread_st) pt_joinq;
 
 	/* LWP ID and entry on the list of all threads. */
 	lwpid_t		pt_lid;

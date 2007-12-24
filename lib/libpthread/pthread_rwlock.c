@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_rwlock.c,v 1.22 2007/11/13 15:57:13 ad Exp $ */
+/*	$NetBSD: pthread_rwlock.c,v 1.23 2007/12/24 14:46:29 ad Exp $ */
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_rwlock.c,v 1.22 2007/11/13 15:57:13 ad Exp $");
+__RCSID("$NetBSD: pthread_rwlock.c,v 1.23 2007/12/24 14:46:29 ad Exp $");
 
 #include <errno.h>
 
@@ -45,6 +45,14 @@ __RCSID("$NetBSD: pthread_rwlock.c,v 1.22 2007/11/13 15:57:13 ad Exp $");
 #include "pthread_int.h"
 
 #ifndef	PTHREAD__HAVE_ATOMIC
+
+int	_pthread_rwlock_held_np(pthread_rwlock_t *);
+int	_pthread_rwlock_rdheld_np(pthread_rwlock_t *);
+int	_pthread_rwlock_wrheld_np(pthread_rwlock_t *);
+
+__weak_alias(pthread_mutex_held_np,_pthread_rwlock_held_np);
+__weak_alias(pthread_mutex_rdheld_np,_pthread_rwlock_rdheld_np);
+__weak_alias(pthread_mutex_wrheld_np,_pthread_rwlock_wrheld_np);
 
 __strong_alias(__libc_rwlock_init,pthread_rwlock_init)
 __strong_alias(__libc_rwlock_rdlock,pthread_rwlock_rdlock)
@@ -433,6 +441,27 @@ pthread_rwlockattr_destroy(pthread_rwlockattr_t *attr)
 	attr->ptra_magic = _PT_RWLOCKATTR_DEAD;
 
 	return 0;
+}
+
+int
+_pthread_rwlock_held_np(pthread_rwlock_t *ptr)
+{
+
+	return ptr->ptr_writer != NULL || ptr->ptr_nreaders != 0;
+}
+
+int
+_pthread_rwlock_rdheld_np(pthread_rwlock_t *ptr)
+{
+
+	return ptr->ptr_nreaders != 0;
+}
+
+int
+_pthread_rwlock_wrheld_np(pthread_rwlock_t *ptr)
+{
+
+	return ptr->ptr_writer != 0;
 }
 
 #endif	/* !PTHREAD__HAVE_ATOMIC */
