@@ -1,7 +1,7 @@
-# $NetBSD: GENERIC,v 1.188 2007/12/23 17:33:57 jmcneill Exp $
+# $NetBSD: GENERIC,v 1.189 2007/12/24 07:54:26 kiyohara Exp $
 #
 # GENERIC machine description file
-# 
+#
 # This machine description file is used to generate the default NetBSD
 # kernel.  The generic kernel does not include all options, subsystems
 # and device drivers, but should be useful for most applications.
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.188 $"
+#ident 		"GENERIC-$Revision: 1.189 $"
 
 maxusers	32		# estimated number of users
 
@@ -75,7 +75,7 @@ options 	POWERNOW_K8
 # Intel(R) On Demand Clock Modulation (aka ODCM)
 # options       INTEL_ONDEMAND_CLOCKMOD
 
-# Enable experimental buffer queue strategy for better responsiveness under 
+# Enable experimental buffer queue strategy for better responsiveness under
 # high disk I/O load. Use it with caution - it's not proven to be stable yet.
 #options 	BUFQ_READPRIO
 #options 	BUFQ_PRIOCSCAN
@@ -245,7 +245,7 @@ mainbus0 at root
 # ACPI will be used if present. If not it will fall back to MPBIOS
 acpi0 		at mainbus0
 options 	ACPI_SCANPCI		# find PCI roots using ACPI
-options 	MPBIOS			# configure CPUs and APICs using MPBIOS 
+options 	MPBIOS			# configure CPUs and APICs using MPBIOS
 options 	MPBIOS_SCANPCI		# MPBIOS configures PCI roots
 #options 	PCI_INTR_FIXUP		# PCI interrupt routing via ACPI
 #options 	ACPI_ACTIVATE_DEV	# If set, activate inactive devices
@@ -555,8 +555,8 @@ wd*	at atabus? drive ? flags 0x0000
 atapibus* at atapi?
 
 
-# ATA RAID configuration support, as found on some Promise controllers.  
-pseudo-device ataraid  
+# ATA RAID configuration support, as found on some Promise controllers.
+pseudo-device ataraid
 ld*     at ataraid? vendtype ? unit ?
 
 # ATAPI devices
@@ -855,8 +855,8 @@ ucom*	at ugensa?
 
 # PCI IEEE1394 controllers
 fwohci*	at pci? dev ? function ?	# IEEE1394 Open Host Controller
- 
-# CardBus IEEE1394 controllers 
+
+# CardBus IEEE1394 controllers
 fwohci*	at cardbus? function ?		# IEEE1394 Open Host Controller
 
 ieee1394if* at fwohci?
