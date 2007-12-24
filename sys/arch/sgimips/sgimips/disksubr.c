@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.21 2007/10/17 19:57:06 garbled Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.22 2007/12/24 15:06:38 ad Exp $	*/
 
 /*
  * Copyright (c) 2001 Christopher Sekiya
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.21 2007/10/17 19:57:06 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.22 2007/12/24 15:06:38 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,7 +100,7 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp, stru
 		return "error reading disklabel";
 
 	/* Check for NetBSD label in second sector */
-	dlp = (struct disklabel *)((char *)bp->b_un.b_addr + LABELOFFSET);
+	dlp = (struct disklabel *)((char *)bp->b_data + LABELOFFSET);
 	if (dlp->d_magic == DISKMAGIC)
 		if (!dkcksum(dlp)) {
 			memcpy(lp, dlp, LABELSIZE(dlp));
@@ -121,7 +121,7 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp, stru
 		return "error reading volume header";
 
 	/* Check for a SGI label. */
-	slp = (struct sgi_boot_block *)bp->b_un.b_addr;
+	slp = (struct sgi_boot_block *)bp->b_data;
 	if (be32toh(slp->magic) != SGI_BOOT_BLOCK_MAGIC)
 		return "no disk label";
 
