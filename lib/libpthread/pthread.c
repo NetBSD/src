@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.93 2007/12/11 03:21:30 ad Exp $	*/
+/*	$NetBSD: pthread.c,v 1.94 2007/12/24 14:46:28 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.93 2007/12/11 03:21:30 ad Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.94 2007/12/24 14:46:28 ad Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -76,6 +76,8 @@ static int	pthread__stackid_setup(void *, size_t, pthread_t *);
 static int	pthread__stackalloc(pthread_t *);
 static void	pthread__initmain(pthread_t *);
 static void	pthread__fork_callback(void);
+static void	pthread__reap(pthread_t);
+static void	pthread__cancelled(void);
 
 void	pthread__init(void);
 
@@ -285,11 +287,12 @@ pthread__initthread(pthread_t t)
 	t->pt_early = NULL;
 	t->pt_lwpctl = &pthread__dummy_lwpctl;
 	t->pt_blocking = 0;
+	t->pt_droplock = NULL;
 
 	memcpy(&t->pt_lockops, pthread__lock_ops, sizeof(t->pt_lockops));
 	pthread_mutex_init(&t->pt_lock, NULL);
 	PTQ_INIT(&t->pt_cleanup_stack);
-	PTQ_INIT(&t->pt_joiners);
+	pthread_cond_init(&t->pt_joiners, NULL);
 	memset(&t->pt_specific, 0, sizeof(t->pt_specific));
 }
 
@@ -352,20 +355,16 @@ pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 		if (newthread != NULL) {
 			PTQ_REMOVE(&pthread__deadqueue, newthread, pt_deadq);
 			pthread_mutex_unlock(&pthread__deadqueue_lock);
-			if ((newthread->pt_flags & PT_FLAG_DETACHED) != 0) {
-				/* Still running? */
-				if (newthread->pt_lwpctl->lc_curcpu !=
-				    LWPCTL_CPU_EXITED &&
-				    (_lwp_kill(newthread->pt_lid, 0) == 0 ||
-				    errno != ESRCH)) {
-					pthread_mutex_lock(
-					    &pthread__deadqueue_lock);
-					PTQ_INSERT_TAIL(&pthread__deadqueue,
-					    newthread, pt_deadq);
-					pthread_mutex_unlock(
-					    &pthread__deadqueue_lock);
-					newthread = NULL;
-				}
+			/* Still running? */
+			if (newthread->pt_lwpctl->lc_curcpu !=
+			    LWPCTL_CPU_EXITED &&
+			    (_lwp_kill(newthread->pt_lid, 0) == 0 ||
+			    errno != ESRCH)) {
+				pthread_mutex_lock(&pthread__deadqueue_lock);
+				PTQ_INSERT_TAIL(&pthread__deadqueue,
+				    newthread, pt_deadq);
+				pthread_mutex_unlock(&pthread__deadqueue_lock);
+				newthread = NULL;
 			}
 		} else
 			pthread_mutex_unlock(&pthread__deadqueue_lock);
@@ -408,11 +407,9 @@ pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 	makecontext(&newthread->pt_uc, pthread__create_tramp, 3,
 	    newthread, startfunc, arg);
 
-	flag = 0;
+	flag = LWP_DETACHED;
 	if ((newthread->pt_flags & PT_FLAG_SUSPENDED) != 0)
 		flag |= LWP_SUSPENDED;
-	if ((newthread->pt_flags & PT_FLAG_DETACHED) != 0)
-		flag |= LWP_DETACHED;
 	ret = _lwp_create(&newthread->pt_uc, flag, &newthread->pt_lid);
 	if (ret != 0) {
 		free(name);
@@ -475,10 +472,8 @@ pthread_suspend_np(pthread_t thread)
 	if (self == thread) {
 		return EDEADLK;
 	}
-#ifdef ERRORCHECK
 	if (pthread__find(thread) != 0)
 		return ESRCH;
-#endif
 	if (_lwp_suspend(thread->pt_lid) == 0)
 		return 0;
 	return errno;
@@ -488,10 +483,8 @@ int
 pthread_resume_np(pthread_t thread)
 {
  
-#ifdef ERRORCHECK
 	if (pthread__find(thread) != 0)
 		return ESRCH;
-#endif
 	if (_lwp_continue(thread->pt_lid) == 0)
 		return 0;
 	return errno;
@@ -510,34 +503,37 @@ pthread_exit(void *retval)
 	pthread_mutex_lock(&self->pt_lock);
 	self->pt_flags |= PT_FLAG_CS_DISABLED;
 	self->pt_cancel = 0;
-	pthread_mutex_unlock(&self->pt_lock);
 
 	/* Call any cancellation cleanup handlers */
-	while (!PTQ_EMPTY(&self->pt_cleanup_stack)) {
-		cleanup = PTQ_FIRST(&self->pt_cleanup_stack);
-		PTQ_REMOVE(&self->pt_cleanup_stack, cleanup, ptc_next);
-		(*cleanup->ptc_cleanup)(cleanup->ptc_arg);
+	if (!PTQ_EMPTY(&self->pt_cleanup_stack)) {
+		pthread_mutex_unlock(&self->pt_lock);
+		while (!PTQ_EMPTY(&self->pt_cleanup_stack)) {
+			cleanup = PTQ_FIRST(&self->pt_cleanup_stack);
+			PTQ_REMOVE(&self->pt_cleanup_stack, cleanup, ptc_next);
+			(*cleanup->ptc_cleanup)(cleanup->ptc_arg);
+		}
+		pthread_mutex_lock(&self->pt_lock);
 	}
 
 	/* Perform cleanup of thread-specific data */
 	pthread__destroy_tsd(self);
 
+	/* Signal our exit. */
 	self->pt_exitval = retval;
-
-	pthread_mutex_lock(&self->pt_lock);
 	if (self->pt_flags & PT_FLAG_DETACHED) {
 		self->pt_state = PT_STATE_DEAD;
 		name = self->pt_name;
 		self->pt_name = NULL;
-		pthread_mutex_lock(&pthread__deadqueue_lock);
-		PTQ_INSERT_TAIL(&pthread__deadqueue, self, pt_deadq);
-		pthread_mutex_unlock(&pthread__deadqueue_lock);
 		pthread_mutex_unlock(&self->pt_lock);
 		if (name != NULL)
 			free(name);
+		pthread_mutex_lock(&pthread__deadqueue_lock);
+		PTQ_INSERT_TAIL(&pthread__deadqueue, self, pt_deadq);
+		pthread_mutex_unlock(&pthread__deadqueue_lock);
 		_lwp_exit();
 	} else {
 		self->pt_state = PT_STATE_ZOMBIE;
+		pthread_cond_broadcast(&self->pt_joiners);
 		pthread_mutex_unlock(&self->pt_lock);
 		/* Note: name will be freed by the joiner. */
 		_lwp_exit();
@@ -553,7 +549,7 @@ int
 pthread_join(pthread_t thread, void **valptr)
 {
 	pthread_t self;
-	char *name;
+	int error;
 
 	self = pthread__self();
 
@@ -566,41 +562,61 @@ pthread_join(pthread_t thread, void **valptr)
 	if (thread == self)
 		return EDEADLK;
 
-	/*
-	 * IEEE Std 1003.1, 2004 Edition:
-	 *
-	 * "The pthread_join() function shall not return an
-	 * error code of [EINTR]."
-	 */
-	while (_lwp_wait(thread->pt_lid, NULL) != 0) {
-		if (errno != EINTR)
-			return errno;
-	}
+	self->pt_droplock = &thread->pt_lock;
+	pthread_mutex_lock(&thread->pt_lock);
+	for (;;) {
+		if (thread->pt_state == PT_STATE_ZOMBIE)
+			break;
+		if (thread->pt_state == PT_STATE_DEAD) {
+			pthread_mutex_unlock(&thread->pt_lock);
+			self->pt_droplock = NULL;
+			return ESRCH;
+		}
+		if ((thread->pt_flags & PT_FLAG_DETACHED) != 0) {
+			pthread_mutex_unlock(&thread->pt_lock);
+			self->pt_droplock = NULL;
+			return EINVAL;
+		}
 
-	/*
-	 * No need to lock - nothing else should (legally) be
-	 * interested in the thread's state at this point.
-	 *
-	 * _lwp_wait() provides a barrier, so the user level
-	 * thread state will be visible to us at this point.
-	 */
-	if (thread->pt_state != PT_STATE_ZOMBIE) {
-		pthread__errorfunc(__FILE__, __LINE__, __func__,
-		    "not a zombie");
+		/*
+		 * IEEE Std 1003.1, 2004 Edition:
+		 *
+		 * "The pthread_join() function shall not return an
+		 * error code of [EINTR]."
+		 */
+		error = pthread_cond_wait(&thread->pt_joiners,
+		    &thread->pt_lock);
+		if (error != 0 && error != EINTR) {
+			self->pt_droplock = NULL;
+			return error;
+		}
 	}
 	if (valptr != NULL)
 		*valptr = thread->pt_exitval;
-	name = thread->pt_name;
-	thread->pt_name = NULL;
-	thread->pt_state = PT_STATE_DEAD;
-	pthread_mutex_lock(&pthread__deadqueue_lock);
-	PTQ_INSERT_HEAD(&pthread__deadqueue, thread, pt_deadq);
-	pthread_mutex_unlock(&pthread__deadqueue_lock);
-	if (name != NULL)
-		free(name);
+	/* pthread__reap() will drop the lock. */
+	pthread__reap(thread);
+	self->pt_droplock = NULL;
+
 	return 0;
 }
 
+static void
+pthread__reap(pthread_t thread)
+{
+	char *name;
+
+	name = thread->pt_name;
+	thread->pt_name = NULL;
+	thread->pt_state = PT_STATE_DEAD;
+	pthread_mutex_unlock(&thread->pt_lock);
+
+	pthread_mutex_lock(&pthread__deadqueue_lock);
+	PTQ_INSERT_HEAD(&pthread__deadqueue, thread, pt_deadq);
+	pthread_mutex_unlock(&pthread__deadqueue_lock);
+
+	if (name != NULL)
+		free(name);
+}
 
 int
 pthread_equal(pthread_t t1, pthread_t t2)
@@ -614,7 +630,6 @@ pthread_equal(pthread_t t1, pthread_t t2)
 int
 pthread_detach(pthread_t thread)
 {
-	int rv;
 
 	if (pthread__find(thread) != 0)
 		return ESRCH;
@@ -624,12 +639,22 @@ pthread_detach(pthread_t thread)
 
 	pthread_mutex_lock(&thread->pt_lock);
 	thread->pt_flags |= PT_FLAG_DETACHED;
-	rv = _lwp_detach(thread->pt_lid);
-	pthread_mutex_unlock(&thread->pt_lock);
+	if (thread->pt_state == PT_STATE_ZOMBIE) {
+		/* pthread__reap() will drop the lock. */
+		pthread__reap(thread);
+	} else {
+		/*
+		 * Not valid for threads to be waiting in
+		 * pthread_join() (there are intractable
+		 * sync issues from the application
+		 * perspective), but give those threads
+		 * a chance anyway.
+		 */
+		pthread_cond_broadcast(&thread->pt_joiners);
+		pthread_mutex_unlock(&thread->pt_lock);
+	}
 
-	if (rv == 0)
-		return 0;
-	return errno;
+	return 0;
 }
 
 
@@ -755,7 +780,7 @@ pthread_setcancelstate(int state, int *oldstate)
 			/* This is not a deferred cancellation point. */
 			if (self->pt_flags & PT_FLAG_CS_ASYNC) {
 				pthread_mutex_unlock(&self->pt_lock);
-				pthread_exit(PTHREAD_CANCELED);
+				pthread__cancelled();
 			}
 		}
 	} else
@@ -789,7 +814,7 @@ pthread_setcanceltype(int type, int *oldtype)
 		self->pt_flags |= PT_FLAG_CS_ASYNC;
 		if (self->pt_cancel) {
 			pthread_mutex_unlock(&self->pt_lock);
-			pthread_exit(PTHREAD_CANCELED);
+			pthread__cancelled();
 		}
 	} else if (type == PTHREAD_CANCEL_DEFERRED)
 		self->pt_flags &= ~PT_FLAG_CS_ASYNC;
@@ -803,13 +828,13 @@ pthread_setcanceltype(int type, int *oldtype)
 
 
 void
-pthread_testcancel()
+pthread_testcancel(void)
 {
 	pthread_t self;
 
 	self = pthread__self();
 	if (self->pt_cancel)
-		pthread_exit(PTHREAD_CANCELED);
+		pthread__cancelled();
 }
 
 
@@ -842,7 +867,24 @@ pthread__testcancel(pthread_t self)
 {
 
 	if (self->pt_cancel)
-		pthread_exit(PTHREAD_CANCELED);
+		pthread__cancelled();
+}
+
+
+void
+pthread__cancelled(void)
+{
+	pthread_mutex_t *droplock;
+	pthread_t self;
+
+	self = pthread__self();
+	droplock = self->pt_droplock;
+	self->pt_droplock = NULL;
+
+	if (droplock != NULL && pthread_mutex_held_np(droplock))
+		pthread_mutex_unlock(droplock);
+
+	pthread_exit(PTHREAD_CANCELED);
 }
 
 
