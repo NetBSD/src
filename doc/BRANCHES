@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.233 2007/12/23 03:52:44 ad Exp $
+#	$NetBSD: BRANCHES,v 1.234 2007/12/24 05:26:34 yamt Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -559,6 +559,11 @@ Base Tag:	yamt-kmem-base3
 Maintainer:	YAMAMOTO Takashi <yamt@NetBSD.org>
 Scope:		src/sys  (src/common is tagged but not branched)
 Notes:		
+		todo:
+		- investigate if PMAP_PREFER equivalent can be done
+		  with vmem_xalloc.  find a tester with hardware for it.
+		- g/c replaced code, including kmapent and malloc.
+		- consider to remove other submaps.  eg. mb_map
 
 Branch:		yamt-lazymbuf
 Description:	implement and evaluate lazy mapping of mbuf external data pages
