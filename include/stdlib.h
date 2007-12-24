@@ -1,4 +1,4 @@
-/*	$NetBSD: stdlib.h,v 1.79 2007/12/14 16:36:19 christos Exp $	*/
+/*	$NetBSD: stdlib.h,v 1.80 2007/12/24 17:26:09 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -93,8 +93,8 @@ extern size_t __mb_cur_max;
 #define	MB_CUR_MAX	__mb_cur_max
 
 __BEGIN_DECLS
-__dead	 void _Exit(int) __attribute__((__noreturn__));
-__dead	 void abort(void) __attribute__((__noreturn__));
+__dead	 void _Exit(int);
+__dead	 void abort(void);
 __pure	 int abs(int);
 int	 atexit(void (*)(void));
 double	 atof(const char *);
@@ -108,7 +108,7 @@ void	*bsearch(const void *, const void *, size_t, size_t,
 #endif /* __BSEARCH_DECLARED */
 void	*calloc(size_t, size_t);
 div_t	 div(int, int);
-__dead	 void exit(int) __attribute__((__noreturn__));
+__dead	 void exit(int);
 void	 free(void *);
 __aconst char *getenv(const char *);
 __pure long

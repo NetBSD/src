@@ -1,4 +1,4 @@
-/*	$NetBSD: setjmp.h,v 1.23 2005/09/13 01:44:32 christos Exp $	*/
+/*	$NetBSD: setjmp.h,v 1.24 2007/12/24 17:26:09 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -60,20 +60,18 @@ typedef long jmp_buf[_JBLEN] _JB_ATTRIBUTES;
 __BEGIN_DECLS
 #ifndef __LIBC12_SOURCE__
 int	setjmp(jmp_buf)			 __RENAME(__setjmp14);
-void	longjmp(jmp_buf, int)		 __RENAME(__longjmp14)
-    __attribute__((__noreturn__));
+void	longjmp(jmp_buf, int)		 __RENAME(__longjmp14) __dead;
 
 #if defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE) || \
     defined(_NETBSD_SOURCE)
 int	sigsetjmp(sigjmp_buf, int)	__RENAME(__sigsetjmp14);
-void	siglongjmp(sigjmp_buf, int)	 __RENAME(__siglongjmp14)
-    __attribute__((__noreturn__));
+void	siglongjmp(sigjmp_buf, int)	 __RENAME(__siglongjmp14) __dead;
 #endif /* not ANSI */
 #endif /* __LIBC12_SOURCE__ */
 
 #if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
 int	_setjmp(jmp_buf);
-void	_longjmp(jmp_buf, int) __attribute__((__noreturn__));
+void	_longjmp(jmp_buf, int) __dead;
 #endif
 
 #if defined(_NETBSD_SOURCE)
