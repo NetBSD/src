@@ -1,4 +1,4 @@
-.\"	$NetBSD: cal.1,v 1.19 2007/12/21 14:21:42 joerg Exp $
+.\"	$NetBSD: cal.1,v 1.20 2007/12/24 13:56:00 wiz Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -40,7 +40,7 @@
 .Nd displays a calendar
 .Sh SYNOPSIS
 .Nm
-.Op Fl hjry3
+.Op Fl 3hjry
 .Op Fl A Ar after
 .Op Fl B Ar before
 .Op Fl d Ar day-of-week
@@ -53,6 +53,9 @@ If arguments are not specified,
 the current month is displayed.
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl 3
+Same as
+.Dq Fl A Ar 1 Fl B Ar 1 .
 .It Fl A Ar after
 Display
 .Ar after
@@ -81,7 +84,7 @@ Selects an alternate Gregorian reform point from the default of
 September 3rd, 1752.
 The
 .Ar reform-spec
-can be selected by one of the built-in names (see 
+can be selected by one of the built-in names (see
 .Sx NOTES
 for a list) or by a date of the form YYYY/MM/DD.
 The date and month may be omitted, provided that what is specified
@@ -100,9 +103,6 @@ If used in conjunction with
 then the entire year is displayed.
 .It Fl y
 Display a calendar for the current year.
-.It Fl 3
-Same as
-.Dq Fl A Ar 1 Fl B Ar 1 .
 .El
 .Pp
 If no parameters are specified, the current month's calendar is
