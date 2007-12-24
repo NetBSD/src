@@ -1,4 +1,4 @@
-/* $NetBSD: paxctl.c,v 1.5 2007/12/15 19:44:56 perry Exp $ */
+/* $NetBSD: paxctl.c,v 1.6 2007/12/24 20:05:24 elad Exp $ */
 
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -33,7 +33,7 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #ifdef __RCSID
-__RCSID("$NetBSD: paxctl.c,v 1.5 2007/12/15 19:44:56 perry Exp $");
+__RCSID("$NetBSD: paxctl.c,v 1.6 2007/12/24 20:05:24 elad Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,10 +60,10 @@ static void pax_printflags(const char *, int, u_long);
 /* NetBSD-specific note type: PaX.  There should be 1 NOTE per executable.
    section.  desc is a 32 bit bitmask */
 #define ELF_NOTE_TYPE_PAX_TAG		3
-#define	ELF_NOTE_PAX_MPROTECT		0x1	/* Force enable Mprotect */
-#define	ELF_NOTE_PAX_NOMPROTECT		0x2	/* Force disable Mprotect */
-#define	ELF_NOTE_PAX_GUARD		0x4	/* Force enable Segvguard */
-#define	ELF_NOTE_PAX_NOGUARD		0x8	/* Force disable Servguard */
+#define	ELF_NOTE_PAX_MPROTECT		0x01	/* Force enable MPROTECT */
+#define	ELF_NOTE_PAX_NOMPROTECT		0x02	/* Force disable MPROTECT */
+#define	ELF_NOTE_PAX_GUARD		0x04	/* Force enable Segvguard */
+#define	ELF_NOTE_PAX_NOGUARD		0x08	/* Force disable Segvguard */
 #define ELF_NOTE_PAX_NAMESZ		4
 #define ELF_NOTE_PAX_NAME		"PaX\0"
 #define ELF_NOTE_PAX_DESCSZ		4
