@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.191 2007/12/21 22:26:22 njoly Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.192 2007/12/24 14:17:18 njoly Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.191 2007/12/21 22:26:22 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.192 2007/12/24 14:17:18 njoly Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ptrace.h"
@@ -939,30 +939,6 @@ linux_select1(l, retval, nfds, readfds, writefds, exceptfds, timeout)
 			return error;
 	}
 
-	return 0;
-}
-
-/*
- * Get the process group of a certain process. Look it up
- * and return the value.
- */
-int
-linux_sys_getpgid(struct lwp *l, const struct linux_sys_getpgid_args *uap, register_t *retval)
-{
-	/* {
-		syscallarg(int) pid;
-	} */
-	struct proc *p = l->l_proc;
-	struct proc *targp;
-
-	if (SCARG(uap, pid) != 0 && SCARG(uap, pid) != p->p_pid) {
-		if ((targp = pfind(SCARG(uap, pid))) == 0)
-			return ESRCH;
-	}
-	else
-		targp = p;
-
-	retval[0] = targp->p_pgid;
 	return 0;
 }
 

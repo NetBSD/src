@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.26 2007/12/21 22:26:21 njoly Exp $  
+	$NetBSD: syscalls.master,v 1.27 2007/12/24 14:17:18 njoly Exp $  
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -233,7 +233,7 @@
 129	UNIMPL		delete_module
 130	UNIMPL		get_kernel_syms
 131	UNIMPL		quotactl
-132	STD		{ int linux_sys_getpgid(int pid); }
+132	NOARGS		{ pid_t sys_getpgid(pid_t pid); }
 133	NOARGS		{ int sys_fchdir(int fd); }
 134	UNIMPL		bdflush
 135	UNIMPL		sysfs
