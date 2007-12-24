@@ -1,4 +1,4 @@
-/*     $NetBSD: vfs_syscalls.h,v 1.4 2007/05/12 17:28:20 dsl Exp $        */
+/*     $NetBSD: vfs_syscalls.h,v 1.5 2007/12/24 15:04:19 ad Exp $        */
 
 #ifndef _SYS_VFS_SYSCALLS_H_
 #define _SYS_VFS_SYSCALLS_H_
@@ -28,5 +28,8 @@ int	vfs_copyinfh_alloc(const void *, size_t, fhandle_t **);
 void	vfs_copyinfh_free(fhandle_t *);
 
 int dofhopen(struct lwp *, const void *, size_t, int, register_t *);
+
+int	do_sys_unlink(const char *, enum uio_seg);
+int	do_sys_rename(const char *, const char *, enum uio_seg, int);
 
 #endif /* _SYS_VFS_SYSCALLS_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.335 2007/12/20 23:03:13 dsl Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.336 2007/12/24 15:04:19 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.335 2007/12/20 23:03:13 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.336 2007/12/24 15:04:19 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -92,7 +92,6 @@ static int change_dir(struct nameidata *, struct lwp *);
 static int change_flags(struct vnode *, u_long, struct lwp *);
 static int change_mode(struct vnode *, int, struct lwp *l);
 static int change_owner(struct vnode *, uid_t, gid_t, struct lwp *, int);
-static int rename_files(const char *, const char *, struct lwp *, int);
 
 void checkdirs(struct vnode *);
 
@@ -2078,14 +2077,21 @@ sys_unlink(struct lwp *l, const struct sys_unlink_args *uap, register_t *retval)
 	/* {
 		syscallarg(const char *) path;
 	} */
+
+	return do_sys_unlink(SCARG(uap, path), UIO_USERSPACE);
+}
+
+int
+do_sys_unlink(const char *arg, enum uio_seg seg)
+{
 	struct vnode *vp;
 	int error;
 	struct nameidata nd;
+	kauth_cred_t cred;
 	char *path;
 	const char *cpath;
-	enum uio_seg seg = UIO_USERSPACE;
 
-	VERIEXEC_PATH_GET(SCARG(uap, path), seg, cpath, path);
+	VERIEXEC_PATH_GET(arg, seg, cpath, path);
 	NDINIT(&nd, DELETE, LOCKPARENT | LOCKLEAF | TRYEMULROOT, seg, cpath);
 
 	if ((error = namei(&nd)) != 0)
@@ -2108,7 +2114,7 @@ sys_unlink(struct lwp *l, const struct sys_unlink_args *uap, register_t *retval)
 
 #if NVERIEXEC > 0
 	/* Handle remove requests for veriexec entries. */
-	if ((error = veriexec_removechk(l, nd.ni_vp, nd.ni_dirp)) != 0) {
+	if ((error = veriexec_removechk(curlwp, nd.ni_vp, nd.ni_dirp)) != 0) {
 		VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
 		if (nd.ni_dvp == vp)
 			vrele(nd.ni_dvp);
@@ -2119,8 +2125,9 @@ sys_unlink(struct lwp *l, const struct sys_unlink_args *uap, register_t *retval)
 	}
 #endif /* NVERIEXEC > 0 */
 	
-	VOP_LEASE(nd.ni_dvp, l->l_cred, LEASE_WRITE);
-	VOP_LEASE(vp, l->l_cred, LEASE_WRITE);
+	cred = kauth_cred_get();
+	VOP_LEASE(nd.ni_dvp, cred, LEASE_WRITE);
+	VOP_LEASE(vp, cred, LEASE_WRITE);
 #ifdef FILEASSOC
 	(void)fileassoc_file_delete(vp);
 #endif /* FILEASSOC */
@@ -3248,7 +3255,7 @@ sys_rename(struct lwp *l, const struct sys_rename_args *uap, register_t *retval)
 		syscallarg(const char *) to;
 	} */
 
-	return (rename_files(SCARG(uap, from), SCARG(uap, to), l, 0));
+	return (do_sys_rename(SCARG(uap, from), SCARG(uap, to), UIO_USERSPACE, 0));
 }
 
 /*
@@ -3263,7 +3270,7 @@ sys___posix_rename(struct lwp *l, const struct sys___posix_rename_args *uap, reg
 		syscallarg(const char *) to;
 	} */
 
-	return (rename_files(SCARG(uap, from), SCARG(uap, to), l, 1));
+	return (do_sys_rename(SCARG(uap, from), SCARG(uap, to), UIO_USERSPACE, 1));
 }
 
 /*
@@ -3276,16 +3283,17 @@ sys___posix_rename(struct lwp *l, const struct sys___posix_rename_args *uap, reg
  *			object in the file system's name space (BSD).
  * (retain == 1)	always retained (POSIX).
  */
-static int
-rename_files(const char *from, const char *to, struct lwp *l, int retain)
+int
+do_sys_rename(const char *from, const char *to, enum uio_seg seg, int retain)
 {
 	struct vnode *tvp, *fvp, *tdvp;
 	struct nameidata fromnd, tond;
+	struct lwp *l = curlwp;
 	struct proc *p;
 	int error;
 
 	NDINIT(&fromnd, DELETE, LOCKPARENT | SAVESTART | TRYEMULROOT,
-	    UIO_USERSPACE, from);
+	    seg, from);
 	if ((error = namei(&fromnd)) != 0)
 		return (error);
 	if (fromnd.ni_dvp != fromnd.ni_vp)
@@ -3294,7 +3302,7 @@ rename_files(const char *from, const char *to, struct lwp *l, int retain)
 	NDINIT(&tond, RENAME,
 	    LOCKPARENT | LOCKLEAF | NOCACHE | SAVESTART | TRYEMULROOT
 	      | (fvp->v_type == VDIR ? CREATEDIR : 0),
-	    UIO_USERSPACE, to);
+	    seg, to);
 	if ((error = namei(&tond)) != 0) {
 		VOP_ABORTOP(fromnd.ni_dvp, &fromnd.ni_cnd);
 		vrele(fromnd.ni_dvp);
