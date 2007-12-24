@@ -1,4 +1,4 @@
-$NetBSD: TODO,v 1.12 2007/11/13 17:20:09 ad Exp $
+$NetBSD: TODO,v 1.13 2007/12/24 14:30:09 ad Exp $
 
 Bugs to fix:
 
@@ -9,11 +9,7 @@ Interfaces/features to implement:
 
 - Realtime exensions: priority scheduling, priority inheritance.
 
-- Figure out how to use registers reserved in the ABI to implement
-  pthread_self(). This will allow for assembly lock stubs.
-
-- Allow threads to change their stack size. This probably depends on the
-  above item.
+- Allow threads to change their stack size.
 
 - Keep a pool of dead LWPs so that we do not have take the full hit of
   _lwp_create() every time pthread_create() is called.
