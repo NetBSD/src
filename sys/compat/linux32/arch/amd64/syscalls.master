@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.23 2007/12/24 14:25:30 njoly Exp $
+	$NetBSD: syscalls.master,v 1.24 2007/12/24 15:56:20 njoly Exp $
 
 ; NetBSD i386 COMPAT_LINUX32 system call name/number "master" file.
 ; (See syscalls.conf to see what it is processed into.)
@@ -204,7 +204,7 @@
 106	UNIMPL	stat
 107	UNIMPL	lstat
 108	UNIMPL	fstat
-109	UNIMPL	olduname
+109	STD	{ int linux32_sys_olduname(linux32_oldutsnamep_t up); }
 110	UNIMPL	iopl
 111	UNIMPL	vhangup
 112	UNIMPL	idle

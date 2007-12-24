@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_utsname.c,v 1.7 2007/12/20 23:02:59 dsl Exp $ */
+/*	$NetBSD: linux32_utsname.c,v 1.8 2007/12/24 15:56:21 njoly Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_utsname.c,v 1.7 2007/12/20 23:02:59 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_utsname.c,v 1.8 2007/12/24 15:56:21 njoly Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -59,6 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_utsname.c,v 1.7 2007/12/20 23:02:59 dsl Exp 
 #include <compat/linux/common/linux_signal.h>
 #include <compat/linux/common/linux_machdep.h>
 #include <compat/linux/common/linux_misc.h>
+#include <compat/linux/common/linux_olduname.h>
 #include <compat/linux/common/linux_oldolduname.h>
 #include <compat/linux/linux_syscallargs.h>
 
@@ -88,6 +89,23 @@ linux32_sys_uname(struct lwp *l, const struct linux32_sys_uname_args *uap, regis
 	lp = SCARG_P32(uap, up);
 
         return copyout(&luts, lp, sizeof(luts));
+}
+
+int
+linux32_sys_olduname(struct lwp *l, const struct linux32_sys_olduname_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(linux32_oldutsnamep_t) up;
+	} */
+	struct linux_oldutsname luts;
+
+	strlcpy(luts.l_sysname, linux32_sysname, sizeof(luts.l_sysname));
+	strlcpy(luts.l_nodename, hostname, sizeof(luts.l_nodename));
+	strlcpy(luts.l_release, linux32_release, sizeof(luts.l_release));
+	strlcpy(luts.l_version, linux32_version, sizeof(luts.l_version));
+	strlcpy(luts.l_machine, LINUX_UNAME_ARCH, sizeof(luts.l_machine));
+
+	return copyout(&luts, SCARG_P32(uap, up), sizeof(luts));
 }
 
 int   
