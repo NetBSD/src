@@ -1,4 +1,4 @@
-/*	$NetBSD: pool.h,v 1.60 2007/12/20 23:49:11 ad Exp $	*/
+/*	$NetBSD: pool.h,v 1.61 2007/12/24 16:45:16 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2007 The NetBSD Foundation, Inc.
@@ -119,8 +119,8 @@ struct pool {
 	const char	*pr_wchan;	/* tsleep(9) identifier */
 	unsigned int	pr_flags;	/* r/w flags */
 	unsigned int	pr_roflags;	/* r/o flags */
-#define	PR_NOWAIT	0x00		/* for symmetry */
-#define PR_WAITOK	0x02
+#define	PR_WAITOK	0x01	/* Note: matches KM_SLEEP */
+#define PR_NOWAIT	0x02	/* Note: matches KM_NOSLEEP */
 #define PR_WANTED	0x04
 #define PR_PHINPAGE	0x40
 #define PR_LOGGING	0x80
