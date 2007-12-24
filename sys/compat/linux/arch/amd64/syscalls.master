@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.21 2007/12/21 22:26:21 njoly Exp $
+	$NetBSD: syscalls.master,v 1.22 2007/12/24 14:17:17 njoly Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -270,7 +270,7 @@
 			    gid_t sgid); }
 120	STD		{ int linux_sys_getresgid(gid_t *rgid, gid_t *egid, \
 			    gid_t *sgid); }
-121	STD		{ int linux_sys_getpgid(int pid); }
+121	NOARGS		{ pid_t sys_getpgid(pid_t pid); }
 122	STD		{ int linux_sys_setfsuid(uid_t uid); }
 123	STD		{ int linux_sys_setfsgid(gid_t gid); }
 124	NOARGS		{ pid_t sys_getsid(pid_t pid); }
