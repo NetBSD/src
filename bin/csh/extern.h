@@ -1,4 +1,4 @@
-/* $NetBSD: extern.h,v 1.21 2007/07/16 18:26:10 christos Exp $ */
+/* $NetBSD: extern.h,v 1.22 2007/12/24 16:11:50 perry Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,12 +41,12 @@
  */
 int gethdir(Char *);
 void dosource(Char **, struct command *);
-__dead void exitstat(void) __attribute__((noreturn));
+__dead void exitstat(void);
 void goodbye(void);
 void importpath(Char *);
 void initdesc(void);
 void pintr(int);
-void pintr1(int) __attribute__((noreturn));
+__dead void pintr1(int);
 void printprompt(void);
 void process(int);
 void rechist(void);
@@ -54,9 +54,9 @@ void untty(void);
 int vis_fputc(int, FILE *);
 
 #ifdef PROF
-__dead void done(int) __attribute__((noreturn));
+__dead void done(int);
 #else
-__dead void xexit(int) __attribute__((noreturn));
+__dead void xexit(int);
 #endif
 
 /*
@@ -85,12 +85,12 @@ void heredoc(Char *);
  * err.c
  */
 void seterror(int, ...);
-__dead void stderror(int, ...) __attribute__((noreturn));
+__dead void stderror(int, ...);
 
 /*
  * exec.c
  */
-void doexec(Char **, struct command *) __attribute__((noreturn));
+__dead void doexec(Char **, struct command *);
 void dohash(Char **, struct command *);
 void dounhash(Char **, struct command *);
 void dowhich(Char **, struct command *);
@@ -215,7 +215,7 @@ Char *strip(Char *);
 Char *quote(Char *);
 char *strsave(const char *);
 char *strspl(char *, char *);
-void udvar(Char *) __attribute__((noreturn));
+__dead void udvar(Char *);
 
 #ifndef	SHORT_STRINGS
 # ifdef NOTUSED
