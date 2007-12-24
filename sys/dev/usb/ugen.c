@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.95 2007/12/09 20:28:24 jmcneill Exp $	*/
+/*	$NetBSD: ugen.c,v 1.96 2007/12/24 14:41:19 smb Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.95 2007/12/09 20:28:24 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.96 2007/12/24 14:41:19 smb Exp $");
 
 #include "opt_ugen_bulk_ra_wb.h"
 #include "opt_compat_netbsd.h"
@@ -1011,6 +1011,7 @@ USB_DETACH(ugen)
 #endif
 
 	sc->sc_dying = 1;
+	pmf_device_deregister(self);
 	/* Abort all pipes.  Causes processes waiting for transfer to wake. */
 	for (i = 0; i < USB_MAX_ENDPOINTS; i++) {
 		for (dir = OUT; dir <= IN; dir++) {
