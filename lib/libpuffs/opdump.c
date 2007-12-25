@@ -1,4 +1,4 @@
-/*	$NetBSD: opdump.c,v 1.21 2007/12/09 16:54:17 pooka Exp $	*/
+/*	$NetBSD: opdump.c,v 1.22 2007/12/25 20:36:53 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: opdump.c,v 1.21 2007/12/09 16:54:17 pooka Exp $");
+__RCSID("$NetBSD: opdump.c,v 1.22 2007/12/25 20:36:53 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -202,6 +202,10 @@ void
 puffsdump_rv(struct puffs_req *preq)
 {
 
+	printf("\tRV reqid: %" PRIu64 ", result: %d %s\n",
+	    preq->preq_id, preq->preq_rv,
+	    preq->preq_rv ? strerror(preq->preq_rv) : "");
+
 	if (PUFFSOP_OPCLASS(preq->preq_opclass) == PUFFSOP_VN) {
 		switch (preq->preq_optype) {
 		case PUFFS_VN_LOOKUP:
@@ -213,14 +217,14 @@ puffsdump_rv(struct puffs_req *preq)
 		case PUFFS_VN_SYMLINK:
 			puffsdump_create_rv(preq);
 			break;
+		case PUFFS_VN_READ:
+		case PUFFS_VN_WRITE:
+			puffsdump_readwrite_rv(preq);
+			break;
 		default:
 			break;
 		}
 	}
-
-	printf("\tRV reqid: %" PRIu64 ", result: %d %s\n",
-	    preq->preq_id, preq->preq_rv,
-	    preq->preq_rv ? strerror(preq->preq_rv) : "");
 }
 
 void
@@ -281,6 +285,14 @@ puffsdump_readwrite(struct puffs_req *preq)
 
 	printf("\t\toffset: %" PRId64 ", resid %zu, ioflag 0x%x\n",
 	    rw_msg->pvnr_offset, rw_msg->pvnr_resid, rw_msg->pvnr_ioflag);
+}
+
+void
+puffsdump_readwrite_rv(struct puffs_req *preq)
+{
+	struct puffs_vnmsg_rw *rw_msg = (void *)preq;
+
+	printf("\t\tresid after op: %zu\n", rw_msg->pvnr_resid);
 }
 
 void

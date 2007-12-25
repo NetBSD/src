@@ -1,4 +1,4 @@
-/*	$NetBSD: puffsdump.h,v 1.7 2007/12/09 16:54:17 pooka Exp $	*/
+/*	$NetBSD: puffsdump.h,v 1.8 2007/12/25 20:36:53 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -40,6 +40,7 @@ void puffsdump_creds(struct puffs_cred *);
 void puffsdump_int(int, const char *);
 
 void puffsdump_readwrite(struct puffs_req *);
+void puffsdump_readwrite_rv(struct puffs_req *);
 void puffsdump_lookup(struct puffs_req *);
 void puffsdump_lookup_rv(struct puffs_req *);
 void puffsdump_create_rv(struct puffs_req *);
