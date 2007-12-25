@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.35 2007/10/17 19:55:35 garbled Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.36 2007/12/25 17:55:10 macallan Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.35 2007/10/17 19:55:35 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.36 2007/12/25 17:55:10 macallan Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -81,28 +81,6 @@ const char *pb3400_compat[] = {"AAPL,3400/2400", NULL};
 
 pcitag_t genppc_pci_indirect_make_tag(void *, int, int, int);
 void genppc_pci_indirect_decompose_tag(void *, pcitag_t, int *, int *, int *);
-
-/*
- * PCI doesn't have any special needs; just use the generic versions
- * of these functions.
- */
-struct powerpc_bus_dma_tag pci_bus_dma_tag = {
-	._dmamap_create = _bus_dmamap_create, 
-	._dmamap_destroy = _bus_dmamap_destroy,
-	._dmamap_load = _bus_dmamap_load,
-	._dmamap_load_mbuf = _bus_dmamap_load_mbuf,
-	._dmamap_load_uio = _bus_dmamap_load_uio,
-	._dmamap_load_raw = _bus_dmamap_load_raw,
-	._dmamap_unload = _bus_dmamap_unload,
-	._dmamap_sync = NULL,
-	._dmamem_alloc = _bus_dmamem_alloc,
-	._dmamem_free = _bus_dmamem_free,
-	._dmamem_map = _bus_dmamem_map,
-	._dmamem_unmap = _bus_dmamem_unmap,
-	._dmamem_mmap = _bus_dmamem_mmap,
-	._dma_phys_to_bus_mem = _bus_dma_phys_to_bus_mem_generic,
-	._dma_bus_mem_to_phys = _bus_dma_bus_mem_to_phys_generic,
-};
 
 void
 macppc_pci_attach_hook(parent, self, pba)
