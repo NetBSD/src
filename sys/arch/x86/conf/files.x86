@@ -1,4 +1,4 @@
-#	$NetBSD: files.x86,v 1.37 2007/12/18 07:17:16 joerg Exp $
+#	$NetBSD: files.x86,v 1.38 2007/12/25 14:22:26 joerg Exp $
 
 # options for MP configuration through the MP spec
 defflag opt_mpbios.h MPBIOS MPVERBOSE MPDEBUG MPBIOS_SCANPCI
@@ -96,3 +96,5 @@ file	arch/x86/x86/coretemp.c 	intel_coretemp
 device	ipmi: sysmon_envsys, sysmon_wdog
 attach	ipmi at ipmibus
 file	arch/x86/x86/ipmi.c		ipmi needs-flag
+
+file	arch/x86/x86/vga_post.c		vga_post
