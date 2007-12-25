@@ -1,4 +1,4 @@
-/*	$NetBSD: siopvar.h,v 1.24 2006/02/16 20:17:16 perry Exp $	*/
+/*	$NetBSD: siopvar.h,v 1.25 2007/12/25 18:33:39 perry Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -43,7 +43,7 @@ struct siop_xfer {
 	struct siop_common_xfer siop_tables;
 	/* u_int32_t resel[sizeof(load_dsa) / sizeof(load_dsa[0])]; */
 	u_int32_t resel[25];
-} __attribute__((__packed__));
+} __packed;
 
 /*
  * This describes a command handled by the SCSI controller

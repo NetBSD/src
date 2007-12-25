@@ -1,4 +1,4 @@
-/* $NetBSD: rtwvar.h,v 1.35 2007/12/21 18:22:43 dyoung Exp $ */
+/* $NetBSD: rtwvar.h,v 1.36 2007/12/25 18:33:39 perry Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -260,7 +260,7 @@ struct rtw_rx_radiotap_header {
 			uint8_t			p_antsignal;
 		} u_philips;
 	} rr_u;
-} __attribute__((__packed__));
+} __packed;
 
 #define RTW_TX_RADIOTAP_PRESENT				\
 	((1 << IEEE80211_RADIOTAP_RATE)		|	\
@@ -273,7 +273,7 @@ struct rtw_tx_radiotap_header {
 	uint8_t					rt_pad;
 	uint16_t				rt_chan_freq;
 	uint16_t				rt_chan_flags;
-} __attribute__((__packed__));
+} __packed;
 
 enum rtw_attach_state {FINISHED, FINISH_DESCMAP_LOAD, FINISH_DESCMAP_CREATE,
 	FINISH_DESC_MAP, FINISH_DESC_ALLOC, FINISH_RXMAPS_CREATE,

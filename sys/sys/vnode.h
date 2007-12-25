@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.178 2007/12/24 14:58:37 ad Exp $	*/
+/*	$NetBSD: vnode.h,v 1.179 2007/12/25 18:33:49 perry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -318,8 +318,8 @@ void holdrelel(struct vnode *);
 void vholdl(struct vnode *);
 void vref(struct vnode *);
 
-static __inline void holdrele(struct vnode *) __attribute__((__unused__));
-static __inline void vhold(struct vnode *) __attribute__((__unused__));
+static __inline void holdrele(struct vnode *) __unused;
+static __inline void vhold(struct vnode *) __unused;
 
 #define	VATTR_NULL(vap)	vattr_null(vap)
 

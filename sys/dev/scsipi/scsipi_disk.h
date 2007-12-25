@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_disk.h,v 1.20 2007/07/01 05:17:28 tsutsui Exp $	*/
+/*	$NetBSD: scsipi_disk.h,v 1.21 2007/12/25 18:33:42 perry Exp $	*/
 
 /*
  * SCSI and SCSI-like interfaces description
@@ -70,7 +70,7 @@ struct scsipi_rw_10 {
 	u_int8_t reserved;
 	u_int8_t length[2];
 	u_int8_t control;
-} __attribute__((__packed__));
+} __packed;
 
 #define	READ_12			0xa8
 #define	WRITE_12		0xaa
@@ -81,7 +81,7 @@ struct scsipi_rw_12 {
 	u_int8_t length[4];
 	u_int8_t byte11;
 	u_int8_t control;
-} __attribute__((__packed__));
+} __packed;
 
 #define	READ_16			0x88
 #define	WRITE_16		0x8a
@@ -92,7 +92,7 @@ struct scsipi_rw_16 {
 	u_int8_t length[4];
 	u_int8_t byte15;
 	u_int8_t control;
-} __attribute__((__packed__));
+} __packed;
 
 #define	READ_CAPACITY_10	0x25
 struct scsipi_read_capacity_10 {
@@ -101,14 +101,14 @@ struct scsipi_read_capacity_10 {
 	u_int8_t addr[4];
 	u_int8_t unused[3];
 	u_int8_t control;
-} __attribute__((__packed__));
+} __packed;
 
 /* DATAs definitions for the above commands */
 
 struct scsipi_read_capacity_10_data {
 	u_int8_t addr[4];
 	u_int8_t length[4];
-} __attribute__((__packed__));
+} __packed;
 
 #define	READ_CAPACITY_16	0x9e	/* really SERVICE ACTION IN */
 struct scsipi_read_capacity_16 {
@@ -120,7 +120,7 @@ struct scsipi_read_capacity_16 {
 	u_int8_t byte15;
 #define	SRC16_PMI		0x01
 	u_int8_t control;
-} __attribute__((__packed__));
+} __packed;
 
 struct scsipi_read_capacity_16_data {
 	u_int8_t addr[8];
@@ -129,7 +129,7 @@ struct scsipi_read_capacity_16_data {
 #define	SRC16D_PROT_EN		0x01
 #define	SRC16D_RTO_EN		0x02
 	u_int8_t reserved[19];
-} __attribute__((__packed__));
+} __packed;
 
 /* XXX SBC-2 says this is vendor-specific */
 #define READ_FORMAT_CAPACITIES	0x23
@@ -139,18 +139,18 @@ struct scsipi_read_format_capacities {
 	u_int8_t reserved1[5];
 	u_int8_t length[2];
 	u_int8_t reserved2[3];
-} __attribute__((__packed__));
+} __packed;
 
 struct scsipi_capacity_list_header {
 	u_int8_t reserved[3];
 	u_int8_t length;
-} __attribute__((__packed__));
+} __packed;
 
 struct scsipi_capacity_descriptor {
 	u_int8_t nblks[4];
 	u_int8_t byte5;
 	u_int8_t blklen[3];
-} __attribute__((__packed__));
+} __packed;
 
 /* codes only valid in the current/maximum capacity descriptor */
 #define	SCSIPI_CAP_DESC_CODE_MASK		0x3

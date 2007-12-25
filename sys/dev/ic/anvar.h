@@ -1,4 +1,4 @@
-/*	$NetBSD: anvar.h,v 1.15 2007/12/09 20:27:57 jmcneill Exp $	*/
+/*	$NetBSD: anvar.h,v 1.16 2007/12/25 18:33:38 perry Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -86,7 +86,7 @@ struct an_rx_radiotap_header {
         u_int16_t                               ar_chan_freq;
         u_int16_t                               ar_chan_flags;
         int8_t                                  ar_antsignal;
-} __attribute__((__packed__));
+} __packed;
 
 #define AN_TX_RADIOTAP_PRESENT  ((1 << IEEE80211_RADIOTAP_FLAGS) | \
                                  (1 << IEEE80211_RADIOTAP_RATE) | \
@@ -98,7 +98,7 @@ struct an_tx_radiotap_header {
         u_int8_t                                at_rate;
         u_int16_t                               at_chan_freq;
         u_int16_t                               at_chan_flags;
-} __attribute__((__packed__));
+} __packed;
 
 #define	AN_GAPLEN_MAX	8
 

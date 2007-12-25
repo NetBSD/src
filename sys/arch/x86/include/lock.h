@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.20 2007/12/20 23:46:11 ad Exp $	*/
+/*	$NetBSD: lock.h,v 1.21 2007/12/25 18:33:34 perry Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006 The NetBSD Foundation, Inc.
@@ -84,13 +84,13 @@ void	__cpu_simple_unlock(__cpu_simple_lock_t *);
 #else
 
 static __inline void __cpu_simple_lock_init(__cpu_simple_lock_t *)
-	__attribute__((__unused__));
+	__unused;
 static __inline void __cpu_simple_lock(__cpu_simple_lock_t *)
-	__attribute__((__unused__));
+	__unused;
 static __inline int __cpu_simple_lock_try(__cpu_simple_lock_t *)
-	__attribute__((__unused__));
+	__unused;
 static __inline void __cpu_simple_unlock(__cpu_simple_lock_t *)
-	__attribute__((__unused__));
+	__unused;
 
 static __inline void
 __cpu_simple_lock_init(__cpu_simple_lock_t *lockp)

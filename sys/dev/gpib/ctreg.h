@@ -1,4 +1,4 @@
-/*	$NetBSD: ctreg.h,v 1.3 2005/12/11 12:21:21 christos Exp $	*/
+/*	$NetBSD: ctreg.h,v 1.4 2007/12/25 18:33:37 perry Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -41,22 +41,22 @@ struct	ct_iocmd {
 	u_int32_t	len;		/* 0 (for rewind) /resid */
 	u_int8_t	nop3;		/* CS80CMD_NOP */
 	u_int8_t	cmd;		/* CS80CMD_READ/CS80CMD_WRITE */
-} __attribute__((__packed__));
+} __packed;
 
 struct	ct_rscmd {
 	u_int8_t	unit;
 	u_int8_t	cmd;
-} __attribute__((__packed__));
+} __packed;
 
 struct	ct_ulcmd {
 	u_int8_t	unit;
 	u_int8_t	cmd;
-} __attribute__((__packed__));
+} __packed;
 
 struct	ct_wfmcmd {
 	u_int8_t	unit;
 	u_int8_t	cmd;
-} __attribute__((__packed__));
+} __packed;
 
 #define	CT7946ID	0x220
 #define CT9145ID	0x268

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.h,v 1.14 2007/10/17 19:53:04 garbled Exp $	*/
+/*	$NetBSD: netbsd32_machdep.h,v 1.15 2007/12/25 18:33:32 perry Exp $	*/
 
 #ifndef _MACHINE_NETBSD32_H_
 #define _MACHINE_NETBSD32_H_
@@ -121,7 +121,7 @@ struct mtrr32 {
 	uint8_t __pad0[3];
 	int flags;
 	uint32_t owner;
-} __attribute__((packed));
+} __packed;
 
 struct x86_64_get_mtrr_args32 {
 	uint32_t mtrrp;
@@ -142,11 +142,11 @@ struct env87 {
 	uint16_t	en_opcode;
 	int32_t		en_foo;
 	int32_t		en_fos;
-} __attribute__((packed));
+} __packed;
 
 struct fpacc87 {
 	uint8_t 	fp_bytes[10];
-} __attribute__((packed));
+} __packed;
 
 struct save87 {
 	struct env87	sv_env;
@@ -154,7 +154,7 @@ struct save87 {
 	int32_t		sv_ex_sw;
 	int32_t		sv_ex_tw;
 	uint8_t		sv_pad[8 * 2 - 2 * 4];
-} __attribute__((packed));
+} __packed;
 
 #define NETBSD32_MID_MACHINE MID_I386
 

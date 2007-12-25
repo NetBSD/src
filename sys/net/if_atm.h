@@ -1,4 +1,4 @@
-/*      $NetBSD: if_atm.h,v 1.16 2007/02/17 22:34:08 dyoung Exp $       */
+/*      $NetBSD: if_atm.h,v 1.17 2007/12/25 18:33:44 perry Exp $       */
 
 /*
  *
@@ -127,7 +127,7 @@ struct pvctxreq {
 struct atmllc {
   u_int8_t llchdr[6];	/* aa.aa.03.00.00.00 */
   u_int8_t type[2];	/* "ethernet" type */
-} __attribute__((__packed__));
+} __packed;
 
 /* ATM_LLC macros: note type code in host byte order */
 #define ATM_LLC_TYPE(X) (((X)->type[0] << 8) | ((X)->type[1]))

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.37 2007/12/22 18:35:00 dsl Exp $	*/
+/*	$NetBSD: cpu.h,v 1.38 2007/12/25 18:33:32 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -202,7 +202,7 @@ extern struct cpu_info *cpu_info_list;
 static struct cpu_info *x86_curcpu(void);
 static lwp_t *x86_curlwp(void);
 
-__inline static struct cpu_info * __attribute__((__unused__))
+__inline static struct cpu_info * __unused
 x86_curcpu(void)
 {
 	struct cpu_info *ci;
@@ -214,7 +214,7 @@ x86_curcpu(void)
 	return ci;
 }
 
-__inline static lwp_t * __attribute__((__unused__))
+__inline static lwp_t * __unused
 x86_curlwp(void)
 {
 	lwp_t *l;

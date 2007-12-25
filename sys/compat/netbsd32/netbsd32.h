@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.70 2007/12/20 23:03:00 dsl Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.71 2007/12/25 18:33:36 perry Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -545,7 +545,7 @@ struct netbsd32_stat13 {
 	u_int32_t st_spare2;
 } 
 #ifdef __x86_64__
-__attribute__((packed))
+__packed
 #endif
 ;
 
@@ -570,7 +570,7 @@ struct netbsd32_stat {
 	u_int32_t st_spare[2];
 }
 #ifdef __x86_64__
-__attribute__((packed))
+__packed
 #endif
 ;
 
@@ -675,7 +675,7 @@ struct netbsd32_kevent {
 	uint32_t		fflags;
 	int64_t			data;
 	netbsd32_intptr_t	udata;
-} __attribute__((packed));
+} __packed;
 
 #if 0
 int	netbsd32_kevent(struct lwp *, void *, register_t *);

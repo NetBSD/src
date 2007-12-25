@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.82 2007/12/22 16:04:45 matt Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.83 2007/12/25 18:33:47 perry Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -46,7 +46,7 @@ struct ipovly {
 	u_int16_t ih_len;		/* protocol length */
 	struct	  in_addr ih_src;	/* source internet address */
 	struct	  in_addr ih_dst;	/* destination internet address */
-} __attribute__((__packed__));
+} __packed;
 
 /*
  * Ip (reassembly or sequence) queue structures.

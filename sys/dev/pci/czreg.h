@@ -1,4 +1,4 @@
-/*	$NetBSD: czreg.h,v 1.1 2000/05/17 17:58:10 thorpej Exp $	*/
+/*	$NetBSD: czreg.h,v 1.2 2007/12/25 18:33:40 perry Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -170,7 +170,7 @@ struct zfirm_header {
 	u_int32_t zfh_nblocks;
 	u_int32_t zfh_blockoff;
 	u_int32_t zfh_reserved[9];
-} __attribute__((__packed__));
+} __packed;
 
 struct zfirm_config {
 	u_int8_t zfc_name[64];
@@ -178,7 +178,7 @@ struct zfirm_config {
 	u_int32_t zfc_function;
 	u_int32_t zfc_nblocks;
 	u_int32_t zfc_blocklist[ZFIRM_MAX_BLOCKS];
-} __attribute__((__packed__));
+} __packed;
 
 #define	ZFC_FUNCTION_NORMAL	0	/* normal operation */
 #define	ZFC_FUNCTION_TEST	1	/* test mode operation */
@@ -188,7 +188,7 @@ struct zfirm_block {
 	u_int32_t zfb_fileoff;
 	u_int32_t zfb_ramoff;
 	u_int32_t zfb_size;
-} __attribute__((__packed__));
+} __packed;
 
 #define	ZFB_TYPE_FIRMWARE	0	/* MIPS firmware */
 #define	ZFB_TYPE_FPGA		1	/* FPGA code */

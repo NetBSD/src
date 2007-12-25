@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwireg.h,v 1.17 2006/12/20 16:30:20 skrll Exp $ */
+/*	$NetBSD: if_iwireg.h,v 1.18 2007/12/25 18:33:40 perry Exp $ */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -125,7 +125,7 @@ struct iwi_error {
 	uint32_t	reserved5;
 	uint32_t	reserved6;
 	uint32_t	reserved7;
-} __attribute__((__packed__));
+} __packed;
 
 /* constants for command blocks */
 #define IWI_CB_DEFAULT_CTL	0x8cea0000
@@ -149,7 +149,7 @@ struct iwi_error {
 struct iwi_firmware_ohdr {
 	uint32_t	version;
 	uint32_t	mode;
-} __attribute__((__packed__));
+} __packed;
 #define	IWI_FW_REQ_MAJOR	3
 #define	IWI_FW_REQ_MINOR	0
 #define	IWI_FW_GET_MAJOR(ver)	(((ver) & 0x00ff0000) >> 16)
@@ -160,7 +160,7 @@ struct iwi_firmware_hdr {
 	uint32_t	bsize;		/* size of boot image */
 	uint32_t	usize;		/* size of ucode image */
 	uint32_t	fsize;		/* size of firmware image */
-} __attribute__((__packed__));
+} __packed;
 
 struct iwi_hdr {
 	uint8_t	type;
@@ -174,7 +174,7 @@ struct iwi_hdr {
 #define IWI_HDR_FLAG_IRQ	0x04
 
 	uint8_t	reserved;
-} __attribute__((__packed__));
+} __packed;
 
 struct iwi_notif {
 	uint32_t	reserved[2];
@@ -192,7 +192,7 @@ struct iwi_notif {
 
 	uint8_t		flags;
 	uint16_t	len;
-} __attribute__((__packed__));
+} __packed;
 
 /* structure for notification IWI_NOTIF_TYPE_AUTHENTICATION */
 struct iwi_notif_authentication {
@@ -204,7 +204,7 @@ struct iwi_notif_authentication {
 #define	IWI_AUTH_SEQ1_FAIL	4		/* 1st exchange failed */
 #define IWI_AUTH_SUCCESS	9
 
-} __attribute__((__packed__));
+} __packed;
 
 /* structure for notification IWI_NOTIF_TYPE_ASSOCIATION */
 struct iwi_notif_association {
@@ -216,13 +216,13 @@ struct iwi_notif_association {
 	uint16_t		capinfo;
 	uint16_t		status;
 	uint16_t		associd;
-} __attribute__((__packed__));
+} __packed;
 
 /* structure for notification IWI_NOTIF_TYPE_SCAN_CHANNEL */
 struct iwi_notif_scan_channel {
 	uint8_t	nchan;
 	uint8_t	reserved[47];
-} __attribute__((__packed__));
+} __packed;
 
 /* structure for notification IWI_NOTIF_TYPE_SCAN_COMPLETE */
 struct iwi_notif_scan_complete {
@@ -230,7 +230,7 @@ struct iwi_notif_scan_complete {
 	uint8_t	nchan;
 	uint8_t	status;
 	uint8_t	reserved;
-} __attribute__((__packed__));
+} __packed;
 
 /* structure for notification IWI_NOTIF_TYPE_BEACON */
 struct iwi_notif_beacon_state {
@@ -238,7 +238,7 @@ struct iwi_notif_beacon_state {
 #define IWI_BEACON_MISS		1
 
 	uint32_t	number;
-} __attribute__((__packed__));
+} __packed;
 
 /* received frame header */
 struct iwi_frame {
@@ -255,7 +255,7 @@ struct iwi_frame {
 	uint8_t		control;
 	uint8_t		reserved2[2];
 	uint16_t	len;
-} __attribute__((__packed__));
+} __packed;
 
 /* header for transmission */
 struct iwi_tx_desc {
@@ -295,7 +295,7 @@ struct iwi_tx_desc {
 
 	uint32_t	seg_addr[IWI_MAX_NSEG];
 	uint16_t	seg_len[IWI_MAX_NSEG];
-} __attribute__((__packed__));
+} __packed;
 
 /* command */
 struct iwi_cmd_desc {
@@ -324,7 +324,7 @@ struct iwi_cmd_desc {
 	uint8_t		len;
 	uint16_t	reserved;
 	uint8_t		data[120];
-} __attribute__((__packed__));
+} __packed;
 
 /* node information (IBSS) */
 struct iwi_ibssnode {
@@ -353,7 +353,7 @@ struct iwi_rateset {
 	uint8_t	reserved;
 #define	IWI_RATESET_SIZE	12
 	uint8_t	rates[IWI_RATESET_SIZE];
-} __attribute__((__packed__));
+} __packed;
 
 /* structure for command IWI_CMD_SET_TX_POWER */
 struct iwi_txpower {
@@ -364,8 +364,8 @@ struct iwi_txpower {
 		uint8_t	power;
 #define IWI_TXPOWER_MAX		20
 #define IWI_TXPOWER_RATIO	(IEEE80211_TXPOWER_MAX / IWI_TXPOWER_MAX)
-	} __attribute__((__packed__)) chan[37];
-} __attribute__((__packed__));
+	} __packed chan[37];
+} __packed;
 
 /* structure for command IWI_CMD_ASSOCIATE */
 struct iwi_associate {
@@ -400,7 +400,7 @@ struct iwi_associate {
 	uint8_t		dst[IEEE80211_ADDR_LEN];
 	uint32_t	reserved3;
 	uint16_t	reserved4;
-} __attribute__((__packed__));
+} __packed;
 
 #define IWI_SCAN_CHANNELS	54
 
@@ -468,7 +468,7 @@ struct iwi_configuration {
 	uint8_t	allow_mgt;
 	uint8_t	noise_reported;		/* report noise stats to host */
 	uint8_t	reserved5;
-} __attribute__((__packed__));
+} __packed;
 
 /* structure for command IWI_CMD_SET_WEP_KEY */
 struct iwi_wep_key {
@@ -479,7 +479,7 @@ struct iwi_wep_key {
 	uint8_t	idx;
 	uint8_t	len;
 	uint8_t	key[IEEE80211_KEYBUF_SIZE];
-} __attribute__((__packed__));
+} __packed;
 
 /* EEPROM = Electrically Erasable Programmable Read-Only Memory */
 

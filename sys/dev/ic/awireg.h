@@ -1,4 +1,4 @@
-/* $NetBSD: awireg.h,v 1.10 2005/12/11 12:21:26 christos Exp $ */
+/* $NetBSD: awireg.h,v 1.11 2007/12/25 18:33:38 perry Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -356,7 +356,7 @@ struct awi_mib_local {
 	u_int8_t	Rx_Buffer_Size[4];
 	u_int8_t	Acting_as_AP;
 	u_int8_t	Fill_CFP;
-} __attribute__((__packed__));
+} __packed;
 
 struct awi_mib_mac {
 	u_int8_t	_Reserved1[2];
@@ -378,7 +378,7 @@ struct awi_mib_mac {
 	u_int8_t	aMax_Receive_MSDU_Lifetime[4];
 	u_int8_t	aStation_Basic_Rate[2];
 	u_int8_t	aDesired_ESS_ID[AWI_ESS_ID_SIZE];
-} __attribute__((__packed__));
+} __packed;
 
 struct awi_mib_stat {
 	u_int8_t	aTransmitted_MPDU_Count[4];
@@ -400,7 +400,7 @@ struct awi_mib_stat {
 	u_int8_t	aFCS_Error_Count[4];
 	u_int8_t	aError_Count[4];
 	u_int8_t	aWEP_Undecryptable_Count[4];
-} __attribute__((__packed__));
+} __packed;
 
 struct awi_mib_mgt {
 	u_int8_t	aPower_Mgt_Mode;
@@ -426,7 +426,7 @@ struct awi_mib_mgt {
 	u_int8_t	aStation_ID[2];
 	u_int8_t	aCurrent_BSS_ID[ETHER_ADDR_LEN];
 	u_int8_t	aCurrent_ESS_ID[AWI_ESS_ID_SIZE];
-} __attribute__((__packed__));
+} __packed;
 
 #define	AWI_GROUP_ADDR_SIZE	4
 struct awi_mib_addr {
@@ -434,7 +434,7 @@ struct awi_mib_addr {
 	u_int8_t	aGroup_Addresses[AWI_GROUP_ADDR_SIZE][ETHER_ADDR_LEN];
 	u_int8_t	aTransmit_Enable_Status;
 	u_int8_t	_Reserved1;
-} __attribute__((__packed__));
+} __packed;
 
 #define AWI_PWR_LEVEL_SIZE 4
 struct awi_mib_phy {
@@ -458,6 +458,6 @@ struct awi_mib_phy {
 #define	AWI_PHY_TYPE_DS		2
 #define	AWI_PHY_TYPE_IR		3
 	u_int8_t	RCR_33A_Bits[8];
-} __attribute__((__packed__));
+} __packed;
 
 #endif /* _DEV_IC_AWIREG_H */
