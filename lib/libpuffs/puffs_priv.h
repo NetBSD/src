@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_priv.h,v 1.36 2007/12/16 20:02:58 pooka Exp $	*/
+/*	$NetBSD: puffs_priv.h,v 1.37 2007/12/25 20:38:01 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006 Antti Kantee.  All Rights Reserved.
@@ -45,7 +45,7 @@ extern pthread_mutex_t pu_lock;
 #define PU_UNLOCK()
 #endif
 
-#define PU_CMAP(pu, c)	(pu->pu_cmap ? pu->pu_cmap(c) : (struct puffs_node *)c)
+#define PU_CMAP(pu, c) (pu->pu_cmap ? pu->pu_cmap(pu,c) : (struct puffs_node*)c)
 
 struct puffs_framectrl {
 	puffs_framev_readframe_fn rfb;
@@ -126,7 +126,7 @@ struct puffs_usermount {
 
 	TAILQ_HEAD(, puffs_executor) pu_exq;
 
-	struct puffs_node	*(*pu_cmap)(void *);
+	pu_cmap_fn		pu_cmap;
 
 	pu_pathbuild_fn		pu_pathbuild;
 	pu_pathtransform_fn	pu_pathtransform;
