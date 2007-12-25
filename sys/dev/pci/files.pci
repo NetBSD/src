@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.299 2007/12/15 05:46:21 dyoung Exp $
+#	$NetBSD: files.pci,v 1.300 2007/12/25 14:22:25 joerg Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -391,6 +391,7 @@ attach	esh at pci with esh_pci
 file	dev/pci/if_esh_pci.c		esh_pci
 
 # generic PCI VGA
+defflag	opt_vga.h	VGA_POST
 attach	vga at pci with vga_pci
 file	dev/pci/vga_pci.c		vga_pci			needs-flag
 
