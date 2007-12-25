@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep_common.c,v 1.5 2007/12/24 01:31:08 macallan Exp $ */
+/* $NetBSD: pci_machdep_common.c,v 1.6 2007/12/25 17:55:10 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep_common.c,v 1.5 2007/12/24 01:31:08 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep_common.c,v 1.6 2007/12/25 17:55:10 macallan Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -71,11 +71,6 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep_common.c,v 1.5 2007/12/24 01:31:08 macal
  * PCI doesn't have any special needs; just use the generic versions
  * of these functions.
  */
-/* 
- * XXX for now macppc needs its own pci_bus_dma_tag
- * this will go away once we use the common bus_space stuff
- */
-#ifndef __HAVE_PRIVATE_PCI_BUS_DMA_TAG 
 struct powerpc_bus_dma_tag pci_bus_dma_tag = {
 	0,			/* _bounce_thresh */
 	_bus_dmamap_create,
@@ -92,7 +87,6 @@ struct powerpc_bus_dma_tag pci_bus_dma_tag = {
 	_bus_dmamem_unmap,
 	_bus_dmamem_mmap,
 };
-#endif
 
 int
 genppc_pci_bus_maxdevs(pci_chipset_tag_t pc, int busno)

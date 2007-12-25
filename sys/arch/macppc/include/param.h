@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.14 2007/12/24 01:27:34 macallan Exp $	*/
+/*	$NetBSD: param.h,v 1.15 2007/12/25 17:55:10 macallan Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -56,7 +56,5 @@
  */
 #define	NKMEMPAGES_MIN_DEFAULT	((8 * 1024 * 1024) >> PAGE_SHIFT)
 #define	NKMEMPAGES_MAX_DEFAULT	((48 * 1024 * 1024) >> PAGE_SHIFT)
-
-#define __HAVE_PRIVATE_PCI_BUS_DMA_TAG
 
 #include <powerpc/param.h>
