@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.80 2007/12/05 12:11:56 pooka Exp $	*/
+/*	$NetBSD: puffs.c,v 1.81 2007/12/25 20:38:01 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.80 2007/12/05 12:11:56 pooka Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.81 2007/12/25 20:38:01 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -335,6 +335,13 @@ puffs_set_errnotify(struct puffs_usermount *pu, pu_errnotify_fn fn)
 {
 
 	pu->pu_errnotify = fn;
+}
+
+void
+puffs_set_cmap(struct puffs_usermount *pu, pu_cmap_fn fn)
+{
+
+	pu->pu_cmap = fn;
 }
 
 void
