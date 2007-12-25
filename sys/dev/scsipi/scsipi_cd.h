@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_cd.h,v 1.17 2006/12/01 21:36:56 martin Exp $	*/
+/*	$NetBSD: scsipi_cd.h,v 1.18 2007/12/25 18:33:42 perry Exp $	*/
 
 /*
  * Written by Julian Elischer (julian@tfs.com)
@@ -35,7 +35,7 @@ struct scsipi_load_unload {
 	u_int8_t unused2[3];
 	u_int8_t slot;
 	u_int8_t unused3[3];
-} __attribute__((__packed__));
+} __packed;
 
 #define PAUSE			0x4b	/* cdrom pause in 'play audio' mode */
 struct scsipi_pause {
@@ -44,7 +44,7 @@ struct scsipi_pause {
 	u_int8_t unused[6];
 	u_int8_t resume;
 	u_int8_t control;
-} __attribute__((__packed__));
+} __packed;
 #define	PA_PAUSE	0x00
 #define PA_RESUME	0x01
 
@@ -60,7 +60,7 @@ struct scsipi_play_msf {
 	u_int8_t end_s;
 	u_int8_t end_f;
 	u_int8_t control;
-} __attribute__((__packed__));
+} __packed;
 
 #define PLAY			0x45	/* cdrom play  'play audio' mode */
 struct scsipi_play {
@@ -70,7 +70,7 @@ struct scsipi_play {
 	u_int8_t unused;
 	u_int8_t xfer_len[2];
 	u_int8_t control;
-} __attribute__((__packed__));
+} __packed;
 
 #define READ_HEADER		0x44	/* cdrom read header */
 struct scsipi_read_header {
@@ -80,7 +80,7 @@ struct scsipi_read_header {
 	u_int8_t unused;
 	u_int8_t data_len[2];
 	u_int8_t control;
-} __attribute__((__packed__));
+} __packed;
 
 #define READ_SUBCHANNEL		0x42	/* cdrom read Subchannel */
 struct scsipi_read_subchannel {
@@ -93,7 +93,7 @@ struct scsipi_read_subchannel {
 	u_int8_t track;
 	u_int8_t data_len[2];
 	u_int8_t control;
-} __attribute__((__packed__));
+} __packed;
 
 #define READ_TOC		0x43	/* cdrom read TOC */
 struct scsipi_read_toc {
@@ -104,13 +104,13 @@ struct scsipi_read_toc {
 	u_int8_t from_track;		/* session nr in format 2 */
 	u_int8_t data_len[2];
 	u_int8_t control;
-} __attribute__((__packed__));
+} __packed;
 
 struct scsipi_toc_header {
 	uint8_t	 length[2];
 	uint8_t  first;			/* track or session */
 	uint8_t  last;
-} __attribute__((__packed__));
+} __packed;
 
 /* read TOC form 0 result entries */
 struct scsipi_toc_formatted {
@@ -119,7 +119,7 @@ struct scsipi_toc_formatted {
 	uint8_t  tracknr;
 	uint8_t  unused2;
 	uint8_t	 msf_lba[4];		/* union msf_lba from cdio.h */
-} __attribute__((__packed__));
+} __packed;
 
 /* read TOC form 1 result entries */
 struct scsipi_toc_msinfo {
@@ -128,7 +128,7 @@ struct scsipi_toc_msinfo {
 	uint8_t  tracknr;		/* first track last compl. session */
 	uint8_t  unused2;
 	uint8_t	 msf_lba[4];		/* union msf_lba from cdio.h */
-} __attribute__((__packed__));
+} __packed;
 
 /* read TOC form 2 result entries */
 struct scsipi_toc_rawtoc {
@@ -143,7 +143,7 @@ struct scsipi_toc_rawtoc {
 	uint8_t  pmin;
 	uint8_t  psec;
 	uint8_t  pframe;
-} __attribute__((__packed__));
+} __packed;
 
 /* read TOC form 3, 4 and 5 obmitted yet */
 
@@ -156,21 +156,21 @@ struct scsipi_get_configuration {
 	uint8_t  unused[3];
 	uint8_t  data_len[2];
 	uint8_t  control;
-} __attribute__((__packed__));
+} __packed;
 
 struct scsipi_get_conf_data {
 	uint8_t  data_len[4];
 	uint8_t  unused[2];
 	uint8_t  mmc_profile[2];	/* current mmc profile for disk */
 	uint8_t  feature_desc[1];	/* feature descriptors follow	*/
-} __attribute__((__packed__));
+} __packed;
 
 struct scsipi_get_conf_feature {	/* feature descriptor */
 	uint8_t  featurecode[2];
 	uint8_t  flags;
 	uint8_t  additional_length;	/* length of feature dependent  */
 	uint8_t  feature_dependent[256];
-} __attribute__((__packed__));
+} __packed;
 #define FEATUREFLAG_CURRENT    1
 #define FEATUREFLAG_PERSISTENT 2
 
@@ -181,7 +181,7 @@ struct scsipi_read_discinfo {
 	uint8_t  unused[6];
 	uint8_t  data_len[2];
 	uint8_t  control;
-} __attribute__((__packed__));
+} __packed;
 
 #define READ_DISCINFO_SMALLSIZE  12
 #define READ_DISCINFO_BIGSIZE    34	/* + entries */
@@ -204,7 +204,7 @@ struct scsipi_read_discinfo_data {
 	uint8_t  application_code;
 	uint8_t  num_opc_table_entries;
 	uint8_t  opc_table_entries[1];	/* opc table entries follow	*/
-} __attribute__((__packed__));
+} __packed;
 
 
 #define READ_TRACKINFO 0x52
@@ -215,7 +215,7 @@ struct scsipi_read_trackinfo {
 	uint8_t  nothing;
 	uint8_t  data_len[2];
 	uint8_t  control;
-} __attribute__((__packed__));
+} __packed;
 #define READ_TRACKINFO_ADDR_LBA    0
 #define READ_TRACKINFO_ADDR_TRACK  1
 #define READ_TRACKINFO_ADDR_SESS   2
@@ -237,7 +237,7 @@ struct scsipi_read_trackinfo_data {
 	uint8_t  track_msb;
 	uint8_t  session_msb;
 	uint8_t  unused2[2];
-} __attribute__((__packed__));
+} __packed;
 #define READ_TRACKINFO_RETURNSIZE 36
 
 
@@ -248,12 +248,12 @@ struct scsipi_read_cd_capacity {
 	u_int8_t addr[4];
 	u_int8_t unused[3];
 	u_int8_t control;
-} __attribute__((__packed__));
+} __packed;
 
 struct scsipi_read_cd_cap_data {
 	u_int8_t addr[4];
 	u_int8_t length[4];
-} __attribute__((__packed__));
+} __packed;
 
 
 /* mod pages common to scsi and atapi */

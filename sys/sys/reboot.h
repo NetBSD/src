@@ -1,4 +1,4 @@
-/*	$NetBSD: reboot.h,v 1.24 2007/11/17 18:12:31 ad Exp $	*/
+/*	$NetBSD: reboot.h,v 1.25 2007/12/25 18:33:48 perry Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993, 1994
@@ -115,7 +115,7 @@
 __BEGIN_DECLS
 
 void	cpu_reboot(int, char *)
-    __attribute__((__noreturn__));
+    __dead;
 
 __END_DECLS
 

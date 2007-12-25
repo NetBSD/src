@@ -1,4 +1,4 @@
-/*	$NetBSD: udp.h,v 1.12 2005/12/10 23:36:23 elad Exp $	*/
+/*	$NetBSD: udp.h,v 1.13 2007/12/25 18:33:47 perry Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -43,7 +43,7 @@ struct udphdr {
 	u_int16_t uh_dport;		/* destination port */
 	u_int16_t uh_ulen;		/* udp length */
 	u_int16_t uh_sum;		/* udp checksum */
-} __attribute__((__packed__));
+} __packed;
 
 /* socket options for UDP */
 #define UDP_ENCAP	100

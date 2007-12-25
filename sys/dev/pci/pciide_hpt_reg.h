@@ -1,4 +1,4 @@
-/*      $NetBSD: pciide_hpt_reg.h,v 1.14 2006/08/05 22:31:13 xtraeme Exp $       */
+/*      $NetBSD: pciide_hpt_reg.h,v 1.15 2007/12/25 18:33:41 perry Exp $       */
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -127,33 +127,33 @@
 
 #define HPT370_FOUT 		0x7c	/* DPLL output frequency */
 
-static const u_int32_t hpt366_pio[] __attribute__((__unused__)) =
+static const u_int32_t hpt366_pio[] __unused =
 	{0x00d0a7aa, 0x00c8a753, 0x00c8a742, 0x00c8a731};
-static const u_int32_t hpt366_dma[] __attribute__((__unused__)) =
+static const u_int32_t hpt366_dma[] __unused =
 	{0x20c8a797, 0x20c8a742, 0x20c8a731};
-static const u_int32_t hpt366_udma[] __attribute__((__unused__)) =
+static const u_int32_t hpt366_udma[] __unused =
 	{0x10c8a731, 0x10cba731, 0x10caa731, 0x10cfa731, 0x10c9a731};
 
-static const u_int32_t hpt370_pio[] __attribute__((__unused__)) =
+static const u_int32_t hpt370_pio[] __unused =
 	{0x06914e8a, 0x06914e65, 0x06514e33, 0x06514e22, 0x06514e21};
-static const u_int32_t hpt370_dma[] __attribute__((__unused__)) =
+static const u_int32_t hpt370_dma[] __unused =
 	{0x26514e97, 0x26514e33, 0x26514e21};
-static const u_int32_t hpt370_udma[] __attribute__((__unused__)) =
+static const u_int32_t hpt370_udma[] __unused =
 	{0x16514e31, 0x164d4e31, 0x16494e31, 0x166d4e31, 0x16454e31,
 	 0x1a85f442};
 
-static const u_int32_t hpt372_pio[] __attribute__((__unused__)) =
+static const u_int32_t hpt372_pio[] __unused =
 	{0x0d029d5e, 0x0d029d26, 0x0c829ca6, 0x0c829c84, 0x0c829c62};
-static const u_int32_t hpt372_dma[] __attribute__((__unused__)) =
+static const u_int32_t hpt372_dma[] __unused =
 	{0x2c829d2e, 0x2c829c66, 0x2829c62};
-static const u_int32_t hpt372_udma[] __attribute__((__unused__)) =
+static const u_int32_t hpt372_udma[] __unused =
 	{0x1c829c62, 0x1c9a9c62, 0x1c929c62, 0x1c8e9c62, 0x1c8a9c62,
 	 0x1cae9c62, 0x1c869c62};
 
-static u_int32_t hpt374_pio[] __attribute__((__unused__)) =
+static u_int32_t hpt374_pio[] __unused =
 	{0x0ac1f48a, 0x0ac1f465, 0x0a81f454, 0x0a81f443, 0x0a81f442};
-static u_int32_t hpt374_dma[] __attribute__((__unused__)) =
+static u_int32_t hpt374_dma[] __unused =
 	{0x228082ea, 0x22808254, 0x22808242};
-static u_int32_t hpt374_udma[] __attribute__((__unused__)) =
+static u_int32_t hpt374_udma[] __unused =
 	{0x121882ea, 0x12148254, 0x120c8242, 0x128c8242, 0x12ac8242,
 	    0x12848242, 0x12808242};

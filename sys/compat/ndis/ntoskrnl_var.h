@@ -881,7 +881,7 @@ struct io_stack_location {
 			void			*isl_arg3;
 			void			*isl_arg4;
 		} isl_others;
-	} isl_parameters __attribute__((packed));
+	} isl_parameters __packed;
 
 	void			*isl_devobj;
 	void			*isl_fileobj;
