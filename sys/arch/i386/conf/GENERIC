@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.869 2007/12/21 15:20:13 jmcneill Exp $
+# $NetBSD: GENERIC,v 1.870 2007/12/25 01:03:32 ad Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.869 $"
+#ident 		"GENERIC-$Revision: 1.870 $"
 
 maxusers	32		# estimated number of users
 
@@ -94,6 +94,9 @@ options 	SYSVSHM		# System V-like memory sharing
 options 	P1003_1B_SEMAPHORE	# p1003.1b semaphore support
 
 options 	LKM		# loadable kernel modules
+options 	MULTIPROCESSOR	# SMP
+options 	APM_NO_IDLE	# needed for SMP
+options 	MPBIOS		# configure CPUs and APICs using MPBIOS
 
 options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
