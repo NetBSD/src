@@ -1,4 +1,4 @@
-/* 	$NetBSD: lwp.h,v 1.73 2007/12/22 01:14:53 yamt Exp $	*/
+/* 	$NetBSD: lwp.h,v 1.74 2007/12/25 18:33:48 perry Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -263,7 +263,7 @@ void	lwp_continue(lwp_t *);
 void	cpu_setfunc(lwp_t *, void (*)(void *), void *);
 void	startlwp(void *);
 void	upcallret(lwp_t *);
-void	lwp_exit(lwp_t *) __attribute__((__noreturn__));
+void	lwp_exit(lwp_t *) __dead;
 void	lwp_exit_switchaway(lwp_t *);
 lwp_t *proc_representative_lwp(struct proc *, int *, int);
 int	lwp_suspend(lwp_t *, lwp_t *);

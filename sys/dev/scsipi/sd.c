@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.268 2007/12/09 20:28:23 jmcneill Exp $	*/
+/*	$NetBSD: sd.c,v 1.269 2007/12/25 18:33:43 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.268 2007/12/09 20:28:23 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.269 2007/12/25 18:33:43 perry Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -1807,7 +1807,7 @@ sd_get_capacity(struct sd_softc *sd, struct disk_parms *dp, int flags)
 		struct {
 			struct scsipi_capacity_list_header header;
 			struct scsipi_capacity_descriptor desc;
-		} __attribute__((packed)) data;
+		} __packed data;
 
 		memset(&cmd, 0, sizeof(cmd));
 		memset(&data, 0, sizeof(data));

@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore.h,v 1.4 2005/12/03 17:34:43 christos Exp $	*/
+/*	$NetBSD: filecore.h,v 1.5 2007/12/25 18:33:43 perry Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -119,7 +119,7 @@ struct filecore_disc_record {
 	unsigned share_size:8;		/* base 2 log sharing granularity */
 	unsigned big_flag:8;		/* 1 if disc > 512Mb */
 	char	 reserved[18];
-} __attribute__((__packed__));
+} __packed;
 
 struct filecore_direntry {
 	char	 name[10];
@@ -128,12 +128,12 @@ struct filecore_direntry {
 	unsigned len:32;
 	unsigned addr:24;
 	unsigned attr:8;
-} __attribute__((__packed__));
+} __packed;
 
 struct filecore_dirhead {
 	unsigned mas_seq:8;
 	unsigned chkname:32;
-} __attribute__((__packed__));
+} __packed;
 
 struct filecore_dirtail {
 	unsigned lastmark:8;
@@ -145,7 +145,7 @@ struct filecore_dirtail {
 	unsigned mas_seq:8;
 	unsigned chkname:32;
 	unsigned checkbyte:8;
-} __attribute__((__packed__));
+} __packed;
 
 #define fcdirhead(dp) ((struct filecore_dirhead *)(dp))
 #define fcdirentry(dp,n) (((struct filecore_direntry *)(((char *)(dp))+5))+(n))

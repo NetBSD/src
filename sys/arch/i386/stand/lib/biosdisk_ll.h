@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk_ll.h,v 1.14 2005/12/11 12:17:48 christos Exp $	 */
+/*	$NetBSD: biosdisk_ll.h,v 1.15 2007/12/25 18:33:34 perry Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -110,7 +110,7 @@ struct biosdisk_extinfo {
 	uint8_t		checksum;	/* byte sum from dev_path_sig is 0 */
 #endif /* BIOSDISK_EXTINFO_V3 */
 #endif /* BIOSDISK_EXTINFO_V2 */
-} __attribute__((packed));
+} __packed;
 
 #define EXTINFO_DMA_TRANS	0x0001	/* transparent DMA boundary errors */
 #define EXTINFO_GEOM_VALID	0x0002	/* geometry in c/h/s in struct valid */

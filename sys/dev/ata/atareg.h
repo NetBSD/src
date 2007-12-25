@@ -1,4 +1,4 @@
-/*	$NetBSD: atareg.h,v 1.31 2007/11/18 17:48:21 christos Exp $	*/
+/*	$NetBSD: atareg.h,v 1.32 2007/12/25 18:33:36 perry Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -475,7 +475,7 @@ struct ata_smart_attr {
 	u_int8_t		worst;
 	u_int8_t		raw[6];
 	u_int8_t		reserved;
-} __attribute__((packed));
+} __packed;
 
 struct ata_smart_attributes {
 	u_int16_t		data_structure_revision;
@@ -493,13 +493,13 @@ struct ata_smart_attributes {
 	u_int8_t		reserved_374_385[12];
 	u_int8_t		vendor_specific_386_509[125];
 	int8_t			checksum;
-} __attribute__((packed));
+} __packed;
 
 struct ata_smart_thresh {
 	u_int8_t		id;
 	u_int8_t		value;
 	u_int8_t		reserved[10];
-} __attribute__((packed));
+} __packed;
 
 struct ata_smart_thresholds {
 	u_int16_t		data_structure_revision;
@@ -507,7 +507,7 @@ struct ata_smart_thresholds {
 	u_int8_t		reserved[18];
 	u_int8_t		vendor_specific[131];
 	int8_t			checksum;
-} __attribute__((packed));
+} __packed;
 
 struct ata_smart_selftest {
 	u_int8_t		number;
@@ -516,7 +516,7 @@ struct ata_smart_selftest {
 	u_int8_t		failure_check_point;
 	u_int32_t		lba_first_error;
 	u_int8_t		vendor_specific[15];
-} __attribute__((packed));
+} __packed;
 
 struct ata_smart_selftestlog {
 	u_int16_t		data_structure_revision;
@@ -525,6 +525,6 @@ struct ata_smart_selftestlog {
 	u_int8_t		mostrecenttest;
 	u_int8_t		reserved[2];
 	u_int8_t		checksum;
-} __attribute__((packed));
+} __packed;
 
 #endif /* _DEV_ATA_ATAREG_H_ */
