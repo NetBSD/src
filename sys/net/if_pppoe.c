@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.81 2007/10/08 16:18:05 ad Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.82 2007/12/25 18:33:45 perry Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.81 2007/10/08 16:18:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.82 2007/12/25 18:33:45 perry Exp $");
 
 #include "pppoe.h"
 #include "bpfilter.h"
@@ -76,12 +76,12 @@ struct pppoehdr {
 	u_int8_t code;
 	u_int16_t session;
 	u_int16_t plen;
-} __attribute__((__packed__));
+} __packed;
 
 struct pppoetag {
 	u_int16_t tag;
 	u_int16_t len;
-} __attribute__((__packed__));
+} __packed;
 
 #define PPPOE_HEADERLEN	sizeof(struct pppoehdr)
 #define	PPPOE_OVERHEAD	(PPPOE_HEADERLEN + 2)

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.h,v 1.33 2006/09/25 12:24:47 sketch Exp $	*/
+/*	$NetBSD: if_ether.h,v 1.34 2007/12/25 18:33:46 perry Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -75,7 +75,7 @@ struct	ether_arp {
 	u_int8_t arp_spa[4];			/* sender protocol address */
 	u_int8_t arp_tha[ETHER_ADDR_LEN];	/* target hardware address */
 	u_int8_t arp_tpa[4];			/* target protocol address */
-} __attribute__((__packed__));
+} __packed;
 #define	arp_hrd	ea_hdr.ar_hrd
 #define	arp_pro	ea_hdr.ar_pro
 #define	arp_hln	ea_hdr.ar_hln

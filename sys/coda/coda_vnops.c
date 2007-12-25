@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vnops.c,v 1.64 2007/12/08 19:29:37 pooka Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.65 2007/12/25 18:33:35 perry Exp $	*/
 
 /*
  *
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.64 2007/12/08 19:29:37 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.65 2007/12/25 18:33:35 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -825,7 +825,7 @@ coda_inactive(void *v)
     struct vop_inactive_args *ap = v;
     struct vnode *vp = ap->a_vp;
     struct cnode *cp = VTOC(vp);
-    kauth_cred_t cred __attribute__((unused)) = NULL;
+    kauth_cred_t cred __unused = NULL;
 
     /* We don't need to send inactive to venus - DCS */
     MARK_ENTRY(CODA_INACTIVE_STATS);
@@ -1700,11 +1700,11 @@ coda_bmap(void *v)
     /* XXX on the global proc */
 /* true args */
     struct vop_bmap_args *ap = v;
-    struct vnode *vp __attribute__((unused)) = ap->a_vp;	/* file's vnode */
-    daddr_t bn __attribute__((unused)) = ap->a_bn;	/* fs block number */
+    struct vnode *vp __unused = ap->a_vp;	/* file's vnode */
+    daddr_t bn __unused = ap->a_bn;	/* fs block number */
     struct vnode **vpp = ap->a_vpp;			/* RETURN vp of device */
-    daddr_t *bnp __attribute__((unused)) = ap->a_bnp;	/* RETURN device block number */
-    struct lwp *l __attribute__((unused)) = curlwp;
+    daddr_t *bnp __unused = ap->a_bnp;	/* RETURN device block number */
+    struct lwp *l __unused = curlwp;
 /* upcall decl */
 /* locals */
 
@@ -1725,8 +1725,8 @@ coda_strategy(void *v)
 {
 /* true args */
     struct vop_strategy_args *ap = v;
-    struct buf *bp __attribute__((unused)) = ap->a_bp;
-    struct lwp *l __attribute__((unused)) = curlwp;
+    struct buf *bp __unused = ap->a_bp;
+    struct lwp *l __unused = curlwp;
 /* upcall decl */
 /* locals */
 
