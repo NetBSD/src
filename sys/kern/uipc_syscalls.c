@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.125 2007/12/20 23:03:13 dsl Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.126 2007/12/26 16:01:37 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.125 2007/12/20 23:03:13 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.126 2007/12/26 16:01:37 ad Exp $");
 
 #include "opt_pipe.h"
 
@@ -538,7 +538,9 @@ do_sys_sendmsg(struct lwp *l, int s, struct msghdr *mp, int flags,
 		MCLAIM(control, so->so_mowner);
 
 	len = auio.uio_resid;
+	KERNEL_LOCK(1, NULL);
 	error = (*so->so_send)(so, to, &auio, NULL, control, flags, l);
+	KERNEL_UNLOCK_ONE(NULL);
 	/* Protocol is responsible for freeing 'control' */
 	control = NULL;
 
@@ -816,8 +818,10 @@ do_sys_recvmsg(struct lwp *l, int s, struct msghdr *mp, struct mbuf **from,
 
 	len = auio.uio_resid;
 	mp->msg_flags &= MSG_USERFLAGS;
+	KERNEL_LOCK(1, NULL);
 	error = (*so->so_receive)(so, from, &auio, NULL, control,
 			  &mp->msg_flags);
+	KERNEL_UNLOCK_ONE(NULL);
 	len -= auio.uio_resid;
 	*retsize = len;
 	if (error != 0 && len != 0
