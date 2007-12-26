@@ -1,7 +1,9 @@
+/*	$NetBSD: exoparg2.c,v 1.1.56.1 2007/12/26 19:55:03 ad Exp $	*/
+
 /******************************************************************************
  *
  * Module Name: exoparg2 - AML execution - opcodes with 2 arguments
- *              xRevision: 1.139 $
+ *              $Revision: 1.1.56.1 $
  *
  *****************************************************************************/
 
@@ -9,7 +11,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2007, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -114,17 +116,16 @@
  *
  *****************************************************************************/
 
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exoparg2.c,v 1.1 2006/03/23 13:36:31 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exoparg2.c,v 1.1.56.1 2007/12/26 19:55:03 ad Exp $");
 
 #define __EXOPARG2_C__
 
-#include "acpi.h"
-#include "acparser.h"
-#include "acinterp.h"
-#include "acevents.h"
-#include "amlcode.h"
+#include <dist/acpica/acpi.h>
+#include <dist/acpica/acparser.h>
+#include <dist/acpica/acinterp.h>
+#include <dist/acpica/acevents.h>
+#include <dist/acpica/amlcode.h>
 
 
 #define _COMPONENT          ACPI_EXECUTER
@@ -179,7 +180,7 @@ AcpiExOpcode_2A_0T_0R (
     ACPI_STATUS             Status = AE_OK;
 
 
-    ACPI_FUNCTION_TRACE_STR ("ExOpcode_2A_0T_0R",
+    ACPI_FUNCTION_TRACE_STR (ExOpcode_2A_0T_0R,
             AcpiPsGetOpcodeName (WalkState->Opcode));
 
 
@@ -281,7 +282,7 @@ AcpiExOpcode_2A_2T_1R (
     ACPI_STATUS             Status;
 
 
-    ACPI_FUNCTION_TRACE_STR ("ExOpcode_2A_2T_1R",
+    ACPI_FUNCTION_TRACE_STR (ExOpcode_2A_2T_1R,
         AcpiPsGetOpcodeName (WalkState->Opcode));
 
 
@@ -342,11 +343,6 @@ AcpiExOpcode_2A_2T_1R (
         goto Cleanup;
     }
 
-    /* Return the remainder */
-
-    WalkState->ResultObj = ReturnDesc1;
-
-
 Cleanup:
     /*
      * Since the remainder is not returned indirectly, remove a reference to
@@ -359,6 +355,13 @@ Cleanup:
         /* Delete the return object */
 
         AcpiUtRemoveReference (ReturnDesc1);
+    }
+
+    /* Save return object (the remainder) on success */
+
+    else
+    {
+        WalkState->ResultObj = ReturnDesc1;
     }
 
     return_ACPI_STATUS (Status);
@@ -389,7 +392,7 @@ AcpiExOpcode_2A_1T_1R (
     ACPI_SIZE               Length;
 
 
-    ACPI_FUNCTION_TRACE_STR ("ExOpcode_2A_1T_1R",
+    ACPI_FUNCTION_TRACE_STR (ExOpcode_2A_1T_1R,
         AcpiPsGetOpcodeName (WalkState->Opcode));
 
 
@@ -507,7 +510,6 @@ AcpiExOpcode_2A_1T_1R (
         Index = Operand[1]->Integer.Value;
         ReturnDesc->Reference.Offset = (UINT32) Index;
         ReturnDesc->Reference.Opcode = AML_INDEX_OP;
-        ReturnDesc->Reference.Object = Operand[0];
 
         /*
          * At this point, the Source operand is a String, Buffer, or Package.
@@ -563,9 +565,10 @@ AcpiExOpcode_2A_1T_1R (
         }
 
         /*
-         * Add a reference to the target package/buffer/string for the life
+         * Save the target object and add a reference to it for the life
          * of the index
          */
+        ReturnDesc->Reference.Object = Operand[0];
         AcpiUtAddReference (Operand[0]);
 
         /* Store the reference to the Target */
@@ -615,6 +618,7 @@ Cleanup:
     if (ACPI_FAILURE (Status))
     {
         AcpiUtRemoveReference (ReturnDesc);
+        WalkState->ResultObj = NULL;
     }
 
     return_ACPI_STATUS (Status);
@@ -643,7 +647,7 @@ AcpiExOpcode_2A_0T_1R (
     BOOLEAN                 LogicalResult = FALSE;
 
 
-    ACPI_FUNCTION_TRACE_STR ("ExOpcode_2A_0T_1R",
+    ACPI_FUNCTION_TRACE_STR (ExOpcode_2A_0T_1R,
         AcpiPsGetOpcodeName (WalkState->Opcode));
 
 
@@ -719,9 +723,6 @@ StoreLogicalResult:
         ReturnDesc->Integer.Value = ACPI_INTEGER_MAX;
     }
 
-    WalkState->ResultObj = ReturnDesc;
-
-
 Cleanup:
 
     /* Delete return object on error */
@@ -729,6 +730,13 @@ Cleanup:
     if (ACPI_FAILURE (Status))
     {
         AcpiUtRemoveReference (ReturnDesc);
+    }
+
+    /* Save return object on success */
+
+    else
+    {
+        WalkState->ResultObj = ReturnDesc;
     }
 
     return_ACPI_STATUS (Status);

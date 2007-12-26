@@ -1,8 +1,9 @@
+/*	$NetBSD: exoparg3.c,v 1.1.56.1 2007/12/26 19:55:03 ad Exp $	*/
 
 /******************************************************************************
  *
  * Module Name: exoparg3 - AML execution - opcodes with 3 arguments
- *              xRevision: 1.31 $
+ *              $Revision: 1.1.56.1 $
  *
  *****************************************************************************/
 
@@ -10,7 +11,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2007, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -117,14 +118,14 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exoparg3.c,v 1.1 2006/03/23 13:36:31 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exoparg3.c,v 1.1.56.1 2007/12/26 19:55:03 ad Exp $");
 
 #define __EXOPARG3_C__
 
-#include "acpi.h"
-#include "acinterp.h"
-#include "acparser.h"
-#include "amlcode.h"
+#include <dist/acpica/acpi.h>
+#include <dist/acpica/acinterp.h>
+#include <dist/acpica/acparser.h>
+#include <dist/acpica/amlcode.h>
 
 
 #define _COMPONENT          ACPI_EXECUTER
@@ -175,7 +176,7 @@ AcpiExOpcode_3A_0T_0R (
     ACPI_STATUS             Status = AE_OK;
 
 
-    ACPI_FUNCTION_TRACE_STR ("ExOpcode_3A_0T_0R",
+    ACPI_FUNCTION_TRACE_STR (ExOpcode_3A_0T_0R,
         AcpiPsGetOpcodeName (WalkState->Opcode));
 
 
@@ -189,7 +190,7 @@ AcpiExOpcode_3A_0T_0R (
             (UINT32) Operand[1]->Integer.Value,
             (UINT32) Operand[2]->Integer.Value));
 
-        Fatal = ACPI_MEM_ALLOCATE (sizeof (ACPI_SIGNAL_FATAL_INFO));
+        Fatal = ACPI_ALLOCATE (sizeof (ACPI_SIGNAL_FATAL_INFO));
         if (Fatal)
         {
             Fatal->Type     = (UINT32) Operand[0]->Integer.Value;
@@ -203,7 +204,7 @@ AcpiExOpcode_3A_0T_0R (
 
         /* Might return while OS is shutting down, just continue */
 
-        ACPI_MEM_FREE (Fatal);
+        ACPI_FREE (Fatal);
         break;
 
 
@@ -246,7 +247,7 @@ AcpiExOpcode_3A_1T_1R (
     ACPI_SIZE               Length;
 
 
-    ACPI_FUNCTION_TRACE_STR ("ExOpcode_3A_1T_1R",
+    ACPI_FUNCTION_TRACE_STR (ExOpcode_3A_1T_1R,
         AcpiPsGetOpcodeName (WalkState->Opcode));
 
 
@@ -296,7 +297,7 @@ AcpiExOpcode_3A_1T_1R (
 
             /* Always allocate a new buffer for the String */
 
-            Buffer = ACPI_MEM_CALLOCATE ((ACPI_SIZE) Length + 1);
+            Buffer = ACPI_ALLOCATE_ZEROED ((ACPI_SIZE) Length + 1);
             if (!Buffer)
             {
                 Status = AE_NO_MEMORY;
@@ -312,7 +313,7 @@ AcpiExOpcode_3A_1T_1R (
             {
                 /* Allocate a new buffer for the Buffer */
 
-                Buffer = ACPI_MEM_CALLOCATE (Length);
+                Buffer = ACPI_ALLOCATE_ZEROED (Length);
                 if (!Buffer)
                 {
                     Status = AE_NO_MEMORY;
@@ -365,6 +366,7 @@ Cleanup:
     if (ACPI_FAILURE (Status) || WalkState->ResultObj)
     {
         AcpiUtRemoveReference (ReturnDesc);
+        WalkState->ResultObj = NULL;
     }
 
     /* Set the return object and exit */

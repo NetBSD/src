@@ -1,8 +1,9 @@
+/*	$NetBSD: exresolv.c,v 1.1.56.1 2007/12/26 19:55:04 ad Exp $	*/
 
 /******************************************************************************
  *
  * Module Name: exresolv - AML Interpreter object resolution
- *              xRevision: 1.136 $
+ *              $Revision: 1.1.56.1 $
  *
  *****************************************************************************/
 
@@ -10,7 +11,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2007, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,16 +117,16 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exresolv.c,v 1.1 2006/03/23 13:36:31 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exresolv.c,v 1.1.56.1 2007/12/26 19:55:04 ad Exp $");
 
 #define __EXRESOLV_C__
 
-#include "acpi.h"
-#include "amlcode.h"
-#include "acdispat.h"
-#include "acinterp.h"
-#include "acnamesp.h"
-#include "acparser.h"
+#include <dist/acpica/acpi.h>
+#include <dist/acpica/amlcode.h>
+#include <dist/acpica/acdispat.h>
+#include <dist/acpica/acinterp.h>
+#include <dist/acpica/acnamesp.h>
+#include <dist/acpica/acparser.h>
 
 
 #define _COMPONENT          ACPI_EXECUTER
@@ -162,7 +163,7 @@ AcpiExResolveToValue (
     ACPI_STATUS             Status;
 
 
-    ACPI_FUNCTION_TRACE_PTR ("ExResolveToValue", StackPtr);
+    ACPI_FUNCTION_TRACE_PTR (ExResolveToValue, StackPtr);
 
 
     if (!StackPtr || !*StackPtr)
@@ -232,12 +233,11 @@ AcpiExResolveObjectToValue (
 {
     ACPI_STATUS             Status = AE_OK;
     ACPI_OPERAND_OBJECT     *StackDesc;
-    void                    *TempNode;
-    ACPI_OPERAND_OBJECT     *ObjDesc;
+    ACPI_OPERAND_OBJECT     *ObjDesc = NULL;
     UINT16                  Opcode;
 
 
-    ACPI_FUNCTION_TRACE ("ExResolveObjectToValue");
+    ACPI_FUNCTION_TRACE (ExResolveObjectToValue);
 
 
     StackDesc = *StackPtr;
@@ -252,24 +252,6 @@ AcpiExResolveObjectToValue (
 
         switch (Opcode)
         {
-        case AML_NAME_OP:
-
-            /*
-             * Convert name reference to a namespace node
-             * Then, AcpiExResolveNodeToValue can be used to get the value
-             */
-            TempNode = StackDesc->Reference.Object;
-
-            /* Delete the Reference Object */
-
-            AcpiUtRemoveReference (StackDesc);
-
-            /* Return the namespace node */
-
-            (*StackPtr) = TempNode;
-            break;
-
-
         case AML_LOCAL_OP:
         case AML_ARG_OP:
 
@@ -357,10 +339,23 @@ AcpiExResolveObjectToValue (
 
         case AML_INT_NAMEPATH_OP:   /* Reference to a named object */
 
-            /* Get the object pointed to by the namespace node */
+            /* Dereference the name */
 
-            *StackPtr = (StackDesc->Reference.Node)->Object;
-            AcpiUtAddReference (*StackPtr);
+            if ((StackDesc->Reference.Node->Type == ACPI_TYPE_DEVICE) ||
+                (StackDesc->Reference.Node->Type == ACPI_TYPE_THERMAL))
+            {
+                /* These node types do not have 'real' subobjects */
+
+                *StackPtr = (void *) StackDesc->Reference.Node;
+            }
+            else
+            {
+                /* Get the object pointed to by the namespace node */
+
+                *StackPtr = (StackDesc->Reference.Node)->Object;
+                AcpiUtAddReference (*StackPtr);
+            }
+
             AcpiUtRemoveReference (StackDesc);
             break;
 
@@ -387,8 +382,6 @@ AcpiExResolveObjectToValue (
         break;
 
 
-    /* These cases may never happen here, but just in case.. */
-
     case ACPI_TYPE_BUFFER_FIELD:
     case ACPI_TYPE_LOCAL_REGION_FIELD:
     case ACPI_TYPE_LOCAL_BANK_FIELD:
@@ -398,6 +391,10 @@ AcpiExResolveObjectToValue (
             StackDesc, ACPI_GET_OBJECT_TYPE (StackDesc)));
 
         Status = AcpiExReadDataFromField (WalkState, StackDesc, &ObjDesc);
+
+        /* Remove a reference to the original operand, then override */
+
+        AcpiUtRemoveReference (*StackPtr);
         *StackPtr = (void *) ObjDesc;
         break;
 
@@ -438,7 +435,7 @@ AcpiExResolveMultiple (
     ACPI_STATUS             Status;
 
 
-    ACPI_FUNCTION_TRACE ("AcpiExResolveMultiple");
+    ACPI_FUNCTION_TRACE (AcpiExResolveMultiple);
 
 
     /* Operand can be either a namespace node or an operand descriptor */

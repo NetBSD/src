@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Name: acpi.h - Master include file, Publics and external data.
- *       xRevision: 1.60 $
+ *       $Revision: 1.1.56.1 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2007, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -122,22 +122,22 @@
  * We put them here because we don't want to duplicate them
  * in the rest of the source code again and again.
  */
-#include "acnames.h"            /* Global ACPI names and strings */
-#include "acconfig.h"           /* Configuration constants */
-#include "acenv.h"              /* Target environment specific items */
-#include "actypes.h"            /* Fundamental common data types */
-#include "acexcep.h"            /* ACPI exception codes */
-#include "acmacros.h"           /* C macros */
-#include "actbl.h"              /* ACPI table definitions */
-#include "aclocal.h"            /* Internal data types */
-#include "acoutput.h"           /* Error output and Debug macros */
-#include "acpiosxf.h"           /* Interfaces to the ACPI-to-OS layer*/
-#include "acpixf.h"             /* ACPI core subsystem external interfaces */
-#include "acobject.h"           /* ACPI internal object */
-#include "acstruct.h"           /* Common structures */
-#include "acglobal.h"           /* All global variables */
-#include "achware.h"            /* Hardware defines and interfaces */
-#include "acutils.h"            /* Utility interfaces */
+#include <dist/acpica/acnames.h>            /* Global ACPI names and strings */
+#include <dist/acpica/acconfig.h>           /* Configuration constants */
+#include <dist/acpica/acenv.h>     /* Target environment specific items */
+#include <dist/acpica/actypes.h>            /* Fundamental common data types */
+#include <dist/acpica/acexcep.h>            /* ACPI exception codes */
+#include <dist/acpica/acmacros.h>           /* C macros */
+#include <dist/acpica/actbl.h>              /* ACPI table definitions */
+#include <dist/acpica/aclocal.h>            /* Internal data types */
+#include <dist/acpica/acoutput.h>           /* Error output and Debug macros */
+#include <dist/acpica/acpiosxf.h>           /* Interfaces to the ACPI-to-OS layer*/
+#include <dist/acpica/acpixf.h>             /* ACPI core subsystem external interfaces */
+#include <dist/acpica/acobject.h>           /* ACPI internal object */
+#include <dist/acpica/acstruct.h>           /* Common structures */
+#include <dist/acpica/acglobal.h>           /* All global variables */
+#include <dist/acpica/achware.h>            /* Hardware defines and interfaces */
+#include <dist/acpica/acutils.h>            /* Utility interfaces */
 
 
 #endif /* __ACPI_H__ */

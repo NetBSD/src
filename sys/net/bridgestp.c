@@ -1,4 +1,4 @@
-/*	$NetBSD: bridgestp.c,v 1.12 2007/08/26 22:59:08 dyoung Exp $	*/
+/*	$NetBSD: bridgestp.c,v 1.12.10.1 2007/12/26 19:57:29 ad Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bridgestp.c,v 1.12 2007/08/26 22:59:08 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bridgestp.c,v 1.12.10.1 2007/12/26 19:57:29 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,7 +101,7 @@ struct bstp_cbpdu {
 	uint16_t	cbu_maxage;		/* maximum age */
 	uint16_t	cbu_hellotime;		/* hello time */
 	uint16_t	cbu_forwarddelay;	/* forwarding delay */
-} __attribute__((__packed__));
+} __packed;
 
 /* topology change notification bridge protocol data unit */
 struct bstp_tbpdu {
@@ -111,7 +111,7 @@ struct bstp_tbpdu {
 	uint16_t	tbu_protoid;		/* protocol id */
 	uint8_t		tbu_protover;		/* protocol version */
 	uint8_t		tbu_bpdutype;		/* message type */
-} __attribute__((__packed__));
+} __packed;
 
 const uint8_t bstp_etheraddr[] = { 0x01, 0x80, 0xc2, 0x00, 0x00, 0x00 };
 

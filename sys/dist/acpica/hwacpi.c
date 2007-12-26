@@ -1,8 +1,9 @@
+/*	$NetBSD: hwacpi.c,v 1.1.56.1 2007/12/26 19:55:06 ad Exp $	*/
 
 /******************************************************************************
  *
  * Module Name: hwacpi - ACPI Hardware Initialization/Mode Interface
- *              xRevision: 1.73 $
+ *              $Revision: 1.1.56.1 $
  *
  *****************************************************************************/
 
@@ -10,7 +11,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2007, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,58 +117,15 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hwacpi.c,v 1.1 2006/03/23 13:36:31 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hwacpi.c,v 1.1.56.1 2007/12/26 19:55:06 ad Exp $");
 
 #define __HWACPI_C__
 
-#include "acpi.h"
+#include <dist/acpica/acpi.h>
 
 
 #define _COMPONENT          ACPI_HARDWARE
         ACPI_MODULE_NAME    ("hwacpi")
-
-
-/******************************************************************************
- *
- * FUNCTION:    AcpiHwInitialize
- *
- * PARAMETERS:  None
- *
- * RETURN:      Status
- *
- * DESCRIPTION: Initialize and validate the various ACPI registers defined in
- *              the FADT.
- *
- ******************************************************************************/
-
-ACPI_STATUS
-AcpiHwInitialize (
-    void)
-{
-    ACPI_STATUS             Status;
-
-
-    ACPI_FUNCTION_TRACE ("HwInitialize");
-
-
-    /* We must have the ACPI tables by the time we get here */
-
-    if (!AcpiGbl_FADT)
-    {
-        ACPI_ERROR ((AE_INFO, "No FADT is present"));
-        return_ACPI_STATUS (AE_NO_ACPI_TABLES);
-    }
-
-    /* Sanity check the FADT for valid values */
-
-    Status = AcpiUtValidateFadt ();
-    if (ACPI_FAILURE (Status))
-    {
-        return_ACPI_STATUS (Status);
-    }
-
-    return_ACPI_STATUS (AE_OK);
-}
 
 
 /******************************************************************************
@@ -191,13 +149,13 @@ AcpiHwSetMode (
     UINT32                  Retry;
 
 
-    ACPI_FUNCTION_TRACE ("HwSetMode");
+    ACPI_FUNCTION_TRACE (HwSetMode);
 
     /*
      * ACPI 2.0 clarified that if SMI_CMD in FADT is zero,
      * system does not support mode transition.
      */
-    if (!AcpiGbl_FADT->SmiCmd)
+    if (!AcpiGbl_FADT.SmiCommand)
     {
         ACPI_ERROR ((AE_INFO, "No SMI_CMD in FADT, mode transition failed"));
         return_ACPI_STATUS (AE_NO_HARDWARE_RESPONSE);
@@ -210,7 +168,7 @@ AcpiHwSetMode (
      * we make sure both the numbers are zero to determine these
      * transitions are not supported.
      */
-    if (!AcpiGbl_FADT->AcpiEnable && !AcpiGbl_FADT->AcpiDisable)
+    if (!AcpiGbl_FADT.AcpiEnable && !AcpiGbl_FADT.AcpiDisable)
     {
         ACPI_ERROR ((AE_INFO,
             "No ACPI mode transition supported in this system (enable/disable both zero)"));
@@ -223,8 +181,8 @@ AcpiHwSetMode (
 
         /* BIOS should have disabled ALL fixed and GP events */
 
-        Status = AcpiOsWritePort (AcpiGbl_FADT->SmiCmd,
-                        (UINT32) AcpiGbl_FADT->AcpiEnable, 8);
+        Status = AcpiOsWritePort (AcpiGbl_FADT.SmiCommand,
+                        (UINT32) AcpiGbl_FADT.AcpiEnable, 8);
         ACPI_DEBUG_PRINT ((ACPI_DB_INFO, "Attempting to enable ACPI mode\n"));
         break;
 
@@ -234,8 +192,8 @@ AcpiHwSetMode (
          * BIOS should clear all fixed status bits and restore fixed event
          * enable bits to default
          */
-        Status = AcpiOsWritePort (AcpiGbl_FADT->SmiCmd,
-                    (UINT32) AcpiGbl_FADT->AcpiDisable, 8);
+        Status = AcpiOsWritePort (AcpiGbl_FADT.SmiCommand,
+                    (UINT32) AcpiGbl_FADT.AcpiDisable, 8);
         ACPI_DEBUG_PRINT ((ACPI_DB_INFO,
                     "Attempting to enable Legacy (non-ACPI) mode\n"));
         break;
@@ -294,19 +252,19 @@ AcpiHwGetMode (
     UINT32                  Value;
 
 
-    ACPI_FUNCTION_TRACE ("HwGetMode");
+    ACPI_FUNCTION_TRACE (HwGetMode);
 
 
     /*
      * ACPI 2.0 clarified that if SMI_CMD in FADT is zero,
      * system does not support mode transition.
      */
-    if (!AcpiGbl_FADT->SmiCmd)
+    if (!AcpiGbl_FADT.SmiCommand)
     {
         return_UINT32 (ACPI_SYS_MODE_ACPI);
     }
 
-    Status = AcpiGetRegister (ACPI_BITREG_SCI_ENABLE, &Value, ACPI_MTX_LOCK);
+    Status = AcpiGetRegister (ACPI_BITREG_SCI_ENABLE, &Value);
     if (ACPI_FAILURE (Status))
     {
         return_UINT32 (ACPI_SYS_MODE_LEGACY);

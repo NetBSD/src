@@ -1,9 +1,10 @@
+/*	$NetBSD: exstoren.c,v 1.1.56.1 2007/12/26 19:55:05 ad Exp $	*/
 
 /******************************************************************************
  *
  * Module Name: exstoren - AML Interpreter object store support,
  *                        Store to Node (namespace object)
- *              xRevision: 1.68 $
+ *              $Revision: 1.1.56.1 $
  *
  *****************************************************************************/
 
@@ -11,7 +12,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2007, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -117,13 +118,13 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exstoren.c,v 1.1 2006/03/23 13:36:31 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exstoren.c,v 1.1.56.1 2007/12/26 19:55:05 ad Exp $");
 
 #define __EXSTOREN_C__
 
-#include "acpi.h"
-#include "acinterp.h"
-#include "amlcode.h"
+#include <dist/acpica/acpi.h>
+#include <dist/acpica/acinterp.h>
+#include <dist/acpica/amlcode.h>
 
 
 #define _COMPONENT          ACPI_EXECUTER
@@ -155,7 +156,7 @@ AcpiExResolveObject (
     ACPI_STATUS             Status = AE_OK;
 
 
-    ACPI_FUNCTION_TRACE ("ExResolveObject");
+    ACPI_FUNCTION_TRACE (ExResolveObject);
 
 
     /* Ensure we have a Target that can be stored to */
@@ -220,7 +221,7 @@ AcpiExResolveObject (
     case ACPI_TYPE_LOCAL_METHOD_ALIAS:
 
         /*
-         * All aliases should have been resolved earlier, during the 
+         * All aliases should have been resolved earlier, during the
          * operand resolution phase.
          */
         ACPI_ERROR ((AE_INFO, "Store into an unresolved Alias object"));
@@ -288,7 +289,7 @@ AcpiExStoreObjectToObject (
     ACPI_STATUS             Status = AE_OK;
 
 
-    ACPI_FUNCTION_TRACE_PTR ("ExStoreObjectToObject", SourceDesc);
+    ACPI_FUNCTION_TRACE_PTR (ExStoreObjectToObject, SourceDesc);
 
 
     ActualSrcDesc = SourceDesc;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_extern.h,v 1.37 2007/11/26 19:02:26 pooka Exp $	*/
+/*	$NetBSD: ext2fs_extern.h,v 1.37.2.1 2007/12/26 19:58:01 ad Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -116,7 +116,7 @@ u_int64_t ext2fs_size(struct inode *);
 int ext2fs_setsize(struct inode *, u_int64_t);
 int ext2fs_update(struct vnode *, const struct timespec *,
     const struct timespec *, int);
-int ext2fs_truncate(struct vnode *, off_t, int, kauth_cred_t, struct proc *);
+int ext2fs_truncate(struct vnode *, off_t, int, kauth_cred_t);
 int ext2fs_inactive(void *);
 
 /* ext2fs_lookup.c */

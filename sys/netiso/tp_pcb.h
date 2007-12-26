@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_pcb.h,v 1.21 2007/03/04 06:03:33 christos Exp $	*/
+/*	$NetBSD: tp_pcb.h,v 1.21.24.1 2007/12/26 19:57:51 ad Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -165,7 +165,7 @@ struct tp_pcb {
 	short		tp_retrans;	/* # times can still retrans */
 	void *		tp_npcb;/* to lower layer pcb */
 	struct nl_protosw *tp_nlproto;	/* lower-layer dependent routines */
-	struct rtentry **tp_routep;	/* obtain mtu; inside npcb */
+	struct route	*tp_routep;	/* obtain mtu; inside npcb */
 
 
 	RefNum		tp_lref;/* local reference */

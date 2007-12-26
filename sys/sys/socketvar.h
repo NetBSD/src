@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.100 2007/11/24 07:49:04 dyoung Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.100.2.1 2007/12/26 19:57:59 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -324,7 +324,7 @@ void	soisconnected(struct socket *);
 void	soisconnecting(struct socket *);
 void	soisdisconnected(struct socket *);
 void	soisdisconnecting(struct socket *);
-int	solisten(struct socket *, int);
+int	solisten(struct socket *, int, struct lwp *);
 struct socket *
 	sonewconn(struct socket *, int);
 void	soqinsque(struct socket *, struct socket *, int);

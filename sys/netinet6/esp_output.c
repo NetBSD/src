@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_output.c,v 1.30 2007/09/22 11:32:06 degroote Exp $	*/
+/*	$NetBSD: esp_output.c,v 1.30.8.1 2007/12/26 19:57:43 ad Exp $	*/
 /*	$KAME: esp_output.c,v 1.44 2001/07/26 06:53:15 jinmei Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_output.c,v 1.30 2007/09/22 11:32:06 degroote Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_output.c,v 1.30.8.1 2007/12/26 19:57:43 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -680,12 +680,7 @@ noantireplay:
 	if (sav->natt_type != 0) {
 		struct ip *ip;
 		ip = mtod(m, struct ip *);
-#ifdef _IP_VHL
-		udp->uh_ulen =
-		    htons(ntohs(ip->ip_len) - (IP_VHL_HL(ip->ip_vhl) << 2));
-#else
 		udp->uh_ulen = htons(ntohs(ip->ip_len) - (ip->ip_hl << 2));
-#endif
 
 	}
 #endif /* IPSEC_NAT_T */

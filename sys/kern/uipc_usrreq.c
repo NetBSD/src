@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.102 2007/11/26 19:02:05 pooka Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.102.2.1 2007/12/26 19:57:16 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.102 2007/11/26 19:02:05 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.102.2.1 2007/12/26 19:57:16 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -636,7 +636,7 @@ unp_bind(struct unpcb *unp, struct mbuf *nam, struct lwp *l)
 	*(((char *)sun) + nam->m_len) = '\0';
 
 	NDINIT(&nd, CREATE, FOLLOW | LOCKPARENT | TRYEMULROOT, UIO_SYSSPACE,
-	    sun->sun_path, l);
+	    sun->sun_path);
 
 /* SHOULD BE ABLE TO ADOPT EXISTING AND wakeup() ALA FIFO's */
 	if ((error = namei(&nd)) != 0)
@@ -700,7 +700,8 @@ unp_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
 	m_copydata(nam, 0, nam->m_len, (void *)sun);
 	*(((char *)sun) + nam->m_len) = '\0';
 
-	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF | TRYEMULROOT, UIO_SYSSPACE, sun->sun_path, l);
+	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF | TRYEMULROOT, UIO_SYSSPACE,
+	    sun->sun_path);
 
 	if ((error = namei(&nd)) != 0)
 		goto bad2;

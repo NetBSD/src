@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_vfs.c,v 1.8 2005/12/11 12:24:50 christos Exp $ */
+/* $NetBSD: lkminit_vfs.c,v 1.8.56.1 2007/12/26 19:57:27 ad Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_vfs.c,v 1.8 2005/12/11 12:24:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_vfs.c,v 1.8.56.1 2007/12/26 19:57:27 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: lkminit_vfs.c,v 1.8 2005/12/11 12:24:50 christos Exp
 #include <fs/msdosfs/bpb.h>
 #include <fs/msdosfs/msdosfsmount.h>
 
-int msdosfs_lkmentry __P((struct lkm_table *, int, int));
+int msdosfs_lkmentry(struct lkm_table *, int, int);
 
 /*
  * This is the vfsops table for the file system in question
@@ -68,8 +68,8 @@ MOD_VFS("msdosfs", -1, &msdosfs_vfsops);
 /*
  * take care of fs specific sysctl nodes
  */
-static int load __P((struct lkm_table *, int));
-static int unload __P((struct lkm_table *, int));
+static int load(struct lkm_table *, int);
+static int unload(struct lkm_table *, int);
 static struct sysctllog *_msdosfs_log;
 
 /*

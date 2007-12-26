@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.h,v 1.76 2007/11/19 18:51:52 ad Exp $	*/
+/*	$NetBSD: tty.h,v 1.76.2.1 2007/12/26 19:58:00 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -62,6 +62,7 @@ struct clist {
 	u_char	*c_ce;		/* c_ce + c_len */
 	u_char	*c_cq;		/* N bits/bytes long, see tty_subr.c */
 	kcondvar_t c_cv;	/* notifier, locked by tty lock */
+	kcondvar_t c_cvf;	/* notifier, locked by tty lock */
 	int	c_cc;		/* count of characters in queue */
 	int	c_cn;		/* total ring buffer length */
 };

@@ -1,7 +1,9 @@
+/*	$NetBSD: evevent.c,v 1.1.56.1 2007/12/26 19:54:59 ad Exp $	*/
+
 /******************************************************************************
  *
  * Module Name: evevent - Fixed Event handling and dispatch
- *              xRevision: 1.121 $
+ *              $Revision: 1.1.56.1 $
  *
  *****************************************************************************/
 
@@ -9,7 +11,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2007, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -115,10 +117,10 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evevent.c,v 1.1 2006/03/23 13:36:31 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evevent.c,v 1.1.56.1 2007/12/26 19:54:59 ad Exp $");
 
-#include "acpi.h"
-#include "acevents.h"
+#include <dist/acpica/acpi.h>
+#include <dist/acpica/acevents.h>
 
 #define _COMPONENT          ACPI_EVENTS
         ACPI_MODULE_NAME    ("evevent")
@@ -153,16 +155,8 @@ AcpiEvInitializeEvents (
     ACPI_STATUS             Status;
 
 
-    ACPI_FUNCTION_TRACE ("EvInitializeEvents");
+    ACPI_FUNCTION_TRACE (EvInitializeEvents);
 
-
-    /* Make sure we have ACPI tables */
-
-    if (!AcpiGbl_DSDT)
-    {
-        ACPI_WARNING ((AE_INFO, "No ACPI tables present!"));
-        return_ACPI_STATUS (AE_NO_ACPI_TABLES);
-    }
 
     /*
      * Initialize the Fixed and General Purpose Events. This is done prior to
@@ -211,7 +205,7 @@ AcpiEvInstallFadtGpes (
     ACPI_STATUS             Status;
 
 
-    ACPI_FUNCTION_TRACE ("EvInstallFadtGpes");
+    ACPI_FUNCTION_TRACE (EvInstallFadtGpes);
 
 
     /* Namespace must be locked */
@@ -256,7 +250,7 @@ AcpiEvInstallXruptHandlers (
     ACPI_STATUS             Status;
 
 
-    ACPI_FUNCTION_TRACE ("EvInstallXruptHandlers");
+    ACPI_FUNCTION_TRACE (EvInstallXruptHandlers);
 
 
     /* Install the SCI handler */
@@ -318,8 +312,7 @@ AcpiEvFixedEventInitialize (
         if (AcpiGbl_FixedEventInfo[i].EnableRegisterId != 0xFF)
         {
             Status = AcpiSetRegister (
-                        AcpiGbl_FixedEventInfo[i].EnableRegisterId,
-                        0, ACPI_MTX_LOCK);
+                        AcpiGbl_FixedEventInfo[i].EnableRegisterId, 0);
             if (ACPI_FAILURE (Status))
             {
                 return (Status);
@@ -353,7 +346,7 @@ AcpiEvFixedEventDetect (
     ACPI_NATIVE_UINT        i;
 
 
-    ACPI_FUNCTION_NAME ("EvFixedEventDetect");
+    ACPI_FUNCTION_NAME (EvFixedEventDetect);
 
 
     /*
@@ -413,8 +406,7 @@ AcpiEvFixedEventDispatch (
 
     /* Clear the status bit */
 
-    (void) AcpiSetRegister (AcpiGbl_FixedEventInfo[Event].StatusRegisterId,
-                1, ACPI_MTX_DO_NOT_LOCK);
+    (void) AcpiSetRegister (AcpiGbl_FixedEventInfo[Event].StatusRegisterId, 1);
 
     /*
      * Make sure we've got a handler.  If not, report an error.
@@ -422,8 +414,7 @@ AcpiEvFixedEventDispatch (
      */
     if (NULL == AcpiGbl_FixedEventHandlers[Event].Handler)
     {
-        (void) AcpiSetRegister (AcpiGbl_FixedEventInfo[Event].EnableRegisterId,
-                0, ACPI_MTX_DO_NOT_LOCK);
+        (void) AcpiSetRegister (AcpiGbl_FixedEventInfo[Event].EnableRegisterId, 0);
 
         ACPI_ERROR ((AE_INFO,
             "No installed handler for fixed event [%08X]",

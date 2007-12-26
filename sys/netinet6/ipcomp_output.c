@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcomp_output.c,v 1.24 2007/11/01 20:33:58 dyoung Exp $	*/
+/*	$NetBSD: ipcomp_output.c,v 1.24.4.1 2007/12/26 19:57:47 ad Exp $	*/
 /*	$KAME: ipcomp_output.c,v 1.24 2001/07/26 06:53:18 jinmei Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipcomp_output.c,v 1.24 2007/11/01 20:33:58 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipcomp_output.c,v 1.24.4.1 2007/12/26 19:57:47 ad Exp $");
 
 #include "opt_inet.h"
 
@@ -241,11 +241,7 @@ ipcomp_output(struct mbuf *m, u_char *nexthdrp, struct mbuf *md,
 #ifdef INET
 	case AF_INET:
 		ip = mtod(m, struct ip *);
-#ifdef _IP_VHL
-		hlen = IP_VHL_HL(ip->ip_vhl) << 2;
-#else
 		hlen = ip->ip_hl << 2;
-#endif
 		break;
 #endif
 #ifdef INET6

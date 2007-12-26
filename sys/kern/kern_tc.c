@@ -1,4 +1,4 @@
-/* $NetBSD: kern_tc.c,v 1.27 2007/11/30 23:05:44 ad Exp $ */
+/* $NetBSD: kern_tc.c,v 1.27.2.1 2007/12/26 19:57:11 ad Exp $ */
 
 /*-
  * ----------------------------------------------------------------------------
@@ -11,7 +11,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_tc.c,v 1.166 2005/09/19 22:16:31 andre Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.27 2007/11/30 23:05:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.27.2.1 2007/12/26 19:57:11 ad Exp $");
 
 #include "opt_ntp.h"
 
@@ -107,7 +107,7 @@ SYSCTL_INT(_kern_timecounter, OID_AUTO, stepwarnings, CTLFLAG_RW,
 #endif /* __FreeBSD__ */
 
 /*
- * sysctl helper routine for kern.timercounter.current
+ * sysctl helper routine for kern.timercounter.hardware
  */
 static int
 sysctl_kern_timecounter_hardware(SYSCTLFN_ARGS)

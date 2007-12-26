@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.114 2007/11/06 00:42:40 ad Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.114.2.1 2007/12/26 19:57:07 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.114 2007/11/06 00:42:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.114.2.1 2007/12/26 19:57:07 ad Exp $");
 
 #include "opt_ntp.h"
 #include "opt_multiprocessor.h"
@@ -1378,6 +1378,47 @@ hardpps(struct timeval *tvp,		/* time at PPS */
 
 /* timecounter compat functions */
 void
+binuptime(struct bintime *bt)
+{
+	struct timeval tv;
+
+	microuptime(&tv);
+	timeval2bintime(&tv, bt);
+}
+
+void
+nanouptime(struct timespec *tsp)
+{
+	struct timeval tv;
+
+	microuptime(&tv);
+	TIMEVAL_TO_TIMESPEC(&mono_time, tsp);
+}
+
+void
+microuptime(struct timeval *tv)
+{
+	struct timeval t;
+	int s;
+
+	/* microtime + time - mono_time */
+	microtime(&t);
+	s = splclock();
+	timeradd(&t, &time, &t);
+	timersub(&t, &mono_time, &t);
+	splx(s);
+}
+
+void
+bintime(struct bintime *bt)
+{
+	struct timeval tv;
+
+	microtime(&tv);
+	timeval2bintime(&tv, bt);
+}
+
+void
 nanotime(struct timespec *ts)
 {
 	struct timeval tv;
@@ -1389,19 +1430,10 @@ nanotime(struct timespec *ts)
 void
 getbinuptime(struct bintime *bt)
 {
-	struct timeval tv;
-
-	microtime(&tv);
-	timeval2bintime(&tv, bt);
-}
-
-void
-nanouptime(struct timespec *tsp)
-{
 	int s;
 
 	s = splclock();
-	TIMEVAL_TO_TIMESPEC(&mono_time, tsp);
+	timeval2bintime(__UNVOLATILE(&mono_time), bt);
 	splx(s);
 }
 
@@ -1422,6 +1454,16 @@ getmicrouptime(struct timeval *tvp)
 
 	s = splclock();
 	*tvp = mono_time;
+	splx(s);
+}
+
+void
+getbintime(struct bintime *bt)
+{
+	int s;
+
+	s = splclock();
+	timeval2bintime(__UNVOLATILE(&time), bt);
 	splx(s);
 }
 
@@ -1449,5 +1491,14 @@ u_int64_t
 tc_getfrequency(void)
 {
 	return hz;
+}
+
+void
+tc_setclock(struct timespec *ts)
+{
+	struct timeval tv;
+
+	TIMESPEC_TO_TIMEVAL(&tv, ts);
+	time = tv;
 }
 #endif /* !__HAVE_TIMECOUNTER */

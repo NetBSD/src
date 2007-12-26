@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.139 2007/11/27 22:45:30 christos Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.139.2.1 2007/12/26 19:57:42 ad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.139 2007/11/27 22:45:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.139.2.1 2007/12/26 19:57:42 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -361,8 +361,7 @@ tcp_usrreq(struct socket *so, int req,
 	case PRU_LISTEN:
 #ifdef INET
 		if (inp && inp->inp_lport == 0) {
-			error = in_pcbbind(inp, (struct mbuf *)0,
-			    (struct lwp *)0);
+			error = in_pcbbind(inp, (struct mbuf *)0, l);
 			if (error)
 				break;
 		}
@@ -389,8 +388,7 @@ tcp_usrreq(struct socket *so, int req,
 #ifdef INET
 		if (inp) {
 			if (inp->inp_lport == 0) {
-				error = in_pcbbind(inp, (struct mbuf *)0,
-				    (struct lwp *)0);
+				error = in_pcbbind(inp, (struct mbuf *)0, l);
 				if (error)
 					break;
 			}

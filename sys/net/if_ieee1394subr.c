@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee1394subr.c,v 1.36 2007/08/30 02:17:35 dyoung Exp $	*/
+/*	$NetBSD: if_ieee1394subr.c,v 1.36.8.1 2007/12/26 19:57:32 ad Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.36 2007/08/30 02:17:35 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.36.8.1 2007/12/26 19:57:32 ad Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -682,7 +682,6 @@ ieee1394_ifattach(struct ifnet *ifp, const struct ieee1394_hwaddr *hwaddr)
 	struct ieee1394com *ic = (struct ieee1394com *)ifp;
 
 	ifp->if_type = IFT_IEEE1394;
-	ifp->if_addrlen = sizeof(struct ieee1394_hwaddr);
 	ifp->if_hdrlen = sizeof(struct ieee1394_header);
 	ifp->if_dlt = DLT_EN10MB;	/* XXX */
 	ifp->if_mtu = IEEE1394MTU;
@@ -693,9 +692,7 @@ ieee1394_ifattach(struct ifnet *ifp, const struct ieee1394_hwaddr *hwaddr)
 	if (ifp->if_baudrate == 0)
 		ifp->if_baudrate = IF_Mbps(100);
 
-	if_alloc_sadl(ifp);
-	(void)sockaddr_dl_setaddr(ifp->if_sadl, ifp->if_sadl->sdl_len,
-	    hwaddr, ifp->if_addrlen);
+	if_set_sadl(ifp, hwaddr, sizeof(struct ieee1394_hwaddr));
 
 	baddr = malloc(ifp->if_addrlen, M_DEVBUF, M_WAITOK);
 	memset(baddr->iha_uid, 0xff, IEEE1394_ADDR_LEN);

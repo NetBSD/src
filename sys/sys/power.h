@@ -1,4 +1,4 @@
-/*	$NetBSD: power.h,v 1.10 2007/10/11 17:31:06 xtraeme Exp $	*/
+/*	$NetBSD: power.h,v 1.10.6.1 2007/12/26 19:57:55 ad Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -86,6 +86,13 @@
 #define	PSWITCH_TYPE_LID	2	/* lid switch */
 #define	PSWITCH_TYPE_RESET	3	/* reset button */
 #define	PSWITCH_TYPE_ACADAPTER	4	/* AC adapter presence */
+#define	PSWITCH_TYPE_HOTKEY	5	/* hotkey button */
+#define		PSWITCH_HK_DISPLAY_CYCLE	"display-cycle"
+#define		PSWITCH_HK_LOCK_SCREEN		"lock-screen"
+#define		PSWITCH_HK_BATTERY_INFO		"battery-info"
+#define		PSWITCH_HK_EJECT_BUTTON		"eject-button"
+#define		PSWITCH_HK_ZOOM_BUTTON		"zoom-button"
+#define		PSWITCH_HK_VENDOR_BUTTON	"vendor-button"
 
 #define	PSWITCH_EVENT_PRESSED	0	/* button pressed, lid closed, AC off */
 #define	PSWITCH_EVENT_RELEASED	1	/* button released, lid open, AC on */

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sched.c,v 1.3 2007/02/09 21:55:31 ad Exp $	*/
+/*	$NetBSD: sys_sched.c,v 1.3.30.1 2007/12/26 19:57:15 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.3 2007/02/09 21:55:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.3.30.1 2007/12/26 19:57:15 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,7 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.3 2007/02/09 21:55:31 ad Exp $");
 #include <sys/syscallargs.h>
 
 int
-sys_sched_yield(struct lwp *l, void *v, register_t *retval)
+sys_sched_yield(struct lwp *l, const void *v, register_t *retval)
 {
 
 	yield();

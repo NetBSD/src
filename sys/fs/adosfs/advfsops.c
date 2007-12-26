@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.44 2007/11/26 19:01:41 pooka Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.44.2.1 2007/12/26 19:57:00 ad Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.44 2007/11/26 19:01:41 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.44.2.1 2007/12/26 19:57:00 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -117,7 +117,7 @@ adosfs_mount(mp, path, data, data_len)
 	 * Not an update, or updating the name: look up the name
 	 * and verify that it refers to a sensible block device.
 	 */
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, args->fspec, l);
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, args->fspec);
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	devvp = nd.ni_vp;

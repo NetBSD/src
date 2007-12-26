@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_flow.c,v 1.48 2007/08/20 19:42:34 dyoung Exp $	*/
+/*	$NetBSD: ip_flow.c,v 1.48.10.1 2007/12/26 19:57:39 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.48 2007/08/20 19:42:34 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.48.10.1 2007/12/26 19:57:39 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -220,7 +220,8 @@ ipflow_fastforward(struct mbuf *m)
 	/*
 	 * Route and interface still up?
 	 */
-	if (rtcache_down(&ipf->ipf_ro) || (rt = ipf->ipf_ro.ro_rt) == NULL ||
+	if (rtcache_down(&ipf->ipf_ro) ||
+	    (rt = rtcache_getrt(&ipf->ipf_ro)) == NULL ||
 	    (rt->rt_ifp->if_flags & IFF_UP) == 0)
 		return 0;
 
@@ -292,8 +293,10 @@ ipflow_fastforward(struct mbuf *m)
 static void
 ipflow_addstats(struct ipflow *ipf)
 {
-	if (!rtcache_down(&ipf->ipf_ro) && ipf->ipf_ro.ro_rt != NULL)
-		ipf->ipf_ro.ro_rt->rt_use += ipf->ipf_uses;
+	struct rtentry *rt;
+
+	if (!rtcache_down(&ipf->ipf_ro) && (rt = rtcache_getrt(&ipf->ipf_ro)) != NULL)
+		rt->rt_use += ipf->ipf_uses;
 	ipstat.ips_cantforward += ipf->ipf_errors + ipf->ipf_dropped;
 	ipstat.ips_total += ipf->ipf_uses;
 	ipstat.ips_forward += ipf->ipf_uses;
@@ -334,7 +337,7 @@ ipflow_reap(int just_one)
 			 * reclaim it.
 			 */
 			if (rtcache_down(&ipf->ipf_ro) ||
-			    ipf->ipf_ro.ro_rt == NULL)
+			    rtcache_getrt(&ipf->ipf_ro) == NULL)
 				goto done;
 			/*
 			 * choose the one that's been least recently
@@ -371,16 +374,18 @@ ipflow_reap(int just_one)
 void
 ipflow_slowtimo(void)
 {
+	struct rtentry *rt;
 	struct ipflow *ipf, *next_ipf;
 
 	for (ipf = LIST_FIRST(&ipflowlist); ipf != NULL; ipf = next_ipf) {
 		next_ipf = LIST_NEXT(ipf, ipf_list);
+		rt = rtcache_getrt(&ipf->ipf_ro);
 		if (PRT_SLOW_ISEXPIRED(ipf->ipf_timer) ||
-		    rtcache_down(&ipf->ipf_ro) || ipf->ipf_ro.ro_rt == NULL) {
+		    rtcache_down(&ipf->ipf_ro) || rt == NULL) {
 			ipflow_free(ipf);
 		} else {
 			ipf->ipf_last_uses = ipf->ipf_uses;
-			ipf->ipf_ro.ro_rt->rt_use += ipf->ipf_uses;
+			rt->rt_use += ipf->ipf_uses;
 			ipstat.ips_total += ipf->ipf_uses;
 			ipstat.ips_forward += ipf->ipf_uses;
 			ipstat.ips_fastforward += ipf->ipf_uses;

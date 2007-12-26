@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fddisubr.c,v 1.73 2007/10/19 12:16:44 ad Exp $	*/
+/*	$NetBSD: if_fddisubr.c,v 1.73.4.1 2007/12/26 19:57:31 ad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.73 2007/10/19 12:16:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.73.4.1 2007/12/26 19:57:31 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -520,8 +520,9 @@ fddi_output(struct ifnet *ifp0, struct mbuf *m0, const struct sockaddr *dst,
 		memcpy(fh->fddi_shost, CFDDIADDR(ifp), sizeof(fh->fddi_shost));
 
 #if NCARP > 0
-	if (ifp0 != ifp && ifp0->if_type == IFT_CARP)
-		memcpy(FDDIADDR(ifp0), fh->fddi_shost, sizeof(fh->fddi_shost));
+	if (ifp0 != ifp && ifp0->if_type == IFT_CARP) {
+		if_set_sadl(ifp0, fh->fddi_shost, sizeof(fh->fddi_shost));
+	}
 
 	if (ifp != ifp0)
 		ifp0->if_obytes += m->m_pkthdr.len;
@@ -768,7 +769,6 @@ fddi_ifattach(struct ifnet *ifp, void *lla)
 	struct ethercom *ec = (struct ethercom *)ifp;
 
 	ifp->if_type = IFT_FDDI;
-	ifp->if_addrlen = 6;
 	ifp->if_hdrlen = 21;
 	ifp->if_dlt = DLT_FDDI;
 	ifp->if_mtu = FDDIMTU;
@@ -786,9 +786,7 @@ fddi_ifattach(struct ifnet *ifp, void *lla)
 		max_linkhdr = ALIGN(ifp->if_hdrlen);
 
 	LIST_INIT(&ec->ec_multiaddrs);
-	if_alloc_sadl(ifp);
-	sockaddr_dl_setaddr(ifp->if_sadl, ifp->if_sadl->sdl_len, lla,
-	    ifp->if_addrlen);
+	if_set_sadl(ifp, lla, 6);
 
 	ifp->if_broadcastaddr = fddibroadcastaddr;
 #if NBPFILTER > 0

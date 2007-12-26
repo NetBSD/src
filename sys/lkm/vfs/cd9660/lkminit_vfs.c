@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_vfs.c,v 1.4 2005/12/11 12:24:49 christos Exp $ */
+/* $NetBSD: lkminit_vfs.c,v 1.4.56.1 2007/12/26 19:57:25 ad Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_vfs.c,v 1.4 2005/12/11 12:24:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_vfs.c,v 1.4.56.1 2007/12/26 19:57:25 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: lkminit_vfs.c,v 1.4 2005/12/11 12:24:49 christos Exp
 #include <fs/cd9660/iso.h>
 #include <fs/cd9660/cd9660_extern.h>
 
-int cd9660_lkmentry __P((struct lkm_table *, int, int));
+int cd9660_lkmentry(struct lkm_table *, int, int);
 
 /*
  * This is the vfsops table for the file system in question
@@ -68,8 +68,8 @@ MOD_VFS("cd9660", -1, &cd9660_vfsops);
 /*
  * take care of fs specific sysctl nodes
  */
-static int load __P((struct lkm_table *, int));
-static int unload __P((struct lkm_table *, int));
+static int load(struct lkm_table *, int);
+static int unload(struct lkm_table *, int);
 static struct sysctllog *_cd9660_log;
 
 /*

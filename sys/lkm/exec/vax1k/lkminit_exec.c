@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_exec.c,v 1.7 2005/12/11 12:24:49 christos Exp $ */
+/* $NetBSD: lkminit_exec.c,v 1.7.56.1 2007/12/26 19:57:24 ad Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_exec.c,v 1.7 2005/12/11 12:24:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_exec.c,v 1.7.56.1 2007/12/26 19:57:24 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,7 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: lkminit_exec.c,v 1.7 2005/12/11 12:24:49 christos Ex
 
 #include <compat/vax1k/vax1k_exec.h>
 
-int exec_vax1k_lkmentry __P((struct lkm_table *, int, int));
+int exec_vax1k_lkmentry(struct lkm_table *, int, int);
 
 static struct execsw exec_vax1k =
 	/* NetBSD vax1k a.out */

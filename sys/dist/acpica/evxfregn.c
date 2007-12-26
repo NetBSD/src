@@ -1,8 +1,10 @@
+/*	$NetBSD: evxfregn.c,v 1.3.34.1 2007/12/26 19:55:01 ad Exp $	*/
+
 /******************************************************************************
  *
  * Module Name: evxfregn - External Interfaces, ACPI Operation Regions and
  *                         Address Spaces.
- *              xRevision: 1.66 $
+ *              $Revision: 1.3.34.1 $
  *
  *****************************************************************************/
 
@@ -10,7 +12,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2007, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,13 +118,13 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evxfregn.c,v 1.3 2006/11/16 01:33:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evxfregn.c,v 1.3.34.1 2007/12/26 19:55:01 ad Exp $");
 
 #define __EVXFREGN_C__
 
-#include "acpi.h"
-#include "acnamesp.h"
-#include "acevents.h"
+#include <dist/acpica/acpi.h>
+#include <dist/acpica/acnamesp.h>
+#include <dist/acpica/acevents.h>
 
 #define _COMPONENT          ACPI_EVENTS
         ACPI_MODULE_NAME    ("evxfregn")
@@ -156,7 +158,7 @@ AcpiInstallAddressSpaceHandler (
     ACPI_STATUS             Status;
 
 
-    ACPI_FUNCTION_TRACE ("AcpiInstallAddressSpaceHandler");
+    ACPI_FUNCTION_TRACE (AcpiInstallAddressSpaceHandler);
 
 
     /* Parameter validation */
@@ -198,6 +200,8 @@ UnlockAndExit:
     return_ACPI_STATUS (Status);
 }
 
+ACPI_EXPORT_SYMBOL (AcpiInstallAddressSpaceHandler)
+
 
 /*******************************************************************************
  *
@@ -227,7 +231,7 @@ AcpiRemoveAddressSpaceHandler (
     ACPI_STATUS             Status;
 
 
-    ACPI_FUNCTION_TRACE ("AcpiRemoveAddressSpaceHandler");
+    ACPI_FUNCTION_TRACE (AcpiRemoveAddressSpaceHandler);
 
 
     /* Parameter validation */
@@ -246,7 +250,11 @@ AcpiRemoveAddressSpaceHandler (
     /* Convert and validate the device handle */
 
     Node = AcpiNsMapHandleToNode (Device);
-    if (!Node)
+    if (!Node ||
+        ((Node->Type != ACPI_TYPE_DEVICE)    &&
+         (Node->Type != ACPI_TYPE_PROCESSOR) &&
+         (Node->Type != ACPI_TYPE_THERMAL)   &&
+         (Node != AcpiGbl_RootNode)))
     {
         Status = AE_BAD_PARAMETER;
         goto UnlockAndExit;
@@ -271,6 +279,14 @@ AcpiRemoveAddressSpaceHandler (
 
         if (HandlerObj->AddressSpace.SpaceId == SpaceId)
         {
+            /* Handler must be the same as the installed handler */
+
+            if (HandlerObj->AddressSpace.Handler != Handler)
+            {
+                Status = AE_BAD_PARAMETER;
+                goto UnlockAndExit;
+            }
+
             /* Matched SpaceId, first dereference this in the Regions */
 
             ACPI_DEBUG_PRINT ((ACPI_DB_OPREGION,
@@ -330,4 +346,5 @@ UnlockAndExit:
     return_ACPI_STATUS (Status);
 }
 
+ACPI_EXPORT_SYMBOL (AcpiRemoveAddressSpaceHandler)
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.150 2007/08/02 02:42:42 rmind Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.150.12.1 2007/12/26 19:57:42 ad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -363,9 +363,9 @@ struct tcpcb {
  * TCP reassembly queue locks.
  */
 static __inline int tcp_reass_lock_try (struct tcpcb *)
-	__attribute__((__unused__));
+	__unused;
 static __inline void tcp_reass_unlock (struct tcpcb *)
-	__attribute__((__unused__));
+	__unused;
 
 static __inline int
 tcp_reass_lock_try(tp)

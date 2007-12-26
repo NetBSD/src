@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_systrace.c,v 1.76 2007/11/07 00:23:22 ad Exp $	*/
+/*	$NetBSD: kern_systrace.c,v 1.76.2.1 2007/12/26 19:57:10 ad Exp $	*/
 
 /*
  * Copyright 2002, 2003 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.76 2007/11/07 00:23:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.76.2.1 2007/12/26 19:57:10 ad Exp $");
 
 #include "opt_systrace.h"
 
@@ -144,43 +144,43 @@ struct str_process {
 	char scriptname[MAXPATHLEN];
 };
 
-uid_t	systrace_seteuid(struct lwp *, uid_t);
-gid_t	systrace_setegid(struct lwp *, gid_t);
-void systrace_lock(void);
-void systrace_unlock(void);
+static uid_t	systrace_seteuid(struct lwp *, uid_t);
+static gid_t	systrace_setegid(struct lwp *, gid_t);
+static void systrace_lock(void);
+static void systrace_unlock(void);
 
 /* Needs to be called with fst locked */
 
-int	systrace_attach(struct fsystrace *, pid_t);
-int	systrace_detach(struct str_process *);
-int	systrace_answer(struct str_process *, struct systrace_answer *);
-int	systrace_setscriptname(struct str_process *, struct 
+static int	systrace_attach(struct fsystrace *, pid_t);
+static int	systrace_detach(struct str_process *);
+static int	systrace_answer(struct str_process *, struct systrace_answer *);
+static int	systrace_setscriptname(struct str_process *, struct 
 	    systrace_scriptname *);
-int	systrace_io(struct str_process *, struct systrace_io *);
-int	systrace_policy(struct fsystrace *, struct systrace_policy *);
-int	systrace_preprepl(struct str_process *, struct systrace_replace *);
-int	systrace_replace(struct str_process *, size_t, register_t []);
-int	systrace_getcwd(struct fsystrace *, struct str_process *);
-int	systrace_fname(struct str_process *, void *, size_t);
-void	systrace_replacefree(struct str_process *);
+static int	systrace_io(struct str_process *, struct systrace_io *);
+static int	systrace_policy(struct fsystrace *, struct systrace_policy *);
+static int	systrace_preprepl(struct str_process *, struct systrace_replace *);
+static int	systrace_replace(struct str_process *, size_t, register_t []);
+static int	systrace_getcwd(struct fsystrace *, struct str_process *);
+static int	systrace_fname(struct str_process *, void *, size_t);
+static void	systrace_replacefree(struct str_process *);
 
-int	systrace_processready(struct str_process *);
-struct proc *systrace_find(struct str_process *);
-struct str_process *systrace_findpid(struct fsystrace *fst, pid_t pid);
-void	systrace_wakeup(struct fsystrace *);
-void	systrace_closepolicy(struct fsystrace *, struct str_policy *);
-int	systrace_insert_process(struct fsystrace *, struct proc *,
+static int	systrace_processready(struct str_process *);
+static struct proc *systrace_find(struct str_process *);
+static struct str_process *systrace_findpid(struct fsystrace *fst, pid_t pid);
+static void	systrace_wakeup(struct fsystrace *);
+static void	systrace_closepolicy(struct fsystrace *, struct str_policy *);
+static int	systrace_insert_process(struct fsystrace *, struct proc *,
 	    struct str_process **);
-struct str_policy *systrace_newpolicy(struct fsystrace *, int);
-int	systrace_msg_child(struct fsystrace *, struct str_process *, pid_t);
-int	systrace_msg_policyfree(struct fsystrace *, struct str_policy *);
-int	systrace_msg_ask(struct fsystrace *, struct str_process *,
-	    int, size_t, register_t []);
-int	systrace_msg_result(struct fsystrace *, struct str_process *,
-	    int, int, size_t, register_t [], register_t []);
-int	systrace_msg_emul(struct fsystrace *, struct str_process *);
-int	systrace_msg_ugid(struct fsystrace *, struct str_process *);
-int	systrace_make_msg(struct str_process *, int, struct str_message *);
+static struct str_policy *systrace_newpolicy(struct fsystrace *, int);
+static int	systrace_msg_child(struct fsystrace *, struct str_process *, pid_t);
+static int	systrace_msg_policyfree(struct fsystrace *, struct str_policy *);
+static int	systrace_msg_ask(struct fsystrace *, struct str_process *,
+	    int, size_t, const register_t []);
+static int	systrace_msg_result(struct fsystrace *, struct str_process *,
+	    int, int, size_t, const register_t [], register_t []);
+static int	systrace_msg_emul(struct fsystrace *, struct str_process *);
+static int	systrace_msg_ugid(struct fsystrace *, struct str_process *);
+static int	systrace_make_msg(struct str_process *, int, struct str_message *);
 
 static const struct fileops systracefops = {
 	systracef_read,
@@ -522,13 +522,13 @@ systracef_close(struct file *fp, struct lwp *l)
 	return (0);
 }
 
-void
+static void
 systrace_lock(void)
 {
 	mutex_enter(&systrace_mutex);
 }
 
-void
+static void
 systrace_unlock(void)
 {
 	mutex_exit(&systrace_mutex);
@@ -580,7 +580,7 @@ systrace_wakeup(struct fsystrace *fst)
 	selwakeup(&fst->si);
 }
 
-struct proc *
+static struct proc *
 systrace_find(struct str_process *strp)
 {
 	struct proc *proc;
@@ -666,7 +666,7 @@ systrace_sys_fork(struct proc *oldproc, struct proc *p)
 }
 
 int
-systrace_enter(struct lwp *l, register_t code, void *v)
+systrace_enter(struct lwp *l, register_t code, const register_t *args)
 {
 	const struct sysent *callp;
 	struct str_process *strp;
@@ -744,7 +744,7 @@ systrace_enter(struct lwp *l, register_t code, void *v)
 #endif
 
 	/* Puts the current process to sleep, return unlocked */
-	error = systrace_msg_ask(fst, strp, code, argsize, v);
+	error = systrace_msg_ask(fst, strp, code, argsize, args);
 
 	/* lock has been released in systrace_msg_ask() */
 	fst = NULL;
@@ -762,7 +762,8 @@ systrace_enter(struct lwp *l, register_t code, void *v)
 			}
 			/* Replace the arguments if necessary */
 			if (strp->replace != NULL) {
-				error = systrace_replace(strp, argsize, v);
+				error = systrace_replace(strp, argsize,
+					__UNCONST(args));
 			}
 		}
 	}
@@ -801,8 +802,8 @@ systrace_enter(struct lwp *l, register_t code, void *v)
 }
 
 void
-systrace_exit(struct lwp *l, register_t code, void *v, register_t retval[],
-    int error)
+systrace_exit(struct lwp *l, register_t code, const register_t *uap,
+    register_t retval[], int error)
 {
 	const struct sysent *callp;
 	struct str_process *strp;
@@ -897,14 +898,14 @@ systrace_exit(struct lwp *l, register_t code, void *v, register_t retval[],
 			argsize = argsize << 1;
 #endif
 
-		systrace_msg_result(fst, strp, error, code, argsize, v, retval);
+		systrace_msg_result(fst, strp, error, code, argsize, uap, retval);
 	} else {
 		DPRINTF(("will not ask syscall %lu, strp %p\n", (u_long)code, strp));
 		systrace_unlock();
 	}
 }
 
-uid_t
+static uid_t
 systrace_seteuid(struct lwp *l, uid_t euid)
 {
 	struct proc *p = l->l_proc;
@@ -931,7 +932,7 @@ systrace_seteuid(struct lwp *l, uid_t euid)
 	return (oeuid);
 }
 
-gid_t
+static gid_t
 systrace_setegid(struct lwp *l, gid_t egid)
 {
 	struct proc *p = l->l_proc;
@@ -960,7 +961,7 @@ systrace_setegid(struct lwp *l, gid_t egid)
 
 /* Called with fst locked */
 
-int
+static int
 systrace_answer(struct str_process *strp, struct systrace_answer *ans)
 {
 	int error = 0;
@@ -1008,7 +1009,7 @@ systrace_answer(struct str_process *strp, struct systrace_answer *ans)
 	return (error);
 }
 
-int
+static int
 systrace_setscriptname(struct str_process *strp,
     struct systrace_scriptname *ans)
 {
@@ -1018,7 +1019,7 @@ systrace_setscriptname(struct str_process *strp,
 	return (0);
 }
 
-int
+static int
 systrace_policy(struct fsystrace *fst, struct systrace_policy *pol)
 {
 	struct str_policy *strpol;
@@ -1088,7 +1089,7 @@ systrace_policy(struct fsystrace *fst, struct systrace_policy *pol)
 	return (0);
 }
 
-int
+static int
 systrace_processready(struct str_process *strp)
 {
 	if (ISSET(strp->flags, STR_PROC_ONQUEUE))
@@ -1104,7 +1105,7 @@ systrace_processready(struct str_process *strp)
 	return (0);
 }
 
-int
+static int
 systrace_getcwd(struct fsystrace *fst, struct str_process *strp)
 {
 #ifdef __NetBSD__
@@ -1156,7 +1157,7 @@ systrace_getcwd(struct fsystrace *fst, struct str_process *strp)
 	return (0);
 }
 
-int
+static int
 systrace_io(struct str_process *strp, struct systrace_io *io)
 {
 	struct proc *t = strp->proc;
@@ -1215,7 +1216,7 @@ systrace_io(struct str_process *strp, struct systrace_io *io)
 	return (error);
 }
 
-int
+static int
 systrace_attach(struct fsystrace *fst, pid_t pid)
 {
 	int error = 0;
@@ -1331,7 +1332,7 @@ systrace_execve1(char *path, struct proc *p)
 
 /* Prepare to replace arguments */
 
-int
+static int
 systrace_preprepl(struct str_process *strp, struct systrace_replace *repl)
 {
 	size_t len;
@@ -1391,7 +1392,7 @@ systrace_preprepl(struct str_process *strp, struct systrace_replace *repl)
  * Replace the arguments with arguments from the monitoring process.
  */
 
-int
+static int
 systrace_replace(struct str_process *strp, size_t argsize, register_t args[])
 {
 	struct proc *p = strp->proc;
@@ -1443,7 +1444,7 @@ systrace_replace(struct str_process *strp, size_t argsize, register_t args[])
 	return (ret);
 }
 
-int
+static int
 systrace_fname(struct str_process *strp, void *kdata, size_t len)
 {
 	if (strp->nfname >= SYSTR_MAXFNAME || len < 2)
@@ -1456,7 +1457,7 @@ systrace_fname(struct str_process *strp, void *kdata, size_t len)
 	return 0;
 }
 
-void
+static void
 systrace_replacefree(struct str_process *strp)
 {
 
@@ -1521,7 +1522,7 @@ systrace_namei(struct nameidata *ndp)
 	int hamper = 0;
 
 	systrace_lock();
-	strp = cnp->cn_lwp->l_proc->p_systrace;
+	strp = curlwp->l_proc->p_systrace;
 	if (strp != NULL) {
 		fst = strp->parent;
 		SYSTRACE_LOCK(fst, curlwp);
@@ -1550,7 +1551,7 @@ systrace_namei(struct nameidata *ndp)
 	}
 }
 
-struct str_process *
+static struct str_process *
 systrace_findpid(struct fsystrace *fst, pid_t pid)
 {
 	struct str_process *strp;
@@ -1568,7 +1569,7 @@ systrace_findpid(struct fsystrace *fst, pid_t pid)
 	return (proc ? strp : NULL);
 }
 
-int
+static int
 systrace_detach(struct str_process *strp)
 {
 	struct proc *proc;
@@ -1604,7 +1605,7 @@ systrace_detach(struct str_process *strp)
 	return (error);
 }
 
-void
+static void
 systrace_closepolicy(struct fsystrace *fst, struct str_policy *policy)
 {
 	if (--policy->refcount)
@@ -1621,7 +1622,7 @@ systrace_closepolicy(struct fsystrace *fst, struct str_policy *policy)
 }
 
 
-int
+static int
 systrace_insert_process(struct fsystrace *fst, struct proc *proc,
     struct str_process **pstrp)
 {
@@ -1649,7 +1650,7 @@ systrace_insert_process(struct fsystrace *fst, struct proc *proc,
 	return (0);
 }
 
-struct str_policy *
+static struct str_policy *
 systrace_newpolicy(struct fsystrace *fst, int maxents)
 {
 	struct str_policy *pol;
@@ -1697,9 +1698,9 @@ systrace_newpolicy(struct fsystrace *fst, int maxents)
 	return (pol);
 }
 
-int
+static int
 systrace_msg_ask(struct fsystrace *fst, struct str_process *strp, int code,
-    size_t argsize, register_t args[])
+    size_t argsize, const register_t args[])
 {
 	struct str_message msg;
 	struct str_msg_ask *msg_ask = &msg.msg_data.msg_ask;
@@ -1713,9 +1714,9 @@ systrace_msg_ask(struct fsystrace *fst, struct str_process *strp, int code,
 	return (systrace_make_msg(strp, SYSTR_MSG_ASK, &msg));
 }
 
-int
+static int
 systrace_msg_result(struct fsystrace *fst, struct str_process *strp, int error,
-    int code, size_t argsize, register_t args[], register_t rval[])
+    int code, size_t argsize, const register_t args[], register_t rval[])
 {
 	struct str_message msg;
 	struct str_msg_ask *msg_ask = &msg.msg_data.msg_ask;
@@ -1733,7 +1734,7 @@ systrace_msg_result(struct fsystrace *fst, struct str_process *strp, int error,
 	return (systrace_make_msg(strp, SYSTR_MSG_RES, &msg));
 }
 
-int
+static int
 systrace_msg_emul(struct fsystrace *fst, struct str_process *strp)
 {
 	struct str_message msg;
@@ -1745,7 +1746,7 @@ systrace_msg_emul(struct fsystrace *fst, struct str_process *strp)
 	return (systrace_make_msg(strp, SYSTR_MSG_EMUL, &msg));
 }
 
-int
+static int
 systrace_msg_ugid(struct fsystrace *fst, struct str_process *strp)
 {
 	struct str_message msg;
@@ -1758,7 +1759,7 @@ systrace_msg_ugid(struct fsystrace *fst, struct str_process *strp)
 	return (systrace_make_msg(strp, SYSTR_MSG_UGID, &msg));
 }
 
-int
+static int
 systrace_make_msg(struct str_process *strp, int type, struct str_message *tmsg)
 {
 	struct str_msgcontainer *cont;
@@ -1811,7 +1812,7 @@ systrace_make_msg(struct str_process *strp, int type, struct str_message *tmsg)
 	return (0);
 }
 
-int
+static int
 systrace_msg_child(struct fsystrace *fst, struct str_process *strp, pid_t npid)
 {
 	struct str_msgcontainer *cont;
@@ -1844,7 +1845,7 @@ systrace_msg_child(struct fsystrace *fst, struct str_process *strp, pid_t npid)
 	return (0);
 }
 
-int
+static int
 systrace_msg_policyfree(struct fsystrace *fst, struct str_policy *strpol)
 {
 	struct str_msgcontainer *cont;

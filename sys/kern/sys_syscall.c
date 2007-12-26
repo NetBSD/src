@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_syscall.c,v 1.1 2007/11/09 14:50:51 dsl Exp $	*/
+/*	$NetBSD: sys_syscall.c,v 1.1.10.1 2007/12/26 19:57:15 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sys_syscall.c,v 1.1 2007/11/09 14:50:51 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_syscall.c,v 1.1.10.1 2007/12/26 19:57:15 ad Exp $");
 
 #include <sys/syscall_stats.h>
 
@@ -47,12 +47,13 @@ __RCSID("$NetBSD: sys_syscall.c,v 1.1 2007/11/09 14:50:51 dsl Exp $");
 #define CONCAT(a,b) __CONCAT(a,b)
 
 int
-SYS_SYSCALL(struct lwp *l, void *v, register_t *rval)
+SYS_SYSCALL(struct lwp *l, const struct CONCAT(SYS_SYSCALL, _args) *uap,
+    register_t *rval)
 {
-	struct CONCAT(SYS_SYSCALL, _args) /* {
+	/* {
 		syscallarg(int) code;
 		syscallarg(register_t) args[SYS_MAXSYSARGS];
-	} */ *uap = v;
+	} */
 	const struct sysent *callp;
 	struct proc *p = l->l_proc;
 	int code;
@@ -62,7 +63,7 @@ SYS_SYSCALL(struct lwp *l, void *v, register_t *rval)
 	int i, narg;
 	#define TRACE_ARGS args64
 #else
-	#define TRACE_ARGS &uap->args
+	#define TRACE_ARGS &SCARG(uap, args[0])
 #endif
 
 	callp = p->p_emul->e_sysent;

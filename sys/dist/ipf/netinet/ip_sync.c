@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_sync.c,v 1.8 2007/04/27 10:17:22 jnemeth Exp $	*/
+/*	$NetBSD: ip_sync.c,v 1.8.16.1 2007/12/26 19:55:26 ad Exp $	*/
 
 /*
  * Copyright (C) 1995-1998 by Darren Reed.
@@ -98,7 +98,12 @@ struct file;
 /* END OF INCLUDES */
 
 #if !defined(lint)
+#if defined(__NetBSD__)
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ip_sync.c,v 1.8.16.1 2007/12/26 19:55:26 ad Exp $");
+#else
 static const char rcsid[] = "@(#)Id: ip_sync.c,v 2.40.2.8 2006/07/14 06:12:20 darrenr Exp";
+#endif
 #endif
 
 #define	SYNC_STATETABSZ	256
