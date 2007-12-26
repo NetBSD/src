@@ -1,4 +1,4 @@
-/* 	$NetBSD: compat_util.c,v 1.37 2007/07/13 21:04:29 dsl Exp $	*/
+/* 	$NetBSD: compat_util.c,v 1.37.16.1 2007/12/26 19:48:43 ad Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_util.c,v 1.37 2007/07/13 21:04:29 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_util.c,v 1.37.16.1 2007/12/26 19:48:43 ad Exp $");
 
 #include "opt_systrace.h"
 
@@ -56,7 +56,6 @@ __KERNEL_RCSID(0, "$NetBSD: compat_util.c,v 1.37 2007/07/13 21:04:29 dsl Exp $")
 #include <sys/syslog.h>
 #include <sys/mount.h>
 
-
 #include <compat/common/compat_util.h>
 
 void
@@ -74,7 +73,7 @@ emul_find_root(struct lwp *l, struct exec_package *epp)
 		/* Emulation doesn't have a root */
 		return;
 
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, emul_path, l);
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, emul_path);
 	if (namei(&nd) != 0)
 		/* emulation root doesn't exist */
 		return;
@@ -112,7 +111,7 @@ emul_find_interp(struct lwp *l, struct exec_package *epp, const char *itp)
 		flags = FOLLOW | TRYEMULROOT | EMULROOTSET;
 	}
 
-	NDINIT(&nd, LOOKUP, flags, UIO_SYSSPACE, itp, l);
+	NDINIT(&nd, LOOKUP, flags, UIO_SYSSPACE, itp);
 	error = namei(&nd);
 	if (error != 0) {
 		epp->ep_interp = NULL;
@@ -150,9 +149,7 @@ emul_flags_translate(const struct emul_flags_xtab *tab,
 /* The only user left of the stackgap is the systrace code. */
 #if SYSTRACE
 void *
-stackgap_init(p, sz)
-	const struct proc *p;
-	size_t sz;
+stackgap_init(const struct proc *p, size_t sz)
 {
 	if (sz == 0)
 		sz = STACKGAPLEN;
@@ -166,10 +163,7 @@ stackgap_init(p, sz)
 
 
 void *
-stackgap_alloc(p, sgp, sz)
-	const struct proc *p;
-	void **sgp;
-	size_t sz;
+stackgap_alloc(const struct proc *p, void **sgp, size_t sz)
 {
 	void *n = *sgp;
 	void *nsgp;
@@ -186,9 +180,7 @@ stackgap_alloc(p, sgp, sz)
 #endif
 
 void
-compat_offseterr(vp, msg)
-	struct vnode *vp;
-	const char *msg;
+compat_offseterr(struct vnode *vp, const char *msg)
 {
 	struct mount *mp;
 

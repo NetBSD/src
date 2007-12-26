@@ -1,3 +1,5 @@
+/*	$NetBSD: tdfx_drv.c,v 1.2.22.1 2007/12/26 19:47:16 ad Exp $	*/
+
 /* tdfx_drv.c -- tdfx driver -*- linux-c -*-
  * Created: Thu Oct  7 10:38:32 1999 by faith@precisioninsight.com
  */
@@ -33,6 +35,7 @@
  */
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: tdfx_drv.c,v 1.2.22.1 2007/12/26 19:47:16 ad Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/tdfx_drv.c,v 1.10 2005/12/20 22:44:36 jhb Exp $");
 */

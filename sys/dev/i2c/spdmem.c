@@ -1,4 +1,4 @@
-/* $NetBSD: spdmem.c,v 1.3 2007/09/20 23:09:59 xtraeme Exp $ */
+/* $NetBSD: spdmem.c,v 1.3.8.1 2007/12/26 19:46:13 ad Exp $ */
 
 /*
  * Copyright (c) 2007 Nicolas Joly
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.3 2007/09/20 23:09:59 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.3.8.1 2007/12/26 19:46:13 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -124,7 +124,7 @@ spdmem_match(struct device *parent, struct cfdata *match, void *aux)
 	int cksum = 0;
 	uint8_t i, val;
 
-	if (ia->ia_addr < 0x50)
+	if (ia->ia_addr < 0x50 || ia->ia_addr > 0x57)
 		return 0;
 
 	sc.sc_tag = ia->ia_tag;
@@ -390,7 +390,8 @@ spdmem_attach(struct device *parent, struct device *self, void *aux)
 		aprint_verbose(" (self-refreshing)");
 	aprint_verbose("\n");
 
-	return;
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
 static uint8_t

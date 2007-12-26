@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_tty.c,v 1.31 2007/03/04 06:01:16 christos Exp $	*/
+/*	$NetBSD: hpux_tty.c,v 1.31.24.1 2007/12/26 19:48:57 ad Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_tty.c,v 1.31 2007/03/04 06:01:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_tty.c,v 1.31.24.1 2007/12/26 19:48:57 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_43.h"
@@ -390,25 +390,25 @@ hpux_termio(fd, com, data, l)
 			 * were implemented.
 			 */
 			{
-				struct hpux_sys_fcntl_args {
-					int fdes, cmd, arg;
-				} args;
+				struct hpux_sys_fcntl_args /* {
+					int fd, cmd, arg;
+				} */ args;
 				int flags, nbio;
 
 				nbio = (htios.c_cc[HPUXVMINS] == 0 &&
 					htios.c_cc[HPUXVTIMES] == 0);
 				if ((nbio && (fp->f_flag & FNONBLOCK) == 0) ||
 				    (!nbio && (fp->f_flag & FNONBLOCK))) {
-					args.fdes = fd;
-					args.cmd = F_GETFL;
-					args.arg = 0;
+					SCARG(&args, fd) = fd;
+					SCARG(&args, cmd) = F_GETFL;
+					SCARG(&args, arg) = 0;
 					(void) hpux_sys_fcntl(l, &args, &flags);
 					if (nbio)
 						flags |= HPUXNDELAY;
 					else
 						flags &= ~HPUXNDELAY;
-					args.cmd = F_SETFL;
-					args.arg = flags;
+					SCARG(&args, cmd) = F_SETFL;
+					SCARG(&args, arg) = flags;
 					(void) hpux_sys_fcntl(l, &args, &flags);
 				}
 			}
@@ -423,10 +423,7 @@ hpux_termio(fd, com, data, l)
 }
 
 void
-termiototermios(tio, tios, bsdtios)
-	struct hpux_termio *tio;
-	struct hpux_termios *tios;
-	struct termios *bsdtios;
+termiototermios(struct hpux_termio *tio, struct hpux_termios *tios, struct termios *bsdtios)
 {
 	int i;
 
@@ -455,9 +452,7 @@ termiototermios(tio, tios, bsdtios)
 }
 
 void
-termiostotermio(tios, tio)
-	struct hpux_termios *tios;
-	struct hpux_termio *tio;
+termiostotermio(struct hpux_termios *tios, struct hpux_termio *tio)
 {
 	int i;
 
@@ -478,8 +473,7 @@ termiostotermio(tios, tio)
 }
 
 int
-bsdtohpuxbaud(bsdspeed)
-	long bsdspeed;
+bsdtohpuxbaud(long bsdspeed)
 {
 	switch (bsdspeed) {
 	case B0:     return(TIO_B0);
@@ -503,8 +497,7 @@ bsdtohpuxbaud(bsdspeed)
 }
 
 int
-hpuxtobsdbaud(hpux_speed)
-	int hpux_speed;
+hpuxtobsdbaud(int hpux_speed)
 {
 	static const int hpuxtobsdbaudtab[32] = {
 		B0,	B50,	B75,	B110,	B134,	B150,	B200,	B300,
@@ -519,29 +512,23 @@ hpuxtobsdbaud(hpux_speed)
 }
 
 int
-hpux_sys_stty_6x(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+hpux_sys_stty_6x(struct lwp *l, const struct hpux_sys_stty_6x_args *uap, register_t *retval)
 {
-	struct hpux_sys_stty_6x_args /* {
+	/* {
 		syscallarg(int) fd;
 		syscallarg(void *) arg;
-	} */ *uap = v;
+	} */
 
 	return (getsettty(l, SCARG(uap, fd), HPUXTIOCGETP, SCARG(uap, arg)));
 }
 
 int
-hpux_sys_gtty_6x(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+hpux_sys_gtty_6x(struct lwp *l, const struct hpux_sys_gtty_6x_args *uap, register_t *retval)
 {
-	struct hpux_sys_gtty_6x_args /* {
+	/* {
 		syscallarg(int) fd;
 		syscallarg(void *) arg;
-	} */ *uap = v;
+	} */
 
 	return (getsettty(l, SCARG(uap, fd), HPUXTIOCSETP, SCARG(uap, arg)));
 }

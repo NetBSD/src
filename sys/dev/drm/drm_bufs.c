@@ -1,4 +1,4 @@
-/* $NetBSD: drm_bufs.c,v 1.5 2007/11/21 19:22:12 bjs Exp $ */
+/* $NetBSD: drm_bufs.c,v 1.5.2.1 2007/12/26 19:46:07 ad Exp $ */
 
 /* drm_bufs.h -- Generic buffer template -*- linux-c -*-
  * Created: Thu Nov 23 03:10:50 2000 by gareth@valinux.com
@@ -34,6 +34,7 @@
  */
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: drm_bufs.c,v 1.5.2.1 2007/12/26 19:46:07 ad Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/drm_bufs.c,v 1.3 2005/11/28 23:13:52 anholt Exp $");
 */

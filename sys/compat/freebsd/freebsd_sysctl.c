@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_sysctl.c,v 1.9 2007/08/15 12:07:28 ad Exp $	*/
+/*	$NetBSD: freebsd_sysctl.c,v 1.9.10.1 2007/12/26 19:48:55 ad Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_sysctl.c,v 1.9 2007/08/15 12:07:28 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_sysctl.c,v 1.9.10.1 2007/12/26 19:48:55 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,19 +82,16 @@ SYSCTL_SETUP(freebsd_sysctl_setup, "freebsd emulated sysctl setup")
 }
 
 int
-freebsd_sys_sysctl(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+freebsd_sys_sysctl(struct lwp *l, const struct freebsd_sys_sysctl_args *uap, register_t *retval)
 {
-	struct freebsd_sys_sysctl_args /* {
+	/* {
 		syscallarg(int *) name;
 		syscallarg(u_int) namelen;
 		syscallarg(void *) old;
 		syscallarg(size_t *) oldlenp;
 		syscallarg(void *) new;
 		syscallarg(size_t) newlen;
-	} */ *uap = v;
+	} */
 	int error;
 	int name[CTL_MAXNAME];
 	size_t newlen, *oldlenp;
@@ -111,7 +108,7 @@ freebsd_sys_sysctl(l, v, retval)
 		return error;
 
 	if (namelen > 0 && name[0] != 0)
-		return(sys___sysctl(l, v, retval));
+		return(sys___sysctl(l, (const void *)uap, retval));
 
 	ktrmib(name, namelen);
 

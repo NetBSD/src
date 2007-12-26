@@ -1,4 +1,4 @@
-/* $NetBSD: auixpvar.h,v 1.5 2007/03/04 06:02:16 christos Exp $*/
+/* $NetBSD: auixpvar.h,v 1.5.24.1 2007/12/26 19:46:41 ad Exp $*/
 
 /*
  * Copyright (c) 2004, 2005 Reinoud Zandijk <reinoud@netbsd.org>
@@ -138,10 +138,6 @@ struct auixp_softc {
 	/* last set audio parameters */
 	struct audio_params	sc_play_params;
 	struct audio_params	sc_rec_params;
-
-	/* suspend/resume */
-	void			*powerhook;
-	uint16_t		*savemem;
 };
 
 

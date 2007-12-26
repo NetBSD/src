@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.64 2007/10/17 19:57:30 garbled Exp $ */
+/*	$NetBSD: cpu.c,v 1.64.4.1 2007/12/26 19:42:48 ad Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.64 2007/10/17 19:57:30 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.64.4.1 2007/12/26 19:42:48 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -149,6 +149,7 @@ alloc_cpuinfo(u_int cpu_node)
 	cpi->ci_paddr = pa0;
 	cpi->ci_self = cpi;
 	cpi->ci_node = cpu_node;
+	cpi->ci_idepth = -1;
 
 	/*
 	 * Finally, add itself to the list of active cpus.

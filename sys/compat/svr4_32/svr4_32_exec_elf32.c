@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_exec_elf32.c,v 1.18 2007/10/19 12:16:40 ad Exp $	 */
+/*	$NetBSD: svr4_32_exec_elf32.c,v 1.18.4.1 2007/12/26 19:49:42 ad Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_exec_elf32.c,v 1.18 2007/10/19 12:16:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_exec_elf32.c,v 1.18.4.1 2007/12/26 19:49:42 ad Exp $");
 
 #define	ELFSIZE		32				/* XXX should die */
 
@@ -76,12 +76,7 @@ int sun_hwcap = (AV_SPARC_HWMUL_32x32|AV_SPARC_HWDIV_32x32|AV_SPARC_HWFSMULD);
 
 #if 0
 int
-svr4_32_copyargs(l, pack, arginfo, stackp, argp)
-	struct lwp *l;
-	struct exec_package *pack;
-	struct ps_strings *arginfo;
-	char **stackp;
-	void *argp;
+svr4_32_copyargs(struct lwp *l, struct exec_package *pack, struct ps_strings *arginfo, char **stackp, void *argp)
 {
 	size_t len;
 	AuxInfo ai[SVR4_32_AUX_ARGSIZ], *a, *platform=NULL, *exec=NULL;
@@ -204,12 +199,7 @@ svr4_32_copyargs(l, pack, arginfo, stackp, argp)
 }
 #else
 int
-svr4_32_copyargs(l, pack, arginfo, stackp, argp)
-	struct lwp *l;
-	struct exec_package *pack;
-	struct ps_strings *arginfo;
-	char **stackp;
-	void *argp;
+svr4_32_copyargs(struct lwp *l, struct exec_package *pack, struct ps_strings *arginfo, char **stackp, void *argp)
 {
 	size_t len;
 	AuxInfo ai[SVR4_32_AUX_ARGSIZ], *a;
@@ -275,12 +265,7 @@ svr4_32_copyargs(l, pack, arginfo, stackp, argp)
 #endif
 
 int
-svr4_32_elf32_probe(l, epp, eh, itp, pos)
-	struct lwp *l;
-	struct exec_package *epp;
-	void *eh;
-	char *itp;
-	vaddr_t *pos;
+svr4_32_elf32_probe(struct lwp *l, struct exec_package *epp, void *eh, char *itp, vaddr_t *pos)
 {
 	int error;
 

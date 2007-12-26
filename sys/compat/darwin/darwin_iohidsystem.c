@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_iohidsystem.c,v 1.40 2007/08/15 12:07:27 ad Exp $ */
+/*	$NetBSD: darwin_iohidsystem.c,v 1.40.10.1 2007/12/26 19:48:48 ad Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_iohidsystem.c,v 1.40 2007/08/15 12:07:27 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_iohidsystem.c,v 1.40.10.1 2007/12/26 19:48:48 ad Exp $");
 
 #include "ioconf.h"
 #include "wsmux.h"
@@ -158,8 +158,7 @@ struct mach_iokit_devclass darwin_iohidsystem_devclass = {
 };
 
 int
-darwin_iohidsystem_connect_method_scalari_scalaro(args)
-	struct mach_trap_args *args;
+darwin_iohidsystem_connect_method_scalari_scalaro(struct mach_trap_args *args)
 {
 	mach_io_connect_method_scalari_scalaro_request_t *req = args->smsg;
 	mach_io_connect_method_scalari_scalaro_reply_t *rep = args->rmsg;
@@ -300,8 +299,7 @@ darwin_iohidsystem_connect_method_scalari_scalaro(args)
 }
 
 int
-darwin_iohidsystem_connect_method_structi_structo(args)
-	struct mach_trap_args *args;
+darwin_iohidsystem_connect_method_structi_structo(struct mach_trap_args *args)
 {
 	mach_io_connect_method_structi_structo_request_t *req = args->smsg;
 	mach_io_connect_method_structi_structo_reply_t *rep = args->rmsg;
@@ -366,8 +364,7 @@ darwin_iohidsystem_connect_method_structi_structo(args)
 }
 
 int
-darwin_iohidsystem_connect_map_memory(args)
-	struct mach_trap_args *args;
+darwin_iohidsystem_connect_map_memory(struct mach_trap_args *args)
 {
 	mach_io_connect_map_memory_request_t *req = args->smsg;
 	mach_io_connect_map_memory_reply_t *rep = args->rmsg;
@@ -410,8 +407,7 @@ darwin_iohidsystem_connect_map_memory(args)
 }
 
 static void
-darwin_iohidsystem_thread(args)
-	void *args;
+darwin_iohidsystem_thread(void *args)
 {
 	struct darwin_iohidsystem_thread_args *dita;
 	struct darwin_iohidsystem_shmem *shmem;
@@ -530,8 +526,7 @@ out2:
 };
 
 static void
-darwin_iohidsystem_shmeminit(kvaddr)
-	vaddr_t kvaddr;
+darwin_iohidsystem_shmeminit(vaddr_t kvaddr)
 {
 	struct darwin_iohidsystem_shmem *shmem;
 	struct darwin_iohidsystem_evglobals *evglobals;
@@ -555,9 +550,7 @@ darwin_iohidsystem_shmeminit(kvaddr)
 }
 
 static int
-darwin_findwsmux(dev, mux)
-	dev_t *dev;
-	int mux;
+darwin_findwsmux(dev_t *dev, int mux)
 {
 	extern struct cdevsw wsmux_cdevsw;
 	struct wsmux_softc *wsm_sc;
@@ -574,9 +567,7 @@ darwin_findwsmux(dev, mux)
 }
 
 static void
-darwin_wscons_to_iohidsystem(wsevt, hidevt)
-	struct wscons_event *wsevt;
-	darwin_iohidsystem_event *hidevt;
+darwin_wscons_to_iohidsystem(struct wscons_event *wsevt, darwin_iohidsystem_event *hidevt)
 {
 	struct timeval tv;
 	static int px = 0; /* Previous mouse location */
@@ -726,8 +717,7 @@ mach_notify_iohidsystem(struct lwp *l, struct mach_right *mr)
 }
 
 void
-darwin_iohidsystem_postfake(l)
-	struct lwp *l;
+darwin_iohidsystem_postfake(struct lwp *l)
 {
 	dev_t dev;
 	int error;

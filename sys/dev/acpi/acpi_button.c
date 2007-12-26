@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_button.c,v 1.24 2007/10/24 07:05:35 joerg Exp $	*/
+/*	$NetBSD: acpi_button.c,v 1.24.4.1 2007/12/26 19:45:59 ad Exp $	*/
 
 /*
  * Copyright 2001, 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_button.c,v 1.24 2007/10/24 07:05:35 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_button.c,v 1.24.4.1 2007/12/26 19:45:59 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,6 +151,9 @@ acpibut_attach(device_t parent, device_t self, void *aux)
 	/* Display the current state when it changes. */
 	sc->sc_flags = ACPIBUT_F_VERBOSE;
 #endif
+
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
 /*
@@ -189,7 +192,7 @@ acpibut_notify_handler(ACPI_HANDLE handle, UINT32 notify, void *context)
 #ifdef ACPI_BUT_DEBUG
 		aprint_debug_dev(dv, "received ButtonPressed message\n");
 #endif
-		rv = AcpiOsQueueForExecution(OSD_PRIORITY_LO,
+		rv = AcpiOsExecute(OSL_NOTIFY_HANDLER,
 		    acpibut_pressed_event, dv);
 		if (ACPI_FAILURE(rv))
 			aprint_error_dev(dv,

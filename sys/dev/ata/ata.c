@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.91 2007/10/19 11:59:36 ad Exp $	*/
+/*	$NetBSD: ata.c,v 1.91.4.1 2007/12/26 19:46:03 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.91 2007/10/19 11:59:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.91.4.1 2007/12/26 19:46:03 ad Exp $");
 
 #include "opt_ata.h"
 
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.91 2007/10/19 11:59:36 ad Exp $");
 #include <sys/kthread.h>
 #include <sys/errno.h>
 #include <sys/ataio.h>
+#include <sys/kmem.h>
 
 #include <sys/intr.h>
 #include <sys/bus.h>
@@ -106,7 +107,8 @@ const struct cdevsw atabus_cdevsw = {
 
 extern struct cfdriver atabus_cd;
 
-static void atabus_powerhook(int, void *);
+static bool atabus_resume(device_t);
+static bool atabus_suspend(device_t);
 
 /*
  * atabusprint:
@@ -416,11 +418,8 @@ atabus_attach(struct device *parent, struct device *self, void *aux)
 		aprint_error("%s: unable to create kernel thread: error %d\n",
 		    sc->sc_dev.dv_xname, error);
 
-	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
-	    atabus_powerhook, sc);
-	if (sc->sc_powerhook == NULL)
-		printf("%s: WARNING: unable to establish power hook\n",
-		    sc->sc_dev.dv_xname);
+	if (!pmf_device_register(self, atabus_suspend, atabus_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
 /*
@@ -502,10 +501,6 @@ atabus_detach(struct device *self, int flags)
 	while (chp->ch_thread != NULL)
 		(void) tsleep(&chp->ch_flags, PRIBIO, "atadown", 0);
 
-	/* power hook */
-	if (sc->sc_powerhook)
-		powerhook_disestablish(sc->sc_powerhook);
-
 	/*
 	 * Detach atapibus and its children.
 	 */
@@ -556,16 +551,16 @@ int
 ata_get_params(struct ata_drive_datas *drvp, u_int8_t flags,
     struct ataparams *prms)
 {
-	char tb[DEV_BSIZE];
 	struct ata_command ata_c;
 	struct ata_channel *chp = drvp->chnl_softc;
 	struct atac_softc *atac = chp->ch_atac;
-	int i;
+	char *tb;
+	int i, rv;
 	u_int16_t *p;
 
 	ATADEBUG_PRINT(("%s\n", __func__), DEBUG_FUNCS);
 
-	memset(tb, 0, DEV_BSIZE);
+	tb = kmem_zalloc(DEV_BSIZE, KM_SLEEP);
 	memset(prms, 0, sizeof(struct ataparams));
 	memset(&ata_c, 0, sizeof(struct ata_command));
 
@@ -582,7 +577,8 @@ ata_get_params(struct ata_drive_datas *drvp, u_int8_t flags,
 	} else {
 		ATADEBUG_PRINT(("ata_get_parms: no disks\n"),
 		    DEBUG_FUNCS|DEBUG_PROBE);
-		return CMD_ERR;
+		rv = CMD_ERR;
+		goto out;
 	}
 	ata_c.flags = AT_READ | flags;
 	ata_c.data = tb;
@@ -591,16 +587,20 @@ ata_get_params(struct ata_drive_datas *drvp, u_int8_t flags,
 						&ata_c) != ATACMD_COMPLETE) {
 		ATADEBUG_PRINT(("ata_get_parms: wdc_exec_command failed\n"),
 		    DEBUG_FUNCS|DEBUG_PROBE);
-		return CMD_AGAIN;
+		rv = CMD_AGAIN;
+		goto out;
 	}
 	if (ata_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
 		ATADEBUG_PRINT(("ata_get_parms: ata_c.flags=0x%x\n",
 		    ata_c.flags), DEBUG_FUNCS|DEBUG_PROBE);
-		return CMD_ERR;
+		rv = CMD_ERR;
+		goto out;
 	}
 	/* if we didn't read any data something is wrong */
-	if ((ata_c.flags & AT_XFDONE) == 0)
-		return CMD_ERR;
+	if ((ata_c.flags & AT_XFDONE) == 0) {
+		rv = CMD_ERR;
+		goto out;
+	}
 
 	/* Read in parameter block. */
 	memcpy(prms, tb, sizeof(struct ataparams));
@@ -624,8 +624,10 @@ ata_get_params(struct ata_drive_datas *drvp, u_int8_t flags,
 	     ((M(0) == 'N' && M(1) == 'E') ||
 	      (M(0) == 'F' && M(1) == 'X') ||
 	      (M(0) == 'P' && M(1) == 'i')) :
-	     ((M(0) == 'T' && M(1) == 'D' && M(2) == 'K'))))
-		return CMD_OK;
+	     ((M(0) == 'T' && M(1) == 'D' && M(2) == 'K')))) {
+		rv = CMD_OK;
+		goto out;
+	     }
 #undef M
 	for (i = 0; i < sizeof(prms->atap_model); i += 2) {
 		p = (u_int16_t *)(prms->atap_model + i);
@@ -640,7 +642,10 @@ ata_get_params(struct ata_drive_datas *drvp, u_int8_t flags,
 		*p = bswap16(*p);
 	}
 
-	return CMD_OK;
+	rv = CMD_OK;
+ out:
+	kmem_free(tb, DEV_BSIZE);
+	return rv;
 }
 
 int
@@ -1475,33 +1480,38 @@ atabusioctl(dev_t dev, u_long cmd, void *addr, int flag,
 	return (error);
 };
 
-static void
-atabus_powerhook(int why, void *hdl)
+static bool
+atabus_suspend(device_t dv)
 {
-	struct atabus_softc *sc = (struct atabus_softc *)hdl;
+	struct atabus_softc *sc = device_private(dv);
+	struct ata_channel *chp = sc->sc_chan;
+
+	ata_queue_idle(chp->ch_queue);
+
+	return true;
+}
+
+static bool
+atabus_resume(device_t dv)
+{
+	struct atabus_softc *sc = device_private(dv);
 	struct ata_channel *chp = sc->sc_chan;
 	int s;
 
-	switch (why) {
-	case PWR_SOFTSUSPEND:
-	case PWR_SOFTSTANDBY:
-		/* freeze the queue and wait for the controller to be idle */
-		ata_queue_idle(chp->ch_queue);
-		break;
-	case PWR_RESUME:
-		printf("%s: resuming...\n", sc->sc_dev.dv_xname);
-		s = splbio();
-		KASSERT(chp->ch_queue->queue_freeze > 0);
-		/* unfreeze the queue and reset drives (to wake them up) */
-		chp->ch_queue->queue_freeze--;
-		ata_reset_channel(chp, AT_WAIT);
+	/*
+	 * XXX joerg: with wdc, the first channel unfreezes the controler.
+	 * Move this the reset and queue idling into wdc.
+	 */
+	s = splbio();
+	if (chp->ch_queue->queue_freeze == 0) {
 		splx(s);
-		break;
-	case PWR_SUSPEND:
-	case PWR_STANDBY:
-	case PWR_SOFTRESUME:
-		break;
+		return true;
 	}
+	KASSERT(chp->ch_queue->queue_freeze > 0);
+	/* unfreeze the queue and reset drives */
+	chp->ch_queue->queue_freeze--;
+	ata_reset_channel(chp, AT_WAIT);
+	splx(s);
 
-	return;
+	return true;
 }

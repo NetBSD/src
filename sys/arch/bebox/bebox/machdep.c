@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.90 2007/10/17 19:53:58 garbled Exp $	*/
+/*	$NetBSD: machdep.c,v 1.90.4.1 2007/12/26 19:42:03 ad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.90 2007/10/17 19:53:58 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.90.4.1 2007/12/26 19:42:03 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -130,7 +130,7 @@ initppc(u_long startkernel, u_long endkernel, void *btinfo)
 		struct btinfo_memory *meminfo;
 
 		meminfo =
-			(struct btinfo_memory *)lookup_bootinfo(BTINFO_MEMORY);
+		    (struct btinfo_memory *)lookup_bootinfo(BTINFO_MEMORY);
 		if (!meminfo)
 			panic("not found memory information in bootinfo");
 		physmemr[0].start = 0;
@@ -148,22 +148,14 @@ initppc(u_long startkernel, u_long endkernel, void *btinfo)
 		extern u_long ticks_per_sec, ns_per_tick;
 
 		clockinfo =
-			(struct btinfo_clock *)lookup_bootinfo(BTINFO_CLOCK);
+		    (struct btinfo_clock *)lookup_bootinfo(BTINFO_CLOCK);
 		if (!clockinfo)
 			panic("not found clock information in bootinfo");
 		ticks_per_sec = clockinfo->ticks_per_sec;
 		ns_per_tick = 1000000000 / ticks_per_sec;
 	}
 
-	/*
-	 * BeBox MotherBoard's Register
-	 *  Interrupt Mask Reset
-	 */
-#if 0
-	*(volatile u_int *)(MOTHER_BOARD_REG + CPU0_INT_MASK) = 0x0ffffffc;
-	*(volatile u_int *)(MOTHER_BOARD_REG + CPU0_INT_MASK) = 0x80000023;
-	*(volatile u_int *)(MOTHER_BOARD_REG + CPU1_INT_MASK) = 0x0ffffffc;
-#endif
+
 	/*
 	 * boothowto
 	 */
@@ -181,30 +173,30 @@ cpu_startup()
 	/*
 	 * BeBox Mother Board's Register Mapping
 	 */
-  bebox_mb_reg = (vaddr_t) mapiodev(BEBOX_INTR_REG, PAGE_SIZE);
-  if (!bebox_mb_reg)
-    panic("cpu_startup: no room for interrupt register");
+	bebox_mb_reg = (vaddr_t) mapiodev(BEBOX_INTR_REG, PAGE_SIZE);
+	if (!bebox_mb_reg)
+		panic("cpu_startup: no room for interrupt register");
   
-  /*
-   * Do common VM initialization
-   */
-  oea_startup(NULL);
+	/*
+	 * Do common VM initialization
+	 */
+	oea_startup(NULL);
   
-  /*
-   * Now that we have VM, malloc's are OK in bus_space.
-   */
-  bus_space_mallocok();
+	/*
+	 * Now that we have VM, malloc's are OK in bus_space.
+	 */
+	bus_space_mallocok();
   
-  /*
-   * Now allow hardware interrupts.
-   */
-  {
-    int msr;
+	/*
+	 * Now allow hardware interrupts.
+	 */
+	{
+		int msr;
     
-    splhigh();
-    __asm volatile ("mfmsr %0; ori %0,%0,%1; mtmsr %0"
+		splhigh();
+		__asm volatile ("mfmsr %0; ori %0,%0,%1; mtmsr %0"
 		    : "=r"(msr) : "K"(PSL_EE));
-  }
+	}
 }
 
 /*
@@ -224,7 +216,7 @@ lookup_bootinfo(type)
 			return (help);
 		help = (struct btinfo_common *)((char*)help + bt->next);
 	} while (bt->next &&
-		(size_t)help < (size_t)bootinfo + sizeof (bootinfo));
+	    (size_t)help < (size_t)bootinfo + sizeof (bootinfo));
 
 	return (NULL);
 }
@@ -247,25 +239,11 @@ consinit()
 	if (!consinfo)
 		panic("not found console information in bootinfo");
 	
-#if 0
-#if (NPFB > 0)
-	if (!strcmp(consinfo->devname, "be")) {
-		pfb_cnattach(consinfo->addr);
-#if (NPCKBC > 0)
-		pckbc_cnattach(&genppc_isa_io_space_tag, IO_KBD, KBCMDP,
-		    PCKBC_KBD_SLOT);
-#endif
-
-	return;
-	}
-#endif
-#endif /* if 0 */	
-
 #if (NPC > 0) || (NVGA > 0)
 	if (!strcmp(consinfo->devname, "vga")) {
 #if (NVGA > 0)
 		if (!vga_cnattach(&genppc_isa_io_space_tag, &genppc_isa_mem_space_tag,
-				  -1, 1))
+			-1, 1))
 			goto dokbd;
 #endif
 #if (NPC > 0)
@@ -287,8 +265,8 @@ dokbd:
 	   	bus_space_tag_t tag = &genppc_isa_io_space_tag;
 
 		if(comcnattach(tag, consinfo->addr, consinfo->speed,
-		    COM_FREQ, COM_TYPE_NORMAL,
-		    ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8)))
+			COM_FREQ, COM_TYPE_NORMAL,
+			((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8)))
 			panic("can't init serial console");
 
 		return;
@@ -335,9 +313,7 @@ cpu_reboot(int howto, char *what)
 	if (howto & RB_HALT) {
 		doshutdownhooks();
 		printf("halted\n\n");
-#if 0
-		ppc_exit();
-#endif
+
 	}
 	if (!cold && (howto & RB_DUMP))
 		oea_dumpsys();
@@ -360,18 +336,5 @@ cpu_reboot(int howto, char *what)
 	*ap++ = 0;
 	if (ap[-2] == '-')
 		*ap1 = 0;
-#if 0
-	ppc_boot(str);
-#endif
 	while (1);
 }
-
-#if 0
-void
-mem_regions(struct mem_region **mem, struct mem_region **avail)
-{
-
-  *mem = physmemr;
-  *avail = availmemr;
-}
-#endif

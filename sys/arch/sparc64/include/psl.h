@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.37 2007/12/03 15:34:23 ad Exp $ */
+/*	$NetBSD: psl.h,v 1.37.2.1 2007/12/26 19:42:47 ad Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -263,7 +263,7 @@ getpstate(void)
 static __inline void
 setpstate(int newpstate)
 {
-	__asm volatile("wrpr %0,0,%%pstate" : : "r" (newpstate));
+	__asm volatile("wrpr %0,0,%%pstate" : : "r" (newpstate) : "memory");
 }
 
 static __inline int
@@ -278,7 +278,7 @@ getcwp(void)
 static __inline void
 setcwp(int newcwp)
 {
-	__asm volatile("wrpr %0,0,%%cwp" : : "r" (newcwp));
+	__asm volatile("wrpr %0,0,%%cwp" : : "r" (newcwp) : "memory");
 }
 
 static __inline uint64_t
@@ -327,7 +327,7 @@ static __inline int name##X(const char* file, int line) \
 	int oldpil; \
 	__asm volatile("rdpr %%pil,%0" : "=r" (oldpil)); \
 	SPLPRINT(("{%s:%d %d=>%d}", file, line, oldpil, newpil)); \
-	__asm volatile("wrpr %%g0,%0,%%pil" : : "n" (newpil)); \
+	__asm volatile("wrpr %%g0,%0,%%pil" : : "n" (newpil) : "memory"); \
 	return (oldpil); \
 }
 /* A non-priority-decreasing version of SPL */
@@ -339,7 +339,7 @@ static __inline int name##X(const char* file, int line) \
 	if (newpil <= oldpil) \
 		return oldpil; \
 	SPLPRINT(("{%s:%d %d->!d}", file, line, oldpil, newpil)); \
-	__asm volatile("wrpr %%g0,%0,%%pil" : : "n" (newpil)); \
+	__asm volatile("wrpr %%g0,%0,%%pil" : : "n" (newpil) : "memory"); \
 	return (oldpil); \
 }
 
@@ -350,7 +350,7 @@ static __inline int name(void) \
 { \
 	int oldpil; \
 	__asm volatile("rdpr %%pil,%0" : "=r" (oldpil)); \
-	__asm volatile("wrpr %%g0,%0,%%pil" : : "n" (newpil)); \
+	__asm volatile("wrpr %%g0,%0,%%pil" : : "n" (newpil) : "memory"); \
 	return (oldpil); \
 }
 /* A non-priority-decreasing version of SPL */
@@ -361,7 +361,7 @@ static __inline int name(void) \
 	__asm volatile("rdpr %%pil,%0" : "=r" (oldpil)); \
 	if (newpil <= oldpil) \
 		return oldpil; \
-	__asm volatile("wrpr %%g0,%0,%%pil" : : "n" (newpil)); \
+	__asm volatile("wrpr %%g0,%0,%%pil" : : "n" (newpil) : "memory"); \
 	return (oldpil); \
 }
 #endif
@@ -391,7 +391,7 @@ splraiseipl(ipl_cookie_t icookie)
 	__asm __volatile("rdpr %%pil,%0" : "=r" (oldpil));
 	if (newpil <= oldpil)
 		return (oldpil);
-	__asm __volatile("wrpr %0,0,%%pil" : : "r" (newpil));
+	__asm __volatile("wrpr %0,0,%%pil" : : "r" (newpil) : "memory");
 	return (oldpil);
 }
 
@@ -465,7 +465,7 @@ static __inline void splx(int newpil)
 	__asm volatile("rdpr %%pil,%0" : "=r" (pil));
 	SPLPRINT(("{%d->%d}", pil, newpil));
 #endif
-	__asm volatile("wrpr %%g0,%0,%%pil" : : "rn" (newpil));
+	__asm volatile("wrpr %%g0,%0,%%pil" : : "rn" (newpil) : "memory");
 }
 #endif /* KERNEL && !_LOCORE */
 

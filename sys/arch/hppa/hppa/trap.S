@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.S,v 1.22 2007/11/12 12:58:11 skrll Exp $	*/
+/*	$NetBSD: trap.S,v 1.22.2.1 2007/12/26 19:42:11 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -227,7 +227,19 @@ $syscall:
 	stw	%t1, TF_R22 -TRAPFRAME_SIZEOF(%sr1, %t3)	/* syscall # */
 	stw	%t4, TF_R19 -TRAPFRAME_SIZEOF(%sr1, %t3)	/* convenience */
 	copy	%sp, %t4
+
+	/*
+	 * Make space for the syscall arguments.
+	 *
+	 * Match the offset from %sp to the trapframe with the
+	 * offset in TLABEL(all) for the benefit of ddb.
+	 */
 	ldo	HPPA_FRAME_SIZE+HPPA_FRAME_MAXARGS(%t3), %sp
+
+	/* Align correctly */
+	ldo	HPPA_FRAME_SIZE-1(%sp),%sp
+	 depi	0, 31, 6, %sp
+
 	stw	%t4, TF_R30 -TRAPFRAME_SIZEOF(%sr1, %t3)	/* user stack */
 	stw	%r1, TF_CR15-TRAPFRAME_SIZEOF(%sr1, %t3)	/* eiem */
 	mtctl	%r1, %eiem
@@ -2016,6 +2028,14 @@ $trap_have_stack:
 
 	copy	%sp, %t3
 	ldo	HPPA_FRAME_SIZE+TRAPFRAME_SIZEOF(%sp), %sp
+
+#if defined(DDB) || defined(KGDB)
+	/*
+	 * Match the offset from %sp for the trapframe with $syscall
+	 */
+	ldo	HPPA_FRAME_MAXARGS+HPPA_FRAME_SIZE-1(%sp),%sp
+	depi	0, 31, 6, %sp
+#endif
 	rfir
 	nop
 $trapnowvirt:
@@ -2176,8 +2196,10 @@ $trapnowvirt:
 	copy	%t3, %arg1
 
 #if defined(DDB) || defined(KGDB)
-	ldo	-HPPA_FRAME_SIZE(%sp), %r3
+	/* Mark frame pointer as NULL to indicate syscall/trap */
+	copy	%r0, %r3
 #endif
+
 	.import	trap, code
 	CALL(trap, %t1)
 

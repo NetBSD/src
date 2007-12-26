@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_ioframebuffer.c,v 1.38 2007/07/01 20:14:17 dsl Exp $ */
+/*	$NetBSD: darwin_ioframebuffer.c,v 1.38.16.1 2007/12/26 19:48:48 ad Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_ioframebuffer.c,v 1.38 2007/07/01 20:14:17 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_ioframebuffer.c,v 1.38.16.1 2007/12/26 19:48:48 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -123,8 +123,7 @@ struct mach_iokit_devclass darwin_ioframebuffer_devclass = {
 };
 
 int
-darwin_ioframebuffer_connect_method_scalari_scalaro(args)
-	struct mach_trap_args *args;
+darwin_ioframebuffer_connect_method_scalari_scalaro(struct mach_trap_args *args)
 {
 	mach_io_connect_method_scalari_scalaro_request_t *req = args->smsg;
 	mach_io_connect_method_scalari_scalaro_reply_t *rep = args->rmsg;
@@ -301,8 +300,7 @@ darwin_ioframebuffer_connect_method_scalari_scalaro(args)
 }
 
 int
-darwin_ioframebuffer_connect_method_scalari_structo(args)
-	struct mach_trap_args *args;
+darwin_ioframebuffer_connect_method_scalari_structo(struct mach_trap_args *args)
 {
 	mach_io_connect_method_scalari_structo_request_t *req = args->smsg;
 	mach_io_connect_method_scalari_structo_reply_t *rep = args->rmsg;
@@ -419,8 +417,7 @@ darwin_ioframebuffer_connect_method_scalari_structo(args)
 }
 
 int
-darwin_ioframebuffer_connect_method_structi_structo(args)
-	struct mach_trap_args *args;
+darwin_ioframebuffer_connect_method_structi_structo(struct mach_trap_args *args)
 {
 	mach_io_connect_method_structi_structo_request_t *req = args->smsg;
 	mach_io_connect_method_structi_structo_reply_t *rep = args->rmsg;
@@ -465,8 +462,7 @@ darwin_ioframebuffer_connect_method_structi_structo(args)
 }
 
 int
-darwin_ioframebuffer_connect_map_memory(args)
-	struct mach_trap_args *args;
+darwin_ioframebuffer_connect_map_memory(struct mach_trap_args *args)
 {
 	mach_io_connect_map_memory_request_t *req = args->smsg;
 	mach_io_connect_map_memory_reply_t *rep = args->rmsg;
@@ -625,8 +621,7 @@ darwin_ioframebuffer_connect_map_memory(args)
 }
 
 void
-darwin_ioframebuffer_shmeminit(kvaddr)
-	vaddr_t kvaddr;
+darwin_ioframebuffer_shmeminit(vaddr_t kvaddr)
 {
 	struct darwin_ioframebuffer_shmem *shmem;
 
@@ -636,8 +631,7 @@ darwin_ioframebuffer_shmeminit(kvaddr)
 }
 
 int
-darwin_ioframebuffer_connect_method_scalari_structi(args)
-	struct mach_trap_args *args;
+darwin_ioframebuffer_connect_method_scalari_structi(struct mach_trap_args *args)
 {
 	mach_io_connect_method_scalari_structi_request_t *req = args->smsg;
 	mach_io_connect_method_scalari_structi_reply_t *rep = args->rmsg;

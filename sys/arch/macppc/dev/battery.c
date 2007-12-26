@@ -1,4 +1,4 @@
-/*	$NetBSD: battery.c,v 1.7 2007/11/16 08:00:12 xtraeme Exp $ */
+/*	$NetBSD: battery.c,v 1.7.2.1 2007/12/26 19:42:29 ad Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: battery.c,v 1.7 2007/11/16 08:00:12 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: battery.c,v 1.7.2.1 2007/12/26 19:42:29 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -243,14 +243,6 @@ battery_setup_envsys(struct battery_softc *sc)
 
 	sc->sc_sme = sysmon_envsys_create();
 
-	for (i = 0; i < BAT_NSENSORS; i++) {
-		if (sysmon_envsys_sensor_attach(sc->sc_sme,
-						&sc->sc_sensor[i])) {
-			sysmon_envsys_destroy(sc->sc_sme);
-			return;
-		}
-	}
-
 	INITDATA(BAT_CPU_TEMPERATURE, ENVSYS_STEMP, "CPU temperature");
 	INITDATA(BAT_AC_PRESENT, ENVSYS_INDICATOR, "AC present");
 	INITDATA(BAT_PRESENT, ENVSYS_INDICATOR, "Battery present");
@@ -262,6 +254,14 @@ battery_setup_envsys(struct battery_softc *sc)
 	INITDATA(BAT_CHARGING, ENVSYS_INDICATOR, "Battery charging");
 	INITDATA(BAT_FULL, ENVSYS_INDICATOR, "Battery full");
 #undef INITDATA
+
+	for (i = 0; i < BAT_NSENSORS; i++) {
+		if (sysmon_envsys_sensor_attach(sc->sc_sme,
+						&sc->sc_sensor[i])) {
+			sysmon_envsys_destroy(sc->sc_sme);
+			return;
+		}
+	}
 
 	sc->sc_sme->sme_name = sc->sc_dev.dv_xname;
 	sc->sc_sme->sme_cookie = sc;

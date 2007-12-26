@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_signal.c,v 1.32 2007/06/16 20:04:28 dsl Exp $	*/
+/*	$NetBSD: osf1_signal.c,v 1.32.16.1 2007/12/26 19:49:36 ad Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_signal.c,v 1.32 2007/06/16 20:04:28 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_signal.c,v 1.32.16.1 2007/12/26 19:49:36 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,12 +56,8 @@ __KERNEL_RCSID(0, "$NetBSD: osf1_signal.c,v 1.32 2007/06/16 20:04:28 dsl Exp $")
 
 #if 0
 int
-osf1_sys_kill(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+osf1_sys_kill(struct lwp *l, const struct osf1_sys_kill_args *uap, register_t *retval)
 {
-	struct osf1_sys_kill_args *uap = v;
 	struct sys_kill_args ka;
 
 	if (SCARG(uap, signum) < 0 || SCARG(uap, signum) > OSF1_NSIG)
@@ -73,12 +69,8 @@ osf1_sys_kill(l, v, retval)
 #endif
 
 int
-osf1_sys_sigaction(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+osf1_sys_sigaction(struct lwp *l, const struct osf1_sys_sigaction_args *uap, register_t *retval)
 {
-	struct osf1_sys_sigaction_args *uap = v;
 	struct osf1_sigaction *nosa, *oosa, tmposa;
 	struct sigaction nbsa, obsa;
 	int error;
@@ -111,12 +103,8 @@ osf1_sys_sigaction(l, v, retval)
 }
 
 int
-osf1_sys_sigaltstack(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+osf1_sys_sigaltstack(struct lwp *l, const struct osf1_sys_sigaltstack_args *uap, register_t *retval)
 {
-	struct osf1_sys_sigaltstack_args *uap = v;
 	/* We silently ignore OSF1_SS_NOMASK and OSF1_SS_UCONTEXT */
 	compat_sigaltstack(uap, osf1_sigaltstack,
 	    OSF1_SS_ONSTACK, OSF1_SS_DISABLE);
@@ -124,12 +112,8 @@ osf1_sys_sigaltstack(l, v, retval)
 
 #if 0
 int
-osf1_sys_signal(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+osf1_sys_signal(struct lwp *l, const struct osf1_sys_signal_args *uap, register_t *retval)
 {
-	struct osf1_sys_signal_args *uap = v;
 	struct proc *p = l->l_proc;
 	int signum;
 	int error;
@@ -230,12 +214,8 @@ osf1_sys_signal(l, v, retval)
 }
 
 int
-osf1_sys_sigpending(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+osf1_sys_sigpending(struct lwp *l, const struct osf1_sys_sigpending_args *uap, register_t *retval)
 {
-	struct osf1_sys_sigpending_args *uap = v;
 	struct proc *p = l->l_proc;
 	sigset_t bss;
 	osf1_sigset_t oss;
@@ -247,12 +227,8 @@ osf1_sys_sigpending(l, v, retval)
 }
 
 int
-osf1_sys_sigprocmask(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+osf1_sys_sigprocmask(struct lwp *l, const struct osf1_sys_sigprocmask_args *uap, register_t *retval)
 {
-	struct osf1_sys_sigprocmask_args *uap = v;
 	struct proc *p = l->l_proc;
 	osf1_sigset_t oss;
 	sigset_t bss;
@@ -306,12 +282,8 @@ osf1_sys_sigprocmask(l, v, retval)
 }
 
 int
-osf1_sys_sigsuspend(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+osf1_sys_sigsuspend(struct lwp *l, const struct osf1_sys_sigsuspend_args *uap, register_t *retval)
 {
-	struct osf1_sys_sigsuspend_args *uap = v;
 	osf1_sigset_t oss;
 	sigset_t bss;
 	struct sys_sigsuspend_args sa;

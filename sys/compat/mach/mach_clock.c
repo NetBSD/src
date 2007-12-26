@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_clock.c,v 1.16 2006/11/16 01:32:44 christos Exp $ */
+/*	$NetBSD: mach_clock.c,v 1.16.34.1 2007/12/26 19:49:25 ad Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_clock.c,v 1.16 2006/11/16 01:32:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_clock.c,v 1.16.34.1 2007/12/26 19:49:25 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -55,16 +55,15 @@ __KERNEL_RCSID(0, "$NetBSD: mach_clock.c,v 1.16 2006/11/16 01:32:44 christos Exp
 #include <compat/mach/mach_syscallargs.h>
 
 int
-mach_sys_clock_sleep_trap(struct lwp *l, void *v,
-    register_t *retval)
+mach_sys_clock_sleep_trap(struct lwp *l, const struct mach_sys_clock_sleep_trap_args *uap, register_t *retval)
 {
-	struct mach_sys_clock_sleep_trap_args /* {
+	/* {
 		syscallarg(mach_clock_port_t) clock_name;
 		syscallarg(mach_sleep_type_t) sleep_type;
 		syscallarg(int) sleep_sec;
 		syscallarg(int) sleep_nsec;
 		syscallarg(mach_timespec_t *) wakeup_time;
-	} */ *uap = v;
+	} */
 	struct timespec mts, cts, tts;
 	mach_timespec_t mcts;
 	int dontcare;
@@ -100,12 +99,11 @@ mach_sys_clock_sleep_trap(struct lwp *l, void *v,
 }
 
 int
-mach_sys_timebase_info(struct lwp *l, void *v,
-    register_t *retval)
+mach_sys_timebase_info(struct lwp *l, const struct mach_sys_timebase_info_args *uap, register_t *retval)
 {
-	struct mach_sys_timebase_info_args /*
+	/* {
 		syscallarg(mach_timebase_info_t) info;
-	*/ *uap = v;
+	} */
 	int error;
 	struct mach_timebase_info info;
 
@@ -123,8 +121,7 @@ mach_sys_timebase_info(struct lwp *l, void *v,
 
 
 int
-mach_clock_get_time(args)
-	struct mach_trap_args *args;
+mach_clock_get_time(struct mach_trap_args *args)
 {
 	mach_clock_get_time_request_t *req = args->smsg;
 	mach_clock_get_time_reply_t *rep = args->rmsg;

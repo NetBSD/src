@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp_cardbus.c,v 1.27 2007/10/19 11:59:39 ad Exp $	*/
+/*	$NetBSD: if_fxp_cardbus.c,v 1.27.4.1 2007/12/26 19:46:06 ad Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fxp_cardbus.c,v 1.27 2007/10/19 11:59:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fxp_cardbus.c,v 1.27.4.1 2007/12/26 19:46:06 ad Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -181,6 +181,11 @@ fxp_cardbus_attach(struct device *parent, struct device *self,
 	fxp_enable(sc);
 	fxp_attach(sc);
 	fxp_disable(sc);
+
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+	else
+		pmf_class_network_register(self, &sc->sc_ethercom.ec_if);
 }
 
 static void

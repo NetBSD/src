@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.89 2007/10/19 11:59:59 ad Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.89.4.1 2007/12/26 19:46:22 ad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -33,6 +33,7 @@
  */
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.89.4.1 2007/12/26 19:46:22 ad Exp $");
 /* $FreeBSD: /repoman/r/ncvs/src/sys/dev/re/if_re.c,v 1.20 2004/04/11 20:34:08 ru Exp $ */
 
 /*
@@ -162,10 +163,8 @@ static int re_init(struct ifnet *);
 static void re_stop(struct ifnet *, int);
 static void re_watchdog(struct ifnet *);
 
-static void re_shutdown(void *);
 static int re_enable(struct rtk_softc *);
 static void re_disable(struct rtk_softc *);
-static void re_power(int, void *);
 
 static int re_ifmedia_upd(struct ifnet *);
 static void re_ifmedia_sts(struct ifnet *, struct ifmediareq *);
@@ -794,25 +793,6 @@ re_attach(struct rtk_softc *sc)
 	if_attach(ifp);
 	ether_ifattach(ifp, eaddr);
 
-
-	/*
-	 * Make sure the interface is shutdown during reboot.
-	 */
-	sc->sc_sdhook = shutdownhook_establish(re_shutdown, sc);
-	if (sc->sc_sdhook == NULL)
-		aprint_error("%s: WARNING: unable to establish shutdown hook\n",
-		    sc->sc_dev.dv_xname);
-	/*
-	 * Add a suspend hook to make sure we come back up after a
-	 * resume.
-	 */
-	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
-	    re_power, sc);
-	if (sc->sc_powerhook == NULL)
-		aprint_error("%s: WARNING: unable to establish power hook\n",
-		    sc->sc_dev.dv_xname);
-
-
 	return;
 
  fail_8:
@@ -936,10 +916,6 @@ re_detach(struct rtk_softc *sc)
 	bus_dmamem_free(sc->sc_dmat,
 	    &sc->re_ldata.re_tx_listseg, sc->re_ldata.re_tx_listnseg);
 
-
-	shutdownhook_disestablish(sc->sc_sdhook);
-	powerhook_disestablish(sc->sc_powerhook);
-
 	return 0;
 }
 
@@ -975,41 +951,6 @@ re_disable(struct rtk_softc *sc)
 		sc->sc_flags &= ~RTK_ENABLED;
 	}
 }
-
-/*
- * re_power:
- *     Power management (suspend/resume) hook.
- */
-void
-re_power(int why, void *arg)
-{
-	struct rtk_softc *sc = (void *)arg;
-	struct ifnet *ifp = &sc->ethercom.ec_if;
-	int s;
-
-	s = splnet();
-	switch (why) {
-	case PWR_SUSPEND:
-	case PWR_STANDBY:
-		re_stop(ifp, 0);
-		if (sc->sc_power != NULL)
-			(*sc->sc_power)(sc, why);
-		break;
-	case PWR_RESUME:
-		if (ifp->if_flags & IFF_UP) {
-			if (sc->sc_power != NULL)
-				(*sc->sc_power)(sc, why);
-			re_init(ifp);
-		}
-		break;
-	case PWR_SOFTSUSPEND:
-	case PWR_SOFTSTANDBY:
-	case PWR_SOFTRESUME:
-		break;
-	}
-	splx(s);
-}
-
 
 static int
 re_newbuf(struct rtk_softc *sc, int idx, struct mbuf *m)
@@ -1375,20 +1316,6 @@ re_txeof(struct rtk_softc *sc)
 	} else
 		ifp->if_timer = 0;
 }
-
-/*
- * Stop all chip I/O so that the kernel's probe routines don't
- * get confused by errant DMAs when rebooting.
- */
-static void
-re_shutdown(void *vsc)
-
-{
-	struct rtk_softc	*sc = vsc;
-
-	re_stop(&sc->ethercom.ec_if, 0);
-}
-
 
 static void
 re_tick(void *xsc)

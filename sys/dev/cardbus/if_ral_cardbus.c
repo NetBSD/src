@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ral_cardbus.c,v 1.9 2007/10/19 11:59:39 ad Exp $	*/
+/*	$NetBSD: if_ral_cardbus.c,v 1.9.4.1 2007/12/26 19:46:06 ad Exp $	*/
 /*	$OpenBSD: if_ral_cardbus.c,v 1.6 2006/01/09 20:03:31 damien Exp $  */
 
 /*-
@@ -22,7 +22,7 @@
  * CardBus front-end for the Ralink RT2560/RT2561/RT2561S/RT2661 driver.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ral_cardbus.c,v 1.9 2007/10/19 11:59:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ral_cardbus.c,v 1.9.4.1 2007/12/26 19:46:06 ad Exp $");
 
 #include "bpfilter.h"
 
@@ -148,7 +148,6 @@ ral_cardbus_attach(struct device *parent, struct device *self,
 	/* power management hooks */
 	sc->sc_enable = ral_cardbus_enable;
 	sc->sc_disable = ral_cardbus_disable;
-	sc->sc_power = ral_cardbus_power;
 
 	/* map control/status registers */
 	error = Cardbus_mapreg_map(ct, CARDBUS_BASE0_REG,
@@ -244,22 +243,6 @@ ral_cardbus_disable(struct rt2560_softc *sc)
 
 	/* power down the socket */
 	Cardbus_function_disable(ct);
-}
-
-void
-ral_cardbus_power(struct rt2560_softc *sc, int why)
-{
-
-	switch (why) {
-	case PWR_RESUME:
-		ral_cardbus_enable(sc);
-		break;
-	case PWR_SUSPEND:
-		ral_cardbus_disable(sc);
-		break;
-	}
-
-	return;
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.222 2007/10/19 12:00:05 ad Exp $	*/
+/*	$NetBSD: wi.c,v 1.222.4.1 2007/12/26 19:46:25 ad Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.222 2007/10/19 12:00:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.222.4.1 2007/12/26 19:46:25 ad Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -630,42 +630,7 @@ wi_activate(struct device *self, enum devact act)
 	splx(s);
 	return rv;
 }
-
-void
-wi_power(struct wi_softc *sc, int why)
-{
-	struct ifnet *ifp = &sc->sc_if;
-	int s;
-
-	s = splnet();
-	switch (why) {
-	case PWR_SUSPEND:
-	case PWR_STANDBY:
-		wi_stop(ifp, 1);
-		break;
-	case PWR_RESUME:
-		if (ifp->if_flags & IFF_UP) {
-			wi_init(ifp);
-			(void)wi_intr(sc);
-		}
-		break;
-	case PWR_SOFTSUSPEND:
-	case PWR_SOFTSTANDBY:
-	case PWR_SOFTRESUME:
-		break;
-	}
-	splx(s);
-}
 #endif /* __NetBSD__ */
-
-void
-wi_shutdown(struct wi_softc *sc)
-{
-	struct ifnet *ifp = &sc->sc_if;
-
-	if (sc->sc_attached)
-		wi_stop(ifp, 1);
-}
 
 int
 wi_intr(void *arg)
@@ -832,7 +797,7 @@ wi_init(struct ifnet *ifp)
 	wi_write_val(sc, WI_RID_OWN_CHNL,
 	    ieee80211_chan2ieee(ic, ic->ic_ibss_chan));
 	wi_write_ssid(sc, WI_RID_OWN_SSID, ic->ic_des_essid, ic->ic_des_esslen);
-	IEEE80211_ADDR_COPY(ic->ic_myaddr, LLADDR(ifp->if_sadl));
+	IEEE80211_ADDR_COPY(ic->ic_myaddr, CLLADDR(ifp->if_sadl));
 	wi_write_rid(sc, WI_RID_MAC_NODE, ic->ic_myaddr, IEEE80211_ADDR_LEN);
 	if (ic->ic_caps & IEEE80211_C_PMGT)
 		wi_write_val(sc, WI_RID_PM_ENABLED,
@@ -2304,7 +2269,7 @@ wi_set_cfg(struct ifnet *ifp, u_long cmd, void *data)
 	switch (wreq.wi_type) {
         case WI_RID_MAC_NODE:
 		(void)memcpy(ic->ic_myaddr, wreq.wi_val, ETHER_ADDR_LEN);
-		IEEE80211_ADDR_COPY(LLADDR(ifp->if_sadl),ic->ic_myaddr);
+		if_set_sadl(ifp, ic->ic_myaddr, ETHER_ADDR_LEN);
 		wi_write_rid(sc, WI_RID_MAC_NODE, ic->ic_myaddr,
 		    IEEE80211_ADDR_LEN);
 		break;

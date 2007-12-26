@@ -1,4 +1,4 @@
-/*	$NetBSD: viaide.c,v 1.47 2007/11/14 14:46:12 xtraeme Exp $	*/
+/*	$NetBSD: viaide.c,v 1.47.2.1 2007/12/26 19:47:08 ad Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.47 2007/11/14 14:46:12 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.47.2.1 2007/12/26 19:47:08 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,6 +44,11 @@ __KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.47 2007/11/14 14:46:12 xtraeme Exp $");
 
 static int	via_pcib_match(struct pci_attach_args *);
 static void	via_chip_map(struct pciide_softc *, struct pci_attach_args *);
+static void	via_mapchan(struct pci_attach_args *, struct pciide_channel *,
+		    pcireg_t, bus_size_t *, bus_size_t *, int (*)(void *));
+static void	vt8231_mapregs_native(struct pci_attach_args *,
+		    struct pciide_channel *, bus_size_t *, bus_size_t *,
+		    int (*)(void *));
 static int	via_sata_chip_map_common(struct pciide_softc *,
 		    struct pci_attach_args *);
 static void	via_sata_chip_map(struct pciide_softc *,
@@ -559,8 +564,80 @@ unknown:
 			cp->ata_channel.ch_flags |= ATACH_DISABLED;
 			continue;
 		}
-		pciide_mapchan(pa, cp, interface, &cmdsize, &ctlsize,
+		via_mapchan(pa, cp, interface, &cmdsize, &ctlsize,
 		    pciide_pci_intr);
+	}
+}
+
+static void
+via_mapchan(struct pci_attach_args *pa,	struct pciide_channel *cp,
+    pcireg_t interface, bus_size_t *cmdsizep, bus_size_t *ctlsizep,
+    int (*pci_intr)(void *))
+{
+	struct ata_channel *wdc_cp;
+	struct pciide_softc *sc;
+	prop_bool_t compat_nat_enable;
+
+	wdc_cp = &cp->ata_channel;
+	sc = CHAN_TO_PCIIDE(&cp->ata_channel);
+	compat_nat_enable = prop_dictionary_get(
+	    device_properties((struct device *)sc), "use-compat-native-irq");
+
+	if (interface & PCIIDE_INTERFACE_PCI(wdc_cp->ch_channel)) {
+		/* native mode with irq 14/15 requested? */
+		if (compat_nat_enable != NULL &&
+		    prop_bool_true(compat_nat_enable))
+			vt8231_mapregs_native(pa, cp, cmdsizep, ctlsizep,
+			    pci_intr);
+		else
+			pciide_mapregs_native(pa, cp, cmdsizep, ctlsizep,
+			    pci_intr);
+	} else {
+		pciide_mapregs_compat(pa, cp, wdc_cp->ch_channel, cmdsizep,
+		    ctlsizep);
+		if ((cp->ata_channel.ch_flags & ATACH_DISABLED) == 0)
+			pciide_map_compat_intr(pa, cp, wdc_cp->ch_channel);
+	}
+	wdcattach(wdc_cp);
+}
+
+/*
+ * At least under certain (mis)configurations (e.g. on the "Pegasos" board)
+ * the VT8231-IDE's native mode only works with irq 14/15, and cannot be
+ * programmed to use a single native PCI irq alone. So we install an interrupt
+ * handler for each channel, as in compatibility mode.
+ */
+static void
+vt8231_mapregs_native(struct pci_attach_args *pa, struct pciide_channel *cp,
+    bus_size_t *cmdsizep, bus_size_t *ctlsizep, int (*pci_intr)(void *))
+{
+	struct ata_channel *wdc_cp;
+	struct pciide_softc *sc;
+
+	wdc_cp = &cp->ata_channel;
+	sc = CHAN_TO_PCIIDE(&cp->ata_channel);
+
+	/* XXX prevent pciide_mapregs_native from installing a handler */
+	if (sc->sc_pci_ih == NULL)
+		sc->sc_pci_ih = (void *)~0;
+	pciide_mapregs_native(pa, cp, cmdsizep, ctlsizep, NULL);
+
+	/* interrupts are fixed to 14/15, as in compatibility mode */
+	if ((wdc_cp->ch_flags & ATACH_DISABLED) == 0) {
+#ifdef __HAVE_PCIIDE_MACHDEP_COMPAT_INTR_ESTABLISH
+		cp->ih = pciide_machdep_compat_intr_establish(
+		    &sc->sc_wdcdev.sc_atac.atac_dev, pa, wdc_cp->ch_channel,
+		    pci_intr, sc);
+		if (cp->ih == NULL) {
+#endif
+			aprint_error("%s: no compatibility interrupt for "
+			    "use by %s channel\n",
+			    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, cp->name);
+			wdc_cp->ch_flags |= ATACH_DISABLED;
+#ifdef __HAVE_PCIIDE_MACHDEP_COMPAT_INTR_ESTABLISH
+		}
+		sc->sc_pci_ih = cp->ih;  /* XXX */
+#endif
 	}
 }
 

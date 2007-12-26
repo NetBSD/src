@@ -1,4 +1,4 @@
-/*	$NetBSD: urlphy.c,v 1.18 2006/11/16 21:24:07 christos Exp $	*/
+/*	$NetBSD: urlphy.c,v 1.18.34.1 2007/12/26 19:46:38 ad Exp $	*/
 /*
  * Copyright (c) 2001, 2002
  *     Shingo WATANABE <nabe@nabechan.org>.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: urlphy.c,v 1.18 2006/11/16 21:24:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: urlphy.c,v 1.18.34.1 2007/12/26 19:46:38 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,7 +103,7 @@ urlphy_attach(struct device *parent, struct device *self, void *aux)
 	aprint_naive(": Media interface\n");
 	aprint_normal(": Realtek RTL8150L internal media interface\n");
 
-	DPRINTF(("%s: %s: enter\n", sc->mii_dev.dv_xname, __FUNCTION__));
+	DPRINTF(("%s: %s: enter\n", sc->mii_dev.dv_xname, __func__));
 
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
@@ -131,6 +131,9 @@ urlphy_attach(struct device *parent, struct device *self, void *aux)
 	else
 		mii_phy_add_media(sc);
 	aprint_normal("\n");
+
+	if (!pmf_device_register(self, NULL, mii_phy_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
 static int
@@ -139,7 +142,7 @@ urlphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	int reg;
 
-	DPRINTF(("%s: %s: enter\n", sc->mii_dev.dv_xname, __FUNCTION__));
+	DPRINTF(("%s: %s: enter\n", sc->mii_dev.dv_xname, __func__));
 
 	if (!device_is_active(&sc->mii_dev))
 		return (ENXIO);
@@ -228,7 +231,7 @@ urlphy_status(struct mii_softc *sc)
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	int msr, bmsr, bmcr;
 
-	DPRINTF(("%s: %s: enter\n", sc->mii_dev.dv_xname, __FUNCTION__));
+	DPRINTF(("%s: %s: enter\n", sc->mii_dev.dv_xname, __func__));
 
 	mii->mii_media_status = IFM_AVALID;
 	mii->mii_media_active = IFM_ETHER;
@@ -241,7 +244,7 @@ urlphy_status(struct mii_softc *sc)
 	if (msr & URLPHY_MSR_LINK)
 		mii->mii_media_status |= IFM_ACTIVE;
 
-	DPRINTF(("%s: %s: link %s\n", sc->mii_dev.dv_xname, __FUNCTION__,
+	DPRINTF(("%s: %s: link %s\n", sc->mii_dev.dv_xname, __func__,
 		 mii->mii_media_status & IFM_ACTIVE ? "up" : "down"));
 
 	bmcr = PHY_READ(sc, MII_BMCR);

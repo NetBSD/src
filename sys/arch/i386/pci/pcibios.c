@@ -1,4 +1,4 @@
-/*	$NetBSD: pcibios.c,v 1.34 2007/03/04 05:59:59 christos Exp $	*/
+/*	$NetBSD: pcibios.c,v 1.34.28.1 2007/12/26 19:42:25 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcibios.c,v 1.34 2007/03/04 05:59:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcibios.c,v 1.34.28.1 2007/12/26 19:42:25 ad Exp $");
 
 #include "opt_pcibios.h"
 #include "opt_pcifixup.h"
@@ -405,7 +405,7 @@ pcibios_get_intr_routing(struct pcibios_intr_routing *table,
 		uint16_t size;
 		void *offset;
 		uint16_t segment;
-	} __attribute__((__packed__)) args;
+	} __packed args;
 
 	args.size = *nentries * sizeof(*table);
 	args.offset = (void *)table;

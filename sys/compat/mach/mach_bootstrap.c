@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_bootstrap.c,v 1.12 2005/12/11 12:20:20 christos Exp $ */
+/*	$NetBSD: mach_bootstrap.c,v 1.12.56.1 2007/12/26 19:49:25 ad Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_bootstrap.c,v 1.12 2005/12/11 12:20:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_bootstrap.c,v 1.12.56.1 2007/12/26 19:49:25 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -53,8 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: mach_bootstrap.c,v 1.12 2005/12/11 12:20:20 christos
 #include <compat/mach/mach_services.h>
 
 int
-mach_bootstrap_look_up(args)
-	struct mach_trap_args *args;
+mach_bootstrap_look_up(struct mach_trap_args *args)
 {
 	mach_bootstrap_look_up_request_t *req = args->smsg;
 	mach_bootstrap_look_up_reply_t *rep = args->rmsg;

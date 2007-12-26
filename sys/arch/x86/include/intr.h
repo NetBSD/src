@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.29 2007/12/03 15:34:27 ad Exp $	*/
+/*	$NetBSD: intr.h,v 1.29.2.1 2007/12/26 19:42:54 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -161,8 +161,6 @@ extern struct intrstub ioapic_edge_stubs[];
 extern struct intrstub ioapic_level_stubs[];
 
 struct cpu_info;
-
-extern char idt_allocmap[];
 
 struct pcibus_attach_args;
 

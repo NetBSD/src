@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.20 2007/10/17 19:53:58 garbled Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.20.4.1 2007/12/26 19:42:04 ad Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.20 2007/10/17 19:53:58 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.20.4.1 2007/12/26 19:42:04 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/extent.h>
@@ -60,7 +60,7 @@ int	mainbus_print (void *, const char *);
 union mainbus_attach_args {
 	const char *mba_busname;		/* first elem of all */
 	struct pcibus_attach_args mba_pba;
-  /*struct pnpbus_attach_args mba_paa;*/
+	/*struct pnpbus_attach_args mba_paa;*/
 };
 
 
@@ -84,31 +84,31 @@ mainbus_match(struct device *parent, struct cfdata *match, void *aux)
 void
 mainbus_attach(struct device *parent, struct device *self, void *aux)
 {
-  union mainbus_attach_args mba;
-  struct confargs ca;
+	union mainbus_attach_args mba;
+	struct confargs ca;
 
 #if NPCI > 0 
-  struct genppc_pci_chipset_businfo *pbi;
+	struct genppc_pci_chipset_businfo *pbi;
 #ifdef PCI_NETBSD_CONFIGURE
-  struct extent *ioext, *memext;
+	struct extent *ioext, *memext;
 #endif
 #endif
 	
-  mainbus_found = 1;
+	mainbus_found = 1;
   
-  aprint_normal("\n");
+	aprint_normal("\n");
 
 
 #if defined(RESIDUAL_DATA_DUMP)
-  print_residual_device_info();
+	print_residual_device_info();
 #endif
 
 	/*
 	 * Always find the CPU
 	 */
-  ca.ca_name = "cpu";
-  ca.ca_node = 0;
-  config_found_ia(self, "mainbus", &ca, mainbus_print);
+	ca.ca_name = "cpu";
+	ca.ca_node = 0;
+	config_found_ia(self, "mainbus", &ca, mainbus_print);
 
 	/*
 	 * XXX Note also that the presence of a PCI bus should
@@ -172,32 +172,9 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 
 #ifdef RESIDUAL_DATA_DUMP
 	SIMPLEQ_FOREACH(pbi, &genppc_pct->pc_pbi, next)
-		printf("%s\n", prop_dictionary_externalize(pbi->pbi_properties));
+	    printf("%s\n", prop_dictionary_externalize(pbi->pbi_properties));
 #endif
 
-
-#if 0
-#if NPCI > 0
-#if defined(PCI_NETBSD_CONFIGURE)
-	ioext  = extent_create("pciio",  0x00008000, 0x0000ffff, M_DEVBUF,
-	    NULL, 0, EX_NOWAIT);
-	memext = extent_create("pcimem", 0x00000000, 0x0fffffff, M_DEVBUF,
-	    NULL, 0, EX_NOWAIT);
-	pci_configure_bus(0, ioext, memext, NULL, 0, 32);
-	extent_destroy(ioext);
-	extent_destroy(memext);
-#endif
-	
-	mba.mba_pba.pba_iot = &genppc_isa_io_space_tag;
-	mba.mba_pba.pba_memt = &genppc_isa_mem_space_tag;
-	mba.mba_pba.pba_dmat = &pci_bus_dma_tag;
-	mba.mba_pba.pba_dmat64 = NULL;
-	mba.mba_pba.pba_bus = 0;
-	mba.mba_pba.pba_bridgetag = NULL;
-	mba.mba_pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
-	config_found_ia(self, "pcibus", &mba, pcibusprint);
-#endif
-#endif
 }
 
 int

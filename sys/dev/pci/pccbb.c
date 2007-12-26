@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.155 2007/12/01 05:41:53 jmcneill Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.155.2.1 2007/12/26 19:47:01 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.155 2007/12/01 05:41:53 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.155.2.1 2007/12/26 19:47:01 ad Exp $");
 
 /*
 #define CBB_DEBUG
@@ -110,6 +110,7 @@ delay_ms(int millis, void *param)
 
 int pcicbbmatch(struct device *, struct cfdata *, void *);
 void pccbbattach(struct device *, struct device *, void *);
+int pccbbdetach(device_t, int);
 int pccbbintr(void *);
 static void pci113x_insert(void *);
 static int pccbbintr_function(struct pccbb_softc *);
@@ -185,7 +186,6 @@ static void pccbb_pcmcia_delay(struct pcic_handle *, int, const char *);
 
 static void pccbb_pcmcia_do_io_map(struct pcic_handle *, int);
 static void pccbb_pcmcia_do_mem_map(struct pcic_handle *, int);
-static void pccbb_powerhook(int, void *);
 
 /* bus-space allocation and deallocation functions */
 #if rbus
@@ -217,13 +217,16 @@ void pccbb_winlist_show(struct pccbb_win_chain *);
 /* for config_defer */
 static void pccbb_pci_callback(struct device *);
 
+static bool pccbb_suspend(device_t);
+static bool pccbb_resume(device_t);
+
 #if defined SHOW_REGS
 static void cb_show_regs(pci_chipset_tag_t pc, pcitag_t tag,
     bus_space_tag_t memt, bus_space_handle_t memh);
 #endif
 
 CFATTACH_DECL(cbb_pci, sizeof(struct pccbb_softc),
-    pcicbbmatch, pccbbattach, NULL, NULL);
+    pcicbbmatch, pccbbattach, pccbbdetach, NULL);
 
 static struct pcmcia_chip_functions pccbb_pcmcia_funcs = {
 	pccbb_pcmcia_mem_alloc,
@@ -378,36 +381,6 @@ cb_chipset(u_int32_t pci_id, int *flagp)
 	return (yc->yc_chiptype);
 }
 
-static void
-pccbb_shutdown(void *arg)
-{
-	struct pccbb_softc *sc = arg;
-	pcireg_t command;
-
-	DPRINTF(("%s: shutdown\n", sc->sc_dev.dv_xname));
-
-	/*
-	 * turn off power
-	 *
-	 * XXX - do not turn off power if chipset is TI 113X because
-	 * only TI 1130 with PowerMac 2400 hangs in pccbb_power().
-	 */
-	if (sc->sc_chipset != CB_TI113X) {
-		pccbb_power((cardbus_chipset_tag_t)sc,
-		    CARDBUS_VCC_0V | CARDBUS_VPP_0V);
-	}
-
-	bus_space_write_4(sc->sc_base_memt, sc->sc_base_memh, CB_SOCKET_MASK,
-	    0);
-
-	command = pci_conf_read(sc->sc_pc, sc->sc_tag, PCI_COMMAND_STATUS_REG);
-
-	command &= ~(PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE |
-	    PCI_COMMAND_MASTER_ENABLE);
-	pci_conf_write(sc->sc_pc, sc->sc_tag, PCI_COMMAND_STATUS_REG, command);
-
-}
-
 void
 pccbbattach(struct device *parent, struct device *self, void *aux)
 {
@@ -418,7 +391,6 @@ pccbbattach(struct device *parent, struct device *self, void *aux)
 	bus_addr_t sockbase;
 	char devinfo[256];
 	int flags;
-	int pwrmgt_offs;
 
 #ifdef __HAVE_PCCBB_ATTACH_HOOK
 	pccbb_attach_hook(parent, self, pa);
@@ -452,23 +424,6 @@ pccbbattach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_flags &= ~CBB_MEMHMAPPED;
 
-	/* power management: set D0 state */
-	sc->sc_pwrmgt_offs = 0;
-	if (pci_get_capability(pc, pa->pa_tag, PCI_CAP_PWRMGMT,
-	    &pwrmgt_offs, 0)) {
-		reg = pci_conf_read(pc, pa->pa_tag, pwrmgt_offs + PCI_PMCSR);
-		if ((reg & PCI_PMCSR_STATE_MASK) != PCI_PMCSR_STATE_D0 ||
-		    reg & 0x100 /* PCI_PMCSR_PME_EN */) {
-			reg &= ~PCI_PMCSR_STATE_MASK;
-			reg |= PCI_PMCSR_STATE_D0;
-			reg &= ~(0x100 /* PCI_PMCSR_PME_EN */);
-			pci_conf_write(pc, pa->pa_tag,
-			    pwrmgt_offs + PCI_PMCSR, reg);
-		}
-
-		sc->sc_pwrmgt_offs = pwrmgt_offs;
-	}
-
 	/*
 	 * MAP socket registers and ExCA registers on memory-space
 	 * When no valid address is set on socket base registers (on pci
@@ -480,7 +435,7 @@ pccbbattach(struct device *parent, struct device *self, void *aux)
 	    PCI_MAPREG_MEM_ADDR(sock_base) != 0xfffffff0) {
 		/* The address must be valid. */
 		if (pci_mapreg_map(pa, PCI_SOCKBASE, PCI_MAPREG_TYPE_MEM, 0,
-		    &sc->sc_base_memt, &sc->sc_base_memh, &sockbase, NULL)) {
+		    &sc->sc_base_memt, &sc->sc_base_memh, &sockbase, &sc->sc_base_size)) {
 			aprint_error("%s: can't map socket base address 0x%lx\n",
 			    sc->sc_dev.dv_xname, (unsigned long)sock_base);
 			/*
@@ -489,7 +444,7 @@ pccbbattach(struct device *parent, struct device *self, void *aux)
 			 */
 			if (pci_mapreg_map(pa, PCI_SOCKBASE, PCI_MAPREG_TYPE_IO,
 			    0, &sc->sc_base_memt, &sc->sc_base_memh, &sockbase,
-			    NULL)) {
+			    &sc->sc_base_size)) {
 				aprint_error("%s: can't map socket base address"
 				    " 0x%lx: io mode\n", sc->sc_dev.dv_xname,
 				    (unsigned long)sockbase);
@@ -526,14 +481,10 @@ pccbbattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_dmat = pa->pa_dmat;
 	sc->sc_tag = pa->pa_tag;
 	sc->sc_function = pa->pa_function;
-	sc->sc_sockbase = sock_base;
-	sc->sc_busnum = busreg;
 
 	memcpy(&sc->sc_pa, pa, sizeof(*pa));
 
 	sc->sc_pcmcia_flags = flags;   /* set PCMCIA facility */
-
-	shutdownhook_establish(pccbb_shutdown, sc);
 
 	/* Disable legacy register mapping. */
 	switch (sc->sc_chipset) {
@@ -559,11 +510,66 @@ pccbbattach(struct device *parent, struct device *self, void *aux)
 		break;
 	}
 
+	if (!pmf_device_register(self, pccbb_suspend, pccbb_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+
 	config_defer(self, pccbb_pci_callback);
 }
 
+int
+pccbbdetach(device_t self, int flags)
+{
+	struct pccbb_softc *sc = device_private(self);
+	pci_chipset_tag_t pc = sc->sc_pa.pa_pc;
+	bus_space_tag_t bmt = sc->sc_base_memt;
+	bus_space_handle_t bmh = sc->sc_base_memh;
+	uint32_t sockmask;
+	int rc;
 
+	if ((rc = config_detach_children(self, flags)) != 0)
+		return rc;
 
+	if (sc->sc_ih != NULL) {
+		pci_intr_disestablish(pc, sc->sc_ih);
+		sc->sc_ih = NULL;
+	}
+
+	/* CSC Interrupt: turn off card detect and power cycle interrupts */
+	sockmask = bus_space_read_4(bmt, bmh, CB_SOCKET_MASK);
+	sockmask &= ~(CB_SOCKET_MASK_CD | CB_SOCKET_MASK_POWER);
+	bus_space_write_4(bmt, bmh, CB_SOCKET_MASK, sockmask);
+	/* reset interrupt */
+	bus_space_write_4(bmt, bmh, CB_SOCKET_EVENT,
+	    bus_space_read_4(bmt, bmh, CB_SOCKET_EVENT));
+
+	switch (sc->sc_flags & (CBB_MEMHMAPPED|CBB_SPECMAPPED)) {
+	case CBB_MEMHMAPPED:
+		bus_space_unmap(bmt, bmh, sc->sc_base_size);
+		break;
+	case CBB_MEMHMAPPED|CBB_SPECMAPPED:
+#if rbus
+	{
+		pcireg_t sockbase;
+
+		sockbase = pci_conf_read(pc, sc->sc_tag, PCI_SOCKBASE);
+		rbus_space_free(sc->sc_rbus_memt, bmh, 0x1000,
+		    NULL);
+	}
+#else
+		bus_space_free(bmt, bmh, 0x1000);
+#endif
+	}
+	sc->sc_flags &= ~(CBB_MEMHMAPPED|CBB_SPECMAPPED);
+
+	if (!TAILQ_EMPTY(&sc->sc_iowindow))
+		aprint_error_dev(self, "i/o windows not empty");
+	if (!TAILQ_EMPTY(&sc->sc_memwindow))
+		aprint_error_dev(self, "memory windows not empty");
+
+	callout_stop(&sc->sc_insert_ch);
+	callout_destroy(&sc->sc_insert_ch);
+	return 0;
+}
 
 /*
  * static void pccbb_pci_callback(struct device *self)
@@ -618,7 +624,6 @@ pccbb_pci_callback(struct device *self)
 		    sc->sc_dev.dv_xname, (unsigned long)sock_base,
 		    (unsigned long)pci_conf_read(pc,
 		    sc->sc_tag, PCI_SOCKBASE)));
-		sc->sc_sockbase = sockbase;
 #endif
 		sc->sc_flags |= CBB_MEMHMAPPED;
 	}
@@ -655,7 +660,6 @@ pccbb_pci_callback(struct device *self)
 	}
 
 	aprint_normal("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
-	powerhook_establish(sc->sc_dev.dv_xname, pccbb_powerhook, sc);
 
 	{
 		u_int32_t sockstat;
@@ -1139,8 +1143,7 @@ pccbbintr_function(struct pccbb_softc *sc)
 	struct pccbb_intrhand_list *pil;
 	int s;
 
-	for (pil = LIST_FIRST(&sc->sc_pil); pil != NULL;
-	     pil = LIST_NEXT(pil, pil_next)) {
+	LIST_FOREACH(pil, &sc->sc_pil, pil_next) {
 		s = splraiseipl(pil->pil_icookie);
 		val = (*pil->pil_func)(pil->pil_arg);
 		splx(s);
@@ -1859,8 +1862,7 @@ pccbb_intr_disestablish(struct pccbb_softc *sc, void *ih)
 	}
 
 #ifdef DIAGNOSTIC
-	for (pil = LIST_FIRST(&sc->sc_pil); pil != NULL;
-	     pil = LIST_NEXT(pil, pil_next)) {
+	LIST_FOREACH(pil, &sc->sc_pil, pil_next) {
 		DPRINTF(("pccbb_intr_disestablish: pil %p\n", pil));
 		if (pil == ih) {
 			DPRINTF(("pccbb_intr_disestablish frees one pil\n"));
@@ -3274,97 +3276,70 @@ pccbb_winset(bus_addr_t align, struct pccbb_softc *sc, bus_space_tag_t bst)
 
 #endif /* rbus */
 
-static void
-pccbb_powerhook(int why, void *arg)
+static bool
+pccbb_suspend(device_t dv)
 {
-	struct pccbb_softc *sc = arg;
-	pcireg_t reg;
+	struct pccbb_softc *sc = device_private(dv);
 	bus_space_tag_t base_memt = sc->sc_base_memt;	/* socket regs memory */
 	bus_space_handle_t base_memh = sc->sc_base_memh;
+	pcireg_t reg;
 
-	DPRINTF(("%s: power: why %d\n", sc->sc_dev.dv_xname, why));
+	if (sc->sc_pil_intr_enable)
+		(void)pccbbintr_function(sc);
+	sc->sc_pil_intr_enable = 0;
 
-	if (why == PWR_SUSPEND || why == PWR_STANDBY) {
-		DPRINTF(("%s: power: why %d stopping intr\n",
-		    sc->sc_dev.dv_xname, why));
-		if (sc->sc_pil_intr_enable) {
-			(void)pccbbintr_function(sc);
-		}
-		sc->sc_pil_intr_enable = 0;
+	reg = bus_space_read_4(base_memt, base_memh, CB_SOCKET_MASK);
+	/* Disable interrupts. */
+	reg &= ~(CB_SOCKET_MASK_CSTS | CB_SOCKET_MASK_CD | CB_SOCKET_MASK_POWER);
+	bus_space_write_4(base_memt, base_memh, CB_SOCKET_MASK, reg);
+	/* XXX joerg Disable power to the socket? */
 
-		pci_conf_capture(sc->sc_pc, sc->sc_tag, &sc->sc_pciconf);
+#ifdef __NO_STRICT_ALIGNMENT
+	/* XXX - the register is at 0x82, so this access is not valid */
+	if (sc->sc_chipset == CB_RX5C47X)
+		sc->sc_ricoh_misc_ctrl = pci_conf_read(sc->sc_pc,
+		     sc->sc_tag, RICOH_PCI_MISC_CTRL);
+#endif
 
-		if (sc->sc_chipset == CB_RX5C47X)
-			sc->sc_ricoh_misc_ctrl = pci_conf_read(sc->sc_pc,
-						     sc->sc_tag,
-						     RICOH_PCI_MISC_CTRL);
+	return true;
+}
 
-		/* ToDo: deactivate or suspend child devices */
-	}
+static bool
+pccbb_resume(device_t dv)
+{
+	struct pccbb_softc *sc = device_private(dv);
+	bus_space_tag_t base_memt = sc->sc_base_memt;	/* socket regs memory */
+	bus_space_handle_t base_memh = sc->sc_base_memh;
+	pcireg_t reg;
 
-	if (why == PWR_RESUME) {
-		if (sc->sc_pwrmgt_offs != 0) {
-			reg = pci_conf_read(sc->sc_pc, sc->sc_tag,
-			    sc->sc_pwrmgt_offs + PCI_PMCSR);
-			if ((reg & PCI_PMCSR_STATE_MASK) != PCI_PMCSR_STATE_D0 ||
-			    reg & PCI_PMCSR_PME_EN) {
-				/* powrstate != D0 */
+	pccbb_chipinit(sc);
+	/* setup memory and io space window for CB */
+	pccbb_winset(0x1000, sc, sc->sc_memt);
+	pccbb_winset(0x04, sc, sc->sc_iot);
+#ifdef __NO_STRICT_ALIGNMENT
+	/* XXX - the register is at 0x82, so this access is not valid */
+	if (sc->sc_chipset == CB_RX5C47X)
+		pci_conf_write(sc->sc_pc, sc->sc_tag,
+		    RICOH_PCI_MISC_CTRL, sc->sc_ricoh_misc_ctrl);
+#endif
 
-				printf("%s going back to D0 mode\n",
-				    sc->sc_dev.dv_xname);
-				reg &= ~PCI_PMCSR_STATE_MASK;
-				reg |= PCI_PMCSR_STATE_D0;
-				reg &= ~PCI_PMCSR_PME_EN;
-				pci_conf_write(sc->sc_pc, sc->sc_tag,
-				    sc->sc_pwrmgt_offs + PCI_PMCSR, reg);
+	/* CSC Interrupt: Card detect interrupt on */
+	reg = bus_space_read_4(base_memt, base_memh, CB_SOCKET_MASK);
+	/* Card detect intr is turned on. */
+	reg |= CB_SOCKET_MASK_CD | CB_SOCKET_MASK_POWER;
+	bus_space_write_4(base_memt, base_memh, CB_SOCKET_MASK, reg);
+	/* reset interrupt */
+	reg = bus_space_read_4(base_memt, base_memh, CB_SOCKET_EVENT);
+	bus_space_write_4(base_memt, base_memh, CB_SOCKET_EVENT, reg);
 
-				pci_conf_write(sc->sc_pc, sc->sc_tag,
-				    PCI_SOCKBASE, sc->sc_sockbase);
-				pci_conf_write(sc->sc_pc, sc->sc_tag,
-				    PCI_BUSNUM, sc->sc_busnum);
-				pccbb_chipinit(sc);
-				/* setup memory and io space window for CB */
-				pccbb_winset(0x1000, sc, sc->sc_memt);
-				pccbb_winset(0x04, sc, sc->sc_iot);
-				goto norestore;
-			}
-		}
+	/*
+	 * check for card insertion or removal during suspend period.
+	 * XXX: the code can't cope with card swap (remove then
+	 * insert).  how can we detect such situation?
+	 */
+	(void)pccbbintr(sc);
 
-norestore:
-		pci_conf_restore(sc->sc_pc, sc->sc_tag, &sc->sc_pciconf);
-		if (sc->sc_chipset == CB_RX5C47X) {
-			pci_conf_write(sc->sc_pc, sc->sc_tag,
-			    RICOH_PCI_MISC_CTRL, sc->sc_ricoh_misc_ctrl);
-		}
+	sc->sc_pil_intr_enable = 1;
 
-		if (pci_conf_read (sc->sc_pc, sc->sc_tag, PCI_SOCKBASE) == 0)
-			/* BIOS did not recover this register */
-			pci_conf_write (sc->sc_pc, sc->sc_tag,
-					PCI_SOCKBASE, sc->sc_sockbase);
-		if (pci_conf_read (sc->sc_pc, sc->sc_tag, PCI_BUSNUM) == 0)
-			/* BIOS did not recover this register */
-			pci_conf_write (sc->sc_pc, sc->sc_tag,
-					PCI_BUSNUM, sc->sc_busnum);
-		/* CSC Interrupt: Card detect interrupt on */
-		reg = bus_space_read_4(base_memt, base_memh, CB_SOCKET_MASK);
-		/* Card detect intr is turned on. */
-		reg |= CB_SOCKET_MASK_CD | CB_SOCKET_MASK_POWER;
-		bus_space_write_4(base_memt, base_memh, CB_SOCKET_MASK, reg);
-		/* reset interrupt */
-		reg = bus_space_read_4(base_memt, base_memh, CB_SOCKET_EVENT);
-		bus_space_write_4(base_memt, base_memh, CB_SOCKET_EVENT, reg);
-
-		/*
-		 * check for card insertion or removal during suspend period.
-		 * XXX: the code can't cope with card swap (remove then
-		 * insert).  how can we detect such situation?
-		 */
-		(void)pccbbintr(sc);
-
-		sc->sc_pil_intr_enable = 1;
-		DPRINTF(("%s: power: RESUME enabling intr\n",
-		    sc->sc_dev.dv_xname));
-
-		/* ToDo: activate or wakeup child devices */
-	}
+	return true;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_exec.c,v 1.14 2005/12/11 12:19:56 christos Exp $	*/
+/*	$NetBSD: compat_exec.c,v 1.14.56.1 2007/12/26 19:48:43 ad Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_exec.c,v 1.14 2005/12/11 12:19:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_exec.c,v 1.14.56.1 2007/12/26 19:48:43 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,9 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: compat_exec.c,v 1.14 2005/12/11 12:19:56 christos Ex
  * There were copies of this in the mac68k, hp300, and i386 ports.
  */
 int
-exec_aout_prep_oldzmagic(l, epp)
-	struct lwp *l;
-	struct exec_package *epp;
+exec_aout_prep_oldzmagic(struct lwp *l, struct exec_package *epp)
 {
 	struct exec *execp = epp->ep_hdr;
 	int error;
@@ -98,9 +96,7 @@ exec_aout_prep_oldzmagic(l, epp)
  * XXX: There must be a better way to share this code.
  */
 int
-exec_aout_prep_oldnmagic(l, epp)
-	struct lwp *l;
-	struct exec_package *epp;
+exec_aout_prep_oldnmagic(struct lwp *l, struct exec_package *epp)
 {
 	struct exec *execp = epp->ep_hdr;
 	long bsize, baddr;
@@ -142,9 +138,7 @@ exec_aout_prep_oldnmagic(l, epp)
  * XXX: There must be a better way to share this code.
  */
 int
-exec_aout_prep_oldomagic(l, epp)
-	struct lwp *l;
-	struct exec_package *epp;
+exec_aout_prep_oldomagic(struct lwp *l, struct exec_package *epp)
 {
 	struct exec *execp = epp->ep_hdr;
 	long dsize, bsize, baddr;

@@ -1,4 +1,4 @@
-#	$NetBSD: XEN3_DOM0,v 1.6 2006/10/17 19:57:24 bouyer Exp $
+#	$NetBSD: XEN3_DOM0,v 1.6.40.1 2007/12/26 19:42:14 ad Exp $
 #
 #	XEN3_0: Xen 3.0 domain0 kernel
 
@@ -29,7 +29,11 @@ ioapic*		at mainbus? apid ?
 acpiacad* 	at acpi?		# ACPI AC Adapter
 acpibat* 	at acpi?		# ACPI Battery
 acpibut* 	at acpi?		# ACPI Button
-acpiec* 	at acpi?		# ACPI Embedded Controller
+# The ACPI Embedded Controller is generally configured via the special ECDT.
+# This is required as parts of the DSDT can reference the EC before the normal
+# attach phase.
+acpiec* 	at acpi?		# ACPI Embedded Controller (late binding)
+acpiecdt* 	at acpi?		# ACPI Embedded Controller (early binding)
 acpilid* 	at acpi?		# ACPI Lid Switch
 
 pseudo-device	xvif

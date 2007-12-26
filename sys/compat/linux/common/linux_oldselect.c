@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_oldselect.c,v 1.54 2007/02/09 21:55:19 ad Exp $	*/
+/*	$NetBSD: linux_oldselect.c,v 1.54.28.1 2007/12/26 19:49:18 ad Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_oldselect.c,v 1.54 2007/02/09 21:55:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_oldselect.c,v 1.54.28.1 2007/12/26 19:49:18 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,14 +62,11 @@ __KERNEL_RCSID(0, "$NetBSD: linux_oldselect.c,v 1.54 2007/02/09 21:55:19 ad Exp 
  * in registers on the i386 like Linux wants to.
  */
 int
-linux_sys_oldselect(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_oldselect(struct lwp *l, const struct linux_sys_oldselect_args *uap, register_t *retval)
 {
-	struct linux_sys_oldselect_args /* {
+	/* {
 		syscallarg(struct linux_oldselect *) lsp;
-	} */ *uap = v;
+	} */
 	struct linux_oldselect ls;
 	int error;
 

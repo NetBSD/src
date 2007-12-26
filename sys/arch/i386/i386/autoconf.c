@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.88 2007/11/14 17:54:59 ad Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.88.2.1 2007/12/26 19:42:15 ad Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.88 2007/11/14 17:54:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.88.2.1 2007/12/26 19:42:15 ad Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_multiprocessor.h"
@@ -77,6 +77,8 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.88 2007/11/14 17:54:59 ad Exp $");
 #include "bios32.h"
 #if NBIOS32 > 0
 #include <machine/bios32.h>
+/* XXX */
+extern void platform_init(void);
 #endif
 
 #include "opt_pcibios.h"
@@ -104,6 +106,7 @@ cpu_configure(void)
 
 #if NBIOS32 > 0
 	bios32_init();
+	platform_init();
 #endif
 #ifdef PCIBIOS
 	pcibios_init();

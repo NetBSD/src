@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_powerres.c,v 1.4 2006/02/16 06:19:26 kochi Exp $ */
+/* $NetBSD: acpi_powerres.c,v 1.4.50.1 2007/12/26 19:46:00 ad Exp $ */
 
 /*-
  * Copyright (c) 2001 Michael Smith
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_powerres.c,v 1.4 2006/02/16 06:19:26 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_powerres.c,v 1.4.50.1 2007/12/26 19:46:00 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -129,7 +129,7 @@ acpi_pwr_register_resource(ACPI_HANDLE res)
 	ACPI_OBJECT			*obj;
 	struct acpi_powerresource	*rp, *srp;
 
-	ACPI_FUNCTION_TRACE(__FUNCTION__);
+	ACPI_FUNCTION_TRACE(__func__);
 
 	rp = NULL;
 	buf.Pointer = NULL;
@@ -199,7 +199,7 @@ acpi_pwr_deregister_resource(ACPI_HANDLE res)
 {
 	struct acpi_powerresource	*rp;
 
-	ACPI_FUNCTION_TRACE(__FUNCTION__);
+	ACPI_FUNCTION_TRACE(__func__);
 
 	rp = NULL;
 
@@ -232,7 +232,7 @@ acpi_pwr_register_consumer(ACPI_HANDLE consumer)
 {
 	struct acpi_powerconsumer	*pc;
 
-	ACPI_FUNCTION_TRACE(__FUNCTION__);
+	ACPI_FUNCTION_TRACE(__func__);
 
 	/* check to see whether we know about this consumer already */
 	if ((pc = acpi_pwr_find_consumer(consumer)) != NULL)
@@ -266,7 +266,7 @@ acpi_pwr_deregister_consumer(ACPI_HANDLE consumer)
 {
 	struct acpi_powerconsumer	*pc;
 
-	ACPI_FUNCTION_TRACE(__FUNCTION__);
+	ACPI_FUNCTION_TRACE(__func__);
 
 	/* find the consumer */
 	if ((pc = acpi_pwr_find_consumer(consumer)) == NULL)
@@ -301,7 +301,7 @@ acpi_pwr_switch_consumer(ACPI_HANDLE consumer, int state)
 	const char				*method_name, *reslist_name;
 	int				res_changed;
 
-	ACPI_FUNCTION_TRACE(__FUNCTION__);
+	ACPI_FUNCTION_TRACE(__func__);
 
 	/* find the consumer */
 	if ((pc = acpi_pwr_find_consumer(consumer)) == NULL) {
@@ -488,7 +488,7 @@ acpi_pwr_reference_resource(ACPI_OBJECT *obj, void *arg)
 	ACPI_HANDLE			res;
 	ACPI_STATUS			status;
 
-	ACPI_FUNCTION_TRACE(__FUNCTION__);
+	ACPI_FUNCTION_TRACE(__func__);
 
 	/* check the object type */
 	switch (obj->Type) {
@@ -566,7 +566,7 @@ acpi_pwr_switch_power(void)
 	ACPI_STATUS			status;
 	ACPI_INTEGER			cur;
 
-	ACPI_FUNCTION_TRACE(__FUNCTION__);
+	ACPI_FUNCTION_TRACE(__func__);
 
 	/*
 	 * Sweep the list forwards turning things on.
@@ -660,7 +660,7 @@ acpi_pwr_find_resource(ACPI_HANDLE res)
 {
 	struct acpi_powerresource	*rp;
 
-	ACPI_FUNCTION_TRACE(__FUNCTION__);
+	ACPI_FUNCTION_TRACE(__func__);
 
 	TAILQ_FOREACH(rp, &acpi_powerresources, ap_link)
 	    if (rp->ap_resource == res)
@@ -676,7 +676,7 @@ acpi_pwr_find_consumer(ACPI_HANDLE consumer)
 {
 	struct acpi_powerconsumer	*pc;
 
-	ACPI_FUNCTION_TRACE(__FUNCTION__);
+	ACPI_FUNCTION_TRACE(__func__);
 
 	TAILQ_FOREACH(pc, &acpi_powerconsumers, ac_link)
 	    if (pc->ac_consumer == consumer)

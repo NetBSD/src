@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_socket.c,v 1.15 2007/06/24 18:07:34 dsl Exp $ */
+/*	$NetBSD: darwin_socket.c,v 1.15.16.1 2007/12/26 19:48:50 ad Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_socket.c,v 1.15 2007/06/24 18:07:34 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_socket.c,v 1.15.16.1 2007/12/26 19:48:50 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,7 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_socket.c,v 1.15 2007/06/24 18:07:34 dsl Exp $
 #include <compat/sys/signal.h>
 
 #include <compat/common/compat_util.h>
-#include <compat/common/compat_file.h>
 
 #include <compat/mach/mach_vm.h>
 
@@ -180,16 +179,13 @@ darwin_to_native_sockaddr(struct mbuf *nam)
 }
 
 int
-darwin_sys_socket(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+darwin_sys_socket(struct lwp *l, const struct darwin_sys_socket_args *uap, register_t *retval)
 {
-	struct darwin_sys_socket_args /* {
+	/* {
 		syscallarg(int) domain;
 		syscallarg(int) type;
 		syscallarg(int) protocol;
-	} */ *uap = v;
+	} */
 	struct compat_30_sys_socket_args cup;
 
 	if ((unsigned)SCARG(uap, domain) >= __arraycount(darwin_to_native_af))
@@ -203,19 +199,16 @@ darwin_sys_socket(l, v, retval)
 }
 
 int
-darwin_sys_recvfrom(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+darwin_sys_recvfrom(struct lwp *l, const struct darwin_sys_recvfrom_args *uap, register_t *retval)
 {
-	struct darwin_sys_recvfrom_args /* {
+	/* {
 		syscallarg(int) s;
 		syscallarg(void *) buf;
 		syscallarg(size_t) len;
 		syscallarg(int) flags;
 		syscallarg(struct sockaddr *) from;
 		syscallarg(unsigned int *) fromlenaddr;
-	} */ *uap = v;
+	} */
 	struct msghdr	msg;
 	struct iovec	aiov;
 	int		error;
@@ -243,16 +236,13 @@ darwin_sys_recvfrom(l, v, retval)
 }
 
 int
-darwin_sys_accept(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+darwin_sys_accept(struct lwp *l, const struct darwin_sys_accept_args *uap, register_t *retval)
 {
-	struct darwin_sys_accept_args /* {
+	/* {
 		syscallarg(int) s;
 		syscallarg(struct sockaddr *) name;
 		syscallarg(unsigned int *) anamelen;
-	} */ *uap = v;
+	} */
 	int error;
 	struct mbuf *name;
 
@@ -272,16 +262,13 @@ darwin_sys_accept(l, v, retval)
 }
 
 int
-darwin_sys_getpeername(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+darwin_sys_getpeername(struct lwp *l, const struct darwin_sys_getpeername_args *uap, register_t *retval)
 {
-	struct darwin_sys_getpeername_args /* {
+	/* {
 		syscallarg(int) fdes;
 		syscallarg(struct sockaddr *) asa;
 		syscallarg(unsigned int *) alen;
-	} */ *uap = v;
+	} */
 	struct mbuf	*m;
 	int		error;
 
@@ -299,16 +286,13 @@ darwin_sys_getpeername(l, v, retval)
 }
 
 int
-darwin_sys_getsockname(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+darwin_sys_getsockname(struct lwp *l, const struct darwin_sys_getsockname_args *uap, register_t *retval)
 {
-	struct darwin_sys_getsockname_args /* {
+	/* {
 		syscallarg(int) fdes;
 		syscallarg(struct sockaddr *) asa;
 		syscallarg(unsigned int *) alen;
-	} */ *uap = v;
+	} */
 	struct mbuf	*m;
 	int		error;
 
@@ -326,16 +310,13 @@ darwin_sys_getsockname(l, v, retval)
 }
 
 int
-darwin_sys_connect(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+darwin_sys_connect(struct lwp *l, const struct darwin_sys_connect_args *uap, register_t *retval)
 {
-	struct darwin_sys_connect_args /* {
+	/* {
 		syscallarg(int) s;
 		syscallarg(struct sockaddr *) name;
 		syscallarg(unsigned int *) namelen;
-	} */ *uap = v;
+	} */
 	struct mbuf *nam;
 	int error;
 
@@ -350,16 +331,13 @@ darwin_sys_connect(l, v, retval)
 }
 
 int
-darwin_sys_bind(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+darwin_sys_bind(struct lwp *l, const struct darwin_sys_bind_args *uap, register_t *retval)
 {
-	struct darwin_sys_bind_args /* {
+	/* {
 		syscallarg(int) s;
 		syscallarg(struct sockaddr *) name;
 		syscallarg(unsigned int *) namelen;
-	} */ *uap = v;
+	} */
 	struct mbuf *nam;
 	int error;
 
@@ -374,19 +352,16 @@ darwin_sys_bind(l, v, retval)
 }
 
 int
-darwin_sys_sendto(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+darwin_sys_sendto(struct lwp *l, const struct darwin_sys_sendto_args *uap, register_t *retval)
 {
-	struct darwin_sys_sendto_args /* {
+	/* {
 		syscallarg(int) s;
 		syscallarg(const void *) buf;
 		syscallarg(size_t) len;
 		syscallarg(int) flags;
 		syscallarg(struct sockaddr *) to;
 		syscallarg(unsigned int) tolen;
-	} */ *uap = v;
+	} */
 
 	struct msghdr	msg;
 	struct iovec	aiov;

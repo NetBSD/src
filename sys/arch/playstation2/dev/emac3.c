@@ -1,4 +1,4 @@
-/*	$NetBSD: emac3.c,v 1.4 2005/12/24 23:24:01 perry Exp $	*/
+/*	$NetBSD: emac3.c,v 1.4.60.1 2007/12/26 19:42:35 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emac3.c,v 1.4 2005/12/24 23:24:01 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emac3.c,v 1.4.60.1 2007/12/26 19:42:35 ad Exp $");
 
 #include "debug_playstation2.h"
 
@@ -66,10 +66,10 @@ __KERNEL_RCSID(0, "$NetBSD: emac3.c,v 1.4 2005/12/24 23:24:01 perry Exp $");
 int	emac3_debug = 0;
 #define	DPRINTF(fmt, args...)						\
 	if (emac3_debug)						\
-		printf("%s: " fmt, __FUNCTION__ , ##args) 
+		printf("%s: " fmt, __func__ , ##args) 
 #define	DPRINTFN(n, arg)						\
 	if (emac3_debug > (n))						\
-n		printf("%s: " fmt, __FUNCTION__ , ##args) 
+n		printf("%s: " fmt, __func__ , ##args) 
 #else
 #define STATIC			static
 #define	DPRINTF(arg...)		((void)0)

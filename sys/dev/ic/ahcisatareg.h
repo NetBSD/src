@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisatareg.h,v 1.2 2007/09/16 15:02:07 bouyer Exp $	*/
+/*	$NetBSD: ahcisatareg.h,v 1.2.8.1 2007/12/26 19:46:14 ad Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -45,7 +45,7 @@ struct ahci_dma_prd {
 	u_int32_t prd_dbc; /* data byte count */
 #define AHCI_PRD_DBC_MASK 0x003fffff
 #define AHCI_PRD_DBC_IPC  0x80000000 /* interrupt on completion */
-} __attribute__((__packed__));
+} __packed;
 
 #define AHCI_NPRD ((MAXPHYS/PAGE_SIZE) + 1)
 
@@ -55,7 +55,7 @@ struct ahci_cmd_tbl {
 	u_int8_t cmdt_acmd[16]; /* ATAPI command */
 	u_int8_t cmdt_res[48]; /* reserved */
 	struct ahci_dma_prd cmdt_prd[1]; /* extended to AHCI_NPRD */
-} __attribute__((__packed__));
+} __packed;
 
 #define AHCI_CMDTBL_ALIGN 0x7f
 
@@ -84,7 +84,7 @@ struct ahci_cmd_header {
 	u_int32_t cmdh_cmdtba;	/* phys. addr. of cmd_tbl */
 	u_int32_t cmdh_cmdtbau;	/* (64bits, 128bytes aligned) */
 	u_int32_t cmdh_res[4];	/* reserved */
-} __attribute__((__packed__));
+} __packed;
 
 #define AHCI_CMDH_SIZE (sizeof(struct ahci_cmd_header) * AHCI_MAX_CMDS)
 
@@ -96,7 +96,7 @@ struct ahci_r_fis {
 	u_int8_t rfis_sdbfis[8]; /* set device bit FIS */
 	u_int8_t rfis_ukfis[64]; /* unknown FIS */
 	u_int8_t rfis_res[96];
-} __attribute__((__packed__));
+} __packed;
 
 #define AHCI_RFIS_SIZE (sizeof(struct ahci_r_fis))
 

@@ -1,3 +1,5 @@
+/*	$NetBSD: via_mm.c,v 1.1.24.1 2007/12/26 19:47:17 ad Exp $	*/
+
 /*
  * Copyright 1998-2003 VIA Technologies, Inc. All Rights Reserved.
  * Copyright 2001-2003 S3 Graphics, Inc. All Rights Reserved.
@@ -21,6 +23,10 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: via_mm.c,v 1.1.24.1 2007/12/26 19:47:17 ad Exp $");
+
 #include <dev/drm/drmP.h>
 #include <dev/pci/drm/via_drm.h>
 #include <dev/pci/drm/via_drv.h>

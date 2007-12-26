@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_lwp.c,v 1.12 2007/03/20 09:11:04 cube Exp $	*/
+/*	$NetBSD: svr4_32_lwp.c,v 1.12.18.1 2007/12/26 19:49:42 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_lwp.c,v 1.12 2007/03/20 09:11:04 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_lwp.c,v 1.12.18.1 2007/12/26 19:49:42 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -68,10 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_32_lwp.c,v 1.12 2007/03/20 09:11:04 cube Exp $"
 
 #if 0
 int
-svr4_32_sys__lwp_self(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+svr4_32_sys__lwp_self(struct proc *p, void *v, register_t *retval)
 {
 	return sys_getpid(p, v, retval);
 }
@@ -79,12 +76,8 @@ svr4_32_sys__lwp_self(p, v, retval)
 
 
 int
-svr4_32_sys__lwp_create(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_32_sys__lwp_create(struct lwp *l, const struct svr4_32_sys__lwp_create_args *uap, register_t *retval)
 {
-	struct svr4_32_sys__lwp_create_args *uap = v;
 	struct sys__lwp_create_args lc;
 	int flags;
 
@@ -111,12 +104,8 @@ svr4_32_sys__lwp_create(l, v, retval)
 }
 
 int
-svr4_32_sys__lwp_kill(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_32_sys__lwp_kill(struct lwp *l, const struct svr4_32_sys__lwp_kill_args *uap, register_t *retval)
 {
-	struct svr4_32_sys__lwp_kill_args *uap = v;
 	struct sys_kill_args ap;
 	SCARG(&ap, pid) = SCARG(uap, lwpid);
 	SCARG(&ap, signum) = SCARG(uap, signum);
@@ -125,12 +114,8 @@ svr4_32_sys__lwp_kill(l, v, retval)
 }
 
 int
-svr4_32_sys__lwp_info(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_32_sys__lwp_info(struct lwp *l, const struct svr4_32_sys__lwp_info_args *uap, register_t *retval)
 {
-	struct svr4_32_sys__lwp_info_args *uap = v;
 	struct proc *p = l->l_proc;
 	struct svr4_32_lwpinfo lwpinfo;
 	int error;
@@ -145,22 +130,15 @@ svr4_32_sys__lwp_info(l, v, retval)
 }
 
 int
-svr4_32_sys__lwp_exit(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_32_sys__lwp_exit(struct lwp *l, const void *v, register_t *retval)
 {
 
 	return sys__lwp_exit(l, NULL, retval);
 }
 
 int
-svr4_32_sys__lwp_wait(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_32_sys__lwp_wait(struct lwp *l, const struct svr4_32_sys__lwp_wait_args *uap, register_t *retval)
 {
-	struct svr4_32_sys__lwp_wait_args *uap = v;
 	struct sys__lwp_wait_args ap;
 
 	SCARG(&ap, wait_for) = SCARG(uap, wait_for);
@@ -170,12 +148,8 @@ svr4_32_sys__lwp_wait(l, v, retval)
 }
 
 int
-svr4_32_sys__lwp_suspend(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_32_sys__lwp_suspend(struct lwp *l, const struct svr4_32_sys__lwp_suspend_args *uap, register_t *retval)
 {
-	struct svr4_32_sys__lwp_suspend_args *uap = v;
 	struct sys__lwp_suspend_args ap;
 
 	SCARG(&ap, target) = SCARG(uap, lwpid);
@@ -184,12 +158,8 @@ svr4_32_sys__lwp_suspend(l, v, retval)
 }
 
 int
-svr4_32_sys__lwp_continue(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_32_sys__lwp_continue(struct lwp *l, const struct svr4_32_sys__lwp_continue_args *uap, register_t *retval)
 {
-	struct svr4_32_sys__lwp_continue_args *uap = v;
 	struct sys__lwp_continue_args ap;
 
 	SCARG(&ap, target) = SCARG(uap, lwpid);
@@ -198,10 +168,7 @@ svr4_32_sys__lwp_continue(l, v, retval)
 }
 
 int
-svr4_32_sys__lwp_getprivate(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_32_sys__lwp_getprivate(struct lwp *l, const void *v, register_t *retval)
 {
 	/* XXX NJWLWP: Replace with call to native version if we ever
 	 * implement that. */
@@ -211,13 +178,9 @@ svr4_32_sys__lwp_getprivate(l, v, retval)
 }
 
 int
-svr4_32_sys__lwp_setprivate(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_32_sys__lwp_setprivate(struct lwp *l, const struct svr4_32_sys__lwp_setprivate_args *uap, register_t *retval)
 {
 #if 0
-	struct svr4_32_sys__lwp_setprivate_args *uap = v;
 
 	/* XXX NJWLWP: Replace with call to native version if we ever
 	 * implement that. */

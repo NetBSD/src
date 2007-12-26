@@ -1,4 +1,4 @@
-#	$NetBSD: files.x86,v 1.35 2007/12/03 15:34:27 ad Exp $
+#	$NetBSD: files.x86,v 1.35.2.1 2007/12/26 19:42:54 ad Exp $
 
 # options for MP configuration through the MP spec
 defflag opt_mpbios.h MPBIOS MPVERBOSE MPDEBUG MPBIOS_SCANPCI
@@ -50,10 +50,12 @@ file	arch/x86/x86/errata.c
 file	arch/x86/x86/i8259.c
 file	arch/x86/x86/idle_machdep.c
 file	arch/x86/x86/intr.c
+file	arch/x86/x86/idt.c
 file	arch/x86/x86/ipi.c		multiprocessor
 file	arch/x86/x86/msr_ipifuncs.c
 file	arch/x86/x86/mtrr_i686.c	mtrr
 file 	arch/x86/x86/patch.c
+file	arch/x86/x86/platform.c
 file 	arch/x86/x86/pmap.c
 file	arch/x86/x86/sys_machdep.c
 file	arch/x86/x86/x86_autoconf.c
@@ -72,7 +74,8 @@ file 	arch/x86/x86/mpbios.c		mpbios
 # MP configuration using ACPI
 file 	arch/x86/x86/mpacpi.c		acpi
 
-file    arch/x86/x86/acpi_machdep.c	acpi
+file	arch/x86/acpi/acpi_wakeup.c	acpi
+file	arch/x86/x86/acpi_machdep.c	acpi
 
 file	arch/x86/isa/isa_machdep.c	isa
 
@@ -94,3 +97,5 @@ file	arch/x86/x86/coretemp.c 	intel_coretemp
 device	ipmi: sysmon_envsys, sysmon_wdog
 attach	ipmi at ipmibus
 file	arch/x86/x86/ipmi.c		ipmi needs-flag
+
+file	arch/x86/x86/vga_post.c		vga_post

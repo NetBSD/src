@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep_common.c,v 1.2 2007/10/17 19:56:44 garbled Exp $ */
+/* $NetBSD: pci_machdep_common.c,v 1.2.10.1 2007/12/26 19:42:38 ad Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep_common.c,v 1.2 2007/10/17 19:56:44 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep_common.c,v 1.2.10.1 2007/12/26 19:42:38 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -65,16 +65,12 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep_common.c,v 1.2 2007/10/17 19:56:44 garbl
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pciconf.h>
+#include <dev/pci/pciidereg.h>
 
 /*
  * PCI doesn't have any special needs; just use the generic versions
  * of these functions.
  */
-/* 
- * XXX for now macppc needs its own pci_bus_dma_tag
- * this will go away once we use the common bus_space stuff
- */
-#ifndef macppc 
 struct powerpc_bus_dma_tag pci_bus_dma_tag = {
 	0,			/* _bounce_thresh */
 	_bus_dmamap_create,
@@ -91,7 +87,7 @@ struct powerpc_bus_dma_tag pci_bus_dma_tag = {
 	_bus_dmamem_unmap,
 	_bus_dmamem_mmap,
 };
-#endif
+
 int
 genppc_pci_bus_maxdevs(pci_chipset_tag_t pc, int busno)
 {
@@ -167,7 +163,7 @@ genppc_pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 	int line = pa->pa_intrline;
 	
 #if DEBUG
-	printf("%s: pin: %d, line: %d\n", __FUNCTION__, pin, line);
+	printf("%s: pin: %d, line: %d\n", __func__, pin, line);
 #endif
 
 	if (pin == 0) {
@@ -213,3 +209,30 @@ bad:
 	return 1;
 }
 
+#ifdef __HAVE_PCIIDE_MACHDEP_COMPAT_INTR_ESTABLISH
+#include <machine/isa_machdep.h>
+#include "isa.h"
+
+void *genppc_pciide_machdep_compat_intr_establish(struct device *,
+    struct pci_attach_args *, int, int (*)(void *), void *);
+
+void *
+genppc_pciide_machdep_compat_intr_establish(struct device *dev,
+    struct pci_attach_args *pa, int chan, int (*func)(void *), void *arg)
+{
+#if NISA > 0
+	int irq;
+	void *cookie;
+
+	irq = PCIIDE_COMPAT_IRQ(chan);
+	cookie = isa_intr_establish(NULL, irq, IST_LEVEL, IPL_BIO, func, arg);
+	if (cookie == NULL)
+		return (NULL);
+	printf("%s: %s channel interrupting at irq %d\n", dev->dv_xname,
+	    PCIIDE_CHANNEL_NAME(chan), irq);
+	return (cookie);
+#else
+	panic("pciide_machdep_compat_intr_establish() called");
+#endif
+}
+#endif /* __HAVE_PCIIDE_MACHDEP_COMPAT_INTR_ESTABLISH */

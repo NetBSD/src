@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.12 2007/03/05 20:43:30 he Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.12.28.1 2007/12/26 19:42:28 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -193,7 +193,7 @@ cachectl1(u_long req, vaddr_t addr, size_t len, struct proc *p)
 }
 
 int
-sys_sysarch(struct lwp *l, void *v, register_t *retval)
+sys_sysarch(struct lwp *l, const struct sys_sysarch_args *uap, register_t *retval)
 {
 
 	return ENOSYS;

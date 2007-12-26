@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbusvar.h,v 1.36 2007/11/16 18:36:53 dyoung Exp $	*/
+/*	$NetBSD: cardbusvar.h,v 1.36.2.1 2007/12/26 19:46:05 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -199,6 +199,9 @@ struct cardbus_softc {
   struct cardbus_devfunc *sc_funcs[8];	/* list of cardbus device functions */
 };
 
+struct cardbus_conf_state {
+	cardbusreg_t reg[16];
+};
 
 /*
  * struct cardbus_devfunc:
@@ -326,10 +329,18 @@ int cardbus_restore_bar(cardbus_devfunc_t);
 int cardbus_function_enable(struct cardbus_softc *, int);
 int cardbus_function_disable(struct cardbus_softc *, int);
 
+void cardbus_disable_retry(cardbus_chipset_tag_t, cardbus_function_tag_t,
+    cardbustag_t);
+
 int cardbus_get_capability(cardbus_chipset_tag_t, cardbus_function_tag_t,
     cardbustag_t, int, int *, cardbusreg_t *);
-int cardbus_powerstate(cardbus_devfunc_t, pcitag_t, const int *, int *);
-int cardbus_setpowerstate(const char *, cardbus_devfunc_t, pcitag_t, int);
+int cardbus_get_powerstate(cardbus_devfunc_t, cardbustag_t, cardbusreg_t *);
+int cardbus_set_powerstate(cardbus_devfunc_t, cardbustag_t, cardbusreg_t);
+
+void cardbus_conf_capture(cardbus_chipset_tag_t, cardbus_function_tag_t,
+    cardbustag_t, struct cardbus_conf_state *);
+void cardbus_conf_restore(cardbus_chipset_tag_t, cardbus_function_tag_t,
+    cardbustag_t, struct cardbus_conf_state *);
 
 #define Cardbus_function_enable(ct) cardbus_function_enable((ct)->ct_sc, (ct)->ct_func)
 #define Cardbus_function_disable(ct) cardbus_function_disable((ct)->ct_sc, (ct)->ct_func)

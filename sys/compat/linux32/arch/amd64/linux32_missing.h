@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_missing.h,v 1.3 2007/03/04 06:01:25 christos Exp $ */
+/*	$NetBSD: linux32_missing.h,v 1.3.24.1 2007/12/26 19:49:20 ad Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -86,27 +86,21 @@ struct linux_sys_setgroups16_args {
         syscallarg(linux_gid_t *) gidset;
 };
 
-struct linux_sys_mmap2_args {
-	syscallarg(unsigned long) addr;
-	syscallarg(size_t) len;
-	syscallarg(int) prot;
-	syscallarg(int) flags;
-	syscallarg(int) fd;
-	syscallarg(linux_off_t) offset;	
-};
-
 #ifdef _KERNEL
 __BEGIN_DECLS
-int linux_sys_old_mmap(struct lwp *, void *, register_t *);
-int linux_sys_ugetrlimit(struct lwp *, void *, register_t *);
-int linux_sys_fcntl64(struct lwp *, void *, register_t *);
-int linux_sys_llseek(struct lwp *, void *, register_t *);
-int linux_sys_setresuid16(struct lwp *, void *, register_t *);
-int linux_sys_setresgid16(struct lwp *, void *, register_t *);
-int linux_sys_nice(struct lwp *, void *, register_t *);
-int linux_sys_getgroups16(struct lwp *, void *, register_t *);
-int linux_sys_setgroups16(struct lwp *, void *, register_t *);
-int linux_sys_mmap2(struct lwp *, void *, register_t *);
+#define SYS_DEF(foo) struct foo##_args; \
+	int foo(lwp_t *, const struct foo##_args *, register_t *)
+SYS_DEF(linux_sys_old_mmap);
+SYS_DEF(linux_sys_ugetrlimit);
+SYS_DEF(linux_sys_fcntl64);
+SYS_DEF(linux_sys_llseek);
+SYS_DEF(linux_sys_setresuid16);
+SYS_DEF(linux_sys_setresgid16);
+SYS_DEF(linux_sys_nice);
+SYS_DEF(linux_sys_getgroups16);
+SYS_DEF(linux_sys_setgroups16);
+// SYS_DEF(linux_sys_mmap2);
+#undef SYS_DEF
 __END_DECLS
 #endif /* !_KERNEL */
 

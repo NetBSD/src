@@ -1,4 +1,4 @@
-/*	$NetBSD: pnpbiosreg.h,v 1.3 2005/12/26 19:24:00 perry Exp $ */
+/*	$NetBSD: pnpbiosreg.h,v 1.3.60.1 2007/12/26 19:42:25 ad Exp $ */
 /*
  * Copyright (c) 2000 Christian E. Hopps
  * All rights reserved.
@@ -99,7 +99,7 @@ struct pnpinstcheck {
 	uint32_t	ic_oemid;
 	uint16_t	ic_rdataseg;
 	uint32_t	ic_pdataseg;
-} __attribute__((__packed__));
+} __packed;
 #define	PNP_IC_VERSION_1_0		0x10
 #define	PNP_IC_CONTORL_EVENT_MASK	0x0003
 #define	PNP_IC_CONTROL_EVENT_NONE	0x0000
@@ -118,7 +118,7 @@ struct pnpdevnode {
 	/* variable - allocated resource */
 	/* variable - possible resource */
 	/* variable - compatible identifiers */
-} __attribute__((__packed__));
+} __packed;
 #define	PNP_DN_ATTR_CONFIG_TIME_MASK		0x0180
 #define	PNP_DN_ATTR_CONFIG_TIME_NEXT_BOOT	0x0000
 #define	PNP_DN_ATTR_CONFIG_TIME_BOTH		0x0080
@@ -137,7 +137,7 @@ struct pnpdockinfo {
 	uint32_t	di_id;		/* dock station id */
 	uint32_t	di_serial;	/* serial number */
 	uint16_t	di_cap;		/* capabilities */
-} __attribute__((__packed__));
+} __packed;
 #define	PNP_DI_ID_UNKNOWN_DOCKING_ID	0xffffffff
 #define	PNP_DI_DOCK_WHEN_MASK		0x0006
 #define	PNP_DI_DOCK_WHEN_NO_POWER	0x0000
@@ -152,7 +152,7 @@ struct pnplargeres {
 	uint8_t		r_type;
 	uint16_t	r_len;
 	/* variable */
-} __attribute__((__packed__));
+} __packed;
 
 /* resource descriptors */
 struct pnpmem16rangeres {
@@ -162,7 +162,7 @@ struct pnpmem16rangeres {
 	uint16_t	r_maxbase;	/* bits 23-8 */
 	uint16_t	r_align;	/* 0 == 0x10000 */
 	uint16_t	r_len;		/* bits 23-8 */
-} __attribute__((__packed__));
+} __packed;
 
 struct pnpmem32rangeres {
 	struct pnplargeres	r_hdr;
@@ -171,42 +171,42 @@ struct pnpmem32rangeres {
 	uint32_t	r_maxbase;
 	uint32_t	r_align;
 	uint32_t	r_len;
-} __attribute__((__packed__));
+} __packed;
 
 struct pnpfixedmem32rangeres {
 	struct pnplargeres	r_hdr;
 	uint8_t		r_flags;
 	uint32_t	r_base;
 	uint32_t	r_len;
-} __attribute__((__packed__));
+} __packed;
 
 struct pnpansiidentres {
 	struct pnplargeres	r_hdr;
 	uint8_t		r_id[1];	/* variable */
-} __attribute__((__packed__));
+} __packed;
 
 struct pnpdevidres {
 	uint8_t		r_hdr;
 	uint32_t	r_id;
 	uint16_t	r_flags;
-} __attribute__((__packed__));
+} __packed;
 
 struct pnpcompatres {
 	uint8_t		r_hdr;
 	uint32_t	r_id;
-} __attribute__((__packed__));
+} __packed;
 
 struct pnpirqres {
 	uint8_t		r_hdr;
 	uint16_t	r_mask;
 	uint8_t		r_info;		/* may not be present */
-} __attribute__((__packed__));
+} __packed;
 
 struct pnpdmares {
 	uint8_t		r_hdr;
 	uint8_t		r_mask;
 	uint8_t		r_flags;
-} __attribute__((__packed__));
+} __packed;
 
 struct pnpportres {
 	uint8_t		r_hdr;
@@ -215,20 +215,20 @@ struct pnpportres {
 	uint16_t	r_maxbase;
 	uint8_t		r_align;
 	uint8_t		r_len;
-} __attribute__((__packed__));
+} __packed;
 
 struct pnpfixedportres {
 	uint8_t		r_hdr;
 	uint16_t	r_base;
 	uint8_t		r_len;
-} __attribute__((__packed__));
+} __packed;
 
 struct pnpdepstartres {
 	uint8_t		r_hdr;
 	uint8_t		r_pri;	/* may not be present */
-} __attribute__((__packed__));
+} __packed;
 
 struct pnpendres {
 	uint8_t		r_hdr;
 	uint8_t		r_cksum;
-} __attribute__((__packed__));
+} __packed;

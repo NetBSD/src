@@ -1,4 +1,4 @@
-/*	$NetBSD: rs5c372.c,v 1.6 2006/09/04 23:45:30 gdamore Exp $	*/
+/*	$NetBSD: rs5c372.c,v 1.6.38.1 2007/12/26 19:46:13 ad Exp $	*/
 
 /*
  * Copyright (c) 2005 Kimihiro Nonaka
@@ -25,6 +25,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rs5c372.c,v 1.6.38.1 2007/12/26 19:46:13 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

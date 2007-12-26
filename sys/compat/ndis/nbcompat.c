@@ -1,7 +1,13 @@
+/*	$NetBSD: nbcompat.c,v 1.6.4.2 2007/12/26 19:49:30 ad Exp $	*/
+
 /* nbcompat.c
  * Implementations of some FreeBSD functions on NetBSD to make things
  * a bit smoother.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: nbcompat.c,v 1.6.4.2 2007/12/26 19:49:30 ad Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>

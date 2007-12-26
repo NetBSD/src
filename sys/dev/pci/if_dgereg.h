@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dgereg.h,v 1.2 2005/12/11 12:22:49 christos Exp $	*/
+/*	$NetBSD: if_dgereg.h,v 1.2.56.1 2007/12/26 19:46:51 ad Exp $	*/
 
 /*
  * Copyright (c) 2004, SUNET, Swedish University Computer Network.
@@ -253,7 +253,7 @@ struct dge_tdes {
 	uint8_t  dt_status;	/* Transmitted data status info */
 	uint8_t  dt_popts;	/* Packet options */
 	uint16_t dt_vlan;	/* VLAN information */
-} __attribute__((__packed__));
+} __packed;
 
 /*
  * Context transmit descriptor, "overlayed" on the above struct.
@@ -276,7 +276,7 @@ struct dge_ctdes {
         uint32_t dc_tcpip_cmdlen;
         uint32_t dc_tcpip_seg;	/* TCP segmentation context */
 #endif
-} __attribute__((__packed__));
+} __packed;
 
 #define	TDESC_DTYP_CTD	0x00000000
 #define	TDESC_DTYP_DATA	0x00100000
@@ -313,7 +313,7 @@ struct dge_rdes {
 	uint8_t  dr_status;	/* Received data status info */
 	uint8_t  dr_errors;	/* Receive errors */
 	uint16_t dr_special;	/* VLAN (802.1q) information */
-} __attribute__((__packed__));
+} __packed;
 
 #define	RDESC_STS_PIF	0x80	/* Exact filter match */
 #define	RDESC_STS_IPCS	0x40	/* IP Checksum calculated */

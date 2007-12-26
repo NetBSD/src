@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_madt.c,v 1.17 2006/11/16 01:32:47 christos Exp $	*/
+/*	$NetBSD: acpi_madt.c,v 1.17.34.1 2007/12/26 19:45:59 ad Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_madt.c,v 1.17 2006/11/16 01:32:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_madt.c,v 1.17.34.1 2007/12/26 19:45:59 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -74,8 +74,7 @@ acpi_madt_map(void)
 	if (madt_header != NULL)
 		return AE_ALREADY_EXISTS;
 
-	rv = AcpiGetFirmwareTable(APIC_SIG, 1, ACPI_LOGICAL_ADDRESSING,
-	    &madt_header);
+	rv = AcpiGetTable(ACPI_SIG_MADT, 1, &madt_header);
 
 	if (ACPI_FAILURE(rv))
 		return rv;
@@ -90,7 +89,6 @@ acpi_madt_map(void)
 void
 acpi_madt_unmap(void)
 {
-	AcpiOsUnmapMemory(madt_header, madt_header->Length);
 	madt_header = NULL;
 }
 
@@ -161,15 +159,15 @@ acpi_print_platint(MADT_INTERRUPT_SOURCE *p)
 #endif
 
 void
-acpi_madt_walk(ACPI_STATUS (*func)(APIC_HEADER *, void *), void *aux)
+acpi_madt_walk(ACPI_STATUS (*func)(ACPI_SUBTABLE_HEADER *, void *), void *aux)
 {
 	char *madtend, *where;
-	APIC_HEADER *hdrp;
+	ACPI_SUBTABLE_HEADER *hdrp;
 
 	madtend = (char *)madt_header + madt_header->Length;
-	where = (char *)madt_header + sizeof (MULTIPLE_APIC_TABLE);
+	where = (char *)madt_header + sizeof (ACPI_TABLE_MADT);
 	while (where < madtend) {
-		hdrp = (APIC_HEADER *)where;
+		hdrp = (ACPI_SUBTABLE_HEADER *)where;
 		if (ACPI_FAILURE(func(hdrp, aux)))
 			break;
 		where += hdrp->Length;
@@ -193,34 +191,34 @@ acpi_madt_print(void)
 }
 
 static ACPI_STATUS
-acpi_madt_print_entry(APIC_HEADER *hdrp, void *aux)
+acpi_madt_print_entry(ACPI_SUBTABLE_HEADER *hdrp, void *aux)
 {
 	switch (hdrp->Type) {
-	case APIC_PROCESSOR:
+	case ACPI_MADT_TYPE_LOCAL_APIC:
 		acpi_print_apic_proc((void *)hdrp);
 		break;
-	case APIC_IO:
+	case ACPI_MADT_TYPE_IO_APIC:
 		acpi_print_ioapic((void *)hdrp);
 		break;
-	case APIC_XRUPT_OVERRIDE:
+	case ACPI_MADT_TYPE_INTERRUPT_OVERRIDE:
 		acpi_print_intsrc_ovr((void *)hdrp);
 		break;
-	case APIC_NMI:
+	case ACPI_MADT_TYPE_NMI_SOURCE:
 		acpi_print_intsrc_nmi((void *)hdrp);
 		break;
-	case APIC_LOCAL_NMI:
+	case ACPI_MADT_TYPE_LOCAL_APIC_NMI:
 		acpi_print_lapic_nmi((void *)hdrp);
 		break;
-	case APIC_ADDRESS_OVERRIDE:
+	case ACPI_MADT_TYPE_LOCAL_APIC_OVERRIDE:
 		acpi_print_lapic_addr_ovr((void *)hdrp);
 		break;
-	case APIC_IO_SAPIC:
+	case ACPI_MADT_TYPE_IO_SAPIC:
 		acpi_print_iosapic((void *)hdrp);
 		break;
-	case APIC_LOCAL_SAPIC:
+	case ACPI_MADT_TYPE_LOCAL_SAPIC:
 		acpi_print_local_sapic((void *)hdrp);
 		break;
-	case APIC_XRUPT_SOURCE:
+	case ACPI_MADT_TYPE_INTERRUPT_SOURCE:
 		acpi_print_platint((void *)hdrp);
 		break;
 	default:

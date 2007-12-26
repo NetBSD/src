@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_icu.c,v 1.15 2007/12/03 15:33:20 ad Exp $	*/
+/*	$NetBSD: i80321_icu.c,v 1.15.2.1 2007/12/26 19:42:02 ad Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2006 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i80321_icu.c,v 1.15 2007/12/03 15:33:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i80321_icu.c,v 1.15.2.1 2007/12/26 19:42:02 ad Exp $");
 
 #ifndef EVBARM_SPL_NOINLINE
 #define	EVBARM_SPL_NOINLINE
@@ -451,12 +451,14 @@ i80321_intr_dispatch(struct clockframe *frame)
 	struct intrq *iq;
 	struct intrhand *ih;
 	int oldirqstate, pcpl, irq, ibit, hwpend;
+	struct cpu_info *ci;
 #ifdef I80321_HPI_ENABLED
 	int oldpending;
 #endif
 
+	ci = curcpu();
+	ci->ci_idepth++;
 	pcpl = current_spl_level;
-
 	hwpend = i80321_iintsrc_read();
 
 	/*
@@ -551,6 +553,7 @@ i80321_intr_dispatch(struct clockframe *frame)
 		 */
 		hwpend |= ((i80321_ipending & ICU_INT_HWMASK) & ~pcpl);
 	}
+	ci->ci_idepth--;
 
 	/* Check for pendings soft intrs. */
 	if ((i80321_ipending & INT_SWMASK) & ~current_spl_level) {

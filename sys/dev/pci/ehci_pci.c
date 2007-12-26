@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_pci.c,v 1.31 2007/10/19 12:00:43 ad Exp $	*/
+/*	$NetBSD: ehci_pci.c,v 1.31.4.1 2007/12/26 19:46:46 ad Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.31 2007/10/19 12:00:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.31.4.1 2007/12/26 19:46:46 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,16 +69,13 @@ extern int ehcidebug;
 
 static void ehci_get_ownership(ehci_softc_t *sc, pci_chipset_tag_t pc,
 			       pcitag_t tag);
-static void ehci_pci_powerhook(int, void *);
+static bool ehci_pci_resume(device_t);
 
 struct ehci_pci_softc {
 	ehci_softc_t		sc;
 	pci_chipset_tag_t	sc_pc;
 	pcitag_t		sc_tag;
 	void 			*sc_ih;		/* interrupt vectoring */
-
-	void			*sc_powerhook;
-	struct pci_conf_state	sc_pciconf;
 };
 
 #define EHCI_MAX_BIOS_WAIT		1000 /* ms */
@@ -210,20 +207,14 @@ ehci_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	ehci_get_ownership(&sc->sc, pc, tag);
 
-	/*
-	 * Establish our powerhook before ehci_init() does its powerhook.
-	 */
-	sc->sc_powerhook = powerhook_establish(
-	    USBDEVNAME(sc->sc.sc_bus.bdev) , ehci_pci_powerhook, sc);
-	if (sc->sc_powerhook == NULL)
-		aprint_error("%s: couldn't establish powerhook\n",
-		    devname);
-
 	r = ehci_init(&sc->sc);
 	if (r != USBD_NORMAL_COMPLETION) {
 		aprint_error("%s: init failed, error=%d\n", devname, r);
 		return;
 	}
+
+	if (!pmf_device_register(self, ehci_suspend, ehci_pci_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	/* Attach usb device. */
 	sc->sc.sc_child = config_found((void *)sc, &sc->sc.sc_bus,
@@ -236,9 +227,7 @@ ehci_pci_detach(device_ptr_t self, int flags)
 	struct ehci_pci_softc *sc = (struct ehci_pci_softc *)self;
 	int rv;
 
-	if (sc->sc_powerhook != NULL)
-		powerhook_disestablish(sc->sc_powerhook);
-
+	pmf_device_deregister(self);
 	rv = ehci_detach(&sc->sc, flags);
 	if (rv)
 		return (rv);
@@ -336,27 +325,11 @@ ehci_get_ownership(ehci_softc_t *sc, pci_chipset_tag_t pc, pcitag_t tag)
 	}
 }
 
-static void
-ehci_pci_powerhook(int why, void *opaque)
+static bool
+ehci_pci_resume(device_t dv)
 {
-	struct ehci_pci_softc *sc;
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
+	struct ehci_pci_softc *sc = device_private(dv);
 
-	sc = (struct ehci_pci_softc *)opaque;
-	pc = sc->sc_pc;
-	tag = sc->sc_tag;
-
-	switch (why) {
-	case PWR_STANDBY:
-	case PWR_SUSPEND:
-		pci_conf_capture(pc, tag, &sc->sc_pciconf);
-		break;
-	case PWR_RESUME:
-		pci_conf_restore(pc, tag, &sc->sc_pciconf);
-		ehci_get_ownership(&sc->sc, pc, tag);
-		break;
-	}
-
-	return;
+	ehci_get_ownership(&sc->sc, sc->sc_pc, sc->sc_tag);
+	return ehci_resume(dv);
 }

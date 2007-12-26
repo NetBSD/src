@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.124 2007/03/13 13:51:56 drochner Exp $	*/
+/*	$NetBSD: umass.c,v 1.124.20.1 2007/12/26 19:47:26 ad Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -131,7 +131,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.124 2007/03/13 13:51:56 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.124.20.1 2007/12/26 19:47:26 ad Exp $");
 
 #include "atapibus.h"
 #include "scsibus.h"
@@ -636,6 +636,9 @@ USB_ATTACH(umass)
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
 			   USBDEV(sc->sc_dev));
 
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+
 	DPRINTF(UDMASS_GEN, ("%s: Attach finished\n", USBDEVNAME(sc->sc_dev)));
 
 	USB_ATTACH_SUCCESS_RETURN;
@@ -648,6 +651,8 @@ USB_DETACH(umass)
 	int rv = 0, i, s;
 
 	DPRINTF(UDMASS_USB, ("%s: detached\n", USBDEVNAME(sc->sc_dev)));
+
+	pmf_device_deregister(self);
 
 	/* Abort the pipes to wake up any waiting processes. */
 	for (i = 0 ; i < UMASS_NEP ; i++) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_all.h,v 1.32 2006/12/01 21:36:56 martin Exp $	*/
+/*	$NetBSD: scsipi_all.h,v 1.32.34.1 2007/12/26 19:47:22 ad Exp $	*/
 
 /*
  * SCSI and SCSI-like general interface description
@@ -62,7 +62,7 @@ struct scsipi_inquiry {
 	u_int8_t unused[2];
 	u_int8_t length;
 	u_int8_t control;
-} __attribute__((__packed__));
+} __packed;
 
 #define START_STOP		0x1b
 struct scsipi_start_stop {
@@ -163,6 +163,6 @@ struct scsipi_inquiry_data {
 /*58*/	u_int8_t reserved;
 /*59*/	char    version_descriptor[8][2];
 #define	SCSIPI_INQUIRY_LENGTH_SCSI3	74
-} __attribute__((__packed__)); /* 74 Bytes */
+} __packed; /* 74 Bytes */
 
 #endif /* _DEV_SCSIPI_SCSIPI_ALL_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_time.c,v 1.20 2007/11/25 00:35:27 elad Exp $ */
+/*	$NetBSD: linux_time.c,v 1.20.2.1 2007/12/26 19:49:20 ad Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_time.c,v 1.20 2007/11/25 00:35:27 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_time.c,v 1.20.2.1 2007/12/26 19:49:20 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/ucred.h>
@@ -84,19 +84,16 @@ static int linux_to_native_clockid(clockid_t *, clockid_t);
 struct timezone linux_sys_tz;
 
 int
-linux_sys_gettimeofday(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_gettimeofday(struct lwp *l, const struct linux_sys_gettimeofday_args *uap, register_t *retval)
 {
-	struct linux_sys_gettimeofday_args /* {
+	/* {
 		syscallarg(struct timeval *) tz;
 		syscallarg(struct timezone *) tzp;
-	} */ *uap = v;
+	} */
 	int error = 0;
 
 	if (SCARG(uap, tp)) {
-		error = sys_gettimeofday (l, v, retval);
+		error = sys_gettimeofday(l, (const void *)uap, retval);
 		if (error)
 			return (error);
 	}
@@ -111,19 +108,16 @@ linux_sys_gettimeofday(l, v, retval)
 }
 
 int
-linux_sys_settimeofday(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_settimeofday(struct lwp *l, const struct linux_sys_settimeofday_args *uap, register_t *retval)
 {
-	struct linux_sys_settimeofday_args /* {
+	/* {
 		syscallarg(struct timeval *) tp;
 		syscallarg(struct timezone *) tzp;
-	} */ *uap = v;
+	} */
 	int error = 0;
 
 	if (SCARG(uap, tp)) {
-		error = sys_settimeofday(l, v, retval);
+		error = sys_settimeofday(l, (const void *)uap, retval);
 		if (error)
 			return (error);
 	}
@@ -178,15 +172,12 @@ linux_to_native_clockid(clockid_t *n, clockid_t l)
 }
 
 int
-linux_sys_clock_gettime(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_clock_gettime(struct lwp *l, const struct linux_sys_clock_gettime_args *uap, register_t *retval)
 {
-	struct linux_sys_clock_gettime_args /* {
+	/* {
 		syscallarg(clockid_t) which;
 		syscallarg(struct linux_timespec *)tp;
-	} */ *uap = v;
+	} */
 	struct timespec ts;
 	struct linux_timespec lts;
 
@@ -206,15 +197,12 @@ linux_sys_clock_gettime(l, v, retval)
 }
 
 int
-linux_sys_clock_settime(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_clock_settime(struct lwp *l, const struct linux_sys_clock_settime_args *uap, register_t *retval)
 {
-	struct linux_sys_clock_settime_args /* {
+	/* {
 		syscallarg(clockid_t) which;
 		syscallarg(struct linux_timespec *)tp;
-	} */ *uap = v;
+	} */
 	struct timespec ts;
 	struct linux_timespec lts;
 	int error;
@@ -236,15 +224,12 @@ linux_sys_clock_settime(l, v, retval)
 }
 
 int
-linux_sys_clock_getres(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_clock_getres(struct lwp *l, const struct linux_sys_clock_getres_args *uap, register_t *retval)
 {
-	struct linux_sys_clock_gettime_args /* {
+	/* {
 		syscallarg(clockid_t) which;
 		syscallarg(struct linux_timespec *)tp;
-	} */ *uap = v;
+	} */
 	struct timespec ts;
 	struct linux_timespec lts;
 	int error;
@@ -261,17 +246,14 @@ linux_sys_clock_getres(l, v, retval)
 }
 
 int
-linux_sys_clock_nanosleep(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_clock_nanosleep(struct lwp *l, const struct linux_sys_clock_nanosleep_args *uap, register_t *retval)
 {
-	struct linux_sys_clock_nanosleep_args /* {
+	/* {
 		syscallarg(clockid_t) which;
 		syscallarg(int) flags;
 		syscallarg(struct linux_timespec) *rqtp;
 		syscallarg(struct linux_timespec) *rmtp;
-	} */ *uap = v;
+	} */
 	struct linux_timespec lrqts, lrmts;
 	struct timespec rqts, rmts;
 	int error, error1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: attimer.c,v 1.4 2007/10/19 11:59:48 ad Exp $	*/
+/*	$NetBSD: attimer.c,v 1.4.4.1 2007/12/26 19:46:18 ad Exp $	*/
 
 /*
  *  Copyright (c) 2005 The NetBSD Foundation.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: attimer.c,v 1.4 2007/10/19 11:59:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: attimer.c,v 1.4.4.1 2007/12/26 19:46:18 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,6 +56,9 @@ void
 attimer_attach(struct attimer_softc *sc)
 {
 	sc->sc_flags |= ATT_CONFIGURED;
+
+	if (!pmf_device_register(&sc->sc_dev, NULL, NULL))
+		aprint_error_dev(&sc->sc_dev, "couldn't establish power handler\n");
 }
 
 /*

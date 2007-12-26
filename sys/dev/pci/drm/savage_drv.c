@@ -1,3 +1,5 @@
+/*	$NetBSD: savage_drv.c,v 1.2.22.1 2007/12/26 19:47:15 ad Exp $	*/
+
 /* savage_drv.c -- Savage DRI driver
  */
 /*-
@@ -27,6 +29,7 @@
  */
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: savage_drv.c,v 1.2.22.1 2007/12/26 19:47:15 ad Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/savage_drv.c,v 1.3 2005/12/20 22:44:36 jhb Exp $");
 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.48 2007/03/12 18:18:26 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.48.26.1 2007/12/26 19:42:37 ad Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.48 2007/03/12 18:18:26 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.48.26.1 2007/12/26 19:42:37 ad Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_altivec.h"
@@ -1457,7 +1457,7 @@ pmap_pvo_find_va(pmap_t pm, vaddr_t va, int *pteidx_p)
 		}
 	}
 	if ((pm == pmap_kernel()) && (va < SEGMENT_LENGTH))
-		panic("%s: returning NULL for %s pmap, va: 0x%08lx\n", __FUNCTION__,
+		panic("%s: returning NULL for %s pmap, va: 0x%08lx\n", __func__,
 		(pm == pmap_kernel() ? "kernel" : "user"), va);
 	return NULL;
 }
@@ -2171,7 +2171,7 @@ pmap_extract(pmap_t pm, vaddr_t va, paddr_t *pap)
 		}
 		return false;
 #elif defined (PPC_OEA64_BRIDGE)
-	panic("%s: pm: %s, va: 0x%08lx\n", __FUNCTION__, 
+	panic("%s: pm: %s, va: 0x%08lx\n", __func__, 
 		(pm == pmap_kernel() ? "kernel" : "user"), va);
 #elif defined (PPC_OEA64)
 #error PPC_OEA64 not supported
@@ -3115,7 +3115,7 @@ pmap_setup_segment0_map(int use_large_pages, ...)
 
         for (; va < (va + size); va += 0x1000, pa += 0x1000) {
 #if 0
-	    printf("%s: Inserting: va: 0x%08lx, pa: 0x%08lx\n", __FUNCTION__,  va, pa);
+	    printf("%s: Inserting: va: 0x%08lx, pa: 0x%08lx\n", __func__,  va, pa);
 #endif
             ptegidx = va_to_pteg(pmap_kernel(), va);
             pmap_pte_create(&pte, pmap_kernel(), va, pa | pte_lo);

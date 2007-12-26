@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.25 2007/12/03 15:34:29 ad Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.25.2.1 2007/12/26 19:43:02 ad Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -64,7 +64,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.25 2007/12/03 15:34:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.25.2.1 2007/12/26 19:43:02 ad Exp $");
 
 #include "opt_xen.h"
 #include "isa.h"
@@ -117,7 +117,6 @@ physdev_op_t physdev_op_notify = {
 #endif
 
 int debug_port;
-int xen_debug_handler(void *);
 #ifndef XEN3
 static int xen_misdirect_handler(void *);
 #endif
@@ -153,15 +152,9 @@ events_default_setup()
 void
 init_events()
 {
-	int evtch;
-	evtch = bind_virq_to_evtch(VIRQ_DEBUG);
-	aprint_verbose("debug virtual interrupt using event channel %d\n",
-	    evtch);
-	event_set_handler(evtch, &xen_debug_handler, NULL, IPL_HIGH,
-	    "debugev");
-	hypervisor_enable_event(evtch);
-
 #ifndef XEN3
+	int evtch;
+
 	evtch = bind_virq_to_evtch(VIRQ_MISDIRECT);
 	aprint_verbose("misdirect virtual interrupt using event channel %d\n",
 	    evtch);
@@ -173,6 +166,16 @@ init_events()
 	 * alive. */
 	ctrl_if_init();
 #endif
+	debug_port = bind_virq_to_evtch(VIRQ_DEBUG);
+	aprint_verbose("debug virtual interrupt using event channel %d\n",
+	    debug_port);
+	/*
+	 * Don't call event_set_handler(), we'll use a shortcut. Just set
+	 * evtsource[] to a non-NULL value so that evtchn_do_event will
+	 * be called.
+	 */
+	evtsource[debug_port] = (void *)-1;
+	hypervisor_enable_event(debug_port);
 
 	x86_enable_intr();		/* at long last... */
 }
@@ -204,7 +207,6 @@ evtchn_do_event(int evtch, struct intrframe *regs)
 	 * Shortcut for the debug handler, we want it to always run,
 	 * regardless of the IPL level.
 	 */
-
 	if (evtch == debug_port) {
 		xen_debug_handler(NULL);
 		hypervisor_enable_event(evtch);
@@ -288,8 +290,6 @@ bind_virq_to_evtch(int virq)
 		if (HYPERVISOR_event_channel_op(&op) != 0)
 			panic("Failed to bind virtual IRQ %d\n", virq);
 		evtchn = op.u.bind_virq.port;
-		if (virq == VIRQ_DEBUG)
-			debug_port = evtchn;
 
 		virq_to_evtch[virq] = evtchn;
 	}

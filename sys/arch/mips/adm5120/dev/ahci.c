@@ -1,4 +1,4 @@
-/*	$NetBSD: ahci.c,v 1.1 2007/03/20 08:52:01 dyoung Exp $	*/
+/*	$NetBSD: ahci.c,v 1.1.28.1 2007/12/26 19:42:31 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahci.c,v 1.1 2007/03/20 08:52:01 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahci.c,v 1.1.28.1 2007/12/26 19:42:31 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -420,13 +420,13 @@ ahci_open(usbd_pipe_handle pipe)
 void
 ahci_softintr(void *arg)
 {
-	DPRINTF(D_TRACE, ("%s()", __FUNCTION__));
+	DPRINTF(D_TRACE, ("%s()", __func__));
 }
 
 void
 ahci_poll(struct usbd_bus *bus)
 {
-	DPRINTF(D_TRACE, ("%s()", __FUNCTION__));
+	DPRINTF(D_TRACE, ("%s()", __func__));
 }
 
 /*
@@ -543,7 +543,7 @@ ahci_freex(struct usbd_bus *bus, usbd_xfer_handle xfer)
 void
 ahci_noop(usbd_pipe_handle pipe)
 {
-	DPRINTF(D_TRACE, ("%s()", __FUNCTION__));
+	DPRINTF(D_TRACE, ("%s()", __func__));
 }
 
 /*
@@ -1287,7 +1287,7 @@ ahci_poll_device(void *arg)
 
 	r = ahci_transaction(sc, pipe, pid, xfer->length, buf, 0/*toggle*/);
 	if (r < 0) {
-		DPRINTF(D_MSG, ("%s error", __FUNCTION__));
+		DPRINTF(D_MSG, ("%s error", __func__));
 		return;
 	}
 	/* no change, return NAK */
@@ -1315,7 +1315,7 @@ ahci_device_intr_abort(usbd_xfer_handle xfer)
 		free(sx, M_USB);
 		xfer->hcpriv = NULL;
 	} else {
-		printf("%s: sx == NULL!\n", __FUNCTION__);
+		printf("%s: sx == NULL!\n", __func__);
 	}
 	ahci_abort_xfer(xfer, USBD_CANCELLED);
 }

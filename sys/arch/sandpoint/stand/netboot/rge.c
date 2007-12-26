@@ -1,4 +1,4 @@
-/* $NetBSD: rge.c,v 1.7 2007/11/29 04:00:18 nisimura Exp $ */
+/* $NetBSD: rge.c,v 1.7.4.1 2007/12/26 19:42:41 ad Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@ struct desc {
 #define  CR_RESET	(1U << 4)	/* reset S1C */
 #define  CR_RXEN	(1U << 3)	/* Rx enable */
 #define  CR_TXEN	(1U << 2)	/* Tx enable */
-#define RGE_TXPOLL	0x38		/* activate desc polling */
+#define RGE_TPPOLL	0x38		/* activate desc polling */
 #define RGE_IMR		0x3c		/* interrupt mask */
 #define RGE_ISR		0x3e		/* interrupt status */
 #define  ISR_TXERR	0x0088		/* Tx error conditions */
@@ -135,7 +135,7 @@ struct desc {
 #define  RCR_APM	(1U << 1)	/* accept unicast frame */
 #define  RCR_AAP	(1U << 0)	/* promiscuous */
 #define RGE_PHYAR	0x60		/* PHY access */
-#define RGE_PHYSR	0x6d		/* PHY status */
+#define RGE_PHYSR	0x6c		/* PHY status */
 #define RGE_RMS		0xda		/* Rx maximum frame size */
 #define RGE_CCCR	0xe0		/* C+CR */
 #define  CCCR_VLAN	(1U << 6)	/* Rx VTAG removal */
@@ -154,9 +154,10 @@ struct local {
 	unsigned tcr, rcr;
 };
 
-static int rge_mii_read(struct local *, int, int);
-static void rge_mii_write(struct local *, int, int, int);
+static int mii_read(struct local *, int, int);
+static void mii_write(struct local *, int, int, int);
 static void mii_initphy(struct local *);
+static void mii_dealan(struct local *, unsigned);
 
 void *
 rge_init(unsigned tag, void *data)
@@ -188,10 +189,20 @@ rge_init(unsigned tag, void *data)
 	en[3] = CSR_READ_1(l, RGE_IDR3);
 	en[4] = CSR_READ_1(l, RGE_IDR4);
 	en[5] = CSR_READ_1(l, RGE_IDR5);
-#if 1
+
 	printf("MAC address %02x:%02x:%02x:%02x:%02x:%02x\n",
-		en[0], en[1], en[2], en[3], en[4], en[5]);
-#endif
+	    en[0], en[1], en[2], en[3], en[4], en[5]);
+	printf("PHY %d (%04x.%04x)\n", l->phy,
+	    mii_read(l, l->phy, 2), mii_read(l, l->phy, 3));
+
+	mii_dealan(l, 5);
+
+	/* speed and duplexity can be seen in PHYSR */
+	val = CSR_READ_1(l, RGE_PHYSR);
+	if (val & (1U << 4)) printf("1000Mbps");
+	if (val & (1U << 3)) printf("100Mbps");
+	if (val & (1U << 2)) printf("10Mbps");
+	if (val & (1U << 0)) printf("-FDX\n");
 
 	txd = &l->txd;
 	rxd = &l->rxd[0];
@@ -232,7 +243,7 @@ rge_send(void *dev, char *buf, unsigned len)
 	txd->xd1 = 0;
 	txd->xd0 = htole32(T0_OWN|T0_EOR|T0_FS|T0_LS| (len & T0_FRMASK));
 	wbinv(txd, sizeof(struct desc));
-	CSR_WRITE_1(l, RGE_TXPOLL, 0x40);
+	CSR_WRITE_1(l, RGE_TPPOLL, 0x40);
 	loop = 100;
 	do {
 		if ((le32toh(txd->xd0) & T0_OWN) == 0)
@@ -289,7 +300,7 @@ printf("recving with %u sec. timeout\n", timo);
 }
 
 static int
-rge_mii_read(struct local *l, int phy, int reg)
+mii_read(struct local *l, int phy, int reg)
 {
 	unsigned v, loop;
 
@@ -303,7 +314,7 @@ rge_mii_read(struct local *l, int phy, int reg)
 }
 
 static void
-rge_mii_write(struct local *l, int phy, int reg, int data)
+mii_write(struct local *l, int phy, int reg, int data)
 {
 	unsigned v;
 
@@ -320,8 +331,23 @@ rge_mii_write(struct local *l, int phy, int reg, int data)
 #define  BMCR_ISO	0x0400	/* isolate */
 #define  BMCR_STARTNEG	0x0200	/* restart autonegotiation */
 #define MII_BMSR	0x01	/* Basic mode status register (ro) */
-
-/* XXX GMII XXX */
+#define  BMSR_ACOMP	0x0020	/* Autonegotiation complete */
+#define  BMSR_LINK	0x0004	/* Link status */
+#define MII_ANAR	0x04	/* Autonegotiation advertisement (rw) */
+#define  ANAR_FC	0x0400	/* local device supports PAUSE */
+#define  ANAR_TX_FD	0x0100	/* local device supports 100bTx FD */
+#define  ANAR_TX	0x0080	/* local device supports 100bTx */
+#define  ANAR_10_FD	0x0040	/* local device supports 10bT FD */
+#define  ANAR_10	0x0020	/* local device supports 10bT */
+#define  ANAR_CSMA	0x0001	/* protocol selector CSMA/CD */
+#define MII_ANLPAR	0x05	/* Autonegotiation lnk partner abilities (rw) */
+#define MII_GTCR	0x09	/* 1000baseT control */
+#define  GANA_1000TFDX	0x0200	/* advertise 1000baseT FDX */
+#define  GANA_1000THDX	0x0100	/* advertise 1000baseT HDX */
+#define MII_GTSR	0x0a	/* 1000baseT status */
+#define  GLPA_1000TFDX	0x0800	/* link partner 1000baseT FDX capable */
+#define  GLPA_1000THDX	0x0400	/* link partner 1000baseT HDX capable */
+#define  GLPA_ASM_DIR	0x0200	/* link partner asym. pause dir. capable */
 
 static void
 mii_initphy(struct local *l)
@@ -329,20 +355,20 @@ mii_initphy(struct local *l)
 	int phy, ctl, sts, bound;
 
 	for (phy = 0; phy < 32; phy++) {
-		ctl = rge_mii_read(l, phy, MII_BMCR);
-		sts = rge_mii_read(l, phy, MII_BMSR);
+		ctl = mii_read(l, phy, MII_BMCR);
+		sts = mii_read(l, phy, MII_BMSR);
 		if (ctl != 0xffff && sts != 0xffff)
 			goto found;
 	}
 	printf("MII: no PHY found\n");
 	return;
   found:
-	ctl = rge_mii_read(l, phy, MII_BMCR);
-	rge_mii_write(l, phy, MII_BMCR, ctl | BMCR_RESET);
+	ctl = mii_read(l, phy, MII_BMCR);
+	mii_write(l, phy, MII_BMCR, ctl | BMCR_RESET);
 	bound = 100;
 	do {
 		DELAY(10);
-		ctl = rge_mii_read(l, phy, MII_BMCR);
+		ctl = mii_read(l, phy, MII_BMCR);
 		if (ctl == 0xffff) {
 			printf("MII: PHY %d has died after reset\n", phy);
 			return;
@@ -352,9 +378,34 @@ mii_initphy(struct local *l)
 		printf("PHY %d reset failed\n", phy);
 	}
 	ctl &= ~BMCR_ISO;
-	rge_mii_write(l, phy, MII_BMCR, ctl);
-	sts = rge_mii_read(l, phy, MII_BMSR) |
-	    rge_mii_read(l, phy, MII_BMSR); /* read twice */
+	mii_write(l, phy, MII_BMCR, ctl);
+	sts = mii_read(l, phy, MII_BMSR) |
+	    mii_read(l, phy, MII_BMSR); /* read twice */
 	l->phy = phy;
 	l->bmsr = sts;
+}
+
+void
+mii_dealan(struct local *l, unsigned timo)
+{
+	unsigned anar, gtcr, bound;
+
+	anar = ANAR_TX_FD | ANAR_TX | ANAR_10_FD | ANAR_10 | ANAR_CSMA;
+	anar |= ANAR_FC;
+	gtcr = GANA_1000TFDX | GANA_1000THDX;
+	mii_write(l, l->phy, MII_ANAR, anar);
+	mii_write(l, l->phy, MII_GTCR, gtcr);
+	mii_write(l, l->phy, MII_BMCR, BMCR_AUTOEN | BMCR_STARTNEG);
+	l->anlpar = 0;
+	bound = getsecs() + timo;
+	do {
+		l->bmsr = mii_read(l, l->phy, MII_BMSR) |
+		   mii_read(l, l->phy, MII_BMSR); /* read twice */
+		if ((l->bmsr & BMSR_LINK) && (l->bmsr & BMSR_ACOMP)) {
+			l->anlpar = mii_read(l, l->phy, MII_ANLPAR);
+			break;
+		}
+		DELAY(10 * 1000);
+	} while (getsecs() < bound);
+	return;
 }

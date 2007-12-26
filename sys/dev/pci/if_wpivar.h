@@ -1,4 +1,4 @@
-/*  $NetBSD: if_wpivar.h,v 1.9 2007/11/16 00:13:32 degroote Exp $    */
+/*  $NetBSD: if_wpivar.h,v 1.9.2.1 2007/12/26 19:47:00 ad Exp $    */
 
 /*-
  * Copyright (c) 2006
@@ -166,7 +166,6 @@ struct wpi_softc {
 	int8_t			maxpwr[IEEE80211_CHAN_MAX];
 
 	int			sc_tx_timer;
-	void			*powerhook;
 
 #if NBPFILTER > 0
 	void *			sc_drvbpf;

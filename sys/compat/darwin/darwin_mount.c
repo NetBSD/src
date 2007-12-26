@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_mount.c,v 1.12 2007/11/26 19:01:29 pooka Exp $ */
+/*	$NetBSD: darwin_mount.c,v 1.12.2.1 2007/12/26 19:48:49 ad Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_mount.c,v 1.12 2007/11/26 19:01:29 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_mount.c,v 1.12.2.1 2007/12/26 19:48:49 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -63,12 +63,12 @@ static void native_to_darwin_statvfs(const struct statvfs *,
     struct darwin_statfs *);
 
 int
-darwin_sys_fstatfs(struct lwp *l, void *v, register_t *retval)
+darwin_sys_fstatfs(struct lwp *l, const struct darwin_sys_fstatfs_args *uap, register_t *retval)
 {
-	struct darwin_sys_fstatfs_args /* {
+	/* {
 		syscallarg(int) fd;
 		syscallarg(struct darwin_statfs *) buf;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 	struct file *fp;
 	struct mount *mp;
@@ -96,16 +96,13 @@ out:
 }
 
 int
-darwin_sys_getfsstat(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+darwin_sys_getfsstat(struct lwp *l, const struct darwin_sys_getfsstat_args *uap, register_t *retval)
 {
-	struct darwin_sys_getfsstat_args /* {
+	/* {
 		syscallarg(struct darwin_statfs *) buf;
 		syscallarg(long) bufsize;
 		syscallarg(int) flags;
-	} */ *uap = v;
+	} */
 	struct mount *mp, *nmp;
 	struct statvfs *bs;
 	struct darwin_statfs ds;
@@ -145,19 +142,20 @@ darwin_sys_getfsstat(l, v, retval)
 }
 
 int
-darwin_sys_statfs(struct lwp *l, void *v, register_t *retval)
+darwin_sys_statfs(struct lwp *l, const struct darwin_sys_statfs_args *uap, register_t *retval)
 {
-	struct darwin_sys_statfs_args /* {
+	/* {
 		syscallarg(char *) path;
 		syscallarg(struct statfs *) buf;
-	} */ *uap = v;
+	} */
 	struct mount *mp;
 	struct statvfs *bs;
 	struct darwin_statfs ds;
 	struct nameidata nd;
 	int error;
 
-	NDINIT(&nd, LOOKUP, FOLLOW | TRYEMULROOT, UIO_USERSPACE, SCARG(uap, path), l);
+	NDINIT(&nd, LOOKUP, FOLLOW | TRYEMULROOT, UIO_USERSPACE,
+	    SCARG(uap, path));
 	if ((error = namei(&nd)) != 0)
 		return error;
 
@@ -177,9 +175,7 @@ darwin_sys_statfs(struct lwp *l, void *v, register_t *retval)
 
 
 static void
-native_to_darwin_statvfs(bs, ds)
-	const struct statvfs *bs;
-	struct darwin_statfs *ds;
+native_to_darwin_statvfs(const struct statvfs *bs, struct darwin_statfs *ds)
 {
 	long dflags = 0;
 	long sflags = bs->f_flag & MNT_VISFLAGMASK;

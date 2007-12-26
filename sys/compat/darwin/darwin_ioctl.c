@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_ioctl.c,v 1.6 2007/02/09 21:55:16 ad Exp $ */
+/*	$NetBSD: darwin_ioctl.c,v 1.6.28.1 2007/12/26 19:48:48 ad Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_ioctl.c,v 1.6 2007/02/09 21:55:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_ioctl.c,v 1.6.28.1 2007/12/26 19:48:48 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -63,16 +63,13 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_ioctl.c,v 1.6 2007/02/09 21:55:16 ad Exp $");
 static int vtype_to_dtype(int);
 
 int
-darwin_sys_ioctl(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+darwin_sys_ioctl(struct lwp *l, const struct darwin_sys_ioctl_args *uap, register_t *retval)
 {
-	struct darwin_sys_ioctl_args /* {
+	/* {
 		syscallarg(int) fd;
 		syscallarg(u_long) com;
 		syscallarg(void *) data;
-	} */ *uap = v;
+	} */
 	struct sys_ioctl_args cup;
 	int error;
 
@@ -113,8 +110,7 @@ darwin_sys_ioctl(l, v, retval)
 }
 
 static int
-vtype_to_dtype(dtype)
-	int dtype;
+vtype_to_dtype(int dtype)
 {
 	switch (dtype) {
 	case VNON:

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipwvar.h,v 1.11 2006/04/17 20:57:24 rpaulo Exp $	*/
+/*	$NetBSD: if_ipwvar.h,v 1.11.44.1 2007/12/26 19:46:52 ad Exp $	*/
 
 /*-
  * Copyright (c) 2004
@@ -108,9 +108,6 @@ struct ipw_softc {
 	pci_chipset_tag_t		sc_pct;
 	pcitag_t			sc_pcitag;
 	bus_size_t			sc_sz;
-
-	void				*sc_sdhook;	/* shutdown hook */
-	void				*sc_powerhook;	/* power management hook */
 
 	int				sc_tx_timer;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_task.c,v 1.65 2007/02/17 22:31:41 pavel Exp $ */
+/*	$NetBSD: mach_task.c,v 1.65.26.1 2007/12/26 19:49:27 ad Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include "opt_compat_darwin.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.65 2007/02/17 22:31:41 pavel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.65.26.1 2007/12/26 19:49:27 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -76,8 +76,7 @@ static void
 update_exception_port(struct mach_emuldata *, int exc, struct mach_port *);
 
 int
-mach_task_get_special_port(args)
-	struct mach_trap_args *args;
+mach_task_get_special_port(struct mach_trap_args *args)
 {
 	mach_task_get_special_port_request_t *req = args->smsg;
 	mach_task_get_special_port_reply_t *rep = args->rmsg;
@@ -121,8 +120,7 @@ mach_task_get_special_port(args)
 }
 
 int
-mach_ports_lookup(args)
-	struct mach_trap_args *args;
+mach_ports_lookup(struct mach_trap_args *args)
 {
 	mach_ports_lookup_request_t *req = args->smsg;
 	mach_ports_lookup_reply_t *rep = args->rmsg;
@@ -177,8 +175,7 @@ mach_ports_lookup(args)
 }
 
 int
-mach_task_set_special_port(args)
-	struct mach_trap_args *args;
+mach_task_set_special_port(struct mach_trap_args *args)
 {
 	mach_task_set_special_port_request_t *req = args->smsg;
 	mach_task_set_special_port_reply_t *rep = args->rmsg;
@@ -266,8 +263,7 @@ mach_task_set_special_port(args)
 }
 
 int
-mach_task_threads(args)
-	struct mach_trap_args *args;
+mach_task_threads(struct mach_trap_args *args)
 {
 	mach_task_threads_request_t *req = args->smsg;
 	mach_task_threads_reply_t *rep = args->rmsg;
@@ -313,8 +309,7 @@ mach_task_threads(args)
 }
 
 int
-mach_task_get_exception_ports(args)
-	struct mach_trap_args *args;
+mach_task_get_exception_ports(struct mach_trap_args *args)
 {
 	mach_task_get_exception_ports_request_t *req = args->smsg;
 	mach_task_get_exception_ports_reply_t *rep = args->rmsg;
@@ -366,10 +361,7 @@ mach_task_get_exception_ports(args)
 }
 
 static void
-update_exception_port(med, exc, mp)
-	struct mach_emuldata *med;
-	int exc;
-	struct mach_port *mp;
+update_exception_port(struct mach_emuldata *med, int exc, struct mach_port *mp)
 {
 	if (med->med_exc[exc] != NULL)
 		MACH_PORT_UNREF(med->med_exc[exc]);
@@ -380,8 +372,7 @@ update_exception_port(med, exc, mp)
 }
 
 int
-mach_task_set_exception_ports(args)
-	struct mach_trap_args *args;
+mach_task_set_exception_ports(struct mach_trap_args *args)
 {
 	mach_task_set_exception_ports_request_t *req = args->smsg;
 	mach_task_set_exception_ports_reply_t *rep = args->rmsg;
@@ -451,8 +442,7 @@ mach_task_set_exception_ports(args)
 }
 
 int
-mach_task_info(args)
-	struct mach_trap_args *args;
+mach_task_info(struct mach_trap_args *args)
 {
 	mach_task_info_request_t *req = args->smsg;
 	mach_task_info_reply_t *rep = args->rmsg;
@@ -548,8 +538,7 @@ mach_task_info(args)
 }
 
 int
-mach_task_suspend(args)
-	struct mach_trap_args *args;
+mach_task_suspend(struct mach_trap_args *args)
 {
 	mach_task_suspend_request_t *req = args->smsg;
 	mach_task_suspend_reply_t *rep = args->rmsg;
@@ -592,8 +581,7 @@ mach_task_suspend(args)
 }
 
 int
-mach_task_resume(args)
-	struct mach_trap_args *args;
+mach_task_resume(struct mach_trap_args *args)
 {
 	mach_task_resume_request_t *req = args->smsg;
 	mach_task_resume_reply_t *rep = args->rmsg;
@@ -630,8 +618,7 @@ mach_task_resume(args)
 }
 
 int
-mach_task_terminate(args)
-	struct mach_trap_args *args;
+mach_task_terminate(struct mach_trap_args *args)
 {
 	mach_task_resume_request_t *req = args->smsg;
 	mach_task_resume_reply_t *rep = args->rmsg;
@@ -656,13 +643,13 @@ mach_task_terminate(args)
 }
 
 int
-mach_sys_task_for_pid(struct lwp *l, void *v, register_t *retval)
+mach_sys_task_for_pid(struct lwp *l, const struct mach_sys_task_for_pid_args *uap, register_t *retval)
 {
-	struct mach_sys_task_for_pid_args /* {
+	/* {
 		syscallarg(mach_port_t) target_tport;
 		syscallarg(int) pid;
 		syscallarg(mach_port_t) *t;
-	} */ *uap = v;
+	} */
 	struct mach_right *mr;
 	struct mach_emuldata *med;
 	struct proc *t;

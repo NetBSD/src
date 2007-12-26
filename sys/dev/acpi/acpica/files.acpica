@@ -1,4 +1,4 @@
-#	$NetBSD: files.acpica,v 1.12 2006/03/23 13:44:10 kochi Exp $
+#	$NetBSD: files.acpica,v 1.12.44.1 2007/12/26 19:46:02 ad Exp $
 
 file	dev/acpi/acpica/OsdEnvironment.c	acpi
 file	dev/acpi/acpica/OsdHardware.c		acpi
@@ -132,11 +132,9 @@ file	dist/acpica/rsutils.c		acpi
 file	dist/acpica/rsxface.c		acpi
 
 # tables/
-file	dist/acpica/tbconvrt.c		acpi
-file	dist/acpica/tbget.c		acpi
-file	dist/acpica/tbgetall.c		acpi
+file	dist/acpica/tbfadt.c		acpi
+file	dist/acpica/tbfind.c		acpi
 file	dist/acpica/tbinstal.c		acpi
-file	dist/acpica/tbrsdt.c		acpi
 file	dist/acpica/tbutils.c		acpi
 file	dist/acpica/tbxface.c		acpi
 file	dist/acpica/tbxfroot.c		acpi
@@ -156,5 +154,6 @@ file	dist/acpica/utmutex.c		acpi
 file	dist/acpica/utobject.c		acpi
 file	dist/acpica/utresrc.c		acpi
 file	dist/acpica/utstate.c		acpi
+file	dist/acpica/uttrack.c		acpi
 file	dist/acpica/utxface.c		acpi
 

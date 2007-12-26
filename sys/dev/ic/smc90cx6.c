@@ -1,4 +1,4 @@
-/*	$NetBSD: smc90cx6.c,v 1.52 2007/10/19 12:00:01 ad Exp $ */
+/*	$NetBSD: smc90cx6.c,v 1.52.4.1 2007/12/26 19:46:24 ad Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc90cx6.c,v 1.52 2007/10/19 12:00:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc90cx6.c,v 1.52.4.1 2007/12/26 19:46:24 ad Exp $");
 
 /* #define BAHSOFTCOPY */
 #define BAHRETRANSMIT /**/
@@ -256,7 +256,7 @@ bah_reset(sc)
 	struct bah_softc *sc;
 {
 	struct ifnet *ifp;
-	int linkaddress;
+	uint8_t linkaddress;
 
 	bus_space_tag_t bst_r = sc->sc_bst_r;
         bus_space_tag_t bst_m = sc->sc_bst_m;
@@ -283,7 +283,7 @@ bah_reset(sc)
 #endif
 
 	/* tell the routing level about the (possibly changed) link address */
-	arc_storelladdr(ifp, linkaddress);
+	if_set_sadl(ifp, &linkaddress, sizeof(linkaddress));
 
 	/* POR is NMI, but we need it below: */
 	sc->sc_intmask = BAH_RECON|BAH_POR;

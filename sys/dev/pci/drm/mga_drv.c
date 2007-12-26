@@ -1,3 +1,5 @@
+/*	$NetBSD: mga_drv.c,v 1.2.22.1 2007/12/26 19:47:12 ad Exp $	*/
+
 /* mga_drv.c -- Matrox G200/G400 driver -*- linux-c -*-
  * Created: Mon Dec 13 01:56:22 1999 by jhartmann@precisioninsight.com
  */
@@ -32,6 +34,7 @@
  */
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mga_drv.c,v 1.2.22.1 2007/12/26 19:47:12 ad Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/mga_drv.c,v 1.12 2006/05/17 06:36:28 anholt Exp $");
 */

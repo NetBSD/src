@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ath_pci.c,v 1.21 2007/04/17 21:50:31 dyoung Exp $	*/
+/*	$NetBSD: if_ath_pci.c,v 1.21.16.1 2007/12/26 19:46:49 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath_pci.c,v 1.11 2005/01/18 18:08:16 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: if_ath_pci.c,v 1.21 2007/04/17 21:50:31 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ath_pci.c,v 1.21.16.1 2007/12/26 19:46:49 ad Exp $");
 #endif
 
 /*
@@ -84,22 +84,17 @@ struct ath_pci_softc {
 	struct ath_softc	sc_sc;
 	pci_chipset_tag_t	sc_pc;
 	pcitag_t		sc_pcitag; 
-	struct pci_conf_state	sc_pciconf;
 	void			*sc_ih;		/* interrupt handler */
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
-	void			*sc_sdhook;
+	bus_size_t		sc_mapsz;
 };
 
 #define	BS_BAR	0x10
-#define	PCIR_RETRY_TIMEOUT_REG		0x40
-#define	PCIR_RETRY_TIMEOUT_MASK		__BITS(15,8)
 
 static void ath_pci_attach(struct device *, struct device *, void *);
 static int ath_pci_detach(struct device *, int);
 static int ath_pci_match(struct device *, struct cfdata *, void *);
-static void ath_pci_shutdown(void *);
-static void ath_pci_powerhook(int, void *);
 static int ath_pci_detach(struct device *, int);
 
 CFATTACH_DECL(ath_pci,
@@ -108,8 +103,6 @@ CFATTACH_DECL(ath_pci,
     ath_pci_attach,
     ath_pci_detach,
     NULL);
-
-static int ath_pci_setup(struct pci_attach_args *);
 
 static int
 ath_pci_match(struct device *parent, struct cfdata *match, void *aux)
@@ -123,34 +116,47 @@ ath_pci_match(struct device *parent, struct cfdata *match, void *aux)
 	return 0;
 }
 
-static void
-ath_disable_retry(pci_chipset_tag_t pc, pcitag_t tag)
+static bool
+ath_pci_resume(device_t dv)
 {
-#if 0
-	pcireg_t retry;
+	struct ath_pci_softc *sc = device_private(dv);
 
-	/*
-	 * Disable retry timeout to keep PCI Tx retries from
-	 * interfering with ACPI C3 CPU state.
+	/* Insofar as I understand what the PCI retry timeout is
+	 * (it does not appear to be documented in any PCI standard,
+	 * and we don't have any Atheros documentation), disabling
+	 * it on resume does not seem to be justified.
+	 *
+	 * Taking a guess, the DMA engine counts down from the
+	 * retry timeout to 0 while it retries a delayed PCI
+	 * transaction.  When it reaches 0, it ceases retrying.
+	 * A PCI master is *never* supposed to stop retrying a
+	 * delayed transaction, though.
+	 *
+	 * Incidentally, while I am hopeful that pci_disable_retry()
+	 * does disable retries, because that would help to explain
+	 * some ath(4) lossage, I suspect that writing 0 to the
+	 * register does not disable *retries*, but it disables
+	 * the timeout.  That is, the device will *never* timeout.
 	 */
-	retry = pci_conf_read(pc, tag, PCIR_RETRY_TIMEOUT_REG);
-	pci_conf_write(pc, tag, PCIR_RETRY_TIMEOUT_REG,
-	    retry & ~PCIR_RETRY_TIMEOUT_MASK);
+#if 0
+	pci_disable_retry(sc->sc_pc, sc->sc_pcitag);
 #endif
+	ath_resume(&sc->sc_sc);
+
+	return true;
 }
 
 static int
-ath_pci_setup(struct pci_attach_args *pa)
+ath_pci_setup(struct ath_pci_softc *sc)
 {
-	pci_chipset_tag_t pc = pa->pa_pc;
 	pcireg_t bhlc, csr, icr, lattimer;
 	/*
 	 * Enable memory mapping and bus mastering.
 	 */
-	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
-	    pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG) |
-	        PCI_COMMAND_MASTER_ENABLE | PCI_COMMAND_MEM_ENABLE);
-	csr = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
+	csr = pci_conf_read(sc->sc_pc, sc->sc_pcitag, PCI_COMMAND_STATUS_REG);
+	csr |= PCI_COMMAND_MASTER_ENABLE | PCI_COMMAND_MEM_ENABLE;
+	pci_conf_write(sc->sc_pc, sc->sc_pcitag, PCI_COMMAND_STATUS_REG, csr);
+	csr = pci_conf_read(sc->sc_pc, sc->sc_pcitag, PCI_COMMAND_STATUS_REG);
 
 	if ((csr & PCI_COMMAND_MEM_ENABLE) == 0) {
 		aprint_error("couldn't enable memory mapping\n");
@@ -161,7 +167,9 @@ ath_pci_setup(struct pci_attach_args *pa)
 		return 0;
 	}
 
-	ath_disable_retry(pc, pa->pa_tag);
+#if 0
+	pci_disable_retry(sc->sc_pc, sc->sc_pcitag);
+#endif
 
 	/*
 	 * XXX Both this comment and code are replicated in
@@ -184,13 +192,13 @@ ath_pci_setup(struct pci_attach_args *pa)
 	 * I never set a Latency Timer less than 0x10, since that
 	 * is what the old code did.
 	 */
-	bhlc = pci_conf_read(pc, pa->pa_tag, PCI_BHLC_REG);
-	icr = pci_conf_read(pc, pa->pa_tag, PCI_INTERRUPT_REG);
+	bhlc = pci_conf_read(sc->sc_pc, sc->sc_pcitag, PCI_BHLC_REG);
+	icr = pci_conf_read(sc->sc_pc, sc->sc_pcitag, PCI_INTERRUPT_REG);
 	lattimer = MAX(0x10, MIN(0xf8, 8 * PCI_MIN_GNT(icr)));
 	if (PCI_LATTIMER(bhlc) < lattimer) {
 		bhlc &= ~(PCI_LATTIMER_MASK << PCI_LATTIMER_SHIFT);
 		bhlc |= (lattimer << PCI_LATTIMER_SHIFT);
-		pci_conf_write(pc, pa->pa_tag, PCI_BHLC_REG, bhlc);
+		pci_conf_write(sc->sc_pc, sc->sc_pcitag, PCI_BHLC_REG, bhlc);
 	}
 	return 1;
 }
@@ -204,15 +212,14 @@ ath_pci_attach(struct device *parent, struct device *self, void *aux)
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pci_intr_handle_t ih;
 	pcireg_t mem_type;
-	void *phook;
 	const char *intrstr = NULL;
 
 	psc->sc_pc = pc;
 
 	psc->sc_pcitag = pa->pa_tag;
 
-	if (!ath_pci_setup(pa))
-		goto bad;
+	if (!ath_pci_setup(psc))
+		goto bad;	
 
 	/*
 	 * Setup memory-mapping of PCI registers.
@@ -224,7 +231,7 @@ ath_pci_attach(struct device *parent, struct device *self, void *aux)
 		goto bad;
 	}
 	if (pci_mapreg_map(pa, BS_BAR, mem_type, 0, &psc->sc_iot,
-		&psc->sc_ioh, NULL, NULL)) {
+		&psc->sc_ioh, NULL, &psc->sc_mapsz)) {
 		aprint_error("cannot map register space\n");
 		goto bad;
 	}
@@ -254,29 +261,22 @@ ath_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_dmat = pa->pa_dmat;
 
-	psc->sc_sdhook = shutdownhook_establish(ath_pci_shutdown, psc);
-	if (psc->sc_sdhook == NULL) {
-		aprint_error("couldn't make shutdown hook\n");
-		goto bad3;
-	}
+	ATH_LOCK_INIT(sc);
 
-	phook = powerhook_establish(sc->sc_dev.dv_xname,
-	    ath_pci_powerhook, psc);
-	if (phook == NULL) {
-		aprint_error("couldn't make power hook\n");
-		goto bad3;
-	}
+	if (!pmf_device_register(self, NULL, ath_pci_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 
-	if (ath_attach(PCI_PRODUCT(pa->pa_id), sc) == 0)
+	if (ath_attach(PCI_PRODUCT(pa->pa_id), sc) == 0) { 
+		pmf_class_network_register(self, &sc->sc_if);
 		return;
+	}
+	ATH_LOCK_DESTROY(sc);
 
-	shutdownhook_disestablish(psc->sc_sdhook);
-	powerhook_disestablish(phook);
-
-bad3:	pci_intr_disestablish(pc, psc->sc_ih);
+	pci_intr_disestablish(pc, psc->sc_ih);
 bad2:	/* XXX */
-bad1:	/* XXX */
-bad:
+bad1:
+	bus_space_unmap(psc->sc_iot, psc->sc_ioh, psc->sc_mapsz);
+bad:	/* XXX */
 	return;
 }
 
@@ -285,40 +285,12 @@ ath_pci_detach(struct device *self, int flags)
 {
 	struct ath_pci_softc *psc = (struct ath_pci_softc *)self;
 
-	shutdownhook_disestablish(psc->sc_sdhook);
 	ath_detach(&psc->sc_sc);
+	pmf_device_deregister(self);
 	pci_intr_disestablish(psc->sc_pc, psc->sc_ih);
+	bus_space_unmap(psc->sc_iot, psc->sc_ioh, psc->sc_mapsz);
+
+	ATH_LOCK_DESTROY(&psc->sc_sc);
 
 	return (0);
-}
-
-static void
-ath_pci_shutdown(void *self)
-{
-	struct ath_pci_softc *psc = (struct ath_pci_softc *)self;
-
-	ath_shutdown(&psc->sc_sc);
-}
-
-static void
-ath_pci_powerhook(int why, void *arg)
-{
-	struct ath_pci_softc *sc = arg;
-	pci_chipset_tag_t pc = sc->sc_pc;
-	pcitag_t tag = sc->sc_pcitag;
-
-	switch (why) {
-	case PWR_SOFTSUSPEND:
-		ath_pci_shutdown(sc);
-		break;
-	case PWR_SUSPEND:
-		pci_conf_capture(pc, tag, &sc->sc_pciconf);
-		break;
-	case PWR_RESUME:
-		pci_conf_restore(pc, tag, &sc->sc_pciconf);
-		ath_disable_retry(pc, tag);
-		break;
-	}
-
-	return;
 }

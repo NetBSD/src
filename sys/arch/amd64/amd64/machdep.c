@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.71 2007/12/03 15:33:09 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.71.2.1 2007/12/26 19:41:57 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007
@@ -120,7 +120,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.71 2007/12/03 15:33:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.71.2.1 2007/12/26 19:41:57 ad Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -134,6 +134,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.71 2007/12/03 15:33:09 ad Exp $");
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
 #include "opt_mtrr.h"
+#include "opt_physmem.h"
 #include "opt_realmem.h"
 #include "opt_xen.h"
 
@@ -1000,14 +1001,10 @@ setregs(struct lwp *l, struct exec_package *pack, u_long stack)
  * Initialize segments and descriptor tables
  */
 
-#ifndef XEN
-struct gate_descriptor *idt;
-#else
-struct trap_info *idt;
+#ifdef XEN
+struct trap_info *xen_idt;
 int xen_idt_idx;
 #endif
-char idt_allocmap[NIDT];
-struct simplelock idt_lock = SIMPLELOCK_INITIALIZER;
 char *ldtstore;
 char *gdtstore;
 extern  struct user *proc0paddr;
@@ -1093,7 +1090,7 @@ cpu_init_idt(void)
 	setregion(&region, idt, NIDT * sizeof(idt[0]) - 1);
 	lidt(&region); 
 #else
-	if (HYPERVISOR_set_trap_table(idt))
+	if (HYPERVISOR_set_trap_table(xen_idt))
 		panic("HYPERVISOR_set_trap_table() failed");
 #endif
 }
@@ -1112,6 +1109,97 @@ extern vector IDTVEC(oosyscall);
 extern vector *IDTVEC(exceptions)[];
 
 #define	KBTOB(x)	((size_t)(x) * 1024UL)
+#define	MBTOB(x)	((size_t)(x) * 1024UL * 1024UL)
+
+static void
+init_x86_64_msgbuf(void)
+{
+	/* Message buffer is located at end of core. */
+	struct vm_physseg *vps;
+	psize_t sz = round_page(MSGBUFSIZE);
+	psize_t reqsz = sz;
+	int x;
+		
+ search_again:
+	vps = NULL;
+
+	for (x = 0; x < vm_nphysseg; x++) {
+		vps = &vm_physmem[x];
+		if (ptoa(vps->avail_end) == avail_end)
+			break;
+	}
+	if (x == vm_nphysseg)
+		panic("init_x86_64: can't find end of memory");
+
+	/* Shrink so it'll fit in the last segment. */
+	if ((vps->avail_end - vps->avail_start) < atop(sz))
+		sz = ptoa(vps->avail_end - vps->avail_start);
+
+	vps->avail_end -= atop(sz);
+	vps->end -= atop(sz);
+            msgbuf_p_seg[msgbuf_p_cnt].sz = sz;
+            msgbuf_p_seg[msgbuf_p_cnt++].paddr = ptoa(vps->avail_end);
+
+	/* Remove the last segment if it now has no pages. */
+	if (vps->start == vps->end) {
+		for (vm_nphysseg--; x < vm_nphysseg; x++)
+			vm_physmem[x] = vm_physmem[x + 1];
+	}
+
+	/* Now find where the new avail_end is. */
+	for (avail_end = 0, x = 0; x < vm_nphysseg; x++)
+		if (vm_physmem[x].avail_end > avail_end)
+			avail_end = vm_physmem[x].avail_end;
+	avail_end = ptoa(avail_end);
+
+	if (sz == reqsz)
+		return;
+
+	reqsz -= sz;
+	if (msgbuf_p_cnt == VM_PHYSSEG_MAX) {
+		/* No more segments available, bail out. */
+		printf("WARNING: MSGBUFSIZE (%zu) too large, using %zu.\n",
+		    (size_t)MSGBUFSIZE, (size_t)(MSGBUFSIZE - reqsz));
+		return;
+	}
+
+	sz = reqsz;
+	goto search_again;
+}
+
+static void
+init_x86_64_ksyms(void)
+{
+#if NKSYMS || defined(DDB) || defined(LKM)
+	extern int end;
+	extern int *esym;
+#ifndef XEN
+	struct btinfo_symtab *symtab;
+	vaddr_t tssym, tesym;
+#endif
+
+#ifdef DDB
+	db_machine_init();
+#endif
+
+#ifndef XEN
+	symtab = lookup_bootinfo(BTINFO_SYMTAB);
+	if (symtab) {
+		tssym = (vaddr_t)symtab->ssym + KERNBASE;
+		tesym = (vaddr_t)symtab->esym + KERNBASE;
+		ksyms_init(symtab->nsym, (void *)tssym, (void *)tesym);
+	} else
+		ksyms_init(*(long *)(void *)&end,
+		    ((long *)(void *)&end) + 1, esym);
+#else  /* XEN */
+	esym = xen_start_info.mod_start ?
+	    (void *)xen_start_info.mod_start :
+	    (void *)xen_start_info.mfn_list;
+	ksyms_init(*(int *)(void *)&end,
+	    ((int *)(void *)&end) + 1, esym);
+#endif /* XEN */
+#endif
+}
 
 void
 init_x86_64(paddr_t first_avail)
@@ -1127,7 +1215,7 @@ init_x86_64(paddr_t first_avail)
 	u_int64_t seg_start1, seg_end1;
 #if !defined(REALEXTMEM) && !defined(REALBASEMEM)
 	struct btinfo_memmap *bim;
-	u_int64_t addr, size, io_end;
+	u_int64_t addr, size, io_end, new_physmem;
 #endif
 #else /* XEN */
 	__PRINTK(("init_x86_64(0x%lx)\n", first_avail));
@@ -1139,7 +1227,7 @@ init_x86_64(paddr_t first_avail)
 	cpu_feature &= ~(CPUID_PGE|CPUID_PSE|CPUID_MTRR|CPUID_FXSR|CPUID_NOX);
 #endif /* XEN */
 
-	cpu_init_msrs(&cpu_info_primary);
+	cpu_init_msrs(&cpu_info_primary, true);
 
 	lwp0.l_addr = proc0paddr;
 #ifdef XEN
@@ -1161,8 +1249,18 @@ init_x86_64(paddr_t first_avail)
 	uvmexp.ncolors = 2;
 
 #ifndef XEN
-	avail_start = PAGE_SIZE; /* BIOS leaves data in low memory */
-				 /* and VM system doesn't work with phys 0 */
+	/*
+	 * Low memory reservations:
+	 * Page 0:	BIOS data
+	 * Page 1:	BIOS callback (not used yet, for symmetry with i386)
+	 * Page 2:	MP bootstrap
+	 * Page 3:	ACPI wakeup code
+	 * Page 4:	Temporary page table for 0MB-4MB
+	 * Page 5:	Temporary page directory
+	 * Page 6:	Temporary page map level 3
+	 * Page 7:	Temporary page map level 4
+	 */
+	avail_start = 8 * PAGE_SIZE;
 #else	/* XEN */
 	/* Parse Xen command line (replace bootinfo */
 	xen_parse_cmdline(XEN_PARSE_BOOTFLAGS, NULL);
@@ -1175,11 +1273,6 @@ init_x86_64(paddr_t first_avail)
 	__PRINTK(("pmap_pa_start 0x%lx avail_start 0x%lx avail_end 0x%lx\n",
 	    pmap_pa_start, avail_start, avail_end));
 #endif	/* !XEN */
-
-#ifdef MULTIPROCESSOR
-	if (avail_start < MP_TRAMPOLINE + PAGE_SIZE)
-		avail_start = MP_TRAMPOLINE + PAGE_SIZE;
-#endif
 
 	/*
 	 * Call pmap initialization to make new kernel address space.
@@ -1268,6 +1361,13 @@ init_x86_64(paddr_t first_avail)
 				panic("init386: too many memory segments "
 				    "(increase VM_PHYSSEG_MAX)");
 
+#ifdef PHYSMEM_MAX_ADDR
+			if (seg_start >= MBTOB(PHYSMEM_MAX_ADDR))
+				continue;
+			if (seg_end > MBTOB(PHYSMEM_MAX_ADDR))
+				seg_end = MBTOB(PHYSMEM_MAX_ADDR);
+#endif
+
 			seg_start = round_page(seg_start);
 			seg_end = trunc_page(seg_end);
 
@@ -1275,12 +1375,25 @@ init_x86_64(paddr_t first_avail)
 				continue;
 
 			mem_clusters[mem_cluster_cnt].start = seg_start;
+			new_physmem = physmem +
+			    atop(seg_end - seg_start);
+
+#ifdef PHYSMEM_MAX_SIZE
+			if (physmem >= atop(MBTOB(PHYSMEM_MAX_SIZE)))
+				continue;
+			if (new_physmem > atop(MBTOB(PHYSMEM_MAX_SIZE))) {
+				seg_end = seg_start +
+				    MBTOB(PHYSMEM_MAX_SIZE) - ptoa(physmem);
+				new_physmem = atop(MBTOB(PHYSMEM_MAX_SIZE));
+			}
+#endif
+
 			mem_clusters[mem_cluster_cnt].size =
 			    seg_end - seg_start;
 
 			if (avail_end < seg_end)
 				avail_end = seg_end;
-			physmem += atop(mem_clusters[mem_cluster_cnt].size);
+			physmem = new_physmem;
 			mem_cluster_cnt++;
 		}
 	}
@@ -1479,62 +1592,7 @@ init_x86_64(paddr_t first_avail)
 		atop(avail_end), VM_FREELIST_DEFAULT);
 #endif	/* !XEN */
 
-	/*
-	 * Steal memory for the message buffer (at end of core).
-	 */
-	{
-		struct vm_physseg *vps = NULL;
-		psize_t sz = round_page(MSGBUFSIZE);
-		psize_t reqsz = sz;
-		
-	search_again:
-
-		for (x = 0; x < vm_nphysseg; x++) {
-			vps = &vm_physmem[x];
-			if (ptoa(vps->avail_end) == avail_end)
-				break;
-		}
-		if (x == vm_nphysseg)
-			panic("init_x86_64: can't find end of memory");
-
-		/* Shrink so it'll fit in the last segment. */
-		if ((vps->avail_end - vps->avail_start) < atop(sz))
-			sz = ptoa(vps->avail_end - vps->avail_start);
-
-		vps->avail_end -= atop(sz);
-		vps->end -= atop(sz);
-                msgbuf_p_seg[msgbuf_p_cnt].sz = sz;
-                msgbuf_p_seg[msgbuf_p_cnt++].paddr = ptoa(vps->avail_end);
-
-		/* Remove the last segment if it now has no pages. */
-		if (vps->start == vps->end) {
-			for (vm_nphysseg--; x < vm_nphysseg; x++)
-				vm_physmem[x] = vm_physmem[x + 1];
-		}
-
-		/* Now find where the new avail_end is. */
-		for (avail_end = 0, x = 0; x < vm_nphysseg; x++)
-			if (vm_physmem[x].avail_end > avail_end)
-				avail_end = vm_physmem[x].avail_end;
-		avail_end = ptoa(avail_end);
-
-		if (sz != reqsz) {
-			reqsz -= sz;
-			if (msgbuf_p_cnt != VM_PHYSSEG_MAX) {
-		/* if still segments available, get memory from next one ... */
-				sz = reqsz;
-				goto search_again;
-			}
-		/* Warn if the message buffer had to be shrunk. */
-			printf("WARNING: %ld bytes not available for msgbuf "
-			       "in last cluster (%ld used)\n", reqsz, sz);
-		}
-
-	}
-
-	/*
-	 * XXXfvdl todo: acpi wakeup code.
-	 */
+	init_x86_64_msgbuf();
 
 	pmap_growkernel(VM_MIN_KERNEL_ADDRESS + 32 * 1024 * 1024);
 
@@ -1555,14 +1613,15 @@ init_x86_64(paddr_t first_avail)
 	pmap_update(pmap_kernel());
 
 #ifndef XEN
+	idt_init();
 	idt = (struct gate_descriptor *)idt_vaddr;
 	gdtstore = (char *)(idt + NIDT);
 	ldtstore = gdtstore + DYNSEL_START;
 #else
-	idt = (struct trap_info *)idt_vaddr;
+	xen_idt = (struct trap_info *)idt_vaddr;
 	xen_idt_idx = 0;
 	/* Xen wants page aligned GDT/LDT in separated pages */
-	ldtstore = (char *) roundup((vaddr_t) (idt + NIDT), PAGE_SIZE);
+	ldtstore = (char *) roundup((vaddr_t) (xen_idt + NIDT), PAGE_SIZE);
 	gdtstore = (char *) (ldtstore + PAGE_SIZE);
 #endif /* XEN */
 
@@ -1628,33 +1687,35 @@ init_x86_64(paddr_t first_avail)
 	/* exceptions */
 	for (x = 0; x < 32; x++) {
 #ifndef XEN
+		idt_vec_reserve(x);
 		ist = (x == 8) ? 2 : 0;
 		setgate(&idt[x], IDTVEC(exceptions)[x], ist, SDT_SYS386IGT,
 		    (x == 3 || x == 4) ? SEL_UPL : SEL_KPL,
 		    GSEL(GCODE_SEL, SEL_KPL));
 #else /* XEN */
-		idt[xen_idt_idx].vector = x;
-		idt[xen_idt_idx].flags = (x == 3 || x == 4) ? SEL_UPL : SEL_KPL;
-		idt[xen_idt_idx].cs = GSEL(GCODE_SEL, SEL_KPL);
-		idt[xen_idt_idx].address = (unsigned long)IDTVEC(exceptions)[x];
+		xen_idt[xen_idt_idx].vector = x;
+		xen_idt[xen_idt_idx].flags =
+		    (x == 3 || x == 4) ? SEL_UPL : SEL_KPL;
+		xen_idt[xen_idt_idx].cs = GSEL(GCODE_SEL, SEL_KPL);
+		xen_idt[xen_idt_idx].address =
+		    (unsigned long)IDTVEC(exceptions)[x];
 		xen_idt_idx++;
 #endif /* XEN */
-		idt_allocmap[x] = 1;
 	}
 
 #if defined(COMPAT_16) || defined(COMPAT_NETBSD32)
 	/* new-style interrupt gate for syscalls */
 #ifndef XEN
+	idt_vec_reserve(128);
 	setgate(&idt[128], &IDTVEC(osyscall), 0, SDT_SYS386IGT, SEL_UPL,
 	    GSEL(GCODE_SEL, SEL_KPL));
 #else
-	idt[xen_idt_idx].vector = 128;
-	idt[xen_idt_idx].flags = SEL_KPL;
-	idt[xen_idt_idx].cs = GSEL(GCODE_SEL, SEL_KPL);
-	idt[xen_idt_idx].address =  (unsigned long) &IDTVEC(osyscall);
+	xen_idt[xen_idt_idx].vector = 128;
+	xen_idt[xen_idt_idx].flags = SEL_KPL;
+	xen_idt[xen_idt_idx].cs = GSEL(GCODE_SEL, SEL_KPL);
+	xen_idt[xen_idt_idx].address =  (unsigned long) &IDTVEC(osyscall);
 	xen_idt_idx++;
 #endif /* XEN */
-	idt_allocmap[128] = 1;
 #endif
 #ifdef XEN
 	pmap_changeprot_local(idt_vaddr, VM_PROT_READ);
@@ -1673,36 +1734,8 @@ init_x86_64(paddr_t first_avail)
 #endif /* XEN */
 	cpu_init_idt();
 
-#if NKSYMS || defined(DDB) || defined(LKM)
-	{
-		extern int end;
-		extern int *esym;
-#ifndef XEN
-		struct btinfo_symtab *symtab;
-		vaddr_t tssym, tesym;
-#endif
+	init_x86_64_ksyms();
 
-#ifdef DDB
-		db_machine_init();
-#endif
-#ifndef XEN
-		symtab = lookup_bootinfo(BTINFO_SYMTAB);
-		if (symtab) {
-			tssym = (vaddr_t)symtab->ssym + KERNBASE;
-			tesym = (vaddr_t)symtab->esym + KERNBASE;
-			ksyms_init(symtab->nsym, (void *)tssym, (void *)tesym);
-		} else
-			ksyms_init(*(long *)(void *)&end,
-			    ((long *)(void *)&end) + 1, esym);
-#else  /* XEN */
-		esym = xen_start_info.mod_start ?
-		    (void *)xen_start_info.mod_start :
-		    (void *)xen_start_info.mfn_list;
-		ksyms_init(*(int *)(void *)&end,
-		    ((int *)(void *)&end) + 1, esym);
-#endif /* XEN */
-	}
-#endif
 #ifdef DDB
 	if (boothowto & RB_KDB)
 		Debugger();
@@ -1961,51 +1994,6 @@ cpu_initclocks(void)
 {
 	(*initclock_func)();
 }
-
-#ifndef XEN
-/*
- * Allocate an IDT vector slot within the given range.
- * XXX needs locking to avoid MP allocation races.
- * XXXfvdl share idt code
- */
-
-int
-idt_vec_alloc(int low, int high)
-{
-	int vec;
-
-	simple_lock(&idt_lock);
-	for (vec = low; vec <= high; vec++) {
-		if (idt_allocmap[vec] == 0) {
-			idt_allocmap[vec] = 1;
-			simple_unlock(&idt_lock);
-			return vec;
-		}
-	}
-	simple_unlock(&idt_lock);
-	return 0;
-}
-
-void
-idt_vec_set(int vec, void (*function)(void))
-{
-	/*
-	 * Vector should be allocated, so no locking needed.
-	 */
-	KASSERT(idt_allocmap[vec] == 1);
-	setgate(&idt[vec], function, 0, SDT_SYS386IGT, SEL_KPL,
-	    GSEL(GCODE_SEL, SEL_KPL));
-}
-
-void
-idt_vec_free(int vec)
-{
-	simple_lock(&idt_lock);
-	unsetgate(&idt[vec]);
-	idt_allocmap[vec] = 0;
-	simple_unlock(&idt_lock);
-}
-#endif	/* !XEN */
 
 int
 memseg_baseaddr(struct lwp *l, uint64_t seg, char *ldtp, int llen,

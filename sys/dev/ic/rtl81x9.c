@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.78 2007/11/06 02:29:20 uwe Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.78.2.1 2007/12/26 19:46:22 ad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.78 2007/11/06 02:29:20 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.78.2.1 2007/12/26 19:46:22 ad Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -140,7 +140,6 @@ STATIC int rtk_init(struct ifnet *);
 STATIC void rtk_stop(struct ifnet *, int);
 
 STATIC void rtk_watchdog(struct ifnet *);
-STATIC void rtk_shutdown(void *);
 STATIC int rtk_ifmedia_upd(struct ifnet *);
 STATIC void rtk_ifmedia_sts(struct ifnet *, struct ifmediareq *);
 
@@ -157,7 +156,6 @@ STATIC void rtk_tick(void *);
 
 STATIC int rtk_enable(struct rtk_softc *);
 STATIC void rtk_disable(struct rtk_softc *);
-STATIC void rtk_power(int, void *);
 
 STATIC void rtk_list_tx_init(struct rtk_softc *);
 
@@ -755,24 +753,6 @@ rtk_attach(struct rtk_softc *sc)
 	if_attach(ifp);
 	ether_ifattach(ifp, eaddr);
 
-	/*
-	 * Make sure the interface is shutdown during reboot.
-	 */
-	sc->sc_sdhook = shutdownhook_establish(rtk_shutdown, sc);
-	if (sc->sc_sdhook == NULL)
-		aprint_error_dev(self,
-			"WARNING: unable to establish shutdown hook\n");
-	/*
-	 * Add a suspend hook to make sure we come back up after a
-	 * resume.
-	 */
-	sc->sc_powerhook = powerhook_establish(device_xname(self),
-	    rtk_power, sc);
-	if (sc->sc_powerhook == NULL)
-		aprint_error_dev(self,
-			"WARNING: unable to establish power hook\n");
-
-
 #if NRND > 0
 	rnd_attach_source(&sc->rnd_source, device_xname(self),
 	    RND_TYPE_NET, 0);
@@ -886,9 +866,6 @@ rtk_detach(struct rtk_softc *sc)
 	    RTK_RXBUFLEN + 16);
 	bus_dmamem_free(sc->sc_dmat, &sc->sc_dmaseg, sc->sc_dmanseg);
 
-	shutdownhook_disestablish(sc->sc_sdhook);
-	powerhook_disestablish(sc->sc_powerhook);
-
 	return 0;
 }
 
@@ -923,40 +900,6 @@ rtk_disable(struct rtk_softc *sc)
 		(*sc->sc_disable)(sc);
 		sc->sc_flags &= ~RTK_ENABLED;
 	}
-}
-
-/*
- * rtk_power:
- *     Power management (suspend/resume) hook.
- */
-void
-rtk_power(int why, void *arg)
-{
-	struct rtk_softc *sc = (void *)arg;
-	struct ifnet *ifp = &sc->ethercom.ec_if;
-	int s;
-
-	s = splnet();
-	switch (why) {
-	case PWR_SUSPEND:
-	case PWR_STANDBY:
-		rtk_stop(ifp, 0);
-		if (sc->sc_power != NULL)
-			(*sc->sc_power)(sc, why);
-		break;
-	case PWR_RESUME:
-		if (ifp->if_flags & IFF_UP) {
-			if (sc->sc_power != NULL)
-				(*sc->sc_power)(sc, why);
-			rtk_init(ifp);
-		}
-		break;
-	case PWR_SOFTSUSPEND:
-	case PWR_SOFTSTANDBY:
-	case PWR_SOFTRESUME:
-		break;
-	}
-	splx(s);
 }
 
 /*
@@ -1617,18 +1560,6 @@ rtk_stop(struct ifnet *ifp, int disable)
 
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 	ifp->if_timer = 0;
-}
-
-/*
- * Stop all chip I/O so that the kernel's probe routines don't
- * get confused by errant DMAs when rebooting.
- */
-STATIC void
-rtk_shutdown(void *arg)
-{
-	struct rtk_softc *sc = (struct rtk_softc *)arg;
-
-	rtk_stop(&sc->ethercom.ec_if, 0);
 }
 
 STATIC void

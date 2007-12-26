@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_filio.c,v 1.11 2007/03/04 06:01:36 christos Exp $	 */
+/*	$NetBSD: svr4_32_filio.c,v 1.11.24.1 2007/12/26 19:49:42 ad Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_filio.c,v 1.11 2007/03/04 06:01:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_filio.c,v 1.11.24.1 2007/12/26 19:49:42 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -66,13 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_32_filio.c,v 1.11 2007/03/04 06:01:36 christos 
 
 
 int
-svr4_32_fil_ioctl(fp, l, retval, fd, cmd, data)
-	struct file *fp;
-	struct lwp *l;
-	register_t *retval;
-	int fd;
-	u_long cmd;
-	void *data;
+svr4_32_fil_ioctl(struct file *fp, struct lwp *l, register_t *retval, int fd, u_long cmd, void *data)
 {
 	int error;
 	int num;
