@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.356 2007/12/03 18:09:28 wiz Exp $
+.\"	$NetBSD: options.4,v 1.357 2007/12/26 22:35:33 christos Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -30,7 +30,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd June 3, 2007
+.Dd December 26, 2007
 .Os
 .Dt OPTIONS 4
 .Sh NAME
@@ -2297,6 +2297,25 @@ If 0, PaX Segvguard will be enabled only if explicitly set on programs
 using
 .Xr paxctl 8 .
 If 1, PaX Segvguard will be enabled to all programs, and exemption can
+be done using
+.Xr paxctl 8 .
+.Pp
+See
+.Xr security 8
+for more details.
+.It Cd options PAX_ASLR=value
+Enables PaX ASLR.
+.Pp
+The
+.Ar value
+is the default value for the
+.Em global
+knob, see
+.Xr sysctl 3 .
+If 0, PaX ASLR will be enabled only if explicitly set on programs
+using
+.Xr paxctl 8 .
+If 1, PaX ASLR will be enabled to all programs, and exemption can
 be done using
 .Xr paxctl 8 .
 .Pp
