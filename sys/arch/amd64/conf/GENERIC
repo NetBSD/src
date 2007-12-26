@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.190 2007/12/26 16:28:17 joerg Exp $
+# $NetBSD: GENERIC,v 1.191 2007/12/26 23:00:50 elad Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.190 $"
+#ident 		"GENERIC-$Revision: 1.191 $"
 
 maxusers	32		# estimated number of users
 
@@ -1068,4 +1068,5 @@ options VERIFIED_EXEC_FP_SHA512
 options VERIFIED_EXEC_FP_SHA1
 options VERIFIED_EXEC_FP_MD5
 
-options PAX_MPROTECT=0			# PaX mprotect(2) restrictions
+options 	PAX_MPROTECT=0		# PaX mprotect(2) restrictions
+options 	PAX_ASLR=0		# PaX Address Space Layout Randomization
