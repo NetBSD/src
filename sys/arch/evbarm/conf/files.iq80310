@@ -1,4 +1,4 @@
-#	$NetBSD: files.iq80310,v 1.11 2003/06/16 17:40:50 thorpej Exp $
+#	$NetBSD: files.iq80310,v 1.11.76.1 2007/12/26 22:24:46 rjs Exp $
 #
 # Intel IQ80310 evaluation board configuration info
 #
@@ -12,9 +12,6 @@
 # Intel/Cyclone IQ80310 (which is the IOP310 reference design
 # eval board).
 defflag opt_iop310.h	IOP310_TEAMASA_NPWR
-
-# Use the generic ARM soft interrupt code.
-file	arch/arm/arm/softintr.c
 
 file	arch/evbarm/iq80310/iq80310_7seg.c
 file	arch/evbarm/iq80310/iq80310_machdep.c

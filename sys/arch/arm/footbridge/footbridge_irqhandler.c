@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_irqhandler.c,v 1.17 2006/12/25 18:39:48 wiz Exp $	*/
+/*	$NetBSD: footbridge_irqhandler.c,v 1.17.20.1 2007/12/26 22:24:37 rjs Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0,"$NetBSD: footbridge_irqhandler.c,v 1.17 2006/12/25 18:39:48 wiz Exp $");
+__KERNEL_RCSID(0,"$NetBSD: footbridge_irqhandler.c,v 1.17.20.1 2007/12/26 22:24:37 rjs Exp $");
 
 #include "opt_irqstats.h"
 
@@ -94,8 +94,8 @@ static const uint32_t si_to_irqbit[SI_NQUEUES] =
  * Map a software interrupt queue to an interrupt priority level.
  */
 static const int si_to_ipl[SI_NQUEUES] = {
-	IPL_SOFT,		/* SI_SOFT */
 	IPL_SOFTCLOCK,		/* SI_SOFTCLOCK */
+	IPL_SOFTBIO,		/* SI_SOFTBIO */
 	IPL_SOFTNET,		/* SI_SOFTNET */
 	IPL_SOFTSERIAL,		/* SI_SOFTSERIAL */
 };
@@ -166,58 +166,22 @@ footbridge_intr_calculate_masks(void)
 	/*
 	 * Initialize the soft interrupt masks to block themselves.
 	 */
-	footbridge_imask[IPL_SOFT] = SI_TO_IRQBIT(SI_SOFT);
 	footbridge_imask[IPL_SOFTCLOCK] = SI_TO_IRQBIT(SI_SOFTCLOCK);
+	footbridge_imask[IPL_SOFTBIO] = SI_TO_IRQBIT(SI_SOFTBIO);
 	footbridge_imask[IPL_SOFTNET] = SI_TO_IRQBIT(SI_SOFTNET);
 	footbridge_imask[IPL_SOFTSERIAL] = SI_TO_IRQBIT(SI_SOFTSERIAL);
-
-	footbridge_imask[IPL_SOFTCLOCK] |= footbridge_imask[IPL_SOFT];
-	footbridge_imask[IPL_SOFTNET] |= footbridge_imask[IPL_SOFTCLOCK];
 
 	/*
 	 * Enforce a hierarchy that gives "slow" device (or devices with
 	 * limited input buffer space/"real-time" requirements) a better
 	 * chance at not dropping data.
 	 */
-	footbridge_imask[IPL_BIO] |= footbridge_imask[IPL_SOFTNET];
-	footbridge_imask[IPL_NET] |= footbridge_imask[IPL_BIO];
-	footbridge_imask[IPL_SOFTSERIAL] |= footbridge_imask[IPL_NET];
-
-	footbridge_imask[IPL_TTY] |= footbridge_imask[IPL_SOFTSERIAL];
-
-	/*
-	 * splvm() blocks all interrupts that use the kernel memory
-	 * allocation facilities.
-	 */
-	footbridge_imask[IPL_VM] |= footbridge_imask[IPL_TTY];
-
-	/*
-	 * Audio devices are not allowed to perform memory allocation
-	 * in their interrupt routines, and they have fairly "real-time"
-	 * requirements, so give them a high interrupt priority.
-	 */
-	footbridge_imask[IPL_AUDIO] |= footbridge_imask[IPL_VM];
-
-	/*
-	 * splclock() must block anything that uses the scheduler.
-	 */
-	footbridge_imask[IPL_CLOCK] |= footbridge_imask[IPL_AUDIO];
-
-	/*
-	 * footbridge has separate statclock.
-	 */
-	footbridge_imask[IPL_STATCLOCK] |= footbridge_imask[IPL_CLOCK];
-
-	/*
-	 * splhigh() must block "everything".
-	 */
-	footbridge_imask[IPL_HIGH] |= footbridge_imask[IPL_STATCLOCK];
-
-	/*
-	 * XXX We need serial drivers to run at the absolute highest priority
-	 * in order to avoid overruns, so serial > high.
-	 */
-	footbridge_imask[IPL_SERIAL] |= footbridge_imask[IPL_HIGH];
+	footbridge_imask[IPL_SOFTBIO] |= footbridge_imask[IPL_SOFTCLOCK];
+	footbridge_imask[IPL_SOFTNET] |= footbridge_imask[IPL_SOFTBIO];
+	footbridge_imask[IPL_SOFTSERIAL] |= footbridge_imask[IPL_SOFTNET];
+	footbridge_imask[IPL_VM] |= footbridge_imask[IPL_SOFTSERIAL];
+	footbridge_imask[IPL_SCHED] |= footbridge_imask[IPL_VM];
+	footbridge_imask[IPL_HIGH] |= footbridge_imask[IPL_SCHED];
 
 	/*
 	 * Calculate the ipl level to go to when handling this interrupt
@@ -266,6 +230,7 @@ footbridge_do_pending(void)
 	
 	oldirqstate = disable_interrupts(I32_bit);
 
+#ifdef __HAVE_FAST_SOFTINTS
 #define	DO_SOFTINT(si)							\
 	if ((footbridge_ipending & ~new) & SI_TO_IRQBIT(si)) {		\
 		footbridge_ipending &= ~SI_TO_IRQBIT(si);		\
@@ -279,7 +244,7 @@ footbridge_do_pending(void)
 	DO_SOFTINT(SI_SOFTNET);
 	DO_SOFTINT(SI_SOFTCLOCK);
 	DO_SOFTINT(SI_SOFT);
-	
+#endif
 	__cpu_simple_unlock(&processing);
 
 	restore_interrupts(oldirqstate);

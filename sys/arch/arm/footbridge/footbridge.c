@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge.c,v 1.17 2007/01/06 16:18:18 christos Exp $	*/
+/*	$NetBSD: footbridge.c,v 1.17.20.1 2007/12/26 22:24:37 rjs Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: footbridge.c,v 1.17 2007/01/06 16:18:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: footbridge.c,v 1.17.20.1 2007/12/26 22:24:37 rjs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,11 +43,13 @@ __KERNEL_RCSID(0, "$NetBSD: footbridge.c,v 1.17 2007/01/06 16:18:18 christos Exp
 #include <sys/conf.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
+#include <uvm/uvm_extern.h>
 
 #include <dev/pci/pcivar.h>
 #define _ARM32_BUS_DMA_PRIVATE
 #include <machine/bus.h>
 #include <machine/intr.h>
+#include <machine/bootconfig.h>
 
 #include <arm/cpuconf.h>
 #include <arm/cpufunc.h>
@@ -86,6 +88,7 @@ struct bus_space footbridge_pci_io_bs_tag;
 struct bus_space footbridge_pci_mem_bs_tag;
 extern struct arm32_pci_chipset footbridge_pci_chipset;
 extern struct arm32_bus_dma_tag footbridge_pci_bus_dma_tag;
+extern struct arm32_dma_range footbridge_dma_ranges[1];
 
 /* Used in footbridge_clock.c */
 struct footbridge_softc *clock_sc;
@@ -205,6 +208,43 @@ footbridge_attach(parent, self, aux)
 
 	/* calibrate the delay loop */
 	calibrate_delay();
+
+	/* it seems that the default of the memory being visible from 0 upwards
+	 * on the PCI bus causes issues when DMAing from traditional PC VGA
+	 * address.  This breaks dumping core on cats, as DMAing pages in the
+	 * range 0xb800-0xc000 cause the system to hang.  This suggests that
+	 * the VGA BIOS is taking over those addresses.
+	 * (note that the range 0xb800-c000 is on an S3 card, others may vary
+	 *
+	 * To workaround this the SDRAM window on the PCI bus is shifted
+	 * to 0x20000000, and the DMA range setup to match.
+	 */
+	{
+		/* first calculate the correct base address mask */
+		int memory_size = bootconfig.dram[0].pages * PAGE_SIZE;
+		uint32_t mask;
+
+		/* window has to be at least 256KB, and up to 256MB */
+		for (mask = 0x00040000; mask < 0x10000000; mask <<= 1)
+			if (mask >= memory_size)
+				break;
+		mask--;
+		mask &= SDRAM_MASK_256MB;
+		
+		/*
+		 * configure the mask, the offset into SDRAM and the address
+		 * SDRAM is exposed on the PCI bus.
+		 */
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh, SDRAM_BA_MASK, mask);
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh, SDRAM_BA_OFFSET, 0);
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh, SDRAM_MEMORY_ADDR, 0x20000000);
+
+		/* configure the dma range for the footbridge to match */
+		footbridge_dma_ranges[0].dr_sysbase = bootconfig.dram[0].address;
+		footbridge_dma_ranges[0].dr_busbase = 0x20000000;
+		footbridge_dma_ranges[0].dr_len = memory_size;
+	}
+
 	/* Attach the PCI bus */
 	fba.fba_pba.pba_pc = &footbridge_pci_chipset;
 	fba.fba_pba.pba_iot = &footbridge_pci_io_bs_tag;

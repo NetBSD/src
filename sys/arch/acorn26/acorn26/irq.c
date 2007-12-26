@@ -1,4 +1,4 @@
-/* $NetBSD: irq.c,v 1.7 2005/12/24 20:06:46 perry Exp $ */
+/* $NetBSD: irq.c,v 1.7.46.1 2007/12/26 22:24:30 rjs Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irq.c,v 1.7 2005/12/24 20:06:46 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irq.c,v 1.7.46.1 2007/12/26 22:24:30 rjs Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -40,12 +40,13 @@ __KERNEL_RCSID(0, "$NetBSD: irq.c,v 1.7 2005/12/24 20:06:46 perry Exp $");
 #include <sys/queue.h>
 #include <sys/syslog.h>
 #include <sys/systm.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/bus.h>
 #include <machine/frame.h>
-#include <machine/intr.h>
 #include <machine/irq.h>
 #include <machine/machdep.h>
 
@@ -114,7 +115,6 @@ irq_init(void)
 {
 
 	irq_genmasks();
-	softintr_init();
 }
 
 /*
@@ -198,11 +198,18 @@ handled:
 
 #if 0
 	printf(" handled\n");
-#endif
 	dosoftints(s); /* May lower spl to s + 1, but no lower. */
+#endif
 
 	hardsplx(s);
 	current_intr_depth--;
+}
+
+bool
+cpu_intr_p(void)
+{
+
+	return current_intr_depth != 0;
 }
 
 struct irq_handler *
@@ -401,7 +408,9 @@ lowerspl(int s)
 {
 
 	if (s < current_spl) {
+#if 0
 		dosoftints(s);
+#endif
 		hardsplx(s);
 	}
 }

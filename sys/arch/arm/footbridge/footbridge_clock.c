@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_clock.c,v 1.23 2006/09/11 15:18:23 gdamore Exp $	*/
+/*	$NetBSD: footbridge_clock.c,v 1.23.26.1 2007/12/26 22:24:37 rjs Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: footbridge_clock.c,v 1.23 2006/09/11 15:18:23 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: footbridge_clock.c,v 1.23.26.1 2007/12/26 22:24:37 rjs Exp $");
 
 /* Include header files */
 
@@ -297,7 +297,7 @@ cpu_initclocks(void)
 	if (stathz) {
 		/* Setup timer 2 and claim interrupt */
 		setstatclockrate(stathz);
-       		clock_sc->sc_statclockintr = footbridge_intr_claim(IRQ_TIMER_2, IPL_STATCLOCK,
+       		clock_sc->sc_statclockintr = footbridge_intr_claim(IRQ_TIMER_2, IPL_HIGH,
        		    "tmr2 stat clk", statclockhandler, 0);
 		if (clock_sc->sc_statclockintr == NULL)
 			panic("%s: Cannot install timer 2 interrupt handler",

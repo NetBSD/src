@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.3 2007/07/29 14:31:24 nonaka Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.3.2.1 2007/12/26 22:24:56 rjs Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.3 2007/07/29 14:31:24 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.3.2.1 2007/12/26 22:24:56 rjs Exp $");
 
 #include "opt_md.h"
 
@@ -66,8 +66,6 @@ cpu_configure(void)
 
 	splhigh();
 	splserial();
-
-	softintr_init();
 
 	config_hook_init();
 

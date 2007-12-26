@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.31 2007/07/29 15:14:08 jmmv Exp $
+#	$NetBSD: INSTALL,v 1.31.2.1 2007/12/26 22:24:52 rjs Exp $
 #
 #	Shark installation kernel
 #
@@ -110,7 +110,6 @@ options 	MEMORY_DISK_HOOKS	# boottime setup of ramdisk
 options 	MEMORY_DISK_IS_ROOT	# use memory disk as root
 options 	MEMORY_DISK_ROOT_SIZE=7000	# Size in blocks (3.5MB)
 
-options 	XSERVER			# also need INSECURE for now
 options 	INSECURE		# disable kernel securelevel
 
 # Use the following to force the serial to always be the console
@@ -140,6 +139,44 @@ options 	DDB		# in-kernel debugger
 #options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 #options 	KERNEL_DEBUG	# compile in kernel debugging capability
 #makeoptions	DEBUG="-g"	# compile full symbol table
+
+#
+# wscons options
+#
+# builtin terminal emulations
+#options 	WSEMUL_SUN		# sun terminal emulation
+options 	WSEMUL_VT100		# VT100 / VT220 emulation
+# customization of console and kernel output - see dev/wscons/wsdisplayvar.h
+#options 	WSDISPLAY_CUSTOM_OUTPUT	# color customization from wsconsctl(8)
+#options 	WS_DEFAULT_FG=WSCOL_WHITE
+#options 	WS_DEFAULT_BG=WSCOL_BLACK
+#options 	WS_DEFAULT_COLATTR="(0)"
+#options 	WS_DEFAULT_MONOATTR="(0)"
+#options 	WS_KERNEL_FG=WSCOL_GREEN
+#options 	WS_KERNEL_BG=WSCOL_BLACK
+#options 	WS_KERNEL_COLATTR=""
+#options 	WS_KERNEL_MONOATTR=""
+# customization of console border color
+#options 	WSDISPLAY_CUSTOM_BORDER	# border customization from wsconsctl(8)
+#options 	WSDISPLAY_BORDER_COLOR=WSCOL_BLUE	# default color
+# compatibility to other console drivers
+#options 	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
+#options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls
+#options 	WSDISPLAY_COMPAT_USL		# VT handling
+#options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
+# see dev/pckbport/wskbdmap_mfii.c for implemented layouts
+#options 	PCKBD_LAYOUT="(KB_DE | KB_NODEAD)"
+#options 	PCKBD_LAYOUT="(KB_US | KB_SWAPCTRLCAPS)"
+# allocate a number of virtual screens at autoconfiguration time
+#options 	WSDISPLAY_DEFAULTSCREENS=4
+# use a large software cursor that doesn't blink
+#options 	PCDISPLAY_SOFTCURSOR
+# modify the screen type of the console; defaults to "80x25"
+#options 	VGA_CONSOLE_SCREENTYPE="\"80x24\""
+# console scrolling support.
+#options 	WSDISPLAY_SCROLLSUPPORT
+# enable VGA raster mode capable of displaying multilingual text on console
+#options 	VGA_RASTERCONSOLE
 
 config		netbsd		root on ? type ffs	# root on miniroot
 
@@ -171,11 +208,21 @@ cd*		at atapibus? drive?
 sd*		at atapibus? drive?
 
 # PCCONS@OFW
-ofisapc*	at ofbus?
-pc*		at ofisapc?
+#ofisapc*	at ofbus?
+#pc*		at ofisapc?
 
 # PS/2 Mouse
 #opms0		at spckbd? irq 12
+
+# wscons
+pckbc*		at ofisa?
+pckbd*		at pckbc?
+#pms*		at pckbc?
+vga*		at ofbus?
+#igsfb*		at ofbus?
+wsdisplay*	at wsemuldisplaydev?
+wskbd*		at pckbd? console ?
+#wsmouse*	at pms? mux 0
 
 # CS8900 Ethernet@OFW
 cs*		at ofisa?
@@ -215,3 +262,5 @@ pseudo-device	rnd			# /dev/random and /dev/urandom
 pseudo-device	md	1		# Ramdisk driver
 #pseudo-device	profiler 1		# fiq based profiling device
 #pseudo-device	sequencer 1		# MIDI sequencer
+pseudo-device	wsmux			# mouse & keyboard multiplexor
+#pseudo-device	wsfont

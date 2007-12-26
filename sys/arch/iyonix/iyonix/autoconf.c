@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.8 2007/02/28 04:21:52 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.8.16.1 2007/12/26 22:24:51 rjs Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.8 2007/02/28 04:21:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.8.16.1 2007/12/26 22:24:51 rjs Exp $");
 
 #include "opt_md.h"
 
@@ -86,9 +86,6 @@ cpu_configure(void)
 
 	(void) splhigh();
 	(void) splserial();	/* XXX need an splextreme() */
-
-	/* Initialize software interrupts. */
-	softintr_init();
 
 	maa.ma_name = "mainbus";
 

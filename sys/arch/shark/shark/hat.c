@@ -1,4 +1,4 @@
-/*	$NetBSD: hat.c,v 1.4 2005/12/11 12:19:05 christos Exp $	*/
+/*	$NetBSD: hat.c,v 1.4.46.1 2007/12/26 22:24:55 rjs Exp $	*/
 
 /*
  * Copyright 1997
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hat.c,v 1.4 2005/12/11 12:19:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hat.c,v 1.4.46.1 2007/12/26 22:24:55 rjs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,6 +61,8 @@ __KERNEL_RCSID(0, "$NetBSD: hat.c,v 1.4 2005/12/11 12:19:05 christos Exp $");
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
+
+#include "isadma.h"
 
 #include <shark/shark/shark_fiq.h>
 #include <shark/shark/sequoia.h>
@@ -102,7 +104,9 @@ hatClkOff(void)
 	shark_fiqregs.fr_r13 = 0;
 
 	fiq_setregs(&shark_fiqregs);
+#if (NISADMA > 0)
 	isa_dmathaw(&isa_chipset_tag);		/* XXX */
+#endif
 
 	return 0;
 }
@@ -118,7 +122,9 @@ hatClkOn(int count, void (*hatFn)(int), int arg,
 
 	hatWedgeFn = wedgeFn;
 
+#if (NISADMA > 0)
 	isa_dmafreeze(&isa_chipset_tag);	/* XXX */
+#endif
 
 	fiq_getregs(&shark_fiqregs);
 

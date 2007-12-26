@@ -1,10 +1,7 @@
-# $NetBSD: files.cp3100,v 1.1 2006/11/08 23:49:02 scw Exp $
+# $NetBSD: files.cp3100,v 1.1.30.1 2007/12/26 22:24:46 rjs Exp $
 #
 # Certance CP3100 configuration info
 #
-
-# Use the generic ARM soft interrupt code.
-file	arch/arm/arm/softintr.c
 
 file	arch/evbarm/iq80321/iq80321_machdep.c
 file	arch/evbarm/cp3100/cp3100_pci.c
