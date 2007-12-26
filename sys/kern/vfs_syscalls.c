@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.336 2007/12/24 15:04:19 ad Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.337 2007/12/26 16:01:37 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.336 2007/12/24 15:04:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.337 2007/12/26 16:01:37 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -260,7 +260,7 @@ mount_get_vfsops(const char *fstype, struct vfsops **vfsops)
 
 static int
 mount_domount(struct lwp *l, struct vnode **vpp, struct vfsops *vfsops,
-    const char *path, int flags, void *data, size_t *data_len)
+    const char *path, int flags, void *data, size_t *data_len, u_int recurse)
 {
 	struct mount *mp = NULL;
 	struct vnode *vp = *vpp;
@@ -345,6 +345,7 @@ mount_domount(struct lwp *l, struct vnode **vpp, struct vfsops *vfsops,
 	mutex_enter(&mountlist_lock);
 	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
 	mutex_exit(&mountlist_lock);
+    	vn_restorerecurse(vp, recurse);
 	VOP_UNLOCK(vp, 0);
 	checkdirs(vp);
 	if ((mp->mnt_flag & (MNT_RDONLY | MNT_ASYNC)) == 0)
@@ -434,6 +435,7 @@ do_sys_mount(struct lwp *l, struct vfsops *vfsops, const char *type,
 	struct vnode *vp;
 	struct nameidata nd;
 	void *data_buf = data;
+	u_int recurse;
 	int error;
 
 	/*
@@ -448,7 +450,8 @@ do_sys_mount(struct lwp *l, struct vfsops *vfsops, const char *type,
 	 * A lookup in VFS_MOUNT might result in an attempt to
 	 * lock this vnode again, so make the lock recursive.
 	 */
-	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY | LK_SETRECURSE);
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	recurse = vn_setrecurse(vp);
   
 	if (vfsops == NULL) {
 		if (flags & (MNT_GETARGS | MNT_UPDATE))
@@ -501,12 +504,14 @@ do_sys_mount(struct lwp *l, struct vfsops *vfsops, const char *type,
 	} else {
 		/* Locking is handled internally in mount_domount(). */
 		error = mount_domount(l, &vp, vfsops, path, flags, data_buf,
-		    &data_len);
+		    &data_len, recurse);
 	}
 
     done:
-	if (vp)
-		vput(vp);
+    	if (vp != NULL) {
+	    	vn_restorerecurse(vp, recurse);
+	    	vput(vp);
+	}
 	if (data_buf != data)
 		free(data_buf, M_TEMP);
 	return (error);
@@ -751,7 +756,14 @@ sys_sync(struct lwp *l, const void *v, register_t *retval)
 		if ((mp->mnt_flag & MNT_RDONLY) == 0) {
 			asyncflag = mp->mnt_flag & MNT_ASYNC;
 			mp->mnt_flag &= ~MNT_ASYNC;
+			/* XXXSMP hack, sync is slow. */
+			if ((mp->mnt_iflag & IMNT_MPSAFE) == 0) {
+				KERNEL_LOCK(1, NULL);
+			}
 			VFS_SYNC(mp, MNT_NOWAIT, l->l_cred);
+			if ((mp->mnt_iflag & IMNT_MPSAFE) == 0) {
+				KERNEL_UNLOCK_ONE(NULL);
+			}
 			if (asyncflag)
 				 mp->mnt_flag |= MNT_ASYNC;
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_lockdebug.c,v 1.23 2007/12/08 15:00:13 ad Exp $	*/
+/*	$NetBSD: subr_lockdebug.c,v 1.24 2007/12/26 16:01:36 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.23 2007/12/08 15:00:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.24 2007/12/26 16:01:36 ad Exp $");
 
 #include "opt_ddb.h"
 
@@ -672,6 +672,9 @@ lockdebug_mem_check(const char *func, void *base, size_t sz)
 	lockdebug_t *ld;
 	lockdebuglk_t *lk;
 	int s;
+
+	if (panicstr != NULL)
+		return;
 
 	s = lockdebug_lock_rd(&ld_tree_lk);
 	ld = (lockdebug_t *)rb_tree_find_node_geq(&ld_rb_tree, base);

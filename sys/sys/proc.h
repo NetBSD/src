@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.264 2007/12/25 18:33:48 perry Exp $	*/
+/*	$NetBSD: proc.h,v 1.265 2007/12/26 16:01:38 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -494,11 +494,6 @@ extern struct proc	*initproc;	/* Process slots for init, pager */
 
 extern const struct proclist_desc proclists[];
 
-extern struct pool	proc_pool;	/* Memory pool for procs */
-extern struct pool	pcred_pool;	/* Memory pool for pcreds */
-extern struct pool	plimit_pool;	/* Memory pool for plimits */
-extern struct pool 	pstats_pool;	/* memory pool for pstats */
-extern struct pool	rusage_pool;	/* Memory pool for rusages */
 extern struct pool	ptimer_pool;	/* Memory pool for ptimers */
 
 struct proc *p_find(pid_t, uint);	/* Find process by id */
@@ -533,6 +528,7 @@ int	do_sys_wait(struct lwp *, int *, int *, int, struct rusage *, int *);
 struct proc *proc_alloc(void);
 void	proc0_init(void);
 void	proc_free_pid(struct proc *);
+void	proc_free_mem(struct proc *);
 void	exit_lwps(struct lwp *l);
 int	fork1(struct lwp *, int, int, void *, size_t,
 	    void (*)(void *), void *, register_t *, struct proc **);

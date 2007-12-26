@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.332 2007/12/22 01:14:53 yamt Exp $	*/
+/*	$NetBSD: init_main.c,v 1.333 2007/12/26 16:01:35 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.332 2007/12/22 01:14:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.333 2007/12/26 16:01:35 ad Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_ntp.h"
@@ -334,6 +334,9 @@ main(void)
 
 	/* Initialize signal-related data structures. */
 	signal_init();
+
+	/* Initialize resource management. */
+	resource_init();
 
 	/* Create process 0 (the swapper). */
 	proc0_init();

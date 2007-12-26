@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.195 2007/12/20 23:03:08 dsl Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.196 2007/12/26 16:01:36 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.195 2007/12/20 23:03:08 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.196 2007/12/26 16:01:36 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -426,6 +426,7 @@ exit1(struct lwp *l, int rv)
 	 * Notify interested parties of our demise.
 	 */
 	KNOTE(&p->p_klist, NOTE_EXIT);
+
 
 #if PERFCTRS
 	/*
@@ -1002,7 +1003,7 @@ proc_free(struct proc *p, struct rusage *ru)
 	cv_destroy(&p->p_lwpcv);
 	rw_destroy(&p->p_reflock);
 
-	pool_put(&proc_pool, p);
+	proc_free_mem(p);
 
 	/*
 	 * Collect child u-areas.

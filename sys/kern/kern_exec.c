@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.258 2007/12/20 23:03:08 dsl Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.259 2007/12/26 16:01:35 ad Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.258 2007/12/20 23:03:08 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.259 2007/12/26 16:01:35 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -206,6 +206,8 @@ krwlock_t exec_lock;
 
 static void link_es(struct execsw_entry **, const struct execsw *);
 #endif /* LKM */
+
+static kmutex_t sigobject_lock;
 
 /*
  * check exec:
@@ -811,7 +813,9 @@ execve1(struct lwp *l, const char *path, char * const *args,
 
 
 	p->p_acflag &= ~AFORK;
+	mutex_enter(&p->p_mutex);
 	p->p_flag |= PK_EXEC;
+	mutex_exit(&p->p_mutex);
 
 	/*
 	 * Stop profiling.
@@ -948,7 +952,9 @@ execve1(struct lwp *l, const char *path, char * const *args,
 		emul_find_root(l, &pack);
 
 	/* Any old emulation root got removed by fdcloseexec */
+	rw_enter(&p->p_cwdi->cwdi_lock, RW_WRITER);
 	p->p_cwdi->cwdi_edir = pack.ep_emul_root;
+	rw_exit(&p->p_cwdi->cwdi_lock);
 	pack.ep_emul_root = NULL;
 	if (pack.ep_interp != NULL)
 		vrele(pack.ep_interp);
@@ -1389,6 +1395,7 @@ exec_init(int init_boot)
 	if (init_boot) {
 		/* do one-time initializations */
 		rw_init(&exec_lock);
+		mutex_init(&sigobject_lock, MUTEX_DEFAULT, IPL_NONE);
 
 		/* register compiled-in emulations */
 		for(i=0; i < nexecs_builtin; i++) {
@@ -1514,23 +1521,28 @@ exec_sigcode_map(struct proc *p, const struct emul *e)
 
 	uobj = *e->e_sigobject;
 	if (uobj == NULL) {
-		uobj = uao_create(sz, 0);
-		(*uobj->pgops->pgo_reference)(uobj);
-		va = vm_map_min(kernel_map);
-		if ((error = uvm_map(kernel_map, &va, round_page(sz),
-		    uobj, 0, 0,
-		    UVM_MAPFLAG(UVM_PROT_RW, UVM_PROT_RW,
-		    UVM_INH_SHARE, UVM_ADV_RANDOM, 0)))) {
-			printf("kernel mapping failed %d\n", error);
-			(*uobj->pgops->pgo_detach)(uobj);
-			return (error);
-		}
-		memcpy((void *)va, e->e_sigcode, sz);
+		mutex_enter(&sigobject_lock);
+		if ((uobj = *e->e_sigobject) == NULL) {
+			uobj = uao_create(sz, 0);
+			(*uobj->pgops->pgo_reference)(uobj);
+			va = vm_map_min(kernel_map);
+			if ((error = uvm_map(kernel_map, &va, round_page(sz),
+			    uobj, 0, 0,
+			    UVM_MAPFLAG(UVM_PROT_RW, UVM_PROT_RW,
+			    UVM_INH_SHARE, UVM_ADV_RANDOM, 0)))) {
+				printf("kernel mapping failed %d\n", error);
+				(*uobj->pgops->pgo_detach)(uobj);
+				mutex_exit(&sigobject_lock);
+				return (error);
+			}
+			memcpy((void *)va, e->e_sigcode, sz);
 #ifdef PMAP_NEED_PROCWR
-		pmap_procwr(&proc0, va, sz);
+			pmap_procwr(&proc0, va, sz);
 #endif
-		uvm_unmap(kernel_map, va, va + round_page(sz));
-		*e->e_sigobject = uobj;
+			uvm_unmap(kernel_map, va, va + round_page(sz));
+			*e->e_sigobject = uobj;
+		}
+		mutex_exit(&sigobject_lock);
 	}
 
 	/* Just a hint to uvm_map where to put it. */
