@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.24 2007/12/24 15:56:20 njoly Exp $
+	$NetBSD: syscalls.master,v 1.25 2007/12/26 13:50:48 njoly Exp $
 
 ; NetBSD i386 COMPAT_LINUX32 system call name/number "master" file.
 ; (See syscalls.conf to see what it is processed into.)
@@ -179,7 +179,8 @@
 87	STD	{ int linux32_sys_swapon(netbsd32_charp name); }
 88	STD	{ int linux32_sys_reboot(int magic1, int magic2, int cmd, \
 		    netbsd32_voidp arg); }
-89	UNIMPL	readdir
+89	STD	{ int linux32_sys_readdir(int fd, netbsd32_voidp dent, \
+		    unsigned int count); }
 90	STD	{ int linux32_sys_old_mmap(linux32_oldmmapp lmp); }
 91	NOARGS	{ int netbsd32_munmap(netbsd32_caddr_t addr, int len); }
 92	STD	{ int linux32_sys_truncate(const netbsd32_charp path, \
