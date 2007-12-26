@@ -1,4 +1,4 @@
-.\"	$NetBSD: paxctl.8,v 1.6 2007/12/08 19:56:54 christos Exp $
+.\"	$NetBSD: paxctl.8,v 1.7 2007/12/26 22:17:02 christos Exp $
 .\"
 .\" Copyright 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -22,7 +22,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 8, 2007
+.Dd December 26, 2007
 .Dt PAXCTL 8
 .Os
 .Sh NAME
@@ -49,6 +49,12 @@ sign to add or remove the flag, respectively.
 .Pp
 The following flags are available:
 .Bl -tag -width flag
+.It a
+Explicitly disable PaX ASLR for
+.Ar program .
+.It A
+Explicitly enable PaX ASLR for
+.Ar program .
 .It g
 Explicitly disable PaX Segvguard for
 .Ar program .
