@@ -1,4 +1,4 @@
-/* $NetBSD: paxctl.c,v 1.6 2007/12/24 20:05:24 elad Exp $ */
+/* $NetBSD: paxctl.c,v 1.7 2007/12/26 22:16:31 christos Exp $ */
 
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -33,7 +33,7 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #ifdef __RCSID
-__RCSID("$NetBSD: paxctl.c,v 1.6 2007/12/24 20:05:24 elad Exp $");
+__RCSID("$NetBSD: paxctl.c,v 1.7 2007/12/26 22:16:31 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -64,6 +64,8 @@ static void pax_printflags(const char *, int, u_long);
 #define	ELF_NOTE_PAX_NOMPROTECT		0x02	/* Force disable MPROTECT */
 #define	ELF_NOTE_PAX_GUARD		0x04	/* Force enable Segvguard */
 #define	ELF_NOTE_PAX_NOGUARD		0x08	/* Force disable Segvguard */
+#define	ELF_NOTE_PAX_ASLR		0x10	/* Force enable ASLR */
+#define	ELF_NOTE_PAX_NOASLR		0x20	/* Force disable ASLR */
 #define ELF_NOTE_PAX_NAMESZ		4
 #define ELF_NOTE_PAX_NAME		"PaX\0"
 #define ELF_NOTE_PAX_DESCSZ		4
@@ -78,6 +80,10 @@ static const struct paxflag {
 	const char *name;
 	int bits;
 } flags[] = {
+	{ 'A', "ASLR, explicit enable",
+	  ELF_NOTE_PAX_ASLR },
+	{ 'a', "ASLR, explicit disable",
+	  ELF_NOTE_PAX_NOASLR },
 	{ 'G', "Segvguard, explicit enable",
 	  ELF_NOTE_PAX_GUARD },
 	{ 'g', "Segvguard, explicit disable",
@@ -91,7 +97,7 @@ static const struct paxflag {
 static void
 usage(void)
 {
-	(void)fprintf(stderr, "Usage: %s [ <-|+><G|g|M|m> ] <file> ...\n",
+	(void)fprintf(stderr, "Usage: %s [ <-|+><A|a|G|g|M|m> ] <file> ...\n",
 #if HAVE_NBTOOL_CONFIG_H
 	    "paxctl"
 #else
