@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.141 2007/12/24 15:46:46 perry Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.142 2007/12/26 22:11:53 christos Exp $	*/
 
 /*
  *
@@ -498,6 +498,7 @@ struct vmspace {
 	void *	vm_daddr;	/* user virtual address of data XXX */
 	void *vm_maxsaddr;	/* user VA at max stack growth */
 	void *vm_minsaddr;	/* user VA at top of stack */
+	size_t vm_aslr_delta_mmap;	/* mmap() random delta for ASLR */
 };
 #define	VMSPACE_IS_KERNEL_P(vm)	VM_MAP_IS_KERNEL(&(vm)->vm_map)
 
