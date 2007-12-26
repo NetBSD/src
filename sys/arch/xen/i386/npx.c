@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.10 2007/11/14 17:55:01 ad Exp $	*/
+/*	$NetBSD: npx.c,v 1.11 2007/12/26 11:51:13 yamt Exp $	*/
 /*	NetBSD: npx.c,v 1.103 2004/03/21 10:56:24 simonb Exp 	*/
 
 /*-
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.10 2007/11/14 17:55:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.11 2007/12/26 11:51:13 yamt Exp $");
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -297,8 +297,8 @@ npxprobe1(bus_space_tag_t iot, bus_space_handle_t ioh, int irq)
 
 	irqmask = i8259_setmask(irqmask);
 
+	idt_vec_reserve(NRSVIDT + irq);
 	idt[NRSVIDT + irq] = save_idt_npxintr;
-	idt_allocmap[NRSVIDT + irq] = 1;
 
 	idt[16] = save_idt_npxtrap;
 	write_eflags(save_eflags);
@@ -310,7 +310,7 @@ npxprobe1(bus_space_tag_t iot, bus_space_handle_t ioh, int irq)
 
 	return (rv);
 }
-#endif
+#endif /* 0 */
 
 void npxinit(ci)
 	struct cpu_info *ci;
