@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.260 2007/12/26 22:11:49 christos Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.261 2007/12/26 22:49:19 xtraeme Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.260 2007/12/26 22:11:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.261 2007/12/26 22:49:19 xtraeme Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -501,8 +501,9 @@ execve1(struct lwp *l, const char *path, char * const *args,
 
 	/* see if we can run it. */
 	if ((error = check_exec(l, &pack)) != 0) {
-		if (error != ENOENT)
+		if (error != ENOENT) {
 			DPRINTF(("execve: check exec failed %d\n", error));
+		}
 		goto freehdr;
 	}
 
