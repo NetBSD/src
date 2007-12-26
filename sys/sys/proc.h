@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.265 2007/12/26 16:01:38 ad Exp $	*/
+/*	$NetBSD: proc.h,v 1.266 2007/12/26 22:11:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -331,6 +331,7 @@ struct proc {
 	u_short		p_xstat;	/* s: Exit status for wait; also stop signal */
 	u_short		p_acflag;	/* p: Acc. flags; see struct lwp also */
 	struct mdproc	p_md;		/*    Any machine-dependent fields */
+	vaddr_t		p_stackbase;	/*    ASLR randomized stack base */
 };
 
 #define	p_rlimit	p_limit->pl_rlimit
@@ -362,8 +363,6 @@ struct proc {
 #define	PK_32		0x00040000 /* 32-bit process (used on 64-bit kernels) */
 #define	PK_CLDSIGIGN	0x00080000 /* Process is ignoring SIGCHLD */
 #define	PK_SYSTRACE	0x00200000 /* Process system call tracing active */
-#define	PK_PAXMPROTECT 	0x08000000 /* Explicitly enable PaX MPROTECT */
-#define	PK_PAXNOMPROTECT	0x10000000 /* Explicitly disable PaX MPROTECT */
 #define	PK_MARKER	0x80000000 /* Is a dummy marker process */
 
 /*

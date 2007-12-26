@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.259 2007/12/26 16:01:35 ad Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.260 2007/12/26 22:11:49 christos Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.259 2007/12/26 16:01:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.260 2007/12/26 22:11:49 christos Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -63,6 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.259 2007/12/26 16:01:35 ad Exp $");
 #include <sys/syscall.h>
 #include <sys/kauth.h>
 #include <sys/lwpctl.h>
+#include <sys/pax.h>
 
 #include <sys/syscallargs.h>
 #if NVERIEXEC > 0
@@ -73,9 +74,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.259 2007/12/26 16:01:35 ad Exp $");
 #include <sys/systrace.h>
 #endif /* SYSTRACE */
 
-#ifdef PAX_SEGVGUARD
-#include <sys/pax.h>
-#endif /* PAX_SEGVGUARD */
 
 #include <uvm/uvm_extern.h>
 
@@ -299,6 +297,11 @@ check_exec(struct lwp *l, struct exec_package *epp)
 		goto bad2;
 	epp->ep_hdrvalid = epp->ep_hdrlen - resid;
 
+#ifdef PAX_ASLR
+	/* Generate random seed to be used. */
+	epp->ep_random = arc4random();
+#endif /* PAX_ASLR */
+
 	/*
 	 * Set up default address space limits.  Can be overridden
 	 * by individual exec packages.
@@ -433,7 +436,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	struct exec_vmcmd	*base_vcp;
 	ksiginfo_t		ksi;
 	ksiginfoq_t		kq;
-	char			pathbuf[MAXPATHLEN];
+	char			*pathbuf;
 	size_t			pathbuflen;
 #ifdef SYSTRACE
 	int			wassugid = ISSET(p->p_flag, PK_SUGID);
@@ -462,7 +465,8 @@ execve1(struct lwp *l, const char *path, char * const *args,
 		systrace_execve0(p);
 #endif
 
-	error = copyinstr(path, pathbuf, sizeof(pathbuf), &pathbuflen);
+	pathbuf = PNBUF_GET();
+	error = copyinstr(path, pathbuf, MAXPATHLEN, &pathbuflen);
 	if (error) {
 		DPRINTF(("execve: copyinstr path %d", error));
 		goto clrflg;
@@ -497,7 +501,8 @@ execve1(struct lwp *l, const char *path, char * const *args,
 
 	/* see if we can run it. */
 	if ((error = check_exec(l, &pack)) != 0) {
-		DPRINTF(("execve: check exec failed %d\n", error));
+		if (error != ENOENT)
+			DPRINTF(("execve: check exec failed %d\n", error));
 		goto freehdr;
 	}
 
@@ -660,6 +665,10 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	vm->vm_ssize = btoc(pack.ep_ssize);
 	vm->vm_maxsaddr = (void *)pack.ep_maxsaddr;
 	vm->vm_minsaddr = (void *)pack.ep_minsaddr;
+
+#ifdef PAX_ASLR
+	pax_aslr_init(l, vm);
+#endif /* PAX_ASLR */
 
 	/* create the new process's VM space by running the vmcmds */
 #ifdef DIAGNOSTIC
@@ -1033,6 +1042,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 		systrace_execve1(pathbuf, p);
 #endif /* SYSTRACE */
 
+	PNBUF_PUT(pathbuf);
 	return (EJUSTRETURN);
 
  bad:
@@ -1058,6 +1068,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 		vrele(pack.ep_interp);
 
  clrflg:
+	PNBUF_PUT(pathbuf);
 	rw_exit(&p->p_reflock);
 #ifdef LKM
 	rw_exit(&exec_lock);
@@ -1066,6 +1077,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	return error;
 
  exec_abort:
+	PNBUF_PUT(pathbuf);
 	rw_exit(&p->p_reflock);
 #ifdef LKM
 	rw_exit(&exec_lock);

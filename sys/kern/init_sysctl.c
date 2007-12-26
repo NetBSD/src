@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.115 2007/12/22 01:14:54 yamt Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.116 2007/12/26 22:11:48 christos Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.115 2007/12/22 01:14:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.116 2007/12/26 22:11:48 christos Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
@@ -94,8 +94,6 @@ static const u_int sysctl_flagmap[] = {
 	PK_NOCLDWAIT, P_NOCLDWAIT,
 	PK_32, P_32,
 	PK_CLDSIGIGN, P_CLDSIGIGN,
-	PK_PAXMPROTECT, P_PAXMPROTECT,
-	PK_PAXNOMPROTECT, P_PAXNOMPROTECT,
 	PK_SYSTRACE, P_SYSTRACE,
 	PK_SUGID, P_SUGID,
 	0

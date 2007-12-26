@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.93 2007/12/07 20:34:06 ad Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.94 2007/12/26 22:11:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -695,10 +695,12 @@ typedef struct {
 /* NetBSD-specific note type: PaX.  There should be 1 NOTE per executable.
    section.  desc is a 32 bit bitmask */
 #define ELF_NOTE_TYPE_PAX_TAG		3
-#define	ELF_NOTE_PAX_MPROTECT		0x1	/* Force enable Mprotect */
-#define	ELF_NOTE_PAX_NOMPROTECT		0x2	/* Force disable Mprotect */
-#define	ELF_NOTE_PAX_GUARD		0x4	/* Force enable Segvguard */
-#define	ELF_NOTE_PAX_NOGUARD		0x8	/* Force disable Servguard */
+#define	ELF_NOTE_PAX_MPROTECT		0x01	/* Force enable Mprotect */
+#define	ELF_NOTE_PAX_NOMPROTECT		0x02	/* Force disable Mprotect */
+#define	ELF_NOTE_PAX_GUARD		0x04	/* Force enable Segvguard */
+#define	ELF_NOTE_PAX_NOGUARD		0x08	/* Force disable Servguard */
+#define	ELF_NOTE_PAX_ASLR		0x10	/* Force enable ASLR */
+#define	ELF_NOTE_PAX_NOASLR		0x20	/* Force disable ASLR */
 #define ELF_NOTE_PAX_NAMESZ		4
 #define ELF_NOTE_PAX_NAME		"PaX\0"
 #define ELF_NOTE_PAX_DESCSZ		4
