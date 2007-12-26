@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c_bitbang.c,v 1.8 2007/12/01 06:32:54 kiyohara Exp $	*/
+/*	$NetBSD: i2c_bitbang.c,v 1.8.2.1 2007/12/26 19:46:11 ad Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -38,6 +38,9 @@
 /*
  * Common module for bit-bang'ing an I2C bus.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: i2c_bitbang.c,v 1.8.2.1 2007/12/26 19:46:11 ad Exp $");
 
 #include <sys/param.h>
 

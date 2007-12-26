@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.17 2007/10/17 19:52:59 garbled Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.17.4.1 2007/12/26 19:41:55 ad Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.17 2007/10/17 19:52:59 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.17.4.1 2007/12/26 19:41:55 ad Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -71,6 +71,8 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.17 2007/10/17 19:52:59 garbled Exp $"
 #include "bios32.h"
 #if NBIOS32 > 0
 #include <machine/bios32.h>
+/* XXX */
+extern void platform_init(void);
 #endif
 
 #include <x86/x86/tsc.h>
@@ -86,6 +88,7 @@ cpu_configure()
 
 #if NBIOS32 > 0
 	bios32_init();
+	platform_init();
 #endif
 
 	x86_64_proc0_tss_ldt_init();

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_nfevar.h,v 1.3 2007/09/24 13:17:54 cube Exp $	*/
+/*	$NetBSD: if_nfevar.h,v 1.3.6.1 2007/12/26 19:46:54 ad Exp $	*/
 /*	$OpenBSD: if_nfevar.h,v 1.11 2006/02/19 13:57:02 damien Exp $	*/
 
 /*-
@@ -76,15 +76,15 @@ struct nfe_softc {
 	bus_dma_tag_t		sc_dmat;
 	struct mii_data		sc_mii;
 	struct callout		sc_tick_ch;
-	void			*sc_powerhook;
 
 	int			sc_if_flags;
 	u_int			sc_flags;
-#define NFE_JUMBO_SUP	0x01
-#define NFE_40BIT_ADDR	0x02
-#define NFE_HW_CSUM	0x04
-#define NFE_HW_VLAN	0x08
-#define NFE_USE_JUMBO	0x10
+#define NFE_JUMBO_SUP		0x01
+#define NFE_40BIT_ADDR		0x02
+#define NFE_HW_CSUM		0x04
+#define NFE_HW_VLAN		0x08
+#define NFE_USE_JUMBO		0x10
+#define NFE_CORRECT_MACADDR	0x20
 
 	uint32_t		rxtxctl;
 	uint8_t			mii_phyaddr;

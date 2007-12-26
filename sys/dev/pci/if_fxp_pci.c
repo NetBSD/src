@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp_pci.c,v 1.53 2007/10/19 12:00:45 ad Exp $	*/
+/*	$NetBSD: if_fxp_pci.c,v 1.53.4.1 2007/12/26 19:46:51 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fxp_pci.c,v 1.53 2007/10/19 12:00:45 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fxp_pci.c,v 1.53.4.1 2007/12/26 19:46:51 ad Exp $");
 
 #include "rnd.h"
 
@@ -86,7 +86,6 @@ struct fxp_pci_softc {
 	pci_chipset_tag_t psc_pc;	/* pci chipset tag */
 	pcireg_t psc_regs[0x20>>2];	/* saved PCI config regs (sparse) */
 	pcitag_t psc_tag;		/* pci register tag */
-	void *psc_powerhook;		/* power hook */
 
 	int psc_pwrmgmt_csr_reg;	/* ACPI power management register */
 	pcireg_t psc_pwrmgmt_csr;	/* ...and the contents at D0 */
@@ -99,8 +98,8 @@ static void	fxp_pci_attach(struct device *, struct device *, void *);
 static int	fxp_pci_enable(struct fxp_softc *);
 static void	fxp_pci_disable(struct fxp_softc *);
 
-static void	fxp_pci_confreg_restore(struct fxp_pci_softc *psc);
-static void	fxp_pci_powerhook(int why, void *arg);
+static void fxp_pci_confreg_restore(struct fxp_pci_softc *psc);
+static bool fxp_pci_resume(device_t dv);
 
 CFATTACH_DECL(fxp_pci, sizeof(struct fxp_pci_softc),
     fxp_pci_match, fxp_pci_attach, NULL, NULL);
@@ -161,6 +160,8 @@ static const struct fxp_pci_product {
 	  "Intel 82562EZ (ICH6)" },
 	{ PCI_PRODUCT_INTEL_82801G_LAN,
 	  "Intel 82801GB/GR (ICH7) Network Controller" },
+	{ PCI_PRODUCT_INTEL_82801GB_LAN,
+	  "Intel 82801GB 10/100 Network Controller" },
 	{ 0,
 	  NULL },
 };
@@ -193,6 +194,7 @@ fxp_pci_match(struct device *parent, struct cfdata *match,
 }
 
 /*
+ * On resume : (XXX it is necessary with new pmf framework ?) 
  * Restore PCI configuration registers that may have been clobbered.
  * This is necessary due to bugs on the Sony VAIO Z505-series on-board
  * ethernet, after an APM suspend/resume, as well as after an ACPI
@@ -240,28 +242,13 @@ fxp_pci_confreg_restore(struct fxp_pci_softc *psc)
 	    psc->psc_regs[(PCI_MAPREG_START+0x8)>>2]);
 }
 
-
-/*
- * Power handler routine. Called when the system is transitioning into/out
- * of power save modes. We restore the (bashed) PCI configuration registers
- * on a resume.
- */
-static void
-fxp_pci_powerhook(int why, void *arg)
+static bool
+fxp_pci_resume(device_t dv)
 {
-	struct fxp_pci_softc *psc = arg;
+	struct fxp_pci_softc *psc = device_private(dv);
+	fxp_pci_confreg_restore(psc);
 
-	switch (why) {
-	case PWR_SUSPEND:
-		pci_conf_capture(psc->psc_pc, psc->psc_tag, &psc->psc_pciconf);
-		break;
-	case PWR_RESUME:
-		pci_conf_restore(psc->psc_pc, psc->psc_tag, &psc->psc_pciconf);
-		fxp_pci_confreg_restore(psc);
-		break;
-	}
-
-	return;
+	return true;
 }
 
 static void
@@ -510,12 +497,10 @@ fxp_pci_attach(struct device *parent, struct device *self, void *aux)
 		fxp_disable(sc);
 
 	/* Add a suspend hook to restore PCI config state */
-	psc->psc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
-	    fxp_pci_powerhook, psc);
-	if (psc->psc_powerhook == NULL)
-		aprint_error(
-		    "%s: WARNING: unable to establish pci power hook\n",
-		    sc->sc_dev.dv_xname);
+	if (!pmf_device_register(self, NULL, fxp_pci_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+	else
+		pmf_class_network_register(self, &sc->sc_ethercom.ec_if);
 }
 
 static int

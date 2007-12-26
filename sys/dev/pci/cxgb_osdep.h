@@ -50,7 +50,6 @@ $FreeBSD: src/sys/dev/cxgb/cxgb_osdep.h,v 1.10 2007/05/27 22:07:47 kmacy Exp $
 #include <dev/cxgb/cxgb_config.h>
 #endif
 #ifdef __NetBSD__
-typedef char *caddr_t;
 #include <dev/pci/cxgb_version.h>
 #include <dev/pci/cxgb_config.h>
 #include <sys/mbuf.h>
@@ -227,7 +226,7 @@ extern void kdb_backtrace(void);
 
 #define WARN_ON(condition) do { \
         if (unlikely((condition)!=0)) { \
-                log(LOG_WARNING, "BUG: warning at %s:%d/%s()\n", __FILE__, __LINE__, __FUNCTION__); \
+                log(LOG_WARNING, "BUG: warning at %s:%d/%s()\n", __FILE__, __LINE__, __func__); \
                 kdb_backtrace(); \
         } \
 } while (0)

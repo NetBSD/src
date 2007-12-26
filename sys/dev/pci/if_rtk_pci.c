@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtk_pci.c,v 1.34 2007/11/06 02:29:19 uwe Exp $	*/
+/*	$NetBSD: if_rtk_pci.c,v 1.34.2.1 2007/12/26 19:46:55 ad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtk_pci.c,v 1.34 2007/11/06 02:29:19 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtk_pci.c,v 1.34.2.1 2007/12/26 19:46:55 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,11 +82,6 @@ struct rtk_pci_softc {
 
 	/* PCI-specific goo.*/
 	void *sc_ih;
-	pci_chipset_tag_t sc_pc; 	/* PCI chipset */
-	pcitag_t sc_pcitag;		/* PCI tag */
-
-	void *sc_powerhook;		/* powerhook ctxt. */
-	struct pci_conf_state sc_pciconf;
 };
 
 static const struct rtk_type rtk_pci_devs[] = {
@@ -111,7 +106,6 @@ static const struct rtk_type rtk_pci_devs[] = {
 
 static int	rtk_pci_match(device_t, struct cfdata *, void *);
 static void	rtk_pci_attach(device_t, device_t, void *);
-static void	rtk_pci_powerhook(int, void *);
 
 CFATTACH_DECL(rtk_pci, sizeof(struct rtk_pci_softc),
     rtk_pci_match, rtk_pci_attach, NULL, NULL);
@@ -151,7 +145,6 @@ rtk_pci_attach(device_t parent, device_t self, void *aux)
 {
 	struct rtk_pci_softc *psc = device_private(self);
 	struct rtk_softc *sc = &psc->sc_rtk;
-	pcireg_t command;
 	struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pci_intr_handle_t ih;
@@ -159,11 +152,7 @@ rtk_pci_attach(device_t parent, device_t self, void *aux)
 	bus_space_handle_t ioh, memh;
 	const char *intrstr = NULL;
 	const struct rtk_type *t;
-	int pmreg;
 	int ioh_valid, memh_valid;
-
-	psc->sc_pc = pa->pa_pc;
-	psc->sc_pcitag = pa->pa_tag;
 
 	t = rtk_pci_lookup(pa);
 	if (t == NULL) {
@@ -174,35 +163,6 @@ rtk_pci_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": %s (rev. 0x%02x)\n",
 		      t->rtk_name, PCI_REVISION(pa->pa_class));
-
-	/*
-	 * Handle power management nonsense.
-	 */
-
-	if (pci_get_capability(pc, pa->pa_tag, PCI_CAP_PWRMGMT, &pmreg, 0)) {
-		command = pci_conf_read(pc, pa->pa_tag, pmreg + PCI_PMCSR);
-		if (command & PCI_PMCSR_STATE_MASK) {
-			pcireg_t iobase, membase, irq;
-
-			/* Save important PCI config data. */
-			iobase = pci_conf_read(pc, pa->pa_tag, RTK_PCI_LOIO);
-			membase = pci_conf_read(pc, pa->pa_tag, RTK_PCI_LOMEM);
-			irq = pci_conf_read(pc, pa->pa_tag, PCI_INTERRUPT_REG);
-
-			/* Reset the power state. */
-			aprint_normal_dev(self,
-			    "chip is in D%d power mode -- setting to D0\n",
-			    command & PCI_PMCSR_STATE_MASK);
-			command &= ~PCI_PMCSR_STATE_MASK;
-			pci_conf_write(pc, pa->pa_tag,
-			    pmreg + PCI_PMCSR, command);
-
-			/* Restore PCI config data. */
-			pci_conf_write(pc, pa->pa_tag, RTK_PCI_LOIO, iobase);
-			pci_conf_write(pc, pa->pa_tag, RTK_PCI_LOMEM, membase);
-			pci_conf_write(pc, pa->pa_tag, PCI_INTERRUPT_REG, irq);
-		}
-	}
 
 	/*
 	 * Map control/status registers.
@@ -258,34 +218,10 @@ rtk_pci_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dmat = pa->pa_dmat;
 	sc->sc_flags |= RTK_ENABLED;
 
-	psc->sc_powerhook = powerhook_establish(device_xname(self),
-	    rtk_pci_powerhook, psc);
-	if (psc->sc_powerhook == NULL)
-		aprint_error_dev(self,
-			"WARNING: unable to establish pci power hook\n");
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+	else
+		pmf_class_network_register(self, &sc->ethercom.ec_if);
 
 	rtk_attach(sc);
-}
-
-static void
-rtk_pci_powerhook(int why, void *arg)
-{
-	struct rtk_pci_softc *sc = (struct rtk_pci_softc *)arg;
-	int s;
-
-	s = splnet();
-	switch (why) {
-	case PWR_SUSPEND:
-	case PWR_STANDBY:
-		pci_conf_capture(sc->sc_pc, sc->sc_pcitag, &sc->sc_pciconf);
-		break;
-	case PWR_RESUME:
-		pci_conf_restore(sc->sc_pc, sc->sc_pcitag, &sc->sc_pciconf);
-		break;
-	case PWR_SOFTSUSPEND:
-	case PWR_SOFTSTANDBY:
-	case PWR_SOFTRESUME:
-		break;
-	}
-	splx(s);
 }

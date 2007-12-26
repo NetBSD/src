@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_notify.c,v 1.18 2006/03/07 03:32:06 thorpej Exp $ */
+/*	$NetBSD: mach_notify.c,v 1.18.48.1 2007/12/26 19:49:27 ad Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_notify.c,v 1.18 2006/03/07 03:32:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_notify.c,v 1.18.48.1 2007/12/26 19:49:27 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -53,9 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: mach_notify.c,v 1.18 2006/03/07 03:32:06 thorpej Exp
 #include <compat/mach/mach_services.h>
 
 void
-mach_notify_port_destroyed(l, mr)
-	struct lwp *l;
-	struct mach_right *mr;
+mach_notify_port_destroyed(struct lwp *l, struct mach_right *mr)
 {
 	struct mach_port *mp;
 	mach_notify_port_destroyed_request_t *req;
@@ -100,9 +98,7 @@ mach_notify_port_destroyed(l, mr)
 }
 
 void
-mach_notify_port_no_senders(l, mr)
-	struct lwp *l;
-	struct mach_right *mr;
+mach_notify_port_no_senders(struct lwp *l, struct mach_right *mr)
 {
 	struct mach_port *mp;
 	mach_notify_port_no_senders_request_t *req;
@@ -149,9 +145,7 @@ out:
 }
 
 void
-mach_notify_port_dead_name(l, mr)
-	struct lwp *l;
-	struct mach_right *mr;
+mach_notify_port_dead_name(struct lwp *l, struct mach_right *mr)
 {
 	struct mach_port *mp;
 	mach_notify_port_dead_name_request_t *req;

@@ -1,4 +1,4 @@
-/*	$NetBSD: vald_acpi.c,v 1.25 2007/04/04 01:34:44 rmind Exp $	*/
+/*	$NetBSD: vald_acpi.c,v 1.25.22.1 2007/12/26 19:42:13 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vald_acpi.c,v 1.25 2007/04/04 01:34:44 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vald_acpi.c,v 1.25.22.1 2007/12/26 19:42:13 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -272,8 +272,7 @@ vald_acpi_notify_handler(ACPI_HANDLE handle, UINT32 notify,
 		    sc->sc_dev.dv_xname);
 #endif /* VALD_ACPI_DEBUG */
 
-		rv = AcpiOsQueueForExecution(OSD_PRIORITY_LO,
-		    vald_acpi_event, sc);
+		rv = AcpiOsExecute(OSL_NOTIFY_HANDLER, vald_acpi_event, sc);
 
 		if (ACPI_FAILURE(rv))
 			printf("%s: WARNING: unable to queue vald change "

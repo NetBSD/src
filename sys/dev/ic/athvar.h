@@ -1,4 +1,4 @@
-/*	$NetBSD: athvar.h,v 1.21 2007/07/17 01:26:17 dyoung Exp $	*/
+/*	$NetBSD: athvar.h,v 1.21.16.1 2007/12/26 19:46:17 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -290,7 +290,6 @@ struct ath_softc {
 	HAL_NODE_STATS		sc_halstats;	/* station-mode rssi stats */
 	struct callout		sc_scan_ch;	/* callout handle for scan */
 	struct callout		sc_dfs_ch;	/* callout handle for dfs */
-	void			*sc_powerhook;	/* power management hook */
 	u_int			sc_flags;	/* misc flags */
 };
 #define	sc_if			sc_ec.ec_if
@@ -306,11 +305,8 @@ struct ath_softc {
 
 int	ath_attach(u_int16_t, struct ath_softc *);
 int	ath_detach(struct ath_softc *);
-void	ath_resume(struct ath_softc *, int);
-void	ath_suspend(struct ath_softc *, int);
 int	ath_activate(struct device *, enum devact);
-void	ath_power(int, void *);
-void	ath_shutdown(void *);
+void	ath_resume(struct ath_softc *);
 int	ath_intr(void *);
 int	ath_reset(struct ifnet *);
 void	ath_sysctlattach(struct ath_softc *);

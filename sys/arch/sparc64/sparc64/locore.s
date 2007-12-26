@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.261 2007/10/22 01:43:39 martin Exp $	*/
+/*	$NetBSD: locore.s,v 1.261.4.1 2007/12/26 19:42:48 ad Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -4027,6 +4027,13 @@ ENTRY_NOPROFILE(sparc_interrupt)
 	ba,pt	%icc, setup_sparcintr
 	 LDPTR	[%g3 + PTRSZ], %g5	! intrlev[1] is reserved for %tick intr.
 0:
+
+	! Increment the per-cpu interrupt level
+	set	CPUINFO_VA+CI_IDEPTH, %g1
+	ld	[%g1], %g2
+	inc	%g2
+	st	%g2, [%g1]
+
 #ifdef TRAPSTATS
 	sethi	%hi(_C_LABEL(kintrcnt)), %g1
 	sethi	%hi(_C_LABEL(uintrcnt)), %g2
@@ -4161,6 +4168,12 @@ intrcmplt:
 	btst	%l3, %l7		! leave mask in %l3 for retry code
 	bnz,pn	%icc, sparc_intr_retry
 	 mov	1, %l5			! initialize intr count for next run
+
+	! Decrement this cpu's interrupt depth
+	set	CPUINFO_VA+CI_IDEPTH, %l4
+	ld	[%l4], %l5
+	dec	%l5
+	st	%l5, [%l4]
 
 #ifdef DEBUG
 	set	_C_LABEL(intrdebug), %o2

@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.30 2007/03/04 06:01:16 christos Exp $
+	$NetBSD: syscalls.master,v 1.30.24.1 2007/12/26 19:48:57 ad Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -62,14 +62,15 @@
 7	STD		{ int hpux_sys_wait(int *status); }
 8	STD		{ int hpux_sys_creat(const char *path, int mode); }
 9	NOARGS	 	{ int sys_link(char *path, char *link); }
-10	STD		{ int hpux_sys_unlink(const char *path); }
+10	NOARGS		{ int sys_unlink(const char *path); }
 11	STD		{ int hpux_sys_execv(const char * path, char **argp); }
-12	STD		{ int hpux_sys_chdir(const char *path); }
+12	NOARGS		{ int sys_chdir(const char *path); }
 13	STD		{ int hpux_sys_time_6x(time_t *t); }
 14	STD		{ int hpux_sys_mknod(const char *path, int mode, \
 			    int dev); }
-15	STD		{ int hpux_sys_chmod(const char *path, int mode); }
-16	STD		{ int hpux_sys_chown(const char *path, int uid, \
+15	NOARGS		{ int sys_chmod(const char *path, int mode); }
+;			chown may not be correct for older HP-UX executables
+16	NOARGS		{ int sys___posix_chown(const char *path, int uid, \
 			    int gid); }
 17	NOARGS		{ int sys_obreak(char *nsize); }
 18	STD		{ int hpux_sys_stat_6x(const char *path, \
@@ -95,7 +96,7 @@
 30	STD		{ int hpux_sys_utime_6x(char *fname, time_t *tptr); }
 31	STD		{ int hpux_sys_stty_6x(int fd, void *arg); }
 32	STD		{ int hpux_sys_gtty_6x(int fd, void *arg); }
-33	STD		{ int hpux_sys_access(const char *path, int flags); }
+33	NOARGS		{ int sys_access(const char *path, int flags); }
 34	STD		{ int hpux_sys_nice_6x(int nval); }
 35	STD		{ int hpux_sys_ftime_6x(struct hpux_timeb *tp); }
 36	NOARGS		{ int sys_sync(void); }
@@ -103,7 +104,8 @@
 38	STD		{ int hpux_sys_stat(const char *path, \
 			    struct hpux_stat *sb); }
 39	STD		{ int hpux_sys_setpgrp_6x(void); }
-40	STD		{ int hpux_sys_lstat(const char *path, \
+#define hpux_sys_lstat_args hpux_sys_stat_args
+40	NOARGS		{ int hpux_sys_lstat(const char *path, \
 			    struct hpux_stat *sb); }
 41	NOARGS		{ int sys_dup(int fd); }
 42	NOARGS		{ int sys_pipe(void); }
@@ -122,11 +124,10 @@
 53	UNIMPL
 54	STD		{ int hpux_sys_ioctl(int fd, int com, void *data); }
 55	UNIMPL		reboot
-56	STD		{ int hpux_sys_symlink(const char *path, \
-			    const char *link); }
+56	NOARGS		{ int sys_symlink(const char *path, const char *link); }
 57	STD		{ int hpux_sys_utssys(struct hpux_utsname *uts, \
 					  int dev, int request); }
-58	STD		{ int hpux_sys_readlink(const char *path, char *buf, \
+58	NOARGS		{ int sys_readlink(const char *path, char *buf, \
 					  int count); }
 59	STD		{ int hpux_sys_execve(const char *path, char **argp, \
 			    char **envp); }
@@ -210,9 +211,9 @@
 125	UNIMPL
 126	STD		{ int hpux_sys_setresuid(uid_t r, uid_t e, uid_t s); }
 127	STD		{ int hpux_sys_setresgid(gid_t r, gid_t e, gid_t s); }
-128	STD		{ int hpux_sys_rename(const char *from, \
+128	NOARGS		{ int sys___posix_rename(const char *from, \
 			    const char *to); }
-129	STD		{ int hpux_sys_truncate(const char *path, \
+129	NOARGS		{ int compat_43_sys_truncate(const char *path, \
 			    long length); }
 130	NOARGS		{ int compat_43_sys_ftruncate(int fd, long length); }
 131	UNIMPL
@@ -220,8 +221,8 @@
 133	UNIMPL
 134	UNIMPL
 135	UNIMPL
-136	STD		{ int hpux_sys_mkdir(const char *path, int mode); }
-137	STD		{ int hpux_sys_rmdir(const char *path); }
+136	NOARGS		{ int sys_mkdir(const char *path, int mode); }
+137	NOARGS		{ int sys_rmdir(const char *path); }
 138	UNIMPL
 139	UNIMPL
 140	UNIMPL

@@ -1,4 +1,4 @@
-/*	$NetBSD: ichsmb.c,v 1.10 2007/10/19 12:00:44 ad Exp $	*/
+/*	$NetBSD: ichsmb.c,v 1.10.4.1 2007/12/26 19:46:48 ad Exp $	*/
 /*	$OpenBSD: ichiic.c,v 1.18 2007/05/03 09:36:26 dlg Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichsmb.c,v 1.10 2007/10/19 12:00:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichsmb.c,v 1.10.4.1 2007/12/26 19:46:48 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -175,7 +175,8 @@ ichsmb_attach(struct device *parent, struct device *self, void *aux)
 	iba.iba_tag = &sc->sc_i2c_tag;
 	config_found(self, &iba, iicbus_print);
 
-	return;
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
 static int

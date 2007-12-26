@@ -151,9 +151,9 @@ extern void i915_mem_release(drm_device_t * dev,
 #define BEGIN_LP_RING(n) do {				\
 	if (I915_VERBOSE)				\
 		DRM_DEBUG("BEGIN_LP_RING(%d) in %s\n",	\
-	                         (n), __FUNCTION__);           \
+	                         (n), __func__);           \
 	if (dev_priv->ring.space < (n)*4)                      \
-		i915_wait_ring(dev, (n)*4, __FUNCTION__);      \
+		i915_wait_ring(dev, (n)*4, __func__);      \
 	outcount = 0;					\
 	outring = dev_priv->ring.tail;			\
 	ringmask = dev_priv->ring.tail_mask;		\

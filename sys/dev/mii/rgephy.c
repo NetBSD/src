@@ -1,4 +1,4 @@
-/*	$NetBSD: rgephy.c,v 1.16 2006/12/03 03:16:48 tsutsui Exp $	*/
+/*	$NetBSD: rgephy.c,v 1.16.28.1 2007/12/26 19:46:37 ad Exp $	*/
 
 /*
  * Copyright (c) 2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.16 2006/12/03 03:16:48 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.16.28.1 2007/12/26 19:46:37 ad Exp $");
 
 
 /*
@@ -153,6 +153,9 @@ rgephy_attach(struct device *parent, struct device *self, void *aux)
 
 	PHY_RESET(sc);
 	aprint_normal("\n");
+
+	if (!pmf_device_register(self, NULL, mii_phy_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
 static int

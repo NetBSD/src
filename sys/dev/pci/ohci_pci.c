@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_pci.c,v 1.32 2007/10/19 12:00:53 ad Exp $	*/
+/*	$NetBSD: ohci_pci.c,v 1.32.4.1 2007/12/26 19:47:01 ad Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci_pci.c,v 1.32 2007/10/19 12:00:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci_pci.c,v 1.32.4.1 2007/12/26 19:47:01 ad Exp $");
 
 #include "ehci.h"
 
@@ -68,6 +68,7 @@ struct ohci_pci_softc {
 	struct usb_pci		sc_pci;
 #endif
 	pci_chipset_tag_t	sc_pc;
+	pcitag_t		sc_tag;
 	void 			*sc_ih;		/* interrupt vectoring */
 };
 
@@ -115,6 +116,7 @@ ohci_pci_attach(struct device *parent, struct device *self, void *aux)
 			  OHCI_ALL_INTRS);
 
 	sc->sc_pc = pc;
+	sc->sc_tag = tag;
 	sc->sc.sc_bus.dmatag = pa->pa_dmat;
 
 	/* Enable the device. */
@@ -156,6 +158,9 @@ ohci_pci_attach(struct device *parent, struct device *self, void *aux)
 #if NEHCI > 0
 	usb_pci_add(&sc->sc_pci, pa, &sc->sc.sc_bus);
 #endif
+
+	if (!pmf_device_register(self, ohci_suspend, ohci_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	/* Attach usb device. */
 	sc->sc.sc_child = config_found((void *)sc, &sc->sc.sc_bus,

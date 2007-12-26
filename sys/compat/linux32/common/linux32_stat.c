@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_stat.c,v 1.8 2007/04/22 08:29:57 dsl Exp $ */
+/*	$NetBSD: linux32_stat.c,v 1.8.16.1 2007/12/26 19:49:24 ad Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_stat.c,v 1.8 2007/04/22 08:29:57 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_stat.c,v 1.8.16.1 2007/12/26 19:49:24 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -76,9 +76,7 @@ static inline void linux32_from_stat(struct stat *, struct linux32_stat64 *);
 
 #define linux_fakedev(x,y) (x)
 static inline void
-linux32_from_stat(st, st32)
-	struct stat *st;
-	struct linux32_stat64 *st32;
+linux32_from_stat(struct stat *st, struct linux32_stat64 *st32)
 {
 	bzero(st32, sizeof(*st32));
 	st32->lst_dev = linux_fakedev(st->st_dev, 0);
@@ -110,15 +108,12 @@ linux32_from_stat(st, st32)
 }
 
 int
-linux32_sys_stat64(l, v, retval)  
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_stat64(struct lwp *l, const struct linux32_sys_stat64_args *uap, register_t *retval)
 {
-	struct linux32_sys_stat64_args /* {  
+	/* {
 	        syscallarg(netbsd32_charp) path;
 	        syscallarg(linux32_statp) sp;
-	} */ *uap = v;
+	} */
 	int error;
 	struct stat st;
 	struct linux32_stat64 st32;
@@ -137,15 +132,12 @@ linux32_sys_stat64(l, v, retval)
 }
 
 int
-linux32_sys_lstat64(l, v, retval)  
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_lstat64(struct lwp *l, const struct linux32_sys_lstat64_args *uap, register_t *retval)
 {
-	struct linux32_sys_lstat64_args /* {  
+	/* {
 	        syscallarg(netbsd32_charp) path;
 	        syscallarg(linux32_stat64p) sp;
-	} */ *uap = v;
+	} */
 	int error;
 	struct stat st;
 	struct linux32_stat64 st32;
@@ -164,15 +156,12 @@ linux32_sys_lstat64(l, v, retval)
 }
 
 int
-linux32_sys_fstat64(l, v, retval)  
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_fstat64(struct lwp *l, const struct linux32_sys_fstat64_args *uap, register_t *retval)
 {
-	struct linux32_sys_fstat64_args /* {  
+	/* {
 	        syscallarg(int) fd;
 	        syscallarg(linux32_stat64p) sp;
-	} */ *uap = v;
+	} */
 	int error;
 	struct stat st;
 	struct linux32_stat64 st32;

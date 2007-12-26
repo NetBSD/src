@@ -1,4 +1,4 @@
-/*	$NetBSD: lockstat.c,v 1.11 2007/11/06 18:02:43 ad Exp $	*/
+/*	$NetBSD: lockstat.c,v 1.11.2.1 2007/12/26 19:45:58 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lockstat.c,v 1.11 2007/11/06 18:02:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lockstat.c,v 1.11.2.1 2007/12/26 19:45:58 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -59,6 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: lockstat.c,v 1.11 2007/11/06 18:02:43 ad Exp $");
 #include <sys/kmem.h>
 #include <sys/conf.h>
 #include <sys/syslog.h>
+#include <sys/atomic.h>
 
 #include <dev/lockstat.h>
 
@@ -209,10 +210,10 @@ lockstat_start(lsenable_t *le)
 	lockstat_lockstart = le->le_lockstart;
 	lockstat_lockstart = le->le_lockstart;
 	lockstat_lockend = le->le_lockend;
-	mb_memory();
+	membar_sync();
 	getnanotime(&lockstat_stime);
 	lockstat_enabled = le->le_mask;
-	mb_write();
+	membar_producer();
 }
 
 /*
@@ -234,7 +235,7 @@ lockstat_stop(lsdisable_t *ld)
 	 * to exit lockstat_event().
 	 */
 	lockstat_enabled = 0;
-	mb_write();
+	membar_producer();
 	getnanotime(&ts);
 	tsleep(&lockstat_stop, PPAUSE, "lockstat", mstohz(10));
 

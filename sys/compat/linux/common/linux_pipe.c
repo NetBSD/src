@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_pipe.c,v 1.59 2007/10/19 18:52:11 njoly Exp $	*/
+/*	$NetBSD: linux_pipe.c,v 1.59.4.1 2007/12/26 19:49:18 ad Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_pipe.c,v 1.59 2007/10/19 18:52:11 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_pipe.c,v 1.59.4.1 2007/12/26 19:49:18 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,14 +66,11 @@ __KERNEL_RCSID(0, "$NetBSD: linux_pipe.c,v 1.59 2007/10/19 18:52:11 njoly Exp $"
  * Linux directly passes the pointer.
  */
 int
-linux_sys_pipe(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_pipe(struct lwp *l, const struct linux_sys_pipe_args *uap, register_t *retval)
 {
-	struct linux_sys_pipe_args /* {
+	/* {
 		syscallarg(int *) pfds;
-	} */ *uap = v;
+	} */
 	int error;
 #ifdef __amd64__
 	int pfds[2];

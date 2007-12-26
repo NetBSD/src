@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_resource.c,v 1.6 2007/05/12 21:07:02 dsl Exp $ */
+/*	$NetBSD: linux32_resource.c,v 1.6.16.1 2007/12/26 19:49:23 ad Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_resource.c,v 1.6 2007/05/12 21:07:02 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_resource.c,v 1.6.16.1 2007/12/26 19:49:23 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -72,15 +72,12 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_resource.c,v 1.6 2007/05/12 21:07:02 dsl Exp
 #include <compat/linux32/linux32_syscallargs.h>
 
 int
-linux32_sys_getrlimit(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_getrlimit(struct lwp *l, const struct linux32_sys_getrlimit_args *uap, register_t *retval)
 {
-	struct linux32_sys_getrlimit_args /* {
+	/* {
 		syscallarg(int) which;
 		syscallarg(netbsd32_orlimitp_t) rlp;
-	} */ *uap = v;
+	} */
 	struct orlimit orl;
 	int which;
 
@@ -94,15 +91,12 @@ linux32_sys_getrlimit(l, v, retval)
 }
 
 int
-linux32_sys_setrlimit(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_setrlimit(struct lwp *l, const struct linux32_sys_setrlimit_args *uap, register_t *retval)
 {
-	struct linux32_sys_setrlimit_args /* {
+	/* {
 		syscallarg(int) which;
 		syscallarg(netbsd32_orlimitp_t) rlp;
-	} */ *uap = v;
+	} */
 	struct rlimit rl;
 	struct orlimit orl;
 	int error;
@@ -121,24 +115,18 @@ linux32_sys_setrlimit(l, v, retval)
 }
 
 int
-linux32_sys_ugetrlimit(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_ugetrlimit(struct lwp *l, const struct linux32_sys_ugetrlimit_args *uap, register_t *retval)
 {
-	return linux32_sys_getrlimit(l, v, retval);
+	return linux32_sys_getrlimit(l, (const void *)uap, retval);
 }
 
 int
-linux32_sys_getpriority(l, v, retval) 
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_getpriority(struct lwp *l, const struct linux32_sys_getpriority_args *uap, register_t *retval)
 {
-	struct linux32_sys_getpriority_args /* {
+	/* {
 		syscallarg(int) which;
 		syscallarg(int) who;
-	} */ *uap = v;
+	} */
 	struct sys_getpriority_args bsa;
 	int error;
 		 
@@ -154,16 +142,13 @@ linux32_sys_getpriority(l, v, retval)
 } 
 
 int
-linux32_sys_setpriority(l, v, retval) 
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_setpriority(struct lwp *l, const struct linux32_sys_setpriority_args *uap, register_t *retval)
 {
-	struct linux32_sys_setpriority_args /* {
+	/* {
 		syscallarg(int) which;
 		syscallarg(int) who;
 		syscallarg(int) prio;
-	} */ *uap = v;
+	} */
 	struct sys_setpriority_args bsa;
 		 
 	SCARG(&bsa, which) = SCARG(uap, which);

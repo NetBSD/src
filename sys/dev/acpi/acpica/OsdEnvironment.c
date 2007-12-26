@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdEnvironment.c,v 1.1 2006/03/23 13:41:13 kochi Exp $	*/
+/*	$NetBSD: OsdEnvironment.c,v 1.1.56.1 2007/12/26 19:46:02 ad Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdEnvironment.c,v 1.1 2006/03/23 13:41:13 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdEnvironment.c,v 1.1.56.1 2007/12/26 19:46:02 ad Exp $");
 
 #include <sys/types.h>
 
@@ -65,7 +65,7 @@ AcpiOsInitialize(void)
 {
 	ACPI_STATUS rv;
 
-	ACPI_FUNCTION_TRACE(__FUNCTION__);
+	ACPI_FUNCTION_TRACE(__func__);
 
 	/* Initialize the Osd Scheduler. */
 	acpi_osd_sched_init();
@@ -85,7 +85,7 @@ AcpiOsTerminate(void)
 {
 	ACPI_STATUS rv;
 
-	ACPI_FUNCTION_TRACE(__FUNCTION__);
+	ACPI_FUNCTION_TRACE(__func__);
 
 	/* Tear down the Osd Scheduler. */
 	acpi_osd_sched_fini();
@@ -100,8 +100,8 @@ AcpiOsTerminate(void)
  *
  *	Obtain the Root ACPI talbe pointer (RSDP)
  */
-ACPI_STATUS
-AcpiOsGetRootPointer(UINT32 Flags, ACPI_POINTER *PhysicalAddress)
+ACPI_PHYSICAL_ADDRESS
+AcpiOsGetRootPointer(void)
 {
-	return acpi_OsGetRootPointer(Flags, PhysicalAddress);
+	return acpi_OsGetRootPointer();
 }

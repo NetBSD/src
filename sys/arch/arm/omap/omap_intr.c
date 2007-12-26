@@ -1,4 +1,4 @@
-/*	$NetBSD: omap_intr.c,v 1.2 2007/02/22 05:14:05 thorpej Exp $	*/
+/*	$NetBSD: omap_intr.c,v 1.2.34.1 2007/12/26 19:42:01 ad Exp $	*/
 
 /*
  * Based on arch/arm/xscale/pxa2x0_intr.c
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap_intr.c,v 1.2 2007/02/22 05:14:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap_intr.c,v 1.2.34.1 2007/12/26 19:42:01 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -470,7 +470,7 @@ omap_intr_establish(int irqno, int level, const char *name,
 	if (irqno < OMAP_IRQ_MIN || irqno >= OMAP_NIRQ
 	    || irqno == OMAP_INT_L2_IRQ
 	    || omap_intr_info[irqno].trig == INVALID)
-		panic("%s(): bogus irq number %d", __FUNCTION__, irqno);
+		panic("%s(): bogus irq number %d", __func__, irqno);
 
 #ifndef MULTIPLE_HANDLERS_ON_ONE_IRQ
 	if (handler[irqno].func != stray_interrupt)
@@ -509,7 +509,7 @@ omap_intr_disestablish(void *v)
 	if (irqno < OMAP_IRQ_MIN || irqno >= OMAP_NIRQ
 	    || irqno == OMAP_INT_L2_IRQ
 	    || omap_intr_info[irqno].trig == INVALID)
-		panic("%s(): bogus irq number %d", __FUNCTION__, irqno);
+		panic("%s(): bogus irq number %d", __func__, irqno);
 
 	int psw = disable_interrupts(I32_bit);
 

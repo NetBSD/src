@@ -1,3 +1,5 @@
+/*	$NetBSD: mach64_state.c,v 1.2.24.1 2007/12/26 19:47:11 ad Exp $	*/
+
 /* mach64_state.c -- State support for mach64 (Rage Pro) driver -*- linux-c -*-
  * Created: Sun Dec 03 19:20:26 2000 by gareth@valinux.com
  */
@@ -31,6 +33,7 @@
  */
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mach64_state.c,v 1.2.24.1 2007/12/26 19:47:11 ad Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/mach64_state.c,v 1.2 2005/11/28 23:13:53 anholt Exp $");
 */
@@ -99,7 +102,7 @@ static int mach64_emit_cliprect(DRMFILE filp, drm_mach64_private_t * dev_priv,
 	drm_mach64_context_regs_t *regs = &sarea_priv->context_state;
 	DMALOCALS;
 
-	DRM_DEBUG("%s: box=%p\n", __FUNCTION__, box);
+	DRM_DEBUG("%s: box=%p\n", __func__, box);
 
 	/* Get GL scissor */
 	/* FIXME: store scissor in SAREA as a cliprect instead of in
@@ -148,9 +151,9 @@ static __inline__ int mach64_emit_state(DRMFILE filp,
 	DMALOCALS;
 
 	if (MACH64_VERBOSE) {
-		mach64_print_dirty(__FUNCTION__, dirty);
+		mach64_print_dirty(__func__, dirty);
 	} else {
-		DRM_DEBUG("%s: dirty=0x%08x\n", __FUNCTION__, dirty);
+		DRM_DEBUG("%s: dirty=0x%08x\n", __func__, dirty);
 	}
 
 	DMAGETPTR(filp, dev_priv, 17);	/* returns on failure to get buffer */
@@ -232,7 +235,7 @@ static int mach64_dma_dispatch_clear(DRMFILE filp, drm_device_t * dev,
 	int i;
 	DMALOCALS;
 
-	DRM_DEBUG("%s\n", __FUNCTION__);
+	DRM_DEBUG("%s\n", __func__);
 
 	switch (dev_priv->fb_bpp) {
 	case 16:
@@ -370,7 +373,7 @@ static int mach64_dma_dispatch_swap(DRMFILE filp, drm_device_t * dev)
 	int i;
 	DMALOCALS;
 
-	DRM_DEBUG("%s\n", __FUNCTION__);
+	DRM_DEBUG("%s\n", __func__);
 
 	switch (dev_priv->fb_bpp) {
 	case 16:
@@ -447,7 +450,7 @@ static int mach64_do_get_frames_queued(drm_mach64_private_t * dev_priv)
 	int i, start;
 	u32 head, tail, ofs;
 
-	DRM_DEBUG("%s\n", __FUNCTION__);
+	DRM_DEBUG("%s\n", __func__);
 
 	if (sarea_priv->frames_queued == 0)
 		return 0;
@@ -528,14 +531,14 @@ static __inline__ int copy_and_verify_from_user(u32 *to,
 				to += count;
 			} else {
 				DRM_ERROR("%s: Got bad command: 0x%04x\n",
-					  __FUNCTION__, reg);
+					  __func__, reg);
 				drm_free(orig_from, bytes, DRM_MEM_DRIVER);
 				return DRM_ERR(EACCES);
 			}
 		} else {
 			DRM_ERROR
 			    ("%s: Got bad command count(=%u) dwords remaining=%lu\n",
-			     __FUNCTION__, count, n);
+			     __func__, count, n);
 			drm_free(orig_from, bytes, DRM_MEM_DRIVER);
 			return DRM_ERR(EINVAL);
 		}
@@ -545,7 +548,7 @@ static __inline__ int copy_and_verify_from_user(u32 *to,
 	if (n == 0)
 		return 0;
 	else {
-		DRM_ERROR("%s: Bad buf->used(=%lu)\n", __FUNCTION__, bytes);
+		DRM_ERROR("%s: Bad buf->used(=%lu)\n", __func__, bytes);
 		return DRM_ERR(EINVAL);
 	}
 }
@@ -562,7 +565,7 @@ static int mach64_dma_dispatch_vertex(DRMFILE filp, drm_device_t * dev,
 	DMALOCALS;
 
 	DRM_DEBUG("%s: buf=%p used=%lu nbox=%d\n",
-		  __FUNCTION__, buf, used, sarea_priv->nbox);
+		  __func__, buf, used, sarea_priv->nbox);
 
 	if (used) {
 		int ret = 0;
@@ -571,7 +574,7 @@ static int mach64_dma_dispatch_vertex(DRMFILE filp, drm_device_t * dev,
 		copy_buf = mach64_freelist_get(dev_priv);
 		if (copy_buf == NULL) {
 			DRM_ERROR("%s: couldn't get buffer in DMAGETPTR\n",
-				  __FUNCTION__);
+				  __func__);
 			return DRM_ERR(EAGAIN);
 		}
 
@@ -629,7 +632,7 @@ static int mach64_dma_dispatch_vertex(DRMFILE filp, drm_device_t * dev,
 				if (copy_buf == entry->buf) {
 					DRM_ERROR
 					    ("%s: Trying to release a pending buf\n",
-					     __FUNCTION__);
+					     __func__);
 					return DRM_ERR(EFAULT);
 				}
 			}
@@ -750,7 +753,7 @@ static int mach64_dma_dispatch_blit(DRMFILE filp, drm_device_t * dev,
 	DMAOUTREG(MACH64_DST_X_Y, (blit->y << 16) | blit->x);
 	DMAOUTREG(MACH64_DST_WIDTH_HEIGHT, (blit->height << 16) | blit->width);
 
-	DRM_DEBUG("%s: %d bytes\n", __FUNCTION__, buf->used);
+	DRM_DEBUG("%s: %d bytes\n", __func__, buf->used);
 
 	/* Add the buffer to the queue */
 	DMAADVANCEHOSTDATA(dev_priv);
@@ -770,7 +773,7 @@ int mach64_dma_clear(DRM_IOCTL_ARGS)
 	drm_mach64_clear_t clear;
 	int ret;
 
-	DRM_DEBUG("%s: pid=%d\n", __FUNCTION__, DRM_CURRENTPID);
+	DRM_DEBUG("%s: pid=%d\n", __func__, DRM_CURRENTPID);
 
 	LOCK_TEST_WITH_RETURN(dev, filp);
 
@@ -797,7 +800,7 @@ int mach64_dma_swap(DRM_IOCTL_ARGS)
 	drm_mach64_sarea_t *sarea_priv = dev_priv->sarea_priv;
 	int ret;
 
-	DRM_DEBUG("%s: pid=%d\n", __FUNCTION__, DRM_CURRENTPID);
+	DRM_DEBUG("%s: pid=%d\n", __func__, DRM_CURRENTPID);
 
 	LOCK_TEST_WITH_RETURN(dev, filp);
 
@@ -822,7 +825,7 @@ int mach64_dma_vertex(DRM_IOCTL_ARGS)
 	LOCK_TEST_WITH_RETURN(dev, filp);
 
 	if (!dev_priv) {
-		DRM_ERROR("%s called with no initialization\n", __FUNCTION__);
+		DRM_ERROR("%s called with no initialization\n", __func__);
 		return DRM_ERR(EINVAL);
 	}
 
@@ -830,7 +833,7 @@ int mach64_dma_vertex(DRM_IOCTL_ARGS)
 				 sizeof(vertex));
 
 	DRM_DEBUG("%s: pid=%d buf=%p used=%lu discard=%d\n",
-		  __FUNCTION__, DRM_CURRENTPID,
+		  __func__, DRM_CURRENTPID,
 		  vertex.buf, vertex.used, vertex.discard);
 
 	if (vertex.prim < 0 || vertex.prim > MACH64_PRIM_POLYGON) {
@@ -866,7 +869,7 @@ int mach64_dma_blit(DRM_IOCTL_ARGS)
 				 sizeof(blit));
 
 	DRM_DEBUG("%s: pid=%d index=%d\n",
-		  __FUNCTION__, DRM_CURRENTPID, blit.idx);
+		  __func__, DRM_CURRENTPID, blit.idx);
 
 	if (blit.idx < 0 || blit.idx >= dma->buf_count) {
 		DRM_ERROR("buffer index %d (of %d max)\n",
@@ -891,10 +894,10 @@ int mach64_get_param(DRM_IOCTL_ARGS)
 	drm_mach64_getparam_t param;
 	int value;
 
-	DRM_DEBUG("%s\n", __FUNCTION__);
+	DRM_DEBUG("%s\n", __func__);
 
 	if (!dev_priv) {
-		DRM_ERROR("%s called with no initialization\n", __FUNCTION__);
+		DRM_ERROR("%s called with no initialization\n", __func__);
 		return DRM_ERR(EINVAL);
 	}
 

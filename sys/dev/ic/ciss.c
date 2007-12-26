@@ -1,4 +1,4 @@
-/*	$NetBSD: ciss.c,v 1.9 2007/10/19 11:59:49 ad Exp $	*/
+/*	$NetBSD: ciss.c,v 1.9.4.1 2007/12/26 19:46:19 ad Exp $	*/
 /*	$OpenBSD: ciss.c,v 1.14 2006/03/13 16:02:23 mickey Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ciss.c,v 1.9 2007/10/19 11:59:49 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ciss.c,v 1.9.4.1 2007/12/26 19:46:19 ad Exp $");
 
 /* #define CISS_DEBUG */
 
@@ -647,7 +647,7 @@ ciss_error(struct ciss_ccb *ccb)
 				    sc->sc_dev.dv_xname, rv, err->scsi_stat,
 				    le32toh(err->resid)));
 				printf("ciss driver stuffup in %s:%d: %s()\n",
-				       __FILE__, __LINE__, __FUNCTION__);
+				       __FILE__, __LINE__, __func__);
 				xs->error = XS_DRIVER_STUFFUP;
 				break;
 			}
@@ -784,7 +784,7 @@ ciss_scsi_raw_cmd(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 			CISS_DPRINTF(CISS_D_CMD, ("CDB too big %p ", xs));
 			bzero(&xs->sense, sizeof(xs->sense));
 			printf("ciss driver stuffup in %s:%d: %s()\n",
-			       __FILE__, __LINE__, __FUNCTION__);
+			       __FILE__, __LINE__, __func__);
 			xs->error = XS_DRIVER_STUFFUP;
 			scsipi_done(xs);
 			break;
@@ -815,7 +815,7 @@ ciss_scsi_raw_cmd(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 		if (ciss_cmd(ccb, BUS_DMA_WAITOK,
 		    xs->xs_control & (XS_CTL_POLL|XS_CTL_NOSLEEP))) {
 			printf("ciss driver stuffup in %s:%d: %s()\n",
-			       __FILE__, __LINE__, __FUNCTION__);
+			       __FILE__, __LINE__, __func__);
 			xs->error = XS_DRIVER_STUFFUP;
 			scsipi_done(xs);
 			CISS_UNLOCK(sc, lock);
@@ -866,7 +866,7 @@ ciss_scsi_cmd(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 			CISS_DPRINTF(CISS_D_CMD, ("CDB too big %p ", xs));
 			bzero(&xs->sense, sizeof(xs->sense));
 			printf("ciss driver stuffup in %s:%d: %s()\n",
-			       __FILE__, __LINE__, __FUNCTION__);
+			       __FILE__, __LINE__, __func__);
 			xs->error = XS_DRIVER_STUFFUP;
 			scsipi_done(xs);
 			break;
@@ -901,7 +901,7 @@ ciss_scsi_cmd(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 		if (ciss_cmd(ccb, BUS_DMA_WAITOK,
 		    xs->xs_control & (XS_CTL_POLL|XS_CTL_NOSLEEP))) {
 			printf("ciss driver stuffup in %s:%d: %s()\n",
-			       __FILE__, __LINE__, __FUNCTION__);
+			       __FILE__, __LINE__, __func__);
 			xs->error = XS_DRIVER_STUFFUP;
 			scsipi_done(xs);
 			CISS_UNLOCK(sc, lock);

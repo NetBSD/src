@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_wait.c,v 1.15 2007/05/07 16:53:19 dsl Exp $	*/
+/*	$NetBSD: netbsd32_wait.c,v 1.15.16.1 2007/12/26 19:49:34 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_wait.c,v 1.15 2007/05/07 16:53:19 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_wait.c,v 1.15.16.1 2007/12/26 19:49:34 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,27 +48,25 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_wait.c,v 1.15 2007/05/07 16:53:19 dsl Exp $
 #include <compat/netbsd32/netbsd32_conv.h>
 
 int
-netbsd32_wait4(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_wait4(struct lwp *l, const struct netbsd32_wait4_args *uap, register_t *retval)
 {
-	struct netbsd32_wait4_args /* {
+	/* {
 		syscallarg(int) pid;
 		syscallarg(netbsd32_intp) status;
 		syscallarg(int) options;
 		syscallarg(netbsd32_rusagep_t) rusage;
-	} */ *uap = v;
+	} */
 	int		status, error;
 	int		was_zombie;
 	struct rusage	ru;
 	struct netbsd32_rusage	ru32;
+	int pid = SCARG(uap, pid);
 
-	error = do_sys_wait(l, &SCARG(uap, pid), &status, SCARG(uap, options),
+	error = do_sys_wait(l, &pid, &status, SCARG(uap, options),
 	    SCARG_P32(uap, rusage) != NULL ? &ru : NULL, &was_zombie);
 
-	retval[0] = SCARG(uap, pid);
-	if (SCARG(uap, pid) == 0)
+	retval[0] = pid;
+	if (pid == 0)
 		return error;
 
 	if (SCARG_P32(uap, rusage)) {
@@ -84,15 +82,12 @@ netbsd32_wait4(l, v, retval)
 
 
 int
-netbsd32_getrusage(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_getrusage(struct lwp *l, const struct netbsd32_getrusage_args *uap, register_t *retval)
 {
-	struct netbsd32_getrusage_args /* {
+	/* {
 		syscallarg(int) who;
 		syscallarg(netbsd32_rusagep_t) rusage;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 	struct rusage *rup;
 	struct netbsd32_rusage ru;

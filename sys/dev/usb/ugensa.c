@@ -1,4 +1,4 @@
-/*	$NetBSD: ugensa.c,v 1.12 2007/11/29 18:38:23 xtraeme Exp $	*/
+/*	$NetBSD: ugensa.c,v 1.12.2.1 2007/12/26 19:47:25 ad Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ugensa.c,v 1.12.2.1 2007/12/26 19:47:25 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

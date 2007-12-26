@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.920 2007/11/26 09:36:29 bjs Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.920.2.1 2007/12/26 19:47:03 ad Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.919 2007/11/24 01:44:55 markd Exp
+ *	NetBSD: pcidevs,v 1.921 2007/12/24 17:03:20 hamajima Exp
  */
 
 /*
@@ -2128,6 +2128,7 @@
 #define	PCI_PRODUCT_INTEL_82571EB_SERDES	0x1060		/* i82571EB Gigabit Ethernet (SERDES) */
 #define	PCI_PRODUCT_INTEL_82801FB_LAN	0x1064		/* 82801FB 10/100 Ethernet */
 #define	PCI_PRODUCT_INTEL_PRO_100_VE_5	0x1068		/* PRO/100 VE (LOM) Network Controller */
+#define	PCI_PRODUCT_INTEL_82801GB_LAN	0x1069		/* 82801GB 10/100 Ethernet */
 #define	PCI_PRODUCT_INTEL_82547GI	0x1075		/* i82547GI Gigabit Ethernet */
 #define	PCI_PRODUCT_INTEL_82541GI	0x1076		/* i82541GI Gigabit Ethernet */
 #define	PCI_PRODUCT_INTEL_82541GI_MOBILE	0x1077		/* i82541GI Mobile Gigabit Ethernet */

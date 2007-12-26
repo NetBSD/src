@@ -1,4 +1,4 @@
-/*	$NetBSD: if_nfereg.h,v 1.4 2007/02/28 17:40:11 tsutsui Exp $	*/
+/*	$NetBSD: if_nfereg.h,v 1.4.24.1 2007/12/26 19:46:54 ad Exp $	*/
 /*	$OpenBSD: if_nfereg.h,v 1.16 2006/02/22 19:23:44 damien Exp $	*/
 
 /*-
@@ -83,6 +83,8 @@
 #define NFE_PHYADD_SHIFT	5
 
 #define NFE_STATUS_MAGIC	0x140000
+
+#define NFE_MAC_ADDR_INORDER	0x8000
 
 #define NFE_R1_MAGIC		0x16070f
 #define NFE_R2_MAGIC		0x16

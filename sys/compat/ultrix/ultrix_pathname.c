@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_pathname.c,v 1.29 2007/11/27 09:47:16 dogcow Exp $	*/
+/*	$NetBSD: ultrix_pathname.c,v 1.29.2.1 2007/12/26 19:49:45 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_pathname.c,v 1.29 2007/11/27 09:47:16 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_pathname.c,v 1.29.2.1 2007/12/26 19:49:45 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,9 +79,8 @@ __KERNEL_RCSID(0, "$NetBSD: ultrix_pathname.c,v 1.29 2007/11/27 09:47:16 dogcow 
 static int ultrixstatfs(struct statvfs *, void *);
 
 int
-ultrix_sys_creat(struct lwp *l, void *v, register_t *retval)
+ultrix_sys_creat(struct lwp *l, const struct ultrix_sys_creat_args *uap, register_t *retval)
 {
-	struct ultrix_sys_creat_args *uap = v;
 	struct sys_open_args ap;
 
 	SCARG(&ap, path) = SCARG(uap, path);
@@ -93,36 +92,33 @@ ultrix_sys_creat(struct lwp *l, void *v, register_t *retval)
 
 
 int
-ultrix_sys_access(struct lwp *l, void *v, register_t *retval)
+ultrix_sys_access(struct lwp *l, const struct ultrix_sys_access_args *uap, register_t *retval)
 {
-	struct ultrix_sys_access_args *uap = v;
 
 	return (sys_access(l, uap, retval));
 }
 
 int
-ultrix_sys_stat(struct lwp *l, void *v, register_t *retval)
+ultrix_sys_stat(struct lwp *l, const struct ultrix_sys_stat_args *uap, register_t *retval)
 {
-	struct ultrix_sys_stat_args *uap = v;
 
 	return (compat_43_sys_stat(l, uap, retval));
 }
 
 int
-ultrix_sys_lstat(struct lwp *l, void *v, register_t *retval)
+ultrix_sys_lstat(struct lwp *l, const struct ultrix_sys_lstat_args *uap, register_t *retval)
 {
-	struct ultrix_sys_lstat_args *uap = v;
 
 	return (compat_43_sys_lstat(l, uap, retval));
 }
 
 int
-ultrix_sys_execv(struct lwp *l, void *v, register_t *retval)
+ultrix_sys_execv(struct lwp *l, const struct ultrix_sys_execv_args *uap, register_t *retval)
 {
-	struct ultrix_sys_execv_args /* {
+	/* {
 		syscallarg(const char *) path;
 		syscallarg(char **) argv;
-	} */ *uap = v;
+	} */
 	struct sys_execve_args ap;
 
 	SCARG(&ap, path) = SCARG(uap, path);
@@ -133,13 +129,13 @@ ultrix_sys_execv(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-ultrix_sys_execve(struct lwp *l, void *v, register_t *retval)
+ultrix_sys_execve(struct lwp *l, const struct ultrix_sys_execve_args *uap, register_t *retval)
 {
-	struct ultrix_sys_execve_args /* {
+	/* {
 		syscallarg(const char *) path;
 		syscallarg(char **) argv;
 		syscallarg(char **) envp;
-	} */ *uap = v;
+	} */
 	struct sys_execve_args ap;
 
 	SCARG(&ap, path) = SCARG(uap, path);
@@ -150,9 +146,8 @@ ultrix_sys_execve(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-ultrix_sys_open(struct lwp *l, void *v, register_t *retval)
+ultrix_sys_open(struct lwp *l, const struct ultrix_sys_open_args *uap, register_t *retval)
 {
-	struct ultrix_sys_open_args *uap = v;
 	struct proc *p = l->l_proc;
 	int q, r;
 	int noctty;
@@ -222,15 +217,15 @@ ultrixstatfs(struct statvfs *sp, void *buf)
 
 
 int
-ultrix_sys_statfs(struct lwp *l, void *v, register_t *retval)
+ultrix_sys_statfs(struct lwp *l, const struct ultrix_sys_statfs_args *uap, register_t *retval)
 {
-	struct ultrix_sys_statfs_args *uap = v;
 	struct mount *mp;
 	struct statvfs *sp;
 	int error;
 	struct nameidata nd;
 
-	NDINIT(&nd, LOOKUP, FOLLOW | TRYEMULROOT, UIO_USERSPACE, SCARG(uap, path), l);
+	NDINIT(&nd, LOOKUP, FOLLOW | TRYEMULROOT, UIO_USERSPACE,
+	    SCARG(uap, path));
 	if ((error = namei(&nd)) != 0)
 		return (error);
 
@@ -249,9 +244,8 @@ ultrix_sys_statfs(struct lwp *l, void *v, register_t *retval)
  * it goes here anyway.
  */
 int
-ultrix_sys_fstatfs(struct lwp *l, void *v, register_t *retval)
+ultrix_sys_fstatfs(struct lwp *l, const struct ultrix_sys_fstatfs_args *uap, register_t *retval)
 {
-	struct ultrix_sys_fstatfs_args *uap = v;
 	struct proc *p = l->l_proc;
 	struct file *fp;
 	struct mount *mp;
@@ -273,9 +267,8 @@ ultrix_sys_fstatfs(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-ultrix_sys_mknod(struct lwp *l, void *v, register_t *retval)
+ultrix_sys_mknod(struct lwp *l, const struct ultrix_sys_mknod_args *uap, register_t *retval)
 {
-	struct ultrix_sys_mknod_args *uap = v;
 
 	if (S_ISFIFO(SCARG(uap, mode)))
 		return sys_mkfifo(l, uap, retval);

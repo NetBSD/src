@@ -1,4 +1,4 @@
-/* $NetBSD: if_lmc.c,v 1.36 2007/10/19 12:00:46 ad Exp $ */
+/* $NetBSD: if_lmc.c,v 1.36.4.1 2007/12/26 19:46:52 ad Exp $ */
 
 /*-
  * Copyright (c) 2002-2006 David Boggs. <boggs@boggs.palo-alto.ca.us>
@@ -142,6 +142,8 @@
 #endif /*__FreeBSD__*/
 
 #if defined(__NetBSD__)
+# include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_lmc.c,v 1.36.4.1 2007/12/26 19:46:52 ad Exp $");
 # include <sys/param.h>	/* OS version */
 /* -DLKM is passed on the compiler command line */
 # include "opt_inet.h"	/* INET6, INET */

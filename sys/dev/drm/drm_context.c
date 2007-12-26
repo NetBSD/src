@@ -1,4 +1,4 @@
-/* $NetBSD: drm_context.c,v 1.2 2007/11/21 19:22:12 bjs Exp $ */
+/* $NetBSD: drm_context.c,v 1.2.2.1 2007/12/26 19:46:07 ad Exp $ */
 
 /* drm_context.h -- IOCTLs for generic contexts -*- linux-c -*-
  * Created: Fri Nov 24 18:31:37 2000 by gareth@valinux.com
@@ -34,6 +34,7 @@
  */
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: drm_context.c,v 1.2.2.1 2007/12/26 19:46:07 ad Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/drm_context.c,v 1.2 2005/11/28 23:13:52 anholt Exp $");
 */

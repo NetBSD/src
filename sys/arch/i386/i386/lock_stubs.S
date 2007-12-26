@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.10 2007/11/28 18:19:20 ad Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.10.2.1 2007/12/26 19:42:20 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -43,11 +43,13 @@
  * alignment with 'objdump -d' after making changes.
  */
 
+#include <machine/asm.h>
+__KERNEL_RCSID(0, "$NetBSD: lock_stubs.S,v 1.10.2.1 2007/12/26 19:42:20 ad Exp $");
+
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
 #include "opt_ddb.h"
 
-#include <machine/asm.h>
 #include <machine/cputypes.h>
 
 #include "assym.h"
@@ -58,7 +60,7 @@
 
 #define	ALIGN64		.align	64
 #define	ALIGN32		.align	32
-#define	LOCK(name)	LABEL(name)	lock
+#define	LOCK(num)	.Lpatch/**/num:	lock
 #define	END(name,a)	.align	a; LABEL(name)
 
 #if !defined(LOCKDEBUG)
@@ -74,7 +76,7 @@ ENTRY(mutex_enter)
 	movl	4(%esp), %edx
 	movl	CPUVAR(CURLWP), %ecx
 	xorl	%eax, %eax
-	LOCK(lockpatch1)
+	LOCK(1)
 	cmpxchgl %ecx, MTX_OWNER(%edx)
 	jnz,pn	_C_LABEL(mutex_vector_enter)
 	ret
@@ -113,7 +115,7 @@ ENTRY(rw_enter)
 	testb	$(RW_WRITE_LOCKED|RW_WRITE_WANTED), %al
 	leal	RW_READ_INCR(%eax), %ecx
 	jnz,pn	_C_LABEL(rw_vector_enter)
-	LOCK(lockpatch2)
+	LOCK(2)
 	cmpxchgl %ecx, RW_OWNER(%edx)
 	jnz,pn	1b
 	ret
@@ -124,7 +126,7 @@ ENTRY(rw_enter)
 2:	movl	CPUVAR(CURLWP), %ecx
 	xorl	%eax, %eax
 	orl	$RW_WRITE_LOCKED, %ecx
-	LOCK(lockpatch3)
+	LOCK(3)
 	cmpxchgl %ecx, RW_OWNER(%edx)
 	jnz,pn	_C_LABEL(rw_vector_enter)
 	ret
@@ -148,7 +150,7 @@ ENTRY(rw_exit)
 	cmpl	$RW_READ_INCR, %eax
 	leal	-RW_READ_INCR(%eax), %ecx
 	jb,pn	3f
-	LOCK(lockpatch4)
+	LOCK(4)
 	cmpxchgl %ecx, RW_OWNER(%edx)
 	jnz,pn	1b
 	ret
@@ -159,7 +161,7 @@ ENTRY(rw_exit)
 2:	leal	-RW_WRITE_LOCKED(%eax), %ecx
 	subl	CPUVAR(CURLWP), %ecx
 	jnz,pn	3f
-	LOCK(lockpatch5)
+	LOCK(5)
 	cmpxchgl %ecx, RW_OWNER(%edx)
 	jnz,pn	3f
 	ret
@@ -189,7 +191,7 @@ ENTRY(mutex_spin_enter)
 2:
 #ifdef FULL
 	mov	$0x0100, %eax			/* new + expected value */
-	LOCK(lockpatch11)
+	LOCK(11)
 	cmpxchgb %ah, MTX_LOCK(%edx)		/* lock it */
 	jnz,pn	_C_LABEL(mutex_spin_retry)
 #endif
@@ -266,61 +268,54 @@ ENTRY(mutex_spin_exit)
 #endif	/* !LOCKDEBUG */
 
 /*
- * int _lock_cas(uintptr_t *val, uintptr_t old, uintptr_t new);
- *
- * Perform an atomic compare-and-set operation.
+ * Spinlocks.
  */
-ENTRY(_lock_cas)
-	mov	4(%esp),%edx
-	movl	8(%esp), %eax
-	movl	12(%esp), %ecx
-	LOCK(lockpatch6)
-	cmpxchgl %ecx, (%edx)
-	movl	$0, %eax
-	setz	%al
+NENTRY(__cpu_simple_lock_init)
+	movl	4(%esp), %edx
+	movb	$0, (%edx)
 	ret
-
-/*
- * Memory barrier operations, may be patched at runtime.
- */
-	.align	8
-
-ENTRY(mb_read)
-	LOCK(lockpatch7)
-	addl	$0, 0(%esp)
+NENTRY(__cpu_simple_lock)
+	movl	4(%esp), %edx
+	movl	$0x0100, %eax
+1:
+	LOCK(6)
+	cmpxchgb %ah, (%edx)
+	jnz	2f
 	ret
-END(mb_read_end, 8)
-
-ENTRY(mb_write)
+2:
+	movl	$0x0100, %eax
+	pause
 	nop
-	ret
-END(mb_write_end, 8)
+	nop
+	cmpb	$0, (%edx)
+	je	1b
+	jmp	2b
 
-ENTRY(mb_memory)
-	LOCK(lockpatch8)
-	addl	$0, 0(%esp)
+NENTRY(__cpu_simple_unlock)
+	movl	4(%esp), %edx
+	movb	$0, (%edx)
 	ret
-END(mb_memory_end, 8)
 
-ENTRY(sse2_mb_read)
-	lfence
+NENTRY(__cpu_simple_lock_try)
+	movl	4(%esp), %edx
+	movl	$0x0100, %eax
+	LOCK(7)
+	cmpxchgb %ah, (%edx)
+	movl	$0, %eax
+	setz	%al	
 	ret
-END(sse2_mb_read_end, 8)
-
-ENTRY(sse2_mb_memory)
-	mfence
-	ret
-END(sse2_mb_memory_end, 8)
 
 /*
  * Patchpoints to replace with NOP when ncpu == 1.
  */
+	.data
+
 #ifndef LOCKDEBUG
 LABEL(x86_lockpatch)
-	.long	lockpatch1, lockpatch2, lockpatch3, lockpatch4
-	.long	lockpatch5, lockpatch6, lockpatch7, lockpatch8
+	.long	.Lpatch1, .Lpatch2, .Lpatch3, .Lpatch4
+	.long	.Lpatch5, .Lpatch6, .Lpatch7
 #if defined(FULL) && !defined(__XEN__)
-	.long	lockpatch11
+	.long	.Lpatch11
 #endif
 	.long	0
 #endif

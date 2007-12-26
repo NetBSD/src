@@ -1,3 +1,5 @@
+/*	$NetBSD: via_verifier.c,v 1.1.24.1 2007/12/26 19:47:18 ad Exp $	*/
+
 /*
  * Copyright 2004 The Unichrome Project. All Rights Reserved.
  * Copyright 2005 Thomas Hellstrom. All Rights Reserved.
@@ -27,6 +29,9 @@
  * Don't run this code directly on an AGP buffer. Due to cache problems it will
  * be very slow.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: via_verifier.c,v 1.1.24.1 2007/12/26 19:47:18 ad Exp $");
 
 #include <dev/drm/drmP.h>
 #include <dev/drm/drm.h>

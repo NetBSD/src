@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.33 2007/03/04 06:01:17 christos Exp $
+	$NetBSD: syscalls.master,v 1.33.24.1 2007/12/26 19:48:59 ad Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -58,14 +58,14 @@
 7	STD		{ int ibcs2_sys_waitsys(int a1, int a2, int a3); }
 8	STD		{ int ibcs2_sys_creat(const char *path, int mode); }
 9	NOARGS		{ int sys_link(char *path, char *link); }
-10	STD		{ int ibcs2_sys_unlink(const char *path); }
+10	NOARGS		{ int sys_unlink(const char *path); }
 11	STD		{ int ibcs2_sys_execv(const char *path, char **argp); }
-12	STD		{ int ibcs2_sys_chdir(const char *path); }
+12	NOARGS		{ int sys_chdir(const char *path); }
 13	STD		{ int ibcs2_sys_time(ibcs2_time_t *tp); }
 14	STD		{ int ibcs2_sys_mknod(const char* path, int mode, \
 			    int dev); }
-15	STD		{ int ibcs2_sys_chmod(const char *path, int mode); }
-16	STD		{ int ibcs2_sys_chown(const char *path, int uid, \
+15	NOARGS		{ int sys_chmod(const char *path, int mode); }
+16	NOARGS		{ int sys___posix_chown(const char *path, int uid, \
 			    int gid); }
 17	NOARGS		{ int sys_obreak(void *nsize); }
 18	STD		{ int ibcs2_sys_stat(const char* path, \
@@ -153,8 +153,8 @@
 76	OBSOL		rfs_rdebug
 77	OBSOL		rfs_rfstop
 78	UNIMPL		rfs_rfsys
-79	STD		{ int ibcs2_sys_rmdir(const char *path); }
-80	STD		{ int ibcs2_sys_mkdir(const char *path, int mode); }
+79	NOARGS		{ int sys_rmdir(const char *path); }
+80	NOARGS		{ int sys_mkdir(const char *path, int mode); }
 81	STD		{ int ibcs2_sys_getdents(int fd, char *buf, \
 			    int nbytes); }
 82	UNIMPL
@@ -170,11 +170,11 @@
 			    int timeout); }
 88	UNIMPL
 89	UNIMPL
-90	STD		{ int ibcs2_sys_symlink(const char *path, \
+90	NOARGS		{ int sys_symlink(const char *path, \
 			    const char *link); }
 91	STD		{ int ibcs2_sys_lstat(const char *path, \
 			    struct ibcs2_stat *st); }
-92	STD		{ int ibcs2_sys_readlink(const char *path, char *buf, \
+92	NOARGS		{ int sys_readlink(const char *path, char *buf, \
 			    int count); }
 93	NOARGS		{ int sys_fchmod(int fd, int mode); }
 94	NOARGS		{ int sys___posix_fchown(int fd, int uid, int gid); } \
@@ -350,7 +350,7 @@
 245	STD		{ int ibcs2_sys_sysconf(int name); }
 246	STD		{ int ibcs2_sys_pathconf(char *path, int name); }
 247	STD		{ int ibcs2_sys_fpathconf(int fd, int name); }
-248	STD		{ int ibcs2_sys_rename(const char *from, \
+248	NOARGS		{ int sys___posix_rename(const char *from, \
 			    const char *to); }
 249	UNIMPL
 250	STD		{ int ibcs2_sys_scoinfo(struct scoutsname *bp, int len); }

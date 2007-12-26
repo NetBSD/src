@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.14 2007/10/27 02:06:04 nisimura Exp $	*/
+/*	$NetBSD: intr.h,v 1.14.4.1 2007/12/26 19:42:40 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -42,6 +42,8 @@
 #include <powerpc/intr.h>
 
 #ifndef _LOCORE
+#include <machine/cpu.h>
+#include <sys/device.h>
 
 void enable_intr(void);
 void disable_intr(void);

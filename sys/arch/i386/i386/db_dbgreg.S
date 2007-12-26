@@ -1,4 +1,4 @@
-/*	$NetBSD: db_dbgreg.S,v 1.6 2007/10/17 19:54:44 garbled Exp $	*/
+/*	$NetBSD: db_dbgreg.S,v 1.6.4.1 2007/12/26 19:42:18 ad Exp $	*/
 
 /* 
  * Mach Operating System
@@ -29,6 +29,8 @@
 /* LINTSTUB: Empty */
 
 #include <i386/include/asm.h>
+__KERNEL_RCSID(0, "$NetBSD: db_dbgreg.S,v 1.6.4.1 2007/12/26 19:42:18 ad Exp $");
+
 #define S_ARG0	 4(%esp)
 #define S_ARG1	 8(%esp)
 #define S_ARG2	12(%esp)

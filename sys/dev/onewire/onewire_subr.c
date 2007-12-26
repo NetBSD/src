@@ -1,4 +1,4 @@
-/* $NetBSD: onewire_subr.c,v 1.5 2006/11/16 01:33:08 christos Exp $ */
+/* $NetBSD: onewire_subr.c,v 1.5.34.1 2007/12/26 19:46:39 ad Exp $ */
 /*	$OpenBSD: onewire_subr.c,v 1.1 2006/03/04 16:27:03 grange Exp $	*/
 
 /*
@@ -20,6 +20,9 @@
 /*
  * 1-Wire bus miscellaneous routines.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: onewire_subr.c,v 1.5.34.1 2007/12/26 19:46:39 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

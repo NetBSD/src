@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_sysctl.c,v 1.53 2007/08/15 12:07:28 ad Exp $ */
+/*	$NetBSD: darwin_sysctl.c,v 1.53.10.1 2007/12/26 19:48:51 ad Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.53 2007/08/15 12:07:28 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.53.10.1 2007/12/26 19:48:51 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -286,9 +286,8 @@ SYSCTL_SETUP(sysctl_darwin_emul_setup, "darwin emulated sysctl tree setup")
 
 
 int
-darwin_sys___sysctl(struct lwp *l, void *v, register_t *retval)
+darwin_sys___sysctl(struct lwp *l, const struct darwin_sys___sysctl_args *uap, register_t *retval)
 {
-	struct darwin_sys___sysctl_args *uap = v;
 	int error, nerror, name[CTL_MAXNAME];
 	size_t savelen = 0, oldlen = 0;
 
@@ -439,7 +438,7 @@ SYSCTL_SETUP(sysctl_emul_darwin_setup, "sysctl emul.darwin subtree setup")
  * of course).
  */
 int
-darwin_sys_getpid(struct lwp *l, void *v, register_t *retval)
+darwin_sys_getpid(struct lwp *l, const void *v, register_t *retval)
 {
 	struct darwin_emuldata *ded;
 	struct proc *p = l->l_proc;
@@ -739,9 +738,7 @@ again:
  * Native struct proc to Darwin's struct kinfo_proc
  */
 static void
-darwin_fill_kproc(p, dkp)
-	struct proc *p;
-	struct darwin_kinfo_proc *dkp;
+darwin_fill_kproc(struct proc *p, struct darwin_kinfo_proc *dkp)
 {
 	struct lwp *l;
 	struct darwin_extern_proc *dep;

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_types.h,v 1.3 2007/04/05 16:39:11 njoly Exp $ */
+/*	$NetBSD: linux32_types.h,v 1.3.18.1 2007/12/26 19:49:22 ad Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -64,7 +64,7 @@ struct linux32_stat64 {
 	unsigned lst_ctime;
 	unsigned lst_ctime_nsec;
 	unsigned long long lst_ino;
-} __attribute__((packed));
+} __packed;
 
 struct linux32_stat {
 	u_int16_t	lst_dev;

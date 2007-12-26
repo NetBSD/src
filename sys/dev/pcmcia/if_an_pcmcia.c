@@ -1,4 +1,4 @@
-/* $NetBSD: if_an_pcmcia.c,v 1.32 2007/10/19 12:01:04 ad Exp $ */
+/* $NetBSD: if_an_pcmcia.c,v 1.32.4.1 2007/12/26 19:47:19 ad Exp $ */
 
 /*-
  * Copyright (c) 2000, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_an_pcmcia.c,v 1.32 2007/10/19 12:01:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_an_pcmcia.c,v 1.32.4.1 2007/12/26 19:47:19 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,7 +84,6 @@ struct an_pcmcia_softc {
 	int sc_io_window;			/* our i/o window */
 	struct pcmcia_function *sc_pf;		/* our PCMCIA function */
 	void *sc_ih;				/* interrupt handle */
-	void *sc_powerhook;			/* power hook descriptor */
 
 	int sc_state;
 #define	AN_PCMCIA_ATTACHED	3
@@ -164,7 +163,10 @@ an_pcmcia_attach(struct device  *parent, struct device *self,
 		goto fail2;
 	}
 
-	psc->sc_powerhook = powerhook_establish(self->dv_xname, an_power, sc);
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+	else
+		pmf_class_network_register(self, &sc->sc_if);
 
 	an_pcmcia_disable(sc);
 	sc->sc_enabled = 0;
@@ -188,8 +190,7 @@ an_pcmcia_detach(struct device *self, int flags)
 	if (psc->sc_state != AN_PCMCIA_ATTACHED)
 		return (0);
 
-	if (psc->sc_powerhook)
-		powerhook_disestablish(psc->sc_powerhook);
+	pmf_device_deregister(self);
 
 	error = an_detach(&psc->sc_an);
 	if (error)

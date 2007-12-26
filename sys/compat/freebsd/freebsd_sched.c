@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_sched.c,v 1.10 2007/10/19 12:16:36 ad Exp $	*/
+/*	$NetBSD: freebsd_sched.c,v 1.10.4.1 2007/12/26 19:48:54 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_sched.c,v 1.10 2007/10/19 12:16:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_sched.c,v 1.10.4.1 2007/12/26 19:48:54 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -57,8 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: freebsd_sched.c,v 1.10 2007/10/19 12:16:36 ad Exp $"
 #include <compat/freebsd/freebsd_sched.h>
 
 int
-freebsd_sys_yield(struct lwp *l, void *v,
-    register_t *retval)
+freebsd_sys_yield(struct lwp *l, const void *v, register_t *retval)
 {
 
 	yield();
@@ -105,12 +104,12 @@ check_proc_access(struct lwp *l, pid_t pid)
 }
 
 int
-freebsd_sys_sched_setparam(struct lwp *l, void *v, register_t *retval)
+freebsd_sys_sched_setparam(struct lwp *l, const struct freebsd_sys_sched_setparam_args *uap, register_t *retval)
 {
-	struct freebsd_sys_sched_setparam_args /* {
+	/* {
 		syscallarg(pid_t) pid;
 		syscallarg(const struct freebsd_sched_param *) sp;
-	} */ *uap = v;
+	} */
 	int error;
 	struct freebsd_sched_param lp;
 
@@ -132,12 +131,12 @@ freebsd_sys_sched_setparam(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-freebsd_sys_sched_getparam(struct lwp *l, void *v, register_t *retval)
+freebsd_sys_sched_getparam(struct lwp *l, const struct freebsd_sys_sched_getparam_args *uap, register_t *retval)
 {
-	struct freebsd_sys_sched_getparam_args /* {
+	/* {
 		syscallarg(pid_t) pid;
 		syscallarg(struct freebsd_sched_param *) sp;
-	} */ *uap = v;
+	} */
 	struct freebsd_sched_param lp;
 	int error;
 
@@ -157,14 +156,13 @@ freebsd_sys_sched_getparam(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-freebsd_sys_sched_setscheduler(struct lwp *l, void *v,
-    register_t *retval)
+freebsd_sys_sched_setscheduler(struct lwp *l, const struct freebsd_sys_sched_setscheduler_args *uap, register_t *retval)
 {
-	struct freebsd_sys_sched_setscheduler_args /* {
+	/* {
 		syscallarg(pid_t) pid;
 		syscallarg(int) policy;
 		syscallarg(cont struct freebsd_sched_scheduler *) sp;
-	} */ *uap = v;
+	} */
 	int error;
 	struct freebsd_sched_param lp;
 
@@ -192,14 +190,11 @@ freebsd_sys_sched_setscheduler(struct lwp *l, void *v,
 }
 
 int
-freebsd_sys_sched_getscheduler(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+freebsd_sys_sched_getscheduler(struct lwp *l, const struct freebsd_sys_sched_getscheduler_args *uap, register_t *retval)
 {
-	struct freebsd_sys_sched_getscheduler_args /* {
+	/* {
 		syscallarg(pid_t) pid;
-	} */ *uap = v;
+	} */
 	int error;
 
 	*retval = -1;
@@ -220,8 +215,7 @@ freebsd_sys_sched_getscheduler(l, v, retval)
 }
 
 int
-freebsd_sys_sched_yield(struct lwp *l, void *v,
-    register_t *retval)
+freebsd_sys_sched_yield(struct lwp *l, const void *v, register_t *retval)
 {
 
 	yield();
@@ -229,12 +223,11 @@ freebsd_sys_sched_yield(struct lwp *l, void *v,
 }
 
 int
-freebsd_sys_sched_get_priority_max(struct lwp *l, void *v,
-    register_t *retval)
+freebsd_sys_sched_get_priority_max(struct lwp *l, const struct freebsd_sys_sched_get_priority_max_args *uap, register_t *retval)
 {
-	struct freebsd_sys_sched_get_priority_max_args /* {
+	/* {
 		syscallarg(int) policy;
-	} */ *uap = v;
+	} */
 
 	/*
 	 * We can't emulate anything put the default scheduling policy.
@@ -249,12 +242,11 @@ freebsd_sys_sched_get_priority_max(struct lwp *l, void *v,
 }
 
 int
-freebsd_sys_sched_get_priority_min(struct lwp *l, void *v,
-    register_t *retval)
+freebsd_sys_sched_get_priority_min(struct lwp *l, const struct freebsd_sys_sched_get_priority_min_args *uap, register_t *retval)
 {
-	struct freebsd_sys_sched_get_priority_min_args /* {
+	/* {
 		syscallarg(int) policy;
-	} */ *uap = v;
+	} */
 
 	/*
 	 * We can't emulate anything put the default scheduling policy.

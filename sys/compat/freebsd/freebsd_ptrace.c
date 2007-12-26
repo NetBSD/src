@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_ptrace.c,v 1.15 2007/06/23 15:24:26 dsl Exp $	*/
+/*	$NetBSD: freebsd_ptrace.c,v 1.15.16.1 2007/12/26 19:48:54 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_ptrace.c,v 1.15 2007/06/23 15:24:26 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_ptrace.c,v 1.15.16.1 2007/12/26 19:48:54 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ptrace.h"
@@ -101,18 +101,15 @@ __KERNEL_RCSID(0, "$NetBSD: freebsd_ptrace.c,v 1.15 2007/06/23 15:24:26 dsl Exp 
  * Process debugging system call.
  */
 int
-freebsd_sys_ptrace(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+freebsd_sys_ptrace(struct lwp *l, const struct freebsd_sys_ptrace_args *uap, register_t *retval)
 {
 #if defined(PTRACE) || defined(_LKM)
-	struct freebsd_sys_ptrace_args /* {
+	/* {
 		syscallarg(int) req;
 		syscallarg(pid_t) pid;
 		syscallarg(void *) addr;
 		syscallarg(int) data;
-	} */ *uap = v;
+	} */
 	struct sys_ptrace_args npa;
 #ifdef _LKM
 	sy_call_t sys_ptrace = sysent[SYS_ptrace].sy_call;
@@ -135,7 +132,7 @@ freebsd_sys_ptrace(l, v, retval)
 	case FREEBSD_PT_CONTINUE:
 	case FREEBSD_PT_KILL:
 		/* These requests are compatible with NetBSD */
-		return sys_ptrace(l, uap, retval);
+		return sys_ptrace(l, (const void *)uap, retval);
 
 #if 0
 /*

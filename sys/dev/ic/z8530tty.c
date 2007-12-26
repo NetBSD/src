@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.117 2007/11/19 18:51:48 ad Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.117.2.1 2007/12/26 19:46:26 ad Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -137,7 +137,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.117 2007/11/19 18:51:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.117.2.1 2007/12/26 19:46:26 ad Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_ntp.h"
@@ -289,6 +289,7 @@ static void zstty_rxint  (struct zs_chanstate *);
 static void zstty_stint  (struct zs_chanstate *, int);
 static void zstty_txint  (struct zs_chanstate *);
 static void zstty_softint(struct zs_chanstate *);
+static void zstty_softint1(struct zs_chanstate *);
 
 #define	ZSUNIT(x)	(minor(x) & 0x7ffff)
 #define	ZSDIALOUT(x)	(minor(x) & 0x80000)
@@ -1286,7 +1287,7 @@ zsparam(tp, t)
 		}
 	}
 
-	zstty_softint(cs);
+	zstty_softint1(cs);
 
 	return (0);
 }
@@ -1886,7 +1887,9 @@ zstty_stsoft(zst, tp)
 		/*
 		 * Inform the tty layer that carrier detect changed.
 		 */
+		mutex_spin_exit(&tty_lock);
 		(void) (*tp->t_linesw->l_modem)(tp, ISSET(rr0, ZSRR0_DCD));
+		mutex_spin_enter(&tty_lock);
 	}
 
 	if (ISSET(delta, cs->cs_rr0_cts)) {
@@ -1916,10 +1919,19 @@ static void
 zstty_softint(cs)
 	struct zs_chanstate *cs;
 {
+
+	mutex_spin_enter(&tty_lock);
+	zstty_softint1(cs);
+	mutex_spin_exit(&tty_lock);
+}
+
+static void
+zstty_softint1(cs)
+	struct zs_chanstate *cs;
+{
 	struct zstty_softc *zst = cs->cs_private;
 	struct tty *tp = zst->zst_tty;
 
-	mutex_spin_enter(&tty_lock);
 
 	if (zst->zst_rx_ready) {
 		zst->zst_rx_ready = 0;
@@ -1935,8 +1947,6 @@ zstty_softint(cs)
 		zst->zst_tx_done = 0;
 		zstty_txsoft(zst, tp);
 	}
-
-	mutex_spin_exit(&tty_lock);
 }
 
 struct zsops zsops_tty = {

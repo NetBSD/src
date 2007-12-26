@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.49 2007/12/03 15:34:28 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.49.2.1 2007/12/26 19:42:59 ad Exp $	*/
 /*	NetBSD: machdep.c,v 1.559 2004/07/22 15:12:46 mycroft Exp 	*/
 
 /*-
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.49 2007/12/03 15:34:28 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.49.2.1 2007/12/26 19:42:59 ad Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -1134,9 +1134,6 @@ setregs(struct lwp *l, struct exec_package *pack, u_long stack)
  */
 
 union	descriptor *gdt, *ldt;
-struct gate_descriptor *idt;
-char idt_allocmap[NIDT];
-struct simplelock idt_lock = SIMPLELOCK_INITIALIZER;
 union	descriptor *pentium_idt;
 struct user *proc0paddr;
 extern vaddr_t proc0uarea;
@@ -1212,6 +1209,7 @@ int xen_idt_idx;
 
 #define	KBTOB(x)	((size_t)(x) * 1024UL)
 
+#if !defined(XEN)
 void cpu_init_idt()
 {
 	struct region_descriptor region;
@@ -1220,6 +1218,7 @@ void cpu_init_idt()
 	setregion(&region, pentium_idt, NIDT * sizeof(idt[0]) - 1);
         lidt(&region);
 }
+#endif /* defined(XEN) */
 
 #if !defined(XEN) && !defined(REALBASEMEM) && !defined(REALEXTMEM)
 void
@@ -1905,20 +1904,20 @@ init386(paddr_t first_avail)
 #if !defined(XEN)
 	/* exceptions */
 	for (x = 0; x < 32; x++) {
+		idt_vec_reserve(x);
 		setgate(&idt[x], IDTVEC(exceptions)[x], 0, SDT_SYS386TGT,
 		    (x == 3 || x == 4) ? SEL_UPL : SEL_KPL,
 		    GSEL(GCODE_SEL, SEL_KPL));
-		idt_allocmap[x] = 1;
 	}
 
 	/* new-style interrupt gate for syscalls */
+	idt_vec_reserve(128);
 	setgate(&idt[128], &IDTVEC(syscall), 0, SDT_SYS386TGT, SEL_UPL,
 	    GSEL(GCODE_SEL, SEL_KPL));
-	idt_allocmap[128] = 1;
 #ifdef COMPAT_SVR4
+	idt_vec_reserve(0xd2);
 	setgate(&idt[0xd2], &IDTVEC(svr4_fasttrap), 0, SDT_SYS386TGT,
 	    SEL_UPL, GSEL(GCODE_SEL, SEL_KPL));
-	idt_allocmap[0xd2] = 1;
 #endif /* COMPAT_SVR4 */
 #endif
 
@@ -2353,48 +2352,6 @@ void
 cpu_initclocks()
 {
 	(*initclock_func)();
-}
-
-/*
- * Allocate an IDT vector slot within the given range.
- * XXX needs locking to avoid MP allocation races.
- */
-
-int
-idt_vec_alloc(int low, int high)
-{
-	int vec;
-
-	simple_lock(&idt_lock);
-	for (vec = low; vec <= high; vec++) {
-		if (idt_allocmap[vec] == 0) {
-			idt_allocmap[vec] = 1;
-			simple_unlock(&idt_lock);
-			return vec;
-		}
-	}
-	simple_unlock(&idt_lock);
-	return 0;
-}
-
-void
-idt_vec_set(int vec, void (*function)(void))
-{
-	/*
-	 * Vector should be allocated, so no locking needed.
-	 */
-	KASSERT(idt_allocmap[vec] == 1);
-	setgate(&idt[vec], function, 0, SDT_SYS386IGT, SEL_KPL,
-	    GSEL(GCODE_SEL, SEL_KPL));
-}
-
-void
-idt_vec_free(int vec)
-{
-	simple_lock(&idt_lock);
-	unsetgate(&idt[vec]);
-	idt_allocmap[vec] = 0;
-	simple_unlock(&idt_lock);
 }
 
 /*

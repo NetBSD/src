@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_exec.c,v 1.51 2007/07/01 20:14:17 dsl Exp $ */
+/*	$NetBSD: darwin_exec.c,v 1.51.16.1 2007/12/26 19:48:48 ad Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "opt_compat_darwin.h" /* For COMPAT_DARWIN in mach_port.h */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.51 2007/07/01 20:14:17 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.51.16.1 2007/12/26 19:48:48 ad Exp $");
 
 #include "opt_syscall_debug.h"
 
@@ -140,12 +140,7 @@ const struct emul emul_darwin = {
  * extra information in case of dynamic binding.
  */
 int
-exec_darwin_copyargs(l, pack, arginfo, stackp, argp)
-	struct lwp *l;
-	struct exec_package *pack;
-	struct ps_strings *arginfo;
-	char **stackp;
-	void *argp;
+exec_darwin_copyargs(struct lwp *l, struct exec_package *pack, struct ps_strings *arginfo, char **stackp, void *argp)
 {
 	struct exec_macho_emul_arg *emea;
 	struct exec_macho_object_header *macho_hdr;
@@ -226,17 +221,14 @@ exec_darwin_copyargs(l, pack, arginfo, stackp, argp)
 }
 
 int
-exec_darwin_probe(path)
-	const char **path;
+exec_darwin_probe(const char **path)
 {
 	*path = emul_darwin.e_path;
 	return 0;
 }
 
 static void
-darwin_e_proc_exec(p, epp)
-	struct proc *p;
-	struct exec_package *epp;
+darwin_e_proc_exec(struct proc *p, struct exec_package *epp)
 {
 	struct darwin_emuldata *ded;
 
@@ -298,9 +290,7 @@ darwin_e_proc_fork(struct proc *p, struct proc *parent, int forkflags)
 }
 
 static void
-darwin_e_proc_init(p, vmspace)
-	struct proc *p;
-	struct vmspace *vmspace;
+darwin_e_proc_init(struct proc *p, struct vmspace *vmspace)
 {
 	struct darwin_emuldata *ded;
 
@@ -321,8 +311,7 @@ darwin_e_proc_init(p, vmspace)
 }
 
 static void
-darwin_e_proc_exit(p)
-	struct proc *p;
+darwin_e_proc_exit(struct proc *p)
 {
 	struct darwin_emuldata *ded;
 	int error, mode;
@@ -412,9 +401,7 @@ darwin_e_proc_exit(p)
 }
 
 int
-darwin_exec_setup_stack(l, epp)
-	struct lwp *l;
-	struct exec_package *epp;
+darwin_exec_setup_stack(struct lwp *l, struct exec_package *epp)
 {
 	u_long max_stack_size;
 	u_long access_linear_min, access_size;

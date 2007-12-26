@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
+/*	$NetBSD: intr.c,v 1.1.48.1 2007/12/26 19:42:27 ad Exp $	*/
 
 /*-
  * Copyright (c) 2005 NONAKA Kimihiro
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.1 2006/09/01 21:26:18 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.1.48.1 2007/12/26 19:42:27 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -154,9 +154,7 @@ extintr_establish(int irq, int level, int (*ih_fun)(void *), void *ih_arg)
 		panic("extintr_establish: unknown level %d", level);
 		/*NOTREACHED*/
 #endif
-	case IPL_BIO:
-	case IPL_NET:
-	case IPL_TTY:
+	case IPL_VM:
 		break;
 	}
 

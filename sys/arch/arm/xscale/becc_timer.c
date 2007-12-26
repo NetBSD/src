@@ -1,4 +1,4 @@
-/*	$NetBSD: becc_timer.c,v 1.11 2007/01/06 16:18:18 christos Exp $	*/
+/*	$NetBSD: becc_timer.c,v 1.11.34.1 2007/12/26 19:42:02 ad Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: becc_timer.c,v 1.11 2007/01/06 16:18:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: becc_timer.c,v 1.11.34.1 2007/12/26 19:42:02 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -163,7 +163,7 @@ cpu_initclocks(void)
 	BECC_CSR_WRITE(BECC_TSCRA, TSCRx_TE | TSCRx_CM);
 
 	/* register soft interrupt handler as well */
-	becc_intr_establish(ICU_SOFT, IPL_SOFT, becc_softint, NULL);
+	becc_intr_establish(ICU_SOFT, IPL_SOFTCLOCK, becc_softint, NULL);
 
 	restore_interrupts(oldirqstate);
 }

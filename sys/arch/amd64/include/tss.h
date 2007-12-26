@@ -1,4 +1,4 @@
-/*	$NetBSD: tss.h,v 1.1 2003/04/26 18:39:49 fvdl Exp $	*/
+/*	$NetBSD: tss.h,v 1.1.90.1 2007/12/26 19:42:00 ad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -56,6 +56,6 @@ struct x86_64_tss {
 	u_int32_t	tss_reserved5;
 	u_int16_t	tss_reserved6;
 	u_int16_t	tss_iobase;
-} __attribute__((packed));
+} __packed;
 
 #endif /* _AMD64_TSS_H_ */

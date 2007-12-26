@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.16 2007/11/12 19:42:44 joerg Exp $	*/
+/*	$NetBSD: i2c.c,v 1.16.2.1 2007/12/26 19:46:11 ad Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -34,6 +34,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.16.2.1 2007/12/26 19:46:11 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,6 +154,9 @@ iic_attach(struct device *parent, struct device *self, void *aux)
 		aprint_normal("\n");
 	}
 #endif
+
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	/*
 	 * Attach all i2c devices described in the kernel

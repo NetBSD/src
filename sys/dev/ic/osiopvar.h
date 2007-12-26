@@ -1,4 +1,4 @@
-/*	$NetBSD: osiopvar.h,v 1.10 2007/06/30 14:08:58 tsutsui Exp $	*/
+/*	$NetBSD: osiopvar.h,v 1.10.16.1 2007/12/26 19:46:20 ad Exp $	*/
 
 /*
  * Copyright (c) 2001 Izumi Tsutsui.  All rights reserved.
@@ -112,7 +112,7 @@ struct osiop_ds {
 	uint8_t msgbuf[8];		/* 224: message in buf */
 	uint8_t stat[8];		/* 232: stat buf */
 	uint8_t pad2[16];		/* 240: padding to 256bytes */
-} __attribute__((__packed__));
+} __packed;
 
 /* status can hold the SCSI_* status values, and 2 additional values: */
 #define SCSI_OSIOP_NOCHECK	0xfe	/* don't check the scsi status */

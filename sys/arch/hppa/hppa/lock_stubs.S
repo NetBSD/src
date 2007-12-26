@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.10 2007/11/29 16:14:28 ad Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.10.2.1 2007/12/26 19:42:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -116,7 +116,7 @@ LEAF_ENTRY(mutex_exit)
 	ldo	(MTX_LOCK + HPPA_LDCW_ALIGN - 1)(%arg0), %t3
 	depi	0, 31, 4, %t3
 	stw	%t1,MTX_OWNER(%arg0)
-	stw	%t2,0(%t3)			/* %t3 is 16 byte aligned */
+	stw	%t2,0(%t3)			/* %t3 is properly aligned */
 	sync
 
 	/*	

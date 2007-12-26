@@ -1,4 +1,4 @@
-/*	$NetBSD: kloader.c,v 1.12 2007/02/21 22:59:58 thorpej Exp $	*/
+/*	$NetBSD: kloader.c,v 1.12.26.1 2007/12/26 19:45:57 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kloader.c,v 1.12 2007/02/21 22:59:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kloader.c,v 1.12.26.1 2007/12/26 19:45:57 ad Exp $");
 
 #include "debug_kloader.h"
 
@@ -58,13 +58,13 @@ __KERNEL_RCSID(0, "$NetBSD: kloader.c,v 1.12 2007/02/21 22:59:58 thorpej Exp $")
 int	kloader_debug = 1;
 #define	DPRINTF(fmt, args...)						\
 	if (kloader_debug)						\
-		printf("%s: " fmt, __FUNCTION__ , ##args)
+		printf("%s: " fmt, __func__ , ##args)
 #define	_DPRINTF(fmt, args...)						\
 	if (kloader_debug)						\
 		printf(fmt, ##args)
 #define	DPRINTFN(n, fmt, args...)					\
 	if (kloader_debug > (n))					\
-		printf("%s: " fmt, __FUNCTION__ , ##args)
+		printf("%s: " fmt, __func__ , ##args)
 #define	_DPRINTFN(n, fmt, args...)					\
 	if (kloader_debug > (n))					\
 		printf(fmt, ##args)
@@ -596,11 +596,10 @@ kloader_load_segment(Elf_Phdr *p)
 struct vnode *
 kloader_open(const char *filename)
 {
-	struct lwp *l = KLOADER_LWP;
 	struct nameidata nid;
 	int error;
 
-	NDINIT(&nid, LOOKUP, FOLLOW, UIO_SYSSPACE, filename, l);
+	NDINIT(&nid, LOOKUP, FOLLOW, UIO_SYSSPACE, filename);
 
 	error = namei(&nid);
 	if (error != 0) {

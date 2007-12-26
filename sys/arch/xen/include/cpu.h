@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.24 2007/11/22 16:16:56 bouyer Exp $	*/
+/*	$NetBSD: cpu.h,v 1.24.2.1 2007/12/26 19:42:59 ad Exp $	*/
 /*	NetBSD: cpu.h,v 1.113 2004/02/20 17:35:01 yamt Exp 	*/
 
 /*-
@@ -194,7 +194,7 @@ extern struct cpu_info *cpu_info_list;
 
 static struct cpu_info *curcpu(void);
 
-__inline static struct cpu_info * __attribute__((__unused__))
+__inline static struct cpu_info * __unused
 curcpu()
 {
 	struct cpu_info *ci;

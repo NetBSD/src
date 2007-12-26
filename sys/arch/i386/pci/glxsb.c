@@ -1,4 +1,4 @@
-/* $NetBSD: glxsb.c,v 1.2 2007/07/09 20:52:18 ad Exp $ */
+/*	$NetBSD: glxsb.c,v 1.2.26.1 2007/12/26 19:42:24 ad Exp $	*/
 /* $OpenBSD: glxsb.c,v 1.7 2007/02/12 14:31:45 tom Exp $ */
 
 /*
@@ -25,6 +25,8 @@
  */
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: glxsb.c,v 1.2.26.1 2007/12/26 19:42:24 ad Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>

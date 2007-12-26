@@ -1,3 +1,5 @@
+/*	$NetBSD: ati_pcigart.c,v 1.2.24.1 2007/12/26 19:47:08 ad Exp $	*/
+
 /* ati_pcigart.h -- ATI PCI GART support -*- linux-c -*-
  * Created: Wed Dec 13 21:52:19 2000 by gareth@valinux.com
  */
@@ -30,6 +32,7 @@
  */
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ati_pcigart.c,v 1.2.24.1 2007/12/26 19:47:08 ad Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/ati_pcigart.c,v 1.3 2005/11/28 23:13:52 anholt Exp $");
 */

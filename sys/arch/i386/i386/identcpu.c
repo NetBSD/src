@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.84 2007/11/22 16:16:46 bouyer Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.84.2.1 2007/12/26 19:42:19 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.84 2007/11/22 16:16:46 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.84.2.1 2007/12/26 19:42:19 ad Exp $");
 
 #include "opt_enhanced_speedstep.h"
 #include "opt_intel_odcm.h"
@@ -265,7 +265,7 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				"Pentium Pro, II or III"	/* Default */
 			},
 			NULL,
-			NULL,
+			intel_family_new_probe,
 			NULL,
 		},
 		/* Family > 6 */
@@ -1002,7 +1002,7 @@ cpu_probe_features(struct cpu_info *ci)
 	if (ci->ci_cpuid_level < 1)
 		return;
 
-	xmax = sizeof (i386_cpuid_cpus) / sizeof (i386_cpuid_cpus[0]);
+	xmax = sizeof(__arraycount(i386_cpuid_cpus));
 	for (i = 0; i < xmax; i++) {
 		if (!strncmp((char *)ci->ci_vendor,
 		    i386_cpuid_cpus[i].cpu_id, 12)) {
@@ -1063,7 +1063,7 @@ amd_family6_probe(struct cpu_info *ci)
 	if (*cpu_brand_string == '\0')
 		return;
 	
-	for (i = 1; i < sizeof(amd_brand) / sizeof(amd_brand[0]); i++)
+	for (i = 1; i < sizeof(__arraycount(amd_brand)); i++)
 		if ((p = strstr(cpu_brand_string, amd_brand[i])) != NULL) {
 			ci->ci_brand_id = i;
 			strlcpy(amd_brand_name, p, sizeof(amd_brand_name));

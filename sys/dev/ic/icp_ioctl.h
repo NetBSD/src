@@ -1,4 +1,4 @@
-/*	$NetBSD: icp_ioctl.h,v 1.5 2005/12/11 12:21:27 christos Exp $	*/
+/*	$NetBSD: icp_ioctl.h,v 1.5.56.1 2007/12/26 19:46:20 ad Exp $	*/
 
 /*
  *       Copyright (c) 2000-03 Intel Corporation
@@ -60,10 +60,10 @@ typedef struct gdt_ucmd {
 			struct icp_ioctlcmd ic;
 			struct icp_cachecmd cc;
 		} cmd_packet;
-	} __attribute__((__packed__)) command;
+	} __packed command;
 
 	u_int8_t	data[GDT_SCRATCH_SZ];
-} __attribute__((__packed__)) gdt_ucmd_t;
+} __packed gdt_ucmd_t;
 #define	GDT_IOCTL_GENERAL	_IOWR('J', 0, gdt_ucmd_t)
 
 /* get driver version */
@@ -80,7 +80,7 @@ typedef struct gdt_ctrt {
 	u_int16_t	ext_type;
 	u_int16_t	device_id;
 	u_int16_t	sub_device_id;
-} __attribute__((__packed__)) gdt_ctrt_t;
+} __packed gdt_ctrt_t;
 #define	GDT_IOCTL_CTRTYPE	_IOWR('J', 2, gdt_ctrt_t)
 
 /* get OS version */
@@ -90,7 +90,7 @@ typedef struct gdt_osv {
 	u_int8_t	subversion;
 	u_int16_t	revision;
 	char		name[64];
-} __attribute__((__packed__)) gdt_osv_t;
+} __packed gdt_osv_t;
 #define	GDT_IOCTL_OSVERS	_IOR('J', 3, gdt_osv_t)
 
 /* get controller count */
@@ -112,14 +112,14 @@ typedef struct {
 			u_int16_t	ionode;
 			u_int16_t	service;
 			u_int32_t	index;
-		} __attribute__((__packed__)) driver;
+		} __packed driver;
 		struct {
 			u_int16_t	ionode;
 			u_int16_t	service;
 			u_int16_t	status;
 			u_int32_t	info;
 			u_int8_t	scsi_coord[3];
-		} __attribute__((__packed__)) async;
+		} __packed async;
 		struct {
 			u_int16_t	ionode;
 			u_int16_t	service;
@@ -128,17 +128,17 @@ typedef struct {
 			u_int16_t	hostdrive;
 			u_int8_t	scsi_coord[3];
 			u_int8_t	sense_key;
-		} __attribute__((__packed__)) sync;
+		} __packed sync;
 		struct {
 			u_int32_t	l1;
 			u_int32_t	l2;
 			u_int32_t	l3;
 			u_int32_t	l4;
-		} __attribute__((__packed__)) test;
+		} __packed test;
 	} eu;
 	u_int32_t	severity;
 	u_int8_t	event_string[256];
-} __attribute__((__packed__)) gdt_evt_data;
+} __packed gdt_evt_data;
 
 typedef struct {
 	u_int32_t	first_stamp;
@@ -149,13 +149,13 @@ typedef struct {
 	u_int8_t	application;
 	u_int8_t	reserved;
 	gdt_evt_data	event_data;
-} __attribute__((__packed__)) gdt_evt_str;
+} __packed gdt_evt_str;
 
 typedef struct gdt_event {
 	int		erase;
 	int		handle;
 	gdt_evt_str	dvr;
-} __attribute__((__packed__)) gdt_event_t;
+} __packed gdt_event_t;
 #define	GDT_IOCTL_EVENT		_IOWR('J', 7, gdt_event_t)
 
 /* get statistics */
@@ -168,7 +168,7 @@ typedef struct gdt_statist {
 	u_int16_t	cmd_index_max;
 	u_int16_t	sg_count_act;
 	u_int16_t	sg_count_max;
-} __attribute__((__packed__)) gdt_statist_t;
+} __packed gdt_statist_t;
 #define	GDT_IOCTL_STATIST	_IOR('J', 9, gdt_statist_t)
 
 /* rescan host drives */
@@ -181,8 +181,8 @@ typedef struct gdt_rescan {
 		u_int8_t	target;
 		u_int8_t	lun;
 		u_int8_t	cluster_type;
-	} __attribute__((__packed__)) hdr_list[ICP_MAX_HDRIVES];
-} __attribute__((__packed__)) gdt_rescan_t;
+	} __packed hdr_list[ICP_MAX_HDRIVES];
+} __packed gdt_rescan_t;
 #define	GDT_IOCTL_RESCAN	_IOWR('J', 11, gdt_rescan_t)
 
 #endif /* _DEV_IC_ICP_IOCTL_H_ */

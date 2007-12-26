@@ -1,4 +1,4 @@
-/*  $NetBSD: if_wpi.c,v 1.32 2007/12/01 18:02:42 jmcneill Exp $    */
+/*  $NetBSD: if_wpi.c,v 1.32.2.1 2007/12/26 19:46:59 ad Exp $    */
 
 /*-
  * Copyright (c) 2006, 2007
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.32 2007/12/01 18:02:42 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.32.2.1 2007/12/26 19:46:59 ad Exp $");
 
 /*
  * Driver for Intel PRO/Wireless 3945ABG 802.11 network adapters.
@@ -94,7 +94,6 @@ static const struct ieee80211_rateset wpi_rateset_11g =
 static int  wpi_match(device_t, struct cfdata *, void *);
 static void wpi_attach(device_t, device_t, void *);
 static int  wpi_detach(device_t , int);
-static void wpi_power(int, void *);
 static int  wpi_dma_contig_alloc(bus_dma_tag_t, struct wpi_dma_info *,
 	void **, bus_size_t, bus_size_t, int);
 static void wpi_dma_contig_free(struct wpi_dma_info *);
@@ -164,6 +163,7 @@ static int  wpi_reset(struct wpi_softc *);
 static void wpi_hw_config(struct wpi_softc *);
 static int  wpi_init(struct ifnet *);
 static void wpi_stop(struct ifnet *, int);
+static bool wpi_resume(device_t);
 
 CFATTACH_DECL_NEW(wpi, sizeof (struct wpi_softc), wpi_match, wpi_attach,
 	wpi_detach, NULL);
@@ -212,10 +212,7 @@ wpi_attach(device_t parent __unused, device_t self, void *aux)
 	revision = PCI_REVISION(pa->pa_class);
 	aprint_normal(": %s (rev. 0x%02x)\n", devinfo, revision);
 
-	/* clear device specific PCI configuration register 0x41 */
-	data = pci_conf_read(sc->sc_pct, sc->sc_pcitag, 0x40);
-	data &= ~0x0000ff00;
-	pci_conf_write(sc->sc_pct, sc->sc_pcitag, 0x40, data);
+	pci_disable_retry(pa->pa_pc, pa->pa_tag);
 
 	/* enable bus-mastering */
 	data = pci_conf_read(sc->sc_pct, sc->sc_pcitag, PCI_COMMAND_STATUS_REG);
@@ -343,8 +340,10 @@ wpi_attach(device_t parent __unused, device_t self, void *aux)
 	sc->amrr.amrr_min_success_threshold = 1;
 	sc->amrr.amrr_max_success_threshold = 15;
 
-	/* set powerhook */
-	sc->powerhook = powerhook_establish(device_xname(self), wpi_power, sc);
+	if (!pmf_device_register(self, NULL, wpi_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+	else
+		pmf_class_network_register(self, ifp);
 
 #if NBPFILTER > 0
 	bpfattach2(ifp, DLT_IEEE802_11_RADIO,
@@ -404,32 +403,6 @@ wpi_detach(device_t self, int flags __unused)
 	bus_space_unmap(sc->sc_st, sc->sc_sh, sc->sc_sz);
 
 	return 0;
-}
-
-static void
-wpi_power(int why, void *arg)
-{
-	struct wpi_softc *sc = arg;
-	struct ifnet *ifp;
-	pcireg_t data;
-	int s;
-
-	if (why != PWR_RESUME)
-		return;
-
-	/* clear device specific PCI configuration register 0x41 */
-	data = pci_conf_read(sc->sc_pct, sc->sc_pcitag, 0x40);
-	data &= ~0x0000ff00;
-	pci_conf_write(sc->sc_pct, sc->sc_pcitag, 0x40, data);
-
-	s = splnet();
-	ifp = sc->sc_ic.ic_ifp;
-	if (ifp->if_flags & IFF_UP) {
-		ifp->if_init(ifp);
-		if (ifp->if_flags & IFF_RUNNING)
-			ifp->if_start(ifp);
-	}
-	splx(s);
 }
 
 static int
@@ -3152,4 +3125,15 @@ wpi_stop(struct ifnet *ifp, int disable)
 
 	tmp = WPI_READ(sc, WPI_RESET);
 	WPI_WRITE(sc, WPI_RESET, tmp | WPI_SW_RESET);
+}
+
+static bool
+wpi_resume(device_t dv)
+{
+	struct wpi_softc *sc = device_private(dv);
+
+	pci_disable_retry(sc->sc_pct, sc->sc_pcitag);
+	(void)wpi_reset(sc);
+
+	return true;
 }

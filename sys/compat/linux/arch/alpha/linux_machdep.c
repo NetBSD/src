@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.39 2007/07/08 09:41:00 pooka Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.39.16.1 2007/12/26 19:49:02 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.39 2007/07/08 09:41:00 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.39.16.1 2007/12/26 19:49:02 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,10 +99,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.39 2007/07/08 09:41:00 pooka Exp
  */
 
 void
-linux_setregs(l, epp, stack)
-	struct lwp *l;
-	struct exec_package *epp;
-	u_long stack;
+linux_setregs(struct lwp *l, struct exec_package *epp, u_long stack)
 {
 #ifdef DEBUG
 	struct trapframe *tfp = l->l_md.md_tf;
@@ -430,14 +427,11 @@ linux_restore_sigcontext(struct lwp *l, struct linux_sigcontext context,
 }
 
 int
-linux_sys_rt_sigreturn(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_rt_sigreturn(struct lwp *l, const struct linux_sys_rt_sigreturn_args *uap, register_t *retval)
 {
-	struct linux_sys_rt_sigreturn_args /* {
+	/* {
 		syscallarg(struct linux_rt_sigframe *) sfp;
-	} */ *uap = v;
+	} */
 	struct linux_rt_sigframe *sfp, sigframe;
 	sigset_t mask;
 
@@ -467,14 +461,11 @@ linux_sys_rt_sigreturn(l, v, retval)
 
 
 int
-linux_sys_sigreturn(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_sigreturn(struct lwp *l, const struct linux_sys_sigreturn_args *uap, register_t *retval)
 {
-	struct linux_sys_sigreturn_args /* {
+	/* {
 		syscallarg(struct linux_sigframe *) sfp;
-	} */ *uap = v;
+	} */
 	struct linux_sigframe *sfp, frame;
 	sigset_t mask;
 
@@ -506,16 +497,13 @@ linux_sys_sigreturn(l, v, retval)
  */
 /* XXX XAX update this, add maps, etc... */
 int
-linux_machdepioctl(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_machdepioctl(struct lwp *l, const struct linux_sys_ioctl_args *uap, register_t *retval)
 {
-	struct linux_sys_ioctl_args /* {
+	/* {
 		syscallarg(int) fd;
 		syscallarg(u_long) com;
 		syscallarg(void *) data;
-	} */ *uap = v;
+	} */
 	struct sys_ioctl_args bia;
 	u_long com;
 
@@ -534,9 +522,7 @@ linux_machdepioctl(l, v, retval)
 
 /* XXX XAX fix this */
 dev_t
-linux_fakedev(dev, raw)
-	dev_t dev;
-	int raw;
+linux_fakedev(dev_t dev, int raw)
 {
 	return dev;
 }

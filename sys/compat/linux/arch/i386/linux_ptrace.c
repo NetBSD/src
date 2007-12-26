@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ptrace.c,v 1.18 2007/07/09 21:10:46 ad Exp $	*/
+/*	$NetBSD: linux_ptrace.c,v 1.18.16.1 2007/12/26 19:49:08 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ptrace.c,v 1.18 2007/07/09 21:10:46 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ptrace.c,v 1.18.16.1 2007/12/26 19:49:08 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -125,17 +125,14 @@ struct linux_user {
 #define ISSET(t, f)		((t) & (f))
 
 int
-linux_sys_ptrace_arch(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_ptrace_arch(struct lwp *l, const struct linux_sys_ptrace_args *uap, register_t *retval)
 {
-	struct linux_sys_ptrace_args /* {
+	/* {
 		syscallarg(int) request;
 		syscallarg(int) pid;
 		syscallarg(int) addr;
 		syscallarg(int) data;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 	int request, error;
 	struct proc *t;				/* target process */

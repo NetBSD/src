@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_cmd_reg.h,v 1.15 2005/12/11 12:22:50 christos Exp $	*/
+/*	$NetBSD: pciide_cmd_reg.h,v 1.15.56.1 2007/12/26 19:47:05 ad Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -95,7 +95,7 @@
 #define CMD_UDMATIM_UDMA33(drive) (0x04 << (drive))
 #define CMD_UDMATIM_TIM_MASK	0x3
 #define CMD_UDMATIM_TIM_OFF(drive) (4 + ((drive) * 2))
-static const int8_t cmd0646_9_tim_udma[] __attribute__((__unused__)) =
+static const int8_t cmd0646_9_tim_udma[] __unused =
     {0x03, 0x02, 0x01, 0x02, 0x01, 0x00};
 
 /*
@@ -103,7 +103,7 @@ static const int8_t cmd0646_9_tim_udma[] __attribute__((__unused__)) =
  * for all dma_mode we have to have
  * DMA_timings(dma_mode) >= PIO_timings(dma_mode + 2)
  */
-static const int8_t cmd0643_9_data_tim_pio[] __attribute__((__unused__)) =
+static const int8_t cmd0643_9_data_tim_pio[] __unused =
     {0xA9, 0x57, 0x44, 0x32, 0x3F};
-static const int8_t cmd0643_9_data_tim_dma[] __attribute__((__unused__)) =
+static const int8_t cmd0643_9_data_tim_dma[] __unused =
     {0x87, 0x32, 0x3F};

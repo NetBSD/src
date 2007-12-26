@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_09.c,v 1.15 2007/03/18 21:38:33 dsl Exp $	*/
+/*	$NetBSD: netbsd32_compat_09.c,v 1.15.18.1 2007/12/26 19:49:31 ad Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_09.c,v 1.15 2007/03/18 21:38:33 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_09.c,v 1.15.18.1 2007/12/26 19:49:31 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,15 +44,12 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_09.c,v 1.15 2007/03/18 21:38:33 dsl 
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 
 int
-compat_09_netbsd32_ogetdomainname(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+compat_09_netbsd32_ogetdomainname(struct lwp *l, const struct compat_09_netbsd32_ogetdomainname_args *uap, register_t *retval)
 {
-	struct compat_09_netbsd32_ogetdomainname_args /* {
+	/* {
 		syscallarg(netbsd32_charp) domainname;
 		syscallarg(int) len;
-	} */ *uap = v;
+	} */
 	int name[2];
 	size_t sz;
 
@@ -64,15 +61,12 @@ compat_09_netbsd32_ogetdomainname(l, v, retval)
 }
 
 int
-compat_09_netbsd32_osetdomainname(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+compat_09_netbsd32_osetdomainname(struct lwp *l, const struct compat_09_netbsd32_osetdomainname_args *uap, register_t *retval)
 {
-	struct compat_09_netbsd32_osetdomainname_args /* {
+	/* {
 		syscallarg(netbsd32_charp) domainname;
 		syscallarg(int) len;
-	} */ *uap = v;
+	} */
 	int name[2];
 
 	name[0] = CTL_KERN;
@@ -82,14 +76,11 @@ compat_09_netbsd32_osetdomainname(l, v, retval)
 }
 
 int
-compat_09_netbsd32_uname(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+compat_09_netbsd32_uname(struct lwp *l, const struct compat_09_netbsd32_uname_args *uap, register_t *retval)
 {
-	struct compat_09_netbsd32_uname_args /* {
+	/* {
 		syscallarg(netbsd32_outsnamep_t) name;
-	} */ *uap = v;
+	} */
 	struct compat_09_sys_uname_args ua;
 
 	NETBSD32TOP_UAP(name, struct outsname);
