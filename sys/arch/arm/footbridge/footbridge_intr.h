@@ -1,4 +1,4 @@
-/* 	$NetBSD: footbridge_intr.h,v 1.10 2007/03/09 06:45:20 thorpej Exp $	*/
+/* 	$NetBSD: footbridge_intr.h,v 1.10.16.1 2007/12/26 22:24:37 rjs Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -40,29 +40,16 @@
 
 #include <arm/armreg.h>
 
-/* Define the various Interrupt Priority Levels */
-
-/* Hardware Interrupt Priority Levels are not mutually exclusive. */
-
 #define IPL_NONE	0	/* nothing */
-#define IPL_SOFT	1	/* generic soft interrupts */
-#define IPL_SOFTCLOCK	2	/* clock software interrupts */
+#define IPL_SOFTCLOCK	1	/* clock soft interrupts */
+#define IPL_SOFTBIO	2	/* block i/o */
 #define IPL_SOFTNET	3	/* network software interrupts */
-#define IPL_BIO		4	/* block I/O */
-#define IPL_NET		5	/* network */
-#define IPL_SOFTSERIAL	6	/* serial software interrupts */
-#define IPL_TTY		7	/* terminal */
-#define	IPL_LPT		IPL_TTY
-#define IPL_VM		8	/* memory allocation */
-#define IPL_AUDIO	9	/* audio */
-#define IPL_CLOCK	10	/* clock */
-#define IPL_STATCLOCK	11	/* statclock */
-#define IPL_HIGH	12	/* everything */
-#define	IPL_SCHED	IPL_HIGH
-#define	IPL_LOCK	IPL_HIGH
-#define IPL_SERIAL	13	/* serial */
+#define IPL_SOFTSERIAL	4	/* serial software interrupts */
+#define IPL_VM		5	/* memory allocation */
+#define IPL_SCHED	6	/* clock */
+#define IPL_HIGH	7	/* everything */
 
-#define NIPL		14
+#define NIPL		8
 
 #define	IST_UNUSABLE	-1	/* interrupt cannot be used */
 #define	IST_NONE	0	/* none (dummy) */

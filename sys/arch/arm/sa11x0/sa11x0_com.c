@@ -1,4 +1,4 @@
-/*      $NetBSD: sa11x0_com.c,v 1.39.6.1 2007/10/06 17:38:29 rjs Exp $        */
+/*      $NetBSD: sa11x0_com.c,v 1.39.6.2 2007/12/26 22:24:41 rjs Exp $        */
 
 /*-
  * Copyright (c) 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x0_com.c,v 1.39.6.1 2007/10/06 17:38:29 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x0_com.c,v 1.39.6.2 2007/12/26 22:24:41 rjs Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -1064,16 +1064,8 @@ sacomstart(struct tty *tp)
 	s = spltty();
 	if (ISSET(tp->t_state, TS_BUSY | TS_TIMEOUT | TS_TTSTOP))
 		goto out;
-
-	if (tp->t_outq.c_cc <= tp->t_lowat) {
-		if (ISSET(tp->t_state, TS_ASLEEP)) {
-			CLR(tp->t_state, TS_ASLEEP);
-			wakeup(&tp->t_outq);
-		}
-		selwakeup(&tp->t_wsel);
-		if (tp->t_outq.c_cc == 0)
-			goto out;
-	}
+	if (!ttypull(tp))
+		goto out;
 
 	/* Grab the first contiguous region of buffer space. */
 	{

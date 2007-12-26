@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_intr.c,v 1.1.2.2 2007/10/05 13:30:54 rjs Exp $	*/
+/*	$NetBSD: sa11x0_intr.c,v 1.1.2.3 2007/12/26 22:24:41 rjs Exp $	*/
 
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x0_intr.c,v 1.1.2.2 2007/10/05 13:30:54 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x0_intr.c,v 1.1.2.3 2007/12/26 22:24:41 rjs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -161,8 +161,8 @@ __raise(int ipl)
  * Map a software interrupt queue to an interrupt priority level.
  */
 static const int si_to_ipl[SI_NQUEUES] = {
-	IPL_SOFT,		/* SI_SOFT */
 	IPL_SOFTCLOCK,		/* SI_SOFTCLOCK */
+	IPL_SOFTBIO,		/* SI_SOFTBIO */
 	IPL_SOFTNET,		/* SI_SOFTNET */
 	IPL_SOFTSERIAL,		/* SI_SOFTSERIAL */
 };
@@ -177,7 +177,10 @@ sa11x0_irq_handler(void *arg)
 	uint32_t irqbits;
 	int irqno;
 	int saved_spl_level;
+	struct cpu_info *ci;
 
+	ci = curcpu();
+	ci->ci_idepth++;
 	saved_spl_level = current_spl_level;
 
 	/* get pending IRQs */
@@ -212,6 +215,8 @@ sa11x0_irq_handler(void *arg)
 	/* restore spl to that was when this interrupt happen */
 	sa11x0_setipl(saved_spl_level);
 			
+	ci->ci_idepth--;
+
 	if(softint_pending & intr_mask.bits[IMASK_SOFTINT])
 		sa11x0_do_pending();
 }
@@ -257,39 +262,12 @@ sa11x0_update_intr_masks(int irqno, int level)
 	 * limited input buffer space/"real-time" requirements) a better
 	 * chance at not dropping data.
 	 */
-	imask_and(&sa11x0_imask[IPL_BIO], &sa11x0_imask[IPL_SOFTNET]);
-	imask_and(&sa11x0_imask[IPL_NET], &sa11x0_imask[IPL_BIO]);
-	imask_and(&sa11x0_imask[IPL_SOFTSERIAL], &sa11x0_imask[IPL_NET]);
-	imask_and(&sa11x0_imask[IPL_TTY], &sa11x0_imask[IPL_SOFTSERIAL]);
-
-	/*
-	 * splvm() blocks all interrupts that use the kernel memory
-	 * allocation facilities.
-	 */
-	imask_and(&sa11x0_imask[IPL_VM], &sa11x0_imask[IPL_TTY]);
-
-	/*
-	 * Audio devices are not allowed to perform memory allocation
-	 * in their interrupt routines, and they have fairly "real-time"
-	 * requirements, so give them a high interrupt priority.
-	 */
-	imask_and(&sa11x0_imask[IPL_AUDIO], &sa11x0_imask[IPL_VM]);
-
-	/*
-	 * splclock() must block anything that uses the scheduler.
-	 */
-	imask_and(&sa11x0_imask[IPL_CLOCK], &sa11x0_imask[IPL_AUDIO]);
-
-	/*
-	 * splhigh() must block "everything".
-	 */
-	imask_and(&sa11x0_imask[IPL_HIGH], &sa11x0_imask[IPL_STATCLOCK]);
-
-	/*
-	 * XXX We need serial drivers to run at the absolute highest priority
-	 * in order to avoid overruns, so serial > high.
-	 */
-	imask_and(&sa11x0_imask[IPL_SERIAL], &sa11x0_imask[IPL_HIGH]);
+	imask_and(&sa11x0_imask[IPL_SOFTBIO], &sa11x0_imask[IPL_SOFTCLOCK]);
+	imask_and(&sa11x0_imask[IPL_SOFTNET], &sa11x0_imask[IPL_SOFTBIO]);
+	imask_and(&sa11x0_imask[IPL_SOFTSERIAL], &sa11x0_imask[IPL_SOFTNET]);
+	imask_and(&sa11x0_imask[IPL_VM], &sa11x0_imask[IPL_SOFTSERIAL]);
+	imask_and(&sa11x0_imask[IPL_SCHED], &sa11x0_imask[IPL_VM]);
+	imask_and(&sa11x0_imask[IPL_HIGH], &sa11x0_imask[IPL_SCHED]);
 
 	write_icu(SAIPIC_MR, sa11x0_imask[current_spl_level].bits[IMASK_ICU]);
 
@@ -308,38 +286,29 @@ init_interrupt_masks(void)
 	 * hardware handlers are installed.
 	 */
 	imask_zero(&sa11x0_imask[IPL_NONE]);
-	imask_orbit(&sa11x0_imask[IPL_NONE], SI_SOFT);
 	imask_orbit(&sa11x0_imask[IPL_NONE], SI_SOFTCLOCK);
+	imask_orbit(&sa11x0_imask[IPL_NONE], SI_SOFTBIO);
 	imask_orbit(&sa11x0_imask[IPL_NONE], SI_SOFTNET);
 	imask_orbit(&sa11x0_imask[IPL_NONE], SI_SOFTSERIAL);
 
 	/*
 	 * Initialize the soft interrupt masks to block themselves.
 	 */
-	imask_clrbit(&sa11x0_imask[IPL_SOFT], SI_SOFT);
 	imask_clrbit(&sa11x0_imask[IPL_SOFTCLOCK], SI_SOFTCLOCK);
+	imask_clrbit(&sa11x0_imask[IPL_SOFTBIO], SI_SOFTBIO);
 	imask_clrbit(&sa11x0_imask[IPL_SOFTNET], SI_SOFTNET);
 	imask_clrbit(&sa11x0_imask[IPL_SOFTSERIAL], SI_SOFTSERIAL);
-	imask_and(&sa11x0_imask[IPL_SOFT], &sa11x0_imask[IPL_NONE]);
 
-	/*
-	 * splsoftclock() is the only interface that users of the
-	 * generic software interrupt facility have to block their
-	 * soft intrs, so splsoftclock() must also block IPL_SOFT.
-	 */
-	imask_and(&sa11x0_imask[IPL_SOFTCLOCK], &sa11x0_imask[IPL_SOFT]);
-
-	/*
-	 * splsoftnet() must also block splsoftclock(), since we don't
-	 * want timer-driven network events to occur while we're
-	 * processing incoming packets.
-	 */
-	imask_and(&sa11x0_imask[IPL_SOFTNET], &sa11x0_imask[IPL_SOFTCLOCK]);
+	imask_and(&sa11x0_imask[IPL_SOFTCLOCK], &sa11x0_imask[IPL_NONE]);
+	imask_and(&sa11x0_imask[IPL_SOFTBIO], &sa11x0_imask[IPL_SOFTCLOCK]);
+	imask_and(&sa11x0_imask[IPL_SOFTNET], &sa11x0_imask[IPL_SOFTBIO]);
+	imask_and(&sa11x0_imask[IPL_SOFTSERIAL], &sa11x0_imask[IPL_SOFTNET]);
 }
 
 void
 sa11x0_do_pending(void)
 {
+#ifdef __HAVE_FAST_SOFTINTS
 	static __cpu_simple_lock_t processing = __SIMPLELOCK_UNLOCKED;
 	int oldirqstate, spl_save;
 
@@ -381,6 +350,7 @@ sa11x0_do_pending(void)
 	__cpu_simple_unlock(&processing);
 
 	restore_interrupts(oldirqstate);
+#endif
 }
 
 

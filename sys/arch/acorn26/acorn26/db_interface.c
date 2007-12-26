@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.14 2007/02/22 04:47:27 thorpej Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.14.18.1 2007/12/26 22:24:30 rjs Exp $	*/
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.14 2007/02/22 04:47:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.14.18.1 2007/12/26 22:24:30 rjs Exp $");
 
 #include "opt_ddb.h"
 
@@ -241,11 +241,11 @@ db_write_bytes(vm_offset_t addr, size_t size, const char *data)
 }
 
 const struct db_command db_machine_command_table[] = {
-	{ "bsw",	db_bus_write_cmd,	CS_MORE, NULL },
-	{ "frame",	db_show_frame_cmd,	0, NULL },
-	{ "irqstat",	db_irqstat_cmd,		0, NULL },
-	{ "panic",	db_show_panic_cmd,	0, NULL },
-	{ NULL, 	NULL, 			0, NULL }
+	{ DDB_ADD_CMD("bsw",	db_bus_write_cmd,	CS_MORE, NULL,NULL,NULL) },
+	{ DDB_ADD_CMD("frame",	db_show_frame_cmd,	0, NULL, NULL,NULL) },
+	{ DDB_ADD_CMD("irqstat",db_irqstat_cmd,		0, NULL, NULL,NULL) },
+	{ DDB_ADD_CMD("panic",	db_show_panic_cmd,	0, NULL, NULL,NULL) },
+	{ DDB_ADD_CMD( NULL,     NULL,              0, NULL, NULL,NULL) }
 };
 
 int

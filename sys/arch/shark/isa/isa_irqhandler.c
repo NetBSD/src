@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_irqhandler.c,v 1.14 2007/03/09 18:20:51 matt Exp $	*/
+/*	$NetBSD: isa_irqhandler.c,v 1.14.16.1 2007/12/26 22:24:54 rjs Exp $	*/
 
 /*
  * Copyright 1997
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_irqhandler.c,v 1.14 2007/03/09 18:20:51 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_irqhandler.c,v 1.14.16.1 2007/12/26 22:24:54 rjs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,7 +94,6 @@ int current_intr_depth;
 u_int current_mask;
 u_int actual_mask;
 u_int disabled_mask;
-u_int spl_mask;
 u_int irqmasks[IPL_LEVELS];
 
 /* Prototypes */
@@ -133,7 +132,6 @@ irq_init()
 	current_mask = 0x00000000;
 	disabled_mask = 0x00000000;
 	actual_mask = 0x00000000;
-	spl_mask = 0x00000000;
 
 	set_spl_masks();
 
@@ -306,38 +304,13 @@ irq_calculatemasks()
 	 * Enforce a hierarchy that gives slow devices a better chance at not
 	 * dropping data.
 	 */
-	irqmasks[IPL_SOFT] &= irqmasks[IPL_NONE];
-	irqmasks[IPL_SOFTCLOCK] &= irqmasks[IPL_SOFT];
-	irqmasks[IPL_SOFTNET] &= irqmasks[IPL_SOFTCLOCK];
-	irqmasks[IPL_BIO] &= irqmasks[IPL_SOFTNET];
-	irqmasks[IPL_NET] &= irqmasks[IPL_BIO];
-	irqmasks[IPL_SOFTSERIAL] &= irqmasks[IPL_NET];
-	irqmasks[IPL_TTY] &= irqmasks[IPL_SOFTSERIAL];
-	
-	/*
-	 * There are tty, network and disk drivers that use free() at interrupt
-	 * time, so imp > (tty | net | bio).
-	 */
-	irqmasks[IPL_VM] &= irqmasks[IPL_TTY];
-	irqmasks[IPL_AUDIO] &= irqmasks[IPL_VM];
-
-	/*
-	 * Since run queues may be manipulated by both the statclock and tty,
-	 * network, and disk drivers, statclock > (tty | net | bio).
-	 */
-	irqmasks[IPL_CLOCK] &= irqmasks[IPL_AUDIO];
-	irqmasks[IPL_STATCLOCK] &= irqmasks[IPL_CLOCK];
-
-	/*
-	 * IPL_HIGH must block everything that can manipulate a run queue.
-	 */
-	irqmasks[IPL_HIGH] &= irqmasks[IPL_STATCLOCK];
-
-	/*
-	 * We need serial drivers to run at the absolute highest priority to
-	 * avoid overruns, so serial > high.
-	 */
-	irqmasks[IPL_SERIAL] &= irqmasks[IPL_HIGH];
+	irqmasks[IPL_SOFTCLOCK] &= irqmasks[IPL_NONE];
+	irqmasks[IPL_SOFTBIO] &= irqmasks[IPL_SOFTCLOCK];
+	irqmasks[IPL_SOFTNET] &= irqmasks[IPL_SOFTBIO];
+	irqmasks[IPL_SOFTSERIAL] &= irqmasks[IPL_SOFTNET];
+	irqmasks[IPL_VM] &= irqmasks[IPL_SOFTSERIAL];
+	irqmasks[IPL_CLOCK] &= irqmasks[IPL_VM];
+	irqmasks[IPL_HIGH] &= irqmasks[IPL_CLOCK];
 }
 
 

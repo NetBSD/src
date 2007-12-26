@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.11.6.2 2007/11/01 16:06:50 rjs Exp $	*/
+/*	$NetBSD: psl.h,v 1.11.6.3 2007/12/26 22:24:39 rjs Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -57,39 +57,23 @@
  */
 
 #define _SPL_0		0
-#define _SPL_SOFT	1
 #define _SPL_SOFTCLOCK	1
-#define _SPL_SOFTNET	2
-#define _SPL_BIO	3
-#define _SPL_NET	4
-#define _SPL_SOFTSERIAL	5
-#define _SPL_TTY	6
-#define _SPL_VM		7
-#define _SPL_AUDIO	8
-#define _SPL_CLOCK	9
-#define _SPL_STATCLOCK	10
-#define _SPL_HIGH	11
-#define _SPL_SERIAL	12
-#define _SPL_LEVELS	13
+#define _SPL_SOFTBIO	2
+#define _SPL_SOFTNET	3
+#define _SPL_SOFTSERIAL	4
+#define _SPL_VM		5
+#define _SPL_SCHED	6
+#define _SPL_HIGH	7
+#define _SPL_LEVELS	8
 
 #define spl0()		splx(_SPL_0)
-#define splsoft()	raisespl(_SPL_SOFT)
-#define splsoftnet()	raisespl(_SPL_SOFTNET)
 #define splsoftclock()	raisespl(_SPL_SOFTCLOCK)
-#define splbio()	raisespl(_SPL_BIO)
-#define splnet()	raisespl(_SPL_NET)
+#define splsoftbio()	raisespl(_SPL_SOFTBIO)
+#define splsoftnet()	raisespl(_SPL_SOFTNET)
 #define splsoftserial()	raisespl(_SPL_SOFTSERIAL)
-#define spltty()	raisespl(_SPL_TTY)
-#define spllpt()	spltty()
 #define splvm()		raisespl(_SPL_VM)
-#define splaudio()	raisespl(_SPL_AUDIO)
-#define splclock()	raisespl(_SPL_CLOCK)
-#define splstatclock()	raisespl(_SPL_STATCLOCK)
-#define splserial()	raisespl(_SPL_SERIAL)
+#define splsched()	raisespl(_SPL_SCHED)
 #define splhigh()	raisespl(_SPL_HIGH)
-
-#define	splsched()	splhigh()
-#define	spllock()	splhigh()
 
 #ifdef _KERNEL
 #ifndef _LOCORE
