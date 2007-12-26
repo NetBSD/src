@@ -1,7 +1,9 @@
+/*	$NetBSD: nsaccess.c,v 1.1.56.1 2007/12/26 19:55:07 ad Exp $	*/
+
 /*******************************************************************************
  *
  * Module Name: nsaccess - Top-level functions for accessing ACPI namespace
- *              xRevision: 1.196 $
+ *              $Revision: 1.1.56.1 $
  *
  ******************************************************************************/
 
@@ -9,7 +11,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2007, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -115,14 +117,14 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsaccess.c,v 1.1 2006/03/23 13:36:31 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nsaccess.c,v 1.1.56.1 2007/12/26 19:55:07 ad Exp $");
 
 #define __NSACCESS_C__
 
-#include "acpi.h"
-#include "amlcode.h"
-#include "acnamesp.h"
-#include "acdispat.h"
+#include <dist/acpica/acpi.h>
+#include <dist/acpica/amlcode.h>
+#include <dist/acpica/acnamesp.h>
+#include <dist/acpica/acdispat.h>
 
 
 #define _COMPONENT          ACPI_NAMESPACE
@@ -154,7 +156,7 @@ AcpiNsRootInitialize (
     ACPI_STRING                 Val = NULL;
 
 
-    ACPI_FUNCTION_TRACE ("NsRootInitialize");
+    ACPI_FUNCTION_TRACE (NsRootInitialize);
 
 
     Status = AcpiUtAcquireMutex (ACPI_MTX_NAMESPACE);
@@ -221,8 +223,7 @@ AcpiNsRootInitialize (
 
             if (!Val)
             {
-		    /*XXXUNCONST*/
-		    Val = (void *)(intptr_t)InitVal->Val;
+                Val = __UNCONST(InitVal->Val);
             }
 
             /*
@@ -285,32 +286,25 @@ AcpiNsRootInitialize (
                 ObjDesc->Mutex.Node = NewNode;
                 ObjDesc->Mutex.SyncLevel = (UINT8) (ACPI_TO_INTEGER (Val) - 1);
 
+                /* Create a mutex */
+
+                Status = AcpiOsCreateMutex (&ObjDesc->Mutex.OsMutex);
+                if (ACPI_FAILURE (Status))
+                {
+                    AcpiUtRemoveReference (ObjDesc);
+                    goto UnlockAndExit;
+                }
+
+                /* Special case for ACPI Global Lock */
+
                 if (ACPI_STRCMP (InitVal->Name, "_GL_") == 0)
                 {
-                    /*
-                     * Create a counting semaphore for the
-                     * global lock
-                     */
-                    Status = AcpiOsCreateSemaphore (ACPI_NO_UNIT_LIMIT,
-                                            1, &ObjDesc->Mutex.Semaphore);
-                    if (ACPI_FAILURE (Status))
-                    {
-                        AcpiUtRemoveReference (ObjDesc);
-                        goto UnlockAndExit;
-                    }
+                    AcpiGbl_GlobalLockMutex = ObjDesc;
 
-                    /*
-                     * We just created the mutex for the
-                     * global lock, save it
-                     */
-                    AcpiGbl_GlobalLockSemaphore = ObjDesc->Mutex.Semaphore;
-                }
-                else
-                {
-                    /* Create a mutex */
+                    /* Create additional counting semaphore for global lock */
 
-                    Status = AcpiOsCreateSemaphore (1, 1,
-                                        &ObjDesc->Mutex.Semaphore);
+                    Status = AcpiOsCreateSemaphore (
+                                1, 0, &AcpiGbl_GlobalLockSemaphore);
                     if (ACPI_FAILURE (Status))
                     {
                         AcpiUtRemoveReference (ObjDesc);
@@ -348,8 +342,8 @@ UnlockAndExit:
 
     if (ACPI_SUCCESS (Status))
     {
-        Status = AcpiNsGetNodeByPath ("\\_GPE", NULL, ACPI_NS_NO_UPSEARCH,
-                        &AcpiGbl_FadtGpeDevice);
+        Status = AcpiNsGetNode (NULL, "\\_GPE", ACPI_NS_NO_UPSEARCH,
+                    &AcpiGbl_FadtGpeDevice);
     }
 
     return_ACPI_STATUS (Status);
@@ -400,11 +394,10 @@ AcpiNsLookup (
     ACPI_OBJECT_TYPE        TypeToCheckFor;
     ACPI_OBJECT_TYPE        ThisSearchType;
     UINT32                  SearchParentFlag = ACPI_NS_SEARCH_PARENT;
-    UINT32                  LocalFlags = Flags & ~(ACPI_NS_ERROR_IF_FOUND |
-                                                   ACPI_NS_SEARCH_PARENT);
+    UINT32                  LocalFlags;
 
 
-    ACPI_FUNCTION_TRACE ("NsLookup");
+    ACPI_FUNCTION_TRACE (NsLookup);
 
 
     if (!ReturnNode)
@@ -412,8 +405,9 @@ AcpiNsLookup (
         return_ACPI_STATUS (AE_BAD_PARAMETER);
     }
 
-    AcpiGbl_NsLookupCount++;
+    LocalFlags = Flags & ~(ACPI_NS_ERROR_IF_FOUND | ACPI_NS_SEARCH_PARENT);
     *ReturnNode = ACPI_ENTRY_NOT_FOUND;
+    AcpiGbl_NsLookupCount++;
 
     if (!AcpiGbl_RootNode)
     {
@@ -443,15 +437,18 @@ AcpiNsLookup (
             return_ACPI_STATUS (AE_AML_INTERNAL);
         }
 
-        /*
-         * This node might not be a actual "scope" node (such as a
-         * Device/Method, etc.)  It could be a Package or other object node.
-         * Backup up the tree to find the containing scope node.
-         */
-        while (!AcpiNsOpensScope (PrefixNode->Type) &&
-                PrefixNode->Type != ACPI_TYPE_ANY)
+        if (!(Flags & ACPI_NS_PREFIX_IS_SCOPE))
         {
-            PrefixNode = AcpiNsGetParentNode (PrefixNode);
+            /*
+             * This node might not be a actual "scope" node (such as a
+             * Device/Method, etc.)  It could be a Package or other object node.
+             * Backup up the tree to find the containing scope node.
+             */
+            while (!AcpiNsOpensScope (PrefixNode->Type) &&
+                    PrefixNode->Type != ACPI_TYPE_ANY)
+            {
+                PrefixNode = AcpiNsGetParentNode (PrefixNode);
+            }
         }
     }
 

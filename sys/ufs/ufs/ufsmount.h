@@ -1,4 +1,4 @@
-/*	$NetBSD: ufsmount.h,v 1.32 2007/09/10 23:47:23 pooka Exp $	*/
+/*	$NetBSD: ufsmount.h,v 1.32.8.1 2007/12/26 19:58:03 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -114,8 +114,7 @@ struct ufs_ops {
 	    const struct timespec *, const struct timespec *);
 	int (*uo_update)(struct vnode *, const struct timespec *,
 	    const struct timespec *, int);
-	int (*uo_truncate)(struct vnode *, off_t, int, kauth_cred_t,
-	    struct lwp *);
+	int (*uo_truncate)(struct vnode *, off_t, int, kauth_cred_t);
 	int (*uo_valloc)(struct vnode *, int, kauth_cred_t, struct vnode **);
 	int (*uo_vfree)(struct vnode *, ino_t, int);
 	int (*uo_balloc)(struct vnode *, off_t, int, kauth_cred_t, int,
@@ -128,8 +127,8 @@ struct ufs_ops {
 	(*UFS_OPS(vp)->uo_itimes)(VTOI(vp), (acc), (mod), (cre))
 #define	UFS_UPDATE(vp, acc, mod, flags) \
 	(*UFS_OPS(vp)->uo_update)((vp), (acc), (mod), (flags))
-#define	UFS_TRUNCATE(vp, off, flags, cr, p) \
-	(*UFS_OPS(vp)->uo_truncate)((vp), (off), (flags), (cr), (p))
+#define	UFS_TRUNCATE(vp, off, flags, cr) \
+	(*UFS_OPS(vp)->uo_truncate)((vp), (off), (flags), (cr))
 #define	UFS_VALLOC(vp, mode, cr, vpp) \
 	(*UFS_OPS(vp)->uo_valloc)((vp), (mode), (cr), (vpp))
 #define	UFS_VFREE(vp, ino, mode) \

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.34 2007/10/28 15:48:23 adrianp Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.34.4.1 2007/12/26 19:57:48 ad Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.34 2007/10/28 15:48:23 adrianp Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.34.4.1 2007/12/26 19:57:48 ad Exp $");
 
 /*
  * IPsec controller part.
@@ -889,11 +889,7 @@ ipsec_setspidx(struct mbuf *m, struct secpolicyindex *spidx, int needport)
 		m_copydata(m, 0, sizeof(ipbuf), &ipbuf);
 		ip = &ipbuf;
 	}
-#ifdef _IP_VHL
-	v = _IP_VHL_V(ip->ip_vhl);
-#else
 	v = ip->ip_v;
-#endif
 	switch (v) {
 	case 4:
 		error = ipsec4_setspidx_ipaddr(m, spidx);
@@ -940,11 +936,7 @@ ipsec4_get_ulp(struct mbuf *m, struct secpolicyindex *spidx, int needport)
 		struct ip *ip = mtod(m, struct ip *);
 		if (ip->ip_off & IP_OFF_CONVERT(IP_MF | IP_OFFMASK))
 			goto done;
-#ifdef _IP_VHL
-		off = _IP_VHL_HL(ip->ip_vhl) << 2;
-#else
 		off = ip->ip_hl << 2;
-#endif
 		nxt = ip->ip_p;
 	} else {
 		struct ip ih;
@@ -952,11 +944,7 @@ ipsec4_get_ulp(struct mbuf *m, struct secpolicyindex *spidx, int needport)
 		m_copydata(m, 0, sizeof (struct ip), &ih);
 		if (ih.ip_off & IP_OFF_CONVERT(IP_MF | IP_OFFMASK))
 			goto done;
-#ifdef _IP_VHL
-		off = _IP_VHL_HL(ih.ip_vhl) << 2;
-#else
 		off = ih.ip_hl << 2;
-#endif
 		nxt = ih.ip_p;
 	}
 

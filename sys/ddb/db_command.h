@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.h,v 1.30 2007/10/01 22:05:15 martin Exp $	*/
+/*	$NetBSD: db_command.h,v 1.30.6.1 2007/12/26 19:57:00 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
 
 void	db_skip_to_eol(void);
 void	db_command_loop(void);
-void	db_error(const char *) __attribute__((__noreturn__));
+void	db_error(const char *) __dead;
 
 extern db_addr_t db_dot;	/* current location */
 extern db_addr_t db_last_addr;	/* last explicit address typed */

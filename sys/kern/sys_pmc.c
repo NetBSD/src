@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pmc.c,v 1.8 2007/09/21 19:14:13 dsl Exp $	*/
+/*	$NetBSD: sys_pmc.c,v 1.8.8.1 2007/12/26 19:57:15 ad Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pmc.c,v 1.8 2007/09/21 19:14:13 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pmc.c,v 1.8.8.1 2007/12/26 19:57:15 ad Exp $");
 
 #include "opt_perfctrs.h"
 
@@ -56,16 +56,16 @@ __KERNEL_RCSID(0, "$NetBSD: sys_pmc.c,v 1.8 2007/09/21 19:14:13 dsl Exp $");
  */
 
 int
-sys_pmc_control(struct lwp *l, void *v, register_t *rv)
+sys_pmc_control(struct lwp *l, const struct sys_pmc_control_args *uap, register_t *retval)
 {
-#ifndef PERFCTRS
-	return ENXIO;
-#else
-	struct sys_pmc_control_args /* {
+	/* {
 		syscallarg(int) ctr;
 		syscallarg(int) op;
 		syscallarg(void *) args;
-	} */ *uap = v;
+	} */
+#ifndef PERFCTRS
+	return ENXIO;
+#else
 	struct pmc_counter_cfg cfg;
 	void *args;
 	int ctr, operation, error=0;
@@ -124,16 +124,16 @@ sys_pmc_control(struct lwp *l, void *v, register_t *rv)
 }
 
 int
-sys_pmc_get_info(struct lwp *l, void *v, register_t *rv)
+sys_pmc_get_info(struct lwp *l, const struct sys_pmc_get_info_args *uap, register_t *retval)
 {
-#ifndef PERFCTRS
-	return ENXIO;
-#else
-	struct sys_pmc_get_info_args /* {
+	/* {
 		syscallarg(int) ctr;
 		syscallarg(int) op;
 		syscallarg(void *) args;
-	} */ *uap = v;
+	} */
+#ifndef PERFCTRS
+	return ENXIO;
+#else
 	uint64_t val;
 	void *args;
 	int nctrs, ctr, ctrt, request, error=0, flags=0;

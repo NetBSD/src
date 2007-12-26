@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_subr.c,v 1.60 2007/11/17 21:55:29 pooka Exp $	*/
+/*	$NetBSD: puffs_subr.c,v 1.60.2.1 2007/12/26 19:57:03 ad Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.60 2007/11/17 21:55:29 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.60.2.1 2007/12/26 19:57:03 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -47,12 +47,11 @@ int puffsdebug;
 
 void
 puffs_makecn(struct puffs_kcn *pkcn, struct puffs_kcred *pkcr,
-	struct puffs_kcid *pkcid, const struct componentname *cn, int full)
+	const struct componentname *cn, int full)
 {
 
 	pkcn->pkcn_nameiop = cn->cn_nameiop;
 	pkcn->pkcn_flags = cn->cn_flags;
-	puffs_cidcvt(pkcid, cn->cn_lwp);
 
 	if (full) {
 		(void)strcpy(pkcn->pkcn_name, cn->cn_nameptr);
@@ -84,21 +83,6 @@ puffs_credcvt(struct puffs_kcred *pkcr, const kauth_cred_t cred)
  	} else {
 		pkcr->pkcr_type = PUFFCRED_TYPE_UUC;
 		kauth_cred_to_uucred(&pkcr->pkcr_uuc, cred);
-	}
-}
-
-void
-puffs_cidcvt(struct puffs_kcid *pkcid, const struct lwp *l)
-{
-
-	if (l) {
-		pkcid->pkcid_type = PUFFCID_TYPE_REAL;
-		pkcid->pkcid_pid = l->l_proc->p_pid;
-		pkcid->pkcid_lwpid = l->l_lid;
-	} else {
-		pkcid->pkcid_type = PUFFCID_TYPE_FAKE;
-		pkcid->pkcid_pid = 0;
-		pkcid->pkcid_lwpid = 0;
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6.h,v 1.22 2007/03/04 06:03:20 christos Exp $	*/
+/*	$NetBSD: ip6.h,v 1.22.24.1 2007/12/26 19:57:38 ad Exp $	*/
 /*	$KAME: ip6.h,v 1.45 2003/06/05 04:46:38 keiichi Exp $	*/
 
 /*
@@ -81,7 +81,7 @@ struct ip6_hdr {
 	} ip6_ctlun;
 	struct in6_addr ip6_src;	/* source address */
 	struct in6_addr ip6_dst;	/* destination address */
-} __attribute__((__packed__));
+} __packed;
 
 #define ip6_vfc		ip6_ctlun.ip6_un2_vfc
 #define ip6_flow	ip6_ctlun.ip6_un1.ip6_un1_flow
@@ -119,7 +119,7 @@ struct ip6_hdr_pseudo {
 	u_int32_t	ip6ph_len;
 	u_int8_t	ip6ph_zero[3];
 	u_int8_t	ip6ph_nxt;
-} __attribute__((__packed__));
+} __packed;
 #endif
 
 /*
@@ -129,7 +129,7 @@ struct ip6_hdr_pseudo {
 struct	ip6_ext {
 	u_int8_t ip6e_nxt;
 	u_int8_t ip6e_len;
-} __attribute__((__packed__));
+} __packed;
 
 /* Hop-by-Hop options header */
 /* XXX should we pad it to force alignment on an 8-byte boundary? */
@@ -137,7 +137,7 @@ struct ip6_hbh {
 	u_int8_t ip6h_nxt;	/* next header */
 	u_int8_t ip6h_len;	/* length in units of 8 octets */
 	/* followed by options */
-} __attribute__((__packed__));
+} __packed;
 
 /* Destination options header */
 /* XXX should we pad it to force alignment on an 8-byte boundary? */
@@ -145,7 +145,7 @@ struct ip6_dest {
 	u_int8_t ip6d_nxt;	/* next header */
 	u_int8_t ip6d_len;	/* length in units of 8 octets */
 	/* followed by options */
-} __attribute__((__packed__));
+} __packed;
 
 /* Option types and related macros */
 #define IP6OPT_PAD1		0x00	/* 00 0 00000 */
@@ -174,14 +174,14 @@ struct ip6_dest {
 struct ip6_opt {
 	u_int8_t ip6o_type;
 	u_int8_t ip6o_len;
-} __attribute__((__packed__));
+} __packed;
 
 /* Jumbo Payload Option */
 struct ip6_opt_jumbo {
 	u_int8_t ip6oj_type;
 	u_int8_t ip6oj_len;
 	u_int8_t ip6oj_jumbo_len[4];
-} __attribute__((__packed__));
+} __packed;
 #define IP6OPT_JUMBO_LEN 6
 
 /* NSAP Address Option */
@@ -192,21 +192,21 @@ struct ip6_opt_nsap {
 	u_int8_t ip6on_dst_nsap_len;
 	/* followed by source NSAP */
 	/* followed by destination NSAP */
-} __attribute__((__packed__));
+} __packed;
 
 /* Tunnel Limit Option */
 struct ip6_opt_tunnel {
 	u_int8_t ip6ot_type;
 	u_int8_t ip6ot_len;
 	u_int8_t ip6ot_encap_limit;
-} __attribute__((__packed__));
+} __packed;
 
 /* Router Alert Option */
 struct ip6_opt_router {
 	u_int8_t ip6or_type;
 	u_int8_t ip6or_len;
 	u_int8_t ip6or_value[2];
-} __attribute__((__packed__));
+} __packed;
 /* Router alert values (in network byte order) */
 #if BYTE_ORDER == BIG_ENDIAN
 #define IP6_ALERT_MLD	0x0000
@@ -227,7 +227,7 @@ struct ip6_rthdr {
 	u_int8_t  ip6r_type;	/* routing type */
 	u_int8_t  ip6r_segleft;	/* segments left */
 	/* followed by routing type specific data */
-} __attribute__((__packed__));
+} __packed;
 
 /* Type 0 Routing header */
 struct ip6_rthdr0 {
@@ -236,7 +236,7 @@ struct ip6_rthdr0 {
 	u_int8_t  ip6r0_type;		/* always zero */
 	u_int8_t  ip6r0_segleft;	/* segments left */
 	u_int32_t ip6r0_reserved;	/* reserved field */
-} __attribute__((__packed__));
+} __packed;
 
 /* Fragment header */
 struct ip6_frag {
@@ -244,7 +244,7 @@ struct ip6_frag {
 	u_int8_t  ip6f_reserved;	/* reserved field */
 	u_int16_t ip6f_offlg;		/* offset, reserved, and flag */
 	u_int32_t ip6f_ident;		/* identification */
-} __attribute__((__packed__));
+} __packed;
 
 #if BYTE_ORDER == BIG_ENDIAN
 #define IP6F_OFF_MASK		0xfff8	/* mask out offset from _offlg */

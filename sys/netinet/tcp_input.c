@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.272 2007/11/09 23:55:58 dyoung Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.272.2.1 2007/12/26 19:57:41 ad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.272 2007/11/09 23:55:58 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.272.2.1 2007/12/26 19:57:41 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -174,6 +174,7 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.272 2007/11/09 23:55:58 dyoung Exp $
 #ifdef TCP_SIGNATURE
 #include <sys/md5.h>
 #endif
+#include <sys/lwp.h> /* for lwp0 */
 
 #include <net/if.h>
 #include <net/route.h>
@@ -261,15 +262,20 @@ static struct timeval tcp_ackdrop_ppslim_last;
  * Neighbor Discovery, Neighbor Unreachability Detection Upper layer hint.
  */
 #ifdef INET6
-#define ND6_HINT(tp) \
-do { \
-	if (tp && tp->t_in6pcb && tp->t_family == AF_INET6 && \
-	    tp->t_in6pcb->in6p_route.ro_rt) { \
-		nd6_nud_hint(tp->t_in6pcb->in6p_route.ro_rt, NULL, 0); \
-	} \
-} while (/*CONSTCOND*/ 0)
+static inline void
+nd6_hint(struct tcpcb *tp)
+{
+	struct rtentry *rt;
+
+	if (tp != NULL && tp->t_in6pcb != NULL && tp->t_family == AF_INET6 &&
+	    (rt = rtcache_getrt(&tp->t_in6pcb->in6p_route)) != NULL)
+		nd6_nud_hint(rt, NULL, 0);
+}
 #else
-#define ND6_HINT(tp)
+static inline void
+nd6_hint(struct tcpcb *tp)
+{
+}
 #endif
 
 /*
@@ -771,7 +777,7 @@ present:
 
 	tp->rcv_nxt += q->ipqe_len;
 	pkt_flags = q->ipqe_flags & TH_FIN;
-	ND6_HINT(tp);
+	nd6_hint(tp);
 
 	TAILQ_REMOVE(&tp->segq, q, ipqe_q);
 	TAILQ_REMOVE(&tp->timeq, q, ipqe_timeq);
@@ -1734,7 +1740,7 @@ after_listen:
 				acked = th->th_ack - tp->snd_una;
 				tcpstat.tcps_rcvackpack++;
 				tcpstat.tcps_rcvackbyte += acked;
-				ND6_HINT(tp);
+				nd6_hint(tp);
 
 				if (acked > (tp->t_lastoff - tp->t_inoff))
 					tp->t_lastm = NULL;
@@ -1786,7 +1792,7 @@ after_listen:
 			tp->rcv_nxt += tlen;
 			tcpstat.tcps_rcvpack++;
 			tcpstat.tcps_rcvbyte += tlen;
-			ND6_HINT(tp);
+			nd6_hint(tp);
 
 		/*
 		 * Automatic sizing enables the performance of large buffers
@@ -2394,7 +2400,7 @@ after_listen:
 		 */
 		tp->t_congctl->newack(tp, th);
 
-		ND6_HINT(tp);
+		nd6_hint(tp);
 		if (acked > so->so_snd.sb_cc) {
 			tp->snd_wnd -= so->so_snd.sb_cc;
 			sbdrop(&so->so_snd, (int)so->so_snd.sb_cc);
@@ -2597,7 +2603,7 @@ dodata:							/* XXX */
 			tiflags = th->th_flags & TH_FIN;
 			tcpstat.tcps_rcvpack++;
 			tcpstat.tcps_rcvbyte += tlen;
-			ND6_HINT(tp);
+			nd6_hint(tp);
 			if (so->so_state & SS_CANTRCVMORE)
 				m_freem(m);
 			else {
@@ -3723,7 +3729,7 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst,
 	am->m_len = src->sa_len;
 	bcopy(src, mtod(am, void *), src->sa_len);
 	if (inp) {
-		if (in_pcbconnect(inp, am, NULL)) {
+		if (in_pcbconnect(inp, am, &lwp0)) {
 			(void) m_free(am);
 			goto resetandabort;
 		}
@@ -4144,6 +4150,9 @@ syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 int
 syn_cache_respond(struct syn_cache *sc, struct mbuf *m)
 {
+#ifdef INET6
+	struct rtentry *rt;
+#endif
 	struct route *ro;
 	u_int8_t *optp;
 	int optlen, error;
@@ -4426,7 +4435,8 @@ syn_cache_respond(struct syn_cache *sc, struct mbuf *m)
 #ifdef INET6
 	case AF_INET6:
 		ip6->ip6_hlim = in6_selecthlim(NULL,
-				ro->ro_rt ? ro->ro_rt->rt_ifp : NULL);
+				(rt = rtcache_getrt(ro)) != NULL ? rt->rt_ifp
+				                                 : NULL);
 
 		error = ip6_output(m, NULL /*XXX*/, ro, 0, NULL, so, NULL);
 		break;

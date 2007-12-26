@@ -33,17 +33,17 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$NetBSD: example_misc.c,v 1.4 2005/12/11 12:24:49 christos Exp $
+ *	$NetBSD: example_misc.c,v 1.4.56.1 2007/12/26 19:57:24 ad Exp $
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: example_misc.c,v 1.4 2005/12/11 12:24:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: example_misc.c,v 1.4.56.1 2007/12/26 19:57:24 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
 #include <sys/systm.h>
 
-int misccall __P((struct lwp *, void *, register_t *));
+int misccall(struct lwp *, void *, register_t *);
 
 /*
  * This is the actual code for system call...  it can be static because

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_pool.c,v 1.10 2007/06/16 10:52:29 martin Exp $	*/
+/*	$NetBSD: ip_pool.c,v 1.10.16.1 2007/12/26 19:55:24 ad Exp $	*/
 
 /*
  * Copyright (C) 1993-2001, 2003 by Darren Reed.
@@ -81,8 +81,13 @@ static int rn_freenode __P((struct radix_node *, void *));
 /* END OF INCLUDES */
 
 #if !defined(lint)
+#if defined(__NetBSD__)
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ip_pool.c,v 1.10.16.1 2007/12/26 19:55:24 ad Exp $");
+#else
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_pool.c,v 2.55.2.20 2007/05/31 12:27:35 darrenr Exp";
+#endif
 #endif
 
 #ifdef IPFILTER_LOOKUP

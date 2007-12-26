@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vfsops.c,v 1.31 2007/11/26 19:01:56 pooka Exp $ */
+/* $NetBSD: udf_vfsops.c,v 1.31.2.1 2007/12/26 19:57:05 ad Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_vfsops.c,v 1.31 2007/11/26 19:01:56 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.31.2.1 2007/12/26 19:57:05 ad Exp $");
 #endif /* not lint */
 
 
@@ -281,7 +281,7 @@ udf_mount(struct mount *mp, const char *path,
 	}
 
 	/* lookup name to get its vnode */
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, args->fspec, l);
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, args->fspec);
 	error = namei(&nd);
 	if (error)
 		return error;

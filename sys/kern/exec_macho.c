@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_macho.c,v 1.39 2007/11/26 19:01:59 pooka Exp $	*/
+/*	$NetBSD: exec_macho.c,v 1.39.2.1 2007/12/26 19:57:05 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_macho.c,v 1.39 2007/11/26 19:01:59 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_macho.c,v 1.39.2.1 2007/12/26 19:57:05 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -307,7 +307,7 @@ exec_macho_load_file(struct lwp *l, struct exec_package *epp,
 	 * 2. read filehdr
 	 * 3. map text, data, and bss out of it using VM_*
 	 */
-	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_SYSSPACE, path, l);
+	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_SYSSPACE, path);
 	if ((error = namei(&nd)) != 0)
 		return error;
 	vp = nd.ni_vp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_map.c,v 1.33 2007/11/26 19:02:16 pooka Exp $	*/
+/*	$NetBSD: procfs_map.c,v 1.33.2.1 2007/12/26 19:57:29 ad Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_map.c,v 1.33 2007/11/26 19:02:16 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_map.c,v 1.33.2.1 2007/12/26 19:57:29 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,9 +92,6 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_map.c,v 1.33 2007/11/26 19:02:16 pooka Exp $"
 #include <uvm/uvm.h>
 
 #define BUFFERSIZE (64 * 1024)
-
-static int procfs_vnode_to_path(struct vnode *vp, char *path, int len,
-				struct lwp *curl, struct proc *p);
 
 /*
  * The map entries can *almost* be read with programs like cat.  However,
@@ -166,8 +163,8 @@ procfs_domap(struct lwp *curl, struct proc *p, struct pfsnode *pfs,
 				if (error == 0 && vp != pfs->pfs_vnode) {
 					fileid = va.va_fileid;
 					dev = va.va_fsid;
-					error = procfs_vnode_to_path(vp, path,
-					    MAXPATHLEN * 4, curl, p);
+					error = vnode_to_path(path,
+					    MAXPATHLEN * 4, vp, curl, p);
 				}
 			}
 			pos += snprintf(buffer + pos, BUFFERSIZE - pos,
@@ -217,54 +214,4 @@ int
 procfs_validmap(struct lwp *l, struct mount *mp)
 {
 	return ((l->l_flag & LW_SYSTEM) == 0);
-}
-
-/*
- * Try to find a pathname for a vnode. Since there is no mapping
- * vnode -> parent directory, this needs the NAMECACHE_ENTER_REVERSE
- * option to work (to make cache_revlookup succeed).
- */
-static int procfs_vnode_to_path(struct vnode *vp, char *path, int len,
-				struct lwp *curl, struct proc *p)
-{
-	struct proc *curp = curl->l_proc;
-	int error, lenused, elen;
-	char *bp, *bend;
-	struct vnode *dvp;
-
-	bp = bend = &path[len];
-	*(--bp) = '\0';
-
-	error = vget(vp, LK_EXCLUSIVE | LK_RETRY);
-	if (error != 0)
-		return error;
-	error = cache_revlookup(vp, &dvp, &bp, path);
-	vput(vp);
-	if (error != 0)
-		return (error == -1 ? ENOENT : error);
-
-	error = vget(dvp, 0);
-	if (error != 0)
-		return error;
-	*(--bp) = '/';
-	/* XXX GETCWD_CHECK_ACCESS == 0x0001 */
-	error = getcwd_common(dvp, NULL, &bp, path, len / 2, 1, curl);
-
-	/*
-	 * Strip off emulation path for emulated processes looking at
-	 * the maps file of a process of the same emulation. (Won't
-	 * work if /emul/xxx is a symlink..)
-	 */
-	if (curp->p_emul == p->p_emul && curp->p_emul->e_path != NULL) {
-		elen = strlen(curp->p_emul->e_path);
-		if (!strncmp(bp, curp->p_emul->e_path, elen))
-			bp = &bp[elen];
-	}
-
-	lenused = bend - bp;
-
-	memcpy(path, bp, lenused);
-	path[lenused] = 0;
-
-	return 0;
 }

@@ -1,7 +1,9 @@
+/*	$NetBSD: exdump.c,v 1.3.34.1 2007/12/26 19:55:02 ad Exp $	*/
+
 /******************************************************************************
  *
  * Module Name: exdump - Interpreter debug output routines
- *              xRevision: 1.194 $
+ *              $Revision: 1.3.34.1 $
  *
  *****************************************************************************/
 
@@ -9,7 +11,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2007, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -115,15 +117,15 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exdump.c,v 1.3 2006/11/16 01:33:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exdump.c,v 1.3.34.1 2007/12/26 19:55:02 ad Exp $");
 
 #define __EXDUMP_C__
 
-#include "acpi.h"
-#include "acinterp.h"
-#include "amlcode.h"
-#include "acnamesp.h"
-#include "acparser.h"
+#include <dist/acpica/acpi.h>
+#include <dist/acpica/acinterp.h>
+#include <dist/acpica/amlcode.h>
+#include <dist/acpica/acnamesp.h>
+#include <dist/acpica/acparser.h>
 
 #define _COMPONENT          ACPI_EXECUTER
         ACPI_MODULE_NAME    ("exdump")
@@ -143,12 +145,12 @@ AcpiExOutString (
 static void
 AcpiExOutPointer (
     const char              *Title,
-    const void              *Value);
+    void                    *Value);
 
 static void
-AcpiExOutAddress (
-    const char              *Title,
-    ACPI_PHYSICAL_ADDRESS   Value);
+AcpiExDumpObject (
+    ACPI_OPERAND_OBJECT     *ObjDesc,
+    ACPI_EXDUMP_INFO        *Info);
 
 static void
 AcpiExDumpReferenceObj (
@@ -184,11 +186,12 @@ static ACPI_EXDUMP_INFO     AcpiExDumpString[4] =
     {ACPI_EXD_STRING,   0,                                              NULL}
 };
 
-static ACPI_EXDUMP_INFO     AcpiExDumpBuffer[4] =
+static ACPI_EXDUMP_INFO     AcpiExDumpBuffer[5] =
 {
     {ACPI_EXD_INIT,     ACPI_EXD_TABLE_SIZE (AcpiExDumpBuffer),         NULL},
     {ACPI_EXD_UINT32,   ACPI_EXD_OFFSET (Buffer.Length),                "Length"},
     {ACPI_EXD_POINTER,  ACPI_EXD_OFFSET (Buffer.Pointer),               "Pointer"},
+    {ACPI_EXD_POINTER,  ACPI_EXD_OFFSET (Buffer.Node),                  "Parent Node"},
     {ACPI_EXD_BUFFER,   0,                                              NULL}
 };
 
@@ -212,15 +215,15 @@ static ACPI_EXDUMP_INFO     AcpiExDumpDevice[4] =
 static ACPI_EXDUMP_INFO     AcpiExDumpEvent[2] =
 {
     {ACPI_EXD_INIT,     ACPI_EXD_TABLE_SIZE (AcpiExDumpEvent),          NULL},
-    {ACPI_EXD_POINTER,  ACPI_EXD_OFFSET (Event.Semaphore),             "Semaphore"}
+    {ACPI_EXD_POINTER,  ACPI_EXD_OFFSET (Event.OsSemaphore),            "OsSemaphore"}
 };
 
 static ACPI_EXDUMP_INFO     AcpiExDumpMethod[8] =
 {
     {ACPI_EXD_INIT,     ACPI_EXD_TABLE_SIZE (AcpiExDumpMethod),         NULL},
     {ACPI_EXD_UINT8,    ACPI_EXD_OFFSET (Method.ParamCount),            "ParamCount"},
-    {ACPI_EXD_UINT8,    ACPI_EXD_OFFSET (Method.Concurrency),           "Concurrency"},
-    {ACPI_EXD_POINTER,  ACPI_EXD_OFFSET (Method.Semaphore),             "Semaphore"},
+    {ACPI_EXD_UINT8,    ACPI_EXD_OFFSET (Method.SyncLevel),             "Sync Level"},
+    {ACPI_EXD_POINTER,  ACPI_EXD_OFFSET (Method.Mutex),                 "Mutex"},
     {ACPI_EXD_UINT8,    ACPI_EXD_OFFSET (Method.OwnerId),               "Owner Id"},
     {ACPI_EXD_UINT8,    ACPI_EXD_OFFSET (Method.ThreadCount),           "Thread Count"},
     {ACPI_EXD_UINT32,   ACPI_EXD_OFFSET (Method.AmlLength),             "Aml Length"},
@@ -233,7 +236,7 @@ static ACPI_EXDUMP_INFO     AcpiExDumpMutex[5] =
     {ACPI_EXD_UINT8,    ACPI_EXD_OFFSET (Mutex.SyncLevel),              "Sync Level"},
     {ACPI_EXD_POINTER,  ACPI_EXD_OFFSET (Mutex.OwnerThread),            "Owner Thread"},
     {ACPI_EXD_UINT16,   ACPI_EXD_OFFSET (Mutex.AcquisitionDepth),       "Acquire Depth"},
-    {ACPI_EXD_POINTER,  ACPI_EXD_OFFSET (Mutex.Semaphore),              "Semaphore"}
+    {ACPI_EXD_POINTER,  ACPI_EXD_OFFSET (Mutex.OsMutex),                "OsMutex"}
 };
 
 static ACPI_EXDUMP_INFO     AcpiExDumpRegion[7] =
@@ -259,8 +262,8 @@ static ACPI_EXDUMP_INFO     AcpiExDumpPower[5] =
 static ACPI_EXDUMP_INFO     AcpiExDumpProcessor[7] =
 {
     {ACPI_EXD_INIT,     ACPI_EXD_TABLE_SIZE (AcpiExDumpProcessor),      NULL},
-    {ACPI_EXD_UINT32,   ACPI_EXD_OFFSET (Processor.ProcId),             "Processor ID"},
-    {ACPI_EXD_UINT32,   ACPI_EXD_OFFSET (Processor.Length),             "Length"},
+    {ACPI_EXD_UINT8,    ACPI_EXD_OFFSET (Processor.ProcId),             "Processor ID"},
+    {ACPI_EXD_UINT8 ,   ACPI_EXD_OFFSET (Processor.Length),             "Length"},
     {ACPI_EXD_ADDRESS,  ACPI_EXD_OFFSET (Processor.Address),            "Address"},
     {ACPI_EXD_POINTER,  ACPI_EXD_OFFSET (Processor.SystemNotify),       "System Notify"},
     {ACPI_EXD_POINTER,  ACPI_EXD_OFFSET (Processor.DeviceNotify),       "Device Notify"},
@@ -359,12 +362,11 @@ static ACPI_EXDUMP_INFO     AcpiExDumpFieldCommon[7] =
     {ACPI_EXD_POINTER,  ACPI_EXD_OFFSET (CommonField.Node),             "Parent Node"}
 };
 
-static ACPI_EXDUMP_INFO     AcpiExDumpNode[6] =
+static ACPI_EXDUMP_INFO     AcpiExDumpNode[5] =
 {
     {ACPI_EXD_INIT,     ACPI_EXD_TABLE_SIZE (AcpiExDumpNode),           NULL},
     {ACPI_EXD_UINT8,    ACPI_EXD_NSOFFSET (Flags),                      "Flags"},
     {ACPI_EXD_UINT8,    ACPI_EXD_NSOFFSET (OwnerId),                    "Owner Id"},
-    {ACPI_EXD_UINT16,   ACPI_EXD_NSOFFSET (ReferenceCount),             "Reference Count"},
     {ACPI_EXD_POINTER,  ACPI_EXD_NSOFFSET (Child),                      "Child List"},
     {ACPI_EXD_POINTER,  ACPI_EXD_NSOFFSET (Peer),                       "Next Peer"}
 };
@@ -477,13 +479,9 @@ AcpiExDumpObject (
             break;
 
         case ACPI_EXD_POINTER:
-
-            AcpiExOutPointer (Name, *ACPI_CAST_PTR (void *, Target));
-            break;
-
         case ACPI_EXD_ADDRESS:
 
-            AcpiExOutAddress (Name, *ACPI_CAST_PTR (ACPI_PHYSICAL_ADDRESS, Target));
+            AcpiExOutPointer (Name, *ACPI_CAST_PTR (void *, Target));
             break;
 
         case ACPI_EXD_STRING:
@@ -550,7 +548,7 @@ AcpiExDumpOperand (
     UINT32                  Index;
 
 
-    ACPI_FUNCTION_NAME ("ExDumpOperand")
+    ACPI_FUNCTION_NAME (ExDumpOperand)
 
 
     if (!((ACPI_LV_EXEC & AcpiDbgLevel) && (_COMPONENT & AcpiDbgLayer)))
@@ -605,14 +603,6 @@ AcpiExDumpOperand (
         case AML_DEBUG_OP:
 
             AcpiOsPrintf ("Reference: Debug\n");
-            break;
-
-
-        case AML_NAME_OP:
-
-            ACPI_DUMP_PATHNAME (ObjDesc->Reference.Object,
-                "Reference: Name: ", ACPI_LV_INFO, _COMPONENT);
-            ACPI_DUMP_ENTRY (ObjDesc->Reference.Object, ACPI_LV_INFO);
             break;
 
 
@@ -908,7 +898,7 @@ AcpiExDumpOperands (
     ACPI_NATIVE_UINT        i;
 
 
-    ACPI_FUNCTION_NAME ("ExDumpOperands");
+    ACPI_FUNCTION_NAME (ExDumpOperands);
 
 
     if (!Ident)
@@ -968,22 +958,9 @@ AcpiExOutString (
 static void
 AcpiExOutPointer (
     const char              *Title,
-    const void              *Value)
+    void                    *Value)
 {
     AcpiOsPrintf ("%20s : %p\n", Title, Value);
-}
-
-static void
-AcpiExOutAddress (
-    const char              *Title,
-    ACPI_PHYSICAL_ADDRESS   Value)
-{
-
-#if ACPI_MACHINE_WIDTH == 16
-    AcpiOsPrintf ("%20s : %p\n", Title, Value);
-#else
-    AcpiOsPrintf ("%20s : %8.8X%8.8X\n", Title, ACPI_FORMAT_UINT64 (Value));
-#endif
 }
 
 
@@ -1014,7 +991,6 @@ AcpiExDumpNamespaceNode (
             return;
         }
     }
-
 
     AcpiOsPrintf ("%20s : %4.4s\n",       "Name", AcpiUtGetNodeName (Node));
     AcpiExOutString  ("Type",             AcpiUtGetTypeName (Node->Type));
@@ -1058,7 +1034,7 @@ AcpiExDumpReferenceObj (
         else
         {
            AcpiOsPrintf ("%s\n", (char *) RetBuf.Pointer);
-           ACPI_MEM_FREE (RetBuf.Pointer);
+           ACPI_FREE (RetBuf.Pointer);
         }
     }
     else if (ObjDesc->Reference.Object)
@@ -1191,7 +1167,7 @@ AcpiExDumpObjectDescriptor (
     ACPI_OPERAND_OBJECT     *ObjDesc,
     UINT32                  Flags)
 {
-    ACPI_FUNCTION_TRACE ("ExDumpObjectDescriptor");
+    ACPI_FUNCTION_TRACE (ExDumpObjectDescriptor);
 
 
     if (!ObjDesc)

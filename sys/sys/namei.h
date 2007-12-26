@@ -1,10 +1,10 @@
-/*	$NetBSD: namei.h,v 1.56 2007/11/27 15:52:56 pooka Exp $	*/
+/*	$NetBSD: namei.h,v 1.56.2.1 2007/12/26 19:57:54 ad Exp $	*/
 
 /*
  * WARNING: GENERATED FILE.  DO NOT EDIT
  * (edit namei.src and run make namei)
  *   by:   NetBSD: gennameih.awk,v 1.1 2007/08/15 14:08:11 pooka Exp 
- *   from: NetBSD: namei.src,v 1.5 2007/11/27 15:52:26 pooka Exp 
+ *   from: NetBSD: namei.src,v 1.6 2007/12/08 19:29:52 pooka Exp 
  */
 
 /*
@@ -42,7 +42,6 @@
 #define	_SYS_NAMEI_H_
 
 #include <sys/queue.h>
-
 #ifdef _KERNEL
 /*
  * Encapsulation of namei parameters.
@@ -81,7 +80,6 @@ struct nameidata {
 		 */
 		uint32_t	cn_nameiop;	/* namei operation */
 		uint32_t	cn_flags;	/* flags to namei */
-		struct		lwp *cn_lwp;	/* lwp requesting lookup */
 		kauth_cred_t 	cn_cred;	/* credentials */
 		/*
 		 * Shared between lookup and commit routines.
@@ -144,14 +142,14 @@ struct nameidata {
 /*
  * Initialization of an nameidata structure.
  */
-#define NDINIT(ndp, op, flags, segflg, namep, l) { \
-	KASSERT((l) == curlwp); \
+#include <sys/kauth.h>
+
+#define NDINIT(ndp, op, flags, segflg, namep) { \
 	(ndp)->ni_cnd.cn_nameiop = op; \
 	(ndp)->ni_cnd.cn_flags = flags; \
 	(ndp)->ni_segflg = segflg; \
 	(ndp)->ni_dirp = namep; \
-	(ndp)->ni_cnd.cn_lwp = l; \
-	(ndp)->ni_cnd.cn_cred = l->l_cred; \
+	(ndp)->ni_cnd.cn_cred = kauth_cred_get(); \
 }
 #endif
 

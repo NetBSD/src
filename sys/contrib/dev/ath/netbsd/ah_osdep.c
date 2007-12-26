@@ -33,8 +33,12 @@
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGES.
  *
- * $Id: ah_osdep.c,v 1.13 2007/10/19 12:16:41 ad Exp $
+ * $Id: ah_osdep.c,v 1.13.4.1 2007/12/26 19:56:58 ad Exp $
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ah_osdep.c,v 1.13.4.1 2007/12/26 19:56:58 ad Exp $");
+
 #include "opt_athhal.h"
 #include "athhal_options.h"
 

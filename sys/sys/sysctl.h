@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.171 2007/10/15 14:12:54 ad Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.171.6.1 2007/12/26 19:57:59 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1060,6 +1060,7 @@ extern struct ctldebug debug15, debug16, debug17, debug18, debug19;
 	void name(struct sysctllog **)
 #ifdef SYSCTL_DEBUG_SETUP
 #define SYSCTL_SETUP(name, desc)				\
+	SYSCTL_SETUP_PROTO(name);				\
 	static void __CONCAT(___,name)(struct sysctllog **);	\
 	void name(struct sysctllog **clog) {			\
 		printf("%s\n", desc);				\
@@ -1068,6 +1069,7 @@ extern struct ctldebug debug15, debug16, debug17, debug18, debug19;
 	static void __CONCAT(___,name)(struct sysctllog **clog)
 #else  /* !SYSCTL_DEBUG_SETUP */
 #define SYSCTL_SETUP(name, desc)				\
+	SYSCTL_SETUP_PROTO(name);				\
 	__link_set_add_text(sysctl_funcs, name);		\
 	void name(struct sysctllog **clog)
 #endif /* !SYSCTL_DEBUG_SETUP */

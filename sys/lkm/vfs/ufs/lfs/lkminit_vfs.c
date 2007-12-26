@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_vfs.c,v 1.12 2007/02/09 21:55:36 ad Exp $ */
+/* $NetBSD: lkminit_vfs.c,v 1.12.28.1 2007/12/26 19:57:28 ad Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_vfs.c,v 1.12 2007/02/09 21:55:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_vfs.c,v 1.12.28.1 2007/12/26 19:57:28 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -56,10 +56,10 @@ __KERNEL_RCSID(0, "$NetBSD: lkminit_vfs.c,v 1.12 2007/02/09 21:55:36 ad Exp $");
 
 #include <ufs/lfs/lfs_extern.h>
 
-int lfs_lkmentry __P((struct lkm_table *, int, int));
+int lfs_lkmentry(struct lkm_table *, int, int);
 
-static int lfs_load __P((struct lkm_table *, int));
-static int lfs_unload __P((struct lkm_table *, int));
+static int lfs_load(struct lkm_table *, int);
+static int lfs_unload(struct lkm_table *, int);
 static struct sysctllog *_lfs_log;
 
 #define LFS_SYSENT_CNT		4
@@ -69,16 +69,16 @@ static const struct {
 } lfs_sysents[LFS_SYSENT_CNT] = {
 	{ SYS_lfs_bmapv,
 		{ 3, sizeof(struct sys_lfs_bmapv_args), 0,
-			sys_lfs_bmapv } },
+			(sy_call_t *)sys_lfs_bmapv } },
 	{ SYS_lfs_markv,
 		{ 3, sizeof(struct sys_lfs_markv_args), 0,
-			sys_lfs_markv } },
+			(sy_call_t *)sys_lfs_markv } },
 	{ SYS_lfs_segclean,
 		{ 2, sizeof(struct sys_lfs_segclean_args), 0,
-			sys_lfs_segclean } },
+			(sy_call_t *)sys_lfs_segclean } },
 	{ SYS_lfs_segwait,
 		{ 2, sizeof(struct sys_lfs_segwait_args), 0,
-			sys_lfs_segwait } },
+			(sy_call_t *)sys_lfs_segwait } },
 };
 static struct sysent lfs_osysent[LFS_SYSENT_CNT];
 

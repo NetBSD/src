@@ -1,4 +1,4 @@
-# $NetBSD: majors,v 1.38 2007/11/13 13:13:10 pooka Exp $
+# $NetBSD: majors,v 1.38.2.1 2007/12/26 19:56:58 ad Exp $
 #
 # Device majors for Machine-Independent drivers.
 #
@@ -34,3 +34,4 @@ device-major	bio		char 181		bio
 device-major	twa		char 187		twa
 device-major	cpuctl		char 188
 device-major	pad		char 189		pad
+device-major	zfs		char 190		zfs

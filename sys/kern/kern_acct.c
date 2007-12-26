@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_acct.c,v 1.78 2007/11/26 19:02:00 pooka Exp $	*/
+/*	$NetBSD: kern_acct.c,v 1.78.2.1 2007/12/26 19:57:06 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.78 2007/11/26 19:02:00 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.78.2.1 2007/12/26 19:57:06 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -281,11 +281,11 @@ acct_init(void)
  * previous implementation done by Mark Tinguely.
  */
 int
-sys_acct(struct lwp *l, void *v, register_t *retval)
+sys_acct(struct lwp *l, const struct sys_acct_args *uap, register_t *retval)
 {
-	struct sys_acct_args /* {
+	/* {
 		syscallarg(const char *) path;
-	} */ *uap = v;
+	} */
 	struct nameidata nd;
 	int error;
 
@@ -301,8 +301,8 @@ sys_acct(struct lwp *l, void *v, register_t *retval)
 	if (SCARG(uap, path) != NULL) {
 		struct vattr va;
 		size_t pad;
-		NDINIT(&nd, LOOKUP, NOFOLLOW | TRYEMULROOT, UIO_USERSPACE, SCARG(uap, path),
-		    l);
+		NDINIT(&nd, LOOKUP, NOFOLLOW | TRYEMULROOT, UIO_USERSPACE,
+		    SCARG(uap, path));
 		if ((error = vn_open(&nd, FWRITE|O_APPEND, 0)) != 0)
 			return (error);
 		if (nd.ni_vp->v_type != VREG) {

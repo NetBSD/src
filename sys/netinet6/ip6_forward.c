@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_forward.c,v 1.58 2007/05/23 17:15:02 christos Exp $	*/
+/*	$NetBSD: ip6_forward.c,v 1.58.16.1 2007/12/26 19:57:46 ad Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.109 2002/09/11 08:10:17 sakane Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.58 2007/05/23 17:15:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.58.16.1 2007/12/26 19:57:46 ad Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_pfil_hooks.h"
@@ -334,7 +334,7 @@ ip6_forward(struct mbuf *m, int srcrt)
 	}
 
 	/* adjust pointer */
-	rt = state.ro ? state.ro->ro_rt : NULL;
+	rt = state.ro ? rtcache_getrt(state.ro) : NULL;
 	dst = (const struct sockaddr_in6 *)state.dst;
 	if (dst != NULL && rt != NULL) {
 		ipsecrt = 1;
@@ -366,10 +366,10 @@ ip6_forward(struct mbuf *m, int srcrt)
 		 * ip6->ip6_dst
 		 */
 		rtcache_check(&ip6_forward_rt);
-		if (ip6_forward_rt.ro_rt == NULL) {
+		if (rtcache_getrt(&ip6_forward_rt) == NULL) {
 			rtcache_init(&ip6_forward_rt);
 
-			if (ip6_forward_rt.ro_rt == NULL) {
+			if (rtcache_getrt(&ip6_forward_rt) == NULL) {
 				ip6stat.ip6s_noroute++;
 				/* XXX in6_ifstat_inc(rt->rt_ifp, ifs6_in_noroute) */
 				if (mcopy) {
@@ -399,7 +399,7 @@ ip6_forward(struct mbuf *m, int srcrt)
 		}
 	}
 	dst = satocsin6(rtcache_getdst(&ip6_forward_rt));
-	rt = ip6_forward_rt.ro_rt;
+	rt = rtcache_getrt(&ip6_forward_rt);
 #ifdef IPSEC
     skip_routing:;
 #endif /* IPSEC */

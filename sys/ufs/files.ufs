@@ -1,4 +1,4 @@
-#	$NetBSD: files.ufs,v 1.16 2006/11/13 16:12:54 jmmv Exp $
+#	$NetBSD: files.ufs,v 1.16.34.1 2007/12/26 19:58:01 ad Exp $
 
 deffs	fs_ffs.h			FFS
 deffs					EXT2FS
@@ -8,6 +8,8 @@ deffs	fs_lfs.h			LFS		# XXX
 defflag	opt_ffs.h			FFS_EI FFS_NO_SNAPSHOT APPLE_UFS
 					UFS_DIRHASH
 					UFS_EXTATTR UFS_EXTATTR_AUTOSTART
+
+defflag	opt_lfs.h			LFS_KERNEL_RFW
 
 file	ufs/ext2fs/ext2fs_alloc.c	ext2fs
 file	ufs/ext2fs/ext2fs_balloc.c	ext2fs
@@ -41,7 +43,7 @@ file	ufs/lfs/lfs_cksum.c		lfs
 file	ufs/lfs/lfs_debug.c		lfs
 file	ufs/lfs/lfs_inode.c		lfs
 file	ufs/lfs/lfs_itimes.c		lfs
-file	ufs/lfs/lfs_rfw.c		lfs
+file	ufs/lfs/lfs_rfw.c		lfs & lfs_kernel_rfw
 file	ufs/lfs/lfs_segment.c		lfs
 file	ufs/lfs/lfs_subr.c		lfs
 file	ufs/lfs/lfs_syscalls.c		lfs

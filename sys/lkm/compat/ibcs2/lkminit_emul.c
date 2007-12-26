@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_emul.c,v 1.5 2005/12/11 12:24:47 christos Exp $ */
+/* $NetBSD: lkminit_emul.c,v 1.5.56.1 2007/12/26 19:57:18 ad Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_emul.c,v 1.5 2005/12/11 12:24:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_emul.c,v 1.5.56.1 2007/12/26 19:57:18 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -48,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: lkminit_emul.c,v 1.5 2005/12/11 12:24:47 christos Ex
 
 extern const struct emul emul_ibcs2;
 
-int compat_ibcs2_lkmentry __P((struct lkm_table *, int, int));
+int compat_ibcs2_lkmentry(struct lkm_table *, int, int);
 
 /*
  * declare the emulation

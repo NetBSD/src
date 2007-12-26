@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_node.h,v 1.22 2006/06/30 06:17:10 tacha Exp $	*/
+/*	$NetBSD: ieee80211_node.h,v 1.22.40.1 2007/12/26 19:57:36 ad Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -38,6 +38,7 @@
 #include <net80211/ieee80211_netbsd.h>
 #include <net80211/ieee80211_ioctl.h>		/* for ieee80211_nodestats */
 
+#ifdef _KERNEL
 /*
  * Each ieee80211com instance has a single timer that fires once a
  * second.  This is used to initiate various work depending on the
@@ -150,9 +151,7 @@ struct ieee80211_node {
 	struct	ifqueue		ni_savedq;	/* ps-poll queue */
 	struct ieee80211_nodestats ni_stats;	/* per-node statistics */
 };
-#ifdef _KERNEL
 MALLOC_DECLARE(M_80211_NODE);
-#endif /* _KERNEL */
 
 #define	IEEE80211_NODE_AID(ni)	IEEE80211_AID(ni->ni_associd)
 
@@ -338,4 +337,5 @@ void ieee80211_init_neighbor(struct ieee80211com *, struct ieee80211_node *,
 struct ieee80211_node *ieee80211_add_neighbor(struct ieee80211com *,
 		const struct ieee80211_frame *,
 		const struct ieee80211_scanparams *);
+#endif /* _KERNEL */
 #endif /* !_NET80211_IEEE80211_NODE_H_ */

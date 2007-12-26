@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_output.c,v 1.23 2007/10/28 15:48:23 adrianp Exp $	*/
+/*	$NetBSD: ipsec_output.c,v 1.23.4.1 2007/12/26 19:57:49 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.23 2007/10/28 15:48:23 adrianp Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.23.4.1 2007/12/26 19:57:49 ad Exp $");
 
 /*
  * IPsec output processing.
@@ -156,12 +156,7 @@ ipsec_process_done(struct mbuf *m, struct ipsecrequest *isr)
 		
 		udp->uh_dport = key_portfromsaddr(&saidx->dst);
 		udp->uh_sum = 0;
-#ifdef _IP_VHL
-        	udp->uh_ulen = htons(m->m_pkthdr.len - 
-				    (IP_VHL_HL(ip->ip_vhl) << 2));
-#else
-        	udp->uh_ulen = htons(m->m_pkthdr.len - (ip->ip_hl << 2));
-#endif
+       	udp->uh_ulen = htons(m->m_pkthdr.len - (ip->ip_hl << 2));
 	}
 #endif /* IPSEC_NAT_T */
 	
@@ -500,15 +495,7 @@ ipsec4_process_packet(
 			ip = mtod(m, struct ip *);
 			ip->ip_len = htons(m->m_pkthdr.len);
 			ip->ip_sum = 0;
-#ifdef _IP_VHL
-			if (ip->ip_vhl == IP_VHL_BORING)
-				ip->ip_sum = in_cksum_hdr(ip);
-			else
-				ip->ip_sum = in_cksum(m,
-					_IP_VHL_HL(ip->ip_vhl) << 2);
-#else
 			ip->ip_sum = in_cksum(m, ip->ip_hl << 2);
-#endif
 
 			/* Encapsulate the packet */
 			error = ipip_output(m, isr, &mp, 0, 0);

@@ -1,5 +1,8 @@
-/* $NetBSD: if_srt.c,v 1.5 2007/03/04 06:03:17 christos Exp $ */
+/* $NetBSD: if_srt.c,v 1.5.24.1 2007/12/26 19:57:33 ad Exp $ */
 /* This file is in the public domain. */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_srt.c,v 1.5.24.1 2007/12/26 19:57:33 ad Exp $");
 
 #include "opt_inet.h"
 
