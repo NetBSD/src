@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.12 2007/12/23 13:51:16 jmmv Exp $
+# $NetBSD: mi,v 1.13 2007/12/26 20:53:33 jmmv Exp $
 ./etc/mtree/set.tests				tests-sys-root
 ./usr/libdata/debug/usr/tests						tests-base-debug
 ./usr/libdata/debug/usr/tests/atf					tests-atf-debug
@@ -25,6 +25,8 @@
 ./usr/libdata/debug/usr/tests/atf/units/t_user.debug			tests-atf-debug		debug
 ./usr/libdata/debug/usr/tests/atf/units/t_utils.debug			tests-atf-debug		debug
 ./usr/libdata/debug/usr/tests/fs					tests-fs-debug
+./usr/libdata/debug/usr/tests/fs/puffs					tests-fs-debug
+./usr/libdata/debug/usr/tests/fs/puffs/h_have_puffs.debug		tests-fs-debug		debug
 ./usr/libdata/debug/usr/tests/fs/tmpfs					tests-fs-debug
 ./usr/libdata/debug/usr/tests/fs/tmpfs/h_tools.debug			tests-fs-debug		debug
 ./usr/libdata/debug/usr/tests/net					tests-net-debug
@@ -260,6 +262,14 @@
 ./usr/tests/fs					tests-fs-tests
 ./usr/tests/fs/Atffile				tests-fs-tests
 ./usr/tests/fs/h_funcs.subr			tests-fs-tests
+./usr/tests/fs/puffs				tests-fs-tests
+./usr/tests/fs/puffs/Atffile			tests-fs-tests
+./usr/tests/fs/puffs/h_have_puffs		tests-fs-tests
+./usr/tests/fs/puffs/ssh_config.in		tests-fs-tests
+./usr/tests/fs/puffs/ssh_host_key		tests-fs-tests
+./usr/tests/fs/puffs/ssh_host_key.pub		tests-fs-tests
+./usr/tests/fs/puffs/sshd_config.in		tests-fs-tests
+./usr/tests/fs/puffs/t_psshfs.sh		tests-fs-tests
 ./usr/tests/fs/tmpfs				tests-fs-tests
 ./usr/tests/fs/tmpfs/Atffile			tests-fs-tests
 ./usr/tests/fs/tmpfs/h_funcs.subr		tests-fs-tests
