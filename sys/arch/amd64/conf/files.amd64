@@ -1,4 +1,4 @@
-#	$NetBSD: files.amd64,v 1.51 2007/12/18 07:17:10 joerg Exp $
+#	$NetBSD: files.amd64,v 1.52 2007/12/26 16:28:17 joerg Exp $
 #
 # new style config file for amd64 architecture
 #
@@ -17,6 +17,9 @@ defparam		CPURESET_DELAY
 
 # The REAL{BASE,EXT}MEM options
 defparam opt_realmem.h	REALBASEMEM REALEXTMEM
+
+# The PHYSMEM_MAX_{SIZE,ADDR} optionms
+defparam opt_physmem.h	PHYSMEM_MAX_ADDR PHYSMEM_MAX_SIZE
 
 #
 # XXX these are just here at the moment so that we can share files

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.189 2007/12/24 07:54:26 kiyohara Exp $
+# $NetBSD: GENERIC,v 1.190 2007/12/26 16:28:17 joerg Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.189 $"
+#ident 		"GENERIC-$Revision: 1.190 $"
 
 maxusers	32		# estimated number of users
 
@@ -43,6 +43,13 @@ maxusers	32		# estimated number of users
 # (as is the case on most recent systems).
 #options 	REALBASEMEM=639		# size of base memory (in KB)
 #options 	REALEXTMEM=15360	# size of extended memory (in KB)
+
+# The following options limit the overall size of physical memory
+# and/or the maximum address used by the system.
+# Contrary to REALBASEMEM and REALEXTMEM, they still use the BIOS memory map
+# and can deal with holes in the memory layout.
+#options	PHYSMEM_MAX_SIZE=64	# max size of physical memory (in MB)
+#options 	PHYSMEM_MAX_ADDR=2048	# don't use memory above this (in MB)
 
 # Standard system options
 
