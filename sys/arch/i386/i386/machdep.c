@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.618 2007/12/26 11:51:10 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.619 2007/12/26 16:28:16 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.618 2007/12/26 11:51:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.619 2007/12/26 16:28:16 joerg Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -85,6 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.618 2007/12/26 11:51:10 yamt Exp $");
 #include "opt_kgdb.h"
 #include "opt_mtrr.h"
 #include "opt_multiprocessor.h"
+#include "opt_physmem.h"
 #include "opt_realmem.h"
 #include "opt_user_ldt.h"
 #include "opt_vm86.h"
@@ -1315,6 +1316,7 @@ extern vector IDTVEC(mach_trap);
 #endif
 
 #define	KBTOB(x)	((size_t)(x) * 1024UL)
+#define	MBTOB(x)	((size_t)(x) * 1024UL * 1024UL)
 
 void cpu_init_idt()
 {
@@ -1327,6 +1329,7 @@ void
 add_mem_cluster(uint64_t seg_start, uint64_t seg_end, uint32_t type)
 {
 	extern struct extent *iomem_ex;
+	uint64_t new_physmem;
 	int i;
 
 	if (seg_end > 0x100000000ULL) {
@@ -1388,6 +1391,13 @@ add_mem_cluster(uint64_t seg_start, uint64_t seg_end, uint32_t type)
 		panic("init386: too many memory segments "
 		    "(increase VM_PHYSSEG_MAX)");
 
+#ifdef PHYSMEM_MAX_ADDR
+	if (seg_start >= MBTOB(PHYSMEM_MAX_ADDR))
+		return;
+	if (seg_end > MBTOB(PHYSMEM_MAX_ADDR))
+		seg_end = MBTOB(PHYSMEM_MAX_ADDR);
+#endif
+
 	seg_start = round_page(seg_start);
 	seg_end = trunc_page(seg_end);
 
@@ -1395,12 +1405,22 @@ add_mem_cluster(uint64_t seg_start, uint64_t seg_end, uint32_t type)
 		return;
 
 	mem_clusters[mem_cluster_cnt].start = seg_start;
-	mem_clusters[mem_cluster_cnt].size =
-	    seg_end - seg_start;
+	new_physmem = physmem + atop(seg_end - seg_start);
+
+#ifdef PHYSMEM_MAX_SIZE
+	if (physmem >= atop(MBTOB(PHYSMEM_MAX_SIZE)))
+		return;
+	if (new_physmem > atop(MBTOB(PHYSMEM_MAX_SIZE))) {
+		seg_end = seg_start + MBTOB(PHYSMEM_MAX_SIZE) - ptoa(physmem);
+		new_physmem = atop(MBTOB(PHYSMEM_MAX_SIZE));
+	}
+#endif
+
+	mem_clusters[mem_cluster_cnt].size = seg_end - seg_start;
 
 	if (avail_end < seg_end)
 		avail_end = seg_end;
-	physmem += atop(mem_clusters[mem_cluster_cnt].size);
+	physmem = new_physmem;
 	mem_cluster_cnt++;
 }
 
