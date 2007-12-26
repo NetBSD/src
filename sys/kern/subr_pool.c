@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.137.2.3 2007/12/15 02:22:22 ad Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.137.2.4 2007/12/26 17:55:57 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002, 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.137.2.3 2007/12/15 02:22:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.137.2.4 2007/12/26 17:55:57 ad Exp $");
 
 #include "opt_pool.h"
 #include "opt_poollog.h"
@@ -58,6 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.137.2.3 2007/12/15 02:22:22 ad Exp $
 #include <sys/lockdebug.h>
 #include <sys/xcall.h>
 #include <sys/cpu.h>
+#include <sys/atomic.h>
 
 #include <uvm/uvm.h>
 
