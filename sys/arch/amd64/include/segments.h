@@ -1,4 +1,4 @@
-/*	$NetBSD: segments.h,v 1.15 2007/12/25 18:33:32 perry Exp $	*/
+/*	$NetBSD: segments.h,v 1.16 2007/12/26 11:51:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -232,6 +232,9 @@ void set_sys_segment(struct sys_segment_descriptor *, void *, size_t,
 			  int, int, int);
 void set_mem_segment(struct mem_segment_descriptor *, void *, size_t,
 			  int, int, int, int, int);
+
+void idt_init(void);
+void idt_vec_reserve(int);
 int idt_vec_alloc(int, int);
 void idt_vec_set(int, void (*)(void));
 void idt_vec_free(int);

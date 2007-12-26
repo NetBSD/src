@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.20 2007/12/03 15:34:29 ad Exp $	*/
+/*	$NetBSD: intr.h,v 1.21 2007/12/26 11:51:13 yamt Exp $	*/
 /*	NetBSD intr.h,v 1.15 2004/10/31 10:39:34 yamt Exp	*/
 
 /*-
@@ -171,8 +171,6 @@ splraiseipl(ipl_cookie_t icookie)
 extern void Xsoftintr(void);
 
 struct cpu_info;
-
-extern char idt_allocmap[];
 
 struct pcibus_attach_args;
 

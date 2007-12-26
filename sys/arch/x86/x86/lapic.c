@@ -1,4 +1,4 @@
-/* $NetBSD: lapic.c,v 1.29 2007/12/09 20:27:50 jmcneill Exp $ */
+/* $NetBSD: lapic.c,v 1.30 2007/12/26 11:51:12 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.29 2007/12/09 20:27:50 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.30 2007/12/26 11:51:12 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -83,8 +83,6 @@ static void 	lapic_map(paddr_t);
 static void lapic_hwmask(struct pic *, int);
 static void lapic_hwunmask(struct pic *, int);
 static void lapic_setup(struct pic *, struct cpu_info *, int, int, int);
-
-extern char idt_allocmap[];
 
 struct pic local_pic = {
 	.pic_dev = {
@@ -211,17 +209,17 @@ lapic_boot_init(paddr_t lapic_base)
 	lapic_map(lapic_base);
 
 #ifdef MULTIPROCESSOR
-	idt_allocmap[LAPIC_IPI_VECTOR] = 1;
+	idt_vec_reserve(LAPIC_IPI_VECTOR);
 	idt_vec_set(LAPIC_IPI_VECTOR, Xintr_lapic_ipi);
-	idt_allocmap[LAPIC_TLB_MCAST_VECTOR] = 1;
+	idt_vec_reserve(LAPIC_TLB_MCAST_VECTOR);
 	idt_vec_set(LAPIC_TLB_MCAST_VECTOR, Xintr_lapic_tlb_mcast);
-	idt_allocmap[LAPIC_TLB_BCAST_VECTOR] = 1;
+	idt_vec_reserve(LAPIC_TLB_BCAST_VECTOR);
 	idt_vec_set(LAPIC_TLB_BCAST_VECTOR, Xintr_lapic_tlb_bcast);
 #endif
-	idt_allocmap[LAPIC_SPURIOUS_VECTOR] = 1;
+	idt_vec_reserve(LAPIC_SPURIOUS_VECTOR);
 	idt_vec_set(LAPIC_SPURIOUS_VECTOR, Xintrspurious);
 
-	idt_allocmap[LAPIC_TIMER_VECTOR] = 1;
+	idt_vec_reserve(LAPIC_TIMER_VECTOR);
 	idt_vec_set(LAPIC_TIMER_VECTOR, Xintr_lapic_ltimer);
 }
 
