@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.125.2.3 2007/12/21 15:27:03 ad Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.125.2.4 2007/12/26 23:05:53 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.125.2.3 2007/12/21 15:27:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.125.2.4 2007/12/26 23:05:53 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_maxuprc.h"
@@ -365,7 +365,7 @@ proc0_init(void)
 
 	mutex_init(&p->p_smutex, MUTEX_DEFAULT, IPL_SCHED);
 	mutex_init(&p->p_stmutex, MUTEX_DEFAULT, IPL_HIGH);
-	mutex_init(&p->p_raslock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&p->p_auxlock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&p->p_mutex, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&l->l_swaplock, MUTEX_DEFAULT, IPL_NONE);
 

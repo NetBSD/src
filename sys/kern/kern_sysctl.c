@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.210.10.1 2007/12/26 19:57:10 ad Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.210.10.2 2007/12/26 23:05:52 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.210.10.1 2007/12/26 19:57:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.210.10.2 2007/12/26 23:05:52 ad Exp $");
 
 #include "opt_defcorename.h"
 #include "ksyms.h"
@@ -304,9 +304,12 @@ sys___sysctl(struct lwp *l, const struct sys___sysctl_args *uap, register_t *ret
 	/*
 	 * wire old so that copyout() is less likely to fail?
 	 */
+	KERNEL_LOCK(1, NULL);			/* XXXSMP */
 	error = sysctl_lock(l, SCARG(uap, old), savelen);
-	if (error)
+	if (error) {
+		KERNEL_UNLOCK_ONE(NULL);	/* XXXSMP */
 		return (error);
+	}
 
 	/*
 	 * do sysctl work (NULL means main built-in default tree)
@@ -320,6 +323,7 @@ sys___sysctl(struct lwp *l, const struct sys___sysctl_args *uap, register_t *ret
 	 * release the sysctl lock
 	 */
 	sysctl_unlock(l);
+	KERNEL_UNLOCK_ONE(NULL);		/* XXXSMP */
 
 	/*
 	 * set caller's oldlen to new value even in the face of an

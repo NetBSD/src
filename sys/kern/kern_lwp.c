@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.83.2.3 2007/12/26 21:39:40 ad Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.83.2.4 2007/12/26 23:05:53 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -205,7 +205,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.83.2.3 2007/12/26 21:39:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.83.2.4 2007/12/26 23:05:53 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -707,6 +707,7 @@ lwp_exit(struct lwp *l)
 	mutex_enter(&p->p_smutex);
 	if (p->p_nlwps - p->p_nzlwps == 1) {
 		KASSERT(current == true);
+		/* XXXSMP kernel_lock not held */
 		exit1(l, 0);
 		/* NOTREACHED */
 	}
