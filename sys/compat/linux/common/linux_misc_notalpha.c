@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc_notalpha.c,v 1.99 2007/12/20 23:02:55 dsl Exp $	*/
+/*	$NetBSD: linux_misc_notalpha.c,v 1.100 2007/12/26 13:48:53 njoly Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.99 2007/12/20 23:02:55 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.100 2007/12/26 13:48:53 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -220,12 +220,18 @@ linux_sys_readdir(struct lwp *l, const struct linux_sys_readdir_args *uap, regis
 		syscallarg(struct linux_dirent *) dent;
 		syscallarg(unsigned int) count;
 	} */
+	int error;
 	struct linux_sys_getdents_args da;
 
 	SCARG(&da, fd) = SCARG(uap, fd);
 	SCARG(&da, dent) = SCARG(uap, dent);
 	SCARG(&da, count) = 1;
-	return linux_sys_getdents(l, &da, retval);
+
+	error = linux_sys_getdents(l, &da, retval);
+	if (error == 0 && *retval > 1)
+		*retval = 1;
+
+	return error;
 }
 #endif /* !amd64 */
 
