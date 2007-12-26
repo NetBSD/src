@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.h,v 1.5 2007/12/25 17:55:10 macallan Exp $ */
+/* $NetBSD: pci_machdep.h,v 1.6 2007/12/26 00:58:05 mrg Exp $ */
 
 /*-
  * Copyright (c) 2002,2007 The NetBSD Foundation, Inc.
@@ -53,6 +53,8 @@
 typedef struct genppc_pci_chipset *pci_chipset_tag_t;
 typedef int pcitag_t;
 typedef int pci_intr_handle_t;
+
+extern struct powerpc_bus_dma_tag pci_bus_dma_tag;
 
 /*
  * Forward declarations.
