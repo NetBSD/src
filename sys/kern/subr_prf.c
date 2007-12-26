@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.111.2.1 2007/12/12 22:05:40 ad Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.111.2.2 2007/12/26 17:55:06 ad Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.111.2.1 2007/12/12 22:05:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.111.2.2 2007/12/26 17:55:06 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
@@ -62,7 +62,6 @@ __KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.111.2.1 2007/12/12 22:05:40 ad Exp $"
 #include <sys/malloc.h>
 #include <sys/lock.h>
 #include <sys/kprintf.h>
-#include <sys/cpu.h>
 
 #include <dev/cons.h>
 
@@ -93,6 +92,7 @@ struct simplelock kprintf_slock = SIMPLELOCK_INITIALIZER;
 
 #ifdef KGDB
 #include <sys/kgdb.h>
+#include <sys/cpu.h>
 #endif
 #ifdef DDB
 #include <ddb/db_output.h>	/* db_printf, db_putchar prototypes */
@@ -191,10 +191,6 @@ panic(const char *fmt, ...)
 {
 	int bootopt;
 	va_list ap;
-
-#ifdef __HAVE_CPU_PANIC
-	cpu_panic_enter();
-#endif
 
 	bootopt = RB_AUTOBOOT;
 	if (dumponpanic)
