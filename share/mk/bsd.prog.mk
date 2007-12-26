@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.224 2007/11/13 13:57:53 jmmv Exp $
+#	$NetBSD: bsd.prog.mk,v 1.225 2007/12/26 22:52:10 jmmv Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -376,6 +376,13 @@ lint-${_P}: ${LOBJS.${_P}}
 .endif
 
 .endfor # _P in ${PROGS} ${PROGS_CXX}					# }
+
+.if defined(OBJS) && !empty(OBJS) && \
+    (empty(PROGS) && empty(PROGS_CXX))
+cleanobjs: cleanobjs-plain
+cleanobjs-plain:
+	rm -f ${OBJS} ${LOBJS}
+.endif
 
 .if !target(proginstall)
 proginstall:: ${_PROG_INSTALL}
