@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.21.2.1 2007/12/04 13:02:50 ad Exp $	*/
+/*	$NetBSD: spl.S,v 1.21.2.2 2007/12/26 21:38:46 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -36,10 +36,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <machine/asm.h>
+__KERNEL_RCSID(0, "$NetBSD: spl.S,v 1.21.2.2 2007/12/26 21:38:46 ad Exp $");
+
 #include "opt_vm86.h"
 #include "opt_ddb.h"
 
-#include <machine/asm.h>
 #include <machine/trap.h>
 #include <machine/segments.h>
 #include <machine/frameasm.h>
@@ -67,8 +69,6 @@ ENTRY(splraise)
  * i686_spllower().  This must use pushf/cli/popf as it is used
  * early in boot where interrupts are disabled via eflags/IE.
  */
-	.align 64
-
 ENTRY(spllower)
 	movl	4(%esp), %ecx
 	cmpl	CPUVAR(ILEVEL), %ecx
@@ -111,10 +111,6 @@ ENTRY(cx8_spllower)
 	movl	CPUVAR(IPENDING),%eax
 	testl	%eax,CPUVAR(IUNMASK)(,%ecx,4)	/* deferred interrupts? */
 	movl	%eax,%ebx
-	/*
-	 * On the P4 this jump is cheaper than patching in junk
-	 * using cmovnz.  Is cmpxchg expensive if it fails?
-	 */
 	jnz,pn	2f
 	cmpxchg8b CPUVAR(ISTATE)		/* swap in new ilevel */
 	jnz,pn	0b

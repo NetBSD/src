@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_ioctl.h,v 1.1.58.1 2007/12/08 17:56:53 ad Exp $ */
+/*	$NetBSD: linux32_ioctl.h,v 1.1.58.2 2007/12/26 21:39:03 ad Exp $ */
 
 /*-
  * Copyright (c) 1995-2006 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 #ifdef _KERNEL
 __BEGIN_DECLS
 struct linux32_sys_ioctl_args;
-int linux32_ioctl_termios(struct lwp *, struct linux32_sys_ioctl_args *,
+int linux32_ioctl_termios(struct lwp *, const struct linux32_sys_ioctl_args *,
     register_t *);
 __END_DECLS
 #endif 

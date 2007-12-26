@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.41.2.7 2007/12/15 00:51:47 ad Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.41.2.8 2007/12/26 21:39:34 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.41.2.7 2007/12/15 00:51:47 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.41.2.8 2007/12/26 21:39:34 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -94,7 +94,7 @@ __KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.41.2.7 2007/12/15 00:51:47 ad Exp $
 int
 tmpfs_alloc_node(struct tmpfs_mount *tmp, enum vtype type,
     uid_t uid, gid_t gid, mode_t mode, struct tmpfs_node *parent,
-    char *target, dev_t rdev, struct proc *p, struct tmpfs_node **node)
+    char *target, dev_t rdev, struct tmpfs_node **node)
 {
 	struct tmpfs_node *nnode;
 
@@ -500,8 +500,7 @@ tmpfs_alloc_file(struct vnode *dvp, struct vnode **vpp, struct vattr *vap,
 
 	/* Allocate a node that represents the new file. */
 	error = tmpfs_alloc_node(tmp, vap->va_type, kauth_cred_geteuid(cnp->cn_cred),
-	    dnode->tn_gid, vap->va_mode, parent, target, vap->va_rdev,
-	    cnp->cn_lwp->l_proc, &node);
+	    dnode->tn_gid, vap->va_mode, parent, target, vap->va_rdev, &node);
 	if (error != 0)
 		goto out;
 

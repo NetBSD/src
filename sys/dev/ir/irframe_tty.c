@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe_tty.c,v 1.47.2.1 2007/12/08 17:57:23 ad Exp $	*/
+/*	$NetBSD: irframe_tty.c,v 1.47.2.2 2007/12/26 21:39:26 ad Exp $	*/
 
 /*
  * TODO
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irframe_tty.c,v 1.47.2.1 2007/12/08 17:57:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irframe_tty.c,v 1.47.2.2 2007/12/26 21:39:26 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -260,7 +260,7 @@ irframetopen(dev_t dev, struct tty *tp)
 	struct cfdata *cfdata;
 	struct ir_attach_args ia;
 
-	DPRINTF(("%s\n", __FUNCTION__));
+	DPRINTF(("%s\n", __func__));
 
 	if ((error = kauth_authorize_device_tty(l->l_cred, 
 		KAUTH_DEVICE_TTY_OPEN, tp)))
@@ -268,11 +268,11 @@ irframetopen(dev_t dev, struct tty *tp)
 
 	s = spltty();
 
-	DPRINTF(("%s: linesw=%p disc=%s\n", __FUNCTION__, tp->t_linesw,
+	DPRINTF(("%s: linesw=%p disc=%s\n", __func__, tp->t_linesw,
 		 tp->t_linesw->l_name));
 	if (tp->t_linesw == &irframet_disc) {
 		sc = (struct irframet_softc *)tp->t_sc;
-		DPRINTF(("%s: sc=%p sc_tp=%p\n", __FUNCTION__, sc, sc->sc_tp));
+		DPRINTF(("%s: sc=%p sc_tp=%p\n", __func__, sc, sc->sc_tp));
 		if (sc != NULL) {
 			splx(s);
 			return (EBUSY);
@@ -296,7 +296,7 @@ irframetopen(dev_t dev, struct tty *tp)
 	printf("%s attached at tty%02d\n", sc->sc_irp.sc_dev.dv_xname,
 	    minor(tp->t_dev));
 
-	DPRINTF(("%s: set sc=%p\n", __FUNCTION__, sc));
+	DPRINTF(("%s: set sc=%p\n", __func__, sc));
 
 	mutex_spin_enter(&tty_lock);
 	ttyflush(tp, FREAD | FWRITE);
@@ -323,7 +323,7 @@ irframetclose(struct tty *tp, int flag)
 	int s;
 	struct cfdata *cfdata;
 
-	DPRINTF(("%s: tp=%p\n", __FUNCTION__, tp));
+	DPRINTF(("%s: tp=%p\n", __func__, tp));
 
 	s = spltty();
 	mutex_spin_enter(&tty_lock);
@@ -360,7 +360,7 @@ irframetioctl(struct tty *tp, u_long cmd, void *data, int flag,
 	int error;
 	int d;
 
-	DPRINTF(("%s: tp=%p\n", __FUNCTION__, tp));
+	DPRINTF(("%s: tp=%p\n", __func__, tp));
 
 	if (sc == NULL || tp != sc->sc_tp)
 		return (EPASSTHROUGH);
@@ -396,7 +396,7 @@ irframetstart(struct tty *tp)
 	/*struct irframet_softc *sc = (struct irframet_softc *)tp->t_sc;*/
 	int s;
 
-	DPRINTF(("%s: tp=%p\n", __FUNCTION__, tp));
+	DPRINTF(("%s: tp=%p\n", __func__, tp));
 
 	s = spltty();
 	if (tp->t_oproc != NULL)
@@ -410,13 +410,13 @@ void
 irt_frame(struct irframet_softc *sc, u_char *tbuf, u_int len)
 {
 	DPRINTF(("%s: nframe=%d framei=%d frameo=%d\n",
-		 __FUNCTION__, sc->sc_nframes, sc->sc_framei, sc->sc_frameo));
+		 __func__, sc->sc_nframes, sc->sc_framei, sc->sc_frameo));
 
 	if (sc->sc_inbuf == NULL) /* XXX happens if device is closed? */
 		return;
 	if (sc->sc_nframes >= MAXFRAMES) {
 #ifdef IRFRAMET_DEBUG
-		printf("%s: dropped frame\n", __FUNCTION__);
+		printf("%s: dropped frame\n", __func__);
 #endif
 		return;
 	}
@@ -428,7 +428,7 @@ irt_frame(struct irframet_softc *sc, u_char *tbuf, u_int len)
 	sc->sc_nframes++;
 	if (sc->sc_state & IRT_RSLP) {
 		sc->sc_state &= ~IRT_RSLP;
-		DPRINTF(("%s: waking up reader\n", __FUNCTION__));
+		DPRINTF(("%s: waking up reader\n", __func__));
 		wakeup(sc->sc_frames);
 	}
 	selnotify(&sc->sc_rsel, 0);
@@ -441,7 +441,7 @@ irt_timeout(void *v)
 
 #ifdef IRFRAMET_DEBUG
 	if (sc->sc_framestate != FRAME_OUTSIDE)
-		printf("%s: input frame timeout\n", __FUNCTION__);
+		printf("%s: input frame timeout\n", __func__);
 #endif
 	sc->sc_framestate = FRAME_OUTSIDE;
 }
@@ -455,7 +455,7 @@ irframetinput(int c, struct tty *tp)
 
 #if IRFRAMET_DEBUG
 	if (irframetdebug > 1)
-		DPRINTF(("%s: tp=%p c=0x%02x\n", __FUNCTION__, tp, c));
+		DPRINTF(("%s: tp=%p c=0x%02x\n", __func__, tp, c));
 #endif
 
 	if (sc == NULL || tp != (struct tty *)sc->sc_tp)
@@ -466,34 +466,34 @@ irframetinput(int c, struct tty *tp)
 
 	switch (c) {
 	case SIR_BOF:
-		DPRINTF(("%s: BOF\n", __FUNCTION__));
+		DPRINTF(("%s: BOF\n", __func__));
 		sc->sc_framestate = FRAME_INSIDE;
 		sc->sc_inchars = 0;
 		sc->sc_inFCS = INITFCS;
 		break;
 	case SIR_EOF:
 		DPRINTF(("%s: EOF state=%d inchars=%d fcs=0x%04x\n",
-			 __FUNCTION__,
+			 __func__,
 			 sc->sc_framestate, sc->sc_inchars, sc->sc_inFCS));
 		if (sc->sc_framestate == FRAME_INSIDE &&
 		    sc->sc_inchars >= 4 && sc->sc_inFCS == GOODFCS) {
 			irt_frame(sc, sc->sc_inbuf, sc->sc_inchars - 2);
 		} else if (sc->sc_framestate != FRAME_OUTSIDE) {
 #ifdef IRFRAMET_DEBUG
-			printf("%s: malformed input frame\n", __FUNCTION__);
+			printf("%s: malformed input frame\n", __func__);
 #endif
 		}
 		sc->sc_framestate = FRAME_OUTSIDE;
 		break;
 	case SIR_CE:
-		DPRINTF(("%s: CE\n", __FUNCTION__));
+		DPRINTF(("%s: CE\n", __func__));
 		if (sc->sc_framestate == FRAME_INSIDE)
 			sc->sc_framestate = FRAME_ESCAPE;
 		break;
 	default:
 #if IRFRAMET_DEBUG
 	if (irframetdebug > 1)
-		DPRINTF(("%s: c=0x%02x, inchar=%d state=%d\n", __FUNCTION__, c,
+		DPRINTF(("%s: c=0x%02x, inchar=%d state=%d\n", __func__, c,
 			 sc->sc_inchars, sc->sc_state));
 #endif
 		if (sc->sc_framestate != FRAME_OUTSIDE) {
@@ -508,7 +508,7 @@ irframetinput(int c, struct tty *tp)
 				sc->sc_framestate = FRAME_OUTSIDE;
 #ifdef IRFRAMET_DEBUG
 				printf("%s: input frame overrun\n",
-				       __FUNCTION__);
+				       __func__);
 #endif
 			}
 		}
@@ -535,7 +535,7 @@ irframet_open(void *h, int flag, int mode,
 	struct irframet_softc *sc = (struct irframet_softc *)tp->t_sc;
 	static bool again;
 
-	DPRINTF(("%s: tp=%p\n", __FUNCTION__, tp));
+	DPRINTF(("%s: tp=%p\n", __func__, tp));
 
 	sc->sc_params.speed = 0;
 	sc->sc_params.ebofs = IRDA_DEFAULT_EBOFS;
@@ -563,7 +563,7 @@ irframet_close(void *h, int flag, int mode,
 	struct irframet_softc *sc = (struct irframet_softc *)tp->t_sc;
 	int i, s;
 
-	DPRINTF(("%s: tp=%p\n", __FUNCTION__, tp));
+	DPRINTF(("%s: tp=%p\n", __func__, tp));
 
 	callout_stop(&sc->sc_timeout);
 	s = splir();
@@ -591,10 +591,10 @@ irframet_read(void *h, struct uio *uio, int flag)
 	int s;
 
 	DPRINTF(("%s: resid=%zd, iovcnt=%d, offset=%ld\n",
-		 __FUNCTION__, uio->uio_resid, uio->uio_iovcnt,
+		 __func__, uio->uio_resid, uio->uio_iovcnt,
 		 (long)uio->uio_offset));
 	DPRINTF(("%s: nframe=%d framei=%d frameo=%d\n",
-		 __FUNCTION__, sc->sc_nframes, sc->sc_framei, sc->sc_frameo));
+		 __func__, sc->sc_nframes, sc->sc_framei, sc->sc_frameo));
 
 
 	s = splir();
@@ -604,9 +604,9 @@ irframet_read(void *h, struct uio *uio, int flag)
 			return (EWOULDBLOCK);
 		}
 		sc->sc_state |= IRT_RSLP;
-		DPRINTF(("%s: sleep\n", __FUNCTION__));
+		DPRINTF(("%s: sleep\n", __func__));
 		error = tsleep(sc->sc_frames, PZERO | PCATCH, "irtrd", 0);
-		DPRINTF(("%s: woke, error=%d\n", __FUNCTION__, error));
+		DPRINTF(("%s: woke, error=%d\n", __func__, error));
 		if (error) {
 			sc->sc_state &= ~IRT_RSLP;
 			break;
@@ -617,15 +617,15 @@ irframet_read(void *h, struct uio *uio, int flag)
 	if (!error) {
 		if (uio->uio_resid < sc->sc_frames[sc->sc_frameo].len) {
 			DPRINTF(("%s: uio buffer smaller than frame size "
-				 "(%zd < %d)\n", __FUNCTION__, uio->uio_resid,
+				 "(%zd < %d)\n", __func__, uio->uio_resid,
 				 sc->sc_frames[sc->sc_frameo].len));
 			error = EINVAL;
 		} else {
-			DPRINTF(("%s: moving %d bytes\n", __FUNCTION__,
+			DPRINTF(("%s: moving %d bytes\n", __func__,
 				 sc->sc_frames[sc->sc_frameo].len));
 			error = uiomove(sc->sc_frames[sc->sc_frameo].buf,
 					sc->sc_frames[sc->sc_frameo].len, uio);
-			DPRINTF(("%s: error=%d\n", __FUNCTION__, error));
+			DPRINTF(("%s: error=%d\n", __func__, error));
 		}
 		sc->sc_frameo = (sc->sc_frameo+1) % MAXFRAMES;
 		sc->sc_nframes--;
@@ -642,7 +642,7 @@ irt_putc(struct tty *tp, int c)
 
 #if IRFRAMET_DEBUG
 	if (irframetdebug > 3)
-		DPRINTF(("%s: tp=%p c=0x%02x cc=%d\n", __FUNCTION__, tp, c,
+		DPRINTF(("%s: tp=%p c=0x%02x cc=%d\n", __func__, tp, c,
 			 tp->t_outq.c_cc));
 #endif
 	if (tp->t_outq.c_cc > tp->t_hiwat) {
@@ -677,14 +677,14 @@ irframet_write(void *h, struct uio *uio, int flag)
 	int n;
 
 	DPRINTF(("%s: resid=%zd, iovcnt=%d, offset=%ld\n",
-		 __FUNCTION__, uio->uio_resid, uio->uio_iovcnt,
+		 __func__, uio->uio_resid, uio->uio_iovcnt,
 		 (long)uio->uio_offset));
 
 	n = irda_sir_frame(sc->sc_buffer, sizeof(sc->sc_buffer), uio,
 	    sc->sc_params.ebofs);
 	if (n < 0) {
 #ifdef IRFRAMET_DEBUG
-		printf("%s: irda_sir_frame() error=%d\n", __FUNCTION__, -n);
+		printf("%s: irda_sir_frame() error=%d\n", __func__, -n);
 #endif
 		return (-n);
 	}
@@ -697,7 +697,7 @@ irt_write_frame(struct tty *tp, u_int8_t *tbuf, size_t len)
 	struct irframet_softc *sc = (struct irframet_softc *)tp->t_sc;
 	int error, i;
 
-	DPRINTF(("%s: tp=%p len=%zd\n", __FUNCTION__, tp, len));
+	DPRINTF(("%s: tp=%p len=%zd\n", __func__, tp, len));
 
 	mutex_enter(&sc->sc_wr_lk);
 	error = 0;
@@ -707,7 +707,7 @@ irt_write_frame(struct tty *tp, u_int8_t *tbuf, size_t len)
 
 	irframetstart(tp);
 
-	DPRINTF(("%s: done, error=%d\n", __FUNCTION__, error));
+	DPRINTF(("%s: done, error=%d\n", __func__, error));
 
 	return (error);
 }
@@ -720,7 +720,7 @@ irframet_poll(void *h, int events, struct lwp *l)
 	int revents = 0;
 	int s;
 
-	DPRINTF(("%s: sc=%p\n", __FUNCTION__, sc));
+	DPRINTF(("%s: sc=%p\n", __func__, sc));
 
 	s = splir();
 	/* XXX is this a good check? */
@@ -730,10 +730,10 @@ irframet_poll(void *h, int events, struct lwp *l)
 
 	if (events & (POLLIN | POLLRDNORM)) {
 		if (sc->sc_nframes > 0) {
-			DPRINTF(("%s: have data\n", __FUNCTION__));
+			DPRINTF(("%s: have data\n", __func__));
 			revents |= events & (POLLIN | POLLRDNORM);
 		} else {
-			DPRINTF(("%s: recording select\n", __FUNCTION__));
+			DPRINTF(("%s: recording select\n", __func__));
 			selrecord(l, &sc->sc_rsel);
 		}
 	}
@@ -835,7 +835,7 @@ irframet_set_params(void *h, struct irda_params *p)
 	int i;
 
 	DPRINTF(("%s: tp=%p speed=%d ebofs=%d maxsize=%d\n",
-		 __FUNCTION__, tp, p->speed, p->ebofs, p->maxsize));
+		 __func__, tp, p->speed, p->ebofs, p->maxsize));
 
 	if (p->speed != sc->sc_params.speed) {
 		/* Checked in irframe.c */
@@ -879,7 +879,7 @@ irframet_get_speeds(void *h, int *speeds)
 	struct tty *tp = h;
 	struct irframet_softc *sc = (struct irframet_softc *)tp->t_sc;
 
-	DPRINTF(("%s: tp=%p\n", __FUNCTION__, tp));
+	DPRINTF(("%s: tp=%p\n", __func__, tp));
 
 	if (sc == NULL)		/* during attach */
 		*speeds = IRDA_SPEEDS_SIR;
@@ -894,7 +894,7 @@ irframet_get_turnarounds(void *h, int *turnarounds)
 	struct tty *tp = h;
 	struct irframet_softc *sc = (struct irframet_softc *)tp->t_sc;
 
-	DPRINTF(("%s: tp=%p\n", __FUNCTION__, tp));
+	DPRINTF(("%s: tp=%p\n", __func__, tp));
 
 	*turnarounds = irt_dongles[sc->sc_dongle].turnmask;
 	return (0);

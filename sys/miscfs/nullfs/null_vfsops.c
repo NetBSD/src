@@ -1,4 +1,4 @@
-/*	$NetBSD: null_vfsops.c,v 1.70.2.2 2007/12/06 21:03:54 ad Exp $	*/
+/*	$NetBSD: null_vfsops.c,v 1.70.2.3 2007/12/26 21:39:49 ad Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: null_vfsops.c,v 1.70.2.2 2007/12/06 21:03:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: null_vfsops.c,v 1.70.2.3 2007/12/26 21:39:49 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -134,8 +134,7 @@ nullfs_mount(mp, path, data, data_len)
 	/*
 	 * Find lower node
 	 */
-	NDINIT(&nd, LOOKUP, FOLLOW|LOCKLEAF,
-		UIO_USERSPACE, args->la.target, l);
+	NDINIT(&nd, LOOKUP, FOLLOW|LOCKLEAF, UIO_USERSPACE, args->la.target);
 	if ((error = namei(&nd)) != 0)
 		return (error);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_fcntl.c,v 1.29.2.1 2007/12/08 17:56:39 ad Exp $	*/
+/*	$NetBSD: ibcs2_fcntl.c,v 1.29.2.2 2007/12/26 21:38:55 ad Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Bartram
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_fcntl.c,v 1.29.2.1 2007/12/08 17:56:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_fcntl.c,v 1.29.2.2 2007/12/26 21:38:55 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,8 +58,7 @@ static int ioflags2oflags(int);
 static int oflags2ioflags(int);
 
 static int
-cvt_o_flags(flags)
-	int flags;
+cvt_o_flags(int flags)
 {
 	int r = 0;
 
@@ -76,9 +75,7 @@ cvt_o_flags(flags)
 }
 
 static void
-cvt_flock2iflock(flp, iflp)
-	struct flock *flp;
-	struct ibcs2_flock *iflp;
+cvt_flock2iflock(struct flock *flp, struct ibcs2_flock *iflp)
 {
 	switch (flp->l_type) {
 	case F_RDLCK:
@@ -99,9 +96,7 @@ cvt_flock2iflock(flp, iflp)
 }
 
 static void
-cvt_iflock2flock(iflp, flp)
-	struct ibcs2_flock *iflp;
-	struct flock *flp;
+cvt_iflock2flock(struct ibcs2_flock *iflp, struct flock *flp)
 {
 	flp->l_start = (off_t)iflp->l_start;
 	flp->l_len = (off_t)iflp->l_len;
@@ -122,8 +117,7 @@ cvt_iflock2flock(iflp, flp)
 
 /* convert iBCS2 mode into NetBSD mode */
 static int
-ioflags2oflags(flags)
-	int flags;
+ioflags2oflags(int flags)
 {
 	int r = 0;
 
@@ -143,8 +137,7 @@ ioflags2oflags(flags)
 
 /* convert NetBSD mode into iBCS2 mode */
 static int
-oflags2ioflags(flags)
-	int flags;
+oflags2ioflags(int flags)
 {
 	int r = 0;
 
@@ -163,22 +156,22 @@ oflags2ioflags(flags)
 }
 
 int
-ibcs2_sys_open(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ibcs2_sys_open(struct lwp *l, const struct ibcs2_sys_open_args *uap, register_t *retval)
 {
-	struct ibcs2_sys_open_args /* {
+	/* {
 		syscallarg(char *) path;
 		syscallarg(int) flags;
 		syscallarg(int) mode;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
+	struct sys_open_args bsd_ua;
 	int noctty = SCARG(uap, flags) & IBCS2_O_NOCTTY;
 	int ret;
 
-	SCARG(uap, flags) = cvt_o_flags(SCARG(uap, flags));
-	ret = sys_open(l, uap, retval);
+	SCARG(&bsd_ua, path) = SCARG(uap, path);
+	SCARG(&bsd_ua, flags) = cvt_o_flags(SCARG(uap, flags));
+	SCARG(&bsd_ua, mode) = SCARG(uap, mode);
+	ret = sys_open(l, &bsd_ua, retval);
 
 	if (!ret && !noctty && SESS_LEADER(p) && !(p->p_lflag & PL_CONTROLT)) {
 		struct filedesc *fdp = p->p_fd;
@@ -196,15 +189,12 @@ ibcs2_sys_open(l, v, retval)
 }
 
 int
-ibcs2_sys_creat(l, v, retval)
-        struct lwp *l;
-	void *v;
-	register_t *retval;
+ibcs2_sys_creat(struct lwp *l, const struct ibcs2_sys_creat_args *uap, register_t *retval)
 {
-	struct ibcs2_sys_creat_args /* {
+	/* {
 		syscallarg(char *) path;
 		syscallarg(int) mode;
-	} */ *uap = v;
+	} */
 	struct sys_open_args cup;
 
 	SCARG(&cup, path) = SCARG(uap, path);
@@ -214,15 +204,12 @@ ibcs2_sys_creat(l, v, retval)
 }
 
 int
-ibcs2_sys_access(l, v, retval)
-        struct lwp *l;
-	void *v;
-        register_t *retval;
+ibcs2_sys_access(struct lwp *l, const struct ibcs2_sys_access_args *uap, register_t *retval)
 {
-	struct ibcs2_sys_access_args /* {
+	/* {
 		syscallarg(char *) path;
 		syscallarg(int) flags;
-	} */ *uap = v;
+	} */
         struct sys_access_args cup;
 
         SCARG(&cup, path) = SCARG(uap, path);
@@ -231,18 +218,18 @@ ibcs2_sys_access(l, v, retval)
 }
 
 int
-ibcs2_sys_eaccess(struct lwp *l, void *v, register_t *retval)
+ibcs2_sys_eaccess(struct lwp *l, const struct ibcs2_sys_eaccess_args *uap, register_t *retval)
 {
-	struct ibcs2_sys_eaccess_args /* {
+	/* {
 		syscallarg(char *) path;
 		syscallarg(int) flags;
-	} */ *uap = v;
+	} */
 	struct vnode *vp;
         int error, flags;
         struct nameidata nd;
 
         NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF | TRYEMULROOT, UIO_USERSPACE,
-            SCARG(uap, path), l);
+            SCARG(uap, path));
         if ((error = namei(&nd)) != 0)
                 return error;
         vp = nd.ni_vp;
@@ -264,16 +251,13 @@ ibcs2_sys_eaccess(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-ibcs2_sys_fcntl(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ibcs2_sys_fcntl(struct lwp *l, const struct ibcs2_sys_fcntl_args *uap, register_t *retval)
 {
-	struct ibcs2_sys_fcntl_args /* {
+	/* {
 		syscallarg(int) fd;
 		syscallarg(int) cmd;
 		syscallarg(char *) arg;
-	} */ *uap = v;
+	} */
 	struct sys_fcntl_args fa;
 	struct flock fl;
 	struct ibcs2_flock ifl;

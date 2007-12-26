@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_sysmp.c,v 1.17.26.1 2007/12/08 17:56:43 ad Exp $ */
+/*	$NetBSD: irix_sysmp.c,v 1.17.26.2 2007/12/26 21:38:58 ad Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_sysmp.c,v 1.17.26.1 2007/12/08 17:56:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_sysmp.c,v 1.17.26.2 2007/12/26 21:38:58 ad Exp $");
 
 #include <sys/errno.h>
 #include <sys/param.h>
@@ -69,18 +69,15 @@ extern struct loadavg averunnable;
 extern long irix_kernel_var[32];
 
 int
-irix_sys_sysmp(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+irix_sys_sysmp(struct lwp *l, const struct irix_sys_sysmp_args *uap, register_t *retval)
 {
-	struct irix_sys_sysmp_args /* {
+	/* {
 		syscallarg(int) cmd;
 		syscallarg(void *) arg1;
 		syscallarg(void *) arg2;
 		syscallarg(void *) arg3;
 		syscallarg(void *) arg4;
-	} */ *uap = v;
+	} */
 	int cmd = SCARG(uap, cmd);
 
 #ifdef DEBUG_IRIX
@@ -122,9 +119,7 @@ irix_sys_sysmp(l, v, retval)
 }
 
 static int
-irix_sysmp_kernaddr(kernaddr, retval)
-	int kernaddr;
-	register_t *retval;
+irix_sysmp_kernaddr(int kernaddr, register_t *retval)
 {
 	switch (kernaddr) {
 	case IRIX_MPKA_AVENRUN:
@@ -146,9 +141,7 @@ irix_sysmp_kernaddr(kernaddr, retval)
 }
 
 static int
-irix_sysmp_sasz(cmd, retval)
-	int cmd;
-	register_t *retval;
+irix_sysmp_sasz(int cmd, register_t *retval)
 {
 	switch (cmd) {
 	case IRIX_MPSA_RMINFO:
@@ -164,10 +157,7 @@ irix_sysmp_sasz(cmd, retval)
 }
 
 static int
-irix_sysmp_saget(cmd, buf, len)
-	int cmd;
-	char *buf;
-	size_t len;
+irix_sysmp_saget(int cmd, char *buf, size_t len)
 {
 	extern u_int bufpages;
 	void *kbuf;

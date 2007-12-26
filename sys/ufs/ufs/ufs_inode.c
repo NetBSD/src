@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.70.2.1 2007/12/04 13:03:54 ad Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.70.2.2 2007/12/26 21:40:03 ad Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.70.2.1 2007/12/04 13:03:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.70.2.2 2007/12/26 21:40:03 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -82,7 +82,6 @@ ufs_inactive(void *v)
 	struct vnode *vp = ap->a_vp;
 	struct inode *ip = VTOI(vp);
 	struct mount *transmp;
-	struct lwp *l = curlwp;
 	mode_t mode;
 	int error = 0;
 
@@ -107,7 +106,7 @@ ufs_inactive(void *v)
 		ufs_extattr_vnode_inactive(vp, l);
 #endif
 		if (ip->i_size != 0) {
-			error = UFS_TRUNCATE(vp, (off_t)0, 0, NOCRED, l);
+			error = UFS_TRUNCATE(vp, (off_t)0, 0, NOCRED);
 		}
 		/*
 		 * Setting the mode to zero needs to wait for the inode

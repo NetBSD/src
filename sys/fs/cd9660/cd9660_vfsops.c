@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.50.2.2 2007/12/08 17:57:37 ad Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.50.2.3 2007/12/26 21:39:31 ad Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.50.2.2 2007/12/08 17:57:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.50.2.3 2007/12/26 21:39:31 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -199,7 +199,7 @@ cd9660_mount(mp, path, data, data_len)
 	 * Not an update, or updating the name: look up the name
 	 * and verify that it refers to a sensible block device.
 	 */
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, args->fspec, l);
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, args->fspec);
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	devvp = nd.ni_vp;

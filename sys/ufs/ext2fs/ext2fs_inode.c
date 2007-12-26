@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_inode.c,v 1.61.2.1 2007/12/04 13:03:41 ad Exp $	*/
+/*	$NetBSD: ext2fs_inode.c,v 1.61.2.2 2007/12/26 21:39:58 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.61.2.1 2007/12/04 13:03:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.61.2.2 2007/12/26 21:39:58 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,7 +156,7 @@ ext2fs_inactive(void *v)
 	error = 0;
 	if (ip->i_e2fs_nlink == 0 && (vp->v_mount->mnt_flag & MNT_RDONLY) == 0) {
 		if (ext2fs_size(ip) != 0) {
-			error = ext2fs_truncate(vp, (off_t)0, 0, NOCRED, NULL);
+			error = ext2fs_truncate(vp, (off_t)0, 0, NOCRED);
 		}
 		ip->i_e2fs_dtime = time_second;
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
@@ -238,7 +238,7 @@ ext2fs_update(struct vnode *vp, const struct timespec *acc,
  */
 int
 ext2fs_truncate(struct vnode *ovp, off_t length, int ioflag,
-    kauth_cred_t cred, struct proc *p)
+    kauth_cred_t cred)
 {
 	daddr_t lastblock;
 	struct inode *oip = VTOI(ovp);
@@ -293,7 +293,7 @@ ext2fs_truncate(struct vnode *ovp, off_t length, int ioflag,
 		    ioflag & IO_SYNC ? B_SYNC : 0);
 		if (error) {
 			(void) ext2fs_truncate(ovp, osize, ioflag & IO_SYNC,
-			    cred, p);
+			    cred);
 			return (error);
 		}
 		uvm_vnp_setsize(ovp, length);

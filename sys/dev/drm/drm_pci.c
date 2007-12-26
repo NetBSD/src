@@ -1,4 +1,4 @@
-/* $NetBSD: drm_pci.c,v 1.5.2.1 2007/12/08 17:57:20 ad Exp $ */
+/* $NetBSD: drm_pci.c,v 1.5.2.2 2007/12/26 21:39:24 ad Exp $ */
 
 /*
  * Copyright 2003 Eric Anholt.
@@ -24,6 +24,7 @@
  */
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: drm_pci.c,v 1.5.2.2 2007/12/26 21:39:24 ad Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/drm_pci.c,v 1.2 2005/11/28 23:13:52 anholt Exp $");
 */

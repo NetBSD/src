@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_sys.h,v 1.65.2.2 2007/12/08 17:57:38 ad Exp $	*/
+/*	$NetBSD: puffs_sys.h,v 1.65.2.3 2007/12/26 21:39:33 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -218,9 +218,8 @@ void	puffs_referencenode(struct puffs_node *);
 int	puffs_cookie2vnode(struct puffs_mount *, void *, int, int,
 			   struct vnode **);
 void	puffs_makecn(struct puffs_kcn *, struct puffs_kcred *,
-		     struct puffs_kcid *, const struct componentname *, int);
+		     const struct componentname *, int);
 void	puffs_credcvt(struct puffs_kcred *, kauth_cred_t);
-void	puffs_cidcvt(struct puffs_kcid *, const struct lwp *);
 
 void	puffs_parkdone_asyncbioread(struct puffs_mount *,
 				    struct puffs_req *, void *);

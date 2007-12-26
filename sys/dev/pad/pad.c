@@ -1,4 +1,4 @@
-/* $NetBSD: pad.c,v 1.2.10.1 2007/12/08 17:57:25 ad Exp $ */
+/* $NetBSD: pad.c,v 1.2.10.2 2007/12/26 21:39:26 ad Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.2.10.1 2007/12/08 17:57:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.2.10.2 2007/12/26 21:39:26 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -254,7 +254,6 @@ pad_attach(struct device *parent, struct device *self, void *opaque)
 
 	sc = (pad_softc_t *)self;
 
-	aprint_normal_dev(self, "Pseudo Audio Device\n");
 	aprint_normal_dev(self, "outputs: 44100Hz, 16-bit, stereo\n");
 
 	sc->sc_open = 0;
@@ -271,6 +270,9 @@ pad_attach(struct device *parent, struct device *self, void *opaque)
 	sc->sc_buflen = 0;
 	sc->sc_rpos = sc->sc_wpos = 0;
 	sc->sc_audiodev = (void *)audio_attach_mi(&pad_hw_if, sc, &sc->sc_dev);
+
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	return;
 }

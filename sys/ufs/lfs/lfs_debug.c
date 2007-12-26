@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_debug.c,v 1.34.14.1 2007/12/04 13:03:49 ad Exp $	*/
+/*	$NetBSD: lfs_debug.c,v 1.34.14.2 2007/12/26 21:40:01 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -66,12 +66,13 @@
  *	@(#)lfs_debug.c	8.1 (Berkeley) 6/11/93
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: lfs_debug.c,v 1.34.14.2 2007/12/26 21:40:01 ad Exp $");
+
 #ifdef DEBUG
 
 #include <machine/stdarg.h>
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_debug.c,v 1.34.14.1 2007/12/04 13:03:49 ad Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/namei.h>

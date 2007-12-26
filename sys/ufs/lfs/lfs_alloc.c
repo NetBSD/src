@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.103.6.3 2007/12/19 21:27:13 ad Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.103.6.4 2007/12/26 21:40:00 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.103.6.3 2007/12/19 21:27:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.103.6.4 2007/12/26 21:40:00 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -634,7 +634,7 @@ lfs_order_freelist(struct lfs *fs)
 		/* Address orphaned files */
 		if (ifp->if_nextfree == LFS_ORPHAN_NEXTFREE &&
 		    VFS_VGET(fs->lfs_ivnode->v_mount, ino, &vp) == 0) {
-			lfs_truncate(vp, 0, 0, NOCRED, curlwp);
+			lfs_truncate(vp, 0, 0, NOCRED);
 			vput(vp);
 			LFS_SEGENTRY(sup, fs, dtosn(fs, ifp->if_daddr), bp);
 			KASSERT(sup->su_nbytes >= DINODE1_SIZE);

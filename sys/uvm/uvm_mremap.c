@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mremap.c,v 1.8.6.1 2007/12/04 13:04:01 ad Exp $	*/
+/*	$NetBSD: uvm_mremap.c,v 1.8.6.2 2007/12/26 21:40:06 ad Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mremap.c,v 1.8.6.1 2007/12/04 13:04:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mremap.c,v 1.8.6.2 2007/12/26 21:40:06 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/mman.h>
@@ -239,15 +239,15 @@ done:
  */
 
 int
-sys_mremap(struct lwp *l, void *v, register_t *retval)
+sys_mremap(struct lwp *l, const struct sys_mremap_args *uap, register_t *retval)
 {
-	struct sys_mremap_args /* {
+	/* {
 		syscallarg(void *) old_address;
 		syscallarg(size_t) old_size;
 		syscallarg(void *) new_address;
 		syscallarg(size_t) new_size;
 		syscallarg(int) flags;
-	} */ *uap = v;
+	} */
 
 	struct proc *p;
 	struct vm_map *map;

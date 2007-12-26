@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_var.h,v 1.74.4.3 2007/12/08 17:58:05 ad Exp $	*/
+/*	$NetBSD: nfs_var.h,v 1.74.4.4 2007/12/26 21:39:54 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -286,8 +286,10 @@ int nfsrv_comparefh(const nfsrvfh_t *, const nfsrvfh_t *);
 void nfsrv_copyfh(nfsrvfh_t *, const nfsrvfh_t *);
 
 /* nfs_syscalls.c */
-int sys_getfh(struct lwp *, void *, register_t *);
-int sys_nfssvc(struct lwp *, void *, register_t *);
+struct sys_getfh_args;
+struct sys_nfssvc_args;
+int sys_getfh(struct lwp *, const struct sys_getfh_args *, register_t *);
+int sys_nfssvc(struct lwp *, const struct sys_nfssvc_args *, register_t *);
 int nfssvc_addsock(struct file *, struct mbuf *);
 int nfssvc_nfsd(struct nfsd_srvargs *, void *, struct lwp *);
 void nfsrv_zapsock(struct nfssvc_sock *);

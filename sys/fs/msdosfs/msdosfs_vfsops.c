@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.54.2.1 2007/12/04 13:03:04 ad Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.54.2.2 2007/12/26 21:39:32 ad Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.54.2.1 2007/12/04 13:03:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.54.2.2 2007/12/26 21:39:32 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -333,7 +333,7 @@ msdosfs_mount(mp, path, data, data_len)
 	 * Not an update, or updating the name: look up the name
 	 * and verify that it refers to a sensible block device.
 	 */
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, args->fspec, l);
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, args->fspec);
 	if ((error = namei(&nd)) != 0) {
 		DPRINTF(("namei %d\n", error));
 		return (error);

@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.62.2.1 2007/12/08 17:57:01 ad Exp $
+	$NetBSD: syscalls.master,v 1.62.2.2 2007/12/26 21:39:09 ad Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -69,65 +69,65 @@
 1	STD		{ void netbsd32_exit(int rval); }
 2	NOARGS		{ int sys_fork(void); }
 3	STD		{ netbsd32_ssize_t netbsd32_read(int fd, netbsd32_voidp buf, netbsd32_size_t nbyte); }
-4	STD		{ netbsd32_ssize_t netbsd32_write(int fd, const netbsd32_voidp buf, netbsd32_size_t nbyte); }
-5	STD		{ int netbsd32_open(const netbsd32_charp path, int flags, ... mode_t mode); }
+4	STD		{ netbsd32_ssize_t netbsd32_write(int fd, netbsd32_voidp buf, netbsd32_size_t nbyte); }
+5	STD		{ int netbsd32_open(netbsd32_charp path, int flags, ... mode_t mode); }
 6	STD		{ int netbsd32_close(int fd); }
 7	STD		{ int netbsd32_wait4(int pid, netbsd32_intp status, int options, netbsd32_rusagep_t rusage); }
-8	COMPAT_43	{ int netbsd32_ocreat(const netbsd32_charp path, mode_t mode); }
-9	STD		{ int netbsd32_link(const netbsd32_charp path, const netbsd32_charp link); }
-10	STD		{ int netbsd32_unlink(const netbsd32_charp path); }
+8	COMPAT_43	{ int netbsd32_ocreat(netbsd32_charp path, mode_t mode); }
+9	STD		{ int netbsd32_link(netbsd32_charp path, netbsd32_charp link); }
+10	STD		{ int netbsd32_unlink(netbsd32_charp path); }
 11	OBSOL		execv
-12	STD		{ int netbsd32_chdir(const netbsd32_charp path); }
+12	STD		{ int netbsd32_chdir(netbsd32_charp path); }
 13	STD		{ int netbsd32_fchdir(int fd); }
-14	STD		{ int netbsd32_mknod(const netbsd32_charp path, mode_t mode, dev_t dev); }
-15	STD		{ int netbsd32_chmod(const netbsd32_charp path, mode_t mode); }
-16	STD		{ int netbsd32_chown(const netbsd32_charp path, uid_t uid, gid_t gid); }
+14	STD		{ int netbsd32_mknod(netbsd32_charp path, mode_t mode, dev_t dev); }
+15	STD		{ int netbsd32_chmod(netbsd32_charp path, mode_t mode); }
+16	STD		{ int netbsd32_chown(netbsd32_charp path, uid_t uid, gid_t gid); }
 17	STD		{ int netbsd32_break(netbsd32_charp nsize); }
 18	COMPAT_20	{ int netbsd32_getfsstat(netbsd32_statfsp_t buf, netbsd32_long bufsize, int flags); }
 19	COMPAT_43	{ netbsd32_long netbsd32_olseek(int fd, netbsd32_long offset, int whence); }
 20	NOARGS MPSAFE	{ pid_t sys_getpid(void); }
-21	STD		{ int netbsd32_mount(const netbsd32_charp type, const netbsd32_charp path, int flags, netbsd32_voidp data); }
-22	STD		{ int netbsd32_unmount(const netbsd32_charp path, int flags); }
+21	STD		{ int netbsd32_mount(netbsd32_charp type, netbsd32_charp path, int flags, netbsd32_voidp data); }
+22	STD		{ int netbsd32_unmount(netbsd32_charp path, int flags); }
 23	STD		{ int netbsd32_setuid(uid_t uid); }
 24	NOARGS MPSAFE	{ uid_t sys_getuid(void); }
 25	NOARGS MPSAFE	{ uid_t sys_geteuid(void); }
 26	STD		{ int netbsd32_ptrace(int req, pid_t pid, netbsd32_caddr_t addr, int data); }
 27	STD		{ netbsd32_ssize_t netbsd32_recvmsg(int s, netbsd32_msghdrp_t msg, int flags); }
-28	STD		{ netbsd32_ssize_t netbsd32_sendmsg(int s, const netbsd32_msghdrp_t msg, int flags); }
+28	STD		{ netbsd32_ssize_t netbsd32_sendmsg(int s, netbsd32_msghdrp_t msg, int flags); }
 29	STD		{ netbsd32_ssize_t netbsd32_recvfrom(int s, netbsd32_voidp buf, netbsd32_size_t len, int flags, netbsd32_sockaddrp_t from, netbsd32_intp fromlenaddr); }
 30	STD		{ int netbsd32_accept(int s, netbsd32_sockaddrp_t name, netbsd32_intp anamelen); }
 31	STD		{ int netbsd32_getpeername(int fdes, netbsd32_sockaddrp_t asa, netbsd32_intp alen); }
 32	STD		{ int netbsd32_getsockname(int fdes, netbsd32_sockaddrp_t asa, netbsd32_intp alen); }
-33	STD		{ int netbsd32_access(const netbsd32_charp path, int flags); }
-34	STD		{ int netbsd32_chflags(const netbsd32_charp path, netbsd32_u_long flags); }
+33	STD		{ int netbsd32_access(netbsd32_charp path, int flags); }
+34	STD		{ int netbsd32_chflags(netbsd32_charp path, netbsd32_u_long flags); }
 35	STD		{ int netbsd32_fchflags(int fd, netbsd32_u_long flags); }
 36	NOARGS		{ void sys_sync(void); }
 37	STD		{ int netbsd32_kill(int pid, int signum); }
-38	COMPAT_43	{ int netbsd32_stat43(const netbsd32_charp path, netbsd32_stat43p_t ub); }
+38	COMPAT_43	{ int netbsd32_stat43(netbsd32_charp path, netbsd32_stat43p_t ub); }
 39	NOARGS MPSAFE	{ pid_t sys_getppid(void); }
-40	COMPAT_43	{ int netbsd32_lstat43(const netbsd32_charp path, netbsd32_stat43p_t ub); }
+40	COMPAT_43	{ int netbsd32_lstat43(netbsd32_charp path, netbsd32_stat43p_t ub); }
 41	STD		{ int netbsd32_dup(int fd); }
 42	NOARGS		{ int sys_pipe(void); }
 43	NOARGS MPSAFE	{ gid_t sys_getegid(void); }
 44	STD		{ int netbsd32_profil(netbsd32_caddr_t samples, netbsd32_size_t size, netbsd32_u_long offset, u_int scale); }
-45	STD		{ int netbsd32_ktrace(const netbsd32_charp fname, int ops, int facs, int pid); }
-46	STD		{ int netbsd32_sigaction(int signum, const netbsd32_sigactionp_t nsa, netbsd32_sigactionp_t osa); }
+45	STD		{ int netbsd32_ktrace(netbsd32_charp fname, int ops, int facs, int pid); }
+46	STD		{ int netbsd32_sigaction(int signum, netbsd32_sigactionp_t nsa, netbsd32_sigactionp_t osa); }
 47	NOARGS MPSAFE	{ gid_t sys_getgid(void); }
 48	COMPAT_13	{ int netbsd32_sigprocmask(int how, \
 			    int mask); } sigprocmask13
 49	STD		{ int netbsd32___getlogin(netbsd32_charp namebuf, u_int namelen); }
-50	STD		{ int netbsd32_setlogin(const netbsd32_charp namebuf); }
-51	STD		{ int netbsd32_acct(const netbsd32_charp path); }
+50	STD		{ int netbsd32_setlogin(netbsd32_charp namebuf); }
+51	STD		{ int netbsd32_acct(netbsd32_charp path); }
 52	COMPAT_13 MPSAFE	{ int sys_sigpending(void); } sigpending13
-53	COMPAT_13	{ int netbsd32_sigaltstack13(const netbsd32_sigaltstack13p_t nss, netbsd32_sigaltstack13p_t oss); }
+53	COMPAT_13	{ int netbsd32_sigaltstack13(netbsd32_sigaltstack13p_t nss, netbsd32_sigaltstack13p_t oss); }
 54	STD		{ int netbsd32_ioctl(int fd, netbsd32_u_long com, ... netbsd32_voidp data); }
 55	COMPAT_12	{ int netbsd32_reboot(int opt); }
-56	STD		{ int netbsd32_revoke(const netbsd32_charp path); }
-57	STD		{ int netbsd32_symlink(const netbsd32_charp path, const netbsd32_charp link); }
-58	STD		{ int netbsd32_readlink(const netbsd32_charp path, netbsd32_charp buf, netbsd32_size_t count); }
-59	STD		{ int netbsd32_execve(const netbsd32_charp path, netbsd32_charpp argp, netbsd32_charpp envp); }
+56	STD		{ int netbsd32_revoke(netbsd32_charp path); }
+57	STD		{ int netbsd32_symlink(netbsd32_charp path, netbsd32_charp link); }
+58	STD		{ int netbsd32_readlink(netbsd32_charp path, netbsd32_charp buf, netbsd32_size_t count); }
+59	STD		{ int netbsd32_execve(netbsd32_charp path, netbsd32_charpp argp, netbsd32_charpp envp); }
 60	STD		{ mode_t netbsd32_umask(mode_t newmask); }
-61	STD		{ int netbsd32_chroot(const netbsd32_charp path); }
+61	STD		{ int netbsd32_chroot(netbsd32_charp path); }
 62	COMPAT_43	{ int netbsd32_fstat43(int fd, netbsd32_stat43p_t sb); }
 63	COMPAT_43	{ int netbsd32_ogetkerninfo(int op, netbsd32_charp where, netbsd32_intp size, int arg); }
 64	COMPAT_43	{ int sys_getpagesize(void); } ogetpagesize
@@ -147,12 +147,12 @@
 77	OBSOL		vlimit
 78	STD		{ int netbsd32_mincore(netbsd32_caddr_t addr, netbsd32_size_t len, netbsd32_charp vec); }
 79	STD		{ int netbsd32_getgroups(int gidsetsize, netbsd32_gid_tp gidset); }
-80	STD		{ int netbsd32_setgroups(int gidsetsize, const netbsd32_gid_tp gidset); }
+80	STD		{ int netbsd32_setgroups(int gidsetsize, netbsd32_gid_tp gidset); }
 81	NOARGS MPSAFE	{ int sys_getpgrp(void); }
 82	STD		{ int netbsd32_setpgid(int pid, int pgid); }
-83	STD		{ int netbsd32_setitimer(int which, const netbsd32_itimervalp_t itv, netbsd32_itimervalp_t oitv); }
+83	STD		{ int netbsd32_setitimer(int which, netbsd32_itimervalp_t itv, netbsd32_itimervalp_t oitv); }
 84	COMPAT_43	{ int sys_wait(void); } owait
-85	COMPAT_12	{ int netbsd32_oswapon(const netbsd32_charp name); }
+85	COMPAT_12	{ int netbsd32_oswapon(netbsd32_charp name); }
 86	STD		{ int netbsd32_getitimer(int which, netbsd32_itimervalp_t itv); }
 87	COMPAT_43	{ int netbsd32_ogethostname(netbsd32_charp hostname, u_int len); }
 88	COMPAT_43	{ int netbsd32_osethostname(netbsd32_charp hostname, u_int len); }
@@ -165,14 +165,14 @@
 95	STD		{ int netbsd32_fsync(int fd); }
 96	STD		{ int netbsd32_setpriority(int which, int who, int prio); }
 97	COMPAT_30	{ int netbsd32_socket(int domain, int type, int protocol); }
-98	STD		{ int netbsd32_connect(int s, const netbsd32_sockaddrp_t name, int namelen); }
+98	STD		{ int netbsd32_connect(int s, netbsd32_sockaddrp_t name, int namelen); }
 99	COMPAT_43	{ int netbsd32_oaccept(int s, netbsd32_caddr_t name, netbsd32_intp anamelen); }
 100	STD		{ int netbsd32_getpriority(int which, int who); }
 101	COMPAT_43	{ int netbsd32_osend(int s, netbsd32_caddr_t buf, int len, int flags); }
 102	COMPAT_43	{ int netbsd32_orecv(int s, netbsd32_caddr_t buf, int len, int flags); }
 103	COMPAT_13	{ int netbsd32_sigreturn(netbsd32_sigcontextp_t sigcntxp); } sigreturn13
-104	STD		{ int netbsd32_bind(int s, const netbsd32_sockaddrp_t name, int namelen); }
-105	STD		{ int netbsd32_setsockopt(int s, int level, int name, const netbsd32_voidp val, int valsize); }
+104	STD		{ int netbsd32_bind(int s, netbsd32_sockaddrp_t name, int namelen); }
+105	STD		{ int netbsd32_setsockopt(int s, int level, int name, netbsd32_voidp val, int valsize); }
 106	STD		{ int netbsd32_listen(int s, int backlog); }
 107	OBSOL		vtimes
 108	COMPAT_43	{ int netbsd32_osigvec(int signum, netbsd32_sigvecp_t nsv, netbsd32_sigvecp_t osv); }
@@ -187,35 +187,35 @@
 117	STD		{ int netbsd32_getrusage(int who, netbsd32_rusagep_t rusage); }
 118	STD		{ int netbsd32_getsockopt(int s, int level, int name, netbsd32_voidp val, netbsd32_intp avalsize); }
 119	OBSOL		resuba
-120	STD		{ netbsd32_ssize_t netbsd32_readv(int fd, const netbsd32_iovecp_t iovp, int iovcnt); }
-121	STD		{ netbsd32_ssize_t netbsd32_writev(int fd, const netbsd32_iovecp_t iovp, int iovcnt); }
-122	STD		{ int netbsd32_settimeofday(const netbsd32_timevalp_t tv, const netbsd32_timezonep_t tzp); }
+120	STD		{ netbsd32_ssize_t netbsd32_readv(int fd, netbsd32_iovecp_t iovp, int iovcnt); }
+121	STD		{ netbsd32_ssize_t netbsd32_writev(int fd, netbsd32_iovecp_t iovp, int iovcnt); }
+122	STD		{ int netbsd32_settimeofday(netbsd32_timevalp_t tv, netbsd32_timezonep_t tzp); }
 123	STD		{ int netbsd32_fchown(int fd, uid_t uid, gid_t gid); }
 124	STD		{ int netbsd32_fchmod(int fd, mode_t mode); }
 125	COMPAT_43	{ int netbsd32_orecvfrom(int s, netbsd32_caddr_t buf, netbsd32_size_t len, int flags, netbsd32_caddr_t from, netbsd32_intp fromlenaddr); }
 126	STD		{ int netbsd32_setreuid(uid_t ruid, uid_t euid); }
 127	STD		{ int netbsd32_setregid(gid_t rgid, gid_t egid); }
-128	STD		{ int netbsd32_rename(const netbsd32_charp from, const netbsd32_charp to); }
-129	COMPAT_43	{ int netbsd32_otruncate(const netbsd32_charp path, netbsd32_long length); }
+128	STD		{ int netbsd32_rename(netbsd32_charp from, netbsd32_charp to); }
+129	COMPAT_43	{ int netbsd32_otruncate(netbsd32_charp path, netbsd32_long length); }
 130	COMPAT_43	{ int netbsd32_oftruncate(int fd, netbsd32_long length); }
 131	STD		{ int netbsd32_flock(int fd, int how); }
-132	STD		{ int netbsd32_mkfifo(const netbsd32_charp path, mode_t mode); }
-133	STD		{ netbsd32_ssize_t netbsd32_sendto(int s, const netbsd32_voidp buf, netbsd32_size_t len, int flags, const netbsd32_sockaddrp_t to, int tolen); }
+132	STD		{ int netbsd32_mkfifo(netbsd32_charp path, mode_t mode); }
+133	STD		{ netbsd32_ssize_t netbsd32_sendto(int s, netbsd32_voidp buf, netbsd32_size_t len, int flags, netbsd32_sockaddrp_t to, int tolen); }
 134	STD		{ int netbsd32_shutdown(int s, int how); }
 135	STD		{ int netbsd32_socketpair(int domain, int type, int protocol, netbsd32_intp rsv); }
-136	STD		{ int netbsd32_mkdir(const netbsd32_charp path, mode_t mode); }
-137	STD		{ int netbsd32_rmdir(const netbsd32_charp path); }
-138	STD		{ int netbsd32_utimes(const netbsd32_charp path, const netbsd32_timevalp_t tptr); }
+136	STD		{ int netbsd32_mkdir(netbsd32_charp path, mode_t mode); }
+137	STD		{ int netbsd32_rmdir(netbsd32_charp path); }
+138	STD		{ int netbsd32_utimes(netbsd32_charp path, netbsd32_timevalp_t tptr); }
 139	OBSOL		4.2 sigreturn
-140	STD		{ int netbsd32_adjtime(const netbsd32_timevalp_t delta, netbsd32_timevalp_t olddelta); }
+140	STD		{ int netbsd32_adjtime(netbsd32_timevalp_t delta, netbsd32_timevalp_t olddelta); }
 141	COMPAT_43	{ int netbsd32_ogetpeername(int fdes, netbsd32_caddr_t asa, netbsd32_intp alen); }
 142	COMPAT_43	{ int32_t sys_gethostid(void); } ogethostid
 143	COMPAT_43	{ int netbsd32_sethostid(int32_t hostid); }
 144	COMPAT_43	{ int netbsd32_ogetrlimit(int which, netbsd32_orlimitp_t rlp); }
-145	COMPAT_43	{ int netbsd32_osetrlimit(int which, const netbsd32_orlimitp_t rlp); }
+145	COMPAT_43	{ int netbsd32_osetrlimit(int which, netbsd32_orlimitp_t rlp); }
 146	COMPAT_43	{ int netbsd32_killpg(int pgid, int signum); }
 147	NOARGS		{ int sys_setsid(void); }
-148	STD		{ int netbsd32_quotactl(const netbsd32_charp path, int cmd, int uid, netbsd32_caddr_t arg); }
+148	STD		{ int netbsd32_quotactl(netbsd32_charp path, int cmd, int uid, netbsd32_caddr_t arg); }
 149	COMPAT_43	{ int sys_quota(void); } oquota
 150	COMPAT_43	{ int netbsd32_ogetsockname(int fdec, netbsd32_caddr_t asa, netbsd32_intp alen); }
 
@@ -233,11 +233,11 @@
 155	EXCL		netbsd32_nfssvc
 #endif
 156	COMPAT_43	{ int netbsd32_ogetdirentries(int fd, netbsd32_charp buf, u_int count, netbsd32_longp basep); }
-157	COMPAT_20	{ int netbsd32_statfs(const netbsd32_charp path, netbsd32_statfsp_t buf); }
+157	COMPAT_20	{ int netbsd32_statfs(netbsd32_charp path, netbsd32_statfsp_t buf); }
 158	COMPAT_20	{ int netbsd32_fstatfs(int fd, netbsd32_statfsp_t buf); }
 159	UNIMPL
 160	UNIMPL
-161	COMPAT_30		{ int netbsd32_getfh(const netbsd32_charp fname, netbsd32_compat_30_fhandlep_t fhp); }
+161	COMPAT_30		{ int netbsd32_getfh(netbsd32_charp fname, netbsd32_compat_30_fhandlep_t fhp); }
 162	COMPAT_09	{ int netbsd32_ogetdomainname(netbsd32_charp domainname, int len); }
 163	COMPAT_09	{ int netbsd32_osetdomainname(netbsd32_charp domainname, int len); }
 164	COMPAT_09	{ int netbsd32_uname(netbsd32_outsnamep_t name); }
@@ -262,7 +262,7 @@
 #endif
 172	UNIMPL
 173	STD		{ netbsd32_ssize_t netbsd32_pread(int fd, netbsd32_voidp buf, netbsd32_size_t nbyte, int pad, off_t offset); }
-174	STD		{ netbsd32_ssize_t netbsd32_pwrite(int fd, const netbsd32_voidp buf, netbsd32_size_t nbyte, int pad, off_t offset); }
+174	STD		{ netbsd32_ssize_t netbsd32_pwrite(int fd, netbsd32_voidp buf, netbsd32_size_t nbyte, int pad, off_t offset); }
 175	COMPAT_30	{ int netbsd32_ntp_gettime(netbsd32_ntptimevalp_t ntvp); }
 176	STD		{ int netbsd32_ntp_adjtime(netbsd32_timexp_t tp); }
 177	UNIMPL
@@ -285,26 +285,26 @@
 186	EXCL		netbsd32_sys_lfs_segclean
 187	EXCL		netbsd32_sys_lfs_segwait
 #endif
-188	COMPAT_12	{ int netbsd32_stat12(const netbsd32_charp path, netbsd32_stat12p_t ub); }
+188	COMPAT_12	{ int netbsd32_stat12(netbsd32_charp path, netbsd32_stat12p_t ub); }
 189	COMPAT_12	{ int netbsd32_fstat12(int fd, netbsd32_stat12p_t sb); }
-190	COMPAT_12	{ int netbsd32_lstat12(const netbsd32_charp path, netbsd32_stat12p_t ub); }
-191	STD		{ netbsd32_long netbsd32_pathconf(const netbsd32_charp path, int name); }
+190	COMPAT_12	{ int netbsd32_lstat12(netbsd32_charp path, netbsd32_stat12p_t ub); }
+191	STD		{ netbsd32_long netbsd32_pathconf(netbsd32_charp path, int name); }
 192	STD		{ netbsd32_long netbsd32_fpathconf(int fd, int name); }
 193	UNIMPL
 194	STD		{ int netbsd32_getrlimit(int which, netbsd32_rlimitp_t rlp); }
-195	STD		{ int netbsd32_setrlimit(int which, const netbsd32_rlimitp_t rlp); }
+195	STD		{ int netbsd32_setrlimit(int which, netbsd32_rlimitp_t rlp); }
 196	COMPAT_12	{ int netbsd32_getdirentries(int fd, netbsd32_charp buf, u_int count, netbsd32_longp basep); }
 197	STD		{ netbsd32_voidp netbsd32_mmap(netbsd32_voidp addr, netbsd32_size_t len, int prot, int flags, int fd, netbsd32_long pad, off_t pos); }
 198	INDIR		{ quad_t netbsd32_sys___syscall(quad_t code, \
 			    ... register32_t args[NETBSD32_SYS_MAXSYSARGS]); }
 199	STD		{ off_t netbsd32_lseek(int fd, int pad, off_t offset, int whence); }
-200	STD		{ int netbsd32_truncate(const netbsd32_charp path, int pad, off_t length); }
+200	STD		{ int netbsd32_truncate(netbsd32_charp path, int pad, off_t length); }
 201	STD		{ int netbsd32_ftruncate(int fd, int pad, off_t length); }
 202	STD		{ int netbsd32___sysctl(netbsd32_intp name, u_int namelen, netbsd32_voidp old, netbsd32_size_tp oldlenp, netbsd32_voidp new, netbsd32_size_t newlen); }
-203	STD		{ int netbsd32_mlock(const netbsd32_voidp addr, netbsd32_size_t len); }
-204	STD		{ int netbsd32_munlock(const netbsd32_voidp addr, netbsd32_size_t len); }
-205	STD		{ int netbsd32_undelete(const netbsd32_charp path); }
-206	STD		{ int netbsd32_futimes(int fd, const netbsd32_timevalp_t tptr); }
+203	STD		{ int netbsd32_mlock(netbsd32_voidp addr, netbsd32_size_t len); }
+204	STD		{ int netbsd32_munlock(netbsd32_voidp addr, netbsd32_size_t len); }
+205	STD		{ int netbsd32_undelete(netbsd32_charp path); }
+206	STD		{ int netbsd32_futimes(int fd, netbsd32_timevalp_t tptr); }
 207	STD		{ int netbsd32_getpgid(pid_t pid); }
 208	STD		{ int netbsd32_reboot(int opt, netbsd32_charp bootstr); }
 209	STD		{ int netbsd32_poll(netbsd32_pollfdp_t fds, u_int nfds, int timeout); }
@@ -349,7 +349,7 @@
 #if defined(SYSVMSG) || !defined(_KERNEL)
 224	COMPAT_14	{ int netbsd32_msgctl(int msqid, int cmd, netbsd32_msqid_dsp_t buf); }
 225	STD		{ int netbsd32_msgget(netbsd32_key_t key, int msgflg); }
-226	STD		{ int netbsd32_msgsnd(int msqid, const netbsd32_voidp msgp, netbsd32_size_t msgsz, int msgflg); }
+226	STD		{ int netbsd32_msgsnd(int msqid, netbsd32_voidp msgp, netbsd32_size_t msgsz, int msgflg); }
 227	STD		{ netbsd32_ssize_t netbsd32_msgrcv(int msqid, netbsd32_voidp msgp, netbsd32_size_t msgsz, netbsd32_long msgtyp, int msgflg); }
 #else
 224	EXCL		compat_14_netbsd32_msgctl
@@ -358,9 +358,9 @@
 227	EXCL		netbsd32_msgrcv
 #endif
 #if defined(SYSVSHM) || !defined(_KERNEL)
-228	STD		{ netbsd32_voidp netbsd32_shmat(int shmid, const netbsd32_voidp shmaddr, int shmflg); }
+228	STD		{ netbsd32_voidp netbsd32_shmat(int shmid, netbsd32_voidp shmaddr, int shmflg); }
 229	COMPAT_14		{ int netbsd32_shmctl(int shmid, int cmd, netbsd32_shmid_dsp_t buf); }
-230	STD		{ int netbsd32_shmdt(const netbsd32_voidp shmaddr); }
+230	STD		{ int netbsd32_shmdt(netbsd32_voidp shmaddr); }
 231	STD		{ int netbsd32_shmget(netbsd32_key_t key, netbsd32_size_t size, int shmflg); }
 #else
 228	EXCL		netbsd32_shmat
@@ -369,33 +369,33 @@
 231	EXCL		netbsd32_shmget
 #endif
 232	STD		{ int netbsd32_clock_gettime(netbsd32_clockid_t clock_id, netbsd32_timespecp_t tp); }
-233	STD		{ int netbsd32_clock_settime(netbsd32_clockid_t clock_id, const netbsd32_timespecp_t tp); }
+233	STD		{ int netbsd32_clock_settime(netbsd32_clockid_t clock_id, netbsd32_timespecp_t tp); }
 234	STD		{ int netbsd32_clock_getres(netbsd32_clockid_t clock_id, netbsd32_timespecp_t tp); }
 235	STD		{ int netbsd32_timer_create(netbsd32_clockid_t clock_id, netbsd32_sigeventp_t evp, \
 			    netbsd32_timerp_t timerid); }
 236	STD		{ int netbsd32_timer_delete(netbsd32_timer_t timerid); }
 237	STD		{ int netbsd32_timer_settime(netbsd32_timer_t timerid, int flags, \
-			    const netbsd32_itimerspecp_t value, \
+			    netbsd32_itimerspecp_t value, \
 			    netbsd32_itimerspecp_t ovalue); }
 238	STD		{ int netbsd32_timer_gettime(netbsd32_timer_t timerid, netbsd32_itimerspecp_t value); }
 239	STD		{ int netbsd32_timer_getoverrun(netbsd32_timer_t timerid); }
 ;
 ; Syscalls 240-269 are reserved for other IEEE Std1003.1b syscalls
 ;
-240	STD		{ int netbsd32_nanosleep(const netbsd32_timespecp_t rqtp, netbsd32_timespecp_t rmtp); }
+240	STD		{ int netbsd32_nanosleep(netbsd32_timespecp_t rqtp, netbsd32_timespecp_t rmtp); }
 241	STD		{ int netbsd32_fdatasync(int fd); }
 242	STD		{ int netbsd32_mlockall(int flags); }
 243	NOARGS		{ int sys_munlockall(void); }
-244	STD		{ int netbsd32___sigtimedwait(const netbsd32_sigsetp_t set, \
+244	STD		{ int netbsd32___sigtimedwait(netbsd32_sigsetp_t set, \
 			    netbsd32_siginfop_t info, \
 			    netbsd32_timespecp_t timeout); }
 245	UNIMPL
 246	UNIMPL
 #if defined(P1003_1B_SEMAPHORE) || (!defined(_KERNEL) && defined(_LIBC))
 247	STD		{ int netbsd32__ksem_init(unsigned int value, netbsd32_semidp_t idp); }
-248	STD		{ int netbsd32__ksem_open(const netbsd32_charp name, int oflag, \
+248	STD		{ int netbsd32__ksem_open(netbsd32_charp name, int oflag, \
 			    mode_t mode, unsigned int value, netbsd32_semidp_t idp); }
-249	STD		{ int netbsd32__ksem_unlink(const netbsd32_charp name); }
+249	STD		{ int netbsd32__ksem_unlink(netbsd32_charp name); }
 250	STD		{ int netbsd32__ksem_close(netbsd32_semid_t id); }
 251	STD		{ int netbsd32__ksem_post(netbsd32_semid_t id); }
 252	STD		{ int netbsd32__ksem_wait(netbsd32_semid_t id); }
@@ -429,41 +429,41 @@
 267	UNIMPL
 268	UNIMPL
 269	UNIMPL
-270	STD		{ int netbsd32___posix_rename(const netbsd32_charp from, const netbsd32_charp to); }
+270	STD		{ int netbsd32___posix_rename(netbsd32_charp from, netbsd32_charp to); }
 271	STD		{ int netbsd32_swapctl(int cmd, netbsd32_voidp arg, int misc); }
 272	COMPAT_30	{ int netbsd32_getdents(int fd, netbsd32_charp buf, netbsd32_size_t count); }
 273	STD		{ int netbsd32_minherit(netbsd32_voidp addr, netbsd32_size_t len, int inherit); }
-274	STD		{ int netbsd32_lchmod(const netbsd32_charp path, mode_t mode); }
-275	STD		{ int netbsd32_lchown(const netbsd32_charp path, uid_t uid, gid_t gid); }
-276	STD		{ int netbsd32_lutimes(const netbsd32_charp path, const netbsd32_timevalp_t tptr); }
+274	STD		{ int netbsd32_lchmod(netbsd32_charp path, mode_t mode); }
+275	STD		{ int netbsd32_lchown(netbsd32_charp path, uid_t uid, gid_t gid); }
+276	STD		{ int netbsd32_lutimes(netbsd32_charp path, netbsd32_timevalp_t tptr); }
 277	STD		{ int netbsd32___msync13(netbsd32_voidp addr, netbsd32_size_t len, int flags); }
-278	COMPAT_30	{ int netbsd32___stat13(const netbsd32_charp path, netbsd32_stat13p_t ub); }
+278	COMPAT_30	{ int netbsd32___stat13(netbsd32_charp path, netbsd32_stat13p_t ub); }
 279	COMPAT_30	{ int netbsd32___fstat13(int fd, netbsd32_stat13p_t sb); }
-280	COMPAT_30	{ int netbsd32___lstat13(const netbsd32_charp path, netbsd32_stat13p_t ub); }
-281	STD		{ int netbsd32___sigaltstack14(const netbsd32_sigaltstackp_t nss, netbsd32_sigaltstackp_t oss); }
+280	COMPAT_30	{ int netbsd32___lstat13(netbsd32_charp path, netbsd32_stat13p_t ub); }
+281	STD		{ int netbsd32___sigaltstack14(netbsd32_sigaltstackp_t nss, netbsd32_sigaltstackp_t oss); }
 282	NOARGS		{ int sys___vfork14(void); }
-283	STD		{ int netbsd32___posix_chown(const netbsd32_charp path, uid_t uid, gid_t gid); }
+283	STD		{ int netbsd32___posix_chown(netbsd32_charp path, uid_t uid, gid_t gid); }
 284	STD		{ int netbsd32___posix_fchown(int fd, uid_t uid, gid_t gid); }
-285	STD		{ int netbsd32___posix_lchown(const netbsd32_charp path, uid_t uid, gid_t gid); }
+285	STD		{ int netbsd32___posix_lchown(netbsd32_charp path, uid_t uid, gid_t gid); }
 286	STD		{ pid_t netbsd32_getsid(pid_t pid); }
 287	STD		{ int netbsd32___clone(int flags, netbsd32_voidp stack); }
-288	STD		{ int netbsd32_fktrace(const int fd, int ops, int facs, int pid); }
-289	STD		{ netbsd32_ssize_t netbsd32_preadv(int fd, const netbsd32_iovecp_t iovp, int iovcnt, int pad, off_t offset); }
-290	STD		{ netbsd32_ssize_t netbsd32_pwritev(int fd, const netbsd32_iovecp_t iovp, int iovcnt, int pad, off_t offset); }
+288	STD		{ int netbsd32_fktrace(int fd, int ops, int facs, int pid); }
+289	STD		{ netbsd32_ssize_t netbsd32_preadv(int fd, netbsd32_iovecp_t iovp, int iovcnt, int pad, off_t offset); }
+290	STD		{ netbsd32_ssize_t netbsd32_pwritev(int fd, netbsd32_iovecp_t iovp, int iovcnt, int pad, off_t offset); }
 291	STD		{ int netbsd32___sigaction14(int signum, \
-			    const netbsd32_sigactionp_t nsa, \
+			    netbsd32_sigactionp_t nsa, \
 			    netbsd32_sigactionp_t osa); }
 292	STD		{ int netbsd32___sigpending14(netbsd32_sigsetp_t set); }
 293	STD		{ int netbsd32___sigprocmask14(int how, \
-			    const netbsd32_sigsetp_t set, \
+			    netbsd32_sigsetp_t set, \
 			    netbsd32_sigsetp_t oset); }
-294	STD		{ int netbsd32___sigsuspend14(const netbsd32_sigsetp_t set); }
+294	STD		{ int netbsd32___sigsuspend14(netbsd32_sigsetp_t set); }
 295	COMPAT_16	{ int netbsd32___sigreturn14(netbsd32_sigcontextp_t sigcntxp); }
 296	STD		{ int netbsd32___getcwd(netbsd32_charp bufp, netbsd32_size_t length); }
 297	STD		{ int netbsd32_fchroot(int fd); }
-298	COMPAT_30	{ int netbsd32_fhopen(const netbsd32_fhandlep_t fhp, \
+298	COMPAT_30	{ int netbsd32_fhopen(netbsd32_fhandlep_t fhp, \
 			   int flags); }
-299	COMPAT_30	{ int netbsd32_fhstat(const netbsd32_fhandlep_t fhp, \
+299	COMPAT_30	{ int netbsd32_fhstat(netbsd32_fhandlep_t fhp, \
 			    netbsd32_stat13p_t sb); }
 300	COMPAT_20	{ int netbsd32_fhstatfs(netbsd32_fhandlep_t fhp, \
 			    netbsd32_statp_t buf); }
@@ -485,14 +485,14 @@
 #else
 303	EXCL		__shmctl13
 #endif
-304	STD		{ int netbsd32_lchflags(const netbsd32_charp path, netbsd32_u_long flags); }
+304	STD		{ int netbsd32_lchflags(netbsd32_charp path, netbsd32_u_long flags); }
 305	NOARGS MPSAFE	{ int sys_issetugid(void); }
-306	STD		{ int netbsd32_utrace(const netbsd32_charp label, netbsd32_voidp addr, \
+306	STD		{ int netbsd32_utrace(netbsd32_charp label, netbsd32_voidp addr, \
 			    netbsd32_size_t len); }
 307	STD		{ int netbsd32_getcontext(netbsd32_ucontextp ucp); }
 308	STD		{ int netbsd32_setcontext(netbsd32_ucontextp ucp, \
 			    uint32_t flags, netbsd32_lwpidp new_lwp); }
-309	STD		{ int netbsd32__lwp_create(const netbsd32_ucontextp ucp, \
+309	STD		{ int netbsd32__lwp_create(netbsd32_ucontextp ucp, \
 			    netbsd32_u_long flags, netbsd32_lwpidp new_lwp); }
 310	NOARGS		{ int sys__lwp_exit(void); }
 311	NOARGS MPSAFE	{ lwpid_t sys__lwp_self(void); }
@@ -505,14 +505,14 @@
 317	STD MPSAFE	{ void netbsd32__lwp_setprivate(netbsd32_voidp ptr); }
 318	STD		{ int netbsd32__lwp_kill(lwpid_t target, int signo); }
 319	STD MPSAFE	{ int netbsd32__lwp_detach(lwpid_t target); }
-320	STD MPSAFE	{ int netbsd32__lwp_park(const netbsd32_timespecp_t ts, \
-				lwpid_t unpark, const netbsd32_voidp hint, \
-				const netbsd32_voidp unparkhint); }
-321	STD MPSAFE	{ int netbsd32__lwp_unpark(lwpid_t target, const netbsd32_voidp hint); }
-322	STD MPSAFE	{ netbsd32_size_t netbsd32__lwp_unpark_all(const netbsd32_lwpidp targets, \
-				netbsd32_size_t ntargets, const netbsd32_voidp hint); }
+320	STD MPSAFE	{ int netbsd32__lwp_park(netbsd32_timespecp_t ts, \
+				lwpid_t unpark, netbsd32_voidp hint, \
+				netbsd32_voidp unparkhint); }
+321	STD MPSAFE	{ int netbsd32__lwp_unpark(lwpid_t target, netbsd32_voidp hint); }
+322	STD MPSAFE	{ netbsd32_size_t netbsd32__lwp_unpark_all(netbsd32_lwpidp targets, \
+				netbsd32_size_t ntargets, netbsd32_voidp hint); }
 323	STD		{ int netbsd32__lwp_setname(lwpid_t target, \
-				const netbsd32_charp name); }
+				netbsd32_charp name); }
 324	STD		{ int netbsd32__lwp_getname(lwpid_t target, \
 				netbsd32_charp name, netbsd32_size_t len); }
 325	STD 		{ int netbsd32__lwp_ctl(int features, \
@@ -532,7 +532,7 @@
 338	UNIMPL
 339	UNIMPL
 340	STD		{ int netbsd32___sigaction_sigtramp(int signum, \
-			    const netbsd32_sigactionp_t nsa, \
+			    netbsd32_sigactionp_t nsa, \
 			    netbsd32_sigactionp_t osa, \
 			    netbsd32_voidp tramp, int vers); }
 341	UNIMPL
@@ -557,100 +557,100 @@
 355	STD		{ int netbsd32_uuidgen(netbsd32_uuidp_t store, int count); }
 356	STD		{ int netbsd32_getvfsstat(netbsd32_statvfsp_t buf, \
 			    netbsd32_size_t bufsize, int flags); }
-357	STD		{ int netbsd32_statvfs1(const netbsd32_charp path, \
+357	STD		{ int netbsd32_statvfs1(netbsd32_charp path, \
 			    netbsd32_statvfsp_t buf, int flags); }
 358	STD		{ int netbsd32_fstatvfs1(int fd, netbsd32_statvfsp_t buf, \
 			    int flags); }
-359	COMPAT_30	{ int netbsd32_fhstatvfs1(const netbsd32_fhandlep_t fhp, \
+359	COMPAT_30	{ int netbsd32_fhstatvfs1(netbsd32_fhandlep_t fhp, \
 			    netbsd32_statvfsp_t buf, int flags); }
-360	STD		{ int netbsd32_extattrctl(const netbsd32_charp path, \
-			    int cmd, const netbsd32_charp filename, int attrnamespace, \
-			    const netbsd32_charp attrname); }
-361	STD		{ int netbsd32_extattr_set_file(const netbsd32_charp path, \
-			    int attrnamespace, const netbsd32_charp attrname, \
-			    const netbsd32_voidp data, netbsd32_size_t nbytes); }
-362	STD		{ int netbsd32_extattr_get_file(const netbsd32_charp path, \
-			    int attrnamespace, const netbsd32_charp attrname, \
+360	STD		{ int netbsd32_extattrctl(netbsd32_charp path, \
+			    int cmd, netbsd32_charp filename, int attrnamespace, \
+			    netbsd32_charp attrname); }
+361	STD		{ int netbsd32_extattr_set_file(netbsd32_charp path, \
+			    int attrnamespace, netbsd32_charp attrname, \
 			    netbsd32_voidp data, netbsd32_size_t nbytes); }
-363	STD		{ int netbsd32_extattr_delete_file(const netbsd32_charp path, \
-			    int attrnamespace, const netbsd32_charp attrname); }
+362	STD		{ int netbsd32_extattr_get_file(netbsd32_charp path, \
+			    int attrnamespace, netbsd32_charp attrname, \
+			    netbsd32_voidp data, netbsd32_size_t nbytes); }
+363	STD		{ int netbsd32_extattr_delete_file(netbsd32_charp path, \
+			    int attrnamespace, netbsd32_charp attrname); }
 364	STD		{ int netbsd32_extattr_set_fd(int fd, \
-			    int attrnamespace, const netbsd32_charp attrname, \
-			    const netbsd32_voidp data, netbsd32_size_t nbytes); }
+			    int attrnamespace, netbsd32_charp attrname, \
+			    netbsd32_voidp data, netbsd32_size_t nbytes); }
 365	STD		{ int netbsd32_extattr_get_fd(int fd, \
-			    int attrnamespace, const netbsd32_charp attrname, \
+			    int attrnamespace, netbsd32_charp attrname, \
 			    netbsd32_voidp data, netbsd32_size_t nbytes); }
 366	STD		{ int netbsd32_extattr_delete_fd(int fd, \
-			    int attrnamespace, const netbsd32_charp attrname); }
-367	STD		{ int netbsd32_extattr_set_link(const netbsd32_charp path, \
-			    int attrnamespace, const netbsd32_charp attrname, \
-			    const netbsd32_voidp data, netbsd32_size_t nbytes); }
-368	STD		{ int netbsd32_extattr_get_link(const netbsd32_charp path, \
-			    int attrnamespace, const netbsd32_charp attrname, \
+			    int attrnamespace, netbsd32_charp attrname); }
+367	STD		{ int netbsd32_extattr_set_link(netbsd32_charp path, \
+			    int attrnamespace, netbsd32_charp attrname, \
 			    netbsd32_voidp data, netbsd32_size_t nbytes); }
-369	STD		{ int netbsd32_extattr_delete_link(const netbsd32_charp path, \
-			    int attrnamespace, const netbsd32_charp attrname); }
+368	STD		{ int netbsd32_extattr_get_link(netbsd32_charp path, \
+			    int attrnamespace, netbsd32_charp attrname, \
+			    netbsd32_voidp data, netbsd32_size_t nbytes); }
+369	STD		{ int netbsd32_extattr_delete_link(netbsd32_charp path, \
+			    int attrnamespace, netbsd32_charp attrname); }
 370	STD		{ int netbsd32_extattr_list_fd(int fd, \
 			    int attrnamespace, netbsd32_voidp data, \
 			    netbsd32_size_t nbytes); }
-371	STD		{ int netbsd32_extattr_list_file(const netbsd32_charp path, \
+371	STD		{ int netbsd32_extattr_list_file(netbsd32_charp path, \
 			    int attrnamespace, netbsd32_voidp data, \
 			    netbsd32_size_t nbytes); }
-372	STD		{ int netbsd32_extattr_list_link(const netbsd32_charp path, \
+372	STD		{ int netbsd32_extattr_list_link(netbsd32_charp path, \
 			    int attrnamespace, netbsd32_voidp data, \
 			    netbsd32_size_t nbytes); }
 373	STD		{ int netbsd32_pselect(int nd, netbsd32_fd_setp_t in, \
 			    netbsd32_fd_setp_t ou, netbsd32_fd_setp_t ex, \
-			    const netbsd32_timespecp_t ts, const netbsd32_sigsetp_t mask); }
+			    netbsd32_timespecp_t ts, netbsd32_sigsetp_t mask); }
 374	STD		{ int netbsd32_pollts(netbsd32_pollfdp_t fds, u_int nfds, \
-			    const netbsd32_timespecp_t ts, const netbsd32_sigsetp_t mask); }
-375	STD		{ int netbsd32_setxattr(const netbsd32_charp path, \
-			    const netbsd32_charp name, netbsd32_voidp value, \
+			    netbsd32_timespecp_t ts, netbsd32_sigsetp_t mask); }
+375	STD		{ int netbsd32_setxattr(netbsd32_charp path, \
+			    netbsd32_charp name, netbsd32_voidp value, \
 			    netbsd32_size_t size, int flags); }
-376	STD		{ int netbsd32_lsetxattr(const netbsd32_charp path, \
-			    const netbsd32_charp name, netbsd32_voidp value, \
+376	STD		{ int netbsd32_lsetxattr(netbsd32_charp path, \
+			    netbsd32_charp name, netbsd32_voidp value, \
 			    netbsd32_size_t size, int flags); }
 377	STD		{ int netbsd32_fsetxattr(int fd, \
-			    const netbsd32_charp name, netbsd32_voidp value, \
+			    netbsd32_charp name, netbsd32_voidp value, \
 			    netbsd32_size_t size, int flags); }
-378	STD		{ int netbsd32_getxattr(const netbsd32_charp path, \
-			    const netbsd32_charp name, netbsd32_voidp value, \
+378	STD		{ int netbsd32_getxattr(netbsd32_charp path, \
+			    netbsd32_charp name, netbsd32_voidp value, \
 			    netbsd32_size_t size); }
-379	STD		{ int netbsd32_lgetxattr(const netbsd32_charp path, \
-			    const netbsd32_charp name, netbsd32_voidp value, \
+379	STD		{ int netbsd32_lgetxattr(netbsd32_charp path, \
+			    netbsd32_charp name, netbsd32_voidp value, \
 			    netbsd32_size_t size); }
 380	STD		{ int netbsd32_fgetxattr(int fd, \
-			    const netbsd32_charp name, netbsd32_voidp value, \
+			    netbsd32_charp name, netbsd32_voidp value, \
 			    netbsd32_size_t size); }
-381	STD		{ int netbsd32_listxattr(const netbsd32_charp path, \
+381	STD		{ int netbsd32_listxattr(netbsd32_charp path, \
 			    netbsd32_charp list, netbsd32_size_t size); }
-382	STD		{ int netbsd32_llistxattr(const netbsd32_charp path, \
+382	STD		{ int netbsd32_llistxattr(netbsd32_charp path, \
 			    netbsd32_charp list, netbsd32_size_t size); }
 383	STD		{ int netbsd32_flistxattr(int fd, \
 			    netbsd32_charp list, netbsd32_size_t size); }
-384	STD		{ int netbsd32_removexattr(const netbsd32_charp path, \
-			    const netbsd32_charp name); }
-385	STD		{ int netbsd32_lremovexattr(const netbsd32_charp path, \
-			    const netbsd32_charp name); }
+384	STD		{ int netbsd32_removexattr(netbsd32_charp path, \
+			    netbsd32_charp name); }
+385	STD		{ int netbsd32_lremovexattr(netbsd32_charp path, \
+			    netbsd32_charp name); }
 386	STD		{ int netbsd32_fremovexattr(int fd, \
-			    const netbsd32_charp name); }
-387     STD             { int netbsd32_sys___stat30(const netbsd32_charp path, \
+			    netbsd32_charp name); }
+387     STD             { int netbsd32_sys___stat30(netbsd32_charp path, \
 			    netbsd32_statp_t ub); }
 388     STD             { int netbsd32_sys___fstat30(int fd, \
 			    netbsd32_statp_t sb); }
 389     STD             { int netbsd32_sys___lstat30( \
-			    const netbsd32_charp path, netbsd32_statp_t ub); }
+			    netbsd32_charp path, netbsd32_statp_t ub); }
 390     STD             { int netbsd32_sys___getdents30(int fd, \
 			    netbsd32_charp buf, netbsd32_size_t count); }
 391	NOARGS		{ int sys_posix_fadvise(int fd, off_t offset, \
 			    off_t len, int advice); }
 392	COMPAT_30	{ int netbsd32_sys___fhstat30( \
-			    const netbsd32_fhandlep_t fhp, \
+			    netbsd32_fhandlep_t fhp, \
 			    netbsd32_statp_t sb); }
 393	STD		{ int netbsd32_ntp_gettime(netbsd32_ntptimevalp_t ntvp); }
 394	STD		{ int netbsd32_sys___socket30(int domain, int type, int protocol); }
-395	STD		{ int netbsd32___getfh30(const netbsd32_charp fname, netbsd32_pointer_t fhp, netbsd32_size_tp fh_size); }
-396	STD		{ int netbsd32___fhopen40(const netbsd32_pointer_t fhp, \
+395	STD		{ int netbsd32___getfh30(netbsd32_charp fname, netbsd32_pointer_t fhp, netbsd32_size_tp fh_size); }
+396	STD		{ int netbsd32___fhopen40(netbsd32_pointer_t fhp, \
 			    netbsd32_size_t fh_size, int flags); }
 397	STD		{ int netbsd32___fhstatvfs140(	\
 			    netbsd32_pointer_t fhp, netbsd32_size_t fh_size,\

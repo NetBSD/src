@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.87.2.5 2007/12/21 10:46:37 ad Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.87.2.6 2007/12/26 21:39:44 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.87.2.5 2007/12/21 10:46:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.87.2.6 2007/12/26 21:39:44 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -249,7 +249,7 @@ pipe_mutex_dtor(void *arg, void *obj)
 
 /* ARGSUSED */
 int
-sys_pipe(struct lwp *l, void *v, register_t *retval)
+sys_pipe(struct lwp *l, const void *v, register_t *retval)
 {
 	struct file *rf, *wf;
 	struct pipe *rpipe, *wpipe;

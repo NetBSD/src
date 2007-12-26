@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.c,v 1.98.2.1 2007/12/08 17:56:47 ad Exp $	*/
+/*	$NetBSD: linux_exec.c,v 1.98.2.2 2007/12/26 21:38:59 ad Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995, 1998, 2000, 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec.c,v 1.98.2.1 2007/12/08 17:56:47 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec.c,v 1.98.2.2 2007/12/26 21:38:59 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -238,8 +238,7 @@ linux_e_proc_exec(struct proc *p, struct exec_package *epp)
  * Emulation per-process exit hook.
  */
 static void
-linux_e_proc_exit(p)
-	struct proc *p;
+linux_e_proc_exit(struct proc *p)
 {
 	struct linux_emuldata *e = p->p_emuldata;
 
@@ -309,8 +308,7 @@ linux_userret(void)
 }
 
 void
-linux_nptl_proc_exit(p)
-	struct proc *p;
+linux_nptl_proc_exit(struct proc *p)
 {
 	struct linux_emuldata *e = p->p_emuldata;
 
@@ -407,9 +405,7 @@ linux_nptl_proc_fork(p, parent, luserret)
 }
 
 void
-linux_nptl_proc_init(p, parent)
-	struct proc *p;
-	struct proc *parent;
+linux_nptl_proc_init(struct proc *p, struct proc *parent)
 {
 	struct linux_emuldata *e = p->p_emuldata;
 	struct linux_emuldata *ep;

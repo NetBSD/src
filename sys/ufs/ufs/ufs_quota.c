@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.51.6.1 2007/12/04 13:03:54 ad Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.51.6.2 2007/12/26 21:40:03 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.51.6.1 2007/12/04 13:03:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.51.6.2 2007/12/26 21:40:03 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -418,7 +418,7 @@ quotaon(struct lwp *l, struct mount *mp, int type, void *fname)
 	struct nameidata nd;
 
 	vpp = &ump->um_quotas[type];
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, fname, l);
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, fname);
 	if ((error = vn_open(&nd, FREAD|FWRITE, 0)) != 0)
 		return (error);
 	vp = nd.ni_vp;

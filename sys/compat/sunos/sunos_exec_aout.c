@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_exec_aout.c,v 1.15.4.1 2007/12/08 17:57:03 ad Exp $	*/
+/*	$NetBSD: sunos_exec_aout.c,v 1.15.4.2 2007/12/26 21:39:10 ad Exp $	*/
 
 /*
  * Copyright (c) 1993 Theo de Raadt
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_exec_aout.c,v 1.15.4.1 2007/12/08 17:57:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_exec_aout.c,v 1.15.4.2 2007/12/26 21:39:10 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,9 +65,7 @@ int sunos_exec_aout_prep_nmagic(struct lwp *, struct exec_package *);
 int sunos_exec_aout_prep_omagic(struct lwp *, struct exec_package *);
 
 int
-exec_sunos_aout_makecmds(l, epp)
-	struct lwp *l;
-	struct exec_package *epp;
+exec_sunos_aout_makecmds(struct lwp *l, struct exec_package *epp)
 {
 	struct sunos_exec *sunmag = epp->ep_hdr;
 	int error = ENOEXEC;
@@ -115,9 +113,7 @@ exec_sunos_aout_makecmds(l, epp)
  * text, data, bss, and stack segments.
  */
 int
-sunos_exec_aout_prep_zmagic(l, epp)
-	struct lwp *l;
-	struct exec_package *epp;
+sunos_exec_aout_prep_zmagic(struct lwp *l, struct exec_package *epp)
 {
 	struct exec *execp = epp->ep_hdr;
 	int error;
@@ -155,9 +151,7 @@ sunos_exec_aout_prep_zmagic(l, epp)
  * sunos_exec_aout_prep_nmagic(): Prepare a SunOS NMAGIC binary's exec package
  */
 int
-sunos_exec_aout_prep_nmagic(l, epp)
-	struct lwp *l;
-	struct exec_package *epp;
+sunos_exec_aout_prep_nmagic(struct lwp *l, struct exec_package *epp)
 {
 	struct exec *execp = epp->ep_hdr;
 	long bsize, baddr;
@@ -192,9 +186,7 @@ sunos_exec_aout_prep_nmagic(l, epp)
  * sunos_exec_aout_prep_omagic(): Prepare a SunOS OMAGIC binary's exec package
  */
 int
-sunos_exec_aout_prep_omagic(l, epp)
-	struct lwp *l;
-	struct exec_package *epp;
+sunos_exec_aout_prep_omagic(struct lwp *l, struct exec_package *epp)
 {
 	struct exec *execp = epp->ep_hdr;
 	long bsize, baddr;

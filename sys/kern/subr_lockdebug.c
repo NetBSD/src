@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_lockdebug.c,v 1.22.2.7 2007/12/13 13:57:51 yamt Exp $	*/
+/*	$NetBSD: subr_lockdebug.c,v 1.22.2.8 2007/12/26 21:39:42 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.22.2.7 2007/12/13 13:57:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.22.2.8 2007/12/26 21:39:42 ad Exp $");
 
 #include "opt_ddb.h"
 
@@ -672,6 +672,9 @@ lockdebug_mem_check(const char *func, void *base, size_t sz)
 	lockdebug_t *ld;
 	lockdebuglk_t *lk;
 	int s;
+
+	if (panicstr != NULL)
+		return;
 
 	if (panicstr != NULL)
 		return;

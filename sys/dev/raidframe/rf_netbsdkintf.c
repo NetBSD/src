@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.239.2.1 2007/12/04 13:02:58 ad Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.239.2.2 2007/12/26 21:39:28 ad Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -146,7 +146,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.239.2.1 2007/12/04 13:02:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.239.2.2 2007/12/26 21:39:28 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -264,7 +264,7 @@ struct raid_softc {
 int numraid = 0;
 
 extern struct cfdriver raid_cd;
-CFATTACH_DECL(raid, sizeof(struct raid_softc),
+CFATTACH_DECL_NEW(raid, sizeof(struct raid_softc),
     raid_match, raid_attach, raid_detach, NULL);
 
 /*
@@ -2913,17 +2913,21 @@ rf_find_raid_components()
 			struct dkwedge_info dkw;
 			error = VOP_IOCTL(vp, DIOCGWEDGEINFO, &dkw, FREAD,
 			    NOCRED);
-			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-			VOP_CLOSE(vp, FREAD | FWRITE, NOCRED);
-			vput(vp);
 			if (error) {
 				printf("RAIDframe: can't get wedge info for "
 				    "dev %s (%d)\n", dv->dv_xname, error);
+				vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+				VOP_CLOSE(vp, FREAD | FWRITE, NOCRED);
+				vput(vp);
 				continue;
 			}
 
-			if (strcmp(dkw.dkw_ptype, DKW_PTYPE_RAIDFRAME) != 0)
+			if (strcmp(dkw.dkw_ptype, DKW_PTYPE_RAIDFRAME) != 0) {
+				vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+				VOP_CLOSE(vp, FREAD | FWRITE, NOCRED);
+				vput(vp);
 				continue;
+			}
 				
 			ac_list = rf_get_component(ac_list, dev, vp,
 			    dv->dv_xname, dkw.dkw_size);

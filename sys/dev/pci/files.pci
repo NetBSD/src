@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.296.2.1 2007/12/08 17:57:26 ad Exp $
+#	$NetBSD: files.pci,v 1.296.2.2 2007/12/26 21:39:27 ad Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -391,6 +391,7 @@ attach	esh at pci with esh_pci
 file	dev/pci/if_esh_pci.c		esh_pci
 
 # generic PCI VGA
+defflag	opt_vga.h	VGA_POST
 attach	vga at pci with vga_pci
 file	dev/pci/vga_pci.c		vga_pci			needs-flag
 
@@ -595,12 +596,11 @@ file	dev/pci/if_vr.c			vr
 # SiS 900 Fast Ethernet controllers
 device	sip: ether, ifnet, arp, mii, mii_bitbang
 attach	sip at pci
-file	dev/pci/if_sip.c		sip
+file	dev/pci/if_sip.c		sip | gsip
 
 # National Semiconductor DP83820 Gigabit Ethernet
 device	gsip: ether, ifnet, arp, mii, mii_bitbang
 attach	gsip at pci
-file	dev/pci/if_gsip.c		gsip
 
 # Level One LXT-1001 Gigabit Ethernet
 #device	glxt: ether, ifnet, arp, mii

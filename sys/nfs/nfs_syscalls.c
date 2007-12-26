@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.126.2.2 2007/12/08 17:58:04 ad Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.126.2.3 2007/12/26 21:39:54 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.126.2.2 2007/12/08 17:58:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.126.2.3 2007/12/26 21:39:54 ad Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -148,12 +148,12 @@ static void nfsd_rt __P((int, struct nfsrv_descript *, int));
  * - remains in the kernel as an nfsiod
  */
 int
-sys_nfssvc(struct lwp *l, void *v, register_t *retval)
+sys_nfssvc(struct lwp *l, const struct sys_nfssvc_args *uap, register_t *retval)
 {
-	struct sys_nfssvc_args /* {
+	/* {
 		syscallarg(int) flag;
 		syscallarg(void *) argp;
-	} */ *uap = v;
+	} */
 	int error;
 #ifdef NFSSERVER
 	struct file *fp;

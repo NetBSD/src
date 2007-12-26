@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.100.16.2 2007/12/05 22:58:36 rmind Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.100.16.3 2007/12/26 21:39:46 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.100.16.2 2007/12/05 22:58:36 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.100.16.3 2007/12/26 21:39:46 ad Exp $");
 
 #define SYSVSHM
 
@@ -309,11 +309,11 @@ shm_memlock(struct lwp *l, struct shmid_ds *shmseg, int shmid, int cmd)
  * Unmap shared memory.
  */
 int
-sys_shmdt(struct lwp *l, void *v, register_t *retval)
+sys_shmdt(struct lwp *l, const struct sys_shmdt_args *uap, register_t *retval)
 {
-	struct sys_shmdt_args /* {
+	/* {
 		syscallarg(const void *) shmaddr;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 	struct shmmap_state *shmmap_s1, *shmmap_s;
 	struct shmmap_entry *shmmap_se;
@@ -374,13 +374,13 @@ sys_shmdt(struct lwp *l, void *v, register_t *retval)
  * Map shared memory.
  */
 int
-sys_shmat(struct lwp *l, void *v, register_t *retval)
+sys_shmat(struct lwp *l, const struct sys_shmat_args *uap, register_t *retval)
 {
-	struct sys_shmat_args /* {
+	/* {
 		syscallarg(int) shmid;
 		syscallarg(const void *) shmaddr;
 		syscallarg(int) shmflg;
-	} */ *uap = v;
+	} */
 	int error, flags = 0;
 	struct proc *p = l->l_proc;
 	kauth_cred_t cred = l->l_cred;
@@ -505,13 +505,13 @@ err_detach:
  * Shared memory control operations.
  */
 int
-sys___shmctl13(struct lwp *l, void *v, register_t *retval)
+sys___shmctl13(struct lwp *l, const struct sys___shmctl13_args *uap, register_t *retval)
 {
-	struct sys___shmctl13_args /* {
+	/* {
 		syscallarg(int) shmid;
 		syscallarg(int) cmd;
 		syscallarg(struct shmid_ds *) buf;
-	} */ *uap = v;
+	} */
 	struct shmid_ds shmbuf;
 	int cmd, error;
 
@@ -599,7 +599,7 @@ shmctl1(struct lwp *l, int shmid, int cmd, struct shmid_ds *shmbuf)
  *  => called from one place, thus, inline;
  */
 static inline int
-shmget_existing(struct lwp *l, struct sys_shmget_args *uap, int mode,
+shmget_existing(struct lwp *l, const struct sys_shmget_args *uap, int mode,
     register_t *retval)
 {
 	struct shmid_ds *shmseg;
@@ -647,13 +647,13 @@ again:
 }
 
 int
-sys_shmget(struct lwp *l, void *v, register_t *retval)
+sys_shmget(struct lwp *l, const struct sys_shmget_args *uap, register_t *retval)
 {
-	struct sys_shmget_args /* {
+	/* {
 		syscallarg(key_t) key;
 		syscallarg(int) size;
 		syscallarg(int) shmflg;
-	} */ *uap = v;
+	} */
 	struct shmid_ds *shmseg;
 	kauth_cred_t cred = l->l_cred;
 	key_t key = SCARG(uap, key);

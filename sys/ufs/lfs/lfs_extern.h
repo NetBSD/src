@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.92.2.3 2007/12/19 21:27:15 ad Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.92.2.4 2007/12/26 21:40:01 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -168,7 +168,7 @@ void lfs_debug_log(int, const char *, ...);
 /* lfs_inode.c */
 int lfs_update(struct vnode *, const struct timespec *, const struct timespec *,
     int);
-int lfs_truncate(struct vnode *, off_t, int, kauth_cred_t, struct lwp *);
+int lfs_truncate(struct vnode *, off_t, int, kauth_cred_t);
 struct ufs1_dinode *lfs_ifind(struct lfs *, ino_t, struct buf *);
 void lfs_finalize_ino_seguse(struct lfs *, struct inode *);
 void lfs_finalize_fs_seguse(struct lfs *);

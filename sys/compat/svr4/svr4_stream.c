@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stream.c,v 1.69.2.1 2007/12/08 17:57:09 ad Exp $	 */
+/*	$NetBSD: svr4_stream.c,v 1.69.2.2 2007/12/26 21:39:14 ad Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_stream.c,v 1.69.2.1 2007/12/08 17:57:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_stream.c,v 1.69.2.2 2007/12/26 21:39:14 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -184,9 +184,7 @@ static void show_msg(const char *, int, struct svr4_strbuf *,
 			  struct svr4_strbuf *, int);
 
 static void
-bufprint(buf, len)
-	u_char *buf;
-	size_t len;
+bufprint(u_char *buf, size_t len)
 {
 	size_t i;
 
@@ -199,9 +197,7 @@ bufprint(buf, len)
 }
 
 static int
-show_ioc(str, ioc)
-	const char		*str;
-	struct svr4_strioctl	*ioc;
+show_ioc(const char *str, struct svr4_strioctl *ioc)
 {
 	u_char *ptr;
 	int error, len;
@@ -229,8 +225,7 @@ show_ioc(str, ioc)
 
 
 static int
-show_strbuf(str)
-	struct svr4_strbuf *str;
+show_strbuf(struct svr4_strbuf *str)
 {
 	int error;
 	u_char *ptr = NULL;
@@ -270,12 +265,7 @@ show_strbuf(str)
 
 
 static void
-show_msg(str, fd, ctl, dat, flags)
-	const char		*str;
-	int			 fd;
-	struct svr4_strbuf	*ctl;
-	struct svr4_strbuf	*dat;
-	int			 flags;
+show_msg(const char *str, int fd, struct svr4_strbuf *ctl, struct svr4_strbuf *dat, int flags)
 {
 	struct svr4_strbuf	buf;
 	int error;
@@ -314,16 +304,14 @@ show_msg(str, fd, ctl, dat, flags)
  * using this as a random file removal tool.
  */
 static int
-clean_pipe(l, path)
-	struct lwp *l;
-	const char *path;
+clean_pipe(struct lwp *l, const char *path)
 {
 	struct nameidata nd;
 	struct vattr va;
 	int error;
 
 	NDINIT(&nd, DELETE, NOFOLLOW | LOCKPARENT | LOCKLEAF | TRYEMULROOT,
-	    UIO_SYSSPACE, path, l);
+	    UIO_SYSSPACE, path);
 
 	error = namei(&nd);
 	if (error != 0)
@@ -353,9 +341,7 @@ clean_pipe(l, path)
 
 
 static void
-sockaddr_to_netaddr_in(sc, sain)
-	struct svr4_strmcmd *sc;
-	const struct sockaddr_in *sain;
+sockaddr_to_netaddr_in(struct svr4_strmcmd *sc, const struct sockaddr_in *sain)
 {
 	struct svr4_netaddr_in *na;
 	na = SVR4_ADDROF(sc);
@@ -369,9 +355,7 @@ sockaddr_to_netaddr_in(sc, sain)
 
 
 static void
-sockaddr_to_netaddr_un(sc, saun)
-	struct svr4_strmcmd *sc;
-	const struct sockaddr_un *saun;
+sockaddr_to_netaddr_un(struct svr4_strmcmd *sc, const struct sockaddr_un *saun)
 {
 	struct svr4_netaddr_un *na;
 	char *dst, *edst = ((char *) sc) + sc->offs + sizeof(na->family) + 1  -
@@ -388,9 +372,7 @@ sockaddr_to_netaddr_un(sc, saun)
 
 
 static void
-netaddr_to_sockaddr_in(sain, sc)
-	struct sockaddr_in *sain;
-	const struct svr4_strmcmd *sc;
+netaddr_to_sockaddr_in(struct sockaddr_in *sain, const struct svr4_strmcmd *sc)
 {
 	const struct svr4_netaddr_in *na;
 
@@ -407,9 +389,7 @@ netaddr_to_sockaddr_in(sain, sc)
 
 
 static void
-netaddr_to_sockaddr_un(saun, sc)
-	struct sockaddr_un *saun;
-	const struct svr4_strmcmd *sc;
+netaddr_to_sockaddr_un(struct sockaddr_un *saun, const struct svr4_strmcmd *sc)
 {
 	const struct svr4_netaddr_un *na;
 	char *dst, *edst = &saun->sun_path[sizeof(saun->sun_path) - 1];
@@ -428,9 +408,7 @@ netaddr_to_sockaddr_un(saun, sc)
 
 
 static void
-getparm(fp, pa)
-	struct file *fp;
-	struct svr4_si_sockparms *pa;
+getparm(struct file *fp, struct svr4_si_sockparms *pa)
 {
 	struct svr4_strm *st = svr4_stream_get(fp);
 	struct socket *so = (struct socket *) fp->f_data;
@@ -535,11 +513,7 @@ si_sockparams(struct file *fp, int fd, struct svr4_strioctl *ioc,
 
 
 static int
-si_listen(fp, fd, ioc, l)
-	struct file		*fp;
-	int 			 fd;
-	struct svr4_strioctl	*ioc;
-	struct lwp		*l;
+si_listen(struct file *fp, int fd, struct svr4_strioctl *ioc, struct lwp *l)
 {
 	int error;
 	struct svr4_strm *st = svr4_stream_get(fp);
@@ -680,11 +654,7 @@ si_shutdown(struct file *fp, int fd, struct svr4_strioctl *ioc,
 
 
 static int
-sockmod(fp, fd, ioc, l)
-	struct file		*fp;
-	int			 fd;
-	struct svr4_strioctl	*ioc;
-	struct lwp		*l;
+sockmod(struct file *fp, int fd, struct svr4_strioctl *ioc, struct lwp *l)
 {
 	switch (ioc->cmd) {
 	case SVR4_SI_OGETUDATA:
@@ -774,11 +744,7 @@ ti_getinfo(struct file *fp, int fd, struct svr4_strioctl *ioc,
 
 
 static int
-ti_bind(fp, fd, ioc, l)
-	struct file		*fp;
-	int 			 fd;
-	struct svr4_strioctl	*ioc;
-	struct lwp		*l;
+ti_bind(struct file *fp, int fd, struct svr4_strioctl *ioc, struct lwp *l)
 {
 	int error;
 	struct svr4_strm *st = svr4_stream_get(fp);
@@ -877,11 +843,7 @@ reply:
 
 
 static int
-timod(fp, fd, ioc, l)
-	struct file		*fp;
-	int			 fd;
-	struct svr4_strioctl	*ioc;
-	struct lwp		*l;
+timod(struct file *fp, int fd, struct svr4_strioctl *ioc, struct lwp *l)
 {
 	switch (ioc->cmd) {
 	case SVR4_TI_GETINFO:
@@ -908,13 +870,7 @@ timod(fp, fd, ioc, l)
 
 
 int
-svr4_stream_ti_ioctl(fp, l, retval, fd, cmd, dat)
-	struct file *fp;
-	struct lwp *l;
-	register_t *retval;
-	int fd;
-	u_long cmd;
-	void *dat;
+svr4_stream_ti_ioctl(struct file *fp, struct lwp *l, register_t *retval, int fd, u_long cmd, void *dat)
 {
 	struct svr4_strbuf skb, *sub = (struct svr4_strbuf *) dat;
 	struct svr4_strm *st = svr4_stream_get(fp);
@@ -1084,7 +1040,7 @@ static int
 _i_bind_rsvd(struct file *fp, struct lwp *l, register_t *retval,
     int fd, u_long cmd, void *dat)
 {
-	struct sys_mknod_args ap;
+	struct sys_mkfifo_args ap;
 
 	/*
 	 * This is a supposed to be a kernel and library only ioctl.
@@ -1244,13 +1200,7 @@ i_getsig(struct file *fp, struct lwp *l, register_t *retval,
 }
 
 int
-svr4_stream_ioctl(fp, l, retval, fd, cmd, dat)
-	struct file *fp;
-	struct lwp *l;
-	register_t *retval;
-	int fd;
-	u_long cmd;
-	void *dat;
+svr4_stream_ioctl(struct file *fp, struct lwp *l, register_t *retval, int fd, u_long cmd, void *dat)
 {
 	*retval = 0;
 
@@ -1419,12 +1369,8 @@ svr4_stream_ioctl(fp, l, retval, fd, cmd, dat)
 
 
 int
-svr4_sys_putmsg(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_sys_putmsg(struct lwp *l, const struct svr4_sys_putmsg_args *uap, register_t *retval)
 {
-	struct svr4_sys_putmsg_args *uap = v;
 	struct proc *p = l->l_proc;
 	struct filedesc	*fdp = p->p_fd;
 	struct file	*fp;
@@ -1586,12 +1532,8 @@ svr4_sys_putmsg(l, v, retval)
 
 
 int
-svr4_sys_getmsg(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_sys_getmsg(struct lwp *l, const struct svr4_sys_getmsg_args *uap, register_t *retval)
 {
-	struct svr4_sys_getmsg_args *uap = v;
 	struct proc *p = l->l_proc;
 	struct filedesc	*fdp = p->p_fd;
 	struct file	*fp;
