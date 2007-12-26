@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.74 2007/12/26 16:28:16 joerg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.75 2007/12/26 16:39:27 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007
@@ -120,7 +120,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.74 2007/12/26 16:28:16 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.75 2007/12/26 16:39:27 joerg Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -1807,34 +1807,6 @@ cpu_reset(void)
 
 	for (;;);
 }
-
-#if 0
-extern void i8254_microtime(struct timeval *tv);
-
-/*
- * XXXXXXX
- * the simulator's 8254 seems to travel backward in time sometimes?
- * work around this with this hideous code. Unacceptable for
- * real hardware, but this is just a patch to stop the weird
- * effects. SMP unsafe, etc.
- */
-void
-microtime(struct timeval *tv)
-{
-	static struct timeval mtv;
-
-	i8254_microtime(tv);
-	if (tv->tv_sec <= mtv.tv_sec && tv->tv_usec < mtv.tv_usec) {
-		mtv.tv_usec++;
-		if (mtv.tv_usec > 1000000) {
-			mtv.tv_sec++;
-			mtv.tv_usec = 0;
-		}
-		*tv = mtv;
-	} else
-		mtv = *tv;
-}
-#endif
 
 void
 cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
