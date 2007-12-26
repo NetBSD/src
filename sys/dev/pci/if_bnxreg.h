@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnxreg.h,v 1.2 2007/04/09 14:23:16 bouyer Exp $	*/
+/*	$NetBSD: if_bnxreg.h,v 1.3 2007/12/26 04:06:29 dyoung Exp $	*/
 /*	$OpenBSD: if_bnxreg.h,v 1.17 2006/11/20 21:26:27 brad Exp $	*/
 
 /*-
@@ -148,8 +148,7 @@
 /* Print a message based on the logging level and code path. */
 #define DBPRINT(sc, level, format, args...)				\
 	if (BNX_LOG_MSG(level)) {					\
-		aprint_debug("%s: " format, 				\
-		sc->bnx_dev.dv_xname, ## args);				\
+		aprint_debug_dev(sc->bnx_dev, format, ## args);		\
 	}
 
 /* Runs a particular command based on the logging level and code path. */
@@ -664,7 +663,7 @@ struct flash_spec {
 /****************************************************************************/
 /* Convenience definitions.                                                 */
 /****************************************************************************/
-#define	BNX_PRINTF(sc, fmt, args...)	aprint_error("%s: " fmt, sc->bnx_dev.dv_xname, ##args)
+#define	BNX_PRINTF(sc, fmt, args...)	aprint_error_dev(sc->bnx_dev, fmt, ##args)
 
 #define REG_WR(sc, reg, val)		bus_space_write_4(sc->bnx_btag, sc->bnx_bhandle, reg, val)
 #define REG_WR16(sc, reg, val)		bus_space_write_2(sc->bnx_btag, sc->bnx_bhandle, reg, val)
@@ -4591,7 +4590,7 @@ struct fw_info {
 
 struct bnx_softc
 {
-	struct device			bnx_dev;			/* Parent device handle */
+	device_t bnx_dev;
 	struct ethercom			ethercom;
 	struct pci_attach_args		bnx_pa;
 
