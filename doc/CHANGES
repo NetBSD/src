@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.967 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.968 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -291,3 +291,5 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		[dogcow 20071221]
 	thinkpad(4): Add driver for IBM/Lenovo Thinkpad hotkeys and
 		brightness controls [jmcneill 20071221]
+	PaX ASLR: Address Space Layout Randomization support in the
+		kernel and dynamic linker [elad, christos 20071226]
