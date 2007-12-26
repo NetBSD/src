@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.119 2007/12/20 23:03:14 dsl Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.120 2007/12/26 22:11:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.119 2007/12/20 23:03:14 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.120 2007/12/26 22:11:53 christos Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_pax.h"
@@ -312,6 +312,9 @@ sys_mmap(struct lwp *l, const struct sys_mmap_args *uap, register_t *retval)
 	struct vnode *vp;
 	void *handle;
 	int error;
+#ifdef PAX_ASLR
+	vaddr_t orig_addr;
+#endif /* PAX_ASLR */
 
 	/*
 	 * first, extract syscall args from the uap.
@@ -323,6 +326,10 @@ sys_mmap(struct lwp *l, const struct sys_mmap_args *uap, register_t *retval)
 	flags = SCARG(uap, flags);
 	fd = SCARG(uap, fd);
 	pos = SCARG(uap, pos);
+
+#ifdef PAX_ASLR
+	orig_addr = addr;
+#endif /* PAX_ASLR */
 
 	/*
 	 * Fixup the old deprecated MAP_COPY into MAP_PRIVATE, and
@@ -550,6 +557,10 @@ sys_mmap(struct lwp *l, const struct sys_mmap_args *uap, register_t *retval)
 #ifdef PAX_MPROTECT
 	pax_mprotect(l, &prot, &maxprot);
 #endif /* PAX_MPROTECT */
+
+#ifdef PAX_ASLR
+	pax_aslr(l, &addr, orig_addr, flags);
+#endif /* PAX_ASLR */
 
 	/*
 	 * now let kernel internal function uvm_mmap do the work.
