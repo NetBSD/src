@@ -1,0 +1,14 @@
+# $NetBSD: ssh_config.in,v 1.1 2007/12/26 20:50:07 jmmv Exp $
+
+# Basic settings.
+Port 10000
+Protocol 2
+
+# The temporary key used for login.
+IdentityFile @WORKDIR@/ssh_user_key
+
+# Prevent the client from complaining about unknown host keys.
+GlobalKnownHostsFile @WORKDIR@/known_hosts
+
+# Do not attempt password authentication in case keys fail.
+IdentitiesOnly yes
