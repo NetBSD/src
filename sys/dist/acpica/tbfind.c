@@ -1,11 +1,18 @@
-/*	$NetBSD: acpi_ecreg.h,v 1.3 2005/12/11 12:21:01 christos Exp $	*/
+/*	$NetBSD: tbfind.c,v 1.1.8.1 2007/12/26 19:17:21 ad Exp $	*/
+
+/******************************************************************************
+ *
+ * Module Name: tbfind   - find table
+ *              $Revision: 1.1.8.1 $
+ *
+ *****************************************************************************/
 
 /******************************************************************************
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999, Intel Corp.  All rights
- * reserved.
+ * Some or all of this work - Copyright (c) 1999 - 2007, Intel Corp.
+ * All rights reserved.
  *
  * 2. License
  *
@@ -109,53 +116,95 @@
  *
  *****************************************************************************/
 
-/*
- * EC_COMMAND:
- * -----------
- */
-typedef UINT8				EC_COMMAND;
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: tbfind.c,v 1.1.8.1 2007/12/26 19:17:21 ad Exp $");
 
-#define EC_COMMAND_UNKNOWN		((EC_COMMAND) 0x00)
-#define EC_COMMAND_READ			((EC_COMMAND) 0x80)
-#define EC_COMMAND_WRITE		((EC_COMMAND) 0x81)
-#define EC_COMMAND_BURST_ENABLE		((EC_COMMAND) 0x82)
-#define EC_COMMAND_BURST_DISABLE	((EC_COMMAND) 0x83)
-#define EC_COMMAND_QUERY		((EC_COMMAND) 0x84)
+#define __TBFIND_C__
 
-/*
- * EC_STATUS:
- * ----------
- * The encoding of the EC status register is illustrated below.
- * Note that a set bit (1) indicates the property is TRUE
- * (e.g. if bit 0 is set then the output buffer is full).
- * +-+-+-+-+-+-+-+-+
- * |7|6|5|4|3|2|1|0|
- * +-+-+-+-+-+-+-+-+
- *  | | | | | | | |
- *  | | | | | | | +- Output Buffer Full?
- *  | | | | | | +--- Input Buffer Full?
- *  | | | | | +----- <reserved>
- *  | | | | +------- Data Register is Command Byte?
- *  | | | +--------- Burst Mode Enabled?
- *  | | +----------- SCI Event?
- *  | +------------- SMI Event?
- *  +--------------- <Reserved>
+#include <dist/acpica/acpi.h>
+#include <dist/acpica/actables.h>
+
+#define _COMPONENT          ACPI_TABLES
+        ACPI_MODULE_NAME    ("tbfind")
+
+
+/*******************************************************************************
  *
- */
-typedef UINT8				EC_STATUS;
+ * FUNCTION:    AcpiTbFindTable
+ *
+ * PARAMETERS:  Signature           - String with ACPI table signature
+ *              OemId               - String with the table OEM ID
+ *              OemTableId          - String with the OEM Table ID
+ *              TableIndex          - Where the table index is returned
+ *
+ * RETURN:      Status and table index
+ *
+ * DESCRIPTION: Find an ACPI table (in the RSDT/XSDT) that matches the
+ *              Signature, OEM ID and OEM Table ID. Returns an index that can
+ *              be used to get the table header or entire table.
+ *
+ ******************************************************************************/
 
-#define EC_FLAG_OUTPUT_BUFFER		((EC_STATUS) 0x01)
-#define EC_FLAG_INPUT_BUFFER		((EC_STATUS) 0x02)
-#define EC_FLAG_BURST_MODE		((EC_STATUS) 0x10)
-#define EC_FLAG_SCI			((EC_STATUS) 0x20)
+ACPI_STATUS
+AcpiTbFindTable (
+    char                    *Signature,
+    char                    *OemId,
+    char                    *OemTableId,
+    ACPI_NATIVE_UINT        *TableIndex)
+{
+    ACPI_NATIVE_UINT        i;
+    ACPI_STATUS             Status;
 
-/*
- * EC_EVENT:
- * ---------
- */
-typedef UINT8				EC_EVENT;
 
-#define EC_EVENT_UNKNOWN		((EC_EVENT) 0x00)
-#define EC_EVENT_OUTPUT_BUFFER_FULL	((EC_EVENT) 0x01)
-#define EC_EVENT_INPUT_BUFFER_EMPTY	((EC_EVENT) 0x02)
-#define EC_EVENT_SCI			((EC_EVENT) 0x20)
+    ACPI_FUNCTION_TRACE (TbFindTable);
+
+
+    for (i = 0; i < AcpiGbl_RootTableList.Count; ++i)
+    {
+        if (ACPI_MEMCMP (&(AcpiGbl_RootTableList.Tables[i].Signature),
+            Signature, ACPI_NAME_SIZE))
+        {
+            /* Not the requested table */
+
+            continue;
+        }
+
+        /* Table with matching signature has been found */
+
+        if (!AcpiGbl_RootTableList.Tables[i].Pointer)
+        {
+            /* Table is not currently mapped, map it */
+
+            Status = AcpiTbVerifyTable (&AcpiGbl_RootTableList.Tables[i]);
+            if (ACPI_FAILURE (Status))
+            {
+                return_ACPI_STATUS (Status);
+            }
+
+            if (!AcpiGbl_RootTableList.Tables[i].Pointer)
+            {
+                continue;
+            }
+        }
+
+        /* Check for table match on all IDs */
+
+        if (!ACPI_MEMCMP (AcpiGbl_RootTableList.Tables[i].Pointer->Signature,
+                Signature, ACPI_NAME_SIZE) &&
+            (!OemId[0] ||
+             !ACPI_MEMCMP (AcpiGbl_RootTableList.Tables[i].Pointer->OemId,
+                             OemId, ACPI_OEM_ID_SIZE)) &&
+            (!OemTableId[0] ||
+             !ACPI_MEMCMP (AcpiGbl_RootTableList.Tables[i].Pointer->OemTableId,
+                             OemTableId, ACPI_OEM_TABLE_ID_SIZE)))
+        {
+            *TableIndex = i;
+
+            ACPI_DEBUG_PRINT ((ACPI_DB_TABLES, "Found table [%4.4s]\n",
+                Signature));
+            return_ACPI_STATUS (AE_OK);
+        }
+    }
+
+    return_ACPI_STATUS (AE_NOT_FOUND);
+}

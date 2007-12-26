@@ -1,11 +1,8 @@
-/*	$NetBSD: if_gsip.c,v 1.2 2001/11/13 07:48:43 lukem Exp $	*/
+/* $NetBSD: platform.c,v 1.1.10.1 2007/12/26 19:17:18 ad Exp $ */
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
  * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Jason R. Thorpe.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -17,8 +14,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
+ *        This product includes software developed by Jared D. McNeill.
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
@@ -37,7 +33,67 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: if_gsip.c,v 1.2 2001/11/13 07:48:43 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: platform.c,v 1.1.10.1 2007/12/26 19:17:18 ad Exp $");
 
-#define	DP83820
-#include <dev/pci/if_sip.c>
+#include <sys/types.h>
+#include <sys/param.h>
+#include <sys/malloc.h>
+#include <sys/kernel.h>
+#include <sys/pmf.h>
+
+#include <arch/x86/include/smbiosvar.h>
+
+void		platform_init(void);	/* XXX */
+static void	platform_add(struct smbtable *, const char *, int);
+static void	platform_print(void);
+
+void
+platform_init(void)
+{
+	struct smbtable smbios;
+	struct smbios_sys *psys;
+
+	smbios.cookie = 0;
+
+	if (smbios_find_table(SMBIOS_TYPE_SYSTEM, &smbios)) {
+		psys = smbios.tblhdr;
+
+		platform_add(&smbios, "system-manufacturer", psys->vendor);
+		platform_add(&smbios, "system-product-name", psys->product);
+		platform_add(&smbios, "system-version", psys->version);
+		platform_add(&smbios, "system-serial-number", psys->serial);
+	}
+
+	platform_print();
+}
+
+static void
+platform_print(void)
+{
+	const char *manuf, *prod, *ver;
+
+	manuf = pmf_get_platform("system-manufacturer");
+	prod = pmf_get_platform("system-product-name");
+	ver = pmf_get_platform("system-version");
+
+	if (manuf == NULL)
+		aprint_normal("Generic");
+	else
+		aprint_normal("%s", manuf);
+	if (prod == NULL)
+		aprint_normal(" PC");
+	else
+		aprint_normal(" %s", prod);
+	if (ver != NULL)
+		aprint_normal(" (%s)", ver);
+	aprint_normal("\n");
+}
+
+static void
+platform_add(struct smbtable *tbl, const char *key, int idx)
+{
+	char tmpbuf[128]; /* XXX is this long enough? */
+
+	if (smbios_get_string(tbl, idx, tmpbuf, 128) != NULL)
+		pmf_set_platform(key, tmpbuf);
+}
