@@ -1,4 +1,4 @@
-#	$NetBSD: GUMSTIX,v 1.14.6.1 2007/11/01 16:06:52 rjs Exp $
+#	$NetBSD: GUMSTIX,v 1.14.6.2 2007/12/26 22:24:45 rjs Exp $
 #
 #	GUMSTIX -- Gumstix. Inc. gumstix platforms kernel
 #
@@ -405,6 +405,7 @@ sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
 #ubt*	at uhub? port ?
 
 # Bluetooth Device Hub
+#bthub*	at bcsp?
 #bthub*	at bt3c?
 #bthub*	at btbc?
 bthub*	at btuart?
@@ -479,6 +480,7 @@ pseudo-device	rnd			# /dev/random and in-kernel generator
 options		RND_COM
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
+pseudo-device	bcsp			# BlueCore Serial Protocol
 pseudo-device	btuart			# Bluetooth HCI UART (H4)
 					# connect with Ericsson Bluetooth Module
 

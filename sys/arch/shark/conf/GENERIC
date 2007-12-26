@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.69 2007/02/20 16:14:49 matt Exp $
+#	$NetBSD: GENERIC,v 1.69.18.1 2007/12/26 22:24:52 rjs Exp $
 #
 # Generic Shark configuration.
 #
@@ -7,7 +7,7 @@ include	"arch/shark/conf/std.shark"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.69 $"
+#ident		"GENERIC-$Revision: 1.69.18.1 $"
 
 # estimated number of users
 maxusers	32
@@ -137,7 +137,6 @@ options 	P1003_1B_SEMAPHORE	# p1003.1b semaphore support
 #options 	MEMORY_DISK_ROOT_SIZE=3400	# Size in blocks
 #options 	MEMORY_DISK_IS_ROOT	# use memory disk as root
 
-#options 	XSERVER			# required by Xserver on old pccons
 options 	INSECURE		# disable kernel securelevel
 
 # Use the following to force the serial to always be the console

@@ -1,4 +1,4 @@
-/*	$NetBSD: iopi2c.c,v 1.4 2006/06/26 18:21:39 drochner Exp $	*/
+/*	$NetBSD: iopi2c.c,v 1.4.30.1 2007/12/26 22:24:43 rjs Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -40,10 +40,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iopi2c.c,v 1.4 2006/06/26 18:21:39 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iopi2c.c,v 1.4.30.1 2007/12/26 22:24:43 rjs Exp $");
 
 #include <sys/param.h>
-#include <sys/lock.h>
+#include <sys/mutex.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
@@ -92,7 +92,8 @@ iopiic_acquire_bus(void *cookie, int flags)
 	if (flags & I2C_F_POLL)
 		return (0);
 
-	return (lockmgr(&sc->sc_buslock, LK_EXCLUSIVE, NULL));
+	mutex_enter(&sc->sc_buslock);
+	return (0);
 }
 
 static void
@@ -104,7 +105,7 @@ iopiic_release_bus(void *cookie, int flags)
 	if (flags & I2C_F_POLL)
 		return;
 
-	(void) lockmgr(&sc->sc_buslock, LK_RELEASE, NULL);
+	mutex_exit(&sc->sc_buslock);
 }
 
 #define	IOPIIC_TIMEOUT		100	/* protocol timeout, in uSecs */

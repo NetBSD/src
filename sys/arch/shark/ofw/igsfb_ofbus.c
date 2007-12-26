@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfb_ofbus.c,v 1.5 2007/07/30 13:02:01 jmmv Exp $ */
+/*	$NetBSD: igsfb_ofbus.c,v 1.5.2.1 2007/12/26 22:24:54 rjs Exp $ */
 
 /*
  * Copyright (c) 2006 Michael Lorenz
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igsfb_ofbus.c,v 1.5 2007/07/30 13:02:01 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igsfb_ofbus.c,v 1.5.2.1 2007/12/26 22:24:54 rjs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,9 +78,7 @@ vaddr_t igsfb_mem_vaddr = 0, igsfb_mmio_vaddr = 0;
 paddr_t igsfb_mem_paddr;
 struct bus_space igsfb_memt, igsfb_iot;
 
-#if defined(SHARK) && (NPC > 0)
-/* For consistency with the conditionals used in ofw.c. */
-#elif (NIGSFB_OFBUS > 0) || (NVGA_OFBUS > 0)
+#if (NIGSFB_OFBUS > 0) || (NVGA_OFBUS > 0)
 extern int console_ihandle;
 #endif
 
@@ -147,9 +145,7 @@ igsfb_ofbus_cnattach(bus_space_tag_t iot, bus_space_tag_t memt)
 
 	igsfb_ofbus_console = 1;
 	igsfb_ofbus_phandle = stdout_phandle;
-#if defined(SHARK) && (NPC > 0)
-/* For consistency with the conditionals used in ofw.c. */
-#elif (NIGSFB_OFBUS > 0) || (NVGA_OFBUS > 0)
+#if (NIGSFB_OFBUS > 0) || (NVGA_OFBUS > 0)
 	console_ihandle = stdout_ihandle;
 #endif
 	return 0;

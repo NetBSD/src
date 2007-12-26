@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.7 2007/03/08 20:48:39 matt Exp $	*/
+/*	$NetBSD: intr.h,v 1.7.16.1 2007/12/26 22:24:53 rjs Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -36,28 +36,16 @@
 #ifndef _SHARK_INTR_H_
 #define _SHARK_INTR_H_
 
-/* Define the various Interrupt Priority Levels */
-
-/* Hardware Interrupt Priority Levels are not mutually exclusive. */
-
 #define IPL_NONE	0
-#define	IPL_SOFT	1
-#define	IPL_SOFTCLOCK	2
+#define	IPL_SOFTCLOCK	1
+#define	IPL_SOFTBIO	2
 #define	IPL_SOFTNET	3
-#define IPL_BIO		4	/* block I/O */
-#define IPL_NET		5	/* network */
-#define	IPL_SOFTSERIAL	6
-#define IPL_TTY		7	/* terminal */
-#define IPL_VM		8	/* memory allocation */
-#define IPL_AUDIO	9	/* audio */
-#define IPL_CLOCK	10	/* clock */
-#define	IPL_STATCLOCK	11
-#define IPL_SERIAL	12	/* serial */
-#define IPL_HIGH	13	/*  */
-#define	IPL_LOCK	IPL_HIGH
-#define	IPL_SCHED	IPL_HIGH
+#define	IPL_SOFTSERIAL	4
+#define IPL_VM		5
+#define IPL_SCHED	6
+#define IPL_HIGH	7
 
-#define IPL_LEVELS	14
+#define IPL_LEVELS	8
 
 #define	IST_UNUSABLE	-1	/* interrupt cannot be used */
 #define	IST_NONE	0	/* none (dummy) */

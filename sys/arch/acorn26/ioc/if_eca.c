@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eca.c,v 1.6 2007/03/04 05:59:04 christos Exp $	*/
+/*	$NetBSD: if_eca.c,v 1.6.16.1 2007/12/26 22:24:32 rjs Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -29,7 +29,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: if_eca.c,v 1.6 2007/03/04 05:59:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eca.c,v 1.6.16.1 2007/12/26 22:24:32 rjs Exp $");
 
 #include <sys/device.h>
 #include <sys/malloc.h>
@@ -364,7 +364,7 @@ eca_init_rx_soft(struct eca_softc *sc)
 	fr->fr_r11 = (register_t)&sc->sc_fiqstate;
 	sc->sc_fiqstate.efs_rx_curmbuf = sc->sc_rcvmbuf;
 	sc->sc_fiqstate.efs_rx_flags = 0;
-	sc->sc_fiqstate.efs_rx_myaddr = LLADDR(ifp->if_sadl)[0];
+	sc->sc_fiqstate.efs_rx_myaddr = CLLADDR(ifp->if_sadl)[0];
 }
 
 /*

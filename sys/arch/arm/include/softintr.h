@@ -1,4 +1,4 @@
-/*	$NetBSD: softintr.h,v 1.3 2007/02/22 04:38:03 matt Exp $	*/
+/*	$NetBSD: softintr.h,v 1.3.18.1 2007/12/26 22:24:38 rjs Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -48,58 +48,12 @@
  * <machine/intr.h>.
  */
 
-#define	SI_SOFT			0	/* for IPL_SOFT */
-#define	SI_SOFTCLOCK		1	/* for IPL_SOFTCLOCK */
+#define	SI_SOFTCLOCK		0	/* for IPL_SOFTCLOCK */
+#define	SI_SOFTBIO		1	/* for IPL_SOFTBIO */
 #define	SI_SOFTNET		2	/* for IPL_SOFTNET */
 #define	SI_SOFTSERIAL		3	/* for IPL_SOFTSERIAL */
 
 #define	SI_NQUEUES		4
-
-#define	SI_QUEUENAMES {							\
-	"generic",							\
-	"clock",							\
-	"net",								\
-	"serial",							\
-}
-
-struct soft_intrhand {
-	TAILQ_ENTRY(soft_intrhand) sih_list;
-	void (*sih_func)(void *);
-	void *sih_arg;
-	struct soft_intrq *sih_siq;
-	int sih_pending;
-};
-
-struct soft_intrq {
-	TAILQ_HEAD(, soft_intrhand) siq_list;
-	struct evcnt siq_evcnt;
-	int siq_si;
-};
-
-void	*softintr_establish(int, void (*)(void *), void *);
-void	softintr_disestablish(void *);
-void	softintr_init(void);
-void	softintr_dispatch(int);
-
-#define	softintr_schedule(arg)						\
-do {									\
-	struct soft_intrhand *__sih = (arg);				\
-	struct soft_intrq *__siq = __sih->sih_siq;			\
-	int __s;							\
-									\
-	__s = splhigh();						\
-	if (__sih->sih_pending == 0) {					\
-		TAILQ_INSERT_TAIL(&__siq->siq_list, __sih, sih_list);	\
-		__sih->sih_pending = 1;					\
-		_setsoftintr(__siq->siq_si);				\
-	}								\
-	splx(__s);							\
-} while (/*CONSTCOND*/0)
-
-/* XXX For legacy software interrupts. */
-extern struct soft_intrhand *softnet_intrhand;
-
-#define	setsoftnet()	softintr_schedule(softnet_intrhand)
 
 #endif /* _KERNEL */
 

@@ -1,4 +1,4 @@
-#	$NetBSD: majors.shark,v 1.22 2006/12/03 04:13:55 macallan Exp $
+#	$NetBSD: majors.shark,v 1.22.20.1 2007/12/26 22:24:53 rjs Exp $
 #
 # Device majors for shark
 #
@@ -24,6 +24,7 @@ device-major	vnd		char 19  block 19	vnd
 device-major	ccd		char 21  block 21	ccd
 device-major	cgd		char 22  block 22	cgd
 
+device-major	sd		char 24  block 24	sd
 device-major	st		char 25  block 25	st
 device-major	cd		char 26  block 26	cd
 

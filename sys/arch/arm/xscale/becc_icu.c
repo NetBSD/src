@@ -1,4 +1,4 @@
-/*	$NetBSD: becc_icu.c,v 1.7 2006/11/24 21:20:05 wiz Exp $	*/
+/*	$NetBSD: becc_icu.c,v 1.7.24.1 2007/12/26 22:24:42 rjs Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: becc_icu.c,v 1.7 2006/11/24 21:20:05 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: becc_icu.c,v 1.7.24.1 2007/12/26 22:24:42 rjs Exp $");
 
 #ifndef EVBARM_SPL_NOINLINE
 #define	EVBARM_SPL_NOINLINE
@@ -49,11 +49,10 @@ __KERNEL_RCSID(0, "$NetBSD: becc_icu.c,v 1.7 2006/11/24 21:20:05 wiz Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <uvm/uvm_extern.h>
-
-#include <machine/bus.h>
-#include <machine/intr.h>
 
 #include <arm/cpufunc.h>
 
@@ -196,71 +195,17 @@ becc_intr_calculate_masks(void)
 	becc_imask[IPL_NONE] = 0;
 
 	/*
-	 * Initialize the soft interrupt masks to block themselves.
-	 * Note they all come in at the same physical IRQ.
-	 */
-	becc_imask[IPL_SOFT] = (1U << ICU_SOFT);
-	becc_imask[IPL_SOFTCLOCK] = (1U << ICU_SOFT);
-	becc_imask[IPL_SOFTNET] = (1U << ICU_SOFT);
-	becc_imask[IPL_SOFTSERIAL] = (1U << ICU_SOFT);
-
-	/*
-	 * splsoftclock() is the only interface that users of the
-	 * generic software interrupt facility have to block their
-	 * soft intrs, so splsoftclock() must also block IPL_SOFT.
-	 */
-	becc_imask[IPL_SOFTCLOCK] |= becc_imask[IPL_SOFT];
-
-	/*
-	 * splsoftnet() must also block splsoftclock(), since we don't
-	 * want timer-driven network events to occur while we're
-	 * processing incoming packets.
-	 */
-	becc_imask[IPL_SOFTNET] |= becc_imask[IPL_SOFTCLOCK];
-
-	/*
 	 * Enforce a hierarchy that gives "slow" device (or devices with
 	 * limited input buffer space/"real-time" requirements) a better
 	 * chance at not dropping data.
 	 */
-	becc_imask[IPL_BIO] |= becc_imask[IPL_SOFTNET];
-	becc_imask[IPL_NET] |= becc_imask[IPL_BIO];
-	becc_imask[IPL_SOFTSERIAL] |= becc_imask[IPL_NET];
-	becc_imask[IPL_TTY] |= becc_imask[IPL_SOFTSERIAL];
-
-	/*
-	 * splvm() blocks all interrupts that use the kernel memory
-	 * allocation facilities.
-	 */
-	becc_imask[IPL_VM] |= becc_imask[IPL_TTY];
-
-	/*
-	 * Audio devices are not allowed to perform memory allocation
-	 * in their interrupt routines, and they have fairly "real-time"
-	 * requirements, so give them a high interrupt priority.
-	 */
-	becc_imask[IPL_AUDIO] |= becc_imask[IPL_VM];
-
-	/*
-	 * splclock() must block anything that uses the scheduler.
-	 */
-	becc_imask[IPL_CLOCK] |= becc_imask[IPL_AUDIO];
-
-	/*
-	 * No separate statclock on the IQ80310.
-	 */
-	becc_imask[IPL_STATCLOCK] |= becc_imask[IPL_CLOCK];
-
-	/*
-	 * splhigh() must block "everything".
-	 */
-	becc_imask[IPL_HIGH] |= becc_imask[IPL_STATCLOCK];
-
-	/*
-	 * XXX We need serial drivers to run at the absolute highest priority
-	 * in order to avoid overruns, so serial > high.
-	 */
-	becc_imask[IPL_SERIAL] |= becc_imask[IPL_HIGH];
+	becc_imask[IPL_SOFTCLOCK] = (1U << ICU_SOFT);
+	becc_imask[IPL_SOFTNET] = (1U << ICU_SOFT);
+	becc_imask[IPL_SOFTBIO] = (1U << ICU_SOFT);
+	becc_imask[IPL_SOFTSERIAL] = (1U << ICU_SOFT);
+	becc_imask[IPL_VM] |= becc_imask[IPL_SOFTSERIAL];
+	becc_imask[IPL_SCHED] |= becc_imask[IPL_VM];
+	becc_imask[IPL_HIGH] |= becc_imask[IPL_SCHED];
 
 	/*
 	 * Now compute which IRQs must be blocked when servicing any
@@ -307,8 +252,8 @@ _setsoftintr(int si)
 }
 
 static const int si_to_ipl[SI_NQUEUES] = {
-	IPL_SOFT,		/* SI_SOFT */
 	IPL_SOFTCLOCK,		/* SI_SOFTCLOCK */
+	IPL_SOFTBIO,		/* SI_SOFTBIO */
 	IPL_SOFTNET,		/* SI_SOFTNET */
 	IPL_SOFTSERIAL,		/* SI_SOFTSERIAL */
 };               
@@ -316,6 +261,7 @@ static const int si_to_ipl[SI_NQUEUES] = {
 int
 becc_softint(void *arg)
 {
+#ifdef __HAVE_FAST_SOFTINTS
 	static __cpu_simple_lock_t processing = __SIMPLELOCK_UNLOCKED;
 	uint32_t	new, oldirqstate;
 
@@ -347,6 +293,7 @@ becc_softint(void *arg)
 	__cpu_simple_unlock(&processing);
 
 	restore_interrupts(oldirqstate);
+#endif
 
 	return 1;
 }
@@ -457,9 +404,11 @@ becc_intr_dispatch(struct irqframe *frame)
 	struct intrq *iq;
 	struct intrhand *ih;
 	uint32_t oldirqstate, pcpl, irq, ibit, hwpend;
+	struct cpu_info *ci;
 
+	ci = curcpu();
+	ci->ci_idepth++;
 	pcpl = current_spl_level;
-
 	hwpend = becc_icsr_read();
 
 	/*
@@ -503,6 +452,8 @@ becc_intr_dispatch(struct irqframe *frame)
 		intr_enabled |= ibit;
 		becc_set_intrmask();
 	}
+
+	ci->ci_idepth--;
 
 	if (becc_ipending & ~pcpl) {
 		intr_enabled |= (becc_ipending & ~pcpl);

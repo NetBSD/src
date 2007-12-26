@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.39 2007/06/09 11:34:03 kiyohara Exp $
+#	$NetBSD: GENERIC,v 1.39.6.1 2007/12/26 22:24:50 rjs Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/iyonix/conf/std.iyonix"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.39 $"
+#ident 		"GENERIC-$Revision: 1.39.6.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -51,12 +51,7 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 
 #options 	SYSVMSG		# System V-like message queues
 #options 	SYSVSEM		# System V-like semaphores
-#options 	SEMMNI=10	# number of semaphore identifiers
-#options 	SEMMNS=60	# number of semaphores in system
-#options 	SEMUME=10	# max number of undo entries per process
-#options 	SEMMNU=30	# number of undo structures in system
 #options 	SYSVSHM		# System V-like memory sharing
-#options 	SHMMAXPGS=2048	# 2048 pages is the default
 #options 	P1003_1B_SEMAPHORE	# p1003.1b semaphore support
 
 # Device options
@@ -518,6 +513,9 @@ uhci*	at pci?	dev ? function ?	# Universal Host Controller (Intel)
 # ISA USB controllers
 #slhci0	at isa? port 0x300 irq 5	# ScanLogic SL811HS
 
+# PCMCIA USB controllers
+#slhci*	at pcmcia? function ?		# ScanLogic SL811HS
+
 # USB bus support
 #usb*	at ehci?
 usb*	at ohci?
@@ -721,12 +719,15 @@ midi*	at midibus?
 
 # Bluetooth PCMCIA Controllers
 #bt3c* at pcmcia? function ?		# 3Com 3CRWB6096-A
+#btbc* at pcmcia? function ?		# AnyCom BlueCard LSE041/039/139
 
 # Bluetooth USB Controllers
 #ubt* at uhub? port ?
 
 # Bluetooth Device Hub
+#bthub* at bcsp?
 #bthub* at bt3c?
+#bthub* at btbc?
 #bthub* at btuart?
 #bthub* at ubt?
 
@@ -817,6 +818,7 @@ pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	lockstat		# lock profiling
+#pseudo-device	bcsp			# BlueCore Serial Protocol
 #pseudo-device	btuart			# Bluetooth HCI UART (H4)
 
 # a pseudo device needed for Coda	# also needs CODA (above)

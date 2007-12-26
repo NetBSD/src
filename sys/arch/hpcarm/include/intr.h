@@ -1,4 +1,4 @@
-/* 	$NetBSD: intr.h,v 1.9.6.1 2007/10/06 17:38:31 rjs Exp $	*/
+/* 	$NetBSD: intr.h,v 1.9.6.2 2007/12/26 22:24:50 rjs Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -38,52 +38,16 @@
 
 #ifdef _KERNEL
 
-/* Define the various Interrupt Priority Levels */
-
-/* Hardware Interrupt Priority Levels are not mutually exclusive. */
-
-/* Interrupt priority "levels". */
-#if __OLD_INTERRUPT_CODE
 #define IPL_SOFTCLOCK	0
-#define IPL_SOFTNET	1
-#define IPL_BIO		2	/* block I/O */
-#define IPL_NET		3	/* network */
-#define IPL_SOFTSERIAL	4
-#define IPL_TTY		5	/* terminal */
-#define IPL_VM		6	/* memory allocation */
-#define IPL_AUDIO	7	/* audio */
-#define IPL_CLOCK	8	/* clock */
-#define	IPL_STATCLOCK	9
-#define IPL_HIGH	10	/*  */
-#define	IPL_SCHED	IPL_HIGH
-#define	IPL_LOCK	IPL_HIGH
-#define IPL_SERIAL	11	/* serial */
-#define IPL_NONE	12
+#define IPL_SOFTBIO	1
+#define IPL_SOFTNET	2
+#define IPL_SOFTSERIAL	3
+#define IPL_VM		4
+#define IPL_SCHED	5
+#define IPL_HIGH	6
+#define IPL_NONE	7
 
-#define NIPL		13
-
-#else
-
-#define	IPL_NONE	0	/* nothing */
-#define	IPL_SOFT	1	/* generic software interrupts */
-#define	IPL_SOFTCLOCK	2	/* software clock interrupt */
-#define	IPL_SOFTNET	3	/* software network interrupt */
-#define	IPL_BIO		4	/* block I/O */
-#define	IPL_NET		5	/* network */
-#define	IPL_SOFTSERIAL	6	/* software serial interrupt */
-#define	IPL_TTY		7	/* terminals */
-#define	IPL_VM		8	/* memory allocation */
-#define	IPL_AUDIO	9	/* audio device */
-#define	IPL_CLOCK	10	/* clock interrupt */
-#define	IPL_STATCLOCK	11	/* statistics clock interrupt */
-#define	IPL_HIGH	12	/* everything */
-#define	IPL_SCHED	IPL_HIGH
-#define	IPL_LOCK	IPL_HIGH
-#define	IPL_SERIAL	13	/* serial device */
-
-#define	NIPL		14
-
-#endif
+#define NIPL		8
 
 #define	IST_UNUSABLE	-1	/* interrupt cannot be used */
 #define	IST_NONE	0	/* none (dummy) */
@@ -95,24 +59,16 @@
 
 /* Software interrupt priority levels */
 
-#define SOFTIRQ_CLOCK	0
-#define SOFTIRQ_NET	1
-#define SOFTIRQ_SERIAL	2
+#define SOFTIRQ_CLOCK   0
+#define SOFTIRQ_BIO     1
+#define SOFTIRQ_NET     2
+#define SOFTIRQ_SERIAL  3
 
-#define SOFTIRQ_BIT(x)	(1 << x)
+#define SOFTIRQ_BIT(x)  (1 << x)
 
-#include <machine/irqhandler.h>
 #include <arm/arm32/psl.h>
-#include <arm/sa11x0/sa11x0_intr.h>
-
-#ifndef _LOCORE
-void *softintr_establish(int, void (*)(void *), void *);
-void softintr_disestablish(void *);
-#endif
 
 #else /* ! __OLD_INTERRUPT_CODE */
-
-#define	__NEWINTR	/* enables new hooks in cpu_fork()/cpu_switch() */
 
 #ifndef _LOCORE
 
@@ -209,3 +165,4 @@ splraiseipl(ipl_cookie_t icookie)
 #endif /* _KERNEL */
 
 #endif	/* _HPCARM_INTR_H */
+

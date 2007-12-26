@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.17 2007/03/09 06:45:20 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.17.16.1 2007/12/26 22:24:49 rjs Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 Wasabi Systems, Inc.
@@ -42,23 +42,15 @@
 
 /* Interrupt priority "levels". */
 #define	IPL_NONE	0	/* nothing */
-#define	IPL_SOFT	1	/* generic software interrupts */
-#define	IPL_SOFTCLOCK	2	/* software clock interrupt */
+#define	IPL_SOFTCLOCK	1	/* clock */
+#define	IPL_SOFTBIO	2	/* block I/O */
 #define	IPL_SOFTNET	3	/* software network interrupt */
-#define	IPL_BIO		4	/* block I/O */
-#define	IPL_NET		5	/* network */
-#define	IPL_SOFTSERIAL	6	/* software serial interrupt */
-#define	IPL_TTY		7	/* terminals */
-#define	IPL_VM		8	/* memory allocation */
-#define	IPL_AUDIO	9	/* audio device */
-#define	IPL_CLOCK	10	/* clock interrupt */
-#define	IPL_STATCLOCK	11	/* statistics clock interrupt */
-#define	IPL_HIGH	12	/* everything */
-#define	IPL_SCHED	IPL_HIGH
-#define	IPL_LOCK	IPL_HIGH
-#define	IPL_SERIAL	13	/* serial device */
+#define	IPL_SOFTSERIAL	4	/* software serial interrupt */
+#define	IPL_VM		5	/* memory allocation */
+#define	IPL_SCHED	6	/* clock interrupt */
+#define	IPL_HIGH	7	/* everything */
 
-#define	NIPL		14
+#define	NIPL		8
 
 /* Interrupt sharing types. */
 #define	IST_NONE	0	/* none */
@@ -77,8 +69,9 @@
 /* Software interrupt priority levels */
 
 #define SOFTIRQ_CLOCK   0
-#define SOFTIRQ_NET     1
-#define SOFTIRQ_SERIAL  2
+#define SOFTIRQ_BIO     1
+#define SOFTIRQ_NET     2
+#define SOFTIRQ_SERIAL  3
 
 #define SOFTIRQ_BIT(x)  (1 << x)
 

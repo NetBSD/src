@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcarm,v 1.61.20.1 2007/10/06 17:38:30 rjs Exp $
+#	$NetBSD: files.hpcarm,v 1.61.20.2 2007/12/26 22:24:49 rjs Exp $
 #
 # hpcarm specific configuration info
 #
@@ -19,7 +19,6 @@ file	dev/md_root.c				memory_disk_hooks
 
 # Generic MD files
 file	arch/arm/arm32/irq_dispatch.S
-file	arch/arm/arm/softintr.c
 
 # HPCARM specific files
 file	arch/hpcarm/hpcarm/autoconf.c

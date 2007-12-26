@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_cas.S,v 1.1 2007/03/09 19:29:28 thorpej Exp $	*/
+/*	$NetBSD: lock_cas.S,v 1.1.18.1 2007/12/26 22:24:33 rjs Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -74,6 +74,7 @@ ENTRY_NP(_lock_cas)
 	.globl	_C_LABEL(_lock_cas_end)
 _C_LABEL(_lock_cas_end):
 #if defined(ARM_LOCK_CAS_DEBUG)
+	mov	r3, r1			/* save 'old' */
 	ldr	r0, .L_lock_cas_success
 	ldmia	r0, {r1-r2}		/* load ev_count */
 #if defined(__ARMEB__)
@@ -84,8 +85,10 @@ _C_LABEL(_lock_cas_end):
 	adc	r2, r2, #0		/* 64-bit incr (hi) */
 #endif /* __ARMEB__ */
 	stmia	r0, {r1-r2}		/* store ev_count */
+	mov	r0, r3			/* return 'old' */
+#else
+	mov	r0, r1			/* return 'old' */
 #endif /* ARM_LOCK_CAS_DEBUG */
-	mov	r0, #1
 	RET
 1:
 #if defined(ARM_LOCK_CAS_DEBUG)
@@ -100,5 +103,14 @@ _C_LABEL(_lock_cas_end):
 #endif /* __ARMEB__ */
 	stmia	r0, {r1-r2}		/* store ev_count */
 #endif /* ARM_LOCK_CAS_DEBUG */
-	mov	r0, #0
+	mov	r0, r3			/* return actual value */
 	RET
+
+STRONG_ALIAS(_atomic_cas_ulong,_lock_cas)
+STRONG_ALIAS(atomic_cas_ulong,_lock_cas)
+STRONG_ALIAS(_atomic_cas_32,_lock_cas)
+STRONG_ALIAS(atomic_cas_32,_lock_cas)
+STRONG_ALIAS(_atomic_cas_uint,_lock_cas)
+STRONG_ALIAS(atomic_cas_uint,_lock_cas)
+STRONG_ALIAS(_atomic_cas_ptr,_lock_cas)
+STRONG_ALIAS(atomic_cas_ptr,_lock_cas)

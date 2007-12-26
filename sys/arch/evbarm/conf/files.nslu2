@@ -1,10 +1,8 @@
-#	$NetBSD: files.nslu2,v 1.1.48.1 2007/11/01 16:06:53 rjs Exp $
+#	$NetBSD: files.nslu2,v 1.1.48.2 2007/12/26 22:24:47 rjs Exp $
 #
 # Linksys NSLU2 "Slug" configuration info
 #
 
-# Use the generic ARM soft interrupt code.
-file	arch/arm/arm/softintr.c
 file	arch/evbarm/nslu2/nslu2_machdep.c
 
 # IXP425 Network Processor CPU support

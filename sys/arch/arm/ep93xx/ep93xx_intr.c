@@ -1,4 +1,4 @@
-/* $NetBSD: ep93xx_intr.c,v 1.8 2006/11/24 21:20:05 wiz Exp $ */
+/* $NetBSD: ep93xx_intr.c,v 1.8.24.1 2007/12/26 22:24:36 rjs Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ep93xx_intr.c,v 1.8 2006/11/24 21:20:05 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ep93xx_intr.c,v 1.8.24.1 2007/12/26 22:24:36 rjs Exp $");
 
 /*
  * Interrupt support for the Cirrus Logic EP93XX
@@ -85,8 +85,8 @@ static volatile int ipending;
  * ever used in future steppings).
  */
 static const u_int32_t si_to_irqbit[SI_NQUEUES] = {
-	EP93XX_INTR_bit30,		/* SI_SOFT */
-	EP93XX_INTR_bit29,		/* SI_SOFTCLOCK */
+	EP93XX_INTR_bit30,		/* SI_SOFTCLOCK */
+	EP93XX_INTR_bit29,		/* SI_SOFTBIO */
 	EP93XX_INTR_bit28,		/* SI_SOFTNET */
 	EP93XX_INTR_bit27,		/* SI_SOFTSERIAL */
 };
@@ -101,8 +101,8 @@ static const u_int32_t si_to_irqbit[SI_NQUEUES] = {
  * Map a software interrupt queue to an interrupt priority level.
  */
 static const int si_to_ipl[SI_NQUEUES] = {
-	IPL_SOFT,		/* SI_SOFT */
 	IPL_SOFTCLOCK,		/* SI_SOFTCLOCK */
+	IPL_SOFTBIO,		/* SI_SOFTBIO */
 	IPL_SOFTNET,		/* SI_SOFTNET */
 	IPL_SOFTSERIAL,		/* SI_SOFTSERIAL */
 };

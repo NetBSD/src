@@ -1,10 +1,8 @@
-#	$NetBSD: files.tsarm,v 1.9 2005/12/11 12:17:07 christos Exp $
+#	$NetBSD: files.tsarm,v 1.9.46.1 2007/12/26 22:24:47 rjs Exp $
 #
 # First try for arm-specific configuration info
 #
 
-# Use the generic ARM soft interrupt code.
-file	arch/arm/arm/softintr.c
 file	arch/evbarm/tsarm/tsarm_machdep.c
 
 # EP93xx Processor CPU support

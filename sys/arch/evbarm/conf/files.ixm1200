@@ -1,9 +1,8 @@
-#	$NetBSD: files.ixm1200,v 1.4 2003/05/05 04:34:48 igy Exp $
+#	$NetBSD: files.ixm1200,v 1.4.76.1 2007/12/26 22:24:47 rjs Exp $
 #
 # Intel IXM1200 evaluation board configuration info
 #
 
-file	arch/arm/arm/softintr.c
 file	arch/evbarm/ixm1200/ixm1200_machdep.c
 file	arch/evbarm/ixm1200/ixm1200_pci.c
 
