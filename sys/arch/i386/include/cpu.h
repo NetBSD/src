@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.150.4.2 2007/12/12 22:05:41 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.150.4.3 2007/12/26 17:55:05 ad Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -407,8 +407,6 @@ void x86_bus_space_mallocok(void);
 
 #include <machine/psl.h>	/* Must be after struct cpu_info declaration */
 
-#define __HAVE_CPU_PANIC	1
-
 #endif /* _KERNEL */
 
 /*
@@ -479,5 +477,4 @@ struct disklist {
 		int ni_biosmatches[MAX_BIOSDISKS]; /* indices in dl_biosdisks */
 	} dl_nativedisks[1];			   /* actually longer */
 };
-
 #endif /* !_I386_CPU_H_ */

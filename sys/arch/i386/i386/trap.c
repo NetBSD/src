@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.228.2.2 2007/12/12 22:05:41 ad Exp $	*/
+/*	$NetBSD: trap.c,v 1.228.2.3 2007/12/26 17:55:05 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2005 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.228.2.2 2007/12/12 22:05:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.228.2.3 2007/12/26 17:55:05 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -159,8 +159,6 @@ const char * const trap_type[] = {
 	"reserved trap",			/* 20 T_RESERVED */
 };
 int	trap_types = __arraycount(trap_type);
-
-extern struct pcb dumppcb;
 
 #ifdef DEBUG
 int	trapdebug = 0;
@@ -334,6 +332,24 @@ trap(frame)
 			}
 		}
 #endif
+#ifdef DDB
+		if (kdb_trap(type, 0, frame))
+			return;
+#endif
+#ifdef KGDB
+		if (kgdb_trap(type, frame))
+			return;
+		else {
+			/*
+			 * If this is a breakpoint, don't panic
+			 * if we're not connected.
+			 */
+			if (type == T_BPTFLT) {
+				printf("kgdb: ignored %s\n", trap_type[type]);
+				return;
+			}
+		}
+#endif
 		if (frame->tf_trapno < trap_types)
 			printf("fatal %s", trap_type[frame->tf_trapno]);
 		else
@@ -342,36 +358,7 @@ trap(frame)
 		printf("trap type %d code %x eip %x cs %x eflags %x cr2 %lx ilevel %x\n",
 		    type, frame->tf_err, frame->tf_eip, frame->tf_cs,
 		    frame->tf_eflags, (long)rcr2(), curcpu()->ci_ilevel);
-		if (dumppcb.pcb_ldt_sel == 0) {
-			dumppcb.pcb_esp = frame->tf_esp;
-			dumppcb.pcb_ebp = frame->tf_ebp;
-			dumppcb.pcb_ldt_sel = -2;
-		}
-#ifdef DDB
-		if (kdb_trap(type, 0, frame)) {
-			if (dumppcb.pcb_ldt_sel == -2)
-				dumppcb.pcb_ldt_sel = 0;
-			return;
-		}
-#endif
-#ifdef KGDB
-		if (kgdb_trap(type, frame)) {
-			if (dumppcb.pcb_ldt_sel == -2)
-				dumppcb.pcb_ldt_sel = 0;
-			return;
-		} else {
-			/*
-			 * If this is a breakpoint, don't panic
-			 * if we're not connected.
-			 */
-			if (type == T_BPTFLT) {
-				printf("kgdb: ignored %s\n", trap_type[type]);
-				if (dumppcb.pcb_ldt_sel == -2)
-					dumppcb.pcb_ldt_sel = 0;
-				return;
-			}
-		}
-#endif
+
 		panic("trap");
 		/*NOTREACHED*/
 
