@@ -1,4 +1,4 @@
-/* 	$NetBSD: lwp.h,v 1.71.2.1 2007/12/15 00:26:55 ad Exp $	*/
+/* 	$NetBSD: lwp.h,v 1.71.2.2 2007/12/26 21:39:55 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -82,8 +82,8 @@ struct lwp {
 	struct mdlwp	l_md;		/* l: machine-dependent fields. */
 	int		l_flag;		/* l: misc flag values */
 	int		l_stat;		/* l: overall LWP status */
-	struct timeval 	l_rtime;	/* l: real time */
-	struct timeval	l_stime;	/* l: start time (while ONPROC) */
+	struct bintime 	l_rtime;	/* l: real time */
+	struct bintime	l_stime;	/* l: start time (while ONPROC) */
 	u_int		l_swtime;	/* l: time swapped in or out */
 	u_int		l_holdcnt;	/* l: if non-zero, don't swap */
 	int		l_biglocks;	/* l: biglock count before sleep */
@@ -263,7 +263,7 @@ void	lwp_continue(lwp_t *);
 void	cpu_setfunc(lwp_t *, void (*)(void *), void *);
 void	startlwp(void *);
 void	upcallret(lwp_t *);
-void	lwp_exit(lwp_t *) __attribute__((__noreturn__));
+void	lwp_exit(lwp_t *) __dead;
 void	lwp_exit_switchaway(lwp_t *);
 lwp_t *proc_representative_lwp(struct proc *, int *, int);
 int	lwp_suspend(lwp_t *, lwp_t *);
@@ -288,6 +288,9 @@ void	lwp_setspecific(specificdata_key_t, void *);
 /* Syscalls */
 int	lwp_park(struct timespec *, const void *);
 int	lwp_unpark(lwpid_t, const void *);
+
+/* ddb */
+void lwp_whatis(uintptr_t, void (*)(const char *, ...));
 
 
 /*

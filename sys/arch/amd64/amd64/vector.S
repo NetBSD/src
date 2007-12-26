@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.16.2.1 2007/12/08 17:56:14 ad Exp $	*/
+/*	$NetBSD: vector.S,v 1.16.2.2 2007/12/26 21:38:42 ad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -70,6 +70,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#include <machine/asm.h>
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -79,7 +80,6 @@
 #include <machine/i8259.h>
 #include <machine/i82093reg.h>
 #include <machine/i82489reg.h>
-#include <machine/asm.h>
 #include <machine/frameasm.h>
 #include <machine/segments.h>
 #include <machine/trap.h>
@@ -136,7 +136,7 @@ IDTVEC(trap07)
 	pushq	$0			# dummy error code
 	pushq	$T_DNA
 	INTRENTRY
-  	STI(si,di)
+  	STI(si)
 	movq	CPUVAR(SELF),%rdi
 	call	_C_LABEL(fpudna)
 	INTRFASTEXIT
@@ -225,7 +225,7 @@ NENTRY(resume_pop_es)
  */
 NENTRY(alltraps)
 	INTRENTRY
-  	STI(si,di)
+  	STI(si)
 calltrap:
 #ifdef DIAGNOSTIC
 	movl	CPUVAR(ILEVEL),%ebx
@@ -238,11 +238,11 @@ calltrap:
 .Lalltraps_checkast:
 	movq	CPUVAR(CURLWP),%r14
 	/* Check for ASTs on exit to user mode. */
-  	CLI(si,di)							;\
+  	CLI(si)
 	CHECK_ASTPENDING(%r14)
 	je	3f
 	CLEAR_ASTPENDING(%r14)
-  	STI(si,di)
+  	STI(si)
 	movl	$T_ASTFLT,TF_TRAPNO(%rsp)
 	movq	%rsp,%rdi
 	call	_C_LABEL(trap)
@@ -255,7 +255,7 @@ calltrap:
 6:	cmpl	CPUVAR(ILEVEL),%ebx
 	jne	3f
 	INTRFASTEXIT
-3:  	STI(si,di)
+3:  	STI(si)
 	movabsq	$4f,%rdi
 	movl	CPUVAR(ILEVEL),%esi
 	movl	%ebx,%edx
@@ -266,7 +266,7 @@ calltrap:
 	jmp	.Lalltraps_checkast
 4:	.asciz	"WARNING: SPL NOT LOWERED ON TRAP EXIT %x %x\n"
 #endif /* DIAGNOSTIC */
-9:	STI(si,di)
+9:	STI(si)
 	call	_C_LABEL(do_pmap_load)
 	jmp	.Lalltraps_checkast	/* re-check ASTs */
 
@@ -871,7 +871,7 @@ IDTVEC(resume_/**/name/**/num)						\
 1:									\
   	pushq	%r13							;\
   	movl	$num,CPUVAR(ILEVEL)					;\
-  	STI(si,di)							;\
+  	STI(si)								;\
   	incl	CPUVAR(IDEPTH)						;\
   	movq	IS_HANDLERS(%r14),%rbx					;\
 6:									\
@@ -882,10 +882,10 @@ IDTVEC(resume_/**/name/**/num)						\
   	testq	%rbx,%rbx						;\
   	jnz	6b							;\
 5:									\
-  	CLI(si,di)							;\
+  	CLI(si)								;\
   	unmask(num)			/* unmask it in hardware */	;\
   	late_ack(num)							;\
-  	CLI(si,di)							;\
+  	CLI(si)								;\
   	jmp	_C_LABEL(Xdoreti)	/* lower spl and do ASTs */	;\
   
 # The unmask func for Xen events

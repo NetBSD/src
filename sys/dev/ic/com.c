@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.266.2.1 2007/12/08 17:57:21 ad Exp $	*/
+/*	$NetBSD: com.c,v 1.266.2.2 2007/12/26 21:39:25 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.266.2.1 2007/12/08 17:57:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.266.2.2 2007/12/26 21:39:25 ad Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -178,7 +178,6 @@ void	com_modem(struct com_softc *, int);
 void	tiocm_to_com(struct com_softc *, u_long, int);
 int	com_to_tiocm(struct com_softc *);
 void	com_iflush(struct com_softc *);
-void	com_power(int, void *);
 
 int	com_common_getc(dev_t, struct com_regs *);
 void	com_common_putc(dev_t, struct com_regs *, int);
@@ -549,12 +548,6 @@ fifodone:
 
 	com_config(sc);
 
-	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
-	    com_power, sc);
-	if (sc->sc_powerhook == NULL)
-		aprint_error("%s: WARNING: unable to establish power hook\n",
-			sc->sc_dev.dv_xname);
-
 	SET(sc->sc_hwflags, COM_HW_DEV_OK);
 }
 
@@ -613,10 +606,6 @@ com_detach(struct device *self, int flags)
 {
 	struct com_softc *sc = (struct com_softc *)self;
 	int maj, mn;
-
-	/* kill the power hook */
-	if (sc->sc_powerhook != NULL)
-		powerhook_disestablish(sc->sc_powerhook);
 
 	/* locate the major number */
 	maj = cdevsw_lookup_major(&com_cdevsw);
@@ -2464,24 +2453,14 @@ com_cleanup(void *arg)
 		CSR_WRITE_1(&sc->sc_regs, COM_REG_FIFO, 0);
 }
 
-void
-com_power(int why, void *arg)
+bool
+com_resume(device_t dev)
 {
-	struct com_softc *sc = arg;
+	struct com_softc *sc = device_private(dev);
 
 	mutex_spin_enter(&sc->sc_lock);
-	switch (why) {
-	case PWR_SUSPEND:
-	case PWR_STANDBY:
-		/* XXX should we do something to stop the device? */
-		break;
-	case PWR_RESUME:
-		com_loadchannelregs(sc);
-		break;
-	case PWR_SOFTSUSPEND:
-	case PWR_SOFTSTANDBY:
-	case PWR_SOFTRESUME:
-		break;
-	}
+	com_loadchannelregs(sc);
 	mutex_spin_exit(&sc->sc_lock);
+
+	return true;
 }

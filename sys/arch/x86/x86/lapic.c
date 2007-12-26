@@ -1,4 +1,4 @@
-/* $NetBSD: lapic.c,v 1.27.2.1 2007/12/08 17:56:33 ad Exp $ */
+/* $NetBSD: lapic.c,v 1.27.2.2 2007/12/26 21:38:50 ad Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.27.2.1 2007/12/08 17:56:33 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.27.2.2 2007/12/26 21:38:50 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -83,8 +83,6 @@ static void 	lapic_map(paddr_t);
 static void lapic_hwmask(struct pic *, int);
 static void lapic_hwunmask(struct pic *, int);
 static void lapic_setup(struct pic *, struct cpu_info *, int, int, int);
-
-extern char idt_allocmap[];
 
 struct pic local_pic = {
 	.pic_dev = {
@@ -136,6 +134,11 @@ void
 lapic_enable(void)
 {
 	i82489_writereg(LAPIC_SVR, LAPIC_SVR_ENABLE | LAPIC_SPURIOUS_VECTOR);
+}
+
+void
+lapic_suspend(void)
+{
 }
 
 void
@@ -206,17 +209,17 @@ lapic_boot_init(paddr_t lapic_base)
 	lapic_map(lapic_base);
 
 #ifdef MULTIPROCESSOR
-	idt_allocmap[LAPIC_IPI_VECTOR] = 1;
+	idt_vec_reserve(LAPIC_IPI_VECTOR);
 	idt_vec_set(LAPIC_IPI_VECTOR, Xintr_lapic_ipi);
-	idt_allocmap[LAPIC_TLB_MCAST_VECTOR] = 1;
+	idt_vec_reserve(LAPIC_TLB_MCAST_VECTOR);
 	idt_vec_set(LAPIC_TLB_MCAST_VECTOR, Xintr_lapic_tlb_mcast);
-	idt_allocmap[LAPIC_TLB_BCAST_VECTOR] = 1;
+	idt_vec_reserve(LAPIC_TLB_BCAST_VECTOR);
 	idt_vec_set(LAPIC_TLB_BCAST_VECTOR, Xintr_lapic_tlb_bcast);
 #endif
-	idt_allocmap[LAPIC_SPURIOUS_VECTOR] = 1;
+	idt_vec_reserve(LAPIC_SPURIOUS_VECTOR);
 	idt_vec_set(LAPIC_SPURIOUS_VECTOR, Xintrspurious);
 
-	idt_allocmap[LAPIC_TIMER_VECTOR] = 1;
+	idt_vec_reserve(LAPIC_TIMER_VECTOR);
 	idt_vec_set(LAPIC_TIMER_VECTOR, Xintr_lapic_ltimer);
 }
 
@@ -304,7 +307,7 @@ lapic_clockintr(void *arg, struct intrframe *frame)
 		     last_tsc[X86_MAXPROCS],
 		     last_tscdelta[X86_MAXPROCS],
 	             last_factor[X86_MAXPROCS];
-#endif /* TIMECOUNTER_DEBUG && __HAVE_TIMECOUNTER */
+#endif /* TIMECOUNTER_DEBUG */
 	struct cpu_info *ci = curcpu();
 
 	ci->ci_lapic_counter += lapic_tval;
@@ -313,7 +316,6 @@ lapic_clockintr(void *arg, struct intrframe *frame)
 #if defined(TIMECOUNTER_DEBUG)
 	{
 		int cid = ci->ci_cpuid;
-		extern u_int i8254_get_timecount(struct timecounter *);
 		u_int c_count = i8254_get_timecount(NULL);
 		u_int c_tsc = cpu_counter32();
 		u_int delta, ddelta, tsc_delta, factor = 0;
@@ -374,12 +376,8 @@ lapic_clockintr(void *arg, struct intrframe *frame)
 	hardclock((struct clockframe *)frame);
 }
 
-#if !defined(__HAVE_TIMECOUNTER) && defined(NTP)
-extern int fixtick;
-#endif /* !__HAVE_TIMECOUNTER && NTP */
-
 void
-lapic_initclocks()
+lapic_initclocks(void)
 {
 	/*
 	 * Start local apic countdown timer running, in repeated mode.

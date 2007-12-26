@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_exec.c,v 1.68.16.1 2007/12/08 17:56:38 ad Exp $	*/
+/*	$NetBSD: ibcs2_exec.c,v 1.68.16.2 2007/12/26 21:38:54 ad Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec.c,v 1.68.16.1 2007/12/08 17:56:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec.c,v 1.68.16.2 2007/12/26 21:38:54 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -123,9 +123,7 @@ const struct emul emul_ibcs2 = {
  * behaviour accordingly can do so.
  */
 static void
-ibcs2_e_proc_exec(p, epp)
-	struct proc *p;
-	struct exec_package *epp;
+ibcs2_e_proc_exec(struct proc *p, struct exec_package *epp)
 {
 	if (epp->ep_esch->es_makecmds == exec_ibcs2_xout_makecmds)
 		p->p_emuldata = IBCS2_EXEC_XENIX;

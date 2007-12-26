@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_nhash.c,v 1.2.28.1 2007/12/04 13:03:04 ad Exp $	*/
+/*	$NetBSD: hfs_nhash.c,v 1.2.28.2 2007/12/26 21:39:32 ad Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -58,6 +58,8 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: hfs_nhash.c,v 1.2.28.2 2007/12/26 21:39:32 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

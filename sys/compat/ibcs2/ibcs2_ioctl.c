@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_ioctl.c,v 1.39.24.1 2007/12/08 17:56:39 ad Exp $	*/
+/*	$NetBSD: ibcs2_ioctl.c,v 1.39.24.2 2007/12/26 21:38:55 ad Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_ioctl.c,v 1.39.24.1 2007/12/08 17:56:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_ioctl.c,v 1.39.24.2 2007/12/26 21:38:55 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,9 +119,7 @@ static void stios2stio(struct ibcs2_termios *, struct ibcs2_termio *);
 static void stio2stios(struct ibcs2_termio *, struct ibcs2_termios *);
 
 static void
-stios2btios(st, bt)
-	struct ibcs2_termios *st;
-	struct termios *bt;
+stios2btios(struct ibcs2_termios *st, struct termios *bt)
 {
 	u_long l, r;
 
@@ -212,9 +210,7 @@ stios2btios(st, bt)
 }
 
 static void
-btios2stios(bt, st)
-	struct termios *bt;
-	struct ibcs2_termios *st;
+btios2stios(struct termios *bt, struct ibcs2_termios *st)
 {
 	int i;
 	u_long l, r;
@@ -303,9 +299,7 @@ btios2stios(bt, st)
 }
 
 static void
-stios2stio(ts, t)
-	struct ibcs2_termios *ts;
-	struct ibcs2_termio *t;
+stios2stio(struct ibcs2_termios *ts, struct ibcs2_termio *t)
 {
 
 	t->c_iflag = ts->c_iflag;
@@ -317,9 +311,7 @@ stios2stio(ts, t)
 }
 
 static void
-stio2stios(t, ts)
-	struct ibcs2_termio *t;
-	struct ibcs2_termios *ts;
+stio2stios(struct ibcs2_termio *t, struct ibcs2_termios *ts)
 {
 
 	ts->c_iflag = t->c_iflag;
@@ -331,16 +323,13 @@ stio2stios(t, ts)
 }
 
 int
-ibcs2_sys_ioctl(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ibcs2_sys_ioctl(struct lwp *l, const struct ibcs2_sys_ioctl_args *uap, register_t *retval)
 {
-	struct ibcs2_sys_ioctl_args /* {
+	/* {
 		syscallarg(int) fd;
 		syscallarg(int) cmd;
 		syscallarg(void *) data;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 	struct filedesc *fdp = p->p_fd;
 	struct file *fp;
@@ -348,17 +337,21 @@ ibcs2_sys_ioctl(l, v, retval)
 	struct termios bts;
 	struct ibcs2_termios sts;
 	struct ibcs2_termio st;
+	struct sys_ioctl_args bsd_ua;
 	int error, t;
+
+	SCARG(&bsd_ua, fd) = SCARG(uap, fd);
+	SCARG(&bsd_ua, data) = SCARG(uap, data);
 
 	/* Handle the easy ones first */
 	switch (SCARG(uap, cmd)) {
 	case IBCS2_TIOCGWINSZ:
-		SCARG(uap, cmd) = TIOCGWINSZ;
-		return sys_ioctl(l, uap, retval);
+		SCARG(&bsd_ua, com) = TIOCGWINSZ;
+		return sys_ioctl(l, &bsd_ua, retval);
 
 	case IBCS2_TIOCSWINSZ:
-		SCARG(uap, cmd) = TIOCSWINSZ;
-		return sys_ioctl(l, uap, retval);
+		SCARG(&bsd_ua, com) = TIOCSWINSZ;
+		return sys_ioctl(l, &bsd_ua, retval);
 
 	case IBCS2_TIOCGPGRP:
 		return copyout(&p->p_pgrp->pg_id, SCARG(uap, data),
@@ -380,11 +373,11 @@ ibcs2_sys_ioctl(l, v, retval)
 		return ENOSYS;
 
 	case IBCS2_SIOCSOCKSYS:
-		return ibcs2_socksys(l, uap, retval);
+		return ibcs2_socksys(l, (const void *)uap, retval);
 
 	case IBCS2_I_NREAD:     /* STREAMS */
-	        SCARG(uap, cmd) = FIONREAD;
-		return sys_ioctl(l, uap, retval);
+		SCARG(&bsd_ua, com) = FIONREAD;
+		return sys_ioctl(l, &bsd_ua, retval);
 	default:
 		break;
 	}
@@ -540,12 +533,12 @@ out:
 }
 
 int
-ibcs2_sys_gtty(struct lwp *l, void *v, register_t *retval)
+ibcs2_sys_gtty(struct lwp *l, const struct ibcs2_sys_gtty_args *uap, register_t *retval)
 {
-	struct ibcs2_sys_gtty_args /* {
+	/* {
 		syscallarg(int) fd;
 		syscallarg(struct sgttyb *) tb;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 	struct filedesc *fdp = p->p_fd;
 	struct file *fp;

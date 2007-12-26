@@ -1,4 +1,4 @@
-/*	$NetBSD: oboe.c,v 1.27.4.1 2007/12/08 17:57:27 ad Exp $	*/
+/*	$NetBSD: oboe.c,v 1.27.4.2 2007/12/26 21:39:28 ad Exp $	*/
 
 /*	XXXXFVDL THIS DRIVER IS BROKEN FOR NON-i386 -- vtophys() usage	*/
 
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oboe.c,v 1.27.4.1 2007/12/08 17:57:27 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oboe.c,v 1.27.4.2 2007/12/26 21:39:28 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -255,7 +255,7 @@ oboe_activate(struct device *self, enum devact act)
 	struct oboe_softc *sc = (struct oboe_softc *)self;
 	int error = 0;
 
-	DPRINTF(("%s: sc=%p\n", __FUNCTION__, sc));
+	DPRINTF(("%s: sc=%p\n", __func__, sc));
 
 	switch (act) {
 	case DVACT_ACTIVATE:
@@ -277,7 +277,7 @@ oboe_detach(struct device *self, int flags)
 	struct oboe_softc *sc = (struct oboe_softc *)self;
 
 	/* XXX needs reference counting for proper detach. */
-	DPRINTF(("%s: sc=%p\n", __FUNCTION__, sc));
+	DPRINTF(("%s: sc=%p\n", __func__, sc));
 #endif
 	return (0);
 }
@@ -287,7 +287,7 @@ oboe_open(void *h, int flag, int mode, struct lwp *l)
 {
 	struct oboe_softc *sc = h;
 
-	DPRINTF(("%s: sc=%p\n", __FUNCTION__, sc));
+	DPRINTF(("%s: sc=%p\n", __func__, sc));
 
 	sc->sc_state = 0;
 	sc->sc_saved = 0;
@@ -305,7 +305,7 @@ oboe_close(void *h, int flag, int mode,
 	int error = 0;
 	int s = splir();
 
-	DPRINTF(("%s: sc=%p\n", __FUNCTION__, sc));
+	DPRINTF(("%s: sc=%p\n", __func__, sc));
 	/* Wait for output to drain */
 
 	if (sc->sc_txpending > 0) {
@@ -327,7 +327,7 @@ oboe_read(void *h, struct uio *uio, int flag)
 	int slot;
 
 	DPRINTF(("%s: resid=%d, iovcnt=%d, offset=%ld\n",
-		 __FUNCTION__, uio->uio_resid, uio->uio_iovcnt,
+		 __func__, uio->uio_resid, uio->uio_iovcnt,
 		 (long)uio->uio_offset));
 
 	s = splir();
@@ -376,7 +376,7 @@ oboe_write(void *h, struct uio *uio, int flag)
 	int n;
 	int s = splir();
 
-	DPRINTF(("%s: sc=%p\n", __FUNCTION__, sc));
+	DPRINTF(("%s: sc=%p\n", __func__, sc));
 	while (sc->sc_txpending == TX_SLOTS) {
 		if (flag & IO_NDELAY) {
 			splx(s);
@@ -454,7 +454,7 @@ oboe_get_turnarounds(void *h, int *turnarounds)
 {
 #ifdef OBOE_DEBUG
 	struct oboe_softc *sc = h;
-	DPRINTF(("%s: sc=%p\n", __FUNCTION__, sc));
+	DPRINTF(("%s: sc=%p\n", __func__, sc));
 #endif
 
 	/* XXX Linux driver sets all bits */
@@ -470,17 +470,17 @@ oboe_poll(void *h, int events, struct lwp *l)
 	int revents = 0;
 	int s;
 
-	DPRINTF(("%s: sc=%p\n", __FUNCTION__, sc));
+	DPRINTF(("%s: sc=%p\n", __func__, sc));
 
 	s = splir();
 	if (events & (POLLOUT | POLLWRNORM))
 		revents |= events & (POLLOUT | POLLWRNORM);
 	if (events & (POLLIN | POLLRDNORM)) {
 		if (sc->sc_saved > 0) {
-			DPRINTF(("%s: have data\n", __FUNCTION__));
+			DPRINTF(("%s: have data\n", __func__));
 			revents |= events & (POLLIN | POLLRDNORM);
 		} else {
-			DPRINTF(("%s: recording select\n", __FUNCTION__));
+			DPRINTF(("%s: recording select\n", __func__));
 			selrecord(l, &sc->sc_rsel);
 		}
 	}

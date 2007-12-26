@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.211.2.1 2007/12/04 13:03:47 ad Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.211.2.2 2007/12/26 21:40:00 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.211.2.1 2007/12/04 13:03:47 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.211.2.2 2007/12/26 21:40:00 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -219,7 +219,7 @@ ffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 		/*
 		 * Look up the name and verify that it's sane.
 		 */
-		NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, args->fspec, l);
+		NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, args->fspec);
 		if ((error = namei(&nd)) != 0)
 			return (error);
 		devvp = nd.ni_vp;
@@ -1503,6 +1503,12 @@ ffs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 #endif
 
 	/*
+	 * Initialize genfs node, we might proceed to destroy it in
+	 * error branches.
+	 */
+	genfs_node_init(vp, &ffs_genfsops);
+
+	/*
 	 * Put it onto its hash chain and lock it so that other requests for
 	 * this inode will block if they arrive while we are sleeping waiting
 	 * for old data structures to be purged or for the contents of the
@@ -1551,7 +1557,6 @@ ffs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 	 * Finish inode initialization now that aliasing has been resolved.
 	 */
 
-	genfs_node_init(vp, &ffs_genfsops);
 	ip->i_devvp = ump->um_devvp;
 	VREF(ip->i_devvp);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.616.2.2 2007/12/26 17:55:04 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.616.2.3 2007/12/26 21:38:45 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.616.2.2 2007/12/26 17:55:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.616.2.3 2007/12/26 21:38:45 ad Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -85,6 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.616.2.2 2007/12/26 17:55:04 ad Exp $")
 #include "opt_kgdb.h"
 #include "opt_mtrr.h"
 #include "opt_multiprocessor.h"
+#include "opt_physmem.h"
 #include "opt_realmem.h"
 #include "opt_user_ldt.h"
 #include "opt_vm86.h"
@@ -1244,9 +1245,6 @@ setregs(struct lwp *l, struct exec_package *pack, u_long stack)
  */
 
 union	descriptor *gdt, *ldt;
-struct gate_descriptor *idt;
-char idt_allocmap[NIDT];
-kmutex_t idt_lock;
 union	descriptor *pentium_idt;
 struct user *proc0paddr;
 extern vaddr_t proc0uarea;
@@ -1318,6 +1316,7 @@ extern vector IDTVEC(mach_trap);
 #endif
 
 #define	KBTOB(x)	((size_t)(x) * 1024UL)
+#define	MBTOB(x)	((size_t)(x) * 1024UL * 1024UL)
 
 void cpu_init_idt()
 {
@@ -1330,6 +1329,7 @@ void
 add_mem_cluster(uint64_t seg_start, uint64_t seg_end, uint32_t type)
 {
 	extern struct extent *iomem_ex;
+	uint64_t new_physmem;
 	int i;
 
 	if (seg_end > 0x100000000ULL) {
@@ -1391,6 +1391,13 @@ add_mem_cluster(uint64_t seg_start, uint64_t seg_end, uint32_t type)
 		panic("init386: too many memory segments "
 		    "(increase VM_PHYSSEG_MAX)");
 
+#ifdef PHYSMEM_MAX_ADDR
+	if (seg_start >= MBTOB(PHYSMEM_MAX_ADDR))
+		return;
+	if (seg_end > MBTOB(PHYSMEM_MAX_ADDR))
+		seg_end = MBTOB(PHYSMEM_MAX_ADDR);
+#endif
+
 	seg_start = round_page(seg_start);
 	seg_end = trunc_page(seg_end);
 
@@ -1398,12 +1405,22 @@ add_mem_cluster(uint64_t seg_start, uint64_t seg_end, uint32_t type)
 		return;
 
 	mem_clusters[mem_cluster_cnt].start = seg_start;
-	mem_clusters[mem_cluster_cnt].size =
-	    seg_end - seg_start;
+	new_physmem = physmem + atop(seg_end - seg_start);
+
+#ifdef PHYSMEM_MAX_SIZE
+	if (physmem >= atop(MBTOB(PHYSMEM_MAX_SIZE)))
+		return;
+	if (new_physmem > atop(MBTOB(PHYSMEM_MAX_SIZE))) {
+		seg_end = seg_start + MBTOB(PHYSMEM_MAX_SIZE) - ptoa(physmem);
+		new_physmem = atop(MBTOB(PHYSMEM_MAX_SIZE));
+	}
+#endif
+
+	mem_clusters[mem_cluster_cnt].size = seg_end - seg_start;
 
 	if (avail_end < seg_end)
 		avail_end = seg_end;
-	physmem += atop(mem_clusters[mem_cluster_cnt].size);
+	physmem = new_physmem;
 	mem_cluster_cnt++;
 }
 
@@ -1440,6 +1457,103 @@ initgdt(union descriptor *tgdt)
 	lgdt(&region);
 }
 
+static void
+init386_msgbuf(void)
+{
+	/* Message buffer is located at end of core. */
+	struct vm_physseg *vps;
+	psize_t sz = round_page(MSGBUFSIZE);
+	psize_t reqsz = sz;
+	unsigned int x;
+
+ search_again:
+	vps = NULL;
+	for (x = 0; x < vm_nphysseg; ++x) {
+		vps = &vm_physmem[x];
+		if (ptoa(vps->avail_end) == avail_end) {
+			break;
+		}
+	}
+	if (x == vm_nphysseg)
+		panic("init386: can't find end of memory");
+
+	/* Shrink so it'll fit in the last segment. */
+	if (vps->avail_end - vps->avail_start < atop(sz))
+		sz = ptoa(vps->avail_end - vps->avail_start);
+
+	vps->avail_end -= atop(sz);
+	vps->end -= atop(sz);
+	msgbuf_p_seg[msgbuf_p_cnt].sz = sz;
+	msgbuf_p_seg[msgbuf_p_cnt++].paddr = ptoa(vps->avail_end);
+
+	/* Remove the last segment if it now has no pages. */
+	if (vps->start == vps->end) {
+		for (--vm_nphysseg; x < vm_nphysseg; x++)
+			vm_physmem[x] = vm_physmem[x + 1];
+	}
+
+	/* Now find where the new avail_end is. */
+	for (avail_end = 0, x = 0; x < vm_nphysseg; x++)
+		if (vm_physmem[x].avail_end > avail_end)
+			avail_end = vm_physmem[x].avail_end;
+	avail_end = ptoa(avail_end);
+
+	if (sz == reqsz)
+		return;
+
+	reqsz -= sz;
+	if (msgbuf_p_cnt == VM_PHYSSEG_MAX) {
+		/* No more segments available, bail out. */
+		printf("WARNING: MSGBUFSIZE (%zu) too large, using %zu.\n",
+		    (size_t)MSGBUFSIZE, (size_t)(MSGBUFSIZE - reqsz));
+		return;
+	}
+
+	sz = reqsz;
+	goto search_again;
+}
+
+static void
+init386_pte0(void)
+{
+	paddr_t paddr;
+	vaddr_t vaddr;
+
+	paddr = 4 * PAGE_SIZE;
+	vaddr = (vaddr_t)vtopte(0);
+	pmap_kenter_pa(vaddr, paddr, VM_PROT_READ | VM_PROT_WRITE);
+	pmap_update(pmap_kernel());
+	/* make sure it is clean before using */
+	memset((void *)vaddr, 0, PAGE_SIZE);
+}
+
+static void
+init386_ksyms(void)
+{
+#if NKSYMS || defined(DDB) || defined(LKM)
+	extern int end;
+	struct btinfo_symtab *symtab;
+
+#ifdef DDB
+	db_machine_init();
+#endif
+
+#if defined(MULTIBOOT)
+	if (multiboot_ksyms_init())
+		return;
+#endif
+
+	if ((symtab = lookup_bootinfo(BTINFO_SYMTAB)) == NULL) {
+		ksyms_init(*(int *)&end, ((int *)&end) + 1, esym);
+		return;
+	}
+
+	symtab->ssym += KERNBASE;
+	symtab->esym += KERNBASE;
+	ksyms_init(symtab->nsym, (int *)symtab->ssym, (int *)symtab->esym);
+#endif
+}
+
 void
 init386(paddr_t first_avail)
 {
@@ -1451,9 +1565,6 @@ init386(paddr_t first_avail)
 	int x, first16q;
 	uint64_t seg_start, seg_end;
 	uint64_t seg_start1, seg_end1;
-	paddr_t realmode_reserved_start;
-	psize_t realmode_reserved_size;
-	int needs_earlier_install_pte0;
 #if NBIOSCALL > 0
 	extern int biostramp_image_size;
 	extern u_char biostramp_image[];
@@ -1514,45 +1625,15 @@ init386(paddr_t first_avail)
 	uvmexp.ncolors = 2;
 
 	/*
-	 * BIOS leaves data in physical page 0
-	 * Even if it didn't, our VM system doesn't like using zero as a
-	 * physical page number.
-	 * We may also need pages in low memory (one each) for secondary CPU
-	 * startup, for BIOS calls, and for ACPI, plus a page table page to map
-	 * them into the first few pages of the kernel's pmap.
+	 * Low memory reservations:
+	 * Page 0:	BIOS data
+	 * Page 1:	BIOS callback
+	 * Page 2:	MP bootstrap
+	 * Page 3:	ACPI wakeup code
+	 * Page 4:	Temporary page table for 0MB-4MB
+	 * Page 5:	Temporary page directory
 	 */
-	avail_start = PAGE_SIZE;
-
-	/*
-	 * reserve memory for real-mode call
-	 */
-	needs_earlier_install_pte0 = 0;
-	realmode_reserved_start = 0;
-	realmode_reserved_size = 0;
-#if NBIOSCALL > 0
-	/* save us a page for trampoline code */
-	realmode_reserved_size += PAGE_SIZE;
-	needs_earlier_install_pte0 = 1;
-#endif
-#ifdef MULTIPROCESSOR						 /* XXX */
-	KASSERT(avail_start == PAGE_SIZE);			 /* XXX */
-	if (realmode_reserved_size < MP_TRAMPOLINE)		 /* XXX */
-		realmode_reserved_size = MP_TRAMPOLINE;		 /* XXX */
-	needs_earlier_install_pte0 = 1;				 /* XXX */
-#endif								 /* XXX */
-#if NACPI > 0
-	/* trampoline code for wake handler */
-	realmode_reserved_size += ptoa(acpi_md_get_npages_of_wakecode()+1);
-	needs_earlier_install_pte0 = 1;
-#endif
-	if (needs_earlier_install_pte0) {
-		/* page table for directory entry 0 */
-		realmode_reserved_size += PAGE_SIZE;
-	}
-	if (realmode_reserved_size>0) {
-		realmode_reserved_start = avail_start;
-		avail_start += realmode_reserved_size;
-	}
+	avail_start = 6 * PAGE_SIZE;
 
 #ifdef DEBUG_MEMLOAD
 	printf("mem_cluster_count: %d\n", mem_cluster_cnt);
@@ -1817,141 +1898,32 @@ init386(paddr_t first_avail)
 		}
 	}
 
+	init386_msgbuf();
 	/*
-	 * Steal memory for the message buffer (at end of core).
+	 * XXX Remove this
+	 *
+	 * Setup a temporary Page Table Entry to allow identity mappings of
+	 * the real mode address. This is required by:
+	 * - bioscall
+	 * - MP bootstrap
+	 * - ACPI wakecode
 	 */
-	{
-		struct vm_physseg *vps;
-		psize_t sz = round_page(MSGBUFSIZE);
-		psize_t reqsz = sz;
-
-	search_again:
-		for (x = 0; x < vm_nphysseg; x++) {
-			vps = &vm_physmem[x];
-			if (ptoa(vps->avail_end) == avail_end)
-				goto found;
-		}
-		panic("init386: can't find end of memory");
-
-	found:
-		/* Shrink so it'll fit in the last segment. */
-		if ((vps->avail_end - vps->avail_start) < atop(sz))
-			sz = ptoa(vps->avail_end - vps->avail_start);
-
-		vps->avail_end -= atop(sz);
-		vps->end -= atop(sz);
-		msgbuf_p_seg[msgbuf_p_cnt].sz = sz;
-		msgbuf_p_seg[msgbuf_p_cnt++].paddr = ptoa(vps->avail_end);
-
-		/* Remove the last segment if it now has no pages. */
-		if (vps->start == vps->end) {
-			for (vm_nphysseg--; x < vm_nphysseg; x++)
-				vm_physmem[x] = vm_physmem[x + 1];
-		}
-
-		/* Now find where the new avail_end is. */
-		for (avail_end = 0, x = 0; x < vm_nphysseg; x++)
-			if (vm_physmem[x].avail_end > avail_end)
-				avail_end = vm_physmem[x].avail_end;
-		avail_end = ptoa(avail_end);
-
-		if (sz != reqsz) {
-			reqsz -= sz;
-			if (msgbuf_p_cnt != VM_PHYSSEG_MAX) {
-		/* if still segments available, get memory from next one ... */
-				sz = reqsz;
-				goto search_again;
-			}
-		/* Warn if the message buffer had to be shrunk. */
-			printf("WARNING: %ld bytes not available for msgbuf "
-			       "in last cluster (%ld used)\n", (long)MSGBUFSIZE, MSGBUFSIZE - reqsz);
-		}
-	}
-
-	/*
-	 * install PT page for the first 4M if needed.
-	 */
-	if (needs_earlier_install_pte0) {
-		paddr_t paddr;
-#ifdef DIAGNOSTIC
-		if (realmode_reserved_size < PAGE_SIZE) {
-			panic("cannot steal memory for first 4M PT page.");
-		}
-#endif
-		paddr=realmode_reserved_start+realmode_reserved_size-PAGE_SIZE;
-		pmap_kenter_pa((vaddr_t)vtopte(0), paddr,
-			   VM_PROT_READ|VM_PROT_WRITE);
-		pmap_update(pmap_kernel());
-		/* make sure it is clean before using */
-		memset(vtopte(0), 0, PAGE_SIZE);
-		realmode_reserved_size -= PAGE_SIZE;
-	}
+	init386_pte0();
 
 #if NBIOSCALL > 0
-	/*
-	 * this should be caught at kernel build time, but put it here
-	 * in case someone tries to fake it out...
-	 */
-#ifdef DIAGNOSTIC
-	if (realmode_reserved_start > BIOSTRAMP_BASE ||
-	    (realmode_reserved_start+realmode_reserved_size) < (BIOSTRAMP_BASE+
-							       PAGE_SIZE)) {
-	    panic("cannot steal memory for PT page of bioscall.");
-	}
-	if (biostramp_image_size > PAGE_SIZE)
-	    panic("biostramp_image_size too big: %x vs. %x",
-		  biostramp_image_size, PAGE_SIZE);
-#endif
+	KASSERT(biostramp_image_size <= PAGE_SIZE);
 	pmap_kenter_pa((vaddr_t)BIOSTRAMP_BASE,	/* virtual */
 		       (paddr_t)BIOSTRAMP_BASE,	/* physical */
 		       VM_PROT_ALL);		/* protection */
 	pmap_update(pmap_kernel());
 	memcpy((void *)BIOSTRAMP_BASE, biostramp_image, biostramp_image_size);
-#ifdef DEBUG_BIOSCALL
-	printf("biostramp installed @ %x\n", BIOSTRAMP_BASE);
-#endif
-	realmode_reserved_size  -= PAGE_SIZE;
-	realmode_reserved_start += PAGE_SIZE;
-#endif
-
-#if NACPI > 0
-	/*
-	 * Steal memory for the acpi wake code
-	 */
-	{
-		paddr_t paddr, p;
-		psize_t sz;
-		int npg;
-
-		paddr = realmode_reserved_start;
-		npg = acpi_md_get_npages_of_wakecode();
-		sz = ptoa(npg);
-#ifdef DIAGNOSTIC
-		if (realmode_reserved_size < sz) {
-			panic("cannot steal memory for ACPI wake code.");
-		}
-#endif
-
-		/* identical mapping */
-		p = paddr;
-		for (x=0; x<npg; x++) {
-			aprint_debug("kenter: 0x%08X\n", (unsigned)p);
-			pmap_kenter_pa((vaddr_t)p, p, VM_PROT_ALL);
-			p += PAGE_SIZE;
-		}
-		pmap_update(pmap_kernel());
-
-		acpi_md_install_wakecode(paddr);
-
-		realmode_reserved_size  -= sz;
-		realmode_reserved_start += sz;
-	}
 #endif
 
 	pmap_kenter_pa(idt_vaddr, idt_paddr, VM_PROT_READ|VM_PROT_WRITE);
 	pmap_update(pmap_kernel());
 	memset((void *)idt_vaddr, 0, PAGE_SIZE);
 
+	idt_init();
 	idt = (struct gate_descriptor *)idt_vaddr;
 	pmap_kenter_pa(pentium_idt_vaddr, idt_paddr, VM_PROT_READ);
 	pmap_update(pmap_kernel());
@@ -1978,55 +1950,29 @@ init386(paddr_t first_avail)
 
 	/* exceptions */
 	for (x = 0; x < 32; x++) {
+		idt_vec_reserve(x);
 		setgate(&idt[x], IDTVEC(exceptions)[x], 0, SDT_SYS386TGT,
 		    (x == 3 || x == 4) ? SEL_UPL : SEL_KPL,
 		    GSEL(GCODE_SEL, SEL_KPL));
-		idt_allocmap[x] = 1;
 	}
 
 	/* new-style interrupt gate for syscalls */
+	idt_vec_reserve(128);
 	setgate(&idt[128], &IDTVEC(syscall), 0, SDT_SYS386TGT, SEL_UPL,
 	    GSEL(GCODE_SEL, SEL_KPL));
-	idt_allocmap[128] = 1;
 #ifdef COMPAT_SVR4
+	idt_vec_reserve(0xd2);
 	setgate(&idt[0xd2], &IDTVEC(svr4_fasttrap), 0, SDT_SYS386TGT,
 	    SEL_UPL, GSEL(GCODE_SEL, SEL_KPL));
-	idt_allocmap[0xd2] = 1;
 #endif /* COMPAT_SVR4 */
 
 	setregion(&region, gdt, NGDT * sizeof(gdt[0]) - 1);
 	lgdt(&region);
 
-	mutex_init(&idt_lock, MUTEX_DEFAULT, IPL_NONE);
 	cpu_init_idt();
 
-#if NKSYMS || defined(DDB) || defined(LKM)
-	{
-		extern int end;
-		bool loaded;
-		struct btinfo_symtab *symtab;
+	init386_ksyms();
 
-#ifdef DDB
-		db_machine_init();
-#endif
-
-#if defined(MULTIBOOT)
-		loaded = multiboot_ksyms_init();
-#else
-		loaded = false;
-#endif
-		if (!loaded) {
-		    symtab = lookup_bootinfo(BTINFO_SYMTAB);
-		    if (symtab) {
-			    symtab->ssym += KERNBASE;
-			    symtab->esym += KERNBASE;
-			    ksyms_init(symtab->nsym, (int *)symtab->ssym,
-				(int *)symtab->esym);
-		    } else
-			    ksyms_init(*(int *)&end, ((int *)&end) + 1, esym);
-		}
-	}
-#endif
 #ifdef DDB
 	if (boothowto & RB_KDB)
 		Debugger();
@@ -2424,50 +2370,6 @@ cpu_initclocks()
 {
 
 	(*initclock_func)();
-}
-
-/*
- * Allocate an IDT vector slot within the given range.
- */
-
-int
-idt_vec_alloc(int low, int high)
-{
-	int vec;
-
-	if (!cold)
-		mutex_enter(&idt_lock);
-	for (vec = low; vec <= high; vec++) {
-		if (idt_allocmap[vec] == 0) {
-			idt_allocmap[vec] = 1;
-			if (!cold)
-				mutex_exit(&idt_lock);
-			return vec;
-		}
-	}
-	if (!cold)
-		mutex_exit(&idt_lock);
-	return 0;
-}
-
-void
-idt_vec_set(int vec, void (*function)(void))
-{
-	/*
-	 * Vector should be allocated, so no locking needed.
-	 */
-	KASSERT(idt_allocmap[vec] == 1);
-	setgate(&idt[vec], function, 0, SDT_SYS386IGT, SEL_KPL,
-	    GSEL(GCODE_SEL, SEL_KPL));
-}
-
-void
-idt_vec_free(int vec)
-{
-	mutex_enter(&idt_lock);
-	unsetgate(&idt[vec]);
-	idt_allocmap[vec] = 0;
-	mutex_exit(&idt_lock);
 }
 
 /*

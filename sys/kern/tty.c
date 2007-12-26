@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.206.2.2 2007/12/21 15:27:04 ad Exp $	*/
+/*	$NetBSD: tty.c,v 1.206.2.3 2007/12/26 21:39:46 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.206.2.2 2007/12/21 15:27:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.206.2.3 2007/12/26 21:39:46 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -905,7 +905,7 @@ ttioctl(struct tty *tp, u_long cmd, void *data, int flag, struct lwp *l)
 				return EBUSY;
 
 			NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_SYSSPACE,
-			    "/dev/console", l);
+			    "/dev/console");
 			if ((error = namei(&nd)) != 0)
 				return error;
 			error = VOP_ACCESS(nd.ni_vp, VREAD, l->l_cred);
@@ -1893,6 +1893,7 @@ ttwrite(struct tty *tp, struct uio *uio, int flag)
 			goto loop;
 		}
 	}
+
 	/*
 	 * Hang the process if it's in the background.
 	 */

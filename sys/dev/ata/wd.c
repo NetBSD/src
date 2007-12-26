@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.350.2.1 2007/12/04 13:02:56 ad Exp $ */
+/*	$NetBSD: wd.c,v 1.350.2.2 2007/12/26 21:39:23 ad Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.350.2.1 2007/12/04 13:02:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.350.2.2 2007/12/26 21:39:23 ad Exp $");
 
 #include "opt_ata.h"
 
@@ -88,6 +88,7 @@ __KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.350.2.1 2007/12/04 13:02:56 ad Exp $");
 #include <sys/disk.h>
 #include <sys/syslog.h>
 #include <sys/proc.h>
+#include <sys/reboot.h>
 #include <sys/vnode.h>
 #if NRND > 0
 #include <sys/rnd.h>
@@ -139,6 +140,9 @@ int	wdactivate(struct device *, enum devact);
 int	wdprint(void *, char *);
 void	wdperror(const struct wd_softc *);
 
+static bool	wd_suspend(device_t);
+static int	wd_standby(struct wd_softc *, int);
+
 CFATTACH_DECL(wd, sizeof(struct wd_softc),
     wdprobe, wdattach, wddetach, wdactivate);
 
@@ -189,9 +193,7 @@ void  __wdstart(struct wd_softc*, struct buf *);
 void  wdrestart(void *);
 void  wddone(void *);
 int   wd_get_params(struct wd_softc *, u_int8_t, struct ataparams *);
-int   wd_standby(struct wd_softc *, int);
 int   wd_flushcache(struct wd_softc *, int);
-void  wd_shutdown(void *);
 
 int   wd_getcache(struct wd_softc *, int *);
 int   wd_setcache(struct wd_softc *, int);
@@ -414,10 +416,6 @@ wdattach(struct device *parent, struct device *self, void *aux)
 	disk_init(&wd->sc_dk, wd->sc_dev.dv_xname, &wddkdriver);
 	disk_attach(&wd->sc_dk);
 	wd->sc_wdc_bio.lp = wd->sc_dk.dk_label;
-	wd->sc_sdhook = shutdownhook_establish(wd_shutdown, wd);
-	if (wd->sc_sdhook == NULL)
-		aprint_error("%s: WARNING: unable to establish shutdown hook\n",
-		    wd->sc_dev.dv_xname);
 #if NRND > 0
 	rnd_attach_source(&wd->rnd_source, wd->sc_dev.dv_xname,
 			  RND_TYPE_DISK, 0);
@@ -425,6 +423,28 @@ wdattach(struct device *parent, struct device *self, void *aux)
 
 	/* Discover wedges on this disk. */
 	dkwedge_discover(&wd->sc_dk);
+
+	if (!pmf_device_register(self, wd_suspend, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+}
+
+static bool
+wd_suspend(device_t dv)
+{
+	struct wd_softc *sc = device_private(dv);
+	/* For shutdown and panic processing, use polling. */
+	int modus = doing_shutdown ? AT_POLL : AT_WAIT;
+
+	wd_flushcache(sc, modus);
+	/*
+	 * Only put the disk into standby mode if this not a shutdown or
+	 * if this is an explicit halt -p.
+	 */
+	if (doing_shutdown == 0 ||
+	    (boothowto & RB_POWERDOWN) == RB_POWERDOWN)
+		wd_standby(sc, modus);
+
+	return true;
 }
 
 int
@@ -489,9 +509,7 @@ wddetach(struct device *self, int flags)
 	sc->sc_bscount = 0;
 #endif
 
-	/* Get rid of the shutdown hook. */
-	if (sc->sc_sdhook != NULL)
-		shutdownhook_disestablish(sc->sc_sdhook);
+	pmf_device_deregister(self);
 
 #if NRND > 0
 	/* Unhook the entropy source. */
@@ -1859,7 +1877,7 @@ wd_setcache(struct wd_softc *wd, int bits)
 	return 0;
 }
 
-int
+static int
 wd_standby(struct wd_softc *wd, int flags)
 {
 	struct ata_command ata_c;
@@ -1871,8 +1889,8 @@ wd_standby(struct wd_softc *wd, int flags)
 	ata_c.flags = flags;
 	ata_c.timeout = 30000; /* 30s timeout */
 	if (wd->atabus->ata_exec_command(wd->drvp, &ata_c) != ATACMD_COMPLETE) {
-		printf("%s: standby immediate command didn't complete\n",
-		    wd->sc_dev.dv_xname);
+		aprint_error_dev(&wd->sc_dev,
+		    "standby immediate command didn't complete\n");
 		return EIO;
 	}
 	if (ata_c.flags & AT_ERROR) {
@@ -1882,8 +1900,7 @@ wd_standby(struct wd_softc *wd, int flags)
 	if (ata_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
 		char sbuf[sizeof(at_errbits) + 64];
 		bitmask_snprintf(ata_c.flags, at_errbits, sbuf, sizeof(sbuf));
-		printf("%s: wd_standby: status=%s\n", wd->sc_dev.dv_xname,
-		    sbuf);
+		aprint_error_dev(&wd->sc_dev, "wd_standby: status=%s\n", sbuf);
 		return EIO;
 	}
 	return 0;
@@ -1929,14 +1946,6 @@ wd_flushcache(struct wd_softc *wd, int flags)
 		return EIO;
 	}
 	return 0;
-}
-
-void
-wd_shutdown(void *arg)
-{
-
-	struct wd_softc *wd = arg;
-	wd_flushcache(wd, AT_POLL);
 }
 
 /*

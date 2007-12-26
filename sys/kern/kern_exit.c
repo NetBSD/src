@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.194.2.1 2007/12/15 03:16:55 ad Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.194.2.2 2007/12/26 21:39:39 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.194.2.1 2007/12/15 03:16:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.194.2.2 2007/12/26 21:39:39 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -167,11 +167,11 @@ exit_psignal(struct proc *p, struct proc *pp, ksiginfo_t *ksi)
  *	Death of process.
  */
 int
-sys_exit(struct lwp *l, void *v, register_t *retval)
+sys_exit(struct lwp *l, const struct sys_exit_args *uap, register_t *retval)
 {
-	struct sys_exit_args /* {
+	/* {
 		syscallarg(int)	rval;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 
 	/* Don't call exit1() multiple times in the same process. */
@@ -426,6 +426,7 @@ exit1(struct lwp *l, int rv)
 	 * Notify interested parties of our demise.
 	 */
 	KNOTE(&p->p_klist, NOTE_EXIT);
+
 
 
 #if PERFCTRS
@@ -716,23 +717,24 @@ do_sys_wait(struct lwp *l, int *pid, int *status, int options,
 }
 
 int
-sys_wait4(struct lwp *l, void *v, register_t *retval)
+sys_wait4(struct lwp *l, const struct sys_wait4_args *uap, register_t *retval)
 {
-	struct sys_wait4_args /* {
+	/* {
 		syscallarg(int)			pid;
 		syscallarg(int *)		status;
 		syscallarg(int)			options;
 		syscallarg(struct rusage *)	rusage;
-	} */ *uap = v;
+	} */
 	int		status, error;
 	int		was_zombie;
 	struct rusage	ru;
+	int pid = SCARG(uap, pid);
 
-	error = do_sys_wait(l, &SCARG(uap, pid), &status, SCARG(uap, options),
+	error = do_sys_wait(l, &pid, &status, SCARG(uap, options),
 	    SCARG(uap, rusage) != NULL ? &ru : NULL, &was_zombie);
 
-	retval[0] = SCARG(uap, pid);
-	if (SCARG(uap, pid) == 0)
+	retval[0] = pid;
+	if (pid == 0)
 		return error;
 
 	if (SCARG(uap, rusage))

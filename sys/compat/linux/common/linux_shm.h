@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_shm.h,v 1.8.50.1 2007/12/08 17:56:50 ad Exp $	*/
+/*	$NetBSD: linux_shm.h,v 1.8.50.2 2007/12/26 21:39:01 ad Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -106,7 +106,6 @@ struct linux_shm_info {
 
 
 /* Pretend the sys_shmat and sys_shmctl syscalls are defined */
-#ifndef __amd64__
 struct linux_sys_shmat_args {
 	syscallarg(int) shmid;
 	syscallarg(void *) shmaddr;
@@ -119,14 +118,19 @@ struct linux_sys_shmctl_args {
 	syscallarg(int) cmd;
 	syscallarg(struct linux_shmid_ds *) buf;
 };
-#endif
+
+struct linux_sys_shmget_args {
+	syscallarg(key_t) key;
+	syscallarg(size_t) size;
+	syscallarg(int) shmflg;
+};
 
 #ifdef SYSVSHM
 #ifdef _KERNEL
 __BEGIN_DECLS
-int linux_sys_shmget(struct lwp *, void *, register_t *);
-int linux_sys_shmat(struct lwp *, void *, register_t *);
-int linux_sys_shmctl(struct lwp *, void *, register_t *);
+int linux_sys_shmget(struct lwp *, const struct linux_sys_shmget_args *, register_t *);
+int linux_sys_shmat(struct lwp *, const struct linux_sys_shmat_args *, register_t *);
+int linux_sys_shmctl(struct lwp *, const struct linux_sys_shmctl_args *, register_t *);
 void linux_to_bsd_shmid_ds(struct linux_shmid_ds *,
     struct shmid_ds *);
 void linux_to_bsd_shmid64_ds(struct linux_shmid64_ds *,

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_exec.c,v 1.7.4.1 2007/12/08 17:56:52 ad Exp $ */
+/*	$NetBSD: linux32_exec.c,v 1.7.4.2 2007/12/26 21:39:02 ad Exp $ */
 
 /*-
  * Copyright (c) 1994-2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_exec.c,v 1.7.4.1 2007/12/08 17:56:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_exec.c,v 1.7.4.2 2007/12/26 21:39:02 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -214,9 +214,7 @@ linux32_e_proc_init(p, parent, forkflags)
  * the executed process is of same emulation as original forked one.
  */
 static void
-linux32_e_proc_exec(p, epp)
-	struct proc *p;
-	struct exec_package *epp;
+linux32_e_proc_exec(struct proc *p, struct exec_package *epp)
 {
 	/* exec, use our vmspace */
 	linux32_e_proc_init(p, NULL, 0);
@@ -226,8 +224,7 @@ linux32_e_proc_exec(p, epp)
  * Emulation per-process exit hook.
  */
 static void
-linux32_e_proc_exit(p)
-	struct proc *p;
+linux32_e_proc_exit(struct proc *p)
 {
 	struct linux_emuldata *e = p->p_emuldata;
 

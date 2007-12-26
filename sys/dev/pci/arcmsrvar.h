@@ -1,4 +1,4 @@
-/*	$NetBSD: arcmsrvar.h,v 1.5.2.2 2007/12/08 17:57:26 ad Exp $ */
+/*	$NetBSD: arcmsrvar.h,v 1.5.2.3 2007/12/26 21:39:27 ad Exp $ */
 /*	Derived from $OpenBSD: arc.c,v 1.68 2007/10/27 03:28:27 dlg Exp $ */
 
 /*
@@ -160,18 +160,45 @@ struct arc_fw_bufhdr {
 	uint16_t		len;
 } __packed;
 
+/* Firmware command codes */
+#define ARC_FW_CHECK_PASS	0x14	/* opcode + 1 byte length + password */
+#define ARC_FW_GETEVENTS	0x1a	/* opcode + 1 byte for page 0/1/2/3 */
 #define ARC_FW_RAIDINFO		0x20	/* opcode + raid# */
 #define ARC_FW_VOLINFO		0x21	/* opcode + vol# */
 #define ARC_FW_DISKINFO		0x22	/* opcode + physdisk# */
 #define ARC_FW_SYSINFO		0x23	/* opcode. reply is fw_sysinfo */
+#define ARC_FW_CLEAREVENTS	0x24	/* opcode only */
 #define ARC_FW_MUTE_ALARM	0x30	/* opcode only */
 #define ARC_FW_SET_ALARM	0x31	/* opcode + 1 byte for setting */
 #define  ARC_FW_SET_ALARM_DISABLE		0x00
 #define  ARC_FW_SET_ALARM_ENABLE		0x01
+#define ARC_FW_SET_PASS		0x32	/* opcode + 1 byte length + password */
+#define ARC_FW_REBUILD_PRIO	0x34	/* Rebuild priority for disks */
+#define  ARC_FW_REBUILD_PRIO_ULTRALOW		(1<<0)
+#define  ARC_FW_REBUILD_PRIO_LOW		(1<<1)
+#define  ARC_FW_REBUILD_PRIO_NORMAL		(1<<2)
+#define  ARC_FW_REBUILD_PRIO_HIGH		(1<<3)
+#define ARC_FW_SET_MAXATA_MODE	0x35	/* opcode + 1 byte mode */
+#define  ARC_FW_SET_MAXATA_MODE_133		(1<<0)
+#define  ARC_FW_SET_MAXATA_MODE_100		(1<<1)
+#define  ARC_FW_SET_MAXATA_MODE_66		(1<<2)
+#define  ARC_FW_SET_MAXATA_MODE_33		(1<<3)
 #define ARC_FW_NOP		0x38	/* opcode only */
 
+/* Status codes for the firmware command codes */
 #define ARC_FW_CMD_OK		0x41
+#define ARC_FW_CMD_RAIDINVAL	0x42
+#define ARC_FW_CMD_VOLINVAL	0x43
+#define ARC_FW_CMD_NORAID	0x44
+#define ARC_FW_CMD_NOVOLUME	0x45
+#define ARC_FW_CMD_NOPHYSDRV	0x46
+#define ARC_FW_CMD_PARAM_ERR	0x47
+#define ARC_FW_CMD_UNSUPPORTED	0x48
+#define ARC_FW_CMD_DISKCFG_CHGD	0x49
+#define ARC_FW_CMD_PASS_INVAL	0x4a
+#define ARC_FW_CMD_NODISKSPACE	0x4b
 #define ARC_FW_CMD_PASS_REQD	0x4d
+#define ARC_FW_CMD_CHECKSUM_ERR	0x4c
 
 struct arc_fw_comminfo {
 	uint8_t		baud_rate;

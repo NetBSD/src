@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.330.2.3 2007/12/15 03:16:54 ad Exp $	*/
+/*	$NetBSD: init_main.c,v 1.330.2.4 2007/12/26 21:39:36 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.330.2.3 2007/12/15 03:16:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.330.2.4 2007/12/26 21:39:36 ad Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_ntp.h"
@@ -334,6 +334,9 @@ main(void)
 
 	/* Initialize signal-related data structures. */
 	signal_init();
+
+	/* Initialize resource management. */
+	resource_init();
 
 	/* Initialize resource management. */
 	resource_init();
@@ -635,13 +638,13 @@ main(void)
 		p->p_stats->p_start = time;
 		LIST_FOREACH(l, &p->p_lwps, l_sibling) {
 			lwp_lock(l);
-			l->l_rtime.tv_sec = l->l_rtime.tv_usec = 0;
+			memset(&l->l_rtime, 0, sizeof(l->l_rtime));
 			lwp_unlock(l);
 		}
 		mutex_exit(&p->p_smutex);
 	}
 	mutex_exit(&proclist_lock);
-	curlwp->l_stime = time;
+	binuptime(&curlwp->l_stime);
 
 	for (CPU_INFO_FOREACH(cii, ci)) {
 		ci->ci_schedstate.spc_lastmod = time_second;
@@ -685,7 +688,7 @@ check_console(struct lwp *l)
 	struct nameidata nd;
 	int error;
 
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, "/dev/console", l);
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, "/dev/console");
 	error = namei(&nd);
 	if (error == 0)
 		vrele(nd.ni_vp);

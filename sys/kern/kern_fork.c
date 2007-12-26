@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.149.2.1 2007/12/08 17:57:40 ad Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.149.2.2 2007/12/26 21:39:39 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.149.2.1 2007/12/08 17:57:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.149.2.2 2007/12/26 21:39:39 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -114,7 +114,7 @@ int	forkfsleep = 0;
 
 /*ARGSUSED*/
 int
-sys_fork(struct lwp *l, void *v, register_t *retval)
+sys_fork(struct lwp *l, const void *v, register_t *retval)
 {
 
 	return (fork1(l, 0, SIGCHLD, NULL, 0, NULL, NULL, retval, NULL));
@@ -126,7 +126,7 @@ sys_fork(struct lwp *l, void *v, register_t *retval)
  */
 /*ARGSUSED*/
 int
-sys_vfork(struct lwp *l, void *v, register_t *retval)
+sys_vfork(struct lwp *l, const void *v, register_t *retval)
 {
 
 	return (fork1(l, FORK_PPWAIT, SIGCHLD, NULL, 0, NULL, NULL,
@@ -139,7 +139,7 @@ sys_vfork(struct lwp *l, void *v, register_t *retval)
  */
 /*ARGSUSED*/
 int
-sys___vfork14(struct lwp *l, void *v, register_t *retval)
+sys___vfork14(struct lwp *l, const void *v, register_t *retval)
 {
 
 	return (fork1(l, FORK_PPWAIT|FORK_SHAREVM, SIGCHLD, NULL, 0,
@@ -150,12 +150,12 @@ sys___vfork14(struct lwp *l, void *v, register_t *retval)
  * Linux-compatible __clone(2) system call.
  */
 int
-sys___clone(struct lwp *l, void *v, register_t *retval)
+sys___clone(struct lwp *l, const struct sys___clone_args *uap, register_t *retval)
 {
-	struct sys___clone_args /* {
+	/* {
 		syscallarg(int) flags;
 		syscallarg(void *) stack;
-	} */ *uap = v;
+	} */
 	int flags, sig;
 
 	/*

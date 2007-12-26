@@ -1,4 +1,4 @@
-/* $NetBSD: svr4_syscallargs.h,v 1.75.24.1 2007/12/26 19:49:41 ad Exp $ */
+/* $NetBSD: svr4_syscallargs.h,v 1.75.24.2 2007/12/26 21:39:15 ad Exp $ */
 
 /*
  * System call argument lists.

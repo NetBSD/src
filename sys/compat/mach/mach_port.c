@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_port.c,v 1.61.22.1 2007/12/08 17:56:55 ad Exp $ */
+/*	$NetBSD: mach_port.c,v 1.61.22.2 2007/12/26 21:39:04 ad Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include "opt_compat_darwin.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.61.22.1 2007/12/08 17:56:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.61.22.2 2007/12/26 21:39:04 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -75,7 +75,7 @@ struct mach_port *mach_io_master_port;
 struct mach_port *mach_saved_bootstrap_port;
 
 int
-mach_sys_reply_port(struct lwp *l, void *v, register_t *retval)
+mach_sys_reply_port(struct lwp *l, const void *v, register_t *retval)
 {
 	struct mach_right *mr;
 
@@ -86,7 +86,7 @@ mach_sys_reply_port(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-mach_sys_thread_self_trap(struct lwp *l, void *v, register_t *retval)
+mach_sys_thread_self_trap(struct lwp *l, const void *v, register_t *retval)
 {
 	struct mach_lwp_emuldata *mle;
 	struct mach_right *mr;
@@ -100,7 +100,7 @@ mach_sys_thread_self_trap(struct lwp *l, void *v, register_t *retval)
 
 
 int
-mach_sys_task_self_trap(struct lwp *l, void *v, register_t *retval)
+mach_sys_task_self_trap(struct lwp *l, const void *v, register_t *retval)
 {
 	struct mach_emuldata *med;
 	struct mach_right *mr;
@@ -114,7 +114,7 @@ mach_sys_task_self_trap(struct lwp *l, void *v, register_t *retval)
 
 
 int
-mach_sys_host_self_trap(struct lwp *l, void *v, register_t *retval)
+mach_sys_host_self_trap(struct lwp *l, const void *v, register_t *retval)
 {
 	struct mach_emuldata *med;
 	struct mach_right *mr;
@@ -127,8 +127,7 @@ mach_sys_host_self_trap(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-mach_port_deallocate(args)
-	struct mach_trap_args *args;
+mach_port_deallocate(struct mach_trap_args *args)
 {
 	mach_port_deallocate_request_t *req = args->smsg;
 	mach_port_deallocate_reply_t *rep = args->rmsg;
@@ -152,8 +151,7 @@ mach_port_deallocate(args)
 }
 
 int
-mach_port_destroy(args)
-	struct mach_trap_args *args;
+mach_port_destroy(struct mach_trap_args *args)
 {
 	mach_port_destroy_request_t *req = args->smsg;
 	mach_port_destroy_reply_t *rep = args->rmsg;
@@ -184,8 +182,7 @@ mach_port_destroy(args)
 }
 
 int
-mach_port_allocate(args)
-	struct mach_trap_args *args;
+mach_port_allocate(struct mach_trap_args *args)
 {
 	mach_port_allocate_request_t *req = args->smsg;
 	mach_port_allocate_reply_t *rep = args->rmsg;
@@ -227,8 +224,7 @@ mach_port_allocate(args)
 }
 
 int
-mach_port_insert_right(args)
-	struct mach_trap_args *args;
+mach_port_insert_right(struct mach_trap_args *args)
 {
 	mach_port_insert_right_request_t *req = args->smsg;
 	mach_port_insert_right_reply_t *rep = args->rmsg;
@@ -283,8 +279,7 @@ mach_port_insert_right(args)
 }
 
 int
-mach_port_type(args)
-	struct mach_trap_args *args;
+mach_port_type(struct mach_trap_args *args)
 {
 	mach_port_type_request_t *req = args->smsg;
 	mach_port_type_reply_t *rep = args->rmsg;
@@ -309,8 +304,7 @@ mach_port_type(args)
 }
 
 int
-mach_port_set_attributes(args)
-	struct mach_trap_args *args;
+mach_port_set_attributes(struct mach_trap_args *args)
 {
 	mach_port_set_attributes_request_t *req = args->smsg;
 	mach_port_set_attributes_reply_t *rep = args->rmsg;
@@ -344,8 +338,7 @@ mach_port_set_attributes(args)
 }
 
 int
-mach_port_get_attributes(args)
-	struct mach_trap_args *args;
+mach_port_get_attributes(struct mach_trap_args *args)
 {
 	mach_port_get_attributes_request_t *req = args->smsg;
 	mach_port_get_attributes_reply_t *rep = args->rmsg;
@@ -430,8 +423,7 @@ mach_port_get_attributes(args)
 
 /* XXX insert a recv right into a port set without removing it from another */
 int
-mach_port_insert_member(args)
-	struct mach_trap_args *args;
+mach_port_insert_member(struct mach_trap_args *args)
 {
 	mach_port_insert_member_request_t *req = args->smsg;
 	mach_port_insert_member_reply_t *rep = args->rmsg;
@@ -450,8 +442,7 @@ mach_port_insert_member(args)
 }
 
 int
-mach_port_move_member(args)
-	struct mach_trap_args *args;
+mach_port_move_member(struct mach_trap_args *args)
 {
 	mach_port_move_member_request_t *req = args->smsg;
 	mach_port_move_member_reply_t *rep = args->rmsg;
@@ -494,8 +485,7 @@ mach_port_move_member(args)
 }
 
 int
-mach_port_request_notification(args)
-	struct mach_trap_args *args;
+mach_port_request_notification(struct mach_trap_args *args)
 {
 	mach_port_request_notification_request_t *req = args->smsg;
 	mach_port_request_notification_reply_t *rep = args->rmsg;
@@ -578,8 +568,7 @@ mach_port_request_notification(args)
 }
 
 int
-mach_port_get_refs(args)
-	struct mach_trap_args *args;
+mach_port_get_refs(struct mach_trap_args *args)
 {
 	mach_port_get_refs_request_t *req = args->smsg;
 	mach_port_get_refs_reply_t *rep = args->rmsg;
@@ -605,8 +594,7 @@ mach_port_get_refs(args)
 }
 
 int
-mach_port_mod_refs(args)
-	struct mach_trap_args *args;
+mach_port_mod_refs(struct mach_trap_args *args)
 {
 	mach_port_mod_refs_request_t *req = args->smsg;
 	mach_port_mod_refs_reply_t *rep = args->rmsg;
@@ -681,8 +669,7 @@ mach_port_get(void)
 }
 
 void
-mach_port_put(mp)
-	struct mach_port *mp;
+mach_port_put(struct mach_port *mp)
 {
 	struct mach_message *mm;
 
@@ -708,11 +695,7 @@ mach_port_put(mp)
 }
 
 struct mach_right *
-mach_right_get(mp, l, type, hint)
-	struct mach_port *mp;
-	struct lwp *l;
-	int type;
-	mach_port_t hint;
+mach_right_get(struct mach_port *mp, struct lwp *l, int type, mach_port_t hint)
 {
 	struct mach_right *mr;
 	struct mach_emuldata *med;
@@ -785,9 +768,7 @@ rcvck:
 }
 
 void
-mach_right_put(mr, right)
-	struct mach_right *mr;
-	int right;
+mach_right_put(struct mach_right *mr, int right)
 {
 	struct mach_emuldata *med = mr->mr_lwp->l_proc->p_emuldata;
 
@@ -799,9 +780,7 @@ mach_right_put(mr, right)
 }
 
 void
-mach_right_put_shlocked(mr, right)
-	struct mach_right *mr;
-	int right;
+mach_right_put_shlocked(struct mach_right *mr, int right)
 {
 	struct mach_emuldata *med = mr->mr_lwp->l_proc->p_emuldata;
 
@@ -817,9 +796,7 @@ mach_right_put_shlocked(mr, right)
 }
 
 void
-mach_right_put_exclocked(mr, right)
-	struct mach_right *mr;
-	int right;
+mach_right_put_exclocked(struct mach_right *mr, int right)
 {
 	struct mach_right *cmr;
 	struct mach_emuldata *med;
@@ -918,10 +895,7 @@ mach_right_put_exclocked(mr, right)
  * Check that a process has a given right.
  */
 struct mach_right *
-mach_right_check(mn, l, type)
-	mach_port_t mn;
-	struct lwp *l;
-	int type;
+mach_right_check(mach_port_t mn, struct lwp *l, int type)
 {
 	struct mach_right *cmr;
 	struct mach_emuldata *med;
@@ -958,9 +932,7 @@ mach_right_check(mn, l, type)
  * Right lists should be locked.
  */
 mach_port_t
-mach_right_newname(l, hint)
-	struct lwp *l;
-	mach_port_t hint;
+mach_right_newname(struct lwp *l, mach_port_t hint)
 {
 	struct mach_emuldata *med;
 	struct mach_right *mr;

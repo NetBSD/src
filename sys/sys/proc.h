@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.261.2.2 2007/12/15 03:16:53 ad Exp $	*/
+/*	$NetBSD: proc.h,v 1.261.2.3 2007/12/26 21:39:56 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -278,7 +278,7 @@ struct proc {
 
 	struct proc	*p_opptr;	/* l: save parent during ptrace. */
 	struct ptimers	*p_timers;	/*    Timers: real, virtual, profiling */
-	struct timeval 	p_rtime;	/* s: real time */
+	struct bintime 	p_rtime;	/* s: real time */
 	u_quad_t 	p_uticks;	/* t: Statclock hits in user mode */
 	u_quad_t 	p_sticks;	/* t: Statclock hits in system mode */
 	u_quad_t 	p_iticks;	/* t: Statclock hits processing intr */
@@ -523,7 +523,7 @@ int	mtsleep(wchan_t, pri_t, const char *, int, kmutex_t *);
 void	wakeup(wchan_t);
 void	wakeup_one(wchan_t);
 int	kpause(const char *, bool, int, kmutex_t *);
-void	exit1(struct lwp *, int) __attribute__((__noreturn__));
+void	exit1(struct lwp *, int) __dead;
 int	do_sys_wait(struct lwp *, int *, int *, int, struct rusage *, int *);
 struct proc *proc_alloc(void);
 void	proc0_init(void);

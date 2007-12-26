@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_sig.c,v 1.35.16.1 2007/12/08 17:56:37 ad Exp $	*/
+/*	$NetBSD: hpux_sig.c,v 1.35.16.2 2007/12/26 21:38:54 ad Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_sig.c,v 1.35.16.1 2007/12/08 17:56:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_sig.c,v 1.35.16.2 2007/12/26 21:38:54 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,12 +111,8 @@ extern const unsigned char hpux_to_native_signo[];
  * doubt any program of interest mixes the two semantics.
  */
 int
-hpux_sys_sigvec(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+hpux_sys_sigvec(struct lwp *l, const struct hpux_sys_sigvec_args *uap, register_t *retval)
 {
-	struct hpux_sys_sigvec_args *uap = v;
 	struct sigvec nsv, osv;
 	struct sigaction nsa, osa;
 	int sig, error;
@@ -162,12 +158,8 @@ hpux_sys_sigvec(l, v, retval)
 }
 
 int
-hpux_sys_sigblock(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+hpux_sys_sigblock(struct lwp *l, const struct hpux_sys_sigblock_args *uap, register_t *retval)
 {
-	struct hpux_sys_sigblock_args *uap = v;
 	sigset_t nmask;
 
 	bsdtohpuxmask(&l->l_sigmask, (int *)retval);
@@ -182,12 +174,8 @@ hpux_sys_sigblock(l, v, retval)
 }
 
 int
-hpux_sys_sigsetmask(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+hpux_sys_sigsetmask(struct lwp *l, const struct hpux_sys_sigsetmask_args *uap, register_t *retval)
 {
-	struct hpux_sys_sigsetmask_args *uap = v;
 
 	bsdtohpuxmask(&l->l_sigmask, (int *)retval);
 	hpuxtobsdmask(SCARG(uap, mask), &l->l_sigmask);
@@ -200,12 +188,8 @@ hpux_sys_sigsetmask(l, v, retval)
 }
 
 int
-hpux_sys_sigpause(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+hpux_sys_sigpause(struct lwp *l, const struct hpux_sys_sigpause_args *uap, register_t *retval)
 {
-	struct hpux_sys_sigpause_args *uap = v;
 	sigset_t mask;
 
 	hpuxtobsdmask(SCARG(uap, mask), &mask);
@@ -214,19 +198,20 @@ hpux_sys_sigpause(l, v, retval)
 
 /* not totally correct, but close enuf' */
 int
-hpux_sys_kill(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+hpux_sys_kill(struct lwp *l, const struct hpux_sys_kill_args *uap, register_t *retval)
 {
-	struct hpux_sys_kill_args *uap = v;
+	struct sys_kill_args bsd_ua;
+	int signo = SCARG(uap, signo);
 
-	if (SCARG(uap, signo)) {
-		SCARG(uap, signo) = hpuxtobsdsig(SCARG(uap, signo));
-		if (SCARG(uap, signo) == 0)
-			SCARG(uap, signo) = NSIG;
+	SCARG(&bsd_ua, pid) = SCARG(uap, pid);
+
+	if (signo) {
+		signo = hpuxtobsdsig(signo);
+		if (signo == 0)
+			signo = NSIG;
 	}
-	return (sys_kill(l, uap, retval));
+	SCARG(&bsd_ua, signum) = signo;
+	return sys_kill(l, &bsd_ua, retval);
 }
 
 /*
@@ -244,12 +229,8 @@ hpux_sys_kill(l, v, retval)
  * XXX We don't handle all HP-UX signals!
  */
 int
-hpux_sys_sigprocmask(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+hpux_sys_sigprocmask(struct lwp *l, const struct hpux_sys_sigprocmask_args *uap, register_t *retval)
 {
-	struct hpux_sys_sigprocmask_args *uap = v;
 	int error = 0;
 	hpux_sigset_t sigset;
 	sigset_t mask;
@@ -296,12 +277,8 @@ hpux_sys_sigprocmask(l, v, retval)
 }
 
 int
-hpux_sys_sigpending(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+hpux_sys_sigpending(struct lwp *l, const struct hpux_sys_sigpending_args *uap, register_t *retval)
 {
-	struct hpux_sys_sigpending_args *uap = v;
 	hpux_sigset_t sigset;
 
 	bsdtohpuxmask(&l->l_sigpendset->sp_set, &sigset.sigset[0]);
@@ -309,12 +286,8 @@ hpux_sys_sigpending(l, v, retval)
 }
 
 int
-hpux_sys_sigsuspend(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+hpux_sys_sigsuspend(struct lwp *l, const struct hpux_sys_sigsuspend_args *uap, register_t *retval)
 {
-	struct hpux_sys_sigsuspend_args *uap = v;
 	hpux_sigset_t sigset;
 	sigset_t mask;
 	int error;
@@ -328,12 +301,8 @@ hpux_sys_sigsuspend(l, v, retval)
 }
 
 int
-hpux_sys_sigaction(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+hpux_sys_sigaction(struct lwp *l, const struct hpux_sys_sigaction_args *uap, register_t *retval)
 {
-	struct hpux_sys_sigaction_args *uap = v;
 	struct hpux_sigaction action;
 	struct hpux_sigaction *sa;
 	struct sigaction *bsa;
@@ -390,15 +359,12 @@ hpux_sys_sigaction(l, v, retval)
 }
 
 int
-hpux_sys_ssig_6x(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+hpux_sys_ssig_6x(struct lwp *l, const struct hpux_sys_ssig_6x_args *uap, register_t *retval)
 {
-	struct hpux_sys_ssig_6x_args /* {
+	/* {
 		syscallarg(int) signo;
 		syscallarg(sig_t) fun;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 	int a;
 	struct sigaction vec;
@@ -434,8 +400,7 @@ hpux_sys_ssig_6x(l, v, retval)
 
 /* signal numbers: convert from HPUX to BSD */
 int
-hpuxtobsdsig(sig)
-	int sig;
+hpuxtobsdsig(int sig)
 {
 	if (sig < 0 || sig >= NSIG)
 		return(0);
@@ -444,8 +409,7 @@ hpuxtobsdsig(sig)
 
 /* signal numbers: convert from BSD to HPUX */
 int
-bsdtohpuxsig(sig)
-	int sig;
+bsdtohpuxsig(int sig)
 {
 	if (sig < 0 || sig >= NSIG)
 		return(0);
@@ -454,9 +418,7 @@ bsdtohpuxsig(sig)
 
 /* signal masks: convert from HPUX to BSD (not pretty or fast) */
 void
-hpuxtobsdmask(hpuxmask, bsdmask)
-	int hpuxmask;
-	sigset_t *bsdmask;
+hpuxtobsdmask(int hpuxmask, sigset_t *bsdmask)
 {
 	int sig, nsig;
 
@@ -470,9 +432,7 @@ hpuxtobsdmask(hpuxmask, bsdmask)
 }
 
 void
-bsdtohpuxmask(bsdmask, hpuxmask)
-	const sigset_t *bsdmask;
-	int *hpuxmask;
+bsdtohpuxmask(const sigset_t *bsdmask, int *hpuxmask)
 {
 	int sig, nsig;
 

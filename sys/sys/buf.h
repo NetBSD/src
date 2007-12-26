@@ -1,4 +1,4 @@
-/*     $NetBSD: buf.h,v 1.100.2.1 2007/12/04 13:03:37 ad Exp $ */
+/*     $NetBSD: buf.h,v 1.100.2.2 2007/12/26 21:39:55 ad Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2007 The NetBSD Foundation, Inc.
@@ -159,12 +159,8 @@ struct buf {
 	 *  - non-buffer cache buffers are owned by subsystem which
 	 *    allocated them. (filesystem, disk driver, etc)
 	 */
-	union {
-		void *bf_private;
-		off_t bf_dcookie;	/* NFS: Offset cookie if dir block */
-	} b_fspriv;
-#define	b_private	b_fspriv.bf_private
-#define	b_dcookie	b_fspriv.bf_dcookie
+	void	*b_private;
+	off_t	b_dcookie;		/* NFS: Offset cookie if dir block */
 
 	kcondvar_t		b_busy;		/* c: threads waiting on buf */
 	u_int			b_refcnt;	/* c: refcount for b_busy */

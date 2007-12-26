@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.104.4.1 2007/12/08 17:57:22 ad Exp $	*/
+/*	$NetBSD: i82557.c,v 1.104.4.2 2007/12/26 21:39:25 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.104.4.1 2007/12/08 17:57:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.104.4.2 2007/12/26 21:39:25 ad Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -206,9 +206,6 @@ void	fxp_get_info(struct fxp_softc *, u_int8_t *);
 void	fxp_tick(void *);
 void	fxp_mc_setup(struct fxp_softc *);
 void	fxp_load_ucode(struct fxp_softc *);
-
-void	fxp_shutdown(void *);
-void	fxp_power(int, void *);
 
 int	fxp_copy_small = 0;
 
@@ -438,24 +435,6 @@ fxp_attach(struct fxp_softc *sc)
 	}
 #endif /* FXP_EVENT_COUNTERS */
 
-	/*
-	 * Add shutdown hook so that DMA is disabled prior to reboot. Not
-	 * doing do could allow DMA to corrupt kernel memory during the
-	 * reboot before the driver initializes.
-	 */
-	sc->sc_sdhook = shutdownhook_establish(fxp_shutdown, sc);
-	if (sc->sc_sdhook == NULL)
-		aprint_error("%s: WARNING: unable to establish shutdown hook\n",
-		    sc->sc_dev.dv_xname);
-	/*
-  	 * Add suspend hook, for similar reasons..
-	 */
-	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
-	    fxp_power, sc);
-	if (sc->sc_powerhook == NULL)
-		aprint_error("%s: WARNING: unable to establish power hook\n",
-		    sc->sc_dev.dv_xname);
-
 	/* The attach is successful. */
 	sc->sc_flags |= FXPF_ATTACHED;
 
@@ -533,53 +512,6 @@ fxp_80c24_initmedia(struct fxp_softc *sc)
 	    fxp_80c24_mediastatus);
 	ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_MANUAL, 0, NULL);
 	ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_MANUAL);
-}
-
-/*
- * Device shutdown routine. Called at system shutdown after sync. The
- * main purpose of this routine is to shut off receiver DMA so that
- * kernel memory doesn't get clobbered during warmboot.
- */
-void
-fxp_shutdown(void *arg)
-{
-	struct fxp_softc *sc = arg;
-
-	/*
-	 * Since the system's going to halt shortly, don't bother
-	 * freeing mbufs.
-	 */
-	fxp_stop(&sc->sc_ethercom.ec_if, 0);
-}
-/*
- * Power handler routine. Called when the system is transitioning
- * into/out of power save modes.  As with fxp_shutdown, the main
- * purpose of this routine is to shut off receiver DMA so it doesn't
- * clobber kernel memory at the wrong time.
- */
-void
-fxp_power(int why, void *arg)
-{
-	struct fxp_softc *sc = arg;
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
-	int s;
-
-	s = splnet();
-	switch (why) {
-	case PWR_SUSPEND:
-	case PWR_STANDBY:
-		fxp_stop(ifp, 0);
-		break;
-	case PWR_RESUME:
-		if (ifp->if_flags & IFF_UP)
-			fxp_init(ifp);
-		break;
-	case PWR_SOFTSUSPEND:
-	case PWR_SOFTSTANDBY:
-	case PWR_SOFTRESUME:
-		break;
-	}
-	splx(s);
 }
 
 /*
@@ -821,7 +753,7 @@ fxp_write_eeprom(struct fxp_softc *sc, u_int16_t *data, int offset, int words)
 		/* Shift in write opcode, address, data. */
 		CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, FXP_EEPROM_EECS);
 		fxp_eeprom_shiftin(sc, FXP_EEPROM_OPC_WRITE, 3);
-		fxp_eeprom_shiftin(sc, offset, sc->sc_eeprom_size);
+		fxp_eeprom_shiftin(sc, i + offset, sc->sc_eeprom_size);
 		fxp_eeprom_shiftin(sc, data[i], 16);
 		CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, 0);
 		DELAY(4);
@@ -2511,9 +2443,6 @@ fxp_detach(struct fxp_softc *sc)
 	bus_dmamem_unmap(sc->sc_dmat, (void *)sc->sc_control_data,
 	    sizeof(struct fxp_control_data));
 	bus_dmamem_free(sc->sc_dmat, &sc->sc_cdseg, sc->sc_cdnseg);
-
-	shutdownhook_disestablish(sc->sc_sdhook);
-	powerhook_disestablish(sc->sc_powerhook);
 
 	return (0);
 }

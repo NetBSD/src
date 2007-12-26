@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.33.2.1 2007/12/08 17:56:16 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.33.2.2 2007/12/26 21:38:43 ad Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -140,6 +140,38 @@ struct cpu_info {
 	char *ci_ddbipi_stack;
 
 	struct evcnt ci_ipi_events[X86_NIPI];
+
+	/*
+	 * The following two are actually region_descriptors,
+	 * but that would pollute the namespace.
+	 */
+	uint64_t	ci_suspend_gdt;
+	uint16_t	ci_suspend_gdt_padding;
+	uint64_t	ci_suspend_idt;
+	uint16_t	ci_suspend_idt_padding;
+
+	uint16_t	ci_suspend_tr;
+	uint16_t	ci_suspend_ldt;
+	uint32_t	ci_suspend_fs_base_l;
+	uint32_t	ci_suspend_fs_base_h;
+	uint32_t	ci_suspend_gs_base_l;
+	uint32_t	ci_suspend_gs_base_h;
+	uint32_t	ci_suspend_gs_kernelbase_l;
+	uint32_t	ci_suspend_gs_kernelbase_h;
+	uint32_t	ci_suspend_msr_efer;
+	uint64_t	ci_suspend_rbx;
+	uint64_t	ci_suspend_rbp;
+	uint64_t	ci_suspend_rsp;
+	uint64_t	ci_suspend_r12;
+	uint64_t	ci_suspend_r13;
+	uint64_t	ci_suspend_r14;
+	uint64_t	ci_suspend_r15;
+	uint64_t	ci_suspend_rfl;
+	uint64_t	ci_suspend_cr0;
+	uint64_t	ci_suspend_cr2;
+	uint64_t	ci_suspend_cr3;
+	uint64_t	ci_suspend_cr4;
+	uint64_t	ci_suspend_cr8;
 };
 
 #define CPUF_BSP	0x0001		/* CPU is the original BSP */
@@ -162,15 +194,15 @@ extern struct cpu_info *cpu_info_list;
 
 #define X86_MAXPROCS		32	/* bitmask; can be bumped to 64 */
 
-#define CPU_STARTUP(_ci)	((_ci)->ci_func->start(_ci))
-#define CPU_STOP(_ci)		((_ci)->ci_func->stop(_ci))
-#define CPU_START_CLEANUP(_ci)	((_ci)->ci_func->cleanup(_ci))
+#define CPU_STARTUP(_ci, _target)	((_ci)->ci_func->start(_ci, _target))
+#define CPU_STOP(_ci)			((_ci)->ci_func->stop(_ci))
+#define CPU_START_CLEANUP(_ci)		((_ci)->ci_func->cleanup(_ci))
 
 #if defined(__GNUC__) && defined(_KERNEL)
 static struct cpu_info *x86_curcpu(void);
 static lwp_t *x86_curlwp(void);
 
-__inline static struct cpu_info * __attribute__((__unused__))
+__inline static struct cpu_info * __unused
 x86_curcpu(void)
 {
 	struct cpu_info *ci;
@@ -182,7 +214,7 @@ x86_curcpu(void)
 	return ci;
 }
 
-__inline static lwp_t * __attribute__((__unused__))
+__inline static lwp_t * __unused
 x86_curlwp(void)
 {
 	lwp_t *l;
@@ -225,8 +257,9 @@ struct clockframe {
 	struct intrframe cf_if;
 };
 
-#define	CLKF_USERMODE(frame)	USERMODE((frame)->cf_if.if_cs, (frame)->cf_if.if_rflags)
-#define CLKF_PC(frame)		((frame)->cf_if.if_rip)
+#define	CLKF_USERMODE(frame)	USERMODE((frame)->cf_if.if_tf.tf_cs, \
+				    (frame)->cf_if.if_tf.tf_rflags)
+#define CLKF_PC(frame)		((frame)->cf_if.if_tf.tf_rip)
 #define CLKF_INTR(frame)	(curcpu()->ci_idepth > 0)
 
 /*
@@ -307,7 +340,7 @@ void	i8254_microtime(struct timeval *);
 void	i8254_initclocks(void);
 #endif
 
-void cpu_init_msrs(struct cpu_info *);
+void cpu_init_msrs(struct cpu_info *, bool);
 
 
 /* vm_machdep.c */
