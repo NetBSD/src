@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.262 2007/12/05 07:06:53 ad Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.263 2007/12/26 22:11:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.262 2007/12/05 07:06:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.263 2007/12/26 22:11:51 christos Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_multiprocessor.h"
@@ -730,7 +730,7 @@ getucontext(struct lwp *l, ucontext_t *ucp)
 	 * the main context stack.
 	 */
 	if ((l->l_sigstk.ss_flags & SS_ONSTACK) == 0) {
-		ucp->uc_stack.ss_sp = (void *)USRSTACK;
+		ucp->uc_stack.ss_sp = (void *)l->l_proc->p_stackbase;
 		ucp->uc_stack.ss_size = ctob(l->l_proc->p_vmspace->vm_ssize);
 		ucp->uc_stack.ss_flags = 0;	/* XXX, def. is Very Fishy */
 	} else {
