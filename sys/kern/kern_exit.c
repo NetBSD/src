@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.194.2.2 2007/12/26 21:39:39 ad Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.194.2.3 2007/12/26 23:07:22 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.194.2.2 2007/12/26 21:39:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.194.2.3 2007/12/26 23:07:22 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -175,6 +175,7 @@ sys_exit(struct lwp *l, const struct sys_exit_args *uap, register_t *retval)
 	struct proc *p = l->l_proc;
 
 	/* Don't call exit1() multiple times in the same process. */
+	KERNEL_LOCK(1, NULL);
 	mutex_enter(&p->p_smutex);
 	if (p->p_sflag & PS_WEXIT) {
 		mutex_exit(&p->p_smutex);
@@ -686,7 +687,9 @@ do_sys_wait(struct lwp *l, int *pid, int *status, int options,
 
 	mutex_enter(&proclist_lock);
 
+	KERNEL_LOCK(1, NULL);		/* XXXSMP */
 	error = find_stopped_child(l->l_proc, *pid, options, &child, status);
+	KERNEL_UNLOCK_ONE(NULL);	/* XXXSMP */
 
 	if (child == NULL) {
 		mutex_exit(&proclist_lock);
@@ -702,9 +705,7 @@ do_sys_wait(struct lwp *l, int *pid, int *status, int options,
 		if (options & WNOWAIT)
 			mutex_exit(&proclist_lock);
 		else {
-			KERNEL_LOCK(1, l);		/* XXXSMP */
 			proc_free(child, ru);
-			KERNEL_UNLOCK_ONE(l);		/* XXXSMP */
 		}
 	} else {
 		/* Child state must have been SSTOP. */
@@ -912,7 +913,9 @@ proc_free(struct proc *p, struct rusage *ru)
 				kpsignal(parent, &ksi, NULL);
 				mutex_exit(&proclist_mutex);
 			}
+			KERNEL_LOCK(1, NULL);		/* XXXSMP */
 			cv_broadcast(&parent->p_waitcv);
+			KERNEL_UNLOCK_ONE(NULL);	/* XXXSMP */
 			mutex_exit(&proclist_lock);
 			return;
 		}
@@ -996,7 +999,7 @@ proc_free(struct proc *p, struct rusage *ru)
 	if (p->p_textvp)
 		vrele(p->p_textvp);
 
-	mutex_destroy(&p->p_raslock);
+	mutex_destroy(&p->p_auxlock);
 	mutex_destroy(&p->p_mutex);
 	mutex_destroy(&p->p_stmutex);
 	mutex_destroy(&p->p_smutex);

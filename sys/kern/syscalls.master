@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.180.2.6 2007/12/26 21:39:45 ad Exp $
+	$NetBSD: syscalls.master,v 1.180.2.7 2007/12/26 23:05:54 ad Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -63,7 +63,7 @@
 
 0	INDIR		{ int sys_syscall(int code, \
 			    ... register_t args[SYS_MAXSYSARGS]); }
-1	STD		{ void sys_exit(int rval); }
+1	STD MPSAFE	{ void sys_exit(int rval); }
 2	STD MPSAFE	{ int sys_fork(void); }
 3	STD MPSAFE	{ ssize_t sys_read(int fd, void *buf, size_t nbyte); }
 4	STD MPSAFE	{ ssize_t sys_write(int fd, const void *buf, \
@@ -71,20 +71,20 @@
 5	STD MPSAFE	{ int sys_open(const char *path, \
 			    int flags, ... mode_t mode); }
 6	STD MPSAFE	{ int sys_close(int fd); }
-7	STD 		{ int sys_wait4(int pid, int *status, int options, \
+7	STD MPSAFE	{ int sys_wait4(int pid, int *status, int options, \
 			    struct rusage *rusage); }
 8	COMPAT_43	{ int sys_creat(const char *path, mode_t mode); } ocreat
 9	STD MPSAFE	{ int sys_link(const char *path, const char *link); }
-10	STD 		{ int sys_unlink(const char *path); }
+10	STD MPSAFE	{ int sys_unlink(const char *path); }
 11	OBSOL		execv
 12	STD MPSAFE	{ int sys_chdir(const char *path); }
 13	STD MPSAFE	{ int sys_fchdir(int fd); }
-14	STD		{ int sys_mknod(const char *path, mode_t mode, \
+14	STD MPSAFE	{ int sys_mknod(const char *path, mode_t mode, \
 			    dev_t dev); }
 15	STD MPSAFE	{ int sys_chmod(const char *path, mode_t mode); }
 16	STD MPSAFE	{ int sys_chown(const char *path, uid_t uid, \
 			    gid_t gid); }
-17	STD		{ int sys_obreak(char *nsize); } break
+17	STD MPSAFE	{ int sys_obreak(char *nsize); } break
 18	COMPAT_20	{ int sys_getfsstat(struct statfs12 *buf, \
 			    long bufsize, int flags); }
 19	COMPAT_43 MPSAFE	{ long sys_lseek(int fd, long offset, int whence); } \
@@ -197,7 +197,7 @@
 83	STD		{ int sys_setitimer(int which, \
 			    const struct itimerval *itv, \
 			    struct itimerval *oitv); }
-84	COMPAT_43 	{ int sys_wait(void); } owait
+84	COMPAT_43 MPSAFE	{ int sys_wait(void); } owait
 85	COMPAT_12	{ int sys_swapon(const char *name); } oswapon
 86	STD		{ int sys_getitimer(int which, \
 			    struct itimerval *itv); }
@@ -393,13 +393,13 @@
 191	STD		{ long sys_pathconf(const char *path, int name); }
 192	STD		{ long sys_fpathconf(int fd, int name); }
 193	UNIMPL
-194	STD		{ int sys_getrlimit(int which, \
+194	STD MPSAFE	{ int sys_getrlimit(int which, \
 			    struct rlimit *rlp); }
 195	STD		{ int sys_setrlimit(int which, \
 			    const struct rlimit *rlp); }
 196	COMPAT_12	{ int sys_getdirentries(int fd, char *buf, \
 			    u_int count, long *basep); }
-197	STD		{ void *sys_mmap(void *addr, size_t len, int prot, \
+197	STD MPSAFE	{ void *sys_mmap(void *addr, size_t len, int prot, \
 			    int flags, int fd, long pad, off_t pos); }
 198	INDIR		{ quad_t sys___syscall(quad_t code, \
 			    ... register_t args[SYS_MAXSYSARGS]); }
@@ -408,7 +408,7 @@
 200	STD MPSAFE	{ int sys_truncate(const char *path, int pad, \
 			    off_t length); }
 201	STD MPSAFE	{ int sys_ftruncate(int fd, int pad, off_t length); }
-202	STD		{ int sys___sysctl(const int *name, u_int namelen, \
+202	STD MPSAFE	{ int sys___sysctl(const int *name, u_int namelen, \
 			    void *old, size_t *oldlenp, const void *new, \
 			    size_t newlen); }
 203	STD MPSAFE	{ int sys_mlock(const void *addr, size_t len); }
