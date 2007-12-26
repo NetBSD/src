@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.617 2007/12/09 20:27:47 jmcneill Exp $	*/
+/*	$NetBSD: machdep.c,v 1.618 2007/12/26 11:51:10 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.617 2007/12/09 20:27:47 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.618 2007/12/26 11:51:10 yamt Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -1244,9 +1244,6 @@ setregs(struct lwp *l, struct exec_package *pack, u_long stack)
  */
 
 union	descriptor *gdt, *ldt;
-struct gate_descriptor *idt;
-char idt_allocmap[NIDT];
-kmutex_t idt_lock;
 union	descriptor *pentium_idt;
 struct user *proc0paddr;
 extern vaddr_t proc0uarea;
@@ -1906,6 +1903,7 @@ init386(paddr_t first_avail)
 	pmap_update(pmap_kernel());
 	memset((void *)idt_vaddr, 0, PAGE_SIZE);
 
+	idt_init();
 	idt = (struct gate_descriptor *)idt_vaddr;
 	pmap_kenter_pa(pentium_idt_vaddr, idt_paddr, VM_PROT_READ);
 	pmap_update(pmap_kernel());
@@ -1932,26 +1930,25 @@ init386(paddr_t first_avail)
 
 	/* exceptions */
 	for (x = 0; x < 32; x++) {
+		idt_vec_reserve(x);
 		setgate(&idt[x], IDTVEC(exceptions)[x], 0, SDT_SYS386TGT,
 		    (x == 3 || x == 4) ? SEL_UPL : SEL_KPL,
 		    GSEL(GCODE_SEL, SEL_KPL));
-		idt_allocmap[x] = 1;
 	}
 
 	/* new-style interrupt gate for syscalls */
+	idt_vec_reserve(128);
 	setgate(&idt[128], &IDTVEC(syscall), 0, SDT_SYS386TGT, SEL_UPL,
 	    GSEL(GCODE_SEL, SEL_KPL));
-	idt_allocmap[128] = 1;
 #ifdef COMPAT_SVR4
+	idt_vec_reserve(0xd2);
 	setgate(&idt[0xd2], &IDTVEC(svr4_fasttrap), 0, SDT_SYS386TGT,
 	    SEL_UPL, GSEL(GCODE_SEL, SEL_KPL));
-	idt_allocmap[0xd2] = 1;
 #endif /* COMPAT_SVR4 */
 
 	setregion(&region, gdt, NGDT * sizeof(gdt[0]) - 1);
 	lgdt(&region);
 
-	mutex_init(&idt_lock, MUTEX_DEFAULT, IPL_NONE);
 	cpu_init_idt();
 
 	init386_ksyms();
@@ -2353,50 +2350,6 @@ cpu_initclocks()
 {
 
 	(*initclock_func)();
-}
-
-/*
- * Allocate an IDT vector slot within the given range.
- */
-
-int
-idt_vec_alloc(int low, int high)
-{
-	int vec;
-
-	if (!cold)
-		mutex_enter(&idt_lock);
-	for (vec = low; vec <= high; vec++) {
-		if (idt_allocmap[vec] == 0) {
-			idt_allocmap[vec] = 1;
-			if (!cold)
-				mutex_exit(&idt_lock);
-			return vec;
-		}
-	}
-	if (!cold)
-		mutex_exit(&idt_lock);
-	return 0;
-}
-
-void
-idt_vec_set(int vec, void (*function)(void))
-{
-	/*
-	 * Vector should be allocated, so no locking needed.
-	 */
-	KASSERT(idt_allocmap[vec] == 1);
-	setgate(&idt[vec], function, 0, SDT_SYS386IGT, SEL_KPL,
-	    GSEL(GCODE_SEL, SEL_KPL));
-}
-
-void
-idt_vec_free(int vec)
-{
-	mutex_enter(&idt_lock);
-	unsetgate(&idt[vec]);
-	idt_allocmap[vec] = 0;
-	mutex_exit(&idt_lock);
 }
 
 /*
