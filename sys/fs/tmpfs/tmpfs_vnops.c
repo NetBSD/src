@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.44.2.9 2007/12/27 17:54:34 ad Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.44.2.10 2007/12/27 22:21:59 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.44.2.9 2007/12/27 17:54:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.44.2.10 2007/12/27 22:21:59 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -810,8 +810,10 @@ tmpfs_rename(void *v)
 	KASSERT(fcnp->cn_flags & HASBUF);
 	KASSERT(tcnp->cn_flags & HASBUF);
 
-	/* Disallow cross-device renames.
-	 * XXX Why isn't this done by the caller? */
+	newname = NULL;
+	namelen = 0;
+
+	/* Disallow cross-device renames. */
 	if (fvp->v_mount != tdvp->v_mount ||
 	    (tvp != NULL && fvp->v_mount != tvp->v_mount)) {
 		error = EXDEV;
@@ -823,8 +825,6 @@ tmpfs_rename(void *v)
 	tnode = (tvp == NULL) ? NULL : VP_TO_TMPFS_NODE(tvp);
 	tdnode = VP_TO_TMPFS_DIR(tdvp);
 	tmp = VFS_TO_TMPFS(tdvp->v_mount);
-	newname = NULL;
-	namelen = 0;
 
 	/* If we need to move the directory between entries, lock the
 	 * source so that we can safely operate on it. */
