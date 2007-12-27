@@ -1,4 +1,4 @@
-/* $NetBSD: scan_ffs.c,v 1.19 2007/10/06 07:21:02 xtraeme Exp $ */
+/* $NetBSD: scan_ffs.c,v 1.19.2.1 2007/12/27 00:47:05 mjf Exp $ */
 
 /*
  * Copyright (c) 2005-2007 Juan Romero Pardines
@@ -33,7 +33,7 @@
  
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: scan_ffs.c,v 1.19 2007/10/06 07:21:02 xtraeme Exp $");
+__RCSID("$NetBSD: scan_ffs.c,v 1.19.2.1 2007/12/27 00:47:05 mjf Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -144,7 +144,7 @@ static int	ffs_checkver(struct sblockinfo *);
 static void	lfs_printpart(struct sblockinfo *, int, int);
 static void	lfs_scan(struct sblockinfo *, int);
 /* common functions */
-static void	usage(void) __attribute__((__noreturn__));
+static void	usage(void) __dead;
 static int	scan_disk(int, daddr_t, daddr_t, int);
 
 static int

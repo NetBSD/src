@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.68.4.1 2007/12/08 18:18:57 mjf Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.68.4.2 2007/12/27 00:44:22 mjf Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -677,7 +677,9 @@ struct netbsd32_kevent {
 	netbsd32_intptr_t	udata;
 } __attribute__((packed));
 
+#if 0
 int	netbsd32_kevent(struct lwp *, void *, register_t *);
+#endif
 
 /*
  * here are some macros to convert between netbsd32 and sparc64 types.
@@ -716,7 +718,8 @@ void	netbsd32_si_to_si32(siginfo32_t *, const siginfo_t *);
 void	netbsd32_si32_to_si(siginfo_t *, const siginfo32_t *);
 
 void	startlwp32(void *);
-int	do_netbsd32___semctl14(struct lwp *, void *, register_t *, void *);
+struct netbsd32___semctl14_args;
+int	do_netbsd32___semctl14(struct lwp *, const struct netbsd32___semctl14_args *, register_t *, void *);
 
 struct iovec *netbsd32_get_iov(struct netbsd32_iovec *, int, struct iovec *,
 	    int);

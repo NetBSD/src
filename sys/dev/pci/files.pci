@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.295.12.2 2007/12/08 18:19:42 mjf Exp $
+#	$NetBSD: files.pci,v 1.295.12.3 2007/12/27 00:45:14 mjf Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -595,12 +595,11 @@ file	dev/pci/if_vr.c			vr
 # SiS 900 Fast Ethernet controllers
 device	sip: ether, ifnet, arp, mii, mii_bitbang
 attach	sip at pci
-file	dev/pci/if_sip.c		sip
+file	dev/pci/if_sip.c		sip | gsip
 
 # National Semiconductor DP83820 Gigabit Ethernet
 device	gsip: ether, ifnet, arp, mii, mii_bitbang
 attach	gsip at pci
-file	dev/pci/if_gsip.c		gsip
 
 # Level One LXT-1001 Gigabit Ethernet
 #device	glxt: ether, ifnet, arp, mii

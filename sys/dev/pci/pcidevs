@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.912.2.2 2007/12/08 18:19:45 mjf Exp $
+$NetBSD: pcidevs,v 1.912.2.3 2007/12/27 00:45:21 mjf Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2121,6 +2121,7 @@ product INTEL 82571EB_FIBER	0x105f	i82571EB 1000baseX Ethernet
 product INTEL 82571EB_SERDES	0x1060	i82571EB Gigabit Ethernet (SERDES)
 product INTEL 82801FB_LAN	0x1064	82801FB 10/100 Ethernet
 product INTEL PRO_100_VE_5	0x1068	PRO/100 VE (LOM) Network Controller
+product INTEL 82801GB_LAN	0x1069	82801GB 10/100 Ethernet
 product INTEL 82547GI		0x1075	i82547GI Gigabit Ethernet
 product INTEL 82541GI		0x1076	i82541GI Gigabit Ethernet
 product INTEL 82541GI_MOBILE	0x1077	i82541GI Mobile Gigabit Ethernet

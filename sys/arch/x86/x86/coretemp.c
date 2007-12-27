@@ -1,4 +1,4 @@
-/* $NetBSD: coretemp.c,v 1.1.4.2 2007/12/08 18:18:11 mjf Exp $ */
+/* $NetBSD: coretemp.c,v 1.1.4.3 2007/12/27 00:43:26 mjf Exp $ */
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coretemp.c,v 1.1.4.2 2007/12/08 18:18:11 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coretemp.c,v 1.1.4.3 2007/12/27 00:43:26 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>

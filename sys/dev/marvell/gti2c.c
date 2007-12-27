@@ -1,4 +1,4 @@
-/*	$NetBSD: gti2c.c,v 1.6.2.1 2007/12/08 18:19:38 mjf Exp $	*/
+/*	$NetBSD: gti2c.c,v 1.6.2.2 2007/12/27 00:45:12 mjf Exp $	*/
 
 /*
  * Copyright (c) 2005 Brocade Communcations, inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gti2c.c,v 1.6.2.1 2007/12/08 18:19:38 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gti2c.c,v 1.6.2.2 2007/12/27 00:45:12 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -106,7 +106,6 @@ gt_i2c_acquire_bus(void *cookie, int flags)
 {
 	struct gti2c_softc * const sc = cookie;
 	uint32_t status;
-	int error;
 
 	if (flags & I2C_F_POLL)
 		return 0;

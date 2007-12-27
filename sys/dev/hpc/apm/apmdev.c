@@ -1,4 +1,4 @@
-/*	$NetBSD: apmdev.c,v 1.12.14.1 2007/12/08 18:19:30 mjf Exp $ */
+/*	$NetBSD: apmdev.c,v 1.12.14.2 2007/12/27 00:45:04 mjf Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apmdev.c,v 1.12.14.1 2007/12/08 18:19:30 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apmdev.c,v 1.12.14.2 2007/12/27 00:45:04 mjf Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_apmdev.h"
@@ -105,7 +105,7 @@ struct apm_softc {
 	int	event_ptr;
 	int	sc_power_state;
 	lwp_t	*sc_thread;
-	kmutex_t sc_lock;
+	kmutex_t sc_mutex;
 	struct apm_event_info event_list[APM_NEVENTS];
 	struct apm_accessops *ops;
 	void *cookie;
@@ -125,10 +125,8 @@ struct apm_softc {
  * APM module.  This is both the APM thread itself, as well as
  * user context.
  */
-#define	APM_LOCK(apmsc)							\
-	(void) mutex_enter(&(apmsc)->sc_lock)
-#define	APM_UNLOCK(apmsc)						\
-	(void) mutex_exit(&(apmsc)->sc_lock)
+#define	APM_LOCK(apmsc)		mutex_enter(&(apmsc)->sc_mutex)
+#define	APM_UNLOCK(apmsc)	mutex_exit(&(apmsc)->sc_mutex)
 
 static void	apmattach(struct device *, struct device *, void *);
 static int	apmmatch(struct device *, struct cfdata *, void *);
@@ -701,7 +699,7 @@ apmattach(struct device *parent, struct device *self, void *aux)
 		apm_perror("get power status", error);
 	sc->ops->cpu_busy(sc->cookie);
 
-	lockinit(&sc->sc_lock, PWAIT, "apmlk", 0, 0);
+	mutex_init(&sc->sc_mutex, MUTEX_DEFAULT, IPL_NONE);
 
 	/* Initial state is `resumed'. */
 	sc->sc_power_state = PWR_RESUME;

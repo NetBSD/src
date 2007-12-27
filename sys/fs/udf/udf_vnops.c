@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.12.4.1 2007/12/08 18:20:22 mjf Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.12.4.2 2007/12/27 00:45:51 mjf Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_vnops.c,v 1.12.4.1 2007/12/08 18:20:22 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.12.4.2 2007/12/27 00:45:51 mjf Exp $");
 #endif /* not lint */
 
 

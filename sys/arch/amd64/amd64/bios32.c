@@ -1,4 +1,4 @@
-/*	$NetBSD: bios32.c,v 1.8.2.1 2007/12/08 18:16:22 mjf Exp $	*/
+/*	$NetBSD: bios32.c,v 1.8.2.2 2007/12/27 00:42:48 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bios32.c,v 1.8.2.1 2007/12/08 18:16:22 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bios32.c,v 1.8.2.2 2007/12/27 00:42:48 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -139,7 +139,6 @@ bios32_init()
 		bios32_entry.segment = GSEL(GCODE_SEL, SEL_KPL);
 	}
 #endif
-#if NIPMI > 0
 	uint8_t *p;
 	int i;
 
@@ -194,7 +193,6 @@ bios32_init()
 
 		break;
 	}
-#endif
 }
 
 /*
@@ -243,7 +241,6 @@ bios32_service(service, e, ei)
 	return (1);
 }
 
-#if NIPMI > 0
 /*
  * smbios_find_table() takes a caller supplied smbios struct type and
  * a pointer to a handle (struct smbtable) returning one if the structure
@@ -327,4 +324,3 @@ smbios_get_string(struct smbtable *st, u_int8_t indx, char *dest, size_t len)
 
 	return ret;
 }
-#endif

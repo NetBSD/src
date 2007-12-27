@@ -1,4 +1,4 @@
-/* $NetBSD: nvt.c,v 1.7.2.1 2007/12/08 18:17:44 mjf Exp $ */
+/* $NetBSD: nvt.c,v 1.7.2.2 2007/12/27 00:43:17 mjf Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
 
 /*
  * - reverse endian access every CSR.
- * - no vtophys() translation, vaddr_t == paddr_t. 
+ * - no vtophys() translation, vaddr_t == paddr_t.
  * - PIPT writeback cache aware.
  */
 #define CSR_WRITE_1(l, r, v)	*(volatile uint8_t *)((l)->csr+(r)) = (v)
@@ -58,7 +58,7 @@
 #define CSR_WRITE_4(l, r, v)	out32rb((l)->csr+(r), (v))
 #define CSR_READ_4(l, r)	in32rb((l)->csr+(r))
 #define VTOPHYS(va)		(uint32_t)(va)
-#define DEVTOV(pa) 		(uint32_t)(pa)
+#define DEVTOV(pa)		(uint32_t)(pa)
 #define wbinv(adr, siz)		_wbinv(VTOPHYS(adr), (uint32_t)(siz))
 #define inv(adr, siz)		_inv(VTOPHYS(adr), (uint32_t)(siz))
 #define DELAY(n)		delay(n)
@@ -68,39 +68,39 @@ void *nvt_init(unsigned, void *);
 int nvt_send(void *, char *, unsigned);
 int nvt_recv(void *, char *, unsigned, unsigned);
 
-#define R0_OWN          (1U << 31)      /* 1: empty for HW to load anew */
-#define R0_FLMASK       0x7fff0000      /* frame length */
-#define R0_RXOK         (1U << 15)
-#define R0_MAR          (1U << 13)      /* multicast frame */
-#define R0_BAR          (1U << 12)      /* broadcast frame */
-#define R0_PHY          (1U << 11)      /* unicast frame */
-#define R0_CHN          (1U << 10)      /* "more bit," not the last seg. */
-#define R0_STP          (1U << 9)       /* first frame segment */
-#define R0_EDP          (1U << 8)       /* last frame segment */
-#define R0_BUFF         (1U << 7)       /* segment chain was broken */
-#define R0_RUNT         (1U << 5)       /* runt frame received */
-#define R0_LONG         (1U << 4)       /* frame too long */
-#define R0_FOV          (1U << 3)       /* Rx FIFO overflow */
-#define R0_FAE          (1U << 2)       /* frame alignment error */
-#define R0_CRCE         (1U << 1)       /* CRC error */
-#define R0_RERR         (1U << 0)       /* Rx error summary */
-#define R1_FLMASK       0x00007ffc      /* Rx segment buffer length */
+#define R0_OWN		(1U << 31)	/* 1: empty for HW to load anew */
+#define R0_FLMASK	0x7fff0000	/* frame length */
+#define R0_RXOK		(1U << 15)
+#define R0_MAR		(1U << 13)	/* multicast frame */
+#define R0_BAR		(1U << 12)	/* broadcast frame */
+#define R0_PHY		(1U << 11)	/* unicast frame */
+#define R0_CHN		(1U << 10)	/* "more bit," not the last seg. */
+#define R0_STP		(1U << 9)	/* first frame segment */
+#define R0_EDP		(1U << 8)	/* last frame segment */
+#define R0_BUFF		(1U << 7)	/* segment chain was broken */
+#define R0_RUNT		(1U << 5)	/* runt frame received */
+#define R0_LONG		(1U << 4)	/* frame too long */
+#define R0_FOV		(1U << 3)	/* Rx FIFO overflow */
+#define R0_FAE		(1U << 2)	/* frame alignment error */
+#define R0_CRCE		(1U << 1)	/* CRC error */
+#define R0_RERR		(1U << 0)	/* Rx error summary */
+#define R1_FLMASK	0x00007ffc	/* Rx segment buffer length */
 
-#define T0_OWN          (1U << 31)      /* 1: loaded for HW to send */
-#define T0_TERR         (1U << 15)      /* Tx error; ABT|CBH */
-#define T0_UDF          (1U << 11)      /* FIFO underflow */
-#define T0_CRS          (1U << 10)      /* found carrier sense lost */
-#define T0_OWC          (1U << 9)       /* found out of window collision */
-#define T0_ABT          (1U << 8)       /* excess collision Tx abort */
-#define T0_CBH          (1U << 7)       /* heartbeat check failure */
-#define T0_COLS         (1U << 4)       /* collision detected */
-#define T0_NCRMASK      0x3             /* number of collision retries */
-#define T1_IC           (1U << 23)      /* post Tx done interrupt */
-#define T1_STP          (1U << 22)      /* first frame segment */
-#define T1_EDP          (1U << 21)      /* last frame segment */
-#define T1_CRC          (1U << 16)      /* _disable_ CRC generation */ 
-#define T1_CHN          (1U << 15)      /* "more bit," not the last seg. */
-#define T_FLMASK	0x00007fff      /* Tx frame/segment length */
+#define T0_OWN		(1U << 31)	/* 1: loaded for HW to send */
+#define T0_TERR		(1U << 15)	/* Tx error; ABT|CBH */
+#define T0_UDF		(1U << 11)	/* FIFO underflow */
+#define T0_CRS		(1U << 10)	/* found carrier sense lost */
+#define T0_OWC		(1U << 9)	/* found out of window collision */
+#define T0_ABT		(1U << 8)	/* excess collision Tx abort */
+#define T0_CBH		(1U << 7)	/* heartbeat check failure */
+#define T0_COLS		(1U << 4)	/* collision detected */
+#define T0_NCRMASK	0x3		/* number of collision retries */
+#define T1_IC		(1U << 23)	/* post Tx done interrupt */
+#define T1_STP		(1U << 22)	/* first frame segment */
+#define T1_EDP		(1U << 21)	/* last frame segment */
+#define T1_CRC		(1U << 16)	/* _disable_ CRC generation */
+#define T1_CHN		(1U << 15)	/* "more bit," not the last seg. */
+#define T_FLMASK	0x00007fff	/* Tx frame/segment length */
 
 struct desc {
 	uint32_t xd0, xd1, xd2, xd3;
@@ -118,15 +118,16 @@ struct desc {
 #define  RCR_AM		(1U << 2)	/* use multicast filter */
 #define VR_TCR		0x07		/* Tx control */
 #define VR_CTL0		0x08		/* control #0 */
-#define  CTL0_TPD	(1U << 5)	/* instruct Tx descriptor poll */
-#define  CTL0_TXON      (1U << 4)       /* start Tx DMA */
-#define  CTL0_RXON      (1U << 3)       /* start Rx DMA */
-#define  CTL0_STOP      (1U << 2)       /* activate stop processing */ 
-#define  CTL0_START     (1U << 1)       /* start and activate */
+#define  CTL0_RDMD	(1U << 6)	/* instruct Rx descriptor poll */
+#define  CTL0_TDMD	(1U << 5)	/* instruct Tx descriptor poll */
+#define  CTL0_TXON	(1U << 4)	/* enable Tx DMA */
+#define  CTL0_RXON	(1U << 3)	/* enable Rx DMA */
+#define  CTL0_STOP	(1U << 2)	/* activate stop processing */
+#define  CTL0_START	(1U << 1)	/* start and activate */
 #define VR_CTL1		0x09		/* control #1 */
-#define  CTL1_RESET     (1U << 7)       /* SW reset, self-clearing */ 
-#define  CTL1_DPOLL     (1U << 3)       /* _disable_ Tx auto polling */
-#define  CTL1_FDX       (1U << 2)       /* set full duplex */
+#define  CTL1_RESET	(1U << 7)	/* SW reset, self-clearing */
+#define  CTL1_DPOLL	(1U << 3)	/* _disable_ Tx auto polling */
+#define  CTL1_FDX	(1U << 2)	/* set full duplex */
 #define VR_ISR		0x0c		/* interrupt status */
 #define VR_IEN		0x0e		/* interrupt enable */
 #define VR_RDBA		0x18		/* Rx descriptor list base */
@@ -134,27 +135,18 @@ struct desc {
 #define VR_MIICFG	0x6c		/* 4:0 PHY number */
 #define VR_MIISR	0x6d		/* MII status */
 #define VR_MIICR	0x70		/* MII control */
+#define  MIICR_MAUTO	(1U << 7)	/* activate autopoll mode */
 #define  MIICR_RCMD	(1U << 6)	/* MII read operation */
 #define  MIICR_WCMD	(1U << 5)	/* MII write operation */
 #define VR_MIIADR	0x71		/* MII indirect */
+#define  MIIADR_MIDLE	(1U << 7)	/* not in auto polling */
 #define VR_MIIDATA	0x72		/* MII read/write */
-#define VR_CTLA		0x78		/* control A */
-#define  CTLA_LED	0x03		/* LED selection, same as MII 16[6:5] */
-#define VR_CTLB		0x79		/* control B */
-#define VR_CTLC		0x7a		/* control C */
-#define VR_CTLD		0x7b		/* control D */
 #define VR_RXC		0x7e		/* Rx feature control */
 #define VR_TXC		0x7f		/* Tx feature control */
 #define VR_MCR0		0x80		/* misc control #0 */
 #define  MCR0_RFDXFLC	(1U << 3)	/* FCR1? */
 #define  MCR0_HDXFLC	(1U << 2)	/* FCR2? */
 #define VR_MCR1		0x81		/* misc control #1 */
-#define VR_FCR0		0x90		/* flow control #0 */
-#define VR_FCR1		0x91		/* flow control #1 */
-#define  FCR1_3XFLC	(1U << 3)	/* 802.3x PAUSE flow control */
-#define  FCR1_TPAUSE	(1U << 2)	/* handle PAUSE on transmit side */
-#define  FCR1_RPAUSE	(1U << 1)	/* handle PAUSE on receive side */
-#define  FCR1_HDXFLC	(1U << 0)	/* HDX jabber flow control */
 
 #define FRAMESIZE	1536
 
@@ -167,8 +159,10 @@ struct local {
 	unsigned ctl0;
 };
 
-static int nvt_mii_read(struct local *, int, int);
-static void nvt_mii_write(struct local *, int, int, int);
+static void mii_autopoll(struct local *);
+static void mii_stoppoll(struct local *);
+static int mii_read(struct local *, int, int);
+static void mii_write(struct local *, int, int, int);
 static void mii_dealan(struct local *, unsigned);
 
 void *
@@ -190,7 +184,7 @@ nvt_init(unsigned tag, void *data)
 
 	val = CTL1_RESET;
 	CSR_WRITE_1(l, VR_CTL1, val);
-	do {	
+	do {
 		val = CSR_READ_1(l, VR_CTL1);
 	} while (val & CTL1_RESET);
 
@@ -203,17 +197,16 @@ nvt_init(unsigned tag, void *data)
 	en[3] = CSR_READ_1(l, VR_PAR3);
 	en[4] = CSR_READ_1(l, VR_PAR4);
 	en[5] = CSR_READ_1(l, VR_PAR5);
-#if 1
+
 	printf("MAC address %02x:%02x:%02x:%02x:%02x:%02x\n",
-		en[0], en[1], en[2], en[3], en[4], en[5]);
+	    en[0], en[1], en[2], en[3], en[4], en[5]);
 	printf("PHY %d (%04x.%04x)\n", l->phy,
-	   nvt_mii_read(l, l->phy, 2), nvt_mii_read(l, l->phy, 3));
+	    mii_read(l, l->phy, 2), mii_read(l, l->phy, 3));
 
 	mii_dealan(l, 5);
-#endif
 
 	/* speed and duplexity can be seen in MII 20 */
-	val = nvt_mii_read(l, l->phy, 20);
+	val = mii_read(l, l->phy, 20);
 	fdx = !!(val & (1U << 0));
 	printf("%s", (val & (1U << 1)) ? "100Mbps" : "10Mbps");
 	if (fdx)
@@ -254,7 +247,7 @@ nvt_send(void *dev, char *buf, unsigned len)
 {
 	struct local *l = dev;
 	struct desc *txd;
-	int loop;
+	unsigned loop;
 	
 	wbinv(buf, len);
 	txd = &l->txd;
@@ -263,6 +256,7 @@ nvt_send(void *dev, char *buf, unsigned len)
 	txd->xd1 = htole32(T1_STP | T1_EDP | len);
 	txd->xd0 = htole32(T0_OWN);
 	wbinv(txd, sizeof(struct desc));
+	CSR_WRITE_1(l, VR_CTL0, l->ctl0 | CTL0_TDMD);
 	loop = 100;
 	do {
 		if ((le32toh(txd->xd0) & T0_OWN) == 0)
@@ -316,25 +310,58 @@ printf("recving with %u sec. timeout\n", timo);
 	return len;
 }
 
-static int
-nvt_mii_read(struct local *l, int phy, int reg)
+static void
+mii_autopoll(struct local *l)
 {
 	int v;
 
+	CSR_WRITE_1(l, VR_MIICR, 0);
+	do {
+		DELAY(1);
+		v = CSR_READ_1(l, VR_MIISR);
+	} while ((v & MIIADR_MIDLE) == 0);
+	CSR_WRITE_1(l, VR_MIICR, MIICR_MAUTO);
+	do {
+		DELAY(1);
+		v = CSR_READ_1(l, VR_MIISR);
+	} while ((v & MIIADR_MIDLE) != 0);
+}	
+	
+static void
+mii_stoppoll(struct local *l)
+{	
+	int v;
+	
+	CSR_WRITE_1(l, VR_MIICR, 0);
+	do {
+		DELAY(1);
+		v = CSR_READ_1(l, VR_MIISR);
+	} while ((v & MIIADR_MIDLE) == 0);
+}
+
+static int
+mii_read(struct local *l, int phy, int reg)
+{
+	int v;
+
+	mii_stoppoll(l);
 	CSR_WRITE_1(l, VR_MIICFG, phy);
 	CSR_WRITE_1(l, VR_MIIADR, reg);
 	CSR_WRITE_1(l, VR_MIICR, MIICR_RCMD);
 	do {
 		v = CSR_READ_1(l, VR_MIICR);
-	} while (v & MIICR_RCMD); 
-	return CSR_READ_2(l, VR_MIIDATA);
+	} while (v & MIICR_RCMD);
+	v = CSR_READ_2(l, VR_MIIDATA);
+	mii_autopoll(l);
+	return v;
 }
 
 static void
-nvt_mii_write(struct local *l, int phy, int reg, int data)
+mii_write(struct local *l, int phy, int reg, int data)
 {
 	int v;
 
+	mii_stoppoll(l);
 	CSR_WRITE_2(l, VR_MIIDATA, data);
 	CSR_WRITE_1(l, VR_MIICFG, phy);
 	CSR_WRITE_1(l, VR_MIIADR, reg);
@@ -342,6 +369,7 @@ nvt_mii_write(struct local *l, int phy, int reg, int data)
 	do {
 		v = CSR_READ_1(l, VR_MIICR);
 	} while (v & MIICR_WCMD);
+	mii_autopoll(l);
 }
 
 #define MII_BMCR	0x00	/* Basic mode control register (rw) */
@@ -367,15 +395,15 @@ mii_dealan(struct local *l, unsigned timo)
 	unsigned anar, bound;
 
 	anar = ANAR_TX_FD | ANAR_TX | ANAR_10_FD | ANAR_10 | ANAR_CSMA;
-	nvt_mii_write(l, l->phy, MII_ANAR, anar);
-	nvt_mii_write(l, l->phy, MII_BMCR, BMCR_AUTOEN | BMCR_STARTNEG);
+	mii_write(l, l->phy, MII_ANAR, anar);
+	mii_write(l, l->phy, MII_BMCR, BMCR_AUTOEN | BMCR_STARTNEG);
 	l->anlpar = 0;
 	bound = getsecs() + timo;
 	do {
-		l->bmsr = nvt_mii_read(l, l->phy, MII_BMSR) |
-		   nvt_mii_read(l, l->phy, MII_BMSR); /* read twice */
+		l->bmsr = mii_read(l, l->phy, MII_BMSR) |
+		   mii_read(l, l->phy, MII_BMSR); /* read twice */
 		if ((l->bmsr & BMSR_LINK) && (l->bmsr & BMSR_ACOMP)) {
-			l->anlpar = nvt_mii_read(l, l->phy, MII_ANLPAR);
+			l->anlpar = mii_read(l, l->phy, MII_ANLPAR);
 			break;
 		}
 		DELAY(10 * 1000);

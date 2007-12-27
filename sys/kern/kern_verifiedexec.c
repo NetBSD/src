@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.101.14.2 2007/12/08 18:20:34 mjf Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.101.14.3 2007/12/27 00:46:05 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.101.14.2 2007/12/08 18:20:34 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.101.14.3 2007/12/27 00:46:05 mjf Exp $");
 
 #include "opt_veriexec.h"
 
@@ -1074,7 +1074,7 @@ veriexec_file_add(struct lwp *l, prop_dictionary_t dict)
 
 	file = prop_string_cstring_nocopy(prop_dictionary_get(dict, "file"));
 
-	NDINIT(&nid, LOOKUP, FOLLOW, UIO_SYSSPACE, file, l);
+	NDINIT(&nid, LOOKUP, FOLLOW, UIO_SYSSPACE, file);
 	error = namei(&nid);
 	if (error)
 		return (error);

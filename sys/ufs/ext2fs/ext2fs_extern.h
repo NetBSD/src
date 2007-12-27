@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_extern.h,v 1.36.10.1 2007/12/08 18:21:37 mjf Exp $	*/
+/*	$NetBSD: ext2fs_extern.h,v 1.36.10.2 2007/12/27 00:46:46 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -116,7 +116,7 @@ u_int64_t ext2fs_size(struct inode *);
 int ext2fs_setsize(struct inode *, u_int64_t);
 int ext2fs_update(struct vnode *, const struct timespec *,
     const struct timespec *, int);
-int ext2fs_truncate(struct vnode *, off_t, int, kauth_cred_t, struct proc *);
+int ext2fs_truncate(struct vnode *, off_t, int, kauth_cred_t);
 int ext2fs_inactive(void *);
 
 /* ext2fs_lookup.c */

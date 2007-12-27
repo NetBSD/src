@@ -1,4 +1,4 @@
-/* $NetBSD: vge.c,v 1.8.2.1 2007/12/08 18:17:45 mjf Exp $ */
+/* $NetBSD: vge.c,v 1.8.2.2 2007/12/27 00:43:18 mjf Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
 
 /*
  * - reverse endian access every CSR.
- * - no vtophys() translation, vaddr_t == paddr_t. 
+ * - no vtophys() translation, vaddr_t == paddr_t.
  * - PIPT writeback cache aware.
  */
 #define CSR_WRITE_1(l, r, v)	*(volatile uint8_t *)((l)->csr+(r)) = (v)
@@ -58,7 +58,7 @@
 #define CSR_WRITE_4(l, r, v)	out32rb((l)->csr+(r), (v))
 #define CSR_READ_4(l, r)	in32rb((l)->csr+(r))
 #define VTOPHYS(va)		(uint32_t)(va)
-#define DEVTOV(pa) 		(uint32_t)(pa)
+#define DEVTOV(pa)		(uint32_t)(pa)
 #define wbinv(adr, siz)		_wbinv(VTOPHYS(adr), (uint32_t)(siz))
 #define inv(adr, siz)		_inv(VTOPHYS(adr), (uint32_t)(siz))
 #define DELAY(n)		delay(n)
@@ -70,28 +70,27 @@ int vge_recv(void *, char *, unsigned, unsigned);
 
 #define R0_OWN		(1U << 31)	/* 1: empty for HW to load anew */
 #define R0_FLMASK	0x3fff0000	/* frame length */
-/* RX status upon Rx completed */
 #define R0_RXOK		(1U << 15)
 #define R0_MAR		(1U << 13)	/* multicast frame */
 #define R0_BAR		(1U << 12)	/* broadcast frame */
-#define R0_PHY		(1U << 11)	/* unicast frame */	 
+#define R0_PHY		(1U << 11)	/* unicast frame */	
 #define R0_VTAG		(1U << 10)	/* VTAG indicator */	
 #define R0_STP		(1U << 9)	/* first frame segment */	
 #define R0_EDP		(1U << 8)	/* last frame segment */
 #define R0_DETAG	(1U << 7)	/* VTAG has removed */
-#define R0_SNTAG	(1U << 6)	/* tagged SNAP frame */ 
-#define R0_SYME		(1U << 5)	/* symbol error */   
+#define R0_SNTAG	(1U << 6)	/* tagged SNAP frame */
+#define R0_SYME		(1U << 5)	/* symbol error */
 #define R0_LENE		(1U << 4)	/* frame length error */	
 #define R0_CSUME	(1U << 3)	/* TCP/IP bad csum */
 #define R0_FAE		(1U << 2)	/* frame alignment error */
-#define R0_CRCE		(1U << 1)	/* CRC error */	      
+#define R0_CRCE		(1U << 1)	/* CRC error */ 
 #define R0_VIDM		(1U << 0)	/* VTAG filter miss */		
 #define R1_IPOK		(1U << 22)	/* IP csum was fine */
 #define R1_TUPOK	(1U << 21)	/* TCP/UDP csum was fine */	
 #define R1_FRAG		(1U << 20)	/* fragmented IP */
 #define R1_CKSMZO	(1U << 19)	/* UDP csum field was zero */
-#define R1_IPKT		(1U << 18)	/* frame was IPv4 */ 
-#define R1_TPKT		(1U << 17)	/* frame was TCPv4 */  
+#define R1_IPKT		(1U << 18)	/* frame was IPv4 */
+#define R1_TPKT		(1U << 17)	/* frame was TCPv4 */
 #define R1_UPKT		(1U << 16)	/* frame was UDPv4 */		
 #define R3_IC		(1U << 31)	/* post Rx interrupt */
 #define R_FLMASK	0x00003ffd	/* Rx segment buffer length */	
@@ -135,80 +134,88 @@ struct rdesc {
 	uint32_t r0, r1, r2, r3;
 };
 
-#define VGE_PAR0	0x00		/* SA [0] */
-#define VGE_PAR1	0x01		/* SA [1] */
-#define VGE_PAR2	0x02		/* SA [2] */
-#define VGE_PAR3	0x03		/* SA [3] */
-#define VGE_PAR4	0x04		/* SA [4] */
-#define VGE_PAR5	0x05		/* SA [5] */
-#define VGE_CAM0	0x10
-#define VGE_RCR		0x06		/* Rx control */
+#define VR_PAR0		0x00		/* SA [0] */
+#define VR_PAR1		0x01		/* SA [1] */
+#define VR_PAR2		0x02		/* SA [2] */
+#define VR_PAR3		0x03		/* SA [3] */
+#define VR_PAR4		0x04		/* SA [4] */
+#define VR_PAR5		0x05		/* SA [5] */
+#define VR_CAM0		0x10		/* 0..7 */
+#define VR_RCR		0x06		/* Rx control */
 #define  RCR_AP		(1U << 6)	/* accept unicast frame */
-#define  RCR_AL		(1U << 5)	/* accept large frame */
+#define  RCR_AL		(1U << 5)	/* accept long VTAG frame */
 #define  RCR_PROM	(1U << 4)	/* accept any frame */
 #define  RCR_AB		(1U << 3)	/* accept broadcast frame */
-#define  RCR_AM		(1U << 2)	/* use multicast filter */  
-#define VGE_CTL0	0x08		/* control #0 */
-#define  CTL0_TXON	(1U << 4)
-#define  CTL0_RXON	(1U << 3)
-#define  CTL0_STOP	(1U << 2)
-#define  CTL0_START	(1U << 1)
-#define VGE_CTL1	0x09		/* control #1 */
+#define  RCR_AM		(1U << 2)	/* use multicast filter */
+#define VR_TCR		0x07		/* Tx control */
+#define VR_CTL0		0x08		/* control #0 */
+#define  CTL0_TXON	(1U << 3)	/* enable Tx DMA */
+#define  CTL0_RXON	(1U << 2)	/* enable Rx DMA */
+#define  CTL0_STOP	(1U << 1)	/* activate stop processing */
+#define  CTL0_START	(1U << 0)	/* start and activate */
+#define VR_CTL1		0x09		/* control #1 */
 #define  CTL1_RESET	(1U << 7)
-#define VGE_CTL2	0x0a		/* control #2 */
+#define  CTL1_DPOLL	(1U << 3)	/* _disable_ TDES/RDES polling */
+#define VR_CTL2		0x0a		/* control #2 */
 #define  CTL2_3XFLC	(1U << 7)	/* 802.3x PAUSE flow control */
 #define  CTL2_TPAUSE	(1U << 6)	/* handle PAUSE on transmit side */
 #define  CTL2_RPAUSE	(1U << 5)	/* handle PAUSE on receive side */
 #define  CTL2_HDXFLC	(1U << 4)	/* HDX jabber flow control */
-#define VGE_CTL3	0x0b		/* control #3 */
-#define  CTL3_GINTMASK	(1U << 1)
-#define VGE_TCR		0x07		/* Tx control */
-#define VGE_DESCHI	0x18		/* RDES/TDES base high 63:32 */
-#define VGE_DATAHI	0x1c		/* frame data base high 63:32 */
-#define VGE_ISR		0x24		/* ISR0123 */
-#define VGE_IEN		0x28		/* IEN0123 */
-#define VGE_TDCSR	0x30
-#define VGE_RDCSR	0x32
-#define VGE_RDB		0x38		/* RDES base lo 31:0 */
-#define VGE_RDINDX	0x3c
-#define VGE_TDB0	0x40		/* #0 TDES base lo 31:0 */
-#define VGE_RDCSIZE	0x50
-#define VGE_TDCSIZE	0x52
-#define VGE_TD0IDX	0x54
-#define VGE_RBRDU	0x5e
-#define VGE_MIICFG	0x6c		/* PHY number 4:0 */
-#define VGE_PHYSR0	0x6e		/* PHY status */
-#define VGE_MIICR	0x70		/* MII control */
+#define VR_CTL3		0x0b		/* control #3 */
+#define  CTL3_GIEN	(1U << 1)	/* global interrupt enable */
+#define VR_DESCHI	0x18		/* RDES/TDES base high 63:32 */
+#define VR_DATAHI	0x1c		/* frame data base high 63:48 */
+#define VR_ISR		0x24		/* ISR0123 */
+#define VR_IEN		0x28		/* IEN0123 */
+#define VR_TDCSR	0x30
+#define VR_RDCSR	0x32
+#define VR_RDB		0x38		/* RDES base lo 31:0 */
+#define VR_TDB0		0x40		/* #0 TDES base lo 31:0 */
+#define VR_RDCSIZE	0x50		/* 0..255 */
+#define VR_TDCSIZE	0x52		/* 0..4095 */
+#define VR_RBRDU	0x5e		/* 0..255 */
+#define VR_CAMADR	0x68
+#define  CAM_EN		(1U << 7)	/* enable to manipulate */
+#define  SADR_CAM	(0U << 6)	/* station address table */
+#define  VTAG_CAM	(1U << 6)	/* VLAN tag table */
+#define VR_CAMCTL	0x69
+#define  CAMCTL_MULT	(00U << 6)	/* multicast address hash */
+#define  CAMCTL_VBIT	(01U << 6)	/* valid bitmask */
+#define  CAMCTL_ADDR	(02U << 6)	/* address data */
+#define  CAMCTL_RD	(1U << 3)	/* CAM read op, auto cleared */
+#define  CAMCTL_WR	(1U << 2)	/* CAM write op, auto cleared */
+#define VR_MIICFG	0x6c		/* PHY number 4:0 */
+#define VR_MIISR	0x6d		/* MII status */
+#define  MIISR_MIDLE	(1U << 7)	/* not in auto polling */
+#define VR_PHYSR0	0x6e		/* PHY status 0 */
+#define VR_MIICR	0x70		/* MII control */
+#define  MIICR_MAUTO	(1U << 7)	/* activate autopoll mode */
 #define  MIICR_RCMD	(1U << 6)	/* MII read operation */
 #define  MIICR_WCMD	(1U << 5)	/* MII write operation */
-#define VGE_MIIADR	0x71		/* MII indirect */
-#define VGE_MIIDATA	0x72		/* MII read/write */
-#define VGE_CAMADR	0x68
-#define  CAMADR_EN	(1U << 7)	/* enable to manipulate */
-#define VGE_CAMCTL	0x69
-#define  CAMCTL_RD	(1U << 3)	/* CAM read op, W1S */
-#define  CAMCTL_WR	(1U << 2)	/* CAM write op, W1S */
-#define VGE_CHIPGCR	0x9f		/* chip global control */
+#define VR_MIIADR	0x71		/* MII indirect */
+#define VR_MIIDATA	0x72		/* MII read/write */
 
 #define FRAMESIZE	1536
+#define NRXDESC		4	/* HW demands multiple of 4 */
 
 struct local {
 	struct tdesc txd;
-	struct rdesc rxd[2];
-	uint8_t rxstore[2][FRAMESIZE];
+	struct rdesc rxd[NRXDESC];
+	uint8_t rxstore[NRXDESC][FRAMESIZE];
 	unsigned csr, rx;
 	unsigned phy, bmsr, anlpar;
-	unsigned rcr, ctl0;
 };
 
-static int vge_mii_read(struct local *, int, int);
-static void vge_mii_write(struct local *, int, int, int);
-static void mii_initphy(struct local *);
+static void mii_autopoll(struct local *);
+static void mii_stoppoll(struct local *);
+static int mii_read(struct local *, int, int);
+static void mii_write(struct local *, int, int, int);
+static void mii_dealan(struct local *, unsigned);
 
 void *
 vge_init(unsigned tag, void *data)
 {
-	unsigned val, i, loop, chipgcr;
+	unsigned val, i, fdx, loop;
 	struct local *l;
 	struct tdesc *txd;
 	struct rdesc *rxd;
@@ -218,96 +225,90 @@ vge_init(unsigned tag, void *data)
 	if (PCI_VENDOR(val) != 0x1106 && PCI_PRODUCT(val) != 0x3119)
 		return NULL;
 
-	l = ALLOC(struct local, 256);   /* tdesc alignment */
+	l = ALLOC(struct local, 64);   /* desc alignment */
 	memset(l, 0, sizeof(struct local));
 	l->csr = DEVTOV(pcicfgread(tag, 0x14)); /* use mem space */
 
 	val = CTL1_RESET;
-	CSR_WRITE_1(l, VGE_CTL1, val);
+	CSR_WRITE_1(l, VR_CTL1, val);
 	do {
-		val = CSR_READ_1(l, VGE_CTL1);
+		val = CSR_READ_1(l, VR_CTL1);
 	} while (val & CTL1_RESET);
 
-	l->phy = CSR_READ_1(l, VGE_MIICFG) & 0x1f;
-	mii_initphy(l);
+	l->phy = CSR_READ_1(l, VR_MIICFG) & 0x1f;
 
 	en = data;
-	en[0] = CSR_READ_1(l, VGE_PAR0);
-	en[1] = CSR_READ_1(l, VGE_PAR1);
-	en[2] = CSR_READ_1(l, VGE_PAR2);
-	en[3] = CSR_READ_1(l, VGE_PAR3);
-	en[4] = CSR_READ_1(l, VGE_PAR4);
-	en[5] = CSR_READ_1(l, VGE_PAR5);
-#if 1
+	en[0] = CSR_READ_1(l, VR_PAR0);
+	en[1] = CSR_READ_1(l, VR_PAR1);
+	en[2] = CSR_READ_1(l, VR_PAR2);
+	en[3] = CSR_READ_1(l, VR_PAR3);
+	en[4] = CSR_READ_1(l, VR_PAR4);
+	en[5] = CSR_READ_1(l, VR_PAR5);
+
 	printf("MAC address %02x:%02x:%02x:%02x:%02x:%02x\n",
-		en[0], en[1], en[2], en[3], en[4], en[5]);
-#endif
+	    en[0], en[1], en[2], en[3], en[4], en[5]);
+	printf("PHY %d (%04x.%04x)\n", l->phy,
+	    mii_read(l, l->phy, 2), mii_read(l, l->phy, 3));
+
+	mii_dealan(l, 5);
+	
+	/* speed and duplexity can be seen in MII 28 */
+	val = mii_read(l, l->phy, 28);
+	fdx = (val >> 5) & 01;
+	switch ((val >> 3) & 03) {
+	case 0: printf("10baseT"); break;
+	case 1: printf("100baseTX"); break;
+	case 2: printf("1000baseT"); break;
+	}
+	if (fdx)
+		printf("-FDX");
+	printf("\n");
 
 	txd = &l->txd;
 	rxd = &l->rxd[0];
-	rxd[0].r0 = htole32(R0_OWN);
-	rxd[0].r1 = 0;
-	rxd[0].r2 = htole32(VTOPHYS(l->rxstore[0]));
-	rxd[0].r3 = htole32(FRAMESIZE << 16);
-	rxd[1].r0 = htole32(R0_OWN);
-	rxd[1].r1 = 0;
-	rxd[1].r2 = htole32(VTOPHYS(l->rxstore[1]));
-	rxd[1].r3 = htole32(FRAMESIZE << 16);
-	wbinv(txd, sizeof(struct tdesc));
-	wbinv(rxd, 2 * sizeof(struct rdesc));
+	for (i = 0; i < NRXDESC; i++) {
+		rxd[i].r0 = htole32(R0_OWN);
+		rxd[i].r1 = 0;
+		rxd[i].r2 = htole32(VTOPHYS(l->rxstore[i]));
+		rxd[i].r3 = htole32(FRAMESIZE << 16);
+	}
+	wbinv(l, sizeof(struct local));
 	l->rx = 0;
 
-	/* set own station address into CAM index #0 */	 
-	CSR_WRITE_1(l, VGE_CAMCTL, 02 << 6);
-	CSR_WRITE_1(l, VGE_CAMADR, CAMADR_EN | 0);
+	/* set own station address into entry #0 */	
+	CSR_WRITE_1(l, VR_CAMCTL, CAMCTL_ADDR);
+	CSR_WRITE_1(l, VR_CAMADR, CAM_EN | SADR_CAM | 0);
 	for (i = 0; i < 6; i++)
-		CSR_WRITE_1(l, VGE_CAM0 + i, en[i]);
-	CSR_WRITE_1(l, VGE_CAMCTL, 02 << 6 | CAMCTL_WR); 
+		CSR_WRITE_1(l, VR_CAM0 + i, en[i]);
+	CSR_WRITE_1(l, VR_CAMCTL, CAMCTL_ADDR | CAMCTL_WR);
 	loop = 20;
-	while (--loop > 0 && (i = CSR_READ_1(l, VGE_CAMCTL)) & CAMCTL_WR)
+	while (--loop > 0 && (i = CSR_READ_1(l, VR_CAMCTL)) & CAMCTL_WR)
 		DELAY(1);
-	CSR_WRITE_1(l, VGE_CAMCTL, 01 << 6);
-	CSR_WRITE_1(l, VGE_CAMADR, CAMADR_EN | 0);
-	CSR_WRITE_1(l, VGE_CAM0, 01); /* position 0 of 63:0 */
-	CSR_WRITE_1(l, VGE_CAMCTL, 01 << 6 | CAMCTL_WR);
-	CSR_WRITE_1(l, VGE_CAMADR, 0);
+	/* mark entry #0 valid, position 0 of 63:0 */
+	CSR_WRITE_1(l, VR_CAMCTL, CAMCTL_VBIT);
+	CSR_WRITE_1(l, VR_CAM0, 01);
+	for (i = 1; i < 8; i++)
+		CSR_WRITE_1(l, VR_CAM0 + i, 00);
+	CSR_WRITE_1(l, VR_CAMADR, 0);
+	CSR_WRITE_1(l, VR_CAMCTL, 0);
 
 	/* prepare descriptor lists */
-	CSR_WRITE_2(l, VGE_DATAHI, 0);
-	CSR_WRITE_4(l, VGE_DESCHI, 0);
-	CSR_WRITE_4(l, VGE_RDB, VTOPHYS(rxd));
-	CSR_WRITE_2(l, VGE_RDCSIZE, 1);
-	CSR_WRITE_2(l, VGE_RBRDU, 1);
-	CSR_WRITE_4(l, VGE_TDB0, VTOPHYS(txd));
-	CSR_WRITE_2(l, VGE_TDCSIZE, 0);
-	CSR_WRITE_2(l, VGE_RDCSR, 01);
-	CSR_WRITE_2(l, VGE_RDCSR, 04);
-	CSR_WRITE_2(l, VGE_TDCSR, 01);
-
-	/* determine speed and duplexity */
-	val = vge_mii_read(l, l->phy, 31);
-	chipgcr = 1U << 4;
-	switch ((val >> 3) & 03) {
-	case 02: /* 1000 */
-		chipgcr |= 1U << 7;
-		break;
-	case 01: /* 100 */
-	case 00: /* 10 */
-		if(val & (1U << 5)) /* FDX */
-			chipgcr |= 1U << 6;
-		break;
-	}
-	CSR_WRITE_1(l, VGE_CHIPGCR, chipgcr);
+	CSR_WRITE_4(l, VR_RDB, VTOPHYS(rxd));
+	CSR_WRITE_2(l, VR_RDCSIZE, NRXDESC - 1);
+	CSR_WRITE_2(l, VR_RBRDU, NRXDESC - 1);
+	CSR_WRITE_4(l, VR_TDB0, VTOPHYS(txd));
+	CSR_WRITE_2(l, VR_TDCSIZE, 0);
 
 	/* enable transmitter and receiver */
-	l->rcr = RCR_AP;
-	l->ctl0 |= (CTL0_TXON | CTL0_RXON | CTL0_START);
-	CSR_WRITE_1(l, VGE_RCR, l->rcr);
-	CSR_WRITE_1(l, VGE_TCR, 0);
-	CSR_WRITE_4(l, VGE_ISR, ~0);
-	CSR_WRITE_4(l, VGE_IEN, 0);
-	CSR_WRITE_1(l, VGE_CTL0, CTL0_START);
-	CSR_WRITE_1(l, VGE_CTL0, l->ctl0);
+	CSR_WRITE_1(l, VR_RDCSR, 01);
+	CSR_WRITE_1(l, VR_RDCSR, 04);
+	CSR_WRITE_2(l, VR_TDCSR, 01);
+	CSR_WRITE_1(l, VR_RCR, RCR_AP);
+	CSR_WRITE_1(l, VR_TCR, 0);
+	CSR_WRITE_1(l, VR_CTL0 + 0x4, CTL0_STOP);
+	CSR_WRITE_1(l, VR_CTL0, CTL0_TXON | CTL0_RXON | CTL0_START);
+	CSR_WRITE_4(l, VR_ISR, ~0);
+	CSR_WRITE_4(l, VR_IEN, 0);
 
 	return l;
 }
@@ -321,14 +322,15 @@ vge_send(void *dev, char *buf, unsigned len)
 	
 	wbinv(buf, len);
 	len = (len & T_FLMASK);
+	if (len < 60)
+		len = 60; /* needs to stretch to ETHER_MIN_LEN - 4 */
 	txd = &l->txd;
 	txd->tf[0].lo = htole32(VTOPHYS(buf));
 	txd->tf[0].hi = htole32(len << 16);
 	txd->t1 = htole32(T1_SOF | T1_EOF | (2 << 28));
 	txd->t0 = htole32(T0_OWN | len << 16);
-	txd->tf[0].hi |= htole32(TF0_Q);
 	wbinv(txd, sizeof(struct tdesc));
-	CSR_WRITE_2(l, VGE_TDCSR, 04);
+	CSR_WRITE_2(l, VR_TDCSR, 04);
 	loop = 100;
 	do {
 		if ((le32toh(txd->t0) & T0_OWN) == 0)
@@ -377,85 +379,130 @@ printf("recving with %u sec. timeout\n", timo);
 	ptr = l->rxstore[l->rx];
 	inv(ptr, len);
 	memcpy(buf, ptr, len);
-	rxd->r0 = htole32(R0_OWN);
-	rxd->r1 = 0;
-	wbinv(rxd, sizeof(struct rdesc));
-	l->rx ^= 1;
+	if ((l->rx & 03) == 3) {
+		/* needs to set R0_OWN to 4 descriptors at a time */
+		rxd[00].r0 = htole32(R0_OWN);
+		rxd[00].r1 = 0;
+		rxd[-1].r0 = htole32(R0_OWN);
+		rxd[-1].r1 = 0;
+		rxd[-2].r0 = htole32(R0_OWN);
+		rxd[-2].r1 = 0;
+		rxd[-3].r0 = htole32(R0_OWN);
+		rxd[-3].r1 = 0;
+		wbinv(rxd, NRXDESC * sizeof(struct rdesc));
+	}
+	l->rx = (l->rx + 1) & (NRXDESC - 1);
 	return len;
 }
 
-static int
-vge_mii_read(struct local *sc, int phy, int reg)
+static void
+mii_autopoll(struct local *l)
 {
 	int v;
 
-	CSR_WRITE_1(sc, VGE_MIICFG, phy);
-	CSR_WRITE_1(sc, VGE_MIIADR, reg);
-	CSR_WRITE_1(sc, VGE_MIICR, MIICR_RCMD);
+	CSR_WRITE_1(l, VR_MIICR, 0);
+	CSR_WRITE_1(l, VR_MIIADR, 1U << 7);
 	do {
-		v = CSR_READ_1(sc, VGE_MIICR);
-	} while (v & MIICR_RCMD);
-	return CSR_READ_2(sc, VGE_MIIDATA);
+		DELAY(1);
+		v = CSR_READ_1(l, VR_MIISR);
+	} while ((v & MIISR_MIDLE) == 0);
+	CSR_WRITE_1(l, VR_MIICR, MIICR_MAUTO);
+	do {
+		DELAY(1);
+		v = CSR_READ_1(l, VR_MIISR);
+	} while ((v & MIISR_MIDLE) != 0);
 }
 
 static void
-vge_mii_write(struct local *sc, int phy, int reg, int data)
+mii_stoppoll(struct local *l)
+{	
+	int v;
+	
+	CSR_WRITE_1(l, VR_MIICR, 0);
+	do {
+		DELAY(1);
+		v = CSR_READ_1(l, VR_MIISR);
+	} while ((v & MIISR_MIDLE) == 0);
+}
+
+static int
+mii_read(struct local *l, int phy, int reg)
 {
 	int v;
 
-	CSR_WRITE_2(sc, VGE_MIIDATA, data);
-	CSR_WRITE_1(sc, VGE_MIICFG, phy);
-	CSR_WRITE_1(sc, VGE_MIIADR, reg);
-	CSR_WRITE_1(sc, VGE_MIICR, MIICR_WCMD);
+	mii_stoppoll(l);
+	CSR_WRITE_1(l, VR_MIICFG, phy);
+	CSR_WRITE_1(l, VR_MIIADR, reg);
+	CSR_WRITE_1(l, VR_MIICR, MIICR_RCMD);
 	do {
-		v = CSR_READ_1(sc, VGE_MIICR);
+		v = CSR_READ_1(l, VR_MIICR);
+	} while (v & MIICR_RCMD);
+	v = CSR_READ_2(l, VR_MIIDATA);
+	mii_autopoll(l);
+	return v;
+}
+
+static void
+mii_write(struct local *l, int phy, int reg, int data)
+{
+	int v;
+
+	mii_stoppoll(l);
+	CSR_WRITE_2(l, VR_MIIDATA, data);
+	CSR_WRITE_1(l, VR_MIICFG, phy);
+	CSR_WRITE_1(l, VR_MIIADR, reg);
+	CSR_WRITE_1(l, VR_MIICR, MIICR_WCMD);
+	do {
+		v = CSR_READ_1(l, VR_MIICR);
 	} while (v & MIICR_WCMD);
+	mii_autopoll(l);
 }
 
 #define MII_BMCR	0x00	/* Basic mode control register (rw) */
-#define	 BMCR_RESET	0x8000	/* reset */
-#define	 BMCR_AUTOEN	0x1000	/* autonegotiation enable */
-#define	 BMCR_ISO	0x0400	/* isolate */
-#define	 BMCR_STARTNEG	0x0200	/* restart autonegotiation */
+#define  BMCR_RESET	0x8000	/* reset */
+#define  BMCR_AUTOEN	0x1000	/* autonegotiation enable */
+#define  BMCR_ISO	0x0400	/* isolate */
+#define  BMCR_STARTNEG	0x0200	/* restart autonegotiation */
 #define MII_BMSR	0x01	/* Basic mode status register (ro) */
+#define  BMSR_ACOMP	0x0020	/* Autonegotiation complete */
+#define  BMSR_LINK	0x0004	/* Link status */
+#define MII_ANAR	0x04	/* Autonegotiation advertisement (rw) */
+#define  ANAR_FC	0x0400	/* local device supports PAUSE */
+#define  ANAR_TX_FD	0x0100	/* local device supports 100bTx FD */
+#define  ANAR_TX	0x0080	/* local device supports 100bTx */
+#define  ANAR_10_FD	0x0040	/* local device supports 10bT FD */
+#define  ANAR_10	0x0020	/* local device supports 10bT */
+#define  ANAR_CSMA	0x0001	/* protocol selector CSMA/CD */
+#define MII_ANLPAR	0x05	/* Autonegotiation lnk partner abilities (rw) */
+#define MII_GTCR	0x09	/* 1000baseT control */
+#define  GANA_1000TFDX	0x0200	/* advertise 1000baseT FDX */
+#define  GANA_1000THDX	0x0100	/* advertise 1000baseT HDX */
+#define MII_GTSR	0x0a	/* 1000baseT status */
+#define  GLPA_1000TFDX	0x0800	/* link partner 1000baseT FDX capable */
+#define  GLPA_1000THDX	0x0400	/* link partner 1000baseT HDX capable */
+#define  GLPA_ASM_DIR	0x0200	/* link partner asym. pause dir. capable */
 
-/* XXX GMII XXX */
-
-static void
-mii_initphy(struct local *l)
+void
+mii_dealan(struct local *l, unsigned timo)
 {
-	int phy, ctl, sts, bound;
+	unsigned anar, gtcr, bound;
 
-	l->bmsr = vge_mii_read(l, l->phy, MII_BMSR);
-	return; /* XXX */
-
-	for (phy = 0; phy < 32; phy++) {
-		ctl = vge_mii_read(l, phy, MII_BMCR);
-		sts = vge_mii_read(l, phy, MII_BMSR);
-		if (ctl != 0xffff && sts != 0xffff)
-			goto found;
-	}
-	printf("MII: no PHY found\n");
-	return;
-  found:
-	ctl = vge_mii_read(l, phy, MII_BMCR);
-	vge_mii_write(l, phy, MII_BMCR, ctl | BMCR_RESET);
-	bound = 100;
+	anar = ANAR_TX_FD | ANAR_TX | ANAR_10_FD | ANAR_10 | ANAR_CSMA;
+	anar |= ANAR_FC;
+	gtcr = GANA_1000TFDX | GANA_1000THDX;
+	mii_write(l, l->phy, MII_ANAR, anar);
+	mii_write(l, l->phy, MII_GTCR, gtcr);
+	mii_write(l, l->phy, MII_BMCR, BMCR_AUTOEN | BMCR_STARTNEG);
+	l->anlpar = 0;
+	bound = getsecs() + timo;
 	do {
-		DELAY(10);
-		ctl = vge_mii_read(l, phy, MII_BMCR);
-		if (ctl == 0xffff) {
-			printf("MII: PHY %d has died after reset\n", phy);
-			return;
+		l->bmsr = mii_read(l, l->phy, MII_BMSR) |
+		   mii_read(l, l->phy, MII_BMSR); /* read twice */
+		if ((l->bmsr & BMSR_LINK) && (l->bmsr & BMSR_ACOMP)) {
+			l->anlpar = mii_read(l, l->phy, MII_ANLPAR);
+			break;
 		}
-	} while (bound-- > 0 && (ctl & BMCR_RESET));
-	if (bound == 0) {
-		printf("PHY %d reset failed\n", phy);
-	}
-	ctl &= ~BMCR_ISO;
-	vge_mii_write(l, phy, MII_BMCR, ctl);
-	sts = vge_mii_read(l, phy, MII_BMSR) |
-	    vge_mii_read(l, phy, MII_BMSR); /* read twice */
-	l->phy = phy;
-	l->bmsr = sts;
+		DELAY(10 * 1000);
+	} while (getsecs() < bound);
+	return;
 }

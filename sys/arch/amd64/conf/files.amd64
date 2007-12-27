@@ -1,4 +1,4 @@
-#	$NetBSD: files.amd64,v 1.48.2.1 2007/12/08 18:16:28 mjf Exp $
+#	$NetBSD: files.amd64,v 1.48.2.2 2007/12/27 00:42:54 mjf Exp $
 #
 # new style config file for amd64 architecture
 #
@@ -187,7 +187,7 @@ include "dev/bluetooth/files.bluetooth"
 include	"dev/ieee1394/files.ieee1394"
 include "dev/apm/files.apm"
 include "dev/acpi/files.acpi"
-file	arch/amd64/acpi/acpi_wakeup.c	acpi
+file	arch/amd64/acpi/acpi_wakeup_low.S	acpi
 
 include	"arch/amd64/conf/majors.amd64"
 endif #xen

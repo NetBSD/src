@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.243.4.1 2007/12/08 18:21:46 mjf Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.243.4.2 2007/12/27 00:46:54 mjf Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.243.4.1 2007/12/08 18:21:46 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.243.4.2 2007/12/27 00:46:54 mjf Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -1522,6 +1522,32 @@ done:
 }
 
 /*
+ * uvm_map_lookup_entry_bytree: lookup an entry in tree
+ */
+
+static bool
+uvm_map_lookup_entry_bytree(struct vm_map *map, vaddr_t address,
+    struct vm_map_entry **entry	/* OUT */)
+{
+	struct vm_map_entry *prev = &map->header;
+	struct vm_map_entry *cur = RB_ROOT(&map->rbhead);
+
+	while (cur) {
+		if (address >= cur->start) {
+			if (address < cur->end) {
+				*entry = cur;
+				return true;
+			}
+			prev = cur;
+			cur = RB_RIGHT(cur, rb_entry);
+		} else
+			cur = RB_LEFT(cur, rb_entry);
+	}
+	*entry = prev;
+	return false;
+}
+
+/*
  * uvm_map_lookup_entry: find map entry at or before an address
  *
  * => map must at least be read-locked by caller
@@ -1590,26 +1616,15 @@ uvm_map_lookup_entry(struct vm_map *map, vaddr_t address,
 	uvm_map_check(map, __func__);
 
 	if (use_tree) {
-		struct vm_map_entry *prev = &map->header;
-		cur = RB_ROOT(&map->rbhead);
-
 		/*
 		 * Simple lookup in the tree.  Happens when the hint is
 		 * invalid, or nentries reach a threshold.
 		 */
-		while (cur) {
-			if (address >= cur->start) {
-				if (address < cur->end) {
-					*entry = cur;
-					goto got;
-				}
-				prev = cur;
-				cur = RB_RIGHT(cur, rb_entry);
-			} else
-				cur = RB_LEFT(cur, rb_entry);
+		if (uvm_map_lookup_entry_bytree(map, address, entry)) {
+			goto got;
+		} else {
+			goto failed;
 		}
-		*entry = prev;
-		goto failed;
 	}
 
 	/*
@@ -5066,3 +5081,26 @@ vm_map_starved_p(struct vm_map *map)
 	}
 	return false;
 }
+
+#if defined(DDB)
+void
+uvm_whatis(uintptr_t addr, void (*pr)(const char *, ...))
+{
+	struct vm_map *map;
+
+	for (map = kernel_map;;) {
+		struct vm_map_entry *entry;
+
+		if (!uvm_map_lookup_entry_bytree(map, (vaddr_t)addr, &entry)) {
+			break;
+		}
+		(*pr)("%p is %p+%zu from VMMAP %p\n",
+		    (void *)addr, (void *)entry->start,
+		    (size_t)(addr - (uintptr_t)entry->start), map);
+		if (!UVM_ET_ISSUBMAP(entry)) {
+			break;
+		}
+		map = entry->object.sub_map;
+	}
+}
+#endif /* defined(DDB) */

@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_syssgi.c,v 1.43.26.1 2007/12/08 18:18:43 mjf Exp $ */
+/*	$NetBSD: irix_syssgi.c,v 1.43.26.2 2007/12/27 00:43:50 mjf Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.43.26.1 2007/12/08 18:18:43 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.43.26.2 2007/12/27 00:43:50 mjf Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -91,19 +91,16 @@ static int irix_syssgi_sysconf(int name, struct lwp *, register_t *);
 static int irix_syssgi_pathconf(char *, int, struct lwp *, register_t *);
 
 int
-irix_sys_syssgi(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+irix_sys_syssgi(struct lwp *l, const struct irix_sys_syssgi_args *uap, register_t *retval)
 {
-	struct irix_sys_syssgi_args /* {
+	/* {
 		syscallarg(int) request;
 		syscallarg(void *) arg1;
 		syscallarg(void *) arg2;
 		syscallarg(void *) arg3;
 		syscallarg(void *) arg4;
 		syscallarg(void *) arg5;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 	int request = SCARG(uap, request);
 	void *arg1, *arg2, *arg3;
@@ -285,12 +282,7 @@ irix_sys_syssgi(l, v, retval)
 }
 
 static int
-irix_syssgi_mapelf(fd, ph, count, l, retval)
-	int fd;
-	Elf_Phdr *ph;
-	int count;
-	struct lwp *l;
-	register_t *retval;
+irix_syssgi_mapelf(int fd, Elf_Phdr *ph, int count, struct lwp *l, register_t *retval)
 {
 	Elf_Phdr *kph;
 	Elf_Phdr *pht;
@@ -452,10 +444,7 @@ bad:
 
 
 static int
-irix_syssgi_sysconf(name, l, retval)
-	int name;
-	struct lwp *l;
-	register_t *retval;
+irix_syssgi_sysconf(int name, struct lwp *l, register_t *retval)
 {
 	struct proc *p = l->l_proc;
 	int error = 0;
@@ -526,11 +515,7 @@ irix_syssgi_sysconf(name, l, retval)
 }
 
 static int
-irix_syssgi_pathconf(path, name, l, retval)
-	char *path;
-	int name;
-	struct lwp *l;
-	register_t *retval;
+irix_syssgi_pathconf(char *path, int name, struct lwp *l, register_t *retval)
 {
 	struct sys_pathconf_args cup;
 	int bname;

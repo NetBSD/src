@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.143.4.1 2007/12/08 18:20:46 mjf Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.143.4.2 2007/12/27 00:46:20 mjf Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.143.4.1 2007/12/08 18:20:46 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.143.4.2 2007/12/27 00:46:20 mjf Exp $");
 
 #include "fs_union.h"
 #include "veriexec.h"
@@ -99,7 +99,7 @@ int
 vn_open(struct nameidata *ndp, int fmode, int cmode)
 {
 	struct vnode *vp;
-	struct lwp *l = ndp->ni_cnd.cn_lwp;
+	struct lwp *l = curlwp;
 	kauth_cred_t cred = l->l_cred;
 	struct vattr va;
 	int error;

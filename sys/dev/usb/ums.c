@@ -1,4 +1,4 @@
-/*	$NetBSD: ums.c,v 1.68.22.1 2007/12/08 18:20:06 mjf Exp $	*/
+/*	$NetBSD: ums.c,v 1.68.22.2 2007/12/27 00:45:33 mjf Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.68.22.1 2007/12/08 18:20:06 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.68.22.2 2007/12/27 00:45:33 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -169,6 +169,9 @@ ums_attach(struct device *parent, struct device *self, void *aux)
 		sc->flags |= UMS_SPUR_BUT_UP;
 
 	uhidev_get_report_desc(uha->parent, &desc, &size);
+
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	if (!hid_locate(desc, size, HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_X),
 	       uha->reportid, hid_input, &sc->sc_loc_x, &flags)) {
@@ -305,6 +308,8 @@ ums_detach(struct device *self, int flags)
 	/* No need to do reference counting of ums, wsmouse has all the goo. */
 	if (sc->sc_wsmousedev != NULL)
 		rv = config_detach(sc->sc_wsmousedev, flags);
+
+	pmf_device_deregister(self);
 
 	return (rv);
 }

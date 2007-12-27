@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vfsops.c,v 1.48.10.1 2007/12/08 18:20:23 mjf Exp $	*/
+/*	$NetBSD: union_vfsops.c,v 1.48.10.2 2007/12/27 00:45:52 mjf Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.48.10.1 2007/12/08 18:20:23 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.48.10.2 2007/12/27 00:45:52 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -154,7 +154,7 @@ union_mount(mp, path, data, data_len)
 	/*
 	 * Find upper node.
 	 */
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, args->target, l);
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, args->target);
 
 	if ((error = namei(&nd)) != 0)
 		goto bad;

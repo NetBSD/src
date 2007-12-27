@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.117.4.1 2007/12/08 18:21:46 mjf Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.117.4.2 2007/12/27 00:46:55 mjf Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.117.4.1 2007/12/08 18:21:46 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.117.4.2 2007/12/27 00:46:55 mjf Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_pax.h"
@@ -115,13 +115,11 @@ range_test(vaddr_t addr, vsize_t size, bool ismmap)
 
 /* ARGSUSED */
 int
-sys_sbrk(struct lwp *l, void *v, register_t *retval)
+sys_sbrk(struct lwp *l, const struct sys_sbrk_args *uap, register_t *retval)
 {
-#if 0
-	struct sys_sbrk_args /* {
+	/* {
 		syscallarg(intptr_t) incr;
-	} */ *uap = v;
-#endif
+	} */
 
 	return (ENOSYS);
 }
@@ -132,13 +130,11 @@ sys_sbrk(struct lwp *l, void *v, register_t *retval)
 
 /* ARGSUSED */
 int
-sys_sstk(struct lwp *l, void *v, register_t *retval)
+sys_sstk(struct lwp *l, const struct sys_sstk_args *uap, register_t *retval)
 {
-#if 0
-	struct sys_sstk_args /* {
+	/* {
 		syscallarg(int) incr;
-	} */ *uap = v;
-#endif
+	} */
 
 	return (ENOSYS);
 }
@@ -149,13 +145,13 @@ sys_sstk(struct lwp *l, void *v, register_t *retval)
 
 /* ARGSUSED */
 int
-sys_mincore(struct lwp *l, void *v, register_t *retval)
+sys_mincore(struct lwp *l, const struct sys_mincore_args *uap, register_t *retval)
 {
-	struct sys_mincore_args /* {
+	/* {
 		syscallarg(void *) addr;
 		syscallarg(size_t) len;
 		syscallarg(char *) vec;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 	struct vm_page *pg;
 	char *vec, pgi;
@@ -292,12 +288,9 @@ sys_mincore(struct lwp *l, void *v, register_t *retval)
  */
 
 int
-sys_mmap(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_mmap(struct lwp *l, const struct sys_mmap_args *uap, register_t *retval)
 {
-	struct sys_mmap_args /* {
+	/* {
 		syscallarg(void *) addr;
 		syscallarg(size_t) len;
 		syscallarg(int) prot;
@@ -305,7 +298,7 @@ sys_mmap(l, v, retval)
 		syscallarg(int) fd;
 		syscallarg(long) pad;
 		syscallarg(off_t) pos;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 	vaddr_t addr;
 	struct vattr va;
@@ -580,13 +573,13 @@ sys_mmap(l, v, retval)
  */
 
 int
-sys___msync13(struct lwp *l, void *v, register_t *retval)
+sys___msync13(struct lwp *l, const struct sys___msync13_args *uap, register_t *retval)
 {
-	struct sys___msync13_args /* {
+	/* {
 		syscallarg(void *) addr;
 		syscallarg(size_t) len;
 		syscallarg(int) flags;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 	vaddr_t addr;
 	vsize_t size, pageoff;
@@ -672,12 +665,12 @@ sys___msync13(struct lwp *l, void *v, register_t *retval)
  */
 
 int
-sys_munmap(struct lwp *l, void *v, register_t *retval)
+sys_munmap(struct lwp *l, const struct sys_munmap_args *uap, register_t *retval)
 {
-	struct sys_munmap_args /* {
+	/* {
 		syscallarg(void *) addr;
 		syscallarg(size_t) len;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 	vaddr_t addr;
 	vsize_t size, pageoff;
@@ -734,13 +727,13 @@ sys_munmap(struct lwp *l, void *v, register_t *retval)
  */
 
 int
-sys_mprotect(struct lwp *l, void *v, register_t *retval)
+sys_mprotect(struct lwp *l, const struct sys_mprotect_args *uap, register_t *retval)
 {
-	struct sys_mprotect_args /* {
+	/* {
 		syscallarg(void *) addr;
 		syscallarg(size_t) len;
 		syscallarg(int) prot;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 	vaddr_t addr;
 	vsize_t size, pageoff;
@@ -778,13 +771,13 @@ sys_mprotect(struct lwp *l, void *v, register_t *retval)
  */
 
 int
-sys_minherit(struct lwp *l, void *v, register_t *retval)
+sys_minherit(struct lwp *l, const struct sys_minherit_args *uap, register_t *retval)
 {
-	struct sys_minherit_args /* {
+	/* {
 		syscallarg(void *) addr;
 		syscallarg(int) len;
 		syscallarg(int) inherit;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 	vaddr_t addr;
 	vsize_t size, pageoff;
@@ -819,13 +812,13 @@ sys_minherit(struct lwp *l, void *v, register_t *retval)
 
 /* ARGSUSED */
 int
-sys_madvise(struct lwp *l, void *v, register_t *retval)
+sys_madvise(struct lwp *l, const struct sys_madvise_args *uap, register_t *retval)
 {
-	struct sys_madvise_args /* {
+	/* {
 		syscallarg(void *) addr;
 		syscallarg(size_t) len;
 		syscallarg(int) behav;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 	vaddr_t addr;
 	vsize_t size, pageoff;
@@ -921,12 +914,12 @@ sys_madvise(struct lwp *l, void *v, register_t *retval)
  */
 
 int
-sys_mlock(struct lwp *l, void *v, register_t *retval)
+sys_mlock(struct lwp *l, const struct sys_mlock_args *uap, register_t *retval)
 {
-	struct sys_mlock_args /* {
+	/* {
 		syscallarg(const void *) addr;
 		syscallarg(size_t) len;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 	vaddr_t addr;
 	vsize_t size, pageoff;
@@ -971,12 +964,12 @@ sys_mlock(struct lwp *l, void *v, register_t *retval)
  */
 
 int
-sys_munlock(struct lwp *l, void *v, register_t *retval)
+sys_munlock(struct lwp *l, const struct sys_munlock_args *uap, register_t *retval)
 {
-	struct sys_munlock_args /* {
+	/* {
 		syscallarg(const void *) addr;
 		syscallarg(size_t) len;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 	vaddr_t addr;
 	vsize_t size, pageoff;
@@ -1014,11 +1007,11 @@ sys_munlock(struct lwp *l, void *v, register_t *retval)
  */
 
 int
-sys_mlockall(struct lwp *l, void *v, register_t *retval)
+sys_mlockall(struct lwp *l, const struct sys_mlockall_args *uap, register_t *retval)
 {
-	struct sys_mlockall_args /* {
+	/* {
 		syscallarg(int) flags;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 	int error, flags;
 
@@ -1038,7 +1031,7 @@ sys_mlockall(struct lwp *l, void *v, register_t *retval)
  */
 
 int
-sys_munlockall(struct lwp *l, void *v, register_t *retval)
+sys_munlockall(struct lwp *l, const void *v, register_t *retval)
 {
 	struct proc *p = l->l_proc;
 

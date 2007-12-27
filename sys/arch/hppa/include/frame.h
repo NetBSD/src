@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.4.20.1 2007/11/19 00:46:16 mjf Exp $	*/
+/*	$NetBSD: frame.h,v 1.4.20.2 2007/12/27 00:42:58 mjf Exp $	*/
 
 /*	$OpenBSD: frame.h,v 1.11 1999/11/25 18:28:06 mickey Exp $	*/
 
@@ -54,7 +54,7 @@
 #define	HPPA_FRAME_ESR4		(-28)
 #define	HPPA_FRAME_EDP		(-32)
 #define	HPPA_FRAME_ROUND(x) \
-	(((x) + HPPA_FRAME_SIZE - 1) & ~(HPPA_FRAME_SIZE - 1))
+	((((uintptr_t)x) + HPPA_FRAME_SIZE - 1) & ~(HPPA_FRAME_SIZE - 1))
 
 /*
  * Macros to decode processor status word.

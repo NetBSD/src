@@ -1,4 +1,4 @@
-/* $NetBSD: drm_vm.c,v 1.4.20.1 2007/12/08 18:19:30 mjf Exp $ */
+/* $NetBSD: drm_vm.c,v 1.4.20.2 2007/12/27 00:45:04 mjf Exp $ */
 
 /*-
  * Copyright 2003 Eric Anholt
@@ -24,6 +24,7 @@
  */
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: drm_vm.c,v 1.4.20.2 2007/12/27 00:45:04 mjf Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/drm_vm.c,v 1.2 2005/11/28 23:13:53 anholt Exp $");
 */

@@ -1,5 +1,5 @@
-/*	$OpenBSD: if_rum.c,v 1.65 2007/09/07 19:05:05 damien Exp $	*/
-/*	$NetBSD: if_rum.c,v 1.17.2.1 2007/12/08 18:20:01 mjf Exp $	*/
+/*	$OpenBSD: if_rum.c,v 1.40 2006/09/18 16:20:20 damien Exp $	*/
+/*	$NetBSD: if_rum.c,v 1.17.2.2 2007/12/27 00:45:30 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2005-2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.17.2.1 2007/12/08 18:20:01 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.17.2.2 2007/12/27 00:45:30 mjf Exp $");
 
 #include "bpfilter.h"
 

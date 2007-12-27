@@ -1,4 +1,4 @@
-#	$NetBSD: files.macppc,v 1.86.2.2 2007/12/08 18:17:19 mjf Exp $
+#	$NetBSD: files.macppc,v 1.86.2.3 2007/12/27 00:43:12 mjf Exp $
 #
 # macppc-specific configuration info
 
@@ -284,7 +284,7 @@ device snapper: audiobus, auconv, mulaw, aurateconv
 attach snapper at obio
 file arch/macppc/dev/snapper.c			snapper
 
-include "arch/macppc/conf/majors.macppc"
+include "arch/powerpc/conf/majors.powerpc"
 
 attach adt7467c at ki2c with adt7467_ki2c
 file arch/macppc/dev/adt7467_ki2c.c		adt7467c

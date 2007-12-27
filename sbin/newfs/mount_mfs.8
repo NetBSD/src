@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount_mfs.8,v 1.14 2006/01/15 19:49:25 dsl Exp $
+.\"	$NetBSD: mount_mfs.8,v 1.14.12.1 2007/12/27 00:47:02 mjf Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)newfs.8	8.6 (Berkeley) 5/3/95
 .\"
-.Dd January 15, 2006
+.Dd December 8, 2007
 .Dt MOUNT_MFS 8
 .Os
 .Sh NAME
@@ -206,8 +206,7 @@ An
 suffix will be interpreted as the number of sectors (the default).
 All other suffixes are interpreted as per other numeric arguments,
 except that the number is converted into sectors by dividing by the
-sector size (as specified by
-.Fl S Ar secsize )
+default sector size (which is 512 bytes)
 after suffix interpretation.
 .It Fl u Ar username
 This specifies the user name or user id of the root

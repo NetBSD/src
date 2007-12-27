@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.33.2.1 2007/12/08 18:18:45 mjf Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.33.2.2 2007/12/27 00:43:59 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.33.2.1 2007/12/08 18:18:45 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.33.2.2 2007/12/27 00:43:59 mjf Exp $");
 
 #define COMPAT_LINUX 1
 
@@ -95,10 +95,7 @@ void setup_linux_rt_sigframe(struct frame *frame, int sig,
  * Setup registers on program execution.
  */
 void
-linux_setregs(l, epp, stack)
-	struct lwp *l;
-	struct exec_package *epp;
-	u_long stack;
+linux_setregs(struct lwp *l, struct exec_package *epp, u_long stack)
 {
 
 	setregs(l, epp, stack);
@@ -108,11 +105,7 @@ linux_setregs(l, epp, stack)
  * Setup signal frame for old signal interface.
  */
 void
-setup_linux_sigframe(frame, sig, mask, usp)
-	struct frame *frame;
-	int sig;
-	const sigset_t *mask;
-	void *usp;
+setup_linux_sigframe(struct frame *frame, int sig, const sigset_t *mask, void *usp)
 {
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
@@ -275,12 +268,7 @@ setup_linux_sigframe(frame, sig, mask, usp)
  * Setup signal frame for new RT signal interface.
  */
 void
-setup_linux_rt_sigframe(frame, sig, mask, usp, l)
-	struct frame *frame;
-	int sig;
-	const sigset_t *mask;
-	void *usp;
-	struct lwp *l;
+setup_linux_rt_sigframe(struct frame *frame, int sig, const sigset_t *mask, void *usp, struct lwp *l)
 {
 	struct proc *p = l->l_proc;
 	struct linux_rt_sigframe *fp, kf;
@@ -512,10 +500,7 @@ linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
  */
 /* ARGSUSED */
 int
-linux_sys_sigreturn(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_sigreturn(struct lwp *l, const void *v, register_t *retval)
 {
 	struct proc *p = l->l_proc;
 	struct frame *frame;
@@ -671,10 +656,7 @@ bad:
 
 /* ARGSUSED */
 int
-linux_sys_rt_sigreturn(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_rt_sigreturn(struct lwp *l, const void *v, register_t *retval)
 {
 	struct proc *p = l->l_proc;
 	struct frame *frame;
@@ -834,17 +816,14 @@ bad:
 
 /* ARGSUSED */
 int
-linux_sys_cacheflush(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_cacheflush(struct lwp *l, const struct linux_sys_cacheflush_args *uap, register_t *retval)
 {
-	struct linux_sys_cacheflush_args /* {
+	/* {
 		syscallarg(unsigned long)	addr;
 		syscallarg(int)			scope;
 		syscallarg(int)			cache;
 		syscallarg(unsigned long)	len;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 	int scope, cache;
 	vaddr_t addr;
@@ -897,9 +876,7 @@ linux_sys_cacheflush(l, v, retval)
  * Convert NetBSD's devices to Linux's.
  */
 dev_t
-linux_fakedev(dev, raw)
-	dev_t dev;
-	int raw;
+linux_fakedev(dev_t dev, int raw)
 {
 
 	/* do nothing for now */
@@ -910,16 +887,13 @@ linux_fakedev(dev, raw)
  * We come here in a last attempt to satisfy a Linux ioctl() call.
  */
 int
-linux_machdepioctl(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_machdepioctl(struct lwp *l, const struct linux_sys_ioctl_args *uap, register_t *retval)
 {
-	struct linux_sys_ioctl_args /* {
+	/* {
 		syscallarg(int) fd;
 		syscallarg(u_long) com;
 		syscallarg(void *) data;
-	} */ *uap = v;
+	} */
 	struct sys_ioctl_args bia;
 	u_long com;
 

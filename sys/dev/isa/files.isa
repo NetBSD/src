@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.152.6.1 2007/11/19 00:48:01 mjf Exp $
+#	$NetBSD: files.isa,v 1.152.6.2 2007/12/27 00:45:10 mjf Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -171,10 +171,6 @@ file	dev/isa/cec.c			cec
 # device declaration in sys/conf/files
 attach	we at isa with we_isa
 file	dev/isa/if_we_isa.c		we_isa
-
-# 3Com common probe code
-define	elink
-file	dev/isa/elink.c			elink
 
 # 3Com 3C503
 device	ec: ether, ifnet, arp, dp8390nic

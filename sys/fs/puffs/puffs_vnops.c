@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.113.2.2 2007/12/08 18:20:18 mjf Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.113.2.3 2007/12/27 00:45:47 mjf Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.113.2.2 2007/12/08 18:20:18 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.113.2.3 2007/12/27 00:45:47 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -503,7 +503,7 @@ puffs_lookup(void *v)
 
 	PUFFS_MSG_ALLOC(vn, lookup);
 	puffs_makecn(&lookup_msg->pvnr_cn, &lookup_msg->pvnr_cn_cred,
-	    &lookup_msg->pvnr_cn_cid, cnp, PUFFS_USE_FULLPNBUF(pmp));
+	    cnp, PUFFS_USE_FULLPNBUF(pmp));
 
 	if (cnp->cn_flags & ISDOTDOT)
 		VOP_UNLOCK(dvp, 0);
@@ -639,7 +639,7 @@ puffs_create(void *v)
 
 	PUFFS_MSG_ALLOC(vn, create);
 	puffs_makecn(&create_msg->pvnr_cn, &create_msg->pvnr_cn_cred,
-	    &create_msg->pvnr_cn_cid, cnp, PUFFS_USE_FULLPNBUF(pmp));
+	    cnp, PUFFS_USE_FULLPNBUF(pmp));
 	create_msg->pvnr_va = *ap->a_vap;
 	puffs_msg_setinfo(park_create, PUFFSOP_VN,
 	    PUFFS_VN_CREATE, VPTOPNC(dvp));
@@ -694,7 +694,7 @@ puffs_mknod(void *v)
 
 	PUFFS_MSG_ALLOC(vn, mknod);
 	puffs_makecn(&mknod_msg->pvnr_cn, &mknod_msg->pvnr_cn_cred,
-	    &mknod_msg->pvnr_cn_cid, cnp, PUFFS_USE_FULLPNBUF(pmp));
+	    cnp, PUFFS_USE_FULLPNBUF(pmp));
 	mknod_msg->pvnr_va = *ap->a_vap;
 	puffs_msg_setinfo(park_mknod, PUFFSOP_VN,
 	    PUFFS_VN_MKNOD, VPTOPNC(dvp));
@@ -1396,7 +1396,7 @@ puffs_callremove(struct puffs_mount *pmp, void *dcookie, void *cookie,
 	PUFFS_MSG_ALLOC(vn, remove);
 	remove_msg->pvnr_cookie_targ = cookie;
 	puffs_makecn(&remove_msg->pvnr_cn, &remove_msg->pvnr_cn_cred,
-	    &remove_msg->pvnr_cn_cid, cnp, PUFFS_USE_FULLPNBUF(pmp));
+	    cnp, PUFFS_USE_FULLPNBUF(pmp));
 	puffs_msg_setinfo(park_remove, PUFFSOP_VN, PUFFS_VN_REMOVE, dcookie);
 
 	PUFFS_MSG_ENQUEUEWAIT(pmp, park_remove, error);
@@ -1431,7 +1431,7 @@ puffs_remove(void *v)
 	PUFFS_MSG_ALLOC(vn, remove);
 	remove_msg->pvnr_cookie_targ = VPTOPNC(vp);
 	puffs_makecn(&remove_msg->pvnr_cn, &remove_msg->pvnr_cn_cred,
-	    &remove_msg->pvnr_cn_cid, cnp, PUFFS_USE_FULLPNBUF(pmp));
+	    cnp, PUFFS_USE_FULLPNBUF(pmp));
 	puffs_msg_setinfo(park_remove, PUFFSOP_VN,
 	    PUFFS_VN_REMOVE, VPTOPNC(dvp));
 
@@ -1472,7 +1472,7 @@ puffs_mkdir(void *v)
 
 	PUFFS_MSG_ALLOC(vn, mkdir);
 	puffs_makecn(&mkdir_msg->pvnr_cn, &mkdir_msg->pvnr_cn_cred,
-	    &mkdir_msg->pvnr_cn_cid, cnp, PUFFS_USE_FULLPNBUF(pmp));
+	    cnp, PUFFS_USE_FULLPNBUF(pmp));
 	mkdir_msg->pvnr_va = *ap->a_vap;
 	puffs_msg_setinfo(park_mkdir, PUFFSOP_VN,
 	    PUFFS_VN_MKDIR, VPTOPNC(dvp));
@@ -1509,7 +1509,7 @@ puffs_callrmdir(struct puffs_mount *pmp, void *dcookie, void *cookie,
 	PUFFS_MSG_ALLOC(vn, rmdir);
 	rmdir_msg->pvnr_cookie_targ = cookie;
 	puffs_makecn(&rmdir_msg->pvnr_cn, &rmdir_msg->pvnr_cn_cred,
-	    &rmdir_msg->pvnr_cn_cid, cnp, PUFFS_USE_FULLPNBUF(pmp));
+	    cnp, PUFFS_USE_FULLPNBUF(pmp));
 	puffs_msg_setinfo(park_rmdir, PUFFSOP_VN, PUFFS_VN_RMDIR, dcookie);
 
 	PUFFS_MSG_ENQUEUEWAIT(pmp, park_rmdir, error);
@@ -1539,7 +1539,7 @@ puffs_rmdir(void *v)
 	PUFFS_MSG_ALLOC(vn, rmdir);
 	rmdir_msg->pvnr_cookie_targ = VPTOPNC(vp);
 	puffs_makecn(&rmdir_msg->pvnr_cn, &rmdir_msg->pvnr_cn_cred,
-	    &rmdir_msg->pvnr_cn_cid, cnp, PUFFS_USE_FULLPNBUF(pmp));
+	    cnp, PUFFS_USE_FULLPNBUF(pmp));
 	puffs_msg_setinfo(park_rmdir, PUFFSOP_VN,
 	    PUFFS_VN_RMDIR, VPTOPNC(dvp));
 
@@ -1578,7 +1578,7 @@ puffs_link(void *v)
 	PUFFS_MSG_ALLOC(vn, link);
 	link_msg->pvnr_cookie_targ = VPTOPNC(vp);
 	puffs_makecn(&link_msg->pvnr_cn, &link_msg->pvnr_cn_cred,
-	    &link_msg->pvnr_cn_cid, cnp, PUFFS_USE_FULLPNBUF(pmp));
+	    cnp, PUFFS_USE_FULLPNBUF(pmp));
 	puffs_msg_setinfo(park_link, PUFFSOP_VN,
 	    PUFFS_VN_LINK, VPTOPNC(dvp));
 
@@ -1628,7 +1628,7 @@ puffs_symlink(void *v)
 
 	PUFFS_MSG_ALLOC(vn, symlink);
 	puffs_makecn(&symlink_msg->pvnr_cn, &symlink_msg->pvnr_cn_cred,
-		&symlink_msg->pvnr_cn_cid, cnp, PUFFS_USE_FULLPNBUF(pmp));
+		cnp, PUFFS_USE_FULLPNBUF(pmp));
 	symlink_msg->pvnr_va = *ap->a_vap;
 	(void)strlcpy(symlink_msg->pvnr_link, ap->a_target,
 	    sizeof(symlink_msg->pvnr_link));
@@ -1728,11 +1728,9 @@ puffs_rename(void *v)
 		rename_msg->pvnr_cookie_targ = VPTOPNC(ap->a_tvp);
 	else
 		rename_msg->pvnr_cookie_targ = NULL;
-	puffs_makecn(&rename_msg->pvnr_cn_src,
-	    &rename_msg->pvnr_cn_src_cred, &rename_msg->pvnr_cn_src_cid,
+	puffs_makecn(&rename_msg->pvnr_cn_src, &rename_msg->pvnr_cn_src_cred,
 	    ap->a_fcnp, PUFFS_USE_FULLPNBUF(pmp));
-	puffs_makecn(&rename_msg->pvnr_cn_targ,
-	    &rename_msg->pvnr_cn_targ_cred, &rename_msg->pvnr_cn_targ_cid,
+	puffs_makecn(&rename_msg->pvnr_cn_targ, &rename_msg->pvnr_cn_targ_cred,
 	    ap->a_tcnp, PUFFS_USE_FULLPNBUF(pmp));
 	puffs_msg_setinfo(park_rename, PUFFSOP_VN,
 	    PUFFS_VN_RENAME, VPTOPNC(fdvp));

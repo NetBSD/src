@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.84.14.1 2007/11/19 00:47:21 mjf Exp $
+	$NetBSD: syscalls.master,v 1.84.14.2 2007/12/27 00:43:59 mjf Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -241,14 +241,14 @@
 129	UNIMPL		delete_module
 130	UNIMPL		get_kernel_syms
 131	UNIMPL		quotactl
-132	STD		{ int linux_sys_getpgid(int pid); }
+132	NOARGS		{ pid_t sys_getpgid(pid_t pid); }
 133	NOARGS		{ int sys_fchdir(int fd); }
 134	UNIMPL		bdflush
 135	UNIMPL		sysfs
 136	STD		{ int linux_sys_personality(int per); }
 137	UNIMPL		afs_syscall
 138	NOARGS		linux_setfsuid16 { int linux_sys_setfsuid(uid_t uid); }
-139	NOARGS		linux_getfsuid16 { int linux_sys_getfsuid(void); }
+139	NOARGS		linux_setfsgid16 { int linux_sys_setfsgid(gid_t gid); }
 140	STD		{ int linux_sys_llseek(int fd, u_int32_t ohigh, \
 			    u_int32_t olow, void *res, int whence); }
 141	STD		{ int linux_sys_getdents(int fd, \
@@ -335,6 +335,7 @@
 190	NOARGS		{ int sys___vfork14(void); }
 191	STD		{ int linux_sys_ugetrlimit(int which, \
 			    struct orlimit *rlp); }
+#define linux_sys_mmap2_args linux_sys_mmap_args
 192	NOARGS		{ linux_off_t linux_sys_mmap2(unsigned long addr, \
 			    size_t len, int prot, int flags, int fd, \
 			    linux_off_t offset); }
@@ -373,7 +374,7 @@
 213	NOARGS		{ int sys_setuid(uid_t uid); }
 214	NOARGS		{ int sys_setgid(gid_t gid); }
 215	STD		{ int linux_sys_setfsuid(uid_t uid); }
-216	NOARGS		{ int linux_sys_getfsuid(void); }
+216	STD		{ int linux_sys_setfsgid(gid_t gid); }
 217	UNIMPL		pivot_root
 218	NOARGS		{ int sys_mincore(void *addr, size_t len, char *vec); }
 219	NOARGS		{ int sys_madvise(void *addr, size_t len, int behav); }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.92.22.1 2007/12/08 18:20:04 mjf Exp $	*/
+/*	$NetBSD: ugen.c,v 1.92.22.2 2007/12/27 00:45:31 mjf Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.92.22.1 2007/12/08 18:20:04 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.92.22.2 2007/12/27 00:45:31 mjf Exp $");
 
 #include "opt_ugen_bulk_ra_wb.h"
 #include "opt_compat_netbsd.h"
@@ -270,6 +270,9 @@ USB_ATTACH(ugen)
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
 			   USBDEV(sc->sc_dev));
+
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	USB_ATTACH_SUCCESS_RETURN;
 }
@@ -1008,6 +1011,7 @@ USB_DETACH(ugen)
 #endif
 
 	sc->sc_dying = 1;
+	pmf_device_deregister(self);
 	/* Abort all pipes.  Causes processes waiting for transfer to wake. */
 	for (i = 0; i < USB_MAX_ENDPOINTS; i++) {
 		for (dir = OUT; dir <= IN; dir++) {

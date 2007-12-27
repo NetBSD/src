@@ -1,4 +1,4 @@
-/* $NetBSD: lapic.c,v 1.25.2.2 2007/12/08 18:18:13 mjf Exp $ */
+/* $NetBSD: lapic.c,v 1.25.2.3 2007/12/27 00:43:27 mjf Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.25.2.2 2007/12/08 18:18:13 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.25.2.3 2007/12/27 00:43:27 mjf Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -136,6 +136,11 @@ void
 lapic_enable(void)
 {
 	i82489_writereg(LAPIC_SVR, LAPIC_SVR_ENABLE | LAPIC_SPURIOUS_VECTOR);
+}
+
+void
+lapic_suspend(void)
+{
 }
 
 void
@@ -304,7 +309,7 @@ lapic_clockintr(void *arg, struct intrframe *frame)
 		     last_tsc[X86_MAXPROCS],
 		     last_tscdelta[X86_MAXPROCS],
 	             last_factor[X86_MAXPROCS];
-#endif /* TIMECOUNTER_DEBUG && __HAVE_TIMECOUNTER */
+#endif /* TIMECOUNTER_DEBUG */
 	struct cpu_info *ci = curcpu();
 
 	ci->ci_lapic_counter += lapic_tval;
@@ -313,7 +318,6 @@ lapic_clockintr(void *arg, struct intrframe *frame)
 #if defined(TIMECOUNTER_DEBUG)
 	{
 		int cid = ci->ci_cpuid;
-		extern u_int i8254_get_timecount(struct timecounter *);
 		u_int c_count = i8254_get_timecount(NULL);
 		u_int c_tsc = cpu_counter32();
 		u_int delta, ddelta, tsc_delta, factor = 0;
@@ -374,12 +378,8 @@ lapic_clockintr(void *arg, struct intrframe *frame)
 	hardclock((struct clockframe *)frame);
 }
 
-#if !defined(__HAVE_TIMECOUNTER) && defined(NTP)
-extern int fixtick;
-#endif /* !__HAVE_TIMECOUNTER && NTP */
-
 void
-lapic_initclocks()
+lapic_initclocks(void)
 {
 	/*
 	 * Start local apic countdown timer running, in repeated mode.

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_machdep.c,v 1.12.2.1 2007/12/08 18:18:52 mjf Exp $ */
+/*	$NetBSD: linux32_machdep.c,v 1.12.2.2 2007/12/27 00:44:14 mjf Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -31,7 +31,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_machdep.c,v 1.12.2.1 2007/12/08 18:18:52 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_machdep.c,v 1.12.2.2 2007/12/27 00:44:14 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -344,12 +344,7 @@ linux32_setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 }
 
 static void
-linux32_save_ucontext(l, tf, mask, sas, uc)
-	struct lwp *l;
-	struct trapframe *tf;
-	const sigset_t *mask;
-	struct sigaltstack *sas;
-	struct linux32_ucontext *uc;
+linux32_save_ucontext(struct lwp *l, struct trapframe *tf, const sigset_t *mask, struct sigaltstack *sas, struct linux32_ucontext *uc)
 {
 	uc->uc_flags = 0;
 	NETBSD32PTR32(uc->uc_link, NULL);
@@ -397,14 +392,11 @@ linux32_save_sigcontext(l, tf, mask, sc)
 }
 
 int
-linux32_sys_sigreturn(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_sigreturn(struct lwp *l, const struct linux32_sys_sigreturn_args *uap, register_t *retval)
 {
-	struct linux32_sys_sigreturn_args /* {
+	/* {
 		syscallarg(linux32_sigcontextp_t) scp;
-	} */ *uap = v;
+	} */
 	struct linux32_sigcontext ctx;
 	int error;
 
@@ -415,14 +407,11 @@ linux32_sys_sigreturn(l, v, retval)
 }
 
 int
-linux32_sys_rt_sigreturn(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_rt_sigreturn(struct lwp *l, const struct linux32_sys_rt_sigreturn_args *uap, register_t *retval)
 {
-	struct linux32_sys_rt_sigreturn_args /* {
+	/* {
 		syscallarg(linux32_ucontextp_t) ucp;
-	} */ *uap = v;
+	} */
 	struct linux32_ucontext ctx;
 	int error;
 
