@@ -1,4 +1,4 @@
-/*	$NetBSD: level.c,v 1.7 2003/08/07 09:37:38 agc Exp $	*/
+/*	$NetBSD: level.c,v 1.8 2007/12/27 23:53:00 dholland Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)level.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: level.c,v 1.7 2003/08/07 09:37:38 agc Exp $");
+__RCSID("$NetBSD: level.c,v 1.8 2007/12/27 23:53:00 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -769,8 +769,8 @@ put_player(nr)
 	rn = get_room_number(rogue.row, rogue.col);
 	wake_room(rn, 1, rogue.row, rogue.col);
 	if (new_level_message) {
-		message(new_level_message, 0);
-		new_level_message = 0;
+		messagef(0, "%s", new_level_message);
+		new_level_message = NULL;
 	}
 	mvaddch(rogue.row, rogue.col, rogue.fchar);
 }
@@ -783,12 +783,12 @@ drop_check()
 	}
 	if (dungeon[rogue.row][rogue.col] & STAIRS) {
 		if (levitate) {
-			message("you're floating in the air!", 0);
+			messagef(0, "you're floating in the air!");
 			return(0);
 		}
 		return(1);
 	}
-	message("I see no way down", 0);
+	messagef(0, "I see no way down");
 	return(0);
 }
 
@@ -797,11 +797,11 @@ check_up()
 {
 	if (!wizard) {
 		if (!(dungeon[rogue.row][rogue.col] & STAIRS)) {
-			message("I see no way up", 0);
+			messagef(0, "I see no way up");
 			return(0);
 		}
 		if (!has_amulet()) {
-			message("your way is magically blocked", 0);
+			messagef(0, "your way is magically blocked");
 			return(0);
 		}
 	}
@@ -820,7 +820,6 @@ add_exp(e, promotion)
 	int e;
 	boolean promotion;
 {
-	char mbuf[40];
 	short new_exp;
 	short i, hp;
 
@@ -832,8 +831,7 @@ add_exp(e, promotion)
 			rogue.exp_points = MAX_EXP + 1;
 		}
 		for (i = rogue.exp+1; i <= new_exp; i++) {
-			sprintf(mbuf, "welcome to level %d", i);
-			message(mbuf, 0);
+			messagef(0, "welcome to level %d", i);
 			if (promotion) {
 				hp = hp_raise();
 				rogue.hp_current += hp;
@@ -873,7 +871,6 @@ hp_raise()
 void
 show_average_hp()
 {
-	char mbuf[80];
 	float real_average;
 	float effective_average;
 
@@ -885,9 +882,8 @@ show_average_hp()
 		effective_average = (float) (rogue.hp_max - INIT_HP) / (rogue.exp - 1);
 
 	}
-	sprintf(mbuf, "R-Hp: %.2f, E-Hp: %.2f (!: %d, V: %d)", real_average,
+	messagef(0, "R-Hp: %.2f, E-Hp: %.2f (!: %d, V: %d)", real_average,
 		effective_average, extra_hp, less_hp);
-	message(mbuf, 0);
 }
 
 void
