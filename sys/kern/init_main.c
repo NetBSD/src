@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.333 2007/12/26 16:01:35 ad Exp $	*/
+/*	$NetBSD: init_main.c,v 1.334 2007/12/27 13:34:43 elad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.333 2007/12/26 16:01:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.334 2007/12/27 13:34:43 elad Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_ntp.h"
@@ -169,9 +169,10 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.333 2007/12/26 16:01:35 ad Exp $");
 #include <sys/syscall.h>
 #include <sys/syscallargs.h>
 
-#if defined(PAX_MPROTECT) || defined(PAX_SEGVGUARD)
+#if defined(PAX_MPROTECT) || defined(PAX_SEGVGUARD) || defined(PAX_ASLR)
 #include <sys/pax.h>
-#endif /* PAX_MPROTECT || PAX_SEGVGUARD */
+#endif /* PAX_MPROTECT || PAX_SEGVGUARD || PAX_ASLR */
+
 #include <ufs/ufs/quota.h>
 
 #include <miscfs/genfs/genfs.h>
@@ -491,9 +492,9 @@ main(void)
 	veriexec_init();
 #endif /* NVERIEXEC > 0 */
 
-#if defined(PAX_MPROTECT) || defined(PAX_SEGVGUARD)
+#if defined(PAX_MPROTECT) || defined(PAX_SEGVGUARD) || defined(PAX_ASLR)
 	pax_init();
-#endif /* PAX_MPROTECT || PAX_SEGVGUARD */
+#endif /* PAX_MPROTECT || PAX_SEGVGUARD || PAX_ASLR */
 
 	/* Attach pseudo-devices. */
 	for (pdev = pdevinit; pdev->pdev_attach != NULL; pdev++)
