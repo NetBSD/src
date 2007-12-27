@@ -1,4 +1,4 @@
-/*	$NetBSD: rtas.c,v 1.3 2007/11/04 16:28:28 garbled Exp $ */
+/*	$NetBSD: rtas.c,v 1.4 2007/12/27 17:23:54 garbled Exp $ */
 
 /*
  * CHRP RTAS support routines
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtas.c,v 1.3 2007/11/04 16:28:28 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtas.c,v 1.4 2007/12/27 17:23:54 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -230,15 +230,18 @@ rtas_call(struct rtas_call *args) {
 void
 rtas_reboot(void)
 {
-	struct rtas_call rc;
+	static struct {
+		struct rtas_call rc;
+		int status;
+	} args;
 
 	if (!rtas_function_token[RTAS_FUNC_SYSTEM_REBOOT].exists)
 		return;
 
-	rc.token = rtas_function_token[RTAS_FUNC_SYSTEM_REBOOT].token;
-	rc.nargs = 0;
-	rc.nreturns = 0;
-	rtas_call(&rc);
+	args.rc.token = rtas_function_token[RTAS_FUNC_SYSTEM_REBOOT].token;
+	args.rc.nargs = 0;
+	args.rc.nreturns = 1;
+	rtas_call(&args.rc);
 }
 
 /*
