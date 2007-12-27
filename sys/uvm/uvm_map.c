@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.246.2.3 2007/12/26 21:40:05 ad Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.246.2.4 2007/12/27 16:21:45 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.246.2.3 2007/12/26 21:40:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.246.2.4 2007/12/27 16:21:45 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -534,7 +534,8 @@ vm_map_lock(struct vm_map *map)
 		KASSERT(map->busy != curlwp);
 		mutex_enter(&map->misc_lock);
 		rw_exit(&map->lock);
-		cv_wait(&map->cv, &map->misc_lock);
+		if (map->busy != NULL)
+			cv_wait(&map->cv, &map->misc_lock);
 		mutex_exit(&map->misc_lock);
 	}
 
@@ -574,6 +575,7 @@ vm_map_unlock(struct vm_map *map)
 		mutex_spin_exit(&map->mutex);
 	else {
 		KASSERT(rw_write_held(&map->lock));
+		KASSERT(map->busy == NULL);
 		rw_exit(&map->lock);
 	}
 }
@@ -617,8 +619,8 @@ vm_map_unbusy(struct vm_map *map)
 	 * o writers are blocked out with a read or write hold
 	 * o at any time, only one thread owns the set of values
 	 */
-	map->busy = NULL;
 	mutex_enter(&map->misc_lock);
+	map->busy = NULL;
 	cv_broadcast(&map->cv);
 	mutex_exit(&map->misc_lock);
 }
