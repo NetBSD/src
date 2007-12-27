@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.90 2007/12/26 16:01:37 ad Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.91 2007/12/27 15:25:22 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.90 2007/12/26 16:01:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.91 2007/12/27 15:25:22 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -815,7 +815,6 @@ pipe_direct_write(struct file *fp, struct pipe *wpipe, struct uio *uio)
 		if (wpipe->pipe_map.cnt == bcnt) {
 			wpipe->pipe_map.cnt = 0;
 			cv_broadcast(&wpipe->pipe_cv);
-			mutex_exit(wpipe->pipe_lock);
 			return (error);
 		}
 
