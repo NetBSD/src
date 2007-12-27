@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_subr.c,v 1.33.6.1 2007/12/04 13:03:06 ad Exp $	*/
+/*	$NetBSD: ntfs_subr.c,v 1.33.6.2 2007/12/27 01:39:57 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko (semenu@FreeBSD.org)
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.33.6.1 2007/12/04 13:03:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.33.6.2 2007/12/27 01:39:57 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -502,6 +502,7 @@ ntfs_ntput(ip)
 			ntfs_freentvattr(vap);
 		}
 		mutex_destroy(&ip->i_interlock);
+		lockdestroy(&ip->i_lock);
 		FREE(ip, M_NTFSNTNODE);
 	}
 }
