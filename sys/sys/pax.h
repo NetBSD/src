@@ -1,4 +1,4 @@
-/* $NetBSD: pax.h,v 1.10 2007/12/26 22:11:52 christos Exp $ */
+/* $NetBSD: pax.h,v 1.11 2007/12/27 15:21:53 elad Exp $ */
 
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -35,6 +35,15 @@
 struct lwp;
 struct exec_package;
 struct vmspace;
+
+#ifdef PAX_ASLR
+/*
+ * We stick this here because we need it in kern/exec_elf32.c for now.
+ */
+#ifndef PAX_ASLR_DELTA_EXEC_LEN
+#define	PAX_ASLR_DELTA_EXEC_LEN	12
+#endif
+#endif /* PAX_ASLR */
 
 void pax_init(void);
 void pax_adjust(struct lwp *, uint32_t);

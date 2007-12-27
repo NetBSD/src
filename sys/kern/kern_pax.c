@@ -1,4 +1,4 @@
-/* $NetBSD: kern_pax.c,v 1.18 2007/12/26 22:11:51 christos Exp $ */
+/* $NetBSD: kern_pax.c,v 1.19 2007/12/27 15:21:53 elad Exp $ */
 
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_pax.c,v 1.18 2007/12/26 22:11:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_pax.c,v 1.19 2007/12/27 15:21:53 elad Exp $");
 
 #include "opt_pax.h"
 
@@ -138,8 +138,10 @@ SYSCTL_SETUP(sysctl_security_pax_setup, "sysctl security.pax setup")
 		       NULL, 0, NULL, 0,
 		       CTL_CREATE, CTL_EOL);
 
-#ifdef PAX_MPROTECT
 	cnode = rnode;
+
+#ifdef PAX_MPROTECT
+	rnode = cnode;
 	sysctl_createv(clog, 0, &rnode, &rnode,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "mprotect",
@@ -230,6 +232,21 @@ SYSCTL_SETUP(sysctl_security_pax_setup, "sysctl security.pax setup")
 				    "mmap(2) calls."),
 		       NULL, PAX_ASLR_DELTA_MMAP_LEN, NULL, 0,
 		       CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, &rnode, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
+		       CTLTYPE_INT, "stack_len",
+		       SYSCTL_DESCR("Number of bits randomized for "
+				    "the stack."),
+		       NULL, PAX_ASLR_DELTA_STACK_LEN, NULL, 0,
+		       CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, &rnode, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
+		       CTLTYPE_INT, "exec_len",
+		       SYSCTL_DESCR("Number of bits randomized for "
+				    "the PIE exec base."),
+		       NULL, PAX_ASLR_DELTA_EXEC_LEN, NULL, 0,
+		       CTL_CREATE, CTL_EOL);
+
 #endif /* PAX_ASLR */
 }
 
