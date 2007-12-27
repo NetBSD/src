@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.89.4.1 2007/12/08 18:21:38 mjf Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.89.4.2 2007/12/27 00:46:48 mjf Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.89.4.1 2007/12/08 18:21:38 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.89.4.2 2007/12/27 00:46:48 mjf Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -164,8 +164,7 @@ ffs_update(struct vnode *vp, const struct timespec *acc,
  * disk blocks.
  */
 int
-ffs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred,
-    struct lwp *l)
+ffs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 {
 	daddr_t lastblock;
 	struct inode *oip = VTOI(ovp);
@@ -241,8 +240,7 @@ ffs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred,
 		uvm_vnp_setwritesize(ovp, length);
 		error = ufs_balloc_range(ovp, length - 1, 1, cred, aflag);
 		if (error) {
-			(void) ffs_truncate(ovp, osize, ioflag & IO_SYNC,
-			    cred, l);
+			(void) ffs_truncate(ovp, osize, ioflag & IO_SYNC, cred);
 			return (error);
 		}
 		uvm_vnp_setsize(ovp, length);
@@ -311,15 +309,17 @@ ffs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred,
 				genfs_node_unlock(ovp);
 				return (error);
 			}
+			mutex_enter(&ump->um_lock);
 			if (oip->i_flag & IN_SPACECOUNTED)
 				fs->fs_pendingblocks -= DIP(oip, blocks);
+			mutex_exit(&ump->um_lock);
 		} else {
 			uvm_vnp_setsize(ovp, length);
 #ifdef QUOTA
  			(void) chkdq(oip, -DIP(oip, blocks), NOCRED, 0);
 #endif
 			softdep_setup_freeblocks(oip, length, 0);
-			(void) vinvalbuf(ovp, 0, cred, l, 0, 0);
+			(void) vinvalbuf(ovp, 0, cred, curlwp, 0, 0);
 			genfs_node_unlock(ovp);
 			oip->i_flag |= IN_CHANGE | IN_UPDATE;
 			return (ffs_update(ovp, NULL, NULL, 0));

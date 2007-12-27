@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_hfs.c,v 1.5 2007/07/16 17:06:53 pooka Exp $	*/
+/*	$NetBSD: mount_hfs.c,v 1.5.6.1 2007/12/27 00:47:00 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@ __COPYRIGHT("@(#) Copyright (c) 2005 Yevgeny Binder\n\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: mount_hfs.c,v 1.5 2007/07/16 17:06:53 pooka Exp $");
+__RCSID("$NetBSD: mount_hfs.c,v 1.5.6.1 2007/12/27 00:47:00 mjf Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -87,24 +87,20 @@ static const struct mntopt mopts[] = {
 	MOPT_NULL,
 };
 
-int	main __P((int, char *[]));
-int	mount_hfs __P((int argc, char **argv));
-static void	usage __P((void));
+int	main(int, char *[]);
+int	mount_hfs(int argc, char **argv);
+static void	usage(void);
 
 #ifndef MOUNT_NOMAIN
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	return mount_hfs(argc, argv);
 }
 #endif
 
 int
-mount_hfs(argc, argv)
-	int argc;
-	char *argv[];
+mount_hfs(int argc, char *argv[])
 {
 	struct hfs_args args;
 	mntoptparse_t optparse;
@@ -144,7 +140,7 @@ mount_hfs(argc, argv)
 }
 
 static void
-usage()
+usage(void)
 {
 	(void)fprintf(stderr, "usage: mount_hfs [-o options] special node\n");
 	exit(1);

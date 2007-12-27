@@ -1,7 +1,7 @@
-# $NetBSD: GENERIC,v 1.172.2.2 2007/12/08 18:16:26 mjf Exp $
+# $NetBSD: GENERIC,v 1.172.2.3 2007/12/27 00:42:52 mjf Exp $
 #
 # GENERIC machine description file
-# 
+#
 # This machine description file is used to generate the default NetBSD
 # kernel.  The generic kernel does not include all options, subsystems
 # and device drivers, but should be useful for most applications.
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.172.2.2 $"
+#ident 		"GENERIC-$Revision: 1.172.2.3 $"
 
 maxusers	32		# estimated number of users
 
@@ -60,7 +60,7 @@ options 	SYSVSHM		# System V-like memory sharing
 options 	P1003_1B_SEMAPHORE	# p1003.1b semaphore support
 
 options 	LKM		# loadable kernel modules
-
+options		MULTIPROCESSOR	# SMP
 options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
@@ -75,7 +75,7 @@ options 	POWERNOW_K8
 # Intel(R) On Demand Clock Modulation (aka ODCM)
 # options       INTEL_ONDEMAND_CLOCKMOD
 
-# Enable experimental buffer queue strategy for better responsiveness under 
+# Enable experimental buffer queue strategy for better responsiveness under
 # high disk I/O load. Use it with caution - it's not proven to be stable yet.
 #options 	BUFQ_READPRIO
 #options 	BUFQ_PRIOCSCAN
@@ -111,8 +111,8 @@ options 	COMPAT_43	# and 4.3BSD
 
 options 	COMPAT_OSSAUDIO
 options 	COMPAT_NETBSD32
-#options 	COMPAT_LINUX
-#options 	COMPAT_LINUX32	# req. COMPAT_LINUX and COMPAT_NETBSD32
+options 	COMPAT_LINUX
+options 	COMPAT_LINUX32	# req. COMPAT_LINUX and COMPAT_NETBSD32
 options 	EXEC_ELF32
 options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
@@ -245,7 +245,7 @@ mainbus0 at root
 # ACPI will be used if present. If not it will fall back to MPBIOS
 acpi0 		at mainbus0
 options 	ACPI_SCANPCI		# find PCI roots using ACPI
-options 	MPBIOS			# configure CPUs and APICs using MPBIOS 
+options 	MPBIOS			# configure CPUs and APICs using MPBIOS
 options 	MPBIOS_SCANPCI		# MPBIOS configures PCI roots
 #options 	PCI_INTR_FIXUP		# PCI interrupt routing via ACPI
 #options 	ACPI_ACTIVATE_DEV	# If set, activate inactive devices
@@ -255,12 +255,15 @@ options 	MPBIOS_SCANPCI		# MPBIOS configures PCI roots
 acpiacad* 	at acpi?		# ACPI AC Adapter
 acpibat* 	at acpi?		# ACPI Battery
 acpibut* 	at acpi?		# ACPI Button
-acpiec* 	at acpi?		# ACPI Embedded Controller
+# The ACPI Embedded Controller is generally configured via the special ECDT.
+# This is required as parts of the DSDT can reference the EC before the normal
+# attach phase.
+acpiec* 	at acpi?		# ACPI Embedded Controller (late binding)
+acpiecdt* 	at acpi?		# ACPI Embedded Controller (early binding)
 acpilid* 	at acpi?		# ACPI Lid Switch
 acpitz* 	at acpi?		# ACPI Thermal Zone
 
 # Mainboard devices
-apm*		at acpi?		# ACPI apm emulation
 aiboost* 	at acpi?		# ASUS AI Booster Hardware monitor
 attimer*	at acpi?		# AT Timer
 #com* 		at acpi?		# Serial communications interface
@@ -271,6 +274,8 @@ joy*		at acpi?		# Joystick/Game port
 mpu*		at acpi?		# Roland MPU-401 MIDI UART
 pckbc*  	at acpi?		# PC keyboard controller
 pcppi*  	at acpi?                # AT-style speaker sound
+sony*		at acpi?		# Sony Notebook Controller
+thinkpad*	at acpi?		# IBM/Lenovo Thinkpad hotkeys
 ug* 		at acpi?		# Abit uGuru Hardware monitor
 wss* 		at acpi?		# NeoMagic 256AV in wss mode
 
@@ -550,8 +555,8 @@ wd*	at atabus? drive ? flags 0x0000
 atapibus* at atapi?
 
 
-# ATA RAID configuration support, as found on some Promise controllers.  
-pseudo-device ataraid  
+# ATA RAID configuration support, as found on some Promise controllers.
+pseudo-device ataraid
 ld*     at ataraid? vendtype ? unit ?
 
 # ATAPI devices
@@ -850,8 +855,8 @@ ucom*	at ugensa?
 
 # PCI IEEE1394 controllers
 fwohci*	at pci? dev ? function ?	# IEEE1394 Open Host Controller
- 
-# CardBus IEEE1394 controllers 
+
+# CardBus IEEE1394 controllers
 fwohci*	at cardbus? function ?		# IEEE1394 Open Host Controller
 
 ieee1394if* at fwohci?
@@ -1034,6 +1039,9 @@ pseudo-device	wsfont
 
 # pseudo audio device driver
 pseudo-device	pad
+
+# userland interface to drivers, including autoconf and properties retrieval
+pseudo-device	drvctl
 
 options 	FILEASSOC		# fileassoc(9) - required for Veriexec
 

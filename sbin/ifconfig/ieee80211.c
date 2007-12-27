@@ -1,4 +1,3 @@
-/*	$NetBSD: ieee80211.c,v 1.10 2007/01/09 09:25:56 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ieee80211.c,v 1.10 2007/01/09 09:25:56 dyoung Exp $");
+__RCSID("$NetBSD: ieee80211.c,v 1.10.6.1 2007/12/27 00:46:58 mjf Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -41,21 +40,54 @@ __RCSID("$NetBSD: ieee80211.c,v 1.10 2007/01/09 09:25:56 dyoung Exp $");
 #include <net/if.h> 
 #include <net/if_ether.h>
 #include <net/if_media.h>
+#include <net/route.h>
 #include <net80211/ieee80211.h>
 #include <net80211/ieee80211_ioctl.h>
+#include <net80211/ieee80211_netbsd.h>
 
 #include <ctype.h>
 #include <err.h>
 #include <netdb.h>
 #include <string.h>
+#include <stddef.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <unistd.h>
 #include <util.h>
 
 #include "extern.h"
 #include "ieee80211.h"
 
-static void set80211(int, int, int, uint8_t *);
+static void set80211(int, int, int, u_int8_t *);
+static u_int ieee80211_mhz2ieee(u_int, u_int);
+static int getmaxrate(const uint8_t [15], u_int8_t);
+static const char * getcaps(int);
+static void printie(const char*, const uint8_t *, size_t, int);
+static int copy_essid(char [], size_t, const u_int8_t *, size_t);
+static void scan_and_wait(void);
+static void list_scan(void);
+static int mappsb(u_int , u_int);
+static int mapgsm(u_int , u_int);
+
+static void printies(const u_int8_t *, int, int);
+static void printie(const char* , const uint8_t *, size_t , int);
+static void printwmeparam(const char *, const u_int8_t *, size_t , int);
+static void printwmeinfo(const char *, const u_int8_t *, size_t , int);
+static const char * wpa_cipher(const u_int8_t *);
+static const char * wpa_keymgmt(const u_int8_t *);
+static void printwpaie(const char *, const u_int8_t *, size_t , int);
+static const char * rsn_cipher(const u_int8_t *);
+static const char * rsn_keymgmt(const u_int8_t *);
+static void printrsnie(const char *, const u_int8_t *, size_t , int);
+static void printssid(const char *, const u_int8_t *, size_t , int);
+static void printrates(const char *, const u_int8_t *, size_t , int);
+static void printcountry(const char *, const u_int8_t *, size_t , int);
+static int iswpaoui(const u_int8_t *);
+static int iswmeinfo(const u_int8_t *);
+static int iswmeparam(const u_int8_t *);
+static const char * iename(int);
+
+extern int vflag;
 
 static void
 set80211(int type, int val, int len, u_int8_t *data)
@@ -158,7 +190,7 @@ setiffrag(const char *val, int d)
 		}
 	}
 
-	(void)strncpy(ireq.i_name, name, sizeof(ireq.i_name));
+	estrlcpy(ireq.i_name, name, sizeof(ireq.i_name));
 	ireq.i_type = IEEE80211_IOC_FRAGTHRESHOLD;
 	ireq.i_val = thr;
 	if (ioctl(s, SIOCS80211, &ireq) == -1)
@@ -272,6 +304,18 @@ setifpowersavesleep(const char *val, int d)
 	power.i_maxsleep = atoi(val);
 	if (ioctl(s, SIOCS80211POWER, &power) == -1)
 		err(EXIT_FAILURE, "SIOCS80211POWER");
+}
+
+void
+setiflist(const char *val, int dummy)
+{
+	if (strncasecmp("scan", val, 4) == 0) {
+		/* Get list of pre-scanned stations. */
+		scan_and_wait();
+		list_scan();
+	}
+	else
+		errx(EXIT_FAILURE, "Don't know how to list %s for %s", val, name);
 }
 
 void
@@ -395,7 +439,6 @@ ieee80211_status(void)
 	struct ether_addr ea;
 	static const u_int8_t zero_macaddr[IEEE80211_ADDR_LEN];
 	enum ieee80211_opmode opmode = get80211opmode();
-	extern int vflag;
 
 	memset(&ifr, 0, sizeof(ifr));
 	ifr.ifr_data = (void *)&nwid;
@@ -522,4 +565,619 @@ ieee80211_status(void)
 			printf(" chan %d", channel.i_channel);
 		printf("\n");
 	}
+}
+
+static void
+scan_and_wait(void)
+{
+	struct ieee80211req ireq;
+	int sroute;
+
+	sroute = socket(PF_ROUTE, SOCK_RAW, 0);
+	if (sroute < 0) {
+		perror("socket(PF_ROUTE,SOCK_RAW)");
+		return;
+	}
+	(void) memset(&ireq, 0, sizeof(ireq));
+	estrlcpy(ireq.i_name, name, sizeof(ireq.i_name));
+	ireq.i_type = IEEE80211_IOC_SCAN_REQ;
+	/* NB: only root can trigger a scan so ignore errors */
+	if (ioctl(s, SIOCS80211, &ireq) >= 0) {
+		char buf[2048];
+		struct if_announcemsghdr *ifan;
+		struct rt_msghdr *rtm;
+
+		do {
+			if (read(sroute, buf, sizeof(buf)) < 0) {
+				perror("read(PF_ROUTE)");
+				break;
+			}
+			rtm = (struct rt_msghdr *) buf;
+			if (rtm->rtm_version != RTM_VERSION)
+				break;
+			ifan = (struct if_announcemsghdr *) rtm;
+		} while (rtm->rtm_type != RTM_IEEE80211 ||
+		    ifan->ifan_what != RTM_IEEE80211_SCAN);
+	}
+	close(sroute);
+}
+
+static void
+list_scan(void)
+{
+	u_int8_t buf[24*1024];
+	struct ieee80211req ireq;
+	char ssid[IEEE80211_NWID_LEN+1];
+	const u_int8_t *cp;
+	int len, ssidmax;
+
+	(void) memset(&ireq, 0, sizeof(ireq));
+	estrlcpy(ireq.i_name, name, sizeof(ireq.i_name));
+	ireq.i_type = IEEE80211_IOC_SCAN_RESULTS;
+	ireq.i_data = buf;
+	ireq.i_len = sizeof(buf);
+	if (ioctl(s, SIOCG80211, &ireq) < 0)
+		errx(1, "unable to get scan results");
+	len = ireq.i_len;
+	if (len < sizeof(struct ieee80211req_scan_result))
+		return;
+
+	ssidmax = IEEE80211_NWID_LEN;
+	printf("%-*.*s  %-17.17s  %4s %4s  %-7s %3s %4s\n"
+		, ssidmax, ssidmax, "SSID"
+		, "BSSID"
+		, "CHAN"
+		, "RATE"
+		, "S:N"
+		, "INT"
+		, "CAPS"
+	);
+	cp = buf;
+	do {
+		const struct ieee80211req_scan_result *sr;
+		const uint8_t *vp;
+
+		sr = (const struct ieee80211req_scan_result *) cp;
+		vp = (const u_int8_t *)(sr+1);
+		printf("%-*.*s  %s  %3d  %3dM %3d:%-3d  %3d %-4.4s"
+			, ssidmax
+			  , copy_essid(ssid, ssidmax, vp, sr->isr_ssid_len)
+			  , ssid
+			, ether_ntoa((const struct ether_addr *) sr->isr_bssid)
+			, ieee80211_mhz2ieee(sr->isr_freq, sr->isr_flags)
+			, getmaxrate(sr->isr_rates, sr->isr_nrates)
+			, sr->isr_rssi, sr->isr_noise
+			, sr->isr_intval
+			, getcaps(sr->isr_capinfo)
+		);
+		printies(vp + sr->isr_ssid_len, sr->isr_ie_len, 24);;
+		printf("\n");
+		cp += sr->isr_len, len -= sr->isr_len;
+	} while (len >= sizeof(struct ieee80211req_scan_result));
+}
+/*
+ * Convert MHz frequency to IEEE channel number.
+ */
+static u_int
+ieee80211_mhz2ieee(u_int isrfreq, u_int isrflags)
+{
+	if ((isrflags & IEEE80211_CHAN_GSM) || (907 <= isrfreq && isrfreq <= 922))
+		return mapgsm(isrfreq, isrflags);
+	if (isrfreq == 2484)
+		return 14;
+	if (isrfreq < 2484)
+		return (isrfreq - 2407) / 5;
+	if (isrfreq < 5000) {
+		if (isrflags & (IEEE80211_CHAN_HALF|IEEE80211_CHAN_QUARTER))
+			return mappsb(isrfreq, isrflags);
+		else if (isrfreq > 4900)
+			return (isrfreq - 4000) / 5;
+		else
+			return 15 + ((isrfreq - 2512) / 20);
+	}
+	return (isrfreq - 5000) / 5;
+}
+
+static int
+getmaxrate(const u_int8_t rates[15], u_int8_t nrates)
+{
+	int i, maxrate = -1;
+
+	for (i = 0; i < nrates; i++) {
+		int rate = rates[i] & IEEE80211_RATE_VAL;
+		if (rate > maxrate)
+			maxrate = rate;
+	}
+	return maxrate / 2;
+}
+
+static const char *
+getcaps(int capinfo)
+{
+	static char capstring[32];
+	char *cp = capstring;
+
+	if (capinfo & IEEE80211_CAPINFO_ESS)
+		*cp++ = 'E';
+	if (capinfo & IEEE80211_CAPINFO_IBSS)
+		*cp++ = 'I';
+	if (capinfo & IEEE80211_CAPINFO_CF_POLLABLE)
+		*cp++ = 'c';
+	if (capinfo & IEEE80211_CAPINFO_CF_POLLREQ)
+		*cp++ = 'C';
+	if (capinfo & IEEE80211_CAPINFO_PRIVACY)
+		*cp++ = 'P';
+	if (capinfo & IEEE80211_CAPINFO_SHORT_PREAMBLE)
+		*cp++ = 'S';
+	if (capinfo & IEEE80211_CAPINFO_PBCC)
+		*cp++ = 'B';
+	if (capinfo & IEEE80211_CAPINFO_CHNL_AGILITY)
+		*cp++ = 'A';
+	if (capinfo & IEEE80211_CAPINFO_SHORT_SLOTTIME)
+		*cp++ = 's';
+	if (capinfo & IEEE80211_CAPINFO_RSN)
+		*cp++ = 'R';
+	if (capinfo & IEEE80211_CAPINFO_DSSSOFDM)
+		*cp++ = 'D';
+	*cp = '\0';
+	return capstring;
+}
+
+static void
+printie(const char* tag, const uint8_t *ie, size_t ielen, int maxlen)
+{
+	printf("%s", tag);
+
+	maxlen -= strlen(tag)+2;
+	if (2*ielen > maxlen)
+		maxlen--;
+	printf("<");
+	for (; ielen > 0; ie++, ielen--) {
+		if (maxlen-- <= 0)
+			break;
+		printf("%02x", *ie);
+	}
+	if (ielen != 0)
+		printf("-");
+	printf(">");
+}
+
+#define LE_READ_2(p)					\
+	((u_int16_t)					\
+	 ((((const u_int8_t *)(p))[0]      ) |		\
+	  (((const u_int8_t *)(p))[1] <<  8)))
+#define LE_READ_4(p)					\
+	((u_int32_t)					\
+	 ((((const u_int8_t *)(p))[0]      ) |		\
+	  (((const u_int8_t *)(p))[1] <<  8) |		\
+	  (((const u_int8_t *)(p))[2] << 16) |		\
+	  (((const u_int8_t *)(p))[3] << 24)))
+
+/*
+ * NB: The decoding routines assume a properly formatted ie
+ *     which should be safe as the kernel only retains them
+ *     if they parse ok.
+ */
+
+static void
+printwmeparam(const char *tag, const u_int8_t *ie, size_t ielen, int maxlen)
+{
+#define	MS(_v, _f)	(((_v) & _f) >> _f##_S)
+	static const char *acnames[] = { "BE", "BK", "VO", "VI" };
+	const struct ieee80211_wme_param *wme =
+	    (const struct ieee80211_wme_param *) ie;
+	int i;
+
+	printf("%s", tag);
+	if (!vflag)
+		return;
+	printf("<qosinfo 0x%x", wme->param_qosInfo);
+	ie += offsetof(struct ieee80211_wme_param, params_acParams);
+	for (i = 0; i < WME_NUM_AC; i++) {
+		const struct ieee80211_wme_acparams *ac =
+		    &wme->params_acParams[i];
+
+		printf(" %s[%saifsn %u cwmin %u cwmax %u txop %u]"
+			, acnames[i]
+			, MS(ac->acp_aci_aifsn, WME_PARAM_ACM) ? "acm " : ""
+			, MS(ac->acp_aci_aifsn, WME_PARAM_AIFSN)
+			, MS(ac->acp_logcwminmax, WME_PARAM_LOGCWMIN)
+			, MS(ac->acp_logcwminmax, WME_PARAM_LOGCWMAX)
+			, LE_READ_2(&ac->acp_txop)
+		);
+	}
+	printf(">");
+#undef MS
+}
+
+static void
+printwmeinfo(const char *tag, const u_int8_t *ie, size_t ielen, int maxlen)
+{
+	printf("%s", tag);
+	if (vflag) {
+		const struct ieee80211_wme_info *wme =
+		    (const struct ieee80211_wme_info *) ie;
+		printf("<version 0x%x info 0x%x>",
+		    wme->wme_version, wme->wme_info);
+	}
+}
+
+static const char *
+wpa_cipher(const u_int8_t *sel)
+{
+#define	WPA_SEL(x)	(((x)<<24)|WPA_OUI)
+	u_int32_t w = LE_READ_4(sel);
+
+	switch (w) {
+	case WPA_SEL(WPA_CSE_NULL):
+		return "NONE";
+	case WPA_SEL(WPA_CSE_WEP40):
+		return "WEP40";
+	case WPA_SEL(WPA_CSE_WEP104):
+		return "WEP104";
+	case WPA_SEL(WPA_CSE_TKIP):
+		return "TKIP";
+	case WPA_SEL(WPA_CSE_CCMP):
+		return "AES-CCMP";
+	}
+	return "?";		/* NB: so 1<< is discarded */
+#undef WPA_SEL
+}
+
+static const char *
+wpa_keymgmt(const u_int8_t *sel)
+{
+#define	WPA_SEL(x)	(((x)<<24)|WPA_OUI)
+	u_int32_t w = LE_READ_4(sel);
+
+	switch (w) {
+	case WPA_SEL(WPA_ASE_8021X_UNSPEC):
+		return "8021X-UNSPEC";
+	case WPA_SEL(WPA_ASE_8021X_PSK):
+		return "8021X-PSK";
+	case WPA_SEL(WPA_ASE_NONE):
+		return "NONE";
+	}
+	return "?";
+#undef WPA_SEL
+}
+
+static void
+printwpaie(const char *tag, const u_int8_t *ie, size_t ielen, int maxlen)
+{
+	u_int8_t len = ie[1];
+
+	printf("%s", tag);
+	if (vflag) {
+		const char *sep;
+		int n;
+
+		ie += 6, len -= 4;		/* NB: len is payload only */
+
+		printf("<v%u", LE_READ_2(ie));
+		ie += 2, len -= 2;
+
+		printf(" mc:%s", wpa_cipher(ie));
+		ie += 4, len -= 4;
+
+		/* unicast ciphers */
+		n = LE_READ_2(ie);
+		ie += 2, len -= 2;
+		sep = " uc:";
+		for (; n > 0; n--) {
+			printf("%s%s", sep, wpa_cipher(ie));
+			ie += 4, len -= 4;
+			sep = "+";
+		}
+
+		/* key management algorithms */
+		n = LE_READ_2(ie);
+		ie += 2, len -= 2;
+		sep = " km:";
+		for (; n > 0; n--) {
+			printf("%s%s", sep, wpa_keymgmt(ie));
+			ie += 4, len -= 4;
+			sep = "+";
+		}
+
+		if (len > 2)		/* optional capabilities */
+			printf(", caps 0x%x", LE_READ_2(ie));
+		printf(">");
+	}
+}
+
+static const char *
+rsn_cipher(const u_int8_t *sel)
+{
+#define	RSN_SEL(x)	(((x)<<24)|RSN_OUI)
+	u_int32_t w = LE_READ_4(sel);
+
+	switch (w) {
+	case RSN_SEL(RSN_CSE_NULL):
+		return "NONE";
+	case RSN_SEL(RSN_CSE_WEP40):
+		return "WEP40";
+	case RSN_SEL(RSN_CSE_WEP104):
+		return "WEP104";
+	case RSN_SEL(RSN_CSE_TKIP):
+		return "TKIP";
+	case RSN_SEL(RSN_CSE_CCMP):
+		return "AES-CCMP";
+	case RSN_SEL(RSN_CSE_WRAP):
+		return "AES-OCB";
+	}
+	return "?";
+#undef WPA_SEL
+}
+
+static const char *
+rsn_keymgmt(const u_int8_t *sel)
+{
+#define	RSN_SEL(x)	(((x)<<24)|RSN_OUI)
+	u_int32_t w = LE_READ_4(sel);
+
+	switch (w) {
+	case RSN_SEL(RSN_ASE_8021X_UNSPEC):
+		return "8021X-UNSPEC";
+	case RSN_SEL(RSN_ASE_8021X_PSK):
+		return "8021X-PSK";
+	case RSN_SEL(RSN_ASE_NONE):
+		return "NONE";
+	}
+	return "?";
+#undef RSN_SEL
+}
+
+static void
+printrsnie(const char *tag, const u_int8_t *ie, size_t ielen, int maxlen)
+{
+	printf("%s", tag);
+	if (vflag) {
+		const char *sep;
+		int n;
+
+		ie += 2, ielen -= 2;
+
+		printf("<v%u", LE_READ_2(ie));
+		ie += 2, ielen -= 2;
+
+		printf(" mc:%s", rsn_cipher(ie));
+		ie += 4, ielen -= 4;
+
+		/* unicast ciphers */
+		n = LE_READ_2(ie);
+		ie += 2, ielen -= 2;
+		sep = " uc:";
+		for (; n > 0; n--) {
+			printf("%s%s", sep, rsn_cipher(ie));
+			ie += 4, ielen -= 4;
+			sep = "+";
+		}
+
+		/* key management algorithms */
+		n = LE_READ_2(ie);
+		ie += 2, ielen -= 2;
+		sep = " km:";
+		for (; n > 0; n--) {
+			printf("%s%s", sep, rsn_keymgmt(ie));
+			ie += 4, ielen -= 4;
+			sep = "+";
+		}
+
+		if (ielen > 2)		/* optional capabilities */
+			printf(", caps 0x%x", LE_READ_2(ie));
+		/* XXXPMKID */
+		printf(">");
+	}
+}
+
+/*
+ * Copy the ssid string contents into buf, truncating to fit.  If the
+ * ssid is entirely printable then just copy intact.  Otherwise convert
+ * to hexadecimal.  If the result is truncated then replace the last
+ * three characters with "...".
+ */
+static int
+copy_essid(char buf[], size_t bufsize, const u_int8_t *essid, size_t essid_len)
+{
+	const u_int8_t *p; 
+	size_t maxlen;
+	int i;
+
+	if (essid_len > bufsize)
+		maxlen = bufsize;
+	else
+		maxlen = essid_len;
+	/* determine printable or not */
+	for (i = 0, p = essid; i < maxlen; i++, p++) {
+		if (*p < ' ' || *p > 0x7e)
+			break;
+	}
+	if (i != maxlen) {		/* not printable, print as hex */
+		if (bufsize < 3)
+			return 0;
+		strlcpy(buf, "0x", bufsize);
+		bufsize -= 2;
+		p = essid;
+		for (i = 0; i < maxlen && bufsize >= 2; i++) {
+			sprintf(&buf[2+2*i], "%02x", p[i]);
+			bufsize -= 2;
+		}
+		if (i != essid_len)
+			memcpy(&buf[2+2*i-3], "...", 3);
+	} else {			/* printable, truncate as needed */
+		memcpy(buf, essid, maxlen);
+		if (maxlen != essid_len)
+			memcpy(&buf[maxlen-3], "...", 3);
+	}
+	return maxlen;
+}
+
+static void
+printssid(const char *tag, const u_int8_t *ie, size_t ielen, int maxlen)
+{
+	char ssid[2*IEEE80211_NWID_LEN+1];
+
+	printf("%s<%.*s>", tag, copy_essid(ssid, maxlen, ie+2, ie[1]), ssid);
+}
+
+static void
+printrates(const char *tag, const u_int8_t *ie, size_t ielen, int maxlen)
+{
+	const char *sep;
+	int i;
+
+	printf("%s", tag);
+	sep = "<";
+	for (i = 2; i < ielen; i++) {
+		printf("%s%s%d", sep,
+		    ie[i] & IEEE80211_RATE_BASIC ? "B" : "",
+		    ie[i] & IEEE80211_RATE_VAL);
+		sep = ",";
+	}
+	printf(">");
+}
+
+static void
+printcountry(const char *tag, const u_int8_t *ie, size_t ielen, int maxlen)
+{
+	const struct ieee80211_country_ie *cie =
+	   (const struct ieee80211_country_ie *) ie;
+	int i, nbands, schan, nchan;
+
+	printf("%s<%c%c%c", tag, cie->cc[0], cie->cc[1], cie->cc[2]);
+	nbands = (cie->len - 3) / sizeof(cie->band[0]);
+	for (i = 0; i < nbands; i++) {
+		schan = cie->band[i].schan;
+		nchan = cie->band[i].nchan;
+		if (nchan != 1)
+			printf(" %u-%u,%u", schan, schan + nchan-1,
+			    cie->band[i].maxtxpwr);
+		else
+			printf(" %u,%u", schan, cie->band[i].maxtxpwr);
+	}
+	printf(">");
+}
+
+/* unaligned little endian access */     
+#define LE_READ_4(p)					\
+	((u_int32_t)					\
+	 ((((const u_int8_t *)(p))[0]      ) |		\
+	  (((const u_int8_t *)(p))[1] <<  8) |		\
+	  (((const u_int8_t *)(p))[2] << 16) |		\
+	  (((const u_int8_t *)(p))[3] << 24)))
+
+static int 
+iswpaoui(const u_int8_t *frm)
+{
+	return frm[1] > 3 && LE_READ_4(frm+2) == ((WPA_OUI_TYPE<<24)|WPA_OUI);
+}
+
+static int 
+iswmeinfo(const u_int8_t *frm)
+{
+	return frm[1] > 5 && LE_READ_4(frm+2) == ((WME_OUI_TYPE<<24)|WME_OUI) &&
+		frm[6] == WME_INFO_OUI_SUBTYPE;
+}
+
+static int
+iswmeparam(const u_int8_t *frm)
+{
+	return frm[1] > 5 && LE_READ_4(frm+2) == ((WME_OUI_TYPE<<24)|WME_OUI) &&
+		frm[6] == WME_PARAM_OUI_SUBTYPE;
+}
+
+static const char *
+iename(int elemid)
+{
+	switch (elemid) {
+	case IEEE80211_ELEMID_FHPARMS:	return " FHPARMS";
+	case IEEE80211_ELEMID_CFPARMS:	return " CFPARMS";
+	case IEEE80211_ELEMID_TIM:	return " TIM";
+	case IEEE80211_ELEMID_IBSSPARMS:return " IBSSPARMS";
+	case IEEE80211_ELEMID_CHALLENGE:return " CHALLENGE";
+	case IEEE80211_ELEMID_PWRCNSTR:	return " PWRCNSTR";
+	case IEEE80211_ELEMID_PWRCAP:	return " PWRCAP";
+	case IEEE80211_ELEMID_TPCREQ:	return " TPCREQ";
+	case IEEE80211_ELEMID_TPCREP:	return " TPCREP";
+	case IEEE80211_ELEMID_SUPPCHAN:	return " SUPPCHAN";
+	case IEEE80211_ELEMID_CHANSWITCHANN:return " CSA";
+	case IEEE80211_ELEMID_MEASREQ:	return " MEASREQ";
+	case IEEE80211_ELEMID_MEASREP:	return " MEASREP";
+	case IEEE80211_ELEMID_QUIET:	return " QUIET";
+	case IEEE80211_ELEMID_IBSSDFS:	return " IBSSDFS";
+	case IEEE80211_ELEMID_TPC:	return " TPC";
+	case IEEE80211_ELEMID_CCKM:	return " CCKM";
+	}
+	return " ???";
+}
+
+static void
+printies(const u_int8_t *vp, int ielen, int maxcols)
+{
+	while (ielen > 0) {
+		switch (vp[0]) {
+		case IEEE80211_ELEMID_SSID:
+			if (vflag)
+				printssid(" SSID", vp, 2+vp[1], maxcols);
+			break;
+		case IEEE80211_ELEMID_RATES:
+		case IEEE80211_ELEMID_XRATES:
+			if (vflag)
+				printrates(vp[0] == IEEE80211_ELEMID_RATES ?
+				    " RATES" : " XRATES", vp, 2+vp[1], maxcols);
+			break;
+		case IEEE80211_ELEMID_DSPARMS:
+			if (vflag)
+				printf(" DSPARMS<%u>", vp[2]);
+			break;
+		case IEEE80211_ELEMID_COUNTRY:
+			if (vflag)
+				printcountry(" COUNTRY", vp, 2+vp[1], maxcols);
+			break;
+		case IEEE80211_ELEMID_ERP:
+			if (vflag)
+				printf(" ERP<0x%x>", vp[2]);
+			break;
+		case IEEE80211_ELEMID_VENDOR:
+			if (iswpaoui(vp))
+				printwpaie(" WPA", vp, 2+vp[1], maxcols);
+			else if (iswmeinfo(vp))
+				printwmeinfo(" WME", vp, 2+vp[1], maxcols);
+			else if (iswmeparam(vp))
+				printwmeparam(" WME", vp, 2+vp[1], maxcols);
+			else if (vflag)
+				printie(" VEN", vp, 2+vp[1], maxcols);
+			break;
+		case IEEE80211_ELEMID_RSN:
+			printrsnie(" RSN", vp, 2+vp[1], maxcols);
+			break;
+		default:
+			if (vflag)
+				printie(iename(vp[0]), vp, 2+vp[1], maxcols);
+			break;
+		}
+		ielen -= 2+vp[1];
+		vp += 2+vp[1];
+	}
+}
+
+static int
+mapgsm(u_int isrfreq, u_int isrflags)
+{
+	isrfreq *= 10;
+	if (isrflags & IEEE80211_CHAN_QUARTER)
+		isrfreq += 5;
+	else if (isrflags & IEEE80211_CHAN_HALF)
+		isrfreq += 10;
+	else
+		isrfreq += 20;
+	/* NB: there is no 907/20 wide but leave room */
+	return (isrfreq - 906*10) / 5;
+}
+
+static int
+mappsb(u_int isrfreq, u_int isrflags)
+{
+	return 37 + ((isrfreq * 10) + ((isrfreq % 5) == 2 ? 5 : 0) - 49400) / 5;
 }

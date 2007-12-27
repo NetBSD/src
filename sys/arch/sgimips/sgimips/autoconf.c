@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.38.2.1 2007/12/08 18:17:47 mjf Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.38.2.2 2007/12/27 00:43:19 mjf Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.38.2.1 2007/12/08 18:17:47 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.38.2.2 2007/12/27 00:43:19 mjf Exp $");
 
 #include "opt_ddb.h"
 
@@ -194,9 +194,9 @@ device_register(struct device *dev, void *aux)
 			}
 
 			if (prop_dictionary_set_bool(device_properties(dev),
-			    "override_ultra", true) == false) {
+			    "aic7xxx-override-ultra", true) == false) {
 				printf("WARNING: unable to set "
-				    "override_ultra property for %s\n",
+				    "aic7xxx-override-ultra property for %s\n",
 				    dev->dv_xname);
 			}
 		}

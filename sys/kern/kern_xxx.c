@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_xxx.c,v 1.65.26.1 2007/11/19 00:48:46 mjf Exp $	*/
+/*	$NetBSD: kern_xxx.c,v 1.65.26.2 2007/12/27 00:46:05 mjf Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_xxx.c,v 1.65.26.1 2007/11/19 00:48:46 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_xxx.c,v 1.65.26.2 2007/12/27 00:46:05 mjf Exp $");
 
 #include "opt_syscall_debug.h"
 
@@ -50,12 +50,12 @@ __KERNEL_RCSID(0, "$NetBSD: kern_xxx.c,v 1.65.26.1 2007/11/19 00:48:46 mjf Exp $
 
 /* ARGSUSED */
 int
-sys_reboot(struct lwp *l, void *v, register_t *retval)
+sys_reboot(struct lwp *l, const struct sys_reboot_args *uap, register_t *retval)
 {
-	struct sys_reboot_args /* {
+	/* {
 		syscallarg(int) opt;
 		syscallarg(char *) bootstr;
-	} */ *uap = v;
+	} */
 	int error;
 	char *bootstr, bs[128];
 

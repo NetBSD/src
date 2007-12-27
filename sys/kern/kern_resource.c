@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.123.4.2 2007/12/08 18:20:30 mjf Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.123.4.3 2007/12/27 00:46:01 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.123.4.2 2007/12/08 18:20:30 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.123.4.3 2007/12/27 00:46:01 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.123.4.2 2007/12/08 18:20:30 mjf 
 #include <sys/pool.h>
 #include <sys/proc.h>
 #include <sys/sysctl.h>
+#include <sys/timevar.h>
 #include <sys/kauth.h>
 #include <sys/atomic.h>
 #include <sys/mount.h>
@@ -72,12 +73,12 @@ kmutex_t uihashtbl_lock;
  */
 
 int
-sys_getpriority(struct lwp *l, void *v, register_t *retval)
+sys_getpriority(struct lwp *l, const struct sys_getpriority_args *uap, register_t *retval)
 {
-	struct sys_getpriority_args /* {
+	/* {
 		syscallarg(int) which;
 		syscallarg(id_t) who;
-	} */ *uap = v;
+	} */
 	struct proc *curp = l->l_proc, *p;
 	int low = NZERO + PRIO_MAX + 1;
 	int who = SCARG(uap, who);
@@ -133,13 +134,13 @@ sys_getpriority(struct lwp *l, void *v, register_t *retval)
 
 /* ARGSUSED */
 int
-sys_setpriority(struct lwp *l, void *v, register_t *retval)
+sys_setpriority(struct lwp *l, const struct sys_setpriority_args *uap, register_t *retval)
 {
-	struct sys_setpriority_args /* {
+	/* {
 		syscallarg(int) which;
 		syscallarg(id_t) who;
 		syscallarg(int) prio;
-	} */ *uap = v;
+	} */
 	struct proc *curp = l->l_proc, *p;
 	int found = 0, error = 0;
 	int who = SCARG(uap, who);
@@ -236,12 +237,12 @@ donice(struct lwp *l, struct proc *chgp, int n)
 
 /* ARGSUSED */
 int
-sys_setrlimit(struct lwp *l, void *v, register_t *retval)
+sys_setrlimit(struct lwp *l, const struct sys_setrlimit_args *uap, register_t *retval)
 {
-	struct sys_setrlimit_args /* {
+	/* {
 		syscallarg(int) which;
 		syscallarg(const struct rlimit *) rlp;
-	} */ *uap = v;
+	} */
 	int which = SCARG(uap, which);
 	struct rlimit alim;
 	int error;
@@ -369,12 +370,12 @@ dosetrlimit(struct lwp *l, struct proc *p, int which, struct rlimit *limp)
 
 /* ARGSUSED */
 int
-sys_getrlimit(struct lwp *l, void *v, register_t *retval)
+sys_getrlimit(struct lwp *l, const struct sys_getrlimit_args *uap, register_t *retval)
 {
-	struct sys_getrlimit_args /* {
+	/* {
 		syscallarg(int) which;
 		syscallarg(struct rlimit *) rlp;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 	int which = SCARG(uap, which);
 	struct rlimit rl;
@@ -399,11 +400,10 @@ void
 calcru(struct proc *p, struct timeval *up, struct timeval *sp,
     struct timeval *ip, struct timeval *rp)
 {
-	u_quad_t u, st, ut, it, tot;
-	unsigned long sec;
-	long usec;
- 	struct timeval tv;
+	uint64_t u, st, ut, it, tot;
 	struct lwp *l;
+	struct bintime tm;
+	struct timeval tv;
 
 	mutex_spin_enter(&p->p_stmutex);
 	st = p->p_sticks;
@@ -411,17 +411,13 @@ calcru(struct proc *p, struct timeval *up, struct timeval *sp,
 	it = p->p_iticks;
 	mutex_spin_exit(&p->p_stmutex);
 
-	sec = p->p_rtime.tv_sec;
-	usec = p->p_rtime.tv_usec;
+	tm = p->p_rtime;
 
 	LIST_FOREACH(l, &p->p_lwps, l_sibling) {
 		lwp_lock(l);
-		sec += l->l_rtime.tv_sec;
-		if ((usec += l->l_rtime.tv_usec) >= 1000000) {
-			sec++;
-			usec -= 1000000;
-		}
+		bintime_add(&tm, &l->l_rtime);
 		if ((l->l_flag & LW_RUNNING) != 0) {
+			struct bintime diff;
 			/*
 			 * Adjust for the current time slice.  This is
 			 * actually fairly important since the error
@@ -429,19 +425,16 @@ calcru(struct proc *p, struct timeval *up, struct timeval *sp,
 			 * which is much greater than the sampling
 			 * error.
 			 */
-			microtime(&tv);
-			sec += tv.tv_sec - l->l_stime.tv_sec;
-			usec += tv.tv_usec - l->l_stime.tv_usec;
-			if (usec >= 1000000) {
-				sec++;
-				usec -= 1000000;
-			}
+			binuptime(&diff);
+			bintime_sub(&diff, &l->l_stime);
+			bintime_add(&tm, &diff);
 		}
 		lwp_unlock(l);
 	}
 
 	tot = st + ut + it;
-	u = sec * 1000000ull + usec;
+	bintime2timeval(&tm, &tv);
+	u = (uint64_t)tv.tv_sec * 1000000ul + tv.tv_usec;
 
 	if (tot == 0) {
 		/* No ticks, so can't use to share time out, split 50-50 */
@@ -465,19 +458,18 @@ calcru(struct proc *p, struct timeval *up, struct timeval *sp,
 		ip->tv_usec = it % 1000000;
 	}
 	if (rp != NULL) {
-		rp->tv_sec = sec;
-		rp->tv_usec = usec;
+		*rp = tv;
 	}
 }
 
 /* ARGSUSED */
 int
-sys_getrusage(struct lwp *l, void *v, register_t *retval)
+sys_getrusage(struct lwp *l, const struct sys_getrusage_args *uap, register_t *retval)
 {
-	struct sys_getrusage_args /* {
+	/* {
 		syscallarg(int) who;
 		syscallarg(struct rusage *) rusage;
-	} */ *uap = v;
+	} */
 	struct rusage ru;
 	struct proc *p = l->l_proc;
 

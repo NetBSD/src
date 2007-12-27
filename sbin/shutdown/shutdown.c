@@ -1,4 +1,4 @@
-/*	$NetBSD: shutdown.c,v 1.48 2007/07/10 23:50:35 jnemeth Exp $	*/
+/*	$NetBSD: shutdown.c,v 1.48.6.1 2007/12/27 00:47:05 mjf Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)shutdown.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: shutdown.c,v 1.48 2007/07/10 23:50:35 jnemeth Exp $");
+__RCSID("$NetBSD: shutdown.c,v 1.48.6.1 2007/12/27 00:47:05 mjf Exp $");
 #endif
 #endif /* not lint */
 
@@ -95,17 +95,17 @@ static const char *whom;
 static char mbuf[BUFSIZ];
 static char *bootstr;
 
-static void badtime(void) __attribute__((__noreturn__));
-static void die_you_gravy_sucking_pig_dog(void) __attribute__((__noreturn__));
+static void badtime(void) __dead;
+static void die_you_gravy_sucking_pig_dog(void) __dead;
 static void doitfast(void);
 void dorcshutdown(void);
-static void finish(int) __attribute__((__noreturn__));
+static void finish(int) __dead;
 static void getoffset(char *);
 static void loop(void);
 static void nolog(void);
 static void timeout(int);
 static void timewarn(time_t);
-static void usage(void) __attribute__((__noreturn__));
+static void usage(void) __dead;
 
 int
 main(int argc, char *argv[])

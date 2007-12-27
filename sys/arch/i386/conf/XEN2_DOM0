@@ -1,4 +1,4 @@
-# $NetBSD: XEN2_DOM0,v 1.33.2.2 2007/12/08 18:17:07 mjf Exp $
+# $NetBSD: XEN2_DOM0,v 1.33.2.3 2007/12/27 00:43:03 mjf Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -749,6 +749,9 @@ pseudo-device	nsmb			# experimental - SMB requester
 # wscons pseudo-devices
 pseudo-device	wsmux			# mouse & keyboard multiplexor
 pseudo-device	wsfont
+
+# userland interface to drivers, including autoconf and properties retrieval
+pseudo-device   drvctl
 
 # xen pseudo-devices
 pseudo-device	xenevt

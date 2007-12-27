@@ -1,4 +1,4 @@
-/* $NetBSD: mount_ntfs.c,v 1.19 2007/07/16 17:06:53 pooka Exp $ */
+/* $NetBSD: mount_ntfs.c,v 1.19.6.1 2007/12/27 00:47:01 mjf Exp $ */
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mount_ntfs.c,v 1.19 2007/07/16 17:06:53 pooka Exp $");
+__RCSID("$NetBSD: mount_ntfs.c,v 1.19.6.1 2007/12/27 00:47:01 mjf Exp $");
 #endif
 
 #include <sys/param.h>
@@ -61,7 +61,7 @@ static const struct mntopt mopts[] = {
 	MOPT_NULL,
 };
 
-static void	usage(void) __attribute__((__noreturn__));
+static void	usage(void) __dead;
 int mount_ntfs(int argc, char **argv);
 
 #ifndef MOUNT_NOMAIN

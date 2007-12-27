@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.319.2.2 2007/12/08 18:17:08 mjf Exp $
+#	$NetBSD: files.i386,v 1.319.2.3 2007/12/27 00:43:03 mjf Exp $
 #
 # new style config file for i386 architecture
 #
@@ -142,7 +142,8 @@ define	vesabiosbus {}
 
 # XXX BIOS32 only if something that uses it is configured!
 device	mainbus: isabus, eisabus, mcabus, pcibus, bios32, acpibus,
-	cpubus, ioapicbus, apmbus, pnpbiosbus, vesabiosbus, ipmibus
+	cpubus, ioapicbus, apmbus, pnpbiosbus, vesabiosbus, ipmibus,
+	bioscall
 attach	mainbus at root
 file	arch/i386/i386/mainbus.c	mainbus
 
@@ -471,7 +472,7 @@ include	"dev/ieee1394/files.ieee1394"
 include	"arch/i386/pnpbios/files.pnpbios"
 
 include "dev/acpi/files.acpi"
-file	arch/i386/acpi/acpi_wakeup.c	acpi
+file	arch/i386/acpi/acpi_wakeup_low.S	acpi
 
 # Toshiba VALD 
 device	vald
@@ -481,11 +482,6 @@ file	arch/i386/acpi/vald_acpi.c		vald_acpi
 # Sony SPIC (jog dial etc.)
 attach	spic at acpinodebus with spic_acpi
 file	arch/i386/acpi/spic_acpi.c		spic_acpi
-
-# Sony Misc (brightness etc.)
-device	sony
-attach	sony at acpinodebus with sony_acpi
-file	arch/i386/acpi/sony_acpi.c		sony_acpi
 
 # Numeric Processing Extension; Math Co-processor
 attach	npx at acpinodebus with npx_acpi
@@ -498,11 +494,11 @@ defflag	opt_vesabios.h	VESABIOSVERBOSE
 
 include	"dev/rasops/files.rasops"
 
-device	vesafb: wsemuldisplaydev, vcons, rasops8, rasops16, rasops32, splash, bioscall
+device	vesafb: displaydev, wsemuldisplaydev, vcons, rasops8, rasops16, rasops32, splash, bioscall
 attach	vesafb at vesabios
 file	arch/i386/bios/vesafb.c		vesafb needs-flag
-defparam 	opt_vesafb.h	VESAFB_WIDTH VESAFB_HEIGHT VESAFB_DEPTH
-defflag 	opt_vesafb.h	VESAFB_PM
+defparam opt_vesafb.h	VESAFB_WIDTH VESAFB_HEIGHT VESAFB_DEPTH
+defflag	opt_vesafb.h	VESAFB_PM
 
 device	vesatext
 attach	vesatext at vesabios

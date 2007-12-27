@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.127.6.1 2007/12/08 18:21:05 mjf Exp $	*/
+/*	$NetBSD: if.h,v 1.127.6.2 2007/12/27 00:46:27 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -272,7 +272,8 @@ struct ifnet {				/* and the entries */
 	void	(*if_drain)		/* routine to release resources */
 		    (struct ifnet *);
 	struct ifaltq if_snd;		/* output queue (includes altq) */
-	struct	sockaddr_dl *if_sadl;	/* pointer to our sockaddr_dl */
+	struct ifaddr	*if_dl;		/* identity of this interface. */
+	const struct	sockaddr_dl *if_sadl;	/* pointer to our sockaddr_dl */
 	const uint8_t *if_broadcastaddr;/* linklevel broadcast bytestring */
 	void	*if_bridge;		/* bridge glue */
 	int	if_dlt;			/* data link type (<net/dlt.h>) */
@@ -818,6 +819,7 @@ void    ether_input(struct ifnet *, struct mbuf *);
 
 int ifreq_setaddr(u_long, struct ifreq *, const struct sockaddr *);
 
+void	if_set_sadl(struct ifnet *, const void *, u_char);
 void	if_alloc_sadl(struct ifnet *);
 void	if_free_sadl(struct ifnet *);
 void	if_attach(struct ifnet *);

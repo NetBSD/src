@@ -1,4 +1,4 @@
-/*	$NetBSD: boot2.c,v 1.14.2.1 2007/12/08 18:17:13 mjf Exp $	*/
+/*	$NetBSD: boot2.c,v 1.14.2.2 2007/12/27 00:43:11 mjf Exp $	*/
 
 /*
  * Copyright (c) 2003
@@ -52,6 +52,9 @@
 #include <libi386.h>
 #include "devopen.h"
 
+#ifdef SUPPORT_USTARFS
+#include "ustarfs.h"
+#endif
 #ifdef SUPPORT_PS2
 #include <biosmca.h>
 #endif
@@ -298,6 +301,9 @@ parsebootconf(const char *conf)
 	int fd, err, off;
 	struct stat st;
 	char *value, *key;
+#ifdef SUPPORT_USTARFS
+	void *op_open;
+#endif
 
 	/* Clear bootconf structure */
 	bzero((void *)&bootconf, sizeof(bootconf));
@@ -305,14 +311,33 @@ parsebootconf(const char *conf)
 	/* Set timeout to configured */
 	bootconf.timeout = boot_params.bp_timeout;
 
-	err = stat(BOOTCONF, &st);
-	if (err == -1)
+	/* don't try to open BOOTCONF if the target fs is ustarfs */
+#ifdef SUPPORT_USTARFS
+#if !defined(LIBSA_SINGLE_FILESYSTEM)
+	fd = open("boot", 0);	/* assume we are loaded as "boot" from here */
+	if (fd < 0)
+		op_open = NULL;	/* XXX */
+	else {
+		op_open = files[fd].f_ops->open;
+		close(fd);
+	}
+#else
+	op_open = file_system[0].open;
+#endif	/* !LIBSA_SINGLE_FILESYSTEM */
+	if (op_open == ustarfs_open)
 		return;
+#endif	/* SUPPORT_USTARFS */
 
 	fd = open(BOOTCONF, 0);
 	if (fd < 0)
 		return;
 	
+	err = fstat(fd, &st);
+	if (err == -1) {
+		close(fd);
+		return;
+	}
+
 	bc = alloc(st.st_size + 1);
 	if (bc == NULL) {
 		printf("Could not allocate memory for boot configuration\n");

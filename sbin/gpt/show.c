@@ -29,7 +29,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/show.c,v 1.14 2006/06/22 22:22:32 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: show.c,v 1.2 2006/10/15 22:36:29 christos Exp $");
+__RCSID("$NetBSD: show.c,v 1.2.10.1 2007/12/27 00:46:58 mjf Exp $");
 #endif
 
 #include <sys/types.h>
@@ -47,12 +47,14 @@ __RCSID("$NetBSD: show.c,v 1.2 2006/10/15 22:36:29 christos Exp $");
 static int show_label = 0;
 static int show_uuid = 0;
 
+const char showmsg[] = "show [-lu] device ...";
+
 static void
 usage_show(void)
 {
 
 	fprintf(stderr,
-	    "usage: %s [-lu] device ...\n", getprogname());
+	    "usage: %s %s\n", getprogname(), showmsg);
 	exit(1);
 }
 

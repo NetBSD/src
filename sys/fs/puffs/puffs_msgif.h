@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.h,v 1.59.2.2 2007/12/08 18:20:18 mjf Exp $	*/
+/*	$NetBSD: puffs_msgif.h,v 1.59.2.3 2007/12/27 00:45:46 mjf Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -102,7 +102,7 @@ enum {
 #define PUFFS_ERR_MAX PUFFS_ERR_VPTOFH
 
 #define PUFFSDEVELVERS	0x80000000
-#define PUFFSVERSION	25
+#define PUFFSVERSION	26
 #define PUFFSNAMESIZE	32
 
 #define PUFFS_TYPEPREFIX "puffs|"
@@ -240,15 +240,6 @@ struct puffs_kcred {
 
 #define PUFFS_TOMOVE(a,b) (MIN((a), b->pmp_msg_maxsize - PUFFS_MSGSTRUCT_MAX))
 
-/* caller id */
-struct puffs_kcid {
-	int	pkcid_type;
-	pid_t	pkcid_pid;
-	lwpid_t	pkcid_lwpid;
-};
-#define PUFFCID_TYPE_REAL	1
-#define PUFFCID_TYPE_FAKE	2
-
 /* puffs struct componentname built by kernel */
 struct puffs_kcn {
 	/* args */
@@ -336,7 +327,6 @@ struct puffs_vnmsg_lookup {
 
 	struct puffs_kcn	pvnr_cn;		/* OUT	*/
 	struct puffs_kcred	pvnr_cn_cred;		/* OUT	*/
-	struct puffs_kcid	pvnr_cn_cid;		/* OUT	*/
 
 	void			*pvnr_newnode;		/* IN	*/
 	enum vtype		pvnr_vtype;		/* IN	*/
@@ -349,7 +339,6 @@ struct puffs_vnmsg_create {
 
 	struct puffs_kcn	pvnr_cn;		/* OUT	*/
 	struct puffs_kcred	pvnr_cn_cred;		/* OUT	*/
-	struct puffs_kcid	pvnr_cn_cid;		/* OUT	*/
 
 	struct vattr		pvnr_va;		/* OUT	*/
 	void			*pvnr_newnode;		/* IN	*/
@@ -360,7 +349,6 @@ struct puffs_vnmsg_mknod {
 
 	struct puffs_kcn	pvnr_cn;		/* OUT	*/
 	struct puffs_kcred	pvnr_cn_cred;		/* OUT	*/
-	struct puffs_kcid	pvnr_cn_cid;		/* OUT	*/
 
 	struct vattr		pvnr_va;		/* OUT	*/
 	void			*pvnr_newnode;		/* IN	*/
@@ -452,7 +440,6 @@ struct puffs_vnmsg_remove {
 
 	struct puffs_kcn	pvnr_cn;		/* OUT	*/
 	struct puffs_kcred	pvnr_cn_cred;		/* OUT	*/
-	struct puffs_kcid	pvnr_cn_cid;		/* OUT	*/
 
 	void			*pvnr_cookie_targ;	/* OUT	*/
 };
@@ -462,7 +449,6 @@ struct puffs_vnmsg_mkdir {
 
 	struct puffs_kcn	pvnr_cn;		/* OUT	*/
 	struct puffs_kcred	pvnr_cn_cred;		/* OUT	*/
-	struct puffs_kcid	pvnr_cn_cid;		/* OUT	*/
 
 	struct vattr		pvnr_va;		/* OUT	*/
 	void			*pvnr_newnode;		/* IN	*/
@@ -473,7 +459,6 @@ struct puffs_vnmsg_rmdir {
 
 	struct puffs_kcn	pvnr_cn;		/* OUT	*/
 	struct puffs_kcred	pvnr_cn_cred;		/* OUT	*/
-	struct puffs_kcid	pvnr_cn_cid;		/* OUT	*/
 
 	void			*pvnr_cookie_targ;	/* OUT	*/
 };
@@ -483,7 +468,6 @@ struct puffs_vnmsg_link {
 
 	struct puffs_kcn	pvnr_cn;		/* OUT	*/
 	struct puffs_kcred	pvnr_cn_cred;		/* OUT	*/
-	struct puffs_kcid	pvnr_cn_cid;		/* OUT	*/
 
 	void			*pvnr_cookie_targ;	/* OUT	*/
 };
@@ -493,10 +477,8 @@ struct puffs_vnmsg_rename {
 
 	struct puffs_kcn	pvnr_cn_src;		/* OUT	*/
 	struct puffs_kcred	pvnr_cn_src_cred;	/* OUT	*/
-	struct puffs_kcid	pvnr_cn_src_cid;	/* OUT	*/
 	struct puffs_kcn	pvnr_cn_targ;		/* OUT	*/
 	struct puffs_kcred	pvnr_cn_targ_cred;	/* OUT	*/
-	struct puffs_kcid	pvnr_cn_targ_cid;	/* OUT	*/
 
 	void			*pvnr_cookie_src;	/* OUT	*/
 	void			*pvnr_cookie_targ;	/* OUT	*/
@@ -508,7 +490,6 @@ struct puffs_vnmsg_symlink {
 
 	struct puffs_kcn	pvnr_cn;		/* OUT	*/
 	struct puffs_kcred	pvnr_cn_cred;		/* OUT	*/
-	struct puffs_kcid	pvnr_cn_cid;		/* OUT	*/
 
 	struct vattr		pvnr_va;		/* OUT	*/
 	void			*pvnr_newnode;		/* IN	*/

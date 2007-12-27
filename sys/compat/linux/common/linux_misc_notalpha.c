@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc_notalpha.c,v 1.95.2.2 2007/12/08 18:18:49 mjf Exp $	*/
+/*	$NetBSD: linux_misc_notalpha.c,v 1.95.2.3 2007/12/27 00:44:09 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.95.2.2 2007/12/08 18:18:49 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.95.2.3 2007/12/27 00:44:09 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,14 +96,11 @@ static void bsd_to_linux_statfs64(const struct statvfs *,
  * Fiddle with the timers to make it work.
  */
 int
-linux_sys_alarm(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_alarm(struct lwp *l, const struct linux_sys_alarm_args *uap, register_t *retval)
 {
-	struct linux_sys_alarm_args /* {
+	/* {
 		syscallarg(unsigned int) secs;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 	struct timeval now;
 	struct itimerval *itp, it;
@@ -190,14 +187,11 @@ linux_sys_alarm(l, v, retval)
 
 #if !defined(__amd64__)
 int
-linux_sys_nice(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_nice(struct lwp *l, const struct linux_sys_nice_args *uap, register_t *retval)
 {
-	struct linux_sys_nice_args /* {
+	/* {
 		syscallarg(int) incr;
-	} */ *uap = v;
+	} */
         struct sys_setpriority_args bsa;
 
         SCARG(&bsa, which) = PRIO_PROCESS;
@@ -219,19 +213,19 @@ linux_sys_nice(l, v, retval)
  * really is the reclen, not the namelength.
  */
 int
-linux_sys_readdir(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_readdir(struct lwp *l, const struct linux_sys_readdir_args *uap, register_t *retval)
 {
-	struct linux_sys_readdir_args /* {
+	/* {
 		syscallarg(int) fd;
 		syscallarg(struct linux_dirent *) dent;
 		syscallarg(unsigned int) count;
-	} */ *uap = v;
+	} */
+	struct linux_sys_getdents_args da;
 
-	SCARG(uap, count) = 1;
-	return linux_sys_getdents(l, uap, retval);
+	SCARG(&da, fd) = SCARG(uap, fd);
+	SCARG(&da, dent) = SCARG(uap, dent);
+	SCARG(&da, count) = 1;
+	return linux_sys_getdents(l, &da, retval);
 }
 #endif /* !amd64 */
 
@@ -240,11 +234,11 @@ linux_sys_readdir(l, v, retval)
  * need to deal with it.
  */
 int
-linux_sys_time(struct lwp *l, void *v, register_t *retval)
+linux_sys_time(struct lwp *l, const struct linux_sys_time_args *uap, register_t *retval)
 {
-	struct linux_sys_time_args /* {
-		linux_time_t *t;
-	} */ *uap = v;
+	/* {
+		syscallarg(linux_time_t) *t;
+	} */
 	struct timeval atv;
 	linux_time_t tt;
 	int error;
@@ -264,15 +258,12 @@ linux_sys_time(struct lwp *l, void *v, register_t *retval)
  * and pass it on.
  */
 int
-linux_sys_utime(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_utime(struct lwp *l, const struct linux_sys_utime_args *uap, register_t *retval)
 {
-	struct linux_sys_utime_args /* {
+	/* {
 		syscallarg(const char *) path;
 		syscallarg(struct linux_utimbuf *)times;
-	} */ *uap = v;
+	} */
 	int error;
 	struct timeval tv[2], *tvp;
 	struct linux_utimbuf lut;
@@ -296,16 +287,13 @@ linux_sys_utime(l, v, retval)
  * waitpid(2).  Just forward on to linux_sys_wait4 with a NULL rusage.
  */
 int
-linux_sys_waitpid(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_waitpid(struct lwp *l, const struct linux_sys_waitpid_args *uap, register_t *retval)
 {
-	struct linux_sys_waitpid_args /* {
+	/* {
 		syscallarg(int) pid;
 		syscallarg(int *) status;
 		syscallarg(int) options;
-	} */ *uap = v;
+	} */
 	struct linux_sys_wait4_args linux_w4a;
 
 	SCARG(&linux_w4a, pid) = SCARG(uap, pid);
@@ -318,13 +306,13 @@ linux_sys_waitpid(l, v, retval)
 #endif /* !amd64 */
 
 int
-linux_sys_setresgid(struct lwp *l, void *v, register_t *retval)
+linux_sys_setresgid(struct lwp *l, const struct linux_sys_setresgid_args *uap, register_t *retval)
 {
-	struct linux_sys_setresgid_args /* {
+	/* {
 		syscallarg(gid_t) rgid;
 		syscallarg(gid_t) egid;
 		syscallarg(gid_t) sgid;
-	} */ *uap = v;
+	} */
 
 	/*
 	 * Note: These checks are a little different than the NetBSD
@@ -339,13 +327,13 @@ linux_sys_setresgid(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-linux_sys_getresgid(struct lwp *l, void *v, register_t *retval)
+linux_sys_getresgid(struct lwp *l, const struct linux_sys_getresgid_args *uap, register_t *retval)
 {
-	struct linux_sys_getresgid_args /* {
+	/* {
 		syscallarg(gid_t *) rgid;
 		syscallarg(gid_t *) egid;
 		syscallarg(gid_t *) sgid;
-	} */ *uap = v;
+	} */
 	kauth_cred_t pc = l->l_cred;
 	int error;
 	gid_t gid;
@@ -376,11 +364,11 @@ linux_sys_getresgid(struct lwp *l, void *v, register_t *retval)
  * need to deal with it.
  */
 int
-linux_sys_stime(struct lwp *l, void *v, register_t *retval)
+linux_sys_stime(struct lwp *l, const struct linux_sys_stime_args *uap, register_t *retval)
 {
-	struct linux_sys_time_args /* {
-		linux_time_t *t;
-	} */ *uap = v;
+	/* {
+		syscallarg(linux_time_t) *t;
+	} */
 	struct timespec ats;
 	linux_time_t tt;
 	int error;
@@ -406,9 +394,7 @@ linux_sys_stime(struct lwp *l, void *v, register_t *retval)
  * statvfs() doesn't use statfs64().
  */
 static void
-bsd_to_linux_statfs64(bsp, lsp)
-	const struct statvfs *bsp;
-	struct linux_statfs64 *lsp;
+bsd_to_linux_statfs64(const struct statvfs *bsp, struct linux_statfs64 *lsp)
 {
 	int i, div;
 
@@ -446,16 +432,13 @@ bsd_to_linux_statfs64(bsp, lsp)
  * Implement the fs stat functions. Straightforward.
  */
 int
-linux_sys_statfs64(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_statfs64(struct lwp *l, const struct linux_sys_statfs64_args *uap, register_t *retval)
 {
-	struct linux_sys_statfs64_args /* {
+	/* {
 		syscallarg(const char *) path;
 		syscallarg(size_t) sz;
 		syscallarg(struct linux_statfs64 *) sp;
-	} */ *uap = v;
+	} */
 	struct statvfs *sb;
 	struct linux_statfs64 ltmp;
 	int error;
@@ -474,16 +457,13 @@ linux_sys_statfs64(l, v, retval)
 }
 
 int
-linux_sys_fstatfs64(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_fstatfs64(struct lwp *l, const struct linux_sys_fstatfs64_args *uap, register_t *retval)
 {
-	struct linux_sys_fstatfs64_args /* {
+	/* {
 		syscallarg(int) fd;
 		syscallarg(size_t) sz;
 		syscallarg(struct linux_statfs64 *) sp;
-	} */ *uap = v;
+	} */
 	struct statvfs *sb;
 	struct linux_statfs64 ltmp;
 	int error;

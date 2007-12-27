@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.90.2.1 2007/12/08 18:20:05 mjf Exp $	*/
+/*	$NetBSD: uhub.c,v 1.90.2.2 2007/12/27 00:45:32 mjf Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.90.2.1 2007/12/08 18:20:05 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.90.2.2 2007/12/27 00:45:32 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -357,6 +357,9 @@ USB_ATTACH(uhub)
 	/* The usual exploration will finish the setup. */
 
 	sc->sc_running = 1;
+
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	USB_ATTACH_SUCCESS_RETURN;
 

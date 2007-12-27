@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.12.4.1 2007/11/19 00:49:26 mjf Exp $	*/
+/*	$NetBSD: cpu.h,v 1.12.4.2 2007/12/27 00:46:39 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2007 YAMAMOTO Takashi,
@@ -59,6 +59,7 @@ void cpu_need_resched(struct cpu_info *, int);
 
 lwp_t	*cpu_switchto(lwp_t *, lwp_t *, bool);
 struct	cpu_info *cpu_lookup(cpuid_t);
+struct	cpu_info *cpu_lookup_byindex(u_int);
 int	cpu_setonline(struct cpu_info *, bool);
 bool	cpu_intr_p(void);
 

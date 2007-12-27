@@ -1,4 +1,4 @@
-.\"	$NetBSD: ifconfig.8,v 1.91 2007/06/05 11:15:15 mishka Exp $
+.\"	$NetBSD: ifconfig.8,v 1.91.6.1 2007/12/27 00:46:59 mjf Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -464,7 +464,17 @@ Unset the desired channel to be used
 for IEEE 802.11-based wireless network interfaces.
 It doesn't affect the channel to be created for IBSS or hostap mode.
 .It Bk -words
-.Cm tunnel Ar src_addr Ns Op Ar ,src_port
+.It Cm list scan
+.Pq IEEE 802.11 devices only
+Display the access points and/or ad-hoc neighbors
+located in the vicinity.
+The
+.Fl v
+flag may be used to display long SSIDs.
+.Fl v
+also causes received information elements to be displayed symbolicaly.
+Only the super-user can use this command. 
+.It Cm tunnel Ar src_addr Ns Op Ar ,src_port
 .Ar dest_addr Ns Op Ar ,dest_port
 .Ek
 .Pq IP tunnel devices only

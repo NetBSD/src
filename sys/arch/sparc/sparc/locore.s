@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.240.2.1 2007/12/08 18:17:54 mjf Exp $	*/
+/*	$NetBSD: locore.s,v 1.240.2.2 2007/12/27 00:43:20 mjf Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -2715,8 +2715,8 @@ sparc_interrupt_common:
 	ld	[%l4 + %l5], %l4
 
 #if defined(MULTIPROCESSOR)
-	/* Grab the kernel lock for interrupt levels <= IPL_CLOCK */
-	cmp	%l3, IPL_CLOCK
+	/* Grab the kernel lock for interrupt levels =< IPL_VM */
+	cmp	%l3, IPL_VM
 	bgeu	3f
 	 st	%fp, [%sp + CCFSZ + 16]
 	call	_C_LABEL(intr_lock_kernel)
@@ -2756,7 +2756,7 @@ sparc_interrupt_common:
 	/* all done: restore registers and go return */
 4:
 #if defined(MULTIPROCESSOR)
-	cmp	%l3, IPL_CLOCK
+	cmp	%l3, IPL_VM
 	bgeu	0f
 	 nop
 	call	_C_LABEL(intr_unlock_kernel)

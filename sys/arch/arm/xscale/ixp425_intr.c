@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_intr.c,v 1.15.36.1 2007/12/08 18:16:41 mjf Exp $ */
+/*	$NetBSD: ixp425_intr.c,v 1.15.36.2 2007/12/27 00:42:55 mjf Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425_intr.c,v 1.15.36.1 2007/12/08 18:16:41 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_intr.c,v 1.15.36.2 2007/12/27 00:42:55 mjf Exp $");
 
 #ifndef EVBARM_SPL_NOINLINE
 #define	EVBARM_SPL_NOINLINE
@@ -438,9 +438,11 @@ ixp425_intr_dispatch(struct clockframe *frame)
 	struct intrq *iq;
 	struct intrhand *ih;
 	int oldirqstate, pcpl, irq, ibit, hwpend;
+	struct cpu_info *ci;
 
+	ci = curcpu();
+	ci->ci_idepth++;
 	pcpl = current_spl_level;
-
 	hwpend = ixp425_irq_read();
 
 	/*
@@ -503,6 +505,7 @@ ixp425_intr_dispatch(struct clockframe *frame)
 		 */
 		hwpend |= ((ixp425_ipending & IXP425_INT_HWMASK) & ~pcpl);
 	}
+	ci->ci_idepth--;
 
 	/* Check for pendings soft intrs. */
 	if ((ixp425_ipending & INT_SWMASK) & ~current_spl_level) {

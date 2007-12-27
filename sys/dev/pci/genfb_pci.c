@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb_pci.c,v 1.1.24.1 2007/12/08 18:19:42 mjf Exp $ */
+/*	$NetBSD: genfb_pci.c,v 1.1.24.2 2007/12/27 00:45:15 mjf Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb_pci.c,v 1.1.24.1 2007/12/08 18:19:42 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb_pci.c,v 1.1.24.2 2007/12/27 00:45:15 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,6 +76,7 @@ struct pci_genfb_softc {
 	pcireg_t sc_bars[9];
 	struct range sc_ranges[8];
 	int sc_ranges_used;
+	int sc_want_wsfb;
 };
 
 static int	pci_genfb_match(struct device *, struct cfdata *, void *);
@@ -120,6 +121,8 @@ pci_genfb_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_iot = pa->pa_iot;	
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_pcitag = pa->pa_tag;
+	sc->sc_want_wsfb = 0;
+
 	genfb_init(&sc->sc_gen);
 
 	if ((sc->sc_gen.sc_width == 0) || (sc->sc_gen.sc_fbsize == 0)) {
@@ -215,10 +218,19 @@ pci_genfb_mmap(void *v, void *vs, off_t offset, int prot)
 	struct lwp *me;
 	int i;
 
-	/* regular fb mapping at 0 */
+	if (offset == 0)
+		sc->sc_want_wsfb = 1;
+
+	/*
+	 * regular fb mapping at 0
+	 * since some Sun firmware likes to put PCI resources low enough
+	 * to collide with the wsfb mapping we only allow it after asking
+	 * for offset 0
+	 */
 	DPRINTF("%s: %08x limit %08x\n", __func__, (uint32_t)offset,
 	    (uint32_t)sc->sc_gen.sc_fbsize);
-	if ((offset >= 0) && (offset < sc->sc_gen.sc_fbsize)) {
+	if ((offset >= 0) && (offset < sc->sc_gen.sc_fbsize) &&
+	    (sc->sc_want_wsfb == 1)) {
 
 		return bus_space_mmap(sc->sc_memt, sc->sc_gen.sc_fboffset,
 		   offset, prot, BUS_SPACE_MAP_LINEAR);

@@ -1,4 +1,4 @@
-/* $NetBSD: vfs_getcwd.c,v 1.37.4.1 2007/12/08 18:20:44 mjf Exp $ */
+/* $NetBSD: vfs_getcwd.c,v 1.37.4.2 2007/12/27 00:46:18 mjf Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_getcwd.c,v 1.37.4.1 2007/12/08 18:20:44 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_getcwd.c,v 1.37.4.2 2007/12/27 00:46:18 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -134,7 +134,6 @@ getcwd_scandir(struct vnode **lvpp, struct vnode **uvpp, char **bpp,
 	 */
 	cn.cn_nameiop = LOOKUP;
 	cn.cn_flags = ISLASTCN | ISDOTDOT | RDONLY;
-	cn.cn_lwp = l;
 	cn.cn_cred = cred;
 	cn.cn_pnbuf = NULL;
 	cn.cn_nameptr = "..";
@@ -513,12 +512,12 @@ proc_isunder(struct proc *p1, struct lwp *l2)
  */
 
 int
-sys___getcwd(struct lwp *l, void *v, register_t *retval)
+sys___getcwd(struct lwp *l, const struct sys___getcwd_args *uap, register_t *retval)
 {
-	struct sys___getcwd_args /* {
+	/* {
 		syscallarg(char *) bufp;
 		syscallarg(size_t) length;
-	} */ *uap = v;
+	} */
 
 	int     error;
 	char   *path;

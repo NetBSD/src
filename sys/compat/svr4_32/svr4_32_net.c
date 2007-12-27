@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_net.c,v 1.14.26.1 2007/12/08 18:19:12 mjf Exp $	 */
+/*	$NetBSD: svr4_32_net.c,v 1.14.26.2 2007/12/27 00:44:39 mjf Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_net.c,v 1.14.26.1 2007/12/08 18:19:12 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_net.c,v 1.14.26.2 2007/12/27 00:44:39 mjf Exp $");
 
 #define COMPAT_SVR4 1
 
@@ -111,15 +111,13 @@ static const struct fileops svr4_32_netops = {
  * Used by new config, but we don't need it.
  */
 int
-svr4_32_netattach(n)
-	int n;
+svr4_32_netattach(int n)
 {
 	return 0;
 }
 
 struct svr4_strm *
-svr4_32_stream_get(fp)
-	struct file *fp;
+svr4_32_stream_get(struct file *fp)
 {
 	struct socket *so;
 	struct svr4_strm *st;

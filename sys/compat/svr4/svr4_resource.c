@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_resource.c,v 1.12.30.1 2007/12/08 18:19:09 mjf Exp $	 */
+/*	$NetBSD: svr4_resource.c,v 1.12.30.2 2007/12/27 00:44:35 mjf Exp $	 */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_resource.c,v 1.12.30.1 2007/12/08 18:19:09 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_resource.c,v 1.12.30.2 2007/12/27 00:44:35 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,8 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_resource.c,v 1.12.30.1 2007/12/08 18:19:09 mjf 
 static inline int svr4_to_native_rl(int);
 
 static inline int
-svr4_to_native_rl(rl)
-	int rl;
+svr4_to_native_rl(int rl)
 {
 	switch (rl) {
 	case SVR4_RLIMIT_CPU:
@@ -95,9 +94,8 @@ svr4_to_native_rl(rl)
 	((svr4_rlim64_t)(l)) != SVR4_RLIM64_SAVED_MAX)
 
 int
-svr4_sys_getrlimit(struct lwp *l, void *v, register_t *retval)
+svr4_sys_getrlimit(struct lwp *l, const struct svr4_sys_getrlimit_args *uap, register_t *retval)
 {
-	struct svr4_sys_getrlimit_args *uap = v;
 	int rl = svr4_to_native_rl(SCARG(uap, which));
 	struct proc *p = l->l_proc;
 	struct rlimit blim;
@@ -140,9 +138,8 @@ svr4_sys_getrlimit(struct lwp *l, void *v, register_t *retval)
 
 
 int
-svr4_sys_setrlimit(struct lwp *l, void *v, register_t *retval)
+svr4_sys_setrlimit(struct lwp *l, const struct svr4_sys_setrlimit_args *uap, register_t *retval)
 {
-	struct svr4_sys_setrlimit_args *uap = v;
 	int rl = svr4_to_native_rl(SCARG(uap, which));
 	struct rlimit blim, *limp;
 	struct svr4_rlimit slim;
@@ -188,9 +185,8 @@ svr4_sys_setrlimit(struct lwp *l, void *v, register_t *retval)
 
 
 int
-svr4_sys_getrlimit64(struct lwp *l, void *v, register_t *retval)
+svr4_sys_getrlimit64(struct lwp *l, const struct svr4_sys_getrlimit64_args *uap, register_t *retval)
 {
-	struct svr4_sys_getrlimit64_args *uap = v;
 	int rl = svr4_to_native_rl(SCARG(uap, which));
 	struct proc *p = l->l_proc;
 	struct rlimit blim;
@@ -233,9 +229,8 @@ svr4_sys_getrlimit64(struct lwp *l, void *v, register_t *retval)
 
 
 int
-svr4_sys_setrlimit64(struct lwp *l, void *v, register_t *retval)
+svr4_sys_setrlimit64(struct lwp *l, const struct svr4_sys_setrlimit64_args *uap, register_t *retval)
 {
-	struct svr4_sys_setrlimit64_args *uap = v;
 	int rl = svr4_to_native_rl(SCARG(uap, which));
 	struct rlimit blim, *limp;
 	struct svr4_rlimit64 slim;

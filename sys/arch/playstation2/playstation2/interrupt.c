@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.5.2.1 2007/12/08 18:17:35 mjf Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.5.2.2 2007/12/27 00:43:15 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.5.2.1 2007/12/08 18:17:35 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.5.2.2 2007/12/27 00:43:15 mjf Exp $");
 
 #include "debug_playstation2.h"
 #if defined INTR_DEBUG && !defined GSFB_DEBUG_MONITOR
@@ -137,7 +137,7 @@ cpu_intr(u_int32_t status, u_int32_t cause, u_int32_t pc, u_int32_t ipending)
 	struct cpu_info *ci;
 
 #if 0
-	_debug_print_intr(__FUNCTION__);
+	_debug_print_intr(__func__);
 #endif
 
 	ci = curcpu();

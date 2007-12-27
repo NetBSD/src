@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_net.c,v 1.48.14.1 2007/12/08 18:19:08 mjf Exp $	*/
+/*	$NetBSD: svr4_net.c,v 1.48.14.2 2007/12/27 00:44:35 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_net.c,v 1.48.14.1 2007/12/08 18:19:08 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_net.c,v 1.48.14.2 2007/12/27 00:44:35 mjf Exp $");
 
 #define COMPAT_SVR4 1
 
@@ -210,9 +210,7 @@ svr4_netopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 
 int
-svr4_soo_close(fp, l)
-	struct file *fp;
-	struct lwp *l;
+svr4_soo_close(struct file *fp, struct lwp *l)
 {
 	struct socket *so = (struct socket *) fp->f_data;
 
@@ -223,8 +221,7 @@ svr4_soo_close(fp, l)
 
 
 struct svr4_strm *
-svr4_stream_get(fp)
-	struct file *fp;
+svr4_stream_get(struct file *fp)
 {
 	struct socket *so;
 	struct svr4_strm *st;

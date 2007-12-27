@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.75.4.1 2007/12/08 18:21:38 mjf Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.75.4.2 2007/12/27 00:46:48 mjf Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.75.4.1 2007/12/08 18:21:38 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.75.4.2 2007/12/27 00:46:48 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -400,7 +400,7 @@ ext2fs_setattr(void *v)
 		default:
 			break;
 		}
-		error = ext2fs_truncate(vp, vap->va_size, 0, cred, l->l_proc);
+		error = ext2fs_truncate(vp, vap->va_size, 0, cred);
 		if (error)
 			return (error);
 	}
@@ -918,7 +918,7 @@ abortit:
 			if (--xp->i_e2fs_nlink != 0)
 				panic("rename: linked directory");
 			error = ext2fs_truncate(tvp, (off_t)0, IO_SYNC,
-			    tcnp->cn_cred, tcnp->cn_lwp->l_proc);
+			    tcnp->cn_cred);
 		}
 		xp->i_flag |= IN_CHANGE;
 		VN_KNOTE(tdvp, NOTE_WRITE);
@@ -1222,8 +1222,7 @@ ext2fs_rmdir(void *v)
 	 * worry about them later.
 	 */
 	ip->i_e2fs_nlink -= 2;
-	error = ext2fs_truncate(vp, (off_t)0, IO_SYNC, cnp->cn_cred,
-	    cnp->cn_lwp->l_proc);
+	error = ext2fs_truncate(vp, (off_t)0, IO_SYNC, cnp->cn_cred);
 	cache_purge(ITOV(ip));
 out:
 	VN_KNOTE(vp, NOTE_DELETE);

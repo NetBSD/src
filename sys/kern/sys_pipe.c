@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.86.4.2 2007/12/08 18:20:39 mjf Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.86.4.3 2007/12/27 00:46:11 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.86.4.2 2007/12/08 18:20:39 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.86.4.3 2007/12/27 00:46:11 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -208,7 +208,7 @@ pipe_init(void)
 
 /* ARGSUSED */
 int
-sys_pipe(struct lwp *l, void *v, register_t *retval)
+sys_pipe(struct lwp *l, const void *v, register_t *retval)
 {
 	struct file *rf, *wf;
 	struct pipe *rpipe, *wpipe;

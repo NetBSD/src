@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.1.4.1 2007/12/08 18:18:23 mjf Exp $	*/
+/*	$NetBSD: cpu.c,v 1.1.4.2 2007/12/27 00:43:30 mjf Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.1.4.1 2007/12/08 18:18:23 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.1.4.2 2007/12/27 00:43:30 mjf Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -135,7 +135,7 @@ struct cpu_softc {
 	struct cpu_info *sc_info;	/* pointer to CPU info */
 };
 
-int mp_cpu_start(struct cpu_info *);
+int mp_cpu_start(struct cpu_info *, paddr_t);
 void mp_cpu_start_cleanup(struct cpu_info *);
 const struct cpu_functions mp_cpu_funcs = { mp_cpu_start, NULL,
 				      mp_cpu_start_cleanup };
@@ -161,6 +161,7 @@ struct cpu_info cpu_info_primary = {
 #ifndef __x86_64__
 	.ci_self150 = (uint8_t *)&cpu_info_primary + 0x150,
 #endif
+	.ci_idepth = -1,
 	.ci_curlwp = &lwp0,
 #ifdef TRAPLOG
 	.ci_tlog = &tlog_primary,
@@ -779,7 +780,7 @@ cpu_set_tss_gates(struct cpu_info *ci)
 }
 
 int
-mp_cpu_start(struct cpu_info *ci)
+mp_cpu_start(struct cpu_info *ci, paddr_t target)
 {
 #if 0
 #if NLAPIC > 0
@@ -800,7 +801,7 @@ mp_cpu_start(struct cpu_info *ci)
 	 */
 
 	dwordptr[0] = 0;
-	dwordptr[1] = MP_TRAMPOLINE >> 4;
+	dwordptr[1] = target >> 4;
 
 	pmap_kenter_pa (0, 0, VM_PROT_READ|VM_PROT_WRITE);
 	memcpy ((u_int8_t *) 0x467, dwordptr, 4);
@@ -819,13 +820,13 @@ mp_cpu_start(struct cpu_info *ci)
 
 		if (cpu_feature & CPUID_APIC) {
 
-			if ((error = x86_ipi(MP_TRAMPOLINE/PAGE_SIZE,
+			if ((error = x86_ipi(target/PAGE_SIZE,
 					     ci->ci_apicid,
 					     LAPIC_DLMODE_STARTUP)) != 0)
 				return error;
 			delay(200);
 
-			if ((error = x86_ipi(MP_TRAMPOLINE/PAGE_SIZE,
+			if ((error = x86_ipi(target/PAGE_SIZE,
 					     ci->ci_apicid,
 					     LAPIC_DLMODE_STARTUP)) != 0)
 				return error;
@@ -853,11 +854,13 @@ mp_cpu_start_cleanup(struct cpu_info *ci)
 #ifdef __x86_64__
 
 void
-cpu_init_msrs(struct cpu_info *ci)
+cpu_init_msrs(struct cpu_info *ci, bool full)
 {
-	HYPERVISOR_set_segment_base (SEGBASE_FS, 0);
-	HYPERVISOR_set_segment_base (SEGBASE_GS_KERNEL, (u_int64_t) ci);
-	HYPERVISOR_set_segment_base (SEGBASE_GS_USER, 0);
+	if (full) {
+		HYPERVISOR_set_segment_base (SEGBASE_FS, 0);
+		HYPERVISOR_set_segment_base (SEGBASE_GS_KERNEL, (u_int64_t) ci);
+		HYPERVISOR_set_segment_base (SEGBASE_GS_USER, 0);
+	}
 }
 #endif	/* __x86_64__ */
 

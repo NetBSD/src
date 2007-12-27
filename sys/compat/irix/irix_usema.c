@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_usema.c,v 1.21.14.1 2007/12/08 18:18:44 mjf Exp $ */
+/*	$NetBSD: irix_usema.c,v 1.21.14.2 2007/12/27 00:43:50 mjf Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_usema.c,v 1.21.14.1 2007/12/08 18:18:44 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_usema.c,v 1.21.14.2 2007/12/27 00:43:50 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -155,10 +155,7 @@ struct irix_usema_softc {
  * and attach the dummy filesystem we need to use custom vnode operations.
  */
 void
-irix_usemaattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+irix_usemaattach(struct device *parent, struct device *self, void *aux)
 {
 	int error;
 
@@ -174,8 +171,7 @@ irix_usemaattach(parent, self, aux)
  * vnode operations on the device
  */
 int
-irix_usema_ioctl(v)
-	void *v;
+irix_usema_ioctl(void *v)
 {
 	struct vop_ioctl_args /* {
 		struct vnode *a_vp;
@@ -264,8 +260,7 @@ irix_usema_ioctl(v)
 
 
 int
-irix_usema_poll(v)
-	void *v;
+irix_usema_poll(void *v)
 {
 	struct vop_poll_args /* {
 		struct vnode *a_vp;
@@ -292,8 +287,7 @@ irix_usema_poll(v)
 }
 
 int
-irix_usema_close(v)
-	void *v;
+irix_usema_close(void *v)
 {
 	struct vop_close_args /* {
 		struct vnode *a_vp;
@@ -335,8 +329,7 @@ irix_usema_close(v)
  * but still return 0 in case of failure (IRIX libc rely on this).
  */
 int
-irix_usema_setattr(v)
-	void *v;
+irix_usema_setattr(void *v)
 {
 	struct vop_setattr_args /* {
 		struct vnode    *a_vp;
@@ -356,8 +349,7 @@ irix_usema_setattr(v)
 }
 
 int
-irix_usema_inactive(v)
-	void *v;
+irix_usema_inactive(void *v)
 {
 	struct vop_inactive_args /* {
 		struct vnode    *a_vp;
@@ -401,15 +393,12 @@ IRIX_USEMA_VNOP_WRAP(fcntl)
  * but it is closely related to it.
  */
 int
-irix_sys_usync_cntl(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+irix_sys_usync_cntl(struct lwp *l, const struct irix_sys_usync_cntl_args *uap, register_t *retval)
 {
-	struct irix_sys_usync_cntl_args /* {
+	/* {
 		syscallarg(int) cmd;
 		syscallarg(void *) arg;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 	int error;
 	struct irix_usync_arg iua;
@@ -490,8 +479,7 @@ irix_sys_usync_cntl(l, v, retval)
 
 /* Operations on irix_usema_reclist */
 static struct irix_usema_rec *
-iur_lookup_by_vn(vp)
-	struct vnode *vp;
+iur_lookup_by_vn(struct vnode *vp)
 {
 	struct irix_usema_rec *iur;
 
@@ -504,8 +492,7 @@ iur_lookup_by_vn(vp)
 }
 
 static struct irix_usema_rec *
-iur_lookup_by_sem(sem)
-	struct irix_semaphore *sem;
+iur_lookup_by_sem(struct irix_semaphore *sem)
 {
 	struct irix_usema_rec *iur;
 	struct irix_semaphore is;
@@ -524,10 +511,7 @@ iur_lookup_by_sem(sem)
 }
 
 static struct irix_usema_rec *
-iur_insert(sem, vp, p)
-	struct irix_semaphore *sem;
-	struct vnode *vp;
-	struct proc *p;
+iur_insert(struct irix_semaphore *sem, struct vnode *vp, struct proc *p)
 {
 	struct irix_usema_rec *iur;
 	struct irix_semaphore is;
@@ -555,8 +539,7 @@ iur_insert(sem, vp, p)
 }
 
 static void
-iur_remove(iur)
-	struct irix_usema_rec *iur;
+iur_remove(struct irix_usema_rec *iur)
 {
 	struct irix_waiting_proc_rec *iwpr;
 
@@ -588,9 +571,7 @@ released_restart:
 }
 
 static struct irix_waiting_proc_rec *
-iur_proc_queue(iur, p)
-	struct irix_usema_rec *iur;
-	struct proc *p;
+iur_proc_queue(struct irix_usema_rec *iur, struct proc *p)
 {
 	struct irix_waiting_proc_rec *iwpr;
 
@@ -614,9 +595,7 @@ got_iwpr:
 }
 
 static void
-iur_proc_dequeue(iur, iwpr)
-	struct irix_usema_rec *iur;
-	struct irix_waiting_proc_rec *iwpr;
+iur_proc_dequeue(struct irix_usema_rec *iur, struct irix_waiting_proc_rec *iwpr)
 {
 	rw_enter(&iur->iur_lock, RW_WRITER);
 	iur->iur_waiting_count--;
@@ -627,9 +606,7 @@ iur_proc_dequeue(iur, iwpr)
 }
 
 static void
-iur_proc_release(iur, iwpr)
-	struct irix_usema_rec *iur;
-	struct irix_waiting_proc_rec *iwpr;
+iur_proc_release(struct irix_usema_rec *iur, struct irix_waiting_proc_rec *iwpr)
 {
 	rw_enter(&iur->iur_lock, RW_WRITER);
 	iur->iur_waiting_count--;
@@ -641,9 +618,7 @@ iur_proc_release(iur, iwpr)
 
 
 static int
-iur_proc_isreleased(iur, p)
-	struct irix_usema_rec *iur;
-	struct proc *p;
+iur_proc_isreleased(struct irix_usema_rec *iur, struct proc *p)
 {
 	struct irix_waiting_proc_rec *iwpr;
 	int res = 0;
@@ -660,8 +635,7 @@ iur_proc_isreleased(iur, p)
 }
 
 static struct irix_waiting_proc_rec *
-iur_proc_getfirst(iur)
-	struct irix_usema_rec *iur;
+iur_proc_getfirst(struct irix_usema_rec *iur)
 {
 	struct irix_waiting_proc_rec *iwpr;
 
@@ -677,9 +651,7 @@ iur_proc_getfirst(iur)
  * otherwise change ownership of structure allocated for process p to new_p
  */
 void
-irix_usema_exit_cleanup(p, new_p)
-	struct proc *p;
-	struct proc *new_p;
+irix_usema_exit_cleanup(struct proc *p, struct proc *new_p)
 {
 	struct irix_usema_rec *iur;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_exec_aout.c,v 1.15.2.1 2007/12/08 18:18:37 mjf Exp $	*/
+/*	$NetBSD: hpux_exec_aout.c,v 1.15.2.2 2007/12/27 00:43:41 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_exec_aout.c,v 1.15.2.1 2007/12/08 18:18:37 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_exec_aout.c,v 1.15.2.2 2007/12/27 00:43:41 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,9 +103,7 @@ static	int exec_hpux_prep_zmagic(struct lwp *, struct exec_package *);
 static	int exec_hpux_prep_omagic(struct lwp *, struct exec_package *);
 
 int
-exec_hpux_makecmds(l, epp)
-	struct lwp *l;
-	struct exec_package *epp;
+exec_hpux_makecmds(struct lwp *l, struct exec_package *epp)
 {
 	struct hpux_exec *hpux_ep = epp->ep_hdr;
 	short sysid, magic;
@@ -148,9 +146,7 @@ exec_hpux_makecmds(l, epp)
 }
 
 static int
-exec_hpux_prep_nmagic(l, epp)
-	struct lwp *l;
-	struct exec_package *epp;
+exec_hpux_prep_nmagic(struct lwp *l, struct exec_package *epp)
 {
 	struct hpux_exec *execp = epp->ep_hdr;
 	long bsize, baddr;
@@ -182,9 +178,7 @@ exec_hpux_prep_nmagic(l, epp)
 }
 
 static int
-exec_hpux_prep_zmagic(l, epp)
-	struct lwp *l;
-	struct exec_package *epp;
+exec_hpux_prep_zmagic(struct lwp *l, struct exec_package *epp)
 {
 	struct hpux_exec *execp = epp->ep_hdr;
 	long bsize, baddr;
@@ -236,9 +230,7 @@ exec_hpux_prep_zmagic(l, epp)
  * HP-UX's version of OMAGIC.
  */
 static int
-exec_hpux_prep_omagic(l, epp)
-	struct lwp *l;
-	struct exec_package *epp;
+exec_hpux_prep_omagic(struct lwp *l, struct exec_package *epp)
 {
 	struct hpux_exec *execp = epp->ep_hdr;
 	long dsize, bsize, baddr;

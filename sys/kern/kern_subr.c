@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.165.4.1 2007/12/08 18:20:32 mjf Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.165.4.2 2007/12/27 00:46:02 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2006 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.165.4.1 2007/12/08 18:20:32 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.165.4.2 2007/12/27 00:46:02 mjf Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -114,6 +114,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.165.4.1 2007/12/08 18:20:32 mjf Exp 
 #include <sys/fcntl.h>
 #include <sys/kauth.h>
 #include <sys/vnode.h>
+#include <sys/pmf.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -500,6 +501,8 @@ doshutdownhooks(void)
 		free(dp, M_DEVBUF);
 #endif
 	}
+
+	pmf_system_shutdown();
 }
 
 /*
@@ -645,6 +648,7 @@ powerhook_establish(const char *name, void (*fn)(int, void *), void *arg)
 	strlcpy(ndp->sfd_name, name, sizeof(ndp->sfd_name));
 	CIRCLEQ_INSERT_HEAD(&powerhook_list, ndp, sfd_list);
 
+	aprint_error("%s: WARNING: powerhook_establish is deprecated\n", name);
 	return (ndp);
 }
 
@@ -1361,8 +1365,8 @@ trace_is_enabled(struct proc *p)
  * system call number range for emulation the process runs under.
  */
 int
-trace_enter(struct lwp *l, register_t code,
-    register_t realcode, const struct sysent *callp, void *args)
+trace_enter(struct lwp *l, register_t code, register_t realcode,
+    const struct sysent *callp, const register_t *args)
 {
 #if defined(SYSCALL_DEBUG) || defined(KTRACE) || defined(PTRACE) || defined(SYSTRACE)
 	struct proc *p = l->l_proc;
@@ -1400,8 +1404,8 @@ trace_enter(struct lwp *l, register_t code,
  * system call number range for emulation the process runs under.
  */
 void
-trace_exit(struct lwp *l, register_t code, void *args, register_t rval[],
-    int error)
+trace_exit(struct lwp *l, register_t code, const register_t *args, 
+    register_t rval[], int error)
 {
 #if defined(SYSCALL_DEBUG) || defined(KTRACE) || defined(PTRACE) || defined(SYSTRACE)
 	struct proc *p = l->l_proc;

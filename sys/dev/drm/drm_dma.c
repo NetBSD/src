@@ -1,4 +1,4 @@
-/* $NetBSD: drm_dma.c,v 1.3.2.1 2007/12/08 18:19:28 mjf Exp $ */
+/* $NetBSD: drm_dma.c,v 1.3.2.2 2007/12/27 00:45:01 mjf Exp $ */
 
 /* drm_dma.c -- DMA IOCTL and function support -*- linux-c -*-
  * Created: Fri Mar 19 14:30:16 1999 by faith@valinux.com
@@ -34,6 +34,7 @@
  */
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: drm_dma.c,v 1.3.2.2 2007/12/27 00:45:01 mjf Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/drm_dma.c,v 1.2 2005/11/28 23:13:52 anholt Exp $");
 */

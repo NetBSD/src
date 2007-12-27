@@ -1,4 +1,4 @@
-.\"	$NetBSD: newfs.8,v 1.69 2006/02/25 01:56:41 christos Exp $
+.\"	$NetBSD: newfs.8,v 1.69.12.1 2007/12/27 00:47:02 mjf Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)newfs.8	8.6 (Berkeley) 5/3/95
 .\"
-.Dd February 24, 2006
+.Dd December 10, 2007
 .Dt NEWFS 8
 .Os
 .Sh NAME
@@ -213,6 +213,8 @@ access control lists).
 .El
 To create an LFS filesystem see
 .Xr newfs_lfs 8 .
+To create a Linux Ext2 filesystem see
+.Xr newfs_ext2fs 8 .
 .It Fl o Ar optimization
 Optimization preference; either
 .Dq space
@@ -350,6 +352,7 @@ that provide disk like block and character devices.
 .Xr makefs 8 ,
 .Xr mount 8 ,
 .Xr mount_mfs 8 ,
+.Xr newfs_ext2fs 8 ,
 .Xr newfs_lfs 8 ,
 .Xr newfs_msdos 8 ,
 .Xr tunefs 8

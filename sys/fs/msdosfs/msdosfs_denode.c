@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.26.4.1 2007/12/08 18:20:15 mjf Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.26.4.2 2007/12/27 00:45:45 mjf Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.26.4.1 2007/12/08 18:20:15 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.26.4.2 2007/12/27 00:45:45 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,7 +76,8 @@ u_long dehash;			/* size of hash table - 1 */
 #define	DEHASH(dev, dcl, doff) \
     (((dev) + (dcl) + (doff) / sizeof(struct direntry)) & dehash)
 
-struct simplelock msdosfs_ihash_slock;
+kmutex_t msdosfs_ihash_lock;
+kmutex_t msdosfs_hashlock;
 
 struct pool msdosfs_denode_pool;
 
@@ -89,7 +90,7 @@ static const struct genfs_ops msdosfs_genfsops = {
 	.gop_markupdate = msdosfs_gop_markupdate,
 };
 
-static struct denode *msdosfs_hashget(dev_t, u_long, u_long);
+static struct denode *msdosfs_hashget(dev_t, u_long, u_long, int);
 static void msdosfs_hashins(struct denode *);
 static void msdosfs_hashrem(struct denode *);
 
@@ -106,7 +107,8 @@ msdosfs_init()
 	    "msdosnopl", &pool_allocator_nointr, IPL_NONE);
 	dehashtbl = hashinit(desiredvnodes / 2, HASH_LIST, M_MSDOSFSMNT,
 	    M_WAITOK, &dehash);
-	simple_lock_init(&msdosfs_ihash_slock);
+	mutex_init(&msdosfs_ihash_lock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&msdosfs_hashlock, MUTEX_DEFAULT, IPL_NONE);
 }
 
 /*
@@ -124,7 +126,7 @@ msdosfs_reinit()
 	hash = hashinit(desiredvnodes / 2, HASH_LIST, M_MSDOSFSMNT, M_WAITOK,
 	    &mask);
 
-	simple_lock(&msdosfs_ihash_slock);
+	mutex_enter(&msdosfs_ihash_lock);
 	oldhash = dehashtbl;
 	oldmask = dehash;
 	dehashtbl = hash;
@@ -137,7 +139,7 @@ msdosfs_reinit()
 			LIST_INSERT_HEAD(&hash[val], dep, de_hash);
 		}
 	}
-	simple_unlock(&msdosfs_ihash_slock);
+	mutex_exit(&msdosfs_ihash_lock);
 	hashdone(oldhash, M_MSDOSFSMNT);
 }
 
@@ -146,36 +148,43 @@ msdosfs_done()
 {
 	hashdone(dehashtbl, M_MSDOSFSMNT);
 	pool_destroy(&msdosfs_denode_pool);
+	mutex_destroy(&msdosfs_ihash_lock);
+	mutex_destroy(&msdosfs_hashlock);
 	malloc_type_detach(M_MSDOSFSTMP);
 	malloc_type_detach(M_MSDOSFSFAT);
 	malloc_type_detach(M_MSDOSFSMNT);
 }
 
 static struct denode *
-msdosfs_hashget(dev, dirclust, diroff)
+msdosfs_hashget(dev, dirclust, diroff, flags)
 	dev_t dev;
 	u_long dirclust;
 	u_long diroff;
+	int flags;
 {
 	struct denode *dep;
 	struct vnode *vp;
 
 loop:
-	simple_lock(&msdosfs_ihash_slock);
+	mutex_enter(&msdosfs_ihash_lock);
 	LIST_FOREACH(dep, &dehashtbl[DEHASH(dev, dirclust, diroff)], de_hash) {
 		if (dirclust == dep->de_dirclust &&
 		    diroff == dep->de_diroffset &&
 		    dev == dep->de_dev &&
 		    dep->de_refcnt != 0) {
 			vp = DETOV(dep);
-			simple_lock(&vp->v_interlock);
-			simple_unlock(&msdosfs_ihash_slock);
-			if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK))
-				goto loop;
+			if (flags == 0) {
+				mutex_exit(&msdosfs_ihash_lock);
+			} else {
+				simple_lock(&vp->v_interlock);
+				mutex_exit(&msdosfs_ihash_lock);
+				if (vget(vp, flags | LK_INTERLOCK))
+					goto loop;
+			}
 			return (dep);
 		}
 	}
-	simple_unlock(&msdosfs_ihash_slock);
+	mutex_exit(&msdosfs_ihash_lock);
 	return (NULL);
 }
 
@@ -186,20 +195,22 @@ msdosfs_hashins(dep)
 	struct ihashhead *depp;
 	int val;
 
-	simple_lock(&msdosfs_ihash_slock);
+	KASSERT(mutex_owned(&msdosfs_hashlock));
+
+	mutex_enter(&msdosfs_ihash_lock);
 	val = DEHASH(dep->de_dev, dep->de_dirclust, dep->de_diroffset);
 	depp = &dehashtbl[val];
 	LIST_INSERT_HEAD(depp, dep, de_hash);
-	simple_unlock(&msdosfs_ihash_slock);
+	mutex_exit(&msdosfs_ihash_lock);
 }
 
 static void
 msdosfs_hashrem(dep)
 	struct denode *dep;
 {
-	simple_lock(&msdosfs_ihash_slock);
+	mutex_enter(&msdosfs_ihash_lock);
 	LIST_REMOVE(dep, de_hash);
-	simple_unlock(&msdosfs_ihash_slock);
+	mutex_exit(&msdosfs_ihash_lock);
 }
 
 /*
@@ -252,7 +263,8 @@ deget(pmp, dirclust, diroffset, depp)
 	 * entry that represented the file happens to be reused while the
 	 * deleted file is still open.
 	 */
-	ldep = msdosfs_hashget(pmp->pm_dev, dirclust, diroffset);
+ retry:
+	ldep = msdosfs_hashget(pmp->pm_dev, dirclust, diroffset, LK_EXCLUSIVE);
 	if (ldep) {
 		*depp = ldep;
 		return (0);
@@ -270,6 +282,18 @@ deget(pmp, dirclust, diroffset, depp)
 		return (error);
 	}
 	ldep = pool_get(&msdosfs_denode_pool, PR_WAITOK);
+
+	/*
+	 * If someone beat us to it, put back the freshly allocated
+	 * vnode/inode pair and retry.
+	 */
+	mutex_enter(&msdosfs_hashlock);
+	if (msdosfs_hashget(pmp->pm_dev, dirclust, diroffset, 0)) {
+		mutex_exit(&msdosfs_hashlock);
+		ungetnewvnode(nvp);
+		pool_put(&msdosfs_denode_pool, ldep);
+		goto retry;
+	}
 	memset(ldep, 0, sizeof *ldep);
 	nvp->v_data = ldep;
 	ldep->de_vnode = nvp;
@@ -289,6 +313,7 @@ deget(pmp, dirclust, diroffset, depp)
 	vn_lock(nvp, LK_EXCLUSIVE | LK_RETRY);
 	genfs_node_init(nvp, &msdosfs_genfsops);
 	msdosfs_hashins(ldep);
+	mutex_exit(&msdosfs_hashlock);
 
 	ldep->de_pmp = pmp;
 	ldep->de_devvp = pmp->pm_devvp;
@@ -587,8 +612,10 @@ reinsert(dep)
 	 */
 	if (dep->de_Attributes & ATTR_DIRECTORY)
 		return;
+	mutex_enter(&msdosfs_hashlock);
 	msdosfs_hashrem(dep);
 	msdosfs_hashins(dep);
+	mutex_exit(&msdosfs_hashlock);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vfsops.c,v 1.26.30.1 2007/12/08 18:21:01 mjf Exp $	*/
+/*	$NetBSD: layer_vfsops.c,v 1.26.30.2 2007/12/27 00:46:23 mjf Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_vfsops.c,v 1.26.30.1 2007/12/08 18:21:01 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_vfsops.c,v 1.26.30.2 2007/12/27 00:46:23 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -150,7 +150,11 @@ layerfs_statvfs(mp, sbp)
 	struct statvfs *sbp;
 {
 	int error;
-	struct statvfs *sbuf = malloc(sizeof(*sbuf), M_TEMP, M_WAITOK);
+	struct statvfs *sbuf;
+
+	sbuf = kmem_alloc(sizeof(*sbuf), KM_SLEEP);
+	if (sbuf == NULL)
+		return ENOMEM;
 
 #ifdef LAYERFS_DIAGNOSTIC
 	if (layerfs_debug)
@@ -181,7 +185,7 @@ layerfs_statvfs(mp, sbp)
 	sbp->f_namemax = sbuf->f_namemax;
 	copy_statvfs_info(sbp, mp);
 done:
-	free(sbuf, M_TEMP);
+	kmem_free(sbuf, sizeof(*sbuf));
 	return error;
 }
 

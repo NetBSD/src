@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.13.30.1 2007/12/08 18:18:24 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.13.30.2 2007/12/27 00:43:30 mjf Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -118,12 +118,11 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.13.30.1 2007/12/08 18:18:24 mjf Exp $");
 #include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/errno.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/atomic.h>
 #include <machine/i8259.h>
-#include <machine/cpu.h>
 #include <machine/pio.h>
 #include <xen/evtchn.h>
 

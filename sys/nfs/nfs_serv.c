@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.130.4.1 2007/12/08 18:21:23 mjf Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.130.4.2 2007/12/27 00:46:35 mjf Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.130.4.1 2007/12/08 18:21:23 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.130.4.2 2007/12/27 00:46:35 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1509,12 +1509,12 @@ nfsrv_create(nfsd, slp, lwp, mrq)
 		}
 		vp = nd.ni_vp;
 	} else {
+		VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
 		vp = nd.ni_vp;
 		if (nd.ni_dvp == vp)
 			vrele(nd.ni_dvp);
 		else
 			vput(nd.ni_dvp);
-		VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
 		if (!error && va.va_size != -1) {
 			error = nfsrv_access(vp, VWRITE, cred,
 			    (nd.ni_cnd.cn_flags & RDONLY), lwp, 0);

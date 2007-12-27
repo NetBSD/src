@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_ioctl.c,v 1.15.16.1 2007/12/08 18:19:12 mjf Exp $	 */
+/*	$NetBSD: svr4_32_ioctl.c,v 1.15.16.2 2007/12/27 00:44:38 mjf Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_ioctl.c,v 1.15.16.1 2007/12/08 18:19:12 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_ioctl.c,v 1.15.16.2 2007/12/27 00:44:38 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -99,12 +99,8 @@ svr4_32_decode_cmd(cmd, dir, c, num, argsiz)
 #endif
 
 int
-svr4_32_sys_ioctl(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_32_sys_ioctl(struct lwp *l, const struct svr4_32_sys_ioctl_args *uap, register_t *retval)
 {
-	struct svr4_32_sys_ioctl_args *uap = v;
 	struct proc 	*p = l->l_proc;
 	struct file	*fp;
 	struct filedesc	*fdp;

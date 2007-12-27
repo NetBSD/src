@@ -1,4 +1,4 @@
-/* $NetBSD: aiboost.c,v 1.16.2.1 2007/11/19 00:47:42 mjf Exp $ */
+/* $NetBSD: aiboost.c,v 1.16.2.2 2007/12/27 00:44:55 mjf Exp $ */
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aiboost.c,v 1.16.2.1 2007/11/19 00:47:42 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aiboost.c,v 1.16.2.2 2007/12/27 00:44:55 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -138,7 +138,7 @@ aiboost_acpi_attach(device_t parent, device_t self, void *aux)
 	sc->sc_sensor = kmem_zalloc(sizeof(envsys_data_t) * maxsens,
 	    KM_NOSLEEP);
 	if (!sc->sc_sensor)
-		return;
+		goto bad2;
 
 	/*
 	 * Set properties in sensors.
@@ -167,10 +167,14 @@ aiboost_acpi_attach(device_t parent, device_t self, void *aux)
 		goto bad;
 	}
 
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+
 	return;
 
 bad:
 	kmem_free(sc->sc_sensor, sizeof(*sc->sc_sensor));
+bad2:
 	sysmon_envsys_destroy(sc->sc_sme);
 	mutex_destroy(&sc->sc_mtx);
 }

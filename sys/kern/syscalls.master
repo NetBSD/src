@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.177.6.1 2007/11/19 00:48:55 mjf Exp $
+	$NetBSD: syscalls.master,v 1.177.6.2 2007/12/27 00:46:13 mjf Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -595,7 +595,7 @@
 			    gid_t gid); }
 286	STD MPSAFE	{ pid_t sys_getsid(pid_t pid); }
 287	STD		{ pid_t sys___clone(int flags, void *stack); }
-288	STD		{ int sys_fktrace(const int fd, int ops, \
+288	STD		{ int sys_fktrace(int fd, int ops, \
 			    int facs, int pid); }
 289	STD		{ ssize_t sys_preadv(int fd, \
 			    const struct iovec *iovp, int iovcnt, \

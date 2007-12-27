@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.184.6.1 2007/12/08 18:21:13 mjf Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.184.6.2 2007/12/27 00:46:30 mjf Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.184.6.1 2007/12/08 18:21:13 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.184.6.2 2007/12/27 00:46:30 mjf Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_inet.h"
@@ -174,6 +174,7 @@ int	ip_do_loopback_cksum = 0;
 int
 ip_output(struct mbuf *m0, ...)
 {
+	struct rtentry *rt;
 	struct ip *ip;
 	struct ifnet *ifp;
 	struct mbuf *m = m0;
@@ -261,7 +262,9 @@ ip_output(struct mbuf *m0, ...)
 	if ((flags & (IP_FORWARDING|IP_RAWOUTPUT)) == 0) {
 		ip->ip_v = IPVERSION;
 		ip->ip_off = htons(0);
-		if ((m->m_pkthdr.csum_flags & M_CSUM_TSOv4) == 0) {
+		if (m->m_pkthdr.len < IP_MINFRAGSIZE) {
+			ip->ip_id = 0;
+		} else if ((m->m_pkthdr.csum_flags & M_CSUM_TSOv4) == 0) {
 			ip->ip_id = ip_newid();
 		} else {
 
@@ -308,7 +311,7 @@ ip_output(struct mbuf *m0, ...)
 		rtcache_free(ro);
 	else
 		rtcache_check(ro);
-	if (ro->ro_rt == NULL) {
+	if ((rt = rtcache_getrt(ro)) == NULL) {
 		dst = &u.dst4;
 		rtcache_setdst(ro, &u.dst);
 	}
@@ -332,20 +335,20 @@ ip_output(struct mbuf *m0, ...)
 		mtu = ifp->if_mtu;
 		IFP_TO_IA(ifp, ia);
 	} else {
-		if (ro->ro_rt == NULL)
+		if (rt == NULL)
 			rtcache_init(ro);
-		if (ro->ro_rt == NULL) {
+		if ((rt = rtcache_getrt(ro)) == NULL) {
 			ipstat.ips_noroute++;
 			error = EHOSTUNREACH;
 			goto bad;
 		}
-		ia = ifatoia(ro->ro_rt->rt_ifa);
-		ifp = ro->ro_rt->rt_ifp;
-		if ((mtu = ro->ro_rt->rt_rmx.rmx_mtu) == 0)
+		ia = ifatoia(rt->rt_ifa);
+		ifp = rt->rt_ifp;
+		if ((mtu = rt->rt_rmx.rmx_mtu) == 0)
 			mtu = ifp->if_mtu;
-		ro->ro_rt->rt_use++;
-		if (ro->ro_rt->rt_flags & RTF_GATEWAY)
-			dst = satosin(ro->ro_rt->rt_gateway);
+		rt->rt_use++;
+		if (rt->rt_flags & RTF_GATEWAY)
+			dst = satosin(rt->rt_gateway);
 	}
 	if (IN_MULTICAST(ip->ip_dst.s_addr) ||
 	    (ip->ip_dst.s_addr == INADDR_BROADCAST)) {
@@ -500,8 +503,8 @@ sendit:
 	 * If we're doing Path MTU Discovery, we need to set DF unless
 	 * the route's MTU is locked.
 	 */
-	if ((flags & IP_MTUDISC) != 0 && ro->ro_rt != NULL &&
-	    (ro->ro_rt->rt_rmx.rmx_locks & RTV_MTU) == 0)
+	if ((flags & IP_MTUDISC) != 0 && rt != NULL &&
+	    (rt->rt_rmx.rmx_locks & RTV_MTU) == 0)
 		ip->ip_off |= htons(IP_DF);
 
 	/* Remember the current ip_len */
@@ -608,12 +611,13 @@ sendit:
 		 * if we have tunnel mode SA, we may need to ignore
 		 * IP_ROUTETOIF.
 		 */
-		if (state.ro != &iproute || state.ro->ro_rt != NULL) {
+		if (state.ro != &iproute || rtcache_getrt(state.ro) != NULL) {
 			flags &= ~IP_ROUTETOIF;
 			ro = state.ro;
 		}
 	} else
 		ro = state.ro;
+	rt = rtcache_getrt(ro);
 	dst = satocsin(state.dst);
 	if (error) {
 		/* mbuf is already reclaimed in ipsec4_output. */
@@ -641,7 +645,7 @@ sendit:
 	hlen = ip->ip_hl << 2;
 	ip_len = ntohs(ip->ip_len);
 
-	if (ro->ro_rt == NULL) {
+	if (rt == NULL) {
 		if ((flags & IP_ROUTETOIF) == 0) {
 			printf("ip_output: "
 				"can't update route after IPsec processing\n");
@@ -651,8 +655,8 @@ sendit:
 	} else {
 		/* nobody uses ia beyond here */
 		if (state.encap) {
-			ifp = ro->ro_rt->rt_ifp;
-			if ((mtu = ro->ro_rt->rt_rmx.rmx_mtu) == 0)
+			ifp = rt->rt_ifp;
+			if ((mtu = rt->rt_rmx.rmx_mtu) == 0)
 				mtu = ifp->if_mtu;
 		}
 	}
@@ -884,13 +888,13 @@ spd_done:
 			    (*ifp->if_output)(ifp, m,
 				(m->m_flags & M_MCAST) ?
 				    sintocsa(rdst) : sintocsa(dst),
-				ro->ro_rt);
+				rt);
 		} else {
 			error =
 			    ip_tso_output(ifp, m,
 				(m->m_flags & M_MCAST) ?
 				    sintocsa(rdst) : sintocsa(dst),
-				ro->ro_rt);
+				rt);
 		}
 		goto done;
 	}
@@ -959,7 +963,7 @@ spd_done:
 				error = (*ifp->if_output)(ifp, m,
 				    (m->m_flags & M_MCAST) ?
 					sintocsa(rdst) : sintocsa(dst),
-				    ro->ro_rt);
+				    rt);
 			}
 		} else
 			m_freem(m);
@@ -1765,6 +1769,7 @@ ip_setmoptions(int optname, struct ip_moptions **imop, struct mbuf *m)
 		 * the route to the given multicast address.
 		 */
 		if (in_nullhost(mreq->imr_interface)) {
+			struct rtentry *rt;
 			union {
 				struct sockaddr		dst;
 				struct sockaddr_in	dst4;
@@ -1776,7 +1781,8 @@ ip_setmoptions(int optname, struct ip_moptions **imop, struct mbuf *m)
 			sockaddr_in_init(&u.dst4, &mreq->imr_multiaddr, 0);
 			rtcache_setdst(&ro, &u.dst);
 			rtcache_init(&ro);
-			ifp = (ro.ro_rt != NULL) ? ro.ro_rt->rt_ifp : NULL;
+			ifp = (rt = rtcache_getrt(&ro)) != NULL ? rt->rt_ifp
+			                                        : NULL;
 			rtcache_free(&ro);
 		} else {
 			ifp = ip_multicast_if(&mreq->imr_interface, NULL);

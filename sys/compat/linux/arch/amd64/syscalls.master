@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.18.18.1 2007/11/19 00:47:18 mjf Exp $
+	$NetBSD: syscalls.master,v 1.18.18.2 2007/12/27 00:43:54 mjf Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -48,7 +48,9 @@
 #include <compat/linux/common/linux_types.h>
 #include <compat/linux/common/linux_mmap.h>
 #include <compat/linux/common/linux_ipc.h>
+#include <compat/linux/common/linux_msg.h>
 #include <compat/linux/common/linux_sem.h>
+#include <compat/linux/common/linux_shm.h>
 #include <compat/linux/common/linux_signal.h>
 #include <compat/linux/common/linux_siginfo.h>
 #include <compat/linux/common/linux_machdep.h>
@@ -110,10 +112,10 @@
 27	NOARGS		{ int sys_mincore(void *addr, size_t len, char *vec); }
 28	NOARGS		{ int sys_madvise(void *addr, size_t len, int behav); }
 #ifdef SYSVSHM
-29	STD		{ int linux_sys_shmget(key_t key, size_t size, \
+29	NOARGS		{ int linux_sys_shmget(key_t key, size_t size, \
 			    int shmflg); }
 30	NOARGS		{ int sys_shmat(int shmid, void *shmaddr, int shmflg); }
-31	STD		{ int linux_sys_shmctl(int shmid, int cmd, \
+31	NOARGS		{ int linux_sys_shmctl(int shmid, int cmd, \
 			    struct linux_shmid_ds *buf); }
 #else
 29	UNIMPL		shmget
@@ -196,7 +198,7 @@
 			    int msgflg); }
 70	NOARGS		{ ssize_t sys_msgrcv(int msqid, void *msgp, \
 			    size_t msgsz, long msgtyp, int msgflg); }
-71	STD		{ int linux_sys_msgctl(int msqid, int cmd, \
+71	NOARGS		{ int linux_sys_msgctl(int msqid, int cmd, \
 			    struct linux_msqid_ds *buf); }
 #else
 68	UNIMPL		msgget
@@ -268,9 +270,9 @@
 			    gid_t sgid); }
 120	STD		{ int linux_sys_getresgid(gid_t *rgid, gid_t *egid, \
 			    gid_t *sgid); }
-121	STD		{ int linux_sys_getpgid(int pid); }
+121	NOARGS		{ pid_t sys_getpgid(pid_t pid); }
 122	STD		{ int linux_sys_setfsuid(uid_t uid); }
-123	STD		{ int linux_sys_getfsuid(void); }
+123	STD		{ int linux_sys_setfsgid(gid_t gid); }
 124	NOARGS		{ pid_t sys_getsid(pid_t pid); }
 125	UNIMPL		capget
 126	UNIMPL		capset

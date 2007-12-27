@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs.h,v 1.26.24.1 2007/11/19 00:48:31 mjf Exp $	*/
+/*	$NetBSD: tmpfs.h,v 1.26.24.2 2007/12/27 00:45:49 mjf Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -366,7 +366,7 @@ struct tmpfs_fid {
 
 int	tmpfs_alloc_node(struct tmpfs_mount *, enum vtype,
 	    uid_t uid, gid_t gid, mode_t mode, struct tmpfs_node *,
-	    char *, dev_t, struct proc *, struct tmpfs_node **);
+	    char *, dev_t, struct tmpfs_node **);
 void	tmpfs_free_node(struct tmpfs_mount *, struct tmpfs_node *);
 int	tmpfs_alloc_dirent(struct tmpfs_mount *, struct tmpfs_node *,
 	    const char *, uint16_t, struct tmpfs_dirent **);

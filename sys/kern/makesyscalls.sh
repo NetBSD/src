@@ -1,5 +1,5 @@
 #! /bin/sh -
-#	$NetBSD: makesyscalls.sh,v 1.59.52.1 2007/11/19 00:48:46 mjf Exp $
+#	$NetBSD: makesyscalls.sh,v 1.59.52.2 2007/12/27 00:46:05 mjf Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -418,8 +418,13 @@ function putent(type, compatwrap) {
 		compatwrap_ = ""
 	else
 		compatwrap_ = compatwrap "_"
-	prototype = "(struct lwp *, void *, register_t *)"
-	proto = sprintf("int\t%s%s%s;\n", compatwrap_, funcname, prototype);
+	if (argc == 0)
+		arg_type = "void";
+	else {
+		arg_type = "struct " compatwrap_ funcname "_args";
+	}
+	proto = "int\t" compatwrap_ funcname "(struct lwp *, const " \
+	    arg_type " *, register_t *);\n"
 	if (sysmap[proto] != 1) {
 		sysmap[proto] = 1;
 		print proto > sysprotos;
@@ -433,9 +438,9 @@ function putent(type, compatwrap) {
 		printf("ns(struct %s%s_args), ", compatwrap_, funcname) > sysent
 	}
 	if (compatwrap == "")
-		wfn = funcname;
+		wfn = "(sy_call_t *)" funcname;
 	else
-		wfn = compatwrap "(" funcname ")";
+		wfn = "(sy_call_t *)" compatwrap "(" funcname ")";
 	printf("%s,\n\t    %s },", sycall_flags, wfn) > sysent
 	for (i = 0; i < (33 - length(wfn)) / 8; i++)
 		printf("\t") > sysent
@@ -457,14 +462,17 @@ function putent(type, compatwrap) {
 	}
 
 	# output syscall argument structure, if it has arguments
-	if (argc != 0 && type != "NOARGS") {
-		printf("\nstruct %s%s_args {\n", compatwrap_, funcname) \
-		    > sysarghdr
-		for (i = 1; i <= argc; i++)
-			printf("\tsyscallarg(%s) %s;\n", argtype[i],
-			    argname[i]) > sysarghdr
-		printf("};\n") > sysarghdr
-		if (type != "INDIR") {
+	if (argc != 0) {
+		printf("\nstruct %s%s_args", compatwrap_, funcname) > sysarghdr
+		if (type != "NOARGS") {
+			print " {" >sysarghdr;
+			for (i = 1; i <= argc; i++)
+				printf("\tsyscallarg(%s) %s;\n", argtype[i],
+				    argname[i]) > sysarghdr
+			printf "}" >sysarghdr;
+		}
+		printf(";\n") > sysarghdr
+		if (type != "NOARGS" && type != "INDIR") {
 			printf("check_syscall_args(%s%s)\n", compatwrap_,
 			    funcname) >sysarghdr
 		}

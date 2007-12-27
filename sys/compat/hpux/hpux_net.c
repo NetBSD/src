@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_net.c,v 1.35.8.1 2007/12/08 18:18:38 mjf Exp $	*/
+/*	$NetBSD: hpux_net.c,v 1.35.8.2 2007/12/27 00:43:42 mjf Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_net.c,v 1.35.8.1 2007/12/08 18:18:38 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_net.c,v 1.35.8.2 2007/12/27 00:43:42 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,8 +120,8 @@ struct hpux_sys_getsockopt_args {
 	syscallarg(int *) avalsize;
 };
 
-int	hpux_sys_setsockopt(struct lwp *, void *, register_t *);
-int	hpux_sys_getsockopt(struct lwp *, void *, register_t *);
+int	hpux_sys_setsockopt(struct lwp *, const struct hpux_sys_setsockopt_args *, register_t *);
+int	hpux_sys_getsockopt(struct lwp *, const struct hpux_sys_getsockopt_args *, register_t *);
 
 void	socksetsize(int, struct mbuf *);
 
@@ -134,78 +134,71 @@ void	socksetsize(int, struct mbuf *);
  * Indexed by callno - MINBSDIPCCODE
  */
 
-struct hpuxtobsdipc {
-	int (*rout)(struct lwp *, void *, register_t *);
-	int nargs;
-} hpuxtobsdipc[NUMBSDIPC] = {
-	{ compat_30_sys_socket,		3 }, /* 3ee */
-	{ sys_listen,			2 }, /* 3ef */
-	{ sys_bind,			3 }, /* 3f0 */
-	{ compat_43_sys_accept,		3 }, /* 3f1 */
-	{ sys_connect,			3 }, /* 3f2 */
-	{ compat_43_sys_recv,		4 }, /* 3f3 */
-	{ compat_43_sys_send,		4 }, /* 3f4 */
-	{ sys_shutdown,			2 }, /* 3f5 */
-	{ compat_43_sys_getsockname,	3 }, /* 3f6 */
-	{ hpux_sys_setsockopt,		5 }, /* 3f7 */
-	{ sys_sendto,			6 }, /* 3f8 */
-	{ compat_43_sys_recvfrom,	6 }, /* 3f9 */
-	{ compat_43_sys_getpeername,	3 }, /* 3fa */
-	{ NULL,				0 }, /* 3fb */
-	{ NULL,				0 }, /* 3fc */
-	{ NULL,				0 }, /* 3fd */
-	{ NULL,				0 }, /* 3fe */
-	{ NULL,				0 }, /* 3ff */
-	{ NULL,				0 }, /* 400 */
-	{ NULL,				0 }, /* 401 */
-	{ NULL,				0 }, /* 402 */
-	{ NULL,				0 }, /* 403 */
-	{ NULL,				0 }, /* 404 */
-	{ NULL,				0 }, /* 405 */
-	{ NULL,				0 }, /* 406 */
-	{ NULL,				0 }, /* 407 */
-	{ NULL,				0 }, /* 408 */
-	{ NULL,				0 }, /* 409 */
-	{ NULL,				0 }, /* 40a */
-	{ hpux_sys_getsockopt,		5 }, /* 40b */
-	{ NULL,				0 }, /* 40c */
-	{ NULL,				0 }, /* 40d */
+#define n(fn, ac) {ac, sizeof (register_t) * (ac), 0, (sy_call_t *)fn}
+struct sysent hpuxtobsdipc[NUMBSDIPC] = {
+	n( compat_30_sys_socket,	3 ), /* 3ee */
+	n( sys_listen,			2 ), /* 3ef */
+	n( sys_bind,			3 ), /* 3f0 */
+	n( compat_43_sys_accept,	3 ), /* 3f1 */
+	n( sys_connect,			3 ), /* 3f2 */
+	n( compat_43_sys_recv,		4 ), /* 3f3 */
+	n( compat_43_sys_send,		4 ), /* 3f4 */
+	n( sys_shutdown,		2 ), /* 3f5 */
+	n( compat_43_sys_getsockname,	3 ), /* 3f6 */
+	n( hpux_sys_setsockopt,		5 ), /* 3f7 */
+	n( sys_sendto,			6 ), /* 3f8 */
+	n( compat_43_sys_recvfrom,	6 ), /* 3f9 */
+	n( compat_43_sys_getpeername,	3 ), /* 3fa */
+	n( NULL,			0 ), /* 3fb */
+	n( NULL,			0 ), /* 3fc */
+	n( NULL,			0 ), /* 3fd */
+	n( NULL,			0 ), /* 3fe */
+	n( NULL,			0 ), /* 3ff */
+	n( NULL,			0 ), /* 400 */
+	n( NULL,			0 ), /* 401 */
+	n( NULL,			0 ), /* 402 */
+	n( NULL,			0 ), /* 403 */
+	n( NULL,			0 ), /* 404 */
+	n( NULL,			0 ), /* 405 */
+	n( NULL,			0 ), /* 406 */
+	n( NULL,			0 ), /* 407 */
+	n( NULL,			0 ), /* 408 */
+	n( NULL,			0 ), /* 409 */
+	n( NULL,			0 ), /* 40a */
+	n( hpux_sys_getsockopt,		5 ), /* 40b */
+	n( NULL,			0 ), /* 40c */
+	n( NULL,			0 ), /* 40d */
 };
-
+#undef n
 /*
  * Single system call entry to BSD style IPC.
  * Gleened from disassembled libbsdipc.a syscall entries.
  */
 int
-hpux_sys_netioctl(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+hpux_sys_netioctl(struct lwp *l, const struct hpux_sys_netioctl_args *uap, register_t *retval)
 {
-	struct hpux_sys_netioctl_args *uap = v;
-	int *args, i;
 	int code;
 	int error;
+	struct sysent *hp_sysent;
+	register_t bsd_ua[6];    /* Max of table at top */
 
-	args = SCARG(uap, args);
-	code = SCARG(uap, call) - MINBSDIPCCODE;
-	if (code < 0 || code >= NUMBSDIPC || hpuxtobsdipc[code].rout == NULL)
-		return (EINVAL);
-	if ((i = hpuxtobsdipc[code].nargs * sizeof (int)) &&
-	    (error = copyin((void *)args, (void *)uap, (u_int)i))) {
-		ktrsyscall(code + MINBSDIPCCODE, code + MINBSDIPCCODE, NULL,
-		    (register_t *)uap);
+	code = SCARG(uap, call);
+	if (code < MINBSDIPCCODE || code >= MINBSDIPCCODE + NUMBSDIPC)
+		return EINVAL;
+	hp_sysent = hpuxtobsdipc + code;
+	if (hp_sysent->sy_call == NULL)
+		return EINVAL;
+	error = copyin(SCARG(uap, args), &bsd_ua, hp_sysent->sy_argsize);
+	if (error != 0) {
+		/* ktrsyscall(code + MINBSDIPCCODE, code + MINBSDIPCCODE, NULL, &bsd_ua); */
 		return (error);
 	}
-	ktrsyscall(code + MINBSDIPCCODE, code + MINBSDIPCCODE, NULL,
-	    (register_t *)uap);
-	return ((*hpuxtobsdipc[code].rout)(l, uap, retval));
+	ktrsyscall(code, code, hp_sysent, bsd_ua);
+	return hp_sysent->sy_call(l, &bsd_ua, retval);
 }
 
 void
-socksetsize(size, m)
-	int size;
-	struct mbuf *m;
+socksetsize(int size, struct mbuf *m)
 {
 	int tmp;
 
@@ -231,16 +224,13 @@ socksetsize(size, m)
 
 /* ARGSUSED */
 int
-hpux_sys_setsockopt(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+hpux_sys_setsockopt(struct lwp *l, const struct hpux_sys_setsockopt_args *uap, register_t *retval)
 {
-	struct hpux_sys_setsockopt_args *uap = v;
 	struct proc *p = l->l_proc;
 	struct file *fp;
 	struct mbuf *m = NULL;
 	int tmp, error;
+	int name = SCARG(uap, name);
 
 	/* getsock() will use the descriptor for us */
 	if ((error = getsock(p->p_fd, SCARG(uap, s), &fp)))
@@ -256,22 +246,22 @@ hpux_sys_setsockopt(l, v, retval)
 			(void) m_free(m);
 			goto out;
 		}
-		if (SCARG(uap, name) == SO_LINGER) {
+		if (name == SO_LINGER) {
 			tmp = *mtod(m, int *);
 			mtod(m, struct linger *)->l_onoff = 1;
 			mtod(m, struct linger *)->l_linger = tmp;
 			m->m_len = sizeof(struct linger);
 		} else
 			socksetsize(SCARG(uap, valsize), m);
-	} else if (SCARG(uap, name) == ~SO_LINGER) {
-		SCARG(uap, name) = SO_LINGER;
+	} else if (name == ~SO_LINGER) {
+		name = SO_LINGER;
 		m = m_get(M_WAIT, MT_SOOPTS);
 		mtod(m, struct linger *)->l_onoff = 0;
 		m->m_len = sizeof(struct linger);
 	}
 
 	error = sosetopt((struct socket *)fp->f_data, SCARG(uap, level),
-	    SCARG(uap, name), m);
+	    name, m);
  out:
 	FILE_UNUSE(fp, l);
 	return (error);
@@ -279,12 +269,8 @@ hpux_sys_setsockopt(l, v, retval)
 
 /* ARGSUSED */
 int
-hpux_sys_setsockopt2(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+hpux_sys_setsockopt2(struct lwp *l, const struct hpux_sys_setsockopt2_args *uap, register_t *retval)
 {
-	struct hpux_sys_setsockopt2_args *uap = v;
 	struct proc *p = l->l_proc;
 	struct file *fp;
 	struct mbuf *m = NULL;
@@ -315,12 +301,8 @@ hpux_sys_setsockopt2(l, v, retval)
 }
 
 int
-hpux_sys_getsockopt(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+hpux_sys_getsockopt(struct lwp *l, const struct hpux_sys_getsockopt_args *uap, register_t *retval)
 {
-	struct hpux_sys_getsockopt_args *uap = v;
 	struct proc *p = l->l_proc;
 	struct file *fp;
 	struct mbuf *m = NULL;

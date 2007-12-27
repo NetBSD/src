@@ -1,355 +1,242 @@
-/*	$NetBSD: acpi_ec.c,v 1.42.2.1 2007/12/08 18:19:22 mjf Exp $	*/
-
-/*
- * Copyright 2001 Wasabi Systems, Inc.
- * All rights reserved.
- *
- * Written by Jason R. Thorpe for Wasabi Systems, Inc.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed for the NetBSD Project by
- *	Wasabi Systems, Inc.
- * 4. The name of Wasabi Systems, Inc. may not be used to endorse
- *    or promote products derived from this software without specific prior
- *    written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY WASABI SYSTEMS, INC. ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
- * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL WASABI SYSTEMS, INC
- * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
- */
+/*	$NetBSD: acpi_ec.c,v 1.42.2.2 2007/12/27 00:44:53 mjf Exp $	*/
 
 /*-
- * Copyright (c) 2000 Michael Smith
- * Copyright (c) 2000 BSDi
+ * Copyright (c) 2007 Joerg Sonnenberger <joerg@NetBSD.org>.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
+ *
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
+ *    notice, this list of conditions and the following disclaimer in
+ *    the documentation and/or other materials provided with the
+ *    distribution.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ * FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE
+ * COPYRIGHT HOLDERS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+ * AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+ * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
 
-/******************************************************************************
+/*
+ * The ACPI Embedded Controller (EC) driver serves two different purposes:
+ * - read and write access from ASL, e.g. to read battery state
+ * - notification of ASL of System Control Interrupts.
  *
- * 1. Copyright Notice
+ * Access to the EC is serialised by sc_access_mtx and optionally the
+ * ACPI global mutex.  Both locks are held until the request is fulfilled.
+ * All access to the softc has to hold sc_mtx to serialise against the GPE
+ * handler and the callout.  sc_mtx is also used for wakeup conditions.
  *
- * Some or all of this work - Copyright (c) 1999, Intel Corp.  All rights
- * reserved.
+ * SCIs are processed in a kernel thread. Handling gets a bit complicated
+ * by the lock order (sc_mtx must be acquired after sc_access_mtx and the
+ * ACPI global mutex).
  *
- * 2. License
+ * Read and write requests spin around for a short time as many requests
+ * can be handled instantly by the EC.  During normal processing interrupt
+ * mode is used exclusively.  At boot and resume time interrupts are not
+ * working and the handlers just busy loop.
  *
- * 2.1. This is your license from Intel Corp. under its intellectual property
- * rights.  You may have additional license terms from the party that provided
- * you this software, covering your right to use that party's intellectual
- * property rights.
+ * A callout is scheduled to compensate for missing interrupts on some
+ * hardware.  If the EC doesn't process a request for 5s, it is most likely
+ * in a wedged state.  No method to reset the EC is currently known.
  *
- * 2.2. Intel grants, free of charge, to any person ("Licensee") obtaining a
- * copy of the source code appearing in this file ("Covered Code") an
- * irrevocable, perpetual, worldwide license under Intel's copyrights in the
- * base code distributed originally by Intel ("Original Intel Code") to copy,
- * make derivatives, distribute, use and display any portion of the Covered
- * Code in any form, with the right to sublicense such rights; and
- *
- * 2.3. Intel grants Licensee a non-exclusive and non-transferable patent
- * license (with the right to sublicense), under only those claims of Intel
- * patents that are infringed by the Original Intel Code, to make, use, sell,
- * offer to sell, and import the Covered Code and derivative works thereof
- * solely to the minimum extent necessary to exercise the above copyright
- * license, and in no event shall the patent license extend to any additions
- * to or modifications of the Original Intel Code.  No other license or right
- * is granted directly or by implication, estoppel or otherwise;
- *
- * The above copyright and patent license is granted only if the following
- * conditions are met:
- *
- * 3. Conditions
- *
- * 3.1. Redistribution of Source with Rights to Further Distribute Source.
- * Redistribution of source code of any substantial portion of the Covered
- * Code or modification with rights to further distribute source must include
- * the above Copyright Notice, the above License, this list of Conditions,
- * and the following Disclaimer and Export Compliance provision.  In addition,
- * Licensee must cause all Covered Code to which Licensee contributes to
- * contain a file documenting the changes Licensee made to create that Covered
- * Code and the date of any change.  Licensee must include in that file the
- * documentation of any changes made by any predecessor Licensee.  Licensee
- * must include a prominent statement that the modification is derived,
- * directly or indirectly, from Original Intel Code.
- *
- * 3.2. Redistribution of Source with no Rights to Further Distribute Source.
- * Redistribution of source code of any substantial portion of the Covered
- * Code or modification without rights to further distribute source must
- * include the following Disclaimer and Export Compliance provision in the
- * documentation and/or other materials provided with distribution.  In
- * addition, Licensee may not authorize further sublicense of source of any
- * portion of the Covered Code, and must include terms to the effect that the
- * license from Licensee to its licensee is limited to the intellectual
- * property embodied in the software Licensee provides to its licensee, and
- * not to intellectual property embodied in modifications its licensee may
- * make.
- *
- * 3.3. Redistribution of Executable. Redistribution in executable form of any
- * substantial portion of the Covered Code or modification must reproduce the
- * above Copyright Notice, and the following Disclaimer and Export Compliance
- * provision in the documentation and/or other materials provided with the
- * distribution.
- *
- * 3.4. Intel retains all right, title, and interest in and to the Original
- * Intel Code.
- *
- * 3.5. Neither the name Intel nor any other trademark owned or controlled by
- * Intel shall be used in advertising or otherwise to promote the sale, use or
- * other dealings in products derived from or relating to the Covered Code
- * without prior written authorization from Intel.
- *
- * 4. Disclaimer and Export Compliance
- *
- * 4.1. INTEL MAKES NO WARRANTY OF ANY KIND REGARDING ANY SOFTWARE PROVIDED
- * HERE.  ANY SOFTWARE ORIGINATING FROM INTEL OR DERIVED FROM INTEL SOFTWARE
- * IS PROVIDED "AS IS," AND INTEL WILL NOT PROVIDE ANY SUPPORT,  ASSISTANCE,
- * INSTALLATION, TRAINING OR OTHER SERVICES.  INTEL WILL NOT PROVIDE ANY
- * UPDATES, ENHANCEMENTS OR EXTENSIONS.  INTEL SPECIFICALLY DISCLAIMS ANY
- * IMPLIED WARRANTIES OF MERCHANTABILITY, NONINFRINGEMENT AND FITNESS FOR A
- * PARTICULAR PURPOSE.
- *
- * 4.2. IN NO EVENT SHALL INTEL HAVE ANY LIABILITY TO LICENSEE, ITS LICENSEES
- * OR ANY OTHER THIRD PARTY, FOR ANY LOST PROFITS, LOST DATA, LOSS OF USE OR
- * COSTS OF PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES, OR FOR ANY INDIRECT,
- * SPECIAL OR CONSEQUENTIAL DAMAGES ARISING OUT OF THIS AGREEMENT, UNDER ANY
- * CAUSE OF ACTION OR THEORY OF LIABILITY, AND IRRESPECTIVE OF WHETHER INTEL
- * HAS ADVANCE NOTICE OF THE POSSIBILITY OF SUCH DAMAGES.  THESE LIMITATIONS
- * SHALL APPLY NOTWITHSTANDING THE FAILURE OF THE ESSENTIAL PURPOSE OF ANY
- * LIMITED REMEDY.
- *
- * 4.3. Licensee shall not export, either directly or indirectly, any of this
- * software or system incorporating such software without first obtaining any
- * required license or other approval from the U. S. Department of Commerce or
- * any other agency or department of the United States Government.  In the
- * event Licensee exports any such software from the United States or
- * re-exports any such software from a foreign destination, Licensee shall
- * ensure that the distribution and export/re-export of the software is in
- * compliance with all laws, regulations, orders, or other restrictions of the
- * U.S. Export Administration Regulations. Licensee agrees that neither it nor
- * any of its subsidiaries will export/re-export any technical data, process,
- * software, or service, directly or indirectly, to any country for which the
- * United States government or any agency thereof requires an export license,
- * other governmental approval, or letter of assurance, without first obtaining
- * such license, approval or letter.
- *
- *****************************************************************************/
+ * Special care has to be taken to not poll the EC in a busy loop without
+ * delay.  This can prevent processing of Power Button events. At least some
+ * Lenovo Thinkpads seem to be implement the Power Button Override in the EC
+ * and the only option to recover on those models is to cut off all power.
+ */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.42.2.1 2007/12/08 18:19:22 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.42.2.2 2007/12/27 00:44:53 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/condvar.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
-#include <sys/proc.h>
 #include <sys/kernel.h>
+#include <sys/kthread.h>
+#include <sys/mutex.h>
 
 #include <sys/bus.h>
 
-#include <dev/acpi/acpica.h>
-#include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
-#include <dev/acpi/acpi_ecreg.h>
+#include <dev/acpi/acpi_ecvar.h>
 
-MALLOC_DECLARE(M_ACPI);
+/* Maximum time to wait for global ACPI lock in ms */
+#define	EC_LOCK_TIMEOUT		5
 
-#define _COMPONENT	ACPI_EC_COMPONENT
-ACPI_MODULE_NAME("EC")
+/* Maximum time to poll for completion of a command  in ms */
+#define	EC_POLL_TIMEOUT		5
 
-struct acpi_ec_softc {
-	struct device	sc_dev;		/* base device glue */
-	ACPI_HANDLE sc_handle;		/* ACPI handle */
+/* Maximum time to give a single EC command in s */
+#define EC_CMD_TIMEOUT		10
 
-	UINT32		sc_gpebit;	/* our GPE interrupt bit */
+/* From ACPI 3.0b, chapter 12.3 */
+#define EC_COMMAND_READ		0x80
+#define	EC_COMMAND_WRITE	0x81
+#define	EC_COMMAND_BURST_EN	0x82
+#define	EC_COMMAND_BURST_DIS	0x83
+#define	EC_COMMAND_QUERY	0x84
 
-	bus_space_tag_t	sc_data_st;	/* space tag for data register */
-	bus_space_handle_t sc_data_sh;	/* space handle for data register */
+/* From ACPI 3.0b, chapter 12.2.1 */
+#define	EC_STATUS_OBF		0x01
+#define	EC_STATUS_IBF		0x02
+#define	EC_STATUS_CMD		0x08
+#define	EC_STATUS_BURST		0x10
+#define	EC_STATUS_SCI		0x20
+#define	EC_STATUS_SMI		0x40
 
-	bus_space_tag_t	sc_csr_st;	/* space tag for control register */
-	bus_space_handle_t sc_csr_sh;	/* space handle for control register */
-
-	int		sc_flags;	/* see below */
-
-	uint32_t	sc_csrvalue;	/* saved control register */
-	uint32_t	sc_uid;		/* _UID in namespace (ECDT only) */
-
-	kmutex_t	sc_lock;	/* serialize operations to this EC */
-	struct simplelock sc_slock;	/* protect against interrupts */
-	UINT32		sc_glkhandle;	/* global lock handle */
-	UINT32		sc_glk;		/* need global lock? */
-};
-
-static const char * const ec_hid[] = {
+static const char *ec_hid[] = {
 	"PNP0C09",
-	NULL
+	NULL,
 };
 
-#define	EC_F_TRANSACTION	0x01	/* doing transaction */
-#define	EC_F_PENDQUERY		0x02	/* query is pending */
+enum ec_state_t {
+	EC_STATE_QUERY,
+	EC_STATE_QUERY_VAL,
+	EC_STATE_READ,
+	EC_STATE_READ_ADDR,
+	EC_STATE_READ_VAL,
+	EC_STATE_WRITE,
+	EC_STATE_WRITE_ADDR,
+	EC_STATE_WRITE_VAL,
+	EC_STATE_FREE
+};
 
-/*
- * how long to wait to acquire global lock.
- * the value is taken from FreeBSD driver.
- */
-#define	EC_LOCK_TIMEOUT	1000
+struct acpiec_softc {
+	ACPI_HANDLE sc_ech;
 
-#define	EC_DATA_READ(sc)						\
-	bus_space_read_1((sc)->sc_data_st, (sc)->sc_data_sh, 0)
-#define	EC_DATA_WRITE(sc, v)						\
-	bus_space_write_1((sc)->sc_data_st, (sc)->sc_data_sh, 0, (v))
+	ACPI_HANDLE sc_gpeh;
+	UINT8 sc_gpebit;
 
-#define	EC_CSR_READ(sc)							\
-	bus_space_read_1((sc)->sc_csr_st, (sc)->sc_csr_sh, 0)
-#define	EC_CSR_WRITE(sc, v)						\
-	bus_space_write_1((sc)->sc_csr_st, (sc)->sc_csr_sh, 0, (v))
+	bus_space_tag_t sc_data_st;
+	bus_space_handle_t sc_data_sh;
 
-typedef struct {
-	EC_COMMAND	Command;
-	UINT8		Address;
-	UINT8		Data;
-} EC_REQUEST;
+	bus_space_tag_t sc_csr_st;
+	bus_space_handle_t sc_csr_sh;
 
-static UINT32		EcGpeHandler(void *);
-static ACPI_STATUS	EcSpaceSetup(ACPI_HANDLE, UINT32, void *, void **);
-static ACPI_STATUS	EcSpaceHandler(UINT32, ACPI_PHYSICAL_ADDRESS, UINT32,
-			    ACPI_INTEGER *, void *, void *);
+	bool sc_need_global_lock;
+	UINT32 sc_global_lock;
 
-static ACPI_STATUS	EcWaitEvent(struct acpi_ec_softc *, EC_EVENT);
-static ACPI_STATUS	EcQuery(struct acpi_ec_softc *, UINT8 *);
-static ACPI_STATUS	EcTransaction(struct acpi_ec_softc *, EC_REQUEST *);
-static ACPI_STATUS	EcRead(struct acpi_ec_softc *, UINT8, UINT8 *);
-static ACPI_STATUS	EcWrite(struct acpi_ec_softc *, UINT8, UINT8 *);
-static void		EcGpeQueryHandler(void *);
-static inline int	EcIsLocked(struct acpi_ec_softc *);
-static inline void	EcLock(struct acpi_ec_softc *);
-static inline void	EcUnlock(struct acpi_ec_softc *);
+	kmutex_t sc_mtx, sc_access_mtx;
+	kcondvar_t sc_cv, sc_cv_sci;
+	enum ec_state_t sc_state;
+	bool sc_got_sci;
+	callout_t sc_pseudo_intr;
 
+	uint8_t sc_cur_addr, sc_cur_val;
+};
 
-static int	acpiec_match(struct device *, struct cfdata *, void *);
-static void	acpiec_attach(struct device *, struct device *, void *);
+static int acpiecdt_match(device_t, struct cfdata *, void *);
+static void acpiecdt_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(acpiec, sizeof(struct acpi_ec_softc),
+static int acpiec_match(device_t, struct cfdata *, void *);
+static void acpiec_attach(device_t, device_t, void *);
+
+static void acpiec_common_attach(device_t, device_t, ACPI_HANDLE,
+    bus_addr_t, bus_addr_t, ACPI_HANDLE, uint8_t);
+
+static bool acpiec_resume(device_t);
+static bool acpiec_suspend(device_t);
+
+static bool acpiec_parse_gpe_package(device_t, ACPI_HANDLE,
+    ACPI_HANDLE *, uint8_t *);
+
+static void acpiec_callout(void *);
+static void acpiec_gpe_query(void *);
+static UINT32 acpiec_gpe_handler(void *);
+static ACPI_STATUS acpiec_space_setup(ACPI_HANDLE, UINT32, void *, void **);
+static ACPI_STATUS acpiec_space_handler(UINT32, ACPI_PHYSICAL_ADDRESS,
+    UINT32, ACPI_INTEGER *, void *, void *);
+
+static void acpiec_gpe_state_machine(device_t);
+
+CFATTACH_DECL_NEW(acpiec, sizeof(struct acpiec_softc),
     acpiec_match, acpiec_attach, NULL, NULL);
 
-static struct acpi_ec_softc *ecdt_sc;
+CFATTACH_DECL_NEW(acpiecdt, sizeof(struct acpiec_softc),
+    acpiecdt_match, acpiecdt_attach, NULL, NULL);
 
-static inline int
-EcIsLocked(struct acpi_ec_softc *sc)
+static device_t ec_singleton = NULL;
+static bool acpiec_cold = false;
+
+static bool
+acpiecdt_find(device_t parent, ACPI_HANDLE *ec_handle,
+    bus_addr_t *cmd_reg, bus_addr_t *data_reg, uint8_t *gpebit)
 {
-
-	return (mutex_owned(&sc->sc_lock));
-}
-
-static inline void
-EcLock(struct acpi_ec_softc *sc)
-{
+	ACPI_TABLE_ECDT *ecdt;
 	ACPI_STATUS rv;
-	int s;
 
-	mutex_enter(&sc->sc_lock);
-	if (sc->sc_glk) {
-		rv = AcpiAcquireGlobalLock(EC_LOCK_TIMEOUT,
-		    &sc->sc_glkhandle);
-		if (ACPI_FAILURE(rv)) {
-			printf("%s: failed to acquire global lock\n",
-			    sc->sc_dev.dv_xname);
-			mutex_exit(&sc->sc_lock);
-			return;
-		}
+	rv = AcpiGetTable(ACPI_SIG_ECDT, 1, (ACPI_TABLE_HEADER **)&ecdt);
+	if (ACPI_FAILURE(rv))
+		return false;
+
+	if (ecdt->Control.BitWidth != 8 || ecdt->Data.BitWidth != 8) {
+		aprint_error_dev(parent,
+		    "ECDT register width invalid (%d/%d)\n",
+		    ecdt->Control.BitWidth, ecdt->Data.BitWidth);
+		return false;
 	}
 
-	s = splvm(); /* XXX */
-	simple_lock(&sc->sc_slock);
-	sc->sc_flags |= EC_F_TRANSACTION;
-	simple_unlock(&sc->sc_slock);
-	splx(s);
+	rv = AcpiGetHandle(ACPI_ROOT_OBJECT, ecdt->Id, ec_handle);
+	if (ACPI_FAILURE(rv)) {
+		aprint_error_dev(parent,
+		    "failed to look up EC object %s: %s\n",
+		    ecdt->Id, AcpiFormatException(rv));
+		return false;
+	}
+
+	*cmd_reg = ecdt->Control.Address;
+	*data_reg = ecdt->Data.Address;
+	*gpebit = ecdt->Gpe;
+
+	return true;
 }
 
-static inline void
-EcUnlock(struct acpi_ec_softc *sc)
-{
-	ACPI_STATUS rv;
-	int s;
-
-	/*
-	 * Clear & Re-Enable the EC GPE:
-	 * -----------------------------
-	 * 'Consume' any EC GPE events that we generated while performing
-	 * the transaction (e.g. IBF/OBF). Clearing the GPE here shouldn't
-	 * have an adverse affect on outstanding EC-SCI's, as the source
-	 * (EC-SCI) will still be high and thus should trigger the GPE
-	 * immediately after we re-enabling it.
-	 */
-	s = splvm(); /* XXX */
-	simple_lock(&sc->sc_slock);
-	if (sc->sc_flags & EC_F_PENDQUERY) {
-		ACPI_STATUS rv2;
-
-		rv2 = AcpiOsQueueForExecution(OSD_PRIORITY_HIGH,
-		    EcGpeQueryHandler, sc);
-		if (ACPI_FAILURE(rv2))
-			printf("%s: unable to queue pending query: %s\n",
-			    sc->sc_dev.dv_xname, AcpiFormatException(rv2));
-		sc->sc_flags &= ~EC_F_PENDQUERY;
-	}
-	sc->sc_flags &= ~EC_F_TRANSACTION;
-	simple_unlock(&sc->sc_slock);
-	splx(s);
-
-	if (sc->sc_glk) {
-		rv = AcpiReleaseGlobalLock(sc->sc_glkhandle);
-		if (ACPI_FAILURE(rv))
-			printf("%s: failed to release global lock\n",
-			    sc->sc_dev.dv_xname);
-	}
-	mutex_exit(&sc->sc_lock);
-}
-
-/*
- * acpiec_match:
- *
- *	Autoconfiguration `match' routine.
- */
 static int
-acpiec_match(struct device *parent, struct cfdata *match,
-    void *aux)
+acpiecdt_match(device_t parent, struct cfdata *match, void *aux)
+{
+	ACPI_HANDLE ec_handle;
+	bus_addr_t cmd_reg, data_reg;
+	uint8_t gpebit;
+
+	if (acpiecdt_find(parent, &ec_handle, &cmd_reg, &data_reg, &gpebit))
+		return 1;
+	else
+		return 0;
+}
+
+static void
+acpiecdt_attach(device_t parent, device_t self, void *aux)
+{
+	ACPI_HANDLE ec_handle;
+	bus_addr_t cmd_reg, data_reg;
+	uint8_t gpebit;
+
+	if (!acpiecdt_find(parent, &ec_handle, &cmd_reg, &data_reg, &gpebit))
+		panic("ECDT disappeared");
+
+	aprint_naive(": ACPI Embedded Controller via ECDT\n");
+	aprint_normal(": ACPI Embedded Controller via ECDT\n");
+
+	acpiec_common_attach(parent, self, ec_handle, cmd_reg, data_reg,
+	    NULL, gpebit);
+}
+
+static int
+acpiec_match(device_t parent, struct cfdata *match, void *aux)
 {
 	struct acpi_attach_args *aa = aux;
 
@@ -359,672 +246,625 @@ acpiec_match(struct device *parent, struct cfdata *match,
 	return acpi_match_hid(aa->aa_node->ad_devinfo, ec_hid);
 }
 
-void
-acpiec_early_attach(struct device *parent)
-{
-	struct acpi_softc *sc = (struct acpi_softc *)parent;
-	EC_BOOT_RESOURCES *ep;
-	ACPI_HANDLE handle;
-	ACPI_STATUS rv;
-	ACPI_INTEGER tmp;
-
-	rv = AcpiGetFirmwareTable("ECDT", 1, ACPI_LOGICAL_ADDRESSING,
-	    (void *)&ep);
-	if (ACPI_FAILURE(rv))
-		return;
-
-	if (ep->EcControl.RegisterBitWidth != 8 ||
-	    ep->EcData.RegisterBitWidth != 8) {
-		printf("%s: ECDT data is invalid, RegisterBitWidth=%d/%d\n",
-		    parent->dv_xname,
-		    ep->EcControl.RegisterBitWidth,
-		    ep->EcData.RegisterBitWidth);
-		return;
-	}
-
-	rv = AcpiGetHandle(ACPI_ROOT_OBJECT, ep->EcId, &handle);
-	if (ACPI_FAILURE(rv)) {
-		printf("%s: failed to look up EC object %s: %s\n",
-		    parent->dv_xname,
-		    ep->EcId, AcpiFormatException(rv));
-		return;
-	}
-
-	ecdt_sc = malloc(sizeof(*ecdt_sc), M_ACPI, M_ZERO);
-
-	strcpy(ecdt_sc->sc_dev.dv_xname, "acpiecdt0"); /* XXX */
-	ecdt_sc->sc_handle = handle;
-
-	ecdt_sc->sc_gpebit = ep->GpeBit;
-	ecdt_sc->sc_uid = ep->Uid;
-
-	ecdt_sc->sc_data_st = sc->sc_iot;
-	if (bus_space_map(ecdt_sc->sc_data_st,
-		(bus_addr_t)(ep->EcData.Address), 1, 0,
-		&ecdt_sc->sc_data_sh) != 0) {
-		printf("%s: bus_space_map failed for EC data.\n",
-		    parent->dv_xname);
-		goto out1;
-	}
-
-	ecdt_sc->sc_csr_st = sc->sc_iot;
-	if (bus_space_map(ecdt_sc->sc_csr_st,
-		(bus_addr_t)(ep->EcControl.Address), 1, 0,
-		&ecdt_sc->sc_csr_sh) != 0) {
-		printf("%s: bus_space_map failed for EC control.\n",
-		    parent->dv_xname);
-		goto out2;
-	}
-
-	rv = acpi_eval_integer(handle, "_GLK", &tmp);
-	if (ACPI_SUCCESS(rv) && tmp == 1)
-		ecdt_sc->sc_glk = 1;
-
-	rv = AcpiInstallGpeHandler(NULL, ecdt_sc->sc_gpebit,
-	    ACPI_GPE_EDGE_TRIGGERED, EcGpeHandler, ecdt_sc);
-	if (ACPI_FAILURE(rv)) {
-		printf("%s: unable to install GPE handler: %s\n",
-		    parent->dv_xname, AcpiFormatException(rv));
-		goto out3;
-	}
-
-	rv = AcpiSetGpeType(NULL, ecdt_sc->sc_gpebit, ACPI_GPE_TYPE_RUNTIME);
-	if (ACPI_FAILURE(rv)) {
-		printf("%s: unable to set GPE type: %s\n",
-		    parent->dv_xname, AcpiFormatException(rv));
-		goto out4;
-	}
-
-	rv = AcpiEnableGpe(NULL, ecdt_sc->sc_gpebit, ACPI_NOT_ISR);
-	if (ACPI_FAILURE(rv)) {
-		printf("%s: unable to enable GPE: %s\n",
-		    parent->dv_xname, AcpiFormatException(rv));
-		goto out4;
-	}
-
-	rv = AcpiInstallAddressSpaceHandler(ACPI_ROOT_OBJECT,
-	    ACPI_ADR_SPACE_EC, EcSpaceHandler, EcSpaceSetup, ecdt_sc);
-	if (ACPI_FAILURE(rv)) {
-		printf("%s: unable to install address space handler: %s\n",
-		    parent->dv_xname,
-		    AcpiFormatException(rv));
-		goto out4;
-	}
-
-	printf("%s: found ECDT, GPE %d\n", parent->dv_xname,
-	    ecdt_sc->sc_gpebit);
-
-	mutex_init(&ecdt_sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
-	simple_lock_init(&ecdt_sc->sc_slock);
-
-	AcpiOsUnmapMemory(ep, ep->Length);
-	return;
-
- out4:
-	AcpiRemoveGpeHandler(NULL, ecdt_sc->sc_gpebit, EcGpeHandler);
- out3:
-	bus_space_unmap(ecdt_sc->sc_csr_st, ecdt_sc->sc_csr_sh, 1);
- out2:
-	bus_space_unmap(ecdt_sc->sc_data_st, ecdt_sc->sc_data_sh, 1);
- out1:
-	free(ecdt_sc, M_ACPI);
-	ecdt_sc = NULL;
-
-	AcpiOsUnmapMemory(ep, ep->Length);
-
-	return;
-}
-
-/*
- * acpiec_attach:
- *
- *	Autoconfiguration `attach' routine.
- */
 static void
-acpiec_attach(struct device *parent, struct device *self, void *aux)
+acpiec_attach(device_t parent, device_t self, void *aux)
 {
-	struct acpi_ec_softc *sc = (void *) self;
 	struct acpi_attach_args *aa = aux;
+	struct acpi_resources ec_res;
 	struct acpi_io *io0, *io1;
-	struct acpi_resources res;
+	ACPI_HANDLE gpe_handle;
+	uint8_t gpebit;
 	ACPI_STATUS rv;
-	ACPI_INTEGER v;
 
-	ACPI_FUNCTION_TRACE(__FUNCTION__);
+	if (ec_singleton != NULL) {
+		aprint_naive(": ACPI Embedded Controller (disabled)\n");
+		aprint_normal(": ACPI Embedded Controller (disabled)\n");
+		if (!pmf_device_register(self, NULL, NULL))
+			aprint_error_dev(self, "couldn't establish power handler\n");
+		return;
+	}
 
 	aprint_naive(": ACPI Embedded Controller\n");
 	aprint_normal(": ACPI Embedded Controller\n");
 
-	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
-	simple_lock_init(&sc->sc_slock);
-
-	sc->sc_handle = aa->aa_node->ad_handle;
-
-	/* Parse our resources. */
-	ACPI_DEBUG_PRINT((ACPI_DB_RESOURCES, "parsing EC resources\n"));
-	rv = acpi_resource_parse(&sc->sc_dev, sc->sc_handle, "_CRS",
-	    &res, &acpi_resource_parse_ops_default);
-	if (ACPI_FAILURE(rv))
+	if (!acpiec_parse_gpe_package(self, aa->aa_node->ad_handle,
+				      &gpe_handle, &gpebit))
 		return;
 
-#define adi aa->aa_node->ad_devinfo
-
-	/* check if we already attached EC via ECDT */
-	if (ecdt_sc &&
-	    ((adi->Valid & ACPI_VALID_UID) == ACPI_VALID_UID) &&
-	    ecdt_sc->sc_uid == strtoul(adi->UniqueId.Value, NULL, 10)) {
-		/* detach all ECDT handles */
-		rv = AcpiRemoveAddressSpaceHandler(ACPI_ROOT_OBJECT,
-		    ACPI_ADR_SPACE_EC, EcSpaceHandler);
-		if (ACPI_FAILURE(rv))
-			aprint_error("ERROR: RemoveAddressSpaceHandler: %s\n",
-			    AcpiFormatException(rv));
-		rv = AcpiRemoveGpeHandler(NULL, ecdt_sc->sc_gpebit,
-		    EcGpeHandler);
-		if (ACPI_FAILURE(rv))
-			aprint_error("ERROR: RemoveAddressSpaceHandler: %s\n",
-			    AcpiFormatException(rv));
-
-		bus_space_unmap(ecdt_sc->sc_csr_st,
-		    ecdt_sc->sc_csr_sh, 1);
-		bus_space_unmap(ecdt_sc->sc_data_st,
-		    ecdt_sc->sc_data_sh, 1);
-
-		mutex_destroy(&ecdt_sc->sc_lock);
-		free(ecdt_sc, M_ACPI);
-		ecdt_sc = NULL;
+	rv = acpi_resource_parse(self, aa->aa_node->ad_handle, "_CRS",
+	    &ec_res, &acpi_resource_parse_ops_default);
+	if (rv != AE_OK) {
+		aprint_error_dev(self, "resource parsing failed: %s\n",
+		    AcpiFormatException(rv));
+		return;
 	}
 
-#undef adi
-
-	sc->sc_data_st = aa->aa_iot;
-	io0 = acpi_res_io(&res, 0);
-	if (io0 == NULL) {
-		aprint_error("%s: unable to find data register resource\n",
-		    sc->sc_dev.dv_xname);
-		goto out;
+	if ((io0 = acpi_res_io(&ec_res, 0)) == NULL) {
+		aprint_error_dev(self, "no data register resource\n");
+		goto free_res;
 	}
-	if (bus_space_map(sc->sc_data_st, io0->ar_base, io0->ar_length,
-	    0, &sc->sc_data_sh) != 0) {
-		aprint_error("%s: unable to map data register\n",
-		    sc->sc_dev.dv_xname);
-		goto out;
+	if ((io1 = acpi_res_io(&ec_res, 1)) == NULL) {
+		aprint_error_dev(self, "no CSR register resource\n");
+		goto free_res;
 	}
 
-	sc->sc_csr_st = aa->aa_iot;
-	io1 = acpi_res_io(&res, 1);
-	if (io1 == NULL) {
-		aprint_error("%s: unable to find csr register resource\n",
-		    sc->sc_dev.dv_xname);
-		goto out;
-	}
-	if (bus_space_map(sc->sc_csr_st, io1->ar_base, io1->ar_length,
-	    0, &sc->sc_csr_sh) != 0) {
-		aprint_error("%s: unable to map csr register\n",
-		    sc->sc_dev.dv_xname);
-		goto out;
-	}
+	acpiec_common_attach(parent, self, aa->aa_node->ad_handle,
+	    io1->ar_base, io0->ar_base, gpe_handle, gpebit);
 
-	/*
-	 * evaluate _GLK to see if we should acquire global lock
-	 * when accessing the EC.
-	 */
-	rv = acpi_eval_integer(sc->sc_handle, "_GLK", &v);
-	if (ACPI_FAILURE(rv)) {
-		if (rv != AE_NOT_FOUND)
-			aprint_error("%s: unable to evaluate _GLK: %s\n",
-			       sc->sc_dev.dv_xname,
-			       AcpiFormatException(rv));
-		sc->sc_glk = 0;
-	} else
-		sc->sc_glk = v;
-
-	/*
-	 * Install GPE handler.
-	 *
-	 * We evaluate the _GPE method to find the GPE bit used by the
-	 * Embedded Controller to signal status (SCI).
-	 */
-	rv = acpi_eval_integer(sc->sc_handle, "_GPE", &v);
-	if (ACPI_FAILURE(rv)) {
-		aprint_error("%s: unable to evaluate _GPE: %s\n",
-		    sc->sc_dev.dv_xname, AcpiFormatException(rv));
-		goto out;
-	}
-	sc->sc_gpebit = v;
-
-	/*
-	 * Install a handler for this EC's GPE bit.  Note that EC SCIs are
-	 * treated as both edge- and level-triggered interrupts; in other words
-	 * we clear the status bit immediately after getting an EC-SCI, then
-	 * again after we're done processing the event.  This guarantees that
-	 * events we cause while performing a transaction (e.g. IBE/OBF) get
-	 * cleared before re-enabling the GPE.
-	 */
-	rv = AcpiInstallGpeHandler(NULL, sc->sc_gpebit,
-	    ACPI_GPE_EDGE_TRIGGERED, EcGpeHandler, sc);
-	if (ACPI_FAILURE(rv)) {
-		aprint_error("%s: unable to install GPE handler: %s\n",
-		    sc->sc_dev.dv_xname, AcpiFormatException(rv));
-		goto out;
-	}
-
-	rv = AcpiSetGpeType(NULL, sc->sc_gpebit, ACPI_GPE_TYPE_RUNTIME);
-	if (ACPI_FAILURE(rv)) {
-		aprint_error("%s: unable to set GPE type: %s\n",
-		    sc->sc_dev.dv_xname, AcpiFormatException(rv));
-		goto out2;
-	}
-
-	rv = AcpiEnableGpe(NULL, sc->sc_gpebit, ACPI_NOT_ISR);
-	if (ACPI_FAILURE(rv)) {
-		aprint_error("%s: unable to enable GPE: %s\n",
-		    sc->sc_dev.dv_xname, AcpiFormatException(rv));
-		goto out2;
-	}
-
-	/* Install address space handler. */
-	rv = AcpiInstallAddressSpaceHandler(sc->sc_handle,
-	     ACPI_ADR_SPACE_EC, EcSpaceHandler, EcSpaceSetup, sc);
-	if (ACPI_FAILURE(rv)) {
-		aprint_error("%s: unable to install address space handler: %s\n",
-		    sc->sc_dev.dv_xname, AcpiFormatException(rv));
-		goto out2;
-	}
-
-	return_VOID;
- out2:
-	(void)AcpiRemoveGpeHandler(NULL, sc->sc_gpebit, EcGpeHandler);
-
- out:
-	acpi_resource_cleanup(&res);
-	return_VOID;
+free_res:
+	acpi_resource_cleanup(&ec_res);
 }
 
 static void
-EcGpeQueryHandler(void *Context)
+acpiec_common_attach(device_t parent, device_t self,
+    ACPI_HANDLE ec_handle, bus_addr_t cmd_reg, bus_addr_t data_reg,
+    ACPI_HANDLE gpe_handle, uint8_t gpebit)
 {
-	struct acpi_ec_softc *sc = Context;
-	UINT8 Data = 0;
+	struct acpiec_softc *sc = device_private(self);
 	ACPI_STATUS rv;
-	char qxx[5];
+	ACPI_INTEGER val;
 
-	ACPI_FUNCTION_TRACE(__FUNCTION__);
+	sc->sc_ech = ec_handle;
+	sc->sc_gpeh = gpe_handle;
+	sc->sc_gpebit = gpebit;
 
-	for (;;) {
-		/*
-		 * Check EC_SCI.
-		 *
-		 * Bail out if the EC_SCI bit of the status register is not
-		 * set. Note that this function should only be called when
-		 * this bit is set (polling is used to detect IBE/OBF events).
-		 *
-		 * It is safe to do this without locking the controller, as
-		 * it's OK to call EcQuery when there's no data ready; in the
-		 * worst case we should just find nothing waiting for us and
-		 * bail.
-		 */
-		if ((EC_CSR_READ(sc) & EC_EVENT_SCI) == 0)
-			break;
+	sc->sc_state = EC_STATE_FREE;
+	mutex_init(&sc->sc_mtx, MUTEX_DRIVER, IPL_TTY);
+	mutex_init(&sc->sc_access_mtx, MUTEX_DEFAULT, IPL_NONE);
+	cv_init(&sc->sc_cv, "eccv");
+	cv_init(&sc->sc_cv_sci, "ecsci");
 
-		EcLock(sc);
+	if (bus_space_map(sc->sc_data_st, data_reg, 1, 0,
+	    &sc->sc_data_sh) != 0) {
+		aprint_error_dev(self, "unable to map data register\n");
+		return;
+	}
 
-		/*
-		 * Find out why the EC is signalling us
-		 */
-		rv = EcQuery(sc, &Data);
+	if (bus_space_map(sc->sc_csr_st, cmd_reg, 1, 0, &sc->sc_csr_sh) != 0) {
+		aprint_error_dev(self, "unable to map CSR register\n");
+		goto post_data_map;
+	}
 
-		EcUnlock(sc);
+	rv = acpi_eval_integer(sc->sc_ech, "_GLK", &val);
+	if (rv == AE_OK) {
+		sc->sc_need_global_lock = val != 0;
+	} else if (rv != AE_NOT_FOUND) {
+		aprint_error_dev(self, "unable to evaluate _GLK: %s\n",
+		    AcpiFormatException(rv));
+		goto post_csr_map;
+	} else {
+		sc->sc_need_global_lock = false;
+	}
+	if (sc->sc_need_global_lock)
+		aprint_normal_dev(self, "using global ACPI lock\n");
 
-		/*
-		 * If we failed to get anything from the EC, give up.
-		 */
-		if (ACPI_FAILURE(rv)) {
-			printf("%s: GPE query failed: %s\n",
-			    sc->sc_dev.dv_xname, AcpiFormatException(rv));
-			break;
+	callout_init(&sc->sc_pseudo_intr, CALLOUT_MPSAFE);
+	callout_setfunc(&sc->sc_pseudo_intr, acpiec_callout, self);
+
+	rv = AcpiInstallAddressSpaceHandler(sc->sc_ech, ACPI_ADR_SPACE_EC,
+	    acpiec_space_handler, acpiec_space_setup, self);
+	if (rv != AE_OK) {
+		aprint_error_dev(self,
+		    "unable to install address space handler: %s\n",
+		    AcpiFormatException(rv));
+		goto post_csr_map;
+	}
+
+	rv = AcpiInstallGpeHandler(sc->sc_gpeh, sc->sc_gpebit,
+	    ACPI_GPE_EDGE_TRIGGERED, acpiec_gpe_handler, self);
+	if (rv != AE_OK) {
+		aprint_error_dev(self, "unable to install GPE handler: %s\n",
+		    AcpiFormatException(rv));
+		goto post_csr_map;
+	}
+
+	rv = AcpiSetGpeType(sc->sc_gpeh, sc->sc_gpebit, ACPI_GPE_TYPE_RUNTIME);
+	if (rv != AE_OK) {
+		aprint_error_dev(self, "unable to set GPE type: %s\n",
+		    AcpiFormatException(rv));
+		goto post_csr_map;
+	}
+
+	rv = AcpiEnableGpe(sc->sc_gpeh, sc->sc_gpebit, ACPI_ISR);
+	if (rv != AE_OK) {
+		aprint_error_dev(self, "unable to enable GPE: %s\n",
+		    AcpiFormatException(rv));
+		goto post_csr_map;
+	}
+
+	if (kthread_create(PRI_NONE, KTHREAD_MPSAFE, NULL, acpiec_gpe_query,
+		           self, NULL, "acpiec sci thread")) {
+		aprint_error_dev(self, "unable to create query kthread\n");
+		goto post_csr_map;
+	}
+
+	ec_singleton = self;
+
+	if (!pmf_device_register(self, acpiec_suspend, acpiec_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+
+	return;
+
+post_csr_map:
+	(void)AcpiRemoveGpeHandler(sc->sc_gpeh, sc->sc_gpebit,
+	    acpiec_gpe_handler);
+	(void)AcpiRemoveAddressSpaceHandler(sc->sc_ech,
+	    ACPI_ADR_SPACE_EC, acpiec_space_handler);
+	bus_space_unmap(sc->sc_csr_st, sc->sc_csr_sh, 1);
+post_data_map:
+	bus_space_unmap(sc->sc_data_st, sc->sc_data_sh, 1);
+}
+
+static bool
+acpiec_suspend(device_t dv)
+{
+	acpiec_cold = true;
+
+	return true;
+}
+
+static bool
+acpiec_resume(device_t dv)
+{
+	acpiec_cold = false;
+
+	return true;
+}
+
+static bool
+acpiec_parse_gpe_package(device_t self, ACPI_HANDLE ec_handle,
+    ACPI_HANDLE *gpe_handle, uint8_t *gpebit)
+{
+	ACPI_BUFFER buf;
+	ACPI_OBJECT *p, *c;
+	ACPI_STATUS rv;
+
+	rv = acpi_eval_struct(ec_handle, "_GPE", &buf);
+	if (rv != AE_OK) {
+		aprint_error_dev(self, "unable to evaluate _GPE: %s\n",
+		    AcpiFormatException(rv));
+		return false;
+	}
+
+	p = buf.Pointer;
+
+	if (p->Type == ACPI_TYPE_INTEGER) {
+		*gpe_handle = NULL;
+		*gpebit = p->Integer.Value;
+		AcpiOsFree(p);
+		return true;
+	}
+
+	if (p->Type != ACPI_TYPE_PACKAGE) {
+		aprint_error_dev(self, "_GPE is neither integer nor package\n");
+		AcpiOsFree(p);
+		return false;
+	}
+	
+	if (p->Package.Count != 2) {
+		aprint_error_dev(self, "_GPE package does not contain 2 elements\n");
+		AcpiOsFree(p);
+		return false;
+	}
+
+	c = &p->Package.Elements[0];
+	switch (c->Type) {
+	case ACPI_TYPE_LOCAL_REFERENCE:
+	case ACPI_TYPE_ANY:
+		*gpe_handle = c->Reference.Handle;
+		break;
+	case ACPI_TYPE_STRING:
+		/* XXX should be using real scope here */
+		rv = AcpiGetHandle(NULL, p->String.Pointer, gpe_handle);
+		if (rv != AE_OK) {
+			aprint_error_dev(self,
+			    "_GPE device reference unresolvable\n");
+			AcpiOsFree(p);
+			return false;
 		}
+		break;
+	default:
+		aprint_error_dev(self, "_GPE device reference incorrect\n");
+		AcpiOsFree(p);
+		return false;
+	}
+	c = &p->Package.Elements[1];
+	if (c->Type != ACPI_TYPE_INTEGER) {
+		aprint_error_dev(self,
+		    "_GPE package needs integer as 2nd field\n");
+		AcpiOsFree(p);
+		return false;
+	}
+	*gpebit = c->Integer.Value;
+	AcpiOsFree(p);
+	return true;
+}
 
-		/*
-		 * Evaluate _Qxx to respond to the controller.
-		 */
-		snprintf(qxx, sizeof(qxx), "_Q%02X", Data);
-		rv = AcpiEvaluateObject(sc->sc_handle, qxx,
-		    NULL, NULL);
+static uint8_t
+acpiec_read_data(struct acpiec_softc *sc)
+{
+	return bus_space_read_1(sc->sc_data_st, sc->sc_data_sh, 0);
+}
 
-		/*
-		 * Ignore spurious query requests.
-		 */
-		if (ACPI_FAILURE(rv) &&
-		    (Data != 0 || rv != AE_NOT_FOUND)) {
-			printf("%s: evaluation of GPE query method %s "
-			    "failed: %s\n", sc->sc_dev.dv_xname, qxx,
+static void
+acpiec_write_data(struct acpiec_softc *sc, uint8_t val)
+{
+	bus_space_write_1(sc->sc_data_st, sc->sc_data_sh, 0, val);
+}
+
+static uint8_t
+acpiec_read_status(struct acpiec_softc *sc)
+{
+	return bus_space_read_1(sc->sc_csr_st, sc->sc_csr_sh, 0);
+}
+
+static void
+acpiec_write_command(struct acpiec_softc *sc, uint8_t cmd)
+{
+	bus_space_write_1(sc->sc_csr_st, sc->sc_csr_sh, 0, cmd);
+}
+
+static ACPI_STATUS
+acpiec_space_setup(ACPI_HANDLE region, UINT32 func, void *arg,
+    void **region_arg)
+{
+	if (func == ACPI_REGION_DEACTIVATE)
+		*region_arg = NULL;
+	else
+		*region_arg = arg;
+
+	return AE_OK;
+}
+
+static void
+acpiec_lock(device_t dv)
+{
+	struct acpiec_softc *sc = device_private(dv);
+	ACPI_STATUS rv;
+
+	mutex_enter(&sc->sc_access_mtx);
+
+	if (sc->sc_need_global_lock) {
+		rv = AcpiAcquireGlobalLock(EC_LOCK_TIMEOUT, &sc->sc_global_lock);
+		if (rv != AE_OK) {
+			aprint_error_dev(dv, "failed to acquire global lock: %s\n",
+			    AcpiFormatException(rv));
+			return;
+		}
+	}
+}
+
+static void
+acpiec_unlock(device_t dv)
+{
+	struct acpiec_softc *sc = device_private(dv);
+	ACPI_STATUS rv;
+
+	if (sc->sc_need_global_lock) {
+		rv = AcpiReleaseGlobalLock(sc->sc_global_lock);
+		if (rv != AE_OK) {
+			aprint_error_dev(dv, "failed to release global lock: %s\n",
 			    AcpiFormatException(rv));
 		}
 	}
+	mutex_exit(&sc->sc_access_mtx);
+}
 
-	/* I know I request Level trigger cleanup */
-	rv = AcpiClearGpe(NULL, sc->sc_gpebit, ACPI_NOT_ISR);
-	if (ACPI_FAILURE(rv))
-		printf("%s: AcpiClearGpe failed: %s\n", sc->sc_dev.dv_xname,
-		    AcpiFormatException(rv));
+static ACPI_STATUS
+acpiec_read(device_t dv, uint8_t addr, uint8_t *val)
+{
+	struct acpiec_softc *sc = device_private(dv);
+	int i;
 
-	return_VOID;
+	acpiec_lock(dv);
+	mutex_enter(&sc->sc_mtx);
+
+	sc->sc_cur_addr = addr;
+	sc->sc_state = EC_STATE_READ;
+
+	for (i = 0; i < EC_POLL_TIMEOUT; ++i) {
+		acpiec_gpe_state_machine(dv);
+		if (sc->sc_state == EC_STATE_FREE)
+			goto done;
+		delay(1);
+	}
+
+	if (cold || acpiec_cold) {
+		while (sc->sc_state != EC_STATE_FREE) {
+			delay(1);
+			acpiec_gpe_state_machine(dv);
+		}
+	} else while (cv_timedwait(&sc->sc_cv, &sc->sc_mtx, EC_CMD_TIMEOUT * hz)) {
+		mutex_exit(&sc->sc_mtx);
+		AcpiClearGpe(sc->sc_gpeh, sc->sc_gpebit, ACPI_NOT_ISR);
+		acpiec_unlock(dv);
+		aprint_error_dev(dv, "command takes over %d sec...\n", EC_CMD_TIMEOUT);
+		return AE_ERROR;
+	}
+
+done:
+	*val = sc->sc_cur_val;
+
+	mutex_exit(&sc->sc_mtx);
+	acpiec_unlock(dv);
+	return AE_OK;
+}
+
+static ACPI_STATUS
+acpiec_write(device_t dv, uint8_t addr, uint8_t val)
+{
+	struct acpiec_softc *sc = device_private(dv);
+	int i;
+
+	acpiec_lock(dv);
+	mutex_enter(&sc->sc_mtx);
+
+	sc->sc_cur_addr = addr;
+	sc->sc_cur_val = val;
+	sc->sc_state = EC_STATE_WRITE;
+
+	for (i = 0; i < EC_POLL_TIMEOUT; ++i) {
+		acpiec_gpe_state_machine(dv);
+		if (sc->sc_state == EC_STATE_FREE)
+			goto done;
+		delay(1);
+	}
+
+	if (cold || acpiec_cold) {
+		while (sc->sc_state != EC_STATE_FREE) {
+			delay(1);
+			acpiec_gpe_state_machine(dv);
+		}
+	} else while (cv_timedwait(&sc->sc_cv, &sc->sc_mtx, EC_CMD_TIMEOUT * hz)) {
+		mutex_exit(&sc->sc_mtx);
+		AcpiClearGpe(sc->sc_gpeh, sc->sc_gpebit, ACPI_NOT_ISR);
+		acpiec_unlock(dv);
+		aprint_error_dev(dv, "command takes over %d sec...\n", EC_CMD_TIMEOUT);
+		return AE_ERROR;
+	}
+
+done:
+	mutex_exit(&sc->sc_mtx);
+	acpiec_unlock(dv);
+	return AE_OK;
+}
+
+static ACPI_STATUS
+acpiec_space_handler(UINT32 func, ACPI_PHYSICAL_ADDRESS paddr,
+    UINT32 width, ACPI_INTEGER *value, void *arg, void *region_arg)
+{
+	device_t dv;
+	struct acpiec_softc *sc;
+	ACPI_STATUS rv;
+	uint8_t addr, reg;
+	unsigned int i;
+
+	if (paddr > 0xff || width % 8 != 0 || value == NULL || arg == NULL ||
+	    paddr + width / 8 > 0xff)
+		return AE_BAD_PARAMETER;
+
+	addr = paddr;
+	dv = arg;
+	sc = device_private(dv);
+
+	rv = AE_OK;
+
+	switch (func) {
+	case ACPI_READ:
+		*value = 0;
+		for (i = 0; i < width; i += 8, ++addr) {
+			rv = acpiec_read(dv, addr, &reg);
+			if (rv != AE_OK)
+				break;
+			*value |= (ACPI_INTEGER)reg << i;
+		}
+		break;
+	case ACPI_WRITE:
+		for (i = 0; i < width; i += 8, ++addr) {
+			reg = (*value >>i) & 0xff;
+			rv = acpiec_write(dv, addr, reg);
+			if (rv != AE_OK)
+				break;
+		}
+		break;
+	default:
+		aprint_error("%s: invalid Address Space function called: %x\n",
+		    device_xname(dv), (unsigned int)func);
+		return AE_BAD_PARAMETER;
+	}
+
+	return rv;
+}
+
+static void
+acpiec_gpe_query(void *arg)
+{
+	device_t dv = arg;
+	struct acpiec_softc *sc = device_private(dv);
+	uint8_t reg;
+	char qxx[5];
+	ACPI_STATUS rv;
+	int i;
+
+loop:
+	mutex_enter(&sc->sc_mtx);
+
+	if (sc->sc_got_sci == false)
+		cv_wait(&sc->sc_cv_sci, &sc->sc_mtx);
+	mutex_exit(&sc->sc_mtx);
+
+	acpiec_lock(dv);
+	mutex_enter(&sc->sc_mtx);
+
+	/* The Query command can always be issued, so be defensive here. */
+	sc->sc_got_sci = false;
+	sc->sc_state = EC_STATE_QUERY;
+
+	for (i = 0; i < EC_POLL_TIMEOUT; ++i) {
+		acpiec_gpe_state_machine(dv);
+		if (sc->sc_state == EC_STATE_FREE)
+			goto done;
+		delay(1);
+	}
+
+	cv_wait(&sc->sc_cv, &sc->sc_mtx);
+
+done:
+	reg = sc->sc_cur_val;
+
+	mutex_exit(&sc->sc_mtx);
+	acpiec_unlock(dv);
+
+	if (reg == 0)
+		goto loop; /* Spurious query result */
+
+	/*
+	 * Evaluate _Qxx to respond to the controller.
+	 */
+	snprintf(qxx, sizeof(qxx), "_Q%02X", (unsigned int)reg);
+	rv = AcpiEvaluateObject(sc->sc_ech, qxx, NULL, NULL);
+	if (rv != AE_OK && rv != AE_NOT_FOUND) {
+		aprint_error("%s: GPE query method %s failed: %s",
+		    device_xname(dv), qxx, AcpiFormatException(rv));
+	}
+
+	goto loop;
+}
+
+static void
+acpiec_gpe_state_machine(device_t dv)
+{
+	struct acpiec_softc *sc = device_private(dv);
+	uint8_t reg;
+
+	reg = acpiec_read_status(sc);
+
+	if (reg & EC_STATUS_SCI)
+		sc->sc_got_sci = true;
+
+	switch (sc->sc_state) {
+	case EC_STATE_QUERY:
+		if ((reg & EC_STATUS_IBF) != 0)
+			break; /* Nothing of interest here. */
+		acpiec_write_command(sc, EC_COMMAND_QUERY);
+		sc->sc_state = EC_STATE_QUERY_VAL;
+		break;
+
+	case EC_STATE_QUERY_VAL:
+		if ((reg & EC_STATUS_OBF) == 0)
+			break; /* Nothing of interest here. */
+
+		sc->sc_cur_val = acpiec_read_data(sc);
+		sc->sc_state = EC_STATE_FREE;
+
+		cv_signal(&sc->sc_cv);
+		break;
+
+	case EC_STATE_READ:
+		if ((reg & EC_STATUS_IBF) != 0)
+			break; /* Nothing of interest here. */
+
+		acpiec_write_command(sc, EC_COMMAND_READ);
+		sc->sc_state = EC_STATE_READ_ADDR;
+		break;
+
+	case EC_STATE_READ_ADDR:
+		if ((reg & EC_STATUS_IBF) != 0)
+			break; /* Nothing of interest here. */
+
+		acpiec_write_data(sc, sc->sc_cur_addr);
+		sc->sc_state = EC_STATE_READ_VAL;
+		break;
+
+	case EC_STATE_READ_VAL:
+		if ((reg & EC_STATUS_OBF) == 0)
+			break; /* Nothing of interest here. */
+		sc->sc_cur_val = acpiec_read_data(sc);
+		sc->sc_state = EC_STATE_FREE;
+
+		cv_signal(&sc->sc_cv);
+		break;
+
+	case EC_STATE_WRITE:
+		if ((reg & EC_STATUS_IBF) != 0)
+			break; /* Nothing of interest here. */
+
+		acpiec_write_command(sc, EC_COMMAND_WRITE);
+		sc->sc_state = EC_STATE_WRITE_ADDR;
+		break;
+
+	case EC_STATE_WRITE_ADDR:
+		if ((reg & EC_STATUS_IBF) != 0)
+			break; /* Nothing of interest here. */
+		acpiec_write_data(sc, sc->sc_cur_addr);
+		sc->sc_state = EC_STATE_WRITE_VAL;
+		break;
+
+	case EC_STATE_WRITE_VAL:
+		if ((reg & EC_STATUS_IBF) != 0)
+			break; /* Nothing of interest here. */
+		sc->sc_state = EC_STATE_FREE;
+		cv_signal(&sc->sc_cv);
+
+		acpiec_write_data(sc, sc->sc_cur_val);
+		break;
+
+	case EC_STATE_FREE:
+		if (sc->sc_got_sci)
+			cv_signal(&sc->sc_cv_sci);
+		break;
+	default:
+		panic("invalid state");
+	}
+
+	if (sc->sc_state != EC_STATE_FREE)
+		callout_schedule(&sc->sc_pseudo_intr, 1);
+}
+
+static void
+acpiec_callout(void *arg)
+{
+	device_t dv = arg;
+	struct acpiec_softc *sc = device_private(dv);
+
+	AcpiClearGpe(sc->sc_gpeh, sc->sc_gpebit, ACPI_NOT_ISR);
+
+	mutex_enter(&sc->sc_mtx);
+	acpiec_gpe_state_machine(dv);
+	mutex_exit(&sc->sc_mtx);
 }
 
 static UINT32
-EcGpeHandler(void *Context)
+acpiec_gpe_handler(void *arg)
 {
-	struct acpi_ec_softc *sc = Context;
-	uint32_t csrvalue;
-	ACPI_STATUS rv;
+	device_t dv = arg;
+	struct acpiec_softc *sc = device_private(dv);
 
-	/*
-	 * If EC is locked, the intr must process EcRead/Write wait only.
-	 * Query request must be pending.
-	 */
-	simple_lock(&sc->sc_slock);
-	if (sc->sc_flags & EC_F_TRANSACTION) {
-		csrvalue = EC_CSR_READ(sc);
-		sc->sc_flags |= EC_F_PENDQUERY;
+	AcpiClearGpe(sc->sc_gpeh, sc->sc_gpebit, ACPI_ISR);
 
-		if ((csrvalue & EC_FLAG_OUTPUT_BUFFER) != 0 ||
-		    (csrvalue & EC_FLAG_INPUT_BUFFER) == 0) {
-			sc->sc_csrvalue = csrvalue;
-			wakeup(&sc->sc_csrvalue);
-		}
-		simple_unlock(&sc->sc_slock);
-	} else {
-		simple_unlock(&sc->sc_slock);
-		/* Enqueue GpeQuery handler. */
-		rv = AcpiOsQueueForExecution(OSD_PRIORITY_HIGH,
-		    EcGpeQueryHandler, Context);
-		if (ACPI_FAILURE(rv))
-			printf("%s: failed to enqueue query handler: %s\n",
-			    sc->sc_dev.dv_xname, AcpiFormatException(rv));
-	}
+	mutex_enter(&sc->sc_mtx);
+	acpiec_gpe_state_machine(dv);
+	mutex_exit(&sc->sc_mtx);
 
-	return 0;			/* XXX not yet used in ACPI-CA */
+	return 0;
 }
 
-static ACPI_STATUS
-EcSpaceSetup(ACPI_HANDLE Region, UINT32 Function, void *Context,
-    void **RegionContext)
+ACPI_STATUS
+acpiec_bus_read(device_t dv, u_int addr, ACPI_INTEGER *val, int width)
 {
-
-	ACPI_FUNCTION_TRACE(__FUNCTION__);
-
-	/*
-	 * Just pass the context through, there's nothing to do here.
-	 */
-	if (Function == ACPI_REGION_DEACTIVATE)
-		*RegionContext = NULL;
-	else
-		*RegionContext = Context;
-
-	return_ACPI_STATUS(AE_OK);
+	return acpiec_space_handler(ACPI_READ, addr, width * 8, val, dv, NULL);
 }
 
-static ACPI_STATUS
-EcSpaceHandler(UINT32 Function, ACPI_PHYSICAL_ADDRESS Address, UINT32 width,
-    ACPI_INTEGER *Value, void *Context, void *RegionContext)
+ACPI_STATUS
+acpiec_bus_write(device_t dv, u_int addr, ACPI_INTEGER val, int width)
 {
-	struct acpi_ec_softc *sc = Context;
-	ACPI_STATUS rv = AE_OK;
-	EC_REQUEST EcRequest;
-	int i;
-
-	ACPI_FUNCTION_TRACE_U32(__FUNCTION__, (UINT32)Address);
-
-	if ((Address > 0xFF) || (width % 8 != 0) || (Value == NULL) ||
-	    (Context == NULL))
-		return_ACPI_STATUS(AE_BAD_PARAMETER);
-
-	switch (Function) {
-	case ACPI_READ:
-		EcRequest.Command = EC_COMMAND_READ;
-		EcRequest.Address = Address;
-		(*Value) = 0;
-		break;
-
-	case ACPI_WRITE:
-		EcRequest.Command = EC_COMMAND_WRITE;
-		EcRequest.Address = Address;
-		break;
-
-	default:
-		printf("%s: invalid Address Space function: %d\n",
-		    sc->sc_dev.dv_xname, Function);
-		return_ACPI_STATUS(AE_BAD_PARAMETER);
-	}
-
-	/*
-	 * Perform the transaction.
-	 */
-	for (i = 0; i < width; i += 8) {
-		if (Function == ACPI_READ)
-			EcRequest.Data = 0;
-		else
-			EcRequest.Data = (UINT8)((*Value) >> i);
-
-		rv = EcTransaction(sc, &EcRequest);
-		if (ACPI_FAILURE(rv))
-			break;
-
-		(*Value) |= (UINT32)EcRequest.Data << i;
-		if (++EcRequest.Address == 0)
-			return_ACPI_STATUS(AE_BAD_PARAMETER);
-	}
-
-	return_ACPI_STATUS(rv);
+	return acpiec_space_handler(ACPI_WRITE, addr, width * 8, &val, dv, NULL);
 }
 
-static ACPI_STATUS
-EcWaitEventIntr(struct acpi_ec_softc *sc, EC_EVENT Event)
+ACPI_HANDLE
+acpiec_get_handle(device_t dv)
 {
-	EC_STATUS EcStatus;
-	int i;
+	struct acpiec_softc *sc = device_private(dv);
 
-	ACPI_FUNCTION_TRACE_U32(__FUNCTION__, (UINT32)Event);
-
-	/* XXX Need better test for "yes, you have interrupts". */
-	if (cold)
-		return_ACPI_STATUS(EcWaitEvent(sc, Event));
-
-	if (EcIsLocked(sc) == 0)
-		printf("%s: EcWaitEventIntr called without EC lock!\n",
-		    sc->sc_dev.dv_xname);
-
-	EcStatus = EC_CSR_READ(sc);
-
-	/* Too long? */
-	for (i = 0; i < 10; i++) {
-		/* Check EC status against the desired event. */
-		if ((Event == EC_EVENT_OUTPUT_BUFFER_FULL) &&
-		    (EcStatus & EC_FLAG_OUTPUT_BUFFER) != 0)
-			return_ACPI_STATUS(AE_OK);
-
-		if ((Event == EC_EVENT_INPUT_BUFFER_EMPTY) &&
-		    (EcStatus & EC_FLAG_INPUT_BUFFER) == 0)
-			return_ACPI_STATUS(AE_OK);
-
-		sc->sc_csrvalue = 0;
-		/* XXXJRT Sleeping with a lock held? */
-		if (tsleep(&sc->sc_csrvalue, 0, "EcWait", (hz + 99) / 100)
-		    != EWOULDBLOCK)
-			EcStatus = sc->sc_csrvalue;
-		else
-			EcStatus = EC_CSR_READ(sc);
-	}
-	return_ACPI_STATUS(AE_ERROR);
-}
-
-static ACPI_STATUS
-EcWaitEvent(struct acpi_ec_softc *sc, EC_EVENT Event)
-{
-	EC_STATUS EcStatus;
-	UINT32 i = 0;
-
-	if (EcIsLocked(sc) == 0)
-		printf("%s: EcWaitEvent called without EC lock!\n",
-		    sc->sc_dev.dv_xname);
-
-	/*
-	 * Stall 10us:
-	 * ----------
-	 * Stall for 10 microseconds before reading the status register
-	 * for the first time.  This allows the EC to set the IBF/OBF
-	 * bit to its proper state.
-	 */
-	AcpiOsStall(10);
-
-	/*
-	 * Wait For Event:
-	 * ---------------
-	 * Poll the EC status register to detect completion of the last
-	 * command.  Wait up to 100ms (in 100us chunks) for this to occur.
-	 */
-	for (i = 0; i < 1000; i++) {
-		EcStatus = EC_CSR_READ(sc);
-
-		if ((Event == EC_EVENT_OUTPUT_BUFFER_FULL) &&
-		    (EcStatus & EC_FLAG_OUTPUT_BUFFER) != 0)
-			return AE_OK;
-
-		if ((Event == EC_EVENT_INPUT_BUFFER_EMPTY) &&
-		    (EcStatus & EC_FLAG_INPUT_BUFFER) == 0)
-			return AE_OK;
-
-		AcpiOsStall(10);
-	}
-
-	return AE_ERROR;
-}
-
-static ACPI_STATUS
-EcQuery(struct acpi_ec_softc *sc, UINT8 *Data)
-{
-	ACPI_STATUS rv;
-
-	if (EcIsLocked(sc) == 0)
-		printf("%s: EcQuery called without EC lock!\n",
-		    sc->sc_dev.dv_xname);
-
-	EC_CSR_WRITE(sc, EC_COMMAND_QUERY);
-	rv = EcWaitEventIntr(sc, EC_EVENT_OUTPUT_BUFFER_FULL);
-	if (ACPI_SUCCESS(rv))
-		*Data = EC_DATA_READ(sc);
-
-	if (ACPI_FAILURE(rv))
-		printf("%s: timed out waiting for EC to respond to "
-		    "EC_COMMAND_QUERY\n", sc->sc_dev.dv_xname);
-
-	return rv;
-}
-
-static ACPI_STATUS
-EcTransaction(struct acpi_ec_softc *sc, EC_REQUEST *EcRequest)
-{
-	ACPI_STATUS rv;
-
-	EcLock(sc);
-
-	/*
-	 * Perform the transaction, and make sure GPE is enabled before
-	 * doing so.
-	 */
-	rv = AcpiEnableGpe(NULL, sc->sc_gpebit, ACPI_NOT_ISR);
-	if (ACPI_FAILURE(rv))
-		return rv;
-	switch (EcRequest->Command) {
-	case EC_COMMAND_READ:
-		rv = EcRead(sc, EcRequest->Address, &(EcRequest->Data));
-		break;
-
-	case EC_COMMAND_WRITE:
-		rv = EcWrite(sc, EcRequest->Address, &(EcRequest->Data));
-		break;
-
-	default:
-		rv = AE_SUPPORT;
-		break;
-	}
-
-	EcUnlock(sc);
-
-	return rv;
-}
-
-static ACPI_STATUS
-EcRead(struct acpi_ec_softc *sc, UINT8 Address, UINT8 *Data)
-{
-	ACPI_STATUS rv;
-
-	if (EcIsLocked(sc) == 0)
-		printf("%s: EcRead called without EC lock!\n",
-		    sc->sc_dev.dv_xname);
-
-	/* EcBurstEnable(EmbeddedController); */
-
-	EC_CSR_WRITE(sc, EC_COMMAND_READ);
-	if ((rv = EcWaitEventIntr(sc, EC_EVENT_INPUT_BUFFER_EMPTY)) !=
-	    AE_OK) {
-		printf("%s: EcRead: timeout waiting for EC to process "
-		    "read command\n", sc->sc_dev.dv_xname);
-		return rv;
-	}
-
-	EC_DATA_WRITE(sc, Address);
-	if ((rv = EcWaitEventIntr(sc, EC_EVENT_OUTPUT_BUFFER_FULL)) !=
-	    AE_OK) {
-		printf("%s: EcRead: timeout waiting for EC to send data\n",
-		    sc->sc_dev.dv_xname);
-		return rv;
-	}
-
-	(*Data) = EC_DATA_READ(sc);
-
-	/* EcBurstDisable(EmbeddedController); */
-
-	return AE_OK;
-}
-
-static ACPI_STATUS
-EcWrite(struct acpi_ec_softc *sc, UINT8 Address, UINT8 *Data)
-{
-	ACPI_STATUS rv;
-
-	if (EcIsLocked(sc) == 0)
-		printf("%s: EcWrite called without EC lock!\n",
-		    sc->sc_dev.dv_xname);
-
-	/* EcBurstEnable(EmbeddedController); */
-
-	EC_CSR_WRITE(sc, EC_COMMAND_WRITE);
-	if ((rv = EcWaitEventIntr(sc, EC_EVENT_INPUT_BUFFER_EMPTY)) !=
-	    AE_OK) {
-		printf("%s: EcWrite: timeout waiting for EC to process "
-		    "write command\n", sc->sc_dev.dv_xname);
-		return rv;
-	}
-
-	EC_DATA_WRITE(sc, Address);
-	if ((rv = EcWaitEventIntr(sc, EC_EVENT_INPUT_BUFFER_EMPTY)) !=
-	    AE_OK) {
-		printf("%s: EcWrite: timeout waiting for EC to process "
-		    "address\n", sc->sc_dev.dv_xname);
-		return rv;
-	}
-
-	EC_DATA_WRITE(sc, *Data);
-	if ((rv = EcWaitEventIntr(sc, EC_EVENT_INPUT_BUFFER_EMPTY)) !=
-	    AE_OK) {
-		printf("%s: EcWrite: timeout waiting for EC to process "
-		    "data\n", sc->sc_dev.dv_xname);
-		return rv;
-	}
-
-	/* EcBurstDisable(EmbeddedController); */
-
-	return AE_OK;
+	return sc->sc_ech;
 }

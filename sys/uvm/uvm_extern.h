@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.135.8.2 2007/12/08 18:21:45 mjf Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.135.8.3 2007/12/27 00:46:53 mjf Exp $	*/
 
 /*
  *
@@ -584,7 +584,7 @@ void			uvm_proc_exit(struct proc *);
 void			uvm_lwp_exit(struct lwp *);
 void			uvm_init_limits(struct proc *);
 bool			uvm_kernacc(void *, size_t, int);
-__dead void		uvm_scheduler(void) __attribute__((noreturn));
+__dead void		uvm_scheduler(void);
 void			uvm_kick_scheduler(void);
 void			uvm_swapin(struct lwp *);
 bool			uvm_uarea_alloc(vaddr_t *);
@@ -640,6 +640,7 @@ void			uvmspace_free(struct vmspace *);
 void			uvmspace_share(struct proc *, struct proc *);
 void			uvmspace_unshare(struct lwp *);
 
+void			uvm_whatis(uintptr_t, void (*)(const char *, ...));
 
 /* uvm_meter.c */
 void			uvm_meter(void);

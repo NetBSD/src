@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_power.c,v 1.29.4.2 2007/12/08 18:19:59 mjf Exp $	*/
+/*	$NetBSD: sysmon_power.c,v 1.29.4.3 2007/12/27 00:45:28 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.29.4.2 2007/12/08 18:19:59 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.29.4.3 2007/12/27 00:45:28 mjf Exp $");
 
 #include "opt_compat_netbsd.h"
 #include <sys/param.h>
@@ -82,6 +82,7 @@ __KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.29.4.2 2007/12/08 18:19:59 mjf Ex
 #include <sys/mutex.h>
 #include <sys/kmem.h>
 #include <sys/proc.h>
+#include <sys/device.h>
 
 #include <dev/sysmon/sysmonvar.h>
 #include <prop/proplib.h>
@@ -118,6 +119,7 @@ static const struct power_event_description pswitch_type_desc[] = {
 	{ PSWITCH_TYPE_LID, 		"lid_switch" },
 	{ PSWITCH_TYPE_RESET, 		"reset_button" },
 	{ PSWITCH_TYPE_ACADAPTER,	"acadapter" },
+	{ PSWITCH_TYPE_HOTKEY,		"hotkey_button" },
 	{ -1, NULL }
 };
 
@@ -896,6 +898,23 @@ sysmon_pswitch_event(struct sysmon_pswitch *smpsw, int event)
 
 	KASSERT(smpsw != NULL);
 
+	/*
+	 * For pnp specific events, we don't care if the power daemon
+	 * is running or not
+	 */
+	if (smpsw->smpsw_type == PSWITCH_TYPE_LID) {
+		switch (event) {
+		case PSWITCH_EVENT_PRESSED:
+			pmf_event_inject(NULL, PMFE_CHASSIS_LID_CLOSE);
+			break;
+		case PSWITCH_EVENT_RELEASED:
+			pmf_event_inject(NULL, PMFE_CHASSIS_LID_OPEN);
+			break;
+		default:
+			break;
+		}
+	}
+
 	if (sysmon_power_daemon != NULL) {
 		/*
 		 * Create a new dictionary for the event.
@@ -952,6 +971,12 @@ sysmon_pswitch_event(struct sysmon_pswitch *smpsw, int event)
 		 */
 		/* XXX */
 		printf("%s: sleep button pressed.\n", smpsw->smpsw_name);
+		break;
+
+	case PSWITCH_TYPE_HOTKEY:
+		/*
+		 * Eat up the event, there's nothing we can do
+		 */
 		break;
 
 	case PSWITCH_TYPE_LID:

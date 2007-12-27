@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_vnops.c,v 1.4.10.1 2007/12/08 18:20:14 mjf Exp $	*/
+/*	$NetBSD: hfs_vnops.c,v 1.4.10.2 2007/12/27 00:45:45 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hfs_vnops.c,v 1.4.10.1 2007/12/08 18:20:14 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hfs_vnops.c,v 1.4.10.2 2007/12/27 00:45:45 mjf Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -401,12 +401,9 @@ hfs_vop_lookup(void *v)
 		*vpp = vdp;
 	} else {
 		hfs_callback_args cbargs;
-		hfs_libcb_argsread argsread;
 		uint8_t len;
 
 		hfslib_init_cbargs(&cbargs);
-		argsread.l = cnp->cn_lwp;
-		argsread.cred = cnp->cn_cred;
 
 		/* XXX: when decomposing, string could grow
 		   and we have to handle overflow */

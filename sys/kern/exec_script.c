@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_script.c,v 1.57.14.1 2007/12/08 18:20:25 mjf Exp $	*/
+/*	$NetBSD: exec_script.c,v 1.57.14.2 2007/12/27 00:45:53 mjf Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_script.c,v 1.57.14.1 2007/12/08 18:20:25 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_script.c,v 1.57.14.2 2007/12/27 00:45:53 mjf Exp $");
 
 #if defined(SETUIDSCRIPTS) && !defined(FDSCRIPTS)
 #define FDSCRIPTS		/* Need this for safe set-id scripts. */
@@ -179,7 +179,7 @@ check_shell:
 	 * method of implementing "safe" set-id and x-only scripts.
 	 */
 	vn_lock(epp->ep_vp, LK_EXCLUSIVE | LK_RETRY);
-	error = VOP_ACCESS(epp->ep_vp, VREAD, l->l_cred, l);
+	error = VOP_ACCESS(epp->ep_vp, VREAD, l->l_cred);
 	VOP_UNLOCK(epp->ep_vp, 0);
 	if (error == EACCES
 #ifdef SETUIDSCRIPTS

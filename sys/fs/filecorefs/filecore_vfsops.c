@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vfsops.c,v 1.43.4.1 2007/12/08 18:20:14 mjf Exp $	*/
+/*	$NetBSD: filecore_vfsops.c,v 1.43.4.2 2007/12/27 00:45:44 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.43.4.1 2007/12/08 18:20:14 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.43.4.2 2007/12/27 00:45:44 mjf Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -227,7 +227,7 @@ filecore_mount(mp, path, data, data_len)
 	 * Not an update, or updating the name: look up the name
 	 * and verify that it refers to a sensible block device.
 	 */
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, args->fspec, l);
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, args->fspec);
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	devvp = nd.ni_vp;

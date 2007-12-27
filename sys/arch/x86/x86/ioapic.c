@@ -1,4 +1,4 @@
-/* 	$NetBSD: ioapic.c,v 1.25.2.2 2007/12/08 18:18:13 mjf Exp $	*/
+/* 	$NetBSD: ioapic.c,v 1.25.2.3 2007/12/27 00:43:27 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.25.2.2 2007/12/08 18:18:13 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.25.2.3 2007/12/27 00:43:27 mjf Exp $");
 
 #include "opt_ddb.h"
 
@@ -80,6 +80,7 @@ __KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.25.2.2 2007/12/08 18:18:13 mjf Exp $");
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/kernel.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -389,6 +390,10 @@ ioapic_attach(struct device *parent, struct device *self, void *aux)
 			    sc->sc_pic.pic_apicid);
 		}
 	}
+
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+
 #if 0
 	/* output of this was boring. */
 	if (mp_verbose)
@@ -468,6 +473,31 @@ ioapic_enable(void)
 		outb(IMCR_ADDR, IMCR_REGISTER);
 		outb(IMCR_DATA, IMCR_APIC);
 	}
+}
+
+void
+ioapic_reenable(void)
+{
+	int p;
+	struct ioapic_softc *sc;
+
+	if (ioapics == NULL)
+		return;
+
+	aprint_normal("%s reenabling\n", device_xname(&ioapics->sc_pic.pic_dev));
+
+	for (sc = ioapics; sc != NULL; sc = sc->sc_next) {
+		ioapic_write(sc,IOAPIC_ID,
+		    (ioapic_read(sc,IOAPIC_ID)&~IOAPIC_ID_MASK)
+		    |(sc->sc_pic.pic_apicid<<IOAPIC_ID_SHIFT));
+
+		for (p = 0; p < sc->sc_apic_sz; p++) {
+			apic_set_redir(sc, p, sc->sc_pins[p].ip_vector,
+				    sc->sc_pins[p].ip_cpu);
+		}
+	}
+
+	ioapic_enable();
 }
 
 void

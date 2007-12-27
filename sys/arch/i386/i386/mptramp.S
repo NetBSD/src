@@ -1,4 +1,4 @@
-/*	$NetBSD: mptramp.S,v 1.11.2.1 2007/11/19 00:46:28 mjf Exp $	*/
+/*	$NetBSD: mptramp.S,v 1.11.2.2 2007/12/27 00:43:08 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -81,11 +81,13 @@
  *        2)   halt the processors waiting for them to be enabled
  *              by a idle-thread 
  */
+
+#include <machine/asm.h>
+__KERNEL_RCSID(0, "$NetBSD: mptramp.S,v 1.11.2.2 2007/12/27 00:43:08 mjf Exp $");
 	
 #include "opt_mpbios.h"		/* for MPDEBUG */
 		
 #include "assym.h"
-#include <machine/asm.h>
 #include <machine/specialreg.h>
 #include <machine/segments.h>
 #include <machine/mpbiosvar.h>

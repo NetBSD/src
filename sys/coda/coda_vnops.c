@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vnops.c,v 1.62.12.1 2007/12/08 18:18:33 mjf Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.62.12.2 2007/12/27 00:43:33 mjf Exp $	*/
 
 /*
  *
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.62.12.1 2007/12/08 18:18:33 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.62.12.2 2007/12/27 00:43:33 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -517,7 +517,7 @@ coda_ioctl(void *v)
        lookupname sooner or later anyway, right? */
 
     NDINIT(&ndp, LOOKUP, (iap->follow ? FOLLOW : NOFOLLOW), UIO_USERSPACE,
-	iap->path, curlwp);
+	iap->path);
     error = namei(&ndp);
     tvp = ndp.ni_vp;
 
@@ -896,7 +896,7 @@ coda_lookup(void *v)
     /* name to lookup */
     struct componentname *cnp = ap->a_cnp;
     kauth_cred_t cred = cnp->cn_cred;
-    struct lwp *l = cnp->cn_lwp;
+    struct lwp *l = curlwp;
 /* locals */
     struct cnode *cp;
     const char *nm = cnp->cn_nameptr;
@@ -1060,7 +1060,7 @@ coda_create(void *v)
     struct vnode **vpp = ap->a_vpp;
     struct componentname  *cnp = ap->a_cnp;
     kauth_cred_t cred = cnp->cn_cred;
-    struct lwp *l = cnp->cn_lwp;
+    struct lwp *l = curlwp;
 /* locals */
     int error;
     struct cnode *cp;
@@ -1157,7 +1157,7 @@ coda_remove(void *v)
     struct vnode *vp = ap->a_vp;
     struct componentname  *cnp = ap->a_cnp;
     kauth_cred_t cred = cnp->cn_cred;
-    struct lwp *l = cnp->cn_lwp;
+    struct lwp *l = curlwp;
 /* locals */
     int error;
     const char *nm = cnp->cn_nameptr;
@@ -1232,7 +1232,7 @@ coda_link(void *v)
     struct cnode *dcp = VTOC(dvp);
     struct componentname *cnp = ap->a_cnp;
     kauth_cred_t cred = cnp->cn_cred;
-    struct lwp *l = cnp->cn_lwp;
+    struct lwp *l = curlwp;
 /* locals */
     int error;
     const char *nm = cnp->cn_nameptr;
@@ -1302,7 +1302,7 @@ coda_rename(void *v)
     struct cnode *ndcp = VTOC(ndvp);
     struct componentname  *tcnp = ap->a_tcnp;
     kauth_cred_t cred = fcnp->cn_cred;
-    struct lwp *l = fcnp->cn_lwp;
+    struct lwp *l = curlwp;
 /* true args */
     int error;
     const char *fnm = fcnp->cn_nameptr;
@@ -1395,7 +1395,7 @@ coda_mkdir(void *v)
     struct vattr *va = ap->a_vap;
     struct vnode **vpp = ap->a_vpp;
     kauth_cred_t cred = cnp->cn_cred;
-    struct lwp *l = cnp->cn_lwp;
+    struct lwp *l = curlwp;
 /* locals */
     int error;
     const char *nm = cnp->cn_nameptr;
@@ -1481,7 +1481,7 @@ coda_rmdir(void *v)
     struct vnode *vp = ap->a_vp;
     struct componentname  *cnp = ap->a_cnp;
     kauth_cred_t cred = cnp->cn_cred;
-    struct lwp *l = cnp->cn_lwp;
+    struct lwp *l = curlwp;
 /* true args */
     int error;
     const char *nm = cnp->cn_nameptr;
@@ -1548,7 +1548,7 @@ coda_symlink(void *v)
     struct vattr *tva = ap->a_vap;
     char *path = ap->a_target;
     kauth_cred_t cred = cnp->cn_cred;
-    struct lwp *l = cnp->cn_lwp;
+    struct lwp *l = curlwp;
 /* locals */
     int error;
     u_long saved_cn_flags;

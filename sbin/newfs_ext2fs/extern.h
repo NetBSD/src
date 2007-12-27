@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.1 2007/11/17 16:50:25 tsutsui Exp $	*/
+/*	$NetBSD: extern.h,v 1.1.2.1 2007/12/27 00:47:03 mjf Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -28,6 +28,10 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+/* XXX should be in <sys/ufs/ext2fs.h> */
+#define EXT2_LOG_MAXBSIZE	12
+#define EXT2_MAXBSIZE		(1 << EXT2_LOG_MAXBSIZE)
 
 /* prototypes */
 void mke2fs(const char *, int, int);

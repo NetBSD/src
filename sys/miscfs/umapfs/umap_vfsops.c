@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vfsops.c,v 1.71.4.1 2007/12/08 18:21:04 mjf Exp $	*/
+/*	$NetBSD: umap_vfsops.c,v 1.71.4.2 2007/12/27 00:46:25 mjf Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.71.4.1 2007/12/08 18:21:04 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.71.4.2 2007/12/27 00:46:25 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,7 +112,7 @@ umapfs_mount(mp, path, data, data_len)
 	 * Find lower node
 	 */
 	NDINIT(&nd, LOOKUP, FOLLOW|LOCKLEAF,
-		UIO_USERSPACE, args->umap_target, l);
+		UIO_USERSPACE, args->umap_target);
 	if ((error = namei(&nd)) != 0)
 		return (error);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb.c,v 1.11.2.1 2007/12/08 18:20:11 mjf Exp $ */
+/*	$NetBSD: genfb.c,v 1.11.2.2 2007/12/27 00:45:37 mjf Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.11.2.1 2007/12/08 18:20:11 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.11.2.2 2007/12/27 00:45:37 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,6 +118,14 @@ genfb_init(struct genfb_softc *sc)
 
 	if (!prop_dictionary_get_uint32(dict, "linebytes", &sc->sc_stride))
 		sc->sc_stride = (sc->sc_width * sc->sc_depth) >> 3;
+
+	/*
+	 * deal with a bug in the Raptor firmware which always sets
+	 * stride = width even when depth != 8
+	 */
+	if (sc->sc_stride < sc->sc_width * (sc->sc_depth >> 3))
+		sc->sc_stride = sc->sc_width * (sc->sc_depth >> 3);
+
 	sc->sc_fbsize = sc->sc_height * sc->sc_stride;
 
 	/* optional colour map callback */

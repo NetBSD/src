@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.54.2.2 2007/12/08 18:17:09 mjf Exp $
+#	$NetBSD: genassym.cf,v 1.54.2.3 2007/12/27 00:43:05 mjf Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007 The NetBSD Foundation, Inc.
@@ -317,6 +317,24 @@ define	CPU_INFO_MTX_COUNT	offsetof(struct cpu_info, ci_mtx_count)
 define	CPU_INFO_MTX_OLDSPL	offsetof(struct cpu_info, ci_mtx_oldspl)
 define	CPU_INFO_INTRSTACK	offsetof(struct cpu_info, ci_intrstack)
 define	CPU_INFO_ISTATE		offsetof(struct cpu_info, ci_istate)
+
+define	ACPI_SUSPEND_GDT		offsetof(struct cpu_info, ci_suspend_gdt)
+define	ACPI_SUSPEND_IDT		offsetof(struct cpu_info, ci_suspend_idt)
+define	ACPI_SUSPEND_TR			offsetof(struct cpu_info, ci_suspend_tr)
+define	ACPI_SUSPEND_LDT		offsetof(struct cpu_info, ci_suspend_ldt)
+define	ACPI_SUSPEND_FS			offsetof(struct cpu_info, ci_suspend_fs)
+define	ACPI_SUSPEND_GS			offsetof(struct cpu_info, ci_suspend_gs)
+
+define	ACPI_SUSPEND_EBX		offsetof(struct cpu_info, ci_suspend_ebx)
+define	ACPI_SUSPEND_ESI		offsetof(struct cpu_info, ci_suspend_esi)
+define	ACPI_SUSPEND_EDI		offsetof(struct cpu_info, ci_suspend_edi)
+define	ACPI_SUSPEND_EBP		offsetof(struct cpu_info, ci_suspend_ebp)
+define	ACPI_SUSPEND_ESP		offsetof(struct cpu_info, ci_suspend_esp)
+define	ACPI_SUSPEND_EFL		offsetof(struct cpu_info, ci_suspend_efl)
+define	ACPI_SUSPEND_CR0		offsetof(struct cpu_info, ci_suspend_cr0)
+define	ACPI_SUSPEND_CR2		offsetof(struct cpu_info, ci_suspend_cr2)
+define	ACPI_SUSPEND_CR3		offsetof(struct cpu_info, ci_suspend_cr3)
+define	ACPI_SUSPEND_CR4		offsetof(struct cpu_info, ci_suspend_cr4)
 
 if NIOAPIC > 0
 define		IOAPIC_SC_REG		offsetof(struct ioapic_softc, sc_reg)

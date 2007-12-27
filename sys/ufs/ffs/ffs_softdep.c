@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.99.4.2 2007/12/08 18:21:39 mjf Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.99.4.3 2007/12/27 00:46:49 mjf Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.99.4.2 2007/12/08 18:21:39 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.99.4.3 2007/12/27 00:46:49 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -3298,7 +3298,7 @@ handle_workitem_remove(dirrem)
 		panic("handle_workitem_remove: bad dir delta");
 	inodedep->id_nlinkdelta = ip->i_nlink - ip->i_ffs_effnlink;
 	FREE_LOCK(&lk);
-	if ((error = ffs_truncate(vp, (off_t)0, 0, l->l_cred, l)) != 0)
+	if ((error = ffs_truncate(vp, (off_t)0, 0, l->l_cred)) != 0)
 		softdep_error("handle_workitem_remove: truncate", error);
 	/*
 	 * Rename a directory to a new parent. Since, we are both deleting

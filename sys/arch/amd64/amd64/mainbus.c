@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.18.2.1 2007/12/08 18:16:24 mjf Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.18.2.2 2007/12/27 00:42:51 mjf Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.18.2.1 2007/12/08 18:16:24 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.18.2.2 2007/12/27 00:42:51 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -262,6 +262,8 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 		config_found_ia(self, "isabus", &mba_iba, isabusprint);
 #endif
 
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
 int
