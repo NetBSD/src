@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.122 2007/10/24 14:50:39 ad Exp $	*/
+/*	$NetBSD: trap.c,v 1.122.4.1 2007/12/27 02:18:19 ad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.122 2007/10/24 14:50:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.122.4.1 2007/12/27 02:18:19 ad Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -112,9 +112,7 @@ trap(struct trapframe *frame)
 			ksi.ksi_trap = EXC_TRC;
 			ksi.ksi_addr = (void *)frame->srr0;
 			ksi.ksi_code = TRAP_TRACE;
-			KERNEL_LOCK(1, l);
 			(*p->p_emul->e_trapsignal)(l, &ksi);
-			KERNEL_UNLOCK_LAST(l);
 		}
 		break;
 	case EXC_DSI: {
@@ -126,7 +124,6 @@ trap(struct trapframe *frame)
 		 * Only query UVM if no interrupts are active.
 		 */
 		if (ci->ci_intrdepth < 0) {
-			KERNEL_LOCK(1, NULL);
 			if ((va >> ADDR_SR_SHFT) == pcb->pcb_kmapsr) {
 				va &= ADDR_PIDX | ADDR_POFF;
 				va |= pcb->pcb_umapsr << ADDR_SR_SHFT;
@@ -137,8 +134,6 @@ trap(struct trapframe *frame)
 				    vm_map_pmap(map)->pm_ste_evictions > 0 &&
 				    pmap_ste_spill(vm_map_pmap(map),
 					    trunc_page(va), false)) {
-					/* KERNEL_UNLOCK_LAST(l); */
-					KERNEL_UNLOCK_ONE(NULL);
 					return;
 				}
 #endif
@@ -147,8 +142,6 @@ trap(struct trapframe *frame)
 				    vm_map_pmap(map)->pm_evictions > 0 &&
 				    pmap_pte_spill(vm_map_pmap(map),
 					    trunc_page(va), false)) {
-					/* KERNEL_UNLOCK_LAST(l); */
-					KERNEL_UNLOCK_ONE(NULL);
 					return;
 				}
 #if defined(DIAGNOSTIC) && (defined(PPC_OEA) || defined (PPC_OEA64_BRIDGE))
@@ -180,9 +173,7 @@ trap(struct trapframe *frame)
 				 */
 				if (rv == 0)
 					uvm_grow(p, trunc_page(va));
-				/* KERNEL_UNLOCK_LAST(l); */
 			}
-			KERNEL_UNLOCK_ONE(NULL);
 			if (rv == 0)
 				return;
 			if (rv == EACCES)
@@ -210,7 +201,6 @@ trap(struct trapframe *frame)
 		goto brain_damage2;
 	}
 	case EXC_DSI|EXC_USER:
-		KERNEL_LOCK(1, l);
 		ci->ci_ev_udsi.ev_count++;
 		if (frame->dsisr & DSISR_STORE)
 			ftype = VM_PROT_WRITE;
@@ -228,7 +218,6 @@ trap(struct trapframe *frame)
 		    vm_map_pmap(map)->pm_ste_evictions > 0 &&
 		    pmap_ste_spill(vm_map_pmap(map), trunc_page(frame->dar),
 				   false)) {
-			KERNEL_UNLOCK_LAST(l);
 			break;
 		}
 #endif
@@ -237,7 +226,6 @@ trap(struct trapframe *frame)
 		    vm_map_pmap(map)->pm_evictions > 0 &&
 		    pmap_pte_spill(vm_map_pmap(map), trunc_page(frame->dar),
 				   false)) {
-			KERNEL_UNLOCK_LAST(l);
 			break;
 		}
 
@@ -247,7 +235,6 @@ trap(struct trapframe *frame)
 			 * Record any stack growth...
 			 */
 			uvm_grow(p, trunc_page(frame->dar));
-			KERNEL_UNLOCK_LAST(l);
 			break;
 		}
 		ci->ci_ev_udsi_fatal.ev_count++;
@@ -273,7 +260,6 @@ trap(struct trapframe *frame)
 			ksi.ksi_signo = SIGKILL;
 		}
 		(*p->p_emul->e_trapsignal)(l, &ksi);
-		KERNEL_UNLOCK_LAST(l);
 		break;
 
 	case EXC_ISI:
@@ -284,7 +270,6 @@ trap(struct trapframe *frame)
 		goto brain_damage2;
 
 	case EXC_ISI|EXC_USER:
-		KERNEL_LOCK(1, l);
 		ci->ci_ev_isi.ev_count++;
 
 		/*
@@ -297,7 +282,6 @@ trap(struct trapframe *frame)
 		if (vm_map_pmap(map)->pm_ste_evictions > 0 &&
 		    pmap_ste_spill(vm_map_pmap(map), trunc_page(frame->srr0),
 				   true)) {
-			KERNEL_UNLOCK_LAST(l);
 			break;
 		}
 #endif
@@ -305,14 +289,12 @@ trap(struct trapframe *frame)
 		if (vm_map_pmap(map)->pm_evictions > 0 &&
 		    pmap_pte_spill(vm_map_pmap(map), trunc_page(frame->srr0),
 				   true)) {
-			KERNEL_UNLOCK_LAST(l);
 			break;
 		}
 
 		ftype = VM_PROT_EXECUTE;
 		rv = uvm_fault(map, trunc_page(frame->srr0), ftype);
 		if (rv == 0) {
-			KERNEL_UNLOCK_LAST(l);
 			break;
 		}
 		ci->ci_ev_isi_fatal.ev_count++;
@@ -327,7 +309,6 @@ trap(struct trapframe *frame)
 		ksi.ksi_addr = (void *)frame->srr0;
 		ksi.ksi_code = (rv == EACCES ? SEGV_ACCERR : SEGV_MAPERR);
 		(*p->p_emul->e_trapsignal)(l, &ksi);
-		KERNEL_UNLOCK_LAST(l);
 		break;
 
 	case EXC_FPU|EXC_USER:
@@ -340,7 +321,6 @@ trap(struct trapframe *frame)
 
 	case EXC_AST|EXC_USER:
 		ci->ci_astpending = 0;		/* we are about to do it */
-		KERNEL_LOCK(1, l);
 		uvmexp.softs++;
 		if (l->l_pflag & LP_OWEUPC) {
 			l->l_flag &= ~LP_OWEUPC;
@@ -349,11 +329,9 @@ trap(struct trapframe *frame)
 		/* Check whether we are being preempted. */
 		if (ci->ci_want_resched)
 			preempt();
-		KERNEL_UNLOCK_LAST(l);
 		break;
 
 	case EXC_ALI|EXC_USER:
-		KERNEL_LOCK(1, l);
 		ci->ci_ev_ali.ev_count++;
 		if (fix_unaligned(l, frame) != 0) {
 			ci->ci_ev_ali_fatal.ev_count++;
@@ -371,7 +349,6 @@ trap(struct trapframe *frame)
 			(*p->p_emul->e_trapsignal)(l, &ksi);
 		} else
 			frame->srr0 += 4;
-		KERNEL_UNLOCK_LAST(l);
 		break;
 
 	case EXC_PERF|EXC_USER:
@@ -384,7 +361,6 @@ trap(struct trapframe *frame)
 		enable_vec();
 		break;
 #else
-		KERNEL_LOCK(1, l);
 		if (cpu_printfataltraps) {
 			printf("trap: pid %d.%d (%s): user VEC trap @ %#lx "
 			    "(SRR1=%#lx)\n",
@@ -397,7 +373,6 @@ trap(struct trapframe *frame)
 		ksi.ksi_addr = (void *)frame->srr0;
 		ksi.ksi_code = ILL_ILLOPC;
 		(*p->p_emul->e_trapsignal)(l, &ksi);
-		KERNEL_UNLOCK_LAST(l);
 		break;
 #endif
 	case EXC_MCHK|EXC_USER:
@@ -412,15 +387,12 @@ trap(struct trapframe *frame)
 		ksi.ksi_trap = EXC_MCHK;
 		ksi.ksi_addr = (void *)frame->srr0;
 		ksi.ksi_code = BUS_OBJERR;
-		KERNEL_LOCK(1, l);
 		(*p->p_emul->e_trapsignal)(l, &ksi);
-		KERNEL_UNLOCK_LAST(l);
 		break;
 
 	case EXC_PGM|EXC_USER:
 		ci->ci_ev_pgm.ev_count++;
 		if (frame->srr1 & 0x00020000) {	/* Bit 14 is set if trap */
-			KERNEL_LOCK(1, l);
 			if (p->p_raslist == NULL ||
 			    ras_lookup(p, (void *)frame->srr0) == (void *) -1) {
 				KSI_INIT_TRAP(&ksi);
@@ -433,7 +405,6 @@ trap(struct trapframe *frame)
 				/* skip the trap instruction */
 				frame->srr0 += 4;
 			}
-			KERNEL_UNLOCK_LAST(l);
 		} else {
 			KSI_INIT_TRAP(&ksi);
 			ksi.ksi_signo = SIGILL;
@@ -454,9 +425,7 @@ trap(struct trapframe *frame)
 				printf("trap: pid %d.%d (%s): user PGM trap @"
 				    " %#lx (SRR1=%#lx)\n", p->p_pid, l->l_lid,
 				    p->p_comm, frame->srr0, frame->srr1);
-			KERNEL_LOCK(1, l);
 			(*p->p_emul->e_trapsignal)(l, &ksi);
-			KERNEL_UNLOCK_LAST(l);
 		}
 		break;
 
@@ -918,6 +887,5 @@ startlwp(void *arg)
 	}
 #endif
 	pool_put(&lwp_uc_pool, uc);
-	KERNEL_UNLOCK_LAST(l);
 	userret(l, frame);
 }
