@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.109 2007/12/20 23:03:07 dsl Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.110 2007/12/27 17:18:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.109 2007/12/20 23:03:07 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.110 2007/12/27 17:18:11 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -198,6 +198,9 @@ const struct emul emul_ultrix = {
 	NULL,
 
 	uvm_default_mapaddr,
+	NULL,
+	0,
+	NULL
 };
 
 #define GSI_PROG_ENV 1
@@ -213,7 +216,7 @@ ultrix_sys_getsysinfo(struct lwp *l, const struct ultrix_sys_getsysinfo_args *ua
 		if (SCARG(uap, nbytes) < sizeof(short))
 			return EINVAL;
 		*retval = 1;
-		return (copyout(&progenv, SCARG(uap, buffer), sizeof(short)));
+		return copyout(&progenv, SCARG(uap, buffer), sizeof(progenv));
 	default:
 		*retval = 0; /* info unavail */
 		return 0;
@@ -231,27 +234,27 @@ ultrix_sys_setsysinfo(struct lwp *l, const struct ultrix_sys_setsysinfo_args *ua
 int
 ultrix_sys_waitpid(struct lwp *l, const struct ultrix_sys_waitpid_args *uap, register_t *retval)
 {
-	struct sys_wait4_args ua;
+	struct sys_wait4_args ap;
 
-	SCARG(&ua, pid) = SCARG(uap, pid);
-	SCARG(&ua, status) = SCARG(uap, status);
-	SCARG(&ua, options) = SCARG(uap, options);
-	SCARG(&ua, rusage) = 0;
+	SCARG(&ap, pid) = SCARG(uap, pid);
+	SCARG(&ap, status) = SCARG(uap, status);
+	SCARG(&ap, options) = SCARG(uap, options);
+	SCARG(&ap, rusage) = 0;
 
-	return (sys_wait4(l, &ua, retval));
+	return sys_wait4(l, &ap, retval);
 }
 
 int
 ultrix_sys_wait3(struct lwp *l, const struct ultrix_sys_wait3_args *uap, register_t *retval)
 {
-	struct sys_wait4_args ua;
+	struct sys_wait4_args ap;
 
-	SCARG(&ua, pid) = -1;
-	SCARG(&ua, status) = SCARG(uap, status);
-	SCARG(&ua, options) = SCARG(uap, options);
-	SCARG(&ua, rusage) = SCARG(uap, rusage);
+	SCARG(&ap, pid) = -1;
+	SCARG(&ap, status) = SCARG(uap, status);
+	SCARG(&ap, options) = SCARG(uap, options);
+	SCARG(&ap, rusage) = SCARG(uap, rusage);
 
-	return (sys_wait4(l, &ua, retval));
+	return sys_wait4(l, &ap, retval);
 }
 
 /*
@@ -262,20 +265,26 @@ ultrix_sys_wait3(struct lwp *l, const struct ultrix_sys_wait3_args *uap, registe
  * limit nfds to at most FD_MAX.
  */
 int
-ultrix_sys_select(struct lwp *l, const struct sys_select_args *uap, register_t *retval)
+ultrix_sys_select(struct lwp *l, const struct ultrix_sys_select_args *uap, register_t *retval)
 {
 	struct timeval atv;
 	int error;
+	struct sys_select_args ap;
 
 	/* Limit number of FDs selected on to the native maximum */
 
 	if (SCARG(uap, nd) > FD_SETSIZE)
-		SCARG(uap, nd) = FD_SETSIZE;
+		SCARG(&ap, nd) = FD_SETSIZE;
+	else
+		SCARG(&ap, nd) = SCARG(uap, nd);
 
+	SCARG(&ap, in) = SCARG(uap, in);
+	SCARG(&ap, ou) = SCARG(uap, ou);
+	SCARG(&ap, ex) = SCARG(uap, ex);
+	SCARG(&ap, tv) = SCARG(uap, tv);
 	/* Check for negative timeval */
-	if (SCARG(uap, tv)) {
-		error = copyin((void *)SCARG(uap, tv), (void *)&atv,
-			       sizeof(atv));
+	if (SCARG(&ap, tv)) {
+		error = copyin(SCARG(uap, tv), &atv, sizeof(atv));
 		if (error)
 			goto done;
 #ifdef DEBUG
@@ -286,7 +295,7 @@ ultrix_sys_select(struct lwp *l, const struct sys_select_args *uap, register_t *
 #endif
 
 	}
-	error = sys_select(l, (void*) uap, retval);
+	error = sys_select(l, &ap, retval);
 	if (error == EINVAL)
 		printf("ultrix select: bad args?\n");
 
@@ -303,7 +312,7 @@ async_daemon(struct lwp *l, const void *v, register_t *retval)
 	SCARG(&ouap, flag) = NFSSVC_BIOD;
 	SCARG(&ouap, argp) = NULL;
 
-	return (sys_nfssvc(l, &ouap, retval));
+	return sys_nfssvc(l, &ouap, retval);
 }
 #endif /* NFS */
 
@@ -319,10 +328,10 @@ ultrix_sys_mmap(struct lwp *l, const struct ultrix_sys_mmap_args *uap, register_
 	 * Verify the arguments.
 	 */
 	if (SCARG(uap, prot) & ~(PROT_READ|PROT_WRITE|PROT_EXEC))
-		return (EINVAL);			/* XXX still needed? */
+		return EINVAL;			/* XXX still needed? */
 
 	if ((SCARG(uap, flags) & SUN__MAP_NEW) == 0)
-		return (EINVAL);
+		return EINVAL;
 
 	SCARG(&ouap, flags) = SCARG(uap, flags) & ~SUN__MAP_NEW;
 	SCARG(&ouap, addr) = SCARG(uap, addr);
@@ -331,7 +340,7 @@ ultrix_sys_mmap(struct lwp *l, const struct ultrix_sys_mmap_args *uap, register_
 	SCARG(&ouap, fd) = SCARG(uap, fd);
 	SCARG(&ouap, pos) = SCARG(uap, pos);
 
-	return (sys_mmap(l, &ouap, retval));
+	return sys_mmap(l, &ouap, retval);
 }
 
 int
@@ -341,19 +350,26 @@ ultrix_sys_setsockopt(struct lwp *l, const struct ultrix_sys_setsockopt_args *ua
 	struct file *fp;
 	struct mbuf *m = NULL;
 	int error;
+	struct sys_setsockopt_args ap;
+
+	SCARG(&ap, s) = SCARG(uap, s);
+	SCARG(&ap, level) = SCARG(uap, level);
+	SCARG(&ap, name) = SCARG(uap, name);
+	SCARG(&ap, val) = SCARG(uap, val);
+	SCARG(&ap, valsize) = SCARG(uap, valsize);
 
 	/* getsock() will use the descriptor for us */
-	if ((error = getsock(p->p_fd, SCARG(uap, s), &fp))  != 0)
-		return (error);
+	if ((error = getsock(p->p_fd, SCARG(&ap, s), &fp))  != 0)
+		return error;
 #define	SO_DONTLINGER (~SO_LINGER)
-	if (SCARG(uap, name) == SO_DONTLINGER) {
+	if (SCARG(&ap, name) == SO_DONTLINGER) {
 		m = m_get(M_WAIT, MT_SOOPTS);
 		mtod(m, struct linger *)->l_onoff = 0;
 		m->m_len = sizeof(struct linger);
-		error = sosetopt((struct socket *)fp->f_data, SCARG(uap, level),
+		error = sosetopt((struct socket *)fp->f_data, SCARG(&ap, level),
 		    SO_LINGER, m);
 	}
-	if (SCARG(uap, level) == IPPROTO_IP) {
+	if (SCARG(&ap, level) == IPPROTO_IP) {
 #define		EMUL_IP_MULTICAST_IF		2
 #define		EMUL_IP_MULTICAST_TTL		3
 #define		EMUL_IP_MULTICAST_LOOP		4
@@ -366,31 +382,31 @@ ultrix_sys_setsockopt(struct lwp *l, const struct ultrix_sys_setsockopt_args *ua
 			IP_ADD_MEMBERSHIP,
 			IP_DROP_MEMBERSHIP
 		};
-		if (SCARG(uap, name) >= EMUL_IP_MULTICAST_IF &&
-		    SCARG(uap, name) <= EMUL_IP_DROP_MEMBERSHIP) {
-			SCARG(uap, name) =
-			    ipoptxlat[SCARG(uap, name) - EMUL_IP_MULTICAST_IF];
+		if (SCARG(&ap, name) >= EMUL_IP_MULTICAST_IF &&
+		    SCARG(&ap, name) <= EMUL_IP_DROP_MEMBERSHIP) {
+			SCARG(&ap, name) =
+			    ipoptxlat[SCARG(&ap, name) - EMUL_IP_MULTICAST_IF];
 		}
 	}
-	if (SCARG(uap, valsize) > MLEN) {
+	if (SCARG(&ap, valsize) > MLEN) {
 		error = EINVAL;
 		goto out;
 	}
-	if (SCARG(uap, val)) {
+	if (SCARG(&ap, val)) {
 		m = m_get(M_WAIT, MT_SOOPTS);
-		error = copyin(SCARG(uap, val), mtod(m, void *),
-		    (u_int)SCARG(uap, valsize));
+		error = copyin(SCARG(&ap, val), mtod(m, void *),
+		    (u_int)SCARG(&ap, valsize));
 		if (error) {
 			(void) m_free(m);
 			goto out;
 		}
-		m->m_len = SCARG(uap, valsize);
+		m->m_len = SCARG(&ap, valsize);
 	}
-	error = sosetopt((struct socket *)fp->f_data, SCARG(uap, level),
-	    SCARG(uap, name), m);
+	error = sosetopt((struct socket *)fp->f_data, SCARG(&ap, level),
+	    SCARG(&ap, name), m);
  out:
 	FILE_UNUSE(fp, l);
-	return (error);
+	return error;
 }
 
 #define	ULTRIX__SYS_NMLN	32
@@ -428,26 +444,28 @@ ultrix_sys_uname(struct lwp *l, const struct ultrix_sys_uname_args *uap, registe
 	*dp = '\0';
 	strncpy(sut.machine, machine, sizeof(sut.machine) - 1);
 
-	return copyout((void *)&sut, (void *)SCARG(uap, name),
-	    sizeof(struct ultrix_utsname));
+	return copyout(&sut, SCARG(uap, name), sizeof(sut));
 }
 
 int
 ultrix_sys_setpgrp(struct lwp *l, const struct ultrix_sys_setpgrp_args *uap, register_t *retval)
 {
 	struct proc *p = l->l_proc;
+	struct sys_setpgid_args ap;
 
+	SCARG(&ap, pid) = SCARG(uap, pid);
+	SCARG(&ap, pgid) = SCARG(uap, pgid);
 	/*
 	 * difference to our setpgid call is to include backwards
 	 * compatibility to pre-setsid() binaries. Do setsid()
 	 * instead of setpgid() in those cases where the process
 	 * tries to create a new session the old way.
 	 */
-	if (!SCARG(uap, pgid) &&
-	    (!SCARG(uap, pid) || SCARG(uap, pid) == p->p_pid))
-		return sys_setsid(l, uap, retval);
+	if (!SCARG(&ap, pgid) &&
+	    (!SCARG(&ap, pid) || SCARG(&ap, pid) == p->p_pid))
+		return sys_setsid(l, &ap, retval);
 	else
-		return sys_setpgid(l, uap, retval);
+		return sys_setpgid(l, &ap, retval);
 }
 
 #if defined (NFSSERVER)
@@ -472,13 +490,13 @@ ultrix_sys_nfssvc(struct lwp *l, const void *v, register_t *retval)
 
 	memset(&sa, 0, sizeof sa);
 	if (error = copyout(&sa, SCARG(&outuap, mskval), SCARG(&outuap, msklen)))
-		return (error);
+		return error;
 	if (error = copyout(&sa, SCARG(&outuap, mtchval), SCARG(&outuap, mtchlen)))
-		return (error);
+		return error;
 
 	return nfssvc(l, &outuap, retval);
 #else
-	return (ENOSYS);
+	return ENOSYS;
 #endif
 }
 #endif /* NFSSERVER */
@@ -504,7 +522,7 @@ ultrix_sys_ustat(struct lwp *l, const struct ultrix_sys_ustat_args *uap, registe
 	 */
 
 	if ((error = copyout(&us, SCARG(uap, buf), sizeof us)) != 0)
-		return (error);
+		return error;
 	return 0;
 }
 
@@ -516,7 +534,7 @@ ultrix_sys_quotactl(struct lwp *l, const struct ultrix_sys_quotactl_args *uap, r
 }
 
 int
-ultrix_sys_vhangup(struct lwp *l, const struct ultrix_sys_vhangup_args *uap, register_t *retval)
+ultrix_sys_vhangup(struct lwp *l, const void *uap, register_t *retval)
 {
 
 	return 0;
@@ -540,7 +558,7 @@ ultrix_sys_cacheflush(struct lwp *l, const struct ultrix_sys_cacheflush_args *ua
 	int nbytes     = SCARG(uap, nbytes);
 	int whichcache = SCARG(uap, whichcache);
 
-	return (mips_user_cacheflush(p, va, nbytes, whichcache));
+	return mips_user_cacheflush(p, va, nbytes, whichcache);
 }
 
 
@@ -583,16 +601,18 @@ ultrix_sys_sigpending(struct lwp *l, const struct ultrix_sys_sigpending_args *ua
 	sigpending1(l, &ss);
 	mask = ss.__bits[0];
 
-	return (copyout((void *)&mask, (void *)SCARG(uap, mask), sizeof(int)));
+	return copyout(&mask, SCARG(uap, mask), sizeof(int));
 }
 
 int
 ultrix_sys_sigreturn(struct lwp *l, const struct ultrix_sys_sigreturn_args *uap, register_t *retval)
 {
-
 	/* struct sigcontext13 is close enough to Ultrix */
+	struct compat_13_sys_sigreturn_args ap;
 
-	return (compat_13_sys_sigreturn(l, uap, retval));
+	SCARG(&ap, sigcntxp) = (void *)SCARG(uap, sigcntxp);
+
+	return compat_13_sys_sigreturn(l, &ap, retval);
 }
 
 int
@@ -600,8 +620,11 @@ ultrix_sys_sigcleanup(struct lwp *l, const struct ultrix_sys_sigcleanup_args *ua
 {
 
 	/* struct sigcontext13 is close enough to Ultrix */
+	struct compat_13_sys_sigreturn_args ap;
 
-	return (compat_13_sys_sigreturn(l, uap, retval));
+	SCARG(&ap, sigcntxp) = (void *)SCARG(uap, sigcntxp);
+
+	return compat_13_sys_sigreturn(l, &ap, retval);
 }
 
 int
@@ -615,7 +638,7 @@ ultrix_sys_sigsuspend(struct lwp *l, const struct ultrix_sys_sigsuspend_args *ua
 	ss.__bits[2] = 0;
 	ss.__bits[3] = 0;
 
-	return (sigsuspend1(l, &ss));
+	return sigsuspend1(l, &ss);
 }
 
 #define ULTRIX_SV_ONSTACK 0x0001  /* take signal on signal stack */
@@ -632,7 +655,7 @@ ultrix_sys_sigvec(struct lwp *l, const struct ultrix_sys_sigvec_args *uap, regis
 	if (SCARG(uap, nsv)) {
 		error = copyin(SCARG(uap, nsv), &nsv, sizeof(nsv));
 		if (error)
-			return (error);
+			return error;
 		nsa.sa_handler = nsv.sv_handler;
 #if 0 /* documentation */
 		/* ONSTACK is identical */
@@ -653,7 +676,7 @@ ultrix_sys_sigvec(struct lwp *l, const struct ultrix_sys_sigvec_args *uap, regis
 	    SCARG(uap, nsv) ? &nsa : 0, SCARG(uap, osv) ? &osa : 0,
 	    NULL, 0);
 	if (error)
-		return (error);
+		return error;
 	if (SCARG(uap, osv)) {
 		osv.sv_handler = osa.sa_handler;
 		osv.sv_flags = osa.sa_flags ^ SA_RESTART;
@@ -661,9 +684,9 @@ ultrix_sys_sigvec(struct lwp *l, const struct ultrix_sys_sigvec_args *uap, regis
 		native_sigset_to_sigset13(&osa.sa_mask, &osv.sv_mask);
 		error = copyout(&osv, SCARG(uap, osv), sizeof(osv));
 		if (error)
-			return (error);
+			return error;
 	}
-	return (0);
+	return 0;
 }
 
 int
@@ -683,30 +706,30 @@ ultrix_sys_shmsys(struct lwp *l, const struct ultrix_sys_shmsys_args *uap, regis
 		SCARG(&shmat_args, shmid) = SCARG(uap, a2);
 		SCARG(&shmat_args, shmaddr) = (void *)SCARG(uap, a3);
 		SCARG(&shmat_args, shmflg) = SCARG(uap, a4);
-		return (sys_shmat(l, &shmat_args, retval));
+		return sys_shmat(l, &shmat_args, retval);
 
 	case 1:						/* Ultrix shmctl() */
 		SCARG(&shmctl_args, shmid) = SCARG(uap, a2);
 		SCARG(&shmctl_args, cmd) = SCARG(uap, a3);
 		SCARG(&shmctl_args, buf) = (struct shmid_ds14 *)SCARG(uap, a4);
-		return (compat_14_sys_shmctl(l, &shmctl_args, retval));
+		return compat_14_sys_shmctl(l, &shmctl_args, retval);
 
 	case 2:						/* Ultrix shmdt() */
 		SCARG(&shmat_args, shmaddr) = (void *)SCARG(uap, a2);
-		return (sys_shmdt(l, &shmdt_args, retval));
+		return sys_shmdt(l, &shmdt_args, retval);
 
 	case 3:						/* Ultrix shmget() */
 		SCARG(&shmget_args, key) = SCARG(uap, a2);
 		SCARG(&shmget_args, size) = SCARG(uap, a3);
 		SCARG(&shmget_args, shmflg) = SCARG(uap, a4)
 		    & (IPC_CREAT|IPC_EXCL|IPC_NOWAIT);
-		return (sys_shmget(l, &shmget_args, retval));
+		return sys_shmget(l, &shmget_args, retval);
 
 	default:
-		return (EINVAL);
+		return EINVAL;
 	}
 #else
-	return (EOPNOTSUPP);
+	return EOPNOTSUPP;
 #endif	/* SYSVSHM */
 }
 
@@ -730,10 +753,10 @@ ultrix_to_bsd_flock(struct ultrix_flock *ufl, struct flock *fl)
 		fl->l_type = F_UNLCK;
 		break;
 	default:
-		return (EINVAL);
+		return EINVAL;
 	}
 
-	return (0);
+	return 0;
 }
 
 static void
@@ -771,10 +794,10 @@ ultrix_sys_fcntl(struct lwp *l, const struct ultrix_sys_fcntl_args *uap, registe
 	case F_SETLKW:
 		error = copyin(SCARG(uap, arg), &ufl, sizeof(ufl));
 		if (error)
-			return (error);
+			return error;
 		error = ultrix_to_bsd_flock(&ufl, &fl);
 		if (error)
-			return (error);
+			return error;
 		error = do_fcntl_lock(l, SCARG(uap, fd), SCARG(uap, cmd), &fl);
 		if (SCARG(uap, cmd) != F_GETLK || error != 0)
 			return error;

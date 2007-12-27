@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_fs.c,v 1.44 2007/12/20 23:03:07 dsl Exp $	*/
+/*	$NetBSD: ultrix_fs.c,v 1.45 2007/12/27 17:18:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_fs.c,v 1.44 2007/12/20 23:03:07 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_fs.c,v 1.45 2007/12/27 17:18:11 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -300,7 +300,7 @@ ultrix_sys_getmnt(struct lwp *l, const struct ultrix_sys_getmnt_args *uap, regis
 bad:
 	if (path)
 		FREE(path, M_TEMP);
-	return (error);
+	return error;
 }
 
 
@@ -372,9 +372,8 @@ ultrix_sys_mount(struct lwp *l, const struct ultrix_sys_mount_args *uap, registe
 		struct ultrix_nfs_args una;
 		struct nfs_args na;
 
-		if ((error = copyin(SCARG(uap, data), &una, sizeof una)) !=0) {
-			return (error);
-		}
+		if ((error = copyin(SCARG(uap, data), &una, sizeof(una))) != 0)
+			return error;
 #if 0
 		/*
 		 * This is the only syscall boundary the
@@ -383,7 +382,7 @@ ultrix_sys_mount(struct lwp *l, const struct ultrix_sys_mount_args *uap, registe
 		 */
 		if ((error = copyin(una.addr, &osa, sizeof osa)) != 0) {
 			printf("ultrix_mount: nfs copyin osa\n");
-			return (error);
+			return error;
 		}
 		sap->sin_family = (u_char)osa.sin_family;
 		sap->sin_len = sizeof(*sap);
@@ -437,5 +436,5 @@ ultrix_sys_mount(struct lwp *l, const struct ultrix_sys_mount_args *uap, registe
 		    &dummy);
 	}
 
-	return (EINVAL);
+	return EINVAL;
 }
