@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.180.2.7 2007/12/26 23:05:54 ad Exp $
+	$NetBSD: syscalls.master,v 1.180.2.8 2007/12/27 15:38:18 ad Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -73,7 +73,7 @@
 6	STD MPSAFE	{ int sys_close(int fd); }
 7	STD MPSAFE	{ int sys_wait4(int pid, int *status, int options, \
 			    struct rusage *rusage); }
-8	COMPAT_43	{ int sys_creat(const char *path, mode_t mode); } ocreat
+8	COMPAT_43 MPSAFE	{ int sys_creat(const char *path, mode_t mode); } ocreat
 9	STD MPSAFE	{ int sys_link(const char *path, const char *link); }
 10	STD MPSAFE	{ int sys_unlink(const char *path); }
 11	OBSOL		execv
@@ -174,19 +174,19 @@
 66	STD MPSAFE	{ int sys_vfork(void); }
 67	OBSOL		vread
 68	OBSOL		vwrite
-69	STD		{ int sys_sbrk(intptr_t incr); }
-70	STD		{ int sys_sstk(int incr); }
+69	STD MPSAFE	{ int sys_sbrk(intptr_t incr); }
+70	STD MPSAFE	{ int sys_sstk(int incr); }
 71	COMPAT_43	{ int sys_mmap(void *addr, size_t len, int prot, \
 			    int flags, int fd, long pos); } ommap
-72	STD		{ int sys_ovadvise(int anom); } vadvise
-73	STD		{ int sys_munmap(void *addr, size_t len); }
-74	STD		{ int sys_mprotect(void *addr, size_t len, \
+72	STD MPSAFE	{ int sys_ovadvise(int anom); } vadvise
+73	STD MPSAFE	{ int sys_munmap(void *addr, size_t len); }
+74	STD MPSAFE	{ int sys_mprotect(void *addr, size_t len, \
 			    int prot); }
-75	STD		{ int sys_madvise(void *addr, size_t len, \
+75	STD MPSAFE	{ int sys_madvise(void *addr, size_t len, \
 			    int behav); }
 76	OBSOL		vhangup
 77	OBSOL		vlimit
-78	STD		{ int sys_mincore(void *addr, size_t len, \
+78	STD MPSAFE	{ int sys_mincore(void *addr, size_t len, \
 			    char *vec); }
 79	STD MPSAFE	{ int sys_getgroups(int gidsetsize, \
 			    gid_t *gidset); }
@@ -205,10 +205,10 @@
 			    ogethostname
 88	COMPAT_43	{ int sys_sethostname(char *hostname, u_int len); } \
 			    osethostname
-89	COMPAT_43	{ int sys_getdtablesize(void); } ogetdtablesize
-90	STD		{ int sys_dup2(int from, int to); }
+89	COMPAT_43 MPSAFE	{ int sys_getdtablesize(void); } ogetdtablesize
+90	STD MPSAFE	{ int sys_dup2(int from, int to); }
 91	UNIMPL		getdopt
-92	STD		{ int sys_fcntl(int fd, int cmd, ... void *arg); }
+92	STD MPSAFE	{ int sys_fcntl(int fd, int cmd, ... void *arg); }
 93	STD MPSAFE	{ int sys_select(int nd, fd_set *in, fd_set *ou, \
 			    fd_set *ex, struct timeval *tv); }
 94	UNIMPL		setdopt
@@ -263,7 +263,7 @@
 			    orecvfrom
 126	STD		{ int sys_setreuid(uid_t ruid, uid_t euid); }
 127	STD		{ int sys_setregid(gid_t rgid, gid_t egid); }
-128	STD		{ int sys_rename(const char *from, const char *to); }
+128	STD MPSAFE	{ int sys_rename(const char *from, const char *to); }
 129	COMPAT_43 MPSAFE	{ int sys_truncate(const char *path, long length); } \
 			    otruncate
 130	COMPAT_43 MPSAFE	{ int sys_ftruncate(int fd, long length); } oftruncate
@@ -284,8 +284,8 @@
 			    struct timeval *olddelta); }
 141	COMPAT_43	{ int sys_getpeername(int fdes, void *asa, \
 			    int *alen); } ogetpeername
-142	COMPAT_43	{ int32_t sys_gethostid(void); } ogethostid
-143	COMPAT_43	{ int sys_sethostid(int32_t hostid); } osethostid
+142	COMPAT_43 MPSAFE	{ int32_t sys_gethostid(void); } ogethostid
+143	COMPAT_43 MPSAFE	{ int sys_sethostid(int32_t hostid); } osethostid
 144	COMPAT_43 MPSAFE	{ int sys_getrlimit(int which, \
 			    struct orlimit *rlp); } ogetrlimit
 145	COMPAT_43	{ int sys_setrlimit(int which, \
@@ -311,7 +311,7 @@
 #else
 155	EXCL		nfssvc
 #endif
-156	COMPAT_43	{ int sys_getdirentries(int fd, char *buf, \
+156	COMPAT_43 MPSAFE{ int sys_getdirentries(int fd, char *buf, \
 			    u_int count, long *basep); } ogetdirentries
 157	COMPAT_20	{ int sys_statfs(const char *path, \
 			    struct statfs12 *buf); }
@@ -324,7 +324,7 @@
 			    ogetdomainname
 163	COMPAT_09	{ int sys_setdomainname(char *domainname, int len); } \
 			    osetdomainname
-164	COMPAT_09	{ int sys_uname(struct outsname *name); } ouname
+164	COMPAT_09 MPSAFE	{ int sys_uname(struct outsname *name); } ouname
 165	STD		{ int sys_sysarch(int op, void *parms); }
 166	UNIMPL
 167	UNIMPL
@@ -338,14 +338,14 @@
 #endif
 ; XXX more generally, never on machines where sizeof(void *) != sizeof(int)
 #if (defined(SYSVMSG) || !defined(_KERNEL)) && !defined(_LP64)
-170	COMPAT_10	{ int sys_msgsys(int which, int a2, int a3, int a4, \
+170	COMPAT_10 MPSAFE	{ int sys_msgsys(int which, int a2, int a3, int a4, \
 			    int a5, int a6); } omsgsys
 #else
 170	EXCL		1.0 msgsys
 #endif
 ; XXX more generally, never on machines where sizeof(void *) != sizeof(int)
 #if (defined(SYSVSHM) || !defined(_KERNEL)) && !defined(_LP64)
-171	COMPAT_10	{ int sys_shmsys(int which, int a2, int a3, int a4); } \
+171	COMPAT_10 MPSAFE	{ int sys_shmsys(int which, int a2, int a3, int a4); } \
 			    oshmsys
 #else
 171	EXCL		1.0 shmsys
@@ -387,11 +387,11 @@
 #endif
 188	COMPAT_12 MPSAFE	{ int sys_stat(const char *path, struct stat12 *ub); } \
 			    stat12
-189	COMPAT_12	{ int sys_fstat(int fd, struct stat12 *sb); } fstat12
+189	COMPAT_12 MPSAFE	{ int sys_fstat(int fd, struct stat12 *sb); } fstat12
 190	COMPAT_12 MPSAFE	{ int sys_lstat(const char *path, \
 			    struct stat12 *ub); } lstat12
-191	STD		{ long sys_pathconf(const char *path, int name); }
-192	STD		{ long sys_fpathconf(int fd, int name); }
+191	STD MPSAFE	{ long sys_pathconf(const char *path, int name); }
+192	STD MPSAFE	{ long sys_fpathconf(int fd, int name); }
 193	UNIMPL
 194	STD MPSAFE	{ int sys_getrlimit(int which, \
 			    struct rlimit *rlp); }
@@ -570,9 +570,9 @@
 269	UNIMPL
 270	STD MPSAFE	{ int sys___posix_rename(const char *from, \
 			    const char *to); }
-271	STD		{ int sys_swapctl(int cmd, void *arg, int misc); }
+271	STD MPSAFE	{ int sys_swapctl(int cmd, void *arg, int misc); }
 272	COMPAT_30 MPSAFE	{ int sys_getdents(int fd, char *buf, size_t count); }
-273	STD		{ int sys_minherit(void *addr, size_t len, \
+273	STD MPSAFE	{ int sys_minherit(void *addr, size_t len, \
 			    int inherit); }
 274	STD MPSAFE	{ int sys_lchmod(const char *path, mode_t mode); }
 275	STD MPSAFE	{ int sys_lchown(const char *path, uid_t uid, \
@@ -594,7 +594,7 @@
 285	STD MPSAFE	{ int sys___posix_lchown(const char *path, uid_t uid, \
 			    gid_t gid); }
 286	STD MPSAFE	{ pid_t sys_getsid(pid_t pid); }
-287	STD		{ pid_t sys___clone(int flags, void *stack); }
+287	STD MPSAFE	{ pid_t sys___clone(int flags, void *stack); }
 288	STD MPSAFE	{ int sys_fktrace(int fd, int ops, \
 			    int facs, int pid); }
 289	STD MPSAFE	{ ssize_t sys_preadv(int fd, \
@@ -613,7 +613,7 @@
 294	STD MPSAFE	{ int sys___sigsuspend14(const sigset_t *set); }
 295	COMPAT_16 MPSAFE { int sys___sigreturn14(struct sigcontext *sigcntxp); }
 296	STD MPSAFE	{ int sys___getcwd(char *bufp, size_t length); }
-297	STD		{ int sys_fchroot(int fd); }
+297	STD MPSAFE	{ int sys_fchroot(int fd); }
 298	COMPAT_30	{ int sys_fhopen(const struct compat_30_fhandle *fhp, int flags); }
 299	COMPAT_30	{ int sys_fhstat(const struct compat_30_fhandle *fhp, \
 			    struct stat13 *sb); }
