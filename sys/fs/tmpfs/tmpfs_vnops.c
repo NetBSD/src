@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.44.2.10 2007/12/27 22:21:59 ad Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.44.2.11 2007/12/27 23:13:13 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.44.2.10 2007/12/27 22:21:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.44.2.11 2007/12/27 23:13:13 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -812,6 +812,7 @@ tmpfs_rename(void *v)
 
 	newname = NULL;
 	namelen = 0;
+	tmp = NULL;
 
 	/* Disallow cross-device renames. */
 	if (fvp->v_mount != tdvp->v_mount ||
