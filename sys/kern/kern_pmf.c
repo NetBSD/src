@@ -1,4 +1,4 @@
-/* $NetBSD: kern_pmf.c,v 1.9 2007/12/23 23:19:11 rmind Exp $ */
+/* $NetBSD: kern_pmf.c,v 1.10 2007/12/27 16:03:10 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_pmf.c,v 1.9 2007/12/23 23:19:11 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_pmf.c,v 1.10 2007/12/27 16:03:10 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -272,9 +272,6 @@ pmf_system_shutdown(void)
 {
 	int depth, maxdepth;
 	device_t curdev;
-
-	if (!pmf_check_system_drivers())
-		delay(2000000);
 
 	aprint_debug("Shutting down devices:");
 
