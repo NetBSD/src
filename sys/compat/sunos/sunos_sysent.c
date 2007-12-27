@@ -1,4 +1,4 @@
-/* $NetBSD: sunos_sysent.c,v 1.72 2007/12/20 23:10:50 dsl Exp $ */
+/* $NetBSD: sunos_sysent.c,v 1.73 2007/12/27 17:05:28 martin Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_sysent.c,v 1.72 2007/12/20 23:10:50 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_sysent.c,v 1.73 2007/12/27 17:05:28 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
