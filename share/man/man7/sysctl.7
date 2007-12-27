@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.13 2007/06/25 23:36:18 christos Exp $
+.\"	$NetBSD: sysctl.7,v 1.14 2007/12/27 00:20:11 elad Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)sysctl.3	8.4 (Berkeley) 5/9/95
 .\"
-.Dd June 19, 2007
+.Dd December 27, 2007
 .Dt SYSCTL 7
 .Os
 .Sh NAME
@@ -1982,6 +1982,21 @@ and
 .Xr security 8 .
 .Pp
 .Bl -tag -width "123456"
+.It Li security.pax.aslr.enable
+Enable PaX ASLR (Address Space Layout Randomization).
+.Pp
+The value of this
+knob must be non-zero for PaX ASLR to be enabled, even if a program is set to
+explicit enable.
+.It Li security.pax.aslr.global
+Specifies the default global policy for programs without an
+explicit enable/disable flag.
+.Pp
+When non-zero, all programs will get PaX ASLR, except those exempted with
+.Xr paxctl 8  .
+Otherwise, all programs will not get PaX ASLR, except those specifically
+marked as such with
+.Xr paxctl 8 .
 .It Li security.pax.mprotect.enable
 Enable PaX MPROTECT restrictions.
 .Pp
