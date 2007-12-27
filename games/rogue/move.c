@@ -1,4 +1,4 @@
-/*	$NetBSD: move.c,v 1.8 2006/05/14 03:15:50 christos Exp $	*/
+/*	$NetBSD: move.c,v 1.9 2007/12/27 23:53:00 dholland Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)move.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: move.c,v 1.8 2006/05/14 03:15:50 christos Exp $");
+__RCSID("$NetBSD: move.c,v 1.9 2007/12/27 23:53:00 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -66,7 +66,7 @@ one_move_rogue(dirch, pickup)
 	short row, col;
 	object *obj;
 	char desc[DCOLS];
-	short n, status, d = 0;	/* XXX: GCC */
+	short status, d = 0;	/* XXX: GCC */
 
 	row = rogue.row;
 	col = rogue.col;
@@ -83,9 +83,9 @@ one_move_rogue(dirch, pickup)
 	if (being_held || bear_trap) {
 		if (!(dungeon[row][col] & MONSTER)) {
 			if (being_held) {
-				message("you are being held", 1);
+				messagef(1, "you are being held");
 			} else {
-				message("you are still stuck in the bear trap", 0);
+				messagef(0, "you are still stuck in the bear trap");
 				(void) reg_move();
 			}
 			return(MOVE_FAILED);
@@ -135,9 +135,10 @@ one_move_rogue(dirch, pickup)
 		}
 		if (pickup && !levitate) {
 			if ((obj = pick_up(row, col, &status)) != NULL) {
-				get_desc(obj, desc);
+				get_desc(obj, desc, sizeof(desc));
 				if (obj->what_is == GOLD) {
 					free_object(obj);
+					messagef(1, "%s", desc);
 					goto NOT_IN_PACK;
 				}
 			} else if (!status) {
@@ -148,17 +149,12 @@ one_move_rogue(dirch, pickup)
 		} else {
 MOVE_ON:
 			obj = object_at(&level_objects, row, col);
-			(void) strcpy(desc, "moved onto ");
-			get_desc(obj, desc+11);
+			get_desc(obj, desc, sizeof(desc));
+			messagef(1, "moved onto %s", desc);
 			goto NOT_IN_PACK;
 		}
-		n = strlen(desc);
-		desc[n] = '(';
-		desc[n+1] = obj->ichar;
-		desc[n+2] = ')';
-		desc[n+3] = 0;
+		messagef(1, "%s(%c)", desc, obj->ichar);
 NOT_IN_PACK:
-		message(desc, 1);
 		(void) reg_move();
 		return(STOPPED_ON_SOMETHING);
 	}
@@ -326,7 +322,7 @@ move_onto()
 	while (!is_direction(ch = rgetchar(), &d)) {
 		sound_bell();
 		if (first_miss) {
-			message("direction? ", 0);
+			messagef(0, "direction? ");
 			first_miss = 0;
 		}
 	}
@@ -382,19 +378,19 @@ check_hunger(msg_only)
 	boolean fainted = 0;
 
 	if (rogue.moves_left == HUNGRY) {
-		(void) strcpy(hunger_str, "hungry");
-		message(hunger_str, 0);
+		(void) strlcpy(hunger_str, "hungry", sizeof(hunger_str));
+		messagef(0, "%s", hunger_str);
 		print_stats(STAT_HUNGER);
 	}
 	if (rogue.moves_left == WEAK) {
-		(void) strcpy(hunger_str, "weak");
-		message(hunger_str, 1);
+		(void) strlcpy(hunger_str, "weak", sizeof(hunger_str));
+		messagef(1, "%s", hunger_str);
 		print_stats(STAT_HUNGER);
 	}
 	if (rogue.moves_left <= FAINT) {
 		if (rogue.moves_left == FAINT) {
-			(void) strcpy(hunger_str, "faint");
-			message(hunger_str, 1);
+			(void) strlcpy(hunger_str, "faint", sizeof(hunger_str));
+			messagef(1, "%s", hunger_str);
 			print_stats(STAT_HUNGER);
 		}
 		n = get_rand(0, (FAINT - rogue.moves_left));
@@ -403,13 +399,13 @@ check_hunger(msg_only)
 			if (rand_percent(40)) {
 				rogue.moves_left++;
 			}
-			message("you faint", 1);
+			messagef(1, "you faint");
 			for (i = 0; i < n; i++) {
 				if (coin_toss()) {
 					mv_mons();
 				}
 			}
-			message(you_can_move_again, 1);
+			messagef(1, you_can_move_again);
 		}
 	}
 	if (msg_only) {
@@ -482,7 +478,7 @@ reg_move()
 	}
 	if (levitate) {
 		if (!(--levitate)) {
-			message("you float gently to the ground", 1);
+			messagef(1, "you float gently to the ground");
 			if (dungeon[rogue.row][rogue.col] & TRAP) {
 				trap_player(rogue.row, rogue.col);
 			}
@@ -490,7 +486,7 @@ reg_move()
 	}
 	if (haste_self) {
 		if (!(--haste_self)) {
-			message("you feel yourself slowing down", 0);
+			messagef(0, "you feel yourself slowing down");
 		}
 	}
 	heal();

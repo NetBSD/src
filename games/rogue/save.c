@@ -1,4 +1,4 @@
-/*	$NetBSD: save.c,v 1.10 2006/03/17 23:04:01 abs Exp $	*/
+/*	$NetBSD: save.c,v 1.11 2007/12/27 23:53:01 dholland Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)save.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: save.c,v 1.10 2006/03/17 23:04:01 abs Exp $");
+__RCSID("$NetBSD: save.c,v 1.11 2007/12/27 23:53:01 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -64,12 +64,12 @@ save_game()
 {
 	char fname[64];
 
-	if (!get_input_line("file name?", save_file, fname, "game not saved",
-			0, 1)) {
+	if (!get_input_line("file name?", save_file, fname, sizeof(fname),
+			"game not saved", 0, 1)) {
 		return;
 	}
 	check_message();
-	message(fname, 0);
+	messagef(0, "%s", fname);
 	save_into_file(fname);
 }
 
@@ -89,20 +89,25 @@ save_into_file(sfile)
 			len = strlen(hptr) + strlen(sfile);
 			name_buffer = md_malloc(len);
 			if (name_buffer == NULL) {
-				message("out of memory for save file name", 0);
+				messagef(0,
+					"out of memory for save file name");
 				sfile = error_file;
 			} else {
 				(void) strcpy(name_buffer, hptr);
 				(void) strcat(name_buffer, sfile+1);
 				sfile = name_buffer;
 			}
+			/* 
+			 * Note: name_buffer gets leaked. But it's small,
+			 * and in the common case we're about to exit.
+			 */
 		}
 	}
 	if (((fp = fopen(sfile, "w")) == NULL) ||
 	    ((file_id = md_get_file_id(sfile)) == -1)) {
 		if (fp)
 			fclose(fp);
-		message("problem accessing the save file", 0);
+		messagef(0, "problem accessing the save file");
 		return;
 	}
 	md_ignore_signals();
@@ -160,7 +165,7 @@ restore(fname)
 	FILE *fp;
 	struct rogue_time saved_time, mod_time;
 	char buf[4];
-	char tbuf[40];
+	char tbuf[MAX_OPT_LEN];
 	int new_file_id, saved_file_id;
 
 	fp = NULL;
@@ -351,10 +356,13 @@ read_string(s, fp, len)
 	short n;
 
 	r_read(fp, (char *) &n, sizeof(short));
-	if (n > len)
+	if (n<=0 || (size_t)(unsigned short)n > len) {
 		clean_up("read_string: corrupt game file");
+	}
 	r_read(fp, s, n);
 	xxxx(s, n);
+	/* ensure null termination */
+	s[n-1] = 0;
 }
 
 void
@@ -389,7 +397,7 @@ r_write(fp, buf, n)
 {
 	if (!write_failed) {
 		if (fwrite(buf, sizeof(char), n, fp) != (size_t)n) {
-			message("write() failed, don't know why", 0);
+			messagef(0, "write() failed, don't know why");
 			sound_bell();
 			write_failed = 1;
 		}

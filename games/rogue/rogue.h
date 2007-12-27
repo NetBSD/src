@@ -1,4 +1,4 @@
-/*	$NetBSD: rogue.h,v 1.17 2005/02/15 12:54:50 jsm Exp $	*/
+/*	$NetBSD: rogue.h,v 1.18 2007/12/27 23:53:00 dholland Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -515,14 +515,14 @@ void	freeze(object *);
 int	get_armor_class(const object *);
 int	get_com_id(int *, short);
 int	get_damage(const char *, boolean);
-void	get_desc(const object *, char *);
+void	get_desc(const object *, char *, size_t);
 int	get_dir(short, short, short, short);
 void	get_dir_rc(short, short *, short *, short);
 char	get_dungeon_char(short, short);
 int	get_exp_level(long);
 void	get_food(object *, boolean);
 int	get_hit_chance(const object *);
-int	get_input_line(const char *, const char *, char *, const char *, boolean, boolean);
+int	get_input_line(const char *, const char *, char *, size_t, const char *, boolean, boolean);
 char	get_mask_char(unsigned short);
 int	get_number(const char *);
 boolean	get_oth_room(short, short *, short *);
@@ -597,7 +597,9 @@ void	md_lock(boolean);
 void	md_shell(const char *);
 void	md_sleep(int);
 void	md_slurp(void);
-void	message(const char *, boolean);
+/*void	message(const char *, boolean);*/
+void	messagef(boolean, const char *, ...)
+		__attribute__((__format__(__printf__, 2, 3)));
 void	mix_colors(void);
 void	mix_random_rooms(void);
 int	mon_can_go(const object *, int, int);
@@ -759,7 +761,8 @@ extern	boolean	see_invisible;
 extern	boolean	sustain_strength;
 extern	boolean	trap_door;
 extern	boolean	wizard;
-extern	char	hit_message[];
+#define HIT_MESSAGE_SIZE 80
+extern	char	hit_message[HIT_MESSAGE_SIZE];
 #define HUNGER_STR_LEN 8
 extern	char	hunger_str[HUNGER_STR_LEN];
 extern	char	login_name[MAX_OPT_LEN];
