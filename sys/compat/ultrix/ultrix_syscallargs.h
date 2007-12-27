@@ -1,4 +1,4 @@
-/* $NetBSD: ultrix_syscallargs.h,v 1.48 2007/12/20 23:10:52 dsl Exp $ */
+/* $NetBSD: ultrix_syscallargs.h,v 1.49 2007/12/27 17:18:11 christos Exp $ */
 
 /*
  * System call argument lists.
@@ -684,9 +684,7 @@ int	ultrix_sys_cachectl(struct lwp *, const struct ultrix_sys_cachectl_args *, r
 #else	/* !mips */
 #endif	/* !mips */
 #ifdef NFSSERVER
-int	ultrix_sys_nfssvc(struct lwp *, const struct ultrix_sys_nfssvc_args *, register_t *);
-
-#else
+int	ultrix_sys_nfssvc(struct lwp *, const void *, register_t *);
 #endif
 int	compat_43_sys_getdirentries(struct lwp *, const struct compat_43_sys_getdirentries_args *, register_t *);
 
