@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.128.2.3 2007/12/10 19:28:05 ad Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.128.2.4 2007/12/27 01:41:29 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.128.2.3 2007/12/10 19:28:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.128.2.4 2007/12/27 01:41:29 ad Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -107,6 +107,12 @@ static int acquire(struct lock **, int *, int, int, int, uintptr_t);
 int	lock_debug_syslog = 0;	/* defaults to printf, but can be patched */
 bool	kernel_lock_dodebug;
 __cpu_simple_lock_t kernel_lock;
+
+static lockops_t lockmgr_lockops = {
+	"lockmgr",
+	1,
+	(void *)nullop
+};
 
 #if defined(LOCKDEBUG) || defined(DIAGNOSTIC) /* { */
 #define	COUNT(lkp, l, cpu_id, x)	(l)->l_locks += (x)
@@ -244,12 +250,18 @@ lockinit(struct lock *lkp, pri_t prio, const char *wmesg, int timo, int flags)
 	lkp->lk_wmesg = wmesg;
 	lkp->lk_lock_addr = 0;
 	lkp->lk_unlock_addr = 0;
+
+	if (LOCKDEBUG_ALLOC(lkp, &lockmgr_lockops,
+	    (uintptr_t)__builtin_return_address(0))) {
+		lkp->lk_flags |= LK_DODEBUG;
+	}
 }
 
 void
 lockdestroy(struct lock *lkp)
 {
 
+	LOCKDEBUG_FREE(((lkp->lk_flags & LK_DODEBUG) != 0), lkp);
 	mutex_destroy(&lkp->lk_interlock);
 }
 
