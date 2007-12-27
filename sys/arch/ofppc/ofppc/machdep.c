@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.99 2007/12/27 05:41:51 garbled Exp $	*/
+/*	$NetBSD: machdep.c,v 1.100 2007/12/27 17:25:02 garbled Exp $	*/
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.99 2007/12/27 05:41:51 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.100 2007/12/27 17:25:02 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -207,6 +207,7 @@ cpu_reboot(int howto, char *what)
 	printf("rebooting\n\n");
 
 	rtas_reboot();
+	for(;;);
 
 	if (what && *what) {
 		if (strlen(what) > sizeof str - 5)
