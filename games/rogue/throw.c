@@ -1,4 +1,4 @@
-/*	$NetBSD: throw.c,v 1.7 2006/03/30 05:04:22 jnemeth Exp $	*/
+/*	$NetBSD: throw.c,v 1.8 2007/12/27 23:53:01 dholland Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)throw.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: throw.c,v 1.7 2006/03/30 05:04:22 jnemeth Exp $");
+__RCSID("$NetBSD: throw.c,v 1.8 2007/12/27 23:53:01 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -67,7 +67,7 @@ throw()
 	while (!is_direction(dir = rgetchar(), &d)) {
 		sound_bell();
 		if (first_miss) {
-			message("direction? ", 0);
+			messagef(0, "direction? ");
 			first_miss = 0;
 		}
 	}
@@ -81,11 +81,11 @@ throw()
 	check_message();
 
 	if (!(weapon = get_letter_object(wch))) {
-		message("no such item.", 0);
+		messagef(0, "no such item.");
 		return;
 	}
 	if ((weapon->in_use_flags & BEING_USED) && weapon->is_cursed) {
-		message(curse_message, 0);
+		messagef(0, curse_message);
 		return;
 	}
 	row = rogue.row; col = rogue.col;
@@ -142,15 +142,15 @@ throw_at_monster(monster, weapon)
 	}
 	t = weapon->quantity;
 	weapon->quantity = 1;
-	sprintf(hit_message, "the %s", name_of(weapon));
+	snprintf(hit_message, HIT_MESSAGE_SIZE, "the %s", name_of(weapon));
 	weapon->quantity = t;
 
 	if (!rand_percent(hit_chance)) {
-		(void) strcat(hit_message, "misses  ");
+		(void) strlcat(hit_message, "misses  ", HIT_MESSAGE_SIZE);
 		return(0);
 	}
 	s_con_mon(monster);
-	(void) strcat(hit_message, "hit  ");
+	(void) strlcat(hit_message, "hit  ", HIT_MESSAGE_SIZE);
 	(void) mon_damage(monster, damage);
 	return(1);
 }
@@ -207,7 +207,6 @@ flop_weapon(weapon, row, col)
 {
 	object *new_weapon, *monster;
 	short i = 0;
-	char msg[80];
 	boolean found = 0;
 	short mch, dch;
 	unsigned short mon;
@@ -257,10 +256,9 @@ flop_weapon(weapon, row, col)
 
 		t = weapon->quantity;
 		weapon->quantity = 1;
-		sprintf(msg, "the %svanishes as it hits the ground",
-		name_of(weapon));
+		messagef(0, "the %svanishes as it hits the ground",
+			name_of(weapon));
 		weapon->quantity = t;
-		message(msg, 0);
 	}
 }
 

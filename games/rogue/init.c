@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.14 2007/12/15 19:44:43 perry Exp $	*/
+/*	$NetBSD: init.c,v 1.15 2007/12/27 23:53:00 dholland Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)init.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: init.c,v 1.14 2007/12/15 19:44:43 perry Exp $");
+__RCSID("$NetBSD: init.c,v 1.15 2007/12/27 23:53:00 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -96,7 +96,8 @@ init(argc, argv)
 	if ((!pn) || (strlen(pn) >= MAX_OPT_LEN)) {
 		clean_up("Hey!  Who are you?");
 	}
-	(void) strcpy(login_name, pn);
+	/* LOGIN_NAME_SIZE == MAX_OPT_LEN now, but just in case... */
+	(void) strlcpy(login_name, pn, sizeof(login_name));
 
 	do_args(argc, argv);
 	do_opts();
@@ -238,7 +239,7 @@ onintr(dummy)
 		did_int = 1;
 	} else {
 		check_message();
-		message("interrupt", 1);
+		messagef(1, "interrupt");
 	}
 	md_heed_signals();
 }
@@ -341,6 +342,7 @@ env_get_value(s, e, add_blank)
 			break;
 		}
 	}
+	/* note: edit_opts() in room.c depends on this being the right size */
 	*s = md_malloc(MAX_OPT_LEN + 2);
 	if (*s == NULL)
 		clean_up("out of memory");
@@ -357,9 +359,10 @@ init_str(str, dflt)
 	const char *dflt;
 {
 	if (!(*str)) {
+		/* note: edit_opts() in room.c depends on this size */
 		*str = md_malloc(MAX_OPT_LEN + 2);
 		if (*str == NULL)
 			clean_up("out of memory");
-		(void) strcpy(*str, dflt);
+		(void) strlcpy(*str, dflt, MAX_OPT_LEN + 2);
 	}
 }
