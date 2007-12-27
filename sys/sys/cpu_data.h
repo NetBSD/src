@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_data.h,v 1.14.2.1 2007/12/13 20:08:10 ad Exp $	*/
+/*	$NetBSD: cpu_data.h,v 1.14.2.2 2007/12/27 15:51:25 ad Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -89,7 +89,6 @@ struct cpu_data {
 	u_int		cpu_softints;		/* pending (slow) softints */
 	kmutex_t	cpu_uarea_lock;		/* uarea alloc lock */
 	u_int		cpu_uarea_cnt;		/* count of free uareas */
-	u_int		cpu_valloc_toggle;	/* toggle for vnode alloc */
 	vaddr_t		cpu_uarea_list;		/* free uareas */
 };
 

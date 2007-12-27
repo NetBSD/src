@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.308.2.7 2007/12/13 20:08:09 ad Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.308.2.8 2007/12/27 15:51:26 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.308.2.7 2007/12/13 20:08:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.308.2.8 2007/12/27 15:51:26 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -175,6 +175,7 @@ vfs_drainvnodes(long target, struct lwp *l)
 	while (numvnodes > target) {
 		vnode_t *vp;
 
+		mutex_enter(&vnode_free_list_lock);
 		vp = getcleanvnode();
 		if (vp == NULL)
 			return EBUSY; /* give up */
@@ -193,8 +194,9 @@ getcleanvnode(void)
 	vnode_t *vp;
 	vnodelst_t *listhd;
 
+	KASSERT(mutex_owned(&vnode_free_list_lock));
+
 retry:
-	mutex_enter(&vnode_free_list_lock);
 	listhd = &vnode_free_list;
 try_nextlist:
 	TAILQ_FOREACH(vp, listhd, v_freelist) {
@@ -261,6 +263,7 @@ try_nextlist:
 		 */
 		vp->v_usecount--;
 		mutex_exit(&vp->v_interlock);
+		mutex_enter(&vnode_free_list_lock);
 		goto retry;
 	}
 
@@ -393,9 +396,9 @@ getnewvnode(enum vtagtype tag, struct mount *mp, int (**vops)(void *),
 	    vnode_t **vpp)
 {
 	struct uvm_object *uobj;
-	int *toggle;
+	static int toggle;
 	vnode_t *vp;
-	int error = 0, tryalloc, tries = 3;
+	int error = 0, tryalloc;
 
  try_again:
 	if (mp) {
@@ -431,23 +434,24 @@ getnewvnode(enum vtagtype tag, struct mount *mp, int (**vops)(void *),
 
 	vp = NULL;
 
-	/* Note: don't care about being preempted here. */
-	toggle = &(curcpu()->ci_data.cpu_valloc_toggle);
-	*toggle ^= 1;
+	mutex_enter(&vnode_free_list_lock);
+
+	toggle ^= 1;
 	if (numvnodes > 2 * desiredvnodes)
-		*toggle = 0;
+		toggle = 0;
 
 	tryalloc = numvnodes < desiredvnodes ||
 	    (TAILQ_FIRST(&vnode_free_list) == NULL &&
-	     (TAILQ_FIRST(&vnode_hold_list) == NULL || *toggle));
+	     (TAILQ_FIRST(&vnode_hold_list) == NULL || toggle));
 
 	if (tryalloc) {
-		atomic_inc_uint(&numvnodes);
+		numvnodes++;
+		mutex_exit(&vnode_free_list_lock);
 		if ((vp = valloc(NULL)) == NULL) {
-			atomic_dec_uint(&numvnodes);
-		} else {
+			mutex_enter(&vnode_free_list_lock);
+			numvnodes--;
+		} else
 			vp->v_usecount = 1;
-		}
 	}
 
 	if (vp == NULL) {
@@ -455,10 +459,10 @@ getnewvnode(enum vtagtype tag, struct mount *mp, int (**vops)(void *),
 		if (vp == NULL) {
 			if (mp && error != EDEADLK)
 				vfs_unbusy(mp);
-			if (--tries != 0) {
+			if (tryalloc) {
 				printf("WARNING: unable to allocate new "
 				    "vnode, retrying...\n");
-				(void)tsleep(&lbolt, PRIBIO, "newvn", 0);
+				(void) tsleep(&lbolt, PRIBIO, "newvn", hz);
 				goto try_again;
 			}
 			tablefull("vnode", "increase kern.maxvnodes or NVNODE");
@@ -567,7 +571,9 @@ vfree(vnode_t *vp)
 
 	if ((vp->v_iflag & VI_MARKER) == 0) {
 		lockdestroy(&vp->v_lock);
-		atomic_dec_uint(&numvnodes);
+		mutex_enter(&vnode_free_list_lock);
+		numvnodes--;
+		mutex_exit(&vnode_free_list_lock);
 	}
 
 	UVM_OBJ_DESTROY(&vp->v_uobj);
