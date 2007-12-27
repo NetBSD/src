@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.75.6.3 2007/12/10 19:28:07 ad Exp $	*/
+/*	$NetBSD: lock.h,v 1.75.6.4 2007/12/27 01:41:29 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -91,9 +91,9 @@
  * The general lock structure.
  */
 struct lock {
-	kmutex_t lk_interlock;		/* lock on remaining fields */
 	u_int	lk_flags;		/* see below */
 	int	lk_sharecount;		/* # of accepted shared locks */
+	kmutex_t lk_interlock;		/* lock on structure */
 	short	lk_exclusivecount;	/* # of recursive exclusive locks */
 	short	lk_recurselevel;	/* lvl above which recursion ok */
 	int	lk_waitcount;		/* # of sleepers */
@@ -160,6 +160,7 @@ struct lock {
 #define	LK_WAITDRAIN	0x00000800	/* process waiting for lock to drain */
 #define	LK_DRAINING	0x00004000	/* lock is being drained */
 #define	LK_DRAINED	0x00008000	/* lock has been decommissioned */
+#define	LK_DODEBUG	0x00010000	/* has lockdebug bits */
 /*
  * Internal state flags corresponding to lk_sharecount, and lk_waitcount
  */
