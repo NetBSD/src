@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.44.2.8 2007/12/22 00:33:16 ad Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.44.2.9 2007/12/27 17:54:34 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.44.2.8 2007/12/22 00:33:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.44.2.9 2007/12/27 17:54:34 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -810,6 +810,14 @@ tmpfs_rename(void *v)
 	KASSERT(fcnp->cn_flags & HASBUF);
 	KASSERT(tcnp->cn_flags & HASBUF);
 
+	/* Disallow cross-device renames.
+	 * XXX Why isn't this done by the caller? */
+	if (fvp->v_mount != tdvp->v_mount ||
+	    (tvp != NULL && fvp->v_mount != tvp->v_mount)) {
+		error = EXDEV;
+		goto out_unlocked;
+	}
+
 	fnode = VP_TO_TMPFS_NODE(fvp);
 	fdnode = VP_TO_TMPFS_DIR(fdvp);
 	tnode = (tvp == NULL) ? NULL : VP_TO_TMPFS_NODE(tvp);
@@ -834,14 +842,6 @@ tmpfs_rename(void *v)
 		goto out;
 	}
 	KASSERT(de->td_node == fnode);
-
-	/* Disallow cross-device renames.
-	 * XXX Why isn't this done by the caller? */
-	if (fvp->v_mount != tdvp->v_mount ||
-	    (tvp != NULL && fvp->v_mount != tvp->v_mount)) {
-		error = EXDEV;
-		goto out;
-	}
 
 	/* If source and target are the same file, there is nothing to do. */
 	if (fvp == tvp) {
