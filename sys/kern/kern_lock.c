@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.128.2.4 2007/12/27 01:41:29 ad Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.128.2.5 2007/12/27 02:17:32 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.128.2.4 2007/12/27 01:41:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.128.2.5 2007/12/27 02:17:32 ad Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -108,11 +108,13 @@ int	lock_debug_syslog = 0;	/* defaults to printf, but can be patched */
 bool	kernel_lock_dodebug;
 __cpu_simple_lock_t kernel_lock;
 
+#ifdef LOCKDEBUG
 static lockops_t lockmgr_lockops = {
 	"lockmgr",
 	1,
 	(void *)nullop
 };
+#endif
 
 #if defined(LOCKDEBUG) || defined(DIAGNOSTIC) /* { */
 #define	COUNT(lkp, l, cpu_id, x)	(l)->l_locks += (x)
