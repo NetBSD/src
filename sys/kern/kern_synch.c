@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.212 2007/12/22 01:14:54 yamt Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.213 2007/12/27 22:13:19 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.212 2007/12/22 01:14:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.213 2007/12/27 22:13:19 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_lockdebug.h"
@@ -929,7 +929,9 @@ sched_pstats(void *arg)
 		}
 		mutex_exit(&p->p_smutex);
 		if (sig) {
+			mutex_enter(&proclist_mutex);
 			psignal(p, sig);
+			mutex_exit(&proclist_mutex);
 		}
 	}
 	mutex_exit(&proclist_lock);
