@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.48.26.1 2007/12/26 19:42:37 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.48.26.2 2007/12/27 02:18:17 ad Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.48.26.1 2007/12/26 19:42:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.48.26.2 2007/12/27 02:18:17 ad Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_altivec.h"
@@ -83,6 +83,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.48.26.1 2007/12/26 19:42:37 ad Exp $");
 #include <sys/queue.h>
 #include <sys/device.h>		/* for evcnt */
 #include <sys/systm.h>
+#include <sys/atomic.h>
 
 #if __NetBSD_Version__ < 105010000
 #include <vm/vm.h>
@@ -515,6 +516,8 @@ mfsrin(vaddr_t va)
 extern void mfmsr64 (register64_t *result);
 #endif /* PPC_OEA64_BRIDGE */
 
+#define	PMAP_LOCK()		KERNEL_LOCK(1, NULL)
+#define	PMAP_UNLOCK()		KERNEL_UNLOCK_ONE(NULL)
 
 static inline register_t
 pmap_interrupts_off(void)
@@ -942,6 +945,8 @@ pmap_pte_spill(struct pmap *pm, vaddr_t addr, bool exec)
 	volatile struct pteg *pteg;
 	volatile struct pte *pt;
 
+	PMAP_LOCK();
+
 	ptegidx = va_to_pteg(pm, addr);
 
 	/*
@@ -1015,6 +1020,7 @@ pmap_pte_spill(struct pmap *pm, vaddr_t addr, bool exec)
 					TAILQ_REMOVE(pvoh, pvo, pvo_olink);
 					TAILQ_INSERT_TAIL(pvoh, pvo, pvo_olink);
 				}
+				PMAP_UNLOCK();
 				return 1;
 			}
 			source_pvo = pvo;
@@ -1040,6 +1046,7 @@ pmap_pte_spill(struct pmap *pm, vaddr_t addr, bool exec)
 
 	if (source_pvo == NULL) {
 		PMAPCOUNT(ptes_unspilled);
+		PMAP_UNLOCK();
 		return 0;
 	}
 
@@ -1112,6 +1119,8 @@ pmap_pte_spill(struct pmap *pm, vaddr_t addr, bool exec)
 
 	PMAP_PVO_CHECK(victim_pvo);
 	PMAP_PVO_CHECK(source_pvo);
+
+	PMAP_UNLOCK();
 	return 1;
 }
 
@@ -1228,6 +1237,7 @@ pmap_pinit(pmap_t pm)
 	 * Allocate some segment registers for this pmap.
 	 */
 	pm->pm_refs = 1;
+	PMAP_LOCK();
 	for (i = 0; i < NPMAPS; i += VSID_NBPW) {
 		static register_t pmap_vsidcontext;
 		register_t hash;
@@ -1267,8 +1277,10 @@ pmap_pinit(pmap_t pm)
 			pm->pm_sr[i] = VSID_MAKE(i, hash) | SR_PRKEY |
 			    SR_NOEXEC;
 #endif
+		PMAP_UNLOCK();
 		return;
 	}
+	PMAP_UNLOCK();
 	panic("pmap_pinit: out of segments");
 }
 
@@ -1278,7 +1290,7 @@ pmap_pinit(pmap_t pm)
 void
 pmap_reference(pmap_t pm)
 {
-	pm->pm_refs++;
+	atomic_inc_uint(&pm->pm_refs);
 }
 
 /*
@@ -1288,7 +1300,7 @@ pmap_reference(pmap_t pm)
 void
 pmap_destroy(pmap_t pm)
 {
-	if (--pm->pm_refs == 0) {
+	if (atomic_dec_uint_nv(&pm->pm_refs) == 0) {
 		pmap_release(pm);
 		pool_put(&pmap_pool, pm);
 	}
@@ -1306,6 +1318,7 @@ pmap_release(pmap_t pm)
 	KASSERT(pm->pm_stats.resident_count == 0);
 	KASSERT(pm->pm_stats.wired_count == 0);
 	
+	PMAP_LOCK();
 	if (pm->pm_sr[0] == 0)
 		panic("pmap_release");
 	idx = pm->pm_vsid & (NPMAPS-1);
@@ -1314,6 +1327,7 @@ pmap_release(pmap_t pm)
 
 	KASSERT(pmap_vsid_bitmap[idx] & mask);
 	pmap_vsid_bitmap[idx] &= ~mask;
+	PMAP_UNLOCK();
 }
 
 /*
@@ -1471,6 +1485,8 @@ pmap_pvo_check(const struct pvo_entry *pvo)
 	volatile struct pte *pt;
 	int failed = 0;
 
+	PMAP_LOCK();
+
 	if ((uintptr_t)(pvo+1) >= SEGMENT_LENGTH)
 		panic("pmap_pvo_check: pvo %p: invalid address", pvo);
 
@@ -1563,6 +1579,8 @@ pmap_pvo_check(const struct pvo_entry *pvo)
 	if (failed)
 		panic("pmap_pvo_check: pvo %p, pm %p: bugcheck!", pvo,
 		    pvo->pvo_pmap);
+
+	PMAP_UNLOCK();
 }
 #endif /* DEBUG || PMAPCHECK */
 
@@ -1942,6 +1960,8 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	u_int pvo_flags;
 	u_int was_exec = 0;
 
+	PMAP_LOCK();
+
 	if (__predict_false(!pmap_initialized)) {
 		pvo_head = &pmap_pvo_kunmanaged;
 		pl = &pmap_upvo_pool;
@@ -2035,6 +2055,8 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 
 	DPRINTFN(ENTER, (": error=%d\n", error));
 
+	PMAP_UNLOCK();
+
 	return error;
 }
 
@@ -2053,6 +2075,8 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 
 	DPRINTFN(KENTER,
 	    ("pmap_kenter_pa(%#lx,%#lx,%#x)\n", va, pa, prot));
+
+	PMAP_LOCK();
 
 	/*
 	 * Assume the page is cache inhibited and access is guarded unless
@@ -2083,6 +2107,8 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 	if (error != 0)
 		panic("pmap_kenter_pa: failed to enter va %#lx pa %#lx: %d",
 		      va, pa, error);
+
+	PMAP_UNLOCK();
 }
 
 void
@@ -2107,6 +2133,7 @@ pmap_remove(pmap_t pm, vaddr_t va, vaddr_t endva)
 	register_t msr;
 	int pteidx;
 
+	PMAP_LOCK();
 	LIST_INIT(&pvol);
 	msr = pmap_interrupts_off();
 	for (; va < endva; va += PAGE_SIZE) {
@@ -2117,6 +2144,7 @@ pmap_remove(pmap_t pm, vaddr_t va, vaddr_t endva)
 	}
 	pmap_interrupts_restore(msr);
 	pmap_pvo_free_list(&pvol);
+	PMAP_UNLOCK();
 }
 
 /*
@@ -2128,6 +2156,7 @@ pmap_extract(pmap_t pm, vaddr_t va, paddr_t *pap)
 	struct pvo_entry *pvo;
 	register_t msr;
 
+	PMAP_LOCK();
 
 	/*
 	 * If this is a kernel pmap lookup, also check the battable
@@ -2149,6 +2178,7 @@ pmap_extract(pmap_t pm, vaddr_t va, paddr_t *pap)
 				    (~(batu & BAT_BL) << 15) & ~0x1ffffL;
 				if (pap)
 					*pap = (batl & mask) | (va & ~mask);
+				PMAP_UNLOCK();
 				return true;
 			}
 		} else {
@@ -2161,14 +2191,17 @@ pmap_extract(pmap_t pm, vaddr_t va, paddr_t *pap)
 				    (~(batl & BAT601_BSM) << 17) & ~0x1ffffL;
 				if (pap)
 					*pap = (batl & mask) | (va & ~mask);
+				PMAP_UNLOCK();
 				return true;
 			} else if (SR601_VALID_P(sr) &&
 				   SR601_PA_MATCH_P(sr, va)) {
 				if (pap)
 					*pap = va;
+				PMAP_UNLOCK();
 				return true;
 			}
 		}
+		PMAP_UNLOCK();
 		return false;
 #elif defined (PPC_OEA64_BRIDGE)
 	panic("%s: pm: %s, va: 0x%08lx\n", __func__, 
@@ -2187,6 +2220,7 @@ pmap_extract(pmap_t pm, vaddr_t va, paddr_t *pap)
 			    | (va & ADDR_POFF);
 	}
 	pmap_interrupts_restore(msr);
+	PMAP_UNLOCK();
 	return pvo != NULL;
 }
 
@@ -2215,6 +2249,8 @@ pmap_protect(pmap_t pm, vaddr_t va, vaddr_t endva, vm_prot_t prot)
 		pmap_remove(pm, va, endva);
 		return;
 	}
+
+	PMAP_LOCK();
 
 	msr = pmap_interrupts_off();
 	for (; va < endva; va += PAGE_SIZE) {
@@ -2261,6 +2297,7 @@ pmap_protect(pmap_t pm, vaddr_t va, vaddr_t endva, vm_prot_t prot)
 		PMAP_PVO_CHECK(pvo);		/* sanity check */
 	}
 	pmap_interrupts_restore(msr);
+	PMAP_UNLOCK();
 }
 
 void
@@ -2269,6 +2306,7 @@ pmap_unwire(pmap_t pm, vaddr_t va)
 	struct pvo_entry *pvo;
 	register_t msr;
 
+	PMAP_LOCK();
 	msr = pmap_interrupts_off();
 	pvo = pmap_pvo_find_va(pm, va, NULL);
 	if (pvo != NULL) {
@@ -2279,6 +2317,7 @@ pmap_unwire(pmap_t pm, vaddr_t va)
 		PMAP_PVO_CHECK(pvo);		/* sanity check */
 	}
 	pmap_interrupts_restore(msr);
+	PMAP_UNLOCK();
 }
 
 /*
@@ -2291,6 +2330,8 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 	struct pvo_entry *pvo, *next_pvo;
 	volatile struct pte *pt;
 	register_t msr;
+
+	PMAP_LOCK();
 
 	KASSERT(prot != VM_PROT_ALL);
 	LIST_INIT(&pvol);
@@ -2356,6 +2397,8 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 	}
 	pmap_interrupts_restore(msr);
 	pmap_pvo_free_list(&pvol);
+
+	PMAP_UNLOCK();
 }
 
 /*
@@ -2401,8 +2444,12 @@ pmap_query_bit(struct vm_page *pg, int ptebit)
 	volatile struct pte *pt;
 	register_t msr;
 
-	if (pmap_attr_fetch(pg) & ptebit)
+	PMAP_LOCK();
+
+	if (pmap_attr_fetch(pg) & ptebit) {
+		PMAP_UNLOCK();
 		return true;
+	}
 
 	msr = pmap_interrupts_off();
 	LIST_FOREACH(pvo, vm_page_to_pvoh(pg), pvo_vlink) {
@@ -2415,6 +2462,7 @@ pmap_query_bit(struct vm_page *pg, int ptebit)
 			pmap_attr_save(pg, ptebit);
 			PMAP_PVO_CHECK(pvo);		/* sanity check */
 			pmap_interrupts_restore(msr);
+			PMAP_UNLOCK();
 			return true;
 		}
 	}
@@ -2438,11 +2486,13 @@ pmap_query_bit(struct vm_page *pg, int ptebit)
 				pmap_attr_save(pg, ptebit);
 				PMAP_PVO_CHECK(pvo);		/* sanity check */
 				pmap_interrupts_restore(msr);
+				PMAP_UNLOCK();
 				return true;
 			}
 		}
 	}
 	pmap_interrupts_restore(msr);
+	PMAP_UNLOCK();
 	return false;
 }
 
@@ -2455,6 +2505,7 @@ pmap_clear_bit(struct vm_page *pg, int ptebit)
 	register_t msr;
 	int rv = 0;
 
+	PMAP_LOCK();
 	msr = pmap_interrupts_off();
 
 	/*
@@ -2523,6 +2574,7 @@ pmap_clear_bit(struct vm_page *pg, int ptebit)
 			PMAPCOUNT(exec_synced_clear_modify);
 		}
 	}
+	PMAP_UNLOCK();
 	return (rv & ptebit) != 0;
 }
 
@@ -2533,6 +2585,7 @@ pmap_procwr(struct proc *p, vaddr_t va, size_t len)
 	size_t offset = va & ADDR_POFF;
 	int s;
 
+	PMAP_LOCK();
 	s = splvm();
 	while (len > 0) {
 		size_t seglen = PAGE_SIZE - offset;
@@ -2549,6 +2602,7 @@ pmap_procwr(struct proc *p, vaddr_t va, size_t len)
 		offset = 0;
 	}
 	splx(s);
+	PMAP_UNLOCK();
 }
 
 #if defined(DEBUG) || defined(PMAPCHECK) || defined(DDB)
@@ -2822,15 +2876,19 @@ pmap_pool_ualloc(struct pool *pp, int flags)
 {
 	struct pvo_page *pvop;
 
+	if (uvm.page_init_done != true) {
+		return (void *) uvm_pageboot_alloc(PAGE_SIZE);
+	}
+
+	PMAP_LOCK();
 	pvop = SIMPLEQ_FIRST(&pmap_upvop_head);
 	if (pvop != NULL) {
 		pmap_upvop_free--;
 		SIMPLEQ_REMOVE_HEAD(&pmap_upvop_head, pvop_link);
+		PMAP_UNLOCK();
 		return pvop;
 	}
-	if (uvm.page_init_done != true) {
-		return (void *) uvm_pageboot_alloc(PAGE_SIZE);
-	}
+	PMAP_UNLOCK();
 	return pmap_pool_malloc(pp, flags);
 }
 
@@ -2840,12 +2898,15 @@ pmap_pool_malloc(struct pool *pp, int flags)
 	struct pvo_page *pvop;
 	struct vm_page *pg;
 
+	PMAP_LOCK();
 	pvop = SIMPLEQ_FIRST(&pmap_mpvop_head);
 	if (pvop != NULL) {
 		pmap_mpvop_free--;
 		SIMPLEQ_REMOVE_HEAD(&pmap_mpvop_head, pvop_link);
+		PMAP_UNLOCK();
 		return pvop;
 	}
+	PMAP_UNLOCK();
  again:
 	pg = uvm_pagealloc_strat(NULL, 0, NULL, UVM_PGA_USERESERVE,
 	    UVM_PGA_STRAT_ONLY, VM_FREELIST_FIRST256);
@@ -2870,11 +2931,13 @@ pmap_pool_ufree(struct pool *pp, void *va)
 		return;
 	}
 #endif
+	PMAP_LOCK();
 	pvop = va;
 	SIMPLEQ_INSERT_HEAD(&pmap_upvop_head, pvop, pvop_link);
 	pmap_upvop_free++;
 	if (pmap_upvop_free > pmap_upvop_maxfree)
 		pmap_upvop_maxfree = pmap_upvop_free;
+	PMAP_UNLOCK();
 }
 
 void
@@ -2882,11 +2945,13 @@ pmap_pool_mfree(struct pool *pp, void *va)
 {
 	struct pvo_page *pvop;
 
+	PMAP_LOCK();
 	pvop = va;
 	SIMPLEQ_INSERT_HEAD(&pmap_mpvop_head, pvop, pvop_link);
 	pmap_mpvop_free++;
 	if (pmap_mpvop_free > pmap_mpvop_maxfree)
 		pmap_mpvop_maxfree = pmap_mpvop_free;
+	PMAP_UNLOCK();
 #if 0
 	uvm_pagefree(PHYS_TO_VM_PAGE((paddr_t) va));
 #endif
