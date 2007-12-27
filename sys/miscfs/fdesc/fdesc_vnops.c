@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.99.4.1 2007/12/08 18:20:59 mjf Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.99.4.2 2007/12/27 00:46:22 mjf Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.99.4.1 2007/12/08 18:20:59 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.99.4.2 2007/12/27 00:46:22 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -277,7 +277,7 @@ fdesc_lookup(v)
 	struct vnode **vpp = ap->a_vpp;
 	struct vnode *dvp = ap->a_dvp;
 	struct componentname *cnp = ap->a_cnp;
-	struct lwp *l = cnp->cn_lwp;
+	struct lwp *l = curlwp;
 	const char *pname = cnp->cn_nameptr;
 	struct proc *p = l->l_proc;
 	int numfiles = p->p_fd->fd_nfiles;

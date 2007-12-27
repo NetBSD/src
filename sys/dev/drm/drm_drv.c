@@ -1,4 +1,4 @@
-/* $NetBSD: drm_drv.c,v 1.6.2.1 2007/12/08 18:19:28 mjf Exp $ */
+/* $NetBSD: drm_drv.c,v 1.6.2.2 2007/12/27 00:45:02 mjf Exp $ */
 
 /* drm_drv.h -- Generic driver template -*- linux-c -*-
  * Created: Thu Nov 23 03:10:50 2000 by gareth@valinux.com
@@ -34,6 +34,7 @@
  */
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.6.2.2 2007/12/27 00:45:02 mjf Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/drm_drv.c,v 1.6 2006/09/07 23:04:47 anholt Exp $");
 */

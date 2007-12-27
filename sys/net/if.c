@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.203.2.1 2007/12/08 18:21:05 mjf Exp $	*/
+/*	$NetBSD: if.c,v 1.203.2.2 2007/12/27 00:46:26 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.203.2.1 2007/12/08 18:21:05 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.203.2.2 2007/12/27 00:46:26 mjf Exp $");
 
 #include "opt_inet.h"
 
@@ -261,6 +261,20 @@ struct ifaddr **ifnet_addrs = NULL;
 struct ifnet **ifindex2ifnet = NULL;
 struct ifnet *lo0ifp;
 
+void
+if_set_sadl(struct ifnet *ifp, const void *lla, u_char addrlen)
+{
+	struct ifaddr *ifa;
+	struct sockaddr_dl *sdl;
+
+	ifp->if_addrlen = addrlen;
+	if_alloc_sadl(ifp);
+	ifa = ifp->if_dl;
+	sdl = satosdl(ifa->ifa_addr);
+
+	(void)sockaddr_dl_setaddr(sdl, sdl->sdl_len, lla, ifp->if_addrlen);
+}
+
 /*
  * Allocate the link level name for the specified interface.  This
  * is an attachment helper.  It must be called after ifp->if_addrlen
@@ -300,6 +314,8 @@ if_alloc_sadl(struct ifnet *ifp)
 	ifnet_addrs[ifp->if_index] = ifa;
 	IFAREF(ifa);
 	ifa_insert(ifp, ifa);
+	ifp->if_dl = ifa;
+	IFAREF(ifa);
 	ifa->ifa_rtrequest = link_rtrequest;
 	ifa->ifa_addr = (struct sockaddr *)sdl;
 	ifp->if_sadl = sdl;
@@ -320,10 +336,12 @@ if_free_sadl(struct ifnet *ifp)
 	ifa = ifnet_addrs[ifp->if_index];
 	if (ifa == NULL) {
 		KASSERT(ifp->if_sadl == NULL);
+		KASSERT(ifp->if_dl == NULL);
 		return;
 	}
 
 	KASSERT(ifp->if_sadl != NULL);
+	KASSERT(ifp->if_dl != NULL);
 
 	s = splnet();
 	rtinit(ifa, RTM_DELETE, 0);
@@ -332,6 +350,8 @@ if_free_sadl(struct ifnet *ifp)
 	ifp->if_sadl = NULL;
 
 	ifnet_addrs[ifp->if_index] = NULL;
+	IFAFREE(ifa);
+	ifp->if_dl = NULL;
 	IFAFREE(ifa);
 	splx(s);
 }

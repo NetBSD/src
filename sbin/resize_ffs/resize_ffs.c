@@ -1,4 +1,4 @@
-/*	$NetBSD: resize_ffs.c,v 1.10 2007/07/08 16:54:40 bouyer Exp $	*/
+/*	$NetBSD: resize_ffs.c,v 1.10.6.1 2007/12/27 00:47:04 mjf Exp $	*/
 /* From sources sent on February 17, 2003 */
 /*-
  * As its sole author, I explicitly place this code in the public
@@ -40,6 +40,7 @@
  *
  */
 
+#include <sys/cdefs.h>
 #include <stdio.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -61,7 +62,7 @@
 	  ( (__GNUC__ == 2) &&				\
 	    defined(__GNUC_MINOR__) &&			\
 	    (__GNUC_MINOR__ >= 7) ) )
-#define UNUSED_ARG(x) x __attribute__((__unused__))
+#define UNUSED_ARG(x) x __unused
 #define INLINE inline
 #else
 #define UNUSED_ARG(x) x

@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.101.14.2 2007/12/08 18:20:41 mjf Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.101.14.3 2007/12/27 00:46:15 mjf Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.101.14.2 2007/12/08 18:20:41 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.101.14.3 2007/12/27 00:46:15 mjf Exp $");
 
 #include "opt_compat_sunos.h"
 #include "opt_ptm.h"
@@ -483,7 +483,7 @@ ptsstart(tp)
 	}
 
 	selnotify(&pti->pt_selr, NOTE_SUBMIT);
-	clwakeup(&tp->t_outq);
+	cv_broadcast(&tp->t_outq.c_cvf);
 }
 
 /*
@@ -509,11 +509,11 @@ ptsstop(tp, flush)
 	/* change of perspective */
 	if (flush & FREAD) {
 		selnotify(&pti->pt_selw, NOTE_SUBMIT);
-		clwakeup(&tp->t_rawq);
+		cv_broadcast(&tp->t_rawq.c_cvf);
 	}
 	if (flush & FWRITE) {
 		selnotify(&pti->pt_selr, NOTE_SUBMIT);
-		clwakeup(&tp->t_outq);
+		cv_broadcast(&tp->t_outq.c_cvf);
 	}
 }
 
@@ -527,11 +527,11 @@ ptcwakeup(tp, flag)
 	mutex_spin_enter(&tty_lock);
 	if (flag & FREAD) {
 		selnotify(&pti->pt_selr, NOTE_SUBMIT);
-		clwakeup(&tp->t_outq);
+		cv_broadcast(&tp->t_outq.c_cvf);
 	}
 	if (flag & FWRITE) {
 		selnotify(&pti->pt_selw, NOTE_SUBMIT);
-		clwakeup(&tp->t_rawq);
+		cv_broadcast(&tp->t_rawq.c_cvf);
 	}
 	mutex_spin_exit(&tty_lock);
 }
@@ -640,7 +640,7 @@ ptcread(dev, uio, flag)
 			error = EWOULDBLOCK;
 			goto out;
 		}
-		error = cv_wait_sig(&tp->t_outq.c_cv, &tty_lock);
+		error = cv_wait_sig(&tp->t_outq.c_cvf, &tty_lock);
 		if (error)
 			goto out;
 	}

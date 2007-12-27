@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_termios.c,v 1.13.22.1 2007/12/08 18:19:14 mjf Exp $	 */
+/*	$NetBSD: svr4_32_termios.c,v 1.13.22.2 2007/12/27 00:44:41 mjf Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_termios.c,v 1.13.22.1 2007/12/08 18:19:14 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_termios.c,v 1.13.22.2 2007/12/27 00:44:41 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -160,8 +160,7 @@ static void print_bsd_termios(const struct termios *);
 
 #ifdef DEBUG_SVR4
 static void
-print_svr4_32_termios(st)
-	const struct svr4_32_termios *st;
+print_svr4_32_termios(const struct svr4_32_termios *st)
 {
 	int i;
 	uprintf("SVR4_32\niflag=%lo oflag=%lo cflag=%lo lflag=%lo\n",
@@ -174,8 +173,7 @@ print_svr4_32_termios(st)
 
 
 static void
-print_bsd_termios(bt)
-	const struct termios *bt;
+print_bsd_termios(const struct termios *bt)
 {
 	int i;
 	uprintf("BSD\niflag=%o oflag=%o cflag=%o lflag=%o\n",
@@ -188,9 +186,7 @@ print_bsd_termios(bt)
 #endif /* DEBUG_SVR4 */
 
 static u_long
-bsd_to_svr4_32_speed(sp, mask)
-	u_long sp;
-	u_long mask;
+bsd_to_svr4_32_speed(u_long sp, u_long mask)
 {
 	switch (sp) {
 #undef getval
@@ -226,9 +222,7 @@ bsd_to_svr4_32_speed(sp, mask)
 
 
 static u_long
-svr4_32_to_bsd_speed(sp, mask)
-	u_long sp;
-	u_long mask;
+svr4_32_to_bsd_speed(u_long sp, u_long mask)
 {
 	while ((mask & 1) == 0) {
 		mask >>= 1;
@@ -262,10 +256,7 @@ svr4_32_to_bsd_speed(sp, mask)
 
 
 static void
-svr4_32_to_bsd_termios(st, bt, new)
-	const struct svr4_32_termios	*st;
-	struct termios	 		*bt;
-	int				 new;
+svr4_32_to_bsd_termios(const struct svr4_32_termios *st, struct termios *bt, int new)
 {
 	/* control characters */
 	/*
@@ -364,9 +355,7 @@ svr4_32_to_bsd_termios(st, bt, new)
 
 
 static void
-bsd_to_svr4_32_termios(bt, st)
-	const struct termios 	*bt;
-	struct svr4_32_termios	*st;
+bsd_to_svr4_32_termios(const struct termios *bt, struct svr4_32_termios *st)
 {
 	/* control characters */
 	/*
@@ -467,9 +456,7 @@ bsd_to_svr4_32_termios(bt, st)
 
 
 static void
-svr4_termio_to_termios(t, ts)
-	const struct svr4_termio	*t;
-	struct svr4_32_termios		*ts;
+svr4_termio_to_termios(const struct svr4_termio *t, struct svr4_32_termios *ts)
 {
 	int i;
 
@@ -484,9 +471,7 @@ svr4_termio_to_termios(t, ts)
 
 
 static void
-svr4_32_termios_to_termio(ts, t)
-	const struct svr4_32_termios	*ts;
-	struct svr4_termio		*t;
+svr4_32_termios_to_termio(const struct svr4_32_termios *ts, struct svr4_termio *t)
 {
 	int i;
 
@@ -501,13 +486,7 @@ svr4_32_termios_to_termio(ts, t)
 }
 
 int
-svr4_32_term_ioctl(fp, l, retval, fd, cmd, data)
-	struct file *fp;
-	struct lwp *l;
-	register_t *retval;
-	int fd;
-	u_long cmd;
-	void *data;
+svr4_32_term_ioctl(struct file *fp, struct lwp *l, register_t *retval, int fd, u_long cmd, void *data)
 {
 	struct termios 		bt;
 	struct svr4_32_termios	st;

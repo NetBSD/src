@@ -1,6 +1,6 @@
-.\"	$NetBSD: fdisk.8,v 1.56 2007/05/20 22:27:46 wiz Exp $
+.\"	$NetBSD: fdisk.8,v 1.56.6.1 2007/12/27 00:46:56 mjf Exp $
 .\"
-.Dd March 10, 2007
+.Dd December 23, 2007
 .Dt FDISK 8
 .Os
 .Sh NAME
@@ -370,6 +370,7 @@ An example follows:
     E2: Primary DOS with 32 bit FAT (sysid 11)
 	start 28900998, size 3614562 (1765 MB, Cyls 1799-2024)
     Bootselector enabled, infinite timeout.
+    First active partition: 0
 .Ed
 .Pp
 This example disk is divided into four partitions the last of which is
@@ -507,8 +508,9 @@ This program is only available (and useful) on systems with PC-platform-style
 MBR partitioning.
 .Pp
 Traditionally the partition boundaries should be on cylinder boundaries
-using the BIOS geometry, all of the first track should be reserved
-for use by the BIOS.
+using the BIOS geometry, with the exception of the first partition,
+which traditionally begins in the second track of the first cylinder
+(cylinder 0, head 1, sector 1).
 Although the BIOS geometry is typically different from the geometry
 reported by the drive, neither will match the actual physical geometry
 for modern disks (the actual geometry will vary across the disk).

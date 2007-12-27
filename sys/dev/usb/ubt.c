@@ -1,4 +1,4 @@
-/*	$NetBSD: ubt.c,v 1.26.4.2 2007/12/08 18:20:03 mjf Exp $	*/
+/*	$NetBSD: ubt.c,v 1.26.4.3 2007/12/27 00:45:30 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.26.4.2 2007/12/08 18:20:03 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.26.4.3 2007/12/27 00:45:30 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -527,6 +527,10 @@ USB_ATTACH(ubt)
 	}
 
 	sc->sc_ok = 1;
+        if (!device_pmf_is_registered(self))
+		if (!pmf_device_register(self, NULL, NULL))
+			aprint_error_dev(self,
+			    "couldn't establish power handler\n"); 
 	USB_ATTACH_SUCCESS_RETURN;
 }
 
@@ -536,6 +540,8 @@ USB_DETACH(ubt)
 	int s;
 
 	DPRINTF("sc=%p flags=%d\n", sc, flags);
+
+	pmf_device_deregister(self);
 
 	sc->sc_dying = 1;
 

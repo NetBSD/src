@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_aout.c,v 1.62.2.1 2007/12/08 18:18:47 mjf Exp $	*/
+/*	$NetBSD: linux_exec_aout.c,v 1.62.2.2 2007/12/27 00:44:06 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec_aout.c,v 1.62.2.1 2007/12/08 18:18:47 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_aout.c,v 1.62.2.2 2007/12/27 00:44:06 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -134,9 +134,7 @@ linux_aout_copyargs(struct lwp *l, struct exec_package *pack,
 }
 
 int
-exec_linux_aout_makecmds(l, epp)
-	struct lwp *l;
-	struct exec_package *epp;
+exec_linux_aout_makecmds(struct lwp *l, struct exec_package *epp)
 {
 	struct exec *linux_ep = epp->ep_hdr;
 	int machtype, magic;
@@ -173,9 +171,7 @@ exec_linux_aout_makecmds(l, epp)
  */
 
 static int
-exec_linux_aout_prep_zmagic(l, epp)
-	struct lwp *l;
-	struct exec_package *epp;
+exec_linux_aout_prep_zmagic(struct lwp *l, struct exec_package *epp)
 {
 	struct exec *execp = epp->ep_hdr;
 
@@ -210,9 +206,7 @@ exec_linux_aout_prep_zmagic(l, epp)
  */
 
 static int
-exec_linux_aout_prep_nmagic(l, epp)
-	struct lwp *l;
-	struct exec_package *epp;
+exec_linux_aout_prep_nmagic(struct lwp *l, struct exec_package *epp)
 {
 	struct exec *execp = epp->ep_hdr;
 	long bsize, baddr;
@@ -249,9 +243,7 @@ exec_linux_aout_prep_nmagic(l, epp)
  */
 
 static int
-exec_linux_aout_prep_omagic(l, epp)
-	struct lwp *l;
-	struct exec_package *epp;
+exec_linux_aout_prep_omagic(struct lwp *l, struct exec_package *epp)
 {
 	struct exec *execp = epp->ep_hdr;
 	long dsize, bsize, baddr;
@@ -289,9 +281,7 @@ exec_linux_aout_prep_omagic(l, epp)
 }
 
 static int
-exec_linux_aout_prep_qmagic(l, epp)
-	struct lwp *l;
-	struct exec_package *epp;
+exec_linux_aout_prep_qmagic(struct lwp *l, struct exec_package *epp)
 {
 	struct exec *execp = epp->ep_hdr;
 	int error;

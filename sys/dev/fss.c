@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.36.4.2 2007/12/08 18:19:19 mjf Exp $	*/
+/*	$NetBSD: fss.c,v 1.36.4.3 2007/12/27 00:44:45 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.36.4.2 2007/12/08 18:19:19 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.36.4.3 2007/12/27 00:44:45 mjf Exp $");
 
 #include "fss.h"
 
@@ -540,7 +540,7 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
 	 * Get the mounted file system.
 	 */
 
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, fss->fss_mount, l);
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, fss->fss_mount);
 	if ((error = namei(&nd)) != 0)
 		return error;
 
@@ -558,7 +558,7 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
 	 * Check for file system internal snapshot.
 	 */
 
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, fss->fss_bstore, l);
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, fss->fss_bstore);
 	if ((error = namei(&nd)) != 0)
 		return error;
 
@@ -566,7 +566,7 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
 		vrele(nd.ni_vp);
 		sc->sc_flags |= FSS_PERSISTENT;
 
-		NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, fss->fss_bstore, l);
+		NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, fss->fss_bstore);
 		if ((error = vn_open(&nd, FREAD, 0)) != 0)
 			return error;
 		sc->sc_bs_vp = nd.ni_vp;
@@ -599,7 +599,7 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
 	 */
 
 	NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE,
-	    sc->sc_mount->mnt_stat.f_mntfromname, l);
+	    sc->sc_mount->mnt_stat.f_mntfromname);
 	if ((error = namei(&nd)) != 0)
 		return error;
 
@@ -622,7 +622,7 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
 	 * Get the backing store
 	 */
 
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, fss->fss_bstore, l);
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, fss->fss_bstore);
 	if ((error = vn_open(&nd, FREAD|FWRITE, 0)) != 0)
 		return error;
 	VOP_UNLOCK(nd.ni_vp, 0);

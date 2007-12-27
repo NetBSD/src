@@ -1,4 +1,4 @@
-/* $NetBSD: rtwvar.h,v 1.31.22.1 2007/11/19 00:47:57 mjf Exp $ */
+/* $NetBSD: rtwvar.h,v 1.31.22.2 2007/12/27 00:45:08 mjf Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -281,11 +281,6 @@ enum rtw_attach_state {FINISHED, FINISH_DESCMAP_LOAD, FINISH_DESCMAP_CREATE,
 	FINISH_RF_ATTACH, FINISH_ID_STA, FINISH_TXDESCBLK_SETUP,
 	FINISH_TXCTLBLK_SETUP, DETACHED};
 
-struct rtw_hooks {
-	void			*rh_shutdown;	/* shutdown hook */
-	void			*rh_power;	/* power management hook */
-};
-
 struct rtw_mtbl {
 	int			(*mt_newstate)(struct ieee80211com *,
 					enum ieee80211_state, int);
@@ -425,7 +420,7 @@ struct rtw_led_state {
 };
 
 struct rtw_softc {
-	struct device		sc_dev;
+	device_t		sc_dev;
 	struct ethercom		sc_ec;
 	struct ieee80211com	sc_ic;
 	struct rtw_regs		sc_regs;
@@ -466,9 +461,7 @@ struct rtw_softc {
 
 	int			(*sc_enable)(struct rtw_softc *);
 	void			(*sc_disable)(struct rtw_softc *);
-	void			(*sc_power)(struct rtw_softc *, int);
 	struct rtw_mtbl		sc_mtbl;
-	struct rtw_hooks	sc_hooks;
 
 	void *			sc_radiobpf;
 
@@ -517,8 +510,7 @@ int rtw_intr(void *);
 void rtw_disable(struct rtw_softc *);
 int rtw_enable(struct rtw_softc *);
 
-int rtw_activate(struct device *, enum devact);
-void rtw_power(int, void *);
+int rtw_activate(device_t, enum devact);
 void rtw_shutdown(void *);
 
 const char *rtw_pwrstate_string(enum rtw_pwrstate);

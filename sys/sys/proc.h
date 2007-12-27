@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.258.2.2 2007/12/08 18:21:34 mjf Exp $	*/
+/*	$NetBSD: proc.h,v 1.258.2.3 2007/12/27 00:46:42 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -278,7 +278,7 @@ struct proc {
 
 	struct proc	*p_opptr;	/* l: save parent during ptrace. */
 	struct ptimers	*p_timers;	/*    Timers: real, virtual, profiling */
-	struct timeval 	p_rtime;	/* s: real time */
+	struct bintime 	p_rtime;	/* s: real time */
 	u_quad_t 	p_uticks;	/* t: Statclock hits in user mode */
 	u_quad_t 	p_sticks;	/* t: Statclock hits in system mode */
 	u_quad_t 	p_iticks;	/* t: Statclock hits processing intr */

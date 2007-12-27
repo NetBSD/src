@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor_machdep.c,v 1.1.4.1 2007/12/08 18:18:23 mjf Exp $	*/
+/*	$NetBSD: hypervisor_machdep.c,v 1.1.4.2 2007/12/27 00:43:30 mjf Exp $	*/
 
 /*
  *
@@ -59,7 +59,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.1.4.1 2007/12/08 18:18:23 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.1.4.2 2007/12/27 00:43:30 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,17 +67,11 @@ __KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.1.4.1 2007/12/08 18:18:23 m
 #include <xen/xen.h>
 #include <xen/hypervisor.h>
 #include <xen/evtchn.h>
-#include <machine/atomic.h>
 
 #include "opt_xen.h"
 
 // #define PORT_DEBUG 4
 // #define EARLY_DEBUG_EVENT
-
-#ifdef EARLY_DEBUG_EVENT
-extern int debug_port;
-extern int xen_debug_handler(void *);
-#endif
 
 int stipending(void);
 int

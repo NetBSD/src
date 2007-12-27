@@ -1,4 +1,4 @@
-/*	$NetBSD: itesio_isa.c,v 1.4.4.3 2007/12/08 18:19:37 mjf Exp $ */
+/*	$NetBSD: itesio_isa.c,v 1.4.4.4 2007/12/27 00:45:11 mjf Exp $ */
 /*	Derived from $OpenBSD: it.c,v 1.19 2006/04/10 00:57:54 deraadt Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: itesio_isa.c,v 1.4.4.3 2007/12/08 18:19:37 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: itesio_isa.c,v 1.4.4.4 2007/12/27 00:45:11 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -240,6 +240,8 @@ itesio_isa_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	sc->sc_hwmon_enabled = true;
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
 static int

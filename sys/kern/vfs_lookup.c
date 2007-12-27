@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.98.4.2 2007/12/08 18:20:44 mjf Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.98.4.3 2007/12/27 00:46:19 mjf Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.98.4.2 2007/12/08 18:20:44 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.98.4.3 2007/12/27 00:46:19 mjf Exp $");
 
 #include "opt_systrace.h"
 #include "opt_magiclinks.h"
@@ -223,12 +223,13 @@ namei(struct nameidata *ndp)
 	char *cp;			/* pointer into pathname argument */
 	struct vnode *dp;		/* the directory we are searching */
 	struct iovec aiov;		/* uio for reading symbolic links */
+	struct lwp *l = curlwp;		/* thread doing namei() */
 	struct uio auio;
 	int error, linklen;
 	struct componentname *cnp = &ndp->ni_cnd;
 
 #ifdef DIAGNOSTIC
-	if (!cnp->cn_cred || !cnp->cn_lwp)
+	if (!cnp->cn_cred)
 		panic("namei: bad cred/proc");
 	if (cnp->cn_nameiop & (~OPMASK))
 		panic("namei: nameiop contaminated with flags");
@@ -266,7 +267,7 @@ namei(struct nameidata *ndp)
 	/*
 	 * Get root directory for the translation.
 	 */
-	cwdi = cnp->cn_lwp->l_proc->p_cwdi;
+	cwdi = l->l_proc->p_cwdi;
 	rw_enter(&cwdi->cwdi_lock, RW_READER);
 	dp = cwdi->cwdi_rdir;
 	if (dp == NULL)
@@ -315,7 +316,7 @@ namei(struct nameidata *ndp)
 			if (cnp->cn_flags & EMULROOTSET)
 				emul_path = ndp->ni_next;
 			else
-				emul_path = cnp->cn_lwp->l_proc->p_emul->e_path;
+				emul_path = l->l_proc->p_emul->e_path;
 			ktrnamei2(emul_path, strlen(emul_path),
 			    cnp->cn_pnbuf, ndp->ni_pathlen);
 		} else
@@ -323,7 +324,7 @@ namei(struct nameidata *ndp)
 	}
 
 #ifdef SYSTRACE
-	if (ISSET(cnp->cn_lwp->l_proc->p_flag, PK_SYSTRACE))
+	if (ISSET(l->l_proc->p_flag, PK_SYSTRACE))
 		systrace_namei(ndp);
 #endif
 
@@ -409,7 +410,7 @@ badlink:
 		 * check length for potential overflow.
 		 */
 		if ((vfs_magiclinks &&
-		     symlink_magic(cnp->cn_lwp->l_proc, cp, &linklen)) ||
+		     symlink_magic(l->l_proc, cp, &linklen)) ||
 		    (linklen + ndp->ni_pathlen >= MAXPATHLEN)) {
 			error = ENAMETOOLONG;
 			goto badlink;
@@ -526,7 +527,7 @@ lookup(struct nameidata *ndp)
 	int error = 0;
 	int slashes;
 	struct componentname *cnp = &ndp->ni_cnd;
-	struct lwp *l = cnp->cn_lwp;
+	struct lwp *l = curlwp;
 
 	/*
 	 * Setup: break out flag bits into variables.

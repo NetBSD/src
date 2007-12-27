@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_pcb.c,v 1.39.14.1 2007/11/19 00:49:18 mjf Exp $	*/
+/*	$NetBSD: iso_pcb.c,v 1.39.14.2 2007/12/27 00:46:35 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -62,7 +62,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iso_pcb.c,v 1.39.14.1 2007/11/19 00:49:18 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iso_pcb.c,v 1.39.14.2 2007/12/27 00:46:35 mjf Exp $");
 
 #include "opt_iso.h"
 
@@ -333,8 +333,8 @@ iso_pcbconnect(void *v, struct mbuf *nam, struct lwp *l)
 			return error;
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_ISO]) {
-			printf("iso_pcbconnect localzero 2, ro->ro_rt %p",
-			       isop->isop_route.ro_rt);
+			printf("iso_pcbconnect localzero 2, rt %p",
+			       rtcache_getrt(&isop->isop_route));
 			printf(" ia %p\n", ia);
 		}
 #endif

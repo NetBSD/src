@@ -1,4 +1,4 @@
-/*	$NetBSD: union_subr.c,v 1.28.4.1 2007/12/08 18:20:23 mjf Exp $	*/
+/*	$NetBSD: union_subr.c,v 1.28.4.2 2007/12/27 00:45:51 mjf Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.28.4.1 2007/12/08 18:20:23 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.28.4.2 2007/12/27 00:45:51 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -810,7 +810,6 @@ union_relookup(um, dvp, vpp, cnp, cn, path, pathlen)
 
 	cn->cn_nameiop = CREATE;
 	cn->cn_flags = (LOCKPARENT|HASBUF|SAVENAME|ISLASTCN);
-	cn->cn_lwp = cnp->cn_lwp;
 	if (um->um_op == UNMNT_ABOVE)
 		cn->cn_cred = cnp->cn_cred;
 	else
@@ -908,7 +907,6 @@ union_mkwhiteout(um, dvp, cnp, path)
 	char *path;
 {
 	int error;
-	struct lwp *l = cnp->cn_lwp;
 	struct vnode *wvp;
 	struct componentname cn;
 
@@ -927,7 +925,7 @@ union_mkwhiteout(um, dvp, cnp, path)
 	}
 
 	/* VOP_LEASE: dvp is locked */
-	VOP_LEASE(dvp, l->l_cred, LEASE_WRITE);
+	VOP_LEASE(dvp, kauth_cred_get(), LEASE_WRITE);
 
 	error = VOP_WHITEOUT(dvp, &cn, CREATE);
 	if (error)
@@ -977,7 +975,6 @@ union_vn_create(vpp, un, l)
 	memcpy(cn.cn_pnbuf, un->un_path, cn.cn_namelen+1);
 	cn.cn_nameiop = CREATE;
 	cn.cn_flags = (LOCKPARENT|HASBUF|SAVENAME|ISLASTCN);
-	cn.cn_lwp = l;
 	cn.cn_cred = l->l_cred;
 	cn.cn_nameptr = cn.cn_pnbuf;
 	cn.cn_hash = un->un_hash;
@@ -1091,10 +1088,9 @@ union_lowervp(vp)
  * during a remove/rmdir operation.
  */
 int
-union_dowhiteout(un, cred, l)
+union_dowhiteout(un, cred)
 	struct union_node *un;
 	kauth_cred_t cred;
-	struct lwp *l;
 {
 	struct vattr va;
 

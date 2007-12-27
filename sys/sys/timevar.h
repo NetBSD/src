@@ -1,4 +1,4 @@
-/*	$NetBSD: timevar.h,v 1.15.2.2 2007/12/08 18:21:36 mjf Exp $	*/
+/*	$NetBSD: timevar.h,v 1.15.2.3 2007/12/27 00:46:45 mjf Exp $	*/
 
 /*
  *  Copyright (c) 2005 The NetBSD Foundation.
@@ -129,7 +129,6 @@ struct	ptimers {
  * 
  */
 
-#ifdef __HAVE_TIMECOUNTER
 void	binuptime(struct bintime *);
 void	nanouptime(struct timespec *);
 void	microuptime(struct timeval *);
@@ -145,19 +144,6 @@ void	getmicrouptime(struct timeval *);
 void	getbintime(struct bintime *);
 void	getnanotime(struct timespec *);
 void	getmicrotime(struct timeval *);
-#else /* !__HAVE_TIMECOUNTER */
-/* timecounter compat functions */
-void	microtime(struct timeval *);
-void	nanotime(struct timespec *);
-
-void	nanouptime(struct timespec *);
-void	getbinuptime(struct bintime *);
-void	getnanouptime(struct timespec *);
-void	getmicrouptime(struct timeval *);
-
-void	getnanotime(struct timespec *);
-void	getmicrotime(struct timeval *);
-#endif /* !__HAVE_TIMECOUNTER */
 
 /* Other functions */
 int	adjtime1(const struct timeval *, struct timeval *, struct proc *);

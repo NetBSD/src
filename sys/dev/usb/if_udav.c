@@ -1,4 +1,4 @@
-/*	$NetBSD: if_udav.c,v 1.18.14.1 2007/12/08 18:20:02 mjf Exp $	*/
+/*	$NetBSD: if_udav.c,v 1.18.14.2 2007/12/27 00:45:30 mjf Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 /*
  * Copyright (c) 2003
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.18.14.1 2007/12/08 18:20:02 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.18.14.2 2007/12/27 00:45:30 mjf Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -614,7 +614,7 @@ udav_init(struct ifnet *ifp)
 {
 	struct udav_softc *sc = ifp->if_softc;
 	struct mii_data *mii = GET_MII(sc);
-	u_char *eaddr;
+	uint8_t eaddr[ETHER_ADDR_LEN];
 	int s;
 
 	DPRINTF(("%s: %s: enter\n", USBDEVNAME(sc->sc_dev), __func__));
@@ -627,7 +627,7 @@ udav_init(struct ifnet *ifp)
 	/* Cancel pending I/O and free all TX/RX buffers */
 	udav_stop(ifp, 1);
 
-	eaddr = LLADDR(ifp->if_sadl);
+	memcpy(eaddr, CLLADDR(ifp->if_sadl), sizeof(eaddr));
 	udav_csr_write(sc, UDAV_PAR, eaddr, ETHER_ADDR_LEN);
 
 	/* Initialize network control register */

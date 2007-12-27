@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.76.2.2 2007/12/08 18:19:25 mjf Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.76.2.3 2007/12/27 00:44:57 mjf Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.76.2.2 2007/12/08 18:19:25 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.76.2.3 2007/12/27 00:44:57 mjf Exp $");
 
 #include "opt_cardbus.h"
 
@@ -70,6 +70,7 @@ __KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.76.2.2 2007/12/08 18:19:25 mjf Exp $")
 
 
 STATIC void cardbusattach(struct device *, struct device *, void *);
+STATIC int cardbusdetach(device_t, int);
 STATIC int cardbusmatch(struct device *, struct cfdata *, void *);
 int cardbus_rescan(struct device *, const char *, const int *);
 void cardbus_childdetached(struct device *, struct device *);
@@ -88,8 +89,10 @@ static int cardbus_read_tuples(struct cardbus_attach_args *,
 static void enable_function(struct cardbus_softc *, int, int);
 static void disable_function(struct cardbus_softc *, int);
 
+static bool cardbus_child_register(device_t);
+
 CFATTACH_DECL2(cardbus, sizeof(struct cardbus_softc),
-    cardbusmatch, cardbusattach, NULL, NULL,
+    cardbusmatch, cardbusattach, cardbusdetach, NULL,
     cardbus_rescan, cardbus_childdetached);
 
 #ifndef __NetBSD_Version__
@@ -141,6 +144,21 @@ cardbusattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_rbus_iot = cba->cba_rbus_iot;
 	sc->sc_rbus_memt = cba->cba_rbus_memt;
 #endif
+
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+}
+
+STATIC int
+cardbusdetach(device_t self, int flags)
+{
+	int rc;
+
+	if ((rc = config_detach_children(self, flags)) != 0)
+		return rc;
+
+	pmf_device_deregister(self);
+	return 0;
 }
 
 static int
@@ -403,6 +421,7 @@ cardbus_attach_card(struct cardbus_softc *sc)
 		return (0);
 	}
 
+	device_pmf_driver_set_child_register(&sc->sc_dev, cardbus_child_register);
 	cardbus_rescan(&sc->sc_dev, "cardbus", wildcard);
 	return (1); /* XXX */
 }
@@ -925,76 +944,92 @@ decode_tuple(u_int8_t *tuple, u_int8_t *end,
 /*
  * XXX: this is another reason why this code should be shared with PCI.
  */
+static int
+cardbus_get_powerstate_int(cardbus_devfunc_t ct, cardbustag_t tag,
+    cardbusreg_t *state, int offset)
+{
+	cardbusreg_t value, now;
+	cardbus_chipset_tag_t cc = ct->ct_cc;
+	cardbus_function_tag_t cf = ct->ct_cf;
+
+	value = cardbus_conf_read(cc, cf, tag, offset + PCI_PMCSR);
+	now = value & PCI_PMCSR_STATE_MASK;
+	switch (now) {
+	case PCI_PMCSR_STATE_D0:
+	case PCI_PMCSR_STATE_D1:
+	case PCI_PMCSR_STATE_D2:
+	case PCI_PMCSR_STATE_D3:
+		*state = now;
+		return 0;
+	default:
+		return EINVAL;
+	}
+}
+
 int
-cardbus_powerstate(cardbus_devfunc_t ct, pcitag_t tag, const int *newstate,
-    int *oldstate)
+cardbus_get_powerstate(cardbus_devfunc_t ct, cardbustag_t tag,
+    cardbusreg_t *state)
+{
+	cardbus_chipset_tag_t cc = ct->ct_cc;
+	cardbus_function_tag_t cf = ct->ct_cf;
+	int offset;
+	cardbusreg_t value;
+
+	if (!cardbus_get_capability(cc, cf, tag, PCI_CAP_PWRMGMT, &offset, &value))
+		return EOPNOTSUPP;
+
+	return cardbus_get_powerstate_int(ct, tag, state, offset);
+}
+
+static int
+cardbus_set_powerstate_int(cardbus_devfunc_t ct, cardbustag_t tag,
+    cardbusreg_t state, int offset, cardbusreg_t cap_reg)
 {
 	cardbus_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
 
-	int offset;
-	pcireg_t value, cap, now;
+	cardbusreg_t value, cap, now;
 
-	if (!cardbus_get_capability(cc, cf, tag, PCI_CAP_PWRMGMT, &offset,
-	    &value))
-		return EOPNOTSUPP;
-
-	cap = value >> 16;
+	cap = cap_reg >> PCI_PMCR_SHIFT;
 	value = cardbus_conf_read(cc, cf, tag, offset + PCI_PMCSR);
 	now = value & PCI_PMCSR_STATE_MASK;
-	value &= ~PCI_PMCSR_STATE_MASK;
-	if (oldstate) {
-		switch (now) {
-		case PCI_PMCSR_STATE_D0:
-			*oldstate = PCI_PWR_D0;
-			break;
-		case PCI_PMCSR_STATE_D1:
-			*oldstate = PCI_PWR_D1;
-			break;
-		case PCI_PMCSR_STATE_D2:
-			*oldstate = PCI_PWR_D2;
-			break;
-		case PCI_PMCSR_STATE_D3:
-			*oldstate = PCI_PWR_D3;
-			break;
-		default:
-			return EINVAL;
-		}
-	}
-	if (newstate == NULL)
+	value &= ~PCI_PMCSR_STATE_MASK;	
+
+	if (now == state)
 		return 0;
-	switch (*newstate) {
-	case PCI_PWR_D0:
-		if (now == PCI_PMCSR_STATE_D0)
-			return 0;
+	switch (state) {
+	case PCI_PMCSR_STATE_D0:
 		value |= PCI_PMCSR_STATE_D0;
 		break;
-	case PCI_PWR_D1:
-		if (now == PCI_PMCSR_STATE_D1)
-			return 0;
-		if (now == PCI_PMCSR_STATE_D2 || now == PCI_PMCSR_STATE_D3)
+	case PCI_PMCSR_STATE_D1:
+		if (now == PCI_PMCSR_STATE_D2 || now == PCI_PMCSR_STATE_D3) {
+			printf("invalid transition from %d to D1\n", (int)now);
 			return EINVAL;
-		if (!(cap & PCI_PMCR_D1SUPP))
+		}
+		if (!(cap & PCI_PMCR_D1SUPP)) {
+			printf("D1 not supported\n");
 			return EOPNOTSUPP;
+		}
 		value |= PCI_PMCSR_STATE_D1;
 		break;
-	case PCI_PWR_D2:
-		if (now == PCI_PMCSR_STATE_D2)
-			return 0;
-		if (now == PCI_PMCSR_STATE_D3)
+	case PCI_PMCSR_STATE_D2:
+		if (now == PCI_PMCSR_STATE_D3) {
+			printf("invalid transition from %d to D2\n", (int)now);
 			return EINVAL;
-		if (!(cap & PCI_PMCR_D2SUPP))
+		}
+		if (!(cap & PCI_PMCR_D2SUPP)) {
+			printf("D2 not supported\n");
 			return EOPNOTSUPP;
+		}
 		value |= PCI_PMCSR_STATE_D2;
 		break;
-	case PCI_PWR_D3:
-		if (now == PCI_PMCSR_STATE_D3)
-			return 0;
+	case PCI_PMCSR_STATE_D3:
 		value |= PCI_PMCSR_STATE_D3;
 		break;
 	default:
 		return EINVAL;
 	}
+
 	cardbus_conf_write(cc, cf, tag, offset + PCI_PMCSR, value);
 	DELAY(1000);
 
@@ -1002,40 +1037,19 @@ cardbus_powerstate(cardbus_devfunc_t ct, pcitag_t tag, const int *newstate,
 }
 
 int
-cardbus_setpowerstate(const char *dvname, cardbus_devfunc_t ct, pcitag_t tag,
-    int newpwr)
+cardbus_set_powerstate(cardbus_devfunc_t ct, cardbustag_t tag, cardbusreg_t state)
 {
-	int oldpwr, error;
+	cardbus_chipset_tag_t cc = ct->ct_cc;
+	cardbus_function_tag_t cf = ct->ct_cf;
+	int offset;
+	cardbusreg_t value;
 
-	if ((error = cardbus_powerstate(ct, tag, &newpwr, &oldpwr)) != 0)
-		return error;
+	if (!cardbus_get_capability(cc, cf, tag, PCI_CAP_PWRMGMT, &offset,
+	    &value))
+		return EOPNOTSUPP;
 
-	if (oldpwr == newpwr)
-		return 0;
-
-	if (oldpwr > newpwr) {
-		printf("%s: sleeping to power state D%d\n", dvname, oldpwr);
-		return 0;
-	}
-
-	/* oldpwr < newpwr */
-	switch (oldpwr) {
-	case PCI_PWR_D3:
-		/*
-		 * XXX: This is because none of the devices do
-		 * the necessary song and dance for now to wakeup
-		 * Once this
-		 */
-		printf("%s: cannot wake up from power state D%d\n",
-		    dvname, oldpwr);
-		return EINVAL;
-	default:
-		printf("%s: waking up from power state D%d\n",
-		    dvname, oldpwr);
-		return 0;
-	}
+	return cardbus_set_powerstate_int(ct, tag, state, offset, value);
 }
-
 
 #ifdef CARDBUS_DEBUG
 static const char *tuple_name(int);
@@ -1095,3 +1109,137 @@ print_tuple(u_int8_t *tuple, int len, void *data)
 	}
 }
 #endif
+
+void
+cardbus_conf_capture(cardbus_chipset_tag_t cc, cardbus_function_tag_t cf,
+    cardbustag_t tag, struct cardbus_conf_state *pcs)
+{
+	int off;
+
+	for (off = 0; off < 16; off++)
+		pcs->reg[off] = cardbus_conf_read(cc, cf, tag, (off * 4));
+}
+
+void
+cardbus_conf_restore(cardbus_chipset_tag_t cc, cardbus_function_tag_t cf,
+    cardbustag_t tag, struct cardbus_conf_state *pcs)
+{
+	int off;
+	cardbusreg_t val;
+
+	for (off = 15; off >= 0; off--) {
+		val = cardbus_conf_read(cc, cf, tag, (off * 4));
+		if (val != pcs->reg[off])
+			cardbus_conf_write(cc, cf,tag, (off * 4), pcs->reg[off]);
+	}
+}
+
+void
+cardbus_disable_retry(cardbus_chipset_tag_t cc, cardbus_function_tag_t cf,
+    cardbustag_t tag)
+{
+	cardbusreg_t retry;
+
+	/*
+	 * Disable retry timeout to keep PCI Tx retries from
+	 * interfering with ACPI C3 CPU state.
+	 */
+	retry = cardbus_conf_read(cc, cf, tag, PCI_RETRY_TIMEOUT_REG);
+	retry &= ~PCI_RETRY_TIMEOUT_REG_MASK;
+	cardbus_conf_write(cc, cf, tag, PCI_RETRY_TIMEOUT_REG, retry);
+}
+
+struct cardbus_child_power {
+	struct cardbus_conf_state p_cardbusconf;
+	cardbus_devfunc_t p_ct;
+	cardbustag_t p_tag;
+	cardbus_chipset_tag_t p_cc;
+	cardbus_function_tag_t p_cf;
+	cardbusreg_t p_pm_cap;
+	bool p_has_pm;
+	int p_pm_offset;
+};
+
+static bool
+cardbus_child_suspend(device_t dv)
+{
+	struct cardbus_child_power *priv = device_pmf_bus_private(dv);
+
+	cardbus_conf_capture(priv->p_cc, priv->p_cf, priv->p_tag,
+	    &priv->p_cardbusconf);
+
+	if (priv->p_has_pm &&
+	    cardbus_set_powerstate_int(priv->p_ct, priv->p_tag,
+	    PCI_PMCSR_STATE_D3, priv->p_pm_offset, priv->p_pm_cap)) {
+		aprint_error_dev(dv, "unsupported state, continuing.\n");
+		return false;
+	}
+
+	Cardbus_function_disable(priv->p_ct);
+
+	return true;
+}
+
+static bool
+cardbus_child_resume(device_t dv)
+{
+	struct cardbus_child_power *priv = device_pmf_bus_private(dv);
+
+	Cardbus_function_enable(priv->p_ct);
+
+	if (priv->p_has_pm &&
+	    cardbus_set_powerstate_int(priv->p_ct, priv->p_tag,
+	    PCI_PMCSR_STATE_D0, priv->p_pm_offset, priv->p_pm_cap)) {
+		aprint_error_dev(dv, "unsupported state, continuing.\n");
+		return false;
+	}
+
+	cardbus_conf_restore(priv->p_cc, priv->p_cf, priv->p_tag,
+	    &priv->p_cardbusconf);
+
+	return true;
+}
+
+static void
+cardbus_child_deregister(device_t dv)
+{
+	struct cardbus_child_power *priv = device_pmf_bus_private(dv);
+
+	free(priv, M_DEVBUF);
+}
+
+static bool
+cardbus_child_register(device_t child)
+{
+	device_t self = device_parent(child);
+	struct cardbus_softc *sc = device_private(self);
+	struct cardbus_devfunc *ct;
+	struct cardbus_child_power *priv;
+	int off;
+	cardbusreg_t reg;
+
+	ct = sc->sc_funcs[device_locator(child, CARDBUSCF_FUNCTION)];
+
+	priv = malloc(sizeof(*priv), M_DEVBUF, M_WAITOK);
+
+	priv->p_ct = ct;
+	priv->p_cc = ct->ct_cf;
+	priv->p_cf = ct->ct_cf;
+	priv->p_tag = cardbus_make_tag(priv->p_cc, priv->p_cf, ct->ct_bus,
+	    ct->ct_func);
+
+	if (cardbus_get_capability(priv->p_cc, priv->p_cf, priv->p_tag,
+				   PCI_CAP_PWRMGMT, &off, &reg)) {
+		priv->p_has_pm = true;
+		priv->p_pm_offset = off;
+		priv->p_pm_cap = reg;
+	} else {
+		priv->p_has_pm = false;
+		priv->p_pm_offset = -1;
+	}
+
+	device_pmf_bus_register(child, priv, cardbus_child_suspend,
+	    cardbus_child_resume, cardbus_child_deregister);
+
+	return true;
+}

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.49.4.1 2007/12/08 18:20:12 mjf Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.49.4.2 2007/12/27 00:45:43 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.49.4.1 2007/12/08 18:20:12 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.49.4.2 2007/12/27 00:45:43 mjf Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -199,7 +199,7 @@ cd9660_mount(mp, path, data, data_len)
 	 * Not an update, or updating the name: look up the name
 	 * and verify that it refers to a sensible block device.
 	 */
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, args->fspec, l);
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, args->fspec);
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	devvp = nd.ni_vp;
@@ -539,11 +539,6 @@ cd9660_unmount(mp, mntflags)
 
 	isomp = VFSTOISOFS(mp);
 
-#ifdef	ISODEVMAP
-	if (isomp->iso_ftype == ISO_FTYPE_RRIP)
-		iso_dunmap(isomp->im_dev);
-#endif
-
 	if (isomp->im_devvp->v_type != VBAD)
 		isomp->im_devvp->v_specmountpoint = NULL;
 
@@ -700,9 +695,6 @@ cd9660_vget_internal(mp, ino, vpp, relocated, isodir)
 {
 	struct iso_mnt *imp;
 	struct iso_node *ip;
-#ifdef ISODEVMAP
-	struct iso_dnode *dp;
-#endif
 	struct buf *bp;
 	struct vnode *vp, *nvp;
 	dev_t dev;
@@ -710,7 +702,9 @@ cd9660_vget_internal(mp, ino, vpp, relocated, isodir)
 
 	imp = VFSTOISOFS(mp);
 	dev = imp->im_dev;
-	if ((*vpp = cd9660_ihashget(dev, ino)) != NULLVP)
+
+ retry:
+	if ((*vpp = cd9660_ihashget(dev, ino, LK_EXCLUSIVE)) != NULLVP)
 		return (0);
 
 	/* Allocate a new vnode/iso_node. */
@@ -719,11 +713,27 @@ cd9660_vget_internal(mp, ino, vpp, relocated, isodir)
 		return (error);
 	}
 	ip = pool_get(&cd9660_node_pool, PR_WAITOK);
+
+	/*
+	 * If someone beat us to it, put back the freshly allocated
+	 * vnode/inode pair and retry.
+	 */
+	mutex_enter(&cd9660_hashlock);
+	if (cd9660_ihashget(dev, ino, 0) != NULL) {
+		mutex_exit(&cd9660_hashlock);
+		ungetnewvnode(vp);
+		pool_put(&cd9660_node_pool, ip);
+		goto retry;
+	}
+
 	memset(ip, 0, sizeof(struct iso_node));
 	vp->v_data = ip;
 	ip->i_vnode = vp;
 	ip->i_dev = dev;
 	ip->i_number = ino;
+	ip->i_mnt = imp;
+	ip->i_devvp = imp->im_devvp;
+	genfs_node_init(vp, &cd9660_genfsops);
 
 	/*
 	 * Put it onto its hash chain and lock it so that other requests for
@@ -732,6 +742,7 @@ cd9660_vget_internal(mp, ino, vpp, relocated, isodir)
 	 * disk portion of this inode to be read.
 	 */
 	cd9660_ihashins(ip);
+	mutex_exit(&cd9660_hashlock);
 
 	if (isodir == 0) {
 		int lbn, off;
@@ -787,8 +798,6 @@ cd9660_vget_internal(mp, ino, vpp, relocated, isodir)
 	} else
 		bp = 0;
 
-	ip->i_mnt = imp;
-	ip->i_devvp = imp->im_devvp;
 	VREF(ip->i_devvp);
 
 	if (relocated) {
@@ -851,10 +860,6 @@ cd9660_vget_internal(mp, ino, vpp, relocated, isodir)
 		/*
 		 * if device, look at device number table for translation
 		 */
-#ifdef	ISODEVMAP
-		if ((dp = iso_dmap(dev, ino, 0)) != NULL)
-			ip->inode.iso_rdev = dp->d_dev;
-#endif
 		vp->v_op = cd9660_specop_p;
 		if ((nvp = checkalias(vp, ip->inode.iso_rdev, mp)) != NULL) {
 			/*
@@ -897,7 +902,6 @@ cd9660_vget_internal(mp, ino, vpp, relocated, isodir)
 	 * XXX need generation number?
 	 */
 
-	genfs_node_init(vp, &cd9660_genfsops);
 	*vpp = vp;
 	return (0);
 }

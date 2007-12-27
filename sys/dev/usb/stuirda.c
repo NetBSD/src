@@ -1,4 +1,4 @@
-/*	$NetBSD: stuirda.c,v 1.2.22.1 2007/12/08 18:20:03 mjf Exp $	*/
+/*	$NetBSD: stuirda.c,v 1.2.22.2 2007/12/27 00:45:30 mjf Exp $	*/
 
 /*
  * Copyright (c) 2001,2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,10 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: stuirda.c,v 1.2.22.2 2007/12/27 00:45:30 mjf Exp $");
+
 #include <sys/param.h>
 
 #include <sys/device.h>

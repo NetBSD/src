@@ -1,4 +1,4 @@
-/* 	$NetBSD: cpuvar.h,v 1.16.2.1 2007/11/19 00:46:58 mjf Exp $ */
+/* 	$NetBSD: cpuvar.h,v 1.16.2.2 2007/12/27 00:43:22 mjf Exp $ */
 
 /*-
  * Copyright (c) 2000, 2007 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 #define	_X86_CPUVAR_H_
 
 struct cpu_functions {
-	int (*start)(struct cpu_info *);
+	int (*start)(struct cpu_info *, paddr_t);
 	int (*stop)(struct cpu_info *);
 	void (*cleanup)(struct cpu_info *);
 };

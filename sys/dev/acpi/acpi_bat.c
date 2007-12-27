@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.61.2.2 2007/12/08 18:19:22 mjf Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.61.2.3 2007/12/27 00:44:53 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.61.2.2 2007/12/08 18:19:22 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.61.2.3 2007/12/27 00:44:53 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -238,6 +238,9 @@ acpibat_attach(device_t parent, device_t self, void *aux)
 #ifdef ACPI_BAT_DEBUG
 	ABAT_SET(sc, ABAT_F_VERBOSE);
 #endif
+
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	acpibat_init_envsys(self);
 }
@@ -648,8 +651,7 @@ acpibat_notify_handler(ACPI_HANDLE handle, UINT32 notify, void *context)
 		mutex_enter(&sc->sc_mtx);
 		acpibat_clear_presence(sc);
 		mutex_exit(&sc->sc_mtx);
-		rv = AcpiOsQueueForExecution(OSD_PRIORITY_LO,
-					     acpibat_update, dv);
+		rv = AcpiOsExecute(OSL_NOTIFY_HANDLER, acpibat_update, dv);
 		if (ACPI_FAILURE(rv))
 			aprint_error_dev(dv,
 			    "unable to queue status check: %s\n",
@@ -660,8 +662,7 @@ acpibat_notify_handler(ACPI_HANDLE handle, UINT32 notify, void *context)
 		mutex_enter(&sc->sc_mtx);
 		acpibat_clear_stat(sc);
 		mutex_exit(&sc->sc_mtx);
-		rv = AcpiOsQueueForExecution(OSD_PRIORITY_LO,
-					     acpibat_update, dv);
+		rv = AcpiOsExecute(OSL_NOTIFY_HANDLER, acpibat_update, dv);
 		if (ACPI_FAILURE(rv))
 			aprint_error_dev(dv,
 			    "unable to queue status check: %s\n",

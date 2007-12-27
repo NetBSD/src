@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_exec_aout.c,v 1.21.52.1 2007/12/08 18:18:59 mjf Exp $	*/
+/*	$NetBSD: netbsd32_exec_aout.c,v 1.21.52.2 2007/12/27 00:44:24 mjf Exp $	*/
 /*	from: NetBSD: exec_aout.c,v 1.15 1996/09/26 23:34:46 cgd Exp */
 
 /*
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_exec_aout.c,v 1.21.52.1 2007/12/08 18:18:59 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_exec_aout.c,v 1.21.52.2 2007/12/27 00:44:24 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,9 +98,7 @@ int netbsd32_copyinargs(struct exec_package *, struct ps_strings *,
  */
 
 int
-exec_netbsd32_makecmds(l, epp)
-	struct lwp *l;
-	struct exec_package *epp;
+exec_netbsd32_makecmds(struct lwp *l, struct exec_package *epp)
 {
 	netbsd32_u_long midmag, magic;
 	u_short mid;
@@ -154,9 +152,7 @@ exec_netbsd32_makecmds(l, epp)
  */
 
 int
-netbsd32_exec_aout_prep_zmagic(l, epp)
-	struct lwp *l;
-	struct exec_package *epp;
+netbsd32_exec_aout_prep_zmagic(struct lwp *l, struct exec_package *epp)
 {
 	struct netbsd32_exec *execp = epp->ep_hdr;
 	int error;
@@ -197,9 +193,7 @@ netbsd32_exec_aout_prep_zmagic(l, epp)
  */
 
 int
-netbsd32_exec_aout_prep_nmagic(l, epp)
-	struct lwp *l;
-	struct exec_package *epp;
+netbsd32_exec_aout_prep_nmagic(struct lwp *l, struct exec_package *epp)
 {
 	struct netbsd32_exec *execp = epp->ep_hdr;
 	long bsize, baddr;
@@ -238,9 +232,7 @@ netbsd32_exec_aout_prep_nmagic(l, epp)
  */
 
 int
-netbsd32_exec_aout_prep_omagic(l, epp)
-	struct lwp *l;
-	struct exec_package *epp;
+netbsd32_exec_aout_prep_omagic(struct lwp *l, struct exec_package *epp)
 {
 	struct netbsd32_exec *execp = epp->ep_hdr;
 	long dsize, bsize, baddr;

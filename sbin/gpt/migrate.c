@@ -29,7 +29,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/migrate.c,v 1.16 2005/09/01 02:42:52 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: migrate.c,v 1.3 2006/10/17 09:20:09 he Exp $");
+__RCSID("$NetBSD: migrate.c,v 1.3.10.1 2007/12/27 00:46:58 mjf Exp $");
 #endif
 
 #include <sys/types.h>
@@ -60,12 +60,14 @@ __RCSID("$NetBSD: migrate.c,v 1.3 2006/10/17 09:20:09 he Exp $");
 static int force;
 static int slice;
 
+const char migratemsg[] = "migrate [-fs] device ...";
+
 static void
 usage_migrate(void)
 {
 
 	fprintf(stderr,
-	    "usage: %s [-fs] device ...\n", getprogname());
+	    "usage: %s %s\n", getprogname(), migratemsg);
 	exit(1);
 }
 

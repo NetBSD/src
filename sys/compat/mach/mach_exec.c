@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_exec.c,v 1.64.14.1 2007/12/08 18:18:54 mjf Exp $	 */
+/*	$NetBSD: mach_exec.c,v 1.64.14.2 2007/12/27 00:44:19 mjf Exp $	 */
 
 /*-
  * Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.64.14.1 2007/12/08 18:18:54 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.64.14.2 2007/12/27 00:44:19 mjf Exp $");
 
 #include "opt_syscall_debug.h"
 
@@ -133,12 +133,7 @@ const struct emul emul_mach = {
  * emulation, and it probably contains Darwin specific bits.
  */
 int
-exec_mach_copyargs(l, pack, arginfo, stackp, argp)
-	struct lwp *l;
-	struct exec_package *pack;
-	struct ps_strings *arginfo;
-	char **stackp;
-	void *argp;
+exec_mach_copyargs(struct lwp *l, struct exec_package *pack, struct ps_strings *arginfo, char **stackp, void *argp)
 {
 	struct exec_macho_emul_arg *emea;
 	struct exec_macho_object_header *macho_hdr;
@@ -190,17 +185,14 @@ exec_mach_copyargs(l, pack, arginfo, stackp, argp)
 }
 
 int
-exec_mach_probe(path)
-	const char **path;
+exec_mach_probe(const char **path)
 {
 	*path = emul_mach.e_path;
 	return 0;
 }
 
 void
-mach_e_proc_exec(p, epp)
-	struct proc *p;
-	struct exec_package *epp;
+mach_e_proc_exec(struct proc *p, struct exec_package *epp)
 {
 	mach_e_proc_init(p, p->p_vmspace);
 
@@ -218,10 +210,7 @@ mach_e_proc_fork(struct proc *p, struct proc *parent, int forkflags)
 }
 
 void
-mach_e_proc_fork1(p, parent, allocate)
-	struct proc *p;
-	struct proc *parent;
-	int allocate;
+mach_e_proc_fork1(struct proc *p, struct proc *parent, int allocate)
 {
 	struct mach_emuldata *med1;
 	struct mach_emuldata *med2;
@@ -360,8 +349,7 @@ mach_e_proc_init(struct proc *p, struct vmspace *vmspace)
 }
 
 void
-mach_e_proc_exit(p)
-	struct proc *p;
+mach_e_proc_exit(struct proc *p)
 {
 	struct mach_emuldata *med;
 	struct mach_right *mr;
@@ -436,8 +424,7 @@ mach_e_lwp_fork(struct lwp *l1, struct lwp *l2)
 }
 
 void
-mach_e_lwp_exit(l)
-	struct lwp *l;
+mach_e_lwp_exit(struct lwp *l)
 {
 	struct mach_lwp_emuldata *mle;
 

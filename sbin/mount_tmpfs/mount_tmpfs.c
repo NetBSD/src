@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_tmpfs.c,v 1.18 2007/07/16 17:12:03 pooka Exp $	*/
+/*	$NetBSD: mount_tmpfs.c,v 1.18.6.1 2007/12/27 00:47:01 mjf Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mount_tmpfs.c,v 1.18 2007/07/16 17:12:03 pooka Exp $");
+__RCSID("$NetBSD: mount_tmpfs.c,v 1.18.6.1 2007/12/27 00:47:01 mjf Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -58,6 +58,7 @@ __RCSID("$NetBSD: mount_tmpfs.c,v 1.18 2007/07/16 17:12:03 pooka Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include "fattr.h"
 
 /* --------------------------------------------------------------------- */
 
@@ -70,11 +71,7 @@ static const struct mntopt mopts[] = {
 /* --------------------------------------------------------------------- */
 
 static int	mount_tmpfs(int argc, char **argv);
-static void	usage(void);
-static int	dehumanize_group(const char *str, gid_t *gid);
-static int	dehumanize_mode(const char *str, mode_t *mode);
-static int	dehumanize_off(const char *str, off_t *size);
-static int	dehumanize_user(const char *str, uid_t *uid);
+static void	usage(void) __dead;
 
 /* --------------------------------------------------------------------- */
 
@@ -87,7 +84,7 @@ mount_tmpfs(int argc, char *argv[])
 	gid_t gid;
 	uid_t uid;
 	mode_t mode;
-	off_t offtmp;
+	int64_t tmpnumber;
 	mntoptparse_t mp;
 	struct tmpfs_args args;
 	struct stat sb;
@@ -108,93 +105,70 @@ mount_tmpfs(int argc, char *argv[])
 	while ((ch = getopt(argc, argv, "g:m:n:o:s:u:")) != -1 ) {
 		switch (ch) {
 		case 'g':
-			if (!dehumanize_group(optarg, &gid)) {
-				errx(EXIT_FAILURE, "failed to parse group "
-				    "'%s'", optarg);
-				/* NOTREACHED */
-			}
+			gid = a_gid(optarg);
 			gidset = 1;
 			break;
 
 		case 'm':
-			if (!dehumanize_mode(optarg, &mode)) {
-				errx(EXIT_FAILURE, "failed to parse mode "
-				    "'%s'", optarg);
-				/* NOTREACHED */
-			}
+			mode = a_mask(optarg);
 			modeset = 1;
 			break;
 
 		case 'n':
-			if (!dehumanize_off(optarg, &offtmp)) {
-				errx(EXIT_FAILURE, "failed to parse size "
-				    "'%s'", optarg);
-				/* NOTREACHED */
-			}
-			args.ta_nodes_max = offtmp;
+			if (dehumanize_number(optarg, &tmpnumber) == -1)
+				err(EXIT_FAILURE, "failed to parse nodes `%s'",
+				    optarg);
+			args.ta_nodes_max = tmpnumber;
 			break;
 
 		case 'o':
 			mp = getmntopts(optarg, mopts, &mntflags, 0);
 			if (mp == NULL)
-				err(1, "getmntopts");
+				err(EXIT_FAILURE, "getmntopts");
 			freemntopts(mp);
 			break;
 
 		case 's':
-			if (!dehumanize_off(optarg, &offtmp)) {
-				errx(EXIT_FAILURE, "failed to parse size "
-				    "'%s'", optarg);
-				/* NOTREACHED */
-			}
-			args.ta_size_max = offtmp;
+			if (dehumanize_number(optarg, &tmpnumber) == -1)
+				err(EXIT_FAILURE, "failed to parse size `%s'",
+				    optarg);
+			args.ta_size_max = tmpnumber;
 			break;
 
 		case 'u':
-			if (!dehumanize_user(optarg, &uid)) {
-				errx(EXIT_FAILURE, "failed to parse user "
-				    "'%s'", optarg);
-				/* NOTREACHED */
-			}
+			uid = a_uid(optarg);
 			uidset = 1;
 			break;
 
 		case '?':
 		default:
 			usage();
-			/* NOTREACHED */
 		}
 	}
 	argc -= optind;
 	argv += optind;
 
-	if (argc != 2) {
+	if (argc != 2)
 		usage();
-		/* NOTREACHED */
-	}
 
-	if (realpath(argv[1], canon_dir) == NULL) {
+	if (realpath(argv[1], canon_dir) == NULL)
 		err(EXIT_FAILURE, "realpath %s", argv[0]);
-		/* NOTREACHED */
-	}
 
 	if (strncmp(argv[1], canon_dir, MAXPATHLEN) != 0) {
 		warnx("\"%s\" is a relative path", argv[0]);
 		warnx("using \"%s\" instead", canon_dir);
 	}
 
-	if (stat(canon_dir, &sb) == -1) {
-		err(EXIT_FAILURE, "cannot stat");
-		/* NOTREACHED */
-	}
+	if (stat(canon_dir, &sb) == -1)
+		err(EXIT_FAILURE, "cannot stat `%s'", canon_dir);
+
 	args.ta_root_uid = uidset ? uid : sb.st_uid;
 	args.ta_root_gid = gidset ? gid : sb.st_gid;
 	args.ta_root_mode = modeset ? mode : sb.st_mode;
 
-	if (mount(MOUNT_TMPFS, canon_dir, mntflags, &args, sizeof args) == -1) {
+	if (mount(MOUNT_TMPFS, canon_dir, mntflags, &args, sizeof args) == -1)
 		err(EXIT_FAILURE, "tmpfs on %s", canon_dir);
-		/* NOTREACHED */
-	}
+
 	if (mntflags & MNT_GETARGS) {
 		struct passwd *pw;
 		struct group *gr;
@@ -234,177 +208,6 @@ usage(void)
 	    "Usage: %s [-g group] [-m mode] [-n nodes] [-o options] [-s size]\n"
 	    "           [-u user] tmpfs mountpoint\n", getprogname());
 	exit(1);
-}
-
-/* --------------------------------------------------------------------- */
-
-/*
- * Obtains a GID number based on the contents of 'str'.  If it is a string
- * and is found in group(5), its corresponding ID is used.  Otherwise, an
- * attempt is made to convert the string to a number and use that as a GID.
- * In case of success, true is returned and *gid holds the GID value.
- * Otherwise, false is returned and *gid is untouched.
- */
-static int
-dehumanize_group(const char *str, gid_t *gid)
-{
-	int error;
-	struct group *gr;
-
-	gr = getgrnam(str);
-	if (gr != NULL) {
-		*gid = gr->gr_gid;
-		error = 1;
-	} else {
-		char *ep;
-		unsigned long tmp;
-
-		errno = 0;
-		tmp = strtoul(str, &ep, 0);
-		if (str[0] == '\0' || *ep != '\0')
-			error = 0; /* Not a number. */
-		else if (errno == ERANGE)
-			error = 0; /* Out of range. */
-		else {
-			*gid = (gid_t)tmp;
-			error = 1;
-		}
-	}
-
-	return error;
-}
-
-/* --------------------------------------------------------------------- */
-
-/*
- * Obtains a mode number based on the contents of 'str'.
- * In case of success, true is returned and *mode holds the mode value.
- * Otherwise, false is returned and *mode is untouched.
- */
-static int
-dehumanize_mode(const char *str, mode_t *mode)
-{
-	char *ep;
-	int error;
-	long tmp;
-
-	errno = 0;
-	tmp = strtol(str, &ep, 8);
-	if (str[0] == '\0' || *ep != '\0')
-		error = 0; /* Not a number. */
-	else if (errno == ERANGE)
-		error = 0; /* Out of range. */
-	else {
-		*mode = (mode_t)tmp;
-		error = 1;
-	}
-
-	return error;
-}
-
-/* --------------------------------------------------------------------- */
-
-/*
- * Converts the number given in 'str', which may be given in a humanized
- * form (as described in humanize_number(3), but with some limitations),
- * to a file size (off_t) without units.
- * In case of success, true is returned and *size holds the value.
- * Otherwise, false is returned and *size is untouched.
- */
-static int
-dehumanize_off(const char *str, off_t *size)
-{
-	char *ep, unit;
-	const char *delimit;
-	long multiplier;
-	long long tmp, tmp2;
-	size_t len;
-
-	len = strlen(str);
-	if (len < 1)
-		return 0;
-
-	multiplier = 1;
-
-	unit = str[len - 1];
-	if (isalpha((int)unit)) {
-		switch (tolower((int)unit)) {
-		case 'b':
-			multiplier = 1;
-			break;
-
-		case 'k':
-			multiplier = 1024;
-			break;
-
-		case 'm':
-			multiplier = 1024 * 1024;
-			break;
-
-		case 'g':
-			multiplier = 1024 * 1024 * 1024;
-			break;
-
-		default:
-			return 0; /* Invalid suffix. */
-		}
-
-		delimit = &str[len - 1];
-	} else
-		delimit = NULL;
-
-	errno = 0;
-	tmp = strtoll(str, &ep, 10);
-	if (str[0] == '\0' || (ep != delimit && *ep != '\0'))
-		return 0; /* Not a number. */
-	else if (errno == ERANGE)
-		return 0; /* Out of range. */
-
-	tmp2 = tmp * multiplier;
-	tmp2 = tmp2 / multiplier;
-	if (tmp != tmp2)
-		return 0; /* Out of range. */
-	*size = tmp * multiplier;
-
-	return 1;
-}
-
-/* --------------------------------------------------------------------- */
-
-/*
- * Obtains a UID number based on the contents of 'str'.  If it is a string
- * and is found in passwd(5), its corresponding ID is used.  Otherwise, an
- * attempt is made to convert the string to a number and use that as a UID.
- * In case of success, true is returned and *uid holds the UID value.
- * Otherwise, false is returned and *uid is untouched.
- */
-static int
-dehumanize_user(const char *str, uid_t *uid)
-{
-	int error;
-	struct passwd *pw;
-
-	pw = getpwnam(str);
-	if (pw != NULL) {
-		*uid = pw->pw_uid;
-		error = 1;
-	} else {
-		char *ep;
-		unsigned long tmp;
-
-		errno = 0;
-		tmp = strtoul(str, &ep, 0);
-		if (str[0] == '\0' || *ep != '\0')
-			error = 0; /* Not a number. */
-		else if (errno == ERANGE)
-			error = 0; /* Out of range. */
-		else {
-			*uid = (uid_t)tmp;
-			error = 1;
-		}
-	}
-
-	return error;
 }
 
 /* --------------------------------------------------------------------- */

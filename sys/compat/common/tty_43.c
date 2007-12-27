@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_43.c,v 1.22.22.1 2007/12/08 18:18:34 mjf Exp $	*/
+/*	$NetBSD: tty_43.c,v 1.22.22.2 2007/12/27 00:43:36 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_43.c,v 1.22.22.1 2007/12/08 18:18:34 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_43.c,v 1.22.22.2 2007/12/27 00:43:36 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,12 +90,7 @@ void ttcompatsetlflags(struct tty *, struct termios *);
 
 /*ARGSUSED*/
 int
-ttcompat(tp, com, data, flag, l)
-	struct tty *tp;
-	u_long com;
-	void *data;
-	int flag;
-	struct lwp *l;
+ttcompat(struct tty *tp, u_long com, void *data, int flag, struct lwp *l)
 {
 
 	switch (com) {
@@ -257,8 +252,7 @@ ttcompat(tp, com, data, flag, l)
 }
 
 int
-ttcompatgetflags(tp)
-	struct tty *tp;
+ttcompatgetflags(struct tty *tp)
 {
 	tcflag_t iflag = tp->t_iflag;
 	tcflag_t lflag = tp->t_lflag;
@@ -321,9 +315,7 @@ ttcompatgetflags(tp)
 }
 
 void
-ttcompatsetflags(tp, t)
-	struct tty *tp;
-	struct termios *t;
+ttcompatsetflags(struct tty *tp, struct termios *t)
 {
 	int flags = tp->t_flags;
 	tcflag_t iflag = t->c_iflag;
@@ -409,9 +401,7 @@ ttcompatsetflags(tp, t)
 }
 
 void
-ttcompatsetlflags(tp, t)
-	struct tty *tp;
-	struct termios *t;
+ttcompatsetlflags(struct tty *tp, struct termios *t)
 {
 	int flags = tp->t_flags;
 	tcflag_t iflag = t->c_iflag;

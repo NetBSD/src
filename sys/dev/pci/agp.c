@@ -1,4 +1,4 @@
-/*	$NetBSD: agp.c,v 1.50.2.2 2007/12/08 18:19:40 mjf Exp $	*/
+/*	$NetBSD: agp.c,v 1.50.2.3 2007/12/27 00:45:12 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -65,7 +65,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.50.2.2 2007/12/08 18:19:40 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.50.2.3 2007/12/27 00:45:12 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,6 +103,7 @@ static int agp_deallocate_user(struct agp_softc *, int);
 static int agp_bind_user(struct agp_softc *, agp_bind *);
 static int agp_unbind_user(struct agp_softc *, agp_unbind *);
 static int agpdev_match(struct pci_attach_args *);
+static bool agp_resume(device_t);
 
 #include "agp_ali.h"
 #include "agp_amd.h"
@@ -334,6 +335,11 @@ agpattach(struct device *parent, struct device *self, void *aux)
 		    (unsigned long)AGP_GET_APERTURE(sc));
 	else
 		sc->as_chipc = NULL;
+
+	if (!device_pmf_is_registered(self)) {
+		if (!pmf_device_register(self, NULL, agp_resume))
+			aprint_error_dev(self, "couldn't establish power handler\n");
+	}
 }
 
 CFATTACH_DECL(agp, sizeof(struct agp_softc),
@@ -1081,4 +1087,12 @@ agp_free_dmamem(bus_dma_tag_t tag, size_t size, bus_dmamap_t map,
 	bus_dmamap_destroy(tag, map);
 	bus_dmamem_unmap(tag, vaddr, size);
 	bus_dmamem_free(tag, seg, nseg);
+}
+
+static bool
+agp_resume(device_t dv)
+{
+	agp_flush_cache();
+
+	return true;
 }

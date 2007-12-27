@@ -1,11 +1,16 @@
-/*	$NetBSD: acpi_ecreg.h,v 1.3 2005/12/11 12:21:01 christos Exp $	*/
+/******************************************************************************
+ *
+ * Name: acefi.h - OS specific defines, etc.
+ *       $Revision: 1.1.6.1 $
+ *
+ *****************************************************************************/
 
 /******************************************************************************
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999, Intel Corp.  All rights
- * reserved.
+ * Some or all of this work - Copyright (c) 1999 - 2007, Intel Corp.
+ * All rights reserved.
  *
  * 2. License
  *
@@ -109,53 +114,35 @@
  *
  *****************************************************************************/
 
-/*
- * EC_COMMAND:
- * -----------
- */
-typedef UINT8				EC_COMMAND;
+#ifndef __ACEFI_H__
+#define __ACEFI_H__
 
-#define EC_COMMAND_UNKNOWN		((EC_COMMAND) 0x00)
-#define EC_COMMAND_READ			((EC_COMMAND) 0x80)
-#define EC_COMMAND_WRITE		((EC_COMMAND) 0x81)
-#define EC_COMMAND_BURST_ENABLE		((EC_COMMAND) 0x82)
-#define EC_COMMAND_BURST_DISABLE	((EC_COMMAND) 0x83)
-#define EC_COMMAND_QUERY		((EC_COMMAND) 0x84)
+#include <efi.h>
+#include <efistdarg.h>
+#include <efilib.h>
+
+
+/* _int64 works for both IA32 and IA64 */
+
+#define COMPILER_DEPENDENT_INT64   __int64
+#define COMPILER_DEPENDENT_UINT64  unsigned __int64
 
 /*
- * EC_STATUS:
- * ----------
- * The encoding of the EC status register is illustrated below.
- * Note that a set bit (1) indicates the property is TRUE
- * (e.g. if bit 0 is set then the output buffer is full).
- * +-+-+-+-+-+-+-+-+
- * |7|6|5|4|3|2|1|0|
- * +-+-+-+-+-+-+-+-+
- *  | | | | | | | |
- *  | | | | | | | +- Output Buffer Full?
- *  | | | | | | +--- Input Buffer Full?
- *  | | | | | +----- <reserved>
- *  | | | | +------- Data Register is Command Byte?
- *  | | | +--------- Burst Mode Enabled?
- *  | | +----------- SCI Event?
- *  | +------------- SMI Event?
- *  +--------------- <Reserved>
+ * Calling conventions:
  *
+ * ACPI_SYSTEM_XFACE        - Interfaces to host OS (handlers, threads)
+ * ACPI_EXTERNAL_XFACE      - External ACPI interfaces
+ * ACPI_INTERNAL_XFACE      - Internal ACPI interfaces
+ * ACPI_INTERNAL_VAR_XFACE  - Internal variable-parameter list interfaces
  */
-typedef UINT8				EC_STATUS;
+#define ACPI_SYSTEM_XFACE
+#define ACPI_EXTERNAL_XFACE
+#define ACPI_INTERNAL_XFACE
+#define ACPI_INTERNAL_VAR_XFACE
 
-#define EC_FLAG_OUTPUT_BUFFER		((EC_STATUS) 0x01)
-#define EC_FLAG_INPUT_BUFFER		((EC_STATUS) 0x02)
-#define EC_FLAG_BURST_MODE		((EC_STATUS) 0x10)
-#define EC_FLAG_SCI			((EC_STATUS) 0x20)
+/* warn C4142: redefinition of type */
 
-/*
- * EC_EVENT:
- * ---------
- */
-typedef UINT8				EC_EVENT;
+#pragma warning(disable:4142)
 
-#define EC_EVENT_UNKNOWN		((EC_EVENT) 0x00)
-#define EC_EVENT_OUTPUT_BUFFER_FULL	((EC_EVENT) 0x01)
-#define EC_EVENT_INPUT_BUFFER_EMPTY	((EC_EVENT) 0x02)
-#define EC_EVENT_SCI			((EC_EVENT) 0x20)
+
+#endif /* __ACEFI_H__ */

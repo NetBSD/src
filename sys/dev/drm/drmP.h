@@ -1,4 +1,4 @@
-/* $NetBSD: drmP.h,v 1.9.2.1 2007/12/08 18:19:27 mjf Exp $ */
+/* $NetBSD: drmP.h,v 1.9.2.2 2007/12/27 00:45:00 mjf Exp $ */
 
 /* drmP.h -- Private header for Direct Rendering Manager -*- linux-c -*-
  * Created: Mon Jan  4 10:05:05 1999 by faith@precisioninsight.com
@@ -120,6 +120,7 @@ typedef struct drm_file drm_file_t;
 #include <sys/kauth.h>
 #include <sys/types.h>
 #include <sys/file.h>
+#include <sys/atomic.h>
 #include <uvm/uvm.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
@@ -352,9 +353,9 @@ typedef u_int8_t u8;
 	below should be enough for x86, perhaps others. */
 
 #if defined(__NetBSD__) 
-#define DRM_READMEMORYBARRIER()		mb_read()
-#define DRM_WRITEMEMORYBARRIER()	mb_write()
-#define DRM_MEMORYBARRIER()		mb_memory()
+#define DRM_READMEMORYBARRIER()		membar_consumer()
+#define DRM_WRITEMEMORYBARRIER()	membar_producer()
+#define DRM_MEMORYBARRIER()		membar_sync()
 #elif defined(__i386__) 
 #define DRM_READMEMORYBARRIER()		__asm __volatile( \
 					"lock; addl $0,0(%%esp)" : : : "memory");
@@ -466,7 +467,7 @@ do {									\
 	if (!_DRM_LOCK_IS_HELD(dev->lock.hw_lock->lock) ||		\
 	     dev->lock.filp != filp) {					\
 		DRM_ERROR("%s called without lock held\n",		\
-			   __FUNCTION__);				\
+			   __func__);				\
 		return EINVAL;						\
 	}								\
 } while (0)

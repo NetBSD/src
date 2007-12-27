@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.859.2.2 2007/12/08 18:17:06 mjf Exp $
+# $NetBSD: GENERIC,v 1.859.2.3 2007/12/27 00:43:00 mjf Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.859.2.2 $"
+#ident 		"GENERIC-$Revision: 1.859.2.3 $"
 
 maxusers	32		# estimated number of users
 
@@ -340,7 +340,11 @@ apm*		at acpi?		# ACPI apm emulation
 acpiacad* 	at acpi?		# ACPI AC Adapter
 acpibat* 	at acpi?		# ACPI Battery
 acpibut* 	at acpi?		# ACPI Button
-acpiec* 	at acpi?		# ACPI Embedded Controller
+# The ACPI Embedded Controller is generally configured via the special ECDT.
+# This is required as parts of the DSDT can reference the EC before the normal
+# attach phase.
+acpiec* 	at acpi?		# ACPI Embedded Controller (late binding)
+acpiecdt* 	at acpi?		# ACPI Embedded Controller (early binding)
 acpilid* 	at acpi?		# ACPI Lid Switch
 acpitz* 	at acpi?		# ACPI Thermal Zone
 
@@ -356,6 +360,7 @@ mpu*		at acpi?		# Roland MPU-401 MIDI UART
 npx*		at acpi?		# Math coprocessor
 pckbc*  	at acpi?		# PC keyboard controller
 pcppi*		at acpi?                # AT-style speaker sound
+thinkpad*	at acpi?		# IBM/Lenovo Thinkpad hotkeys
 ug* 		at acpi?		# Abit uGuru Hardware monitor
 wss* 		at acpi?		# NeoMagic 256AV in wss mode
 ym* 		at acpi?		# Yamaha OPL3-SA[23] audio
@@ -1465,6 +1470,9 @@ pseudo-device	wsfont
 
 # pseudo audio device driver
 pseudo-device	pad
+
+# userland interface to drivers, including autoconf and properties retrieval
+pseudo-device	drvctl
 
 options 	FILEASSOC		# fileassoc(9) - required for Veriexec
 

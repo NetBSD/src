@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.22.4.1 2007/12/08 18:20:23 mjf Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.22.4.2 2007/12/27 00:45:52 mjf Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.22.4.1 2007/12/08 18:20:23 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.22.4.2 2007/12/27 00:45:52 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1200,7 +1200,7 @@ union_remove(v)
 		un->un_flags |= UN_KLOCK;
 		vput(ap->a_vp);
 
-		if (union_dowhiteout(un, cnp->cn_cred, cnp->cn_lwp))
+		if (union_dowhiteout(un, cnp->cn_cred))
 			cnp->cn_flags |= DOWHITEOUT;
 		error = VOP_REMOVE(dvp, vp, cnp);
 		if (!error)
@@ -1228,7 +1228,6 @@ union_link(v)
 	} */ *ap = v;
 	int error = 0;
 	struct componentname *cnp = ap->a_cnp;
-	struct lwp *l = cnp->cn_lwp;
 	struct union_node *dun;
 	struct vnode *vp;
 	struct vnode *dvp;
@@ -1256,7 +1255,7 @@ union_link(v)
 				dun->un_flags &= ~UN_ULOCK;
 				VOP_UNLOCK(dun->un_uppervp, 0);
 			}
-			error = union_copyup(un, 1, cnp->cn_cred, l);
+			error = union_copyup(un, 1, cnp->cn_cred, curlwp);
 			if (dun->un_uppervp == un->un_dirvp) {
 				/*
 				 * During copyup, we dropped the lock on the
@@ -1481,7 +1480,7 @@ union_rmdir(v)
 		un->un_flags |= UN_KLOCK;
 		vput(ap->a_vp);
 
-		if (union_dowhiteout(un, cnp->cn_cred, cnp->cn_lwp))
+		if (union_dowhiteout(un, cnp->cn_cred))
 			cnp->cn_flags |= DOWHITEOUT;
 		error = VOP_RMDIR(dvp, vp, ap->a_cnp);
 		if (!error)

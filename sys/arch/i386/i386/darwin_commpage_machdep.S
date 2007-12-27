@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_commpage_machdep.S,v 1.5.56.1 2007/11/19 00:46:25 mjf Exp $ */
+/*	$NetBSD: darwin_commpage_machdep.S,v 1.5.56.2 2007/12/27 00:43:05 mjf Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,6 +37,7 @@
  */
 
 #include <machine/asm.h>
+__KERNEL_RCSID(0, "$NetBSD: darwin_commpage_machdep.S,v 1.5.56.2 2007/12/27 00:43:05 mjf Exp $");
 
 #include <compat/darwin/darwin_syscall.h>
 

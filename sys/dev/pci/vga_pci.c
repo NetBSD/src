@@ -1,4 +1,4 @@
-/*	$NetBSD: vga_pci.c,v 1.33.8.1 2007/12/08 18:19:48 mjf Exp $	*/
+/*	$NetBSD: vga_pci.c,v 1.33.8.2 2007/12/27 00:45:24 mjf Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_pci.c,v 1.33.8.1 2007/12/08 18:19:48 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_pci.c,v 1.33.8.2 2007/12/27 00:45:24 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,11 +69,14 @@ struct vga_pci_softc {
 
 	struct vga_bar sc_bars[NBARS];
 	struct vga_bar sc_rom;
+
+	struct pci_conf_state sc_pciconf;
 };
 
 static int	vga_pci_match(struct device *, struct cfdata *, void *);
 static void	vga_pci_attach(struct device *, struct device *, void *);
 static int	vga_pci_lookup_quirks(struct pci_attach_args *);
+static bool	vga_pci_resume(device_t dv);
 
 CFATTACH_DECL(vga_pci, sizeof(struct vga_pci_softc),
     vga_pci_match, vga_pci_attach, NULL, NULL);
@@ -218,7 +221,24 @@ vga_pci_attach(struct device *parent, struct device *self, void *aux)
 	vga_common_attach(sc, pa->pa_iot, pa->pa_memt, WSDISPLAY_TYPE_PCIVGA,
 			  vga_pci_lookup_quirks(pa), &vga_pci_funcs);
 
+	/*
+	 * XXX Do not use the generic PCI framework for now as
+	 * XXX it would power down the device when the console
+	 * XXX is still using it.
+	 */
+	if (!pmf_device_register(self, NULL, vga_pci_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 	config_found_ia(self, "drm", aux, vga_drm_print);
+}
+
+static bool
+vga_pci_resume(device_t dv)
+{
+	struct vga_pci_softc *sc = device_private(dv);
+
+	vga_resume(&sc->sc_vga);
+
+	return true;
 }
 
 int
