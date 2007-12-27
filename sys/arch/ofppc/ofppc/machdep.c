@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.100 2007/12/27 17:25:02 garbled Exp $	*/
+/*	$NetBSD: machdep.c,v 1.101 2007/12/27 17:49:36 garbled Exp $	*/
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.100 2007/12/27 17:25:02 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.101 2007/12/27 17:49:36 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -174,7 +174,7 @@ consinit(void)
 void
 dumpsys(void)
 {
-	printf("dumpsys: TBD\n");
+	aprint_normal("dumpsys: TBD\n");
 }
 
 /*
@@ -198,20 +198,20 @@ cpu_reboot(int howto, char *what)
 	splhigh();
 	if (howto & RB_HALT) {
 		doshutdownhooks();
-		printf("halted\n\n");
+		aprint_normal("halted\n\n");
 		ppc_exit();
 	}
 	if (!cold && (howto & RB_DUMP))
 		oea_dumpsys();
 	doshutdownhooks();
-	printf("rebooting\n\n");
+	aprint_normal("rebooting\n\n");
 
 	rtas_reboot();
 	for(;;);
 
 	if (what && *what) {
 		if (strlen(what) > sizeof str - 5)
-			printf("boot string too large, ignored\n");
+			aprint_normal("boot string too large, ignored\n");
 		else {
 			strcpy(str, what);
 			ap1 = ap = str + strlen(str);

@@ -1,4 +1,4 @@
-/* $NetBSD: pegasospci.c,v 1.8 2007/12/24 13:54:59 phx Exp $ */
+/* $NetBSD: pegasospci.c,v 1.9 2007/12/27 17:49:36 garbled Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pegasospci.c,v 1.8 2007/12/24 13:54:59 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pegasospci.c,v 1.9 2007/12/27 17:49:36 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -232,7 +232,7 @@ pegasospci_indirect_attach_hook(struct device *parent, struct device *self,
 	if (pba->pba_bus != 0)
 		return;
 
-	printf(": indirect configuration space access");
+	aprint_normal(": indirect configuration space access");
 
 	/*
 	 * SmartFirmware 1.2 only initializes the devices it will use,
