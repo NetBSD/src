@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.98 2007/11/26 19:58:30 garbled Exp $	*/
+/*	$NetBSD: machdep.c,v 1.99 2007/12/27 05:41:51 garbled Exp $	*/
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.98 2007/11/26 19:58:30 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.99 2007/12/27 05:41:51 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.98 2007/11/26 19:58:30 garbled Exp $")
 #include <machine/trap.h>
 #include <machine/bus.h>
 #include <machine/isa_machdep.h>
+#include <machine/spr.h>
 
 #include <powerpc/oea/bat.h>
 #include <powerpc/ofw_cons.h>
@@ -71,6 +72,9 @@ char bootpath[256];
 
 void ofwppc_batinit(void);
 void	ofppc_bootstrap_console(void);
+
+extern u_int l2cr_config;
+
 
 void
 initppc(u_int startkernel, u_int endkernel, char *args)
@@ -92,6 +96,9 @@ model_init(void)
 		char buf[32];
 		int i;
 
+		/* the pegasos doesn't bother to set the L2 cache up*/
+		l2cr_config = L2CR_L2PE;
+		
 		/* fix the device_type property of a graphics card */
 		for (qhandle = OF_peer(0); qhandle; qhandle = phandle) {
 			if (OF_getprop(qhandle, "name", buf, sizeof buf) > 0
