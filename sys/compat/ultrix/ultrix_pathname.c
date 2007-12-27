@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_pathname.c,v 1.31 2007/12/20 23:03:07 dsl Exp $	*/
+/*	$NetBSD: ultrix_pathname.c,v 1.32 2007/12/27 17:18:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_pathname.c,v 1.31 2007/12/20 23:03:07 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_pathname.c,v 1.32 2007/12/27 17:18:11 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,7 +87,7 @@ ultrix_sys_creat(struct lwp *l, const struct ultrix_sys_creat_args *uap, registe
 	SCARG(&ap, flags) = O_WRONLY | O_CREAT | O_TRUNC;
 	SCARG(&ap, mode) = SCARG(uap, mode);
 
-	return (sys_open(l, &ap, retval));
+	return sys_open(l, &ap, retval);
 }
 
 
@@ -95,21 +95,23 @@ int
 ultrix_sys_access(struct lwp *l, const struct ultrix_sys_access_args *uap, register_t *retval)
 {
 
-	return (sys_access(l, uap, retval));
+	return sys_access(l, (const struct sys_access_args *)uap, retval);
 }
 
 int
 ultrix_sys_stat(struct lwp *l, const struct ultrix_sys_stat_args *uap, register_t *retval)
 {
 
-	return (compat_43_sys_stat(l, uap, retval));
+	return compat_43_sys_stat(l,
+	    (const struct compat_43_sys_stat_args *)uap, retval);
 }
 
 int
 ultrix_sys_lstat(struct lwp *l, const struct ultrix_sys_lstat_args *uap, register_t *retval)
 {
 
-	return (compat_43_sys_lstat(l, uap, retval));
+	return compat_43_sys_lstat(l,
+	    (const struct compat_43_sys_lstat_args *)uap, retval);
 }
 
 int
@@ -125,7 +127,7 @@ ultrix_sys_execv(struct lwp *l, const struct ultrix_sys_execv_args *uap, registe
 	SCARG(&ap, argp) = SCARG(uap, argp);
 	SCARG(&ap, envp) = NULL;
 
-	return (sys_execve(l, &ap, retval));
+	return sys_execve(l, &ap, retval);
 }
 
 int
@@ -142,7 +144,7 @@ ultrix_sys_execve(struct lwp *l, const struct ultrix_sys_execve_args *uap, regis
 	SCARG(&ap, argp) = SCARG(uap, argp);
 	SCARG(&ap, envp) = SCARG(uap, envp);
 
-	return (sys_execve(l, &ap, retval));
+	return sys_execve(l, &ap, retval);
 }
 
 int
@@ -152,8 +154,10 @@ ultrix_sys_open(struct lwp *l, const struct ultrix_sys_open_args *uap, register_
 	int q, r;
 	int noctty;
 	int ret;
+	struct sys_open_args ap;
 
 	/* convert open flags into NetBSD flags */
+
 	q = SCARG(uap, flags);
 	noctty = q & 0x8000;
 	r =	(q & (0x0001 | 0x0002 | 0x0008 | 0x0040 | 0x0200 | 0x0400 | 0x0800));
@@ -162,8 +166,10 @@ ultrix_sys_open(struct lwp *l, const struct ultrix_sys_open_args *uap, register_
 	r |=	((q & 0x0100) ? O_EXLOCK : 0);
 	r |=	((q & 0x2000) ? O_FSYNC : 0);
 
-	SCARG(uap, flags) = r;
-	ret = sys_open(l, (struct sys_open_args *)uap, retval);
+	SCARG(&ap, path) = SCARG(uap, path);
+	SCARG(&ap, flags) = r;
+	SCARG(&ap, mode) = SCARG(uap, mode);
+	ret = sys_open(l, &ap, retval);
 
 	/* XXXSMP */
 	if (!ret && !noctty && SESS_LEADER(p) && !(p->p_lflag & PL_CONTROLT)) {
@@ -227,13 +233,13 @@ ultrix_sys_statfs(struct lwp *l, const struct ultrix_sys_statfs_args *uap, regis
 	NDINIT(&nd, LOOKUP, FOLLOW | TRYEMULROOT, UIO_USERSPACE,
 	    SCARG(uap, path));
 	if ((error = namei(&nd)) != 0)
-		return (error);
+		return error;
 
 	mp = nd.ni_vp->v_mount;
 	sp = &mp->mnt_stat;
 	vrele(nd.ni_vp);
 	if ((error = VFS_STATVFS(mp, sp)) != 0)
-		return (error);
+		return error;
 	sp->f_flag = mp->mnt_flag & MNT_VISFLAGMASK;
 	return ultrixstatfs(sp, (void *)SCARG(uap, buf));
 }
@@ -254,7 +260,7 @@ ultrix_sys_fstatfs(struct lwp *l, const struct ultrix_sys_fstatfs_args *uap, reg
 
 	/* getvnode() will use the descriptor for us */
 	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
-		return (error);
+		return error;
 	mp = ((struct vnode *)fp->f_data)->v_mount;
 	sp = &mp->mnt_stat;
 	if ((error = VFS_STATVFS(mp, sp)) != 0)
@@ -263,7 +269,7 @@ ultrix_sys_fstatfs(struct lwp *l, const struct ultrix_sys_fstatfs_args *uap, reg
 	error = ultrixstatfs(sp, (void *)SCARG(uap, buf));
  out:
 	FILE_UNUSE(fp, l);
-	return (error);
+	return error;
 }
 
 int
@@ -271,7 +277,8 @@ ultrix_sys_mknod(struct lwp *l, const struct ultrix_sys_mknod_args *uap, registe
 {
 
 	if (S_ISFIFO(SCARG(uap, mode)))
-		return sys_mkfifo(l, uap, retval);
+		return sys_mkfifo(l, (const struct sys_mkfifo_args *)uap,
+		    retval);
 
-	return sys_mknod(l, (struct sys_mknod_args *)uap, retval);
+	return sys_mknod(l, (const struct sys_mknod_args *)uap, retval);
 }
