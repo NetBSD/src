@@ -1,4 +1,4 @@
-/*	$NetBSD: ipifuncs.c,v 1.14 2007/12/20 23:46:10 ad Exp $ */
+/*	$NetBSD: ipifuncs.c,v 1.15 2007/12/27 16:50:43 joerg Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.14 2007/12/20 23:46:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.15 2007/12/27 16:50:43 joerg Exp $");
 
 /*
  * Interprocessor interrupt handlers.
@@ -84,7 +84,7 @@ void x86_64_reload_mtrr(struct cpu_info *);
 #if NACPI > 0
 void acpi_cpu_sleep(struct cpu_info *);
 #else
-#define	acpu_cpu_sleep NULL
+#define	acpi_cpu_sleep NULL
 #endif
 
 void (*ipifunc[X86_NIPI])(struct cpu_info *) =
