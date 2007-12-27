@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.14 2006/04/24 19:00:30 snj Exp $	*/
+/*	$NetBSD: machdep.c,v 1.15 2007/12/27 23:53:00 dholland Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)machdep.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: machdep.c,v 1.14 2006/04/24 19:00:30 snj Exp $");
+__RCSID("$NetBSD: machdep.c,v 1.15 2007/12/27 23:53:00 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -456,7 +456,7 @@ md_lock(l)
 		setegid(egid);
 		if ((fd = open(_PATH_SCOREFILE, O_RDONLY)) < 1) {
 			setegid(gid);
-			message("cannot lock score file", 0);
+			messagef(0, "cannot lock score file");
 			return;
 		}
 		setegid(gid);
@@ -472,10 +472,13 @@ md_lock(l)
 /* md_shell():
  *
  * This function spawns a shell for the user to use.  When this shell is
- * terminated, the game continues.  Since this program may often be run
- * setuid to gain access to privileged files, care is taken that the shell
- * is run with the user's REAL user id, and not the effective user id.
- * The effective user id is restored after the shell completes.
+ * terminated, the game continues.
+ *
+ * It is important that the game not give the shell the privileges the
+ * game uses to access the scores file. This version of the game runs
+ * with privileges low by default; only the saved gid (if setgid) or uid
+ * (if setuid) will be privileged, but that privilege is discarded by
+ * exec().
  */
 
 void
@@ -483,11 +486,19 @@ md_shell(shell)
 	const char *shell;
 {
 	int w;
+	pid_t pid;
 
-	if (!fork()) {
+	pid = fork();
+	switch (pid) {
+	case -1:
+		break;
+	case 0:
 		execl(shell, shell, (char *) 0);
+		_exit(255);
+	default:
+		waitpid(pid, &w, 0);
+		break;
 	}
-	wait(&w);
 }
 
 #endif

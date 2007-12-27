@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.6 2003/08/07 09:37:40 agc Exp $	*/
+/*	$NetBSD: trap.c,v 1.7 2007/12/27 23:53:01 dholland Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)trap.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: trap.c,v 1.6 2003/08/07 09:37:40 agc Exp $");
+__RCSID("$NetBSD: trap.c,v 1.7 2007/12/27 23:53:01 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -99,7 +99,7 @@ trap_player(row, col)
 	}
 	dungeon[row][col] &= (~HIDDEN);
 	if (rand_percent(rogue.exp + ring_exp)) {
-		message("the trap failed", 1);
+		messagef(1, "the trap failed");
 		return;
 	}
 	switch(t) {
@@ -108,7 +108,7 @@ trap_player(row, col)
 		new_level_message = trap_strings[(t*2)+1];
 		break;
 	case BEAR_TRAP:
-		message(trap_strings[(t*2)+1], 1);
+		messagef(1, "%s", trap_strings[(t*2)+1]);
 		bear_trap = get_rand(4, 7);
 		break;
 	case TELE_TRAP:
@@ -116,7 +116,7 @@ trap_player(row, col)
 		tele();
 		break;
 	case DART_TRAP:
-		message(trap_strings[(t*2)+1], 1);
+		messagef(1, "%s", trap_strings[(t*2)+1]);
 		rogue.hp_current -= get_damage("1d6", 1);
 		if (rogue.hp_current <= 0) {
 			rogue.hp_current = 0;
@@ -131,11 +131,11 @@ trap_player(row, col)
 		}
 		break;
 	case SLEEPING_GAS_TRAP:
-		message(trap_strings[(t*2)+1], 1);
+		messagef(1, "%s", trap_strings[(t*2)+1]);
 		take_a_nap();
 		break;
 	case RUST_TRAP:
-		message(trap_strings[(t*2)+1], 1);
+		messagef(1, "%s", trap_strings[(t*2)+1]);
 		rust((object *) 0);
 		break;
 	}
@@ -191,7 +191,7 @@ id_trap()
 {
 	short dir, row, col, d, t;
 
-	message("direction? ", 0);
+	messagef(0, "direction? ");
 
 	while (!is_direction(dir = rgetchar(), &d)) {
 		sound_bell();
@@ -208,9 +208,9 @@ id_trap()
 
 	if ((dungeon[row][col] & TRAP) && (!(dungeon[row][col] & HIDDEN))) {
 		t = trap_at(row, col);
-		message(trap_strings[t*2], 0);
+		messagef(0, "%s", trap_strings[t*2]);
 	} else {
-		message("no trap there", 0);
+		messagef(0, "no trap there");
 	}
 }
 
@@ -269,7 +269,8 @@ search(n, is_auto)
 						shown++;
 						if (dungeon[row][col] & TRAP) {
 							t = trap_at(row, col);
-							message(trap_strings[t*2], 1);
+							messagef(1, "%s",
+								 trap_strings[t*2]);
 						}
 					}
 				}
