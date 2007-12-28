@@ -1,4 +1,4 @@
-.\"     $NetBSD: namei.9,v 1.16 2007/06/30 18:55:19 pooka Exp $
+.\"     $NetBSD: namei.9,v 1.17 2007/12/28 18:05:22 pooka Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd June 30, 2007
+.Dd December 28, 2007
 .Dt NAMEI 9
 .Os
 .Sh NAME
@@ -45,7 +45,6 @@
 .Nd pathname lookup
 .Sh SYNOPSIS
 .In sys/namei.h
-.In sys/lwp.h
 .In sys/uio.h
 .In sys/vnode.h
 .Ft int
@@ -57,7 +56,7 @@
 "struct componentname *cnp"
 .Ft void
 .Fn NDINIT "struct nameidata *ndp" "u_long op" "u_long flags" \
-"enum uio_seg segflg" "const char *namep" "struct lwp *l"
+"enum uio_seg segflg" "const char *namep"
 .Sh DESCRIPTION
 The
 .Nm
@@ -107,7 +106,6 @@ struct nameidata {
                  */
                 u_long  cn_nameiop;     /* namei operation */
                 u_long  cn_flags;       /* flags to namei */
-                struct  lwp *cn_lwp;    /* lwp requesting lookup */
                 kauth_cred_t cn_cred;   /* credentials */
                 /*
                  * Shared between lookup and commit routines.
@@ -273,7 +271,7 @@ and the pathname component by
 .Fa cnp .
 The vnode of the pathname is returned in the address specified by
 .Fa vpp .
-.It Fn NDINIT "ndp" "op" "flags" "segflg" "namep" "l"
+.It Fn NDINIT "ndp" "op" "flags" "segflg" "namep"
 Initialise a nameidata structure pointed to by
 .Fa ndp
 for use by the
@@ -298,9 +296,16 @@ The argument
 .Fa namep
 is a pointer to the pathname that
 .Em ndp-\*[Gt]ni_dirp
-is set to and
-.Fa l
-is the calling lwp.
+is set to.
+.Pp
+This routine stores the credentials of the calling thread
+.Va ( curlwp )
+in
+.Fa ndp .
+In the rare case that another set of credentials is required for the
+namei operation,
+.Em ndp-\*[Gt]ni_cnd.cn_cred
+must be set manually.
 .El
 .Sh CODE REFERENCES
 This section describes places within the
