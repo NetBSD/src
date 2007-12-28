@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.101 2007/12/27 17:49:36 garbled Exp $	*/
+/*	$NetBSD: machdep.c,v 1.102 2007/12/28 04:47:37 garbled Exp $	*/
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.101 2007/12/27 17:49:36 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.102 2007/12/28 04:47:37 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -59,6 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.101 2007/12/27 17:49:36 garbled Exp $"
 
 #include <powerpc/oea/bat.h>
 #include <powerpc/ofw_cons.h>
+#include <powerpc/rtas.h>
 
 #include "com.h"
 #if (NCOM > 0)
@@ -180,13 +181,13 @@ dumpsys(void)
 /*
  * Halt or reboot the machine after syncing/dumping according to howto.
  */
-void rtas_reboot(void);
 
 void
 cpu_reboot(int howto, char *what)
 {
 	static int syncing;
 	static char str[256];
+	int junk;
 	char *ap = str, *ap1 = ap;
 
 	boothowto = howto;
@@ -206,7 +207,7 @@ cpu_reboot(int howto, char *what)
 	doshutdownhooks();
 	aprint_normal("rebooting\n\n");
 
-	rtas_reboot();
+	rtas_call(RTAS_FUNC_SYSTEM_REBOOT, 0, 1, &junk);
 	for(;;);
 
 	if (what && *what) {
