@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_rfw.c,v 1.5.6.4 2007/12/26 21:40:02 ad Exp $	*/
+/*	$NetBSD: lfs_rfw.c,v 1.5.6.5 2007/12/28 21:41:50 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_rfw.c,v 1.5.6.4 2007/12/26 21:40:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_rfw.c,v 1.5.6.5 2007/12/28 21:41:50 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -245,7 +245,7 @@ update_meta(struct lfs *fs, ino_t ino, int vers, daddr_t lbn,
 		return (error);
 	}
 	/* No need to write, the block is already on disk */
-	if (bp->b_flags & B_DELWRI) {
+	if (bp->b_oflags & BO_DELWRI) {
 		LFS_UNLOCK_BUF(bp);
 		fs->lfs_avail += btofsb(fs, bp->b_bcount);
 	}
