@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.119 2007/12/26 22:11:52 christos Exp $	*/
+/*	$NetBSD: exec.h,v 1.120 2007/12/28 17:14:50 elad Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -203,7 +203,6 @@ struct exec_package {
 	struct vnode *ep_interp;        /* vnode of (elf) interpeter */
 	uint32_t ep_pax_flags;		/* pax flags */
 	char	*ep_path;		/* absolute path of executable */
-	uint32_t ep_random;		/* random seed for PaX ASLR */
 };
 #define	EXEC_INDIR	0x0001		/* script handling already done */
 #define	EXEC_HASFD	0x0002		/* holding a shell script */

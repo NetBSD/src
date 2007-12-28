@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.261 2007/12/26 22:49:19 xtraeme Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.262 2007/12/28 17:14:50 elad Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.261 2007/12/26 22:49:19 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.262 2007/12/28 17:14:50 elad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -296,11 +296,6 @@ check_exec(struct lwp *l, struct exec_package *epp)
 	if (error)
 		goto bad2;
 	epp->ep_hdrvalid = epp->ep_hdrlen - resid;
-
-#ifdef PAX_ASLR
-	/* Generate random seed to be used. */
-	epp->ep_random = arc4random();
-#endif /* PAX_ASLR */
 
 	/*
 	 * Set up default address space limits.  Can be overridden
@@ -609,6 +604,11 @@ execve1(struct lwp *l, const char *path, char * const *args,
 		    sizeof(char *) + sizeof(int) + dp + STACKGAPLEN +
 		    szsigcode + sizeof(struct ps_strings) + STACK_PTHREADSPACE)
 		    - argp;
+
+#ifdef PAX_ASLR
+	if (pax_aslr_active(l))
+		len += (arc4random() % PAGE_SIZE);
+#endif /* PAX_ASLR */
 
 #ifdef STACKLALIGN	/* arm, etc. */
 	len = STACKALIGN(len);	/* make the stack "safely" aligned */

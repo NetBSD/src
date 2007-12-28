@@ -1,4 +1,4 @@
-/* $NetBSD: kern_pax.c,v 1.19 2007/12/27 15:21:53 elad Exp $ */
+/* $NetBSD: kern_pax.c,v 1.20 2007/12/28 17:14:51 elad Exp $ */
 
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_pax.c,v 1.19 2007/12/27 15:21:53 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_pax.c,v 1.20 2007/12/28 17:14:51 elad Exp $");
 
 #include "opt_pax.h"
 
@@ -394,7 +394,7 @@ void
 pax_aslr_stack(struct lwp *l, struct exec_package *epp, u_long *max_stack_size)
 {
 	if (pax_aslr_active(l)) {
-		u_long d =  PAX_ASLR_DELTA(epp->ep_random,
+		u_long d =  PAX_ASLR_DELTA(arc4random(),
 		    PAX_ASLR_DELTA_STACK_LSB,
 		    PAX_ASLR_DELTA_STACK_LEN);
 #ifdef DEBUG_ASLR
