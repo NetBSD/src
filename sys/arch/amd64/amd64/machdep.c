@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.76 2007/12/27 21:31:35 joerg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.77 2007/12/28 07:04:54 dogcow Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007
@@ -120,7 +120,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.76 2007/12/27 21:31:35 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.77 2007/12/28 07:04:54 dogcow Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -134,11 +134,11 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.76 2007/12/27 21:31:35 joerg Exp $");
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
 #include "opt_mtrr.h"
+#include "opt_realmem.h"
+#include "opt_xen.h"
 #ifndef XEN
 #include "opt_physmem.h"
 #endif
-#include "opt_realmem.h"
-#include "opt_xen.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
