@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2006/11/11 14:47:27 jmmv Exp $
+#	$NetBSD: Makefile,v 1.12 2007/12/28 21:44:32 ad Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/18/93
 
 .include <bsd.own.mk>
@@ -13,7 +13,8 @@ MAN=	lfs_cleanerd.8
 FSCK_LFS= ${NETBSDSRCDIR}/sbin/fsck_lfs
 DPADD=  ${LIBUTIL}
 LDADD=  -lutil
-CPPFLAGS+=-I${FSCK_LFS} # -DUSE_CLIENT_SERVER 
+CPPFLAGS+=-I${FSCK_LFS} "-Dmutex_enter(x)=" "-Dmutex_exit(x)=" # -DUSE_CLIENT_SERVER 
+CPPFLAGS+="-DKASSERT(x)="
 #CPPFLAGS+=-DREPAIR_ZERO_FINFO
 #CPPFLAGS+=-DTEST_PATTERN
 
