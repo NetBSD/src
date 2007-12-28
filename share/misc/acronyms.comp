@@ -18,6 +18,7 @@ ARP	address resolution protocol
 ARQ	automatic repeat request
 AS	autonomous system
 ASCII	american standard code for information interchange
+ASLR	address space layout randomization
 ASN	autonomous system number
 AT	advanced technology
 ATA	advanced technology attachment
@@ -233,7 +234,9 @@ PERL	practical extraction [and] report language
 PFS	perfect forward secrecy
 PGP	pretty good privacy
 PIC	programmable interrupt controller
+PIC	position independent code
 PID	process id
+PIE	position independent executable
 PIN	personal identification number
 PIO	programmed input/output
 PLL	phase locked loop
