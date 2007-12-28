@@ -1,4 +1,4 @@
-/*	$NetBSD: catopen.c,v 1.23 2005/11/29 03:12:00 christos Exp $	*/
+/*	$NetBSD: catopen.c,v 1.24 2007/12/28 00:39:32 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: catopen.c,v 1.23 2005/11/29 03:12:00 christos Exp $");
+__RCSID("$NetBSD: catopen.c,v 1.24 2007/12/28 00:39:32 martin Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #define _NLS_PRIVATE
@@ -179,7 +179,6 @@ load_msgcat(path)
 	close (fd);
 
 	if (data == (void *)-1) {
-		munmap(data, (size_t)st.st_size);
 		return (nl_catd)-1;
 	}
 
