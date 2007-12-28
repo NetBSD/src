@@ -60,5 +60,6 @@ enum rtas_func {
 };
 
 int rtas_call(int, int, int, ...);
+int rtas_has_func(int);
 
 #endif /* _POWERPC_RTAS_H_ */
