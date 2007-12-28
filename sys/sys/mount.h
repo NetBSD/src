@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.167.2.2 2007/12/26 21:39:55 ad Exp $	*/
+/*	$NetBSD: mount.h,v 1.167.2.3 2007/12/28 18:32:28 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -40,6 +40,8 @@
 #include <sys/stat.h>
 #endif /* _NETBSD_SOURCE */
 #endif
+
+#ifndef _STANDALONE
 #include <sys/ucred.h>
 #include <sys/fstypes.h>
 #include <sys/queue.h>
@@ -47,6 +49,7 @@
 #include <sys/statvfs.h>
 #include <sys/vnode.h>
 #include <sys/specificdata.h>
+#endif	/* !_STANDALONE */
 
 /*
  * file system statistics
@@ -88,6 +91,8 @@
 #define MOUNT_HFS	"hfs"		/* Apple HFS+ Filesystem */
 #define MOUNT_EFS	"efs"		/* SGI's Extent Filesystem */
 #define MOUNT_ZFS	"zfs"		/* Sun ZFS */
+
+#ifndef _STANDALONE
 
 /*
  * Structure per mounted file system.  Each mounted file system has an
@@ -132,7 +137,6 @@ struct mount {
 #define	VFS_MAGICLINKS  4		/* expand 'magic' symlinks */
 #define	VFSGEN_MAXID	5		/* number of valid vfs.generic ids */
 
-#ifndef _STANDALONE
 /*
  * USE THE SAME NAMES AS MOUNT_*!
  *
