@@ -1,4 +1,4 @@
-/*     $NetBSD: buf.h,v 1.100.2.2 2007/12/26 21:39:55 ad Exp $ */
+/*     $NetBSD: buf.h,v 1.100.2.3 2007/12/28 21:41:29 ad Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2007 The NetBSD Foundation, Inc.
@@ -150,7 +150,7 @@ struct buf {
 						      (partition relative) */
 	daddr_t			b_rawblkno;	/* b: raw physical block number
 						      (volume relative) */
-	proc_t			*b_proc;	/* b: proc if BB_PHYS */
+	struct proc		*b_proc;	/* b: proc if BB_PHYS */
 	void			*b_saveaddr;	/* b: saved b_data for physio */
 
 	/*
