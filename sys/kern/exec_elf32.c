@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.129 2007/12/27 15:21:52 elad Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.130 2007/12/28 17:14:50 elad Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.129 2007/12/27 15:21:52 elad Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.130 2007/12/28 17:14:50 elad Exp $");
 
 /* If not included by exec_elf64.c, ELFSIZE won't be defined. */
 #ifndef ELFSIZE
@@ -130,6 +130,7 @@ pax_aslr_elf(struct lwp *l, struct exec_package *epp, Elf_Ehdr *eh,
     Elf_Phdr *ph)
 {
 	size_t pax_align = 0, pax_offset, i;
+	uint32_t r;
 
 	if (!pax_aslr_active(l))
 		return;
@@ -144,14 +145,16 @@ pax_aslr_elf(struct lwp *l, struct exec_package *epp, Elf_Ehdr *eh,
 			break;
 		}
 
+	r = arc4random();
+
 	if (pax_align == 0)
 		pax_align = PGSHIFT;
 #ifdef DEBUG_ASLR
-	uprintf("r=0x%x a=0x%x p=0x%x Delta=0x%lx\n", epp->ep_random,
-	    ilog2(pax_align), PGSHIFT, PAX_ASLR_DELTA(epp->ep_random, 
+	uprintf("r=0x%x a=0x%x p=0x%x Delta=0x%lx\n", r,
+	    ilog2(pax_align), PGSHIFT, PAX_ASLR_DELTA(r,
 		ilog2(pax_align), PAX_ASLR_DELTA_EXEC_LEN));
 #endif
-	pax_offset = ELF_TRUNC(PAX_ASLR_DELTA(epp->ep_random,
+	pax_offset = ELF_TRUNC(PAX_ASLR_DELTA(r,
 	    ilog2(pax_align), PAX_ASLR_DELTA_EXEC_LEN), pax_align);
 
 	for (i = 0; i < eh->e_phnum; i++)
