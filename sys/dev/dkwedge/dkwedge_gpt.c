@@ -1,4 +1,4 @@
-/*	$NetBSD: dkwedge_gpt.c,v 1.6 2007/03/04 06:01:45 christos Exp $	*/
+/*	$NetBSD: dkwedge_gpt.c,v 1.7 2007/12/28 19:53:10 riz Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dkwedge_gpt.c,v 1.6 2007/03/04 06:01:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dkwedge_gpt.c,v 1.7 2007/12/28 19:53:10 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,8 +62,14 @@ static const struct {
 #if 0
 	{ GPT_ENT_TYPE_FREEBSD,		??? },
 #endif
-	{ GPT_ENT_TYPE_FREEBSD_SWAP,	"swap" },	/* XXX for now */
-	{ GPT_ENT_TYPE_FREEBSD_UFS,	"ffs" },	/* XXX for now */
+	{ GPT_ENT_TYPE_NETBSD_SWAP,		DKW_PTYPE_SWAP },
+	{ GPT_ENT_TYPE_FREEBSD_SWAP,		DKW_PTYPE_SWAP },
+	{ GPT_ENT_TYPE_NETBSD_FFS,		DKW_PTYPE_FFS },
+	{ GPT_ENT_TYPE_FREEBSD_UFS,		DKW_PTYPE_FFS },
+	{ GPT_ENT_TYPE_NETBSD_LFS,		DKW_PTYPE_LFS },
+	{ GPT_ENT_TYPE_NETBSD_RAIDFRAME,	DKW_PTYPE_RAIDFRAME },
+	{ GPT_ENT_TYPE_NETBSD_CCD,		DKW_PTYPE_CCD },
+	{ GPT_ENT_TYPE_NETBSD_CGD,		DKW_PTYPE_CGD },
 
 	/* XXX What about the MS and Linux types? */
 

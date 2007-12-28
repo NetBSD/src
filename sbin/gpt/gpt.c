@@ -31,7 +31,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/gpt.c,v 1.16 2006/07/07 02:44:23 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: gpt.c,v 1.6 2007/12/19 05:48:33 dogcow Exp $");
+__RCSID("$NetBSD: gpt.c,v 1.7 2007/12/28 19:53:10 riz Exp $");
 #endif
 
 #include <sys/param.h>
@@ -280,6 +280,17 @@ parse_uuid(const char *s, uuid_t *uuid)
 		return (0);
 
 	switch (*s) {
+	case 'c':
+		if (strcmp(s, "ccd") == 0) {
+			uuid_t ccd = GPT_ENT_TYPE_NETBSD_CCD;
+			*uuid = ccd;
+			return (0);
+		} else if (strcmp(s, "cgd") == 0) {
+			uuid_t cgd = GPT_ENT_TYPE_NETBSD_CGD;
+			*uuid = cgd;
+			return (0);
+		}
+		break;
 	case 'e':
 		if (strcmp(s, "efi") == 0) {
 			uuid_t efi = GPT_ENT_TYPE_EFI;
@@ -295,22 +306,33 @@ parse_uuid(const char *s, uuid_t *uuid)
 		}
 		break;
 	case 'l':
-		if (strcmp(s, "linux") == 0) {
+		if (strcmp(s, "lfs") == 0) {
+			uuid_t lfs = GPT_ENT_TYPE_NETBSD_LFS;
+			*uuid = lfs;
+			return (0);
+		} else if (strcmp(s, "linux") == 0) {
 			uuid_t lnx = GPT_ENT_TYPE_MS_BASIC_DATA;
 			*uuid = lnx;
 			return (0);
 		}
 		break;
+	case 'r':
+		if (strcmp(s, "raid") == 0) {
+			uuid_t raid = GPT_ENT_TYPE_NETBSD_RAIDFRAME;
+			*uuid = raid;
+			return (0);
+		}
+		break;
 	case 's':
 		if (strcmp(s, "swap") == 0) {
-			uuid_t sw = GPT_ENT_TYPE_FREEBSD_SWAP;
+			uuid_t sw = GPT_ENT_TYPE_NETBSD_SWAP;
 			*uuid = sw;
 			return (0);
 		}
 		break;
 	case 'u':
 		if (strcmp(s, "ufs") == 0) {
-			uuid_t ufs = GPT_ENT_TYPE_FREEBSD_UFS;
+			uuid_t ufs = GPT_ENT_TYPE_NETBSD_FFS;
 			*uuid = ufs;
 			return (0);
 		}
