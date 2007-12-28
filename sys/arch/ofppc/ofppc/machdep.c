@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.102 2007/12/28 04:47:37 garbled Exp $	*/
+/*	$NetBSD: machdep.c,v 1.103 2007/12/28 05:12:41 garbled Exp $	*/
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.102 2007/12/28 04:47:37 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.103 2007/12/28 05:12:41 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -75,7 +75,7 @@ void ofwppc_batinit(void);
 void	ofppc_bootstrap_console(void);
 
 extern u_int l2cr_config;
-
+extern int machine_has_rtas;
 
 void
 initppc(u_int startkernel, u_int endkernel, char *args)
@@ -200,6 +200,9 @@ cpu_reboot(int howto, char *what)
 	if (howto & RB_HALT) {
 		doshutdownhooks();
 		aprint_normal("halted\n\n");
+		if ((howto & 0x800) && machine_has_rtas &&
+		    rtas_has_func(RTAS_FUNC_POWER_OFF))
+			rtas_call(RTAS_FUNC_POWER_OFF, 2, 1, 0, 0, &junk);
 		ppc_exit();
 	}
 	if (!cold && (howto & RB_DUMP))
@@ -207,8 +210,10 @@ cpu_reboot(int howto, char *what)
 	doshutdownhooks();
 	aprint_normal("rebooting\n\n");
 
-	rtas_call(RTAS_FUNC_SYSTEM_REBOOT, 0, 1, &junk);
-	for(;;);
+	if (machine_has_rtas && rtas_has_func(RTAS_FUNC_SYSTEM_REBOOT)) {
+		rtas_call(RTAS_FUNC_SYSTEM_REBOOT, 0, 1, &junk);
+		for(;;);
+	}
 
 	if (what && *what) {
 		if (strlen(what) > sizeof str - 5)
