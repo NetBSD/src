@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.137.2.5 2007/12/26 21:39:42 ad Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.137.2.6 2007/12/28 15:06:20 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002, 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.137.2.5 2007/12/26 21:39:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.137.2.6 2007/12/28 15:06:20 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pool.h"
@@ -2606,17 +2606,21 @@ pool_cache_put_slow(pool_cache_cpu_t *cc, int *s, void *object, paddr_t pa)
 		/*
 		 * If there's a empty group, release our full
 		 * group back to the cache.  Install the empty
-		 * group as cc_current and return.
+		 * group and return.
 		 */
-		if ((cur = cc->cc_current) != NULL) {
-			KASSERT(cur->pcg_avail == pcg->pcg_size);
-			cur->pcg_next = pc->pc_fullgroups;
-			pc->pc_fullgroups = cur;
-			pc->pc_nfull++;
-		}
 		KASSERT(pcg->pcg_avail == 0);
-		cc->cc_current = pcg;
 		pc->pc_emptygroups = pcg->pcg_next;
+		if (cc->cc_previous == NULL) {
+			cc->cc_previous = pcg;
+		} else {
+			if ((cur = cc->cc_current) != NULL) {
+				KASSERT(cur->pcg_avail == pcg->pcg_size);
+				cur->pcg_next = pc->pc_fullgroups;
+				pc->pc_fullgroups = cur;
+				pc->pc_nfull++;
+			}
+			cc->cc_current = pcg;
+		}
 		pc->pc_hits++;
 		pc->pc_nempty--;
 		mutex_exit(&pc->pc_lock);
