@@ -1,11 +1,8 @@
-#	$NetBSD: Makefile,v 1.22 2007/11/30 21:48:40 dsl Exp $
+#	$NetBSD: Makefile,v 1.22.2.1 2007/12/28 21:43:15 ad Exp $
 #
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/sys/rump/Makefile.rump"
-
-# Temporary until atomic_add_int() is in libc
-CPPFLAGS += -D_SYS_ATOMIC_H_ '-Datomic_add_int(t,v)=*(t)+=(v)'
 
 LIB=	rump
 
@@ -15,8 +12,8 @@ LIB=	rump
 	${NETBSDSRCDIR}/sys/miscfs/syncfs
 
 # implement something
-SRCS=	rump.c auth.c emul.c genfs_io.c locks.c ltsleep.c pool.c	\
-	specfs.c vfs.c vm.c
+SRCS=	rump.c atomic.c auth.c emul.c genfs_io.c locks.c ltsleep.c pool.c \
+	intr.c specfs.c vfs.c vm.c
 
 # just stubs
 SRCS+=	fstrans_stub.c misc_stub.c pmap_stub.c vfsops_stub.c

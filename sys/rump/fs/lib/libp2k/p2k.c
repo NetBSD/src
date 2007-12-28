@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.c,v 1.31 2007/11/30 19:02:31 pooka Exp $	*/
+/*	$NetBSD: p2k.c,v 1.31.2.1 2007/12/28 21:43:11 ad Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -669,11 +669,12 @@ int
 p2k_node_inactive(struct puffs_usermount *pu, void *opc)
 {
 	struct vnode *vp = opc;
+	bool recycle;
 	int rv;
 
 	(void) RUMP_VOP_PUTPAGES(vp, 0, 0, PGO_ALLPAGES);
 	VLE(vp);
-	rv = RUMP_VOP_INACTIVE(vp);
+	rv = RUMP_VOP_INACTIVE(vp, &recycle);
 	if (vp->v_usecount == 0)
 		puffs_setback(puffs_cc_getcc(pu), PUFFS_SETBACK_NOREF_N1);
 
