@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.194.2.3 2007/12/26 23:07:22 ad Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.194.2.4 2007/12/28 14:28:06 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.194.2.3 2007/12/26 23:07:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.194.2.4 2007/12/28 14:28:06 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -381,15 +381,11 @@ exit1(struct lwp *l, int rv)
 				tp->t_pgrp = NULL;
 				tp->t_session = NULL;
 				mutex_spin_exit(&tty_lock);
-				SESSRELE(sp);
 				mutex_exit(&proclist_lock);
 				(void) ttywait(tp);
 				mutex_enter(&proclist_lock);
 
-				/*
-				 * The tty could have been revoked
-				 * if we blocked.
-				 */
+				/* The tty could have been revoked. */
 				vprevoke = sp->s_ttyvp;
 			} else
 				mutex_spin_exit(&tty_lock);
@@ -404,6 +400,7 @@ exit1(struct lwp *l, int rv)
 		sp->s_leader = NULL;
 
 		if (vprevoke != NULL || vprele != NULL) {
+			SESSRELE(sp);
 			mutex_exit(&proclist_lock);
 			if (vprevoke != NULL)
 				VOP_REVOKE(vprevoke, REVOKEALL);
@@ -685,9 +682,8 @@ do_sys_wait(struct lwp *l, int *pid, int *status, int options,
 	struct proc	*child;
 	int		error;
 
-	mutex_enter(&proclist_lock);
-
 	KERNEL_LOCK(1, NULL);		/* XXXSMP */
+	mutex_enter(&proclist_lock);
 	error = find_stopped_child(l->l_proc, *pid, options, &child, status);
 	KERNEL_UNLOCK_ONE(NULL);	/* XXXSMP */
 
