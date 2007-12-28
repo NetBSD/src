@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.156 2007/11/12 14:54:43 jmmv Exp $
+#	$NetBSD: bsd.sys.mk,v 1.157 2007/12/28 21:35:45 christos Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -68,6 +68,11 @@ FOPTS+=		-msoft-float
 CFLAGS+=	-mieee
 FFLAGS+=	-mieee
 .endif
+.endif
+
+.if defined(MKPIE) && (${MKPIE} != "no")
+CFLAGS+=	-fPIC
+LDFLAGS+=	-Wl,-pie -shared-libgcc
 .endif
 
 .if ${MACHINE} == "sparc64" && ${MACHINE_ARCH} == "sparc"
