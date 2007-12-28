@@ -22,6 +22,8 @@ AS	autonomous system
 ASCII	american standard code for information interchange
 ASLR	address space layout randomization
 ASN	autonomous system number
+AST	abstract syntax tree
+AST	asynchronous trap
 AT	advanced technology
 ATA	advanced technology attachment
 ATAPI	advanced technology attachment packet interface
@@ -230,6 +232,7 @@ OSI	open-source initiative
 OSPF	open shortest path first
 OTP	one time password
 PA	physical address
+PAE	physical address extension
 PAM	pluggable authentication modules
 PAM	pulse amplitude modulation
 PAT	port address translation
@@ -271,6 +274,7 @@ PWM	pulse width modulation
 QOS	quality of service
 RAID	redundant array of inexpensive disks
 RAM	random access memory
+RAS	restartable atomic sequence
 RCS	revision control system
 RGB	red green blue
 RIFF	Resource Interchange File Format
