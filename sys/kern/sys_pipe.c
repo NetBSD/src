@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.87.2.7 2007/12/27 15:26:01 ad Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.87.2.8 2007/12/28 13:10:41 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.87.2.7 2007/12/27 15:26:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.87.2.8 2007/12/28 13:10:41 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1345,9 +1345,13 @@ pipeclose(struct file *fp, struct pipe *pipe)
 static void
 filt_pipedetach(struct knote *kn)
 {
-	struct pipe *pipe = (struct pipe *)kn->kn_fp->f_data;
+	struct pipe *pipe;
+	kmutex_t *lock;
 
-	mutex_enter(pipe->pipe_lock);
+	pipe = (struct pipe *)kn->kn_fp->f_data;
+	lock = pipe->pipe_lock;
+
+	mutex_enter(lock);
 
 	switch(kn->kn_filter) {
 	case EVFILT_WRITE:
@@ -1356,7 +1360,7 @@ filt_pipedetach(struct knote *kn)
 
 		/* if reader end already closed, just return */
 		if (pipe == NULL) {
-			mutex_exit(pipe->pipe_lock);
+			mutex_exit(lock);
 			return;
 		}
 
@@ -1372,7 +1376,7 @@ filt_pipedetach(struct knote *kn)
 #endif
 
 	SLIST_REMOVE(&pipe->pipe_sel.sel_klist, kn, knote, kn_selnext);
-	mutex_exit(pipe->pipe_lock);
+	mutex_exit(lock);
 }
 
 /*ARGSUSED*/
@@ -1446,9 +1450,12 @@ static int
 pipe_kqfilter(struct file *fp, struct knote *kn)
 {
 	struct pipe *pipe;
+	kmutex_t *lock;
 
 	pipe = (struct pipe *)kn->kn_fp->f_data;
-	mutex_enter(pipe->pipe_lock);
+	lock = pipe->pipe_lock;
+
+	mutex_enter(lock);
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
@@ -1459,18 +1466,18 @@ pipe_kqfilter(struct file *fp, struct knote *kn)
 		pipe = pipe->pipe_peer;
 		if (pipe == NULL) {
 			/* other end of pipe has been closed */
-			mutex_exit(pipe->pipe_lock);
+			mutex_exit(lock);
 			return (EBADF);
 		}
 		break;
 	default:
-		mutex_exit(pipe->pipe_lock);
+		mutex_exit(lock);
 		return (EINVAL);
 	}
 
 	kn->kn_hook = pipe;
 	SLIST_INSERT_HEAD(&pipe->pipe_sel.sel_klist, kn, kn_selnext);
-	mutex_exit(pipe->pipe_lock);
+	mutex_exit(lock);
 
 	return (0);
 }
