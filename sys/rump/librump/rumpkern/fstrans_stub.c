@@ -1,4 +1,4 @@
-/*	$NetBSD: fstrans_stub.c,v 1.3 2007/12/02 18:24:34 hannken Exp $	*/
+/*	$NetBSD: fstrans_stub.c,v 1.3.2.1 2007/12/28 21:43:16 ad Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -86,4 +86,17 @@ fscow_run(struct buf *bp, bool data_valid)
 {
 
 	return 0;
+}
+
+int
+fstrans_mount(struct mount *mp)
+{
+
+	return 0;
+}
+
+void
+fstrans_unmount(struct mount *mp)
+{
+
 }

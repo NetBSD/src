@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr2.c,v 1.8.2.3 2007/12/13 20:08:09 ad Exp $	*/
+/*	$NetBSD: vfs_subr2.c,v 1.8.2.4 2007/12/28 21:43:09 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>  
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr2.c,v 1.8.2.3 2007/12/13 20:08:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr2.c,v 1.8.2.4 2007/12/28 21:43:09 ad Exp $");
 
 #include "opt_ddb.h"
 
@@ -153,11 +153,6 @@ u_int numvnodes;
 void
 vntblinit(void)
 {
-	extern pool_cache_t vnode_cache;
-
-	vnode_cache = pool_cache_init(sizeof(struct vnode), 0, 0, 0, "vnodepl",
-	    NULL, IPL_NONE, NULL, NULL, NULL);
-	KASSERT(vnode_cache != NULL);
 
 	mutex_init(&mountlist_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&mntid_lock, MUTEX_DEFAULT, IPL_NONE);
@@ -204,6 +199,63 @@ vfs_destroy(struct mount *mp)
 	mutex_destroy(&mp->mnt_mutex);
 	lockdestroy(&mp->mnt_lock);
 	free(mp, M_MOUNT);
+}
+
+/*
+ * Wait for a vnode (typically with VI_XLOCK set) to be cleaned or
+ * recycled.
+ */
+void
+vwait(vnode_t *vp, int flags)
+{
+
+	KASSERT(mutex_owned(&vp->v_interlock));
+	KASSERT(vp->v_usecount != 0);
+
+	while ((vp->v_iflag & flags) != 0)
+		cv_wait(&vp->v_cv, &vp->v_interlock);
+}
+
+/*
+ * Insert a marker vnode into a mount's vnode list, after the
+ * specified vnode.  mntvnode_lock must be held.
+ */
+void
+vmark(vnode_t *mvp, vnode_t *vp)
+{
+	struct mount *mp;
+
+	mp = mvp->v_mount;
+
+	KASSERT(mutex_owned(&mntvnode_lock));
+	KASSERT((mvp->v_iflag & VI_MARKER) != 0);
+	KASSERT(vp->v_mount == mp);
+
+	TAILQ_INSERT_AFTER(&mp->mnt_vnodelist, vp, mvp, v_mntvnodes);
+}
+
+/*
+ * Remove a marker vnode from a mount's vnode list, and return
+ * a pointer to the next vnode in the list.  mntvnode_lock must
+ * be held.
+ */
+vnode_t *
+vunmark(vnode_t *mvp)
+{
+	vnode_t *vp;
+	struct mount *mp;
+
+	mp = mvp->v_mount;
+
+	KASSERT(mutex_owned(&mntvnode_lock));
+	KASSERT((mvp->v_iflag & VI_MARKER) != 0);
+
+	vp = TAILQ_NEXT(mvp, v_mntvnodes);
+	TAILQ_REMOVE(&mp->mnt_vnodelist, mvp, v_mntvnodes); 
+
+	KASSERT(vp == NULL || vp->v_mount == mp);
+
+	return vp;
 }
 
 /*

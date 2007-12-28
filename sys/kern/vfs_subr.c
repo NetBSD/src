@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.308.2.8 2007/12/27 15:51:26 ad Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.308.2.9 2007/12/28 21:43:08 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.308.2.8 2007/12/27 15:51:26 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.308.2.9 2007/12/28 21:43:08 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -130,7 +130,7 @@ static kmutex_t	vrele_lock;
 static kcondvar_t vrele_cv;
 static lwp_t *vrele_lwp;
 
-pool_cache_t vnode_cache;
+static pool_cache_t vnode_cache;
 
 MALLOC_DEFINE(M_VNODE, "vnodes", "Dynamically allocated vnodes");
 
@@ -159,6 +159,10 @@ vpanic(vnode_t *vp, const char *msg)
 void
 vn_init1(void)
 {
+
+	vnode_cache = pool_cache_init(sizeof(struct vnode), 0, 0, 0, "vnodepl",
+	    NULL, IPL_NONE, NULL, NULL, NULL);
+	KASSERT(vnode_cache != NULL);
 
 	/* Create deferred release thread. */
 	mutex_init(&vrele_lock, MUTEX_DEFAULT, IPL_NONE);
@@ -582,48 +586,6 @@ vfree(vnode_t *vp)
 }
 
 /*
- * Insert a marker vnode into a mount's vnode list, after the
- * specified vnode.  mntvnode_lock must be held.
- */
-void
-vmark(vnode_t *mvp, vnode_t *vp)
-{
-	struct mount *mp;
-
-	mp = mvp->v_mount;
-
-	KASSERT(mutex_owned(&mntvnode_lock));
-	KASSERT((mvp->v_iflag & VI_MARKER) != 0);
-	KASSERT(vp->v_mount == mp);
-
-	TAILQ_INSERT_AFTER(&mp->mnt_vnodelist, vp, mvp, v_mntvnodes);
-}
-
-/*
- * Remove a marker vnode from a mount's vnode list, and return
- * a pointer to the next vnode in the list.  mntvnode_lock must
- * be held.
- */
-vnode_t *
-vunmark(vnode_t *mvp)
-{
-	vnode_t *vp;
-	struct mount *mp;
-
-	mp = mvp->v_mount;
-
-	KASSERT(mutex_owned(&mntvnode_lock));
-	KASSERT((mvp->v_iflag & VI_MARKER) != 0);
-
-	vp = TAILQ_NEXT(mvp, v_mntvnodes);
-	TAILQ_REMOVE(&mp->mnt_vnodelist, mvp, v_mntvnodes); 
-
-	KASSERT(vp == NULL || vp->v_mount == mp);
-
-	return vp;
-}
-
-/*
  * Remove a vnode from its freelist.
  */
 static inline void
@@ -828,21 +790,6 @@ loop:
 	nvp->v_type = VNON;
 	insmntque(vp, mp);
 	return (vp);
-}
-
-/*
- * Wait for a vnode (typically with VI_XLOCK set) to be cleaned or
- * recycled.
- */
-void
-vwait(vnode_t *vp, int flags)
-{
-
-	KASSERT(mutex_owned(&vp->v_interlock));
-	KASSERT(vp->v_usecount != 0);
-
-	while ((vp->v_iflag & flags) != 0)
-		cv_wait(&vp->v_cv, &vp->v_interlock);
 }
 
 /*
