@@ -1,4 +1,4 @@
-/*	$NetBSD: rtas.c,v 1.5 2007/12/28 04:45:57 garbled Exp $ */
+/*	$NetBSD: rtas.c,v 1.6 2007/12/28 05:12:41 garbled Exp $ */
 
 /*
  * CHRP RTAS support routines
@@ -9,7 +9,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtas.c,v 1.5 2007/12/28 04:45:57 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtas.c,v 1.6 2007/12/28 05:12:41 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -22,6 +22,8 @@ __KERNEL_RCSID(0, "$NetBSD: rtas.c,v 1.5 2007/12/28 04:45:57 garbled Exp $");
 #include <machine/autoconf.h>
 #include <machine/stdarg.h>
 #include <powerpc/rtas.h>
+
+int machine_has_rtas = 0;
 
 struct rtas_softc *rtas0_softc;
 
@@ -101,6 +103,8 @@ rtas_attach(struct device *parent, struct device *self, void *aux)
 	char buf[4];
 	int i;
 
+	machine_has_rtas = 1;
+	
 	sc->ra_phandle = ph;
 	if (OF_getprop(ph, "rtas-version", buf, sizeof buf) != sizeof buf)
 		goto fail;
@@ -241,6 +245,12 @@ rtas_call(int token, int nargs, int nreturns, ...)
 	va_end(ap);
 
 	return args.args_n_results[nargs];
+}
+
+int
+rtas_has_func(int token)
+{
+	return rtas_function_token[token].exists;
 }
 
 /*
