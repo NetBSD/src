@@ -1,4 +1,4 @@
-/*	$NetBSD: smc90cx6.c,v 1.53 2007/12/25 23:31:27 he Exp $ */
+/*	$NetBSD: smc90cx6.c,v 1.54 2007/12/28 20:18:45 joerg Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc90cx6.c,v 1.53 2007/12/25 23:31:27 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc90cx6.c,v 1.54 2007/12/28 20:18:45 joerg Exp $");
 
 /* #define BAHSOFTCOPY */
 #define BAHRETRANSMIT /**/
@@ -808,7 +808,7 @@ bahintr(arg)
 			 */
 
 			callout_stop(&sc->sc_recon_ch);
-			newsec = time.tv_sec;
+			newsec = time_second;
 			if ((newsec - sc->sc_recontime <= 2) &&
 			    (++sc->sc_reconcount == ARC_EXCESSIVE_RECONS)) {
 				log(LOG_WARNING,
