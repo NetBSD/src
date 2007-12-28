@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.246.2.4 2007/12/27 16:21:45 ad Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.246.2.5 2007/12/28 14:33:13 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.246.2.4 2007/12/27 16:21:45 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.246.2.5 2007/12/28 14:33:13 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -626,6 +626,74 @@ vm_map_unbusy(struct vm_map *map)
 }
 
 /*
+ * vm_map_lock_read: acquire a shared (read) lock on a map.
+ */
+
+void
+vm_map_lock_read(struct vm_map *map)
+{
+
+	KASSERT((map->flags & VM_MAP_INTRSAFE) == 0);
+
+	rw_enter(&map->lock, RW_READER);
+}
+
+/*
+ * vm_map_unlock_read: release a shared lock on a map.
+ */
+ 
+void
+vm_map_unlock_read(struct vm_map *map)
+{
+
+	KASSERT((map->flags & VM_MAP_INTRSAFE) == 0);
+
+	rw_exit(&map->lock);
+}
+
+/*
+ * vm_map_downgrade: downgrade an exclusive lock to a shared lock.
+ */
+
+void
+vm_map_downgrade(struct vm_map *map)
+{
+
+	rw_downgrade(&map->lock);
+}
+
+/*
+ * vm_map_busy: mark a map as busy.
+ *
+ * => the caller must hold the map write locked
+ */
+
+void
+vm_map_busy(struct vm_map *map)
+{
+
+	KASSERT(rw_write_held(&map->lock));
+	KASSERT(map->busy == NULL);
+
+	map->busy = curlwp;
+}
+
+/*
+ * vm_map_locked_p: return true if the map is write locked.
+ */
+
+bool
+vm_map_locked_p(struct vm_map *map)
+{
+
+	if ((map->flags & VM_MAP_INTRSAFE) != 0) {
+		return mutex_owned(&map->mutex);
+	} else {
+		return rw_write_held(&map->lock);
+	}
+}
+
+/*
  * uvm_mapent_alloc: allocate a map entry
  */
 
@@ -652,6 +720,8 @@ uvm_mapent_alloc(struct vm_map *map, int flags)
 
 /*
  * uvm_mapent_alloc_split: allocate a map entry for clipping.
+ *
+ * => map must be locked by caller if UVM_MAP_QUANTUM is set.
  */
 
 static struct vm_map_entry *
@@ -667,11 +737,10 @@ uvm_mapent_alloc_split(struct vm_map *map,
 	if (old_entry->flags & UVM_MAP_QUANTUM) {
 		struct vm_map_kernel *vmk = vm_map_to_kernel(map);
 
-		mutex_spin_enter(&uvm_kentry_lock);
+		KASSERT(vm_map_locked_p(map));
 		me = vmk->vmk_merged_entries;
 		KASSERT(me);
 		vmk->vmk_merged_entries = me->next;
-		mutex_spin_exit(&uvm_kentry_lock);
 		KASSERT(me->flags & UVM_MAP_QUANTUM);
 	} else {
 		me = uvm_mapent_alloc(map, flags);
@@ -703,6 +772,7 @@ uvm_mapent_free(struct vm_map_entry *me)
  *
  * => keep the entry if needed.
  * => caller shouldn't hold map locked if VM_MAP_USE_KMAPENT(map) is true.
+ * => map should be locked if UVM_MAP_QUANTUM is set.
  */
 
 static void
@@ -717,15 +787,14 @@ uvm_mapent_free_merged(struct vm_map *map, struct vm_map_entry *me)
 		 */
 		struct vm_map_kernel *vmk;
 
+		KASSERT(vm_map_locked_p(map));
 		KASSERT(VM_MAP_IS_KERNEL(map));
 		KASSERT(!VM_MAP_USE_KMAPENT(map) ||
 		    (me->flags & UVM_MAP_KERNEL));
 
 		vmk = vm_map_to_kernel(map);
-		mutex_spin_enter(&uvm_kentry_lock);
 		me->next = vmk->vmk_merged_entries;
 		vmk->vmk_merged_entries = me;
-		mutex_spin_exit(&uvm_kentry_lock);
 	} else {
 		uvm_mapent_free(me);
 	}
@@ -1512,18 +1581,26 @@ nomerge:
 
 	error = 0;
 done:
-	vm_map_unlock(map);
-	if (new_entry) {
-		if (error == 0) {
-			KDASSERT(merged);
-			uvm_mapent_free_merged(map, new_entry);
-		} else {
-			uvm_mapent_free(new_entry);
-		}
+	if ((flags & UVM_FLAG_QUANTUM) == 0) {
+		/*
+		 * vmk_merged_entries is locked by the map's lock.
+		 */
+		vm_map_unlock(map);
+	}
+	if (new_entry && error == 0) {
+		KDASSERT(merged);
+		uvm_mapent_free_merged(map, new_entry);
+		new_entry = NULL;
 	}
 	if (dead) {
 		KDASSERT(merged);
 		uvm_mapent_free_merged(map, dead);
+	}
+	if ((flags & UVM_FLAG_QUANTUM) != 0) {
+		vm_map_unlock(map);
+	}
+	if (new_entry != NULL) {
+		uvm_mapent_free(new_entry);
 	}
 	return error;
 }
