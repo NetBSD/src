@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_misc.c,v 1.56 2007/12/20 23:03:04 dsl Exp $	*/
+/*	$NetBSD: sunos32_misc.c,v 1.57 2007/12/28 10:00:18 hannken Exp $	*/
 /* from :NetBSD: sunos_misc.c,v 1.107 2000/12/01 19:25:10 jdolecek Exp	*/
 
 /*
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.56 2007/12/20 23:03:04 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.57 2007/12/28 10:00:18 hannken Exp $");
 
 #define COMPAT_SUNOS 1
 
@@ -1210,7 +1210,7 @@ sunos32_sys_sysconf(struct lwp *l, const struct sunos32_sys_sysconf_args *uap, r
 	/* {
 		syscallarg(int) name;
 	} */
-	extern int maxfiles;
+	extern u_int maxfiles;
 
 	switch(SCARG(uap, name)) {
 	case SUNOS_SC_ARG_MAX:
