@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.78 2007/11/29 23:20:47 dsl Exp $ */
+/*	$NetBSD: mbr.c,v 1.79 2007/12/28 00:48:43 dholland Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -331,7 +331,7 @@ set_mbr_type(menudesc *m, void *arg)
 	int type;
 	u_int start, sz;
 	int i;
-	char numbuf[4];
+	char numbuf[5];
 
 	dump_mbr(ombri, "set type");
 
