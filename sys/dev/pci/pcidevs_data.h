@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.921 2007/12/24 17:05:53 hamajima Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.922 2007/12/28 00:35:23 dholland Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.921 2007/12/24 17:03:20 hamajima Exp
+ *	NetBSD: pcidevs,v 1.922 2007/12/28 00:34:00 dholland Exp
  */
 
 /*
@@ -10805,7 +10805,7 @@ static const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_PCI,
-	    "nForce MCP65 PCI Brige",
+	    "nForce MCP65 PCI Bridge",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_HDA_1,
