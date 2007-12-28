@@ -1,4 +1,4 @@
-# $NetBSD: sshd_config.in,v 1.1 2007/12/26 20:50:07 jmmv Exp $
+# $NetBSD: sshd_config.in,v 1.2 2007/12/28 08:57:42 jmmv Exp $
 
 # Basic settings.
 Port 10000
@@ -19,7 +19,7 @@ AuthorizedKeysFile @WORKDIR@/authorized_keys
 StrictModes no
 
 # Some settings to allow user runs of sshd.
-PidFile @WORKDIR@/sshd.pid
+PidFile @WORKDIR@/sshd.pid.2
 Subsystem sftp @WORKDIR@/sftp-server
 UsePam no
 UsePrivilegeSeparation no

@@ -1,4 +1,4 @@
-# $NetBSD: t_psshfs.sh,v 1.1 2007/12/26 20:50:07 jmmv Exp $
+# $NetBSD: t_psshfs.sh,v 1.2 2007/12/28 08:57:42 jmmv Exp $
 #
 # Copyright (c) 2007 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -81,7 +81,9 @@ start_ssh() {
 	    atf_fail "Failed to create sshd_config"
 	atf_check 'cp /usr/libexec/sftp-server .' 0 null null
 
-	/usr/sbin/sshd -e -f ./sshd_config >sshd.log 2>&1
+	/usr/sbin/sshd -e -D -f ./sshd_config >sshd.log 2>&1 &
+	echo $! >sshd.pid
+	echo "SSH server started (pid $(cat sshd.pid))"
 
 	echo "Setting up SSH client configuration"
 	atf_check 'ssh-keygen -f ssh_user_key -t rsa -b 1024 -N "" -q' \
