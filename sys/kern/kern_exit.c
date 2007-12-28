@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.194.2.4 2007/12/28 14:28:06 ad Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.194.2.5 2007/12/28 14:35:45 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.194.2.4 2007/12/28 14:28:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.194.2.5 2007/12/28 14:35:45 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -400,10 +400,12 @@ exit1(struct lwp *l, int rv)
 		sp->s_leader = NULL;
 
 		if (vprevoke != NULL || vprele != NULL) {
-			SESSRELE(sp);
-			mutex_exit(&proclist_lock);
-			if (vprevoke != NULL)
+			if (vprevoke != NULL) {
+				SESSRELE(sp);
+				mutex_exit(&proclist_lock);
 				VOP_REVOKE(vprevoke, REVOKEALL);
+			} else
+				mutex_exit(&proclist_lock);
 			if (vprele != NULL)
 				vrele(vprele);
 			mutex_enter(&proclist_lock);
