@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.108 2007/12/17 12:18:31 tsutsui Exp $	*/
+/*	$NetBSD: i82557.c,v 1.109 2007/12/29 17:59:20 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.108 2007/12/17 12:18:31 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.109 2007/12/29 17:59:20 tsutsui Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1363,7 +1363,7 @@ fxp_rxintr(struct fxp_softc *sc)
 #if NBPFILTER > 0
 		/*
 		 * Pass this up to any BPF listeners, but only
-		 * pass it up the stack it its for us.
+		 * pass it up the stack if it's for us.
 		 */
 		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m);
