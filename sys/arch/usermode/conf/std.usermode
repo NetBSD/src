@@ -1,0 +1,11 @@
+# $NetBSD: std.usermode,v 1.1 2007/12/29 14:38:30 jmcneill Exp $
+
+machine usermode
+include "conf/std"
+
+options 	HZ=100
+options		EXEC_ELF32
+options 	EXEC_ELF64
+options 	EXEC_SCRIPT
+
+defflag opt_xen.h	DO_NOT_DEFINE
