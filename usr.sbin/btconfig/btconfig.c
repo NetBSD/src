@@ -1,4 +1,4 @@
-/* $NetBSD: btconfig.c,v 1.8 2007/11/28 20:16:13 plunky Exp $ */
+/* $NetBSD: btconfig.c,v 1.9 2007/12/29 14:35:39 plunky Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -34,7 +34,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2006 Itronix, Inc.\n"
 	    "All rights reserved.\n");
-__RCSID("$NetBSD: btconfig.c,v 1.8 2007/11/28 20:16:13 plunky Exp $");
+__RCSID("$NetBSD: btconfig.c,v 1.9 2007/12/29 14:35:39 plunky Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/param.h>
@@ -612,7 +612,7 @@ config_unit(void)
 void
 print_info(int level)
 {
-	uint8_t val, buf[MAX_STR_SIZE];
+	uint8_t version, val, buf[MAX_STR_SIZE];
 	uint16_t val16;
 
 	if (lflag) {
@@ -640,6 +640,16 @@ print_info(int level)
 
 	if (level-- < 1 || (btr.btr_flags & BTF_UP) == 0)
 		return;
+
+	load_value(HCI_CMD_READ_LOCAL_VER, &version, sizeof(version));
+	printf("\tHCI version: ");
+	switch(version) {
+	case HCI_SPEC_V10:	printf("1.0\n");	break;
+	case HCI_SPEC_V11:	printf("1.0b\n");	break;
+	case HCI_SPEC_V12:	printf("1.2\n");	break;
+	case HCI_SPEC_V20:	printf("2.0\n");	break;
+	default:		printf("unknown\n");	break;
+	}
 
 	load_value(HCI_CMD_READ_UNIT_CLASS, buf, HCI_CLASS_SIZE);
 	class = (buf[2] << 16) | (buf[1] << 8) | (buf[0]);
@@ -682,13 +692,12 @@ print_info(int level)
 	if (val & HCI_LINK_POLICY_ENABLE_PARK_MODE)	tag("park");
 	else if (level > 0)				tag("-park");
 
-/* bt3c(4) locks up if you send this command as it is 1.0b spec
- * I have ideas about fixing that so it can't happen.
- *
-	load_value(HCI_CMD_READ_INQUIRY_MODE, &val, sizeof(val));
+	val = 0;
+	if (version >= HCI_SPEC_V12)
+		load_value(HCI_CMD_READ_INQUIRY_MODE, &val, sizeof(val));
+
 	if (val)				tag("rssi");
 	else if (level > 0)			tag("-rssi");
-*/
 
 	tag(NULL);
 
