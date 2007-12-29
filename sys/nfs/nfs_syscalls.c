@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.126.2.3 2007/12/26 21:39:54 ad Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.126.2.4 2007/12/29 10:20:49 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.126.2.3 2007/12/26 21:39:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.126.2.4 2007/12/29 10:20:49 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -485,7 +485,7 @@ nfssvc_addsock(fp, mynam)
 	so->so_upcall = nfsrv_soupcall;
 	so->so_rcv.sb_flags |= SB_UPCALL;
 	splx(s);
-	KERNEL_UNLOCK_LAST(curlwp);
+	KERNEL_UNLOCK_ONE(curlwp);
 	nfsrv_wakenfsd(slp);
 	return (0);
 }
@@ -864,7 +864,7 @@ nfsrv_zapsock(slp)
 	so->so_rcv.sb_flags &= ~SB_UPCALL;
 	splx(s);
 	soshutdown(so, SHUT_RDWR);
-	KERNEL_UNLOCK_LAST(curlwp);
+	KERNEL_UNLOCK_ONE(curlwp);
 
 	if (slp->ns_nam)
 		m_free(slp->ns_nam);
