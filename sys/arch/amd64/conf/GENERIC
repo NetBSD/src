@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.191 2007/12/26 23:00:50 elad Exp $
+# $NetBSD: GENERIC,v 1.192 2007/12/29 06:09:05 xtraeme Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.191 $"
+#ident 		"GENERIC-$Revision: 1.192 $"
 
 maxusers	32		# estimated number of users
 
@@ -418,7 +418,7 @@ iic*	at ichsmb?
 #adt7463c* at iic? addr 0x2D		# Tyan S2881
 #adt7463c* at iic? addr 0x2E            # Tyan S2882-D
 
-# iTE IT87xxF and compatible hardware monitors
+# iTE IT87xxF Super I/O with watchdog and sensors support
 #itesio0 	at isa? port 0x2e
 
 # Abit uGuru Hardware system monitor
