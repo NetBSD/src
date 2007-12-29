@@ -1,4 +1,4 @@
-/*	$NetBSD: fast_ipsec.c,v 1.8 2007/12/05 00:51:12 seanb Exp $ */
+/*	$NetBSD: fast_ipsec.c,v 1.9 2007/12/29 21:36:43 degroote Exp $ */
 /* 	$FreeBSD: src/tools/tools/crypto/ipsecstats.c,v 1.1.4.1 2003/06/03 00:13:13 sam Exp $ */
 
 /*-
@@ -33,7 +33,7 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #ifdef __NetBSD__
-__RCSID("$NetBSD: fast_ipsec.c,v 1.8 2007/12/05 00:51:12 seanb Exp $");
+__RCSID("$NetBSD: fast_ipsec.c,v 1.9 2007/12/29 21:36:43 degroote Exp $");
 #endif
 #endif /* not lint*/
 
@@ -313,6 +313,8 @@ fast_ipsec_stats(u_long off, char *name)
 	IPCOMP(ipcs.ipcomps_output,	"output IPcomp packets");
 	IPCOMP(ipcs.ipcomps_invalid,	"specified an invalid TDB");
 	IPCOMP(ipcs.ipcomps_toobig,	"packets decompressed as too big");
+	IPCOMP(ipcs.ipcomps_minlen, "packets too short to be compressed");
+	IPCOMP(ipcs.ipcomps_uselesscomp, "packet for which compression was useless");
 	IPCOMP(ipcs.ipcomps_pdrops,	"packets blocked due to policy");
 	IPCOMP(ipcs.ipcomps_crypto,	"failed crypto requests");
 
