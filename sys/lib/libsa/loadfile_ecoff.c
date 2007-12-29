@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile_ecoff.c,v 1.10 2007/12/03 09:51:30 isaki Exp $ */
+/* $NetBSD: loadfile_ecoff.c,v 1.11 2007/12/29 17:54:42 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -58,11 +58,7 @@
 #ifdef BOOT_ECOFF
 
 int
-loadfile_coff(fd, coff, marks, flags)
-	int fd;
-	struct ecoff_exechdr *coff;
-	u_long *marks;
-	int flags;
+loadfile_coff(int fd, struct ecoff_exechdr *coff, u_long *marks, int flags)
 {
 	paddr_t offset = marks[MARK_START];
 	paddr_t minp = ~0, maxp = 0, pos;
