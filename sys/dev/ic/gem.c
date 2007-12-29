@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.60 2007/10/19 11:59:51 ad Exp $ */
+/*	$NetBSD: gem.c,v 1.61 2007/12/29 17:59:20 tsutsui Exp $ */
 
 /*
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.60 2007/10/19 11:59:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.61 2007/12/29 17:59:20 tsutsui Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -1528,7 +1528,7 @@ gem_rint(sc)
 #if NBPFILTER > 0
 		/*
 		 * Pass this up to any BPF listeners, but only
-		 * pass it up the stack if its for us.
+		 * pass it up the stack if it's for us.
 		 */
 		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m);
