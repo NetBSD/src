@@ -3061,7 +3061,7 @@ elf32_hppa_final_link (bfd *abfd, struct bfd_link_info *info)
 /* Record the lowest address for the data and text segments.  */
 
 static void
-hppa_record_segment_addr (bfd *abfd ATTRIBUTE_UNUSED,
+hppa_record_segment_addr (bfd *abfd,
 			  asection *section,
 			  void *data)
 {
@@ -3071,8 +3071,28 @@ hppa_record_segment_addr (bfd *abfd ATTRIBUTE_UNUSED,
 
   if ((section->flags & (SEC_ALLOC | SEC_LOAD)) == (SEC_ALLOC | SEC_LOAD))
     {
-      bfd_vma value = section->vma - section->filepos;
+      bfd_vma value;
+      struct elf_segment_map *m;
+      Elf_Internal_Phdr *p;
 
+      /* Find the segment that contains the output_section.  */
+      for (m = elf_tdata (abfd)->segment_map,
+	     p = elf_tdata (abfd)->phdr;
+	   m != NULL;
+	   m = m->next, p++)
+	{
+	  int i;
+	  for (i = m->count - 1; i >= 0; i--)
+	    if (m->sections[i] == section->output_section)
+	      break;
+	  if (i >= 0)
+	    break;
+	}
+
+      if (m == NULL)
+        return;
+
+      value = p->p_vaddr;
       if ((section->flags & SEC_READONLY) != 0)
 	{
 	  if (value < htab->text_segment_base)
