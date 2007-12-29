@@ -1,4 +1,4 @@
-.\"	$NetBSD: cron.8,v 1.7 2004/03/20 18:54:33 wiz Exp $
+.\"	$NetBSD: cron.8,v 1.8 2007/12/29 13:21:57 wiz Exp $
 .\"
 .\"/* Copyright 1988,1990,1993 by Paul Vixie
 .\" * All rights reserved
@@ -19,7 +19,7 @@
 .\"
 .\" Id: cron.8,v 2.2 1993/12/28 08:34:43 vixie Exp
 .\"
-.Dd March 20, 2004
+.Dd December 29, 2007
 .Dt CRON 8
 .Os
 .Sh NAME
@@ -53,6 +53,18 @@ When executing commands, any output is mailed to the owner of the
 crontab (or to the user named in the
 .Ev MAILTO
 environment variable in the crontab, if such exists).
+.Pp
+Events such as
+.Dv START
+and
+.Dv FINISH
+are recorded in the
+.Pa /var/log/cron
+log file with date and time details.
+This information is useful for a number of reasons, such as
+determining the amount of time required to run a particular job.
+By default, root has an hourly job that rotates these log files
+with compression to preserve disk space.
 .Pp
 Additionally,
 .Nm
@@ -106,6 +118,8 @@ print extended debugging information
 spool directory
 .It Pa /etc/crontab
 system crontab
+.It Pa /var/log/cron
+log file for cron events
 .El
 .Sh SEE ALSO
 .Xr crontab 1 ,
