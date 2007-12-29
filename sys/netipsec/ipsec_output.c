@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_output.c,v 1.24 2007/12/09 18:27:39 degroote Exp $	*/
+/*	$NetBSD: ipsec_output.c,v 1.25 2007/12/29 14:53:25 degroote Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.24 2007/12/09 18:27:39 degroote Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.25 2007/12/29 14:53:25 degroote Exp $");
 
 /*
  * IPsec output processing.
@@ -94,11 +94,31 @@ __KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.24 2007/12/09 18:27:39 degroote E
 
 #include <net/net_osdep.h>		/* ovbcopy() in ipsec6_encapsulate() */
 
+
+/*
+ * Add a IPSEC_OUT_DONE tag to mark that we have finished the ipsec processing
+ * It will be used by ip{,6}_output to check if we have already or not 
+ * processed this packet.
+ */
+static int
+ipsec_register_done(struct mbuf *m, int * error)
+{
+	struct m_tag *mtag;
+
+	mtag = m_tag_get(PACKET_TAG_IPSEC_OUT_DONE, 0, M_NOWAIT);
+	if (mtag == NULL) {
+		DPRINTF(("ipsec_register_done: could not get packet tag\n"));
+		*error = ENOMEM;
+		return -1;
+	}
+
+	m_tag_prepend(m, mtag);
+	return 0;
+}
+
 int
 ipsec_process_done(struct mbuf *m, struct ipsecrequest *isr)
 {
-	struct tdb_ident *tdbi;
-	struct m_tag *mtag;
 	struct secasvar *sav;
 	struct secasindex *saidx;
 	int error;
@@ -200,24 +220,6 @@ ipsec_process_done(struct mbuf *m, struct ipsecrequest *isr)
 	}
 
 	/*
-	 * Add a record of what we've done or what needs to be done to the
-	 * packet.
-	 */
-	mtag = m_tag_get(PACKET_TAG_IPSEC_OUT_DONE,
-			sizeof(struct tdb_ident), M_NOWAIT);
-	if (mtag == NULL) {
-		DPRINTF(("ipsec_process_done: could not get packet tag\n"));
-		error = ENOMEM;
-		goto bad;
-	}
-
-	tdbi = (struct tdb_ident *)(mtag + 1);
-	tdbi->dst = saidx->dst;
-	tdbi->proto = saidx->proto;
-	tdbi->spi = sav->spi;
-	m_tag_prepend(m, mtag);
-
-	/*
 	 * If there's another (bundled) SA to apply, do so.
 	 * Note that this puts a burden on the kernel stack size.
 	 * If this is a problem we'll need to introduce a queue
@@ -244,10 +246,14 @@ ipsec_process_done(struct mbuf *m, struct ipsecrequest *isr)
 	}
 
 	/*
-	 * We're done with IPsec processing, transmit the packet using the
-	 * appropriate network protocol (IP or IPv6). SPD lookup will be
-	 * performed again there.
+	 * We're done with IPsec processing, 
+	 * mark that we have already processed the packet
+	 * transmit it packet using the appropriate network protocol (IP or IPv6). 
 	 */
+
+	if (ipsec_register_done(m, &error) < 0)
+		goto bad;
+
 	switch (saidx->dst.sa.sa_family) {
 #ifdef INET
 	case AF_INET:
