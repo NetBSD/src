@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.1 2007/12/29 14:38:34 jmcneill Exp $	*/
+/*	$NetBSD: mutex.h,v 1.2 2007/12/29 15:44:31 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006 The NetBSD Foundation, Inc.
@@ -36,8 +36,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _X86_MUTEX_H_
-#define	_X86_MUTEX_H_
+#ifndef _ARCH_USERMODE_INCLUDE_MUTEX_H_
+#define	_ARCH_USERMODE_INCLUDE_MUTEX_H_
 
 struct kmutex {
 	union {
@@ -79,4 +79,4 @@ unsigned long	_atomic_cas_ulong(volatile unsigned long *,
 
 #endif	/* __MUTEX_PRIVATE */
 
-#endif /* _X86_MUTEX_H_ */
+#endif /* _ARCH_USERMODE_INCLUDE_MUTEX_H_ */
