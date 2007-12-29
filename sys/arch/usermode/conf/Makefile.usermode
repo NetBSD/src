@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.usermode,v 1.2 2007/12/29 16:13:46 jmcneill Exp $
+# $NetBSD: Makefile.usermode,v 1.3 2007/12/29 17:48:23 jmcneill Exp $
 
 MACHINE_ARCH=			usermode
 USETOOLS?=			no
@@ -17,7 +17,7 @@ GENASSYM_CONF=	${USERMODE}/usermode/genassym.cf
 ## (2) compile settings
 ##
 DEFCOPTS=	-O2
-CPPFLAGS+=	-Dusermode -Dmalloc=kernmalloc
+CPPFLAGS+=	-Dusermode -Dmalloc=kernmalloc -Dfree=kernfree
 CPPFLAGS.init_main.c+=	-Dmain=kernmain
 AFLAGS+=	-x assembler-with-cpp -traditional-cpp
 
