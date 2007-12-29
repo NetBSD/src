@@ -1,4 +1,4 @@
-/*	$NetBSD: itesio_isa.c,v 1.9 2007/12/29 06:05:06 xtraeme Exp $ */
+/*	$NetBSD: itesio_isa.c,v 1.10 2007/12/29 06:15:47 xtraeme Exp $ */
 /*	Derived from $OpenBSD: it.c,v 1.19 2006/04/10 00:57:54 deraadt Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: itesio_isa.c,v 1.9 2007/12/29 06:05:06 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: itesio_isa.c,v 1.10 2007/12/29 06:15:47 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -83,7 +83,7 @@ static void	itesio_writereg(bus_space_tag_t, bus_space_handle_t, int, int);
 static void	itesio_enter(bus_space_tag_t, bus_space_handle_t);
 static void	itesio_exit(bus_space_tag_t, bus_space_handle_t);
 
-/* envsys(9) glue */
+/* sysmon_envsys(9) glue */
 static void	itesio_setup_sensors(struct itesio_softc *);
 static void	itesio_refresh_temp(struct itesio_softc *, envsys_data_t *);
 static void	itesio_refresh_volts(struct itesio_softc *, envsys_data_t *);
