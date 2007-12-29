@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnx.c,v 1.13 2007/12/26 04:06:29 dyoung Exp $	*/
+/*	$NetBSD: if_bnx.c,v 1.14 2007/12/29 19:51:38 dyoung Exp $	*/
 /*	$OpenBSD: if_bnx.c,v 1.43 2007/01/30 03:21:10 krw Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/dev/bce/if_bce.c,v 1.3 2006/04/13 14:12:26 ru Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.13 2007/12/26 04:06:29 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.14 2007/12/29 19:51:38 dyoung Exp $");
 
 /*
  * The following controllers are supported by this driver:
@@ -242,7 +242,6 @@ static struct flash_spec flash_table[] =
 /* OpenBSD device entry points.                                             */
 /****************************************************************************/
 static int	bnx_probe(device_t, cfdata_t, void *);
-bool	bnx_suspend_resume(device_t);
 void	bnx_attach(device_t, device_t, void *);
 int	bnx_detach(device_t, int);
 
@@ -313,8 +312,7 @@ void	bnx_load_cpu_fw(struct bnx_softc *, struct cpu_reg *,
 	    struct fw_info *);
 void	bnx_init_cpus(struct bnx_softc *);
 
-void	bnx_if_stop(struct ifnet *, int);
-void	bnx_stop(struct bnx_softc *);
+void	bnx_stop(struct ifnet *, int);
 int	bnx_reset(struct bnx_softc *, u_int32_t);
 int	bnx_chipinit(struct bnx_softc *);
 int	bnx_blockinit(struct bnx_softc *);
@@ -392,14 +390,6 @@ bnx_probe(device_t parent, cfdata_t match, void *aux)
 		return (1);
 
 	return (0);
-}
-
-bool
-bnx_suspend_resume(device_t dev)
-{
-	struct bnx_softc *sc = device_private(dev);
-
-	return bnx_reset(sc, BNX_DRV_MSG_CODE_RESET) == 0;
 }
 
 /****************************************************************************/
@@ -659,7 +649,7 @@ bnx_attach(device_t parent, device_t self, void *aux)
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_ioctl = bnx_ioctl;
-	ifp->if_stop = bnx_if_stop;
+	ifp->if_stop = bnx_stop;
 	ifp->if_start = bnx_start;
 	ifp->if_init = bnx_init;
 	ifp->if_timer = 0;
@@ -701,7 +691,7 @@ bnx_attach(device_t parent, device_t self, void *aux)
 	mii_attach(self, &sc->bnx_mii, 0xffffffff,
 	    MII_PHY_ANY, MII_OFFSET_ANY, 0);
 
-	if (LIST_FIRST(&sc->bnx_mii.mii_phys) == NULL) {
+	if (LIST_EMPTY(&sc->bnx_mii.mii_phys)) {
 		aprint_error_dev(self, "no PHY found!\n");
 		ifmedia_add(&sc->bnx_mii.mii_media,
 		    IFM_ETHER|IFM_MANUAL, 0, NULL);
@@ -718,7 +708,7 @@ bnx_attach(device_t parent, device_t self, void *aux)
 
 	callout_init(&sc->bnx_timeout, 0);
 
-	if (!pmf_device_register(self, bnx_suspend_resume, bnx_suspend_resume))
+	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 	else
 		pmf_class_network_register(self, ifp);
@@ -746,6 +736,7 @@ bnx_attach_exit:
 int
 bnx_detach(device_t dev, int flags)
 {
+	int s;
 	struct bnx_softc *sc;
 	struct ifnet *ifp;
 
@@ -755,8 +746,10 @@ bnx_detach(device_t dev, int flags)
 	DBPRINT(sc, BNX_VERBOSE_RESET, "Entering %s()\n", __func__);
 
 	/* Stop and reset the controller. */
-	bnx_stop(sc);
-	bnx_reset(sc, BNX_DRV_MSG_CODE_RESET);
+	s = splnet();
+	if (ifp->if_flags & IFF_RUNNING)
+		bnx_stop(ifp, 1);
+	splx(s);
 
 	pmf_device_deregister(dev);
 	ether_ifdetach(ifp);
@@ -2698,14 +2691,6 @@ bnx_set_mac_addr(struct bnx_softc *sc)
 	REG_WR(sc, BNX_EMAC_MAC_MATCH1, val);
 }
 
-void
-bnx_if_stop(struct ifnet *ifp, int disable)
-{
-	struct bnx_softc *sc = ifp->if_softc;
-
-	bnx_stop(sc);
-}
-
 /****************************************************************************/
 /* Stop the controller.                                                     */
 /*                                                                          */
@@ -2713,16 +2698,18 @@ bnx_if_stop(struct ifnet *ifp, int disable)
 /*   Nothing.                                                               */
 /****************************************************************************/
 void
-bnx_stop(struct bnx_softc *sc)
+bnx_stop(struct ifnet *ifp, int disable)
 {
-	struct ifnet		*ifp = &sc->ethercom.ec_if;
-	struct mii_data		*mii = NULL;
+	struct bnx_softc *sc = ifp->if_softc;
 
 	DBPRINT(sc, BNX_VERBOSE_RESET, "Entering %s()\n", __func__);
 
-	mii = &sc->bnx_mii;
+	if ((ifp->if_flags & IFF_RUNNING) == 0)
+		return;
 
 	callout_stop(&sc->bnx_timeout);
+
+	mii_down(&sc->bnx_mii);
 
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 
@@ -2734,7 +2721,10 @@ bnx_stop(struct bnx_softc *sc)
 	bnx_disable_intr(sc);
 
 	/* Tell firmware that the driver is going away. */
-	bnx_reset(sc, BNX_DRV_MSG_CODE_SUSPEND_NO_WOL);
+	if (disable)
+		bnx_reset(sc, BNX_DRV_MSG_CODE_RESET);
+	else
+		bnx_reset(sc, BNX_DRV_MSG_CODE_SUSPEND_NO_WOL);
 
 	/* Free the RX lists. */
 	bnx_free_rx_chain(sc);
@@ -3475,7 +3465,7 @@ bnx_ifmedia_upd(struct ifnet *ifp)
 	struct bnx_softc	*sc;
 	struct mii_data		*mii;
 	struct ifmedia		*ifm;
-	int			rc = 0;
+	int rc;
 
 	sc = ifp->if_softc;
 	ifm = &sc->bnx_ifmedia;
@@ -3484,14 +3474,9 @@ bnx_ifmedia_upd(struct ifnet *ifp)
 
 	mii = &sc->bnx_mii;
 	sc->bnx_link = 0;
-	if (mii->mii_instance) {
-		struct mii_softc *miisc;
-		LIST_FOREACH(miisc, &mii->mii_phys, mii_list)
-			mii_phy_reset(miisc);
-	}
-	mii_mediachg(mii);
-
-	return(rc);
+	if ((rc = mii_mediachg(mii)) == ENXIO)
+		return 0;
+	return rc;
 }
 
 /****************************************************************************/
@@ -4073,7 +4058,7 @@ bnx_init(struct ifnet *ifp)
 
 	s = splnet();
 
-	bnx_stop(sc);
+	bnx_stop(ifp, 0);
 
 	if ((error = bnx_reset(sc, BNX_DRV_MSG_CODE_RESET)) != 0) {
 		aprint_error("bnx: Controller reset failed!\n");
@@ -4129,7 +4114,8 @@ bnx_init(struct ifnet *ifp)
 	/* Enable host interrupts. */
 	bnx_enable_intr(sc);
 
-	bnx_ifmedia_upd(ifp);
+	if ((error = bnx_ifmedia_upd(ifp)) != 0)
+		goto bnx_init_exit;
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
@@ -4394,7 +4380,7 @@ bnx_ioctl(struct ifnet *ifp, u_long command, void *data)
 				bnx_init(ifp);
 
 		} else if (ifp->if_flags & IFF_RUNNING)
-			bnx_stop(sc);
+			bnx_stop(ifp, 1);
 
 		sc->bnx_if_flags = ifp->if_flags;
 		break;
@@ -4472,6 +4458,7 @@ bnx_intr(void *xsc)
 	struct bnx_softc	*sc;
 	struct ifnet		*ifp;
 	u_int32_t		status_attn_bits;
+	const struct status_block *sblk;
 
 	sc = xsc;
 	if (!device_is_active(sc->bnx_dev))
@@ -4502,7 +4489,8 @@ bnx_intr(void *xsc)
 
 	/* Keep processing data as long as there is work to do. */
 	for (;;) {
-		status_attn_bits = sc->status_block->status_attn_bits;
+		sblk = sc->status_block;
+		status_attn_bits = sblk->status_attn_bits;
 
 		DBRUNIF(DB_RANDOMTRUE(bnx_debug_unexpected_attention),
 		    aprint_debug("Simulating unexpected status attention bit set.");
@@ -4511,19 +4499,19 @@ bnx_intr(void *xsc)
 
 		/* Was it a link change interrupt? */
 		if ((status_attn_bits & STATUS_ATTN_BITS_LINK_STATE) !=
-		    (sc->status_block->status_attn_bits_ack &
+		    (sblk->status_attn_bits_ack &
 		    STATUS_ATTN_BITS_LINK_STATE))
 			bnx_phy_intr(sc);
 
 		/* If any other attention is asserted then the chip is toast. */
 		if (((status_attn_bits & ~STATUS_ATTN_BITS_LINK_STATE) !=
-		    (sc->status_block->status_attn_bits_ack & 
+		    (sblk->status_attn_bits_ack & 
 		    ~STATUS_ATTN_BITS_LINK_STATE))) {
 			DBRUN(1, sc->unexpected_attentions++);
 
 			aprint_error_dev(sc->bnx_dev,
 			    "Fatal attention detected: 0x%08X\n", 
-			    sc->status_block->status_attn_bits);
+			    sblk->status_attn_bits);
 
 			DBRUN(BNX_FATAL,
 			    if (bnx_debug_unexpected_attention == 0)
@@ -4534,19 +4522,19 @@ bnx_intr(void *xsc)
 		}
 
 		/* Check for any completed RX frames. */
-		if (sc->status_block->status_rx_quick_consumer_index0 !=
+		if (sblk->status_rx_quick_consumer_index0 !=
 		    sc->hw_rx_cons)
 			bnx_rx_intr(sc);
 
 		/* Check for any completed TX frames. */
-		if (sc->status_block->status_tx_quick_consumer_index0 !=
+		if (sblk->status_tx_quick_consumer_index0 !=
 		    sc->hw_tx_cons)
 			bnx_tx_intr(sc);
 
 		/* Save the status block index value for use during the
 		 * next interrupt.
 		 */
-		sc->last_status_idx = sc->status_block->status_idx;
+		sc->last_status_idx = sblk->status_idx;
 
 		/* Prevent speculative reads from getting ahead of the
 		 * status block.
@@ -4555,9 +4543,9 @@ bnx_intr(void *xsc)
 		    BUS_SPACE_BARRIER_READ);
 
 		/* If there's no work left then exit the isr. */
-		if ((sc->status_block->status_rx_quick_consumer_index0 ==
+		if ((sblk->status_rx_quick_consumer_index0 ==
 		    sc->hw_rx_cons) &&
-		    (sc->status_block->status_tx_quick_consumer_index0 ==
+		    (sblk->status_tx_quick_consumer_index0 ==
 		    sc->hw_tx_cons))
 			break;
 	}
@@ -4875,7 +4863,7 @@ bnx_tick(void *xsc)
 {
 	struct bnx_softc	*sc = xsc;
 	struct ifnet		*ifp = &sc->ethercom.ec_if;
-	struct mii_data		*mii = NULL;
+	struct mii_data		*mii;
 	u_int32_t		msg;
 	u_int16_t		prod, chain_prod;
 	u_int32_t		prod_bseq;
@@ -4895,14 +4883,14 @@ bnx_tick(void *xsc)
 	/* Schedule the next tick. */
 	callout_reset(&sc->bnx_timeout, hz, bnx_tick, sc);
 
-	/* If link is up already up then we're done. */
-	if (sc->bnx_link)
-		goto bnx_tick_exit;
-
 	/* DRC - ToDo: Add SerDes support and check SerDes link here. */
 
 	mii = &sc->bnx_mii;
 	mii_tick(mii);
+
+	/* If link is up already up then we're done. */
+	if (sc->bnx_link)
+		goto bnx_tick_exit;
 
 	/* Check if the link has come up. */
 	if (!sc->bnx_link && mii->mii_media_status & IFM_ACTIVE &&
