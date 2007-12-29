@@ -1,4 +1,4 @@
-# $NetBSD: t_psshfs.sh,v 1.2 2007/12/28 08:57:42 jmmv Exp $
+# $NetBSD: t_psshfs.sh,v 1.3 2007/12/29 23:07:17 jmmv Exp $
 #
 # Copyright (c) 2007 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -80,6 +80,10 @@ start_ssh() {
 	    $(atf_get_srcdir)/sshd_config.in >sshd_config || \
 	    atf_fail "Failed to create sshd_config"
 	atf_check 'cp /usr/libexec/sftp-server .' 0 null null
+	atf_check "cp $(atf_get_srcdir)/ssh_host_key ." 0 null null
+	atf_check "cp $(atf_get_srcdir)/ssh_host_key.pub ." 0 null null
+	atf_check "chmod 400 ssh_host_key" 0 null null
+	atf_check "chmod 444 ssh_host_key.pub" 0 null null
 
 	/usr/sbin/sshd -e -D -f ./sshd_config >sshd.log 2>&1 &
 	echo $! >sshd.pid
