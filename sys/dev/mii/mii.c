@@ -1,4 +1,4 @@
-/*	$NetBSD: mii.c,v 1.42 2007/12/29 08:19:35 dyoung Exp $	*/
+/*	$NetBSD: mii.c,v 1.43 2007/12/29 19:34:55 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mii.c,v 1.42 2007/12/29 08:19:35 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mii.c,v 1.43 2007/12/29 19:34:55 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -231,6 +231,14 @@ mii_print(void *aux, const char *pnp)
 	return (UNCONF);
 }
 
+static inline int
+phy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
+{
+	if (!device_is_active(&sc->mii_dev))
+		return ENXIO;
+	return PHY_SERVICE(sc, mii, cmd);
+}
+
 /*
  * Media changed; notify all PHYs.
  */
@@ -244,7 +252,7 @@ mii_mediachg(struct mii_data *mii)
 	mii->mii_media_active = IFM_NONE;
 
 	LIST_FOREACH(child, &mii->mii_phys, mii_list) {
-		rv = PHY_SERVICE(child, mii, MII_MEDIACHG);
+		rv = phy_service(child, mii, MII_MEDIACHG);
 		if (rv)
 			return (rv);
 	}
@@ -260,7 +268,7 @@ mii_tick(struct mii_data *mii)
 	struct mii_softc *child;
 
 	LIST_FOREACH(child, &mii->mii_phys, mii_list)
-		(void) PHY_SERVICE(child, mii, MII_TICK);
+		(void)phy_service(child, mii, MII_TICK);
 }
 
 /*
@@ -275,7 +283,7 @@ mii_pollstat(struct mii_data *mii)
 	mii->mii_media_active = IFM_NONE;
 
 	LIST_FOREACH(child, &mii->mii_phys, mii_list)
-		(void) PHY_SERVICE(child, mii, MII_POLLSTAT);
+		(void)phy_service(child, mii, MII_POLLSTAT);
 }
 
 /*
@@ -287,7 +295,7 @@ mii_down(struct mii_data *mii)
 	struct mii_softc *child;
 
 	LIST_FOREACH(child, &mii->mii_phys, mii_list)
-		(void) PHY_SERVICE(child, mii, MII_DOWN);
+		(void)phy_service(child, mii, MII_DOWN);
 }
 
 static unsigned char

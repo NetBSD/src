@@ -1,4 +1,4 @@
-/*	$NetBSD: inphy.c,v 1.44 2007/12/09 20:28:03 jmcneill Exp $	*/
+/*	$NetBSD: inphy.c,v 1.45 2007/12/29 19:34:55 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: inphy.c,v 1.44 2007/12/09 20:28:03 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: inphy.c,v 1.45 2007/12/29 19:34:55 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -174,9 +174,6 @@ inphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	int reg;
-
-	if (!device_is_active(&sc->mii_dev))
-		return (ENXIO);
 
 	switch (cmd) {
 	case MII_POLLSTAT:
