@@ -1,4 +1,4 @@
-/* $NetBSD: ptrace.h,v 1.1 2007/12/29 14:38:35 jmcneill Exp $ */
+/* $NetBSD: ptrace.h,v 1.2 2007/12/29 20:07:22 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -36,5 +36,6 @@
 #define _ARCH_USERMODE_INCLUDE_PTRACE_H
 
 #include </usr/include/machine/ptrace.h>
+#undef __HAVE_PTRACE_MACHDEP
 
 #endif /* !_ARCH_USERMODE_INCLUDE_PTRACE_H */
