@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k_syscall.c,v 1.30 2007/10/17 19:55:12 garbled Exp $	*/
+/*	$NetBSD: m68k_syscall.c,v 1.31 2007/12/29 00:02:52 martin Exp $	*/
 
 /*-
  * Portions Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m68k_syscall.c,v 1.30 2007/10/17 19:55:12 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m68k_syscall.c,v 1.31 2007/12/29 00:02:52 martin Exp $");
 
 #include "opt_execfmt.h"
 #include "opt_compat_netbsd.h"
@@ -288,6 +288,8 @@ syscall_plain(register_t code, struct lwp *l, struct frame *frame)
 			if (p->p_emul != &emul_netbsd_aoutm68k)
 				frame->f_regs[A0] = rval[0];
 		}
+#else
+		frame->f_regs[A0] = rval[0];
 #endif
 		break;
 	case ERESTART:
@@ -407,6 +409,8 @@ out:
 			if (p->p_emul != &emul_netbsd_aoutm68k)
 				frame->f_regs[A0] = rval[0];
 		}
+#else
+	frame->f_regs[A0] = rval[0];
 #endif
 		break;
 	case ERESTART:
