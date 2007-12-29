@@ -1,0 +1,41 @@
+# $NetBSD: files.usermode,v 1.1 2007/12/29 14:38:30 jmcneill Exp $
+
+maxpartitions 8
+maxusers 8 16 64
+
+defparam opt_memsize.h				MEMSIZE
+
+define	thunkbus { }
+
+device	mainbus: thunkbus
+attach	mainbus at root
+file	arch/usermode/dev/mainbus.c		mainbus
+
+device	cpu { }
+attach	cpu at thunkbus
+file	arch/usermode/dev/cpu.c			cpu
+
+device	clock { }
+attach	clock at thunkbus
+file	arch/usermode/dev/clock.c		clock
+
+device	ttycons { } : tty
+attach	ttycons at thunkbus
+file	arch/usermode/dev/ttycons.c		ttycons
+
+file	netinet/in_cksum.c			inet
+file	netinet/in4_cksum.c			inet
+
+file	arch/usermode/usermode/copy.c
+file	arch/usermode/usermode/machdep.c
+file	arch/usermode/usermode/mem.c
+file	arch/usermode/usermode/pmap.c
+file	arch/usermode/usermode/process_machdep.c
+file	arch/usermode/usermode/sys_machdep.c
+file	arch/usermode/usermode/syscall.c
+file	arch/usermode/usermode/trap.c
+file	arch/usermode/usermode/vm_machdep.c
+file	dev/cons.c
+file	dev/md_root.c				memory_disk_hooks
+
+include "arch/usermode/conf/majors.usermode"
