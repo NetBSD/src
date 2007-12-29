@@ -1,4 +1,4 @@
-# $NetBSD: std.usermode,v 1.2 2007/12/29 20:19:37 reinoud Exp $
+# $NetBSD: std.usermode,v 1.3 2007/12/29 20:21:01 reinoud Exp $
 
 machine usermode
 include "conf/std"
