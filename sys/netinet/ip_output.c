@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.188 2007/12/29 14:53:25 degroote Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.189 2007/12/29 15:13:55 degroote Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.188 2007/12/29 14:53:25 degroote Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.189 2007/12/29 15:13:55 degroote Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_inet.h"
@@ -697,6 +697,7 @@ skip_ipsec:
 				if (ntohs(ip->ip_len) > sp->req->sav->esp_frag) {
 					natt_frag = 1;
 					mtu = sp->req->sav->esp_frag;
+					splx(s);
 					goto spd_done;
 				}
 			}
