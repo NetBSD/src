@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170.c,v 1.67 2007/10/19 12:00:01 ad Exp $	*/
+/*	$NetBSD: smc83c170.c,v 1.68 2007/12/29 17:59:20 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc83c170.c,v 1.67 2007/10/19 12:00:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc83c170.c,v 1.68 2007/12/29 17:59:20 tsutsui Exp $");
 
 #include "bpfilter.h"
 
@@ -735,7 +735,7 @@ epic_intr(arg)
 #if NBPFILTER > 0
 			/*
 			 * Pass this up to any BPF listeners, but only
-			 * pass it up the stack if its for us.
+			 * pass it up the stack if it's for us.
 			 */
 			if (ifp->if_bpf)
 				bpf_mtap(ifp->if_bpf, m);
