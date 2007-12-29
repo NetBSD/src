@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170.c,v 1.68 2007/12/29 17:59:20 tsutsui Exp $	*/
+/*	$NetBSD: smc83c170.c,v 1.69 2007/12/29 23:58:48 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc83c170.c,v 1.68 2007/12/29 17:59:20 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc83c170.c,v 1.69 2007/12/29 23:58:48 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -266,7 +266,7 @@ epic_attach(sc)
 	    epic_mediastatus);
 	mii_attach(&sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
 	    MII_OFFSET_ANY, miiflags);
-	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
+	if (LIST_EMPTY(&sc->sc_mii.mii_phys)) {
 		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
 		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE);
 	} else
@@ -1522,8 +1522,7 @@ epic_mediachange(ifp)
 	}
 
 	/* Lookup selected PHY */
-	for (miisc = LIST_FIRST(&mii->mii_phys); miisc != NULL;
-	     miisc = LIST_NEXT(miisc, mii_list)) {
+	LIST_FOREACH(miisc, &mii->mii_phys, mii_list) {
 		if (IFM_INST(media) == miisc->mii_inst)
 			break;
 	}
