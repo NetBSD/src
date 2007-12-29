@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.2 2007/12/29 16:13:46 jmcneill Exp $ */
+/* $NetBSD: machdep.c,v 1.3 2007/12/29 16:28:40 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.2 2007/12/29 16:13:46 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.3 2007/12/29 16:28:40 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -75,7 +75,7 @@ main(int argc, char *argv[])
 			BOOT_FLAG(argv[i][j], r);
 			if (r == 0) {
 				printf("-%c: unknown flag\n", argv[i][j]);
-				printf("usage: %s [-acdqsvx]\n", argv[0]);
+				printf("usage: %s [-acdqsvxz]\n", argv[0]);
 				printf("       (ex. \"%s -s\")\n", argv[0]);
 				return;
 			}
