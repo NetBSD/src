@@ -1,4 +1,4 @@
-/* $NetBSD: vmparam.h,v 1.1 2007/12/29 14:38:36 jmcneill Exp $ */
+/* $NetBSD: vmparam.h,v 1.2 2007/12/29 20:07:22 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -36,8 +36,21 @@
 #define _ARCH_USERMODE_INCLUDE_VMPARAM_H
 
 #include </usr/include/machine/vmparam.h>
+#include "opt_memsize.h"
+
+#undef VM_MIN_ADDRESS
+#define VM_MIN_ADDRESS 0
+
+#undef VM_MAX_ADDRESS
+#define VM_MAX_ADDRESS (MEMSIZE*1024)
 
 #undef VM_MIN_KERNEL_ADDRESS
 #define VM_MIN_KERNEL_ADDRESS	0
+
+#undef VM_MAX_KERNEL_ADDRESS
+#define VM_MAX_KERNEL_ADDRESS (MEMSIZE*1024)
+
+#undef VM_MAXUSER_ADDRESS
+#define VM_MAXUSER_ADDRESS (MEMSIZE*1024)
 
 #endif /* !_ARCH_USERMODE_INCLUDE_VMPARAM_H */
