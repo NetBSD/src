@@ -1,4 +1,4 @@
-/*	$NetBSD: hci.h,v 1.19 2007/11/28 20:16:12 plunky Exp $	*/
+/*	$NetBSD: hci.h,v 1.20 2007/12/29 11:30:27 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -54,7 +54,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: hci.h,v 1.19 2007/11/28 20:16:12 plunky Exp $
+ * $Id: hci.h,v 1.20 2007/12/29 11:30:27 plunky Exp $
  * $FreeBSD: src/sys/netgraph/bluetooth/include/ng_hci.h,v 1.6 2005/01/07 01:45:43 imp Exp $
  */
 
@@ -1999,7 +1999,6 @@ struct btreq {
 #define btr_sco_mtu	btru.btri.btri_sco_mtu
 #define btr_link_policy btru.btri.btri_link_policy
 #define btr_packet_type btru.btri.btri_packet_type
-#define btr_uclass	btru.btri.btri_uclass
 #define btr_stats	btru.btrs
 
 /* hci_unit & btr_flags */
