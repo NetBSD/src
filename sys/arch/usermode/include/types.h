@@ -1,4 +1,4 @@
-/* $NetBSD: types.h,v 1.1 2007/12/29 14:38:35 jmcneill Exp $ */
+/* $NetBSD: types.h,v 1.2 2007/12/29 18:30:17 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -47,19 +47,11 @@ typedef struct label_t {
 } label_t;
 #endif
 
-#ifdef _LP64
 typedef unsigned long	paddr_t;
 typedef unsigned long	psize_t;
 typedef unsigned long	vaddr_t;
 typedef unsigned long	vsize_t;
 typedef long int	register_t;
-#else
-typedef unsigned int	paddr_t;
-typedef unsigned int	psize_t;
-typedef unsigned int	vaddr_t;
-typedef unsigned int	vsize_t;
-typedef int		register_t;
-#endif
 
 typedef volatile unsigned char	__cpu_simple_lock_t;
 #define __CPU_SIMPLE_LOCK_PAD
