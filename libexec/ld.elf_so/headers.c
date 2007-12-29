@@ -1,4 +1,4 @@
-/*	$NetBSD: headers.c,v 1.25 2007/12/28 19:36:21 christos Exp $	 */
+/*	$NetBSD: headers.c,v 1.26 2007/12/29 01:44:03 christos Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: headers.c,v 1.25 2007/12/28 19:36:21 christos Exp $");
+__RCSID("$NetBSD: headers.c,v 1.26 2007/12/29 01:44:03 christos Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -313,7 +313,7 @@ _rtld_digest_phdr(const Elf_Phdr *phdr, int phnum, caddr_t entry)
 			if (nsegs == 0) {	/* First load segment */
 				obj->vaddrbase = round_down(vaddr);
 				obj->mapbase = (caddr_t)obj->vaddrbase;
-				obj->relocbase = relocoffs;
+				obj->relocbase = (void *)relocoffs;
 				obj->textsize = round_up(vaddr + ph->p_memsz) -
 				    obj->vaddrbase;
 			} else {		/* Last load segment */
