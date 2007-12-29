@@ -1,4 +1,4 @@
-# $NetBSD: sshd_config.in,v 1.2 2007/12/28 08:57:42 jmmv Exp $
+# $NetBSD: sshd_config.in,v 1.3 2007/12/29 23:07:17 jmmv Exp $
 
 # Basic settings.
 Port 10000
@@ -7,9 +7,10 @@ Protocol 2
 # Provide information to the user in case something goes wrong.
 LogLevel DEBUG1
 
-# The host key.  It lives in the test's source directory because we do not
-# care much about it.
-HostKey @SRCDIR@/ssh_host_key
+# The host key.  It lives in the work directory because we need to set
+# very strict permissions on it and cannot modify the copy on the source
+# directory.
+HostKey @WORKDIR@/ssh_host_key
 
 # The authorized keys file we set up during the test to allow the client
 # to safely log in.  We need to disable strict modes because ATF_WORKDIR
