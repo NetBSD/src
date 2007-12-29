@@ -1,4 +1,4 @@
-/*	$NetBSD: itesio_isavar.h,v 1.3 2007/11/16 08:00:15 xtraeme Exp $	*/
+/*	$NetBSD: itesio_isavar.h,v 1.4 2007/12/29 06:05:11 xtraeme Exp $	*/
 /*	$OpenBSD: itvar.h,v 1.2 2003/11/05 20:57:10 grange Exp $	*/
 
 /*
@@ -42,6 +42,17 @@
 #define ITESIO_EC_MSB	0x60	/* EC Base Address (MSB) */
 #define ITESIO_EC_LSB	0x61	/* EC Base Address (LSB) */
 
+#define ITESIO_WDT_LDN	0x07	/* Watchdog Logical Device Number */
+#define ITESIO_WDT_CTL	0x71	/* Watchdog Control Register */
+#define ITESIO_WDT_CNF	0x72	/* Watchdog Configuration Register */
+#define   ITESIO_WDT_CNF_SECS	(1<<7)	/* Use seconds for the timer */
+#define   ITESIO_WDT_CNF_KRST	(1<<6)	/* Enable KRST */
+#define   ITESIO_WDT_CNF_PWROK	(1<<4)	/* Enable PWROK */
+#define ITESIO_WDT_TMO_LSB	0x73	/* Watchdog Timeout Value LSB */
+#define ITESIO_WDT_TMO_MSB	0x74	/* Watchdog Timeout Value MSB */
+
+#define ITESIO_WDT_MAXTIMO	0xffff	/* either seconds or minutes */
+
 #define ITESIO_CHIPID1	0x20	/* Chip ID 1 */
 #define ITESIO_CHIPID2	0x21	/* Chip ID 2 */
 #define ITESIO_DEVREV	0x22	/* Device Revision */
@@ -79,7 +90,7 @@
 #define ITESIO_EC_FANMINBASE	0x10
 #define ITESIO_EC_FANENABLE	0x13
 
-#define ITESIO_EC_SENSORFANBASE 		0x0d	/* Fan from 0x0d to 0x0f */
+#define ITESIO_EC_SENSORFANBASE 	0x0d	/* Fan from 0x0d to 0x0f */
 #define ITESIO_EC_SENSORFANEXTBASE 	0x18 	/* Fan (MSB) from 0x18 to 0x1A */
 #define ITESIO_EC_SENSORVOLTBASE 	0x20 	/* Voltage from 0x20 to 0x28 */
 #define ITESIO_EC_SENSORTEMPBASE 	0x29 	/* Temperature from 0x29 to 0x2b */
@@ -126,18 +137,23 @@
 #define ITESIO_EC_VREF			(4096) /* Vref = 4.096 V */
 
 struct itesio_softc {
-	bus_space_tag_t sc_iot;
-	bus_space_handle_t sc_ioh;
+	bus_space_tag_t 	sc_iot;
+	bus_space_handle_t 	sc_ioh;
 
-	struct sysmon_envsys *sc_sme;
-	envsys_data_t sc_sensor[IT_NUM_SENSORS];
+	bus_space_tag_t		sc_ec_iot;
+	bus_space_handle_t	sc_ec_ioh;
+
+	struct sysmon_wdog	sc_smw;
+	struct sysmon_envsys 	*sc_sme;
+	envsys_data_t 		sc_sensor[IT_NUM_SENSORS];
 	
-	uint16_t sc_hwmon_baseaddr;
-	bool sc_hwmon_mapped;
-	bool sc_hwmon_enabled;
+	uint16_t 		sc_hwmon_baseaddr;
+	bool 			sc_hwmon_mapped;
+	bool 			sc_hwmon_enabled;
+	bool 			sc_wdt_enabled;
 
-	uint16_t sc_chipid;
-	uint8_t sc_devrev;
+	uint16_t 		sc_chipid;
+	uint8_t 		sc_devrev;
 };
 
 #endif /* _DEV_ISA_ITSIO_ISAVAR_H_ */
