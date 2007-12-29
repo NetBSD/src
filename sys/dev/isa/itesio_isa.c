@@ -1,4 +1,4 @@
-/*	$NetBSD: itesio_isa.c,v 1.10 2007/12/29 06:15:47 xtraeme Exp $ */
+/*	$NetBSD: itesio_isa.c,v 1.11 2007/12/29 06:18:35 xtraeme Exp $ */
 /*	Derived from $OpenBSD: it.c,v 1.19 2006/04/10 00:57:54 deraadt Exp $	*/
 
 /*
@@ -29,11 +29,12 @@
 
 /*
  * Driver for the iTE IT87xxF Super I/O. Currently supporting
- * the Hardware monitor part in the Environmental Controller.
+ * the Environmental Controller to monitor the sensors and the
+ * Watchdog Timer.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: itesio_isa.c,v 1.10 2007/12/29 06:15:47 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: itesio_isa.c,v 1.11 2007/12/29 06:18:35 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
