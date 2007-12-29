@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.180.2.8 2007/12/27 15:38:18 ad Exp $
+	$NetBSD: syscalls.master,v 1.180.2.9 2007/12/29 10:20:48 yamt Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -307,7 +307,7 @@
 153	UNIMPL
 154	UNIMPL
 #if defined(NFS) || defined(NFSSERVER) || !defined(_KERNEL)
-155	STD MPSAFE	{ int sys_nfssvc(int flag, void *argp); }
+155	STD		{ int sys_nfssvc(int flag, void *argp); }
 #else
 155	EXCL		nfssvc
 #endif
