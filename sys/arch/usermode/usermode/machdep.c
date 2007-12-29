@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.1 2007/12/29 14:38:36 jmcneill Exp $ */
+/* $NetBSD: machdep.c,v 1.2 2007/12/29 16:13:46 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,13 +33,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1 2007/12/29 14:38:36 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.2 2007/12/29 16:13:46 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/exec.h>
 #include <sys/buf.h>
+#include <sys/boot_flag.h>
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_page.h>
@@ -56,19 +57,39 @@ int		physmem = MEMSIZE * 1024 / PAGE_SIZE;
 struct vm_map	*mb_map = NULL;
 struct vm_map	*exec_map = NULL;
 
-void	start(void);
+void	main(int argc, char *argv[]);
 
 void
-start(void)
+main(int argc, char *argv[])
 {
+	extern void ttycons_consinit(void);
 	extern void pmap_bootstrap(void);
+	extern void kernmain(void);
+	int i, j, r, tmpopt = 0;
 
-	printf("NetBSD/usermode startup\n");
+	ttycons_consinit();
+
+	for (i = 1; i < argc; i++) {
+		for (j = 1; argv[i][j] != '\0'; j++) {
+			r = 0;
+			BOOT_FLAG(argv[i][j], r);
+			if (r == 0) {
+				printf("-%c: unknown flag\n", argv[i][j]);
+				printf("usage: %s [-acdqsvx]\n", argv[0]);
+				printf("       (ex. \"%s -s\")\n", argv[0]);
+				return;
+			}
+			tmpopt |= r;
+		}
+	}
+	boothowto = tmpopt;
 
 	uvm_setpagesize();
 	uvmexp.ncolors = 2;
 
 	pmap_bootstrap();
+
+	kernmain();
 }
 
 void
@@ -88,12 +109,7 @@ setstatclockrate(int arg)
 void
 consinit(void)
 {
-	extern void ttycons_consinit(void);
-
-	ttycons_consinit();
-
-	/* XXX we start in main, not start */
-	start();
+	printf("NetBSD/usermode startup\n");
 }
 
 void
