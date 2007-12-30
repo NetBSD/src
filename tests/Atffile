@@ -1,4 +1,5 @@
 Content-Type: application/X-atf-atffile; version="1"
+X-NetBSD-Id: "$NetBSD: Atffile,v 1.4 2007/12/30 09:13:32 jmmv Exp $"
 
 # XXX: This top-level file shouldn't have to define a test-suite.
 prop: test-suite = "NetBSD"
