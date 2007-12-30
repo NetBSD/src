@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.36 2007/12/27 05:40:49 garbled Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.37 2007/12/30 22:39:15 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.36 2007/12/27 05:40:49 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.37 2007/12/30 22:39:15 macallan Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -547,16 +547,15 @@ cpu_setup(self, ci)
 		aprint_normal("%u.%02u MHz",
 			      ci->ci_khz / 1000, (ci->ci_khz / 10) % 100);
 		switch (vers) {
+		case MPC7450: /* 7441 does not have L3! */
+		case MPC7455: /* 7445 does not have L3! */
+		case MPC7457: /* 7447 does not have L3! */
+			cpu_config_l3cr(vers);
+			/* FALLTHROUGH */
 		case IBM750FX:
 		case MPC750:
 		case MPC7400:
 		case MPC7410:
-			cpu_config_l3cr(vers);
-			break;
-		case MPC7450: /* 7441 does not have L3! */
-		case MPC7455: /* 7445 does not have L3! */
-		case MPC7457: /* 7447 does not have L3! */
-			/* do something special XXX */
 		case MPC7447A:
 		case MPC7448:
 			cpu_config_l2cr(pvr);
@@ -652,6 +651,7 @@ cpu_identify(char *str, size_t len)
 
 	switch (vers) {
 	case MPC7410:
+	case MPC7400:
 		minor = (pvr >> 0) & 0xff;
 		major = minor <= 4 ? 1 : 2;
 		break;
