@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnx.c,v 1.14 2007/12/29 19:51:38 dyoung Exp $	*/
+/*	$NetBSD: if_bnx.c,v 1.15 2007/12/30 00:56:45 dyoung Exp $	*/
 /*	$OpenBSD: if_bnx.c,v 1.43 2007/01/30 03:21:10 krw Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/dev/bce/if_bce.c,v 1.3 2006/04/13 14:12:26 ru Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.14 2007/12/29 19:51:38 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.15 2007/12/30 00:56:45 dyoung Exp $");
 
 /*
  * The following controllers are supported by this driver:
@@ -645,7 +645,7 @@ bnx_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/* Initialize the ifnet interface. */
-	ifp = &sc->ethercom.ec_if;
+	ifp = &sc->bnx_ec.ec_if;
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_ioctl = bnx_ioctl;
@@ -662,7 +662,7 @@ bnx_attach(device_t parent, device_t self, void *aux)
 	IFQ_SET_READY(&ifp->if_snd);
 	memcpy(ifp->if_xname, device_xname(self), IFNAMSIZ);
 
-	sc->ethercom.ec_capabilities |= ETHERCAP_JUMBO_MTU |
+	sc->bnx_ec.ec_capabilities |= ETHERCAP_JUMBO_MTU |
 	    ETHERCAP_VLAN_MTU | ETHERCAP_VLAN_HWTAGGING;
 
 	ifp->if_capabilities |=
@@ -741,7 +741,7 @@ bnx_detach(device_t dev, int flags)
 	struct ifnet *ifp;
 
 	sc = device_private(dev);
-	ifp = &sc->ethercom.ec_if;
+	ifp = &sc->bnx_ec.ec_if;
 
 	DBPRINT(sc, BNX_VERBOSE_RESET, "Entering %s()\n", __func__);
 
@@ -2676,7 +2676,7 @@ void
 bnx_set_mac_addr(struct bnx_softc *sc)
 {
 	u_int32_t		val;
-	const u_int8_t		*mac_addr = CLLADDR(sc->ethercom.ec_if.if_sadl);
+	const u_int8_t		*mac_addr = CLLADDR(sc->bnx_ec.ec_if.if_sadl);
 
 	DBPRINT(sc, BNX_INFO, "Setting Ethernet address = "
 	    "%s\n", ether_sprintf(sc->eaddr));
@@ -3559,7 +3559,7 @@ void
 bnx_rx_intr(struct bnx_softc *sc)
 {
 	struct status_block	*sblk = sc->status_block;
-	struct ifnet		*ifp = &sc->ethercom.ec_if;
+	struct ifnet		*ifp = &sc->bnx_ec.ec_if;
 	u_int16_t		hw_cons, sw_cons, sw_chain_cons;
 	u_int16_t		sw_prod, sw_chain_prod;
 	u_int32_t		sw_prod_bseq;
@@ -3900,7 +3900,7 @@ void
 bnx_tx_intr(struct bnx_softc *sc)
 {
 	struct status_block	*sblk = sc->status_block;
-	struct ifnet		*ifp = &sc->ethercom.ec_if;
+	struct ifnet		*ifp = &sc->bnx_ec.ec_if;
 	u_int16_t		hw_tx_cons, sw_tx_cons, sw_tx_chain_cons;
 
 	DBRUNIF(1, sc->tx_interrupts++);
@@ -4164,7 +4164,7 @@ bnx_tx_encap(struct bnx_softc *sc, struct mbuf **m_head)
 	}
 
 	/* Transfer any VLAN tags to the bd. */
-	mtag = VLAN_OUTPUT_TAG(&sc->ethercom, m0);
+	mtag = VLAN_OUTPUT_TAG(&sc->bnx_ec, m0);
 	if (mtag != NULL) {
 		flags |= TX_BD_FLAGS_VLAN_TAG;
 		vlan_tag = VLAN_TAG_VALUE(mtag);
@@ -4464,7 +4464,7 @@ bnx_intr(void *xsc)
 	if (!device_is_active(sc->bnx_dev))
 		return 0;
 
-	ifp = &sc->ethercom.ec_if;
+	ifp = &sc->bnx_ec.ec_if;
 
 	DBRUNIF(1, sc->interrupts_generated++);
 
@@ -4576,7 +4576,7 @@ bnx_intr(void *xsc)
 void
 bnx_set_rx_mode(struct bnx_softc *sc)
 {
-	struct ethercom		*ec = &sc->ethercom;
+	struct ethercom		*ec = &sc->bnx_ec;
 	struct ifnet		*ifp = &ec->ec_if;
 	struct ether_multi	*enm;
 	struct ether_multistep	step;
@@ -4664,7 +4664,7 @@ allmulti:
 void
 bnx_stats_update(struct bnx_softc *sc)
 {
-	struct ifnet		*ifp = &sc->ethercom.ec_if;
+	struct ifnet		*ifp = &sc->bnx_ec.ec_if;
 	struct statistics_block	*stats;
 
 	DBPRINT(sc, BNX_EXCESSIVE, "Entering %s()\n", __func__);
@@ -4862,7 +4862,7 @@ void
 bnx_tick(void *xsc)
 {
 	struct bnx_softc	*sc = xsc;
-	struct ifnet		*ifp = &sc->ethercom.ec_if;
+	struct ifnet		*ifp = &sc->bnx_ec.ec_if;
 	struct mii_data		*mii;
 	u_int32_t		msg;
 	u_int16_t		prod, chain_prod;
