@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.308.2.9 2007/12/28 21:43:08 ad Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.308.2.10 2007/12/30 00:50:56 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.308.2.9 2007/12/28 21:43:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.308.2.10 2007/12/30 00:50:56 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -686,6 +686,7 @@ getdevvp(dev_t dev, vnode_t **vpp, enum vtype type)
 	}
 	vp = nvp;
 	vp->v_type = type;
+	vp->v_vflag |= VV_MPSAFE;
 	uvm_vnp_setsize(vp, 0);
 	if ((nvp = checkalias(vp, dev, NULL)) != 0) {
 		vput(vp);
