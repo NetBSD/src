@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.23 2007/12/08 19:29:52 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.24 2007/12/30 23:29:06 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -51,6 +51,8 @@ kauth_cred_t rump_cred;
 struct cpu_info rump_cpu;
 
 kmutex_t rump_giantlock;
+
+sigset_t sigcantmask;
 
 struct fakeblk {
 	char path[MAXPATHLEN];
@@ -109,6 +111,8 @@ rump_init()
 
 	rumpuser_gethostname(hostname, MAXHOSTNAMELEN, &error);
 	hostnamelen = strlen(hostname);
+
+	sigemptyset(&sigcantmask);
 }
 
 struct mount *
