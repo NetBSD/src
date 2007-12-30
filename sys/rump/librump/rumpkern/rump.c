@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.24 2007/12/30 23:29:06 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.25 2007/12/30 23:30:27 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -75,6 +75,7 @@ rump_init()
 {
 	extern char hostname[];
 	extern size_t hostnamelen;
+	extern kmutex_t rump_atomic_lock;
 	struct proc *p;
 	struct lwp *l;
 	int error;
@@ -89,6 +90,7 @@ rump_init()
 	l->l_proc = p;
 	l->l_lid = 1;
 
+	mutex_init(&rump_atomic_lock, MUTEX_DEFAULT, IPL_NONE);
 	rumpvm_init();
 
 	rump_limits.pl_rlimit[RLIMIT_FSIZE].rlim_cur = RLIM_INFINITY;
