@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.36 2007/10/18 15:28:35 yamt Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.37 2007/12/30 13:28:20 yamt Exp $	*/
 
 /* 
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.36 2007/10/18 15:28:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.37 2007/12/30 13:28:20 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -219,6 +219,25 @@ const struct inst	db_inst_0f3x[] = {
 /*3f*/	{ "",	   false, NONE,  0,	      0 },
 };
 
+const struct inst	db_inst_0f4x[] = {
+/*40*/	{ "cmovo",  true,  LONG,  op2(E,R),    0 },
+/*41*/	{ "cmovno", true,  LONG,  op2(E,R),    0 },
+/*42*/	{ "cmovc",  true,  LONG,  op2(E,R),    0 },
+/*43*/	{ "cmovnc", true,  LONG,  op2(E,R),    0 },
+/*44*/	{ "cmovz",  true,  LONG,  op2(E,R),    0 },
+/*45*/	{ "cmovnz", true,  LONG,  op2(E,R),    0 },
+/*46*/	{ "cmovbe", true,  LONG,  op2(E,R),    0 },
+/*47*/	{ "cmovmbe",true,  LONG,  op2(E,R),    0 },
+/*48*/	{ "cmovs",  true,  LONG,  op2(E,R),    0 },
+/*49*/	{ "cmovns", true,  LONG,  op2(E,R),    0 },
+/*4a*/	{ "cmovp",  true,  LONG,  op2(E,R),    0 },
+/*4b*/	{ "cmovnp", true,  LONG,  op2(E,R),    0 },
+/*4c*/	{ "cmovl",  true,  LONG,  op2(E,R),    0 },
+/*4d*/	{ "cmovnl", true,  LONG,  op2(E,R),    0 },
+/*4e*/	{ "cmovle", true,  LONG,  op2(E,R),    0 },
+/*4f*/	{ "cmovnle",true,  LONG,  op2(E,R),    0 },
+};
+
 const struct inst	db_inst_0f8x[] = {
 /*80*/	{ "jo",    false, NONE,  op1(Dl),     0 },
 /*81*/	{ "jno",   false, NONE,  op1(Dl),     0 },
@@ -323,7 +342,7 @@ const struct inst * const db_inst_0f[] = {
 	0,
 	db_inst_0f2x,
 	db_inst_0f3x,
-	0,
+	db_inst_0f4x,
 	0,
 	0,
 	0,
