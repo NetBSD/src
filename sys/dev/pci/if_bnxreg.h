@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnxreg.h,v 1.3 2007/12/26 04:06:29 dyoung Exp $	*/
+/*	$NetBSD: if_bnxreg.h,v 1.4 2007/12/30 00:56:45 dyoung Exp $	*/
 /*	$OpenBSD: if_bnxreg.h,v 1.17 2006/11/20 21:26:27 brad Exp $	*/
 
 /*-
@@ -4591,7 +4591,7 @@ struct fw_info {
 struct bnx_softc
 {
 	device_t bnx_dev;
-	struct ethercom			ethercom;
+	struct ethercom			bnx_ec;
 	struct pci_attach_args		bnx_pa;
 
 	struct ifmedia		bnx_ifmedia;		/* TBI media info */
