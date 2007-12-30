@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_inode.c,v 1.61.2.2 2007/12/26 21:39:58 ad Exp $	*/
+/*	$NetBSD: ext2fs_inode.c,v 1.61.2.3 2007/12/30 00:50:10 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.61.2.2 2007/12/26 21:39:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.61.2.3 2007/12/30 00:50:10 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -155,14 +155,14 @@ ext2fs_inactive(void *v)
 
 	error = 0;
 	if (ip->i_e2fs_nlink == 0 && (vp->v_mount->mnt_flag & MNT_RDONLY) == 0) {
+		/* Defer final inode free and update to reclaim.*/
 		if (ext2fs_size(ip) != 0) {
 			error = ext2fs_truncate(vp, (off_t)0, 0, NOCRED);
 		}
 		ip->i_e2fs_dtime = time_second;
-		ip->i_flag |= IN_CHANGE | IN_UPDATE;
-		ext2fs_vfree(vp, ip->i_number, ip->i_e2fs_mode);
-	}
-	if (ip->i_flag & (IN_CHANGE | IN_UPDATE | IN_MODIFIED)) {
+		ip->i_flag |= IN_CHANGE | IN_UPDATE | IN_MODIFIED;
+		ip->i_omode = 1;
+	} else if (ip->i_flag & (IN_CHANGE | IN_UPDATE | IN_MODIFIED)) {
 		ext2fs_update(vp, NULL, NULL, 0);
 	}
 out:

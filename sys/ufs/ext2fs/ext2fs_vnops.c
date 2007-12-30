@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.76.2.2 2007/12/26 21:39:58 ad Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.76.2.3 2007/12/30 00:50:10 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.76.2.2 2007/12/26 21:39:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.76.2.3 2007/12/30 00:50:10 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1487,6 +1487,13 @@ ext2fs_reclaim(void *v)
 	struct inode *ip = VTOI(vp);
 	int error;
 
+	/*
+	 * The inode must be freed and updated before being removed
+	 * from its hash chain.  Other threads trying to gain a hold
+	 * on the inode will be stalled because it is locked (VI_XLOCK).
+	 */
+	if (ip->i_omode == 1 && (vp->v_mount->mnt_flag & MNT_RDONLY) == 0)
+		ext2fs_vfree(vp, ip->i_number, ip->i_e2fs_mode);
 	if ((error = ufs_reclaim(vp)) != 0)
 		return (error);
 	if (ip->i_din.e2fs_din != NULL)
