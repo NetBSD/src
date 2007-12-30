@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.73 2007/11/19 18:51:50 ad Exp $	*/
+/*	$NetBSD: ucom.c,v 1.74 2007/12/30 21:49:47 smb Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.73 2007/11/19 18:51:50 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.74 2007/12/30 21:49:47 smb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -208,6 +208,8 @@ USB_ATTACH(ucom)
 			  RND_TYPE_TTY, 0);
 #endif
 
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 	USB_ATTACH_SUCCESS_RETURN;
 }
 
@@ -222,6 +224,7 @@ USB_DETACH(ucom)
 		 sc, flags, tp, sc->sc_bulkin_no, sc->sc_bulkout_no));
 
 	sc->sc_dying = 1;
+	pmf_device_deregister(self);
 
 	if (sc->sc_bulkin_pipe != NULL)
 		usbd_abort_pipe(sc->sc_bulkin_pipe);
