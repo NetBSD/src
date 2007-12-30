@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.971 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.972 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -293,5 +293,7 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		brightness controls [jmcneill 20071221]
 	PaX ASLR: Address Space Layout Randomization support in the kernel and
 		dynamic linker, see security(8). [elad, christos 20071226]
+	msdosfs: Significantly speed up write speed (up to 16x faster).
+		[reinoud 20071228]
 	itesio(4): Added support for the Watchdog Timer. [xtraeme 20071229]
 	hp700: kernels are now compiled with -O2. [skrll 20071230]
