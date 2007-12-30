@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.106 2007/12/22 02:21:29 ad Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.107 2007/12/30 22:03:01 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.106 2007/12/22 02:21:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.107 2007/12/30 22:03:01 ad Exp $");
 
 #include "opt_compat_sunos.h"
 #include "opt_ptm.h"
@@ -857,7 +857,9 @@ filt_ptcread(struct knote *kn, long hint)
 	pti = kn->kn_hook;
 	tp = pti->pt_tty;
 
-	mutex_spin_enter(&tty_lock);
+	if ((hint & NOTE_SUBMIT) == 0) {
+		mutex_spin_enter(&tty_lock);
+	}
 
 	canread = (ISSET(tp->t_state, TS_ISOPEN) &&
 		    ((tp->t_outq.c_cc > 0 && !ISSET(tp->t_state, TS_TTSTOP)) ||
@@ -876,7 +878,9 @@ filt_ptcread(struct knote *kn, long hint)
 			kn->kn_data++;
 	}
 
-	mutex_spin_exit(&tty_lock);
+	if ((hint & NOTE_SUBMIT) == 0) {
+		mutex_spin_exit(&tty_lock);
+	}
 
 	return (canread);
 }
@@ -906,7 +910,9 @@ filt_ptcwrite(struct knote *kn, long hint)
 	pti = kn->kn_hook;
 	tp = pti->pt_tty;
 
-	mutex_spin_enter(&tty_lock);
+	if ((hint & NOTE_SUBMIT) == 0) {
+		mutex_spin_enter(&tty_lock);
+	}
 
 	canwrite = (ISSET(tp->t_state, TS_ISOPEN) &&
 		    ((pti->pt_flags & PF_REMOTE) ?
@@ -925,7 +931,9 @@ filt_ptcwrite(struct knote *kn, long hint)
 		kn->kn_data = nwrite;
 	}
 
-	mutex_spin_exit(&tty_lock);
+	if ((hint & NOTE_SUBMIT) == 0) {
+		mutex_spin_exit(&tty_lock);
+	}
 
 	return (canwrite);
 }
