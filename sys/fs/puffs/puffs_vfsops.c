@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.72 2007/11/27 11:31:17 pooka Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.73 2007/12/30 23:04:12 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.72 2007/11/27 11:31:17 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.73 2007/12/30 23:04:12 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -52,7 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.72 2007/11/27 11:31:17 pooka Exp 
 
 #include <nfs/nfsproto.h> /* for fh sizes */
 
-VFS_PROTOS(puffs);
+VFS_PROTOS(puffs_vfsop);
 
 #ifndef PUFFS_PNODEBUCKETS
 #define PUFFS_PNODEBUCKETS 256
@@ -74,7 +74,8 @@ static struct putter_ops puffs_putter = {
 };
 
 int
-puffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
+puffs_vfsop_mount(struct mount *mp, const char *path, void *data,
+	size_t *data_len)
 {
 	struct puffs_mount *pmp = NULL;
 	struct puffs_kargs *args;
@@ -266,7 +267,7 @@ puffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 }
 
 int
-puffs_start(struct mount *mp, int flags)
+puffs_vfsop_start(struct mount *mp, int flags)
 {
 	struct puffs_mount *pmp = MPTOPUFFSMP(mp);
 
@@ -277,7 +278,7 @@ puffs_start(struct mount *mp, int flags)
 }
 
 int
-puffs_unmount(struct mount *mp, int mntflags)
+puffs_vfsop_unmount(struct mount *mp, int mntflags)
 {
 	PUFFS_MSG_VARS(vfs, unmount);
 	struct puffs_mount *pmp;
@@ -370,7 +371,7 @@ puffs_unmount(struct mount *mp, int mntflags)
  * This doesn't need to travel to userspace
  */
 int
-puffs_root(struct mount *mp, struct vnode **vpp)
+puffs_vfsop_root(struct mount *mp, struct vnode **vpp)
 {
 	struct puffs_mount *pmp = MPTOPUFFSMP(mp);
 	int rv;
@@ -381,7 +382,7 @@ puffs_root(struct mount *mp, struct vnode **vpp)
 }
 
 int
-puffs_statvfs(struct mount *mp, struct statvfs *sbp)
+puffs_vfsop_statvfs(struct mount *mp, struct statvfs *sbp)
 {
 	PUFFS_MSG_VARS(vfs, statvfs);
 	struct puffs_mount *pmp;
@@ -530,7 +531,7 @@ pageflush(struct mount *mp, kauth_cred_t cred, int waitfor, int suspending)
 }
 
 int
-puffs_sync(struct mount *mp, int waitfor, struct kauth_cred *cred)
+puffs_vfsop_sync(struct mount *mp, int waitfor, struct kauth_cred *cred)
 {
 	PUFFS_MSG_VARS(vfs, sync);
 	struct puffs_mount *pmp = MPTOPUFFSMP(mp);
@@ -554,7 +555,7 @@ puffs_sync(struct mount *mp, int waitfor, struct kauth_cred *cred)
 }
 
 int
-puffs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
+puffs_vfsop_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
 {
 	PUFFS_MSG_VARS(vfs, fhtonode);
 	struct puffs_mount *pmp = MPTOPUFFSMP(mp);
@@ -614,7 +615,7 @@ puffs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
 }
 
 int
-puffs_vptofh(struct vnode *vp, struct fid *fhp, size_t *fh_size)
+puffs_vfsop_vptofh(struct vnode *vp, struct fid *fhp, size_t *fh_size)
 {
 	PUFFS_MSG_VARS(vfs, nodetofh);
 	struct puffs_mount *pmp = MPTOPUFFSMP(vp->v_mount);
@@ -689,7 +690,7 @@ puffs_vptofh(struct vnode *vp, struct fid *fhp, size_t *fh_size)
 }
 
 void
-puffs_init()
+puffs_vfsop_init()
 {
 
 	/* some checks depend on this */
@@ -701,7 +702,7 @@ puffs_init()
 }
 
 void
-puffs_done()
+puffs_vfsop_done()
 {
 
 	puffs_msgif_destroy();
@@ -709,14 +710,14 @@ puffs_done()
 }
 
 int
-puffs_snapshot(struct mount *mp, struct vnode *vp, struct timespec *ts)
+puffs_vfsop_snapshot(struct mount *mp, struct vnode *vp, struct timespec *ts)
 {
 
 	return EOPNOTSUPP;
 }
 
 int
-puffs_suspendctl(struct mount *mp, int cmd)
+puffs_vfsop_suspendctl(struct mount *mp, int cmd)
 {
 	PUFFS_MSG_VARS(vfs, suspend);
 	struct puffs_mount *pmp;
@@ -799,25 +800,25 @@ const struct vnodeopv_desc * const puffs_vnodeopv_descs[] = {
 struct vfsops puffs_vfsops = {
 	MOUNT_PUFFS,
 	sizeof (struct puffs_kargs),
-	puffs_mount,		/* mount	*/
-	puffs_start,		/* start	*/
-	puffs_unmount,		/* unmount	*/
-	puffs_root,		/* root		*/
-	(void *)eopnotsupp,	/* quotactl	*/
-	puffs_statvfs,		/* statvfs	*/
-	puffs_sync,		/* sync		*/
-	(void *)eopnotsupp,	/* vget		*/
-	puffs_fhtovp,		/* fhtovp	*/
-	puffs_vptofh,		/* vptofh	*/
-	puffs_init,		/* init		*/
-	NULL,			/* reinit	*/
-	puffs_done,		/* done		*/
-	NULL,			/* mountroot	*/
-	puffs_snapshot,		/* snapshot	*/
-	vfs_stdextattrctl,	/* extattrctl	*/
-	puffs_suspendctl,	/* suspendctl	*/
-	puffs_vnodeopv_descs,	/* vnodeops	*/
-	0,			/* refcount	*/
+	puffs_vfsop_mount,		/* mount	*/
+	puffs_vfsop_start,		/* start	*/
+	puffs_vfsop_unmount,		/* unmount	*/
+	puffs_vfsop_root,		/* root		*/
+	(void *)eopnotsupp,		/* quotactl	*/
+	puffs_vfsop_statvfs,		/* statvfs	*/
+	puffs_vfsop_sync,		/* sync		*/
+	(void *)eopnotsupp,		/* vget		*/
+	puffs_vfsop_fhtovp,		/* fhtovp	*/
+	puffs_vfsop_vptofh,		/* vptofh	*/
+	puffs_vfsop_init,		/* init		*/
+	NULL,				/* reinit	*/
+	puffs_vfsop_done,		/* done		*/
+	NULL,				/* mountroot	*/
+	puffs_vfsop_snapshot,		/* snapshot	*/
+	vfs_stdextattrctl,		/* extattrctl	*/
+	puffs_vfsop_suspendctl,		/* suspendctl	*/
+	puffs_vnodeopv_descs,		/* vnodeops	*/
+	0,				/* refcount	*/
 	{ NULL, NULL }
 };
 VFS_ATTACH(puffs_vfsops);
