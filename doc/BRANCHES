@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.234 2007/12/24 05:26:34 yamt Exp $
+#	$NetBSD: BRANCHES,v 1.235 2007/12/30 23:14:24 ad Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -507,7 +507,7 @@ Description:	Make VM and file system framework MP safe
 Status:		Active
 Start Date:	4 December 2007
 End Date:
-Base Tag:	vmlocking2-base1
+Base Tag:	vmlocking2-base3
 Maintainer:	Andrew Doran <ad@NetBSD.org>
 Scope:		kernel
 Notes:		Goals:
@@ -518,19 +518,18 @@ Notes:		Goals:
 
 		Status by architecture:
 
-		  alpha		partial: need pmap/trap locking changes
+		  alpha		done
 		  i386		done
 		  amd64		done
 		  mips		done
-		  sparc			
+		  sparc		need pmap/trap locking changes	
 		  sparc64	done
-		  arm			
-		  powerpc	partial: need pmap/trap locking changes
+		  arm		done
+		  powerpc	done
 		  hppa		done
 		  sh3		done
-		  vax		partial: need pmap/trap locking changes
-		  m68k		
-		  xen		partial
+		  m68k		done
+		  xen		need pmap/trap locking changes
 
 		Remaining MI work to do:
 
@@ -539,14 +538,6 @@ Notes:		Goals:
 		Remaining problems:
 
 		- LFS stalls due to v_numoutput leak.
-
-		- ext2fs dup alloc.
-
-		- tmpfs rename issue on pkgbuild
-
-		- Unmount erroneously reports busy sometimes. Why?
-
-		- usl_detachtimeout warning occasionally.
 
 Branch:		yamt-kmem
 Description:	
