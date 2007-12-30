@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_event.c,v 1.12 2007/11/28 21:46:52 plunky Exp $	*/
+/*	$NetBSD: hci_event.c,v 1.13 2007/12/30 18:26:42 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_event.c,v 1.12 2007/11/28 21:46:52 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_event.c,v 1.13 2007/12/30 18:26:42 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -59,6 +59,8 @@ static void hci_event_read_clock_offset_compl(struct hci_unit *, struct mbuf *);
 static void hci_cmd_read_bdaddr(struct hci_unit *, struct mbuf *);
 static void hci_cmd_read_buffer_size(struct hci_unit *, struct mbuf *);
 static void hci_cmd_read_local_features(struct hci_unit *, struct mbuf *);
+static void hci_cmd_read_local_ver(struct hci_unit *, struct mbuf *);
+static void hci_cmd_read_local_commands(struct hci_unit *, struct mbuf *);
 static void hci_cmd_reset(struct hci_unit *, struct mbuf *);
 
 #ifdef BLUETOOTH_DEBUG
@@ -329,6 +331,14 @@ hci_event_command_compl(struct hci_unit *unit, struct mbuf *m)
 
 	case HCI_CMD_READ_LOCAL_FEATURES:
 		hci_cmd_read_local_features(unit, m);
+		break;
+
+	case HCI_CMD_READ_LOCAL_VER:
+		hci_cmd_read_local_ver(unit, m);
+		break;
+
+	case HCI_CMD_READ_LOCAL_COMMANDS:
+		hci_cmd_read_local_commands(unit, m);
 		break;
 
 	case HCI_CMD_RESET:
@@ -966,6 +976,59 @@ hci_cmd_read_local_features(struct hci_unit *unit, struct mbuf *m)
 }
 
 /*
+ * process results of read_local_ver command_complete event
+ *
+ * reading local supported commands is only supported from 1.2 spec
+ */
+static void
+hci_cmd_read_local_ver(struct hci_unit *unit, struct mbuf *m)
+{
+	hci_read_local_ver_rp rp;
+
+	KASSERT(m->m_pkthdr.len >= sizeof(rp));
+	m_copydata(m, 0, sizeof(rp), &rp);
+	m_adj(m, sizeof(rp));
+
+	if (rp.status != 0)
+		return;
+
+	if ((unit->hci_flags & BTF_INIT_COMMANDS) == 0)
+		return;
+
+	if (rp.hci_version < HCI_SPEC_V12) {
+		unit->hci_flags &= ~BTF_INIT_COMMANDS;
+		wakeup(unit);
+		return;
+	}
+
+	hci_send_cmd(unit, HCI_CMD_READ_LOCAL_COMMANDS, NULL, 0);
+}
+
+/*
+ * process results of read_local_commands command_complete event
+ */
+static void
+hci_cmd_read_local_commands(struct hci_unit *unit, struct mbuf *m)
+{
+	hci_read_local_commands_rp rp;
+
+	KASSERT(m->m_pkthdr.len >= sizeof(rp));
+	m_copydata(m, 0, sizeof(rp), &rp);
+	m_adj(m, sizeof(rp));
+
+	if (rp.status != 0)
+		return;
+
+	if ((unit->hci_flags & BTF_INIT_COMMANDS) == 0)
+		return;
+
+	unit->hci_flags &= ~BTF_INIT_COMMANDS;
+	memcpy(unit->hci_cmds, rp.commands, HCI_COMMANDS_SIZE);
+
+	wakeup(unit);
+}
+
+/*
  * process results of reset command_complete event
  *
  * This has killed all the connections, so close down anything we have left,
@@ -1008,5 +1071,8 @@ hci_cmd_reset(struct hci_unit *unit, struct mbuf *m)
 		return;
 
 	if (hci_send_cmd(unit, HCI_CMD_READ_LOCAL_FEATURES, NULL, 0))
+		return;
+
+	if (hci_send_cmd(unit, HCI_CMD_READ_LOCAL_VER, NULL, 0))
 		return;
 }
