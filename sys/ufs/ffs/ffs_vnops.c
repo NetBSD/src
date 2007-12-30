@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.93.2.3 2007/12/10 19:28:07 ad Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.93.2.4 2007/12/30 00:50:11 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.93.2.3 2007/12/10 19:28:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.93.2.4 2007/12/30 00:50:11 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -469,6 +469,14 @@ ffs_reclaim(void *v)
 	int error;
 
 	fstrans_start(mp, FSTRANS_LAZY);
+	/*
+	 * The inode must be freed and updated before being removed
+	 * from its hash chain.  Other threads trying to gain a hold
+	 * on the inode will be stalled because it is locked (VI_XLOCK).
+	 */
+	if (ip->i_nlink <= 0 && (vp->v_mount->mnt_flag & MNT_RDONLY) == 0) {
+		ffs_vfree(vp, ip->i_number, ip->i_omode);
+	}
 	if ((error = ufs_reclaim(vp)) != 0) {
 		fstrans_done(mp);
 		return (error);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_alloc.c,v 1.35.6.1 2007/12/04 13:03:40 ad Exp $	*/
+/*	$NetBSD: ext2fs_alloc.c,v 1.35.6.2 2007/12/30 00:50:10 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_alloc.c,v 1.35.6.1 2007/12/04 13:03:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_alloc.c,v 1.35.6.2 2007/12/30 00:50:10 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -557,10 +557,6 @@ ext2fs_vfree(struct vnode *pvp, ino_t ino, int mode)
 
 	pip = VTOI(pvp);
 	fs = pip->i_e2fs;
-	if (ino == EXT2_ROOTINO) {
-		/* XXX root inode being reclaimed because linkcount == 0 */
-		return 0;
-	}
 	if ((u_int)ino > fs->e2fs.e2fs_icount || (u_int)ino < EXT2_FIRSTINO)
 		panic("ifree: range: dev = 0x%x, ino = %llu, fs = %s",
 			pip->i_dev, (unsigned long long)ino, fs->e2fs_fsmnt);

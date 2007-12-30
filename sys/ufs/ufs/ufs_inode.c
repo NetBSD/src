@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.70.2.2 2007/12/26 21:40:03 ad Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.70.2.3 2007/12/30 00:50:11 ad Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.70.2.2 2007/12/26 21:40:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.70.2.3 2007/12/30 00:50:11 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -150,14 +150,6 @@ ufs_reclaim(struct vnode *vp)
 	if (prtactive && vp->v_usecount > 1)
 		vprint("ufs_reclaim: pushing active", vp);
 
-	/*
-	 * The inode must be freed and updated before being removed
-	 * from its hash chain.  Other threads trying to gain a hold
-	 * on the inode will be stalled because it is locked (VI_XLOCK).
-	 */
-	if (ip->i_nlink <= 0 && (vp->v_mount->mnt_flag & MNT_RDONLY) == 0) {
-		UFS_VFREE(vp, ip->i_number, ip->i_omode);
-	}
 	UFS_UPDATE(vp, NULL, NULL, UPDATE_CLOSE);
 	ufs_ihashrem(ip);
 

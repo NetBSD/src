@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.124.2.2 2007/12/26 21:39:58 ad Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.124.2.3 2007/12/30 00:50:10 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.124.2.2 2007/12/26 21:39:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.124.2.3 2007/12/30 00:50:10 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -887,7 +887,8 @@ loop:
 			continue;
 		mutex_enter(&vp->v_interlock);
 		ip = VTOI(vp);
-		if (vp->v_type == VNON ||
+		if (ip == NULL || (vp->v_iflag & (VI_XLOCK|VI_CLEAN)) != 0 ||
+		    vp->v_type == VNON ||
 		    ((ip->i_flag &
 		      (IN_CHANGE | IN_UPDATE | IN_MODIFIED)) == 0 &&
 		     LIST_EMPTY(&vp->v_dirtyblkhd) &&
