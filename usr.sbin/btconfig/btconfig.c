@@ -1,4 +1,4 @@
-/* $NetBSD: btconfig.c,v 1.9 2007/12/29 14:35:39 plunky Exp $ */
+/* $NetBSD: btconfig.c,v 1.10 2007/12/30 18:26:43 plunky Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -34,7 +34,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2006 Itronix, Inc.\n"
 	    "All rights reserved.\n");
-__RCSID("$NetBSD: btconfig.c,v 1.9 2007/12/29 14:35:39 plunky Exp $");
+__RCSID("$NetBSD: btconfig.c,v 1.10 2007/12/30 18:26:43 plunky Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/param.h>
@@ -106,6 +106,7 @@ int opt_reset = 0;
 			"\007INIT_BUFFER_SIZE"	\
 			"\010INIT_FEATURES"	\
 			"\011POWER_UP_NOOP"	\
+			"\012INIT_COMMANDS"	\
 			""
 
 /* authorisation (flag) */

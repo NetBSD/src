@@ -1,4 +1,4 @@
-/*	$NetBSD: hci.h,v 1.20 2007/12/29 11:30:27 plunky Exp $	*/
+/*	$NetBSD: hci.h,v 1.21 2007/12/30 18:26:42 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -54,7 +54,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: hci.h,v 1.20 2007/12/29 11:30:27 plunky Exp $
+ * $Id: hci.h,v 1.21 2007/12/30 18:26:42 plunky Exp $
  * $FreeBSD: src/sys/netgraph/bluetooth/include/ng_hci.h,v 1.6 2005/01/07 01:45:43 imp Exp $
  */
 
@@ -90,6 +90,7 @@
 #define HCI_FEATURES_SIZE		8   /* LMP features */
 #define HCI_UNIT_NAME_SIZE		248 /* unit name size */
 #define HCI_DEVNAME_SIZE		16  /* same as dv_xname */
+#define HCI_COMMANDS_SIZE		64  /* supported commands mask */
 
 /* HCI specification */
 #define HCI_SPEC_V10			0x00 /* v1.0 */
@@ -1413,7 +1414,7 @@ typedef struct {
 /* No command parameter(s) */
 typedef struct {
 	uint8_t		status;		/* 0x00 - success */
-	uint8_t		commands[64];	/* opcode bitmask */
+	uint8_t		commands[HCI_COMMANDS_SIZE];	/* opcode bitmask */
 } __attribute__ ((__packed__)) hci_read_local_commands_rp;
 
 #define HCI_OCF_READ_LOCAL_FEATURES			0x0003
@@ -2011,8 +2012,13 @@ struct btreq {
 #define BTF_INIT_BDADDR		(1<<5)	/* waiting for bdaddr */
 #define BTF_INIT_BUFFER_SIZE	(1<<6)	/* waiting for buffer size */
 #define BTF_INIT_FEATURES	(1<<7)	/* waiting for features */
-#define BTF_INIT		(BTF_INIT_BDADDR | BTF_INIT_BUFFER_SIZE | BTF_INIT_FEATURES)
 #define BTF_POWER_UP_NOOP	(1<<8)	/* should wait for No-op on power up */
+#define BTF_INIT_COMMANDS	(1<<9)	/* waiting for supported commands */
+
+#define BTF_INIT		(BTF_INIT_BDADDR	\
+				| BTF_INIT_BUFFER_SIZE	\
+				| BTF_INIT_FEATURES	\
+				| BTF_INIT_COMMANDS)
 
 /**************************************************************************
  **************************************************************************
@@ -2131,6 +2137,8 @@ struct hci_unit {
 
 	uint16_t	 hci_link_policy;	/* link policy */
 	uint16_t	 hci_lmp_mask;		/* link policy capabilities */
+
+	uint8_t		 hci_cmds[HCI_COMMANDS_SIZE]; /* opcode bitmask */
 
 	/* flow control */
 	uint16_t	 hci_max_acl_size;	/* ACL payload mtu */
