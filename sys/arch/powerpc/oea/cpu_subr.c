@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.37 2007/12/30 22:39:15 macallan Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.38 2007/12/30 23:21:21 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.37 2007/12/30 22:39:15 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.38 2007/12/30 23:21:21 macallan Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -551,7 +551,7 @@ cpu_setup(self, ci)
 		case MPC7455: /* 7445 does not have L3! */
 		case MPC7457: /* 7447 does not have L3! */
 			cpu_config_l3cr(vers);
-			/* FALLTHROUGH */
+			break;
 		case IBM750FX:
 		case MPC750:
 		case MPC7400:
@@ -737,7 +737,7 @@ cpu_enable_l2cr(register_t l2cr)
 	mtspr(SPR_L2CR, l2cr | L2CR_L2I);
 	do {
 		x = mfspr(SPR_L2CR);
-	} while (x & L2CR_L2I);
+	} while (x & L2CR_L2IP);
 
 	/* Enable L2 cache. */
 	l2cr |= L2CR_L2E;
