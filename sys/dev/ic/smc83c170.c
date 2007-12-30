@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170.c,v 1.69 2007/12/29 23:58:48 dyoung Exp $	*/
+/*	$NetBSD: smc83c170.c,v 1.70 2007/12/30 00:04:47 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc83c170.c,v 1.69 2007/12/29 23:58:48 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc83c170.c,v 1.70 2007/12/30 00:04:47 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -1476,6 +1476,9 @@ epic_mediastatus(ifp, ifmr)
 
 /*
  * Callback from ifmedia to request new media setting.
+ *
+ * XXX Looks to me like some of this complexity should move into
+ * XXX one or two custom PHY drivers. --dyoung
  */
 int
 epic_mediachange(ifp)
@@ -1489,7 +1492,7 @@ epic_mediachange(ifp)
 	struct mii_softc *miisc;
 	int cfg;
 
-	if (!(ifp->if_flags & IFF_UP))
+	if ((ifp->if_flags & IFF_UP) == 0)
 		return (0);
 
 	if (IFM_INST(media) != sc->sc_serinst) {
