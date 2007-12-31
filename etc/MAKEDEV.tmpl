@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.100 2007/12/17 04:29:50 riz Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.101 2007/12/31 15:31:40 ad Exp $
 #
 # Copyright (c) 2003,2007 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -279,7 +279,6 @@
 #	ss*	SCSI scanner
 #	stic*	PixelStamp interface chip
 #	sysmon	System Monitoring hardware
-#	systrace syscall tracer
 #	tap*	virtual Ethernet device
 #	tun*	network tunnel driver
 #	twa	3ware Apache control interface
@@ -643,7 +642,7 @@ all)
 	makedev vnd0 vnd1 vnd2 vnd3
 	makedev bpf
 	makedev tun0 tun1 tun2 tun3
-	makedev ipl pf crypto random systrace
+	makedev ipl pf crypto random
 	makedev lkm lockstat clockctl cpuctl
 	makedev atabus0 atabus1 atabus2 atabus3
 	makedev tap tap0 tap1 tap2 tap3
@@ -1440,10 +1439,6 @@ nsmb)
 nsmb*)
 	unit=${i#nsmb}
 	mkdev nsmb$unit c %nsmb_chr% $unit 644
-	;;
-
-systrace)
-	mkdev systrace c %systrace_chr% 0 644
 	;;
 
 kttcp)

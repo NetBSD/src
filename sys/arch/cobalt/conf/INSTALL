@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.27 2006/11/18 14:28:55 tsutsui Exp $
+# $NetBSD: INSTALL,v 1.28 2007/12/31 15:31:51 ad Exp $
 #
 # INSTALL -- installation and rescue kernel.
 #
@@ -10,7 +10,7 @@ include 	"arch/cobalt/conf/std.cobalt"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"INSTALL-$Revision: 1.27 $"
+#ident 		"INSTALL-$Revision: 1.28 $"
 
 makeoptions     COPTS="-Os -mmemcpy"
 makeoptions	CPUFLAGS="-march=vr5000 -mabi=32"
@@ -19,7 +19,6 @@ maxusers	32
 
 # Standard system options
 options 	KTRACE		# system call tracing support
-#options 	SYSTRACE	# system call vetting via systrace(1)
 options 	SYSVMSG		# System V message queues
 options 	SYSVSEM		# System V semaphores
 #options 	SEMMNI=10	# number of semaphore identifiers

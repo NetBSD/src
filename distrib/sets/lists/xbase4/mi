@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.16 2006/09/12 02:36:37 simonb Exp $
+# $NetBSD: mi,v 1.17 2007/12/31 15:31:39 ad Exp $
 ./etc/X11
 ./etc/fonts
 ./etc/fonts/fonts.conf
@@ -96,7 +96,7 @@
 ./usr/X11R6/bin/xsetroot
 ./usr/X11R6/bin/xsm
 ./usr/X11R6/bin/xstdcmap
-./usr/X11R6/bin/xsystrace
+./usr/X11R6/bin/xsystrace		xbase-obsolete	obsolete
 ./usr/X11R6/bin/xterm
 ./usr/X11R6/bin/xtrapchar
 ./usr/X11R6/bin/xtrapin
@@ -239,7 +239,7 @@
 ./usr/X11R6/lib/X11/app-defaults/Xmag
 ./usr/X11R6/lib/X11/app-defaults/Xmessage-color
 ./usr/X11R6/lib/X11/app-defaults/Xmh
-./usr/X11R6/lib/X11/app-defaults/Xsystrace
+./usr/X11R6/lib/X11/app-defaults/Xsystrace	xbase-obsolete	obsolete
 ./usr/X11R6/lib/X11/config
 ./usr/X11R6/lib/X11/etc
 ./usr/X11R6/lib/X11/etc/xterm.termcap
@@ -1009,7 +1009,7 @@
 ./usr/X11R6/man/cat1/xsetroot.0
 ./usr/X11R6/man/cat1/xsm.0
 ./usr/X11R6/man/cat1/xstdcmap.0
-./usr/X11R6/man/cat1/xsystrace.0
+./usr/X11R6/man/cat1/xsystrace.0		xbase-obsolete	obsolete
 ./usr/X11R6/man/cat1/xterm.0
 ./usr/X11R6/man/cat1/xtrap.0
 ./usr/X11R6/man/cat1/xtrapchar.0

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.136 2007/11/04 14:34:26 xtraeme Exp $
+# $NetBSD: GENERIC,v 1.137 2007/12/31 15:32:08 ad Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/x68k/conf/std.x68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.136 $"
+#ident 		"GENERIC-$Revision: 1.137 $"
 
 maxusers	8
 
@@ -66,7 +66,6 @@ options 	RTC_OFFSET=-540	# hardware clock is this many mins. west of GMT
 
 ## System call tracing (see ktrace(1)).
 options 	KTRACE
-#options 	SYSTRACE	# system call vetting via systrace(1)
 
 ## Collect statistics on kernel malloc's and free's.  This does have a
 ## significant performance hit on slower machines, so it is intended for

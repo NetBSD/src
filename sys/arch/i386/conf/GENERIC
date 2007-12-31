@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.874 2007/12/30 13:15:22 joerg Exp $
+# $NetBSD: GENERIC,v 1.875 2007/12/31 15:31:56 ad Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.874 $"
+#ident 		"GENERIC-$Revision: 1.875 $"
 
 maxusers	32		# estimated number of users
 
@@ -93,7 +93,6 @@ options 	NTP		# NTP phase/frequency locked loop
 				# Improves time behavior under VMware.
 
 options 	KTRACE		# system call tracing via ktrace(1)
-#options 	SYSTRACE	# system call vetting via systrace(1)
 
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores

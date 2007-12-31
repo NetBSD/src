@@ -1,4 +1,4 @@
-#	$NetBSD: EXPLORA451,v 1.32 2007/11/27 10:55:27 hannken Exp $
+#	$NetBSD: EXPLORA451,v 1.33 2007/12/31 15:31:53 ad Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -25,7 +25,6 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 options 	NTP		# NTP phase/frequency locked loop
 
 options 	KTRACE		# system call tracing via ktrace(1)
-#options 	SYSTRACE	# system call vetting via systrace(1)
 
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores

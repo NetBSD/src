@@ -1,4 +1,4 @@
-#	$NetBSD: majors.next68k,v 1.19 2006/11/24 22:04:24 wiz Exp $
+#	$NetBSD: majors.next68k,v 1.20 2007/12/31 15:32:02 ad Exp $
 #
 # Device majors for next68k
 #
@@ -41,7 +41,6 @@ device-major	wsmouse		char 43			wsmouse
 device-major	svr4_net	char 44			compat_svr4
 device-major	wsmux		char 45			wsmux
 device-major	clockctl	char 46			clockctl
-device-major	systrace	char 47			systrace
 device-major	cgd		char 48  block 21	cgd
 device-major	ksyms		char 49			ksyms
 device-major	wsfont		char 50			wsfont

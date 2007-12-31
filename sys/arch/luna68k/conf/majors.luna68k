@@ -1,4 +1,4 @@
-#	$NetBSD: majors.luna68k,v 1.17 2006/11/24 22:04:23 wiz Exp $
+#	$NetBSD: majors.luna68k,v 1.18 2007/12/31 15:31:58 ad Exp $
 #
 # Device majors for luna68k
 #
@@ -34,7 +34,6 @@ device-major	raid		char 32  block 14	raid
 device-major	wsmux		char 33			wsmux
 device-major	rnd		char 34			rnd
 device-major	clockctl	char 35			clockctl
-device-major	systrace	char 36			systrace
 device-major	cgd		char 37  block 15	cgd
 device-major	ksyms		char 38			ksyms
 device-major	wsfont		char 39			wsfont

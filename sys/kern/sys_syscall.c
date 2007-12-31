@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_syscall.c,v 1.5 2007/12/22 16:19:35 dsl Exp $	*/
+/*	$NetBSD: sys_syscall.c,v 1.6 2007/12/31 15:32:13 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_syscall.c,v 1.5 2007/12/22 16:19:35 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_syscall.c,v 1.6 2007/12/31 15:32:13 ad Exp $");
 
 #include <sys/syscall_stats.h>
 
@@ -82,7 +82,6 @@ SYS_SYSCALL(struct lwp *l, const struct CONCAT(SYS_SYSCALL, _args) *uap,
 	narg = callp->sy_argsize >> 2;
 	for (i = 0; i < narg; i++)
 		args64[i] = SCARG(uap, args[i]);
-	/* XXX systrace will not modify the correct arguments! */
 #endif
 
 	error = trace_enter(l, code, code, NULL, TRACE_ARGS);

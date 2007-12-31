@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.153 2007/12/20 23:03:08 dsl Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.154 2007/12/31 15:32:11 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -74,10 +74,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.153 2007/12/20 23:03:08 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.154 2007/12/31 15:32:11 ad Exp $");
 
 #include "opt_ktrace.h"
-#include "opt_systrace.h"
 #include "opt_multiprocessor.h"
 
 #include <sys/param.h>
@@ -97,7 +96,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.153 2007/12/20 23:03:08 dsl Exp $");
 #include <sys/vmmeter.h>
 #include <sys/sched.h>
 #include <sys/signalvar.h>
-#include <sys/systrace.h>
 #include <sys/kauth.h>
 #include <sys/atomic.h>
 #include <sys/syscallargs.h>
@@ -450,12 +448,6 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	LIST_INSERT_HEAD(&allproc, p2, p_list);
 
 	mutex_exit(&proclist_lock);
-
-#ifdef SYSTRACE
-	/* Tell systrace what's happening. */
-	if (ISSET(p1->p_flag, PK_SYSTRACE))
-		systrace_sys_fork(p1, p2);
-#endif
 
 #ifdef __HAVE_SYSCALL_INTERN
 	(*p2->p_emul->e_syscall_intern)(p2);

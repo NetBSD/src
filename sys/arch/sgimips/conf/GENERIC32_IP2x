@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC32_IP2x,v 1.70 2007/11/04 14:34:25 xtraeme Exp $
+#	$NetBSD: GENERIC32_IP2x,v 1.71 2007/12/31 15:32:04 ad Exp $
 #
 # GENERIC32_IP2x machine description file
 # 
@@ -29,7 +29,7 @@ makeoptions	TEXTADDR=0x88069000	# entry point
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC32-IP2x-$Revision: 1.70 $"
+#ident		"GENERIC32-IP2x-$Revision: 1.71 $"
 
 maxusers	32
 
@@ -50,7 +50,6 @@ makeoptions	WANT_ECOFF="yes"	# Create an ECOFF kernel in addition
 
 #options 	NTP		# NTP phase/frequence locked loop
 options 	KTRACE		# system call tracing via ktrace(1)
-#options 	SYSTRACE	# system call vetting via systrace(1)
 
 options 	SYSVMSG		# System V message queues
 options 	SYSVSEM		# System V semaphores

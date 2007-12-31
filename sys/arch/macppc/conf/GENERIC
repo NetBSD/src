@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.262 2007/11/07 19:12:25 macallan Exp $
+# $NetBSD: GENERIC,v 1.263 2007/12/31 15:31:59 ad Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.262 $"
+#ident 		"GENERIC-$Revision: 1.263 $"
 
 maxusers	32
 
@@ -34,7 +34,6 @@ options 	INSECURE	# disable kernel security levels
 options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 options 	NTP		# NTP phase/frequency locked loop
 options 	KTRACE		# system call tracing via ktrace(1)
-#options 	SYSTRACE	# system call vetting via systrace(1)
 
 options 	SYSVMSG		# System V message queues
 options 	SYSVSEM		# System V semaphores

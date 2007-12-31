@@ -1,4 +1,4 @@
-# $NetBSD: RPC44,v 1.30 2007/10/17 19:53:28 garbled Exp $
+# $NetBSD: RPC44,v 1.31 2007/12/31 15:31:49 ad Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/arc/conf/std.arc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.30 $"
+#ident		"GENERIC-$Revision: 1.31 $"
 
 maxusers	32		# estimated number of users
 
@@ -35,7 +35,6 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 options 	NTP		# NTP phase/frequency locked loop
 
 options 	KTRACE		# system call tracing via ktrace(1)
-#options 	SYSTRACE	# system call vetting via systrace(1)
 
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores

@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1106 2007/12/24 15:15:49 ad Exp $
+#	$NetBSD: mi,v 1.1107 2007/12/31 15:31:37 ad Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -1932,7 +1932,7 @@
 ./usr/include/sys/syslimits.h			comp-c-include
 ./usr/include/sys/syslog.h			comp-c-include
 ./usr/include/sys/systm.h			comp-obsolete		obsolete
-./usr/include/sys/systrace.h			comp-c-include
+./usr/include/sys/systrace.h			comp-obsolete		obsolete
 ./usr/include/sys/tablet.h			comp-obsolete		obsolete
 ./usr/include/sys/tape.h			comp-c-include
 ./usr/include/sys/termios.h			comp-c-include
@@ -2303,7 +2303,7 @@
 ./usr/libdata/debug/bin/sleep.debug		comp-util-debug		debug
 ./usr/libdata/debug/bin/stty.debug		comp-util-debug		debug
 ./usr/libdata/debug/bin/sync.debug		comp-util-debug		debug
-./usr/libdata/debug/bin/systrace.debug		comp-util-debug		debug
+./usr/libdata/debug/bin/systrace.debug		comp-obsolete		obsolete
 ./usr/libdata/debug/bin/test.debug		comp-util-debug		debug
 ./usr/libdata/debug/libexec/lfs_cleanerd.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/amrctl.debug		comp-sysutil-debug	debug

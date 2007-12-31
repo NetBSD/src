@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.196 2007/12/26 16:01:36 ad Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.197 2007/12/31 15:32:11 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -74,11 +74,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.196 2007/12/26 16:01:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.197 2007/12/31 15:32:11 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
-#include "opt_systrace.h"
 #include "opt_sysv.h"
 
 #include <sys/param.h>
@@ -109,7 +108,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.196 2007/12/26 16:01:36 ad Exp $");
 #include <sys/sched.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
-#include <sys/systrace.h>
 #include <sys/kauth.h>
 #include <sys/sleepq.h>
 #include <sys/lockdebug.h>
@@ -297,9 +295,6 @@ exit1(struct lwp *l, int rv)
 		ktrderef(p);
 		mutex_exit(&ktrace_lock);
 	}
-#endif
-#ifdef SYSTRACE
-	systrace_sys_exit(p);
 #endif
 
 	/*

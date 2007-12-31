@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_securelevel.c,v 1.4 2007/11/25 09:39:26 elad Exp $ */
+/* $NetBSD: secmodel_securelevel.c,v 1.5 2007/12/31 15:32:13 ad Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_securelevel.c,v 1.4 2007/11/25 09:39:26 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_securelevel.c,v 1.5 2007/12/31 15:32:13 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_insecure.h"
@@ -309,7 +309,6 @@ secmodel_securelevel_process_cb(kauth_cred_t cred,
 		}
 
 	case KAUTH_PROCESS_CANPTRACE:
-	case KAUTH_PROCESS_CANSYSTRACE:
 		if ((p == initproc) && (securelevel >= 0))
 			result = KAUTH_RESULT_DENY;
 

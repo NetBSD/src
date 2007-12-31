@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.77 2007/12/31 13:38:50 ad Exp $
+# $NetBSD: GENERIC,v 1.78 2007/12/31 15:31:54 ad Exp $
 #
 # GENERIC machine description file
 # 
@@ -23,7 +23,7 @@ include 	"arch/hp700/conf/std.hp700"
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
-#ident 		"GENERIC-$Revision: 1.77 $"
+#ident 		"GENERIC-$Revision: 1.78 $"
 
 maxusers	32		# estimated number of users
 
@@ -53,7 +53,6 @@ options 	INSECURE	# disable kernel security levels
 options 	NTP		# NTP phase/frequency locked loop
 
 options 	KTRACE		# system call tracing via ktrace(1)
-#options 	SYSTRACE	# system call vetting via systrace(1)
 
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores

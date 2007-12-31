@@ -1,4 +1,4 @@
-#	$NetBSD: majors.newsmips,v 1.18 2006/11/24 22:04:23 wiz Exp $
+#	$NetBSD: majors.newsmips,v 1.19 2007/12/31 15:32:02 ad Exp $
 #
 # Device majors for newsmips
 #
@@ -41,7 +41,6 @@ device-major	wsmux		char 63			wsmux
 device-major	scsibus		char 73			scsibus
 device-major	raid		char 74  block 32	raid
 device-major	clockctl	char 75			clockctl
-device-major	systrace	char 76			systrace
 device-major	cgd		char 77  block 33	cgd
 device-major	ksyms		char 78			ksyms
 device-major	wsfont		char 79			wsfont

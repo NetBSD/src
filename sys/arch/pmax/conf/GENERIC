@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.154 2007/11/04 14:34:25 xtraeme Exp $
+# $NetBSD: GENERIC,v 1.155 2007/12/31 15:32:03 ad Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/pmax/conf/std.pmax"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.154 $"
+#ident		"GENERIC-$Revision: 1.155 $"
 
 maxusers	64
 
@@ -50,7 +50,6 @@ options 	DDB_ONPANIC=0		# don't enter debugger on panic
 #options 	DEBUG			# extra kernel debugging support
 options 	COMPAT_43		# compatibility with 4.3BSD binaries
 options 	KTRACE			# system call tracing support
-#options 	SYSTRACE		# system call vetting via systrace(1)
 
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores

@@ -1,4 +1,4 @@
-.\" $NetBSD: secmodel_securelevel.9,v 1.1 2007/11/21 22:49:06 elad Exp $
+.\" $NetBSD: secmodel_securelevel.9,v 1.2 2007/12/31 15:31:44 ad Exp $
 .\"
 .\" Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -59,8 +59,7 @@ Don't raise the securelevel on boot
 .Bl -hyphen -compact
 .It
 The init process (PID 1) may not be traced or accessed by
-.Xr ptrace 2 ,
-.Xr systrace 4 ,
+.Xr ptrace 2
 or procfs.
 .It
 Immutable and append-only file flags may be changed

@@ -1,9 +1,7 @@
-/*	$NetBSD: linux32_syscall.c,v 1.17 2007/11/03 12:58:04 dsl Exp $ */
+/*	$NetBSD: linux32_syscall.c,v 1.18 2007/12/31 15:31:46 ad Exp $ */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_syscall.c,v 1.17 2007/11/03 12:58:04 dsl Exp $");
-
-#include "opt_systrace.h"
+__KERNEL_RCSID(0, "$NetBSD: linux32_syscall.c,v 1.18 2007/12/31 15:31:46 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
