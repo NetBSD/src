@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.974 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.975 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -300,3 +300,4 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		[jmcneill 20071229]
 	hp700: kernels are now compiled with -O2. [skrll 20071230]
 	compat_hpux: removed. [ad 20071231]
+	systrace(1): removed. [ad 20071231]
