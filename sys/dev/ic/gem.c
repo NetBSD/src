@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.61 2007/12/29 17:59:20 tsutsui Exp $ */
+/*	$NetBSD: gem.c,v 1.62 2007/12/31 20:31:02 dyoung Exp $ */
 
 /*
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.61 2007/12/29 17:59:20 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.62 2007/12/31 20:31:02 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -1336,6 +1336,38 @@ gem_tint(sc)
 	 * frames that have been transmitted.
 	 */
 	while ((txs = SIMPLEQ_FIRST(&sc->sc_txdirtyq)) != NULL) {
+		/*
+		 * In theory, we could harveast some descriptors before
+		 * the ring is empty, but that's a bit complicated.
+		 *
+		 * GEM_TX_COMPLETION points to the last descriptor
+		 * processed +1.
+		 *
+		 * Let's assume that the NIC writes back to the Tx
+		 * descriptors before it updates the completion
+		 * register.  If the NIC has posted writes to the
+		 * Tx descriptors, PCI ordering requires that the
+		 * posted writes flush to RAM before the register-read
+		 * finishes.  So let's read the completion register,
+		 * before syncing the descriptors, so that we
+		 * examine Tx descriptors that are at least as
+		 * current as the completion register.
+		 */
+		txlast = bus_space_read_4(t, mac, GEM_TX_COMPLETION);
+		DPRINTF(sc,
+			("gem_tint: txs->txs_lastdesc = %d, txlast = %d\n",
+				txs->txs_lastdesc, txlast));
+		if (txs->txs_firstdesc <= txs->txs_lastdesc) {
+			if ((txlast >= txs->txs_firstdesc) &&
+				(txlast <= txs->txs_lastdesc))
+				break;
+		} else {
+			/* Ick -- this command wraps */
+			if ((txlast >= txs->txs_firstdesc) ||
+				(txlast <= txs->txs_lastdesc))
+				break;
+		}
+
 		GEM_CDTXSYNC(sc, txs->txs_lastdesc,
 		    txs->txs_ndescs,
 		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
@@ -1356,27 +1388,6 @@ gem_tint(sc)
 		}
 #endif
 
-		/*
-		 * In theory, we could harveast some descriptors before
-		 * the ring is empty, but that's a bit complicated.
-		 *
-		 * GEM_TX_COMPLETION points to the last descriptor
-		 * processed +1.
-		 */
-		txlast = bus_space_read_4(t, mac, GEM_TX_COMPLETION);
-		DPRINTF(sc,
-			("gem_tint: txs->txs_lastdesc = %d, txlast = %d\n",
-				txs->txs_lastdesc, txlast));
-		if (txs->txs_firstdesc <= txs->txs_lastdesc) {
-			if ((txlast >= txs->txs_firstdesc) &&
-				(txlast <= txs->txs_lastdesc))
-				break;
-		} else {
-			/* Ick -- this command wraps */
-			if ((txlast >= txs->txs_firstdesc) ||
-				(txlast <= txs->txs_lastdesc))
-				break;
-		}
 
 		DPRINTF(sc, ("gem_tint: releasing a desc\n"));
 		SIMPLEQ_REMOVE_HEAD(&sc->sc_txdirtyq, txs_q);
