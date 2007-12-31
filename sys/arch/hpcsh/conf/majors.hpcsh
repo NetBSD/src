@@ -1,4 +1,4 @@
-#	$NetBSD: majors.hpcsh,v 1.20 2006/11/24 22:04:23 wiz Exp $
+#	$NetBSD: majors.hpcsh,v 1.21 2007/12/31 15:31:55 ad Exp $
 #
 # Device majors for hpcsh
 #
@@ -38,7 +38,6 @@ device-major	scif		char 31			scif
 device-major	sci		char 32			sci
 device-major	biconsdev	char 33			biconsdev
 device-major	clockctl	char 34			clockctl
-device-major	systrace	char 35			systrace
 device-major	cgd		char 36  block 10	cgd
 device-major	ksyms		char 37			ksyms
 device-major	lkm		char 38			lkm

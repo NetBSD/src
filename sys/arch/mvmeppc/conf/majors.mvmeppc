@@ -1,4 +1,4 @@
-#	$NetBSD: majors.mvmeppc,v 1.17 2006/11/24 22:04:23 wiz Exp $
+#	$NetBSD: majors.mvmeppc,v 1.18 2007/12/31 15:32:00 ad Exp $
 #
 # Device majors for mvmeppc
 #
@@ -45,7 +45,6 @@ device-major	isdnbchan	char 55			isdnbchan
 device-major	isdntrc		char 56			isdntrc
 device-major	isdntel		char 57			isdntel
 device-major	clockctl	char 58			clockctl
-device-major	systrace	char 59			systrace
 device-major	cgd		char 60  block 19	cgd
 device-major	ksyms		char 61			ksyms
 

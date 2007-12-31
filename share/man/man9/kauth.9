@@ -1,4 +1,4 @@
-.\" $NetBSD: kauth.9,v 1.58 2007/11/27 10:50:09 elad Exp $
+.\" $NetBSD: kauth.9,v 1.59 2007/12/31 15:31:43 ad Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -389,11 +389,6 @@ to another process.
 is the process the signal is being posted to, and
 .Ar arg1
 is the signal number.
-.It Dv KAUTH_PROCESS_CANSYSTRACE
-Checks whether object with passed credentials can use
-.Xr systrace 4
-on process
-.Ar p .
 .It Dv KAUTH_PROCESS_CORENAME
 Checks whether the coredump name for the process
 .Ar p

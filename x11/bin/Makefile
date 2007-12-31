@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2004/05/13 21:10:36 mhitch Exp $
+#	$NetBSD: Makefile,v 1.8 2007/12/31 15:34:26 ad Exp $
 
 SUBDIR=	appres bdftopcf bdftruncate beforelight bitmap \
 	ccmakedep cleanlinks cxpm dpsexec dpsinfo editres \
@@ -15,7 +15,7 @@ SUBDIR=	appres bdftopcf bdftruncate beforelight bitmap \
 	xgamma xgc xhost xinit xkbcomp xkbevd xkbprint xkbutils \
 	xkill xload xlogo xlsatoms xlsclients xlsfonts xmag xman \
 	xmessage xmh xmkmf xmodmap xprop xrandr xrdb xrefresh xset \
-	xsetmode xsetpointer xsetroot xsm xstdcmap xsystrace xterm \
+	xsetmode xsetpointer xsetroot xsm xstdcmap xterm \
 	xtrap xvidtune xvinfo xwd xwininfo xwud
 
 .include <bsd.subdir.mk>

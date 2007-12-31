@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.31 2007/06/29 23:30:19 rumble Exp $
+#	$NetBSD: list,v 1.32 2007/12/31 15:31:41 ad Exp $
 
 SRCDIRS	bin
 
@@ -33,7 +33,6 @@ PROG	sh
 PROG	sleep
 PROG	stty
 PROG	sync
-PROG	systrace
 PROG	test		[
 
 ARGVLN	csh -csh
