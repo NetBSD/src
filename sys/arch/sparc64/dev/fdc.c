@@ -1,4 +1,4 @@
-/*	$NetBSD: fdc.c,v 1.19.2.1 2007/12/10 19:24:19 ad Exp $	*/
+/*	$NetBSD: fdc.c,v 1.19.2.2 2007/12/31 12:59:55 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc.c,v 1.19.2.1 2007/12/10 19:24:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc.c,v 1.19.2.2 2007/12/31 12:59:55 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -2516,7 +2516,8 @@ fd_read_md_image(size_t	*sizep, void **addrp)
 		bp->b_error = 0;
 		bp->b_resid = 0;
 		bp->b_proc = NULL;
-		bp->b_flags = B_BUSY | B_PHYS | B_RAW | B_READ;
+		bp->b_cflags = BC_BUSY;
+		bp->b_flags = B_PHYS | B_RAW | B_READ;
 		bp->b_blkno = btodb(offset);
 		bp->b_bcount = DEV_BSIZE;
 		bp->b_data = addr;

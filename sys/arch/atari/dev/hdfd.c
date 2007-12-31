@@ -1,4 +1,4 @@
-/*	$NetBSD: hdfd.c,v 1.59.4.1 2007/12/31 10:43:11 ad Exp $	*/
+/*	$NetBSD: hdfd.c,v 1.59.4.2 2007/12/31 12:59:54 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996 Leo Weppelman
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdfd.c,v 1.59.4.1 2007/12/31 10:43:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdfd.c,v 1.59.4.2 2007/12/31 12:59:54 ad Exp $");
 
 #include "opt_ddb.h"
 
@@ -1559,7 +1559,7 @@ fdformat(dev, finfo, p)
 
 	/* ...and wait for it to complete */
 	mutex_enter(bp->b_objlock);
-	while(!(bp->b_flags & B_DONE)) {
+	while(!(bp->b_oflags & BO_DONE)) {
 		rv = cv_timedwait(&bp->b_done, 20 * hz);
 		if (rv == EWOULDBLOCK)
 			break;
