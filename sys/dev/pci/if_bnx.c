@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnx.c,v 1.15 2007/12/30 00:56:45 dyoung Exp $	*/
+/*	$NetBSD: if_bnx.c,v 1.16 2007/12/31 22:52:14 dyoung Exp $	*/
 /*	$OpenBSD: if_bnx.c,v 1.43 2007/01/30 03:21:10 krw Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/dev/bce/if_bce.c,v 1.3 2006/04/13 14:12:26 ru Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.15 2007/12/30 00:56:45 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.16 2007/12/31 22:52:14 dyoung Exp $");
 
 /*
  * The following controllers are supported by this driver:
@@ -328,8 +328,6 @@ int	bnx_tx_encap(struct bnx_softc *, struct mbuf **);
 void	bnx_start(struct ifnet *);
 int	bnx_ioctl(struct ifnet *, u_long, void *);
 void	bnx_watchdog(struct ifnet *);
-int	bnx_ifmedia_upd(struct ifnet *);
-void	bnx_ifmedia_sts(struct ifnet *, struct ifmediareq *);
 int	bnx_init(struct ifnet *);
 
 void	bnx_init_context(struct bnx_softc *);
@@ -685,9 +683,9 @@ bnx_attach(device_t parent, device_t self, void *aux)
 	sc->bnx_mii.mii_writereg = bnx_miibus_write_reg;
 	sc->bnx_mii.mii_statchg = bnx_miibus_statchg;
 
-	/* Look for our PHY. */
-	ifmedia_init(&sc->bnx_mii.mii_media, 0, bnx_ifmedia_upd,
-	    bnx_ifmedia_sts);
+	sc->bnx_ec.ec_mii = &sc->bnx_mii;
+	ifmedia_init(&sc->bnx_mii.mii_media, 0, ether_mediachange,
+	    ether_mediastatus);
 	mii_attach(self, &sc->bnx_mii, 0xffffffff,
 	    MII_PHY_ANY, MII_OFFSET_ANY, 0);
 
@@ -2734,8 +2732,6 @@ bnx_stop(struct ifnet *ifp, int disable)
 
 	ifp->if_timer = 0;
 
-	sc->bnx_link = 0;
-
 	DBPRINT(sc, BNX_VERBOSE_RESET, "Exiting %s()\n", __func__);
 
 }
@@ -3454,60 +3450,6 @@ bnx_free_rx_chain(struct bnx_softc *sc)
 }
 
 /****************************************************************************/
-/* Set media options.                                                       */
-/*                                                                          */
-/* Returns:                                                                 */
-/*   0 for success, positive value for failure.                             */
-/****************************************************************************/
-int
-bnx_ifmedia_upd(struct ifnet *ifp)
-{
-	struct bnx_softc	*sc;
-	struct mii_data		*mii;
-	struct ifmedia		*ifm;
-	int rc;
-
-	sc = ifp->if_softc;
-	ifm = &sc->bnx_ifmedia;
-
-	/* DRC - ToDo: Add SerDes support. */
-
-	mii = &sc->bnx_mii;
-	sc->bnx_link = 0;
-	if ((rc = mii_mediachg(mii)) == ENXIO)
-		return 0;
-	return rc;
-}
-
-/****************************************************************************/
-/* Reports current media status.                                            */
-/*                                                                          */
-/* Returns:                                                                 */
-/*   Nothing.                                                               */
-/****************************************************************************/
-void
-bnx_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
-{
-	struct bnx_softc	*sc;
-	struct mii_data		*mii;
-	int			s;
-
-	sc = ifp->if_softc;
-
-	s = splnet();
-
-	mii = &sc->bnx_mii;
-
-	/* DRC - ToDo: Add SerDes support. */
-
-	mii_pollstat(mii);
-	ifmr->ifm_active = mii->mii_media_active;
-	ifmr->ifm_status = mii->mii_media_status;
-
-	splx(s);
-}
-
-/****************************************************************************/
 /* Handles PHY generated interrupt events.                                  */
 /*                                                                          */
 /* Returns:                                                                 */
@@ -3529,7 +3471,6 @@ bnx_phy_intr(struct bnx_softc *sc)
 	if (new_link_state != old_link_state) {
 		DBRUN(BNX_VERBOSE_INTR, bnx_dump_status_block(sc));
 
-		sc->bnx_link = 0;
 		callout_stop(&sc->bnx_timeout);
 		bnx_tick(sc);
 
@@ -4114,7 +4055,7 @@ bnx_init(struct ifnet *ifp)
 	/* Enable host interrupts. */
 	bnx_enable_intr(sc);
 
-	if ((error = bnx_ifmedia_upd(ifp)) != 0)
+	if ((error = ether_mediachange(ifp)) != 0)
 		goto bnx_init_exit;
 
 	ifp->if_flags |= IFF_RUNNING;
@@ -4281,9 +4222,9 @@ bnx_start(struct ifnet *ifp)
 	u_int16_t		tx_prod, tx_chain_prod;
 
 	/* If there's no link or the transmit queue is empty then just exit. */
-	if (!sc->bnx_link || IFQ_IS_EMPTY(&ifp->if_snd)) {
+	if ((ifp->if_flags & (IFF_OACTIVE|IFF_RUNNING)) != IFF_RUNNING) {
 		DBPRINT(sc, BNX_INFO_SEND,
-		    "%s(): No link or transmit queue empty.\n", __func__);
+		    "%s(): output active or device not running.\n", __func__);
 		goto bnx_start_exit;
 	}
 
@@ -4561,7 +4502,7 @@ bnx_intr(void *xsc)
 	    BNX_PCICFG_INT_ACK_CMD_INDEX_VALID | sc->last_status_idx);
 
 	/* Handle any frames that arrived while handling the interrupt. */
-	if (ifp->if_flags & IFF_RUNNING && !IFQ_IS_EMPTY(&ifp->if_snd))
+	if (!IFQ_IS_EMPTY(&ifp->if_snd))
 		bnx_start(ifp);
 
 	return (1);
@@ -4862,7 +4803,6 @@ void
 bnx_tick(void *xsc)
 {
 	struct bnx_softc	*sc = xsc;
-	struct ifnet		*ifp = &sc->bnx_ec.ec_if;
 	struct mii_data		*mii;
 	u_int32_t		msg;
 	u_int16_t		prod, chain_prod;
@@ -4888,20 +4828,6 @@ bnx_tick(void *xsc)
 	mii = &sc->bnx_mii;
 	mii_tick(mii);
 
-	/* If link is up already up then we're done. */
-	if (sc->bnx_link)
-		goto bnx_tick_exit;
-
-	/* Check if the link has come up. */
-	if (!sc->bnx_link && mii->mii_media_status & IFM_ACTIVE &&
-	    IFM_SUBTYPE(mii->mii_media_active) != IFM_NONE) {
-		sc->bnx_link++;
-		/* Now that link is up, handle any outstanding TX traffic. */
-		if (!IFQ_IS_EMPTY(&ifp->if_snd))
-			bnx_start(ifp);
-	}
-
-bnx_tick_exit:
 	/* try to get more RX buffers, just in case */
 	prod = sc->rx_prod;
 	prod_bseq = sc->rx_prod_bseq;

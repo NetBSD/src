@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnxreg.h,v 1.4 2007/12/30 00:56:45 dyoung Exp $	*/
+/*	$NetBSD: if_bnxreg.h,v 1.5 2007/12/31 22:52:14 dyoung Exp $	*/
 /*	$OpenBSD: if_bnxreg.h,v 1.17 2006/11/20 21:26:27 brad Exp $	*/
 
 /*-
@@ -4687,7 +4687,6 @@ struct bnx_softc
 	u_int16_t					tx_cons;
 	u_int32_t					tx_prod_bseq;	/* Counts the bytes used.  */
 
-	int					bnx_link;
 	struct callout				bnx_timeout;
 
 	/* Frame size and mbuf allocation size for RX frames. */
