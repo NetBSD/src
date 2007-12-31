@@ -1,10 +1,10 @@
-# $NetBSD: Makefile,v 1.3 2007/11/21 15:39:34 jmmv Exp $
+# $NetBSD: Makefile,v 1.4 2007/12/31 15:32:14 ad Exp $
 
 .include <bsd.own.mk>
 
 TESTSDIR=	${TESTSBASE}/util
 
-SUBDIR=		df id ps sh systrace
+SUBDIR=		df id ps sh
 
 TESTS_SH=	t_cp
 TESTS_SH+=	t_dd

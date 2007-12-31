@@ -1,4 +1,4 @@
-#	$NetBSD: majors.bebox,v 1.19 2007/01/09 21:59:08 cube Exp $
+#	$NetBSD: majors.bebox,v 1.20 2007/12/31 15:31:50 ad Exp $
 #
 # Device majors for bebox
 #
@@ -57,7 +57,6 @@ device-major	isdnbchan	char 55			isdnbchan
 device-major	isdntrc		char 56			isdntrc
 device-major	isdntel		char 57			isdntel
 device-major	clockctl	char 58			clockctl
-device-major	systrace	char 59			systrace
 device-major	cgd		char 60  block 19	cgd
 device-major	ksyms		char 61			ksyms
 device-major	wsfont		char 62			wsfont

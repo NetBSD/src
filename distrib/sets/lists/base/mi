@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.733 2007/11/21 16:23:29 njoly Exp $
+# $NetBSD: mi,v 1.734 2007/12/31 15:31:36 ad Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -37,7 +37,7 @@
 ./bin/sleep					base-util-root
 ./bin/stty					base-util-root
 ./bin/sync					base-util-root
-./bin/systrace					base-util-root
+./bin/systrace					base-obsolete		obsolete
 ./bin/tar					base-util-root
 ./bin/test					base-util-root
 ./dev						base-sys-root
@@ -99,7 +99,6 @@
 ./etc/skel					base-sys-root
 ./etc/sliphome					base-slip-root
 ./etc/ssh					base-sys-root
-./etc/systrace					base-util-root
 ./etc/uucp					base-obsolete		obsolete
 ./lib						base-sys-root
 ./lib/libdes.so					base-obsolete		obsolete

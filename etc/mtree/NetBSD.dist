@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.357 2007/12/26 20:51:26 jmmv Exp $
+#	$NetBSD: NetBSD.dist,v 1.358 2007/12/31 15:31:41 ad Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -51,7 +51,6 @@
 ./etc/skel
 ./etc/sliphome
 ./etc/ssh
-./etc/systrace
 ./lib
 ./libdata
 ./libdata/firmware
@@ -343,7 +342,6 @@
 ./usr/libdata/debug/usr/tests/util
 ./usr/libdata/debug/usr/tests/util/df
 ./usr/libdata/debug/usr/tests/util/id
-./usr/libdata/debug/usr/tests/util/systrace
 ./usr/libdata/firmware
 ./usr/libdata/lint
 ./usr/libexec
@@ -1114,7 +1112,6 @@
 ./usr/tests/util/id
 ./usr/tests/util/ps
 ./usr/tests/util/sh
-./usr/tests/util/systrace
 ./var
 ./var/account
 ./var/at

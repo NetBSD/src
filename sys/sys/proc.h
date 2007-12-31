@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.266 2007/12/26 22:11:52 christos Exp $	*/
+/*	$NetBSD: proc.h,v 1.267 2007/12/31 15:32:14 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -285,9 +285,7 @@ struct proc {
 
 	int		p_traceflag;	/* k: Kernel trace points */
 	void		*p_tracep;	/* k: Trace private data */
-	void		*p_systrace;	/*    Back pointer to systrace */
-
-	struct vnode 	*p_textvp;	/*    Vnode of executable */
+	struct vnode 	*p_textvp;	/* (: Vnode of executable */
 
 	void	     (*p_userret)(void);/* p: return-to-user hook */
 	const struct emul *p_emul;	/*    Emulation information */
@@ -362,7 +360,6 @@ struct proc {
 #define	PK_NOCLDWAIT	0x00020000 /* No zombies if child dies */
 #define	PK_32		0x00040000 /* 32-bit process (used on 64-bit kernels) */
 #define	PK_CLDSIGIGN	0x00080000 /* Process is ignoring SIGCHLD */
-#define	PK_SYSTRACE	0x00200000 /* Process system call tracing active */
 #define	PK_MARKER	0x80000000 /* Is a dummy marker process */
 
 /*

@@ -1,4 +1,4 @@
-# 	$NetBSD: LIBERO,v 1.46 2007/10/17 19:55:53 garbled Exp $
+# 	$NetBSD: LIBERO,v 1.47 2007/12/31 15:32:01 ad Exp $
 
 #	NEWS1750 config file;
 #
@@ -17,7 +17,6 @@ options 	CPU_SINGLE		# Will IOP be supported eventually?
 # Standard system options
 options 	NTP			# NTP phase/frequency locked loop
 options 	KTRACE			# system call tracing support
-#options 	SYSTRACE		# system call vetting via systrace(1)
 options 	SYSVMSG			# System V message queues
 options 	SYSVSEM			# System V semaphores
 options 	SYSVSHM			# System V shared memory
