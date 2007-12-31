@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.209 2007/12/26 16:01:37 ad Exp $	*/
+/*	$NetBSD: tty.c,v 1.210 2007/12/31 21:11:13 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.209 2007/12/26 16:01:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.210 2007/12/31 21:11:13 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -843,7 +843,13 @@ ttioctl(struct tty *tp, u_long cmd, void *data, int flag, struct lwp *l)
 		while (isbackground(curproc, tp) &&
 		    p->p_pgrp->pg_jobc && (p->p_sflag & PS_PPWAIT) == 0 &&
 		    !sigismasked(l, SIGTTOU)) {
-			ttysig(tp, TTYSIG_PG1, SIGTTOU);
+			mutex_spin_exit(&tty_lock);
+
+			mutex_enter(&proclist_mutex);
+			pgsignal(p->p_pgrp, SIGTTOU, 1);
+			mutex_exit(&proclist_mutex);
+			
+			mutex_spin_enter(&tty_lock);
 			error = ttysleep(tp, &lbolt, true, 0);
 			if (error) {
 				mutex_spin_exit(&tty_lock);
@@ -1641,7 +1647,13 @@ ttread(struct tty *tp, struct uio *uio, int flag)
 			mutex_spin_exit(&tty_lock);
 			return (EIO);
 		}
-		ttysig(tp, TTYSIG_PG1, SIGTTIN);
+		mutex_spin_exit(&tty_lock);
+
+		mutex_enter(&proclist_mutex);
+		pgsignal(p->p_pgrp, SIGTTIN, 1);
+		mutex_exit(&proclist_mutex);
+
+		mutex_spin_enter(&tty_lock);
 		error = ttysleep(tp, &lbolt, true, 0);
 		mutex_spin_exit(&tty_lock);
 		if (error)
@@ -1906,7 +1918,13 @@ ttwrite(struct tty *tp, struct uio *uio, int flag)
 			mutex_spin_exit(&tty_lock);
 			goto out;
 		}
-		ttysig(tp, TTYSIG_PG1, SIGTTOU);
+		mutex_spin_exit(&tty_lock);
+
+		mutex_enter(&proclist_mutex);
+		pgsignal(p->p_pgrp, SIGTTOU, 1);
+		mutex_exit(&proclist_mutex);
+
+		mutex_spin_enter(&tty_lock);
 		error = ttysleep(tp, &lbolt, true, 0);
 		mutex_spin_exit(&tty_lock);
 		if (error)
