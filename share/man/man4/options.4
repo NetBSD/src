@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.357 2007/12/26 22:35:33 christos Exp $
+.\"	$NetBSD: options.4,v 1.358 2007/12/31 13:30:14 ad Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -30,7 +30,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd December 26, 2007
+.Dd December 31, 2007
 .Os
 .Dt OPTIONS 4
 .Sh NAME
@@ -435,13 +435,6 @@ compatibility with
 .Fx
 applications built for the same architecture.
 At the moment this is limited to the i386 port.
-.It Cd options COMPAT_HPUX
-On those architectures that support it, this enables binary
-compatibility with
-.Tn HP/UX
-applications built for the same architecture.
-This is limited to the hp300 port, and has some known bugs.
-A limited set of programs do work.
 .It Cd options COMPAT_IBCS2
 On those architectures that support it, this enables binary
 compatibility with iBCS2 or SVR3 applications built for the same architecture.
@@ -2468,24 +2461,6 @@ and Hades.
 .El
 .Ss i386-specific Options
 .Bl -ohang
-.It Cd options I386_CPU,I486_CPU,I586_CPU,I686_CPU
-Include support for a particular class of
-.Tn CPU
-.Po
-.Tn i386 ,
-.Tn i486 ,
-.Tn Pentium ,
-or
-.Tn Pentium Pro
-.Pc .
-If the appropriate class for your
-.Tn CPU
-is not configured, the kernel will use the highest class available
-that will work.
-In general, using the correct
-.Tn CPU
-class will result in the best performance.
-At least one of these options must be present.
 .It Cd options ENHANCED_SPEEDSTEP
 Include support for the
 .Tn Enhanced SpeedStep Technology
