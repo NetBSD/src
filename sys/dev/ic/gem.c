@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.66 2007/12/31 21:02:00 dyoung Exp $ */
+/*	$NetBSD: gem.c,v 1.67 2007/12/31 21:43:57 dyoung Exp $ */
 
 /*
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.66 2007/12/31 21:02:00 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.67 2007/12/31 21:43:57 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -124,6 +124,7 @@ int		gem_tint(struct gem_softc *);
 void		gem_power(int, void *);
 
 #ifdef GEM_DEBUG
+static void gem_txsoft_print(const struct gem_softc *, int, int);
 #define	DPRINTF(sc, x)	if ((sc)->sc_ethercom.ec_if.if_flags & IFF_DEBUG) \
 				printf x
 #else
@@ -1019,6 +1020,24 @@ gem_init_regs(struct gem_softc *sc)
 	bus_space_write_4(t, h, GEM_MAC_XIF_CONFIG, v);
 }
 
+#ifdef GEM_DEBUG
+static void
+gem_txsoft_print(const struct gem_softc *sc, int firstdesc, int lastdesc)
+{
+	int i;
+
+	for (i = firstdesc;; i = GEM_NEXTTX(i)) {
+		printf("descriptor %d:\t", i);
+		printf("gd_flags:   0x%016" PRIx64 "\t",
+			GEM_DMA_READ(sc, sc->sc_txdescs[i].gd_flags));
+		printf("gd_addr: 0x%016" PRIx64 "\n",
+			GEM_DMA_READ(sc, sc->sc_txdescs[i].gd_addr));
+		if (i == lastdesc)
+			break;
+	}
+}
+#endif
+
 static void
 gem_start(ifp)
 	struct ifnet *ifp;
@@ -1238,15 +1257,8 @@ gem_start(ifp)
 #ifdef GEM_DEBUG
 		if (ifp->if_flags & IFF_DEBUG) {
 			printf("     gem_start %p transmit chain:\n", txs);
-			for (seg = sc->sc_txnext;; seg = GEM_NEXTTX(seg)) {
-				printf("descriptor %d:\t", seg);
-				printf("gd_flags:   0x%016llx\t", (long long)
-					GEM_DMA_READ(sc, sc->sc_txdescs[seg].gd_flags));
-				printf("gd_addr: 0x%016llx\n", (long long)
-					GEM_DMA_READ(sc, sc->sc_txdescs[seg].gd_addr));
-				if (seg == lasttx)
-					break;
-			}
+			gem_txsoft_print(sc, txs->txs_firstdesc,
+			    txs->txs_lastdesc);
 		}
 #endif
 
@@ -1368,17 +1380,9 @@ gem_tint(sc)
 
 #ifdef GEM_DEBUG	/* XXX DMA synchronization? */
 		if (ifp->if_flags & IFF_DEBUG) {
-			int i;
 			printf("    txsoft %p transmit chain:\n", txs);
-			for (i = txs->txs_firstdesc;; i = GEM_NEXTTX(i)) {
-				printf("descriptor %d: ", i);
-				printf("gd_flags: 0x%016" PRIx64 "\t",
-					GEM_DMA_READ(sc, sc->sc_txdescs[i].gd_flags));
-				printf("gd_addr: 0x%016" PRIx64 "\n",
-					GEM_DMA_READ(sc, sc->sc_txdescs[i].gd_addr));
-				if (i == txs->txs_lastdesc)
-					break;
-			}
+			gem_txsoft_print(sc, txs->txs_firstdesc,
+			    txs->txs_lastdesc);
 		}
 #endif
 
