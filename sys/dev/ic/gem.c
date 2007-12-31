@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.65 2007/12/31 20:54:41 dyoung Exp $ */
+/*	$NetBSD: gem.c,v 1.66 2007/12/31 21:02:00 dyoung Exp $ */
 
 /*
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.65 2007/12/31 20:54:41 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.66 2007/12/31 21:02:00 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -1363,8 +1363,7 @@ gem_tint(sc)
 		           txlast <= txs->txs_lastdesc)
 			break;
 
-		GEM_CDTXSYNC(sc, txs->txs_lastdesc,
-		    txs->txs_ndescs,
+		GEM_CDTXSYNC(sc, txs->txs_firstdesc, txs->txs_ndescs,
 		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 
 #ifdef GEM_DEBUG	/* XXX DMA synchronization? */
