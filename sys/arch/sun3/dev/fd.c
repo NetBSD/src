@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.59.4.1 2007/12/08 17:56:29 ad Exp $	*/
+/*	$NetBSD: fd.c,v 1.59.4.2 2007/12/31 12:59:56 ad Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.59.4.1 2007/12/08 17:56:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.59.4.2 2007/12/31 12:59:56 ad Exp $");
 
 #include "opt_ddb.h"
 
@@ -1765,18 +1765,19 @@ fdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 int 
 fdformat(dev_t dev, struct ne7_fd_formb *finfo, struct proc *p)
 {
-	int rv = 0, s;
+	int rv = 0;
 	struct fd_softc *fd = fd_cd.cd_devs[FDUNIT(dev)];
 	struct fd_type *type = fd->sc_type;
 	struct buf *bp;
 
 	/* set up a buffer header for fdstrategy() */
-	bp = (struct buf *)malloc(sizeof(struct buf), M_TEMP, M_NOWAIT);
+	bp = getiobuf(NULL, false);
 	if (bp == 0)
 		return (ENOBUFS);
 
 	memset((void *)bp, 0, sizeof(struct buf));
-	bp->b_flags = B_BUSY | B_PHYS | B_FORMAT;
+	bp->b_flags = B_PHYS | B_FORMAT;
+	bp->b_cflags = BC_BUSY;
 	bp->b_proc = p;
 	bp->b_dev = dev;
 
@@ -1800,13 +1801,14 @@ fdformat(dev_t dev, struct ne7_fd_formb *finfo, struct proc *p)
 	fdstrategy(bp);
 
 	/* ...and wait for it to complete */
-	s = splbio();
-	while (!(bp->b_flags & B_DONE)) {
-		rv = tsleep((void *)bp, PRIBIO, "fdform", 20 * hz);
+	/* XXX dodgy */
+	mutex_enter(bp->b_objlock);
+	while (!(bp->b_oflags & BO_DONE)) {
+		rv = cv_timedwait(&bp->b_done, 20 * hz);
 		if (rv == EWOULDBLOCK)
 			break;
 	}
-	splx(s);
+	mutex_exit(bp->b_objlock);
 
 	if (rv == EWOULDBLOCK) {
 		/* timed out */
@@ -1814,7 +1816,7 @@ fdformat(dev_t dev, struct ne7_fd_formb *finfo, struct proc *p)
 		biodone(bp);
 	} else if (bp->b_error != 0)
 		rv = bp->b_error;
-	free(bp, M_TEMP);
+	putiobuf(bp);
 	return (rv);
 }
 
@@ -1943,14 +1945,13 @@ fd_read_md_image(size_t *sizep, void **addrp)
 		bp->b_error = 0;
 		bp->b_resid = 0;
 		bp->b_proc = NULL;
-		bp->b_flags = B_BUSY | B_PHYS | B_RAW | B_READ;
+		bp->b_flags = B_PHYS | B_RAW | B_READ;
+		bp->b_cflags = BC_BUSY;
 		bp->b_blkno = btodb(offset);
 		bp->b_bcount = DEV_BSIZE;
 		bp->b_data = addr;
 		fdstrategy(bp);
-		while ((bp->b_flags & B_DONE) == 0) {
-			tsleep((void *)bp, PRIBIO + 1, "physio", 0);
-		}
+		biowait(bp);
 		if (bp->b_error)
 			panic("fd: mountroot: fdread error %d", bp->b_error);
 

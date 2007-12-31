@@ -1,4 +1,4 @@
-/*	$NetBSD: cfl.c,v 1.16 2007/10/17 19:57:59 garbled Exp $	*/
+/*	$NetBSD: cfl.c,v 1.16.4.1 2007/12/31 12:59:57 ad Exp $	*/
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cfl.c,v 1.16 2007/10/17 19:57:59 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cfl.c,v 1.16.4.1 2007/12/31 12:59:57 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -195,16 +195,17 @@ cflrw(dev, uio, flag)
 				break;
 		}
 		if (uio->uio_rw == UIO_WRITE) {
-			bp->b_flags &= ~(B_READ|B_DONE);
+			bp->b_oflags &= ~(BO_DONE);
+			bp->b_flags &= ~(B_READ);
 			bp->b_flags |= B_WRITE;
 		} else {
-			bp->b_flags &= ~(B_WRITE|B_DONE);
+			bp->b_oflags &= ~(BO_DONE);
+			bp->b_flags &= ~(B_WRITE);
 			bp->b_flags |= B_READ;
 		}
 		s = splconsmedia(); 
 		cflstart();
-		while ((bp->b_flags & B_DONE) == 0)
-			(void) tsleep(bp, PRIBIO, "cflrw", 0);
+		biowait(bp);
 		splx(s);
 		if (bp->b_error != 0) {
 			error = bp->b_error;
@@ -284,7 +285,6 @@ void
 cflrint(int ch)
 {
 	struct buf *bp = cfltab.cfl_buf;
-	int s;
 
 	switch (cfltab.cfl_active) {
 	case CFL_NEXT:
@@ -292,10 +292,10 @@ cflrint(int ch)
 			cfltab.cfl_active = CFL_GETIN;
 		else {
 			cfltab.cfl_active = CFL_IDLE;
-			s = splbio();
-			bp->b_flags |= B_DONE;
-			splx(s);
-			wakeup(bp);
+			mutex_enter(bp->b_objlock);
+			bp->b_oflags |= BO_DONE;
+			cv_broadcast(&bp->b_done);
+			mutex_exit(bp->b_objlock);
 		}
 		break;
 
@@ -303,10 +303,10 @@ cflrint(int ch)
 		*cfltab.cfl_xaddr++ = ch & 0377;
 		if (--bp->b_bcount==0) {
 			cfltab.cfl_active = CFL_IDLE;
-			s = splbio();
-			bp->b_flags |= B_DONE;
-			splx(s);
-			wakeup(bp);
+			mutex_enter(bp->b_objlock);
+			bp->b_oflags |= BO_DONE;
+			cv_broadcast(&bp->b_done);
+			mutex_exit(bp->b_objlock);
 		}
 		break;
 	}
