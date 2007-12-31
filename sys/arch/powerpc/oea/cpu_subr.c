@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.38 2007/12/30 23:21:21 macallan Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.39 2007/12/31 01:37:13 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.38 2007/12/30 23:21:21 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.39 2007/12/31 01:37:13 macallan Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -651,7 +651,6 @@ cpu_identify(char *str, size_t len)
 
 	switch (vers) {
 	case MPC7410:
-	case MPC7400:
 		minor = (pvr >> 0) & 0xff;
 		major = minor <= 4 ? 1 : 2;
 		break;
