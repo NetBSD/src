@@ -1,4 +1,4 @@
-/*	$NetBSD: policy.c,v 1.8 2007/11/09 16:27:47 vanhu Exp $	*/
+/*	$NetBSD: policy.c,v 1.9 2007/12/31 01:42:07 mgrooms Exp $	*/
 
 /*	$KAME: policy.c,v 1.46 2001/11/16 04:08:10 sakane Exp $	*/
 
@@ -232,8 +232,7 @@ cmpspidxwild(a, b)
 	if (!(b->dir == IPSEC_DIR_ANY || a->dir == b->dir))
 		return 1;
 
-	if (!(a->ul_proto == IPSEC_ULPROTO_ANY ||
-	      b->ul_proto == IPSEC_ULPROTO_ANY ||
+	if (!(b->ul_proto == IPSEC_ULPROTO_ANY ||
 	      a->ul_proto == b->ul_proto))
 		return 1;
 
