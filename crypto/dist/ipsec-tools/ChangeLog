@@ -1,10 +1,16 @@
+2007-12-30  Matthew Grooms
+	From Timo Teras <timo.teras@iki.fi>:
+	* src/racoon/racoonctl.8
+	  src/racoon/racoonctl.c: add GRE protocol number to racoonctl
+	* src/racoon/policy.c: correct id wildcard matching for transport mode
+
 2007-12-11  Matthew Grooms
 	From Timo Teras <timo.teras@iki.fi>:
 	* src/racoon/handler.c
 	  src/racoon/handler.h
 	  src/racoon/isakmp_quick.c
 	  src/racoon/pfkey.c: add support for nat-t oa payload handling.
-	
+
 2007-12-04  Matthew Grooms
 	From Timo Teras <timo.teras@iki.fi>:
 	* src/racoon/ipsec_doi.c
@@ -12,12 +18,12 @@
 	  src/racoon/isakmp_quick.c: modify ipsecdoi_sockaddr2id to obtain host
 	  address without specific prefix legth.
 	  src/racoon/isakmp_quick.c: correct a memory leak in phase2.
-	
+
 2007-11-29  Yvan Vanhullebus  <vanhu@netasq.com>
 	From Natanael Copa <natanael.copa@gmail.com>:
 	* src/racoon/Makefile.am: fixed a race condition when building
 	  yacc stuff.
-	
+
 2007-11-09  Yvan Vanhullebus  <vanhu@netasq.com>
 	From Arnaud Ebalard <arno@natisbad.org>:
 	* src/racoon/pfkey.c: Some sanity check in pk_recv()
@@ -39,7 +45,7 @@
 	* src/racoon/kmpstat.c: plog changed to _plog to work with new plog macro
 	* src/racoon/crypto_openssl.c: includes plog.h to work with the
 	  new plog macro
-	
+
 2007-09-19  Matthew Grooms <mgrooms@shrew.net>
 	From Gabriel Somlo <somlo@cmu.edu>
 	* src/racoon/isakmp.c: Set REUSE option on sockets to prevent failures
