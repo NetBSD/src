@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.87.4.7 2007/05/23 02:20:05 wrstuden Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.87.4.8 2007/12/31 09:01:12 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.87.4.7 2007/05/23 02:20:05 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.87.4.8 2007/12/31 09:01:12 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1696,7 +1696,7 @@ sa_upcall_userret(struct lwp *l)
  *	KERNEL_PROC_LOCK should be held on entry and exit, and
  * SA_LWP_STATE should also be locked (L_SA temporarily disabled).
  *
- *	If the enqueued event was DEVERED, this is the time when we set
+ *	If the enqueued event was DEFERRED, this is the time when we set
  * up the upcall event's state.
  */
 static inline void
