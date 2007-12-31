@@ -1,4 +1,4 @@
-#	$NetBSD: RESPONSIBLE,v 1.84 2007/12/18 07:37:57 joerg Exp $
+#	$NetBSD: RESPONSIBLE,v 1.85 2007/12/31 14:09:53 ad Exp $
 
 List of sections of the system, and who is responsible for them (or at
 least considered an expert on them).
@@ -180,7 +180,6 @@ lwp/pthread	nathanw
 ntp		simonb, jonathan
 pipes		jdolecek
 splash		jmcneill
-systrace	provos
 uvm		chuck, chs, mrg, atatat
 
 kern/compat:
