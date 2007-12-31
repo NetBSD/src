@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.40 2006/10/22 16:43:24 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.41 2007/12/31 00:22:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: main.c,v 1.40 2006/10/22 16:43:24 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.41 2007/12/31 00:22:15 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -85,6 +85,7 @@ int     CMDLINE;
 int     turns = 2;	/* stay how many refresh-turns in 'all' mode? */
 int     allflag;
 int     allcounter;
+sig_atomic_t needsredraw = 0;
 
 static	WINDOW *wload;			/* one line window for load average */
 
@@ -309,13 +310,14 @@ display(int signo)
 }
 
 void
-redraw(int signo)
+redraw(void)
 {
 	resizeterm(LINES, COLS);
 	CMDLINE = LINES - 1;
 	labels();
 
 	display(0);
+	needsredraw = 0;
 }
 
 static void
@@ -332,7 +334,7 @@ stop(int signo)
 	kill(0, SIGTSTP);
 	/* must have been restarted */
 	signal(SIGTSTP, stop);
-	redraw(signo);
+	needsredraw = signo;
 }
 
 void
