@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1045 2007/12/23 17:39:19 jmcneill Exp $
+# $NetBSD: mi,v 1.1046 2007/12/31 13:33:37 ad Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -1907,7 +1907,7 @@
 ./usr/share/man/cat8/compat_30.0		man-sys-catman		.cat
 ./usr/share/man/cat8/compat_darwin.0		man-sys-catman		.cat
 ./usr/share/man/cat8/compat_freebsd.0		man-sys-catman		.cat
-./usr/share/man/cat8/compat_hpux.0		man-sys-catman		.cat
+./usr/share/man/cat8/compat_hpux.0		man-obsolete		obsolete
 ./usr/share/man/cat8/compat_ibcs2.0		man-sys-catman		.cat
 ./usr/share/man/cat8/compat_linux.0		man-sys-catman		.cat
 ./usr/share/man/cat8/compat_netbsd32.0		man-sys-catman		.cat
@@ -4423,7 +4423,7 @@
 ./usr/share/man/man8/compat_30.8		man-sys-man		.man
 ./usr/share/man/man8/compat_darwin.8		man-sys-man		.man
 ./usr/share/man/man8/compat_freebsd.8		man-sys-man		.man
-./usr/share/man/man8/compat_hpux.8		man-sys-man		.man
+./usr/share/man/man8/compat_hpux.8		man-obsolete		obsolete
 ./usr/share/man/man8/compat_ibcs2.8		man-sys-man		.man
 ./usr/share/man/man8/compat_linux.8		man-sys-man		.man
 ./usr/share/man/man8/compat_netbsd32.8		man-sys-man		.man
