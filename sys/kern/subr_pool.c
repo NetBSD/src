@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.137.2.6 2007/12/28 15:06:20 ad Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.137.2.7 2007/12/31 16:25:02 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002, 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.137.2.6 2007/12/28 15:06:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.137.2.7 2007/12/31 16:25:02 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pool.h"
@@ -2641,7 +2641,9 @@ pool_cache_put_slow(pool_cache_cpu_t *cc, int *s, void *object, paddr_t pa)
 	 * object away.
 	 */
 	nobj = pc->pc_pcgsize;
-	if (nobj == PCG_NOBJECTS_LARGE) {
+	if (pool_cache_disable) {
+		pcg = NULL;
+	} else if (nobj == PCG_NOBJECTS_LARGE) {
 		pcg = pool_get(&pcg_large_pool, PR_NOWAIT);
 	} else {
 		pcg = pool_get(&pcg_normal_pool, PR_NOWAIT);
