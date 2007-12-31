@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.334 2007/12/27 13:34:43 elad Exp $	*/
+/*	$NetBSD: init_main.c,v 1.335 2007/12/31 15:32:10 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.334 2007/12/27 13:34:43 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.335 2007/12/31 15:32:10 ad Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_ntp.h"
@@ -79,7 +79,6 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.334 2007/12/27 13:34:43 elad Exp $")
 #include "opt_posix.h"
 #include "opt_syscall_debug.h"
 #include "opt_sysv.h"
-#include "opt_systrace.h"
 #include "opt_fileassoc.h"
 #include "opt_ktrace.h"
 #include "opt_pax.h"
@@ -141,9 +140,6 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.334 2007/12/27 13:34:43 elad Exp $")
 #endif
 #ifdef SYSVMSG
 #include <sys/msg.h>
-#endif
-#ifdef SYSTRACE
-#include <sys/systrace.h>
 #endif
 #ifdef P1003_1B_SEMAPHORE
 #include <sys/ksem.h>
@@ -460,10 +456,6 @@ main(void)
 
 	/* Lock the kernel on behalf of proc0. */
 	KERNEL_LOCK(1, l);
-
-#ifdef SYSTRACE
-	systrace_init();
-#endif
 
 #ifdef SYSVSHM
 	/* Initialize System V style shared memory. */

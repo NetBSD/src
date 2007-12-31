@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.880 2007/12/31 13:39:02 ad Exp $
+#	$NetBSD: files,v 1.881 2007/12/31 15:32:09 ad Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -23,7 +23,6 @@ defflag				KMEMSTATS
 defflag				KTRACE
 defflag				MBUFTRACE
 defflag				PTRACE
-defflag				SYSTRACE
 defflag				COREDUMP
 
 defparam			DEFCORENAME
@@ -1373,7 +1372,6 @@ file	kern/kern_sleepq.c
 file	kern/kern_softint.c
 file	kern/kern_stub.c
 file	kern/kern_subr.c
-file	kern/kern_systrace.c		systrace
 file	kern/kern_synch.c
 file	kern/kern_sysctl.c
 file	kern/kern_tc.c

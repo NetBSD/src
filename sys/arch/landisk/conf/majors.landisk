@@ -1,4 +1,4 @@
-#	$NetBSD: majors.landisk,v 1.2 2006/11/24 22:04:23 wiz Exp $
+#	$NetBSD: majors.landisk,v 1.3 2007/12/31 15:31:58 ad Exp $
 #
 # Device majors for landisk
 #
@@ -43,7 +43,6 @@ device-major	raid		char 49  block 18	raid
 device-major	esh		char 50			esh
 device-major	wdog		char 51			wdog
 device-major	clockctl	char 52			clockctl
-device-major	systrace	char 53			systrace
 device-major	cgd		char 54  block 19	cgd
 device-major	sysmon		char 55			sysmon_power | sysmon_wdog
 

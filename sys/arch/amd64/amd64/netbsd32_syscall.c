@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_syscall.c,v 1.21 2007/11/09 14:59:37 dsl Exp $	*/
+/*	$NetBSD: netbsd32_syscall.c,v 1.22 2007/12/31 15:31:46 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_syscall.c,v 1.21 2007/11/09 14:59:37 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_syscall.c,v 1.22 2007/12/31 15:31:46 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,7 +106,6 @@ netbsd32_syscall(struct trapframe *frame)
 		int narg = callp->sy_argsize >> 2;
 		for (i = 0; i < narg; i++)
 			args64[i] = args[i];
-		/* XXX systrace will modify the wrong arguments */
 		error = trace_enter(l, code, code, NULL, args64);
 		if (__predict_false(error != 0))
 			goto out;

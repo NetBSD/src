@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.91 2007/11/04 14:34:24 xtraeme Exp $
+# $NetBSD: GENERIC,v 1.92 2007/12/31 15:32:01 ad Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/news68k/conf/std.news68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.91 $"
+#ident 		"GENERIC-$Revision: 1.92 $"
 
 maxusers	8
 
@@ -34,7 +34,6 @@ options 	CPU_SINGLE		# Will IOP be supported eventually?
 # Standard system options
 options 	NTP			# NTP phase/frequency locked loop
 options 	KTRACE			# system call tracing support
-#options 	SYSTRACE		# system call vetting via systrace(1)
 options 	SYSVMSG			# System V message queues
 options 	SYSVSEM			# System V semaphores
 options 	SYSVSHM			# System V shared memory

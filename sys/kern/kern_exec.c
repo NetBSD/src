@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.262 2007/12/28 17:14:50 elad Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.263 2007/12/31 15:32:10 ad Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.262 2007/12/28 17:14:50 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.263 2007/12/31 15:32:10 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -64,20 +64,15 @@ __KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.262 2007/12/28 17:14:50 elad Exp $")
 #include <sys/kauth.h>
 #include <sys/lwpctl.h>
 #include <sys/pax.h>
+#include <sys/cpu.h>
 
 #include <sys/syscallargs.h>
 #if NVERIEXEC > 0
 #include <sys/verified_exec.h>
 #endif /* NVERIEXEC > 0 */
 
-#ifdef SYSTRACE
-#include <sys/systrace.h>
-#endif /* SYSTRACE */
-
-
 #include <uvm/uvm_extern.h>
 
-#include <sys/cpu.h>
 #include <machine/reg.h>
 
 #include <compat/common/compat_util.h>
@@ -433,9 +428,6 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	ksiginfoq_t		kq;
 	char			*pathbuf;
 	size_t			pathbuflen;
-#ifdef SYSTRACE
-	int			wassugid = ISSET(p->p_flag, PK_SUGID);
-#endif /* SYSTRACE */
 
 	p = l->l_proc;
 
@@ -455,11 +447,6 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	 * functions call check_exec() recursively - for example,
 	 * see exec_script_makecmds().
 	 */
-#ifdef SYSTRACE
-	if (ISSET(p->p_flag, PK_SYSTRACE))
-		systrace_execve0(p);
-#endif
-
 	pathbuf = PNBUF_GET();
 	error = copyinstr(path, pathbuf, MAXPATHLEN, &pathbuflen);
 	if (error) {
@@ -472,11 +459,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	/*
 	 * initialize the fields of the exec package.
 	 */
-#ifdef SYSTRACE
-	pack.ep_name = pathbuf;
-#else
 	pack.ep_name = path;
-#endif /* SYSTRACE */
 	pack.ep_hdr = malloc(exec_maxhdrsz, M_EXEC, M_WAITOK);
 	pack.ep_hdrlen = exec_maxhdrsz;
 	pack.ep_hdrvalid = 0;
@@ -1035,13 +1018,6 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	} else {
 		mutex_exit(&proclist_mutex);
 	}
-
-#ifdef SYSTRACE
-	/* XXXSMP */
-	if (ISSET(p->p_flag, PK_SYSTRACE) &&
-	    wassugid && !ISSET(p->p_flag, PK_SUGID))
-		systrace_execve1(pathbuf, p);
-#endif /* SYSTRACE */
 
 	PNBUF_PUT(pathbuf);
 	return (EJUSTRETURN);

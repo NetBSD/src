@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.14 2007/12/26 22:31:51 jmmv Exp $
+# $NetBSD: mi,v 1.15 2007/12/31 15:31:38 ad Exp $
 ./etc/mtree/set.tests				tests-sys-root
 ./usr/libdata/debug/usr/tests						tests-base-debug
 ./usr/libdata/debug/usr/tests/atf					tests-atf-debug
@@ -38,8 +38,8 @@
 ./usr/libdata/debug/usr/tests/util/df/h_df.debug			tests-util-debug	debug
 ./usr/libdata/debug/usr/tests/util/id					tests-util-debug
 ./usr/libdata/debug/usr/tests/util/id/h_id.debug			tests-util-debug	debug
-./usr/libdata/debug/usr/tests/util/systrace				tests-util-debug
-./usr/libdata/debug/usr/tests/util/systrace/h_have_systrace.debug	tests-util-debug	debug
+./usr/libdata/debug/usr/tests/util/systrace				tests-obsolete		obsolete
+./usr/libdata/debug/usr/tests/util/systrace/h_have_systrace.debug	tests-obsolete		obsolete
 ./usr/tests					tests-base-tests
 ./usr/tests/Atffile				tests-base-tests
 ./usr/tests/atf					tests-atf-tests
@@ -336,11 +336,11 @@
 ./usr/tests/util/sh/t_here			tests-util-tests
 ./usr/tests/util/sh/t_set_e			tests-util-tests
 ./usr/tests/util/sh/t_varquote			tests-util-tests
-./usr/tests/util/systrace			tests-util-tests
-./usr/tests/util/systrace/Atffile		tests-util-tests
-./usr/tests/util/systrace/id.policy		tests-util-tests
-./usr/tests/util/systrace/h_have_systrace	tests-util-tests
-./usr/tests/util/systrace/t_id			tests-util-tests
+./usr/tests/util/systrace			tests-obsolete		obsolete
+./usr/tests/util/systrace/Atffile		tests-obsolete		obsolete
+./usr/tests/util/systrace/id.policy		tests-obsolete		obsolete
+./usr/tests/util/systrace/h_have_systrace	tests-obsolete		obsolete
+./usr/tests/util/systrace/t_id			tests-obsolete		obsolete
 ./usr/tests/util/t_cp				tests-util-tests
 ./usr/tests/util/t_dd				tests-util-tests
 ./usr/tests/util/t_expr				tests-util-tests
