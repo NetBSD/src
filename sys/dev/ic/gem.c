@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.64 2007/12/31 20:39:45 dyoung Exp $ */
+/*	$NetBSD: gem.c,v 1.65 2007/12/31 20:54:41 dyoung Exp $ */
 
 /*
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.64 2007/12/31 20:39:45 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.65 2007/12/31 20:54:41 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -1251,7 +1251,7 @@ gem_start(ifp)
 #endif
 
 		/* Sync the descriptors we're using. */
-		GEM_CDTXSYNC(sc, sc->sc_txnext, dmamap->dm_nsegs,
+		GEM_CDTXSYNC(sc, txs->txs_firstdesc, txs->txs_ndescs,
 		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
 		/* Advance the tx pointer. */
