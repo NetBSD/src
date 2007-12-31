@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.h,v 1.47 2007/12/25 18:33:44 perry Exp $	*/
+/*	$NetBSD: if_ether.h,v 1.48 2007/12/31 22:48:41 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -140,6 +140,8 @@ do {									\
 }
 #endif
 
+struct mii_data;
+
 /*
  * Structure shared between the ethernet driver modules and
  * the multicast list code.  For example, each ec_softc or il_softc
@@ -157,6 +159,8 @@ struct	ethercom {
 						   capabilities to enable */
 
 	int	ec_nvlans;			/* # VLANs on this interface */
+	/* The device handle for the MII bus child device. */
+	struct mii_data				*ec_mii;
 #ifdef MBUFTRACE
 	struct	mowner ec_rx_mowner;		/* mbufs received */
 	struct	mowner ec_tx_mowner;		/* mbufs transmitted */
@@ -277,6 +281,8 @@ struct ether_multistep {
 
 void	ether_ifattach(struct ifnet *, const u_int8_t *);
 void	ether_ifdetach(struct ifnet *);
+int	ether_mediachange(struct ifnet *);
+void	ether_mediastatus(struct ifnet *, struct ifmediareq *);
 
 char	*ether_sprintf(const u_int8_t *);
 char	*ether_snprintf(char *, size_t, const u_int8_t *);
