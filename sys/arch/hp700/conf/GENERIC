@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.76 2007/11/04 14:34:21 xtraeme Exp $
+# $NetBSD: GENERIC,v 1.77 2007/12/31 13:38:50 ad Exp $
 #
 # GENERIC machine description file
 # 
@@ -23,7 +23,7 @@ include 	"arch/hp700/conf/std.hp700"
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
-#ident 		"GENERIC-$Revision: 1.76 $"
+#ident 		"GENERIC-$Revision: 1.77 $"
 
 maxusers	32		# estimated number of users
 
@@ -83,7 +83,6 @@ options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options 	COMPAT_43	# and 4.3BSD
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
-#options 	COMPAT_HPUX	# HP-UX binary compatibility
 #options 	COMPAT_OSF1	# OSF1 binary compatibility
 #options 	COMPAT_LINUX	# binary compatibility with Linux
 options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.

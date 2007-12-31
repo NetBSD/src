@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.61 2007/03/04 05:59:47 christos Exp $	*/
+/*	$NetBSD: grf.c,v 1.62 2007/12/31 13:38:48 ad Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -83,9 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.61 2007/03/04 05:59:47 christos Exp $");
-
-#include "opt_compat_hpux.h"
+__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.62 2007/12/31 13:38:48 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,10 +104,6 @@ __KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.61 2007/03/04 05:59:47 christos Exp $");
 #include <hp300/dev/grfioctl.h>
 #include <hp300/dev/grfvar.h>
 #include <hp300/dev/grfreg.h>
-
-#ifdef COMPAT_HPUX
-#include <compat/hpux/hpux.h>
-#endif
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_map.h>
@@ -211,21 +205,6 @@ grfopen(dev_t dev, int flags, int mode, struct lwp *l)
 
 	if ((gp->g_flags & (GF_OPEN|GF_EXCLUDE)) == (GF_OPEN|GF_EXCLUDE))
 		return EBUSY;
-#ifdef COMPAT_HPUX
-	/*
-	 * XXX: cannot handle both HPUX and BSD processes at the same time
-	 */
-	if (l->l_proc->p_emul == &emul_hpux)
-		if (gp->g_flags & GF_BSDOPEN)
-			return EBUSY;
-		else
-			gp->g_flags |= GF_HPUXOPEN;
-	else
-		if (gp->g_flags & GF_HPUXOPEN)
-			return EBUSY;
-		else
-			gp->g_flags |= GF_BSDOPEN;
-#endif
 	/*
 	 * First open.
 	 * XXX: always put in graphics mode.
@@ -254,9 +233,6 @@ grfclose(dev_t dev, int flags, int mode, struct lwp *l)
 		return ENXIO;
 
 	(void) grfoff(dev);
-#ifdef COMPAT_HPUX
-	(void) grfunlock(gp);
-#endif
 	gp->g_flags &= GF_ALIVE;
 	return 0;
 }
@@ -276,10 +252,6 @@ grfioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	if ((gp->g_flags & GF_ALIVE) == 0)
 		return ENXIO;
 
-#ifdef COMPAT_HPUX
-	if (l->l_proc->p_emul == &emul_hpux)
-		return hpuxgrfioctl(dev, cmd, data, flag, l->l_proc);
-#endif
 	error = 0;
 	switch (cmd) {
 
@@ -379,234 +351,6 @@ grfaddr(struct grf_softc *sc, off_t off)
 	return -1;
 }
 
-/*
- * HP-UX compatibility routines
- */
-#ifdef COMPAT_HPUX
-
-/*ARGSUSED*/
-int
-hpuxgrfioctl(dev_t dev, int cmd, void *data, int flag, struct proc *p)
-{
-	struct grf_softc *sc = grf_cd.cd_devs[GRFUNIT(dev)];
-	struct grf_data *gp = sc->sc_data;
-	int error;
-
-	error = 0;
-	switch (cmd) {
-
-	case GCID:
-		*(int *)data = gp->g_display.gd_id;
-		break;
-
-	case GCON:
-		error = grfon(dev);
-		break;
-
-	case GCOFF:
-		error = grfoff(dev);
-		break;
-
-	case GCLOCK:
-		error = grflock(gp, 1);
-		break;
-
-	case GCUNLOCK:
-		error = grfunlock(gp);
-		break;
-
-	case GCAON:
-	case GCAOFF:
-		break;
-
-	/* GCSTATIC is implied by our implementation */
-	case GCSTATIC_CMAP:
-	case GCVARIABLE_CMAP:
-		break;
-
-	/* map in control regs and frame buffer */
-	case GCMAP:
-		error = grfmap(dev, (void **)data, p);
-		break;
-
-	case GCUNMAP:
-		error = grfunmap(dev, *(void **)data, p);
-		/* XXX: HP-UX uses GCUNMAP to get rid of GCSLOT memory */
-		if (error)
-			error = grflckunmmap(dev, *(void **)data);
-		break;
-
-	case GCSLOT:
-	{
-		struct grf_slot *sp = (struct grf_slot *)data;
-
-		sp->slot = grffindpid(gp);
-		if (sp->slot) {
-			error = grflckmmap(dev, (void **)&sp->addr);
-			if (error && gp->g_pid) {
-				free((void *)gp->g_pid, M_DEVBUF);
-				gp->g_pid = NULL;
-			}
-		} else
-			error = EINVAL;		/* XXX */
-		break;
-	}
-
-	case GCDESCRIBE:
-		error = (*gp->g_sw->gd_mode)(gp, GM_DESCRIBE, data);
-		break;
-
-	/*
-	 * XXX: only used right now to map in rbox control registers
-	 * Will be replaced in the future with a real IOMAP interface.
-	 */
-	case IOMAPMAP:
-		error = iommap(dev, (void **)data);
-#if 0
-		/*
-		 * It may not be worth kludging this (using p_devtmp) to
-		 * make this work.  It was an undocumented side-effect
-		 * in HP-UX that the mapped address was the return value
-		 * of the ioctl.  The only thing I remember that counted
-		 * on this behavior was the rbox X10 server.
-		 */
-		if (!error)
-			u.u_r.r_val1 = *(int *)data;	/* XXX: this sux */
-#endif
-		break;
-
-	case IOMAPUNMAP:
-		error = iounmmap(dev, *(void **)data);
-		break;
-
-	default:
-		error = EINVAL;
-		break;
-	}
-	return error;
-}
-
-int
-grflock(struct grf_data *gp, int block)
-{
-	struct proc *p = curproc;		/* XXX */
-	int error;
-
-#ifdef DEBUG
-	if (grfdebug & GDB_LOCK)
-		printf("grflock(%d): flags %x lockpid %x\n",
-		       p->p_pid, gp->g_flags,
-		       gp->g_lockp ? gp->g_lockp->p_pid : -1);
-#endif
-	if (gp->g_pid) {
-#ifdef DEBUG
-		if (grfdebug & GDB_LOCK)
-			printf(" lockpslot %d lockslot %d lock[lockslot] %d\n",
-			       gp->g_lock->gl_lockslot, gp->g_lockpslot,
-			       gp->g_lock->gl_locks[gp->g_lockpslot]);
-#endif
-		gp->g_lock->gl_lockslot = 0;
-		if (gp->g_lock->gl_locks[gp->g_lockpslot] == 0) {
-			gp->g_lockp = NULL;
-			gp->g_lockpslot = 0;
-		}
-	}
-	if (gp->g_lockp) {
-		if (gp->g_lockp == p)
-			return EBUSY;
-		if (!block)
-			return OEAGAIN;
-		do {
-			gp->g_flags |= GF_WANTED;
-			if ((error = tsleep((void *)&gp->g_flags,
-					   (PZERO+1) | PCATCH, devioc, 0)))
-				return error;
-		} while (gp->g_lockp);
-	}
-	gp->g_lockp = p;
-	if (gp->g_pid) {
-		int slot = grffindpid(gp);
-
-#ifdef DEBUG
-		if (grfdebug & GDB_LOCK)
-			printf("  slot %d\n", slot);
-#endif
-		gp->g_lockpslot = gp->g_lock->gl_lockslot = slot;
-		gp->g_lock->gl_locks[slot] = 1;
-	}
-	return 0;
-}
-
-int
-grfunlock(struct grf_data *gp)
-{
-#ifdef DEBUG
-	if (grfdebug & GDB_LOCK)
-		printf("grfunlock(%d): flags %x lockpid %d\n",
-		       curproc->p_pid, gp->g_flags,
-		       gp->g_lockp ? gp->g_lockp->p_pid : -1);
-#endif
-	if (gp->g_lockp != curproc)
-		return EBUSY;
-	if (gp->g_pid) {
-#ifdef DEBUG
-		if (grfdebug & GDB_LOCK)
-			printf(" lockpslot %d lockslot %d lock[lockslot] %d\n",
-			       gp->g_lock->gl_lockslot, gp->g_lockpslot,
-			       gp->g_lock->gl_locks[gp->g_lockpslot]);
-#endif
-		gp->g_lock->gl_locks[gp->g_lockpslot] = 0;
-		gp->g_lockpslot = gp->g_lock->gl_lockslot = 0;
-	}
-	if (gp->g_flags & GF_WANTED) {
-		wakeup((void *)&gp->g_flags);
-		gp->g_flags &= ~GF_WANTED;
-	}
-	gp->g_lockp = NULL;
-	return 0;
-}
-
-/*
- * Convert a BSD style minor devno to HPUX style.
- * We cannot just create HPUX style nodes as they require 24 bits
- * of minor device number and we only have 8.
- * XXX: This may give the wrong result for remote stats of other
- * machines where device 10 exists.
- */
-int
-grfdevno(dev_t dev)
-{
-	int unit = GRFUNIT(dev);
-	struct grf_softc *sc;
-	struct grf_data *gp;
-	int newdev;
-
-	if (unit >= grf_cd.cd_ndevs ||
-	    (sc = grf_cd.cd_devs[unit]) == NULL)
-		return bsdtohpuxdev(dev);
-
-	gp = sc->sc_data;
-	if ((gp->g_flags & GF_ALIVE) == 0)
-		return bsdtohpuxdev(dev);
-
-	/* magic major number */
-	newdev = 12 << 24;
-	/* now construct minor number */
-	if (gp->g_display.gd_regaddr != (void *)(INTIOBASE + FB_BASE))
-		newdev |= (sc->sc_scode << 16) | 0x200;
-	if (dev & GRFIMDEV)
-		newdev |= 0x02;
-	else if (dev & GRFOVDEV)
-		newdev |= 0x01;
-#ifdef DEBUG
-	if (grfdebug & GDB_DEVNO)
-		printf("grfdevno: dev %x newdev %x\n", dev, newdev);
-#endif
-	return newdev;
-}
-
-#endif	/* COMPAT_HPUX */
-
 int
 grfmap(dev_t dev, void **addrp, struct proc *p)
 {
@@ -659,126 +403,3 @@ grfunmap(dev_t dev, void *addr, struct proc *p)
 	uvm_unmap(&p->p_vmspace->vm_map, (vaddr_t)addr, (vaddr_t)addr + size);
 	return 0;
 }
-
-#ifdef COMPAT_HPUX
-int
-iommap(dev_t dev, void **addrp)
-{
-
-#ifdef DEBUG
-	if (grfdebug & (GDB_MMAP|GDB_IOMAP))
-		printf("iommap(%d): addr %p\n", curproc->p_pid, *addrp);
-#endif
-	return EINVAL;
-}
-
-int
-iounmmap(dev_t dev, void *addr)
-{
-#ifdef DEBUG
-	int unit = minor(dev);
-
-	if (grfdebug & (GDB_MMAP|GDB_IOMAP))
-		printf("iounmmap(%d): id %d addr %p\n",
-		       curproc->p_pid, unit, addr);
-#endif
-	return 0;
-}
-
-/*
- * Processes involved in framebuffer mapping via GCSLOT are recorded in
- * an array of pids.  The first element is used to record the last slot used
- * (for faster lookups).  The remaining elements record up to GRFMAXLCK-1
- * process ids.  Returns a slot number between 1 and GRFMAXLCK or 0 if no
- * slot is available.
- */
-int
-grffindpid(struct grf_data *gp)
-{
-	short pid, *sp;
-	int i, limit;
-	int ni;
-
-	if (gp->g_pid == NULL)
-		MALLOC(gp->g_pid, short *, GRFMAXLCK*sizeof(short),
-		    M_DEVBUF, M_WAITOK | M_ZERO);
-	pid = curproc->p_pid;
-	ni = limit = gp->g_pid[0];
-	for (i = 1, sp = &gp->g_pid[1]; i <= limit; i++, sp++) {
-		if (*sp == pid)
-			goto done;
-		if (*sp == 0)
-			ni = i;
-	}
-	i = ni;
-	if (i < limit) {
-		gp->g_pid[i] = pid;
-		goto done;
-	}
-	if (++i == GRFMAXLCK)
-		return 0;
-	gp->g_pid[0] = i;
-	gp->g_pid[i] = pid;
-done:
-#ifdef DEBUG
-	if (grfdebug & GDB_LOCK)
-		printf("grffindpid(%d): slot %d of %d\n",
-		       pid, i, gp->g_pid[0]);
-#endif
-	return i;
-}
-
-void
-grfrmpid(struct grf_data *gp)
-{
-	short pid, *sp;
-	int limit, i;
-	int mi;
-
-	if (gp->g_pid == NULL || (limit = gp->g_pid[0]) == 0)
-		return;
-	pid = curproc->p_pid;
-	limit = gp->g_pid[0];
-	mi = 0;
-	for (i = 1, sp = &gp->g_pid[1]; i <= limit; i++, sp++) {
-		if (*sp == pid)
-			*sp = 0;
-		else if (*sp)
-			mi = i;
-	}
-	i = mi;
-	if (i < limit)
-		gp->g_pid[0] = i;
-#ifdef DEBUG
-	if (grfdebug & GDB_LOCK)
-		printf("grfrmpid(%d): slot %d of %d\n",
-		       pid, sp-gp->g_pid, gp->g_pid[0]);
-#endif
-}
-
-int
-grflckmmap(dev_t dev, void **addrp)
-{
-#ifdef DEBUG
-	struct proc *p = curproc;		/* XXX */
-
-	if (grfdebug & (GDB_MMAP|GDB_LOCK))
-		printf("grflckmmap(%d): addr %p\n",
-		       p->p_pid, *addrp);
-#endif
-	return EINVAL;
-}
-
-int
-grflckunmmap(dev_t dev, void *addr)
-{
-#ifdef DEBUG
-	int unit = minor(dev);
-
-	if (grfdebug & (GDB_MMAP|GDB_LOCK))
-		printf("grflckunmmap(%d): id %d addr %p\n",
-		       curproc->p_pid, unit, addr);
-#endif
-	return EINVAL;
-}
-#endif	/* COMPAT_HPUX */
