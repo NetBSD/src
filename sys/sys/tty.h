@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.h,v 1.78 2007/12/31 20:48:44 christos Exp $	*/
+/*	$NetBSD: tty.h,v 1.79 2007/12/31 23:33:08 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -210,6 +210,9 @@ MALLOC_DECLARE(M_TTYS);
 
 extern	int tty_count;			/* number of ttys in global ttylist */
 extern	struct ttychars ttydefaults;
+
+/* Symbolic sleep message strings. */
+extern	 const char ttclos[];
 
 int	 b_to_q(const u_char *, int, struct clist *);
 void	 catq(struct clist *, struct clist *);
