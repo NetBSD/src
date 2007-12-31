@@ -1,4 +1,4 @@
-.\"	$NetBSD: racoonctl.8,v 1.13 2006/09/09 16:22:10 manu Exp $
+.\"	$NetBSD: racoonctl.8,v 1.14 2007/12/31 01:42:07 mgrooms Exp $
 .\"
 .\" Id: racoonctl.8,v 1.6 2006/05/07 21:32:59 manubsd Exp
 .\"
@@ -120,7 +120,7 @@ has the following format:
 .Bl -tag -width Bl
 .It isakmp {inet|inet6} Ar src Ar dst
 .It {esp|ah} {inet|inet6} Ar src/prefixlen/port Ar dst/prefixlen/port
-{icmp|tcp|udp|any}
+{icmp|tcp|udp|gre|any}
 .El
 .It Xo vpn-connect
 .Oo Fl u Ar username
