@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.62 2007/12/31 20:31:02 dyoung Exp $ */
+/*	$NetBSD: gem.c,v 1.63 2007/12/31 20:35:11 dyoung Exp $ */
 
 /*
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.62 2007/12/31 20:31:02 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.63 2007/12/31 20:35:11 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -1358,15 +1358,12 @@ gem_tint(sc)
 			("gem_tint: txs->txs_lastdesc = %d, txlast = %d\n",
 				txs->txs_lastdesc, txlast));
 		if (txs->txs_firstdesc <= txs->txs_lastdesc) {
-			if ((txlast >= txs->txs_firstdesc) &&
-				(txlast <= txs->txs_lastdesc))
+			if (txlast >= txs->txs_firstdesc &&
+			    txlast <= txs->txs_lastdesc)
 				break;
-		} else {
-			/* Ick -- this command wraps */
-			if ((txlast >= txs->txs_firstdesc) ||
-				(txlast <= txs->txs_lastdesc))
-				break;
-		}
+		} else if (txlast >= txs->txs_firstdesc ||
+		           txlast <= txs->txs_lastdesc)
+			break;
 
 		GEM_CDTXSYNC(sc, txs->txs_lastdesc,
 		    txs->txs_ndescs,
