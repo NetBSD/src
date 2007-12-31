@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.63 2007/12/31 20:35:11 dyoung Exp $ */
+/*	$NetBSD: gem.c,v 1.64 2007/12/31 20:39:45 dyoung Exp $ */
 
 /*
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.63 2007/12/31 20:35:11 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.64 2007/12/31 20:39:45 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -1025,7 +1025,7 @@ gem_start(ifp)
 {
 	struct gem_softc *sc = (struct gem_softc *)ifp->if_softc;
 	struct mbuf *m0, *m;
-	struct gem_txsoft *txs, *last_txs;
+	struct gem_txsoft *txs;
 	bus_dmamap_t dmamap;
 	int error, firsttx, nexttx = -1, lasttx = -1, ofree, seg;
 	uint64_t flags = 0;
@@ -1260,8 +1260,6 @@ gem_start(ifp)
 
 		SIMPLEQ_REMOVE_HEAD(&sc->sc_txfreeq, txs_q);
 		SIMPLEQ_INSERT_TAIL(&sc->sc_txdirtyq, txs, txs_q);
-
-		last_txs = txs;
 
 #if NBPFILTER > 0
 		/*
