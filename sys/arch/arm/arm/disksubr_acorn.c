@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr_acorn.c,v 1.7 2007/10/17 19:53:30 garbled Exp $	*/
+/*	$NetBSD: disksubr_acorn.c,v 1.7.4.1 2007/12/31 10:43:10 ad Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr_acorn.c,v 1.7 2007/10/17 19:53:30 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr_acorn.c,v 1.7.4.1 2007/12/31 10:43:10 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -259,7 +259,7 @@ filecore_label_read(dev, strat, lp, osdep, msgp, cylp, netbsd_label_offp)
 		    bp->b_blkno);*/
 		bp->b_cylinder = bp->b_blkno / lp->d_secpercyl;
 		bp->b_bcount = lp->d_secsize;
-		bp->b_flags &= ~(B_DONE);
+		bp->b_oflags &= ~(BO_DONE);
 		bp->b_flags |= B_READ;
 		(*strat)(bp);
 
