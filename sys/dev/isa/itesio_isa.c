@@ -1,4 +1,4 @@
-/*	$NetBSD: itesio_isa.c,v 1.11 2007/12/29 06:18:35 xtraeme Exp $ */
+/*	$NetBSD: itesio_isa.c,v 1.12 2007/12/31 01:53:58 wiz Exp $ */
 /*	Derived from $OpenBSD: it.c,v 1.19 2006/04/10 00:57:54 deraadt Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: itesio_isa.c,v 1.11 2007/12/29 06:18:35 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: itesio_isa.c,v 1.12 2007/12/31 01:53:58 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -286,7 +286,7 @@ itesio_isa_detach(device_t self, int flags)
 	if (sc->sc_hwmon_mapped)
 		bus_space_unmap(sc->sc_ec_iot, sc->sc_ec_ioh, 8);
 	if (sc->sc_wdt_enabled) {
-		sysmon_wdog_register(&sc->sc_smw);
+		sysmon_wdog_unregister(&sc->sc_smw);
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, 2);
 	}
 
