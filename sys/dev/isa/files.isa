@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.154 2007/12/13 21:23:48 garbled Exp $
+#	$NetBSD: files.isa,v 1.155 2007/12/31 01:52:34 wiz Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -457,7 +457,7 @@ attach	lm at isa with lm_isa
 file	dev/isa/lm_isa.c		lm_isa
 
 # IT8705F/8712F SIS950 hardware monitor
-device	itesio: sysmon_envsys
+device	itesio: sysmon_envsys, sysmon_wdog
 attach	itesio at isa with itesio
 file	dev/isa/itesio_isa.c		itesio
 
