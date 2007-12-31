@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.143 2007/11/04 14:34:21 xtraeme Exp $
+# $NetBSD: GENERIC,v 1.144 2007/12/31 13:38:48 ad Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/hp300/conf/std.hp300"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.143 $"
+#ident 		"GENERIC-$Revision: 1.144 $"
 
 maxusers	32		# estimated number of users
 
@@ -90,7 +90,6 @@ options 	COMPAT_40	# compatibility with NetBSD 4.0
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
 # Binary compatibility.
-options 	COMPAT_HPUX	# HP-UX binary compatibility
 options 	COMPAT_AOUT_M68K	# NetBSD/m68k a.out binary compatibility
 options 	COMPAT_M68K4K	# NetBSD/m68k4k binary compatibility
 options 	COMPAT_SUNOS	# SunOS4 m68k binary compatibility
