@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.39 2007/12/31 01:37:13 macallan Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.40 2007/12/31 18:54:34 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.39 2007/12/31 01:37:13 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.40 2007/12/31 18:54:34 garbled Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -717,7 +717,10 @@ void
 cpu_enable_l2cr(register_t l2cr)
 {
 	register_t msr, x;
+	uint16_t vers;
 
+	vers = mfpvr() >> 16;
+	
 	/* Disable interrupts and set the cache config bits. */
 	msr = mfmsr();
 	mtmsr(msr & ~PSL_EE);
@@ -733,11 +736,17 @@ cpu_enable_l2cr(register_t l2cr)
 	delay(100);
 
 	/* Invalidate all L2 contents. */
-	mtspr(SPR_L2CR, l2cr | L2CR_L2I);
-	do {
-		x = mfspr(SPR_L2CR);
-	} while (x & L2CR_L2IP);
-
+	if (MPC745X_P(vers)) {
+		mtspr(SPR_L2CR, l2cr | L2CR_L2I);
+		do {
+			x = mfspr(SPR_L2CR);
+		} while (x & L2CR_L2I);
+	} else {
+		mtspr(SPR_L2CR, l2cr | L2CR_L2I);
+		do {
+			x = mfspr(SPR_L2CR);
+		} while (x & L2CR_L2IP);
+	}
 	/* Enable L2 cache. */
 	l2cr |= L2CR_L2E;
 	mtspr(SPR_L2CR, l2cr);
