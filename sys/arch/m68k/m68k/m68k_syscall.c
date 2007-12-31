@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k_syscall.c,v 1.31 2007/12/29 00:02:52 martin Exp $	*/
+/*	$NetBSD: m68k_syscall.c,v 1.32 2007/12/31 13:38:51 ad Exp $	*/
 
 /*-
  * Portions Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m68k_syscall.c,v 1.31 2007/12/29 00:02:52 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m68k_syscall.c,v 1.32 2007/12/31 13:38:51 ad Exp $");
 
 #include "opt_execfmt.h"
 #include "opt_compat_netbsd.h"
@@ -305,7 +305,7 @@ syscall_plain(register_t code, struct lwp *l, struct frame *frame)
 	default:
 	bad:
 		/*
-		 * XXX: HPUX and SVR4 use this code-path, so we may have
+		 * XXX: SVR4 uses this code-path, so we may have
 		 * to translate errno.
 		 */
 		if (p->p_emul->e_errno)
@@ -426,7 +426,7 @@ out:
 	default:
 	bad:
 		/*
-		 * XXX: HPUX and SVR4 use this code-path, so we may have
+		 * XXX: SVR4 uses this code-path, so we may have
 		 * to translate errno.
 		 */
 		if (p->p_emul->e_errno)

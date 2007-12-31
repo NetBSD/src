@@ -1,4 +1,4 @@
-#	$NetBSD: files.hppa,v 1.8 2007/10/17 19:54:31 garbled Exp $
+#	$NetBSD: files.hppa,v 1.9 2007/12/31 13:38:50 ad Exp $
 #
 #	$OpenBSD: files.hppa,v 1.31 2001/06/26 02:41:25 mickey Exp $
 #
@@ -29,8 +29,6 @@ file	netinet/in4_cksum.c			inet
 #
 # Compatibility
 #
-include "compat/hpux/files.hpux"
-file	arch/hp700/hp700/hpux_machdep.c		compat_hpux
 include "compat/osf1/files.osf1"
 file	arch/hp700/hp700/osf1_machdep.c		compat_osf1
 include	"compat/linux/files.linux"

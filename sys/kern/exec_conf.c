@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_conf.c,v 1.94 2007/12/03 02:06:57 christos Exp $	*/
+/*	$NetBSD: exec_conf.c,v 1.95 2007/12/31 13:39:03 ad Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_conf.c,v 1.94 2007/12/03 02:06:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_conf.c,v 1.95 2007/12/31 13:39:03 ad Exp $");
 
 #include "opt_execfmt.h"
 #include "opt_compat_freebsd.h"
@@ -39,7 +39,6 @@ __KERNEL_RCSID(0, "$NetBSD: exec_conf.c,v 1.94 2007/12/03 02:06:57 christos Exp 
 #include "opt_compat_ibcs2.h"
 #include "opt_compat_irix.h"
 #include "opt_compat_sunos.h"
-#include "opt_compat_hpux.h"
 #include "opt_compat_m68k4k.h"
 #include "opt_compat_mach.h"
 #include "opt_compat_darwin.h"
@@ -141,10 +140,6 @@ int ELF64NAME2(netbsd,probe)(struct lwp *, struct exec_package *,
 
 #ifdef COMPAT_FREEBSD
 #include <compat/freebsd/freebsd_exec.h>
-#endif
-
-#ifdef COMPAT_HPUX
-#include <compat/hpux/hpux_exec.h>
 #endif
 
 #ifdef COMPAT_M68K4K
@@ -741,24 +736,6 @@ const struct execsw execsw_builtin[] = {
 	  exec_freebsd_aout_makecmds,
 	  { NULL },
 	  &emul_freebsd,
-	  EXECSW_PRIO_ANY,
-	  0,
-	  copyargs,
-	  NULL,
-#ifdef COREDUMP
-	  coredump_netbsd,
-#else
-	  NULL,
-#endif
-	  exec_setup_stack },
-#endif
-
-#ifdef COMPAT_HPUX
-	/* HP-UX a.out for m68k (native word size) */
-	{ HPUX_EXEC_HDR_SIZE,
-	  exec_hpux_makecmds,
-	  { NULL },
-	  &emul_hpux,
 	  EXECSW_PRIO_ANY,
 	  0,
 	  copyargs,

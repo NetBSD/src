@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.23 2007/03/11 07:57:37 isaki Exp $	*/
+/*	$NetBSD: param.h,v 1.24 2007/12/31 13:38:53 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -124,23 +124,5 @@
 
 void	_delay(u_int);
 #endif /* _KERNEL && !_LOCORE */
-
-#if defined(_KERNEL_OPT)
-#include "opt_compat_hpux.h"
-#endif
-
-#ifdef COMPAT_HPUX
-/*
- * Constants/macros for HPUX multiple mapping of user address space.
- * Pages in the first 256Mb are mapped in at every 256Mb segment.
- */
-#define HPMMMASK	0xF0000000
-#define ISHPMMADDR(v) \
-	((curproc->p_md.mdp_flags & MDP_HPUXMMAP) && \
-	 ((unsigned)(v) & HPMMMASK) && \
-	 ((unsigned)(v) & HPMMMASK) != HPMMMASK)
-#define HPMMBASEADDR(v) \
-	((unsigned)(v) & ~HPMMMASK)
-#endif
 
 #endif	/* !_MACHINE_PARAM_H_ */

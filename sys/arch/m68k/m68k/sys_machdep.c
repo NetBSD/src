@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.13 2007/12/20 23:02:40 dsl Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.14 2007/12/31 13:38:51 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -33,8 +33,6 @@
 
 #include <sys/cdefs.h>
 __KERNEL_RCSID(0, "$NetBSD");
-
-#include "opt_compat_hpux.h"
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -76,13 +74,6 @@ cachectl1(u_long req, vaddr_t addr, size_t len, struct proc *p)
 		bool doall = false;
 		paddr_t pa = 0;
 		vaddr_t end = 0;
-#ifdef COMPAT_HPUX
-		extern struct emul emul_hpux;
-
-		if ((p->p_emul == &emul_hpux) &&
-		    len != 16 && len != PAGE_SIZE)
-			doall = 1;
-#endif
 
 		if (addr == 0 ||
 #if defined(M68060)
