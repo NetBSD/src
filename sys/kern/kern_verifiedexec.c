@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.103.2.1 2007/12/26 19:57:12 ad Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.103.2.2 2008/01/01 19:51:08 ad Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.103.2.1 2007/12/26 19:57:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.103.2.2 2008/01/01 19:51:08 ad Exp $");
 
 #include "opt_veriexec.h"
 
@@ -106,6 +106,7 @@ struct veriexec_table_entry {
 
 static int veriexec_verbose;
 int veriexec_strict;
+static int veriexec_bypass = 1;
 
 static char *veriexec_fp_names = NULL;
 static size_t veriexec_name_max = 0;
@@ -668,10 +669,17 @@ veriexec_verify(struct lwp *l, struct vnode *vp, const u_char *name, int flag,
 	struct veriexec_file_entry *vfe;
 	int r;
 
+	if (veriexec_bypass)
+		return 0;
+
+	KERNEL_LOCK(1, NULL);
+
 	r = veriexec_file_verify(l, vp, name, flag, &vfe);
 
 	if (found != NULL)
 		*found = (vfe != NULL) ? true : false;
+
+	KERNEL_UNLOCK_ONE(NULL);
 
 	return (r);
 }
@@ -755,9 +763,16 @@ int
 veriexec_removechk(struct lwp *l, struct vnode *vp, const char *pathbuf)
 {
 	struct veriexec_file_entry *vfe;
+	int error;
+
+	if (veriexec_bypass)
+		return 0;
+
+	KERNEL_LOCK(1, NULL);
 
 	vfe = veriexec_get(vp);
 	if (vfe == NULL) {
+		KERNEL_UNLOCK_ONE(NULL);
 		/* Lockdown mode: Deny access to non-monitored files. */
 		if (veriexec_strict >= VERIEXEC_LOCKDOWN)
 			return (EPERM);
@@ -770,9 +785,12 @@ veriexec_removechk(struct lwp *l, struct vnode *vp, const char *pathbuf)
 
 	/* IDS mode: Deny removal of monitored files. */
 	if (veriexec_strict >= VERIEXEC_IDS)
-		return (EPERM);
+		error = EPERM;
+	else
+		error = veriexec_file_delete(l, vp);
 
-	return (veriexec_file_delete(l, vp));
+	KERNEL_UNLOCK_ONE(NULL);
+	return error;
 }
 
 /*
@@ -788,11 +806,17 @@ veriexec_renamechk(struct lwp *l, struct vnode *fromvp, const char *fromname,
 {
 	struct veriexec_file_entry *vfe, *tvfe;
 
+	if (veriexec_bypass)
+		return 0;
+
+	KERNEL_LOCK(1, NULL);
+
 	if (veriexec_strict >= VERIEXEC_LOCKDOWN) {
 		log(LOG_ALERT, "Veriexec: Preventing rename of `%s' to "
 		    "`%s', uid=%u, pid=%u: Lockdown mode.\n", fromname, toname,
 		    kauth_cred_geteuid(l->l_cred), l->l_proc->p_pid);
 
+		KERNEL_UNLOCK_ONE(NULL);
 		return (EPERM);
 	}
 
@@ -810,6 +834,7 @@ veriexec_renamechk(struct lwp *l, struct vnode *fromvp, const char *fromname,
 			    l->l_proc->p_pid, (vfe != NULL && tvfe != NULL) ?
 			    "files" : "file");
 
+			KERNEL_UNLOCK_ONE(NULL);
 			return (EPERM);
 		}
 
@@ -838,6 +863,7 @@ veriexec_renamechk(struct lwp *l, struct vnode *fromvp, const char *fromname,
 		    kauth_cred_geteuid(l->l_cred), l->l_proc->p_pid);
 	}
 
+	KERNEL_UNLOCK_ONE(NULL);
 	return (0);
 }
 
@@ -1214,6 +1240,7 @@ veriexec_file_add(struct lwp *l, prop_dictionary_t dict)
 	}
 
 	veriexec_file_report(NULL, "New entry.", file, NULL, REPORT_DEBUG);
+	veriexec_bypass = 0;
 
  out:
 	vrele(nid.ni_vp);
@@ -1289,8 +1316,10 @@ veriexec_unmountchk(struct mount *mp)
 {
 	int error;
 
-	if (doing_shutdown)
+	if (veriexec_bypass || doing_shutdown)
 		return (0);
+
+	KERNEL_LOCK(1, NULL);
 
 	switch (veriexec_strict) {
 	case VERIEXEC_LEARNING:
@@ -1329,6 +1358,7 @@ veriexec_unmountchk(struct mount *mp)
 		break;
 	}
 
+	KERNEL_UNLOCK_ONE(NULL);
 	return (error);
 }
 
@@ -1337,6 +1367,11 @@ veriexec_openchk(struct lwp *l, struct vnode *vp, const char *path, int fmode)
 {
 	struct veriexec_file_entry *vfe = NULL;
 	int error = 0;
+
+	if (veriexec_bypass)
+		return 0;
+
+	KERNEL_LOCK(1, NULL);
 
 	if (vp == NULL) {
 		/* If no creation requested, let this fail normally. */
@@ -1369,6 +1404,7 @@ veriexec_openchk(struct lwp *l, struct vnode *vp, const char *path, int fmode)
 	}
 
  out:
+	KERNEL_UNLOCK_ONE(NULL);
 	return (error);
 }
 
