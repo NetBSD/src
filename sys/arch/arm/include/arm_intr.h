@@ -1,4 +1,4 @@
-/* 	$NetBSD: arm_intr.h,v 1.1.2.4 2007/08/18 23:45:45 chris Exp $	*/
+/* 	$NetBSD: arm_intr.h,v 1.1.2.5 2008/01/01 16:01:38 chris Exp $	*/
 
 /*
  * Copyright (c) 2007 Christopher Gilbert
@@ -66,30 +66,20 @@
 
 #include <arm/armreg.h>
 
-/* Define the various Interrupt Priority Levels */
-
-/* Hardware Interrupt Priority Levels are not mutually exclusive. */
-
 #define IPL_NONE	0	/* nothing */
-#define IPL_SOFT	1	/* generic soft interrupts */
-#define IPL_SOFTCLOCK	2	/* clock software interrupts */
+#define IPL_SOFTCLOCK	1	/* clock software interrupts */
+#define IPL_SOFTBIO	2	/* block i/o */
 #define IPL_SOFTNET	3	/* network software interrupts */
-#define IPL_BIO		4	/* block I/O */
-#define IPL_NET		5	/* network */
-#define IPL_SOFTSERIAL	6	/* serial software interrupts */
-#define IPL_TTY		7	/* terminal */
-#define	IPL_LPT		IPL_TTY
-#define IPL_VM		8	/* memory allocation */
-#define IPL_AUDIO	9	/* audio */
-#define IPL_IRQBUS	10	/* this irq collates other irq */
-#define IPL_CLOCK	11	/* clock */
-#define IPL_STATCLOCK	12	/* statclock */
-#define IPL_HIGH	13	/* everything */
-#define	IPL_SCHED	IPL_HIGH
-#define	IPL_LOCK	IPL_HIGH
-#define IPL_SERIAL	14	/* serial */
+#define IPL_SOFTSERIAL	4	/* serial software interrupts */
+#define IPL_VM		5	/* memory allocation */
+#define	IPL_SCHED	6	/* clock */
+#define IPL_HIGH	7	/* everything */
 
-#define NIPL		15
+#define NIPL		8
+
+#define IPL_STATCLOCK	IPL_SCHED	/* statclock */
+#define	IPL_LPT		IPL_VM
+#define IPL_IRQBUS	IPL_VM	/* this irq collates other irq */
 
 #define	__NEWINTR	/* enables new hooks in cpu_fork()/cpu_switch() */
 

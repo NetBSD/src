@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.11.6.2 2008/01/01 15:39:53 chris Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.11.6.3 2008/01/01 16:01:38 chris Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.11.6.2 2008/01/01 15:39:53 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.11.6.3 2008/01/01 16:01:38 chris Exp $");
 
 #include "opt_md.h"
 
@@ -136,9 +136,6 @@ cpu_rootconf(void)
 void
 cpu_configure(void)
 {
-	softintr_init();
-
-
 	config_rootfound("mainbus", NULL);
 
 #if defined(DEBUG)
