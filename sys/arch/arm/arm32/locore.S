@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.18 2005/12/11 12:16:41 christos Exp $	*/
+/*	$NetBSD: locore.S,v 1.19 2008/01/01 14:06:42 chris Exp $	*/
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -212,5 +212,38 @@ _C_LABEL(esym):	.word	_C_LABEL(end)
 ENTRY_NP(abort)
 	b	_C_LABEL(abort)
 
+/*
+ * part of doing a system dump, we need to save registers and cpsr onto the
+ * stack, then save the rest of the registers into the dumppcb
+ */
+ENTRY(dumpsys)
+	/* push registers onto stack */
+	stmfd	sp!, {r0-r7, lr}
+	
+	/* push the status bits onto the stack */
+	mrs	r0, cpsr_all
+	stmfd	sp!, {r0}
+
+	/* fill in dumppcb */
+	ldr	r0, .Ldumppcb
+
+#ifndef __XSCALE__
+        add     r2, r0, #(PCB_R8)
+        stmia   r2, {r8-r13}
+#else
+        strd    r8, [r0, #(PCB_R8)]
+        strd    r10, [r0, #(PCB_R10)]
+        strd    r12, [r0, #(PCB_R12)]
+#endif
+
+	bl	_C_LABEL(dodumpsys)
+
+	/* unwind the stack */
+	ldmfd	sp!, {r0}
+	nop
+	ldmfd	sp!, {r0-r7, pc}
+
+.Ldumppcb:
+	.word	_C_LABEL(dumppcb)
 
 /* End of locore.S */
