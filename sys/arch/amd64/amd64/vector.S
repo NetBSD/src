@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.18 2007/12/21 19:18:14 dsl Exp $	*/
+/*	$NetBSD: vector.S,v 1.19 2008/01/01 19:49:06 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -123,7 +123,38 @@ IDTVEC(trap00)
 IDTVEC(trap01)
 	BPTTRAP(T_TRCTRAP)
 IDTVEC(trap02)
+#if defined(XEN)
 	ZTRAP(T_NMI)
+#else /* defined(XEN) */
+	pushq $0
+	pushq $T_NMI
+	subq	$TF_REGSIZE,%rsp
+	INTR_SAVE_GPRS
+	movl	$MSR_GSBASE,%ecx
+	rdmsr
+	cmpl	$VM_MIN_KERNEL_ADDRESS_HIGH32,%edx
+	jae	1f
+	swapgs
+	movw	%gs,TF_GS(%rsp)
+	movw	%fs,TF_FS(%rsp)
+	movw	%es,TF_ES(%rsp)
+	movw	%ds,TF_DS(%rsp)
+	movq	%rsp,%rdi
+	call	_C_LABEL(trap)
+	swapgs
+	movw	TF_GS(%rsp),%gs
+	movw	TF_FS(%rsp),%fs
+	movw	TF_ES(%rsp),%es
+	movw	TF_DS(%rsp),%ds
+	jmp	2f
+1:
+	movq	%rsp,%rdi
+	call	_C_LABEL(trap)
+2:
+	INTR_RESTORE_GPRS
+	addq	$TF_REGSIZE+16,%rsp
+	iretq
+#endif /* defined(XEN) */
 IDTVEC(trap03)
 	BPTTRAP(T_BPTFLT)
 IDTVEC(trap04)
