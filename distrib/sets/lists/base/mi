@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.734 2007/12/31 15:31:36 ad Exp $
+# $NetBSD: mi,v 1.735 2008/01/01 10:47:54 jnemeth Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -99,6 +99,7 @@
 ./etc/skel					base-sys-root
 ./etc/sliphome					base-slip-root
 ./etc/ssh					base-sys-root
+./etc/systrace					base-util-root		obsolete
 ./etc/uucp					base-obsolete		obsolete
 ./lib						base-sys-root
 ./lib/libdes.so					base-obsolete		obsolete
