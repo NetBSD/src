@@ -1,0 +1,65 @@
+$NetBSD: README,v 1.1 2008/01/01 23:42:56 yamt Exp $
+
+NOTE:
+	- tprof driver currently only supports pentium4 (netburst) processors.
+	- it doesn't work for amd64 due to a bug.  see PR/37662.
+
+usage:
+
+1. add a line to your kernel config.
+	pseudo-device	tprof
+
+2. create a device special file.
+	# mknod /dev/tprof c 191 0
+
+3. run the tprof command.
+	# tprof -o /tmp/foo sleep 1
+
+	tprof statistics:
+		sample 57
+		overflow 0
+		buf 3
+		emptybuf 3
+		dropbuf 0
+		dropbuf_sample 0
+
+4. format the result.
+	# sh ./fmt.sh < /tmp/foo
+	11      c0396c36        lapic_gettick+0x6
+	5       c039b98a        x86_pause+0x2
+	4       c010cf9d        __cpu_simple_lock+0xd
+	2       c010cfcd        __cpu_simple_lock_try+0xd
+	2       c039b571        bus_space_read_4+0x11
+	1       c01005c8        sse2_zero_page+0x18
+	1       c0100624        sse2_copy_page+0x34
+	1       c010ceeb        mutex_spin_enter+0x2b
+	1       c010cef5        mutex_spin_enter+0x35
+	1       c010cf32        mutex_spin_exit+0x32
+	1       c0119ed0        in_localaddr+0x30
+	1       c012d0fd        tcp_output+0x1fbd
+	1       c02980c2        amap_copy+0x42
+	1       c02a0100        uvm_map_lookup_entry_bytree+0x20
+	1       c02a27fe        uvm_tree_RB_REMOVE+0xee
+	1       c02a8914        uvm_pagelookup+0x4
+	1       c02a9d5c        uvm_pagefree+0xfc
+	1       c02a9e36        uvm_pagefree+0x1d6
+	1       c02dd4f6        lockmgr+0x3d6
+	1       c02dd9d1        _kernel_unlock+0xa1
+	1       c02e0285        mutex_vector_enter+0x15
+	1       c02eb83a        sleepq_wake+0x5a
+	1       c0303467        pool_cache_get_paddr+0x97
+	1       c030368b        pool_cache_put_slow+0x6b
+	1       c0321ed3        pffasttimo+0x33
+	1       c034547a        VOP_LOCK+0xa
+	1       c0346235        VOP_ACCESS+0x45
+	1       c034a749        genfs_unlock+0x29
+	1       c038f251        cpu_idle+0x31
+	1       c03938da        pmap_write_protect+0xaa
+	1       c0394305        pmap_do_remove+0x2e5
+	1       c03944b3        pmap_do_remove+0x493
+	1       c0396cdf        lapic_delay+0x5f
+	1       c0396d19        lapic_delay+0x99
+	1       c0396d1d        lapic_delay+0x9d
+	1       c0397429        lapic_clockintr+0x19
+	1       c039b984        x86_mwait+0xc
+	1       c042f66a        _atomic_swap_32+0xa
