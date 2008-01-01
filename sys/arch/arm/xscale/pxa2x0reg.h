@@ -1,4 +1,4 @@
-/* $NetBSD: pxa2x0reg.h,v 1.16 2007/06/28 14:30:58 nonaka Exp $ */
+/* $NetBSD: pxa2x0reg.h,v 1.16.10.1 2008/01/01 15:39:49 chris Exp $ */
 
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.

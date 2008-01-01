@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.c,v 1.29 2007/02/18 07:25:35 matt Exp $	*/
+/*	$NetBSD: undefined.c,v 1.29.22.1 2008/01/01 15:39:12 chris Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris.
@@ -54,7 +54,7 @@
 #include <sys/kgdb.h>
 #endif
 
-__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.29 2007/02/18 07:25:35 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.29.22.1 2008/01/01 15:39:12 chris Exp $");
 
 #include <sys/malloc.h>
 #include <sys/queue.h>
@@ -88,10 +88,6 @@ __KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.29 2007/02/18 07:25:35 matt Exp $");
 #endif
 
 static int gdb_trapper(u_int, u_int, struct trapframe *, int);
-
-#ifdef FAST_FPE
-extern int want_resched;
-#endif
 
 LIST_HEAD(, undefined_handler) undefined_handlers[NUM_UNKNOWN_HANDLERS];
 
@@ -380,7 +376,7 @@ undefinedinstruction(trapframe_t *frame)
 		 * 1 ast so this code should always be run
 		 */
 
-		if (want_resched) {
+		if (curcpu()->ci_want_resched) {
 			/*
 			 * We are being preempted.
 			 */
@@ -389,10 +385,6 @@ undefinedinstruction(trapframe_t *frame)
 
 		/* Invoke MI userret code */
 		mi_userret(l);
-
-		l->l_priority = l->l_usrpri;
-
-		curcpu()->ci_schedstate.spc_curpriority = l->l_priority;
 	}
 
 #else

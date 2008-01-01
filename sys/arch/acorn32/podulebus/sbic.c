@@ -1,4 +1,4 @@
-/* $NetBSD: sbic.c,v 1.12 2007/07/09 20:51:59 ad Exp $ */
+/* $NetBSD: sbic.c,v 1.12.10.1 2008/01/01 15:39:53 chris Exp $ */
 
 /*
  * Copyright (c) 2001 Richard Earnshaw
@@ -114,7 +114,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.12 2007/07/09 20:51:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.12.10.1 2008/01/01 15:39:53 chris Exp $");
 
 #include <sys/systm.h>
 #include <sys/callout.h>

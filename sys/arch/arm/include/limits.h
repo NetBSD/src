@@ -1,4 +1,4 @@
-/*	$NetBSD: limits.h,v 1.6 2005/12/11 12:16:47 christos Exp $	*/
+/*	$NetBSD: limits.h,v 1.6.50.1 2008/01/01 15:39:30 chris Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -46,7 +46,7 @@
 #define	CHAR_MAX	0xff		/* max value for a char */
 #define	CHAR_MIN	0		/* min value for a char */
 
-#define	USHRT_MAX	0xffffU		/* max value for an unsigned short */
+#define	USHRT_MAX	0xffff		/* max value for an unsigned short */
 #define	SHRT_MAX	0x7fff		/* max value for a short */
 #define SHRT_MIN        (-0x7fff-1)     /* min value for a short */
 

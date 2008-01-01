@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.8 2007/02/09 21:55:02 ad Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.8.24.1 2008/01/01 15:39:20 chris Exp $	*/
 
 /*
  * Copyright (c) 1995-1997 Mark Brinicombe.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.8 2007/02/09 21:55:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.8.24.1 2008/01/01 15:39:20 chris Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,10 +59,7 @@ static int arm32_sync_icache __P((struct proc *, char *, register_t *));
 static int arm32_drain_writebuf __P((struct proc *, char *, register_t *));
 
 static int
-arm32_sync_icache(p, args, retval)
-	struct proc *p;
-	char *args;
-	register_t *retval;
+arm32_sync_icache(struct proc *p, char *args, register_t *retval)
 {
 	struct arm_sync_icache_args ua;
 	int error;
@@ -77,10 +74,7 @@ arm32_sync_icache(p, args, retval)
 }
 
 static int
-arm32_drain_writebuf(p, args, retval)
-	struct proc *p;
-	char *args;
-	register_t *retval;
+arm32_drain_writebuf(struct proc *p, char *args, register_t *retval)
 {
 	/* No args. */
 
@@ -91,15 +85,12 @@ arm32_drain_writebuf(p, args, retval)
 }
 
 int
-sys_sysarch(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_sysarch(struct lwp *l, const struct sys_sysarch_args *uap, register_t *retval)
 {
-	struct sys_sysarch_args /* {
+	/* {
 		syscallarg(int) op;
 		syscallarg(void *) parms;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 	int error = 0;
 

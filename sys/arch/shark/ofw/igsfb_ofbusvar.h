@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfb_ofbusvar.h,v 1.2 2007/06/03 01:28:54 uwe Exp $ */
+/*	$NetBSD: igsfb_ofbusvar.h,v 1.2.10.1 2008/01/01 15:39:57 chris Exp $ */
 
 /*
  * Copyright (c) 2006 Michael Lorenz

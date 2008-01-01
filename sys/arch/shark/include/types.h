@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.7 2007/07/14 21:48:23 ad Exp $	*/
+/*	$NetBSD: types.h,v 1.7.10.1 2008/01/01 15:39:56 chris Exp $	*/
 
 #ifndef _SHARK_TYPES_H_
 #define	_SHARK_TYPES_H_

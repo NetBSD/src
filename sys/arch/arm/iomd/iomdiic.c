@@ -1,4 +1,4 @@
-/*	$NetBSD: iomdiic.c,v 1.5 2006/06/26 18:21:39 drochner Exp $	*/
+/*	$NetBSD: iomdiic.c,v 1.5.34.1 2008/01/01 15:39:34 chris Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -39,10 +39,9 @@
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
-#include <sys/lock.h>
-
-#include <machine/bus.h>
-#include <machine/cpu.h>
+#include <sys/mutex.h>
+#include <sys/bus.h>
+#include <sys/cpu.h>
 
 #include <arm/iomd/iomdreg.h> 
 #include <arm/iomd/iomdvar.h>
@@ -58,7 +57,7 @@ struct iomdiic_softc {
 	bus_space_handle_t sc_sh;
 
 	struct i2c_controller sc_i2c;
-	struct lock sc_buslock;
+	kmutex_t sc_buslock;
 
 	/*
 	 * The SDA pin is open-drain, so we make it an input by
@@ -135,7 +134,7 @@ iomdiic_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 
-	lockinit(&sc->sc_buslock, PRIBIO|PCATCH, "iomdiiclk", 0, 0);
+	mutex_init(&sc->sc_buslock, MUTEX_DEFAULT, IPL_NONE);
 
 	sc->sc_i2c.ic_cookie = sc;
 	sc->sc_i2c.ic_acquire_bus = iomdiic_acquire_bus;
@@ -182,7 +181,8 @@ iomdiic_acquire_bus(void *cookie, int flags)
 	if (flags & I2C_F_POLL)
 		return (0);
 
-	return (lockmgr(&sc->sc_buslock, LK_EXCLUSIVE, NULL));
+	mutex_enter(&sc->sc_buslock);
+	return (0);
 }
 
 static void
@@ -194,7 +194,7 @@ iomdiic_release_bus(void *cookie, int flags)
 	if (flags & I2C_F_POLL)
 		return;
 
-	(void) lockmgr(&sc->sc_buslock, LK_RELEASE, NULL);
+	mutex_exit(&sc->sc_buslock);
 }
 
 static int

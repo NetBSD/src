@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_com.c,v 1.7 2006/12/10 12:46:48 kiyohara Exp $	*/
+/*	$NetBSD: pxa2x0_com.c,v 1.7.24.1 2008/01/01 15:39:47 chris Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_com.c,v 1.7 2006/12/10 12:46:48 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_com.c,v 1.7.24.1 2008/01/01 15:39:47 chris Exp $");
 
 #include "opt_com.h"
 
@@ -55,8 +55,10 @@ __KERNEL_RCSID(0, "$NetBSD: pxa2x0_com.c,v 1.7 2006/12/10 12:46:48 kiyohara Exp 
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>
 
+#include <arm/xscale/pxa2x0cpu.h>
 #include <arm/xscale/pxa2x0reg.h>
 #include <arm/xscale/pxa2x0var.h>
+#include <arm/xscale/pxa2x0_gpio.h>
 
 #include "locators.h"
 
@@ -72,31 +74,47 @@ pxauart_match(struct device *parent, struct cfdata *cf, void *aux)
 	struct pxaip_attach_args *pxa = aux;
 	bus_space_tag_t bt = &pxa2x0_a4x_bs_tag;	/* XXX: This sucks */
 	bus_space_handle_t bh;
-	int rv;
+	struct pxa2x0_gpioconf *gpioconf;
+	u_int gpio;
+	int rv, i;
 
 	switch (pxa->pxa_addr) {
 	case PXA2X0_FFUART_BASE:
 		if (pxa->pxa_intr != PXA2X0_INT_FFUART)
 			return (0);
+		gpioconf = CPU_IS_PXA250 ? pxa25x_com_ffuart_gpioconf :
+			    pxa27x_com_ffuart_gpioconf;
 		break;
 
 	case PXA2X0_STUART_BASE:
 		if (pxa->pxa_intr != PXA2X0_INT_STUART)
 			return (0);
+		gpioconf = CPU_IS_PXA250 ? pxa25x_com_stuart_gpioconf :
+			    pxa27x_com_stuart_gpioconf;
 		break;
 
 	case PXA2X0_BTUART_BASE:	/* XXX: Config file option ... */
 		if (pxa->pxa_intr != PXA2X0_INT_BTUART)
 			return (0);
+		gpioconf = CPU_IS_PXA250 ? pxa25x_com_btuart_gpioconf :
+			    pxa27x_com_btuart_gpioconf;
 		break;
 
 	case PXA2X0_HWUART_BASE:
 		if (pxa->pxa_intr != PXA2X0_INT_HWUART)
 			return (0);
+		gpioconf = CPU_IS_PXA250 ? pxa25x_com_hwuart_gpioconf :
+			    pxa27x_com_hwuart_gpioconf;
 		break;
 
 	default:
 		return (0);
+	}
+	for (i = 0; gpioconf[i].pin != -1; i++) {
+		gpio = pxa2x0_gpio_get_function(gpioconf[i].pin);
+		if (GPIO_FN(gpio) != GPIO_FN(gpioconf[i].value) ||
+		    GPIO_FN_IS_OUT(gpio) != GPIO_FN_IS_OUT(gpioconf[i].value))
+			return (0);
 	}
 
 	pxa->pxa_size = 0x20;

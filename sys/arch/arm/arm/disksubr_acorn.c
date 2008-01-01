@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr_acorn.c,v 1.5 2005/12/11 12:16:41 christos Exp $	*/
+/*	$NetBSD: disksubr_acorn.c,v 1.5.50.1 2008/01/01 15:39:11 chris Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr_acorn.c,v 1.5 2005/12/11 12:16:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr_acorn.c,v 1.5.50.1 2008/01/01 15:39:11 chris Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -306,7 +306,7 @@ filecore_label_read(dev, strat, lp, osdep, msgp, cylp, netbsd_label_offp)
 	*netbsd_label_offp = netbsdpartoff;
 	*msgp = NULL;
 out:
-        brelse(bp);
+        brelse(bp, 0);
 	return (rv);
 }
 
@@ -386,6 +386,6 @@ filecore_label_locate(dev, strat, lp, osdep, cylp, netbsd_label_offp)
 	*cylp = cyl;
 	*netbsd_label_offp = netbsdpartoff;
 out:
-        brelse(bp);
+        brelse(bp, 0);
 	return (rv);
 }

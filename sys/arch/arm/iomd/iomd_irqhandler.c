@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_irqhandler.c,v 1.13.22.1 2007/08/18 13:46:41 chris Exp $	*/
+/*	$NetBSD: iomd_irqhandler.c,v 1.13.22.2 2008/01/01 15:39:34 chris Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iomd_irqhandler.c,v 1.13.22.1 2007/08/18 13:46:41 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iomd_irqhandler.c,v 1.13.22.2 2008/01/01 15:39:34 chris Exp $");
 
 #include "opt_irqstats.h"
 
