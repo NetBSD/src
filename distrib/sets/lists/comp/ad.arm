@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.27 2007/02/18 18:47:36 briggs Exp $
+# $NetBSD: ad.arm,v 1.28 2008/01/01 14:08:03 chris Exp $
 ./usr/include/arm				comp-c-include
 ./usr/include/arm/ansi.h			comp-c-include
 ./usr/include/arm/aout_machdep.h		comp-c-include
@@ -45,6 +45,7 @@
 ./usr/include/arm/iomd				comp-obsolete		obsolete
 ./usr/include/arm/iomd/vidc.h			comp-obsolete		obsolete
 ./usr/include/arm/ipkdb.h			comp-c-include
+./usr/include/arm/kcore.h			comp-c-include
 ./usr/include/arm/limits.h			comp-c-include
 ./usr/include/arm/lock.h			comp-c-include
 ./usr/include/arm/math.h			comp-c-include
