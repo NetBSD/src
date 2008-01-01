@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.25 2007/12/25 18:33:34 perry Exp $	*/
+/*	$NetBSD: cpu.h,v 1.26 2008/01/01 20:32:11 yamt Exp $	*/
 /*	NetBSD: cpu.h,v 1.113 2004/02/20 17:35:01 yamt Exp 	*/
 
 /*-
@@ -84,6 +84,10 @@ struct cpu_info {
 	cpuid_t ci_cpuid;		/* our CPU ID */
 	int ci_cpumask;			/* (1 << CPU ID) */
 	u_int ci_apicid;		/* our APIC ID */
+	uint8_t ci_initapicid;		/* our intitial APIC ID */
+	uint8_t ci_packageid;
+	uint8_t ci_coreid;
+	uint8_t ci_smtid;
 	struct cpu_data ci_data;	/* MI per-cpu data */
 
 	/*
