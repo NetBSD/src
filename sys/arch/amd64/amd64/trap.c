@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.40 2007/12/03 20:21:32 ad Exp $	*/
+/*	$NetBSD: trap.c,v 1.41 2008/01/01 13:40:21 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.40 2007/12/03 20:21:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.41 2008/01/01 13:40:21 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -213,7 +213,7 @@ trap(struct trapframe *frame)
 	}
 #endif
 
-	if (!KERNELMODE(frame->tf_cs, frame->tf_rflags)) {
+	if (type != T_NMI && !KERNELMODE(frame->tf_cs, frame->tf_rflags)) {
 		type |= T_USER;
 		l->l_md.md_regs = frame;
 		LWP_CACHE_CREDS(l, p);
@@ -322,7 +322,6 @@ copyfault:
 	case T_SEGNPFLT|T_USER:
 	case T_STKFLT|T_USER:
 	case T_ALIGNFLT|T_USER:
-	case T_NMI|T_USER:
 #ifdef TRAP_SIGDEBUG
 		printf("pid %d (%s): BUS (%x) at rip %lx addr %lx\n",
 		    p->p_pid, p->p_comm, type, frame->tf_rip, rcr2());
@@ -338,7 +337,6 @@ copyfault:
 			ksi.ksi_code = BUS_ADRERR;
 			break;
 		case T_TSSFLT|T_USER:
-		case T_NMI|T_USER:
 			ksi.ksi_code = BUS_OBJERR;
 			break;
 		case T_ALIGNFLT|T_USER:
