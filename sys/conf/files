@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.881 2007/12/31 15:32:09 ad Exp $
+#	$NetBSD: files,v 1.882 2008/01/01 21:28:38 yamt Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -1575,3 +1575,8 @@ include "dev/pad/files.pad"
 # Intel 386 Real Mode emulator
 #
 include "lib/libx86emu/files.x86emu"
+
+#
+# "tprof" profiler.
+#
+include	"dev/tprof/files.tprof"
