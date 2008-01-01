@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_arm.c,v 1.2 2001/07/16 05:45:52 matt Exp $	*/
+/* $NetBSD: kvm_arm.c,v 1.3 2008/01/01 14:10:37 chris Exp $	 */
 
 /*-
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -37,49 +37,147 @@
  * arm32 machine dependent routines for kvm.
  */
 
-#include <sys/param.h>
+#include <sys/cdefs.h>
+#if defined(LIBC_SCCS) && !defined(lint)
+__RCSID("$NetBSD: kvm_arm.c,v 1.3 2008/01/01 14:10:37 chris Exp $");
+#endif				/* LIBC_SCCS and not lint */
 
+#include <sys/param.h>
 #include <sys/exec.h>
+#include <sys/kcore.h>
+#include <arm/kcore.h>
+#include <arm/arm32/pte.h>
 
 #include <stdlib.h>
 #include <db.h>
 #include <limits.h>
 #include <kvm.h>
 
+#include <unistd.h>
+
 #include "kvm_private.h"
 
 void
-_kvm_freevtop(kd)
-	kvm_t *kd;
+_kvm_freevtop(kvm_t * kd)
 {
 	if (kd->vmst != 0)
 		free(kd->vmst);
 }
 
 int
-_kvm_initvtop(kd)
-	kvm_t *kd;
+_kvm_initvtop(kvm_t * kd)
 {
 	return 0;
 }
 
 int
-_kvm_kvatop(kd, va, pa)
-	kvm_t *kd;
-	u_long va;
-	u_long *pa;
+_kvm_kvatop(kvm_t * kd, u_long va, u_long * pa)
 {
+	cpu_kcore_hdr_t *cpu_kh;
+	pd_entry_t      pde;
+	pt_entry_t      pte;
+	uint32_t        pde_pa, pte_pa;
+
+	if (ISALIVE(kd)) {
+		_kvm_err(kd, 0, "vatop called in live kernel!");
+		return (0);
+	}
+	cpu_kh = kd->cpu_data;
+
+	if (cpu_kh->version != 1) {
+		_kvm_err(kd, 0, "unsupported kcore structure version");
+		return 0;
+	}
+	if (cpu_kh->flags != 0) {
+		_kvm_err(kd, 0, "kcore flags not supported");
+		return 0;
+	}
+	/*
+	 * work out which L1 table we need
+	 */
+	if (va >= (cpu_kh->UserL1TableSize << 17))
+		pde_pa = cpu_kh->PAKernelL1Table;
+	else
+		pde_pa = cpu_kh->PAUserL1Table;
+
+	/*
+	 * work out the offset into the L1 Table
+	 */
+	pde_pa += ((va >> 20) * sizeof(pd_entry_t));
+
+	if (pread(kd->pmfd, (void *) &pde, sizeof(pd_entry_t),
+		  _kvm_pa2off(kd, pde_pa)) != sizeof(pd_entry_t)) {
+		_kvm_syserr(kd, 0, "could not read L1 entry");
+		return (0);
+	}
+	/*
+	 * next work out what kind of record it is
+	 */
+	switch (pde & L1_TYPE_MASK) {
+	case L1_TYPE_S:
+		*pa = (pde & L1_S_FRAME) | (va & L1_S_OFFSET);
+		return L1_S_SIZE - (va & L1_S_OFFSET);
+	case L1_TYPE_C:
+		pte_pa = (pde & L1_C_ADDR_MASK)
+			| ((va & 0xff000) >> 10);
+		break;
+	case L1_TYPE_F:
+		pte_pa = (pde & L1_S_ADDR_MASK)
+			| ((va & 0xffc00) >> 8);
+		break;
+	default:
+		_kvm_syserr(kd, 0, "L1 entry is invalid");
+		return (0);
+	}
+
+	/*
+	 * locate the pte and load it
+	 */
+	if (pread(kd->pmfd, (void *) &pte, sizeof(pt_entry_t),
+		  _kvm_pa2off(kd, pte_pa)) != sizeof(pt_entry_t)) {
+		_kvm_syserr(kd, 0, "could not read L2 entry");
+		return (0);
+	}
+	switch (pte & L2_TYPE_MASK) {
+	case L2_TYPE_L:
+		*pa = (pte & L2_L_FRAME) | (va & L2_L_OFFSET);
+		return (L2_L_SIZE - (va & L2_L_OFFSET));
+	case L2_TYPE_S:
+		*pa = (pte & L2_S_FRAME) | (va & L2_S_OFFSET);
+		return (L2_S_SIZE - (va & L2_S_OFFSET));
+	case L2_TYPE_T:
+		*pa = (pte & L2_T_FRAME) | (va & L2_T_OFFSET);
+		return (L2_T_SIZE - (va & L2_T_OFFSET));
+	default:
+		_kvm_syserr(kd, 0, "L2 entry is invalid");
+		return (0);
+	}
+
 	_kvm_err(kd, 0, "vatop not yet implemented!");
 	return 0;
 }
 
 off_t
-_kvm_pa2off(kd, pa)
-	kvm_t *kd;
-	u_long pa;
+_kvm_pa2off(kvm_t * kd, u_long pa)
 {
-	_kvm_err(kd, 0, "pa2off not yet implemented!");
-	return 0;
+	cpu_kcore_hdr_t *cpu_kh;
+	phys_ram_seg_t *ramsegs;
+	off_t           off;
+	int             i;
+
+	cpu_kh = kd->cpu_data;
+	ramsegs = (void *) ((char *) (void *) cpu_kh + cpu_kh->omemsegs);
+
+	off = 0;
+	for (i = 0; i < cpu_kh->nmemsegs; i++) {
+		if (pa >= ramsegs[i].start &&
+		    (pa - ramsegs[i].start) < ramsegs[i].size) {
+			off += (pa - ramsegs[i].start);
+			break;
+		}
+		off += ramsegs[i].size;
+	}
+	return (kd->dump_off + off);
 }
 
 /*
@@ -88,13 +186,12 @@ _kvm_pa2off(kd, pa)
  * have to deal with these NOT being constants!  (i.e. arm)
  */
 int
-_kvm_mdopen(kd)
-	kvm_t	*kd;
+_kvm_mdopen(kvm_t * kd)
 {
-	uintptr_t max_uva;
+	uintptr_t       max_uva;
 	extern struct ps_strings *__ps_strings;
 
-#if 0   /* XXX - These vary across arm machines... */
+#if 0				/* XXX - These vary across arm machines... */
 	kd->usrstack = USRSTACK;
 	kd->min_uva = VM_MIN_ADDRESS;
 	kd->max_uva = VM_MAXUSER_ADDRESS;
@@ -102,8 +199,8 @@ _kvm_mdopen(kd)
 	/* This is somewhat hack-ish, but it works. */
 	max_uva = (uintptr_t) (__ps_strings + 1);
 	kd->usrstack = max_uva;
-	kd->max_uva  = max_uva;
-	kd->min_uva  = 0;
+	kd->max_uva = max_uva;
+	kd->min_uva = 0;
 
 	return (0);
 }
