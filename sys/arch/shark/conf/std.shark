@@ -1,4 +1,4 @@
-#	$NetBSD: std.shark,v 1.6 2007/08/05 13:37:31 jmmv Exp $
+#	$NetBSD: std.shark,v 1.6.2.1 2008/01/01 15:39:56 chris Exp $
 #
 # standard NetBSD/shark options
 

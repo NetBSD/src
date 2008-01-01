@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.40 2007/03/04 14:47:18 bjh21 Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.40.20.1 2008/01/01 15:39:29 chris Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -146,7 +146,7 @@ struct cpu_functions {
 	int	(*cf_dataabt_fixup)	(void *);
 	int	(*cf_prefetchabt_fixup)	(void *);
 
-	void	(*cf_context_switch)	(void);
+	void	(*cf_context_switch)	(u_int);
 
 	void	(*cf_setup)		(char *);
 };
@@ -194,6 +194,7 @@ extern u_int cputype;
 #define ABORT_FIXUP_FAILED	1	/* fixup failed */
 #define ABORT_FIXUP_RETURN	2	/* abort handler should return */
 
+#define cpu_context_switch(a)		cpufuncs.cf_context_switch(a)
 #define cpu_setup(a)			cpufuncs.cf_setup(a)
 
 int	set_cpufuncs		(void);
@@ -229,7 +230,7 @@ void	arm67_setttb		(u_int);
 void	arm67_tlb_flush		(void);
 void	arm67_tlb_purge		(u_int);
 void	arm67_cache_flush	(void);
-void	arm67_context_switch	(void);
+void	arm67_context_switch	(u_int);
 #endif	/* CPU_ARM6 || CPU_ARM7 */
 
 #ifdef CPU_ARM6
@@ -247,7 +248,7 @@ void	arm7tdmi_setttb		(u_int);
 void	arm7tdmi_tlb_flushID	(void);
 void	arm7tdmi_tlb_flushID_SE	(u_int);
 void	arm7tdmi_cache_flushID	(void);
-void	arm7tdmi_context_switch	(void);
+void	arm7tdmi_context_switch	(u_int);
 #endif /* CPU_ARM7TDMI */
 
 #ifdef CPU_ARM8
@@ -268,7 +269,7 @@ void	arm8_cache_purgeID_rng	(vaddr_t, vsize_t);
 void	arm8_cache_purgeD_rng	(vaddr_t, vsize_t);
 void	arm8_cache_syncI_rng	(vaddr_t, vsize_t);
 
-void	arm8_context_switch	(void);
+void	arm8_context_switch	(u_int);
 
 void	arm8_setup		(char *);
 
@@ -277,13 +278,13 @@ u_int	arm8_clock_config	(u_int, u_int);
 
 #ifdef CPU_SA110
 void	sa110_setup		(char *);
-void	sa110_context_switch	(void);
+void	sa110_context_switch	(u_int);
 #endif	/* CPU_SA110 */
 
 #if defined(CPU_SA1100) || defined(CPU_SA1110)
 void	sa11x0_drain_readbuf	(void);
 
-void	sa11x0_context_switch	(void);
+void	sa11x0_context_switch	(u_int);
 void	sa11x0_cpu_sleep	(int);
 
 void	sa11x0_setup		(char *);
@@ -333,7 +334,7 @@ void	arm9_dcache_wb_range	(vaddr_t, vsize_t);
 void	arm9_idcache_wbinv_all	(void);
 void	arm9_idcache_wbinv_range (vaddr_t, vsize_t);
 
-void	arm9_context_switch	(void);
+void	arm9_context_switch	(u_int);
 
 void	arm9_setup		(char *);
 
@@ -347,7 +348,7 @@ extern unsigned arm9_dcache_index_inc;
 void	arm10_tlb_flushID_SE	(u_int);
 void	arm10_tlb_flushI_SE	(u_int);
 
-void	arm10_context_switch	(void);
+void	arm10_context_switch	(u_int);
 
 void	arm10_setup		(char *);
 #endif
@@ -358,7 +359,7 @@ void	arm11_setttb		(u_int);
 void	arm11_tlb_flushID_SE	(u_int);
 void	arm11_tlb_flushI_SE	(u_int);
 
-void	arm11_context_switch	(void);
+void	arm11_context_switch	(u_int);
 
 void	arm11_setup		(char *string);
 void	arm11_tlb_flushID	(void);
@@ -419,7 +420,7 @@ void	armv4_drain_writebuf	(void);
 
 #if defined(CPU_IXP12X0)
 void	ixp12x0_drain_readbuf	(void);
-void	ixp12x0_context_switch	(void);
+void	ixp12x0_context_switch	(u_int);
 void	ixp12x0_setup		(char *);
 #endif
 
@@ -459,7 +460,7 @@ void	xscale_cache_purgeD_rng	(vaddr_t, vsize_t);
 void	xscale_cache_syncI_rng	(vaddr_t, vsize_t);
 void	xscale_cache_flushD_rng	(vaddr_t, vsize_t);
 
-void	xscale_context_switch	(void);
+void	xscale_context_switch	(u_int);
 
 void	xscale_setup		(char *);
 #endif	/* CPU_XSCALE_80200 || CPU_XSCALE_80321 || __CPU_XSCALE_PXA2XX || CPU_XSCALE_IXP425 */

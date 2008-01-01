@@ -1,4 +1,4 @@
-/*	$NetBSD: shark_machdep.c,v 1.27 2007/08/03 16:02:17 jmmv Exp $	*/
+/*	$NetBSD: shark_machdep.c,v 1.27.4.1 2008/01/01 15:39:59 chris Exp $	*/
 
 /*
  * Copyright 1997
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: shark_machdep.c,v 1.27 2007/08/03 16:02:17 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: shark_machdep.c,v 1.27.4.1 2008/01/01 15:39:59 chris Exp $");
 
 #include "opt_ddb.h"
 

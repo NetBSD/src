@@ -1,4 +1,4 @@
-/*      $NetBSD: sa11x0_com.c,v 1.39 2007/07/14 21:48:18 ad Exp $        */
+/*      $NetBSD: sa11x0_com.c,v 1.39.10.1 2008/01/01 15:39:41 chris Exp $        */
 
 /*-
  * Copyright (c) 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x0_com.c,v 1.39 2007/07/14 21:48:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x0_com.c,v 1.39.10.1 2008/01/01 15:39:41 chris Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -336,7 +336,7 @@ sacom_attach_subr(struct sacom_softc *sc)
 	}
 
 
-	sc->sc_si = softintr_establish(IPL_SOFTSERIAL, sacomsoft, sc);
+	sc->sc_si = softint_establish(SOFTINT_SERIAL, sacomsoft, sc);
 
 #if NRND > 0 && defined(RND_COM)
 	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
@@ -378,7 +378,7 @@ sacom_detach(struct device *self, int flags)
 	ttyfree(sc->sc_tty);
 
 	/* Unhook the soft interrupt handler. */
-	softintr_disestablish(sc->sc_si);
+	softint_disestablish(sc->sc_si);
 
 #if NRND > 0 && defined(RND_COM)
 	/* Unhook the entropy source. */
@@ -789,7 +789,7 @@ sacom_schedrx(struct sacom_softc *sc)
 	sc->sc_rx_ready = 1;
 
 	/* Wake up the poller. */
-	softintr_schedule(sc->sc_si);
+	softint_schedule(sc->sc_si);
 }
 
 void
@@ -1064,16 +1064,8 @@ sacomstart(struct tty *tp)
 	s = spltty();
 	if (ISSET(tp->t_state, TS_BUSY | TS_TIMEOUT | TS_TTSTOP))
 		goto out;
-
-	if (tp->t_outq.c_cc <= tp->t_lowat) {
-		if (ISSET(tp->t_state, TS_ASLEEP)) {
-			CLR(tp->t_state, TS_ASLEEP);
-			wakeup(&tp->t_outq);
-		}
-		selwakeup(&tp->t_wsel);
-		if (tp->t_outq.c_cc == 0)
-			goto out;
-	}
+	if (!ttypull(tp))
+		goto out;
 
 	/* Grab the first contiguous region of buffer space. */
 	{
@@ -1408,7 +1400,7 @@ sacomintr(void *arg)
 	COM_UNLOCK(sc);
 
 	/* Wake up the poller. */
-	softintr_schedule(sc->sc_si);
+	softint_schedule(sc->sc_si);
 
 #if NRND > 0 && defined(RND_COM)
 	rnd_add_uint32(&sc->rnd_source, iir | lsr);

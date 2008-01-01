@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_i2s.c,v 1.5 2007/06/26 15:08:42 nonaka Exp $	*/
+/*	$NetBSD: pxa2x0_i2s.c,v 1.5.10.1 2008/01/01 15:39:48 chris Exp $	*/
 /*	$OpenBSD: pxa2x0_i2s.c,v 1.7 2006/04/04 11:45:40 pascoe Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_i2s.c,v 1.5 2007/06/26 15:08:42 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_i2s.c,v 1.5.10.1 2008/01/01 15:39:48 chris Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,12 +81,6 @@ pxa2x0_i2s_attach_sub(struct pxa2x0_i2s_softc *sc)
 
 	bus_space_barrier(sc->sc_iot, sc->sc_ioh, 0, sc->sc_size,
 	    BUS_SPACE_BARRIER_READ|BUS_SPACE_BARRIER_WRITE);
-
-	pxa2x0_gpio_set_function(28, GPIO_ALT_FN_1_OUT);  /* I2S_BITCLK */
-	pxa2x0_gpio_set_function(113, GPIO_ALT_FN_1_OUT); /* I2S_SYSCLK */
-	pxa2x0_gpio_set_function(31, GPIO_ALT_FN_1_OUT);  /* I2S_SYNC */
-	pxa2x0_gpio_set_function(30, GPIO_ALT_FN_1_OUT);  /* I2S_SDATA_OUT */
-	pxa2x0_gpio_set_function(29, GPIO_ALT_FN_2_IN);   /* I2S_SDATA_IN */
 
 	pxa2x0_i2s_init(sc);
 

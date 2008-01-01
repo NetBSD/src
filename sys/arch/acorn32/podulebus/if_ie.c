@@ -1,4 +1,4 @@
-/* $NetBSD: if_ie.c,v 1.17 2007/03/04 05:59:07 christos Exp $ */
+/* $NetBSD: if_ie.c,v 1.17.20.1 2008/01/01 15:39:53 chris Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.17 2007/03/04 05:59:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.17.20.1 2008/01/01 15:39:53 chris Exp $");
 
 #define IGNORE_ETHER1_IDROM_CHECKSUM
 
@@ -922,7 +922,7 @@ ieinit(sc)
     iasetup_cmd.com.ie_cmd_cmd = IE_CMD_IASETUP | IE_CMD_LAST;
     iasetup_cmd.com.ie_cmd_link = 0xffff;
 
-    bcopy ( LLADDR(ifp->if_sadl), (void *) &iasetup_cmd.ie_address,
+    bcopy ( CLLADDR(ifp->if_sadl), (void *) &iasetup_cmd.ie_address,
 	 	sizeof (iasetup_cmd.ie_address) );
 
     if ( command_and_wait(sc, IE_CU_START, &scb, &iasetup_cmd, ptr, sizeof cmd,

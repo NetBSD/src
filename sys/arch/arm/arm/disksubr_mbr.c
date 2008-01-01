@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr_mbr.c,v 1.8 2007/03/04 10:21:25 christos Exp $	*/
+/*	$NetBSD: disksubr_mbr.c,v 1.8.20.1 2008/01/01 15:39:11 chris Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr_mbr.c,v 1.8 2007/03/04 10:21:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr_mbr.c,v 1.8.20.1 2008/01/01 15:39:11 chris Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -195,7 +195,7 @@ mbr_label_read(dev, strat, lp, osdep, msgp, cylp, netbsd_label_offp)
 	*netbsd_label_offp = mbrpartoff;
 	*msgp = NULL;
 out:
-        brelse(bp);
+        brelse(bp, 0);
 	return (rv);
 }
 
@@ -271,6 +271,6 @@ mbr_label_locate(dev, strat, lp, osdep, cylp, netbsd_label_offp)
 	*netbsd_label_offp = mbrpartoff;
 	rv = 1;
 out:
-        brelse(bp);
+        brelse(bp, 0);
 	return (rv);
 }

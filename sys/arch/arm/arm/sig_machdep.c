@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.33 2007/07/08 10:19:22 pooka Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.33.10.1 2008/01/01 15:39:12 chris Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -45,7 +45,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.33 2007/07/08 10:19:22 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.33.10.1 2008/01/01 15:39:12 chris Exp $");
 
 #include <sys/mount.h>		/* XXX only needed by syscallargs.h */
 #include <sys/proc.h>

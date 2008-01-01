@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm,v 1.85 2007/07/07 05:13:14 tsutsui Exp $
+#	$NetBSD: files.arm,v 1.85.10.1 2008/01/01 15:39:21 chris Exp $
 
 # temporary define to allow easy moving to ../arch/arm/arm32
 defflag				ARM32

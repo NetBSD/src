@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.164 2007/05/17 14:51:16 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.164.10.1 2008/01/01 15:39:18 chris Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -212,7 +212,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.164 2007/05/17 14:51:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.164.10.1 2008/01/01 15:39:18 chris Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -261,15 +261,14 @@ struct pmap     kernel_pmap_store;
  *
  * XXXSCW: Fix for SMP ...
  */
-union pmap_cache_state *pmap_cache_state;
+static pmap_t pmap_recent_user;
 
 /*
  * Pool and cache that pmap structures are allocated from.
  * We use a cache to avoid clearing the pm_l2[] array (1KB)
  * in pmap_create().
  */
-static struct pool pmap_pmap_pool;
-static struct pool_cache pmap_pmap_cache;
+static struct pool_cache pmap_cache;
 static LIST_HEAD(, pmap) pmap_pmaps;
 
 /*
@@ -287,7 +286,6 @@ static struct pool_allocator pmap_bootstrap_pv_allocator = {
  * We use a cache to avoid clearing the structures when they're
  * allocated. (196 bytes)
  */
-static struct pool pmap_l2dtable_pool;
 static struct pool_cache pmap_l2dtable_cache;
 static vaddr_t pmap_kernel_l2dtable_kva;
 
@@ -296,7 +294,6 @@ static vaddr_t pmap_kernel_l2dtable_kva;
  * We use a cache to avoid clearing the descriptor table
  * when they're allocated. (1KB)
  */
-static struct pool pmap_l2ptp_pool;
 static struct pool_cache pmap_l2ptp_cache;
 static vaddr_t pmap_kernel_l2ptp_kva;
 static paddr_t pmap_kernel_l2ptp_phys;
@@ -306,7 +303,7 @@ static paddr_t pmap_kernel_l2ptp_phys;
  */
 static pt_entry_t *csrc_pte, *cdst_pte;
 static vaddr_t csrcp, cdstp;
-char *memhook;
+vaddr_t memhook;
 extern void *msgbufaddr;
 
 /*
@@ -318,7 +315,7 @@ bool pmap_initialized;
  * Misc. locking data structures
  */
 
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
+#if 0 /* defined(MULTIPROCESSOR) || defined(LOCKDEBUG) */
 static struct lock pmap_main_lock;
 
 #define PMAP_MAP_TO_HEAD_LOCK() \
@@ -517,6 +514,8 @@ static void		pmap_page_remove(struct vm_page *);
 static void		pmap_init_l1(struct l1_ttable *, pd_entry_t *);
 static vaddr_t		kernel_pt_lookup(paddr_t);
 
+void pmap_switch(struct lwp *, struct lwp *);
+
 
 /*
  * External function prototypes
@@ -648,8 +647,8 @@ static inline bool
 pmap_is_cached(pmap_t pm)
 {
 
-	if (pm == pmap_kernel() || pmap_cache_state == NULL ||
-	   pmap_cache_state == &pm->pm_cstate)
+	if (pm == pmap_kernel() || pmap_recent_user == NULL ||
+	    pmap_recent_user == pm)
 		return (true);
 
 	return (false);
@@ -856,20 +855,6 @@ pmap_modify_pv(struct vm_page *pg, pmap_t pm, vaddr_t va,
 	}
 
 	return (oflags);
-}
-
-static void
-pmap_pinit(pmap_t pm)
-{
-
-	if (vector_page < KERNEL_BASE) {
-		/*
-		 * Map the vector page.
-		 */
-		pmap_enter(pm, vector_page, systempage.pv_pa,
-		    VM_PROT_READ, VM_PROT_READ | PMAP_WIRED);
-		pmap_update(pm);
-	}
 }
 
 /*
@@ -1253,6 +1238,27 @@ pmap_pmap_ctor(void *arg, void *v, int flags)
 
 	memset(v, 0, sizeof(struct pmap));
 	return (0);
+}
+
+static void
+pmap_pinit(pmap_t pm)
+{
+	struct l2_bucket *l2b;
+
+	if (vector_page < KERNEL_BASE) {
+		/*
+		 * Map the vector page.
+		 */
+		pmap_enter(pm, vector_page, systempage.pv_pa,
+		    VM_PROT_READ, VM_PROT_READ | PMAP_WIRED);
+		pmap_update(pm);
+
+		pm->pm_pl1vec = &pm->pm_l1->l1_kva[L1_IDX(vector_page)];
+		l2b = pmap_get_l2_bucket(pm, vector_page);
+		pm->pm_l1vec = l2b->l2b_phys | L1_C_PROTO |
+		    L1_C_DOM(pm->pm_domain);
+	} else
+		pm->pm_pl1vec = NULL;
 }
 
 /*
@@ -1901,7 +1907,7 @@ pmap_create(void)
 {
 	pmap_t pm;
 
-	pm = pool_cache_get(&pmap_pmap_cache, PR_WAITOK);
+	pm = pool_cache_get(&pmap_cache, PR_WAITOK);
 
 	simple_lock_init(&pm->pm_lock);
 	pm->pm_obj.pgops = NULL;	/* currently not a mappable object */
@@ -3051,78 +3057,117 @@ pmap_unwire(pmap_t pm, vaddr_t va)
 }
 
 void
+pmap_switch(struct lwp *olwp, struct lwp *nlwp)
+{
+	extern int block_userspace_access;
+	pmap_t opm, npm, rpm;
+	uint32_t odacr, ndacr;
+	int oldirqstate;
+
+	npm = nlwp->l_proc->p_vmspace->vm_map.pmap;
+	ndacr = (DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL * 2)) |
+	    (DOMAIN_CLIENT << (npm->pm_domain * 2));
+
+	/*
+	 * If TTB and DACR are unchanged, short-circuit all the
+	 * TLB/cache management stuff.
+	 */
+	if (olwp != NULL) {
+		opm = olwp->l_proc->p_vmspace->vm_map.pmap;
+		odacr = (DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL * 2)) |
+		    (DOMAIN_CLIENT << (opm->pm_domain * 2));
+
+		if (opm->pm_l1 == npm->pm_l1 && odacr == ndacr)
+			goto all_done;
+	} else
+		opm = NULL;
+
+	block_userspace_access = 1;
+
+	/*
+	 * If switching to a user vmspace which is different to the
+	 * most recent one, and the most recent one is potentially
+	 * live in the cache, we must write-back and invalidate the
+	 * entire cache.
+	 */
+	rpm = pmap_recent_user;
+	if (npm != pmap_kernel() && rpm && npm != rpm &&
+	    rpm->pm_cstate.cs_cache) {
+		rpm->pm_cstate.cs_cache = 0;
+		cpu_idcache_wbinv_all();
+	}
+
+	/* No interrupts while we frob the TTB/DACR */
+	oldirqstate = disable_interrupts(I32_bit | F32_bit);
+
+	/*
+	 * For ARM_VECTORS_LOW, we MUST, I repeat, MUST fix up the L1
+	 * entry corresponding to 'vector_page' in the incoming L1 table
+	 * before switching to it otherwise subsequent interrupts/exceptions
+	 * (including domain faults!) will jump into hyperspace.
+	 */
+	if (npm->pm_pl1vec != NULL) {
+		cpu_tlb_flushID_SE((u_int)vector_page);
+		cpu_cpwait();
+		*npm->pm_pl1vec = npm->pm_l1vec;
+		PTE_SYNC(npm->pm_pl1vec);
+	}
+
+	cpu_domains(ndacr);
+
+	if (npm == pmap_kernel() || npm == rpm) {
+		/*
+		 * Switching to a kernel thread, or back to the
+		 * same user vmspace as before... Simply update
+		 * the TTB (no TLB flush required)
+		 */
+		__asm volatile("mcr p15, 0, %0, c2, c0, 0" ::
+		    "r"(npm->pm_l1->l1_physaddr));
+		cpu_cpwait();
+	} else {
+		/*
+		 * Otherwise, update TTB and flush TLB
+		 */
+		cpu_context_switch(npm->pm_l1->l1_physaddr);
+		if (rpm != NULL)
+			rpm->pm_cstate.cs_tlb = 0;
+	}
+
+	restore_interrupts(oldirqstate);
+
+	block_userspace_access = 0;
+
+ all_done:
+	/*
+	 * The new pmap is resident. Make sure it's marked
+	 * as resident in the cache/TLB.
+	 */
+	npm->pm_cstate.cs_all = PMAP_CACHE_STATE_ALL;
+	if (npm != pmap_kernel())
+		pmap_recent_user = npm;
+
+	/* The old pmap is not longer active */
+	if (opm != NULL)
+		opm->pm_activated = false;
+
+	/* But the new one is */
+	npm->pm_activated = true;
+}
+
+void
 pmap_activate(struct lwp *l)
 {
-	pmap_t pm;
-	struct pcb *pcb;
-	int s;
 
-	pm = l->l_proc->p_vmspace->vm_map.pmap;
-	pcb = &l->l_addr->u_pcb;
-
-	pmap_set_pcb_pagedir(pm, pcb);
-
-	if (l == curlwp) {
-		u_int cur_dacr, cur_ttb;
-		int oldirqstate;
-
-		__asm volatile("mrc p15, 0, %0, c2, c0, 0" : "=r"(cur_ttb));
-		__asm volatile("mrc p15, 0, %0, c3, c0, 0" : "=r"(cur_dacr));
-
-		cur_ttb &= ~(L1_TABLE_SIZE - 1);
-
-		if (cur_ttb == (u_int)pcb->pcb_pagedir &&
-		    cur_dacr == pcb->pcb_dacr) {
-			/*
-			 * No need to switch address spaces.
-			 */
-			return;
-		}
-
-		s = splhigh();
-		pmap_acquire_pmap_lock(pm);
-		oldirqstate = disable_interrupts(I32_bit | F32_bit);
-
-		/*
-		 * We MUST, I repeat, MUST fix up the L1 entry corresponding
-		 * to 'vector_page' in the incoming L1 table before switching
-		 * to it otherwise subsequent interrupts/exceptions (including
-		 * domain faults!) will jump into hyperspace.
-		 */
-		if (pcb->pcb_pl1vec) {
-			*pcb->pcb_pl1vec = pcb->pcb_l1vec;
-			/*
-			 * Don't need to PTE_SYNC() at this point since
-			 * cpu_setttb() is about to flush both the cache
-			 * and the TLB.
-			 */
-		}
-
-		cpu_domains(pcb->pcb_dacr);
-		cpu_setttb(pcb->pcb_pagedir);
-
-		restore_interrupts(oldirqstate);
-
-		/*
-		 * Flag any previous userland pmap as being NOT
-		 * resident in the cache/tlb.
-		 */
-		if (pmap_cache_state && pmap_cache_state != &pm->pm_cstate)
-			pmap_cache_state->cs_all = 0;
-
-		/*
-		 * The new pmap, however, IS resident.
-		 */
-		pmap_cache_state = &pm->pm_cstate;
-		pm->pm_cstate.cs_all = PMAP_CACHE_STATE_ALL;
-		pmap_release_pmap_lock(pm);
-		splx(s);
-	}
+	if (l == curlwp &&
+	    l->l_proc->p_vmspace->vm_map.pmap->pm_activated == false)
+		pmap_switch(NULL, l);
 }
 
 void
 pmap_deactivate(struct lwp *l)
 {
+
+	l->l_proc->p_vmspace->vm_map.pmap->pm_activated = false;
 }
 
 void
@@ -3211,42 +3256,22 @@ pmap_destroy(pmap_t pm)
 	 */
 
 	if (vector_page < KERNEL_BASE) {
-		struct pcb *pcb = &lwp0.l_addr->u_pcb;
-
-		if (pmap_is_current(pm)) {
-			/*
-			 * Frob the L1 entry corresponding to the vector
-			 * page so that it contains the kernel pmap's domain
-			 * number. This will ensure pmap_remove() does not
-			 * pull the current vector page out from under us.
-			 */
-			disable_interrupts(I32_bit | F32_bit);
-			*pcb->pcb_pl1vec = pcb->pcb_l1vec;
-			cpu_domains(pcb->pcb_dacr);
-			cpu_setttb(pcb->pcb_pagedir);
-			enable_interrupts(I32_bit | F32_bit);
-		}
+		KDASSERT(!pmap_is_current(pm));
 
 		/* Remove the vector page mapping */
 		pmap_remove(pm, vector_page, vector_page + PAGE_SIZE);
 		pmap_update(pm);
-
-		/*
-		 * Make sure cpu_switch(), et al, DTRT. This is safe to do
-		 * since this process has no remaining mappings of its own.
-		 */
-		curpcb->pcb_pl1vec = pcb->pcb_pl1vec;
-		curpcb->pcb_l1vec = pcb->pcb_l1vec;
-		curpcb->pcb_dacr = pcb->pcb_dacr;
-		curpcb->pcb_pagedir = pcb->pcb_pagedir;
 	}
 
 	LIST_REMOVE(pm, pm_list);
 
 	pmap_free_l1(pm);
 
+	if (pmap_recent_user == pm)
+		pmap_recent_user = NULL;
+
 	/* return the pmap to the pool */
-	pool_cache_put(&pmap_pmap_cache, pm);
+	pool_cache_put(&pmap_cache, pm);
 }
 
 
@@ -3699,31 +3724,6 @@ vector_page_setprot(int prot)
 }
 
 /*
- * This is used to stuff certain critical values into the PCB where they
- * can be accessed quickly from cpu_switch() et al.
- */
-void
-pmap_set_pcb_pagedir(pmap_t pm, struct pcb *pcb)
-{
-	struct l2_bucket *l2b;
-
-	KDASSERT(pm->pm_l1);
-
-	pcb->pcb_pagedir = pm->pm_l1->l1_physaddr;
-	pcb->pcb_dacr = (DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL * 2)) |
-	    (DOMAIN_CLIENT << (pm->pm_domain * 2));
-	pcb->pcb_cstate = (void *)&pm->pm_cstate;
-
-	if (vector_page < KERNEL_BASE) {
-		pcb->pcb_pl1vec = &pm->pm_l1->l1_kva[L1_IDX(vector_page)];
-		l2b = pmap_get_l2_bucket(pm, vector_page);
-		pcb->pcb_l1vec = l2b->l2b_phys | L1_C_PROTO |
-		    L1_C_DOM(pm->pm_domain);
-	} else
-		pcb->pcb_pl1vec = NULL;
-}
-
-/*
  * Fetch pointers to the PDE/PTE for the given pmap/VA pair.
  * Returns true if the mapping exists, else false.
  *
@@ -3854,6 +3854,7 @@ pmap_bootstrap(pd_entry_t *kernel_l1pt, vaddr_t vstart, vaddr_t vend)
 	 */
 	pm->pm_l1 = l1;
 	pm->pm_domain = PMAP_DOMAIN_KERNEL;
+	pm->pm_activated = true;
 	pm->pm_cstate.cs_all = PMAP_CACHE_STATE_ALL;
 	simple_lock_init(&pm->pm_lock);
 	pm->pm_obj.pgops = NULL;
@@ -3962,7 +3963,7 @@ pmap_bootstrap(pd_entry_t *kernel_l1pt, vaddr_t vstart, vaddr_t vend)
 	pmap_set_pt_cache_mode(kernel_l1pt, (vaddr_t)csrc_pte);
 	pmap_alloc_specials(&virtual_avail, 1, &cdstp, &cdst_pte);
 	pmap_set_pt_cache_mode(kernel_l1pt, (vaddr_t)cdst_pte);
-	pmap_alloc_specials(&virtual_avail, 1, (void *)&memhook, NULL);
+	pmap_alloc_specials(&virtual_avail, 1, &memhook, NULL);
 	pmap_alloc_specials(&virtual_avail, round_page(MSGBUFSIZE) / PAGE_SIZE,
 	    (void *)&msgbufaddr, NULL);
 
@@ -3984,9 +3985,7 @@ pmap_bootstrap(pd_entry_t *kernel_l1pt, vaddr_t vstart, vaddr_t vend)
 	/*
 	 * init the static-global locks and global pmap list.
 	 */
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
-	spinlockinit(&pmap_main_lock, "pmaplk", 0);
-#endif
+	/* spinlockinit(&pmap_main_lock, "pmaplk", 0); */
 
 	/*
 	 * We can now initialise the first L1's metadata.
@@ -3996,13 +3995,20 @@ pmap_bootstrap(pd_entry_t *kernel_l1pt, vaddr_t vstart, vaddr_t vend)
 	simple_lock_init(&l1_lru_lock);
 	pmap_init_l1(l1, kernel_l1pt);
 
+	/* Set up vector page L1 details, if necessary */
+	if (vector_page < KERNEL_BASE) {
+		pm->pm_pl1vec = &pm->pm_l1->l1_kva[L1_IDX(vector_page)];
+		l2b = pmap_get_l2_bucket(pm, vector_page);
+		pm->pm_l1vec = l2b->l2b_phys | L1_C_PROTO |
+		    L1_C_DOM(pm->pm_domain);
+	} else
+		pm->pm_pl1vec = NULL;
+
 	/*
-	 * Initialize the pmap pool and cache
+	 * Initialize the pmap cache
 	 */
-	pool_init(&pmap_pmap_pool, sizeof(struct pmap), 0, 0, 0, "pmappl",
-	    &pool_allocator_nointr, IPL_NONE);
-	pool_cache_init(&pmap_pmap_cache, &pmap_pmap_pool,
-	    pmap_pmap_ctor, NULL, NULL);
+	pool_cache_bootstrap(&pmap_cache, sizeof(struct pmap), 0, 0, 0,
+	    "pmappl", NULL, IPL_NONE, pmap_pmap_ctor, NULL, NULL);
 	LIST_INIT(&pmap_pmaps);
 	LIST_INSERT_HEAD(&pmap_pmaps, pm, pm_list);
 
@@ -4015,17 +4021,14 @@ pmap_bootstrap(pd_entry_t *kernel_l1pt, vaddr_t vstart, vaddr_t vend)
 	/*
 	 * Initialize the L2 dtable pool and cache.
 	 */
-	pool_init(&pmap_l2dtable_pool, sizeof(struct l2_dtable), 0, 0, 0,
-	    "l2dtblpl", NULL, IPL_NONE);
-	pool_cache_init(&pmap_l2dtable_cache, &pmap_l2dtable_pool,
-	    pmap_l2dtable_ctor, NULL, NULL);
+	pool_cache_bootstrap(&pmap_l2dtable_cache, sizeof(struct l2_dtable), 0,
+	    0, 0, "l2dtblpl", NULL, IPL_NONE, pmap_l2dtable_ctor, NULL, NULL);
 
 	/*
 	 * Initialise the L2 descriptor table pool and cache
 	 */
-	pool_init(&pmap_l2ptp_pool, L2_TABLE_SIZE_REAL, 0, L2_TABLE_SIZE_REAL,
-	    0, "l2ptppl", NULL, IPL_NONE);
-	pool_cache_init(&pmap_l2ptp_cache, &pmap_l2ptp_pool,
+	pool_cache_bootstrap(&pmap_l2ptp_cache, L2_TABLE_SIZE_REAL, 0,
+	    L2_TABLE_SIZE_REAL, 0, "l2ptppl", NULL, IPL_NONE,
 	    pmap_l2ptp_ctor, NULL, NULL);
 
 	cpu_dcache_wbinv_all();
@@ -4185,9 +4188,9 @@ pmap_postinit(void)
 	u_int loop, needed;
 	int error;
 
-	pool_setlowat(&pmap_l2ptp_pool,
+	pool_cache_setlowat(&pmap_l2ptp_cache,
 	    (PAGE_SIZE / L2_TABLE_SIZE_REAL) * 4);
-	pool_setlowat(&pmap_l2dtable_pool,
+	pool_cache_setlowat(&pmap_l2dtable_cache,
 	    (PAGE_SIZE / sizeof(struct l2_dtable)) * 2);
 
 	needed = (maxproc / PMAP_DOMAINS) + ((maxproc % PMAP_DOMAINS) ? 1 : 0);
@@ -4981,6 +4984,14 @@ pmap_uarea(vaddr_t va)
 	cpu_cpwait();
 }
 #endif /* ARM_MMU_XSCALE == 1 */
+
+/*
+ * return the PA of the current L1 table, for use when handling a crash dump
+ */
+uint32_t pmap_kernel_L1_addr()
+{
+	return pmap_kernel()->pm_l1->l1_physaddr;
+}
 
 #if defined(DDB)
 /*

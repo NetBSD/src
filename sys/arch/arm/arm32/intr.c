@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.22.2.1 2007/08/18 13:46:41 chris Exp $	*/
+/*	$NetBSD: intr.c,v 1.22.2.2 2008/01/01 15:39:17 chris Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.22.2.1 2007/08/18 13:46:41 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.22.2.2 2008/01/01 15:39:17 chris Exp $");
 
 #include "opt_irqstats.h"
 
@@ -81,6 +81,7 @@ _setsoftintr(int si)
 	atomic_set_bit(&soft_interrupts, SI_SOFTMASK(si));
 }
 
+#ifdef __HAVE_FAST_SOFTINTS
 /* Handle software interrupts */
 
 void
@@ -113,6 +114,16 @@ dosoftints(void)
 	}
 
 	/*
+	 * Block software interrupts
+	 */
+	if (softints & SI_SOFTMASK(SI_SOFTBIO)) {
+		s = splsoftbio();
+		clearsoftintr(SI_SOFTMASK(SI_SOFTBIO));
+		softintr_dispatch(SI_SOFTBIO);
+		(void)splx(s);
+	}
+
+	/*
 	 * Software clock interrupts
 	 */
 	if (softints & SI_SOFTMASK(SI_SOFTCLOCK)) {
@@ -121,19 +132,10 @@ dosoftints(void)
 		softintr_dispatch(SI_SOFTCLOCK);
 		(void)splx(s);
 	}
-
-	/*
-	 * Misc software interrupts
-	 */
-	if (softints & SI_SOFTMASK(SI_SOFT)) {
-		s = splsoft();
-		clearsoftintr(SI_SOFTMASK(SI_SOFT));
-		softintr_dispatch(SI_SOFT);
-		(void)splx(s);
-	}
 }
+#endif
 
-int current_spl_level = _SPL_SERIAL;
+int current_spl_level = _SPL_HIGH;
 u_int spl_masks[_SPL_LEVELS + 1];
 int safepri = _SPL_0;
 
@@ -149,20 +151,9 @@ set_spl_masks(void)
 		spl_smasks[loop] = 0;
 	}
 
-	spl_masks[_SPL_BIO]        = irqmasks[IPL_BIO];
-	spl_masks[_SPL_NET]        = irqmasks[IPL_NET];
-	spl_masks[_SPL_SOFTSERIAL] = irqmasks[IPL_TTY];
-	spl_masks[_SPL_TTY]        = irqmasks[IPL_TTY];
 	spl_masks[_SPL_VM]         = irqmasks[IPL_VM];
-	spl_masks[_SPL_AUDIO]      = irqmasks[IPL_AUDIO];
-	spl_masks[_SPL_CLOCK]      = irqmasks[IPL_CLOCK];
-#ifdef IPL_STATCLOCK
-	spl_masks[_SPL_STATCLOCK]  = irqmasks[IPL_STATCLOCK];
-#else
-	spl_masks[_SPL_STATCLOCK]  = irqmasks[IPL_CLOCK];
-#endif
+	spl_masks[_SPL_SCHED]      = irqmasks[IPL_SCHED];
 	spl_masks[_SPL_HIGH]       = irqmasks[IPL_HIGH];
-	spl_masks[_SPL_SERIAL]     = irqmasks[IPL_SERIAL];
 	spl_masks[_SPL_LEVELS]     = 0;
 
 	spl_smasks[_SPL_0] = 0xffffffff;
@@ -172,33 +163,19 @@ set_spl_masks(void)
 		spl_smasks[loop] |= SI_SOFTMASK(SI_SOFTNET);
 	for (loop = 0; loop < _SPL_SOFTCLOCK; ++loop)
 		spl_smasks[loop] |= SI_SOFTMASK(SI_SOFTCLOCK);
-	for (loop = 0; loop < _SPL_SOFT; ++loop)
-		spl_smasks[loop] |= SI_SOFTMASK(SI_SOFT);
+	for (loop = 0; loop < _SPL_SOFTBIO; ++loop)
+		spl_smasks[loop] |= SI_SOFTMASK(SI_SOFTBIO);
 }
 
 static const int ipl_to_spl_map[] = {
 	[IPL_NONE] = 1 + _SPL_0,
-#ifdef IPL_SOFT
-	[IPL_SOFT] = 1 + _SPL_SOFT,
-#endif /* IPL_SOFTCLOCK */
-#if defined(IPL_SOFTCLOCK)
 	[IPL_SOFTCLOCK] = 1 + _SPL_SOFTCLOCK,
-#endif /* defined(IPL_SOFTCLOCK) */
-#if defined(IPL_SOFTNET)
+	[IPL_SOFTBIO] = 1 + _SPL_SOFTBIO,
 	[IPL_SOFTNET] = 1 + _SPL_SOFTNET,
-#endif /* defined(IPL_SOFTNET) */
-	[IPL_BIO] = 1 + _SPL_BIO,
-	[IPL_NET] = 1 + _SPL_NET,
-#if defined(IPL_SOFTSERIAL)
 	[IPL_SOFTSERIAL] = 1 + _SPL_SOFTSERIAL,
-#endif /* defined(IPL_SOFTSERIAL) */
-	[IPL_TTY] = 1 + _SPL_TTY,
 	[IPL_VM] = 1 + _SPL_VM,
-	[IPL_AUDIO] = 1 + _SPL_AUDIO,
-	[IPL_CLOCK] = 1 + _SPL_CLOCK,
-	[IPL_STATCLOCK] = 1 + _SPL_STATCLOCK,
+	[IPL_SCHED] = 1 + _SPL_SCHED,
 	[IPL_HIGH] = 1 + _SPL_HIGH,
-	[IPL_SERIAL] = 1 + _SPL_SERIAL,
 };
 
 int

@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.33 2007/08/05 13:37:31 jmmv Exp $
+#	$NetBSD: INSTALL,v 1.33.2.1 2008/01/01 15:39:55 chris Exp $
 #
 #	Shark installation kernel
 #
@@ -110,7 +110,6 @@ options 	MEMORY_DISK_HOOKS	# boottime setup of ramdisk
 options 	MEMORY_DISK_IS_ROOT	# use memory disk as root
 options 	MEMORY_DISK_ROOT_SIZE=7000	# Size in blocks (3.5MB)
 
-options 	XSERVER			# also need INSECURE for now
 options 	INSECURE		# disable kernel securelevel
 
 # Use the following to force the serial to always be the console

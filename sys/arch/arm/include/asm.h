@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.8 2006/01/20 22:02:40 christos Exp $	*/
+/*	$NetBSD: asm.h,v 1.8.48.1 2008/01/01 15:39:29 chris Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -37,6 +37,8 @@
 #ifndef _ARM32_ASM_H_
 #define _ARM32_ASM_H_
 
+#include <arm/cdefs.h>
+
 #ifdef __ELF__
 # define _C_LABEL(x)	x
 #else
@@ -66,10 +68,14 @@
  * We define a couple of macros so that assembly code will not be dependant
  * on one or the other.
  */
-#define _ASM_TYPE_FUNCTION	#function
-#define _ASM_TYPE_OBJECT	#object
+#define _ASM_TYPE_FUNCTION	%function
+#define _ASM_TYPE_OBJECT	%object
 #define _ENTRY(x) \
 	.text; _ALIGN_TEXT; .globl x; .type x,_ASM_TYPE_FUNCTION; x:
+#define	_END(x)		.size x,.-x
+#define	END(y)		_END(_C_LABEL(y))
+#define	ASEND(y)	_END(_ASM_LABEL(y))
+
 
 #ifdef GPROF
 # ifdef __ELF__
@@ -87,6 +93,8 @@
 #define	ENTRY_NP(y)	_ENTRY(_C_LABEL(y))
 #define	ASENTRY(y)	_ENTRY(_ASM_LABEL(y)); _PROF_PROLOGUE
 #define	ASENTRY_NP(y)	_ENTRY(_ASM_LABEL(y))
+#define	END(y)		_END(_C_LABEL(y))
+#define	ASEND(y)	_END(_ASM_LABEL(y))
 
 #define	ASMSTR		.asciz
 
@@ -133,20 +141,9 @@
 	.stabs __STRING(_/**/sym),1,0,0,0
 #endif /* __STDC__ */
 
-#if defined (__ARM_ARCH_6__) || defined (__ARM_ARCH_6J__)
-#define _ARM_ARCH_6
+#if defined (_ARM_ARCH_6)
+#define GET_CPUINFO(rX)		mrc	p15, 0, rX, c13, c0, 4
 #endif
-
-#if defined (_ARM_ARCH_6) || defined (__ARM_ARCH_5__) || \
-    defined (__ARM_ARCH_5T__) || defined (__ARM_ARCH_5TE__) || \
-    defined (__ARM_ARCH_5TEJ__)
-#define _ARM_ARCH_5
-#endif
-
-#if defined (_ARM_ARCH_5) || defined (__ARM_ARCH_4T__)
-#define _ARM_ARCH_4T
-#endif
-
 
 #if defined (_ARM_ARCH_4T)
 # define RET	bx	lr

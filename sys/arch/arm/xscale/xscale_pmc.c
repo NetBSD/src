@@ -1,4 +1,4 @@
-/*	$NetBSD: xscale_pmc.c,v 1.10 2006/05/17 05:16:09 mrg Exp $	*/
+/*	$NetBSD: xscale_pmc.c,v 1.10.38.1 2008/01/01 15:39:50 chris Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xscale_pmc.c,v 1.10 2006/05/17 05:16:09 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xscale_pmc.c,v 1.10.38.1 2008/01/01 15:39:50 chris Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -103,7 +103,7 @@ xscale_pmc_dispatch(void *arg)
 	uint32_t pmnc;
 	int s;
 
-	s = splstatclock();
+	s = splhigh();
 
 	pmnc = xscale_pmnc_read() & ~(PMNC_C | PMNC_P);
 
@@ -556,7 +556,7 @@ xscale_start_profiling(int ctr, struct pmc_counter_cfg *cfg)
 
 	pmc_reset_vals[ctr] = (uint32_t) -((int32_t) cfg->reset_value);
 
-	s = splstatclock();
+	s = splhigh();
 
 	switch (ctr) {
 	case __PMC_CCNT_I:

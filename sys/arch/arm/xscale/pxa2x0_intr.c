@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_intr.c,v 1.11 2006/12/17 16:03:33 peter Exp $	*/
+/*	$NetBSD: pxa2x0_intr.c,v 1.11.24.1 2008/01/01 15:39:48 chris Exp $	*/
 
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_intr.c,v 1.11 2006/12/17 16:03:33 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_intr.c,v 1.11.24.1 2008/01/01 15:39:48 chris Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -159,8 +159,8 @@ __raise(int ipl)
  * Map a software interrupt queue to an interrupt priority level.
  */
 static const int si_to_ipl[SI_NQUEUES] = {
-	IPL_SOFT,		/* SI_SOFT */
 	IPL_SOFTCLOCK,		/* SI_SOFTCLOCK */
+	IPL_SOFTBIO,		/* SI_SOFTBIO */
 	IPL_SOFTNET,		/* SI_SOFTNET */
 	IPL_SOFTSERIAL,		/* SI_SOFTSERIAL */
 };
@@ -175,7 +175,10 @@ pxa2x0_irq_handler(void *arg)
 	uint32_t irqbits;
 	int irqno;
 	int saved_spl_level;
+	struct cpu_info *ci;
 
+	ci = curcpu();
+	ci->ci_idepth++;
 	saved_spl_level = current_spl_level;
 
 	/* get pending IRQs */
@@ -209,6 +212,8 @@ pxa2x0_irq_handler(void *arg)
 
 	/* restore spl to that was when this interrupt happen */
 	pxa2x0_setipl(saved_spl_level);
+
+	ci->ci_idepth--;
 			
 	if(softint_pending & intr_mask)
 		pxa2x0_do_pending();
@@ -254,39 +259,12 @@ pxa2x0_update_intr_masks(int irqno, int level)
 	 * limited input buffer space/"real-time" requirements) a better
 	 * chance at not dropping data.
 	 */
-	pxa2x0_imask[IPL_BIO] &= pxa2x0_imask[IPL_SOFTNET];
-	pxa2x0_imask[IPL_NET] &= pxa2x0_imask[IPL_BIO];
-	pxa2x0_imask[IPL_SOFTSERIAL] &= pxa2x0_imask[IPL_NET];
-	pxa2x0_imask[IPL_TTY] &= pxa2x0_imask[IPL_SOFTSERIAL];
-
-	/*
-	 * splvm() blocks all interrupts that use the kernel memory
-	 * allocation facilities.
-	 */
-	pxa2x0_imask[IPL_VM] &= pxa2x0_imask[IPL_TTY];
-
-	/*
-	 * Audio devices are not allowed to perform memory allocation
-	 * in their interrupt routines, and they have fairly "real-time"
-	 * requirements, so give them a high interrupt priority.
-	 */
-	pxa2x0_imask[IPL_AUDIO] &= pxa2x0_imask[IPL_VM];
-
-	/*
-	 * splclock() must block anything that uses the scheduler.
-	 */
-	pxa2x0_imask[IPL_CLOCK] &= pxa2x0_imask[IPL_AUDIO];
-
-	/*
-	 * splhigh() must block "everything".
-	 */
-	pxa2x0_imask[IPL_HIGH] &= pxa2x0_imask[IPL_STATCLOCK];
-
-	/*
-	 * XXX We need serial drivers to run at the absolute highest priority
-	 * in order to avoid overruns, so serial > high.
-	 */
-	pxa2x0_imask[IPL_SERIAL] &= pxa2x0_imask[IPL_HIGH];
+	pxa2x0_imask[IPL_SOFTBIO] &= pxa2x0_imask[IPL_SOFTCLOCK];
+	pxa2x0_imask[IPL_SOFTNET] &= pxa2x0_imask[IPL_SOFTBIO];
+	pxa2x0_imask[IPL_SOFTSERIAL] &= pxa2x0_imask[IPL_SOFTNET];
+	pxa2x0_imask[IPL_VM] &= pxa2x0_imask[IPL_SOFTSERIAL];
+	pxa2x0_imask[IPL_SCHED] &= pxa2x0_imask[IPL_VM];
+	pxa2x0_imask[IPL_HIGH] &= pxa2x0_imask[IPL_SCHED];
 
 	write_icu(SAIPIC_MR, pxa2x0_imask[current_spl_level]);
 
@@ -305,39 +283,29 @@ init_interrupt_masks(void)
 	 * hardware handlers are installed.
 	 */
 	pxa2x0_imask[IPL_NONE] =
-	    SI_TO_IRQBIT(SI_SOFT) |
 	    SI_TO_IRQBIT(SI_SOFTCLOCK) |
+	    SI_TO_IRQBIT(SI_SOFTBIO) |
 	    SI_TO_IRQBIT(SI_SOFTNET) |
 	    SI_TO_IRQBIT(SI_SOFTSERIAL);
 
 	/*
 	 * Initialize the soft interrupt masks to block themselves.
 	 */
-	pxa2x0_imask[IPL_SOFT] = ~SI_TO_IRQBIT(SI_SOFT);
 	pxa2x0_imask[IPL_SOFTCLOCK] = ~SI_TO_IRQBIT(SI_SOFTCLOCK);
+	pxa2x0_imask[IPL_SOFTBIO] = ~SI_TO_IRQBIT(SI_SOFTBIO);
 	pxa2x0_imask[IPL_SOFTNET] = ~SI_TO_IRQBIT(SI_SOFTNET);
 	pxa2x0_imask[IPL_SOFTSERIAL] = ~SI_TO_IRQBIT(SI_SOFTSERIAL);
 
-	pxa2x0_imask[IPL_SOFT] &= pxa2x0_imask[IPL_NONE];
-
-	/*
-	 * splsoftclock() is the only interface that users of the
-	 * generic software interrupt facility have to block their
-	 * soft intrs, so splsoftclock() must also block IPL_SOFT.
-	 */
-	pxa2x0_imask[IPL_SOFTCLOCK] &= pxa2x0_imask[IPL_SOFT];
-
-	/*
-	 * splsoftnet() must also block splsoftclock(), since we don't
-	 * want timer-driven network events to occur while we're
-	 * processing incoming packets.
-	 */
-	pxa2x0_imask[IPL_SOFTNET] &= pxa2x0_imask[IPL_SOFTCLOCK];
+	pxa2x0_imask[IPL_SOFTCLOCK] &= pxa2x0_imask[IPL_NONE];
+	pxa2x0_imask[IPL_SOFTBIO] &= pxa2x0_imask[IPL_SOFTCLOCK];
+	pxa2x0_imask[IPL_SOFTNET] &= pxa2x0_imask[IPL_SOFTBIO];
+	pxa2x0_imask[IPL_SOFTSERIAL] &= pxa2x0_imask[IPL_SOFTNET];
 }
 
 void
 pxa2x0_do_pending(void)
 {
+#ifdef __HAVE_FAST_SOFTINTS
 	static __cpu_simple_lock_t processing = __SIMPLELOCK_UNLOCKED;
 	int oldirqstate, spl_save;
 
@@ -379,6 +347,7 @@ pxa2x0_do_pending(void)
 	__cpu_simple_unlock(&processing);
 
 	restore_interrupts(oldirqstate);
+#endif
 }
 
 

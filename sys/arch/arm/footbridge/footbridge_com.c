@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_com.c,v 1.24 2007/07/09 20:52:05 ad Exp $	*/
+/*	$NetBSD: footbridge_com.c,v 1.24.10.1 2008/01/01 15:39:25 chris Exp $	*/
 
 /*-
  * Copyright (c) 1997 Mark Brinicombe
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: footbridge_com.c,v 1.24 2007/07/09 20:52:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: footbridge_com.c,v 1.24.10.1 2008/01/01 15:39:25 chris Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ddbparam.h"
@@ -416,7 +416,7 @@ fcomstart(tp)
 	s = splserial();
 	if (bus_space_read_4(iot, ioh, UART_FLAGS) & UART_TX_BUSY) {
 		tp->t_state |= TS_TIMEOUT;
-		callout_reset(&tp->t_rstrt_ch, 1, ttrstrt, tp);
+		callout_schedule(&tp->t_rstrt_ch, 1);
 		(void)splx(s);
 		return;
 	}
@@ -438,16 +438,9 @@ fcomstart(tp)
 	}
 	s = spltty();
 	tp->t_state &= ~TS_BUSY;
-	if (cl->c_cc) {
+	if (ttypull(tp)) {
 		tp->t_state |= TS_TIMEOUT;
-		callout_reset(&tp->t_rstrt_ch, 1, ttrstrt, tp);
-	}
-	if (cl->c_cc <= tp->t_lowat) {
-		if (tp->t_state & TS_ASLEEP) {
-			tp->t_state &= ~TS_ASLEEP;
-			wakeup(cl);
-		}
-		selwakeup(&tp->t_wsel);
+		callout_schedule(&tp->t_rstrt_ch, 1);
 	}
 	(void)splx(s);
 }

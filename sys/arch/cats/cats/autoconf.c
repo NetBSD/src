@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.11.6.1 2007/08/11 21:14:52 chris Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.11.6.2 2008/01/01 15:39:53 chris Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.11.6.1 2007/08/11 21:14:52 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.11.6.2 2008/01/01 15:39:53 chris Exp $");
 
 #include "opt_md.h"
 
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.11.6.1 2007/08/11 21:14:52 chris Exp 
 #include <sys/malloc.h>
 #include <machine/bootconfig.h>
 #include <machine/intr.h>
+#include <dev/pci/pcivar.h>
 
 #include "isa.h"
 
@@ -152,5 +153,24 @@ cpu_configure(void)
 void
 device_register(struct device *dev, void *aux)
 {
+	struct device *pdev;
+        if ((pdev = device_parent(dev)) != NULL &&
+    	    device_is_a(pdev, "pci")) {
+		/*
+		 * cats builtin aceride is on 0:16:0
+		 */
+		struct pci_attach_args *pa = aux;
+		if (((pa)->pa_bus == 0
+		    && (pa)->pa_device == 16 
+		    && (pa)->pa_function == 0)) {
+			if (prop_dictionary_set_bool(device_properties(dev),
+						"ali1543-ide-force-compat-mode",
+						true) == false) {
+				printf("WARNING: unable to set "
+					"ali1543-ide-force-compat-mode "
+					"property for %s\n", dev->dv_xname);
+			}
+		}
+	}
 }
 /* End of autoconf.c */

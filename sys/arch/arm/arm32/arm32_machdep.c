@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.49 2007/05/17 14:51:15 yamt Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.49.10.1 2008/01/01 15:39:13 chris Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.49 2007/05/17 14:51:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.49.10.1 2008/01/01 15:39:13 chris Exp $");
 
 #include "opt_md.h"
 #include "opt_pmap_debug.h"
@@ -278,7 +278,6 @@ cpu_startup()
 	    USPACE_UNDEF_STACK_TOP;
 	curpcb->pcb_un.un_32.pcb32_sp = (u_int)lwp0.l_addr +
 	    USPACE_SVC_STACK_TOP;
-	pmap_set_pcb_pagedir(pmap_kernel(), curpcb);
 
         curpcb->pcb_tf = (struct trapframe *)curpcb->pcb_un.un_32.pcb32_sp - 1;
 }
@@ -427,10 +426,17 @@ cpu_need_resched(struct cpu_info *ci, int flags)
 {
 	bool immed = (flags & RESCHED_IMMED) != 0;
 
-	if (want_resched && !immed)
+	if (ci->ci_want_resched && !immed)
 		return;
 
-	want_resched = 1;
+	ci->ci_want_resched = 1;
 	if (curlwp != ci->ci_data.cpu_idlelwp)
 		setsoftast();
+}
+
+bool
+cpu_intr_p(void)
+{
+
+	return curcpu()->ci_idepth != 0;
 }

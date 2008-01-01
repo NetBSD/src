@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw.c,v 1.39.6.1 2007/08/18 13:46:43 chris Exp $	*/
+/*	$NetBSD: ofw.c,v 1.39.6.2 2008/01/01 15:39:57 chris Exp $	*/
 
 /*
  * Copyright 1997
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw.c,v 1.39.6.1 2007/08/18 13:46:43 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw.c,v 1.39.6.2 2008/01/01 15:39:57 chris Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,7 +75,6 @@ __KERNEL_RCSID(0, "$NetBSD: ofw.c,v 1.39.6.1 2007/08/18 13:46:43 chris Exp $");
 #include "machine/isa_machdep.h"
 #endif
 
-#include "pc.h"
 #include "isadma.h"
 #include "igsfb_ofbus.h"
 #include "vga_ofbus.h"
@@ -114,9 +113,6 @@ extern int ofw_handleticks;
 extern void dump_spl_masks  __P((void));
 extern void dumpsys	    __P((void));
 extern void dotickgrovelling __P((vaddr_t));
-#if defined(SHARK) && (NPC > 0)
-extern void shark_screen_cleanup __P((int));
-#endif
 
 #define WriteWord(a, b) \
 *((volatile unsigned int *)(a)) = (b)
@@ -150,9 +146,7 @@ static vaddr_t  virt_freeptr;
 
 int ofw_callbacks = 0;		/* debugging counter */
 
-#if defined(SHARK) && (NPC > 0)
-/* For consistency with the conditionals used in this file. */
-#elif (NIGSFB_OFBUS > 0) || (NVGA_OFBUS > 0)
+#if (NIGSFB_OFBUS > 0) || (NVGA_OFBUS > 0)
 int console_ihandle = 0;
 static void reset_screen(void);
 #endif
@@ -412,9 +406,7 @@ ofw_boot(howto, bootstr)
 		*ap++ = 0;
 		if (ap[-2] == '-')
 			*ap1 = 0;
-#if defined(SHARK) && (NPC > 0)
-		shark_screen_cleanup(0);
-#elif (NIGSFB_OFBUS > 0) || (NVGA_OFBUS > 0)
+#if (NIGSFB_OFBUS > 0) || (NVGA_OFBUS > 0)
 		reset_screen();
 #endif
 		OF_boot(str);
@@ -423,9 +415,7 @@ ofw_boot(howto, bootstr)
 
 ofw_exit:
 	printf("Calling OF_exit...\n");
-#if defined(SHARK) && (NPC > 0)
-	shark_screen_cleanup(1);
-#elif (NIGSFB_OFBUS > 0) || (NVGA_OFBUS > 0)
+#if (NIGSFB_OFBUS > 0) || (NVGA_OFBUS > 0)
 	reset_screen();
 #endif
 	OF_exit();
@@ -2010,9 +2000,7 @@ ofw_initallocator(void)
     
 }
 
-#if defined(SHARK) && (NPC > 0)
-/* For consistency with the conditionals used in this file. */
-#elif (NIGSFB_OFBUS > 0) || (NVGA_OFBUS > 0)
+#if (NIGSFB_OFBUS > 0) || (NVGA_OFBUS > 0)
 static void
 reset_screen()
 {

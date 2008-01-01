@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.48 2007/05/25 10:40:04 skrll Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.48.10.1 2008/01/01 15:39:14 chris Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -159,11 +159,6 @@ _C_LABEL(curpcb):
 .Lblock_userspace_access:
 	.word	_C_LABEL(block_userspace_access)
 
-.Lpmap_kernel_cstate:
-	.word	(kernel_pmap_store + PMAP_CSTATE)
-
-.Llast_cache_state_ptr:
-	.word	_C_LABEL(pmap_cache_state)
 
 /*
  * struct lwp *
@@ -214,7 +209,8 @@ ENTRY(cpu_switchto)
 	 * straight to restoring the context for the new process.
 	 */
 	teq	r4, #0x00000000
-	beq	.Lswitch_exited
+	ldreq	r9, [r6, #(L_ADDR)]
+	beq	.Ldo_switch
 
 	/* rem: r4 = old lwp */
 	/* rem: r6 = new lwp */
@@ -272,176 +268,14 @@ ENTRY(cpu_switchto)
 
 	/* rem: r4 = old lwp */
 	/* rem: r6 = new lwp */
-	/* rem: r8 = old PCB */
 	/* rem: r9 = new PCB */
 	/* rem: interrupts are enabled */
 
-	/*
-	 * Get the new L1 table pointer into r11.  If we're switching to
-	 * an LWP with the same address space as the outgoing one, we can
-	 * skip the cache purge and the TTB load.
-	 *
-	 * To avoid data dep stalls that would happen anyway, we try
-	 * and get some useful work done in the mean time.
-	 */
-	ldr	r10, [r8, #(PCB_PAGEDIR)]	/* r10 = old L1 */
-	ldr	r11, [r9, #(PCB_PAGEDIR)]	/* r11 = new L1 */
+.Ldo_switch:
+	mov	r0, r4
+	mov	r1, r6
+	bl	_C_LABEL(pmap_switch)
 
-	ldr	r0, [r8, #(PCB_DACR)]		/* r0 = old DACR */
-	ldr	r1, [r9, #(PCB_DACR)]		/* r1 = new DACR */
-	ldr	r8, [r9, #(PCB_CSTATE)]		/* r8 = &new_pmap->pm_cstate */
-	ldr	r5, .Llast_cache_state_ptr	/* Previous thread's cstate */
-
-	teq	r10, r11			/* Same L1? */
-	ldr	r5, [r5]
-	cmpeq	r0, r1				/* Same DACR? */
-	beq	.Lcs_context_switched		/* yes! */
-
-	ldr	r3, .Lblock_userspace_access
-	mov	r12, #0
-	cmp	r5, #0				/* No last vm? (switch_exit) */
-	beq	.Lcs_cache_purge_skipped	/* No, we can skip cache flsh */
-
-	mov	r2, #DOMAIN_CLIENT
-	cmp	r1, r2, lsl #(PMAP_DOMAIN_KERNEL * 2) /* Sw to kernel thread? */
-	beq	.Lcs_cache_purge_skipped	/* Yup. Don't flush cache */
-
-	cmp	r5, r8				/* Same userland VM space? */
-	ldrneb	r12, [r5, #(CS_CACHE_ID)]	/* Last VM space cache state */
-
-	/*
-	 * We're definately switching to a new userland VM space,
-	 * and the previous userland VM space has yet to be flushed
-	 * from the cache/tlb.
-	 *
-	 * r12 holds the previous VM space's cs_cache_id state
-	 */
-	tst	r12, #0xff			/* Test cs_cache_id */
-	beq	.Lcs_cache_purge_skipped	/* VM space is not in cache */
-
-	/*
-	 * Definately need to flush the cache.
-	 * Mark the old VM space as NOT being resident in the cache.
-	 */
-
-	mov	r2, #0x00000000
-	strb	r2, [r5, #(CS_CACHE_ID)]
-	strb	r2, [r5, #(CS_CACHE_D)]
-
-.Lcs_cache_purge:
-	/*
-	 * Don't allow user space access between the purge and the switch.
-	 */
-	mov	r2, #0x00000001
-	str	r2, [r3]
-
-	stmfd	sp!, {r0-r3}
-	ldr	r1, .Lcpufuncs
-	mov	lr, pc
-	ldr	pc, [r1, #CF_IDCACHE_WBINV_ALL]
-	ldmfd	sp!, {r0-r3}
-
-.Lcs_cache_purge_skipped:
-	/* rem: r1 = new DACR */
-	/* rem: r3 = &block_userspace_access */
-	/* rem: r4 = old lwp */
-	/* rem: r5 = &old_pmap->pm_cstate (or NULL) */
-	/* rem: r6 = new lwp */
-	/* rem: r8 = &new_pmap->pm_cstate */
-	/* rem: r9 = new PCB */
-	/* rem: r10 = old L1 */
-	/* rem: r11 = new L1 */
-
-	mov	r2, #0x00000000
-	ldr	r7, [r9, #(PCB_PL1VEC)]
-
-	/*
-	 * At this point we need to kill IRQ's again.
-	 *
-	 * XXXSCW: Don't need to block FIQs if vectors have been relocated
-	 */
-	IRQdisableALL
-
-	/*
-	 * Interrupts are disabled so we can allow user space accesses again
-	 * as none will occur until interrupts are re-enabled after the
-	 * switch.
-	 */
-	str	r2, [r3]
-
-	/*
-	 * Ensure the vector table is accessible by fixing up the L1
-	 */
-	cmp	r7, #0			/* No need to fixup vector table? */
-	ldrne	r2, [r7]		/* But if yes, fetch current value */
-	ldrne	r0, [r9, #(PCB_L1VEC)]	/* Fetch new vector_page value */
-	mcr	p15, 0, r1, c3, c0, 0	/* Update DACR for new context */
-	cmpne	r2, r0			/* Stuffing the same value? */
-#ifndef PMAP_INCLUDE_PTE_SYNC
-	strne	r0, [r7]		/* Nope, update it */
-#else
-	beq	.Lcs_same_vector
-	str	r0, [r7]		/* Otherwise, update it */
-
-	/*
-	 * Need to sync the cache to make sure that last store is
-	 * visible to the MMU.
-	 */
-	ldr	r2, .Lcpufuncs
-	mov	r0, r7
-	mov	r1, #4
-	mov	lr, pc
-	ldr	pc, [r2, #CF_DCACHE_WB_RANGE]
-
-.Lcs_same_vector:
-#endif /* PMAP_INCLUDE_PTE_SYNC */
-
-	cmp	r10, r11		/* Switching to the same L1? */
-	ldr	r10, .Lcpufuncs
-	beq	.Lcs_same_l1		/* Yup. */
-
-	/*
-	 * Do a full context switch, including full TLB flush.
-	 */
-	mov	r0, r11
-	mov	lr, pc
-	ldr	pc, [r10, #CF_CONTEXT_SWITCH]
-
-	/*
-	 * Mark the old VM space as NOT being resident in the TLB
-	 */
-	mov	r2, #0x00000000
-	cmp	r5, #0
-	strneh	r2, [r5, #(CS_TLB_ID)]
-	b	.Lcs_context_switched
-
-	/*
-	 * We're switching to a different process in the same L1.
-	 * In this situation, we only need to flush the TLB for the
-	 * vector_page mapping, and even then only if r7 is non-NULL.
-	 */
-.Lcs_same_l1:
-	cmp	r7, #0
-	movne	r0, #0			/* We *know* vector_page's VA is 0x0 */
-	movne	lr, pc
-	ldrne	pc, [r10, #CF_TLB_FLUSHID_SE]
-
-.Lcs_context_switched:
-	/* rem: r8 = &new_pmap->pm_cstate */
-
-	/* XXXSCW: Safe to re-enable FIQs here */
-
-	/*
-	 * The new VM space is live in the cache and TLB.
-	 * Update its cache/tlb state, and if it's not the kernel
-	 * pmap, update the 'last cache state' pointer.
-	 */
-	mov	r2, #-1
-	ldr	r5, .Lpmap_kernel_cstate
-	ldr	r0, .Llast_cache_state_ptr
-	str	r2, [r8, #(CS_ALL)]
-	cmp	r5, r8
-	strne	r8, [r0]
 
 	/* rem: r4 = old lwp */
 	/* rem: r6 = new lwp */
@@ -527,32 +361,6 @@ ENTRY(cpu_switchto)
 	strne	r0, [r1, #(TF_PC)]
 	b	.Lswitch_return
 
-.Lswitch_exited:
-
-	/*
-	 * We're about to clear both the cache and the TLB.
-	 * Make sure to zap the 'last cache state' pointer since the
-	 * pmap might be about to go away. Also ensure the outgoing
-	 * VM space's cache state is marked as NOT resident in the
-	 * cache.
-	 */
-
-	/* rem: r4 = old lwp (NULL) */
-	/* rem: r6 = new lwp */
-	/* rem: interrupts are enabled */
-
-	/*
-	 * Load up registers the way .Lcs_purge_cache expects.
-	 */
-
-	ldr	r3, .Lblock_userspace_access
-	ldr	r9, [r6, #(L_ADDR)]		/* r9 = new PCB */
-	mrc	p15, 0, r10, c2, c0, 0		/* r10 = old L1 */
-	mov	r5, #0				/* No previous cache state */
-	ldr	r1, [r9, #(PCB_DACR)]		/* r1 = new DACR */
-	ldr	r8, [r9, #(PCB_CSTATE)]		/* r8 = new cache state */
-	ldr	r11, [r9, #(PCB_PAGEDIR)]	/* r11 = new L1 */
-	b	.Lcs_cache_purge
 
 /* LINTSTUB: Func: void savectx(struct pcb *pcb) */
 ENTRY(savectx)

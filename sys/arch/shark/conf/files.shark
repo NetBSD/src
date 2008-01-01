@@ -1,4 +1,4 @@
-#	$NetBSD: files.shark,v 1.14 2007/02/18 08:10:41 macallan Exp $
+#	$NetBSD: files.shark,v 1.14.22.1 2008/01/01 15:39:55 chris Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -11,9 +11,6 @@ defflag	COMPAT_OLD_OFW
 
 # Maintain Interrupt statistics
 defflag	IRQSTATS
-
-# X server support in console drivers
-defflag	XSERVER
 
 # Bootloader options (COMPAT... to be dropped ASAP)
 defflag	COMPAT_OLD_BOOTLOADER
@@ -101,7 +98,6 @@ file	arch/arm/arm/disksubr_acorn.c		disk
 file	arch/arm/arm/disksubr_mbr.c		disk
 
 file	arch/arm/arm32/intr.c
-file	arch/arm/arm/softintr.c
 file	arch/arm/arm32/spl.S
 
 # Shark specific files
@@ -126,11 +122,6 @@ file	arch/shark/shark/i8042.c		i8042
 
 defpseudo profiler: disk
 file	arch/shark/shark/profile.c		profiler needs-flag
-
-# SHARK pc console
-device	pc: tty, spckbd, i8042
-attach	pc at ofisapc
-file	arch/shark/shark/pccons.c		pc needs-flag
 
 # ofbus VGA
 attach	vga at ofbus with vga_ofbus

@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_io.c,v 1.13 2007/07/18 09:47:49 uwe Exp $	*/
+/*	$NetBSD: footbridge_io.c,v 1.13.6.1 2008/01/01 15:39:26 chris Exp $	*/
 
 /*
  * Copyright (c) 1997 Causality Limited
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: footbridge_io.c,v 1.13 2007/07/18 09:47:49 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: footbridge_io.c,v 1.13.6.1 2008/01/01 15:39:26 chris Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
