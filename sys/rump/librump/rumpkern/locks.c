@@ -1,4 +1,4 @@
-/*	$NetBSD: locks.c,v 1.5 2007/12/30 03:35:20 pooka Exp $	*/
+/*	$NetBSD: locks.c,v 1.6 2008/01/01 22:03:24 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -57,6 +57,13 @@ mutex_enter(kmutex_t *mtx)
 	rumpuser_mutex_enter(mtx->kmtx_mtx);
 }
 
+void
+mutex_spin_enter(kmutex_t *mtx)
+{
+
+	mutex_enter(mtx);
+}
+
 int
 mutex_tryenter(kmutex_t *mtx)
 {
@@ -74,6 +81,13 @@ mutex_exit(kmutex_t *mtx)
 {
 
 	rumpuser_mutex_exit(mtx->kmtx_mtx);
+}
+
+void
+mutex_spin_exit(kmutex_t *mtx)
+{
+
+	mutex_exit(mtx);
 }
 
 int
@@ -127,6 +141,14 @@ rw_tryupgrade(krwlock_t *rw)
 {
 
 	return 0;
+}
+
+int
+rw_write_held(krwlock_t *rw)
+{
+
+	/* XXX: always held for now */
+	return 1;
 }
 
 /* curriculum vitaes */
