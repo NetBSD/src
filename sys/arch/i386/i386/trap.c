@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.228 2007/12/03 20:21:33 ad Exp $	*/
+/*	$NetBSD: trap.c,v 1.229 2008/01/01 13:40:20 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2005 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.228 2007/12/03 20:21:33 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.229 2008/01/01 13:40:20 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -306,7 +306,8 @@ trap(frame)
 	}
 #endif
 
-	if (!KVM86MODE && !KERNELMODE(frame->tf_cs, frame->tf_eflags)) {
+	if (type != T_NMI && !KVM86MODE &&
+	    !KERNELMODE(frame->tf_cs, frame->tf_eflags)) {
 		type |= T_USER;
 		l->l_md.md_regs = frame;
 		pcb->pcb_cr2 = 0;
@@ -486,7 +487,6 @@ copyfault:
 	case T_SEGNPFLT|T_USER:
 	case T_STKFLT|T_USER:
 	case T_ALIGNFLT|T_USER:
-	case T_NMI|T_USER:
 		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_signo = SIGBUS;
 		ksi.ksi_addr = (void *)rcr2();
@@ -496,7 +496,6 @@ copyfault:
 			ksi.ksi_code = BUS_ADRERR;
 			break;
 		case T_TSSFLT|T_USER:
-		case T_NMI|T_USER:
 			ksi.ksi_code = BUS_OBJERR;
 			break;
 		case T_ALIGNFLT|T_USER:
