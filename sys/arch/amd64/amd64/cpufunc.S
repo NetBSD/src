@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.S,v 1.5 2007/12/20 23:46:10 ad Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.6 2008/01/01 12:51:09 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -335,9 +335,11 @@ NENTRY(x86_pause)
 	pause
 	ret
 
-NENTRY(x86_cpuid)
+NENTRY(x86_cpuid2)
 	movq	%rbx, %r8
 	movq	%rdi, %rax
+	movq	%rsi, %rcx
+	movq	%rdx, %rsi
 	cpuid
 	movl	%eax, 0(%rsi)
 	movl	%ebx, 4(%rsi)
