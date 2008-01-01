@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.S,v 1.4 2007/12/11 23:06:12 lukem Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.5 2008/01/01 12:51:08 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.S,v 1.4 2007/12/11 23:06:12 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.S,v 1.5 2008/01/01 12:51:08 yamt Exp $");
 
 #include "opt_xen.h"
 
@@ -249,11 +249,12 @@ NENTRY(x86_pause)
 	pause
 	ret
 
-ENTRY(x86_cpuid)
+ENTRY(x86_cpuid2)
 	pushl	%ebx
 	pushl	%edi
 	movl	12(%esp), %eax
-	movl	16(%esp), %edi
+	movl	16(%esp), %ecx
+	movl	20(%esp), %edi
 	cpuid
 	movl	%eax, 0(%edi)
 	movl	%ebx, 4(%edi)
