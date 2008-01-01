@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.21 2007/12/21 20:43:45 dsl Exp $
+#	$NetBSD: genassym.cf,v 1.22 2008/01/01 19:49:05 yamt Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007 The NetBSD Foundation, Inc.
@@ -394,3 +394,5 @@ define	NKL2_KIMG_ENTRIES	NKL2_KIMG_ENTRIES
 
 define	PGOFSET			PGOFSET
 define	PGSHIFT			PGSHIFT
+
+define	VM_MIN_KERNEL_ADDRESS_HIGH32	(VM_MIN_KERNEL_ADDRESS >> 32)
