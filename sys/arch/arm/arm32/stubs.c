@@ -1,4 +1,4 @@
-/*	$NetBSD: stubs.c,v 1.17 2007/03/04 05:59:37 christos Exp $	*/
+/*	$NetBSD: stubs.c,v 1.17.20.1 2008/01/01 15:39:20 chris Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stubs.c,v 1.17 2007/03/04 05:59:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stubs.c,v 1.17.20.1 2008/01/01 15:39:20 chris Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,8 +55,16 @@ __KERNEL_RCSID(0, "$NetBSD: stubs.c,v 1.17 2007/03/04 05:59:37 christos Exp $");
 #include <machine/bootconfig.h>
 #include <machine/pcb.h>
 #include <arm/arm32/machdep.h>
+#include <arm/kcore.h>
+#include <sys/kcore.h>
+#include <sys/core.h>
+#include <sys/exec_aout.h>
 
 extern dev_t dumpdev;
+
+int	cpu_dump(void);
+int	cpu_dumpsize(void);
+u_long	cpu_dump_mempagecnt(void);
 
 /*
  * These variables are needed by /sbin/savecore
@@ -69,7 +77,7 @@ struct pcb dumppcb;
 
 /*
  * This is called by main to set dumplo and dumpsize.
- * Dumps always skip the first CLBYTES of disk space
+ * Dumps always skip the first PAGE_SIZE of disk space
  * in case there might be a disk label stored there.
  * If there is extra space, put dump at the end to
  * reduce the chance that swapping trashes it.
@@ -79,46 +87,136 @@ void
 cpu_dumpconf()
 {
 	const struct bdevsw *bdev;
-	int nblks;	/* size of dump area */
+	int nblks, dumpblks;	/* size of dump area */
 
 	if (dumpdev == NODEV)
 		return;
 	bdev = bdevsw_lookup(dumpdev);
-	if (bdev == NULL) {
-		dumpdev = NODEV;
-		return;
-	}
+	if (bdev == NULL)
+		panic("dumpconf: bad dumpdev=0x%x", dumpdev);
 	if (bdev->d_psize == NULL)
 		return;
 	nblks = (*bdev->d_psize)(dumpdev);
 	if (nblks <= ctod(1))
 		return;
 
-	dumpsize = physmem;
+	dumpblks = cpu_dumpsize();
+	if (dumpblks < 0)
+		goto bad;
+	dumpblks += ctod(cpu_dump_mempagecnt());
 
-	/* Always skip the first CLBYTES, in case there is a label there. */
-	if (dumplo < ctod(1))
-		dumplo = ctod(1);
+	/* If dump won't fit (incl. room for possible label), punt. */
+	if (dumpblks > (nblks - ctod(1)))
+		goto bad;
 
-	/* Put dump at end of partition, and make it fit. */
-	if (dumpsize > dtoc(nblks - dumplo))
-		dumpsize = dtoc(nblks - dumplo);
-	if (dumplo < nblks - ctod(dumpsize))
-		dumplo = nblks - ctod(dumpsize);
+	/* Put dump at end of partition */
+	dumplo = nblks - dumpblks;
+
+	/* dumpsize is in page units, and doesn't include headers. */
+	dumpsize = cpu_dump_mempagecnt();
+	return;
+
+ bad:
+	dumpsize = 0;
+}
+
+/*
+ * cpu_dump: dump the machine-dependent kernel core dump headers.
+ */
+int
+cpu_dump()
+{
+	int (*dump)(dev_t, daddr_t, void *, size_t);
+	char bf[dbtob(1)];
+	kcore_seg_t *segp;
+	cpu_kcore_hdr_t *cpuhdrp;
+	phys_ram_seg_t *memsegp;
+	const struct bdevsw *bdev;
+	int i;
+
+	bdev = bdevsw_lookup(dumpdev);
+	if (bdev == NULL)
+		return (ENXIO);
+	dump = bdev->d_dump;
+
+	memset(bf, 0, sizeof bf);
+	segp = (kcore_seg_t *)bf;
+	cpuhdrp = (cpu_kcore_hdr_t *)&bf[ALIGN(sizeof(*segp))];
+	memsegp = (phys_ram_seg_t *)&bf[ ALIGN(sizeof(*segp)) +
+	    ALIGN(sizeof(*cpuhdrp))];
+
+	/*
+	 * Generate a segment header.
+	 */
+	CORE_SETMAGIC(*segp, KCORE_MAGIC, MID_MACHINE, CORE_CPU);
+	segp->c_size = dbtob(1) - ALIGN(sizeof(*segp));
+
+	/*
+	 * Add the machine-dependent header info.
+	 */
+	cpuhdrp->version = 1;
+	cpuhdrp->PAKernelL1Table = pmap_kernel_L1_addr();
+	cpuhdrp->UserL1TableSize = 0;
+	cpuhdrp->nmemsegs = bootconfig.dramblocks;
+	cpuhdrp->omemsegs = ALIGN(sizeof(*cpuhdrp));
+
+	/*
+	 * Fill in the memory segment descriptors.
+	 */
+	for (i = 0; i < bootconfig.dramblocks; i++) {
+		memsegp[i].start = bootconfig.dram[i].address;
+		memsegp[i].size = bootconfig.dram[i].pages * PAGE_SIZE;
+	}
+
+	return (dump(dumpdev, dumplo, bf, dbtob(1)));
+}
+
+/*
+ * cpu_dumpsize: calculate size of machine-dependent kernel core dump headers.
+ */
+int
+cpu_dumpsize()
+{
+	int size;
+
+	size = ALIGN(sizeof(kcore_seg_t)) + ALIGN(sizeof(cpu_kcore_hdr_t)) +
+	    ALIGN( bootconfig.dramblocks * sizeof(phys_ram_seg_t));
+	if (roundup(size, dbtob(1)) != dbtob(1))
+		return (-1);
+
+	return (1);
+}
+
+
+/*
+ * cpu_dump_mempagecnt: calculate the size of RAM (in pages) to be dumped.
+ */
+u_long
+cpu_dump_mempagecnt()
+{
+	u_long i, n;
+
+	n = 0;
+	for (i = 0; i < bootconfig.dramblocks; i++) {
+		n += bootconfig.dram[i].pages;
+	}
+
+	return (n);
 }
 
 /* This should be moved to machdep.c */
 
-extern char *memhook;		/* XXX */
+extern vaddr_t memhook;		/* XXX */
 
 /*
  * Doadump comes here after turning off memory management and
  * getting on the dump stack, either when called above, or by
  * the auto-restart code.
  */
+void dodumpsys(void);
 
 void
-dumpsys()
+dodumpsys()
 {
 	const struct bdevsw *bdev;
 	daddr_t blkno;
@@ -129,8 +227,6 @@ dumpsys()
 	int len;
 	vaddr_t dumpspace;
 
-	/* Save registers. */
-	savectx(&dumppcb);
 	/* flush everything out of caches */
 	cpu_dcache_wbinv_all();
 
@@ -138,19 +234,16 @@ dumpsys()
 		return;
 	if (dumpsize == 0) {
 		cpu_dumpconf();
-		if (dumpsize == 0)
-			return;
 	}
-	if (dumplo <= 0) {
+	if (dumplo <= 0 || dumpsize == 0) {
 		printf("\ndump to dev %u,%u not possible\n", major(dumpdev),
 		    minor(dumpdev));
+		delay(5000000);
 		return;
 	}
 	printf("\ndumping to dev %u,%u offset %ld\n", major(dumpdev),
 	    minor(dumpdev), dumplo);
 
-	blkno = dumplo;
-	dumpspace = (vaddr_t) memhook;
 
 	bdev = bdevsw_lookup(dumpdev);
 	if (bdev == NULL || bdev->d_psize == NULL)
@@ -162,6 +255,11 @@ dumpsys()
 		return;
 	}
 
+	if ((error = cpu_dump()) != 0)
+		goto err;
+
+	blkno = dumplo + cpu_dumpsize();
+	dumpspace = memhook;
 	error = 0;
 	len = 0;
 
@@ -172,19 +270,18 @@ dumpsys()
 		     addr += PAGE_SIZE) {
 		    	if ((len % (1024*1024)) == 0)
 		    		printf("%d ", len / (1024*1024));
+
 			pmap_kenter_pa(dumpspace, addr, VM_PROT_READ);
 			pmap_update(pmap_kernel());
-
 			error = (*bdev->d_dump)(dumpdev,
 			    blkno, (void *) dumpspace, PAGE_SIZE);
-			pmap_kremove(dumpspace, PAGE_SIZE);
-			pmap_update(pmap_kernel());
-			if (error) break;
+
+			if (error) goto err;
 			blkno += btodb(PAGE_SIZE);
 			len += PAGE_SIZE;
 		}
 	}
-
+err:
 	switch (error) {
 	case ENXIO:
 		printf("device bad\n");
@@ -206,12 +303,16 @@ dumpsys()
 		printf("aborted from console\n");
 		break;
 
-	default:
+	case 0:
 		printf("succeeded\n");
+		break;
+
+	default:
+		printf("error %d\n", error);
 		break;
 	}
 	printf("\n\n");
-	delay(1000000);
+	delay(5000000);
 }
 
 /* End of stubs.c */

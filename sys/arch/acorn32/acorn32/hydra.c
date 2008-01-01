@@ -1,4 +1,4 @@
-/*	$NetBSD: hydra.c,v 1.25 2007/07/09 20:51:58 ad Exp $	*/
+/*	$NetBSD: hydra.c,v 1.25.10.1 2008/01/01 15:39:50 chris Exp $	*/
 
 /*-
  * Copyright (c) 2002 Ben Harris
@@ -31,7 +31,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: hydra.c,v 1.25 2007/07/09 20:51:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hydra.c,v 1.25.10.1 2008/01/01 15:39:50 chris Exp $");
 
 #include <sys/callout.h>
 #include <sys/device.h>

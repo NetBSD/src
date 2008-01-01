@@ -1,9 +1,7 @@
-#	$NetBSD: files.pxa2x0,v 1.14 2007/02/25 13:46:40 nonaka Exp $
+#	$NetBSD: files.pxa2x0,v 1.14.22.1 2008/01/01 15:39:44 chris Exp $
 #
 # Configuration info for Intel PXA2[751]0 CPU support
 #
-
-file	arch/arm/arm/softintr.c  # Use the generic ARM soft interrupt code.
 
 # PXA2[751]0's integrated peripherals bus.
 device pxaip { [addr=-1], [size=0], [intr=-1], [index=-1]} : bus_space_generic

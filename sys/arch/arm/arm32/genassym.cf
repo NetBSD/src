@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.33 2007/05/17 14:51:16 yamt Exp $
+#	$NetBSD: genassym.cf,v 1.33.10.1 2008/01/01 15:39:16 chris Exp $
 
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -89,11 +89,6 @@ define	L_PROC			offsetof(struct lwp, l_proc)
 define	P_RASLIST		offsetof(struct proc, p_raslist)
 
 define	PCB_TF			offsetof(struct pcb, pcb_tf)
-define	PCB_PAGEDIR		offsetof(struct pcb, pcb_pagedir)
-define	PCB_PL1VEC		offsetof(struct pcb, pcb_pl1vec)
-define	PCB_L1VEC		offsetof(struct pcb, pcb_l1vec)
-define	PCB_DACR		offsetof(struct pcb, pcb_dacr)
-define	PCB_CSTATE		offsetof(struct pcb, pcb_cstate)
 define	PCB_FLAGS		offsetof(struct pcb, pcb_flags)
 define	PCB_R8			offsetof(struct pcb, pcb_un.un_32.pcb32_r8)
 define	PCB_R9			offsetof(struct pcb, pcb_un.un_32.pcb32_r9)
@@ -115,15 +110,6 @@ define	V_SOFT			offsetof(struct uvmexp, softs)
 
 define	VM_MAP			offsetof(struct vmspace, vm_map)
 define	VM_PMAP			offsetof(struct vmspace, vm_map.pmap)
-
-define	CS_TLB_ID		offsetof(union pmap_cache_state, cs_tlb_id)
-define	CS_TLB_D		offsetof(union pmap_cache_state, cs_tlb_d)
-define	CS_TLB			offsetof(union pmap_cache_state, cs_tlb)
-define	CS_CACHE_ID		offsetof(union pmap_cache_state, cs_cache_id)
-define	CS_CACHE_D		offsetof(union pmap_cache_state, cs_cache_d)
-define	CS_CACHE		offsetof(union pmap_cache_state, cs_cache)
-define	CS_ALL			offsetof(union pmap_cache_state, cs_all)
-define	PMAP_CSTATE		offsetof(struct pmap, pm_cstate)
 
 define	PR_BASE			offsetof(struct uprof, pr_base)
 define	PR_SIZE			offsetof(struct uprof, pr_size)

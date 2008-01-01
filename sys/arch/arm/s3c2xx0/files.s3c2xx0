@@ -1,9 +1,8 @@
-#	$NetBSD: files.s3c2xx0,v 1.7 2005/12/11 12:16:51 christos Exp $
+#	$NetBSD: files.s3c2xx0,v 1.7.50.1 2008/01/01 15:39:39 chris Exp $
 #
 # Configuration info common to Samsung S3C2800/S3C24[10]0
 #
 
-file	arch/arm/arm/softintr.c  # Use the generic ARM soft interrupt code.
 file	arch/arm/s3c2xx0/s3c2xx0_space.c
 file	arch/arm/s3c2xx0/s3c2xx0_busdma.c
 

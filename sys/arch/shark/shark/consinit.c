@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.6 2007/07/31 19:35:37 jmmv Exp $	*/
+/*	$NetBSD: consinit.c,v 1.6.4.1 2008/01/01 15:39:58 chris Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.6 2007/07/31 19:35:37 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.6.4.1 2008/01/01 15:39:58 chris Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,13 +56,6 @@ __KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.6 2007/07/31 19:35:37 jmmv Exp $");
 #include <dev/pckbport/pckbportvar.h>
 #endif
 #include "pckbd.h" /* for pckbc_machdep_cnattach */
-
-#include "pc.h"
-#if (NPC > 0)
-#include <machine/pccons.h>
-cons_decl(pc)
-static struct consdev pccons = cons_init(pc);
-#endif
 
 #include "com.h"
 #if (NCOM > 0)
@@ -121,7 +114,7 @@ consinit()
 #endif
 
 	if (!comconsole) {
-#if (NPC > 0) || (NVGA > 0) || (NIGSFB_OFBUS > 0)
+#if (NVGA > 0) || (NIGSFB_OFBUS > 0)
 #if (NIGSFB_OFBUS > 0)
 		if (!igsfb_ofbus_cnattach(&isa_io_bs_tag, &isa_mem_bs_tag)) {
 #if (NPCKBC > 0)
@@ -140,16 +133,7 @@ consinit()
 			return;
 		}
 #endif /* NVGA_OFBUS */
-#if (NPC > 0)
-		cp = &pccons;
-		pccnprobe(cp);
-		if (cp->cn_pri == CN_INTERNAL) {
-			pccninit(cp);
-			cn_tab = cp;
-			return;
-		}
-#endif /* NPC */
-#else /* NPC || NVGA */
+#else /* NVGA */
 #if (NOFCONS > 0)
 		cp = &ofcons;
 		ofcons_cnprobe(cp);
@@ -159,7 +143,7 @@ consinit()
 			return;
 		}
 #endif /* NOFCONS */
-#endif /* NPC || NVGA */
+#endif /* NVGA */
 	}
 #if (NCOM > 0)
 	if (comcnattach(&isa_io_bs_tag, CONADDR, CONSPEED, COM_FREQ,

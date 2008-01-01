@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.7 2007/05/17 14:51:11 yamt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.7.10.1 2008/01/01 15:39:52 chris Exp $	*/
 
 /*-
  * Copyright (c) 2002 Ben Harris

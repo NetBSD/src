@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_gpio.c,v 1.7 2006/12/17 16:03:33 peter Exp $	*/
+/*	$NetBSD: pxa2x0_gpio.c,v 1.7.24.1 2008/01/01 15:39:47 chris Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_gpio.c,v 1.7 2006/12/17 16:03:33 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_gpio.c,v 1.7.24.1 2008/01/01 15:39:47 chris Exp $");
 
 #include "opt_pxa2x0_gpio.h"
 
@@ -669,4 +669,281 @@ pxa2x0_gpio_set_intr_level(u_int gpio, int level)
 	pxagpio_reg_write(sc, GPIO_REG(GPIO_GRER0, gpio), grer);
 
 	splx(s);
+}
+
+
+#if defined(CPU_XSCALE_PXA250)
+/*
+ * Configurations of GPIO for PXA25x
+ */
+struct pxa2x0_gpioconf pxa25x_com_btuart_gpioconf[] = {
+	{ 42, GPIO_CLR | GPIO_ALT_FN_1_IN },	/* BTRXD */
+	{ 43, GPIO_CLR | GPIO_ALT_FN_2_OUT },	/* BTTXD */
+
+#if 0	/* optional */
+	{ 44, GPIO_CLR | GPIO_ALT_FN_1_IN },	/* BTCTS */
+	{ 45, GPIO_CLR | GPIO_ALT_FN_2_OUT },	/* BTRTS */
+#endif
+
+	{ -1 }
+};
+
+struct pxa2x0_gpioconf pxa25x_com_ffuart_gpioconf[] = {
+	{ 34, GPIO_CLR | GPIO_ALT_FN_1_IN },	/* FFRXD */
+
+#if 0	/* optional */
+	{ 35, GPIO_CLR | GPIO_ALT_FN_1_IN },	/* CTS */
+	{ 36, GPIO_CLR | GPIO_ALT_FN_1_IN },	/* DCD */
+	{ 37, GPIO_CLR | GPIO_ALT_FN_1_IN },	/* DSR */
+	{ 38, GPIO_CLR | GPIO_ALT_FN_1_IN },	/* RI */
+#endif
+
+	{ 39, GPIO_CLR | GPIO_ALT_FN_2_OUT },	/* FFTXD */
+
+#if 0	/* optional */
+	{ 40, GPIO_CLR | GPIO_ALT_FN_2_OUT },	/* DTR */
+	{ 41, GPIO_CLR | GPIO_ALT_FN_2_OUT },	/* RTS */
+#endif
+
+	{ -1 }
+};
+
+struct pxa2x0_gpioconf pxa25x_com_hwuart_gpioconf[] = {
+#if 0	/* We can select and/or. */
+	{ 42, GPIO_CLR | GPIO_ALT_FN_3_IN },	/* HWRXD */
+	{ 49, GPIO_CLR | GPIO_ALT_FN_2_IN },	/* HWRXD */
+
+	{ 43, GPIO_CLR | GPIO_ALT_FN_3_OUT },	/* HWTXD */
+	{ 48, GPIO_CLR | GPIO_ALT_FN_1_OUT },	/* HWTXD */
+
+#if 0	/* optional */
+	{ 44, GPIO_CLR | GPIO_ALT_FN_3_IN },	/* HWCST */
+	{ 51, GPIO_CLR | GPIO_ALT_FN_3_IN },	/* HWCST */
+
+	{ 45, GPIO_CLR | GPIO_ALT_FN_3_OUT },	/* HWRST */
+	{ 52, GPIO_CLR | GPIO_ALT_FN_3_OUT },	/* HWRST */
+#endif
+#endif
+
+	{ -1 }
+};
+
+struct pxa2x0_gpioconf pxa25x_com_stuart_gpioconf[] = {
+	{ 46, GPIO_CLR | GPIO_ALT_FN_2_IN },	/* RXD */
+	{ 47, GPIO_CLR | GPIO_ALT_FN_1_OUT },	/* TXD */
+	{ -1 }
+};
+
+struct pxa2x0_gpioconf pxa25x_i2c_gpioconf[] = {
+	{ -1 }
+};
+
+struct pxa2x0_gpioconf pxa25x_i2s_gpioconf[] = {
+	{ 28, GPIO_CLR | GPIO_ALT_FN_1_OUT },	/* BITCLK */
+	{ 29, GPIO_CLR | GPIO_ALT_FN_2_IN },	/* SDATA_IN */
+	{ 30, GPIO_CLR | GPIO_ALT_FN_1_OUT },	/* SDATA_OUT */
+	{ 31, GPIO_CLR | GPIO_ALT_FN_1_OUT },	/* SYNC */
+	{ 32, GPIO_CLR | GPIO_ALT_FN_1_OUT },	/* SYSCLK */
+	{ -1 }
+};
+
+struct pxa2x0_gpioconf pxa25x_pcic_gpioconf[] = {
+	{ 48, GPIO_CLR | GPIO_ALT_FN_2_OUT },	/* nPOE */
+	{ 49, GPIO_CLR | GPIO_ALT_FN_2_OUT },	/* nPWE */
+	{ 50, GPIO_CLR | GPIO_ALT_FN_2_OUT },	/* nPIOR */
+	{ 51, GPIO_CLR | GPIO_ALT_FN_2_OUT },	/* nPIOW */
+
+#if 0	/* We can select and/or. */
+	{ 52, GPIO_CLR | GPIO_ALT_FN_2_OUT },	/* nPCE1 */
+	{ 53, GPIO_CLR | GPIO_ALT_FN_2_OUT },	/* nPCE2 */
+#endif
+
+	{ 54, GPIO_CLR | GPIO_ALT_FN_2_OUT },	/* pSKTSEL */
+	{ 55, GPIO_CLR | GPIO_ALT_FN_2_OUT },	/* nPREG */
+	{ 56, GPIO_CLR | GPIO_ALT_FN_1_IN },	/* nPWAIT */
+	{ 57, GPIO_CLR | GPIO_ALT_FN_1_IN },	/* nIOIS16 */
+	{ -1 }
+};
+
+struct pxa2x0_gpioconf pxa25x_pxaacu_gpioconf[] = {
+	{ 28, GPIO_CLR | GPIO_ALT_FN_1_IN },	/* BITCLK */
+	{ 30, GPIO_CLR | GPIO_ALT_FN_2_OUT },	/* SDATA_OUT */
+	{ 31, GPIO_CLR | GPIO_ALT_FN_2_OUT },	/* SYNC */
+
+#if 0	/* We can select and/or. */
+	{ 29, GPIO_CLR | GPIO_ALT_FN_1_IN },	/* SDATA_IN0 */
+	{ 32, GPIO_CLR | GPIO_ALT_FN_1_IN },	/* SDATA_IN1 */
+#endif
+
+	{ -1 }
+};
+
+struct pxa2x0_gpioconf pxa25x_pxamci_gpioconf[] = {
+#if 0	/* We can select and/or. */
+	{  6, GPIO_CLR | GPIO_ALT_FN_1_OUT },	/* MMCCLK */
+	{ 53, GPIO_CLR | GPIO_ALT_FN_1_OUT },	/* MMCCLK */
+	{ 54, GPIO_CLR | GPIO_ALT_FN_1_OUT },	/* MMCCLK */
+
+	{  8, GPIO_CLR | GPIO_ALT_FN_1_OUT },	/* MMCCS0 */
+	{ 34, GPIO_CLR | GPIO_ALT_FN_2_OUT },	/* MMCCS0 */
+	{ 67, GPIO_CLR | GPIO_ALT_FN_1_OUT },	/* MMCCS0 */
+
+	{  9, GPIO_CLR | GPIO_ALT_FN_1_OUT },	/* MMCCS1 */
+	{ 39, GPIO_CLR | GPIO_ALT_FN_1_OUT },	/* MMCCS1 */
+	{ 68, GPIO_CLR | GPIO_ALT_FN_1_OUT },	/* MMCCS1 */
+#endif
+
+	{  -1 }
+};
+#endif
+
+#if defined(CPU_XSCALE_PXA270)
+/*
+ * Configurations of GPIO for PXA27x
+ */
+struct pxa2x0_gpioconf pxa27x_com_btuart_gpioconf[] = {
+	{  42, GPIO_CLR | GPIO_ALT_FN_1_IN },	/* BTRXD */
+	{  43, GPIO_CLR | GPIO_ALT_FN_2_OUT },	/* BTTXD */
+
+#if 0	/* optional */
+	{  44, GPIO_CLR | GPIO_ALT_FN_1_IN },	/* BTCTS */
+	{  45, GPIO_CLR | GPIO_ALT_FN_2_OUT },	/* BTRTS */
+#endif
+
+	{  -1 }
+};
+
+struct pxa2x0_gpioconf pxa27x_com_ffuart_gpioconf[] = {
+#if 0	/* We can select and/or. */
+	{  16, GPIO_CLR | GPIO_ALT_FN_3_OUT },	/* FFTXD */
+	{  37, GPIO_CLR | GPIO_ALT_FN_3_OUT },	/* FFTXD */
+	{  39, GPIO_CLR | GPIO_ALT_FN_2_OUT },	/* FFTXD */
+	{  83, GPIO_CLR | GPIO_ALT_FN_2_OUT },	/* FFTXD */
+	{  99, GPIO_CLR | GPIO_ALT_FN_3_OUT },	/* FFTXD */
+
+	{  19, GPIO_CLR | GPIO_ALT_FN_3_IN },	/* FFRXD */
+	{  33, GPIO_CLR | GPIO_ALT_FN_1_IN },	/* FFRXD */
+	{  34, GPIO_CLR | GPIO_ALT_FN_1_IN },	/* FFRXD */
+	{  41, GPIO_CLR | GPIO_ALT_FN_1_IN },	/* FFRXD */
+	{  53, GPIO_CLR | GPIO_ALT_FN_1_IN },	/* FFRXD */
+	{  85, GPIO_CLR | GPIO_ALT_FN_1_IN },	/* FFRXD */
+	{  96, GPIO_CLR | GPIO_ALT_FN_3_IN },	/* FFRXD */
+	{ 102, GPIO_CLR | GPIO_ALT_FN_3_IN },	/* FFRXD */
+
+	{   9, GPIO_CLR | GPIO_ALT_FN_3_IN },	/* FFCTS */
+	{  26, GPIO_CLR | GPIO_ALT_FN_3_IN },	/* FFCTS */
+	{  35, GPIO_CLR | GPIO_ALT_FN_1_IN },	/* FFCTS */
+	{ 100, GPIO_CLR | GPIO_ALT_FN_3_IN },	/* FFCTS */
+
+	{  27, GPIO_CLR | GPIO_ALT_FN_3_OUT },	/* FFRTS */
+	{  41, GPIO_CLR | GPIO_ALT_FN_2_OUT },	/* FFRTS */
+	{  83, GPIO_CLR | GPIO_ALT_FN_3_OUT },	/* FFRTS */
+	{  98, GPIO_CLR | GPIO_ALT_FN_3_OUT },	/* FFRTS */
+
+	{  40, GPIO_CLR | GPIO_ALT_FN_2_OUT },	/* FFDTR */
+	{  82, GPIO_CLR | GPIO_ALT_FN_3_OUT },	/* FFDTR */
+
+	{  36, GPIO_CLR | GPIO_ALT_FN_1_IN },	/* FFDCD */
+
+	{  33, GPIO_CLR | GPIO_ALT_FN_2_IN },	/* FFDSR */
+	{  37, GPIO_CLR | GPIO_ALT_FN_1_IN },	/* FFDSR */
+
+	{  38, GPIO_CLR | GPIO_ALT_FN_1_IN },	/* FFRI */
+#endif
+	{  -1 }
+};
+
+struct pxa2x0_gpioconf pxa27x_com_hwuart_gpioconf[] = {
+	{  -1 }
+};
+
+struct pxa2x0_gpioconf pxa27x_com_stuart_gpioconf[] = {
+	{  46, GPIO_CLR | GPIO_ALT_FN_2_IN },	/* STD_RXD */
+	{  47, GPIO_CLR | GPIO_ALT_FN_1_OUT },	/* STD_TXD */
+	{  -1 }
+};
+
+struct pxa2x0_gpioconf pxa27x_i2c_gpioconf[] = {
+	{ 117, GPIO_CLR | GPIO_ALT_FN_1_IN },	/* SCL */
+	{ 118, GPIO_CLR | GPIO_ALT_FN_1_IN },	/* SDA */
+	{  -1 }
+};
+
+struct pxa2x0_gpioconf pxa27x_i2s_gpioconf[] = {
+	{  28, GPIO_CLR | GPIO_ALT_FN_1_OUT },	/* I2S_BITCLK */
+	{  29, GPIO_CLR | GPIO_ALT_FN_2_IN },	/* I2S_SDATA_IN */
+	{  30, GPIO_CLR | GPIO_ALT_FN_1_OUT },	/* I2S_SDATA_OUT */
+	{  31, GPIO_CLR | GPIO_ALT_FN_1_OUT },	/* I2S_SYNC */
+	{ 113, GPIO_CLR | GPIO_ALT_FN_1_OUT },	/* I2S_SYSCLK */
+	{  -1 }
+};
+
+struct pxa2x0_gpioconf pxa27x_pcic_gpioconf[] = {
+	{  48, GPIO_CLR | GPIO_ALT_FN_2_OUT },	/* nPOE */
+	{  49, GPIO_CLR | GPIO_ALT_FN_2_OUT },	/* nPWE */
+	{  50, GPIO_CLR | GPIO_ALT_FN_2_OUT },	/* nPIOR */
+	{  51, GPIO_CLR | GPIO_ALT_FN_2_OUT },	/* nPIOW */
+	{  55, GPIO_CLR | GPIO_ALT_FN_2_OUT },	/* nPREG */
+	{  56, GPIO_CLR | GPIO_ALT_FN_1_IN },	/* nPWAIT */
+	{  57, GPIO_CLR | GPIO_ALT_FN_1_IN },	/* nIOIS16 */
+	{ 104, GPIO_CLR | GPIO_ALT_FN_1_OUT },	/* pSKTSEL */
+
+#if 0	/* We can select and/or. */
+	{  85, GPIO_CLR | GPIO_ALT_FN_1_OUT },	/* nPCE1 */
+	{  86, GPIO_CLR | GPIO_ALT_FN_1_OUT },	/* nPCE1 */
+	{ 102, GPIO_CLR | GPIO_ALT_FN_1_OUT },	/* nPCE1 */
+
+	{  54, GPIO_CLR | GPIO_ALT_FN_2_OUT },	/* nPCE2 */
+	{  78, GPIO_CLR | GPIO_ALT_FN_1_OUT },	/* nPCE2 */
+	{ 105, GPIO_CLR | GPIO_ALT_FN_1_OUT },	/* nPCE2 */
+#endif
+
+	{  -1 }
+};
+
+struct pxa2x0_gpioconf pxa27x_pxaacu_gpioconf[] = {
+	{  28, GPIO_CLR | GPIO_ALT_FN_1_IN },	/* BITCLK */
+	{  30, GPIO_CLR | GPIO_ALT_FN_2_OUT },	/* SDATA_OUT */
+
+#if 0	/* We can select and/or. */
+	{  31, GPIO_CLR | GPIO_ALT_FN_2_OUT },	/* SYNC */
+	{  94, GPIO_CLR | GPIO_ALT_FN_1_OUT },	/* SYNC */
+
+	{  29, GPIO_CLR | GPIO_ALT_FN_1_IN },	/* SDATA_IN0 */
+	{ 116, GPIO_CLR | GPIO_ALT_FN_2_IN },	/* SDATA_IN0 */
+
+	{  32, GPIO_CLR | GPIO_ALT_FN_1_IN },	/* SDATA_IN1 */
+	{  99, GPIO_CLR | GPIO_ALT_FN_2_IN },	/* SDATA_IN1 */
+
+	{  95, GPIO_CLR | GPIO_ALT_FN_1_OUT },	/* RESET_n */
+	{ 113, GPIO_CLR | GPIO_ALT_FN_2_OUT },	/* RESET_n */
+#endif
+
+	{  -1 }
+};
+
+struct pxa2x0_gpioconf pxa27x_pxamci_gpioconf[] = {
+	{  32, GPIO_CLR | GPIO_ALT_FN_2_OUT },	/* MMCLK */
+	{ 112, GPIO_CLR | GPIO_ALT_FN_1_IN },	/* MMCMD */
+	{  92, GPIO_CLR | GPIO_ALT_FN_1_IN },	/* MMDAT<0> */
+
+#if 0	/* optional */
+	{ 109, GPIO_CLR | GPIO_ALT_FN_1_IN },	/* MMDAT<1> */
+	{ 110, GPIO_CLR | GPIO_ALT_FN_1_IN },	/* MMDAT<2>/MMCCS<0> */
+	{ 111, GPIO_CLR | GPIO_ALT_FN_1_IN },	/* MMDAT<3>/MMCCS<1> */
+#endif
+
+	{  -1 }
+};
+#endif
+
+void
+pxa2x0_gpio_config(struct pxa2x0_gpioconf **conflist)
+{
+	int i, j;
+
+	for (i = 0; conflist[i] != NULL; i++)
+		for (j = 0; conflist[i][j].pin != -1; j++)
+			pxa2x0_gpio_set_function(conflist[i][j].pin,
+			    conflist[i][j].value);
 }

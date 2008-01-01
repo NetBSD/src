@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.42 2007/02/22 05:14:05 thorpej Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.42.22.1 2008/01/01 15:39:15 chris Exp $	*/
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.42 2007/02/22 05:14:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.42.22.1 2008/01/01 15:39:15 chris Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -365,12 +365,12 @@ cpu_Debugger(void)
 }
 
 const struct db_command db_machine_command_table[] = {
-	{ "frame",	db_show_frame_cmd,	0, NULL },
-	{ "panic",	db_show_panic_cmd,	0, NULL },
+	{ DDB_ADD_CMD("frame",	db_show_frame_cmd,	0, NULL,NULL,NULL) },
+	{ DDB_ADD_CMD("panic",	db_show_panic_cmd,	0, NULL,NULL,NULL) },
 #ifdef ARM32_DB_COMMANDS
 	ARM32_DB_COMMANDS,
 #endif
-	{ NULL, 	NULL, 			0, NULL }
+	{ DDB_ADD_CMD(NULL,     NULL,           0,NULL,NULL,NULL) }
 };
 
 int
