@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.172 2007/03/04 06:00:47 christos Exp $ */
+/*	$NetBSD: trap.c,v 1.172.28.1 2008/01/01 14:48:42 ad Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.172 2007/03/04 06:00:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.172.28.1 2008/01/01 14:48:42 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_svr4.h"
@@ -417,9 +417,7 @@ badtrap:
 #endif
 
 		if (fs == NULL) {
-			KERNEL_LOCK(1, l);
 			fs = malloc(sizeof *fs, M_SUBPROC, M_WAITOK);
-			KERNEL_UNLOCK_LAST(l);
 			*fs = initfpstate;
 			l->l_md.md_fpstate = fs;
 		}
@@ -495,12 +493,10 @@ badtrap:
 	}
 
 	case T_WINOF:
-		KERNEL_LOCK(1, l);
 		if (rwindow_save(l)) {
 			mutex_enter(&p->p_smutex);
 			sigexit(l, SIGILL);
 		}
-		KERNEL_UNLOCK_LAST(l);
 		break;
 
 #define read_rw(src, dst) \
@@ -515,7 +511,6 @@ badtrap:
 		 * nsaved to -1.  If we decide to deliver a signal on
 		 * our way out, we will clear nsaved.
 		 */
-		KERNEL_LOCK(1, l);
 		if (pcb->pcb_uw || pcb->pcb_nsaved)
 			panic("trap T_RWRET 1");
 #ifdef DEBUG
@@ -531,7 +526,6 @@ badtrap:
 		if (pcb->pcb_nsaved)
 			panic("trap T_RWRET 2");
 		pcb->pcb_nsaved = -1;		/* mark success */
-		KERNEL_UNLOCK_LAST(l);
 		break;
 
 	case T_WINUF:
@@ -544,7 +538,6 @@ badtrap:
 		 * in the pcb.  The restore's window may still be in
 		 * the CPU; we need to force it out to the stack.
 		 */
-		KERNEL_LOCK(1, l);
 #ifdef DEBUG
 		if (rwindow_debug)
 			printf("cpu%d:%s[%d]: rwindow: T_WINUF 0: pcb<-stack: 0x%x\n",
@@ -569,14 +562,11 @@ badtrap:
 		if (pcb->pcb_nsaved)
 			panic("trap T_WINUF");
 		pcb->pcb_nsaved = -1;		/* mark success */
-		KERNEL_UNLOCK_LAST(l);
 		break;
 
 	case T_ALIGN:
 		if ((p->p_md.md_flags & MDP_FIXALIGN) != 0) {
-			KERNEL_LOCK(1, l);
 			n = fixalign(l, tf);
-			KERNEL_UNLOCK_LAST(l);
 			if (n == 0) {
 				ADVANCE;
 				break;
@@ -598,7 +588,6 @@ badtrap:
 		 * will not match once fpu_cleanup does its job, so
 		 * we must not save again later.)
 		 */
-		KERNEL_LOCK(1, l);
 		if (l != cpuinfo.fplwp)
 			panic("fpe without being the FP user");
 		FPU_LOCK(s);
@@ -606,7 +595,6 @@ badtrap:
 		cpuinfo.fplwp = NULL;
 		l->l_md.md_fpu = NULL;
 		FPU_UNLOCK(s);
-		KERNEL_UNLOCK_LAST(l);
 		/* tf->tf_psr &= ~PSR_EF; */	/* share_fpu will do this */
 		if ((code = fpu_cleanup(l, l->l_md.md_fpstate)) != 0) {
 			sig = SIGFPE;
@@ -658,12 +646,10 @@ badtrap:
 	case T_FLUSHWIN:
 		write_user_windows();
 #ifdef probably_slower_since_this_is_usually_false
-		KERNEL_LOCK(1, l);
 		if (pcb->pcb_nsaved && rwindow_save(p)) {
 			mutex_enter(&p->p_smutex);
 			sigexit(l, SIGILL);
 		}
-		KERNEL_UNLOCK_LAST(l);
 #endif
 		ADVANCE;
 		break;
@@ -703,10 +689,8 @@ badtrap:
 		break;
 	}
 	if (sig != 0) {
-		KERNEL_LOCK(1, l);
 		ksi.ksi_signo = sig;
 		trapsignal(l, &ksi);
-		KERNEL_UNLOCK_LAST(l);
 	}
 	userret(l, pc, sticks);
 	share_fpu(l, tf);
@@ -805,9 +789,6 @@ mem_access_fault(unsigned type, int ser, u_int v, int pc, int psr,
 	p = l->l_proc;
 	LWP_CACHE_CREDS(l, p);
 	sticks = p->p_sticks;
-
-	if ((psr & PSR_PS) == 0)
-		KERNEL_LOCK(1, l);
 
 #ifdef FPU_DEBUG
 	if ((tf->tf_psr & PSR_EF) != 0) {
@@ -974,7 +955,6 @@ kfault:
 	}
 out:
 	if ((psr & PSR_PS) == 0) {
-		KERNEL_UNLOCK_LAST(l);
 		userret(l, pc, sticks);
 		share_fpu(l, tf);
 	}
@@ -1053,11 +1033,6 @@ mem_access_fault4m(unsigned type, u_int sfsr, u_int sfva, struct trapframe *tf)
 		 */
 		goto out_nounlock;
 	}
-
-	if ((psr & PSR_PS) == 0)
-		KERNEL_LOCK(1, l);
-	else
-		KERNEL_LOCK(1, NULL);
 
 	/*
 	 * Figure out what to pass the VM code. We cannot ignore the sfva
@@ -1188,7 +1163,6 @@ mem_access_fault4m(unsigned type, u_int sfsr, u_int sfva, struct trapframe *tf)
 		if (va >= KERNBASE) {
 			rv = uvm_fault(kernel_map, va, atype);
 			if (rv == 0) {
-				KERNEL_UNLOCK_ONE(NULL);
 				return;
 			}
 			goto kfault;
@@ -1232,7 +1206,6 @@ kfault:
 			tf->tf_pc = onfault;
 			tf->tf_npc = onfault + 4;
 			tf->tf_out[0] = (rv == EACCES) ? EFAULT : rv;
-			KERNEL_UNLOCK_ONE(NULL);
 			return;
 		}
 		KSI_INIT_TRAP(&ksi);
@@ -1255,13 +1228,10 @@ kfault:
 	}
 out:
 	if ((psr & PSR_PS) == 0) {
-		KERNEL_UNLOCK_LAST(l);
 out_nounlock:
 		userret(l, pc, sticks);
 		share_fpu(l, tf);
 	}
-	else
-		KERNEL_UNLOCK_ONE(NULL);
 }
 #endif /* SUN4M */
 
@@ -1283,7 +1253,6 @@ startlwp(void *arg)
 #endif
 	pool_put(&lwp_uc_pool, uc);
 
-	KERNEL_UNLOCK_LAST(l);
 	userret(l, l->l_md.md_tf->tf_pc, 0);
 }
 
