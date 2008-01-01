@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.195 2008/01/01 10:48:36 jmmv Exp $
+# $NetBSD: GENERIC,v 1.196 2008/01/01 11:05:27 jmmv Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.195 $"
+#ident 		"GENERIC-$Revision: 1.196 $"
 
 maxusers	32		# estimated number of users
 
@@ -265,6 +265,7 @@ options 	MPBIOS_SCANPCI		# MPBIOS configures PCI roots
 #options	ACPICA_PEDANTIC		# force strict conformance to the Spec.
 
 # ACPI devices
+apm*		at acpi?		# ACPI apm emulation
 acpiacad* 	at acpi?		# ACPI AC Adapter
 acpibat* 	at acpi?		# ACPI Battery
 acpibut* 	at acpi?		# ACPI Button
