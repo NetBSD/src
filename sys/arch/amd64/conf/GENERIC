@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.194 2007/12/31 15:31:47 ad Exp $
+# $NetBSD: GENERIC,v 1.195 2008/01/01 10:48:36 jmmv Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.194 $"
+#ident 		"GENERIC-$Revision: 1.195 $"
 
 maxusers	32		# estimated number of users
 
@@ -412,6 +412,10 @@ amdpm*	at pci? dev ? function ?	# RNG and SMBus 1.0 interface
 nfsmbc*	at pci? dev ? function ?
 nfsmb*	at nfsmbc?
 iic*	at nfsmb?
+
+# Intel PIIX4 power management controllers
+piixpm* at pci? dev ? function ?	# PIIX4 compatible PM controller
+iic*	at piixpm?			# SMBus on PIIX4
 
 # Intel Core's on-die Thermal sensor
 options 	INTEL_CORETEMP
