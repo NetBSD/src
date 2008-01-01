@@ -1,5 +1,5 @@
 #! /bin/sh
-#	$NetBSD: fmt.sh,v 1.1 2008/01/01 21:37:50 yamt Exp $
+#	$NetBSD: fmt.sh,v 1.2 2008/01/01 21:39:50 yamt Exp $
 
 # /*-
 #  * Copyright (c)2008 YAMAMOTO Takashi,
@@ -26,6 +26,8 @@
 #  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 #  * SUCH DAMAGE.
 #  */
+
+# usage: tprof -c sleep 1 | sh fmt.sh
 
 SIZEOF_PTR=4	# XXX
 
