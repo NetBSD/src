@@ -1,4 +1,4 @@
-/* 	$NetBSD: cpuvar.h,v 1.20 2007/12/18 07:17:17 joerg Exp $ */
+/* 	$NetBSD: cpuvar.h,v 1.21 2008/01/01 20:32:12 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000, 2007 The NetBSD Foundation, Inc.
@@ -110,6 +110,7 @@ int x86_ipi_init(int);
 void x86_errata(void);
 
 void identifycpu(struct cpu_info *);
+void identifycpu_cpuids(struct cpu_info *);
 void cpu_init(struct cpu_info *);
 void cpu_init_first(void);
 

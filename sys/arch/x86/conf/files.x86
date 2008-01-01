@@ -1,4 +1,4 @@
-#	$NetBSD: files.x86,v 1.39 2007/12/26 11:51:12 yamt Exp $
+#	$NetBSD: files.x86,v 1.40 2008/01/01 20:32:11 yamt Exp $
 
 # options for MP configuration through the MP spec
 defflag opt_mpbios.h MPBIOS MPVERBOSE MPDEBUG MPBIOS_SCANPCI
@@ -60,6 +60,7 @@ file 	arch/x86/x86/pmap.c
 file	arch/x86/x86/sys_machdep.c
 file	arch/x86/x86/x86_autoconf.c
 file	arch/x86/x86/x86_machdep.c
+file	arch/x86/x86/x86_identcpu.c
 
 define	lapic
 file	arch/x86/x86/lapic.c		lapic needs-flag
@@ -99,3 +100,5 @@ attach	ipmi at ipmibus
 file	arch/x86/x86/ipmi.c		ipmi needs-flag
 
 file	arch/x86/x86/vga_post.c		vga_post
+
+file	arch/x86/x86/tprof_pmi.c	tprof	needs-flag

@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.85 2007/12/20 23:28:08 xtraeme Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.86 2008/01/01 20:32:10 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.85 2007/12/20 23:28:08 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.86 2008/01/01 20:32:10 yamt Exp $");
 
 #include "opt_enhanced_speedstep.h"
 #include "opt_intel_odcm.h"
@@ -908,6 +908,8 @@ cpu_probe_base_features(struct cpu_info *ci)
 	uint32_t miscbytes;
 	uint32_t brand[12];
 
+	ci->ci_initapicid = 0;
+
 	if (ci->ci_cpuid_level < 0)
 		return;
 
@@ -944,6 +946,8 @@ cpu_probe_base_features(struct cpu_info *ci)
 	/* CLFLUSH line size is next 8 bits */
 	if (ci->ci_feature_flags & CPUID_CFLUSH)
 		ci->ci_cflush_lsize = ((miscbytes >> 8) & 0xff) << 3;
+
+	ci->ci_initapicid = (miscbytes >> 24) & 0xff;
 
 	if (ci->ci_cpuid_level < 2)
 		return;
@@ -1499,6 +1503,8 @@ identifycpu(struct cpu_info *ci)
 		    ci->ci_cpu_serial[1] / 65536, ci->ci_cpu_serial[1] % 65536,
 		    ci->ci_cpu_serial[2] / 65536, ci->ci_cpu_serial[2] % 65536);
 	}
+
+	identifycpu_cpuids(ci);
 
 	if (cpu_class == CPUCLASS_386) {
 		panic("NetBSD requires an 80486 or later processor");
