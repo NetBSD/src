@@ -1,4 +1,4 @@
-# $NetBSD: rescue.mi,v 1.25 2007/12/31 15:31:37 ad Exp $
+# $NetBSD: rescue.mi,v 1.26 2008/01/01 10:45:12 jnemeth Exp $
 ./rescue/[					base-rescue-root
 ./rescue/atactl					base-rescue-root
 ./rescue/badsect				base-rescue-root
@@ -137,6 +137,7 @@
 ./rescue/swapon					base-rescue-root
 ./rescue/sync					base-rescue-root
 ./rescue/sysctl					base-rescue-root
+./rescue/systrace				base-rescue-root	obsolete
 ./rescue/tar					base-rescue-root
 ./rescue/test					base-rescue-root
 ./rescue/tetris					base-rescue-root
