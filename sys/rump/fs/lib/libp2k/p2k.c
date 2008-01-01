@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.c,v 1.31 2007/11/30 19:02:31 pooka Exp $	*/
+/*	$NetBSD: p2k.c,v 1.32 2008/01/01 22:31:42 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -141,8 +141,8 @@ p2k_run_fs(const char *vfsname, const char *devpath, const char *mountpath,
 	PUFFSOP_SET(pops, p2k, node, setattr);
 #if 0
 	PUFFSOP_SET(pops, p2k, node, poll);
-	PUFFSOP_SET(pops, p2k, node, mmap);
 #endif
+	PUFFSOP_SET(pops, p2k, node, mmap);
 	PUFFSOP_SET(pops, p2k, node, fsync);
 	PUFFSOP_SET(pops, p2k, node, seek);
 	PUFFSOP_SET(pops, p2k, node, remove);
@@ -423,6 +423,20 @@ p2k_node_fsync(struct puffs_usermount *pu, void *opc, const struct puffs_cred *p
 	VLE(opc);
 	rv = RUMP_VOP_FSYNC(opc, cred, flags, offlo, offhi);
 	VUL(opc);
+	cred_destroy(cred);
+
+	return rv;
+}
+
+int
+p2k_node_mmap(struct puffs_usermount *pu, void *opc, vm_prot_t flags,
+	const struct puffs_cred *pcr)
+{
+	kauth_cred_t cred;
+	int rv;
+
+	cred = cred_create(pcr);
+	rv = RUMP_VOP_MMAP(opc, flags, cred);
 	cred_destroy(cred);
 
 	return rv;
