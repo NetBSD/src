@@ -1,4 +1,4 @@
-/*	$NetBSD: cal.c,v 1.22 2007/12/24 13:56:55 wiz Exp $	*/
+/*	$NetBSD: cal.c,v 1.23 2008/01/01 17:45:01 dholland Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)cal.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: cal.c,v 1.22 2007/12/24 13:56:55 wiz Exp $");
+__RCSID("$NetBSD: cal.c,v 1.23 2008/01/01 17:45:01 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -232,9 +232,13 @@ main(int argc, char **argv)
 		switch (ch) {
 		case 'A':
 			after = getnum(optarg);
+			if (after < 0)
+				errx(1, "Argument to -A must be positive");
 			break;
 		case 'B':
 			before = getnum(optarg);
+			if (before < 0)
+				errx(1, "Argument to -B must be positive");
 			break;
 		case 'd':
 			dow = getnum(optarg);
