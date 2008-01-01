@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.41 2008/01/01 13:40:21 yamt Exp $	*/
+/*	$NetBSD: trap.c,v 1.42 2008/01/01 21:28:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.41 2008/01/01 13:40:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.42 2008/01/01 21:28:40 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -83,6 +83,12 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.41 2008/01/01 13:40:21 yamt Exp $");
 #include "opt_multiprocessor.h"
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ibcs2.h"
+#include "opt_xen.h"
+#if !defined(XEN)
+#include "tprof.h"
+#else /* !defined(XEN) */
+#define	NTPROF	0
+#endif /* !defined(XEN) */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,6 +105,10 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.41 2008/01/01 13:40:21 yamt Exp $");
 
 
 #include <uvm/uvm_extern.h>
+
+#if NTPROF > 0
+#include <x86/tprof.h>
+#endif /* NTPROF > 0 */
 
 #include <machine/cpu.h>
 #include <machine/cpufunc.h>
@@ -576,8 +586,12 @@ faultcommon:
 		}
 		break;
 
-#if	NISA > 0
 	case T_NMI:
+#if NTPROF > 0
+		if (tprof_pmi_nmi(frame))
+			return;
+#endif /* NTPROF > 0 */
+#if	NISA > 0
 #if defined(KGDB) || defined(DDB)
 		/* NMI can be hooked up to a pushbutton for debugging */
 		printf ("NMI ... going to debugger\n");
@@ -598,6 +612,7 @@ faultcommon:
 		else
 			return;
 #endif /* NISA > 0 */
+		;	/* avoid a label at end of compound statement */
 	}
 
 	if ((type & T_USER) == 0)
