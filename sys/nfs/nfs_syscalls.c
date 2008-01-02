@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.128 2007/12/20 23:03:14 dsl Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.129 2008/01/02 11:49:04 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.128 2007/12/20 23:03:14 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.129 2008/01/02 11:49:04 ad Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -479,11 +479,13 @@ nfssvc_addsock(fp, mynam)
 	slp->ns_aflags = SLP_A_NEEDQ;
 	slp->ns_gflags = 0;
 	slp->ns_sflags = 0;
+	KERNEL_LOCK(1, curlwp);
 	s = splsoftnet();
 	so->so_upcallarg = (void *)slp;
 	so->so_upcall = nfsrv_soupcall;
 	so->so_rcv.sb_flags |= SB_UPCALL;
 	splx(s);
+	KERNEL_UNLOCK_ONE(curlwp);
 	nfsrv_wakenfsd(slp);
 	return (0);
 }
@@ -855,12 +857,14 @@ nfsrv_zapsock(slp)
 
 	so = slp->ns_so;
 	KASSERT(so != NULL);
+	KERNEL_LOCK(1, curlwp);
 	s = splsoftnet();
 	so->so_upcall = NULL;
 	so->so_upcallarg = NULL;
 	so->so_rcv.sb_flags &= ~SB_UPCALL;
 	splx(s);
 	soshutdown(so, SHUT_RDWR);
+	KERNEL_UNLOCK_ONE(curlwp);
 
 	if (slp->ns_nam)
 		m_free(slp->ns_nam);
@@ -1045,10 +1049,8 @@ nfssvc_iod(void *arg)
 	struct nfs_iod *myiod;
 	struct nfsmount *nmp;
 
-	KERNEL_LOCK(1, curlwp);
 	myiod = kmem_alloc(sizeof(*myiod), KM_SLEEP);
 	mutex_init(&myiod->nid_lock, MUTEX_DEFAULT, IPL_NONE);
-	KERNEL_UNLOCK_LAST(curlwp);
 	cv_init(&myiod->nid_cv, "nfsiod");
 	myiod->nid_exiting = false;
 	myiod->nid_mount = NULL;
@@ -1123,10 +1125,8 @@ quit:
 	mutex_exit(&myiod->nid_lock);
 
 	cv_destroy(&myiod->nid_cv);
-	KERNEL_LOCK(1, curlwp);
 	mutex_destroy(&myiod->nid_lock);
 	kmem_free(myiod, sizeof(*myiod));
-	KERNEL_UNLOCK_LAST(curlwp);
 
 	kthread_exit(0);
 }
@@ -1166,10 +1166,8 @@ nfs_set_niothreads(int newval)
 			 */
 
 			mutex_exit(&nfs_iodlist_lock);
-			KERNEL_LOCK(1, curlwp);
 			error = kthread_create(PRI_NONE, KTHREAD_MPSAFE, NULL,
 			    nfssvc_iod, NULL, NULL, "nfsio");
-			KERNEL_UNLOCK_LAST(curlwp);
 			mutex_enter(&nfs_iodlist_lock);
 			if (error) {
 				/* give up */

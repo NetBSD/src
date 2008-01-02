@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.230 2008/01/01 21:28:40 yamt Exp $	*/
+/*	$NetBSD: trap.c,v 1.231 2008/01/02 11:48:25 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2005 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.230 2008/01/01 21:28:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.231 2008/01/02 11:48:25 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -472,25 +472,21 @@ copyfault:
 		return;
 
 	case T_PROTFLT|T_USER:		/* protection fault */
-		KERNEL_LOCK(1, l);
 #ifdef VM86
 		if (frame->tf_eflags & PSL_VM) {
 			vm86_gpfault(l, type & ~T_USER);
-			KERNEL_UNLOCK_LAST(l);
 			goto out;
 		}
 #endif
 		/* If pmap_exec_fixup does something, let's retry the trap. */
 		if (pmap_exec_fixup(&p->p_vmspace->vm_map, frame,
 		    &l->l_addr->u_pcb)) {
-			KERNEL_UNLOCK_LAST(l);
 			goto out;
 		}
 		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_signo = SIGSEGV;
 		ksi.ksi_addr = (void *)rcr2();
 		ksi.ksi_code = SEGV_ACCERR;
-		KERNEL_UNLOCK_LAST(l);
 		goto trapsignal;
 
 	case T_TSSFLT|T_USER:
@@ -621,7 +617,6 @@ copyfault:
 #endif /* defined(XEN) && !defined(XEN3) */
 
 		cr2 = FETCH_CR2;
-		KERNEL_LOCK(1, NULL);
 		goto faultcommon;
 
 	case T_PAGEFLT|T_USER: {	/* page fault */
@@ -632,7 +627,6 @@ copyfault:
 		extern struct vm_map *kernel_map;
 
 		cr2 = FETCH_CR2;
-		KERNEL_LOCK(1, l);
 	faultcommon:
 		vm = p->p_vmspace;
 		if (vm == NULL)
@@ -673,8 +667,6 @@ copyfault:
 				uvm_grow(p, va);
 
 			if (type == T_PAGEFLT) {
-				KERNEL_UNLOCK_ONE(NULL);
-
 				/*
 				 * we need to switch pmap now if we're in
 				 * the middle of copyin/out.
@@ -692,7 +684,6 @@ copyfault:
 				}
 				return;
 			}
-			KERNEL_UNLOCK_LAST(l);
 			goto out;
 		}
 		KSI_INIT_TRAP(&ksi);
@@ -707,10 +698,8 @@ copyfault:
 
 		if (type == T_PAGEFLT) {
 			onfault = onfault_handler(pcb, frame);
-			if (onfault != NULL) {
-				KERNEL_UNLOCK_ONE(NULL);
+			if (onfault != NULL)
 				goto copyfault;
-			}
 			printf("uvm_fault(%p, %#lx, %d) -> %#x\n",
 			    map, va, ftype, error);
 			goto we_re_toast;
@@ -725,11 +714,6 @@ copyfault:
 			ksi.ksi_signo = SIGSEGV;
 		}
 		(*p->p_emul->e_trapsignal)(l, &ksi);
-		if (type != T_PAGEFLT) {
-			KERNEL_UNLOCK_LAST(l);
-		} else {
-			KERNEL_UNLOCK_ONE(NULL);
-		}
 		break;
 	}
 
@@ -761,9 +745,7 @@ copyfault:
 			else
 				ksi.ksi_code = TRAP_TRACE;
 			ksi.ksi_addr = (void *)frame->tf_eip;
-			KERNEL_LOCK(1, l);
 			(*p->p_emul->e_trapsignal)(l, &ksi);
-			KERNEL_UNLOCK_LAST(l);
 		}
 		break;
 
@@ -811,9 +793,7 @@ out:
 	return;
 trapsignal:
 	ksi.ksi_trap = type & ~T_USER;
-	KERNEL_LOCK(1, l);
 	(*p->p_emul->e_trapsignal)(l, &ksi);
-	KERNEL_UNLOCK_LAST(l);
 	userret(l);
 }
 
@@ -835,7 +815,5 @@ startlwp(arg)
 	}
 #endif
 	pool_put(&lwp_uc_pool, uc);
-
-	KERNEL_UNLOCK_LAST(l);
 	userret(l);
 }

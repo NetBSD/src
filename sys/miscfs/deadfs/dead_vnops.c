@@ -1,4 +1,4 @@
-/*	$NetBSD: dead_vnops.c,v 1.45 2007/10/10 20:42:28 ad Exp $	*/
+/*	$NetBSD: dead_vnops.c,v 1.46 2008/01/02 11:48:58 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dead_vnops.c,v 1.45 2007/10/10 20:42:28 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dead_vnops.c,v 1.46 2008/01/02 11:48:58 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -300,7 +300,7 @@ dead_getpages(void *v)
 	} */ *ap = v;
 
 	if ((ap->a_flags & PGO_LOCKED) == 0)
-		simple_unlock(&ap->a_vp->v_interlock);
+		mutex_exit(&ap->a_vp->v_interlock);
 
 	return (EFAULT);
 }
@@ -317,13 +317,12 @@ chkvnlock(vp, interlock)
 	int locked = 0;
 
 	if (!interlock)
-		simple_lock(&vp->v_interlock);
+		mutex_enter(&vp->v_interlock);
 	while (vp->v_iflag & VI_XLOCK) {
-		vp->v_iflag |= VI_XWANT;
-		(void) tsleep(vp, PINOD, "deadchk", 0);
+		vwait(vp, VI_XLOCK);
 		locked = 1;
 	}
-	simple_unlock(&vp->v_interlock);
+	mutex_exit(&vp->v_interlock);
 
 	return (locked);
 }

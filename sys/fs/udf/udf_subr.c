@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.43 2007/12/11 12:05:27 lukem Exp $ */
+/* $NetBSD: udf_subr.c,v 1.44 2008/01/02 11:48:47 ad Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.43 2007/12/11 12:05:27 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.44 2008/01/02 11:48:47 ad Exp $");
 #endif /* not lint */
 
 
@@ -1783,7 +1783,7 @@ loop:
 		    unp->loc.loc.part_num == icbptr->loc.part_num) {
 			vp = unp->vnode;
 			assert(vp);
-			simple_lock(&vp->v_interlock);
+			mutex_enter(&vp->v_interlock);
 			mutex_exit(&ump->ihash_lock);
 			if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK))
 				goto loop;
@@ -2709,27 +2709,32 @@ udf_read_file_extent(struct udf_node *node,
 		     uint32_t from, uint32_t sectors,
 		     uint8_t *blob)
 {
-	struct buf buf;
+	struct buf *buf;
 	uint32_t sector_size;
+	int rv;
 
-	BUF_INIT(&buf);
+	buf = getiobuf(NULL, true);
 
 	sector_size = node->ump->discinfo.sector_size;
 
-	buf.b_bufsize = sectors * sector_size;
-	buf.b_data    = blob;
-	buf.b_bcount  = buf.b_bufsize;
-	buf.b_resid   = buf.b_bcount;
-	buf.b_flags   = B_BUSY | B_READ;
-	buf.b_vp      = node->vnode;
-	buf.b_proc    = NULL;
+	buf->b_bufsize = sectors * sector_size;
+	buf->b_data    = blob;
+	buf->b_bcount  = buf->b_bufsize;
+	buf->b_resid   = buf->b_bcount;
+	buf->b_cflags  = BC_BUSY;
+	buf->b_flags   = B_READ;
+	buf->b_vp      = node->vnode;
+	buf->b_proc    = NULL;
 
-	buf.b_blkno  = from;
-	buf.b_lblkno = 0;
-	BIO_SETPRIO(&buf, BPRIO_TIMELIMITED);
+	buf->b_blkno  = from;
+	buf->b_lblkno = 0;
+	BIO_SETPRIO(buf, BPRIO_TIMELIMITED);
 
-	udf_read_filebuf(node, &buf);
-	return biowait(&buf);
+	udf_read_filebuf(node, buf);
+	rv = biowait(buf);
+	putiobuf(buf);
+
+	return rv;
 }
 
 
@@ -2835,7 +2840,7 @@ udf_read_filebuf(struct udf_node *node, struct buf *buf)
 			rbuflen = run_length * sector_size;
 			rblk    = run_start  * (sector_size/DEV_BSIZE);
 
-			nestbuf = getiobuf();
+			nestbuf = getiobuf(NULL, true);
 			nestiobuf_setup(buf, nestbuf, buf_offset, rbuflen);
 			/* nestbuf is B_ASYNC */
 
