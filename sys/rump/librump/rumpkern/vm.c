@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.25 2008/01/02 11:49:06 ad Exp $	*/
+/*	$NetBSD: vm.c,v 1.26 2008/01/02 15:44:04 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -175,6 +175,7 @@ vn_get(struct uvm_object *uobj, voff_t off, struct vm_page **pgs,
 {
 	struct vnode *vp = (struct vnode *)uobj;
 
+	mutex_enter(&vp->v_interlock);
 	return VOP_GETPAGES(vp, off, pgs, npages, centeridx, access_type,
 	    advice, flags);
 }
@@ -184,6 +185,7 @@ vn_put(struct uvm_object *uobj, voff_t offlo, voff_t offhi, int flags)
 {
 	struct vnode *vp = (struct vnode *)uobj;
 
+	mutex_enter(&vp->v_interlock);
 	return VOP_PUTPAGES(vp, offlo, offhi, flags);
 }
 
@@ -221,7 +223,7 @@ ao_get(struct uvm_object *uobj, voff_t off, struct vm_page **pgs,
 			pgs[i] = pg;
 		}
 	}
-	simple_unlock(&uobj->vmobjlock);
+	mutex_exit(&uobj->vmobjlock);
 
 	return 0;
 
@@ -234,13 +236,13 @@ ao_put(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 
 	/* we only free all pages for now */
 	if ((flags & PGO_FREE) == 0 || (flags & PGO_ALLPAGES) == 0) {
-		simple_unlock(&uobj->vmobjlock);
+		mutex_exit(&uobj->vmobjlock);
 		return 0;
 	}
 
 	while ((pg = TAILQ_FIRST(&uobj->memq)) != NULL)
 		uvm_pagefree(pg);
-	simple_unlock(&uobj->vmobjlock);
+	mutex_exit(&uobj->vmobjlock);
 
 	return 0;
 }
@@ -254,7 +256,7 @@ uao_create(vsize_t size, int flags)
 	memset(uobj, 0, sizeof(struct uvm_object));
 	uobj->pgops = &aobj_pager;
 	TAILQ_INIT(&uobj->memq);
-	simple_lock_init(&uobj->vmobjlock);
+	mutex_init(&uobj->vmobjlock, MUTEX_DEFAULT, IPL_NONE);
 
 	return uobj;
 }
@@ -308,7 +310,6 @@ rump_ubc_magic_uiomove(void *va, size_t n, struct uio *uio, int *rvp,
 
 	allocsize = npages * sizeof(pgs);
 	pgs = kmem_zalloc(allocsize, KM_SLEEP);
-	simple_lock(&uwinp->uwin_obj->vmobjlock);
 	rv = uwinp->uwin_obj->pgops->pgo_get(uwinp->uwin_obj,
 	    uwinp->uwin_off + ((uint8_t *)va - uwinp->uwin_mem),
 	    pgs, &npages, 0, 0, 0, 0);
@@ -464,7 +465,6 @@ uvm_pagelookup(struct uvm_object *uobj, voff_t off)
 
 	TAILQ_FOREACH(pg, &uobj->memq, listq) {
 		if (pg->offset == off) {
-			simple_unlock(&uobj->vmobjlock);
 			return pg;
 		}
 	}
@@ -564,7 +564,7 @@ uvm_vnp_zerorange(struct vnode *vp, off_t off, size_t len)
 	while (len) {
 		npages = MIN(maxpages, round_page(len) >> PAGE_SHIFT);
 		memset(pgs, 0, npages * sizeof(struct vm_page *));
-		simple_lock(&uobj->vmobjlock);
+		mutex_enter(&uobj->vmobjlock);
 		rv = uobj->pgops->pgo_get(uobj, off, pgs, &npages, 0, 0, 0, 0);
 		assert(npages > 0);
 

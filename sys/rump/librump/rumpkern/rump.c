@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.25 2007/12/30 23:30:27 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.26 2008/01/02 15:44:03 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -443,6 +443,13 @@ rump_vp_islocked(struct vnode *vp)
 {
 
 	return VOP_ISLOCKED(vp);
+}
+
+void
+rump_vp_interlock(struct vnode *vp)
+{
+
+	mutex_enter(&vp->v_interlock);
 }
 
 int
