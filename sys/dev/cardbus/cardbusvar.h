@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbusvar.h,v 1.37 2007/12/09 20:27:55 jmcneill Exp $	*/
+/*	$NetBSD: cardbusvar.h,v 1.38 2008/01/02 23:11:34 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -40,9 +40,11 @@
 #include <dev/cardbus/rbus.h>
 #endif
 
+struct {
+	int dummy;
+} cardbus_chipset_tag;
 
-
-typedef void *cardbus_chipset_tag_t;
+typedef struct cardbus_chipset_tag *cardbus_chipset_tag_t;
 typedef int cardbus_intr_handle_t;
 
 
@@ -359,9 +361,9 @@ void cardbus_conf_restore(cardbus_chipset_tag_t, cardbus_function_tag_t,
 #define Cardbus_free_tag(ct, tag) (*(ct)->ct_cf->cardbus_free_tag)((ct)->ct_cc, (tag))
 #define cardbus_free_tag(cc, cf, tag) (*(cf)->cardbus_free_tag)(cc, (tag))
 
-#define Cardbus_conf_read(ct, tag, offs) (*(ct)->ct_cf->cardbus_conf_read)((ct)->ct_cf, (tag), (offs))
+#define Cardbus_conf_read(ct, tag, offs) (*(ct)->ct_cf->cardbus_conf_read)((ct)->ct_cc, (tag), (offs))
 #define cardbus_conf_read(cc, cf, tag, offs) ((cf)->cardbus_conf_read)((cc), (tag), (offs))
-#define Cardbus_conf_write(ct, tag, offs, val) (*(ct)->ct_cf->cardbus_conf_write)((ct)->ct_cf, (tag), (offs), (val))
+#define Cardbus_conf_write(ct, tag, offs, val) (*(ct)->ct_cf->cardbus_conf_write)((ct)->ct_cc, (tag), (offs), (val))
 #define cardbus_conf_write(cc, cf, tag, offs, val) ((cf)->cardbus_conf_write)((cc), (tag), (offs), (val))
 
 #endif /* !_DEV_CARDBUS_CARDBUSVAR_H_ */
