@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.130 2007/12/28 17:14:50 elad Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.131 2008/01/02 22:04:56 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.130 2007/12/28 17:14:50 elad Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.131 2008/01/02 22:04:56 yamt Exp $");
 
 /* If not included by exec_elf64.c, ELFSIZE won't be defined. */
 #ifndef ELFSIZE
@@ -478,8 +478,10 @@ elf_load_file(struct lwp *l, struct exec_package *epp, char *path,
 	if ((error = elf_check_header(&eh, ET_DYN)) != 0)
 		goto bad;
 
-	if (eh.e_phnum > MAXPHNUM)
+	if (eh.e_phnum > MAXPHNUM || eh.e_phnum == 0) {
+		error = ENOEXEC;
 		goto bad;
+	}
 
 	phsize = eh.e_phnum * sizeof(Elf_Phdr);
 	ph = (Elf_Phdr *)malloc(phsize, M_TEMP, M_WAITOK);
@@ -662,7 +664,7 @@ exec_elf_makecmds(struct lwp *l, struct exec_package *epp)
 	if (elf_check_header(eh, ET_EXEC) != 0 && !is_dyn)
 		return ENOEXEC;
 
-	if (eh->e_phnum > MAXPHNUM)
+	if (eh->e_phnum > MAXPHNUM || eh->e_phnum == 0)
 		return ENOEXEC;
 
 	error = vn_marktext(epp->ep_vp);
@@ -687,8 +689,10 @@ exec_elf_makecmds(struct lwp *l, struct exec_package *epp)
 	for (i = 0; i < eh->e_phnum; i++) {
 		pp = &ph[i];
 		if (pp->p_type == PT_INTERP) {
-			if (pp->p_filesz >= MAXPATHLEN)
+			if (pp->p_filesz >= MAXPATHLEN) {
+				error = ENOEXEC;
 				goto bad;
+			}
 			interp = PNBUF_GET();
 			interp[0] = '\0';
 			if ((error = exec_read_from(l, epp->ep_vp,
@@ -743,8 +747,10 @@ exec_elf_makecmds(struct lwp *l, struct exec_package *epp)
 			 * XXX
 			 * Can handle only 2 sections: text and data
 			 */
-			if (nload++ == 2)
+			if (nload++ == 2) {
+				error = ENOEXEC;
 				goto bad;
+			}
 			elf_load_psection(&epp->ep_vmcmds, epp->ep_vp,
 			    &ph[i], &addr, &size, &prot, VMCMD_FIXED);
 
@@ -830,7 +836,7 @@ bad:
 		PNBUF_PUT(interp);
 	free(ph, M_TEMP);
 	kill_vmcmds(&epp->ep_vmcmds);
-	return ENOEXEC;
+	return error;
 }
 
 int
@@ -845,7 +851,7 @@ netbsd_elf_signature(struct lwp *l, struct exec_package *epp,
 	char *ndata;
 
 	epp->ep_pax_flags = 0;
-	if (eh->e_phnum > MAXPHNUM)
+	if (eh->e_phnum > MAXPHNUM || eh->e_phnum == 0)
 		return ENOEXEC;
 
 	phsize = eh->e_phnum * sizeof(Elf_Phdr);
