@@ -1,4 +1,4 @@
-/*	$NetBSD: hdfd.c,v 1.59 2007/10/17 19:53:47 garbled Exp $	*/
+/*	$NetBSD: hdfd.c,v 1.59.8.1 2008/01/02 21:47:28 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996 Leo Weppelman
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdfd.c,v 1.59 2007/10/17 19:53:47 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdfd.c,v 1.59.8.1 2008/01/02 21:47:28 bouyer Exp $");
 
 #include "opt_ddb.h"
 
@@ -1531,11 +1531,12 @@ fdformat(dev, finfo, p)
 	struct buf *bp;
 
 	/* set up a buffer header for fdstrategy() */
-	bp = (struct buf *)malloc(sizeof(struct buf), M_TEMP, M_NOWAIT);
+	bp = getiobuf(NULL, false);
 	if(bp == 0)
 		return ENOBUFS;
 	bzero((void *)bp, sizeof(struct buf));
-	bp->b_flags = B_BUSY | B_PHYS | B_FORMAT;
+	bp->b_flags = B_PHYS | B_FORMAT;
+	bp->b_cflags |= BC_BUSY;
 	bp->b_proc = p;
 	bp->b_dev = dev;
 
@@ -1557,13 +1558,13 @@ fdformat(dev, finfo, p)
 	fdstrategy(bp);
 
 	/* ...and wait for it to complete */
-	s = splbio();
-	while(!(bp->b_flags & B_DONE)) {
-		rv = tsleep((void *)bp, PRIBIO, "fdform", 20 * hz);
+	mutex_enter(bp->b_objlock);
+	while(!(bp->b_oflags & BO_DONE)) {
+		rv = cv_timedwait(&bp->b_done, 20 * hz);
 		if (rv == EWOULDBLOCK)
 			break;
 	}
-	splx(s);
+	mutex_exit(bp->b_objlock);
        
 	if (rv == EWOULDBLOCK) {
 		/* timed out */
@@ -1572,7 +1573,7 @@ fdformat(dev, finfo, p)
 	} else if (bp->b_error != 0) {
 		rv = bp->b_error;
 	}
-	free(bp, M_TEMP);
+	putiobuf(bp);
 	return rv;
 }
 

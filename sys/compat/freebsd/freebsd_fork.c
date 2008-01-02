@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_fork.c,v 1.5 2005/12/11 12:20:02 christos Exp $	*/
+/*	$NetBSD: freebsd_fork.c,v 1.5.60.1 2008/01/02 21:51:51 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_fork.c,v 1.5 2005/12/11 12:20:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_fork.c,v 1.5.60.1 2008/01/02 21:51:51 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,11 +57,11 @@ __KERNEL_RCSID(0, "$NetBSD: freebsd_fork.c,v 1.5 2005/12/11 12:20:02 christos Ex
  * rfork()
  */
 int
-freebsd_sys_rfork(struct lwp *l, void *v, register_t *retval)
+freebsd_sys_rfork(struct lwp *l, const struct freebsd_sys_rfork_args *uap, register_t *retval)
 {
-	struct freebsd_sys_rfork_args /* {
+	/* {
 		syscallargs(int) flags;
-	} */ *uap = v;
+	} */
 	int flags;
 
 	flags = 0;

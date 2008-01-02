@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.25 2007/03/04 06:00:06 christos Exp $	*/
+/*	$NetBSD: svr4_machdep.c,v 1.25.32.1 2008/01/02 21:48:34 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.25 2007/03/04 06:00:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.25.32.1 2008/01/02 21:48:34 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -287,12 +287,12 @@ svr4_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
  * sysm68k()
  */
 int
-svr4_sys_sysarch(struct lwp *l, void *v, register_t *retval)
+svr4_sys_sysarch(struct lwp *l, const struct svr4_sys_sysarch_args *uap, register_t *retval)
 {
-	struct svr4_sys_sysarch_args /* {
+	/* {
 		syscallarg(int) op;
 		syscallarg(void *) a1;
-	} */ *uap = v;
+	} */
 	char tmp[MAXHOSTNAMELEN];
 	size_t len;
 	int error, name[2];

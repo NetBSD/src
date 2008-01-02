@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_resource.c,v 1.12 2007/12/08 18:36:03 dsl Exp $ */
+/*	$NetBSD: irix_resource.c,v 1.12.4.1 2008/01/02 21:52:08 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_resource.c,v 1.12 2007/12/08 18:36:03 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_resource.c,v 1.12.4.1 2008/01/02 21:52:08 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -96,12 +96,12 @@ irix_to_native_resource(int irix_res)
 }
 
 int
-irix_sys_getrlimit(struct lwp *l, void *v, register_t *retval)
+irix_sys_getrlimit(struct lwp *l, const struct irix_sys_getrlimit_args *uap, register_t *retval)
 {
-	struct irix_sys_getrlimit_args /* {
+	/* {
 		syscallarg(int) resource;
 		syscallarg(struct irix_rlimit *) rlp;
-	} */ *uap = v;
+	} */
 	struct rlimit *rlp;
 	struct irix_rlimit irlp;
 	int which;
@@ -126,12 +126,12 @@ irix_sys_getrlimit(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-irix_sys_getrlimit64(struct lwp *l, void *v, register_t *retval)
+irix_sys_getrlimit64(struct lwp *l, const struct irix_sys_getrlimit64_args *uap, register_t *retval)
 {
-	struct irix_sys_getrlimit64_args /* {
+	/* {
 		syscallarg(int) resource;
 		syscallarg(struct irix_rlimit64 *) rlp;
-	} */ *uap = v;
+	} */
 	struct rlimit *rlp;
 	struct irix_rlimit64 irlp;
 	int which;
@@ -156,12 +156,12 @@ irix_sys_getrlimit64(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-irix_sys_setrlimit(struct lwp *l, void *v, register_t *retval)
+irix_sys_setrlimit(struct lwp *l, const struct irix_sys_setrlimit_args *uap, register_t *retval)
 {
-	struct irix_sys_getrlimit_args /* {
+	/* {
 		syscallarg(int) resource;
 		syscallarg(const struct irix_rlimit *) rlp;
-	} */ *uap = v;
+	} */
 	struct irix_rlimit irlp;
 	struct rlimit rlp;
 	int which;
@@ -188,12 +188,12 @@ irix_sys_setrlimit(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-irix_sys_setrlimit64(struct lwp *l, void *v, register_t *retval)
+irix_sys_setrlimit64(struct lwp *l, const struct irix_sys_setrlimit64_args *uap, register_t *retval)
 {
-	struct irix_sys_getrlimit_args /* {
+	/* {
 		syscallarg(int) resource;
 		syscallarg(const struct irix_rlimit64 *) rlp;
-	} */ *uap = v;
+	} */
 	struct rlimit rlp;
 	struct irix_rlimit64 irlp;
 	int which;

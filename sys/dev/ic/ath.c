@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.93 2007/12/09 20:27:57 jmcneill Exp $	*/
+/*	$NetBSD: ath.c,v 1.93.2.1 2008/01/02 21:54:07 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.104 2005/09/16 10:09:23 ru Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.93 2007/12/09 20:27:57 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.93.2.1 2008/01/02 21:54:07 bouyer Exp $");
 #endif
 
 /*
@@ -701,7 +701,6 @@ ath_detach(struct ath_softc *sc)
 	ath_hal_detach(sc->sc_ah);
 	if_detach(ifp);
 	splx(s);
-	powerhook_disestablish(sc->sc_powerhook);
 
 	return 0;
 }
@@ -947,6 +946,9 @@ ath_init(struct ath_softc *sc)
 
 	DPRINTF(sc, ATH_DEBUG_ANY, "%s: if_flags 0x%x\n",
 		__func__, ifp->if_flags);
+
+	if (!device_has_power(&sc->sc_dev))
+		return EBUSY;
 
 	ATH_LOCK(sc);
 

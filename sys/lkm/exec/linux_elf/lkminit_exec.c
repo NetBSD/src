@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_exec.c,v 1.11 2007/10/19 18:52:13 njoly Exp $ */
+/* $NetBSD: lkminit_exec.c,v 1.11.8.1 2008/01/02 21:56:40 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_exec.c,v 1.11 2007/10/19 18:52:13 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_exec.c,v 1.11.8.1 2008/01/02 21:56:40 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,7 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: lkminit_exec.c,v 1.11 2007/10/19 18:52:13 njoly Exp 
 
 #include <compat/linux/common/linux_exec.h>
 
-int exec_linux_elf_lkmentry __P((struct lkm_table *, int, int));
+int exec_linux_elf_lkmentry(struct lkm_table *, int, int);
 
 static struct execsw exec_linux_elf =
 	/* Linux Elf */

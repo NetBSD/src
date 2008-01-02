@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_nhash.c,v 1.2.32.1 2007/12/13 21:56:50 bouyer Exp $	*/
+/*	$NetBSD: hfs_nhash.c,v 1.2.32.2 2008/01/02 21:55:29 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hfs_nhash.c,v 1.2.32.1 2007/12/13 21:56:50 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hfs_nhash.c,v 1.2.32.2 2008/01/02 21:55:29 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,7 +127,7 @@ loop:
 	LIST_FOREACH(hp, hpp, h_hash) {
 		if (cnid == hp->h_rec.cnid && dev == hp->h_dev) {
 			vp = HTOV(hp);
-			simple_lock(&vp->v_interlock);
+			mutex_enter(&vp->v_interlock);
 			simple_unlock(&hfs_nhash_slock);
 			if (vget(vp, flags | LK_INTERLOCK))
 				goto loop;

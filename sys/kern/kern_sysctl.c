@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.210 2007/08/15 12:07:34 ad Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.210.14.1 2008/01/02 21:56:01 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.210 2007/08/15 12:07:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.210.14.1 2008/01/02 21:56:01 bouyer Exp $");
 
 #include "opt_defcorename.h"
 #include "ksyms.h"
@@ -263,16 +263,16 @@ sysctl_init(void)
  * ********************************************************************
  */
 int
-sys___sysctl(struct lwp *l, void *v, register_t *retval)
+sys___sysctl(struct lwp *l, const struct sys___sysctl_args *uap, register_t *retval)
 {
-	struct sys___sysctl_args /* {
+	/* {
 		syscallarg(const int *) name;
 		syscallarg(u_int) namelen;
 		syscallarg(void *) old;
 		syscallarg(size_t *) oldlenp;
 		syscallarg(const void *) new;
 		syscallarg(size_t) newlen;
-	} */ *uap = v;
+	} */
 	int error, nerror, name[CTL_MAXNAME];
 	size_t oldlen, savelen, *oldlenp;
 
@@ -304,9 +304,12 @@ sys___sysctl(struct lwp *l, void *v, register_t *retval)
 	/*
 	 * wire old so that copyout() is less likely to fail?
 	 */
+	KERNEL_LOCK(1, NULL);			/* XXXSMP */
 	error = sysctl_lock(l, SCARG(uap, old), savelen);
-	if (error)
+	if (error) {
+		KERNEL_UNLOCK_ONE(NULL);	/* XXXSMP */
 		return (error);
+	}
 
 	/*
 	 * do sysctl work (NULL means main built-in default tree)
@@ -320,6 +323,7 @@ sys___sysctl(struct lwp *l, void *v, register_t *retval)
 	 * release the sysctl lock
 	 */
 	sysctl_unlock(l);
+	KERNEL_UNLOCK_ONE(NULL);		/* XXXSMP */
 
 	/*
 	 * set caller's oldlen to new value even in the face of an

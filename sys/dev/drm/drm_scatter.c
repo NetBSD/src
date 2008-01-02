@@ -1,4 +1,4 @@
-/* $NetBSD: drm_scatter.c,v 1.2.6.1 2007/12/13 21:55:30 bouyer Exp $ */
+/* $NetBSD: drm_scatter.c,v 1.2.6.2 2008/01/02 21:54:01 bouyer Exp $ */
 
 /* drm_scatter.h -- IOCTLs to manage scatter/gather memory -*- linux-c -*-
  * Created: Mon Dec 18 23:20:54 2000 by gareth@valinux.com */
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_scatter.c,v 1.2.6.1 2007/12/13 21:55:30 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_scatter.c,v 1.2.6.2 2008/01/02 21:54:01 bouyer Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/drm_scatter.c,v 1.3 2006/05/17 06:29:36 anholt Exp $");
 */
@@ -56,7 +56,7 @@ int drm_sg_alloc(DRM_IOCTL_ARGS)
 	unsigned long pages;
 	int i;
 
-	DRM_DEBUG( "%s\n", __FUNCTION__ );
+	DRM_DEBUG( "%s\n", __func__ );
 
 	if ( dev->sg )
 		return EINVAL;

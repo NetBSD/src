@@ -1,4 +1,4 @@
-/*	$NetBSD: pdq_ifsubr.c,v 1.49 2007/09/01 07:32:27 dyoung Exp $	*/
+/*	$NetBSD: pdq_ifsubr.c,v 1.49.12.1 2008/01/02 21:54:14 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pdq_ifsubr.c,v 1.49 2007/09/01 07:32:27 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pdq_ifsubr.c,v 1.49.12.1 2008/01/02 21:54:14 bouyer Exp $");
 
 #ifdef __NetBSD__
 #include "opt_inet.h"
@@ -449,7 +449,7 @@ pdq_ifioctl(
 	case SIOCGIFADDR: {
 	    struct ifreq *ifr = (struct ifreq *)data;
 	    memcpy((void *) ((struct sockaddr *)&ifr->ifr_data)->sa_data,
-		(void *) PDQ_LANADDR(sc), 6);
+		(const void *) PDQ_LANADDR(sc), 6);
 	    break;
 	}
 

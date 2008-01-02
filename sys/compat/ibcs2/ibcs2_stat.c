@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_stat.c,v 1.43 2007/12/08 19:29:38 pooka Exp $	*/
+/*	$NetBSD: ibcs2_stat.c,v 1.43.4.1 2008/01/02 21:52:04 bouyer Exp $	*/
 /*
  * Copyright (c) 1995, 1998 Scott Bartram
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_stat.c,v 1.43 2007/12/08 19:29:38 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_stat.c,v 1.43.4.1 2008/01/02 21:52:04 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,14 +128,14 @@ cvt_statvfs(struct statvfs *sp, void *tbuf, int len)
 }
 
 int
-ibcs2_sys_statfs(struct lwp *l, void *v, register_t *retval)
+ibcs2_sys_statfs(struct lwp *l, const struct ibcs2_sys_statfs_args *uap, register_t *retval)
 {
-	struct ibcs2_sys_statfs_args /* {
+	/* {
 		syscallarg(const char *) path;
 		syscallarg(struct ibcs2_statfs *) buf;
 		syscallarg(int) len;
 		syscallarg(int) fstype;
-	} */ *uap = v;
+	} */
 	struct mount *mp;
 	struct statvfs *sp;
 	int error;
@@ -155,14 +155,14 @@ ibcs2_sys_statfs(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-ibcs2_sys_fstatfs(struct lwp *l, void *v, register_t *retval)
+ibcs2_sys_fstatfs(struct lwp *l, const struct ibcs2_sys_fstatfs_args *uap, register_t *retval)
 {
-	struct ibcs2_sys_fstatfs_args /* {
+	/* {
 		syscallarg(int) fd;
 		syscallarg(struct ibcs2_statfs *) buf;
 		syscallarg(int) len;
 		syscallarg(int) fstype;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 	struct file *fp;
 	struct mount *mp;
@@ -184,12 +184,12 @@ ibcs2_sys_fstatfs(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-ibcs2_sys_statvfs(struct lwp *l, void *v, register_t *retval)
+ibcs2_sys_statvfs(struct lwp *l, const struct ibcs2_sys_statvfs_args *uap, register_t *retval)
 {
-	struct ibcs2_sys_statvfs_args /* {
+	/* {
 		syscallarg(const char *) path;
 		syscallarg(struct ibcs2_statvfs *) buf;
-	} */ *uap = v;
+	} */
 	struct mount *mp;
 	struct statvfs *sp;
 	int error;
@@ -210,12 +210,12 @@ ibcs2_sys_statvfs(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-ibcs2_sys_fstatvfs(struct lwp *l, void *v, register_t *retval)
+ibcs2_sys_fstatvfs(struct lwp *l, const struct ibcs2_sys_fstatvfs_args *uap, register_t *retval)
 {
-	struct ibcs2_sys_fstatvfs_args /* {
+	/* {
 		syscallarg(int) fd;
 		syscallarg(struct ibcs2_statvfs *) buf;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 	struct file *fp;
 	struct mount *mp;
@@ -237,12 +237,12 @@ ibcs2_sys_fstatvfs(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-ibcs2_sys_stat(struct lwp *l, void *v, register_t *retval)
+ibcs2_sys_stat(struct lwp *l, const struct ibcs2_sys_stat_args *uap, register_t *retval)
 {
-	struct ibcs2_sys_stat_args /* {
+	/* {
 		syscallarg(const char *) path;
 		syscallarg(struct ibcs2_stat *) st;
-	} */ *uap = v;
+	} */
 	struct stat sb;
 	struct ibcs2_stat ibcs2_st;
 	int error;
@@ -256,12 +256,12 @@ ibcs2_sys_stat(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-ibcs2_sys_lstat(struct lwp *l, void *v, register_t *retval)
+ibcs2_sys_lstat(struct lwp *l, const struct ibcs2_sys_lstat_args *uap, register_t *retval)
 {
-	struct ibcs2_sys_lstat_args /* {
+	/* {
 		syscallarg(const char *) path;
 		syscallarg(struct ibcs2_stat *) st;
-	} */ *uap = v;
+	} */
 	struct stat sb;
 	struct ibcs2_stat ibcs2_st;
 	int error;
@@ -276,12 +276,12 @@ ibcs2_sys_lstat(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-ibcs2_sys_fstat(struct lwp *l, void *v, register_t *retval)
+ibcs2_sys_fstat(struct lwp *l, const struct ibcs2_sys_fstat_args *uap, register_t *retval)
 {
-	struct ibcs2_sys_fstat_args /* {
+	/* {
 		syscallarg(int) fd;
 		syscallarg(struct ibcs2_stat *) st;
-	} */ *uap = v;
+	} */
 	struct stat sb;
 	struct ibcs2_stat ibcs2_st;
 	int error;
@@ -295,13 +295,13 @@ ibcs2_sys_fstat(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-ibcs2_sys_utssys(struct lwp *l, void *v, register_t *retval)
+ibcs2_sys_utssys(struct lwp *l, const struct ibcs2_sys_utssys_args *uap, register_t *retval)
 {
-	struct ibcs2_sys_utssys_args /* {
+	/* {
 		syscallarg(int) a1;
 		syscallarg(int) a2;
 		syscallarg(int) flag;
-	} */ *uap = v;
+	} */
 
 	switch (SCARG(uap, flag)) {
 	case 0:			/* uname(struct utsname *) */

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_stat.c,v 1.31 2007/12/08 18:36:29 dsl Exp $	 */
+/*	$NetBSD: svr4_32_stat.c,v 1.31.4.1 2008/01/02 21:53:36 bouyer Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_stat.c,v 1.31 2007/12/08 18:36:29 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_stat.c,v 1.31.4.1 2008/01/02 21:53:36 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,7 +86,6 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_32_stat.c,v 1.31 2007/12/08 18:36:29 dsl Exp $"
 
 static void bsd_to_svr4_32_xstat(struct stat *, struct svr4_32_xstat *);
 static void bsd_to_svr4_32_stat64(struct stat *, struct svr4_32_stat64 *);
-int svr4_32_ustat(struct lwp *, void *, register_t *);
 static int svr4_32_to_bsd_pathconf(int);
 
 /*
@@ -166,15 +165,10 @@ bsd_to_svr4_32_stat64(struct stat *st, struct svr4_32_stat64 *st4)
 
 
 int
-svr4_32_sys_stat(struct lwp *l, void *v, register_t *retval)
+svr4_32_sys_stat(struct lwp *l, const struct svr4_32_sys_stat_args *uap, register_t *retval)
 {
-	struct svr4_32_sys_stat_args *uap = v;
 #ifdef SVR4_NO_OSTAT
-	struct svr4_32_sys_xstat_args_noconst {
-		syscallarg(int) two;
-		syscallarg(netbsd32_charp) path;
-		syscallarg(svr4_32_xstat_tp) ub;
-	} cup;
+	struct svr4_32_sys_xstat_args cup;
 
 	SCARG(&cup, two) = 2;
 	SCARG(&cup, path) = SCARG(uap, path);
@@ -201,15 +195,10 @@ svr4_32_sys_stat(struct lwp *l, void *v, register_t *retval)
 
 
 int
-svr4_32_sys_lstat(struct lwp *l, void *v, register_t *retval)
+svr4_32_sys_lstat(struct lwp *l, const struct svr4_32_sys_lstat_args *uap, register_t *retval)
 {
-	struct svr4_32_sys_lstat_args *uap = v;
 #ifdef SVR4_NO_OSTAT
-	struct svr4_32_sys_lxstat_args_noconst {
-		syscallarg(int) two;
-		syscallarg(netbsd32_charp) path;
-		syscallarg(svr4_32_xstat_tp) ub;
-	} cup;
+	struct svr4_32_sys_lxstat_args cup;
 
 	SCARG(&cup, two) = 2;
 	SCARG(&cup, path) = SCARG(uap, path);
@@ -236,9 +225,8 @@ svr4_32_sys_lstat(struct lwp *l, void *v, register_t *retval)
 
 
 int
-svr4_32_sys_fstat(struct lwp *l, void *v, register_t *retval)
+svr4_32_sys_fstat(struct lwp *l, const struct svr4_32_sys_fstat_args *uap, register_t *retval)
 {
-	struct svr4_32_sys_fstat_args *uap = v;
 #ifdef SVR4_NO_OSTAT
 	struct svr4_32_sys_fxstat_args cup;
 
@@ -264,9 +252,8 @@ svr4_32_sys_fstat(struct lwp *l, void *v, register_t *retval)
 
 
 int
-svr4_32_sys_xstat(struct lwp *l, void *v, register_t *retval)
+svr4_32_sys_xstat(struct lwp *l, const struct svr4_32_sys_xstat_args *uap, register_t *retval)
 {
-	struct svr4_32_sys_xstat_args *uap = v;
 	struct stat		st;
 	struct svr4_32_xstat	svr4_st;
 	int			error;
@@ -287,9 +274,8 @@ svr4_32_sys_xstat(struct lwp *l, void *v, register_t *retval)
 
 
 int
-svr4_32_sys_lxstat(struct lwp *l, void *v, register_t *retval)
+svr4_32_sys_lxstat(struct lwp *l, const struct svr4_32_sys_lxstat_args *uap, register_t *retval)
 {
-	struct svr4_32_sys_lxstat_args *uap = v;
 	struct stat		st;
 	struct svr4_32_xstat	svr4_st;
 	int			error;
@@ -310,9 +296,8 @@ svr4_32_sys_lxstat(struct lwp *l, void *v, register_t *retval)
 
 
 int
-svr4_32_sys_fxstat(struct lwp *l, void *v, register_t *retval)
+svr4_32_sys_fxstat(struct lwp *l, const struct svr4_32_sys_fxstat_args *uap, register_t *retval)
 {
-	struct svr4_32_sys_fxstat_args *uap = v;
 	struct stat		st;
 	struct svr4_32_xstat	svr4_st;
 	int			error;
@@ -329,9 +314,8 @@ svr4_32_sys_fxstat(struct lwp *l, void *v, register_t *retval)
 
 
 int
-svr4_32_sys_stat64(struct lwp *l, void *v, register_t *retval)
+svr4_32_sys_stat64(struct lwp *l, const struct svr4_32_sys_stat64_args *uap, register_t *retval)
 {
-	struct svr4_32_sys_stat64_args *uap = v;
 	struct stat		st;
 	struct svr4_32_stat64	svr4_st;
 	int			error;
@@ -352,9 +336,8 @@ svr4_32_sys_stat64(struct lwp *l, void *v, register_t *retval)
 
 
 int
-svr4_32_sys_lstat64(struct lwp *l, void *v, register_t *retval)
+svr4_32_sys_lstat64(struct lwp *l, const struct svr4_32_sys_lstat64_args *uap, register_t *retval)
 {
-	struct svr4_32_sys_lstat64_args *uap = v;
 	struct stat		st;
 	struct svr4_32_stat64	svr4_st;
 	int			error;
@@ -375,9 +358,8 @@ svr4_32_sys_lstat64(struct lwp *l, void *v, register_t *retval)
 
 
 int
-svr4_32_sys_fstat64(struct lwp *l, void *v, register_t *retval)
+svr4_32_sys_fstat64(struct lwp *l, const struct svr4_32_sys_fstat64_args *uap, register_t *retval)
 {
-	struct svr4_32_sys_fstat64_args *uap = v;
 	struct stat		st;
 	struct svr4_32_stat64	svr4_st;
 	int			error;
@@ -398,13 +380,13 @@ struct svr4_32_ustat_args {
 	syscallarg(svr4_32_ustatp)	name;
 };
 
-int
-svr4_32_ustat(struct lwp *l, void *v, register_t *retval)
+static int
+svr4_32_ustat(struct lwp *l, const struct svr4_32_ustat_args *uap, register_t *retval)
 {
-	struct svr4_32_ustat_args /* {
+	/* {
 		syscallarg(svr4_dev_t)		dev;
 		syscallarg(svr4_32_ustatp)	name;
-	} */ *uap = v;
+	} */
 	struct svr4_32_ustat	us;
 	int			error;
 
@@ -424,9 +406,8 @@ svr4_32_ustat(struct lwp *l, void *v, register_t *retval)
 
 
 int
-svr4_32_sys_uname(struct lwp *l, void *v, register_t *retval)
+svr4_32_sys_uname(struct lwp *l, const struct svr4_32_sys_uname_args *uap, register_t *retval)
 {
-	struct svr4_32_sys_uname_args *uap = v;
 	struct svr4_utsname	sut;
 
 	memset(&sut, 0, sizeof(sut));
@@ -452,9 +433,8 @@ svr4_32_sys_uname(struct lwp *l, void *v, register_t *retval)
 
 
 int
-svr4_32_sys_systeminfo(struct lwp *l, void *v, register_t *retval)
+svr4_32_sys_systeminfo(struct lwp *l, const struct svr4_32_sys_systeminfo_args *uap, register_t *retval)
 {
-	struct svr4_32_sys_systeminfo_args *uap = v;
 	const char *str = NULL;
 	int name[2];
 	int error;
@@ -590,9 +570,8 @@ svr4_32_sys_systeminfo(struct lwp *l, void *v, register_t *retval)
 
 
 int
-svr4_32_sys_utssys(struct lwp *l, void *v, register_t *retval)
+svr4_32_sys_utssys(struct lwp *l, const struct svr4_32_sys_utssys_args *uap, register_t *retval)
 {
-	struct svr4_32_sys_utssys_args *uap = v;
 
 	switch (SCARG(uap, sel)) {
 	case 0:		/* uname(2)  */
@@ -621,9 +600,8 @@ svr4_32_sys_utssys(struct lwp *l, void *v, register_t *retval)
 
 
 int
-svr4_32_sys_utime(struct lwp *l, void *v, register_t *retval)
+svr4_32_sys_utime(struct lwp *l, const struct svr4_32_sys_utime_args *uap, register_t *retval)
 {
-	struct svr4_32_sys_utime_args *uap = v;
 	struct svr4_32_utimbuf ub;
 	struct timeval tbuf[2], *tvp;
 	int error;
@@ -646,9 +624,8 @@ svr4_32_sys_utime(struct lwp *l, void *v, register_t *retval)
 
 
 int
-svr4_32_sys_utimes(struct lwp *l, void *v, register_t *retval)
+svr4_32_sys_utimes(struct lwp *l, const struct svr4_32_sys_utimes_args *uap, register_t *retval)
 {
-	struct svr4_32_sys_utimes_args *uap = v;
 	struct sys_utimes_args ua;
 	SCARG(&ua, path) = SCARG_P32(uap, path);
 	SCARG(&ua, tptr) = SCARG_P32(uap, tptr);
@@ -707,9 +684,8 @@ svr4_32_to_bsd_pathconf(int name)
 
 
 int
-svr4_32_sys_pathconf(struct lwp *l, void *v, register_t *retval)
+svr4_32_sys_pathconf(struct lwp *l, const struct svr4_32_sys_pathconf_args *uap, register_t *retval)
 {
-	struct svr4_32_sys_pathconf_args *uap = v;
 	struct sys_pathconf_args /* {
 		syscallarg(char *) path;
 		syscallarg(int) name;
@@ -726,19 +702,20 @@ svr4_32_sys_pathconf(struct lwp *l, void *v, register_t *retval)
 		*retval = 0;
 		return 0;
 	default:
-		return sys_pathconf(l, uap, retval);
+		return sys_pathconf(l, &ua, retval);
 	}
 }
 
 
 int
-svr4_32_sys_fpathconf(struct lwp *l, void *v, register_t *retval)
+svr4_32_sys_fpathconf(struct lwp *l, const struct svr4_32_sys_fpathconf_args *uap, register_t *retval)
 {
-	struct svr4_32_sys_fpathconf_args *uap = v;
+	struct sys_fpathconf_args ua;
 
-	SCARG(uap, name) = svr4_32_to_bsd_pathconf(SCARG(uap, name));
+	SCARG(&ua, fd) = SCARG(uap, fd);
+	SCARG(&ua, name) = svr4_32_to_bsd_pathconf(SCARG(uap, name));
 
-	switch (SCARG(uap, name)) {
+	switch (SCARG(&ua, name)) {
 	case -1:
 		*retval = -1;
 		return EINVAL;
@@ -746,6 +723,6 @@ svr4_32_sys_fpathconf(struct lwp *l, void *v, register_t *retval)
 		*retval = 0;
 		return 0;
 	default:
-		return sys_fpathconf(l, uap, retval);
+		return sys_fpathconf(l, &ua, retval);
 	}
 }

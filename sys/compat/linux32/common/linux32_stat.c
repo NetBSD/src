@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_stat.c,v 1.9 2007/12/08 18:36:12 dsl Exp $ */
+/*	$NetBSD: linux32_stat.c,v 1.9.4.1 2008/01/02 21:52:52 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_stat.c,v 1.9 2007/12/08 18:36:12 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_stat.c,v 1.9.4.1 2008/01/02 21:52:52 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -108,15 +108,12 @@ linux32_from_stat(struct stat *st, struct linux32_stat64 *st32)
 }
 
 int
-linux32_sys_stat64(l, v, retval)  
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_stat64(struct lwp *l, const struct linux32_sys_stat64_args *uap, register_t *retval)
 {
-	struct linux32_sys_stat64_args /* {  
+	/* {
 	        syscallarg(netbsd32_charp) path;
 	        syscallarg(linux32_statp) sp;
-	} */ *uap = v;
+	} */
 	int error;
 	struct stat st;
 	struct linux32_stat64 st32;
@@ -135,15 +132,12 @@ linux32_sys_stat64(l, v, retval)
 }
 
 int
-linux32_sys_lstat64(l, v, retval)  
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_lstat64(struct lwp *l, const struct linux32_sys_lstat64_args *uap, register_t *retval)
 {
-	struct linux32_sys_lstat64_args /* {  
+	/* {
 	        syscallarg(netbsd32_charp) path;
 	        syscallarg(linux32_stat64p) sp;
-	} */ *uap = v;
+	} */
 	int error;
 	struct stat st;
 	struct linux32_stat64 st32;
@@ -162,15 +156,12 @@ linux32_sys_lstat64(l, v, retval)
 }
 
 int
-linux32_sys_fstat64(l, v, retval)  
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_fstat64(struct lwp *l, const struct linux32_sys_fstat64_args *uap, register_t *retval)
 {
-	struct linux32_sys_fstat64_args /* {  
+	/* {
 	        syscallarg(int) fd;
 	        syscallarg(linux32_stat64p) sp;
-	} */ *uap = v;
+	} */
 	int error;
 	struct stat st;
 	struct linux32_stat64 st32;

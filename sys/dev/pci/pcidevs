@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.920 2007/11/26 09:36:28 bjs Exp $
+$NetBSD: pcidevs,v 1.920.6.1 2008/01/02 21:54:51 bouyer Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1007,6 +1007,7 @@ product APPLE U3_PPB4		0x0048	U3 PCI-PCI bridge
 product APPLE U3_PPB5		0x0049	U3 PCI-PCI bridge
 product APPLE U3_AGP		0x004b	U3 AGP Interface
 product APPLE K2_GMAC		0x004c	GMAC Ethernet
+product APPLE SHASTA_GMAC	0x0051	Shasta GMAC
 product APPLE INTREPID2_AGP	0x0066	Intrepid 2 AGP
 product APPLE INTREPID2_PCI1	0x0067	Intrepid 2 PCI
 product APPLE INTREPID2_PCI2	0x0068	Intrepid 2 PCI
@@ -2121,6 +2122,7 @@ product INTEL 82571EB_FIBER	0x105f	i82571EB 1000baseX Ethernet
 product INTEL 82571EB_SERDES	0x1060	i82571EB Gigabit Ethernet (SERDES)
 product INTEL 82801FB_LAN	0x1064	82801FB 10/100 Ethernet
 product INTEL PRO_100_VE_5	0x1068	PRO/100 VE (LOM) Network Controller
+product INTEL 82801GB_LAN	0x1069	82801GB 10/100 Ethernet
 product INTEL 82547GI		0x1075	i82547GI Gigabit Ethernet
 product INTEL 82541GI		0x1076	i82541GI Gigabit Ethernet
 product INTEL 82541GI_MOBILE	0x1077	i82541GI Mobile Gigabit Ethernet
@@ -3084,7 +3086,7 @@ product NVIDIA	MCP65_MEM	0x0444	nForce MCP65 Memory Controller
 product NVIDIA	MCP65_MEM2	0x0445	nForce MCP65 Memory Controller
 product NVIDIA	MCP65_SMB	0x0446	nForce MCP65 SMBus Controller
 product NVIDIA	MCP65_IDE	0x0448	nForce MCP65 ATA133 IDE Controller
-product NVIDIA	MCP65_PCI	0x0449  nForce MCP65 PCI Brige
+product NVIDIA	MCP65_PCI	0x0449  nForce MCP65 PCI Bridge
 product NVIDIA	MCP65_HDA_1	0x044a	nForce MCP65 High Definition Audio Controller
 product NVIDIA	MCP65_HDA_2	0x044b	nForce MCP65 High Definition Audio Controller
 product NVIDIA	MCP65_AHCI_1	0x044c  nForce MCP65 AHCI Controller

@@ -1,4 +1,4 @@
-/* 	$NetBSD: compat_util.c,v 1.39 2007/12/08 19:29:37 pooka Exp $	*/
+/* 	$NetBSD: compat_util.c,v 1.39.4.1 2008/01/02 21:51:39 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,9 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_util.c,v 1.39 2007/12/08 19:29:37 pooka Exp $");
-
-#include "opt_systrace.h"
+__KERNEL_RCSID(0, "$NetBSD: compat_util.c,v 1.39.4.1 2008/01/02 21:51:39 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -145,39 +143,6 @@ emul_flags_translate(const struct emul_flags_xtab *tab,
 		*leftover = in;
 	return (out);
 }
-
-/* The only user left of the stackgap is the systrace code. */
-#if SYSTRACE
-void *
-stackgap_init(const struct proc *p, size_t sz)
-{
-	if (sz == 0)
-		sz = STACKGAPLEN;
-	if (sz > STACKGAPLEN)
-		panic("size %lu > STACKGAPLEN", (unsigned long)sz);
-#define szsigcode ((void *)(p->p_emul->e_esigcode - p->p_emul->e_sigcode))
-	return (void *)(((unsigned long)p->p_psstr - (unsigned long)szsigcode
-		- sz) & ~ALIGNBYTES);
-#undef szsigcode
-}
-
-
-void *
-stackgap_alloc(const struct proc *p, void **sgp, size_t sz)
-{
-	void *n = *sgp;
-	void *nsgp;
-	const struct emul *e = p->p_emul;
-	int sigsize = e->e_esigcode - e->e_sigcode;
-
-	sz = ALIGN(sz);
-	nsgp = (char *)*sgp + sz;
-	if (nsgp > (void *)(((char *)p->p_psstr) - sigsize))
-		return NULL;
-	*sgp = nsgp;
-	return n;
-}
-#endif
 
 void
 compat_offseterr(struct vnode *vp, const char *msg)

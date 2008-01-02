@@ -1,4 +1,4 @@
-#	$NetBSD: files.hp300,v 1.77 2007/12/03 15:33:37 ad Exp $
+#	$NetBSD: files.hp300,v 1.77.6.1 2008/01/02 21:47:44 bouyer Exp $
 #
 # hp300-specific configuration info
 
@@ -199,12 +199,6 @@ file	arch/m68k/m68k/sys_machdep.c
 file	arch/m68k/m68k/vm_machdep.c
 
 file	dev/cons.c
-
-#
-# HP-UX binary compatibility
-#
-include "compat/hpux/files.hpux"
-file	arch/hp300/hp300/hpux_machdep.c		compat_hpux
 
 # NetBSD m68k a.out Binary Compatibility (COMPAT_AOUT_M68K)
 include	"compat/aoutm68k/files.aoutm68k"

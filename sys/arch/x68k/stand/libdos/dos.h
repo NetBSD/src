@@ -6,7 +6,7 @@
  *	(based on PD libc 1.1.32 by PROJECT C Library)
  *	public domain
  *
- *	$NetBSD: dos.h,v 1.4 2005/12/11 12:19:45 christos Exp $
+ *	$NetBSD: dos.h,v 1.4.64.1 2008/01/02 21:51:15 bouyer Exp $
  */
 /*
  * PROJECT C Library, X68000 PROGRAMMING INTERFACE DEFINITION
@@ -272,7 +272,7 @@ struct dos_prcptr {
  *	super_jsr	special for DOS_SUPER_JSR
  */
 
-/* ff00 ; noret */	__dead void DOS_EXIT __P((void)) __attribute__((__noreturn__));
+/* ff00 ; noret */	__dead void DOS_EXIT __P((void));
 /* ff01 */		int DOS_GETCHAR __P((void));
 /* ff02 w */		void DOS_PUTCHAR __P((int));
 /* ff03 */		int DOS_COMINP __P((void));
@@ -360,7 +360,7 @@ struct dos_prcptr {
 /* ff2e w */		void DOS_VERIFY __P((int));
 /* ff2f w w ; e */	int DOS_DUP0 __P((int, int));
 /* ff30 */		int __pure DOS_VERNUM __P((void));
-/* ff31 l w ; noret */	__dead void DOS_KEEPPR __P((int, int)) __attribute__((__noreturn__));
+/* ff31 l w ; noret */	__dead void DOS_KEEPPR __P((int, int));
 /* ff32 w l ; e */	int DOS_GETDPB __P((int, struct dos_dpbptr *));
 /* ff33 w */		int DOS_BREAKCK __P((int));
 /* ff34 w w ; e */	void DOS_DRVXCHG __P((int, int));
@@ -405,7 +405,7 @@ struct dos_prcptr {
 /* ff4b 5.w l l 0.l ; sv e */	int DOS_BINDNO __P((const char *, const char *));
 		/*^ 0.l is required?? */
 /* ff4b w l l l ; sv e */	int DOS_EXEC2 __P((int, const char *, const char *, const char *));
-/* ff4c w ; noret */	__dead void DOS_EXIT2 __P((int)) __attribute__((__noreturn__));
+/* ff4c w ; noret */	__dead void DOS_EXIT2 __P((int));
 /* ff4d */		int DOS_WAIT __P((void));
 /* ff4e l l w ; e */	int DOS_FILES __P((struct dos_filbuf *, const char *, int));
 /* ff4e lb31 l w ; e */	int DOS_EXFILES __P((struct dos_exfilbuf *, const char *, int));
@@ -441,10 +441,10 @@ struct dos_prcptr {
 /* ffad wb15 l l ; ealloc */	void *DOS_S_MALLOC0 __P((int, int));
 /* ffae l ; e */	int DOS_S_MFREE __P((void *));
 /* ffaf w l l l ; ep */	int DOS_S_PROCESS __P((int, int, int, int));
-/* fff0 ; alias DOS_EXITVC noret */	__dead void DOS_RETSHELL __P((void)) __attribute__((__noreturn__));
-			__dead void DOS_EXITVC __P((void)) __attribute__((__noreturn__));
-/* fff1 ; noret */	__dead void DOS_CTLABORT __P((void)) __attribute__((__noreturn__));
-/* fff2 ; noret */	__dead void DOS_ERRABORT __P((void)) __attribute__((__noreturn__));
+/* fff0 ; alias DOS_EXITVC noret */	__dead void DOS_RETSHELL __P((void));
+			__dead void DOS_EXITVC __P((void));
+/* fff1 ; noret */	__dead void DOS_CTLABORT __P((void));
+/* fff2 ; noret */	__dead void DOS_ERRABORT __P((void));
 /* fff3 l w w w */	void DOS_DISKRED __P((void *, int, int, int));
 /* fff3 lb31 w l l */	void DOS_DISKRED2 __P((void *, int, int, int));
 /* fff4 l w w w */	void DOS_DISKWRT __P((const void *, int, int, int));

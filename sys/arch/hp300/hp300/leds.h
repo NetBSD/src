@@ -1,4 +1,4 @@
-/*	$NetBSD: leds.h,v 1.3 2005/12/11 12:17:18 christos Exp $	*/
+/*	$NetBSD: leds.h,v 1.3.64.1 2008/01/02 21:47:50 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -84,6 +84,6 @@
 #define	LED_PULSE	0x10		/* heartbeat */
 
 #if defined(_KERNEL) && !defined(_LOCORE)
-void	ledinit __P((void));
-void	ledcontrol __P((int, int, int));
+void	ledinit(void);
+void	ledcontrol(int, int, int);
 #endif

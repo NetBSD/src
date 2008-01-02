@@ -1,4 +1,4 @@
-/*	$NetBSD: r128_cce.c,v 1.3.26.1 2007/12/13 21:55:58 bouyer Exp $	*/
+/*	$NetBSD: r128_cce.c,v 1.3.26.2 2008/01/02 21:55:03 bouyer Exp $	*/
 
 /* r128_cce.c -- ATI Rage 128 driver -*- linux-c -*-
  * Created: Wed Apr  5 19:24:19 2000 by kevin@precisioninsight.com
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: r128_cce.c,v 1.3.26.1 2007/12/13 21:55:58 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: r128_cce.c,v 1.3.26.2 2008/01/02 21:55:03 bouyer Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/r128_cce.c,v 1.14 2005/11/28 23:13:53 anholt Exp $");
 */
@@ -662,7 +662,7 @@ int r128_cce_start(DRM_IOCTL_ARGS)
 	LOCK_TEST_WITH_RETURN(dev, filp);
 
 	if (dev_priv->cce_running || dev_priv->cce_mode == R128_PM4_NONPM4) {
-		DRM_DEBUG("%s while CCE running\n", __FUNCTION__);
+		DRM_DEBUG("%s while CCE running\n", __func__);
 		return 0;
 	}
 
@@ -726,7 +726,7 @@ int r128_cce_reset(DRM_IOCTL_ARGS)
 	LOCK_TEST_WITH_RETURN(dev, filp);
 
 	if (!dev_priv) {
-		DRM_DEBUG("%s called before init done\n", __FUNCTION__);
+		DRM_DEBUG("%s called before init done\n", __func__);
 		return DRM_ERR(EINVAL);
 	}
 

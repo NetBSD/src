@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.35 2007/04/08 09:35:51 scw Exp $
+#	$NetBSD: Makefile,v 1.35.26.1 2008/01/02 21:46:46 bouyer Exp $
 
 # For now, we install the machine and arch includes, and symlink 'machine'
 # to the location of the machine includes (usually).
@@ -48,6 +48,7 @@ SUBDIR+= xen
 #	ofppc \
 #	pc532 playstation2 pmax powerpc prep \
 #	sandpoint sbmips sgimips sh3 shark sparc sparc64 sun2 sun3 sun68k \
+#	rs6000 \
 #	vax \
 #	x68k x86_64 xen \
 #	zaurus

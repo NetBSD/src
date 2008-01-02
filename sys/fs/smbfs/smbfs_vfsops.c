@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vfsops.c,v 1.73 2007/11/26 19:01:52 pooka Exp $	*/
+/*	$NetBSD: smbfs_vfsops.c,v 1.73.6.1 2008/01/02 21:55:36 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.73 2007/11/26 19:01:52 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.73.6.1 2008/01/02 21:55:36 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_quota.h"
@@ -394,46 +394,46 @@ smbfs_statvfs(struct mount *mp, struct statvfs *sbp)
 int
 smbfs_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
 {
-	struct vnode *vp, *nvp;
+	struct vnode *vp, *mvp;
 	struct smbnode *np;
 	int error, allerror = 0;
+
+	/* Allocate a marker vnode. */
+	if ((mvp = valloc(mp)) == NULL)
+		return ENOMEM;
 	/*
 	 * Force stale buffer cache information to be flushed.
 	 */
-	simple_lock(&mntvnode_slock);
+	mutex_enter(&mntvnode_lock);
 loop:
-	/*
-	 * NOTE: not using the TAILQ_FOREACH here since in this loop vgone()
-	 * and vclean() can be called indirectly
-	 */
-	for (vp = TAILQ_FIRST(&mp->mnt_vnodelist); vp; vp = nvp) {
+	for (vp = TAILQ_FIRST(&mp->mnt_vnodelist); vp; vp = vunmark(mvp)) {
+		vmark(mvp, vp);
 		/*
 		 * If the vnode that we are about to sync is no longer
 		 * associated with this mount point, start over.
 		 */
-		if (vp->v_mount != mp)
-			goto loop;
-		simple_lock(&vp->v_interlock);
-		nvp = TAILQ_NEXT(vp, v_mntvnodes);
-
+		if (vp->v_mount != mp || vismarker(vp))
+			continue;
+		mutex_enter(&vp->v_interlock);
 		np = VTOSMB(vp);
 		if (np == NULL) {
-			simple_unlock(&vp->v_interlock);
+			mutex_exit(&vp->v_interlock);
 			continue;
 		}
-			
 		if ((vp->v_type == VNON || (np->n_flag & NMODIFIED) == 0) &&
 		    LIST_EMPTY(&vp->v_dirtyblkhd) &&
-		     UVM_OBJ_IS_CLEAN(&vp->v_uobj)) {
-			simple_unlock(&vp->v_interlock);
+		     vp->v_uobj.uo_npages == 0) {
+			mutex_exit(&vp->v_interlock);
 			continue;
 		}
-		simple_unlock(&mntvnode_slock);
+		mutex_exit(&mntvnode_lock);
 		error = vget(vp, LK_EXCLUSIVE | LK_NOWAIT | LK_INTERLOCK);
 		if (error) {
-			simple_lock(&mntvnode_slock);
-			if (error == ENOENT)
+			mutex_enter(&mntvnode_lock);
+			if (error == ENOENT) {
+				(void)vunmark(mvp);
 				goto loop;
+			}
 			continue;
 		}
 		error = VOP_FSYNC(vp, cred,
@@ -441,9 +441,10 @@ loop:
 		if (error)
 			allerror = error;
 		vput(vp);
-		simple_lock(&mntvnode_slock);
+		mutex_enter(&mntvnode_lock);
 	}
-	simple_unlock(&mntvnode_slock);
+	mutex_exit(&mntvnode_lock);
+	vfree(mvp);
 	return (allerror);
 }
 

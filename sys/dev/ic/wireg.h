@@ -1,4 +1,4 @@
-/*	$NetBSD: wireg.h,v 1.52 2005/12/11 12:21:29 christos Exp $	*/
+/*	$NetBSD: wireg.h,v 1.52.60.1 2008/01/02 21:54:20 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -550,7 +550,7 @@ struct wi_frame {
 	struct ieee80211_frame_addr4 wi_whdr;	/* 0x0e */
 	u_int16_t		wi_dat_len;	/* 0x2c */
 	struct ether_header	wi_ehdr;	/* 0x2e */
-} __attribute__((__packed__));
+} __packed;
 
 /* Software support fields are returned untouched by TxOK, TxExc events. */
 #define	wi_tx_swsup0		wi_rx_silence

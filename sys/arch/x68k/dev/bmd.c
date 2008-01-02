@@ -1,4 +1,4 @@
-/*	$NetBSD: bmd.c,v 1.11 2007/10/17 19:58:01 garbled Exp $	*/
+/*	$NetBSD: bmd.c,v 1.11.8.1 2008/01/02 21:51:14 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2002 Tetsuya Isaki. All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bmd.c,v 1.11 2007/10/17 19:58:01 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bmd.c,v 1.11.8.1 2008/01/02 21:51:14 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -205,7 +205,7 @@ bmdopen(dev_t dev, int oflags, int devtype, struct lwp *l)
 	int unit = BMD_UNIT(dev);
 	struct bmd_softc *sc;
 
-	DPRINTF(("%s%d\n", __FUNCTION__, unit));
+	DPRINTF(("%s%d\n", __func__, unit));
 
 	if (unit >= bmd_cd.cd_ndevs)
 		return ENXIO;
@@ -234,7 +234,7 @@ bmdclose(dev_t dev, int fflag, int devtype, struct lwp *l)
 	int unit = BMD_UNIT(dev);
 	struct bmd_softc *sc = bmd_cd.cd_devs[unit];
 
-	DPRINTF(("%s%d\n", __FUNCTION__, unit));
+	DPRINTF(("%s%d\n", __func__, unit));
 
 	switch (devtype) {
 	case S_IFCHR:
@@ -327,7 +327,7 @@ bmdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	struct disklabel dl;
 	int error;
 
-	DPRINTF(("%s%d %ld\n", __FUNCTION__, unit, cmd));
+	DPRINTF(("%s%d %ld\n", __func__, unit, cmd));
 
 	if (unit >= bmd_cd.cd_ndevs)
 		return ENXIO;
@@ -361,7 +361,7 @@ int
 bmddump(dev_t dev, daddr_t blkno, void *va, size_t size)
 {
 
-	DPRINTF(("%s%d ", __FUNCTION__, BMD_UNIT(dev)));
+	DPRINTF(("%s%d ", __func__, BMD_UNIT(dev)));
 	return ENODEV;
 }
 
@@ -371,7 +371,7 @@ bmdsize(dev_t dev)
 	int unit = BMD_UNIT(dev);
 	struct bmd_softc *sc;
 
-	DPRINTF(("%s%d ", __FUNCTION__, unit));
+	DPRINTF(("%s%d ", __func__, unit));
 
 	if (unit >= bmd_cd.cd_ndevs)
 		return 0;

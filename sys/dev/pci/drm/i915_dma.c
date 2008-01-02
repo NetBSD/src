@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_dma.c,v 1.2.28.1 2007/12/13 21:55:54 bouyer Exp $	*/
+/*	$NetBSD: i915_dma.c,v 1.2.28.2 2008/01/02 21:54:59 bouyer Exp $	*/
 
 /* i915_dma.c -- DMA support for the I915 -*- linux-c -*-
  */
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_dma.c,v 1.2.28.1 2007/12/13 21:55:54 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_dma.c,v 1.2.28.2 2008/01/02 21:54:59 bouyer Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/i915_dma.c,v 1.4 2006/09/07 23:04:47 anholt Exp $");
 */
@@ -213,7 +213,7 @@ static int i915_dma_resume(drm_device_t * dev)
 {
 	drm_i915_private_t *dev_priv = (drm_i915_private_t *) dev->dev_private;
 
-	DRM_DEBUG("%s\n", __FUNCTION__);
+	DRM_DEBUG("%s\n", __func__);
 
 	if (!dev_priv->sarea) {
 		DRM_ERROR("can not find sarea!\n");
@@ -536,7 +536,7 @@ static int i915_dispatch_flip(drm_device_t * dev)
 	RING_LOCALS;
 
 	DRM_DEBUG("%s: page=%d pfCurrentPage=%d\n",
-		  __FUNCTION__,
+		  __func__,
 		  dev_priv->current_page,
 		  dev_priv->sarea_priv->pf_current_page);
 
@@ -583,7 +583,7 @@ static int i915_quiescent(drm_device_t * dev)
 	drm_i915_private_t *dev_priv = dev->dev_private;
 
 	i915_kernel_lost_context(dev);
-	return i915_wait_ring(dev, dev_priv->ring.Size - 8, __FUNCTION__);
+	return i915_wait_ring(dev, dev_priv->ring.Size - 8, __func__);
 }
 
 static int i915_flush_ioctl(DRM_IOCTL_ARGS)
@@ -669,7 +669,7 @@ static int i915_do_cleanup_pageflip(drm_device_t * dev)
 {
 	drm_i915_private_t *dev_priv = dev->dev_private;
 
-	DRM_DEBUG("%s\n", __FUNCTION__);
+	DRM_DEBUG("%s\n", __func__);
 	if (dev_priv->current_page != 0)
 		i915_dispatch_flip(dev);
 
@@ -680,7 +680,7 @@ static int i915_flip_bufs(DRM_IOCTL_ARGS)
 {
 	DRM_DEVICE;
 
-	DRM_DEBUG("%s\n", __FUNCTION__);
+	DRM_DEBUG("%s\n", __func__);
 
 	LOCK_TEST_WITH_RETURN(dev, filp);
 
@@ -695,7 +695,7 @@ static int i915_getparam(DRM_IOCTL_ARGS)
 	int value;
 
 	if (!dev_priv) {
-		DRM_ERROR("%s called with no initialization\n", __FUNCTION__);
+		DRM_ERROR("%s called with no initialization\n", __func__);
 		return DRM_ERR(EINVAL);
 	}
 
@@ -732,7 +732,7 @@ static int i915_setparam(DRM_IOCTL_ARGS)
 	drm_i915_setparam_t param;
 
 	if (!dev_priv) {
-		DRM_ERROR("%s called with no initialization\n", __FUNCTION__);
+		DRM_ERROR("%s called with no initialization\n", __func__);
 		return DRM_ERR(EINVAL);
 	}
 

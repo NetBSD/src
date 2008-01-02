@@ -1,4 +1,4 @@
-/*	$NetBSD: kloader.h,v 1.4 2006/01/20 02:47:30 uwe Exp $	*/
+/*	$NetBSD: kloader.h,v 1.4.58.1 2008/01/02 21:53:46 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@ void __kloader_reboot_setup(struct kloader_ops *, const char *);
  * kloader_reboot jumps to 2nd boot loader.
  * call after all shutdown hooks done.
  */
-void kloader_reboot(void) __attribute__((__noreturn__));
+void kloader_reboot(void) __dead;
 
 /*
  * kloader_bootinfo_set sets arguments of new kernel to boot. this is optional.

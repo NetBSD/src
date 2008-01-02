@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_mman.c,v 1.5 2007/12/08 18:36:11 dsl Exp $ */
+/*	$NetBSD: linux32_mman.c,v 1.5.4.1 2008/01/02 21:52:50 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_mman.c,v 1.5 2007/12/08 18:36:11 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_mman.c,v 1.5.4.1 2008/01/02 21:52:50 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -59,6 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_mman.c,v 1.5 2007/12/08 18:36:11 dsl Exp $")
 #include <compat/linux/common/linux_signal.h>
 #include <compat/linux/common/linux_machdep.h>
 #include <compat/linux/common/linux_misc.h>
+#include <compat/linux/common/linux_mmap.h>
 #include <compat/linux/common/linux_oldolduname.h>
 #include <compat/linux/linux_syscallargs.h>
 
@@ -70,11 +71,11 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_mman.c,v 1.5 2007/12/08 18:36:11 dsl Exp $")
 #include <compat/linux32/linux32_syscallargs.h>
 
 int
-linux32_sys_old_mmap(struct lwp *l, void *v, register_t *retval)
+linux32_sys_old_mmap(struct lwp *l, const struct linux32_sys_old_mmap_args *uap, register_t *retval)
 {
-	struct linux32_sys_old_mmap_args /* {
+	/* {
 		syscallarg(linux32_oldmmapp) lmp;
-	} */ *uap = v;
+	} */
 	struct linux_sys_old_mmap_args ua;
 
 	NETBSD32TOP_UAP(lmp, struct linux_oldmmap);
@@ -82,33 +83,30 @@ linux32_sys_old_mmap(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-linux32_sys_mprotect(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
-{ 
-	struct linux32_sys_mprotect_args /* {
-		syscallarg(netbsd32_voidp) addr;
+linux32_sys_mprotect(struct lwp *l, const struct linux32_sys_mprotect_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(netbsd32_voidp) start;
 		syscallarg(netbsd32_long) len;
 		syscallarg(int) prot;
-	} */ *uap = v; 
-	struct sys_mprotect_args ua;
+	} */
+	struct linux_sys_mprotect_args ua;
 
-	NETBSD32TOP_UAP(addr, void);
+	NETBSD32TOP_UAP(start, void);
 	NETBSD32TOX_UAP(len, long);
 	NETBSD32TO64_UAP(prot);
 	return (linux_sys_mprotect(l, &ua, retval));
 }
 
 int
-linux32_sys_mremap(struct lwp *l, void *v, register_t *retval)
+linux32_sys_mremap(struct lwp *l, const struct linux32_sys_mremap_args *uap, register_t *retval)
 {
-	struct linux32_sys_mremap_args /* {
+	/* {
 		syscallarg(netbsd32_voidp) old_address;
 		syscallarg(netbsd32_size_t) old_size;
 		syscallarg(netbsd32_size_t) new_size;
 		syscallarg(netbsd32_u_long) flags;
-	} */ *uap = v;
+	} */
 	struct linux_sys_mremap_args ua;
 
 	NETBSD32TOP_UAP(old_address, void);
@@ -120,17 +118,17 @@ linux32_sys_mremap(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-linux32_sys_mmap2(struct lwp *l, void *v, register_t *retval)
+linux32_sys_mmap2(struct lwp *l, const struct linux32_sys_mmap2_args *uap, register_t *retval)
 {
-	struct linux32_sys_mmap2_args /* {
+	/* {
 		syscallarg(netbsd32_u_long) addr;
 		syscallarg(netbsd32_size_t) len;
 		syscallarg(int) prot;
 		syscallarg(int) flags;
 		syscallarg(int) fd;
 		syscallarg(linux32_off_t) offset;
-	} */ *uap = v;
-	struct linux_sys_mmap2_args ua;
+	} */
+	struct linux_sys_mmap_args ua;
 
 	NETBSD32TOX64_UAP(addr, u_long);
 	NETBSD32TOX64_UAP(len, size_t);

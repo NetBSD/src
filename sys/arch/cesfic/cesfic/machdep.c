@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.39 2007/10/17 19:54:07 garbled Exp $	*/
+/*	$NetBSD: machdep.c,v 1.39.8.1 2008/01/02 21:47:31 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,12 +77,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.39 2007/10/17 19:54:07 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.39.8.1 2008/01/02 21:47:31 bouyer Exp $");
 
 #include "opt_bufcache.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
-#include "opt_compat_hpux.h"
 #include "opt_compat_netbsd.h"
 #include "opt_sysv.h"
 #include "opt_panicbutton.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.55 2007/10/17 19:53:12 garbled Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.55.8.1 2008/01/02 21:47:11 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.55 2007/10/17 19:53:12 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.55.8.1 2008/01/02 21:47:11 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -190,7 +190,7 @@ readdisklabel(dev, strat, lp, clp)
 		bp->b_blkno = nextb;
 		bp->b_cylinder = bp->b_blkno / lp->d_secpercyl;
 		bp->b_bcount = lp->d_secsize;
-		bp->b_flags &= ~(B_DONE);
+		bp->b_oflags &= ~(BO_DONE);
 		bp->b_flags |= B_READ;
 #ifdef SD_C_ADJUSTS_NR
 		bp->b_blkno *= (lp->d_secsize / DEV_BSIZE);
@@ -307,7 +307,7 @@ readdisklabel(dev, strat, lp, clp)
 		bp->b_blkno = nextb;
 		bp->b_cylinder = bp->b_blkno / lp->d_secpercyl;
 		bp->b_bcount = lp->d_secsize;
-		bp->b_flags &= ~(B_DONE);
+		bp->b_oflags &= ~(BO_DONE);
 		bp->b_flags |= B_READ;
 #ifdef SD_C_ADJUSTS_NR
 		bp->b_blkno *= (lp->d_secsize / DEV_BSIZE);
@@ -571,7 +571,8 @@ writedisklabel(dev, strat, lp, clp)
 	dlp = (struct disklabel *)((char*)bp->b_data + LABELOFFSET);
 	*dlp = *lp;     /* struct assignment */
 
-	bp->b_flags &= ~(B_READ|B_DONE);
+	bp->b_oflags &= ~(BO_DONE);
+	bp->b_flags &= ~(B_READ);
 	bp->b_flags |= B_WRITE;
 	(*strat)(bp);
 	error = biowait(bp);

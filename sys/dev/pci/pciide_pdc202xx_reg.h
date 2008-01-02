@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_pdc202xx_reg.h,v 1.13 2005/12/11 12:22:50 christos Exp $ */
+/*	$NetBSD: pciide_pdc202xx_reg.h,v 1.13.60.1 2008/01/02 21:54:57 bouyer Exp $ */
 
 /*
  * Copyright (c) 1999 Manuel Bouyer.
@@ -107,15 +107,15 @@
  * right for the PDC20246 too ...
  */
 
-static const int8_t pdc2xx_pa[] __attribute__((__unused__)) =
+static const int8_t pdc2xx_pa[] __unused =
     {0x9, 0x5, 0x3, 0x2, 0x1};
-static const int8_t pdc2xx_pb[] __attribute__((__unused__)) =
+static const int8_t pdc2xx_pb[] __unused =
     {0x13, 0xc, 0x8, 0x6, 0x4};
-static const int8_t pdc2xx_dma_mb[] __attribute__((__unused__)) =
+static const int8_t pdc2xx_dma_mb[] __unused =
     {0x3, 0x3, 0x3};
-static const int8_t pdc2xx_dma_mc[] __attribute__((__unused__)) =
+static const int8_t pdc2xx_dma_mc[] __unused =
     {0x5, 0x4, 0x3};
-static const int8_t pdc2xx_udma_mb[] __attribute__((__unused__)) =
+static const int8_t pdc2xx_udma_mb[] __unused =
     {0x3, 0x2, 0x1, 0x2, 0x1, 0x1};
-static const int8_t pdc2xx_udma_mc[] __attribute__((__unused__)) =
+static const int8_t pdc2xx_udma_mc[] __unused =
     {0x3, 0x2, 0x1, 0x2, 0x1, 0x1};

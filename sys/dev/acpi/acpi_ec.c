@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.44.2.1 2007/12/13 21:55:24 bouyer Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.44.2.2 2008/01/02 21:53:49 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -29,8 +29,37 @@
  * SUCH DAMAGE.
  */
 
+/*
+ * The ACPI Embedded Controller (EC) driver serves two different purposes:
+ * - read and write access from ASL, e.g. to read battery state
+ * - notification of ASL of System Control Interrupts.
+ *
+ * Access to the EC is serialised by sc_access_mtx and optionally the
+ * ACPI global mutex.  Both locks are held until the request is fulfilled.
+ * All access to the softc has to hold sc_mtx to serialise against the GPE
+ * handler and the callout.  sc_mtx is also used for wakeup conditions.
+ *
+ * SCIs are processed in a kernel thread. Handling gets a bit complicated
+ * by the lock order (sc_mtx must be acquired after sc_access_mtx and the
+ * ACPI global mutex).
+ *
+ * Read and write requests spin around for a short time as many requests
+ * can be handled instantly by the EC.  During normal processing interrupt
+ * mode is used exclusively.  At boot and resume time interrupts are not
+ * working and the handlers just busy loop.
+ *
+ * A callout is scheduled to compensate for missing interrupts on some
+ * hardware.  If the EC doesn't process a request for 5s, it is most likely
+ * in a wedged state.  No method to reset the EC is currently known.
+ *
+ * Special care has to be taken to not poll the EC in a busy loop without
+ * delay.  This can prevent processing of Power Button events. At least some
+ * Lenovo Thinkpads seem to be implement the Power Button Override in the EC
+ * and the only option to recover on those models is to cut off all power.
+ */
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.44.2.1 2007/12/13 21:55:24 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.44.2.2 2008/01/02 21:53:49 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,12 +72,16 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.44.2.1 2007/12/13 21:55:24 bouyer Exp 
 #include <sys/bus.h>
 
 #include <dev/acpi/acpivar.h>
+#include <dev/acpi/acpi_ecvar.h>
 
 /* Maximum time to wait for global ACPI lock in ms */
 #define	EC_LOCK_TIMEOUT		5
 
 /* Maximum time to poll for completion of a command  in ms */
 #define	EC_POLL_TIMEOUT		5
+
+/* Maximum time to give a single EC command in s */
+#define EC_CMD_TIMEOUT		10
 
 /* From ACPI 3.0b, chapter 12.3 */
 #define EC_COMMAND_READ		0x80
@@ -101,6 +134,7 @@ struct acpiec_softc {
 	kcondvar_t sc_cv, sc_cv_sci;
 	enum ec_state_t sc_state;
 	bool sc_got_sci;
+	callout_t sc_pseudo_intr;
 
 	uint8_t sc_cur_addr, sc_cur_val;
 };
@@ -120,6 +154,7 @@ static bool acpiec_suspend(device_t);
 static bool acpiec_parse_gpe_package(device_t, ACPI_HANDLE,
     ACPI_HANDLE *, uint8_t *);
 
+static void acpiec_callout(void *);
 static void acpiec_gpe_query(void *);
 static UINT32 acpiec_gpe_handler(void *);
 static ACPI_STATUS acpiec_space_setup(ACPI_HANDLE, UINT32, void *, void **);
@@ -302,6 +337,9 @@ acpiec_common_attach(device_t parent, device_t self,
 	}
 	if (sc->sc_need_global_lock)
 		aprint_normal_dev(self, "using global ACPI lock\n");
+
+	callout_init(&sc->sc_pseudo_intr, CALLOUT_MPSAFE);
+	callout_setfunc(&sc->sc_pseudo_intr, acpiec_callout, self);
 
 	rv = AcpiInstallAddressSpaceHandler(sc->sc_ech, ACPI_ADR_SPACE_EC,
 	    acpiec_space_handler, acpiec_space_setup, self);
@@ -516,12 +554,11 @@ static ACPI_STATUS
 acpiec_read(device_t dv, uint8_t addr, uint8_t *val)
 {
 	struct acpiec_softc *sc = device_private(dv);
-	int i, timeouts = 0;
+	int i;
 
 	acpiec_lock(dv);
 	mutex_enter(&sc->sc_mtx);
 
-retry:
 	sc->sc_cur_addr = addr;
 	sc->sc_state = EC_STATE_READ;
 
@@ -537,15 +574,11 @@ retry:
 			delay(1);
 			acpiec_gpe_state_machine(dv);
 		}
-	} else while (cv_timedwait(&sc->sc_cv, &sc->sc_mtx, hz)) {
+	} else while (cv_timedwait(&sc->sc_cv, &sc->sc_mtx, EC_CMD_TIMEOUT * hz)) {
 		mutex_exit(&sc->sc_mtx);
 		AcpiClearGpe(sc->sc_gpeh, sc->sc_gpebit, ACPI_NOT_ISR);
-		mutex_enter(&sc->sc_mtx);
-		if (++timeouts < 5)
-			goto retry;
-		mutex_exit(&sc->sc_mtx);
 		acpiec_unlock(dv);
-		aprint_error_dev(dv, "command takes over 5sec...\n");
+		aprint_error_dev(dv, "command takes over %d sec...\n", EC_CMD_TIMEOUT);
 		return AE_ERROR;
 	}
 
@@ -561,12 +594,11 @@ static ACPI_STATUS
 acpiec_write(device_t dv, uint8_t addr, uint8_t val)
 {
 	struct acpiec_softc *sc = device_private(dv);
-	int i, timeouts = 0;
+	int i;
 
 	acpiec_lock(dv);
 	mutex_enter(&sc->sc_mtx);
 
-retry:
 	sc->sc_cur_addr = addr;
 	sc->sc_cur_val = val;
 	sc->sc_state = EC_STATE_WRITE;
@@ -583,15 +615,11 @@ retry:
 			delay(1);
 			acpiec_gpe_state_machine(dv);
 		}
-	} else while (cv_timedwait(&sc->sc_cv, &sc->sc_mtx, hz)) {
+	} else while (cv_timedwait(&sc->sc_cv, &sc->sc_mtx, EC_CMD_TIMEOUT * hz)) {
 		mutex_exit(&sc->sc_mtx);
 		AcpiClearGpe(sc->sc_gpeh, sc->sc_gpebit, ACPI_NOT_ISR);
-		mutex_enter(&sc->sc_mtx);
-		if (++timeouts < 5)
-			goto retry;
-		mutex_exit(&sc->sc_mtx);
 		acpiec_unlock(dv);
-		aprint_error_dev(dv, "command takes over 5sec...\n");
+		aprint_error_dev(dv, "command takes over %d sec...\n", EC_CMD_TIMEOUT);
 		return AE_ERROR;
 	}
 
@@ -788,6 +816,22 @@ acpiec_gpe_state_machine(device_t dv)
 	default:
 		panic("invalid state");
 	}
+
+	if (sc->sc_state != EC_STATE_FREE)
+		callout_schedule(&sc->sc_pseudo_intr, 1);
+}
+
+static void
+acpiec_callout(void *arg)
+{
+	device_t dv = arg;
+	struct acpiec_softc *sc = device_private(dv);
+
+	AcpiClearGpe(sc->sc_gpeh, sc->sc_gpebit, ACPI_NOT_ISR);
+
+	mutex_enter(&sc->sc_mtx);
+	acpiec_gpe_state_machine(dv);
+	mutex_exit(&sc->sc_mtx);
 }
 
 static UINT32
@@ -803,4 +847,24 @@ acpiec_gpe_handler(void *arg)
 	mutex_exit(&sc->sc_mtx);
 
 	return 0;
+}
+
+ACPI_STATUS
+acpiec_bus_read(device_t dv, u_int addr, ACPI_INTEGER *val, int width)
+{
+	return acpiec_space_handler(ACPI_READ, addr, width * 8, val, dv, NULL);
+}
+
+ACPI_STATUS
+acpiec_bus_write(device_t dv, u_int addr, ACPI_INTEGER val, int width)
+{
+	return acpiec_space_handler(ACPI_WRITE, addr, width * 8, &val, dv, NULL);
+}
+
+ACPI_HANDLE
+acpiec_get_handle(device_t dv)
+{
+	struct acpiec_softc *sc = device_private(dv);
+
+	return sc->sc_ech;
 }

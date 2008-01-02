@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.106.2.1 2007/12/13 21:55:35 bouyer Exp $	*/
+/*	$NetBSD: i82557.c,v 1.106.2.2 2008/01/02 21:54:12 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.106.2.1 2007/12/13 21:55:35 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.106.2.2 2008/01/02 21:54:12 bouyer Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -753,7 +753,7 @@ fxp_write_eeprom(struct fxp_softc *sc, u_int16_t *data, int offset, int words)
 		/* Shift in write opcode, address, data. */
 		CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, FXP_EEPROM_EECS);
 		fxp_eeprom_shiftin(sc, FXP_EEPROM_OPC_WRITE, 3);
-		fxp_eeprom_shiftin(sc, offset, sc->sc_eeprom_size);
+		fxp_eeprom_shiftin(sc, i + offset, sc->sc_eeprom_size);
 		fxp_eeprom_shiftin(sc, data[i], 16);
 		CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, 0);
 		DELAY(4);
@@ -1363,7 +1363,7 @@ fxp_rxintr(struct fxp_softc *sc)
 #if NBPFILTER > 0
 		/*
 		 * Pass this up to any BPF listeners, but only
-		 * pass it up the stack it its for us.
+		 * pass it up the stack if it's for us.
 		 */
 		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m);

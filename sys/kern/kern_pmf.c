@@ -1,4 +1,4 @@
-/* $NetBSD: kern_pmf.c,v 1.2.2.1 2007/12/13 21:56:53 bouyer Exp $ */
+/* $NetBSD: kern_pmf.c,v 1.2.2.2 2008/01/02 21:55:55 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_pmf.c,v 1.2.2.1 2007/12/13 21:56:53 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_pmf.c,v 1.2.2.2 2008/01/02 21:55:55 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -101,7 +101,7 @@ pmf_event_worker(struct work *wk, void *dummy)
 	TAILQ_FOREACH(event, &pmf_all_events, pmf_link) {
 		if (event->pmf_event != pew->pew_event)
 			continue;
-		if (event->pmf_device != pew->pew_device || event->pmf_global)
+		if (event->pmf_device == pew->pew_device || event->pmf_global)
 			(*event->pmf_handler)(event->pmf_device);
 	}
 
@@ -130,6 +130,45 @@ pmf_check_system_drivers(void)
 		return false;
 	}
 	return true;
+}
+
+bool
+pmf_system_bus_resume(void)
+{
+	int depth, maxdepth;
+	bool rv;
+	device_t curdev;
+
+	maxdepth = 0;
+	TAILQ_FOREACH(curdev, &alldevs, dv_list) {
+		if (curdev->dv_depth > maxdepth)
+			maxdepth = curdev->dv_depth;
+	}
+	++maxdepth;
+
+	aprint_debug("Powering devices:");
+	/* D0 handlers are run in order */
+	depth = 0;
+	rv = true;
+	for (depth = 0; depth < maxdepth; ++depth) {
+		TAILQ_FOREACH(curdev, &alldevs, dv_list) {
+			if (!device_pmf_is_registered(curdev))
+				continue;
+			if (device_is_active(curdev) ||
+			    !device_is_enabled(curdev))
+				continue;
+			if (curdev->dv_depth != depth)
+				continue;
+
+			aprint_debug(" %s", device_xname(curdev));
+
+			if (!device_pmf_bus_resume(curdev))
+				aprint_debug("(failed)");
+		}
+	}
+	aprint_debug("\n");
+
+	return rv;
 }
 
 bool
@@ -233,9 +272,6 @@ pmf_system_shutdown(void)
 {
 	int depth, maxdepth;
 	device_t curdev;
-
-	if (!pmf_check_system_drivers())
-		delay(2000000);
 
 	aprint_debug("Shutting down devices:");
 
@@ -501,6 +537,7 @@ pmf_event_deregister(device_t dv, pmf_generic_event_t ev,
 			continue;
 		TAILQ_REMOVE(&pmf_all_events, event, pmf_link);
 		free(event, M_WAITOK);
+		return;
 	}
 }
 

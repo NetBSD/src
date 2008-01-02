@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.13.6.1 2007/12/13 18:59:34 bouyer Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.13.6.2 2008/01/02 21:51:22 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.13.6.1 2007/12/13 18:59:34 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.13.6.2 2008/01/02 21:51:22 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,7 +52,6 @@ __KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.13.6.1 2007/12/13 18:59:34 bouyer Ex
 #include <machine/bus.h>
 #include <machine/pio.h>
 #include <machine/isa_machdep.h>
-#include <machine/atomic.h>
 
 #ifdef XEN
 #include <xen/hypervisor.h>

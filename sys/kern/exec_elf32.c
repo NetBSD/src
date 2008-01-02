@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.127 2007/12/03 02:06:58 christos Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.127.6.1 2008/01/02 21:55:43 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.127 2007/12/03 02:06:58 christos Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.127.6.1 2008/01/02 21:55:43 bouyer Exp $");
 
 /* If not included by exec_elf64.c, ELFSIZE won't be defined. */
 #ifndef ELFSIZE
@@ -87,15 +87,14 @@ __KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.127 2007/12/03 02:06:58 christos Ex
 #include <sys/mount.h>
 #include <sys/stat.h>
 #include <sys/kauth.h>
+#include <sys/bitops.h>
 
 #include <sys/cpu.h>
 #include <machine/reg.h>
 
 #include <compat/common/compat_util.h>
 
-#if defined(PAX_MPROTECT) || defined(PAX_SEGVGUARD)
 #include <sys/pax.h>
-#endif /* PAX_MPROTECT || PAX_SEGVGUARD */
 
 extern const struct emul emul_netbsd;
 
@@ -121,6 +120,52 @@ int	netbsd_elf_probe(struct lwp *, struct exec_package *, void *, char *,
 #define	ELF_TRUNC(a, b)		((a) & ~((b) - 1))
 
 #define MAXPHNUM	50
+
+#ifdef PAX_ASLR
+/*
+ * We don't move this code in kern_pax.c because it is compiled twice.
+ */
+static void
+pax_aslr_elf(struct lwp *l, struct exec_package *epp, Elf_Ehdr *eh,
+    Elf_Phdr *ph)
+{
+	size_t pax_align = 0, pax_offset, i;
+	uint32_t r;
+
+	if (!pax_aslr_active(l))
+		return;
+
+	/*
+	 * find align XXX: not all sections might have the same
+	 * alignment
+	 */
+	for (i = 0; i < eh->e_phnum; i++)
+		if (ph[i].p_type == PT_LOAD) {
+			pax_align = ph[i].p_align;
+			break;
+		}
+
+	r = arc4random();
+
+	if (pax_align == 0)
+		pax_align = PGSHIFT;
+#ifdef DEBUG_ASLR
+	uprintf("r=0x%x a=0x%x p=0x%x Delta=0x%lx\n", r,
+	    ilog2(pax_align), PGSHIFT, PAX_ASLR_DELTA(r,
+		ilog2(pax_align), PAX_ASLR_DELTA_EXEC_LEN));
+#endif
+	pax_offset = ELF_TRUNC(PAX_ASLR_DELTA(r,
+	    ilog2(pax_align), PAX_ASLR_DELTA_EXEC_LEN), pax_align);
+
+	for (i = 0; i < eh->e_phnum; i++)
+		ph[i].p_vaddr += pax_offset;
+	eh->e_entry += pax_offset;
+#ifdef DEBUG_ASLR
+	uprintf("pax offset=0x%x entry=0x%x\n",
+	    pax_offset, eh->e_entry);
+#endif
+}
+#endif /* PAX_ASLR */
 
 /*
  * Copy arguments onto the stack in the normal way, but add some
@@ -604,16 +649,17 @@ exec_elf_makecmds(struct lwp *l, struct exec_package *epp)
 	char *interp = NULL;
 	u_long phsize;
 	struct proc *p;
+	bool is_dyn;
 
 	if (epp->ep_hdrvalid < sizeof(Elf_Ehdr))
 		return ENOEXEC;
 
+	is_dyn = elf_check_header(eh, ET_DYN) == 0;
 	/*
 	 * XXX allow for executing shared objects. It seems silly
 	 * but other ELF-based systems allow it as well.
 	 */
-	if (elf_check_header(eh, ET_EXEC) != 0 &&
-	    elf_check_header(eh, ET_DYN) != 0)
+	if (elf_check_header(eh, ET_EXEC) != 0 && !is_dyn)
 		return ENOEXEC;
 
 	if (eh->e_phnum > MAXPHNUM)
@@ -670,6 +716,16 @@ exec_elf_makecmds(struct lwp *l, struct exec_package *epp)
 			goto bad;
 		pos = (Elf_Addr)startp;
 	}
+
+#if defined(PAX_MPROTECT) || defined(PAX_SEGVGUARD) || defined(PAX_ASLR)
+	if (epp->ep_pax_flags)
+		pax_adjust(l, epp->ep_pax_flags);
+#endif /* PAX_MPROTECT || PAX_SEGVGUARD || PAX_ASLR */
+
+#ifdef PAX_ASLR
+	if (is_dyn)
+		pax_aslr_elf(l, epp, eh, ph);
+#endif /* PAX_ASLR */
 
 	/*
 	 * Load all the necessary sections
@@ -730,11 +786,6 @@ exec_elf_makecmds(struct lwp *l, struct exec_package *epp)
 			break;
 		}
 	}
-
-#if defined(PAX_MPROTECT) || defined(PAX_SEGVGUARD)
-	if (epp->ep_pax_flags)
-		pax_adjust(l, epp->ep_pax_flags);
-#endif /* PAX_MPROTECT || PAX_SEGVGUARD */
 
 	/*
 	 * Check if we found a dynamically linked binary and arrange to load

@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.92 2007/12/09 20:27:54 jmcneill Exp $	*/
+/*	$NetBSD: ata.c,v 1.92.2.1 2008/01/02 21:53:54 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.92 2007/12/09 20:27:54 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.92.2.1 2008/01/02 21:53:54 bouyer Exp $");
 
 #include "opt_ata.h"
 
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.92 2007/12/09 20:27:54 jmcneill Exp $");
 #include <sys/kthread.h>
 #include <sys/errno.h>
 #include <sys/ataio.h>
+#include <sys/kmem.h>
 
 #include <sys/intr.h>
 #include <sys/bus.h>
@@ -550,16 +551,16 @@ int
 ata_get_params(struct ata_drive_datas *drvp, u_int8_t flags,
     struct ataparams *prms)
 {
-	char tb[DEV_BSIZE];
 	struct ata_command ata_c;
 	struct ata_channel *chp = drvp->chnl_softc;
 	struct atac_softc *atac = chp->ch_atac;
-	int i;
+	char *tb;
+	int i, rv;
 	u_int16_t *p;
 
 	ATADEBUG_PRINT(("%s\n", __func__), DEBUG_FUNCS);
 
-	memset(tb, 0, DEV_BSIZE);
+	tb = kmem_zalloc(DEV_BSIZE, KM_SLEEP);
 	memset(prms, 0, sizeof(struct ataparams));
 	memset(&ata_c, 0, sizeof(struct ata_command));
 
@@ -576,7 +577,8 @@ ata_get_params(struct ata_drive_datas *drvp, u_int8_t flags,
 	} else {
 		ATADEBUG_PRINT(("ata_get_parms: no disks\n"),
 		    DEBUG_FUNCS|DEBUG_PROBE);
-		return CMD_ERR;
+		rv = CMD_ERR;
+		goto out;
 	}
 	ata_c.flags = AT_READ | flags;
 	ata_c.data = tb;
@@ -585,16 +587,20 @@ ata_get_params(struct ata_drive_datas *drvp, u_int8_t flags,
 						&ata_c) != ATACMD_COMPLETE) {
 		ATADEBUG_PRINT(("ata_get_parms: wdc_exec_command failed\n"),
 		    DEBUG_FUNCS|DEBUG_PROBE);
-		return CMD_AGAIN;
+		rv = CMD_AGAIN;
+		goto out;
 	}
 	if (ata_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
 		ATADEBUG_PRINT(("ata_get_parms: ata_c.flags=0x%x\n",
 		    ata_c.flags), DEBUG_FUNCS|DEBUG_PROBE);
-		return CMD_ERR;
+		rv = CMD_ERR;
+		goto out;
 	}
 	/* if we didn't read any data something is wrong */
-	if ((ata_c.flags & AT_XFDONE) == 0)
-		return CMD_ERR;
+	if ((ata_c.flags & AT_XFDONE) == 0) {
+		rv = CMD_ERR;
+		goto out;
+	}
 
 	/* Read in parameter block. */
 	memcpy(prms, tb, sizeof(struct ataparams));
@@ -618,8 +624,10 @@ ata_get_params(struct ata_drive_datas *drvp, u_int8_t flags,
 	     ((M(0) == 'N' && M(1) == 'E') ||
 	      (M(0) == 'F' && M(1) == 'X') ||
 	      (M(0) == 'P' && M(1) == 'i')) :
-	     ((M(0) == 'T' && M(1) == 'D' && M(2) == 'K'))))
-		return CMD_OK;
+	     ((M(0) == 'T' && M(1) == 'D' && M(2) == 'K')))) {
+		rv = CMD_OK;
+		goto out;
+	     }
 #undef M
 	for (i = 0; i < sizeof(prms->atap_model); i += 2) {
 		p = (u_int16_t *)(prms->atap_model + i);
@@ -634,7 +642,10 @@ ata_get_params(struct ata_drive_datas *drvp, u_int8_t flags,
 		*p = bswap16(*p);
 	}
 
-	return CMD_OK;
+	rv = CMD_OK;
+ out:
+	kmem_free(tb, DEV_BSIZE);
+	return rv;
 }
 
 int

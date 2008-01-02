@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_machdep.c,v 1.18 2007/12/09 20:27:49 jmcneill Exp $	*/
+/*	$NetBSD: acpi_machdep.c,v 1.18.2.1 2008/01/02 21:51:22 bouyer Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.18 2007/12/09 20:27:49 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.18.2.1 2008/01/02 21:51:22 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -281,4 +281,8 @@ acpi_md_callback(void)
 	if (!mpbios_scanned)
 #endif
 	mpacpi_find_interrupts(acpi_softc);
+
+#ifndef XEN
+	acpi_md_sleep_init();
+#endif
 }

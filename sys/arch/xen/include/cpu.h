@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.24.6.1 2007/12/11 23:03:01 bouyer Exp $	*/
+/*	$NetBSD: cpu.h,v 1.24.6.2 2008/01/02 21:51:30 bouyer Exp $	*/
 /*	NetBSD: cpu.h,v 1.113 2004/02/20 17:35:01 yamt Exp 	*/
 
 /*-
@@ -85,6 +85,10 @@ struct cpu_info {
 	cpuid_t ci_cpuid;		/* our CPU ID */
 	int ci_cpumask;			/* (1 << CPU ID) */
 	u_int ci_apicid;		/* our APIC ID */
+	uint8_t ci_initapicid;		/* our intitial APIC ID */
+	uint8_t ci_packageid;
+	uint8_t ci_coreid;
+	uint8_t ci_smtid;
 	struct cpu_data ci_data;	/* MI per-cpu data */
 
 	/*
@@ -197,7 +201,7 @@ extern struct cpu_info *cpu_info_list;
 
 static struct cpu_info *curcpu(void);
 
-__inline static struct cpu_info * __attribute__((__unused__))
+__inline static struct cpu_info * __unused
 curcpu()
 {
 	struct cpu_info *ci;

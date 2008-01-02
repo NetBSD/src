@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.921 2007/12/09 20:28:12 jmcneill Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.921.2.1 2008/01/02 21:54:52 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.885.6.10 2007/10/31 23:14:07 joerg Exp
+ *	NetBSD: pcidevs,v 1.923 2007/12/30 09:28:28 jdc Exp
  */
 
 /*
@@ -1014,6 +1014,7 @@
 #define	PCI_PRODUCT_APPLE_U3_PPB5	0x0049		/* U3 PCI-PCI bridge */
 #define	PCI_PRODUCT_APPLE_U3_AGP	0x004b		/* U3 AGP Interface */
 #define	PCI_PRODUCT_APPLE_K2_GMAC	0x004c		/* GMAC Ethernet */
+#define	PCI_PRODUCT_APPLE_SHASTA_GMAC	0x0051		/* Shasta GMAC */
 #define	PCI_PRODUCT_APPLE_INTREPID2_AGP	0x0066		/* Intrepid 2 AGP */
 #define	PCI_PRODUCT_APPLE_INTREPID2_PCI1	0x0067		/* Intrepid 2 PCI */
 #define	PCI_PRODUCT_APPLE_INTREPID2_PCI2	0x0068		/* Intrepid 2 PCI */
@@ -2128,6 +2129,7 @@
 #define	PCI_PRODUCT_INTEL_82571EB_SERDES	0x1060		/* i82571EB Gigabit Ethernet (SERDES) */
 #define	PCI_PRODUCT_INTEL_82801FB_LAN	0x1064		/* 82801FB 10/100 Ethernet */
 #define	PCI_PRODUCT_INTEL_PRO_100_VE_5	0x1068		/* PRO/100 VE (LOM) Network Controller */
+#define	PCI_PRODUCT_INTEL_82801GB_LAN	0x1069		/* 82801GB 10/100 Ethernet */
 #define	PCI_PRODUCT_INTEL_82547GI	0x1075		/* i82547GI Gigabit Ethernet */
 #define	PCI_PRODUCT_INTEL_82541GI	0x1076		/* i82541GI Gigabit Ethernet */
 #define	PCI_PRODUCT_INTEL_82541GI_MOBILE	0x1077		/* i82541GI Mobile Gigabit Ethernet */
@@ -3091,7 +3093,7 @@
 #define	PCI_PRODUCT_NVIDIA_MCP65_MEM2	0x0445		/* nForce MCP65 Memory Controller */
 #define	PCI_PRODUCT_NVIDIA_MCP65_SMB	0x0446		/* nForce MCP65 SMBus Controller */
 #define	PCI_PRODUCT_NVIDIA_MCP65_IDE	0x0448		/* nForce MCP65 ATA133 IDE Controller */
-#define	PCI_PRODUCT_NVIDIA_MCP65_PCI	0x0449		/* nForce MCP65 PCI Brige */
+#define	PCI_PRODUCT_NVIDIA_MCP65_PCI	0x0449		/* nForce MCP65 PCI Bridge */
 #define	PCI_PRODUCT_NVIDIA_MCP65_HDA_1	0x044a		/* nForce MCP65 High Definition Audio Controller */
 #define	PCI_PRODUCT_NVIDIA_MCP65_HDA_2	0x044b		/* nForce MCP65 High Definition Audio Controller */
 #define	PCI_PRODUCT_NVIDIA_MCP65_AHCI_1	0x044c		/* nForce MCP65 AHCI Controller */

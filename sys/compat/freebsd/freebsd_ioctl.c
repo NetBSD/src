@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_ioctl.c,v 1.14 2007/12/08 18:35:58 dsl Exp $	*/
+/*	$NetBSD: freebsd_ioctl.c,v 1.14.4.1 2008/01/02 21:51:51 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_ioctl.c,v 1.14 2007/12/08 18:35:58 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_ioctl.c,v 1.14.4.1 2008/01/02 21:51:51 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,11 +54,11 @@ __KERNEL_RCSID(0, "$NetBSD: freebsd_ioctl.c,v 1.14 2007/12/08 18:35:58 dsl Exp $
 #include <compat/ossaudio/ossaudiovar.h>
 
 /* The FreeBSD and OSS(Linux) encodings of ioctl R/W differ. */
-static void freebsd_to_oss(struct freebsd_sys_ioctl_args *,
+static void freebsd_to_oss(const struct freebsd_sys_ioctl_args *,
 			   struct oss_sys_ioctl_args *);
 
 static void
-freebsd_to_oss(struct freebsd_sys_ioctl_args *uap, struct oss_sys_ioctl_args *rap)
+freebsd_to_oss(const struct freebsd_sys_ioctl_args *uap, struct oss_sys_ioctl_args *rap)
 {
 	u_long ocmd, ncmd;
 
@@ -76,11 +76,11 @@ freebsd_to_oss(struct freebsd_sys_ioctl_args *uap, struct oss_sys_ioctl_args *ra
 }
 
 
-static void freebsd_to_netbsd_ifioctl(struct freebsd_sys_ioctl_args *uap,
+static void freebsd_to_netbsd_ifioctl(const struct freebsd_sys_ioctl_args *uap,
 				      struct sys_ioctl_args *nap);
 
 static void
-freebsd_to_netbsd_ifioctl(struct freebsd_sys_ioctl_args *uap, struct sys_ioctl_args *nap)
+freebsd_to_netbsd_ifioctl(const struct freebsd_sys_ioctl_args *uap, struct sys_ioctl_args *nap)
 {
 	u_long ocmd, ncmd;
 	ocmd = SCARG(uap, com);
@@ -110,13 +110,13 @@ freebsd_to_netbsd_ifioctl(struct freebsd_sys_ioctl_args *uap, struct sys_ioctl_a
 }
 
 int
-freebsd_sys_ioctl(struct lwp *l, void *v, register_t *retval)
+freebsd_sys_ioctl(struct lwp *l, const struct freebsd_sys_ioctl_args *uap, register_t *retval)
 {
-	struct freebsd_sys_ioctl_args /* {
+	/* {
 		syscallarg(int) fd;
 		syscallarg(u_long) com;
 		syscallarg(void *) data;
-	} */ *uap = v;
+	} */
         struct oss_sys_ioctl_args ap;
 	struct sys_ioctl_args nap;
 
@@ -143,6 +143,6 @@ freebsd_sys_ioctl(struct lwp *l, void *v, register_t *retval)
 		freebsd_to_netbsd_ifioctl(uap, &nap);
 		return sys_ioctl(l, &nap, retval);
 	default:
-		return sys_ioctl(l, uap, retval);
+		return sys_ioctl(l, (const void *)uap, retval);
 	}
 }

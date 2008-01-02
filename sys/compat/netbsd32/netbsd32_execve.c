@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_execve.c,v 1.30 2007/04/22 08:29:58 dsl Exp $	*/
+/*	$NetBSD: netbsd32_execve.c,v 1.30.20.1 2008/01/02 21:53:08 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_execve.c,v 1.30 2007/04/22 08:29:58 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_execve.c,v 1.30.20.1 2008/01/02 21:53:08 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,13 +62,13 @@ netbsd32_execve_fetch_element(char * const *array, size_t index, char **value)
 }
 
 int
-netbsd32_execve(struct lwp *l, void *v, register_t *retval)
+netbsd32_execve(struct lwp *l, const struct netbsd32_execve_args *uap, register_t *retval)
 {
-	struct netbsd32_execve_args /* {
+	/* {
 		syscallarg(const netbsd32_charp) path;
 		syscallarg(netbsd32_charpp) argp;
 		syscallarg(netbsd32_charpp) envp;
-	} */ *uap = v;
+	} */
 	const char *path = SCARG_P32(uap, path);
 
 	return execve1(l, path, SCARG_P32(uap, argp),

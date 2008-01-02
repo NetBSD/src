@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ec.c,v 1.12 2007/03/04 06:00:51 christos Exp $	*/
+/*	$NetBSD: if_ec.c,v 1.12.32.1 2008/01/02 21:50:35 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ec.c,v 1.12 2007/03/04 06:00:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ec.c,v 1.12.32.1 2008/01/02 21:50:35 bouyer Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -286,7 +286,7 @@ ec_init(struct ifnet *ifp)
 	delay(160);
 
 	/* Set the Ethernet address. */
-	bus_space_write_region_1(sc->sc_iot, sc->sc_ioh, ECREG_ARAM, LLADDR(sc->sc_ethercom.ec_if.if_sadl), ETHER_ADDR_LEN);
+	bus_space_write_region_1(sc->sc_iot, sc->sc_ioh, ECREG_ARAM, CLLADDR(sc->sc_ethercom.ec_if.if_sadl), ETHER_ADDR_LEN);
 	ECREG_CSR_WR((ECREG_CSR_RD & EC_CSR_INTPA) | EC_CSR_AMSW);
 	ECREG_CSR_WR(ECREG_CSR_RD & 0);
 

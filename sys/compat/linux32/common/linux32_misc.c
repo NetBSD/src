@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_misc.c,v 1.8 2007/12/08 18:36:11 dsl Exp $	*/
+/*	$NetBSD: linux32_misc.c,v 1.8.4.1 2008/01/02 21:52:49 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_misc.c,v 1.8 2007/12/08 18:36:11 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_misc.c,v 1.8.4.1 2008/01/02 21:52:49 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -70,12 +70,12 @@ extern const int linux_fstypes_cnt;
  * Implement the fs stat functions. Straightforward.
  */
 int
-linux32_sys_statfs(struct lwp *l, void *v, register_t *retval)
+linux32_sys_statfs(struct lwp *l, const struct linux32_sys_statfs_args *uap, register_t *retval)
 {
-	struct linux32_sys_statfs_args /* {
+	/* {
 		syscallarg(const netbsd32_charp char) path;
 		syscallarg(linux32_statfsp) sp;
-	} */ *uap = v;
+	} */
 	struct statvfs *sb;
 	struct linux_statfs ltmp;
 	int error;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.81 2007/12/09 20:27:55 jmcneill Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.81.2.1 2008/01/02 21:53:57 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.81 2007/12/09 20:27:55 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.81.2.1 2008/01/02 21:53:57 bouyer Exp $");
 
 #include "opt_cardbus.h"
 
@@ -70,6 +70,7 @@ __KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.81 2007/12/09 20:27:55 jmcneill Exp $"
 
 
 STATIC void cardbusattach(struct device *, struct device *, void *);
+STATIC int cardbusdetach(device_t, int);
 STATIC int cardbusmatch(struct device *, struct cfdata *, void *);
 int cardbus_rescan(struct device *, const char *, const int *);
 void cardbus_childdetached(struct device *, struct device *);
@@ -91,7 +92,7 @@ static void disable_function(struct cardbus_softc *, int);
 static bool cardbus_child_register(device_t);
 
 CFATTACH_DECL2(cardbus, sizeof(struct cardbus_softc),
-    cardbusmatch, cardbusattach, NULL, NULL,
+    cardbusmatch, cardbusattach, cardbusdetach, NULL,
     cardbus_rescan, cardbus_childdetached);
 
 #ifndef __NetBSD_Version__
@@ -146,6 +147,18 @@ cardbusattach(struct device *parent, struct device *self, void *aux)
 
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
+}
+
+STATIC int
+cardbusdetach(device_t self, int flags)
+{
+	int rc;
+
+	if ((rc = config_detach_children(self, flags)) != 0)
+		return rc;
+
+	pmf_device_deregister(self);
+	return 0;
 }
 
 static int
@@ -217,6 +230,8 @@ cardbus_read_tuples(struct cardbus_attach_args *ca, cardbusreg_t cis_ptr,
 			    sc->sc_dev.dv_xname);
 			return (1);
 		}
+		aprint_debug_dev(&sc->sc_dev, "mapped %ju bytes at 0x%jx\n",
+		    (uintmax_t)bar_size, (uintmax_t)bar_addr);
 
 		if (cardbus_space == CARDBUS_CIS_ASI_ROM) {
 			cardbusreg_t exrom;
@@ -235,8 +250,7 @@ cardbus_read_tuples(struct cardbus_attach_args *ca, cardbusreg_t cis_ptr,
 			    CARDBUS_COMMAND_STATUS_REG,
 			    command | CARDBUS_COMMAND_MEM_ENABLE);
 
-			if (cardbus_read_exrom(ca->ca_memt, bar_memh,
-			    &rom_image))
+			if (cardbus_read_exrom(bar_tag, bar_memh, &rom_image))
 				goto out;
 
 			SIMPLEQ_FOREACH(p, &rom_image, next) {
@@ -264,7 +278,7 @@ cardbus_read_tuples(struct cardbus_attach_args *ca, cardbusreg_t cis_ptr,
 			    CARDBUS_COMMAND_STATUS_REG,
 			    command | CARDBUS_COMMAND_MEM_ENABLE);
 			/* XXX byte order? */
-			bus_space_read_region_1(ca->ca_memt, bar_memh,
+			bus_space_read_region_1(bar_tag, bar_memh,
 			    cis_ptr, tuples, MIN(bar_size, len));
 			found++;
 		}

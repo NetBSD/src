@@ -1,4 +1,4 @@
-/*	$NetBSD: siopreg.h,v 1.17 2005/12/11 12:21:28 christos Exp $	*/
+/*	$NetBSD: siopreg.h,v 1.17.60.1 2008/01/02 21:54:16 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -80,7 +80,7 @@ struct scf_period {
 	int scf; /* scf value to use */
 };
 
-static const struct scf_period scf_period[] __attribute__((__unused__)) = {
+static const struct scf_period scf_period[] __unused = {
 	{250, 25, 1}, /* 10.0 MHz */
 	{250, 37, 2}, /* 6.67 MHz */
 	{250, 50, 3},  /* 5.00 MHz */
@@ -96,7 +96,7 @@ static const struct scf_period scf_period[] __attribute__((__unused__)) = {
 	{ 62, 25, 5},  /* 10.0 MHz */
 };
 
-static const struct scf_period dt_scf_period[] __attribute__((__unused__)) = {
+static const struct scf_period dt_scf_period[] __unused = {
 	{ 62,  9, 1},  /* 80.0 MHz */
 	{ 62, 10, 3},  /* 40.0 MHz */
 	{ 62, 12, 5},  /* 20.0 MHz */
@@ -456,7 +456,7 @@ struct nvram_symbios {
 		u_int16_t	flags;
 #define	NVRAM_SYM_HOST_F_SCAN_AT_BOOT	0x0001
 		u_int16_t	io_port;	/* PCI I/O address */
-	} __attribute__((__packed__)) host[4];
+	} __packed host[4];
 
 	/* Targets (8 bytes x 16) */
 	struct nvram_symbios_target {
@@ -470,7 +470,7 @@ struct nvram_symbios {
 		u_int8_t	sync_offset;	/* 8, 16, etc. */
 		u_int16_t	sync_period;	/* 4 * factor */
 		u_int16_t	timeout;
-	} __attribute__((__packed__)) target[16];
+	} __packed target[16];
 
 	/* SCAM table (8 bytes x 4) */
 	struct nvram_symbios_scam {
@@ -487,17 +487,17 @@ struct nvram_symbios {
 #define	NVRAM_SYM_SCAM_ID_VALID		3
 		u_int8_t		target_id;
 		u_int8_t		rsvd;
-	} __attribute__((__packed__)) scam[4];
+	} __packed scam[4];
 
 	u_int8_t	spare_devices[15 * 8];
 	u_int8_t	trailer[6];	/* 0xfe 0xfe 0x00 0x00 0x00 0x00 */
-} __attribute__((__packed__));
+} __packed;
 
 #define	SIOP_NVRAM_TEK_SIZE		64
 #define	SIOP_NVRAM_TEK_93c46_ADDRESS	0
 #define	SIOP_NVRAM_TEK_24c16_ADDRESS	0x40
 
-static const u_int8_t tekram_sync_table[16] __attribute__((__unused__)) = {
+static const u_int8_t tekram_sync_table[16] __unused = {
 	25, 31, 37,  43,
 	50, 62, 75, 125,
 	12, 15, 18,  21,
@@ -515,7 +515,7 @@ struct nvram_tekram {
 #define	NVRAM_TEK_TARG_F_WIDE_NEGO	0x20
 		u_int8_t	sync_index;
 		u_int16_t	word2;
-	} __attribute__((__packed__)) target[16];
+	} __packed target[16];
 	u_int8_t	host_id;
 	u_int8_t	flags;
 #define	NVRAM_TEK_F_MORE_THAN_2_DRIVES	0x01
@@ -530,4 +530,4 @@ struct nvram_tekram {
 	u_int16_t	flags1;
 #define	NVRAM_TEK_F_F2_F6_ENABLED	0x0001
 	u_int16_t	spare[29];
-} __attribute__((__packed__));
+} __packed;

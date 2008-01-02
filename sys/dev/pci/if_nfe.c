@@ -1,4 +1,4 @@
-/*	$NetBSD: if_nfe.c,v 1.24 2007/12/09 20:28:09 jmcneill Exp $	*/
+/*	$NetBSD: if_nfe.c,v 1.24.2.1 2008/01/02 21:54:44 bouyer Exp $	*/
 /*	$OpenBSD: if_nfe.c,v 1.52 2006/03/02 09:04:00 jsg Exp $	*/
 
 /*-
@@ -21,7 +21,7 @@
 /* Driver for NVIDIA nForce MCP Fast Ethernet and Gigabit Ethernet */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.24 2007/12/09 20:28:09 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.24.2.1 2008/01/02 21:54:44 bouyer Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -248,6 +248,10 @@ nfe_attach(struct device *parent, struct device *self, void *aux)
 	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
 
 	sc->sc_dmat = pa->pa_dmat;
+
+	/* Check for reversed ethernet address */
+	if ((NFE_READ(sc, NFE_TX_UNK) & NFE_MAC_ADDR_INORDER) != 0)
+		sc->sc_flags |= NFE_CORRECT_MACADDR;
 
 	nfe_get_macaddr(sc, sc->sc_enaddr);
 	printf("%s: Ethernet address %s\n",
@@ -1866,15 +1870,27 @@ nfe_get_macaddr(struct nfe_softc *sc, uint8_t *addr)
 {
 	uint32_t tmp;
 
-	tmp = NFE_READ(sc, NFE_MACADDR_LO);
-	addr[0] = (tmp >> 8) & 0xff;
-	addr[1] = (tmp & 0xff);
+	if ((sc->sc_flags & NFE_CORRECT_MACADDR) == 0) {
+		tmp = NFE_READ(sc, NFE_MACADDR_LO);
+		addr[0] = (tmp >> 8) & 0xff;
+		addr[1] = (tmp & 0xff);
 
-	tmp = NFE_READ(sc, NFE_MACADDR_HI);
-	addr[2] = (tmp >> 24) & 0xff;
-	addr[3] = (tmp >> 16) & 0xff;
-	addr[4] = (tmp >>  8) & 0xff;
-	addr[5] = (tmp & 0xff);
+		tmp = NFE_READ(sc, NFE_MACADDR_HI);
+		addr[2] = (tmp >> 24) & 0xff;
+		addr[3] = (tmp >> 16) & 0xff;
+		addr[4] = (tmp >>  8) & 0xff;
+		addr[5] = (tmp & 0xff);
+	} else {
+		tmp = NFE_READ(sc, NFE_MACADDR_LO);
+		addr[5] = (tmp >> 8) & 0xff;
+		addr[4] = (tmp & 0xff);
+
+		tmp = NFE_READ(sc, NFE_MACADDR_HI);
+		addr[3] = (tmp >> 24) & 0xff;
+		addr[2] = (tmp >> 16) & 0xff;
+		addr[1] = (tmp >>  8) & 0xff;
+		addr[0] = (tmp & 0xff);
+	}
 }
 
 void

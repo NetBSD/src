@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.71 2007/12/03 15:34:07 ad Exp $	*/
+/*	$NetBSD: trap.c,v 1.71.6.1 2008/01/02 21:48:55 bouyer Exp $	*/
 
 /*
  * This file was taken from mvme68k/mvme68k/trap.c
@@ -84,13 +84,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.71 2007/12/03 15:34:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.71.6.1 2008/01/02 21:48:55 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
 #include "opt_kgdb.h"
 #include "opt_compat_sunos.h"
-#include "opt_compat_hpux.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,10 +117,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.71 2007/12/03 15:34:07 ad Exp $");
 #include <m68k/cacheops.h>
 
 #include <uvm/uvm_extern.h>
-
-#ifdef COMPAT_HPUX
-#include <compat/hpux/hpux.h>
-#endif
 
 #ifdef COMPAT_SUNOS
 #include <compat/sunos/sunos_syscall.h>
@@ -454,20 +449,7 @@ trap(struct frame *fp, int type, unsigned code, unsigned v)
 #endif
 
 	case T_ILLINST|T_USER:	/* illegal instruction fault */
-#ifdef COMPAT_HPUX
-		if (p->p_emul == &emul_hpux) {
-			ksi.ksi_addr = (void *)HPUX_ILL_ILLINST_TRAP;
-			ksi.ksi_signo = SIGILL;
-			break;
-		}
-		/* fall through */
-#endif
 	case T_PRIVINST|T_USER:	/* privileged instruction fault */
-#ifdef COMPAT_HPUX
-		if (p->p_emul == &emul_hpux)
-			ksi.ksi_addr = (void *)HPUX_ILL_PRIV_TRAP;
-		else
-#endif
 		ksi.ksi_addr = (void *)(int)fp->f_format;
 				/* XXX was ILL_PRIVIN_FAULT */
 		ksi.ksi_signo = SIGILL;
@@ -476,11 +458,6 @@ trap(struct frame *fp, int type, unsigned code, unsigned v)
 		break;
 
 	case T_ZERODIV|T_USER:	/* Divide by zero */
-#ifdef COMPAT_HPUX
-		if (p->p_emul == &emul_hpux)
-			ksi.ksi_addr = (void *)HPUX_FPE_INTDIV_TRAP;
-		else
-#endif
 		ksi.ksi_addr = (void *)(int)fp->f_format;
 				/* XXX was FPE_INTDIV_TRAP */
 		ksi.ksi_signo = SIGFPE;
@@ -488,28 +465,12 @@ trap(struct frame *fp, int type, unsigned code, unsigned v)
 		break;
 
 	case T_CHKINST|T_USER:	/* CHK instruction trap */
-#ifdef COMPAT_HPUX
-		if (p->p_emul == &emul_hpux) {
-			/* handled differently under hp-ux */
-			ksi.ksi_signo = SIGILL;
-			ksi.ksi_addr = (void *)HPUX_ILL_CHK_TRAP;
-			break;
-		}
-#endif
 		ksi.ksi_addr = (void *)(int)fp->f_format;
 				/* XXX was FPE_SUBRNG_TRAP */
 		ksi.ksi_signo = SIGFPE;
 		break;
 
 	case T_TRAPVINST|T_USER:	/* TRAPV instruction trap */
-#ifdef COMPAT_HPUX
-		if (p->p_emul == &emul_hpux) {
-			/* handled differently under hp-ux */
-			ksi.ksi_signo = SIGILL;
-			ksi.ksi_addr = (void *)HPUX_ILL_TRAPV_TRAP;
-			break;
-		}
-#endif
 		ksi.ksi_addr = (void *)(int)fp->f_format;
 				/* XXX was FPE_INTOVF_TRAP */
 		ksi.ksi_signo = SIGFPE;
@@ -651,20 +612,6 @@ trap(struct frame *fp, int type, unsigned code, unsigned v)
 		}
 #endif
 		
-#ifdef COMPAT_HPUX
-		if (ISHPMMADDR(va)) {
-			int pmap_mapmulti(pmap_t, vaddr_t);
-			vaddr_t bva;
-
-			rv = pmap_mapmulti(map->pmap, va);
-			if (rv != 0) {
-				bva = HPMMBASEADDR(va);
-				rv = uvm_fault(map, bva, ftype);
-				if (rv == 0)
-					(void) pmap_mapmulti(map->pmap, va);
-			}
-		} else
-#endif
 		rv = uvm_fault(map, va, ftype);
 #ifdef DEBUG
 		if (rv && MDB_ISPID(p->p_pid))

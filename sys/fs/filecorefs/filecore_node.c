@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_node.c,v 1.12 2007/11/26 19:01:44 pooka Exp $	*/
+/*	$NetBSD: filecore_node.c,v 1.12.6.1 2008/01/02 21:55:29 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1994
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_node.c,v 1.12 2007/11/26 19:01:44 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_node.c,v 1.12.6.1 2008/01/02 21:55:29 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -174,7 +174,7 @@ loop:
 	LIST_FOREACH(ip, &filecorehashtbl[INOHASH(dev, inum)], i_hash) {
 		if (inum == ip->i_number && dev == ip->i_dev) {
 			vp = ITOV(ip);
-			simple_lock(&vp->v_interlock);
+			mutex_enter(&vp->v_interlock);
 			simple_unlock(&filecore_ihash_slock);
 			if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK))
 				goto loop;
@@ -226,7 +226,7 @@ filecore_inactive(v)
 {
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
-		struct lwp *a_l;
+		bool *a_recycle;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct filecore_node *ip = VTOI(vp);
@@ -235,14 +235,13 @@ filecore_inactive(v)
 	if (prtactive && vp->v_usecount != 0)
 		vprint("filecore_inactive: pushing active", vp);
 
-	ip->i_flag = 0;
-	VOP_UNLOCK(vp, 0);
 	/*
 	 * If we are done with the inode, reclaim it
 	 * so that it can be reused immediately.
 	 */
-	if (filecore_staleinode(ip))
-		vrecycle(vp, (struct simplelock *)0, curlwp);
+	ip->i_flag = 0;
+	*ap->a_recycle = (filecore_staleinode(ip) != 0);
+	VOP_UNLOCK(vp, 0);
 	return error;
 }
 

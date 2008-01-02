@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.xen,v 1.20 2007/11/22 16:16:47 bouyer Exp $
+#	$NetBSD: Makefile.xen,v 1.20.6.1 2008/01/02 21:51:29 bouyer Exp $
 #	NetBSD: Makefile.i386,v 1.132 2003/07/05 16:56:10 simonb Exp 
 
 # Makefile for NetBSD
@@ -145,8 +145,9 @@ apmcall.o in_cksum.o pnpbioscall.o bioscall.o: assym.h
 mptramp.o: assym.h
 .elif  ${XEN_BUILD} == amd64
 locore.o machdep.o: Makefile
-busfunc.o cpufunc.o netbsd32_sigcode.o: assym.h
+cpufunc.o linux32_sigcode.o lock_stubs.o netbsd32_sigcode.o: assym.h
 .endif
+busfunc.o cpufunc.o: assym.h
 clock.o: config_time.h
 
 ##

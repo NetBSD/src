@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ras.c,v 1.23 2007/10/26 17:28:37 ad Exp $	*/
+/*	$NetBSD: kern_ras.c,v 1.23.8.1 2008/01/02 21:55:56 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ras.c,v 1.23 2007/10/26 17:28:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ras.c,v 1.23.8.1 2008/01/02 21:55:56 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/lock.h>
@@ -166,7 +166,7 @@ ras_purgeall(void)
 
 	p = curproc;
 
-	mutex_enter(&p->p_raslock);
+	mutex_enter(&p->p_auxlock);
 	if ((rp = p->p_raslist) != NULL) {
 		p->p_raslist = NULL;
 		ras_sync();
@@ -175,7 +175,7 @@ ras_purgeall(void)
 			pool_put(&ras_pool, rp);
 		}
 	}
-	mutex_exit(&p->p_raslock);
+	mutex_exit(&p->p_auxlock);
 
 	return 0;
 }
@@ -211,7 +211,7 @@ ras_install(void *addr, size_t len)
 	nras = 0;
 	p = curproc;
 
-	mutex_enter(&p->p_raslock);
+	mutex_enter(&p->p_auxlock);
 	for (rp = p->p_raslist; rp != NULL; rp = rp->ras_next) {
 		if (++nras >= ras_per_proc) {
 			error = EINVAL;
@@ -226,9 +226,9 @@ ras_install(void *addr, size_t len)
 		newrp->ras_next = p->p_raslist;
 		p->p_raslist = newrp;
 		ras_sync();
-	 	mutex_exit(&p->p_raslock);
+	 	mutex_exit(&p->p_auxlock);
 	} else {
-	 	mutex_exit(&p->p_raslock);
+	 	mutex_exit(&p->p_auxlock);
  		pool_put(&ras_pool, newrp);
 	}
 
@@ -249,7 +249,7 @@ ras_purge(void *addr, size_t len)
 	endaddr = (char *)addr + len;
 	p = curproc;
 
-	mutex_enter(&p->p_raslock);
+	mutex_enter(&p->p_auxlock);
 	link = &p->p_raslist;
 	for (rp = *link; rp != NULL; link = &rp->ras_next, rp = *link) {
 		if (addr == rp->ras_startaddr && endaddr == rp->ras_endaddr)
@@ -258,11 +258,11 @@ ras_purge(void *addr, size_t len)
 	if (rp != NULL) {
 		*link = rp->ras_next;
 		ras_sync();
-		mutex_exit(&p->p_raslock);
+		mutex_exit(&p->p_auxlock);
 		pool_put(&ras_pool, rp);
 		return 0;
 	} else {
-		mutex_exit(&p->p_raslock);
+		mutex_exit(&p->p_auxlock);
 		return ESRCH;
 	}
 }
@@ -271,16 +271,15 @@ ras_purge(void *addr, size_t len)
 
 /*ARGSUSED*/
 int
-sys_rasctl(struct lwp *l, void *v, register_t *retval)
+sys_rasctl(struct lwp *l, const struct sys_rasctl_args *uap, register_t *retval)
 {
 
 #if defined(__HAVE_RAS)
-
-	struct sys_rasctl_args /* {
+	/* {
 		syscallarg(void *) addr;
 		syscallarg(size_t) len;
 		syscallarg(int) op;
-	} */ *uap = v;
+	} */
 	void *addr;
 	size_t len;
 	int op;

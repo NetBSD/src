@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.17 2007/12/03 20:21:33 ad Exp $	*/
+/*	$NetBSD: vector.S,v 1.17.4.1 2008/01/02 21:47:03 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -70,6 +70,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#include <machine/asm.h>
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -79,7 +80,6 @@
 #include <machine/i8259.h>
 #include <machine/i82093reg.h>
 #include <machine/i82489reg.h>
-#include <machine/asm.h>
 #include <machine/frameasm.h>
 #include <machine/segments.h>
 #include <machine/trap.h>
@@ -123,7 +123,38 @@ IDTVEC(trap00)
 IDTVEC(trap01)
 	BPTTRAP(T_TRCTRAP)
 IDTVEC(trap02)
+#if defined(XEN)
 	ZTRAP(T_NMI)
+#else /* defined(XEN) */
+	pushq $0
+	pushq $T_NMI
+	subq	$TF_REGSIZE,%rsp
+	INTR_SAVE_GPRS
+	movl	$MSR_GSBASE,%ecx
+	rdmsr
+	cmpl	$VM_MIN_KERNEL_ADDRESS_HIGH32,%edx
+	jae	1f
+	swapgs
+	movw	%gs,TF_GS(%rsp)
+	movw	%fs,TF_FS(%rsp)
+	movw	%es,TF_ES(%rsp)
+	movw	%ds,TF_DS(%rsp)
+	movq	%rsp,%rdi
+	call	_C_LABEL(trap)
+	swapgs
+	movw	TF_GS(%rsp),%gs
+	movw	TF_FS(%rsp),%fs
+	movw	TF_ES(%rsp),%es
+	movw	TF_DS(%rsp),%ds
+	jmp	2f
+1:
+	movq	%rsp,%rdi
+	call	_C_LABEL(trap)
+2:
+	INTR_RESTORE_GPRS
+	addq	$TF_REGSIZE+16,%rsp
+	iretq
+#endif /* defined(XEN) */
 IDTVEC(trap03)
 	BPTTRAP(T_BPTFLT)
 IDTVEC(trap04)
@@ -136,7 +167,7 @@ IDTVEC(trap07)
 	pushq	$0			# dummy error code
 	pushq	$T_DNA
 	INTRENTRY
-  	STI(si,di)
+  	STI(si)
 	movq	CPUVAR(SELF),%rdi
 	call	_C_LABEL(fpudna)
 	INTRFASTEXIT
@@ -225,7 +256,7 @@ NENTRY(resume_pop_es)
  */
 NENTRY(alltraps)
 	INTRENTRY
-  	STI(si,di)
+  	STI(si)
 calltrap:
 #ifdef DIAGNOSTIC
 	movl	CPUVAR(ILEVEL),%ebx
@@ -238,11 +269,11 @@ calltrap:
 .Lalltraps_checkast:
 	movq	CPUVAR(CURLWP),%r14
 	/* Check for ASTs on exit to user mode. */
-  	CLI(si,di)							;\
+  	CLI(si)
 	CHECK_ASTPENDING(%r14)
 	je	3f
 	CLEAR_ASTPENDING(%r14)
-  	STI(si,di)
+  	STI(si)
 	movl	$T_ASTFLT,TF_TRAPNO(%rsp)
 	movq	%rsp,%rdi
 	call	_C_LABEL(trap)
@@ -255,7 +286,7 @@ calltrap:
 6:	cmpl	CPUVAR(ILEVEL),%ebx
 	jne	3f
 	INTRFASTEXIT
-3:  	STI(si,di)
+3:  	STI(si)
 	movabsq	$4f,%rdi
 	movl	CPUVAR(ILEVEL),%esi
 	movl	%ebx,%edx
@@ -266,7 +297,7 @@ calltrap:
 	jmp	.Lalltraps_checkast
 4:	.asciz	"WARNING: SPL NOT LOWERED ON TRAP EXIT %x %x\n"
 #endif /* DIAGNOSTIC */
-9:	STI(si,di)
+9:	STI(si)
 	call	_C_LABEL(do_pmap_load)
 	jmp	.Lalltraps_checkast	/* re-check ASTs */
 
@@ -871,7 +902,7 @@ IDTVEC(resume_/**/name/**/num)						\
 1:									\
   	pushq	%r13							;\
   	movl	$num,CPUVAR(ILEVEL)					;\
-  	STI(si,di)							;\
+  	STI(si)								;\
   	incl	CPUVAR(IDEPTH)						;\
   	movq	IS_HANDLERS(%r14),%rbx					;\
 6:									\
@@ -882,10 +913,10 @@ IDTVEC(resume_/**/name/**/num)						\
   	testq	%rbx,%rbx						;\
   	jnz	6b							;\
 5:									\
-  	CLI(si,di)							;\
+  	CLI(si)								;\
   	unmask(num)			/* unmask it in hardware */	;\
   	late_ack(num)							;\
-  	CLI(si,di)							;\
+  	CLI(si)								;\
   	jmp	_C_LABEL(Xdoreti)	/* lower spl and do ASTs */	;\
   
 # The unmask func for Xen events

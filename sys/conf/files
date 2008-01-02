@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.876.2.1 2007/12/13 21:55:13 bouyer Exp $
+#	$NetBSD: files,v 1.876.2.2 2008/01/02 21:53:42 bouyer Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -23,7 +23,6 @@ defflag				KMEMSTATS
 defflag				KTRACE
 defflag				MBUFTRACE
 defflag				PTRACE
-defflag				SYSTRACE
 defflag				COREDUMP
 
 defparam			DEFCORENAME
@@ -97,6 +96,12 @@ file kern/subr_syscall_stats.c	syscall_stats
 
 defparam opt_pax.h		PAX_MPROTECT
 				PAX_SEGVGUARD
+ 				PAX_ASLR
+ 				PAX_ASLR_DELTA_MMAP_LSB
+ 				PAX_ASLR_DELTA_MMAP_LEN
+ 				PAX_ASLR_DELTA_STACK_LSB
+ 				PAX_ASLR_DELTA_STACK_LEN
+ 				PAX_ASLR_DELTA_PROG_LEN
 
 defflag	opt_fileassoc.h		FILEASSOC
 
@@ -117,7 +122,6 @@ defflag	opt_compat_netbsd.h	COMPAT_10: COMPAT_11
 defflag	opt_compat_netbsd.h	COMPAT_09: COMPAT_10
 defflag				COMPAT_OSSAUDIO
 defflag				COMPAT_FREEBSD: COMPAT_30
-defflag				COMPAT_HPUX
 defflag				COMPAT_IBCS2
 defflag				COMPAT_IRIX
 defflag				COMPAT_LINUX
@@ -535,6 +539,10 @@ file	dev/ic/esiop.c			esiop
 #
 device	uha: scsi
 file	dev/ic/uha.c			uha
+
+# 3Com common probe code
+define  elink
+file    dev/isa/elink.c                 elink
 
 # Aironet PC4500/PC4800
 #
@@ -1364,7 +1372,6 @@ file	kern/kern_sleepq.c
 file	kern/kern_softint.c
 file	kern/kern_stub.c
 file	kern/kern_subr.c
-file	kern/kern_systrace.c		systrace
 file	kern/kern_synch.c
 file	kern/kern_sysctl.c
 file	kern/kern_tc.c
@@ -1568,3 +1575,8 @@ include "dev/pad/files.pad"
 # Intel 386 Real Mode emulator
 #
 include "lib/libx86emu/files.x86emu"
+
+#
+# "tprof" profiler.
+#
+include	"dev/tprof/files.tprof"

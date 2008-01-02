@@ -1,4 +1,4 @@
-#	$NetBSD: majors.hp700,v 1.21 2006/12/06 10:27:00 skrll Exp $
+#	$NetBSD: majors.hp700,v 1.21.36.1 2008/01/02 21:47:54 bouyer Exp $
 #
 # Device majors for hp700
 #
@@ -37,7 +37,6 @@ device-major	wsmux		char 30			wsmux
 device-major	raid		char 31  block 10	raid
 device-major	xfs		char 32			xfs
 device-major	altq		char 33			altq
-device-major	systrace	char 34			systrace
 device-major	cgd		char 35  block 8	cgd
 device-major	ksyms		char 36			ksyms
 device-major	wsfont		char 37			wsfont

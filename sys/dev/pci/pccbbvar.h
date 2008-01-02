@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbbvar.h,v 1.30 2007/12/09 20:28:11 jmcneill Exp $	*/
+/*	$NetBSD: pccbbvar.h,v 1.30.2.1 2008/01/02 21:54:50 bouyer Exp $	*/
 /*
  * Copyright (c) 1999 HAYAKAWA Koichi.  All rights reserved.
  *
@@ -110,6 +110,7 @@ struct pccbb_softc {
 
 	bus_space_tag_t sc_base_memt;
 	bus_space_handle_t sc_base_memh;
+	bus_size_t sc_base_size;
 
 	struct callout sc_insert_ch;
 
@@ -122,6 +123,7 @@ struct pccbb_softc {
 #define	CBB_16BITCARD	0x04
 #define	CBB_32BITCARD	0x08
 #define	CBB_MEMHMAPPED	0x02000000
+#define	CBB_SPECMAPPED	0x04000000	/* "special" mapping */
 
 	pci_chipset_tag_t sc_pc;
 	pcitag_t sc_tag;

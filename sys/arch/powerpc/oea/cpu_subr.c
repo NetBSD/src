@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.35 2007/11/17 08:30:35 kefren Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.35.6.1 2008/01/02 21:49:09 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.35 2007/11/17 08:30:35 kefren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.35.6.1 2008/01/02 21:49:09 bouyer Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -83,6 +83,8 @@ static const struct fmttab cpu_7450_l2cr_formats[] = {
 	{ L2CR_L2DO|L2CR_L2IO, L2CR_L2IO, " instruction-only" },
 	{ L2CR_L2DO|L2CR_L2IO, L2CR_L2DO|L2CR_L2IO, " locked" },
 	{ L2CR_L2E, ~0, " 256KB L2 cache" },
+	{ L2CR_L2PE, 0, " no parity" },
+	{ L2CR_L2PE, ~0, " parity enabled" },
 	{ 0, 0, NULL }
 };
 
@@ -92,6 +94,8 @@ static const struct fmttab cpu_7448_l2cr_formats[] = {
 	{ L2CR_L2DO|L2CR_L2IO, L2CR_L2IO, " instruction-only" },
 	{ L2CR_L2DO|L2CR_L2IO, L2CR_L2DO|L2CR_L2IO, " locked" },
 	{ L2CR_L2E, ~0, " 1MB L2 cache" },
+	{ L2CR_L2PE, 0, " no parity" },
+	{ L2CR_L2PE, ~0, " parity enabled" },
 	{ 0, 0, NULL }
 };
 
@@ -101,6 +105,8 @@ static const struct fmttab cpu_7457_l2cr_formats[] = {
 	{ L2CR_L2DO|L2CR_L2IO, L2CR_L2IO, " instruction-only" },
 	{ L2CR_L2DO|L2CR_L2IO, L2CR_L2DO|L2CR_L2IO, " locked" },
 	{ L2CR_L2E, ~0, " 512KB L2 cache" },
+	{ L2CR_L2PE, 0, " no parity" },
+	{ L2CR_L2PE, ~0, " parity enabled" },
 	{ 0, 0, NULL }
 };
 
@@ -540,14 +546,22 @@ cpu_setup(self, ci)
 		cpu_probe_speed(ci);
 		aprint_normal("%u.%02u MHz",
 			      ci->ci_khz / 1000, (ci->ci_khz / 10) % 100);
-
-		if (vers == IBM750FX || vers == MPC750 ||
-		    vers == MPC7400  || vers == MPC7410 || MPC745X_P(vers)) {
-			if (MPC745X_P(vers)) {
-				cpu_config_l3cr(vers);
-			} else {
-				cpu_config_l2cr(pvr);
-			}
+		switch (vers) {
+		case MPC7450: /* 7441 does not have L3! */
+		case MPC7455: /* 7445 does not have L3! */
+		case MPC7457: /* 7447 does not have L3! */
+			cpu_config_l3cr(vers);
+			break;
+		case IBM750FX:
+		case MPC750:
+		case MPC7400:
+		case MPC7410:
+		case MPC7447A:
+		case MPC7448:
+			cpu_config_l2cr(pvr);
+			break;
+		default:
+			break;
 		}
 		aprint_normal("\n");
 		break;
@@ -612,6 +626,16 @@ cpu_setup(self, ci)
 		NULL, self->dv_xname, "IPIs");
 }
 
+/*
+ * According to a document labeled "PVR Register Settings":
+ ** For integrated microprocessors the PVR register inside the device
+ ** will identify the version of the microprocessor core. You must also
+ ** read the Device ID, PCI register 02, to identify the part and the
+ ** Revision ID, PCI register 08, to identify the revision of the
+ ** integrated microprocessor.
+ * This apparently applies to 8240/8245/8241, PVR 00810101 and 80811014
+ */
+
 void
 cpu_identify(char *str, size_t len)
 {
@@ -630,8 +654,12 @@ cpu_identify(char *str, size_t len)
 		minor = (pvr >> 0) & 0xff;
 		major = minor <= 4 ? 1 : 2;
 		break;
+	case MPCG2: /*XXX see note above */
+		major = (pvr >> 4) & 0xf;
+		minor = (pvr >> 0) & 0xf;
+		break;
 	default:
-		major = (pvr >>  4) & 0xf;
+		major = (pvr >>  8) & 0xf;
 		minor = (pvr >>  0) & 0xf;
 	}
 
@@ -689,7 +717,10 @@ void
 cpu_enable_l2cr(register_t l2cr)
 {
 	register_t msr, x;
+	uint16_t vers;
 
+	vers = mfpvr() >> 16;
+	
 	/* Disable interrupts and set the cache config bits. */
 	msr = mfmsr();
 	mtmsr(msr & ~PSL_EE);
@@ -705,11 +736,17 @@ cpu_enable_l2cr(register_t l2cr)
 	delay(100);
 
 	/* Invalidate all L2 contents. */
-	mtspr(SPR_L2CR, l2cr | L2CR_L2I);
-	do {
-		x = mfspr(SPR_L2CR);
-	} while (x & L2CR_L2IP);
-
+	if (MPC745X_P(vers)) {
+		mtspr(SPR_L2CR, l2cr | L2CR_L2I);
+		do {
+			x = mfspr(SPR_L2CR);
+		} while (x & L2CR_L2I);
+	} else {
+		mtspr(SPR_L2CR, l2cr | L2CR_L2I);
+		do {
+			x = mfspr(SPR_L2CR);
+		} while (x & L2CR_L2IP);
+	}
 	/* Enable L2 cache. */
 	l2cr |= L2CR_L2E;
 	mtspr(SPR_L2CR, l2cr);
@@ -768,6 +805,7 @@ void
 cpu_config_l2cr(int pvr)
 {
 	register_t l2cr;
+	u_int vers = (pvr >> 16) & 0xffff;
 
 	l2cr = mfspr(SPR_L2CR);
 
@@ -792,14 +830,33 @@ cpu_config_l2cr(int pvr)
 		aprint_normal(" L2 cache present but not enabled ");
 		return;
 	}
-
 	aprint_normal(",");
-	if ((pvr >> 16) == IBM750FX ||
-	    (pvr & 0xffffff00) == 0x00082200 /* IBM750CX */ ||
-	    (pvr & 0xffffef00) == 0x00082300 /* IBM750CXe */) {
+
+	switch (vers) {
+	case IBM750FX:
 		cpu_fmttab_print(cpu_ibm750_l2cr_formats, l2cr);
-	} else {
+		break;
+	case MPC750:
+		if ((pvr & 0xffffff00) == 0x00082200 /* IBM750CX */ ||
+		    (pvr & 0xffffef00) == 0x00082300 /* IBM750CXe */)
+			cpu_fmttab_print(cpu_ibm750_l2cr_formats, l2cr);
+		else
+			cpu_fmttab_print(cpu_l2cr_formats, l2cr);
+		break;
+	case MPC7447A:
+	case MPC7457:
+		cpu_fmttab_print(cpu_7457_l2cr_formats, l2cr);
+		return;
+	case MPC7448:
+		cpu_fmttab_print(cpu_7448_l2cr_formats, l2cr);
+		return;
+	case MPC7450:
+	case MPC7455:
+		cpu_fmttab_print(cpu_7450_l2cr_formats, l2cr);
+		break;
+	default:
 		cpu_fmttab_print(cpu_l2cr_formats, l2cr);
+		break;
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.37 2007/12/06 13:58:38 ad Exp $	*/
+/*	$NetBSD: intr.c,v 1.37.4.1 2008/01/02 21:51:24 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -140,7 +140,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.37 2007/12/06 13:58:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.37.4.1 2008/01/02 21:51:24 bouyer Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_acpi.h"
@@ -214,7 +214,7 @@ intr_default_setup(void)
 
 	/* icu vectors */
 	for (i = 0; i < NUM_LEGACY_IRQS; i++) {
-		idt_allocmap[ICU_OFFSET + i] = 1;
+		idt_vec_reserve(ICU_OFFSET + i);
 		setgate(&idt[ICU_OFFSET + i],
 		    i8259_stubs[i].ist_entry, 0, SDT_SYS386IGT,
 		    SEL_KPL, GSEL(GCODE_SEL, SEL_KPL));

@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.172.4.1 2007/12/13 21:55:22 bouyer Exp $	*/
+/*	$NetBSD: vnd.c,v 1.172.4.2 2008/01/02 21:53:48 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -137,7 +137,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.172.4.1 2007/12/13 21:55:22 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.172.4.2 2008/01/02 21:53:48 bouyer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -171,6 +171,8 @@ __KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.172.4.1 2007/12/13 21:55:22 bouyer Exp $")
 #include <miscfs/specfs/specdev.h>
 
 #include <dev/vndvar.h>
+
+#include <prop/proplib.h>
 
 #if defined(VNDDEBUG) && !defined(DEBUG)
 #define DEBUG
@@ -227,6 +229,7 @@ static void	handle_with_rdwr(struct vnd_softc *, const struct buf *,
 		    struct buf *);
 static void	handle_with_strategy(struct vnd_softc *, const struct buf *,
 		    struct buf *);
+static void	vnd_set_properties(struct vnd_softc *);
 
 static dev_type_open(vndopen);
 static dev_type_close(vndclose);
@@ -617,11 +620,14 @@ vndthread(void *arg)
 		disk_busy(&vnd->sc_dkdev);
 
 		bp = &vnx->vx_buf;
-		BUF_INIT(bp);
-		bp->b_flags = (obp->b_flags & B_READ) | B_CALL;
+		buf_init(bp);
+		bp->b_flags = (obp->b_flags & B_READ);
+		bp->b_oflags = obp->b_oflags;
+		bp->b_cflags = obp->b_cflags;
 		bp->b_iodone = vndiodone;
 		bp->b_private = obp;
 		bp->b_vp = vnd->sc_vp;
+		bp->b_objlock = &bp->b_vp->v_interlock;
 		bp->b_data = obp->b_data;
 		bp->b_bcount = obp->b_bcount;
 		BIO_COPYPRIO(bp, obp);
@@ -705,8 +711,11 @@ handle_with_rdwr(struct vnd_softc *vnd, const struct buf *obp, struct buf *bp)
 
 	/* We need to increase the number of outputs on the vnode if
 	 * there was any write to it. */
-	if (!doread)
-		V_INCR_NUMOUTPUT(vp);
+	if (!doread) {
+		mutex_enter(&vp->v_interlock);
+		vp->v_numoutput++;
+		mutex_exit(&vp->v_interlock);
+	}
 
 	biodone(bp);
 }
@@ -724,15 +733,15 @@ handle_with_strategy(struct vnd_softc *vnd, const struct buf *obp,
 	int bsize, error, flags, skipped;
 	size_t resid, sz;
 	off_t bn, offset;
+	struct vnode *vp;
 
 	flags = obp->b_flags;
 
 	if (!(flags & B_READ)) {
-		int s;
-		
-		s = splbio();
-		V_INCR_NUMOUTPUT(bp->b_vp);
-		splx(s);
+		vp = bp->b_vp;
+		mutex_enter(&vp->v_interlock);
+		vp->v_numoutput++;
+		mutex_exit(&vp->v_interlock);
 	}
 
 	/* convert to a byte offset within the file. */
@@ -753,7 +762,6 @@ handle_with_strategy(struct vnd_softc *vnd, const struct buf *obp,
 	for (offset = 0, resid = bp->b_resid; resid;
 	    resid -= sz, offset += sz) {
 		struct buf *nbp;
-		struct vnode *vp;
 		daddr_t nbn;
 		int off, nra;
 
@@ -789,11 +797,11 @@ handle_with_strategy(struct vnd_softc *vnd, const struct buf *obp,
 #ifdef	DEBUG
 		if (vnddebug & VDB_IO)
 			printf("vndstrategy: vp %p/%p bn 0x%qx/0x%" PRIx64
-			       " sz 0x%zx\n",
-			    vnd->sc_vp, vp, (long long)bn, nbn, sz);
+			    " sz 0x%zx\n", vnd->sc_vp, vp, (long long)bn,
+			    nbn, sz);
 #endif
 
-		nbp = getiobuf();
+		nbp = getiobuf(vp, true);
 		nestiobuf_setup(bp, nbp, offset, sz);
 		nbp->b_blkno = nbn + btodb(off);
 
@@ -1160,6 +1168,8 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			vnd->sc_geom.vng_ntracks = 1;
 			vnd->sc_geom.vng_ncylinders = vnd->sc_size;
 		}
+
+		vnd_set_properties(vnd);
 
 		if (vio->vnd_flags & VNDIOF_READONLY) {
 			vnd->sc_flags |= VNF_READONLY;
@@ -1823,3 +1833,45 @@ vnd_free(void *aux, void *ptr)
 	free(ptr, M_TEMP);
 }
 #endif /* VND_COMPRESSION */
+
+static void
+vnd_set_properties(struct vnd_softc *vnd)
+{
+	prop_dictionary_t disk_info, odisk_info, geom;
+
+	disk_info = prop_dictionary_create();
+
+	geom = prop_dictionary_create();
+
+	prop_dictionary_set_uint64(geom, "sectors-per-unit",
+	    vnd->sc_geom.vng_nsectors * vnd->sc_geom.vng_ntracks *
+	    vnd->sc_geom.vng_ncylinders);
+
+	prop_dictionary_set_uint32(geom, "sector-size",
+	    vnd->sc_geom.vng_secsize);
+
+	prop_dictionary_set_uint16(geom, "sectors-per-track",
+	    vnd->sc_geom.vng_nsectors);
+
+	prop_dictionary_set_uint16(geom, "tracks-per-cylinder",
+	    vnd->sc_geom.vng_ntracks);
+
+	prop_dictionary_set_uint64(geom, "cylinders-per-unit",
+	    vnd->sc_geom.vng_ncylinders);
+
+	prop_dictionary_set(disk_info, "geometry", geom);
+	prop_object_release(geom);
+
+	prop_dictionary_set(device_properties(&vnd->sc_dev),
+	    "disk-info", disk_info);
+
+	/*
+	 * Don't release disk_info here; we keep a reference to it.
+	 * disk_detach() will release it when we go away.
+	 */
+
+	odisk_info = vnd->sc_dkdev.dk_info;
+	vnd->sc_dkdev.dk_info = disk_info;
+	if (odisk_info)
+		prop_object_release(odisk_info);
+}

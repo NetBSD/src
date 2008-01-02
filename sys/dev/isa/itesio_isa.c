@@ -1,4 +1,4 @@
-/*	$NetBSD: itesio_isa.c,v 1.7.2.1 2007/12/13 21:55:40 bouyer Exp $ */
+/*	$NetBSD: itesio_isa.c,v 1.7.2.2 2008/01/02 21:54:26 bouyer Exp $ */
 /*	Derived from $OpenBSD: it.c,v 1.19 2006/04/10 00:57:54 deraadt Exp $	*/
 
 /*
@@ -29,11 +29,12 @@
 
 /*
  * Driver for the iTE IT87xxF Super I/O. Currently supporting
- * the Hardware monitor part in the Environmental Controller.
+ * the Environmental Controller to monitor the sensors and the
+ * Watchdog Timer.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: itesio_isa.c,v 1.7.2.1 2007/12/13 21:55:40 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: itesio_isa.c,v 1.7.2.2 2008/01/02 21:54:26 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -83,12 +84,16 @@ static void	itesio_writereg(bus_space_tag_t, bus_space_handle_t, int, int);
 static void	itesio_enter(bus_space_tag_t, bus_space_handle_t);
 static void	itesio_exit(bus_space_tag_t, bus_space_handle_t);
 
-/* envsys(9) glue */
+/* sysmon_envsys(9) glue */
 static void	itesio_setup_sensors(struct itesio_softc *);
 static void	itesio_refresh_temp(struct itesio_softc *, envsys_data_t *);
 static void	itesio_refresh_volts(struct itesio_softc *, envsys_data_t *);
 static void	itesio_refresh_fans(struct itesio_softc *, envsys_data_t *);
 static void	itesio_refresh(struct sysmon_envsys *, envsys_data_t *);
+
+/* sysmon_wdog glue */
+static int	itesio_wdt_setmode(struct sysmon_wdog *);
+static int 	itesio_wdt_tickle(struct sysmon_wdog *);
 
 /* rfact values for voltage sensors */
 static const int itesio_vrfact[] = {
@@ -150,13 +155,13 @@ itesio_isa_attach(device_t parent, device_t self, void *aux)
 {
 	struct itesio_softc *sc = device_private(self);
 	struct isa_attach_args *ia = aux;
-	bus_space_handle_t ioh;
 	int i;
 	uint8_t cr;
 
-	ia->ia_iot = sc->sc_iot;
+	sc->sc_iot = ia->ia_iot;
 
-	if (bus_space_map(sc->sc_iot, ia->ia_io[0].ir_addr, 2, 0, &ioh)) {
+	if (bus_space_map(sc->sc_iot, ia->ia_io[0].ir_addr, 2, 0,
+			  &sc->sc_ioh)) {
 		aprint_error(": can't map i/o space\n");
 		return;
 	}
@@ -166,34 +171,37 @@ itesio_isa_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Enter to the Super I/O MB PNP mode.
 	 */
-	itesio_enter(ia->ia_iot, ioh);
+	itesio_enter(sc->sc_iot, sc->sc_ioh);
 	/*
 	 * Get info from the Super I/O Global Configuration Registers:
 	 * Chip IDs and Device Revision.
 	 */
-	sc->sc_chipid = (itesio_readreg(ia->ia_iot, ioh, ITESIO_CHIPID1) << 8);
-	sc->sc_chipid |= itesio_readreg(ia->ia_iot, ioh, ITESIO_CHIPID2);
-	sc->sc_devrev = (itesio_readreg(ia->ia_iot, ioh, ITESIO_DEVREV) & 0x0f);
+	sc->sc_chipid = (itesio_readreg(sc->sc_iot, sc->sc_ioh,
+	    ITESIO_CHIPID1) << 8);
+	sc->sc_chipid |= itesio_readreg(sc->sc_iot, sc->sc_ioh,
+	    ITESIO_CHIPID2);
+	sc->sc_devrev = (itesio_readreg(sc->sc_iot, sc->sc_ioh,
+	    ITESIO_DEVREV) & 0x0f);
 	/*
 	 * Select the EC LDN to get the Base Address.
 	 */
-	itesio_writereg(ia->ia_iot, ioh, ITESIO_LDNSEL, ITESIO_EC_LDN);
+	itesio_writereg(sc->sc_iot, sc->sc_ioh, ITESIO_LDNSEL, ITESIO_EC_LDN);
 	sc->sc_hwmon_baseaddr =
-	    (itesio_readreg(ia->ia_iot, ioh, ITESIO_EC_MSB) << 8);
-	sc->sc_hwmon_baseaddr |= itesio_readreg(ia->ia_iot, ioh, ITESIO_EC_LSB);
+	    (itesio_readreg(sc->sc_iot, sc->sc_ioh, ITESIO_EC_MSB) << 8);
+	sc->sc_hwmon_baseaddr |= itesio_readreg(sc->sc_iot, sc->sc_ioh,
+	    ITESIO_EC_LSB);
 	/*
-	 * We are done, exit MB PNP mode and unmap I/O space.
+	 * We are done, exit MB PNP mode.
 	 */
-	itesio_exit(ia->ia_iot, ioh);
-	bus_space_unmap(sc->sc_iot, ioh, 2);
+	itesio_exit(sc->sc_iot, sc->sc_ioh);
 
 	aprint_normal(": iTE IT%4xF Super I/O (rev %d)\n",
 	    sc->sc_chipid, sc->sc_devrev);
 	aprint_normal_dev(self, "Hardware Monitor registers at 0x%x\n",
 	    sc->sc_hwmon_baseaddr);
 
-	if (bus_space_map(sc->sc_iot, sc->sc_hwmon_baseaddr, 8, 0,
-	    &sc->sc_ioh)) {
+	if (bus_space_map(sc->sc_ec_iot, sc->sc_hwmon_baseaddr, 8, 0,
+	    &sc->sc_ec_ioh)) {
 		aprint_error_dev(self, "cannot map hwmon i/o space\n");
 		return;
 	}
@@ -236,12 +244,36 @@ itesio_isa_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self,
 		    "unable to register with sysmon (%d)\n", i);
 		sysmon_envsys_destroy(sc->sc_sme);
-		bus_space_unmap(sc->sc_iot, sc->sc_ioh, 8);
+		bus_space_unmap(sc->sc_ec_iot, sc->sc_ec_ioh, 8);
 		return;
 	}
 	sc->sc_hwmon_enabled = true;
+
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
+
+	/* The IT8705 doesn't support a WDT */
+	if (sc->sc_chipid == ITESIO_ID8705) {
+		bus_space_unmap(sc->sc_iot, sc->sc_ioh, 2);
+		return;
+	}
+
+	/*
+	 * Initialize the watchdog timer.
+	 */
+	sc->sc_smw.smw_name = device_xname(self);
+	sc->sc_smw.smw_cookie = sc;
+	sc->sc_smw.smw_setmode = itesio_wdt_setmode;
+	sc->sc_smw.smw_tickle = itesio_wdt_tickle;
+	sc->sc_smw.smw_period = 60;
+
+	if (sysmon_wdog_register(&sc->sc_smw)) {
+		aprint_error_dev(self, "unable to register watchdog timer\n");
+		bus_space_unmap(sc->sc_iot, sc->sc_ioh, 2);
+		return;
+	}
+	sc->sc_wdt_enabled = true;
+	aprint_normal_dev(self, "Watchdog Timer present\n");
 }
 
 static int
@@ -252,7 +284,12 @@ itesio_isa_detach(device_t self, int flags)
 	if (sc->sc_hwmon_enabled)
 		sysmon_envsys_unregister(sc->sc_sme);
 	if (sc->sc_hwmon_mapped)
-		bus_space_unmap(sc->sc_iot, sc->sc_ioh, 8);
+		bus_space_unmap(sc->sc_ec_iot, sc->sc_ec_ioh, 8);
+	if (sc->sc_wdt_enabled) {
+		sysmon_wdog_unregister(&sc->sc_smw);
+		bus_space_unmap(sc->sc_iot, sc->sc_ioh, 2);
+	}
+
 	return 0;
 }
 
@@ -262,15 +299,15 @@ itesio_isa_detach(device_t self, int flags)
 static uint8_t
 itesio_ecreadreg(struct itesio_softc *sc, int reg)
 {
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh, ITESIO_EC_ADDR, reg);
-	return bus_space_read_1(sc->sc_iot, sc->sc_ioh, ITESIO_EC_DATA);
+	bus_space_write_1(sc->sc_ec_iot, sc->sc_ec_ioh, ITESIO_EC_ADDR, reg);
+	return bus_space_read_1(sc->sc_ec_iot, sc->sc_ec_ioh, ITESIO_EC_DATA);
 }
 
 static void
 itesio_ecwritereg(struct itesio_softc *sc, int reg, int val)
 {
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh, ITESIO_EC_ADDR, reg);
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh, ITESIO_EC_DATA, val);
+	bus_space_write_1(sc->sc_ec_iot, sc->sc_ec_ioh, ITESIO_EC_ADDR, reg);
+	bus_space_write_1(sc->sc_ec_iot, sc->sc_ec_ioh, ITESIO_EC_DATA, val);
 }
 
 /*
@@ -485,4 +522,60 @@ itesio_refresh(struct sysmon_envsys *sme, struct envsys_data *edata)
 		itesio_refresh_volts(sc, edata);
 	else
 		itesio_refresh_fans(sc, edata);
+}
+
+static int
+itesio_wdt_setmode(struct sysmon_wdog *smw)
+{
+	struct itesio_softc *sc = smw->smw_cookie;
+	int period = smw->smw_period;
+
+	/* Enter MB PNP mode and select the WDT LDN */
+	itesio_enter(sc->sc_iot, sc->sc_ioh);
+	itesio_writereg(sc->sc_iot, sc->sc_ioh, ITESIO_LDNSEL, ITESIO_WDT_LDN);
+
+	if ((smw->smw_mode & WDOG_MODE_MASK) == WDOG_MODE_DISARMED) {
+		/* Disable the watchdog */
+		itesio_writereg(sc->sc_iot, sc->sc_ioh, ITESIO_WDT_CTL, 0);
+		itesio_writereg(sc->sc_iot, sc->sc_ioh, ITESIO_WDT_CNF, 0);
+		itesio_writereg(sc->sc_iot, sc->sc_ioh, ITESIO_WDT_TMO_MSB, 0);
+		itesio_writereg(sc->sc_iot, sc->sc_ioh, ITESIO_WDT_TMO_LSB, 0);
+	} else {
+		/* Enable the watchdog */
+		if (period > ITESIO_WDT_MAXTIMO || period < 1)
+			period = smw->smw_period = ITESIO_WDT_MAXTIMO;
+
+		period *= 2;
+
+		/* set the timeout and start the watchdog */
+		itesio_writereg(sc->sc_iot, sc->sc_ioh, ITESIO_WDT_TMO_MSB,
+		    period >> 8);
+		itesio_writereg(sc->sc_iot, sc->sc_ioh, ITESIO_WDT_TMO_LSB,
+		    period & 0xff);
+		itesio_writereg(sc->sc_iot, sc->sc_ioh, ITESIO_WDT_CNF,
+		    ITESIO_WDT_CNF_SECS | ITESIO_WDT_CNF_KRST |
+		    ITESIO_WDT_CNF_PWROK);
+	}
+	/* we are done, exit MB PNP mode */
+	itesio_exit(sc->sc_iot, sc->sc_ioh);
+
+	return 0;
+}
+
+static int
+itesio_wdt_tickle(struct sysmon_wdog *smw)
+{
+	struct itesio_softc *sc = smw->smw_cookie;
+	int period = smw->smw_period * 2;
+
+	/* refresh timeout value and exit */
+	itesio_enter(sc->sc_iot, sc->sc_ioh);
+	itesio_writereg(sc->sc_iot, sc->sc_ioh, ITESIO_LDNSEL, ITESIO_WDT_LDN);
+	itesio_writereg(sc->sc_iot, sc->sc_ioh, ITESIO_WDT_TMO_MSB,
+	    period >> 8);
+	itesio_writereg(sc->sc_iot, sc->sc_ioh, ITESIO_WDT_TMO_LSB,
+	    period & 0xff);
+	itesio_exit(sc->sc_iot, sc->sc_ioh);
+
+	return 0;
 }

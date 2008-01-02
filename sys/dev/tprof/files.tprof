@@ -1,0 +1,4 @@
+#	$NetBSD: files.tprof,v 1.1.2.2 2008/01/02 21:55:16 bouyer Exp $
+
+defpseudo tprof
+file	dev/tprof/tprof.c	tprof

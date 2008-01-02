@@ -1,4 +1,4 @@
-/*	$NetBSD: bfs.c,v 1.9 2007/06/30 09:37:57 pooka Exp $	*/
+/*	$NetBSD: bfs.c,v 1.9.20.1 2008/01/02 21:55:37 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: bfs.c,v 1.9 2007/06/30 09:37:57 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bfs.c,v 1.9.20.1 2008/01/02 21:55:37 bouyer Exp $");
 #define	BFS_DEBUG
 
 #include <sys/param.h>
@@ -291,7 +291,7 @@ bfs_file_write(struct bfs *bfs, const char *fname, void *buf,
 		if (!bfs_inode_lookup(bfs, dirent->inode, &inode)) {
 			DPRINTF(bfs->debug, "%s: dirent found, but inode "
 			    "not found. inconsistent filesystem.\n",
-			    __FUNCTION__);
+			    __func__);
 			return ENOENT;
 		}
 		attr = inode->attr;	/* copy old attribute */
@@ -331,7 +331,7 @@ bfs_file_delete(struct bfs *bfs, const char *fname)
 
 	bfs_writeback_dirent(bfs, dirent, false);
 	bfs_writeback_inode(bfs, inode);
-	DPRINTF(bfs->debug, "%s: \"%s\" deleted.\n", __FUNCTION__, fname);
+	DPRINTF(bfs->debug, "%s: \"%s\" deleted.\n", __func__, fname);
 
 	return 0;
 }
@@ -356,7 +356,7 @@ bfs_file_rename(struct bfs *bfs, const char *from_name, const char *to_name)
 	bfs_writeback_dirent(bfs, dirent, false);
 
  out:
-	DPRINTF(bfs->debug, "%s: \"%s\" -> \"%s\" error=%d.\n", __FUNCTION__,
+	DPRINTF(bfs->debug, "%s: \"%s\" -> \"%s\" error=%d.\n", __func__,
 	    from_name, to_name, err);
 
 	return err;
@@ -412,7 +412,7 @@ bfs_file_create(struct bfs *bfs, const char *fname, void *buf, size_t bufsz,
 	file->inode = inode->number;
 	strncpy(file->name, fname, BFS_FILENAME_MAXLEN);
 
-	DPRINTF(bfs->debug, "%s: start %d end %d\n", __FUNCTION__,
+	DPRINTF(bfs->debug, "%s: start %d end %d\n", __func__,
 	    inode->start_sector, inode->end_sector);
 
 	if (buf != 0) {

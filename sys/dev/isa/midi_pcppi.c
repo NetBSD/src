@@ -1,4 +1,4 @@
-/*	$NetBSD: midi_pcppi.c,v 1.16 2007/10/19 12:00:20 ad Exp $	*/
+/*	$NetBSD: midi_pcppi.c,v 1.16.8.1 2008/01/02 21:54:27 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midi_pcppi.c,v 1.16 2007/10/19 12:00:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midi_pcppi.c,v 1.16.8.1 2008/01/02 21:54:27 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,6 +114,10 @@ midi_pcppi_attach(parent, self, aux)
 
 	midisyn_attach(&sc->sc_mididev, ms);
 	midi_attach(&sc->sc_mididev, parent);
+        if (!device_pmf_is_registered(self))
+		if (!pmf_device_register(self, NULL, NULL))
+			aprint_error_dev(self,
+			    "couldn't establish power handler\n"); 
 }
 
 void

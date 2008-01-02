@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.82 2007/12/03 14:13:18 rafal Exp $	*/
+/*	$NetBSD: psycho.c,v 1.82.6.1 2008/01/02 21:50:29 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Eduardo E. Horvath
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.82 2007/12/03 14:13:18 rafal Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.82.6.1 2008/01/02 21:50:29 bouyer Exp $");
 
 #include "opt_ddb.h"
 
@@ -755,7 +755,7 @@ psycho_alloc_extent(struct psycho_pbm *pp, int node, int ss, const char *name)
 	/* get available lists */
 	num = 0;
 	if (prom_getprop(node, "available", sizeof(*pa), &num, &pa)) {
-		printf("psycho_alloc_extent: prom_getprop failed\n");
+		printf("psycho_alloc_extent: no \"available\" property\n");
 		return NULL;
 	}
 

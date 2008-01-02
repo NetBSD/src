@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.491 2007/12/09 21:24:30 smb Exp $
+$NetBSD: usbdevs,v 1.491.2.1 2008/01/02 21:55:21 bouyer Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -502,6 +502,7 @@ vendor ARKMICROCHIPS	0x6547	ArkMicroChips
 vendor 3COM2		0x6891	3Com
 vendor INTEL		0x8086	Intel
 vendor MOSCHIP		0x9710	MosChip Semiconductor
+vendor EMPIA		0xeb1a	eMPIA Technology
 vendor HP2		0xf003	Hewlett Packard
 vendor USRP		0xfffe	GNU Radio USRP
 
@@ -979,6 +980,9 @@ product ELECOM LDUSBTX3		0xabc1	LD-USB/TX
 /* Elsa products */
 product ELSA MODEM1		0x2265	ELSA Modem Board
 product ELSA USB2ETHERNET	0x3000	Microlink USB2Ethernet
+
+/* eMPIA products */
+product EMPIA CAMERA		0x2761	Camera
 
 /* EMS products */
 product EMS DUAL_SHOOTER	0x0003	PSX gun controller converter

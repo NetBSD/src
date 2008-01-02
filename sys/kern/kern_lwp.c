@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.83.6.1 2007/12/13 21:56:53 bouyer Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.83.6.2 2008/01/02 21:55:53 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -205,7 +205,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.83.6.1 2007/12/13 21:56:53 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.83.6.2 2008/01/02 21:55:53 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -234,11 +234,10 @@ __KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.83.6.1 2007/12/13 21:56:53 bouyer Exp
 
 struct lwplist	alllwp = LIST_HEAD_INITIALIZER(alllwp);
 
-POOL_INIT(lwp_pool, sizeof(struct lwp), MIN_LWP_ALIGNMENT, 0, 0, "lwppl",
-    &pool_allocator_nointr, IPL_NONE);
 POOL_INIT(lwp_uc_pool, sizeof(ucontext_t), 0, 0, 0, "lwpucpl",
     &pool_allocator_nointr, IPL_NONE);
 
+static pool_cache_t lwp_cache;
 static specificdata_domain_t lwp_specificdata_domain;
 
 void
@@ -248,6 +247,8 @@ lwpinit(void)
 	lwp_specificdata_domain = specificdata_domain_create();
 	KASSERT(lwp_specificdata_domain != NULL);
 	lwp_sys_init();
+	lwp_cache = pool_cache_init(sizeof(lwp_t), MIN_LWP_ALIGNMENT, 0, 0,
+	    "lwppl", NULL, IPL_NONE, NULL, NULL, NULL);
 }
 
 /*
@@ -556,7 +557,7 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, bool inmem, int flags,
 			mutex_exit(&p2->p_smutex);
 	}
 	if (isfree == NULL) {
-		l2 = pool_get(&lwp_pool, PR_WAITOK);
+		l2 = pool_cache_get(lwp_cache, PR_WAITOK);
 		memset(l2, 0, sizeof(*l2));
 		l2->l_ts = pool_cache_get(turnstile_cache, PR_WAITOK);
 		SLIST_INIT(&l2->l_pi_lenders);
@@ -580,6 +581,7 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, bool inmem, int flags,
 	l2->l_mutex = l1->l_cpu->ci_schedstate.spc_mutex;
 	l2->l_cpu = l1->l_cpu;
 	l2->l_flag = inmem ? LW_INMEM : 0;
+	l2->l_pflag = LP_MPSAFE;
 
 	if (p2->p_flag & PK_SYSTEM) {
 		/*
@@ -705,6 +707,7 @@ lwp_exit(struct lwp *l)
 	mutex_enter(&p->p_smutex);
 	if (p->p_nlwps - p->p_nzlwps == 1) {
 		KASSERT(current == true);
+		/* XXXSMP kernel_lock not held */
 		exit1(l, 0);
 		/* NOTREACHED */
 	}
@@ -860,7 +863,7 @@ lwp_free(struct lwp *l, bool recycle, bool last)
 		 * Add the LWP's run time to the process' base value.
 		 * This needs to co-incide with coming off p_lwps.
 		 */
-		timeradd(&l->l_rtime, &p->p_rtime, &p->p_rtime);
+		bintime_add(&p->p_rtime, &l->l_rtime);
 		p->p_pctcpu += l->l_pctcpu;
 		LIST_REMOVE(l, l_sibling);
 		p->p_nlwps--;
@@ -912,8 +915,6 @@ lwp_free(struct lwp *l, bool recycle, bool last)
 	 *
 	 * We don't recycle the VM resources at this time.
 	 */
-	KERNEL_LOCK(1, curlwp);		/* XXXSMP */
-
 	if (l->l_lwpctl != NULL)
 		lwp_ctl_free(l);
 	sched_lwp_exit(l);
@@ -927,8 +928,7 @@ lwp_free(struct lwp *l, bool recycle, bool last)
 	KASSERT(SLIST_EMPTY(&l->l_pi_lenders));
 	KASSERT(l->l_inheritedprio == -1);
 	if (!recycle)
-		pool_put(&lwp_pool, l);
-	KERNEL_UNLOCK_ONE(curlwp);	/* XXXSMP */
+		pool_cache_put(lwp_cache, l);
 }
 
 /*
@@ -1088,11 +1088,8 @@ lwp_update_creds(struct lwp *l)
 	kauth_cred_hold(p->p_cred);
 	l->l_cred = p->p_cred;
 	mutex_exit(&p->p_mutex);
-	if (oc != NULL) {
-		KERNEL_LOCK(1, l);	/* XXXSMP */
+	if (oc != NULL)
 		kauth_cred_free(oc);
-		KERNEL_UNLOCK_ONE(l);	/* XXXSMP */
-	}
 }
 
 /*
@@ -1233,12 +1230,10 @@ lwp_userret(struct lwp *l)
 		 */
 		if ((l->l_flag & (LW_PENDSIG | LW_WCORE | LW_WEXIT)) ==
 		    LW_PENDSIG) {
-			KERNEL_LOCK(1, l);	/* XXXSMP pool_put() below */
 			mutex_enter(&p->p_smutex);
 			while ((sig = issignal(l)) != 0)
 				postsig(sig);
 			mutex_exit(&p->p_smutex);
-			KERNEL_UNLOCK_LAST(l);	/* XXXSMP */
 		}
 
 		/*
@@ -1263,7 +1258,6 @@ lwp_userret(struct lwp *l)
 
 		/* Process is exiting. */
 		if ((l->l_flag & LW_WEXIT) != 0) {
-			KERNEL_LOCK(1, l);
 			lwp_exit(l);
 			KASSERT(0);
 			/* NOTREACHED */

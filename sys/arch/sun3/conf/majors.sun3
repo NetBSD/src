@@ -1,4 +1,4 @@
-#	$NetBSD: majors.sun3,v 1.17 2006/11/24 22:04:24 wiz Exp $
+#	$NetBSD: majors.sun3,v 1.17.42.1 2008/01/02 21:50:36 bouyer Exp $
 #
 # Device majors for sun3/sun3x
 #
@@ -59,7 +59,6 @@ device-major	scsibus		char 81			scsibus
 device-major	raid		char 82  block 25	raid
 device-major	svr4_net	char 83			compat_svr4
 device-major	clockctl	char 84			clockctl
-device-major	systrace	char 85			systrace
 device-major	cgd		char 86  block 26	cgd
 device-major	ksyms		char 87			ksyms
 

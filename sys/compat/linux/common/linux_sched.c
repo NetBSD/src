@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sched.c,v 1.45 2007/12/08 18:36:09 dsl Exp $	*/
+/*	$NetBSD: linux_sched.c,v 1.45.4.1 2008/01/02 21:52:41 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.45 2007/12/08 18:36:09 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.45.4.1 2008/01/02 21:52:41 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -69,16 +69,16 @@ __KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.45 2007/12/08 18:36:09 dsl Exp $")
 #include <compat/linux/common/linux_sched.h>
 
 int
-linux_sys_clone(struct lwp *l, void *v, register_t *retval)
+linux_sys_clone(struct lwp *l, const struct linux_sys_clone_args *uap, register_t *retval)
 {
-	struct linux_sys_clone_args /* {
+	/* {
 		syscallarg(int) flags;
 		syscallarg(void *) stack;
 #ifdef LINUX_NPTL
 		syscallarg(void *) parent_tidptr;
 		syscallarg(void *) child_tidptr;
 #endif
-	} */ *uap = v;
+	} */
 	int flags, sig;
 	int error;
 #ifdef LINUX_NPTL
@@ -142,12 +142,12 @@ linux_sys_clone(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-linux_sys_sched_setparam(struct lwp *cl, void *v, register_t *retval)
+linux_sys_sched_setparam(struct lwp *l, const struct linux_sys_sched_setparam_args *uap, register_t *retval)
 {
-	struct linux_sys_sched_setparam_args /* {
+	/* {
 		syscallarg(linux_pid_t) pid;
 		syscallarg(const struct linux_sched_param *) sp;
-	} */ *uap = v;
+	} */
 	int error;
 	struct linux_sched_param lp;
 	struct proc *p;
@@ -164,11 +164,11 @@ linux_sys_sched_setparam(struct lwp *cl, void *v, register_t *retval)
 		return error;
 
 	if (SCARG(uap, pid) != 0) {
-		kauth_cred_t pc = cl->l_cred;
+		kauth_cred_t pc = l->l_cred;
 
 		if ((p = pfind(SCARG(uap, pid))) == NULL)
 			return ESRCH;
-		if (!(cl->l_proc == p ||
+		if (!(l->l_proc == p ||
 		      kauth_authorize_generic(pc, KAUTH_GENERIC_ISSUSER, NULL) == 0 ||
 		      kauth_cred_getuid(pc) == kauth_cred_getuid(p->p_cred) ||
 		      kauth_cred_geteuid(pc) == kauth_cred_getuid(p->p_cred) ||
@@ -181,12 +181,12 @@ linux_sys_sched_setparam(struct lwp *cl, void *v, register_t *retval)
 }
 
 int
-linux_sys_sched_getparam(struct lwp *cl, void *v, register_t *retval)
+linux_sys_sched_getparam(struct lwp *l, const struct linux_sys_sched_getparam_args *uap, register_t *retval)
 {
-	struct linux_sys_sched_getparam_args /* {
+	/* {
 		syscallarg(linux_pid_t) pid;
 		syscallarg(struct linux_sched_param *) sp;
-	} */ *uap = v;
+	} */
 	struct proc *p;
 	struct linux_sched_param lp;
 
@@ -197,11 +197,11 @@ linux_sys_sched_getparam(struct lwp *cl, void *v, register_t *retval)
 		return EINVAL;
 
 	if (SCARG(uap, pid) != 0) {
-		kauth_cred_t pc = cl->l_cred;
+		kauth_cred_t pc = l->l_cred;
 
 		if ((p = pfind(SCARG(uap, pid))) == NULL)
 			return ESRCH;
-		if (!(cl->l_proc == p ||
+		if (!(l->l_proc == p ||
 		      kauth_authorize_generic(pc, KAUTH_GENERIC_ISSUSER, NULL) == 0 ||
 		      kauth_cred_getuid(pc) == kauth_cred_getuid(p->p_cred) ||
 		      kauth_cred_geteuid(pc) == kauth_cred_getuid(p->p_cred) ||
@@ -215,14 +215,13 @@ linux_sys_sched_getparam(struct lwp *cl, void *v, register_t *retval)
 }
 
 int
-linux_sys_sched_setscheduler(struct lwp *cl, void *v,
-    register_t *retval)
+linux_sys_sched_setscheduler(struct lwp *l, const struct linux_sys_sched_setscheduler_args *uap, register_t *retval)
 {
-	struct linux_sys_sched_setscheduler_args /* {
+	/* {
 		syscallarg(linux_pid_t) pid;
 		syscallarg(int) policy;
 		syscallarg(cont struct linux_sched_scheduler *) sp;
-	} */ *uap = v;
+	} */
 	int error;
 	struct linux_sched_param lp;
 	struct proc *p;
@@ -239,11 +238,11 @@ linux_sys_sched_setscheduler(struct lwp *cl, void *v,
 		return error;
 
 	if (SCARG(uap, pid) != 0) {
-		kauth_cred_t pc = cl->l_cred;
+		kauth_cred_t pc = l->l_cred;
 
 		if ((p = pfind(SCARG(uap, pid))) == NULL)
 			return ESRCH;
-		if (!(cl->l_proc == p ||
+		if (!(l->l_proc == p ||
 		      kauth_authorize_generic(pc, KAUTH_GENERIC_ISSUSER, NULL) == 0 ||
 		      kauth_cred_getuid(pc) == kauth_cred_getuid(p->p_cred) ||
 		      kauth_cred_geteuid(pc) == kauth_cred_getuid(p->p_cred) ||
@@ -263,11 +262,11 @@ linux_sys_sched_setscheduler(struct lwp *cl, void *v,
 }
 
 int
-linux_sys_sched_getscheduler(struct lwp *cl, void *v, register_t *retval)
+linux_sys_sched_getscheduler(struct lwp *l, const struct linux_sys_sched_getscheduler_args *uap, register_t *retval)
 {
-	struct linux_sys_sched_getscheduler_args /* {
+	/* {
 		syscallarg(linux_pid_t) pid;
-	} */ *uap = v;
+	} */
 	struct proc *p;
 
 	*retval = -1;
@@ -276,11 +275,11 @@ linux_sys_sched_getscheduler(struct lwp *cl, void *v, register_t *retval)
  */
 
 	if (SCARG(uap, pid) != 0) {
-		kauth_cred_t pc = cl->l_cred;
+		kauth_cred_t pc = l->l_cred;
 
 		if ((p = pfind(SCARG(uap, pid))) == NULL)
 			return ESRCH;
-		if (!(cl->l_proc == p ||
+		if (!(l->l_proc == p ||
 		      kauth_authorize_generic(pc, KAUTH_GENERIC_ISSUSER, NULL) == 0 ||
 		      kauth_cred_getuid(pc) == kauth_cred_getuid(p->p_cred) ||
 		      kauth_cred_geteuid(pc) == kauth_cred_getuid(p->p_cred) ||
@@ -297,8 +296,7 @@ linux_sys_sched_getscheduler(struct lwp *cl, void *v, register_t *retval)
 }
 
 int
-linux_sys_sched_yield(struct lwp *cl, void *v,
-    register_t *retval)
+linux_sys_sched_yield(struct lwp *l, const void *v, register_t *retval)
 {
 
 	yield();
@@ -306,12 +304,11 @@ linux_sys_sched_yield(struct lwp *cl, void *v,
 }
 
 int
-linux_sys_sched_get_priority_max(struct lwp *cl, void *v,
-    register_t *retval)
+linux_sys_sched_get_priority_max(struct lwp *l, const struct linux_sys_sched_get_priority_max_args *uap, register_t *retval)
 {
-	struct linux_sys_sched_get_priority_max_args /* {
+	/* {
 		syscallarg(int) policy;
-	} */ *uap = v;
+	} */
 
 /*
  * We can't emulate anything put the default scheduling policy.
@@ -326,12 +323,11 @@ linux_sys_sched_get_priority_max(struct lwp *cl, void *v,
 }
 
 int
-linux_sys_sched_get_priority_min(struct lwp *cl, void *v,
-    register_t *retval)
+linux_sys_sched_get_priority_min(struct lwp *l, const struct linux_sys_sched_get_priority_min_args *uap, register_t *retval)
 {
-	struct linux_sys_sched_get_priority_min_args /* {
+	/* {
 		syscallarg(int) policy;
-	} */ *uap = v;
+	} */
 
 /*
  * We can't emulate anything put the default scheduling policy.
@@ -348,12 +344,12 @@ linux_sys_sched_get_priority_min(struct lwp *cl, void *v,
 #ifndef __m68k__
 /* Present on everything but m68k */
 int
-linux_sys_exit_group(struct lwp *l, void *v, register_t *retval)
+linux_sys_exit_group(struct lwp *l, const struct linux_sys_exit_group_args *uap, register_t *retval)
 {
 #ifdef LINUX_NPTL
-	struct linux_sys_exit_group_args /* {
+	/* {
 		syscallarg(int) error_code;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 	struct linux_emuldata *led = p->p_emuldata;
 	struct linux_emuldata *e;
@@ -373,7 +369,7 @@ linux_sys_exit_group(struct lwp *l, void *v, register_t *retval)
 		 * If there is only one thread, things are quite simple
 		 */
 		if (led->s->refs == 1)
-			return sys_exit(l, v, retval);
+			return sys_exit(l, (const void *)uap, retval);
 
 #ifdef DEBUG_LINUX
 		printf("%s:%d\n", __func__, __LINE__);
@@ -407,17 +403,17 @@ linux_sys_exit_group(struct lwp *l, void *v, register_t *retval)
 	}
 #endif /* LINUX_NPTL */
 
-	return sys_exit(l, v, retval);
+	return sys_exit(l, (const void *)uap, retval);
 }
 #endif /* !__m68k__ */
 
 #ifdef LINUX_NPTL
 int
-linux_sys_set_tid_address(struct lwp *l, void *v, register_t *retval)
+linux_sys_set_tid_address(struct lwp *l, const struct linux_sys_set_tid_address_args *uap, register_t *retval)
 {
-	struct linux_sys_set_tid_address_args /* {
+	/* {
 		syscallarg(int *) tidptr;
-	} */ *uap = v;
+	} */
 	struct linux_emuldata *led;
 
 	led = (struct linux_emuldata *)l->l_proc->p_emuldata;
@@ -432,7 +428,7 @@ linux_sys_set_tid_address(struct lwp *l, void *v, register_t *retval)
 
 /* ARGUSED1 */
 int
-linux_sys_gettid(struct lwp *l, void *v, register_t *retval)
+linux_sys_gettid(struct lwp *l, const void *v, register_t *retval)
 {
 	/* The Linux kernel does it exactly that way */
 	*retval = l->l_proc->p_pid;
@@ -442,7 +438,7 @@ linux_sys_gettid(struct lwp *l, void *v, register_t *retval)
 #ifdef LINUX_NPTL
 /* ARGUSED1 */
 int
-linux_sys_getpid(struct lwp *l, void *v, register_t *retval)
+linux_sys_getpid(struct lwp *l, const void *v, register_t *retval)
 {
 	struct linux_emuldata *led = l->l_proc->p_emuldata;
 
@@ -458,7 +454,7 @@ linux_sys_getpid(struct lwp *l, void *v, register_t *retval)
 
 /* ARGUSED1 */
 int
-linux_sys_getppid(struct lwp *l, void *v, register_t *retval)
+linux_sys_getppid(struct lwp *l, const void *v, register_t *retval)
 {
 	struct proc *p = l->l_proc;
 	struct linux_emuldata *led = p->p_emuldata;
@@ -495,13 +491,13 @@ linux_sys_getppid(struct lwp *l, void *v, register_t *retval)
 #endif /* LINUX_NPTL */
 
 int
-linux_sys_sched_getaffinity(struct lwp *l, void *v, register_t *retval)
+linux_sys_sched_getaffinity(struct lwp *l, const struct linux_sys_sched_getaffinity_args *uap, register_t *retval)
 {
-	struct linux_sys_sched_getaffinity_args /* {
+	/* {
 		syscallarg(pid_t) pid;
 		syscallarg(unsigned int) len;
 		syscallarg(unsigned long *) mask;
-	} */ *uap = v;
+	} */
 	int error;
 	int ret;
 	char *data;
@@ -536,13 +532,13 @@ linux_sys_sched_getaffinity(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-linux_sys_sched_setaffinity(struct lwp *l, void *v, register_t *retval)
+linux_sys_sched_setaffinity(struct lwp *l, const struct linux_sys_sched_setaffinity_args *uap, register_t *retval)
 {
-	struct linux_sys_sched_setaffinity_args /* {
+	/* {
 		syscallarg(pid_t) pid;
 		syscallarg(unsigned int) len;
 		syscallarg(unsigned long *) mask;
-	} */ *uap = v;
+	} */
 
 	if (pfind(SCARG(uap, pid)) == NULL)
 		return ESRCH;

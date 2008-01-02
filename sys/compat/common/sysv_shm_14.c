@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm_14.c,v 1.13 2007/12/08 18:35:55 dsl Exp $	*/
+/*	$NetBSD: sysv_shm_14.c,v 1.13.4.1 2008/01/02 21:51:42 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_shm_14.c,v 1.13 2007/12/08 18:35:55 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_shm_14.c,v 1.13.4.1 2008/01/02 21:51:42 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,13 +93,13 @@ native_to_shmid_ds14(struct shmid_ds *shmbuf, struct shmid_ds14 *oshmbuf)
 }
 
 int
-compat_14_sys_shmctl(struct lwp *l, void *v, register_t *retval)
+compat_14_sys_shmctl(struct lwp *l, const struct compat_14_sys_shmctl_args *uap, register_t *retval)
 {
-	struct compat_14_sys_shmctl_args /* {
+	/* {
 		syscallarg(int) shmid;
 		syscallarg(int) cmd;
 		syscallarg(struct shmid_ds14 *) buf;
-	} */ *uap = v;
+	} */
 	struct shmid_ds shmbuf;
 	struct shmid_ds14 oshmbuf;
 	int cmd, error;

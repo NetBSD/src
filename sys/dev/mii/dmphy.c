@@ -1,4 +1,4 @@
-/*	$NetBSD: dmphy.c,v 1.28 2007/12/09 20:28:02 jmcneill Exp $	*/
+/*	$NetBSD: dmphy.c,v 1.28.2.1 2008/01/02 21:54:29 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmphy.c,v 1.28 2007/12/09 20:28:02 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dmphy.c,v 1.28.2.1 2008/01/02 21:54:29 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -168,9 +168,6 @@ dmphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	int reg;
-
-	if (!device_is_active(&sc->mii_dev))
-		return (ENXIO);
 
 	switch (cmd) {
 	case MII_POLLSTAT:

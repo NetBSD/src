@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_pci_link.c,v 1.10 2007/12/09 20:27:53 jmcneill Exp $	*/
+/*	$NetBSD: acpi_pci_link.c,v 1.10.2.1 2008/01/02 21:53:50 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2002 Mitsuru IWASAKI <iwasaki@jp.freebsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_pci_link.c,v 1.10 2007/12/09 20:27:53 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_pci_link.c,v 1.10.2.1 2008/01/02 21:53:50 bouyer Exp $");
 
 #include "opt_acpi.h"
 #include <sys/param.h>
@@ -1082,8 +1082,12 @@ acpi_pci_link_route_interrupt(void *v, int index, int *irq, int *pol, int *trig)
 	}
 
 	/* Choose an IRQ if we need one. */
-	if (PCI_INTERRUPT_VALID(link->l_irq))
+	if (PCI_INTERRUPT_VALID(link->l_irq)) {
+		*irq = link->l_irq;
+		*pol = link->l_pol;
+		*trig = link->l_trig;
 		goto done;
+	}
 
 	link->l_irq = acpi_pci_link_choose_irq(sc, link);
 

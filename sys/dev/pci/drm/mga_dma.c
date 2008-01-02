@@ -1,4 +1,4 @@
-/*	$NetBSD: mga_dma.c,v 1.2.26.1 2007/12/13 21:55:56 bouyer Exp $	*/
+/*	$NetBSD: mga_dma.c,v 1.2.26.2 2008/01/02 21:55:02 bouyer Exp $	*/
 
 /* mga_dma.c -- DMA support for mga g200/g400 -*- linux-c -*-
  * Created: Mon Dec 13 01:50:01 1999 by jhartmann@precisioninsight.com
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mga_dma.c,v 1.2.26.1 2007/12/13 21:55:56 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mga_dma.c,v 1.2.26.2 2008/01/02 21:55:02 bouyer Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/mga_dma.c,v 1.13 2005/11/28 23:13:53 anholt Exp $");
 */
@@ -1074,7 +1074,7 @@ int mga_dma_flush(DRM_IOCTL_ARGS)
 #if MGA_DMA_DEBUG
 		int ret = mga_do_wait_for_idle(dev_priv);
 		if (ret < 0)
-			DRM_INFO("%s: -EBUSY\n", __FUNCTION__);
+			DRM_INFO("%s: -EBUSY\n", __func__);
 		return ret;
 #else
 		return mga_do_wait_for_idle(dev_priv);

@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.60 2007/10/19 11:59:51 ad Exp $ */
+/*	$NetBSD: gem.c,v 1.60.8.1 2008/01/02 21:54:11 bouyer Exp $ */
 
 /*
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.60 2007/10/19 11:59:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.60.8.1 2008/01/02 21:54:11 bouyer Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -124,6 +124,7 @@ int		gem_tint(struct gem_softc *);
 void		gem_power(int, void *);
 
 #ifdef GEM_DEBUG
+static void gem_txsoft_print(const struct gem_softc *, int, int);
 #define	DPRINTF(sc, x)	if ((sc)->sc_ethercom.ec_if.if_flags & IFF_DEBUG) \
 				printf x
 #else
@@ -1019,13 +1020,31 @@ gem_init_regs(struct gem_softc *sc)
 	bus_space_write_4(t, h, GEM_MAC_XIF_CONFIG, v);
 }
 
+#ifdef GEM_DEBUG
+static void
+gem_txsoft_print(const struct gem_softc *sc, int firstdesc, int lastdesc)
+{
+	int i;
+
+	for (i = firstdesc;; i = GEM_NEXTTX(i)) {
+		printf("descriptor %d:\t", i);
+		printf("gd_flags:   0x%016" PRIx64 "\t",
+			GEM_DMA_READ(sc, sc->sc_txdescs[i].gd_flags));
+		printf("gd_addr: 0x%016" PRIx64 "\n",
+			GEM_DMA_READ(sc, sc->sc_txdescs[i].gd_addr));
+		if (i == lastdesc)
+			break;
+	}
+}
+#endif
+
 static void
 gem_start(ifp)
 	struct ifnet *ifp;
 {
 	struct gem_softc *sc = (struct gem_softc *)ifp->if_softc;
 	struct mbuf *m0, *m;
-	struct gem_txsoft *txs, *last_txs;
+	struct gem_txsoft *txs;
 	bus_dmamap_t dmamap;
 	int error, firsttx, nexttx = -1, lasttx = -1, ofree, seg;
 	uint64_t flags = 0;
@@ -1238,20 +1257,13 @@ gem_start(ifp)
 #ifdef GEM_DEBUG
 		if (ifp->if_flags & IFF_DEBUG) {
 			printf("     gem_start %p transmit chain:\n", txs);
-			for (seg = sc->sc_txnext;; seg = GEM_NEXTTX(seg)) {
-				printf("descriptor %d:\t", seg);
-				printf("gd_flags:   0x%016llx\t", (long long)
-					GEM_DMA_READ(sc, sc->sc_txdescs[seg].gd_flags));
-				printf("gd_addr: 0x%016llx\n", (long long)
-					GEM_DMA_READ(sc, sc->sc_txdescs[seg].gd_addr));
-				if (seg == lasttx)
-					break;
-			}
+			gem_txsoft_print(sc, txs->txs_firstdesc,
+			    txs->txs_lastdesc);
 		}
 #endif
 
 		/* Sync the descriptors we're using. */
-		GEM_CDTXSYNC(sc, sc->sc_txnext, dmamap->dm_nsegs,
+		GEM_CDTXSYNC(sc, txs->txs_firstdesc, txs->txs_ndescs,
 		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
 		/* Advance the tx pointer. */
@@ -1260,8 +1272,6 @@ gem_start(ifp)
 
 		SIMPLEQ_REMOVE_HEAD(&sc->sc_txfreeq, txs_q);
 		SIMPLEQ_INSERT_TAIL(&sc->sc_txdirtyq, txs, txs_q);
-
-		last_txs = txs;
 
 #if NBPFILTER > 0
 		/*
@@ -1336,47 +1346,46 @@ gem_tint(sc)
 	 * frames that have been transmitted.
 	 */
 	while ((txs = SIMPLEQ_FIRST(&sc->sc_txdirtyq)) != NULL) {
-		GEM_CDTXSYNC(sc, txs->txs_lastdesc,
-		    txs->txs_ndescs,
-		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
-
-#ifdef GEM_DEBUG	/* XXX DMA synchronization? */
-		if (ifp->if_flags & IFF_DEBUG) {
-			int i;
-			printf("    txsoft %p transmit chain:\n", txs);
-			for (i = txs->txs_firstdesc;; i = GEM_NEXTTX(i)) {
-				printf("descriptor %d: ", i);
-				printf("gd_flags: 0x%016" PRIx64 "\t",
-					GEM_DMA_READ(sc, sc->sc_txdescs[i].gd_flags));
-				printf("gd_addr: 0x%016" PRIx64 "\n",
-					GEM_DMA_READ(sc, sc->sc_txdescs[i].gd_addr));
-				if (i == txs->txs_lastdesc)
-					break;
-			}
-		}
-#endif
-
 		/*
 		 * In theory, we could harveast some descriptors before
 		 * the ring is empty, but that's a bit complicated.
 		 *
 		 * GEM_TX_COMPLETION points to the last descriptor
 		 * processed +1.
+		 *
+		 * Let's assume that the NIC writes back to the Tx
+		 * descriptors before it updates the completion
+		 * register.  If the NIC has posted writes to the
+		 * Tx descriptors, PCI ordering requires that the
+		 * posted writes flush to RAM before the register-read
+		 * finishes.  So let's read the completion register,
+		 * before syncing the descriptors, so that we
+		 * examine Tx descriptors that are at least as
+		 * current as the completion register.
 		 */
 		txlast = bus_space_read_4(t, mac, GEM_TX_COMPLETION);
 		DPRINTF(sc,
 			("gem_tint: txs->txs_lastdesc = %d, txlast = %d\n",
 				txs->txs_lastdesc, txlast));
 		if (txs->txs_firstdesc <= txs->txs_lastdesc) {
-			if ((txlast >= txs->txs_firstdesc) &&
-				(txlast <= txs->txs_lastdesc))
+			if (txlast >= txs->txs_firstdesc &&
+			    txlast <= txs->txs_lastdesc)
 				break;
-		} else {
-			/* Ick -- this command wraps */
-			if ((txlast >= txs->txs_firstdesc) ||
-				(txlast <= txs->txs_lastdesc))
-				break;
+		} else if (txlast >= txs->txs_firstdesc ||
+		           txlast <= txs->txs_lastdesc)
+			break;
+
+		GEM_CDTXSYNC(sc, txs->txs_firstdesc, txs->txs_ndescs,
+		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+
+#ifdef GEM_DEBUG	/* XXX DMA synchronization? */
+		if (ifp->if_flags & IFF_DEBUG) {
+			printf("    txsoft %p transmit chain:\n", txs);
+			gem_txsoft_print(sc, txs->txs_firstdesc,
+			    txs->txs_lastdesc);
 		}
+#endif
+
 
 		DPRINTF(sc, ("gem_tint: releasing a desc\n"));
 		SIMPLEQ_REMOVE_HEAD(&sc->sc_txdirtyq, txs_q);
@@ -1528,7 +1537,7 @@ gem_rint(sc)
 #if NBPFILTER > 0
 		/*
 		 * Pass this up to any BPF listeners, but only
-		 * pass it up the stack if its for us.
+		 * pass it up the stack if it's for us.
 		 */
 		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ath_cardbus.c,v 1.21 2007/12/09 20:27:55 jmcneill Exp $ */
+/*	$NetBSD: if_ath_cardbus.c,v 1.21.2.1 2008/01/02 21:53:58 bouyer Exp $ */
 /*
  * Copyright (c) 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ath_cardbus.c,v 1.21 2007/12/09 20:27:55 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ath_cardbus.c,v 1.21.2.1 2008/01/02 21:53:58 bouyer Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -125,11 +125,30 @@ static bool
 ath_cardbus_resume(device_t dv)
 {
 	struct ath_cardbus_softc *csc = device_private(dv);
+
+	/* Insofar as I understand what the PCI retry timeout is
+	 * (it does not appear to be documented in any PCI standard,
+	 * and we don't have any Atheros documentation), disabling
+	 * it on resume does not seem to be justified.
+	 *
+	 * Taking a guess, the DMA engine counts down from the
+	 * retry timeout to 0 while it retries a delayed PCI
+	 * transaction.  When it reaches 0, it ceases retrying.
+	 * A PCI master is *never* supposed to stop retrying a
+	 * delayed transaction, though.
+	 *
+	 * Incidentally, while I am hopeful that cardbus_disable_retry()
+	 * does disable retries, because that would help to explain
+	 * some ath(4) lossage, I suspect that writing 0 to the
+	 * register does not disable *retries*, but it disables
+	 * the timeout.  That is, the device will *never* timeout.
+	 */
+#if 0
 	cardbus_devfunc_t ct = csc->sc_ct;
 	cardbus_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
-
 	cardbus_disable_retry(cc, cf, csc->sc_tag);
+#endif
 	ath_resume(&csc->sc_ath);
 
 	return true;
@@ -202,6 +221,8 @@ ath_cardbus_attach(struct device *parent, struct device *self,
 	/* Remember which interrupt line. */
 	csc->sc_intrline = ca->ca_intrline;
 
+	ATH_LOCK_INIT(sc);
+
 	if (!pmf_device_register(self, NULL, ath_cardbus_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 	else
@@ -235,15 +256,18 @@ ath_cardbus_detach(struct device *self, int flags)
 	/*
 	 * Unhook the interrupt handler.
 	 */
-	if (csc->sc_ih != NULL)
+	if (csc->sc_ih != NULL) {
 		cardbus_intr_disestablish(ct->ct_cc, ct->ct_cf, csc->sc_ih);
 		csc->sc_ih = NULL;
+	}
 
 	/*
 	 * Release bus space and close window.
 	 */
 	Cardbus_mapreg_unmap(ct, ATH_PCI_MMBA, csc->sc_iot, csc->sc_ioh,
 	    csc->sc_mapsize);
+
+	ATH_LOCK_DESTROY(sc);
 
 	return (0);
 }

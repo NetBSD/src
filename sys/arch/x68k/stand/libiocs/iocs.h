@@ -6,7 +6,7 @@
  *	(based on PD libc 1.1.32 by PROJECT C Library)
  *	public domain
  *
- *	$NetBSD: iocs.h,v 1.4 2005/12/24 23:24:07 perry Exp $
+ *	$NetBSD: iocs.h,v 1.4.64.1 2008/01/02 21:51:16 bouyer Exp $
  */
 /*
  * PROJECT C Library, X68000 PROGRAMMING INTERFACE DEFINITION
@@ -449,8 +449,8 @@ struct iocs_inquiry {
 /* d8 a1 */	void IOCS_TXREV __P((const struct iocs_trevptr *));
 /* df d1 d2 d3 */	void IOCS_TXRASCPY __P((int, int, int));
 /* fd */	void IOCS_ABORTRST __P((void));
-/* fe ; noret */	__dead void IOCS_IPLERR __P((void)) __attribute__((__noreturn__));
-/* ff ; noret */	__dead void IOCS_ABORTJOB __P((void)) __attribute__((__noreturn__));
+/* fe ; noret */	__dead void IOCS_IPLERR __P((void));
+/* ff ; noret */	__dead void IOCS_ABORTJOB __P((void));
 
 /* SCSI calls */
 /* f5 d1=0 */		void IOCS_S_RESET __P((void));

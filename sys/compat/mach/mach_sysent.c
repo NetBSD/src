@@ -1,4 +1,4 @@
-/* $NetBSD: mach_sysent.c,v 1.19.32.1 2007/12/13 21:55:12 bouyer Exp $ */
+/* $NetBSD: mach_sysent.c,v 1.19.32.2 2008/01/02 21:52:58 bouyer Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_sysent.c,v 1.19.32.1 2007/12/13 21:55:12 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_sysent.c,v 1.19.32.2 2008/01/02 21:52:58 bouyer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -83,57 +83,57 @@ struct sysent mach_sysent[] = {
 	{ 0, 0, 0,
 	    sys_nosys },			/* 25 = unimplemented */
 	{ 0, 0, 0,
-	    mach_sys_reply_port },		/* 26 = reply_port */
+	    (sy_call_t *)mach_sys_reply_port },	/* 26 = reply_port */
 	{ 0, 0, 0,
-	    mach_sys_thread_self_trap },	/* 27 = thread_self_trap */
+	    (sy_call_t *)mach_sys_thread_self_trap },/* 27 = thread_self_trap */
 	{ 0, 0, 0,
-	    mach_sys_task_self_trap },		/* 28 = task_self_trap */
+	    (sy_call_t *)mach_sys_task_self_trap },/* 28 = task_self_trap */
 	{ 0, 0, 0,
-	    mach_sys_host_self_trap },		/* 29 = host_self_trap */
+	    (sy_call_t *)mach_sys_host_self_trap },/* 29 = host_self_trap */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 30 = unimplemented */
 	{ ns(struct mach_sys_msg_trap_args), 0,
-	    mach_sys_msg_trap },		/* 31 = msg_trap */
+	    (sy_call_t *)mach_sys_msg_trap },	/* 31 = msg_trap */
 	{ ns(struct mach_sys_msg_overwrite_trap_args), 0,
-	    mach_sys_msg_overwrite_trap },	/* 32 = msg_overwrite_trap */
+	    (sy_call_t *)mach_sys_msg_overwrite_trap },/* 32 = msg_overwrite_trap */
 	{ ns(struct mach_sys_semaphore_signal_trap_args), 0,
-	    mach_sys_semaphore_signal_trap },	/* 33 = semaphore_signal_trap */
+	    (sy_call_t *)mach_sys_semaphore_signal_trap },/* 33 = semaphore_signal_trap */
 	{ ns(struct mach_sys_semaphore_signal_all_trap_args), 0,
-	    mach_sys_semaphore_signal_all_trap },/* 34 = semaphore_signal_all_trap */
+	    (sy_call_t *)mach_sys_semaphore_signal_all_trap },/* 34 = semaphore_signal_all_trap */
 	{ ns(struct mach_sys_semaphore_signal_thread_trap_args), 0,
-	    mach_sys_semaphore_signal_thread_trap },/* 35 = semaphore_signal_thread_trap */
+	    (sy_call_t *)mach_sys_semaphore_signal_thread_trap },/* 35 = semaphore_signal_thread_trap */
 	{ ns(struct mach_sys_semaphore_wait_trap_args), 0,
-	    mach_sys_semaphore_wait_trap },	/* 36 = semaphore_wait_trap */
+	    (sy_call_t *)mach_sys_semaphore_wait_trap },/* 36 = semaphore_wait_trap */
 	{ ns(struct mach_sys_semaphore_wait_signal_trap_args), 0,
-	    mach_sys_semaphore_wait_signal_trap },/* 37 = semaphore_wait_signal_trap */
+	    (sy_call_t *)mach_sys_semaphore_wait_signal_trap },/* 37 = semaphore_wait_signal_trap */
 	{ ns(struct mach_sys_semaphore_timedwait_trap_args), 0,
-	    mach_sys_semaphore_timedwait_trap },/* 38 = semaphore_timedwait_trap */
+	    (sy_call_t *)mach_sys_semaphore_timedwait_trap },/* 38 = semaphore_timedwait_trap */
 	{ ns(struct mach_sys_semaphore_timedwait_signal_trap_args), 0,
-	    mach_sys_semaphore_timedwait_signal_trap },/* 39 = semaphore_timedwait_signal_trap */
+	    (sy_call_t *)mach_sys_semaphore_timedwait_signal_trap },/* 39 = semaphore_timedwait_signal_trap */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 40 = unimplemented */
 	{ 0, 0, 0,
-	    mach_sys_init_process },		/* 41 = init_process */
+	    (sy_call_t *)mach_sys_init_process },/* 41 = init_process */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 42 = unimplemented */
 	{ ns(struct mach_sys_map_fd_args), 0,
-	    mach_sys_map_fd },			/* 43 = map_fd */
+	    (sy_call_t *)mach_sys_map_fd },	/* 43 = map_fd */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 44 = unimplemented */
 	{ ns(struct mach_sys_task_for_pid_args), 0,
-	    mach_sys_task_for_pid },		/* 45 = task_for_pid */
+	    (sy_call_t *)mach_sys_task_for_pid },/* 45 = task_for_pid */
 	{ ns(struct mach_sys_pid_for_task_args), 0,
-	    mach_sys_pid_for_task },		/* 46 = pid_for_task */
+	    (sy_call_t *)mach_sys_pid_for_task },/* 46 = pid_for_task */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 47 = unimplemented */
 	{ ns(struct mach_sys_macx_swapon_args), 0,
-	    mach_sys_macx_swapon },		/* 48 = macx_swapon */
+	    (sy_call_t *)mach_sys_macx_swapon },/* 48 = macx_swapon */
 	{ ns(struct mach_sys_macx_swapoff_args), 0,
-	    mach_sys_macx_swapoff },		/* 49 = macx_swapoff */
+	    (sy_call_t *)mach_sys_macx_swapoff },/* 49 = macx_swapoff */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 50 = unimplemented */
 	{ ns(struct mach_sys_macx_triggers_args), 0,
-	    mach_sys_macx_triggers },		/* 51 = macx_triggers */
+	    (sy_call_t *)mach_sys_macx_triggers },/* 51 = macx_triggers */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 52 = unimplemented */
 	{ 0, 0, 0,
@@ -149,13 +149,13 @@ struct sysent mach_sysent[] = {
 	{ 0, 0, 0,
 	    sys_nosys },			/* 58 = unimplemented */
 	{ ns(struct mach_sys_swtch_pri_args), 0,
-	    mach_sys_swtch_pri },		/* 59 = swtch_pri */
+	    (sy_call_t *)mach_sys_swtch_pri },	/* 59 = swtch_pri */
 	{ 0, 0, 0,
-	    mach_sys_swtch },			/* 60 = swtch */
+	    (sy_call_t *)mach_sys_swtch },	/* 60 = swtch */
 	{ ns(struct mach_sys_syscall_thread_switch_args), 0,
-	    mach_sys_syscall_thread_switch },	/* 61 = syscall_thread_switch */
+	    (sy_call_t *)mach_sys_syscall_thread_switch },/* 61 = syscall_thread_switch */
 	{ ns(struct mach_sys_clock_sleep_trap_args), 0,
-	    mach_sys_clock_sleep_trap },	/* 62 = clock_sleep_trap */
+	    (sy_call_t *)mach_sys_clock_sleep_trap },/* 62 = clock_sleep_trap */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 63 = unimplemented */
 	{ 0, 0, 0,
@@ -209,19 +209,19 @@ struct sysent mach_sysent[] = {
 	{ 0, 0, 0,
 	    sys_nosys },			/* 88 = unimplemented */
 	{ ns(struct mach_sys_timebase_info_args), 0,
-	    mach_sys_timebase_info },		/* 89 = timebase_info */
+	    (sy_call_t *)mach_sys_timebase_info },/* 89 = timebase_info */
 	{ ns(struct mach_sys_wait_until_args), 0,
-	    mach_sys_wait_until },		/* 90 = wait_until */
+	    (sy_call_t *)mach_sys_wait_until },	/* 90 = wait_until */
 	{ 0, 0, 0,
-	    mach_sys_timer_create },		/* 91 = timer_create */
+	    (sy_call_t *)mach_sys_timer_create },/* 91 = timer_create */
 	{ ns(struct mach_sys_timer_destroy_args), 0,
-	    mach_sys_timer_destroy },		/* 92 = timer_destroy */
+	    (sy_call_t *)mach_sys_timer_destroy },/* 92 = timer_destroy */
 	{ ns(struct mach_sys_timer_arm_args), 0,
-	    mach_sys_timer_arm },		/* 93 = timer_arm */
+	    (sy_call_t *)mach_sys_timer_arm },	/* 93 = timer_arm */
 	{ ns(struct mach_sys_timer_cancel_args), 0,
-	    mach_sys_timer_cancel },		/* 94 = timer_cancel */
+	    (sy_call_t *)mach_sys_timer_cancel },/* 94 = timer_cancel */
 	{ 0, 0, 0,
-	    mach_sys_get_time_base_info },	/* 95 = get_time_base_info */
+	    (sy_call_t *)mach_sys_get_time_base_info },/* 95 = get_time_base_info */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 96 = unimplemented */
 	{ 0, 0, 0,

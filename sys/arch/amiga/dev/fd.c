@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.77 2007/10/17 19:53:15 garbled Exp $ */
+/*	$NetBSD: fd.c,v 1.77.8.1 2008/01/02 21:47:14 bouyer Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.77 2007/10/17 19:53:15 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.77.8.1 2008/01/02 21:47:14 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -912,7 +912,8 @@ fdputdisklabel(struct fd_softc *sc, dev_t dev)
 	bcopy(lp, dlp, sizeof(struct disklabel));
 	bp->b_blkno = 0;
 	bp->b_cylinder = 0;
-	bp->b_flags &= ~(B_READ|B_DONE);
+	bp->b_flags &= ~(B_READ);
+	bp->b_oflags &= ~(BO_DONE);
 	bp->b_flags |= B_WRITE;
 	fdstrategy(bp);
 	error = biowait(bp);

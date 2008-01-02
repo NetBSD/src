@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_llseek.c,v 1.30 2007/12/08 18:36:08 dsl Exp $	*/
+/*	$NetBSD: linux_llseek.c,v 1.30.4.1 2008/01/02 21:52:36 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_llseek.c,v 1.30 2007/12/08 18:36:08 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_llseek.c,v 1.30.4.1 2008/01/02 21:52:36 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,15 +62,15 @@ __KERNEL_RCSID(0, "$NetBSD: linux_llseek.c,v 1.30 2007/12/08 18:36:08 dsl Exp $"
  * This appears to be part of a Linux attempt to switch to 64 bits file sizes.
  */
 int
-linux_sys_llseek(struct lwp *l, void *v, register_t *retval)
+linux_sys_llseek(struct lwp *l, const struct linux_sys_llseek_args *uap, register_t *retval)
 {
-	struct linux_sys_llseek_args /* {
+	/* {
 		syscallarg(int) fd;
 		syscallarg(uint32_t) ohigh;
 		syscallarg(uint32_t) olow;
 		syscallarg(void *) res;
 		syscallarg(int) whence;
-	} */ *uap = v;
+	} */
 	struct sys_lseek_args bla;
 	int error;
 	off_t off;

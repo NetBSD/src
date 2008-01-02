@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.118 2007/11/04 14:34:20 xtraeme Exp $
+# $NetBSD: GENERIC,v 1.118.8.1 2008/01/02 21:47:29 bouyer Exp $
 #
 # GENERIC machine description file
 # 
@@ -154,7 +154,6 @@ options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 
 # Miscellaneous kernel options
 options 	KTRACE		# system call tracing, a la ktrace(1)
-#options 	SYSTRACE	# system call vetting via systrace(1)
 options 	IRQSTATS	# manage IRQ statistics
 #options 	LKM		# loadable kernel modules
 #options 	KMEMSTATS	# kernel memory statistics

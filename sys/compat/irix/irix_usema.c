@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_usema.c,v 1.25 2007/12/08 18:36:04 dsl Exp $ */
+/*	$NetBSD: irix_usema.c,v 1.25.4.1 2008/01/02 21:52:11 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_usema.c,v 1.25 2007/12/08 18:36:04 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_usema.c,v 1.25.4.1 2008/01/02 21:52:11 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -393,12 +393,12 @@ IRIX_USEMA_VNOP_WRAP(fcntl)
  * but it is closely related to it.
  */
 int
-irix_sys_usync_cntl(struct lwp *l, void *v, register_t *retval)
+irix_sys_usync_cntl(struct lwp *l, const struct irix_sys_usync_cntl_args *uap, register_t *retval)
 {
-	struct irix_sys_usync_cntl_args /* {
+	/* {
 		syscallarg(int) cmd;
 		syscallarg(void *) arg;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 	int error;
 	struct irix_usync_arg iua;

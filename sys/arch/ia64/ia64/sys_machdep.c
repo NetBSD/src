@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.3 2007/02/09 21:55:05 ad Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.3.36.1 2008/01/02 21:48:28 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.3 2007/02/09 21:55:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.3.36.1 2008/01/02 21:48:28 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,7 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.3 2007/02/09 21:55:05 ad Exp $");
 #include <sys/syscallargs.h>
 
 int
-sys_sysarch(struct lwp *l, void *v, register_t *retval)
+sys_sysarch(struct lwp *l, const struct sys_sysarch_args *uap, register_t *retval)
 {
 	return (EINVAL);
 }

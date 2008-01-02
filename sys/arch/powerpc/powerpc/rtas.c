@@ -1,14 +1,15 @@
-/*	$NetBSD: rtas.c,v 1.3 2007/11/04 16:28:28 garbled Exp $ */
+/*	$NetBSD: rtas.c,v 1.3.8.1 2008/01/02 21:49:11 bouyer Exp $ */
 
 /*
  * CHRP RTAS support routines
  * Common Hardware Reference Platform / Run-Time Abstraction Services
  *
  * Started by Aymeric Vincent in 2007, public domain.
+ * Modifications by Tim Rightnour 2007.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtas.c,v 1.3 2007/11/04 16:28:28 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtas.c,v 1.3.8.1 2008/01/02 21:49:11 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -19,6 +20,10 @@ __KERNEL_RCSID(0, "$NetBSD: rtas.c,v 1.3 2007/11/04 16:28:28 garbled Exp $");
 #include <dev/clock_subr.h>
 #include <dev/ofw/openfirm.h>
 #include <machine/autoconf.h>
+#include <machine/stdarg.h>
+#include <powerpc/rtas.h>
+
+int machine_has_rtas = 0;
 
 struct rtas_softc *rtas0_softc;
 
@@ -33,69 +38,50 @@ struct rtas_softc {
 	struct todr_chip_handle ra_todr_handle;
 };
 
-enum rtas_func {
-	RTAS_FUNC_RESTART_RTAS, RTAS_FUNC_NVRAM_FETCH, RTAS_FUNC_NVRAM_STORE,
-	RTAS_FUNC_GET_TIME_OF_DAY, RTAS_FUNC_SET_TIME_OF_DAY,
-	RTAS_FUNC_SET_TIME_FOR_POWER_ON,
-	RTAS_FUNC_EVENT_SCAN, RTAS_FUNC_CHECK_EXCEPTION,
-	RTAS_FUNC_READ_PCI_CONFIG, RTAS_FUNC_WRITE_PCI_CONFIG,
-	RTAS_FUNC_DISPLAY_CHARACTER, RTAS_FUNC_SET_INDICATOR,
-	RTAS_FUNC_POWER_OFF, RTAS_FUNC_SUSPEND, RTAS_FUNC_HIBERNATE,
-	RTAS_FUNC_SYSTEM_REBOOT,
-	RTAS_FUNC_number
-};
-
 static struct {
 	int token;
 	int exists;
 } rtas_function_token[RTAS_FUNC_number];
 
 static struct {
-	const char *name;
-	int index;
+        const char *name;
+        int index;
 } rtas_function_lookup[] = {
-	{ "restart-rtas", RTAS_FUNC_RESTART_RTAS },
-	{ "nvram-fetch", RTAS_FUNC_NVRAM_FETCH },
-	{ "nvram-store", RTAS_FUNC_NVRAM_STORE },
-	{ "get-time-of-day", RTAS_FUNC_GET_TIME_OF_DAY },
-	{ "set-time-of-day", RTAS_FUNC_SET_TIME_OF_DAY },
-	{ "set-time-for-power-on", RTAS_FUNC_SET_TIME_FOR_POWER_ON },
-	{ "event-scan", RTAS_FUNC_EVENT_SCAN },
-	{ "check-exception", RTAS_FUNC_CHECK_EXCEPTION },
-	/* Typo in my Efika's firmware */
-	{ "check-execption", RTAS_FUNC_CHECK_EXCEPTION },
-	{ "read-pci-config", RTAS_FUNC_READ_PCI_CONFIG },
-	{ "write-pci-config", RTAS_FUNC_WRITE_PCI_CONFIG },
-	{ "display-character", RTAS_FUNC_DISPLAY_CHARACTER },
-	{ "set-indicator", RTAS_FUNC_SET_INDICATOR },
-	{ "power-off", RTAS_FUNC_POWER_OFF },
-	{ "suspend", RTAS_FUNC_SUSPEND },
-	{ "hibernate", RTAS_FUNC_HIBERNATE },
-	{ "system-reboot", RTAS_FUNC_SYSTEM_REBOOT },
+        { "restart-rtas", RTAS_FUNC_RESTART_RTAS },
+        { "nvram-fetch", RTAS_FUNC_NVRAM_FETCH },
+        { "nvram-store", RTAS_FUNC_NVRAM_STORE },
+        { "get-time-of-day", RTAS_FUNC_GET_TIME_OF_DAY },
+        { "set-time-of-day", RTAS_FUNC_SET_TIME_OF_DAY },
+        { "set-time-for-power-on", RTAS_FUNC_SET_TIME_FOR_POWER_ON },
+        { "event-scan", RTAS_FUNC_EVENT_SCAN },
+        { "check-exception", RTAS_FUNC_CHECK_EXCEPTION },
+        /* Typo in my Efika's firmware */
+        { "check-execption", RTAS_FUNC_CHECK_EXCEPTION },
+        { "read-pci-config", RTAS_FUNC_READ_PCI_CONFIG },
+        { "write-pci-config", RTAS_FUNC_WRITE_PCI_CONFIG },
+        { "display-character", RTAS_FUNC_DISPLAY_CHARACTER },
+        { "set-indicator", RTAS_FUNC_SET_INDICATOR },
+        { "power-off", RTAS_FUNC_POWER_OFF },
+        { "suspend", RTAS_FUNC_SUSPEND },
+        { "hibernate", RTAS_FUNC_HIBERNATE },
+        { "system-reboot", RTAS_FUNC_SYSTEM_REBOOT },
 };
 
-struct rtas_call {
-	int token;
-	int nargs;
-	int nreturns;
-	int args[0];
-};
-void rtas_reboot(void);
-static int	rtas_match(struct device *, struct cfdata *, void *);
-static void	rtas_attach(struct device *, struct device *, void *);
-static int	rtas_detach(struct device *, int);
-static int	rtas_activate(struct device *, enum devact);
-static int	rtas_call(struct rtas_call *);
-static int	rtas_todr_gettime_ymdhms(struct todr_chip_handle *,
-							struct clock_ymdhms *);
-static int	rtas_todr_settime_ymdhms(struct todr_chip_handle *,
-							struct clock_ymdhms *);
+static int rtas_match(struct device *, struct cfdata *, void *);
+static void rtas_attach(struct device *, struct device *, void *);
+static int rtas_detach(struct device *, int);
+static int rtas_activate(struct device *, enum devact);
+static int rtas_todr_gettime_ymdhms(struct todr_chip_handle *,
+    struct clock_ymdhms *);
+static int rtas_todr_settime_ymdhms(struct todr_chip_handle *,
+    struct clock_ymdhms *);
 
 CFATTACH_DECL(rtas, sizeof (struct rtas_softc),
-	rtas_match, rtas_attach, rtas_detach, rtas_activate);
+    rtas_match, rtas_attach, rtas_detach, rtas_activate);
 
 static int
-rtas_match(struct device *parent, struct cfdata *match, void *aux) {
+rtas_match(struct device *parent, struct cfdata *match, void *aux)
+{
 	struct confargs *ca = aux;
 
 	if (strcmp(ca->ca_name, "rtas"))
@@ -105,7 +91,8 @@ rtas_match(struct device *parent, struct cfdata *match, void *aux) {
 }
 
 static void
-rtas_attach(struct device *parent, struct device *self, void *aux) {
+rtas_attach(struct device *parent, struct device *self, void *aux)
+{
 	struct confargs *ca = aux;
 	struct rtas_softc *sc = (struct rtas_softc *) self;
 	int ph = ca->ca_node;
@@ -116,6 +103,8 @@ rtas_attach(struct device *parent, struct device *self, void *aux) {
 	char buf[4];
 	int i;
 
+	machine_has_rtas = 1;
+	
 	sc->ra_phandle = ph;
 	if (OF_getprop(ph, "rtas-version", buf, sizeof buf) != sizeof buf)
 		goto fail;
@@ -187,12 +176,14 @@ fail:
 }
 
 static int
-rtas_detach(struct device *self, int flags) {
+rtas_detach(struct device *self, int flags)
+{
 	return EOPNOTSUPP;
 }
 
 static int
-rtas_activate(struct device *self, enum devact act) {
+rtas_activate(struct device *self, enum devact act)
+{
 	return EOPNOTSUPP;
 }
 
@@ -200,18 +191,42 @@ rtas_activate(struct device *self, enum devact act) {
  * Support for calling to the RTAS
  */
 
-static int
-rtas_call(struct rtas_call *args) {
-	paddr_t pargs = (paddr_t) args;
+int
+rtas_call(int token, int nargs, int nreturns, ...)
+{
+	va_list ap;
+	static struct {
+		int token;
+		int nargs;
+		int nreturns;
+		int args_n_results[RTAS_MAXARGS];
+	} args;
+	paddr_t pargs = (paddr_t)&args;
 	paddr_t base;
-	void (*entry)(paddr_t, paddr_t);
 	register_t msr;
+	void (*entry)(paddr_t, paddr_t);
+	int n;
 
 	if (rtas0_softc == NULL)
 		return -1;
 
+	if (nargs + nreturns > RTAS_MAXARGS)
+		return -1;
+
+	if (!rtas_function_token[token].exists)
+		return -1;
+	
 	base = rtas0_softc->ra_base_pa;
 	entry = rtas0_softc->ra_entry_pa;
+
+	memset(args.args_n_results, 0, RTAS_MAXARGS * sizeof(int));
+	args.nargs = nargs;
+	args.nreturns = nreturns;
+	args.token = rtas_function_token[token].token;
+	
+	va_start(ap, nreturns);
+	for (n=0; n < nargs && n < RTAS_MAXARGS; n++)
+		args.args_n_results[n] = va_arg(ap, int);
 
 	__insn_barrier();
 	msr = mfmsr();
@@ -224,21 +239,18 @@ rtas_call(struct rtas_call *args) {
 	mtmsr(msr);
 	__asm("isync;\n");
 
-	return args->args[args->nargs];
+	for (n = nargs; n < nargs + nreturns && n < RTAS_MAXARGS; n++)
+		*va_arg(ap, int *) = args.args_n_results[n];
+
+	va_end(ap);
+
+	return args.args_n_results[nargs];
 }
 
-void
-rtas_reboot(void)
+int
+rtas_has_func(int token)
 {
-	struct rtas_call rc;
-
-	if (!rtas_function_token[RTAS_FUNC_SYSTEM_REBOOT].exists)
-		return;
-
-	rc.token = rtas_function_token[RTAS_FUNC_SYSTEM_REBOOT].token;
-	rc.nargs = 0;
-	rc.nreturns = 0;
-	rtas_call(&rc);
+	return rtas_function_token[token].exists;
 }
 
 /*
@@ -246,68 +258,46 @@ rtas_reboot(void)
  */
 
 static int
-rtas_todr_gettime_ymdhms(struct todr_chip_handle *h, struct clock_ymdhms *t) {
-	static struct {
-		struct rtas_call rc;
-		int status;
-		int year;
-		int month;
-		int day;
-		int hour;
-		int minute;
-		int second;
-		int nanosecond;
-	} args;
+rtas_todr_gettime_ymdhms(struct todr_chip_handle *h, struct clock_ymdhms *t)
+{
+	int status, year, month, day, hour, minute, second, nanosecond;
 
 	if (!rtas_function_token[RTAS_FUNC_GET_TIME_OF_DAY].exists)
 		return ENXIO;
 
-	args.rc.token = rtas_function_token[RTAS_FUNC_GET_TIME_OF_DAY].token;
-	args.rc.nargs = 0;
-	args.rc.nreturns = 8;
-	if (rtas_call(&args.rc) < 0)
+	if (rtas_call(RTAS_FUNC_GET_TIME_OF_DAY, 0, 8, &status, &year,
+		&month, &day, &hour, &minute, &second, &nanosecond) < 0)
 		return ENXIO;
-
-	t->dt_year = args.year;
-	t->dt_mon = args.month;
-	t->dt_day = args.day;
-	t->dt_hour = args.hour;
-	t->dt_min = args.minute;
-	t->dt_sec = args.second;
+	
+	t->dt_year = year;
+	t->dt_mon = month;
+	t->dt_day = day;
+	t->dt_hour = hour;
+	t->dt_min = minute;
+	t->dt_sec = second;
 
 	return 0;
 }
 
 static int
-rtas_todr_settime_ymdhms(struct todr_chip_handle *h, struct clock_ymdhms *t) {
-	static struct {
-		struct rtas_call rc;
-		int year;
-		int month;
-		int day;
-		int hour;
-		int minute;
-		int second;
-		int nanosecond;
-		int status;
-	} args;
+rtas_todr_settime_ymdhms(struct todr_chip_handle *h, struct clock_ymdhms *t)
+{
+	int status, year, month, day, hour, minute, second, nanosecond;
 
 	if (!rtas_function_token[RTAS_FUNC_SET_TIME_OF_DAY].exists)
 		return ENXIO;
 
-	args.rc.token = rtas_function_token[RTAS_FUNC_SET_TIME_OF_DAY].token;
-	args.rc.nargs = 7;
-	args.rc.nreturns = 1;
-	args.year = t->dt_year;
-	args.month = t->dt_mon;
-	args.day = t->dt_day;
-	args.hour = t->dt_hour;
-	args.minute = t->dt_min;
-	args.second = t->dt_sec;
-	args.nanosecond = 0;
+	year = t->dt_year;
+	month = t->dt_mon;
+	day = t->dt_day;
+	hour = t->dt_hour;
+	minute = t->dt_min;
+	second = t->dt_sec;
+	nanosecond = 0;
 
-	if (rtas_call(&args.rc) < 0)
+	if (rtas_call(RTAS_FUNC_SET_TIME_OF_DAY, 7, 1, year, month,
+		day, hour, minute, second, nanosecond, &status) < 0)
 		return ENXIO;
-
+	
 	return 0;
 }

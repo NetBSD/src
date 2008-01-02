@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_13.c,v 1.23 2007/12/08 18:36:17 dsl Exp $	*/
+/*	$NetBSD: netbsd32_compat_13.c,v 1.23.4.1 2008/01/02 21:53:06 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_13.c,v 1.23 2007/12/08 18:36:17 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_13.c,v 1.23.4.1 2008/01/02 21:53:06 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,20 +49,19 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_13.c,v 1.23 2007/12/08 18:36:17 dsl 
 #include <compat/common/compat_sigaltstack.h>
 
 int
-compat_13_netbsd32_sigaltstack13(struct lwp *l, void *v, register_t *retval)
+compat_13_netbsd32_sigaltstack13(struct lwp *l, const struct compat_13_netbsd32_sigaltstack13_args *uap, register_t *retval)
 {
-	struct compat_13_netbsd32_sigaltstack13_args *uap = v;
 	compat_sigaltstack(uap, netbsd32_sigaltstack13, SS_ONSTACK, SS_DISABLE);
 }
 
 
 int
-compat_13_netbsd32_sigprocmask(struct lwp *l, void *v, register_t *retval)
+compat_13_netbsd32_sigprocmask(struct lwp *l, const struct compat_13_netbsd32_sigprocmask_args *uap, register_t *retval)
 {
-	struct compat_13_netbsd32_sigprocmask_args /* {
+	/* {
 		syscallarg(int) how;
 		syscallarg(int) mask;
-	} */ *uap = v;
+	} */
 	sigset13_t ness, oess;
 	sigset_t nbss, obss;
 	int error;
@@ -78,11 +77,11 @@ compat_13_netbsd32_sigprocmask(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-compat_13_netbsd32_sigsuspend(struct lwp *l, void *v, register_t *retval)
+compat_13_netbsd32_sigsuspend(struct lwp *l, const struct compat_13_netbsd32_sigsuspend_args *uap, register_t *retval)
 {
-	struct compat_13_netbsd32_sigsuspend_args /* {
+	/* {
 		syscallarg(sigset13_t) mask;
-	} */ *uap = v;
+	} */
 	sigset13_t ess;
 	sigset_t bss;
 

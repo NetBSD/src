@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rayreg.h,v 1.9 2005/12/11 12:23:23 christos Exp $	*/
+/*	$NetBSD: if_rayreg.h,v 1.9.60.1 2008/01/02 21:55:07 bouyer Exp $	*/
 /*
  * Copyright (c) 2000 Christian E. Hopps
  * All rights reserved.
@@ -223,7 +223,7 @@ struct ray_startup_params_head {
 /*48*/	u_int8_t	sp_country_code;
 /*49*/	u_int8_t	sp_hop_seq;
 /*4a*/	u_int8_t	sp_hop_seq_len;	/* no longer supported */
-} __attribute__((__packed__));
+} __packed;
 
 /* build 5 tail to the startup params */
 struct ray_startup_params_tail_5 {
@@ -241,7 +241,7 @@ struct ray_startup_params_tail_5 {
 	u_int8_t	sp_privacy_must_start;
 	u_int8_t	sp_privacy_can_join;
 	u_int8_t	sp_basic_rate_set[8];
-} __attribute__((__packed__));
+} __packed;
 
 /* build 4 (webgear) tail to the startup params */
 struct ray_startup_params_tail_4 {
@@ -256,7 +256,7 @@ struct ray_startup_params_tail_4 {
 	u_int8_t	sp_test_min_chan;
 	u_int8_t	sp_test_max_chan;
 	/* more bytes in build 5 */
-} __attribute__((__packed__));
+} __packed;
 
 /*
  * Parameter IDs for the update/report param commands and values if

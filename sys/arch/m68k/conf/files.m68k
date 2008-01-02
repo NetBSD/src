@@ -1,4 +1,4 @@
-#	$NetBSD: files.m68k,v 1.41 2007/10/17 19:55:04 garbled Exp $
+#	$NetBSD: files.m68k,v 1.41.8.1 2008/01/02 21:48:31 bouyer Exp $
 #
 
 defflag	opt_fpsp.h		FPSP
@@ -23,7 +23,6 @@ file	arch/m68k/m68k/regdump.c
 file	arch/m68k/m68k/sig_machdep.c
 file	arch/m68k/m68k/m68k_syscall.c
 file	arch/m68k/m68k/sunos_syscall.c		compat_sunos
-file	arch/m68k/m68k/hpux_syscall.c		compat_hpux
 file	arch/m68k/m68k/svr4_syscall.c		compat_svr4
 file	arch/m68k/m68k/linux_syscall.c		compat_linux
 

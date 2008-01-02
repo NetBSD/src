@@ -1,4 +1,4 @@
-/*	$NetBSD: dp83932reg.h,v 1.5 2007/06/02 10:48:24 tsutsui Exp $	*/
+/*	$NetBSD: dp83932reg.h,v 1.5.20.1 2008/01/02 21:54:10 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@ struct sonic_rda16 {
 	uint16_t	rda_seqno;
 	uint16_t	rda_link;
 	uint16_t	rda_inuse;
-} __attribute__((__packed__));
+} __packed;
 
 struct sonic_rda32 {
 	uint32_t	rda_status;
@@ -65,7 +65,7 @@ struct sonic_rda32 {
 	uint32_t	rda_seqno;
 	uint32_t	rda_link;
 	uint32_t	rda_inuse;
-} __attribute__((__packed__));
+} __packed;
 
 #define	RDA_SEQNO_RBA(x)	(((x) >> 8) & 0xff)
 #define	RDA_SEQNO_RSN(x)	((x) & 0xff)
@@ -85,14 +85,14 @@ struct sonic_rra16 {
 	uint16_t	rra_ptr1;
 	uint16_t	rra_wc0;
 	uint16_t	rra_wc1;
-} __attribute__((__packed__));
+} __packed;
 
 struct sonic_rra32 {
 	uint32_t	rra_ptr0;
 	uint32_t	rra_ptr1;
 	uint32_t	rra_wc0;
 	uint32_t	rra_wc1;
-} __attribute__((__packed__));
+} __packed;
 
 /*
  * SONIC Transmit Descriptor Area
@@ -105,13 +105,13 @@ struct sonic_frag16 {
 	uint16_t	frag_ptr0;
 	uint16_t	frag_ptr1;
 	uint16_t	frag_size;
-} __attribute__((__packed__));
+} __packed;
 
 struct sonic_frag32 {
 	uint32_t	frag_ptr0;
 	uint32_t	frag_ptr1;
 	uint32_t	frag_size;
-} __attribute__((__packed__));
+} __packed;
 
 /*
  * Note the frag after the last frag is used to link up to the
@@ -127,7 +127,7 @@ struct sonic_tda16 {
 #if 0
 	uint16_t	tda_link;
 #endif
-} __attribute__((__packed__));
+} __packed;
 
 struct sonic_tda32 {
 	uint32_t	tda_status;
@@ -138,7 +138,7 @@ struct sonic_tda32 {
 #if 0
 	uint32_t	tda_link;
 #endif
-} __attribute__((__packed__));
+} __packed;
 
 #define	TDA_STATUS_NCOL(x)	(((x) >> 11) & 0x1f)
 
@@ -152,14 +152,14 @@ struct sonic_cda16 {
 	uint16_t	cda_addr0;
 	uint16_t	cda_addr1;
 	uint16_t	cda_addr2;
-} __attribute__((__packed__));
+} __packed;
 
 struct sonic_cda32 {
 	uint32_t	cda_entry;
 	uint32_t	cda_addr0;
 	uint32_t	cda_addr1;
 	uint32_t	cda_addr2;
-} __attribute__((__packed__));
+} __packed;
 
 /*
  * SONIC register file.

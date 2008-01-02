@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_exec.c,v 1.11 2005/12/11 12:24:48 christos Exp $ */
+/* $NetBSD: lkminit_exec.c,v 1.11.60.1 2008/01/02 21:56:37 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_exec.c,v 1.11 2005/12/11 12:24:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_exec.c,v 1.11.60.1 2008/01/02 21:56:37 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: lkminit_exec.c,v 1.11 2005/12/11 12:24:48 christos E
 
 #include <compat/freebsd/freebsd_exec.h>
 
-int exec_freebsd_elf_lkmentry __P((struct lkm_table *, int, int));
+int exec_freebsd_elf_lkmentry(struct lkm_table *, int, int);
 
 static struct execsw exec_freebsd_elf =
 	/* FreBSD Elf32 (probe not 64-bit safe) */

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ipc.c,v 1.41 2007/12/08 18:36:07 dsl Exp $	*/
+/*	$NetBSD: linux_ipc.c,v 1.41.4.1 2008/01/02 21:52:35 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ipc.c,v 1.41 2007/12/08 18:36:07 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ipc.c,v 1.41.4.1 2008/01/02 21:52:35 bouyer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -181,14 +181,14 @@ linux_to_bsd_semid_ds(struct linux_semid_ds *ls, struct semid_ds *bs)
  * just need to frob the `cmd' and convert the semid_ds and semun.
  */
 int
-linux_sys_semctl(struct lwp *l, void *v, register_t *retval)
+linux_sys_semctl(struct lwp *l, const struct linux_sys_semctl_args *uap, register_t *retval)
 {
-	struct linux_sys_semctl_args /* {
+	/* {
 		syscallarg(int) semid;
 		syscallarg(int) semnum;
 		syscallarg(int) cmd;
 		syscallarg(union linux_semun) arg;
-	} */ *uap = v;
+	} */
 	struct semid_ds sembuf;
 	struct linux_semid_ds lsembuf;
 	union __semun semun;
@@ -308,13 +308,13 @@ bsd_to_linux_msqid_ds(struct msqid_ds *bmp, struct linux_msqid_ds *lmp)
 }
 
 int
-linux_sys_msgctl(struct lwp *l, void *v, register_t *retval)
+linux_sys_msgctl(struct lwp *l, const struct linux_sys_msgctl_args *uap, register_t *retval)
 {
-	struct linux_sys_msgctl_args /* {
+	/* {
 		syscallarg(int) msqid;
 		syscallarg(int) cmd;
 		syscallarg(struct linux_msqid_ds *) buf;
-	} */ *uap = v;
+	} */
 	struct msqid_ds bm;
 	struct linux_msqid_ds lm;
 	int error;
@@ -348,16 +348,20 @@ linux_sys_msgctl(struct lwp *l, void *v, register_t *retval)
  * the segment would be removed.
  */
 int
-linux_sys_shmget(struct lwp *l, void *v, register_t *retval)
+linux_sys_shmget(struct lwp *l, const struct linux_sys_shmget_args *uap, register_t *retval)
 {
-	struct sys_shmget_args /* {
+	/* {
 		syscallarg(key_t) key;
 		syscallarg(size_t) size;
 		syscallarg(int) shmflg;
-	} */ *uap = v;
+	} */
+	struct sys_shmget_args bsd_ua;
 
-	SCARG(uap, shmflg) |= _SHM_RMLINGER;
-	return sys_shmget(l, uap, retval);
+	SCARG(&bsd_ua, key) = SCARG(uap, key);
+	SCARG(&bsd_ua, size) = SCARG(uap, size);
+	SCARG(&bsd_ua, shmflg) = SCARG(uap, shmflg) | _SHM_RMLINGER;
+
+	return sys_shmget(l, &bsd_ua, retval);
 }
 
 /*
@@ -367,22 +371,21 @@ linux_sys_shmget(struct lwp *l, void *v, register_t *retval)
  */
 #ifndef __amd64__
 int
-linux_sys_shmat(struct lwp *l, void *v, register_t *retval)
+linux_sys_shmat(struct lwp *l, const struct linux_sys_shmat_args *uap, register_t *retval)
 {
-	struct linux_sys_shmat_args /* {
+	/* {
 		syscallarg(int) shmid;
 		syscallarg(void *) shmaddr;
 		syscallarg(int) shmflg;
 		syscallarg(u_long *) raddr;
-	} */ *uap = v;
+	} */
 	int error;
 
-	if ((error = sys_shmat(l, uap, retval)))
+	if ((error = sys_shmat(l, (const void *)uap, retval)))
 		return error;
 
 #ifndef __amd64__
-	if ((error = copyout(&retval[0], (void *) SCARG(uap, raddr),
-	     sizeof retval[0])))
+	if ((error = copyout(&retval[0], SCARG(uap, raddr), sizeof retval[0])))
 		return error;
 
 	retval[0] = 0;
@@ -465,13 +468,13 @@ bsd_to_linux_shmid64_ds(struct shmid_ds *bsp, struct linux_shmid64_ds *lsp)
  * The usual structure conversion and massaging is done.
  */
 int
-linux_sys_shmctl(struct lwp *l, void *v, register_t *retval)
+linux_sys_shmctl(struct lwp *l, const struct linux_sys_shmctl_args *uap, register_t *retval)
 {
-	struct linux_sys_shmctl_args /* {
+	/* {
 		syscallarg(int) shmid;
 		syscallarg(int) cmd;
 		syscallarg(struct linux_shmid_ds *) buf;
-	} */ *uap = v;
+	} */
 	struct shmid_ds bs;
 	struct linux_shmid_ds ls;
 	struct linux_shmid64_ds ls64;

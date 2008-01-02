@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.72 2007/12/09 20:27:43 jmcneill Exp $	*/
+/*	$NetBSD: machdep.c,v 1.72.2.1 2008/01/02 21:47:00 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007
@@ -120,7 +120,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.72 2007/12/09 20:27:43 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.72.2.1 2008/01/02 21:47:00 bouyer Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -136,6 +136,9 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.72 2007/12/09 20:27:43 jmcneill Exp $"
 #include "opt_mtrr.h"
 #include "opt_realmem.h"
 #include "opt_xen.h"
+#ifndef XEN
+#include "opt_physmem.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1000,14 +1003,10 @@ setregs(struct lwp *l, struct exec_package *pack, u_long stack)
  * Initialize segments and descriptor tables
  */
 
-#ifndef XEN
-struct gate_descriptor *idt;
-#else
-struct trap_info *idt;
+#ifdef XEN
+struct trap_info *xen_idt;
 int xen_idt_idx;
 #endif
-char idt_allocmap[NIDT];
-struct simplelock idt_lock = SIMPLELOCK_INITIALIZER;
 char *ldtstore;
 char *gdtstore;
 extern  struct user *proc0paddr;
@@ -1093,7 +1092,7 @@ cpu_init_idt(void)
 	setregion(&region, idt, NIDT * sizeof(idt[0]) - 1);
 	lidt(&region); 
 #else
-	if (HYPERVISOR_set_trap_table(idt))
+	if (HYPERVISOR_set_trap_table(xen_idt))
 		panic("HYPERVISOR_set_trap_table() failed");
 #endif
 }
@@ -1112,6 +1111,7 @@ extern vector IDTVEC(oosyscall);
 extern vector *IDTVEC(exceptions)[];
 
 #define	KBTOB(x)	((size_t)(x) * 1024UL)
+#define	MBTOB(x)	((size_t)(x) * 1024UL * 1024UL)
 
 static void
 init_x86_64_msgbuf(void)
@@ -1217,7 +1217,7 @@ init_x86_64(paddr_t first_avail)
 	u_int64_t seg_start1, seg_end1;
 #if !defined(REALEXTMEM) && !defined(REALBASEMEM)
 	struct btinfo_memmap *bim;
-	u_int64_t addr, size, io_end;
+	u_int64_t addr, size, io_end, new_physmem;
 #endif
 #else /* XEN */
 	__PRINTK(("init_x86_64(0x%lx)\n", first_avail));
@@ -1363,6 +1363,13 @@ init_x86_64(paddr_t first_avail)
 				panic("init386: too many memory segments "
 				    "(increase VM_PHYSSEG_MAX)");
 
+#ifdef PHYSMEM_MAX_ADDR
+			if (seg_start >= MBTOB(PHYSMEM_MAX_ADDR))
+				continue;
+			if (seg_end > MBTOB(PHYSMEM_MAX_ADDR))
+				seg_end = MBTOB(PHYSMEM_MAX_ADDR);
+#endif
+
 			seg_start = round_page(seg_start);
 			seg_end = trunc_page(seg_end);
 
@@ -1370,12 +1377,25 @@ init_x86_64(paddr_t first_avail)
 				continue;
 
 			mem_clusters[mem_cluster_cnt].start = seg_start;
+			new_physmem = physmem +
+			    atop(seg_end - seg_start);
+
+#ifdef PHYSMEM_MAX_SIZE
+			if (physmem >= atop(MBTOB(PHYSMEM_MAX_SIZE)))
+				continue;
+			if (new_physmem > atop(MBTOB(PHYSMEM_MAX_SIZE))) {
+				seg_end = seg_start +
+				    MBTOB(PHYSMEM_MAX_SIZE) - ptoa(physmem);
+				new_physmem = atop(MBTOB(PHYSMEM_MAX_SIZE));
+			}
+#endif
+
 			mem_clusters[mem_cluster_cnt].size =
 			    seg_end - seg_start;
 
 			if (avail_end < seg_end)
 				avail_end = seg_end;
-			physmem += atop(mem_clusters[mem_cluster_cnt].size);
+			physmem = new_physmem;
 			mem_cluster_cnt++;
 		}
 	}
@@ -1595,14 +1615,15 @@ init_x86_64(paddr_t first_avail)
 	pmap_update(pmap_kernel());
 
 #ifndef XEN
+	idt_init();
 	idt = (struct gate_descriptor *)idt_vaddr;
 	gdtstore = (char *)(idt + NIDT);
 	ldtstore = gdtstore + DYNSEL_START;
 #else
-	idt = (struct trap_info *)idt_vaddr;
+	xen_idt = (struct trap_info *)idt_vaddr;
 	xen_idt_idx = 0;
 	/* Xen wants page aligned GDT/LDT in separated pages */
-	ldtstore = (char *) roundup((vaddr_t) (idt + NIDT), PAGE_SIZE);
+	ldtstore = (char *) roundup((vaddr_t) (xen_idt + NIDT), PAGE_SIZE);
 	gdtstore = (char *) (ldtstore + PAGE_SIZE);
 #endif /* XEN */
 
@@ -1668,33 +1689,35 @@ init_x86_64(paddr_t first_avail)
 	/* exceptions */
 	for (x = 0; x < 32; x++) {
 #ifndef XEN
+		idt_vec_reserve(x);
 		ist = (x == 8) ? 2 : 0;
 		setgate(&idt[x], IDTVEC(exceptions)[x], ist, SDT_SYS386IGT,
 		    (x == 3 || x == 4) ? SEL_UPL : SEL_KPL,
 		    GSEL(GCODE_SEL, SEL_KPL));
 #else /* XEN */
-		idt[xen_idt_idx].vector = x;
-		idt[xen_idt_idx].flags = (x == 3 || x == 4) ? SEL_UPL : SEL_KPL;
-		idt[xen_idt_idx].cs = GSEL(GCODE_SEL, SEL_KPL);
-		idt[xen_idt_idx].address = (unsigned long)IDTVEC(exceptions)[x];
+		xen_idt[xen_idt_idx].vector = x;
+		xen_idt[xen_idt_idx].flags =
+		    (x == 3 || x == 4) ? SEL_UPL : SEL_KPL;
+		xen_idt[xen_idt_idx].cs = GSEL(GCODE_SEL, SEL_KPL);
+		xen_idt[xen_idt_idx].address =
+		    (unsigned long)IDTVEC(exceptions)[x];
 		xen_idt_idx++;
 #endif /* XEN */
-		idt_allocmap[x] = 1;
 	}
 
 #if defined(COMPAT_16) || defined(COMPAT_NETBSD32)
 	/* new-style interrupt gate for syscalls */
 #ifndef XEN
+	idt_vec_reserve(128);
 	setgate(&idt[128], &IDTVEC(osyscall), 0, SDT_SYS386IGT, SEL_UPL,
 	    GSEL(GCODE_SEL, SEL_KPL));
 #else
-	idt[xen_idt_idx].vector = 128;
-	idt[xen_idt_idx].flags = SEL_KPL;
-	idt[xen_idt_idx].cs = GSEL(GCODE_SEL, SEL_KPL);
-	idt[xen_idt_idx].address =  (unsigned long) &IDTVEC(osyscall);
+	xen_idt[xen_idt_idx].vector = 128;
+	xen_idt[xen_idt_idx].flags = SEL_KPL;
+	xen_idt[xen_idt_idx].cs = GSEL(GCODE_SEL, SEL_KPL);
+	xen_idt[xen_idt_idx].address =  (unsigned long) &IDTVEC(osyscall);
 	xen_idt_idx++;
 #endif /* XEN */
-	idt_allocmap[128] = 1;
 #endif
 #ifdef XEN
 	pmap_changeprot_local(idt_vaddr, VM_PROT_READ);
@@ -1786,34 +1809,6 @@ cpu_reset(void)
 
 	for (;;);
 }
-
-#if 0
-extern void i8254_microtime(struct timeval *tv);
-
-/*
- * XXXXXXX
- * the simulator's 8254 seems to travel backward in time sometimes?
- * work around this with this hideous code. Unacceptable for
- * real hardware, but this is just a patch to stop the weird
- * effects. SMP unsafe, etc.
- */
-void
-microtime(struct timeval *tv)
-{
-	static struct timeval mtv;
-
-	i8254_microtime(tv);
-	if (tv->tv_sec <= mtv.tv_sec && tv->tv_usec < mtv.tv_usec) {
-		mtv.tv_usec++;
-		if (mtv.tv_usec > 1000000) {
-			mtv.tv_sec++;
-			mtv.tv_usec = 0;
-		}
-		*tv = mtv;
-	} else
-		mtv = *tv;
-}
-#endif
 
 void
 cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
@@ -1973,51 +1968,6 @@ cpu_initclocks(void)
 {
 	(*initclock_func)();
 }
-
-#ifndef XEN
-/*
- * Allocate an IDT vector slot within the given range.
- * XXX needs locking to avoid MP allocation races.
- * XXXfvdl share idt code
- */
-
-int
-idt_vec_alloc(int low, int high)
-{
-	int vec;
-
-	simple_lock(&idt_lock);
-	for (vec = low; vec <= high; vec++) {
-		if (idt_allocmap[vec] == 0) {
-			idt_allocmap[vec] = 1;
-			simple_unlock(&idt_lock);
-			return vec;
-		}
-	}
-	simple_unlock(&idt_lock);
-	return 0;
-}
-
-void
-idt_vec_set(int vec, void (*function)(void))
-{
-	/*
-	 * Vector should be allocated, so no locking needed.
-	 */
-	KASSERT(idt_allocmap[vec] == 1);
-	setgate(&idt[vec], function, 0, SDT_SYS386IGT, SEL_KPL,
-	    GSEL(GCODE_SEL, SEL_KPL));
-}
-
-void
-idt_vec_free(int vec)
-{
-	simple_lock(&idt_lock);
-	unsetgate(&idt[vec]);
-	idt_allocmap[vec] = 0;
-	simple_unlock(&idt_lock);
-}
-#endif	/* !XEN */
 
 int
 memseg_baseaddr(struct lwp *l, uint64_t seg, char *ldtp, int llen,

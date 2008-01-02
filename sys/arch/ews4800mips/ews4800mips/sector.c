@@ -1,4 +1,4 @@
-/*	$NetBSD: sector.c,v 1.5 2007/10/17 19:54:21 garbled Exp $	*/
+/*	$NetBSD: sector.c,v 1.5.8.1 2008/01/02 21:47:42 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sector.c,v 1.5 2007/10/17 19:54:21 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sector.c,v 1.5.8.1 2008/01/02 21:47:42 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,7 +98,7 @@ sector_read(void *self, uint8_t *buf, daddr_t sector)
 	b->b_blkno = sector;
 	b->b_cylinder = sector / 100;
 	b->b_bcount = DEV_BSIZE;
-	b->b_flags &= ~(B_DONE);
+	b->b_oflags &= ~(BO_DONE);
 	b->b_flags |= B_READ;
 	rw->strategy(b);
 
@@ -134,7 +134,8 @@ sector_write(void *self, uint8_t *buf, daddr_t sector)
 	b->b_blkno = sector;
 	b->b_cylinder = sector / 100;
 	b->b_bcount = DEV_BSIZE;
-	b->b_flags &= ~(B_READ | B_DONE);
+	b->b_flags &= ~(B_READ);
+	b->b_oflags &= ~(BO_DONE);
 	b->b_flags |= B_WRITE;
 	memcpy(b->b_data, buf, DEV_BSIZE);
 	rw->strategy(b);

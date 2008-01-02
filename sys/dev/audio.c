@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.227.2.1 2007/12/13 21:55:19 bouyer Exp $	*/
+/*	$NetBSD: audio.c,v 1.227.2.2 2008/01/02 21:53:44 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.227.2.1 2007/12/13 21:55:19 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.227.2.2 2008/01/02 21:53:44 bouyer Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -543,6 +543,8 @@ audiodetach(struct device *self, int flags)
 
 	callout_stop(&sc->sc_idle_counter);
 
+	device_active_deregister(self, audio_activity);
+
 	pmf_device_deregister(self);
 
 	wakeup(&sc->sc_wchan);
@@ -911,7 +913,7 @@ audio_stream_ctor(audio_stream_t *stream, const audio_params_t *param, int size)
 
 	size = min(size, AU_RING_SIZE);
 	stream->bufsize = size;
-	stream->start = malloc(size, M_DEVBUF, M_WAITOK);
+	stream->start = malloc(size, M_DEVBUF, M_NOWAIT);
 	if (stream->start == NULL)
 		return ENOMEM;
 	frame_size = (param->precision + 7) / 8 * param->channels;

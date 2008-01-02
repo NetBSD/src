@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_4bsd.c,v 1.9 2007/12/05 07:06:54 ad Exp $	*/
+/*	$NetBSD: sched_4bsd.c,v 1.9.4.1 2008/01/02 21:56:06 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.9 2007/12/05 07:06:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.9.4.1 2008/01/02 21:56:06 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -133,7 +133,7 @@ fixpt_t decay_cpu(fixpt_t, fixpt_t);
 extern unsigned int sched_pstats_ticks; /* defined in kern_synch.c */
 
 /* The global scheduler state */
-kmutex_t sched_mutex;
+kmutex_t runqueue_lock;
 
 /* Number of hardclock ticks per sched_tick() */
 int rrticks;
@@ -477,7 +477,7 @@ sched_rqinit()
 {
 
 	runqueue_init(&global_queue);
-	mutex_init(&sched_mutex, MUTEX_DEFAULT, IPL_SCHED);
+	mutex_init(&runqueue_lock, MUTEX_DEFAULT, IPL_SCHED);
 	/* Initialize the lock pointer for lwp0 */
 	lwp0.l_mutex = &curcpu()->ci_schedstate.spc_lwplock;
 }
@@ -487,8 +487,8 @@ sched_cpuattach(struct cpu_info *ci)
 {
 	runqueue_t *rq;
 
-	ci->ci_schedstate.spc_mutex = &sched_mutex;
-	rq = kmem_zalloc(sizeof(*rq), KM_NOSLEEP);
+	ci->ci_schedstate.spc_mutex = &runqueue_lock;
+	rq = kmem_zalloc(sizeof(*rq), KM_SLEEP);
 	runqueue_init(rq);
 	ci->ci_schedstate.spc_sched_info = rq;
 }

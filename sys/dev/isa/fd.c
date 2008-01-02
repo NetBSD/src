@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.77 2007/10/19 12:00:16 ad Exp $	*/
+/*	$NetBSD: fd.c,v 1.77.8.1 2008/01/02 21:54:25 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.77 2007/10/19 12:00:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.77.8.1 2008/01/02 21:54:25 bouyer Exp $");
 
 #include "rnd.h"
 #include "opt_ddb.h"
@@ -1518,12 +1518,12 @@ fdformat(dev, finfo, l)
 	struct buf *bp;
 
 	/* set up a buffer header for fdstrategy() */
-	bp = getiobuf_nowait();
+	bp = getiobuf(NULL, false);
 	if (bp == NULL)
 		return ENOBUFS;
 
-	bp->b_vp = NULL;
-	bp->b_flags = B_BUSY | B_PHYS | B_FORMAT;
+	bp->b_cflags = BC_BUSY;
+	bp->b_flags = B_PHYS | B_FORMAT;
 	bp->b_proc = l->l_proc;
 	bp->b_dev = dev;
 

@@ -1,4 +1,4 @@
-/* $NetBSD: sig_machdep.c,v 1.13 2007/10/17 19:58:00 garbled Exp $	 */
+/* $NetBSD: sig_machdep.c,v 1.13.8.1 2008/01/02 21:51:12 bouyer Exp $	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.13 2007/10/17 19:58:00 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.13.8.1 2008/01/02 21:51:12 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -170,11 +170,11 @@ const static sig_setupstack_t sig_setupstacks[] = {
 
 #if defined(COMPAT_13) || defined(COMPAT_ULTRIX) || defined(COMPAT_IBCS2)
 int
-compat_13_sys_sigreturn(struct lwp *l, void *v, register_t *retval)
+compat_13_sys_sigreturn(struct lwp *l, const struct compat_13_sys_sigreturn_args *uap, register_t *retval)
 {
-	struct compat_13_sys_sigreturn_args /* {
+	/* {
 		syscallarg(struct sigcontext13 *) sigcntxp;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 	struct trapframe *scf;
 	struct sigcontext13 *ucntx;
@@ -271,11 +271,11 @@ setupstack_oldsigcontext(const ksiginfo_t *ksi, const sigset_t *mask, int vers,
 
 #if defined(COMPAT_16) || defined(COMPAT_ULTRIX)
 int
-compat_16_sys___sigreturn14(struct lwp *l, void *v, register_t *retval)
+compat_16_sys___sigreturn14(struct lwp *l, const struct compat_16_sys___sigreturn14_args *uap, register_t *retval)
 {
-	struct compat_16_sys___sigreturn14_args /* {
+	/* {
 		syscallarg(struct sigcontext *) sigcntxp;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 	struct trapframe *scf;
 	struct sigcontext *ucntx;

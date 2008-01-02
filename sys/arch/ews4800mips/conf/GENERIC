@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.21 2007/11/04 14:34:21 xtraeme Exp $
+# $NetBSD: GENERIC,v 1.21.8.1 2008/01/02 21:47:41 bouyer Exp $
 #
 # GENERIC machine description file
 # This machine description file is used to generate the default NetBSD
@@ -25,7 +25,7 @@ include 	"arch/ews4800mips/conf/std.ews4800mips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.21 $"
+#ident		"GENERIC-$Revision: 1.21.8.1 $"
 
 maxusers	16
 
@@ -44,7 +44,6 @@ options 	EWS4800_TR2A		# 360,360AD,360ADII,360SX,360EX
 options 	NTP			# NTP phase/frequency locked loop
 
 options 	KTRACE			# system call tracing ktrace(1)
-#options 	SYSTRACE		# system call vetting via systrace(1)
 
 options 	SYSVMSG			# System V-like message queues
 options 	SYSVSEM			# System V-like semaphores

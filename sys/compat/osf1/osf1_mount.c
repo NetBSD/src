@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_mount.c,v 1.38 2007/12/08 19:29:39 pooka Exp $	*/
+/*	$NetBSD: osf1_mount.c,v 1.38.4.1 2008/01/02 21:53:17 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_mount.c,v 1.38 2007/12/08 19:29:39 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_mount.c,v 1.38.4.1 2008/01/02 21:53:17 bouyer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -105,13 +105,12 @@ __KERNEL_RCSID(0, "$NetBSD: osf1_mount.c,v 1.38 2007/12/08 19:29:39 pooka Exp $"
 #define	OSF1_UNMOUNT_FLAGS	(OSF1_MNT_FORCE|OSF1_MNT_NOFORCE)
 
 
-static int	osf1_mount_mfs(struct lwp *, struct osf1_sys_mount_args *);
-static int	osf1_mount_nfs(struct lwp *, struct osf1_sys_mount_args *);
+static int	osf1_mount_mfs(struct lwp *, const struct osf1_sys_mount_args *);
+static int	osf1_mount_nfs(struct lwp *, const struct osf1_sys_mount_args *);
 
 int
-osf1_sys_fstatfs(struct lwp *l, void *v, register_t *retval)
+osf1_sys_fstatfs(struct lwp *l, const struct osf1_sys_fstatfs_args *uap, register_t *retval)
 {
-	struct osf1_sys_fstatfs_args *uap = v;
 	struct proc *p = l->l_proc;
 	struct file *fp;
 	struct mount *mp;
@@ -136,9 +135,8 @@ osf1_sys_fstatfs(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-osf1_sys_getfsstat(struct lwp *l, void *v, register_t *retval)
+osf1_sys_getfsstat(struct lwp *l, const struct osf1_sys_getfsstat_args *uap, register_t *retval)
 {
-	struct osf1_sys_getfsstat_args *uap = v;
 	struct mount *mp, *nmp;
 	struct statvfs *sp;
 	struct osf1_statfs osfs;
@@ -181,9 +179,8 @@ osf1_sys_getfsstat(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-osf1_sys_mount(struct lwp *l, void *v, register_t *retval)
+osf1_sys_mount(struct lwp *l, const struct osf1_sys_mount_args *uap, register_t *retval)
 {
-	struct osf1_sys_mount_args *uap = v;
 
 	if (SCARG(uap, flags) & ~OSF1_MOUNT_FLAGS)
 		return (EINVAL);
@@ -204,9 +201,8 @@ osf1_sys_mount(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-osf1_sys_statfs(struct lwp *l, void *v, register_t *retval)
+osf1_sys_statfs(struct lwp *l, const struct osf1_sys_statfs_args *uap, register_t *retval)
 {
-	struct osf1_sys_statfs_args *uap = v;
 	struct mount *mp;
 	struct statvfs *sp;
 	struct osf1_statfs osfs;
@@ -229,9 +225,8 @@ osf1_sys_statfs(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-osf1_sys_unmount(struct lwp *l, void *v, register_t *retval)
+osf1_sys_unmount(struct lwp *l, const struct osf1_sys_unmount_args *uap, register_t *retval)
 {
-	struct osf1_sys_unmount_args *uap = v;
 	struct sys_unmount_args a;
 
 	SCARG(&a, path) = SCARG(uap, path);
@@ -247,7 +242,7 @@ osf1_sys_unmount(struct lwp *l, void *v, register_t *retval)
 }
 
 static int
-osf1_mount_mfs(struct lwp *l, struct osf1_sys_mount_args *uap)
+osf1_mount_mfs(struct lwp *l, const struct osf1_sys_mount_args *uap)
 {
 	struct osf1_mfs_args osf_ma;
 	struct mfs_args bsd_ma;
@@ -268,7 +263,7 @@ osf1_mount_mfs(struct lwp *l, struct osf1_sys_mount_args *uap)
 }
 
 static int
-osf1_mount_nfs(struct lwp *l, struct osf1_sys_mount_args *uap)
+osf1_mount_nfs(struct lwp *l, const struct osf1_sys_mount_args *uap)
 {
 	struct osf1_nfs_args osf_na;
 	struct nfs_args bsd_na;

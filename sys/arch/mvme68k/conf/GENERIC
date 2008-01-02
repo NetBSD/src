@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.72 2007/10/17 19:55:47 garbled Exp $
+# $NetBSD: GENERIC,v 1.72.8.1 2008/01/02 21:48:45 bouyer Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/mvme68k/conf/std.mvme68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.72 $"
+#ident 		"GENERIC-$Revision: 1.72.8.1 $"
 
 # Boards this kernel supports
 options 	MVME147
@@ -45,7 +45,6 @@ options 	M060SP
 
 #options 	SYSVSHM
 options 	KTRACE
-#options 	SYSTRACE	# system call vetting via systrace(1)
 options 	COMPAT_43
 
 options 	USERCONF	# userconf(4) support

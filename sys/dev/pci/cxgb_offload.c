@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cxgb_offload.c,v 1.3.8.1 2007/12/13 21:55:43 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cxgb_offload.c,v 1.3.8.2 2008/01/02 21:54:38 bouyer Exp $");
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/dev/cxgb/cxgb_offload.c,v 1.5 2007/06/17 04:33:38 kmacy Exp $");
 #endif
@@ -1233,7 +1233,7 @@ set_l2t_ix(struct toedev *tdev, u32 tid, struct l2t_entry *e)
 
 	m = m_gethdr(M_NOWAIT, MT_DATA);
 	if (!m) {
-		log(LOG_ERR, "%s: cannot allocate mbuf!\n", __FUNCTION__);
+		log(LOG_ERR, "%s: cannot allocate mbuf!\n", __func__);
 		return;
 	}
 	
@@ -1266,14 +1266,14 @@ cxgb_redirect(struct rtentry *old, struct rtentry *new)
 		return;
 	if (!is_offloading(newdev)) {
 		log(LOG_WARNING, "%s: Redirect to non-offload"
-		    "device ignored.\n", __FUNCTION__);
+		    "device ignored.\n", __func__);
 		return;
 	}
 	tdev = TOEDEV(olddev);
 	BUG_ON(!tdev);
 	if (tdev != TOEDEV(newdev)) {
 		log(LOG_WARNING, "%s: Redirect to different "
-		    "offload device ignored.\n", __FUNCTION__);
+		    "offload device ignored.\n", __func__);
 		return;
 	}
 
@@ -1281,7 +1281,7 @@ cxgb_redirect(struct rtentry *old, struct rtentry *new)
 	e = t3_l2t_get(tdev, new, ((struct port_info *)new->rt_ifp->if_softc)->port);
 	if (!e) {
 		log(LOG_ERR, "%s: couldn't allocate new l2t entry!\n",
-		       __FUNCTION__);
+		       __func__);
 		return;
 	}
 

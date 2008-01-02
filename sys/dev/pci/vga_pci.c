@@ -1,4 +1,4 @@
-/*	$NetBSD: vga_pci.c,v 1.37 2007/12/09 20:28:13 jmcneill Exp $	*/
+/*	$NetBSD: vga_pci.c,v 1.37.2.1 2008/01/02 21:54:58 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_pci.c,v 1.37 2007/12/09 20:28:13 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_pci.c,v 1.37.2.1 2008/01/02 21:54:58 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,6 +52,12 @@ __KERNEL_RCSID(0, "$NetBSD: vga_pci.c,v 1.37 2007/12/09 20:28:13 jmcneill Exp $"
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
 
+#include "opt_vga.h"
+
+#ifdef VGA_POST
+#include <x86/vga_post.h>
+#endif
+
 #define	NBARS		6	/* number of PCI BARs */
 
 struct vga_bar {
@@ -70,7 +76,9 @@ struct vga_pci_softc {
 	struct vga_bar sc_bars[NBARS];
 	struct vga_bar sc_rom;
 
-	struct pci_conf_state sc_pciconf;
+#ifdef VGA_POST
+	struct vga_post *sc_posth;
+#endif
 };
 
 static int	vga_pci_match(struct device *, struct cfdata *, void *);
@@ -221,6 +229,12 @@ vga_pci_attach(struct device *parent, struct device *self, void *aux)
 	vga_common_attach(sc, pa->pa_iot, pa->pa_memt, WSDISPLAY_TYPE_PCIVGA,
 			  vga_pci_lookup_quirks(pa), &vga_pci_funcs);
 
+#ifdef VGA_POST
+	psc->sc_posth = vga_post_init(pa->pa_bus, pa->pa_device, pa->pa_function);
+	if (psc->sc_posth == NULL)
+		aprint_error_dev(self, "WARNING: could not prepare POST handler\n");
+#endif
+
 	/*
 	 * XXX Do not use the generic PCI framework for now as
 	 * XXX it would power down the device when the console
@@ -237,6 +251,11 @@ vga_pci_resume(device_t dv)
 	struct vga_pci_softc *sc = device_private(dv);
 
 	vga_resume(&sc->sc_vga);
+
+#ifdef VGA_POST
+	if (sc->sc_posth != NULL)
+		vga_post_call(sc->sc_posth);
+#endif
 
 	return true;
 }

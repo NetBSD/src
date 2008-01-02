@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.6.2.2 2007/12/13 21:26:35 bouyer Exp $	*/
+/*	$NetBSD: pmap.h,v 1.6.2.3 2008/01/02 21:51:20 bouyer Exp $	*/
 
 /*
  *
@@ -178,36 +178,6 @@ struct pv_entry {			/* locked by its list's pvh_lock */
 };
 
 /*
- * pv_entrys are dynamically allocated in chunks from a single page.
- * we keep track of how many pv_entrys are in use for each page and
- * we can free pv_entry pages if needed.  there is one lock for the
- * entire allocation system.
- */
-
-struct pv_page_info {
-	TAILQ_ENTRY(pv_page) pvpi_list;
-	struct pv_entry *pvpi_pvfree;
-	int pvpi_nfree;
-};
-
-/*
- * number of pv_entry's in a pv_page
- * (note: won't work on systems where NPBG isn't a constant)
- */
-
-#define PVE_PER_PVPAGE ((PAGE_SIZE - sizeof(struct pv_page_info)) / \
-			sizeof(struct pv_entry))
-
-/*
- * a pv_page: where pv_entrys are allocated from
- */
-
-struct pv_page {
-	struct pv_page_info pvinfo;
-	struct pv_entry pvents[PVE_PER_PVPAGE];
-};
-
-/*
  * global kernel variables
  */
 
@@ -280,7 +250,7 @@ pmap_remove_all(struct pmap *pmap)
  *	if hardware doesn't support one-page flushing)
  */
 
-__inline static void __attribute__((__unused__))
+__inline static void __unused
 pmap_update_pg(vaddr_t va)
 {
 	invlpg(va);
@@ -290,7 +260,7 @@ pmap_update_pg(vaddr_t va)
  * pmap_update_2pg: flush two pages from the TLB
  */
 
-__inline static void __attribute__((__unused__))
+__inline static void __unused
 pmap_update_2pg(vaddr_t va, vaddr_t vb)
 {
 	invlpg(va);
@@ -306,7 +276,7 @@ pmap_update_2pg(vaddr_t va, vaddr_t vb)
  *	unprotecting a page is done on-demand at fault time.
  */
 
-__inline static void __attribute__((__unused__))
+__inline static void __unused
 pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 {
 	if ((prot & VM_PROT_WRITE) == 0) {
@@ -326,7 +296,7 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
  *	unprotecting a page is done on-demand at fault time.
  */
 
-__inline static void __attribute__((__unused__))
+__inline static void __unused
 pmap_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 {
 	if ((prot & VM_PROT_WRITE) == 0) {
@@ -349,7 +319,7 @@ pmap_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 
 #include <lib/libkern/libkern.h>
 
-static __inline pt_entry_t * __attribute__((__unused__))
+static __inline pt_entry_t * __unused
 vtopte(vaddr_t va)
 {
 
@@ -358,7 +328,7 @@ vtopte(vaddr_t va)
 	return (PTE_BASE + pl1_i(va));
 }
 
-static __inline pt_entry_t * __attribute__((__unused__))
+static __inline pt_entry_t * __unused
 kvtopte(vaddr_t va)
 {
 	pd_entry_t *pde;

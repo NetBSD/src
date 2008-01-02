@@ -1,4 +1,4 @@
-#	$NetBSD: majors.alpha,v 1.21 2006/11/24 22:04:21 wiz Exp $
+#	$NetBSD: majors.alpha,v 1.21.42.1 2008/01/02 21:46:54 bouyer Exp $
 #
 # Device majors for alpha
 #
@@ -68,7 +68,6 @@ device-major	pci		char 66			pci
 device-major	agp		char 67			agp
 device-major	stic		char 68			stic
 device-major	clockctl	char 69			clockctl
-device-major	systrace	char 70			systrace
 device-major	bktr		char 71			bktr
 device-major	kttcp		char 72			kttcp
 device-major	cgd		char 73  block 18	cgd

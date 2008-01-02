@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.35 2007/12/08 18:36:06 dsl Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.35.4.1 2008/01/02 21:52:22 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.35 2007/12/08 18:36:06 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.35.4.1 2008/01/02 21:52:22 bouyer Exp $");
 
 #define COMPAT_LINUX 1
 
@@ -500,7 +500,7 @@ linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
  */
 /* ARGSUSED */
 int
-linux_sys_sigreturn(struct lwp *l, void *v, register_t *retval)
+linux_sys_sigreturn(struct lwp *l, const void *v, register_t *retval)
 {
 	struct proc *p = l->l_proc;
 	struct frame *frame;
@@ -656,7 +656,7 @@ bad:
 
 /* ARGSUSED */
 int
-linux_sys_rt_sigreturn(struct lwp *l, void *v, register_t *retval)
+linux_sys_rt_sigreturn(struct lwp *l, const void *v, register_t *retval)
 {
 	struct proc *p = l->l_proc;
 	struct frame *frame;
@@ -816,14 +816,14 @@ bad:
 
 /* ARGSUSED */
 int
-linux_sys_cacheflush(struct lwp *l, void *v, register_t *retval)
+linux_sys_cacheflush(struct lwp *l, const struct linux_sys_cacheflush_args *uap, register_t *retval)
 {
-	struct linux_sys_cacheflush_args /* {
+	/* {
 		syscallarg(unsigned long)	addr;
 		syscallarg(int)			scope;
 		syscallarg(int)			cache;
 		syscallarg(unsigned long)	len;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 	int scope, cache;
 	vaddr_t addr;
@@ -887,13 +887,13 @@ linux_fakedev(dev_t dev, int raw)
  * We come here in a last attempt to satisfy a Linux ioctl() call.
  */
 int
-linux_machdepioctl(struct lwp *l, void *v, register_t *retval)
+linux_machdepioctl(struct lwp *l, const struct linux_sys_ioctl_args *uap, register_t *retval)
 {
-	struct linux_sys_ioctl_args /* {
+	/* {
 		syscallarg(int) fd;
 		syscallarg(u_long) com;
 		syscallarg(void *) data;
-	} */ *uap = v;
+	} */
 	struct sys_ioctl_args bia;
 	u_long com;
 

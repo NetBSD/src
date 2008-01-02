@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_ptm.c,v 1.21 2007/11/26 19:02:05 pooka Exp $	*/
+/*	$NetBSD: tty_ptm.c,v 1.21.6.1 2008/01/02 21:56:19 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.21 2007/11/26 19:02:05 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.21.6.1 2008/01/02 21:56:19 bouyer Exp $");
 
 #include "opt_ptm.h"
 
@@ -224,10 +224,10 @@ pty_grant_slave(struct lwp *l, dev_t dev)
 			return error;
 		}
 	}
-	simple_lock(&vp->v_interlock);
+	mutex_enter(&vp->v_interlock);
 	revoke = (vp->v_usecount > 1 || (vp->v_iflag & VI_ALIASED) ||
 	    (vp->v_iflag & VI_LAYER));
-	simple_unlock(&vp->v_interlock);
+	mutex_exit(&vp->v_interlock);
 	VOP_UNLOCK(vp, 0);
 	if (revoke)
 		VOP_REVOKE(vp, REVOKEALL);
