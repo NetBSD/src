@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.246.2.5 2007/12/28 14:33:13 ad Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.246.2.6 2008/01/02 10:12:28 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.246.2.5 2007/12/28 14:33:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.246.2.6 2008/01/02 10:12:28 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -4529,7 +4529,8 @@ again:
 		goto again;
 	}
 
-	error = uvm_map_prepare(map, 0, PAGE_SIZE, NULL, 0, 0, mapflags, &args);
+	error = uvm_map_prepare(map, 0, PAGE_SIZE, NULL, UVM_UNKNOWN_OFFSET,
+	    0, mapflags, &args);
 	if (error) {
 		uvm_pagefree(pg);
 		return NULL;
