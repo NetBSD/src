@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_bsd44_suser.c,v 1.42 2007/12/01 21:59:49 elad Exp $ */
+/* $NetBSD: secmodel_bsd44_suser.c,v 1.42.6.1 2008/01/02 21:57:56 bouyer Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.42 2007/12/01 21:59:49 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.42.6.1 2008/01/02 21:57:56 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -519,21 +519,6 @@ secmodel_bsd44_suser_process_cb(kauth_cred_t cred, kauth_action_t action,
 
 		break;
 		}
-
-	case KAUTH_PROCESS_CANSYSTRACE:
-		if (isroot) {
-			result = KAUTH_RESULT_ALLOW;
-			break;
-		}
-
-		if (kauth_cred_getuid(cred) != kauth_cred_getuid(p->p_cred) ||
-		    ISSET(p->p_flag, PK_SUGID)) {
-			result = KAUTH_RESULT_DENY;
-			break;
-		}
-
-		result = KAUTH_RESULT_ALLOW;
-		break;
 
 	case KAUTH_PROCESS_CORENAME:
 		result = KAUTH_RESULT_ALLOW;

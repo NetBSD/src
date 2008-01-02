@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs.c,v 1.21 2007/11/26 19:02:24 pooka Exp $	*/
+/*	$NetBSD: vfs.c,v 1.21.6.1 2008/01/02 21:57:55 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -70,6 +70,13 @@ const struct vnodeopv_entry_desc fifo_vnodeop_entries[] = {
 const struct vnodeopv_desc fifo_vnodeop_opv_desc =
 	{ &fifo_vnodeop_p, fifo_vnodeop_entries };
 
+struct vnode *speclisth[SPECHSZ];
+
+void
+vn_init1(void)
+{
+
+}
 
 int
 getnewvnode(enum vtagtype tag, struct mount *mp, int (**vops)(void *),
@@ -85,8 +92,13 @@ getnewvnode(enum vtagtype tag, struct mount *mp, int (**vops)(void *),
 	vp->v_op = vops;
 	vp->v_vnlock = &vp->v_lock;
 	vp->v_usecount = 1;
-	simple_lock_init(&vp->v_interlock);
-	TAILQ_INSERT_TAIL(&mp->mnt_vnodelist, vp, v_mntvnodes);
+	mutex_init(&vp->v_interlock, MUTEX_DEFAULT, IPL_NONE);
+	cv_init(&vp->v_cv, "vnode");
+	lockinit(&vp->v_lock, PVFS, "vnlock", 0, 0);
+
+	if (mp) {
+		TAILQ_INSERT_TAIL(&mp->mnt_vnodelist, vp, v_mntvnodes);
+	}
 
 	uobj = &vp->v_uobj;
 	uobj->pgops = &uvm_vnodeops;
@@ -130,11 +142,15 @@ int
 vget(struct vnode *vp, int lockflag)
 {
 
-	if (lockflag & LK_TYPE_MASK)
-		vn_lock(vp, (lockflag&LK_TYPE_MASK) | (lockflag&LK_INTERLOCK));
-	if (lockflag & LK_INTERLOCK)
-		simple_unlock(&vp->v_interlock);
+	if ((lockflag & LK_INTERLOCK) == 0)
+		mutex_enter(&vp->v_interlock);
 
+	if (lockflag & LK_TYPE_MASK) {
+		vn_lock(vp, (lockflag&LK_TYPE_MASK) | (lockflag&LK_INTERLOCK));
+		return 0;
+	}
+
+	mutex_exit(&vp->v_interlock);
 	return 0;
 }
 
@@ -145,9 +161,44 @@ vrele(struct vnode *vp)
 }
 
 void
-vrele2(struct vnode *vp, int onhead)
+vrelel(struct vnode *vp, int doinactive, int onhead)
 {
 
+}
+
+void
+vrele2(struct vnode *vp, bool onhead)
+{
+
+}
+
+vnode_t *
+valloc(struct mount *mp)
+{
+	struct vnode *vp;
+	struct uvm_object *uobj;
+
+	/* assuming mp != NULL */
+
+	vp = kmem_zalloc(sizeof(struct vnode), KM_SLEEP);
+	vp->v_type = VBAD;
+	vp->v_iflag = VI_MARKER;
+	vp->v_mount = mp;
+	uobj = &vp->v_uobj;
+	uobj->pgops = &uvm_vnodeops;
+	mutex_init(&vp->v_interlock, MUTEX_DEFAULT, IPL_NONE);
+	cv_init(&vp->v_cv, "vnode");
+	TAILQ_INIT(&uobj->memq);
+
+	return vp;
+}
+
+
+void
+vfree(vnode_t *vp)
+{
+
+	rumpuser_free(vp);
 }
 
 void
@@ -159,6 +210,13 @@ vput(struct vnode *vp)
 
 void
 vgone(struct vnode *vp)
+{
+
+	vgonel(vp, curlwp);
+}
+
+void
+vclean(struct vnode *vp, int flag)
 {
 
 	vgonel(vp, curlwp);
@@ -183,18 +241,19 @@ holdrelel(struct vnode *vp)
 }
 
 int
-vrecycle(struct vnode *vp, struct simplelock *inter_lkp, struct lwp *l)
+vrecycle(struct vnode *vp, kmutex_t *inter_lkp, struct lwp *l)
 {
 	struct mount *mp = vp->v_mount;
+	bool recycle;
 
 	if (vp->v_usecount == 1) {
 		vp->v_usecount = 0;
-		simple_lock(&vp->v_interlock);
+		mutex_enter(&vp->v_interlock);
 		if (inter_lkp)
-			simple_unlock(inter_lkp);
+			mutex_exit(inter_lkp);
 		VOP_LOCK(vp, LK_EXCLUSIVE | LK_INTERLOCK);
 		vinvalbuf(vp, V_SAVE, NOCRED, l, 0, 0);
-		VOP_INACTIVE(vp);
+		VOP_INACTIVE(vp, &recycle);
 
 		VOP_RECLAIM(vp);
 		TAILQ_REMOVE(&mp->mnt_vnodelist, vp, v_mntvnodes);
@@ -272,7 +331,9 @@ makevnode(struct stat *sb, const char *path)
 	vp->v_op = spec_vnodeop_p;
 	vp->v_mount = &mnt_dummy;
 	vp->v_vnlock = &vp->v_lock;
-	simple_lock_init(&vp->v_interlock);
+	mutex_init(&vp->v_interlock, MUTEX_DEFAULT, IPL_NONE);
+	lockinit(&vp->v_lock, PVFS, "vnlock", 0, 0);
+	cv_init(&vp->v_cv, "vnode");
 
 	return vp;
 }

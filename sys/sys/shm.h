@@ -1,4 +1,4 @@
-/*	$NetBSD: shm.h,v 1.42 2006/11/25 21:40:06 christos Exp $	*/
+/*	$NetBSD: shm.h,v 1.42.38.1 2008/01/02 21:58:08 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -171,8 +171,8 @@ extern struct shminfo shminfo;
 extern struct shmid_ds *shmsegs;
 extern int shm_nused;
 
-#define	SHMSEG_FREE     	0x0200
-#define	SHMSEG_REMOVED  	0x0400
+#define	SHMSEG_FREE		0x0200
+#define	SHMSEG_REMOVED		0x0400
 #define	SHMSEG_ALLOCATED	0x0800
 #define	SHMSEG_WANTED		0x1000
 #define	SHMSEG_RMLINGER		0x2000

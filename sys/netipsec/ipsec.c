@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.35 2007/12/09 18:27:39 degroote Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.35.2.1 2008/01/02 21:57:33 bouyer Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.35 2007/12/09 18:27:39 degroote Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.35.2.1 2008/01/02 21:57:33 bouyer Exp $");
 
 /*
  * IPsec controller part.
@@ -2165,9 +2165,7 @@ ipsec6_check_policy(struct mbuf * m, const struct socket * so,
 		    int flags, int * needipsecp, int * errorp)
 {
 	struct in6pcb *in6p = NULL;
-	struct m_tag *mtag;
 	struct secpolicy *sp = NULL;
-	struct tdb_ident *tdbi;
 	int s;
 	int error = 0;
 	int needipsec = 0;
@@ -2175,78 +2173,31 @@ ipsec6_check_policy(struct mbuf * m, const struct socket * so,
 	if (so != NULL && so->so_proto->pr_domain->dom_family == AF_INET6)
 		in6p = sotoin6pcb(so);
 
-	mtag = m_tag_find(m, PACKET_TAG_IPSEC_PENDING_TDB, NULL);
-	s = splsoftnet();
-	if (mtag != NULL) {
-		tdbi = (struct tdb_ident *)(mtag + 1);
-		sp = ipsec_getpolicy(tdbi, IPSEC_DIR_OUTBOUND);
-		if (sp == NULL)
-			error = -EINVAL;	/* force silent drop */
-		m_tag_delete(m, mtag);
-	} else {
+	if (!ipsec_outdone(m)) {
+		s = splsoftnet();
 		if (in6p != NULL &&
-			IPSEC_PCB_SKIP_IPSEC(in6p->in6p_sp, IPSEC_DIR_OUTBOUND))
+				IPSEC_PCB_SKIP_IPSEC(in6p->in6p_sp, IPSEC_DIR_OUTBOUND))
 			goto skippolicycheck;
 		sp = ipsec6_checkpolicy(m, IPSEC_DIR_OUTBOUND, flags, &error,in6p);
-	}
 
-	/*
-	 * There are four return cases:
-	 *	sp != NULL			apply IPsec policy
-	 *	sp == NULL, error == 0		no IPsec handling needed
-	 *	sp == NULL, error == -EINVAL  discard packet w/o error
-	 *	sp == NULL, error != 0		discard packet, report error
- 	 */
-	
-	if (sp == NULL) {
+		/*
+		 * There are four return cases:
+		 *	sp != NULL			apply IPsec policy
+		 *	sp == NULL, error == 0		no IPsec handling needed
+		 *	sp == NULL, error == -EINVAL  discard packet w/o error
+		 *	sp == NULL, error != 0		discard packet, report error
+		 */
+
 		splx(s);
-
-		if (error != 0) {
+		if (sp == NULL) {
+			/* 
+			 * Caller must check the error return to see if it needs to discard
+			 * the packet.
+			 */
 			needipsec = 0;
 		} else {
-			/* No IPsec processing for this packet. */
-			needipsec = 0;
+			needipsec = 1;
 		}
-	} else {
-		/* Loop detection, check if ipsec processing already done */
-		IPSEC_ASSERT(sp->req != NULL, ("ip6_output: no ipsec request"));
-		for (mtag = m_tag_first(m); mtag != NULL;
-			 mtag = m_tag_next(m, mtag)) {
-#ifdef MTAG_ABI_COMPAT
-			if (mtag->m_tag_cookie != MTAG_ABI_COMPAT)
-				continue;
-#endif
-			if (mtag->m_tag_id != PACKET_TAG_IPSEC_OUT_DONE &&
-				mtag->m_tag_id != PACKET_TAG_IPSEC_OUT_CRYPTO_NEEDED)
-				continue;
-			/*
-			 * Check if policy has an SA associated with it.
-			 * This can happen when an SP has yet to acquire
-			 * an SA; e.g. on first reference.  If it occurs,
-			 * then we let ipsec4_process_packet do its thing.
-			 */
-			if (sp->req->sav == NULL)
-				break;
-			tdbi = (struct tdb_ident *)(mtag + 1);
-			if (tdbi->spi == sp->req->sav->spi &&
-				tdbi->proto == sp->req->sav->sah->saidx.proto &&
-				bcmp(&tdbi->dst, &sp->req->sav->sah->saidx.dst,
-				 sizeof (union sockaddr_union)) == 0) {
-				/*
-				 * No IPsec processing is needed, free
-				 * reference to SP.
-				 *
-				 * NB: null pointer to avoid free at
-				 *	 done: below.
-				 */
-				KEY_FREESP(&sp), sp = NULL;
-				needipsec = 0;
-				splx(s);
-				goto skippolicycheck;
-			}
-		}
-		splx(s);
-		needipsec = 1;
 	}
 skippolicycheck:;
 

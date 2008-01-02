@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.256 2007/11/26 08:40:46 yamt Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.256.6.1 2008/01/02 21:57:21 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.256 2007/11/26 08:40:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.256.6.1 2008/01/02 21:57:21 bouyer Exp $");
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
@@ -896,7 +896,18 @@ ours:
 	 * but it's not worth the time; just let them time out.)
 	 */
 	if (ip->ip_off & ~htons(IP_DF|IP_RF)) {
-
+		uint16_t off;
+		/*
+		 * Prevent TCP blind data attacks by not allowing non-initial
+		 * fragments to start at less than 68 bytes (minimal fragment
+		 * size) and making sure the first fragment is at least 68
+		 * bytes.
+		 */
+		off = (ntohs(ip->ip_off) & IP_OFFMASK) << 3;
+		if ((off > 0 ? off + hlen : len) < IP_MINFRAGSIZE - 1) {
+			ipstat.ips_badfrags++;
+			goto bad;
+		}
 		/*
 		 * Look for queue of fragments
 		 * of this datagram.
@@ -907,9 +918,17 @@ ours:
 			if (ip->ip_id == fp->ipq_id &&
 			    in_hosteq(ip->ip_src, fp->ipq_src) &&
 			    in_hosteq(ip->ip_dst, fp->ipq_dst) &&
-			    ip->ip_p == fp->ipq_p)
+			    ip->ip_p == fp->ipq_p) {
+				/*
+				 * Make sure the TOS is matches previous
+				 * fragments.
+				 */
+				if (ip->ip_tos != fp->ipq_tos) {
+					ipstat.ips_badfrags++;
+					goto bad;
+				}
 				goto found;
-
+			}
 		}
 		fp = 0;
 found:
@@ -1105,6 +1124,7 @@ ip_reass(struct ipqent *ipqe, struct ipq *fp, struct ipqhead *ipqhead)
 		fp->ipq_ttl = IPFRAGTTL;
 		fp->ipq_p = ipqe->ipqe_ip->ip_p;
 		fp->ipq_id = ipqe->ipqe_ip->ip_id;
+		fp->ipq_tos = ipqe->ipqe_ip->ip_tos;
 		TAILQ_INIT(&fp->ipq_fragq);
 		fp->ipq_src = ipqe->ipqe_ip->ip_src;
 		fp->ipq_dst = ipqe->ipqe_ip->ip_dst;
@@ -1934,8 +1954,8 @@ ip_forward(struct mbuf *m, int srcrt)
 		type = ICMP_UNREACH;
 		code = ICMP_UNREACH_NEEDFRAG;
 #if !defined(IPSEC) && !defined(FAST_IPSEC)
-		if (ipforward_rt.ro_rt != NULL)
-			destmtu = ipforward_rt.ro_rt->rt_ifp->if_mtu;
+		if ((rt = rtcache_getrt(&ipforward_rt)) != NULL)
+			destmtu = rt->rt_ifp->if_mtu;
 #else
 		/*
 		 * If the packet is routed over IPsec tunnel, tell the
@@ -1943,7 +1963,7 @@ ip_forward(struct mbuf *m, int srcrt)
 		 *	tunnel MTU = if MTU - sizeof(IP) - ESP/AH hdrsiz
 		 * XXX quickhack!!!
 		 */
-		if (ipforward_rt.ro_rt != NULL) {
+		if ((rt = rtcache_getrt(&ipforward_rt)) != NULL) {
 			struct secpolicy *sp;
 			int ipsecerror;
 			size_t ipsechdr;
@@ -1954,7 +1974,7 @@ ip_forward(struct mbuf *m, int srcrt)
 			    &ipsecerror);
 
 			if (sp == NULL)
-				destmtu = ipforward_rt.ro_rt->rt_ifp->if_mtu;
+				destmtu = rt->rt_ifp->if_mtu;
 			else {
 				/* count IPsec header size */
 				ipsechdr = ipsec4_hdrsiz(mcopy,
@@ -1969,11 +1989,11 @@ ip_forward(struct mbuf *m, int srcrt)
 				 && sp->req->sav != NULL
 				 && sp->req->sav->sah != NULL) {
 					ro = &sp->req->sav->sah->sa_route;
-					if (ro->ro_rt && ro->ro_rt->rt_ifp) {
+					if (rt && rt->rt_ifp) {
 						destmtu =
-						    ro->ro_rt->rt_rmx.rmx_mtu ?
-						    ro->ro_rt->rt_rmx.rmx_mtu :
-						    ro->ro_rt->rt_ifp->if_mtu;
+						    rt->rt_rmx.rmx_mtu ?
+						    rt->rt_rmx.rmx_mtu :
+						    rt->rt_ifp->if_mtu;
 						destmtu -= ipsechdr;
 					}
 				}

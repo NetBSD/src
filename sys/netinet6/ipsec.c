@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.122 2007/11/16 17:50:07 dyoung Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.122.6.1 2008/01/02 21:57:31 bouyer Exp $	*/
 /*	$KAME: ipsec.c,v 1.136 2002/05/19 00:36:39 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.122 2007/11/16 17:50:07 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.122.6.1 2008/01/02 21:57:31 bouyer Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -2525,6 +2525,7 @@ ipsec4_checksa(struct ipsecrequest *isr,
 int
 ipsec4_output(struct ipsec_output_state *state, struct secpolicy *sp, int flags)
 {
+	struct rtentry *rt;
 	struct ip *ip = NULL;
 	struct ipsecrequest *isr = NULL;
 	int s;
@@ -2638,7 +2639,7 @@ ipsec4_output(struct ipsec_output_state *state, struct secpolicy *sp, int flags)
 			state->ro = &isr->sav->sah->sa_route;
 
 			sockaddr_in_init(&u.dst4, &ip->ip_dst, 0);
-			if (rtcache_lookup(state->ro, &u.dst) == NULL) {
+			if ((rt = rtcache_lookup(state->ro, &u.dst)) == NULL) {
 				rtcache_free(state->ro);
 				ipstat.ips_noroute++;
 				error = EHOSTUNREACH;
@@ -2649,8 +2650,8 @@ ipsec4_output(struct ipsec_output_state *state, struct secpolicy *sp, int flags)
 			 * away!  I suggest sockaddr_dup()'ing it.  --dyoung
 			 */
 			/* adjust state->dst if tunnel endpoint is offlink */
-			if (state->ro->ro_rt->rt_flags & RTF_GATEWAY) {
-				state->dst = state->ro->ro_rt->rt_gateway;
+			if (rt->rt_flags & RTF_GATEWAY) {
+				state->dst = rt->rt_gateway;
 			} else {
 				state->dst = rtcache_getdst(state->ro);
 			}
@@ -2916,6 +2917,7 @@ int
 ipsec6_output_tunnel(struct ipsec_output_state *state, struct secpolicy *sp,
     int flags)
 {
+	struct rtentry *rt;
 	struct ip6_hdr *ip6;
 	struct ipsecrequest *isr = NULL;
 	int error = 0;
@@ -3022,7 +3024,7 @@ ipsec6_output_tunnel(struct ipsec_output_state *state, struct secpolicy *sp,
 			} u;
 
 			sockaddr_in6_init(&u.dst6, &ip6->ip6_dst, 0, 0, 0);
-			if (rtcache_lookup(state->ro, &u.dst) == NULL) {
+			if ((rt = rtcache_lookup(state->ro, &u.dst)) == NULL) {
 				rtcache_free(state->ro);
 				ip6stat.ip6s_noroute++;
 				ipsec6stat.out_noroute++;
@@ -3034,8 +3036,8 @@ ipsec6_output_tunnel(struct ipsec_output_state *state, struct secpolicy *sp,
 			 * away!  I suggest sockaddr_dup()'ing it.  --dyoung
 			 */
 			/* adjust state->dst if tunnel endpoint is offlink */
-			if (state->ro->ro_rt->rt_flags & RTF_GATEWAY) {
-				state->dst = state->ro->ro_rt->rt_gateway;
+			if (rt->rt_flags & RTF_GATEWAY) {
+				state->dst = rt->rt_gateway;
 			} else
 				state->dst = rtcache_getdst(state->ro);
 		} else

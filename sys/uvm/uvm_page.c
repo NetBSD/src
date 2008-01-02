@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.126 2007/11/29 18:07:11 ad Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.126.6.1 2008/01/02 21:58:41 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.126 2007/11/29 18:07:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.126.6.1 2008/01/02 21:58:41 bouyer Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -191,7 +191,7 @@ uvm_pageinsert_after(struct vm_page *pg, struct vm_page *where)
 	kmutex_t *lock;
 	u_int hash;
 
-	LOCK_ASSERT(simple_lock_held(&uobj->vmobjlock));
+	KASSERT(mutex_owned(&uobj->vmobjlock));
 	KASSERT((pg->flags & PG_TABLED) == 0);
 	KASSERT(where == NULL || (where->flags & PG_TABLED));
 	KASSERT(where == NULL || (where->uobject == uobj));
@@ -248,7 +248,7 @@ uvm_pageremove(struct vm_page *pg)
 	kmutex_t *lock;
 	u_int hash;
 
-	LOCK_ASSERT(simple_lock_held(&uobj->vmobjlock));
+	KASSERT(mutex_owned(&uobj->vmobjlock));
 	KASSERT(pg->flags & PG_TABLED);
 
 	hash = uvm_pagehash(uobj, pg->offset);
@@ -315,7 +315,7 @@ uvm_page_init(vaddr_t *kvm_startp, vaddr_t *kvm_endp)
 	 */
 
 	uvmpdpol_init();
-	simple_lock_init(&uvm.pageqlock);
+	mutex_init(&uvm_pageqlock, MUTEX_DRIVER, IPL_NONE);
 	mutex_init(&uvm_fpageqlock, MUTEX_DRIVER, IPL_VM);
 
 	/*
@@ -443,12 +443,6 @@ uvm_page_init(vaddr_t *kvm_startp, vaddr_t *kvm_endp)
 	uvm_zerocheckkva = *kvm_startp;
 	*kvm_startp += PAGE_SIZE;
 #endif /* DEBUG */
-
-	/*
-	 * init locks for kernel threads
-	 */
-
-	mutex_init(&uvm_pagedaemon_lock, MUTEX_DEFAULT, IPL_NONE);
 
 	/*
 	 * init various thresholds.
@@ -1079,8 +1073,8 @@ uvm_pagealloc_strat(struct uvm_object *obj, voff_t off, struct vm_anon *anon,
 	KASSERT(obj == NULL || anon == NULL);
 	KASSERT(anon == NULL || off == 0);
 	KASSERT(off == trunc_page(off));
-	LOCK_ASSERT(obj == NULL || simple_lock_held(&obj->vmobjlock));
-	LOCK_ASSERT(anon == NULL || simple_lock_held(&anon->an_lock));
+	KASSERT(obj == NULL || mutex_owned(&obj->vmobjlock));
+	KASSERT(anon == NULL || mutex_owned(&anon->an_lock));
 
 	mutex_spin_enter(&uvm_fpageqlock);
 
@@ -1244,7 +1238,7 @@ uvm_pagereplace(struct vm_page *oldpg, struct vm_page *newpg)
 	KASSERT(oldpg->uobject != NULL);
 	KASSERT((newpg->flags & PG_TABLED) == 0);
 	KASSERT(newpg->uobject == NULL);
-	LOCK_ASSERT(simple_lock_held(&oldpg->uobject->vmobjlock));
+	KASSERT(mutex_owned(&oldpg->uobject->vmobjlock));
 
 	newpg->uobject = oldpg->uobject;
 	newpg->offset = oldpg->offset;
@@ -1338,12 +1332,12 @@ uvm_pagefree(struct vm_page *pg)
 #endif /* DEBUG */
 
 	KASSERT((pg->flags & PG_PAGEOUT) == 0);
-	LOCK_ASSERT(simple_lock_held(&uvm.pageqlock) ||
+	KASSERT(mutex_owned(&uvm_pageqlock) ||
 		!uvmpdpol_pageisqueued_p(pg));
-	LOCK_ASSERT(pg->uobject == NULL ||
-		simple_lock_held(&pg->uobject->vmobjlock));
-	LOCK_ASSERT(pg->uobject != NULL || pg->uanon == NULL ||
-		simple_lock_held(&pg->uanon->an_lock));
+	KASSERT(pg->uobject == NULL ||
+		mutex_owned(&pg->uobject->vmobjlock));
+	KASSERT(pg->uobject != NULL || pg->uanon == NULL ||
+		mutex_owned(&pg->uanon->an_lock));
 
 	/*
 	 * if the page is loaned, resolve the loan instead of freeing.
@@ -1475,11 +1469,11 @@ uvm_page_unbusy(struct vm_page **pgs, int npgs)
 			continue;
 		}
 
-		LOCK_ASSERT(pg->uobject == NULL ||
-		    simple_lock_held(&pg->uobject->vmobjlock));
-		LOCK_ASSERT(pg->uobject != NULL ||
+		KASSERT(pg->uobject == NULL ||
+		    mutex_owned(&pg->uobject->vmobjlock));
+		KASSERT(pg->uobject != NULL ||
 		    (pg->uanon != NULL &&
-		    simple_lock_held(&pg->uanon->an_lock)));
+		    mutex_owned(&pg->uanon->an_lock)));
 
 		KASSERT(pg->flags & PG_BUSY);
 		KASSERT((pg->flags & PG_PAGEOUT) == 0);
@@ -1521,9 +1515,9 @@ uvm_page_own(struct vm_page *pg, const char *tag)
 	uobj = pg->uobject;
 	anon = pg->uanon;
 	if (uobj != NULL) {
-		LOCK_ASSERT(simple_lock_held(&uobj->vmobjlock));
+		KASSERT(mutex_owned(&uobj->vmobjlock));
 	} else if (anon != NULL) {
-		LOCK_ASSERT(simple_lock_held(&anon->an_lock));
+		KASSERT(mutex_owned(&anon->an_lock));
 	}
 
 	KASSERT((pg->flags & PG_WANTED) == 0);
@@ -1575,7 +1569,6 @@ uvm_pageidlezero(void)
 	int free_list, firstbucket;
 	static int nextbucket;
 
-	KERNEL_LOCK(1, NULL);
 	mutex_spin_enter(&uvm_fpageqlock);
 	firstbucket = nextbucket;
 	do {
@@ -1598,7 +1591,6 @@ uvm_pageidlezero(void)
 				    pg, pageq);
 				uvmexp.free--;
 				mutex_spin_exit(&uvm_fpageqlock);
-				KERNEL_UNLOCK_LAST(NULL);
 #ifdef PMAP_PAGEIDLEZERO
 				if (!PMAP_PAGEIDLEZERO(VM_PAGE_TO_PHYS(pg))) {
 
@@ -1609,7 +1601,6 @@ uvm_pageidlezero(void)
 					 * process now ready to run.
 					 */
 
-					KERNEL_LOCK(1, NULL);
 					mutex_spin_enter(&uvm_fpageqlock);
 					TAILQ_INSERT_HEAD(&pgfl->pgfl_buckets[
 					    nextbucket].pgfl_queues[
@@ -1623,7 +1614,6 @@ uvm_pageidlezero(void)
 #endif /* PMAP_PAGEIDLEZERO */
 				pg->flags |= PG_ZERO;
 
-				KERNEL_LOCK(1, NULL);
 				mutex_spin_enter(&uvm_fpageqlock);
 				TAILQ_INSERT_HEAD(&pgfl->pgfl_buckets[
 				    nextbucket].pgfl_queues[PGFL_ZEROS],
@@ -1636,7 +1626,6 @@ uvm_pageidlezero(void)
 	} while (nextbucket != firstbucket);
 quit:
 	mutex_spin_exit(&uvm_fpageqlock);
-	KERNEL_UNLOCK_LAST(NULL);
 }
 
 /*
@@ -1654,7 +1643,7 @@ uvm_pagelookup(struct uvm_object *obj, voff_t off)
 	kmutex_t *lock;
 	u_int hash;
 
-	LOCK_ASSERT(simple_lock_held(&obj->vmobjlock));
+	KASSERT(mutex_owned(&obj->vmobjlock));
 
 	hash = uvm_pagehash(obj, off);
 	buck = &uvm.page_hash[hash];
@@ -1681,7 +1670,7 @@ uvm_pagelookup(struct uvm_object *obj, voff_t off)
 void
 uvm_pagewire(struct vm_page *pg)
 {
-	UVM_LOCK_ASSERT_PAGEQ();
+	KASSERT(mutex_owned(&uvm_pageqlock));
 #if defined(READAHEAD_STATS)
 	if ((pg->pqflags & PQ_READAHEAD) != 0) {
 		uvm_ra_hit.ev_count++;
@@ -1705,7 +1694,7 @@ uvm_pagewire(struct vm_page *pg)
 void
 uvm_pageunwire(struct vm_page *pg)
 {
-	UVM_LOCK_ASSERT_PAGEQ();
+	KASSERT(mutex_owned(&uvm_pageqlock));
 	pg->wire_count--;
 	if (pg->wire_count == 0) {
 		uvm_pageactivate(pg);
@@ -1726,7 +1715,7 @@ void
 uvm_pagedeactivate(struct vm_page *pg)
 {
 
-	UVM_LOCK_ASSERT_PAGEQ();
+	KASSERT(mutex_owned(&uvm_pageqlock));
 	KASSERT(pg->wire_count != 0 || uvmpdpol_pageisqueued_p(pg));
 	uvmpdpol_pagedeactivate(pg);
 }
@@ -1741,7 +1730,7 @@ void
 uvm_pageactivate(struct vm_page *pg)
 {
 
-	UVM_LOCK_ASSERT_PAGEQ();
+	KASSERT(mutex_owned(&uvm_pageqlock));
 #if defined(READAHEAD_STATS)
 	if ((pg->pqflags & PQ_READAHEAD) != 0) {
 		uvm_ra_hit.ev_count++;
@@ -1763,7 +1752,7 @@ uvm_pagedequeue(struct vm_page *pg)
 {
 
 	if (uvmpdpol_pageisqueued_p(pg)) {
-		UVM_LOCK_ASSERT_PAGEQ();
+		KASSERT(mutex_owned(&uvm_pageqlock));
 	}
 
 	uvmpdpol_pagedequeue(pg);
@@ -1778,7 +1767,7 @@ void
 uvm_pageenqueue(struct vm_page *pg)
 {
 
-	UVM_LOCK_ASSERT_PAGEQ();
+	KASSERT(mutex_owned(&uvm_pageqlock));
 	if (pg->wire_count != 0) {
 		return;
 	}

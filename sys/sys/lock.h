@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.76 2007/12/06 17:05:07 ad Exp $	*/
+/*	$NetBSD: lock.h,v 1.76.4.1 2008/01/02 21:58:02 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -82,6 +82,7 @@
 
 #include <sys/stdint.h>
 #include <sys/queue.h>
+#include <sys/mutex.h>
 #include <sys/simplelock.h>
 
 #include <machine/lock.h>
@@ -90,9 +91,9 @@
  * The general lock structure.
  */
 struct lock {
-	struct	simplelock lk_interlock;/* lock on remaining fields */
 	u_int	lk_flags;		/* see below */
 	int	lk_sharecount;		/* # of accepted shared locks */
+	kmutex_t lk_interlock;		/* lock on structure */
 	short	lk_exclusivecount;	/* # of recursive exclusive locks */
 	short	lk_recurselevel;	/* lvl above which recursion ok */
 	int	lk_waitcount;		/* # of sleepers */
@@ -147,7 +148,6 @@ struct lock {
 #define	LK_SLEEPFAIL	0x00000020	/* sleep, then return failure */
 #define	LK_CANRECURSE	0x00000040	/* this may be recursive lock attempt */
 #define	LK_REENABLE	0x00000080	/* lock is be reenabled after drain */
-#define	LK_SETRECURSE	0x00100000	/* other locks while we have it OK */
 #define	LK_RECURSEFAIL  0x00200000	/* attempt at recursive lock fails */
 #define	LK_RESURRECT	0x00800000	/* immediately reenable drained lock */
 /*
@@ -160,6 +160,7 @@ struct lock {
 #define	LK_WAITDRAIN	0x00000800	/* process waiting for lock to drain */
 #define	LK_DRAINING	0x00004000	/* lock is being drained */
 #define	LK_DRAINED	0x00008000	/* lock has been decommissioned */
+#define	LK_DODEBUG	0x00010000	/* has lockdebug bits */
 /*
  * Internal state flags corresponding to lk_sharecount, and lk_waitcount
  */
@@ -177,7 +178,6 @@ struct lock {
 #define __LK_FLAG_BITS \
 	"\20" \
 	"\22LK_RECURSEFAIL" \
-	"\21LK_SETRECURSE" \
 	"\20LK_WAIT_NOZERO" \
 	"\19LK_SHARE_NOZERO" \
 	"\18LK_RETRY" \
@@ -211,7 +211,7 @@ struct proc;
 
 void	lockinit(struct lock *, pri_t, const char *, int, int);
 void	lockdestroy(struct lock *);
-int	lockmgr(struct lock *, u_int flags, struct simplelock *);
+int	lockmgr(struct lock *, u_int flags, kmutex_t *);
 void	transferlockers(struct lock *, struct lock *);
 int	lockstatus(struct lock *);
 void	lockmgr_printinfo(struct lock *);
