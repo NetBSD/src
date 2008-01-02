@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.24 2008/01/02 12:49:53 ad Exp $
+#	$NetBSD: Makefile,v 1.25 2008/01/02 18:15:14 pooka Exp $
 #
 
 .include <bsd.own.mk>
@@ -12,17 +12,17 @@ LIB=	rump
 	${NETBSDSRCDIR}/sys/miscfs/syncfs
 
 # implement something
-SRCS=	rump.c atomic.c auth.c emul.c genfs_io.c locks.c ltsleep.c pool.c \
-	intr.c specfs.c vfs.c vm.c
+SRCS=	rump.c atomic.c auth.c emul.c intr.c genfs_io.c locks.c		\
+	ltsleep.c pool.c specfs.c vfs.c vm.c
 
 # just stubs
 SRCS+=	fstrans_stub.c misc_stub.c pmap_stub.c vfsops_stub.c
 
 # sys/kern
-SRCS+=	clock_subr.c kern_lock.c kern_stub.c param.c subr_bufq.c	\
-	subr_hash.c subr_prf2.c subr_specificdata.c subr_time.c		\
-	vfs_bio.c vfs_cache.c vfs_vnops.c vfs_init.c vfs_subr2.c	\
-	vnode_if.c subr_workqueue.c
+SRCS+=	clock_subr.c kern_descrip.c kern_lock.c kern_stub.c param.c	\
+	subr_bufq.c subr_hash.c subr_prf2.c subr_specificdata.c		\
+	subr_time.c subr_workqueue.c sys_generic.c vfs_bio.c		\
+	vfs_cache.c vfs_vnops.c vfs_init.c vfs_subr2.c vnode_if.c
 
 # sys/miscfs
 SRCS+=	genfs_vnops.c sync_subr.c
@@ -42,6 +42,8 @@ OBJS+=	${RUMPUSEROBJDIR}/rumpuser.o ${RUMPUSEROBJDIR}/rumpuser_pth.o
 CPPFLAGS+=	-I${NETBSDSRCDIR}/sys -I${NETBSDSRCDIR}/common/include	\
 		-I${NETBSDSRCDIR}/sys/rump/librump/rumpuser		\
 		-I${.CURDIR}/opt -DMAXUSERS=32
+
+CFLAGS+=	-Wno-pointer-sign
 
 # Create a few files.  We can't include them directly, because that
 # would create hideous namespace lossage.  So just do some clever

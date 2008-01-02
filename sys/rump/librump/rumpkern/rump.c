@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.26 2008/01/02 15:44:03 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.27 2008/01/02 18:15:14 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,6 +28,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/cpu.h>
 #include <sys/filedesc.h>
 #include <sys/kauth.h>
 #include <sys/kmem.h>
@@ -35,8 +36,8 @@
 #include <sys/namei.h>
 #include <sys/queue.h>
 #include <sys/resourcevar.h>
+#include <sys/select.h>
 #include <sys/vnode.h>
-#include <sys/cpu.h>
 
 #include <miscfs/specfs/specdev.h>
 
@@ -49,6 +50,7 @@ struct pstats rump_stats;
 struct plimit rump_limits;
 kauth_cred_t rump_cred;
 struct cpu_info rump_cpu;
+struct filedesc0 rump_filedesc0;
 
 kmutex_t rump_giantlock;
 
@@ -70,6 +72,8 @@ rump_aiodone_worker(struct work *wk, void *dummy)
 	bp->b_iodone(bp);
 }
 
+int rump_inited;
+
 void
 rump_init()
 {
@@ -80,12 +84,19 @@ rump_init()
 	struct lwp *l;
 	int error;
 
+	/* XXX */
+	if (rump_inited)
+		return;
+	rump_inited = 1;
+
 	l = &lwp0;
 	p = &rump_proc;
 	p->p_stats = &rump_stats;
 	p->p_cwdi = &rump_cwdi;
 	p->p_limit = &rump_limits;
 	p->p_pid = 0;
+	p->p_fd = &rump_filedesc0.fd_fd;
+	p->p_vmspace = &rump_vmspace;
 	l->l_cred = rump_cred;
 	l->l_proc = p;
 	l->l_lid = 1;
@@ -94,12 +105,15 @@ rump_init()
 	rumpvm_init();
 
 	rump_limits.pl_rlimit[RLIMIT_FSIZE].rlim_cur = RLIM_INFINITY;
+	rump_limits.pl_rlimit[RLIMIT_NOFILE].rlim_cur = RLIM_INFINITY;
 
 	/* should be "enough" */
 	syncdelay = 0;
 
 	vfsinit();
 	bufinit();
+	filedesc_init();
+	selsysinit();
 
 	rump_sleepers_init();
 	rumpuser_thrinit();
@@ -115,6 +129,8 @@ rump_init()
 	hostnamelen = strlen(hostname);
 
 	sigemptyset(&sigcantmask);
+
+	fdinit1(&rump_filedesc0);
 }
 
 struct mount *
@@ -143,13 +159,8 @@ rump_mnt_mount(struct mount *mp, const char *path, void *data, size_t *dlen)
 	if (rv)
 		return rv;
 
-	rv = VFS_STATVFS(mp, &mp->mnt_stat);
-	if (rv) {
-		VFS_UNMOUNT(mp, MNT_FORCE);
-		return rv;
-	}
-
-	rv =  VFS_START(mp, 0);
+	(void) VFS_STATVFS(mp, &mp->mnt_stat);
+	rv = VFS_START(mp, 0);
 	if (rv)
 		VFS_UNMOUNT(mp, MNT_FORCE);
 
@@ -536,6 +547,7 @@ rump_setup_curlwp(pid_t pid, lwpid_t lid, int set)
 	p->p_cwdi = &rump_cwdi;
 	p->p_limit = &rump_limits;
         p->p_pid = pid;
+	p->p_vmspace = &rump_vmspace;
 	l->l_cred = rump_cred;
 	l->l_proc = p;
         l->l_lid = lid;
