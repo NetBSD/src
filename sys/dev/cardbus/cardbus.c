@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.82 2007/12/16 21:28:30 dyoung Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.83 2008/01/02 02:05:19 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.82 2007/12/16 21:28:30 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.83 2008/01/02 02:05:19 dyoung Exp $");
 
 #include "opt_cardbus.h"
 
@@ -230,6 +230,8 @@ cardbus_read_tuples(struct cardbus_attach_args *ca, cardbusreg_t cis_ptr,
 			    sc->sc_dev.dv_xname);
 			return (1);
 		}
+		aprint_debug_dev(&sc->sc_dev, "mapped %ju bytes at 0x%jx\n",
+		    (uintmax_t)bar_size, (uintmax_t)bar_addr);
 
 		if (cardbus_space == CARDBUS_CIS_ASI_ROM) {
 			cardbusreg_t exrom;
@@ -248,8 +250,7 @@ cardbus_read_tuples(struct cardbus_attach_args *ca, cardbusreg_t cis_ptr,
 			    CARDBUS_COMMAND_STATUS_REG,
 			    command | CARDBUS_COMMAND_MEM_ENABLE);
 
-			if (cardbus_read_exrom(ca->ca_memt, bar_memh,
-			    &rom_image))
+			if (cardbus_read_exrom(bar_tag, bar_memh, &rom_image))
 				goto out;
 
 			SIMPLEQ_FOREACH(p, &rom_image, next) {
@@ -277,7 +278,7 @@ cardbus_read_tuples(struct cardbus_attach_args *ca, cardbusreg_t cis_ptr,
 			    CARDBUS_COMMAND_STATUS_REG,
 			    command | CARDBUS_COMMAND_MEM_ENABLE);
 			/* XXX byte order? */
-			bus_space_read_region_1(ca->ca_memt, bar_memh,
+			bus_space_read_region_1(bar_tag, bar_memh,
 			    cis_ptr, tuples, MIN(bar_size, len));
 			found++;
 		}
