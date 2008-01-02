@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs.c,v 1.24 2008/01/02 15:44:04 pooka Exp $	*/
+/*	$NetBSD: vfs.c,v 1.25 2008/01/02 18:15:15 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -93,9 +93,12 @@ getnewvnode(enum vtagtype tag, struct mount *mp, int (**vops)(void *),
 	vp->v_vnlock = &vp->v_lock;
 	vp->v_usecount = 1;
 	mutex_init(&vp->v_interlock, MUTEX_DEFAULT, IPL_NONE);
-	TAILQ_INSERT_TAIL(&mp->mnt_vnodelist, vp, v_mntvnodes);
-	lockinit(&vp->v_lock, PVFS, "vnlock", 0, 0);
 	cv_init(&vp->v_cv, "vnode");
+	lockinit(&vp->v_lock, PVFS, "vnlock", 0, 0);
+
+	if (mp) {
+		TAILQ_INSERT_TAIL(&mp->mnt_vnodelist, vp, v_mntvnodes);
+	}
 
 	uobj = &vp->v_uobj;
 	uobj->pgops = &uvm_vnodeops;
@@ -184,7 +187,6 @@ valloc(struct mount *mp)
 	uobj = &vp->v_uobj;
 	uobj->pgops = &uvm_vnodeops;
 	mutex_init(&vp->v_interlock, MUTEX_DEFAULT, IPL_NONE);
-	lockinit(&vp->v_lock, PVFS, "vnlock", 0, 0);
 	cv_init(&vp->v_cv, "vnode");
 	TAILQ_INIT(&uobj->memq);
 

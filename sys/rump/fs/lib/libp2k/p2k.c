@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.c,v 1.34 2008/01/02 15:44:03 pooka Exp $	*/
+/*	$NetBSD: p2k.c,v 1.35 2008/01/02 18:15:13 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -160,7 +160,12 @@ p2k_run_fs(const char *vfsname, const char *devpath, const char *mountpath,
 	PUFFSOP_SET(pops, p2k, node, reclaim);
 
 	strcpy(typebuf, "p2k|");
-	strlcat(typebuf, vfsname, sizeof(typebuf));
+	if (strcmp(vfsname, "puffs") == 0) { /* XXX */
+		struct puffs_kargs *args = arg;
+		strlcat(typebuf, args->pa_typename, sizeof(typebuf));
+	} else {
+		strlcat(typebuf, vfsname, sizeof(typebuf));
+	}
 
 	pu = puffs_init(pops, devpath, typebuf, ukfs_getmp(ukfs), puffs_flags);
 	if (pu == NULL)
