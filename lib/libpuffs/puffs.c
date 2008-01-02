@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.81 2007/12/25 20:38:01 pooka Exp $	*/
+/*	$NetBSD: puffs.c,v 1.82 2008/01/02 14:27:42 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.81 2007/12/25 20:38:01 pooka Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.82 2008/01/02 14:27:42 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -451,13 +451,14 @@ puffs_mount(struct puffs_usermount *pu, const char *dir, int mntflags,
 	char rp[MAXPATHLEN];
 	ssize_t n;
 	int rv, fd, sverrno;
+	char *comfd;
 
-#if 1
+	pu->pu_kargp->pa_root_cookie = cookie;
+
 	/* XXXkludgehere */
 	/* kauth doesn't provide this service any longer */
 	if (geteuid() != 0)
 		mntflags |= MNT_NOSUID | MNT_NODEV;
-#endif
 
 	if (realpath(dir, rp) == NULL) {
 		rv = -1;
@@ -469,25 +470,70 @@ puffs_mount(struct puffs_usermount *pu, const char *dir, int mntflags,
 		warnx("puffs_mount: using \"%s\" instead.", rp);
 	}
 
-	fd = open(_PATH_PUFFS, O_RDWR);
-	if (fd == -1) {
-		warnx("puffs_mount: cannot open %s", _PATH_PUFFS);
-		rv = -1;
-		goto out;
-	}
-	if (fd <= 2)
-		warnx("puffs_init: device fd %d (<= 2), sure this is "
-		    "what you want?", fd);
+	/*
+	 * Undocumented...  Well, documented only here.
+	 *
+	 * This is used for imaginative purposes.  If the env variable is
+	 * set, puffs_mount() doesn't do the regular mount procedure.
+	 * Rather, it crams the mount data down the comfd and sets comfd as
+	 * the puffs descriptor.
+	 *
+	 * This shouldn't be used unless you can read my mind ( ... or write
+	 * it, not to mention execute it, but that's starting to get silly).
+	 */
+	if ((comfd = getenv("PUFFS_COMFD")) != NULL) {
+		size_t len;
 
-	pu->pu_kargp->pa_fd = pu->pu_fd = fd;
-	pu->pu_kargp->pa_root_cookie = cookie;
-	if ((rv = mount(MOUNT_PUFFS, rp, mntflags,
-	    pu->pu_kargp, sizeof(struct puffs_kargs))) == -1)
-		goto out;
-#if 0
-	if ((rv = ioctl(pu->pu_fd, PUFFSREQSIZEOP, &pu->pu_maxreqlen)) == -1)
-		goto out;
-#endif
+		if (sscanf(comfd, "%d", &pu->pu_fd) != 1) {
+			errno = EINVAL;
+			rv = -1;
+			goto out;
+		}
+		/* check that what we got at least resembles an fd */
+		if (fcntl(pu->pu_fd, F_GETFL) == -1) {
+			rv = -1;
+			goto out;
+		}
+			
+		len = strlen(dir)+1;
+
+#define allwrite(buf, len)						\
+do {									\
+	ssize_t al_rv;							\
+	al_rv = write(pu->pu_fd, buf, len);				\
+	if (al_rv != len) {						\
+		if (al_rv != -1)					\
+			errno = EIO;					\
+		rv = -1;						\
+		abort();\
+		goto out;						\
+	}								\
+} while (/*CONSTCOND*/0)
+		allwrite(&len, sizeof(len));
+		allwrite(dir, len);
+		allwrite(&mntflags, sizeof(mntflags));
+		allwrite(pu->pu_kargp, sizeof(*pu->pu_kargp));
+		allwrite(&pu->pu_flags, sizeof(pu->pu_flags));
+#undef allwrite
+
+		rv = 0;
+	} else {
+		fd = open(_PATH_PUFFS, O_RDWR);
+		if (fd == -1) {
+			warnx("puffs_mount: cannot open %s", _PATH_PUFFS);
+			rv = -1;
+			goto out;
+		}
+		if (fd <= 2)
+			warnx("puffs_mount: device fd %d (<= 2), sure this is "
+			    "what you want?", fd);
+
+		pu->pu_kargp->pa_fd = pu->pu_fd = fd;
+		if ((rv = mount(MOUNT_PUFFS, rp, mntflags,
+		    pu->pu_kargp, sizeof(struct puffs_kargs))) == -1)
+			goto out;
+	}
+
 	PU_SETSTATE(pu, PUFFS_STATE_RUNNING);
 
  out:
