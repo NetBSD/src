@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.16 2008/01/02 11:48:33 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.17 2008/01/02 12:30:31 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.16 2008/01/02 11:48:33 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.17 2008/01/02 12:30:31 yamt Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -241,9 +241,6 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.16 2008/01/02 11:48:33 ad Exp $");
  *      page is mapped in.    this is critical for page based operations
  *      such as pmap_page_protect() [change protection on _all_ mappings
  *      of a page]
- *  - pv_page/pv_page_info: pv_entry's are allocated out of pv_page's.
- *      if we run out of pv_entry's we allocate a new pv_page and free
- *      its pv_entrys.
  */
 
 /*
@@ -279,22 +276,6 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.16 2008/01/02 11:48:33 ad Exp $");
  * pmap_growkernel() to grow the kernel PTPs in advance.
  *
  * [C] pv_entry structures
- *	- plan 1: try to allocate one off the free list
- *		=> success: done!
- *		=> failure: no more free pv_entrys on the list
- *	- plan 2: try to allocate a new pv_page to add a chunk of
- *	pv_entrys to the free list
- *		[a] obtain a free, unmapped, VA in kmem_map.  either
- *		we have one saved from a previous call, or we allocate
- *		one now using a "vm_map_lock_try" in uvm_map
- *		=> success: we have an unmapped VA, continue to [b]
- *		=> failure: unable to lock kmem_map or out of VA in it.
- *			move on to plan 3.
- *		[b] allocate a page for the VA
- *		=> success: map it in, free the pv_entry's, DONE!
- *		=> failure: no free vm_pages, etc.
- *			save VA for later call to [a], go to plan 3.
- *	If we fail, we simply let pmap_enter() tell UVM about it.
  */
 
 /*
@@ -370,9 +351,6 @@ static krwlock_t pmap_main_lock;
 static vaddr_t pmap_maxkvaddr;
 
 #define COUNT(x)	/* nothing */
-
-TAILQ_HEAD(pv_pagelist, pv_page);
-typedef struct pv_pagelist pv_pagelist_t;
 
 /*
  * Global TLB shootdown mailbox.
@@ -451,14 +429,6 @@ static bool pmap_initialized = false;	/* pmap_init done yet? */
 
 static vaddr_t virtual_avail;	/* VA of first free KVA */
 static vaddr_t virtual_end;	/* VA of last free KVA */
-
-/*
- * pv_page management structures
- */
-
-#define PVE_LOWAT (PVE_PER_PVPAGE / 2)	/* free pv_entry low water mark */
-#define PVE_HIWAT (PVE_LOWAT + (PVE_PER_PVPAGE * 2))
-					/* high water mark */
 
 static inline int
 pv_compare(struct pv_entry *a, struct pv_entry *b)
