@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr2.c,v 1.8 2007/11/26 19:02:08 pooka Exp $	*/
+/*	$NetBSD: vfs_subr2.c,v 1.9 2008/01/02 11:48:56 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>  
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr2.c,v 1.8 2007/11/26 19:02:08 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr2.c,v 1.9 2008/01/02 11:48:56 ad Exp $");
 
 #include "opt_ddb.h"
 
@@ -95,6 +95,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_subr2.c,v 1.8 2007/11/26 19:02:08 pooka Exp $");
 #include <sys/systm.h>
 #include <sys/vnode.h>
 #include <sys/proc.h>
+#include <sys/kthread.h>
 
 #include <miscfs/syncfs/syncfs.h>
 #include <miscfs/specfs/specdev.h>
@@ -124,12 +125,10 @@ int prtactive = 0;		/* 1 => print out reclaim of active vnodes */
 
 kmutex_t mountlist_lock;
 kmutex_t mntid_lock;
-struct simplelock mntvnode_slock = SIMPLELOCK_INITIALIZER;
-struct simplelock spechash_slock = SIMPLELOCK_INITIALIZER;
+kmutex_t mntvnode_lock;
+kmutex_t vnode_free_list_lock;
+kmutex_t spechash_lock;
 kmutex_t vfs_list_lock;
-
-/* XXX - gross; single global lock to protect v_numoutput */
-struct simplelock global_v_numoutput_slock = SIMPLELOCK_INITIALIZER;
 
 struct mntlist mountlist =			/* mounted filesystem list */
     CIRCLEQ_HEAD_INITIALIZER(mountlist);
@@ -146,7 +145,7 @@ struct device *root_device;			/* root device */
 void printlockedvnodes(void);
 #endif
 
-long numvnodes;
+u_int numvnodes;
 
 /*
  * Initialize the vnode management data structures.
@@ -157,14 +156,16 @@ vntblinit(void)
 
 	mutex_init(&mountlist_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&mntid_lock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&mntvnode_lock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&vnode_free_list_lock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&spechash_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&vfs_list_lock, MUTEX_DEFAULT, IPL_NONE);
 
 	mount_specificdata_domain = specificdata_domain_create();
 
-	/*
-	 * Initialize the filesystem syncer.
-	 */
+	/* Initialize the filesystem syncer. */
 	vn_initialize_syncerd();
+	vn_init1();
 }
 
 /*
@@ -195,7 +196,66 @@ vfs_destroy(struct mount *mp)
 {
 
 	specificdata_fini(mount_specificdata_domain, &mp->mnt_specdataref);
+	mutex_destroy(&mp->mnt_mutex);
+	lockdestroy(&mp->mnt_lock);
 	free(mp, M_MOUNT);
+}
+
+/*
+ * Wait for a vnode (typically with VI_XLOCK set) to be cleaned or
+ * recycled.
+ */
+void
+vwait(vnode_t *vp, int flags)
+{
+
+	KASSERT(mutex_owned(&vp->v_interlock));
+	KASSERT(vp->v_usecount != 0);
+
+	while ((vp->v_iflag & flags) != 0)
+		cv_wait(&vp->v_cv, &vp->v_interlock);
+}
+
+/*
+ * Insert a marker vnode into a mount's vnode list, after the
+ * specified vnode.  mntvnode_lock must be held.
+ */
+void
+vmark(vnode_t *mvp, vnode_t *vp)
+{
+	struct mount *mp;
+
+	mp = mvp->v_mount;
+
+	KASSERT(mutex_owned(&mntvnode_lock));
+	KASSERT((mvp->v_iflag & VI_MARKER) != 0);
+	KASSERT(vp->v_mount == mp);
+
+	TAILQ_INSERT_AFTER(&mp->mnt_vnodelist, vp, mvp, v_mntvnodes);
+}
+
+/*
+ * Remove a marker vnode from a mount's vnode list, and return
+ * a pointer to the next vnode in the list.  mntvnode_lock must
+ * be held.
+ */
+vnode_t *
+vunmark(vnode_t *mvp)
+{
+	vnode_t *vp;
+	struct mount *mp;
+
+	mp = mvp->v_mount;
+
+	KASSERT(mutex_owned(&mntvnode_lock));
+	KASSERT((mvp->v_iflag & VI_MARKER) != 0);
+
+	vp = TAILQ_NEXT(mvp, v_mntvnodes);
+	TAILQ_REMOVE(&mp->mnt_vnodelist, mvp, v_mntvnodes); 
+
+	KASSERT(vp == NULL || vp->v_mount == mp);
+
+	return vp;
 }
 
 /*
@@ -206,20 +266,16 @@ vwakeup(struct buf *bp)
 {
 	struct vnode *vp;
 
-	if ((vp = bp->b_vp) != NULL) {
-		/* XXX global lock hack
-		 * can't use v_interlock here since this is called
-		 * in interrupt context from biodone().
-		 */
-		simple_lock(&global_v_numoutput_slock);
-		if (--vp->v_numoutput < 0)
-			panic("vwakeup: neg numoutput, vp %p", vp);
-		if ((vp->v_iflag & VI_BWAIT) && vp->v_numoutput <= 0) {
-			vp->v_iflag &= ~VI_BWAIT;
-			wakeup((void *)&vp->v_numoutput);
-		}
-		simple_unlock(&global_v_numoutput_slock);
-	}
+	if ((vp = bp->b_vp) == NULL)
+		return;
+
+	KASSERT(bp->b_objlock == &vp->v_interlock);
+	KASSERT(mutex_owned(bp->b_objlock));
+
+	if (--vp->v_numoutput < 0)
+		panic("vwakeup: neg numoutput, vp %p", vp);
+	if (vp->v_numoutput == 0)
+		cv_broadcast(&vp->v_cv);
 }
 
 /*
@@ -229,15 +285,15 @@ vwakeup(struct buf *bp)
  */
 int
 vinvalbuf(struct vnode *vp, int flags, kauth_cred_t cred, struct lwp *l,
-    int slpflag, int slptimeo)
+	  bool catch, int slptimeo)
 {
 	struct buf *bp, *nbp;
-	int s, error;
+	int error;
 	int flushflags = PGO_ALLPAGES | PGO_FREE | PGO_SYNCIO |
-		(flags & V_SAVE ? PGO_CLEANIT | PGO_RECLAIM : 0);
+	    (flags & V_SAVE ? PGO_CLEANIT | PGO_RECLAIM : 0);
 
 	/* XXXUBC this doesn't look at flags or slp* */
-	simple_lock(&vp->v_interlock);
+	mutex_enter(&vp->v_interlock);
 	error = VOP_PUTPAGES(vp, 0, 0, flushflags);
 	if (error) {
 		return error;
@@ -247,67 +303,48 @@ vinvalbuf(struct vnode *vp, int flags, kauth_cred_t cred, struct lwp *l,
 		error = VOP_FSYNC(vp, cred, FSYNC_WAIT|FSYNC_RECLAIM, 0, 0);
 		if (error)
 		        return (error);
-#ifdef DIAGNOSTIC
-		s = splbio();
-		if (vp->v_numoutput > 0 || !LIST_EMPTY(&vp->v_dirtyblkhd))
-		        panic("vinvalbuf: dirty bufs, vp %p", vp);
-		splx(s);
-#endif
+		KASSERT(vp->v_numoutput == 0 && LIST_EMPTY(&vp->v_dirtyblkhd));
 	}
 
-	s = splbio();
-
+	mutex_enter(&bufcache_lock);
 restart:
-	for (bp = LIST_FIRST(&vp->v_cleanblkhd); bp; bp = nbp) {
-		nbp = LIST_NEXT(bp, b_vnbufs);
-		simple_lock(&bp->b_interlock);
-		if (bp->b_flags & B_BUSY) {
-			bp->b_flags |= B_WANTED;
-			error = ltsleep((void *)bp,
-				    slpflag | (PRIBIO + 1) | PNORELOCK,
-				    "vinvalbuf", slptimeo, &bp->b_interlock);
-			if (error) {
-				splx(s);
-				return (error);
-			}
-			goto restart;
-		}
-		bp->b_flags |= B_BUSY | B_INVAL | B_VFLUSH;
-		simple_unlock(&bp->b_interlock);
-		brelse(bp, 0);
-	}
-
 	for (bp = LIST_FIRST(&vp->v_dirtyblkhd); bp; bp = nbp) {
 		nbp = LIST_NEXT(bp, b_vnbufs);
-		simple_lock(&bp->b_interlock);
-		if (bp->b_flags & B_BUSY) {
-			bp->b_flags |= B_WANTED;
-			error = ltsleep((void *)bp,
-				    slpflag | (PRIBIO + 1) | PNORELOCK,
-				    "vinvalbuf", slptimeo, &bp->b_interlock);
-			if (error) {
-				splx(s);
-				return (error);
-			}
-			goto restart;
+		error = bbusy(bp, catch, slptimeo);
+		if (error != 0) {
+			if (error == EPASSTHROUGH)
+				goto restart;
+			mutex_exit(&bufcache_lock);
+			return (error);
+		}
+		brelsel(bp, BC_INVAL | BC_VFLUSH);
+	}
+
+	for (bp = LIST_FIRST(&vp->v_cleanblkhd); bp; bp = nbp) {
+		nbp = LIST_NEXT(bp, b_vnbufs);
+		error = bbusy(bp, catch, slptimeo);
+		if (error != 0) {
+			if (error == EPASSTHROUGH)
+				goto restart;
+			mutex_exit(&bufcache_lock);
+			return (error);
 		}
 		/*
 		 * XXX Since there are no node locks for NFS, I believe
 		 * there is a slight chance that a delayed write will
 		 * occur while sleeping just above, so check for it.
 		 */
-		if ((bp->b_flags & B_DELWRI) && (flags & V_SAVE)) {
+		if ((bp->b_oflags & BO_DELWRI) && (flags & V_SAVE)) {
 #ifdef DEBUG
 			printf("buffer still DELWRI\n");
 #endif
-			bp->b_flags |= B_BUSY | B_VFLUSH;
-			simple_unlock(&bp->b_interlock);
+			bp->b_cflags |= BC_BUSY | BC_VFLUSH;
+			mutex_exit(&bufcache_lock);
 			VOP_BWRITE(bp);
+			mutex_enter(&bufcache_lock);
 			goto restart;
 		}
-		bp->b_flags |= B_BUSY | B_INVAL | B_VFLUSH;
-		simple_unlock(&bp->b_interlock);
-		brelse(bp, 0);
+		brelsel(bp, BC_INVAL | BC_VFLUSH);
 	}
 
 #ifdef DIAGNOSTIC
@@ -315,7 +352,7 @@ restart:
 		panic("vinvalbuf: flush failed, vp %p", vp);
 #endif
 
-	splx(s);
+	mutex_exit(&bufcache_lock);
 
 	return (0);
 }
@@ -326,91 +363,78 @@ restart:
  * buffers from being queued.
  */
 int
-vtruncbuf(struct vnode *vp, daddr_t lbn, int slpflag, int slptimeo)
+vtruncbuf(struct vnode *vp, daddr_t lbn, bool catch, int slptimeo)
 {
 	struct buf *bp, *nbp;
-	int s, error;
+	int error;
 	voff_t off;
 
 	off = round_page((voff_t)lbn << vp->v_mount->mnt_fs_bshift);
-	simple_lock(&vp->v_interlock);
+	mutex_enter(&vp->v_interlock);
 	error = VOP_PUTPAGES(vp, off, 0, PGO_FREE | PGO_SYNCIO);
 	if (error) {
 		return error;
 	}
 
-	s = splbio();
-
+	mutex_enter(&bufcache_lock);
 restart:
-	for (bp = LIST_FIRST(&vp->v_cleanblkhd); bp; bp = nbp) {
-		nbp = LIST_NEXT(bp, b_vnbufs);
-		if (bp->b_lblkno < lbn)
-			continue;
-		simple_lock(&bp->b_interlock);
-		if (bp->b_flags & B_BUSY) {
-			bp->b_flags |= B_WANTED;
-			error = ltsleep(bp, slpflag | (PRIBIO + 1) | PNORELOCK,
-			    "vtruncbuf", slptimeo, &bp->b_interlock);
-			if (error) {
-				splx(s);
-				return (error);
-			}
-			goto restart;
-		}
-		bp->b_flags |= B_BUSY | B_INVAL | B_VFLUSH;
-		simple_unlock(&bp->b_interlock);
-		brelse(bp, 0);
-	}
-
 	for (bp = LIST_FIRST(&vp->v_dirtyblkhd); bp; bp = nbp) {
 		nbp = LIST_NEXT(bp, b_vnbufs);
 		if (bp->b_lblkno < lbn)
 			continue;
-		simple_lock(&bp->b_interlock);
-		if (bp->b_flags & B_BUSY) {
-			bp->b_flags |= B_WANTED;
-			error = ltsleep(bp, slpflag | (PRIBIO + 1) | PNORELOCK,
-			    "vtruncbuf", slptimeo, &bp->b_interlock);
-			if (error) {
-				splx(s);
-				return (error);
-			}
-			goto restart;
+		error = bbusy(bp, catch, slptimeo);
+		if (error != 0) {
+			if (error == EPASSTHROUGH)
+				goto restart;
+			mutex_exit(&bufcache_lock);
+			return (error);
 		}
-		bp->b_flags |= B_BUSY | B_INVAL | B_VFLUSH;
-		simple_unlock(&bp->b_interlock);
-		brelse(bp, 0);
+		brelsel(bp, BC_INVAL | BC_VFLUSH);
 	}
 
-	splx(s);
+	for (bp = LIST_FIRST(&vp->v_cleanblkhd); bp; bp = nbp) {
+		nbp = LIST_NEXT(bp, b_vnbufs);
+		if (bp->b_lblkno < lbn)
+			continue;
+		error = bbusy(bp, catch, slptimeo);
+		if (error != 0) {
+			if (error == EPASSTHROUGH)
+				goto restart;
+			mutex_exit(&bufcache_lock);
+			return (error);
+		}
+		brelsel(bp, BC_INVAL | BC_VFLUSH);
+	}
+	mutex_exit(&bufcache_lock);
 
 	return (0);
 }
 
+/*
+ * Flush all dirty buffers from a vnode.
+ * Called with the underlying vnode locked, which should prevent new dirty
+ * buffers from being queued.
+ */
 void
 vflushbuf(struct vnode *vp, int sync)
 {
 	struct buf *bp, *nbp;
 	int flags = PGO_CLEANIT | PGO_ALLPAGES | (sync ? PGO_SYNCIO : 0);
-	int s;
+	bool dirty;
 
-	simple_lock(&vp->v_interlock);
+	mutex_enter(&vp->v_interlock);
 	(void) VOP_PUTPAGES(vp, 0, 0, flags);
 
 loop:
-	s = splbio();
+	mutex_enter(&bufcache_lock);
 	for (bp = LIST_FIRST(&vp->v_dirtyblkhd); bp; bp = nbp) {
 		nbp = LIST_NEXT(bp, b_vnbufs);
-		simple_lock(&bp->b_interlock);
-		if ((bp->b_flags & B_BUSY)) {
-			simple_unlock(&bp->b_interlock);
+		if ((bp->b_cflags & BC_BUSY))
 			continue;
-		}
-		if ((bp->b_flags & B_DELWRI) == 0)
+		if ((bp->b_oflags & BO_DELWRI) == 0)
 			panic("vflushbuf: not dirty, bp %p", bp);
-		bp->b_flags |= B_BUSY | B_VFLUSH;
-		simple_unlock(&bp->b_interlock);
-		splx(s);
+		bp->b_cflags |= BC_BUSY | BC_VFLUSH;
+		mutex_exit(&bufcache_lock);
 		/*
 		 * Wait for I/O associated with indirect blocks to complete,
 		 * since there is no way to quickly wait for them below.
@@ -421,46 +445,49 @@ loop:
 			(void) bwrite(bp);
 		goto loop;
 	}
-	if (sync == 0) {
-		splx(s);
+	mutex_exit(&bufcache_lock);
+
+	if (sync == 0)
 		return;
-	}
-	simple_lock(&global_v_numoutput_slock);
-	while (vp->v_numoutput) {
-		vp->v_iflag |= VI_BWAIT;
-		ltsleep((void *)&vp->v_numoutput, PRIBIO + 1, "vflushbuf", 0,
-			&global_v_numoutput_slock);
-	}
-	simple_unlock(&global_v_numoutput_slock);
-	splx(s);
-	if (!LIST_EMPTY(&vp->v_dirtyblkhd)) {
+
+	mutex_enter(&vp->v_interlock);
+	while (vp->v_numoutput != 0)
+		cv_wait(&vp->v_cv, &vp->v_interlock);
+	dirty = !LIST_EMPTY(&vp->v_dirtyblkhd);
+	mutex_exit(&vp->v_interlock);
+
+	if (dirty) {
 		vprint("vflushbuf: dirty", vp);
 		goto loop;
 	}
 }
 
 /*
- * Associate a buffer with a vnode.
+ * Associate a buffer with a vnode.  There must already be a hold on
+ * the vnode.
  */
 void
 bgetvp(struct vnode *vp, struct buf *bp)
 {
-	int s;
 
-	if (bp->b_vp)
-		panic("bgetvp: not free, bp %p", bp);
-	VHOLD(vp);
-	s = splbio();
+	KASSERT(bp->b_vp == NULL);
+	KASSERT(bp->b_objlock == &buffer_lock);
+	KASSERT(mutex_owned(&vp->v_interlock));
+	KASSERT(mutex_owned(&bufcache_lock));
+	KASSERT((bp->b_cflags & BC_BUSY) != 0);
+
+	vholdl(vp);
 	bp->b_vp = vp;
 	if (vp->v_type == VBLK || vp->v_type == VCHR)
 		bp->b_dev = vp->v_rdev;
 	else
 		bp->b_dev = NODEV;
+
 	/*
 	 * Insert onto list for new vnode.
 	 */
 	bufinsvn(bp, &vp->v_cleanblkhd);
-	splx(s);
+	bp->b_objlock = &vp->v_interlock;
 }
 
 /*
@@ -469,14 +496,14 @@ bgetvp(struct vnode *vp, struct buf *bp)
 void
 brelvp(struct buf *bp)
 {
-	struct vnode *vp;
-	int s;
+	struct vnode *vp = bp->b_vp;
 
-	if (bp->b_vp == NULL)
-		panic("brelvp: vp NULL, bp %p", bp);
+	KASSERT(vp != NULL);
+	KASSERT(bp->b_objlock == &vp->v_interlock);
+	KASSERT(mutex_owned(&vp->v_interlock));
+	KASSERT(mutex_owned(&bufcache_lock));
+	KASSERT((bp->b_cflags & BC_BUSY) != 0);
 
-	s = splbio();
-	vp = bp->b_vp;
 	/*
 	 * Delete from old vnode list, if on one.
 	 */
@@ -489,50 +516,54 @@ brelvp(struct buf *bp)
 		vn_syncer_remove_from_worklist(vp);
 	}
 
+	bp->b_objlock = &buffer_lock;
 	bp->b_vp = NULL;
-	HOLDRELE(vp);
-	splx(s);
+	holdrelel(vp);
 }
 
 /*
- * Reassign a buffer from one vnode to another.
+ * Reassign a buffer from one vnode list to another.
+ * The list reassignment must be within the same vnode.
  * Used to assign file specific control information
- * (indirect blocks) to the vnode to which they belong.
- *
- * This function must be called at splbio().
+ * (indirect blocks) to the list to which they belong.
  */
 void
-reassignbuf(struct buf *bp, struct vnode *newvp)
+reassignbuf(struct buf *bp, struct vnode *vp)
 {
 	struct buflists *listheadp;
 	int delayx;
+
+	KASSERT(bp->b_objlock == &vp->v_interlock);
+	KASSERT(mutex_owned(&vp->v_interlock));
+	KASSERT((bp->b_cflags & BC_BUSY) != 0);
 
 	/*
 	 * Delete from old vnode list, if on one.
 	 */
 	if (LIST_NEXT(bp, b_vnbufs) != NOLIST)
 		bufremvn(bp);
+
 	/*
 	 * If dirty, put on list of dirty buffers;
 	 * otherwise insert onto list of clean buffers.
 	 */
-	if ((bp->b_flags & B_DELWRI) == 0) {
-		listheadp = &newvp->v_cleanblkhd;
-		if (TAILQ_EMPTY(&newvp->v_uobj.memq) &&
-		    (newvp->v_iflag & VI_ONWORKLST) &&
-		    LIST_FIRST(&newvp->v_dirtyblkhd) == NULL) {
-			newvp->v_iflag &= ~VI_WRMAPDIRTY;
-			vn_syncer_remove_from_worklist(newvp);
+	if ((bp->b_oflags & BO_DELWRI) == 0) {
+		listheadp = &vp->v_cleanblkhd;
+		if (TAILQ_EMPTY(&vp->v_uobj.memq) &&
+		    (vp->v_iflag & VI_ONWORKLST) &&
+		    LIST_FIRST(&vp->v_dirtyblkhd) == NULL) {
+			vp->v_iflag &= ~VI_WRMAPDIRTY;
+			vn_syncer_remove_from_worklist(vp);
 		}
 	} else {
-		listheadp = &newvp->v_dirtyblkhd;
-		if ((newvp->v_iflag & VI_ONWORKLST) == 0) {
-			switch (newvp->v_type) {
+		listheadp = &vp->v_dirtyblkhd;
+		if ((vp->v_iflag & VI_ONWORKLST) == 0) {
+			switch (vp->v_type) {
 			case VDIR:
 				delayx = dirdelay;
 				break;
 			case VBLK:
-				if (newvp->v_specmountpoint != NULL) {
+				if (vp->v_specmountpoint != NULL) {
 					delayx = metadelay;
 					break;
 				}
@@ -541,9 +572,9 @@ reassignbuf(struct buf *bp, struct vnode *newvp)
 				delayx = filedelay;
 				break;
 			}
-			if (!newvp->v_mount ||
-			    (newvp->v_mount->mnt_flag & MNT_ASYNC) == 0)
-				vn_syncer_add_to_worklist(newvp, delayx);
+			if (!vp->v_mount ||
+			    (vp->v_mount->mnt_flag & MNT_ASYNC) == 0)
+				vn_syncer_add_to_worklist(vp, delayx);
 		}
 	}
 	bufinsvn(bp, listheadp);
@@ -654,11 +685,11 @@ vprint(const char *label, struct vnode *vp)
 		printf("%s: ", label);
 	printf("vnode @ %p, flags (%s)\n\ttag %s(%d), type %s(%d), "
 	    "usecount %d, writecount %ld, holdcount %ld\n"
-	    "\tmount %p, data %p\n", vp, bf,
+	    "\tfreelisthd %p, mount %p, data %p\n", vp, bf,
 	    ARRAY_PRINT(vp->v_tag, vnode_tags), vp->v_tag,
 	    ARRAY_PRINT(vp->v_type, vnode_types), vp->v_type,
 	    vp->v_usecount, vp->v_writecount, vp->v_holdcnt,
-	    vp->v_mount, vp->v_data);
+	    vp->v_freelisthd, vp->v_mount, vp->v_data);
 	if (vp->v_data != NULL) {
 		printf("\t");
 		VOP_PRINT(vp);
@@ -972,14 +1003,15 @@ vfs_buf_print(struct buf *bp, int full, void (*pr)(const char *, ...))
 	    PRIx64 " dev 0x%x\n",
 	    bp->b_vp, bp->b_lblkno, bp->b_blkno, bp->b_rawblkno, bp->b_dev);
 
-	bitmask_snprintf(bp->b_flags, buf_flagbits, bf, sizeof(bf));
+	bitmask_snprintf(bp->b_flags | bp->b_oflags | bp->b_cflags,
+	    buf_flagbits, bf, sizeof(bf));
 	(*pr)("  error %d flags 0x%s\n", bp->b_error, bf);
 
 	(*pr)("  bufsize 0x%lx bcount 0x%lx resid 0x%lx\n",
 		  bp->b_bufsize, bp->b_bcount, bp->b_resid);
 	(*pr)("  data %p saveaddr %p dep %p\n",
 		  bp->b_data, bp->b_saveaddr, LIST_FIRST(&bp->b_dep));
-	(*pr)("  iodone %p\n", bp->b_iodone);
+	(*pr)("  iodone %p objlock %p\n", bp->b_iodone, bp->b_objlock);
 }
 
 

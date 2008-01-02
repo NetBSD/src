@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_object.h,v 1.23 2007/12/01 10:40:28 yamt Exp $	*/
+/*	$NetBSD: uvm_object.h,v 1.24 2008/01/02 11:49:18 ad Exp $	*/
 
 /*
  *
@@ -46,7 +46,7 @@
  */
 
 struct uvm_object {
-	struct simplelock	vmobjlock;	/* lock on memq */
+	kmutex_t		vmobjlock;	/* lock on memq */
 	const struct uvm_pagerops *pgops;	/* pager ops */
 	struct pglist		memq;		/* pages in this object */
 	int			uo_npages;	/* # of pages in memq */
@@ -104,11 +104,16 @@ extern const struct uvm_pagerops aobj_pager;
 
 #define	UVM_OBJ_INIT(uobj, ops, refs)					\
 	do {								\
-		simple_lock_init(&(uobj)->vmobjlock);			\
+		mutex_init(&(uobj)->vmobjlock, MUTEX_DEFAULT, IPL_NONE);\
 		(uobj)->pgops = (ops);					\
 		TAILQ_INIT(&(uobj)->memq);				\
 		(uobj)->uo_npages = 0;					\
 		(uobj)->uo_refs = (refs);				\
+	} while (/* CONSTCOND */ 0)
+
+#define	UVM_OBJ_DESTROY(uobj)						\
+	do {								\
+		mutex_destroy(&(uobj)->vmobjlock);			\
 	} while (/* CONSTCOND */ 0)
 
 #endif /* _KERNEL */

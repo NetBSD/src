@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.125 2007/12/05 07:06:50 ad Exp $	*/
+/*	$NetBSD: ccd.c,v 1.126 2008/01/02 11:48:36 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2007 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.125 2007/12/05 07:06:50 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.126 2008/01/02 11:48:36 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -837,8 +837,10 @@ ccdbuffer(struct ccd_softc *cs, struct buf *bp, daddr_t bn, void *addr,
 	cbp = CCD_GETBUF();
 	if (cbp == NULL)
 		return (NULL);
-	BUF_INIT(&cbp->cb_buf);
-	cbp->cb_buf.b_flags = bp->b_flags | B_CALL;
+	buf_init(&cbp->cb_buf);
+	cbp->cb_buf.b_flags = bp->b_flags;
+	cbp->cb_buf.b_oflags = bp->b_oflags;
+	cbp->cb_buf.b_cflags = bp->b_cflags;
 	cbp->cb_buf.b_iodone = ccdiodone;
 	cbp->cb_buf.b_proc = bp->b_proc;
 	cbp->cb_buf.b_dev = ci->ci_dev;
@@ -924,6 +926,7 @@ ccdiodone(struct buf *vbp)
 		       cs->sc_xname, bp->b_error, cbp->cb_comp);
 	}
 	count = cbp->cb_buf.b_bcount;
+	buf_destroy(&cbp->cb_buf);
 	CCD_PUTBUF(cbp);
 
 	/*

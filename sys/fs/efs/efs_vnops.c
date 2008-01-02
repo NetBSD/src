@@ -1,4 +1,4 @@
-/*	$NetBSD: efs_vnops.c,v 1.12 2007/11/26 19:01:43 pooka Exp $	*/
+/*	$NetBSD: efs_vnops.c,v 1.13 2008/01/02 11:48:40 ad Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble <rumble@ephemeral.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efs_vnops.c,v 1.12 2007/11/26 19:01:43 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efs_vnops.c,v 1.13 2008/01/02 11:48:40 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -559,13 +559,12 @@ efs_inactive(void *v)
 	struct vop_inactive_args /* {
 		const struct vnodeop_desc *a_desc;
 		struct vnode *a_vp;
+		bool *a_recycle
 	} */ *ap = v;
 	struct efs_inode *eip = EFS_VTOI(ap->a_vp);
 
+	*ap->a_recycle = (eip->ei_mode == 0);
 	VOP_UNLOCK(ap->a_vp, 0);
-
-	if (eip->ei_mode == 0)
-		vrecycle(ap->a_vp, NULL, curlwp);
 
 	return (0);
 }

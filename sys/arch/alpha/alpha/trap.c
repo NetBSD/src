@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.116 2007/10/17 19:52:56 garbled Exp $ */
+/* $NetBSD: trap.c,v 1.117 2008/01/02 11:48:21 ad Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.116 2007/10/17 19:52:56 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.117 2008/01/02 11:48:21 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -263,9 +263,7 @@ trap(const u_long a0, const u_long a1, const u_long a2, const u_long entry,
 		 * and per-process unaligned-access-handling flags).
 		 */
 		if (user) {
-			KERNEL_LOCK(1, l);
 			i = unaligned_fixup(a0, a1, a2, l);
-			KERNEL_UNLOCK_LAST(l);
 			if (i == 0)
 				goto out;
 
@@ -360,9 +358,7 @@ trap(const u_long a0, const u_long a1, const u_long a2, const u_long entry,
 			break;
 
 		case ALPHA_IF_CODE_OPDEC:
-			KERNEL_LOCK(1, l);
 			i = handle_opdec(l, &ucode);
-			KERNEL_UNLOCK_LAST(l);
 			KSI_INIT_TRAP(&ksi);
 			if (i == 0)
 				goto out;
@@ -392,20 +388,10 @@ trap(const u_long a0, const u_long a1, const u_long a2, const u_long entry,
 		case ALPHA_MMCSR_FOR:
 		case ALPHA_MMCSR_FOE:
 		case ALPHA_MMCSR_FOW:
-			if (user)
-				KERNEL_LOCK(1, l);
-			else
-				KERNEL_LOCK(1, NULL);
-
 			if (pmap_emulate_reference(l, a0, user, a1)) {
 				ftype = VM_PROT_EXECUTE;
 				goto do_fault;
 			}
-
-			if (user)
-				KERNEL_UNLOCK_LAST(l);
-			else
-				KERNEL_UNLOCK_ONE(NULL);
 			goto out;
 
 		case ALPHA_MMCSR_INVALTRANS:
@@ -435,9 +421,7 @@ trap(const u_long a0, const u_long a1, const u_long a2, const u_long entry,
 #endif
 			}
 
-			if (user)
-				KERNEL_LOCK(1, l);
-			else {
+			if (!user) {
 				struct cpu_info *ci = curcpu();
 
 				if (l == NULL) {
@@ -472,8 +456,6 @@ trap(const u_long a0, const u_long a1, const u_long a2, const u_long entry,
 				 */
 				if (ci->ci_intrdepth != 0)
 					goto dopanic;
-
-				KERNEL_LOCK(1, NULL);
 			}
 
 			/*
@@ -513,16 +495,10 @@ do_fault:
 					rv = EFAULT;
 			}
 			if (rv == 0) {
-				if (user)
-					KERNEL_UNLOCK_LAST(l);
-				else
-					KERNEL_UNLOCK_ONE(NULL);
 				goto out;
 			}
 
 			if (user == 0) {
-				KERNEL_UNLOCK_ONE(NULL);
-
 				/* Check for copyin/copyout fault */
 				if (l != NULL &&
 				    l->l_addr->u_pcb.pcb_onfault != 0) {
@@ -550,7 +526,6 @@ do_fault:
 				ksi.ksi_code = SEGV_ACCERR;
 			else
 				ksi.ksi_code = SEGV_MAPERR;
-			KERNEL_UNLOCK_LAST(l);
 			break;
 		    }
 
@@ -567,9 +542,7 @@ do_fault:
 #ifdef DEBUG
 	printtrap(a0, a1, a2, entry, framep, 1, user);
 #endif
-	KERNEL_LOCK(1, l);
 	(*p->p_emul->e_trapsignal)(l, &ksi);
-	KERNEL_UNLOCK_LAST(l);
 out:
 	if (user)
 		userret(l);
@@ -675,8 +648,6 @@ ast(struct trapframe *framep)
 	if (l == NULL)
 		return;
 
-	KERNEL_LOCK(1, l);
-
 	uvmexp.softs++;
 	l->l_md.md_tf = framep;
 
@@ -692,7 +663,6 @@ ast(struct trapframe *framep)
 		preempt();
 	}
 
-	KERNEL_UNLOCK_LAST(l);
 	userret(l);
 }
 
@@ -1247,6 +1217,5 @@ startlwp(void *arg)
 #endif
 	pool_put(&lwp_uc_pool, uc);
 
-	KERNEL_UNLOCK_LAST(l);
 	userret(l);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_unix.c,v 1.39 2007/12/20 23:03:15 dsl Exp $	*/
+/*	$NetBSD: uvm_unix.c,v 1.40 2008/01/02 11:49:21 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_unix.c,v 1.39 2007/12/20 23:03:15 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_unix.c,v 1.40 2008/01/02 11:49:21 ad Exp $");
 
 #include "opt_pax.h"
 
@@ -83,15 +83,20 @@ sys_obreak(struct lwp *l, const struct sys_obreak_args *uap, register_t *retval)
 	vaddr_t new, old;
 	int error;
 
+	mutex_enter(&p->p_auxlock);
 	old = (vaddr_t)vm->vm_daddr;
 	new = round_page((vaddr_t)SCARG(uap, nsize));
-	if ((new - old) > p->p_rlimit[RLIMIT_DATA].rlim_cur && new > old)
+	if ((new - old) > p->p_rlimit[RLIMIT_DATA].rlim_cur && new > old) {
+		mutex_exit(&p->p_auxlock);
 		return (ENOMEM);
+	}
 
 	old = round_page(old + ptoa(vm->vm_dsize));
 
-	if (new == old)
+	if (new == old) {
+		mutex_exit(&p->p_auxlock);
 		return (0);
+	}
 
 	/*
 	 * grow or shrink?
@@ -114,6 +119,7 @@ sys_obreak(struct lwp *l, const struct sys_obreak_args *uap, register_t *retval)
 		if (error) {
 			uprintf("sbrk: grow %ld failed, error = %d\n",
 				new - old, error);
+			mutex_exit(&p->p_auxlock);
 			return (error);
 		}
 		vm->vm_dsize += atop(new - old);
@@ -121,6 +127,8 @@ sys_obreak(struct lwp *l, const struct sys_obreak_args *uap, register_t *retval)
 		uvm_deallocate(&vm->vm_map, new, old - new);
 		vm->vm_dsize -= atop(old - new);
 	}
+	mutex_exit(&p->p_auxlock);
+
 	return (0);
 }
 

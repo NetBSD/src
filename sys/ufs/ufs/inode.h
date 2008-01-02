@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.h,v 1.48 2007/04/09 12:21:24 pooka Exp $	*/
+/*	$NetBSD: inode.h,v 1.49 2008/01/02 11:49:13 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -128,6 +128,7 @@ struct inode {
 	int32_t   i_gen;	/* Generation number. */
 	u_int32_t i_uid;	/* File owner. */
 	u_int32_t i_gid;	/* File group. */
+	u_int16_t i_omode;	/* Old mode, for ufs_reclaim */
 
 	struct dirhash *i_dirhash;	/* Hashing for large directories */
 

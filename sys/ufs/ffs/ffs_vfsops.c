@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.213 2007/12/20 16:18:57 dyoung Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.214 2008/01/02 11:49:09 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.213 2007/12/20 16:18:57 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.214 2008/01/02 11:49:09 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -482,7 +482,7 @@ fail:
 int
 ffs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 {
-	struct vnode *vp, *nvp, *devvp;
+	struct vnode *vp, *mvp, *devvp;
 	struct inode *ip;
 	void *space;
 	struct buf *bp;
@@ -647,30 +647,36 @@ ffs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 			*lp++ = fs->fs_contigsumsize;
 	}
 
-loop:
+	/* Allocate a marker vnode. */
+	if ((mvp = valloc(mp)) == NULL)
+		return ENOMEM;
 	/*
 	 * NOTE: not using the TAILQ_FOREACH here since in this loop vgone()
 	 * and vclean() can be called indirectly
 	 */
-	simple_lock(&mntvnode_slock);
-	for (vp = TAILQ_FIRST(&mp->mnt_vnodelist); vp; vp = nvp) {
-		if (vp->v_mount != mp) {
-			simple_unlock(&mntvnode_slock);
-			goto loop;
-		}
+	mutex_enter(&mntvnode_lock);
+ loop:
+	for (vp = TAILQ_FIRST(&mp->mnt_vnodelist); vp; vp = vunmark(mvp)) {
+		vmark(mvp, vp);
+		if (vp->v_mount != mp || vismarker(vp))
+			continue;
 		/*
 		 * Step 4: invalidate all inactive vnodes.
 		 */
-		if (vrecycle(vp, &mntvnode_slock, l))
+		if (vrecycle(vp, &mntvnode_lock, l)) {
+			mutex_enter(&mntvnode_lock);
+			(void)vunmark(mvp);
 			goto loop;
+		}
 		/*
 		 * Step 5: invalidate all cached file data.
 		 */
-		simple_lock(&vp->v_interlock);
-		nvp = TAILQ_NEXT(vp, v_mntvnodes);
-		simple_unlock(&mntvnode_slock);
-		if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK))
+		mutex_enter(&vp->v_interlock);
+		mutex_exit(&mntvnode_lock);
+		if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK)) {
+			(void)vunmark(mvp);
 			goto loop;
+		}
 		if (vinvalbuf(vp, 0, cred, l, 0, 0))
 			panic("ffs_reload: dirty2");
 		/*
@@ -682,16 +688,18 @@ loop:
 		if (error) {
 			brelse(bp, 0);
 			vput(vp);
-			return (error);
+			(void)vunmark(mvp);
+			break;
 		}
 		ffs_load_inode(bp, ip, fs, ip->i_number);
 		ip->i_ffs_effnlink = ip->i_nlink;
 		brelse(bp, 0);
 		vput(vp);
-		simple_lock(&mntvnode_slock);
+		mutex_enter(&mntvnode_lock);
 	}
-	simple_unlock(&mntvnode_slock);
-	return (0);
+	mutex_exit(&mntvnode_lock);
+	vfree(mvp);
+	return (error);
 }
 
 /*
@@ -742,6 +750,10 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	fs = NULL;
 	sblockloc = 0;
 	fstype = 0;
+
+	error = fstrans_mount(mp);
+	if (error)
+		return error;
 
 	/*
 	 * Try reading the superblock in each of its possible locations.
@@ -974,7 +986,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	mp->mnt_fs_bshift = fs->fs_bshift;
 	mp->mnt_dev_bshift = DEV_BSHIFT;	/* XXX */
 	mp->mnt_flag |= MNT_LOCAL;
-	mp->mnt_iflag |= IMNT_HAS_TRANS;
+	mp->mnt_iflag |= IMNT_MPSAFE;
 #ifdef FFS_EI
 	if (needswap)
 		ump->um_flags |= UFS_NEEDSWAP;
@@ -1016,6 +1028,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 #endif /* UFS_EXTATTR */
 	return (0);
 out:
+	fstrans_unmount(mp);
 	if (fs)
 		free(fs, M_UFSMNT);
 	devvp->v_specmountpoint = NULL;
@@ -1214,10 +1227,12 @@ ffs_unmount(struct mount *mp, int mntflags)
 	free(fs, M_UFSMNT);
 	if (ump->um_oldfscompat != NULL)
 		free(ump->um_oldfscompat, M_UFSMNT);
+	softdep_unmount(mp);
 	mutex_destroy(&ump->um_lock);
 	free(ump, M_UFSMNT);
 	mp->mnt_data = NULL;
 	mp->mnt_flag &= ~MNT_LOCAL;
+	fstrans_unmount(mp);
 	return (0);
 }
 
@@ -1313,7 +1328,7 @@ int
 ffs_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
 {
 	struct lwp *l = curlwp;
-	struct vnode *vp, *nvp;
+	struct vnode *vp, *mvp;
 	struct inode *ip;
 	struct ufsmount *ump = VFSTOUFS(mp);
 	struct fs *fs;
@@ -1324,46 +1339,53 @@ ffs_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
 		printf("fs = %s\n", fs->fs_fsmnt);
 		panic("update: rofs mod");
 	}
+
+	/* Allocate a marker vnode. */
+	if ((mvp = valloc(mp)) == NULL)
+		return (ENOMEM);
+
 	fstrans_start(mp, FSTRANS_SHARED);
 	/*
 	 * Write back each (modified) inode.
 	 */
-	simple_lock(&mntvnode_slock);
+	mutex_enter(&mntvnode_lock);
 loop:
 	/*
 	 * NOTE: not using the TAILQ_FOREACH here since in this loop vgone()
 	 * and vclean() can be called indirectly
 	 */
-	for (vp = TAILQ_FIRST(&mp->mnt_vnodelist); vp; vp = nvp) {
+	for (vp = TAILQ_FIRST(&mp->mnt_vnodelist); vp; vp = vunmark(mvp)) {
+		vmark(mvp, vp);
 		/*
 		 * If the vnode that we are about to sync is no longer
 		 * associated with this mount point, start over.
 		 */
-		if (vp->v_mount != mp)
-			goto loop;
-		simple_lock(&vp->v_interlock);
-		nvp = TAILQ_NEXT(vp, v_mntvnodes);
+		if (vp->v_mount != mp || vismarker(vp))
+			continue;
+		mutex_enter(&vp->v_interlock);
 		ip = VTOI(vp);
-		if (vp->v_type == VNON ||
-		    ((ip->i_flag &
-		      (IN_CHANGE | IN_UPDATE | IN_MODIFIED)) == 0 &&
-		     LIST_EMPTY(&vp->v_dirtyblkhd) &&
-		     UVM_OBJ_IS_CLEAN(&vp->v_uobj)))
+		if (ip == NULL || (vp->v_iflag & (VI_XLOCK|VI_CLEAN)) != 0 ||
+		    vp->v_type == VNON || ((ip->i_flag &
+		    (IN_CHANGE | IN_UPDATE | IN_MODIFIED)) == 0 &&
+		    LIST_EMPTY(&vp->v_dirtyblkhd) &&
+		    UVM_OBJ_IS_CLEAN(&vp->v_uobj)))
 		{
-			simple_unlock(&vp->v_interlock);
+			mutex_exit(&vp->v_interlock);
 			continue;
 		}
 		if (vp->v_type == VBLK &&
 		    fstrans_getstate(mp) == FSTRANS_SUSPENDING) {
-			simple_unlock(&vp->v_interlock);
+			mutex_exit(&vp->v_interlock);
 			continue;
 		}
-		simple_unlock(&mntvnode_slock);
+		mutex_exit(&mntvnode_lock);
 		error = vget(vp, LK_EXCLUSIVE | LK_NOWAIT | LK_INTERLOCK);
 		if (error) {
-			simple_lock(&mntvnode_slock);
-			if (error == ENOENT)
+			mutex_enter(&mntvnode_lock);
+			if (error == ENOENT) {
+				(void)vunmark(mvp);
 				goto loop;
+			}
 			continue;
 		}
 		if (vp->v_type == VREG && waitfor == MNT_LAZY)
@@ -1374,9 +1396,9 @@ loop:
 		if (error)
 			allerror = error;
 		vput(vp);
-		simple_lock(&mntvnode_slock);
+		mutex_enter(&mntvnode_lock);
 	}
-	simple_unlock(&mntvnode_slock);
+	mutex_exit(&mntvnode_lock);
 	/*
 	 * Force stale file system control information to be flushed.
 	 */
@@ -1385,7 +1407,7 @@ loop:
 			allerror = error;
 		/* Flushed work items may create new vnodes to clean */
 		if (allerror == 0 && count) {
-			simple_lock(&mntvnode_slock);
+			mutex_enter(&mntvnode_lock);
 			goto loop;
 		}
 	}
@@ -1397,7 +1419,7 @@ loop:
 			allerror = error;
 		VOP_UNLOCK(ump->um_devvp, 0);
 		if (allerror == 0 && waitfor == MNT_WAIT) {
-			simple_lock(&mntvnode_slock);
+			mutex_enter(&mntvnode_lock);
 			goto loop;
 		}
 	}
@@ -1414,6 +1436,7 @@ loop:
 			allerror = error;
 	}
 	fstrans_done(mp);
+	vfree(mvp);
 	return (allerror);
 }
 

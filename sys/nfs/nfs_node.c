@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.96 2007/11/26 19:02:20 pooka Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.97 2008/01/02 11:49:03 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.96 2007/11/26 19:02:20 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.97 2008/01/02 11:49:03 ad Exp $");
 
 #include "opt_nfs.h"
 
@@ -224,12 +224,11 @@ nfs_inactive(v)
 {
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
+		bool *a_recycle;
 	} */ *ap = v;
 	struct nfsnode *np;
 	struct sillyrename *sp;
-	struct lwp *l = curlwp;
 	struct vnode *vp = ap->a_vp;
-	bool removed;
 
 	np = VTONFS(vp);
 	if (prtactive && vp->v_usecount != 0)
@@ -240,8 +239,8 @@ nfs_inactive(v)
 	} else
 		sp = NULL;
 	if (sp != NULL)
-		nfs_vinvalbuf(vp, 0, sp->s_cred, l, 1);
-	removed = (np->n_flag & NREMOVED) != 0;
+		nfs_vinvalbuf(vp, 0, sp->s_cred, curlwp, 1);
+	*ap->a_recycle = (np->n_flag & NREMOVED) != 0;
 	np->n_flag &=
 	    (NMODIFIED | NFLUSHINPROG | NFLUSHWANT | NEOFVALID | NTRUNCDELAYED);
 
@@ -250,10 +249,6 @@ nfs_inactive(v)
 		    NFS_INVALDIRCACHE_FORCE | NFS_INVALDIRCACHE_KEEPEOF);
 
 	VOP_UNLOCK(vp, 0);
-
-	/* XXXMP only kernel_lock protects vp */
-	if (removed)
-		vrecycle(vp, NULL, l);
 
 	if (sp != NULL) {
 		int error;

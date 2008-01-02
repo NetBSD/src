@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_inode.h,v 1.4 2007/03/04 06:03:00 christos Exp $	*/
+/*	$NetBSD: ntfs_inode.h,v 1.5 2008/01/02 11:48:42 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -73,7 +73,7 @@ struct ntnode {
 
 	/* locking */
 	struct lock	i_lock;
-	struct simplelock i_interlock;
+	kmutex_t	i_interlock;
 	int		i_usecount;
 
 	LIST_HEAD(,fnode)	i_fnlist;
