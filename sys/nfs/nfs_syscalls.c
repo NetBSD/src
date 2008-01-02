@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.127 2007/12/04 17:42:31 yamt Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.127.4.1 2008/01/02 21:57:44 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.127 2007/12/04 17:42:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.127.4.1 2008/01/02 21:57:44 bouyer Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -116,8 +116,6 @@ int nfssvc_sockhead_flag;
 int nfsd_head_flag;
 #endif
 
-MALLOC_DEFINE(M_NFSUID, "NFS uid", "Nfs uid mapping structure");
-
 #ifdef NFS
 /*
  * locking order:
@@ -148,12 +146,12 @@ static void nfsd_rt __P((int, struct nfsrv_descript *, int));
  * - remains in the kernel as an nfsiod
  */
 int
-sys_nfssvc(struct lwp *l, void *v, register_t *retval)
+sys_nfssvc(struct lwp *l, const struct sys_nfssvc_args *uap, register_t *retval)
 {
-	struct sys_nfssvc_args /* {
+	/* {
 		syscallarg(int) flag;
 		syscallarg(void *) argp;
-	} */ *uap = v;
+	} */
 	int error;
 #ifdef NFSSERVER
 	struct file *fp;
@@ -279,14 +277,12 @@ sys_nfssvc(struct lwp *l, void *v, register_t *retval)
 			     */
 			    if (slp->ns_numuids < nuidhash_max) {
 				slp->ns_numuids++;
-				nuidp = (struct nfsuid *)
-				   malloc(sizeof (struct nfsuid), M_NFSUID,
-					M_WAITOK);
+				nuidp = kmem_alloc(sizeof(*nuidp), KM_SLEEP);
 			    } else
 				nuidp = (struct nfsuid *)0;
 			    if ((slp->ns_flags & SLP_VALID) == 0) {
 				if (nuidp)
-				    free((void *)nuidp, M_NFSUID);
+				    kmem_free(nuidp, sizeof(*nuidp));
 			    } else {
 				if (nuidp == (struct nfsuid *)0) {
 				    nuidp = TAILQ_FIRST(&slp->ns_uidlruhead);
@@ -349,15 +345,13 @@ sys_nfssvc(struct lwp *l, void *v, register_t *retval)
 
 #ifdef NFSSERVER
 MALLOC_DEFINE(M_NFSD, "NFS daemon", "Nfs server daemon structure");
-MALLOC_DEFINE(M_NFSSVC, "NFS srvsock", "Nfs server structure");
 
 static struct nfssvc_sock *
 nfsrv_sockalloc()
 {
 	struct nfssvc_sock *slp;
 
-	slp = (struct nfssvc_sock *)
-	    malloc(sizeof (struct nfssvc_sock), M_NFSSVC, M_WAITOK);
+	slp = kmem_alloc(sizeof(*slp), KM_SLEEP);
 	memset(slp, 0, sizeof (struct nfssvc_sock));
 	/* XXX could be IPL_SOFTNET */
 	mutex_init(&slp->ns_lock, MUTEX_DRIVER, IPL_VM);
@@ -383,7 +377,7 @@ nfsrv_sockfree(struct nfssvc_sock *slp)
 	mutex_destroy(&slp->ns_lock);
 	mutex_destroy(&slp->ns_alock);
 	cv_destroy(&slp->ns_cv);
-	free(slp, M_NFSSVC);
+	kmem_free(slp, sizeof(*slp));
 }
 
 /*
@@ -479,11 +473,13 @@ nfssvc_addsock(fp, mynam)
 	slp->ns_aflags = SLP_A_NEEDQ;
 	slp->ns_gflags = 0;
 	slp->ns_sflags = 0;
+	KERNEL_LOCK(1, curlwp);
 	s = splsoftnet();
 	so->so_upcallarg = (void *)slp;
 	so->so_upcall = nfsrv_soupcall;
 	so->so_rcv.sb_flags |= SB_UPCALL;
 	splx(s);
+	KERNEL_UNLOCK_ONE(curlwp);
 	nfsrv_wakenfsd(slp);
 	return (0);
 }
@@ -516,8 +512,7 @@ nfssvc_nfsd(nsd, argp, l)
 #endif
 	uvm_lwp_hold(l);
 	if (nfsd == NULL) {
-		nsd->nsd_nfsd = nfsd = 
-			malloc(sizeof (struct nfsd), M_NFSD, M_WAITOK);
+		nsd->nsd_nfsd = nfsd = kmem_alloc(sizeof(*nfsd), KM_SLEEP);
 		memset(nfsd, 0, sizeof (struct nfsd));
 		cv_init(&nfsd->nfsd_cv, "nfsd");
 		nfsd->nfsd_procp = p;
@@ -816,7 +811,7 @@ done:
 		nfssvc_sockhead_flag |= SLP_INIT;
 	mutex_exit(&nfsd_lock);
 	cv_destroy(&nfsd->nfsd_cv);
-	free(nfsd, M_NFSD);
+	kmem_free(nfsd, sizeof(*nfsd));
 	nsd->nsd_nfsd = NULL;
 	if (doreinit)
 		nfsrv_init(true);	/* Reinitialize everything */
@@ -855,12 +850,14 @@ nfsrv_zapsock(slp)
 
 	so = slp->ns_so;
 	KASSERT(so != NULL);
+	KERNEL_LOCK(1, curlwp);
 	s = splsoftnet();
 	so->so_upcall = NULL;
 	so->so_upcallarg = NULL;
 	so->so_rcv.sb_flags &= ~SB_UPCALL;
 	splx(s);
 	soshutdown(so, SHUT_RDWR);
+	KERNEL_UNLOCK_ONE(curlwp);
 
 	if (slp->ns_nam)
 		m_free(slp->ns_nam);
@@ -880,7 +877,7 @@ nfsrv_zapsock(slp)
 		TAILQ_REMOVE(&slp->ns_uidlruhead, nuidp, nu_lru);
 		if (nuidp->nu_flag & NU_NAM)
 			m_freem(nuidp->nu_nam);
-		free((void *)nuidp, M_NFSUID);
+		kmem_free(nuidp, sizeof(*nuidp));
 	}
 	mutex_enter(&nfsd_lock);
 	while ((nwp = LIST_FIRST(&slp->ns_tq)) != NULL) {
@@ -1045,10 +1042,8 @@ nfssvc_iod(void *arg)
 	struct nfs_iod *myiod;
 	struct nfsmount *nmp;
 
-	KERNEL_LOCK(1, curlwp);
 	myiod = kmem_alloc(sizeof(*myiod), KM_SLEEP);
 	mutex_init(&myiod->nid_lock, MUTEX_DEFAULT, IPL_NONE);
-	KERNEL_UNLOCK_LAST(curlwp);
 	cv_init(&myiod->nid_cv, "nfsiod");
 	myiod->nid_exiting = false;
 	myiod->nid_mount = NULL;
@@ -1123,10 +1118,8 @@ quit:
 	mutex_exit(&myiod->nid_lock);
 
 	cv_destroy(&myiod->nid_cv);
-	KERNEL_LOCK(1, curlwp);
 	mutex_destroy(&myiod->nid_lock);
 	kmem_free(myiod, sizeof(*myiod));
-	KERNEL_UNLOCK_LAST(curlwp);
 
 	kthread_exit(0);
 }
@@ -1166,10 +1159,8 @@ nfs_set_niothreads(int newval)
 			 */
 
 			mutex_exit(&nfs_iodlist_lock);
-			KERNEL_LOCK(1, curlwp);
 			error = kthread_create(PRI_NONE, KTHREAD_MPSAFE, NULL,
 			    nfssvc_iod, NULL, NULL, "nfsio");
-			KERNEL_UNLOCK_LAST(curlwp);
 			mutex_enter(&nfs_iodlist_lock);
 			if (error) {
 				/* give up */
@@ -1375,9 +1366,7 @@ nfs_savenickauth(nmp, cred, len, key, mdp, dposp, mrep)
 		if (deltasec <= NFS_KERBCLOCKSKEW) {
 			if (nmp->nm_numuids < nuidhash_max) {
 				nmp->nm_numuids++;
-				nuidp = (struct nfsuid *)
-				   malloc(sizeof (struct nfsuid), M_NFSUID,
-					M_WAITOK);
+				nuidp = kmem_alloc(sizeof(*nuidp), KM_SLEEP);
 			} else {
 				nuidp = TAILQ_FIRST(&nmp->nm_uidlruhead);
 				LIST_REMOVE(nuidp, nu_hash);

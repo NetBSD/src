@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.185 2007/11/28 04:14:11 dyoung Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.185.6.1 2008/01/02 21:57:22 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.185 2007/11/28 04:14:11 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.185.6.1 2008/01/02 21:57:22 bouyer Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_inet.h"
@@ -174,6 +174,7 @@ int	ip_do_loopback_cksum = 0;
 int
 ip_output(struct mbuf *m0, ...)
 {
+	struct rtentry *rt;
 	struct ip *ip;
 	struct ifnet *ifp;
 	struct mbuf *m = m0;
@@ -199,9 +200,7 @@ ip_output(struct mbuf *m0, ...)
 #endif /*IPSEC*/
 #ifdef FAST_IPSEC
 	struct inpcb *inp;
-	struct m_tag *mtag;
 	struct secpolicy *sp = NULL;
-	struct tdb_ident *tdbi;
 	int s;
 #endif
 	u_int16_t ip_len;
@@ -261,7 +260,9 @@ ip_output(struct mbuf *m0, ...)
 	if ((flags & (IP_FORWARDING|IP_RAWOUTPUT)) == 0) {
 		ip->ip_v = IPVERSION;
 		ip->ip_off = htons(0);
-		if ((m->m_pkthdr.csum_flags & M_CSUM_TSOv4) == 0) {
+		if (m->m_pkthdr.len < IP_MINFRAGSIZE) {
+			ip->ip_id = 0;
+		} else if ((m->m_pkthdr.csum_flags & M_CSUM_TSOv4) == 0) {
 			ip->ip_id = ip_newid();
 		} else {
 
@@ -308,7 +309,7 @@ ip_output(struct mbuf *m0, ...)
 		rtcache_free(ro);
 	else
 		rtcache_check(ro);
-	if (ro->ro_rt == NULL) {
+	if ((rt = rtcache_getrt(ro)) == NULL) {
 		dst = &u.dst4;
 		rtcache_setdst(ro, &u.dst);
 	}
@@ -332,20 +333,20 @@ ip_output(struct mbuf *m0, ...)
 		mtu = ifp->if_mtu;
 		IFP_TO_IA(ifp, ia);
 	} else {
-		if (ro->ro_rt == NULL)
+		if (rt == NULL)
 			rtcache_init(ro);
-		if (ro->ro_rt == NULL) {
+		if ((rt = rtcache_getrt(ro)) == NULL) {
 			ipstat.ips_noroute++;
 			error = EHOSTUNREACH;
 			goto bad;
 		}
-		ia = ifatoia(ro->ro_rt->rt_ifa);
-		ifp = ro->ro_rt->rt_ifp;
-		if ((mtu = ro->ro_rt->rt_rmx.rmx_mtu) == 0)
+		ia = ifatoia(rt->rt_ifa);
+		ifp = rt->rt_ifp;
+		if ((mtu = rt->rt_rmx.rmx_mtu) == 0)
 			mtu = ifp->if_mtu;
-		ro->ro_rt->rt_use++;
-		if (ro->ro_rt->rt_flags & RTF_GATEWAY)
-			dst = satosin(ro->ro_rt->rt_gateway);
+		rt->rt_use++;
+		if (rt->rt_flags & RTF_GATEWAY)
+			dst = satosin(rt->rt_gateway);
 	}
 	if (IN_MULTICAST(ip->ip_dst.s_addr) ||
 	    (ip->ip_dst.s_addr == INADDR_BROADCAST)) {
@@ -500,8 +501,8 @@ sendit:
 	 * If we're doing Path MTU Discovery, we need to set DF unless
 	 * the route's MTU is locked.
 	 */
-	if ((flags & IP_MTUDISC) != 0 && ro->ro_rt != NULL &&
-	    (ro->ro_rt->rt_rmx.rmx_locks & RTV_MTU) == 0)
+	if ((flags & IP_MTUDISC) != 0 && rt != NULL &&
+	    (rt->rt_rmx.rmx_locks & RTV_MTU) == 0)
 		ip->ip_off |= htons(IP_DF);
 
 	/* Remember the current ip_len */
@@ -608,12 +609,13 @@ sendit:
 		 * if we have tunnel mode SA, we may need to ignore
 		 * IP_ROUTETOIF.
 		 */
-		if (state.ro != &iproute || state.ro->ro_rt != NULL) {
+		if (state.ro != &iproute || rtcache_getrt(state.ro) != NULL) {
 			flags &= ~IP_ROUTETOIF;
 			ro = state.ro;
 		}
 	} else
 		ro = state.ro;
+	rt = rtcache_getrt(ro);
 	dst = satocsin(state.dst);
 	if (error) {
 		/* mbuf is already reclaimed in ipsec4_output. */
@@ -641,7 +643,7 @@ sendit:
 	hlen = ip->ip_hl << 2;
 	ip_len = ntohs(ip->ip_len);
 
-	if (ro->ro_rt == NULL) {
+	if (rt == NULL) {
 		if ((flags & IP_ROUTETOIF) == 0) {
 			printf("ip_output: "
 				"can't update route after IPsec processing\n");
@@ -651,8 +653,8 @@ sendit:
 	} else {
 		/* nobody uses ia beyond here */
 		if (state.encap) {
-			ifp = ro->ro_rt->rt_ifp;
-			if ((mtu = ro->ro_rt->rt_rmx.rmx_mtu) == 0)
+			ifp = rt->rt_ifp;
+			if ((mtu = rt->rt_rmx.rmx_mtu) == 0)
 				mtu = ifp->if_mtu;
 		}
 	}
@@ -669,137 +671,82 @@ skip_ipsec:
 	 * AH, ESP, etc. processing), there will be a tag to bypass
 	 * the lookup and related policy checking.
 	 */
-	mtag = m_tag_find(m, PACKET_TAG_IPSEC_PENDING_TDB, NULL);
-	s = splsoftnet();
-	if (mtag != NULL) {
-		tdbi = (struct tdb_ident *)(mtag + 1);
-		sp = ipsec_getpolicy(tdbi, IPSEC_DIR_OUTBOUND);
-		if (sp == NULL)
-			error = -EINVAL;	/* force silent drop */
-		m_tag_delete(m, mtag);
-	} else {
+	if (!ipsec_outdone(m)) {
+		s = splsoftnet();
 		if (inp != NULL &&
-		    IPSEC_PCB_SKIP_IPSEC(inp->inp_sp, IPSEC_DIR_OUTBOUND))
+				IPSEC_PCB_SKIP_IPSEC(inp->inp_sp, IPSEC_DIR_OUTBOUND))
 			goto spd_done;
 		sp = ipsec4_checkpolicy(m, IPSEC_DIR_OUTBOUND, flags,
-					&error, inp);
-	}
-	/*
-	 * There are four return cases:
-	 *    sp != NULL	 	    apply IPsec policy
-	 *    sp == NULL, error == 0	    no IPsec handling needed
-	 *    sp == NULL, error == -EINVAL  discard packet w/o error
-	 *    sp == NULL, error != 0	    discard packet, report error
-	 */
-	if (sp != NULL) {
+				&error, inp);
+		/*
+		 * There are four return cases:
+		 *    sp != NULL	 	    apply IPsec policy
+		 *    sp == NULL, error == 0	    no IPsec handling needed
+		 *    sp == NULL, error == -EINVAL  discard packet w/o error
+		 *    sp == NULL, error != 0	    discard packet, report error
+		 */
+		if (sp != NULL) {
 #ifdef IPSEC_NAT_T
-		/*
-		 * NAT-T ESP fragmentation: don't do IPSec processing now,
-		 * we'll do it on each fragmented packet.
-		 */
-		if (sp->req->sav &&
-		    ((sp->req->sav->natt_type & UDP_ENCAP_ESPINUDP) ||
-		     (sp->req->sav->natt_type & UDP_ENCAP_ESPINUDP_NON_IKE))) {
-			if (ntohs(ip->ip_len) > sp->req->sav->esp_frag) {
-				natt_frag = 1;
-				mtu = sp->req->sav->esp_frag;
-				goto spd_done;
-			}
-		}
-#endif /* IPSEC_NAT_T */
-		/* Loop detection, check if ipsec processing already done */
-		IPSEC_ASSERT(sp->req != NULL, ("ip_output: no ipsec request"));
-		for (mtag = m_tag_first(m); mtag != NULL;
-		     mtag = m_tag_next(m, mtag)) {
-#ifdef MTAG_ABI_COMPAT
-			if (mtag->m_tag_cookie != MTAG_ABI_COMPAT)
-				continue;
-#endif
-			if (mtag->m_tag_id != PACKET_TAG_IPSEC_OUT_DONE &&
-			    mtag->m_tag_id != PACKET_TAG_IPSEC_OUT_CRYPTO_NEEDED)
-				continue;
 			/*
-			 * Check if policy has an SA associated with it.
-			 * This can happen when an SP has yet to acquire
-			 * an SA; e.g. on first reference.  If it occurs,
-			 * then we let ipsec4_process_packet do its thing.
+			 * NAT-T ESP fragmentation: don't do IPSec processing now,
+			 * we'll do it on each fragmented packet.
 			 */
-			if (sp->req->sav == NULL)
-				break;
-			tdbi = (struct tdb_ident *)(mtag + 1);
-			if (tdbi->spi == sp->req->sav->spi &&
-			    tdbi->proto == sp->req->sav->sah->saidx.proto &&
-			    bcmp(&tdbi->dst, &sp->req->sav->sah->saidx.dst,
-				 sizeof (union sockaddr_union)) == 0) {
-				/*
-				 * No IPsec processing is needed, free
-				 * reference to SP.
-				 *
-				 * NB: null pointer to avoid free at
-				 *     done: below.
-				 */
-				KEY_FREESP(&sp), sp = NULL;
-				splx(s);
-				goto spd_done;
+			if (sp->req->sav &&
+					((sp->req->sav->natt_type & UDP_ENCAP_ESPINUDP) ||
+					 (sp->req->sav->natt_type & UDP_ENCAP_ESPINUDP_NON_IKE))) {
+				if (ntohs(ip->ip_len) > sp->req->sav->esp_frag) {
+					natt_frag = 1;
+					mtu = sp->req->sav->esp_frag;
+					splx(s);
+					goto spd_done;
+				}
 			}
-		}
+#endif /* IPSEC_NAT_T */
 
-		/*
-		 * Do delayed checksums now because we send before
-		 * this is done in the normal processing path.
-		 */
-		if (m->m_pkthdr.csum_flags & (M_CSUM_TCPv4|M_CSUM_UDPv4)) {
-			in_delayed_cksum(m);
-			m->m_pkthdr.csum_flags &= ~(M_CSUM_TCPv4|M_CSUM_UDPv4);
-		}
+			/*
+			 * Do delayed checksums now because we send before
+			 * this is done in the normal processing path.
+			 */
+			if (m->m_pkthdr.csum_flags & (M_CSUM_TCPv4|M_CSUM_UDPv4)) {
+				in_delayed_cksum(m);
+				m->m_pkthdr.csum_flags &= ~(M_CSUM_TCPv4|M_CSUM_UDPv4);
+			}
 
 #ifdef __FreeBSD__
-		ip->ip_len = htons(ip->ip_len);
-		ip->ip_off = htons(ip->ip_off);
+			ip->ip_len = htons(ip->ip_len);
+			ip->ip_off = htons(ip->ip_off);
 #endif
 
-		/* NB: callee frees mbuf */
-		error = ipsec4_process_packet(m, sp->req, flags, 0);
-		/*
-		 * Preserve KAME behaviour: ENOENT can be returned
-		 * when an SA acquire is in progress.  Don't propagate
-		 * this to user-level; it confuses applications.
-		 *
-		 * XXX this will go away when the SADB is redone.
-		 */
-		if (error == ENOENT)
-			error = 0;
-		splx(s);
-		goto done;
-	} else {
-		splx(s);
-
-		if (error != 0) {
+			/* NB: callee frees mbuf */
+			error = ipsec4_process_packet(m, sp->req, flags, 0);
 			/*
-			 * Hack: -EINVAL is used to signal that a packet
-			 * should be silently discarded.  This is typically
-			 * because we asked key management for an SA and
-			 * it was delayed (e.g. kicked up to IKE).
+			 * Preserve KAME behaviour: ENOENT can be returned
+			 * when an SA acquire is in progress.  Don't propagate
+			 * this to user-level; it confuses applications.
+			 *
+			 * XXX this will go away when the SADB is redone.
 			 */
-			if (error == -EINVAL)
+			if (error == ENOENT)
 				error = 0;
-			goto bad;
+			splx(s);
+			goto done;
 		} else {
-			/* No IPsec processing for this packet. */
+			splx(s);
+
+			if (error != 0) {
+				/*
+				 * Hack: -EINVAL is used to signal that a packet
+				 * should be silently discarded.  This is typically
+				 * because we asked key management for an SA and
+				 * it was delayed (e.g. kicked up to IKE).
+				 */
+				if (error == -EINVAL)
+					error = 0;
+				goto bad;
+			} else {
+				/* No IPsec processing for this packet. */
+			}
 		}
-#ifdef notyet
-		/*
-		 * If deferred crypto processing is needed, check that
-		 * the interface supports it.
-		 */
-		mtag = m_tag_find(m, PACKET_TAG_IPSEC_OUT_CRYPTO_NEEDED, NULL);
-		if (mtag != NULL && (ifp->if_capenable & IFCAP_IPSEC) == 0) {
-			/* notify IPsec to do its own crypto */
-			ipsp_skipcrypto_unmark((struct tdb_ident *)(mtag + 1));
-			error = EHOSTUNREACH;
-			goto bad;
-		}
-#endif
 	}
 spd_done:
 #endif /* FAST_IPSEC */
@@ -884,13 +831,13 @@ spd_done:
 			    (*ifp->if_output)(ifp, m,
 				(m->m_flags & M_MCAST) ?
 				    sintocsa(rdst) : sintocsa(dst),
-				ro->ro_rt);
+				rt);
 		} else {
 			error =
 			    ip_tso_output(ifp, m,
 				(m->m_flags & M_MCAST) ?
 				    sintocsa(rdst) : sintocsa(dst),
-				ro->ro_rt);
+				rt);
 		}
 		goto done;
 	}
@@ -959,7 +906,7 @@ spd_done:
 				error = (*ifp->if_output)(ifp, m,
 				    (m->m_flags & M_MCAST) ?
 					sintocsa(rdst) : sintocsa(dst),
-				    ro->ro_rt);
+				    rt);
 			}
 		} else
 			m_freem(m);
@@ -1765,6 +1712,7 @@ ip_setmoptions(int optname, struct ip_moptions **imop, struct mbuf *m)
 		 * the route to the given multicast address.
 		 */
 		if (in_nullhost(mreq->imr_interface)) {
+			struct rtentry *rt;
 			union {
 				struct sockaddr		dst;
 				struct sockaddr_in	dst4;
@@ -1776,7 +1724,8 @@ ip_setmoptions(int optname, struct ip_moptions **imop, struct mbuf *m)
 			sockaddr_in_init(&u.dst4, &mreq->imr_multiaddr, 0);
 			rtcache_setdst(&ro, &u.dst);
 			rtcache_init(&ro);
-			ifp = (ro.ro_rt != NULL) ? ro.ro_rt->rt_ifp : NULL;
+			ifp = (rt = rtcache_getrt(&ro)) != NULL ? rt->rt_ifp
+			                                        : NULL;
 			rtcache_free(&ro);
 		} else {
 			ifp = ip_multicast_if(&mreq->imr_interface, NULL);

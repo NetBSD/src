@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.60 2007/10/08 23:20:38 ad Exp $	*/
+/*	$NetBSD: file.h,v 1.60.10.1 2008/01/02 21:58:00 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -156,8 +156,8 @@ do {									\
 
 LIST_HEAD(filelist, file);
 extern struct filelist	filehead;	/* head of list of open files */
-extern int		maxfiles;	/* kernel limit on # of open files */
-extern int		nfiles;		/* actual number of open files */
+extern u_int		maxfiles;	/* kernel limit on # of open files */
+extern u_int		nfiles;		/* actual number of open files */
 
 extern const struct fileops vnops;	/* vnode operations for files */
 

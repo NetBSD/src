@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_usrreq.c,v 1.25 2007/05/02 20:40:24 dyoung Exp $	 */
+/*	$NetBSD: ddp_usrreq.c,v 1.25.20.1 2008/01/02 21:57:15 bouyer Exp $	 */
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.25 2007/05/02 20:40:24 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.25.20.1 2008/01/02 21:57:15 bouyer Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -335,6 +335,7 @@ at_pcbconnect(ddp, addr, l)
 	struct mbuf    *addr;
 	struct lwp     *l;
 {
+	struct rtentry *rt;
 	const struct sockaddr_at *cdst;
 	struct sockaddr_at *sat = mtod(addr, struct sockaddr_at *);
 	struct route *ro;
@@ -366,13 +367,13 @@ at_pcbconnect(ddp, addr, l)
          * route here.  Attempt to detect it.
          */
 	rtcache_check(ro);
-	if (ro->ro_rt != NULL) {
+	if ((rt = rtcache_getrt(ro)) != NULL) {
 		if (hintnet) {
 			net = hintnet;
 		} else {
 			net = sat->sat_addr.s_net;
 		}
-		if ((ifp = ro->ro_rt->rt_ifp) != NULL) {
+		if ((ifp = rt->rt_ifp) != NULL) {
 			TAILQ_FOREACH(aa, &at_ifaddr, aa_list) {
 				if (aa->aa_ifp == ifp &&
 				    ntohs(net) >= ntohs(aa->aa_firstnet) &&
@@ -391,7 +392,7 @@ at_pcbconnect(ddp, addr, l)
 	/*
          * If we've got no route for this interface, try to find one.
          */
-	if (ro->ro_rt == NULL) {
+	if ((rt = rtcache_getrt(ro)) == NULL) {
 		union {
 			struct sockaddr		dst;
 			struct sockaddr_at	dsta;
@@ -407,7 +408,7 @@ at_pcbconnect(ddp, addr, l)
 	/*
          * Make sure any route that we have has a valid interface.
          */
-	if (ro->ro_rt != NULL && (ifp = ro->ro_rt->rt_ifp) != NULL) {
+	if ((rt = rtcache_getrt(ro)) != NULL && (ifp = rt->rt_ifp) != NULL) {
 		TAILQ_FOREACH(aa, &at_ifaddr, aa_list) {
 			if (aa->aa_ifp == ifp)
 				break;

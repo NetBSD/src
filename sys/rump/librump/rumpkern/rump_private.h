@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_private.h,v 1.6 2007/11/07 16:24:22 pooka Exp $	*/
+/*	$NetBSD: rump_private.h,v 1.6.6.1 2008/01/02 21:57:54 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -68,7 +68,7 @@ struct rump_specpriv {
 
 #define RUMP_UBC_MAGIC_WINDOW (void *)0x37
 
-void abort(void) __attribute__((__noreturn__));
+void abort(void) __dead;
 
 void	rump_putnode(struct vnode *);
 int	rump_recyclenode(struct vnode *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extern.h,v 1.55 2007/11/26 19:02:34 pooka Exp $	*/
+/*	$NetBSD: ufs_extern.h,v 1.55.6.1 2008/01/02 21:58:29 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -33,6 +33,8 @@
 
 #ifndef _UFS_UFS_EXTERN_H_
 #define _UFS_UFS_EXTERN_H_
+
+#include <sys/mutex.h>
 
 struct buf;
 struct componentname;
@@ -185,5 +187,7 @@ void  softdep_change_linkcnt(struct inode *);
 void  softdep_releasefile(struct inode *);
 
 __END_DECLS
+
+extern kmutex_t ufs_ihash_lock;
 
 #endif /* !_UFS_UFS_EXTERN_H_ */

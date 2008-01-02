@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.c,v 1.31 2007/11/30 19:02:31 pooka Exp $	*/
+/*	$NetBSD: p2k.c,v 1.31.6.1 2008/01/02 21:57:48 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -141,8 +141,8 @@ p2k_run_fs(const char *vfsname, const char *devpath, const char *mountpath,
 	PUFFSOP_SET(pops, p2k, node, setattr);
 #if 0
 	PUFFSOP_SET(pops, p2k, node, poll);
-	PUFFSOP_SET(pops, p2k, node, mmap);
 #endif
+	PUFFSOP_SET(pops, p2k, node, mmap);
 	PUFFSOP_SET(pops, p2k, node, fsync);
 	PUFFSOP_SET(pops, p2k, node, seek);
 	PUFFSOP_SET(pops, p2k, node, remove);
@@ -160,7 +160,12 @@ p2k_run_fs(const char *vfsname, const char *devpath, const char *mountpath,
 	PUFFSOP_SET(pops, p2k, node, reclaim);
 
 	strcpy(typebuf, "p2k|");
-	strlcat(typebuf, vfsname, sizeof(typebuf));
+	if (strcmp(vfsname, "puffs") == 0) { /* XXX */
+		struct puffs_kargs *args = arg;
+		strlcat(typebuf, args->pa_typename, sizeof(typebuf));
+	} else {
+		strlcat(typebuf, vfsname, sizeof(typebuf));
+	}
 
 	pu = puffs_init(pops, devpath, typebuf, ukfs_getmp(ukfs), puffs_flags);
 	if (pu == NULL)
@@ -429,6 +434,20 @@ p2k_node_fsync(struct puffs_usermount *pu, void *opc, const struct puffs_cred *p
 }
 
 int
+p2k_node_mmap(struct puffs_usermount *pu, void *opc, vm_prot_t flags,
+	const struct puffs_cred *pcr)
+{
+	kauth_cred_t cred;
+	int rv;
+
+	cred = cred_create(pcr);
+	rv = RUMP_VOP_MMAP(opc, flags, cred);
+	cred_destroy(cred);
+
+	return rv;
+}
+
+int
 p2k_node_seek(struct puffs_usermount *pu, void *opc, off_t oldoff, off_t newoff,
 	const struct puffs_cred *pcr)
 {
@@ -669,11 +688,13 @@ int
 p2k_node_inactive(struct puffs_usermount *pu, void *opc)
 {
 	struct vnode *vp = opc;
+	bool recycle;
 	int rv;
 
+	rump_vp_interlock(vp);
 	(void) RUMP_VOP_PUTPAGES(vp, 0, 0, PGO_ALLPAGES);
 	VLE(vp);
-	rv = RUMP_VOP_INACTIVE(vp);
+	rv = RUMP_VOP_INACTIVE(vp, &recycle);
 	if (vp->v_usecount == 0)
 		puffs_setback(puffs_cc_getcc(pu), PUFFS_SETBACK_NOREF_N1);
 
