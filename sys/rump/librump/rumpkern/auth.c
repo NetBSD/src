@@ -1,4 +1,4 @@
-/*	$NetBSD: auth.c,v 1.3 2007/12/08 19:29:52 pooka Exp $	*/
+/*	$NetBSD: auth.c,v 1.4 2008/01/02 18:15:14 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -48,6 +48,8 @@ rump_cred_create(uid_t uid, gid_t gid, size_t ngroups, gid_t *groups)
 {
 	kauth_cred_t cred;
 	size_t credsize;
+
+	KASSERT(ngroups <= NGROUPS);
 
 	credsize = sizeof(struct kauth_cred) + ngroups * sizeof(gid_t);
 	cred = rumpuser_malloc(credsize, 0);
@@ -148,6 +150,36 @@ kauth_cred_group(kauth_cred_t cred, u_int idx)
 	KASSERT(idx < cred->cr_ngroups);
 
 	return cred->cr_groups[idx];
+}
+
+void
+kauth_cred_to_uucred(struct uucred *uucred, const kauth_cred_t cred)
+{
+
+	if (cred == RUMPCRED_SUSER) {
+		memset(uucred, 0, sizeof(struct uucred));
+		return;
+	}
+
+	uucred->cr_uid = cred->cr_uid;
+	uucred->cr_gid = cred->cr_gid;
+	uucred->cr_ngroups = cred->cr_ngroups;
+	memcpy(uucred->cr_groups, cred->cr_groups,
+	    cred->cr_ngroups * sizeof(gid_t));
+}
+
+void
+kauth_cred_hold(kauth_cred_t cred)
+{
+
+	/* nada: creds are always destroyed upon exit from VOP */
+}
+
+void
+kauth_cred_free(kauth_cred_t cred)
+{
+
+	/* nada: see above */
 }
 
 kauth_cred_t

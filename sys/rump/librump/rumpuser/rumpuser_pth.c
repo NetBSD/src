@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_pth.c,v 1.6 2007/11/19 14:17:22 pooka Exp $	*/
+/*	$NetBSD: rumpuser_pth.c,v 1.7 2008/01/02 18:15:15 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -80,10 +80,10 @@ iothread(void *arg)
 		pthread_mutex_unlock(&rua_mtx.pthmtx);
 
 		if (rua->rua_op)
-			rumpuser_read(rua->rua_fd, rua->rua_data,
+			rumpuser_read_bio(rua->rua_fd, rua->rua_data,
 			    rua->rua_dlen, rua->rua_off, rua->rua_bp);
 		else
-			rumpuser_write(rua->rua_fd, rua->rua_data,
+			rumpuser_write_bio(rua->rua_fd, rua->rua_data,
 			    rua->rua_dlen, rua->rua_off, rua->rua_bp);
 
 		free(rua);
