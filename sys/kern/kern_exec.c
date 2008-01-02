@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.264 2008/01/02 11:48:49 ad Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.265 2008/01/02 19:44:37 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.264 2008/01/02 11:48:49 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.265 2008/01/02 19:44:37 yamt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.264 2008/01/02 11:48:49 ad Exp $");
 #include <sys/proc.h>
 #include <sys/mount.h>
 #include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/namei.h>
 #include <sys/vnode.h>
 #include <sys/file.h>
@@ -421,7 +422,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	struct ps_strings	arginfo;
 	struct ps_strings	*aip = &arginfo;
 	struct vmspace		*vm;
-	char			**tmpfap;
+	struct exec_fakearg	*tmpfap;
 	int			szsigcode;
 	struct exec_vmcmd	*base_vcp;
 	ksiginfo_t		ksi;
@@ -460,7 +461,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	 * initialize the fields of the exec package.
 	 */
 	pack.ep_name = path;
-	pack.ep_hdr = malloc(exec_maxhdrsz, M_EXEC, M_WAITOK);
+	pack.ep_hdr = kmem_alloc(exec_maxhdrsz, KM_SLEEP);
 	pack.ep_hdrlen = exec_maxhdrsz;
 	pack.ep_hdrvalid = 0;
 	pack.ep_ndp = &nid;
@@ -500,18 +501,18 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	/* copy the fake args list, if there's one, freeing it as we go */
 	if (pack.ep_flags & EXEC_HASARGL) {
 		tmpfap = pack.ep_fa;
-		while (*tmpfap != NULL) {
-			char *cp;
+		while (tmpfap->fa_arg != NULL) {
+			const char *cp;
 
-			cp = *tmpfap;
+			cp = tmpfap->fa_arg;
 			while (*cp)
 				*dp++ = *cp++;
 			dp++;
 
-			FREE(*tmpfap, M_EXEC);
+			kmem_free(tmpfap->fa_arg, tmpfap->fa_len);
 			tmpfap++; argc++;
 		}
-		FREE(pack.ep_fa, M_EXEC);
+		kmem_free(pack.ep_fa, pack.ep_fa_len);
 		pack.ep_flags &= ~EXEC_HASARGL;
 	}
 
@@ -937,7 +938,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 		goto exec_abort;
 	}
 
-	free(pack.ep_hdr, M_EXEC);
+	kmem_free(pack.ep_hdr, pack.ep_hdrlen);
 
 	/* The emulation root will usually have been found when we looked
 	 * for the elf interpreter (or similar), if not look now. */
@@ -1038,7 +1039,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	uvm_km_free(exec_map, (vaddr_t) argp, NCARGS, UVM_KMF_PAGEABLE);
 
  freehdr:
-	free(pack.ep_hdr, M_EXEC);
+	kmem_free(pack.ep_hdr, pack.ep_hdrlen);
 	if (pack.ep_emul_root != NULL)
 		vrele(pack.ep_emul_root);
 	if (pack.ep_interp != NULL)
@@ -1071,7 +1072,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 		FREE(pack.ep_emul_arg, M_TEMP);
 	PNBUF_PUT(nid.ni_cnd.cn_pnbuf);
 	uvm_km_free(exec_map, (vaddr_t) argp, NCARGS, UVM_KMF_PAGEABLE);
-	free(pack.ep_hdr, M_EXEC);
+	kmem_free(pack.ep_hdr, pack.ep_hdrlen);
 	if (pack.ep_emul_root != NULL)
 		vrele(pack.ep_emul_root);
 	if (pack.ep_interp != NULL)

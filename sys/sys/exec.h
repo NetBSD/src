@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.120 2007/12/28 17:14:50 elad Exp $	*/
+/*	$NetBSD: exec.h,v 1.121 2008/01/02 19:44:36 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -195,7 +195,11 @@ struct exec_package {
 	vaddr_t	ep_vm_minaddr;		/* bottom of process address space */
 	vaddr_t	ep_vm_maxaddr;		/* top of process address space */
 	u_int	ep_flags;		/* flags; see below. */
-	char	**ep_fa;		/* a fake args vector for scripts */
+	size_t	ep_fa_len;		/* byte size of ep_fa */
+	struct exec_fakearg {
+		char *fa_arg;
+		size_t fa_len;
+	} *ep_fa;			/* a fake args vector for scripts */
 	int	ep_fd;			/* a file descriptor we're holding */
 	void	*ep_emul_arg;		/* emulation argument */
 	const struct	execsw *ep_esch;/* execsw entry */
