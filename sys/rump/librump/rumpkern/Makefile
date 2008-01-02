@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 2007/12/30 23:30:26 pooka Exp $
+#	$NetBSD: Makefile,v 1.24 2008/01/02 12:49:53 ad Exp $
 #
 
 .include <bsd.own.mk>
@@ -13,7 +13,7 @@ LIB=	rump
 
 # implement something
 SRCS=	rump.c atomic.c auth.c emul.c genfs_io.c locks.c ltsleep.c pool.c \
-	specfs.c vfs.c vm.c
+	intr.c specfs.c vfs.c vm.c
 
 # just stubs
 SRCS+=	fstrans_stub.c misc_stub.c pmap_stub.c vfsops_stub.c
