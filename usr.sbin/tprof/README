@@ -1,7 +1,10 @@
-$NetBSD: README,v 1.2 2008/01/02 01:06:31 yamt Exp $
+$NetBSD: README,v 1.3 2008/01/02 01:17:41 yamt Exp $
 
 NOTE:
 	- tprof driver currently only supports pentium4 (netburst) processors.
+	- it samples program counters on every PMIs.
+	- it's currently hardcoded to use global_power_events events.
+	  for details, see x86/x86/tprof_pmi.c and intel's processor manuals.
 	- it doesn't work for amd64 due to a bug.  see PR/37662.
 
 usage:
