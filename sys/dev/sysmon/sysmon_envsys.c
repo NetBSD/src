@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.75 2007/12/05 06:52:27 ad Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.76 2008/01/02 02:29:14 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.75 2007/12/05 06:52:27 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.76 2008/01/02 02:29:14 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -697,8 +697,7 @@ sysmon_envsys_register(struct sysmon_envsys *sme)
 	 * Iterate over all sensors and create a dictionary per sensor.
 	 * We must respect the order in which the sensors were added.
 	 */
-	for (edata = TAILQ_FIRST(&sme->sme_sensors_list); edata;
-	     edata = TAILQ_NEXT(edata, sensors_head)) {
+	TAILQ_FOREACH(edata, &sme->sme_sensors_list, sensors_head) {
 		dict = prop_dictionary_create();
 		if (!dict) {
 			error = ENOMEM;
