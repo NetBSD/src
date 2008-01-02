@@ -1,7 +1,8 @@
-/*	$NetBSD: arcmsrvar.h,v 1.6 2007/12/09 00:24:46 xtraeme Exp $ */
+/*	$NetBSD: arcmsrvar.h,v 1.7 2008/01/02 23:48:05 xtraeme Exp $ */
 /*	Derived from $OpenBSD: arc.c,v 1.68 2007/10/27 03:28:27 dlg Exp $ */
 
 /*
+ * Copyright (c) 2007 Juan Romero Pardines <xtraeme@netbsd.org>
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -163,6 +164,7 @@ struct arc_fw_bufhdr {
 /* Firmware command codes */
 #define ARC_FW_CHECK_PASS	0x14	/* opcode + 1 byte length + password */
 #define ARC_FW_GETEVENTS	0x1a	/* opcode + 1 byte for page 0/1/2/3 */
+#define ARC_FW_GETHWMON		0x1b	/* opcode + arc_fw_hwmon */
 #define ARC_FW_RAIDINFO		0x20	/* opcode + raid# */
 #define ARC_FW_VOLINFO		0x21	/* opcode + vol# */
 #define ARC_FW_DISKINFO		0x22	/* opcode + physdisk# */
@@ -184,6 +186,55 @@ struct arc_fw_bufhdr {
 #define  ARC_FW_SET_MAXATA_MODE_66		(1<<2)
 #define  ARC_FW_SET_MAXATA_MODE_33		(1<<3)
 #define ARC_FW_NOP		0x38	/* opcode only */
+/*
+ * Structure for ARC_FW_CREATE_PASSTHRU:
+ *
+ * byte 2	command code 0x40
+ * byte 3	device #
+ * byte 4	scsi channel (0/1)
+ * byte 5	scsi id (0/15)
+ * byte 6	scsi lun (0/7)
+ * byte 7	tagged queue (1 enabled)
+ * byte 8	cache mode (1 enabled)
+ * byte 9	max speed ((0/1/2/3/4 -> 33/66/100/133/150)
+ */
+#define ARC_FW_CREATE_PASSTHRU	0x40
+#define ARC_FW_DELETE_PASSTHRU	0x42	/* opcode + device# */
+
+/*
+ * Structure for ARC_FW_CREATE_RAIDSET:
+ *
+ * byte 2	command code 0x50
+ * byte 3-6	device mask
+ * byte 7-22	raidset name (byte 7 == 0 use default)
+ */	
+#define ARC_FW_CREATE_RAIDSET	0x50
+#define ARC_FW_DELETE_RAIDSET	0x51	/* opcode + raidset# */
+#define ARC_FW_CREATE_HOTSPARE	0x54	/* opcode + 4 bytes device mask */
+#define ARC_FW_DELETE_HOTSPARE	0x55	/* opcode + 4 bytes device mask */
+
+/*
+ * Structure for ARC_FW_CREATE_VOLUME/ARC_FW_MODIFY_VOLUME:
+ *
+ * byte 2 	command code 0x60
+ * byte 3 	raidset#
+ * byte 4-19 	volume set name (byte 4 == 0 use default)
+ * byte 20-27	volume capacity in blocks
+ * byte 28	raid level
+ * byte 29	stripe size
+ * byte 30	channel
+ * byte 31	ID
+ * byte 32	LUN
+ * byte 33	1 enable tag queuing
+ * byte 33	1 enable cache
+ * byte 35	speed 0/1/2/3/4 -> 33/66/100/133/150
+ * byte 36	1 for quick init (only for CREATE_VOLUME)
+ */
+#define ARC_FW_CREATE_VOLUME	0x60
+#define ARC_FW_MODIFY_VOLUME 	0x61
+#define ARC_FW_DELETE_VOLUME	0x62	/* opcode + vol# */
+#define ARC_FW_START_CHECKVOL	0x63	/* opcode + vol# */
+#define ARC_FW_STOP_CHECKVOL	0x64	/* opcode only */
 
 /* Status codes for the firmware command codes */
 #define ARC_FW_CMD_OK		0x41
@@ -197,8 +248,27 @@ struct arc_fw_bufhdr {
 #define ARC_FW_CMD_DISKCFG_CHGD	0x49
 #define ARC_FW_CMD_PASS_INVAL	0x4a
 #define ARC_FW_CMD_NODISKSPACE	0x4b
-#define ARC_FW_CMD_PASS_REQD	0x4d
 #define ARC_FW_CMD_CHECKSUM_ERR	0x4c
+#define ARC_FW_CMD_PASS_REQD	0x4d
+
+struct arc_fw_hwmon {
+	uint8_t 	nfans;
+	uint8_t 	nvoltages;
+	uint8_t 	ntemps;
+	uint8_t 	npower;
+	uint16_t 	fan0;		/* RPM */
+	uint16_t 	fan1;		/* RPM */
+	uint16_t 	voltage_orig0;	/* original value * 1000 */
+	uint16_t 	voltage_val0;	/* value */
+	uint16_t 	voltage_orig1;	/* original value * 1000 */
+	uint16_t 	voltage_val1;	/* value */
+	uint16_t 	voltage_orig2;
+	uint16_t 	voltage_val2;
+	uint8_t 	temp0;
+	uint8_t 	temp1;
+	uint8_t 	pwr_indicator;	/* (bit0 : power#0, bit1 : power#1) */
+	uint8_t 	ups_indicator;
+} __packed;
 
 struct arc_fw_comminfo {
 	uint8_t		baud_rate;
@@ -277,6 +347,10 @@ struct arc_fw_diskinfo {
 	uint32_t	capacity;
 	uint32_t	capacity2;
 	uint8_t		device_state;
+#define ARC_FW_DISK_RAIDMEMBER	0x89	/* disk is member of a raid set */
+#define ARC_FW_DISK_PASSTHRU	0x8b	/* pass through disk */
+#define ARC_FW_DISK_HOTSPARE	0xa9	/* hotspare disk */
+#define ARC_FW_DISK_UNUSED	0xc9	/* free/unused disk */
 	uint8_t		pio_mode;
 	uint8_t		current_udma_mode;
 	uint8_t		udma_mode;
@@ -350,6 +424,7 @@ struct arc_softc {
 	void			*sc_shutdownhook;
 
 	int			sc_req_count;
+	u_int			sc_maxdisks;
 
 	struct arc_dmamem	*sc_requests;
 	struct arc_ccb		*sc_ccbs;
@@ -364,6 +439,8 @@ struct arc_softc {
 	struct sysmon_envsys	*sc_sme;
 	envsys_data_t		*sc_sensors;
 	int			sc_nsensors;
+
+	struct device		*sc_scsibus_dv;
 };
 
 /* 
@@ -375,11 +452,15 @@ void 	arc_scsi_cmd(struct scsipi_channel *, scsipi_adapter_req_t, void *);
  * code to deal with getting bits in and out of the bus space.
  */
 uint32_t 	arc_read(struct arc_softc *, bus_size_t);
-void 	arc_read_region(struct arc_softc *, bus_size_t, void *, size_t);
+void 		arc_read_region(struct arc_softc *, bus_size_t, void *,
+				size_t);
 void 	arc_write(struct arc_softc *, bus_size_t, uint32_t);
-void 	arc_write_region(struct arc_softc *, bus_size_t, void *, size_t);
-int 	arc_wait_eq(struct arc_softc *, bus_size_t, uint32_t, uint32_t);
-int 	arc_wait_ne(struct arc_softc *, bus_size_t, uint32_t, uint32_t);
+void 		arc_write_region(struct arc_softc *, bus_size_t, void *,
+				 size_t);
+int 		arc_wait_eq(struct arc_softc *, bus_size_t, uint32_t,
+			    uint32_t);
+int 		arc_wait_ne(struct arc_softc *, bus_size_t, uint32_t,
+			    uint32_t);
 int	arc_msg0(struct arc_softc *, uint32_t);
 
 #define arc_push(_s, _r)	arc_write((_s), ARC_REG_POST_QUEUE, (_r))
@@ -399,7 +480,8 @@ struct arc_dmamem {
 #define ARC_DMA_KVA(_adm)	((void *)(_adm)->adm_kva)
 
 struct arc_dmamem 	*arc_dmamem_alloc(struct arc_softc *, size_t);
-void 	arc_dmamem_free(struct arc_softc *, struct arc_dmamem *);
+void 			arc_dmamem_free(struct arc_softc *,
+					struct arc_dmamem *);
 
 /* 
  * stuff to manage a scsi command.
@@ -423,7 +505,8 @@ struct arc_ccb	*arc_get_ccb(struct arc_softc *);
 void 	arc_put_ccb(struct arc_softc *, struct arc_ccb *);
 int 	arc_load_xs(struct arc_ccb *);
 int 	arc_complete(struct arc_softc *, struct arc_ccb *, int);
-void 	arc_scsi_cmd_done(struct arc_softc *, struct arc_ccb *, uint32_t);
+void 		arc_scsi_cmd_done(struct arc_softc *, struct arc_ccb *,
+				  uint32_t);
 
 /* 
  * real stuff for dealing with the hardware.
