@@ -1,7 +1,7 @@
-/*	$NetBSD: tmpfs.h,v 1.29 2007/12/08 19:29:44 pooka Exp $	*/
+/*	$NetBSD: tmpfs.h,v 1.30 2008/01/02 11:48:46 ad Exp $	*/
 
 /*
- * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
+ * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -221,13 +221,8 @@ struct tmpfs_node {
 	 *
 	 * May be NULL when the node is unused (that is, no vnode has been
 	 * allocated for it or it has been reclaimed). */
+	kmutex_t		tn_vlock;
 	struct vnode *		tn_vnode;
-
-	/* Pointer to the node returned by tmpfs_lookup() after doing a
-	 * delete or a rename lookup; its value is only valid in these two
-	 * situations.  In case we were looking up . or .., it holds a null
-	 * pointer. */
-	struct tmpfs_dirent *	tn_lookup_dirent;
 
 	union {
 		/* Valid when tn_type == VBLK || tn_type == VCHR. */
@@ -298,11 +293,11 @@ struct tmpfs_mount {
 	 * used directly as it may be bigger than the current amount of
 	 * free memory; in the extreme case, it will hold the SIZE_MAX
 	 * value.  Instead, use the TMPFS_PAGES_MAX macro. */
-	size_t			tm_pages_max;
+	u_int			tm_pages_max;
 
 	/* Number of pages in use by the file system.  Cannot be bigger
 	 * than the value returned by TMPFS_PAGES_MAX in any case. */
-	size_t			tm_pages_used;
+	u_int			tm_pages_used;
 
 	/* Pointer to the node representing the root directory of this
 	 * file system. */
@@ -314,28 +309,16 @@ struct tmpfs_mount {
 	 * cannot be released until the file system is unmounted.
 	 * Otherwise, we could easily run out of memory by creating lots
 	 * of empty files and then simply removing them. */
-	ino_t			tm_nodes_max;
+	u_int			tm_nodes_max;
 
 	/* Number of nodes currently allocated.  This number only grows.
 	 * When it reaches tm_nodes_max, no more new nodes can be allocated.
 	 * Of course, the old, unused ones can be reused. */
-	ino_t			tm_nodes_last;
+	u_int			tm_nodes_cnt;
 
-	/* Nodes are organized in two different lists.  The used list
-	 * contains all nodes that are currently used by the file system;
-	 * i.e., they refer to existing files.  The available list contains
-	 * all nodes that are currently available for use by new files.
-	 * Nodes must be kept in this list (instead of deleting them)
-	 * because we need to keep track of their generation number (tn_gen
-	 * field).
-	 *
-	 * Note that nodes are lazily allocated: if the available list is
-	 * empty and we have enough space to create more nodes, they will be
-	 * created and inserted in the used list.  Once these are released,
-	 * they will go into the available list, remaining alive until the
-	 * file system is unmounted. */
-	struct tmpfs_node_list	tm_nodes_used;
-	struct tmpfs_node_list	tm_nodes_avail;
+	/* Node list. */
+	kmutex_t		tm_lock;
+	struct tmpfs_node_list	tm_nodes;
 
 	/* Pools used to store file system meta data.  These are not shared
 	 * across several instances of tmpfs for the reasons described in
@@ -466,7 +449,8 @@ TMPFS_PAGES_MAX(struct tmpfs_mount *tmp)
 }
 
 /* Returns the available space for the given file system. */
-#define TMPFS_PAGES_AVAIL(tmp) (TMPFS_PAGES_MAX(tmp) - (tmp)->tm_pages_used)
+#define TMPFS_PAGES_AVAIL(tmp)		\
+    ((ssize_t)(TMPFS_PAGES_MAX(tmp) - (tmp)->tm_pages_used))
 
 /* --------------------------------------------------------------------- */
 

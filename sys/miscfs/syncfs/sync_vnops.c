@@ -1,4 +1,4 @@
-/*	$NetBSD: sync_vnops.c,v 1.19 2007/11/26 19:02:18 pooka Exp $	*/
+/*	$NetBSD: sync_vnops.c,v 1.20 2008/01/02 11:49:02 ad Exp $	*/
 
 /*
  * Copyright 1997 Marshall Kirk McKusick. All Rights Reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sync_vnops.c,v 1.19 2007/11/26 19:02:18 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sync_vnops.c,v 1.20 2008/01/02 11:49:02 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -97,7 +97,9 @@ vfs_allocate_syncvnode(mp)
 		}
 		next = start;
 	}
+	mutex_enter(&vp->v_interlock);
 	vn_syncer_add_to_worklist(vp, syncdelay > 0 ? next % syncdelay : 0);
+	mutex_exit(&vp->v_interlock);
 	mp->mnt_syncer = vp;
 	return (0);
 }
@@ -113,9 +115,10 @@ vfs_deallocate_syncvnode(mp)
 
 	vp = mp->mnt_syncer;
 	mp->mnt_syncer = NULL;
+	mutex_enter(&vp->v_interlock);
 	vn_syncer_remove_from_worklist(vp);
 	vp->v_writecount = 0;
-	vrele(vp);
+	mutex_exit(&vp->v_interlock);
 	vgone(vp);
 }
 
@@ -146,7 +149,9 @@ sync_fsync(v)
 	/*
 	 * Move ourselves to the back of the sync list.
 	 */
+	mutex_enter(&syncvp->v_interlock);
 	vn_syncer_add_to_worklist(syncvp, syncdelay);
+	mutex_exit(&syncvp->v_interlock);
 
 	/*
 	 * Walk the list of vnodes pushing all that are dirty and

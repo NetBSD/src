@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.210 2007/12/31 21:11:13 ad Exp $	*/
+/*	$NetBSD: tty.c,v 1.211 2008/01/02 11:48:55 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.210 2007/12/31 21:11:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.211 2008/01/02 11:48:55 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1905,6 +1905,7 @@ ttwrite(struct tty *tp, struct uio *uio, int flag)
 			goto loop;
 		}
 	}
+
 	/*
 	 * Hang the process if it's in the background.
 	 */

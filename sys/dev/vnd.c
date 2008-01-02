@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.174 2007/12/18 23:22:18 riz Exp $	*/
+/*	$NetBSD: vnd.c,v 1.175 2008/01/02 11:48:36 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -137,7 +137,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.174 2007/12/18 23:22:18 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.175 2008/01/02 11:48:36 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -620,11 +620,14 @@ vndthread(void *arg)
 		disk_busy(&vnd->sc_dkdev);
 
 		bp = &vnx->vx_buf;
-		BUF_INIT(bp);
-		bp->b_flags = (obp->b_flags & B_READ) | B_CALL;
+		buf_init(bp);
+		bp->b_flags = (obp->b_flags & B_READ);
+		bp->b_oflags = obp->b_oflags;
+		bp->b_cflags = obp->b_cflags;
 		bp->b_iodone = vndiodone;
 		bp->b_private = obp;
 		bp->b_vp = vnd->sc_vp;
+		bp->b_objlock = &bp->b_vp->v_interlock;
 		bp->b_data = obp->b_data;
 		bp->b_bcount = obp->b_bcount;
 		BIO_COPYPRIO(bp, obp);
@@ -708,8 +711,11 @@ handle_with_rdwr(struct vnd_softc *vnd, const struct buf *obp, struct buf *bp)
 
 	/* We need to increase the number of outputs on the vnode if
 	 * there was any write to it. */
-	if (!doread)
-		V_INCR_NUMOUTPUT(vp);
+	if (!doread) {
+		mutex_enter(&vp->v_interlock);
+		vp->v_numoutput++;
+		mutex_exit(&vp->v_interlock);
+	}
 
 	biodone(bp);
 }
@@ -727,15 +733,15 @@ handle_with_strategy(struct vnd_softc *vnd, const struct buf *obp,
 	int bsize, error, flags, skipped;
 	size_t resid, sz;
 	off_t bn, offset;
+	struct vnode *vp;
 
 	flags = obp->b_flags;
 
 	if (!(flags & B_READ)) {
-		int s;
-		
-		s = splbio();
-		V_INCR_NUMOUTPUT(bp->b_vp);
-		splx(s);
+		vp = bp->b_vp;
+		mutex_enter(&vp->v_interlock);
+		vp->v_numoutput++;
+		mutex_exit(&vp->v_interlock);
 	}
 
 	/* convert to a byte offset within the file. */
@@ -756,7 +762,6 @@ handle_with_strategy(struct vnd_softc *vnd, const struct buf *obp,
 	for (offset = 0, resid = bp->b_resid; resid;
 	    resid -= sz, offset += sz) {
 		struct buf *nbp;
-		struct vnode *vp;
 		daddr_t nbn;
 		int off, nra;
 
@@ -792,11 +797,11 @@ handle_with_strategy(struct vnd_softc *vnd, const struct buf *obp,
 #ifdef	DEBUG
 		if (vnddebug & VDB_IO)
 			printf("vndstrategy: vp %p/%p bn 0x%qx/0x%" PRIx64
-			       " sz 0x%zx\n",
-			    vnd->sc_vp, vp, (long long)bn, nbn, sz);
+			    " sz 0x%zx\n", vnd->sc_vp, vp, (long long)bn,
+			    nbn, sz);
 #endif
 
-		nbp = getiobuf();
+		nbp = getiobuf(vp, true);
 		nestiobuf_setup(bp, nbp, offset, sz);
 		nbp->b_blkno = nbn + btodb(off);
 

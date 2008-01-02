@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.188 2007/11/26 19:02:21 pooka Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.189 2008/01/02 11:49:04 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.188 2007/11/26 19:02:21 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.189 2008/01/02 11:49:04 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -893,7 +893,6 @@ nfs_unmount(struct mount *mp, int mntflags)
 	 * There are two reference counts to get rid of here
 	 * (see comment in mountnfs()).
 	 */
-	vrele(vp);
 	vput(vp);
 	vgone(vp);
 	nfs_disconnect(nmp);
@@ -945,37 +944,46 @@ nfs_sync(mp, waitfor, cred)
 	int waitfor;
 	kauth_cred_t cred;
 {
-	struct vnode *vp, *nvp;
+	struct vnode *vp, *mvp;
 	int error, allerror = 0;
 
 	/*
 	 * Force stale buffer cache information to be flushed.
 	 */
+	if ((mvp = valloc(mp)) == NULL)
+		return (ENOMEM);
 loop:
 	/*
 	 * NOTE: not using the TAILQ_FOREACH here since in this loop vgone()
 	 * and vclean() can be called indirectly
 	 */
-	for (vp = TAILQ_FIRST(&mp->mnt_vnodelist); vp; vp = nvp) {
-		/*
-		 * If the vnode that we are about to sync is no longer
-		 * associated with this mount point, start over.
-		 */
-		if (vp->v_mount != mp)
-			goto loop;
-		nvp = TAILQ_NEXT(vp, v_mntvnodes);
+	mutex_enter(&mntvnode_lock);
+	for (vp = TAILQ_FIRST(&mp->mnt_vnodelist); vp; vp = vunmark(mvp)) {
+		vmark(mvp, vp);
+		if (vp->v_mount != mp || vismarker(vp))
+			continue;
+		mutex_enter(&vp->v_interlock);
+		/* XXX MNT_LAZY cannot be right? */
 		if (waitfor == MNT_LAZY || VOP_ISLOCKED(vp) ||
 		    (LIST_EMPTY(&vp->v_dirtyblkhd) &&
-		     UVM_OBJ_IS_CLEAN(&vp->v_uobj)))
+		     UVM_OBJ_IS_CLEAN(&vp->v_uobj))) {
+			mutex_exit(&vp->v_interlock);
 			continue;
-		if (vget(vp, LK_EXCLUSIVE))
+		}
+		mutex_exit(&mntvnode_lock);
+		if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK)) {
+			(void)vunmark(mvp);
 			goto loop;
+		}
 		error = VOP_FSYNC(vp, cred,
 		    waitfor == MNT_WAIT ? FSYNC_WAIT : 0, 0, 0);
 		if (error)
 			allerror = error;
 		vput(vp);
+		mutex_enter(&mntvnode_lock);
 	}
+	mutex_exit(&mntvnode_lock);
+	vfree(mvp);
 	return (allerror);
 }
 

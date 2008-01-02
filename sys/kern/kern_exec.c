@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.263 2007/12/31 15:32:10 ad Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.264 2008/01/02 11:48:49 ad Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.263 2007/12/31 15:32:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.264 2008/01/02 11:48:49 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -1078,6 +1078,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 		vrele(pack.ep_interp);
 
 	/* Acquire the sched-state mutex (exit1() will release it). */
+	KERNEL_LOCK(1, NULL);	/* XXXSMP */
 	mutex_enter(&p->p_smutex);
 	exit1(l, W_EXITCODE(error, SIGABRT));
 

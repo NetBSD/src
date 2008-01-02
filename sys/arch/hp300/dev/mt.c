@@ -1,4 +1,4 @@
-/*	$NetBSD: mt.c,v 1.40 2007/10/17 19:54:23 garbled Exp $	*/
+/*	$NetBSD: mt.c,v 1.41 2008/01/02 11:48:25 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.40 2007/10/17 19:54:23 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.41 2008/01/02 11:48:25 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -435,13 +435,14 @@ mtcommand(dev_t dev, int cmd, int cnt)
 	int error = 0;
 
 #if 1
-	if (bp->b_flags & B_BUSY)
+	if (bp->b_cflags & BC_BUSY)
 		return EBUSY;
 #endif
 	bp->b_cmd = cmd;
 	bp->b_dev = dev;
 	do {
-		bp->b_flags = B_BUSY | B_CMD;
+		bp->b_cflags = BC_BUSY;
+		bp->b_flags = B_CMD;
 		mtstrategy(bp);
 		biowait(bp);
 		if (bp->b_error != 0) {
@@ -450,9 +451,9 @@ mtcommand(dev_t dev, int cmd, int cnt)
 		}
 	} while (--cnt > 0);
 #if 0
-	bp->b_flags = 0 /*&= ~B_BUSY*/;
+	bp->b_flags = 0 /*&= ~BC_BUSY*/;
 #else
-	bp->b_flags &= ~B_BUSY;
+	bp->b_flags &= ~BC_BUSY;
 #endif
 	return error;
 }

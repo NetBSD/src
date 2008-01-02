@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.73 2007/12/30 23:04:12 pooka Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.74 2008/01/02 11:48:44 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.73 2007/12/30 23:04:12 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.74 2008/01/02 11:48:44 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -428,7 +428,7 @@ static int
 pageflush(struct mount *mp, kauth_cred_t cred, int waitfor, int suspending)
 {
 	struct puffs_node *pn;
-	struct vnode *vp, *nvp;
+	struct vnode *vp, *mvp;
 	int error, rv;
 
 	KASSERT(((waitfor == MNT_WAIT) && suspending) == 0);
@@ -438,29 +438,31 @@ pageflush(struct mount *mp, kauth_cred_t cred, int waitfor, int suspending)
 
 	error = 0;
 
+	/* Allocate a marker vnode. */
+	if ((mvp = valloc(mp)) == NULL)
+		return ENOMEM;
+
 	/*
 	 * Sync all cached data from regular vnodes (which are not
 	 * currently locked, see below).  After this we call VFS_SYNC
 	 * for the fs server, which should handle data and metadata for
 	 * all the nodes it knows to exist.
 	 */
-	simple_lock(&mntvnode_slock);
+	mutex_enter(&mntvnode_lock);
  loop:
-	for (vp = TAILQ_FIRST(&mp->mnt_vnodelist); vp; vp = nvp) {
-		/* check if we're on the right list */
-		if (vp->v_mount != mp)
-			goto loop;
+	for (vp = TAILQ_FIRST(&mp->mnt_vnodelist); vp; vp = vunmark(mvp)) {
+		vmark(mvp, vp);
+		if (vp->v_mount != mp || vismarker(vp))
+			continue;
 
-		simple_lock(&vp->v_interlock);
+		mutex_enter(&vp->v_interlock);
 		pn = VPTOPP(vp);
-		nvp = TAILQ_NEXT(vp, v_mntvnodes);
-
 		if (vp->v_type != VREG || UVM_OBJ_IS_CLEAN(&vp->v_uobj)) {
-			simple_unlock(&vp->v_interlock);
+			mutex_exit(&vp->v_interlock);
 			continue;
 		}
 
-		simple_unlock(&mntvnode_slock);
+		mutex_exit(&mntvnode_lock);
 
 		/*
 		 * Here we try to get a reference to the vnode and to
@@ -482,9 +484,11 @@ pageflush(struct mount *mp, kauth_cred_t cred, int waitfor, int suspending)
 		 */
 		rv = vget(vp, LK_EXCLUSIVE | LK_NOWAIT | LK_INTERLOCK);
 		if (rv) {
-			simple_lock(&mntvnode_slock);
-			if (rv == ENOENT)
+			mutex_enter(&mntvnode_lock);
+			if (rv == ENOENT) {
+				(void)vunmark(mvp);
 				goto loop;
+			}
 			continue;
 		}
 
@@ -510,22 +514,23 @@ pageflush(struct mount *mp, kauth_cred_t cred, int waitfor, int suspending)
 		 * TODO: Maybe also hint the user server of this twist?
 		 */
 		if (suspending || waitfor == MNT_LAZY) {
-			simple_lock(&vp->v_interlock);
+			mutex_enter(&vp->v_interlock);
 			pn->pn_stat |= PNODE_SUSPEND;
-			simple_unlock(&vp->v_interlock);
+			mutex_exit(&vp->v_interlock);
 		}
 		rv = VOP_FSYNC(vp, cred, waitfor, 0, 0);
 		if (suspending || waitfor == MNT_LAZY) {
-			simple_lock(&vp->v_interlock);
+			mutex_enter(&vp->v_interlock);
 			pn->pn_stat &= ~PNODE_SUSPEND;
-			simple_unlock(&vp->v_interlock);
+			mutex_exit(&vp->v_interlock);
 		}
 		if (rv)
 			error = rv;
 		vput(vp);
-		simple_lock(&mntvnode_slock);
+		mutex_enter(&mntvnode_lock);
 	}
-	simple_unlock(&mntvnode_slock);
+	mutex_exit(&mntvnode_lock);
+	vfree(mvp);
 
 	return error;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.32 2007/10/17 19:58:04 garbled Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.33 2008/01/02 11:48:32 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.32 2007/10/17 19:58:04 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.33 2008/01/02 11:48:32 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -138,7 +138,7 @@ dodospart:
 	labelsz = howmany(sizeof(struct cpu_disklabel),
 			  lp->d_secsize) * lp->d_secsize;
 	bp->b_bcount = labelsz;	/* to support < 512B/sector disks */
-	bp->b_flags &= ~(B_DONE);
+	bp->b_oflags &= ~(BO_DONE);
 	(*strat)(bp);
 
 	/* if successful, wander through Human68k partition table */
@@ -213,7 +213,7 @@ dobadsect:
 		i = 0;
 		do {
 			/* read a bad sector table */
-			bp->b_flags &= ~(B_DONE);
+			bp->b_oflags &= ~(BO_DONE);
 			bp->b_flags |= B_READ;
 			bp->b_blkno = lp->d_secperunit - lp->d_nsectors + i;
 			if (lp->d_secsize > DEF_BSIZE)
@@ -349,7 +349,8 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *),
 		if (dlp->d_magic == DISKMAGIC && dlp->d_magic2 == DISKMAGIC &&
 		    dkcksum(dlp) == 0) {
 			*dlp = *lp;
-			bp->b_flags &= ~(B_READ|B_DONE);
+			bp->b_oflags &= ~(BO_DONE);
+			bp->b_flags &= ~(B_READ);
 			bp->b_flags |= B_WRITE;
 			(*strat)(bp);
 			error = biowait(bp);
@@ -368,7 +369,7 @@ dodospart:
 		/* read the x68k disk magic */
 		bp->b_blkno = DOSBBSECTOR;
 		bp->b_bcount = lp->d_secsize;
-		bp->b_flags &= ~(B_WRITE|B_DONE);
+		bp->b_oflags &= ~(BO_DONE);
 		bp->b_flags |= B_READ;
 		bp->b_cylinder = DOSBBSECTOR / lp->d_secpercyl;
 		(*strat)(bp);
@@ -381,7 +382,7 @@ dodospart:
 		labelsz = howmany(sizeof(struct cpu_disklabel),
 				  lp->d_secsize) * lp->d_secsize;
 		bp->b_bcount = labelsz;
-		bp->b_flags &= ~(B_WRITE|B_DONE);
+		bp->b_oflags &= ~(BO_DONE);
 		bp->b_flags |= B_READ;
 		bp->b_cylinder = DOSPARTOFF / lp->d_secpercyl;
 		(*strat)(bp);
@@ -441,7 +442,8 @@ dodospart:
 				dp->dp_start = start;
 				dp->dp_size = size;
 			}
-			bp->b_flags &= ~(B_READ|B_DONE);
+			bp->b_oflags &= ~(BO_DONE);
+			bp->b_flags &= ~(B_READ);
 			bp->b_flags |= B_WRITE;
 			(*strat)(bp);
 			error = biowait(bp);

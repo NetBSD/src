@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vfsops.c,v 1.20 2007/12/15 00:39:36 perry Exp $	*/
+/*	$NetBSD: sysvbfs_vfsops.c,v 1.21 2008/01/02 11:48:46 ad Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vfsops.c,v 1.20 2007/12/15 00:39:36 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vfsops.c,v 1.21 2008/01/02 11:48:46 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -307,11 +307,12 @@ sysvbfs_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
 
 	DPRINTF("%s:\n", __func__);
 	error = 0;
-	simple_lock(&mntvnode_slock);
+	mutex_enter(&mntvnode_lock);
 	for (bnode = LIST_FIRST(&bmp->bnode_head); bnode != NULL;
 	    bnode = LIST_NEXT(bnode, link)) {
-		simple_unlock(&mntvnode_slock);
 		v = bnode->vnode;
+	    	mutex_enter(&v->v_interlock);
+		mutex_exit(&mntvnode_lock);
 		err = vget(v, LK_EXCLUSIVE | LK_NOWAIT | LK_INTERLOCK);
 		if (err == 0) {
 			err = VOP_FSYNC(v, cred, FSYNC_WAIT, 0, 0);
@@ -319,9 +320,9 @@ sysvbfs_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
 		}
 		if (err != 0)
 			error = err;
-		simple_lock(&mntvnode_slock);
+		mutex_enter(&mntvnode_lock);
 	}
-	simple_unlock(&mntvnode_slock);
+	mutex_exit(&mntvnode_lock);
 
 	return error;
 }
@@ -362,9 +363,9 @@ sysvbfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 	vp->v_data = pool_get(&sysvbfs_node_pool, PR_WAITOK);
 	memset(vp->v_data, 0, sizeof(struct sysvbfs_node));
 	bnode = vp->v_data;
-	simple_lock(&mntvnode_slock);
+	mutex_enter(&mntvnode_lock);
 	LIST_INSERT_HEAD(&bmp->bnode_head, bnode, link);
-	simple_unlock(&mntvnode_slock);
+	mutex_exit(&mntvnode_lock);
 	bnode->vnode = vp;
 	bnode->bmp = bmp;
 	bnode->inode = inode;

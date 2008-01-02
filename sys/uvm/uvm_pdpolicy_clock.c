@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdpolicy_clock.c,v 1.8 2007/02/22 06:05:01 thorpej Exp $	*/
+/*	$NetBSD: uvm_pdpolicy_clock.c,v 1.9 2008/01/02 11:49:20 ad Exp $	*/
 /*	NetBSD: uvm_pdaemon.c,v 1.72 2006/01/05 10:47:33 yamt Exp $	*/
 
 /*
@@ -74,7 +74,7 @@
 #else /* defined(PDSIM) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clock.c,v 1.8 2007/02/22 06:05:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clock.c,v 1.9 2008/01/02 11:49:20 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -175,7 +175,7 @@ uvmpdpol_selectvictim(void)
 	struct uvmpdpol_scanstate *ss = &pdpol_scanstate;
 	struct vm_page *pg;
 
-	UVM_LOCK_ASSERT_PAGEQ();
+	KASSERT(mutex_owned(&uvm_pageqlock));
 
 	while (/* CONSTCOND */ 1) {
 		struct vm_anon *anon;
@@ -287,7 +287,7 @@ void
 uvmpdpol_pagedeactivate(struct vm_page *pg)
 {
 
-	UVM_LOCK_ASSERT_PAGEQ();
+	KASSERT(mutex_owned(&uvm_pageqlock));
 	if (pg->pqflags & PQ_ACTIVE) {
 		TAILQ_REMOVE(&pdpol_state.s_activeq, pg, pageq);
 		pg->pqflags &= ~PQ_ACTIVE;
@@ -317,13 +317,13 @@ uvmpdpol_pagedequeue(struct vm_page *pg)
 {
 
 	if (pg->pqflags & PQ_ACTIVE) {
-		UVM_LOCK_ASSERT_PAGEQ();
+		KASSERT(mutex_owned(&uvm_pageqlock));
 		TAILQ_REMOVE(&pdpol_state.s_activeq, pg, pageq);
 		pg->pqflags &= ~PQ_ACTIVE;
 		KASSERT(pdpol_state.s_active > 0);
 		pdpol_state.s_active--;
 	} else if (pg->pqflags & PQ_INACTIVE) {
-		UVM_LOCK_ASSERT_PAGEQ();
+		KASSERT(mutex_owned(&uvm_pageqlock));
 		TAILQ_REMOVE(&pdpol_state.s_inactiveq, pg, pageq);
 		pg->pqflags &= ~PQ_INACTIVE;
 		KASSERT(pdpol_state.s_inactive > 0);

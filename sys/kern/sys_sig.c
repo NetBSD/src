@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sig.c,v 1.9 2007/12/20 23:03:12 dsl Exp $	*/
+/*	$NetBSD: sys_sig.c,v 1.10 2008/01/02 11:48:53 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.9 2007/12/20 23:03:12 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.10 2008/01/02 11:48:53 ad Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_compat_netbsd.h"
@@ -670,9 +670,7 @@ __sigtimedwait1(struct lwp *l, const struct sys___sigtimedwait_args *uap, regist
 	/*
 	 * Allocate a ksi up front.  We can't sleep with the mutex held.
 	 */
-	KERNEL_LOCK(1, l);	/* XXXSMP ksiginfo_alloc() -> pool_get()  */
 	ksi = ksiginfo_alloc(p, NULL, PR_WAITOK);
-	KERNEL_UNLOCK_ONE(l);	/* XXXSMP */
 	if (ksi == NULL)
 		return (ENOMEM);
 
@@ -750,9 +748,7 @@ __sigtimedwait1(struct lwp *l, const struct sys___sigtimedwait_args *uap, regist
 		error = (*put_info)(&ksi->ksi_info, SCARG(uap, info),
 		    sizeof(ksi->ksi_info));
 
-	KERNEL_LOCK(1, l);	/* XXXSMP ksiginfo_free() -> pool_put()  */	
 	ksiginfo_free(ksi);
-	KERNEL_UNLOCK_ONE(l);	/* XXXSMP */
 
 	return error;
 }

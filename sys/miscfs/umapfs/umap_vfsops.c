@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vfsops.c,v 1.73 2007/12/08 19:29:51 pooka Exp $	*/
+/*	$NetBSD: umap_vfsops.c,v 1.74 2008/01/02 11:49:02 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.73 2007/12/08 19:29:51 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.74 2008/01/02 11:49:02 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -256,18 +256,14 @@ umapfs_unmount(struct mount *mp, int mntflags)
 	vprint("alias root of lower", rtvp);
 #endif
 	/*
-	 * Release reference on underlying root vnode
-	 */
-	vrele(rtvp);
-	/*
-	 * And blow it away for future re-use
+	 * Blow it away for future re-use
 	 */
 	vgone(rtvp);
 	/*
 	 * Finally, throw away the umap_mount structure
 	 */
 	mutex_destroy(&amp->umapm_hashlock);
-	free(mp->mnt_data, M_UFSMNT);	/* XXX */
+	free(amp, M_UFSMNT);	/* XXX */
 	mp->mnt_data = 0;
 	return (0);
 }

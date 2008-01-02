@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs.c,v 1.21 2007/11/26 19:02:24 pooka Exp $	*/
+/*	$NetBSD: vfs.c,v 1.22 2008/01/02 11:49:06 ad Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -70,6 +70,13 @@ const struct vnodeopv_entry_desc fifo_vnodeop_entries[] = {
 const struct vnodeopv_desc fifo_vnodeop_opv_desc =
 	{ &fifo_vnodeop_p, fifo_vnodeop_entries };
 
+struct vnode *speclisth[SPECHSZ];
+
+void
+vn_init1(void)
+{
+
+}
 
 int
 getnewvnode(enum vtagtype tag, struct mount *mp, int (**vops)(void *),
@@ -145,9 +152,22 @@ vrele(struct vnode *vp)
 }
 
 void
-vrele2(struct vnode *vp, int onhead)
+vrelel(struct vnode *vp, int doinactive, int onhead)
 {
 
+}
+
+void
+vrele2(struct vnode *vp, bool onhead)
+{
+
+}
+
+void
+vfree(vnode_t *vp)
+{
+
+	/* XXX */
 }
 
 void
@@ -159,6 +179,13 @@ vput(struct vnode *vp)
 
 void
 vgone(struct vnode *vp)
+{
+
+	vgonel(vp, curlwp);
+}
+
+void
+vclean(struct vnode *vp, int flag)
 {
 
 	vgonel(vp, curlwp);
@@ -183,18 +210,19 @@ holdrelel(struct vnode *vp)
 }
 
 int
-vrecycle(struct vnode *vp, struct simplelock *inter_lkp, struct lwp *l)
+vrecycle(struct vnode *vp, kmutex_t *inter_lkp, struct lwp *l)
 {
 	struct mount *mp = vp->v_mount;
+	bool recycle;
 
 	if (vp->v_usecount == 1) {
 		vp->v_usecount = 0;
 		simple_lock(&vp->v_interlock);
 		if (inter_lkp)
-			simple_unlock(inter_lkp);
+			mutex_exit(inter_lkp);
 		VOP_LOCK(vp, LK_EXCLUSIVE | LK_INTERLOCK);
 		vinvalbuf(vp, V_SAVE, NOCRED, l, 0, 0);
-		VOP_INACTIVE(vp);
+		VOP_INACTIVE(vp, &recycle);
 
 		VOP_RECLAIM(vp);
 		TAILQ_REMOVE(&mp->mnt_vnodelist, vp, v_mntvnodes);

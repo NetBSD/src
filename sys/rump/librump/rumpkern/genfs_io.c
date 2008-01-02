@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.6 2007/11/07 18:59:18 pooka Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.7 2008/01/02 11:49:05 ad Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -192,17 +192,17 @@ genfs_getpages(void *v)
 			continue;
 		}
 
-		bp = getiobuf();
+		bp = getiobuf(vp, true);
 
 		bp->b_data = tmpbuf + bufoff;
 		bp->b_bcount = xfersize;
 		bp->b_blkno = bn;
 		bp->b_lblkno = 0;
-		bp->b_flags = B_READ | B_BUSY;
-		bp->b_vp = vp;
+		bp->b_flags = B_READ;
+		bp->b_cflags = BC_BUSY;
 
 		if (async) {
-			bp->b_flags |= B_ASYNC | B_CALL;
+			bp->b_flags |= B_ASYNC;
 			bp->b_iodone = uvm_aio_biodone;
 		}
 
@@ -374,7 +374,7 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff, int flags,
 		if (bn == -1)
 			continue;
 
-		bp = getiobuf();
+		bp = getiobuf(vp, true);
 
 		/* only write max what we are allowed to write */
 		bp->b_bcount = xfersize;
@@ -394,11 +394,11 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff, int flags,
 		bp->b_lblkno = 0;
 		bp->b_blkno = bn + (((smallest+bufoff)&(bsize-1))>>DEV_BSHIFT);
 		bp->b_data = databuf + bufoff;
-		bp->b_vp = vp;
-		bp->b_flags = B_WRITE | B_BUSY;
-		bp->b_iodone = uvm_aio_biodone;
+		bp->b_flags = B_WRITE;
+		bp->b_cflags |= BC_BUSY;
+
 		if (async) {
-			bp->b_flags |= B_CALL | B_ASYNC;
+			bp->b_flags |= B_ASYNC;
 			bp->b_iodone = uvm_aio_biodone;
 		}
 

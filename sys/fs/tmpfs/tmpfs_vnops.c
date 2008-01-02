@@ -1,7 +1,7 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.44 2007/11/26 19:01:55 pooka Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.45 2008/01/02 11:48:47 ad Exp $	*/
 
 /*
- * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
+ * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.44 2007/11/26 19:01:55 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.45 2008/01/02 11:48:47 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -169,11 +169,9 @@ tmpfs_lookup(void *v)
 		    dnode->tn_spec.tn_dir.tn_parent, vpp);
 
 		vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
-		dnode->tn_spec.tn_dir.tn_parent->tn_lookup_dirent = NULL;
 	} else if (cnp->cn_namelen == 1 && cnp->cn_nameptr[0] == '.') {
 		VREF(dvp);
 		*vpp = dvp;
-		dnode->tn_lookup_dirent = NULL;
 		error = 0;
 	} else {
 		de = tmpfs_dir_lookup(dnode, cnp);
@@ -229,8 +227,8 @@ tmpfs_lookup(void *v)
 				error = VOP_ACCESS(dvp, VWRITE, cnp->cn_cred);
 				if (error != 0)
 					goto out;
-				tnode->tn_lookup_dirent = de;
-			}
+			} else
+				de = NULL;
 
 			/* Allocate a new vnode on the matching entry. */
 			error = tmpfs_alloc_vp(dvp->v_mount, tnode, vpp);
@@ -240,7 +238,8 @@ tmpfs_lookup(void *v)
 	/* Store the result of this lookup in the cache.  Avoid this if the
 	 * request was for creation, as it does not improve timings on
 	 * emprical tests. */
-	if ((cnp->cn_flags & MAKEENTRY) && cnp->cn_nameiop != CREATE)
+	if ((cnp->cn_flags & MAKEENTRY) && cnp->cn_nameiop != CREATE &&
+	    (cnp->cn_flags & ISDOTDOT) == 0)
 		cache_enter(dvp, *vpp, cnp);
 
 out:
@@ -651,6 +650,7 @@ tmpfs_remove(void *v)
 {
 	struct vnode *dvp = ((struct vop_remove_args *)v)->a_dvp;
 	struct vnode *vp = ((struct vop_remove_args *)v)->a_vp;
+	struct componentname *cnp = (((struct vop_remove_args *)v)->a_cnp);
 
 	int error;
 	struct tmpfs_dirent *de;
@@ -669,8 +669,12 @@ tmpfs_remove(void *v)
 	dnode = VP_TO_TMPFS_DIR(dvp);
 	node = VP_TO_TMPFS_NODE(vp);
 	tmp = VFS_TO_TMPFS(vp->v_mount);
-	de = node->tn_lookup_dirent;
-	KASSERT(de != NULL);
+	de = tmpfs_dir_lookup(dnode, cnp);
+	if (de == NULL) {
+		error = ENOENT;
+		goto out;
+	}
+	KASSERT(de->td_node == node);
 
 	/* Files marked as immutable or append-only cannot be deleted. */
 	if (node->tn_flags & (IMMUTABLE | APPEND)) {
@@ -696,8 +700,6 @@ out:
 	else
 		vput(dvp);
 
-	KASSERT(!VOP_ISLOCKED(dvp));
-
 	return error;
 }
 
@@ -716,7 +718,6 @@ tmpfs_link(void *v)
 	struct tmpfs_node *node;
 
 	KASSERT(VOP_ISLOCKED(dvp));
-	KASSERT(!VOP_ISLOCKED(vp));
 	KASSERT(cnp->cn_flags & HASBUF);
 	KASSERT(dvp != vp); /* XXX When can this be false? */
 
@@ -727,7 +728,7 @@ tmpfs_link(void *v)
 	 * needs the vnode to be locked. */
 	error = vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	if (error != 0)
-		goto out;
+		goto out1;
 
 	/* XXX: Why aren't the following two tests done by the caller? */
 
@@ -773,16 +774,11 @@ tmpfs_link(void *v)
 	error = 0;
 
 out:
-	if (VOP_ISLOCKED(vp))
-		VOP_UNLOCK(vp, 0);
-
+	VOP_UNLOCK(vp, 0);
+out1:
 	PNBUF_PUT(cnp->cn_pnbuf);
 
 	vput(dvp);
-
-	/* XXX Locking status of dvp does not match manual page. */
-	KASSERT(!VOP_ISLOCKED(dvp));
-	KASSERT(!VOP_ISLOCKED(vp));
 
 	return error;
 }
@@ -801,33 +797,52 @@ tmpfs_rename(void *v)
 
 	char *newname;
 	int error;
-	struct tmpfs_dirent *de;
+	struct tmpfs_dirent *de, *de2;
 	struct tmpfs_mount *tmp;
 	struct tmpfs_node *fdnode;
 	struct tmpfs_node *fnode;
 	struct tmpfs_node *tnode;
 	struct tmpfs_node *tdnode;
+	size_t namelen;
 
 	KASSERT(VOP_ISLOCKED(tdvp));
-	KASSERT(IMPLIES(tvp != NULL, VOP_ISLOCKED(tvp)));
+	KASSERT(IMPLIES(tvp != NULL, VOP_ISLOCKED(tvp) == LK_EXCLUSIVE));
 	KASSERT(fcnp->cn_flags & HASBUF);
 	KASSERT(tcnp->cn_flags & HASBUF);
 
-	fdnode = VP_TO_TMPFS_DIR(fdvp);
-	fnode = VP_TO_TMPFS_NODE(fvp);
-	tnode = (tvp == NULL) ? NULL : VP_TO_TMPFS_NODE(tvp);
-	de = fnode->tn_lookup_dirent;
+	newname = NULL;
+	namelen = 0;
+	tmp = NULL;
 
-	/* Disallow cross-device renames.
-	 * XXX Why isn't this done by the caller? */
+	/* Disallow cross-device renames. */
 	if (fvp->v_mount != tdvp->v_mount ||
 	    (tvp != NULL && fvp->v_mount != tvp->v_mount)) {
 		error = EXDEV;
-		goto out;
+		goto out_unlocked;
 	}
 
-	tmp = VFS_TO_TMPFS(tdvp->v_mount);
+	fnode = VP_TO_TMPFS_NODE(fvp);
+	fdnode = VP_TO_TMPFS_DIR(fdvp);
+	tnode = (tvp == NULL) ? NULL : VP_TO_TMPFS_NODE(tvp);
 	tdnode = VP_TO_TMPFS_DIR(tdvp);
+	tmp = VFS_TO_TMPFS(tdvp->v_mount);
+
+	/* If we need to move the directory between entries, lock the
+	 * source so that we can safely operate on it. */
+
+	/* XXX: this is a potential locking order violation! */
+	if (fdnode != tdnode) {
+		error = vn_lock(fdvp, LK_EXCLUSIVE | LK_RETRY);
+		if (error != 0)
+			goto out_unlocked;
+	}
+
+	de = tmpfs_dir_lookup(fdnode, fcnp);
+	if (de == NULL) {
+		error = ENOENT;
+		goto out;
+	}
+	KASSERT(de->td_node == fnode);
 
 	/* If source and target are the same file, there is nothing to do. */
 	if (fvp == tvp) {
@@ -863,44 +878,17 @@ tmpfs_rename(void *v)
 		}
 	}
 
-	/* If we need to move the directory between entries, lock the
-	 * source so that we can safely operate on it. */
-
-	/* XXX: this is a potential locking order violation! */
-	if (fdnode != tdnode) {
-		error = vn_lock(fdvp, LK_EXCLUSIVE | LK_RETRY);
-		if (error != 0)
-			goto out;
-	}
-
-	/* Make sure we have the correct cached dirent */
-	fcnp->cn_flags &= ~(MODMASK | SAVESTART);
-	fcnp->cn_flags |= LOCKPARENT | LOCKLEAF;
-	if ((error = relookup(fdvp, &fvp, fcnp))) {
-		goto out_locked;
-	}
-	KASSERT(fvp != NULL);
-	/* Relookup always returns with vpp locked and 1UP referenced */
-	VOP_UNLOCK(fvp, 0);
-	vrele(((struct vop_rename_args *)v)->a_fvp);
-
-	/* Reacquire values.  fvp might have changed.  Since we only
-	 * used fvp to sanitycheck fcnp values above, we can do this. */
-	fnode = VP_TO_TMPFS_NODE(fvp);
-	de = fnode->tn_lookup_dirent;
-
 	/* Ensure that we have enough memory to hold the new name, if it
 	 * has to be changed. */
+	namelen = tcnp->cn_namelen;
 	if (fcnp->cn_namelen != tcnp->cn_namelen ||
 	    memcmp(fcnp->cn_nameptr, tcnp->cn_nameptr, fcnp->cn_namelen) != 0) {
-		newname = tmpfs_str_pool_get(&tmp->tm_str_pool,
-		    tcnp->cn_namelen, 0);
+		newname = tmpfs_str_pool_get(&tmp->tm_str_pool, namelen, 0);
 		if (newname == NULL) {
 			error = ENOSPC;
-			goto out_locked;
+			goto out;
 		}
-	} else
-		newname = NULL;
+	}
 
 	/* If the node is being moved to another directory, we have to do
 	 * the move. */
@@ -917,7 +905,7 @@ tmpfs_rename(void *v)
 			while (n != n->tn_spec.tn_dir.tn_parent) {
 				if (n == fnode) {
 					error = EINVAL;
-					goto out_locked;
+					goto out;
 				}
 				n = n->tn_spec.tn_dir.tn_parent;
 			}
@@ -944,6 +932,37 @@ tmpfs_rename(void *v)
 		VN_KNOTE(fdvp, NOTE_WRITE);
 	}
 
+	/* If we are overwriting an entry, we have to remove the old one
+	 * from the target directory. */
+	if (tvp != NULL) {
+		KASSERT(tnode != NULL);
+
+		/* Remove the old entry from the target directory.
+		 * Note! This relies on tmpfs_dir_attach() putting the new
+		 * node on the end of the target's node list. */
+		de2 = tmpfs_dir_lookup(tdnode, tcnp);
+		KASSERT(de2 != NULL);
+/* XXXREMOVEME */
+		if (de2 == de) {
+			panic("tmpfs_rename: to self 1");
+		}
+		if (de2->td_node == de->td_node) {
+			panic("tmpfs_rename: to self 2");
+		}
+		if (de2->td_node != tnode) {
+			panic("tmpfs_rename: found wrong entry [%s]",
+			    tcnp->cn_nameptr);
+		}
+/* XXXREMOVEME */
+		KASSERT(de2->td_node == tnode);
+		tmpfs_dir_detach(tdvp, de2);
+
+		/* Free the directory entry we just deleted.  Note that the
+		 * node referred by it will not be removed until the vnode is
+		 * really reclaimed. */
+		tmpfs_free_dirent(VFS_TO_TMPFS(tvp->v_mount), de2, true);
+	}
+
 	/* If the name has changed, we need to make it effective by changing
 	 * it in the directory entry. */
 	if (newname != NULL) {
@@ -952,27 +971,13 @@ tmpfs_rename(void *v)
 
 		tmpfs_str_pool_put(&tmp->tm_str_pool, de->td_name,
 		    de->td_namelen);
-		de->td_namelen = (uint16_t)tcnp->cn_namelen;
-		memcpy(newname, tcnp->cn_nameptr, tcnp->cn_namelen);
+		de->td_namelen = (uint16_t)namelen;
+		memcpy(newname, tcnp->cn_nameptr, namelen);
 		de->td_name = newname;
+		newname = NULL;
 
 		fnode->tn_status |= TMPFS_NODE_CHANGED;
 		tdnode->tn_status |= TMPFS_NODE_MODIFIED;
-	}
-
-	/* If we are overwriting an entry, we have to remove the old one
-	 * from the target directory. */
-	if (tvp != NULL) {
-		KASSERT(tnode != NULL);
-
-		/* Remove the old entry from the target directory. */
-		de = tnode->tn_lookup_dirent;
-		tmpfs_dir_detach(tdvp, de);
-
-		/* Free the directory entry we just deleted.  Note that the
-		 * node referred by it will not be removed until the vnode is
-		 * really reclaimed. */
-		tmpfs_free_dirent(VFS_TO_TMPFS(tvp->v_mount), de, true);
 	}
 
 	/* Notify listeners of tdvp about the change in the directory (either
@@ -983,11 +988,11 @@ tmpfs_rename(void *v)
 
 	error = 0;
 
-out_locked:
+ out:
 	if (fdnode != tdnode)
 		VOP_UNLOCK(fdvp, 0);
 
-out:
+ out_unlocked:
 	/* Release target nodes. */
 	if (tdvp == tvp)
 		vrele(tdvp);
@@ -999,6 +1004,9 @@ out:
 	/* Release source nodes. */
 	vrele(fdvp);
 	vrele(fvp);
+
+	if (newname != NULL)
+		tmpfs_str_pool_put(&tmp->tm_str_pool, newname, namelen);
 
 	return error;
 }
@@ -1025,6 +1033,7 @@ tmpfs_rmdir(void *v)
 {
 	struct vnode *dvp = ((struct vop_rmdir_args *)v)->a_dvp;
 	struct vnode *vp = ((struct vop_rmdir_args *)v)->a_vp;
+	struct componentname *cnp = ((struct vop_rmdir_args *)v)->a_cnp;
 
 	int error;
 	struct tmpfs_dirent *de;
@@ -1051,12 +1060,13 @@ tmpfs_rmdir(void *v)
 	 * We checked for that above so this is safe now. */
 	KASSERT(node->tn_spec.tn_dir.tn_parent == dnode);
 
-	/* Get the directory entry associated with node (vp).  This was
-	 * filled by tmpfs_lookup while looking up the entry. */
-	de = node->tn_lookup_dirent;
-	KASSERT(TMPFS_DIRENT_MATCHES(de,
-	    ((struct vop_rmdir_args *)v)->a_cnp->cn_nameptr,
-	    ((struct vop_rmdir_args *)v)->a_cnp->cn_namelen));
+	/* Get the directory entry associated with node (vp). */
+	de = tmpfs_dir_lookup(dnode, cnp);
+	if (de == NULL) {
+		error = ENOENT;
+		goto out;
+	}
+	KASSERT(de->td_node == node);
 
 	/* Check flags to see if we are allowed to remove the directory. */
 	if (dnode->tn_flags & APPEND || node->tn_flags & (IMMUTABLE | APPEND)) {
@@ -1082,6 +1092,7 @@ tmpfs_rmdir(void *v)
 	 * reclaimed. */
 	tmpfs_free_dirent(tmp, de, true);
 
+	KASSERT(node->tn_links == 0);
  out:
 	/* Release the nodes. */
 	vput(dvp);
@@ -1244,19 +1255,14 @@ int
 tmpfs_inactive(void *v)
 {
 	struct vnode *vp = ((struct vop_inactive_args *)v)->a_vp;
-	nlink_t links;
 
 	struct tmpfs_node *node;
 
 	KASSERT(VOP_ISLOCKED(vp));
 
 	node = VP_TO_TMPFS_NODE(vp);
-	links = node->tn_links;
-
+	*((struct vop_inactive_args *)v)->a_recycle = (node->tn_links == 0);
 	VOP_UNLOCK(vp, 0);
-
-	if (links == 0)
-		vrecycle(vp, NULL, curlwp);
 
 	return 0;
 }
@@ -1271,8 +1277,6 @@ tmpfs_reclaim(void *v)
 	struct tmpfs_mount *tmp;
 	struct tmpfs_node *node;
 
-	KASSERT(!VOP_ISLOCKED(vp));
-
 	node = VP_TO_TMPFS_NODE(vp);
 	tmp = VFS_TO_TMPFS(vp->v_mount);
 
@@ -1285,7 +1289,6 @@ tmpfs_reclaim(void *v)
 	if (node->tn_links == 0)
 		tmpfs_free_node(tmp, node);
 
-	KASSERT(!VOP_ISLOCKED(vp));
 	KASSERT(vp->v_data == NULL);
 
 	return 0;
@@ -1405,7 +1408,7 @@ tmpfs_getpages(void *v)
 	int npages = *count;
 
 	KASSERT(vp->v_type == VREG);
-	LOCK_ASSERT(simple_lock_held(&vp->v_interlock));
+	KASSERT(mutex_owned(&vp->v_interlock));
 
 	node = VP_TO_TMPFS_NODE(vp);
 	uobj = node->tn_spec.tn_reg.tn_aobj;
@@ -1414,7 +1417,7 @@ tmpfs_getpages(void *v)
 
 	if (vp->v_size <= offset + (centeridx << PAGE_SHIFT)) {
 		if ((flags & PGO_LOCKED) == 0)
-			simple_unlock(&vp->v_interlock);
+			mutex_exit(&vp->v_interlock);
 		return EINVAL;
 	}
 
@@ -1433,7 +1436,7 @@ tmpfs_getpages(void *v)
 			node->tn_status |= TMPFS_NODE_MODIFIED;
 	}
 
-	simple_unlock(&vp->v_interlock);
+	mutex_exit(&vp->v_interlock);
 
 	/*
 	 * Make sure that the array on which we will store the
@@ -1448,7 +1451,7 @@ tmpfs_getpages(void *v)
 	if (m != NULL)
 		for (i = 0; i < npages; i++)
 			m[i] = NULL;
-	simple_lock(&uobj->vmobjlock);
+	mutex_enter(&uobj->vmobjlock);
 	error = (*uobj->pgops->pgo_get)(uobj, offset, m, &npages, centeridx,
 	    access_type, advice, flags | PGO_ALLPAGES);
 #if defined(DEBUG)
@@ -1478,19 +1481,19 @@ tmpfs_putpages(void *v)
 	struct tmpfs_node *node;
 	struct uvm_object *uobj;
 
-	LOCK_ASSERT(simple_lock_held(&vp->v_interlock));
+	KASSERT(mutex_owned(&vp->v_interlock));
 
 	node = VP_TO_TMPFS_NODE(vp);
 
 	if (vp->v_type != VREG) {
-		simple_unlock(&vp->v_interlock);
+		mutex_exit(&vp->v_interlock);
 		return 0;
 	}
 
 	uobj = node->tn_spec.tn_reg.tn_aobj;
-	simple_unlock(&vp->v_interlock);
+	mutex_exit(&vp->v_interlock);
 
-	simple_lock(&uobj->vmobjlock);
+	mutex_enter(&uobj->vmobjlock);
 	error = (*uobj->pgops->pgo_put)(uobj, offlo, offhi, flags);
 
 	/* XXX mtime */

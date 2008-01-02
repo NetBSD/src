@@ -1,4 +1,4 @@
-/*	$NetBSD: union.h,v 1.16 2007/12/08 19:29:45 pooka Exp $	*/
+/*	$NetBSD: union.h,v 1.17 2008/01/02 11:48:47 ad Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -129,8 +129,6 @@ struct union_node {
 #define UN_ULOCK	0x04		/* Upper node is locked */
 #define UN_KLOCK	0x08		/* Keep upper node locked on vput */
 #define UN_CACHED	0x10		/* In union cache */
-#define UN_DRAINING	0x20		/* upper node lock is draining */
-#define UN_DRAINED	0x40		/* upper node lock is drained */
 
 extern int union_allocvp(struct vnode **, struct mount *,
 				struct vnode *, struct vnode *,

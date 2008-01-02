@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_lwp.c,v 1.32 2007/12/20 23:03:10 dsl Exp $	*/
+/*	$NetBSD: sys_lwp.c,v 1.33 2008/01/02 11:48:53 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.32 2007/12/20 23:03:10 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.33 2008/01/02 11:48:53 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -657,18 +657,14 @@ sys__lwp_unpark_all(struct lwp *l, const struct sys__lwp_unpark_all_args *uap, r
 	if (sz <= sizeof(targets))
 		tp = targets;
 	else {
-		KERNEL_LOCK(1, l);		/* XXXSMP */
 		tp = kmem_alloc(sz, KM_SLEEP);
-		KERNEL_UNLOCK_ONE(l);		/* XXXSMP */
 		if (tp == NULL)
 			return ENOMEM;
 	}
 	error = copyin(SCARG(uap, targets), tp, sz);
 	if (error != 0) {
 		if (tp != targets) {
-			KERNEL_LOCK(1, l);	/* XXXSMP */
 			kmem_free(tp, sz);
-			KERNEL_UNLOCK_ONE(l);	/* XXXSMP */
 		}
 		return error;
 	}
@@ -727,11 +723,8 @@ sys__lwp_unpark_all(struct lwp *l, const struct sys__lwp_unpark_all_args *uap, r
 	}
 
 	sleepq_unlock(sq);
-	if (tp != targets) {
-		KERNEL_LOCK(1, l);		/* XXXSMP */
+	if (tp != targets)
 		kmem_free(tp, sz);
-		KERNEL_UNLOCK_ONE(l);		/* XXXSMP */
-	}
 	if (swapin)
 		uvm_kick_scheduler();
 

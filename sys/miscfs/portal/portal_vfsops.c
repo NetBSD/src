@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vfsops.c,v 1.68 2007/11/26 19:02:15 pooka Exp $	*/
+/*	$NetBSD: portal_vfsops.c,v 1.69 2008/01/02 11:49:01 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.68 2007/11/26 19:02:15 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.69 2008/01/02 11:49:01 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -179,11 +179,7 @@ portal_unmount(struct mount *mp, int mntflags)
 		return (error);
 
 	/*
-	 * Release reference on underlying root vnode
-	 */
-	vrele(rtvp);
-	/*
-	 * And blow it away for future re-use
+	 * Blow it away for future re-use
 	 */
 	vgone(rtvp);
 	/*

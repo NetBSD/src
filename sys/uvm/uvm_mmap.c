@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.120 2007/12/26 22:11:53 christos Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.121 2008/01/02 11:49:18 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.120 2007/12/26 22:11:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.121 2008/01/02 11:49:18 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_pax.h"
@@ -231,7 +231,7 @@ sys_mincore(struct lwp *l, const struct sys_mincore_args *uap, register_t *retva
 		if (amap != NULL)
 			amap_lock(amap);
 		if (uobj != NULL)
-			simple_lock(&uobj->vmobjlock);
+			mutex_enter(&uobj->vmobjlock);
 
 		for (/* nothing */; start < lim; start += PAGE_SIZE, vec++) {
 			pgi = 0;
@@ -267,7 +267,7 @@ sys_mincore(struct lwp *l, const struct sys_mincore_args *uap, register_t *retva
 			(void) subyte(vec, pgi);
 		}
 		if (uobj != NULL)
-			simple_unlock(&uobj->vmobjlock);
+			mutex_exit(&uobj->vmobjlock);
 		if (amap != NULL)
 			amap_unlock(amap);
 	}
@@ -1167,9 +1167,9 @@ uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff, locklimit)
 			 * then mark it as text.
 			 */
 			if (prot & PROT_EXEC) {
-				simple_lock(&uobj->vmobjlock);
+				mutex_enter(&vp->v_interlock);
 				vn_markexec(vp);
-				simple_unlock(&uobj->vmobjlock);
+				mutex_exit(&vp->v_interlock);
 			}
 		} else {
 			int i = maxprot;
@@ -1199,22 +1199,22 @@ uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff, locklimit)
 		 * with direct I/O.
 		 */
 
-		simple_lock(&vp->v_interlock);
+		mutex_enter(&vp->v_interlock);
 		needwritemap = (vp->v_iflag & VI_WRMAP) == 0 &&
 			(flags & MAP_SHARED) != 0 &&
 			(maxprot & VM_PROT_WRITE) != 0;
 		if ((vp->v_iflag & VI_MAPPED) == 0 || needwritemap) {
 			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY | LK_INTERLOCK);
-			simple_lock(&vp->v_interlock);
+			mutex_enter(&vp->v_interlock);
 			vp->v_iflag |= VI_MAPPED;
 			vp->v_vflag |= VV_MAPPED;
 			if (needwritemap) {
 				vp->v_iflag |= VI_WRMAP;
 			}
-			simple_unlock(&vp->v_interlock);
+			mutex_exit(&vp->v_interlock);
 			VOP_UNLOCK(vp, 0);
 		} else
-			simple_unlock(&vp->v_interlock);
+			mutex_exit(&vp->v_interlock);
 	}
 
 	uvmflag = UVM_MAPFLAG(prot, maxprot,

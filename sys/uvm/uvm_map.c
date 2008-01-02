@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.247 2007/12/13 02:45:11 yamt Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.248 2008/01/02 11:49:18 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.247 2007/12/13 02:45:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.248 2008/01/02 11:49:18 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -88,6 +88,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.247 2007/12/13 02:45:11 yamt Exp $");
 #include <sys/mount.h>
 #include <sys/vnode.h>
 #include <sys/lockdebug.h>
+#include <sys/atomic.h>
 
 #ifdef SYSVSHM
 #include <sys/shm.h>
@@ -139,18 +140,16 @@ UVMMAP_EVCNT_DEFINE(ukh_free)
 const char vmmapbsy[] = "vmmapbsy";
 
 /*
- * pool for vmspace structures.
+ * cache for vmspace structures.
  */
 
-POOL_INIT(uvm_vmspace_pool, sizeof(struct vmspace), 0, 0, 0, "vmsppl",
-    &pool_allocator_nointr, IPL_NONE);
+static struct pool_cache uvm_vmspace_cache;
 
 /*
- * pool for dynamically-allocated map entries.
+ * cache for dynamically-allocated map entries.
  */
 
-POOL_INIT(uvm_map_entry_pool, sizeof(struct vm_map_entry), 0, 0, 0, "vmmpepl",
-    &pool_allocator_nointr, IPL_NONE);
+static struct pool_cache uvm_map_entry_cache;
 
 MALLOC_DEFINE(M_VMMAP, "VM map", "VM map structures");
 MALLOC_DEFINE(M_VMPMAP, "VM pmap", "VM pmap");
@@ -229,13 +228,10 @@ extern struct vm_map *pager_map; /* XXX */
 /*
  * SAVE_HINT: saves the specified entry as the hint for future lookups.
  *
- * => map need not be locked (protected by hint_lock).
+ * => map need not be locked.
  */
-#define SAVE_HINT(map,check,value) do { \
-	mutex_enter(&(map)->hint_lock); \
-	if ((map)->hint == (check)) \
-		(map)->hint = (value); \
-	mutex_exit(&(map)->hint_lock); \
+#define SAVE_HINT(map, check, value) do { \
+	atomic_cas_ptr(&(map)->hint, (check), (value)); \
 } while (/*CONSTCOND*/ 0)
 
 /*
@@ -538,7 +534,8 @@ vm_map_lock(struct vm_map *map)
 		KASSERT(map->busy != curlwp);
 		mutex_enter(&map->misc_lock);
 		rw_exit(&map->lock);
-		cv_wait(&map->cv, &map->misc_lock);
+		if (map->busy != NULL)
+			cv_wait(&map->cv, &map->misc_lock);
 		mutex_exit(&map->misc_lock);
 	}
 
@@ -578,6 +575,7 @@ vm_map_unlock(struct vm_map *map)
 		mutex_spin_exit(&map->mutex);
 	else {
 		KASSERT(rw_write_held(&map->lock));
+		KASSERT(map->busy == NULL);
 		rw_exit(&map->lock);
 	}
 }
@@ -621,10 +619,78 @@ vm_map_unbusy(struct vm_map *map)
 	 * o writers are blocked out with a read or write hold
 	 * o at any time, only one thread owns the set of values
 	 */
-	map->busy = NULL;
 	mutex_enter(&map->misc_lock);
+	map->busy = NULL;
 	cv_broadcast(&map->cv);
 	mutex_exit(&map->misc_lock);
+}
+
+/*
+ * vm_map_lock_read: acquire a shared (read) lock on a map.
+ */
+
+void
+vm_map_lock_read(struct vm_map *map)
+{
+
+	KASSERT((map->flags & VM_MAP_INTRSAFE) == 0);
+
+	rw_enter(&map->lock, RW_READER);
+}
+
+/*
+ * vm_map_unlock_read: release a shared lock on a map.
+ */
+ 
+void
+vm_map_unlock_read(struct vm_map *map)
+{
+
+	KASSERT((map->flags & VM_MAP_INTRSAFE) == 0);
+
+	rw_exit(&map->lock);
+}
+
+/*
+ * vm_map_downgrade: downgrade an exclusive lock to a shared lock.
+ */
+
+void
+vm_map_downgrade(struct vm_map *map)
+{
+
+	rw_downgrade(&map->lock);
+}
+
+/*
+ * vm_map_busy: mark a map as busy.
+ *
+ * => the caller must hold the map write locked
+ */
+
+void
+vm_map_busy(struct vm_map *map)
+{
+
+	KASSERT(rw_write_held(&map->lock));
+	KASSERT(map->busy == NULL);
+
+	map->busy = curlwp;
+}
+
+/*
+ * vm_map_locked_p: return true if the map is write locked.
+ */
+
+bool
+vm_map_locked_p(struct vm_map *map)
+{
+
+	if ((map->flags & VM_MAP_INTRSAFE) != 0) {
+		return mutex_owned(&map->mutex);
+	} else {
+		return rw_write_held(&map->lock);
+	}
 }
 
 /*
@@ -641,7 +707,7 @@ uvm_mapent_alloc(struct vm_map *map, int flags)
 	if (VM_MAP_USE_KMAPENT(map)) {
 		me = uvm_kmapent_alloc(map, flags);
 	} else {
-		me = pool_get(&uvm_map_entry_pool, pflags);
+		me = pool_cache_get(&uvm_map_entry_cache, pflags);
 		if (__predict_false(me == NULL))
 			return NULL;
 		me->flags = 0;
@@ -654,6 +720,8 @@ uvm_mapent_alloc(struct vm_map *map, int flags)
 
 /*
  * uvm_mapent_alloc_split: allocate a map entry for clipping.
+ *
+ * => map must be locked by caller if UVM_MAP_QUANTUM is set.
  */
 
 static struct vm_map_entry *
@@ -669,11 +737,10 @@ uvm_mapent_alloc_split(struct vm_map *map,
 	if (old_entry->flags & UVM_MAP_QUANTUM) {
 		struct vm_map_kernel *vmk = vm_map_to_kernel(map);
 
-		mutex_spin_enter(&uvm_kentry_lock);
+		KASSERT(vm_map_locked_p(map));
 		me = vmk->vmk_merged_entries;
 		KASSERT(me);
 		vmk->vmk_merged_entries = me->next;
-		mutex_spin_exit(&uvm_kentry_lock);
 		KASSERT(me->flags & UVM_MAP_QUANTUM);
 	} else {
 		me = uvm_mapent_alloc(map, flags);
@@ -696,7 +763,7 @@ uvm_mapent_free(struct vm_map_entry *me)
 	if (me->flags & UVM_MAP_KERNEL) {
 		uvm_kmapent_free(me);
 	} else {
-		pool_put(&uvm_map_entry_pool, me);
+		pool_cache_put(&uvm_map_entry_cache, me);
 	}
 }
 
@@ -705,6 +772,7 @@ uvm_mapent_free(struct vm_map_entry *me)
  *
  * => keep the entry if needed.
  * => caller shouldn't hold map locked if VM_MAP_USE_KMAPENT(map) is true.
+ * => map should be locked if UVM_MAP_QUANTUM is set.
  */
 
 static void
@@ -719,15 +787,14 @@ uvm_mapent_free_merged(struct vm_map *map, struct vm_map_entry *me)
 		 */
 		struct vm_map_kernel *vmk;
 
+		KASSERT(vm_map_locked_p(map));
 		KASSERT(VM_MAP_IS_KERNEL(map));
 		KASSERT(!VM_MAP_USE_KMAPENT(map) ||
 		    (me->flags & UVM_MAP_KERNEL));
 
 		vmk = vm_map_to_kernel(map);
-		mutex_spin_enter(&uvm_kentry_lock);
 		me->next = vmk->vmk_merged_entries;
 		vmk->vmk_merged_entries = me;
-		mutex_spin_exit(&uvm_kentry_lock);
 	} else {
 		uvm_mapent_free(me);
 	}
@@ -837,8 +904,7 @@ uvm_map_unreference_amap(struct vm_map_entry *entry, int flags)
 
 
 /*
- * uvm_map_init: init mapping system at boot time.   note that we allocate
- * and init the static pool of struct vm_map_entry *'s for the kernel here.
+ * uvm_map_init: init mapping system at boot time.
  */
 
 void
@@ -864,6 +930,15 @@ uvm_map_init(void)
 	 */
 
 	mutex_init(&uvm_kentry_lock, MUTEX_DRIVER, IPL_VM);
+
+	/*
+	 * initialize caches.
+	 */
+
+	pool_cache_bootstrap(&uvm_map_entry_cache, sizeof(struct vm_map_entry),
+	    0, 0, 0, "vmmpepl", NULL, IPL_NONE, NULL, NULL, NULL);
+	pool_cache_bootstrap(&uvm_vmspace_cache, sizeof(struct vmspace),
+	    0, 0, 0, "vmsppl", NULL, IPL_NONE, NULL, NULL, NULL);
 }
 
 /*
@@ -1103,7 +1178,8 @@ uvm_map_prepare(struct vm_map *map, vaddr_t start, vsize_t size,
 
 retry:
 	if (vm_map_lock_try(map) == false) {
-		if (flags & UVM_FLAG_TRYLOCK) {
+		if ((flags & UVM_FLAG_TRYLOCK) != 0 &&
+		    (map->flags & VM_MAP_INTRSAFE) == 0) {
 			return EAGAIN;
 		}
 		vm_map_lock(map); /* could sleep here */
@@ -1505,18 +1581,26 @@ nomerge:
 
 	error = 0;
 done:
-	vm_map_unlock(map);
-	if (new_entry) {
-		if (error == 0) {
-			KDASSERT(merged);
-			uvm_mapent_free_merged(map, new_entry);
-		} else {
-			uvm_mapent_free(new_entry);
-		}
+	if ((flags & UVM_FLAG_QUANTUM) == 0) {
+		/*
+		 * vmk_merged_entries is locked by the map's lock.
+		 */
+		vm_map_unlock(map);
+	}
+	if (new_entry && error == 0) {
+		KDASSERT(merged);
+		uvm_mapent_free_merged(map, new_entry);
+		new_entry = NULL;
 	}
 	if (dead) {
 		KDASSERT(merged);
 		uvm_mapent_free_merged(map, dead);
+	}
+	if ((flags & UVM_FLAG_QUANTUM) != 0) {
+		vm_map_unlock(map);
+	}
+	if (new_entry != NULL) {
+		uvm_mapent_free(new_entry);
 	}
 	return error;
 }
@@ -1572,9 +1656,7 @@ uvm_map_lookup_entry(struct vm_map *map, vaddr_t address,
 	 * list, or from the hint.
 	 */
 
-	mutex_enter(&map->hint_lock);
 	cur = map->hint;
-	mutex_exit(&map->hint_lock);
 
 	if (cur == &map->header)
 		cur = cur->next;
@@ -3007,9 +3089,9 @@ uvm_map_protect(struct vm_map *map, vaddr_t start, vaddr_t end,
 
 				if (UVM_OBJ_IS_VNODE(uobj) &&
 				    (current->protection & VM_PROT_EXECUTE)) {
-				    	simple_lock(&uobj->vmobjlock);
+				    	mutex_enter(&uobj->vmobjlock);
 					vn_markexec((struct vnode *) uobj);
-				    	simple_unlock(&uobj->vmobjlock);
+				    	mutex_exit(&uobj->vmobjlock);
 				}
 			}
 		}
@@ -3724,10 +3806,10 @@ uvm_map_clean(struct vm_map *map, vaddr_t start, vaddr_t end, int flags)
 			if (anon == NULL)
 				continue;
 
-			simple_lock(&anon->an_lock);
+			mutex_enter(&anon->an_lock);
 			pg = anon->an_page;
 			if (pg == NULL) {
-				simple_unlock(&anon->an_lock);
+				mutex_exit(&anon->an_lock);
 				continue;
 			}
 
@@ -3747,18 +3829,18 @@ uvm_map_clean(struct vm_map *map, vaddr_t start, vaddr_t end, int flags)
 				 * at all in these cases.
 				 */
 
-				uvm_lock_pageq();
+				mutex_enter(&uvm_pageqlock);
 				if (pg->loan_count != 0 ||
 				    pg->wire_count != 0) {
-					uvm_unlock_pageq();
-					simple_unlock(&anon->an_lock);
+					mutex_exit(&uvm_pageqlock);
+					mutex_exit(&anon->an_lock);
 					continue;
 				}
 				KASSERT(pg->uanon == anon);
 				pmap_clear_reference(pg);
 				uvm_pagedeactivate(pg);
-				uvm_unlock_pageq();
-				simple_unlock(&anon->an_lock);
+				mutex_exit(&uvm_pageqlock);
+				mutex_exit(&anon->an_lock);
 				continue;
 
 			case PGO_FREE:
@@ -3773,12 +3855,12 @@ uvm_map_clean(struct vm_map *map, vaddr_t start, vaddr_t end, int flags)
 
 				/* skip the page if it's wired */
 				if (pg->wire_count != 0) {
-					simple_unlock(&anon->an_lock);
+					mutex_exit(&anon->an_lock);
 					continue;
 				}
 				amap_unadd(&current->aref, offset);
 				refs = --anon->an_ref;
-				simple_unlock(&anon->an_lock);
+				mutex_exit(&anon->an_lock);
 				if (refs == 0)
 					uvm_anfree(anon);
 				continue;
@@ -3797,7 +3879,7 @@ uvm_map_clean(struct vm_map *map, vaddr_t start, vaddr_t end, int flags)
 		uoff = current->offset + (start - current->start);
 		size = MIN(end, current->end) - start;
 		if (uobj != NULL) {
-			simple_lock(&uobj->vmobjlock);
+			mutex_enter(&uobj->vmobjlock);
 			if (uobj->pgops->pgo_put != NULL)
 				error = (uobj->pgops->pgo_put)(uobj, uoff,
 				    uoff + size, flags | PGO_CLEANIT);
@@ -3868,7 +3950,7 @@ uvmspace_alloc(vaddr_t vmin, vaddr_t vmax)
 	struct vmspace *vm;
 	UVMHIST_FUNC("uvmspace_alloc"); UVMHIST_CALLED(maphist);
 
-	vm = pool_get(&uvm_vmspace_pool, PR_WAITOK);
+	vm = pool_cache_get(&uvm_vmspace_cache, PR_WAITOK);
 	uvmspace_init(vm, NULL, vmin, vmax);
 	UVMHIST_LOG(maphist,"<- done (vm=0x%x)", vm,0,0,0);
 	return (vm);
@@ -4078,11 +4160,10 @@ uvmspace_free(struct vmspace *vm)
 	KASSERT(map->nentries == 0);
 	KASSERT(map->size == 0);
 	mutex_destroy(&map->misc_lock);
-	mutex_destroy(&map->hint_lock);
 	mutex_destroy(&map->mutex);
 	rw_destroy(&map->lock);
 	pmap_destroy(map->pmap);
-	pool_put(&uvm_vmspace_pool, vm);
+	pool_cache_put(&uvm_vmspace_cache, vm);
 }
 
 /*
@@ -4806,7 +4887,7 @@ uvm_object_printit(struct uvm_object *uobj, bool full,
 	int cnt = 0;
 
 	(*pr)("OBJECT %p: locked=%d, pgops=%p, npages=%d, ",
-	    uobj, uobj->vmobjlock.lock_data, uobj->pgops, uobj->uo_npages);
+	    uobj, mutex_owned(&uobj->vmobjlock), uobj->pgops, uobj->uo_npages);
 	if (UVM_OBJ_IS_KERN_OBJECT(uobj))
 		(*pr)("refs=<SYSTEM>\n");
 	else
@@ -4995,12 +5076,6 @@ uvm_map_setup(struct vm_map *map, vaddr_t vmin, vaddr_t vmax, int flags)
 	cv_init(&map->cv, "vm_map");
 	mutex_init(&map->misc_lock, MUTEX_DRIVER, ipl);
 	mutex_init(&map->mutex, MUTEX_DRIVER, ipl);
-
-	/*
-	 * The hint lock can get acquired with the pagequeue
-	 * lock held, so must be at IPL_VM.
-	 */
-	mutex_init(&map->hint_lock, MUTEX_DRIVER, IPL_VM);
 }
 
 

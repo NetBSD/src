@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.154 2007/12/31 15:32:11 ad Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.155 2008/01/02 11:48:49 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.154 2007/12/31 15:32:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.155 2008/01/02 11:48:49 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
@@ -315,7 +315,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	/* XXX p_smutex can be IPL_VM except for audio drivers */
 	mutex_init(&p2->p_smutex, MUTEX_DEFAULT, IPL_SCHED);
 	mutex_init(&p2->p_stmutex, MUTEX_DEFAULT, IPL_HIGH);
-	mutex_init(&p2->p_raslock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&p2->p_auxlock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&p2->p_mutex, MUTEX_DEFAULT, IPL_NONE);
 	rw_init(&p2->p_reflock);
 	cv_init(&p2->p_waitcv, "wait");

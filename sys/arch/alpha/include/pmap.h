@@ -1,7 +1,7 @@
-/* $NetBSD: pmap.h,v 1.68 2007/02/21 22:59:37 thorpej Exp $ */
+/* $NetBSD: pmap.h,v 1.69 2008/01/02 11:48:21 ad Exp $ */
 
 /*-
- * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999, 2000, 2001, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -117,7 +117,7 @@
 #include "opt_multiprocessor.h"
 #endif
 
-#include <sys/lock.h>
+#include <sys/mutex.h>
 #include <sys/queue.h>
 
 #include <machine/pte.h>
@@ -144,7 +144,7 @@ struct pmap {
 	TAILQ_ENTRY(pmap)	pm_list;	/* list of all pmaps */
 	pt_entry_t		*pm_lev1map;	/* level 1 map */
 	int			pm_count;	/* pmap reference count */
-	struct simplelock	pm_slock;	/* lock on pmap */
+	kmutex_t		pm_lock;	/* lock on pmap */
 	struct pmap_statistics	pm_stats;	/* pmap statistics */
 	unsigned long		pm_cpus;	/* mask of CPUs using pmap */
 	unsigned long		pm_needisync;	/* mask of CPUs needing isync */
@@ -343,8 +343,8 @@ pmap_l3pte(pmap, v, l2pte)
  * operations, locking the kernel pmap is not necessary.  Therefore,
  * it is not necessary to block interrupts when locking pmap strucutres.
  */
-#define	PMAP_LOCK(pmap)		simple_lock(&(pmap)->pm_slock)
-#define	PMAP_UNLOCK(pmap)	simple_unlock(&(pmap)->pm_slock)
+#define	PMAP_LOCK(pmap)		mutex_enter(&(pmap)->pm_lock)
+#define	PMAP_UNLOCK(pmap)	mutex_exit(&(pmap)->pm_lock)
 
 /*
  * Macro for processing deferred I-stream synchronization.
