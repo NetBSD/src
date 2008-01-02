@@ -1,4 +1,4 @@
-/*	$NetBSD: specfs.c,v 1.14 2008/01/02 15:44:04 pooka Exp $	*/
+/*	$NetBSD: specfs.c,v 1.15 2008/01/02 18:15:14 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -252,11 +252,10 @@ rump_specstrategy(void *v)
 	} else {
  syncfallback:
 		if (bp->b_flags & B_READ) {
-			printf("scheduling read\n");
-			rumpuser_read(sp->rsp_fd, bp->b_data,
+			rumpuser_read_bio(sp->rsp_fd, bp->b_data,
 			    bp->b_bcount, off, bp);
 		} else {
-			rumpuser_write(sp->rsp_fd, bp->b_data,
+			rumpuser_write_bio(sp->rsp_fd, bp->b_data,
 			    bp->b_bcount, off, bp);
 		}
 		biowait(bp);
