@@ -1,6 +1,7 @@
-.\"	$NetBSD: arcmsr.4,v 1.2 2007/12/05 00:22:12 xtraeme Exp $
+.\"	$NetBSD: arcmsr.4,v 1.3 2008/01/02 23:50:52 xtraeme Exp $
 .\"	$OpenBSD: arc.4,v 1.10 2007/11/04 08:18:17 dlg Exp $
 .\"
+.\" Copyright (c) 2007 Juan Romero Pardines <xtraeme@netbsd.org>
 .\" Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -15,12 +16,12 @@
 .\" TORTIOUS ACTION, ARISING OUT OF
 .\" PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd December 4, 2007
+.Dd January 2, 2008
 .Dt ARCMSR 4
 .Os
 .Sh NAME
 .Nm arcmsr
-.Nd Areca Technology Corporation SATA RAID controller
+.Nd Areca Technology Corporation SATA/SAS RAID controller
 .Sh SYNOPSIS
 .Cd "arcmsr* at pci? dev ? function ?"
 .Sh DESCRIPTION
@@ -88,12 +89,28 @@ ARC-1681 PCI-X 8 Port SAS RAID Controller
 These controllers can support RAID levels 0, 1, 1E, 3, 5, 6, and JBOD.
 .Pp
 .Nm
-supports alarm control and monitoring of volumes configured on the
-controllers via the
+supports management of the controllers via the
 .Xr bio 4
 interface and the
 .Xr bioctl 8
 utility.
+.Pp
+Please note, however, that to use some features that require special
+privileges, such as creating/removing hot-spares, pass-through disks
+or RAID volumes will require to have the
+.Em password
+disable in the firmware; otherwise a
+.Em Permission denied
+error will be reported by
+.Xr bioctl 8 .
+.Pp
+The
+.Nm
+driver will also report to the kernel log buffer any error that might
+appear when handling firmware commands, such as used by the
+.Xr bioctl 8
+utility.
+.Pp
 .Sh SEE ALSO
 .Xr bio 4 ,
 .Xr intro 4 ,
@@ -105,13 +122,14 @@ The
 .Nm
 driver first appeared in
 .Ox 4.0 .
+It was ported to
+.Nx 4.0
+then.
 .Sh AUTHORS
 .An -nosplit
 The
 .Nm
 driver was written by
 .An David Gwynne Aq dlg@openbsd.org 
-and was ported to
-.Nx 
-by
+and was extended by
 .An Juan Romero Pardines Aq xtraeme@netbsd.org .
