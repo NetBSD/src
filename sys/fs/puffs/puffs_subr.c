@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_subr.c,v 1.62 2007/12/08 19:57:03 pooka Exp $	*/
+/*	$NetBSD: puffs_subr.c,v 1.63 2008/01/02 22:37:19 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.62 2007/12/08 19:57:03 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.63 2008/01/02 22:37:19 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -204,7 +204,7 @@ puffs_senderr(struct puffs_mount *pmp, int type, int error,
 	struct puffs_msgpark *park;
 	struct puffs_error *perr;
 
-	puffs_msgmem_alloc(sizeof(struct puffs_error), &park, (void**)&perr, 1);
+	puffs_msgmem_alloc(sizeof(struct puffs_error), &park, (void *)&perr, 1);
 	puffs_msg_setfaf(park);
 	puffs_msg_setinfo(park, PUFFSOP_ERROR, type, cookie);
 
