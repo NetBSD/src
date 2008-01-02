@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.109 2007/12/31 15:32:02 ad Exp $
+# $NetBSD: GENERIC,v 1.110 2008/01/02 02:32:25 mrg Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/ofppc/conf/std.ofppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.109 $"
+#ident 		"GENERIC-$Revision: 1.110 $"
 
 maxusers	32
 
@@ -52,7 +52,7 @@ options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 # Diagnostic/debugging support options
 #options 	DIAGNOSTIC	# cheap kernel consistency checks
 #options 	DEBUG		# expensive debugging checks/support
-#options	KMEMSTATS	# kernel memory statistics (vmstat -m)
+#options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 options 	DDB		# in-kernel debugger
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 options		DDB_VERBOSE_HELP
@@ -71,6 +71,7 @@ options 	COMPAT_15	# NetBSD 1.5,
 options 	COMPAT_16	# NetBSD 1.6,
 options 	COMPAT_20	# NetBSD 2.0,
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
+options 	COMPAT_40	# NetBSD 4.0 compatibility.
 options 	COMPAT_43	# and 4.3BSD
 options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 #options 	COMPAT_LINUX	# Linux binary compatibility
@@ -268,6 +269,7 @@ ex*	at pci? dev ? function ?	# 3Com 3c90x[BC]
 fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
 pcn*	at pci? dev ? function ?	# AMD PCnet-PCI Ethernet
+re*	at pci? dev ? function ?	# Realtek 8139C+/8169/8169S/8110S
 rtk*	at pci? dev ? function ?	# Realtek 8129/8139
 sip*	at pci? dev ? function ?	# SiS 900/DP83815 Ethernet
 tlp*	at pci? dev ? function ?	# DECchip 21x4x and clones
@@ -377,8 +379,8 @@ pseudo-device	vnd			# disk-like interface to files
 #options 	VND_COMPRESSION		# compressed vnd(4)
 pseudo-device	ccd		4	# concatenated/striped disk devices
 #pseudo-device	cgd		4	# cryptographic disk devices
-#pseudo-device	raid		8	# RAIDframe disk driver
-#options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
+pseudo-device	raid		8	# RAIDframe disk driver
+options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # Options to enable various other RAIDframe RAID types.
 # options	RF_INCLUDE_EVENODD=1
 # options	RF_INCLUDE_RAID5_RS=1
