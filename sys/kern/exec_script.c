@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_script.c,v 1.60 2007/12/31 15:32:10 ad Exp $	*/
+/*	$NetBSD: exec_script.c,v 1.61 2008/01/02 19:44:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_script.c,v 1.60 2007/12/31 15:32:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_script.c,v 1.61 2008/01/02 19:44:37 yamt Exp $");
 
 #if defined(SETUIDSCRIPTS) && !defined(FDSCRIPTS)
 #define FDSCRIPTS		/* Need this for safe set-id scripts. */
@@ -42,7 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: exec_script.c,v 1.60 2007/12/31 15:32:10 ad Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/vnode.h>
 #include <sys/namei.h>
 #include <sys/file.h>
@@ -74,7 +74,9 @@ exec_script_makecmds(struct lwp *l, struct exec_package *epp)
 	int error, hdrlinelen, shellnamelen, shellarglen;
 	char *hdrstr = epp->ep_hdr;
 	char *cp, *shellname, *shellarg, *oldpnbuf;
-	char **shellargp, **tmpsap;
+	size_t shellargp_len;
+	struct exec_fakearg *shellargp;
+	struct exec_fakearg *tmpsap;
 	struct vnode *scriptvp;
 #ifdef SETUIDSCRIPTS
 	/* Gcc needs those initialized for spurious uninitialized warning */
@@ -212,30 +214,39 @@ check_shell:
 	epp->ep_flags |= EXEC_INDIR;
 
 	/* and set up the fake args list, for later */
-	MALLOC(shellargp, char **, 4 * sizeof(char *), M_EXEC, M_WAITOK);
+	shellargp_len = 4 * sizeof(*shellargp);
+	shellargp = kmem_alloc(shellargp_len, KM_SLEEP);
 	tmpsap = shellargp;
-	*tmpsap = malloc(shellnamelen + 1, M_EXEC, M_WAITOK);
-	strlcpy(*tmpsap++, shellname, shellnamelen + 1);
+	tmpsap->fa_len = shellnamelen + 1;
+	tmpsap->fa_arg = kmem_alloc(tmpsap->fa_len, KM_SLEEP);
+	strlcpy(tmpsap->fa_arg, shellname, tmpsap->fa_len);
+	tmpsap++;
 	if (shellarg != NULL) {
-		*tmpsap = malloc(shellarglen + 1, M_EXEC, M_WAITOK);
-		strlcpy(*tmpsap++, shellarg, shellarglen + 1);
+		tmpsap->fa_len = shellarglen + 1;
+		tmpsap->fa_arg = kmem_alloc(tmpsap->fa_len, KM_SLEEP);
+		strlcpy(tmpsap->fa_arg, shellarg, tmpsap->fa_len);
+		tmpsap++;
 	}
-	MALLOC(*tmpsap, char *, MAXPATHLEN, M_EXEC, M_WAITOK);
+	tmpsap->fa_len = MAXPATHLEN;
+	tmpsap->fa_arg = kmem_alloc(tmpsap->fa_len, KM_SLEEP);
 #ifdef FDSCRIPTS
 	if ((epp->ep_flags & EXEC_HASFD) == 0) {
 #endif
 		/* normally can't fail, but check for it if diagnostic */
-		error = copyinstr(epp->ep_name, *tmpsap++, MAXPATHLEN,
+		error = copyinstr(epp->ep_name, tmpsap->fa_arg, MAXPATHLEN,
 		    (size_t *)0);
+		tmpsap++;
 #ifdef DIAGNOSTIC
 		if (error != 0)
 			panic("exec_script: copyinstr couldn't fail");
 #endif
 #ifdef FDSCRIPTS
-	} else
-		snprintf(*tmpsap++, MAXPATHLEN, "/dev/fd/%d", epp->ep_fd);
+	} else {
+		snprintf(tmpsap->fa_arg, MAXPATHLEN, "/dev/fd/%d", epp->ep_fd);
+		tmpsap++;
+	}
 #endif
-	*tmpsap = NULL;
+	tmpsap->fa_arg = NULL;
 
 	/*
 	 * mark the header we have as invalid; check_exec will read
@@ -271,6 +282,7 @@ check_shell:
 
 		epp->ep_flags |= (EXEC_HASARGL | EXEC_SKIPARG);
 		epp->ep_fa = shellargp;
+		epp->ep_fa_len = shellargp_len;
 #ifdef SETUIDSCRIPTS
 		/*
 		 * set thing up so that set-id scripts will be
@@ -307,11 +319,11 @@ fail:
 
 	/* free the fake arg list, because we're not returning it */
 	if ((tmpsap = shellargp) != NULL) {
-		while (*tmpsap != NULL) {
-			FREE(*tmpsap, M_EXEC);
+		while (tmpsap->fa_arg != NULL) {
+			kmem_free(tmpsap->fa_arg, tmpsap->fa_len);
 			tmpsap++;
 		}
-		FREE(shellargp, M_EXEC);
+		kmem_free(shellargp, shellargp_len);
 	}
 
         /*
