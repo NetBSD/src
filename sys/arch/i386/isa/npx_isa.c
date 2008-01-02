@@ -1,4 +1,4 @@
-/*	$NetBSD: npx_isa.c,v 1.15 2006/11/16 01:32:38 christos Exp $	*/
+/*	$NetBSD: npx_isa.c,v 1.16 2008/01/02 21:05:51 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx_isa.c,v 1.15 2006/11/16 01:32:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx_isa.c,v 1.16 2008/01/02 21:05:51 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,15 +83,14 @@ __KERNEL_RCSID(0, "$NetBSD: npx_isa.c,v 1.15 2006/11/16 01:32:38 christos Exp $"
 
 #include <i386/isa/npxvar.h>
 
-int npx_isa_probe(struct device *, struct cfdata *, void *);
-void npx_isa_attach(struct device *, struct device *, void *);
+int npx_isa_probe(device_t, struct cfdata *, void *);
+void npx_isa_attach(device_t, device_t, void *);
 
 CFATTACH_DECL(npx_isa, sizeof(struct npx_softc),
     npx_isa_probe, npx_isa_attach, NULL, NULL);
 
 int
-npx_isa_probe(struct device *parent, struct cfdata *match,
-    void *aux)
+npx_isa_probe(device_t parent, struct cfdata *match, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_handle_t ioh;
@@ -137,9 +136,9 @@ npx_isa_probe(struct device *parent, struct cfdata *match,
 }
 
 void
-npx_isa_attach(struct device *parent, struct device *self, void *aux)
+npx_isa_attach(device_t parent, device_t self, void *aux)
 {
-	struct npx_softc *sc = (void *)self;
+	struct npx_softc *sc = device_private(self);
 	struct isa_attach_args *ia = aux;
 
 	sc->sc_iot = ia->ia_iot;
