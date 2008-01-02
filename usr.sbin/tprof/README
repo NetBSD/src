@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.1 2008/01/01 23:42:56 yamt Exp $
+$NetBSD: README,v 1.2 2008/01/02 01:06:31 yamt Exp $
 
 NOTE:
 	- tprof driver currently only supports pentium4 (netburst) processors.
@@ -24,6 +24,8 @@ usage:
 		dropbuf_sample 0
 
 4. format the result.
+   the first line in the following example means that 11 samples have been
+   taken at 0xc0396c36, whose symbolic name is lapic_gettick+0x6.
 	# sh ./fmt.sh < /tmp/foo
 	11      c0396c36        lapic_gettick+0x6
 	5       c039b98a        x86_pause+0x2
