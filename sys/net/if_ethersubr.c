@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.158 2007/12/31 22:48:41 dyoung Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.159 2008/01/02 00:41:07 dyoung Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.158 2007/12/31 22:48:41 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.159 2008/01/02 00:41:07 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -1033,36 +1033,6 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 		m_freem(m);
 	} else
 		IF_ENQUEUE(inq, m);
-}
-
-int
-ether_mediachange(struct ifnet *ifp)
-{
-	struct ethercom *ec = (struct ethercom *)ifp;
-	int rc;
-
-	KASSERT(ec->ec_mii != NULL);
-
-	if ((ifp->if_flags & IFF_UP) == 0)
-		return 0;
-	if ((rc = mii_mediachg(ec->ec_mii)) == ENXIO)
-		return 0;
-	return rc;
-}
-
-void
-ether_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
-{
-	struct ethercom	*ec = (struct ethercom	*)ifp;
-	struct mii_data		*mii;
-
-	KASSERT(ec->ec_mii != NULL);
-
-	mii = ec->ec_mii;
-
-	mii_pollstat(mii);
-	ifmr->ifm_active = mii->mii_media_active;
-	ifmr->ifm_status = mii->mii_media_status;
 }
 
 /*
