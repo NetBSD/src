@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.104 2007/11/01 06:31:59 hannken Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.104.8.1 2008/01/02 21:58:16 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.104 2007/11/01 06:31:59 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.104.8.1 2008/01/02 21:58:16 bouyer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -138,14 +138,14 @@ ffs_alloc(struct inode *ip, daddr_t lbn, daddr_t bpref, int size,
 		voff_t off = trunc_page(lblktosize(fs, lbn));
 		voff_t endoff = round_page(lblktosize(fs, lbn) + size);
 
-		simple_lock(&uobj->vmobjlock);
+		mutex_enter(&uobj->vmobjlock);
 		while (off < endoff) {
 			pg = uvm_pagelookup(uobj, off);
 			KASSERT(pg != NULL);
 			KASSERT(pg->owner == curproc->p_pid);
 			off += PAGE_SIZE;
 		}
-		simple_unlock(&uobj->vmobjlock);
+		mutex_exit(&uobj->vmobjlock);
 	}
 #endif
 
@@ -226,7 +226,7 @@ ffs_realloccg(struct inode *ip, daddr_t lbprev, daddr_t bpref, int osize,
 		voff_t off = trunc_page(lblktosize(fs, lbprev));
 		voff_t endoff = round_page(lblktosize(fs, lbprev) + osize);
 
-		simple_lock(&uobj->vmobjlock);
+		mutex_enter(&uobj->vmobjlock);
 		while (off < endoff) {
 			pg = uvm_pagelookup(uobj, off);
 			KASSERT(pg != NULL);
@@ -234,7 +234,7 @@ ffs_realloccg(struct inode *ip, daddr_t lbprev, daddr_t bpref, int osize,
 			KASSERT((pg->flags & PG_CLEAN) == 0);
 			off += PAGE_SIZE;
 		}
-		simple_unlock(&uobj->vmobjlock);
+		mutex_exit(&uobj->vmobjlock);
 	}
 #endif
 
@@ -295,8 +295,10 @@ ffs_realloccg(struct inode *ip, daddr_t lbprev, daddr_t bpref, int osize,
 			if (bp->b_blkno != fsbtodb(fs, bno))
 				panic("bad blockno");
 			allocbuf(bp, nsize, 1);
-			bp->b_flags |= B_DONE;
 			memset((char *)bp->b_data + osize, 0, nsize - osize);
+			mutex_enter(bp->b_objlock);
+			bp->b_oflags |= BO_DONE;
+			mutex_exit(bp->b_objlock);
 			*bpp = bp;
 		}
 		if (blknop != NULL) {
@@ -375,8 +377,10 @@ ffs_realloccg(struct inode *ip, daddr_t lbprev, daddr_t bpref, int osize,
 		if (bpp != NULL) {
 			bp->b_blkno = fsbtodb(fs, bno);
 			allocbuf(bp, nsize, 1);
-			bp->b_flags |= B_DONE;
 			memset((char *)bp->b_data + osize, 0, (u_int)nsize - osize);
+			mutex_enter(bp->b_objlock);
+			bp->b_oflags |= BO_DONE;
+			mutex_exit(bp->b_objlock);
 			*bpp = bp;
 		}
 		if (blknop != NULL) {

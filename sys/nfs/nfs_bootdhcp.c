@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bootdhcp.c,v 1.36 2007/08/29 22:55:41 dyoung Exp $	*/
+/*	$NetBSD: nfs_bootdhcp.c,v 1.36.12.1 2008/01/02 21:57:41 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bootdhcp.c,v 1.36 2007/08/29 22:55:41 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bootdhcp.c,v 1.36.12.1 2008/01/02 21:57:41 bouyer Exp $");
 
 #include "opt_nfs_boot.h"
 #include "opt_tftproot.h"
@@ -473,7 +473,7 @@ bootpc_call(nd, lwp)
 	m = nam = NULL;
 
 	/* Record our H/W (Ethernet) address. */
-	{	struct sockaddr_dl *sdl = ifp->if_sadl;
+	{	const struct sockaddr_dl *sdl = ifp->if_sadl;
 		switch (sdl->sdl_type) {
 		    case IFT_ISO88025:
 			hafmt = HTYPE_IEEE802;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arc.h,v 1.19 2005/12/14 00:28:08 christos Exp $	*/
+/*	$NetBSD: if_arc.h,v 1.19.60.1 2008/01/02 21:57:02 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -41,7 +41,7 @@
  */
 struct arc_addr {
 	u_int8_t  arc_addr_octet[1];
-} __attribute__((__packed__));
+} __packed;
 
 /*
  * Structure of a 2.5MB/s Arcnet header.
@@ -64,7 +64,7 @@ struct	arc_header {
 	u_int8_t  arc_type2;	/* same as arc_type */
 	u_int8_t  arc_flag2;	/* real flag value */
 	u_int16_t arc_seqid2;	/* real seqid value */
-} __attribute__((__packed__));
+} __packed;
 
 #define	ARC_ADDR_LEN		1
 
@@ -119,7 +119,6 @@ extern u_int8_t arcbroadcastaddr;
 extern int arc_ipmtu;	/* XXX new ip only, no RFC 1051! */
 
 void	arc_ifattach(struct ifnet *, u_int8_t);
-void	arc_storelladdr(struct ifnet *, u_int8_t);
 char	*arc_sprintf(u_int8_t *);
 int	arc_isphds(uint8_t);
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.132 2007/12/08 19:29:57 pooka Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.132.4.1 2008/01/02 21:58:46 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.132 2007/12/08 19:29:57 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.132.4.1 2008/01/02 21:58:46 bouyer Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -188,26 +188,6 @@ POOL_INIT(vndxfer_pool, sizeof(struct vndxfer), 0, 0, 0, "swp vnx", NULL,
 POOL_INIT(vndbuf_pool, sizeof(struct vndbuf), 0, 0, 0, "swp vnd", NULL,
     IPL_BIO);
 
-#define	getvndxfer(vnx)	do {						\
-	int sp = splbio();						\
-	vnx = pool_get(&vndxfer_pool, PR_WAITOK);			\
-	splx(sp);							\
-} while (/*CONSTCOND*/ 0)
-
-#define putvndxfer(vnx) {						\
-	pool_put(&vndxfer_pool, (void *)(vnx));				\
-}
-
-#define	getvndbuf(vbp)	do {						\
-	int sp = splbio();						\
-	vbp = pool_get(&vndbuf_pool, PR_WAITOK);			\
-	splx(sp);							\
-} while (/*CONSTCOND*/ 0)
-
-#define putvndbuf(vbp) {						\
-	pool_put(&vndbuf_pool, (void *)(vbp));				\
-}
-
 /*
  * local variables
  */
@@ -269,8 +249,7 @@ uvm_swap_init(void)
 	uvmexp.nswapdev = 0;
 	rw_init(&swap_syscall_lock);
 	cv_init(&uvm.scheduler_cv, "schedule");
-	/* XXXSMP should be adaptive, but needs vmobjlock replaced */
-	mutex_init(&uvm_swap_data_lock, MUTEX_SPIN, IPL_NONE);
+	mutex_init(&uvm_swap_data_lock, MUTEX_DEFAULT, IPL_NONE);
 
 	/* XXXSMP should be at IPL_VM, but for audio interrupt handlers. */
 	mutex_init(&uvm_scheduler_mutex, MUTEX_SPIN, IPL_SCHED);
@@ -446,13 +425,13 @@ swapdrum_getsdp(int pgno)
  * 	[with two helper functions: swap_on and swap_off]
  */
 int
-sys_swapctl(struct lwp *l, void *v, register_t *retval)
+sys_swapctl(struct lwp *l, const struct sys_swapctl_args *uap, register_t *retval)
 {
-	struct sys_swapctl_args /* {
+	/* {
 		syscallarg(int) cmd;
 		syscallarg(void *) arg;
 		syscallarg(int) misc;
-	} */ *uap = (struct sys_swapctl_args *)v;
+	} */
 	struct vnode *vp;
 	struct nameidata nd;
 	struct swappri *spp;
@@ -1103,7 +1082,7 @@ swstrategy(struct buf *bp)
 {
 	struct swapdev *sdp;
 	struct vnode *vp;
-	int s, pageno, bn;
+	int pageno, bn;
 	UVMHIST_FUNC("swstrategy"); UVMHIST_CALLED(pdhist);
 
 	/*
@@ -1139,9 +1118,10 @@ swstrategy(struct buf *bp)
 	 * to sw_reg_strategy().
 	 */
 
-	switch (sdp->swd_vp->v_type) {
+	vp = sdp->swd_vp;		/* swapdev vnode pointer */
+	switch (vp->v_type) {
 	default:
-		panic("swstrategy: vnode type 0x%x", sdp->swd_vp->v_type);
+		panic("swstrategy: vnode type 0x%x", vp->v_type);
 
 	case VBLK:
 
@@ -1149,9 +1129,7 @@ swstrategy(struct buf *bp)
 		 * must convert "bp" from an I/O on /dev/drum to an I/O
 		 * on the swapdev (sdp).
 		 */
-		s = splbio();
 		bp->b_blkno = bn;		/* swapdev block number */
-		vp = sdp->swd_vp;		/* swapdev vnode pointer */
 		bp->b_dev = sdp->swd_dev;	/* swapdev dev_t */
 
 		/*
@@ -1159,15 +1137,19 @@ swstrategy(struct buf *bp)
 		 * drum's v_numoutput counter to the swapdevs.
 		 */
 		if ((bp->b_flags & B_READ) == 0) {
+			mutex_enter(bp->b_objlock);
 			vwakeup(bp);	/* kills one 'v_numoutput' on drum */
-			V_INCR_NUMOUTPUT(vp);	/* put it on swapdev */
+			mutex_exit(bp->b_objlock);
+			mutex_enter(&vp->v_interlock);
+			vp->v_numoutput++;	/* put it on swapdev */
+			mutex_exit(&vp->v_interlock);
 		}
 
 		/*
 		 * finally plug in swapdev vnode and start I/O
 		 */
 		bp->b_vp = vp;
-		splx(s);
+		bp->b_objlock = &vp->v_interlock;
 		VOP_STRATEGY(vp, bp);
 		return;
 
@@ -1234,7 +1216,7 @@ sw_reg_strategy(struct swapdev *sdp, struct buf *bp, int bn)
 	 * allocate a vndxfer head for this transfer and point it to
 	 * our buffer.
 	 */
-	getvndxfer(vnx);
+	vnx = pool_get(&vndxfer_pool, PR_WAITOK);
 	vnx->vx_flags = VX_BUSY;
 	vnx->vx_error = 0;
 	vnx->vx_pending = 0;
@@ -1309,9 +1291,11 @@ sw_reg_strategy(struct swapdev *sdp, struct buf *bp, int bn)
 		 * at the front of the nbp structure so that you can
 		 * cast pointers between the two structure easily.
 		 */
-		getvndbuf(nbp);
-		BUF_INIT(&nbp->vb_buf);
-		nbp->vb_buf.b_flags    = bp->b_flags | B_CALL;
+		nbp = pool_get(&vndbuf_pool, PR_WAITOK);
+		buf_init(&nbp->vb_buf);
+		nbp->vb_buf.b_flags    = bp->b_flags;
+		nbp->vb_buf.b_cflags   = bp->b_cflags;
+		nbp->vb_buf.b_oflags   = bp->b_oflags;
 		nbp->vb_buf.b_bcount   = sz;
 		nbp->vb_buf.b_bufsize  = sz;
 		nbp->vb_buf.b_error    = 0;
@@ -1321,6 +1305,7 @@ sw_reg_strategy(struct swapdev *sdp, struct buf *bp, int bn)
 		nbp->vb_buf.b_rawblkno = nbp->vb_buf.b_blkno;
 		nbp->vb_buf.b_iodone   = sw_reg_biodone;
 		nbp->vb_buf.b_vp       = vp;
+		nbp->vb_buf.b_objlock  = &vp->v_interlock;
 		if (vp->v_type == VBLK) {
 			nbp->vb_buf.b_dev = vp->v_rdev;
 		}
@@ -1332,12 +1317,14 @@ sw_reg_strategy(struct swapdev *sdp, struct buf *bp, int bn)
 		 */
 		s = splbio();
 		if (vnx->vx_error != 0) {
-			putvndbuf(nbp);
+			buf_destroy(&nbp->vb_buf);
+			pool_put(&vndbuf_pool, nbp);
 			goto out;
 		}
 		vnx->vx_pending++;
 
 		/* sort it in and start I/O if we are not over our limit */
+		/* XXXAD locking */
 		BUFQ_PUT(sdp->swd_tab, &nbp->vb_buf);
 		sw_reg_start(sdp);
 		splx(s);
@@ -1354,9 +1341,9 @@ sw_reg_strategy(struct swapdev *sdp, struct buf *bp, int bn)
 out: /* Arrive here at splbio */
 	vnx->vx_flags &= ~VX_BUSY;
 	if (vnx->vx_pending == 0) {
-		if (vnx->vx_error != 0)
-			bp->b_error = vnx->vx_error;
-		putvndxfer(vnx);
+		error = vnx->vx_error;
+		pool_put(&vndxfer_pool, vnx);
+		bp->b_error = error;
 		biodone(bp);
 	}
 	splx(s);
@@ -1371,6 +1358,7 @@ static void
 sw_reg_start(struct swapdev *sdp)
 {
 	struct buf	*bp;
+	struct vnode	*vp;
 	UVMHIST_FUNC("sw_reg_start"); UVMHIST_CALLED(pdhist);
 
 	/* recursion control */
@@ -1388,10 +1376,14 @@ sw_reg_start(struct swapdev *sdp)
 		UVMHIST_LOG(pdhist,
 		    "sw_reg_start:  bp %p vp %p blkno %p cnt %lx",
 		    bp, bp->b_vp, bp->b_blkno, bp->b_bcount);
-		if ((bp->b_flags & B_READ) == 0)
-			V_INCR_NUMOUTPUT(bp->b_vp);
-
-		VOP_STRATEGY(bp->b_vp, bp);
+		vp = bp->b_vp;
+		KASSERT(bp->b_objlock == &vp->v_interlock);
+		if ((bp->b_flags & B_READ) == 0) {
+			mutex_enter(&vp->v_interlock);
+			vp->v_numoutput++;
+			mutex_exit(&vp->v_interlock);
+		}
+		VOP_STRATEGY(vp, bp);
 	}
 	sdp->swd_flags &= ~SWF_BUSY;
 }
@@ -1437,7 +1429,7 @@ sw_reg_iodone(struct work *wk, void *dummy)
 
 	if (vbp->vb_buf.b_error != 0) {
 		/* pass error upward */
-		error = vbp->vb_buf.b_error;
+		error = vbp->vb_buf.b_error ? vbp->vb_buf.b_error : EIO;
 		UVMHIST_LOG(pdhist, "  got error=%d !", error, 0, 0, 0);
 		vnx->vx_error = error;
 	}
@@ -1445,7 +1437,8 @@ sw_reg_iodone(struct work *wk, void *dummy)
 	/*
 	 * kill vbp structure
 	 */
-	putvndbuf(vbp);
+	buf_destroy(&vbp->vb_buf);
+	pool_put(&vndbuf_pool, vbp);
 
 	/*
 	 * wrap up this transaction if it has run to completion or, in
@@ -1453,18 +1446,19 @@ sw_reg_iodone(struct work *wk, void *dummy)
 	 */
 	if (vnx->vx_error != 0) {
 		/* pass error upward */
-		pbp->b_error = vnx->vx_error;
+		error = vnx->vx_error;
 		if ((vnx->vx_flags & VX_BUSY) == 0 && vnx->vx_pending == 0) {
-			putvndxfer(vnx);
+			pbp->b_error = error;
 			biodone(pbp);
+			pool_put(&vndxfer_pool, vnx);
 		}
 	} else if (pbp->b_resid == 0) {
 		KASSERT(vnx->vx_pending == 0);
 		if ((vnx->vx_flags & VX_BUSY) == 0) {
 			UVMHIST_LOG(pdhist, "  iodone error=%d !",
 			    pbp, vnx->vx_error, 0, 0);
-			putvndxfer(vnx);
 			biodone(pbp);
+			pool_put(&vndxfer_pool, vnx);
 		}
 	}
 
@@ -1690,7 +1684,7 @@ uvm_swap_io(struct vm_page **pps, int startslot, int npages, int flags)
 	daddr_t startblk;
 	struct	buf *bp;
 	vaddr_t kva;
-	int	error, s, mapinflags;
+	int	error, mapinflags;
 	bool write, async;
 	UVMHIST_FUNC("uvm_swap_io"); UVMHIST_CALLED(pdhist);
 
@@ -1719,19 +1713,19 @@ uvm_swap_io(struct vm_page **pps, int startslot, int npages, int flags)
 	 * now allocate a buf for the i/o.
 	 */
 
-	bp = getiobuf();
+	bp = getiobuf(swapdev_vp, true);
 
 	/*
 	 * fill in the bp/sbp.   we currently route our i/o through
 	 * /dev/drum's vnode [swapdev_vp].
 	 */
 
-	bp->b_flags = B_BUSY | B_NOCACHE | (flags & (B_READ|B_ASYNC));
+	bp->b_cflags = BC_BUSY | BC_NOCACHE;
+	bp->b_flags = (flags & (B_READ|B_ASYNC));
 	bp->b_proc = &proc0;	/* XXX */
 	bp->b_vnbufs.le_next = NOLIST;
 	bp->b_data = (void *)kva;
 	bp->b_blkno = startblk;
-	bp->b_vp = swapdev_vp;
 	bp->b_bufsize = bp->b_bcount = npages << PAGE_SHIFT;
 
 	/*
@@ -1739,9 +1733,9 @@ uvm_swap_io(struct vm_page **pps, int startslot, int npages, int flags)
 	 */
 
 	if (write) {
-		s = splbio();
-		V_INCR_NUMOUTPUT(swapdev_vp);
-		splx(s);
+		mutex_enter(&swapdev_vp->v_interlock);
+		swapdev_vp->v_numoutput++;
+		mutex_exit(&swapdev_vp->v_interlock);
 	}
 
 	/*
@@ -1749,7 +1743,6 @@ uvm_swap_io(struct vm_page **pps, int startslot, int npages, int flags)
 	 */
 
 	if (async) {
-		bp->b_flags |= B_CALL;
 		bp->b_iodone = uvm_aio_biodone;
 		UVMHIST_LOG(pdhist, "doing async!", 0, 0, 0, 0);
 		if (curlwp == uvm.pagedaemon_lwp)
@@ -1757,6 +1750,7 @@ uvm_swap_io(struct vm_page **pps, int startslot, int npages, int flags)
 		else
 			BIO_SETPRIO(bp, BPRIO_TIMELIMITED);
 	} else {
+		bp->b_iodone = NULL;
 		BIO_SETPRIO(bp, BPRIO_TIMECRITICAL);
 	}
 	UVMHIST_LOG(pdhist,
@@ -1787,11 +1781,13 @@ uvm_swap_io(struct vm_page **pps, int startslot, int npages, int flags)
 	 * now dispose of the buf and we're done.
 	 */
 
-	s = splbio();
-	if (write)
+	if (write) {
+		mutex_enter(&swapdev_vp->v_interlock);
 		vwakeup(bp);
+		mutex_exit(&swapdev_vp->v_interlock);
+	}
 	putiobuf(bp);
-	splx(s);
 	UVMHIST_LOG(pdhist, "<- done (sync)  error=%d", error, 0, 0, 0);
+
 	return (error);
 }

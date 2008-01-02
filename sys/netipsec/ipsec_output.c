@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_output.c,v 1.24 2007/12/09 18:27:39 degroote Exp $	*/
+/*	$NetBSD: ipsec_output.c,v 1.24.2.1 2008/01/02 21:57:34 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.24 2007/12/09 18:27:39 degroote Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.24.2.1 2008/01/02 21:57:34 bouyer Exp $");
 
 /*
  * IPsec output processing.
@@ -94,11 +94,65 @@ __KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.24 2007/12/09 18:27:39 degroote E
 
 #include <net/net_osdep.h>		/* ovbcopy() in ipsec6_encapsulate() */
 
+
+/*
+ * Add a IPSEC_OUT_DONE tag to mark that we have finished the ipsec processing
+ * It will be used by ip{,6}_output to check if we have already or not 
+ * processed this packet.
+ */
+static int
+ipsec_register_done(struct mbuf *m, int * error)
+{
+	struct m_tag *mtag;
+
+	mtag = m_tag_get(PACKET_TAG_IPSEC_OUT_DONE, 0, M_NOWAIT);
+	if (mtag == NULL) {
+		DPRINTF(("ipsec_register_done: could not get packet tag\n"));
+		*error = ENOMEM;
+		return -1;
+	}
+
+	m_tag_prepend(m, mtag);
+	return 0;
+}
+
+static int
+ipsec_reinject_ipstack(struct mbuf *m, int af)
+{
+#ifdef INET
+	struct ip * ip;
+#endif /* INET */
+
+	switch (af) {
+#ifdef INET
+	case AF_INET:
+		ip = mtod(m, struct ip *);
+#ifdef __FreeBSD__
+		/* FreeBSD ip_output() expects ip_len, ip_off in host endian */
+		ip->ip_len = ntohs(ip->ip_len);
+		ip->ip_off = ntohs(ip->ip_off);
+#endif /* __FreeBSD_ */
+		return ip_output(m, NULL, NULL, IP_RAWOUTPUT,
+		    (struct ip_moptions *)NULL, (struct socket *)NULL);
+
+#endif /* INET */
+#ifdef INET6
+	case AF_INET6:
+		/*
+		 * We don't need massage, IPv6 header fields are always in
+		 * net endian.
+		 */
+		return ip6_output(m, NULL, NULL, 0, NULL, NULL, NULL);
+#endif /* INET6 */
+	}
+
+	panic("ipsec_reinject_ipstack : iunknown protocol family %u\n", af);
+	return -1; /* NOTREACHED */
+}
+
 int
 ipsec_process_done(struct mbuf *m, struct ipsecrequest *isr)
 {
-	struct tdb_ident *tdbi;
-	struct m_tag *mtag;
 	struct secasvar *sav;
 	struct secasindex *saidx;
 	int error;
@@ -200,24 +254,6 @@ ipsec_process_done(struct mbuf *m, struct ipsecrequest *isr)
 	}
 
 	/*
-	 * Add a record of what we've done or what needs to be done to the
-	 * packet.
-	 */
-	mtag = m_tag_get(PACKET_TAG_IPSEC_OUT_DONE,
-			sizeof(struct tdb_ident), M_NOWAIT);
-	if (mtag == NULL) {
-		DPRINTF(("ipsec_process_done: could not get packet tag\n"));
-		error = ENOMEM;
-		goto bad;
-	}
-
-	tdbi = (struct tdb_ident *)(mtag + 1);
-	tdbi->dst = saidx->dst;
-	tdbi->proto = saidx->proto;
-	tdbi->spi = sav->spi;
-	m_tag_prepend(m, mtag);
-
-	/*
 	 * If there's another (bundled) SA to apply, do so.
 	 * Note that this puts a burden on the kernel stack size.
 	 * If this is a problem we'll need to introduce a queue
@@ -244,39 +280,29 @@ ipsec_process_done(struct mbuf *m, struct ipsecrequest *isr)
 	}
 
 	/*
-	 * We're done with IPsec processing, transmit the packet using the
-	 * appropriate network protocol (IP or IPv6). SPD lookup will be
-	 * performed again there.
+	 * We're done with IPsec processing, 
+	 * mark that we have already processed the packet
+	 * transmit it packet using the appropriate network protocol (IP or IPv6). 
 	 */
-	switch (saidx->dst.sa.sa_family) {
-#ifdef INET
-	case AF_INET:
-		ip = mtod(m, struct ip *);
-#ifdef __FreeBSD__
-		/* FreeBSD ip_output() expects ip_len, ip_off in host endian */
-		ip->ip_len = ntohs(ip->ip_len);
-		ip->ip_off = ntohs(ip->ip_off);
-#endif /* __FreeBSD_ */
-		return ip_output(m, NULL, NULL, IP_RAWOUTPUT,
-		    (struct ip_moptions *)NULL, (struct socket *)NULL);
 
-#endif /* INET */
-#ifdef INET6
-	case AF_INET6:
-		/*
-		 * We don't need massage, IPv6 header fields are always in
-		 * net endian.
-		 */
-		return ip6_output(m, NULL, NULL, 0, NULL, NULL, NULL);
-#endif /* INET6 */
-	}
-	panic("ipsec_process_done");
+	if (ipsec_register_done(m, &error) < 0)
+		goto bad;
+
+	return ipsec_reinject_ipstack(m, saidx->dst.sa.sa_family);
 bad:
 	m_freem(m);
 	KEY_FREESAV(&sav);
 	return (error);
 }
 
+/*
+ * ipsec_nextisr can return :
+ * - isr == NULL and error != 0 => something is bad : the packet must be
+ *   discarded
+ * - isr == NULL and error == 0 => no more rules to apply, ipsec processing 
+ *   is done, reinject it in ip stack
+ * - isr != NULL (error == 0) => we need to apply one rule to the packet
+ */
 static struct ipsecrequest *
 ipsec_nextisr(
 	struct mbuf *m,
@@ -369,14 +395,18 @@ again:
 		goto bad;
 	}
 	sav = isr->sav;
-	if (sav == NULL) {		/* XXX valid return */
+	/* sav may be NULL here if we have an USE rule */
+	if (sav == NULL) {		
 		IPSEC_ASSERT(ipsec_get_reqlevel(isr) == IPSEC_LEVEL_USE,
 			("ipsec_nextisr: no SA found, but required; level %u",
 			ipsec_get_reqlevel(isr)));
 		isr = isr->next;
+		/* 
+		 * No more rules to apply, return NULL isr and no error 
+		 * It can happen when the last rules are USE rules
+		 * */
 		if (isr == NULL) {
-			/*XXXstatistic??*/
-			*error = EINVAL;		/*XXX*/
+			*error = 0;		
 			return isr;
 		}
 		goto again;
@@ -437,8 +467,17 @@ ipsec4_process_packet(
 	s = splsoftnet();			/* insure SA contents don't change */
 
 	isr = ipsec_nextisr(m, isr, AF_INET, &saidx, &error);
-	if (isr == NULL)
-		goto bad;
+	if (isr == NULL) {
+		if (error != 0) {
+			goto bad;
+		} else {
+			if (ipsec_register_done(m, &error) < 0)
+				goto bad;
+
+			splx(s);
+			return ipsec_reinject_ipstack(m, AF_INET);
+		}
+	}
 
 	sav = isr->sav;
 	if (!tunalready) {
@@ -579,8 +618,16 @@ ipsec6_process_packet(
 	s = splsoftnet();   /* insure SA contents don't change */
 	isr = ipsec_nextisr(m, isr, AF_INET6, &saidx, &error);
 	if (isr == NULL) {
-		// XXX Should we send a notification ?
-		goto bad;
+		if (error != 0) {
+			// XXX Should we send a notification ?
+			goto bad;
+		} else {
+			if (ipsec_register_done(m, &error) < 0)
+				goto bad;
+
+			splx(s);
+			return ipsec_reinject_ipstack(m, AF_INET);
+		}
 	}
 
 	sav = isr->sav;

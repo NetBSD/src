@@ -1,4 +1,4 @@
-/*	$NetBSD: if_llc.h,v 1.17 2006/12/10 11:35:36 is Exp $	*/
+/*	$NetBSD: if_llc.h,v 1.17.32.1 2008/01/02 21:57:08 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -76,13 +76,13 @@ struct llc {
 		u_int8_t  control;
 		u_int8_t  org_code[3];
 		u_int16_t ether_type;
-	    } type_snap __attribute__((__packed__));
+	    } type_snap __packed;
 	    struct {
 		u_int8_t control;
 		u_int8_t control_ext;
 	    } type_raw /* XXX __attribute__((__packed__)) ??? */;
 	} llc_un /* XXX __attribute__((__packed__)) ??? */;
-} __attribute__((__packed__));
+} __packed;
 
 struct frmrinfo {
 	u_int8_t frmr_rej_pdu0;
@@ -90,7 +90,7 @@ struct frmrinfo {
 	u_int8_t frmr_control;
 	u_int8_t frmr_control_ext;
 	u_int8_t frmr_cause;
-} __attribute__((__packed__));
+} __packed;
 
 #define	llc_control		llc_un.type_u.control
 #define	llc_control_ext		llc_un.type_raw.control_ext

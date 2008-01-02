@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_subr.c,v 1.22 2007/10/10 20:42:28 ad Exp $	*/
+/*	$NetBSD: layer_subr.c,v 1.22.10.1 2008/01/02 21:56:52 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_subr.c,v 1.22 2007/10/10 20:42:28 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_subr.c,v 1.22.10.1 2008/01/02 21:56:52 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,7 +77,9 @@ __KERNEL_RCSID(0, "$NetBSD: layer_subr.c,v 1.22 2007/10/10 20:42:28 ad Exp $");
 #include <sys/vnode.h>
 #include <sys/mount.h>
 #include <sys/namei.h>
+#include <sys/kmem.h>
 #include <sys/malloc.h>
+
 #include <miscfs/specfs/specdev.h>
 #include <miscfs/genfs/layer.h>
 #include <miscfs/genfs/layer_extern.h>
@@ -157,8 +159,9 @@ loop:
 			 * the layer vp's lock separately afterward, but only
 			 * if it does not share the lower vp's lock.
 			 */
+			mutex_enter(&vp->v_interlock);
 			mutex_exit(&lmp->layerm_hashlock);
-			error = vget(vp, 0);
+			error = vget(vp, LK_INTERLOCK);
 			if (error) {
 				mutex_enter(&lmp->layerm_hashlock);
 				goto loop;
@@ -189,15 +192,19 @@ layer_node_alloc(mp, lowervp, vpp)
 	int error;
 	extern int (**dead_vnodeop_p)(void *);
 
-	if ((error = getnewvnode(lmp->layerm_tag, mp, lmp->layerm_vnodeop_p,
-			&vp)) != 0)
+	error = getnewvnode(lmp->layerm_tag, mp, lmp->layerm_vnodeop_p, &vp);
+	if (error != 0)
 		return (error);
 	vp->v_type = lowervp->v_type;
-	simple_lock(&vp->v_interlock);
+	mutex_enter(&vp->v_interlock);
 	vp->v_iflag |= VI_LAYER;
-	simple_unlock(&vp->v_interlock);
+	mutex_exit(&vp->v_interlock);
 
-	xp = malloc(lmp->layerm_size, M_TEMP, M_WAITOK);
+	xp = kmem_alloc(lmp->layerm_size, KM_SLEEP);
+	if (xp == NULL) {
+		ungetnewvnode(vp);
+		return ENOMEM;
+	}
 	if (vp->v_type == VBLK || vp->v_type == VCHR) {
 		MALLOC(vp->v_specinfo, struct specinfo *,
 		    sizeof(struct specinfo), M_VNODE, M_WAITOK);
@@ -206,6 +213,8 @@ layer_node_alloc(mp, lowervp, vpp)
 	}
 
 	vp->v_data = xp;
+	vp->v_vflag = (vp->v_vflag & ~VV_MPSAFE) |
+	    (lowervp->v_vflag & VV_MPSAFE);
 	xp->layer_vnode = vp;
 	xp->layer_lowervp = lowervp;
 	xp->layer_flags = 0;
@@ -220,7 +229,7 @@ layer_node_alloc(mp, lowervp, vpp)
 		*vpp = nvp;
 
 		/* free the substructures we've allocated. */
-		FREE(xp, M_TEMP);
+		kmem_free(xp, lmp->layerm_size);
 		if (vp->v_type == VBLK || vp->v_type == VCHR)
 			FREE(vp->v_specinfo, M_VNODE);
 

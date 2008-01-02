@@ -1,4 +1,4 @@
-/*	$NetBSD: esis.h,v 1.22 2007/07/19 20:48:59 dyoung Exp $	*/
+/*	$NetBSD: esis.h,v 1.22.18.1 2008/01/02 21:57:36 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -85,7 +85,7 @@ struct esis_fixed {
 	u_char          esis_ht_lsb;	/* holding time (seconds) low byte */
 	u_char          esis_cksum_msb;	/* checksum high byte */
 	u_char          esis_cksum_lsb;	/* checksum low byte */
-} __attribute__((packed));
+} __packed;
 /*
  * Values for ESIS datagram options
  */

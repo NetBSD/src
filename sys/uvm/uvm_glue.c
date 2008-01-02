@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.113 2007/11/06 00:42:46 ad Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.113.6.1 2008/01/02 21:58:37 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.113 2007/11/06 00:42:46 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.113.6.1 2008/01/02 21:58:37 bouyer Exp $");
 
 #include "opt_coredump.h"
 #include "opt_kgdb.h"
@@ -86,6 +86,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.113 2007/11/06 00:42:46 ad Exp $");
 #include <sys/user.h>
 #include <sys/syncobj.h>
 #include <sys/cpu.h>
+#include <sys/atomic.h>
 
 #include <uvm/uvm.h>
 
@@ -809,10 +810,15 @@ void
 uvm_lwp_hold(struct lwp *l)
 {
 
-	/* XXXSMP mutex_enter(&l->l_swaplock); */
-	if (l->l_holdcnt++ == 0 && (l->l_flag & LW_INMEM) == 0)
-		uvm_swapin(l);
-	/* XXXSMP mutex_exit(&l->l_swaplock); */
+	if (l == curlwp) {
+		atomic_inc_uint(&l->l_holdcnt);
+	} else {
+		mutex_enter(&l->l_swaplock);
+		if (atomic_inc_uint_nv(&l->l_holdcnt) == 1 &&
+		    (l->l_flag & LW_INMEM) == 0)
+			uvm_swapin(l);
+		mutex_exit(&l->l_swaplock);
+	}
 }
 
 /*
@@ -826,9 +832,7 @@ uvm_lwp_rele(struct lwp *l)
 
 	KASSERT(l->l_holdcnt != 0);
 
-	/* XXXSMP mutex_enter(&l->l_swaplock); */
-	l->l_holdcnt--;
-	/* XXXSMP mutex_exit(&l->l_swaplock); */
+	atomic_dec_uint(&l->l_holdcnt);
 }
 
 #ifdef COREDUMP

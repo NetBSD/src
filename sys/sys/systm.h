@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.203 2007/11/22 22:56:16 plunky Exp $	*/
+/*	$NetBSD: systm.h,v 1.203.6.1 2008/01/02 21:58:10 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -107,7 +107,7 @@ extern struct vnode *swapdev_vp;/* vnode equivalent to above */
 
 extern const dev_t zerodev;	/* /dev/zero */
 
-typedef int	sy_call_t(struct lwp *, void *, register_t *);
+typedef int	sy_call_t(struct lwp *, const void *, register_t *);
 
 extern struct sysent {		/* system call table */
 	short	sy_narg;	/* number of args */
@@ -152,7 +152,7 @@ struct malloc_type;
 void	*hashinit(u_int, enum hashtype, struct malloc_type *, int, u_long *);
 void	hashdone(void *, struct malloc_type *);
 int	seltrue(dev_t, int, struct lwp *);
-int	sys_nosys(struct lwp *, void *, register_t *);
+int	sys_nosys(struct lwp *, const void *, register_t *);
 
 
 #ifdef _KERNEL
@@ -373,8 +373,9 @@ void	doforkhooks(struct proc *, struct proc *);
 #ifdef _KERNEL
 bool	trace_is_enabled(struct proc *);
 int	trace_enter(struct lwp *, register_t, register_t,
-	    const struct sysent *, void *);
-void	trace_exit(struct lwp *, register_t, void *, register_t [], int);
+	    const struct sysent *, const register_t *);
+void	trace_exit(struct lwp *, register_t, const register_t *,
+	    register_t [], int);
 #endif
 
 int	uiomove(void *, size_t, struct uio *);
@@ -382,7 +383,7 @@ int	uiomove_frombuf(void *, size_t, struct uio *);
 
 #ifdef _KERNEL
 int	setjmp(label_t *);
-void	longjmp(label_t *) __attribute__((__noreturn__));
+void	longjmp(label_t *) __dead;
 #endif
 
 void	consinit(void);

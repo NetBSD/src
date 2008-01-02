@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_rfw.c,v 1.5.10.1 2007/12/13 21:57:02 bouyer Exp $	*/
+/*	$NetBSD: lfs_rfw.c,v 1.5.10.2 2008/01/02 21:58:25 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_rfw.c,v 1.5.10.1 2007/12/13 21:57:02 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_rfw.c,v 1.5.10.2 2008/01/02 21:58:25 bouyer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -199,15 +199,13 @@ lfs_rf_valloc(struct lfs *fs, ino_t ino, int vers, struct lwp *l,
 		lfs_unmark_vnode(vp);
 		(void)lfs_vunref(vp);
 		vp->v_uflag &= ~VU_DIROP;
-		simple_lock(&fs->lfs_interlock);
-		simple_lock(&lfs_subsys_lock);
+		mutex_enter(&lfs_lock);
 		--lfs_dirvcount;
-		simple_unlock(&lfs_subsys_lock);
 		--fs->lfs_dirvcount;
 		TAILQ_REMOVE(&fs->lfs_dchainhd, ip, i_lfs_dchain);
 		wakeup(&lfs_dirvcount);
 		wakeup(&fs->lfs_dirvcount);
-		simple_unlock(&fs->lfs_interlock);
+		mutex_exit(&lfs_lock);
 	}
 	*vpp = vp;
 	return error;
@@ -247,7 +245,7 @@ update_meta(struct lfs *fs, ino_t ino, int vers, daddr_t lbn,
 		return (error);
 	}
 	/* No need to write, the block is already on disk */
-	if (bp->b_flags & B_DELWRI) {
+	if (bp->b_oflags & BO_DELWRI) {
 		LFS_UNLOCK_BUF(bp);
 		fs->lfs_avail += btofsb(fs, bp->b_bcount);
 	}
@@ -570,12 +568,12 @@ check_segsum(struct lfs *fs, daddr_t offset, u_int64_t nextserial,
 	if (flags & CHECK_UPDATE) {
 		fs->lfs_avail -= (offset - oldoffset);
 		/* Don't clog the buffer queue */
-		simple_lock(&lfs_subsys_lock);
+		mutex_enter(&lfs_lock);
 		if (locked_queue_count > LFS_MAX_BUFS ||
 		    locked_queue_bytes > LFS_MAX_BYTES) {
 			lfs_flush(fs, SEGM_CKP, 0);
 		}
-		simple_unlock(&lfs_subsys_lock);
+		mutex_exit(&lfs_lock);
 	}
 
     err2:

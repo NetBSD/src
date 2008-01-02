@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_balloc.c,v 1.47 2007/12/08 15:21:19 ad Exp $	*/
+/*	$NetBSD: ffs_balloc.c,v 1.47.4.1 2008/01/02 21:58:16 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_balloc.c,v 1.47 2007/12/08 15:21:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_balloc.c,v 1.47.4.1 2008/01/02 21:58:16 bouyer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -460,13 +460,13 @@ fail:
 			}
 			bp = getblk(vp, indirs[i].in_lbn, (int)fs->fs_bsize, 0,
 			    0);
-			if (bp->b_flags & B_DELWRI) {
+			if (bp->b_oflags & BO_DELWRI) {
 				nb = fsbtodb(fs, cgtod(fs, dtog(fs,
 				    dbtofsb(fs, bp->b_blkno))));
 				bwrite(bp);
 				bp = getblk(ip->i_devvp, nb, (int)fs->fs_cgsize,
 				    0, 0);
-				if (bp->b_flags & B_DELWRI) {
+				if (bp->b_oflags & BO_DELWRI) {
 					bwrite(bp);
 				} else {
 					brelse(bp, BC_INVAL);
@@ -627,8 +627,10 @@ ffs_balloc_ufs2(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
 				brelse(bp, 0);
 				return (error);
 			}
+			mutex_enter(&bp->b_interlock);
 			bp->b_blkno = fsbtodb(fs, nb);
 			bp->b_xflags |= BX_ALTDATA;
+			mutex_exit(&bp->b_interlock);
 			*bpp = bp;
 			return (0);
 		}
@@ -1026,13 +1028,13 @@ fail:
 			}
 			bp = getblk(vp, indirs[i].in_lbn, (int)fs->fs_bsize, 0,
 			    0);
-			if (bp->b_flags & B_DELWRI) {
+			if (bp->b_oflags & BO_DELWRI) {
 				nb = fsbtodb(fs, cgtod(fs, dtog(fs,
 				    dbtofsb(fs, bp->b_blkno))));
 				bwrite(bp);
 				bp = getblk(ip->i_devvp, nb, (int)fs->fs_cgsize,
 				    0, 0);
-				if (bp->b_flags & B_DELWRI) {
+				if (bp->b_oflags & BO_DELWRI) {
 					bwrite(bp);
 				} else {
 					brelse(bp, BC_INVAL);

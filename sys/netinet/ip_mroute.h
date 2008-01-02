@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.h,v 1.28 2007/07/09 21:11:11 ad Exp $	*/
+/*	$NetBSD: ip_mroute.h,v 1.28.20.1 2008/01/02 21:57:22 bouyer Exp $	*/
 
 #ifndef _NETINET_IP_MROUTE_H_
 #define _NETINET_IP_MROUTE_H_
@@ -283,7 +283,7 @@ struct igmpmsg {
 	u_int8_t  im_vif;		/* vif rec'd on */
 	u_int8_t  unused3;
 	struct	  in_addr im_src, im_dst;
-} __attribute__((__packed__));
+} __packed;
 
 /*
  * Argument structure used for pkt info. while upcall is made.

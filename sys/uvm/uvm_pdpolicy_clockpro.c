@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdpolicy_clockpro.c,v 1.9 2007/08/01 14:49:55 yamt Exp $	*/
+/*	$NetBSD: uvm_pdpolicy_clockpro.c,v 1.9.16.1 2008/01/02 21:58:45 bouyer Exp $	*/
 
 /*-
  * Copyright (c)2005, 2006 YAMAMOTO Takashi,
@@ -43,7 +43,7 @@
 #else /* defined(PDSIM) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clockpro.c,v 1.9 2007/08/01 14:49:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clockpro.c,v 1.9.16.1 2008/01/02 21:58:45 bouyer Exp $");
 
 #include "opt_ddb.h"
 
@@ -712,7 +712,7 @@ clockpro_pageenqueue(struct vm_page *pg)
 	bool speculative = (pg->pqflags & PQ_SPECULATIVE) != 0; /* XXX */
 
 	KASSERT((~pg->pqflags & (PQ_INITIALREF|PQ_SPECULATIVE)) != 0);
-	UVM_LOCK_ASSERT_PAGEQ();
+	KASSERT(mutex_owned(&uvm_pageqlock));
 	check_sanity();
 	KASSERT(clockpro_getq(pg) == CLOCKPRO_NOQUEUE);
 	s->s_npages++;

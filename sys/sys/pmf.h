@@ -1,4 +1,4 @@
-/* $NetBSD: pmf.h,v 1.3 2007/12/09 23:21:39 jmcneill Exp $ */
+/* $NetBSD: pmf.h,v 1.3.2.1 2008/01/02 21:58:06 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -66,6 +66,7 @@ bool		pmf_set_platform(const char *, const char *);
 const char	*pmf_get_platform(const char *);
 
 bool		pmf_system_resume(void);
+bool		pmf_system_bus_resume(void);
 bool		pmf_system_suspend(void);
 void		pmf_system_shutdown(void);
 

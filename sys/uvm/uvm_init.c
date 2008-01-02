@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_init.c,v 1.30 2007/11/14 11:04:08 yamt Exp $	*/
+/*	$NetBSD: uvm_init.c,v 1.30.6.1 2008/01/02 21:58:37 bouyer Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.30 2007/11/14 11:04:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.30.6.1 2008/01/02 21:58:37 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.30 2007/11/14 11:04:08 yamt Exp $");
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_pdpolicy.h>
+#include <uvm/uvm_readahead.h>
 
 /*
  * struct uvm: we store most global vars in this structure to make them
@@ -64,8 +65,8 @@ struct uvm uvm;		/* decl */
 struct uvmexp uvmexp;	/* decl */
 struct uvm_object *uvm_kernel_object;
 
+kmutex_t uvm_pageqlock;
 kmutex_t uvm_fpageqlock;
-kmutex_t uvm_pagedaemon_lock;
 kmutex_t uvm_kentry_lock;
 kmutex_t uvm_swap_data_lock;
 kmutex_t uvm_scheduler_mutex;
@@ -175,4 +176,10 @@ uvm_init(void)
 	 */
 
 	uvm_anon_init();
+
+	/*
+	 * init readahead module
+	 */
+
+	uvm_ra_init();
 }

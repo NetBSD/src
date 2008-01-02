@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.82 2007/11/07 00:23:38 ad Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.82.6.1 2008/01/02 21:56:55 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.82 2007/11/07 00:23:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.82.6.1 2008/01/02 21:56:55 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -619,7 +619,7 @@ loop:
 		    	if (flags == 0) {
 				mutex_exit(&pfs_ihash_lock);
 			} else {
-				simple_lock(&vp->v_interlock);
+				mutex_enter(&vp->v_interlock);
 				mutex_exit(&pfs_ihash_lock);
 				if (vget(vp, flags | LK_INTERLOCK))
 					goto loop;
@@ -679,17 +679,17 @@ procfs_revoke_vnodes(p, arg)
 	for (pfs = LIST_FIRST(ppp); pfs; pfs = pnext) {
 		vp = PFSTOV(pfs);
 		pnext = LIST_NEXT(pfs, pfs_hash);
-		simple_lock(&vp->v_interlock);
+		mutex_enter(&vp->v_interlock);
 		if (vp->v_usecount > 0 && pfs->pfs_pid == p->p_pid &&
 		    vp->v_mount == mp) {
 		    	vp->v_usecount++;
-		    	simple_unlock(&vp->v_interlock);
+		    	mutex_exit(&vp->v_interlock);
 			mutex_exit(&pfs_ihash_lock);
 			VOP_REVOKE(vp, REVOKEALL);
 			vrele(vp);
 			mutex_enter(&pfs_ihash_lock);
 		} else {
-			simple_unlock(&vp->v_interlock);
+			mutex_exit(&vp->v_interlock);
 		}
 	}
 	mutex_exit(&pfs_ihash_lock);

@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_subr.h,v 1.16 2006/08/17 17:11:29 christos Exp $	*/
+/*	$NetBSD: smb_subr.h,v 1.16.42.1 2008/01/02 21:57:40 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -79,11 +79,11 @@ void m_dumpm(struct mbuf *m);
  * Compatibility wrappers for simple locks
  */
 
-#define	smb_slock			simplelock
-#define	smb_sl_init(mtx, desc)		simple_lock_init(mtx)
-#define	smb_sl_destroy(mtx)		/*simple_lock_destroy(mtx)*/
-#define	smb_sl_lock(mtx)		simple_lock(mtx)
-#define	smb_sl_unlock(mtx)		simple_unlock(mtx)
+#define	smb_slock			kmutex
+#define	smb_sl_init(mtx, desc)		mutex_init((mtx), MUTEX_DEFAULT, IPL_NONE)
+#define	smb_sl_destroy(mtx)		mutex_destroy(mtx)
+#define	smb_sl_lock(mtx)		mutex_enter(mtx)
+#define	smb_sl_unlock(mtx)		mutex_exit(mtx)
 
 #define SMB_STRFREE(p)	do { if (p) smb_strfree(p); } while(0)
 

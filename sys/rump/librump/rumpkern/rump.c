@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.23 2007/12/08 19:29:52 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.23.4.1 2008/01/02 21:57:54 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,6 +28,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/cpu.h>
 #include <sys/filedesc.h>
 #include <sys/kauth.h>
 #include <sys/kmem.h>
@@ -35,8 +36,8 @@
 #include <sys/namei.h>
 #include <sys/queue.h>
 #include <sys/resourcevar.h>
+#include <sys/select.h>
 #include <sys/vnode.h>
-#include <sys/cpu.h>
 
 #include <miscfs/specfs/specdev.h>
 
@@ -49,8 +50,11 @@ struct pstats rump_stats;
 struct plimit rump_limits;
 kauth_cred_t rump_cred;
 struct cpu_info rump_cpu;
+struct filedesc0 rump_filedesc0;
 
 kmutex_t rump_giantlock;
+
+sigset_t sigcantmask;
 
 struct fakeblk {
 	char path[MAXPATHLEN];
@@ -68,14 +72,22 @@ rump_aiodone_worker(struct work *wk, void *dummy)
 	bp->b_iodone(bp);
 }
 
+int rump_inited;
+
 void
 rump_init()
 {
 	extern char hostname[];
 	extern size_t hostnamelen;
+	extern kmutex_t rump_atomic_lock;
 	struct proc *p;
 	struct lwp *l;
 	int error;
+
+	/* XXX */
+	if (rump_inited)
+		return;
+	rump_inited = 1;
 
 	l = &lwp0;
 	p = &rump_proc;
@@ -83,19 +95,25 @@ rump_init()
 	p->p_cwdi = &rump_cwdi;
 	p->p_limit = &rump_limits;
 	p->p_pid = 0;
+	p->p_fd = &rump_filedesc0.fd_fd;
+	p->p_vmspace = &rump_vmspace;
 	l->l_cred = rump_cred;
 	l->l_proc = p;
 	l->l_lid = 1;
 
+	mutex_init(&rump_atomic_lock, MUTEX_DEFAULT, IPL_NONE);
 	rumpvm_init();
 
 	rump_limits.pl_rlimit[RLIMIT_FSIZE].rlim_cur = RLIM_INFINITY;
+	rump_limits.pl_rlimit[RLIMIT_NOFILE].rlim_cur = RLIM_INFINITY;
 
 	/* should be "enough" */
 	syncdelay = 0;
 
 	vfsinit();
 	bufinit();
+	filedesc_init();
+	selsysinit();
 
 	rump_sleepers_init();
 	rumpuser_thrinit();
@@ -109,6 +127,10 @@ rump_init()
 
 	rumpuser_gethostname(hostname, MAXHOSTNAMELEN, &error);
 	hostnamelen = strlen(hostname);
+
+	sigemptyset(&sigcantmask);
+
+	fdinit1(&rump_filedesc0);
 }
 
 struct mount *
@@ -137,13 +159,8 @@ rump_mnt_mount(struct mount *mp, const char *path, void *data, size_t *dlen)
 	if (rv)
 		return rv;
 
-	rv = VFS_STATVFS(mp, &mp->mnt_stat);
-	if (rv) {
-		VFS_UNMOUNT(mp, MNT_FORCE);
-		return rv;
-	}
-
-	rv =  VFS_START(mp, 0);
+	(void) VFS_STATVFS(mp, &mp->mnt_stat);
+	rv = VFS_START(mp, 0);
 	if (rv)
 		VFS_UNMOUNT(mp, MNT_FORCE);
 
@@ -439,6 +456,13 @@ rump_vp_islocked(struct vnode *vp)
 	return VOP_ISLOCKED(vp);
 }
 
+void
+rump_vp_interlock(struct vnode *vp)
+{
+
+	mutex_enter(&vp->v_interlock);
+}
+
 int
 rump_vfs_unmount(struct mount *mp, int mntflags)
 {
@@ -523,6 +547,7 @@ rump_setup_curlwp(pid_t pid, lwpid_t lid, int set)
 	p->p_cwdi = &rump_cwdi;
 	p->p_limit = &rump_limits;
         p->p_pid = pid;
+	p->p_vmspace = &rump_vmspace;
 	l->l_cred = rump_cred;
 	l->l_proc = p;
         l->l_lid = lid;

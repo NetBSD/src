@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.262 2007/12/04 16:56:16 ad Exp $	*/
+/*	$NetBSD: proc.h,v 1.262.4.1 2008/01/02 21:58:07 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -203,19 +203,19 @@ struct emul {
  * Field markings and the corresponding locks (not yet fully implemented,
  * more a statement of intent):
  *
+ * a:	p_auxlock
  * k:	ktrace_mutex
  * m:	proclist_mutex
  * l:	proclist_lock
  * s:	p_smutex
  * t:	p_stmutex
  * p:	p_mutex
- * r:	p_raslock
  * (:	unlocked, stable
  */
 struct proc {
 	LIST_ENTRY(proc) p_list;	/* l, m: List of all processes */
 
-	kmutex_t	p_raslock;	/* :: RAS modification lock */
+	kmutex_t	p_auxlock;	/* :: secondary, longer term lock */
 	kmutex_t	p_mutex;	/* :: general mutex */
 	kmutex_t	p_smutex;	/* :: mutex on scheduling state */
 	kmutex_t	p_stmutex;	/* :: mutex on profiling state */
@@ -254,7 +254,7 @@ struct proc {
 	LIST_ENTRY(proc) p_sibling;	/* l: List of sibling processes. */
 	LIST_HEAD(, proc) p_children;	/* l: List of children. */
 	LIST_HEAD(, lwp) p_lwps;	/* s: List of LWPs. */
-	struct ras	*p_raslist;	/* r: List of RAS entries */
+	struct ras	*p_raslist;	/* a: List of RAS entries */
 
 /* The following fields are all zeroed upon creation in fork. */
 #define	p_startzero	p_nlwps
@@ -278,16 +278,14 @@ struct proc {
 
 	struct proc	*p_opptr;	/* l: save parent during ptrace. */
 	struct ptimers	*p_timers;	/*    Timers: real, virtual, profiling */
-	struct timeval 	p_rtime;	/* s: real time */
+	struct bintime 	p_rtime;	/* s: real time */
 	u_quad_t 	p_uticks;	/* t: Statclock hits in user mode */
 	u_quad_t 	p_sticks;	/* t: Statclock hits in system mode */
 	u_quad_t 	p_iticks;	/* t: Statclock hits processing intr */
 
 	int		p_traceflag;	/* k: Kernel trace points */
 	void		*p_tracep;	/* k: Trace private data */
-	void		*p_systrace;	/*    Back pointer to systrace */
-
-	struct vnode 	*p_textvp;	/*    Vnode of executable */
+	struct vnode 	*p_textvp;	/* (: Vnode of executable */
 
 	void	     (*p_userret)(void);/* p: return-to-user hook */
 	const struct emul *p_emul;	/*    Emulation information */
@@ -331,6 +329,7 @@ struct proc {
 	u_short		p_xstat;	/* s: Exit status for wait; also stop signal */
 	u_short		p_acflag;	/* p: Acc. flags; see struct lwp also */
 	struct mdproc	p_md;		/*    Any machine-dependent fields */
+	vaddr_t		p_stackbase;	/*    ASLR randomized stack base */
 };
 
 #define	p_rlimit	p_limit->pl_rlimit
@@ -361,9 +360,6 @@ struct proc {
 #define	PK_NOCLDWAIT	0x00020000 /* No zombies if child dies */
 #define	PK_32		0x00040000 /* 32-bit process (used on 64-bit kernels) */
 #define	PK_CLDSIGIGN	0x00080000 /* Process is ignoring SIGCHLD */
-#define	PK_SYSTRACE	0x00200000 /* Process system call tracing active */
-#define	PK_PAXMPROTECT 	0x08000000 /* Explicitly enable PaX MPROTECT */
-#define	PK_PAXNOMPROTECT	0x10000000 /* Explicitly disable PaX MPROTECT */
 #define	PK_MARKER	0x80000000 /* Is a dummy marker process */
 
 /*
@@ -494,11 +490,6 @@ extern struct proc	*initproc;	/* Process slots for init, pager */
 
 extern const struct proclist_desc proclists[];
 
-extern struct pool	proc_pool;	/* Memory pool for procs */
-extern struct pool	pcred_pool;	/* Memory pool for pcreds */
-extern struct pool	plimit_pool;	/* Memory pool for plimits */
-extern struct pool 	pstats_pool;	/* memory pool for pstats */
-extern struct pool	rusage_pool;	/* Memory pool for rusages */
 extern struct pool	ptimer_pool;	/* Memory pool for ptimers */
 
 struct proc *p_find(pid_t, uint);	/* Find process by id */
@@ -528,11 +519,12 @@ int	mtsleep(wchan_t, pri_t, const char *, int, kmutex_t *);
 void	wakeup(wchan_t);
 void	wakeup_one(wchan_t);
 int	kpause(const char *, bool, int, kmutex_t *);
-void	exit1(struct lwp *, int) __attribute__((__noreturn__));
+void	exit1(struct lwp *, int) __dead;
 int	do_sys_wait(struct lwp *, int *, int *, int, struct rusage *, int *);
 struct proc *proc_alloc(void);
 void	proc0_init(void);
 void	proc_free_pid(struct proc *);
+void	proc_free_mem(struct proc *);
 void	exit_lwps(struct lwp *l);
 int	fork1(struct lwp *, int, int, void *, size_t,
 	    void (*)(void *), void *, register_t *, struct proc **);

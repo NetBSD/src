@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vfsops.c,v 1.75 2007/11/26 19:02:16 pooka Exp $	*/
+/*	$NetBSD: procfs_vfsops.c,v 1.75.6.1 2008/01/02 21:56:56 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.75 2007/11/26 19:02:16 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.75.6.1 2008/01/02 21:56:56 bouyer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -161,6 +161,7 @@ procfs_mount(
 	else
 		pmnt->pmnt_flags = 0;
 
+	mp->mnt_iflag |= IMNT_MPSAFE;
 	return error;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_subr2.c,v 1.35 2007/11/09 21:00:06 plunky Exp $	*/
+/*	$NetBSD: tp_subr2.c,v 1.35.6.1 2008/01/02 21:57:39 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -66,7 +66,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_subr2.c,v 1.35 2007/11/09 21:00:06 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_subr2.c,v 1.35.6.1 2008/01/02 21:57:39 bouyer Exp $");
 
 /*
  * this def'n is to cause the expansion of this macro in the routine
@@ -510,7 +510,7 @@ tp_mss(struct tp_pcb *tpcb, int nhdr_size)
 	else
 		mss = 1 << tpcb->tp_tpdusize;
 	so = tpcb->tp_sock;
-	if ((rt = *(tpcb->tp_routep)) == 0) {
+	if ((rt = rtcache_getrt(tpcb->tp_routep)) == NULL) {
 		bufsize = so->so_rcv.sb_hiwat;
 		goto punt_route;
 	}
@@ -680,7 +680,7 @@ tp_route_to(struct mbuf *m, struct tp_pcb *tpcb, void *channel)
 				tpcb->tp_netservice = ISO_CLNS;
 				if (clnp_route(&siso->siso_addr, &isop->isop_route,
 				    flags, NULL, NULL) == 0) {
-					rt = isop->isop_route.ro_rt;
+					rt = rtcache_getrt(&isop->isop_route);
 					if (rt && rt->rt_flags & RTF_PROTO1)
 						tpcb->tp_netservice = ISO_CONS;
 				}

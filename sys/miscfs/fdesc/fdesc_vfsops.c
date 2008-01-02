@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vfsops.c,v 1.71 2007/11/26 19:02:12 pooka Exp $	*/
+/*	$NetBSD: fdesc_vfsops.c,v 1.71.6.1 2008/01/02 21:56:50 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vfsops.c,v 1.71 2007/11/26 19:02:12 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vfsops.c,v 1.71.6.1 2008/01/02 21:56:50 bouyer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -128,11 +128,7 @@ fdesc_unmount(struct mount *mp, int mntflags)
 		return (error);
 
 	/*
-	 * Release reference on underlying root vnode
-	 */
-	vrele(rtvp);
-	/*
-	 * And blow it away for future re-use
+	 * Blow it away for future re-use
 	 */
 	vgone(rtvp);
 	/*

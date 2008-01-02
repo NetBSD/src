@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.6 2007/11/07 18:59:18 pooka Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.6.6.1 2008/01/02 21:57:52 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -103,7 +103,7 @@ genfs_getpages(void *v)
 		if (pg->flags & PG_BUSY) {
 			pg->flags |= PG_WANTED;
 			UVM_UNLOCK_AND_WAIT(pg, &uobj->vmobjlock, 0, "getpg",0);
-			simple_lock(&uobj->vmobjlock);
+			mutex_enter(&uobj->vmobjlock);
 			goto retrylookup;
 		}
 		pg->flags |= PG_BUSY;
@@ -114,7 +114,7 @@ genfs_getpages(void *v)
 
 	/* got everything?  if so, just return */
 	if (i == count) {
-		simple_unlock(&uobj->vmobjlock);
+		mutex_exit(&uobj->vmobjlock);
 		return 0;
 	}
 
@@ -132,7 +132,7 @@ genfs_getpages(void *v)
 				pg->flags = PG_WANTED;
 				UVM_UNLOCK_AND_WAIT(pg, &uobj->vmobjlock, 0,
 				    "getpg2", 0);
-				simple_lock(&uobj->vmobjlock);
+				mutex_enter(&uobj->vmobjlock);
 				goto retrylookup2;
 			} else {
 				pg->flags |= PG_BUSY;
@@ -149,7 +149,7 @@ genfs_getpages(void *v)
 	 * We have done all the clerical work and have all pages busied.
 	 * Release the vm object for other consumers.
 	 */
-	simple_unlock(&uobj->vmobjlock);
+	mutex_exit(&uobj->vmobjlock);
 
 	/*
 	 * Now, we have all the pages here & busy.  Transfer the range
@@ -192,17 +192,17 @@ genfs_getpages(void *v)
 			continue;
 		}
 
-		bp = getiobuf();
+		bp = getiobuf(vp, true);
 
 		bp->b_data = tmpbuf + bufoff;
 		bp->b_bcount = xfersize;
 		bp->b_blkno = bn;
 		bp->b_lblkno = 0;
-		bp->b_flags = B_READ | B_BUSY;
-		bp->b_vp = vp;
+		bp->b_flags = B_READ;
+		bp->b_cflags = BC_BUSY;
 
 		if (async) {
-			bp->b_flags |= B_ASYNC | B_CALL;
+			bp->b_flags |= B_ASYNC;
 			bp->b_iodone = uvm_aio_biodone;
 		}
 
@@ -322,7 +322,7 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff, int flags,
 	/* all done? */
 	if (TAILQ_EMPTY(&uobj->memq)) {
 		vp->v_iflag &= ~VI_ONWORKLST;
-		simple_unlock(&uobj->vmobjlock);
+		mutex_exit(&uobj->vmobjlock);
 		return 0;
 	}
 
@@ -348,7 +348,7 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff, int flags,
 	}
 	assert(curoff > smallest);
 
-	simple_unlock(&uobj->vmobjlock);
+	mutex_exit(&uobj->vmobjlock);
 
 	/* then we write */
 	for (bufoff = 0; bufoff < MIN(curoff-smallest,eof); bufoff+=xfersize) {
@@ -374,7 +374,7 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff, int flags,
 		if (bn == -1)
 			continue;
 
-		bp = getiobuf();
+		bp = getiobuf(vp, true);
 
 		/* only write max what we are allowed to write */
 		bp->b_bcount = xfersize;
@@ -394,11 +394,11 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff, int flags,
 		bp->b_lblkno = 0;
 		bp->b_blkno = bn + (((smallest+bufoff)&(bsize-1))>>DEV_BSHIFT);
 		bp->b_data = databuf + bufoff;
-		bp->b_vp = vp;
-		bp->b_flags = B_WRITE | B_BUSY;
-		bp->b_iodone = uvm_aio_biodone;
+		bp->b_flags = B_WRITE;
+		bp->b_cflags |= BC_BUSY;
+
 		if (async) {
-			bp->b_flags |= B_CALL | B_ASYNC;
+			bp->b_flags |= B_ASYNC;
 			bp->b_iodone = uvm_aio_biodone;
 		}
 
@@ -412,7 +412,7 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff, int flags,
 	}
 	rumpvm_flushva();
 
-	simple_lock(&uobj->vmobjlock);
+	mutex_enter(&uobj->vmobjlock);
 	goto restart;
 }
 
@@ -423,7 +423,7 @@ genfs_null_putpages(void *v)
 	struct vnode *vp = ap->a_vp;
 
 	KASSERT(vp->v_uobj.uo_npages == 0);
-	simple_unlock(&vp->v_interlock);
+	mutex_exit(&vp->v_interlock);
 	return 0;
 }
 

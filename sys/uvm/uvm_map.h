@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.h,v 1.58 2007/07/22 21:07:47 he Exp $	*/
+/*	$NetBSD: uvm_map.h,v 1.58.18.1 2008/01/02 21:58:40 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -214,7 +214,6 @@ struct vm_map {
 	struct lwp *		busy;		/* LWP holding map busy */
 	kmutex_t		mutex;		/* INTRSAFE lock */
 	kmutex_t		misc_lock;	/* Lock for ref_count, cv */
-	kmutex_t		hint_lock;	/* lock for hint storage */
 	kcondvar_t		cv;		/* For signalling */
 	int			flags;		/* flags */
 	RB_HEAD(uvm_tree, vm_map_entry) rbhead;	/* Tree for entries */
@@ -362,58 +361,11 @@ void		vm_map_lock(struct vm_map *);
 void		vm_map_unlock(struct vm_map *);
 void		vm_map_upgrade(struct vm_map *);
 void		vm_map_unbusy(struct vm_map *);
-
-/*
- * vm_map_lock_read: acquire a shared (read) lock on a map.
- */
-
-static inline void
-vm_map_lock_read(struct vm_map *map)
-{
-
-	KASSERT((map->flags & VM_MAP_INTRSAFE) == 0);
-
-	rw_enter(&map->lock, RW_READER);
-}
-
-/*
- * vm_map_unlock_read: release a shared lock on a map.
- */
- 
-static inline void
-vm_map_unlock_read(struct vm_map *map)
-{
-
-	KASSERT((map->flags & VM_MAP_INTRSAFE) == 0);
-
-	rw_exit(&map->lock);
-}
-/*
- * vm_map_downgrade: downgrade an exclusive lock to a shared lock.
- */
-
-static inline void
-vm_map_downgrade(struct vm_map *map)
-{
-
-	rw_downgrade(&map->lock);
-}
-
-/*
- * vm_map_busy: mark a map as busy.
- *
- * => the caller must hold the map write locked
- */
-
-static inline void
-vm_map_busy(struct vm_map *map)
-{
-
-	KASSERT(rw_write_held(&map->lock));
-	KASSERT(map->busy == NULL);
-
-	map->busy = curlwp;
-}
+void		vm_map_lock_read(struct vm_map *);
+void		vm_map_unlock_read(struct vm_map *);
+void		vm_map_downgrade(struct vm_map *);
+void		vm_map_busy(struct vm_map *);
+bool		vm_map_locked_p(struct vm_map *);
 
 #endif /* _KERNEL */
 

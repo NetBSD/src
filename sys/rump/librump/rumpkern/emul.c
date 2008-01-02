@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.19 2007/11/11 17:18:47 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.19.6.1 2008/01/02 21:57:52 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -40,10 +40,12 @@
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/queue.h>
+#include <sys/file.h>
 #include <sys/filedesc.h>
 #include <sys/kthread.h>
 #include <sys/cpu.h>
 #include <sys/kmem.h>
+#include <sys/poll.h>
 
 #include <machine/stdarg.h>
 
@@ -75,6 +77,7 @@ MALLOC_DEFINE(M_UFSMNT, "UFS mount", "UFS mount structure");
 MALLOC_DEFINE(M_TEMP, "temp", "misc. temporary data buffers");
 MALLOC_DEFINE(M_DEVBUF, "devbuf", "device driver memory");
 MALLOC_DEFINE(M_VNODE, "vnodes", "Dynamically allocated vnodes");
+MALLOC_DEFINE(M_KEVENT, "kevent", "kevents/knotes");
 
 char hostname[MAXHOSTNAMELEN];
 size_t hostnamelen;
@@ -86,6 +89,8 @@ u_long	bufmem;
 u_int	nbuf;
 
 const char *panicstr;
+
+const struct filterops seltrue_filtops;
 
 void
 panic(const char *fmt, ...)
@@ -388,4 +393,78 @@ callout_stop(callout_t *c)
 {
 
 	panic("%s: not implemented", __func__);
+}
+
+struct proc *
+p_find(pid_t pid, uint flags)
+{
+
+	panic("%s: not implemented", __func__);
+}
+
+struct pgrp *
+pg_find(pid_t pid, uint flags)
+{
+
+	panic("%s: not implemented", __func__);
+}
+
+void
+kpsignal(struct proc *p, ksiginfo_t *ksi, void *data)
+{
+
+	panic("%s: not implemented", __func__);
+}
+
+void
+kpgsignal(struct pgrp *pgrp, ksiginfo_t *ksi, void *data, int checkctty)
+{
+
+	panic("%s: not implemented", __func__);
+}
+
+int
+pgid_in_session(struct proc *p, pid_t pg_id)
+{
+
+	panic("%s: not implemented", __func__);
+}
+
+int
+sigispending(struct lwp *l, int signo)
+{
+
+	return 0;
+}
+
+void
+knote_fdclose(struct lwp *l, int fd)
+{
+
+	/* since we don't add knotes, we don't have to remove them */
+}
+
+int
+seltrue_kqfilter(dev_t dev, struct knote *kn)
+{
+
+	panic("%s: not implemented", __func__);
+}
+
+int
+kpause(const char *wmesg, bool intr, int timeo, kmutex_t *mtx)
+{
+	extern int hz;
+	int rv, error;
+
+	if (mtx)
+		mutex_exit(mtx);
+	rv = rumpuser_usleep(timeo * (1000000 / hz), &error);
+	if (mtx)
+		mutex_enter(mtx);
+
+	if (rv)
+		return error;
+
+	return 0;
 }

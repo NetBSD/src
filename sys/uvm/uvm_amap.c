@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.83 2007/12/08 15:46:31 ad Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.83.4.1 2008/01/02 21:58:32 bouyer Exp $	*/
 
 /*
  *
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.83 2007/12/08 15:46:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.83.4.1 2008/01/02 21:58:32 bouyer Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -704,11 +704,11 @@ amap_wipeout(struct vm_amap *amap)
 		if (anon == NULL || anon->an_ref == 0)
 			panic("amap_wipeout: corrupt amap");
 
-		simple_lock(&anon->an_lock);
+		mutex_enter(&anon->an_lock);
 		UVMHIST_LOG(maphist,"  processing anon 0x%x, ref=%d", anon,
 		    anon->an_ref, 0, 0);
 		refs = --anon->an_ref;
-		simple_unlock(&anon->an_lock);
+		mutex_exit(&anon->an_lock);
 		if (refs == 0) {
 
 			/*
@@ -860,9 +860,9 @@ amap_copy(struct vm_map *map, struct vm_map_entry *entry, int flags,
 		    srcamap->am_anon[entry->aref.ar_pageoff + lcv];
 		if (amap->am_anon[lcv] == NULL)
 			continue;
-		simple_lock(&amap->am_anon[lcv]->an_lock);
+		mutex_enter(&amap->am_anon[lcv]->an_lock);
 		amap->am_anon[lcv]->an_ref++;
-		simple_unlock(&amap->am_anon[lcv]->an_lock);
+		mutex_exit(&amap->am_anon[lcv]->an_lock);
 		amap->am_bckptr[lcv] = amap->am_nused;
 		amap->am_slots[amap->am_nused] = lcv;
 		amap->am_nused++;
@@ -947,7 +947,7 @@ ReStart:
 
 		slot = amap->am_slots[lcv];
 		anon = amap->am_anon[slot];
-		simple_lock(&anon->an_lock);
+		mutex_enter(&anon->an_lock);
 
 		/*
 		 * If the anon has only one ref, we must have already copied it.
@@ -958,7 +958,7 @@ ReStart:
 
 		if (anon->an_ref == 1) {
 			KASSERT(anon->an_page != NULL || anon->an_swslot != 0);
-			simple_unlock(&anon->an_lock);
+			mutex_exit(&anon->an_lock);
 			continue;
 		}
 
@@ -976,7 +976,7 @@ ReStart:
 		 */
 
 		if (pg->loan_count != 0) {
-			simple_unlock(&anon->an_lock);
+			mutex_exit(&anon->an_lock);
 			continue;
 		}
 		KASSERT(pg->uanon == anon && pg->uobject == NULL);
@@ -1011,10 +1011,10 @@ ReStart:
 
 			if (nanon) {
 				nanon->an_ref--;
-				simple_unlock(&nanon->an_lock);
+				mutex_exit(&nanon->an_lock);
 				uvm_anfree(nanon);
 			}
-			simple_unlock(&anon->an_lock);
+			mutex_exit(&anon->an_lock);
 			amap_unlock(amap);
 			uvm_wait("cownowpage");
 			goto ReStart;
@@ -1034,13 +1034,13 @@ ReStart:
 		 * locked the whole time it can't be PG_RELEASED or PG_WANTED.
 		 */
 
-		uvm_lock_pageq();
+		mutex_enter(&uvm_pageqlock);
 		uvm_pageactivate(npg);
-		uvm_unlock_pageq();
+		mutex_exit(&uvm_pageqlock);
 		npg->flags &= ~(PG_BUSY|PG_FAKE);
 		UVM_PAGE_OWN(npg, NULL);
-		simple_unlock(&nanon->an_lock);
-		simple_unlock(&anon->an_lock);
+		mutex_exit(&nanon->an_lock);
+		mutex_exit(&anon->an_lock);
 	}
 	amap_unlock(amap);
 }
@@ -1253,9 +1253,9 @@ amap_wiperange(struct vm_amap *amap, int slotoff, int slots)
 		 * drop anon reference count
 		 */
 
-		simple_lock(&anon->an_lock);
+		mutex_enter(&anon->an_lock);
 		refs = --anon->an_ref;
-		simple_unlock(&anon->an_lock);
+		mutex_exit(&anon->an_lock);
 		if (refs == 0) {
 
 			/*
@@ -1334,11 +1334,11 @@ amap_swap_off(int startslot, int endslot)
 
 			slot = am->am_slots[i];
 			anon = am->am_anon[slot];
-			simple_lock(&anon->an_lock);
+			mutex_enter(&anon->an_lock);
 
 			swslot = anon->an_swslot;
 			if (swslot < startslot || endslot <= swslot) {
-				simple_unlock(&anon->an_lock);
+				mutex_exit(&anon->an_lock);
 				continue;
 			}
 
