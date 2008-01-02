@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs.c,v 1.23 2008/01/02 13:42:47 ad Exp $	*/
+/*	$NetBSD: vfs.c,v 1.24 2008/01/02 15:44:04 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -92,8 +92,10 @@ getnewvnode(enum vtagtype tag, struct mount *mp, int (**vops)(void *),
 	vp->v_op = vops;
 	vp->v_vnlock = &vp->v_lock;
 	vp->v_usecount = 1;
-	simple_lock_init(&vp->v_interlock);
+	mutex_init(&vp->v_interlock, MUTEX_DEFAULT, IPL_NONE);
 	TAILQ_INSERT_TAIL(&mp->mnt_vnodelist, vp, v_mntvnodes);
+	lockinit(&vp->v_lock, PVFS, "vnlock", 0, 0);
+	cv_init(&vp->v_cv, "vnode");
 
 	uobj = &vp->v_uobj;
 	uobj->pgops = &uvm_vnodeops;
@@ -137,11 +139,15 @@ int
 vget(struct vnode *vp, int lockflag)
 {
 
-	if (lockflag & LK_TYPE_MASK)
-		vn_lock(vp, (lockflag&LK_TYPE_MASK) | (lockflag&LK_INTERLOCK));
-	if (lockflag & LK_INTERLOCK)
-		simple_unlock(&vp->v_interlock);
+	if ((lockflag & LK_INTERLOCK) == 0)
+		mutex_enter(&vp->v_interlock);
 
+	if (lockflag & LK_TYPE_MASK) {
+		vn_lock(vp, (lockflag&LK_TYPE_MASK) | (lockflag&LK_INTERLOCK));
+		return 0;
+	}
+
+	mutex_exit(&vp->v_interlock);
 	return 0;
 }
 
@@ -171,14 +177,15 @@ valloc(struct mount *mp)
 
 	/* assuming mp != NULL */
 
-	vp = rumpuser_malloc(sizeof(struct vnode), 0);
-	memset(vp, 0, sizeof(struct vnode));
+	vp = kmem_zalloc(sizeof(struct vnode), KM_SLEEP);
 	vp->v_type = VBAD;
 	vp->v_iflag = VI_MARKER;
 	vp->v_mount = mp;
 	uobj = &vp->v_uobj;
 	uobj->pgops = &uvm_vnodeops;
-	simple_lock_init(&vp->v_interlock);
+	mutex_init(&vp->v_interlock, MUTEX_DEFAULT, IPL_NONE);
+	lockinit(&vp->v_lock, PVFS, "vnlock", 0, 0);
+	cv_init(&vp->v_cv, "vnode");
 	TAILQ_INIT(&uobj->memq);
 
 	return vp;
@@ -239,7 +246,7 @@ vrecycle(struct vnode *vp, kmutex_t *inter_lkp, struct lwp *l)
 
 	if (vp->v_usecount == 1) {
 		vp->v_usecount = 0;
-		simple_lock(&vp->v_interlock);
+		mutex_enter(&vp->v_interlock);
 		if (inter_lkp)
 			mutex_exit(inter_lkp);
 		VOP_LOCK(vp, LK_EXCLUSIVE | LK_INTERLOCK);
@@ -322,7 +329,9 @@ makevnode(struct stat *sb, const char *path)
 	vp->v_op = spec_vnodeop_p;
 	vp->v_mount = &mnt_dummy;
 	vp->v_vnlock = &vp->v_lock;
-	simple_lock_init(&vp->v_interlock);
+	mutex_init(&vp->v_interlock, MUTEX_DEFAULT, IPL_NONE);
+	lockinit(&vp->v_lock, PVFS, "vnlock", 0, 0);
+	cv_init(&vp->v_cv, "vnode");
 
 	return vp;
 }

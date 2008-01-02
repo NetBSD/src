@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.c,v 1.33 2008/01/02 11:49:05 ad Exp $	*/
+/*	$NetBSD: p2k.c,v 1.34 2008/01/02 15:44:03 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -686,6 +686,7 @@ p2k_node_inactive(struct puffs_usermount *pu, void *opc)
 	bool recycle;
 	int rv;
 
+	rump_vp_interlock(vp);
 	(void) RUMP_VOP_PUTPAGES(vp, 0, 0, PGO_ALLPAGES);
 	VLE(vp);
 	rv = RUMP_VOP_INACTIVE(vp, &recycle);
