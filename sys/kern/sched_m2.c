@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_m2.c,v 1.13 2007/12/05 07:06:54 ad Exp $	*/
+/*	$NetBSD: sched_m2.c,v 1.13.4.1 2008/01/02 21:56:06 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2007, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_m2.c,v 1.13 2007/12/05 07:06:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_m2.c,v 1.13.4.1 2008/01/02 21:56:06 bouyer Exp $");
 
 #include <sys/param.h>
 
@@ -218,7 +218,7 @@ sched_cpuattach(struct cpu_info *ci)
 	 * XXX: Estimate cache behaviour more..
 	 */
 	size = roundup(sizeof(runqueue_t), CACHE_LINE_SIZE) + CACHE_LINE_SIZE;
-	rq_ptr = kmem_zalloc(size, KM_NOSLEEP);
+	rq_ptr = kmem_zalloc(size, KM_SLEEP);
 	if (rq_ptr == NULL) {
 		panic("scheduler: could not allocate the runqueue");
 	}

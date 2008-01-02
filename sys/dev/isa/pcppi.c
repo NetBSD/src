@@ -1,4 +1,4 @@
-/* $NetBSD: pcppi.c,v 1.24 2007/10/19 12:00:22 ad Exp $ */
+/* $NetBSD: pcppi.c,v 1.24.8.1 2008/01/02 21:54:28 bouyer Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcppi.c,v 1.24 2007/10/19 12:00:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcppi.c,v 1.24.8.1 2008/01/02 21:54:28 bouyer Exp $");
 
 #include "attimer.h"
 
@@ -165,6 +165,11 @@ pcppi_isa_attach(struct device *parent, struct device *self, void *aux)
         printf("\n");
 
         pcppi_attach(sc);
+        if (!device_pmf_is_registered(self))
+		if (!pmf_device_register(self, NULL, NULL))
+			aprint_error_dev(self,
+			    "couldn't establish power handler\n"); 
+
 }
 
 void

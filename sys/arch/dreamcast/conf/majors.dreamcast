@@ -1,4 +1,4 @@
-#	$NetBSD: majors.dreamcast,v 1.19 2006/11/24 22:04:22 wiz Exp $
+#	$NetBSD: majors.dreamcast,v 1.19.42.1 2008/01/02 21:47:35 bouyer Exp $
 #
 # Device majors for dreamcast
 #
@@ -50,7 +50,6 @@ device-major	wsmux		char 56			wsmux
 device-major	gdrom		char 57  block 19	gdrom
 device-major	maple		char 58			maple
 device-major	clockctl	char 59			clockctl
-device-major	systrace	char 60			systrace
 device-major	cgd		char 61  block 20	cgd
 
 device-major	mmem		char 62  block 21	mmem

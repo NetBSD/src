@@ -1,4 +1,4 @@
-# $NetBSD: QEMU,v 1.13 2007/11/14 17:54:58 ad Exp $
+# $NetBSD: QEMU,v 1.13.6.1 2008/01/02 21:48:11 bouyer Exp $
 #
 # QEMU machine description file
 #
@@ -11,7 +11,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"QEMU-$Revision: 1.13 $"
+#ident 		"QEMU-$Revision: 1.13.6.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -58,7 +58,6 @@ options 	NTP		# NTP phase/frequency locked loop
 				# Improves time behavior under VMware.
 
 options 	KTRACE		# system call tracing via ktrace(1)
-#options 	SYSTRACE	# system call vetting via systrace(1)
 
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores

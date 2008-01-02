@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.h,v 1.11 2006/02/03 11:08:24 jmmv Exp $	*/
+/*	$NetBSD: bootinfo.h,v 1.11.60.1 2008/01/02 21:51:18 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -72,7 +72,7 @@ struct btinfo_bootwedge {
 	daddr_t matchblk;
 	uint64_t matchnblks;
 	uint8_t matchhash[16];	/* MD5 hash */
-} __attribute__((packed));
+} __packed;
 
 struct btinfo_netif {
 	struct btinfo_common common;
@@ -104,7 +104,7 @@ struct bi_memmap_entry {
 	uint64_t addr;		/* beginning of block */	/* 8 */
 	uint64_t size;		/* size of block */		/* 8 */
 	uint32_t type;		/* type of block */		/* 4 */
-} __attribute__((packed));				/*	== 20 */
+} __packed;				/*	== 20 */
 
 #define	BIM_Memory	1	/* available RAM usable by OS */
 #define	BIM_Reserved	2	/* in use or reserved by the system */
@@ -155,7 +155,7 @@ struct bi_biosgeom_entry {
 	int		res0, res1, res2, res3;	/* future expansion; 0 now */
 #endif
 	struct mbr_partition dosparts[MBR_PART_COUNT]; /* MBR itself */
-} __attribute__((packed));
+} __packed;
 
 struct btinfo_biosgeom {
 	struct btinfo_common common;

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.36.4.1 2007/12/13 21:56:55 bouyer Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.36.4.2 2008/01/02 21:56:11 bouyer Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.36.4.1 2007/12/13 21:56:55 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.36.4.2 2008/01/02 21:56:11 bouyer Exp $");
 
 #define	VMEM_DEBUG
 #if defined(_KERNEL)
@@ -848,15 +848,13 @@ vmem_roundup_size(vmem_t *vm, vmem_size_t size)
  */
 
 vmem_addr_t
-vmem_alloc(vmem_t *vm, vmem_size_t size0, vm_flag_t flags)
+vmem_alloc(vmem_t *vm, vmem_size_t size, vm_flag_t flags)
 {
-	const vmem_size_t size __unused = vmem_roundup_size(vm, size0);
 	const vm_flag_t strat __unused = flags & VM_FITMASK;
 
 	KASSERT((flags & (VM_SLEEP|VM_NOSLEEP)) != 0);
 	KASSERT((~flags & (VM_SLEEP|VM_NOSLEEP)) != 0);
 
-	KASSERT(size0 > 0);
 	KASSERT(size > 0);
 	KASSERT(strat == VM_BESTFIT || strat == VM_INSTANTFIT);
 	if ((flags & VM_SLEEP) != 0) {
@@ -865,7 +863,7 @@ vmem_alloc(vmem_t *vm, vmem_size_t size0, vm_flag_t flags)
 
 #if defined(QCACHE)
 	if (size <= vm->vm_qcache_max) {
-		int qidx = size >> vm->vm_quantum_shift;
+		int qidx = (size + vm->vm_quantum_mask) >> vm->vm_quantum_shift;
 		qcache_t *qc = vm->vm_qcache[qidx - 1];
 
 		return (vmem_addr_t)pool_cache_get(qc->qc_cache,
@@ -873,7 +871,7 @@ vmem_alloc(vmem_t *vm, vmem_size_t size0, vm_flag_t flags)
 	}
 #endif /* defined(QCACHE) */
 
-	return vmem_xalloc(vm, size0, 0, 0, 0, 0, 0, flags);
+	return vmem_xalloc(vm, size, 0, 0, 0, 0, 0, flags);
 }
 
 vmem_addr_t
@@ -1208,15 +1206,14 @@ vmem_rehash_start(void)
 static bt_t *
 vmem_whatis_lookup(vmem_t *vm, uintptr_t addr)
 {
-	int i;
+	bt_t *bt;
 
-	for (i = 0; i < vm->vm_hashsize; i++) {
-		bt_t *bt;
-
-		LIST_FOREACH(bt, &vm->vm_hashlist[i], bt_hashlist) {
-			if (bt->bt_start <= addr && addr < BT_END(bt)) {
-				return bt;
-			}
+	CIRCLEQ_FOREACH(bt, &vm->vm_seglist, bt_seglist) {
+		if (BT_ISSPAN_P(bt)) {
+			continue;
+		}
+		if (bt->bt_start <= addr && addr < BT_END(bt)) {
+			return bt;
 		}
 	}
 
@@ -1235,9 +1232,10 @@ vmem_whatis(uintptr_t addr, void (*pr)(const char *, ...))
 		if (bt == NULL) {
 			continue;
 		}
-		(*pr)("%p is %p+%zu from VMEM '%s'\n",
+		(*pr)("%p is %p+%zu in VMEM '%s' (%s)\n",
 		    (void *)addr, (void *)bt->bt_start,
-		    (size_t)(addr - bt->bt_start), vm->vm_name);
+		    (size_t)(addr - bt->bt_start), vm->vm_name,
+		    (bt->bt_type == BT_TYPE_BUSY) ? "allocated" : "free");
 	}
 }
 #endif /* defined(DDB) */

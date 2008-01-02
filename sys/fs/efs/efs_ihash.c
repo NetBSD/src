@@ -1,4 +1,4 @@
-/*	$NetBSD: efs_ihash.c,v 1.1 2007/06/29 23:30:28 rumble Exp $	*/
+/*	$NetBSD: efs_ihash.c,v 1.1.24.1 2008/01/02 21:55:28 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efs_ihash.c,v 1.1 2007/06/29 23:30:28 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efs_ihash.c,v 1.1.24.1 2008/01/02 21:55:28 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -146,7 +146,7 @@ efs_ihashget(dev_t dev, ino_t inum, int flags)
 			if (flags == 0) {
 				mutex_exit(&efs_ihash_lock);
 			} else {
-				simple_lock(&vp->v_interlock);
+				mutex_enter(&vp->v_interlock);
 				mutex_exit(&efs_ihash_lock);
 				if (vget(vp, flags | LK_INTERLOCK))
 					goto loop;

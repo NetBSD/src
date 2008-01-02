@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup_low.S,v 1.2 2007/12/09 20:27:42 jmcneill Exp $	*/
+/*	$NetBSD: acpi_wakeup_low.S,v 1.2.2.1 2008/01/02 21:46:56 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@netbsd.org>
@@ -30,74 +30,79 @@
 
 #include "assym.h"
 #include <machine/asm.h>
+#include <machine/segments.h>
 #include <machine/specialreg.h>
 
 	.text
 	.p2align 2, 0x90
 	.globl acpi_md_sleep_exit
 acpi_md_sleep_exit:
-	lgdt	r_gdt
+	lgdt	ACPI_SUSPEND_GDT(%r8)
 
+	/* Reload fixed descriptors for new GDT */
+	movw	$GSEL(GDATA_SEL, SEL_KPL),%ax
+	movw	%ax,%ds
+	movw	%ax,%es
+	movw	%ax,%ss
+
+	/* FS and GS are driven by MSRs, so use NULL for them */
 	xorw	%ax,%ax
 	movw	%ax,%fs
 	movw	%ax,%gs
 
 	movl	$MSR_EFER,%ecx
-	movl	r_msr_efer,%eax
+	movl	ACPI_SUSPEND_MSR_EFER(%r8),%eax
 	wrmsr
 
 	movl	$MSR_FSBASE,%ecx
-	movl	r_fs_base_l,%eax
-	movl	r_fs_base_h,%edx
+	movl	ACPI_SUSPEND_FS_BASE_L(%r8),%eax
+	movl	ACPI_SUSPEND_FS_BASE_H(%r8),%edx
 	wrmsr
 
 	movl	$MSR_GSBASE,%ecx
-	movl	r_gs_base_l,%eax
-	movl	r_gs_base_h,%edx
+	movl	ACPI_SUSPEND_GS_BASE_L(%r8),%eax
+	movl	ACPI_SUSPEND_GS_BASE_H(%r8),%edx
 	wrmsr
 
 	movl	$MSR_KERNELGSBASE,%ecx
-	movl	r_gs_kernelbase_l,%eax
-	movl	r_gs_kernelbase_h,%edx
+	movl	ACPI_SUSPEND_GS_KERNELBASE_L(%r8),%eax
+	movl	ACPI_SUSPEND_GS_KERNELBASE_H(%r8),%edx
 	wrmsr
 
-	movq	r_cr8,%rax
+	movq	ACPI_SUSPEND_CR8(%r8),%rax
 	movq	%rax,%cr8
-	movq	r_cr4,%rax
+	movq	ACPI_SUSPEND_CR4(%r8),%rax
 	movq	%rax,%cr4
-	movq	r_cr3,%rax
+	movq	ACPI_SUSPEND_CR3(%r8),%rax
 	movq	%rax,%cr3
-	movq	r_cr2,%rax
+	movq	ACPI_SUSPEND_CR2(%r8),%rax
 	movq	%rax,%cr2
-	movq	r_cr0,%rax
+	movq	ACPI_SUSPEND_CR0(%r8),%rax
 	movq	%rax,%cr0
 
 	jmp 1f
 1:
 
 	movq	CPUVAR(GDT),%rax
-	movq	%rax, r_save_gdt
-	movzwq	r_tr,%rdx
+	movzwq	ACPI_SUSPEND_TR(%r8),%rdx
 	andq	$~0x0200,4(%rax,%rdx, 1)
 
 	ltr	%dx
-	lldt 	r_ldt
-	lidt	r_idt
+	lldt 	ACPI_SUSPEND_LDT(%r8)
+	lidt	ACPI_SUSPEND_IDT(%r8)
 
-	movq	r_rsp,%rsp
+	movq	ACPI_SUSPEND_RSP(%r8),%rsp
 
-	movq	r_rbx,%rbx
-	movq	r_rbp,%rbp
-	movq	r_r12,%r12
-	movq	r_r13,%r13
-	movq	r_r14,%r14
-	movq	r_r15,%r15
+	movq	ACPI_SUSPEND_RBX(%r8),%rbx
+	movq	ACPI_SUSPEND_RBP(%r8),%rbp
+	movq	ACPI_SUSPEND_R12(%r8),%r12
+	movq	ACPI_SUSPEND_R13(%r8),%r13
+	movq	ACPI_SUSPEND_R14(%r8),%r14
+	movq	ACPI_SUSPEND_R15(%r8),%r15
 
-	movq ret_addr,%rax
-	movq %rax,(%rsp)
 	xorq	%rax,%rax
 
-	pushq	r_rfl
+	pushq	ACPI_SUSPEND_RFL(%r8)
 	popfq
 	ret
 
@@ -105,100 +110,55 @@ acpi_md_sleep_exit:
 	.type acpi_md_sleep_prepare, @function
 	.globl acpi_md_sleep_prepare
 acpi_md_sleep_prepare:
-	movq	%rbx,r_rbx
-	movq	%rbp,r_rbp
-	movq	%r12,r_r12
-	movq	%r13,r_r13
-	movq	%r14,r_r14
-	movq	%r15,r_r15
+	movq	CPUVAR(SELF),%r8
+	movq	%rbx,ACPI_SUSPEND_RBX(%r8)
+	movq	%rbp,ACPI_SUSPEND_RBP(%r8)
+	movq	%r12,ACPI_SUSPEND_R12(%r8)
+	movq	%r13,ACPI_SUSPEND_R13(%r8)
+	movq	%r14,ACPI_SUSPEND_R14(%r8)
+	movq	%r15,ACPI_SUSPEND_R15(%r8)
 
 	movq	%cr0,%rax
-	movq	%rax,r_cr0
+	movq	%rax,ACPI_SUSPEND_CR0(%r8)
 	movq	%cr2,%rax
-	movq	%rax,r_cr2
+	movq	%rax,ACPI_SUSPEND_CR2(%r8)
 	movq	%cr3,%rax
-	movq	%rax,r_cr3
+	movq	%rax,ACPI_SUSPEND_CR3(%r8)
 	movq	%cr4,%rax
-	movq	%rax,r_cr4
+	movq	%rax,ACPI_SUSPEND_CR4(%r8)
 	movq	%cr8,%rax
-	movq	%rax,r_cr8
+	movq	%rax,ACPI_SUSPEND_CR8(%r8)
 
 	pushfq
-	popq	r_rfl
+	popq	ACPI_SUSPEND_RFL(%r8)
 
-	movq	%rsp,r_rsp
+	movq	%rsp,ACPI_SUSPEND_RSP(%r8)
 
 	movl	$MSR_FSBASE,%ecx
 	rdmsr
-	movl	%eax,r_fs_base_l
-	movl	%edx,r_fs_base_h
+	movl	%eax,ACPI_SUSPEND_FS_BASE_L(%r8)
+	movl	%edx,ACPI_SUSPEND_FS_BASE_H(%r8)
 
 	movl	$MSR_GSBASE,%ecx
 	rdmsr
-	movl	%eax,r_gs_base_l
-	movl	%edx,r_gs_base_h
+	movl	%eax,ACPI_SUSPEND_GS_BASE_L(%r8)
+	movl	%edx,ACPI_SUSPEND_GS_BASE_H(%r8)
 
 	movl	$MSR_KERNELGSBASE,%ecx
 	rdmsr
-	movl	%eax,r_gs_kernelbase_l
-	movl	%edx,r_gs_kernelbase_h
+	movl	%eax,ACPI_SUSPEND_GS_KERNELBASE_L(%r8)
+	movl	%edx,ACPI_SUSPEND_GS_KERNELBASE_H(%r8)
 
 	movl	$MSR_EFER,%ecx
 	rdmsr
-	movl	%eax,r_msr_efer
+	movl	%eax,ACPI_SUSPEND_MSR_EFER(%r8)
 
-	sgdt	r_gdt
-	sidt	r_idt
-	sldt	r_ldt
-	str	r_tr
-
-	movq	(%rsp),%rax
-	movq	%rax,ret_addr
+	sgdt	ACPI_SUSPEND_GDT(%r8)
+	sidt	ACPI_SUSPEND_IDT(%r8)
+	sldt	ACPI_SUSPEND_LDT(%r8)
+	str	ACPI_SUSPEND_TR(%r8)
 
 	call	acpi_md_sleep_enter
 	/* acpi_md_sleep_enter only returns on failure. */
 	movl	$-1,%eax
 	ret
-
-	.data
-	.align 16
-
-r_tr:		.word	0
-r_ldt:		.word	0
-
-r_fs_base_l:
-		.long	0
-r_fs_base_h:
-		.long	0
-r_gs_base_l:
-		.long	0
-r_gs_base_h:
-		.long	0
-r_gs_kernelbase_l:
-		.long	0
-r_gs_kernelbase_h:
-		.long	0
-r_msr_efer:
-		.long	0
-r_rbx:		.quad	0
-r_rbp:		.quad	0
-r_rsp:		.quad	0
-r_r12:		.quad	0
-r_r13:		.quad	0
-r_r14:		.quad	0
-r_r15:		.quad	0
-r_rfl:		.quad	0
-
-r_cr0:		.quad	0
-r_cr2:		.quad	0
-r_cr3:		.quad	0
-r_cr4:		.quad	0
-r_cr8:		.quad	0
-
-r_gdt:		.word	0
-		.quad	0
-r_idt:		.word	0
-		.quad	0
-
-ret_addr:	.quad	0
-r_save_gdt:	.quad	0

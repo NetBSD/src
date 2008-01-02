@@ -28,7 +28,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cxgb_lro.c,v 1.3.8.1 2007/12/13 21:55:42 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cxgb_lro.c,v 1.3.8.2 2008/01/02 21:54:38 bouyer Exp $");
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/dev/cxgb/cxgb_lro.c,v 1.7 2007/06/13 05:35:59 kmacy Exp $");
 #endif
@@ -180,7 +180,7 @@ lro_new_session_init(struct t3_lro_session *s, struct mbuf *m)
 	struct tcphdr *th = (struct tcphdr *) (ih + 1);
 	int ip_len = ntohs(ih->ip_len);
 
-	DPRINTF("%s(s=%p, m=%p)\n", __FUNCTION__, s, m);
+	DPRINTF("%s(s=%p, m=%p)\n", __func__, s, m);
 	
 	s->head = m;
 	
@@ -217,7 +217,7 @@ lro_flush_session(struct sge_qset *qs, struct t3_lro_session *s, struct mbuf *m)
 	struct ip *ih = (struct ip *)(mtod(sm, uint8_t *) + IPH_OFFSET);
 
 #ifdef __FreeBSD__	
-	DPRINTF("%s(qs=%p, s=%p, ", __FUNCTION__,
+	DPRINTF("%s(qs=%p, s=%p, ", __func__,
 	    qs, s);
 
 	if (m)
@@ -253,7 +253,7 @@ lro_new_session(struct sge_qset *qs, struct mbuf *m, uint32_t rss_hash)
 	int idx = LRO_SESSION_IDX_HINT_HASH(rss_hash); 
 	struct t3_lro_session *s = &l->sess[idx];
 
-	DPRINTF("%s(qs=%p,  m=%p, rss_hash=0x%x)\n", __FUNCTION__,
+	DPRINTF("%s(qs=%p,  m=%p, rss_hash=0x%x)\n", __func__,
 	    qs, m, rss_hash);
 	
 	if (__predict_true(!s->head))
@@ -293,7 +293,7 @@ lro_update_session(struct t3_lro_session *s, struct mbuf *m)
 	int plen, tcpiphlen, olen = (nth->th_off << 2) - sizeof (*nth);
 	
 	
-	DPRINTF("%s(s=%p,  m=%p)\n", __FUNCTION__, s, m);	
+	DPRINTF("%s(s=%p,  m=%p)\n", __func__, s, m);	
 	if (cpl->vlan_valid && cpl->vlan != ncpl->vlan) {
 		return -1;
 	}

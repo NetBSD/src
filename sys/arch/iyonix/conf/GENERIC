@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.45 2007/12/02 05:19:13 kiyohara Exp $
+#	$NetBSD: GENERIC,v 1.45.6.1 2008/01/02 21:48:29 bouyer Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/iyonix/conf/std.iyonix"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.45 $"
+#ident 		"GENERIC-$Revision: 1.45.6.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -46,7 +46,6 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 				# Improves time behavior under VMware.
 
 #options 	KTRACE		# system call tracing via ktrace(1)
-#options 	SYSTRACE	# system call vetting via systrace(1)
 
 
 #options 	SYSVMSG		# System V-like message queues

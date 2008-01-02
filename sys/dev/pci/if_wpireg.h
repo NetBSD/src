@@ -1,4 +1,4 @@
-/*  $NetBSD: if_wpireg.h,v 1.8 2007/11/28 22:51:49 degroote Exp $    */
+/*  $NetBSD: if_wpireg.h,v 1.8.6.1 2008/01/02 21:54:49 bouyer Exp $    */
 
 /*-
  * Copyright (c) 2006
@@ -174,7 +174,7 @@ struct wpi_shared {
 	uint32_t	txbase[8];
 	uint32_t	next;
 	uint32_t	reserved[2];
-} __attribute__((__packed__));
+} __packed;
 
 #define WPI_MAX_SEG_LEN	65520
 struct wpi_tx_desc {
@@ -184,9 +184,9 @@ struct wpi_tx_desc {
 	struct {
 		uint32_t	addr;
 		uint32_t	len;
-	} __attribute__((__packed__))	segs[WPI_MAX_SCATTER];
+	} __packed	segs[WPI_MAX_SCATTER];
 	uint8_t		reserved[28];
-} __attribute__((__packed__));
+} __packed;
 
 struct wpi_tx_stat {
 	uint8_t		nrts;
@@ -195,7 +195,7 @@ struct wpi_tx_stat {
 	uint8_t		rate;
 	uint32_t	duration;
 	uint32_t	status;
-} __attribute__((__packed__));
+} __packed;
 
 struct wpi_rx_desc {
 	uint32_t	len;
@@ -210,7 +210,7 @@ struct wpi_rx_desc {
 	uint8_t		flags;
 	uint8_t		idx;
 	uint8_t		qid;
-} __attribute__((__packed__));
+} __packed;
 
 struct wpi_rx_stat {
 	uint8_t		len;
@@ -223,7 +223,7 @@ struct wpi_rx_stat {
 	uint8_t		agc;	/* access gain control */
 	uint16_t	signal;
 	uint16_t	noise;
-} __attribute__((__packed__));
+} __packed;
 
 struct wpi_rx_head {
 	uint16_t	chan;
@@ -231,7 +231,7 @@ struct wpi_rx_head {
 	uint8_t		reserved;
 	uint8_t		rate;
 	uint16_t	len;
-} __attribute__((__packed__));
+} __packed;
 
 struct wpi_rx_tail {
 	uint32_t	flags;
@@ -242,7 +242,7 @@ struct wpi_rx_tail {
 
 	uint64_t	tstamp;
 	uint32_t	tbeacon;
-} __attribute__((__packed__));
+} __packed;
 
 struct wpi_tx_cmd {
 	uint8_t	code;
@@ -264,7 +264,7 @@ struct wpi_tx_cmd {
 	uint8_t	idx;
 	uint8_t	qid;
 	uint8_t	data[124];
-} __attribute__((__packed__));
+} __packed;
 
 /* structure for WPI_CMD_CONFIGURE */
 struct wpi_config {
@@ -305,7 +305,7 @@ struct wpi_config {
 
 	uint8_t		chan;
 	uint8_t		reserved6[3];
-} __attribute__((__packed__));
+} __packed;
 
 /* structure for command WPI_CMD_ASSOCIATE */
 struct wpi_assoc {
@@ -314,7 +314,7 @@ struct wpi_assoc {
 	uint8_t		ofdm_mask;
 	uint8_t		cck_mask;
 	uint16_t	reserved;
-} __attribute__((__packed__));
+} __packed;
 
 /* structure for command WPI_CMD_SET_WME */
 struct wpi_wme_setup {
@@ -326,7 +326,7 @@ struct wpi_wme_setup {
 		uint8_t		reserved;
 		uint16_t	txop;
 	} __packed	ac[WME_NUM_AC];
-} __attribute__((__packed__));
+} __packed;
 
 /* structure for command WPI_CMD_TSF */
 struct wpi_cmd_tsf {
@@ -336,7 +336,7 @@ struct wpi_cmd_tsf {
 	uint32_t	binitval;
 	uint16_t	lintval;
 	uint16_t	reserved;
-} __attribute__((__packed__));
+} __packed;
 
 /* structure for WPI_CMD_ADD_NODE */
 struct wpi_node_info {
@@ -372,7 +372,7 @@ struct wpi_node_info {
 	uint8_t		add_imm;
 	uint8_t		del_imm;
 	uint16_t	add_imm_start;
-} __attribute__((__packed__));
+} __packed;
 
 /* structure for command WPI_CMD_TX_DATA */
 struct wpi_cmd_data {
@@ -402,7 +402,7 @@ struct wpi_cmd_data {
 	uint8_t		data_ntries;
 	uint16_t	timeout;
 	uint16_t	txop;
-} __attribute__((__packed__));
+} __packed;
 
 /* structure for command WPI_CMD_SET_BEACON */
 struct wpi_cmd_beacon {
@@ -420,7 +420,7 @@ struct wpi_cmd_beacon {
 	uint8_t		timsz;
 	uint8_t		reserved4;
 	struct		ieee80211_frame wh;
-} __attribute__((__packed__));
+} __packed;
 
 /* structure for WPI_CMD_MRR_SETUP */
 struct wpi_mrr_setup {
@@ -439,8 +439,8 @@ struct wpi_mrr_setup {
 #define WPI_CCK2	9
 #define WPI_CCK11	11
 
-	} __attribute__((__packed__))	rates[WPI_CCK11 + 1];
-} __attribute__((__packed__));
+	} __packed	rates[WPI_CCK11 + 1];
+} __packed;
 
 /* structure for WPI_CMD_SET_LED */
 struct wpi_cmd_led {
@@ -452,7 +452,7 @@ struct wpi_cmd_led {
 	uint8_t		off;
 	uint8_t		on;
 	uint8_t		reserved;
-} __attribute__((__packed__));
+} __packed;
 
 /* structure for WPI_CMD_SET_POWER_MODE */
 struct wpi_power {
@@ -462,7 +462,7 @@ struct wpi_power {
 	uint32_t	rx_timeout;
 	uint32_t	tx_timeout;
 	uint32_t	sleep[5];
-} __attribute__((__packed__));
+} __packed;
 
 /* structure for command WPI_CMD_SCAN */
 
@@ -470,7 +470,7 @@ struct wpi_scan_essid {
 	uint8_t	id;
 	uint8_t	len;
 	uint8_t	data[IEEE80211_NWID_LEN];
-} __attribute__((__packed__));
+} __packed;
 
 struct wpi_scan_hdr {
 	uint16_t	len;
@@ -508,7 +508,7 @@ struct wpi_scan_hdr {
 
 	/* followed by probe request body */
 	/* followed by nchan x wpi_scan_chan */
-} __attribute__((__packed__));
+} __packed;
 
 struct wpi_scan_chan {
 	uint8_t		flags;
@@ -520,7 +520,7 @@ struct wpi_scan_chan {
 	uint8_t		dsp_gain;
 	uint16_t	active;		/* msecs */
 	uint16_t	passive;	/* msecs */
-} __attribute__((__packed__));
+} __packed;
 
 /* structure for WPI_CMD_TXPOWER */
 struct wpi_cmd_txpower {
@@ -535,8 +535,8 @@ struct wpi_cmd_txpower {
 		uint8_t	rf_gain;
 		uint8_t	dsp_gain;
 		uint8_t	reserved;
-	} __attribute__((__packed__)) rates[WPI_CCK11 + 1];
-} __attribute__((__packed__));
+	} __packed rates[WPI_CCK11 + 1];
+} __packed;
 
 /* structure for WPI_CMD_BLUETOOTH */
 struct wpi_bluetooth {
@@ -546,7 +546,7 @@ struct wpi_bluetooth {
 	uint8_t		reserved;
 	uint32_t	ack;
 	uint32_t	cts;
-} __attribute__((__packed__));
+} __packed;
 
 
 /* structure for WPI_UC_READY notification */
@@ -560,7 +560,7 @@ struct wpi_ucode_info {
 	uint32_t	errorptr;
 	uint32_t	timestamp;
 	uint32_t	valid;
-} __attribute__((__packed__));
+} __packed;
 
 /* structure for WPI_START_SCAN notification */
 struct wpi_start_scan {
@@ -570,7 +570,7 @@ struct wpi_start_scan {
 	uint8_t		band;
 	uint16_t	reserved;
 	uint32_t	status;
-} __attribute__((__packed__));
+} __packed;
 
 /* structure for WPI_STOP_SCAN notification */
 struct wpi_stop_scan {
@@ -579,7 +579,7 @@ struct wpi_stop_scan {
 	uint8_t		reserved;
 	uint8_t		chan;
 	uint64_t	tsf;
-} __attribute__((__packed__));
+} __packed;
 
 /* firmware image header */
 struct wpi_firmware_hdr {
@@ -589,7 +589,7 @@ struct wpi_firmware_hdr {
 	uint32_t 	init_textsz;
 	uint32_t	init_datasz;
 	uint32_t	boot_textsz;
-} __attribute__((__packed__));
+} __packed;
 
 #define WPI_FW_MAIN_TEXT_MAXSZ	(80 * 1024)
 #define WPI_FW_MAIN_DATA_MAXSZ	(32 * 1024)
@@ -622,13 +622,13 @@ struct wpi_eeprom_chan {
 #define WPI_EEPROM_CHAN_RADAR	(1 << 4)
 
 	int8_t	maxpwr;
-} __attribute__((__packed__));
+} __packed;
 
 struct wpi_eeprom_sample {
 	uint8_t		index;
 	int8_t		power;
 	uint16_t	volt;
-} __attribute__((__packed__));
+} __packed;
 
 #define WPI_POWER_GROUPS_COUNT	5
 struct wpi_eeprom_group {
@@ -638,7 +638,7 @@ struct wpi_eeprom_group {
 	int8_t		maxpwr;
 	uint8_t		chan;
 	int16_t		temp;
-} __attribute__((__packed__));
+} __packed;
 
 #define WPI_CHAN_BANDS_COUNT	5
 #define WPI_MAX_CHAN_PER_BAND	14

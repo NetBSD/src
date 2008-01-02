@@ -29,7 +29,7 @@ copyright="\
  * SUCH DAMAGE.
  */
 "
-SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.47 2007/11/26 19:02:11 pooka Exp $'
+SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.47.6.1 2008/01/02 21:56:27 bouyer Exp $'
 
 # Script to produce VFS front-end sugar.
 #
@@ -220,6 +220,8 @@ BEGIN	{
 	vop_offset = 1; # start at 1, to count the 'default' op
 
 	printf("\n/* Special cases: */\n#include <sys/buf.h>\n");
+	printf("#ifndef _KERNEL\n#include <stdbool.h>\n#endif\n\n");
+
 	argc=1;
 	argtype[0]="struct buf *";
 	argname[0]="bp";

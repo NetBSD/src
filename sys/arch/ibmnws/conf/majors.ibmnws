@@ -1,4 +1,4 @@
-#	$NetBSD: majors.ibmnws,v 1.11 2006/11/24 22:04:23 wiz Exp $
+#	$NetBSD: majors.ibmnws,v 1.11.42.1 2008/01/02 21:48:28 bouyer Exp $
 #
 # Device majors for ibmnws
 #
@@ -54,7 +54,6 @@ device-major	isdntel		char 70			isdntel
 device-major	wsfont		char 71			wsfont
 device-major	pci		char 72			pci
 device-major	clockctl	char 73			clockctl
-device-major	systrace	char 74			systrace
 device-major	cgd		char 75  block 19	cgd
 device-major	ksyms		char 76			ksyms
 

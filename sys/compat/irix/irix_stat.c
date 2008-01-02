@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_stat.c,v 1.21 2007/12/08 18:36:04 dsl Exp $ */
+/*	$NetBSD: irix_stat.c,v 1.21.4.1 2008/01/02 21:52:08 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_stat.c,v 1.21 2007/12/08 18:36:04 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_stat.c,v 1.21.4.1 2008/01/02 21:52:08 bouyer Exp $");
 
 #include <sys/errno.h>
 #include <sys/types.h>
@@ -150,13 +150,13 @@ convert_irix_stat(struct stat *st, void *buf, int stat_version)
 }
 
 int
-irix_sys_xstat(struct lwp *l, void *v, register_t *retval)
+irix_sys_xstat(struct lwp *l, const struct irix_sys_xstat_args *uap, register_t *retval)
 {
-	struct irix_sys_xstat_args /* {
+	/* {
 		syscallarg(const int) version;
 		syscallarg(const char *) path;
 		syscallarg(struct stat *) buf;
-	} */ *uap = v;
+	} */
 	struct stat st;
 	int error;
 
@@ -168,13 +168,13 @@ irix_sys_xstat(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-irix_sys_lxstat(struct lwp *l, void *v, register_t *retval)
+irix_sys_lxstat(struct lwp *l, const struct irix_sys_lxstat_args *uap, register_t *retval)
 {
-	struct irix_sys_lxstat_args /* {
+	/* {
 		syscallarg(const int) version;
 		syscallarg(const char *) path;
 		syscallarg(struct stat *) buf;
-	} */ *uap = v;
+	} */
 	struct stat st;
 	int error;
 
@@ -185,13 +185,13 @@ irix_sys_lxstat(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-irix_sys_fxstat(struct lwp *l, void *v, register_t *retval)
+irix_sys_fxstat(struct lwp *l, const struct irix_sys_fxstat_args *uap, register_t *retval)
 {
-	struct irix_sys_fxstat_args /* {
+	/* {
 		syscallarg(const int) version;
 		syscallarg(const int) fd;
 		syscallarg(struct stat *) buf;
-	} */ *uap = v;
+	} */
 	struct stat st;
 	int error;
 

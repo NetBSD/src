@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_vm.c,v 1.57 2007/12/08 18:36:16 dsl Exp $ */
+/*	$NetBSD: mach_vm.c,v 1.57.4.1 2008/01/02 21:52:59 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.57 2007/12/08 18:36:16 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.57.4.1 2008/01/02 21:52:59 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -340,15 +340,15 @@ mach_vm_protect(struct mach_trap_args *args)
 }
 
 int
-mach_sys_map_fd(struct lwp *l, void *v, register_t *retval)
+mach_sys_map_fd(struct lwp *l, const struct mach_sys_map_fd_args *uap, register_t *retval)
 {
-	struct mach_sys_map_fd_args /* {
+	/* {
 		syscallarg(int) fd;
 		syscallarg(mach_vm_offset_t) offset;
 		syscallarg(mach_vm_offset_t *) va;
 		syscallarg(mach_boolean_t) findspace;
 		syscallarg(mach_vm_size_t) size;
-	} */ *uap = v;
+	} */
 	struct file *fp;
 	struct filedesc *fdp;
 	struct vnode *vp;

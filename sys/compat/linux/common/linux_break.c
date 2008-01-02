@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_break.c,v 1.54 2007/02/09 21:55:19 ad Exp $	*/
+/*	$NetBSD: linux_break.c,v 1.54.32.1 2008/01/02 21:52:31 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_break.c,v 1.54 2007/02/09 21:55:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_break.c,v 1.54.32.1 2008/01/02 21:52:31 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,14 +62,11 @@ __KERNEL_RCSID(0, "$NetBSD: linux_break.c,v 1.54 2007/02/09 21:55:19 ad Exp $");
  * world uses this anymore
  */
 int
-linux_sys_break(struct lwp *l, void *v,
-    register_t *retval)
+linux_sys_break(struct lwp *l, const struct linux_sys_break_args *uap, register_t *retval)
 {
-#if 0
-	struct linux_sys_brk_args /* {
+	/* {
 		syscallarg(char *) nsize;
-	} */ *uap = v;
-#endif
+	} */
 
 	return ENOSYS;
 }

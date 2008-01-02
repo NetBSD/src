@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_ipc.c,v 1.26 2007/12/08 18:36:01 dsl Exp $	*/
+/*	$NetBSD: ibcs2_ipc.c,v 1.26.4.1 2008/01/02 21:52:02 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Bartram
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_ipc.c,v 1.26 2007/12/08 18:36:01 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_ipc.c,v 1.26.4.1 2008/01/02 21:52:02 bouyer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -162,26 +162,41 @@ cvt_imsqid2msqid(struct ibcs2_msqid_ds *ibp, struct msqid_ds *bp)
 	bp->msg_ctime = ibp->msg_ctime;
 }
 
+static int
+do_compat_10_sys_msgsys(struct lwp *l, const struct ibcs2_sys_msgsys_args *uap,
+    register_t *retval, int which)
+{
+    struct compat_10_sys_msgsys_args bsd_ua;
+
+    SCARG(&bsd_ua, which) = which;
+    SCARG(&bsd_ua, a2) = SCARG(uap, a2);
+    SCARG(&bsd_ua, a3) = SCARG(uap, a3);
+    SCARG(&bsd_ua, a4) = SCARG(uap, a4);
+    SCARG(&bsd_ua, a5) = SCARG(uap, a5);
+    SCARG(&bsd_ua, a6) = SCARG(uap, a6);
+
+    return compat_10_sys_msgsys(l, &bsd_ua, retval);
+}
+
 int
-ibcs2_sys_msgsys(struct lwp *l, void *v, register_t *retval)
+ibcs2_sys_msgsys(struct lwp *l, const struct ibcs2_sys_msgsys_args *uap, register_t *retval)
 {
 #ifdef SYSVMSG
-	struct ibcs2_sys_msgsys_args /* {
+	/* {
 		syscallarg(int) which;
 		syscallarg(int) a2;
 		syscallarg(int) a3;
 		syscallarg(int) a4;
 		syscallarg(int) a5;
 		syscallarg(int) a6;
-	} */ *uap = v;
+	} */
 	int error;
 	struct msqid_ds msqbuf;
 	struct ibcs2_msqid_ds msqbuf_ibcs2, *ibp;
 
 	switch (SCARG(uap, which)) {
 	case 0:				/* msgget */
-		SCARG(uap, which) = 1;
-		return compat_10_sys_msgsys(l, uap, retval);
+		return do_compat_10_sys_msgsys(l, uap, retval, 1);
 	case 1: 			/* msgctl */
 		ibp = (void *)SCARG(uap, a4);
 		switch (SCARG(uap, a3)) {
@@ -206,11 +221,9 @@ ibcs2_sys_msgsys(struct lwp *l, void *v, register_t *retval)
 		}
 		return EINVAL;
 	case 2:				/* msgrcv */
-		SCARG(uap, which) = 3;
-		return compat_10_sys_msgsys(l, uap, retval);
+		return do_compat_10_sys_msgsys(l, uap, retval, 3);
 	case 3:				/* msgsnd */
-		SCARG(uap, which) = 2;
-		return compat_10_sys_msgsys(l, uap, retval);
+		return do_compat_10_sys_msgsys(l, uap, retval, 2);
 	default:
 		break;
 	}
@@ -287,19 +300,20 @@ cvt_isemid2semid(const struct ibcs2_semid_ds *ibp, struct semid_ds *bp)
 }
 
 int
-ibcs2_sys_semsys(struct lwp *l, void *v, register_t *retval)
+ibcs2_sys_semsys(struct lwp *l, const struct ibcs2_sys_semsys_args *uap, register_t *retval)
 {
 #ifdef SYSVSEM
-	struct ibcs2_sys_semsys_args /* {
+	/* {
 		syscallarg(int) which;
 		syscallarg(int) a2;
 		syscallarg(int) a3;
 		syscallarg(int) a4;
 		syscallarg(int) a5;
-	} */ *uap = v;
+	} */
 	struct semid_ds sembuf;
 	struct ibcs2_semid_ds isembuf;
 	void *pass_arg;
+	int a5 = SCARG(uap, a5);
 	int error;
 
 	switch (SCARG(uap, which)) {
@@ -307,7 +321,7 @@ ibcs2_sys_semsys(struct lwp *l, void *v, register_t *retval)
 #define	semctl_semid	SCARG(uap, a2)
 #define	semctl_semnum	SCARG(uap, a3)
 #define	semctl_cmd	SCARG(uap, a4)
-#define	semctl_arg	((union __semun *)&SCARG(uap, a5))
+#define	semctl_arg	((union __semun *)&a5)
 		pass_arg = get_semctl_arg(semctl_cmd, &sembuf, semctl_arg);
 		if (semctl_cmd == IPC_SET) {
 			error = copyin(semctl_arg->buf, &isembuf, sizeof isembuf);
@@ -328,10 +342,10 @@ ibcs2_sys_semsys(struct lwp *l, void *v, register_t *retval)
 #undef	semctl_arg
 
 	case 1:				/* semget */
-		return compat_10_sys_semsys(l, uap, retval);
+		return compat_10_sys_semsys(l, (const void *)uap, retval);
 
 	case 2:				/* semop */
-		return compat_10_sys_semsys(l, uap, retval);
+		return compat_10_sys_semsys(l, (const void *)uap, retval);
 	}
 #endif
 	return EINVAL;
@@ -389,22 +403,22 @@ cvt_ishmid2shmid(const struct ibcs2_shmid_ds *ibp, struct shmid_ds *bp)
 }
 
 int
-ibcs2_sys_shmsys(struct lwp *l, void *v, register_t *retval)
+ibcs2_sys_shmsys(struct lwp *l, const struct ibcs2_sys_shmsys_args *uap, register_t *retval)
 {
 #ifdef SYSVSHM
-	struct ibcs2_sys_shmsys_args /* {
+	/* {
 		syscallarg(int) which;
 		syscallarg(int) a2;
 		syscallarg(int) a3;
 		syscallarg(int) a4;
-	} */ *uap = v;
+	} */
 	struct shmid_ds shmbuf;
 	struct ibcs2_shmid_ds *isp, ishmbuf;
 	int cmd, error;
 
 	switch (SCARG(uap, which)) {
 	case 0:						/* shmat */
-		return compat_10_sys_shmsys(l, uap, retval);
+		break;
 
 	case 1:						/* shmctl */
 		cmd = SCARG(uap, a3);
@@ -426,13 +440,18 @@ ibcs2_sys_shmsys(struct lwp *l, void *v, register_t *retval)
 		return error;
 
 	case 2:						/* shmdt */
-		return compat_10_sys_shmsys(l, uap, retval);
+		break;
 
 	case 3:						/* shmget */
-		return compat_10_sys_shmsys(l, uap, retval);
+		break;
+
+	default:
+		return EINVAL;
 	}
-#endif
+	return compat_10_sys_shmsys(l, (const void *)uap, retval);
+#else
 	return EINVAL;
+#endif
 }
 
 #endif /* SYSVSHM */

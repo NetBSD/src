@@ -1,4 +1,4 @@
-/* $NetBSD: ofw_autoconf.c,v 1.4 2007/11/26 23:13:37 macallan Exp $ */
+/* $NetBSD: ofw_autoconf.c,v 1.4.8.1 2008/01/02 21:49:09 bouyer Exp $ */
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
  * Copyright (C) 1995, 1996 TooLs GmbH.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_autoconf.c,v 1.4 2007/11/26 23:13:37 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_autoconf.c,v 1.4.8.1 2008/01/02 21:49:09 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -214,18 +214,29 @@ device_register(dev, aux)
 		return;
 
 	if (device_is_a(device_parent(dev), "pci")) {
-		/* see if this is going to be console */
 		struct pci_attach_args *pa = aux;
 		prop_dictionary_t dict;
+		prop_bool_t b;
 		int node;
 		char name[32];
 
 		dict = device_properties(dev);
 		node = pcidev_to_ofdev(pa->pa_pc, pa->pa_tag);
 
+		/* enable configuration of irq 14/15 for VIA native IDE */
+		if (device_is_a(dev, "viaide") &&
+		    strncmp(model_name, "Pegasos", 7) == 0) {
+			b = prop_bool_create(true);
+			KASSERT(b != NULL);
+			(void)prop_dictionary_set(dict,
+			    "use-compat-native-irq", b);
+			prop_object_release(b);
+		}
+
 		if (node != 0) {
 			prop_dictionary_set_uint32(dict, "device_node", node);
 
+			/* see if this is going to be console */
 			memset(name, 0, sizeof(name));
 			OF_getprop(node, "device_type", name, sizeof(name));
 			if (strcmp(name, "display") == 0) {

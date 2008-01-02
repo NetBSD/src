@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.129 2007/12/06 17:05:08 ad Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.129.4.1 2008/01/02 21:55:52 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.129 2007/12/06 17:05:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.129.4.1 2008/01/02 21:55:52 bouyer Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -107,6 +107,14 @@ static int acquire(struct lock **, int *, int, int, int, uintptr_t);
 int	lock_debug_syslog = 0;	/* defaults to printf, but can be patched */
 bool	kernel_lock_dodebug;
 __cpu_simple_lock_t kernel_lock;
+
+#ifdef LOCKDEBUG
+static lockops_t lockmgr_lockops = {
+	"lockmgr",
+	1,
+	(void *)nullop
+};
+#endif
 
 #if defined(LOCKDEBUG) || defined(DIAGNOSTIC) /* { */
 #define	COUNT(lkp, l, cpu_id, x)	(l)->l_locks += (x)
@@ -140,9 +148,9 @@ acquire(struct lock **lkpp, int *s, int extflags,
 			lkp->lk_flags |= LK_WAIT_NONZERO;
 		}
 		LOCKSTAT_START_TIMER(lsflag, slptime);
-		error = ltsleep(drain ? (void *)&lkp->lk_flags : (void *)lkp,
+		error = mtsleep(drain ? (void *)&lkp->lk_flags : (void *)lkp,
 		    lkp->lk_prio, lkp->lk_wmesg, lkp->lk_timo,
-		    &lkp->lk_interlock);
+		    __UNVOLATILE(&lkp->lk_interlock));
 		LOCKSTAT_STOP_TIMER(lsflag, slptime);
 		LOCKSTAT_EVENT_RA(lsflag, (void *)(uintptr_t)lkp,
 		    LB_LOCKMGR | LB_SLEEP1, 1, slptime, ra);
@@ -237,20 +245,26 @@ lockinit(struct lock *lkp, pri_t prio, const char *wmesg, int timo, int flags)
 
 	memset(lkp, 0, sizeof(struct lock));
 	lkp->lk_flags = flags & LK_EXTFLG_MASK;
-	simple_lock_init(&lkp->lk_interlock);
+	mutex_init(&lkp->lk_interlock, MUTEX_DEFAULT, IPL_NONE);
 	lkp->lk_lockholder = LK_NOPROC;
 	lkp->lk_prio = prio;
 	lkp->lk_timo = timo;
 	lkp->lk_wmesg = wmesg;
 	lkp->lk_lock_addr = 0;
 	lkp->lk_unlock_addr = 0;
+
+	if (LOCKDEBUG_ALLOC(lkp, &lockmgr_lockops,
+	    (uintptr_t)__builtin_return_address(0))) {
+		lkp->lk_flags |= LK_DODEBUG;
+	}
 }
 
 void
 lockdestroy(struct lock *lkp)
 {
 
-	/* nothing yet */
+	LOCKDEBUG_FREE(((lkp->lk_flags & LK_DODEBUG) != 0), lkp);
+	mutex_destroy(&lkp->lk_interlock);
 }
 
 /*
@@ -275,7 +289,7 @@ lockstatus(struct lock *lkp)
 		lid = l->l_lid;
 	}
 
-	simple_lock(&lkp->lk_interlock);
+	mutex_enter(&lkp->lk_interlock);
 	if (lkp->lk_exclusivecount != 0) {
 		if (WEHOLDIT(lkp, pid, lid, cpu_num))
 			lock_type = LK_EXCLUSIVE;
@@ -285,7 +299,7 @@ lockstatus(struct lock *lkp)
 		lock_type = LK_SHARED;
 	else if (lkp->lk_flags & LK_WANT_EXCL)
 		lock_type = LK_EXCLOTHER;
-	simple_unlock(&lkp->lk_interlock);
+	mutex_exit(&lkp->lk_interlock);
 	return (lock_type);
 }
 
@@ -312,7 +326,7 @@ lockstatus(struct lock *lkp)
  * accepted shared locks to go away.
  */
 int
-lockmgr(struct lock *lkp, u_int flags, struct simplelock *interlkp)
+lockmgr(struct lock *lkp, u_int flags, kmutex_t *interlkp)
 {
 	int error;
 	pid_t pid;
@@ -329,9 +343,9 @@ lockmgr(struct lock *lkp, u_int flags, struct simplelock *interlkp)
 	KASSERT((flags & LK_RETRY) == 0);
 	KASSERT((l->l_pflag & LP_INTR) == 0 || panicstr != NULL);
 
-	simple_lock(&lkp->lk_interlock);
+	mutex_enter(&lkp->lk_interlock);
 	if (flags & LK_INTERLOCK)
-		simple_unlock(interlkp);
+		mutex_exit(interlkp);
 	extflags = (flags | lkp->lk_flags) & LK_EXTFLG_MASK;
 
 	if (l == NULL) {
@@ -438,9 +452,6 @@ lockmgr(struct lock *lkp, u_int flags, struct simplelock *interlkp)
 					lockpanic(lkp, "lockmgr: locking against myself");
 			}
 			lkp->lk_exclusivecount++;
-			if (extflags & LK_SETRECURSE &&
-			    lkp->lk_recurselevel == 0)
-				lkp->lk_recurselevel = lkp->lk_exclusivecount;
 			COUNT(lkp, l, cpu_num, 1);
 			break;
 		}
@@ -479,8 +490,6 @@ lockmgr(struct lock *lkp, u_int flags, struct simplelock *interlkp)
 		if (lkp->lk_exclusivecount != 0)
 			lockpanic(lkp, "lockmgr: non-zero exclusive count");
 		lkp->lk_exclusivecount = 1;
-		if (extflags & LK_SETRECURSE)
-			lkp->lk_recurselevel = 1;
 		COUNT(lkp, l, cpu_num, 1);
 		break;
 
@@ -549,14 +558,11 @@ lockmgr(struct lock *lkp, u_int flags, struct simplelock *interlkp)
 		lkp->lk_lock_addr = RETURN_ADDRESS;
 #endif
 		lkp->lk_exclusivecount = 1;
-		/* XXX unlikely that we'd want this */
-		if (extflags & LK_SETRECURSE)
-			lkp->lk_recurselevel = 1;
 		COUNT(lkp, l, cpu_num, 1);
 		break;
 
 	default:
-		simple_unlock(&lkp->lk_interlock);
+		mutex_exit(&lkp->lk_interlock);
 		lockpanic(lkp, "lockmgr: unknown locktype request %d",
 		    flags & LK_TYPE_MASK);
 		/* NOTREACHED */
@@ -575,7 +581,7 @@ lockmgr(struct lock *lkp, u_int flags, struct simplelock *interlkp)
 	if (error && lock_shutdown_noblock)
 		lockpanic(lkp, "lockmgr: deadlock (see previous panic)");
 
-	simple_unlock(&lkp->lk_interlock);
+	mutex_exit(&lkp->lk_interlock);
 	return (error);
 }
 

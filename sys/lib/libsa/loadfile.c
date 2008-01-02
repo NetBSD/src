@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile.c,v 1.26 2007/11/24 13:20:55 isaki Exp $ */
+/* $NetBSD: loadfile.c,v 1.26.6.1 2008/01/02 21:56:29 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -95,10 +95,7 @@
  * Fill in marks
  */
 int
-loadfile(fname, marks, flags)
-	const char *fname;
-	u_long *marks;
-	int flags;
+loadfile(const char *fname, u_long *marks, int flags)
 {
 	int fd, error;
 
@@ -124,10 +121,7 @@ loadfile(fname, marks, flags)
  * Fill in marks.
  */
 int
-fdloadfile(fd, marks, flags)
-	int fd;
-	u_long *marks;
-	int flags;
+fdloadfile(int fd, u_long *marks, int flags)
 {
 	union {
 #ifdef BOOT_ECOFF

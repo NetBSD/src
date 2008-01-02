@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr.c,v 1.25 2007/10/19 12:00:23 ad Exp $	*/
+/*	$NetBSD: spkr.c,v 1.25.8.1 2008/01/02 21:54:28 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1990 Eric S. Raymond (esr@snark.thyrsus.com)
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.25 2007/10/19 12:00:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.25.8.1 2008/01/02 21:54:28 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -172,7 +172,7 @@ static const int pitchtab[] =
 /* 5 */ 2093, 2217, 2349, 2489, 2637, 2794, 2960, 3136, 3322, 3520, 3729, 3951,
 /* 6 */ 4186, 4435, 4698, 4978, 5274, 5588, 5920, 6272, 6644, 7040, 7459, 7902,
 };
-#define NOCTAVES (sizeof(pitchtab) / sizeof(pitchtab[0]) / OCTAVE_NOTES)
+#define NOCTAVES (__arraycount(pitchtab) / OCTAVE_NOTES)
 
 static void
 playinit()
@@ -420,6 +420,11 @@ spkrattach(struct device *parent, struct device *self,
 	printf("\n");
 	ppicookie = ((struct pcppi_attach_args *)aux)->pa_cookie;
 	spkr_attached = 1;
+        if (!device_pmf_is_registered(self))
+		if (!pmf_device_register(self, NULL, NULL))
+			aprint_error_dev(self,
+			    "couldn't establish power handler\n"); 
+
 }
 
 int

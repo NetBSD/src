@@ -1,4 +1,4 @@
-/*	$NetBSD: tlphy.c,v 1.52 2007/12/09 20:28:04 jmcneill Exp $	*/
+/*	$NetBSD: tlphy.c,v 1.52.2.1 2008/01/02 21:54:35 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tlphy.c,v 1.52 2007/12/09 20:28:04 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tlphy.c,v 1.52.2.1 2008/01/02 21:54:35 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -211,9 +211,6 @@ tlphy_service(struct mii_softc *self, struct mii_data *mii, int cmd)
 	struct tlphy_softc *sc = (struct tlphy_softc *) self;
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	int reg;
-
-	if (!device_is_active(&sc->sc_mii.mii_dev))
-		return (ENXIO);
 
 	if ((sc->sc_mii.mii_flags & MIIF_DOINGAUTO) == 0 && sc->sc_need_acomp)
 		tlphy_acomp(sc);

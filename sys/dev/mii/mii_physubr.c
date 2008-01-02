@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_physubr.c,v 1.54 2007/12/09 20:28:03 jmcneill Exp $	*/
+/*	$NetBSD: mii_physubr.c,v 1.54.2.1 2008/01/02 21:54:32 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.54 2007/12/09 20:28:03 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.54.2.1 2008/01/02 21:54:32 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -640,5 +640,5 @@ mii_phy_resume(device_t dv)
 	struct mii_softc *sc = device_private(dv);
 
 	PHY_RESET(sc);
-	return true;
+	return PHY_SERVICE(sc, sc->mii_pdata, MII_MEDIACHG) == 0;
 }

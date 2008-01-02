@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.15 2007/12/09 20:27:49 jmcneill Exp $	*/
+/*	$NetBSD: clock.c,v 1.15.2.1 2008/01/02 21:51:22 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -121,7 +121,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.15 2007/12/09 20:27:49 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.15.2.1 2008/01/02 21:51:22 bouyer Exp $");
 
 /* #define CLOCKDEBUG */
 /* #define CLOCK_PARANOIA */
@@ -475,11 +475,6 @@ i8254_delay(unsigned int n)
 {
 	unsigned int cur_tick, initial_tick;
 	int remaining;
-	static const int delaytab[26] = {
-		 0,  2,  3,  4,  5,  6,  7,  9, 10, 11,
-		12, 13, 15, 16, 17, 18, 19, 21, 22, 23,
-		24, 25, 27, 28, 29, 30,
-	};
 
 	/* allow DELAY() to be used before startrtclock() */
 	if (!rtclock_init)
@@ -491,9 +486,7 @@ i8254_delay(unsigned int n)
 	 */
 	initial_tick = gettick();
 
-	if (n <= 25)
-		remaining = delaytab[n];
-	else if (n <= UINT_MAX / TIMER_FREQ) {
+	if (n <= UINT_MAX / TIMER_FREQ) {
 		/*
 		 * For unsigned arithmetic, division can be replaced with
 		 * multiplication with the inverse and a shift.

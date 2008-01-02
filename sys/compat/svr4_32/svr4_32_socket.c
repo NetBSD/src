@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_socket.c,v 1.10 2007/12/08 18:36:28 dsl Exp $	*/
+/*	$NetBSD: svr4_32_socket.c,v 1.10.4.1 2008/01/02 21:53:35 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_socket.c,v 1.10 2007/12/08 18:36:28 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_socket.c,v 1.10.4.1 2008/01/02 21:53:35 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -178,10 +178,9 @@ svr4_32_add_socket(struct proc *p, const char *path, struct stat *st)
 #endif
 
 int
-svr4_32_sys_socket(struct lwp *l, void *v, register_t *retval)
+svr4_32_sys_socket(struct lwp *l, const struct svr4_32_sys_socket_args *uap, register_t *retval)
 {
-	struct svr4_32_sys_socket_args *uap = v;
-	struct compat_30_sys_socket_args uap0;
+	struct sys___socket30_args uap0;
 
 	/*
 	 * We need to use a separate args since native has a different

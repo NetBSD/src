@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.98 2007/11/26 19:58:30 garbled Exp $	*/
+/*	$NetBSD: machdep.c,v 1.98.6.1 2008/01/02 21:48:57 bouyer Exp $	*/
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.98 2007/11/26 19:58:30 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.98.6.1 2008/01/02 21:48:57 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -55,9 +55,11 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.98 2007/11/26 19:58:30 garbled Exp $")
 #include <machine/trap.h>
 #include <machine/bus.h>
 #include <machine/isa_machdep.h>
+#include <machine/spr.h>
 
 #include <powerpc/oea/bat.h>
 #include <powerpc/ofw_cons.h>
+#include <powerpc/rtas.h>
 
 #include "com.h"
 #if (NCOM > 0)
@@ -71,6 +73,9 @@ char bootpath[256];
 
 void ofwppc_batinit(void);
 void	ofppc_bootstrap_console(void);
+
+extern u_int l2cr_config;
+extern int machine_has_rtas;
 
 void
 initppc(u_int startkernel, u_int endkernel, char *args)
@@ -92,6 +97,9 @@ model_init(void)
 		char buf[32];
 		int i;
 
+		/* the pegasos doesn't bother to set the L2 cache up*/
+		l2cr_config = L2CR_L2PE;
+		
 		/* fix the device_type property of a graphics card */
 		for (qhandle = OF_peer(0); qhandle; qhandle = phandle) {
 			if (OF_getprop(qhandle, "name", buf, sizeof buf) > 0
@@ -167,19 +175,19 @@ consinit(void)
 void
 dumpsys(void)
 {
-	printf("dumpsys: TBD\n");
+	aprint_normal("dumpsys: TBD\n");
 }
 
 /*
  * Halt or reboot the machine after syncing/dumping according to howto.
  */
-void rtas_reboot(void);
 
 void
 cpu_reboot(int howto, char *what)
 {
 	static int syncing;
 	static char str[256];
+	int junk;
 	char *ap = str, *ap1 = ap;
 
 	boothowto = howto;
@@ -191,19 +199,25 @@ cpu_reboot(int howto, char *what)
 	splhigh();
 	if (howto & RB_HALT) {
 		doshutdownhooks();
-		printf("halted\n\n");
+		aprint_normal("halted\n\n");
+		if ((howto & 0x800) && machine_has_rtas &&
+		    rtas_has_func(RTAS_FUNC_POWER_OFF))
+			rtas_call(RTAS_FUNC_POWER_OFF, 2, 1, 0, 0, &junk);
 		ppc_exit();
 	}
 	if (!cold && (howto & RB_DUMP))
 		oea_dumpsys();
 	doshutdownhooks();
-	printf("rebooting\n\n");
+	aprint_normal("rebooting\n\n");
 
-	rtas_reboot();
+	if (machine_has_rtas && rtas_has_func(RTAS_FUNC_SYSTEM_REBOOT)) {
+		rtas_call(RTAS_FUNC_SYSTEM_REBOOT, 0, 1, &junk);
+		for(;;);
+	}
 
 	if (what && *what) {
 		if (strlen(what) > sizeof str - 5)
-			printf("boot string too large, ignored\n");
+			aprint_normal("boot string too large, ignored\n");
 		else {
 			strcpy(str, what);
 			ap1 = ap = str + strlen(str);

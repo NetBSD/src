@@ -1,4 +1,4 @@
-# $NetBSD: XEN2_DOM0,v 1.35 2007/12/07 10:13:22 xtraeme Exp $
+# $NetBSD: XEN2_DOM0,v 1.35.4.1 2008/01/02 21:48:11 bouyer Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -33,7 +33,6 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 options 	NTP		# NTP phase/frequency locked loop
 
 options 	KTRACE		# system call tracing via ktrace(1)
-#options 	SYSTRACE	# system call vetting via systrace(1)
 
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
@@ -749,6 +748,9 @@ pseudo-device	nsmb			# experimental - SMB requester
 # wscons pseudo-devices
 pseudo-device	wsmux			# mouse & keyboard multiplexor
 pseudo-device	wsfont
+
+# userland interface to drivers, including autoconf and properties retrieval
+pseudo-device   drvctl
 
 # xen pseudo-devices
 pseudo-device	xenevt

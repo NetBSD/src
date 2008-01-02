@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_unistd.c,v 1.9 2007/12/08 18:35:57 dsl Exp $ */
+/*	$NetBSD: darwin_unistd.c,v 1.9.4.1 2008/01/02 21:51:50 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_unistd.c,v 1.9 2007/12/08 18:35:57 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_unistd.c,v 1.9.4.1 2008/01/02 21:51:50 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,9 +55,8 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_unistd.c,v 1.9 2007/12/08 18:35:57 dsl Exp $"
 #include <compat/darwin/darwin_syscallargs.h>
 
 int
-darwin_sys_lseek(struct lwp *l, void *v, register_t *retval)
+darwin_sys_lseek(struct lwp *l, const struct darwin_sys_lseek_args *uap, register_t *retval)
 {
-	struct darwin_sys_lseek_args *uap = v;
 	struct sys_lseek_args cup;
 	union {
 		off_t o;

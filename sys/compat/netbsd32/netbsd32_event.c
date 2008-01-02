@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_event.c,v 1.3 2007/09/10 10:35:53 cube Exp $	*/
+/*	$NetBSD: netbsd32_event.c,v 1.3.12.1 2008/01/02 21:53:08 bouyer Exp $	*/
 
 /*
  *  Copyright (c) 2005 The NetBSD Foundation.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_event.c,v 1.3 2007/09/10 10:35:53 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_event.c,v 1.3.12.1 2008/01/02 21:53:08 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -95,16 +95,16 @@ netbsd32_kevent_put_events(void *private, struct kevent *events,
 }
 
 int
-netbsd32_kevent(struct lwp *l, void *v, register_t *retval)
+netbsd32_kevent(struct lwp *l, const struct netbsd32_kevent_args *uap, register_t *retval)
 {
-	struct netbsd32_kevent_args /* {
+	/* {
 		syscallarg(int) fd;
 		syscallarg(netbsd32_keventp_t) changelist;
 		syscallarg(netbsd32_size_t) nchanges;
 		syscallarg(netbsd32_keventp_t) eventlist;
 		syscallarg(netbsd32_size_t) nevents;
 		syscallarg(netbsd32_timespecp_t) timeout;
-	} */ *uap = v;
+	} */
 	int error;
 	size_t maxalloc, nchanges, nevents;
 	struct kevent_ops netbsd32_kevent_ops = {

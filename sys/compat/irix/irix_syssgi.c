@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_syssgi.c,v 1.45 2007/12/08 18:36:04 dsl Exp $ */
+/*	$NetBSD: irix_syssgi.c,v 1.45.4.1 2008/01/02 21:52:11 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.45 2007/12/08 18:36:04 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.45.4.1 2008/01/02 21:52:11 bouyer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -91,16 +91,16 @@ static int irix_syssgi_sysconf(int name, struct lwp *, register_t *);
 static int irix_syssgi_pathconf(char *, int, struct lwp *, register_t *);
 
 int
-irix_sys_syssgi(struct lwp *l, void *v, register_t *retval)
+irix_sys_syssgi(struct lwp *l, const struct irix_sys_syssgi_args *uap, register_t *retval)
 {
-	struct irix_sys_syssgi_args /* {
+	/* {
 		syscallarg(int) request;
 		syscallarg(void *) arg1;
 		syscallarg(void *) arg2;
 		syscallarg(void *) arg3;
 		syscallarg(void *) arg4;
 		syscallarg(void *) arg5;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 	int request = SCARG(uap, request);
 	void *arg1, *arg2, *arg3;

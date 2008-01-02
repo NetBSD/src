@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.14 2007/12/04 08:03:46 ad Exp $	*/
+/*	$NetBSD: spl.S,v 1.14.4.1 2008/01/02 21:47:02 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -251,7 +251,7 @@ IDTVEC(spllower)
 	leaq	1f(%rip),%r13		# address to resume loop at
 1:	movl	%ebx,%eax		# get cpl
 	movl	CPUVAR(IUNMASK)(,%rax,4),%eax
-	CLI(si,di)
+	CLI(si)
 	andl	CPUVAR(IPENDING),%eax		# any non-masked bits left?
 	jz	2f
 	bsrl	%eax,%eax
@@ -260,7 +260,7 @@ IDTVEC(spllower)
 	jmp	*IS_RECURSE(%rax)
 2:
 	movl	%ebx,CPUVAR(ILEVEL)
-	STI(si,di)
+	STI(si)
 	popq	%r12
 	popq	%r13
 	popq	%rbx
@@ -279,7 +279,7 @@ IDTVEC(doreti)
 	leaq	1f(%rip),%r13
 1:	movl	%ebx,%eax
 	movl	CPUVAR(IUNMASK)(,%rax,4),%eax
-	CLI(si,di)
+	CLI(si)
 	andl	CPUVAR(IPENDING),%eax
 	jz	2f
 	bsrl    %eax,%eax               # slow, but not worth optimizing
@@ -297,12 +297,12 @@ doreti_checkast:
 	CHECK_ASTPENDING(%r14)
 	je	3f
 	CLEAR_ASTPENDING(%r14)
-	STI(si,di)
+	STI(si)
 	movl	$T_ASTFLT,TF_TRAPNO(%rsp)	/* XXX undo later.. */
 	/* Pushed T_ASTFLT into tf_trapno on entry. */
 	movq	%rsp,%rdi
 	call	_C_LABEL(trap)
-	CLI(si,di)
+	CLI(si)
 	jmp	doreti_checkast
 3:
 	CHECK_DEFERRED_SWITCH
@@ -310,9 +310,9 @@ doreti_checkast:
 6:
 	INTRFASTEXIT
 9:
-	STI(si,di)
+	STI(si)
 	call	_C_LABEL(do_pmap_load)
-	CLI(si,di)
+	CLI(si)
 	jmp	doreti_checkast		/* recheck ASTs */
 
 #ifdef XEN

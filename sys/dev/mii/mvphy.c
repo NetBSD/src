@@ -1,4 +1,4 @@
-/*	$NetBSD: mvphy.c,v 1.4 2007/12/09 20:28:03 jmcneill Exp $	*/
+/*	$NetBSD: mvphy.c,v 1.4.2.1 2008/01/02 21:54:34 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2006 Sam Leffler, Errno Consulting
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvphy.c,v 1.4 2007/12/09 20:28:03 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvphy.c,v 1.4.2.1 2008/01/02 21:54:34 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -221,9 +221,6 @@ static int
 mvphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
-
-	if (!device_is_active(&sc->mii_dev))
-		return (ENXIO);
 
 	switch (cmd) {
 	case MII_POLLSTAT:

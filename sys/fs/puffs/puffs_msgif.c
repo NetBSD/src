@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.c,v 1.61 2007/12/05 12:11:56 pooka Exp $	*/
+/*	$NetBSD: puffs_msgif.c,v 1.61.4.1 2008/01/02 21:55:33 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.61 2007/12/05 12:11:56 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.61.4.1 2008/01/02 21:55:33 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -927,7 +927,7 @@ puffsop_flush(struct puffs_mount *pmp, struct puffs_flush *pf)
 			break;
 		}
 
-		simple_lock(&vp->v_uobj.vmobjlock);
+		mutex_enter(&vp->v_uobj.vmobjlock);
 		rv = VOP_PUTPAGES(vp, offlo, offhi, flags);
 		break;
 
@@ -1032,18 +1032,18 @@ puffs_msgif_close(void *this)
 	 * wait for syncer_mutex.  Otherwise the mointpoint can be
 	 * wiped out while we wait.
 	 */
-	simple_lock(&mp->mnt_slock);
+	mutex_enter(&mp->mnt_mutex);
 	mp->mnt_wcnt++;
-	simple_unlock(&mp->mnt_slock);
+	mutex_exit(&mp->mnt_mutex);
 
 	mutex_enter(&syncer_mutex);
 
-	simple_lock(&mp->mnt_slock);
+	mutex_enter(&mp->mnt_mutex);
 	mp->mnt_wcnt--;
 	if (mp->mnt_wcnt == 0)
 		wakeup(&mp->mnt_wcnt);
 	gone = mp->mnt_iflag & IMNT_GONE;
-	simple_unlock(&mp->mnt_slock);
+	mutex_exit(&mp->mnt_mutex);
 	if (gone) {
 		mutex_exit(&syncer_mutex);
 		return 0;

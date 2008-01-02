@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOMU,v 1.2 2007/11/22 16:16:43 bouyer Exp $
+# $NetBSD: XEN3_DOMU,v 1.2.12.1 2008/01/02 21:47:06 bouyer Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -28,7 +28,6 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 options 	NTP		# NTP phase/frequency locked loop
 
 options 	KTRACE		# system call tracing via ktrace(1)
-#options 	SYSTRACE	# system call vetting via systrace(1)
 
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores

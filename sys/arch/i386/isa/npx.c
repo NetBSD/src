@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.120 2007/12/09 20:27:47 jmcneill Exp $	*/
+/*	$NetBSD: npx.c,v 1.120.2.1 2008/01/02 21:48:23 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.120 2007/12/09 20:27:47 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.120.2.1 2008/01/02 21:48:23 bouyer Exp $");
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -265,8 +265,8 @@ npxprobe1(bus_space_tag_t iot, bus_space_handle_t ioh, int irq)
 
 	irqmask = i8259_setmask(irqmask);
 
+	idt_vec_reserve(NRSVIDT + irq);
 	idt[NRSVIDT + irq] = save_idt_npxintr;
-	idt_allocmap[NRSVIDT + irq] = 1;
 
 	idt[16] = save_idt_npxtrap;
 	x86_write_psl(save_eflags);

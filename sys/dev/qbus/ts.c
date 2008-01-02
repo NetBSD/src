@@ -1,4 +1,4 @@
-/*	$NetBSD: ts.c,v 1.21 2007/10/19 12:01:09 ad Exp $ */
+/*	$NetBSD: ts.c,v 1.21.8.1 2008/01/02 21:55:09 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ts.c,v 1.21 2007/10/19 12:01:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ts.c,v 1.21.8.1 2008/01/02 21:55:09 bouyer Exp $");
 
 #undef	TSDEBUG
 
@@ -321,7 +321,6 @@ void
 tscommand(struct ts_softc *sc, dev_t dev, int cmd, int count)
 {
 	struct buf *bp;
-	int s;
 
 #ifdef TSDEBUG
 	printf("tscommand (%x, %d)\n", cmd, count);
@@ -329,20 +328,19 @@ tscommand(struct ts_softc *sc, dev_t dev, int cmd, int count)
 
 	bp = &sc->ts_cbuf;
 
-	s = splbio();
-	while (bp->b_flags & B_BUSY) {
+	mutex_enter(&bufcache_lock);
+	while (bp->b_cflags & BC_BUSY) {
 		/*
-		 * This special check is because B_BUSY never
+		 * This special check is because BC_BUSY never
 		 * gets cleared in the non-waiting rewind case. ???
 		 */
-		if (bp->b_bcount == 0 && (bp->b_flags & B_DONE))
+		if (bp->b_bcount == 0 && (bp->b_oflags & BO_DONE))
 			break;
-		bp->b_flags |= B_WANTED;
-		(void) tsleep(bp, PRIBIO, "tscmd", 0);
+		(void )bbusy(bp, false, 0);
 		/* check MOT-flag !!! */
 	}
-	bp->b_flags = B_BUSY | B_READ;
-	splx(s);
+	bp->b_flags = B_READ;
+	mutex_exit(&bufcache_lock);
 
 	/*
 	 * Load the buffer.  The b_count field gets used to hold the command
@@ -354,6 +352,8 @@ tscommand(struct ts_softc *sc, dev_t dev, int cmd, int count)
 	bp->b_bcount = count;
 	bp->b_resid = cmd;
 	bp->b_blkno = 0;
+	bp->b_oflags = 0;
+	bp->b_objlock = &buffer_lock;
 	tsstrategy(bp);
 	/*
 	 * In case of rewind from close, don't wait.
@@ -362,9 +362,10 @@ tscommand(struct ts_softc *sc, dev_t dev, int cmd, int count)
 	if (count == 0)
 		return;
 	biowait(bp);
-	if (bp->b_flags & B_WANTED)
-		wakeup((void *)bp);
-	bp->b_flags = 0;
+	mutex_enter(&bufcache_lock);
+	cv_broadcast(&bp->b_busy);
+	bp->b_cflags = 0;
+	mutex_exit(&bufcache_lock);
 }
 
 /*

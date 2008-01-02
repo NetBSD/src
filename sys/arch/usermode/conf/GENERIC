@@ -1,0 +1,51 @@
+# $NetBSD: GENERIC,v 1.1.2.2 2008/01/02 21:50:40 bouyer Exp $
+
+include "arch/usermode/conf/std.usermode"
+
+#options 	INCLUDE_CONFIG_FILE
+#ident 		"GENERIC-$Revision: 1.1.2.2 $"
+maxusers 	32
+makeoptions	DEBUG="-g3"
+makeoptions	COPTS="-O2 -fno-omit-frame-pointer"
+
+#options 	MEMSIZE=65536	# amount of memory to allocate (in KB)
+options 	MEMSIZE=131072
+
+options 	RTC_OFFSET=0
+options 	KTRACE
+options 	USERCONF
+
+#options 	DEBUG
+#options 	DIAGNOSTIC
+#options 	LOCKDEBUG
+
+options		NKMEMPAGES=256
+
+#options 	DDB
+#options 	DDB_HISTORY_SIZE=512
+
+options 	COMPAT_BSDPTY
+
+file-system	FFS
+file-system	FDESC
+file-system	KERNFS
+file-system	TMPFS
+
+options 	INET
+options 	NFS_BOOT_DHCP
+options 	NFS_BOOT_BOOTPARAM
+
+config		netbsd	root on ? type ?
+
+mainbus0	at root
+cpu0		at mainbus?
+clock0		at mainbus?
+ttycons0	at mainbus?
+
+pseudo-device	loop
+pseudo-device	md	1
+
+options		MEMORY_DISK_HOOKS
+options		MEMORY_DISK_IS_ROOT
+options		MEMORY_DISK_SERVER=0
+options		MEMORY_DISK_ROOT_SIZE=10000

@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_thread.c,v 1.44 2007/12/08 18:36:16 dsl Exp $ */
+/*	$NetBSD: mach_thread.c,v 1.44.4.1 2008/01/02 21:52:59 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_thread.c,v 1.44 2007/12/08 18:36:16 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_thread.c,v 1.44.4.1 2008/01/02 21:52:59 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -62,14 +62,13 @@ __KERNEL_RCSID(0, "$NetBSD: mach_thread.c,v 1.44 2007/12/08 18:36:16 dsl Exp $")
 #include <compat/mach/mach_syscallargs.h>
 
 int
-mach_sys_syscall_thread_switch(struct lwp *l, void *v,
-    register_t *retval)
+mach_sys_syscall_thread_switch(struct lwp *l, const struct mach_sys_syscall_thread_switch_args *uap, register_t *retval)
 {
-	struct mach_sys_syscall_thread_switch_args /* {
+	/* {
 		syscallarg(mach_port_name_t) thread_name;
 		syscallarg(int) option;
 		syscallarg(mach_msg_timeout_t) option_time;
-	} */ *uap = v;
+	} */
 	int timeout;
 	struct mach_emuldata *med;
 
@@ -108,13 +107,11 @@ mach_sys_syscall_thread_switch(struct lwp *l, void *v,
 }
 
 int
-mach_sys_swtch_pri(struct lwp *l, void *v, register_t *retval)
+mach_sys_swtch_pri(struct lwp *l, const struct mach_sys_swtch_pri_args *uap, register_t *retval)
 {
-#if 0	/* pri is not used yet */
-	struct mach_sys_swtch_pri_args /* {
+	/* {
 		syscallarg(int) pri;
-	} */ *uap = v;
-#endif
+	} */
 
 	/*
 	 * Copied from preempt(9). We cannot just call preempt
@@ -131,7 +128,7 @@ mach_sys_swtch_pri(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-mach_sys_swtch(struct lwp *l, void *v, register_t *retval)
+mach_sys_swtch(struct lwp *l, const void *v, register_t *retval)
 {
 	struct mach_sys_swtch_pri_args cup;
 

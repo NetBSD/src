@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.58 2007/12/05 17:19:47 pooka Exp $	*/
+/*	$NetBSD: midi.c,v 1.58.4.1 2008/01/02 21:53:47 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.58 2007/12/05 17:19:47 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.58.4.1 2008/01/02 21:53:47 bouyer Exp $");
 
 #include "midi.h"
 #include "sequencer.h"
@@ -169,6 +169,10 @@ midiattach(struct device *parent, struct device *self, void *aux)
 	sc->hw_if = hwp;
 	sc->hw_hdl = hdlp;
 	midi_attach(sc, parent);
+        if (!device_pmf_is_registered(self))
+		if (!pmf_device_register(self, NULL, NULL))
+			aprint_error_dev(self,
+			    "couldn't establish power handler\n"); 
 }
 
 int
@@ -194,6 +198,8 @@ mididetach(struct device *self, int flags)
 	int maj, mn;
 
 	DPRINTFN(2,("midi_detach: sc=%p flags=%d\n", sc, flags));
+
+	pmf_device_deregister(self);
 
 	sc->dying = 1;
 

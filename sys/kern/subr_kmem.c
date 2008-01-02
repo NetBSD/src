@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kmem.c,v 1.17 2007/11/07 00:23:23 ad Exp $	*/
+/*	$NetBSD: subr_kmem.c,v 1.17.6.1 2008/01/02 21:56:08 bouyer Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.17 2007/11/07 00:23:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.17.6.1 2008/01/02 21:56:08 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/callback.h>
@@ -102,7 +102,7 @@ kmem_alloc(size_t size, km_flag_t kmflags)
 	p = (void *)vmem_alloc(kmem_arena, size,
 	    kmf_to_vmf(kmflags) | VM_INSTANTFIT);
 	if (p != NULL) {
-		kmem_poison_check(p, size);
+		kmem_poison_check(p, kmem_roundup_size(size));
 		FREECHECK_OUT(&kmem_freecheck, p);
 	}
 	return p;
@@ -138,6 +138,7 @@ kmem_free(void *p, size_t size)
 
 	FREECHECK_IN(&kmem_freecheck, p);
 	LOCKDEBUG_MEM_CHECK(p, size);
+	kmem_poison_check((char *)p + size, kmem_roundup_size(size) - size);
 	kmem_poison_fill(p, size);
 	vmem_free(kmem_arena, (vmem_addr_t)p, size);
 }

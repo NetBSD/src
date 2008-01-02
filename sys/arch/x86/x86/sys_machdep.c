@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.7 2007/11/22 16:17:13 bouyer Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.7.6.1 2008/01/02 21:51:26 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.7 2007/11/22 16:17:13 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.7.6.1 2008/01/02 21:51:26 bouyer Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_mtrr.h"
@@ -669,12 +669,12 @@ x86_get_sdbase(void *arg, char which)
 }
 
 int
-sys_sysarch(struct lwp *l, void *v, register_t *retval)
+sys_sysarch(struct lwp *l, const struct sys_sysarch_args *uap, register_t *retval)
 {
-	struct sys_sysarch_args /* {
+	/* {
 		syscallarg(int) op;
 		syscallarg(void *) parms;
-	} */ *uap = v;
+	} */
 	int error = 0;
 
 	switch(SCARG(uap, op)) {

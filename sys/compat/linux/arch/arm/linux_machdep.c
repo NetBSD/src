@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.23 2007/12/08 18:36:05 dsl Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.23.4.1 2008/01/02 21:52:17 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.23 2007/12/08 18:36:05 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.23.4.1 2008/01/02 21:52:17 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -200,7 +200,8 @@ linux_sys_rt_sigreturn(struct proc *p, void *v, register_t *retval)
 #endif
 
 int
-linux_sys_sigreturn(struct lwp *l, void *v, register_t *retval)
+linux_sys_sigreturn(struct lwp *l, const struct linux_sys_sigreturn_args *v,
+	register_t *retval)
 {
 	struct linux_sigframe *sfp, frame;
 	struct proc *p = l->l_proc;
@@ -274,13 +275,13 @@ linux_fakedev(dev_t dev, int raw)
  * We come here in a last attempt to satisfy a Linux ioctl() call
  */
 int
-linux_machdepioctl(struct lwp *l, void *v, register_t *retval)
+linux_machdepioctl(struct lwp *l, const struct linux_sys_ioctl_args *uap, register_t *retval)
 {
-	struct linux_sys_ioctl_args /* {
+	/* {
 		syscallarg(int) fd;
 		syscallarg(u_long) com;
 		syscallarg(void *) data;
-	} */ *uap = v;
+	} */
 	struct sys_ioctl_args bia;
 	u_long com;
 

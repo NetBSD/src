@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.111 2007/11/07 00:19:08 ad Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.111.6.1 2008/01/02 21:56:10 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.111 2007/11/07 00:19:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.111.6.1 2008/01/02 21:56:10 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
@@ -145,19 +145,6 @@ const char HEXDIGITS[] = "0123456789ABCDEF";
 /*
  * functions
  */
-
-/*
- * tablefull: warn that a system table is full
- */
-
-void
-tablefull(const char *tab, const char *hint)
-{
-	if (hint)
-		log(LOG_ERR, "%s: table is full - %s\n", tab, hint);
-	else
-		log(LOG_ERR, "%s: table is full\n", tab);
-}
 
 /*
  * twiddle: spin a little propellor on the console.

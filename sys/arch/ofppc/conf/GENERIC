@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.106 2007/11/06 19:22:59 garbled Exp $
+# $NetBSD: GENERIC,v 1.106.6.1 2008/01/02 21:48:56 bouyer Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/ofppc/conf/std.ofppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.106 $"
+#ident 		"GENERIC-$Revision: 1.106.6.1 $"
 
 maxusers	32
 
@@ -37,7 +37,6 @@ options 	FIRMWORKSBUGS
 #options 	INSECURE	# disable kernel security checks
 #options 	NTP		# NTP phase/frequency locked loop
 options 	KTRACE		# system call tracing via ktrace(1)
-#options 	SYSTRACE	# system call vetting via systrace(1)
 
 options 	SYSVMSG		# System V message queues
 options 	SYSVSEM		# System V semaphores
@@ -53,7 +52,7 @@ options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 # Diagnostic/debugging support options
 #options 	DIAGNOSTIC	# cheap kernel consistency checks
 #options 	DEBUG		# expensive debugging checks/support
-#options	KMEMSTATS	# kernel memory statistics (vmstat -m)
+#options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 options 	DDB		# in-kernel debugger
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 options		DDB_VERBOSE_HELP
@@ -72,6 +71,7 @@ options 	COMPAT_15	# NetBSD 1.5,
 options 	COMPAT_16	# NetBSD 1.6,
 options 	COMPAT_20	# NetBSD 2.0,
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
+options 	COMPAT_40	# NetBSD 4.0 compatibility.
 options 	COMPAT_43	# and 4.3BSD
 options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 #options 	COMPAT_LINUX	# Linux binary compatibility
@@ -160,7 +160,8 @@ options		WS_DEFAULT_FG=WSCOL_BLACK
 options		WS_DEFAULT_BG=WSCOL_LIGHT_WHITE
 options		WS_KERNEL_FG=WSCOL_GREEN
 options		WS_KERNEL_BG=WSCOL_LIGHT_WHITE
-options		FONT_GALLANT12x22
+#options		FONT_GALLANT12x22
+options		FONT_BOLD8x16
 
 # Kernel root file system and dump configuration
 config		netbsd	root on ? type ?
@@ -268,6 +269,7 @@ ex*	at pci? dev ? function ?	# 3Com 3c90x[BC]
 fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
 pcn*	at pci? dev ? function ?	# AMD PCnet-PCI Ethernet
+re*	at pci? dev ? function ?	# Realtek 8139C+/8169/8169S/8110S
 rtk*	at pci? dev ? function ?	# Realtek 8129/8139
 sip*	at pci? dev ? function ?	# SiS 900/DP83815 Ethernet
 tlp*	at pci? dev ? function ?	# DECchip 21x4x and clones
@@ -303,13 +305,82 @@ tqphy*	at mii? phy ?			# TDK Semiconductor PHYs
 ukphy*	at mii? phy ?			# generic unknown PHYs
 urlphy* at mii? phy ?			# Realtek RTL8150L internal PHYs
 
+# PCI USB controllers
+uhci*	at pci? dev ? function ?	# USB Universal Host Controller
+ohci*	at pci? dev ? function ?	# USB Open Host Controller
+ehci*	at pci? dev ? function ?	# USB Enhanced Host Controller
+
+usb*	at uhci?			# USB bus support
+usb*	at ohci?			# USB bus support
+usb*	at ehci?			# USB bus support
+uhub*	at usb?				# USB Hubs
+uhub*	at uhub? port ?
+
+# USB Mass Storage
+umass*	at uhub? port ? configuration ? interface ?
+wd*	at umass?
+
+uhidev*	at uhub? port ? configuration ? interface ?	# USB HID device
+
+ums*	at uhidev? reportid ?				# USB Mice
+wsmouse* at ums? mux 0
+
+ukbd*	at uhidev? reportid ?				# USB Keyboards
+wskbd*	at ukbd? console ? mux 1
+
+ucycom*	at uhidev? reportid ?				# USB serial adapter
+uhid*	at uhidev? reportid ?				# USB Generic HID
+ulpt*	at uhub? port ? configuration ? interface ?	# USB Printer
+umodem*	at uhub? port ? configuration ?			# USB Modem
+ucom*	at umodem?
+#uaudio*	at uhub? port ? configuration ?			# USB audio
+
+# D-Link DSB-R100 USB FM radio tuner
+#udsbr* at uhub? port ?
+#radio* at udsbr?
+
+# USB Ethernet adapters
+#aue*	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
+#axe*	at uhub? port ?		# ASIX AX88172 based adapters
+#cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
+#kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
+#url*	at uhub? port ?		# Realtek RTL8150L based adapters
+#udav*	at uhub? port ?		# Davicom DM9601 based adapters
+
+#ukyopon* at uhub? port ?				# Kyocera AIR-EDGE PHONE
+#ucom*	at ukyopon? portno ?
+
+#uscanner* at uhub? port ?				# USB scanners
+#uyap* at uhub? port ?					# Y@P firmware loader
+ugen*	at uhub? port ? configuration ? interface ?	# USB Generic driver
+
+# USB 802.11 adapters
+#atu*	at uhub? port ?		# Atmel at76c50x 802.11b
+#ral*	at uhub? port ?		# Ralink Technology RT25x0 802.11a/b/g
+#zyd*	at uhub? port ?		# Zydas ZD1211
+
+# PCI IEEE1394 controllers
+fwohci*	at pci? dev ? function ?	# IEEE1394 Open Host Controller
+
+ieee1394if* at fwohci?
+fwip*	at ieee1394if?			# IP over IEEE1394
+sbp*	at ieee1394if? euihi ? euilo ?
+
+# Audio Devices
+
+# PCI audio devices
+auvia*  at pci? dev ? function ?	# VIA VT82C686A integrated AC'97 Audio
+
+# Audio support
+audio*	at audiobus?
+
 
 pseudo-device	vnd			# disk-like interface to files
 #options 	VND_COMPRESSION		# compressed vnd(4)
 pseudo-device	ccd		4	# concatenated/striped disk devices
 #pseudo-device	cgd		4	# cryptographic disk devices
-#pseudo-device	raid		8	# RAIDframe disk driver
-#options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
+pseudo-device	raid		8	# RAIDframe disk driver
+options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # Options to enable various other RAIDframe RAID types.
 # options	RF_INCLUDE_EVENODD=1
 # options	RF_INCLUDE_RAID5_RS=1
@@ -342,6 +413,7 @@ pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	openfirm		# /dev/openfirm
 pseudo-device	ksyms			# /dev/ksyms
+pseudo-device	wsmux			# mouse and keyboard multiplexor
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
 

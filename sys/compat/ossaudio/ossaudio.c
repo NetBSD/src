@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.60 2007/12/08 18:36:22 dsl Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.60.4.1 2008/01/02 21:53:20 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ossaudio.c,v 1.60 2007/12/08 18:36:22 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ossaudio.c,v 1.60.4.1 2008/01/02 21:53:20 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -72,15 +72,13 @@ static void setblocksize(struct file *, struct audio_info *, struct lwp *);
 
 
 int
-oss_ioctl_audio(l, uap, retval)
-	struct lwp *l;
-	struct oss_sys_ioctl_args /* {
+oss_ioctl_audio(struct lwp *l, const struct oss_sys_ioctl_args *uap, register_t *retval)
+{
+	/* {
 		syscallarg(int) fd;
 		syscallarg(u_long) com;
 		syscallarg(void *) data;
-	} */ *uap;
-	register_t *retval;
-{
+	} */
 	struct proc *p = l->l_proc;
 	struct file *fp;
 	struct filedesc *fdp;
@@ -732,15 +730,13 @@ getdevinfo(struct file *fp, struct lwp *l)
 }
 
 int
-oss_ioctl_mixer(lwp, uap, retval)
-	struct lwp *lwp;
-	struct oss_sys_ioctl_args /* {
+oss_ioctl_mixer(struct lwp *lwp, const struct oss_sys_ioctl_args *uap, register_t *retval)
+{
+	/* {
 		syscallarg(int) fd;
 		syscallarg(u_long) com;
 		syscallarg(void *) data;
-	} */ *uap;
-	register_t *retval;
-{
+	} */
 	struct proc *p = lwp->l_proc;
 	struct file *fp;
 	struct filedesc *fdp;
@@ -940,15 +936,13 @@ oss_ioctl_mixer(lwp, uap, retval)
 
 /* Sequencer emulation */
 int
-oss_ioctl_sequencer(l, uap, retval)
-	struct lwp *l;
-	struct oss_sys_ioctl_args /* {
+oss_ioctl_sequencer(struct lwp *l, const struct oss_sys_ioctl_args *uap, register_t *retval)
+{
+	/* {
 		syscallarg(int) fd;
 		syscallarg(u_long) com;
 		syscallarg(void *) data;
-	} */ *uap;
-	register_t *retval;
-{
+	} */
 	struct proc *p = l->l_proc;
 	struct file *fp;
 	struct filedesc *fdp;

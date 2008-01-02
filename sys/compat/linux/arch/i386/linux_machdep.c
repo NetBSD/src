@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.132 2007/12/08 18:36:05 dsl Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.132.4.1 2008/01/02 21:52:19 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.132 2007/12/08 18:36:05 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.132.4.1 2008/01/02 21:52:19 bouyer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -437,11 +437,11 @@ linux_old_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
  * a machine fault.
  */
 int
-linux_sys_rt_sigreturn(struct lwp *l, void *v, register_t *retval)
+linux_sys_rt_sigreturn(struct lwp *l, const struct linux_sys_rt_sigreturn_args *uap, register_t *retval)
 {
-	struct linux_sys_rt_sigreturn_args /* {
+	/* {
 		syscallarg(struct linux_ucontext *) ucp;
-	} */ *uap = v;
+	} */
 	struct linux_ucontext context, *ucp = SCARG(uap, ucp);
 	int error;
 
@@ -458,11 +458,11 @@ linux_sys_rt_sigreturn(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-linux_sys_sigreturn(struct lwp *l, void *v, register_t *retval)
+linux_sys_sigreturn(struct lwp *l, const struct linux_sys_sigreturn_args *uap, register_t *retval)
 {
-	struct linux_sys_sigreturn_args /* {
+	/* {
 		syscallarg(struct linux_sigcontext *) scp;
-	} */ *uap = v;
+	} */
 	struct linux_sigcontext context, *scp = SCARG(uap, scp);
 	int error;
 
@@ -558,7 +558,7 @@ linux_restore_sigcontext(struct lwp *l, struct linux_sigcontext *scp,
 #ifdef USER_LDT
 
 static int
-linux_read_ldt(struct lwp *l, struct linux_sys_modify_ldt_args *uap,
+linux_read_ldt(struct lwp *l, const struct linux_sys_modify_ldt_args *uap,
     register_t *retval)
 {
 	struct x86_get_ldt_args gl;
@@ -612,7 +612,7 @@ struct linux_ldt_info {
 };
 
 static int
-linux_write_ldt(struct lwp *l, struct linux_sys_modify_ldt_args *uap,
+linux_write_ldt(struct lwp *l, const struct linux_sys_modify_ldt_args *uap,
     int oldmode)
 {
 	struct linux_ldt_info ldt_info;
@@ -670,29 +670,28 @@ linux_write_ldt(struct lwp *l, struct linux_sys_modify_ldt_args *uap,
 #endif /* USER_LDT */
 
 int
-linux_sys_modify_ldt(struct lwp *l, void *v,
-    register_t *retval)
+linux_sys_modify_ldt(struct lwp *l, const struct linux_sys_modify_ldt_args *uap, register_t *retval)
 {
-	struct linux_sys_modify_ldt_args /* {
+	/* {
 		syscallarg(int) func;
 		syscallarg(void *) ptr;
 		syscallarg(size_t) bytecount;
-	} */ *uap = v;
+	} */
 
 	switch (SCARG(uap, func)) {
 #ifdef USER_LDT
 	case 0:
-		return linux_read_ldt(l, uap, retval);
+		return linux_read_ldt(l, (const void *)uap, retval);
 	case 1:
-		return linux_write_ldt(l, uap, 1);
+		return linux_write_ldt(l, (const void *)uap, 1);
 	case 2:
 #ifdef notyet
-		return (linux_read_default_ldt(l, uap, retval);
+		return (linux_read_default_ldt(l, (const void *)uap, retval);
 #else
 		return (ENOSYS);
 #endif
 	case 0x11:
-		return linux_write_ldt(l, uap, 0);
+		return linux_write_ldt(l, (const void *)uap, 0);
 #endif /* USER_LDT */
 
 	default:
@@ -845,13 +844,13 @@ fd2biosinfo(struct proc *p, struct file *fp)
  * We come here in a last attempt to satisfy a Linux ioctl() call
  */
 int
-linux_machdepioctl(struct lwp *l, void *v, register_t *retval)
+linux_machdepioctl(struct lwp *l, const struct linux_sys_ioctl_args *uap, register_t *retval)
 {
-	struct linux_sys_ioctl_args /* {
+	/* {
 		syscallarg(int) fd;
 		syscallarg(u_long) com;
 		syscallarg(void *) data;
-	} */ *uap = v;
+	} */
 	struct sys_ioctl_args bia;
 	u_long com;
 	int error, error1;
@@ -1075,13 +1074,11 @@ out:
  * to rely on I/O permission maps, which are not implemented.
  */
 int
-linux_sys_iopl(struct lwp *l, void *v, register_t *retval)
+linux_sys_iopl(struct lwp *l, const struct linux_sys_iopl_args *uap, register_t *retval)
 {
-#if 0
-	struct linux_sys_iopl_args /* {
+	/* {
 		syscallarg(int) level;
-	} */ *uap = v;
-#endif
+	} */
 	struct trapframe *fp = l->l_md.md_regs;
 
 	if (kauth_authorize_machdep(l->l_cred, KAUTH_MACHDEP_IOPL,
@@ -1097,13 +1094,13 @@ linux_sys_iopl(struct lwp *l, void *v, register_t *retval)
  * just let it have the whole range.
  */
 int
-linux_sys_ioperm(struct lwp *l, void *v, register_t *retval)
+linux_sys_ioperm(struct lwp *l, const struct linux_sys_ioperm_args *uap, register_t *retval)
 {
-	struct linux_sys_ioperm_args /* {
+	/* {
 		syscallarg(unsigned int) lo;
 		syscallarg(unsigned int) hi;
 		syscallarg(int) val;
-	} */ *uap = v;
+	} */
 	struct trapframe *fp = l->l_md.md_regs;
 
 	if (kauth_authorize_machdep(l->l_cred, SCARG(uap, val) ?

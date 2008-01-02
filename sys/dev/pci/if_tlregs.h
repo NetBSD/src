@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlregs.h,v 1.8 2005/12/11 12:22:50 christos Exp $	*/
+/*	$NetBSD: if_tlregs.h,v 1.8.60.1 2008/01/02 21:54:47 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -154,14 +154,14 @@
 struct tl_data_seg {
 	u_int32_t data_count;
 	u_int32_t data_addr;
-} __attribute__((packed));
+} __packed;
 
 /* Receive list (one_frag = 1) */
 struct tl_Rx_list {
 	u_int32_t fwd;
 	u_int32_t stat;
 	struct tl_data_seg seg;
-}__attribute__((packed));
+}__packed;
 
 #define TL_RX_CSTAT_CPLT	0x4000 /* Frame complete */
 #define TL_RX_CSTAT_EOC		0x0800 /* Rx EOC */
@@ -174,7 +174,7 @@ struct tl_Tx_list {
 	u_int32_t fwd;
 	u_int32_t stat;
 	struct tl_data_seg seg[TL_NSEG];
-}__attribute__((packed));
+}__packed;
 
 #define TL_TX_CSTAT_CPLT	0x4000 /* Frame complete */
 #define TL_TX_CSTAT_EOC		0x0800 /* Tx EOC */

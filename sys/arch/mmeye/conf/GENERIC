@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.90 2007/11/04 14:34:23 xtraeme Exp $
+# $NetBSD: GENERIC,v 1.90.8.1 2008/01/02 21:48:44 bouyer Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/mmeye/conf/std.mmeye"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.90 $"
+#ident 		"GENERIC-$Revision: 1.90.8.1 $"
 
 maxusers	16		# estimated number of users
 
@@ -41,7 +41,6 @@ options 	INITTODR_ALWAYS_USE_RTC
 options 	HZ=50		# clock interrupt generates every 1/HZ sec
 options 	NTP		# NTP phase/frequency locked loop
 options 	KTRACE		# system call tracing via ktrace(1)
-#options 	SYSTRACE	# system call vetting via systrace(1)
 
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores

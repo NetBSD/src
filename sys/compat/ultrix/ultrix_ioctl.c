@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_ioctl.c,v 1.31 2007/06/01 11:36:35 he Exp $ */
+/*	$NetBSD: ultrix_ioctl.c,v 1.31.20.1 2008/01/02 21:53:38 bouyer Exp $ */
 /*	from : NetBSD: sunos_ioctl.c,v 1.21 1995/10/07 06:27:31 mycroft Exp */
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_ioctl.c,v 1.31 2007/06/01 11:36:35 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_ioctl.c,v 1.31.20.1 2008/01/02 21:53:38 bouyer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_ultrix.h"
@@ -274,6 +274,7 @@ static void
 btios2stios(struct termios *bt, struct emul_termios *st)
 {
 	u_long l, r;
+	int speed;
 
 	l = bt->c_iflag;
 	r = 	((l &  IGNBRK) ? 0x00000001	: 0);
@@ -364,9 +365,9 @@ btios2stios(struct termios *bt, struct emul_termios *st)
 	r |=	((l &  PENDIN) ? 0x00004000	: 0);
 	st->c_lflag = r;
 
-	l = ttspeedtab(bt->c_ospeed, sptab);
-	if (l >= 0)
-		st->c_cflag |= l;
+	speed = ttspeedtab(bt->c_ospeed, sptab);
+	if (speed != -1)
+	    st->c_cflag |= speed;
 
 	st->c_cc[0] = NATIVE_TO_EMUL_CC(bt->c_cc[VINTR]);
 	st->c_cc[1] = NATIVE_TO_EMUL_CC(bt->c_cc[VQUIT]);
@@ -441,13 +442,13 @@ stio2stios(struct emul_termio *t, struct emul_termios *ts)
 }
 
 int
-ultrix_sys_ioctl(struct lwp *l, void *v, register_t *retval)
+ultrix_sys_ioctl(struct lwp *l, const struct ultrix_sys_ioctl_args *uap, register_t *retval)
 {
-	struct ultrix_sys_ioctl_args *uap = v;
 	struct proc *p = l->l_proc;
 	struct filedesc *fdp = p->p_fd;
 	struct file *fp;
 	int (*ctl)(struct file *, u_long, void *, struct lwp *);
+	struct sys_ioctl_args ap;
 	int error;
 
 	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
@@ -458,15 +459,18 @@ ultrix_sys_ioctl(struct lwp *l, void *v, register_t *retval)
 
 	ctl = fp->f_ops->fo_ioctl;
 
-	switch (SCARG(uap, com)) {
+	SCARG(&ap, fd) = SCARG(uap, fd);
+	SCARG(&ap, data) = SCARG(uap, data);
+	SCARG(&ap, com) = SCARG(uap, com);
+	switch (SCARG(&ap, com)) {
 	case _IOR('t', 0, int):
-		SCARG(uap, com) = TIOCGETD;
+		SCARG(&ap, com) = TIOCGETD;
 		break;
 	case _IOW('t', 1, int):
 	    {
 		int disc;
 
-		if ((error = copyin(SCARG(uap, data), &disc, sizeof disc)) != 0)
+		if ((error = copyin(SCARG(&ap, data), &disc, sizeof disc)) != 0)
 			return error;
 
 		/* map SunOS NTTYDISC into our termios discipline */
@@ -482,13 +486,13 @@ ultrix_sys_ioctl(struct lwp *l, void *v, register_t *retval)
 	    {
 		int x;	/* unused */
 
-		return copyin(&x, SCARG(uap, data), sizeof x);
+		return copyin(&x, SCARG(&ap, data), sizeof x);
 	    }
 	case _IOR('t', 100, int):	/* sun SUNOS_TIOCSSOFTCAR */
 	    {
 		int x = 0;
 
-		return copyout(&x, SCARG(uap, data), sizeof x);
+		return copyout(&x, SCARG(&ap, data), sizeof x);
 	    }
 	case _IO('t', 36): 		/* sun TIOCCONS, no parameters */
 	    {
@@ -501,9 +505,9 @@ ultrix_sys_ioctl(struct lwp *l, void *v, register_t *retval)
 		struct sunos_ttysize ss;
 
 		if ((error = (*ctl)(fp, TIOCGWINSZ, &ws, l)) != 0)
-			return (error);
+			return error;
 
-		if ((error = copyin(SCARG(uap, data), &ss, sizeof (ss))) != 0)
+		if ((error = copyin(SCARG(&ap, data), &ss, sizeof (ss))) != 0)
 			return error;
 
 		ws.ws_row = ss.ts_row;
@@ -517,18 +521,18 @@ ultrix_sys_ioctl(struct lwp *l, void *v, register_t *retval)
 		struct sunos_ttysize ss;
 
 		if ((error = (*ctl)(fp, TIOCGWINSZ, &ws, l)) != 0)
-			return (error);
+			return error;
 
 		ss.ts_row = ws.ws_row;
 		ss.ts_col = ws.ws_col;
 
-		return copyout (&ss, SCARG(uap, data), sizeof (ss));
+		return copyout (&ss, SCARG(&ap, data), sizeof (ss));
 	    }
 	case _IOW('t', 118, int):
-		SCARG(uap, com) = TIOCSPGRP;
+		SCARG(&ap, com) = TIOCSPGRP;
 		break;
 	case _IOR('t', 119, int):
-		SCARG(uap, com) = TIOCGPGRP;
+		SCARG(&ap, com) = TIOCGPGRP;
 		break;
 
 	/* Emulate termio or termios tcget() */
@@ -543,11 +547,11 @@ ultrix_sys_ioctl(struct lwp *l, void *v, register_t *retval)
 			return error;
 
 		btios2stios (&bts, &sts);
-		if (SCARG(uap, com) == ULTRIX_TCGETA) {
+		if (SCARG(&ap, com) == ULTRIX_TCGETA) {
 			stios2stio (&sts, &st);
-			return copyout(&st, SCARG(uap, data), sizeof (st));
+			return copyout(&st, SCARG(&ap, data), sizeof (st));
 		} else
-			return copyout(&sts, SCARG(uap, data), sizeof (sts));
+			return copyout(&sts, SCARG(&ap, data), sizeof (sts));
 		/*NOTREACHED*/
 	    }
 	/* Emulate termio tcset() */
@@ -560,7 +564,7 @@ ultrix_sys_ioctl(struct lwp *l, void *v, register_t *retval)
 		struct ultrix_termio st;
 		int result;
 
-		if ((error = copyin(SCARG(uap, data), &st, sizeof (st))) != 0)
+		if ((error = copyin(SCARG(&ap, data), &st, sizeof (st))) != 0)
 			return error;
 
 		/* get full BSD termios so we don't lose information */
@@ -579,13 +583,13 @@ ultrix_sys_ioctl(struct lwp *l, void *v, register_t *retval)
 		 * map ioctl code: ultrix tcsets are numbered in reverse order
 		 */
 #ifdef notyet
-		return (*ctl)(fp, ULTRIX_TCSETA - SCARG(uap, com) + TIOCSETA,
+		return (*ctl)(fp, ULTRIX_TCSETA - SCARG(&ap, com) + TIOCSETA,
 		    &bts, l);
 #else
-		result= (*ctl)(fp, ULTRIX_TCSETA -  SCARG(uap, com) + TIOCSETA,
+		result= (*ctl)(fp, ULTRIX_TCSETA -  SCARG(&ap, com) + TIOCSETA,
 		    &bts, l);
 		printf("ultrix TCSETA %lx returns %d\n",
-		    ULTRIX_TCSETA - SCARG(uap, com), result);
+		    ULTRIX_TCSETA - SCARG(&ap, com), result);
 		return result;
 #endif
 
@@ -598,10 +602,10 @@ ultrix_sys_ioctl(struct lwp *l, void *v, register_t *retval)
 		struct termios bts;
 		struct ultrix_termios sts;
 
-		if ((error = copyin(SCARG(uap, data), &sts, sizeof (sts))) != 0)
+		if ((error = copyin(SCARG(&ap, data), &sts, sizeof (sts))) != 0)
 			return error;
 		stios2btios (&sts, &bts);
-		return (*ctl)(fp, ULTRIX_TCSETS - SCARG(uap, com) + TIOCSETA,
+		return (*ctl)(fp, ULTRIX_TCSETS - SCARG(&ap, com) + TIOCSETA,
 		    &bts, l);
 	    }
 /*
@@ -610,7 +614,7 @@ ultrix_sys_ioctl(struct lwp *l, void *v, register_t *retval)
 	case _IOW('t', 32, int): {	/* TIOCTCNTL */
 		int on;
 
-		error = copyin(SCARG(uap, data), &on, sizeof (on));
+		error = copyin(SCARG(&ap, data), &on, sizeof (on));
 		if (error != 0)
 			return error;
 		return (*ctl)(fp, TIOCUCNTL, &on, l);
@@ -618,7 +622,7 @@ ultrix_sys_ioctl(struct lwp *l, void *v, register_t *retval)
 	case _IOW('t', 33, int): {	/* TIOCSIGNAL */
 		int sig;
 
-		error = copyin(SCARG(uap, data), &sig, sizeof (sig));
+		error = copyin(SCARG(&ap, data), &sig, sizeof (sig));
 		if (error != 0)
 			return error;
 		return (*ctl)(fp, TIOCSIG, &sig, l);
@@ -629,7 +633,7 @@ ultrix_sys_ioctl(struct lwp *l, void *v, register_t *retval)
  */
 #define IN_TYPE(a, type_t) { \
 	type_t localbuf; \
-	if ((error = copyin(SCARG(uap, data), \
+	if ((error = copyin(SCARG(&ap, data), \
 				&localbuf, sizeof (type_t))) != 0) \
 		return error; \
 	return (*ctl)(fp, a, &localbuf, l); \
@@ -637,29 +641,29 @@ ultrix_sys_ioctl(struct lwp *l, void *v, register_t *retval)
 
 #define INOUT_TYPE(a, type_t) { \
 	type_t localbuf; \
-	if ((error = copyin(SCARG(uap, data), &localbuf,	\
+	if ((error = copyin(SCARG(&ap, data), &localbuf,	\
 			     sizeof (type_t))) != 0) \
 		return error; \
 	if ((error = (*ctl)(fp, a, &localbuf, l)) != 0) \
 		return error; \
-	return copyout(&localbuf, SCARG(uap, data), sizeof (type_t)); \
+	return copyout(&localbuf, SCARG(&ap, data), sizeof (type_t)); \
 }
 
 
 #define IFREQ_IN(a) { \
 	struct oifreq ifreq; \
-	if ((error = copyin(SCARG(uap, data), &ifreq, sizeof (ifreq))) != 0) \
+	if ((error = copyin(SCARG(&ap, data), &ifreq, sizeof (ifreq))) != 0) \
 		return error; \
 	return (*ctl)(fp, a, &ifreq, l); \
 }
 
 #define IFREQ_INOUT(a) { \
 	struct oifreq ifreq; \
-	if ((error = copyin(SCARG(uap, data), &ifreq, sizeof (ifreq))) != 0) \
+	if ((error = copyin(SCARG(&ap, data), &ifreq, sizeof (ifreq))) != 0) \
 		return error; \
 	if ((error = (*ctl)(fp, a, &ifreq, l)) != 0) \
 		return error; \
-	return copyout(&ifreq, SCARG(uap, data), sizeof (ifreq)); \
+	return copyout(&ifreq, SCARG(&ap, data), sizeof (ifreq)); \
 }
 
 	case _IOW('i', 12, struct oifreq):
@@ -699,13 +703,13 @@ ultrix_sys_ioctl(struct lwp *l, void *v, register_t *retval)
 		 * 1. our sockaddr's are variable length, not always sizeof(sockaddr)
 		 * 2. this returns a name per protocol, ie. it returns two "lo0"'s
 		 */
-		error = copyin(SCARG(uap, data), &ifconfarg, sizeof (ifconfarg));
+		error = copyin(SCARG(&ap, data), &ifconfarg, sizeof (ifconfarg));
 		if (error)
 			return error;
 		error = (*ctl)(fp, OSIOCGIFCONF, &ifconfarg, l);
 		if (error)
 			return error;
-		return copyout(&ifconfarg, SCARG(uap, data), sizeof (ifconfarg));
+		return copyout(&ifconfarg, SCARG(&ap, data), sizeof (ifconfarg));
 	    }
 
 
@@ -759,5 +763,5 @@ ultrix_sys_ioctl(struct lwp *l, void *v, register_t *retval)
 		return EOPNOTSUPP;
 
 	}
-	return (sys_ioctl(l, uap, retval));
+	return sys_ioctl(l, &ap, retval);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: inkernel.c,v 1.6 2006/04/10 18:40:06 garbled Exp $	*/
+/*	$NetBSD: inkernel.c,v 1.6.52.1 2008/01/02 21:49:18 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -52,10 +52,10 @@ init_in(u_long ladr)
 	u_int i;
 
 	for (i = 0; i < 4096; i++, p++) {
-		if (memcmp(p, magic, MAGICSIZE) == 0) {
-			kern_len = *(int *)(p + MAGICSIZE);
+		if (memcmp(p, prep_magic, PREP_MAGICSIZE) == 0) {
+			kern_len = *(int *)(p + PREP_MAGICSIZE);
 			memmove((char *)KERNENTRY,
-				p + MAGICSIZE + KERNLENSIZE, kern_len);
+				p + PREP_MAGICSIZE + KERNLENSIZE, kern_len);
 			return;
 		}
 	}

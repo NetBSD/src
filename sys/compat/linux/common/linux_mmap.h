@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_mmap.h,v 1.19 2007/12/04 18:40:16 dsl Exp $	*/
+/*	$NetBSD: linux_mmap.h,v 1.19.4.1 2008/01/02 21:52:38 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -82,6 +82,7 @@
 /*
  * Ensure the linux_sys_mmap syscall appears to exist:
  */
+struct linux_sys_mmap_args;
 struct linux_sys_mmap_args {
 	syscallarg(unsigned long) addr;
 	syscallarg(size_t) len;
@@ -99,8 +100,9 @@ struct linux_sys_mmap_args {
 
 #ifdef _KERNEL
 __BEGIN_DECLS
-int linux_sys_mmap(struct lwp *p, void *v, register_t *retval);
-int linux_sys_mmap2(struct lwp *p, void *v, register_t *retval);
+int linux_sys_mmap(struct lwp *p, const struct linux_sys_mmap_args *v, register_t *retval);
+int linux_sys_mmap2(struct lwp *p, const struct linux_sys_mmap2_args *v, register_t *retval);
+
 __END_DECLS
 #endif /* !_KERNEL */
 

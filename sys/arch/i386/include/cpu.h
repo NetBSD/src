@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.151 2007/12/03 22:17:28 joerg Exp $	*/
+/*	$NetBSD: cpu.h,v 1.151.4.1 2008/01/02 21:48:21 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -85,6 +85,10 @@ struct cpu_info {
 	cpuid_t ci_cpuid;		/* our CPU ID */
 	int	ci_cpumask;		/* (1 << CPU ID) */
 	u_int ci_apicid;		/* our APIC ID */
+	uint8_t ci_initapicid;		/* our intitial APIC ID */
+	uint8_t ci_packageid;
+	uint8_t ci_coreid;
+	uint8_t ci_smtid;
 	struct cpu_data ci_data;	/* MI per-cpu data */
 	struct cc_microtime_state ci_cc;/* cc_microtime state */
 
@@ -157,6 +161,30 @@ struct cpu_info {
 	struct evcnt ci_ipi_events[X86_NIPI];
 
 	struct via_padlock	ci_vp;	/* VIA PadLock private storage */
+
+	/*
+	 * The following two are actually region_descriptors,
+	 * but that would pollute the namespace.
+	 */
+	uint32_t	ci_suspend_gdt;
+	uint16_t	ci_suspend_gdt_padding;
+	uint32_t	ci_suspend_idt;
+	uint16_t	ci_suspend_idt_padding;
+
+	uint16_t	ci_suspend_tr;
+	uint16_t	ci_suspend_ldt;
+	uint16_t	ci_suspend_fs;
+	uint16_t	ci_suspend_gs;
+	uint32_t	ci_suspend_ebx;
+	uint32_t	ci_suspend_esi;
+	uint32_t	ci_suspend_edi;
+	uint32_t	ci_suspend_ebp;
+	uint32_t	ci_suspend_esp;
+	uint32_t	ci_suspend_efl;
+	uint32_t	ci_suspend_cr0;
+	uint32_t	ci_suspend_cr2;
+	uint32_t	ci_suspend_cr3;
+	uint32_t	ci_suspend_cr4;
 };
 
 /*
@@ -193,15 +221,15 @@ extern struct cpu_info *cpu_info_list;
 
 #define X86_MAXPROCS		32	/* because we use a bitmask */
 
-#define CPU_STARTUP(_ci)	((_ci)->ci_func->start(_ci))
-#define CPU_STOP(_ci)	        ((_ci)->ci_func->stop(_ci))
-#define CPU_START_CLEANUP(_ci)	((_ci)->ci_func->cleanup(_ci))
+#define CPU_STARTUP(_ci, _target)	((_ci)->ci_func->start(_ci, _target))
+#define CPU_STOP(_ci)	        	((_ci)->ci_func->stop(_ci))
+#define CPU_START_CLEANUP(_ci)		((_ci)->ci_func->cleanup(_ci))
 
 #if defined(__GNUC__) && defined(_KERNEL)
 static struct cpu_info *x86_curcpu(void);
 static lwp_t *x86_curlwp(void);
 
-__inline static struct cpu_info * __attribute__((__unused__))
+__inline static struct cpu_info * __unused
 x86_curcpu(void)
 {
 	struct cpu_info *ci;
@@ -213,7 +241,7 @@ x86_curcpu(void)
 	return ci;
 }
 
-__inline static lwp_t * __attribute__((__unused__))
+__inline static lwp_t * __unused
 x86_curlwp(void)
 {
 	lwp_t *l;

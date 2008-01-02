@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.73 2007/10/17 19:57:31 garbled Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.73.8.1 2008/01/02 21:50:31 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.73 2007/10/17 19:57:31 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.73.8.1 2008/01/02 21:50:31 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -103,9 +103,9 @@ void
 netbsd32_setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 {
 	struct proc *p = l->l_proc;
-	register struct trapframe64 *tf = l->l_md.md_tf;
-	register struct fpstate64 *fs;
-	register int64_t tstate;
+	struct trapframe64 *tf = l->l_md.md_tf;
+	struct fpstate64 *fs;
+	int64_t tstate;
 
 	/* Don't allow misaligned code by default */
 	p->p_md.md_flags &= ~MDP_FIXALIGN;
@@ -176,7 +176,7 @@ static void
 netbsd32_sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 {
 	int sig = ksi->ksi_signo;
-	register struct lwp *l = curlwp;
+	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
 	struct sparc32_sigframe *fp;
 	struct trapframe64 *tf;
@@ -421,17 +421,14 @@ netbsd32_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 
 #ifdef COMPAT_13
 int
-compat_13_netbsd32_sigreturn(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+compat_13_netbsd32_sigreturn(struct lwp *l, const struct compat_13_netbsd32_sigreturn_args *uap, register_t *retval)
 {
-	struct compat_13_netbsd32_sigreturn_args /* {
+	/* {
 		syscallarg(struct netbsd32_sigcontext13 *) sigcntxp;
-	} */ *uap = v;
+	} */
 	struct netbsd32_sigcontext13 *scp;
 	struct netbsd32_sigcontext13 sc;
-	register struct trapframe64 *tf;
+	struct trapframe64 *tf;
 	struct proc *p = l->l_proc;
 	sigset_t mask;
 
@@ -518,16 +515,13 @@ compat_13_netbsd32_sigreturn(l, v, retval)
  */
 /* ARGSUSED */
 int
-compat_16_netbsd32___sigreturn14(l, v, retval)
-	register struct lwp *l;
-	void *v;
-	register_t *retval;
+compat_16_netbsd32___sigreturn14(struct lwp *l, const struct compat_16_netbsd32___sigreturn14_args *uap, register_t *retval)
 {
-	struct compat_16_netbsd32___sigreturn14_args /* {
+	/* {
 		syscallarg(struct sigcontext *) sigcntxp;
-	} */ *uap = v;
+	} */
 	struct netbsd32_sigcontext sc, *scp;
-	register struct trapframe64 *tf;
+	struct trapframe64 *tf;
 	struct proc *p = l->l_proc;
 
 	/* First ensure consistent stack state (see sendsig). */
@@ -604,9 +598,7 @@ compat_16_netbsd32___sigreturn14(l, v, retval)
 
 /* Unfortunately we need to convert v9 trapframe to v8 regs */
 int
-netbsd32_process_read_regs(l, regs)
-	struct lwp *l;
-	struct reg32 *regs;
+netbsd32_process_read_regs(struct lwp *l, struct reg32 *regs)
 {
 	struct trapframe64* tf = l->l_md.md_tf;
 	int i;
@@ -631,9 +623,7 @@ netbsd32_process_read_regs(l, regs)
 
 #if 0
 int
-netbsd32_process_write_regs(p, regs)
-	struct proc *p;
-	const struct reg *regs;
+netbsd32_process_write_regs(struct proc *p, const struct reg *regs)
 {
 	const struct reg32* regp = (const struct reg32*)regs;
 	struct trapframe64* tf = p->p_md.md_tf;
@@ -653,9 +643,7 @@ netbsd32_process_write_regs(p, regs)
 #endif
 
 int
-netbsd32_process_read_fpregs(l, regs)
-struct lwp	*l;
-struct fpreg32	*regs;
+netbsd32_process_read_fpregs(struct lwp *l, struct fpreg32 *regs)
 {
 	extern struct fpstate64	initfpstate;
 	struct fpstate64	*statep = &initfpstate;
@@ -671,9 +659,7 @@ struct fpreg32	*regs;
 
 #if 0
 int
-netbsd32_process_write_fpregs(p, regs)
-struct proc	*p;
-const struct fpreg	*regs;
+netbsd32_process_write_fpregs(struct proc *p, const struct fpreg *regs)
 {
 	extern struct fpstate	initfpstate;
 	struct fpstate64	*statep = &initfpstate;
@@ -1034,10 +1020,7 @@ static inline void netbsd32_from_opiocdesc(struct opiocdesc *,
 
 /* convert to/from different structures */
 static inline void
-netbsd32_to_fbcmap(s32p, p, cmd)
-	struct netbsd32_fbcmap *s32p;
-	struct fbcmap *p;
-	u_long cmd;
+netbsd32_to_fbcmap(struct netbsd32_fbcmap *s32p, struct fbcmap *p, u_long cmd)
 {
 
 	p->index = s32p->index;
@@ -1048,10 +1031,7 @@ netbsd32_to_fbcmap(s32p, p, cmd)
 }
 
 static inline void
-netbsd32_to_fbcursor(s32p, p, cmd)
-	struct netbsd32_fbcursor *s32p;
-	struct fbcursor *p;
-	u_long cmd;
+netbsd32_to_fbcursor(struct netbsd32_fbcursor *s32p, struct fbcursor *p, u_long cmd)
 {
 
 	p->set = s32p->set;
@@ -1065,10 +1045,7 @@ netbsd32_to_fbcursor(s32p, p, cmd)
 }
 
 static inline void
-netbsd32_to_opiocdesc(s32p, p, cmd)
-	struct netbsd32_opiocdesc *s32p;
-	struct opiocdesc *p;
-	u_long cmd;
+netbsd32_to_opiocdesc(struct netbsd32_opiocdesc *s32p, struct opiocdesc *p, u_long cmd)
 {
 
 	p->op_nodeid = s32p->op_nodeid;
@@ -1079,10 +1056,7 @@ netbsd32_to_opiocdesc(s32p, p, cmd)
 }
 
 static inline void
-netbsd32_from_fbcmap(p, s32p, cmd)
-	struct fbcmap *p;
-	struct netbsd32_fbcmap *s32p;
-	u_long cmd;
+netbsd32_from_fbcmap(struct fbcmap *p, struct netbsd32_fbcmap *s32p, u_long cmd)
 {
 
 	s32p->index = p->index;
@@ -1096,10 +1070,7 @@ netbsd32_from_fbcmap(p, s32p, cmd)
 }
 
 static inline void
-netbsd32_from_fbcursor(p, s32p, cmd)
-	struct fbcursor *p;
-	struct netbsd32_fbcursor *s32p;
-	u_long cmd;
+netbsd32_from_fbcursor(struct fbcursor *p, struct netbsd32_fbcursor *s32p, u_long cmd)
 {
 
 	s32p->set = p->set;
@@ -1116,10 +1087,7 @@ netbsd32_from_fbcursor(p, s32p, cmd)
 }
 
 static inline void
-netbsd32_from_opiocdesc(p, s32p, cmd)
-	struct opiocdesc *p;
-	struct netbsd32_opiocdesc *s32p;
-	u_long cmd;
+netbsd32_from_opiocdesc(struct opiocdesc *p, struct netbsd32_opiocdesc *s32p, u_long cmd)
 {
 
 	s32p->op_nodeid = p->op_nodeid;
@@ -1130,11 +1098,7 @@ netbsd32_from_opiocdesc(p, s32p, cmd)
 }
 
 int
-netbsd32_md_ioctl(fp, cmd, data32, l)
-	struct file *fp;
-	netbsd32_u_long cmd;
-	void *data32;
-	struct lwp *l;
+netbsd32_md_ioctl(struct file *fp, netbsd32_u_long cmd, void *data32, struct lwp *l)
 {
 	u_int size;
 	void *data, *memp = NULL;
@@ -1169,15 +1133,12 @@ netbsd32_md_ioctl(fp, cmd, data32, l)
 
 
 int
-netbsd32_sysarch(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_sysarch(struct lwp *l, const struct netbsd32_sysarch_args *uap, register_t *retval)
 {
-	struct netbsd32_sysarch_args /* {
+	/* {
 		syscallarg(int) op;
 		syscallarg(netbsd32_voidp) parms;
-	} */ *uap = v;
+	} */
 
 	switch (SCARG(uap, op)) {
 	default:

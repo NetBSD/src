@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.6 2005/12/11 12:18:29 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.6.64.1 2008/01/02 21:48:55 bouyer Exp $	*/
 /*
  * Copyright (c) 1998 Darrin Jewell
  * Copyright (c) 1994 Rolf Grossmann
@@ -86,7 +86,7 @@ putchar(int c)
 __dead void
 _rtt(void)
 {
-	extern __dead void _halt(void) __attribute__((noreturn));
+	extern __dead void _halt(void);
 
 	printf("Press any key to halt.\n");
 	getchar();
