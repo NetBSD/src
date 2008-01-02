@@ -1,4 +1,4 @@
-/*	$NetBSD: boot2.c,v 1.19 2007/12/29 16:28:40 jmcneill Exp $	*/
+/*	$NetBSD: boot2.c,v 1.20 2008/01/02 10:39:39 sborrill Exp $	*/
 
 /*
  * Copyright (c) 2003
@@ -269,7 +269,7 @@ atoi(const char *in)
 }
 
 /*
- * This function parses a boot.cnf file in the root of the filesystem
+ * This function parses a boot.cfg file in the root of the filesystem
  * (if present) and populates the global boot configuration.
  * 
  * The file consists of a number of lines each terminated by \n
@@ -283,7 +283,7 @@ atoi(const char *in)
  * default: the default menu option to use if Return is pressed
  * consdev: the console device to use
  *
- * Example boot.cnf file:
+ * Example boot.cfg file:
  * banner=Welcome to NetBSD
  * banner=Please choose the boot type from the following menu
  * menu=Boot NetBSD:boot netbsd
@@ -354,7 +354,7 @@ parsebootconf(const char *conf)
 	bc[off] = '\0';
 	
 	close(fd);
-	/* bc now contains the whole boot.cnf file */
+	/* bc now contains the whole boot.cfg file */
 	
 	cmenu = 0;
 	cbanner = 0;
@@ -507,7 +507,7 @@ boot2(int biosdev, u_int biossector)
 	parsebootconf(BOOTCONF);
 
 	/*
-	 * If console set in boot.cnf, switch to it.
+	 * If console set in boot.cfg, switch to it.
 	 * This will print the banner, so we don't need to explicitly do it
 	 */
 	if (bootconf.consdev)
