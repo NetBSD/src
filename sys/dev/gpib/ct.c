@@ -1,4 +1,4 @@
-/*	$NetBSD: ct.c,v 1.12 2007/10/08 20:12:06 ad Exp $ */
+/*	$NetBSD: ct.c,v 1.12.6.1 2008/01/02 09:33:31 ad Exp $ */
 
 /*-
  * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
@@ -128,7 +128,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ct.c,v 1.12 2007/10/08 20:12:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ct.c,v 1.12.6.1 2008/01/02 09:33:31 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -475,6 +475,7 @@ ctcommand(dev, cmd, cnt)
 	sc->sc_bp = bp;
 	sc->sc_cmd = cmd;
 	bp->b_dev = dev;
+	bp->b_objlock = &buffer_lock;
 	if (cmd == MTFSF) {
 		nbp = (struct buf *)geteblk(MAXBSIZE);
 		bp->b_data = nbp->b_data;
@@ -482,7 +483,9 @@ ctcommand(dev, cmd, cnt)
 	}
 
 	while (cnt-- > 0) {
-		bp->b_flags = B_BUSY;
+		bp->b_flags = 0;
+		bp->b_cflags = BC_BUSY;
+		bp->b_oflags = 0;
 		if (cmd == MTBSF) {
 			sc->sc_blkno = sc->sc_eofs[sc->sc_eofp];
 			sc->sc_eofp--;

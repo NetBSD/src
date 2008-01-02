@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.74 2007/10/19 12:01:23 ad Exp $	*/
+/*	$NetBSD: xy.c,v 1.74.4.1 2008/01/02 09:33:32 ad Exp $	*/
 
 /*
  *
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.74 2007/10/19 12:01:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.74.4.1 2008/01/02 09:33:32 ad Exp $");
 
 #undef XYC_DEBUG		/* full debug */
 #undef XYC_DIAG			/* extra sanity checks */
@@ -247,8 +247,8 @@ xydummystrat(bp)
 	if (bp->b_bcount != XYFM_BPS)
 		panic("xydummystrat");
 	bcopy(xy_labeldata, bp->b_data, XYFM_BPS);
-	bp->b_flags |= B_DONE;
-	bp->b_flags &= ~B_BUSY;
+	bp->b_oflags |= BO_DONE;
+	bp->b_cflags &= ~BC_BUSY;
 }
 
 int
