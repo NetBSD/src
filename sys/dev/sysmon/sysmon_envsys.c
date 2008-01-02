@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.77 2008/01/02 03:06:02 dyoung Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.78 2008/01/02 10:15:53 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.77 2008/01/02 03:06:02 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.78 2008/01/02 10:15:53 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -520,6 +520,7 @@ sysmon_envsys_create(void)
 	sme = kmem_zalloc(sizeof(*sme), KM_SLEEP);
 	TAILQ_INIT(&sme->sme_sensors_list);
 	LIST_INIT(&sme->sme_events_list);
+	callout_init(&sme->sme_callout, 0);
 
 	return sme;
 }
@@ -976,9 +977,14 @@ sysmon_envsys_find_40(u_int idx)
 
 	KASSERT(mutex_owned(&sme_mtx));
 
+again:
 	LIST_FOREACH(sme, &sysmon_envsys_list, sme_list) {
 		if (idx >= sme->sme_fsensor &&
 	    	    idx < (sme->sme_fsensor + sme->sme_nsensors)) {
+			if (sme->sme_flags & SME_FLAG_BUSY) {
+				cv_wait(&sme_cv, &sme_mtx);
+				goto again;
+			}
 			sme->sme_flags |= SME_FLAG_BUSY;
 			break;
 		}
