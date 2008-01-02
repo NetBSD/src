@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf_filter.c,v 1.33 2007/01/27 07:16:01 cbiere Exp $	*/
+/*	$NetBSD: bpf_filter.c,v 1.34 2008/01/02 15:58:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf_filter.c,v 1.33 2007/01/27 07:16:01 cbiere Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf_filter.c,v 1.34 2008/01/02 15:58:01 christos Exp $");
 
 #if 0
 #if !(defined(lint) || defined(KERNEL))
@@ -453,9 +453,10 @@ bpf_filter(struct bpf_insn *pc, u_char *p, u_int wirelen, u_int buflen)
 /*
  * Return true if the 'fcode' is a valid filter program.
  * The constraints are that each jump be forward and to a valid
- * code.  The code must terminate with either an accept or reject.
- * 'valid' is an array for use by the routine (it must be at least
- * 'len' bytes long).
+ * code, that memory accesses are within valid ranges (to the
+ * extent that this can be checked statically; loads of packet
+ * data have to be, and are, also checked at run time), and that
+ * the code terminates with either an accept or reject.
  *
  * The kernel needs to be able to verify an application's filter code.
  * Otherwise, a bogus program could easily crash the system.
@@ -466,7 +467,6 @@ bpf_validate(struct bpf_insn *f, int len)
 	u_int i, from;
 	struct bpf_insn *p;
 
- 
 	if (len < 1 || len > BPF_MAXINSNS)
 		return 0;
 
@@ -502,6 +502,7 @@ bpf_validate(struct bpf_insn *f, int len)
 			switch (BPF_OP(p->code)) {
 			case BPF_ADD:
 			case BPF_SUB:
+			case BPF_MUL:
 			case BPF_OR:
 			case BPF_AND:
 			case BPF_LSH:
