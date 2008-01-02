@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.74 2008/01/02 11:48:44 ad Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.75 2008/01/02 22:37:21 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.74 2008/01/02 11:48:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.75 2008/01/02 22:37:21 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -589,7 +589,7 @@ puffs_vfsop_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
 	}
 
 	argsize = sizeof(struct puffs_vfsmsg_fhtonode) + fhlen;
-	puffs_msgmem_alloc(argsize, &park_fhtonode, (void **)&fhtonode_msg, 1);
+	puffs_msgmem_alloc(argsize, &park_fhtonode, (void *)&fhtonode_msg, 1);
 	fhtonode_msg->pvfsr_dsize = fhlen;
 	memcpy(fhtonode_msg->pvfsr_data, fhdata, fhlen);
 	puffs_msg_setinfo(park_fhtonode, PUFFSOP_VFS, PUFFS_VFS_FHTOVP, NULL);
@@ -644,7 +644,7 @@ puffs_vfsop_vptofh(struct vnode *vp, struct fid *fhp, size_t *fh_size)
 		fhlen = PUFFS_FROMFHSIZE(*fh_size);
 
 	argsize = sizeof(struct puffs_vfsmsg_nodetofh) + fhlen;
-	puffs_msgmem_alloc(argsize, &park_nodetofh, (void **)&nodetofh_msg, 1);
+	puffs_msgmem_alloc(argsize, &park_nodetofh, (void *)&nodetofh_msg, 1);
 	nodetofh_msg->pvfsr_fhcookie = VPTOPNC(vp);
 	nodetofh_msg->pvfsr_dsize = fhlen;
 	puffs_msg_setinfo(park_nodetofh, PUFFSOP_VFS, PUFFS_VFS_VPTOFH, NULL);
