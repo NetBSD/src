@@ -1,6 +1,7 @@
-.\"	$NetBSD: bioctl.8,v 1.7 2007/12/05 14:28:13 xtraeme Exp $
+.\"	$NetBSD: bioctl.8,v 1.8 2008/01/02 23:45:06 xtraeme Exp $
 .\"	$OpenBSD: bioctl.8,v 1.43 2007/03/20 06:12:11 jmc Exp $
 .\"
+.\" Copyright (c) 2007, 2008 Juan Romero Pardines
 .\" Copyright (c) 2004, 2005 Marco Peereboom
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -24,7 +25,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd December 5, 2007
+.Dd January 2, 2008
 .Dt BIOCTL 8
 .Os
 .Sh NAME
@@ -32,95 +33,100 @@
 .Nd RAID management interface
 .Sh SYNOPSIS
 .Nm bioctl
-.Bk -words
-.Op Fl hv
-.Op Fl a Ar alarm-function
-.Op Fl b Ar channel:target[.lun]
-.Op Fl H Ar channel:target[.lun]
-.Op Fl u Ar channel:target[.lun]
 .Ar device
-.Ek
+.Ar command
+.Op Ar arg Op ...
 .Sh DESCRIPTION
 RAID device drivers which support management functionality can
 register their services with the
 .Xr bio 4
 driver.
 .Nm bioctl
-then can be used to maintain RAID volumes.
-.Pp
-The options are as follows:
-.Bl -tag -width Ds
-.It Fl a Ar alarm-function
-Control the RAID card's alarm functionality, if supported.
-.Ar alarm-function
-may be one of:
-.Pp
-.Bl -tag -width disable -compact
-.It Ar disable
-Disable the alarm on the RAID controller.
-.It Ar enable
-Enable the alarm on the RAID controller.
-.It Ar get
-Retrieve the current alarm state (enabled or disabled).
-.It Ar silence | Ar quiet
-Silence the alarm if it is currently beeping.
-.El
-.Pp
+then can be used to manage RAID controller's properties.
+.Sh COMMANDS
+The following commands are supported:
+.Bl -tag -width XXstrategyXXnameXX
+.It Ic show Op Ar disks | volumes
+Without any argument by default it will show information about
+all volumes and the logical disks used on them. If
+.Ar disks
+is specified, only information will be shown about physical disks.
+If
+.Ar volumes
+is specified, only information will be shown about the volumes.
+.It Ic alarm Op Ar enable | disable | silence | test
+Control the RAID card's alarm functionality, if supported. By default
+its state will be shown if no argument is specified. Optionally the
+.Ar enable ,
+.Ar disable ,
+.Ar silence
+or
+.Ar test
+argument may be specified to enable, disable, silence or test the
+RAID card's alarm.
+.It Ic blink Ar start | stop Op Ar channel:target.lun
+Instruct the device at
+.Ar channel:target.lun
+to start or cease blinking, if there's
+.Xr ses 4
+support in the enclosure.
+.It Ic hotspare Ar add | remove Ar channel:target.lun
+Create or remove a hot-spare drive at location
+.Ar channel:target.lun .
+.It Ic passthru Ar add DISKID | remove Ar channel:target.lun
+Create or remove a
+.Ar pass-through
+device. The
+.Ar DISKID
+argument specifies the disk that will be used for the new device, and
+it will be created at
+.Ar channel:target.lun
+location.
+.Em NOTE :
+removing a pass-through device that has a mounted filesystem will lead to
+undefined behaviour.
+.It Ic check Ar start | stop VOLID
+Start or stop consistency volume check in the volume with index
+.Ar VOLID .
+.Em NOTE :
+not many RAID controllers will support this feature.
+.It Ic create volume Ar VOLID DISKIDs Oo Ar SIZE Oc Ar STRIPE RAID_LEVEL channel:target.lun
+Create a volume at index
+.Ar VOLID .
 The
-.Ar alarm-function
-may be specified as given above,
-or by the first letter only
-(e.g.,
-.Fl a Ar e ) .
-.It Fl b Ar channel:target[.lun]
-Instruct the device at
-.Ar channel:target[.lun]
-to start blinking, if there is
-.Xr ses 4
-support in the enclosure.
-.It Fl H Ar channel:target[.lun]
-If the device at
-.Ar channel:target[.lun]
-is currently marked
-.Dq Unused ,
-promote it to being a
-.Dq Hot Spare .
-.It Fl h
-Where necessary, produce
-.Dq human-readable
-output.
-Use unit suffixes: Byte, Kilobyte, Megabyte,
-Gigabyte, Terabyte, Petabyte, Exabyte in order to reduce the number of
-digits to four or less.
-.It Fl u Ar channel:target[.lun]
-Instruct the device at
-.Ar channel:target[.lun]
-to cease blinking, if there is
-.Xr ses 4
-support in the enclosure.
-.It Fl v
-Be more verbose in output.
-.It Ar device
-Select a drive by name (e.g., sd0) or a RAID controller by name (e.g., ami0).
-For operations which will be performed against
-.Xr ses 4
-enclosures, it is also possible to directly specify the enclosure name
-(e.g., safte0).
+.Ar DISKIDs
+argument will specify the first and last disk, i.e:
+.Em 0-3
+will use the disks 0, 1, 2 and 3. The
+.Ar SIZE
+argument is optional and may be specified if not all available disk space is
+wanted (dependent of the
+.Ar RAID_LEVEL
+too). The volume will have a stripe size defined in the
+.Ar STRIPE
+argument and it will be located at
+.Ar channel:target.lun .
+.It Ic remove volume Ar VOLID channel:target.lun
+Remove a volume at index
+.Ar VOLID
+and located at
+.Ar channel:target.lun .
+.Em NOTE: 
+removing a RAID volume that has a mounted filesystem will lead to
+undefined behaviour.
 .El
 .Sh EXAMPLES
 The following command, executed from the command line, shows the status of
-the logical drives on the RAID controller:
+the volumes and its logical disks on the RAID controller:
 .Bd -literal
-# bioctl -h mfi0
-Volume  Status           Size Device
- mfi0 0 Online            74G mfi0    RAID1
-      0 Online            75G 1:0.0   noencl \*[Lt]ATA     WDC WD800JD-75MS1E04\*[Gt]
-      1 Online            75G 1:1.0   noencl \*[Lt]ATA     WDC WD800JD-75MS1E04\*[Gt]
- mfi0 1 Online           697G mfi0    RAID5
-      0 Online           233G 1:3.0   noencl \*[Lt]ATA     WDC WD2500JS-75N2E04\*[Gt]
-      1 Online           233G 1:2.0   noencl \*[Lt]ATA     WDC WD2500JS-75N2E04\*[Gt]
-      2 Online           233G 1:4.0   noencl \*[Lt]ATA     WDC WD2500JS-75N2E04\*[Gt]
-      3 Online           233G 1:5.0   noencl \*[Lt]ATA     WDC WD2500JS-75N2E04\*[Gt]
+# bioctl show arcmsr0
+Volume Status       Size         Device/Label   RAID Level Stripe
+=================================================================
+     0 Building     468G  sd0 ARC-1210-VOL#00       RAID 6  128KB  0% done
+   0:0 Online       234G         0:0.0 noencl <WDC WD2500YS-01SHB1 20.06C06>
+   0:1 Online       234G         0:1.0 noencl <WDC WD2500YS-01SHB1 20.06C06>
+   0:2 Online       234G         0:2.0 noencl <WDC WD2500YS-01SHB1 20.06C06>
+   0:3 Online       234G         0:3.0 noencl <WDC WD2500YS-01SHB1 20.06C06>
 .Ed
 .Sh SEE ALSO
 .Xr arcmsr 4 ,
@@ -130,9 +136,13 @@ Volume  Status           Size Device
 The
 .Nm
 command first appeared in
-.Ox 3.8 .
+.Ox 3.8 ,
+it was rewritten for
+.Nx 4.1 .
 .Sh AUTHORS
 The
 .Nm
 interface was written by
-.An Marco Peereboom Aq marco@openbsd.org .
+.An Marco Peereboom Aq marco@openbsd.org 
+and was rewritten with multiple features by
+.An Juan Romero Pardines Aq xtraeme@netbsd.org .
