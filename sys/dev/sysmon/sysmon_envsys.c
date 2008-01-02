@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.78 2008/01/02 10:15:53 dyoung Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.79 2008/01/02 12:20:26 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.78 2008/01/02 10:15:53 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.79 2008/01/02 12:20:26 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -520,7 +520,7 @@ sysmon_envsys_create(void)
 	sme = kmem_zalloc(sizeof(*sme), KM_SLEEP);
 	TAILQ_INIT(&sme->sme_sensors_list);
 	LIST_INIT(&sme->sme_events_list);
-	callout_init(&sme->sme_callout, 0);
+	callout_init(&sme->sme_callout, CALLOUT_MPSAFE);
 
 	return sme;
 }
@@ -927,14 +927,14 @@ sysmon_envsys_find(const char *name)
 
 again:
 	LIST_FOREACH(sme, &sysmon_envsys_list, sme_list) {
-			if (strcmp(sme->sme_name, name) == 0) {
-				if (sme->sme_flags & SME_FLAG_BUSY) {
-					cv_wait(&sme_cv, &sme_mtx);
-					goto again;
-				}
-				sme->sme_flags |= SME_FLAG_BUSY;
-				break;
+		if (strcmp(sme->sme_name, name) == 0) {
+			if (sme->sme_flags & SME_FLAG_BUSY) {
+				cv_wait(&sme_cv, &sme_mtx);
+				goto again;
 			}
+			sme->sme_flags |= SME_FLAG_BUSY;
+			break;
+		}
 	}
 	return sme;
 }
