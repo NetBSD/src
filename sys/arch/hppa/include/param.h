@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.10 2007/12/31 13:38:50 ad Exp $	*/
+/*	$NetBSD: param.h,v 1.11 2008/01/02 21:00:34 he Exp $	*/
 
 /*	$OpenBSD: param.h,v 1.12 2001/07/06 02:07:41 provos Exp $	*/
 
@@ -102,5 +102,3 @@
 
 #define btop(x)		((unsigned long)(x) >> PGSHIFT)
 #define ptob(x)		((unsigned long)(x) << PGSHIFT)
-
-#endif
