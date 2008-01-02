@@ -1,0 +1,44 @@
+#	$NetBSD: Makefile.ramdisk,v 1.1 2008/01/02 11:39:02 mrg Exp $
+
+.include <bsd.own.mk>
+.include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
+
+OFPPCCOMMON=	${.CURDIR}/../common
+
+.PATH:		${OFPPCCOMMON}
+
+WARNS=		1
+DBG=		-Os -fno-asynchronous-unwind-tables
+CRUNCHGEN_FLAGS= -d "${DBG}"
+
+CRUNCHBIN=	ramdiskbin
+LISTS=		${.CURDIR}/list ${OFPPCCOMMON}/list.ramdisk
+MTREECONF=	${DISTRIBDIR}/common/mtree.common ${.CURDIR}/../common/mtree.ramdisk
+IMAGEENDIAN=	le
+IMAGEDEPENDS+= 	${CRUNCHBIN} \
+		dot.profile termcap.mini \
+		${DESTDIR}/usr/mdec/ofwboot \
+		${NETBSDSRCDIR}/etc/group ${NETBSDSRCDIR}/etc/master.passwd \
+		${NETBSDSRCDIR}/etc/netconfig ${NETBSDSRCDIR}/etc/protocols \
+		${NETBSDSRCDIR}/distrib/common/services
+PARSELISTENV+=	BOOTMODEL=${BOOTMODEL:Q}
+
+.if defined(USE_SYSINST)
+# MI sysinst list has has languages we do not
+#LISTS+=		${DISTRIBDIR}/common/list.sysinst
+LISTS+=		${.CURDIR}/../common/list.sysinst
+MAKEFS_FLAGS+=	-f 14
+.endif
+
+# Use stubs to eliminate some large stuff from libc
+HACKSRC=	${DISTRIBDIR}/utils/libhack
+.include	"${HACKSRC}/Makefile.inc"
+${CRUNCHBIN}:	libhack.o
+
+.include "${DISTRIBDIR}/common/Makefile.crunch"
+.include "${DISTRIBDIR}/common/Makefile.makedev"
+.include "${DISTRIBDIR}/common/Makefile.image"
+
+release:
+
+.include <bsd.prog.mk>

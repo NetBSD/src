@@ -1,0 +1,6 @@
+#	$NetBSD: list.inet6,v 1.1 2008/01/02 11:39:04 mrg Exp $
+
+PROG	sbin/ping6
+PROG	sbin/rtsol
+
+SPECIAL	ping6		srcdir	distrib/utils/x_ping6
