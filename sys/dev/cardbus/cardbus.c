@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.84 2008/01/02 22:29:00 dyoung Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.85 2008/01/02 23:04:25 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.84 2008/01/02 22:29:00 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.85 2008/01/02 23:04:25 dyoung Exp $");
 
 #include "opt_cardbus.h"
 
@@ -1225,7 +1225,7 @@ cardbus_child_register(device_t child)
 	priv = malloc(sizeof(*priv), M_DEVBUF, M_WAITOK);
 
 	priv->p_ct = ct;
-	priv->p_cc = ct->ct_cf;
+	priv->p_cc = ct->ct_cc;
 	priv->p_cf = ct->ct_cf;
 	priv->p_tag = cardbus_make_tag(priv->p_cc, priv->p_cf, ct->ct_bus,
 	    ct->ct_func);
