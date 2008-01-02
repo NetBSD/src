@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.7 2008/01/02 11:49:05 ad Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.8 2008/01/02 15:44:03 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -103,7 +103,7 @@ genfs_getpages(void *v)
 		if (pg->flags & PG_BUSY) {
 			pg->flags |= PG_WANTED;
 			UVM_UNLOCK_AND_WAIT(pg, &uobj->vmobjlock, 0, "getpg",0);
-			simple_lock(&uobj->vmobjlock);
+			mutex_enter(&uobj->vmobjlock);
 			goto retrylookup;
 		}
 		pg->flags |= PG_BUSY;
@@ -114,7 +114,7 @@ genfs_getpages(void *v)
 
 	/* got everything?  if so, just return */
 	if (i == count) {
-		simple_unlock(&uobj->vmobjlock);
+		mutex_exit(&uobj->vmobjlock);
 		return 0;
 	}
 
@@ -132,7 +132,7 @@ genfs_getpages(void *v)
 				pg->flags = PG_WANTED;
 				UVM_UNLOCK_AND_WAIT(pg, &uobj->vmobjlock, 0,
 				    "getpg2", 0);
-				simple_lock(&uobj->vmobjlock);
+				mutex_enter(&uobj->vmobjlock);
 				goto retrylookup2;
 			} else {
 				pg->flags |= PG_BUSY;
@@ -149,7 +149,7 @@ genfs_getpages(void *v)
 	 * We have done all the clerical work and have all pages busied.
 	 * Release the vm object for other consumers.
 	 */
-	simple_unlock(&uobj->vmobjlock);
+	mutex_exit(&uobj->vmobjlock);
 
 	/*
 	 * Now, we have all the pages here & busy.  Transfer the range
@@ -322,7 +322,7 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff, int flags,
 	/* all done? */
 	if (TAILQ_EMPTY(&uobj->memq)) {
 		vp->v_iflag &= ~VI_ONWORKLST;
-		simple_unlock(&uobj->vmobjlock);
+		mutex_exit(&uobj->vmobjlock);
 		return 0;
 	}
 
@@ -348,7 +348,7 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff, int flags,
 	}
 	assert(curoff > smallest);
 
-	simple_unlock(&uobj->vmobjlock);
+	mutex_exit(&uobj->vmobjlock);
 
 	/* then we write */
 	for (bufoff = 0; bufoff < MIN(curoff-smallest,eof); bufoff+=xfersize) {
@@ -412,7 +412,7 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff, int flags,
 	}
 	rumpvm_flushva();
 
-	simple_lock(&uobj->vmobjlock);
+	mutex_enter(&uobj->vmobjlock);
 	goto restart;
 }
 
@@ -423,7 +423,7 @@ genfs_null_putpages(void *v)
 	struct vnode *vp = ap->a_vp;
 
 	KASSERT(vp->v_uobj.uo_npages == 0);
-	simple_unlock(&vp->v_interlock);
+	mutex_exit(&vp->v_interlock);
 	return 0;
 }
 
