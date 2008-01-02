@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.82 2008/01/02 14:27:42 pooka Exp $	*/
+/*	$NetBSD: puffs.c,v 1.83 2008/01/02 17:57:51 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.82 2008/01/02 14:27:42 pooka Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.83 2008/01/02 17:57:51 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -511,6 +511,9 @@ do {									\
 } while (/*CONSTCOND*/0)
 		allwrite(&len, sizeof(len));
 		allwrite(dir, len);
+		len = strlen(dir)+1;
+		allwrite(&len, sizeof(len));
+		allwrite(pu->pu_kargp->pa_mntfromname, len);
 		allwrite(&mntflags, sizeof(mntflags));
 		allwrite(pu->pu_kargp, sizeof(*pu->pu_kargp));
 		allwrite(&pu->pu_flags, sizeof(pu->pu_flags));
