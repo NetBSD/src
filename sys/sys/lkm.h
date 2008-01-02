@@ -1,4 +1,4 @@
-/*	$NetBSD: lkm.h,v 1.42 2007/10/11 20:11:38 ad Exp $	*/
+/*	$NetBSD: lkm.h,v 1.43 2008/01/02 17:52:02 ad Exp $	*/
 
 /*
  * Header file used by loadable kernel modules and loadable kernel module
@@ -277,20 +277,13 @@ struct lkm_table {
 #define _LKM_E_DEBUG		""
 #endif
 
-#ifdef MULTIPROCESSOR
-#define _LKM_E_MULTIPROCESSOR	",MULTIPROCESSOR"
-#else
-#define _LKM_E_MULTIPROCESSOR	""
-#endif
-
 #ifdef MALLOCLOG
 #define _LKM_E_MALLOCLOG	",MALLOCLOG"
 #else
 #define _LKM_E_MALLOCLOG	""
 #endif
 
-#define	_LKM_ENV_VERSION	\
-	_LKM_E_DEBUG _LKM_E_MULTIPROCESSOR _LKM_E_MALLOCLOG
+#define	_LKM_ENV_VERSION	_LKM_E_DEBUG _LKM_E_MALLOCLOG
 
 int lkm_nofunc(struct lkm_table *, int);
 int lkmexists(struct lkm_table *);
