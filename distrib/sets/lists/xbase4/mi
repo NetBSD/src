@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.17 2007/12/31 15:31:39 ad Exp $
+# $NetBSD: mi,v 1.18 2008/01/02 21:58:17 gdt Exp $
 ./etc/X11
 ./etc/fonts
 ./etc/fonts/fonts.conf
@@ -204,12 +204,6 @@
 ./usr/X11R6/include/X11/extensions
 ./usr/X11R6/include/X11/fonts
 ./usr/X11R6/include/X11/pixmaps
-./usr/X11R6/include/X11/pixmaps/deny-always.xpm
-./usr/X11R6/include/X11/pixmaps/deny.xpm
-./usr/X11R6/include/X11/pixmaps/logo.xpm
-./usr/X11R6/include/X11/pixmaps/permit-always.xpm
-./usr/X11R6/include/X11/pixmaps/permit.xpm
-./usr/X11R6/include/X11/pixmaps/skull.xpm
 ./usr/X11R6/lib
 ./usr/X11R6/lib/X11
 ./usr/X11R6/lib/X11/XErrorDB

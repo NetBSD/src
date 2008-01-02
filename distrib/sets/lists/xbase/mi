@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.53 2007/12/31 15:31:39 ad Exp $
+# $NetBSD: mi,v 1.54 2008/01/02 21:58:17 gdt Exp $
 ./etc/mtree/set.xbase				xbase-sys-root
 ./var/db/obsolete/xbase				xbase-sys-root
 ./var/db/obsolete/xetc				xbase-sys-root
@@ -218,12 +218,6 @@
 ./usr/X11R6/include/X11/pixmaps/NetBSDinv.xpm
 ./usr/X11R6/include/X11/pixmaps/XFree86.xpm
 ./usr/X11R6/include/X11/pixmaps/XFree86bw.xpm
-./usr/X11R6/include/X11/pixmaps/deny-always.xpm
-./usr/X11R6/include/X11/pixmaps/deny.xpm
-./usr/X11R6/include/X11/pixmaps/logo.xpm
-./usr/X11R6/include/X11/pixmaps/permit-always.xpm
-./usr/X11R6/include/X11/pixmaps/permit.xpm
-./usr/X11R6/include/X11/pixmaps/skull.xpm
 ./usr/X11R6/lib/X11/XErrorDB
 ./usr/X11R6/lib/X11/XKeysymDB
 ./usr/X11R6/lib/X11/Xcms.txt
