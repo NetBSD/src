@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.46 2007/11/20 17:24:32 xtraeme Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.47 2008/01/02 12:20:26 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.46 2007/11/20 17:24:32 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.47 2008/01/02 12:20:26 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -69,7 +69,9 @@ static bool sysmon_low_power = false;
 #define SME_EVTIMO	(SME_EVENTS_DEFTIMEOUT * hz)
 
 static bool sme_event_check_low_power(void);
+static bool sme_battery_check(void);
 static bool sme_battery_critical(envsys_data_t *);
+static bool sme_acadapter_check(void);
 
 /*
  * sme_event_register:
@@ -367,7 +369,6 @@ sme_events_init(struct sysmon_envsys *sme)
 	if (error)
 		goto out;
 
-	callout_init(&sme->sme_callout, CALLOUT_MPSAFE);
 	callout_setfunc(&sme->sme_callout, sme_events_check, sme);
 	callout_schedule(&sme->sme_callout, timo);
 	sme->sme_flags |= SME_CALLOUT_INITIALIZED;
@@ -613,8 +614,56 @@ do {									\
 	mutex_exit(&sme_mtx);
 }
 
+/*
+ * Returns true if the system is in low power state: all AC adapters
+ * are OFF and all batteries are in LOW/CRITICAL state.
+ */
 static bool
 sme_event_check_low_power(void)
+{
+	KASSERT(mutex_owned(&sme_mtx));
+
+	if (!sme_acadapter_check())
+		return false;
+
+	return sme_battery_check();
+}
+
+static bool
+sme_acadapter_check(void)
+{
+	struct sysmon_envsys *sme;
+	envsys_data_t *edata;
+	bool sensor = false;
+
+	KASSERT(mutex_owned(&sme_mtx));
+
+	LIST_FOREACH(sme, &sysmon_envsys_list, sme_list)
+		if (sme->sme_class == SME_CLASS_ACADAPTER)
+			break;
+	/*
+	 * No AC Adapter devices were found.
+	 */
+	if (!sme)
+		return false;
+	/*
+	 * Check if there's an AC adapter device connected.
+	 */
+	TAILQ_FOREACH(edata, &sme->sme_sensors_list, sensors_head) {
+		if (edata->units == ENVSYS_INDICATOR) {
+			sensor = true;
+			if (edata->value_cur)
+				return false;
+		}
+	}
+	if (!sensor)
+		return false;
+
+	return true;
+}
+
+static bool
+sme_battery_check(void)
 {
 	struct sysmon_envsys *sme;
 	envsys_data_t *edata;
@@ -623,27 +672,6 @@ sme_event_check_low_power(void)
 	KASSERT(mutex_owned(&sme_mtx));
 
 	battery = batterycap = batterycharge = false;
-
-	LIST_FOREACH(sme, &sysmon_envsys_list, sme_list)
-		if (sme->sme_class == SME_CLASS_ACADAPTER)
-			break;
-
-	/*
-	 * No AC Adapter devices were found, do nothing.
-	 */
-	if (!sme)
-		return false;
-
-	/*
-	 * If there's an AC Adapter connected, there's no need
-	 * to continue...
-	 */
-	TAILQ_FOREACH(edata, &sme->sme_sensors_list, sensors_head) {
-		if (edata->units == ENVSYS_INDICATOR) {
-			if (edata->value_cur)
-				return false;
-		}
-	}
 
 	/*
 	 * Check for battery devices and its state.
@@ -680,6 +708,8 @@ sme_event_check_low_power(void)
 static bool
 sme_battery_critical(envsys_data_t *edata)
 {
+	KASSERT(mutex_owned(&sme_mtx));
+
 	if (edata->value_cur == ENVSYS_BATTERY_CAPACITY_CRITICAL ||
 	    edata->value_cur == ENVSYS_BATTERY_CAPACITY_LOW)
 		return true;
