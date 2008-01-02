@@ -1,0 +1,3 @@
+#	$NetBSD: mtree.ramdisk,v 1.1.4.2 2008/01/02 11:39:04 mrg Exp $
+
+./boot		type=dir uname=root gname=wheel mode=0755
