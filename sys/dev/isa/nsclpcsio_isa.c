@@ -1,4 +1,4 @@
-/* $NetBSD: nsclpcsio_isa.c,v 1.23 2007/12/05 07:06:51 ad Exp $ */
+/* $NetBSD: nsclpcsio_isa.c,v 1.24 2008/01/02 02:25:27 dyoung Exp $ */
 
 /*
  * Copyright (c) 2002
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsclpcsio_isa.c,v 1.23 2007/12/05 07:06:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nsclpcsio_isa.c,v 1.24 2008/01/02 02:25:27 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -317,8 +317,8 @@ nsclpcsio_isa_attach(struct device *parent, struct device *self, void *aux)
 
 	if (bus_space_map(ia->ia_iot, iobase, 2, 0, &sc->sc_ioh)) {
 		aprint_error(": can't map i/o space\n");
-			return;
-		}
+		return;
+	}
 
 	aprint_normal(": NSC PC87366 rev. 0x%d ",
 	    nsread(sc->sc_iot, sc->sc_ioh, SIO_REG_SRID));
