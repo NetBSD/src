@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.263 2008/01/02 11:49:04 ad Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.264 2008/01/02 19:26:47 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.263 2008/01/02 11:49:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.264 2008/01/02 19:26:47 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_nfs.h"
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.263 2008/01/02 11:49:04 ad Exp $");
 #include <sys/condvar.h>
 #include <sys/disk.h>
 #include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/mbuf.h>
 #include <sys/mutex.h>
 #include <sys/namei.h>
@@ -2991,8 +2992,7 @@ nfs_sillyrename(dvp, vp, cnp, dolink)
 	if (vp->v_type == VDIR)
 		panic("nfs: sillyrename dir");
 #endif
-	MALLOC(sp, struct sillyrename *, sizeof (struct sillyrename),
-		M_NFSREQ, M_WAITOK);
+	sp = kmem_alloc(sizeof(*sp), KM_SLEEP);
 	sp->s_cred = kauth_cred_dup(cnp->cn_cred);
 	sp->s_dvp = dvp;
 	VREF(dvp);
@@ -3036,7 +3036,7 @@ nfs_sillyrename(dvp, vp, cnp, dolink)
 bad:
 	vrele(sp->s_dvp);
 	kauth_cred_free(sp->s_cred);
-	free((void *)sp, M_NFSREQ);
+	kmem_free(sp, sizeof(*sp));
 	return (error);
 }
 
@@ -3082,14 +3082,14 @@ nfs_lookitup(dvp, name, len, cred, l, npp)
 		if (*npp) {
 		    np = *npp;
 		    if (np->n_fhsize > NFS_SMALLFH && fhlen <= NFS_SMALLFH) {
-			free((void *)np->n_fhp, M_NFSBIGFH);
+			kmem_free(np->n_fhp, np->n_fhsize);
 			np->n_fhp = &np->n_fh;
 		    }
 #if NFS_SMALLFH < NFSX_V3FHMAX
-		    else if (np->n_fhsize <= NFS_SMALLFH && fhlen>NFS_SMALLFH)
-			np->n_fhp =(nfsfh_t *)malloc(fhlen,M_NFSBIGFH,M_WAITOK);
+		    else if (np->n_fhsize <= NFS_SMALLFH && fhlen > NFS_SMALLFH)
+			np->n_fhp = kmem_alloc(fhlen, KM_SLEEP);
 #endif
-		    memcpy((void *)np->n_fhp, (void *)nfhp, fhlen);
+		    memcpy(np->n_fhp, nfhp, fhlen);
 		    np->n_fhsize = fhlen;
 		    newvp = NFSTOV(np);
 		} else if (NFS_CMPFH(dnp, nfhp, fhlen)) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.195 2008/01/02 11:49:04 ad Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.196 2008/01/02 19:26:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.195 2008/01/02 11:49:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.196 2008/01/02 19:26:46 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -87,6 +87,7 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.195 2008/01/02 11:49:04 ad Exp $");
 #include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
+#include <sys/kmem.h>
 #include <sys/mount.h>
 #include <sys/vnode.h>
 #include <sys/namei.h>
@@ -1197,8 +1198,7 @@ nfs_initdirxlatecookie(vp)
 
 	KASSERT(VFSTONFS(vp->v_mount)->nm_flag & NFSMNT_XLATECOOKIE);
 
-	dirgens = malloc(NFS_DIRHASHSIZ * sizeof (unsigned), M_NFSDIROFF,
-	    M_WAITOK|M_ZERO);
+	dirgens = kmem_zalloc(NFS_DIRHASHSIZ * sizeof(unsigned), KM_SLEEP);
 	NFSDC_LOCK(np);
 	if (np->n_dirgens == NULL) {
 		np->n_dirgens = dirgens;
@@ -1206,7 +1206,7 @@ nfs_initdirxlatecookie(vp)
 	}
 	NFSDC_UNLOCK(np);
 	if (dirgens)
-		free(dirgens, M_NFSDIROFF);
+		kmem_free(dirgens, NFS_DIRHASHSIZ * sizeof(unsigned));
 }
 
 static const struct nfsdircache dzero;
@@ -1250,7 +1250,7 @@ nfs_putdircache(np, ndp)
 	NFSDC_UNLOCK(np);
 
 	if (ref == 0)
-		free(ndp, M_NFSDIROFF);
+		kmem_free(ndp, sizeof(*ndp));
 }
 
 static void
@@ -1266,7 +1266,7 @@ nfs_putdircache_unlocked(struct nfsnode *np, struct nfsdircache *ndp)
 	KASSERT(ndp->dc_refcnt > 0);
 	ref = --ndp->dc_refcnt;
 	if (ref == 0)
-		free(ndp, M_NFSDIROFF);
+		kmem_free(ndp, sizeof(*ndp));
 }
 
 struct nfsdircache *
@@ -1388,7 +1388,7 @@ retry:
 	if (!ndp) {
 		if (newndp == NULL) {
 			NFSDC_UNLOCK(np);
-			newndp = malloc(sizeof(*ndp), M_NFSDIROFF, M_WAITOK);
+			newndp = kmem_alloc(sizeof(*newndp), KM_SLEEP);
 			newndp->dc_refcnt = 1;
 			LIST_NEXT(newndp, dc_hash) = (void *)-1;
 			goto retry;
@@ -1473,7 +1473,8 @@ nfs_invaldircache(vp, flags)
 		}
 		np->n_dircachesize = 0;
 		if (forcefree && np->n_dirgens) {
-			FREE(np->n_dirgens, M_NFSDIROFF);
+			kmem_free(np->n_dirgens,
+			    NFS_DIRHASHSIZ * sizeof(unsigned));
 			np->n_dirgens = NULL;
 		}
 	} else {

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.97 2008/01/02 11:49:03 ad Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.98 2008/01/02 19:26:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.97 2008/01/02 11:49:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.98 2008/01/02 19:26:46 yamt Exp $");
 
 #include "opt_nfs.h"
 
@@ -68,7 +68,6 @@ POOL_INIT(nfs_node_pool, sizeof(struct nfsnode), 0, 0, 0, "nfsnodepl",
 POOL_INIT(nfs_vattr_pool, sizeof(struct vattr), 0, 0, 0, "nfsvapl",
     &pool_allocator_nointr, IPL_NONE);
 
-MALLOC_DEFINE(M_NFSBIGFH, "NFS bigfh", "NFS big filehandle");
 MALLOC_DEFINE(M_NFSNODE, "NFS node", "NFS vnode private part");
 
 extern int prtactive;
@@ -194,7 +193,7 @@ loop:
 
 	LIST_INSERT_HEAD(nhpp, np, n_hash);
 	if (fhsize > NFS_SMALLFH) {
-		np->n_fhp = malloc(fhsize, M_NFSBIGFH, M_WAITOK);
+		np->n_fhp = kmem_alloc(fhsize, KM_SLEEP);
 	} else
 		np->n_fhp = &np->n_fh;
 	memcpy(np->n_fhp, fhp, fhsize);
@@ -270,7 +269,7 @@ nfs_inactive(v)
 		}
 		kauth_cred_free(sp->s_cred);
 		vput(sp->s_dvp);
-		FREE(sp, M_NFSREQ);
+		kmem_free(sp, sizeof(*sp));
 	}
 
 	return (0);
@@ -304,7 +303,7 @@ nfs_reclaim(v)
 	KASSERT(np->n_dirgens == NULL);
 
 	if (np->n_fhsize > NFS_SMALLFH)
-		free(np->n_fhp, M_NFSBIGFH);
+		kmem_free(np->n_fhp, np->n_fhsize);
 
 	pool_put(&nfs_vattr_pool, np->n_vattr);
 	if (np->n_rcred)

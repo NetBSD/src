@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.166 2008/01/02 11:49:03 ad Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.167 2008/01/02 19:26:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.166 2008/01/02 11:49:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.167 2008/01/02 19:26:46 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.166 2008/01/02 11:49:03 ad Exp $");
 #include <sys/proc.h>
 #include <sys/mount.h>
 #include <sys/kernel.h>
+#include <sys/kmem.h>
 #include <sys/mbuf.h>
 #include <sys/vnode.h>
 #include <sys/domain.h>
@@ -80,7 +81,6 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.166 2008/01/02 11:49:03 ad Exp $");
 #include <nfs/nfsrtt.h>
 #include <nfs/nfs_var.h>
 
-MALLOC_DEFINE(M_NFSREQ, "NFS req", "NFS request header");
 #ifdef MBUFTRACE
 struct mowner nfs_mowner = MOWNER_INIT("nfs","");
 #endif
@@ -1001,7 +1001,7 @@ nfs_request(np, mrest, procnum, lwp, cred, mrp, mdp, dposp, rexmitp)
 
 tryagain_cred:
 	KASSERT(cred != NULL);
-	MALLOC(rep, struct nfsreq *, sizeof(struct nfsreq), M_NFSREQ, M_WAITOK);
+	rep = kmem_alloc(sizeof(*rep), KM_SLEEP);
 	rep->r_nmp = nmp;
 	KASSERT(lwp == NULL || lwp == curlwp);
 	rep->r_lwp = lwp;
@@ -1029,7 +1029,7 @@ kerbauth:
 			error = nfs_getauth(nmp, rep, cred, &auth_str,
 				&auth_len, verf_str, &verf_len, key);
 			if (error) {
-				free((void *)rep, M_NFSREQ);
+				kmem_free(rep, sizeof(*rep));
 				m_freem(mrest);
 				KASSERT(kauth_cred_getrefcnt(acred) == 1);
 				kauth_cred_free(acred);
@@ -1263,7 +1263,7 @@ tryagain:
 					break;
 				m_freem(mrep);
 				m_freem(rep->r_mreq);
-				FREE(rep, M_NFSREQ);
+				kmem_free(rep, sizeof(*rep));
 				use_opencred = !use_opencred;
 				if (mrest_backup == NULL) {
 					/* m_copym failure */
@@ -1424,7 +1424,7 @@ nfsmout:
 	KASSERT(kauth_cred_getrefcnt(acred) == 1);
 	kauth_cred_free(acred);
 	m_freem(rep->r_mreq);
-	free((void *)rep, M_NFSREQ);
+	kmem_free(rep, sizeof(*rep));
 	m_freem(mrest_backup);
 	return (error);
 }
@@ -1988,7 +1988,7 @@ nfs_getreq(nd, nfsd, has_header)
 	 */
 	if (auth_type == rpc_auth_unix) {
 		uid_t uid;
-		gid_t gid, *grbuf;
+		gid_t gid;
 
 		nd->nd_cr = kauth_cred_alloc();
 		len = fxdr_unsigned(int, *++tl);
@@ -2017,16 +2017,20 @@ nfs_getreq(nd, nfsd, has_header)
 		}
 		nfsm_dissect(tl, u_int32_t *, (len + 2) * NFSX_UNSIGNED);
 
-		grbuf = malloc(len * sizeof(gid_t), M_TEMP, M_WAITOK);
-		for (i = 0; i < len; i++) {
-			if (i < NGROUPS) /* XXX elad */
-				grbuf[i] = fxdr_unsigned(gid_t, *tl++);
-			else
-				tl++;
+		if (len > 0) {
+			size_t grbuf_size = min(len, NGROUPS) * sizeof(gid_t);
+			gid_t *grbuf = kmem_alloc(grbuf_size, KM_SLEEP);
+
+			for (i = 0; i < len; i++) {
+				if (i < NGROUPS) /* XXX elad */
+					grbuf[i] = fxdr_unsigned(gid_t, *tl++);
+				else
+					tl++;
+			}
+			kauth_cred_setgroups(nd->nd_cr, grbuf,
+			    min(len, NGROUPS), -1, UIO_SYSSPACE);
+			kmem_free(grbuf, grbuf_size);
 		}
-		kauth_cred_setgroups(nd->nd_cr, grbuf, min(len, NGROUPS), -1,
-		    UIO_SYSSPACE);
-		free(grbuf, M_TEMP);
 
 		len = fxdr_unsigned(int, *++tl);
 		if (len < 0 || len > RPCAUTH_MAXSIZ) {
