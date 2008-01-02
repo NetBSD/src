@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.189 2008/01/02 11:49:04 ad Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.190 2008/01/02 19:26:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.189 2008/01/02 11:49:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.190 2008/01/02 19:26:46 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -83,8 +83,6 @@ extern int nfs_ticks;
  * for the per drive stats.
  */
 unsigned int nfs_mount_count = 0;
-
-MALLOC_DEFINE(M_NFSMNT, "NFS mount", "NFS mount structure");
 
 /*
  * nfs vfs operations.
@@ -345,11 +343,11 @@ nfs_mountroot()
 	 * Call nfs_boot_init() to fill in the nfs_diskless struct.
 	 * Side effect:  Finds and configures a network interface.
 	 */
-	nd = malloc(sizeof(*nd), M_NFSMNT, M_WAITOK);
+	nd = kmem_alloc(sizeof(*nd), KM_SLEEP);
 	memset(nd, 0, sizeof(*nd));
 	error = nfs_boot_init(nd, l);
 	if (error) {
-		free(nd, M_NFSMNT);
+		kmem_free(nd, sizeof(*nd));
 		return (error);
 	}
 
@@ -384,7 +382,7 @@ nfs_mountroot()
 out:
 	if (error)
 		nfs_boot_cleanup(nd, l);
-	free(nd, M_NFSMNT);
+	kmem_free(nd, sizeof(*nd));
 	return (error);
 }
 
@@ -716,9 +714,7 @@ mountnfs(argp, mp, nam, pth, hst, vpp, l)
 		m_freem(nam);
 		return (0);
 	} else {
-		MALLOC(nmp, struct nfsmount *, sizeof (struct nfsmount),
-		    M_NFSMNT, M_WAITOK);
-		memset(nmp, 0, sizeof (struct nfsmount));
+		nmp = kmem_zalloc(sizeof(*nmp), KM_SLEEP);
 		mp->mnt_data = nmp;
 		TAILQ_INIT(&nmp->nm_uidlruhead);
 		TAILQ_INIT(&nmp->nm_bufq);
@@ -827,7 +823,7 @@ bad:
 	cv_destroy(&nmp->nm_sndcv);
 	cv_destroy(&nmp->nm_aiocv);
 	cv_destroy(&nmp->nm_disconcv);
-	free(nmp, M_NFSMNT);
+	kmem_free(nmp, sizeof(*nmp));
 	m_freem(nam);
 	return (error);
 }
@@ -904,7 +900,7 @@ nfs_unmount(struct mount *mp, int mntflags)
 	cv_destroy(&nmp->nm_sndcv);
 	cv_destroy(&nmp->nm_aiocv);
 	cv_destroy(&nmp->nm_disconcv);
-	free(nmp, M_NFSMNT);
+	kmem_free(nmp, sizeof(*nmp));
 	return (0);
 }
 
