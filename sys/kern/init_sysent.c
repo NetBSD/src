@@ -1,4 +1,4 @@
-/* $NetBSD: init_sysent.c,v 1.201.2.9 2007/12/29 10:21:14 yamt Exp $ */
+/* $NetBSD: init_sysent.c,v 1.201.2.10 2008/01/02 09:35:13 ad Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysent.c,v 1.201.2.9 2007/12/29 10:21:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysent.c,v 1.201.2.10 2008/01/02 09:35:13 ad Exp $");
 
 #include "opt_nfsserver.h"
 #include "opt_ntp.h"
@@ -165,11 +165,11 @@ struct sysent sysent[] = {
 	    (sy_call_t *)sys_geteuid },		/* 25 = geteuid */
 	{ ns(struct sys_ptrace_args), 0,
 	    (sy_call_t *)sys_ptrace },		/* 26 = ptrace */
-	{ ns(struct sys_recvmsg_args), SYCALL_MPSAFE | 0,
+	{ ns(struct sys_recvmsg_args), 0,
 	    (sy_call_t *)sys_recvmsg },		/* 27 = recvmsg */
-	{ ns(struct sys_sendmsg_args), SYCALL_MPSAFE | 0,
+	{ ns(struct sys_sendmsg_args), 0,
 	    (sy_call_t *)sys_sendmsg },		/* 28 = sendmsg */
-	{ ns(struct sys_recvfrom_args), SYCALL_MPSAFE | 0,
+	{ ns(struct sys_recvfrom_args), 0,
 	    (sy_call_t *)sys_recvfrom },	/* 29 = recvfrom */
 	{ ns(struct sys_accept_args), 0,
 	    (sy_call_t *)sys_accept },		/* 30 = accept */
@@ -382,7 +382,7 @@ struct sysent sysent[] = {
 	    (sy_call_t *)sys_flock },		/* 131 = flock */
 	{ ns(struct sys_mkfifo_args), SYCALL_MPSAFE | 0,
 	    (sy_call_t *)sys_mkfifo },		/* 132 = mkfifo */
-	{ ns(struct sys_sendto_args), SYCALL_MPSAFE | 0,
+	{ ns(struct sys_sendto_args), 0,
 	    (sy_call_t *)sys_sendto },		/* 133 = sendto */
 	{ ns(struct sys_shutdown_args), 0,
 	    (sy_call_t *)sys_shutdown },	/* 134 = shutdown */
