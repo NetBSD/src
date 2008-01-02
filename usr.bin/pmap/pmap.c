@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.39 2007/12/24 19:52:37 ad Exp $ */
+/*	$NetBSD: pmap.c,v 1.40 2008/01/02 17:23:31 yamt Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -38,16 +38,10 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pmap.c,v 1.39 2007/12/24 19:52:37 ad Exp $");
+__RCSID("$NetBSD: pmap.c,v 1.40 2008/01/02 17:23:31 yamt Exp $");
 #endif
 
 #include <string.h>
-
-#ifndef LOCKDEBUG
-#define VERSION regular
-#else /* LOCKDEBUG */
-#define VERSION lockdebug
-#endif /* LOCKDEBUG */
 
 #include "pmap.h"
 #include "main.h"
@@ -64,7 +58,7 @@ static int search_cache(kvm_t *, struct kbit *, char **, char *, size_t);
 int heapfound;
 
 void
-PMAPFUNC(process_map,VERSION)(kvm_t *kd, struct kinfo_proc2 *proc,
+process_map(kvm_t *kd, struct kinfo_proc2 *proc,
 			      struct kbit *vmspace, const char *thing)
 {
 	struct kbit kbit, *vm_map = &kbit;
@@ -99,11 +93,11 @@ PMAPFUNC(process_map,VERSION)(kvm_t *kd, struct kinfo_proc2 *proc,
 		KDEREF(kd, vm_map);
 	}
 
-	PMAPFUNC(dump_vm_map,VERSION)(kd, proc, vmspace, vm_map, thing);
+	dump_vm_map(kd, proc, vmspace, vm_map, thing);
 }
 
 void
-PMAPFUNC(dump_vm_map,VERSION)(kvm_t *kd, struct kinfo_proc2 *proc,
+dump_vm_map(kvm_t *kd, struct kinfo_proc2 *proc,
 	struct kbit *vmspace, struct kbit *vm_map, const char *mname)
 {
 	struct kbit kbit[2], *header, *vm_map_entry;
@@ -188,7 +182,7 @@ PMAPFUNC(dump_vm_map,VERSION)(kvm_t *kd, struct kinfo_proc2 *proc,
 			printf("\t%*s([ %s ])\n", indent(2), "", name);
 	}
 
-	PMAPFUNC(dump_vm_map_entry,VERSION)(kd, proc, vmspace, header, 1);
+	dump_vm_map_entry(kd, proc, vmspace, header, 1);
 
 	/*
 	 * we're not recursing into a submap, so print headers
@@ -242,8 +236,7 @@ PMAPFUNC(dump_vm_map,VERSION)(kvm_t *kd, struct kinfo_proc2 *proc,
 			       page_size,
 			       (D(vm_map_entry, vm_map_entry)->start - end) /
 			       1024);
-		total += PMAPFUNC(dump_vm_map_entry,VERSION)(kd, proc,
-		    vmspace, vm_map_entry, 0);
+		total += dump_vm_map_entry(kd, proc, vmspace, vm_map_entry, 0);
 
 		end = D(vm_map_entry, vm_map_entry)->end;
 	}
@@ -264,8 +257,7 @@ PMAPFUNC(dump_vm_map,VERSION)(kvm_t *kd, struct kinfo_proc2 *proc,
 }
 
 size_t
-PMAPFUNC(dump_vm_map_entry,VERSION)(kvm_t *kd,
-	struct kinfo_proc2 *proc, struct kbit *vmspace,
+dump_vm_map_entry(kvm_t *kd, struct kinfo_proc2 *proc, struct kbit *vmspace,
 	struct kbit *vm_map_entry, int ishead)
 {
 	struct kbit kbit[3];
@@ -333,7 +325,7 @@ PMAPFUNC(dump_vm_map_entry,VERSION)(kvm_t *kd,
 		P(amap) = vme->aref.ar_amap;
 		S(amap) = sizeof(struct vm_amap);
 		KDEREF(kd, amap);
-		PMAPFUNC(dump_amap,VERSION)(kd, amap);
+		dump_amap(kd, amap);
 	}
 
 	if (ishead)
@@ -527,7 +519,7 @@ PMAPFUNC(dump_vm_map_entry,VERSION)(kvm_t *kd,
 		P(submap) = vme->object.sub_map;
 		S(submap) = sizeof(*vme->object.sub_map);
 		KDEREF(kd, submap);
-		PMAPFUNC(dump_vm_map,VERSION)(kd, proc, vmspace, submap, "submap");
+		dump_vm_map(kd, proc, vmspace, submap, "submap");
 		recurse--;
 	}
 
@@ -535,7 +527,7 @@ PMAPFUNC(dump_vm_map_entry,VERSION)(kvm_t *kd,
 }
 
 void
-PMAPFUNC(dump_amap,VERSION)(kvm_t *kd, struct kbit *amap)
+dump_amap(kvm_t *kd, struct kbit *amap)
 {
 	struct vm_anon **am_anon;
 	int *am_slots;
