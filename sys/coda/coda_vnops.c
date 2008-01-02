@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vnops.c,v 1.65 2007/12/25 18:33:35 perry Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.66 2008/01/02 11:48:34 ad Exp $	*/
 
 /*
  *
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.65 2007/12/25 18:33:35 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.66 2008/01/02 11:48:34 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -872,7 +872,7 @@ coda_inactive(void *v)
 	    printf("coda_inactive: %p ovp != NULL\n", vp);
 	}
 	VOP_UNLOCK(vp, 0);
-	vgone(vp);
+	*ap->a_recycle = true;
     }
 
     MARK_INT_SAT(CODA_INACTIVE_STATS);
@@ -2002,7 +2002,7 @@ coda_getpages(void *v)
 	/* Check for control object. */
 	if (IS_CTL_VP(vp)) {
 		printf("coda_getpages: control object %p\n", vp);
-		simple_unlock(&vp->v_uobj.vmobjlock);
+		mutex_exit(&vp->v_uobj.vmobjlock);
 		return(EINVAL);
 	}
 
@@ -2017,7 +2017,7 @@ coda_getpages(void *v)
 	waslocked = VOP_ISLOCKED(vp);
 
 	/* Drop the vmobject lock. */
-	simple_unlock(&vp->v_uobj.vmobjlock);
+	mutex_exit(&vp->v_uobj.vmobjlock);
 
 	/* Get container file if not already present. */
 	if (cp->c_ovp == NULL) {
@@ -2065,7 +2065,7 @@ coda_getpages(void *v)
 	ap->a_vp = cp->c_ovp;
 
 	/* Get the lock on the container vnode, and call getpages on it. */
-	simple_lock(&ap->a_vp->v_uobj.vmobjlock);
+	mutex_enter(&ap->a_vp->v_uobj.vmobjlock);
 	error = VCALL(ap->a_vp, VOFFSET(vop_getpages), ap);
 
 	/* If we opened the vnode, we must close it. */
@@ -2106,7 +2106,7 @@ coda_putpages(void *v)
 	int error;
 
 	/* Drop the vmobject lock. */
-	simple_unlock(&vp->v_uobj.vmobjlock);
+	mutex_exit(&vp->v_uobj.vmobjlock);
 
 	/* Check for control object. */
 	if (IS_CTL_VP(vp)) {
@@ -2127,7 +2127,7 @@ coda_putpages(void *v)
 	ap->a_vp = cp->c_ovp;
 
 	/* Get the lock on the container vnode, and call putpages on it. */
-	simple_lock(&ap->a_vp->v_uobj.vmobjlock);
+	mutex_enter(&ap->a_vp->v_uobj.vmobjlock);
 	error = VCALL(ap->a_vp, VOFFSET(vop_putpages), ap);
 
 	return error;

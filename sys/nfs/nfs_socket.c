@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.165 2007/12/04 17:42:31 yamt Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.166 2008/01/02 11:49:03 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.165 2007/12/04 17:42:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.166 2008/01/02 11:49:03 ad Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -2242,7 +2242,9 @@ nfsrv_rcv(struct nfssvc_sock *slp)
 		auio.uio_resid = 1000000000;
 		/* not need to setup uio_vmspace */
 		flags = MSG_DONTWAIT;
+		KERNEL_LOCK(1, curlwp);
 		error = (*so->so_receive)(so, &nam, &auio, &mp, NULL, &flags);
+		KERNEL_UNLOCK_ONE(curlwp);
 		if (error || mp == NULL) {
 			if (error == EWOULDBLOCK)
 				setflags |= SLP_A_NEEDQ;
@@ -2278,8 +2280,10 @@ nfsrv_rcv(struct nfssvc_sock *slp)
 			auio.uio_resid = 1000000000;
 			/* not need to setup uio_vmspace */
 			flags = MSG_DONTWAIT;
+			KERNEL_LOCK(1, curlwp);
 			error = (*so->so_receive)(so, &nam, &auio, &mp, NULL,
 			    &flags);
+			KERNEL_UNLOCK_ONE(curlwp);
 			if (mp) {
 				if (nam) {
 					m = nam;

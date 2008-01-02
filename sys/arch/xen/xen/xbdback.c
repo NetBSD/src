@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback.c,v 1.28 2007/11/26 19:01:27 pooka Exp $      */
+/*      $NetBSD: xbdback.c,v 1.29 2008/01/02 11:48:33 ad Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -853,6 +853,8 @@ xbdback_co_io_gotreq(struct xbdback_instance *xbdi, void *obj)
 static void *
 xbdback_co_io_loop(struct xbdback_instance *xbdi, void *obj)
 {
+	struct xbdback_io *xio;
+
 	(void)obj;
 	if (xbdi->segno < xbdi->xen_req->nr_segments) {
 		unsigned long this_fas, last_fas;
@@ -898,7 +900,9 @@ xbdback_co_io_loop(struct xbdback_instance *xbdi, void *obj)
 
 		if (xbdi->io == NULL) {
 			xbdi->cont = xbdback_co_io_gotio;
-			return xbdback_pool_get(&xbdback_io_pool, xbdi);
+			xio = xbdback_pool_get(&xbdback_io_pool, xbdi);
+			buf_init(&xio->xio_buf);
+			return xio;
 		} else {
 			xbdi->cont = xbdback_co_io_gotio2;
 		}
@@ -929,16 +933,18 @@ xbdback_co_io_gotio(struct xbdback_instance *xbdi, void *obj)
 	start_offset = blkif_first_sect(xbdi->this_fas) * VBD_BSIZE;
 	
 	if (xbdi->xen_req->operation == BLKIF_OP_WRITE) {
-		buf_flags = B_WRITE | B_CALL;
+		buf_flags = B_WRITE;
 	} else {
-		buf_flags = B_READ | B_CALL;
+		buf_flags = B_READ;
 	}
 
-	BUF_INIT(&xbd_io->xio_buf);
 	xbd_io->xio_buf.b_flags = buf_flags;
+	xbd_io->xio_buf.b_cflags = 0;
+	xbd_io->xio_buf.b_oflags = 0;
 	xbd_io->xio_buf.b_iodone = xbdback_iodone;
 	xbd_io->xio_buf.b_proc = NULL;
 	xbd_io->xio_buf.b_vp = xbdi->req_vbd->vp;
+	xbd_io->xio_buf.b_objlock = &xbdi->req_vbd->vp->v_interlock;
 	xbd_io->xio_buf.b_dev = xbdi->req_vbd->dev;
 	xbd_io->xio_buf.b_blkno = xbdi->next_sector;
 	xbd_io->xio_buf.b_bcount = 0;
@@ -1133,12 +1139,14 @@ xbdback_iodone(struct buf *bp)
 		xbdback_pool_put(&xbdback_request_pool, xbd_req);
 	}
 	xbdi_put(xbdi);
+	buf_destroy(&xbd_io->xio_buf);
 	xbdback_pool_put(&xbdback_io_pool, xbd_io);
 }
 
 static void *
 xbdback_co_probe(struct xbdback_instance *xbdi, void *obj)
 {
+	struct xbdback_io *xio;
 	(void)obj;
 	/*
 	 * There should be only one page in the request. Map it and store
@@ -1153,7 +1161,9 @@ xbdback_co_probe(struct xbdback_instance *xbdi, void *obj)
 		return xbdi;
 	}
 	xbdi->cont = xbdback_co_probe_gotio;
-	return xbdback_pool_get(&xbdback_io_pool, xbdi);
+	xio = xbdback_pool_get(&xbdback_io_pool, xbdi);
+	buf_init(&xio->xio_buf);
+	return xio;
 }
 
 static void *
@@ -1202,6 +1212,7 @@ xbdback_co_probe_gotvm(struct xbdback_instance *xbdi, void *obj)
 	xbdback_unmap_shm(xbdi->io);
 	XENPRINTF(("xbdback_probe: nreplies=%d\n", i));
 	xbdback_send_reply(xbdi, req->id, req->operation, i);
+	buf_destroy(&xbdi->io->xio_buf);
 	xbdback_pool_put(&xbdback_io_pool, xbdi->io);
 	xbdi->io = NULL;
 	xbdi->cont = xbdback_co_main_incr;

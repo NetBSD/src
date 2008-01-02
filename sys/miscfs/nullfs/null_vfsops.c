@@ -1,4 +1,4 @@
-/*	$NetBSD: null_vfsops.c,v 1.71 2007/12/08 19:29:51 pooka Exp $	*/
+/*	$NetBSD: null_vfsops.c,v 1.72 2008/01/02 11:49:00 ad Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: null_vfsops.c,v 1.71 2007/12/08 19:29:51 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: null_vfsops.c,v 1.72 2008/01/02 11:49:00 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -184,16 +184,19 @@ nullfs_mount(mp, path, data, data_len)
 		return (error);
 	}
 	/*
-	 * Unlock the node
-	 */
-	vp->v_vflag |= VV_ROOT;
-	VOP_UNLOCK(vp, 0);
-
-	/*
 	 * Keep a held reference to the root vnode.
 	 * It is vrele'd in nullfs_unmount.
 	 */
+	vp->v_vflag |= VV_ROOT;
 	nmp->nullm_rootvp = vp;
+
+	/* We don't need kernel_lock. */
+	mp->mnt_iflag |= IMNT_MPSAFE;
+
+	/*
+	 * Unlock the node
+	 */
+	VOP_UNLOCK(vp, 0);
 
 	error = set_statvfs_info(path, UIO_USERSPACE, args->la.target,
 	    UIO_USERSPACE, mp->mnt_op->vfs_name, mp, l);
@@ -231,12 +234,7 @@ nullfs_unmount(struct mount *mp, int mntflags)
 	vprint("alias root of lower", null_rootvp);
 #endif
 	/*
-	 * Release reference on underlying root vnode
-	 */
-	vrele(null_rootvp);
-
-	/*
-	 * And blow it away for future re-use
+	 * Blow it away for future re-use
 	 */
 	vgone(null_rootvp);
 

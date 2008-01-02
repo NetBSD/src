@@ -1,4 +1,4 @@
-/*	$NetBSD: ct.c,v 1.51 2007/10/17 19:54:22 garbled Exp $	*/
+/*	$NetBSD: ct.c,v 1.52 2008/01/02 11:48:24 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ct.c,v 1.51 2007/10/17 19:54:22 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ct.c,v 1.52 2008/01/02 11:48:24 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -468,7 +468,7 @@ ctcommand(dev_t dev, int cmd, int cnt)
 	}
 
 	while (cnt-- > 0) {
-		bp->b_flags = B_BUSY;
+		bp->b_cflags = BC_BUSY;
 		if (cmd == MTBSF) {
 			sc->sc_blkno = sc->sc_eofs[sc->sc_eofp];
 			sc->sc_eofp--;

@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.335 2007/12/31 15:32:10 ad Exp $	*/
+/*	$NetBSD: init_main.c,v 1.336 2008/01/02 11:48:48 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.335 2007/12/31 15:32:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.336 2008/01/02 11:48:48 ad Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_ntp.h"
@@ -423,6 +423,9 @@ main(void)
 	tty_init();
 	ttyldisc_init();
 
+	/* Initialize the buffer cache, part 2. */
+	bufinit2();
+
 	/* Initialize the disk wedge subsystem. */
 	dkwedge_init();
 
@@ -639,17 +642,18 @@ main(void)
 
 	/* Create the pageout daemon kernel thread. */
 	uvm_swap_init();
-	if (kthread_create(PRI_PGDAEMON, 0, NULL, uvm_pageout,
+	if (kthread_create(PRI_PGDAEMON, KTHREAD_MPSAFE, NULL, uvm_pageout,
 	    NULL, NULL, "pgdaemon"))
 		panic("fork pagedaemon");
 
 	/* Create the filesystem syncer kernel thread. */
-	if (kthread_create(PRI_IOFLUSH, 0, NULL, sched_sync, NULL, NULL, "ioflush"))
+	if (kthread_create(PRI_IOFLUSH, KTHREAD_MPSAFE, NULL, sched_sync,
+	    NULL, NULL, "ioflush"))
 		panic("fork syncer");
 
 	/* Create the aiodone daemon kernel thread. */
 	if (workqueue_create(&uvm.aiodone_queue, "aiodoned",
-	    uvm_aiodone_worker, NULL, PRI_VM, IPL_BIO, 0))
+	    uvm_aiodone_worker, NULL, PRI_VM, IPL_NONE, WQ_MPSAFE))
 		panic("fork aiodoned");
 
 	vmem_rehash_start();

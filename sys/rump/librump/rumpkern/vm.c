@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.24 2007/12/01 10:45:42 yamt Exp $	*/
+/*	$NetBSD: vm.c,v 1.25 2008/01/02 11:49:06 ad Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -78,6 +78,8 @@ const struct uvm_pagerops aobj_pager = {
 	.pgo_get = ao_get,
 	.pgo_put = ao_put,
 };
+
+kmutex_t uvm_pageqlock;
 
 struct uvmexp uvmexp;
 struct uvm uvm;
@@ -423,6 +425,7 @@ rumpvm_init()
 
 	mutex_init(&rvamtx, MUTEX_DEFAULT, 0);
 	mutex_init(&uwinmtx, MUTEX_DEFAULT, 0);
+	mutex_init(&uvm_pageqlock, MUTEX_DEFAULT, 0);
 }
 
 void
@@ -531,7 +534,7 @@ void
 uvm_aio_aiodone(struct buf *bp)
 {
 
-	if ((bp->b_flags & (B_READ | B_NOCACHE)) == 0 && bioopsp)
+	if (((bp->b_flags | bp->b_cflags) & (B_READ | BC_NOCACHE)) == 0 && bioopsp)
 		bioopsp->io_pageiodone(bp);
 }
 
@@ -667,4 +670,28 @@ uvm_km_suballoc(struct vm_map *map, vaddr_t *minaddr, vaddr_t *maxaddr,
 {
 
 	return (struct vm_map *)417416;
+}
+
+void
+uvm_pageout_start(int npages)
+{
+
+	uvmexp.paging += npages;
+}
+
+void
+uvm_pageout_done(int npages)
+{
+
+	uvmexp.paging -= npages;
+
+	/*
+	 * wake up either of pagedaemon or LWPs waiting for it.
+	 */
+
+	if (uvmexp.free <= uvmexp.reserve_kernel) {
+		wakeup(&uvm.pagedaemon);
+	} else {
+		wakeup(&uvmexp.free);
+	}
 }

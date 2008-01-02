@@ -1,11 +1,11 @@
-/*	$NetBSD: fstrans.h,v 1.8 2008/01/02 11:49:07 ad Exp $	*/
+/*	$NetBSD: intr.c,v 1.2 2008/01/02 11:49:06 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Juergen Hannken-Illjes.
+ * by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,55 +36,52 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * File system transaction operations.
- */
+#include <sys/param.h>
+#include <sys/errno.h>
+#include <sys/intr.h>
+#include <sys/kmem.h>
+#include <sys/cpu.h>
 
-#ifndef _SYS_FSTRANS_H_
-#define	_SYS_FSTRANS_H_
+#include "rump.h"
+#include "rumpuser.h"
 
-#include <sys/mount.h>
-
-#define SUSPEND_SUSPEND	0x0001		/* VFS_SUSPENDCTL: suspend */
-#define SUSPEND_RESUME	0x0002		/* VFS_SUSPENDCTL: resume */
-
-enum fstrans_lock_type {
-	FSTRANS_LAZY = 1,		/* Granted while not suspended */
-	FSTRANS_SHARED = 2		/* Granted while not suspending */
-#ifdef _FSTRANS_API_PRIVATE
-	,
-	FSTRANS_EXCL = 3		/* Internal: exclusive lock */
-#endif /* _FSTRANS_API_PRIVATE */
+struct v_dodgy {
+	void	(*func)(void *);
+	void	*arg;
 };
 
-enum fstrans_state {
-	FSTRANS_NORMAL,
-	FSTRANS_SUSPENDING,
-	FSTRANS_SUSPENDED
-};
+void *
+softint_establish(u_int flags, void (*func)(void *), void *arg)
+{
+	struct v_dodgy *vd;
 
-void	fstrans_init(void);
-#define fstrans_start(mp, t)						\
-do {									\
-	_fstrans_start((mp), (t), 1);					\
-} while (/* CONSTCOND */ 0)
-#define fstrans_start_nowait(mp, t)	_fstrans_start((mp), (t), 0)
-int	_fstrans_start(struct mount *, enum fstrans_lock_type, int);
-void	fstrans_done(struct mount *);
-int	fstrans_is_owner(struct mount *);
-int	fstrans_mount(struct mount *);
-void	fstrans_unmount(struct mount *);
+	vd = kmem_alloc(sizeof(*vd), KM_SLEEP);
+	if (vd != NULL) {
+		vd->func = func;
+		vd->arg = arg;
+	}
+	return vd;
+}
 
-int	fstrans_setstate(struct mount *, enum fstrans_state);
-enum fstrans_state fstrans_getstate(struct mount *);
+void
+softint_disestablish(void *arg)
+{
 
-int	fscow_establish(struct mount *, int (*)(void *, struct buf *, bool),
-	    void *);
-int	fscow_disestablish(struct mount *, int (*)(void *, struct buf *, bool),
-	    void *);
-int	fscow_run(struct buf *, bool);
+	kmem_free(arg, sizeof(struct v_dodgy));
+}
 
-int	vfs_suspend(struct mount *, int);
-void	vfs_resume(struct mount *);
+void
+softint_schedule(void *arg)
+{
+	struct v_dodgy *vd;
 
-#endif /* _SYS_FSTRANS_H_ */
+	vd = arg;
+	(*(vd->func))(arg);
+}
+
+bool
+cpu_intr_p(void)
+{
+
+	return false;
+}

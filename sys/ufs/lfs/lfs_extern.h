@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.93 2007/12/08 19:29:55 pooka Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.94 2008/01/02 11:49:11 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -121,8 +121,10 @@ extern int locked_queue_count;
 extern long locked_queue_bytes;
 extern int lfs_subsys_pages;
 extern int lfs_dirvcount;
-extern struct simplelock lfs_subsys_lock;
+extern kmutex_t lfs_lock;
 extern int lfs_debug_log_subsys[];
+extern kcondvar_t lfs_writing_cv;
+extern kcondvar_t locked_queue_cv;
 
 __BEGIN_DECLS
 /* lfs_alloc.c */
@@ -181,7 +183,7 @@ int lfs_vflush(struct vnode *);
 int lfs_segwrite(struct mount *, int);
 int lfs_writefile(struct lfs *, struct segment *, struct vnode *);
 int lfs_writeinode(struct lfs *, struct segment *, struct inode *);
-int lfs_gatherblock(struct segment *, struct buf *, int *);
+int lfs_gatherblock(struct segment *, struct buf *, kmutex_t *);
 int lfs_gather(struct lfs *, struct segment *, struct vnode *, int (*match )(struct lfs *, struct buf *));
 void lfs_update_single(struct lfs *, struct segment *, struct vnode *,
     daddr_t, int32_t, int);

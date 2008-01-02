@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.15 2007/12/20 23:46:11 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.16 2008/01/02 11:48:33 ad Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.15 2007/12/20 23:46:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.16 2008/01/02 11:48:33 ad Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -363,20 +363,6 @@ long nkptpmax[] = NKPTPMAX_INITIALIZER;
 long nbpd[] = NBPD_INITIALIZER;
 pd_entry_t *normal_pdes[] = PDES_INITIALIZER;
 pd_entry_t *alternate_pdes[] = APDES_INITIALIZER;
-
-/*
- * locking data structures.  to enable the locks, changes from the
- * 'vmlocking' cvs branch are required.  for now, just stub them out.
- */
-
-#define rw_enter(a, b)		/* nothing */
-#define	rw_exit(a)		/* nothing */
-#define	mutex_enter(a)		simple_lock(a)
-#define	mutex_exit(a)		simple_unlock(a)
-#define	mutex_init(a, b, c)	simple_lock_init(a)
-#define	mutex_owned(a)		(1)
-#define	mutex_destroy(a)	/* nothing */
-#define kmutex_t		struct simplelock
 
 static kmutex_t pmaps_lock;
 static krwlock_t pmap_main_lock;
@@ -1986,8 +1972,6 @@ pmap_destroy(struct pmap *pmap)
 	 * remove it from global list of pmaps
 	 */
 
-	KERNEL_LOCK(1, NULL);
-
 	mutex_enter(&pmaps_lock);
 	LIST_REMOVE(pmap, pm_list);
 	mutex_exit(&pmaps_lock);
@@ -2025,8 +2009,6 @@ pmap_destroy(struct pmap *pmap)
 	for (i = 0; i < PTP_LEVELS - 1; i++)
 		mutex_destroy(&pmap->pm_obj[i].vmobjlock);
 	pool_cache_put(&pmap_cache, pmap);
-
-	KERNEL_UNLOCK_ONE(NULL);
 }
 
 /*
