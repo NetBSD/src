@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.18 2008/01/02 12:31:32 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.19 2008/01/02 17:33:08 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.18 2008/01/02 12:31:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.19 2008/01/02 17:33:08 yamt Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -2501,8 +2501,8 @@ pmap_extract_ma(pmap, va, pap)
 	struct pmap *pmap2;
  
 	pmap_map_ptes(pmap, &pmap2, &ptes, &pdes);
-	if (pmap_pdes_valid(va, pdes, &pde) == FALSE) {
-		return FALSE;
+	if (!pmap_pdes_valid(va, pdes, &pde)) {
+		return false;
 	}
  
 	pte = ptes[pl1_i(va)];
@@ -2511,10 +2511,10 @@ pmap_extract_ma(pmap, va, pap)
 	if (__predict_true((pte & PG_V) != 0)) {
 		if (pap != NULL)
 			*pap = (pte & PG_FRAME) | (va & (NBPD_L1 - 1));
-		return (TRUE);
+		return true;
 	}
 				 
-	 return FALSE;
+	return false;
 }
 
 /*
