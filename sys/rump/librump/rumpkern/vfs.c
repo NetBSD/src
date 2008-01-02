@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs.c,v 1.22 2008/01/02 11:49:06 ad Exp $	*/
+/*	$NetBSD: vfs.c,v 1.23 2008/01/02 13:42:47 ad Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -163,11 +163,33 @@ vrele2(struct vnode *vp, bool onhead)
 
 }
 
+vnode_t *
+valloc(struct mount *mp)
+{
+	struct vnode *vp;
+	struct uvm_object *uobj;
+
+	/* assuming mp != NULL */
+
+	vp = rumpuser_malloc(sizeof(struct vnode), 0);
+	memset(vp, 0, sizeof(struct vnode));
+	vp->v_type = VBAD;
+	vp->v_iflag = VI_MARKER;
+	vp->v_mount = mp;
+	uobj = &vp->v_uobj;
+	uobj->pgops = &uvm_vnodeops;
+	simple_lock_init(&vp->v_interlock);
+	TAILQ_INIT(&uobj->memq);
+
+	return vp;
+}
+
+
 void
 vfree(vnode_t *vp)
 {
 
-	/* XXX */
+	rumpuser_free(vp);
 }
 
 void
