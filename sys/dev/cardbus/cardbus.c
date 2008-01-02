@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.83 2008/01/02 02:05:19 dyoung Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.84 2008/01/02 22:29:00 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.83 2008/01/02 02:05:19 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.84 2008/01/02 22:29:00 dyoung Exp $");
 
 #include "opt_cardbus.h"
 
@@ -279,7 +279,8 @@ cardbus_read_tuples(struct cardbus_attach_args *ca, cardbusreg_t cis_ptr,
 			    command | CARDBUS_COMMAND_MEM_ENABLE);
 			/* XXX byte order? */
 			bus_space_read_region_1(bar_tag, bar_memh,
-			    cis_ptr, tuples, MIN(bar_size, len));
+			    cis_ptr, tuples,
+			    MIN(bar_size - MIN(bar_size, cis_ptr), len));
 			found++;
 		}
 		command = cardbus_conf_read(cc, cf, tag,
