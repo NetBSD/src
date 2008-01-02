@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.17 2008/01/02 12:30:31 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.18 2008/01/02 12:31:32 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.17 2008/01/02 12:30:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.18 2008/01/02 12:31:32 yamt Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -465,7 +465,7 @@ static struct pool_cache pmap_cache;
  * pv_entry cache
  */
 
-struct pool_cache pmap_pv_cache;
+static struct pool_cache pmap_pv_cache;
 
 /*
  * MULTIPROCESSOR: special VA's/ PTE's are actually allocated inside a
