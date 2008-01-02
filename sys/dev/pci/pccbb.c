@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.159 2007/12/20 20:48:24 dyoung Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.160 2008/01/02 23:11:34 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.159 2007/12/20 20:48:24 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.160 2008/01/02 23:11:34 dyoung Exp $");
 
 /*
 #define CBB_DEBUG
@@ -136,7 +136,8 @@ STATIC void pccbb_pcmcia_deactivate_card(struct pcic_handle *);
 #endif
 
 STATIC int pccbb_ctrl(cardbus_chipset_tag_t, int);
-STATIC int pccbb_power(cardbus_chipset_tag_t, int);
+STATIC int pccbb_power(struct pccbb_softc *sc, int);
+STATIC int pccbb_power_ct(cardbus_chipset_tag_t, int);
 STATIC int pccbb_cardenable(struct pccbb_softc * sc, int function);
 #if !rbus
 static int pccbb_io_open(cardbus_chipset_tag_t, int, u_int32_t, u_int32_t);
@@ -252,7 +253,7 @@ static struct cardbus_functions pccbb_funcs = {
 	pccbb_cb_intr_establish,
 	pccbb_cb_intr_disestablish,
 	pccbb_ctrl,
-	pccbb_power,
+	pccbb_power_ct,
 	pccbb_make_tag,
 	pccbb_free_tag,
 	pccbb_conf_read,
@@ -261,7 +262,7 @@ static struct cardbus_functions pccbb_funcs = {
 #else
 static struct cardbus_functions pccbb_funcs = {
 	pccbb_ctrl,
-	pccbb_power,
+	pccbb_power_ct,
 	pccbb_mem_open,
 	pccbb_mem_close,
 	pccbb_io_open,
@@ -924,7 +925,7 @@ pccbb_chipinit(struct pccbb_softc *sc)
 	    bus_space_read_1(bmt, bmh, 0x800 + PCIC_INTR) & ~PCIC_INTR_RESET);
 
 	/* turn off power */
-	pccbb_power((cardbus_chipset_tag_t)sc, CARDBUS_VCC_0V | CARDBUS_VPP_0V);
+	pccbb_power(sc, CARDBUS_VCC_0V | CARDBUS_VPP_0V);
 
 	/* CSC Interrupt: Card detect and power cycle interrupts on */
 	sockmask = bus_space_read_4(bmt, bmh, CB_SOCKET_MASK);
@@ -1260,15 +1261,22 @@ pccbb_ctrl(cardbus_chipset_tag_t ct, int command)
 	return 0;
 }
 
+STATIC int
+pccbb_power_ct(cardbus_chipset_tag_t ct, int command)
+{
+	struct pccbb_softc *sc = (struct pccbb_softc *)ct;
+
+	return pccbb_power(sc, command);
+}
+
 /*
  * STATIC int pccbb_power(cardbus_chipset_tag_t, int)
  *   This function returns true when it succeeds and returns false when
  *   it fails.
  */
 STATIC int
-pccbb_power(cardbus_chipset_tag_t ct, int command)
+pccbb_power(struct pccbb_softc *sc, int command)
 {
-	struct pccbb_softc *sc = (struct pccbb_softc *)ct;
 	u_int32_t status, osock_ctrl, sock_ctrl, reg_ctrl;
 	bus_space_tag_t memt = sc->sc_base_memt;
 	bus_space_handle_t memh = sc->sc_base_memh;
