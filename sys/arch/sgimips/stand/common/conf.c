@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.5 2005/12/11 12:18:58 christos Exp $	*/
+/*	$NetBSD: conf.c,v 1.5.64.1 2008/01/02 21:50:17 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -67,13 +67,14 @@ struct devsw devsw[] = {
 #endif
 };
 
-int	ndevs = (sizeof(devsw)/sizeof(devsw[0]));
+int	ndevs = __arraycount(devsw);
 #endif
 
 
 #ifndef LIBSA_SINGLE_FILESYSTEM
 #ifdef LIBSA_NO_FS_CLOSE
-#define ufs_close	0
+#define ffsv1_close	0
+#define ffsv2_close	0
 #define lfsv1_close	0
 #define lfsv2_close	0
 #define cd9660_close	0
@@ -81,7 +82,8 @@ int	ndevs = (sizeof(devsw)/sizeof(devsw[0]));
 #define nfs_close	0
 #endif
 #ifdef LIBSA_NO_FS_WRITE
-#define ufs_write	0
+#define ffsv1_write	0
+#define ffsv2_write	0
 #define lfsv1_write	0
 #define lfsv2_write	0
 #define cd9660_write	0
@@ -90,7 +92,8 @@ int	ndevs = (sizeof(devsw)/sizeof(devsw[0]));
 #endif
 
 struct fs_ops file_system[] = {
-	FS_OPS(ufs),
+	FS_OPS(ffsv1),
+	FS_OPS(ffsv2),
 	FS_OPS(lfsv1),
 	FS_OPS(lfsv2),
 	FS_OPS(cd9660),
@@ -102,7 +105,7 @@ struct fs_ops file_system[] = {
 #endif
 };
 
-int nfsys = sizeof(file_system)/sizeof(struct fs_ops);
+int nfsys = __arraycount(file_system);
 #endif
 
 #ifdef BOOTNET
@@ -111,5 +114,5 @@ extern struct netif_driver prom_netif_driver;
 struct netif_driver *netif_drivers[] = {
 	&prom_netif_driver,
 };
-int	n_netif_drivers = (sizeof(netif_drivers) / sizeof(netif_drivers[0]));
+int	n_netif_drivers = __arraycount(netif_drivers);
 #endif

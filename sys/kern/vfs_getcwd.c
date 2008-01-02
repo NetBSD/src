@@ -1,4 +1,4 @@
-/* $NetBSD: vfs_getcwd.c,v 1.40 2007/12/08 19:29:49 pooka Exp $ */
+/* $NetBSD: vfs_getcwd.c,v 1.40.4.1 2008/01/02 21:56:22 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_getcwd.c,v 1.40 2007/12/08 19:29:49 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_getcwd.c,v 1.40.4.1 2008/01/02 21:56:22 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -512,12 +512,12 @@ proc_isunder(struct proc *p1, struct lwp *l2)
  */
 
 int
-sys___getcwd(struct lwp *l, void *v, register_t *retval)
+sys___getcwd(struct lwp *l, const struct sys___getcwd_args *uap, register_t *retval)
 {
-	struct sys___getcwd_args /* {
+	/* {
 		syscallarg(char *) bufp;
 		syscallarg(size_t) length;
-	} */ *uap = v;
+	} */
 
 	int     error;
 	char   *path;

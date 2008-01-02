@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.72 2007/12/09 20:27:47 jmcneill Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.72.2.1 2008/01/02 21:48:19 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.72 2007/12/09 20:27:47 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.72.2.1 2008/01/02 21:48:19 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,11 +99,12 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.72 2007/12/09 20:27:47 jmcneill Exp $"
 #endif
 #endif
 
+void	mainbus_childdetached(device_t, device_t);
 int	mainbus_match(struct device *, struct cfdata *, void *);
 void	mainbus_attach(struct device *, struct device *, void *);
 
-CFATTACH_DECL(mainbus, sizeof(struct device),
-    mainbus_match, mainbus_attach, NULL, NULL);
+CFATTACH_DECL2(mainbus, sizeof(struct device),
+    mainbus_match, mainbus_attach, NULL, NULL, NULL, mainbus_childdetached);
 
 int	mainbus_print(void *, const char *);
 
@@ -164,6 +165,11 @@ int mp_verbose = 0;
 #endif
 #endif
 
+void
+mainbus_childdetached(device_t self, device_t child)
+{
+	/* mainbus holds no pointers to its children, so this is ok */
+}
 
 /*
  * Probe for the mainbus; always succeeds.

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.45 2007/10/17 19:57:07 garbled Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.45.8.1 2008/01/02 21:50:18 bouyer Exp $	*/
 
 /*-
  * Copyright (C) 2002 UCHIYAMA Yasushi.  All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.45 2007/10/17 19:57:07 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.45.8.1 2008/01/02 21:50:18 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -83,6 +83,7 @@ static void __db_cachedump_sh4(vaddr_t);
 
 static void db_frame_cmd(db_expr_t, bool, db_expr_t, const char *);
 static void __db_print_symbol(db_expr_t);
+static void __db_print_tfstack(struct trapframe *, struct trapframe *);
 
 #ifdef KSTACK_DEBUG
 static void db_stackcheck_cmd(db_expr_t, bool, db_expr_t, const char *);
@@ -532,7 +533,7 @@ static void
 db_frame_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 {
 	struct switchframe *sf = &curpcb->pcb_sf;
-	struct trapframe *tf, *tftop;
+	struct trapframe *tf, *tfbot;
 
 	/* Print switch frame */
 	db_printf("[switch frame]\n");
@@ -541,26 +542,43 @@ db_frame_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 		__db_print_symbol(sf->sf_ ## x)
 
 	SF(sr);
-	SF(r15);
-	SF(r14);
-	SF(r13);
-	SF(r12);
-	SF(r11);
-	SF(r10);
-	SF(r9);
-	SF(r8);
 	SF(pr);
+	SF(r8);
+	SF(r9);
+	SF(r10);
+	SF(r11);
+	SF(r12);
+	SF(r13);
+	SF(r14);
+	SF(r15);
 	db_printf("sf_r6_bank\t0x%08x\n", sf->sf_r6_bank);
 	db_printf("sf_r7_bank\t0x%08x\n", sf->sf_r7_bank);
+#undef	SF
 
 
 	/* Print trap frame stack */
-	db_printf("[trap frame]\n");
+	tfbot = (struct trapframe *)((vaddr_t)curpcb + PAGE_SIZE);
 
 	__asm("stc r6_bank, %0" : "=r"(tf));
-	tftop = (struct trapframe *)((vaddr_t)curpcb + PAGE_SIZE);
+	if ((uint32_t)tf < intfp) {
+	    db_printf("[trap frames on interrupt stack]\n");
+	    __db_print_tfstack(tf, (void *)intfp);
 
-	for (; tf != tftop; tf++) {
+	    tf = *(struct trapframe **)((uint32_t *)intsp - 2);
+	}
+
+	db_printf("[trap frames]\n");
+	__db_print_tfstack(tf, tfbot);
+}
+
+
+static void
+__db_print_tfstack(struct trapframe *tf, struct trapframe *tfbot)
+{
+	db_printf("[[-- dumping frames from 0x%08x to 0x%08x --]]\n",
+		  (uint32_t)tf, (uint32_t)tfbot);
+
+	for (; tf != tfbot; tf++) {
 		db_printf("-- %p-%p --\n", tf, tf + 1);
 		db_printf("tf_expevt\t0x%08x\n", tf->tf_expevt);
 
@@ -568,31 +586,31 @@ db_frame_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 		__db_print_symbol(tf->tf_ ## x)
 
 		TF(ubc);
-		TF(spc);
 		TF(ssr);
+		TF(spc);
+		TF(pr);
 		TF(macl);
 		TF(mach);
-		TF(pr);
-		TF(r13);
-		TF(r12);
-		TF(r11);
-		TF(r10);
-		TF(r9);
-		TF(r8);
-		TF(r7);
-		TF(r6);
-		TF(r5);
-		TF(r4);
-		TF(r3);
-		TF(r2);
-		TF(r1);
 		TF(r0);
-		TF(r15);
+		TF(r1);
+		TF(r2);
+		TF(r3);
+		TF(r4);
+		TF(r5);
+		TF(r6);
+		TF(r7);
+		TF(r8);
+		TF(r9);
+		TF(r10);
+		TF(r11);
+		TF(r12);
+		TF(r13);
 		TF(r14);
-	}
-#undef	SF
+		TF(r15);
 #undef	TF
+	}
 }
+
 
 static void
 __db_print_symbol(db_expr_t value)
@@ -629,7 +647,7 @@ db_stackcheck_cmd(db_expr_t addr, int have_addr, db_expr_t count,
 	    " sizeof(struct trapframe) %d byte\n", MAX_STACK, MAX_FRAME,
 	    sizeof(struct trapframe));
 	db_printf("   PID.LID    "
-		  "stack top    max used    frame top     max used"
+		  "stack bot    max used    frame bot     max used"
 		  "  nest\n");
 
 	LIST_FOREACH(l, &alllwp, l_list) {

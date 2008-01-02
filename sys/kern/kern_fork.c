@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.152 2007/12/05 07:06:52 ad Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.152.4.1 2008/01/02 21:55:50 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -74,10 +74,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.152 2007/12/05 07:06:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.152.4.1 2008/01/02 21:55:50 bouyer Exp $");
 
 #include "opt_ktrace.h"
-#include "opt_systrace.h"
 #include "opt_multiprocessor.h"
 
 #include <sys/param.h>
@@ -97,7 +96,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.152 2007/12/05 07:06:52 ad Exp $");
 #include <sys/vmmeter.h>
 #include <sys/sched.h>
 #include <sys/signalvar.h>
-#include <sys/systrace.h>
 #include <sys/kauth.h>
 #include <sys/atomic.h>
 #include <sys/syscallargs.h>
@@ -114,7 +112,7 @@ int	forkfsleep = 0;
 
 /*ARGSUSED*/
 int
-sys_fork(struct lwp *l, void *v, register_t *retval)
+sys_fork(struct lwp *l, const void *v, register_t *retval)
 {
 
 	return (fork1(l, 0, SIGCHLD, NULL, 0, NULL, NULL, retval, NULL));
@@ -126,7 +124,7 @@ sys_fork(struct lwp *l, void *v, register_t *retval)
  */
 /*ARGSUSED*/
 int
-sys_vfork(struct lwp *l, void *v, register_t *retval)
+sys_vfork(struct lwp *l, const void *v, register_t *retval)
 {
 
 	return (fork1(l, FORK_PPWAIT, SIGCHLD, NULL, 0, NULL, NULL,
@@ -139,7 +137,7 @@ sys_vfork(struct lwp *l, void *v, register_t *retval)
  */
 /*ARGSUSED*/
 int
-sys___vfork14(struct lwp *l, void *v, register_t *retval)
+sys___vfork14(struct lwp *l, const void *v, register_t *retval)
 {
 
 	return (fork1(l, FORK_PPWAIT|FORK_SHAREVM, SIGCHLD, NULL, 0,
@@ -150,12 +148,12 @@ sys___vfork14(struct lwp *l, void *v, register_t *retval)
  * Linux-compatible __clone(2) system call.
  */
 int
-sys___clone(struct lwp *l, void *v, register_t *retval)
+sys___clone(struct lwp *l, const struct sys___clone_args *uap, register_t *retval)
 {
-	struct sys___clone_args /* {
+	/* {
 		syscallarg(int) flags;
 		syscallarg(void *) stack;
-	} */ *uap = v;
+	} */
 	int flags, sig;
 
 	/*
@@ -317,7 +315,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	/* XXX p_smutex can be IPL_VM except for audio drivers */
 	mutex_init(&p2->p_smutex, MUTEX_DEFAULT, IPL_SCHED);
 	mutex_init(&p2->p_stmutex, MUTEX_DEFAULT, IPL_HIGH);
-	mutex_init(&p2->p_raslock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&p2->p_auxlock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&p2->p_mutex, MUTEX_DEFAULT, IPL_NONE);
 	rw_init(&p2->p_reflock);
 	cv_init(&p2->p_waitcv, "wait");
@@ -450,12 +448,6 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	LIST_INSERT_HEAD(&allproc, p2, p_list);
 
 	mutex_exit(&proclist_lock);
-
-#ifdef SYSTRACE
-	/* Tell systrace what's happening. */
-	if (ISSET(p1->p_flag, PK_SYSTRACE))
-		systrace_sys_fork(p1, p2);
-#endif
 
 #ifdef __HAVE_SYSCALL_INTERN
 	(*p2->p_emul->e_syscall_intern)(p2);

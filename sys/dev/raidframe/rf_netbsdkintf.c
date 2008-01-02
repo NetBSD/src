@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.239.6.1 2007/12/13 21:56:05 bouyer Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.239.6.2 2008/01/02 21:55:10 bouyer Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -146,7 +146,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.239.6.1 2007/12/13 21:56:05 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.239.6.2 2008/01/02 21:55:10 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -2208,7 +2208,9 @@ InitBP(struct buf *bp, struct vnode *b_vp, unsigned rw_flag, dev_t dev,
        struct proc *b_proc)
 {
 	/* bp->b_flags       = B_PHYS | rw_flag; */
-	bp->b_flags = B_CALL | rw_flag;	/* XXX need B_PHYS here too??? */
+	bp->b_flags = rw_flag;	/* XXX need B_PHYS here too??? */
+	bp->b_oflags = 0;
+	bp->b_cflags = 0;
 	bp->b_bcount = numSect << logBytesPerSector;
 	bp->b_bufsize = bp->b_bcount;
 	bp->b_error = 0;
@@ -2223,8 +2225,11 @@ InitBP(struct buf *bp, struct vnode *b_vp, unsigned rw_flag, dev_t dev,
 	bp->b_iodone = cbFunc;
 	bp->b_private = cbArg;
 	bp->b_vp = b_vp;
+	bp->b_objlock = &b_vp->v_interlock;
 	if ((bp->b_flags & B_READ) == 0) {
-		bp->b_vp->v_numoutput++;
+		mutex_enter(&b_vp->v_interlock);
+		b_vp->v_numoutput++;
+		mutex_exit(&b_vp->v_interlock);
 	}
 
 }
@@ -2908,17 +2913,21 @@ rf_find_raid_components()
 			struct dkwedge_info dkw;
 			error = VOP_IOCTL(vp, DIOCGWEDGEINFO, &dkw, FREAD,
 			    NOCRED);
-			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-			VOP_CLOSE(vp, FREAD | FWRITE, NOCRED);
-			vput(vp);
 			if (error) {
 				printf("RAIDframe: can't get wedge info for "
 				    "dev %s (%d)\n", dv->dv_xname, error);
+				vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+				VOP_CLOSE(vp, FREAD | FWRITE, NOCRED);
+				vput(vp);
 				continue;
 			}
 
-			if (strcmp(dkw.dkw_ptype, DKW_PTYPE_RAIDFRAME) != 0)
+			if (strcmp(dkw.dkw_ptype, DKW_PTYPE_RAIDFRAME) != 0) {
+				vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+				VOP_CLOSE(vp, FREAD | FWRITE, NOCRED);
+				vput(vp);
 				continue;
+			}
 				
 			ac_list = rf_get_component(ac_list, dev, vp,
 			    dv->dv_xname, dkw.dkw_size);

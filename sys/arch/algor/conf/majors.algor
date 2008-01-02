@@ -1,4 +1,4 @@
-#	$NetBSD: majors.algor,v 1.17 2006/11/24 22:04:21 wiz Exp $
+#	$NetBSD: majors.algor,v 1.17.42.1 2008/01/02 21:46:50 bouyer Exp $
 #
 # Device majors for algor
 #
@@ -64,7 +64,6 @@ device-major	uscanner	char 63			uscanner
 device-major	altq		char 64			altq
 device-major	mlx		char 65			mlx
 device-major	clockctl	char 66			clockctl
-device-major	systrace	char 67			systrace
 device-major	cgd		char 68  block 18	cgd
 device-major	ksyms		char 69			ksyms
 device-major	wsfont		char 70			wsfont

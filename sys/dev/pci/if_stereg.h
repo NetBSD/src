@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stereg.h,v 1.3 2002/06/24 16:55:17 bouyer Exp $	*/
+/*	$NetBSD: if_stereg.h,v 1.3.94.1 2008/01/02 21:54:47 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
 struct ste_frag {
 	uint32_t	frag_addr;	/* buffer address */
 	uint32_t	frag_len;	/* buffer length */
-} __attribute__((__packed__));
+} __packed;
 
 #define	FRAG_LEN	0x00001fff	/* length mask */
 #define	FRAG_LAST	(1U << 31)	/* last frag in list */
@@ -65,7 +65,7 @@ struct ste_tfd {
 	uint32_t	tfd_control;	/* control bits */
 					/* the buffer fragments */
 	struct ste_frag tfd_frags[STE_NTXFRAGS];
-} __attribute__((__packed__));
+} __packed;
 
 #define	TFD_WordAlign_dword	0		/* align to dword in TxFIFO */
 #define	TFD_WordAlign_word	2		/* align to word in TxFIFO */
@@ -86,7 +86,7 @@ struct ste_rfd {
 	uint32_t	rfd_next;	/* next RFD in list */
 	uint32_t	rfd_status;	/* status bits */
 	struct ste_frag rfd_frag;	/* the buffer */
-} __attribute__((__packed__));
+} __packed;
 
 #define	RFD_RxDMAFrameLen(x)	((x) & FRAG_LEN)
 #define	RFD_RxFrameError	(1U << 14)

@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC.NOACPI,v 1.2 2007/10/31 21:18:46 joerg Exp $
+#	$NetBSD: GENERIC.NOACPI,v 1.2.8.1 2008/01/02 21:48:10 bouyer Exp $
 #
 #	GENERIC.NOACPI -- GENERIC without ACPI
 #
@@ -11,6 +11,10 @@ include "arch/i386/conf/GENERIC"
 
 no acpi0 at mainbus0
 no ioapic* at mainbus?
+
+no options MULTIPROCESSOR
+no options MPBIOS
+no options APM_NO_IDLE
 
 apm*	at mainbus0			# Advanced power management
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ts.c,v 1.34 2007/10/17 19:57:58 garbled Exp $ */
+/*	$NetBSD: ts.c,v 1.34.8.1 2008/01/02 21:51:10 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ts.c,v 1.34 2007/10/17 19:57:58 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ts.c,v 1.34.8.1 2008/01/02 21:51:10 bouyer Exp $");
 
 #define TS11_COMPAT	/* don't use extended features provided by TS05 */
 
@@ -371,27 +371,15 @@ tscommand (dev, cmd, count)
 	int count;
 {
 	register struct buf *bp;
-	register int s;	 
 
 	trace (("tscommand (%d, %x, %d)\n", TS_UNIT(dev), cmd, count));
 
-	s = splbio();
 	bp = &ts_cbuf[TS_UNIT(dev)];
-
-	while (bp->b_flags & B_BUSY) {
-		/*
-		 * This special check is because B_BUSY never
-		 * gets cleared in the non-waiting rewind case. ???
-		 */
-		if (bp->b_bcount == 0 && (bp->b_flags & B_DONE))
-			break;
-		bp->b_flags |= B_WANTED;
-		(void) tsleep(bp, PRIBIO, "tscmd", 0);
-		/* check MOT-flag !!! */
-	}
-	bp->b_flags = B_BUSY | B_READ;
-
-	splx(s);
+	mutex_enter(&bufcache_lock);
+	while (bbusy(bp) != 0)
+		;
+	mutex_exit(&bufcache_lock);
+	bp->b_flags |= B_READ;
 
 	/*
 	 * Load the buffer.  The b_count field gets used to hold the command
@@ -414,8 +402,10 @@ tscommand (dev, cmd, count)
 	}
 	debug (("tscommand: calling biowait ...\n"));
 	biowait (bp);
-	if (bp->b_flags & B_WANTED)
-		wakeup ((void *)bp);
+	mutex_enter(&bufcache_lock);
+	bp->b_flags &= ~B_WANTED;
+	cv_broadcast(&bp->b_busy);
+	mutex_exit(&bufcache_lock);
 	bp->b_error = 0;
 }
 

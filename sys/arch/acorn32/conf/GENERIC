@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC,v 1.82 2007/11/04 14:34:19 xtraeme Exp $
+# 	$NetBSD: GENERIC,v 1.82.8.1 2008/01/02 21:46:49 bouyer Exp $
 #
 #	GENERIC --- NetBSD/acorn32 complete configuration
 #
@@ -22,7 +22,7 @@ include		"arch/acorn32/conf/std.acorn32"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.82 $"
+#ident		"GENERIC-$Revision: 1.82.8.1 $"
 
 # estimated number of users
 maxusers	32
@@ -141,7 +141,6 @@ options 	MEMORY_DISK_HOOKS	# boottime setup of ramdisk
 
 # Miscellaneous kernel options
 options 	KTRACE		# system call tracing, a la ktrace(1)
-#options 	SYSTRACE	# system call vetting via systrace(1)
 options 	IRQSTATS	# manage IRQ statistics
 options 	LKM		# loadable kernel modules
 options 	KMEMSTATS	# kernel memory statistics

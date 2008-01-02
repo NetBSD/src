@@ -1,0 +1,12 @@
+# $NetBSD: majors.usermode,v 1.1.2.2 2008/01/02 21:50:41 bouyer Exp $
+
+device-major	cons		char 0
+device-major	ctty		char 1
+device-major	mem		char 2
+#device-major	wd		char 3
+device-major	swap		char 4	block 1		vmswap
+device-major	pts		char 5			pty
+device-major	ptc		char 6			pty
+device-major	log		char 7
+device-major	com		char 8			com
+device-major	md		char 24	block 17	md

@@ -1,4 +1,4 @@
-/*	$NetBSD: aps.c,v 1.5 2007/12/09 20:28:01 jmcneill Exp $	*/
+/*	$NetBSD: aps.c,v 1.5.2.1 2008/01/02 21:54:23 bouyer Exp $	*/
 /*	$OpenBSD: aps.c,v 1.15 2007/05/19 19:14:11 tedu Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aps.c,v 1.5 2007/12/09 20:28:01 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aps.c,v 1.5.2.1 2008/01/02 21:54:23 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -215,9 +215,9 @@ aps_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Initialize sensors */
 #define INITDATA(idx, unit, string)					\
-	sc->sc_sensor[idx].units = unit;					\
-	snprintf(sc->sc_sensor[idx].desc, sizeof(sc->sc_sensor[idx].desc),	\
-	    "%s %s", sc->sc_dev.dv_xname, string);
+	sc->sc_sensor[idx].units = unit;				\
+	strlcpy(sc->sc_sensor[idx].desc, string,			\
+	    sizeof(sc->sc_sensor[idx].desc));
 
 	INITDATA(APS_SENSOR_XACCEL, ENVSYS_INTEGER, "X_ACCEL");
 	INITDATA(APS_SENSOR_YACCEL, ENVSYS_INTEGER, "Y_ACCEL");

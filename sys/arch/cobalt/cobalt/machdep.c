@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.90 2007/12/03 15:33:27 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.90.6.1 2008/01/02 21:47:33 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2006 Izumi Tsutsui.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.90 2007/12/03 15:33:27 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.90.6.1 2008/01/02 21:47:33 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -531,8 +531,10 @@ icu_intr_establish(int irq, int type, int ipl, int (*func)(void *),
 	struct cobalt_intrhand *ih;
 
 	ih = &icu_intrtab[irq];
-	if (ih->ih_func != NULL)
-		panic("icu_intr_establish(): irq %d is already in use", irq);
+	if (ih->ih_func != NULL) {
+		printf("%s: irq %d is already in use\n", __func__, irq);
+		return NULL;
+	}
 
 	ih->ih_cookie_type = COBALT_COOKIE_TYPE_ICU;
 	ih->ih_func = func;

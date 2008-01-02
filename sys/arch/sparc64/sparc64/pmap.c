@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.202 2007/12/09 20:12:55 martin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.202.2.1 2008/01/02 21:50:32 bouyer Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.202 2007/12/09 20:12:55 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.202.2.1 2008/01/02 21:50:32 bouyer Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -45,6 +45,8 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.202 2007/12/09 20:12:55 martin Exp $");
 #include <sys/core.h>
 #include <sys/kcore.h>
 #include <sys/proc.h>
+#include <sys/atomic.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm.h>
 
@@ -53,7 +55,6 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.202 2007/12/09 20:12:55 martin Exp $");
 #include <machine/ctlreg.h>
 #include <machine/promlib.h>
 #include <machine/kcore.h>
-#include <machine/cpu.h>
 #include <machine/bootinfo.h>
 
 #include "cache.h"
@@ -122,8 +123,8 @@ extern int pseg_set(struct pmap *, vaddr_t, int64_t, paddr_t);
 #define PV_SETVA(pv,va) ((pv)->pv_va = (((va) & PV_VAMASK) | \
 					(((pv)->pv_va) & PV_MASK)))
 
-struct pool pmap_pmap_pool;
-struct pool pmap_pv_pool;
+struct pool_cache pmap_cache;
+struct pool_cache pmap_pv_cache;
 
 pv_entry_t	pmap_remove_pv(struct pmap *, vaddr_t, struct vm_page *);
 void	pmap_enter_pv(struct pmap *, vaddr_t, paddr_t, struct vm_page *,
@@ -292,6 +293,10 @@ int numctx;
 static int pmap_get_page(paddr_t *p);
 static void pmap_free_page(paddr_t pa);
 
+/*
+ * Global pmap lock.
+ */
+static kmutex_t pmap_lock;
 
 /*
  * Support for big page sizes.  This maps the page size to the
@@ -929,7 +934,7 @@ pmap_bootstrap(u_long kernelstart, u_long kernelend)
 	/*
 	 * Allocate and clear out pmap_kernel()->pm_segs[]
 	 */
-	simple_lock_init(&pmap_kernel()->pm_lock);
+	mutex_init(&pmap_lock, MUTEX_DEFAULT, IPL_NONE);
 	pmap_kernel()->pm_refs = 1;
 	pmap_kernel()->pm_ctx = 0;
 
@@ -1170,10 +1175,10 @@ pmap_init()
 	/*
 	 * initialize the pmap pools.
 	 */
-	pool_init(&pmap_pmap_pool, sizeof(struct pmap), 0, 0, 0, "pmappl",
-	    &pool_allocator_nointr, IPL_NONE);
-	pool_init(&pmap_pv_pool, sizeof(struct pv_entry), 0, 0, 0, "pv_entry",
-	    &pool_allocator_nointr, IPL_NONE);
+	pool_cache_bootstrap(&pmap_cache, sizeof(struct pmap), 0, 0, 0,
+	    "pmappl", NULL, IPL_NONE, NULL, NULL, NULL);
+	pool_cache_bootstrap(&pmap_pv_cache, sizeof(struct pv_entry), 0, 0, 0,
+	    "pv_entry", NULL, IPL_NONE, NULL, NULL, NULL);
 
 	vm_first_phys = avail_start;
 	vm_num_phys = avail_end - avail_start;
@@ -1219,7 +1224,7 @@ pmap_growkernel(maxkvaddr)
 		       (void *)KERNEND, (void *)maxkvaddr);
 		return (kbreak);
 	}
-	simple_lock(&pm->pm_lock);
+	mutex_enter(&pmap_lock);
 	DPRINTF(PDB_GROW, ("pmap_growkernel(%lx...%lx)\n", kbreak, maxkvaddr));
 	/* Align with the start of a page table */
 	for (kbreak &= (-1 << PDSHIFT); kbreak < maxkvaddr;
@@ -1237,7 +1242,7 @@ pmap_growkernel(maxkvaddr)
 			ENTER_STAT(ptpneeded);
 		}
 	}
-	simple_unlock(&pm->pm_lock);
+	mutex_exit(&pmap_lock);
 	return (kbreak);
 }
 
@@ -1251,11 +1256,10 @@ pmap_create()
 
 	DPRINTF(PDB_CREATE, ("pmap_create()\n"));
 
-	pm = pool_get(&pmap_pmap_pool, PR_WAITOK);
+	pm = pool_cache_get(&pmap_cache, PR_WAITOK);
 	memset(pm, 0, sizeof *pm);
 	DPRINTF(PDB_CREATE, ("pmap_create(): created %p\n", pm));
 
-	simple_lock_init(&pm->pm_lock);
 	pm->pm_refs = 1;
 	TAILQ_INIT(&pm->pm_obj.memq);
 	if (pm != pmap_kernel()) {
@@ -1276,9 +1280,7 @@ pmap_reference(pm)
 	struct pmap *pm;
 {
 
-	simple_lock(&pm->pm_lock);
-	pm->pm_refs++;
-	simple_unlock(&pm->pm_lock);
+	atomic_inc_uint(&pm->pm_refs);
 }
 
 /*
@@ -1290,12 +1292,8 @@ pmap_destroy(pm)
 	struct pmap *pm;
 {
 	struct vm_page *pg, *nextpg;
-	int refs;
 
-	simple_lock(&pm->pm_lock);
-	refs = --pm->pm_refs;
-	simple_unlock(&pm->pm_lock);
-	if (refs > 0) {
+	if (atomic_dec_uint_nv(&pm->pm_refs) > 0) {
 		return;
 	}
 	DPRINTF(PDB_DESTROY, ("pmap_destroy: freeing pmap %p\n", pm));
@@ -1309,7 +1307,7 @@ pmap_destroy(pm)
 		uvm_pagefree(pg);
 	}
 	pmap_free_page((paddr_t)(u_long)pm->pm_segs);
-	pool_put(&pmap_pmap_pool, pm);
+	pool_cache_put(&pmap_cache, pm);
 }
 
 /*
@@ -1357,7 +1355,7 @@ pmap_collect(pm)
 	if (pm == pmap_kernel())
 		return;
 
-	simple_lock(&pm->pm_lock);
+	mutex_enter(&pmap_lock);
 	for (i = 0; i < STSZ; i++) {
 		pdir = (paddr_t *)(u_long)ldxa((vaddr_t)&pm->pm_segs[i],
 					       ASI_PHYS_CACHED);
@@ -1396,7 +1394,7 @@ pmap_collect(pm)
 			pmap_free_page(pa);
 		}
 	}
-	simple_unlock(&pm->pm_lock);
+	mutex_exit(&pmap_lock);
 }
 
 /*
@@ -1627,7 +1625,7 @@ pmap_enter(pm, va, pa, prot, flags)
 	 * entering the same PA again.  if it's different remove it.
 	 */
 
-	simple_lock(&pm->pm_lock);
+	mutex_enter(&pmap_lock);
 	data = pseg_get(pm, va);
 	if (data & TLB_V) {
 		wasmapped = TRUE;
@@ -1665,17 +1663,17 @@ pmap_enter(pm, va, pa, prot, flags)
 		 */
 		if (pvh->pv_pmap == NULL || (wasmapped && opa == pa)) {
 			if (npv != NULL) {
-				pool_put(&pmap_pv_pool, npv);
+				pool_cache_put(&pmap_pv_cache, npv);	/* XXXAD defer */
 				npv = NULL;
 			}
 			if (wasmapped && opa == pa) {
 				dopv = FALSE;
 			}
 		} else if (npv == NULL) {
-			npv = pool_get(&pmap_pv_pool, PR_NOWAIT);
+			npv = pool_cache_get(&pmap_pv_cache, PR_NOWAIT);	/* XXXAD defer */
 			if (npv == NULL) {
 				if (flags & PMAP_CANFAIL) {
-					simple_unlock(&pm->pm_lock);
+					mutex_exit(&pmap_lock);
 					return (ENOMEM);
 				}
 				panic("pmap_enter: no pv entries available");
@@ -1686,7 +1684,7 @@ pmap_enter(pm, va, pa, prot, flags)
 		ENTER_STAT(unmanaged);
 		dopv = FALSE;
 		if (npv != NULL) {
-			pool_put(&pmap_pv_pool, npv);
+			pool_cache_put(&pmap_pv_cache, npv);	/* XXXAD defer */
 			npv = NULL;
 		}
 	}
@@ -1709,7 +1707,7 @@ pmap_enter(pm, va, pa, prot, flags)
 #else
 	/* If it needs ref accounting do nothing. */
 	if (!(flags & VM_PROT_READ)) {
-		simple_unlock(&pm->pm_lock);
+		mutex_exit(&pmap_lock);
 		return 0;
 	}
 #endif
@@ -1754,9 +1752,9 @@ pmap_enter(pm, va, pa, prot, flags)
 		ptp = 0;
 		if (!pmap_get_page(&ptp)) {
 			if (flags & PMAP_CANFAIL) {
-				simple_unlock(&pm->pm_lock);
+				mutex_exit(&pmap_lock);
 				if (npv != NULL) {
-					pool_put(&pmap_pv_pool, npv);
+					pool_cache_put(&pmap_pv_cache, npv);	/* XXXAD defer */
 				}
 				return (ENOMEM);
 			} else {
@@ -1776,7 +1774,7 @@ pmap_enter(pm, va, pa, prot, flags)
 		pmap_enter_pv(pm, va, pa, pg, npv);
 	}
 
-	simple_unlock(&pm->pm_lock);
+	mutex_exit(&pmap_lock);
 #ifdef DEBUG
 	i = ptelookup_va(va);
 	if (pmapdebug & PDB_ENTER)
@@ -1876,7 +1874,7 @@ pmap_remove(pm, va, endva)
 	KASSERT(pm != pmap_kernel() || endva < INTSTACK || va > EINTSTACK);
 	KASSERT(pm != pmap_kernel() || endva < kdata || va > ekdata);
 
-	simple_lock(&pm->pm_lock);
+	mutex_enter(&pmap_lock);
 	DPRINTF(PDB_REMOVE, ("pmap_remove(pm=%p, va=%p, endva=%p):", pm,
 			     (void *)(u_long)va, (void *)(u_long)endva));
 	REMOVE_STAT(calls);
@@ -1905,7 +1903,7 @@ pmap_remove(pm, va, endva)
 		if (pg) {
 			pv = pmap_remove_pv(pm, va, pg);
 			if (pv != NULL) {
-				pool_put(&pmap_pv_pool, pv);
+				pool_cache_put(&pmap_pv_cache, pv);	/* XXXAD defer */
 			}
 		}
 
@@ -1942,13 +1940,13 @@ pmap_remove(pm, va, endva)
 		REMOVE_STAT(tflushes);
 		tlb_flush_pte(va, pm->pm_ctx);
 	}
-	simple_unlock(&pm->pm_lock);
 	if (flush && pm->pm_refs) {
 		REMOVE_STAT(flushes);
 		blast_dcache();
 	}
 	DPRINTF(PDB_REMOVE, ("\n"));
 	pv_check();
+	mutex_exit(&pmap_lock);
 }
 
 /*
@@ -1974,7 +1972,7 @@ pmap_protect(pm, sva, eva, prot)
 		return;
 	}
 
-	simple_lock(&pm->pm_lock);
+	mutex_enter(&pmap_lock);
 	sva = sva & ~PGOFSET;
 	for (; sva < eva; sva += PAGE_SIZE) {
 #ifdef DEBUG
@@ -2030,8 +2028,8 @@ pmap_protect(pm, sva, eva, prot)
 		tsb_invalidate(pm->pm_ctx, sva);
 		tlb_flush_pte(sva, pm->pm_ctx);
 	}
-	simple_unlock(&pm->pm_lock);
 	pv_check();
+	mutex_exit(&pmap_lock);
 }
 
 /*
@@ -2066,7 +2064,7 @@ pmap_extract(pm, va, pap)
 		return TRUE;
 	} else {
 		if (pm != pmap_kernel()) {
-			simple_lock(&pm->pm_lock);
+			mutex_enter(&pmap_lock);
 		}
 		data = pseg_get(pm, va);
 		pa = data & TLB_PA_MASK;
@@ -2100,7 +2098,7 @@ pmap_extract(pm, va, pap)
 		}
 #endif
 		if (pm != pmap_kernel()) {
-			simple_unlock(&pm->pm_lock);
+			mutex_exit(&pmap_lock);
 		}
 	}
 	if ((data & TLB_V) == 0)
@@ -2123,7 +2121,7 @@ pmap_kprotect(va, prot)
 	int64_t data;
 	int rv;
 
-	simple_lock(&pm->pm_lock);
+	mutex_enter(&pmap_lock);
 	data = pseg_get(pm, va);
 	KASSERT(data & TLB_V);
 	if (prot & VM_PROT_WRITE) {
@@ -2136,7 +2134,7 @@ pmap_kprotect(va, prot)
 		panic("pmap_kprotect: pseg_set needs spare! rv=%d", rv);
 	tsb_invalidate(pm->pm_ctx, va);
 	tlb_flush_pte(va, pm->pm_ctx);
-	simple_unlock(&pm->pm_lock);
+	mutex_exit(&pmap_lock);
 }
 
 /*
@@ -2355,6 +2353,7 @@ pmap_clear_modify(pg)
 #if defined(DEBUG)
 	modified = pmap_is_modified(pg);
 #endif
+	mutex_enter(&pmap_lock);
 	/* Clear all mappings */
 	pv = &pg->mdpage.mdpg_pvh;
 #ifdef DEBUG
@@ -2376,7 +2375,6 @@ pmap_clear_modify(pg)
 			struct pmap *pmap = pv->pv_pmap;
 			vaddr_t va = pv->pv_va & PV_VAMASK;
 
-			simple_lock(&pmap->pm_lock);
 			/* First clear the mod bit in the PTE and make it R/O */
 			data = pseg_get(pmap, va);
 			KASSERT(data & TLB_V);
@@ -2400,10 +2398,10 @@ pmap_clear_modify(pg)
 			if (pv->pv_va & PV_MOD)
 				changed |= 1;
 			pv->pv_va &= ~(PV_MOD);
-			simple_unlock(&pmap->pm_lock);
 		}
 	}
 	pv_check();
+	mutex_exit(&pmap_lock);
 #ifdef DEBUG
 	if (pmap_is_modified(pg)) {
 		printf("pmap_clear_modify(): %p still modified!\n", pg);
@@ -2432,6 +2430,7 @@ pmap_clear_reference(pg)
 	int referenced = 0;
 #endif
 
+	mutex_enter(&pmap_lock);
 #ifdef DEBUG
 	DPRINTF(PDB_CHANGEPROT|PDB_REF, ("pmap_clear_reference(%p)\n", pg));
 	referenced = pmap_is_referenced(pg);
@@ -2453,7 +2452,6 @@ pmap_clear_reference(pg)
 			struct pmap *pmap = pv->pv_pmap;
 			vaddr_t va = pv->pv_va & PV_VAMASK;
 
-			simple_lock(&pmap->pm_lock);
 			data = pseg_get(pmap, va);
 			KASSERT(data & TLB_V);
 			DPRINTF(PDB_CHANGEPROT,
@@ -2480,7 +2478,6 @@ pmap_clear_reference(pg)
 			if (pv->pv_va & PV_REF)
 				changed |= 1;
 			pv->pv_va &= ~(PV_REF);
-			simple_unlock(&pmap->pm_lock);
 		}
 	}
 	dcache_flush_page(pa);
@@ -2497,8 +2494,12 @@ pmap_clear_reference(pg)
 		printf("pmap_clear_reference: referenced %d changed %d\n",
 		       referenced, changed);
 		Debugger();
-	} else return (referenced);
+	} else {
+		mutex_exit(&pmap_lock);
+		return (referenced);
+	}
 #endif
+	mutex_exit(&pmap_lock);
 	return (changed);
 }
 
@@ -2622,15 +2623,15 @@ pmap_unwire(pmap, va)
 		return;
 	}
 #endif
-	simple_lock(&pmap->pm_lock);
+	mutex_enter(&pmap_lock);
 	data = pseg_get(pmap, va & PV_VAMASK);
 	KASSERT(data & TLB_V);
 	data &= ~TLB_TSB_LOCK;
 	rv = pseg_set(pmap, va & PV_VAMASK, data, 0);
 	if (rv & 1)
 		panic("pmap_unwire: pseg_set needs spare! rv=%d\n", rv);
-	simple_unlock(&pmap->pm_lock);
 	pv_check();
+	mutex_exit(&pmap_lock);
 }
 
 /*
@@ -2648,7 +2649,7 @@ pmap_page_protect(pg, prot)
 	int64_t data = 0;
 	int rv;
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
-	pv_entry_t pv, npv, firstpv;
+	pv_entry_t pv, npv, firstpv, freepv = NULL;
 	struct pmap *pmap;
 	vaddr_t va;
 	bool needflush = FALSE;
@@ -2656,6 +2657,7 @@ pmap_page_protect(pg, prot)
 	DPRINTF(PDB_CHANGEPROT,
 	    ("pmap_page_protect: pg %p prot %x\n", pg, prot));
 
+	mutex_enter(&pmap_lock);
 	pv = &pg->mdpage.mdpg_pvh;
 	if (prot & (VM_PROT_READ|VM_PROT_EXECUTE)) {
 		/* copy_on_write */
@@ -2680,7 +2682,6 @@ pmap_page_protect(pg, prot)
 				pmap = pv->pv_pmap;
 				va = pv->pv_va & PV_VAMASK;
 
-				simple_lock(&pmap->pm_lock);
 				DPRINTF(PDB_CHANGEPROT | PDB_REF,
 					("pmap_page_protect: "
 					 "RO va %p of pg %p...\n",
@@ -2705,7 +2706,6 @@ pmap_page_protect(pg, prot)
 					tsb_invalidate(pmap->pm_ctx, va);
 					tlb_flush_pte(va, pmap->pm_ctx);
 				}
-				simple_unlock(&pmap->pm_lock);
 			}
 		}
 	} else {
@@ -2721,7 +2721,6 @@ pmap_page_protect(pg, prot)
 			va = npv->pv_va & PV_VAMASK;
 
 			/* We're removing npv from pv->pv_next */
-			simple_lock(&pmap->pm_lock);
 			DPRINTF(PDB_CHANGEPROT|PDB_REF|PDB_REMOVE,
 				("pmap_page_protect: "
 				 "demap va %p of pg %p in pmap %p...\n",
@@ -2748,11 +2747,11 @@ pmap_page_protect(pg, prot)
 			if (pmap->pm_refs > 0) {
 				needflush = TRUE;
 			}
-			simple_unlock(&pmap->pm_lock);
 
 			/* free the pv */
 			pv->pv_next = npv->pv_next;
-			pool_put(&pmap_pv_pool, npv);
+			npv->pv_next = freepv;
+			freepv = npv;
 		}
 
 		pv = firstpv;
@@ -2768,7 +2767,6 @@ pmap_page_protect(pg, prot)
 			pmap = pv->pv_pmap;
 			va = pv->pv_va & PV_VAMASK;
 
-			simple_lock(&pmap->pm_lock);
 			DPRINTF(PDB_CHANGEPROT|PDB_REF|PDB_REMOVE,
 				("pmap_page_protect: "
 				 "demap va %p of pg %p from pm %p...\n",
@@ -2793,7 +2791,6 @@ pmap_page_protect(pg, prot)
 			if (pmap->pm_refs > 0) {
 				needflush = TRUE;
 			}
-			simple_unlock(&pmap->pm_lock);
 			npv = pv->pv_next;
 			/* dump the first pv */
 			if (npv) {
@@ -2801,7 +2798,8 @@ pmap_page_protect(pg, prot)
 				pv->pv_pmap = npv->pv_pmap;
 				pv->pv_va |= npv->pv_va & PV_MASK;
 				pv->pv_next = npv->pv_next;
-				pool_put(&pmap_pv_pool, npv);
+				npv->pv_next = freepv;
+				freepv = npv;
 			} else {
 				pv->pv_pmap = NULL;
 				pv->pv_next = NULL;
@@ -2813,6 +2811,13 @@ pmap_page_protect(pg, prot)
 	}
 	/* We should really only flush the pages we demapped. */
 	pv_check();
+	mutex_exit(&pmap_lock);
+
+	/* Catch up on deferred frees. */
+	for (; freepv != NULL; freepv = npv) {
+		npv = freepv->pv_next;
+		pool_cache_put(&pmap_pv_cache, freepv);
+	}
 }
 
 #ifdef PMAP_COUNT_DEBUG
@@ -2828,7 +2833,7 @@ pmap_count_res(struct pmap *pm)
 
 	/* Almost the same as pmap_collect() */
 	/* Don't want one of these pages reused while we're reading it. */
-	simple_lock(&pm->pm_lock);
+	mutex_enter(&pmap_lock);
 	n = 0;
 	for (i = 0; i < STSZ; i++) {
 		pdir = (paddr_t *)(u_long)ldxa((vaddr_t)&pm->pm_segs[i],
@@ -2850,7 +2855,7 @@ pmap_count_res(struct pmap *pm)
 			}
 		}
 	}
-	simple_unlock(&pm->pm_lock);
+	mutex_exit(&pmap_lock);
 
 	if (pm->pm_stats.resident_count != n)
 		printf("pmap_count_resident: pm_stats = %ld, counted: %d\n",
@@ -2871,7 +2876,7 @@ pmap_count_wired(struct pmap *pm)
 
 	/* Almost the same as pmap_collect() */
 	/* Don't want one of these pages reused while we're reading it. */
-	simple_lock(&pm->pm_lock);
+	mutex_enter(&pmap_lock);
 	n = 0;
 	for (i = 0; i < STSZ; i++) {
 		pdir = (paddr_t *)(u_long)ldxa((vaddr_t)&pm->pm_segs[i],
@@ -2893,7 +2898,7 @@ pmap_count_wired(struct pmap *pm)
 			}
 		}
 	}
-	simple_unlock(&pm->pm_lock);
+	mutex_exit(&pmap_lock);
 
 	if (pm->pm_stats.wired_count != n)
 		printf("pmap_count_wired: pm_stats = %ld, counted: %d\n",
@@ -2921,7 +2926,7 @@ ctx_alloc(struct pmap *pm)
 
 	KASSERT(pm != pmap_kernel());
 	KASSERT(pm == curproc->p_vmspace->vm_map.pmap);
-	simple_lock(&pm->pm_lock);
+	mutex_enter(&pmap_lock);	/* XXXAD ctxswitch */
 	ctx = pmap_next_ctx++;
 
 	/*
@@ -2949,7 +2954,7 @@ ctx_alloc(struct pmap *pm)
 	ctxbusy[ctx] = pm->pm_physaddr;
 	LIST_INSERT_HEAD(&pmap_ctxlist, pm, pm_list);
 	pm->pm_ctx = ctx;
-	simple_unlock(&pm->pm_lock);
+	mutex_exit(&pmap_lock);
 	DPRINTF(PDB_CTX_ALLOC, ("ctx_alloc: allocated ctx %d\n", ctx));
 	return ctx;
 }
@@ -2999,6 +3004,8 @@ pmap_enter_pv(struct pmap *pmap, vaddr_t va, paddr_t pa, struct vm_page *pg,
 	      pv_entry_t npv)
 {
 	pv_entry_t pvh;
+
+	KASSERT(mutex_owned(&pmap_lock));
 
 	pvh = &pg->mdpage.mdpg_pvh;
 	DPRINTF(PDB_ENTER, ("pmap_enter: pvh %p: was %lx/%p/%p\n",
@@ -3059,6 +3066,8 @@ pmap_remove_pv(struct pmap *pmap, vaddr_t va, struct vm_page *pg)
 {
 	pv_entry_t pvh, npv, pv;
 	int64_t data = 0;
+
+	KASSERT(mutex_owned(&pmap_lock));
 
 	pvh = &pg->mdpage.mdpg_pvh;
 
@@ -3135,14 +3144,14 @@ pmap_page_cache(struct pmap *pm, paddr_t pa, int mode)
 	vaddr_t va;
 	int rv;
 
+	KASSERT(mutex_owned(&pmap_lock));
+
 	DPRINTF(PDB_ENTER, ("pmap_page_uncache(%llx)\n",
 	    (unsigned long long)pa));
 	pg = PHYS_TO_VM_PAGE(pa);
 	pv = &pg->mdpage.mdpg_pvh;
 	while (pv) {
 		va = pv->pv_va & PV_VAMASK;
-		if (pv->pv_pmap != pm)
-			simple_lock(&pv->pv_pmap->pm_lock);
 		if (pv->pv_va & PV_NC) {
 			int64_t data;
 
@@ -3174,8 +3183,6 @@ pmap_page_cache(struct pmap *pm, paddr_t pa, int mode)
 				panic("pmap_page_cache: pseg_set needs"
 				    " spare! rv=%d\n", rv);
 		}
-		if (pv->pv_pmap != pm)
-			simple_unlock(&pv->pv_pmap->pm_lock);
 		if (pv->pv_pmap->pm_ctx || pv->pv_pmap == pmap_kernel()) {
 			/* Force reload -- cache bits have changed */
 			tsb_invalidate(pv->pv_pmap->pm_ctx, va);

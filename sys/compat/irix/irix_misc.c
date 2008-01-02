@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_misc.c,v 1.10 2007/12/08 18:36:03 dsl Exp $ */
+/*	$NetBSD: irix_misc.c,v 1.10.4.1 2008/01/02 21:52:06 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_misc.c,v 1.10 2007/12/08 18:36:03 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_misc.c,v 1.10.4.1 2008/01/02 21:52:06 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -66,12 +66,12 @@ __KERNEL_RCSID(0, "$NetBSD: irix_misc.c,v 1.10 2007/12/08 18:36:03 dsl Exp $");
  * Maybe consider moving this to sys/compat/common/compat_util.c?
  */
 int
-irix_sys_setpgrp(struct lwp *l, void *v, register_t *retval)
+irix_sys_setpgrp(struct lwp *l, const struct irix_sys_setpgrp_args *uap, register_t *retval)
 {
-	struct irix_sys_setpgrp_args /* {
+	/* {
 		syscallarg(int) pid;
 		syscallarg(int) pgid;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 
 	/*
@@ -84,17 +84,17 @@ irix_sys_setpgrp(struct lwp *l, void *v, register_t *retval)
 	    (!SCARG(uap, pid) || SCARG(uap, pid) == p->p_pid))
 		return sys_setsid(l, uap, retval);
 	else
-		return sys_setpgid(l, uap, retval);
+		return sys_setpgid(l, (const void *)uap, retval);
 }
 
 #define BUF_SIZE 16
 
 int
-irix_sys_uname(struct lwp *l, void *v, register_t *retval)
+irix_sys_uname(struct lwp *l, const struct irix_sys_uname_args *uap, register_t *retval)
 {
-	struct irix_sys_uname_args /* {
+	/* {
 		syscallarg(struct irix_utsname *) name;
-	} */ *uap = v;
+	} */
 	struct irix_utsname sut;
 	char irix_release[BUF_SIZE + 1];
 
@@ -122,14 +122,14 @@ irix_sys_uname(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-irix_sys_utssys(struct lwp *l, void *v, register_t *retval)
+irix_sys_utssys(struct lwp *l, const struct irix_sys_utssys_args *uap, register_t *retval)
 {
-	struct irix_sys_utssys_args /* {
+	/* {
 		syscallarg(void *) a1;
 		syscallarg(void *) a2;
 		syscallarg(int) sel;
 		syscallarg(void) a3;
-	} */ *uap = v;
+	} */
 
 	switch (SCARG(uap, sel)) {
 	case 0: {	/* uname(2)  */
@@ -140,7 +140,7 @@ irix_sys_utssys(struct lwp *l, void *v, register_t *retval)
 	break;
 
 	default:
-		return(svr4_sys_utssys(l, v, retval));
+		return(svr4_sys_utssys(l, (const void *)uap, retval));
 	break;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.102 2007/12/08 19:29:49 pooka Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.102.4.1 2008/01/02 21:56:23 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,9 +37,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.102 2007/12/08 19:29:49 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.102.4.1 2008/01/02 21:56:23 bouyer Exp $");
 
-#include "opt_systrace.h"
 #include "opt_magiclinks.h"
 
 #include <sys/param.h>
@@ -58,10 +57,6 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.102 2007/12/08 19:29:49 pooka Exp $
 #include <sys/syslog.h>
 #include <sys/kauth.h>
 #include <sys/ktrace.h>
-
-#ifdef SYSTRACE
-#include <sys/systrace.h>
-#endif
 
 #ifndef MAGICLINKS
 #define MAGICLINKS 0
@@ -322,11 +317,6 @@ namei(struct nameidata *ndp)
 		} else
 			ktrnamei(cnp->cn_pnbuf, ndp->ni_pathlen);
 	}
-
-#ifdef SYSTRACE
-	if (ISSET(l->l_proc->p_flag, PK_SYSTRACE))
-		systrace_namei(ndp);
-#endif
 
 	vn_lock(dp, LK_EXCLUSIVE | LK_RETRY);
 	/* Loop through symbolic links */

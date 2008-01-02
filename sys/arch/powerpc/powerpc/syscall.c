@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.36 2007/11/05 20:43:04 ad Exp $	*/
+/*	$NetBSD: syscall.c,v 1.36.8.1 2008/01/02 21:49:12 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -60,7 +60,7 @@
 #define EMULNAME(x)	(x)
 #define EMULNAMEU(x)	(x)
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.36 2007/11/05 20:43:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.36.8.1 2008/01/02 21:49:12 bouyer Exp $");
 
 void
 child_return(void *arg)
@@ -135,11 +135,9 @@ EMULNAME(syscall_plain)(struct trapframe *frame)
 
 	if (argsize > n * sizeof(register_t)) {
 		memcpy(args, params, n * sizeof(register_t));
-		KERNEL_LOCK(1, l);
 		error = copyin(MOREARGS(frame->fixreg[1]),
 		       args + n,
 		       argsize - n * sizeof(register_t));
-		KERNEL_UNLOCK_LAST(l);
 		if (error)
 			goto bad;
 		params = args;

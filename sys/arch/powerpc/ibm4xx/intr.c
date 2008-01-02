@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.19 2007/12/03 15:34:11 ad Exp $	*/
+/*	$NetBSD: intr.c,v 1.19.6.1 2008/01/02 21:49:06 bouyer Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.19 2007/12/03 15:34:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.19.6.1 2008/01/02 21:49:06 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -256,13 +256,15 @@ ext_intr(void)
 				disable_irq(i);
 			wrteei(1);
 
-			KERNEL_LOCK(1, NULL);
 			ih = intrs[i].is_head;
 			while (ih) {
+				if (ih->ih_level == IPL_VM)
+					KERNEL_LOCK(1, NULL);
 				(*ih->ih_fun)(ih->ih_arg);
 				ih = ih->ih_next;
+				if (ih->ih_level == IPL_VM)
+					KERNEL_UNLOCK_ONE(NULL);
 			}
-			KERNEL_UNLOCK_ONE(NULL);
 
 			mtmsr(msr);
 			if (intrs[i].is_type == IST_LEVEL)

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_ipc.c,v 1.18 2007/12/08 18:36:27 dsl Exp $	*/
+/*	$NetBSD: svr4_32_ipc.c,v 1.18.4.1 2008/01/02 21:53:33 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_ipc.c,v 1.18 2007/12/08 18:36:27 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_ipc.c,v 1.18.4.1 2008/01/02 21:53:33 bouyer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -79,9 +79,6 @@ static void bsd_to_svr4_32_semid_ds(const struct semid_ds *,
 				      struct svr4_32_semid_ds *);
 static void svr4_32_to_bsd_semid_ds(const struct svr4_32_semid_ds *,
 				      struct semid_ds *);
-static int svr4_32_semop(struct lwp *, void *, register_t *);
-static int svr4_32_semget(struct lwp *, void *, register_t *);
-static int svr4_32_semctl(struct lwp *, void *, register_t *);
 #endif
 
 #ifdef SYSVMSG
@@ -89,10 +86,6 @@ static void bsd_to_svr4_32_msqid_ds(const struct msqid_ds *,
 				      struct svr4_32_msqid_ds *);
 static void svr4_32_to_bsd_msqid_ds(const struct svr4_32_msqid_ds *,
 				      struct msqid_ds *);
-static int svr4_32_msgsnd(struct lwp *, void *, register_t *);
-static int svr4_32_msgrcv(struct lwp *, void *, register_t *);
-static int svr4_32_msgget(struct lwp *, void *, register_t *);
-static int svr4_32_msgctl(struct lwp *, void *, register_t *);
 #endif
 
 #ifdef SYSVSHM
@@ -100,10 +93,6 @@ static void bsd_to_svr4_32_shmid_ds(const struct shmid_ds *,
 				      struct svr4_32_shmid_ds *);
 static void svr4_32_to_bsd_shmid_ds(const struct svr4_32_shmid_ds *,
 				      struct shmid_ds *);
-static int svr4_32_shmat(struct lwp *, void *, register_t *);
-static int svr4_32_shmdt(struct lwp *, void *, register_t *);
-static int svr4_32_shmget(struct lwp *, void *, register_t *);
-static int svr4_32_shmctl(struct lwp *, void *, register_t *);
 #endif
 
 #if defined(SYSVMSG) || defined(SYSVSHM) || defined(SYSVSEM)
@@ -163,13 +152,13 @@ struct svr4_32_sys_semctl_args {
 };
 
 static int
-svr4_32_semctl(struct lwp *l, void *v, register_t *retval)
+svr4_32_semctl(struct lwp *l, const struct svr4_32_sys_semctl_args *uap, register_t *retval)
 {
-	struct svr4_32_sys_semctl_args *uap = v;
 	struct semid_ds sembuf;
 	struct svr4_32_semid_ds ssembuf;
 	int cmd, error;
 	void *pass_arg = NULL;
+	union netbsd32_semun arg;
 
 	cmd = SCARG(uap, cmd);
 
@@ -205,17 +194,20 @@ svr4_32_semctl(struct lwp *l, void *v, register_t *retval)
 		break;
 
 	case SVR4_SEM_GETALL:
-		pass_arg = &SCARG(uap, arg);
+		arg = SCARG(uap, arg);
+		pass_arg = &arg;
 		cmd = GETALL;
 		break;
 
 	case SVR4_SEM_SETVAL:
-		pass_arg = &SCARG(uap, arg);
+		arg = SCARG(uap, arg);
+		pass_arg = &arg;
 		cmd = SETVAL;
 		break;
 
 	case SVR4_SEM_SETALL:
-		pass_arg = &SCARG(uap, arg);
+		arg = SCARG(uap, arg);
+		pass_arg = &arg;
 		cmd = SETALL;
 		break;
 
@@ -251,9 +243,8 @@ struct svr4_32_sys_semget_args {
 };
 
 static int
-svr4_32_semget(struct lwp *l, void *v, register_t *retval)
+svr4_32_semget(struct lwp *l, const struct svr4_32_sys_semget_args *uap, register_t *retval)
 {
-	struct svr4_32_sys_semget_args *uap = v;
 	struct sys_semget_args ap;
 
 	SCARG(&ap, key) = SCARG(uap, key);
@@ -271,9 +262,8 @@ struct svr4_32_sys_semop_args {
 };
 
 static int
-svr4_32_semop(struct lwp *l, void *v, register_t *retval)
+svr4_32_semop(struct lwp *l, const struct svr4_32_sys_semop_args *uap, register_t *retval)
 {
-	struct svr4_32_sys_semop_args *uap = v;
 	struct sys_semop_args ap;
 
 	SCARG(&ap, semid) = SCARG(uap, semid);
@@ -285,19 +275,18 @@ svr4_32_semop(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-svr4_32_sys_semsys(struct lwp *l, void *v, register_t *retval)
+svr4_32_sys_semsys(struct lwp *l, const struct svr4_32_sys_semsys_args *uap, register_t *retval)
 {
-	struct svr4_32_sys_semsys_args *uap = v;
 
 	DPRINTF(("svr4_32_semsys(%d)\n", SCARG(uap, what)));
 
 	switch (SCARG(uap, what)) {
 	case SVR4_semctl:
-		return svr4_32_semctl(l, v, retval);
+		return svr4_32_semctl(l, (const void *)uap, retval);
 	case SVR4_semget:
-		return svr4_32_semget(l, v, retval);
+		return svr4_32_semget(l, (const void *)uap, retval);
 	case SVR4_semop:
-		return svr4_32_semop(l, v, retval);
+		return svr4_32_semop(l, (const void *)uap, retval);
 	default:
 		return EINVAL;
 	}
@@ -357,9 +346,8 @@ struct svr4_32_sys_msgsnd_args {
 };
 
 static int
-svr4_32_msgsnd(struct lwp *l, void *v, register_t *retval)
+svr4_32_msgsnd(struct lwp *l, const struct svr4_32_sys_msgsnd_args *uap, register_t *retval)
 {
-	struct svr4_32_sys_msgsnd_args *uap = v;
 	struct sys_msgsnd_args ap;
 
 	SCARG(&ap, msqid) = SCARG(uap, msqid);
@@ -380,9 +368,8 @@ struct svr4_32_sys_msgrcv_args {
 };
 
 static int
-svr4_32_msgrcv(struct lwp *l, void *v, register_t *retval)
+svr4_32_msgrcv(struct lwp *l, const struct svr4_32_sys_msgrcv_args *uap, register_t *retval)
 {
-	struct svr4_32_sys_msgrcv_args *uap = v;
 	struct sys_msgrcv_args ap;
 
 	SCARG(&ap, msqid) = SCARG(uap, msqid);
@@ -401,9 +388,8 @@ struct svr4_32_sys_msgget_args {
 };
 
 static int
-svr4_32_msgget(struct lwp *l, void *v, register_t *retval)
+svr4_32_msgget(struct lwp *l, const struct svr4_32_sys_msgget_args *uap, register_t *retval)
 {
-	struct svr4_32_sys_msgget_args *uap = v;
 	struct sys_msgget_args ap;
 
 	SCARG(&ap, key) = SCARG(uap, key);
@@ -420,9 +406,8 @@ struct svr4_32_sys_msgctl_args {
 };
 
 static int
-svr4_32_msgctl(struct lwp *l, void *v, register_t *retval)
+svr4_32_msgctl(struct lwp *l, const struct svr4_32_sys_msgctl_args *uap, register_t *retval)
 {
-	struct svr4_32_sys_msgctl_args *uap = v;
 	struct svr4_32_msqid_ds ss;
 	struct msqid_ds bs;
 	int error;
@@ -452,21 +437,20 @@ svr4_32_msgctl(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-svr4_32_sys_msgsys(struct lwp *l, void *v, register_t *retval)
+svr4_32_sys_msgsys(struct lwp *l, const struct svr4_32_sys_msgsys_args *uap, register_t *retval)
 {
-	struct svr4_32_sys_msgsys_args *uap = v;
 
 	DPRINTF(("svr4_32_msgsys(%d)\n", SCARG(uap, what)));
 
 	switch (SCARG(uap, what)) {
 	case SVR4_msgsnd:
-		return svr4_32_msgsnd(l, v, retval);
+		return svr4_32_msgsnd(l, (const void *)uap, retval);
 	case SVR4_msgrcv:
-		return svr4_32_msgrcv(l, v, retval);
+		return svr4_32_msgrcv(l, (const void *)uap, retval);
 	case SVR4_msgget:
-		return svr4_32_msgget(l, v, retval);
+		return svr4_32_msgget(l, (const void *)uap, retval);
 	case SVR4_msgctl:
-		return svr4_32_msgctl(l, v, retval);
+		return svr4_32_msgctl(l, (const void *)uap, retval);
 	default:
 		return EINVAL;
 	}
@@ -516,9 +500,8 @@ struct svr4_32_sys_shmat_args {
 };
 
 static int
-svr4_32_shmat(struct lwp *l, void *v, register_t *retval)
+svr4_32_shmat(struct lwp *l, const struct svr4_32_sys_shmat_args *uap, register_t *retval)
 {
-	struct svr4_32_sys_shmat_args *uap = v;
 	struct sys_shmat_args ap;
 
 	SCARG(&ap, shmid) = SCARG(uap, shmid);
@@ -534,9 +517,8 @@ struct svr4_32_sys_shmdt_args {
 };
 
 static int
-svr4_32_shmdt(struct lwp *l, void *v, register_t *retval)
+svr4_32_shmdt(struct lwp *l, const struct svr4_32_sys_shmdt_args *uap, register_t *retval)
 {
-	struct svr4_32_sys_shmdt_args *uap = v;
 	struct sys_shmdt_args ap;
 
 	SCARG(&ap, shmaddr) = SCARG_P32(uap, shmaddr);
@@ -552,9 +534,8 @@ struct svr4_32_sys_shmget_args {
 };
 
 static int
-svr4_32_shmget(struct lwp *l, void *v, register_t *retval)
+svr4_32_shmget(struct lwp *l, const struct svr4_32_sys_shmget_args *uap, register_t *retval)
 {
-	struct svr4_32_sys_shmget_args *uap = v;
 	struct sys_shmget_args ap;
 
 	SCARG(&ap, key) = SCARG(uap, key);
@@ -571,10 +552,9 @@ struct svr4_32_sys_shmctl_args {
 	syscallarg(svr4_32_shmid_dsp) buf;
 };
 
-int
-svr4_32_shmctl(struct lwp *l, void *v, register_t *retval)
+static int
+svr4_32_shmctl(struct lwp *l, const struct svr4_32_sys_shmctl_args *uap, register_t *retval)
 {
-	struct svr4_32_sys_shmctl_args *uap = v;
 	struct shmid_ds bs;
 	struct svr4_32_shmid_ds ss;
 	int error;
@@ -610,21 +590,20 @@ svr4_32_shmctl(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-svr4_32_sys_shmsys(struct lwp *l, void *v, register_t *retval)
+svr4_32_sys_shmsys(struct lwp *l, const struct svr4_32_sys_shmsys_args *uap, register_t *retval)
 {
-	struct svr4_32_sys_shmsys_args *uap = v;
 
 	DPRINTF(("svr4_32_shmsys(%d)\n", SCARG(uap, what)));
 
 	switch (SCARG(uap, what)) {
 	case SVR4_shmat:
-		return svr4_32_shmat(l, v, retval);
+		return svr4_32_shmat(l, (const void *)uap, retval);
 	case SVR4_shmdt:
-		return svr4_32_shmdt(l, v, retval);
+		return svr4_32_shmdt(l, (const void *)uap, retval);
 	case SVR4_shmget:
-		return svr4_32_shmget(l, v, retval);
+		return svr4_32_shmget(l, (const void *)uap, retval);
 	case SVR4_shmctl:
-		return svr4_32_shmctl(l, v, retval);
+		return svr4_32_shmctl(l, (const void *)uap, retval);
 	default:
 		return ENOSYS;
 	}

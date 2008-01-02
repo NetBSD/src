@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.94 2007/11/18 12:40:15 jnemeth Exp $ */
+/* $NetBSD: rtw.c,v 1.94.6.1 2008/01/02 21:54:15 bouyer Exp $ */
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 David Young.  All rights
  * reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.94 2007/11/18 12:40:15 jnemeth Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.94.6.1 2008/01/02 21:54:15 bouyer Exp $");
 
 #include "bpfilter.h"
 
@@ -73,12 +73,6 @@ __KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.94 2007/11/18 12:40:15 jnemeth Exp $");
 #include <dev/ic/rtwphy.h>
 
 #include <dev/ic/smc93cx6var.h>
-
-#define	KASSERT2(__cond, __msg)		\
-	do {				\
-		if (!(__cond))		\
-			panic __msg ;	\
-	} while (0)
 
 static int rtw_rfprog_fallback = 0;
 static int rtw_host_rfio = 0;
@@ -500,7 +494,7 @@ rtw_txdac_enable(struct rtw_softc *sc, int enable)
 }
 
 static inline int
-rtw_chip_reset1(struct rtw_regs *regs, const char *dvname)
+rtw_chip_reset1(struct rtw_regs *regs, device_t dev)
 {
 	uint8_t cr;
 	int i;
@@ -512,19 +506,19 @@ rtw_chip_reset1(struct rtw_regs *regs, const char *dvname)
 	for (i = 0; i < 1000; i++) {
 		if ((cr = RTW_READ8(regs, RTW_CR) & RTW_CR_RST) == 0) {
 			RTW_DPRINTF(RTW_DEBUG_RESET,
-			    ("%s: reset in %dus\n", dvname, i));
+			    ("%s: reset in %dus\n", device_xname(dev), i));
 			return 0;
 		}
 		RTW_RBR(regs, RTW_CR, RTW_CR);
 		DELAY(10); /* 10us */
 	}
 
-	printf("%s: reset failed\n", dvname);
+	aprint_error_dev(dev, "reset failed\n");
 	return ETIMEDOUT;
 }
 
 static inline int
-rtw_chip_reset(struct rtw_regs *regs, const char *dvname)
+rtw_chip_reset(struct rtw_regs *regs, device_t dev)
 {
 	uint32_t tcr;
 
@@ -536,7 +530,7 @@ rtw_chip_reset(struct rtw_regs *regs, const char *dvname)
 
 	RTW_WBW(regs, RTW_CR, RTW_TCR);
 
-	return rtw_chip_reset1(regs, dvname);
+	return rtw_chip_reset1(regs, dev);
 }
 
 static int
@@ -695,7 +689,7 @@ out:
 }
 
 static inline int
-rtw_recall_eeprom(struct rtw_regs *regs, const char *dvname)
+rtw_recall_eeprom(struct rtw_regs *regs, device_t dev)
 {
 	int i;
 	uint8_t ecr;
@@ -711,13 +705,14 @@ rtw_recall_eeprom(struct rtw_regs *regs, const char *dvname)
 		ecr = RTW_READ8(regs, RTW_9346CR);
 		if ((ecr & RTW_9346CR_EEM_MASK) == RTW_9346CR_EEM_NORMAL) {
 			RTW_DPRINTF(RTW_DEBUG_RESET,
-			    ("%s: recall EEPROM in %dus\n", dvname, i * 100));
+			    ("%s: recall EEPROM in %dus\n", device_xname(dev),
+			    i * 100));
 			return 0;
 		}
 		RTW_RBR(regs, RTW_9346CR, RTW_9346CR);
 		DELAY(100);
 	}
-	printf("%s: recall EEPROM failed\n", dvname);
+	aprint_error_dev(dev, "recall EEPROM failed\n");
 	return ETIMEDOUT;
 }
 
@@ -729,10 +724,10 @@ rtw_reset(struct rtw_softc *sc)
 
 	sc->sc_flags &= ~RTW_F_DK_VALID;
 
-	if ((rc = rtw_chip_reset(&sc->sc_regs, sc->sc_dev.dv_xname)) != 0)
+	if ((rc = rtw_chip_reset(&sc->sc_regs, sc->sc_dev)) != 0)
 		return rc;
 
-	rc = rtw_recall_eeprom(&sc->sc_regs, sc->sc_dev.dv_xname);
+	rc = rtw_recall_eeprom(&sc->sc_regs, sc->sc_dev);
 
 	config1 = RTW_READ8(&sc->sc_regs, RTW_CONFIG1);
 	RTW_WRITE8(&sc->sc_regs, RTW_CONFIG1, config1 & ~RTW_CONFIG1_PMEN);
@@ -814,7 +809,7 @@ rtw_srom_defaults(struct rtw_srom *sr, uint32_t *flags,
 static int
 rtw_srom_parse(struct rtw_srom *sr, uint32_t *flags, uint8_t *cs_threshold,
     enum rtw_rfchipid *rfchipid, uint32_t *rcr, enum rtw_locale *locale,
-    const char *dvname)
+    device_t dev)
 {
 	int i;
 	const char *rfname, *paname;
@@ -826,21 +821,24 @@ rtw_srom_parse(struct rtw_srom *sr, uint32_t *flags, uint8_t *cs_threshold,
 	*rcr &= ~(RTW_RCR_ENCS1 | RTW_RCR_ENCS2);
 
 	srom_version = RTW_SR_GET16(sr, RTW_SR_VERSION);
-	printf("%s: SROM version %d.%d", dvname,
-	    srom_version >> 8, srom_version & 0xff);
 
 	if (srom_version <= 0x0101) {
-		printf(" is not understood, limping along with defaults\n");
+		aprint_error_dev(dev,
+		    "SROM version %d.%d is not understood, "
+		    "limping along with defaults\n",
+		    srom_version >> 8, srom_version & 0xff);
 		rtw_srom_defaults(sr, flags, cs_threshold, rfchipid, rcr);
 		return 0;
+	} else {
+		aprint_verbose_dev(dev, "SROM version %d.%d",
+		    srom_version >> 8, srom_version & 0xff);
 	}
-	printf("\n");
 
 	for (i = 0; i < IEEE80211_ADDR_LEN; i++)
 		mac[i] = RTW_SR_GET(sr, RTW_SR_MAC + i);
 
 	RTW_DPRINTF(RTW_DEBUG_ATTACH,
-	    ("%s: EEPROM MAC %s\n", dvname, ether_sprintf(mac)));
+	    ("%s: EEPROM MAC %s\n", device_xname(dev), ether_sprintf(mac)));
 
 	*cs_threshold = RTW_SR_GET(sr, RTW_SR_ENERGYDETTHR);
 
@@ -897,7 +895,7 @@ rtw_srom_parse(struct rtw_srom *sr, uint32_t *flags, uint8_t *cs_threshold,
 		snprintf(scratch, sizeof(scratch), "unknown 0x%02x", *rfchipid);
 		rfname = paname = scratch;
 	}
-	printf("%s: RF: %s, PA: %s\n", dvname, rfname, paname);
+	aprint_normal_dev(dev, "RF: %s, PA: %s\n", rfname, paname);
 
 	switch (RTW_SR_GET(sr, RTW_SR_CONFIG0) & RTW_CONFIG0_GL_MASK) {
 	case RTW_CONFIG0_GL_USA:
@@ -920,7 +918,7 @@ rtw_srom_parse(struct rtw_srom *sr, uint32_t *flags, uint8_t *cs_threshold,
 /* Returns -1 on failure. */
 static int
 rtw_srom_read(struct rtw_regs *regs, uint32_t flags, struct rtw_srom *sr,
-    const char *dvname)
+    device_t dev)
 {
 	int rc;
 	struct seeprom_descriptor sd;
@@ -931,11 +929,13 @@ rtw_srom_read(struct rtw_regs *regs, uint32_t flags, struct rtw_srom *sr,
 	ecr = RTW_READ8(regs, RTW_9346CR);
 
 	if ((flags & RTW_F_9356SROM) != 0) {
-		RTW_DPRINTF(RTW_DEBUG_ATTACH, ("%s: 93c56 SROM\n", dvname));
+		RTW_DPRINTF(RTW_DEBUG_ATTACH, ("%s: 93c56 SROM\n",
+		    device_xname(dev)));
 		sr->sr_size = 256;
 		sd.sd_chip = C56_66;
 	} else {
-		RTW_DPRINTF(RTW_DEBUG_ATTACH, ("%s: 93c46 SROM\n", dvname));
+		RTW_DPRINTF(RTW_DEBUG_ATTACH, ("%s: 93c46 SROM\n",
+		    device_xname(dev)));
 		sr->sr_size = 128;
 		sd.sd_chip = C46;
 	}
@@ -949,7 +949,7 @@ rtw_srom_read(struct rtw_regs *regs, uint32_t flags, struct rtw_srom *sr,
 	sr->sr_content = malloc(sr->sr_size, M_DEVBUF, M_NOWAIT);
 
 	if (sr->sr_content == NULL) {
-		printf("%s: unable to allocate SROM buffer\n", dvname);
+		aprint_error_dev(dev, "unable to allocate SROM buffer\n");
 		return ENOMEM;
 	}
 
@@ -975,7 +975,7 @@ rtw_srom_read(struct rtw_regs *regs, uint32_t flags, struct rtw_srom *sr,
 
 	/* TBD bus barriers */
 	if (!read_seeprom(&sd, sr->sr_content, 0, sr->sr_size/2)) {
-		printf("%s: could not read SROM\n", dvname);
+		aprint_error_dev(dev, "could not read SROM\n");
 		free(sr->sr_content, M_DEVBUF);
 		sr->sr_content = NULL;
 		return -1;	/* XXX */
@@ -986,14 +986,14 @@ rtw_srom_read(struct rtw_regs *regs, uint32_t flags, struct rtw_srom *sr,
 	    (ecr & ~RTW_9346CR_EEM_MASK) | RTW_9346CR_EEM_NORMAL);
 	RTW_WBRW(regs, RTW_9346CR, RTW_9346CR);
 
-	if ((rc = rtw_recall_eeprom(regs, dvname)) != 0)
+	if ((rc = rtw_recall_eeprom(regs, dev)) != 0)
 		return rc;
 
 #ifdef RTW_DEBUG
 	{
 		int i;
 		RTW_DPRINTF(RTW_DEBUG_ATTACH,
-		    ("\n%s: serial ROM:\n\t", dvname));
+		    ("\n%s: serial ROM:\n\t", device_xname(dev)));
 		for (i = 0; i < sr->sr_size/2; i++) {
 			if (((i % 8) == 0) && (i != 0))
 				RTW_DPRINTF(RTW_DEBUG_ATTACH, ("\n\t"));
@@ -1008,7 +1008,7 @@ rtw_srom_read(struct rtw_regs *regs, uint32_t flags, struct rtw_srom *sr,
 
 static void
 rtw_set_rfprog(struct rtw_regs *regs, enum rtw_rfchipid rfchipid,
-    const char *dvname)
+    device_t dev)
 {
 	uint8_t cfg4;
 	const char *method;
@@ -1040,14 +1040,13 @@ rtw_set_rfprog(struct rtw_regs *regs, enum rtw_rfchipid rfchipid,
 	RTW_WBR(regs, RTW_CONFIG4, RTW_CONFIG4);
 
 	RTW_DPRINTF(RTW_DEBUG_INIT,
-	    ("%s: %s RF programming method, %#02x\n", dvname, method,
+	    ("%s: %s RF programming method, %#02x\n", device_xname(dev), method,
 	    RTW_READ8(regs, RTW_CONFIG4)));
 }
 
 static inline void
 rtw_init_channels(enum rtw_locale locale,
-    struct ieee80211_channel (*chans)[IEEE80211_CHAN_MAX+1],
-    const char *dvname)
+    struct ieee80211_channel (*chans)[IEEE80211_CHAN_MAX+1], device_t dev)
 {
 	int i;
 	const char *name = NULL;
@@ -1080,7 +1079,7 @@ rtw_init_channels(enum rtw_locale locale,
 			ADD_CHANNEL(chans, i);
 		break;
 	}
-	printf("%s: Geographic Location %s\n", dvname, name);
+	aprint_normal_dev(dev, "Geographic Location %s\n", name);
 #undef ADD_CHANNEL
 }
 
@@ -1109,7 +1108,7 @@ rtw_identify_country(struct rtw_regs *regs, enum rtw_locale *locale)
 
 static inline int
 rtw_identify_sta(struct rtw_regs *regs, uint8_t (*addr)[IEEE80211_ADDR_LEN],
-    const char *dvname)
+    device_t dev)
 {
 	static const uint8_t empty_macaddr[IEEE80211_ADDR_LEN] = {
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00
@@ -1126,12 +1125,12 @@ rtw_identify_sta(struct rtw_regs *regs, uint8_t (*addr)[IEEE80211_ADDR_LEN],
 	(*addr)[5] = __SHIFTOUT(idr1, __BITS(8, 15));
 
 	if (IEEE80211_ADDR_EQ(addr, empty_macaddr)) {
-		printf("%s: could not get mac address, attach failed\n",
-		    dvname);
+		aprint_error_dev(dev,
+		    "could not get mac address, attach failed\n");
 		return ENXIO;
 	}
 
-	printf("%s: 802.11 address %s\n", dvname, ether_sprintf(*addr));
+	aprint_normal_dev(dev, "802.11 address %s\n", ether_sprintf(*addr));
 
 	return 0;
 }
@@ -1141,9 +1140,7 @@ rtw_chan2txpower(struct rtw_srom *sr, struct ieee80211com *ic,
     struct ieee80211_channel *chan)
 {
 	u_int idx = RTW_SR_TXPOWER1 + ieee80211_chan2ieee(ic, chan) - 1;
-	KASSERT2(idx >= RTW_SR_TXPOWER1 && idx <= RTW_SR_TXPOWER14,
-	    ("%s: channel %d out of range", __func__,
-	     idx - RTW_SR_TXPOWER1 + 1));
+	KASSERT(idx >= RTW_SR_TXPOWER1 && idx <= RTW_SR_TXPOWER14);
 	return RTW_SR_GET(sr, idx);
 }
 
@@ -1312,7 +1309,7 @@ rtw_rxsoft_alloc(bus_dma_tag_t dmat, struct rtw_rxsoft *rs)
 
 static int
 rtw_rxsoft_init_all(bus_dma_tag_t dmat, struct rtw_rxsoft *desc,
-    int *ndesc, const char *dvname)
+    int *ndesc, device_t dev)
 {
 	int i, rc = 0;
 	struct rtw_rxsoft *rs;
@@ -1323,14 +1320,15 @@ rtw_rxsoft_init_all(bus_dma_tag_t dmat, struct rtw_rxsoft *desc,
 		KASSERT(rs->rs_mbuf == NULL);
 #ifdef RTW_DEBUG
 		if (i == rtw_rxbufs_limit) {
-			printf("%s: TEST hit %d-buffer limit\n", dvname, i);
+			aprint_error_dev(dev, "TEST hit %d-buffer limit\n", i);
 			rc = ENOBUFS;
 			break;
 		}
 #endif /* RTW_DEBUG */
 		if ((rc = rtw_rxsoft_alloc(dmat, rs)) != 0) {
-			printf("%s: rtw_rxsoft_alloc failed, %d buffers, "
-			       "rc %d\n", dvname, i, rc);
+			aprint_error_dev(dev,
+			    "rtw_rxsoft_alloc failed, %d buffers, rc %d\n",
+			    i, rc);
 			break;
 		}
 	}
@@ -1490,7 +1488,7 @@ rtw_intr_rx(struct rtw_softc *sc, uint16_t isr)
 } while (0)
 		if ((rtw_debug & RTW_DEBUG_RECV_DESC) != 0) {
 			const char *delim = "<";
-			printf("%s: ", sc->sc_dev.dv_xname);
+			printf("%s: ", device_xname(sc->sc_dev));
 			if ((hstat & RTW_RXSTAT_DEBUG) != 0) {
 				printf("status %08x", hstat);
 				PRINTSTAT(RTW_RXSTAT_SPLCP);
@@ -1506,9 +1504,9 @@ rtw_intr_rx(struct rtw_softc *sc, uint16_t isr)
 #endif /* RTW_DEBUG */
 
 		if ((hstat & RTW_RXSTAT_IOERROR) != 0) {
-			printf("%s: DMA error/FIFO overflow %08" PRIx32 ", "
-			    "rx descriptor %d\n", sc->sc_dev.dv_xname,
-			    hstat, next);
+			aprint_error_dev(sc->sc_dev,
+			    "DMA error/FIFO overflow %08" PRIx32 ", "
+			    "rx descriptor %d\n", hstat, next);
 			ifp->if_ierrors++;
 			goto next;
 		}
@@ -1518,13 +1516,16 @@ rtw_intr_rx(struct rtw_softc *sc, uint16_t isr)
 			sc->sc_ic.ic_stats.is_rx_tooshort++;
 			goto next;
 		}
-		KASSERT(len <= rs->rs_mbuf->m_pkthdr.len);
-		KASSERT(len <= rs->rs_mbuf->m_len);
+		if (len > rs->rs_mbuf->m_len) {
+			aprint_error_dev(sc->sc_dev, "rx frame too long\n");
+			ifp->if_ierrors++;
+			goto next;
+		}
 
 		hwrate = __SHIFTOUT(hstat, RTW_RXSTAT_RATE_MASK);
 		if (hwrate >= __arraycount(ratetbl)) {
-			printf("%s: unknown rate #%" __PRIuBITS "\n",
-			    sc->sc_dev.dv_xname,
+			aprint_error_dev(sc->sc_dev,
+			    "unknown rate #%" __PRIuBITS "\n",
 			    __SHIFTOUT(hstat, RTW_RXSTAT_RATE_MASK));
 			ifp->if_ierrors++;
 			goto next;
@@ -1539,9 +1540,8 @@ rtw_intr_rx(struct rtw_softc *sc, uint16_t isr)
 
 		/* if bad flags, skip descriptor */
 		if ((hstat & RTW_RXSTAT_ONESEG) != RTW_RXSTAT_ONESEG) {
-			printf("%s: too many rx segments, "
-			    "next=%d, %08" PRIx32 "\n",
-			    sc->sc_dev.dv_xname, next, hstat);
+			aprint_error_dev(sc->sc_dev, "too many rx segments, "
+			    "next=%d, %08" PRIx32 "\n", next, hstat);
 			goto next;
 		}
 
@@ -1555,13 +1555,14 @@ rtw_intr_rx(struct rtw_softc *sc, uint16_t isr)
 		case 0:
 			break;
 		case ENOBUFS:
-			printf("%s: rtw_rxsoft_alloc(, %d) failed, "
-			    "dropping packet\n", sc->sc_dev.dv_xname, next);
+			aprint_error_dev(sc->sc_dev,
+			    "rtw_rxsoft_alloc(, %d) failed, dropping packet\n",
+			    next);
 			goto next;
 		default:
 			/* XXX shorten rx ring, instead? */
-			panic("%s: could not load DMA map\n",
-			    sc->sc_dev.dv_xname);
+			aprint_error_dev(sc->sc_dev,
+			    "could not load DMA map\n");
 		}
 
 		sq = __SHIFTOUT(hrssi, RTW_RXRSSI_SQ);
@@ -1711,7 +1712,7 @@ rtw_collect_txpkt(struct rtw_softc *sc, struct rtw_txdesc_blk *tdb,
 
 	DPRINTF(sc, RTW_DEBUG_XMIT_DESC,
 	    ("%s: ts %p txdesc[%d, %d] %s tries rts %u data %u\n",
-	    sc->sc_dev.dv_xname, ts, ts->ts_first, ts->ts_last,
+	    device_xname(sc->sc_dev), ts, ts->ts_first, ts->ts_last,
 	    condstring, rts_retry, data_retry));
 }
 
@@ -1859,8 +1860,8 @@ rtw_intr_beacon(struct rtw_softc *sc, uint16_t isr)
 		m = rtw_beacon_alloc(sc, ic->ic_bss);
 
 		if (m == NULL) {
-			printf("%s: could not allocate beacon\n",
-			    sc->sc_dev.dv_xname);
+			aprint_error_dev(sc->sc_dev,
+			    "could not allocate beacon\n");
 			return;
 		}
 		m->m_pkthdr.rcvif = (void *)ieee80211_ref_node(ic->ic_bss);
@@ -1955,9 +1956,8 @@ rtw_swring_setup(struct rtw_softc *sc)
 
 	rdb = &sc->sc_rxdesc_blk;
 	if ((rc = rtw_rxsoft_init_all(sc->sc_dmat, sc->sc_rxsoft, &rdb->rdb_ndesc,
-	     sc->sc_dev.dv_xname)) != 0 && rdb->rdb_ndesc == 0) {
-		printf("%s: could not allocate rx buffers\n",
-		    sc->sc_dev.dv_xname);
+	     sc->sc_dev)) != 0 && rdb->rdb_ndesc == 0) {
+		aprint_error_dev(sc->sc_dev, "could not allocate rx buffers\n");
 		return rc;
 	}
 
@@ -2039,10 +2039,10 @@ rtw_txdescs_reset(struct rtw_softc *sc)
 static void
 rtw_intr_ioerror(struct rtw_softc *sc, uint16_t isr)
 {
-	printf("%s: tx fifo underflow\n", sc->sc_dev.dv_xname);
+	aprint_error_dev(sc->sc_dev, "tx fifo underflow\n");
 
 	RTW_DPRINTF(RTW_DEBUG_BUGS, ("%s: cleaning up xmit, isr %" PRIx16
-	    "\n", sc->sc_dev.dv_xname, isr));
+	    "\n", device_xname(sc->sc_dev), isr));
 
 #ifdef RTW_DEBUG
 	rtw_dump_rings(sc);
@@ -2062,7 +2062,7 @@ static inline void
 rtw_suspend_ticks(struct rtw_softc *sc)
 {
 	RTW_DPRINTF(RTW_DEBUG_TIMEOUT,
-	    ("%s: suspending ticks\n", sc->sc_dev.dv_xname));
+	    ("%s: suspending ticks\n", device_xname(sc->sc_dev)));
 	sc->sc_do_tick = 0;
 }
 
@@ -2081,13 +2081,13 @@ rtw_resume_ticks(struct rtw_softc *sc)
 
 	RTW_DPRINTF(RTW_DEBUG_TIMEOUT,
 	    ("%s: resume ticks delta %#08x now %#08x next %#08x\n",
-	    sc->sc_dev.dv_xname, tsftrl1 - tsftrl0, tsftrl1, next_tick));
+	    device_xname(sc->sc_dev), tsftrl1 - tsftrl0, tsftrl1, next_tick));
 }
 
 static void
 rtw_intr_timeout(struct rtw_softc *sc)
 {
-	RTW_DPRINTF(RTW_DEBUG_TIMEOUT, ("%s: timeout\n", sc->sc_dev.dv_xname));
+	RTW_DPRINTF(RTW_DEBUG_TIMEOUT, ("%s: timeout\n", device_xname(sc->sc_dev)));
 	if (sc->sc_do_tick)
 		rtw_resume_ticks(sc);
 	return;
@@ -2108,8 +2108,9 @@ rtw_intr(void *arg)
 	 */
 	if ((sc->sc_flags & RTW_F_ENABLED) == 0 ||
 	    (ifp->if_flags & IFF_RUNNING) == 0 ||
-	    !device_is_active(&sc->sc_dev)) {
-		RTW_DPRINTF(RTW_DEBUG_INTR, ("%s: stray interrupt\n", sc->sc_dev.dv_xname));
+	    !device_is_active(sc->sc_dev)) {
+		RTW_DPRINTF(RTW_DEBUG_INTR, ("%s: stray interrupt\n",
+		    device_xname(sc->sc_dev)));
 		return (0);
 	}
 
@@ -2136,7 +2137,8 @@ rtw_intr(void *arg)
 		if ((rtw_debug & RTW_DEBUG_INTR) != 0 && isr != 0) {
 			const char *delim = "<";
 
-			printf("%s: reg[ISR] = %x", sc->sc_dev.dv_xname, isr);
+			printf("%s: reg[ISR] = %x", device_xname(sc->sc_dev),
+			    isr);
 
 			PRINTINTR(RTW_INTR_TXFOVW);
 			PRINTINTR(RTW_INTR_TIMEOUT);
@@ -2425,8 +2427,7 @@ rtw_tune(struct rtw_softc *sc)
 	    dflantb = sc->sc_flags & RTW_F_DFLANTB;
 
 	chan = ieee80211_chan2ieee(ic, ic->ic_curchan);
-	if (chan == IEEE80211_CHAN_ANY)
-		panic("%s: chan == IEEE80211_CHAN_ANY\n", __func__);
+	KASSERT(chan != IEEE80211_CHAN_ANY);
 
 	rt->rt_chan_freq = htole16(ic->ic_curchan->ic_freq);
 	rt->rt_chan_flags = htole16(ic->ic_curchan->ic_flags);
@@ -2452,7 +2453,7 @@ rtw_tune(struct rtw_softc *sc)
 	    rtw_chan2txpower(&sc->sc_srom, ic, ic->ic_curchan), sc->sc_csthr,
 	        ic->ic_curchan->ic_freq, antdiv, dflantb, RTW_ON)) != 0) {
 		/* XXX condition on powersaving */
-		printf("%s: phy init failed\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(sc->sc_dev, "phy init failed\n");
 	}
 
 	sc->sc_cur_chan = chan;
@@ -2475,8 +2476,8 @@ rtw_disable(struct rtw_softc *sc)
 	/* turn off PHY */
 	if ((sc->sc_flags & RTW_F_INVALID) == 0 &&
 	    (rc = rtw_pwrstate(sc, RTW_OFF)) != 0) {
-		printf("%s: failed to turn off PHY (%d)\n",
-		    sc->sc_dev.dv_xname, rc);
+		aprint_error_dev(sc->sc_dev,
+		    "failed to turn off PHY (%d)\n", rc);
 	}
 
 	if (sc->sc_disable != NULL)
@@ -2490,8 +2491,8 @@ rtw_enable(struct rtw_softc *sc)
 {
 	if ((sc->sc_flags & RTW_F_ENABLED) == 0) {
 		if (sc->sc_enable != NULL && (*sc->sc_enable)(sc) != 0) {
-			printf("%s: device enable failed\n",
-			    sc->sc_dev.dv_xname);
+			aprint_error_dev(sc->sc_dev,
+			    "device enable failed\n");
 			return (EIO);
 		}
 		sc->sc_flags |= RTW_F_ENABLED;
@@ -2658,7 +2659,7 @@ rtw_pktfilt_load(struct rtw_softc *sc)
 
 	DPRINTF(sc, RTW_DEBUG_PKTFILT,
 	    ("%s: RTW_MAR0 %08x RTW_MAR1 %08x RTW_RCR %08x\n",
-	    sc->sc_dev.dv_xname, RTW_READ(regs, RTW_MAR0),
+	    device_xname(sc->sc_dev), RTW_READ(regs, RTW_MAR0),
 	    RTW_READ(regs, RTW_MAR1), RTW_READ(regs, RTW_RCR)));
 }
 
@@ -2719,7 +2720,7 @@ rtw_init(struct ifnet *ifp)
 	RTW_WRITE(regs, RTW_FEMR, 0xffff);
 	RTW_SYNC(regs, RTW_FEMR, RTW_FEMR);
 
-	rtw_set_rfprog(regs, sc->sc_rfchipid, sc->sc_dev.dv_xname);
+	rtw_set_rfprog(regs, sc->sc_rfchipid, sc->sc_dev);
 
 	RTW_WRITE8(regs, RTW_PHYDELAY, sc->sc_phydelay);
 	/* from Linux driver */
@@ -2753,7 +2754,7 @@ rtw_init(struct ifnet *ifp)
 		return ieee80211_new_state(ic, IEEE80211_S_SCAN, -1);
 
 out:
-	printf("%s: interface not running\n", sc->sc_dev.dv_xname);
+	aprint_error_dev(sc->sc_dev, "interface not running\n");
 	return rc;
 }
 
@@ -3023,7 +3024,7 @@ rtw_dequeue(struct ifnet *ifp, struct rtw_txsoft_blk **tsbp,
 	sc = (struct rtw_softc *)ifp->if_softc;
 
 	DPRINTF(sc, RTW_DEBUG_XMIT,
-	    ("%s: enter %s\n", sc->sc_dev.dv_xname, __func__));
+	    ("%s: enter %s\n", device_xname(sc->sc_dev), __func__));
 
 	if_flagsp = &ifp->if_flags;
 
@@ -3107,7 +3108,7 @@ rtw_seg_too_short(bus_dmamap_t dmamap)
 /* TBD factor with atw_start */
 static struct mbuf *
 rtw_dmamap_load_txbuf(bus_dma_tag_t dmat, bus_dmamap_t dmam, struct mbuf *chain,
-    u_int ndescfree, const char *dvname)
+    u_int ndescfree, device_t dev)
 {
 	int first, rc;
 	struct mbuf *m, *m0;
@@ -3136,15 +3137,14 @@ rtw_dmamap_load_txbuf(bus_dma_tag_t dmat, bus_dmamap_t dmam, struct mbuf *chain,
 		}
 		MGETHDR(m, M_DONTWAIT, MT_DATA);
 		if (m == NULL) {
-			printf("%s: unable to allocate Tx mbuf\n",
-			    dvname);
+			aprint_error_dev(dev, "unable to allocate Tx mbuf\n");
 			break;
 		}
 		if (m0->m_pkthdr.len > MHLEN) {
 			MCLGET(m, M_DONTWAIT);
 			if ((m->m_flags & M_EXT) == 0) {
-				printf("%s: cannot allocate Tx cluster\n",
-				    dvname);
+				aprint_error_dev(dev,
+				    "cannot allocate Tx cluster\n");
 				m_freem(m);
 				break;
 			}
@@ -3156,17 +3156,17 @@ rtw_dmamap_load_txbuf(bus_dma_tag_t dmat, bus_dmamap_t dmam, struct mbuf *chain,
 		m = NULL;
 	}
 	if (rc != 0) {
-		printf("%s: cannot load Tx buffer, rc = %d\n", dvname, rc);
+		aprint_error_dev(dev, "cannot load Tx buffer, rc = %d\n", rc);
 		m_freem(m0);
 		return NULL;
 	} else if (rtw_seg_too_short(dmam)) {
-		printf("%s: cannot load Tx buffer, segment too short\n",
-		    dvname);
+		aprint_error_dev(dev,
+		    "cannot load Tx buffer, segment too short\n");
 		bus_dmamap_unload(dmat, dmam);
 		m_freem(m0);
 		return NULL;
 	} else if (dmam->dm_nsegs > ndescfree) {
-		printf("%s: too many tx segments\n", dvname);
+		aprint_error_dev(dev, "too many tx segments\n");
 		bus_dmamap_unload(dmat, dmam);
 		m_freem(m0);
 		return NULL;
@@ -3182,7 +3182,7 @@ rtw_print_txdesc(struct rtw_softc *sc, const char *action,
 	struct rtw_txdesc *td = &tdb->tdb_desc[desc];
 	DPRINTF(sc, RTW_DEBUG_XMIT_DESC, ("%s: %p %s txdesc[%d] next %#08x "
 	    "buf %#08x ctl0 %#08x ctl1 %#08x len %#08x\n",
-	    sc->sc_dev.dv_xname, ts, action, desc,
+	    device_xname(sc->sc_dev), ts, action, desc,
 	    le32toh(td->td_buf), le32toh(td->td_next),
 	    le32toh(td->td_ctl0), le32toh(td->td_ctl1),
 	    le32toh(td->td_len)));
@@ -3212,7 +3212,7 @@ rtw_start(struct ifnet *ifp)
 	ic = &sc->sc_ic;
 
 	DPRINTF(sc, RTW_DEBUG_XMIT,
-	    ("%s: enter %s\n", sc->sc_dev.dv_xname, __func__));
+	    ("%s: enter %s\n", device_xname(sc->sc_dev), __func__));
 
 	if ((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)
 		goto out;
@@ -3243,7 +3243,7 @@ rtw_start(struct ifnet *ifp)
 		dmamap = ts->ts_dmamap;
 
 		m0 = rtw_dmamap_load_txbuf(sc->sc_dmat, dmamap, m0,
-		    tdb->tdb_nfree, sc->sc_dev.dv_xname);
+		    tdb->tdb_nfree, sc->sc_dev);
 
 		if (m0 == NULL || dmamap->dm_nsegs == 0) {
 			DPRINTF(sc, RTW_DEBUG_XMIT,
@@ -3652,7 +3652,7 @@ rtw_node_alloc(struct ieee80211_node_table *nt)
 	struct ieee80211_node *ni = (*sc->sc_mtbl.mt_node_alloc)(nt);
 
 	DPRINTF(sc, RTW_DEBUG_NODE,
-	    ("%s: alloc node %p\n", sc->sc_dev.dv_xname, ni));
+	    ("%s: alloc node %p\n", device_xname(sc->sc_dev), ni));
 	return ni;
 }
 
@@ -3664,7 +3664,7 @@ rtw_node_free(struct ieee80211_node *ni)
 	struct rtw_softc *sc = (struct rtw_softc *)ifp->if_softc;
 
 	DPRINTF(sc, RTW_DEBUG_NODE,
-	    ("%s: freeing node %p %s\n", sc->sc_dev.dv_xname, ni,
+	    ("%s: freeing node %p %s\n", device_xname(sc->sc_dev), ni,
 	    ether_sprintf(ni->ni_bssid)));
 	(*sc->sc_mtbl.mt_node_free)(ni);
 }
@@ -3697,54 +3697,10 @@ rtw_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 	ieee80211_media_status(ifp, imr);
 }
 
-void
-rtw_power(int why, void *arg)
-{
-	struct rtw_softc *sc = arg;
-	struct ifnet *ifp = &sc->sc_if;
-	int s;
-
-	DPRINTF(sc, RTW_DEBUG_PWR,
-	    ("%s: rtw_power(%d,)\n", sc->sc_dev.dv_xname, why));
-
-	s = splnet();
-	switch (why) {
-	case PWR_STANDBY:
-		/* XXX do nothing. */
-		break;
-	case PWR_SUSPEND:
-		rtw_stop(ifp, 0);
-		if (sc->sc_power != NULL)
-			(*sc->sc_power)(sc, why);
-		break;
-	case PWR_RESUME:
-		if (ifp->if_flags & IFF_UP) {
-			if (sc->sc_power != NULL)
-				(*sc->sc_power)(sc, why);
-			rtw_init(ifp);
-		}
-		break;
-	case PWR_SOFTSUSPEND:
-	case PWR_SOFTSTANDBY:
-	case PWR_SOFTRESUME:
-		break;
-	}
-	splx(s);
-}
-
-/* rtw_shutdown: make sure the interface is stopped at reboot time. */
-void
-rtw_shutdown(void *arg)
-{
-	struct rtw_softc *sc = arg;
-
-	rtw_stop(&sc->sc_if, 1);
-}
-
 static inline void
 rtw_setifprops(struct ifnet *ifp, const char *dvname, void *softc)
 {
-	(void)memcpy(ifp->if_xname, dvname, IFNAMSIZ);
+	(void)strlcpy(ifp->if_xname, dvname, IFNAMSIZ);
 	ifp->if_softc = softc;
 	ifp->if_flags = IFF_SIMPLEX | IFF_BROADCAST | IFF_MULTICAST |
 	    IFF_NOTRAILERS;
@@ -3793,39 +3749,6 @@ rtw_set80211methods(struct rtw_mtbl *mtbl, struct ieee80211com *ic)
 	ic->ic_crypto.cs_key_set = rtw_key_set;
 	ic->ic_crypto.cs_key_update_begin = rtw_key_update_begin;
 	ic->ic_crypto.cs_key_update_end = rtw_key_update_end;
-}
-
-static inline void
-rtw_establish_hooks(struct rtw_hooks *hooks, const char *dvname,
-    void *arg)
-{
-	/*
-	 * Make sure the interface is shutdown during reboot.
-	 */
-	hooks->rh_shutdown = shutdownhook_establish(rtw_shutdown, arg);
-	if (hooks->rh_shutdown == NULL)
-		printf("%s: WARNING: unable to establish shutdown hook\n",
-		    dvname);
-
-	/*
-	 * Add a suspend hook to make sure we come back up after a
-	 * resume.
-	 */
-	hooks->rh_power = powerhook_establish(dvname, rtw_power, arg);
-	if (hooks->rh_power == NULL)
-		printf("%s: WARNING: unable to establish power hook\n",
-		    dvname);
-}
-
-static inline void
-rtw_disestablish_hooks(struct rtw_hooks *hooks, const char *dvname,
-    void *arg)
-{
-	if (hooks->rh_shutdown != NULL)
-		shutdownhook_disestablish(hooks->rh_shutdown);
-
-	if (hooks->rh_power != NULL)
-		powerhook_disestablish(hooks->rh_power);
 }
 
 static inline void
@@ -4025,7 +3948,7 @@ rtw_attach(struct rtw_softc *sc)
 		sc->sc_hwverid = '?';
 		break;
 	}
-	printf("%s: hardware version %c\n", sc->sc_dev.dv_xname,
+	aprint_verbose_dev(sc->sc_dev, "hardware version %c\n",
 	    sc->sc_hwverid);
 
 	rc = bus_dmamem_alloc(sc->sc_dmat, sizeof(struct rtw_descs),
@@ -4033,8 +3956,8 @@ rtw_attach(struct rtw_softc *sc)
 	    0);
 
 	if (rc != 0) {
-		printf("%s: could not allocate hw descriptors, error %d\n",
-		     sc->sc_dev.dv_xname, rc);
+		aprint_error_dev(sc->sc_dev,
+		    "could not allocate hw descriptors, error %d\n", rc);
 		goto err;
 	}
 
@@ -4045,8 +3968,8 @@ rtw_attach(struct rtw_softc *sc)
 	    (void **)&sc->sc_descs, BUS_DMA_COHERENT);
 
 	if (rc != 0) {
-		printf("%s: could not map hw descriptors, error %d\n",
-		    sc->sc_dev.dv_xname, rc);
+		aprint_error_dev(sc->sc_dev,
+		    "could not map hw descriptors, error %d\n", rc);
 		goto err;
 	}
 	NEXT_ATTACH_STATE(sc, FINISH_DESC_MAP);
@@ -4055,8 +3978,9 @@ rtw_attach(struct rtw_softc *sc)
 	    sizeof(struct rtw_descs), 0, 0, &sc->sc_desc_dmamap);
 
 	if (rc != 0) {
-		printf("%s: could not create DMA map for hw descriptors, "
-		    "error %d\n", sc->sc_dev.dv_xname, rc);
+		aprint_error_dev(sc->sc_dev,
+		    "could not create DMA map for hw descriptors, error %d\n",
+		    rc);
 		goto err;
 	}
 	NEXT_ATTACH_STATE(sc, FINISH_DESCMAP_CREATE);
@@ -4073,8 +3997,9 @@ rtw_attach(struct rtw_softc *sc)
 	    sizeof(struct rtw_descs), NULL, 0);
 
 	if (rc != 0) {
-		printf("%s: could not load DMA map for hw descriptors, "
-		    "error %d\n", sc->sc_dev.dv_xname, rc);
+		aprint_error_dev(sc->sc_dev,
+		    "could not load DMA map for hw descriptors, error %d\n",
+		    rc);
 		goto err;
 	}
 	NEXT_ATTACH_STATE(sc, FINISH_DESCMAP_LOAD);
@@ -4094,9 +4019,9 @@ rtw_attach(struct rtw_softc *sc)
 
 		if ((rc = rtw_txdesc_dmamaps_create(sc->sc_dmat,
 		    &tsb->tsb_desc[0], tsb->tsb_ndesc)) != 0) {
-			printf("%s: could not load DMA map for "
-			    "hw tx descriptors, error %d\n",
-			    sc->sc_dev.dv_xname, rc);
+			aprint_error_dev(sc->sc_dev,
+			    "could not load DMA map for hw tx descriptors, "
+			    "error %d\n", rc);
 			goto err;
 		}
 	}
@@ -4104,8 +4029,9 @@ rtw_attach(struct rtw_softc *sc)
 	NEXT_ATTACH_STATE(sc, FINISH_TXMAPS_CREATE);
 	if ((rc = rtw_rxdesc_dmamaps_create(sc->sc_dmat, &sc->sc_rxsoft[0],
 	                                    RTW_RXQLEN)) != 0) {
-		printf("%s: could not load DMA map for hw rx descriptors, "
-		    "error %d\n", sc->sc_dev.dv_xname, rc);
+		aprint_error_dev(sc->sc_dev,
+		    "could not load DMA map for hw rx descriptors, error %d\n",
+		    rc);
 		goto err;
 	}
 	NEXT_ATTACH_STATE(sc, FINISH_RXMAPS_CREATE);
@@ -4121,23 +4047,24 @@ rtw_attach(struct rtw_softc *sc)
 		sc->sc_flags |= RTW_F_9356SROM;
 
 	if (rtw_srom_read(&sc->sc_regs, sc->sc_flags, &sc->sc_srom,
-	    sc->sc_dev.dv_xname) != 0)
+	    sc->sc_dev) != 0)
 		goto err;
 
 	NEXT_ATTACH_STATE(sc, FINISH_READ_SROM);
 
 	if (rtw_srom_parse(&sc->sc_srom, &sc->sc_flags, &sc->sc_csthr,
 	    &sc->sc_rfchipid, &sc->sc_rcr, &sc->sc_locale,
-	    sc->sc_dev.dv_xname) != 0) {
-		printf("%s: attach failed, malformed serial ROM\n",
-		    sc->sc_dev.dv_xname);
+	    sc->sc_dev) != 0) {
+		aprint_error_dev(sc->sc_dev,
+		    "attach failed, malformed serial ROM\n");
 		goto err;
 	}
 
-	printf("%s: %s PHY\n", sc->sc_dev.dv_xname,
+	aprint_verbose_dev(sc->sc_dev, "%s PHY\n",
 	    ((sc->sc_flags & RTW_F_DIGPHY) != 0) ? "digital" : "analog");
 
-	printf("%s: CS threshold %u\n", sc->sc_dev.dv_xname, sc->sc_csthr);
+	aprint_verbose_dev(sc->sc_dev, "carrier-sense threshold %u\n",
+	    sc->sc_csthr);
 
 	NEXT_ATTACH_STATE(sc, FINISH_PARSE_SROM);
 
@@ -4145,8 +4072,8 @@ rtw_attach(struct rtw_softc *sc)
 	    sc->sc_flags & RTW_F_DIGPHY);
 
 	if (sc->sc_rf == NULL) {
-		printf("%s: attach failed, could not attach RF\n",
-		    sc->sc_dev.dv_xname);
+		aprint_verbose_dev(sc->sc_dev,
+		    "attach failed, could not attach RF\n");
 		goto err;
 	}
 
@@ -4155,20 +4082,19 @@ rtw_attach(struct rtw_softc *sc)
 	sc->sc_phydelay = rtw_check_phydelay(&sc->sc_regs, sc->sc_rcr);
 
 	RTW_DPRINTF(RTW_DEBUG_ATTACH,
-	    ("%s: PHY delay %d\n", sc->sc_dev.dv_xname, sc->sc_phydelay));
+	    ("%s: PHY delay %d\n", device_xname(sc->sc_dev), sc->sc_phydelay));
 
 	if (sc->sc_locale == RTW_LOCALE_UNKNOWN)
 		rtw_identify_country(&sc->sc_regs, &sc->sc_locale);
 
-	rtw_init_channels(sc->sc_locale, &sc->sc_ic.ic_channels,
-	    sc->sc_dev.dv_xname);
+	rtw_init_channels(sc->sc_locale, &sc->sc_ic.ic_channels, sc->sc_dev);
 
 	if (rtw_identify_sta(&sc->sc_regs, &sc->sc_ic.ic_myaddr,
-	    sc->sc_dev.dv_xname) != 0)
+	    sc->sc_dev) != 0)
 		goto err;
 	NEXT_ATTACH_STATE(sc, FINISH_ID_STA);
 
-	rtw_setifprops(ifp, sc->sc_dev.dv_xname, (void*)sc);
+	rtw_setifprops(ifp, device_xname(sc->sc_dev), (void*)sc);
 
 	IFQ_SET_READY(&ifp->if_snd);
 
@@ -4201,7 +4127,11 @@ rtw_attach(struct rtw_softc *sc)
 	    sizeof(struct ieee80211_frame) + 64, &sc->sc_radiobpf);
 #endif
 
-	rtw_establish_hooks(&sc->sc_hooks, sc->sc_dev.dv_xname, (void*)sc);
+	if (!pmf_device_register(sc->sc_dev, NULL, NULL)) {
+		aprint_error_dev(sc->sc_dev,
+		    "couldn't establish power handler\n");
+	} else
+		pmf_class_network_register(sc->sc_dev, &sc->sc_if);
 
 	NEXT_ATTACH_STATE(sc, FINISHED);
 
@@ -4216,20 +4146,20 @@ int
 rtw_detach(struct rtw_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_if;
-	int pri;
+	int pri, s;
 
+	s = splnet();
 	sc->sc_flags |= RTW_F_INVALID;
 
 	switch (sc->sc_attach_state) {
 	case FINISHED:
 		rtw_stop(ifp, 1);
 
-		rtw_disestablish_hooks(&sc->sc_hooks, sc->sc_dev.dv_xname,
-		    (void*)sc);
+		pmf_device_deregister(sc->sc_dev);
 		callout_stop(&sc->sc_scan_ch);
 		ieee80211_ifdetach(&sc->sc_ic);
 		if_detach(ifp);
-		break;
+		/*FALLTHROUGH*/
 	case FINISH_ID_STA:
 	case FINISH_RF_ATTACH:
 		rtw_rf_destroy(sc->sc_rf);
@@ -4273,13 +4203,14 @@ rtw_detach(struct rtw_softc *sc)
 		NEXT_ATTACH_STATE(sc, DETACHED);
 		break;
 	}
+	splx(s);
 	return 0;
 }
 
 int
-rtw_activate(struct device *self, enum devact act)
+rtw_activate(device_t self, enum devact act)
 {
-	struct rtw_softc *sc = (struct rtw_softc *)self;
+	struct rtw_softc *sc = device_private(self);
 	int rc = 0, s;
 
 	s = splnet();

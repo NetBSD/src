@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.154 2007/10/19 12:00:03 ad Exp $	*/
+/*	$NetBSD: tulip.c,v 1.154.8.1 2008/01/02 21:54:18 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.154 2007/10/19 12:00:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.154.8.1 2008/01/02 21:54:18 bouyer Exp $");
 
 #include "bpfilter.h"
 
@@ -1412,7 +1412,7 @@ tlp_rxintr(struct tulip_softc *sc)
 #if NBPFILTER > 0
 		/*
 		 * Pass this up to any BPF listeners, but only
-		 * pass it up the stack if its for us.
+		 * pass it up the stack if it's for us.
 		 */
 		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m);

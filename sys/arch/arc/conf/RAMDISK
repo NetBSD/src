@@ -1,4 +1,4 @@
-#	$NetBSD: RAMDISK,v 1.73 2006/09/27 21:42:04 manu Exp $
+#	$NetBSD: RAMDISK,v 1.73.42.1 2008/01/02 21:47:17 bouyer Exp $
 #
 #	memory disk based configuration file for MIPS R4x00 ARC Systems
 #
@@ -7,7 +7,7 @@ include		"arch/arc/conf/std.arc"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.73 $"
+#ident		"GENERIC-$Revision: 1.73.42.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -30,7 +30,6 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 #options 	NTP		# NTP phase/frequency locked loop
 
 #options 	KTRACE		# system call tracing via ktrace(1)
-#options 	SYSTRACE	# system call vetting via systrace(1)
 
 #options 	SYSVMSG		# System V-like message queues
 #options 	SYSVSEM		# System V-like semaphores

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.41 2007/12/06 17:00:32 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.41.4.1 2008/01/02 21:47:55 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -70,12 +70,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.41 2007/12/06 17:00:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.41.4.1 2008/01/02 21:47:55 bouyer Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
-#include "opt_compat_hpux.h"
 #include "opt_useleds.h"
 #include "opt_power_switch.h"
 
@@ -118,10 +117,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.41 2007/12/06 17:00:32 ad Exp $");
 #include <machine/cpufunc.h>
 #include <machine/autoconf.h>
 #include <machine/kcore.h>
-
-#ifdef COMPAT_HPUX
-#include <compat/hpux/hpux.h>
-#endif
 
 #ifdef	KGDB
 #include "com.h"
@@ -213,9 +208,6 @@ u_int	cpu_ticksnum, cpu_ticksdenom, cpu_hzticks;
 char	machine[] = MACHINE;
 char	cpu_model[128];
 const struct hppa_cpu_info *hppa_cpu_info;
-#ifdef COMPAT_HPUX
-int	cpu_model_hpux;	/* contains HPUX_SYSCONF_CPU* kind of value */
-#endif
 
 /*
  * exported methods for cpus
@@ -687,17 +679,6 @@ hppa_init(paddr_t start)
 	LDILDO(trap_ep_T_ITLBMISS  , hppa_cpu_info->itlbh);
 	LDILDO(trap_ep_T_ITLBMISSNA, hppa_cpu_info->itlbh);
 #undef LDILDO
-
-#ifdef COMPAT_HPUX
-	if (hppa_cpu_info->hppa_cpu_info_pa_spec >= 
-	    HPPA_PA_SPEC_MAKE(2, 0, ' '))
-		cpu_model_hpux = HPUX_SYSCONF_CPUPA20;
-	else if (hppa_cpu_info->hppa_cpu_info_pa_spec >= 
-	    HPPA_PA_SPEC_MAKE(1, 1, ' '))
-		cpu_model_hpux = HPUX_SYSCONF_CPUPA11;
-	else 
-		cpu_model_hpux = HPUX_SYSCONF_CPUPA10;
-#endif
 
 	/* we hope this won't fail */
 	hp700_io_extent = extent_create("io",

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.13.2.4 2007/12/13 22:06:00 bouyer Exp $	*/
+/*	$NetBSD: pmap.c,v 1.13.2.5 2008/01/02 21:51:25 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.13.2.4 2007/12/13 22:06:00 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.13.2.5 2008/01/02 21:51:25 bouyer Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -172,16 +172,15 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.13.2.4 2007/12/13 22:06:00 bouyer Exp $")
 #include <sys/user.h>
 #include <sys/kernel.h>
 #include <sys/atomic.h>
+#include <sys/cpu.h>
+#include <sys/intr.h>
 
 #include <uvm/uvm.h>
 
 #include <dev/isa/isareg.h>
 
-#include <machine/atomic.h>
-#include <machine/cpu.h>
 #include <machine/specialreg.h>
 #include <machine/gdt.h>
-#include <machine/intr.h>
 #include <machine/isa_machdep.h>
 #include <machine/cpuvar.h>
 
@@ -242,9 +241,6 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.13.2.4 2007/12/13 22:06:00 bouyer Exp $")
  *      page is mapped in.    this is critical for page based operations
  *      such as pmap_page_protect() [change protection on _all_ mappings
  *      of a page]
- *  - pv_page/pv_page_info: pv_entry's are allocated out of pv_page's.
- *      if we run out of pv_entry's we allocate a new pv_page and free
- *      its pv_entrys.
  */
 
 /*
@@ -280,22 +276,6 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.13.2.4 2007/12/13 22:06:00 bouyer Exp $")
  * pmap_growkernel() to grow the kernel PTPs in advance.
  *
  * [C] pv_entry structures
- *	- plan 1: try to allocate one off the free list
- *		=> success: done!
- *		=> failure: no more free pv_entrys on the list
- *	- plan 2: try to allocate a new pv_page to add a chunk of
- *	pv_entrys to the free list
- *		[a] obtain a free, unmapped, VA in kmem_map.  either
- *		we have one saved from a previous call, or we allocate
- *		one now using a "vm_map_lock_try" in uvm_map
- *		=> success: we have an unmapped VA, continue to [b]
- *		=> failure: unable to lock kmem_map or out of VA in it.
- *			move on to plan 3.
- *		[b] allocate a page for the VA
- *		=> success: map it in, free the pv_entry's, DONE!
- *		=> failure: no free vm_pages, etc.
- *			save VA for later call to [a], go to plan 3.
- *	If we fail, we simply let pmap_enter() tell UVM about it.
  */
 
 /*
@@ -365,29 +345,12 @@ long nbpd[] = NBPD_INITIALIZER;
 pd_entry_t *normal_pdes[] = PDES_INITIALIZER;
 pd_entry_t *alternate_pdes[] = APDES_INITIALIZER;
 
-/*
- * locking data structures.  to enable the locks, changes from the
- * 'vmlocking' cvs branch are required.  for now, just stub them out.
- */
-
-#define rw_enter(a, b)		/* nothing */
-#define	rw_exit(a)		/* nothing */
-#define	mutex_enter(a)		simple_lock(a)
-#define	mutex_exit(a)		simple_unlock(a)
-#define	mutex_init(a, b, c)	simple_lock_init(a)
-#define	mutex_owned(a)		(1)
-#define	mutex_destroy(a)	/* nothing */
-#define kmutex_t		struct simplelock
-
 static kmutex_t pmaps_lock;
 static krwlock_t pmap_main_lock;
 
 static vaddr_t pmap_maxkvaddr;
 
 #define COUNT(x)	/* nothing */
-
-TAILQ_HEAD(pv_pagelist, pv_page);
-typedef struct pv_pagelist pv_pagelist_t;
 
 /*
  * Global TLB shootdown mailbox.
@@ -469,14 +432,6 @@ static bool pmap_initialized = false;	/* pmap_init done yet? */
 static vaddr_t virtual_avail;	/* VA of first free KVA */
 static vaddr_t virtual_end;	/* VA of last free KVA */
 
-/*
- * pv_page management structures
- */
-
-#define PVE_LOWAT (PVE_PER_PVPAGE / 2)	/* free pv_entry low water mark */
-#define PVE_HIWAT (PVE_LOWAT + (PVE_PER_PVPAGE * 2))
-					/* high water mark */
-
 static inline int
 pv_compare(struct pv_entry *a, struct pv_entry *b)
 {
@@ -512,7 +467,7 @@ static struct pool_cache pmap_cache;
  * pv_entry cache
  */
 
-struct pool_cache pmap_pv_cache;
+static struct pool_cache pmap_pv_cache;
 
 /*
  * MULTIPROCESSOR: special VA's/ PTE's are actually allocated inside a
@@ -541,9 +496,7 @@ static char *csrcp, *cdstp, *zerop, *ptpp, *early_zerop;
 static struct pool_cache pmap_pdp_cache;
 
 int	pmap_pdp_ctor(void *, void *, int);
-#ifdef XEN
-void   pmap_pdp_dtor(void *, void *);
-#endif
+void	pmap_pdp_dtor(void *, void *);
 
 void *vmmap; /* XXX: used by mem.c... it should really uvm_map_reserve it */
 
@@ -1355,18 +1308,13 @@ pmap_bootstrap(vaddr_t kva_start)
 	 * initialize caches.
 	 */
 
-	pool_cache_bootstrap(&pmap_cache, sizeof(struct pmap), 0, 0, 0, "pmappl",
-	    &pool_allocator_nointr, IPL_NONE, NULL, NULL, NULL);
-#ifdef XEN
-	pool_cache_bootstrap(&pmap_pdp_cache, PAGE_SIZE, 0, 0, 0, "pdppl",
-	    &pool_allocator_nointr, IPL_NONE,
-	    pmap_pdp_ctor, pmap_pdp_dtor, NULL);
-#else
-	pool_cache_bootstrap(&pmap_pdp_cache, PAGE_SIZE, 0, 0, 0, "pdppl",
-	    &pool_allocator_nointr, IPL_NONE, pmap_pdp_ctor, NULL, NULL);
-#endif
-	pool_cache_bootstrap(&pmap_pv_cache, sizeof(struct pv_entry), 0, 0, 0,
-	    "pvpl", &pool_allocator_meta, IPL_NONE, NULL, NULL, NULL);
+	pool_cache_bootstrap(&pmap_cache, sizeof(struct pmap), 0, 0, 0,
+	    "pmappl", NULL, IPL_NONE, NULL, NULL, NULL);
+	pool_cache_bootstrap(&pmap_pdp_cache, PAGE_SIZE, 0, 0, 0,
+	    "pdppl", NULL, IPL_NONE, pmap_pdp_ctor, pmap_pdp_dtor, NULL);
+	pool_cache_bootstrap(&pmap_pv_cache, sizeof(struct pv_entry), 0, 0,
+	    PR_LARGECACHE, "pvpl", &pool_allocator_meta, IPL_NONE, NULL,
+	    NULL, NULL);
 
 	/*
 	 * ensure the TLB is sync'd with reality by flushing it...
@@ -1872,7 +1820,6 @@ pmap_pdp_ctor(void *arg, void *object, int flags)
 	return (0);
 }
 
-#ifdef XEN
 /*
  * pmap_pdp_dtor: destructor for the PDP cache.
  */
@@ -1880,6 +1827,7 @@ pmap_pdp_ctor(void *arg, void *object, int flags)
 void
 pmap_pdp_dtor(void *arg, void *object)
 {
+#ifdef XEN
 	paddr_t pdirpa = 0;	/* XXX: GCC */
 	int s = splvm();
 	pt_entry_t *pte = kvtopte((vaddr_t)object);
@@ -1893,9 +1841,8 @@ pmap_pdp_dtor(void *arg, void *object)
 	xpq_queue_invlpg((vaddr_t)object);
 	xpq_flush_queue();
 	splx(s);
-}
 #endif  /* XEN */
-
+}
 
 /*
  * pmap_create: create a pmap
@@ -1998,8 +1945,6 @@ pmap_destroy(struct pmap *pmap)
 	 * remove it from global list of pmaps
 	 */
 
-	KERNEL_LOCK(1, NULL);
-
 	mutex_enter(&pmaps_lock);
 	LIST_REMOVE(pmap, pm_list);
 	mutex_exit(&pmaps_lock);
@@ -2037,8 +1982,6 @@ pmap_destroy(struct pmap *pmap)
 	for (i = 0; i < PTP_LEVELS - 1; i++)
 		mutex_destroy(&pmap->pm_obj[i].vmobjlock);
 	pool_cache_put(&pmap_cache, pmap);
-
-	KERNEL_UNLOCK_ONE(NULL);
 }
 
 /*
@@ -2564,8 +2507,8 @@ pmap_extract_ma(pmap, va, pap)
 	struct pmap *pmap2;
  
 	pmap_map_ptes(pmap, &pmap2, &ptes, &pdes);
-	if (pmap_pdes_valid(va, pdes, &pde) == FALSE) {
-		return FALSE;
+	if (!pmap_pdes_valid(va, pdes, &pde)) {
+		return false;
 	}
  
 	pte = ptes[pl1_i(va)];
@@ -2574,10 +2517,10 @@ pmap_extract_ma(pmap, va, pap)
 	if (__predict_true((pte & PG_V) != 0)) {
 		if (pap != NULL)
 			*pap = (pte & PG_FRAME) | (va & (NBPD_L1 - 1));
-		return (TRUE);
+		return true;
 	}
 				 
-	 return FALSE;
+	return false;
 }
 
 /*

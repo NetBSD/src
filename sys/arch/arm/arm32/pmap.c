@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.169 2007/11/08 11:10:28 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.169.6.1 2008/01/02 21:47:21 bouyer Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -212,7 +212,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.169 2007/11/08 11:10:28 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.169.6.1 2008/01/02 21:47:21 bouyer Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -303,7 +303,7 @@ static paddr_t pmap_kernel_l2ptp_phys;
  */
 static pt_entry_t *csrc_pte, *cdst_pte;
 static vaddr_t csrcp, cdstp;
-char *memhook;
+vaddr_t memhook;
 extern void *msgbufaddr;
 
 /*
@@ -3963,7 +3963,7 @@ pmap_bootstrap(pd_entry_t *kernel_l1pt, vaddr_t vstart, vaddr_t vend)
 	pmap_set_pt_cache_mode(kernel_l1pt, (vaddr_t)csrc_pte);
 	pmap_alloc_specials(&virtual_avail, 1, &cdstp, &cdst_pte);
 	pmap_set_pt_cache_mode(kernel_l1pt, (vaddr_t)cdst_pte);
-	pmap_alloc_specials(&virtual_avail, 1, (void *)&memhook, NULL);
+	pmap_alloc_specials(&virtual_avail, 1, &memhook, NULL);
 	pmap_alloc_specials(&virtual_avail, round_page(MSGBUFSIZE) / PAGE_SIZE,
 	    (void *)&msgbufaddr, NULL);
 
@@ -4984,6 +4984,14 @@ pmap_uarea(vaddr_t va)
 	cpu_cpwait();
 }
 #endif /* ARM_MMU_XSCALE == 1 */
+
+/*
+ * return the PA of the current L1 table, for use when handling a crash dump
+ */
+uint32_t pmap_kernel_L1_addr()
+{
+	return pmap_kernel()->pm_l1->l1_physaddr;
+}
 
 #if defined(DDB)
 /*

@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_descrip.c,v 1.24 2007/12/08 18:36:20 dsl Exp $ */
+/* $NetBSD: osf1_descrip.c,v 1.24.4.1 2008/01/02 21:53:15 bouyer Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_descrip.c,v 1.24 2007/12/08 18:36:20 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_descrip.c,v 1.24.4.1 2008/01/02 21:53:15 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,9 +87,8 @@ __KERNEL_RCSID(0, "$NetBSD: osf1_descrip.c,v 1.24 2007/12/08 18:36:20 dsl Exp $"
 #include <compat/osf1/osf1_cvt.h>
 
 int
-osf1_sys_fcntl(struct lwp *l, void *v, register_t *retval)
+osf1_sys_fcntl(struct lwp *l, const struct osf1_sys_fcntl_args *uap, register_t *retval)
 {
-	struct osf1_sys_fcntl_args *uap = v;
 	struct sys_fcntl_args a;
 	struct osf1_flock oflock;
 	struct flock nflock;
@@ -195,9 +194,8 @@ osf1_sys_fcntl(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-osf1_sys_fpathconf(struct lwp *l, void *v, register_t *retval)
+osf1_sys_fpathconf(struct lwp *l, const struct osf1_sys_fpathconf_args *uap, register_t *retval)
 {
-	struct osf1_sys_fpathconf_args *uap = v;
 	struct sys_fpathconf_args a;
 	int error;
 
@@ -216,9 +214,8 @@ osf1_sys_fpathconf(struct lwp *l, void *v, register_t *retval)
  * Return status information about a file descriptor.
  */
 int
-osf1_sys_fstat(struct lwp *l, void *v, register_t *retval)
+osf1_sys_fstat(struct lwp *l, const struct osf1_sys_fstat_args *uap, register_t *retval)
 {
-	struct osf1_sys_fstat_args *uap = v;
 	struct proc *p = l->l_proc;
 	struct filedesc *fdp = p->p_fd;
 	struct file *fp;
@@ -245,9 +242,8 @@ osf1_sys_fstat(struct lwp *l, void *v, register_t *retval)
  * Return status information about a file descriptor.
  */
 int
-osf1_sys_fstat2(struct lwp *l, void *v, register_t *retval)
+osf1_sys_fstat2(struct lwp *l, const struct osf1_sys_fstat2_args *uap, register_t *retval)
 {
-	struct osf1_sys_fstat2_args *uap = v;
 	struct proc *p = l->l_proc;
 	struct filedesc *fdp = p->p_fd;
 	struct file *fp;
@@ -271,9 +267,8 @@ osf1_sys_fstat2(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-osf1_sys_ftruncate(struct lwp *l, void *v, register_t *retval)
+osf1_sys_ftruncate(struct lwp *l, const struct osf1_sys_ftruncate_args *uap, register_t *retval)
 {
-	struct osf1_sys_ftruncate_args *uap = v;
 	struct sys_ftruncate_args a;
 
 	SCARG(&a, fd) = SCARG(uap, fd);
@@ -284,9 +279,8 @@ osf1_sys_ftruncate(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-osf1_sys_lseek(struct lwp *l, void *v, register_t *retval)
+osf1_sys_lseek(struct lwp *l, const struct osf1_sys_lseek_args *uap, register_t *retval)
 {
-	struct osf1_sys_lseek_args *uap = v;
 	struct sys_lseek_args a;
 
 	SCARG(&a, fd) = SCARG(uap, fd);

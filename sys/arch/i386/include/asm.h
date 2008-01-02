@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.35.6.1 2007/12/13 21:54:45 bouyer Exp $	*/
+/*	$NetBSD: asm.h,v 1.35.6.2 2008/01/02 21:48:21 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -124,15 +124,15 @@
 #ifdef _STANDALONE
 #define ALIGN_DATA	.align	4
 #define ALIGN_TEXT	.align	4	/* 4-byte boundaries */
-#define SUPERALIGN_TEXT	.align	32	/* 32-byte boundaries */
+#define SUPERALIGN_TEXT	.align	16	/* 15-byte boundaries */
 #elif defined __ELF__
 #define ALIGN_DATA	.align	4
-#define ALIGN_TEXT	.align	32	/* 32-byte boundaries */
-#define SUPERALIGN_TEXT	.align	32	/* 32-byte boundaries */
+#define ALIGN_TEXT	.align	16	/* 16-byte boundaries */
+#define SUPERALIGN_TEXT	.align	16	/* 16-byte boundaries */
 #else
 #define ALIGN_DATA	.align	2
-#define ALIGN_TEXT	.align	5	/* 32-byte boundaries */
-#define SUPERALIGN_TEXT	.align	5	/* 32-byte boundaries */
+#define ALIGN_TEXT	.align	4	/* 16-byte boundaries */
+#define SUPERALIGN_TEXT	.align	4	/* 16-byte boundaries */
 #endif /* __ELF__ */
 
 #define _ALIGN_TEXT ALIGN_TEXT

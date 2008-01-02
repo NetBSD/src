@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_aio.c,v 1.13 2007/11/30 17:39:43 rmind Exp $	*/
+/*	$NetBSD: sys_aio.c,v 1.13.6.1 2008/01/02 21:56:12 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2007, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.13 2007/11/30 17:39:43 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.13.6.1 2008/01/02 21:56:12 bouyer Exp $");
 
 #include "opt_ddb.h"
 
@@ -101,7 +101,7 @@ aio_init(struct proc *p)
 	vaddr_t uaddr;
 
 	/* Allocate and initialize AIO structure */
-	aio = kmem_zalloc(sizeof(struct aioproc), KM_NOSLEEP);
+	aio = kmem_zalloc(sizeof(struct aioproc), KM_SLEEP);
 	if (aio == NULL)
 		return EAGAIN;
 
@@ -537,12 +537,12 @@ aio_enqueue_job(int op, void *aiocb_uptr, struct lio_req *lio)
  */
 
 int
-sys_aio_cancel(struct lwp *l, void *v, register_t *retval)
+sys_aio_cancel(struct lwp *l, const struct sys_aio_cancel_args *uap, register_t *retval)
 {
-	struct sys_aio_cancel_args /* {
+	/* {
 		syscallarg(int) fildes;
 		syscallarg(struct aiocb *) aiocbp;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 	struct aioproc *aio;
 	struct aio_job *a_job;
@@ -642,11 +642,11 @@ sys_aio_cancel(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-sys_aio_error(struct lwp *l, void *v, register_t *retval)
+sys_aio_error(struct lwp *l, const struct sys_aio_error_args *uap, register_t *retval)
 {
-	struct sys_aio_error_args /* {
+	/* {
 		syscallarg(const struct aiocb *) aiocbp;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 	struct aioproc *aio = p->p_aio;
 	struct aiocb aiocbp;
@@ -668,12 +668,12 @@ sys_aio_error(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-sys_aio_fsync(struct lwp *l, void *v, register_t *retval)
+sys_aio_fsync(struct lwp *l, const struct sys_aio_fsync_args *uap, register_t *retval)
 {
-	struct sys_aio_fsync_args /* {
+	/* {
 		syscallarg(int) op;
 		syscallarg(struct aiocb *) aiocbp;
-	} */ *uap = v;
+	} */
 	int op = SCARG(uap, op);
 
 	if ((op != O_DSYNC) && (op != O_SYNC))
@@ -685,21 +685,21 @@ sys_aio_fsync(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-sys_aio_read(struct lwp *l, void *v, register_t *retval)
+sys_aio_read(struct lwp *l, const struct sys_aio_read_args *uap, register_t *retval)
 {
-	struct sys_aio_read_args /* {
+	/* {
 		syscallarg(struct aiocb *) aiocbp;
-	} */ *uap = v;
+	} */
 
 	return aio_enqueue_job(AIO_READ, SCARG(uap, aiocbp), NULL);
 }
 
 int
-sys_aio_return(struct lwp *l, void *v, register_t *retval)
+sys_aio_return(struct lwp *l, const struct sys_aio_return_args *uap, register_t *retval)
 {
-	struct sys_aio_return_args /* {
+	/* {
 		syscallarg(struct aiocb *) aiocbp;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 	struct aioproc *aio = p->p_aio;
 	struct aiocb aiocbp;
@@ -727,13 +727,13 @@ sys_aio_return(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-sys_aio_suspend(struct lwp *l, void *v, register_t *retval)
+sys_aio_suspend(struct lwp *l, const struct sys_aio_suspend_args *uap, register_t *retval)
 {
-	struct sys_aio_suspend_args /* {
+	/* {
 		syscallarg(const struct aiocb *const[]) list;
 		syscallarg(int) nent;
 		syscallarg(const struct timespec *) timeout;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 	struct aioproc *aio;
 	struct aio_job *a_job;
@@ -826,24 +826,24 @@ sys_aio_suspend(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-sys_aio_write(struct lwp *l, void *v, register_t *retval)
+sys_aio_write(struct lwp *l, const struct sys_aio_write_args *uap, register_t *retval)
 {
-	struct sys_aio_write_args /* {
+	/* {
 		syscallarg(struct aiocb *) aiocbp;
-	} */ *uap = v;
+	} */
 
 	return aio_enqueue_job(AIO_WRITE, SCARG(uap, aiocbp), NULL);
 }
 
 int
-sys_lio_listio(struct lwp *l, void *v, register_t *retval)
+sys_lio_listio(struct lwp *l, const struct sys_lio_listio_args *uap, register_t *retval)
 {
-	struct sys_lio_listio_args /* {
+	/* {
 		syscallarg(int) mode;
 		syscallarg(struct aiocb *const[]) list;
 		syscallarg(int) nent;
 		syscallarg(struct sigevent *) sig;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 	struct aioproc *aio;
 	struct aiocb **aiocbp_list;

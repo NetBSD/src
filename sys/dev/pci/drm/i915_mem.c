@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_mem.c,v 1.1.28.1 2007/12/13 21:55:55 bouyer Exp $	*/
+/*	$NetBSD: i915_mem.c,v 1.1.28.2 2008/01/02 21:55:00 bouyer Exp $	*/
 
 /* i915_mem.c -- Simple agp/fb memory manager for i915 -*- linux-c -*-
  */
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_mem.c,v 1.1.28.1 2007/12/13 21:55:55 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_mem.c,v 1.1.28.2 2008/01/02 21:55:00 bouyer Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/i915_mem.c,v 1.3 2006/04/09 20:45:45 anholt Exp $");
 */
@@ -283,7 +283,7 @@ int i915_mem_alloc(DRM_IOCTL_ARGS)
 	struct mem_block *block, **heap;
 
 	if (!dev_priv) {
-		DRM_ERROR("%s called with no initialization\n", __FUNCTION__);
+		DRM_ERROR("%s called with no initialization\n", __func__);
 		return DRM_ERR(EINVAL);
 	}
 
@@ -323,7 +323,7 @@ int i915_mem_free(DRM_IOCTL_ARGS)
 	struct mem_block *block, **heap;
 
 	if (!dev_priv) {
-		DRM_ERROR("%s called with no initialization\n", __FUNCTION__);
+		DRM_ERROR("%s called with no initialization\n", __func__);
 		return DRM_ERR(EINVAL);
 	}
 
@@ -354,7 +354,7 @@ int i915_mem_init_heap(DRM_IOCTL_ARGS)
 	struct mem_block **heap;
 
 	if (!dev_priv) {
-		DRM_ERROR("%s called with no initialization\n", __FUNCTION__);
+		DRM_ERROR("%s called with no initialization\n", __func__);
 		return DRM_ERR(EINVAL);
 	}
 
@@ -382,7 +382,7 @@ int i915_mem_destroy_heap( DRM_IOCTL_ARGS )
 	struct mem_block **heap;
 
 	if ( !dev_priv ) {
-		DRM_ERROR( "%s called with no initialization\n", __FUNCTION__ );
+		DRM_ERROR( "%s called with no initialization\n", __func__ );
 		return DRM_ERR(EINVAL);
 	}
 

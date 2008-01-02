@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.323 2007/12/09 20:27:46 jmcneill Exp $
+#	$NetBSD: files.i386,v 1.323.2.1 2008/01/02 21:48:12 bouyer Exp $
 #
 # new style config file for i386 architecture
 #
@@ -35,6 +35,9 @@ defflag	opt_xserver.h	XSERVER XSERVER_DDB
 
 # The REAL{BASE,EXT}MEM options
 defparam opt_realmem.h	REALBASEMEM REALEXTMEM
+
+# The PHYSMEM_MAX_{SIZE,ADDR} optionms
+defparam opt_physmem.h	PHYSMEM_MAX_ADDR PHYSMEM_MAX_SIZE
 
 # understand boot device passed by pre-1.3 bootblocks
 defflag			COMPAT_OLDBOOT
@@ -472,7 +475,6 @@ include	"dev/ieee1394/files.ieee1394"
 include	"arch/i386/pnpbios/files.pnpbios"
 
 include "dev/acpi/files.acpi"
-file	arch/i386/acpi/acpi_wakeup.c		acpi
 file	arch/i386/acpi/acpi_wakeup_low.S	acpi
 
 # Toshiba VALD 
@@ -483,11 +485,6 @@ file	arch/i386/acpi/vald_acpi.c		vald_acpi
 # Sony SPIC (jog dial etc.)
 attach	spic at acpinodebus with spic_acpi
 file	arch/i386/acpi/spic_acpi.c		spic_acpi
-
-# Sony Misc (brightness etc.)
-device	sony: displaydev, wskbddev
-attach	sony at acpinodebus with sony_acpi
-file	arch/i386/acpi/sony_acpi.c		sony_acpi
 
 # Numeric Processing Extension; Math Co-processor
 attach	npx at acpinodebus with npx_acpi

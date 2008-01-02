@@ -1,4 +1,4 @@
-/*	$NetBSD: weaselreg.h,v 1.6 2001/05/03 17:55:47 hpeyerl Exp $	*/
+/*	$NetBSD: weaselreg.h,v 1.6.110.1 2008/01/02 21:54:28 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -94,7 +94,7 @@ struct weasel_config_block {
 	u_int8_t	break_passthru;	/* BREAK is passed through */
 	u_int8_t	obsolete[30];	/* reserved for future use */
 	u_int8_t	cksum;		/* arithmetic sum -> reserved */
-} __attribute__((__packed__));
+} __packed;
 
 /*
  * Commands that can be written to the MISC_COMMAND register.

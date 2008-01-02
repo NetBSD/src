@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_softint.c,v 1.6.6.1 2007/12/13 21:56:54 bouyer Exp $	*/
+/*	$NetBSD: kern_softint.c,v 1.6.6.2 2008/01/02 21:55:58 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -184,7 +184,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.6.6.1 2007/12/13 21:56:54 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.6.6.2 2008/01/02 21:55:58 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -742,7 +742,7 @@ softint_thread(void *cookie)
 void
 softint_dispatch(lwp_t *pinned, int s)
 {
-	struct timeval now;
+	struct bintime now;
 	softint_t *si;
 	u_int timing;
 	lwp_t *l;
@@ -766,10 +766,10 @@ softint_dispatch(lwp_t *pinned, int s)
 	 * for it.
 	 */
 	if (timing)
-		microtime(&l->l_stime);
+		bintime(&l->l_stime);
 	softint_execute(si, l, s);
 	if (timing) {
-		microtime(&now);
+		bintime(&now);
 		updatertime(l, &now);
 		l->l_flag &= ~LW_TIMEINTR;
 	}

@@ -1,0 +1,12 @@
+# $NetBSD: INSTALL,v 1.1.2.2 2008/01/02 21:48:57 bouyer Exp $
+#
+# INSTALL machine description file for ofppc
+
+include	"arch/ofppc/conf/GENERIC"
+
+#ident 		"INSTALL-$Revision: 1.1.2.2 $"
+
+options 	MEMORY_DISK_HOOKS
+options 	MEMORY_DISK_IS_ROOT     # force root on memory disk
+options 	MEMORY_DISK_SERVER=0    # no userspace memory disk support
+options 	MEMORY_DISK_ROOT_SIZE=10000     # size of memory disk, in blocks

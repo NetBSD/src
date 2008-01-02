@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_vm.h,v 1.28 2005/12/11 12:20:20 christos Exp $ */
+/*	$NetBSD: mach_vm.h,v 1.28.60.1 2008/01/02 21:53:00 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -223,7 +223,7 @@ typedef struct {
 	mach_memory_object_size_t req_size;
 	mach_memory_object_offset_t req_offset;
 	mach_vm_prot_t req_perm;
-} __attribute__((packed)) mach_make_memory_entry_64_request_t;
+} __packed mach_make_memory_entry_64_request_t;
 
 typedef struct {
 	mach_msg_header_t rep_msgh;
@@ -232,7 +232,7 @@ typedef struct {
 	mach_ndr_record_t rep_ndr;
 	mach_memory_object_size_t rep_size;
 	mach_msg_trailer_t rep_trailer;
-} __attribute__((packed)) mach_make_memory_entry_64_reply_t;
+} __packed mach_make_memory_entry_64_reply_t;
 
 /* vm_region */
 

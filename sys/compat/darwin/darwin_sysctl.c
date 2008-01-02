@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_sysctl.c,v 1.54 2007/12/08 18:35:57 dsl Exp $ */
+/*	$NetBSD: darwin_sysctl.c,v 1.54.4.1 2008/01/02 21:51:49 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.54 2007/12/08 18:35:57 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.54.4.1 2008/01/02 21:51:49 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -286,9 +286,8 @@ SYSCTL_SETUP(sysctl_darwin_emul_setup, "darwin emulated sysctl tree setup")
 
 
 int
-darwin_sys___sysctl(struct lwp *l, void *v, register_t *retval)
+darwin_sys___sysctl(struct lwp *l, const struct darwin_sys___sysctl_args *uap, register_t *retval)
 {
-	struct darwin_sys___sysctl_args *uap = v;
 	int error, nerror, name[CTL_MAXNAME];
 	size_t savelen = 0, oldlen = 0;
 
@@ -439,7 +438,7 @@ SYSCTL_SETUP(sysctl_emul_darwin_setup, "sysctl emul.darwin subtree setup")
  * of course).
  */
 int
-darwin_sys_getpid(struct lwp *l, void *v, register_t *retval)
+darwin_sys_getpid(struct lwp *l, const void *v, register_t *retval)
 {
 	struct darwin_emuldata *ded;
 	struct proc *p = l->l_proc;

@@ -1,4 +1,4 @@
-/*	$NetBSD: dmac.c,v 1.7 2007/03/17 13:51:46 msaitoh Exp $	*/
+/*	$NetBSD: dmac.c,v 1.7.26.1 2008/01/02 21:49:01 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmac.c,v 1.7 2007/03/17 13:51:46 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dmac.c,v 1.7.26.1 2008/01/02 21:49:01 bouyer Exp $");
 
 #include "debug_playstation2.h"
 
@@ -154,7 +154,7 @@ dmac_intr(u_int32_t mask)
 			if (bit & dispatch) {
 				dmac_intr_disable(i);
 				printf("%s: spurious interrupt %d disabled.\n",
-				    __FUNCTION__, i);
+				    __func__, i);
 			}
 		}
 	}

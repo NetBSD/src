@@ -1,4 +1,4 @@
-#	$NetBSD: majors.amd64,v 1.18 2007/11/22 16:16:44 bouyer Exp $
+#	$NetBSD: majors.amd64,v 1.18.6.1 2008/01/02 21:47:07 bouyer Exp $
 #
 # Device majors for amd64
 #
@@ -74,7 +74,6 @@ device-major	iop		char 76			iop
 device-major	altq		char 77			altq
 device-major	mlx		char 78			mlx
 device-major	clockctl	char 79			clockctl
-device-major	systrace	char 80			systrace
 device-major	cgd		char 81  block 20	cgd
 device-major	agp		char 82			agp
 device-major	pci		char 83			pci

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.167 2007/12/09 20:28:43 jmcneill Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.167.2.1 2008/01/02 21:56:00 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2006 The NetBSD Foundation, Inc.
@@ -86,14 +86,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.167 2007/12/09 20:28:43 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.167.2.1 2008/01/02 21:56:00 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
 #include "opt_syscall_debug.h"
 #include "opt_ktrace.h"
 #include "opt_ptrace.h"
-#include "opt_systrace.h"
 #include "opt_powerhook.h"
 #include "opt_tftproot.h"
 
@@ -108,7 +107,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.167 2007/12/09 20:28:43 jmcneill Exp
 #include <sys/disk.h>
 #include <sys/disklabel.h>
 #include <sys/queue.h>
-#include <sys/systrace.h>
 #include <sys/ktrace.h>
 #include <sys/ptrace.h>
 #include <sys/fcntl.h>
@@ -1345,10 +1343,6 @@ trace_is_enabled(struct proc *p)
 	if (ISSET(p->p_traceflag, (KTRFAC_SYSCALL | KTRFAC_SYSRET)))
 		return (true);
 #endif
-#ifdef SYSTRACE
-	if (ISSET(p->p_flag, PK_SYSTRACE))
-		return (true);
-#endif
 #ifdef PTRACE
 	if (ISSET(p->p_slflag, PSL_SYSCALL))
 		return (true);
@@ -1365,10 +1359,10 @@ trace_is_enabled(struct proc *p)
  * system call number range for emulation the process runs under.
  */
 int
-trace_enter(struct lwp *l, register_t code,
-    register_t realcode, const struct sysent *callp, void *args)
+trace_enter(struct lwp *l, register_t code, register_t realcode,
+    const struct sysent *callp, const register_t *args)
 {
-#if defined(SYSCALL_DEBUG) || defined(KTRACE) || defined(PTRACE) || defined(SYSTRACE)
+#if defined(SYSCALL_DEBUG) || defined(KTRACE) || defined(PTRACE)
 	struct proc *p = l->l_proc;
 
 #ifdef SYSCALL_DEBUG
@@ -1383,16 +1377,7 @@ trace_enter(struct lwp *l, register_t code,
 		process_stoptrace(l);
 #endif
 
-#ifdef SYSTRACE
-	if (ISSET(p->p_flag, PK_SYSTRACE)) {
-		int error;
-		KERNEL_LOCK(1, l);
-		error = systrace_enter(l, code, args);
-		KERNEL_UNLOCK_ONE(l);
-		return error;
-	}
-#endif
-#endif /* SYSCALL_DEBUG || {K,P,SYS}TRACE */
+#endif /* SYSCALL_DEBUG || {K,P}TRACE */
 	return 0;
 }
 
@@ -1404,10 +1389,10 @@ trace_enter(struct lwp *l, register_t code,
  * system call number range for emulation the process runs under.
  */
 void
-trace_exit(struct lwp *l, register_t code, void *args, register_t rval[],
-    int error)
+trace_exit(struct lwp *l, register_t code, const register_t *args, 
+    register_t rval[], int error)
 {
-#if defined(SYSCALL_DEBUG) || defined(KTRACE) || defined(PTRACE) || defined(SYSTRACE)
+#if defined(SYSCALL_DEBUG) || defined(KTRACE) || defined(PTRACE)
 	struct proc *p = l->l_proc;
 
 #ifdef SYSCALL_DEBUG
@@ -1422,14 +1407,7 @@ trace_exit(struct lwp *l, register_t code, void *args, register_t rval[],
 		process_stoptrace(l);
 #endif
 
-#ifdef SYSTRACE
-	if (ISSET(p->p_flag, PK_SYSTRACE)) {
-		KERNEL_LOCK(1, l);
-		systrace_exit(l, code, args, rval, error);
-		KERNEL_UNLOCK_ONE(l);
-	}
-#endif
-#endif /* SYSCALL_DEBUG || {K,P,SYS}TRACE */
+#endif /* SYSCALL_DEBUG || {K,P}TRACE */
 }
 
 /*

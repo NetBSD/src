@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_socket.c,v 1.17 2007/12/08 18:36:25 dsl Exp $	*/
+/*	$NetBSD: svr4_socket.c,v 1.17.4.1 2008/01/02 21:53:29 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_socket.c,v 1.17 2007/12/08 18:36:25 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_socket.c,v 1.17.4.1 2008/01/02 21:53:29 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -175,32 +175,35 @@ svr4_add_socket(struct proc *p, const char *path, struct stat *st)
 
 
 int
-svr4_sys_socket(struct lwp *l, void *v, register_t *retval)
+svr4_sys_socket(struct lwp *l, const struct svr4_sys_socket_args *uap, register_t *retval)
 {
-	struct svr4_sys_socket_args *uap = v;
+	struct sys___socket30_args bsd_ua;
+
+	SCARG(&bsd_ua, domain) = SCARG(uap, domain);
+	SCARG(&bsd_ua, protocol) = SCARG(uap, protocol);
 
 	switch (SCARG(uap, type)) {
 	case SVR4_SOCK_DGRAM:
-		SCARG(uap, type) = SOCK_DGRAM;
+		SCARG(&bsd_ua, type) = SOCK_DGRAM;
 		break;
 
 	case SVR4_SOCK_STREAM:
-		SCARG(uap, type) = SOCK_STREAM;
+		SCARG(&bsd_ua, type) = SOCK_STREAM;
 		break;
 
 	case SVR4_SOCK_RAW:
-		SCARG(uap, type) = SOCK_RAW;
+		SCARG(&bsd_ua, type) = SOCK_RAW;
 		break;
 
 	case SVR4_SOCK_RDM:
-		SCARG(uap, type) = SOCK_RDM;
+		SCARG(&bsd_ua, type) = SOCK_RDM;
 		break;
 
 	case SVR4_SOCK_SEQPACKET:
-		SCARG(uap, type) = SOCK_SEQPACKET;
+		SCARG(&bsd_ua, type) = SOCK_SEQPACKET;
 		break;
 	default:
 		return EINVAL;
 	}
-	return sys___socket30(l, uap, retval);
+	return sys___socket30(l, &bsd_ua, retval);
 }

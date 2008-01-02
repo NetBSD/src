@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.3.2.1 2007/12/13 21:55:02 bouyer Exp $	*/
+/*	$NetBSD: cpu.c,v 1.3.2.2 2008/01/02 21:51:32 bouyer Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.3.2.1 2007/12/13 21:55:02 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.3.2.2 2008/01/02 21:51:32 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -135,7 +135,7 @@ struct cpu_softc {
 	struct cpu_info *sc_info;	/* pointer to CPU info */
 };
 
-int mp_cpu_start(struct cpu_info *);
+int mp_cpu_start(struct cpu_info *, paddr_t);
 void mp_cpu_start_cleanup(struct cpu_info *);
 const struct cpu_functions mp_cpu_funcs = { mp_cpu_start, NULL,
 				      mp_cpu_start_cleanup };
@@ -780,7 +780,7 @@ cpu_set_tss_gates(struct cpu_info *ci)
 }
 
 int
-mp_cpu_start(struct cpu_info *ci)
+mp_cpu_start(struct cpu_info *ci, paddr_t target)
 {
 #if 0
 #if NLAPIC > 0
@@ -801,7 +801,7 @@ mp_cpu_start(struct cpu_info *ci)
 	 */
 
 	dwordptr[0] = 0;
-	dwordptr[1] = MP_TRAMPOLINE >> 4;
+	dwordptr[1] = target >> 4;
 
 	pmap_kenter_pa (0, 0, VM_PROT_READ|VM_PROT_WRITE);
 	memcpy ((u_int8_t *) 0x467, dwordptr, 4);
@@ -820,13 +820,13 @@ mp_cpu_start(struct cpu_info *ci)
 
 		if (cpu_feature & CPUID_APIC) {
 
-			if ((error = x86_ipi(MP_TRAMPOLINE/PAGE_SIZE,
+			if ((error = x86_ipi(target/PAGE_SIZE,
 					     ci->ci_apicid,
 					     LAPIC_DLMODE_STARTUP)) != 0)
 				return error;
 			delay(200);
 
-			if ((error = x86_ipi(MP_TRAMPOLINE/PAGE_SIZE,
+			if ((error = x86_ipi(target/PAGE_SIZE,
 					     ci->ci_apicid,
 					     LAPIC_DLMODE_STARTUP)) != 0)
 				return error;

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_power.c,v 1.34 2007/12/09 20:57:19 martin Exp $	*/
+/*	$NetBSD: sysmon_power.c,v 1.34.2.1 2008/01/02 21:55:15 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.34 2007/12/09 20:57:19 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.34.2.1 2008/01/02 21:55:15 bouyer Exp $");
 
 #include "opt_compat_netbsd.h"
 #include <sys/param.h>
@@ -119,6 +119,7 @@ static const struct power_event_description pswitch_type_desc[] = {
 	{ PSWITCH_TYPE_LID, 		"lid_switch" },
 	{ PSWITCH_TYPE_RESET, 		"reset_button" },
 	{ PSWITCH_TYPE_ACADAPTER,	"acadapter" },
+	{ PSWITCH_TYPE_HOTKEY,		"hotkey_button" },
 	{ -1, NULL }
 };
 
@@ -970,6 +971,12 @@ sysmon_pswitch_event(struct sysmon_pswitch *smpsw, int event)
 		 */
 		/* XXX */
 		printf("%s: sleep button pressed.\n", smpsw->smpsw_name);
+		break;
+
+	case PSWITCH_TYPE_HOTKEY:
+		/*
+		 * Eat up the event, there's nothing we can do
+		 */
 		break;
 
 	case PSWITCH_TYPE_LID:

@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_mman.c,v 1.18 2007/12/08 18:36:03 dsl Exp $ */
+/*	$NetBSD: irix_mman.c,v 1.18.4.1 2008/01/02 21:52:06 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_mman.c,v 1.18 2007/12/08 18:36:03 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_mman.c,v 1.18.4.1 2008/01/02 21:52:06 bouyer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -74,16 +74,16 @@ static int irix_mmap(struct lwp *, void *, size_t, int ,
 		int, int, off_t, register_t *);
 
 int
-irix_sys_mmap(struct lwp *l, void *v, register_t *retval)
+irix_sys_mmap(struct lwp *l, const struct irix_sys_mmap_args *uap, register_t *retval)
 {
-	struct irix_sys_mmap_args /* {
+	/* {
 		syscallarg(void *) addr;
 		syscallarg(irix_size_t) len;
 		syscallarg(int) prot;
 		syscallarg(int) flags;
 		syscallarg(int) fd;
 		syscallarg(irix_off_t) pos;
-	} */ *uap = v;
+	} */
 
 	return irix_mmap(l, SCARG(uap, addr), SCARG(uap, len),
 	    SCARG(uap, prot), SCARG(uap, flags), SCARG(uap, fd),
@@ -91,9 +91,9 @@ irix_sys_mmap(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-irix_sys_mmap64(struct lwp *l, void *v, register_t *retval)
+irix_sys_mmap64(struct lwp *l, const struct irix_sys_mmap64_args *uap, register_t *retval)
 {
-	struct irix_sys_mmap64_args /* {
+	/* {
 		syscallarg(void *) addr;
 		syscallarg(irix_size_t) len;
 		syscallarg(int) prot;
@@ -101,7 +101,7 @@ irix_sys_mmap64(struct lwp *l, void *v, register_t *retval)
 		syscallarg(int) fd;
 		syscallarg(int) pad1;
 		syscallarg(irix_off64_t) pos;
-	} */ *uap = v;
+	} */
 
 	return irix_mmap(l, SCARG(uap, addr), SCARG(uap, len),
 	    SCARG(uap, prot), SCARG(uap, flags), SCARG(uap, fd),
@@ -227,16 +227,16 @@ out:
 
 
 int
-irix_sys_munmap(struct lwp *l, void *v, register_t *retval)
+irix_sys_munmap(struct lwp *l, const struct irix_sys_munmap_args *uap, register_t *retval)
 {
-	struct irix_sys_munmap_args /* {
+	/* {
 		syscallarg(void *) addr;
 		syscallarg(size_t) len;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 	int error;
 
-	IRIX_VM_SYNC(p, error = sys_munmap(l, v, retval));
+	IRIX_VM_SYNC(p, error = sys_munmap(l, (const void *)uap, retval));
 	if (error == 0)
 		irix_isrr_insert((vaddr_t)SCARG(uap, addr),
 		    SCARG(uap, len), IRIX_ISRR_SHARED, p);
@@ -245,33 +245,33 @@ irix_sys_munmap(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-irix_sys_break(struct lwp *l, void *v, register_t *retval)
+irix_sys_break(struct lwp *l, const struct irix_sys_break_args *uap, register_t *retval)
 {
 	struct proc *p = l->l_proc;
 	int error;
 
-	IRIX_VM_SYNC(p, error = svr4_sys_break(l, v, retval));
+	IRIX_VM_SYNC(p, error = svr4_sys_break(l, (const void *)uap, retval));
 	return error;
 }
 
 #ifdef SYSVSHM
 int
-irix_sys_shmsys(struct lwp *l, void *v, register_t *retval)
+irix_sys_shmsys(struct lwp *l, const struct irix_sys_shmsys_args *uap, register_t *retval)
 {
 	struct proc *p = l->l_proc;
 	int error;
 
-	IRIX_VM_SYNC(p, error = svr4_sys_shmsys(l, v, retval));
+	IRIX_VM_SYNC(p, error = svr4_sys_shmsys(l, (const void *)uap, retval));
 	return error;
 }
 #endif
 
 int
-irix_sys_mprotect(struct lwp *l, void *v, register_t *retval)
+irix_sys_mprotect(struct lwp *l, const struct irix_sys_mprotect_args *uap, register_t *retval)
 {
 	struct proc *p = l->l_proc;
 	int error;
 
-	IRIX_VM_SYNC(p, error = sys_mprotect(l, v, retval));
+	IRIX_VM_SYNC(p, error = sys_mprotect(l, (const void *)uap, retval));
 	return error;
 }

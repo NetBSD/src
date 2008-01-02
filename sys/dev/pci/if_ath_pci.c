@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ath_pci.c,v 1.22 2007/12/09 20:28:08 jmcneill Exp $	*/
+/*	$NetBSD: if_ath_pci.c,v 1.22.2.1 2008/01/02 21:54:40 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath_pci.c,v 1.11 2005/01/18 18:08:16 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: if_ath_pci.c,v 1.22 2007/12/09 20:28:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ath_pci.c,v 1.22.2.1 2008/01/02 21:54:40 bouyer Exp $");
 #endif
 
 /*
@@ -87,6 +87,7 @@ struct ath_pci_softc {
 	void			*sc_ih;		/* interrupt handler */
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
+	bus_size_t		sc_mapsz;
 };
 
 #define	BS_BAR	0x10
@@ -120,7 +121,26 @@ ath_pci_resume(device_t dv)
 {
 	struct ath_pci_softc *sc = device_private(dv);
 
+	/* Insofar as I understand what the PCI retry timeout is
+	 * (it does not appear to be documented in any PCI standard,
+	 * and we don't have any Atheros documentation), disabling
+	 * it on resume does not seem to be justified.
+	 *
+	 * Taking a guess, the DMA engine counts down from the
+	 * retry timeout to 0 while it retries a delayed PCI
+	 * transaction.  When it reaches 0, it ceases retrying.
+	 * A PCI master is *never* supposed to stop retrying a
+	 * delayed transaction, though.
+	 *
+	 * Incidentally, while I am hopeful that pci_disable_retry()
+	 * does disable retries, because that would help to explain
+	 * some ath(4) lossage, I suspect that writing 0 to the
+	 * register does not disable *retries*, but it disables
+	 * the timeout.  That is, the device will *never* timeout.
+	 */
+#if 0
 	pci_disable_retry(sc->sc_pc, sc->sc_pcitag);
+#endif
 	ath_resume(&sc->sc_sc);
 
 	return true;
@@ -147,7 +167,9 @@ ath_pci_setup(struct ath_pci_softc *sc)
 		return 0;
 	}
 
+#if 0
 	pci_disable_retry(sc->sc_pc, sc->sc_pcitag);
+#endif
 
 	/*
 	 * XXX Both this comment and code are replicated in
@@ -209,7 +231,7 @@ ath_pci_attach(struct device *parent, struct device *self, void *aux)
 		goto bad;
 	}
 	if (pci_mapreg_map(pa, BS_BAR, mem_type, 0, &psc->sc_iot,
-		&psc->sc_ioh, NULL, NULL)) {
+		&psc->sc_ioh, NULL, &psc->sc_mapsz)) {
 		aprint_error("cannot map register space\n");
 		goto bad;
 	}
@@ -239,18 +261,22 @@ ath_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_dmat = pa->pa_dmat;
 
+	ATH_LOCK_INIT(sc);
+
 	if (!pmf_device_register(self, NULL, ath_pci_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
-	else
-		pmf_class_network_register(self, &sc->sc_if);
 
-	if (ath_attach(PCI_PRODUCT(pa->pa_id), sc) == 0)
+	if (ath_attach(PCI_PRODUCT(pa->pa_id), sc) == 0) { 
+		pmf_class_network_register(self, &sc->sc_if);
 		return;
+	}
+	ATH_LOCK_DESTROY(sc);
 
 	pci_intr_disestablish(pc, psc->sc_ih);
 bad2:	/* XXX */
-bad1:	/* XXX */
-bad:
+bad1:
+	bus_space_unmap(psc->sc_iot, psc->sc_ioh, psc->sc_mapsz);
+bad:	/* XXX */
 	return;
 }
 
@@ -262,6 +288,9 @@ ath_pci_detach(struct device *self, int flags)
 	ath_detach(&psc->sc_sc);
 	pmf_device_deregister(self);
 	pci_intr_disestablish(psc->sc_pc, psc->sc_ih);
+	bus_space_unmap(psc->sc_iot, psc->sc_ioh, psc->sc_mapsz);
+
+	ATH_LOCK_DESTROY(&psc->sc_sc);
 
 	return (0);
 }

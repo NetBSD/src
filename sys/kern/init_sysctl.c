@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.113.6.1 2007/12/13 21:56:52 bouyer Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.113.6.2 2008/01/02 21:55:44 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.113.6.1 2007/12/13 21:56:52 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.113.6.2 2008/01/02 21:55:44 bouyer Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
@@ -94,9 +94,6 @@ static const u_int sysctl_flagmap[] = {
 	PK_NOCLDWAIT, P_NOCLDWAIT,
 	PK_32, P_32,
 	PK_CLDSIGIGN, P_CLDSIGIGN,
-	PK_PAXMPROTECT, P_PAXMPROTECT,
-	PK_PAXNOMPROTECT, P_PAXNOMPROTECT,
-	PK_SYSTRACE, P_SYSTRACE,
 	PK_SUGID, P_SUGID,
 	0
 };
@@ -2890,6 +2887,7 @@ static void
 fill_lwp(struct lwp *l, struct kinfo_lwp *kl)
 {
 	struct proc *p = l->l_proc;
+	struct timeval tv;
 
 	kl->l_forw = 0;
 	kl->l_back = 0;
@@ -2916,8 +2914,9 @@ fill_lwp(struct lwp *l, struct kinfo_lwp *kl)
 #else
 	kl->l_cpuid = KI_NOCPU;
 #endif
-	kl->l_rtime_sec = l->l_rtime.tv_sec;
-	kl->l_rtime_usec = l->l_rtime.tv_usec;
+	bintime2timeval(&l->l_rtime, &tv);
+	kl->l_rtime_sec = tv.tv_sec;
+	kl->l_rtime_usec = tv.tv_usec;
 	kl->l_cpticks = l->l_cpticks;
 	kl->l_pctcpu = l->l_pctcpu;
 	kl->l_pid = p->p_pid;

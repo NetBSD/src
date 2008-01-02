@@ -1,4 +1,4 @@
-/* $NetBSD: if_rtw_cardbus.c,v 1.19 2007/12/09 20:27:56 jmcneill Exp $ */
+/* $NetBSD: if_rtw_cardbus.c,v 1.19.2.1 2008/01/02 21:53:59 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtw_cardbus.c,v 1.19 2007/12/09 20:27:56 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtw_cardbus.c,v 1.19.2.1 2008/01/02 21:53:59 bouyer Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -151,11 +151,11 @@ struct rtw_cardbus_softc {
 #endif
 };
 
-int	rtw_cardbus_match(struct device *, struct cfdata *, void *);
-void	rtw_cardbus_attach(struct device *, struct device *, void *);
-int	rtw_cardbus_detach(struct device *, int);
+int	rtw_cardbus_match(device_t, struct cfdata *, void *);
+void	rtw_cardbus_attach(device_t, device_t, void *);
+int	rtw_cardbus_detach(device_t, int);
 
-CFATTACH_DECL(rtw_cardbus, sizeof(struct rtw_cardbus_softc),
+CFATTACH_DECL_NEW(rtw_cardbus, sizeof(struct rtw_cardbus_softc),
     rtw_cardbus_match, rtw_cardbus_attach, rtw_cardbus_detach, rtw_activate);
 
 void	rtw_cardbus_setup(struct rtw_cardbus_softc *);
@@ -198,8 +198,7 @@ rtw_cardbus_lookup(const struct cardbus_attach_args *ca)
 }
 
 int
-rtw_cardbus_match(struct device *parent, struct cfdata *match,
-    void *aux)
+rtw_cardbus_match(device_t parent, struct cfdata *match, void *aux)
 {
 	struct cardbus_attach_args *ca = aux;
 
@@ -229,7 +228,7 @@ rtw_cardbus_funcregen(struct rtw_regs *regs, int enable)
 }
 
 void
-rtw_cardbus_attach(struct device *parent, struct device *self, void *aux)
+rtw_cardbus_attach(device_t parent, device_t self, void *aux)
 {
 	struct rtw_cardbus_softc *csc = device_private(self);
 	struct rtw_softc *sc = &csc->sc_rtw;
@@ -240,6 +239,7 @@ rtw_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	bus_addr_t adr;
 	int rev;
 
+	sc->sc_dev = self;
 	sc->sc_dmat = ca->ca_dmat;
 	csc->sc_ct = ct;
 	csc->sc_tag = ca->ca_tag;
@@ -255,7 +255,6 @@ rtw_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	sc->sc_enable = rtw_cardbus_enable;
 	sc->sc_disable = rtw_cardbus_disable;
-	sc->sc_power = rtw_cardbus_power;
 
 	sc->sc_intr_ack = rtw_cardbus_intr_ack;
 
@@ -265,7 +264,7 @@ rtw_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	printf(": %s\n", rcp->rcp_product_name);
 
 	RTW_DPRINTF(RTW_DEBUG_ATTACH,
-	    ("%s: pass %d.%d signature %08x\n", sc->sc_dev.dv_xname,
+	    ("%s: pass %d.%d signature %08x\n", device_xname(sc->sc_dev),
 	     (rev >> 4) & 0xf, rev & 0xf,
 	     cardbus_conf_read(ct->ct_cc, ct->ct_cf, csc->sc_tag, 0x80)));
 
@@ -278,7 +277,8 @@ rtw_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	    &csc->sc_mapsize) == 0) {
 		RTW_DPRINTF(RTW_DEBUG_ATTACH,
 		    ("%s: %s mapped %lu bytes mem space\n",
-		     sc->sc_dev.dv_xname, __func__, (long)csc->sc_mapsize));
+		     device_xname(sc->sc_dev), __func__,
+		     (long)csc->sc_mapsize));
 #if rbus
 #else
 		(*ct->ct_cf->cardbus_mem_open)(cc, 0, adr, adr+csc->sc_mapsize);
@@ -292,7 +292,8 @@ rtw_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	    &csc->sc_mapsize) == 0) {
 		RTW_DPRINTF(RTW_DEBUG_ATTACH,
 		    ("%s: %s mapped %lu bytes I/O space\n",
-		     sc->sc_dev.dv_xname, __func__, (long)csc->sc_mapsize));
+		     device_xname(sc->sc_dev), __func__,
+		     (long)csc->sc_mapsize));
 #if rbus
 #else
 		(*ct->ct_cf->cardbus_io_open)(cc, 0, adr, adr+csc->sc_mapsize);
@@ -302,8 +303,8 @@ rtw_cardbus_attach(struct device *parent, struct device *self, void *aux)
 		csc->sc_bar_reg = RTW_PCI_IOBA;
 		csc->sc_bar_val = adr | CARDBUS_MAPREG_TYPE_IO;
 	} else {
-		printf("%s: unable to map device registers\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(sc->sc_dev,
+		    "unable to map device registers\n");
 		return;
 	}
 
@@ -316,8 +317,7 @@ rtw_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	/* Remember which interrupt line. */
 	csc->sc_intrline = ca->ca_intrline;
 
-	printf("%s: interrupting at %d\n", sc->sc_dev.dv_xname,
-	    csc->sc_intrline);
+	aprint_normal_dev(sc->sc_dev, "interrupting at %d\n", csc->sc_intrline);
 	/*
 	 * Finish off the attach.
 	 */
@@ -339,7 +339,7 @@ rtw_cardbus_attach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-rtw_cardbus_detach(struct device *self, int flags)
+rtw_cardbus_detach(device_t self, int flags)
 {
 	struct rtw_cardbus_softc *csc = device_private(self);
 	struct rtw_softc *sc = &csc->sc_rtw;
@@ -349,7 +349,7 @@ rtw_cardbus_detach(struct device *self, int flags)
 
 #if defined(DIAGNOSTIC)
 	if (ct == NULL)
-		panic("%s: data structure lacks", sc->sc_dev.dv_xname);
+		panic("%s: data structure lacks", device_xname(self));
 #endif
 
 	if ((rc = rtw_detach(sc)) != 0)
@@ -401,8 +401,8 @@ rtw_cardbus_enable(struct rtw_softc *sc)
 	csc->sc_ih = cardbus_intr_establish(cc, cf, csc->sc_intrline, IPL_NET,
 	    rtw_intr, sc);
 	if (csc->sc_ih == NULL) {
-		printf("%s: unable to establish interrupt at %d\n",
-		    sc->sc_dev.dv_xname, csc->sc_intrline);
+		aprint_error_dev(sc->sc_dev,
+		    "unable to establish interrupt at %d\n", csc->sc_intrline);
 		Cardbus_function_disable(csc->sc_ct);
 		return 1;
 	}
@@ -438,27 +438,6 @@ rtw_cardbus_disable(struct rtw_softc *sc)
 
 	/* Power down the socket. */
 	Cardbus_function_disable(ct);
-}
-
-void
-rtw_cardbus_power(struct rtw_softc *sc, int why)
-{
-	struct rtw_cardbus_softc *csc = (void *) sc;
-
-	RTW_DPRINTF(RTW_DEBUG_ATTACH,
-	    ("%s: rtw_cardbus_power\n", sc->sc_dev.dv_xname));
-
-	if (why == PWR_RESUME) {
-		/*
-		 * Give the PCI configuration registers a kick
-		 * in the head.
-		 */
-#ifdef DIAGNOSTIC
-		if ((sc->sc_flags & RTW_F_ENABLED) == 0)
-			panic("rtw_cardbus_power");
-#endif
-		rtw_cardbus_setup(csc);
-	}
 }
 
 void

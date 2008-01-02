@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_signal.c,v 1.57 2007/12/08 18:36:09 dsl Exp $	*/
+/*	$NetBSD: linux_signal.c,v 1.57.4.1 2008/01/02 21:52:43 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.57 2007/12/08 18:36:09 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.57.4.1 2008/01/02 21:52:43 bouyer Exp $");
 
 #define COMPAT_LINUX 1
 
@@ -262,14 +262,14 @@ native_to_linux_sigaction(struct linux_sigaction *lsa, const struct sigaction *b
  * ignored (see above).
  */
 int
-linux_sys_rt_sigaction(struct lwp *l, void *v, register_t *retval)
+linux_sys_rt_sigaction(struct lwp *l, const struct linux_sys_rt_sigaction_args *uap, register_t *retval)
 {
-	struct linux_sys_rt_sigaction_args /* {
+	/* {
 		syscallarg(int) signum;
 		syscallarg(const struct linux_sigaction *) nsa;
 		syscallarg(struct linux_sigaction *) osa;
 		syscallarg(size_t) sigsetsize;
-	} */ *uap = v;
+	} */
 	struct linux_sigaction nlsa, olsa;
 	struct sigaction nbsa, obsa;
 	int error, sig;
@@ -373,14 +373,14 @@ linux_sigprocmask1(struct lwp *l, int how, const linux_old_sigset_t *set, linux_
 }
 
 int
-linux_sys_rt_sigprocmask(struct lwp *l, void *v, register_t *retval)
+linux_sys_rt_sigprocmask(struct lwp *l, const struct linux_sys_rt_sigprocmask_args *uap, register_t *retval)
 {
-	struct linux_sys_rt_sigprocmask_args /* {
+	/* {
 		syscallarg(int) how;
 		syscallarg(const linux_sigset_t *) set;
 		syscallarg(linux_sigset_t *) oset;
 		syscallarg(size_t) sigsetsize;
-	} */ *uap = v;
+	} */
 	linux_sigset_t nlss, olss, *oset;
 	const linux_sigset_t *set;
 	struct proc *p = l->l_proc;
@@ -425,12 +425,12 @@ linux_sys_rt_sigprocmask(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-linux_sys_rt_sigpending(struct lwp *l, void *v, register_t *retval)
+linux_sys_rt_sigpending(struct lwp *l, const struct linux_sys_rt_sigpending_args *uap, register_t *retval)
 {
-	struct linux_sys_rt_sigpending_args /* {
+	/* {
 		syscallarg(linux_sigset_t *) set;
 		syscallarg(size_t) sigsetsize;
-	} */ *uap = v;
+	} */
 	sigset_t bss;
 	linux_sigset_t lss;
 
@@ -444,11 +444,11 @@ linux_sys_rt_sigpending(struct lwp *l, void *v, register_t *retval)
 
 #ifndef __amd64__
 int
-linux_sys_sigpending(struct lwp *l, void *v, register_t *retval)
+linux_sys_sigpending(struct lwp *l, const struct linux_sys_sigpending_args *uap, register_t *retval)
 {
-	struct linux_sys_sigpending_args /* {
+	/* {
 		syscallarg(linux_old_sigset_t *) mask;
-	} */ *uap = v;
+	} */
 	sigset_t bss;
 	linux_old_sigset_t lss;
 
@@ -458,13 +458,13 @@ linux_sys_sigpending(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-linux_sys_sigsuspend(struct lwp *l, void *v, register_t *retval)
+linux_sys_sigsuspend(struct lwp *l, const struct linux_sys_sigsuspend_args *uap, register_t *retval)
 {
-	struct linux_sys_sigsuspend_args /* {
+	/* {
 		syscallarg(void *) restart;
 		syscallarg(int) oldmask;
 		syscallarg(int) mask;
-	} */ *uap = v;
+	} */
 	linux_old_sigset_t lss;
 	sigset_t bss;
 
@@ -475,12 +475,12 @@ linux_sys_sigsuspend(struct lwp *l, void *v, register_t *retval)
 #endif /* __amd64__ */
 
 int
-linux_sys_rt_sigsuspend(struct lwp *l, void *v, register_t *retval)
+linux_sys_rt_sigsuspend(struct lwp *l, const struct linux_sys_rt_sigsuspend_args *uap, register_t *retval)
 {
-	struct linux_sys_rt_sigsuspend_args /* {
+	/* {
 		syscallarg(linux_sigset_t *) unewset;
 		syscallarg(size_t) sigsetsize;
-	} */ *uap = v;
+	} */
 	linux_sigset_t lss;
 	sigset_t bss;
 	int error;
@@ -502,7 +502,7 @@ linux_sys_rt_sigsuspend(struct lwp *l, void *v, register_t *retval)
  * Note: also used as sys_rt_queueinfo.  The info field is ignored.
  */
 int
-linux_sys_rt_queueinfo(struct lwp *l, void *v, register_t *retval)
+linux_sys_rt_queueinfo(struct lwp *l, const struct linux_sys_rt_queueinfo_args *uap, register_t *retval)
 {
 	/* XXX XAX This isn't this really int, int, siginfo_t *, is it? */
 #if 0
@@ -515,16 +515,16 @@ linux_sys_rt_queueinfo(struct lwp *l, void *v, register_t *retval)
 
 	/* XXX To really implement this we need to	*/
 	/* XXX keep a list of queued signals somewhere.	*/
-	return (linux_sys_kill(l, v, retval));
+	return (linux_sys_kill(l, (const void *)uap, retval));
 }
 
 int
-linux_sys_kill(struct lwp *l, void *v, register_t *retval)
+linux_sys_kill(struct lwp *l, const struct linux_sys_kill_args *uap, register_t *retval)
 {
-	struct linux_sys_kill_args /* {
+	/* {
 		syscallarg(int) pid;
 		syscallarg(int) signum;
-	} */ *uap = v;
+	} */
 
 	struct sys_kill_args ka;
 	int sig;
@@ -568,12 +568,12 @@ native_to_linux_sigaltstack(struct linux_sigaltstack *lss, const struct sigaltst
 }
 
 int
-linux_sys_sigaltstack(struct lwp *l, void *v, register_t *retval)
+linux_sys_sigaltstack(struct lwp *l, const struct linux_sys_sigaltstack_args *uap, register_t *retval)
 {
-	struct linux_sys_sigaltstack_args /* {
+	/* {
 		syscallarg(const struct linux_sigaltstack *) ss;
 		syscallarg(struct linux_sigaltstack *) oss;
-	} */ *uap = v;
+	} */
 	struct linux_sigaltstack ss;
 	struct sigaltstack nss;
 	struct proc *p = l->l_proc;
@@ -612,12 +612,12 @@ linux_sys_sigaltstack(struct lwp *l, void *v, register_t *retval)
 
 #ifdef LINUX_NPTL
 int
-linux_sys_tkill(struct lwp *l, void *v, register_t *retval)
+linux_sys_tkill(struct lwp *l, const struct linux_sys_tkill_args *uap, register_t *retval)
 {
-	struct linux_sys_tkill_args /* {
+	/* {
 		syscallarg(int) tid;
 		syscallarg(int) sig;
-	} */ *uap = v;
+	} */
 	struct linux_sys_kill_args cup;
 
 	/* We use the PID as the TID ... */
@@ -628,13 +628,13 @@ linux_sys_tkill(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-linux_sys_tgkill(struct lwp *l, void *v, register_t *retval)
+linux_sys_tgkill(struct lwp *l, const struct linux_sys_tgkill_args *uap, register_t *retval)
 {
-	struct linux_sys_tgkill_args /* {
+	/* {
 		syscallarg(int) tgid;
 		syscallarg(int) tid;
 		syscallarg(int) sig;
-	} */ *uap = v;
+	} */
 	struct linux_sys_kill_args cup;
 	struct linux_emuldata *led;
 	struct proc *p;

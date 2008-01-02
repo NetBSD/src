@@ -1,4 +1,4 @@
-/*	$NetBSD: aacvar.h,v 1.10 2007/10/20 01:46:30 briggs Exp $	*/
+/*	$NetBSD: aacvar.h,v 1.10.8.1 2008/01/02 21:54:06 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
 #define AAC_D_IO	0x10
 extern int aac_debug;
 
-#define AAC_PRINT_FIB(sc, fib)	aac_print_fib((sc), (fib), __FUNCTION__)
+#define AAC_PRINT_FIB(sc, fib)	aac_print_fib((sc), (fib), __func__)
 #else
 #define AAC_DPRINTF(mask, args)
 #define AAC_PRINT_FIB(sc, fib)

@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170.c,v 1.67 2007/10/19 12:00:01 ad Exp $	*/
+/*	$NetBSD: smc83c170.c,v 1.67.8.1 2008/01/02 21:54:17 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc83c170.c,v 1.67 2007/10/19 12:00:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc83c170.c,v 1.67.8.1 2008/01/02 21:54:17 bouyer Exp $");
 
 #include "bpfilter.h"
 
@@ -266,7 +266,7 @@ epic_attach(sc)
 	    epic_mediastatus);
 	mii_attach(&sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
 	    MII_OFFSET_ANY, miiflags);
-	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
+	if (LIST_EMPTY(&sc->sc_mii.mii_phys)) {
 		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
 		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE);
 	} else
@@ -735,7 +735,7 @@ epic_intr(arg)
 #if NBPFILTER > 0
 			/*
 			 * Pass this up to any BPF listeners, but only
-			 * pass it up the stack if its for us.
+			 * pass it up the stack if it's for us.
 			 */
 			if (ifp->if_bpf)
 				bpf_mtap(ifp->if_bpf, m);
@@ -1476,6 +1476,9 @@ epic_mediastatus(ifp, ifmr)
 
 /*
  * Callback from ifmedia to request new media setting.
+ *
+ * XXX Looks to me like some of this complexity should move into
+ * XXX one or two custom PHY drivers. --dyoung
  */
 int
 epic_mediachange(ifp)
@@ -1489,7 +1492,7 @@ epic_mediachange(ifp)
 	struct mii_softc *miisc;
 	int cfg;
 
-	if (!(ifp->if_flags & IFF_UP))
+	if ((ifp->if_flags & IFF_UP) == 0)
 		return (0);
 
 	if (IFM_INST(media) != sc->sc_serinst) {
@@ -1522,8 +1525,7 @@ epic_mediachange(ifp)
 	}
 
 	/* Lookup selected PHY */
-	for (miisc = LIST_FIRST(&mii->mii_phys); miisc != NULL;
-	     miisc = LIST_NEXT(miisc, mii_list)) {
+	LIST_FOREACH(miisc, &mii->mii_phys, mii_list) {
 		if (IFM_INST(media) == miisc->mii_inst)
 			break;
 	}

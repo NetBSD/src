@@ -1,7 +1,7 @@
-/*	$NetBSD: tmpfs_pool.c,v 1.11 2007/11/22 21:08:10 pooka Exp $	*/
+/*	$NetBSD: tmpfs_pool.c,v 1.11.6.1 2008/01/02 21:55:39 bouyer Exp $	*/
 
 /*
- * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
+ * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -42,10 +42,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_pool.c,v 1.11 2007/11/22 21:08:10 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_pool.c,v 1.11.6.1 2008/01/02 21:55:39 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/pool.h>
+#include <sys/atomic.h>
 
 #include <uvm/uvm.h>
 
@@ -155,15 +156,29 @@ tmpfs_pool_page_alloc(struct pool *pp, int flags)
 {
 	struct tmpfs_pool *tpp;
 	struct tmpfs_mount *tmp;
+	u_int pages;
+	void *page;
 
 	tpp = (struct tmpfs_pool *)pp;
 	tmp = tpp->tp_mount;
 
-	if (TMPFS_PAGES_MAX(tmp) - tmp->tm_pages_used == 0)
+	pages = atomic_inc_uint_nv(&tmp->tm_pages_used);
+	if (pages >= TMPFS_PAGES_MAX(tmp)) {
+		atomic_dec_uint(&tmp->tm_pages_used);
 		return NULL;
+	}
+	/*
+	 * tmpfs never specifies PR_WAITOK as we enforce local limits
+	 * on memory allocation.  However, we should wait for memory
+	 * to become available if under our limit.  XXX The result of
+	 * the TMPFS_PAGES_MAX() check is stale.
+	 */
+	page = pool_page_alloc_nointr(pp, flags | PR_WAITOK);
+	if (page == NULL) {
+		atomic_dec_uint(&tmp->tm_pages_used);
+	}
 
-	tmp->tm_pages_used += 1;
-	return pool_page_alloc_nointr(pp, flags);
+	return page;
 }
 
 /* --------------------------------------------------------------------- */
@@ -177,7 +192,7 @@ tmpfs_pool_page_free(struct pool *pp, void *v)
 	tpp = (struct tmpfs_pool *)pp;
 	tmp = tpp->tp_mount;
 
-	tmp->tm_pages_used -= 1;
+	atomic_dec_uint(&tmp->tm_pages_used);
 	pool_page_free_nointr(pp, v);
 }
 

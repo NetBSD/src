@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_domain.c,v 1.71 2007/09/19 04:33:42 dyoung Exp $	*/
+/*	$NetBSD: uipc_domain.c,v 1.71.12.1 2008/01/02 21:56:20 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.71 2007/09/19 04:33:42 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.71.12.1 2008/01/02 21:56:20 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.71 2007/09/19 04:33:42 dyoung Exp 
 #include <sys/un.h>
 #include <sys/unpcb.h>
 #include <sys/file.h>
+#include <sys/filedesc.h>
 #include <sys/kauth.h>
 
 MALLOC_DECLARE(M_SOCKADDR);
@@ -414,11 +415,12 @@ sysctl_unpcblist(SYSCTLFN_ARGS)
 	 * there's no "list" of local domain sockets, so we have
 	 * to walk the file list looking for them.  :-/
 	 */
+	mutex_enter(&filelist_lock);
 	LIST_FOREACH(fp, &filehead, f_list) {
 		if (kauth_authorize_generic(l->l_cred,
 		    KAUTH_GENERIC_CANSEE, fp->f_cred) != 0)
 			continue;
-		if (fp->f_type != DTYPE_SOCKET)
+		if (fp->f_count == 0 || fp->f_type != DTYPE_SOCKET)
 			continue;
 		so = (struct socket *)fp->f_data;
 		if (so->so_type != type)
@@ -426,8 +428,13 @@ sysctl_unpcblist(SYSCTLFN_ARGS)
 		if (so->so_proto->pr_domain->dom_family != pf)
 			continue;
 		if (len >= elem_size && elem_count > 0) {
+			mutex_enter(&fp->f_lock);
+			FILE_USE(fp);
+			mutex_exit(&filelist_lock);
 			sysctl_dounpcb(&pcb, so);
 			error = copyout(&pcb, dp, out_size);
+			FILE_UNUSE(fp, NULL);
+			mutex_enter(&filelist_lock);
 			if (error)
 				break;
 			dp += elem_size;
@@ -439,6 +446,7 @@ sysctl_unpcblist(SYSCTLFN_ARGS)
 				elem_count--;
 		}
 	}
+	mutex_exit(&filelist_lock);
 
 	*oldlenp = needed;
 	if (oldp == NULL)

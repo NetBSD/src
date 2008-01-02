@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.28 2007/12/08 14:48:33 ad Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.28.4.1 2008/01/02 21:55:30 bouyer Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.28 2007/12/08 14:48:33 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.28.4.1 2008/01/02 21:55:30 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -176,7 +176,7 @@ loop:
 			if (flags == 0) {
 				mutex_exit(&msdosfs_ihash_lock);
 			} else {
-				simple_lock(&vp->v_interlock);
+				mutex_enter(&vp->v_interlock);
 				mutex_exit(&msdosfs_ihash_lock);
 				if (vget(vp, flags | LK_INTERLOCK))
 					goto loop;
@@ -585,12 +585,18 @@ deextend(dep, length, cred)
 		}
 	}
 
+	/*
+	 * Zero extend file range; uvm_vnp_zerorange() uses ubc_alloc() and a
+	 * memset(); we set the write size so ubc won't read in file data that
+	 * is zero'd later.
+	 */
 	osize = dep->de_FileSize;
 	dep->de_FileSize = length;
-	uvm_vnp_setsize(DETOV(dep), (voff_t)dep->de_FileSize);
+	uvm_vnp_setwritesize(DETOV(dep), (voff_t)dep->de_FileSize);
 	dep->de_flag |= DE_UPDATE|DE_MODIFIED;
 	uvm_vnp_zerorange(DETOV(dep), (off_t)osize,
 	    (size_t)(dep->de_FileSize - osize));
+	uvm_vnp_setsize(DETOV(dep), (voff_t)dep->de_FileSize);
 	return (deupdat(dep, 1));
 }
 
@@ -662,6 +668,7 @@ msdosfs_inactive(v)
 {
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
+		bool *a_recycle;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct denode *dep = VTODE(vp);
@@ -698,7 +705,6 @@ msdosfs_inactive(v)
 	}
 	deupdat(dep, 0);
 out:
-	VOP_UNLOCK(vp, 0);
 	/*
 	 * If we are done with the denode, reclaim it
 	 * so that it can be reused immediately.
@@ -707,8 +713,8 @@ out:
 	printf("msdosfs_inactive(): v_usecount %d, de_Name[0] %x\n",
 		vp->v_usecount, dep->de_Name[0]);
 #endif
-	if (dep->de_Name[0] == SLOT_DELETED)
-		vrecycle(vp, (struct simplelock *)0, curlwp);
+	*ap->a_recycle = (dep->de_Name[0] == SLOT_DELETED);
+	VOP_UNLOCK(vp, 0);
 	return (error);
 }
 
