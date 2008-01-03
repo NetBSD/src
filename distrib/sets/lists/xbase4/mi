@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.18 2008/01/02 21:58:17 gdt Exp $
+# $NetBSD: mi,v 1.19 2008/01/03 00:53:49 jnemeth Exp $
 ./etc/X11
 ./etc/fonts
 ./etc/fonts/fonts.conf
@@ -204,6 +204,12 @@
 ./usr/X11R6/include/X11/extensions
 ./usr/X11R6/include/X11/fonts
 ./usr/X11R6/include/X11/pixmaps
+./usr/X11R6/include/X11/pixmaps/deny-always.xpm		xbase-obsolete	obsolete
+./usr/X11R6/include/X11/pixmaps/deny.xpm		xbase-obsolete	obsolete
+./usr/X11R6/include/X11/pixmaps/logo.xpm		xbase-obsolete	obsolete
+./usr/X11R6/include/X11/pixmaps/permit-always.xpm	xbase-obsolete	obsolete
+./usr/X11R6/include/X11/pixmaps/permit.xpm		xbase-obsolete	obsolete
+./usr/X11R6/include/X11/pixmaps/skull.xpm		xbase-obsolete	obsolete
 ./usr/X11R6/lib
 ./usr/X11R6/lib/X11
 ./usr/X11R6/lib/X11/XErrorDB
