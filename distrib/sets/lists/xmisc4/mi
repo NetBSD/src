@@ -1,0 +1,14 @@
+# $NetBSD: mi,v 1.2.2.2 2008/01/03 20:48:08 jdc Exp $
+#
+# Note: don't delete entries from here - mark them as "obsolete" instead.
+#
+./usr/X11R6/bin/ssh-askpass
+./usr/X11R6/lib/X11/app-defaults/SshAskpass
+./usr/X11R6/share
+./usr/X11R6/share/examples
+./usr/X11R6/share/examples/ssh-askpass
+./usr/X11R6/share/examples/ssh-askpass/SshAskpass-1337.ad
+./usr/X11R6/share/examples/ssh-askpass/SshAskpass-NeXTish.ad
+./usr/X11R6/share/examples/ssh-askpass/SshAskpass-default.ad
+./usr/X11R6/share/examples/ssh-askpass/SshAskpass-green.ad
+./usr/X11R6/share/examples/ssh-askpass/SshAskpass-motif.ad
