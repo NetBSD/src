@@ -1,4 +1,4 @@
-/*	$NetBSD: pool.c,v 1.5 2008/01/02 18:15:14 pooka Exp $	*/
+/*	$NetBSD: pool.c,v 1.6 2008/01/03 02:48:03 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -113,7 +113,7 @@ pool_get(struct pool *pp, int flags)
 	if (pp->pr_size == 0)
 		panic("%s: pool unit size 0.  not initialized?", __func__);
 
-	rv = rumpuser_malloc(pp->pr_size, 1);
+	rv = kmem_alloc(pp->pr_size, KM_NOSLEEP);
 	if (rv == NULL && (flags & PR_WAITOK && (flags & PR_LIMITFAIL) == 0))
 		panic("%s: out of memory and PR_WAITOK", __func__);
 
@@ -124,7 +124,7 @@ void
 pool_put(struct pool *pp, void *item)
 {
 
-	rumpuser_free(item);
+	kmem_free(item, pp->pr_size);
 }
 
 void
