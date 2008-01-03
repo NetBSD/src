@@ -1,4 +1,4 @@
-/* $NetBSD: kern_tc.c,v 1.28 2007/12/15 18:20:11 yamt Exp $ */
+/* $NetBSD: kern_tc.c,v 1.29 2008/01/03 04:42:13 dyoung Exp $ */
 
 /*-
  * ----------------------------------------------------------------------------
@@ -11,7 +11,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_tc.c,v 1.166 2005/09/19 22:16:31 andre Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.28 2007/12/15 18:20:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.29 2008/01/03 04:42:13 dyoung Exp $");
 
 #include "opt_ntp.h"
 
@@ -464,6 +464,51 @@ tc_init(struct timecounter *tc)
 	}
 	splx(s);
 	mutex_exit(&time_lock);
+}
+
+/*
+ * Stop using a timecounter and remove it from the timecounters list.
+ */
+int
+tc_detach(struct timecounter *target)
+{
+	struct timecounter *best, *tc;
+	struct timecounter **tcp = NULL;
+	int rc = 0, s;
+
+	mutex_enter(&time_lock);
+	for (tcp = &timecounters, tc = timecounters;
+	     tc != NULL;
+	     tcp = &tc->tc_next, tc = tc->tc_next) {
+		if (tc == target)
+			break;
+	}
+	if (tc == NULL) {
+		rc = ESRCH;
+		goto out;
+	}
+	*tcp = tc->tc_next;
+
+	if (timecounter != target)
+		goto out;
+
+	for (best = tc = timecounters; tc != NULL; tc = tc->tc_next) {
+		if (tc->tc_quality > best->tc_quality)
+			best = tc;
+		else if (tc->tc_quality < best->tc_quality)
+			continue;
+		else if (tc->tc_frequency > best->tc_frequency)
+			best = tc;
+	}
+	s = splsched();
+	(void)best->tc_get_timecount(best);
+	(void)best->tc_get_timecount(best);
+	timecounter = best;
+	tc_windup();
+	splx(s);
+out:
+	mutex_exit(&time_lock);
+	return rc;
 }
 
 /* Report the frequency of the current timecounter. */
