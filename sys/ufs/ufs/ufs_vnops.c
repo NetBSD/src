@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.161 2008/01/02 11:49:14 ad Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.162 2008/01/03 19:28:51 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.161 2008/01/02 11:49:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.162 2008/01/03 19:28:51 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -721,10 +721,10 @@ ufs_link(void *v)
 		softdep_change_linkcnt(ip);
 	error = UFS_UPDATE(vp, NULL, NULL, UPDATE_DIROP);
 	if (!error) {
-		newdir = pool_get(&ufs_direct_pool, PR_WAITOK);
+		newdir = pool_cache_get(ufs_direct_cache, PR_WAITOK);
 		ufs_makedirentry(ip, cnp, newdir);
 		error = ufs_direnter(dvp, vp, newdir, cnp, NULL);
-		pool_put(&ufs_direct_pool, newdir);
+		pool_cache_put(ufs_direct_cache, newdir);
 	}
 	if (error) {
 		ip->i_ffs_effnlink--;
@@ -781,7 +781,7 @@ ufs_whiteout(void *v)
 			panic("ufs_whiteout: old format filesystem");
 #endif
 
-		newdir = pool_get(&ufs_direct_pool, PR_WAITOK);
+		newdir = pool_cache_get(ufs_direct_cache, PR_WAITOK);
 		newdir->d_ino = WINO;
 		newdir->d_namlen = cnp->cn_namelen;
 		memcpy(newdir->d_name, cnp->cn_nameptr,
@@ -789,7 +789,7 @@ ufs_whiteout(void *v)
 		newdir->d_name[cnp->cn_namelen] = '\0';
 		newdir->d_type = DT_WHT;
 		error = ufs_direnter(dvp, NULL, newdir, cnp, NULL);
-		pool_put(&ufs_direct_pool, newdir);
+		pool_cache_put(ufs_direct_cache, newdir);
 		break;
 
 	case DELETE:
@@ -1058,10 +1058,10 @@ ufs_rename(void *v)
 				goto bad;
 			}
 		}
-		newdir = pool_get(&ufs_direct_pool, PR_WAITOK);
+		newdir = pool_cache_get(ufs_direct_cache, PR_WAITOK);
 		ufs_makedirentry(ip, tcnp, newdir);
 		error = ufs_direnter(tdvp, NULL, newdir, tcnp, NULL);
-		pool_put(&ufs_direct_pool, newdir);
+		pool_cache_put(ufs_direct_cache, newdir);
 		if (error != 0) {
 			if (doingdirectory && newparent) {
 				dp->i_ffs_effnlink--;
@@ -1398,10 +1398,10 @@ ufs_mkdir(void *v)
 			(void)VOP_BWRITE(bp);
 		goto bad;
 	}
-	newdir = pool_get(&ufs_direct_pool, PR_WAITOK);
+	newdir = pool_cache_get(ufs_direct_cache, PR_WAITOK);
 	ufs_makedirentry(ip, cnp, newdir);
 	error = ufs_direnter(dvp, tvp, newdir, cnp, bp);
-	pool_put(&ufs_direct_pool, newdir);
+	pool_cache_put(ufs_direct_cache, newdir);
  bad:
 	if (error == 0) {
 		VN_KNOTE(dvp, NOTE_WRITE | NOTE_LINK);
@@ -2156,10 +2156,10 @@ ufs_makeinode(int mode, struct vnode *dvp, struct vnode **vpp,
 	 */
 	if ((error = UFS_UPDATE(tvp, NULL, NULL, UPDATE_DIROP)) != 0)
 		goto bad;
-	newdir = pool_get(&ufs_direct_pool, PR_WAITOK);
+	newdir = pool_cache_get(ufs_direct_cache, PR_WAITOK);
 	ufs_makedirentry(ip, cnp, newdir);
 	error = ufs_direnter(dvp, tvp, newdir, cnp, NULL);
-	pool_put(&ufs_direct_pool, newdir);
+	pool_cache_put(ufs_direct_cache, newdir);
 	if (error)
 		goto bad;
 	if ((cnp->cn_flags & SAVESTART) == 0)
