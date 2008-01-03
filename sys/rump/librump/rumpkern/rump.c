@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.27 2008/01/02 18:15:14 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.28 2008/01/03 02:48:03 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -138,8 +138,7 @@ rump_mnt_init(struct vfsops *vfsops, int mntflags)
 {
 	struct mount *mp;
 
-	mp = rumpuser_malloc(sizeof(struct mount), 0);
-	memset(mp, 0, sizeof(struct mount));
+	mp = kmem_zalloc(sizeof(struct mount), KM_SLEEP);
 
 	mp->mnt_op = vfsops;
 	mp->mnt_flag = mntflags;
@@ -172,7 +171,7 @@ rump_mnt_destroy(struct mount *mp)
 {
 
 	mount_finispecific(mp);
-	rumpuser_free(mp);
+	kmem_free(mp, sizeof(*mp));
 }
 
 struct componentname *
@@ -181,8 +180,7 @@ rump_makecn(u_long nameiop, u_long flags, const char *name, size_t namelen,
 {
 	struct componentname *cnp;
 
-	cnp = rumpuser_malloc(sizeof(struct componentname), 0);
-	memset(cnp, 0, sizeof(struct componentname));
+	cnp = kmem_zalloc(sizeof(struct componentname), KM_SLEEP);
 
 	cnp->cn_nameiop = nameiop;
 	cnp->cn_flags = flags;
@@ -210,7 +208,7 @@ rump_freecn(struct componentname *cnp, int flags)
 	} else {
 		PNBUF_PUT(cnp->cn_pnbuf);
 	}
-	rumpuser_free(cnp);
+	kmem_free(cnp, sizeof(*cnp));
 }
 
 int
@@ -250,7 +248,7 @@ rump_fakeblk_register(const char *path)
 	if (rumpuser_realpath(path, buf, &error) == NULL)
 		return error;
 
-	fblk = rumpuser_malloc(sizeof(struct fakeblk), 1);
+	fblk = kmem_alloc(sizeof(struct fakeblk), KM_NOSLEEP);
 	if (fblk == NULL)
 		return ENOMEM;
 
@@ -277,7 +275,7 @@ rump_fakeblk_deregister(const char *path)
 		return;
 
 	LIST_REMOVE(fblk, entries);
-	rumpuser_free(fblk);
+	kmem_free(fblk, sizeof(*fblk));
 }
 
 void
@@ -314,7 +312,7 @@ rump_vattr_init()
 {
 	struct vattr *vap;
 
-	vap = rumpuser_malloc(sizeof(struct vattr), 0);
+	vap = kmem_alloc(sizeof(struct vattr), KM_SLEEP);
 	vattr_null(vap);
 
 	return vap;
@@ -345,7 +343,7 @@ void
 rump_vattr_free(struct vattr *vap)
 {
 
-	rumpuser_free(vap);
+	kmem_free(vap, sizeof(*vap));
 }
 
 void
@@ -386,8 +384,8 @@ rump_uio_setup(void *buf, size_t bufsize, off_t offset, enum rump_uiorw rw)
 		panic("%s: invalid rw %d", __func__, rw);
 	}
 
-	uio = rumpuser_malloc(sizeof(struct uio), 0);
-	uio->uio_iov = rumpuser_malloc(sizeof(struct iovec), 0);
+	uio = kmem_alloc(sizeof(struct uio), KM_SLEEP);
+	uio->uio_iov = kmem_alloc(sizeof(struct iovec), KM_SLEEP);
 
 	uio->uio_iov->iov_base = buf;
 	uio->uio_iov->iov_len = bufsize;
@@ -421,8 +419,8 @@ rump_uio_free(struct uio *uio)
 	size_t resid;
 
 	resid = uio->uio_resid;
-	rumpuser_free(uio->uio_iov);
-	rumpuser_free(uio);
+	kmem_free(uio->uio_iov, sizeof(*uio->uio_iov));
+	kmem_free(uio, sizeof(*uio));
 
 	return resid;
 }
