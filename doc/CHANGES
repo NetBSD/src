@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.979 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.980 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -279,7 +279,7 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	arcmsr(4): Areca Technology Corporation SATA RAID controller driver,
 		ported from OpenBSD. [xtraeme 20071204]
 	acpi: Updated ACPI-CA to 20070320. [jmcneill 20071211]
-	pmf(9): Added a new power management framework, see pmf(9) for details.
+	kernel: Added a new power management framework, see pmf(9) for details.
 		[jmcneill, joerg 20071211]
 	MAKEDEV(8): Use pax(1) in preference to mknod(8) to create device
 		nodes more efficiently; use mount_tmpfs(8) in preference to
@@ -291,7 +291,7 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		[dogcow 20071221]
 	thinkpad(4): Add driver for IBM/Lenovo Thinkpad hotkeys and
 		brightness controls [jmcneill 20071221]
-	PaX ASLR: Address Space Layout Randomization support in the kernel and
+	kernel: Address Space Layout Randomization support in the kernel and
 		dynamic linker, see security(8). [elad, christos 20071226]
 	msdosfs: Significantly speed up write speed (up to 16x faster).
 		[reinoud 20071228]
