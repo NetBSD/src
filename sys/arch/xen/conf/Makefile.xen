@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.xen,v 1.22 2008/01/02 12:46:23 joerg Exp $
+#	$NetBSD: Makefile.xen,v 1.23 2008/01/03 21:17:44 joerg Exp $
 #	NetBSD: Makefile.i386,v 1.132 2003/07/05 16:56:10 simonb Exp 
 
 # Makefile for NetBSD
@@ -140,7 +140,7 @@ LINKFORMAT=	-z
 
 .if ${XEN_BUILD} == i386
 freebsd_sigcode.o ibcs2_sigcode.o linux_sigcode.o: assym.h
-svr4_sigcode.o mach_sigcode.o: assym.h
+lock_stubs.o svr4_sigcode.o mach_sigcode.o: assym.h
 apmcall.o in_cksum.o pnpbioscall.o bioscall.o: assym.h
 mptramp.o: assym.h
 .elif  ${XEN_BUILD} == amd64
