@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.17 2008/01/03 04:50:19 dyoung Exp $	*/
+/*	$NetBSD: clock.c,v 1.18 2008/01/03 21:30:16 he Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -121,7 +121,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.17 2008/01/03 04:50:19 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.18 2008/01/03 21:30:16 he Exp $");
 
 /* #define CLOCKDEBUG */
 /* #define CLOCK_PARANOIA */
@@ -195,6 +195,7 @@ static void	rtcput(mc_todregs *);
 static int	cmoscheck(void);
 
 static int	clock_expandyear(int);
+int 		sysbeepdetach(device_t, int);
 
 static unsigned int	gettick_broken_latch(void);
 
@@ -558,7 +559,9 @@ int
 sysbeepdetach(device_t self, int flags)
 {
 	pmf_device_deregister(self);
+#if (NPCPPI > 0)
 	ppi_attached = 0;
+#endif
 	return 0;
 }
 
