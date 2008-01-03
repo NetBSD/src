@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia_codec.c,v 1.51 2008/01/03 17:39:03 kent Exp $	*/
+/*	$NetBSD: azalia_codec.c,v 1.52 2008/01/03 18:00:43 kent Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.51 2008/01/03 17:39:03 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.52 2008/01/03 18:00:43 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -1837,15 +1837,15 @@ alc260_mixer_init(codec_t *this)
 
 	switch (this->subid) {
 	case ALC260_FUJITSU_ID:
-		this->nmixers = sizeof(alc260_loox_mixer_items) / sizeof(mixer_item_t);
+		this->nmixers = __arraycount(alc260_loox_mixer_items);
 		mi = alc260_loox_mixer_items;
 		break;
 	default:
-		this->nmixers = sizeof(alc260_mixer_items) / sizeof(mixer_item_t);
+		this->nmixers = __arraycount(alc260_mixer_items);
 		mi = alc260_mixer_items;
 	}
 	this->mixers = malloc(sizeof(mixer_item_t) * this->nmixers,
-	    M_DEVBUF, M_ZERO | M_NOWAIT);
+	    M_DEVBUF, M_NOWAIT);
 	if (this->mixers == NULL) {
 		aprint_error("%s: out of memory in %s\n", XNAME(this), __func__);
 		return ENOMEM;
@@ -2196,15 +2196,13 @@ alc880_mixer_init(codec_t *this)
 {
 	mixer_ctrl_t mc;
 
-	this->nmixers = sizeof(alc880_mixer_items) / sizeof(mixer_item_t);
-	this->mixers = malloc(sizeof(mixer_item_t) * this->nmixers,
-	    M_DEVBUF, M_ZERO | M_NOWAIT);
+	this->nmixers = __arraycount(alc880_mixer_items);
+	this->mixers = malloc(sizeof(alc880_mixer_items), M_DEVBUF, M_NOWAIT);
 	if (this->mixers == NULL) {
 		aprint_error("%s: out of memory in %s\n", XNAME(this), __func__);
 		return ENOMEM;
 	}
-	memcpy(this->mixers, alc880_mixer_items,
-	    sizeof(mixer_item_t) * this->nmixers);
+	memcpy(this->mixers, alc880_mixer_items, sizeof(alc880_mixer_items));
 	generic_mixer_fix_indexes(this);
 	generic_mixer_default(this);
 
@@ -2363,15 +2361,13 @@ alc882_mixer_init(codec_t *this)
 {
 	mixer_ctrl_t mc;
 
-	this->nmixers = sizeof(alc882_mixer_items) / sizeof(mixer_item_t);
-	this->mixers = malloc(sizeof(mixer_item_t) * this->nmixers,
-	    M_DEVBUF, M_ZERO | M_NOWAIT);
+	this->nmixers = __arraycount(alc882_mixer_items);
+	this->mixers = malloc(sizeof(alc882_mixer_items), M_DEVBUF, M_NOWAIT);
 	if (this->mixers == NULL) {
 		aprint_error("%s: out of memory in %s\n", XNAME(this), __func__);
 		return ENOMEM;
 	}
-	memcpy(this->mixers, alc882_mixer_items,
-	    sizeof(mixer_item_t) * this->nmixers);
+	memcpy(this->mixers, alc882_mixer_items, sizeof(alc882_mixer_items));
 	generic_mixer_fix_indexes(this);
 	generic_mixer_default(this);
 
@@ -2633,15 +2629,13 @@ alc883_mixer_init(codec_t *this)
 {
 	mixer_ctrl_t mc;
 
-	this->nmixers = sizeof(alc883_mixer_items) / sizeof(mixer_item_t);
-	this->mixers = malloc(sizeof(mixer_item_t) * this->nmixers,
-	    M_DEVBUF, M_NOWAIT | M_ZERO);
+	this->nmixers = __arraycount(alc883_mixer_items);
+	this->mixers = malloc(sizeof(alc883_mixer_items), M_DEVBUF, M_NOWAIT);
 	if (this->mixers == NULL) {
 		printf("%s: out of memory in %s\n", XNAME(this), __func__);
 		return ENOMEM;
 	}
-	memcpy(this->mixers, alc883_mixer_items,
-	    sizeof(mixer_item_t) * this->nmixers);
+	memcpy(this->mixers, alc883_mixer_items, sizeof(alc883_mixer_items));
 	generic_mixer_fix_indexes(this);
 	generic_mixer_default(this);
 
@@ -2901,15 +2895,13 @@ ad1981hd_mixer_init(codec_t *this)
 {
 	mixer_ctrl_t mc;
 
-	this->nmixers = sizeof(ad1981hd_mixer_items) / sizeof(mixer_item_t);
-	this->mixers = malloc(sizeof(mixer_item_t) * this->nmixers,
-	    M_DEVBUF, M_ZERO | M_NOWAIT);
+	this->nmixers = __arraycount(ad1981hd_mixer_items);
+	this->mixers = malloc(sizeof(ad1981hd_mixer_items), M_DEVBUF, M_NOWAIT);
 	if (this->mixers == NULL) {
 		aprint_error("%s: out of memory in %s\n", XNAME(this), __func__);
 		return ENOMEM;
 	}
-	memcpy(this->mixers, ad1981hd_mixer_items,
-	    sizeof(mixer_item_t) * this->nmixers);
+	memcpy(this->mixers, ad1981hd_mixer_items, sizeof(ad1981hd_mixer_items));
 	generic_mixer_fix_indexes(this);
 	generic_mixer_default(this);
 
@@ -3010,15 +3002,13 @@ ad1983_mixer_init(codec_t *this)
 {
 	mixer_ctrl_t mc;
 
-	this->nmixers = sizeof(ad1983_mixer_items) / sizeof(mixer_item_t);
-	this->mixers = malloc(sizeof(mixer_item_t) * this->nmixers,
-	    M_DEVBUF, M_ZERO | M_NOWAIT);
+	this->nmixers = __arraycount(ad1983_mixer_items);
+	this->mixers = malloc(sizeof(ad1983_mixer_items), M_DEVBUF, M_NOWAIT);
 	if (this->mixers == NULL) {
 		aprint_error("%s: out of memory in %s\n", XNAME(this), __func__);
 		return ENOMEM;
 	}
-	memcpy(this->mixers, ad1983_mixer_items,
-	    sizeof(mixer_item_t) * this->nmixers);
+	memcpy(this->mixers, ad1983_mixer_items, sizeof(ad1983_mixer_items));
 	generic_mixer_fix_indexes(this);
 	generic_mixer_default(this);
 
@@ -3311,15 +3301,13 @@ ad1986a_mixer_init(codec_t *this)
 {
 	mixer_ctrl_t mc;
 
-	this->nmixers = sizeof(ad1986a_mixer_items) / sizeof(mixer_item_t);
-	this->mixers = malloc(sizeof(mixer_item_t) * this->nmixers,
-	    M_DEVBUF, M_ZERO | M_NOWAIT);
+	this->nmixers = __arraycount(ad1986a_mixer_items);
+	this->mixers = malloc(sizeof(ad1986a_mixer_items), M_DEVBUF, M_NOWAIT);
 	if (this->mixers == NULL) {
 		aprint_error("%s: out of memory in %s\n", XNAME(this), __func__);
 		return ENOMEM;
 	}
-	memcpy(this->mixers, ad1986a_mixer_items,
-	    sizeof(mixer_item_t) * this->nmixers);
+	memcpy(this->mixers, ad1986a_mixer_items, sizeof(ad1986a_mixer_items));
 	generic_mixer_fix_indexes(this);
 	generic_mixer_default(this);
 
@@ -3431,15 +3419,13 @@ cmi9880_mixer_init(codec_t *this)
 {
 	mixer_ctrl_t mc;
 
-	this->nmixers = sizeof(cmi9880_mixer_items) / sizeof(mixer_item_t);
-	this->mixers = malloc(sizeof(mixer_item_t) * this->nmixers,
-	    M_DEVBUF, M_ZERO | M_NOWAIT);
+	this->nmixers = __arraycount(cmi9880_mixer_items);
+	this->mixers = malloc(sizeof(cmi9880_mixer_items), M_DEVBUF, M_NOWAIT);
 	if (this->mixers == NULL) {
 		aprint_error("%s: out of memory in %s\n", XNAME(this), __func__);
 		return ENOMEM;
 	}
-	memcpy(this->mixers, cmi9880_mixer_items,
-	    sizeof(mixer_item_t) * this->nmixers);
+	memcpy(this->mixers, cmi9880_mixer_items, sizeof(cmi9880_mixer_items));
 	generic_mixer_fix_indexes(this);
 	generic_mixer_default(this);
 
@@ -3593,15 +3579,13 @@ stac9200_mixer_init(codec_t *this)
 	mixer_ctrl_t mc;
 	uint32_t value;
 
-	this->nmixers = sizeof(stac9200_mixer_items) / sizeof(mixer_item_t);
-	this->mixers = malloc(sizeof(mixer_item_t) * this->nmixers,
-	    M_DEVBUF, M_ZERO | M_NOWAIT);
+	this->nmixers = __arraycount(stac9200_mixer_items);
+	this->mixers = malloc(sizeof(stac9200_mixer_items), M_DEVBUF, M_NOWAIT);
 	if (this->mixers == NULL) {
 		aprint_error("%s: out of memory in %s\n", XNAME(this), __func__);
 		return ENOMEM;
 	}
-	memcpy(this->mixers, stac9200_mixer_items,
-	    sizeof(mixer_item_t) * this->nmixers);
+	memcpy(this->mixers, stac9200_mixer_items, sizeof(stac9200_mixer_items));
 	generic_mixer_fix_indexes(this);
 	generic_mixer_default(this);
 
