@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_subr.c,v 1.58 2008/01/02 11:48:48 ad Exp $	*/
+/*	$NetBSD: exec_subr.c,v 1.59 2008/01/03 14:29:31 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -31,14 +31,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.58 2008/01/02 11:48:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.59 2008/01/03 14:29:31 yamt Exp $");
 
 #include "opt_pax.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/vnode.h>
 #include <sys/filedesc.h>
 #include <sys/exec.h>
@@ -113,14 +113,13 @@ vmcmdset_extend(struct exec_vmcmd_set *evsp)
 		evsp->evs_cnt = EXEC_DEFAULT_VMCMD_SETSIZE;
 
 	/* allocate it */
-	nvcp = malloc(evsp->evs_cnt * sizeof(struct exec_vmcmd),
-	    M_EXEC, M_WAITOK);
+	nvcp = kmem_alloc(evsp->evs_cnt * sizeof(struct exec_vmcmd), KM_SLEEP);
 
 	/* free the old struct, if there was one, and record the new one */
 	if (ocnt) {
 		memcpy(nvcp, evsp->evs_cmds,
 		    (ocnt * sizeof(struct exec_vmcmd)));
-		free(evsp->evs_cmds, M_EXEC);
+		kmem_free(evsp->evs_cmds, ocnt * sizeof(struct exec_vmcmd));
 	}
 	evsp->evs_cmds = nvcp;
 }
@@ -141,8 +140,8 @@ kill_vmcmds(struct exec_vmcmd_set *evsp)
 		if (vcp->ev_vp != NULL)
 			vrele(vcp->ev_vp);
 	}
+	kmem_free(evsp->evs_cmds, evsp->evs_cnt * sizeof(struct exec_vmcmd));
 	evsp->evs_used = evsp->evs_cnt = 0;
-	free(evsp->evs_cmds, M_EXEC);
 }
 
 /*
