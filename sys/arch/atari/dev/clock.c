@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.38 2007/03/04 05:59:40 christos Exp $	*/
+/*	$NetBSD: clock.c,v 1.39 2008/01/03 01:02:04 joerg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.38 2007/03/04 05:59:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.39 2008/01/03 01:02:04 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -333,10 +333,9 @@ clkread()
  * Note: timer had better have been programmed before this is first used!
  */
 void
-delay(n)
-int	n;
+delay(unsigned int n)
 {
-	int	ticks, otick;
+	int	ticks, otick, remaining;
 
 	/*
 	 * Read the counter first, so that the rest of the setup overhead is
@@ -344,28 +343,25 @@ int	n;
 	 */
 	otick = MFP->mf_tbdr;
 
-	/*
-	 * Calculate ((n * TIMER_FREQ) / 1e6) using explicit assembler code so
-	 * we can take advantage of the intermediate 64-bit quantity to prevent
-	 * loss of significance.
-	 */
-	n -= 5;
-	if(n < 0)
-		return;
-	{
-	    u_int	temp;
-		
-	    __asm volatile ("mulul %2,%1:%0" : "=d" (n), "=d" (temp)
-					       : "d" (TIMB_FREQ), "d" (n));
-	    __asm volatile ("divul %1,%2:%0" : "=d" (n)
-					       : "d"(1000000),"d"(temp),"0"(n));
+	if (n <= UINT_MAX / TIMB_FREQ) {
+		/*
+		 * For unsigned arithmetic, division can be replaced with
+		 * multiplication with the inverse and a shift.
+		 */
+		remaining = n * TIMB_FREQ / 1000000;
+	} else {
+		/* This is a very long delay.
+		 * Being slow here doesn't matter.
+		 */
+		remaining = (unsigned long long) n * TIMB_FREQ / 1000000;
 	}
 
-	while(n > 0) {
+	while(remaining > 0) {
 		ticks = MFP->mf_tbdr;
 		if(ticks > otick)
-			n -= TIMB_LIMIT - (ticks - otick);
-		else n -= otick - ticks;
+			remaining -= TIMB_LIMIT - (ticks - otick);
+		else
+			remaining -= otick - ticks;
 		otick = ticks;
 	}
 }
