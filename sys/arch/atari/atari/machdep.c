@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.147 2007/12/03 15:33:22 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.148 2008/01/03 00:31:28 joerg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.147 2007/12/03 15:33:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.148 2008/01/03 00:31:28 joerg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -129,14 +129,14 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.147 2007/12/03 15:33:22 ad Exp $");
 
 #include "ksyms.h"
 
-static void bootsync __P((void));
-static void call_sicallbacks __P((void));
-static void identifycpu __P((void));
-void	straymfpint __P((int, u_short));
-void	straytrap __P((int, u_short));
+static void bootsync(void);
+static void call_sicallbacks(void);
+static void identifycpu(void);
+void	straymfpint(int, u_short);
+void	straytrap(int, u_short);
 
 #ifdef _MILANHW_
-void	nmihandler __P((void));
+void	nmihandler(void);
 #endif
 
 struct vm_map *exec_map = NULL;  
@@ -172,7 +172,7 @@ struct cpu_info cpu_info_store;
  * to choose and initialize a console.
  */
 void
-consinit()
+consinit(void)
 {
 	int	i;
 
@@ -223,7 +223,7 @@ consinit()
  * initialize CPU, and do autoconfiguration.
  */
 void
-cpu_startup()
+cpu_startup(void)
 {
 	extern	 int		iomem_malloc_safe;
 		 char		pbuf[9];
@@ -289,10 +289,7 @@ cpu_startup()
  * Set registers on exec.
  */
 void
-setregs(l, pack, stack)
-	struct lwp *l;
-	struct exec_package *pack;
-	u_long stack;
+setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 {
 	struct frame *frame = (struct frame *)l->l_md.md_regs;
 	
@@ -327,7 +324,7 @@ setregs(l, pack, stack)
 char cpu_model[120];
  
 static void
-identifycpu()
+identifycpu(void)
 {
        const char *mach, *mmu, *fpu, *cpu;
 
@@ -422,9 +419,7 @@ bootsync(void)
 }
 
 void
-cpu_reboot(howto, bootstr)
-	int	howto;
-	char	*bootstr;
+cpu_reboot(int howto, char *bootstr)
 {
 	/* take a snap shot before clobbering any registers */
 	if (curlwp->l_addr)
@@ -463,8 +458,7 @@ static vaddr_t	dumpspace;	/* Virt. space to map dumppages	*/
  * Reserve _virtual_ memory to map in the page to be dumped
  */
 vaddr_t
-reserve_dumppages(p)
-vaddr_t	p;
+reserve_dumppages(vaddr_t p)
 {
 	dumpspace = p;
 	return(p + BYTES_PER_DUMP);
@@ -475,7 +469,7 @@ int		dumpsize = 0;		/* also for savecore (pages)	*/
 long		dumplo   = 0;		/* (disk blocks)		*/
 
 void
-cpu_dumpconf()
+cpu_dumpconf(void)
 {
 	const struct bdevsw *bdev;
 	int	nblks, i;
@@ -517,11 +511,11 @@ cpu_dumpconf()
  * the auto-restart code.
  */
 void
-dumpsys()
+dumpsys(void)
 {
 	const struct bdevsw *bdev;
 	daddr_t	blkno;		/* Current block to write	*/
-	int	(*dump) __P((dev_t, daddr_t, void *, size_t));
+	int	(*dump)(dev_t, daddr_t, void *, size_t);
 				/* Dumping function		*/
 	u_long	maddr;		/* PA being dumped		*/
 	int	segbytes;	/* Number of bytes in this seg.	*/
@@ -645,8 +639,8 @@ dumpsys()
  * we guarantee that the time will be greater than the value obtained by a
  * previous call.
  */
-void microtime(tvp)
-	register struct timeval *tvp;
+void
+microtime(struct timeval *tvp)
 {
 	int s = splhigh();
 	static struct timeval lasttime;
@@ -668,9 +662,7 @@ void microtime(tvp)
 }
 
 void
-straytrap(pc, evec)
-int pc;
-u_short evec;
+straytrap(int pc, u_short evec)
 {
 	static int	prev_evec;
 
@@ -685,9 +677,7 @@ u_short evec;
 }
 
 void
-straymfpint(pc, evec)
-int		pc;
-u_short	evec;
+straymfpint(int pc, u_short evec)
 {
 	printf("unexpected mfp-interrupt (vector offset 0x%x) from 0x%x\n",
 	       evec & 0xFFF, pc);
@@ -696,9 +686,7 @@ u_short	evec;
 int	*nofault;
 
 int
-badbaddr(addr, size)
-	register void *addr;
-	int		 size;
+badbaddr(void *addr, int size)
 {
 	register int i;
 	label_t	faultbuf;
@@ -743,7 +731,7 @@ badbaddr(addr, size)
  */
 struct si_callback {
 	struct si_callback *next;
-	void (*function) __P((void *rock1, void *rock2));
+	void (*function)(void *rock1, void *rock2);
 	void *rock1, *rock2;
 };
 static void *si_callback_cookie;
@@ -753,16 +741,16 @@ static struct si_callback *si_free;
 static int ncbd;	/* number of callback blocks dynamically allocated */
 #endif
 
-void init_sicallback(void)
+void
+init_sicallback(void)
 {
 
 	si_callback_cookie = softint_establish(SOFTINT_NET,
 	    (void (*)(void *))call_sicallbacks, NULL);
 }
 
-void add_sicallback (function, rock1, rock2)
-void	(*function) __P((void *rock1, void *rock2));
-void	*rock1, *rock2;
+void
+add_sicallback(void (*function)(void *, void *), void *rock1, void *rock2)
 {
 	struct si_callback	*si;
 	int			s;
@@ -811,8 +799,8 @@ void	*rock1, *rock2;
 	softint_schedule(si_callback_cookie);
 }
 
-void rem_sicallback(function)
-void (*function) __P((void *rock1, void *rock2));
+void
+rem_sicallback(void (*function)(void *rock1, void *rock2))
 {
 	struct si_callback	*si, *psi, *nsi;
 	int			s;
@@ -836,12 +824,13 @@ void (*function) __P((void *rock1, void *rock2));
 }
 
 /* purge the list */
-static void call_sicallbacks()
+static void
+call_sicallbacks(void)
 {
 	struct si_callback	*si;
 	int			s;
 	void			*rock1, *rock2;
-	void			(*function) __P((void *, void *));
+	void			(*function)(void *, void *);
 
 	do {
 		s = splhigh ();
@@ -881,10 +870,10 @@ int panicbutton = 1;	/* non-zero if panic buttons are enabled */
 int crashandburn = 0;
 int candbdelay = 50;	/* give em half a second */
 
-void candbtimer __P((void));
+void candbtimer(void);
 
 void
-candbtimer()
+candbtimer(void)
 {
 	crashandburn = 0;
 }
@@ -897,9 +886,7 @@ candbtimer()
  * MID and proceed to new zmagic code ;-)
  */
 int
-cpu_exec_aout_makecmds(l, epp)
-	struct lwp *l;
-	struct exec_package *epp;
+cpu_exec_aout_makecmds(struct lwp *l, struct exec_package *epp)
 {
 	int error = ENOEXEC;
 #ifdef COMPAT_NOMID
@@ -925,7 +912,7 @@ cpu_exec_aout_makecmds(l, epp)
  * possible.
  */
 void
-nmihandler()
+nmihandler(void)
 {
 	extern unsigned long	plx_status;
 
