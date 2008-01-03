@@ -1,4 +1,7 @@
-# $NetBSD: shl.mi,v 1.60 2007/11/12 14:56:26 jmmv Exp $
+# $NetBSD: shl.mi,v 1.61 2008/01/03 20:48:00 jdc Exp $
+#
+# Note: don't delete entries from here - mark them as "obsolete" instead.
+#
 ./usr/lib/crtbeginT.o				comp-c-lib
 ./usr/lib/libarchive_pic.a			comp-c-piclib
 ./usr/lib/libasn1_pic.a				comp-c-piclib		kerberos

@@ -1,4 +1,7 @@
-# $NetBSD: mi,v 1.30 2007/12/31 15:31:39 ad Exp $
+# $NetBSD: mi,v 1.31 2008/01/03 20:48:04 jdc Exp $
+#
+# Note: don't delete entries from here - mark them as "obsolete" instead.
+#
 ./etc/mtree/set.xcomp			xcomp-sys-root
 ./usr/X11R6/bin/bdftruncate.pl		xcomp-obsolete	obsolete
 ./usr/X11R6/bin/ccmakedep

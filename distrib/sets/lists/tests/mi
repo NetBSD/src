@@ -1,4 +1,7 @@
-# $NetBSD: mi,v 1.15 2007/12/31 15:31:38 ad Exp $
+# $NetBSD: mi,v 1.16 2008/01/03 20:48:02 jdc Exp $
+#
+# Note: don't delete entries from here - mark them as "obsolete" instead.
+#
 ./etc/mtree/set.tests				tests-sys-root
 ./usr/libdata/debug/usr/tests						tests-base-debug
 ./usr/libdata/debug/usr/tests/atf					tests-atf-debug

@@ -1,4 +1,7 @@
-# $NetBSD: mi,v 1.3 2005/03/18 20:45:43 tron Exp $
+# $NetBSD: mi,v 1.4 2008/01/03 20:48:07 jdc Exp $
+#
+# Note: don't delete entries from here - mark them as "obsolete" instead.
+#
 ./usr/X11R6/bin/Xdmx
 ./usr/X11R6/bin/Xprt
 ./usr/X11R6/bin/dmxaddinput
