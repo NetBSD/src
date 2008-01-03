@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof.c,v 1.1 2008/01/01 21:33:26 yamt Exp $	*/
+/*	$NetBSD: tprof.c,v 1.2 2008/01/03 15:01:07 yamt Exp $	*/
 
 /*-
  * Copyright (c)2008 YAMAMOTO Takashi,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: tprof.c,v 1.1 2008/01/01 21:33:26 yamt Exp $");
+__RCSID("$NetBSD: tprof.c,v 1.2 2008/01/03 15:01:07 yamt Exp $");
 #endif /* not lint */
 
 #include <sys/ioctl.h>
@@ -57,7 +57,12 @@ static void
 usage(void)
 {
 
-	fprintf(stderr, "%s [-c] [-o outfile] command ...\n", getprogname());
+	fprintf(stderr, "%s [options] command ...\n", getprogname());
+	fprintf(stderr, "\n");
+	fprintf(stderr, "-o filename\t"
+	    "output to the file.  [default: -o tprof.out]\n");
+	fprintf(stderr, "-c\t\t"
+	    "output to stdout.  NOTE: the output is a binary stream.\n");
 
 	exit(EXIT_FAILURE);
 }
