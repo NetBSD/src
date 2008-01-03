@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs.c,v 1.26 2008/01/03 01:26:31 pooka Exp $	*/
+/*	$NetBSD: vfs.c,v 1.27 2008/01/03 02:44:05 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -83,7 +83,6 @@ getnewvnode(enum vtagtype tag, struct mount *mp, int (**vops)(void *),
 	struct vnode **vpp)
 {
 	struct vnode *vp;
-	struct uvm_object *uobj;
 
 	vp = rumpuser_malloc(sizeof(struct vnode), 0);
 	memset(vp, 0, sizeof(struct vnode));
@@ -92,17 +91,14 @@ getnewvnode(enum vtagtype tag, struct mount *mp, int (**vops)(void *),
 	vp->v_op = vops;
 	vp->v_vnlock = &vp->v_lock;
 	vp->v_usecount = 1;
-	mutex_init(&vp->v_interlock, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&vp->v_cv, "vnode");
 	lockinit(&vp->v_lock, PVFS, "vnlock", 0, 0);
+
+	UVM_OBJ_INIT(&vp->v_uobj, &uvm_vnodeops, 1);
 
 	if (mp) {
 		TAILQ_INSERT_TAIL(&mp->mnt_vnodelist, vp, v_mntvnodes);
 	}
-
-	uobj = &vp->v_uobj;
-	uobj->pgops = &uvm_vnodeops;
-	TAILQ_INIT(&uobj->memq);
 
 	*vpp = vp;
 
@@ -115,6 +111,7 @@ rump_putnode(struct vnode *vp)
 
 	if (vp->v_specinfo)
 		rumpuser_free(vp->v_specinfo);
+	UVM_OBJ_DESTROY(&vp->v_uobj);
 	rumpuser_free(vp);
 }
 
@@ -176,7 +173,6 @@ vnode_t *
 vnalloc(struct mount *mp)
 {
 	struct vnode *vp;
-	struct uvm_object *uobj;
 
 	/* assuming mp != NULL */
 
@@ -184,11 +180,8 @@ vnalloc(struct mount *mp)
 	vp->v_type = VBAD;
 	vp->v_iflag = VI_MARKER;
 	vp->v_mount = mp;
-	uobj = &vp->v_uobj;
-	uobj->pgops = &uvm_vnodeops;
-	mutex_init(&vp->v_interlock, MUTEX_DEFAULT, IPL_NONE);
+	UVM_OBJ_INIT(&vp->v_uobj, &uvm_vnodeops, 1);
 	cv_init(&vp->v_cv, "vnode");
-	TAILQ_INIT(&uobj->memq);
 
 	return vp;
 }
@@ -198,6 +191,7 @@ void
 vnfree(vnode_t *vp)
 {
 
+	UVM_OBJ_DESTROY(&vp->v_uobj);
 	kmem_free(vp, sizeof(struct vnode));
 }
 
