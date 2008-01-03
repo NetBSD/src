@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.180 2008/01/02 11:49:07 ad Exp $	*/
+/*	$NetBSD: vnode.h,v 1.181 2008/01/03 01:26:31 pooka Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -568,10 +568,12 @@ void	vwakeup(struct buf *);
 void	vwait(struct vnode *, int);
 void	vclean(struct vnode *, int);
 void	vrelel(struct vnode *, int, int);
-struct	vnode *valloc(struct mount *);
-void	vfree(struct vnode *);
+struct vnode *
+	vnalloc(struct mount *);
+void	vnfree(struct vnode *);
 void	vmark(struct vnode *, struct vnode *);
-struct	vnode *vunmark(struct vnode *);
+struct vnode *
+	vunmark(struct vnode *);
 void	vn_init1(void);
 
 /* see vnsubr(9) */
