@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.57 2008/01/02 11:49:09 ad Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.58 2008/01/03 01:26:32 pooka Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.57 2008/01/02 11:49:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.58 2008/01/03 01:26:32 pooka Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -427,7 +427,7 @@ ffs_snapshot(struct mount *mp, struct vnode *vp,
 	snaplistsize = fs->fs_ncg + howmany(fs->fs_cssize, fs->fs_bsize) +
 	    FSMAXSNAP + 1 /* superblock */ + 1 /* last block */ + 1 /* size */;
 	/* Allocate a marker vnode */
-	if ((mvp = valloc(mp)) == NULL) {
+	if ((mvp = vnalloc(mp)) == NULL) {
 		error = ENOMEM;
 		goto out1;
 	}
@@ -505,7 +505,7 @@ ffs_snapshot(struct mount *mp, struct vnode *vp,
 		MNT_ILOCK(mp);
 	}
 	MNT_IUNLOCK(mp);
-	vfree(mvp);
+	vnfree(mvp);
 	/*
 	 * If there already exist snapshots on this filesystem, grab a
 	 * reference to their shared lock. If this is the first snapshot

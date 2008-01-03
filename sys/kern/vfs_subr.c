@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.309 2008/01/02 11:48:56 ad Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.310 2008/01/03 01:26:30 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.309 2008/01/02 11:48:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.310 2008/01/03 01:26:30 pooka Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -451,7 +451,7 @@ getnewvnode(enum vtagtype tag, struct mount *mp, int (**vops)(void *),
 	if (tryalloc) {
 		numvnodes++;
 		mutex_exit(&vnode_free_list_lock);
-		if ((vp = valloc(NULL)) == NULL) {
+		if ((vp = vnalloc(NULL)) == NULL) {
 			mutex_enter(&vnode_free_list_lock);
 			numvnodes--;
 		} else
@@ -535,7 +535,7 @@ ungetnewvnode(vnode_t *vp)
  * marker vnode and we are prepared to wait for the allocation.
  */
 vnode_t *
-valloc(struct mount *mp)
+vnalloc(struct mount *mp)
 {
 	vnode_t *vp;
 
@@ -568,7 +568,7 @@ valloc(struct mount *mp)
  * Free an unused, unreferenced vnode.
  */
 void
-vfree(vnode_t *vp)
+vnfree(vnode_t *vp)
 {
 
 	KASSERT(vp->v_usecount == 0);
@@ -1009,7 +1009,7 @@ vrelel(vnode_t *vp, int doinactive, int onhead)
 		KASSERT(vp->v_writecount == 0);
 		mutex_exit(&vp->v_interlock);
 		insmntque(vp, NULL);
-		vfree(vp);
+		vnfree(vp);
 	} else {
 		/*
 		 * Otherwise, put it back onto the freelist.  It
@@ -1161,7 +1161,7 @@ vflush(struct mount *mp, vnode_t *skipvp, int flags)
 	int busy = 0;
 
 	/* Allocate a marker vnode. */
-	if ((mvp = valloc(mp)) == NULL)
+	if ((mvp = vnalloc(mp)) == NULL)
 		return (ENOMEM);
 
 	mutex_enter(&mntvnode_lock);
@@ -1235,7 +1235,7 @@ vflush(struct mount *mp, vnode_t *skipvp, int flags)
 		busy++;
 	}
 	mutex_exit(&mntvnode_lock);
-	vfree(mvp);
+	vnfree(mvp);
 	if (busy)
 		return (EBUSY);
 	return (0);
@@ -1640,7 +1640,7 @@ sysctl_kern_vnode(SYSCTLFN_ARGS)
 		}
 		savebp = bp;
 		/* Allocate a marker vnode. */
-		if ((mvp = valloc(mp)) == NULL)
+		if ((mvp = vnalloc(mp)) == NULL)
 			return (ENOMEM);
 		mutex_enter(&mntvnode_lock);
 		for (vp = TAILQ_FIRST(&mp->mnt_vnodelist); vp; vp = vunmark(mvp)) {
@@ -1655,7 +1655,7 @@ sysctl_kern_vnode(SYSCTLFN_ARGS)
 			if (bp + VPTRSZ + VNODESZ > ewhere) {
 				(void)vunmark(mvp);
 				mutex_exit(&mntvnode_lock);
-				vfree(mvp);
+				vnfree(mvp);
 				*sizep = bp - where;
 				return (ENOMEM);
 			}
@@ -1666,7 +1666,7 @@ sysctl_kern_vnode(SYSCTLFN_ARGS)
 			   	mutex_enter(&mntvnode_lock);
 				(void)vunmark(mvp);
 				mutex_exit(&mntvnode_lock);
-				vfree(mvp);
+				vnfree(mvp);
 				return (error);
 			}
 			bp += VPTRSZ + VNODESZ;
@@ -1676,7 +1676,7 @@ sysctl_kern_vnode(SYSCTLFN_ARGS)
 		mutex_enter(&mountlist_lock);
 		nmp = CIRCLEQ_NEXT(mp, mnt_list);
 		vfs_unbusy(mp);
-		vfree(mvp);
+		vnfree(mvp);
 	}
 	mutex_exit(&mountlist_lock);
 

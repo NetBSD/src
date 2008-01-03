@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.53 2008/01/02 11:49:14 ad Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.54 2008/01/03 01:26:32 pooka Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.53 2008/01/02 11:49:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.54 2008/01/03 01:26:32 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -453,7 +453,7 @@ quotaon(struct lwp *l, struct mount *mp, int type, void *fname)
 		dqrele(NULLVP, dq);
 	}
 	/* Allocate a marker vnode. */
-	if ((mvp = valloc(mp)) == NULL) {
+	if ((mvp = vnalloc(mp)) == NULL) {
 		error = ENOMEM;
 		goto out;
 	}
@@ -487,7 +487,7 @@ again:
 		vput(vp);
 	}
 	mutex_exit(&mntvnode_lock);
-	vfree(mvp);
+	vnfree(mvp);
  out:
 	mutex_enter(&dqlock);
 	ump->um_qflags[type] &= ~QTF_OPENING;
@@ -513,7 +513,7 @@ quotaoff(struct lwp *l, struct mount *mp, int type)
 	int i, error;
 
 	/* Allocate a marker vnode. */
-	if ((mvp = valloc(mp)) == NULL)
+	if ((mvp = vnalloc(mp)) == NULL)
 		return ENOMEM;
 
 	mutex_enter(&dqlock);
@@ -521,7 +521,7 @@ quotaoff(struct lwp *l, struct mount *mp, int type)
 		cv_wait(&dqcv, &dqlock);
 	if ((qvp = ump->um_quotas[type]) == NULLVP) {
 		mutex_exit(&dqlock);
-		vfree(mvp);
+		vnfree(mvp);
 		return (0);
 	}
 	ump->um_qflags[type] |= QTF_CLOSING;
@@ -707,7 +707,7 @@ qsync(struct mount *mp)
 		return (0);
 
 	/* Allocate a marker vnode. */
-	if ((mvp = valloc(mp)) == NULL)
+	if ((mvp = vnalloc(mp)) == NULL)
 		return (ENOMEM);
 
 	/*
@@ -746,7 +746,7 @@ qsync(struct mount *mp)
 		mutex_enter(&mntvnode_lock);
 	}
 	mutex_exit(&mntvnode_lock);
-	vfree(mvp);
+	vnfree(mvp);
 	return (0);
 }
 

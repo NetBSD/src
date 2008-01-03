@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs.c,v 1.25 2008/01/02 18:15:15 pooka Exp $	*/
+/*	$NetBSD: vfs.c,v 1.26 2008/01/03 01:26:31 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -173,7 +173,7 @@ vrele2(struct vnode *vp, bool onhead)
 }
 
 vnode_t *
-valloc(struct mount *mp)
+vnalloc(struct mount *mp)
 {
 	struct vnode *vp;
 	struct uvm_object *uobj;
@@ -195,10 +195,10 @@ valloc(struct mount *mp)
 
 
 void
-vfree(vnode_t *vp)
+vnfree(vnode_t *vp)
 {
 
-	rumpuser_free(vp);
+	kmem_free(vp, sizeof(struct vnode));
 }
 
 void
