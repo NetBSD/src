@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs.c,v 1.27 2008/01/03 02:44:05 pooka Exp $	*/
+/*	$NetBSD: vfs.c,v 1.28 2008/01/03 02:48:03 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -84,8 +84,7 @@ getnewvnode(enum vtagtype tag, struct mount *mp, int (**vops)(void *),
 {
 	struct vnode *vp;
 
-	vp = rumpuser_malloc(sizeof(struct vnode), 0);
-	memset(vp, 0, sizeof(struct vnode));
+	vp = kmem_zalloc(sizeof(struct vnode), KM_SLEEP);
 	vp->v_mount = mp;
 	vp->v_tag = tag;
 	vp->v_op = vops;
@@ -110,9 +109,9 @@ rump_putnode(struct vnode *vp)
 {
 
 	if (vp->v_specinfo)
-		rumpuser_free(vp->v_specinfo);
+		kmem_free(vp->v_specinfo, sizeof(*vp->v_specinfo));
 	UVM_OBJ_DESTROY(&vp->v_uobj);
-	rumpuser_free(vp);
+	kmem_free(vp, sizeof(*vp));
 }
 
 void
@@ -307,7 +306,7 @@ makevnode(struct stat *sb, const char *path)
 	struct vnode *vp;
 	struct rump_specpriv *sp;
 
-	vp = rumpuser_malloc(sizeof(struct vnode), 0);
+	vp = kmem_alloc(sizeof(struct vnode), KM_SLEEP);
 	vp->v_size = vp->v_writesize = sb->st_size;
 	vp->v_type = mode2vt(sb->st_mode);
 	if (vp->v_type != VBLK)
@@ -317,9 +316,9 @@ makevnode(struct stat *sb, const char *path)
 	if (vp->v_type != VBLK)
 		panic("namei: only VBLK results supported currently");
 
-	vp->v_specinfo = rumpuser_malloc(sizeof(struct specinfo), 0);
+	vp->v_specinfo = kmem_alloc(sizeof(struct specinfo), KM_SLEEP);
 	vp->v_rdev = sb->st_dev;
-	sp = rumpuser_malloc(sizeof(struct rump_specpriv), 0);
+	sp = kmem_alloc(sizeof(struct rump_specpriv), KM_SLEEP);
 	strcpy(sp->rsp_path, path);
 	vp->v_data = sp;
 	vp->v_op = spec_vnodeop_p;
@@ -443,7 +442,7 @@ checkalias(struct vnode *nvp, dev_t nvp_rdev, struct mount *mp)
 
 	/* Can this cause any funnies? */
 
-	nvp->v_specinfo = rumpuser_malloc(sizeof(struct specinfo), 0);
+	nvp->v_specinfo = kmem_alloc(sizeof(struct specinfo), KM_SLEEP);
 	nvp->v_rdev = nvp_rdev;
 	return NULLVP;
 }
