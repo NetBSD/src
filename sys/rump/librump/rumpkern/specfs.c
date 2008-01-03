@@ -1,4 +1,4 @@
-/*	$NetBSD: specfs.c,v 1.15 2008/01/02 18:15:14 pooka Exp $	*/
+/*	$NetBSD: specfs.c,v 1.16 2008/01/03 02:48:03 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -219,7 +219,7 @@ rump_specstrategy(void *v)
 	if (bp->b_flags & B_ASYNC) {
 		struct rumpuser_aio *rua;
 
-		rua = rumpuser_malloc(sizeof(struct rumpuser_aio), 0);
+		rua = kmem_alloc(sizeof(struct rumpuser_aio), KM_SLEEP);
 		rua->rua_fd = sp->rsp_fd;
 		rua->rua_data = bp->b_data;
 		rua->rua_dlen = bp->b_bcount;
@@ -239,7 +239,7 @@ rump_specstrategy(void *v)
 		 * so for now set N_AIOS high and FIXXXME some day.
 		 */
 		if ((rua_head+1) % N_AIOS == rua_tail) {
-			rumpuser_free(rua);
+			kmem_free(rua, sizeof(*rua));
 			rumpuser_mutex_exit(&rua_mtx);
 			goto syncfallback;
 		}
