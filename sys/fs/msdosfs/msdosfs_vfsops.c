@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.56 2008/01/02 11:48:41 ad Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.57 2008/01/03 01:26:28 pooka Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.56 2008/01/02 11:48:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.57 2008/01/03 01:26:28 pooka Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -954,7 +954,7 @@ msdosfs_sync(mp, waitfor, cred)
 		}
 	}
 	/* Allocate a marker vnode. */
-	if ((mvp = valloc(mp)) == NULL)
+	if ((mvp = vnalloc(mp)) == NULL)
 		return ENOMEM;
 	/*
 	 * Write back each (modified) denode.
@@ -992,7 +992,7 @@ loop:
 		mutex_enter(&mntvnode_lock);
 	}
 	mutex_exit(&mntvnode_lock);
-	vfree(mvp);
+	vnfree(mvp);
 
 	/*
 	 * Force stale file system control information to be flushed.

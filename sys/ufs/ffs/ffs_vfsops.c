@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.214 2008/01/02 11:49:09 ad Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.215 2008/01/03 01:26:32 pooka Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.214 2008/01/02 11:49:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.215 2008/01/03 01:26:32 pooka Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -648,7 +648,7 @@ ffs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 	}
 
 	/* Allocate a marker vnode. */
-	if ((mvp = valloc(mp)) == NULL)
+	if ((mvp = vnalloc(mp)) == NULL)
 		return ENOMEM;
 	/*
 	 * NOTE: not using the TAILQ_FOREACH here since in this loop vgone()
@@ -698,7 +698,7 @@ ffs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 		mutex_enter(&mntvnode_lock);
 	}
 	mutex_exit(&mntvnode_lock);
-	vfree(mvp);
+	vnfree(mvp);
 	return (error);
 }
 
@@ -1341,7 +1341,7 @@ ffs_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
 	}
 
 	/* Allocate a marker vnode. */
-	if ((mvp = valloc(mp)) == NULL)
+	if ((mvp = vnalloc(mp)) == NULL)
 		return (ENOMEM);
 
 	fstrans_start(mp, FSTRANS_SHARED);
@@ -1436,7 +1436,7 @@ loop:
 			allerror = error;
 	}
 	fstrans_done(mp);
-	vfree(mvp);
+	vnfree(mvp);
 	return (allerror);
 }
 

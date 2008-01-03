@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.75 2008/01/02 22:37:21 pooka Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.76 2008/01/03 01:26:29 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.75 2008/01/02 22:37:21 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.76 2008/01/03 01:26:29 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -439,7 +439,7 @@ pageflush(struct mount *mp, kauth_cred_t cred, int waitfor, int suspending)
 	error = 0;
 
 	/* Allocate a marker vnode. */
-	if ((mvp = valloc(mp)) == NULL)
+	if ((mvp = vnalloc(mp)) == NULL)
 		return ENOMEM;
 
 	/*
@@ -530,7 +530,7 @@ pageflush(struct mount *mp, kauth_cred_t cred, int waitfor, int suspending)
 		mutex_enter(&mntvnode_lock);
 	}
 	mutex_exit(&mntvnode_lock);
-	vfree(mvp);
+	vnfree(mvp);
 
 	return error;
 }
