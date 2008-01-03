@@ -1,4 +1,4 @@
-/*	$NetBSD: arcmsrvar.h,v 1.7 2008/01/02 23:48:05 xtraeme Exp $ */
+/*	$NetBSD: arcmsrvar.h,v 1.8 2008/01/03 21:28:11 xtraeme Exp $ */
 /*	Derived from $OpenBSD: arc.c,v 1.68 2007/10/27 03:28:27 dlg Exp $ */
 
 /*
@@ -451,16 +451,16 @@ void 	arc_scsi_cmd(struct scsipi_channel *, scsipi_adapter_req_t, void *);
 /* 
  * code to deal with getting bits in and out of the bus space.
  */
-uint32_t 	arc_read(struct arc_softc *, bus_size_t);
-void 		arc_read_region(struct arc_softc *, bus_size_t, void *,
-				size_t);
+uint32_t arc_read(struct arc_softc *, bus_size_t);
+void 	arc_read_region(struct arc_softc *, bus_size_t, void *,
+			size_t);
 void 	arc_write(struct arc_softc *, bus_size_t, uint32_t);
-void 		arc_write_region(struct arc_softc *, bus_size_t, void *,
-				 size_t);
-int 		arc_wait_eq(struct arc_softc *, bus_size_t, uint32_t,
-			    uint32_t);
-int 		arc_wait_ne(struct arc_softc *, bus_size_t, uint32_t,
-			    uint32_t);
+void 	arc_write_region(struct arc_softc *, bus_size_t, void *,
+			 size_t);
+int 	arc_wait_eq(struct arc_softc *, bus_size_t, uint32_t,
+		    uint32_t);
+int 	arc_wait_ne(struct arc_softc *, bus_size_t, uint32_t,
+		    uint32_t);
 int	arc_msg0(struct arc_softc *, uint32_t);
 
 #define arc_push(_s, _r)	arc_write((_s), ARC_REG_POST_QUEUE, (_r))
@@ -505,8 +505,8 @@ struct arc_ccb	*arc_get_ccb(struct arc_softc *);
 void 	arc_put_ccb(struct arc_softc *, struct arc_ccb *);
 int 	arc_load_xs(struct arc_ccb *);
 int 	arc_complete(struct arc_softc *, struct arc_ccb *, int);
-void 		arc_scsi_cmd_done(struct arc_softc *, struct arc_ccb *,
-				  uint32_t);
+void 	arc_scsi_cmd_done(struct arc_softc *, struct arc_ccb *,
+			  uint32_t);
 
 /* 
  * real stuff for dealing with the hardware.
