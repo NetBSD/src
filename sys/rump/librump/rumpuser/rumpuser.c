@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.c,v 1.10 2008/01/02 18:15:15 pooka Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.11 2008/01/03 02:38:23 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -190,7 +190,7 @@ rumpuser_read_bio(int fd, void *data, size_t size, off_t offset,
 	void *biodonecookie)
 {
 	ssize_t rv;
-	int error;
+	int error = 0;
 
 	rv = rumpuser_pread(fd, data, size, offset, &error);
 	/* check against <0 instead of ==-1 to get typing below right */
@@ -229,7 +229,7 @@ rumpuser_write_bio(int fd, const void *data, size_t size, off_t offset,
 	void *biodonecookie)
 {
 	ssize_t rv;
-	int error;
+	int error = 0;
 
 	rv = rumpuser_pwrite(fd, data, size, offset, &error);
 	/* check against <0 instead of ==-1 to get typing below right */
