@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.76 2008/01/03 01:26:29 pooka Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.77 2008/01/03 18:09:35 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.76 2008/01/03 01:26:29 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.77 2008/01/03 18:09:35 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -104,6 +104,9 @@ puffs_vfsop_mount(struct mount *mp, const char *path, void *data,
 	if (!data)
 		return EINVAL;
 
+	error = fstrans_mount(mp);
+	if (error)
+		return error;
 	args = (struct puffs_kargs *)data;
 
 	/* devel phase */
@@ -259,6 +262,8 @@ puffs_vfsop_mount(struct mount *mp, const char *path, void *data,
 	vfs_getnewfsid(mp);
 
  out:
+	if (error)
+		fstrans_unmount(mp);
 	if (error && pmp && pmp->pmp_pnodehash)
 		kmem_free(pmp->pmp_pnodehash, BUCKETALLOC(pmp->pmp_npnodehash));
 	if (error && pmp)
@@ -355,6 +360,7 @@ puffs_vfsop_unmount(struct mount *mp, int mntflags)
 		cv_destroy(&pmp->pmp_msg_waiter_cv);
 		mutex_destroy(&pmp->pmp_lock);
 
+		fstrans_unmount(mp);
 		kmem_free(pmp->pmp_pnodehash, BUCKETALLOC(pmp->pmp_npnodehash));
 		kmem_free(pmp, sizeof(struct puffs_mount));
 		error = 0;
