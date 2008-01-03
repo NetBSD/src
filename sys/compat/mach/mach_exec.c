@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_exec.c,v 1.66 2007/12/08 18:36:14 dsl Exp $	 */
+/*	$NetBSD: mach_exec.c,v 1.67 2008/01/03 14:25:50 yamt Exp $	 */
 
 /*-
  * Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.66 2007/12/08 18:36:14 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.67 2008/01/03 14:25:50 yamt Exp $");
 
 #include "opt_syscall_debug.h"
 
@@ -167,7 +167,7 @@ exec_mach_copyargs(struct lwp *l, struct exec_package *pack, struct ps_strings *
 	*stackp += len + 1;
 
 	/* We don't need this anymore */
-	free(pack->ep_emul_arg, M_EXEC);
+	free(pack->ep_emul_arg, M_TEMP);
 	pack->ep_emul_arg = NULL;
 
 	len = len % sizeof(zero);
