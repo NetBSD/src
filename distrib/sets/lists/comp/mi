@@ -1,4 +1,7 @@
-#	$NetBSD: mi,v 1.1107 2007/12/31 15:31:37 ad Exp $
+#	$NetBSD: mi,v 1.1108 2008/01/03 20:47:58 jdc Exp $
+#
+# Note: don't delete entries from here - mark them as "obsolete" instead.
+#
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd

@@ -1,4 +1,7 @@
-# $NetBSD: mi,v 1.55 2008/01/03 00:52:01 jnemeth Exp $
+# $NetBSD: mi,v 1.56 2008/01/03 20:48:03 jdc Exp $
+#
+# Note: don't delete entries from here - mark them as "obsolete" instead.
+#
 ./etc/mtree/set.xbase				xbase-sys-root
 ./var/db/obsolete/xbase				xbase-sys-root
 ./var/db/obsolete/xetc				xbase-sys-root
