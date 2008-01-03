@@ -1,4 +1,4 @@
-/* $NetBSD: dec_maxine.c,v 1.51 2007/12/03 15:34:11 ad Exp $ */
+/* $NetBSD: dec_maxine.c,v 1.52 2008/01/03 23:02:25 joerg Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -106,11 +106,12 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.51 2007/12/03 15:34:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.52 2008/01/03 23:02:25 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/timetc.h>
 
 #include <machine/cpu.h>
 #include <machine/sysconf.h>
@@ -137,14 +138,14 @@ static void	dec_maxine_intr __P((unsigned, unsigned, unsigned, unsigned));
 static void	dec_maxine_intr_establish __P((struct device *, void *,
 		    int, int (*)(void *), void *));
 
+static void	dec_maxine_tc_init(void);
+
 static void	kn02ca_wbflush __P((void));
-static unsigned	kn02ca_clkread __P((void));
 
 /*
  * local declarations
  */
 static u_int32_t xine_tc3_imask;
-static unsigned latched_cycle_cnt;
 
 static const int dec_maxine_ipl2spl_table[] = {
 	[IPL_NONE] = 0,
@@ -169,7 +170,7 @@ dec_maxine_init()
 	platform.iointr = dec_maxine_intr;
 	platform.intr_establish = dec_maxine_intr_establish;
 	platform.memsize = memsize_bitmap;
-	platform.clkread = kn02ca_clkread;
+	platform.tc_init = dec_maxine_tc_init;
 	/* MAXINE has 1 microsec. free-running high resolution timer */
  
 	/* clear any memory errors */
@@ -331,8 +332,6 @@ dec_maxine_intr(status, cause, pc, ipending)
 
 		__asm volatile("lbu $0,48(%0)" ::
 			"r"(ioasic_base + IOASIC_SLOT_8_START));
-		latched_cycle_cnt =
-		    *(u_int32_t *)MIPS_PHYS_TO_KSEG1(XINE_REG_FCTR);
 		cf.pc = pc;
 		cf.sr = status;
 		hardclock(&cf);
@@ -408,11 +407,22 @@ kn02ca_wbflush()
 	    "i"(MIPS_PHYS_TO_KSEG1(XINE_REG_IMSK)));
 }
 
-static unsigned
-kn02ca_clkread()
+static uint32_t
+dec_maxine_get_timecount(struct timecounter *tc)
 {
-	u_int32_t cycles;
+	return *(u_int32_t *)MIPS_PHYS_TO_KSEG1(XINE_REG_FCTR);
+}
 
-	cycles = *(u_int32_t *)MIPS_PHYS_TO_KSEG1(XINE_REG_FCTR);
-	return cycles - latched_cycle_cnt;
+static void
+dec_maxine_tc_init(void)
+{
+	static struct timecounter tc = {
+		.tc_get_timecount = dec_maxine_get_timecount,
+		.tc_quality = 100,
+		.tc_frequency = 1000000,
+		.tc_counter_mask = ~0,
+		.tc_name = "maxine_fctr",
+	};
+
+	tc_init(&tc);
 }
