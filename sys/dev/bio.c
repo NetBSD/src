@@ -1,4 +1,4 @@
-/*	$NetBSD: bio.c,v 1.5 2008/01/02 23:45:03 xtraeme Exp $ */
+/*	$NetBSD: bio.c,v 1.6 2008/01/03 02:30:08 christos Exp $ */
 /*	$OpenBSD: bio.c,v 1.9 2007/03/20 02:35:55 marco Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
 /* A device controller ioctl tunnelling device.  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bio.c,v 1.5 2008/01/02 23:45:03 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bio.c,v 1.6 2008/01/03 02:30:08 christos Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -52,19 +52,20 @@ struct bio_mapping {
 	int (*bm_ioctl)(struct device *, u_long, void *);
 };
 
-LIST_HEAD(, bio_mapping) bios = LIST_HEAD_INITIALIZER(bios);
+static LIST_HEAD(, bio_mapping) bios = LIST_HEAD_INITIALIZER(bios);
 static kmutex_t bio_lock;
 static bool bio_lock_initialized = false;
 
-static void bio_initialize(void);
-void	bioattach(int);
-int	bioclose(dev_t, int, int, struct lwp *);
-int	bioioctl(dev_t, u_long, void *, int, struct lwp *);
-int	bioopen(dev_t, int, int, struct lwp *);
+static void	bio_initialize(void);
+static int	bioclose(dev_t, int, int, struct lwp *);
+static int	bioioctl(dev_t, u_long, void *, int, struct lwp *);
+static int	bioopen(dev_t, int, int, struct lwp *);
 
-int	bio_delegate_ioctl(struct bio_mapping *, u_long, void *);
-struct	bio_mapping *bio_lookup(char *);
-int	bio_validate(void *);
+static int	bio_delegate_ioctl(void *, u_long, void *);
+static struct	bio_mapping *bio_lookup(char *);
+static int	bio_validate(void *);
+
+void	bioattach(int);
 
 const struct cdevsw bio_cdevsw = {
         bioopen, bioclose, noread, nowrite, bioioctl,
@@ -72,7 +73,7 @@ const struct cdevsw bio_cdevsw = {
 };
 
 
-void
+static void
 bio_initialize(void)
 {
 	if (bio_lock_initialized)
@@ -89,27 +90,23 @@ bioattach(int nunits)
 		bio_initialize();
 }
 
-int
+static int
 bioopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	return 0;
 }
 
-int
+static int
 bioclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	return 0;
 }
 
-int
+static int
 bioioctl(dev_t dev, u_long cmd, void *addr, int flag, struct  lwp *l)
 {
 	struct bio_locate *locate;
 	struct bio_common *common;
-#ifdef COMPAT_30
-	struct bioc_disk *bd;
-	struct bioc_vol *bv;
-#endif
 	char name[16];
 	int error;
 
@@ -165,7 +162,7 @@ bioioctl(dev_t dev, u_long cmd, void *addr, int flag, struct  lwp *l)
 
 	switch (cmd) {
 	case BIOCLOCATE:
-		locate = (struct bio_locate *)addr;
+		locate = addr;
 		error = copyinstr(locate->bl_name, name, sizeof(name), NULL);
 		if (error != 0)
 			return error;
@@ -175,7 +172,7 @@ bioioctl(dev_t dev, u_long cmd, void *addr, int flag, struct  lwp *l)
 		break;
 
 	default:
-		common = (struct bio_common *)addr;
+		common = addr;
 		mutex_enter(&bio_lock);
 		if (!bio_validate(common->bc_cookie)) {
 			mutex_exit(&bio_lock);
@@ -184,44 +181,41 @@ bioioctl(dev_t dev, u_long cmd, void *addr, int flag, struct  lwp *l)
 		mutex_exit(&bio_lock);
 #ifdef COMPAT_30
 		switch (cmd) {
-		case OBIOCDISK:
-		    {
-			bd = malloc(sizeof(*bd), M_DEVBUF, M_WAITOK|M_ZERO);
+		case OBIOCDISK: {
+			struct bioc_disk *bd =
+			    malloc(sizeof(*bd), M_DEVBUF, M_WAITOK|M_ZERO);
 
-			memcpy(bd, addr, sizeof(struct obioc_disk));
-			error = bio_delegate_ioctl(
-			    (struct bio_mapping *)common->bc_cookie,
+			(void)memcpy(bd, addr, sizeof(struct obioc_disk));
+			error = bio_delegate_ioctl(common->bc_cookie,
 			    BIOCDISK, bd);
 			if (error) {
 				free(bd, M_DEVBUF);
 				return error;
 			}
 
-			memcpy(addr, bd, sizeof(struct obioc_disk));
+			(void)memcpy(addr, bd, sizeof(struct obioc_disk));
 			free(bd, M_DEVBUF);
 			return 0;
-		    }
-		case OBIOCVOL:
-		    {
-			bv = malloc(sizeof(*bv), M_DEVBUF, M_WAITOK|M_ZERO);
+		}
+		case OBIOCVOL: {
+			struct bioc_vol *bv =
+			    malloc(sizeof(*bv), M_DEVBUF, M_WAITOK|M_ZERO);
 
-			memcpy(bv, addr, sizeof(struct obioc_vol));
-			error = bio_delegate_ioctl(
-			    (struct bio_mapping *)common->bc_cookie,
+			(void)memcpy(bv, addr, sizeof(struct obioc_vol));
+			error = bio_delegate_ioctl(common->bc_cookie,
 			    BIOCVOL, bv);
 			if (error) {
 				free(bv, M_DEVBUF);
 				return error;
 			}
 
-			memcpy(addr, bv, sizeof(struct obioc_vol));
+			(void)memcpy(addr, bv, sizeof(struct obioc_vol));
 			free(bv, M_DEVBUF);
 			return 0;
-		    }
+		}
 		}
 #endif
-		error = bio_delegate_ioctl(
-		    (struct bio_mapping *)common->bc_cookie, cmd, addr);
+		error = bio_delegate_ioctl(common->bc_cookie, cmd, addr);
 		return error;
 	}
 	return 0;
@@ -263,7 +257,7 @@ bio_unregister(struct device *dev)
 	mutex_exit(&bio_lock);
 }
 
-struct bio_mapping *
+static struct bio_mapping *
 bio_lookup(char *name)
 {
 	struct bio_mapping *bm;
@@ -279,7 +273,7 @@ bio_lookup(char *name)
 	return NULL;
 }
 
-int
+static int
 bio_validate(void *cookie)
 {
 	struct bio_mapping *bm;
@@ -291,9 +285,10 @@ bio_validate(void *cookie)
 	return 0;
 }
 
-int
-bio_delegate_ioctl(struct bio_mapping *bm, u_long cmd, void *addr)
+static int
+bio_delegate_ioctl(void *cookie, u_long cmd, void *addr)
 {
+	struct bio_mapping *bm = cookie;
 	
 	return bm->bm_ioctl(bm->bm_dev, cmd, addr);
 }
