@@ -1,4 +1,4 @@
-/*	$NetBSD: hdfd.c,v 1.60 2008/01/02 11:48:23 ad Exp $	*/
+/*	$NetBSD: hdfd.c,v 1.61 2008/01/03 16:06:24 he Exp $	*/
 
 /*-
  * Copyright (c) 1996 Leo Weppelman
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdfd.c,v 1.60 2008/01/02 11:48:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdfd.c,v 1.61 2008/01/03 16:06:24 he Exp $");
 
 #include "opt_ddb.h"
 
@@ -1525,7 +1525,7 @@ fdformat(dev, finfo, p)
 	struct ne7_fd_formb *finfo;
 	struct proc *p;
 {
-	int rv = 0, s;
+	int rv = 0;
 	struct fd_softc *fd = hdfd_cd.cd_devs[FDUNIT(dev)];
 	struct fd_type *type = fd->sc_type;
 	struct buf *bp;
@@ -1560,7 +1560,7 @@ fdformat(dev, finfo, p)
 	/* ...and wait for it to complete */
 	mutex_enter(bp->b_objlock);
 	while(!(bp->b_oflags & BO_DONE)) {
-		rv = cv_timedwait(&bp->b_done, 20 * hz);
+		rv = cv_timedwait(&bp->b_done, bp->b_objlock, 20 * hz);
 		if (rv == EWOULDBLOCK)
 			break;
 	}
