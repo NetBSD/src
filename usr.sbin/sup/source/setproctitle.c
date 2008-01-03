@@ -62,6 +62,10 @@ setproctitle(const char *fmt, ...)
 	pname = *++args;
 	*(int *)((int *)pname - 1) = 1; /* *argc = 1; */
  
+	/* Just the last component of the name */
+	if ((p = strrchr(pname, '/')) != NULL)
+		pname = p + 1;
+
 	/* In case we get called again */
 	if ((p = strrchr(pname, ':')) != NULL)
 		*p = '\0';
