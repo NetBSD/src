@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.923 2007/12/30 09:30:02 jdc Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.924 2008/01/03 03:40:25 jnemeth Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.923 2007/12/30 09:28:28 jdc Exp
+ *	NetBSD: pcidevs,v 1.924 2008/01/03 03:38:32 jnemeth Exp
  */
 
 /*
@@ -9737,7 +9737,7 @@ static const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_1030,
-	    "53c1030",
+	    "53c1020/53c1030",
 	},
 	{
 	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_1030R,
