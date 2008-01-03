@@ -1,4 +1,4 @@
-/*	$NetBSD: pchbvar.h,v 1.2 2007/12/09 20:27:49 jmcneill Exp $	*/
+/*	$NetBSD: pchbvar.h,v 1.3 2008/01/03 04:50:19 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -56,10 +56,12 @@ struct pchb_softc {
 
 	int sc_rnd_i;
 	uint32_t sc_rnd_ax;
+	bool sc_rnd_attached;
 
 	pcireg_t sc_pciconfext[48];
 };
 
 void	pchb_attach_rnd(struct pchb_softc *, struct pci_attach_args *);
+void	pchb_detach_rnd(struct pchb_softc *);
 
 #endif /* _I386_PCI_PCHBVAR_H_ */

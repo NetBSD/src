@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.16 2007/12/28 14:05:22 joerg Exp $	*/
+/*	$NetBSD: clock.c,v 1.17 2008/01/03 04:50:19 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -121,7 +121,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.16 2007/12/28 14:05:22 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.17 2008/01/03 04:50:19 dyoung Exp $");
 
 /* #define CLOCKDEBUG */
 /* #define CLOCK_PARANOIA */
@@ -166,9 +166,10 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.16 2007/12/28 14:05:22 joerg Exp $");
 
 int sysbeepmatch(struct device *, struct cfdata *, void *);
 void sysbeepattach(struct device *, struct device *, void *);
+int sysbeepdetach(device_t, int);
 
 CFATTACH_DECL(sysbeep, sizeof(struct device),
-    sysbeepmatch, sysbeepattach, NULL, NULL);
+    sysbeepmatch, sysbeepattach, sysbeepdetach, NULL);
 
 static int ppi_attached;
 static pcppi_tag_t ppicookie;
@@ -552,6 +553,14 @@ sysbeepattach(struct device *parent, struct device *self,
 		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 #endif
+
+int
+sysbeepdetach(device_t self, int flags)
+{
+	pmf_device_deregister(self);
+	ppi_attached = 0;
+	return 0;
+}
 
 void
 sysbeep(int pitch, int period)
