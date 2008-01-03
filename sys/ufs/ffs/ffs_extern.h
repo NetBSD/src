@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_extern.h,v 1.62 2008/01/02 11:49:09 ad Exp $	*/
+/*	$NetBSD: ffs_extern.h,v 1.63 2008/01/03 19:28:48 ad Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -64,13 +64,15 @@ struct cg;
 
 #if defined(_KERNEL)
 
+#include <sys/pool.h>
+
 #define	FFS_ITIMES(ip, acc, mod, cre) \
 	while ((ip)->i_flag & (IN_ACCESS | IN_CHANGE | IN_UPDATE | IN_MODIFY)) \
 		ffs_itimes(ip, acc, mod, cre)
 
-extern struct pool ffs_inode_pool;	/* memory pool for inodes */
-extern struct pool ffs_dinode1_pool;	/* memory pool for UFS1 dinodes */
-extern struct pool ffs_dinode2_pool;	/* memory pool for UFS2 dinodes */
+extern pool_cache_t ffs_inode_cache;	/* memory pool for inodes */
+extern pool_cache_t ffs_dinode1_cache;	/* memory pool for UFS1 dinodes */
+extern pool_cache_t ffs_dinode2_cache;	/* memory pool for UFS2 dinodes */
 
 #endif /* defined(_KERNEL) */
 
