@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.85 2008/01/02 23:04:25 dyoung Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.86 2008/01/03 23:15:43 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.85 2008/01/02 23:04:25 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.86 2008/01/03 23:15:43 dyoung Exp $");
 
 #include "opt_cardbus.h"
 
@@ -1140,15 +1140,16 @@ void
 cardbus_disable_retry(cardbus_chipset_tag_t cc, cardbus_function_tag_t cf,
     cardbustag_t tag)
 {
+	/* See comment on sys/dev/pci/pci.c:pci_disable_retry() for
+	 * the reason I comment-out this code.
+	 */
+#if 0
 	cardbusreg_t retry;
 
-	/*
-	 * Disable retry timeout to keep PCI Tx retries from
-	 * interfering with ACPI C3 CPU state.
-	 */
 	retry = cardbus_conf_read(cc, cf, tag, PCI_RETRY_TIMEOUT_REG);
 	retry &= ~PCI_RETRY_TIMEOUT_REG_MASK;
 	cardbus_conf_write(cc, cf, tag, PCI_RETRY_TIMEOUT_REG, retry);
+#endif
 }
 
 struct cardbus_child_power {
