@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.978 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.979 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -312,3 +312,4 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		in volumes as well as showing information about physical
 		disks (even if they are marked as hot-spare, pass-through
 		or unused). [xtraeme 20080102]
+	ofppc: Support intallation and RAID bootable root.  [mrg 20080102]
