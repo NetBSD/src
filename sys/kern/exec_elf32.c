@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.131 2008/01/02 22:04:56 yamt Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.132 2008/01/03 14:30:49 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.131 2008/01/02 22:04:56 yamt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.132 2008/01/03 14:30:49 yamt Exp $");
 
 /* If not included by exec_elf64.c, ELFSIZE won't be defined. */
 #ifndef ELFSIZE
@@ -78,6 +78,7 @@ __KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.131 2008/01/02 22:04:56 yamt Exp $"
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/namei.h>
 #include <sys/vnode.h>
 #include <sys/exec.h>
@@ -484,7 +485,7 @@ elf_load_file(struct lwp *l, struct exec_package *epp, char *path,
 	}
 
 	phsize = eh.e_phnum * sizeof(Elf_Phdr);
-	ph = (Elf_Phdr *)malloc(phsize, M_TEMP, M_WAITOK);
+	ph = kmem_alloc(phsize, KM_SLEEP);
 
 	if ((error = exec_read_from(l, vp, eh.e_phoff, ph, phsize)) != 0)
 		goto bad;
@@ -611,7 +612,7 @@ elf_load_file(struct lwp *l, struct exec_package *epp, char *path,
 		}
 	}
 
-	free(ph, M_TEMP);
+	kmem_free(ph, phsize);
 	/*
 	 * This value is ignored if TOPDOWN.
 	 */
@@ -624,7 +625,7 @@ badunlock:
 
 bad:
 	if (ph != NULL)
-		free(ph, M_TEMP);
+		kmem_free(ph, phsize);
 #ifdef notyet /* XXX cgd 960926 */
 	(maybe) VOP_CLOSE it
 #endif
@@ -677,7 +678,7 @@ exec_elf_makecmds(struct lwp *l, struct exec_package *epp)
 	 */
 	p = l->l_proc;
 	phsize = eh->e_phnum * sizeof(Elf_Phdr);
-	ph = (Elf_Phdr *)malloc(phsize, M_TEMP, M_WAITOK);
+	ph = kmem_alloc(phsize, KM_SLEEP);
 
 	if ((error = exec_read_from(l, epp->ep_vp, eh->e_phoff, ph, phsize)) !=
 	    0)
@@ -828,13 +829,13 @@ exec_elf_makecmds(struct lwp *l, struct exec_package *epp)
 	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_readvn, PAGE_SIZE, 0,
 	    epp->ep_vp, 0, VM_PROT_READ);
 #endif
-	free(ph, M_TEMP);
+	kmem_free(ph, phsize);
 	return (*epp->ep_esch->es_setup_stack)(l, epp);
 
 bad:
 	if (interp)
 		PNBUF_PUT(interp);
-	free(ph, M_TEMP);
+	kmem_free(ph, phsize);
 	kill_vmcmds(&epp->ep_vmcmds);
 	return error;
 }
@@ -855,7 +856,7 @@ netbsd_elf_signature(struct lwp *l, struct exec_package *epp,
 		return ENOEXEC;
 
 	phsize = eh->e_phnum * sizeof(Elf_Phdr);
-	ph = (Elf_Phdr *)malloc(phsize, M_TEMP, M_WAITOK);
+	ph = kmem_alloc(phsize, KM_SLEEP);
 	error = exec_read_from(l, epp->ep_vp, eh->e_phoff, ph, phsize);
 	if (error)
 		goto out;
@@ -869,7 +870,7 @@ netbsd_elf_signature(struct lwp *l, struct exec_package *epp,
 		    ephp->p_filesz < sizeof(Elf_Nhdr) + ELF_NOTE_NETBSD_NAMESZ)
 			continue;
 
-		np = (Elf_Nhdr *)malloc(ephp->p_filesz, M_TEMP, M_WAITOK);
+		np = kmem_alloc(ephp->p_filesz, KM_SLEEP);
 		error = exec_read_from(l, epp->ep_vp, ephp->p_offset, np,
 		    ephp->p_filesz);
 		if (error)
@@ -902,13 +903,13 @@ netbsd_elf_signature(struct lwp *l, struct exec_package *epp,
 		}
 
 next:
-		free(np, M_TEMP);
+		kmem_free(np, ephp->p_filesz);
 		continue;
 	}
 
 	error = isnetbsd ? 0 : ENOEXEC;
 out:
-	free(ph, M_TEMP);
+	kmem_free(ph, phsize);
 	return error;
 }
 
