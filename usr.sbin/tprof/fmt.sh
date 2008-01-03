@@ -1,5 +1,5 @@
 #! /bin/sh
-#	$NetBSD: fmt.sh,v 1.2 2008/01/01 21:39:50 yamt Exp $
+#	$NetBSD: fmt.sh,v 1.3 2008/01/03 14:21:53 yamt Exp $
 
 # /*-
 #  * Copyright (c)2008 YAMAMOTO Takashi,
@@ -29,7 +29,9 @@
 
 # usage: tprof -c sleep 1 | sh fmt.sh
 
-SIZEOF_PTR=4	# XXX
+if [ ! "${SIZEOF_PTR}" ]; then
+	SIZEOF_PTR=4
+fi
 
 hexdump -v -e "/${SIZEOF_PTR} \"%x\n\""|sort|uniq -c|sort -nr|
 while read x y;do 
