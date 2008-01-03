@@ -1,4 +1,4 @@
-/*	$NetBSD: dbtest.c,v 1.13 2007/02/03 23:46:40 christos Exp $	*/
+/*	$NetBSD: dbtest.c,v 1.14 2008/01/03 13:52:46 martin Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)dbtest.c	8.17 (Berkeley) 9/1/94";
 #else
-__RCSID("$NetBSD: dbtest.c,v 1.13 2007/02/03 23:46:40 christos Exp $");
+__RCSID("$NetBSD: dbtest.c,v 1.14 2008/01/03 13:52:46 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -328,6 +328,7 @@ lkey:			switch (command) {
 	if ((*dbp->close)(dbp))
 		err(1, "db->close failed");
 	(void)close(ofd);
+	(void)unlink(fname);
 	return 0;
 }
 
