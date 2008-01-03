@@ -1,4 +1,4 @@
-/* $NetBSD: attimer_acpi.c,v 1.8 2008/01/02 20:47:28 dyoung Exp $ */
+/* $NetBSD: attimer_acpi.c,v 1.9 2008/01/03 01:21:45 dyoung Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: attimer_acpi.c,v 1.8 2008/01/02 20:47:28 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: attimer_acpi.c,v 1.9 2008/01/03 01:21:45 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,7 +87,7 @@ static int	attimer_acpi_match(device_t, struct cfdata *, void *);
 static void	attimer_acpi_attach(device_t, device_t, void *);
 
 CFATTACH_DECL(attimer_acpi, sizeof(struct attimer_softc), attimer_acpi_match,
-    attimer_acpi_attach, NULL, NULL);
+    attimer_acpi_attach, attimer_detach, NULL);
 
 /*
  * Supported device IDs
@@ -142,8 +142,9 @@ attimer_acpi_attach(device_t parent, device_t self, void *aux)
 	}
 
 	sc->sc_iot = aa->aa_iot;
-	if (bus_space_map(sc->sc_iot, io->ar_base, io->ar_length,
-		    0, &sc->sc_ioh)) {
+	sc->sc_size = io->ar_length;
+	if (bus_space_map(sc->sc_iot, io->ar_base, sc->sc_size,
+		    0, &sc->sc_ioh) != 0) {
 		aprint_error("%s: can't map i/o space\n", sc->sc_dev.dv_xname);
 		goto out;
 	}
