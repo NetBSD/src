@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.121 2008/01/02 19:44:36 yamt Exp $	*/
+/*	$NetBSD: exec.h,v 1.122 2008/01/03 14:36:57 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -231,10 +231,6 @@ struct exec_vmcmd {
 };
 
 #ifdef _KERNEL
-#include <sys/mallocvar.h>
-
-MALLOC_DECLARE(M_EXEC);
-
 /*
  * funtions used either by execve() or the various CPU-dependent execve()
  * hooks.
