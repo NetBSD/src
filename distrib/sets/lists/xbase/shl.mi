@@ -1,4 +1,7 @@
-# $NetBSD: shl.mi,v 1.9 2005/03/22 13:45:46 tron Exp $
+# $NetBSD: shl.mi,v 1.10 2008/01/03 20:48:03 jdc Exp $
+#
+# Note: don't delete entries from here - mark them as "obsolete" instead.
+#
 ./usr/X11R6/lib/libFS.so.6.0
 ./usr/X11R6/lib/libGL.so.1.2
 ./usr/X11R6/lib/libGLU.so.1.3

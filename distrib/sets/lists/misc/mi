@@ -1,4 +1,7 @@
-# $NetBSD: mi,v 1.151 2007/12/09 22:15:38 tls Exp $
+# $NetBSD: mi,v 1.152 2008/01/03 20:48:02 jdc Exp $
+#
+# Note: don't delete entries from here - mark them as "obsolete" instead.
+#
 ./etc/mtree/set.misc				misc-sys-root
 ./usr/share/dict/README				misc-reference-share	share
 ./usr/share/dict/american			misc-reference-share	share

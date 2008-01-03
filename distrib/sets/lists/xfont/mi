@@ -1,4 +1,7 @@
-# $NetBSD: mi,v 1.24 2005/05/03 00:23:41 lukem Exp $
+# $NetBSD: mi,v 1.25 2008/01/03 20:48:06 jdc Exp $
+#
+# Note: don't delete entries from here - mark them as "obsolete" instead.
+#
 ./etc/mtree/set.xfont						xfont-sys-root
 ./usr/X11R6/lib/X11/fonts					xfont	share
 ./usr/X11R6/lib/X11/fonts/100dpi				xfont	share

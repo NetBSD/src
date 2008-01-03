@@ -1,4 +1,7 @@
-# $NetBSD: mi,v 1.1047 2007/12/31 15:31:38 ad Exp $
+# $NetBSD: mi,v 1.1048 2008/01/03 20:48:01 jdc Exp $
+#
+# Note: don't delete entries from here - mark them as "obsolete" instead.
+#
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info

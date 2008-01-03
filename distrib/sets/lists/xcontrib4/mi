@@ -1,4 +1,7 @@
-# $NetBSD: mi,v 1.1 2003/12/28 15:45:59 lukem Exp $
+# $NetBSD: mi,v 1.2 2008/01/03 20:48:05 jdc Exp $
+#
+# Note: don't delete entries from here - mark them as "obsolete" instead.
+#
 ./usr/X11R6/bin/ico
 ./usr/X11R6/bin/listres
 ./usr/X11R6/bin/showfont

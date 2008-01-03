@@ -1,4 +1,7 @@
-# $NetBSD: mi,v 1.39 2006/01/24 19:06:35 elad Exp $
+# $NetBSD: mi,v 1.40 2008/01/03 20:48:00 jdc Exp $
+#
+# Note: don't delete entries from here - mark them as "obsolete" instead.
+#
 ./etc/mtree/set.games				games-sys-root
 ./usr/games/adventure				games-games-bin
 ./usr/games/arithmetic				games-games-bin

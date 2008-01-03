@@ -1,4 +1,7 @@
-# $NetBSD: rescue.mi,v 1.26 2008/01/01 10:45:12 jnemeth Exp $
+# $NetBSD: rescue.mi,v 1.27 2008/01/03 20:47:57 jdc Exp $
+#
+# Note: don't delete entries from here - mark them as "obsolete" instead.
+#
 ./rescue/[					base-rescue-root
 ./rescue/atactl					base-rescue-root
 ./rescue/badsect				base-rescue-root

@@ -1,4 +1,7 @@
-# $NetBSD: mi,v 1.735 2008/01/01 10:47:54 jnemeth Exp $
+# $NetBSD: mi,v 1.736 2008/01/03 20:47:55 jdc Exp $
+#
+# Note: don't delete entries from here - mark them as "obsolete" instead.
+#
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
