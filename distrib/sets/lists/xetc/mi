@@ -1,0 +1,39 @@
+# $NetBSD: mi,v 1.5.2.2 2008/01/03 20:48:06 jdc Exp $
+#
+# Note: don't delete entries from here - mark them as "obsolete" instead.
+#
+./etc/X11/fs/config
+./etc/X11/lbxproxy/AtomControl
+./etc/X11/proxymngr/pmconfig
+./etc/X11/rstart/commands/@List
+./etc/X11/rstart/commands/ListContexts
+./etc/X11/rstart/commands/ListGenericCommands
+./etc/X11/rstart/commands/x
+./etc/X11/rstart/commands/x11
+./etc/X11/rstart/commands/x11r6/@List
+./etc/X11/rstart/commands/x11r6/LoadMonitor
+./etc/X11/rstart/commands/x11r6/Terminal
+./etc/X11/rstart/config
+./etc/X11/rstart/contexts/@List
+./etc/X11/rstart/contexts/default
+./etc/X11/rstart/contexts/x
+./etc/X11/rstart/contexts/x11
+./etc/X11/rstart/contexts/x11r6
+./etc/X11/twm/system.twmrc
+./etc/X11/xdm/GiveConsole
+./etc/X11/xdm/TakeConsole
+./etc/X11/xdm/Xaccess
+./etc/X11/xdm/Xresources
+./etc/X11/xdm/Xservers
+./etc/X11/xdm/Xservers.fs
+./etc/X11/xdm/Xservers.ws
+./etc/X11/xdm/Xsession
+./etc/X11/xdm/Xsetup_0
+./etc/X11/xdm/Xwilling
+./etc/X11/xdm/xdm-config
+./etc/X11/xinit/xinitrc
+./etc/X11/xserver/SecurityPolicy
+./etc/X11/xsm/system.xsm
+./etc/fonts/fonts.conf
+./etc/fonts/fonts.dtd
+./etc/mtree/set.xetc					xetc-sys-root
