@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia_codec.c,v 1.53 2008/01/04 12:18:00 kent Exp $	*/
+/*	$NetBSD: azalia_codec.c,v 1.54 2008/01/04 17:00:05 kent Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.53 2008/01/04 12:18:00 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.54 2008/01/04 17:00:05 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -92,6 +92,8 @@ static int	generic_mixer_init(codec_t *);
 static int	generic_mixer_fix_indexes(codec_t *);
 static int	generic_mixer_default(codec_t *);
 static int	generic_mixer_delete(codec_t *);
+static void	generic_mixer_cat_names
+	(char *, size_t, const char *, const char *, const char *);
 static int	generic_mixer_ensure_capacity(codec_t *, size_t);
 static int	generic_mixer_get(const codec_t *, nid_t, int, mixer_ctrl_t *);
 static int	generic_mixer_set(codec_t *, nid_t, int, const mixer_ctrl_t *);
@@ -671,9 +673,11 @@ generic_mixer_init(codec_t *this)
 						continue;
 					GMIDPRINTF(("%s: input mute %s.%s\n", __func__,
 					    w->name, this->w[w->connections[j]].name));
-					snprintf(d->label.name, sizeof(d->label.name),
-					    "%s.%s.mute", w->name,
-					    this->w[w->connections[j]].name);
+					generic_mixer_cat_names(
+					    d->label.name,
+					    sizeof(d->label.name),
+					    w->name, this->w[w->connections[j]].name,
+					    "mute");
 					d->type = AUDIO_MIXER_ENUM;
 					if (w->type == COP_AWTYPE_PIN_COMPLEX)
 						d->mixer_class = AZ_CLASS_OUTPUT;
@@ -926,6 +930,29 @@ generic_mixer_init(codec_t *this)
 	generic_mixer_fix_indexes(this);
 	generic_mixer_default(this);
 	return 0;
+}
+
+static void
+generic_mixer_cat_names(char *dst, size_t dstsize,
+		  const char *str1, const char *str2, const char *str3)
+{
+	const char *last2;
+	size_t len1, len2, len3, total;
+
+	len1 = strlen(str1);
+	len2 = strlen(str2);
+	len3 = strlen(str3);
+	total = len1 + 1 + len2 + 1 + len3 + 1;
+	if (total - (len3 - 1) <= dstsize) {
+		snprintf(dst, dstsize, "%s.%s.%s", str1, str2, str3);
+		return;
+	}
+	last2 = len2 > 2 ? str2 + len2 - 2 : str2;
+	if (len2 > 4) {
+		snprintf(dst, dstsize, "%s.%.2s%s.%s", str1, str2, last2, str3);
+		return;
+	}
+	snprintf(dst, dstsize, "%s.%s.%s", str1, last2, str3);
 }
 
 static int
