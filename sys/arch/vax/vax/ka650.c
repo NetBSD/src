@@ -1,4 +1,4 @@
-/*	$NetBSD: ka650.c,v 1.32 2007/03/04 06:01:01 christos Exp $	*/
+/*	$NetBSD: ka650.c,v 1.33 2008/01/04 21:43:58 joerg Exp $	*/
 /*
  * Copyright (c) 1988 The Regents of the University of California.
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka650.c,v 1.32 2007/03/04 06:01:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka650.c,v 1.33 2008/01/04 21:43:58 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -212,19 +212,19 @@ uvaxIII_mchk(cmcf)
 		if (i & CAER_DAT) {
 			printf("data");
 			i = cache1data;
-			cache1data = time.tv_sec;
+			cache1data = time_second;
 		}
 		if (i & CAER_TAG) {
 			printf("tag");
 			i = cache1tag;
-			cache1tag = time.tv_sec;
+			cache1tag = time_second;
 		}
 	} else if ((i & CAER_MCD) || (ka650merr_ptr->merr_errstat & MEM_CDAL)) {
 		printf("CDAL");
 		i = cdalerr;
-		cdalerr = time.tv_sec;
+		cdalerr = time_second;
 	}
-	if (time.tv_sec - i < 7) {
+	if (time_second - i < 7) {
 		ka650setcache(CACHEOFF);
 		printf(" parity error:	cacheing disabled\n");
 	} else {
