@@ -1,4 +1,4 @@
-/*	$NetBSD: ktrace.h,v 1.45 2006/10/22 18:19:50 christos Exp $	*/
+/*	$NetBSD: ktrace.h,v 1.45.4.1 2008/01/04 11:40:45 skrll Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -289,7 +289,7 @@ void ktrmmsg(struct lwp *, const void *, size_t);
 void ktrkmem(struct lwp *, int, const void *, size_t);
 void ktrmib(struct lwp *, const int *, u_int);
 void ktrmool(struct lwp *, const void *, size_t, const void *);
-void ktrsaupcall(struct lwp *, int, int, int, void *, void *);
+void ktrsaupcall(struct lwp *, int, int, int, void *, void *, void *);
 
 void ktrderef(struct proc *);
 void ktradref(struct proc *);
