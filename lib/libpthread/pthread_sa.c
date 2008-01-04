@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sa.c,v 1.37.6.4 2007/11/04 04:26:59 wrstuden Exp $	*/
+/*     $NetBSD: pthread_sa.c,v 1.37.6.5 2008/01/04 21:42:26 wrstuden Exp $    */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_sa.c,v 1.37.6.4 2007/11/04 04:26:59 wrstuden Exp $");
+__RCSID("$NetBSD: pthread_sa.c,v 1.37.6.5 2008/01/04 21:42:26 wrstuden Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -206,6 +206,16 @@ pthread__upcall(int type, struct sa_t *sas[], int ev, int intr, void *arg)
 		break;
 	case SA_UPCALL_USER:
 		PTHREADD_ADD(PTHREADD_UP_USER);
+		/*
+		 * We send these so that we can deliver signals to running
+		 * threads. So check for pending signals.
+		 */
+		t = pthread__sa_id(sas[1]);
+		pthread_spinlock(self, &t->pt_flaglock);
+		flags = t->pt_flags;
+		pthread_spinunlock(self, &t->pt_flaglock);
+		if (flags & PT_FLAG_SIGDEFERRED)
+			pthread__signal_deferred(self, t);
 		break;
 	default:
 		pthread__abort();
