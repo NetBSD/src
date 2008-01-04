@@ -1,4 +1,4 @@
-/* $NetBSD: mcclock.c,v 1.18 2008/01/03 23:02:25 joerg Exp $ */
+/* $NetBSD: mcclock.c,v 1.19 2008/01/04 01:00:43 simonb Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcclock.c,v 1.18 2008/01/03 23:02:25 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock.c,v 1.19 2008/01/04 01:00:43 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -222,7 +222,7 @@ mcclock_set(todr_chip_handle_t tch, volatile struct timeval *tvp)
 
 #ifdef DEBUG
 	if (dt.dt_year != 1972)
-		printf("resettodr: botch (%ld, %ld)\n", yearsecs, time.tv_sec);
+		printf("resettodr: botch (%d, %ld)\n", yearsecs, time_second);
 #endif
 
 	s = splclock();
