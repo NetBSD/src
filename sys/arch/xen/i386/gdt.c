@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.c,v 1.10 2007/12/06 17:00:33 ad Exp $	*/
+/*	$NetBSD: gdt.c,v 1.11 2008/01/04 15:55:34 yamt Exp $	*/
 /*	NetBSD: gdt.c,v 1.32 2004/02/13 11:36:13 wiz Exp 	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.10 2007/12/06 17:00:33 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.11 2008/01/04 15:55:34 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -93,7 +93,7 @@ gdt_unlock()
 }
 
 void
-setgdt(int sel, void *base, size_t limit,
+setgdt(int sel, const void *base, size_t limit,
     int type, int dpl, int def32, int gran)
 {
 	struct segment_descriptor sd;
@@ -365,33 +365,6 @@ gdt_put_slot1(int slot, int which)
 	gdt_free[which] = slot;
 
 	gdt_unlock();
-}
-
-int
-tss_alloc(struct pcb *pcb)
-{
-#ifndef XEN
-	int slot;
-
-	slot = gdt_get_slot();
-	setgdt(slot, &pcb->pcb_tss, sizeof(struct pcb) - 1,
-	    SDT_SYS386TSS, SEL_KPL, 0, 0);
-	return GSEL(slot, SEL_KPL);
-#else
-
-	return GSEL(GNULL_SEL, SEL_KPL);
-#endif
-}
-
-void
-tss_free(int sel)
-{
-
-#ifndef XEN
-	gdt_put_slot(IDXSEL(sel));
-#else
-	KASSERT(sel == GSEL(GNULL_SEL, SEL_KPL));
-#endif
 }
 
 /*

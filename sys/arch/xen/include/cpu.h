@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.26 2008/01/01 20:32:11 yamt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.27 2008/01/04 15:55:35 yamt Exp $	*/
 /*	NetBSD: cpu.h,v 1.113 2004/02/20 17:35:01 yamt Exp 	*/
 
 /*-
@@ -327,11 +327,9 @@ extern int i386_has_sse2;
 
 /* machdep.c */
 void	dumpconf(void);
-int	cpu_maxproc(void);
 void	cpu_reset(void);
 void	i386_proc0_tss_ldt_init(void);
-struct pcb;
-void	i386_switch_context(struct pcb *);
+void	i386_switch_context(lwp_t *);
 
 /* identcpu.c */
 extern int tmx86_has_longrun;

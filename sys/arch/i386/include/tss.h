@@ -1,4 +1,4 @@
-/*	$NetBSD: tss.h,v 1.8 2003/08/07 16:28:00 agc Exp $	*/
+/*	$NetBSD: tss.h,v 1.9 2008/01/04 15:55:34 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -67,7 +67,7 @@ struct i386tss {
 	int	tss_fs;		/* saved segment register */
 	int	tss_gs;		/* saved segment register */
 	int	tss_ldt;	/* LDT selector */
-	int	tss_ioopt;	/* options and I/O permission map offset */
+	int	tss_iobase;	/* options and I/O permission map offset */
 };
 
 #endif /* #ifndef _I386_TSS_H_ */

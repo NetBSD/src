@@ -1,4 +1,4 @@
-/* 	$NetBSD: cpuvar.h,v 1.21 2008/01/01 20:32:12 yamt Exp $ */
+/* 	$NetBSD: cpuvar.h,v 1.22 2008/01/04 15:55:28 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000, 2007 The NetBSD Foundation, Inc.
@@ -112,6 +112,7 @@ void x86_errata(void);
 void identifycpu(struct cpu_info *);
 void identifycpu_cpuids(struct cpu_info *);
 void cpu_init(struct cpu_info *);
+void cpu_init_tss(struct cpu_info *);
 void cpu_init_first(void);
 
 #ifdef INTEL_CORETEMP

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.59 2007/12/11 23:06:13 lukem Exp $	*/
+/*	$NetBSD: locore.S,v 1.60 2008/01/04 15:55:32 yamt Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -111,7 +111,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.59 2007/12/11 23:06:13 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.60 2008/01/04 15:55:32 yamt Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_ddb.h"
@@ -762,19 +762,16 @@ ENTRY(cpu_switchto)
 	testl	%edx,%edx
 	jnz	4f
 
-	/* Switch TSS.  Reset "task busy" flag before loading. */
-	movl	%cr3,%eax
-	movl	%eax,PCB_CR3(%ebx)	# for TSS gates
-	movl	CPUVAR(GDT),%ecx
-	movl	L_MD_TSS_SEL(%edi),%edx
-	andl	$~0x0200,4(%ecx,%edx, 1)
-	ltr	%dx
+	/* Switch ring0 esp */
+	movl	PCB_ESP0(%ebx),%eax
+	movl	%eax,CPUVAR(ESP0)
 
 	/* Don't bother with the rest if switching to a system process. */
 	testl	$LW_SYSTEM,L_FLAG(%edi)
 	jnz	4f
 
 	/* Restore thread-private %fs/%gs descriptors. */
+	movl	CPUVAR(GDT),%ecx
 	movl	PCB_FSD(%ebx), %eax
 	movl	PCB_FSD+4(%ebx), %edx
 	movl	%eax, (GUFS_SEL*8)(%ecx)
@@ -783,6 +780,13 @@ ENTRY(cpu_switchto)
 	movl	PCB_GSD+4(%ebx), %edx
 	movl	%eax, (GUGS_SEL*8)(%ecx)
 	movl	%edx, (GUGS_SEL*8+4)(%ecx)
+
+	/* Switch I/O bitmap */
+	movl	PCB_IOMAP(%ebx),%eax
+	orl	%eax,%eax
+	jnz,pn	.Lcopy_iobitmap
+	movl	$(IOMAP_INVALOFF << 16),CPUVAR(IOBASE)
+.Liobitmap_done:
 
 	/* Is this process using RAS (restartable atomic sequences)? */
 	movl	L_PROC(%edi),%eax
@@ -830,6 +834,21 @@ ENTRY(cpu_switchto)
 	movl	L_MD_REGS(%edi),%ecx
 	movl	%eax,TF_EIP(%ecx)
 	jmp	2b
+
+.Lcopy_iobitmap:
+	/* Copy I/O bitmap. */
+	movl	$(IOMAPSIZE/4),%ecx
+	pushl	%esi
+	pushl	%edi
+	movl	%eax,%esi		/* pcb_iomap */
+	movl	CPUVAR(SELF),%edi
+	leal	CPU_INFO_IOMAP(%edi),%edi
+	rep
+	movsl
+	popl	%edi
+	popl	%esi
+	movl	$((CPU_INFO_IOMAP - CPU_INFO_TSS) << 16),CPUVAR(IOBASE)
+	jmp	.Liobitmap_done
 
 /*
  * void savectx(struct pcb *pcb);

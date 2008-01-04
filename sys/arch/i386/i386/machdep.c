@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.619 2007/12/26 16:28:16 joerg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.620 2008/01/04 15:55:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.619 2007/12/26 16:28:16 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.620 2008/01/04 15:55:32 yamt Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -489,6 +489,9 @@ cpu_startup()
 	gdt_init();
 	i386_proc0_tss_ldt_init();
 
+	cpu_init_tss(&cpu_info_primary);
+	ltr(cpu_info_primary.ci_tss_sel);
+
 	x86_init();
 }
 
@@ -500,27 +503,33 @@ i386_proc0_tss_ldt_init()
 {
 	struct lwp *l;
 	struct pcb *pcb;
-	int x;
 
 	l = &lwp0;
 	pcb = &l->l_addr->u_pcb;
-	pcb->pcb_tss.tss_ioopt =
-	    ((char *)pcb->pcb_iomap - (char *)&pcb->pcb_tss) << 16;
-
-	for (x = 0; x < sizeof(pcb->pcb_iomap) / 4; x++)
-		pcb->pcb_iomap[x] = 0xffffffff;
 
 	pcb->pcb_ldt_sel = pmap_kernel()->pm_ldt_sel = GSEL(GLDT_SEL, SEL_KPL);
 	pcb->pcb_cr0 = rcr0();
-	pcb->pcb_tss.tss_ss0 = GSEL(GDATA_SEL, SEL_KPL);
-	pcb->pcb_tss.tss_esp0 = USER_TO_UAREA(l->l_addr) + KSTACK_SIZE - 16;
-	l->l_md.md_regs = (struct trapframe *)pcb->pcb_tss.tss_esp0 - 1;
-	l->l_md.md_tss_sel = tss_alloc(pcb);
+	pcb->pcb_esp0 = USER_TO_UAREA(l->l_addr) + KSTACK_SIZE - 16;
+	l->l_md.md_regs = (struct trapframe *)pcb->pcb_esp0 - 1;
 	memcpy(pcb->pcb_fsd, &gdt[GUDATA_SEL], sizeof(pcb->pcb_fsd));
 	memcpy(pcb->pcb_gsd, &gdt[GUDATA_SEL], sizeof(pcb->pcb_gsd));
 
-	ltr(l->l_md.md_tss_sel);
 	lldt(pcb->pcb_ldt_sel);
+}
+
+/*
+ * Set up TSS and I/O bitmap.
+ */
+void
+cpu_init_tss(struct cpu_info *ci)
+{
+	struct i386tss *tss = &ci->ci_tss;
+
+	tss->tss_iobase = IOMAP_INVALOFF << 16;
+	tss->tss_ss0 = GSEL(GDATA_SEL, SEL_KPL);
+	tss->tss_ldt = GSEL(GLDT_SEL, SEL_KPL);
+	tss->tss_cr3 = rcr3();
+	ci->ci_tss_sel = tss_alloc(tss);
 }
 
 /*
@@ -1287,8 +1296,8 @@ setregion(struct region_descriptor *rd, void *base, size_t limit)
 }
 
 void
-setsegment(struct segment_descriptor *sd, void *base, size_t limit, int type,
-    int dpl, int def32, int gran)
+setsegment(struct segment_descriptor *sd, const void *base, size_t limit,
+    int type, int dpl, int def32, int gran)
 {
 
 	sd->sd_lolimit = (int)limit;
@@ -2010,12 +2019,6 @@ init386(paddr_t first_avail)
 		       ptoa(physmem), 2*1024*1024UL);
 		cngetc();
 	}
-
-#ifdef __HAVE_CPU_MAXPROC
-	/* Make sure maxproc is sane */
-	if (maxproc > cpu_maxproc())
-		maxproc = cpu_maxproc();
-#endif
 }
 
 #ifdef COMPAT_NOMID
@@ -2370,17 +2373,4 @@ cpu_initclocks()
 {
 
 	(*initclock_func)();
-}
-
-/*
- * Number of processes is limited by number of available GDT slots.
- */
-int
-cpu_maxproc(void)
-{
-#ifdef USER_LDT
-	return ((MAXGDTSIZ - NGDT) / 2);
-#else
-	return (MAXGDTSIZ - NGDT);
-#endif
 }

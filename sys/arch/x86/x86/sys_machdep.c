@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.8 2007/12/20 23:02:43 dsl Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.9 2008/01/04 15:55:31 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.8 2007/12/20 23:02:43 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.9 2008/01/04 15:55:31 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_mtrr.h"
@@ -58,6 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.8 2007/12/20 23:02:43 dsl Exp $");
 #include <sys/buf.h>
 #include <sys/signal.h>
 #include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/kauth.h>
 
 #include <sys/mount.h>
@@ -80,7 +81,11 @@ __KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.8 2007/12/20 23:02:43 dsl Exp $");
 #undef	VM86
 #undef	IOPERM
 #else
+#if defined(XEN)
+#undef	IOPERM
+#else /* defined(XEN) */
 #define	IOPERM
+#endif /* defined(XEN) */
 #endif
 
 #ifdef VM86
@@ -433,12 +438,7 @@ x86_iopl(struct lwp *l, void *args, register_t *retval)
 	int error;
 	struct x86_iopl_args ua;
 #ifdef XEN
-	struct pcb *pcb = &l->l_addr->u_pcb;
-#ifdef __x86_64__
-#define TSS_IO	tss_iobase
-#else
-#define TSS_IO	tss_ioopt
-#endif /* __x86_64__ */
+	int iopl;
 #else
 	struct trapframe *tf = l->l_md.md_regs;
 #endif
@@ -452,19 +452,16 @@ x86_iopl(struct lwp *l, void *args, register_t *retval)
 		return error;
 
 #ifdef XEN
-	{
-		pcb->pcb_tss.TSS_IO &= ~SEL_RPL;
-		if (ua.iopl)
-			pcb->pcb_tss.TSS_IO |= SEL_UPL; /* i/o pl */
-		else
-			pcb->pcb_tss.TSS_IO |= SEL_KPL; /* i/o pl */
-	}
+	if (ua.iopl)
+		iopl = SEL_UPL;
+	else
+		iopl = SEL_KPL;
 	/* Force the change at ring 0. */
 #ifdef XEN3
 	{
 		struct physdev_op physop;
 		physop.cmd = PHYSDEVOP_SET_IOPL;
-		physop.u.set_iopl.iopl = pcb->pcb_tss.TSS_IO & SEL_RPL;
+		physop.u.set_iopl.iopl = iopl;
 		HYPERVISOR_physdev_op(&physop);
 	}
 #else /* XEN3 */
@@ -472,11 +469,10 @@ x86_iopl(struct lwp *l, void *args, register_t *retval)
 		dom0_op_t op;
 		op.cmd = DOM0_IOPL;
 		op.u.iopl.domain = DOMID_SELF;
-		op.u.iopl.iopl = pcb->pcb_tss.TSS_IO & SEL_RPL; /* i/o pl */
+		op.u.iopl.iopl = iopl;
 		HYPERVISOR_dom0_op(&op);
 	}
 #endif /* XEN3 */
-#undef TSS_IO
 #elif defined(__x86_64__)
 	if (ua.iopl)
 		tf->tf_rflags |= PSL_IOPL;
@@ -499,6 +495,8 @@ x86_get_ioperm(struct lwp *l, void *args, register_t *retval)
 	int error;
 	struct pcb *pcb = &l->l_addr->u_pcb;
 	struct x86_get_ioperm_args ua;
+	void *dummymap = NULL;
+	void *iomap;
 
 	error = kauth_authorize_machdep(l->l_cred, KAUTH_MACHDEP_IOPERM_GET,
 	    NULL, NULL, NULL, NULL);
@@ -508,7 +506,16 @@ x86_get_ioperm(struct lwp *l, void *args, register_t *retval)
 	if ((error = copyin(args, &ua, sizeof(ua))) != 0)
 		return (error);
 
-	return copyout(pcb->pcb_iomap, ua.iomap, sizeof(pcb->pcb_iomap));
+	iomap = pcb->pcb_iomap;
+	if (iomap == NULL) {
+		iomap = dummymap = kmem_alloc(IOMAPSIZE, KM_SLEEP);
+		memset(dummymap, 0xff, IOMAPSIZE);
+	}
+	error = copyout(iomap, ua.iomap, IOMAPSIZE);
+	if (dummymap != NULL) {
+		kmem_free(dummymap, IOMAPSIZE);
+	}
+	return error;
 #else
 	return EINVAL;
 #endif
@@ -518,9 +525,12 @@ int
 x86_set_ioperm(struct lwp *l, void *args, register_t *retval)
 {
 #ifdef IOPERM
+	struct cpu_info *ci;
 	int error;
 	struct pcb *pcb = &l->l_addr->u_pcb;
 	struct x86_set_ioperm_args ua;
+	void *new;
+	void *old;
 
   	error = kauth_authorize_machdep(l->l_cred, KAUTH_MACHDEP_IOPERM_SET,
 	    NULL, NULL, NULL, NULL);
@@ -530,7 +540,26 @@ x86_set_ioperm(struct lwp *l, void *args, register_t *retval)
 	if ((error = copyin(args, &ua, sizeof(ua))) != 0)
 		return (error);
 
-	return copyin(ua.iomap, pcb->pcb_iomap, sizeof(pcb->pcb_iomap));
+	new = kmem_alloc(IOMAPSIZE, KM_SLEEP);
+	error = copyin(ua.iomap, new, IOMAPSIZE);
+	if (error) {
+		kmem_free(new, IOMAPSIZE);
+		return error;
+	}
+	old = pcb->pcb_iomap;
+	pcb->pcb_iomap = new;
+	if (old != NULL) {
+		kmem_free(old, IOMAPSIZE);
+	}
+
+	crit_enter();
+	ci = curcpu();
+	memcpy(ci->ci_iomap, pcb->pcb_iomap, sizeof(ci->ci_iomap));
+	ci->ci_tss.tss_iobase =
+	    ((uintptr_t)ci->ci_iomap - (uintptr_t)&ci->ci_tss) << 16;
+	crit_exit();
+
+	return error;
 #else
 	return EINVAL;
 #endif

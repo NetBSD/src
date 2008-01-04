@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.h,v 1.11 2007/04/16 17:24:19 ad Exp $	*/
+/*	$NetBSD: gdt.h,v 1.12 2008/01/04 15:55:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -44,8 +44,10 @@ struct pmap;
 void gdt_init(void);
 void gdt_init_cpu(struct cpu_info *);
 void gdt_reload_cpu(struct cpu_info *);
+int gdt_get_slot(void);
+void gdt_put_slot(int);
 void gdt_alloc_cpu(struct cpu_info *);
-int tss_alloc(struct pcb *);
+int tss_alloc(const struct i386tss *);
 void tss_free(int);
 int ldt_alloc(union descriptor *, size_t);
 void ldt_free(int);
