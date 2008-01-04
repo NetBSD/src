@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.77 2007/12/28 07:04:54 dogcow Exp $	*/
+/*	$NetBSD: machdep.c,v 1.78 2008/01/04 23:04:54 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007
@@ -120,7 +120,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.77 2007/12/28 07:04:54 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.78 2008/01/04 23:04:54 dsl Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -1816,7 +1816,10 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 	const struct trapframe *tf = l->l_md.md_regs;
 	__greg_t ras_rip;
 
-	memcpy(mcp->__gregs, tf, sizeof *tf);
+	/* Copy general registers member by member */
+#define copy_from_tf(reg, REG, idx) mcp->__gregs[_REG_##REG] = tf->tf_##reg;
+	_FRAME_GREG(copy_from_tf)
+#undef copy_from_tf
 
 	if ((ras_rip = (__greg_t)ras_lookup(l->l_proc,
 	    (void *) mcp->__gregs[_REG_RIP])) != -1)
@@ -1853,7 +1856,12 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 		rflags = tf->tf_rflags;
 		err = tf->tf_err;
 		trapno = tf->tf_trapno;
-		memcpy(tf, gr, sizeof *tf);
+
+		/* Copy general registers member by member */
+#define copy_to_tf(reg, REG, idx) tf->tf_##reg = gr[_REG_##REG];
+		_FRAME_GREG(copy_to_tf)
+#undef copy_to_tf
+
 #ifdef XEN
 		/*
 		 * Xen has its own way of dealing with %cs and %ss,
@@ -1863,7 +1871,7 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 		tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
 #endif
 		rflags &= ~PSL_USER;
-		tf->tf_rflags = rflags | (gr[_REG_RFL] & PSL_USER);
+		tf->tf_rflags = rflags | (gr[_REG_RFLAGS] & PSL_USER);
 		tf->tf_err = err;
 		tf->tf_trapno = trapno;
 
@@ -1898,7 +1906,7 @@ check_mcontext(struct lwp *l, const mcontext_t *mcp, struct trapframe *tf)
 
 	gr = mcp->__gregs;
 
-	if (((gr[_REG_RFL] ^ tf->tf_rflags) & PSL_USERSTATIC) != 0)
+	if (((gr[_REG_RFLAGS] ^ tf->tf_rflags) & PSL_USERSTATIC) != 0)
 		return EINVAL;
 
 	if (__predict_false((pmap->pm_flags & PMF_USER_LDT) != 0)) {
