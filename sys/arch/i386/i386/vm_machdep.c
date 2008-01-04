@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.136 2008/01/04 15:55:32 yamt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.137 2008/01/04 16:38:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.136 2008/01/04 15:55:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.137 2008/01/04 16:38:46 yamt Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_mtrr.h"
@@ -165,6 +165,9 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 		panic("cpu_lwp_fork: curlwp");
 #endif
 	*pcb = l1->l_addr->u_pcb;
+#if defined(XEN)
+	pcb->pcb_iopl = SEL_KPL;
+#endif /* defined(XEN) */
 
 	/*
 	 * Fix up the ring0 esp.
