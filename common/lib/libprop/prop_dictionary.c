@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_dictionary.c,v 1.20 2007/08/30 12:23:54 joerg Exp $	*/
+/*	$NetBSD: prop_dictionary.c,v 1.21 2008/01/04 21:35:19 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,6 +35,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/simplelock.h>
 
 #include <prop/prop_array.h>
 #include <prop/prop_dictionary.h>
