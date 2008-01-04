@@ -1,4 +1,4 @@
-/* $NetBSD: coretemp.c,v 1.5 2007/12/21 21:36:22 xtraeme Exp $ */
+/* $NetBSD: coretemp.c,v 1.6 2008/01/04 20:42:25 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coretemp.c,v 1.5 2007/12/21 21:36:22 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coretemp.c,v 1.6 2008/01/04 20:42:25 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -47,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: coretemp.c,v 1.5 2007/12/21 21:36:22 xtraeme Exp $")
 #include <machine/cpu.h>
 #include <machine/cpuvar.h>
 #include <machine/specialreg.h>
+#include <machine/cpufunc.h>
 
 struct coretemp_softc {
 	struct cpu_info		*sc_ci;
