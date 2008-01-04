@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.20 2008/01/04 21:17:43 ad Exp $	*/
+/*	$NetBSD: clock.c,v 1.21 2008/01/04 22:10:34 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -121,7 +121,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.20 2008/01/04 21:17:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.21 2008/01/04 22:10:34 dyoung Exp $");
 
 /* #define CLOCKDEBUG */
 /* #define CLOCK_PARANOIA */
@@ -555,7 +555,6 @@ sysbeepattach(struct device *parent, struct device *self,
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 }
-#endif
 
 int
 sysbeepdetach(device_t self, int flags)
@@ -566,6 +565,7 @@ sysbeepdetach(device_t self, int flags)
 #endif
 	return 0;
 }
+#endif
 
 void
 sysbeep(int pitch, int period)
