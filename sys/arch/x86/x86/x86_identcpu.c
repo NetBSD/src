@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_identcpu.c,v 1.1 2008/01/01 20:32:12 yamt Exp $	*/
+/*	$NetBSD: x86_identcpu.c,v 1.2 2008/01/04 15:44:58 yamt Exp $	*/
 
 /*-
  * Copyright (c)2008 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_identcpu.c,v 1.1 2008/01/01 20:32:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_identcpu.c,v 1.2 2008/01/04 15:44:58 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,7 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: x86_identcpu.c,v 1.1 2008/01/01 20:32:12 yamt Exp $"
 void
 identifycpu_cpuids(struct cpu_info *ci)
 {
-	const char *cpuname = ci->ci_dev->dv_xname;
+	const char *cpuname = device_xname(ci->ci_dev);
 	u_int smt_max = 1;
 	u_int core_max = 1;
 	int smt_bits, core_bits;
