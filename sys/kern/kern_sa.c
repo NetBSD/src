@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.87.4.9 2008/01/04 11:40:45 skrll Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.87.4.10 2008/01/04 20:19:08 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.87.4.9 2008/01/04 11:40:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.87.4.10 2008/01/04 20:19:08 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -621,7 +621,9 @@ sys_sa_enable(struct lwp *l, void *v, register_t *retval)
 	p->p_flag |= P_SA;
 	l->l_flag |= L_SA; /* We are now an activation LWP */
 
-	/* This will not return to the place in user space it came from. */
+	/*
+	 * This will return to the SA handler previously registered.
+	 */
 	return (0);
 }
 
