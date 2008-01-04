@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.61 2008/01/02 11:48:30 ad Exp $	*/
+/*	$NetBSD: fd.c,v 1.62 2008/01/04 19:45:54 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.61 2008/01/02 11:48:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.62 2008/01/04 19:45:54 joerg Exp $");
 
 #include "opt_ddb.h"
 
@@ -1804,7 +1804,7 @@ fdformat(dev_t dev, struct ne7_fd_formb *finfo, struct proc *p)
 	/* XXX dodgy */
 	mutex_enter(bp->b_objlock);
 	while (!(bp->b_oflags & BO_DONE)) {
-		rv = cv_timedwait(&bp->b_done, 20 * hz);
+		rv = cv_timedwait(&bp->b_done, bp->b_objlock, 20 * hz);
 		if (rv == EWOULDBLOCK)
 			break;
 	}
