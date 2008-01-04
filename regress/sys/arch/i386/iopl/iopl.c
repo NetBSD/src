@@ -1,4 +1,4 @@
-/*	$NetBSD: iopl.c,v 1.1 2008/01/04 15:37:11 yamt Exp $	*/
+/*	$NetBSD: iopl.c,v 1.2 2008/01/04 16:18:52 yamt Exp $	*/
 
 /*-
  * Copyright (c)2008 YAMAMOTO Takashi,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: iopl.c,v 1.1 2008/01/04 15:37:11 yamt Exp $");
+__RCSID("$NetBSD: iopl.c,v 1.2 2008/01/04 16:18:52 yamt Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -96,18 +96,22 @@ main(int argc, char *argv[])
 	signal(SIGSEGV, sighandler);
 
 	try("1", false);
+	sleep(1);
 
 	ret = i386_iopl(3);
 	if (ret == -1) {
 		err(EXIT_FAILURE, "iopl 1");
 	}
 
+	sleep(1);
 	try("2", true);
+	sleep(1);
 
 	ret = i386_iopl(0);
 	if (ret == -1) {
 		err(EXIT_FAILURE, "iopl 2");
 	}
 
+	sleep(1);
 	try("3", false);
 }
