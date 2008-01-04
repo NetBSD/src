@@ -1,4 +1,4 @@
-/*	$NetBSD: uba_sbi.c,v 1.22 2005/12/11 12:19:36 christos Exp $	   */
+/*	$NetBSD: uba_sbi.c,v 1.23 2008/01/04 22:43:45 joerg Exp $	   */
 /*
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uba_sbi.c,v 1.22 2005/12/11 12:19:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uba_sbi.c,v 1.23 2008/01/04 22:43:45 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -322,11 +322,11 @@ ubaerror(struct uba_softc *uh, int *ipl, int *uvec)
 		 * Declare dt as unsigned so that negative values
 		 * are handled as >8 below, in case time was set back.
 		 */
-		u_long	dt = time.tv_sec - vc->uh_zvtime;
+		u_long	dt = time_second - vc->uh_zvtime;
 
 		vc->uh_zvtotal++;
 		if (dt > 8) {
-			vc->uh_zvtime = time.tv_sec;
+			vc->uh_zvtime = time_second;
 			vc->uh_zvcnt = 0;
 		}
 		if (++vc->uh_zvcnt > zvcnt_max) {
