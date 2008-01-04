@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.21 2008/01/04 22:10:34 dyoung Exp $	*/
+/*	$NetBSD: clock.c,v 1.22 2008/01/04 22:28:20 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -121,7 +121,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.21 2008/01/04 22:10:34 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.22 2008/01/04 22:28:20 dyoung Exp $");
 
 /* #define CLOCKDEBUG */
 /* #define CLOCK_PARANOIA */
@@ -560,9 +560,7 @@ int
 sysbeepdetach(device_t self, int flags)
 {
 	pmf_device_deregister(self);
-#if (NPCPPI > 0)
 	ppi_attached = 0;
-#endif
 	return 0;
 }
 #endif
