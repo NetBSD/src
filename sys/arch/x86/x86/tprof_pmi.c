@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof_pmi.c,v 1.1 2008/01/01 21:28:39 yamt Exp $	*/
+/*	$NetBSD: tprof_pmi.c,v 1.2 2008/01/04 15:44:58 yamt Exp $	*/
 
 /*-
  * Copyright (c)2008 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tprof_pmi.c,v 1.1 2008/01/01 21:28:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tprof_pmi.c,v 1.2 2008/01/04 15:44:58 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,7 +109,7 @@ tprof_pmi_start_cpu(void *arg1, void *arg2)
 
 	if (ci->ci_smtid >= 2) {
 		printf("%s: ignoring %s smtid=%u",
-		    __func__, ci->ci_dev->dv_xname, ci->ci_smtid);
+		    __func__, device_xname(ci->ci_dev), ci->ci_smtid);
 		return;
 	}
 	msr = &msrs[ci->ci_smtid];
@@ -140,7 +140,7 @@ tprof_pmi_stop_cpu(void *arg1, void *arg2)
 
 	if (ci->ci_smtid >= 2) {
 		printf("%s: ignoring %s smtid=%u",
-		    __func__, ci->ci_dev->dv_xname, ci->ci_smtid);
+		    __func__, device_xname(ci->ci_dev), ci->ci_smtid);
 		return;
 	}
 	msr = &msrs[ci->ci_smtid];
