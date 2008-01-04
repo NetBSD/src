@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.75 2007/12/16 02:23:55 mrg Exp $ */
+/*	$NetBSD: db_interface.c,v 1.76 2008/01/04 01:11:30 martin Exp $ */
 
 /*
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.75 2007/12/16 02:23:55 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.76 2008/01/04 01:11:30 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -459,9 +459,9 @@ db_lock_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 	}
 
 	l = (struct lock *)addr;
-	db_printf("interlock=%x flags=%x\n waitcount=%x sharecount=%x "
+	db_printf("flags=%x\n waitcount=%x sharecount=%x "
 	    "exclusivecount=%x\n wmesg=%s recurselevel=%x\n",
-	    l->lk_interlock.lock_data, l->lk_flags, l->lk_waitcount,
+	    l->lk_flags, l->lk_waitcount,
 	    l->lk_sharecount, l->lk_exclusivecount, l->lk_wmesg,
 	    l->lk_recurselevel);
 }
