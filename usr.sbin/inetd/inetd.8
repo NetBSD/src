@@ -1,4 +1,4 @@
-.\"	$NetBSD: inetd.8,v 1.45 2005/09/11 23:38:35 wiz Exp $
+.\"	$NetBSD: inetd.8,v 1.46 2008/01/04 18:21:35 reed Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -64,7 +64,7 @@
 .\"
 .\"     from: @(#)inetd.8       8.4 (Berkeley) 6/1/94
 .\"
-.Dd March 24, 2004
+.Dd January 4, 2008
 .Dt INETD 8
 .Os
 .Sh NAME
@@ -310,6 +310,11 @@ within an interval of 60 seconds.
 When omitted,
 .Dq max
 defaults to 40.
+If it reaches this maximum spawn rate,
+.Nm
+will log the problem (via the syslogger using the LOG_DAEMON
+facility and LOG_ERR level)
+and stop handling the specific service for ten minutes.
 .Pp
 Stream servers are usually marked as
 .Dq nowait
