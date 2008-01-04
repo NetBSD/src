@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.29 2007/12/03 15:33:28 ad Exp $	*/
+/*	$NetBSD: intr.h,v 1.30 2008/01/04 22:55:25 ad Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -47,7 +47,7 @@
 #ifdef _KERNEL
 #ifndef _LOCORE
 
-#include <sys/device.h>
+#include <sys/evcnt.h>
 #include <mips/cpuregs.h>
 #include <mips/locore.h>
 
