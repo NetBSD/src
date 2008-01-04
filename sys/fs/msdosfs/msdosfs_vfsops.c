@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.57 2008/01/03 01:26:28 pooka Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.58 2008/01/04 14:58:16 pooka Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.57 2008/01/03 01:26:28 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.58 2008/01/04 14:58:16 pooka Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -638,6 +638,14 @@ msdosfs_mountfs(devvp, mp, l, argp)
 		pmp->pm_FATsecs     *= tmp;
 		SecPerClust         *= tmp;
 	}
+
+	/* Check that fs has nonzero FAT size */
+	if (pmp->pm_FATsecs == 0) {
+		DPRINTF(("FATsecs is 0\n"));
+		error = EINVAL;
+		goto error_exit;
+	}
+
 	pmp->pm_fatblk = pmp->pm_ResSectors;
 	if (FAT32(pmp)) {
 		pmp->pm_rootdirblk = getulong(b710->bpbRootClust);
