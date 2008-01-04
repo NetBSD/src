@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_bool.c,v 1.12 2007/08/30 12:23:54 joerg Exp $	*/
+/*	$NetBSD: prop_bool.c,v 1.13 2008/01/04 21:35:18 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -35,6 +35,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/simplelock.h>
 
 #include <prop/prop_bool.h>
 #include "prop_object_impl.h"
