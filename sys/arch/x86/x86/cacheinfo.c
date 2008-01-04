@@ -1,4 +1,4 @@
-/*	$NetBSD: cacheinfo.c,v 1.12 2007/10/17 19:58:16 garbled Exp $	*/
+/*	$NetBSD: cacheinfo.c,v 1.13 2008/01/04 20:38:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cacheinfo.c,v 1.12 2007/10/17 19:58:16 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cacheinfo.c,v 1.13 2008/01/04 20:38:01 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -45,6 +45,8 @@ __KERNEL_RCSID(0, "$NetBSD: cacheinfo.c,v 1.12 2007/10/17 19:58:16 garbled Exp $
 
 #include <machine/cpu.h>
 #include <machine/specialreg.h>
+
+#include <x86/cpufunc.h>
 
 static const char *print_cache_config(struct cpu_info *, int, const char *,
     const char *);
