@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_flow.c,v 1.12 2008/01/04 23:26:44 dyoung Exp $	*/
+/*	$NetBSD: ip6_flow.c,v 1.13 2008/01/04 23:35:00 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_flow.c,v 1.12 2008/01/04 23:26:44 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_flow.c,v 1.13 2008/01/04 23:35:00 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,7 +128,7 @@ int ip6_hashsize = IP6FLOW_DEFAULT_HASHSIZE;
  * Calculate hash table position.
  */
 static size_t 
-ip6flow_hash(struct ip6_hdr *ip6)
+ip6flow_hash(const struct ip6_hdr *ip6)
 {
 	size_t hash;
 	uint32_t dst_sum, src_sum;
@@ -151,7 +151,7 @@ ip6flow_hash(struct ip6_hdr *ip6)
  * Check to see if a flow already exists - if so return it.
  */
 static struct ip6flow *
-ip6flow_lookup(struct ip6_hdr *ip6)
+ip6flow_lookup(const struct ip6_hdr *ip6)
 {
 	size_t hash;
 	struct ip6flow *ip6f;
@@ -233,7 +233,7 @@ ip6flow_fastforward(struct mbuf *m)
 	if ((m->m_flags & (M_BCAST|M_MCAST)) != 0)
 		return 0;
 
-	if (IP6_HDR_ALIGNED_P(mtod(m, void *)) == 0) {
+	if (IP6_HDR_ALIGNED_P(mtod(m, const void *)) == 0) {
 		if ((m = m_copyup(m, sizeof(struct ip6_hdr),
 				(max_linkhdr + 3) & ~3)) == NULL) {
 			return 0;
@@ -312,7 +312,7 @@ ip6flow_fastforward(struct mbuf *m)
  * Add the IPv6 flow statistics to the main IPv6 statistics.
  */
 static void
-ip6flow_addstats(struct ip6flow *ip6f)
+ip6flow_addstats(const struct ip6flow *ip6f)
 {
 	struct rtentry *rt;
 
@@ -428,12 +428,12 @@ ip6flow_slowtimo(void)
 void
 ip6flow_create(const struct route *ro, struct mbuf *m)
 {
-	struct ip6_hdr *ip6;
+	const struct ip6_hdr *ip6;
 	struct ip6flow *ip6f;
 	size_t hash;
 	int s;
 
-	ip6 = mtod(m, struct ip6_hdr *);
+	ip6 = mtod(m, const struct ip6_hdr *);
 
 	/*
 	 * If IPv6 Fast Forward is disabled, don't create a flow.
