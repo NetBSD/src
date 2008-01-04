@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.51 2008/01/04 15:55:34 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.52 2008/01/04 16:38:46 yamt Exp $	*/
 /*	NetBSD: machdep.c,v 1.559 2004/07/22 15:12:46 mycroft Exp 	*/
 
 /*-
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.51 2008/01/04 15:55:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.52 2008/01/04 16:38:46 yamt Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -375,6 +375,7 @@ i386_proc0_tss_ldt_init()
 	pcb->pcb_ldt_sel = pmap_kernel()->pm_ldt_sel = GSEL(GLDT_SEL, SEL_KPL);
 	pcb->pcb_cr0 = rcr0();
 	pcb->pcb_esp0 = USER_TO_UAREA(l->l_addr) + KSTACK_SIZE - 16;
+	pcb->pcb_iopl = SEL_KPL;
 	l->l_md.md_regs = (struct trapframe *)pcb->pcb_esp0 - 1;
 
 #ifndef XEN
@@ -410,8 +411,7 @@ i386_switch_context(lwp_t *l)
 	HYPERVISOR_stack_switch(GSEL(GDATA_SEL, SEL_KPL), pcb->pcb_esp0);
 
 	if (xen_start_info.flags & SIF_PRIVILEGED) {
-		int iopl = (l->l_md.md_regs->tf_eflags & PSL_IOPL) != 0 ?
-		    SEL_UPL : SEL_KPL;
+		int iopl = pcb->pcb_iopl;
 #ifdef XEN3
 	        struct physdev_op physop;
 		physop.cmd = PHYSDEVOP_SET_IOPL;

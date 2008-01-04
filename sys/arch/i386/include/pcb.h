@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.42 2008/01/04 15:55:33 yamt Exp $	*/
+/*	$NetBSD: pcb.h,v 1.43 2008/01/04 16:38:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -96,6 +96,7 @@ struct pcb {
 	int	pcb_cr0;		/* saved image of CR0 */
 	int	pcb_cr2;		/* page fault address (CR2) */
 	int	pcb_cr3;		/* page directory pointer */
+	int	pcb_iopl;		/* i/o privilege level */
 
 	/* floating point state for FPU */
 	union	savefpu pcb_savefpu __aligned(16);
