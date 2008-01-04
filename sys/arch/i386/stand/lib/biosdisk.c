@@ -1,4 +1,5 @@
-/*	$NetBSD: biosdisk.c,v 1.26 2006/01/25 18:28:26 christos Exp $	*/
+/*	$NetBSD: biosdisk.c,v 1.27 2008/01/04 20:05:46 dsl Exp $	*/
+#define DISK_DEBUG
 
 /*
  * Copyright (c) 1996, 1998
@@ -173,7 +174,7 @@ check_label(struct biosdisk *d, int sector)
 	lp = (struct disklabel *) (d->buf + LABELOFFSET);
 	if (lp->d_magic != DISKMAGIC || dkcksum(lp)) {
 #ifdef DISK_DEBUG
-		printf("warning: no disklabel\n");
+		printf("warning: no disklabel in sector %u\n", sector);
 #endif
 		return -1;
 	}
@@ -228,6 +229,9 @@ read_label(struct biosdisk *d)
 			if (typ == 0)
 				continue;
 			sector = this_ext + mbr[i].mbrp_start;
+#ifdef DISK_DEBUG
+			printf("ptn type %d in sector %u\n", typ, sector);
+#endif
 			if (typ == MBR_PTYPE_NETBSD) {
 				error = check_label(d, sector);
 				if (error >= 0)
@@ -285,7 +289,7 @@ read_label(struct biosdisk *d)
 	/* XXX fill it to make checksum match kernel one */
 	dflt_lbl.d_checksum = dkcksum(&dflt_lbl);
 	memcpy(d->buf, &dflt_lbl, sizeof(dflt_lbl));
-	return -1;
+	return 0;
 }
 #endif /* NO_DISKLABEL */
 
@@ -302,6 +306,9 @@ biosdisk_findpartition(int biosdev, u_int sector)
 	struct biosdisk *d;
 	int partition = 0;
 	struct disklabel *lp;
+#ifdef DISK_DEBUG
+	printf("looking for partition device %x, sector %u\n", biosdev, sector);
+#endif
 
 	/* Look for netbsd partition that is the dos boot one */
 	d = alloc_biosdisk(biosdev);
