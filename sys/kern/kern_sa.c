@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.87.4.10 2008/01/04 20:19:08 skrll Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.87.4.11 2008/01/04 20:30:45 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.87.4.10 2008/01/04 20:19:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.87.4.11 2008/01/04 20:30:45 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -691,7 +691,7 @@ sa_increaseconcurrency(struct lwp *l, int concurrency)
 			} else
 				error = 1;
 			if (error) {
-				/* put l2 into l's LWP cache */
+				/* put l2 into l's VP LWP cache */
 				l2->l_savp = l->l_savp;
 				PHOLD(l2);
 				SCHED_LOCK(s);
