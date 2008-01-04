@@ -1,4 +1,4 @@
-/*	$NetBSD: segments.h,v 1.46 2007/12/26 11:51:11 yamt Exp $	*/
+/*	$NetBSD: segments.h,v 1.47 2008/01/04 15:55:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -170,9 +170,9 @@ extern struct gate_descriptor *idt;
 
 void setgate(struct gate_descriptor *, void *, int, int, int, int);
 void setregion(struct region_descriptor *, void *, size_t);
-void setsegment(struct segment_descriptor *, void *, size_t, int, int,
+void setsegment(struct segment_descriptor *, const void *, size_t, int, int,
     int, int);
-void setgdt(int, void *, size_t, int, int, int, int);
+void setgdt(int, const void *, size_t, int, int, int, int);
 void unsetgate(struct gate_descriptor *);
 void cpu_init_idt(void);
 
