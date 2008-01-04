@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.28 2008/01/04 21:18:09 ad Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.29 2008/01/04 21:31:06 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.28 2008/01/04 21:18:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.29 2008/01/04 21:31:06 xtraeme Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -61,6 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.28 2008/01/04 21:18:09 ad Exp $");
 #include <sys/kernel.h>
 #include <sys/atomic.h>
 #include <sys/intr.h>
+#include <sys/lock.h>
 
 #include <dev/lockstat.h>
 
