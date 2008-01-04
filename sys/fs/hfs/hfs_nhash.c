@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_nhash.c,v 1.4 2008/01/02 11:48:41 ad Exp $	*/
+/*	$NetBSD: hfs_nhash.c,v 1.5 2008/01/04 21:18:08 ad Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hfs_nhash.c,v 1.4 2008/01/02 11:48:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hfs_nhash.c,v 1.5 2008/01/04 21:18:08 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,6 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: hfs_nhash.c,v 1.4 2008/01/02 11:48:41 ad Exp $");
 #include <sys/buf.h>
 #include <sys/dirent.h>
 #include <sys/msgbuf.h>
+#include <sys/simplelock.h>
 
 #include <fs/hfs/hfs.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.93 2007/12/20 20:12:01 pooka Exp $	*/
+/*	$NetBSD: ata.c,v 1.94 2008/01/04 21:17:50 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.93 2007/12/20 20:12:01 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.94 2008/01/04 21:17:50 ad Exp $");
 
 #include "opt_ata.h"
 
@@ -47,7 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.93 2007/12/20 20:12:01 pooka Exp $");
 #include <sys/errno.h>
 #include <sys/ataio.h>
 #include <sys/kmem.h>
-
+#include <sys/simplelock.h>
 #include <sys/intr.h>
 #include <sys/bus.h>
 

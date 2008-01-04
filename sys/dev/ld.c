@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.53 2007/12/05 07:06:50 ad Exp $	*/
+/*	$NetBSD: ld.c,v 1.54 2008/01/04 21:17:48 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.53 2007/12/05 07:06:50 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.54 2008/01/04 21:17:48 ad Exp $");
 
 #include "rnd.h"
 
@@ -58,7 +58,6 @@ __KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.53 2007/12/05 07:06:50 ad Exp $");
 #include <sys/disk.h>
 #include <sys/dkio.h>
 #include <sys/stat.h>
-#include <sys/lock.h>
 #include <sys/conf.h>
 #include <sys/fcntl.h>
 #include <sys/vnode.h>
