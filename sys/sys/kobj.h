@@ -1,4 +1,4 @@
-/*	$NetBSD: kobj.h,v 1.1 2008/01/04 12:26:20 ad Exp $	*/
+/*	$NetBSD: kobj.h,v 1.2 2008/01/04 14:53:32 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -41,6 +41,7 @@ typedef struct kobj *kobj_t;
 /* External interface. */
 int		kobj_load(const char *, kobj_t *);
 void		kobj_unload(kobj_t);
+void		kobj_stat(kobj_t, vaddr_t *, size_t *, uintptr_t *);
 
 /* MI-MD interface. */
 uintptr_t	kobj_sym_lookup(kobj_t, uintptr_t);
