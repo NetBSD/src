@@ -1,4 +1,4 @@
-/*	$NetBSD: piixide.c,v 1.42 2007/12/09 20:28:12 jmcneill Exp $	*/
+/*	$NetBSD: piixide.c,v 1.43 2008/01/04 00:27:27 joerg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piixide.c,v 1.42 2007/12/09 20:28:12 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piixide.c,v 1.43 2008/01/04 00:27:27 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -288,9 +288,9 @@ piixide_resume(device_t dv)
 	struct pciide_softc *sc = device_private(dv);
 
 	pci_conf_write(sc->sc_pc, sc->sc_tag, PIIX_IDETIM,
-	    sc->sc_idetim);
+	    sc->sc_pm_reg[0]);
 	pci_conf_write(sc->sc_pc, sc->sc_tag, PIIX_UDMATIM,
-	    sc->sc_udmatim);
+	    sc->sc_pm_reg[1]);
 
 	return true;
 }
@@ -300,9 +300,9 @@ piixide_suspend(device_t dv)
 {
 	struct pciide_softc *sc = device_private(dv);
 
-	sc->sc_idetim = pci_conf_read(sc->sc_pc, sc->sc_tag,
+	sc->sc_pm_reg[0] = pci_conf_read(sc->sc_pc, sc->sc_tag,
 	    PIIX_IDETIM);
-	sc->sc_udmatim = pci_conf_read(sc->sc_pc, sc->sc_tag,
+	sc->sc_pm_reg[1] = pci_conf_read(sc->sc_pc, sc->sc_tag,
 	    PIIX_UDMATIM);
 
 	return true;
