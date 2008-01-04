@@ -1,5 +1,4 @@
-//
-// Automated Testing Framework (atf)
+// $NetBSD: t_connect.cpp,v 1.2 2008/01/04 18:37:15 jmmv Exp $
 //
 // Copyright (c) 2007 The NetBSD Foundation, Inc.
 // All rights reserved.
