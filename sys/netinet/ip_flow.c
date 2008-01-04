@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_flow.c,v 1.50 2008/01/04 23:26:44 dyoung Exp $	*/
+/*	$NetBSD: ip_flow.c,v 1.51 2008/01/04 23:28:07 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.50 2008/01/04 23:26:44 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.51 2008/01/04 23:28:07 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,7 +100,7 @@ int ip_maxflows = IPFLOW_MAX;
 int ip_hashsize = IPFLOW_DEFAULT_HASHSIZE;
 
 static size_t 
-ipflow_hash(struct ip *ip)
+ipflow_hash(const struct ip *ip)
 {
 	size_t hash = ip->ip_tos;
 	size_t idx;
@@ -114,7 +114,7 @@ ipflow_hash(struct ip *ip)
 }
 
 static struct ipflow *
-ipflow_lookup(struct ip *ip)
+ipflow_lookup(const struct ip *ip)
 {
 	size_t hash;
 	struct ipflow *ipf;
@@ -158,7 +158,8 @@ ipflow_init(int table_size)
 int
 ipflow_fastforward(struct mbuf *m)
 {
-	struct ip *ip, ip_store;
+	struct ip *ip;
+	struct ip ip_store;
 	struct ipflow *ipf;
 	struct rtentry *rt;
 	const struct sockaddr *dst;
@@ -181,10 +182,10 @@ ipflow_fastforward(struct mbuf *m)
 	/*
 	 * IP header with no option and valid version and length
 	 */
-	if (IP_HDR_ALIGNED_P(mtod(m, void *)))
+	if (IP_HDR_ALIGNED_P(mtod(m, const void *)))
 		ip = mtod(m, struct ip *);
 	else {
-		memcpy(&ip_store, mtod(m, void *), sizeof(ip_store));
+		memcpy(&ip_store, mtod(m, const void *), sizeof(ip_store));
 		ip = &ip_store;
 	}
 	iplen = ntohs(ip->ip_len);
@@ -254,6 +255,8 @@ ipflow_fastforward(struct mbuf *m)
 
 	/*
 	 * Done modifying the header; copy it back, if necessary.
+	 *
+	 * XXX Use m_copyback_cow(9) here? --dyoung
 	 */
 	if (IP_HDR_ALIGNED_P(mtod(m, void *)) == 0)
 		memcpy(mtod(m, void *), &ip_store, sizeof(ip_store));
@@ -394,7 +397,7 @@ ipflow_slowtimo(void)
 void
 ipflow_create(const struct route *ro, struct mbuf *m)
 {
-	struct ip *const ip = mtod(m, struct ip *);
+	const struct ip *const ip = mtod(m, const struct ip *);
 	struct ipflow *ipf;
 	size_t hash;
 	int s;
