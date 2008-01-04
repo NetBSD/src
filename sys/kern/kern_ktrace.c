@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.112 2006/11/28 17:27:10 elad Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.112.4.1 2008/01/04 11:40:45 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.112 2006/11/28 17:27:10 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.112.4.1 2008/01/04 11:40:45 skrll Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h"
@@ -731,7 +731,7 @@ ktrmool(struct lwp *l, const void *kaddr, size_t size, const void *uaddr)
 
 void
 ktrsaupcall(struct lwp *l, int type, int nevent, int nint, void *sas,
-    void *ap)
+    void *ap, void *ksas)
 {
 	struct proc *p = l->l_proc;
 	struct ktrace_entry *kte;
@@ -758,11 +758,11 @@ ktrsaupcall(struct lwp *l, int type, int nevent, int nint, void *sas,
 	/*
 	 *  Copy the sa_t's
 	 */
-	sapp = (struct sa_t **) sas;
+	sapp = (struct sa_t **) ksas;
 
 	for (i = nevent + nint; i >= 0; i--) {
-		if (copyin(*sapp, (char *)ktp + len, sizeof(struct sa_t)) == 0)
-			len += sizeof(struct sa_t);
+		memcpy((char *)ktp + len, *sapp, sizeof(struct sa_t));
+		len += sizeof(struct sa_t);
 		sapp++;
 	}
 
