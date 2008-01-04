@@ -1,4 +1,4 @@
-/*	$NetBSD: tr2a.c,v 1.1 2005/12/29 15:20:08 tsutsui Exp $	*/
+/*	$NetBSD: tr2a.c,v 1.2 2008/01/04 22:15:09 ad Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tr2a.c,v 1.1 2005/12/29 15:20:08 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tr2a.c,v 1.2 2008/01/04 22:15:09 ad Exp $");
 
 #include "fb_sbdio.h"
 #include "kbms_sbdio.h"
@@ -47,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: tr2a.c,v 1.1 2005/12/29 15:20:08 tsutsui Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
+#include <sys/device.h>
 
 #include <uvm/uvm_extern.h>
 
