@@ -1,5 +1,6 @@
-#	$NetBSD: Makefile,v 1.5 2003/08/16 15:43:00 drochner Exp $
+#	$NetBSD: Makefile,v 1.6 2008/01/04 14:23:00 yamt Exp $
 
 SUBDIR+= ldt vm86
+#SUBDIR+= ioperm
 
 .include <bsd.subdir.mk>
