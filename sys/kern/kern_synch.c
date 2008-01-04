@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.173.4.1 2007/05/17 22:53:05 wrstuden Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.173.4.2 2008/01/04 20:17:03 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.173.4.1 2007/05/17 22:53:05 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.173.4.2 2008/01/04 20:17:03 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -638,7 +638,7 @@ ltsleep(volatile const void *ident, int priority, const char *wmesg, int timo,
 /*
  * Implement timeout for tsleep.
  * If process hasn't been awakened (wchan non-zero),
- * set timeout flag and undo the sleep.  If proc
+ * set timeout flag and undo the sleep.  If LWP
  * is stopped, just unsleep so it will remain stopped.
  */
 void
@@ -873,7 +873,7 @@ yield(void)
 }
 
 /*
- * General preemption call.  Puts the current process back on its run queue
+ * General preemption call.  Puts the current LWP back on its run queue
  * and performs an involuntary context switch.
  * The 'more' ("more work to do") argument is boolean. Returning to userspace
  * preempt() calls pass 0. "Voluntary" preemptions in e.g. uiomove() pass 1.
@@ -906,7 +906,7 @@ preempt(int more)
  * Switch to "new" if non-NULL, otherwise let cpu_switch choose
  * the next lwp.
  *
- * Returns 1 if another process was actually run.
+ * Returns 1 if another LWP was actually run.
  */
 int
 mi_switch(struct lwp *l, struct lwp *newl)
