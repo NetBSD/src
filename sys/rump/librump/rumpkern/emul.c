@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.20 2008/01/02 18:15:14 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.21 2008/01/04 00:38:24 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -98,6 +98,7 @@ panic(const char *fmt, ...)
 	va_list ap;
 
 	va_start(ap, fmt);
+	printf("panic: ");
 	vprintf(fmt, ap);
 	va_end(ap);
 	printf("\n");
