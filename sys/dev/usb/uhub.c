@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.92 2007/12/09 20:28:24 jmcneill Exp $	*/
+/*	$NetBSD: uhub.c,v 1.93 2008/01/04 03:56:47 smb Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.92 2007/12/09 20:28:24 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.93 2008/01/04 03:56:47 smb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -598,6 +598,7 @@ USB_DETACH(uhub)
 	if (hub == NULL)		/* Must be partially working */
 		return (0);
 
+	pmf_device_deregister(self);
 	usbd_abort_pipe(sc->sc_ipipe);
 	usbd_close_pipe(sc->sc_ipipe);
 
