@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.34.4.4 2007/11/04 04:26:57 wrstuden Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.34.4.5 2008/01/04 21:41:19 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001,2002,2003 The NetBSD Foundation, Inc.
@@ -176,7 +176,7 @@ struct	__pthread_st {
 
 /*
  * Thread locking hierarcy. In order to avoid deadlocks when concurrency
- * is enabled, locks mus be aquired in a consistent order. Locks are
+ * is enabled, locks must be aquired in a consistent order. Locks are
  * divided into groups, and no lock in a "higher" group may be taken while
  * holding a lock in a "lower" group. Also, only one lock in a group may
  * be taken at once, as otherwise the locks need to be listed separately
