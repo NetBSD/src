@@ -1,4 +1,4 @@
-/*	$NetBSD: cacheinfo.c,v 1.13 2008/01/04 20:38:01 christos Exp $	*/
+/*	$NetBSD: cacheinfo.c,v 1.14 2008/01/04 21:17:44 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,13 +37,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cacheinfo.c,v 1.13 2008/01/04 20:38:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cacheinfo.c,v 1.14 2008/01/04 21:17:44 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
 #include <sys/null.h>
 
 #include <machine/cpu.h>
+#include <machine/cpufunc.h>
 #include <machine/specialreg.h>
 
 #include <x86/cpufunc.h>

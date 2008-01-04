@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_turnstile.c,v 1.13 2007/12/05 07:06:54 ad Exp $	*/
+/*	$NetBSD: kern_turnstile.c,v 1.14 2008/01/04 21:18:11 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -67,10 +67,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.13 2007/12/05 07:06:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.14 2008/01/04 21:18:11 ad Exp $");
 
 #include <sys/param.h>
-#include <sys/lock.h>
 #include <sys/lockdebug.h>
 #include <sys/pool.h>
 #include <sys/proc.h> 

@@ -35,6 +35,8 @@
 #ifndef _NDIS_VAR_H_
 #define _NDIS_VAR_H_
 
+#include <sys/simplelock.h>
+
 /* Forward declarations */
 struct ndis_miniport_block;
 struct ndis_mdriver_block;
