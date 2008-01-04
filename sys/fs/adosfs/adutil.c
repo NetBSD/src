@@ -1,4 +1,4 @@
-/*	$NetBSD: adutil.c,v 1.6 2008/01/02 11:48:39 ad Exp $	*/
+/*	$NetBSD: adutil.c,v 1.7 2008/01/04 21:18:07 ad Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adutil.c,v 1.6 2008/01/02 11:48:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adutil.c,v 1.7 2008/01/04 21:18:07 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: adutil.c,v 1.6 2008/01/02 11:48:39 ad Exp $");
 #include <sys/time.h>
 #include <sys/queue.h>
 #include <sys/buf.h>
+#include <sys/simplelock.h>
 #include <fs/adosfs/adosfs.h>
 
 /*

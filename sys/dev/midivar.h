@@ -1,4 +1,4 @@
-/*	$NetBSD: midivar.h,v 1.13 2007/02/09 21:55:26 ad Exp $	*/
+/*	$NetBSD: midivar.h,v 1.14 2008/01/04 21:17:49 ad Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
 #include <sys/callout.h>
 #include <sys/cdefs.h>
 #include <sys/device.h>
-#include <sys/lock.h>
+#include <sys/simplelock.h>
 
 /*
  * In both xmt and rcv direction, the midi_fst runs at the time data are

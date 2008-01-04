@@ -1,4 +1,4 @@
-/* $NetBSD: if_lmc.c,v 1.37 2007/12/11 11:25:51 lukem Exp $ */
+/* $NetBSD: if_lmc.c,v 1.38 2008/01/04 21:18:01 ad Exp $ */
 
 /*-
  * Copyright (c) 2002-2006 David Boggs. <boggs@boggs.palo-alto.ca.us>
@@ -99,7 +99,6 @@
 # include <sys/mbuf.h>
 # include <sys/socket.h>
 # include <sys/sockio.h>
-# include <sys/lock.h>
 # include <sys/mutex.h>
 # include <sys/module.h>
 # include <sys/bus.h>
@@ -143,7 +142,7 @@
 
 #if defined(__NetBSD__)
 # include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lmc.c,v 1.37 2007/12/11 11:25:51 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lmc.c,v 1.38 2008/01/04 21:18:01 ad Exp $");
 # include <sys/param.h>	/* OS version */
 /* -DLKM is passed on the compiler command line */
 # include "opt_inet.h"	/* INET6, INET */
@@ -281,7 +280,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_lmc.c,v 1.37 2007/12/11 11:25:51 lukem Exp $");
 # include <sys/sockio.h>
 # include <sys/device.h>
 # include <sys/reboot.h>
-# include <sys/lock.h>
 # include <net/if.h>
 # include <net/if_types.h>
 # include <net/if_media.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.130 2008/01/02 11:48:50 ad Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.131 2008/01/04 21:18:08 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.130 2008/01/02 11:48:50 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.131 2008/01/04 21:18:08 ad Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -91,6 +91,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.130 2008/01/02 11:48:50 ad Exp $");
 #include <sys/atomic.h>
 
 #include <machine/stdarg.h>
+#include <machine/lock.h>
 
 #include <dev/lockstat.h>
 

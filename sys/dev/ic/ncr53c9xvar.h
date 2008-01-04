@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9xvar.h,v 1.48 2007/03/04 06:01:59 christos Exp $	*/
+/*	$NetBSD: ncr53c9xvar.h,v 1.49 2008/01/04 21:17:57 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
 #ifndef _DEV_IC_NCR53C9XVAR_H_
 #define _DEV_IC_NCR53C9XVAR_H_
 
-#include <sys/lock.h>
+#include <sys/simplelock.h>
 
 /* Set this to 1 for normal debug, or 2 for per-target tracing. */
 /* #define NCR53C9X_DEBUG		1 */

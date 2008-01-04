@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.39 2007/12/22 03:27:10 yamt Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.40 2008/01/04 21:18:14 ad Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.39 2007/12/22 03:27:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.40 2008/01/04 21:18:14 ad Exp $");
 
 #define	VMEM_DEBUG
 #if defined(_KERNEL)
@@ -54,7 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.39 2007/12/22 03:27:10 yamt Exp $");
 #include <sys/systm.h>
 #include <sys/kernel.h>	/* hz */
 #include <sys/callout.h>
-#include <sys/lock.h>
 #include <sys/malloc.h>
 #include <sys/once.h>
 #include <sys/pool.h>

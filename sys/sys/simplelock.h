@@ -1,4 +1,4 @@
-/*	$NetBSD: simplelock.h,v 1.5 2007/10/11 19:49:04 ad Exp $	*/
+/*	$NetBSD: simplelock.h,v 1.6 2008/01/04 21:18:18 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -101,13 +101,6 @@ struct simplelock {
 	uint8_t lock_pad[3];
 #endif
 };
-
-/*
- * Indicator that no process/cpu holds exclusive lock
- */
-#define	LK_KERNPROC	((pid_t) -2)
-#define	LK_NOPROC	((pid_t) -1)
-#define	LK_NOCPU	((cpuid_t) -1)
 
 #define	SIMPLELOCK_INITIALIZER	{ .lock_data = __SIMPLELOCK_UNLOCKED }
 

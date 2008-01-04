@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.89 2007/12/09 20:27:47 jmcneill Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.90 2008/01/04 21:17:40 ad Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.89 2007/12/09 20:27:47 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.90 2008/01/04 21:17:40 ad Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_multiprocessor.h"
@@ -61,6 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.89 2007/12/09 20:27:47 jmcneill Exp $
 #include <machine/cpu.h>
 #include <machine/gdt.h>
 #include <machine/pcb.h>
+#include <machine/cpufunc.h>
 #include <x86/x86/tsc.h>
 
 #include "ioapic.h"

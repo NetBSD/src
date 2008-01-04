@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.49 2008/01/02 11:48:36 ad Exp $ */
+/* $NetBSD: cgd.c,v 1.50 2008/01/04 21:17:46 ad Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.49 2008/01/02 11:48:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.50 2008/01/04 21:17:46 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -54,7 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.49 2008/01/02 11:48:36 ad Exp $");
 #include <sys/disklabel.h>
 #include <sys/fcntl.h>
 #include <sys/vnode.h>
-#include <sys/lock.h>
 #include <sys/conf.h>
 
 #include <dev/dkvar.h>

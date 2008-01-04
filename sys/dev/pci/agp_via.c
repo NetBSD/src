@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_via.c,v 1.14 2007/10/19 12:00:39 ad Exp $	*/
+/*	$NetBSD: agp_via.c,v 1.15 2008/01/04 21:18:01 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -29,13 +29,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_via.c,v 1.14 2007/10/19 12:00:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_via.c,v 1.15 2008/01/04 21:18:01 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
-#include <sys/lock.h>
 #include <sys/proc.h>
 #include <sys/conf.h>
 #include <sys/device.h>

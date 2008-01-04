@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon.c,v 1.15 2007/03/04 06:02:45 christos Exp $	*/
+/*	$NetBSD: sysmon.c,v 1.16 2008/01/04 21:18:06 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -39,13 +39,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon.c,v 1.15 2007/03/04 06:02:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon.c,v 1.16 2008/01/04 21:18:06 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
 #include <sys/errno.h>
 #include <sys/fcntl.h>
-#include <sys/lock.h>
 #include <sys/callout.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
