@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.28 2007/12/20 23:46:10 ad Exp $
+# $NetBSD: md.amd64,v 1.29 2008/01/04 23:05:42 dsl Exp $
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
 ./usr/include/amd64/aout_machdep.h		comp-c-include
@@ -19,6 +19,7 @@
 ./usr/include/amd64/float.h			comp-c-include
 ./usr/include/amd64/fpu.h			comp-c-include
 ./usr/include/amd64/frame.h			comp-c-include
+./usr/include/amd64/frame_regs.h		comp-c-include
 ./usr/include/amd64/gdt.h			comp-c-include
 ./usr/include/amd64/ieee.h			comp-c-include
 ./usr/include/amd64/ieeefp.h			comp-c-include
