@@ -1,4 +1,4 @@
-/*	$NetBSD: mips3_clockintr.c,v 1.5 2007/10/17 19:55:38 garbled Exp $	*/
+/*	$NetBSD: mips3_clockintr.c,v 1.6 2008/01/04 22:16:12 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,15 +78,16 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips3_clockintr.c,v 1.5 2007/10/17 19:55:38 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips3_clockintr.c,v 1.6 2008/01/04 22:16:12 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/cpu.h>
+#include <sys/evcnt.h>
+#include <sys/intr.h>
 
 #include <mips/mips3_clock.h>
 
-#include <machine/intr.h>
 #include <machine/locore.h>
 
 struct evcnt mips_int5_evcnt =
