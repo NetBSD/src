@@ -1,4 +1,4 @@
-/* $NetBSD: msr_ipifuncs.c,v 1.13 2007/12/09 15:35:15 ad Exp $ */
+/* $NetBSD: msr_ipifuncs.c,v 1.14 2008/01/04 18:38:32 ad Exp $ */
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -34,13 +34,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msr_ipifuncs.c,v 1.13 2007/12/09 15:35:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msr_ipifuncs.c,v 1.14 2008/01/04 18:38:32 ad Exp $");
 
 #include "opt_multiprocessor.h"
 
 #include <sys/param.h>
 #include <sys/mutex.h>
-#include <sys/lock.h>
 #include <sys/atomic.h>
 #include <sys/cpu.h>
 
