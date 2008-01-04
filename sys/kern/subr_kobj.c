@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kobj.c,v 1.1 2008/01/04 12:26:20 ad Exp $	*/
+/*	$NetBSD: subr_kobj.c,v 1.2 2008/01/04 14:53:33 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.1 2008/01/04 12:26:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.2 2008/01/04 14:53:33 ad Exp $");
 
 #define	ELFSIZE		ARCH_ELFSIZE
 
@@ -120,6 +120,7 @@ struct kobj {
 	relent_t	*ko_reltab;
 	Elf_Sym		*ko_symtab;	/* Symbol table */
 	char		*ko_strtab;	/* String table */
+	uintptr_t	ko_entry;	/* Entry point */
 	size_t		ko_size;	/* Size of text/data/bss */
 	size_t		ko_symcnt;	/* Number of symbols */
 	size_t		ko_strtabsz;	/* Number of bytes in string table */
@@ -175,19 +176,32 @@ kobj_load(const char *name, kobj_t *kop)
 		return ENOMEM;
 	}
 
+	/*
+	 * XXXAD should:
+	 * - have lkm code strip module name out of pathname
+	 * - take both name and pathname arguments
+	 * - be smarter about where to look - needs a policy
+	 */
 	if (strlcpy(ko->ko_name, name, sizeof(ko->ko_name)) >=
 	    sizeof(ko->ko_name)) {
 	    	error = EINVAL;
 	    	goto out;
 	}
 
-	path = PNBUF_GET();
-	snprintf(path, MAXPATHLEN, "%s/%s", kobj_path, name);
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, path);
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, name);
 	error = vn_open(&nd, FREAD, 0);
-	PNBUF_PUT(path);
 	if (error != 0) {
-		goto out;
+		if (error != ENOENT) {
+			goto out;
+		}
+		path = PNBUF_GET();
+		snprintf(path, MAXPATHLEN, "%s/%s", kobj_path, name);
+		NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, path);
+		error = vn_open(&nd, FREAD, 0);
+		PNBUF_PUT(path);
+		if (error != 0) {
+			goto out;
+		}
 	}
 
 	/*
@@ -402,6 +416,7 @@ kobj_load(const char *name, kobj_t *kop)
 	}
 	ko->ko_address = mapbase;
 	ko->ko_size = mapsize;
+	ko->ko_entry = mapbase + hdr->e_entry;
 
 	/*
 	 * Now load code/data(progbits), zero bss(nobits), allocate space
@@ -584,6 +599,26 @@ kobj_unload(kobj_t ko)
 }
 
 /*
+ * kobj_stat:
+ *
+ *	Return size and load address of an object.
+ */
+void
+kobj_stat(kobj_t ko, vaddr_t *address, size_t *size, uintptr_t *entry)
+{
+
+	if (address != NULL) {
+		*address = ko->ko_address;
+	}
+	if (size != NULL) {
+		*size = ko->ko_size;
+	}
+	if (entry != NULL) {
+		*entry = ko->ko_entry;
+	}
+}
+
+/*
  * kobj_release_mem: 
  *
  *	Release object data not needed after loading.
@@ -740,7 +775,6 @@ kobj_relocate(kobj_t ko)
 				continue;
 			}
 			sym = ko->ko_symtab + symidx;
-			/* Only do local relocs */
 			if (ELF_ST_BIND(sym->st_info) == STB_LOCAL) {
 				kobj_reloc(ko, base, rel, false, true);
 				continue;
@@ -770,7 +804,6 @@ kobj_relocate(kobj_t ko)
 				continue;
 			}
 			sym = ko->ko_symtab + symidx;
-			/* Only do local relocs */
 			if (ELF_ST_BIND(sym->st_info) == STB_LOCAL) {
 				kobj_reloc(ko, base, rela, true, true);
 				continue;
