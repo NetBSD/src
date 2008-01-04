@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.99 2007/12/20 19:53:30 dyoung Exp $	*/
+/*	$NetBSD: route.c,v 1.100 2008/01/04 23:26:44 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
 #include "opt_route.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.99 2007/12/20 19:53:30 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.100 2008/01/04 23:26:44 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -1226,7 +1226,7 @@ rtcache_lookup2(struct route *ro, const struct sockaddr *dst, int clone,
 		;
 	else if (sockaddr_cmp(odst, dst) != 0)
 		rtcache_free(ro);
-	else if (rtcache_down(ro))
+	else if (rtcache_validate(ro) == NULL)
 		rtcache_clear(ro);
 
 	if (ro->_ro_rt == NULL) {
