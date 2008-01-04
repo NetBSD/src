@@ -1,4 +1,4 @@
-/*	$NetBSD: frame_regs.h,v 1.1 2008/01/04 23:04:53 dsl Exp $	*/
+/*	$NetBSD: frame_regs.h,v 1.2 2008/01/04 23:29:54 dsl Exp $	*/
 
 #ifndef _AMD64_FRAME_REGS_H_
 #define _AMD64_FRAME_REGS_H_
@@ -16,7 +16,7 @@
  * 2) src/lib/libc/arch/x86_64/gen/makecontext.c assumes that the first
  *    6 entries in the __greg_t array match the registers used to pass
  *    function arguments.
- * 3) PTHREAD_UCONTEXT_TO_REG (src/lib/libpthread/arch/*/pthread_md.h)
+ * 3) PTHREAD_UCONTEXT_TO_REG (src/lib/libpthread/arch/?*?/pthread_md.h)
  *    assumes that something matches the __greg_t layout, but there
  *    are no (obvious) references.
  * 4) There might be other code out there that relies on the ordering.
