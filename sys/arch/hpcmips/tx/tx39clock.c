@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39clock.c,v 1.21 2006/09/16 02:14:57 gdamore Exp $ */
+/*	$NetBSD: tx39clock.c,v 1.22 2008/01/04 22:13:57 ad Exp $ */
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -37,17 +37,18 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tx39clock.c,v 1.21 2006/09/16 02:14:57 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tx39clock.c,v 1.22 2008/01/04 22:13:57 ad Exp $");
 
 #include "opt_tx39clock_debug.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/timetc.h>
+#include <sys/device.h>
+#include <sys/bus.h>
 
 #include <dev/clock_subr.h>
 
-#include <machine/bus.h>
 #include <machine/sysconf.h>
 
 #include <hpcmips/tx/tx39var.h>
