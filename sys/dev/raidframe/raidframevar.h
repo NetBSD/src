@@ -1,4 +1,4 @@
-/*	$NetBSD: raidframevar.h,v 1.10 2006/09/05 01:55:21 oster Exp $ */
+/*	$NetBSD: raidframevar.h,v 1.11 2008/01/04 21:18:05 ad Exp $ */
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -109,7 +109,7 @@
 #include <sys/uio.h>
 #include <sys/param.h>
 #include <sys/proc.h>
-#include <sys/lock.h>
+#include <sys/simplelock.h>
 
 #include <sys/mallocvar.h>
 #endif

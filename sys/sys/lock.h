@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.77 2008/01/02 11:49:07 ad Exp $	*/
+/*	$NetBSD: lock.h,v 1.78 2008/01/04 21:18:17 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,17 +75,8 @@
 #ifndef	_SYS_LOCK_H_
 #define	_SYS_LOCK_H_
 
-#if defined(_KERNEL_OPT)
-#include "opt_lockdebug.h"
-#include "opt_multiprocessor.h"
-#endif
-
 #include <sys/stdint.h>
-#include <sys/queue.h>
 #include <sys/mutex.h>
-#include <sys/simplelock.h>
-
-#include <machine/lock.h>
 
 /*
  * The general lock structure.
@@ -204,6 +195,14 @@ struct lock {
  * A failed lock attempt always returns a non-zero error value. No lock
  * is held after an error return.
  */
+
+
+/*
+ * Indicator that no process/cpu holds exclusive lock
+ */
+#define	LK_KERNPROC	((pid_t) -2)
+#define	LK_NOPROC	((pid_t) -1)
+#define	LK_NOCPU	((cpuid_t) -1)
 
 #ifdef _KERNEL
 

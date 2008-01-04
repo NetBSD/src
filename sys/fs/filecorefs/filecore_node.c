@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_node.c,v 1.13 2008/01/02 11:48:41 ad Exp $	*/
+/*	$NetBSD: filecore_node.c,v 1.14 2008/01/04 21:18:08 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1994
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_node.c,v 1.13 2008/01/02 11:48:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_node.c,v 1.14 2008/01/04 21:18:08 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,6 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: filecore_node.c,v 1.13 2008/01/02 11:48:41 ad Exp $"
 #include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/stat.h>
+#include <sys/simplelock.h>
 
 #include <fs/filecorefs/filecore.h>
 #include <fs/filecorefs/filecore_extern.h>

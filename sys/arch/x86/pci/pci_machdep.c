@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.29 2008/01/04 18:38:32 ad Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.30 2008/01/04 21:17:43 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.29 2008/01/04 18:38:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.30 2008/01/04 21:17:43 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -95,6 +95,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.29 2008/01/04 18:38:32 ad Exp $");
 #include <machine/bus_private.h>
 
 #include <machine/pio.h>
+#include <machine/lock.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
