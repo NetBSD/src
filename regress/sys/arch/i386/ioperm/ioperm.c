@@ -1,4 +1,4 @@
-/*	$NetBSD: ioperm.c,v 1.1 2008/01/04 14:23:00 yamt Exp $	*/
+/*	$NetBSD: ioperm.c,v 1.2 2008/01/04 16:18:52 yamt Exp $	*/
 
 /*-
  * Copyright (c)2008 YAMAMOTO Takashi,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ioperm.c,v 1.1 2008/01/04 14:23:00 yamt Exp $");
+__RCSID("$NetBSD: ioperm.c,v 1.2 2008/01/04 16:18:52 yamt Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -108,6 +108,7 @@ main(int argc, char *argv[])
 	signal(SIGSEGV, sighandler);
 
 	try("1", false);
+	sleep(1);
 
 	memset(buf2, 0x00, sizeof(buf2));
 	strcpy((char *)buf2, "foobarbaz");
@@ -125,7 +126,9 @@ main(int argc, char *argv[])
 		errx(EXIT_FAILURE, "iomap mismatch");
 	}
 
+	sleep(1);
 	try("2", true);
+	sleep(1);
 
 	buf2[PORT / 8 / sizeof(unsigned long)] |=
 	    (1 << (PORT % (8 * sizeof(unsigned long))));
@@ -134,5 +137,6 @@ main(int argc, char *argv[])
 		err(EXIT_FAILURE, "set_ioperm 3");
 	}
 
+	sleep(1);
 	try("3", false);
 }
