@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.18 2008/01/03 21:30:16 he Exp $	*/
+/*	$NetBSD: clock.c,v 1.19 2008/01/04 20:38:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -121,7 +121,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.18 2008/01/03 21:30:16 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.19 2008/01/04 20:38:01 christos Exp $");
 
 /* #define CLOCKDEBUG */
 /* #define CLOCK_PARANOIA */
@@ -148,6 +148,7 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.18 2008/01/03 21:30:16 he Exp $");
 #include <dev/ic/i8253reg.h>
 #include <i386/isa/nvram.h>
 #include <x86/x86/tsc.h>
+#include <x86/lock.h>
 #include <dev/clock_subr.h>
 #include <machine/specialreg.h> 
 
