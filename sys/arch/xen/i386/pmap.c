@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.39 2007/11/28 16:40:40 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.40 2008/01/04 15:55:35 yamt Exp $	*/
 /*	NetBSD: pmap.c,v 1.179 2004/10/10 09:55:24 yamt Exp		*/
 
 /*
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.39 2007/11/28 16:40:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.40 2008/01/04 15:55:35 yamt Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_largepages.h"
@@ -710,9 +710,8 @@ pmap_exec_account(struct pmap *pm, vaddr_t va, pt_entry_t opte, pt_entry_t npte)
 
 	if ((opte & PG_X) && (npte & PG_X) == 0 && va == pm->pm_hiexec) {
 		struct trapframe *tf = curlwp->l_md.md_regs;
-		struct pcb *pcb = &curlwp->l_addr->u_pcb;
 
-		pcb->pcb_cs = tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
+		tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
 		pm->pm_hiexec = I386_MAX_EXE_ADDR;
 	}
 }
@@ -842,9 +841,9 @@ pmap_exec_fixup(struct vm_map *map, struct trapframe *tf, struct pcb *pcb)
 
 	pm->pm_hiexec = va;
 	if (pm->pm_hiexec > I386_MAX_EXE_ADDR) {
-		pcb->pcb_cs = tf->tf_cs = GSEL(GUCODEBIG_SEL, SEL_UPL);
+		tf->tf_cs = GSEL(GUCODEBIG_SEL, SEL_UPL);
 	} else {
-		pcb->pcb_cs = tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
+		tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
 		return (0);
 	}
 	return (1);
