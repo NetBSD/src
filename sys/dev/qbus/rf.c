@@ -1,4 +1,4 @@
-/*	$NetBSD: rf.c,v 1.17 2007/10/19 12:01:09 ad Exp $	*/
+/*	$NetBSD: rf.c,v 1.18 2008/01/04 22:04:59 joerg Exp $	*/
 /*
  * Copyright (c) 2002 Jochen Kunz.
  * All rights reserved.
@@ -36,7 +36,7 @@ TODO:
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf.c,v 1.17 2007/10/19 12:01:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf.c,v 1.18 2008/01/04 22:04:59 joerg Exp $");
 
 /* autoconfig stuff */
 #include <sys/param.h>
@@ -594,7 +594,7 @@ rfstrategy(struct buf *buf)
 	if (rfc_sc->sc_curbuf == NULL) {
 		rfc_sc->sc_curchild = rf_sc->sc_dnum;
 		rfc_sc->sc_curbuf = buf;
-		rfc_sc->sc_bufidx = buf->b_un.b_addr;
+		rfc_sc->sc_bufidx = buf->b_data;
 		rfc_sc->sc_bytesleft = buf->b_bcount;
 		rfc_intr(rfc_sc);
 	} else {
@@ -626,7 +626,7 @@ get_new_buf( struct rfc_softc *rfc_sc)
 	rf_sc = (struct rf_softc *)rfc_sc->sc_childs[rfc_sc->sc_curchild];
 	rfc_sc->sc_curbuf = BUFQ_GET(rf_sc->sc_bufq);
 	if (rfc_sc->sc_curbuf != NULL) {
-		rfc_sc->sc_bufidx = rfc_sc->sc_curbuf->b_un.b_addr;
+		rfc_sc->sc_bufidx = rfc_sc->sc_curbuf->b_data;
 		rfc_sc->sc_bytesleft = rfc_sc->sc_curbuf->b_bcount;
 	} else {
 		RFS_SETCMD(rf_sc->sc_state, RFS_IDLE);
@@ -637,7 +637,7 @@ get_new_buf( struct rfc_softc *rfc_sc)
 			rfc_sc->sc_curchild = rfc_sc->sc_curchild == 0 ? 1 : 0;
 			rf_sc = other_drive;
 			rfc_sc->sc_curbuf = BUFQ_GET(rf_sc->sc_bufq);
-			rfc_sc->sc_bufidx = rfc_sc->sc_curbuf->b_un.b_addr;
+			rfc_sc->sc_bufidx = rfc_sc->sc_curbuf->b_data;
 			rfc_sc->sc_bytesleft = rfc_sc->sc_curbuf->b_bcount;
 		} else
 			return(NULL);
