@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.35 2007/11/15 19:18:34 ad Exp $	*/
+/*	$NetBSD: locore.S,v 1.36 2008/01/04 15:55:34 yamt Exp $	*/
 /*	NetBSD: locore.S,v 1.31 2004/08/26 10:12:33 junyoung Exp	*/
 
 /*
@@ -676,7 +676,7 @@ switch_skipsave:
 	 *   %edi - new lwp
 	 */
 
-	pushl	%ebx
+	pushl	%edi
 	call	_C_LABEL(i386_switch_context)
 	addl	$4,%esp
 

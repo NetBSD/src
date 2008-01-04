@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.50 2007/12/26 11:51:13 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.51 2008/01/04 15:55:34 yamt Exp $	*/
 /*	NetBSD: machdep.c,v 1.559 2004/07/22 15:12:46 mycroft Exp 	*/
 
 /*-
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.50 2007/12/26 11:51:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.51 2008/01/04 15:55:34 yamt Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -368,23 +368,14 @@ i386_proc0_tss_ldt_init()
 {
 	struct lwp *l;
 	struct pcb *pcb;
-	int x;
 
 	l = &lwp0;
 	pcb = &l->l_addr->u_pcb;
-	pcb->pcb_tss.tss_ioopt =
-	    ((char *)pcb->pcb_iomap - (char *)&pcb->pcb_tss) << 16
-		| SEL_KPL;		/* i/o pl */
-
-	for (x = 0; x < sizeof(pcb->pcb_iomap) / 4; x++)
-		pcb->pcb_iomap[x] = 0xffffffff;
 
 	pcb->pcb_ldt_sel = pmap_kernel()->pm_ldt_sel = GSEL(GLDT_SEL, SEL_KPL);
 	pcb->pcb_cr0 = rcr0();
-	pcb->pcb_tss.tss_ss0 = GSEL(GDATA_SEL, SEL_KPL);
-	pcb->pcb_tss.tss_esp0 = USER_TO_UAREA(l->l_addr) + KSTACK_SIZE - 16;
-	l->l_md.md_regs = (struct trapframe *)pcb->pcb_tss.tss_esp0 - 1;
-	l->l_md.md_tss_sel = tss_alloc(pcb);
+	pcb->pcb_esp0 = USER_TO_UAREA(l->l_addr) + KSTACK_SIZE - 16;
+	l->l_md.md_regs = (struct trapframe *)pcb->pcb_esp0 - 1;
 
 #ifndef XEN
 	ltr(l->l_md.md_tss_sel);
@@ -392,9 +383,10 @@ i386_proc0_tss_ldt_init()
 #else
 	HYPERVISOR_fpu_taskswitch();
 	XENPRINTF(("lwp tss sp %p ss %04x/%04x\n",
-		      (void *)pcb->pcb_tss.tss_esp0,
-		      pcb->pcb_tss.tss_ss0, IDXSEL(pcb->pcb_tss.tss_ss0)));
-	HYPERVISOR_stack_switch(pcb->pcb_tss.tss_ss0, pcb->pcb_tss.tss_esp0);
+		      (void *)pcb->pcb_esp0,
+		      GSEL(GDATA_SEL, SEL_KPL),
+		      IDXSEL(GSEL(GDATA_SEL, SEL_KPL))));
+	HYPERVISOR_stack_switch(GSEL(GDATA_SEL, SEL_KPL), pcb->pcb_esp0);
 #endif
 }
 
@@ -404,9 +396,10 @@ i386_proc0_tss_ldt_init()
  * - switch stack pointer for user->kernel transition
  */
 void
-i386_switch_context(struct pcb *new)
+i386_switch_context(lwp_t *l)
 {
 	struct cpu_info *ci;
+	struct pcb *pcb = &l->l_addr->u_pcb;
 
 	ci = curcpu();
 	if (ci->ci_fpused) {
@@ -414,19 +407,21 @@ i386_switch_context(struct pcb *new)
 		ci->ci_fpused = 0;
 	}
 
-	HYPERVISOR_stack_switch(new->pcb_tss.tss_ss0, new->pcb_tss.tss_esp0);
+	HYPERVISOR_stack_switch(GSEL(GDATA_SEL, SEL_KPL), pcb->pcb_esp0);
 
 	if (xen_start_info.flags & SIF_PRIVILEGED) {
+		int iopl = (l->l_md.md_regs->tf_eflags & PSL_IOPL) != 0 ?
+		    SEL_UPL : SEL_KPL;
 #ifdef XEN3
 	        struct physdev_op physop;
 		physop.cmd = PHYSDEVOP_SET_IOPL;
-		physop.u.set_iopl.iopl = new->pcb_tss.tss_ioopt & SEL_RPL;
+		physop.u.set_iopl.iopl = iopl;
 		HYPERVISOR_physdev_op(&physop);
 #else
 		dom0_op_t op;
 		op.cmd = DOM0_IOPL;
 		op.u.iopl.domain = DOMID_SELF;
-		op.u.iopl.iopl = new->pcb_tss.tss_ioopt & SEL_RPL; /* i/o pl */
+		op.u.iopl.iopl = iopl;
 		HYPERVISOR_dom0_op(&op);
 #endif
 	}
@@ -1176,8 +1171,8 @@ setregion(struct region_descriptor *rd, void *base, size_t limit)
 }
 
 void
-setsegment(struct segment_descriptor *sd, void *base, size_t limit, int type,
-    int dpl, int def32, int gran)
+setsegment(struct segment_descriptor *sd, const void *base, size_t limit,
+    int type, int dpl, int def32, int gran)
 {
 
 	sd->sd_lolimit = (int)limit;
@@ -2037,12 +2032,6 @@ init386(paddr_t first_avail)
 		cngetc();
 	}
 
-#ifdef __HAVE_CPU_MAXPROC
-	XENPRINTF(("cpu_maxproc\n"));
-	/* Make sure maxproc is sane */
-	if (maxproc > cpu_maxproc())
-		maxproc = cpu_maxproc();
-#endif
 	XENPRINTF(("init386 end\n"));
 }
 
@@ -2352,17 +2341,4 @@ void
 cpu_initclocks()
 {
 	(*initclock_func)();
-}
-
-/*
- * Number of processes is limited by number of available GDT slots.
- */
-int
-cpu_maxproc(void)
-{
-#ifdef USER_LDT
-	return ((MAXGDTSIZ - NGDT) / 2);
-#else
-	return (MAXGDTSIZ - NGDT);
-#endif
 }

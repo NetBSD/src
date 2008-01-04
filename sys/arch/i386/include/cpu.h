@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.154 2008/01/01 20:32:11 yamt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.155 2008/01/04 15:55:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -63,6 +63,15 @@
 
 struct intrsource;
 struct pmap;
+
+#define	NIOPORTS	1024		/* # of ports we allow to be mapped */
+#define	IOMAPSIZE	(NIOPORTS / 8)	/* I/O bitmap size in bytes */
+
+/*
+ * I/O bitmap offset beyond TSS's segment limit means no bitmaps.
+ * (i.e. any I/O attempt generates an exception.)
+ */
+#define	IOMAP_INVALOFF	0xffff
 
 /*
  * a bunch of this belongs in cpuvar.h; move it later..
@@ -161,6 +170,10 @@ struct cpu_info {
 	struct evcnt ci_ipi_events[X86_NIPI];
 
 	struct via_padlock	ci_vp;	/* VIA PadLock private storage */
+
+	struct i386tss	ci_tss;		/* Per-cpu TSS; shared among LWPs */
+	char		ci_iomap[IOMAPSIZE]; /* I/O Bitmap */
+	int ci_tss_sel;			/* TSS selector of this cpu */
 
 	/*
 	 * The following two are actually region_descriptors,
@@ -362,7 +375,6 @@ extern int i386_has_sse2;
 
 /* machdep.c */
 void	dumpconf(void);
-int	cpu_maxproc(void);
 void	cpu_reset(void);
 void	i386_proc0_tss_ldt_init(void);
 
