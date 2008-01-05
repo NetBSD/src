@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_fs.c,v 1.49 2007/12/20 23:03:01 dsl Exp $	*/
+/*	$NetBSD: netbsd32_fs.c,v 1.50 2008/01/05 19:14:08 dsl Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.49 2007/12/20 23:03:01 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.50 2008/01/05 19:14:08 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,8 +116,10 @@ netbsd32_readv(struct lwp *l, const struct netbsd32_readv_args *uap, register_t 
 	if ((fp = fd_getfile(fdp, fd)) == NULL)
 		return (EBADF);
 
-	if ((fp->f_flag & FREAD) == 0)
+	if ((fp->f_flag & FREAD) == 0) {
+		FILE_UNLOCK(fp);
 		return (EBADF);
+	}
 
 	FILE_USE(fp);
 
@@ -223,8 +225,10 @@ netbsd32_writev(struct lwp *l, const struct netbsd32_writev_args *uap, register_
 	if ((fp = fd_getfile(fdp, fd)) == NULL)
 		return (EBADF);
 
-	if ((fp->f_flag & FWRITE) == 0)
+	if ((fp->f_flag & FWRITE) == 0) {
+		FILE_UNLOCK(fp);
 		return (EBADF);
+	}
 
 	FILE_USE(fp);
 
@@ -633,8 +637,10 @@ netbsd32_preadv(struct lwp *l, const struct netbsd32_preadv_args *uap, register_
 	if ((fp = fd_getfile(fdp, fd)) == NULL)
 		return (EBADF);
 
-	if ((fp->f_flag & FREAD) == 0)
+	if ((fp->f_flag & FREAD) == 0) {
+		FILE_UNLOCK(fp);
 		return (EBADF);
+	}
 
 	FILE_USE(fp);
 
@@ -681,8 +687,10 @@ netbsd32_pwritev(struct lwp *l, const struct netbsd32_pwritev_args *uap, registe
 	if ((fp = fd_getfile(fdp, fd)) == NULL)
 		return (EBADF);
 
-	if ((fp->f_flag & FWRITE) == 0)
+	if ((fp->f_flag & FWRITE) == 0) {
+		FILE_UNLOCK(fp);
 		return (EBADF);
+	}
 
 	FILE_USE(fp);
 
