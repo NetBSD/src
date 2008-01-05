@@ -1,4 +1,4 @@
-.\" $NetBSD: gem.4,v 1.4 2005/06/23 12:47:38 peter Exp $
+.\" $NetBSD: gem.4,v 1.5 2008/01/05 20:31:18 jdc Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -31,7 +31,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd February 20, 2005
+.Dd December 18, 2007
 .Dt GEM 4
 .Os
 .Sh NAME
@@ -39,6 +39,7 @@
 .Nd ERI/GEM/GMAC Ethernet device driver
 .Sh SYNOPSIS
 .Cd "gem* at pci? dev ? function ?"
+.Cd "gem* at sbus? slot ? offset ?"
 .Pp
 Configuration of PHYs may also be necessary.
 See
@@ -53,7 +54,7 @@ well as many Sun UltraSPARCs.
 Cards supported by this driver include:
 .Bl -bullet -compact -offset indent
 .It
-Sun GEM gigabit ethernet
+Sun GEM gigabit ethernet (including SX fibre variants)
 .It
 Sun ERI 10/100
 .It
@@ -61,7 +62,7 @@ Apple GMAC
 .El
 .Pp
 The GEM family supports hardware checksumming to assist in computing
-IPv4 TCP/UDP checksums.
+IPv4 TCP checksums.
 The
 .Nm
 driver supports this feature of the chip.
@@ -69,12 +70,16 @@ See
 .Xr ifconfig 8
 for information on how to enable this feature.
 .Sh SEE ALSO
-.Xr bm 4 ,
-.Xr de 4 ,
-.Xr hme 4 ,
-.Xr mc 4 ,
+.Xr bmtphy 4 ,
+.Xr ifmedia 4 ,
+.Xr intro 4 ,
 .Xr mii 4 ,
-.Xr tlp 4
+.Xr ifconfig 8
+.Rs
+.%T "GEM Gigabit Ethernet ASIC Specification"
+.%A Sun Microsystems
+.%O http://www.sun.com/processors/manuals/ge.pdf
+.Re
 .Sh HISTORY
 The
 .Nm
@@ -90,3 +95,9 @@ driver was written by
 The man page was written by
 .An Thomas Klausner
 .Aq wiz@NetBSD.org .
+.Sh BUGS
+On the SX fibre variants of the hardware, the link will stay down if there is
+a duplex mismatch.
+Also, packet transmission may fail when in
+.Cm half-duplex
+mode.
