@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.39 2008/01/01 20:32:11 yamt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.40 2008/01/05 21:37:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -114,7 +114,6 @@ struct cpu_info {
 	u_int32_t	ci_imask[NIPL];
 	u_int32_t	ci_iunmask[NIPL];
 
-	paddr_t 	ci_idle_pcb_paddr;
 	u_int		ci_flags;
 	u_int32_t	ci_ipis;
 
