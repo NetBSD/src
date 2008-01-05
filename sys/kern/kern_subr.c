@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.171 2008/01/05 12:30:47 dsl Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.172 2008/01/05 12:41:43 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2006 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.171 2008/01/05 12:30:47 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.172 2008/01/05 12:41:43 dsl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -1362,9 +1362,6 @@ int
 trace_enter(struct lwp *l, register_t code, register_t realcode,
     const struct sysent *callp, const register_t *args)
 {
-#if defined(SYSCALL_DEBUG) || defined(KTRACE) || defined(PTRACE)
-	struct proc *p = l->l_proc;
-
 #ifdef SYSCALL_DEBUG
 	scdebug_call(code, args);
 #endif /* SYSCALL_DEBUG */
@@ -1372,12 +1369,10 @@ trace_enter(struct lwp *l, register_t code, register_t realcode,
 	ktrsyscall(code, realcode, callp, args);
 
 #ifdef PTRACE
-	if ((p->p_slflag & (PSL_SYSCALL|PSL_TRACED)) ==
+	if ((curlwp->l_proc->p_slflag & (PSL_SYSCALL|PSL_TRACED)) ==
 	    (PSL_SYSCALL|PSL_TRACED))
-		process_stoptrace(l);
+		process_stoptrace();
 #endif
-
-#endif /* SYSCALL_DEBUG || {K,P}TRACE */
 	return 0;
 }
 
@@ -1392,9 +1387,6 @@ void
 trace_exit(struct lwp *l, register_t code, const register_t *args, 
     register_t rval[], int error)
 {
-#if defined(SYSCALL_DEBUG) || defined(KTRACE) || defined(PTRACE)
-	struct proc *p = l->l_proc;
-
 #ifdef SYSCALL_DEBUG
 	scdebug_ret(code, error, rval);
 #endif /* SYSCALL_DEBUG */
@@ -1402,12 +1394,10 @@ trace_exit(struct lwp *l, register_t code, const register_t *args,
 	ktrsysret(code, error, rval);
 	
 #ifdef PTRACE
-	if ((p->p_slflag & (PSL_SYSCALL|PSL_TRACED)) ==
+	if ((curlwp->l_proc->p_slflag & (PSL_SYSCALL|PSL_TRACED)) ==
 	    (PSL_SYSCALL|PSL_TRACED))
-		process_stoptrace(l);
+		process_stoptrace();
 #endif
-
-#endif /* SYSCALL_DEBUG || {K,P}TRACE */
 }
 
 /*
