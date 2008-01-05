@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.28 2008/01/05 19:16:07 bouyer Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.29 2008/01/05 19:29:26 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -64,7 +64,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.28 2008/01/05 19:16:07 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.29 2008/01/05 19:29:26 bouyer Exp $");
 
 #include "opt_xen.h"
 #include "isa.h"
@@ -207,7 +207,7 @@ evtchn_do_event(int evtch, struct intrframe *regs)
 	 * Shortcut for the debug handler, we want it to always run,
 	 * regardless of the IPL level.
 	 */
-	if (evtch == debug_port) {
+	if (__predict_false(evtch == debug_port)) {
 		xen_debug_handler(NULL);
 		hypervisor_enable_event(evtch);
 		return 0;
