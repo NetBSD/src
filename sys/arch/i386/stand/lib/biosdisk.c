@@ -1,5 +1,4 @@
-/*	$NetBSD: biosdisk.c,v 1.27 2008/01/04 20:05:46 dsl Exp $	*/
-#define DISK_DEBUG
+/*	$NetBSD: biosdisk.c,v 1.28 2008/01/05 15:28:43 dsl Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998
