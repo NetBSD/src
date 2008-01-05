@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.h,v 1.3 2005/12/11 12:16:25 christos Exp $	*/
+/*	$NetBSD: gdt.h,v 1.4 2008/01/05 21:47:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -45,7 +45,8 @@ void gdt_init_cpu __P((struct cpu_info *));
 void gdt_reload_cpu __P((struct cpu_info *));
 void gdt_alloc_cpu __P((struct cpu_info *));
 
-int tss_alloc(struct pcb *);
+struct x86_64_tss;
+int tss_alloc(struct x86_64_tss *);
 void tss_free(int);
 
 void ldt_alloc(struct pmap *, char *, size_t);

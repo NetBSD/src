@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.9 2008/01/04 15:55:31 yamt Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.10 2008/01/05 21:47:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.9 2008/01/04 15:55:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.10 2008/01/05 21:47:18 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_mtrr.h"
@@ -456,6 +456,7 @@ x86_iopl(struct lwp *l, void *args, register_t *retval)
 		iopl = SEL_UPL;
 	else
 		iopl = SEL_KPL;
+	l->l_addr->u_pcb.pcb_iopl = iopl;
 	/* Force the change at ring 0. */
 #ifdef XEN3
 	{
