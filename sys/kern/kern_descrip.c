@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.167 2007/12/26 16:01:35 ad Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.168 2008/01/05 19:08:50 dsl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.167 2007/12/26 16:01:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.168 2008/01/05 19:08:50 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -207,9 +207,9 @@ fd_getfile(struct filedesc *fdp, int fd)
 		return (NULL);
 	}
 
-	mutex_enter(&fp->f_lock);
+	FILE_LOCK(fp);
 	if (FILE_IS_USABLE(fp) == 0) {
-		mutex_exit(&fp->f_lock);
+		FILE_UNLOCK(fp);
 		rw_exit(&fdp->fd_lock);
 		return (NULL);
 	}
@@ -248,12 +248,12 @@ finishdup(struct lwp *l, int old, int new, register_t *retval)
 	rw_exit(&fdp->fd_lock);
 
 	*retval = new;
-	mutex_enter(&fp->f_lock);
+	FILE_LOCK(fp);
 	fp->f_count++;
 	FILE_UNUSE_HAVELOCK(fp, l);
 
 	if (delfp != NULL) {
-		mutex_enter(&delfp->f_lock);
+		FILE_LOCK(delfp);
 		FILE_USE(delfp);
 		if (new < fdp->fd_knlistsize)
 			knote_fdclose(l, new);
@@ -354,12 +354,12 @@ sys_dup2(struct lwp *l, const struct sys_dup2_args *uap, register_t *retval)
 
 	if ((u_int)new >= p->p_rlimit[RLIMIT_NOFILE].rlim_cur ||
 	    (u_int)new >= maxfiles) {
-		mutex_exit(&fp->f_lock);
+		FILE_UNLOCK(fp);
 		return (EBADF);
 	}
 
 	if (old == new) {
-		mutex_exit(&fp->f_lock);
+		FILE_UNLOCK(fp);
 		*retval = new;
 		return (0);
 	}
@@ -716,9 +716,9 @@ fdrelease(struct lwp *l, int fd)
 	if (fp == NULL)
 		goto badf;
 
-	mutex_enter(&fp->f_lock);
+	FILE_LOCK(fp);
 	if (!FILE_IS_USABLE(fp)) {
-		mutex_exit(&fp->f_lock);
+		FILE_UNLOCK(fp);
 		goto badf;
 	}
 
@@ -1053,9 +1053,9 @@ falloc(struct lwp *l, struct file **resultfp, int *resultfd)
 	fp->f_cred = l->l_cred;
 	kauth_cred_hold(fp->f_cred);
 
-	mutex_enter(&fp->f_lock);
+	FILE_LOCK(fp);
 	fp->f_count = 1;
-	mutex_exit(&fp->f_lock);
+	FILE_UNLOCK(fp);
 
 	rw_enter(&fdp->fd_lock, RW_WRITER);	/* XXXAD check order */
 	KDASSERT(fdp->fd_ofiles[i] == NULL);
@@ -1387,9 +1387,9 @@ restart:
 			/* kq descriptors cannot be copied. */
 			fdremove(newfdp, i);
 		else {
-			mutex_enter(&(*fpp)->f_lock);
+			FILE_LOCK(*fpp);
 			(*fpp)->f_count++;
-			mutex_exit(&(*fpp)->f_lock);
+			FILE_UNLOCK(*fpp);
 		}
 	}
 
@@ -1424,7 +1424,7 @@ fdfree(struct lwp *l)
 		fp = *fpp;
 		if (fp != NULL) {
 			*fpp = NULL;
-			mutex_enter(&fp->f_lock);
+			FILE_LOCK(fp);
 			FILE_USE(fp);
 			if ((fdp->fd_lastfile - i) < fdp->fd_knlistsize)
 				knote_fdclose(l, fdp->fd_lastfile - i);
@@ -1488,7 +1488,7 @@ closef(struct file *fp, struct lwp *l)
 	 * happen if a filedesc structure is shared by multiple
 	 * processes.
 	 */
-	mutex_enter(&fp->f_lock);
+	FILE_LOCK(fp);
 	if (fp->f_iflags & FIF_WANTCLOSE) {
 		/*
 		 * Another user of the file is already closing, and is
@@ -1504,7 +1504,7 @@ closef(struct file *fp, struct lwp *l)
 #endif
 		if (--fp->f_usecount == 1)
 			cv_broadcast(&fp->f_cv);
-		mutex_exit(&fp->f_lock);
+		FILE_UNLOCK(fp);
 		return (0);
 	} else {
 		/*
@@ -1518,7 +1518,7 @@ closef(struct file *fp, struct lwp *l)
 				panic("closef: no wantclose and usecount < 1");
 #endif
 			fp->f_usecount--;
-			mutex_exit(&fp->f_lock);
+			FILE_UNLOCK(fp);
 			return (0);
 		}
 	}
@@ -1552,7 +1552,7 @@ closef(struct file *fp, struct lwp *l)
 		panic("closef: usecount != 1");
 #endif
 
-	mutex_exit(&fp->f_lock);
+	FILE_UNLOCK(fp);
 	if ((fp->f_flag & FHASLOCK) && fp->f_type == DTYPE_VNODE) {
 		lf.l_whence = SEEK_SET;
 		lf.l_start = 0;
@@ -1794,7 +1794,7 @@ dupfdopen(struct lwp *l, int indx, int dfd, int mode, int error)
 		fdp->fd_ofiles[indx] = wfp;
 		fdp->fd_ofileflags[indx] = fdp->fd_ofileflags[dfd];
 		rw_exit(&fdp->fd_lock);
-		mutex_enter(&wfp->f_lock);
+		FILE_LOCK(wfp);
 		wfp->f_count++;
 		/* 'indx' has been fd_used'ed by caller */
 		FILE_UNUSE_HAVELOCK(wfp, l);
@@ -1906,7 +1906,7 @@ restart:
 				return (error);
 			}
 
-			mutex_enter(&devnullfp->f_lock);
+			FILE_LOCK(devnullfp);
 			FILE_USE(devnullfp);
 			/* finishdup() will unuse the descriptors for us */
 			if ((error = finishdup(l, devnull, fd, &retval)) != 0)

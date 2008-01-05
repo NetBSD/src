@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_domain.c,v 1.72 2007/12/28 18:22:16 ad Exp $	*/
+/*	$NetBSD: uipc_domain.c,v 1.73 2008/01/05 19:08:48 dsl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.72 2007/12/28 18:22:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.73 2008/01/05 19:08:48 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -428,7 +428,7 @@ sysctl_unpcblist(SYSCTLFN_ARGS)
 		if (so->so_proto->pr_domain->dom_family != pf)
 			continue;
 		if (len >= elem_size && elem_count > 0) {
-			mutex_enter(&fp->f_lock);
+			FILE_LOCK(fp);
 			FILE_USE(fp);
 			mutex_exit(&filelist_lock);
 			sysctl_dounpcb(&pcb, so);

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.338 2008/01/02 11:48:56 ad Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.339 2008/01/05 19:08:49 dsl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.338 2008/01/02 11:48:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.339 2008/01/05 19:08:49 dsl Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -2174,7 +2174,7 @@ sys_lseek(struct lwp *l, const struct sys_lseek_args *uap, register_t *retval)
 	vp = (struct vnode *)fp->f_data;
 	if (fp->f_type != DTYPE_VNODE || vp->v_type == VFIFO) {
 		error = ESPIPE;
-		mutex_exit(&fp->f_lock);
+		FILE_UNLOCK(fp);
 		goto out;
 	}
 
@@ -2197,14 +2197,14 @@ sys_lseek(struct lwp *l, const struct sys_lseek_args *uap, register_t *retval)
 		newoff = SCARG(uap, offset);
 		break;
 	default:
-		mutex_exit(&fp->f_lock);
+		FILE_UNLOCK(fp);
 		error = EINVAL;
 		goto out;
 	}
 	if ((error = VOP_SEEK(vp, fp->f_offset, newoff, cred)) == 0) {
-		mutex_enter(&fp->f_lock);
+		FILE_LOCK(fp);
 		*(off_t *)retval = fp->f_offset = newoff;
-		mutex_exit(&fp->f_lock);
+		FILE_UNLOCK(fp);
 	}
 	FILE_UNUSE(fp, l);
  out:
@@ -2234,7 +2234,7 @@ sys_pread(struct lwp *l, const struct sys_pread_args *uap, register_t *retval)
 		return (EBADF);
 
 	if ((fp->f_flag & FREAD) == 0) {
-		mutex_exit(&fp->f_lock);
+		FILE_UNLOCK(fp);
 		return (EBADF);
 	}
 
@@ -2305,7 +2305,7 @@ sys_pwrite(struct lwp *l, const struct sys_pwrite_args *uap, register_t *retval)
 		return (EBADF);
 
 	if ((fp->f_flag & FWRITE) == 0) {
-		mutex_exit(&fp->f_lock);
+		FILE_UNLOCK(fp);
 		return (EBADF);
 	}
 
