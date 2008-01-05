@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.43 2008/01/04 16:38:46 yamt Exp $	*/
+/*	$NetBSD: pcb.h,v 1.44 2008/01/05 21:59:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -101,9 +101,6 @@ struct pcb {
 	/* floating point state for FPU */
 	union	savefpu pcb_savefpu __aligned(16);
 
-/*
- * Software pcb (extension)
- */
 	int	pcb_fsd[2];		/* %fs descriptor */
 	int	pcb_gsd[2];		/* %gs descriptor */
 	void *	pcb_onfault;		/* copyin/out fault recovery */
