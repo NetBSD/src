@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.42 2008/01/05 21:47:19 yamt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.43 2008/01/05 21:52:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -310,7 +310,6 @@ void cpu_probe_features(struct cpu_info *);
 
 /* machdep.c */
 void	dumpconf(void);
-int	cpu_maxproc(void);
 void	cpu_reset(void);
 void	x86_64_proc0_tss_ldt_init(void);
 void	x86_64_init_pcb_tss_ldt(struct cpu_info *);
