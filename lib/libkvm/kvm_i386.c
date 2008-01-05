@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_i386.c,v 1.23 2008/01/05 06:22:55 jld Exp $	*/
+/*	$NetBSD: kvm_i386.c,v 1.24 2008/01/05 06:54:12 jld Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_hp300.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: kvm_i386.c,v 1.23 2008/01/05 06:22:55 jld Exp $");
+__RCSID("$NetBSD: kvm_i386.c,v 1.24 2008/01/05 06:54:12 jld Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -130,6 +130,14 @@ _kvm_kvatop(kd, va, pa)
 	if ((pde & PG_V) == 0) {
 		_kvm_err(kd, 0, "invalid translation (invalid PDE)");
 		goto lose;
+	}
+	if ((pde & PG_PS) != 0) {
+		/*
+		 * This is a 4MB page.
+		 */
+		page_off = va & ~PG_LGFRAME;
+		*pa = (pde & PG_LGFRAME) + page_off;
+		return (int)(NBPD_L2 - page_off);
 	}
 	pte_pa = (pde & PG_FRAME) + (pl1_pi(va) * sizeof(pt_entry_t));
 	if (pread(kd->pmfd, (void *) &pte, sizeof(pte),
