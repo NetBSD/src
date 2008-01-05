@@ -1,4 +1,4 @@
-/*	$NetBSD: m_netbsd15.c,v 1.31 2007/11/06 00:43:25 ad Exp $	*/
+/*	$NetBSD: m_netbsd15.c,v 1.32 2008/01/05 19:29:12 christos Exp $	*/
 
 /*
  * top - a top users display for Unix
@@ -37,12 +37,12 @@
  *		Andrew Doran <ad@NetBSD.org>
  *
  *
- * $Id: m_netbsd15.c,v 1.31 2007/11/06 00:43:25 ad Exp $
+ * $Id: m_netbsd15.c,v 1.32 2008/01/05 19:29:12 christos Exp $
  */
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: m_netbsd15.c,v 1.31 2007/11/06 00:43:25 ad Exp $");
+__RCSID("$NetBSD: m_netbsd15.c,v 1.32 2008/01/05 19:29:12 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -784,7 +784,7 @@ format_next_proc(caddr_t handle, char *(*get_userid)(int))
 
 #ifdef KI_NOCPU
 	/* Post-1.5 change: add CPU number if appropriate */
-	if (pp->p_cpuid != KI_NOCPU) {
+	if (pp->p_cpuid != KI_NOCPU && ncpu > 1) {
 		switch (pp->p_stat) {
 		case LSONPROC:
 		case LSRUN:
