@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc_jensenio.c,v 1.7 2007/12/03 15:33:05 ad Exp $ */
+/* $NetBSD: pckbc_jensenio.c,v 1.8 2008/01/05 00:31:50 ad Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pckbc_jensenio.c,v 1.7 2007/12/03 15:33:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_jensenio.c,v 1.8 2008/01/05 00:31:50 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,10 +48,8 @@ __KERNEL_RCSID(0, "$NetBSD: pckbc_jensenio.c,v 1.7 2007/12/03 15:33:05 ad Exp $"
 #include <sys/malloc.h>
 #include <sys/errno.h>
 #include <sys/queue.h>
-#include <sys/lock.h> 
-
-#include <machine/intr.h>
-#include <machine/bus.h>
+#include <sys/intr.h>
+#include <sys/bus.h>
 
 #include <dev/ic/i8042reg.h>
 #include <dev/ic/pckbcvar.h> 
