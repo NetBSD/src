@@ -1,4 +1,4 @@
-/* $NetBSD: ttwoga_pci.c,v 1.2 2002/05/15 16:57:43 thorpej Exp $ */
+/* $NetBSD: ttwoga_pci.c,v 1.3 2008/01/05 00:31:51 ad Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -38,13 +38,13 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ttwoga_pci.c,v 1.2 2002/05/15 16:57:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttwoga_pci.c,v 1.3 2008/01/05 00:31:51 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h> 
-#include <sys/lock.h>
+#include <sys/simplelock.h>
 
 #include <dev/pci/pcireg.h> 
 #include <dev/pci/pcivar.h>
