@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.34 2007/12/31 15:31:46 ad Exp $	*/
+/*	$NetBSD: syscall.c,v 1.35 2008/01/05 12:08:50 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.34 2007/12/31 15:31:46 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.35 2008/01/05 12:08:50 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,7 +92,11 @@ syscall(struct trapframe *frame)
 	struct proc *p;
 	struct lwp *l;
 	int error;
-	register_t code, args[2 + SYS_MAXSYSARGS], rval[2];
+	register_t code, rval[2];
+	#define args (&frame->tf_rdi)
+	/* Verify that the syscall args will fit in the trapframe space */
+	typedef char foo[offsetof(struct trapframe, tf_arg9)
+		>= sizeof (register_t) * (2 + SYS_MAXSYSARGS - 1) ? 1 : -1];
 
 	l = curlwp;
 	p = l->l_proc;
@@ -107,20 +111,19 @@ syscall(struct trapframe *frame)
 	SYSCALL_COUNT(syscall_counts, code);
 	SYSCALL_TIME_SYS_ENTRY(l, syscall_times, code);
 
-	if (callp->sy_argsize != 0) {
-		args[0] = frame->tf_rdi;
-		args[1] = frame->tf_rsi;
-		args[2] = frame->tf_rdx;
-		args[3] = frame->tf_r10;
-		args[4] = frame->tf_r8;
-		args[5] = frame->tf_r9;
-		if (__predict_false(callp->sy_argsize > 6 * 8)) {
-			error = copyin((register_t *)frame->tf_rsp + 1,
-			    &args[6], callp->sy_argsize - 6 * 8);
-			if (error != 0)
-				goto bad;
-			code = frame->tf_rax & (SYS_NSYSENT - 1);
-		}
+	/*
+	 * The first 6 syscall args are passed in rdi, rsi, rdx, r10, r8 and r9
+	 * (rcx gets copied to r10 in the libc stub because the syscall
+	 * instruction overwrites %cx) and are together in the trap frame
+	 * with space following for 4 more entries.
+	 */
+	if (__predict_false(callp->sy_argsize > 6 * 8)) {
+		error = copyin((register_t *)frame->tf_rsp + 1,
+		    &frame->tf_arg6, callp->sy_argsize - 6 * 8);
+		if (error != 0)
+			goto bad;
+		/* Refetch to avoid register spill to stack */
+		code = frame->tf_rax & (SYS_NSYSENT - 1);
 	}
 
 	if (!__predict_false(p->p_trace_enabled)
