@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.78 2008/01/04 23:04:54 dsl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.79 2008/01/05 21:47:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007
@@ -120,7 +120,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.78 2008/01/04 23:04:54 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.79 2008/01/05 21:47:19 yamt Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -186,7 +186,10 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.78 2008/01/04 23:04:54 dsl Exp $");
 #include <machine/fpu.h>
 #include <machine/mtrr.h>
 #include <machine/mpbiosvar.h>
+
 #include <x86/cpu_msr.h>
+#include <x86/cpuvar.h>
+
 #include <x86/x86/tsc.h>
 
 #include <dev/isa/isareg.h>
@@ -382,6 +385,11 @@ cpu_startup(void)
 
 	gdt_init();
 	x86_64_proc0_tss_ldt_init();
+
+	cpu_init_tss(&cpu_info_primary);
+#if !defined(XEN)
+	ltr(cpu_info_primary.ci_tss_sel);
+#endif /* !defined(XEN) */
 }
 
 #ifdef XEN
@@ -399,15 +407,11 @@ x86_64_switch_context(struct pcb *new)
 		HYPERVISOR_fpu_taskswitch(0);
 		/* XXX ci->ci_fpused = 0; */
 	}
-	HYPERVISOR_stack_switch(GSEL(GDATA_SEL, SEL_KPL), new->pcb_tss.tss_rsp0);
+	HYPERVISOR_stack_switch(GSEL(GDATA_SEL, SEL_KPL), new->pcb_rsp0);
 	if (xen_start_info.flags & SIF_PRIVILEGED) {
 		struct physdev_op physop;
 		physop.cmd = PHYSDEVOP_SET_IOPL;
-		if ((new->pcb_tss.tss_iobase & SEL_RPL) == 0)
-			physop.u.set_iopl.iopl = 1;
-		else
-			physop.u.set_iopl.iopl =
-			    (new->pcb_tss.tss_iobase & SEL_RPL);
+		physop.u.set_iopl.iopl = new->pcb_iopl;
 		HYPERVISOR_physdev_op(&physop);
 	}
 }
@@ -422,40 +426,43 @@ x86_64_proc0_tss_ldt_init(void)
 {
 	struct lwp *l;
 	struct pcb *pcb;
-	int x;
 
 	l = &lwp0;
 	pcb = &l->l_addr->u_pcb;
 	pcb->pcb_flags = 0;
-	pcb->pcb_tss.tss_iobase =
-	    (u_int16_t)((char *)pcb->pcb_iomap - (char *)&pcb->pcb_tss);
-	for (x = 0; x < sizeof(pcb->pcb_iomap) / 4; x++)
-		pcb->pcb_iomap[x] = 0xffffffff;
-
 	pcb->pcb_fs = 0;
 	pcb->pcb_gs = 0;
+	pcb->pcb_rsp0 = (u_int64_t)l->l_addr + USPACE - 16;
+	pcb->pcb_iopl = SEL_KPL;
 
 	pcb->pcb_ldt_sel = pmap_kernel()->pm_ldt_sel =
 	    GSYSSEL(GLDT_SEL, SEL_KPL);
 	pcb->pcb_cr0 = rcr0();
-	pcb->pcb_tss.tss_rsp0 = (u_int64_t)l->l_addr + USPACE - 16;
-	pcb->pcb_tss.tss_ist[0] = (u_int64_t)l->l_addr + PAGE_SIZE;
-	pcb->pcb_tss.tss_ist[1] = (uint64_t) x86_64_doubleflt_stack
-	    + PAGE_SIZE - 16;
-	l->l_md.md_regs = (struct trapframe *)pcb->pcb_tss.tss_rsp0 - 1;
-	l->l_md.md_tss_sel = tss_alloc(pcb);
+	l->l_md.md_regs = (struct trapframe *)pcb->pcb_rsp0 - 1;
 
-#ifndef XEN
-	ltr(l->l_md.md_tss_sel);
+#if !defined(XEN)
 	lldt(pcb->pcb_ldt_sel);
 #else
 	xen_set_ldt((vaddr_t) ldtstore, LDT_SIZE >> 3);
 	/* Reset TS bit and set kernel stack for interrupt handlers */
 	HYPERVISOR_fpu_taskswitch(0);
-	HYPERVISOR_stack_switch(GSEL(GDATA_SEL, SEL_KPL), pcb->pcb_tss.tss_rsp0);
+	HYPERVISOR_stack_switch(GSEL(GDATA_SEL, SEL_KPL), pcb->pcb_rsp0);
 #endif /* XEN */
 }
 
+/*
+ * Set up TSS and I/O bitmap.
+ */
+void
+cpu_init_tss(struct cpu_info *ci)
+{
+	struct x86_64_tss *tss = &ci->ci_tss;
+
+	tss->tss_iobase = IOMAP_INVALOFF << 16;
+	/* tss->tss_ist[0] is filled by cpu_intr_init */
+	tss->tss_ist[1] = (uint64_t)x86_64_doubleflt_stack + PAGE_SIZE - 16;
+	ci->ci_tss_sel = tss_alloc(tss);
+}
 
 /*  
  * machine dependent system variables.
