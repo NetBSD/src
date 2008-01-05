@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpga_intr.c,v 1.5 2006/11/24 21:20:05 wiz Exp $	*/
+/*	$NetBSD: ifpga_intr.c,v 1.6 2008/01/05 12:40:34 ad Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -46,11 +46,10 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <uvm/uvm_extern.h>
-
-#include <machine/bus.h>
-#include <machine/intr.h>
 
 #include <arm/cpufunc.h>
 
@@ -81,8 +80,8 @@ uint32_t intr_steer;
  * ever used in future steppings).
  */
 static const uint32_t si_to_irqbit[SI_NQUEUES] = {
-	IFPGA_INTR_bit31,	/* SI_SOFT */
-	IFPGA_INTR_bit30,	/* SI_SOFTCLOCK */
+	IFPGA_INTR_bit31,	/* SI_SOFTCLOCK */
+	IFPGA_INTR_bit30,	/* SI_SOFTBIO */
 	IFPGA_INTR_bit29,	/* SI_SOFTNET */
 	IFPGA_INTR_bit28,	/* SI_SOFTSERIAL */
 };
@@ -93,8 +92,8 @@ static const uint32_t si_to_irqbit[SI_NQUEUES] = {
  * Map a software interrupt queue to an interrupt priority level.
  */
 static const int si_to_ipl[SI_NQUEUES] = {
-	IPL_SOFT,		/* SI_SOFT */
 	IPL_SOFTCLOCK,		/* SI_SOFTCLOCK */
+	IPL_SOFTBIO,		/* SI_SOFTBIO */
 	IPL_SOFTNET,		/* SI_SOFTNET */
 	IPL_SOFTSERIAL,		/* SI_SOFTSERIAL */
 };
@@ -200,68 +199,22 @@ ifpga_intr_calculate_masks(void)
 	/*
 	 * Initialize the soft interrupt masks to block themselves.
 	 */
-	ifpga_imask[IPL_SOFT] = SI_TO_IRQBIT(SI_SOFT);
 	ifpga_imask[IPL_SOFTCLOCK] = SI_TO_IRQBIT(SI_SOFTCLOCK);
+	ifpga_imask[IPL_SOFTBIO] = SI_TO_IRQBIT(SI_SOFTBIO);
 	ifpga_imask[IPL_SOFTNET] = SI_TO_IRQBIT(SI_SOFTNET);
 	ifpga_imask[IPL_SOFTSERIAL] = SI_TO_IRQBIT(SI_SOFTSERIAL);
-
-	/*
-	 * splsoftclock() is the only interface that users of the
-	 * generic software interrupt facility have to block their
-	 * soft intrs, so splsoftclock() must also block IPL_SOFT.
-	 */
-	ifpga_imask[IPL_SOFTCLOCK] |= ifpga_imask[IPL_SOFT];
-
-	/*
-	 * splsoftnet() must also block splsoftclock(), since we don't
-	 * want timer-driven network events to occur while we're
-	 * processing incoming packets.
-	 */
-	ifpga_imask[IPL_SOFTNET] |= ifpga_imask[IPL_SOFTCLOCK];
 
 	/*
 	 * Enforce a hierarchy that gives "slow" device (or devices with
 	 * limited input buffer space/"real-time" requirements) a better
 	 * chance at not dropping data.
 	 */
-	ifpga_imask[IPL_BIO] |= ifpga_imask[IPL_SOFTNET];
-	ifpga_imask[IPL_NET] |= ifpga_imask[IPL_BIO];
-	ifpga_imask[IPL_SOFTSERIAL] |= ifpga_imask[IPL_NET];
-	ifpga_imask[IPL_TTY] |= ifpga_imask[IPL_SOFTSERIAL];
-
-	/*
-	 * splvm() blocks all interrupts that use the kernel memory
-	 * allocation facilities.
-	 */
-	ifpga_imask[IPL_VM] |= ifpga_imask[IPL_TTY];
-
-	/*
-	 * Audio devices are not allowed to perform memory allocation
-	 * in their interrupt routines, and they have fairly "real-time"
-	 * requirements, so give them a high interrupt priority.
-	 */
-	ifpga_imask[IPL_AUDIO] |= ifpga_imask[IPL_VM];
-
-	/*
-	 * splclock() must block anything that uses the scheduler.
-	 */
-	ifpga_imask[IPL_CLOCK] |= ifpga_imask[IPL_AUDIO];
-
-	/*
-	 * splstatclock() must also block the clock.
-	 */
-	ifpga_imask[IPL_STATCLOCK] |= ifpga_imask[IPL_CLOCK];
-
-	/*
-	 * splhigh() must block "everything".
-	 */
-	ifpga_imask[IPL_HIGH] |= ifpga_imask[IPL_STATCLOCK];
-
-	/*
-	 * XXX We need serial drivers to run at the absolute highest priority
-	 * in order to avoid overruns, so serial > high.
-	 */
-	ifpga_imask[IPL_SERIAL] |= ifpga_imask[IPL_HIGH];
+	ifpga_imask[IPL_SOFTBIO] |= ifpga_imask[IPL_SOFTCLOCK];
+	ifpga_imask[IPL_SOFTNET] |= ifpga_imask[IPL_SOFTBIO];
+	ifpga_imask[IPL_SOFTSERIAL] |= ifpga_imask[IPL_SOFTNET];
+	ifpga_imask[IPL_VM] |= ifpga_imask[IPL_SOFTSERIAL];
+	ifpga_imask[IPL_SCHED] |= ifpga_imask[IPL_VM];
+	ifpga_imask[IPL_HIGH] |= ifpga_imask[IPL_SCHED];
 
 	/*
 	 * Now compute which IRQs must be blocked when servicing any
@@ -282,6 +235,7 @@ ifpga_intr_calculate_masks(void)
 void
 ifpga_do_pending(void)
 {
+#ifdef __HAVE_FAST_SOFTINTS
 	static __cpu_simple_lock_t processing = __SIMPLELOCK_UNLOCKED;
 	int new, oldirqstate;
 
@@ -304,12 +258,13 @@ ifpga_do_pending(void)
 
 	DO_SOFTINT(SI_SOFTSERIAL);
 	DO_SOFTINT(SI_SOFTNET);
+	DO_SOFTINT(SI_SOFTBIO);
 	DO_SOFTINT(SI_SOFTCLOCK);
-	DO_SOFTINT(SI_SOFT);
 
 	__cpu_simple_unlock(&processing);
 
 	restore_interrupts(oldirqstate);
+#endif
 }
 
 void
@@ -436,6 +391,10 @@ ifpga_intr_dispatch(struct clockframe *frame)
 	struct intrq *iq;
 	struct intrhand *ih;
 	int oldirqstate, pcpl, irq, ibit, hwpend;
+	struct cpu_info *ci;
+
+	ci = curcpu();
+	ci->ci_idepth++;
 
 	pcpl = current_spl_level;
 
@@ -487,6 +446,8 @@ ifpga_intr_dispatch(struct clockframe *frame)
 		intr_enabled |= ibit;
 		ifpga_set_intrmask();
 	}
+
+	ci->ci_idepth--;
 
 	/* Check for pendings soft intrs. */
 	if ((ifpga_ipending & INT_SWMASK) & ~current_spl_level) {
