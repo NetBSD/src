@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.27 2008/01/04 15:55:35 yamt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.28 2008/01/05 21:37:25 yamt Exp $	*/
 /*	NetBSD: cpu.h,v 1.113 2004/02/20 17:35:01 yamt Exp 	*/
 
 /*-
@@ -118,7 +118,6 @@ struct cpu_info {
 	u_int32_t	ci_iunmask[NIPL];
 	void *		ci_intrstack;
 
-	paddr_t ci_idle_pcb_paddr;	/* PA of idle PCB */
 	u_int32_t ci_flags;		/* flags; see below */
 	u_int32_t ci_ipis;		/* interprocessor interrupts pending */
 	int sc_apic_version;		/* local APIC version */
