@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stream.c,v 1.73 2007/12/20 23:03:05 dsl Exp $	 */
+/*	$NetBSD: svr4_stream.c,v 1.74 2008/01/05 19:14:08 dsl Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_stream.c,v 1.73 2007/12/20 23:03:05 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_stream.c,v 1.74 2008/01/05 19:14:08 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1400,14 +1400,14 @@ svr4_sys_putmsg(struct lwp *l, const struct svr4_sys_putmsg_args *uap, register_
 	if (SCARG_PTR(uap, ctl) != NULL) {
 		if ((error = copyin(SCARG_PTR(uap, ctl),
 				    &ctl, sizeof(ctl))) != 0)
-			return error;
+			goto out;
 	} else
 		ctl.len = -1;
 
 	if (SCARG_PTR(uap, dat) != NULL) {
 	    	if ((error = copyin(SCARG_PTR(uap, dat),
 				    &dat, sizeof(dat))) != 0)
-			return error;
+			goto out;
 	} else
 		dat.len = -1;
 
