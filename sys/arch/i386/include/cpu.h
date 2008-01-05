@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.156 2008/01/05 21:37:25 yamt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.157 2008/01/05 21:45:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -66,12 +66,6 @@ struct pmap;
 
 #define	NIOPORTS	1024		/* # of ports we allow to be mapped */
 #define	IOMAPSIZE	(NIOPORTS / 8)	/* I/O bitmap size in bytes */
-
-/*
- * I/O bitmap offset beyond TSS's segment limit means no bitmaps.
- * (i.e. any I/O attempt generates an exception.)
- */
-#define	IOMAP_INVALOFF	0xffff
 
 /*
  * a bunch of this belongs in cpuvar.h; move it later..
