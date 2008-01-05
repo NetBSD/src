@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.2 2007/11/22 16:17:04 bouyer Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.2.12.1 2008/01/05 23:39:50 bouyer Exp $	*/
 /*	NetBSD: mainbus.c,v 1.53 2003/10/27 14:11:47 junyoung Exp 	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.2 2007/11/22 16:17:04 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.2.12.1 2008/01/05 23:39:50 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,7 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.2 2007/11/22 16:17:04 bouyer Exp $");
 #if NACPI > 0
 #include <dev/acpi/acpivar.h>
 #include <dev/acpi/acpi_madt.h>       
-#include <machine/mpacpi.h>       
+#include <xen/mpacpi.h>       
 #endif /* NACPI > 0 */
 #ifdef MPBIOS
 #include <machine/mpbiosvar.h>       
