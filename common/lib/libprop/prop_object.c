@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_object.c,v 1.18 2008/01/04 21:35:19 xtraeme Exp $	*/
+/*	$NetBSD: prop_object.c,v 1.19 2008/01/05 01:15:02 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,8 +35,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
-#include <sys/simplelock.h>
 
 #include <prop/prop_object.h>
 #include "prop_object_impl.h"
