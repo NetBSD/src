@@ -1,4 +1,4 @@
-/*	$NetBSD: boot2.c,v 1.20 2008/01/02 10:39:39 sborrill Exp $	*/
+/*	$NetBSD: boot2.c,v 1.21 2008/01/05 19:29:16 apb Exp $	*/
 
 /*
  * Copyright (c) 2003
@@ -288,6 +288,7 @@ atoi(const char *in)
  * banner=Please choose the boot type from the following menu
  * menu=Boot NetBSD:boot netbsd
  * menu=Boot into single user mode:boot netbsd -s
+ * menu=:boot hd1a:netbsd -cs
  * menu=Goto boot comand line:prompt
  * timeout=10
  * consdev=com0
@@ -300,7 +301,7 @@ parsebootconf(const char *conf)
 	int cmenu, cbanner, len;
 	int fd, err, off;
 	struct stat st;
-	char *value, *key;
+	char *key, *value, *v2;
 #ifdef SUPPORT_USTARFS
 	void *op_open;
 #endif
@@ -375,15 +376,23 @@ parsebootconf(const char *conf)
 		*c = 0;
 		
 		if (!strncmp(key, "menu", 4)) {
+			/*
+			 * Parse "menu=<description>:<command>".  If the
+			 * description is empty ("menu=:<command>)",
+			 * then re-use the command as the description.
+			 * Note that the command may contain embedded
+			 * colons.
+			 */
 			if (cmenu >= MAXMENU)
 				continue;
 			bootconf.desc[cmenu] = value;
-			/* Look for : between description and command */
-			for (; *value && *value != ':'; value++)
+			for (v2=value; *v2 && *v2 != ':'; v2++)
 				continue;
-			if(*value) {
-				*value++ = 0;
-				bootconf.command[cmenu] = value;
+			if (*v2) {
+				*v2++ = 0;
+				bootconf.command[cmenu] = v2;
+				if (! *value)
+					bootconf.desc[cmenu] = v2;
 				cmenu++;
 			} else {
 				/* No delimiter means invalid line */

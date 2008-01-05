@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.cfg.5,v 1.3 2007/11/22 15:27:22 sborrill Exp $
+.\"	$NetBSD: boot.cfg.5,v 1.4 2008/01/05 19:29:16 apb Exp $
 .\"
 .\" Copyright (c) 2007 Stephen Borrill
 .\" All rights reserved.
@@ -67,12 +67,16 @@ banner line with no value should be given.
 Used to define a menu item to be displayed to the end-user at boot time
 which allows a series of boot commands to be run without further typing.
 The value consists of the required menu text, followed by a colon
-.Po So : Sc Pc
+.Pq Sq \&:
 and then the desired command.
+If the specified menu text is empty
+(the colon appears immediately after the equals sign),
+then the displayed menu text is the same as the command.
 For example:
 .Bd -literal
 menu=Boot normally:boot
 menu=Boot single-user:boot -s
+menu=:boot hd1a:netbsd -as
 .Ed
 .Pp
 Each menu item will be prefixed by an ascending number when displayed,
