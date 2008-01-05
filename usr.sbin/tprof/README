@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.4 2008/01/05 22:49:59 yamt Exp $
+$NetBSD: README,v 1.5 2008/01/05 22:54:49 yamt Exp $
 
 NOTE:
 	- tprof driver currently only supports pentium4 (netburst) processors.
@@ -28,6 +28,8 @@ usage:
 4. format the result.
    the first line in the following example means that 11 samples have been
    taken at 0xc0396c36, whose symbolic name is lapic_gettick+0x6.
+   (fmt.sh uses the SIZEOF_PTR environment variable.
+   if not set, SIZEOF_PTR=4 is assumed.)
 	# sh ./fmt.sh < /tmp/foo
 	11      c0396c36        lapic_gettick+0x6
 	5       c039b98a        x86_pause+0x2
