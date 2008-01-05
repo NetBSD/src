@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_ioctl.c,v 1.18 2007/12/20 23:03:06 dsl Exp $	 */
+/*	$NetBSD: svr4_32_ioctl.c,v 1.19 2008/01/05 19:14:09 dsl Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_ioctl.c,v 1.18 2007/12/20 23:03:06 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_ioctl.c,v 1.19 2008/01/05 19:14:09 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -105,6 +105,7 @@ svr4_32_sys_ioctl(struct lwp *l, const struct svr4_32_sys_ioctl_args *uap, regis
 	struct file	*fp;
 	struct filedesc	*fdp;
 	u_long		 cmd;
+	int error;
 	int (*fun)(struct file *, struct lwp *, register_t *,
 			int, u_long, void *);
 #ifdef DEBUG_SVR4
@@ -124,8 +125,10 @@ svr4_32_sys_ioctl(struct lwp *l, const struct svr4_32_sys_ioctl_args *uap, regis
 	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
 		return EBADF;
 
-	if ((fp->f_flag & (FREAD | FWRITE)) == 0)
+	if ((fp->f_flag & (FREAD | FWRITE)) == 0) {
+		FILE_UNLOCK(fp);
 		return EBADF;
+	}
 
 	switch (cmd & 0xff00) {
 	case SVR4_tIOC:
@@ -150,12 +153,16 @@ svr4_32_sys_ioctl(struct lwp *l, const struct svr4_32_sys_ioctl_args *uap, regis
 
 	case SVR4_XIOC:
 		/* We do not support those */
+		FILE_UNLOCK(fp);
 		return EINVAL;
 
 	default:
 		DPRINTF(("Unimplemented ioctl %lx\n", cmd));
 		return 0;	/* XXX: really ENOSYS */
 	}
-	return (*fun)(fp, l, retval, SCARG(uap, fd), cmd,
+	FILE_USE(fp);
+	error = (*fun)(fp, l, retval, SCARG(uap, fd), cmd,
 		      SCARG_P32(uap, data));
+	FILE_UNUSE(fp, l);
+	return error;
 }

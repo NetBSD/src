@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_misc.c,v 1.57 2007/12/28 10:00:18 hannken Exp $	*/
+/*	$NetBSD: sunos32_misc.c,v 1.58 2008/01/05 19:14:08 dsl Exp $	*/
 /* from :NetBSD: sunos_misc.c,v 1.107 2000/12/01 19:25:10 jdolecek Exp	*/
 
 /*
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.57 2007/12/28 10:00:18 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.58 2008/01/05 19:14:08 dsl Exp $");
 
 #define COMPAT_SUNOS 1
 
@@ -1010,8 +1010,12 @@ sunos32_sys_open(struct lwp *l, const struct sunos32_sys_open_args *uap, registe
 		fp = fd_getfile(fdp, *retval);
 
 		/* ignore any error, just give it a try */
-		if (fp != NULL && fp->f_type == DTYPE_VNODE)
-			(fp->f_ops->fo_ioctl)(fp, TIOCSCTTY, (void *)0, l);
+		if (fp != NULL) {
+			FILE_USE(fp);
+			if (fp->f_type == DTYPE_VNODE)
+				(fp->f_ops->fo_ioctl)(fp, TIOCSCTTY, (void *)0, l);
+			FILE_UNUSE(fp, l);
+		}
 	}
 	return ret;
 }

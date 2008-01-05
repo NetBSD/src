@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_fcntl.c,v 1.65 2008/01/02 11:48:35 ad Exp $	 */
+/*	$NetBSD: svr4_fcntl.c,v 1.66 2008/01/05 19:14:08 dsl Exp $	 */
 
 /*-
  * Copyright (c) 1994, 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_fcntl.c,v 1.65 2008/01/02 11:48:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_fcntl.c,v 1.66 2008/01/05 19:14:08 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -234,7 +234,7 @@ fd_revoke(struct lwp *l, int fd, register_t *retval)
 		return EBADF;
 
 	if (fp->f_type != DTYPE_VNODE) {
-		mutex_exit(&fp->f_lock);
+		FILE_UNLOCK(fp);
 		return EINVAL;
 	}
 
@@ -284,7 +284,7 @@ fd_truncate(struct lwp *l, int fd, struct flock *flp, register_t *retval)
 
 	vp = (struct vnode *)fp->f_data;
 	if (fp->f_type != DTYPE_VNODE || vp->v_type == VFIFO) {
-		mutex_exit(&fp->f_lock);
+		FILE_UNLOCK(fp);
 		return ESPIPE;
 	}
 	FILE_USE(fp);
