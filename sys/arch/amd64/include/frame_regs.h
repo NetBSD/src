@@ -1,4 +1,4 @@
-/*	$NetBSD: frame_regs.h,v 1.2 2008/01/04 23:29:54 dsl Exp $	*/
+/*	$NetBSD: frame_regs.h,v 1.3 2008/01/05 12:08:51 dsl Exp $	*/
 
 #ifndef _AMD64_FRAME_REGS_H_
 #define _AMD64_FRAME_REGS_H_
@@ -8,7 +8,7 @@
  * Also the indexes into the 'general register state' (__greg_t) passed to
  * userland.
  * Historically they were in the same order, but the order in the frames
- * will be changed to improve syscall efficiency.
+ * has been changed to improve syscall efficiency.
  *
  * Notes:
  * 1) gdb (src/gnu/dist/gdb6/gdb/amd64nbsd-tdep.c) has a lookup table that
@@ -20,15 +20,25 @@
  *    assumes that something matches the __greg_t layout, but there
  *    are no (obvious) references.
  * 4) There might be other code out there that relies on the ordering.
+ *
+ * The first entries below match the registers used for syscall arguments
+ * (%rcx is destroyed by the syscall instruction, to the libc stubs copy
+ * the value to %r10).
+ * arg6-arg9 are copied from the user stack for system calls with more
+ * than 6 args (SYS_MAXSYSARGS is 8, + 2 entries for SYS___SYSCALL).
  */
 #define _FRAME_REG(greg, freg) 	\
 	greg(rdi, RDI, 0)	\
 	greg(rsi, RSI, 1)	\
 	greg(rdx, RDX, 2)	\
-	greg(rcx, RCX, 3)	\
+	greg(r10, R10, 6)	\
 	greg(r8,  R8,  4)	\
 	greg(r9,  R9,  5)	\
-	greg(r10, R10, 6)	\
+	freg(arg6, @,  @)	/* syscall arg from stack */ \
+	freg(arg7, @,  @)	/* syscall arg from stack */ \
+	freg(arg8, @,  @)	/* syscall arg from stack */ \
+	freg(arg9, @,  @)	/* syscall arg from stack */ \
+	greg(rcx, RCX, 3)	\
 	greg(r11, R11, 7)	\
 	greg(r12, R12, 8)	\
 	greg(r13, R13, 9)	\
