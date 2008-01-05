@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.24.6.2 2008/01/02 21:51:30 bouyer Exp $	*/
+/*	$NetBSD: cpu.h,v 1.24.6.3 2008/01/05 23:50:24 bouyer Exp $	*/
 /*	NetBSD: cpu.h,v 1.113 2004/02/20 17:35:01 yamt Exp 	*/
 
 /*-
@@ -410,10 +410,6 @@ void kgdb_port_init(void);
 /* bus_machdep.c */
 void x86_bus_space_init(void);
 void x86_bus_space_mallocok(void);
-
-/* xen_machdep.c */
-void	xpmap_init(void);
-paddr_t	find_pmap_mem_end(vaddr_t);
 
 #include <machine/psl.h>	/* Must be after struct cpu_info declaration */
 
