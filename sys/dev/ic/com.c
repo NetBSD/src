@@ -1,7 +1,7 @@
-/*	$NetBSD: com.c,v 1.268 2007/12/14 03:36:54 dyoung Exp $	*/
+/*	$NetBSD: com.c,v 1.269 2008/01/05 12:44:13 ad Exp $	*/
 
 /*-
- * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.268 2007/12/14 03:36:54 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.269 2008/01/05 12:44:13 ad Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -650,7 +650,6 @@ com_activate(struct device *self, enum devact act)
 	struct com_softc *sc = (struct com_softc *)self;
 	int rv = 0;
 
-	mutex_spin_enter(&sc->sc_lock);
 	switch (act) {
 	case DVACT_ACTIVATE:
 		rv = EOPNOTSUPP;
@@ -669,7 +668,6 @@ com_activate(struct device *self, enum devact act)
 		break;
 	}
 
-	mutex_spin_exit(&sc->sc_lock);
 	return (rv);
 }
 
@@ -719,6 +717,8 @@ com_shutdown(struct com_softc *sc)
 
 	CSR_WRITE_1(&sc->sc_regs, COM_REG_IER, sc->sc_ier);
 
+	mutex_spin_exit(&sc->sc_lock);
+
 	if (sc->disable) {
 #ifdef DIAGNOSTIC
 		if (!sc->enabled)
@@ -727,7 +727,6 @@ com_shutdown(struct com_softc *sc)
 		(*sc->disable)(sc);
 		sc->enabled = 0;
 	}
-	mutex_spin_exit(&sc->sc_lock);
 }
 
 int
@@ -769,18 +768,19 @@ comopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 		tp->t_dev = dev;
 
-		mutex_spin_enter(&sc->sc_lock);
 
 		if (sc->enable) {
 			if ((*sc->enable)(sc)) {
-				mutex_spin_exit(&sc->sc_lock);
 				splx(s);
 				printf("%s: device enable failed\n",
 				       sc->sc_dev.dv_xname);
 				return (EIO);
 			}
+			mutex_spin_enter(&sc->sc_lock);
 			sc->enabled = 1;
 			com_config(sc);
+		} else {
+			mutex_spin_enter(&sc->sc_lock);
 		}
 
 		/* Turn on interrupts. */
