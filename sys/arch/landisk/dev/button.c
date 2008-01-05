@@ -1,4 +1,4 @@
-/*	$NetBSD: button.c,v 1.2 2007/03/04 06:00:03 christos Exp $	*/
+/*	$NetBSD: button.c,v 1.3 2008/01/05 00:23:00 ad Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,13 +36,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: button.c,v 1.2 2007/03/04 06:00:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: button.c,v 1.3 2008/01/05 00:23:00 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
-#include <sys/lock.h>
+#include <sys/simplelock.h>
 #include <sys/queue.h>
 #include <sys/proc.h>
 #include <sys/kthread.h>

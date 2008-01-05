@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.207 2007/10/17 19:57:14 garbled Exp $ */
+/*	$NetBSD: cpu.c,v 1.208 2008/01/05 00:22:34 ad Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.207 2007/10/17 19:57:14 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.208 2008/01/05 00:22:34 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -63,7 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.207 2007/10/17 19:57:14 garbled Exp $");
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
-#include <sys/lock.h>
+#include <sys/simplelock.h>
 #include <sys/kernel.h>
 
 #include <uvm/uvm.h>
