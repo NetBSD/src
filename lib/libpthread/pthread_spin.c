@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_spin.c,v 1.3 2007/11/13 15:57:14 ad Exp $	*/
+/*	$NetBSD: pthread_spin.c,v 1.4 2008/01/05 01:37:35 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -41,11 +41,12 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_spin.c,v 1.3 2007/11/13 15:57:14 ad Exp $");
+__RCSID("$NetBSD: pthread_spin.c,v 1.4 2008/01/05 01:37:35 ad Exp $");
 
 #include <sys/types.h>
-#include <sys/lock.h>
 #include <sys/ras.h>
+
+#include <machine/lock.h>
 
 #include <errno.h>
 #include <unistd.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_mutex.c,v 1.39 2007/12/24 14:46:29 ad Exp $	*/
+/*	$NetBSD: pthread_mutex.c,v 1.40 2008/01/05 01:37:35 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,15 +37,16 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_mutex.c,v 1.39 2007/12/24 14:46:29 ad Exp $");
+__RCSID("$NetBSD: pthread_mutex.c,v 1.40 2008/01/05 01:37:35 ad Exp $");
+
+#include <sys/types.h>
+
+#include <machine/lock.h>
 
 #include <errno.h>
 #include <limits.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include <sys/types.h>
-#include <sys/lock.h>
 
 #include "pthread.h"
 #include "pthread_int.h"
