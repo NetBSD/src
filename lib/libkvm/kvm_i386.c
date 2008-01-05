@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_i386.c,v 1.22 2007/10/18 15:30:44 yamt Exp $	*/
+/*	$NetBSD: kvm_i386.c,v 1.23 2008/01/05 06:22:55 jld Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_hp300.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: kvm_i386.c,v 1.22 2007/10/18 15:30:44 yamt Exp $");
+__RCSID("$NetBSD: kvm_i386.c,v 1.23 2008/01/05 06:22:55 jld Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -117,7 +117,7 @@ _kvm_kvatop(kd, va, pa)
 	/*
 	 * Find and read the page directory entry.
 	 */
-	pde_pa = cpu_kh->pdppaddr + (pl2_i(va) * sizeof(pd_entry_t));
+	pde_pa = cpu_kh->pdppaddr + (pl2_pi(va) * sizeof(pd_entry_t));
 	if (pread(kd->pmfd, (void *)&pde, sizeof(pde),
 	    _kvm_pa2off(kd, pde_pa)) != sizeof(pde)) {
 		_kvm_syserr(kd, 0, "could not read PDE");
@@ -131,7 +131,7 @@ _kvm_kvatop(kd, va, pa)
 		_kvm_err(kd, 0, "invalid translation (invalid PDE)");
 		goto lose;
 	}
-	pte_pa = (pde & PG_FRAME) + (pl1_i(va) * sizeof(pt_entry_t));
+	pte_pa = (pde & PG_FRAME) + (pl1_pi(va) * sizeof(pt_entry_t));
 	if (pread(kd->pmfd, (void *) &pte, sizeof(pte),
 	    _kvm_pa2off(kd, pte_pa)) != sizeof(pte)) {
 		_kvm_syserr(kd, 0, "could not read PTE");
