@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.170 2007/12/31 15:32:11 ad Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.171 2008/01/05 12:30:47 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2006 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.170 2007/12/31 15:32:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.171 2008/01/05 12:30:47 dsl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -1366,7 +1366,7 @@ trace_enter(struct lwp *l, register_t code, register_t realcode,
 	struct proc *p = l->l_proc;
 
 #ifdef SYSCALL_DEBUG
-	scdebug_call(l, code, args);
+	scdebug_call(code, args);
 #endif /* SYSCALL_DEBUG */
 
 	ktrsyscall(code, realcode, callp, args);
@@ -1396,7 +1396,7 @@ trace_exit(struct lwp *l, register_t code, const register_t *args,
 	struct proc *p = l->l_proc;
 
 #ifdef SYSCALL_DEBUG
-	scdebug_ret(l, code, error, rval);
+	scdebug_ret(code, error, rval);
 #endif /* SYSCALL_DEBUG */
 
 	ktrsysret(code, error, rval);

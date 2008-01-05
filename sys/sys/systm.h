@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.207 2007/12/25 18:33:49 perry Exp $	*/
+/*	$NetBSD: systm.h,v 1.208 2008/01/05 12:30:47 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -42,7 +42,6 @@
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
-#include "opt_syscall_debug.h"
 #endif
 
 #include <machine/endian.h>
@@ -466,10 +465,9 @@ extern int db_fromconsole; /* XXX ddb/ddbvar.h */
 #endif
 #endif /* _KERNEL */
 
-#ifdef SYSCALL_DEBUG
-void scdebug_call(struct lwp *, register_t, register_t[]);
-void scdebug_ret(struct lwp *, register_t, int, register_t[]);
-#endif /* SYSCALL_DEBUG */
+/* For SYSCALL_DEBUG */
+void scdebug_call(register_t, const register_t[]);
+void scdebug_ret(register_t, int, const register_t[]);
 
 void	kernel_lock_init(void);
 void	_kernel_lock(int, struct lwp *);
