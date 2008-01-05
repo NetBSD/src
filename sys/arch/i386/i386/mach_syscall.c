@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_syscall.c,v 1.25 2007/12/11 09:26:11 dogcow Exp $	*/
+/*	$NetBSD: mach_syscall.c,v 1.26 2008/01/05 12:53:53 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_syscall.c,v 1.25 2007/12/11 09:26:11 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_syscall.c,v 1.26 2008/01/05 12:53:53 dsl Exp $");
 
 #include "opt_vm86.h"
 
@@ -225,7 +225,7 @@ mach_syscall_fancy(frame)
 			goto bad;
 	}
 
-	if ((error = trace_enter(l, code, realcode, callp - code, args)) != 0)
+	if ((error = trace_enter(code, realcode, callp - code, args)) != 0)
 		goto out;
 
 	rval[0] = 0;
@@ -256,7 +256,7 @@ out:
 		break;
 	}
 
-	trace_exit(l, realcode, args, rval, error);
+	trace_exit(realcode, args, rval, error);
 
 	userret(l);
 }
