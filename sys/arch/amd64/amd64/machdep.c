@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.80 2008/01/05 21:52:01 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.81 2008/01/05 22:48:31 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007
@@ -120,7 +120,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.80 2008/01/05 21:52:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.81 2008/01/05 22:48:31 yamt Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -457,10 +457,17 @@ void
 cpu_init_tss(struct cpu_info *ci)
 {
 	struct x86_64_tss *tss = &ci->ci_tss;
+	uintptr_t p;
 
 	tss->tss_iobase = IOMAP_INVALOFF << 16;
 	/* tss->tss_ist[0] is filled by cpu_intr_init */
+
+	/* double fault */
 	tss->tss_ist[1] = (uint64_t)x86_64_doubleflt_stack + PAGE_SIZE - 16;
+
+	/* NMI */
+	p = uvm_km_alloc(kernel_map, PAGE_SIZE, 0, UVM_KMF_WIRED);
+	tss->tss_ist[2] = p + PAGE_SIZE - 16;
 	ci->ci_tss_sel = tss_alloc(tss);
 }
 
@@ -1697,7 +1704,17 @@ init_x86_64(paddr_t first_avail)
 	for (x = 0; x < 32; x++) {
 #ifndef XEN
 		idt_vec_reserve(x);
-		ist = (x == 8) ? 2 : 0;
+		switch (x) {
+		case 2:	/* NMI */
+			ist = 3;
+			break;
+		case 8:	/* double fault */
+			ist = 2;
+			break;
+		default:
+			ist = 0;
+			break;
+		}
 		setgate(&idt[x], IDTVEC(exceptions)[x], ist, SDT_SYS386IGT,
 		    (x == 3 || x == 4) ? SEL_UPL : SEL_KPL,
 		    GSEL(GCODE_SEL, SEL_KPL));
