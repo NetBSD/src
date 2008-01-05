@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.980 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.981 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -313,3 +313,4 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		disks (even if they are marked as hot-spare, pass-through
 		or unused). [xtraeme 20080102]
 	ofppc: Support intallation and RAID bootable root.  [mrg 20080102]
+	gem(4): Add support for Sun SX fibre cards.  [jdc 20080105]
