@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.79 2008/01/05 21:47:19 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.80 2008/01/05 21:52:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007
@@ -120,7 +120,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.79 2008/01/05 21:47:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.80 2008/01/05 21:52:01 yamt Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -1767,10 +1767,6 @@ init_x86_64(paddr_t first_avail)
 	x86_enable_intr();
 
 	x86_init();
-
-        /* Make sure maxproc is sane */ 
-        if (maxproc > cpu_maxproc())
-                maxproc = cpu_maxproc();
 }
 
 void
@@ -2046,17 +2042,4 @@ int
 valid_user_selector(struct lwp *l, uint64_t seg, char *ldtp, int len)
 {
 	return memseg_baseaddr(l, seg, ldtp, len, NULL);
-}
-
-/*
- * Number of processes is limited by number of available GDT slots.
- */
-int
-cpu_maxproc(void)
-{
-#ifdef USER_LDT
-	return ((MAXGDTSIZ - DYNSEL_START) / 32);
-#else
-	return (MAXGDTSIZ - DYNSEL_START) / 16;
-#endif
 }
