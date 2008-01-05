@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.15 2008/01/04 15:55:30 yamt Exp $	*/
+/*	$NetBSD: cpu.c,v 1.16 2008/01/05 21:47:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.15 2008/01/04 15:55:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.16 2008/01/05 21:47:18 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -331,9 +331,7 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 			return;
 		}
 #endif
-#if defined(i386)
 		cpu_init_tss(ci);
-#endif /* defined(i386) */
 	} else {
 		KASSERT(ci->ci_data.cpu_idlelwp != NULL);
 	}
@@ -660,9 +658,7 @@ cpu_hatch(void *v)
 	fpuinit(ci);
 #endif
 	lldt(GSYSSEL(GLDT_SEL, SEL_KPL));
-#ifdef i386
 	ltr(ci->ci_tss_sel);
-#endif
 
 	cpu_init(ci);
 	cpu_get_tsc_freq(ci);

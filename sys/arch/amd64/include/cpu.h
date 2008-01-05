@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.41 2008/01/05 21:40:57 yamt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.42 2008/01/05 21:47:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -111,6 +111,7 @@ struct cpu_info {
 #define	ci_ilevel	ci_istate.ilevel
 
 	int		ci_idepth;
+	void *		ci_intrstack;
 	u_int32_t	ci_imask[NIPL];
 	u_int32_t	ci_iunmask[NIPL];
 
@@ -137,6 +138,9 @@ struct cpu_info {
 	char		*ci_gdt;
 
 	struct evcnt ci_ipi_events[X86_NIPI];
+
+	struct x86_64_tss ci_tss;	/* Per-cpu TSS; shared among LWPs */
+	int		ci_tss_sel;	/* TSS selector of this cpu */
 
 	/*
 	 * The following two are actually region_descriptors,
