@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.75.6.2 2008/01/02 21:51:29 bouyer Exp $
+#	$NetBSD: files.xen,v 1.75.6.3 2008/01/05 23:50:23 bouyer Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -56,7 +56,6 @@ file	arch/i386/i386/procfs_machdep.c	procfs
 file	arch/i386/i386/syscall.c
 file	arch/i386/i386/trap.c
 file	arch/i386/i386/vm_machdep.c
-file	arch/xen/i386/xpmap.c
 file	arch/i386/i386/lock_stubs.S
 
 file	arch/i386/i386/mptramp.S		multiprocessor
