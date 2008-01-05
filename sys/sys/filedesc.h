@@ -1,4 +1,4 @@
-/*	$NetBSD: filedesc.h,v 1.43 2007/12/03 02:06:59 christos Exp $	*/
+/*	$NetBSD: filedesc.h,v 1.44 2008/01/05 23:53:21 ad Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -163,6 +163,8 @@ int	vnode_to_path(char *, size_t, struct vnode *, struct lwp *,
 
 int	closef(struct file *, struct lwp *);
 int	getsock(struct filedesc *, int, struct file **);
+struct file *fgetdummy(void);
+void	fputdummy(struct file *);
 
 struct stat;
 int	do_sys_fstat(struct lwp *, int, struct stat *);

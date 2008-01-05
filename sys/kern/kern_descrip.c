@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.168 2008/01/05 19:08:50 dsl Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.169 2008/01/05 23:53:21 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.168 2008/01/05 19:08:50 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.169 2008/01/05 23:53:21 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1161,6 +1161,27 @@ file_dtor(void *arg, void *obj)
 
 	mutex_destroy(&fp->f_lock);
 	cv_destroy(&fp->f_cv);
+}
+
+struct file *
+fgetdummy(void)
+{
+	struct file *fp;
+
+	fp = kmem_alloc(sizeof(*fp), KM_SLEEP);
+	if (fp != NULL) {
+		memset(fp, 0, sizeof(*fp));
+		mutex_init(&fp->f_lock, MUTEX_DEFAULT, IPL_NONE);
+	}
+	return fp;
+}
+
+void
+fputdummy(struct file *fp)
+{
+
+	mutex_destroy(&fp->f_lock);
+	kmem_free(fp, sizeof(*fp));
 }
 
 /*
