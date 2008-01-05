@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_log.c,v 1.46 2008/01/02 11:48:53 ad Exp $	*/
+/*	$NetBSD: subr_log.c,v 1.47 2008/01/05 14:07:26 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_log.c,v 1.46 2008/01/02 11:48:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_log.c,v 1.47 2008/01/05 14:07:26 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,9 +94,9 @@ static bool	log_async;
 static struct selinfo log_selp;		/* process waiting on select call */
 static pid_t	log_pgid;		/* process/group for async I/O */
 static kcondvar_t log_cv;
-static kmutex_t log_lock;
 static void	*log_sih;
 
+kmutex_t log_lock;
 int	log_open;			/* also used in log() */
 int	msgbufmapped;			/* is the message buffer mapped */
 int	msgbufenabled;			/* is logging to the buffer enabled */
