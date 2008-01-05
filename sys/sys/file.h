@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.61 2007/12/26 16:01:38 ad Exp $	*/
+/*	$NetBSD: file.h,v 1.62 2008/01/05 18:52:16 dsl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -120,22 +120,29 @@ do {									\
 
 /*
  * FILE_USE() must be called with the file lock held.
- * (Typical usage is: `fp = fd_getfile(..); FILE_USE(fp);'
  * and fd_getfile() returns the file locked)
+ * Typical usage is either:
+ *    fp = fd_getfile(..); FILE_USE(fp); ...; FILE_UNUSE(fp, l);
+ * or:
+ *    fp = fd_getfile(..); ...; FILE_UNLOCK(fp);
  */
+
+#define FILE_LOCK(fp) mutex_enter(&(fp)->f_lock)
+#define FILE_UNLOCK(fp) mutex_exit(&(fp)->f_lock)
+
 #define	FILE_USE(fp)							\
 do {									\
 	(fp)->f_usecount++;						\
 	FILE_USE_CHECK((fp), "f_usecount overflow");			\
-	mutex_exit(&(fp)->f_lock);					\
+	FILE_UNLOCK(fp);						\
 } while (/* CONSTCOND */ 0)
 
 #define	FILE_UNUSE_WLOCK(fp, l, havelock)				\
 do {									\
 	if (!(havelock))						\
-		mutex_enter(&(fp)->f_lock);				\
+		FILE_LOCK(fp);						\
 	if ((fp)->f_iflags & FIF_WANTCLOSE) {				\
-		mutex_exit(&(fp)->f_lock);				\
+		FILE_UNLOCK(fp);					\
 		/* Will drop usecount */				\
 		(void) closef((fp), (l));				\
 		break;							\
@@ -143,7 +150,7 @@ do {									\
 		(fp)->f_usecount--;					\
 		FILE_USE_CHECK((fp), "f_usecount underflow");		\
 	}								\
-	mutex_exit(&(fp)->f_lock);					\
+	FILE_UNLOCK(fp);						\
 } while (/* CONSTCOND */ 0)
 #define	FILE_UNUSE(fp, l)		FILE_UNUSE_WLOCK(fp, l, 0)
 #define	FILE_UNUSE_HAVELOCK(fp, l)	FILE_UNUSE_WLOCK(fp, l, 1)
