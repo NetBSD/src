@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_mutex.c,v 1.29 2008/01/04 21:31:06 xtraeme Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.30 2008/01/05 12:31:39 ad Exp $	*/
 
 /*-
- * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -47,7 +47,7 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.29 2008/01/04 21:31:06 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.30 2008/01/05 12:31:39 ad Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -509,16 +509,9 @@ mutex_vector_enter(kmutex_t *mtx)
 	MUTEX_ASSERT(mtx, curthread != 0);
 	MUTEX_WANTLOCK(mtx);
 
-#ifdef LOCKDEBUG
 	if (panicstr == NULL) {
-		simple_lock_only_held(NULL, "mutex_enter");
-#ifdef MULTIPROCESSOR
 		LOCKDEBUG_BARRIER(&kernel_lock, 1);
-#else
-		LOCKDEBUG_BARRIER(NULL, 1);
-#endif
 	}
-#endif
 
 	LOCKSTAT_ENTER(lsflag);
 
