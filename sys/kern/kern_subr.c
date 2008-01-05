@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.172 2008/01/05 12:41:43 dsl Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.173 2008/01/05 12:53:55 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2006 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.172 2008/01/05 12:41:43 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.173 2008/01/05 12:53:55 dsl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -1359,7 +1359,7 @@ trace_is_enabled(struct proc *p)
  * system call number range for emulation the process runs under.
  */
 int
-trace_enter(struct lwp *l, register_t code, register_t realcode,
+trace_enter(register_t code, register_t realcode,
     const struct sysent *callp, const register_t *args)
 {
 #ifdef SYSCALL_DEBUG
@@ -1384,7 +1384,7 @@ trace_enter(struct lwp *l, register_t code, register_t realcode,
  * system call number range for emulation the process runs under.
  */
 void
-trace_exit(struct lwp *l, register_t code, const register_t *args, 
+trace_exit(register_t code, const register_t *args, 
     register_t rval[], int error)
 {
 #ifdef SYSCALL_DEBUG
