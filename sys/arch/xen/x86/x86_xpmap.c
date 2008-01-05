@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_xpmap.c,v 1.3.12.3 2007/12/15 22:56:55 bouyer Exp $	*/
+/*	$NetBSD: x86_xpmap.c,v 1.3.12.4 2008/01/05 19:31:29 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2006 Mathieu Ropert <mro@adviseo.fr>
@@ -79,7 +79,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.3.12.3 2007/12/15 22:56:55 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.3.12.4 2008/01/05 19:31:29 bouyer Exp $");
 
 #include "opt_xen.h"
 #include "opt_ddb.h"
@@ -539,7 +539,6 @@ xen_pmap_bootstrap()
 	/* after the tables we'll have:
 	 *  - UAREA
 	 *  - dummy user PGD (x86_64)
-	 *  - ISA MEM space
 	 *  - HYPERVISOR_shared_info
 	 *  - ISA I/O mem (if needed)
 	 */
@@ -646,7 +645,7 @@ xen_bootstrap_tables (vaddr_t old_pgd, vaddr_t new_pgd,
 	map_end = new_pgd + ((new_count + PTP_LEVELS - 1) * NBPG);
 	if (final) {
 		map_end += (UPAGES + 1) * NBPG;
-		HYPERVISOR_shared_info = (struct shared_info *)map_end;
+		HYPERVISOR_shared_info = (shared_info_t *)map_end;
 		map_end += NBPG;
 	}
 	/*
@@ -734,6 +733,7 @@ xen_bootstrap_tables (vaddr_t old_pgd, vaddr_t new_pgd,
 				    "va 0x%lx pte 0x%lx\n",
 				    HYPERVISOR_shared_info, pte[pl1_pi(page)]));
 			}
+#ifdef XEN3
 			if (xpmap_ptom_masked(page - KERNBASE) ==
 			    (xen_start_info.console_mfn << PAGE_SHIFT)) {
 				xencons_interface = (void *)page;
@@ -752,6 +752,7 @@ xen_bootstrap_tables (vaddr_t old_pgd, vaddr_t new_pgd,
 				    "va 0x%lx pte 0x%lx\n",
 				    xenstore_interface, pte[pl1_pi(page)]));
 			}
+#endif /* XEN3 */
 #ifdef DOM0OPS
 			if (page >= (vaddr_t)atdevbase &&
 			    page < (vaddr_t)atdevbase + IOM_SIZE) {
@@ -863,7 +864,7 @@ xen_bt_set_readonly (vaddr_t page)
 	pt_entry_t entry;
 
 	entry = xpmap_ptom_masked(page - KERNBASE);
-	entry |= PG_u | PG_V;
+	entry |= PG_k | PG_V;
 
 	HYPERVISOR_update_va_mapping (page, entry, UVMF_INVLPG);
 }
