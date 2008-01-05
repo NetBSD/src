@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.27 2007/12/13 21:42:06 bouyer Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.28 2008/01/05 19:16:07 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -64,7 +64,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.27 2007/12/13 21:42:06 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.28 2008/01/05 19:16:07 bouyer Exp $");
 
 #include "opt_xen.h"
 #include "isa.h"
@@ -116,7 +116,7 @@ physdev_op_t physdev_op_notify = {
 };
 #endif
 
-int debug_port;
+int debug_port = -1;
 #ifndef XEN3
 static int xen_misdirect_handler(void *);
 #endif
