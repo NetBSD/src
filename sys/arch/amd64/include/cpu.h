@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.40 2008/01/05 21:37:25 yamt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.41 2008/01/05 21:40:57 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -135,12 +135,6 @@ struct cpu_info {
 	struct x86_cache_info ci_cinfo[CAI_COUNT];
 
 	char		*ci_gdt;
-
-	struct x86_64_tss	ci_doubleflt_tss;
-	struct x86_64_tss	ci_ddbipi_tss;
-
-	char *ci_doubleflt_stack;
-	char *ci_ddbipi_stack;
 
 	struct evcnt ci_ipi_events[X86_NIPI];
 
