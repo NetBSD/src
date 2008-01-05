@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile,v 1.14 2006/10/27 01:29:37 uwe Exp $
+#	$NetBSD: Makefile,v 1.15 2008/01/05 20:00:49 christos Exp $
 
 .include <bsd.own.mk>
 
+WARNS=4
 USE_SHLIBDIR=	yes
 
 PROPLIBDIR=${NETBSDSRCDIR}/common/lib/libprop
