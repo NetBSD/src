@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_syscall.c,v 1.6 2007/12/31 15:32:13 ad Exp $	*/
+/*	$NetBSD: sys_syscall.c,v 1.7 2008/01/05 12:53:56 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_syscall.c,v 1.6 2007/12/31 15:32:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_syscall.c,v 1.7 2008/01/05 12:53:56 dsl Exp $");
 
 #include <sys/syscall_stats.h>
 
@@ -84,11 +84,11 @@ SYS_SYSCALL(struct lwp *l, const struct CONCAT(SYS_SYSCALL, _args) *uap,
 		args64[i] = SCARG(uap, args[i]);
 #endif
 
-	error = trace_enter(l, code, code, NULL, TRACE_ARGS);
+	error = trace_enter(code, code, NULL, TRACE_ARGS);
 	if (__predict_false(error != 0))
 		return error;
 	error = callp->sy_call(l, &uap->args, rval);
-	trace_exit(l, code, TRACE_ARGS, rval, error);
+	trace_exit(code, TRACE_ARGS, rval, error);
 	return error;
 
 	#undef TRACE_ARGS
