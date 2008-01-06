@@ -1,4 +1,4 @@
-/*	$NetBSD: bios32.c,v 1.17 2007/12/09 20:27:47 jmcneill Exp $	*/
+/*	$NetBSD: bios32.c,v 1.17.2.1 2008/01/06 18:46:41 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bios32.c,v 1.17 2007/12/09 20:27:47 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bios32.c,v 1.17.2.1 2008/01/06 18:46:41 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,6 +110,7 @@ __KERNEL_RCSID(0, "$NetBSD: bios32.c,v 1.17 2007/12/09 20:27:47 jmcneill Exp $")
 #include <uvm/uvm.h>
 
 #include "ipmi.h"
+#include "opt_xen.h"
 
 #define	BIOS32_START	0xe0000
 #define	BIOS32_SIZE	0x20000
@@ -200,7 +201,11 @@ bios32_init()
 		smbios_entry.count = sh->count;
 
     		for (; pa < end; pa+= NBPG, eva+= NBPG)
+#ifdef XEN
+			pmap_kenter_ma(eva, pa, VM_PROT_READ);
+#else
 			pmap_kenter_pa(eva, pa, VM_PROT_READ);
+#endif
 
 		aprint_normal("SMBIOS rev. %d.%d @ 0x%lx (%d entries)\n",
 			    sh->majrev, sh->minrev, (u_long)sh->addr,
