@@ -1,4 +1,4 @@
-/* $NetBSD: ixp12x0_intr.c,v 1.15 2006/11/24 21:20:05 wiz Exp $ */
+/* $NetBSD: ixp12x0_intr.c,v 1.16 2008/01/06 03:45:27 matt Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp12x0_intr.c,v 1.15 2006/11/24 21:20:05 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp12x0_intr.c,v 1.16 2008/01/06 03:45:27 matt Exp $");
 
 /*
  * Interrupt support for the Intel ixp12x0
@@ -463,7 +463,6 @@ ixp12x0_intr_init(void)
 		evcnt_attach_dynamic(&iq->iq_ev, EVCNT_TYPE_INTR,
 				     NULL, "ixpintr", iq->iq_name);
 	}
-	current_intr_depth = 0;
 	current_spl_level = 0;
 	hardware_spl_level = 0;
 
