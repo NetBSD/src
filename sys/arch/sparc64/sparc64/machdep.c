@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.211 2007/12/09 22:04:32 martin Exp $ */
+/*	$NetBSD: machdep.c,v 1.212 2008/01/06 18:24:06 martin Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.211 2007/12/09 22:04:32 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.212 2008/01/06 18:24:06 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -152,8 +152,6 @@ int sigpid = 0;
 struct vm_map *exec_map = NULL;
 struct vm_map *mb_map = NULL;
 extern vaddr_t avail_end;
-
-int	physmem;
 
 extern	void *msgbufaddr;
 
