@@ -1,4 +1,4 @@
-/* $NetBSD: ras3.c,v 1.7 2005/12/24 21:22:47 perry Exp $ */
+/* $NetBSD: ras3.c,v 1.8 2008/01/06 21:53:08 martin Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -84,7 +84,7 @@ main(int argc, char *argv[])
 		}
 		if (fork() != 0) {
 			wait(&rv);
-			return (rv == 0);
+			return (WEXITSTATUS(rv) == 0);
 		}
 		if (execvp(argv[0],args) < 0) {
 			printf("exec failed\n");
