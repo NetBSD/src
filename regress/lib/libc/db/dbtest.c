@@ -1,4 +1,4 @@
-/*	$NetBSD: dbtest.c,v 1.14 2008/01/03 13:52:46 martin Exp $	*/
+/*	$NetBSD: dbtest.c,v 1.15 2008/01/06 19:42:33 martin Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)dbtest.c	8.17 (Berkeley) 9/1/94";
 #else
-__RCSID("$NetBSD: dbtest.c,v 1.14 2008/01/03 13:52:46 martin Exp $");
+__RCSID("$NetBSD: dbtest.c,v 1.15 2008/01/06 19:42:33 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -54,6 +54,7 @@ __RCSID("$NetBSD: dbtest.c,v 1.14 2008/01/03 13:52:46 martin Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 #include <unistd.h>
 #include <err.h>
 #include <db.h>
@@ -103,9 +104,11 @@ main(int argc, char *argv[])
 	size_t len;
 	int ch, oflags, sflag;
 	char *fname, *infoarg, *p, *t, buf[8 * 1024];
+	bool unlink_dbfile;
 
 	infoarg = NULL;
 	fname = NULL;
+	unlink_dbfile = false;
 	oflags = O_CREAT | O_RDWR;
 	sflag = 0;
 	while ((ch = getopt(argc, argv, "f:i:lo:s")) != -1)
@@ -164,6 +167,7 @@ main(int argc, char *argv[])
 		(void)snprintf(buf, sizeof(buf), "%s/__dbtest", q);
 		fname = buf;
 		(void)unlink(buf);
+		unlink_dbfile = true;
 	} else  if (!sflag)
 		(void)unlink(fname);
 
@@ -171,6 +175,8 @@ main(int argc, char *argv[])
 	    oflags, S_IRUSR | S_IWUSR, type, infop)) == NULL)
 		err(1, "Cannot dbopen `%s'", fname);
 	XXdbp = dbp;
+	if (unlink_dbfile)
+		(void)unlink(fname);
 
 	state = COMMAND;
 	for (lineno = 1;
@@ -328,7 +334,6 @@ lkey:			switch (command) {
 	if ((*dbp->close)(dbp))
 		err(1, "db->close failed");
 	(void)close(ofd);
-	(void)unlink(fname);
 	return 0;
 }
 
