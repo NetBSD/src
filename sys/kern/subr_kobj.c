@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kobj.c,v 1.3 2008/01/06 14:47:26 ad Exp $	*/
+/*	$NetBSD: subr_kobj.c,v 1.4 2008/01/06 15:13:07 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.3 2008/01/06 14:47:26 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.4 2008/01/06 15:13:07 jmcneill Exp $");
 
 #define	ELFSIZE		ARCH_ELFSIZE
 
@@ -961,7 +961,7 @@ kobj_read(kobj_t ko, void *base, size_t size, off_t off)
 		}
 		break;
 	case KT_MEMORY:
-		if (ko->ko_memsize != -1 && off + size >= ko->ko_memsize) {
+		if (ko->ko_memsize != -1 && off + size > ko->ko_memsize) {
 			kobj_error("kobj_read: preloaded object short");
 			error = EINVAL;
 		} else {
