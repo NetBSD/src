@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.75.6.4 2008/01/06 18:46:41 bouyer Exp $
+#	$NetBSD: files.xen,v 1.75.6.5 2008/01/06 20:35:44 bouyer Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -190,7 +190,7 @@ file arch/xen/xenbus/xenbus_xs.c xenbus & xen3 needs-flag
 ifdef i386
 # Numeric Processing Extension; Math Co-processor
 device	npx
-file	arch/xen/i386/npx.c		npx needs-flag
+file	arch/i386/isa/npx.c		npx needs-flag
 
 attach	npx at xendevbus with npx_hv
 file	arch/xen/i386/npx_hv.c		npx_hv
