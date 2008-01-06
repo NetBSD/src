@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.20.6.2 2008/01/05 23:39:48 bouyer Exp $	*/
+/*	$NetBSD: intr.h,v 1.20.6.3 2008/01/06 18:27:56 bouyer Exp $	*/
 /*	NetBSD intr.h,v 1.15 2004/10/31 10:39:34 yamt Exp	*/
 
 /*-
@@ -126,11 +126,6 @@ void spllower(int);
 void softintr(int);
 
 #define SPL_ASSERT_BELOW(x) KDASSERT(curcpu()->ci_ilevel < (x))
-
-/*
- * Software interrupt masks
- */
-#define splsoftxenevt()	splraise(IPL_SOFTXENEVT)
 
 /*
  * Miscellaneous
