@@ -1,4 +1,4 @@
-/*	$NetBSD: i80200_irq.S,v 1.14 2007/03/09 19:21:59 thorpej Exp $	*/
+/*	$NetBSD: i80200_irq.S,v 1.15 2008/01/06 03:45:27 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -55,7 +55,7 @@
 	.align	0
 
 .Lcurrent_intr_depth: 
-	.word	_C_LABEL(current_intr_depth)
+	.word	_C_LABEL(cpu_info_store) + CI_IDEPTH
 
 .Lintr_dispatch:
 	.word	_C_LABEL(i80200_extirq_dispatch)
@@ -141,8 +141,4 @@ ASENTRY_NP(irq_entry)
 
 	.global _C_LABEL(astpending)
 _C_LABEL(astpending):
-	.word	0
-
-	.global	_C_LABEL(current_intr_depth)
-_C_LABEL(current_intr_depth):
 	.word	0

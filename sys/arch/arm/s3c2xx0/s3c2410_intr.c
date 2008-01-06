@@ -1,4 +1,4 @@
-/* $NetBSD: s3c2410_intr.c,v 1.7 2008/01/06 01:37:55 matt Exp $ */
+/* $NetBSD: s3c2410_intr.c,v 1.8 2008/01/06 03:45:27 matt Exp $ */
 
 /*
  * Copyright (c) 2003  Genetec corporation.  All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2410_intr.c,v 1.7 2008/01/06 01:37:55 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2410_intr.c,v 1.8 2008/01/06 03:45:27 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,7 +102,7 @@ s3c2410_irq_handler(struct clockframe *frame)
 	saved_spl_level = current_spl_level;
 
 #ifdef	DIAGNOSTIC
-	if (current_intr_depth > 10)
+	if (curcpu()->ci_idepth > 10)
 		panic("nested intr too deep");
 #endif
 
