@@ -1,0 +1,67 @@
+The NetBSD iSCSI HOWTO
+======================
+
+This document is intended to tell you how to set up an iSCSI target on
+a NetBSD host, so that block storage can be presented to the network. 
+It then goes on to show how to connect to that storage using the
+Microsoft iSCSI initiator (version 1.06, running on Windows XP).
+
+
+1. Configuring the NetBSD iSCSI target
+======================================
+
+1.1. Decide what storage will be presented
+
+The iSCSI target serves up block storage to clients on the network.
+These clients are called "initiators". Firstly, we must decide how
+much storage we are going to serve up, and for this document, we
+will serve up 100 MB. It will be in a file called /tmp/iscsi-target0.
+
+So we must first edit /etc/iscsi/targets, so that it contains the
+following lines:
+
+	# extent        file or device          start           length
+	extent0         /tmp/iscsi-target0      0               100MB
+
+	# target        flags   storage                 netmask
+	target0         rw      extent0                 0/0
+
+The extent definition tells the file which is used as backing
+store. It is persistent, so that the target can serve up the
+same storage after reboot. Its length is 100 MB, and there is
+no offset into the file for the start of the extent. (An offset
+is useful if you need to skip over MBRs, or disklabels).
+
+The extent is mounted read-write by "target0", and is served up
+to any host (the 0.0.0.0/0 netmask).
+
+1.2. Start the iscsi-target
+
+Issue the command:
+
+	# /etc/rc.d/iscsi_target forcestart
+
+and you should see the messages from the iscsi-target:
+
+	Starting iscsi_target.
+	Reading configuration from `/etc/iscsi/targets'
+	target0:rw:0/0
+		extent0:/tmp/iscsi-target0:0:104857600
+	DISK: 1 logical units (204800 blocks, 512 bytes/block), type iscsi fs
+	DISK: LU 0: 100 MB disk storage for "target0"
+	TARGET: TargetName is iqn.1994-04.org.netbsd.iscsi-target
+
+1.3 You're done!
+
+Congratulations - your iSCSI target is now up and running and
+serving blocks to initiators.
+
+
+
+2. Configuring the Microsoft iSCSI initiator, version 1.06
+==========================================================
+
+Please see the relevant documentation on setting up iSCSI initiators.
+
+Alistair Crooks
+Sun Jan  6 10:38:19 GMT 2008
