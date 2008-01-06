@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.205 2008/01/06 13:41:28 martin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.206 2008/01/06 18:07:16 martin Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.205 2008/01/06 13:41:28 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.206 2008/01/06 18:07:16 martin Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -1123,12 +1123,6 @@ pmap_bootstrap(u_long kernelstart, u_long kernelend)
 	for (mp = avail; mp->size; mp++)
 		avail_end = mp->start+mp->size;
 
-	/*
-	 * Can not do this earlier, with LOCKDEBUG it needs a working
-	 * curcpu() - which requires the per-CPU mappings done above.
-	 */
-	mutex_init(&pmap_lock, MUTEX_DEFAULT, IPL_NONE);
-
 	BDPRINTF(PDB_BOOT1, ("Finished pmap_bootstrap()\n"));
 
 	BDPRINTF(PDB_BOOT, ("left kdata: %" PRId64 " @%" PRIx64 ".\n",
@@ -1187,6 +1181,8 @@ pmap_init()
 
 	vm_first_phys = avail_start;
 	vm_num_phys = avail_end - avail_start;
+
+	mutex_init(&pmap_lock, MUTEX_DEFAULT, IPL_NONE);
 }
 
 /*
