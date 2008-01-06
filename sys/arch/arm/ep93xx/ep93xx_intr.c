@@ -1,4 +1,4 @@
-/* $NetBSD: ep93xx_intr.c,v 1.10 2008/01/06 01:37:53 matt Exp $ */
+/* $NetBSD: ep93xx_intr.c,v 1.11 2008/01/06 03:45:26 matt Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ep93xx_intr.c,v 1.10 2008/01/06 01:37:53 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ep93xx_intr.c,v 1.11 2008/01/06 03:45:26 matt Exp $");
 
 /*
  * Interrupt support for the Cirrus Logic EP93XX
@@ -404,7 +404,6 @@ ep93xx_intr_init(void)
 				     NULL, (i < VIC_NIRQ ? "vic1" : "vic2"),
 		                     iq->iq_name);
 	}
-	current_intr_depth = 0;
 	current_spl_level = 0;
 	hardware_spl_level = 0;
 
