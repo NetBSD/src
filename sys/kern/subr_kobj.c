@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kobj.c,v 1.4 2008/01/06 15:13:07 jmcneill Exp $	*/
+/*	$NetBSD: subr_kobj.c,v 1.5 2008/01/06 18:03:58 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -66,8 +66,10 @@
  * TODO: adjust kmem_alloc() calls to avoid needless fragmentation.
  */
 
+#include "opt_modular.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.4 2008/01/06 15:13:07 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.5 2008/01/06 18:03:58 ad Exp $");
 
 #define	ELFSIZE		ARCH_ELFSIZE
 
@@ -88,6 +90,8 @@ __KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.4 2008/01/06 15:13:07 jmcneill Exp $
 #include <machine/stdarg.h>
 
 #include <uvm/uvm_extern.h>
+
+#ifdef MODULAR
 
 typedef struct {
 	void		*addr;
@@ -975,3 +979,56 @@ kobj_read(kobj_t ko, void *base, size_t size, off_t off)
 
 	return error;
 }
+
+#else	/* MODULAR */
+
+int
+kobj_open_file(kobj_t *kop, const char *name, const char *filename)
+{
+
+	return ENOSYS;
+}
+
+int
+kobj_open_mem(kobj_t *kop, const char *name, void *base, ssize_t size)
+{
+
+	return ENOSYS;
+}
+
+void
+kobj_close(kobj_t ko)
+{
+
+	panic("not modular");
+}
+
+int
+kobj_load(kobj_t ko)
+{
+
+	panic("not modular");
+}
+
+void
+kobj_unload(kobj_t ko)
+{
+
+	panic("not modular");
+}
+
+void
+kobj_stat(kobj_t ko, vaddr_t *base, size_t *size, uintptr_t *entry)
+{
+
+	panic("not modular");
+}
+
+void
+kobj_set_name(kobj_t ko, const char *name)
+{
+
+	panic("not modular");
+}
+
+#endif	/* MODULAR */
