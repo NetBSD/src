@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_irqhandler.c,v 1.19 2008/01/04 16:09:54 ad Exp $	*/
+/*	$NetBSD: footbridge_irqhandler.c,v 1.20 2008/01/06 12:17:13 chris Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0,"$NetBSD: footbridge_irqhandler.c,v 1.19 2008/01/04 16:09:54 ad Exp $");
+__KERNEL_RCSID(0,"$NetBSD: footbridge_irqhandler.c,v 1.20 2008/01/06 12:17:13 chris Exp $");
 
 #include "opt_irqstats.h"
 
@@ -365,11 +365,8 @@ footbridge_intr_dispatch(struct clockframe *frame)
 	struct intrq *iq;
 	struct intrhand *ih;
 	int oldirqstate, pcpl, irq, ibit, hwpend;
-	struct cpu_info *ci;
 
 	pcpl = current_spl_level;
-	ci = curcpu();
-	ci->ci_idepth++;
 
 	hwpend = footbridge_intstatus();
 
@@ -420,7 +417,6 @@ footbridge_intr_dispatch(struct clockframe *frame)
 		 * that we can handle at this spl level */
 		hwpend |= (footbridge_ipending & ICU_INT_HWMASK) & ~pcpl;
 	}
-	ci->ci_idepth--;
 
 	/* Check for pendings soft intrs. */
         if ((footbridge_ipending & INT_SWMASK) & ~current_spl_level) {
