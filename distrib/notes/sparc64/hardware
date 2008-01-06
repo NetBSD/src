@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.17.10.2.2.2 2007/09/03 06:57:36 wrstuden Exp $
+.\"	$NetBSD: hardware,v 1.17.10.2.2.3 2008/01/06 05:00:28 wrstuden Exp $
 .
 .Ss2 Supported machines
 The minimal configuration requires 32 MB of RAM and ~60 MB of disk space.
@@ -97,6 +97,8 @@ Systems with an UltraSPARC IV CPU
 .\" Fire E2900
 .\" Fire E4900
 .\" Fire E6900
+.It
+Systems with an UltraSPARC T1 or T2
 .bullet)
 .
 .Ss2 Supported devices
@@ -138,10 +140,17 @@ All on-board frame buffers
 Unless otherwise specified, only text console is supported
 .br
 .It
-On-board and SBUS card (GX, GX+, TGX, TGX+)
+On-board and SBUS card
+.Pq GX, GX+, TGX, TGX+
 .Pq Em cgsix
 .br
 8 bpp accelerated framebuffer.
+Accelerated X via the integrated XFree.
+.It
+UPA devices
+.Pq ffb and afb, also called Creator3D
+24 bpp accelerated framebuffer.
+Accelerated X via the integrated XFree.
 .bullet)
 .It
 SCSI host controllers

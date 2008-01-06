@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.232.4.1 2007/09/03 07:04:06 wrstuden Exp $	*/
+/*	$NetBSD: locore.s,v 1.232.4.2 2008/01/06 05:00:59 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -6875,7 +6875,6 @@ Lsw_panic_srun:
  * IT MIGHT BE WORTH SAVING BEFORE ENTERING idle TO AVOID HAVING TO
  * SAVE LATER WHEN SOMEONE ELSE IS READY ... MUST MEASURE!
  */
-	.globl	_C_LABEL(time)
 ENTRY(cpu_switch)
 	/*
 	 * REGISTER USAGE AT THIS POINT:

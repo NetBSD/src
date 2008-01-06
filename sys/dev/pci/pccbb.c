@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.137.4.1 2007/09/03 07:04:37 wrstuden Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.137.4.2 2008/01/06 05:01:07 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.137.4.1 2007/09/03 07:04:37 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.137.4.2 2008/01/06 05:01:07 wrstuden Exp $");
 
 /*
 #define CBB_DEBUG
@@ -78,11 +78,6 @@ __KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.137.4.1 2007/09/03 07:04:37 wrstuden Exp
 #include <dev/pci/pccbbvar.h>
 
 #include "locators.h"
-
-#if defined(__i386__)
-#include "ioapic.h"
-#include "acpi.h"
-#endif
 
 #ifndef __NetBSD_Version__
 struct cfdriver cbb_cd = {
@@ -427,6 +422,9 @@ pccbbattach(struct device *parent, struct device *self, void *aux)
 	pccbb_attach_hook(parent, self, pa);
 #endif
 
+	callout_init(&sc->sc_insert_ch);
+	callout_setfunc(&sc->sc_insert_ch, pci113x_insert, sc);
+
 	sc->sc_chipset = cb_chipset(pa->pa_id, &flags);
 
 	pci_devinfo(pa->pa_id, 0, 0, devinfo, sizeof(devinfo));
@@ -503,22 +501,6 @@ pccbbattach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_mem_start = 0;	       /* XXX */
 	sc->sc_mem_end = 0xffffffff;   /* XXX */
-
-	/*
-	 * When interrupt isn't routed correctly, give up probing cbb and do
-	 * not kill pcic-compatible port.
-	 *
-	 * However, if we are using an ioapic, avoid this check -- pa_intrline
-	 * may well be zero, with the interrupt routed through the apic.
-	 */
-
-#if NIOAPIC == 0 && NACPI == 0
-	if ((0 == pa->pa_intrline) || (255 == pa->pa_intrline)) {
-    		printf("%s: NOT USED because of unconfigured interrupt\n",
-		    sc->sc_dev.dv_xname);
-		return;
-	}
-#endif
 
 	busreg = pci_conf_read(pc, pa->pa_tag, PCI_BUSNUM);
 
@@ -1075,8 +1057,7 @@ pccbbintr(void *arg)
 			if (sc->sc_flags & CBB_INSERTING) {
 				callout_stop(&sc->sc_insert_ch);
 			}
-			callout_reset(&sc->sc_insert_ch, hz / 5,
-			    pci113x_insert, sc);
+			callout_schedule(&sc->sc_insert_ch, hz / 5);
 			sc->sc_flags |= CBB_INSERTING;
 		}
 	}
@@ -1185,8 +1166,7 @@ pci113x_insert(void *arg)
 			/* who are you? */
 		}
 	} else {
-		callout_reset(&sc->sc_insert_ch, hz / 10,
-		    pci113x_insert, sc);
+		callout_schedule(&sc->sc_insert_ch, hz / 10);
 	}
 }
 

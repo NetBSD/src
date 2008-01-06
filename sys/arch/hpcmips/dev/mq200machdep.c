@@ -1,4 +1,4 @@
-/*	$NetBSD: mq200machdep.c,v 1.4 2005/12/11 12:17:33 christos Exp $	*/
+/*	$NetBSD: mq200machdep.c,v 1.4.40.1 2008/01/06 05:00:55 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001 TAKEMURA Shin
@@ -31,7 +31,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mq200machdep.c,v 1.4 2005/12/11 12:17:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mq200machdep.c,v 1.4.40.1 2008/01/06 05:00:55 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -171,6 +171,9 @@ static struct mq200_md_param machdep_params[] = {
 		MQ200_MM01_SLOW_REFRESH_EN |
 		(0x143e << MQ200_MM01_REFRESH_SHIFT),
 	},
+	{
+		NULL		/* md_platform */
+	}
 };
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.c,v 1.3 2006/08/17 20:13:31 plunky Exp $	*/
+/*	$NetBSD: profile.c,v 1.3.4.1 2008/01/06 05:01:18 wrstuden Exp $	*/
 
 /*
  * profile.c
@@ -27,12 +27,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: profile.c,v 1.3 2006/08/17 20:13:31 plunky Exp $
+ * $Id: profile.c,v 1.3.4.1 2008/01/06 05:01:18 wrstuden Exp $
  * $FreeBSD: src/usr.sbin/bluetooth/sdpd/profile.c,v 1.2 2004/07/28 07:15:44 kan Exp $
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: profile.c,v 1.3 2006/08/17 20:13:31 plunky Exp $");
+__RCSID("$NetBSD: profile.c,v 1.3.4.1 2008/01/06 05:01:18 wrstuden Exp $");
 
 #include <sys/queue.h>
 #include <sys/utsname.h>
@@ -74,7 +74,7 @@ profile_get_descriptor(uint16_t uuid)
 	int32_t			i;
 
 	for (i = 0; i < sizeof(profiles)/sizeof(profiles[0]); i++)
-		if (profiles[i]->uuid == uuid)
+		if (profiles[i]->uuid[0] == uuid)
 			return (profiles[i]);
 
 	return (NULL);

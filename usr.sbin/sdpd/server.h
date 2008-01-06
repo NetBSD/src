@@ -1,4 +1,4 @@
-/*	$NetBSD: server.h,v 1.1.6.1 2007/10/29 00:45:25 wrstuden Exp $	*/
+/*	$NetBSD: server.h,v 1.1.6.2 2008/01/06 05:01:19 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -55,7 +55,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: server.h,v 1.1.6.1 2007/10/29 00:45:25 wrstuden Exp $
+ * $Id: server.h,v 1.1.6.2 2008/01/06 05:01:19 wrstuden Exp $
  * $FreeBSD: src/usr.sbin/bluetooth/sdpd/server.h,v 1.2 2005/12/06 17:56:36 emax Exp $
  */
 
@@ -108,6 +108,8 @@ typedef struct server *	server_p;
 int32_t	server_init(server_p srv, const char *control, char const *sgroup);
 void	server_shutdown(server_p srv);
 int32_t	server_do(server_p srv);
+
+int	server_get_service_search_pattern(uint8_t const **buf, uint8_t const *end, uint128_t *uuid);
 
 int32_t	server_prepare_service_search_response(server_p srv, int32_t fd);
 int32_t	server_send_service_search_response(server_p srv, int32_t fd);

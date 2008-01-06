@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.de,v 1.33.4.1 2007/10/01 16:51:50 wrstuden Exp $	*/
+/*	$NetBSD: msg.mi.de,v 1.33.4.2 2008/01/06 05:00:33 wrstuden Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1001,3 +1001,13 @@ System gestartet ist, müssen Sie das neu erstellte /emul/aout mit dem alten
 Verzeichnis abgleichen.
 }
 .endif
+
+message oldsendmail
+{Sendmail ist nicht länger integrierter Bestandteil von NetBSD.
+Der Standard MTA ist nun Postfix. Ihr System benutzt derzeit
+eine Konfiguration in /etc/mailer.conf, die auf das nicht mehr
+vorhandene Sendmail-Programm verweist. 
+Möchten Sie /etc/mailer.conf automatisch auf eine Version für
+Postfix umstellen? Falls Sie "Nein" wählen, müssen Sie anschließend
+manuell /etc/mailer.conf korrigieren, um funktionierende Mailauslieferung
+zu gewährleisten.}

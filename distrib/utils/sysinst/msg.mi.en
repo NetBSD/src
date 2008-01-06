@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.146 2006/09/04 02:20:40 hubertf Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.146.4.1 2008/01/06 05:00:34 wrstuden Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -944,3 +944,10 @@ Once you bring your upgraded system back up, you may need to take care
 of merging the newly created /emul/aout directory with the old one.
 }
 .endif
+
+message oldsendmail
+{Sendmail is no longer in this release of NetBSD, default MTA is
+postfix. The file /etc/mailer.conf still chooses the removed
+sendmail. Do you want to upgrade /etc/mailer.conf automatically for
+postfix? If you choose "No" you will have to update /etc/mailer.conf
+yourself to ensure proper email delivery.}

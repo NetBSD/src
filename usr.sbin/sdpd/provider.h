@@ -1,4 +1,4 @@
-/*	$NetBSD: provider.h,v 1.1 2006/06/19 15:44:56 gdamore Exp $	*/
+/*	$NetBSD: provider.h,v 1.1.6.1 2008/01/06 05:01:19 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -55,7 +55,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: provider.h,v 1.1 2006/06/19 15:44:56 gdamore Exp $
+ * $Id: provider.h,v 1.1.6.1 2008/01/06 05:01:19 wrstuden Exp $
  * $FreeBSD: src/usr.sbin/bluetooth/sdpd/provider.h,v 1.1 2004/01/20 20:48:26 emax Exp $
  */
 
@@ -100,6 +100,9 @@ provider_p	provider_by_handle		(uint32_t handle);
 provider_p	provider_get_first		(void);
 provider_p	provider_get_next		(provider_p provider);
 uint32_t	provider_get_change_state	(void);
+
+int		provider_match_uuid		(provider_p provider,
+						 uint128_t *ulist, int ucount);
 
 int32_t server_prepare_attr_list(provider_p const, uint8_t const *, uint8_t const *,
 		uint8_t *, uint8_t const *);

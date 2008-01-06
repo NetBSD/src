@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.486.2.2.2.2 2007/09/03 06:57:44 wrstuden Exp $
+#	$NetBSD: 3RDPARTY,v 1.486.2.2.2.3 2008/01/06 05:00:38 wrstuden Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -716,8 +716,8 @@ Notes:
 Beta versions are available from Purdue (ftp.cs.purdue.edu:/pub/RCS).
 
 Package:	root.cache
-Version:	2004012900 (Jan 29, 2004)
-Current Vers:	2004012900 (Jan 29, 2004)
+Version:	2007110100 (Nov 01, 2007)
+Current Vers:	2007110100 (Nov 01, 2007)
 Maintainer:	InterNIC
 Archive Site:	ftp://ftp.internic.net/domain/named.root
 Home Page:	ftp://ftp.internic.net/domain/named.root
@@ -845,8 +845,8 @@ License:	BSD (4-clause)
 Notes:
 
 Package:	tz
-Version:	tzcode2004a / tzdata2007a
-Current Vers:	tzcode2007a / tzdata2007a
+Version:	tzcode2004a / tzdata2007h
+Current Vers:	tzcode2007h / tzdata2007h
 Maintainer:	Arthur David Olson <ado@elsie.nci.nih.gov>
 Archive Site:	ftp://elsie.nci.nih.gov/pub/
 Home Page:

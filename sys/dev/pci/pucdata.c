@@ -1,4 +1,4 @@
-/*	$NetBSD: pucdata.c,v 1.49.2.1 2007/02/18 14:03:29 tron Exp $	*/
+/*	$NetBSD: pucdata.c,v 1.49.2.1.2.1 2008/01/06 05:01:10 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.49.2.1 2007/02/18 14:03:29 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.49.2.1.2.1 2008/01/06 05:01:10 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1209,7 +1209,7 @@ const struct puc_device_description puc_devices[] = {
 	    },
 	},
 	{   "EXAR XR17D158",
-	    {   0x13a8, 0x0154, 0,      0       },
+	    {   0x13a8, 0x0158, 0,      0       },
 	    {   0xffff, 0xffff, 0,      0       },
 	    {
 		{ PUC_PORT_TYPE_COM, 0x10, 0x0000, COM_FREQ * 8 },

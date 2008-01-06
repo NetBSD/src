@@ -1,4 +1,4 @@
-.\"	$NetBSD: ln.1,v 1.21 2006/10/07 10:05:25 elad Exp $
+.\"	$NetBSD: ln.1,v 1.21.4.1 2008/01/06 05:00:09 wrstuden Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	@(#)ln.1	8.2 (Berkeley) 12/30/93
 .\"
-.Dd October 7, 2006
+.Dd October 29, 2007
 .Dt LN 1
 .Os
 .Sh NAME
@@ -73,7 +73,9 @@ or
 .Ar target_dir
 is a symbolic link, do not follow it.
 This is most useful with the
-.Fl i
+.Fl f
+option, to replace a symlink which may point to a directory.
+.It Fl i
 Cause
 .Nm
 to write a prompt to standard error if the target file exists.
@@ -85,11 +87,9 @@ then unlink the target file so that the link may occur.
 Otherwise, do not attempt the link.
 (The
 .Fl i
-option override any previous
+option overrides any previous
 .Fl f
 options.)
-.Fl f
-option, to replace a symlink which may point to a directory.
 .It Fl n
 Same as
 .Fl h ,

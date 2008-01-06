@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnx.c,v 1.1.4.4.2.1 2007/09/03 07:04:30 wrstuden Exp $	*/
+/*	$NetBSD: if_bnx.c,v 1.1.4.4.2.2 2008/01/06 05:01:05 wrstuden Exp $	*/
 /*	$OpenBSD: if_bnx.c,v 1.43 2007/01/30 03:21:10 krw Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/dev/bce/if_bce.c,v 1.3 2006/04/13 14:12:26 ru Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.1.4.4.2.1 2007/09/03 07:04:30 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.1.4.4.2.2 2008/01/06 05:01:05 wrstuden Exp $");
 
 /*
  * The following controllers are supported by this driver:
@@ -424,7 +424,7 @@ bnx_attach(struct device *parent, struct device *self, void *aux)
 		panic("unknown device");
 
 	aprint_naive("\n");
-	aprint_normal(": %s", bp->bp_name);
+	aprint_normal(": %s\n", bp->bp_name);
 
 	sc->bnx_pa = *pa;
 

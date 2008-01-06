@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.678.2.4.2.1 2007/09/03 06:57:37 wrstuden Exp $
+# $NetBSD: mi,v 1.678.2.4.2.2 2008/01/06 05:00:29 wrstuden Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -2871,16 +2871,6 @@
 ./usr/share/nls/sk/libc.cat			base-locale-sk		nls
 ./usr/share/nls/sv				base-locale-sv
 ./usr/share/nls/sv/libc.cat			base-locale-sv		nls
-./usr/share/sendmail				base-obsolete		obsolete
-./usr/share/sendmail/cf				base-obsolete		obsolete
-./usr/share/sendmail/domain			base-obsolete		obsolete
-./usr/share/sendmail/feature			base-obsolete		obsolete
-./usr/share/sendmail/hack			base-obsolete		obsolete
-./usr/share/sendmail/m4				base-obsolete		obsolete
-./usr/share/sendmail/mailer			base-obsolete		obsolete
-./usr/share/sendmail/ostype			base-obsolete		obsolete
-./usr/share/sendmail/sh				base-obsolete		obsolete
-./usr/share/sendmail/siteconfig			base-obsolete		obsolete
 ./usr/share/sushi				base-obsolete	obsolete
 ./usr/share/sushi/help				base-obsolete	obsolete
 ./usr/share/sushi/index				base-obsolete	obsolete
@@ -3385,8 +3375,10 @@
 ./usr/share/zoneinfo/America/Indiana/Knox	base-sys-share		share
 ./usr/share/zoneinfo/America/Indiana/Marengo	base-sys-share		share
 ./usr/share/zoneinfo/America/Indiana/Petersburg	base-sys-share		share
+./usr/share/zoneinfo/America/Indiana/Tell_City	base-sys-share		share
 ./usr/share/zoneinfo/America/Indiana/Vevay	base-sys-share		share
 ./usr/share/zoneinfo/America/Indiana/Vincennes	base-sys-share		share
+./usr/share/zoneinfo/America/Indiana/Winamac	base-sys-share		share
 ./usr/share/zoneinfo/America/Indianapolis	base-sys-share		share
 ./usr/share/zoneinfo/America/Inuvik		base-sys-share		share
 ./usr/share/zoneinfo/America/Iqaluit		base-sys-share		share
@@ -3437,6 +3429,7 @@
 ./usr/share/zoneinfo/America/Rankin_Inlet	base-sys-share		share
 ./usr/share/zoneinfo/America/Recife		base-sys-share		share
 ./usr/share/zoneinfo/America/Regina		base-sys-share		share
+./usr/share/zoneinfo/America/Resolute		base-sys-share		share
 ./usr/share/zoneinfo/America/Rio_Branco		base-sys-share		share
 ./usr/share/zoneinfo/America/Rosario		base-sys-share		share
 ./usr/share/zoneinfo/America/Santiago		base-sys-share		share
@@ -3891,7 +3884,9 @@
 ./usr/share/zoneinfo/W-SU			base-sys-share		share
 ./usr/share/zoneinfo/WET			base-sys-share		share
 ./usr/share/zoneinfo/Zulu			base-sys-share		share
+./usr/share/zoneinfo/iso3166.tab		base-sys-share		share
 ./usr/share/zoneinfo/posixrules			base-sys-share		share
+./usr/share/zoneinfo/zone.tab			base-sys-share		share
 ./var						base-sys-root
 ./var/account					base-sys-root
 ./var/at					base-cron-root

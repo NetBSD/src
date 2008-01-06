@@ -1,4 +1,4 @@
-.\"	$NetBSD: mk.conf.5,v 1.33 2006/10/05 02:49:06 jnemeth Exp $
+.\"	$NetBSD: mk.conf.5,v 1.33.4.1 2008/01/06 05:00:44 wrstuden Exp $
 .\"
 .\"  Copyright (c) 1999-2003 The NetBSD Foundation, Inc.
 .\"  All rights reserved.
@@ -31,7 +31,7 @@
 .\"  TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 .\"  USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 23, 2006
+.Dd October 18, 2007
 .Dt MK.CONF 5
 .Os
 .\" turn off hyphenation
@@ -541,13 +541,6 @@ will compare file timestamps before installing, and skip the install
 phase if the destination files are up-to-date.
 This also has implications on full builds (see next subsection).
 .DFLTn
-.
-.It Sy MKUUCP
-.YorN
-Indicates whether
-.Xr uucp 1
-and related programs are built.
-.DFLTy
 .
 .It Sy MKYP
 .YorN

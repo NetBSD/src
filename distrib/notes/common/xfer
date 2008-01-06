@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.53.4.2 2007/09/30 20:27:41 wrstuden Exp $
+.\"	$NetBSD: xfer,v 1.53.4.3 2008/01/06 05:00:17 wrstuden Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -243,7 +243,7 @@ diskless.
 No file transfer is needed, and all you have to do is to prepare files on
 the server.
 More information about diskless setting can be found at
-.Lk http://www.NetBSD.org/Documentation/network/netboot/
+.Lk http://www.NetBSD.org/docs/network/netboot/
 .Pp
 .if \n[ews4800mips] \{\
 The PROM uses the ordinary tftp protocol, so
@@ -669,10 +669,10 @@ If you don't have access to a functioning nameserver during
 installation, the IPv4 address of
 .Sy ftp.NetBSD.org
 is
-.Li 204.152.184.36
+.Li 204.152.190.13
 and the IPv6 address is
-.Li 2001:4f8:1:c:230:48ff:fe31:43f2
-(as of December, 2006).
+.Li 2001:4f8:4:7:230:48ff:fe31:43f2
+(as of December, 2007).
 .Pp
 Once you have this information, you can proceed to the next
 step in the installation or upgrade process.
@@ -729,7 +729,7 @@ by the machine on which you are installing or upgrading
 .Nx .
 This will probably require modifying the
 .Pa /etc/exports
-file on of the NFS server and resetting its mount daemon (mountd).
+file on the NFS server and resetting its mount daemon (mountd).
 (Both of these actions will probably require superuser
 privileges on the server.)
 .Pp
@@ -802,14 +802,14 @@ are the
 distribution sets' directories, for the distribution sets you
 wish to place on the tape.
 For instance, to put the
-.Sy misc, base, No and Sy etc
+.Sy kern-GENERIC, base, No and Sy etc
 distributions on tape (in
 order to do the absolute minimum installation to a new disk),
 you would do the following:
 .Pp
 .Dl # Ic "cd \&.../NetBSD-\*V"
 .Dl # Ic "cd \*M/binary"
-.Dl # Ic "tar -cf" Ar tape_device Ic "misc etc kern"
+.Dl # Ic "tar -cf" Ar tape_device Ic "kern-GENERIC base etc"
 .Pp
 .(Note
 You still need to fill in

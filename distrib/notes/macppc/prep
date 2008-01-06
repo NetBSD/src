@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.41 2004/08/27 16:53:13 wiz Exp $
+.\"	$NetBSD: prep,v 1.41.12.1 2008/01/06 05:00:23 wrstuden Exp $
 .
 .Ss2 Prepare yourself
 .
@@ -35,7 +35,7 @@ but depending on your model it may be almost as painful as learning a
 little
 .Tn MacOS .
 See the FAQ for more help:
-.Lk http://www.NetBSD.org/Ports/macppc/faq.html#macos-newbie
+.Lk http://www.NetBSD.org/ports/macppc/faq.html#macos-newbie
 .Pp
 It's done printing?  Fine, time to get started.
 .Pp
@@ -45,7 +45,7 @@ Go to the
 .Nx*M
 model support page and look up your model information and issues (I can't
 stress this enough times).
-.Lk http://www.NetBSD.org/Ports/macppc/models.html
+.Lk http://www.NetBSD.org/ports/macppc/models.html
 .Pp
 .It
 Spend about 15 minutes and read through this document from this point onward.

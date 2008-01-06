@@ -1,4 +1,4 @@
-/*	$NetBSD: ssr.c,v 1.1 2006/06/19 15:44:56 gdamore Exp $	*/
+/*	$NetBSD: ssr.c,v 1.1.6.1 2008/01/06 05:01:19 wrstuden Exp $	*/
 
 /*
  * ssr.c
@@ -27,12 +27,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: ssr.c,v 1.1 2006/06/19 15:44:56 gdamore Exp $
+ * $Id: ssr.c,v 1.1.6.1 2008/01/06 05:01:19 wrstuden Exp $
  * $FreeBSD: src/usr.sbin/bluetooth/sdpd/ssr.c,v 1.3 2005/01/05 18:37:37 emax Exp $
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ssr.c,v 1.1 2006/06/19 15:44:56 gdamore Exp $");
+__RCSID("$NetBSD: ssr.c,v 1.1.6.1 2008/01/06 05:01:19 wrstuden Exp $");
 
 #include <sys/queue.h>
 #include <sys/uio.h>
@@ -49,21 +49,118 @@ __RCSID("$NetBSD: ssr.c,v 1.1 2006/06/19 15:44:56 gdamore Exp $");
 #include "uuid-private.h"
 
 /*
+ * Extract ServiceSearchPattern from request to uuid array
+ *	return count or 0 if error
+ */
+int
+server_get_service_search_pattern(uint8_t const **buf, uint8_t const *end, uint128_t *uuid)
+{
+	uint8_t const *req = *buf;
+	uint32_t type, ssplen;
+	int count;
+
+	if (req + 1 > end)
+		return 0;
+
+	SDP_GET8(type, req);
+
+	ssplen = 0;
+	switch (type) {
+	case SDP_DATA_SEQ8:
+		if (req + 1 > end)
+			return 0;
+
+		SDP_GET8(ssplen, req);
+		break;
+
+	case SDP_DATA_SEQ16:
+		if (req + 2 > end)
+			return 0;
+
+		SDP_GET16(ssplen, req);
+		break;
+
+	case SDP_DATA_SEQ32:
+		if (req + 4 > end)
+			return 0;
+
+		SDP_GET32(ssplen, req);
+		break;
+
+	default:
+		return 0;
+	}
+
+	if (req + ssplen > end)
+		return 0;
+
+	count = 0;
+	while (ssplen > 0) {
+		if (count == 12)
+			return 0;
+
+		SDP_GET8(type, req);
+		ssplen--;
+
+		switch (type) {
+		case SDP_DATA_UUID16:
+			if (ssplen < 2)
+				return 0;
+
+			memcpy(uuid, &uuid_base, sizeof(*uuid));
+			uuid->b[2] = *req++;
+			uuid->b[3] = *req++;
+			ssplen -= 2;
+			break;
+
+		case SDP_DATA_UUID32:
+			if (ssplen < 4)
+				return 0;
+
+			memcpy(uuid, &uuid_base, sizeof(*uuid));
+			uuid->b[0] = *req++;
+			uuid->b[1] = *req++;
+			uuid->b[2] = *req++;
+			uuid->b[3] = *req++;
+			ssplen -= 4;
+			break;
+
+		case SDP_DATA_UUID128:
+			if (ssplen < 16)
+				return 0;
+
+			memcpy(uuid, req, 16);
+			req += 16;
+			ssplen -= 16;
+			break;
+
+		default:
+			return 0;
+		}
+
+		count++;
+		uuid++;
+	}
+
+	*buf = req;
+	return count;
+}
+
+/*
  * Prepare SDP Service Search Response
  */
 
 int32_t
 server_prepare_service_search_response(server_p srv, int32_t fd)
 {
-	uint8_t 	*req = srv->req + sizeof(sdp_pdu_t);
+	uint8_t const	*req = srv->req + sizeof(sdp_pdu_t);
 	uint8_t const	*req_end = req + ((sdp_pdu_p)(srv->req))->len;
 	uint8_t		*rsp = srv->fdidx[fd].rsp;
 	uint8_t const	*rsp_end = rsp + L2CAP_MTU_MAXIMUM;
 
-	uint8_t		*ptr = NULL;
 	provider_t	*provider = NULL;
-	int32_t		 type, ssplen, rsp_limit, rcount, cslen, cs;
-	uint128_t	 uuid, puuid;
+	int32_t		 ucount, rsp_limit, cslen, cs;
+	uint128_t	 ulist[12];
 
 	/*
 	 * Minimal SDP Service Search Request
@@ -74,50 +171,30 @@ server_prepare_service_search_response(server_p srv, int32_t fd)
 	 * value8		- 1 byte  ContinuationState
 	 */
 
-	if (req_end - req < 8)
+	/* Get ServiceSearchPattern into uuid array */
+	ucount = server_get_service_search_pattern(&req, req_end, ulist);
+	if (ucount < 1 || ucount > 12)
 		return (SDP_ERROR_CODE_INVALID_REQUEST_SYNTAX);
-
-	/* Get size of ServiceSearchPattern */
-	ssplen = 0;
-	SDP_GET8(type, req);
-	switch (type) {
-	case SDP_DATA_SEQ8:
-		SDP_GET8(ssplen, req);
-		break;
-
-	case SDP_DATA_SEQ16:
-		SDP_GET16(ssplen, req);
-		break;
-
-	case SDP_DATA_SEQ32:
-		SDP_GET32(ssplen, req);
-		break;
-	}
-	if (ssplen <= 0)
-		return (SDP_ERROR_CODE_INVALID_REQUEST_SYNTAX);
-
-	ptr = (uint8_t *) req + ssplen;
 
 	/* Get MaximumServiceRecordCount */
-	if (ptr + 2 > req_end)
+	if (req + 2 > req_end)
 		return (SDP_ERROR_CODE_INVALID_REQUEST_SYNTAX);
 
-	SDP_GET16(rsp_limit, ptr);
+	SDP_GET16(rsp_limit, req);
 	if (rsp_limit <= 0)
 		return (SDP_ERROR_CODE_INVALID_REQUEST_SYNTAX);
 
 	/* Get ContinuationState */
-	if (ptr + 1 > req_end)
+	if (req + 1 > req_end)
 		return (SDP_ERROR_CODE_INVALID_REQUEST_SYNTAX);
 
-	SDP_GET8(cslen, ptr);
-	if (cslen != 0) {
-		if (cslen != 2 || req_end - ptr != 2)
-			return (SDP_ERROR_CODE_INVALID_REQUEST_SYNTAX);
-
-		SDP_GET16(cs, ptr);
-	} else
+	SDP_GET8(cslen, req);
+	if (cslen == 2 && req + 2 == req_end)
+		SDP_GET16(cs, req);
+	else if (cslen == 0 && req == req_end)
 		cs = 0;
+	else
+		return (SDP_ERROR_CODE_INVALID_CONTINUATION_STATE);
 
 	/* Process the request. First, check continuation state */
 	if (srv->fdidx[fd].rsp_cs != cs)
@@ -132,79 +209,27 @@ server_prepare_service_search_response(server_p srv, int32_t fd)
 	 * value16	- 2 bytes CurrentServiceRecordCount (not incl.)
 	 * value32	- 4 bytes handle
 	 * [ value32 ]
-	 *
-	 * Calculate how many record handles we can fit
-	 * in our reply buffer and adjust rlimit.
 	 */
 
-	ptr = rsp;
-	rcount = (rsp_end - ptr) / 4;
-	if (rcount < rsp_limit)
-		rsp_limit = rcount;
+	/* Look for the record handles and add to the rsp buffer */
+	for (provider = provider_get_first();
+	     provider != NULL;
+	     provider = provider_get_next(provider)) {
+		if (!provider_match_bdaddr(provider, &srv->req_sa.bt_bdaddr))
+			continue;
 
-	/* Look for the record handles */
-	for (rcount = 0; ssplen > 0 && rcount < rsp_limit; ) {
-		SDP_GET8(type, req);
-		ssplen --;
+		if (!provider_match_uuid(provider, ulist, ucount))
+			continue;
 
-		switch (type) {
-		case SDP_DATA_UUID16:
-			if (ssplen < 2)
-				return (SDP_ERROR_CODE_INVALID_REQUEST_SYNTAX);
-
-			memcpy(&uuid, &uuid_base, sizeof(uuid));
-			uuid.b[2] = *req ++;
-			uuid.b[3] = *req ++;
-			ssplen -= 2;
+		if (rsp + 4 > rsp_end)
 			break;
 
-		case SDP_DATA_UUID32:
-			if (ssplen < 4)
-				return (SDP_ERROR_CODE_INVALID_REQUEST_SYNTAX);
-
-			memcpy(&uuid, &uuid_base, sizeof(uuid));
-			uuid.b[0] = *req ++;
-			uuid.b[1] = *req ++;
-			uuid.b[2] = *req ++;
-			uuid.b[3] = *req ++;
-			ssplen -= 4;
-			break;
-
-		case SDP_DATA_UUID128:
-			if (ssplen < 16)
-				return (SDP_ERROR_CODE_INVALID_REQUEST_SYNTAX);
-
-			memcpy(uuid.b, req, 16);
-			req += 16;
-			ssplen -= 16;
-			break;
-
-		default:
-			return (SDP_ERROR_CODE_INVALID_REQUEST_SYNTAX);
-			/* NOT REACHED */
-		}
-
-		for (provider = provider_get_first();
-		     provider != NULL && rcount < rsp_limit;
-		     provider = provider_get_next(provider)) {
-			if (!provider_match_bdaddr(provider, &srv->req_sa.bt_bdaddr))
-				continue;
-
-			memcpy(&puuid, &uuid_base, sizeof(puuid));
-			puuid.b[2] = provider->profile->uuid >> 8;
-			puuid.b[3] = provider->profile->uuid;
-
-			if (memcmp(&uuid, &puuid, sizeof(uuid)) == 0 ||
-			    memcmp(&uuid, &uuid_public_browse_group, sizeof(uuid)) == 0) {
-				SDP_PUT32(provider->handle, ptr);
-				rcount ++;
-			}
-		}
+		SDP_PUT32(provider->handle, rsp);
 	}
 
 	/* Set reply size (not counting PDU header and continuation state) */
 	srv->fdidx[fd].rsp_limit = srv->fdidx[fd].omtu - sizeof(sdp_pdu_t) - 4;
-	srv->fdidx[fd].rsp_size = ptr - rsp;
+	srv->fdidx[fd].rsp_size = rsp - srv->fdidx[fd].rsp;
 	srv->fdidx[fd].rsp_cs = 0;
 
 	return (0);

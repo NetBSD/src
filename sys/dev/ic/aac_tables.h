@@ -1,4 +1,4 @@
-/*	$NetBSD: aac_tables.h,v 1.4 2005/12/11 12:21:25 christos Exp $	*/
+/*	$NetBSD: aac_tables.h,v 1.4.38.1 2008/01/06 05:01:02 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -89,6 +89,9 @@ static const struct aac_code_lookup aac_cpu_variant[] = {
 	{ "i80303",			CPUI80303 },
 	{ "StrongARM SA110",		CPUARM_SA110 },
 	{ "PowerPC 603e",		CPUPPC_603e },
+	{ "XScale 80321",		CPU_XSCALE_80321 },
+	{ "MIPS 4KC",			CPU_MIPS_4KC },
+	{ "MIPS 5KC",			CPU_MIPS_5KC },
 	{ "Unknown StrongARM",		CPUARM_xxx },
 	{ "Unknown PowerPC",		CPUPPC_xxx },
 	{ NULL, 			0 },
@@ -119,6 +122,12 @@ const struct aac_code_lookup aac_container_types[] = {
 	{ "RAID 00",		CT_RAID00 },
 	{ "Volume of Mirrors",	CT_VOLUME_OF_MIRRORS },
 	{ "Pseudo RAID 3",	CT_PSEUDO_RAID3 },
+	{ "RAID 0/5",		CT_RAID50 },
+	{ "RAID 5D",		CT_RAID5D },
+	{ "RAID 0/5D",		CT_RAID5D0 },
+	{ "RAID 1E",		CT_RAID1E },
+	{ "RAID 6",		CT_RAID6 },
+	{ "RAID 60",		CT_RAID60 },
 	{ NULL,			0 },
 	{ "unknown",		0 }
 };

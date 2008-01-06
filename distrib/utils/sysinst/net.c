@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.113.2.2 2007/03/31 16:26:02 bouyer Exp $	*/
+/*	$NetBSD: net.c,v 1.113.2.2.2.1 2008/01/06 05:00:37 wrstuden Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -335,7 +335,7 @@ get_ifinterface_info(void)
 	if (do_ifreq(&ifmr, SIOCGIFMEDIA) == 0) {
 		/* Get the name of the media word */
 		modew = ifmr.ifm_current;
-		strlcpy(net_media, get_media_mode_string(modew),
+		strlcpy(net_media, get_media_subtype_string(modew),
 		    sizeof net_media);
 		/* and add any media options */
 		sep = " mediaopt ";

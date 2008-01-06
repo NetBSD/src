@@ -1,4 +1,4 @@
-#	$NetBSD: README.files,v 1.3 2006/03/09 18:07:53 wiz Exp $
+#	$NetBSD: README.files,v 1.3.6.1 2008/01/06 05:00:41 wrstuden Exp $
 
 What's in this directory:
 
@@ -36,7 +36,7 @@ If you are receiving this distribution on a CD set, some files and
 subdirectories may be on a separate disc; read all README files for more
 information.
 
-See http://www.NetBSD.org/Misc/crypto-export.html for the formal status of
+See http://www.NetBSD.org/about/crypto-export.html for the formal status of
 the exportability out of the United States of some pieces of the
 distribution tree containing cryptographic software.  If you export these
 bits and the above document says you should not do so, it's your fault,

@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.31 2006/11/25 22:53:34 mishka Exp $
+.\"	$NetBSD: install,v 1.31.4.1 2008/01/06 05:00:13 wrstuden Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -269,11 +269,11 @@ with
 Detailed instructions on netbooting can be found by visiting the
 .Nx
 \*M platform page:
-.Lk http://www.NetBSD.org/Ports/\*M/
+.Lk http://www.NetBSD.org/ports/\*M/
 .Pp
 At the time of this
 release, the URL for the netbooting instructions is:
-.Lk http://www.NetBSD.org/Documentation/network/netboot/
+.Lk http://www.NetBSD.org/docs/network/netboot/
 .Pp
 You'll want to map root to
 .Li root

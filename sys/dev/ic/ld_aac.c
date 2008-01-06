@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_aac.c,v 1.13 2006/11/16 01:32:51 christos Exp $	*/
+/*	$NetBSD: ld_aac.c,v 1.13.16.1 2008/01/06 05:01:03 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_aac.c,v 1.13 2006/11/16 01:32:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_aac.c,v 1.13.16.1 2008/01/06 05:01:03 wrstuden Exp $");
 
 #include "rnd.h"
 
@@ -104,10 +104,10 @@ ld_aac_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_hwunit = aaca->aaca_unit;
 	ld->sc_flags = LDF_ENABLED;
-	ld->sc_maxxfer = AAC_MAX_XFER;
+	ld->sc_maxxfer = AAC_MAX_XFER(aac);
 	ld->sc_secperunit = hdr->hd_size;
 	ld->sc_secsize = AAC_SECTOR_SIZE;
-	ld->sc_maxqueuecnt = (AAC_NCCBS - AAC_NCCBS_RESERVE) / aac->sc_nunits;
+	ld->sc_maxqueuecnt = (aac->sc_max_fibs - AAC_NCCBS_RESERVE) / aac->sc_nunits;
 	ld->sc_start = ld_aac_start;
 	ld->sc_dump = ld_aac_dump;
 
@@ -124,10 +124,6 @@ ld_aac_dobio(struct ld_aac_softc *sc, void *data, int datasize, int blkno,
 	struct aac_blockwrite_response *bwr;
 	struct aac_ccb *ac;
 	struct aac_softc *aac;
-	struct aac_blockread *br;
-	struct aac_blockwrite *bw;
-	struct aac_sg_entry *sge;
-	struct aac_sg_table *sgt;
 	struct aac_fib *fib;
 	bus_dmamap_t xfer;
 	u_int32_t status;
@@ -140,6 +136,8 @@ ld_aac_dobio(struct ld_aac_softc *sc, void *data, int datasize, int blkno,
 	 * Allocate a command control block and map the data transfer.
 	 */
 	ac = aac_ccb_alloc(aac, (dowrite ? AAC_CCB_DATA_OUT : AAC_CCB_DATA_IN));
+	if (ac == NULL)
+		return EBUSY;
 	ac->ac_data = data;
 	ac->ac_datalen = datasize;
 
@@ -155,46 +153,107 @@ ld_aac_dobio(struct ld_aac_softc *sc, void *data, int datasize, int blkno,
 
         fib->Header.XferState = htole32(AAC_FIBSTATE_HOSTOWNED |
 	    AAC_FIBSTATE_INITIALISED | AAC_FIBSTATE_FROMHOST |
-	    AAC_FIBSTATE_REXPECTED | AAC_FIBSTATE_NORM);
-	fib->Header.Command = htole16(ContainerCommand);
+	    AAC_FIBSTATE_REXPECTED | AAC_FIBSTATE_NORM |
+	    AAC_FIBSTATE_ASYNC | AAC_FIBSTATE_FAST_RESPONSE );
 
-	if (dowrite) {
-		bw = (struct aac_blockwrite *)&fib->data[0];
-		bw->Command = htole32(VM_CtBlockWrite);
-		bw->ContainerId = htole32(sc->sc_hwunit);
-		bw->BlockNumber = htole32(blkno);
-		bw->ByteCount = htole32(datasize);
-		bw->Stable = htole32(CUNSTABLE); /* XXX what's appropriate here? */
+	if ((aac->sc_quirks & AAC_QUIRK_SG_64BIT) == 0) {
+		struct aac_blockread *br;
+		struct aac_blockwrite *bw;
+		struct aac_sg_entry *sge;
+		struct aac_sg_table *sgt;
 
-		size = sizeof(struct aac_blockwrite);
-		sgt = &bw->SgMap;
+		fib->Header.Command = htole16(ContainerCommand);
+		if (dowrite) {
+			bw = (struct aac_blockwrite *)&fib->data[0];
+			bw->Command = htole32(VM_CtBlockWrite);
+			bw->ContainerId = htole32(sc->sc_hwunit);
+			bw->BlockNumber = htole32(blkno);
+			bw->ByteCount = htole32(datasize);
+			bw->Stable = htole32(CUNSTABLE);
+			/* CSTABLE sometimes?  FUA? */
+
+			size = sizeof(struct aac_blockwrite);
+			sgt = &bw->SgMap;
+		} else {
+			br = (struct aac_blockread *)&fib->data[0];
+			br->Command = htole32(VM_CtBlockRead);
+			br->ContainerId = htole32(sc->sc_hwunit);
+			br->BlockNumber = htole32(blkno);
+			br->ByteCount = htole32(datasize);
+
+			size = sizeof(struct aac_blockread);
+			sgt = &br->SgMap;
+		}
+
+		xfer = ac->ac_dmamap_xfer;
+		sgt->SgCount = xfer->dm_nsegs;
+		sge = sgt->SgEntry;
+
+		for (i = 0; i < xfer->dm_nsegs; i++, sge++) {
+			sge->SgAddress = htole32(xfer->dm_segs[i].ds_addr);
+			sge->SgByteCount = htole32(xfer->dm_segs[i].ds_len);
+			AAC_DPRINTF(AAC_D_IO,
+			    ("#%d va %p pa %lx len %lx\n", i, data,
+			    (u_long)xfer->dm_segs[i].ds_addr,
+			    (u_long)xfer->dm_segs[i].ds_len));
+		}
+
+		size += xfer->dm_nsegs * sizeof(struct aac_sg_entry);
+		size = htole16(sizeof(fib->Header) + size);
+		fib->Header.Size = htole16(size);
 	} else {
-		br = (struct aac_blockread *)&fib->data[0];
-		br->Command = htole32(VM_CtBlockRead);
-		br->ContainerId = htole32(sc->sc_hwunit);
-		br->BlockNumber = htole32(blkno);
-		br->ByteCount = htole32(datasize);
+		struct aac_blockread64 *br;
+		struct aac_blockwrite64 *bw;
+		struct aac_sg_entry64 *sge;
+		struct aac_sg_table64 *sgt;
 
-		size = sizeof(struct aac_blockread);
-		sgt = &br->SgMap;
+		fib->Header.Command = htole16(ContainerCommand64);
+		if (dowrite) {
+			bw = (struct aac_blockwrite64 *)&fib->data[0];
+			bw->Command = htole32(VM_CtHostWrite64);
+			bw->BlockNumber = htole32(blkno);
+			bw->ContainerId = htole16(sc->sc_hwunit);
+			bw->SectorCount = htole16(datasize / AAC_BLOCK_SIZE);
+			bw->Pad = 0;
+			bw->Flags = 0;
+
+			size = sizeof(struct aac_blockwrite64);
+			sgt = &bw->SgMap64;
+		} else {
+			br = (struct aac_blockread64 *)&fib->data[0];
+			br->Command = htole32(VM_CtHostRead64);
+			br->BlockNumber = htole32(blkno);
+			br->ContainerId = htole16(sc->sc_hwunit);
+			br->SectorCount = htole16(datasize / AAC_BLOCK_SIZE);
+			br->Pad = 0;
+			br->Flags = 0;
+
+			size = sizeof(struct aac_blockread64);
+			sgt = &br->SgMap64;
+		}
+
+		xfer = ac->ac_dmamap_xfer;
+		sgt->SgCount = xfer->dm_nsegs;
+		sge = sgt->SgEntry64;
+
+		for (i = 0; i < xfer->dm_nsegs; i++, sge++) {
+			/*
+			 * XXX - This is probably an alignment issue on non-x86
+			 * platforms since this is a packed array of 64/32-bit
+			 * tuples, so every other SgAddress is 32-bit, but not
+			 * 64-bit aligned.
+			 */
+			sge->SgAddress = htole64(xfer->dm_segs[i].ds_addr);
+			sge->SgByteCount = htole32(xfer->dm_segs[i].ds_len);
+			AAC_DPRINTF(AAC_D_IO,
+			    ("#%d va %p pa %lx len %lx\n", i, data,
+			    (u_int64_t)xfer->dm_segs[i].ds_addr,
+			    (u_long)xfer->dm_segs[i].ds_len));
+		}
+		size += xfer->dm_nsegs * sizeof(struct aac_sg_entry64);
+		size = htole16(sizeof(fib->Header) + size);
+		fib->Header.Size = htole16(size);
 	}
-
-	xfer = ac->ac_dmamap_xfer;
-	sgt->SgCount = xfer->dm_nsegs;
-	sge = sgt->SgEntry;
-
-	for (i = 0; i < xfer->dm_nsegs; i++, sge++) {
-		sge->SgAddress = htole32(xfer->dm_segs[i].ds_addr);
-		sge->SgByteCount = htole32(xfer->dm_segs[i].ds_len);
-		AAC_DPRINTF(AAC_D_IO,
-		    ("#%d va %p pa %lx len %lx\n", i, data,
-		    (u_long)xfer->dm_segs[i].ds_addr,
-		    (u_long)xfer->dm_segs[i].ds_len));
-	}
-
-	size += xfer->dm_nsegs * sizeof(struct aac_sg_entry);
-	size = htole16(sizeof(fib->Header) + size);
-	fib->Header.Size = htole16(size);
 
 	if (bp == NULL) {
 		/*

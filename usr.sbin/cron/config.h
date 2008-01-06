@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.6 1999/04/09 02:47:03 cjs Exp $	*/
+/*	$NetBSD: config.h,v 1.6.28.1 2008/01/06 05:01:16 wrstuden Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -44,11 +44,10 @@
 			 */
 
 #define MAILCMD _PATH_SENDMAIL					/*-*/
-#define MAILARGS "%s -FCronDaemon -odi -oem -oi -or0s -t"	/*-*/
+#define MAILARGS "%s -FCronDaemon -odi -oem -oi -t"		/*-*/
 			/* -Fx	 = set full-name of sender
 			 * -odi	 = Option Deliverymode Interactive
 			 * -oem	 = Option Errors Mailedtosender
-			 * -or0s = Option Readtimeout -- don't time out
 			 * -t    = read recipient from header of message
 			 */
 

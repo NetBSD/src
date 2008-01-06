@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.1.70.1 2007/09/03 07:03:18 wrstuden Exp $
+$NetBSD: version,v 1.1.70.2 2008/01/06 05:00:55 wrstuden Exp $
 
 NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
 file is important - make sure the entries are appended on end, last item
@@ -9,3 +9,4 @@ is taken as the current.
 0.3:	Parse boot_flags and pass boothowto value via bootinfo
 0.4:	parse "root=/dev/hdXN" args passed from the firmware and
 	set default boot device accordingly
+0.5:	Add support for netboot via tlp0

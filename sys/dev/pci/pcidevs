@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.855.2.5.2.2 2007/10/29 00:45:16 wrstuden Exp $
+$NetBSD: pcidevs,v 1.855.2.5.2.3 2008/01/06 05:01:08 wrstuden Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1782,6 +1782,7 @@ product MARVELL YUKON_C036	0x4366	Yukon 88EC036
 product MARVELL YUKON_C032	0x4367	Yukon 88EC032
 product MARVELL YUKON_C034	0x4368	Yukon 88EC034
 product MARVELL YUKON_C042	0x4369	Yukon 88EC042
+product MARVELL YUKON_CO55	0x436a	Yukon 88ECO55
 product MARVELL	GT64120		0x4620	GT-64120 System Controller
 product MARVELL	BELKIN		0x5005	Belkin Gigabit Ethernet
 product MARVELL 88SX5040	0x5040	88SX5040 SATA
@@ -2257,6 +2258,7 @@ product INTEL 82801H_SATA_AHCI6	0x2821	82801H AHCI SATA Controller with 6 ports
 product INTEL 82801H_SATA_RAID	0x2822	82801H RAID SATA Controller
 product INTEL 82801H_SATA_AHCI4	0x2824	82801H AHCI SATA Controller with 4 ports
 product INTEL 82801H_SATA_2	0x2825	82801H SATA Controller
+product INTEL 82801HEM_SATA	0x2828	82801HEM SATA Controller
 product INTEL 82801HBM_SATA_1	0x2829  82801HBM SATA Controller
 product INTEL 82801HBM_SATA_2	0x282a	82081HBM SATA Controller
 product INTEL 82801H_USB_1	0x2830	82801H USB UHCI Controller
@@ -2276,6 +2278,10 @@ product INTEL 82801H_EXP_6	0x2849	82801H PCI Express Port #6
 product INTEL 82801H_HDA	0x284b	82801H High Definition Audio Controller
 product INTEL 82801I_IGP_C	0x294c	82801I (C) LAN Controller
 product INTEL 82801H_THERMAL	0x284f	82801H Thermal Controller
+product INTEL 82801HBM_IDE	0x2850 	82801H IDE Controller
+product INTEL 82801I_SATA_1	0x2920	82801I SATA Controller with 4 ports
+product INTEL 82801I_SATA_2	0x2921	82801I SATA Controller with 2 ports
+product INTEL 82801I_SATA_3	0x2926	82801I SATA Controller with 2 ports
 product INTEL 82965Q_HB		0x2990  82965Q Host Bridge
 product INTEL 82965Q_EXP	0x2991  82965Q PCI Express Bridge
 product INTEL 82965Q_IGD	0x2992  82965Q Integrated Graphics Device
@@ -3327,6 +3333,7 @@ product SUN US_IIi	0xa000	UltraSPARC IIi PCI
 product SUN US_IIe	0xa001	UltraSPARC IIe PCI
 
 /* Sundance Technology products */
+product SUNDANCETI IP100A	0x0200	IP100A 10/100 Ethernet
 product SUNDANCETI ST201	0x0201	ST201 10/100 Ethernet
 product SUNDANCETI ST1023	0x1023	ST1023 Gigabit Ethernet
 product SUNDANCETI ST2021	0x2021	ST2021 Gigabit Ethernet

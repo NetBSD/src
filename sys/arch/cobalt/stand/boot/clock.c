@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.1 2003/06/25 17:24:22 cdi Exp $	*/
+/*	$NetBSD: clock.c,v 1.1.70.1 2008/01/06 05:00:53 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,12 +36,26 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/param.h>
 #include <sys/types.h>
 #include <lib/libsa/stand.h>
+#include <lib/libkern/libkern.h>
+
+#include <netinet/in.h>
+#include <netinet/in_systm.h>
+#include <lib/libsa/net.h>
+
+#include <dev/ic/mc146818reg.h>
+
+#include <mips/cpuregs.h>
 
 #include "boot.h"
 
 #define DELAY_CALIBRATE	1000
+
+#define MCCLOCK_BASE	0x10000070
+#define MCCLOCK_REG	0
+#define MCCLOCK_DATA	1
 
 void
 delay(int ms)
@@ -51,5 +65,24 @@ delay(int ms)
 	 */
 	volatile register int N = ms * DELAY_CALIBRATE;
 	for (; --N;)
-		;
+		__insn_barrier();
+}
+
+time_t
+getsecs(void)
+{
+	volatile uint8_t *mcclock_reg, *mcclock_data;
+	u_int sec;
+
+	mcclock_reg  = (void *)MIPS_PHYS_TO_KSEG1(MCCLOCK_BASE + MCCLOCK_REG);
+	mcclock_data = (void *)MIPS_PHYS_TO_KSEG1(MCCLOCK_BASE + MCCLOCK_DATA);
+
+	*mcclock_reg = MC_SEC;
+	sec  = bcdtobin(*mcclock_data);
+	*mcclock_reg = MC_MIN;
+	sec += bcdtobin(*mcclock_data) * 60;
+	*mcclock_reg = MC_HOUR;
+	sec += bcdtobin(*mcclock_data) * 60 * 60;
+
+	return (time_t)sec;
 }

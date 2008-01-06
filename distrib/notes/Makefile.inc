@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.36.6.1 2007/09/03 06:57:22 wrstuden Exp $
+#	$NetBSD: Makefile.inc,v 1.36.6.2 2008/01/06 05:00:12 wrstuden Exp $
 #
 
 # Ross Harvey <ross@NetBSD.org>
@@ -20,7 +20,8 @@ TOCS=	${TARG}.PostScript.toc ${TARG}.ASCII.toc ${TARG}.HTML.toc \
 	${TARG}.more.toc
 SRCS=	${MAIN} whatis ${COMMON}/contents hardware xfer prep \
 	${.CURDIR}/install ${COMMON}/postinstall upgrade \
-	${COMMON}/legal.common legal \
+	${COMMON}/legal.common legal ${COMMON}/netboot \
+	${COMMON}/sysinst \
 	${.CURDIR}/../Makefile.inc ${MERGED_SRCS}
 
 whatis: .OPTIONAL
