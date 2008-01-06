@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs_data.h,v 1.853.2.5.2.2 2007/10/29 00:45:18 wrstuden Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.853.2.5.2.3 2008/01/06 05:01:09 wrstuden Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -6164,6 +6164,10 @@ static const struct pci_product pci_products[] = {
 	    "Yukon 88EC042",
 	},
 	{
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_CO55,
+	    "Yukon 88ECO55",
+	},
+	{
 	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_GT64120,
 	    "GT-64120 System Controller",
 	},
@@ -7924,6 +7928,10 @@ static const struct pci_product pci_products[] = {
 	    "82801H SATA Controller",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801HEM_SATA,
+	    "82801HEM SATA Controller",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801HBM_SATA_1,
 	    "82801HBM SATA Controller",
 	},
@@ -7998,6 +8006,22 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_THERMAL,
 	    "82801H Thermal Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801HBM_IDE,
+	    "82801H IDE Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_SATA_1,
+	    "82801I SATA Controller with 4 ports",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_SATA_2,
+	    "82801I SATA Controller with 2 ports",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_SATA_3,
+	    "82801I SATA Controller with 2 ports",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82965Q_HB,
@@ -11456,6 +11480,10 @@ static const struct pci_product pci_products[] = {
 	    "UltraSPARC IIe PCI",
 	},
 	{
+	    PCI_VENDOR_SUNDANCETI, PCI_PRODUCT_SUNDANCETI_IP100A,
+	    "IP100A 10/100 Ethernet",
+	},
+	{
 	    PCI_VENDOR_SUNDANCETI, PCI_PRODUCT_SUNDANCETI_ST201,
 	    "ST201 10/100 Ethernet",
 	},
@@ -12860,4 +12888,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2620;
+const int pci_nproducts = 2627;

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.41 2006/02/27 09:08:10 lukem Exp $
+#	$NetBSD: Makefile,v 1.41.6.1 2008/01/06 05:00:47 wrstuden Exp $
 
 .include <bsd.own.mk>
 
@@ -46,6 +46,7 @@ YDATA=		africa antarctica asia australasia \
 NDATA=		systemv
 SDATA=		solar87 solar88 solar89
 TDATA=		$(YDATA) $(NDATA) $(SDATA)
+TABDATA=	iso3166.tab zone.tab
 DATA=		$(YDATA) $(NDATA) $(SDATA) leapseconds # yearistype.sh
 USNO=		usno1988 usno1989
 
@@ -87,7 +88,7 @@ TOOL_PAX.unpriv=
 .endif
 
 .if ${MKSHARE} != "no"
-afterinstall: ${DATA} ${REDO}
+afterinstall: ${DATA} ${REDO} ${TABDATA}
 	${_MKMSG_CREATE} ${POSIXRULES}
 	mkdir -p ${TZBUILDDIR}
 	cd ${.CURDIR} && \
@@ -115,6 +116,10 @@ afterinstall: ${DATA} ${REDO}
 			${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} \
 			    -m ${NONBINMODE} $$tzfile $$destfile; \
 		fi; \
+	done
+	for f in ${TABDATA}; do \
+		${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m ${NONBINMODE} \
+			${.CURDIR}/$$f ${DESTDIR}${TZDIR}; \
 	done
 .else	# ${MKSHARE} == "no"
 afterinstall:

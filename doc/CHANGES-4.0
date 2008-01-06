@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.157.2.9 2007/10/29 00:45:07 wrstuden Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.157.2.10 2008/01/06 05:00:40 wrstuden Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -10181,4 +10181,587 @@ gnu/usr.bin/groff/tmac/mdoc.local		patch
 sys/sys/param.h					patch
 
 	Welcome to NetBSD-4.0_RC3.
+
+sys/dev/pci/if_ste.c				1.30
+sys/dev/pci/pcidevs				1.905
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+
+	IC Plus Corp IP100A support for ste(4), submitted by
+	Pedro Alejandro Lopez-Valencia in PR kern/36605.
+	[xtraeme, ticket #931]
+
+sys/dev/pci/piixide.c				1.38-1.41 via patch
+sys/dev/pci/pcidevs				patch
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+
+	Add support for ICH8M and ICH9's SATA controller.
+	[msaitoh, ticket #935]
+
+sys/arch/mips/include/cpuregs.h			1.72
+sys/arch/mips/mips/mips_machdep.c		1.195
+
+	Recognise the R2000A cpu as found in some pmaxen.
+	From Dennis Grevenstein on port-pmax@.
+	[simonb, ticket #936]
+
+sys/arch/hppa/include/cpufunc.h			1.10
+
+	Remove get_psw/set_psw - they're not needed and can cause problems.
+	[skrll, ticket #939]
+
+distrib/utils/sysinst/net.c			1.116
+
+	Use get_media_subtype_string instead of get_media_mode_string to determine
+	the card's current media type.  Otherwise it always defaults to 'autoselect'
+	which is not supported by all cards (e.g. cs(4) in NetBSD/shark).
+
+	This was causing problems when configuring an interface with dhclient, as
+	sysinst could incorrectly reset the media type (the net_media variable) to
+	'autoselect', writing incorrect ifconfig.<if> files in the target file system.
+	[jmmv, ticket #940]
+
+sys/arch/acorn32/acorn32/autoconf.c		1.9
+sys/arch/cats/cats/autoconf.c			1.11
+sys/arch/netwinder/netwinder/autoconf.c		1.8
+sys/arch/shark/shark/autoconf.c			1.9
+
+	Print some debugging information when DEBUG is set, not when TERSE is
+	unset.  The latter is not a "standard" definition, and was used in very
+	few places anyway.
+	[jmmv, ticket #941]
+
+sys/kern/vfs_bio.c				1.180
+
+	Fix vm.bufmem* sysctl nodes for 64bit archs by making them uint64_t,
+	as discussed on tech-kern. No requests for binary compat - so don't
+	bother to version them.
+	[martin, ticket #946]
+
+usr.sbin/postinstall/postinstall		1.50
+
+	do not use trap 0, it clobbers the exit status. Instead remove the
+	scratch directory in err(). Use err() instead of exit in one place to
+	ensure that the temporary directory is removed.
+	[pavel, ticket #943]
+
+distrib/sets/lists/base/mi			1.721 via patch
+doc/3RDPARTY					1.554 via patch
+share/zoneinfo/australasia			1.16
+share/zoneinfo/africa				1.1.1.24-1.1.1.25 
+share/zoneinfo/antarctica			1.1.1.16-1.1.1.17 
+share/zoneinfo/asia				1.1.1.41-1.1.1.42 
+share/zoneinfo/europe				1.1.1.36-1.1.1.37 
+share/zoneinfo/leapseconds			1.1.1.13-1.1.1.14 
+share/zoneinfo/northamerica			patch
+share/zoneinfo/southamerica			1.1.1.37-1.1.1.38 
+share/zoneinfo/zone.tab				1.1.1.29-1.1.1.30 
+
+	Import tzdata2007h.
+	[jnemeth, ticket #937]
+
+distrib/utils/sysinst/msg.mi.de			1.39
+distrib/utils/sysinst/msg.mi.de			1.40
+distrib/utils/sysinst/msg.mi.en			1.147
+distrib/utils/sysinst/msg.mi.es			1.18
+distrib/utils/sysinst/msg.mi.fr			1.98
+distrib/utils/sysinst/msg.mi.fr			1.99
+distrib/utils/sysinst/msg.mi.pl			1.58
+distrib/utils/sysinst/util.c			1.148
+
+	Offer to update /etc/mailer.conf if sysinst detects during upgrade
+	that sendmail (removed in NetBSD 4.0) is being used.
+	[pavel, ticket #948]
+
+Makefile					1.250
+usr.sbin/postinstall/postinstall		1.51
+usr.sbin/postinstall/postinstall		1.52
+
+	- Return exit code 1 when a postinstall check or fix fails.
+	- Ignore the return code from "postinstall check" during make build, it
+  	  typically fails.
+	- Add a check for obsolete sendmail in /etc/mailer.conf, installs a
+	  fresh copy of the file if invoked as "fix". Not enabled by default.
+	[pavel, ticket #947]
+
+sys/dev/pci/pccbb.c				1.149 via patch
+
+	Correctly initialise sc_insert_ch and switch to
+	callout_setfunc/callout_schedule.
+	[joerg, ticket #942]
+
+sys/dev/pci/pccbb.c				1.150
+
+	Remove a completely bogus check if cbb has a valid PCI interrupt routed.
+	If you have a system where it doesn't get one and you still want pcic,
+	you can just disable cbb. This check is invalid as soon as the PCI
+	interrupt register is not used and broke on my Dell Latitude for that
+	reason.
+	[joerg, ticket #949]
+
+distrib/utils/sysinst/msg.mi.es			1.19
+
+	Translate oldsendmail per Pavel's request.
+	[jmmv, ticket #950]
+
+crypto/dist/openssl/ssl/Makefile		1.2
+crypto/dist/openssl/ssl/d1_both.c		1.2
+crypto/dist/openssl/ssl/dtls1.h			1.2
+crypto/dist/openssl/ssl/ssl.h			1.17
+crypto/dist/openssl/ssl/ssl_err.c		1.11
+
+	Fix for CVE-2007-4995 from OpenSSL CVS
+	[adrianp, ticket #951]
+
+usr.sbin/postinstall/postinstall		1.54
+
+	now when trap 0 is not used, we need to remove the temporary directiry
+	at the end. PR bin/37223.
+	[pavel, ticket #952]
+
+distrib/sets/lists/base/mi			1.724
+
+	Remove /usr/share/sendmail and subdirectories under it from the obsolete
+	list. I already removed the files under /usr/share/sendmail from the
+	obsolete list in src/distrib/sets/lists/misc/mi rev. 1.145, but forgot
+	about the directories. This avoids "postinstall check obsolete" failing
+	needlessly.
+	[pavel, ticket #953]
+
+sys/dist/ipf/netinet/ip_nat.c			patch
+sys/dist/ipf/netinet/ip_nat.h			patch
+sys/dist/ipf/netinet/ip_state.c			patch
+sys/dist/ipf/netinet/ip_state.h			patch
+
+	Revert pullup #880. It reportedly causes RDR sessions to not
+	expire and fill up the NAT table. See PR kern/37037 and possibly
+	kern/37174.
+
+sys/arch/x86/x86/mtrr_i686.c			1.12
+
+Fix a reboot when using MTRR, triggered by running X11 on amd64 machines
+with more than 4GB of RAM.
+[pavel, ticket #959]
+
+lib/libc/arch/hppa/gen/swapcontext.S		1.2
+
+	Fix setcontext(3) on hppa.
+	[skrll, ticket #955]
+
+sys/dev/acpi/acpi_apm.c				1.11
+usr.sbin/apm/apm.c				1.18
+
+	When no estimate of battery minutes_left can be made, apm should
+	return a value of 0.
+	[plunky, ticket #956]
+
+distrib/sets/lists/comp/mi			1.1074
+
+	The man page for rcs2log(1) is not installed when MKCVS=no.
+	[minskim, ticket #958]
+
+sys/arch/sparc64/sparc64/locore.s			patch
+
+	Avoid undefined symbol "time" in sparc64 kernels causing
+	savecore confusion.
+	[martin, ticket #944]
+
+distrib/notes/common/main			1.355
+distrib/notes/common/main			1.357
+distrib/notes/common/main			1.358
+distrib/notes/common/main			1.359
+distrib/notes/common/main			1.360
+distrib/notes/common/main			1.361
+distrib/notes/common/main			1.362
+distrib/notes/common/main			1.363
+distrib/notes/common/main			1.364
+
+	Update release notes.
+	[pavel, ticket #962]
+
+share/man/man5/mk.conf.5			1.35
+
+	Remove the MKUUCP entry as uucp is no longer in src.
+	[minskim, ticket #961]
+
+bin/ln/ln.1					1.22
+
+	fixup botched addition of -i option
+	[jnemeth, ticket #960]
+
+sys/netipsec/ipsec.c				1.34
+sys/netipsec/ipsec_osdep.h			1.21
+sys/netipsec/ipsec_output.c			1.23
+sys/netipsec/xform_ah.c				1.19
+sys/netipsec/xform_ipip.c			1.18
+
+	The function ipsec4_get_ulp assumes that ip_off is in host order. This results
+	in IPsec processing that is dependent on protocol and/or port can be bypassed.
+
+	Bug report, analysis and initial fix from Karl Knutsson.
+	Final patch and ok from degroote
+	[adrianp, ticket #964]
+
+sys/dev/pci/if_msk.c				1.11
+sys/dev/pci/pcidevs				1.907
+sys/dev/pci/pcidevs.h				patch
+sys/dev/pci/pcidevs_data.h			patch
+
+	Add support for Marvell 88CO55. Newer iMacs come with that chip.
+	[manu, ticket #954]
+
+sys/fs/udf/udf_subr.c				1.40
+
+	Fix panic when the VAT couldn't be found. It would refer an stale
+	udf_node->vnode.
+	[reinoud, ticket #966]
+
+sys/dev/pci/pucdata.c				1.52
+
+	PR/37259 - Daniel Neri -- typo in EXAR XR17C158 description
+	[jnemeth, ticket #968]
+
+sys/dev/biovar.h				1.2,1.4
+
+	Make the bio(4) variables which represent disk and volume size
+	64-bit, for large RAID volumes.
+	[xtraeme, ticket #969]
+
+usr.sbin/bind/Makefile.inc			patch
+
+	Do not build named with threads support on mips architectures,
+	as it triggers libpthread/SA problems.
+	[martin, ticket #965]
+
+xsrc/xfree/xc/programs/Xserver/hw/xfree86/loader/xf86sym.c 1.11
+
+	Add SSP related symbols "__stack_chk_guard" and "__stack_chk_fail"
+	to the list of symbols for X11 server loadable modules.
+
+	This makes an X11 server built via "src/x11" with SSP enabled work.
+	[tron, ticket #967]
+
+doc/3RDPARTY					1.562
+etc/namedb/root.cache				1.11
+
+	Update to 2007110100 version
+	[martti, ticket #972, #973]
+
+src/sys/arch/cobalt/cobalt/autoconf.c		1.25, 1.26
+src/sys/arch/cobalt/cobalt/machdep.c		1.89
+src/sys/arch/cobalt/stand/boot/Makefile		1.12
+src/sys/arch/cobalt/stand/boot/boot.c		1.10
+src/sys/arch/cobalt/stand/boot/boot.h		1.6
+src/sys/arch/cobalt/stand/boot/cache.c		1.1(new), 1.2
+src/sys/arch/cobalt/stand/boot/clock.c		1.2
+src/sys/arch/cobalt/stand/boot/conf.c		1.5
+src/sys/arch/cobalt/stand/boot/devopen.c	1.4
+src/sys/arch/cobalt/stand/boot/nif_tlp.c	1.1(new)
+src/sys/arch/cobalt/stand/boot/start.S		1.6
+src/sys/arch/cobalt/stand/boot/tlp.c		1.1(new), 1.2, 1.3
+src/sys/arch/cobalt/stand/boot/version		1.6
+src/sys/lib/libsa/dev_net.h			1.5
+
+	Add support for netboot via tlp0 with standalone tlp(4) driver
+	taken from arch/sandpoint/stand/netboot.
+	[tsutsui, ticket #974]
+
+sys/dev/ic/hd44780_subr.c			1.13
+
+	Fix some random LCD corruption on cobalt.
+	[tsutsui, ticket #975]
+
+usr.sbin/cron/config.h				1.7
+
+	Use default timeout parameters when cron invokes sendmail.
+	PR bin/37226.
+	[martin, ticket #971]
+
+usr.sbin/rpc.lockd/lock_proc.c			1.8
+
+	Fix off-by-one error accessing "clnt_cache_addr" array which causes heap
+	corruption. This will hopefully fix PR bin/37236.
+	[tron, ticket #976]
+
+sys/arch/amd64/conf/GENERIC			patch
+
+	Reduce difference to i386 GENERIC:
+	- add some comments from that
+	- options SPACE TAB
+	- enable EST
+	- enable DDB and build w/ frame pointer by default
+	- enable ACPI devices
+	- include AGP
+	- include Cardbus and PCMCIA
+	- include Synaptics driver
+	- include atw, ipw, iwi, hme, rtw, txp
+	- include uep, utoppy, ugensa
+
+	This makes GENERIC actually usable for laptops.
+	[joerg, ticket #963]
+
+share/man/man4/agr.4				1.4
+
+	write a HISTORY section.
+	[yamt, ticket #977]
+
+distrib/notes/common/main			1.365-1.366
+
+	Sync the list of changes with NetBSD-4.0.xml.
+	[xtraeme, ticket #978]
+
+gnu/usr.bin/groff/tmac/mdoc.local		patch
+sys/sys/param.h					patch
+
+	Welcome to NetBSD 4.0_RC4.
+	[liamjfoy]
+
+sys/arch/hpcmips/dev/mq200machdep.c		1.5
+
+	There is a possibility that TLB-miss is caused in mq200_mdsetup().
+	[kiyohara, ticket #997]
+
+sys/dev/ic/ninjascsi32.c			1.13
+sys/dev/ic/ninjascsi32.c			1.14
+sys/dev/ic/ninjascsi32var.h			1.4
+
+	Fix problem where targets with ID 0, 1, or 2 couldn't be reconnected.
+
+	It seems I have always tested with targets those ID >= 3,
+	and that I am the only user of this driver.
+
+	- Reset the bus if a Bus Reset condition is detected to make sure
+  	  all devices on the bus are really reset.
+
+	- Block interrupts on Bus Reset, and check it periodically until the
+	  reset is released.  On some 32UDE devices (probably the earlier ones)
+	  the RST line looks unstable without the termination power and may
+	  suffer ~continuous Bus Reset interrupts.
+
+	- Change number of scatter/gather segments from 16 to 17, to allow
+	  non-page-aligned 64KB transfer on 4KB/page platforms.
+	[itohy, ticket #980]
+
+sys/dev/pci/if_bnx.c				1.10
+
+	Added missing newline.
+	[martti, ticket #986]
+
+distrib/sets/lists/base/mi			1.725
+share/zoneinfo/Makefile				1.42
+
+	also install zone.tab and iso3166.tab from tzdata, some applications
+	(evolution, KDE) want the former at least, and other OSes install it
+	(as the Makefile in tzcode suggests)
+	[drochner, ticket #987]
+
+usr.sbin/sdpd/bgd.c				1.2
+usr.sbin/sdpd/dun.c				1.2
+usr.sbin/sdpd/ftrn.c				1.2
+usr.sbin/sdpd/hf.c				1.2
+usr.sbin/sdpd/hset.c				1.2
+usr.sbin/sdpd/irmc.c				1.2
+usr.sbin/sdpd/irmc_command.c			1.2
+usr.sbin/sdpd/lan.c				1.2
+usr.sbin/sdpd/opush.c				1.2
+usr.sbin/sdpd/profile.c				1.4
+usr.sbin/sdpd/profile.h				1.2
+usr.sbin/sdpd/provider.c			1.2
+usr.sbin/sdpd/provider.h			1.2
+usr.sbin/sdpd/sd.c				1.2
+usr.sbin/sdpd/server.h				1.3
+usr.sbin/sdpd/sp.c				1.2
+usr.sbin/sdpd/ssar.c				1.2
+usr.sbin/sdpd/ssr.c				1.2
+
+	Fix ServiceSearchAttribute and ServiceSearch request handling
+	so that they match the whole list of UUIDs against a record,
+	as according to the spec
+
+	each profile now supplies a list of UUIDs instead of just a
+	service class.
+	[plunky, ticket #988]
+
+sys/arch/amd64/conf/GENERIC			1.144 patch
+sys/arch/amd64/conf/INSTALL			1.70 patch
+sys/dev/ic/aac.c				1.31 patch
+sys/dev/ic/aac.c				1.32 patch
+sys/dev/ic/aac.c				1.33 patch
+sys/dev/ic/aac.c				1.34 patch
+sys/dev/ic/aac.c				1.37 patch
+sys/dev/ic/aac_tables.h				1.5 patch
+sys/dev/ic/aacreg.h				1.6 patch
+sys/dev/ic/aacreg.h				1.7 patch
+sys/dev/ic/aacreg.h				1.8 patch
+sys/dev/ic/aacreg.h				1.9 patch
+sys/dev/ic/aacvar.h				1.10 patch
+sys/dev/ic/aacvar.h				1.9 patch
+sys/dev/ic/ld_aac.c				1.14 patch
+sys/dev/ic/ld_aac.c				1.15 patch
+sys/dev/pci/aac_pci.c				1.21 patch
+
+	Compile and run on amd64 and on >2GB RAM.
+	[briggs, ticket #990]
+
+share/man/man4/sk.4				1.11
+
+	tell about 88E8055 support
+	[manu, ticket #991]
+
+sys/dev/scsipi/st.c				1.199 patch
+sys/dev/scsipi/st.c				1.200 patch
+sys/dev/scsipi/st.c				1.201 patch
+
+	Properly set b_resid in an error case.
+	Clamp b_resid to b_bcount in case the info field is larger. Fix a KASSERT
+	in physio() when a media error occurs on my SDLT320 drive (maybe this drive
+	is bogus for not setting the highter bits to 0 in the INFO field in this
+	case).
+
+	When checking for invalid b_resid valyes, also check negative ones.
+	Should fix kern/36690.
+
+	Move check for b_resid value to the right place. Should definitively fix
+	kern/36690.
+	[bouyer, ticket #1002]
+
+lib/libc/gen/humanize_number.c			1.12
+
+	Fix a bug that humanize_number() produces "1000" where it should be "1.0G"
+	or "1.0M".  The bug reported by Greg Troxel.
+	[simonb, ticket #992]
+
+distrib/notes/common/main			1.369
+
+	Note gdb 6.5 kernel crash dump & pthread debugging problems.
+	[martin, ticket #993]
+
+sys/ufs/lfs/lfs_vnops.c				1.208 patch
+
+	Move the "vp = NULL" assignment after the code that requires vp != NULL.
+	Reported by Chris Ross on current-users.
+	[christos, ticket #994]
+
+usr.sbin/postinstall/postinstall		1.55 patch
+
+	PR/35238 - tls@ -- add _proxy to uid and gid checks
+	[jnemeth, ticket #995]
+
+sys/arch/amd64/conf/INSTALL			1.74
+
+	PR/37404 - Rui-Xiang Guo -- sync phy list with GENERIC
+	[jnemeth, ticket #996]
+
+sys/arch/amd64/conf/GENERIC			1.176 patch
+sys/arch/i386/conf/GENERIC			1.863
+
+	comment out com*/lpt* at acpi? as they cause these ports to move from
+	their traditional location and imminent changes in -current will cause
+	them to move back
+	[jnemeth, ticket #998]
+
+build.sh					1.180 patch
+
+	Delete mention of 'iso-dir=cdextras'.  This was a leftover from
+	the original implementation of cdextra as an operation instead of
+	a being paramater.
+	[jnemeth, ticket #999]
+
+gnu/usr.bin/groff/tmac/mdoc.local		patch
+sys/sys/param.h					patch
+
+	Welcome to NetBSD 4.0_RC5.
+	[bouyer]
+
+share/man/man3/queue.3				1.36
+
+	Note that CIRCLEQ_LOOP first appeared in NetBSD 4.0.
+	[pooka, ticket #1009]
+
+share/man/man9/kauth.9				1.58
+
+	Add a NOTES section to the manual, indicating that kauth(9) is
+	still under active development and its ABI (and possibly API) may
+	change between NetBSD versions.
+	[elad, ticket #1003]
+
+share/man/man8/compat_30.8			1.6-1.7
+
+	Complete the list of libraries needed for 3.0 binary compatibility.
+	From the emulators/compat30 package, suggested by Johnny Lam.
+	Note the socket(2) syscall change.
+	[pavel, ticket #1016]
+
+distrib/notes/common/contents			patch
+distrib/notes/common/list-setsizes.sh		patch
+distrib/notes/pmppc/hardware			patch
+distrib/notes/Makefile.inc			1.39, 1.40
+distrib/notes/acorn32/prep.RISCOS		1.18
+distrib/notes/alpha/install			1.32
+distrib/notes/common/main			1.367, 1.368, 1.370 - 1.382
+distrib/notes/common/netboot			1.31
+distrib/notes/common/postinstall		1.64, 1.65
+distrib/notes/common/sysinst			1.82, 1.83
+distrib/notes/common/xfer			1.58 - 1.60
+distrib/notes/evbppc/hardware			1.3
+distrib/notes/ews4800mips/hardware		1.2
+distrib/notes/hp300/hardware			1.19
+distrib/notes/hp300/prep			1.21
+distrib/notes/hp700/hardware			1.3
+distrib/notes/i386/hardware			1.121
+distrib/notes/i386/whatis			1.22
+distrib/notes/mac68k/hardware			1.23
+distrib/notes/mac68k/install			1.28
+distrib/notes/macppc/hardware			1.44
+distrib/notes/macppc/install			1.36
+distrib/notes/macppc/prep			1.42
+distrib/notes/macppc/prep.OPENFIRMWARE 		1.9
+distrib/notes/news68k/hardware			1.5
+distrib/notes/newsmips/hardware			1.4
+distrib/notes/next68k/hardware			1.8
+distrib/notes/pmax/install			1.39
+distrib/notes/sandpoint/hardware		1.6
+distrib/notes/sparc/hardware			1.33
+distrib/notes/sparc64/hardware			1.23
+distrib/notes/sparc64/install			1.28
+distrib/notes/vax/xfer				1.13
+
+	Sync release notes with reality
+	[jnemeth, ticket #1017]
+
+distrib/notes/sparc/install			1.53
+doc/README.files				1.4
+share/doc/papers/bus_dma/about.me		1.4
+share/man/man8/afterboot.8			1.34
+share/man/man8/compat_hpux.8			1.5
+share/man/man8/man8.macppc/boot.8		1.5
+share/man/man8/man8.macppc/ofwboot.8		1.8
+
+	Update URLs after website reorganization. patch by OKANO Takayoshi,
+	from PR 37070.
+	[pavel, ticket #1018]
+
+distrib/notes/common/main			1.384
+
+	Remove a spurious paragraph break from the start of the generated
+	text. Bump date.
+	[pavel, ticket #1019]
+
+distrib/notes/common/main			1.383
+
+	Update the number of packages in pkgsrc to match reality.
+	Dedicate the 4.0 release to the memory of itojun.
+	[agc, ticket #1020]
+
+distrib/notes/common/netboot			1.30
+
+	update URLs
+	[pavel, ticket #1021]
+
+gnu/usr.bin/groff/tmac/mdoc.local		patch
+sys/sys/param.h					patch
+
+	Welcome to NetBSD 4.0.
+	[bouyer]
 

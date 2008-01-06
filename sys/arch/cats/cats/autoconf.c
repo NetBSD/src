@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.10 2005/12/11 12:17:04 christos Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.10.40.1 2008/01/06 05:00:51 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.10 2005/12/11 12:17:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.10.40.1 2008/01/06 05:00:51 wrstuden Exp $");
 
 #include "opt_md.h"
 
@@ -150,15 +150,15 @@ cpu_configure(void)
 
 	config_rootfound("mainbus", NULL);
 
+#if defined(DEBUG)
 	/* Debugging information */
-#ifndef TERSE
 	printf("ipl_bio=%08x ipl_net=%08x ipl_tty=%08x ipl_vm=%08x\n",
 	    footbridge_imask[IPL_BIO], footbridge_imask[IPL_NET],
 	    footbridge_imask[IPL_TTY], footbridge_imask[IPL_VM]);
 	printf("ipl_audio=%08x ipl_imp=%08x ipl_high=%08x ipl_serial=%08x\n",
 	    footbridge_imask[IPL_AUDIO], footbridge_imask[IPL_CLOCK],
 	    footbridge_imask[IPL_HIGH], footbridge_imask[IPL_SERIAL]);
-#endif
+#endif /* defined(DEBUG) */
 
 	/* Time to start taking interrupts so lets open the flood gates .... */
 	(void)spl0();

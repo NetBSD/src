@@ -1,4 +1,4 @@
-	$NetBSD: prep.RISCOS,v 1.15.6.1 2007/09/03 06:57:24 wrstuden Exp $
+	$NetBSD: prep.RISCOS,v 1.15.6.2 2008/01/06 05:00:12 wrstuden Exp $
 
 These instructions are specific to NetBSD/acorn32 on Acorn RISCOS platforms
 (RiscPC/A7000/A7000+/NC's).
@@ -26,7 +26,7 @@ specifically.
 1.1 Hardware
 
 Refer to the NetBSD installation notes and/or the web site
-http://www.NetBSD.org/Ports/acorn32/ for a list of supported hardware.
+http://www.NetBSD.org/ports/acorn32/ for a list of supported hardware.
 
 
 1.2 Software

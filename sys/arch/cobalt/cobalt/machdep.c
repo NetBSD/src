@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.75.6.1 2007/09/03 07:03:14 wrstuden Exp $	*/
+/*	$NetBSD: machdep.c,v 1.75.6.2 2008/01/06 05:00:52 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 2006 Izumi Tsutsui.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.75.6.1 2007/09/03 07:03:14 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.75.6.2 2008/01/06 05:00:52 wrstuden Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -826,6 +826,9 @@ decode_bootstring(void)
 			bootpart = root_bstr[8] - '1';
 		}
 	}
+
+	if (nfsroot_bstr != NULL)
+		netboot = 1;
 }
 
 

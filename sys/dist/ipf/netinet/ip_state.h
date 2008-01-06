@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_state.h,v 1.5.12.1.2.2 2007/09/23 21:36:33 wrstuden Exp $	*/
+/*	$NetBSD: ip_state.h,v 1.5.12.1.2.3 2008/01/06 05:01:12 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 1995-2001 by Darren Reed.
@@ -26,8 +26,10 @@ struct ipscan;
 # define	IPSTATE_MAX	4013	/* Maximum number of states held */
 #endif
 
-#define	SEQ_GE(a,b)	((int)((a) - (b)) >= 0)
-#define	SEQ_GT(a,b)	((int)((a) - (b)) > 0)
+#define	PAIRS(s1,d1,s2,d2)	((((s1) == (s2)) && ((d1) == (d2))) ||\
+				 (((s1) == (d2)) && ((d1) == (s2))))
+#define	IPPAIR(s1,d1,s2,d2)	PAIRS((s1).s_addr, (d1).s_addr, \
+				      (s2).s_addr, (d2).s_addr)
 
 
 typedef struct ipstate {
@@ -244,7 +246,7 @@ extern	ipstate_t *fr_stlookup __P((fr_info_t *, tcphdr_t *, ipftq_t **));
 extern	void	fr_statesync __P((void *));
 extern	void	fr_timeoutstate __P((void));
 extern	int	fr_tcp_age __P((struct ipftqent *, struct fr_info *,
-				struct ipftq *, int, int));
+				struct ipftq *, int));
 extern	int	fr_tcpinwindow __P((struct fr_info *, struct tcpdata *,
 				    struct tcpdata *, tcphdr_t *, int));
 extern	void	fr_stateunload __P((void));

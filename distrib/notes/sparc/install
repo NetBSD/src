@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.52 2006/11/26 11:26:27 martin Exp $
+.\"	$NetBSD: install,v 1.52.4.1 2008/01/06 05:00:27 wrstuden Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -148,7 +148,7 @@ or create your own.
 If you wish to create your own, you should follow the directions on the
 .Nx
 Bootable CD-ROM HOW-TO at:
-.Lk http://www.NetBSD.org/Documentation/bootcd.html#sparcimage
+.Lk http://www.NetBSD.org/docs/bootcd.html#sparcimage
 .Pp
 Once you have downloaded
 .Pa sparccd-\*V.iso

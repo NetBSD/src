@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.h,v 1.3.40.1 2007/09/03 07:03:15 wrstuden Exp $	*/
+/*	$NetBSD: boot.h,v 1.3.40.2 2008/01/06 05:00:52 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -71,8 +71,29 @@ int wdopen(struct open_file *, ...);
 int wdclose(struct open_file *);
 
 /*
+ * tlp
+ */
+void *tlp_init(void *); 
+int tlp_send(void *, char *, u_int);
+int tlp_recv(void *, char *, u_int, u_int);
+
+extern struct netif_driver ether_tlp_driver;
+
+/*
  * devopen
  */
 int devparse(const char *, int *, uint8_t *, uint8_t *, const char **);
 
+/*
+ * tgetc
+ */
 int tgets(char *);
+
+/*
+ * cache
+ */
+#define CACHELINESIZE	32
+
+void pdcache_wb(uint32_t, u_int);
+void pdcache_inv(uint32_t, u_int);
+void pdcache_wbinv(uint32_t, u_int);

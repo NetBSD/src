@@ -1,4 +1,4 @@
-/*	$NetBSD: bgd.c,v 1.1 2006/06/19 15:44:56 gdamore Exp $	*/
+/*	$NetBSD: bgd.c,v 1.1.6.1 2008/01/06 05:01:17 wrstuden Exp $	*/
 
 /*
  * bgd.c
@@ -27,12 +27,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: bgd.c,v 1.1 2006/06/19 15:44:56 gdamore Exp $
+ * $Id: bgd.c,v 1.1.6.1 2008/01/06 05:01:17 wrstuden Exp $
  * $FreeBSD: src/usr.sbin/bluetooth/sdpd/bgd.c,v 1.1 2004/01/20 20:48:26 emax Exp $
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bgd.c,v 1.1 2006/06/19 15:44:56 gdamore Exp $");
+__RCSID("$NetBSD: bgd.c,v 1.1.6.1 2008/01/06 05:01:17 wrstuden Exp $");
 
 #include <bluetooth.h>
 #include <sdp.h>
@@ -98,8 +98,13 @@ static attr_t	bgd_profile_attrs[] = {
 	{ 0, NULL } /* end entry */
 };
 
-profile_t	bgd_profile_descriptor = {
+static uint16_t	bgd_profile_uuids[] = {
 	SDP_SERVICE_CLASS_BROWSE_GROUP_DESCRIPTOR,
+};
+
+profile_t	bgd_profile_descriptor = {
+	bgd_profile_uuids,
+	sizeof(bgd_profile_uuids),
 	0,
 	(profile_data_valid_p) NULL,
 	(attr_t const * const) &bgd_profile_attrs

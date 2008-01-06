@@ -1,4 +1,4 @@
-/*	$NetBSD: humanize_number.c,v 1.11 2006/06/08 21:08:56 simonb Exp $	*/
+/*	$NetBSD: humanize_number.c,v 1.11.6.1 2008/01/06 05:00:42 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: humanize_number.c,v 1.11 2006/06/08 21:08:56 simonb Exp $");
+__RCSID("$NetBSD: humanize_number.c,v 1.11.6.1 2008/01/06 05:00:42 wrstuden Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -121,7 +121,12 @@ humanize_number(char *buf, size_t len, int64_t bytes,
 		for (max = 100, i = len - baselen; i-- > 0;)
 			max *= 10;
 
-		for (i = 0; bytes >= max && i < maxscale; i++)
+		/*
+		 * Divide the number until it fits the given column.
+		 * If there will be an overflow by the rounding below,
+		 * divide once more.
+		 */
+		for (i = 0; bytes >= max - 50 && i < maxscale; i++)
 			bytes /= divisor;
 
 		if (scale & HN_GETSCALE)

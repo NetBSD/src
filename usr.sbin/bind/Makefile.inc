@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.25.4.1 2007/06/03 17:26:11 wrstuden Exp $
+#	$NetBSD: Makefile.inc,v 1.25.4.2 2008/01/06 05:01:16 wrstuden Exp $
 
 .if !defined(BIND9_MAKEFILE_INC)
 BIND9_MAKEFILE_INC=yes
@@ -11,7 +11,8 @@ WARNS?=	1
 NAMED_USE_OPENSSL?=no
 .endif
 
-.if (${MACHINE_ARCH} == "sparc" || ${MACHINE_ARCH} == "sparc64")
+.if (${MACHINE_ARCH} == "sparc" || ${MACHINE_ARCH} == "sparc64" \
+	|| ${MACHINE_ARCH} == "mipsel" || ${MACHINE_ARCH} == "mipseb" )
 NAMED_USE_PTHREADS?=no
 .else
 NAMED_USE_PTHREADS?=yes

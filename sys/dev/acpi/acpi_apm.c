@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_apm.c,v 1.8 2006/11/16 01:32:47 christos Exp $	*/
+/*	$NetBSD: acpi_apm.c,v 1.8.12.1 2008/01/06 05:01:01 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_apm.c,v 1.8 2006/11/16 01:32:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_apm.c,v 1.8.12.1 2008/01/06 05:01:01 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -289,7 +289,7 @@ acpiapm_get_powstat(void *opaque, u_int batteryid,
 	(void)memset(pinfo, 0, sizeof(*pinfo));
 	pinfo->ac_state = APM_AC_UNKNOWN;
 	pinfo->minutes_valid = 0;
-	pinfo->minutes_left = 0xffff; /* unknown */
+	pinfo->minutes_left = 0;
 	pinfo->batteryid = 0;
 	pinfo->nbattery = 0;	/* to be incremented as batteries are found */
 	pinfo->battery_flags = 0;
