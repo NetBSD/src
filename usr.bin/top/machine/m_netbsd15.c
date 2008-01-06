@@ -1,4 +1,4 @@
-/*	$NetBSD: m_netbsd15.c,v 1.32 2008/01/05 19:29:12 christos Exp $	*/
+/*	$NetBSD: m_netbsd15.c,v 1.33 2008/01/06 06:55:08 yamt Exp $	*/
 
 /*
  * top - a top users display for Unix
@@ -37,12 +37,12 @@
  *		Andrew Doran <ad@NetBSD.org>
  *
  *
- * $Id: m_netbsd15.c,v 1.32 2008/01/05 19:29:12 christos Exp $
+ * $Id: m_netbsd15.c,v 1.33 2008/01/06 06:55:08 yamt Exp $
  */
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: m_netbsd15.c,v 1.32 2008/01/05 19:29:12 christos Exp $");
+__RCSID("$NetBSD: m_netbsd15.c,v 1.33 2008/01/06 06:55:08 yamt Exp $");
 #endif
 
 #include <sys/param.h>
@@ -137,7 +137,7 @@ static u_int64_t *cp_diff;
 int process_states[8];
 char *procstatenames[] = {
 	"", " idle, ", " runnable, ", " sleeping, ", " stopped, ",
-	" zombie, ", " dead, ", " on processor, ",
+	" zombie, ", " dead, ", " on CPU, ",
 	NULL
 };
 
