@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia_codec.c,v 1.54 2008/01/04 17:00:05 kent Exp $	*/
+/*	$NetBSD: azalia_codec.c,v 1.55 2008/01/06 13:33:21 kent Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.54 2008/01/04 17:00:05 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.55 2008/01/06 13:33:21 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -265,6 +265,38 @@ azalia_codec_init_vtbl(codec_t *this)
 		this->name = "CMedia CMI9880";
 		this->init_dacgroup = cmi9880_init_dacgroup;
 		this->mixer_init = cmi9880_mixer_init;
+		break;
+	case 0x83847612:
+		/* http://www.idt.com/products/getDoc.cfm?docID=17122893 */
+		this->name = "Sigmatel STAC9230X";
+		break;
+	case 0x83847613:
+		/* http://www.idt.com/products/getDoc.cfm?docID=17122893 */
+		this->name = "Sigmatel STAC9230D";
+		break;
+	case 0x83847614:
+		/* http://www.idt.com/products/getDoc.cfm?docID=17122893 */
+		this->name = "Sigmatel STAC9229X";
+		break;
+	case 0x83847615:
+		/* http://www.idt.com/products/getDoc.cfm?docID=17122893 */
+		this->name = "Sigmatel STAC9229D";
+		break;
+	case 0x83847616:
+		/* http://www.idt.com/products/getDoc.cfm?docID=17122893 */
+		this->name = "Sigmatel STAC9228X";
+		break;
+	case 0x83847617:
+		/* http://www.idt.com/products/getDoc.cfm?docID=17122893 */
+		this->name = "Sigmatel STAC9228D";
+		break;
+	case 0x83847618:
+		/* http://www.idt.com/products/getDoc.cfm?docID=17122893 */
+		this->name = "Sigmatel STAC9227X";
+		break;
+	case 0x83847619:
+		/* http://www.idt.com/products/getDoc.cfm?docID=17122893 */
+		this->name = "Sigmatel STAC9227D";
 		break;
 	case 0x83847680:
 		this->name = "Sigmatel STAC9221";
