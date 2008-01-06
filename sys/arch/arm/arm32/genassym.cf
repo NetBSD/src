@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.35 2007/10/17 19:53:31 garbled Exp $
+#	$NetBSD: genassym.cf,v 1.36 2008/01/06 01:19:42 matt Exp $
 
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -136,6 +136,7 @@ define	CF_SLEEP		offsetof(struct cpu_functions, cf_sleep)
 define	CF_CONTROL		offsetof(struct cpu_functions, cf_control)
 
 define	CI_CURPRIORITY		offsetof(struct cpu_info, ci_schedstate.spc_curpriority)
+define	CI_IDEPTH		offsetof(struct cpu_info, ci_idepth)
 ifdef MULTIPROCESSOR
 define	CI_CURLWP		offsetof(struct cpu_info, ci_curlwp)
 define	CI_CURPCB		offsetof(struct cpu_info, ci_curpcb)

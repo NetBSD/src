@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_irqhandler.c,v 1.18 2008/01/06 00:56:18 ad Exp $	*/
+/*	$NetBSD: isa_irqhandler.c,v 1.19 2008/01/06 01:19:42 matt Exp $	*/
 
 /*
  * Copyright 1997
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_irqhandler.c,v 1.18 2008/01/06 00:56:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_irqhandler.c,v 1.19 2008/01/06 01:19:42 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,7 +101,6 @@ u_int irqmasks[IPL_LEVELS];
 extern void set_spl_masks(void);
 void irq_calculatemasks(void);
 void stray_irqhandler(u_int);
-static int intr_wrapper(void *);
 
 #define WriteWord(a, b) *((volatile unsigned int *)(a)) = (b)
 
@@ -331,10 +330,8 @@ intr_claim(irq, level, ih_func, ih_arg, group, name)
 		panic("intr_claim(): Cannot malloc handler memory");
 
 	ih->ih_level = level;
-	ih->ih_realfunc = ih_func;	/* XXX */
-	ih->ih_realarg = ih_arg;	/* XXX */
-	ih->ih_func = intr_wrapper;	/* XXX */
-	ih->ih_arg = ih;		/* XXX */
+	ih->ih_func = ih_func;
+	ih->ih_arg = ih_arg;
 	ih->ih_flags = 0;
 
 	if (irq_claim(irq, ih, group, name) != 0) 
@@ -413,21 +410,4 @@ stray_irqhandler(mask)
 	if (++stray_irqs <= 8)
 		log(LOG_ERR, "Stray interrupt %08x%s\n", mask,
 		    stray_irqs >= 8 ? ": stopped logging" : "");
-}
-
-static int
-intr_wrapper(void *arg)			/* XXX */
-{
-	struct irqhandler *ih;
-	struct cpu_info *ci;
-	int rv;
-
-	ci = curcpu();
-	ih = arg;
-
-	ci->ci_idepth++;
-	rv = (*ih->ih_realfunc)(ih->ih_realarg);
-	ci->ci_idepth--;
-
-	return rv;
 }
