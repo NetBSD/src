@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback_xenbus.c,v 1.12 2008/01/02 11:48:33 ad Exp $      */
+/*      $NetBSD: xbdback_xenbus.c,v 1.13 2008/01/06 12:43:42 bouyer Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -1018,6 +1018,7 @@ xbdback_co_io_loop(struct xbdback_instance *xbdi, void *obj)
 			xbdi->xbdi_cont = xbdback_co_io_gotio;
 			xio = xbdback_pool_get(&xbdback_io_pool, xbdi);
 			buf_init(&xio->xio_buf);
+			return xio;
 		} else {
 			xbdi->xbdi_cont = xbdback_co_io_gotio2;
 		}
