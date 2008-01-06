@@ -1,4 +1,4 @@
-#	$NetBSD: files.m68k,v 1.42 2007/12/31 13:38:51 ad Exp $
+#	$NetBSD: files.m68k,v 1.43 2008/01/06 18:04:01 ad Exp $
 #
 
 defflag	opt_fpsp.h		FPSP
@@ -13,6 +13,7 @@ file	arch/m68k/m68k/db_trace.c		ddb
 file	arch/m68k/m68k/in_cksum.c		inet
 file	netinet/in4_cksum.c			inet
 file	arch/m68k/m68k/kgdb_m68k.c		kgdb
+file	arch/m68k/m68k/kobj_machdep.c		modular
 file	arch/m68k/m68k/lock_stubs.s
 file	arch/m68k/m68k/m68k_machdep.c
 file	arch/m68k/m68k/mappedcopy.c		mappedcopy
