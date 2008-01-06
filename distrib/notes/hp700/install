@@ -1,0 +1,7 @@
+.\"	$NetBSD: install,v 1.2.2.2 2008/01/06 20:16:26 skrll Exp $
+.
+.Ss2 Installing NetBSD by using a netboot setup
+.
+.so ../common/netboot
+.
+.so ../common/sysinst
