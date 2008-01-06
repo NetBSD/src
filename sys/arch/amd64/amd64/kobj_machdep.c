@@ -1,4 +1,4 @@
-/*	$NetBSD: kobj_machdep.c,v 1.1 2008/01/04 12:26:20 ad Exp $	*/
+/*	$NetBSD: kobj_machdep.c,v 1.2 2008/01/06 14:33:27 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,12 +59,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.1 2008/01/04 12:26:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.2 2008/01/06 14:33:27 ad Exp $");
 
 #define	ELFSIZE		ARCH_ELFSIZE
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/kernel.h>
 #include <sys/kobj.h>
 #include <sys/exec.h>
 #include <sys/exec_elf.h>
@@ -178,8 +179,12 @@ kobj_machdep(kobj_t ko, void *base, size_t size, bool load)
 	uint64_t where;
 
 	if (load) {
-		where = xc_broadcast(0, (xcfunc_t)wbinvd, NULL, NULL);
-		xc_wait(where);
+		if (cold) {
+			wbinvd();
+		} else {
+			where = xc_broadcast(0, (xcfunc_t)wbinvd, NULL, NULL);
+			xc_wait(where);
+		}
 	}
 
 	return 0;
