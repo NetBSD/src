@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.49.6.3 2008/01/02 21:51:30 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.49.6.4 2008/01/06 18:29:45 bouyer Exp $	*/
 /*	NetBSD: machdep.c,v 1.559 2004/07/22 15:12:46 mycroft Exp 	*/
 
 /*-
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.49.6.3 2008/01/02 21:51:30 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.49.6.4 2008/01/06 18:29:45 bouyer Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -530,16 +530,6 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 		       CTLTYPE_STRUCT, "console_device", NULL,
 		       sysctl_consdev, 0, NULL, sizeof(dev_t),
 		       CTL_MACHDEP, CPU_CONSDEV, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_INT, "biosbasemem", NULL,
-		       NULL, 0, &biosbasemem, 0,
-		       CTL_MACHDEP, CPU_BIOSBASEMEM, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_INT, "biosextmem", NULL,
-		       NULL, 0, &biosextmem, 0,
-		       CTL_MACHDEP, CPU_BIOSEXTMEM, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRING, "booted_kernel", NULL,
