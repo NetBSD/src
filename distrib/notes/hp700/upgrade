@@ -1,4 +1,4 @@
-.\"	$NetBSD: upgrade,v 1.1 2003/10/10 23:53:21 mbw Exp $
+.\"	$NetBSD: upgrade,v 1.2 2008/01/06 20:16:25 skrll Exp $
 .\"
 .\" Copyright (c) 1999-2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -32,5 +32,4 @@
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
 .
-.Nx*M
-does not currently support an upgrade procedure.
+.so ../common/upgrade

@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysinst,v 1.83 2007/12/14 21:15:55 pavel Exp $
+.\"	$NetBSD: sysinst,v 1.84 2008/01/06 20:16:24 skrll Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -55,8 +55,8 @@
 .  ds part_usr e
 .\}
 .if \n[amiga]:\n[amigappc]:\n[arc]:\n[atari]:\n[cobalt]:\n[evbmips]:\
-\n[evbppc]:\n[hpcmips]:\n[i386]:\n[macppc]:\n[ofppc]:\n[playstation2]:\
-\n[sandpoint]:\n[sbmips]:\n[sgimips]:\n[x86_64] \{\
+\n[evbppc]:\n[hp700]:\n[hpcmips]:\n[i386]:\n[macppc]:\n[ofppc]:\
+\n[playstation2]:\n[sandpoint]:\n[sbmips]:\n[sgimips]:\n[x86_64] \{\
 .  ds part_max p
 .\}
 .if \n[acorn26]:\n[acorn32]:\n[cats]:\n[evbarm]:\n[evbppc]:\n[ews4800mips]:\
@@ -85,7 +85,7 @@ covers many details for the sake of completeness.
 Do not let this discourage you; the install program is not hard
 to use.
 .
-.if !\n[acorn26]:\n[acorn32]\n[atari]:\n[ews4800mips]:\n[mac68k]:\n[macppc]:\n[mvme68k]:\n[news68k]:\n[newsmips]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[sparc64]:\n[x68k] \{\
+.if !\n[acorn26]:\n[acorn32]\n[atari]:\n[ews4800mips]:\n[hp700]:\n[mac68k]:\n[macppc]:\n[mvme68k]:\n[news68k]:\n[newsmips]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[sparc64]:\n[x68k] \{\
 .It
 .To 2 "Possible hardware problems"
 .Em Possible hardware problems
@@ -99,7 +99,7 @@ Non-removable devices can be disabled with
 .Ic boot
 .Fl c
 to enter it).
-.\} \" !\n[acorn26]:\n[atari]:\n:[ews4800mips]:\n[macppc]:\n[mvme68k]:\n[news68k]:\n[newsmips]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[sparc64]:\n[x68k]
+.\} \" !\n[acorn26]:\n[acorn32]\n[atari]:\n:[ews4800mips]:\n[hp700]:\n[mac68k]\:[macppc]:\n[mvme68k]:\n[news68k]:\n[newsmips]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[sparc64]:\n[x68k]
 .if \n[mac68k] \{\
 .It
 .To 2 "Possible hardware-specific issues"
@@ -186,6 +186,12 @@ The distribution sets (in this example, they are on CD).
 .el \{\
 .ie \n[ews4800mips] Two floppy disks.
 .el \{\
+.ie \n[hp700] \{\
+The
+.Pa netinstall.lif
+volume on a netboot server as described above.
+.\}
+.el \{\
 .ie \n[i386] Two 1.44 MB 3.5" floppy disks if the CD is not bootable or if you cannot boot from CD.
 .el \{\
 .ie \n[mac68k] The Mac OS Booter application and an Installation Kernel
@@ -222,6 +228,7 @@ a hard disk and a minimum of
 .if \n[atari] 4 MB (TT030/Falcon) or 16 MB (Hades/Milan)
 .if \n[cats] 8 MB
 .if \n[ews4800mips] 16 MB
+.if \n[hp700] 32 MB
 .if \n[i386] 4 MB
 .if \n[mac68k] 8 MB
 .if \n[macppc] 16 MB
@@ -240,6 +247,7 @@ The hard disk should have at least
 .if \n[atari] 120
 .if \n[cats] 200
 .if \n[ews4800mips] 200
+.if \n[hp700] 200
 .if \n[i386] 200
 .if \n[mac68k] 120
 .if \n[macppc] 200
@@ -329,7 +337,7 @@ kernels while booting.
 .It
 The Quick Installation
 .(bullet
-.ie \n[acorn26]:\n[atari]:\n[cats]:\n[evbppc]:\n[macppc]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[sparc64] \{\
+.ie \n[acorn26]:\n[atari]:\n[cats]:\n[evbppc]:\n[hp700]:\n[macppc]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[sparc64] \{\
 Boot the system as described above.
 You should be at the
 .Ic sysinst
