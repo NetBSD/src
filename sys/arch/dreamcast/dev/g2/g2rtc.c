@@ -1,4 +1,4 @@
-/* $NetBSD: g2rtc.c,v 1.1 2006/09/05 11:09:36 uwe Exp $ */
+/* $NetBSD: g2rtc.c,v 1.2 2008/01/06 10:33:24 he Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -34,10 +34,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: g2rtc.c,v 1.1 2006/09/05 11:09:36 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: g2rtc.c,v 1.2 2008/01/06 10:33:24 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/device.h>
 
 #include <dev/clock_subr.h>
 
