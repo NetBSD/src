@@ -1,7 +1,37 @@
-/*	$NetBSD: locore.S,v 1.58.6.1 2007/12/13 21:54:42 bouyer Exp $	*/
+/*	$NetBSD: locore.S,v 1.58.6.2 2008/01/06 18:29:43 bouyer Exp $	*/
 
 /*
  * Copyright-o-rama!
+ */
+
+/*
+ * Copyright (c) 2006 Manuel Bouyer.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by Manuel Bouyer.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
  */
 
 /*
@@ -111,12 +141,13 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.58.6.1 2007/12/13 21:54:42 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.58.6.2 2008/01/06 18:29:43 bouyer Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_ddb.h"
 #include "opt_realmem.h"
 #include "opt_vm86.h"
+#include "opt_xen.h"
 
 #include "npx.h"
 #include "assym.h"
@@ -132,13 +163,44 @@ __KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.58.6.1 2007/12/13 21:54:42 bouyer Exp $
 #include <machine/specialreg.h>
 #include <machine/trap.h>
 #include <machine/i82489reg.h>
-#include <machine/multiboot.h>
 #include <machine/frameasm.h>
 #include <machine/i82489reg.h>
+#ifndef XEN
+#include <machine/multiboot.h>
+#endif
 
 /* XXX temporary kluge; these should not be here */
 /* Get definitions for IOM_BEGIN, IOM_END, and IOM_SIZE */
 #include <dev/isa/isareg.h>
+
+#ifdef XEN
+/*
+ * Xen guest identifier and loader selection
+ */
+.section __xen_guest
+#ifdef XEN3
+	.ascii	"GUEST_OS=netbsd,GUEST_VER=3.0,XEN_VER=xen-3.0"
+#if defined(DOM0OPS) || !defined(XEN_COMPAT_030001)
+	.ascii  ",VIRT_BASE=0xc0000000" /* KERNBASE */
+	.ascii  ",ELF_PADDR_OFFSET=0xc0000000" /* KERNBASE */
+#else
+	.ascii  ",VIRT_BASE=0xc0100000" /* KERNTEXTOFF */
+	.ascii  ",ELF_PADDR_OFFSET=0xc0100000" /* KERNTEXTOFF */
+#endif
+	.ascii  ",VIRT_ENTRY=0xc0100000" /* KERNTEXTOFF */
+#if !defined(XEN_COMPAT_030001)
+	.ascii  ",HYPERCALL_PAGE=0x00000101"
+		/* (???+HYPERCALL_PAGE_OFFSET)/PAGE_SIZE) */
+#endif
+#else /* !XEN3 */
+	.ascii	"GUEST_OS=netbsd,GUEST_VER=2.0,XEN_VER=2.0"
+#endif /* XEN3 */
+	.ascii	",LOADER=generic"
+#if (NKSYMS || defined(DDB) || defined(LKM)) && !defined(SYMTAB_SPACE)
+	.ascii	",BSD_SYMTAB=yes"
+#endif
+	.byte	0
+#endif
 
 /*
  * Initialization
@@ -182,11 +244,14 @@ _C_LABEL(proc0uarea):	.long	0
 _C_LABEL(PDPpaddr):	.long	0	# paddr of PDP, for libkvm
 _C_LABEL(tablesize):	.long	0
 
-	.space 512
+	.space 1024
 tmpstk:
 
-
+#ifndef XEN
 #define	_RELOC(x)	((x) - KERNBASE)
+#else
+#define	_RELOC(x)	((x))
+#endif /* XEN */
 #define	RELOC(x)	_RELOC(_C_LABEL(x))
 
 	.text
@@ -194,6 +259,7 @@ tmpstk:
 	.set	_C_LABEL(kernel_text),KERNTEXTOFF
 
 	.globl	start
+#ifndef XEN
 start:	movw	$0x1234,0x472			# warm boot
 
 #if defined(MULTIBOOT)
@@ -645,6 +711,97 @@ begin:
 #endif /* SAFARI_FIFO_HACK */
 
 	call 	_C_LABEL(main)
+#else /* XEN */
+start:
+	/* First, reset the PSL. */
+	pushl	$PSL_MBO
+	popfl
+
+	cld
+#ifdef XEN3
+	movl	%esp, %ebx		# save start of available space
+#else
+	movl    %esi,%ebx               # save start_info pointer
+#endif
+	movl	$_RELOC(tmpstk),%esp	# bootstrap stack end location
+
+        /* Clear BSS first so that there are no surprises... */
+	xorl	%eax,%eax
+	movl	$RELOC(__bss_start),%edi
+	movl	$RELOC(_end),%ecx
+	subl	%edi,%ecx
+	rep stosb
+
+	/* Copy the necessary stuff from start_info structure. */
+        /* We need to copy shared_info early, so that sti/cli work */
+	movl	$RELOC(start_info_union),%edi
+	movl	$128,%ecx
+	rep movsl
+
+	/* Clear segment registers; always null in proc0. */
+	xorl	%eax,%eax
+	movw	%ax,%fs
+	movw	%ax,%gs
+	decl	%eax
+	movl	%eax,RELOC(cpu_info_primary)+CPU_INFO_LEVEL
+
+	xorl	%eax,%eax
+	cpuid
+	movl	%eax,RELOC(cpu_info_primary)+CPU_INFO_LEVEL
+
+	call	xen_pmap_bootstrap
+	/*
+	 * First avail returned by xen_pmap_bootstrap in %eax
+	 */
+	movl	%eax, %esi;
+	movl	%esi, _C_LABEL(proc0uarea)
+
+#define PROC0PDIR       ((0)              * PAGE_SIZE)
+#define PROC0STACK      ((1)              * PAGE_SIZE)
+
+	/* Set up bootstrap stack. */
+	leal	(KSTACK_SIZE-FRAMESIZE)(%eax),%esp
+	xorl	%ebp,%ebp               # mark end of frames
+
+	addl	$USPACE, %esi
+	subl	$KERNBASE, %esi		#init386 want a physical address
+	pushl	%esi
+	call	_C_LABEL(init386)	# wire 386 chip for unix operation
+	addl	$4,%esp
+	call 	_C_LABEL(main)
+
+#if defined(XEN3) && !defined(XEN_COMPAT_030001)
+/* space for the hypercall call page */
+#define HYPERCALL_PAGE_OFFSET 0x1000
+.org HYPERCALL_PAGE_OFFSET
+ENTRY(hypercall_page)
+.skip 0x1000
+#endif /* defined(XEN3) && !defined(XEN_COMPAT_030001) */
+
+/*
+ * void lgdt_finish(void);
+ * Finish load a new GDT pointer (do any necessary cleanup).
+ * XXX It's somewhat questionable whether reloading all the segment registers
+ * is necessary, since the actual descriptor data is not changed except by
+ * process creation and exit, both of which clean up via task switches.  OTOH,
+ * this only happens at run time when the GDT is resized.
+ */
+/* LINTSTUB: Func: void lgdt_finish(void) */
+NENTRY(lgdt_finish)
+	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax
+	movw	%ax,%ds
+	movw	%ax,%es
+	movw	%ax,%gs
+	movw	%ax,%ss
+	movl	$GSEL(GCPU_SEL, SEL_KPL),%eax
+	movw	%ax,%fs
+	/* Reload code selector by doing intersegment return. */
+	popl	%eax
+	pushl	$GSEL(GCODE_SEL, SEL_KPL)
+	pushl	%eax
+	lret
+
+#endif /* XEN */
 
 /*
  * void lwp_trampoline(void);
@@ -763,6 +920,11 @@ ENTRY(cpu_switchto)
 	jnz	4f
 
 	/* Switch TSS.  Reset "task busy" flag before loading. */
+#ifdef XEN
+	pushl	%ebx
+	call	_C_LABEL(i386_switch_context)
+	addl	$4,%esp
+#else /* XEN */
 	movl	%cr3,%eax
 	movl	%eax,PCB_CR3(%ebx)	# for TSS gates
 	movl	CPUVAR(GDT),%ecx
@@ -783,6 +945,7 @@ ENTRY(cpu_switchto)
 	movl	PCB_GSD+4(%ebx), %edx
 	movl	%eax, (GUGS_SEL*8)(%ecx)
 	movl	%edx, (GUGS_SEL*8+4)(%ecx)
+#endif /* XEN */
 
 	/* Is this process using RAS (restartable atomic sequences)? */
 	movl	L_PROC(%edi),%eax
@@ -794,7 +957,9 @@ ENTRY(cpu_switchto)
 	 * FPU IPIs can alter the LWP's saved cr0.  Dropping the priority
 	 * is deferred until mi_switch(), when cpu_switchto() returns.
 	 */
-2:	movl	$IPL_IPI,CPUVAR(ILEVEL)
+2:
+#ifndef XEN
+	movl	$IPL_IPI,CPUVAR(ILEVEL)
 	movl	PCB_CR0(%ebx),%ecx
 	movl	%cr0,%edx
 
@@ -811,6 +976,7 @@ ENTRY(cpu_switchto)
 3:	cmpl	%edx,%ecx
 	je	4f
 	movl	%ecx,%cr0
+#endif /* XEN */
 
 	/* Return to the new LWP, returning 'oldlwp' in %eax. */
 4:	movl	%esi,%eax
@@ -890,12 +1056,12 @@ syscall1:
 	addl	$4,%esp
 .Lsyscall_checkast:
 	/* Check for ASTs on exit to user mode. */
-	cli
+	CLI(%eax)
 	CHECK_ASTPENDING(%eax)
 	je	1f
 	/* Always returning to user mode here. */
 	CLEAR_ASTPENDING(%eax)
-	sti
+	STI(%eax)
 	/* Pushed T_ASTFLT into tf_trapno on entry. */
 	pushl	%esp
 	call	_C_LABEL(trap)
@@ -903,13 +1069,36 @@ syscall1:
 	jmp	.Lsyscall_checkast	/* re-check ASTs */
 1:	CHECK_DEFERRED_SWITCH
 	jnz	9f
+#ifdef XEN
+	STIC(%eax)
+	jz	14f
+	call	_C_LABEL(stipending)
+	testl	%eax,%eax
+	jz	14f
+	/* process pending interrupts */
+	CLI(%eax)
+	movl	CPUVAR(ILEVEL), %ebx
+	movl	$.Lsyscall_resume, %esi # address to resume loop at
+.Lsyscall_resume:
+	movl	%ebx,%eax	# get cpl
+	movl	CPUVAR(IUNMASK)(,%eax,4),%eax
+	andl	CPUVAR(IPENDING),%eax   # any non-masked bits left?
+	jz	17f
+	bsrl	%eax,%eax
+	btrl	%eax,CPUVAR(IPENDING)
+	movl	CPUVAR(ISOURCES)(,%eax,4),%eax
+	jmp	*IS_RESUME(%eax)
+17:	movl	%ebx, CPUVAR(ILEVEL)    #restore cpl
+	jmp	.Lsyscall_checkast
+14:
+#endif /* XEN */
 #ifndef DIAGNOSTIC
 	INTRFASTEXIT
 #else /* DIAGNOSTIC */
 	cmpl	$IPL_NONE,CPUVAR(ILEVEL)
 	jne	3f
 	INTRFASTEXIT
-3:	sti
+3:	STI(%eax)
 	pushl	$4f
 	call	_C_LABEL(printf)
 	addl	$4,%esp
@@ -921,7 +1110,7 @@ syscall1:
 5:	.asciz	"WARNING: SPL NOT ZERO ON SYSCALL ENTRY\n"
 6:	.asciz	"WARNING: WANT PMAPLOAD ON SYSCALL ENTRY\n"
 #endif /* DIAGNOSTIC */
-9:	sti
+9:	STI(%eax)
 	call	_C_LABEL(pmap_load)
 	jmp	.Lsyscall_checkast	/* re-check ASTs */
 
