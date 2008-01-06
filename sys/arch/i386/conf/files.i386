@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.326 2007/12/26 16:28:15 joerg Exp $
+#	$NetBSD: files.i386,v 1.327 2008/01/06 18:03:59 ad Exp $
 #
 # new style config file for i386 architecture
 #
@@ -81,6 +81,7 @@ file	arch/i386/i386/i386func.S
 file	arch/i386/i386/in_cksum.S	inet | inet6
 file	arch/i386/i386/ipkdb_glue.c	ipkdb
 file	arch/i386/i386/kgdb_machdep.c	kgdb
+file	arch/i386/i386/kobj_machdep.c	modular
 file	arch/i386/i386/machdep.c
 file	arch/i386/i386/identcpu.c
 file	arch/i386/i386/math_emulate.c	math_emulate
