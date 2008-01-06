@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kobj.c,v 1.2 2008/01/04 14:53:33 ad Exp $	*/
+/*	$NetBSD: subr_kobj.c,v 1.3 2008/01/06 14:47:26 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.2 2008/01/04 14:53:33 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.3 2008/01/06 14:47:26 ad Exp $");
 
 #define	ELFSIZE		ARCH_ELFSIZE
 
@@ -111,8 +111,17 @@ typedef struct {
 	size_t		size;
 } relaent_t;
 
+typedef enum kobjtype {
+	KT_UNSET,
+	KT_VNODE,
+	KT_MEMORY
+} kobjtype_t;
+
 struct kobj {
 	char		ko_name[MAXLKMNAME];
+	kobjtype_t	ko_type;
+	void		*ko_source;
+	ssize_t		ko_memsize;
 	vaddr_t		ko_address;	/* Relocation address */
 	Elf_Shdr	*ko_shdr;
 	progent_t	*ko_progtab;
@@ -129,15 +138,129 @@ struct kobj {
 	int		ko_nrela;
 	int		ko_nprogtab;
 	bool		ko_ksyms;
+	bool		ko_loaded;
 };
 
 static int	kobj_relocate(kobj_t);
 static void	kobj_error(const char *, ...);
-static int	kobj_read(vnode_t *, void *, size_t, off_t);
+static int	kobj_read(kobj_t, void *, size_t, off_t);
 static void	kobj_release_mem(kobj_t);
 
 extern struct vm_map *lkm_map;
 static const char	*kobj_path = "/modules";	/* XXX ??? */
+
+/*
+ * kobj_open_file:
+ *
+ *	Open an object located in the file system.  'name' may not
+ *	be known in advance and so is preliminary.
+ */
+int
+kobj_open_file(kobj_t *kop, const char *name, const char *filename)
+{
+	struct nameidata nd;
+	kauth_cred_t cred;
+	char *path;
+	int error;
+	kobj_t ko;
+
+	cred = kauth_cred_get();
+
+	ko = kmem_zalloc(sizeof(*ko), KM_SLEEP);
+	if (ko == NULL) {
+		return ENOMEM;
+	}
+
+	strlcpy(ko->ko_name, name, sizeof(ko->ko_name));
+
+	/* XXX where to look? */
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, filename);
+	error = vn_open(&nd, FREAD, 0);
+	if (error != 0) {
+		if (error != ENOENT) {
+			goto out;
+		}
+		path = PNBUF_GET();
+		snprintf(path, MAXPATHLEN - 1, "%s/%s", kobj_path,
+		    filename);
+		NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, path);
+		error = vn_open(&nd, FREAD, 0);
+		PNBUF_PUT(path);
+		if (error != 0) {
+			goto out;
+		}
+	}
+
+ out:
+ 	if (error != 0) {
+	 	kmem_free(ko, sizeof(*ko));
+	} else {
+		ko->ko_type = KT_VNODE;
+		ko->ko_source = nd.ni_vp;
+		*kop = ko;
+	}
+	return error;
+}
+
+/*
+ * kobj_open_mem:
+ *
+ *	Open a pre-loaded object already resident in memory.  If size
+ *	is not -1, the complete size of the object is known.  'name' may
+ *	not be known in advance and so is preliminary.
+ */
+int
+kobj_open_mem(kobj_t *kop, const char *name, void *base, ssize_t size)
+{
+	kobj_t ko;
+
+	ko = kmem_zalloc(sizeof(*ko), KM_SLEEP);
+	if (ko == NULL) {
+		return ENOMEM;
+	}
+
+	strlcpy(ko->ko_name, name, sizeof(ko->ko_name));
+	ko->ko_type = KT_MEMORY;
+	ko->ko_source = base;
+	ko->ko_memsize = size;
+	*kop = ko;
+
+	return 0;
+}
+
+/*
+ * kobj_close:
+ *
+ *	Close an open ELF object.  If the object was not successfully
+ *	loaded, it will be destroyed.
+ */
+void
+kobj_close(kobj_t ko)
+{
+
+	KASSERT(ko->ko_source != NULL);
+
+	switch (ko->ko_type) {
+	case KT_VNODE:
+		VOP_UNLOCK(ko->ko_source, 0);
+		vn_close(ko->ko_source, FREAD, kauth_cred_get(), curlwp);
+		break;
+	case KT_MEMORY:
+		/* nothing */
+		break;
+	default:
+		panic("kobj_close: unknown type");
+		break;
+	}
+
+	ko->ko_source = NULL;
+	ko->ko_type = KT_UNSET;
+
+	/* If the object hasn't been loaded, then destroy it. */
+	if (!ko->ko_loaded) {
+		kobj_unload(ko);
+	}
+}
 
 /*
  * kobj_load:
@@ -146,16 +269,13 @@ static const char	*kobj_path = "/modules";	/* XXX ??? */
  *	running	kernel image.
  */
 int
-kobj_load(const char *name, kobj_t *kop)
+kobj_load(kobj_t ko)
 {
-	struct nameidata nd;
-	kauth_cred_t cred;
 	Elf_Ehdr *hdr;
 	Elf_Shdr *shdr;
 	Elf_Sym *es;
 	vaddr_t mapbase;
 	size_t mapsize;
-	char *path;
 	int error;
 	int symtabindex;
 	int symstrindex;
@@ -163,46 +283,14 @@ kobj_load(const char *name, kobj_t *kop)
 	int pb, rl, ra;
 	int alignmask;
 	int i, j;
-	kobj_t ko;
 
-	cred = kauth_cred_get();
+	KASSERT(ko->ko_type != KT_UNSET);
+	KASSERT(ko->ko_source != NULL);
+
 	shdr = NULL;
 	mapsize = 0;
 	error = 0;
 	hdr = NULL;
-
-	ko = kmem_zalloc(sizeof(*ko), KM_SLEEP);
-	if (ko == NULL) {
-		return ENOMEM;
-	}
-
-	/*
-	 * XXXAD should:
-	 * - have lkm code strip module name out of pathname
-	 * - take both name and pathname arguments
-	 * - be smarter about where to look - needs a policy
-	 */
-	if (strlcpy(ko->ko_name, name, sizeof(ko->ko_name)) >=
-	    sizeof(ko->ko_name)) {
-	    	error = EINVAL;
-	    	goto out;
-	}
-
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, name);
-	error = vn_open(&nd, FREAD, 0);
-	if (error != 0) {
-		if (error != ENOENT) {
-			goto out;
-		}
-		path = PNBUF_GET();
-		snprintf(path, MAXPATHLEN, "%s/%s", kobj_path, name);
-		NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, path);
-		error = vn_open(&nd, FREAD, 0);
-		PNBUF_PUT(path);
-		if (error != 0) {
-			goto out;
-		}
-	}
 
 	/*
 	 * Read the elf header from the file.
@@ -212,10 +300,11 @@ kobj_load(const char *name, kobj_t *kop)
 		error = ENOMEM;
 		goto out;
 	}
-	error = kobj_read(nd.ni_vp, hdr, sizeof(*hdr), 0);
+	error = kobj_read(ko, hdr, sizeof(*hdr), 0);
 	if (error != 0)
 		goto out;
 	if (memcmp(hdr->e_ident, ELFMAG, SELFMAG) != 0) {
+		kobj_error("not an ELF object");
 		error = ENOEXEC;
 		goto out;
 	}
@@ -263,7 +352,7 @@ kobj_load(const char *name, kobj_t *kop)
 		goto out;
 	}
 	ko->ko_shdr = shdr;
-	error = kobj_read(nd.ni_vp, shdr, ko->ko_shdrsz, hdr->e_shoff);
+	error = kobj_read(ko, shdr, ko->ko_shdrsz, hdr->e_shoff);
 	if (error != 0) {
 		goto out;
 	}
@@ -358,7 +447,7 @@ kobj_load(const char *name, kobj_t *kop)
 		error = ENOMEM;
 		goto out;
 	}
-	error = kobj_read(nd.ni_vp, ko->ko_symtab, shdr[symtabindex].sh_size,
+	error = kobj_read(ko, ko->ko_symtab, shdr[symtabindex].sh_size,
 	    shdr[symtabindex].sh_offset);
 	if (error != 0) {
 		goto out;
@@ -377,7 +466,7 @@ kobj_load(const char *name, kobj_t *kop)
 		error = ENOMEM;
 		goto out;
 	}
-	error = kobj_read(nd.ni_vp, ko->ko_strtab, shdr[symstrindex].sh_size,
+	error = kobj_read(ko, ko->ko_strtab, shdr[symstrindex].sh_size,
 	    shdr[symstrindex].sh_offset);
 	if (error != 0) {
 		goto out;
@@ -436,7 +525,7 @@ kobj_load(const char *name, kobj_t *kop)
 			ko->ko_progtab[pb].addr = (void *)mapbase;
 			if (shdr[i].sh_type == SHT_PROGBITS) {
 				ko->ko_progtab[pb].name = "<<PROGBITS>>";
-				error = kobj_read(nd.ni_vp,
+				error = kobj_read(ko,
 				    ko->ko_progtab[pb].addr, shdr[i].sh_size,
 				    shdr[i].sh_offset);
 				if (error != 0) {
@@ -473,7 +562,7 @@ kobj_load(const char *name, kobj_t *kop)
 				ko->ko_reltab[rl].nrel =
 				    shdr[i].sh_size / sizeof(Elf_Rel);
 				ko->ko_reltab[rl].sec = shdr[i].sh_info;
-				error = kobj_read(nd.ni_vp,
+				error = kobj_read(ko,
 				    ko->ko_reltab[rl].rel,
 				    ko->ko_reltab[rl].size,
 				    shdr[i].sh_offset);
@@ -494,7 +583,7 @@ kobj_load(const char *name, kobj_t *kop)
 				ko->ko_relatab[ra].nrela =
 				    shdr[i].sh_size / sizeof(Elf_Rela);
 				ko->ko_relatab[ra].sec = shdr[i].sh_info;
-				error = kobj_read(nd.ni_vp,
+				error = kobj_read(ko,
 				    ko->ko_relatab[ra].rela,
 				    shdr[i].sh_size,
 				    shdr[i].sh_offset);
@@ -549,16 +638,11 @@ kobj_load(const char *name, kobj_t *kop)
 		kobj_error("machine dependent init failed");
 		goto out;
 	}
-	*kop = ko;
+	ko->ko_loaded = true;
  out:
 	kobj_release_mem(ko);
-	if (error != 0 && ko)
-		kobj_unload(ko);
-	if (hdr != NULL)
+	if (hdr != NULL) {
 		kmem_free(hdr, sizeof(*hdr));
-	if (nd.ni_vp != NULL) {
-		VOP_UNLOCK(nd.ni_vp, 0);
-		vn_close(nd.ni_vp, FREAD, cred, curlwp);
 	}
 
 	return error;
@@ -587,15 +671,19 @@ kobj_unload(kobj_t ko)
 	if (ko->ko_strtab != NULL) {
 		kmem_free(ko->ko_strtab, ko->ko_strtabsz);
 	}
-	kmem_free(ko, sizeof(*ko));
 
 	/*
 	 * Notify MD code that a module has been unloaded.
 	 */
-	error = kobj_machdep(ko, (void *)ko->ko_address, ko->ko_size, false);
-	if (error != 0) {
-		kobj_error("machine dependent deinit failed");
+	if (ko->ko_loaded) {
+		error = kobj_machdep(ko, (void *)ko->ko_address, ko->ko_size,
+		    false);
+		if (error != 0) {
+			kobj_error("machine dependent deinit failed");
+		}
 	}
+
+	kmem_free(ko, sizeof(*ko));
 }
 
 /*
@@ -616,6 +704,22 @@ kobj_stat(kobj_t ko, vaddr_t *address, size_t *size, uintptr_t *entry)
 	if (entry != NULL) {
 		*entry = ko->ko_entry;
 	}
+}
+
+/*
+ * kobj_set_name:
+ *
+ *	Set an object's name.  Used only for symbol table lookups.
+ *	May only be called after the module is loaded.
+ */
+void
+kobj_set_name(kobj_t ko, const char *name)
+{
+
+	KASSERT(ko->ko_loaded);
+
+	strlcpy(ko->ko_name, name, sizeof(ko->ko_name));
+	/* XXX propagate name change to ksyms. */
 }
 
 /*
@@ -840,14 +944,34 @@ kobj_error(const char *fmt, ...)
  *	Utility function: read from the object.
  */
 static int
-kobj_read(vnode_t *vp, void *base, size_t size, off_t off)
+kobj_read(kobj_t ko, void *base, size_t size, off_t off)
 {
 	size_t resid;
 	int error;
 
-	error = vn_rdwr(UIO_READ, vp, base, size, off, UIO_SYSSPACE,
-	    IO_NODELOCKED, curlwp->l_cred, &resid, curlwp);
-	if (error == 0 && resid != 0)
-		error = EINVAL;
+	KASSERT(ko->ko_source != NULL);
+
+	switch (ko->ko_type) {
+	case KT_VNODE:
+		error = vn_rdwr(UIO_READ, ko->ko_source, base, size, off,
+		    UIO_SYSSPACE, IO_NODELOCKED, curlwp->l_cred, &resid,
+		    curlwp);
+		if (error == 0 && resid != 0) {
+			error = EINVAL;
+		}
+		break;
+	case KT_MEMORY:
+		if (ko->ko_memsize != -1 && off + size >= ko->ko_memsize) {
+			kobj_error("kobj_read: preloaded object short");
+			error = EINVAL;
+		} else {
+			memcpy(base, (uint8_t *)ko->ko_source + off, size);
+			error = 0;
+		}
+		break;
+	default:
+		panic("kobj_read: invalid type");
+	}
+
 	return error;
 }
