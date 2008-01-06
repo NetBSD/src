@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.206 2008/01/06 18:07:16 martin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.207 2008/01/06 18:24:06 martin Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.206 2008/01/06 18:07:16 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.207 2008/01/06 18:24:06 martin Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -147,7 +147,6 @@ int tsbsize;		/* tsbents = 512 * 2^^tsbsize */
 
 struct pmap kernel_pmap_;
 
-int physmem;
 /*
  * Virtual and physical addresses of the start and end of kernel text
  * and data segments.
