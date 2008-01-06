@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_usema.c,v 1.26 2007/12/20 23:02:51 dsl Exp $ */
+/*	$NetBSD: irix_usema.c,v 1.27 2008/01/06 13:18:19 dsl Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_usema.c,v 1.26 2007/12/20 23:02:51 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_usema.c,v 1.27 2008/01/06 13:18:19 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: irix_usema.c,v 1.26 2007/12/20 23:02:51 dsl Exp $");
 #include <sys/mount.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
+#include <sys/simplelock.h>
 #include <sys/malloc.h>
 #include <sys/poll.h>
 #include <sys/queue.h>
