@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.64 2007/10/18 15:28:37 yamt Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.65 2008/01/06 20:53:06 ad Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,6 +38,7 @@
 #define _VMPARAM_H_
 
 #include <sys/tree.h>
+#include <sys/mutex.h>
 
 /*
  * Machine dependent constants for 386.
