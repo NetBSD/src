@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.262 2007/12/09 20:12:54 martin Exp $	*/
+/*	$NetBSD: locore.s,v 1.263 2008/01/06 17:22:15 martin Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -4971,7 +4971,7 @@ ENTRY_NOPROFILE(cpu_initialize)	/* for cosmetic reasons - nicer backtrace */
 	ld	[%l1 + CI_UPAID], %l3		! Load UPAID
 	cmp	%l3, %l2			! Does it match?
 	bne,a,pt	%icc, 0b		! no
-	 ld	[%l1 + CI_NEXT], %l1		! Load next cpu_info pointer
+	 LDPTR	[%l1 + CI_NEXT], %l1		! Load next cpu_info pointer
 
 
 	/*
