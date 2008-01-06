@@ -1,4 +1,4 @@
-.\"	$NetBSD: netboot,v 1.31 2007/12/11 18:22:25 jnemeth Exp $
+.\"	$NetBSD: netboot,v 1.32 2008/01/06 20:16:24 skrll Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -204,7 +204,8 @@ Get
 .if \n[hp300] .Pa SYS_UBOOT
 .if \n[hp700] .Pa SYSNBSD
 from the
-.Pa installation/misc
+.if \n[hp300] .Pa installation/misc
+.if \n[hp700] .Pa installation
 directory of the distribution.
 .Pp
 .(disp
