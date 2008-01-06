@@ -1,4 +1,4 @@
-/*	$NetBSD: omap_intr.h,v 1.1 2007/01/06 00:29:52 christos Exp $ */
+/*	$NetBSD: omap_intr.h,v 1.2 2008/01/06 01:37:54 matt Exp $ */
 
 /*
  * Redistribution and use in source and binary forms, with or without
@@ -44,7 +44,6 @@
 #include <arm/armreg.h>
 #include <arm/cpufunc.h>
 #include <machine/atomic.h>
-#include <arm/softintr.h>
 
 #define OMAP_IRQ_MIN			0
 #define OMAP_NIRQ			(OMAP_INT_L1_NIRQ + OMAP_INT_L2_NIRQ)
@@ -118,8 +117,10 @@ extern uint32_t omap_spl_masks[NIPL][OMAP_NBANKS];
 /* Array of globally-off masks while interrupts processed. */
 extern uint32_t omap_global_masks[OMAP_NBANKS];
 
+#ifdef __HAVE_FAST_SOFTINTS
 /* Array to translate from software interrupt numbers to an irq number. */
 extern int omap_si_to_irq[OMAP_FREE_IRQ_NUM];
+#endif
 
 extern volatile int current_spl_level;
 
@@ -169,6 +170,7 @@ omap_spllower(int ipl)
 	return(old);
 }
 
+#ifdef __HAVE_FAST_SOFTINTS
 static inline void
 omap_setsoftintr(int si)
 {
@@ -189,18 +191,23 @@ omap_setsoftintr(int si)
 #endif
 	write_icu(info->bank_base, OMAP_INTB_SISR, info->mask);
 }
+#endif
 
 
 int	_splraise(int);
 int	_spllower(int);
 void	splx(int);
+#ifdef __HAVE_FAST_SOFTINTS
 void	_setsoftintr(int);
+#endif
 
 #if !defined(EVBARM_SPL_NOINLINE)
 #define splx(new)		omap_splx(new)
 #define	_spllower(ipl)		omap_spllower(ipl)
 #define	_splraise(ipl)		omap_splraise(ipl)
+#ifdef __HAVE_FAST_SOFTINTS
 #define	_setsoftintr(si)	omap_setsoftintr(si)
+#endif
 #endif	/* !EVBARM_SPL_NOINTR */
 
 void omap_irq_handler(void *);

@@ -1,4 +1,4 @@
-/* $NetBSD: s3c2410_extint.c,v 1.8 2007/12/15 00:39:15 perry Exp $ */
+/* $NetBSD: s3c2410_extint.c,v 1.9 2008/01/06 01:37:55 matt Exp $ */
 
 /*
  * Copyright (c) 2003  Genetec corporation.  All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2410_extint.c,v 1.8 2007/12/15 00:39:15 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2410_extint.c,v 1.9 2008/01/06 01:37:55 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -207,16 +207,7 @@ s3c2410_extint_establish(int extint, int ipl, int type,
 		return s3c24x0_intr_establish(extint, ipl, type, func, arg);
 	}
 
-#ifdef __GENERIC_SOFT_INTERRUPTS_ALL_LEVELS
-	soft_level = ipl;
-#else
-	if (ipl >= IPL_SOFTSERIAL)
-		soft_level = IPL_SOFTSERIAL;
-	else if (ipl >= IPL_SOFTNET)
-		soft_level = IPL_SOFTNET;
-	else
-		soft_level = IPL_SOFT;
-#endif
+	soft_level = SOFTINT_SERIAL;
 
 	idx = extint - EXTINT_CASCADE_MIN;
 
@@ -226,7 +217,7 @@ s3c2410_extint_establish(int extint, int ipl, int type,
 	ssextio_softc->sc_handler[idx].arg = arg;
 	ssextio_softc->sc_handler[idx].level = ipl;
 
-	ssextio_softc->sc_handler[idx].sh = softintr_establish(soft_level,
+	ssextio_softc->sc_handler[idx].sh = softint_establish(soft_level,
 	    ssextio_softintr, &ssextio_softc->sc_handler[idx]);
 
 	s3c2410_setup_extint(extint, type);
@@ -278,7 +269,7 @@ ssextio_cascaded_intr(void *cookie)
 		if (pending & (1<<i)) {
 			assert(ssextio_softc->sc_handler[i-EXTINT_CASCADE_MIN].sh != NULL);
 
-			softintr_schedule(
+			softint_schedule(
 			    ssextio_softc->sc_handler[i-EXTINT_CASCADE_MIN].sh);
 			pending &= ~ (1<<i);
 		}
