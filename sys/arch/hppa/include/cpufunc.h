@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.8 2006/08/27 08:42:50 skrll Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.8.18.1 2008/01/06 05:00:55 wrstuden Exp $	*/
 
 /*	$OpenBSD: cpufunc.h,v 1.17 2000/05/15 17:22:40 mickey Exp $	*/
 
@@ -99,26 +99,6 @@ static __inline register_t mtsm(register_t mask) {
 			 "mtsm %1": "=&r" (ret) : "r" (mask));
 	return ret;
 }
-
-static __inline register_t get_psw(void)
-{
-	register_t ret;
-	__asm volatile("break %1, %2\n\tcopy %%ret0, %0" : "=r" (ret)
-		: "i" (HPPA_BREAK_KERNEL), "i" (HPPA_BREAK_GET_PSW)
-		: "r28");
-	return ret;
-}
-
-static __inline register_t set_psw(register_t psw)
-{
-	register_t ret;
-	__asm volatile("copy	%0, %%arg0\n\tbreak %1, %2\n\tcopy %%ret0, %0"
-		: "=r" (ret)
-		: "i" (HPPA_BREAK_KERNEL), "i" (HPPA_BREAK_SET_PSW), "0" (psw)
-		: "r26", "r28");
-	return ret;
-}
-
 
 #define	fdce(sp,off) __asm volatile("fdce 0(%0,%1)":: "i" (sp), "r" (off))
 #define	fice(sp,off) __asm volatile("fice 0(%0,%1)":: "i" (sp), "r" (off))

@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_proc.c,v 1.7 2000/10/11 20:23:56 is Exp $	*/
+/*	$NetBSD: lock_proc.c,v 1.7.20.1 2008/01/06 05:01:17 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: lock_proc.c,v 1.7 2000/10/11 20:23:56 is Exp $");
+__RCSID("$NetBSD: lock_proc.c,v 1.7.20.1 2008/01/06 05:01:17 wrstuden Exp $");
 #endif
 
 #include <sys/param.h>
@@ -237,7 +237,7 @@ get_client(host_addr, vers)
 	memcpy(&clnt_cache_addr[clnt_cache_next_to_use], host_addr,
 	    host_addr->sa_len);
 	clnt_cache_time[clnt_cache_next_to_use] = time_now.tv_sec;
-	if (++clnt_cache_next_to_use > CLIENT_CACHE_SIZE)
+	if (++clnt_cache_next_to_use >= CLIENT_CACHE_SIZE)
 		clnt_cache_next_to_use = 0;
 
 	/*

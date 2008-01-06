@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.1.70.1 2007/09/03 07:03:16 wrstuden Exp $	*/
+/*	$NetBSD: devopen.c,v 1.1.70.2 2008/01/06 05:00:53 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -77,24 +77,31 @@ devparse(const char *fname, int *dev, uint8_t *unit, uint8_t *part,
 		/* extract device name */
 		for (i = 0; isalpha(fname[i]) && (i < devlen); i++)
 			devname[i] = fname[i];
-		devname[i] = 0;
+		devname[i] = '\0';
 
-		if (!isnum(fname[i]))
-			return EUNIT;
+		if (strcmp(devname, "nfs") == 0) {
+			/* no unit number or partition suffix on netboot */
+			u = 0;
+			p = 0;
+		} else {
+			/* parse [disk][unit][part] (ex. wd0a) strings */	
+			if (!isnum(fname[i]))
+				return EUNIT;
 
-		/* device number */
-		for (u = 0; isnum(fname[i]) && (i < devlen); i++)
-			u = u * 10 + (fname[i] - '0');
+			/* device number */
+			for (u = 0; isnum(fname[i]) && (i < devlen); i++)
+				u = u * 10 + (fname[i] - '0');
 
-		if (!isalpha(fname[i]))
-			return EPART;
+			if (!isalpha(fname[i]))
+				return EPART;
 
-		/* partition number */
-		if (i < devlen)
-			p = fname[i++] - 'a';
+			/* partition number */
+			if (i < devlen)
+				p = fname[i++] - 'a';
 
-		if (i != devlen)
-			return ENXIO;
+			if (i != devlen)
+				return ENXIO;
+		}
 
 		/* check device name */
 		for (dp = devsw, i = 0; i < ndevs; dp++, i++) {
@@ -132,7 +139,7 @@ devopen(struct open_file *f, const char *fname, char **file)
 
 	dp = &devsw[dev];
 	if ((void *)dp->dv_open == (void *)nodev)
-	return ENXIO;
+		return ENXIO;
 
 	f->f_dev = dp;
     

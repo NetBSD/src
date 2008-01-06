@@ -1,7 +1,7 @@
-/*	$NetBSD: ninjascsi32var.h,v 1.3 2005/12/11 12:21:28 christos Exp $	*/
+/*	$NetBSD: ninjascsi32var.h,v 1.3.38.1 2008/01/06 05:01:04 wrstuden Exp $	*/
 
 /*-
- * Copyright (c) 2004 The NetBSD Foundation, Inc.
+ * Copyright (c) 2004, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -54,17 +54,17 @@ typedef unsigned	njsc32_model_t;
 
 /* in microseconds */
 #define NJSC32_REQ_TIMEOUT		10000	/* 10ms */
-#define NJSC32_RESET_HOLD_TIME		30	/* 25us min */
+#define NJSC32_RESET_HOLD_TIME		26	/* 25us min */
 
 /*
  * DMA page
  */
 #ifdef NJSC32_AUTOPARAM
-#define NJSC32_NUM_CMD	15	/* # simultaneous commands */
+#define NJSC32_NUM_CMD	14	/* # simultaneous commands */
 #else
-#define NJSC32_NUM_CMD	16	/* # simultaneous commands */
+#define NJSC32_NUM_CMD	15	/* # simultaneous commands */
 #endif
-#define NJSC32_NUM_SG	16	/* # scatter/gather table entries per command */
+#define NJSC32_NUM_SG	17	/* # scatter/gather table entries per command */
 
 struct njsc32_dma_page {
 	/*
@@ -121,8 +121,8 @@ struct njsc32_cmd {
 	bus_dmamap_t		c_dmamap_xfer;
 };
 
-/* XXX? */
-#define NJSC32_MAX_XFER	(NJSC32_NUM_SG << PGSHIFT)
+/* -1 for unaligned acccess */
+#define NJSC32_MAX_XFER	((NJSC32_NUM_SG - 1) << PGSHIFT)
 
 struct njsc32_softc {
 	struct device	sc_dev;
@@ -155,6 +155,9 @@ struct njsc32_softc {
 		NJSC32_STAT_RESEL,	/* a target did Reselection */
 		NJSC32_STAT_RESEL_LUN,	/* received Identify message */
 		NJSC32_STAT_RECONNECT,	/* command is active (reconnection) */
+		NJSC32_STAT_RESET,	/* resetting bus */
+		NJSC32_STAT_RESET1,	/* waiting for bus reset release */
+		NJSC32_STAT_RESET2,	/* waiting for bus reset release */
 		NJSC32_STAT_DETACH	/* detaching */
 	} sc_stat;
 
@@ -174,6 +177,9 @@ struct njsc32_softc {
 #ifdef NJSC32_AUTOPARAM
 	u_int32_t		sc_ap_dma;	/* autoparam DMA address */
 #endif
+
+	/* for monitoring bus reset */
+	struct callout		sc_callout;
 
 	/*
 	 * command control structure

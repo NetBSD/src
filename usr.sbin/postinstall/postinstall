@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.31.2.2.2.2 2007/10/29 00:45:24 wrstuden Exp $
+# $NetBSD: postinstall,v 1.31.2.2.2.3 2008/01/06 05:01:16 wrstuden Exp $
 #
 # Copyright (c) 2002-2005 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -62,6 +62,9 @@ err()
 	exitval=$1
 	shift
 	echo 1>&2 "${PROGNAME}: $@"
+	if [ -n "${SCRATCHDIR}" ]; then
+	    /bin/rm -rf ${SCRATCHDIR}
+	fi
 	exit ${exitval}
 }
 
@@ -78,8 +81,8 @@ msg()
 mkdtemp()
 {
 	# Make sure we don't loop forever if mkdir will always fail.
-	[ -d /tmp ] || err 1 /tmp is not a directory
-	[ -w /tmp ] || err 1 /tmp is not writable
+	[ -d /tmp ] || err 2 /tmp is not a directory
+	[ -w /tmp ] || err 2 /tmp is not writable
 
 	_base=/tmp/_postinstall.$$
 	_serial=0
@@ -98,7 +101,7 @@ mkdtemp()
 #
 additem()
 {
-	[ $# -eq 2 ] || err 2 "USAGE: additem item description"
+	[ $# -eq 2 ] || err 3 "USAGE: additem item description"
 	defaultitems="${defaultitems}${defaultitems:+ }$1"
 	eval desc_$1=\"$2\"
 }
@@ -109,7 +112,7 @@ additem()
 #
 adddisableditem()
 {
-	[ $# -eq 2 ] || err 2 "USAGE: adddisableditem item description"
+	[ $# -eq 2 ] || err 3 "USAGE: adddisableditem item description"
 	otheritems="${otheritems}${otheritems:+ }$1"
 	eval desc_$1=\"$2\"
 }
@@ -120,7 +123,7 @@ adddisableditem()
 #
 check_dir()
 {
-	[ $# -eq 3 ] || err 2 "USAGE: check_dir op dir mode"
+	[ $# -eq 3 ] || err 3 "USAGE: check_dir op dir mode"
 	_cdop=$1
 	_cddir=$2
 	_cdmode=$3
@@ -143,7 +146,7 @@ check_dir()
 #	
 check_ids()
 {
-	[ $# -ge 4 ] || err 2 "USAGE: checks_ids op type file id [...]"
+	[ $# -ge 4 ] || err 3 "USAGE: checks_ids op type file id [...]"
 	_op=$1
 	_type=$2
 	_file=$3
@@ -194,7 +197,7 @@ check_ids()
 #
 populate_dir()
 {
-	[ $# -ge 5 ] || err 2 "USAGE: populate_dir op onlynew src dest mode file [...]"
+	[ $# -ge 5 ] || err 3 "USAGE: populate_dir op onlynew src dest mode file [...]"
 	_op=$1
 	_onlynew=$2
 	_src=$3
@@ -252,7 +255,7 @@ populate_dir()
 #
 compare_dir()
 {
-	[ $# -ge 4 ] || err 2 "USAGE: compare_dir op src dest mode file [...]"
+	[ $# -ge 4 ] || err 3 "USAGE: compare_dir op src dest mode file [...]"
 	_op=$1
 	_src=$2
 	_dest=$3
@@ -269,7 +272,7 @@ compare_dir()
 #
 move_file()
 {
-	[ $# -eq 3 ] || err 2 "USAGE: move_file op src dest"
+	[ $# -eq 3 ] || err 3 "USAGE: move_file op src dest"
 	_fm_op=$1
 	_fm_src=$2
 	_fm_dest=$3
@@ -296,7 +299,7 @@ move_file()
 #
 rcconf_is_set()
 {
-	[ $# -ge 3 ] || err 2 "USAGE: rcconf_is_set op name var [verbose]"
+	[ $# -ge 3 ] || err 3 "USAGE: rcconf_is_set op name var [verbose]"
 	_rcis_op=$1
 	_rcis_name=$2
 	_rcis_var=$3
@@ -334,7 +337,7 @@ rcconf_is_set()
 #
 find_file_in_dirlist()
 {
-	[ $# -ge 3 ] || err 2 "USAGE: find_file_in_dirlist file msg dir1 [...]"
+	[ $# -ge 3 ] || err 3 "USAGE: find_file_in_dirlist file msg dir1 [...]"
 
 	_file=$1 ; shift
 	_msg=$1 ; shift
@@ -384,7 +387,7 @@ stat()
 #
 file_exists_exact()
 {
-	[ -n "1" ] || err 2 "USAGE: file_exists_exact path"
+	[ -n "1" ] || err 3 "USAGE: file_exists_exact path"
 	_path=${1#.}
 	[ -h "${DEST_DIR}${_path}" ] || \
         	[ -e "${DEST_DIR}${_path}" ] || return 1
@@ -406,7 +409,7 @@ file_exists_exact()
 #
 obsolete_paths()
 {
-	[ -n "$1" ] || err 2 "USAGE: obsolete_paths  fix|check"
+	[ -n "$1" ] || err 3 "USAGE: obsolete_paths  fix|check"
 	op=$1
 
 	failed=0
@@ -446,12 +449,12 @@ obsolete_paths()
 #
 obsolete_libs()
 {
-	[ $# -eq 1 ] || err 2 "USAGE: obsolete_paths dir"
+	[ $# -eq 1 ] || err 3 "USAGE: obsolete_libs dir"
 	dir=$1
 
 	(
 
-	cd "${DEST_DIR}/${dir}" || exit 1
+	cd "${DEST_DIR}/${dir}" || err 2 "can't cd to ${DEST_DIR}/${dir}"
 	echo lib*.so.* \
 	| tr ' ' '\n' \
 	| awk -v LibDir="${dir}/" '
@@ -507,7 +510,7 @@ function checklib(results, line, regex) {
 #
 modify_file()
 {
-	[ $# -eq 4 ] || err 2 "USAGE: modify_file op file scratch awkprog"
+	[ $# -eq 4 ] || err 3 "USAGE: modify_file op file scratch awkprog"
 
 	_mfop=$1
 	_mffile=$2
@@ -542,7 +545,7 @@ modify_file()
 #
 contents_owner()
 {
-	[ $# -eq 4 ] || err 2 "USAGE: contents_owner op dir user group"
+	[ $# -eq 4 ] || err 3 "USAGE: contents_owner op dir user group"
 
 	_op=$1
 	_dir=$2
@@ -577,7 +580,7 @@ contents_owner()
 additem bluetooth "bluetooth configuration is up to date"
 do_bluetooth()
 {
-	[ -n "$1" ] || err 2 "USAGE: do_bluetooth fix|check"
+	[ -n "$1" ] || err 3 "USAGE: do_bluetooth fix|check"
 	op=$1
 	failed=0
 
@@ -599,7 +602,7 @@ do_bluetooth()
 additem defaults "/etc/defaults/ being up to date"
 do_defaults()
 {
-	[ -n "$1" ] || err 2 "USAGE: do_defaults  fix|check"
+	[ -n "$1" ] || err 3 "USAGE: do_defaults  fix|check"
 	op=$1
 	failed=0
 
@@ -623,10 +626,10 @@ do_defaults()
 additem gid "required groups in /etc/group"
 do_gid()
 {
-	[ -n "$1" ] || err 2 "USAGE: do_gid  fix|check"
+	[ -n "$1" ] || err 3 "USAGE: do_gid  fix|check"
 
 	check_ids $1 groups "${DEST_DIR}/etc/group" \
-	    named ntpd postfix sshd authpf _pflogd _rwhod _sdpd
+	    named ntpd postfix sshd authpf _pflogd _rwhod _proxy _sdpd
 }
 
 #
@@ -635,7 +638,7 @@ do_gid()
 additem hosts "/etc/hosts being up to date"
 do_hosts()
 {
-	[ -n "$1" ] || err 2 "USAGE: do_hosts  fix|check"
+	[ -n "$1" ] || err 3 "USAGE: do_hosts  fix|check"
 
 	modify_file "$1" ${DEST_DIR}/etc/hosts ${SCRATCHDIR}/hosts '
 		/^(127\.0\.0\.1|::1)[ 	]+[^\.]*$/ {
@@ -653,7 +656,7 @@ do_hosts()
 additem iscsi "/etc/iscsi is populated"
 do_iscsi()
 {
-	[ -n "$1" ] || err 2 "USAGE: do_iscsi  fix|check"
+	[ -n "$1" ] || err 3 "USAGE: do_iscsi  fix|check"
 
 	populate_dir ${op} true ${SRC_DIR}/etc/iscsi ${DEST_DIR}/etc/iscsi 600 auths
 	populate_dir ${op} true ${SRC_DIR}/etc/iscsi ${DEST_DIR}/etc/iscsi 644 targets
@@ -666,7 +669,7 @@ do_iscsi()
 additem makedev "/dev/MAKEDEV being up to date"
 do_makedev()
 {
-	[ -n "$1" ] || err 2 "USAGE: do_makedev   fix|check"
+	[ -n "$1" ] || err 3 "USAGE: do_makedev   fix|check"
 
 	if [ -f "${SRC_DIR}/etc/MAKEDEV.tmpl" ]; then
 			# generate MAKEDEV from source if source is available
@@ -690,7 +693,7 @@ do_makedev()
 additem motd "contents of motd"
 do_motd()
 {
-	[ -n "$1" ] || err 2 "USAGE: do_motd  fix|check"
+	[ -n "$1" ] || err 3 "USAGE: do_motd  fix|check"
 
 	if grep 'http://www.NetBSD.org/Misc/send-pr.html' ${DEST_DIR}/etc/motd \
 	    >/dev/null 2>&1
@@ -728,7 +731,7 @@ do_motd()
 additem mtree "/etc/mtree/ being up to date"
 do_mtree()
 {
-	[ -n "$1" ] || err 2 "USAGE: do_mtree  fix|check"
+	[ -n "$1" ] || err 3 "USAGE: do_mtree  fix|check"
 
 	compare_dir $1 ${SRC_DIR}/etc/mtree ${DEST_DIR}/etc/mtree 444 \
 		NetBSD.dist special
@@ -740,7 +743,7 @@ do_mtree()
 additem named "named configuration update"
 do_named()
 {
-	[ -n "$1" ] || err 2 "USAGE: do_named  fix|check"
+	[ -n "$1" ] || err 3 "USAGE: do_named  fix|check"
 	op=$1
 
 	move_file ${op} \
@@ -754,7 +757,7 @@ do_named()
 additem pam "/etc/pam.d is populated"
 do_pam()
 {
-	[ -n "$1" ] || err 2 "USAGE: do_pam  fix|check"
+	[ -n "$1" ] || err 3 "USAGE: do_pam  fix|check"
 	op=$1
 	failed=0
 
@@ -773,7 +776,7 @@ do_pam()
 additem periodic "/etc/{daily,weekly,monthly,security} being up to date"
 do_periodic()
 {
-	[ -n "$1" ] || err 2 "USAGE: do_periodic  fix|check"
+	[ -n "$1" ] || err 3 "USAGE: do_periodic  fix|check"
 
 	compare_dir $1 ${SRC_DIR}/etc ${DEST_DIR}/etc 644 \
 		daily weekly monthly security
@@ -785,7 +788,7 @@ do_periodic()
 additem pf "pf configuration being up to date"
 do_pf()
 {
-	[ -n "$1" ] || err 2 "USAGE: do_pf  fix|check"
+	[ -n "$1" ] || err 3 "USAGE: do_pf  fix|check"
 	op=$1
 	failed=0
 
@@ -807,7 +810,7 @@ do_pf()
 additem postfix "/etc/postfix/ being up to date"
 do_postfix()
 {
-	[ -n "$1" ] || err 2 "USAGE: do_postfix  fix|check"
+	[ -n "$1" ] || err 3 "USAGE: do_postfix  fix|check"
 	op=$1
 	failed=0
 
@@ -831,7 +834,7 @@ do_postfix()
 additem rc "/etc/rc* and /etc/rc.d/ being up to date"
 do_rc()
 {
-	[ -n "$1" ] || err 2 "USAGE: do_rc  fix|check"
+	[ -n "$1" ] || err 3 "USAGE: do_rc  fix|check"
 	op=$1
 	failed=0
 
@@ -902,7 +905,7 @@ do_rc()
 adddisableditem sendmail "remove obsolete sendmail configuration files and scripts"
 do_sendmail()
 {
-	[ -n "$1" ] || err 2 "USAGE: do_sendmail  fix|check"
+	[ -n "$1" ] || err 3 "USAGE: do_sendmail  fix|check"
 	op=$1
 	failed=0
 
@@ -927,12 +930,38 @@ do_sendmail()
 }
 
 #
+#	mailerconf
+#
+adddisableditem mailerconf "update /etc/mailer.conf after sendmail removal"
+do_mailerconf()
+{
+	[ -n "$1" ] || err 3 "USAGE: do_mailterconf  fix|check"
+	op=$1
+
+	failed=0
+	mta_path=$(awk '/^sendmail[ \t]/{print$2}' /etc/mailer.conf)
+	old_sendmail_path="/usr/libexec/sendmail/sendmail"
+	if [ "${mta_path}" = "${old_sendmail_path}" ]; then
+	    if [ "$op" = check ]; then
+		msg "mailer.conf points to obsolete ${old_sendmail_path}"
+		failed=1;
+	    else
+		populate_dir ${op} false \
+		${SRC_DIR}/etc ${DEST_DIR}/etc 644 mailer.conf
+		failed=$?
+	    fi
+	fi
+	
+	return ${failed}
+}
+
+#
 #	ssh
 #
 additem ssh "ssh configuration update"
 do_ssh()
 {
-	[ -n "$1" ] || err 2 "USAGE: do_ssh  fix|check"
+	[ -n "$1" ] || err 3 "USAGE: do_ssh  fix|check"
 	op=$1
 
 	failed=0
@@ -1025,7 +1054,7 @@ do_ssh()
 additem wscons "wscons configuration file update"
 do_wscons()
 {
-	[ -n "$1" ] || err 2 "USAGE: do_wscons  fix|check"
+	[ -n "$1" ] || err 3 "USAGE: do_wscons  fix|check"
 	op=$1
 
 	[ -f ${DEST_DIR}/etc/wscons.conf ] || return 0
@@ -1052,7 +1081,7 @@ do_wscons()
 additem x11 "x11 configuration update"
 do_x11()
 {
-	[ -n "$1" ] || err 2 "USAGE: do_x11  fix|check"
+	[ -n "$1" ] || err 3 "USAGE: do_x11  fix|check"
 	op=$1
 
 	failed=0
@@ -1106,10 +1135,10 @@ do_x11()
 additem uid "required users in /etc/master.passwd"
 do_uid()
 {
-	[ -n "$1" ] || err 2 "USAGE: do_uid  fix|check"
+	[ -n "$1" ] || err 3 "USAGE: do_uid  fix|check"
 
 	check_ids $1 users "${DEST_DIR}/etc/master.passwd" \
-	    named ntpd postfix sshd _pflogd _rwhod _sdpd
+	    named ntpd postfix sshd _pflogd _rwhod _proxy _sdpd
 }
 
 
@@ -1119,7 +1148,7 @@ do_uid()
 additem varrwho "required ownership of files in /var/rwho"
 do_varrwho()
 {
-	[ -n "$1" ] || err 2 "USAGE: do_varrwho  fix|check"
+	[ -n "$1" ] || err 3 "USAGE: do_varrwho  fix|check"
 
 	contents_owner $1 "${DEST_DIR}/var/rwho" _rwhod _rwhod
 }
@@ -1132,7 +1161,7 @@ do_varrwho()
 additem obsolete "remove obsolete file sets and minor libraries"
 do_obsolete()
 {
-	[ -n "$1" ] || err 2 "USAGE: do_obsolete  fix|check"
+	[ -n "$1" ] || err 3 "USAGE: do_obsolete  fix|check"
 	op=$1
 	failed=0
 
@@ -1189,7 +1218,7 @@ Usage: ${PROGNAME} [-s srcdir] [-d destdir] [-m mach] [-a arch] op [item [...]]
 		fix	Apply fixes that 'check' determines need to be applied.
 		usage	Display this usage.
 _USAGE_
-	exit 1
+	exit 2
 }
 
 
@@ -1229,7 +1258,7 @@ main()
 			elif [ -d "${OPTARG}" ]; then
 				SRC_ARG=${OPTARG}
 			else
-				err 1 "Invalid argument for -s option"
+				err 2 "Invalid argument for -s option"
 			fi
 			;;
 		d)
@@ -1258,7 +1287,7 @@ main()
 		echo "Note: -s ${SRC_ARG} is a file,"
 		echo "      temporarily extracting to ${ETCTGZDIR}"
 		if ! mkdir "${ETCTGZDIR}"; then
-			err 1 "Can't create ${ETCTGZDIR}"
+			err 2 "Can't create ${ETCTGZDIR}"
 		fi
 		oldIFS="${IFS}"
 		IFS=:
@@ -1266,7 +1295,7 @@ main()
 			cat "${tgz}" | (
 				cd "${ETCTGZDIR}" &&
 				tar -zxf -
-			) || err 1 "Can't extract ${tgz}"
+			) || err 2 "Can't extract ${tgz}"
 		done
 		IFS="${oldIFS}"
 		SRC_DIR="${ETCTGZDIR}"
@@ -1274,10 +1303,10 @@ main()
 		SRC_DIR="${SRC_ARG}"
 	fi
 
-	[ -d "${SRC_DIR}" ]	|| err 1 "${SRC_DIR} is not a directory"
-	[ -d "${DEST_DIR}" ]	|| err 1 "${DEST_DIR} is not a directory"
-	[ -n "${MACHINE}" ]	|| err 1 "\${MACHINE} is not defined"
-	[ -n "${MACHINE_ARCH}" ] || err 1 "\${MACHINE_ARCH} is not defined"
+	[ -d "${SRC_DIR}" ]	|| err 2 "${SRC_DIR} is not a directory"
+	[ -d "${DEST_DIR}" ]	|| err 2 "${DEST_DIR} is not a directory"
+	[ -n "${MACHINE}" ]	|| err 2 "\${MACHINE} is not defined"
+	[ -n "${MACHINE_ARCH}" ] || err 2 "\${MACHINE_ARCH} is not defined"
 
 		# If directories are /, clear them, so various messages
 		# don't have leading "//".   However, this requires
@@ -1299,7 +1328,7 @@ main()
 			c|e|n|u)
 				if [ ${DIFF_STYLE} != n -a \
 				    ${DIFF_STYLE} != ${ch} ]; then
-					err 1 "conflicting output style: ${ch}"
+					err 2 "conflicting output style: ${ch}"
 				fi
 				DIFF_STYLE=${ch}
 				;;
@@ -1307,7 +1336,7 @@ main()
 				DIFF_OPT="${DIFF_OPT} -${ch}"
 				;;
 			*)
-				err 1 "unknown diff option"
+				err 2 "unknown diff option"
 				;;
 			esac
 		done
@@ -1338,7 +1367,7 @@ main()
 		#
 		for i in ${todo}; do
 			eval desc=\"\${desc_${i}}\"
-			[ -n "${desc}" ] || err 1 "Unsupported ${op} '"${i}"'"
+			[ -n "${desc}" ] || err 2 "Unsupported ${op} '"${i}"'"
 		done
 
 		# perform each check/fix
@@ -1368,12 +1397,15 @@ main()
 
 		echo "${PROGNAME} ${plural} passed:${items_passed}"
 		echo "${PROGNAME} ${plural} failed:${items_failed}"
-		if [ -n "${items_failed}" -a "${op}" = "check" ]; then
+		if [ -n "${items_failed}" ]; then
+		    exitstatus=1;
+		    if [ "${op}" = "check" ]; then
 			[ "$MACHINE" = "$(uname -m)" ] && m= || m=" -m $MACHINE"
 			cat <<_Fix_me_
 To fix, run:
     ${0} -s ${SRC_ARG} -d ${DEST_DIR:-/}$m fix${items_failed}
 _Fix_me_
+		    fi
 		fi
 
 		;;
@@ -1396,12 +1428,14 @@ DEST_DIR="/"
 
 DIFF_STYLE=
 NOT_FIXED=" (FIX MANUALLY)"
-SCRATCHDIR=$( mkdtemp ) || err 1 "Can't create scratch directory"
-trap "/bin/rm -rf ${SCRATCHDIR} ; exit 0" 0 1 2 3 15	# EXIT HUP INT QUIT TERM
+SCRATCHDIR=$( mkdtemp ) || err 2 "Can't create scratch directory"
+trap "/bin/rm -rf ${SCRATCHDIR} ; exit 0" 1 2 3 15	# HUP INT QUIT TERM
 
 umask 022
 exec 3>/dev/null
 exec 4>/dev/null
+exitstatus=0
 
 main "$@"
-exit 0
+/bin/rm -rf ${SCRATCHDIR}
+exit $exitstatus

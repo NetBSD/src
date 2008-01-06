@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.764.2.15.2.4 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.764.2.15.2.5 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -643,6 +643,7 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 	kernel: add jmide(4), a driver for the JMicron Technology JMB36x
 		PCIe to SATA II/PATA controllers. [bouyer 20070515]
 	postfix(1): Updated to 2.4.1 [heas 20070519]
+	aac(4): Compile and run on amd64. [briggs 20070525]
 	audio(4): New ioctl AUDIO_GETBUFINFO reduces system overhead for many
 		emulated OSS functions. [joerg 20070611]
 	i386:   Import AMD Geode LX Security Block driver glxsb(4) from
@@ -661,3 +662,5 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 		added to the CD-ROM image. [jnemeth 20070901]
 	build.sh: Convert iso-dir=directory option to -C cddir.
 		[jnemeth 20070901]
+	msk(4): Add support for Marvell 88CO55 gigabit ethernet, which 
+		is used by newer iMacs [manu 20071022]

@@ -1,4 +1,4 @@
-/*	$NetBSD: hset.c,v 1.1 2006/06/19 15:44:56 gdamore Exp $	*/
+/*	$NetBSD: hset.c,v 1.1.6.1 2008/01/06 05:01:17 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hset.c,v 1.1 2006/06/19 15:44:56 gdamore Exp $");
+__RCSID("$NetBSD: hset.c,v 1.1.6.1 2008/01/06 05:01:17 wrstuden Exp $");
 
 #include <sys/queue.h>
 #include <bluetooth.h>
@@ -128,8 +128,17 @@ static attr_t	hset_profile_attrs[] = {
 	{ 0, NULL } /* end entry */
 };
 
-profile_t	hset_profile_descriptor = {
+static uint16_t hset_profile_uuids[] = {
 	SDP_SERVICE_CLASS_HEADSET_AUDIO_GATEWAY,
+	SDP_SERVICE_CLASS_GENERIC_AUDIO,
+	SDP_UUID_PROTOCOL_L2CAP,
+	SDP_UUID_PROTOCOL_RFCOMM,
+	SDP_SERVICE_CLASS_HEADSET,
+};
+
+profile_t	hset_profile_descriptor = {
+	hset_profile_uuids,
+	sizeof(hset_profile_uuids),
 	sizeof(sdp_hset_profile_t),
 	hset_profile_data_valid,
 	(attr_t const * const) &hset_profile_attrs

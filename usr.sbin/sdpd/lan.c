@@ -1,4 +1,4 @@
-/*	$NetBSD: lan.c,v 1.1 2006/06/19 15:44:56 gdamore Exp $	*/
+/*	$NetBSD: lan.c,v 1.1.6.1 2008/01/06 05:01:18 wrstuden Exp $	*/
 
 /*
  * lan.c
@@ -27,12 +27,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: lan.c,v 1.1 2006/06/19 15:44:56 gdamore Exp $
+ * $Id: lan.c,v 1.1.6.1 2008/01/06 05:01:18 wrstuden Exp $
  * $FreeBSD: src/usr.sbin/bluetooth/sdpd/lan.c,v 1.1 2004/01/20 20:48:26 emax Exp $
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: lan.c,v 1.1 2006/06/19 15:44:56 gdamore Exp $");
+__RCSID("$NetBSD: lan.c,v 1.1.6.1 2008/01/06 05:01:18 wrstuden Exp $");
 
 #include <arpa/inet.h>
 #include <sys/queue.h>
@@ -173,8 +173,15 @@ static attr_t	lan_profile_attrs[] = {
 	{ 0, NULL } /* end entry */
 };
 
-profile_t	lan_profile_descriptor = {
+static uint16_t lan_profile_uuids[] = {
 	SDP_SERVICE_CLASS_LAN_ACCESS_USING_PPP,
+	SDP_UUID_PROTOCOL_L2CAP,
+	SDP_UUID_PROTOCOL_RFCOMM,
+};
+
+profile_t	lan_profile_descriptor = {
+	lan_profile_uuids,
+	sizeof(lan_profile_uuids),
 	sizeof(sdp_lan_profile_t),
 	lan_profile_data_valid,
 	(attr_t const * const) &lan_profile_attrs

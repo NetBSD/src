@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.5.40.1 2007/09/03 07:03:14 wrstuden Exp $	*/
+/*	$NetBSD: boot.c,v 1.5.40.2 2008/01/06 05:00:52 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,6 +75,7 @@
 
 #include <lib/libsa/stand.h>
 #include <lib/libsa/loadfile.h>
+#include <lib/libsa/dev_net.h>
 #include <lib/libkern/libkern.h>
 
 #include <sys/param.h>
@@ -108,22 +109,23 @@ void start(void);
 
 static char *bootstring;
 
-static int patch_bootstring	(char *bootspec);
+static int patch_bootstring(char *bootspec);
 static int get_bsdbootname(char **, char **, int *);
 static int parse_bootname(char *, int, char **, char **);
-static int prominit		(unsigned int memsize);
-static int print_banner		(unsigned int memsize);
+static void prominit(unsigned int memsize);
+static void print_banner(unsigned int memsize);
 
-int cpu_reboot(void);
+void cpu_reboot(void);
 
 int main(unsigned int memsize);
 
 /*
  * Perform CPU reboot.
  */
-int
+void
 cpu_reboot(void)
 {
+
 	printf("rebooting...\n\n");
 
 	*(volatile uint8_t *)MIPS_PHYS_TO_KSEG1(LED_ADDR) = LED_RESET;
@@ -141,7 +143,7 @@ patch_bootstring(char *bootspec)
 {
 	char *sp = bootstring;
 	uint8_t unit, part;
-	int dev, error;
+	int dev;
 	char *file;
 
 	DPRINTF(("patch_bootstring: %s\n", bootspec));
@@ -150,7 +152,7 @@ patch_bootstring(char *bootspec)
 	if (devparse(bootspec, &dev, &unit, &part, (const char **)&file) != 0)
 		unit = part = 0;
 
-	DPRINTF(("patch_bootstring: %d, %d\n", unit, part));
+	DPRINTF(("patch_bootstring: unit = %d, part = %d\n", unit, part));
 
 	/* take out the 'root=xxx' parameter */
 	if ((sp = strstr(bootstring, "root=")) != NULL) {
@@ -171,10 +173,27 @@ patch_bootstring(char *bootspec)
 	DPRINTF(("patch_bootstring: [%s]\n", bootstring));
 
 #define DEVNAMESIZE	(MAXDEVNAME + sizeof(" root=/dev/hd") + sizeof("0a"))
-	/* bsd notation -> linux notation (wd0a -> hda1) */
-	if (strlen(bootstring) <= (511 - DEVNAMESIZE)) {
+	if (strcmp(devsw[dev].dv_name, "wd") == 0 &&
+	    strlen(bootstring) <= (511 - DEVNAMESIZE)) {
 		int len;
 
+		/* omit "nfsroot=" arg on wd boot */
+		if ((sp = strstr(bootstring, "nfsroot=")) != NULL) {
+			const char *end;
+
+			end = strchr(sp, ' ');
+
+			/* strip off leading spaces */
+			for (--sp; (sp > bootstring) && (*sp == ' '); --sp)
+				;
+
+			if (end != NULL)
+				strcpy(++sp, end);
+			else
+				*++sp = '\0';
+		}
+
+		/* bsd notation -> linux notation (wd0a -> hda1) */
 		strcat(bootstring, " root=/dev/hd");
 
 		len = strlen(bootstring);
@@ -193,19 +212,21 @@ patch_bootstring(char *bootspec)
 static int
 get_bsdbootname(char **dev, char **kname, int *howtop)
 {
-	int len, error;
+	int len;
 	int bootunit, bootpart;
 	char *bootstr_dev, *bootstr_kname;
 	char *prompt_dev, *prompt_kname;
 	char *ptr, *spec;
 	char c, namebuf[PATH_MAX];
 	static char bootdev[] = "wd0a";
+	static char nfsbootdev[] = "nfs";
 
 	bootstr_dev = prompt_dev = NULL;
 	bootstr_kname = prompt_kname = NULL;
 
 	/* first, get root device specified by the firmware */
 	spec = bootstring;
+
 	/* assume the last one is valid */
 	while ((spec = strstr(spec, "root=")) != NULL) {
 		spec += 5;	/* skip 'root=' */
@@ -237,6 +258,11 @@ get_bsdbootname(char **dev, char **kname, int *howtop)
 			    &bootstr_dev, &bootstr_kname))
 				return 1;
 		}
+	}
+
+	/* third, check if netboot */
+	if (strstr(bootstring, "nfsroot=") != NULL) {
+		bootstr_dev = nfsbootdev;
 	}
 
 	DPRINTF(("bootstr_dev = %s, bootstr_kname = %s\n",
@@ -325,7 +351,7 @@ parse_bootname(char *spec, int len, char **dev, char **kname)
 /*
  * Get the bootstring from PROM.
  */
-int
+void
 prominit(unsigned int memsize)
 {
 
@@ -336,7 +362,7 @@ prominit(unsigned int memsize)
 /*
  * Print boot message.
  */
-int
+void
 print_banner(unsigned int memsize)
 {
 
@@ -365,8 +391,9 @@ main(unsigned int memsize)
 	struct btinfo_symtab bi_syms;
 	struct btinfo_bootpath bi_bpath;
 	struct btinfo_howto bi_howto;
-
 	int addr, speed, howto;
+
+	try_bootp = 1;
 
 	/* Initialize boot info early */
 	howto = 0x0;

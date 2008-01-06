@@ -1,4 +1,4 @@
-/*	$NetBSD: dun.c,v 1.1 2006/06/19 15:44:56 gdamore Exp $	*/
+/*	$NetBSD: dun.c,v 1.1.6.1 2008/01/06 05:01:17 wrstuden Exp $	*/
 
 /*
  * dun.c
@@ -27,12 +27,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: dun.c,v 1.1 2006/06/19 15:44:56 gdamore Exp $
+ * $Id: dun.c,v 1.1.6.1 2008/01/06 05:01:17 wrstuden Exp $
  * $FreeBSD: src/usr.sbin/bluetooth/sdpd/dun.c,v 1.1 2004/01/20 20:48:26 emax Exp $
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dun.c,v 1.1 2006/06/19 15:44:56 gdamore Exp $");
+__RCSID("$NetBSD: dun.c,v 1.1.6.1 2008/01/06 05:01:17 wrstuden Exp $");
 
 #include <sys/queue.h>
 #include <bluetooth.h>
@@ -132,8 +132,16 @@ static attr_t	dun_profile_attrs[] = {
 	{ 0, NULL } /* end entry */
 };
 
-profile_t	dun_profile_descriptor = {
+static uint16_t dun_profile_uuids[] = {
 	SDP_SERVICE_CLASS_DIALUP_NETWORKING,
+	SDP_SERVICE_CLASS_GENERIC_NETWORKING,
+	SDP_UUID_PROTOCOL_L2CAP,
+	SDP_UUID_PROTOCOL_RFCOMM,
+};
+
+profile_t	dun_profile_descriptor = {
+	dun_profile_uuids,
+	sizeof(dun_profile_uuids),
 	sizeof(sdp_dun_profile_t),
 	common_profile_server_channel_valid,
 	(attr_t const * const) &dun_profile_attrs

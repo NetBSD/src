@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.38 2006/11/27 01:57:25 hubertf Exp $
+.\"	$NetBSD: install,v 1.38.4.1 2008/01/06 05:00:25 wrstuden Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -36,7 +36,7 @@
 There may be updates to this procedure available from the
 .Nx*M
 web page at
-http://www.NetBSD.org/Ports/\*M/ .
+http://www.NetBSD.org/ports/\*M/ .
 .Note)
 .Pp
 To install or upgrade
@@ -478,7 +478,7 @@ Instructions for setting up an NFS server and diskless booting are on the
 .Nx*M
 netboot
 webpage at
-.Lk http://www.NetBSD.org/Ports/\*M/netboot.html
+.Lk http://www.NetBSD.org/ports/\*M/netboot.html
 .Pp
 Since the system install utility,
 .Ic sysinst ,

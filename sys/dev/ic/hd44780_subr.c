@@ -1,4 +1,4 @@
-/* $NetBSD: hd44780_subr.c,v 1.9 2006/04/12 19:38:23 jmmv Exp $ */
+/* $NetBSD: hd44780_subr.c,v 1.9.18.1 2008/01/06 05:01:03 wrstuden Exp $ */
 
 /*
  * Copyright (c) 2002 Dennis I. Chernoivanov
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd44780_subr.c,v 1.9 2006/04/12 19:38:23 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd44780_subr.c,v 1.9.18.1 2008/01/06 05:01:03 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -161,10 +161,11 @@ hlcd_copycols(id, row, srccol, dstcol, ncols)
 		ncols = hdscr->hlcd_sc->sc_cols - srccol;
 
 	if (row > 0 && (hdscr->hlcd_sc->sc_flags & (HD_MULTILINE|HD_MULTICHIP)))
-		bcopy(&hdscr->image[hdscr->hlcd_sc->sc_cols * row + srccol],
-		    &hdscr->image[hdscr->hlcd_sc->sc_cols * row + dstcol], ncols);
+		memmove(&hdscr->image[hdscr->hlcd_sc->sc_cols * row + dstcol],
+		    &hdscr->image[hdscr->hlcd_sc->sc_cols * row + srccol],
+		    ncols);
 	else
-		bcopy(&hdscr->image[srccol], &hdscr->image[dstcol], ncols);
+		memmove(&hdscr->image[dstcol], &hdscr->image[srccol], ncols);
 }
 
 
@@ -200,7 +201,7 @@ hlcd_copyrows(id, srcrow, dstrow, nrows)
 
 	if (!(hdscr->hlcd_sc->sc_flags & (HD_MULTILINE|HD_MULTICHIP)))
 		return;
-	bcopy(&hdscr->image[srcrow * ncols], &hdscr->image[dstrow * ncols],
+	memmove(&hdscr->image[dstrow * ncols], &hdscr->image[srcrow * ncols],
 	    nrows * ncols);
 }
 
@@ -703,6 +704,7 @@ hd44780_ddram_redraw(sc, en, io)
 
 	hd44780_ir_write(sc, en, cmd_clear());
 	hd44780_ir_write(sc, en, cmd_rethome());
+	hd44780_ir_write(sc, en, cmd_ddramset(HD_ROW1_ADDR));
 	for (i = 0; (i < io->len) && (i < sc->sc_cols); i++) {
 		hd44780_dr_write(sc, en, io->buf[i]);
 	}

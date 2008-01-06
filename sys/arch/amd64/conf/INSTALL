@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.60.2.6.2.1 2007/09/03 07:03:05 wrstuden Exp $
+# $NetBSD: INSTALL,v 1.60.2.6.2.2 2008/01/06 05:00:51 wrstuden Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include	"arch/amd64/conf/std.amd64"
 
-#ident 		"INSTALL-$Revision: 1.60.2.6.2.1 $"
+#ident 		"INSTALL-$Revision: 1.60.2.6.2.2 $"
 
 maxusers	32		# estimated number of users
 
@@ -316,6 +316,7 @@ cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 
 
 # RAID controllers and devices
+aac*	at pci? dev ? function ?	# Adaptec AAC family
 amr*	at pci? dev ? function ?	# AMI/LSI Logic MegaRAID
 cac*	at pci? dev ? function ?	# Compaq PCI array controllers
 ciss*	at pci? dev ? function ?	# HP Smart Array controllers
@@ -324,6 +325,7 @@ mlx*	at pci? dev ? function ?	# Mylex DAC960 & DEC SWXCR family
 twe*	at pci? dev ? function ?	# 3ware Escalade RAID controllers
 twa*	at pci? dev ? function ?	# 3ware Escalade 9xxx RAID controllers
 
+ld*	at aac? unit ?
 ld*	at amr? unit ?
 ld*	at cac? unit ?
 ld*	at icp? unit ?
@@ -485,8 +487,10 @@ acphy*	at mii? phy ?			# DAltima AC101 and AMD Am79c874 PHYs
 amhphy*	at mii? phy ?			# AMD 79c901 Ethernet PHYs
 bmtphy*	at mii? phy ?			# Broadcom BCM5201 and BCM5202 PHYs
 brgphy*	at mii? phy ?			# Broadcom BCM5400-family PHYs
+ciphy*	at mii? phy ?			# Cicada CS8201 Gig-E PHYs
 dmphy*	at mii? phy ?			# Davicom DM9101 PHYs
 exphy*	at mii? phy ?			# 3Com internal PHYs
+gentbi* at mii? phy ?			# Generic Ten-Bit 1000BASE-[CLS]X PHYs
 glxtphy* at mii? phy ?			# Level One LXT-1000 PHYs
 gphyter* at mii? phy ?			# NS83861 Gig-E PHY
 icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS189x
