@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpga_intr.h,v 1.6 2006/05/16 21:38:14 mrg Exp $	*/
+/*	$NetBSD: ifpga_intr.h,v 1.7 2008/01/06 01:37:58 matt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -48,7 +48,9 @@
 #include <evbarm/ifpga/ifpgareg.h>
 #include <evbarm/ifpga/ifpgavar.h>
 
+#ifdef __HAVE_FAST_SOFTINTS
 void ifpga_do_pending(void);
+#endif
 
 static inline void __attribute__((__unused__))
 ifpga_set_intrmask(void)
@@ -63,9 +65,11 @@ ifpga_set_intrmask(void)
 	    IFPGA_INTR_ENABLESET, mask);
 }
 
+#ifdef __HAVE_FAST_SOFTINTS
 #define INT_SWMASK				\
         (IFPGA_INTR_bit31 | IFPGA_INTR_bit30 |	\
          IFPGA_INTR_bit29 | IFPGA_INTR_bit28)
+#endif
 
 static inline void __attribute__((__unused__))
 ifpga_splx(int new)
@@ -88,8 +92,10 @@ ifpga_splx(int new)
 
 	restore_interrupts(oldirqstate);
 
+#ifdef __HAVE_FAST_SOFTINTS
 	if ((ifpga_ipending & INT_SWMASK) & ~new)
 		ifpga_do_pending();
+#endif
 }
 
 static inline int __attribute__((__unused__))
@@ -123,14 +129,18 @@ ifpga_spllower(int ipl)
 #define splx(new)		ifpga_splx(new)
 #define	_spllower(ipl)		ifpga_spllower(ipl)
 #define	_splraise(ipl)		ifpga_splraise(ipl)
+#ifdef __HAVE_FAST_SOFTINTS
 void	_setsoftintr(int);
+#endif
 
 #else
 
 int	_splraise(int);
 int	_spllower(int);
 void	splx(int);
+#ifdef __HAVE_FAST_SOFTINTS
 void	_setsoftintr(int);
+#endif
 
 #endif /* ! EVBARM_SPL_NOINLINE */
 

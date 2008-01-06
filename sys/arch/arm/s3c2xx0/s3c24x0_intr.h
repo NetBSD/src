@@ -1,4 +1,4 @@
-/*	$NetBSD: s3c24x0_intr.h,v 1.6 2005/12/24 20:06:52 perry Exp $ */
+/*	$NetBSD: s3c24x0_intr.h,v 1.7 2008/01/06 01:37:55 matt Exp $ */
 
 /*
  * Copyright (c) 2002, 2003  Genetec corporation.  All rights reserved.
@@ -34,18 +34,20 @@
 
 #ifndef _LOCORE
 
+#ifdef __HAVE_FAST_SOFTINTS
 #define	SI_TO_IRQBIT(si)  (1<<(si))
-
-#define	get_pending_softint()	(softint_pending & soft_intr_mask)
-#define	update_softintr_mask()	\
-	(soft_intr_mask = s3c24x0_soft_imask[current_spl_level])
-#define	s3c2xx0_update_hw_mask() \
-	(*s3c2xx0_intr_mask_reg = ~(intr_mask & global_intr_mask))
 
 /* no room for softinterrupts in intr_mask. */
 extern int volatile soft_intr_mask;
 extern int s3c24x0_soft_imask[];
 
+#define	get_pending_softint()	(softint_pending & soft_intr_mask)
+#define	update_softintr_mask()	\
+	(soft_intr_mask = s3c24x0_soft_imask[current_spl_level])
+#endif
+
+#define	s3c2xx0_update_hw_mask() \
+	(*s3c2xx0_intr_mask_reg = ~(intr_mask & global_intr_mask))
 
 #include <arm/s3c2xx0/s3c2xx0_intr.h>
 
