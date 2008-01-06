@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.122 2007/12/13 16:53:28 jmcneill Exp $	*/
+/*	$NetBSD: auich.c,v 1.123 2008/01/06 12:56:20 kent Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.122 2007/12/13 16:53:28 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.123 2008/01/06 12:56:20 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -994,7 +994,7 @@ auich_set_params(void *v, int setmode, int usemode,
 			    p->sample_rate > 48000)
 				return EINVAL;
 
-			if (sc->sc_spdif)
+			if (!sc->sc_spdif)
 				index = auconv_set_converter(sc->sc_audio_formats,
 				    AUICH_AUDIO_NFORMATS, mode, p, TRUE, fil);
 			else
