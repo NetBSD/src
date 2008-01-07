@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.197 2008/01/01 13:35:36 jmmv Exp $
+# $NetBSD: GENERIC,v 1.198 2008/01/07 08:30:03 martti Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.197 $"
+#ident 		"GENERIC-$Revision: 1.198 $"
 
 maxusers	32		# estimated number of users
 
@@ -48,7 +48,7 @@ maxusers	32		# estimated number of users
 # and/or the maximum address used by the system.
 # Contrary to REALBASEMEM and REALEXTMEM, they still use the BIOS memory map
 # and can deal with holes in the memory layout.
-#options	PHYSMEM_MAX_SIZE=64	# max size of physical memory (in MB)
+#options 	PHYSMEM_MAX_SIZE=64	# max size of physical memory (in MB)
 #options 	PHYSMEM_MAX_ADDR=2048	# don't use memory above this (in MB)
 
 # Standard system options
@@ -66,7 +66,7 @@ options 	SYSVSHM		# System V-like memory sharing
 options 	P1003_1B_SEMAPHORE	# p1003.1b semaphore support
 
 options 	LKM		# loadable kernel modules
-options		MULTIPROCESSOR	# SMP
+options 	MULTIPROCESSOR	# SMP
 options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
@@ -101,7 +101,7 @@ options 	DDB		# in-kernel debugger
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	KGDB		# remote debugger
 #options 	KGDB_DEVNAME="\"com\"",KGDB_DEVADDR=0x3f8,KGDB_DEVRATE=9600
-#makeoptions	DEBUG="-g"	# compile full symbol table
+#makeoptions 	DEBUG="-g"	# compile full symbol table
 #options 	SYSCALL_STATS	# per syscall counts
 #options 	SYSCALL_TIMES	# per syscall times
 #options 	SYSCALL_TIMES_HASCOUNTER	# use 'broken' rdtsc (soekris)
@@ -159,7 +159,7 @@ options 	QUOTA		# UFS quotas
 options 	SOFTDEP		# FFS soft updates support.
 # Note that UFS_DIRHASH is suspected of causing kernel memory corruption.
 # It is not recommended for general use.
-#options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
+#options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	NFSSERVER	# Network File System server
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
@@ -262,7 +262,7 @@ options 	MPBIOS			# configure CPUs and APICs using MPBIOS
 options 	MPBIOS_SCANPCI		# MPBIOS configures PCI roots
 #options 	PCI_INTR_FIXUP		# PCI interrupt routing via ACPI
 #options 	ACPI_ACTIVATE_DEV	# If set, activate inactive devices
-#options	ACPICA_PEDANTIC		# force strict conformance to the Spec.
+#options 	ACPICA_PEDANTIC		# force strict conformance to the Spec.
 
 # ACPI devices
 acpiacad* 	at acpi?		# ACPI AC Adapter
@@ -1027,7 +1027,7 @@ pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
 pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
-#options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
+#options 	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 pseudo-device	agr			# IEEE 802.3ad link aggregation
 
 # miscellaneous pseudo-devices
