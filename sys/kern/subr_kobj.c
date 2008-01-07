@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kobj.c,v 1.6 2008/01/07 18:25:56 ad Exp $	*/
+/*	$NetBSD: subr_kobj.c,v 1.7 2008/01/07 20:42:48 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
 #include "opt_modular.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.6 2008/01/07 18:25:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.7 2008/01/07 20:42:48 ad Exp $");
 
 #define	ELFSIZE		ARCH_ELFSIZE
 
@@ -980,14 +980,14 @@ kobj_read(kobj_t ko, void *base, size_t size, off_t off)
 #else	/* MODULAR */
 
 int
-kobj_open_file(kobj_t *kop, const char *name, const char *filename)
+kobj_open_file(kobj_t *kop, const char *name)
 {
 
 	return ENOSYS;
 }
 
 int
-kobj_open_mem(kobj_t *kop, const char *name, void *base, ssize_t size)
+kobj_open_mem(kobj_t *kop, void *base, ssize_t size)
 {
 
 	return ENOSYS;
@@ -1021,7 +1021,7 @@ kobj_stat(kobj_t ko, vaddr_t *base, size_t *size, uintptr_t *entry)
 	panic("not modular");
 }
 
-void
+int
 kobj_set_name(kobj_t ko, const char *name)
 {
 
