@@ -1,4 +1,4 @@
-/* $NetBSD: types.h,v 1.2 2007/12/29 18:30:17 reinoud Exp $ */
+/* $NetBSD: types.h,v 1.3 2008/01/07 17:27:12 joerg Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -58,5 +58,7 @@ typedef volatile unsigned char	__cpu_simple_lock_t;
 
 #define __SIMPLELOCK_LOCKED	1
 #define __SIMPLELOCK_UNLOCKED	0
+
+#define __HAVE_TIMECOUNTER
 
 #endif /* !_ARCH_USERMODE_INCLUDE_TYPES_H */
