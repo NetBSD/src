@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.310 2008/01/03 01:26:30 pooka Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.311 2008/01/07 16:12:55 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.310 2008/01/03 01:26:30 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.311 2008/01/07 16:12:55 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -1525,6 +1525,7 @@ sysctl_vfs_generic_fstypes(SYSCTLFN_ARGS)
 	needed = 0;
 	left = *oldlenp;
 
+	sysctl_unlock();
 	mutex_enter(&vfs_list_lock);
 	LIST_FOREACH(v, &vfs_list, vfs_list) {
 		if (where == NULL)
@@ -1556,6 +1557,7 @@ sysctl_vfs_generic_fstypes(SYSCTLFN_ARGS)
 		}
 	}
 	mutex_exit(&vfs_list_lock);
+	sysctl_relock();
 	*oldlenp = needed;
 	return (error);
 }
@@ -1612,7 +1614,7 @@ sysctl_kern_vnode(SYSCTLFN_ARGS)
 	char *where = oldp;
 	size_t *sizep = oldlenp;
 	struct mount *mp, *nmp;
-	vnode_t *vp, *mvp;
+	vnode_t *vp, *mvp, vbuf;
 	char *bp = where, *savebp;
 	char *ewhere;
 	int error;
@@ -1630,7 +1632,7 @@ sysctl_kern_vnode(SYSCTLFN_ARGS)
 	}
 	ewhere = where + *sizep;
 
-
+	sysctl_unlock();
 	mutex_enter(&mountlist_lock);
 	for (mp = CIRCLEQ_FIRST(&mountlist); mp != (void *)&mountlist;
 	     mp = nmp) {
@@ -1640,8 +1642,10 @@ sysctl_kern_vnode(SYSCTLFN_ARGS)
 		}
 		savebp = bp;
 		/* Allocate a marker vnode. */
-		if ((mvp = vnalloc(mp)) == NULL)
+		if ((mvp = vnalloc(mp)) == NULL) {
+			sysctl_relock();
 			return (ENOMEM);
+		}
 		mutex_enter(&mntvnode_lock);
 		for (vp = TAILQ_FIRST(&mp->mnt_vnodelist); vp; vp = vunmark(mvp)) {
 			vmark(mvp, vp);
@@ -1656,17 +1660,19 @@ sysctl_kern_vnode(SYSCTLFN_ARGS)
 				(void)vunmark(mvp);
 				mutex_exit(&mntvnode_lock);
 				vnfree(mvp);
+				sysctl_relock();
 				*sizep = bp - where;
 				return (ENOMEM);
 			}
-			/* XXXAD copy to temporary buffer */
+			memcpy(&vbuf, vp, VNODESZ);
 			mutex_exit(&mntvnode_lock);
-			if ((error = copyout((void *)&vp, bp, VPTRSZ)) ||
-			   (error = copyout((void *)vp, bp + VPTRSZ, VNODESZ))) {
+			if ((error = copyout(vp, bp, VPTRSZ)) ||
+			   (error = copyout(&vbuf, bp + VPTRSZ, VNODESZ))) {
 			   	mutex_enter(&mntvnode_lock);
 				(void)vunmark(mvp);
 				mutex_exit(&mntvnode_lock);
 				vnfree(mvp);
+				sysctl_relock();
 				return (error);
 			}
 			bp += VPTRSZ + VNODESZ;
@@ -1679,6 +1685,7 @@ sysctl_kern_vnode(SYSCTLFN_ARGS)
 		vnfree(mvp);
 	}
 	mutex_exit(&mountlist_lock);
+	sysctl_relock();
 
 	*sizep = bp - where;
 	return (0);

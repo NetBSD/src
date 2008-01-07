@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_domain.c,v 1.73 2008/01/05 19:08:48 dsl Exp $	*/
+/*	$NetBSD: uipc_domain.c,v 1.74 2008/01/07 16:12:54 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.73 2008/01/05 19:08:48 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.74 2008/01/07 16:12:54 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -372,7 +372,7 @@ sysctl_dounpcb(struct kinfo_pcb *pcb, const struct socket *so)
 static int
 sysctl_unpcblist(SYSCTLFN_ARGS)
 {
-	struct file *fp;
+	struct file *fp, *dfp, *np;
 	struct socket *so;
 	struct kinfo_pcb pcb;
 	char *dp;
@@ -412,15 +412,26 @@ sysctl_unpcblist(SYSCTLFN_ARGS)
 	pf2 = (oldp == NULL) ? 0 : pf;
 
 	/*
+	 * allocate dummy file descriptor to make position in list.
+	 */
+	sysctl_unlock();
+	if ((dfp = fgetdummy()) == NULL) {
+	 	sysctl_relock();
+		return ENOMEM;
+	}
+
+	/*
 	 * there's no "list" of local domain sockets, so we have
 	 * to walk the file list looking for them.  :-/
 	 */
 	mutex_enter(&filelist_lock);
 	LIST_FOREACH(fp, &filehead, f_list) {
+	    	np = LIST_NEXT(fp, f_list);
+		if (fp->f_count == 0 || fp->f_type != DTYPE_SOCKET ||
+		    fp->f_data == NULL)
+			continue;
 		if (kauth_authorize_generic(l->l_cred,
 		    KAUTH_GENERIC_CANSEE, fp->f_cred) != 0)
-			continue;
-		if (fp->f_count == 0 || fp->f_type != DTYPE_SOCKET)
 			continue;
 		so = (struct socket *)fp->f_data;
 		if (so->so_type != type)
@@ -430,11 +441,14 @@ sysctl_unpcblist(SYSCTLFN_ARGS)
 		if (len >= elem_size && elem_count > 0) {
 			FILE_LOCK(fp);
 			FILE_USE(fp);
+			LIST_INSERT_AFTER(fp, dfp, f_list);
 			mutex_exit(&filelist_lock);
 			sysctl_dounpcb(&pcb, so);
 			error = copyout(&pcb, dp, out_size);
 			FILE_UNUSE(fp, NULL);
 			mutex_enter(&filelist_lock);
+			np = LIST_NEXT(dfp, f_list);
+			LIST_REMOVE(dfp, f_list);
 			if (error)
 				break;
 			dp += elem_size;
@@ -447,10 +461,11 @@ sysctl_unpcblist(SYSCTLFN_ARGS)
 		}
 	}
 	mutex_exit(&filelist_lock);
-
-	*oldlenp = needed;
+	fputdummy(dfp);
+ 	*oldlenp = needed;
 	if (oldp == NULL)
 		*oldlenp += PCB_SLOP * sizeof(struct kinfo_pcb);
+ 	sysctl_relock();
 
 	return (error);
 }

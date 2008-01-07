@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_sysctl.c,v 1.8 2007/12/20 23:02:58 dsl Exp $ */
+/*	$NetBSD: linux32_sysctl.c,v 1.9 2008/01/07 16:12:53 ad Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -31,7 +31,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_sysctl.c,v 1.8 2007/12/20 23:02:58 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_sysctl.c,v 1.9 2008/01/07 16:12:53 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -191,22 +191,17 @@ linux32_sys___sysctl(struct lwp *l, const struct linux32_sys___sysctl_args *uap,
 		return error;
 
 	ktrmib(name, ls32.nlen);
-
-	if ((error = sysctl_lock(l, 
-	    NETBSD32PTR64(ls32.oldval), savelen)) != 0)
-		return error;
-
 	/*
 	 * First try linux32 tree, then linux tree
 	 */
 	oldlen = (size_t)oldlen32;
+	sysctl_lock(NETBSD32PTR64(ls32.newval) != NULL);
 	error = sysctl_dispatch(name, ls32.nlen,
 				NETBSD32PTR64(ls32.oldval), &oldlen,
 				NETBSD32PTR64(ls32.newval), ls32.newlen,
 				name, l, &linux32_sysctl_root);
 	oldlen32 = (netbsd32_size_t)oldlen;
-
-	sysctl_unlock(l);
+	sysctl_unlock();
 
 	/*
 	 * Check for oldlen overflow (not likely, but who knows...)
