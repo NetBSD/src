@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.48 2007/03/17 00:11:03 matt Exp $	 */
+/*	$NetBSD: clock.c,v 1.49 2008/01/07 16:40:17 joerg Exp $	 */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -30,11 +30,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.48 2007/03/17 00:11:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.49 2008/01/07 16:40:17 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
+#include <sys/timetc.h>
 #include <sys/device.h>
 
 #include <machine/mtpr.h>
@@ -58,60 +59,62 @@ static struct todr_chip_handle todr_handle = {
 	.todr_settime = vax_settime,
 };
 
-
-/*
- * microtime() should return number of usecs in struct timeval.
- * We may get wrap-arounds, but that will be fixed with lasttime
- * check. This may fault within 10 msecs.
- */
-void
-microtime(struct timeval *tvp)
-{
-	int s, i;
-	static struct timeval lasttime;
-
-	s = splhigh();
-	*tvp = time;
-
-	switch (vax_boardtype) {
 #if VAX46 || VAXANY
-	case VAX_BTYP_46: {
-		extern struct vs_cpu *ka46_cpu;
-		i = *(volatile int *)(&ka46_cpu->vc_diagtimu);
-		i = (i >> 16) * 1024 + (i & 0x3ff);
-		break;
-		}
-#endif
-#if VAX48 || VAXANY
-	case VAX_BTYP_48: {
-		/*
-		 * PR_ICR doesn't exist.  We could use the vc_diagtimu
-		 * counter, saving the value on the timer interrupt and
-		 * subtracting that from the current value.
-		 */
-		i = 0;
-		break;
-		}
-#endif
-	default:
-		i = mfpr(PR_ICR);
-		break;
-	}
-	i += tick; /* Get current interval count */
-	tvp->tv_usec += i;
-	while (tvp->tv_usec >= 1000000) {
-		tvp->tv_sec++;
-		tvp->tv_usec -= 1000000;
-	}
-	if (tvp->tv_sec == lasttime.tv_sec &&
-	    tvp->tv_usec <= lasttime.tv_usec &&
-	    (tvp->tv_usec = lasttime.tv_usec + 1) >= 1000000) {
-		tvp->tv_sec++;
-		tvp->tv_usec -= 1000000;
-	}
-	lasttime = *tvp;
-	splx(s);
+static u_int
+vax_diag_get_counter(struct timecounter *tc)
+{
+	extern struct vs_cpu *ka46_cpu;
+	int cur_hardclock;
+	u_int counter;
+
+	do {
+		cur_hardclock = hardclock_ticks;
+		counter = *(volatile u_int *)&ka46_cpu->vc_diagtimu;
+	} while (cur_hardclock != hardclock_ticks);
+
+	counter = (counter & 0x3ff) + (counter >> 16) * 1024;
+
+	return counter + hardclock_ticks * tick;
 }
+#endif
+
+static u_int
+vax_mfpr_get_counter(struct timecounter *tc)
+{
+	int cur_hardclock;
+	u_int counter;
+
+	do {
+		cur_hardclock = hardclock_ticks;
+		counter = mfpr(PR_ICR);
+	} while (cur_hardclock != hardclock_ticks);
+
+	return counter + hardclock_ticks * tick;
+}
+
+#if VAX46 || VAXANY
+static struct timecounter vax_diag_tc = {
+	vax_diag_get_counter,	/* get_timecount */
+	0,			/* no poll_pps */
+	~0u,			/* counter_mask */
+	1000000,		/* frequency */
+	"diagtimer",		/* name */
+	100,			/* quality */
+	NULL,			/* prev */
+	NULL,			/* next */
+};
+#endif
+
+static struct timecounter vax_mfpr_tc = {
+	vax_mfpr_get_counter,	/* get_timecount */
+	0,			/* no poll_pps */
+	~0u,			/* counter_mask */
+	1000000,		/* frequency */
+	"mfpr",			/* name */
+	100,			/* quality */
+	NULL,			/* prev */
+	NULL,			/* next */
+};
 
 /*
  * A delayloop that delays about the number of milliseconds that is
@@ -135,6 +138,13 @@ cpu_initclocks(void)
 	mtpr(0x800000d1, PR_ICCS); /* Start clock and enable interrupt */
 
 	todr_attach(&todr_handle);
+
+#if VAX46 || VAXANY
+	if (vax_boardtype == VAX_BTYP_46)
+		tc_init(&vax_diag_tc);
+#endif
+	if (vax_boardtype != VAX_BTYP_46 && vax_boardtype != VAX_BTYP_48)
+		tc_init(&vax_mfpr_tc);
 }
 
 int
