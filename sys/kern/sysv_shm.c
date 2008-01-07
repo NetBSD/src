@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.102 2008/01/02 11:48:54 ad Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.103 2008/01/07 16:12:54 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.102 2008/01/02 11:48:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.103 2008/01/07 16:12:54 ad Exp $");
 
 #define SYSVSHM
 
@@ -993,7 +993,10 @@ sysctl_ipc_shmmni(SYSCTLFN_ARGS)
 	if (error || newp == NULL)
 		return error;
 
-	return shmrealloc(newsize);
+	sysctl_unlock();
+	error = shmrealloc(newsize);
+	sysctl_relock();
+	return error;
 }
 
 static int

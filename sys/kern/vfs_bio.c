@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.184 2008/01/07 12:50:38 ad Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.185 2008/01/07 16:12:55 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -114,7 +114,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.184 2008/01/07 12:50:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.185 2008/01/07 16:12:55 ad Exp $");
 
 #include "fs_ffs.h"
 #include "opt_bufcache.h"
@@ -1707,6 +1707,7 @@ sysctl_dobuf(SYSCTLFN_ARGS)
 
 	error = 0;
 	needed = 0;
+	sysctl_unlock();
 	mutex_enter(&bufcache_lock);
 	for (i = 0; i < BQUEUES; i++) {
 		bq = &bufqueues[i];
@@ -1746,6 +1747,7 @@ sysctl_dobuf(SYSCTLFN_ARGS)
 			break;
 	}
 	mutex_exit(&bufcache_lock);
+	sysctl_relock();
 
 	*oldlenp = needed;
 	if (oldp == NULL)
@@ -1786,6 +1788,7 @@ sysctl_bufvm_update(SYSCTLFN_ARGS)
 		return (EINVAL);
 
 	/* Drain until below new high water mark */
+	sysctl_unlock();
 	mutex_enter(&bufcache_lock);
 	while ((t = bufmem - bufmem_hiwater) >= 0) {
 		rv = buf_drain(t / (2 * 1024));
@@ -1793,6 +1796,7 @@ sysctl_bufvm_update(SYSCTLFN_ARGS)
 			break;
 	}
 	mutex_exit(&bufcache_lock);
+	sysctl_relock();
 
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: misc_stub.c,v 1.3 2007/08/14 13:54:15 pooka Exp $	*/
+/*	$NetBSD: misc_stub.c,v 1.4 2008/01/07 16:12:56 ad Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -77,4 +77,22 @@ sysctl_query(SYSCTLFN_ARGS)
 {
 
 	return ENOSYS;
+}
+
+void
+sysctl_lock(bool write)
+{
+
+}
+
+void
+sysctl_relock(void)
+{
+
+}
+
+void
+sysctl_unlock(void)
+{
+
 }
