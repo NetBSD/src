@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_sysctl.c,v 1.11 2007/12/20 23:02:48 dsl Exp $	*/
+/*	$NetBSD: freebsd_sysctl.c,v 1.12 2008/01/07 16:12:53 ad Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_sysctl.c,v 1.11 2007/12/20 23:02:48 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_sysctl.c,v 1.12 2008/01/07 16:12:53 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -152,15 +152,15 @@ freebsd_sys_sysctl(struct lwp *l, const struct freebsd_sys_sysctl_args *uap, reg
 		     (char *) malloc(newlen + 1, M_TEMP, M_WAITOK)) == NULL)
 			return(ENOMEM);
 
-		if ((error = copyinstr(new, locnew, newlen + 1, NULL)) ||
-		    (error = sysctl_lock(l, old, *oldlenp))) {
+		if ((error = copyinstr(new, locnew, newlen + 1, NULL))) {
 			free(locnew, M_TEMP);
 			return(error);
 		}
 
 		ktrmibio(-1, UIO_WRITE, new, newlen + 1, error);
+		sysctl_lock(new != NULL);
 		error = freebsd_sysctl_name2oid(locnew, oid, &oidlen);
-		sysctl_unlock(l);
+		sysctl_unlock();
 		free(locnew, M_TEMP);
 		if (error)
 			return(error);
