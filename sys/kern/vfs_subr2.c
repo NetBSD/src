@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr2.c,v 1.10 2008/01/07 12:34:12 ad Exp $	*/
+/*	$NetBSD: vfs_subr2.c,v 1.11 2008/01/07 12:50:38 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>  
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr2.c,v 1.10 2008/01/07 12:34:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr2.c,v 1.11 2008/01/07 12:50:38 ad Exp $");
 
 #include "opt_ddb.h"
 
@@ -535,6 +535,7 @@ reassignbuf(struct buf *bp, struct vnode *vp)
 	struct buflists *listheadp;
 	int delayx;
 
+	KASSERT(mutex_owned(&bufcache_lock));
 	KASSERT(bp->b_objlock == &vp->v_interlock);
 	KASSERT(mutex_owned(&vp->v_interlock));
 	KASSERT((bp->b_cflags & BC_BUSY) != 0);
