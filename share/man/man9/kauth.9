@@ -1,4 +1,4 @@
-.\" $NetBSD: kauth.9,v 1.59 2007/12/31 15:31:43 ad Exp $
+.\" $NetBSD: kauth.9,v 1.60 2008/01/07 23:51:06 elad Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 27, 2007
+.Dd January 8, 2008
 .Dt KAUTH 9
 .Os
 .Sh NAME
@@ -396,6 +396,12 @@ can be changed.
 .Pp
 .Ar arg1
 is the new corename.
+.It Dv KAUTH_PROCESS_FORK
+Checks if the process can fork.
+.Ar arg1
+is an
+.Ft int
+indicating how many processes exist on the system at the time of the check.
 .It Dv KAUTH_PROCESS_NICE
 Checks whether the
 .Em nice

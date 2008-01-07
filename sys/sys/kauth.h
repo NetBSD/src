@@ -1,4 +1,4 @@
-/* $NetBSD: kauth.h,v 1.43 2007/12/31 15:32:14 ad Exp $ */
+/* $NetBSD: kauth.h,v 1.44 2008/01/07 23:51:07 elad Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>  
@@ -127,6 +127,7 @@ enum {
 	KAUTH_PROCESS_CANSEE,
 	KAUTH_PROCESS_CANSIGNAL,
 	KAUTH_PROCESS_CORENAME,
+	KAUTH_PROCESS_FORK,
 	KAUTH_PROCESS_NICE,
 	KAUTH_PROCESS_RLIMIT,
 	KAUTH_PROCESS_SETID,
