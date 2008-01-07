@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.34 2007/12/03 15:33:28 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.35 2008/01/07 05:00:12 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2002 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.34 2007/12/03 15:33:28 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.35 2008/01/07 05:00:12 uwe Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -275,11 +275,7 @@ void
 intc_intr(int ssr, int spc, int ssp)
 {
 	struct intc_intrhand *ih;
-	struct cpu_info *ci;
 	int s, evtcode;
-
-	ci = curcpu();
-	ci->ci_idepth++;
 
 	evtcode = _reg_read_4(SH4_INTEVT);
 
@@ -300,6 +296,4 @@ intc_intr(int ssr, int spc, int ssp)
 	} else {
 		(*ih->ih_func)(ih->ih_arg);
 	}
-
-	ci->ci_idepth--;
 }
