@@ -1,4 +1,4 @@
-/* $Id: ar5315_intr.c,v 1.4 2008/01/07 06:55:32 dyoung Exp $ */
+/* $Id: ar5315_intr.c,v 1.5 2008/01/07 07:12:06 dyoung Exp $ */
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ar5315_intr.c,v 1.4 2008/01/07 06:55:32 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ar5315_intr.c,v 1.5 2008/01/07 07:12:06 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/queue.h>
@@ -90,16 +90,16 @@ struct ar531x_intr {
 
 const uint32_t	ipl_sr_bits[_IPL_N] = {
 	0,				/* 0: IPL_NONE */
-	MIPS_SOFT_INT_MASK_0,		/* 2: IPL_SOFTCLOCK */
-	MIPS_SOFT_INT_MASK_0,		/* 3: IPL_SOFTNET */
+	MIPS_SOFT_INT_MASK_0,		/* 1: IPL_SOFTCLOCK */
+	MIPS_SOFT_INT_MASK_0,		/* 2: IPL_SOFTNET */
 
 	MIPS_SOFT_INT_MASK_0 |
 	MIPS_SOFT_INT_MASK_1 |
 	MIPS_INT_MASK_0 |
 	MIPS_INT_MASK_1 |
-	MIPS_INT_MASK_2,		/* 5: IPL_VM */
+	MIPS_INT_MASK_2,		/* 3: IPL_VM */
 
-	MIPS_INT_MASK,			/* 8: IPL_{SCHED,HIGH} */
+	MIPS_INT_MASK,			/* 4: IPL_{SCHED,HIGH} */
 };
 
 static const char *ar5315_cpuintrnames[NINTRS] = {
