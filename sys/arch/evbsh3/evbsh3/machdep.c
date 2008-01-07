@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.58 2007/12/03 15:33:35 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.59 2008/01/07 05:00:12 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.58 2007/12/03 15:33:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.59 2008/01/07 05:00:12 uwe Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -740,12 +740,8 @@ void
 intc_intr(int ssr, int spc, int ssp)
 {
 	struct intc_intrhand *ih;
-	struct cpu_info *ci;
 	struct clockframe cf;
 	int s, evtcode;
-
-	ci = curcpu();
-	ci->ci_idepth++;
 
 	switch (cpu_product) {
 	case CPU_PRODUCT_7708:
@@ -765,7 +761,6 @@ intc_intr(int ssr, int spc, int ssp)
 #ifdef DIAGNOSTIC
 		panic("intr_intc: cpu_product %d unhandled!", cpu_product);
 #endif
-		ci->ci_idepth--;
 		return;
 	}
 
@@ -793,7 +788,5 @@ intc_intr(int ssr, int spc, int ssp)
 		printf("NMI ignored.\n");
 		break;
 	}
-
-	ci->ci_idepth--;
 }
 
