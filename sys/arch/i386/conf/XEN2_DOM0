@@ -1,4 +1,4 @@
-# $NetBSD: XEN2_DOM0,v 1.37 2007/12/31 15:31:56 ad Exp $
+# $NetBSD: XEN2_DOM0,v 1.38 2008/01/07 08:39:07 martti Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -17,7 +17,7 @@ options 	DOM0OPS
 # to a domU, at the expense of a higher memory usage by the network stack.
 #options 	MCLSHIFT=12
 
-makeoptions	CPUFLAGS="-march=i686"
+makeoptions 	CPUFLAGS="-march=i686"
 
 #options 	VM86		# virtual 8086 emulation
 #options 	USER_LDT	# user-settable LDT; used by WINE
@@ -58,7 +58,7 @@ options 	DDB_ONPANIC=1	# see also sysctl(8): `ddb.onpanic'
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	KGDB		# remote debugger
 #options 	KGDB_DEVNAME="\"com\"",KGDB_DEVADDR=0x2f8,KGDB_DEVRATE=57600
-#makeoptions	DEBUG="-g"	# compile full symbol table
+#makeoptions 	DEBUG="-g"	# compile full symbol table
 
 # Compatibility options
 options 	COMPAT_NOMID	# NetBSD 0.8, 386BSD, and BSDI
