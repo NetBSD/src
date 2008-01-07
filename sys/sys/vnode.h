@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.181 2008/01/03 01:26:31 pooka Exp $	*/
+/*	$NetBSD: vnode.h,v 1.182 2008/01/07 16:56:27 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -206,11 +206,12 @@ typedef struct vnode vnode_t;
  * The third set are locked by the underlying file system.
  */
 #define	VU_DIROP	0x01000000	/* LFS: involved in a directory op */
+#define	VU_SOFTDEP	0x02000000	/* FFS: involved in softdep processing */
 
 #define	VNODE_FLAGBITS \
     "\20\1ROOT\2SYSTEM\3ISTTY\4MAPPED\5MPSAFE\6LOCKSWORK\11TEXT\12EXECMAP" \
     "\13WRMAP\14WRMAPDIRTY\15XLOCK\16ALIASED\17ONWORKLST\20MARKER" \
-    "\22LAYER\23MAPPED\24CLEAN\25INACTPEND\26INACTREDO\31DIROP" 
+    "\22LAYER\23MAPPED\24CLEAN\25INACTPEND\26INACTREDO\31DIROP\32VU_SOFTDEP" 
 
 #define	VSIZENOTSET	((voff_t)-1)
 

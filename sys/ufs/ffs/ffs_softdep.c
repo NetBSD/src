@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.104 2008/01/07 05:20:25 tnn Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.105 2008/01/07 16:56:27 ad Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.104 2008/01/07 05:20:25 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.105 2008/01/07 16:56:27 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -3827,8 +3827,7 @@ softdep_disk_write_complete(bp)
 	}
 
 	/* Avoid taking bufcache_lock if not doing softdep. */
-	if (bp->b_vp == NULL || bp->b_vp->v_mount == NULL ||
-	    !DOINGSOFTDEP(bp->b_vp))
+	if (bp->b_vp == NULL || !DOINGSOFTDEP(bp->b_vp))
 	    	return;
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.216 2008/01/03 19:28:49 ad Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.217 2008/01/07 16:56:27 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.216 2008/01/03 19:28:49 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.217 2008/01/07 16:56:27 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -259,6 +259,8 @@ ffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 			vref(devvp);
 		}
 	}
+	if ((mp->mnt_flag & MNT_SOFTDEP) != 0)
+		devvp->v_uflag |= VU_SOFTDEP;
 
 	/*
 	 * If mount by non-root, then verify that user has necessary
@@ -1484,6 +1486,8 @@ ffs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 	}
 
 	vp->v_vflag |= VV_LOCKSWORK;
+	if ((mp->mnt_flag & MNT_SOFTDEP) != 0)
+		vp->v_uflag |= VU_SOFTDEP;
 
 	/*
 	 * XXX MFS ends up here, too, to allocate an inode.  Should we
