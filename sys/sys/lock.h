@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.78 2008/01/04 21:18:17 ad Exp $	*/
+/*	$NetBSD: lock.h,v 1.79 2008/01/07 00:20:18 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -77,6 +77,8 @@
 
 #include <sys/stdint.h>
 #include <sys/mutex.h>
+
+#include <machine/lock.h>
 
 /*
  * The general lock structure.
