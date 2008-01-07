@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.169 2008/01/02 11:49:07 ad Exp $	*/
+/*	$NetBSD: mount.h,v 1.170 2008/01/07 12:34:12 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -215,21 +215,25 @@ struct vfsops {
 	LIST_ENTRY(vfsops) vfs_list;
 };
 
-#define VFS_MOUNT(MP, PATH, DATA, DATA_LEN) \
-	(*(MP)->mnt_op->vfs_mount)(MP, PATH, DATA, DATA_LEN)
-#define VFS_START(MP, FLAGS)	  (*(MP)->mnt_op->vfs_start)(MP, FLAGS)
-#define VFS_UNMOUNT(MP, FORCE)	  (*(MP)->mnt_op->vfs_unmount)(MP, FORCE)
-#define VFS_ROOT(MP, VPP)	  (*(MP)->mnt_op->vfs_root)(MP, VPP)
-#define VFS_QUOTACTL(MP,C,U,A)	  (*(MP)->mnt_op->vfs_quotactl)(MP, C, U, A)
-#define VFS_STATVFS(MP, SBP)	  (*(MP)->mnt_op->vfs_statvfs)(MP, SBP)
-#define VFS_SYNC(MP, WAIT, C)	  (*(MP)->mnt_op->vfs_sync)(MP, WAIT, C)
+/* XXX Actually file system internal. */
 #define VFS_VGET(MP, INO, VPP)    (*(MP)->mnt_op->vfs_vget)(MP, INO, VPP)
-#define VFS_FHTOVP(MP, FIDP, VPP) (*(MP)->mnt_op->vfs_fhtovp)(MP, FIDP, VPP)
-#define	VFS_VPTOFH(VP, FIDP, FIDSZP)  (*(VP)->v_mount->mnt_op->vfs_vptofh)(VP, FIDP, FIDSZP)
-#define VFS_SNAPSHOT(MP, VP, TS)  (*(MP)->mnt_op->vfs_snapshot)(MP, VP, TS)
-#define	VFS_EXTATTRCTL(MP, C, VP, AS, AN) \
-	(*(MP)->mnt_op->vfs_extattrctl)(MP, C, VP, AS, AN)
-#define VFS_SUSPENDCTL(MP, C)     (*(MP)->mnt_op->vfs_suspendctl)(MP, C)
+
+int	VFS_MOUNT(struct mount *, const char *, void *, size_t *);
+int	VFS_START(struct mount *, int);
+int	VFS_UNMOUNT(struct mount *, int);
+int	VFS_ROOT(struct mount *, struct vnode **);
+int	VFS_QUOTACTL(struct mount *, int, uid_t, void *);
+int	VFS_STATVFS(struct mount *, struct statvfs *);
+int	VFS_SYNC(struct mount *, int, struct kauth_cred *);
+int	VFS_FHTOVP(struct mount *, struct fid *, struct vnode **);
+int	VFS_VPTOFH(struct vnode *, struct fid *, size_t *);
+void	VFS_INIT(void);
+void	VFS_REINIT(void);
+void	VFS_DONE(void);
+int	VFS_MOUNTROOT(void);
+int	VFS_SNAPSHOT(struct mount *, struct vnode *, struct timespec *);
+int	VFS_EXTATTRCTL(struct mount *, int, struct vnode *, int, const char *);
+int	VFS_SUSPENDCTL(struct mount *, int);
 
 #endif /* _KERNEL || __VFSOPS_EXPOSE */
 
