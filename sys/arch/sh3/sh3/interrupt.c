@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.22 2008/01/07 04:41:40 uwe Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.23 2008/01/07 04:43:54 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.22 2008/01/07 04:41:40 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.23 2008/01/07 04:43:54 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -630,7 +630,7 @@ tmu1_intr(void *arg)
 		
 	return (0);
 }
-#endif
+#endif /* __HAVE_FAST_SOFTINTS */
 
 bool
 cpu_intr_p(void)
