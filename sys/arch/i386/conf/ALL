@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.152 2007/12/31 15:31:55 ad Exp $
+# $NetBSD: ALL,v 1.153 2008/01/07 08:39:03 martti Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.152 $"
+#ident 		"ALL-$Revision: 1.153 $"
 
 maxusers	32		# estimated number of users
 
@@ -39,7 +39,7 @@ options 	POWERNOW_K7
 options 	POWERNOW_K8
 
 # VIA PadLock
-options		VIA_PADLOCK
+options 	VIA_PADLOCK
 
 # Intel(R) On Demand Clock Modulation (aka ODCM)
 options 	INTEL_ONDEMAND_CLOCKMOD
@@ -117,7 +117,7 @@ options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 options 	DDB_VERBOSE_HELP
 options 	KGDB		# remote debugger
 options 	KGDB_DEVNAME="\"com\"",KGDB_DEVADDR=0x3f8,KGDB_DEVRATE=9600
-makeoptions	DEBUG="-g"	# compile full symbol table
+makeoptions 	DEBUG="-g"	# compile full symbol table
 options 	SYSCALL_STATS	# per syscall counts
 options 	SYSCALL_TIMES 	# per syscall times
 options 	SYSCALL_TIMES_HASCOUNTER	# use 'broken' rdtsc (soekris)
@@ -151,7 +151,7 @@ options 	COMPAT_NDIS	# NDIS network driver
 options 	COMPAT_PECOFF	# kernel support to run Win32 apps
 options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
-options		X86EMU		# 386 Real Mode emulator
+options 	X86EMU		# 386 Real Mode emulator
 
 # File systems
 file-system 	FFS		# UFS
@@ -193,7 +193,7 @@ options 	NFSSERVER	# Network File System server
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
-options		VNODE_LOCKDEBUG
+options 	VNODE_LOCKDEBUG
 
 # Networking options
 options 	GATEWAY		# packet forwarding
@@ -287,7 +287,7 @@ options 	VGA_CONSOLE_SCREENTYPE="\"80x24\""
 # work around a hardware bug that loaded fonts don't work; found on ATI cards
 options 	VGA_CONSOLE_ATI_BROKEN_FONTSEL
 # issue VGA BIOS POST on resume
-options		VGA_POST
+options 	VGA_POST
 # console scrolling support.
 options 	WSDISPLAY_SCROLLSUPPORT
 # enable VGA raster mode capable of displaying multilingual text on console
