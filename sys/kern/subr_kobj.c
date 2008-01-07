@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kobj.c,v 1.5 2008/01/06 18:03:58 ad Exp $	*/
+/*	$NetBSD: subr_kobj.c,v 1.6 2008/01/07 18:25:56 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
 #include "opt_modular.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.5 2008/01/06 18:03:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.6 2008/01/07 18:25:56 ad Exp $");
 
 #define	ELFSIZE		ARCH_ELFSIZE
 
@@ -156,11 +156,10 @@ static const char	*kobj_path = "/modules";	/* XXX ??? */
 /*
  * kobj_open_file:
  *
- *	Open an object located in the file system.  'name' may not
- *	be known in advance and so is preliminary.
+ *	Open an object located in the file system.
  */
 int
-kobj_open_file(kobj_t *kop, const char *name, const char *filename)
+kobj_open_file(kobj_t *kop, const char *filename)
 {
 	struct nameidata nd;
 	kauth_cred_t cred;
@@ -174,8 +173,6 @@ kobj_open_file(kobj_t *kop, const char *name, const char *filename)
 	if (ko == NULL) {
 		return ENOMEM;
 	}
-
-	strlcpy(ko->ko_name, name, sizeof(ko->ko_name));
 
 	/* XXX where to look? */
 	NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, filename);
@@ -210,11 +207,10 @@ kobj_open_file(kobj_t *kop, const char *name, const char *filename)
  * kobj_open_mem:
  *
  *	Open a pre-loaded object already resident in memory.  If size
- *	is not -1, the complete size of the object is known.  'name' may
- *	not be known in advance and so is preliminary.
+ *	is not -1, the complete size of the object is known.
  */
 int
-kobj_open_mem(kobj_t *kop, const char *name, void *base, ssize_t size)
+kobj_open_mem(kobj_t *kop, void *base, ssize_t size)
 {
 	kobj_t ko;
 
@@ -223,7 +219,6 @@ kobj_open_mem(kobj_t *kop, const char *name, void *base, ssize_t size)
 		return ENOMEM;
 	}
 
-	strlcpy(ko->ko_name, name, sizeof(ko->ko_name));
 	ko->ko_type = KT_MEMORY;
 	ko->ko_source = base;
 	ko->ko_memsize = size;
@@ -624,17 +619,6 @@ kobj_load(kobj_t ko)
 	}
 
 	/*
-	 * Register symbol table with ksyms.
-	 */
-	error = ksyms_addsymtab(ko->ko_name, ko->ko_symtab, ko->ko_symcnt *
-	    sizeof(Elf_Sym), ko->ko_strtab, ko->ko_strtabsz);
-	if (error != 0) {
-		kobj_error("unable to register module symbol table");
-		goto out;
-	}
-	ko->ko_ksyms = true;
-
-	/*
 	 * Notify MD code that a module has been loaded.
 	 */
 	error = kobj_machdep(ko, (void *)ko->ko_address, ko->ko_size, true);
@@ -716,14 +700,27 @@ kobj_stat(kobj_t ko, vaddr_t *address, size_t *size, uintptr_t *entry)
  *	Set an object's name.  Used only for symbol table lookups.
  *	May only be called after the module is loaded.
  */
-void
+int
 kobj_set_name(kobj_t ko, const char *name)
 {
+	int error;
 
 	KASSERT(ko->ko_loaded);
 
 	strlcpy(ko->ko_name, name, sizeof(ko->ko_name));
-	/* XXX propagate name change to ksyms. */
+
+	/*
+	 * Now that we know the name, register the symbol table.
+	 */
+	error = ksyms_addsymtab(ko->ko_name, ko->ko_symtab, ko->ko_symcnt *
+	    sizeof(Elf_Sym), ko->ko_strtab, ko->ko_strtabsz);
+	if (error != 0) {
+		kobj_error("unable to register module symbol table");
+	} else {
+		ko->ko_ksyms = true;
+	}
+
+	return error;
 }
 
 /*
