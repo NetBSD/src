@@ -1,4 +1,5 @@
-/*	$NetBSD: types.h,v 1.4 2007/10/17 19:53:26 garbled Exp $ */
+/*	$NetBSD: types.h,v 1.5 2008/01/07 13:55:36 joerg Exp $ */
 
 #include <powerpc/types.h>
 
+#define	__HAVE_TIMECOUNTER
