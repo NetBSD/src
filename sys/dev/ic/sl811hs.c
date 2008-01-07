@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.17 2008/01/04 21:17:58 ad Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.18 2008/01/07 00:27:35 ad Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.17 2008/01/04 21:17:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.18 2008/01/07 00:27:35 ad Exp $");
 
 #include <sys/cdefs.h>
 #include <sys/param.h>
@@ -651,8 +651,7 @@ DDOLOGBUF(uint8_t *buf, unsigned int length)
 #endif /* SLHCI_DEBUG */
 
 #ifdef LOCKDEBUG
-#define SLHCI_MAINLOCKASSERT(sc) 					 \
-    simple_lock_assert_locked(&(sc)->sc_lock, "slhci")
+#define SLHCI_MAINLOCKASSERT(sc) 		/* nothing */
 #define SLHCI_LOCKASSERT(sc, main, wait) do {				 \
 	simple_lock_assert_ ## main (&(sc)->sc_lock, "slhci");	    	 \
 	simple_lock_assert_ ## wait (&(sc)->sc_wait_lock, "slhci wait"); \
