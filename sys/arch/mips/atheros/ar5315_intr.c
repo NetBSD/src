@@ -1,4 +1,4 @@
-/* $Id: ar5315_intr.c,v 1.3 2007/02/21 02:26:15 dyoung Exp $ */
+/* $Id: ar5315_intr.c,v 1.4 2008/01/07 06:55:32 dyoung Exp $ */
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ar5315_intr.c,v 1.3 2007/02/21 02:26:15 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ar5315_intr.c,v 1.4 2008/01/07 06:55:32 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/queue.h>
@@ -90,43 +90,18 @@ struct ar531x_intr {
 
 const uint32_t	ipl_sr_bits[_IPL_N] = {
 	0,				/* 0: IPL_NONE */
-
-	MIPS_SOFT_INT_MASK_0,		/* 1: IPL_SOFT */
-
 	MIPS_SOFT_INT_MASK_0,		/* 2: IPL_SOFTCLOCK */
-
 	MIPS_SOFT_INT_MASK_0,		/* 3: IPL_SOFTNET */
 
-	MIPS_SOFT_INT_MASK_0,		/* 4: IPL_SOFTSERIAL */
-
 	MIPS_SOFT_INT_MASK_0 |
 	MIPS_SOFT_INT_MASK_1 |
 	MIPS_INT_MASK_0 |
 	MIPS_INT_MASK_1 |
-	MIPS_INT_MASK_2,		/* 5: IPL_BIO */
-	
-	MIPS_SOFT_INT_MASK_0 |
-	MIPS_SOFT_INT_MASK_1 |
-	MIPS_INT_MASK_0 |
-	MIPS_INT_MASK_1 |
-	MIPS_INT_MASK_2,		/* 6: IPL_NET */
+	MIPS_INT_MASK_2,		/* 5: IPL_VM */
 
-	MIPS_SOFT_INT_MASK_0 |
-	MIPS_SOFT_INT_MASK_1 |
-	MIPS_INT_MASK_0 |
-	MIPS_INT_MASK_1 |
-	MIPS_INT_MASK_2,		/* 7: IPL_{SERIAL,TTY} */
-
-	MIPS_INT_MASK,			/* 8: IPL_{CLOCK,HIGH} */
+	MIPS_INT_MASK,			/* 8: IPL_{SCHED,HIGH} */
 };
 
-const uint32_t mips_ipl_si_to_sr[SI_NQUEUES] = {
-	MIPS_SOFT_INT_MASK_0,		/* IPL_SOFT */
-	MIPS_SOFT_INT_MASK_0,		/* IPL_SOFTCLOCK */
-	MIPS_SOFT_INT_MASK_0,		/* IPL_SOFTNET */
-	MIPS_SOFT_INT_MASK_0,		/* IPL_SOFTSERIAL */
-};
- 
 static const char *ar5315_cpuintrnames[NINTRS] = {
 	"int 2 (misc)",
 	"int 3 (wlan)",
@@ -297,7 +272,7 @@ ar531x_miscintr(void *arg)
 			    rv |= (*ih->ih_func)(ih->ih_arg);
 		}
 	}
-	
+
 	return rv;
 }
 
