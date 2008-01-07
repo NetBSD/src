@@ -100,6 +100,6 @@ int	device_is_attached(device_t dev);
  */
 int
 ndis_kthread_create(void (*func)(void *), void *arg,
-    struct proc **newpp, void *stack, size_t stacksize, const char *fmt, ...);
+    struct proc **newpp, void *stack, size_t stacksize, const char *name);
 
 #endif /* _NBCOMPAT_H_ */
