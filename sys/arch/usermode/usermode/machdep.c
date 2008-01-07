@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.3 2007/12/29 16:28:40 jmcneill Exp $ */
+/* $NetBSD: machdep.c,v 1.4 2008/01/07 17:27:12 joerg Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.3 2007/12/29 16:28:40 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.4 2008/01/07 17:27:12 joerg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -90,15 +90,6 @@ main(int argc, char *argv[])
 	pmap_bootstrap();
 
 	kernmain();
-}
-
-void
-microtime(struct timeval *tv)
-{
-#if notyet
-	extern void __libc_gettimeofday(struct timeval *);
-	__libc_gettimeofday(tv);
-#endif
 }
 
 void
