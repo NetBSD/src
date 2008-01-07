@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.183 2008/01/02 11:48:55 ad Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.184 2008/01/07 12:50:38 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -114,7 +114,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.183 2008/01/02 11:48:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.184 2008/01/07 12:50:38 ad Exp $");
 
 #include "fs_ffs.h"
 #include "opt_bufcache.h"
@@ -830,15 +830,20 @@ bwrite(buf_t *bp)
 	 * Pay for the I/O operation and make sure the buf is on the correct
 	 * vnode queue.
 	 */
-	CLR(bp->b_flags, B_READ);
-	mutex_enter(bp->b_objlock);
-	wasdelayed = ISSET(bp->b_oflags, BO_DELWRI);
-	CLR(bp->b_oflags, BO_DONE | BO_DELWRI);
 	bp->b_error = 0;
-	if (wasdelayed)
+	wasdelayed = ISSET(bp->b_oflags, BO_DELWRI);
+	CLR(bp->b_flags, B_READ);
+	if (wasdelayed) {
+		mutex_enter(&bufcache_lock);
+		mutex_enter(bp->b_objlock);
+		CLR(bp->b_oflags, BO_DONE | BO_DELWRI);
 		reassignbuf(bp, bp->b_vp);
-	else
+		mutex_exit(&bufcache_lock);
+	} else {
 		curproc->p_stats->p_ru.ru_oublock++;
+		mutex_enter(bp->b_objlock);
+		CLR(bp->b_oflags, BO_DONE | BO_DELWRI);
+	}
 	if (vp != NULL)
 		vp->v_numoutput++;
 	mutex_exit(bp->b_objlock);
@@ -905,11 +910,15 @@ bdwrite(buf_t *bp)
 	 */
 	KASSERT(bp->b_vp == NULL || bp->b_objlock == &bp->b_vp->v_interlock);
 
-	mutex_enter(bp->b_objlock);
 	if (!ISSET(bp->b_oflags, BO_DELWRI)) {
+		mutex_enter(&bufcache_lock);
+		mutex_enter(bp->b_objlock);
 		SET(bp->b_oflags, BO_DELWRI);
 		curproc->p_stats->p_ru.ru_oublock++;
 		reassignbuf(bp, bp->b_vp);
+		mutex_exit(&bufcache_lock);
+	} else {
+		mutex_enter(bp->b_objlock);
 	}
 	/* Otherwise, the "write" is done, so mark and release the buffer. */
 	CLR(bp->b_oflags, BO_DONE);
