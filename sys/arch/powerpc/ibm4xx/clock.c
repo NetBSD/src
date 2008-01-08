@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.19 2008/01/08 13:47:49 joerg Exp $	*/
+/*	$NetBSD: clock.c,v 1.20 2008/01/08 13:52:00 joerg Exp $	*/
 /*      $OpenBSD: clock.c,v 1.3 1997/10/13 13:42:53 pefo Exp $  */
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.19 2008/01/08 13:47:49 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.20 2008/01/08 13:52:00 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -62,7 +62,7 @@ static u_int get_ppc4xx_timecount(struct timecounter *);
 static struct timecounter ppc4xx_timecounter = {
 	get_ppc4xx_timecount,	/* get_timecount */
 	0,			/* no poll_pps */
-	~0,			/* counter_mask */
+	~0u,			/* counter_mask */
 	0,			/* frequency */
 	"ppc_timebase",		/* name */
 	100,			/* quality */
