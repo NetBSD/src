@@ -1,4 +1,4 @@
-/* $NetBSD: if_rtw_cardbus.c,v 1.21 2007/12/21 18:22:43 dyoung Exp $ */
+/* $NetBSD: if_rtw_cardbus.c,v 1.22 2008/01/08 18:26:09 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtw_cardbus.c,v 1.21 2007/12/21 18:22:43 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtw_cardbus.c,v 1.22 2008/01/08 18:26:09 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -354,8 +354,6 @@ rtw_cardbus_detach(device_t self, int flags)
 
 	if ((rc = rtw_detach(sc)) != 0)
 		return rc;
-
-	rtw_cardbus_funcregen(regs, 0);
 
 	/*
 	 * Unhook the interrupt handler.
