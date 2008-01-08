@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_xxx.c,v 1.66.6.1 2008/01/02 21:56:05 bouyer Exp $	*/
+/*	$NetBSD: kern_xxx.c,v 1.66.6.2 2008/01/08 22:11:39 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_xxx.c,v 1.66.6.1 2008/01/02 21:56:05 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_xxx.c,v 1.66.6.2 2008/01/08 22:11:39 bouyer Exp $");
 
 #include "opt_syscall_debug.h"
 
@@ -108,8 +108,9 @@ int	scdebug = SCDEBUG_CALLS|SCDEBUG_RETURNS|SCDEBUG_SHOWARGS|SCDEBUG_ALL;
 #endif
 
 void
-scdebug_call(struct lwp *l, register_t code, register_t args[])
+scdebug_call(register_t code, const register_t args[])
 {
+	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
 	const struct sysent *sy;
 	const struct emul *em;
@@ -150,8 +151,9 @@ scdebug_call(struct lwp *l, register_t code, register_t args[])
 }
 
 void
-scdebug_ret(struct lwp *l, register_t code, int error, register_t retval[])
+scdebug_ret(register_t code, int error, const register_t retval[])
 {
+	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
 	const struct sysent *sy;
 	const struct emul *em;

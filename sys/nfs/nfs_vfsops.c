@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.188.6.1 2008/01/02 21:57:45 bouyer Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.188.6.2 2008/01/08 22:11:51 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.188.6.1 2008/01/02 21:57:45 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.188.6.2 2008/01/08 22:11:51 bouyer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -946,7 +946,7 @@ nfs_sync(mp, waitfor, cred)
 	/*
 	 * Force stale buffer cache information to be flushed.
 	 */
-	if ((mvp = valloc(mp)) == NULL)
+	if ((mvp = vnalloc(mp)) == NULL)
 		return (ENOMEM);
 loop:
 	/*
@@ -979,7 +979,7 @@ loop:
 		mutex_enter(&mntvnode_lock);
 	}
 	mutex_exit(&mntvnode_lock);
-	vfree(mvp);
+	vnfree(mvp);
 	return (allerror);
 }
 

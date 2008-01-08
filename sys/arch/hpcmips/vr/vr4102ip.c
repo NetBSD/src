@@ -1,4 +1,4 @@
-/*	$NetBSD: vr4102ip.c,v 1.7 2005/12/11 12:17:34 christos Exp $	*/
+/*	$NetBSD: vr4102ip.c,v 1.7.64.1 2008/01/08 22:09:49 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2002 TAKEMURA Shin
@@ -31,12 +31,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vr4102ip.c,v 1.7 2005/12/11 12:17:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vr4102ip.c,v 1.7.64.1 2008/01/08 22:09:49 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-
-#include <machine/bus.h>
+#include <sys/device.h>
+#include <sys/bus.h>
 
 #include "opt_vr41xx.h"
 #include <hpcmips/vr/vrcpudef.h>

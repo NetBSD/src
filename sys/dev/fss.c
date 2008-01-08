@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.41.4.1 2008/01/02 21:53:46 bouyer Exp $	*/
+/*	$NetBSD: fss.c,v 1.41.4.2 2008/01/08 22:10:54 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.41.4.1 2008/01/02 21:53:46 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.41.4.2 2008/01/08 22:10:54 bouyer Exp $");
 
 #include "fss.h"
 
@@ -66,6 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.41.4.1 2008/01/02 21:53:46 bouyer Exp $");
 #include <sys/conf.h>
 #include <sys/kthread.h>
 #include <sys/fstrans.h>
+#include <sys/simplelock.h>
 
 #include <miscfs/specfs/specdev.h>
 

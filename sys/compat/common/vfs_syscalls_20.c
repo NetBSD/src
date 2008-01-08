@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_20.c,v 1.22.4.1 2008/01/02 21:51:44 bouyer Exp $	*/
+/*	$NetBSD: vfs_syscalls_20.c,v 1.22.4.2 2008/01/08 22:10:44 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_20.c,v 1.22.4.1 2008/01/02 21:51:44 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_20.c,v 1.22.4.2 2008/01/08 22:10:44 bouyer Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -154,7 +154,6 @@ compat_20_sys_statfs(struct lwp *l, const struct compat_20_sys_statfs_args *uap,
 		return error;
 
 	mp = nd.ni_vp->v_mount;
-	vrele(nd.ni_vp);
 
 	sbuf = malloc(sizeof(*sbuf), M_TEMP, M_WAITOK);
 	if ((error = dostatvfs(mp, sbuf, l, 0, 1)) != 0)
@@ -162,6 +161,7 @@ compat_20_sys_statfs(struct lwp *l, const struct compat_20_sys_statfs_args *uap,
 
 	error = vfs2fs(SCARG(uap, buf), sbuf);
 done:
+	vrele(nd.ni_vp);
 	free(sbuf, M_TEMP);
 	return error;
 }
@@ -297,12 +297,13 @@ compat_20_sys_fhstatfs(struct lwp *l, const struct compat_20_sys_fhstatfs_args *
 	if ((error = VFS_FHTOVP(mp, (struct fid*)&fh.fh_fid, &vp)))
 		return (error);
 	mp = vp->v_mount;
-	vput(vp);
+	VOP_UNLOCK(vp, 0);
 	sbuf = malloc(sizeof(*sbuf), M_TEMP, M_WAITOK);
 	if ((error = VFS_STATVFS(mp, sbuf)) != 0)
 		goto out;
 	error = vfs2fs(SCARG(uap, buf), sbuf);
 out:
+	vrele(vp);
 	free(sbuf, M_TEMP);
 	return error;
 }

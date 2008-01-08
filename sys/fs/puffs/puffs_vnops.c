@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.122.4.1 2008/01/02 21:55:35 bouyer Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.122.4.2 2008/01/08 22:11:27 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.122.4.1 2008/01/02 21:55:35 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.122.4.2 2008/01/08 22:11:27 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -1149,7 +1149,7 @@ puffs_vnop_readdir(void *v)
 	argsize = sizeof(struct puffs_vnmsg_readdir);
 	tomove = resid + cookiemem;
 	puffs_msgmem_alloc(argsize + tomove, &park_readdir,
-	    (void **)&readdir_msg, 1);
+	    (void *)&readdir_msg, 1);
 
 	puffs_credcvt(&readdir_msg->pvnr_cred, ap->a_cred);
 	readdir_msg->pvnr_offset = uio->uio_offset;
@@ -1818,7 +1818,7 @@ puffs_vnop_read(void *v)
 		tomove = PUFFS_TOMOVE(uio->uio_resid, pmp);
 		argsize = sizeof(struct puffs_vnmsg_read);
 		puffs_msgmem_alloc(argsize + tomove, &park_read,
-		    (void **)&read_msg, 1);
+		    (void *)&read_msg, 1);
 
 		error = 0;
 		while (uio->uio_resid > 0) {
@@ -1972,7 +1972,7 @@ puffs_vnop_write(void *v)
 		/* tomove is non-increasing */
 		tomove = PUFFS_TOMOVE(uio->uio_resid, pmp);
 		argsize = sizeof(struct puffs_vnmsg_write) + tomove;
-		puffs_msgmem_alloc(argsize, &park_write, (void **)&write_msg,1);
+		puffs_msgmem_alloc(argsize, &park_write, (void *)&write_msg,1);
 
 		while (uio->uio_resid > 0) {
 			/* move data to buffer */
@@ -2173,7 +2173,7 @@ puffs_vnop_strategy(void *v)
 	tomove = PUFFS_TOMOVE(bp->b_bcount, pmp);
 	argsize = sizeof(struct puffs_vnmsg_rw);
 	error = puffs_msgmem_alloc(argsize + tomove, &park_rw,
-	    (void **)&rw_msg, dofaf ? 0 : 1);
+	    (void *)&rw_msg, dofaf ? 0 : 1);
 	if (error)
 		goto out;
 	RWARGS(rw_msg, 0, tomove, bp->b_blkno << DEV_BSHIFT, FSCRED);

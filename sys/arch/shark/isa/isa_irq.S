@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_irq.S,v 1.10 2007/12/03 15:34:20 ad Exp $	*/
+/*	$NetBSD: isa_irq.S,v 1.10.6.1 2008/01/08 22:10:23 bouyer Exp $	*/
 
 /*
  * Copyright 1997
@@ -108,7 +108,7 @@ Lcurrent_spl_level:
 	.word	_C_LABEL(current_spl_level)
 
 Lcurrent_intr_depth:
-	.word	_C_LABEL(current_intr_depth)
+	.word	_C_LABEL(cpu_info_store) + CI_IDEPTH
 
 Lvam_io_data:
 	.word	_C_LABEL(isa_io_bs_tag)

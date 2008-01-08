@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_intel.c,v 1.25.2.1 2008/01/02 21:54:37 bouyer Exp $	*/
+/*	$NetBSD: agp_intel.c,v 1.25.2.2 2008/01/08 22:11:10 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -29,13 +29,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_intel.c,v 1.25.2.1 2008/01/02 21:54:37 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_intel.c,v 1.25.2.2 2008/01/08 22:11:10 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
-#include <sys/lock.h>
 #include <sys/proc.h>
 #include <sys/agpio.h>
 #include <sys/device.h>

@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.58.6.2 2008/01/06 18:29:43 bouyer Exp $
+#	$NetBSD: genassym.cf,v 1.58.6.3 2008/01/08 22:09:59 bouyer Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007 The NetBSD Foundation, Inc.
@@ -189,6 +189,8 @@ define	L1_SLOT_KERNBASE	pl1_pi(KERNBASE)
 define	PDIR_SLOT_PTE		PDIR_SLOT_PTE
 define	PTE_BASE		PTE_BASE
 
+define	IOMAPSIZE		IOMAPSIZE
+
 define	VM_MAXUSER_ADDRESS	(int)VM_MAXUSER_ADDRESS
 
 define	UVM_PAGE_IDLE_ZERO	offsetof(struct uvm, page_idle_zero)
@@ -196,7 +198,6 @@ define	UVM_PAGE_IDLE_ZERO	offsetof(struct uvm, page_idle_zero)
 define	L_ADDR			offsetof(struct lwp, l_addr)
 define	L_FLAG			offsetof(struct lwp, l_flag)
 define	L_PROC			offsetof(struct lwp, l_proc)
-define	L_MD_TSS_SEL		offsetof(struct lwp, l_md.md_tss_sel)
 define	L_MD_REGS		offsetof(struct lwp, l_md.md_regs)
 define	L_CTXSWTCH		offsetof(struct lwp, l_ctxswtch)
 define	L_MD_ASTPENDING		offsetof(struct lwp, l_md.md_astpending)
@@ -227,11 +228,11 @@ define	PCB_EBP			offsetof(struct pcb, pcb_ebp)
 define	PCB_ESP			offsetof(struct pcb, pcb_esp)
 define	PCB_ESP0		offsetof(struct pcb, pcb_esp0)
 define	PCB_CR0			offsetof(struct pcb, pcb_cr0)
-define	PCB_LDT_SEL		offsetof(struct pcb, pcb_ldt_sel)
 define	PCB_ONFAULT		offsetof(struct pcb, pcb_onfault)
 define	PCB_FPCPU		offsetof(struct pcb, pcb_fpcpu)
 define	PCB_FSD			offsetof(struct pcb, pcb_fsd)
 define	PCB_GSD			offsetof(struct pcb, pcb_gsd)
+define	PCB_IOMAP		offsetof(struct pcb, pcb_iomap)
 
 define	TF_CS			offsetof(struct trapframe, tf_cs)
 define	TF_EIP			offsetof(struct trapframe, tf_eip)
@@ -312,6 +313,12 @@ define	CPU_INFO_CURLWP		offsetof(struct cpu_info, ci_curlwp)
 define	CPU_INFO_IDLELWP	offsetof(struct cpu_info, ci_data.cpu_idlelwp)
 define	CPU_INFO_PMAP		offsetof(struct cpu_info, ci_pmap)
 define	CPU_INFO_CPUMASK	offsetof(struct cpu_info, ci_cpumask)
+define	CPU_INFO_TSS		offsetof(struct cpu_info, ci_tss)
+define	CPU_INFO_TSS_SEL	offsetof(struct cpu_info, ci_tss_sel)
+define	CPU_INFO_ESP0		offsetof(struct cpu_info, ci_tss.tss_esp0)
+define	CPU_INFO_IOBASE		offsetof(struct cpu_info, ci_tss.tss_iobase)
+define	CPU_INFO_IOMAP		offsetof(struct cpu_info, ci_iomap)
+define	IOMAP_INVALOFF		IOMAP_INVALOFF
 
 define	CPU_INFO_LEVEL		offsetof(struct cpu_info, ci_cpuid_level)
 define	CPU_INFO_VENDOR		offsetof(struct cpu_info, ci_vendor[0])

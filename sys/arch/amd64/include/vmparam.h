@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.16 2007/11/22 16:16:46 bouyer Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.16.6.1 2008/01/08 22:09:20 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,6 +38,7 @@
 #define _VMPARAM_H_
 
 #include <sys/tree.h>
+#include <sys/mutex.h>
 #ifdef _KERNEL_OPT
 #include "opt_xen.h"
 #endif

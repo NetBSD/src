@@ -1,4 +1,4 @@
-/*	$NetBSD: ltsleep.c,v 1.3.10.1 2008/01/02 21:57:53 bouyer Exp $	*/
+/*	$NetBSD: ltsleep.c,v 1.3.10.2 2008/01/08 22:11:53 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -31,6 +31,7 @@
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/queue.h>
+#include <sys/simplelock.h>
 
 #include "rump_private.h"
 #include "rumpuser.h"

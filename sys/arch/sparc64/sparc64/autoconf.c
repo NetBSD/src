@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.146.4.1 2008/01/02 21:50:30 bouyer Exp $ */
+/*	$NetBSD: autoconf.c,v 1.146.4.2 2008/01/08 22:10:27 bouyer Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.146.4.1 2008/01/02 21:50:30 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.146.4.2 2008/01/08 22:10:27 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -135,6 +135,7 @@ int kgdb_break_at_attach;
 #define	OFPATHLEN	128
 #define	OFNODEKEY	"OFpnode"
 
+char	machine_banner[100];
 char	machine_model[100];
 char	ofbootpath[OFPATHLEN], *ofboottarget, *ofbootpartition;
 int	ofbootpackage;
@@ -518,6 +519,7 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 	struct mainbus_attach_args ma;
 	char sbuf[32];
 	const char *const *ssp, *sp = NULL;
+	char *c;
 	int node0, node, rv, i;
 
 	static const char *const openboot_special[] = {
@@ -536,9 +538,26 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 		NULL
 	};
 
+	if (OF_getprop(findroot(), "banner-name", machine_banner,
+	    sizeof machine_banner) < 0)
+		i = 0;
+	else {
+		i = 1;
+		if (((c = strchr(machine_banner, '(')) != NULL) &&
+		    c != &machine_banner[0]) {
+				while (*c == '(' || *c == ' ') {
+					*c = '\0';
+					c--;
+				}
+			}
+	}
 	OF_getprop(findroot(), "name", machine_model, sizeof machine_model);
 	prom_getidprom();
-	printf(": %s: hostid %lx\n", machine_model, hostid);
+	if (i)
+		printf(": %s (%s): hostid %lx\n", machine_model,
+		    machine_banner, hostid);
+	else
+		printf(": %s: hostid %lx\n", machine_model, hostid);
 
 	/*
 	 * Locate and configure the ``early'' devices.  These must be

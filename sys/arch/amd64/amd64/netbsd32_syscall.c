@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_syscall.c,v 1.21.6.1 2008/01/02 21:47:02 bouyer Exp $	*/
+/*	$NetBSD: netbsd32_syscall.c,v 1.21.6.2 2008/01/08 22:09:14 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_syscall.c,v 1.21.6.1 2008/01/02 21:47:02 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_syscall.c,v 1.21.6.2 2008/01/08 22:09:14 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,7 +106,7 @@ netbsd32_syscall(struct trapframe *frame)
 		int narg = callp->sy_argsize >> 2;
 		for (i = 0; i < narg; i++)
 			args64[i] = args[i];
-		error = trace_enter(l, code, code, NULL, args64);
+		error = trace_enter(code, code, NULL, args64);
 		if (__predict_false(error != 0))
 			goto out;
 	}
@@ -126,7 +126,7 @@ out:
 	    && !__predict_false(callp->sy_flags & SYCALL_INDIRECT)) {
 		/* Recover 'code' - the compiler doesn't assign it a register */
 		code = frame->tf_rax & (SYS_NSYSENT - 1);
-		trace_exit(l, code, args64, rval, error);
+		trace_exit(code, args64, rval, error);
 	}
 
 	if (__predict_true(error == 0)) {

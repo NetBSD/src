@@ -1,4 +1,4 @@
-/*	$NetBSD: s3c24x0_clk.c,v 1.7 2007/01/06 16:18:18 christos Exp $ */
+/*	$NetBSD: s3c24x0_clk.c,v 1.7.38.1 2008/01/08 22:09:30 bouyer Exp $ */
 
 /*
  * Copyright (c) 2003  Genetec corporation.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c24x0_clk.c,v 1.7 2007/01/06 16:18:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c24x0_clk.c,v 1.7.38.1 2008/01/08 22:09:30 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -287,8 +287,10 @@ cpu_initclocks(void)
 
 	s3c24x0_intr_establish(S3C24X0_INT_TIMER4, IPL_CLOCK, 
 			       IST_NONE, hardintr, 0);
+#ifdef IPL_STATCLOCK
 	s3c24x0_intr_establish(S3C24X0_INT_TIMER3, IPL_STATCLOCK,
 			       IST_NONE, statintr, 0);
+#endif
 
 	/* set prescaler1 */
 	reg = bus_space_read_4(iot, ioh, TIMER_TCFG0);

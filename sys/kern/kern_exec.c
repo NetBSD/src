@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.257.4.1 2008/01/02 21:55:48 bouyer Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.257.4.2 2008/01/08 22:11:32 bouyer Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.257.4.1 2008/01/02 21:55:48 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.257.4.2 2008/01/08 22:11:32 bouyer Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -85,8 +85,6 @@ static int exec_sigcode_map(struct proc *, const struct emul *);
 #else
 #define DPRINTF(a)
 #endif /* DEBUG_EXEC */
-
-MALLOC_DEFINE(M_EXEC, "exec", "argument lists & other mem used by exec");
 
 /*
  * Exec function switch:
@@ -1168,8 +1166,7 @@ emul_register(const struct emul *emul, int ro_entry)
 		goto out;
 	}
 
-	MALLOC(ee, struct emul_entry *, sizeof(struct emul_entry),
-		M_EXEC, M_WAITOK);
+	ee = kmem_alloc(sizeof(*ee), KM_SLEEP);
 	ee->el_emul = emul;
 	ee->ro_entry = ro_entry;
 	LIST_INSERT_HEAD(&el_head, ee, el_list);
@@ -1238,7 +1235,7 @@ emul_unregister(const char *name)
 
 	/* entry is not used, remove it */
 	LIST_REMOVE(it, el_list);
-	FREE(it, M_EXEC);
+	kmem_free(it, sizeof(*it));
 
  out:
 	rw_exit(&exec_lock);
@@ -1276,8 +1273,7 @@ exec_add(struct execsw *esp, const char *e_name)
 	}
 
 	/* if we got here, the entry doesn't exist yet */
-	MALLOC(it, struct exec_entry *, sizeof(struct exec_entry),
-		M_EXEC, M_WAITOK);
+	it = kmem_alloc(sizeof(*it), KM_SLEEP);
 	it->es = esp;
 	LIST_INSERT_HEAD(&ex_head, it, ex_list);
 
@@ -1315,7 +1311,7 @@ exec_remove(const struct execsw *esp)
 
 	/* remove item from list and free resources */
 	LIST_REMOVE(it, ex_list);
-	FREE(it, M_EXEC);
+	kmem_free(it, sizeof(*it));
 
 	/* update execsw[] */
 	exec_init(0);
@@ -1418,7 +1414,7 @@ exec_init(int init_boot)
 	 * Now that we have sorted all execw entries, create new execsw[]
 	 * and free no longer needed memory in the process.
 	 */
-	new_es = malloc(es_sz * sizeof(struct execsw *), M_EXEC, M_WAITOK);
+	new_es = kmem_alloc(es_sz * sizeof(struct execsw *), KM_SLEEP);
 	for(i=0; list; i++) {
 		new_es[i] = list->es;
 		e1 = list->next;
@@ -1431,11 +1427,11 @@ exec_init(int init_boot)
 	 * used memory.
 	 */
 	old_es = execsw;
-	execsw = new_es;
-	nexecs = es_sz;
 	if (old_es)
 		/*XXXUNCONST*/
-		free(__UNCONST(old_es), M_EXEC);
+		kmem_free(__UNCONST(old_es), nexecs * sizeof(struct execsw *));
+	execsw = new_es;
+	nexecs = es_sz;
 
 	/*
 	 * Figure out the maximum size of an exec header.
@@ -1467,7 +1463,7 @@ exec_init(int init_boot)
 
 	/* do one-time initializations */
 	nexecs = nexecs_builtin;
-	execsw = malloc(nexecs*sizeof(struct execsw *), M_EXEC, M_WAITOK);
+	execsw = kmem_alloc(nexecs * sizeof(struct execsw *), KM_SLEEP);
 
 	/*
 	 * Fill in execsw[] and figure out the maximum size of an exec header.

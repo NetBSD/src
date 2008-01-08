@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.83.6.2 2008/01/02 21:55:53 bouyer Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.83.6.3 2008/01/08 22:11:34 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -205,7 +205,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.83.6.2 2008/01/02 21:55:53 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.83.6.3 2008/01/08 22:11:34 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -1515,13 +1515,19 @@ lwp_ctl_alloc(vaddr_t *uaddr)
 		    uao, lp->lp_cur, PAGE_SIZE,
 		    UVM_MAPFLAG(UVM_PROT_RW, UVM_PROT_RW,
 		    UVM_INH_NONE, UVM_ADV_RANDOM, 0));
-		if (error == 0)
-			error = uvm_map_pageable(kernel_map, lcp->lcp_kaddr,
-			    lcp->lcp_kaddr + PAGE_SIZE, FALSE, 0);
 		if (error != 0) {
 			mutex_exit(&lp->lp_lock);
 			kmem_free(lcp, LWPCTL_LCPAGE_SZ);
 			(*uao->pgops->pgo_detach)(uao);
+			return error;
+		}
+		error = uvm_map_pageable(kernel_map, lcp->lcp_kaddr,
+		    lcp->lcp_kaddr + PAGE_SIZE, FALSE, 0);
+		if (error != 0) {
+			mutex_exit(&lp->lp_lock);
+			uvm_unmap(kernel_map, lcp->lcp_kaddr,
+			    lcp->lcp_kaddr + PAGE_SIZE);
+			kmem_free(lcp, LWPCTL_LCPAGE_SZ);
 			return error;
 		}
 		/* Prepare the page descriptor and link into the list. */

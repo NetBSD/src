@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.11 2007/12/03 15:33:04 ad Exp $	*/
+/*	$NetBSD: intr.h,v 1.11.6.1 2008/01/08 22:09:09 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -39,8 +39,7 @@
 #ifndef _ALGOR_INTR_H_
 #define _ALGOR_INTR_H_
 
-#include <sys/device.h>
-#include <sys/lock.h>
+#include <sys/evcnt.h>
 #include <sys/queue.h>
 
 #define	IPL_NONE	0	/* disable only this interrupt */

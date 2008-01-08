@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_pathname.c,v 1.30.4.1 2008/01/02 21:53:39 bouyer Exp $	*/
+/*	$NetBSD: ultrix_pathname.c,v 1.30.4.2 2008/01/08 22:10:52 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_pathname.c,v 1.30.4.1 2008/01/02 21:53:39 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_pathname.c,v 1.30.4.2 2008/01/08 22:10:52 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -179,8 +179,12 @@ ultrix_sys_open(struct lwp *l, const struct ultrix_sys_open_args *uap, register_
 		fp = fd_getfile(fdp, *retval);
 
 		/* ignore any error, just give it a try */
-		if (fp != NULL && fp->f_type == DTYPE_VNODE)
-			(fp->f_ops->fo_ioctl)(fp, TIOCSCTTY, (void *)0, l);
+		if (fp != NULL) {
+			FILE_USE(fp);
+			if (fp->f_type == DTYPE_VNODE)
+				(fp->f_ops->fo_ioctl)(fp, TIOCSCTTY, (void *)0, l);
+			FILE_UNUSE(fp, l);
+		}
 	}
 	return ret;
 }

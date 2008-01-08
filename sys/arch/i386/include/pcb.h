@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.41 2007/11/10 23:04:29 ad Exp $	*/
+/*	$NetBSD: pcb.h,v 1.41.6.1 2008/01/08 22:10:04 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -88,23 +88,19 @@
 #include <machine/npx.h>
 #include <machine/sysarch.h>
 
-#define	NIOPORTS	1024		/* # of ports we allow to be mapped */
-
 struct pcb {
-	struct	i386tss pcb_tss;
-#define	pcb_cr3		pcb_tss.tss_cr3
-#define	pcb_esp		pcb_tss.tss_esp
-#define	pcb_esp0	pcb_tss.tss_esp0
-#define	pcb_ebp		pcb_tss.tss_ebp
-#define	pcb_cs		pcb_tss.__tss_cs
-#define	pcb_ldt_sel	pcb_tss.tss_ldt
+	int	pcb_esp0;		/* ring0 esp */
+	int	pcb_esp;		/* kernel esp */
+	int	pcb_ebp;		/* kernel ebp */
+	int	pcb_ldt_sel;
 	int	pcb_cr0;		/* saved image of CR0 */
 	int	pcb_cr2;		/* page fault address (CR2) */
-	union	savefpu pcb_savefpu;	/* floating point state for FPU */
+	int	pcb_cr3;		/* page directory pointer */
+	int	pcb_iopl;		/* i/o privilege level */
 
-/*
- * Software pcb (extension)
- */
+	/* floating point state for FPU */
+	union	savefpu pcb_savefpu __aligned(16);
+
 	int	pcb_fsd[2];		/* %fs descriptor */
 	int	pcb_gsd[2];		/* %gs descriptor */
 	void *	pcb_onfault;		/* copyin/out fault recovery */
@@ -112,7 +108,7 @@ struct pcb {
 	int	vm86_flagmask;		/* flag mask for vm86 mode */
 	void	*vm86_userp;		/* XXX performance hack */
 	struct cpu_info *pcb_fpcpu;	/* cpu holding our fp state. */
-	u_long	pcb_iomap[NIOPORTS/32];	/* I/O bitmap */
+	char	*pcb_iomap;		/* I/O permission bitmap */
 };
 
 /*    

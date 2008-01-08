@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.16 2007/11/06 21:51:07 ad Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.16.6.1 2008/01/08 22:11:05 bouyer Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.16 2007/11/06 21:51:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.16.6.1 2008/01/08 22:11:05 bouyer Exp $");
 
 #include <sys/cdefs.h>
 #include <sys/param.h>
@@ -97,7 +97,7 @@ __KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.16 2007/11/06 21:51:07 ad Exp $");
 #include <sys/malloc.h>
 #include <sys/queue.h>
 #include <sys/gcq.h>
-#include <sys/lock.h>
+#include <sys/simplelock.h>
 #include <sys/intr.h>
 #include <sys/cpu.h>
 #include <sys/bus.h>
@@ -650,17 +650,8 @@ DDOLOGBUF(uint8_t *buf, unsigned int length)
 #define DLOGBUF(x, b, l) ((void)0)
 #endif /* SLHCI_DEBUG */
 
-#ifdef LOCKDEBUG
-#define SLHCI_MAINLOCKASSERT(sc) 					 \
-    simple_lock_assert_locked(&(sc)->sc_lock, "slhci")
-#define SLHCI_LOCKASSERT(sc, main, wait) do {				 \
-	simple_lock_assert_ ## main (&(sc)->sc_lock, "slhci");	    	 \
-	simple_lock_assert_ ## wait (&(sc)->sc_wait_lock, "slhci wait"); \
-} while (/*CONSTCOND*/0)
-#else
 #define SLHCI_MAINLOCKASSERT(sc) ((void)0)
 #define SLHCI_LOCKASSERT(sc, main, wait) ((void)0)
-#endif
 
 #ifdef DIAGNOSTIC
 #define LK_SLASSERT(exp, sc, spipe, xfer, ext) do {			\

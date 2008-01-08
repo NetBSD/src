@@ -28,7 +28,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cxgb_l2t.c,v 1.4.16.1 2007/12/13 21:55:41 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cxgb_l2t.c,v 1.4.16.2 2008/01/08 22:11:12 bouyer Exp $");
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/dev/cxgb/cxgb_l2t.c,v 1.2 2007/05/28 22:57:26 kmacy Exp $");
 #endif
@@ -40,7 +40,6 @@ __FBSDID("$FreeBSD: src/sys/dev/cxgb/cxgb_l2t.c,v 1.2 2007/05/28 22:57:26 kmacy 
 #include <sys/module.h>
 #include <sys/bus.h>
 #endif
-#include <sys/lock.h>
 #include <sys/mutex.h>
 #include <sys/rwlock.h>
 

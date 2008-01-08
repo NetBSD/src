@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8.36.1 2008/01/02 21:47:07 bouyer Exp $
+#	$NetBSD: Makefile,v 1.8.36.2 2008/01/08 22:09:18 bouyer Exp $
 
 INCSDIR= /usr/include/amd64
 
@@ -7,7 +7,7 @@ INCS=	ansi.h aout_machdep.h asm.h \
 	cdefs.h cpu.h cpufunc.h \
 	disklabel.h \
 	elf_machdep.h endian.h endian_machdep.h \
-	float.h fpu.h frame.h \
+	float.h fpu.h frame.h frame_regs.h \
 	gdt.h \
 	ieee.h ieeefp.h \
 	int_const.h int_fmtio.h int_limits.h int_mwgwtypes.h int_types.h \

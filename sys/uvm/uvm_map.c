@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.246.6.2 2008/01/02 21:58:39 bouyer Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.246.6.3 2008/01/08 22:12:06 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.246.6.2 2008/01/02 21:58:39 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.246.6.3 2008/01/08 22:12:06 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -531,7 +531,8 @@ vm_map_lock(struct vm_map *map)
 		rw_enter(&map->lock, RW_WRITER);
 		if (map->busy == NULL)
 			break;
-		KASSERT(map->busy != curlwp);
+		if (map->busy == curlwp)
+			break;
 		mutex_enter(&map->misc_lock);
 		rw_exit(&map->lock);
 		if (map->busy != NULL)
@@ -575,29 +576,9 @@ vm_map_unlock(struct vm_map *map)
 		mutex_spin_exit(&map->mutex);
 	else {
 		KASSERT(rw_write_held(&map->lock));
-		KASSERT(map->busy == NULL);
+		KASSERT(map->busy == NULL || map->busy == curlwp);
 		rw_exit(&map->lock);
 	}
-}
-
-/*
- * vm_map_upgrade: upgrade a shared lock to an exclusive lock.
- *
- * => the caller must hold the map busy
- */
-
-void
-vm_map_upgrade(struct vm_map *map)
-{
-
-	KASSERT(rw_read_held(&map->lock));
-	KASSERT(map->busy == curlwp);
-
-	if (rw_tryupgrade(&map->lock))
-		return;
-
-	rw_exit(&map->lock);
-	rw_enter(&map->lock, RW_WRITER);
 }
 
 /*
@@ -609,7 +590,6 @@ void
 vm_map_unbusy(struct vm_map *map)
 {
 
-	KASSERT(rw_lock_held(&map->lock));
 	KASSERT(map->busy == curlwp);
 
 	/*
@@ -649,17 +629,6 @@ vm_map_unlock_read(struct vm_map *map)
 	KASSERT((map->flags & VM_MAP_INTRSAFE) == 0);
 
 	rw_exit(&map->lock);
-}
-
-/*
- * vm_map_downgrade: downgrade an exclusive lock to a shared lock.
- */
-
-void
-vm_map_downgrade(struct vm_map *map)
-{
-
-	rw_downgrade(&map->lock);
 }
 
 /*
@@ -3408,7 +3377,7 @@ uvm_map_pageable(struct vm_map *map, vaddr_t start, vaddr_t end,
 	timestamp_save = map->timestamp;
 #endif
 	vm_map_busy(map);
-	vm_map_downgrade(map);
+	vm_map_unlock(map);
 
 	rv = 0;
 	entry = start_entry;
@@ -3436,7 +3405,7 @@ uvm_map_pageable(struct vm_map *map, vaddr_t start, vaddr_t end,
 		 * Get back to an exclusive (write) lock.
 		 */
 
-		vm_map_upgrade(map);
+		vm_map_lock(map);
 		vm_map_unbusy(map);
 
 #ifdef DIAGNOSTIC
@@ -3473,17 +3442,15 @@ uvm_map_pageable(struct vm_map *map, vaddr_t start, vaddr_t end,
 		return (rv);
 	}
 
-	/* We are holding a read lock here. */
 	if ((lockflags & UVM_LK_EXIT) == 0) {
 		vm_map_unbusy(map);
-		vm_map_unlock_read(map);
 	} else {
 
 		/*
 		 * Get back to an exclusive (write) lock.
 		 */
 
-		vm_map_upgrade(map);
+		vm_map_lock(map);
 		vm_map_unbusy(map);
 	}
 
@@ -3639,7 +3606,7 @@ uvm_map_pageable_all(struct vm_map *map, int flags, vsize_t limit)
 	timestamp_save = map->timestamp;
 #endif
 	vm_map_busy(map);
-	vm_map_downgrade(map);
+	vm_map_unlock(map);
 
 	rv = 0;
 	for (entry = map->header.next; entry != &map->header;
@@ -3666,7 +3633,7 @@ uvm_map_pageable_all(struct vm_map *map, int flags, vsize_t limit)
 		 * Get back an exclusive (write) lock.
 		 */
 
-		vm_map_upgrade(map);
+		vm_map_lock(map);
 		vm_map_unbusy(map);
 
 #ifdef DIAGNOSTIC
@@ -3709,9 +3676,7 @@ uvm_map_pageable_all(struct vm_map *map, int flags, vsize_t limit)
 		return (rv);
 	}
 
-	/* We are holding a read lock here. */
 	vm_map_unbusy(map);
-	vm_map_unlock_read(map);
 
 	UVMHIST_LOG(maphist,"<- done (OK WIRE)",0,0,0,0);
 	return 0;

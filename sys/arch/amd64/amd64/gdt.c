@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.c,v 1.15 2007/12/06 17:00:31 ad Exp $	*/
+/*	$NetBSD: gdt.c,v 1.15.4.1 2008/01/08 22:09:12 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.15 2007/12/06 17:00:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.15.4.1 2008/01/08 22:09:12 bouyer Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -332,7 +332,7 @@ gdt_put_slot(int slot)
 }
 
 int
-tss_alloc(struct pcb *pcb)
+tss_alloc(struct x86_64_tss *tss)
 {
 #ifndef XEN
 	int slot;
@@ -344,7 +344,7 @@ tss_alloc(struct pcb *pcb)
 #if 0
 	printf("tss_alloc: slot %d addr %p\n", slot, &gdt[slot]);
 #endif
-	set_sys_gdt(&gdt[slot], &pcb->pcb_tss, sizeof (struct x86_64_tss)-1,
+	set_sys_gdt(&gdt[slot], tss, sizeof (struct x86_64_tss)-1,
 	    SDT_SYS386TSS, SEL_KPL, 0);
 #if 0
 	printf("lolimit %lx lobase %lx type %lx dpl %lx p %lx hilimit %lx\n"

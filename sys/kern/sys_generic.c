@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.109.4.1 2008/01/02 21:56:12 bouyer Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.109.4.2 2008/01/08 22:11:42 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.109.4.1 2008/01/02 21:56:12 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.109.4.2 2008/01/08 22:11:42 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -138,7 +138,7 @@ sys_read(struct lwp *l, const struct sys_read_args *uap, register_t *retval)
 		return (EBADF);
 
 	if ((fp->f_flag & FREAD) == 0) {
-		mutex_exit(&fp->f_lock);
+		FILE_UNLOCK(fp);
 		return (EBADF);
 	}
 
@@ -231,7 +231,7 @@ do_filereadv(int fd, const struct iovec *iovp, int iovcnt,
 		return EBADF;
 
 	if ((fp->f_flag & FREAD) == 0) {
-		mutex_exit(&fp->f_lock);
+		FILE_UNLOCK(fp);
 		return EBADF;
 	}
 
@@ -347,7 +347,7 @@ sys_write(struct lwp *l, const struct sys_write_args *uap, register_t *retval)
 		return (EBADF);
 
 	if ((fp->f_flag & FWRITE) == 0) {
-		mutex_exit(&fp->f_lock);
+		FILE_UNLOCK(fp);
 		return (EBADF);
 	}
 
@@ -446,7 +446,7 @@ do_filewritev(int fd, const struct iovec *iovp, int iovcnt,
 		return EBADF;
 
 	if ((fp->f_flag & FWRITE) == 0) {
-		mutex_exit(&fp->f_lock);
+		FILE_UNLOCK(fp);
 		return EBADF;
 	}
 
@@ -638,22 +638,22 @@ sys_ioctl(struct lwp *l, const struct sys_ioctl_args *uap, register_t *retval)
 	switch (com) {
 
 	case FIONBIO:
-		mutex_enter(&fp->f_lock);
+		FILE_LOCK(fp);
 		if (*(int *)data != 0)
 			fp->f_flag |= FNONBLOCK;
 		else
 			fp->f_flag &= ~FNONBLOCK;
-		mutex_exit(&fp->f_lock);
+		FILE_UNLOCK(fp);
 		error = (*fp->f_ops->fo_ioctl)(fp, FIONBIO, data, l);
 		break;
 
 	case FIOASYNC:
-		mutex_enter(&fp->f_lock);
+		FILE_LOCK(fp);
 		if (*(int *)data != 0)
 			fp->f_flag |= FASYNC;
 		else
 			fp->f_flag &= ~FASYNC;
-		mutex_exit(&fp->f_lock);
+		FILE_UNLOCK(fp);
 		error = (*fp->f_ops->fo_ioctl)(fp, FIOASYNC, data, l);
 		break;
 

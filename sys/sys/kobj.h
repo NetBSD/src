@@ -1,11 +1,8 @@
-/* $NetBSD: lkminit_exec.c,v 1.7.60.1 2008/01/02 21:56:37 bouyer Exp $ */
+/*	$NetBSD: kobj.h,v 1.4.2.2 2008/01/08 22:11:56 bouyer Exp $	*/
 
 /*-
- * Copyright (c) 1996 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Michael Graff <explorer@flame.org>.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,52 +33,23 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_exec.c,v 1.7.60.1 2008/01/02 21:56:37 bouyer Exp $");
+#ifndef _SYS_KOBJ_H_
+#define	_SYS_KOBJ_H_
 
-#include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/conf.h>
-#include <sys/exec.h>
-#include <sys/exec_aout.h>
-#include <sys/exec_elf.h>
-#include <sys/proc.h>
-#include <sys/lkm.h>
-#include <sys/signalvar.h>
+typedef struct kobj *kobj_t;
 
-#include <compat/hpux/hpux_exec.h>
+/* External interface. */
+int		kobj_open_file(kobj_t *, const char *);
+int		kobj_open_mem(kobj_t *, void *, ssize_t);
+void		kobj_close(kobj_t);
+int		kobj_load(kobj_t);
+void		kobj_unload(kobj_t);
+void		kobj_stat(kobj_t, vaddr_t *, size_t *, uintptr_t *);
+int		kobj_set_name(kobj_t, const char *);
 
-int exec_hpux_aout_lkmentry(struct lkm_table *, int, int);
+/* MI-MD interface. */
+uintptr_t	kobj_sym_lookup(kobj_t, uintptr_t);
+int		kobj_reloc(kobj_t, uintptr_t, const void *, bool, bool);
+int		kobj_machdep(kobj_t, void *, size_t, bool);
 
-static struct execsw exec_hpux_aout =
-	/* HP-UX a.out for m68k (native word size) */
-	{ HPUX_EXEC_HDR_SIZE,
-	  exec_hpux_makecmds,
-	  { NULL },
-	  NULL,
-	  EXECSW_PRIO_ANY,
-	  0,
-	  copyargs,
-	  NULL,
-	  coredump_netbsd,
-	  exec_setup_stack };
-
-/*
- * declare the exec
- */
-MOD_EXEC("exec_hpux_aout", -1, &exec_hpux_aout, "hpux");
-
-/*
- * entry point
- */
-int
-exec_hpux_aout_lkmentry(lkmtp, cmd, ver)
-	struct lkm_table *lkmtp;
-	int cmd;
-	int ver;
-{
-	DISPATCH(lkmtp, cmd, ver,
-		 lkm_nofunc,
-		 lkm_nofunc,
-		 lkm_nofunc);
-}
+#endif /* !_SYS_KOBJ_H_ */

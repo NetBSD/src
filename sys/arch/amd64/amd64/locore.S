@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.35.4.1 2008/01/02 21:47:00 bouyer Exp $	*/
+/*	$NetBSD: locore.S,v 1.35.4.2 2008/01/08 22:09:13 bouyer Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -911,15 +911,13 @@ ENTRY(cpu_switchto)
 	testb	%dl,%dl
 	jnz	4f
 
-	/* Switch TSS. Reset "task busy" flag before loading. */
-#ifdef XEN
+	/* Switch ring0 stack */
+#ifndef XEN
+	movq	PCB_RSP0(%r14),%rax
+	movq	%rax,CPUVAR(RSP0)
+#else
 	movq	%r14, %rdi
 	callq	_C_LABEL(x86_64_switch_context);
-#else
-	movq    CPUVAR(GDT),%rax
-	movl	L_MD_TSS_SEL(%r12),%edx
-	andl	$~0x0200,4(%rax,%rdx, 1)
-	ltr	%dx
 #endif
 
 	/* Don't bother with the rest if switching to a system process. */

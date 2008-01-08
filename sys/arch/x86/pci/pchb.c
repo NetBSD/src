@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.5 2007/12/09 20:27:49 jmcneill Exp $ */
+/*	$NetBSD: pchb.c,v 1.5.2.1 2008/01/08 22:10:35 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1996, 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.5 2007/12/09 20:27:49 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.5.2.1 2008/01/08 22:10:35 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -80,12 +80,13 @@ __KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.5 2007/12/09 20:27:49 jmcneill Exp $");
 
 int	pchbmatch(struct device *, struct cfdata *, void *);
 void	pchbattach(struct device *, struct device *, void *);
+int	pchbdetach(device_t, int);
 
 static bool	pchb_resume(device_t);
 static bool	pchb_suspend(device_t);
 
 CFATTACH_DECL(pchb, sizeof(struct pchb_softc),
-    pchbmatch, pchbattach, NULL, NULL);
+    pchbmatch, pchbattach, pchbdetach, NULL);
 
 int
 pchbmatch(struct device *parent, struct cfdata *match, void *aux)
@@ -382,6 +383,28 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 		memset(&pba.pba_intrtag, 0, sizeof(pba.pba_intrtag));
 		config_found_ia(self, "pcibus", &pba, pcibusprint);
 	}
+}
+
+int
+pchbdetach(device_t self, int flags)
+{
+	int rc;
+#if NRND > 0
+	struct pchb_softc *sc = device_private(self);
+#endif
+
+	if ((rc = config_detach_children(self, flags)) != 0)
+		return rc;
+
+	pmf_device_deregister(self);
+
+#if NRND > 0
+	/*
+	 * Attach a random number generator, if there is one.
+	 */
+	pchb_detach_rnd(sc);
+#endif
+	return 0;
 }
 
 static bool

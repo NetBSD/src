@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.151.4.2 2008/01/06 18:29:44 bouyer Exp $	*/
+/*	$NetBSD: cpu.h,v 1.151.4.3 2008/01/08 22:10:03 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -65,6 +65,9 @@
 struct intrsource;
 struct pmap;
 
+#define	NIOPORTS	1024		/* # of ports we allow to be mapped */
+#define	IOMAPSIZE	(NIOPORTS / 8)	/* I/O bitmap size in bytes */
+
 /*
  * a bunch of this belongs in cpuvar.h; move it later..
  */
@@ -126,7 +129,6 @@ struct cpu_info {
 	uint32_t	ci_imask[NIPL];
 	uint32_t	ci_iunmask[NIPL];
 
-	paddr_t ci_idle_pcb_paddr;	/* PA of idle PCB */
 	uint32_t ci_flags;		/* flags; see below */
 	uint32_t ci_ipis;		/* interprocessor interrupts pending */
 	int sc_apic_version;		/* local APIC version */
@@ -166,6 +168,10 @@ struct cpu_info {
 	struct evcnt ci_ipi_events[X86_NIPI];
 
 	struct via_padlock	ci_vp;	/* VIA PadLock private storage */
+
+	struct i386tss	ci_tss;		/* Per-cpu TSS; shared among LWPs */
+	char		ci_iomap[IOMAPSIZE]; /* I/O Bitmap */
+	int ci_tss_sel;			/* TSS selector of this cpu */
 
 	/*
 	 * The following two are actually region_descriptors,
@@ -375,7 +381,6 @@ extern int i386_has_sse2;
 
 /* machdep.c */
 void	dumpconf(void);
-int	cpu_maxproc(void);
 void	cpu_reset(void);
 void	i386_proc0_tss_ldt_init(void);
 
@@ -397,8 +402,7 @@ struct region_descriptor;
 void	lgdt(struct region_descriptor *);
 #ifdef XEN
 void	lgdt_finish(void);
-struct pcb;
-void	i386_switch_context(struct pcb *);
+void	i386_switch_context(lwp_t *);
 #endif
 void	fillw(short, void *, size_t);
 

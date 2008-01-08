@@ -1,4 +1,4 @@
-/* $NetBSD: kern_tc.c,v 1.27.6.1 2008/01/02 21:56:02 bouyer Exp $ */
+/* $NetBSD: kern_tc.c,v 1.27.6.2 2008/01/08 22:11:37 bouyer Exp $ */
 
 /*-
  * ----------------------------------------------------------------------------
@@ -11,7 +11,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_tc.c,v 1.166 2005/09/19 22:16:31 andre Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.27.6.1 2008/01/02 21:56:02 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.27.6.2 2008/01/08 22:11:37 bouyer Exp $");
 
 #include "opt_ntp.h"
 
@@ -100,6 +100,7 @@ static struct bintime timebasebin;
 static int timestepwarnings;
 
 extern kmutex_t time_lock;
+static kmutex_t tc_windup_lock;
 
 #ifdef __FreeBSD__
 SYSCTL_INT(_kern_timecounter, OID_AUTO, stepwarnings, CTLFLAG_RW,
@@ -426,7 +427,6 @@ void
 tc_init(struct timecounter *tc)
 {
 	u_int u;
-	int s;
 
 	u = tc->tc_frequency / tc->tc_counter_mask;
 	/* XXX: We need some margin here, 10% is a guess */
@@ -446,7 +446,7 @@ tc_init(struct timecounter *tc)
 	}
 
 	mutex_enter(&time_lock);
-	s = splsched();
+	mutex_spin_enter(&tc_windup_lock);
 	tc->tc_next = timecounters;
 	timecounters = tc;
 	/*
@@ -462,8 +462,53 @@ tc_init(struct timecounter *tc)
 		timecounter = tc;
 		tc_windup();
 	}
-	splx(s);
+	mutex_spin_exit(&tc_windup_lock);
 	mutex_exit(&time_lock);
+}
+
+/*
+ * Stop using a timecounter and remove it from the timecounters list.
+ */
+int
+tc_detach(struct timecounter *target)
+{
+	struct timecounter *best, *tc;
+	struct timecounter **tcp = NULL;
+	int rc = 0;
+
+	mutex_enter(&time_lock);
+	for (tcp = &timecounters, tc = timecounters;
+	     tc != NULL;
+	     tcp = &tc->tc_next, tc = tc->tc_next) {
+		if (tc == target)
+			break;
+	}
+	if (tc == NULL) {
+		rc = ESRCH;
+		goto out;
+	}
+	*tcp = tc->tc_next;
+
+	if (timecounter != target)
+		goto out;
+
+	for (best = tc = timecounters; tc != NULL; tc = tc->tc_next) {
+		if (tc->tc_quality > best->tc_quality)
+			best = tc;
+		else if (tc->tc_quality < best->tc_quality)
+			continue;
+		else if (tc->tc_frequency > best->tc_frequency)
+			best = tc;
+	}
+	mutex_spin_enter(&tc_windup_lock);
+	(void)best->tc_get_timecount(best);
+	(void)best->tc_get_timecount(best);
+	timecounter = best;
+	tc_windup();
+	mutex_spin_exit(&tc_windup_lock);
+out:
+	mutex_exit(&time_lock);
+	return rc;
 }
 
 /* Report the frequency of the current timecounter. */
@@ -477,7 +522,6 @@ tc_getfrequency(void)
 /*
  * Step our concept of UTC.  This is done by modifying our estimate of
  * when we booted.
- * XXX: not locked.
  */
 void
 tc_setclock(struct timespec *ts)
@@ -485,15 +529,16 @@ tc_setclock(struct timespec *ts)
 	struct timespec ts2;
 	struct bintime bt, bt2;
 
+	mutex_spin_enter(&tc_windup_lock);
 	nsetclock.ev_count++;
 	binuptime(&bt2);
 	timespec2bintime(ts, &bt);
 	bintime_sub(&bt, &bt2);
 	bintime_add(&bt2, &timebasebin);
 	timebasebin = bt;
-
-	/* XXX fiddle all the little crinkly bits around the fiords... */
 	tc_windup();
+	mutex_spin_exit(&tc_windup_lock);
+
 	if (timestepwarnings) {
 		bintime2timespec(&bt2, &ts2);
 		log(LOG_INFO, "Time stepped from %jd.%09ld to %jd.%09ld\n",
@@ -516,6 +561,8 @@ tc_windup(void)
 	u_int delta, ncount, ogen;
 	int i, s_update;
 	time_t t;
+
+	KASSERT(mutex_owned(&tc_windup_lock));
 
 	s_update = 0;
 
@@ -836,13 +883,17 @@ tc_ticktock(void)
 	if (++count < tc_tick)
 		return;
 	count = 0;
+	mutex_spin_enter(&tc_windup_lock);
 	tc_windup();
+	mutex_spin_exit(&tc_windup_lock);
 }
 
 void
 inittimecounter(void)
 {
 	u_int p;
+
+	mutex_init(&tc_windup_lock, MUTEX_DEFAULT, IPL_SCHED);
 
 	/*
 	 * Set the initial timeout to

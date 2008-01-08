@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.19 2007/12/05 07:06:53 ad Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.19.4.1 2008/01/08 22:11:35 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,10 +42,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.19 2007/12/05 07:06:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.19.4.1 2008/01/08 22:11:35 bouyer Exp $");
 
 #include <sys/param.h>
-#include <sys/lock.h>
 #include <sys/kernel.h>
 #include <sys/cpu.h>
 #include <sys/pool.h>

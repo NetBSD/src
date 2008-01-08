@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.24.6.1 2008/01/02 21:57:55 bouyer Exp $	*/
+/*	$NetBSD: vm.c,v 1.24.6.2 2008/01/08 22:11:54 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -97,13 +97,11 @@ rumpvm_makepage(struct uvm_object *uobj, voff_t off)
 {
 	struct vm_page *pg;
 
-	pg = rumpuser_malloc(sizeof(struct vm_page), 0);
-	memset(pg, 0, sizeof(struct vm_page));
+	pg = kmem_zalloc(sizeof(struct vm_page), KM_SLEEP);
 	pg->offset = off;
 	pg->uobject = uobj;
 
-	pg->uanon = (void *)rumpuser_malloc(PAGE_SIZE, 0);
-	memset((void *)pg->uanon, 0, PAGE_SIZE);
+	pg->uanon = (void *)kmem_zalloc(PAGE_SIZE, KM_SLEEP);
 	pg->flags = PG_CLEAN|PG_BUSY|PG_FAKE;
 
 	TAILQ_INSERT_TAIL(&uobj->memq, pg, listq);
@@ -125,8 +123,8 @@ uvm_pagefree(struct vm_page *pg)
 		wakeup(pg);
 
 	TAILQ_REMOVE(&uobj->memq, pg, listq);
-	rumpuser_free((void *)pg->uanon);
-	rumpuser_free(pg);
+	kmem_free((void *)pg->uanon, PAGE_SIZE);
+	kmem_free(pg, sizeof(*pg));
 }
 
 struct rumpva {
@@ -143,7 +141,7 @@ rumpvm_enterva(vaddr_t addr, struct vm_page *pg)
 {
 	struct rumpva *rva;
 
-	rva = rumpuser_malloc(sizeof(struct rumpva), 0);
+	rva = kmem_alloc(sizeof(struct rumpva), KM_SLEEP);
 	rva->addr = addr;
 	rva->pg = pg;
 	mutex_enter(&rvamtx);
@@ -159,7 +157,7 @@ rumpvm_flushva()
 	mutex_enter(&rvamtx);
 	while ((rva = LIST_FIRST(&rvahead)) != NULL) {
 		LIST_REMOVE(rva, entries);
-		rumpuser_free(rva);
+		kmem_free(rva, sizeof(*rva));
 	}
 	mutex_exit(&rvamtx);
 }
@@ -252,8 +250,7 @@ uao_create(vsize_t size, int flags)
 {
 	struct uvm_object *uobj;
 
-	uobj = rumpuser_malloc(sizeof(struct uvm_object), 0);
-	memset(uobj, 0, sizeof(struct uvm_object));
+	uobj = kmem_zalloc(sizeof(struct uvm_object), KM_SLEEP);
 	uobj->pgops = &aobj_pager;
 	TAILQ_INIT(&uobj->memq);
 	mutex_init(&uobj->vmobjlock, MUTEX_DEFAULT, IPL_NONE);
@@ -266,7 +263,7 @@ uao_detach(struct uvm_object *uobj)
 {
 
 	ao_put(uobj, 0, 0, PGO_ALLPAGES | PGO_FREE);
-	rumpuser_free(uobj);
+	kmem_free(uobj, sizeof(*uobj));
 }
 
 /*

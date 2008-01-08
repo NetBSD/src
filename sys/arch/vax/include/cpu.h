@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.79 2007/10/17 19:57:48 garbled Exp $      */
+/*      $NetBSD: cpu.h,v 1.79.8.1 2008/01/08 22:10:32 bouyer Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -57,7 +57,6 @@
 #include <sys/cdefs.h>
 #include <sys/queue.h>
 #include <sys/device.h>
-#include <sys/lock.h>
 #include <sys/cpu_data.h>
 
 #include <machine/mtpr.h>

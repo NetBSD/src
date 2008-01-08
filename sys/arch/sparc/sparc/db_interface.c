@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.74.8.1 2008/01/02 21:50:24 bouyer Exp $ */
+/*	$NetBSD: db_interface.c,v 1.74.8.2 2008/01/08 22:10:25 bouyer Exp $ */
 
 /*
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.74.8.1 2008/01/02 21:50:24 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.74.8.2 2008/01/08 22:10:25 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.74.8.1 2008/01/02 21:50:24 bouyer
 #include <sys/user.h>
 #include <sys/reboot.h>
 #include <sys/systm.h>
+#include <sys/simplelock.h>
 
 #include <dev/cons.h>
 
@@ -459,9 +460,9 @@ db_lock_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 	}
 
 	l = (struct lock *)addr;
-	db_printf("interlock=%x flags=%x\n waitcount=%x sharecount=%x "
+	db_printf("flags=%x\n waitcount=%x sharecount=%x "
 	    "exclusivecount=%x\n wmesg=%s recurselevel=%x\n",
-	    l->lk_interlock.lock_data, l->lk_flags, l->lk_waitcount,
+	    l->lk_flags, l->lk_waitcount,
 	    l->lk_sharecount, l->lk_exclusivecount, l->lk_wmesg,
 	    l->lk_recurselevel);
 }

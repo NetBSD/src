@@ -1,4 +1,4 @@
-#	$NetBSD: XEN3_DOM0,v 1.7 2007/12/09 20:27:46 jmcneill Exp $
+#	$NetBSD: XEN3_DOM0,v 1.7.2.1 2008/01/08 22:09:57 bouyer Exp $
 #
 #	XEN3_0: Xen 3.0 domain0 kernel
 
@@ -7,7 +7,7 @@ include "arch/i386/conf/XEN2_DOM0"
 options 	XEN3	#Xen 3.x support
 
 # boot messages with MPBIOS, acpi and ioapic can be quite large
-options		MSGBUFSIZE=24576
+options 	MSGBUFSIZE=24576
 
 vcpu*		at hypervisor?		# Xen virtual CPUs
 xenbus*		at hypervisor?		# Xen virtual bus
@@ -15,13 +15,13 @@ ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 pci*	at ppb? bus ?
 
 acpi0 		at hypervisor?
-options		MPBIOS
-options		MPDEBUG
-options		MPVERBOSE
+options 	MPBIOS
+options 	MPDEBUG
+options 	MPVERBOSE
 options 	ACPIVERBOSE
-#options 	 PCI_ADDR_FIXUP		# fixup PCI I/O addresses
-#options 	 PCI_BUS_FIXUP		# fixup PCI bus numbering
-#options 	 PCI_INTR_FIXUP		# fixup PCI interrupt routing
+#options 	PCI_ADDR_FIXUP		# fixup PCI I/O addresses
+#options 	PCI_BUS_FIXUP		# fixup PCI bus numbering
+#options 	PCI_INTR_FIXUP		# fixup PCI interrupt routing
 
 ioapic*		at mainbus? apid ?
 

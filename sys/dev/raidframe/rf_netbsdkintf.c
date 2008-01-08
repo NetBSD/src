@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.239.6.2 2008/01/02 21:55:10 bouyer Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.239.6.3 2008/01/08 22:11:19 bouyer Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -146,7 +146,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.239.6.2 2008/01/02 21:55:10 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.239.6.3 2008/01/08 22:11:19 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -162,7 +162,6 @@ __KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.239.6.2 2008/01/02 21:55:10 bou
 #include <sys/vnode.h>
 #include <sys/disklabel.h>
 #include <sys/conf.h>
-#include <sys/lock.h>
 #include <sys/buf.h>
 #include <sys/bufq.h>
 #include <sys/user.h>

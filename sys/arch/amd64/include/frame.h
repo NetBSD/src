@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.10.8.1 2008/01/02 21:47:09 bouyer Exp $	*/
+/*	$NetBSD: frame.h,v 1.10.8.2 2008/01/08 22:09:18 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -79,6 +79,7 @@
 
 #include <sys/signal.h>
 #include <machine/fpu.h>
+#include <machine/frame_regs.h>
 
 /*
  * System stack frames.
@@ -87,36 +88,11 @@
 /*
  * Exception/Trap Stack Frame
  */
+#define tf(reg, REG, idx) uint64_t tf_##reg;
 struct trapframe {
-	uint64_t	tf_rdi;
-	uint64_t	tf_rsi;
-	uint64_t	tf_rdx;
-	uint64_t	tf_rcx;
-	uint64_t	tf_r8;
-	uint64_t 	tf_r9;
-	uint64_t	tf_r10;
-	uint64_t 	tf_r11;
-	uint64_t 	tf_r12;
-	uint64_t 	tf_r13;
-	uint64_t 	tf_r14;
-	uint64_t 	tf_r15;
-	uint64_t	tf_rbp;
-	uint64_t	tf_rbx;
-	uint64_t	tf_rax;
-	uint64_t	tf_gs;
-	uint64_t	tf_fs;
-	uint64_t	tf_es;
-	uint64_t	tf_ds;
-	uint64_t	tf_trapno;
-	/* below portion defined in hardware */
-	uint64_t	tf_err;		/* Dummy inserted if not defined */
-	uint64_t	tf_rip;
-	uint64_t	tf_cs;
-	uint64_t	tf_rflags;
-	/* These are pushed unconditionally on the x86-64 */
-	uint64_t	tf_rsp;
-	uint64_t	tf_ss;
+    _FRAME_REG(tf, tf)
 };
+#undef tf
 
 /*
  * Interrupt stack frame

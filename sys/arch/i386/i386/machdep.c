@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.617.2.2 2008/01/07 00:34:52 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.617.2.3 2008/01/08 22:10:01 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.617.2.2 2008/01/07 00:34:52 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.617.2.3 2008/01/08 22:10:01 bouyer Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -527,6 +527,9 @@ cpu_startup()
 	gdt_init();
 	i386_proc0_tss_ldt_init();
 
+	cpu_init_tss(&cpu_info_primary);
+	ltr(cpu_info_primary.ci_tss_sel);
+
 	x86_init();
 }
 
@@ -538,35 +541,27 @@ i386_proc0_tss_ldt_init()
 {
 	struct lwp *l;
 	struct pcb *pcb;
-	int x;
 
 	l = &lwp0;
 	pcb = &l->l_addr->u_pcb;
-	pcb->pcb_tss.tss_ioopt =
-	    ((char *)pcb->pcb_iomap - (char *)&pcb->pcb_tss) << 16;
-	pcb->pcb_tss.tss_ioopt |= SEL_KPL; /*  i/o pl */
-
-	for (x = 0; x < sizeof(pcb->pcb_iomap) / 4; x++)
-		pcb->pcb_iomap[x] = 0xffffffff;
 
 	pcb->pcb_ldt_sel = pmap_kernel()->pm_ldt_sel = GSEL(GLDT_SEL, SEL_KPL);
 	pcb->pcb_cr0 = rcr0();
-	pcb->pcb_tss.tss_ss0 = GSEL(GDATA_SEL, SEL_KPL);
-	pcb->pcb_tss.tss_esp0 = USER_TO_UAREA(l->l_addr) + KSTACK_SIZE - 16;
-	l->l_md.md_regs = (struct trapframe *)pcb->pcb_tss.tss_esp0 - 1;
-	l->l_md.md_tss_sel = tss_alloc(pcb);
+	pcb->pcb_esp0 = USER_TO_UAREA(l->l_addr) + KSTACK_SIZE - 16;
+	pcb->pcb_iopl = SEL_KPL;
+	l->l_md.md_regs = (struct trapframe *)pcb->pcb_esp0 - 1;
 	memcpy(pcb->pcb_fsd, &gdt[GUDATA_SEL], sizeof(pcb->pcb_fsd));
 	memcpy(pcb->pcb_gsd, &gdt[GUDATA_SEL], sizeof(pcb->pcb_gsd));
 
 #ifndef XEN
-	ltr(l->l_md.md_tss_sel);
 	lldt(pcb->pcb_ldt_sel);
 #else
 	HYPERVISOR_fpu_taskswitch();
 	XENPRINTF(("lwp tss sp %p ss %04x/%04x\n",
-	    (void *)pcb->pcb_tss.tss_esp0,
-	    pcb->pcb_tss.tss_ss0, IDXSEL(pcb->pcb_tss.tss_ss0)));
-	HYPERVISOR_stack_switch(pcb->pcb_tss.tss_ss0, pcb->pcb_tss.tss_esp0);
+	    (void *)pcb->pcb_esp0,
+	    GSEL(GDATA_SEL, SEL_KPL),
+	    IDXSEL(GSEL(GDATA_SEL, SEL_KPL))));
+	HYPERVISOR_stack_switch(GSEL(GDATA_SEL, SEL_KPL), pcb->pcb_esp0);
 #endif
 }
 
@@ -577,9 +572,10 @@ i386_proc0_tss_ldt_init()
  * - switch stack pointer for user->kernel transition
  */
 void
-i386_switch_context(struct pcb *new)
+i386_switch_context(lwp_t *l)
 {
 	struct cpu_info *ci;
+	struct pcb *pcb = &l->l_addr->u_pcb;
 
 	ci = curcpu();
 	if (ci->ci_fpused) {
@@ -590,21 +586,37 @@ i386_switch_context(struct pcb *new)
 	HYPERVISOR_stack_switch(new->pcb_tss.tss_ss0, new->pcb_tss.tss_esp0);
 
 	if (xen_start_info.flags & SIF_PRIVILEGED) {
+		int iopl = pcb->pcb_iopl;
 #ifdef XEN3
 	        struct physdev_op physop;
 		physop.cmd = PHYSDEVOP_SET_IOPL;
-		physop.u.set_iopl.iopl = new->pcb_tss.tss_ioopt & SEL_RPL;
+		physop.u.set_iopl.iopl = iopl;
 		HYPERVISOR_physdev_op(&physop);
 #else
 		dom0_op_t op;
 		op.cmd = DOM0_IOPL;
 		op.u.iopl.domain = DOMID_SELF;
-		op.u.iopl.iopl = new->pcb_tss.tss_ioopt & SEL_RPL; /* i/o pl */
+		op.u.iopl.iopl = iopl;
 		HYPERVISOR_dom0_op(&op);
 #endif
 	}
 }
 #endif
+
+/*
+ * Set up TSS and I/O bitmap.
+ */
+void
+cpu_init_tss(struct cpu_info *ci)
+{
+	struct i386tss *tss = &ci->ci_tss;
+
+	tss->tss_iobase = IOMAP_INVALOFF << 16;
+	tss->tss_ss0 = GSEL(GDATA_SEL, SEL_KPL);
+	tss->tss_ldt = GSEL(GLDT_SEL, SEL_KPL);
+	tss->tss_cr3 = rcr3();
+	ci->ci_tss_sel = tss_alloc(tss);
+}
 
 /*
  * sysctl helper routine for machdep.tm* nodes.
@@ -1386,8 +1398,8 @@ setregion(struct region_descriptor *rd, void *base, size_t limit)
 }
 
 void
-setsegment(struct segment_descriptor *sd, void *base, size_t limit, int type,
-    int dpl, int def32, int gran)
+setsegment(struct segment_descriptor *sd, const void *base, size_t limit,
+    int type, int dpl, int def32, int gran)
 {
 
 	sd->sd_lolimit = (int)limit;
@@ -2251,12 +2263,6 @@ init386(paddr_t first_avail)
 		       ptoa(physmem), 2*1024*1024UL);
 		cngetc();
 	}
-
-#ifdef __HAVE_CPU_MAXPROC
-	/* Make sure maxproc is sane */
-	if (maxproc > cpu_maxproc())
-		maxproc = cpu_maxproc();
-#endif
 	XENPRINTF(("init386 end\n"));
 }
 
@@ -2616,17 +2622,4 @@ cpu_initclocks()
 {
 
 	(*initclock_func)();
-}
-
-/*
- * Number of processes is limited by number of available GDT slots.
- */
-int
-cpu_maxproc(void)
-{
-#ifdef USER_LDT
-	return ((MAXGDTSIZ - NGDT) / 2);
-#else
-	return (MAXGDTSIZ - NGDT);
-#endif
 }

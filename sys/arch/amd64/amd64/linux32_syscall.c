@@ -1,7 +1,7 @@
-/*	$NetBSD: linux32_syscall.c,v 1.17.8.1 2008/01/02 21:46:58 bouyer Exp $ */
+/*	$NetBSD: linux32_syscall.c,v 1.17.8.2 2008/01/08 22:09:13 bouyer Exp $ */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_syscall.c,v 1.17.8.1 2008/01/02 21:46:58 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_syscall.c,v 1.17.8.2 2008/01/08 22:09:13 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,7 +76,7 @@ linux32_syscall(frame)
 			    code, argsize);
 		for (i = 0; i < (argsize >> 2); i++)
 			args64[i] = args[i] & 0xffffffff;
-		if ((error = trace_enter(l, code, code, NULL, args64)) != 0)
+		if ((error = trace_enter(code, code, NULL, args64)) != 0)
 			goto out;
 	}
 
@@ -110,6 +110,6 @@ out:
 	}
 
 	if (__predict_false(p->p_trace_enabled))
-		trace_exit(l, code, args64, rval, error);
+		trace_exit(code, args64, rval, error);
 	userret(l);
 }

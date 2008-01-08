@@ -1,4 +1,4 @@
-/* $NetBSD: apic.c,v 1.4 2005/12/11 12:19:47 christos Exp $ */
+/* $NetBSD: apic.c,v 1.4.64.1 2008/01/08 22:10:36 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,17 +39,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apic.c,v 1.4 2005/12/11 12:19:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apic.c,v 1.4.64.1 2008/01/08 22:10:36 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/lock.h>		/* XXX */
 
 #include <machine/i82489reg.h>
 #include <machine/i82489var.h>
 #include <machine/apicvar.h>
-
 
 const char redirlofmt[] = "\177\20"
 	"f\0\10vector\0"

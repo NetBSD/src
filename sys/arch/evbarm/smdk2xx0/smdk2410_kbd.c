@@ -1,4 +1,4 @@
-/* $NetBSD: smdk2410_kbd.c,v 1.4 2007/03/04 05:59:45 christos Exp $ */
+/* $NetBSD: smdk2410_kbd.c,v 1.4.32.1 2008/01/08 22:09:42 bouyer Exp $ */
 
 /*
  * Copyright (c) 2004  Genetec Corporation.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smdk2410_kbd.c,v 1.4 2007/03/04 05:59:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smdk2410_kbd.c,v 1.4.32.1 2008/01/08 22:09:42 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -320,8 +320,7 @@ sskbd_attach(struct device *parent, struct device *self, void *aux)
 	sc->spi_ih = s3c24x0_intr_establish(spia->spia_intr, IPL_SERIAL,
 	    0, sskbd_spi_intr, sc);
 
-	sc->soft_ih = softintr_establish(IPL_SOFTSERIAL, sskbd_soft_intr,
-	    sc);
+	sc->soft_ih = softint_establish(SOFTINT_SERIAL, sskbd_soft_intr, sc);
 
 	if (sc->atn_ih == NULL || sc->spi_ih == NULL)
 		aprint_error("%s: can't establish interrupt handler\n",
@@ -361,7 +360,7 @@ sskbd_atn_intr(void *arg)
 
 	if (advance_ring_ptr(sc->inptr) == sc->outptr) {
 		/* ring buffer is full. ignore this nATN signale */
-		softintr_schedule(sc->soft_ih);
+		softint_schedule(sc->soft_ih);
 		return 1;
 	}
 
@@ -406,7 +405,7 @@ sskbd_spi_intr(void *arg)
 		sc->ring[sc->inptr] = data;
 		sc->inptr = advance_ring_ptr(sc->inptr);
 
-		softintr_schedule(sc->soft_ih);
+		softint_schedule(sc->soft_ih);
 	}
 #ifdef KBD_DEBUG
 	else {

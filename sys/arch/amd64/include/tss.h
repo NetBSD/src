@@ -1,4 +1,4 @@
-/*	$NetBSD: tss.h,v 1.1.94.1 2008/01/02 21:47:10 bouyer Exp $	*/
+/*	$NetBSD: tss.h,v 1.1.94.2 2008/01/08 22:09:20 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -54,8 +54,13 @@ struct x86_64_tss {
 	u_int64_t	tss_ist[7];
 	u_int32_t	tss_reserved4;
 	u_int32_t	tss_reserved5;
-	u_int16_t	tss_reserved6;
-	u_int16_t	tss_iobase;
+	u_int32_t	tss_iobase;
 } __packed;
+
+/*
+ * I/O bitmap offset beyond TSS's segment limit means no bitmaps.
+ * (i.e. any I/O attempt generates an exception.)
+ */
+#define	IOMAP_INVALOFF	0xffff
 
 #endif /* _AMD64_TSS_H_ */
