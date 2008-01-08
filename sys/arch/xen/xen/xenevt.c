@@ -1,4 +1,4 @@
-/*      $NetBSD: xenevt.c,v 1.17 2007/12/03 15:34:30 ad Exp $      */
+/*      $NetBSD: xenevt.c,v 1.18 2008/01/08 19:26:10 bouyer Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -43,6 +43,7 @@
 #include <sys/proc.h>
 #include <sys/conf.h>
 #include <sys/intr.h>
+#include <sys/kmem.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -417,7 +418,7 @@ xenevt_fwrite(struct file *fp, off_t *offp, struct uio *uio,
     kauth_cred_t cred, int flags)
 {
 	struct xenevt_d *d = fp->f_data;
-	u_int16_t chans[NR_EVENT_CHANNELS];
+	u_int16_t *chans;
 	int i, nentries, error;
 
 	if (uio->uio_resid == 0)
@@ -425,15 +426,20 @@ xenevt_fwrite(struct file *fp, off_t *offp, struct uio *uio,
 	nentries = uio->uio_resid / sizeof(u_int16_t);
 	if (nentries > NR_EVENT_CHANNELS)
 		return EMSGSIZE;
+	chans = kmem_alloc(nentries * sizeof(u_int16_t), KM_SLEEP);
+	if (chans == NULL)
+		return ENOMEM;
 	error = uiomove(chans, uio->uio_resid, uio);
 	if (error)
-		return error;
+		goto out;
 	for (i = 0; i < nentries; i++) {
 		if (chans[i] < NR_EVENT_CHANNELS &&
 		    devevent[chans[i]] == d) {
 			hypervisor_unmask_event(chans[i]);
 		}
 	}
+out:
+	kmem_free(chans, nentries * sizeof(u_int16_t));
 	return 0;
 }
 
