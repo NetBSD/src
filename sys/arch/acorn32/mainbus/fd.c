@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.36 2008/01/05 17:38:50 ad Exp $	*/
+/*	$NetBSD: fd.c,v 1.37 2008/01/08 06:29:39 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.36 2008/01/05 17:38:50 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.37 2008/01/08 06:29:39 matt Exp $");
 
 #include "opt_ddb.h"
 
@@ -1507,7 +1507,7 @@ fdformat(dev, finfo, l)
 	struct ne7_fd_formb *finfo;
 	struct lwp *l;
 {
-	int rv = 0, s;
+	int rv = 0;
 	struct fd_softc *fd = fd_cd.cd_devs[FDUNIT(dev)];
 	struct fd_type *type = fd->sc_type;
 	struct buf *bp;
