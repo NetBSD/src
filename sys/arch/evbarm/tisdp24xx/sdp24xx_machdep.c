@@ -1,4 +1,4 @@
-/*	$NetBSD: sdp24xx_machdep.c,v 1.1.2.1 2007/10/29 19:23:16 matt Exp $ */
+/*	$NetBSD: sdp24xx_machdep.c,v 1.1.2.2 2008/01/08 07:16:28 matt Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdp24xx_machdep.c,v 1.1.2.1 2007/10/29 19:23:16 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdp24xx_machdep.c,v 1.1.2.2 2008/01/08 07:16:28 matt Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -460,7 +460,6 @@ initarm(void *arg)
 	/* The console is going to try to map things.  Give pmap a devmap. */
 	pmap_devmap_register(devmap);
 	consinit();
-	omap2430_intr_init(&omap_bs_tag);
 #if 1
 	sdp_putchar('h');
 #endif

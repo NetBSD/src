@@ -1,4 +1,4 @@
-/*	$NetBSD: omap2430_mputmr.c,v 1.1.2.3 2007/11/05 05:06:40 matt Exp $	*/
+/*	$NetBSD: omap2430_mputmr.c,v 1.1.2.4 2008/01/08 07:16:27 matt Exp $	*/
 
 /*
  * OMAP 2430 GP timers
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap2430_mputmr.c,v 1.1.2.3 2007/11/05 05:06:40 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap2430_mputmr.c,v 1.1.2.4 2008/01/08 07:16:27 matt Exp $");
 
 #include "opt_omap.h"
 
@@ -268,10 +268,8 @@ cpu_initclocks(void)
 	 * through to hardclock() and statclock().
 	 */
 
-	omap_intr_establish(clock_sc->sc_intr, IPL_CLOCK,
-			    clock_sc->sc_dev.dv_xname, clockintr, 0);
-	omap_intr_establish(stat_sc->sc_intr, IPL_STATCLOCK,
-			    stat_sc->sc_dev.dv_xname, statintr, 0);
+	intr_establish(clock_sc->sc_intr, IPL_CLOCK, IST_LEVEL, clockintr, 0);
+	intr_establish(stat_sc->sc_intr, IPL_STATCLOCK, IST_LEVEL, statintr, 0);
 
 	_timer_intr_enb(clock_sc);
 	_timer_intr_enb(stat_sc);

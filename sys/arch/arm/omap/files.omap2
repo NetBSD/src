@@ -1,10 +1,12 @@
-#	$NetBSD: files.omap2,v 1.1.2.3 2007/11/05 22:01:55 matt Exp $
+#	$NetBSD: files.omap2,v 1.1.2.4 2008/01/08 07:16:27 matt Exp $
 #
 # Configuration info for Texas Instruments OMAP2 CPU support
 # Based on xscale/files.pxa2x0
 #
 
-file	arch/arm/arm/softintr.c  # Use the generic ARM soft interrupt code.
+include "arch/arm/pic/files.pic"
+
+file	arch/arm/arm/softintr.c			!pic
 file	arch/arm/arm32/irq_dispatch.S
 
 # Memory size in megabytes
@@ -27,8 +29,16 @@ file	arch/arm/omap/omap_a2x_io.S		obio
 file	arch/arm/omap/omap_a4x_space.c		obio
 file	arch/arm/xscale/pxa2x0_a4x_io.S		obio
 
-# INTC controller
-file	arch/arm/omap/omap2430_intr.c		omap2
+# OMAP2 interrupt controller
+device	omapicu: pic
+attach	omapicu at obio with omap2icu
+file	arch/arm/omap/omap2_icu.c		omap2 & omapicu
+file	arch/arm/omap/omap2430_intr.c		omap2 & !omapicu
+
+# OMAP2 GPIO controllers
+device	omapgpio: gpiobus
+attach	omapgpio at obio with omap2gpio
+file	arch/arm/omap/omap2_gpio.c		omap2 & omapgpio
 
 # OMAP 2430 General Purpose Timer
 device	omap2430mputmr

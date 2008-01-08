@@ -1,4 +1,4 @@
-/* $NetBSD: omap2430reg.h,v 1.1.2.6 2007/11/05 22:08:52 matt Exp $ */
+/* $NetBSD: omap2430reg.h,v 1.1.2.7 2008/01/08 07:16:27 matt Exp $ */
 
 /*
  * Copyright (c) 2007 Danger Inc.
@@ -375,9 +375,9 @@
 #define	INTC_ISR_SET		0x0090	/* r/w soft intr mask */
 #define	INTC_ISR_CLEAR		0x0094	/* clr soft intr mask */
 #define	INTC_PENDING_IRQ	0x0098	/* masked irq state */
-#define	INTC_PENDING_FIQ(n)	0x009c	/* masked fiq state */
+#define	INTC_PENDING_FIQ	0x009c	/* masked fiq state */
 
-#define	INTC_ILR(n)		0x0100	
+#define	INTC_ILR		0x0100	
 
 #define	INTC_SYSCONFIG_SOFTRESET	0x2
 #define	INTC_SYSCONFIG_AUTOIDLE		0x1

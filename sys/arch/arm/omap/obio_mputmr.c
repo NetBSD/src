@@ -1,4 +1,4 @@
-/* $NetBSD: obio_mputmr.c,v 1.1.2.5 2007/11/05 22:01:56 matt Exp $ */
+/* $NetBSD: obio_mputmr.c,v 1.1.2.6 2008/01/08 07:16:27 matt Exp $ */
 
 /*
  * Based on omap_mputmr.c
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio_mputmr.c,v 1.1.2.5 2007/11/05 22:01:56 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio_mputmr.c,v 1.1.2.6 2008/01/08 07:16:27 matt Exp $");
 
 #include "opt_omap.h"
 
@@ -145,7 +145,7 @@ typedef struct {
 #define GPT_ENTRY(n) { \
 		.gptn = (n), \
 		.addr = GPT ## n ## _BASE, \
-		.intr = GPT ## n ## _IRQ, \
+		.intr = IRQ_ ## GPT ## n, \
 		.clksel2 = OMAP2_CM_CLKSEL2_CORE_GPTn(n, \
 		    CLKSEL2_CORE_GPT_SYS_CLK), \
 		.fclken1 = OMAP2_CM_FCLKEN1_CORE_EN_GPT ## n, \
