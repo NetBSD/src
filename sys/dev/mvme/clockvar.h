@@ -1,4 +1,4 @@
-/*	$NetBSD: clockvar.h,v 1.6 2005/12/11 12:22:47 christos Exp $	*/
+/*	$NetBSD: clockvar.h,v 1.6.60.1 2008/01/08 22:11:08 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2002 The NetBSD Foundation, Inc.
@@ -53,7 +53,6 @@ extern	int clock_statmin;
 
 struct clock_attach_args {
 	void			(*ca_initfunc)(void *, int, int);
-	long			(*ca_microtime)(void *);
 	void			*ca_arg;
 };
 

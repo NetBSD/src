@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.172 2007/12/10 14:19:08 bsh Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.172.2.1 2008/01/08 22:11:59 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1122,9 +1122,10 @@ void	sysctl_init(void);
 /*
  * typical syscall call order
  */
-int	sysctl_lock(struct lwp *, void *, size_t);
+void	sysctl_lock(bool);
 int	sysctl_dispatch(SYSCTLFN_PROTO);
-void	sysctl_unlock(struct lwp *);
+void	sysctl_unlock(void);
+void	sysctl_relock(void);
 
 /*
  * tree navigation primitives (must obtain lock before using these)

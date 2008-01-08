@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.c,v 1.7 2006/11/17 21:01:03 tsutsui Exp $ */
+/* $NetBSD: autoconf.c,v 1.7.42.1 2008/01/08 22:09:43 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,13 +37,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.7 2006/11/17 21:01:03 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.7.42.1 2008/01/08 22:09:43 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
-
-#include <machine/bus.h>
+#include <sys/device.h>
+#include <sys/bus.h>
 
 #include <mips/atheros/include/ar531xvar.h>
 #include <mips/atheros/include/arbusvar.h>

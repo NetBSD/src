@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.867.2.1 2008/01/02 21:48:09 bouyer Exp $
+# $NetBSD: GENERIC,v 1.867.2.2 2008/01/08 22:09:52 bouyer Exp $
 #
 # GENERIC machine description file
 #
@@ -22,11 +22,11 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.867.2.1 $"
+#ident 		"GENERIC-$Revision: 1.867.2.2 $"
 
 maxusers	32		# estimated number of users
 
-makeoptions	CPUFLAGS="-march=i486 -mtune=pentiumpro" # Assume at least 486,
+makeoptions 	CPUFLAGS="-march=i486 -mtune=pentiumpro" # Assume at least 486,
 							# tune for more modern
 
 # CPU-related options.
@@ -47,7 +47,7 @@ options 	POWERNOW_K7
 options 	POWERNOW_K8
 
 # VIA PadLock
-#options	VIA_PADLOCK
+#options 	VIA_PADLOCK
 
 # Intel(R) On Demand Clock Modulation (aka ODCM)
 #options 	INTEL_ONDEMAND_CLOCKMOD
@@ -80,7 +80,7 @@ options 	MULTIBOOT	# Multiboot support (see multiboot(8))
 # and/or the maximum address used by the system.
 # Contrary to REALBASEMEM and REALEXTMEM, they still use the BIOS memory map
 # and can deal with holes in the memory layout.
-#options	PHYSMEM_MAX_SIZE=64	# max size of physical memory (in MB)
+#options 	PHYSMEM_MAX_SIZE=64	# max size of physical memory (in MB)
 #options 	PHYSMEM_MAX_ADDR=2048	# don't use memory above this (in MB)
 
 # Standard system options
@@ -130,7 +130,7 @@ options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	DDB_VERBOSE_HELP
 #options 	KGDB		# remote debugger
 #options 	KGDB_DEVNAME="\"com\"",KGDB_DEVADDR=0x3f8,KGDB_DEVRATE=9600
-#makeoptions	DEBUG="-g"	# compile full symbol table
+#makeoptions 	DEBUG="-g"	# compile full symbol table
 #options 	SYSCALL_STATS	# per syscall counts
 #options 	SYSCALL_TIMES	# per syscall times
 #options 	SYSCALL_TIMES_HASCOUNTER	# use 'broken' rdtsc (soekris)
@@ -1062,7 +1062,7 @@ uhci*	at cardbus? function ?		# Universal Host Controller (Intel)
 # ISA USB controllers
 #slhci0	at isa? port 0x300 irq 5	# ScanLogic SL811HS
 
-# PCMCIA USB controllers   
+# PCMCIA USB controllers
 slhci*	at pcmcia? function ?		# ScanLogic SL811HS
 
 # USB bus support

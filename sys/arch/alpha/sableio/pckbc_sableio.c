@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc_sableio.c,v 1.5 2002/10/02 04:06:39 thorpej Exp $ */
+/* $NetBSD: pckbc_sableio.c,v 1.5.98.1 2008/01/08 22:09:12 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pckbc_sableio.c,v 1.5 2002/10/02 04:06:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_sableio.c,v 1.5.98.1 2008/01/08 22:09:12 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,10 +48,8 @@ __KERNEL_RCSID(0, "$NetBSD: pckbc_sableio.c,v 1.5 2002/10/02 04:06:39 thorpej Ex
 #include <sys/malloc.h>
 #include <sys/errno.h>
 #include <sys/queue.h>
-#include <sys/lock.h> 
-
-#include <machine/intr.h>
-#include <machine/bus.h>
+#include <sys/intr.h>
+#include <sys/bus.h>
 
 #include <dev/ic/i8042reg.h>
 #include <dev/ic/pckbcvar.h> 

@@ -1,4 +1,4 @@
-/*	$NetBSD: auth.c,v 1.3.4.1 2008/01/02 21:57:52 bouyer Exp $	*/
+/*	$NetBSD: auth.c,v 1.3.4.2 2008/01/08 22:11:52 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -31,6 +31,7 @@
 #include <sys/param.h>
 #include <sys/errno.h>
 #include <sys/kauth.h>
+#include <sys/kmem.h>
 
 #include "rump.h"
 #include "rumpuser.h"
@@ -40,19 +41,16 @@ struct kauth_cred {
 	gid_t cr_gid;
 
 	size_t cr_ngroups;
-	gid_t cr_groups[0];
+	gid_t cr_groups[NGROUPS];
 };
 
 kauth_cred_t
 rump_cred_create(uid_t uid, gid_t gid, size_t ngroups, gid_t *groups)
 {
 	kauth_cred_t cred;
-	size_t credsize;
 
 	KASSERT(ngroups <= NGROUPS);
-
-	credsize = sizeof(struct kauth_cred) + ngroups * sizeof(gid_t);
-	cred = rumpuser_malloc(credsize, 0);
+	cred = kmem_alloc(sizeof(struct kauth_cred), KM_SLEEP);
 
 	cred->cr_uid = uid;
 	cred->cr_gid = gid;
@@ -66,7 +64,7 @@ void
 rump_cred_destroy(kauth_cred_t cred)
 {
 
-	rumpuser_free(cred);
+	kmem_free(cred, sizeof(struct kauth_cred));
 }
 
 int

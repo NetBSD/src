@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_TINY,v 1.109 2007/11/15 19:18:32 ad Exp $
+#	$NetBSD: GENERIC_TINY,v 1.109.6.1 2008/01/08 22:09:54 bouyer Exp $
 #
 #	GENERIC_TINY -- suitable default for 4M machines
 #			No EISA, PCI, or SCSI.
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-makeoptions	COPTS="-Os"
+makeoptions 	COPTS="-Os"
 
 maxusers	8		# estimated number of users
 
@@ -66,7 +66,7 @@ options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 #options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	KGDB		# remote debugger
 #options 	KGDB_DEVNAME="\"com\"",KGDB_DEVADDR=0x3f8,KGDB_DEVRATE=9600
-#makeoptions	DEBUG="-g"	# compile full symbol table
+#makeoptions 	DEBUG="-g"	# compile full symbol table
 
 # Compatibility options
 #options 	COMPAT_NOMID	# NetBSD 0.8, 386BSD, and BSDI
@@ -89,7 +89,7 @@ options 	COMPAT_43	# 4.3BSD, 386BSD, and BSDI
 #options 	COMPAT_IBCS2	# binary compatibility with SCO and ISC
 #options 	COMPAT_LINUX	# binary compatibility with Linux
 #options 	COMPAT_FREEBSD	# binary compatibility with FreeBSD
-options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
+options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # File systems
 file-system 	FFS		# UFS
@@ -371,7 +371,7 @@ wdc1	at isa? port 0x170 irq 15
 
 # ATA (IDE) bus support
 atabus* at ata?
-#options	ATADEBUG
+#options 	ATADEBUG
 
 # IDE drives
 wd*	at atabus? drive ?			# the drives themselves

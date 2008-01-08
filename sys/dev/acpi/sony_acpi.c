@@ -1,4 +1,4 @@
-/*	$NetBSD: sony_acpi.c,v 1.2.6.2 2008/01/02 21:53:51 bouyer Exp $	*/
+/*	$NetBSD: sony_acpi.c,v 1.2.6.3 2008/01/08 22:10:56 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sony_acpi.c,v 1.2.6.2 2008/01/02 21:53:51 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sony_acpi.c,v 1.2.6.3 2008/01/08 22:10:56 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -424,9 +424,12 @@ sony_acpi_brightness_up(device_t dv)
 	ACPI_STATUS rv;
 
 	rv = acpi_eval_integer(sc->sc_node->ad_handle, "GBRT", &arg);
-	if (ACPI_FAILURE(rv) || arg > 8)
+	if (ACPI_FAILURE(rv))
 		return;
-	arg++;
+	if (arg >= 8)
+		arg = 8;
+	else
+		arg++;
 	sony_acpi_eval_set_integer(sc->sc_node->ad_handle, "SBRT", arg, NULL);
 }
 
@@ -438,9 +441,12 @@ sony_acpi_brightness_down(device_t dv)
 	ACPI_STATUS rv;
 
 	rv = acpi_eval_integer(sc->sc_node->ad_handle, "GBRT", &arg);
-	if (ACPI_FAILURE(rv) || arg == 0)
+	if (ACPI_FAILURE(rv))
 		return;
-	arg--;
+	if (arg <= 0)
+		arg = 0;
+	else
+		arg--;
 	sony_acpi_eval_set_integer(sc->sc_node->ad_handle, "SBRT", arg, NULL);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.122.10.1 2008/01/02 21:58:21 bouyer Exp $	*/
+/*	$NetBSD: lfs.h,v 1.122.10.2 2008/01/08 22:12:03 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,6 +71,8 @@
 
 #include <sys/rwlock.h>
 #include <sys/mutex.h>
+#include <sys/queue.h>
+#include <sys/condvar.h>
 
 /*
  * Compile-time options for LFS.

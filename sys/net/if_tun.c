@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.100 2007/12/05 17:20:01 pooka Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.100.4.1 2008/01/08 22:11:49 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -15,7 +15,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.100 2007/12/05 17:20:01 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.100.4.1 2008/01/08 22:11:49 bouyer Exp $");
 
 #include "opt_inet.h"
 
@@ -35,7 +35,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.100 2007/12/05 17:20:01 pooka Exp $");
 #include <sys/signalvar.h>
 #include <sys/conf.h>
 #include <sys/kauth.h>
-
+#include <sys/simplelock.h>
 #include <sys/cpu.h>
 
 #include <net/if.h>

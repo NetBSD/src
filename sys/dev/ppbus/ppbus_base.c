@@ -1,4 +1,4 @@
-/* $NetBSD: ppbus_base.c,v 1.14 2007/12/05 07:58:31 ad Exp $ */
+/* $NetBSD: ppbus_base.c,v 1.14.4.1 2008/01/08 22:11:18 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 1999 Nicolas Souchu
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppbus_base.c,v 1.14 2007/12/05 07:58:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppbus_base.c,v 1.14.4.1 2008/01/08 22:11:18 bouyer Exp $");
 
 #include "opt_ppbus_1284.h"
 #include "opt_ppbus.h"
@@ -39,7 +39,6 @@ __KERNEL_RCSID(0, "$NetBSD: ppbus_base.c,v 1.14 2007/12/05 07:58:31 ad Exp $");
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>
-#include <sys/lock.h>
 #include <sys/systm.h>
 
 #include <dev/ppbus/ppbus_1284.h>

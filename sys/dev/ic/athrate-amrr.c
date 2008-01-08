@@ -1,4 +1,4 @@
-/*	$NetBSD: athrate-amrr.c,v 1.9 2007/10/19 11:59:47 ad Exp $ */
+/*	$NetBSD: athrate-amrr.c,v 1.9.8.1 2008/01/08 22:11:02 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2004 INRIA
@@ -43,7 +43,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/ath_rate/amrr/amrr.c,v 1.10 2005/08/09 10:19:43 rwatson Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: athrate-amrr.c,v 1.9 2007/10/19 11:59:47 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: athrate-amrr.c,v 1.9.8.1 2008/01/08 22:11:02 bouyer Exp $");
 #endif
 
 /*
@@ -58,11 +58,8 @@ __KERNEL_RCSID(0, "$NetBSD: athrate-amrr.c,v 1.9 2007/10/19 11:59:47 ad Exp $");
 #include <sys/systm.h> 
 #include <sys/sysctl.h>
 #include <sys/kernel.h>
-#include <sys/lock.h>
 #include <sys/errno.h>
-
 #include <sys/bus.h>
-
 #include <sys/socket.h>
  
 #include <net/if.h>

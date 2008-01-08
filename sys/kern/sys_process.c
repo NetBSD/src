@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.131.6.1 2008/01/02 21:56:14 bouyer Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.131.6.2 2008/01/08 22:11:42 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.131.6.1 2008/01/02 21:56:14 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.131.6.2 2008/01/08 22:11:42 bouyer Exp $");
 
 #include "opt_coredump.h"
 #include "opt_ptrace.h"
@@ -909,8 +909,9 @@ process_domem(struct lwp *curl /*tracer*/,
 
 #if defined(KTRACE) || defined(PTRACE)
 void
-process_stoptrace(struct lwp *l)
+process_stoptrace(void)
 {
+	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc, *pp;
 
 	/* XXXSMP proc_stop -> child_psignal -> kpsignal2 -> pool_get */ 

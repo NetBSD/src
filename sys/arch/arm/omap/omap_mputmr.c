@@ -1,4 +1,4 @@
-/*	$NetBSD: omap_mputmr.c,v 1.1 2007/01/06 00:29:52 christos Exp $	*/
+/*	$NetBSD: omap_mputmr.c,v 1.1.44.1 2008/01/08 22:09:30 bouyer Exp $	*/
 
 /*
  * Based on i80321_timer.c and arch/arm/sa11x0/sa11x0_ost.c
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap_mputmr.c,v 1.1 2007/01/06 00:29:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap_mputmr.c,v 1.1.44.1 2008/01/08 22:09:30 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -323,7 +323,7 @@ cpu_initclocks(void)
 
 	omap_intr_establish(clock_sc->sc_intr, IPL_CLOCK,
 			    clock_sc->sc_dev.dv_xname, clockintr, 0);
-	omap_intr_establish(stat_sc->sc_intr, IPL_STATCLOCK,
+	omap_intr_establish(stat_sc->sc_intr, IPL_HIGH,
 			    stat_sc->sc_dev.dv_xname, statintr, 0);
 }
 

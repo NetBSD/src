@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extern.h,v 1.55.6.1 2008/01/02 21:58:29 bouyer Exp $	*/
+/*	$NetBSD: ufs_extern.h,v 1.55.6.2 2008/01/08 22:12:05 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -55,7 +55,7 @@ struct uio;
 struct vattr;
 struct vnode;
 
-extern struct pool ufs_direct_pool;	/* memory pool for directs */
+extern pool_cache_t ufs_direct_cache;	/* memory pool for directs */
 
 __BEGIN_DECLS
 #define	ufs_abortop	genfs_abortop

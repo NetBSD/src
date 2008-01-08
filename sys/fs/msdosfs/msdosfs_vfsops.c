@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.55.4.1 2008/01/02 21:55:30 bouyer Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.55.4.2 2008/01/08 22:11:25 bouyer Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.55.4.1 2008/01/02 21:55:30 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.55.4.2 2008/01/08 22:11:25 bouyer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -638,6 +638,14 @@ msdosfs_mountfs(devvp, mp, l, argp)
 		pmp->pm_FATsecs     *= tmp;
 		SecPerClust         *= tmp;
 	}
+
+	/* Check that fs has nonzero FAT size */
+	if (pmp->pm_FATsecs == 0) {
+		DPRINTF(("FATsecs is 0\n"));
+		error = EINVAL;
+		goto error_exit;
+	}
+
 	pmp->pm_fatblk = pmp->pm_ResSectors;
 	if (FAT32(pmp)) {
 		pmp->pm_rootdirblk = getulong(b710->bpbRootClust);
@@ -954,7 +962,7 @@ msdosfs_sync(mp, waitfor, cred)
 		}
 	}
 	/* Allocate a marker vnode. */
-	if ((mvp = valloc(mp)) == NULL)
+	if ((mvp = vnalloc(mp)) == NULL)
 		return ENOMEM;
 	/*
 	 * Write back each (modified) denode.
@@ -992,7 +1000,7 @@ loop:
 		mutex_enter(&mntvnode_lock);
 	}
 	mutex_exit(&mntvnode_lock);
-	vfree(mvp);
+	vnfree(mvp);
 
 	/*
 	 * Force stale file system control information to be flushed.

@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_intr.c,v 1.16.6.1 2007/12/13 21:54:36 bouyer Exp $ */
+/*	$NetBSD: ixp425_intr.c,v 1.16.6.2 2008/01/08 22:09:34 bouyer Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425_intr.c,v 1.16.6.1 2007/12/13 21:54:36 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_intr.c,v 1.16.6.2 2008/01/08 22:09:34 bouyer Exp $");
 
 #ifndef EVBARM_SPL_NOINLINE
 #define	EVBARM_SPL_NOINLINE
@@ -110,6 +110,7 @@ volatile uint32_t intr_enabled;
 /* Mask if interrupts steered to FIQs. */
 uint32_t intr_steer;
 
+#ifdef __HAVE_FAST_SOFTINTS
 /*
  * Map a software interrupt queue index
  *
@@ -135,13 +136,13 @@ static const uint32_t si_to_irqbit[SI_NQUEUES] = {
 /*
  * Map a software interrupt queue to an interrupt priority level.
  */
-static const int si_to_ipl[SI_NQUEUES] = {
-	IPL_SOFTCLOCK,		/* SI_SOFTCLOCK */
-	IPL_SOFTBIO,		/* SI_SOFTBIO */
-	IPL_SOFTNET,		/* SI_SOFTNET */
-	IPL_SOFTSERIAL,		/* SI_SOFTSERIAL */
+static const int si_to_ipl[] = {
+	[SI_SOFTCLOCK] =	IPL_SOFTCLOCK,
+	[SI_SOFTBIO] =		IPL_SOFTBIO,
+	[SI_SOFTNET] =		IPL_SOFTNET,
+	[SI_SOFTSERIAL] =	IPL_SOFTSERIAL,
 };
-
+#endif /* __HAVE_FAST_SOFTINTS */
 void	ixp425_intr_dispatch(struct clockframe *frame);
 
 static inline uint32_t
@@ -224,8 +225,9 @@ ixp425_intr_calculate_masks(void)
 		ixp425_imask[ipl] = irqs;
 	}
 
-	ixp425_imask[IPL_NONE] = 0;
+	KASSERT(ixp425_imask[IPL_NONE] == 0);
 
+#ifdef __HAVE_FAST_SOFTINTS
 	/*
 	 * Initialize the soft interrupt masks to block themselves.
 	 */
@@ -233,6 +235,7 @@ ixp425_intr_calculate_masks(void)
 	ixp425_imask[IPL_SOFTBIO] = SI_TO_IRQBIT(SI_SOFTBIO);
 	ixp425_imask[IPL_SOFTNET] = SI_TO_IRQBIT(SI_SOFTNET);
 	ixp425_imask[IPL_SOFTSERIAL] = SI_TO_IRQBIT(SI_SOFTSERIAL);
+#endif
 
 	/*
 	 * Enforce a hierarchy that gives "slow" device (or devices with
@@ -262,10 +265,10 @@ ixp425_intr_calculate_masks(void)
 	}
 }
 
+#ifdef __HAVE_FAST_SOFTINTS
 void
 ixp425_do_pending(void)
 {
-#ifdef __HAVE_FAST_SOFTINTS
 	static __cpu_simple_lock_t processing = __SIMPLELOCK_UNLOCKED;
 	int new, oldirqstate;
 
@@ -294,8 +297,8 @@ ixp425_do_pending(void)
 	__cpu_simple_unlock(&processing);
 
 	restore_interrupts(oldirqstate);
-#endif
 }
+#endif
 
 void
 splx(int new)
@@ -318,6 +321,7 @@ _splraise(int ipl)
 	return (ixp425_splraise(ipl));
 }
 
+#ifdef __HAVE_FAST_SOFTINTS
 void
 _setsoftintr(int si)
 {
@@ -331,6 +335,7 @@ _setsoftintr(int si)
 	if ((ixp425_ipending & INT_SWMASK) & ~current_spl_level)
 		ixp425_do_pending();
 }
+#endif /* __HAVE_FAST_SOFTINTS */
 
 /*
  * ixp425_icu_init:
@@ -507,10 +512,12 @@ ixp425_intr_dispatch(struct clockframe *frame)
 	}
 	ci->ci_idepth--;
 
+#ifdef __HAVE_FAST_SOFTINTS
 	/* Check for pendings soft intrs. */
 	if ((ixp425_ipending & INT_SWMASK) & ~current_spl_level) {
 		oldirqstate = enable_interrupts(I32_bit);
 		ixp425_do_pending();
 		restore_interrupts(oldirqstate);
 	}
+#endif
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_uuid.c,v 1.11.14.1 2008/01/02 21:56:04 bouyer Exp $	*/
+/*	$NetBSD: kern_uuid.c,v 1.11.14.2 2008/01/08 22:11:38 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2002 Marcel Moolenaar
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_uuid.c,v 1.11.14.1 2008/01/02 21:56:04 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_uuid.c,v 1.11.14.2 2008/01/08 22:11:38 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/endian.h>
@@ -110,6 +110,7 @@ uuid_node(uint16_t *node)
 	int i, s;
 
 	s = splnet();
+	KERNEL_LOCK(1, NULL);
 	IFNET_FOREACH(ifp) {
 		/* Walk the address list */
 		IFADDR_FOREACH(ifa, ifp) {
@@ -118,11 +119,13 @@ uuid_node(uint16_t *node)
 			    sdl->sdl_type == IFT_ETHER) {
 				/* Got a MAC address. */
 				memcpy(node, CLLADDR(sdl), UUID_NODE_LEN);
+				KERNEL_UNLOCK_ONE(NULL);
 				splx(s);
 				return;
 			}
 		}
 	}
+	KERNEL_UNLOCK_ONE(NULL);
 	splx(s);
 
 	for (i = 0; i < (UUID_NODE_LEN>>1); i++)

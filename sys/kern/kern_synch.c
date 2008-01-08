@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.211.6.1 2008/01/02 21:56:01 bouyer Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.211.6.2 2008/01/08 22:11:36 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.211.6.1 2008/01/02 21:56:01 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.211.6.2 2008/01/08 22:11:36 bouyer Exp $");
 
 #include "opt_kstack.h"
 #include "opt_lockdebug.h"
@@ -101,6 +101,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.211.6.1 2008/01/02 21:56:01 bouyer 
 #include <sys/intr.h>
 #include <sys/lwpctl.h>
 #include <sys/atomic.h>
+#include <sys/simplelock.h>
 
 #include <uvm/uvm_extern.h>
 

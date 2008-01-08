@@ -1,4 +1,4 @@
-/*	$NetBSD: bmtphy.c,v 1.23 2007/12/09 20:28:02 jmcneill Exp $	*/
+/*	$NetBSD: bmtphy.c,v 1.23.2.1 2008/01/08 22:11:07 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bmtphy.c,v 1.23 2007/12/09 20:28:02 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bmtphy.c,v 1.23.2.1 2008/01/08 22:11:07 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,9 +99,10 @@ CFATTACH_DECL(bmtphy, sizeof(struct mii_softc),
 
 static int	bmtphy_service(struct mii_softc *, struct mii_data *, int);
 static void	bmtphy_status(struct mii_softc *);
+static void	bmtphy_reset(struct mii_softc *);
 
 static const struct mii_phy_funcs bmtphy_funcs = {
-	bmtphy_service, bmtphy_status, mii_phy_reset,
+	bmtphy_service, bmtphy_status, bmtphy_reset,
 };
 
 static const struct mii_phydesc bmtphys[] = {
@@ -148,6 +149,7 @@ bmtphyattach(struct device *parent, struct device *self, void *aux)
 	aprint_naive(": Media interface\n");
 	aprint_normal(": %s, rev. %d\n", mpd->mpd_name, MII_REV(ma->mii_id2));
 
+	sc->mii_mpd_model = MII_MODEL(ma->mii_id2);
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
 	sc->mii_funcs = &bmtphy_funcs;
@@ -276,6 +278,35 @@ bmtphy_status(struct mii_softc *sc)
 			mii->mii_media_active |= IFM_10_T;
 		if (aux_csr & AUX_CSR_FDX)
 			mii->mii_media_active |= IFM_FDX;
+		else
+			mii->mii_media_active |= IFM_HDX;
 	} else
 		mii->mii_media_active = ife->ifm_media;
 }
+
+static void   
+bmtphy_reset(struct mii_softc *sc)
+{
+	u_int16_t data;
+
+	mii_phy_reset(sc);
+
+	if (sc->mii_mpd_model == MII_MODEL_xxBROADCOM_BCM5221) {
+		/* Enable shadow register mode */
+		data = PHY_READ(sc, 0x1f);
+		PHY_WRITE(sc, 0x1f, data | 0x0080);
+
+		/* Enable APD (Auto PowerDetect) */
+		data = PHY_READ(sc, MII_BMTPHY_AUX2);
+		PHY_WRITE(sc, MII_BMTPHY_AUX2, data | 0x0020);
+
+		/* Enable clocks across APD for
+		 * Auto-MDIX functionality */
+		data = PHY_READ(sc, MII_BMTPHY_INTR);
+		PHY_WRITE(sc, MII_BMTPHY_INTR, data | 0x0004);
+
+		/* Disable shadow register mode */
+		data = PHY_READ(sc, 0x1f);
+		PHY_WRITE(sc, 0x1f, data & ~0x0080);
+	}
+}      

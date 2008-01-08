@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_bsd44_suser.c,v 1.42.6.1 2008/01/02 21:57:56 bouyer Exp $ */
+/* $NetBSD: secmodel_bsd44_suser.c,v 1.42.6.2 2008/01/08 22:11:54 bouyer Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.42.6.1 2008/01/02 21:57:56 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.42.6.2 2008/01/08 22:11:54 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.42.6.1 2008/01/02 21:57:5
 #include <net/route.h>
 #include <sys/ptrace.h>
 #include <sys/vnode.h>
+#include <sys/proc.h>
 
 #include <miscfs/procfs/procfs.h>
 
@@ -532,6 +533,22 @@ secmodel_bsd44_suser_process_cb(kauth_cred_t cred, kauth_action_t action,
 		}
 
 		break;
+
+	case KAUTH_PROCESS_FORK: {
+		int lnprocs = (int)(unsigned long)arg2;
+
+		/*
+		 * Don't allow a nonprivileged user to use the last few
+		 * processes. The variable lnprocs is the current number of
+		 * processes, maxproc is the limit.
+		 */
+		if (__predict_false((lnprocs >= maxproc - 5) && !isroot))
+			result = KAUTH_RESULT_DENY;
+		else
+			result = KAUTH_RESULT_ALLOW;
+
+		break;
+		}
 
 	case KAUTH_PROCESS_NICE:
 		if (isroot) {

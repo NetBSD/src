@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.35.2.1 2008/01/02 21:47:08 bouyer Exp $	*/
+/*	$NetBSD: cpu.h,v 1.35.2.2 2008/01/08 22:09:18 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -111,10 +111,10 @@ struct cpu_info {
 #define	ci_ilevel	ci_istate.ilevel
 
 	int		ci_idepth;
+	void *		ci_intrstack;
 	u_int32_t	ci_imask[NIPL];
 	u_int32_t	ci_iunmask[NIPL];
 
-	paddr_t 	ci_idle_pcb_paddr;
 	u_int		ci_flags;
 	u_int32_t	ci_ipis;
 
@@ -137,13 +137,10 @@ struct cpu_info {
 
 	char		*ci_gdt;
 
-	struct x86_64_tss	ci_doubleflt_tss;
-	struct x86_64_tss	ci_ddbipi_tss;
-
-	char *ci_doubleflt_stack;
-	char *ci_ddbipi_stack;
-
 	struct evcnt ci_ipi_events[X86_NIPI];
+
+	struct x86_64_tss ci_tss;	/* Per-cpu TSS; shared among LWPs */
+	int		ci_tss_sel;	/* TSS selector of this cpu */
 
 	/*
 	 * The following two are actually region_descriptors,
@@ -313,7 +310,6 @@ void cpu_probe_features(struct cpu_info *);
 
 /* machdep.c */
 void	dumpconf(void);
-int	cpu_maxproc(void);
 void	cpu_reset(void);
 void	x86_64_proc0_tss_ldt_init(void);
 void	x86_64_init_pcb_tss_ldt(struct cpu_info *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: elan520reg.h,v 1.7.8.1 2008/01/02 21:48:24 bouyer Exp $	*/
+/*	$NetBSD: elan520reg.h,v 1.7.8.2 2008/01/08 22:10:05 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -225,7 +225,14 @@
 
 #define	MMCR_WPVMAP		0xd44
 #define	MMCR_WPVMAP_RSVD0	__BITS(7, 5)
+/* map write-protection violations to an Elan SC520 interrupt priority,
+ * 1 through 22
+ */ 
 #define	MMCR_WPVMAP_INT_MAP	__BITS(4, 0)
+/* no bits set -> disable */
+#define	MMCR_WPVMAP_INT_OFF	0
+/* all bits set -> NMI */
+#define	MMCR_WPVMAP_INT_NMI	MMCR_WPVMAP_INT_MAP
 
 #define	MMCR_ADDDECCTL		0x80
 #define	MMCR_ADDDECCTL_WPV_INT_ENB	__BIT(7)

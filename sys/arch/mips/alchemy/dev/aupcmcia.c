@@ -1,4 +1,4 @@
-/* $NetBSD: aupcmcia.c,v 1.4.8.1 2008/01/02 21:48:40 bouyer Exp $ */
+/* $NetBSD: aupcmcia.c,v 1.4.8.2 2008/01/08 22:10:10 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -35,7 +35,7 @@
 /* #include "pci.h" */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aupcmcia.c,v 1.4.8.1 2008/01/02 21:48:40 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aupcmcia.c,v 1.4.8.2 2008/01/08 22:10:10 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: aupcmcia.c,v 1.4.8.1 2008/01/02 21:48:40 bouyer Exp 
 #include <sys/kernel.h>
 #include <sys/kthread.h>
 #include <sys/intr.h>
+#include <sys/device.h>
 
 #include <dev/pcmcia/pcmciareg.h>
 #include <dev/pcmcia/pcmciavar.h>

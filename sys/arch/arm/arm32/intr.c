@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.25 2007/12/03 15:33:16 ad Exp $	*/
+/*	$NetBSD: intr.c,v 1.25.6.1 2008/01/08 22:09:25 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.25 2007/12/03 15:33:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.25.6.1 2008/01/08 22:09:25 bouyer Exp $");
 
 #include "opt_irqstats.h"
 
@@ -58,15 +58,16 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.25 2007/12/03 15:33:16 ad Exp $");
  
 extern int current_spl_level;
 
+static u_int spl_smasks[_SPL_LEVELS];
+
+/* Eventually these will become macros */
+
+#ifdef __HAVE_FAST_SOFTINTS
 /* Generate soft interrupt counts if IRQSTATS is defined */
 /* Prototypes */
 static void clearsoftintr(u_int); 
  
 static u_int soft_interrupts = 0;
-static u_int spl_smasks[_SPL_LEVELS];
-
-/* Eventually these will become macros */
-
 #define	SI_SOFTMASK(si)	(1U << (si))
 
 static inline void
@@ -81,7 +82,6 @@ _setsoftintr(int si)
 	atomic_set_bit(&soft_interrupts, SI_SOFTMASK(si));
 }
 
-#ifdef __HAVE_FAST_SOFTINTS
 /* Handle software interrupts */
 
 void
@@ -157,6 +157,7 @@ set_spl_masks(void)
 	spl_masks[_SPL_LEVELS]     = 0;
 
 	spl_smasks[_SPL_0] = 0xffffffff;
+#ifdef __HAVE_FAST_SOFTINTS
 	for (loop = 0; loop < _SPL_SOFTSERIAL; ++loop)
 		spl_smasks[loop] |= SI_SOFTMASK(SI_SOFTSERIAL);
 	for (loop = 0; loop < _SPL_SOFTNET; ++loop)
@@ -165,6 +166,7 @@ set_spl_masks(void)
 		spl_smasks[loop] |= SI_SOFTMASK(SI_SOFTCLOCK);
 	for (loop = 0; loop < _SPL_SOFTBIO; ++loop)
 		spl_smasks[loop] |= SI_SOFTMASK(SI_SOFTBIO);
+#endif
 }
 
 static const int ipl_to_spl_map[] = {

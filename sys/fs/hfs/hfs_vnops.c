@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_vnops.c,v 1.6 2007/12/08 19:29:43 pooka Exp $	*/
+/*	$NetBSD: hfs_vnops.c,v 1.6.4.1 2008/01/08 22:11:24 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hfs_vnops.c,v 1.6 2007/12/08 19:29:43 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hfs_vnops.c,v 1.6.4.1 2008/01/08 22:11:24 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -484,7 +484,6 @@ hfs_vop_open(void *v)
 		struct vnode *a_vp;
 		int a_mode;
 		kauth_cred_t a_cred;
-		struct lwp *a_l;
 	} */ *ap = v;
 	struct hfsnode *hn = VTOH(ap->a_vp);
 #endif
@@ -509,7 +508,6 @@ hfs_vop_close(void *v)
 		struct vnode *a_vp;
 		int a_fflag;
 		kauth_cred_t a_cred;
-		struct lwp *a_l;
 	} */ *ap = v;
 	struct hfsnode *hn = VTOH(ap->a_vp);
 #endif
@@ -529,7 +527,6 @@ hfs_vop_access(void *v)
 		struct vnode *a_vp;
 		int a_mode;
 		kauth_cred_t a_cred;
-		struct lwp *a_l;
 	} */ *ap = v;
 	struct vattr va;
 	int error;
@@ -568,7 +565,6 @@ hfs_vop_getattr(void *v)
 		struct vnode	*a_vp;
 		struct vattr	*a_vap;
 		struct ucred	*a_cred;
-		struct lwp	*a_l;
 	} */ *ap = v;
 	struct vnode	*vp;
 	struct hfsnode	*hp;
@@ -660,7 +656,6 @@ hfs_vop_setattr(void *v)
 		struct vnode	*a_vp;
 		struct vattr	*a_vap;
 		kauth_cred_t	a_cred;
-		struct lwp	*a_l;
 	} */ *ap = v;
 	struct vattr	*vap;
 	struct vnode	*vp;
@@ -1000,7 +995,6 @@ hfs_vop_reclaim(void *v)
 {
 	struct vop_reclaim_args /* {
 		struct vnode *a_vp;
-		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp;
 	struct hfsnode *hp;

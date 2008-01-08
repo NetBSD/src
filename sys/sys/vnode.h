@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.177.6.1 2008/01/02 21:58:12 bouyer Exp $	*/
+/*	$NetBSD: vnode.h,v 1.177.6.2 2008/01/08 22:12:00 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -206,11 +206,12 @@ typedef struct vnode vnode_t;
  * The third set are locked by the underlying file system.
  */
 #define	VU_DIROP	0x01000000	/* LFS: involved in a directory op */
+#define	VU_SOFTDEP	0x02000000	/* FFS: involved in softdep processing */
 
 #define	VNODE_FLAGBITS \
     "\20\1ROOT\2SYSTEM\3ISTTY\4MAPPED\5MPSAFE\6LOCKSWORK\11TEXT\12EXECMAP" \
     "\13WRMAP\14WRMAPDIRTY\15XLOCK\16ALIASED\17ONWORKLST\20MARKER" \
-    "\22LAYER\23MAPPED\24CLEAN\25INACTPEND\26INACTREDO\31DIROP" 
+    "\22LAYER\23MAPPED\24CLEAN\25INACTPEND\26INACTREDO\31DIROP\32VU_SOFTDEP" 
 
 #define	VSIZENOTSET	((voff_t)-1)
 
@@ -568,10 +569,12 @@ void	vwakeup(struct buf *);
 void	vwait(struct vnode *, int);
 void	vclean(struct vnode *, int);
 void	vrelel(struct vnode *, int, int);
-struct	vnode *valloc(struct mount *);
-void	vfree(struct vnode *);
+struct vnode *
+	vnalloc(struct mount *);
+void	vnfree(struct vnode *);
 void	vmark(struct vnode *, struct vnode *);
-struct	vnode *vunmark(struct vnode *);
+struct vnode *
+	vunmark(struct vnode *);
 void	vn_init1(void);
 
 /* see vnsubr(9) */

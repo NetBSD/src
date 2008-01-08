@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.79 2007/12/09 20:27:59 jmcneill Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.79.2.1 2008/01/08 22:11:05 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.79 2007/12/09 20:27:59 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.79.2.1 2008/01/08 22:11:05 bouyer Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1186,6 +1186,9 @@ rtk_intr(void *arg)
 
 	sc = arg;
 	ifp = &sc->ethercom.ec_if;
+
+	if (!device_has_power(&sc->sc_dev))
+		return 0;
 
 	/* Disable interrupts. */
 	CSR_WRITE_2(sc, RTK_IMR, 0x0000);

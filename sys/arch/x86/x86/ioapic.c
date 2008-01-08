@@ -1,4 +1,4 @@
-/* 	$NetBSD: ioapic.c,v 1.29 2007/12/09 20:27:50 jmcneill Exp $	*/
+/* 	$NetBSD: ioapic.c,v 1.29.2.1 2008/01/08 22:10:38 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.29 2007/12/09 20:27:50 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.29.2.1 2008/01/08 22:10:38 bouyer Exp $");
 
 #include "opt_ddb.h"
 
@@ -81,10 +81,10 @@ __KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.29 2007/12/09 20:27:50 jmcneill Exp $")
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
+#include <sys/bus.h>
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/bus.h>
 #include <machine/isa_machdep.h> /* XXX intrhand */
 #include <machine/i82093reg.h>
 #include <machine/i82093var.h>
@@ -93,6 +93,7 @@ __KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.29 2007/12/09 20:27:50 jmcneill Exp $")
 #include <machine/mpbiosvar.h>
 #include <machine/pio.h>
 #include <machine/pmap.h>
+#include <machine/lock.h>
 
 #include "acpi.h"
 #include "opt_mpbios.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.39.6.1 2008/01/02 21:48:05 bouyer Exp $	*/
+/*	$NetBSD: pmap.c,v 1.39.6.2 2008/01/08 22:09:50 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -171,11 +171,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.39.6.1 2008/01/02 21:48:05 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.39.6.2 2008/01/08 22:09:50 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/lock.h>
+#include <sys/simplelock.h>
 #include <sys/malloc.h>
 #include <sys/user.h>
 #include <sys/proc.h>

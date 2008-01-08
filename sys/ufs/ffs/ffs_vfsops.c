@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.212.4.1 2008/01/02 21:58:19 bouyer Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.212.4.2 2008/01/08 22:12:02 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.212.4.1 2008/01/02 21:58:19 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.212.4.2 2008/01/08 22:12:02 bouyer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -133,9 +133,9 @@ static const struct ufs_ops ffs_ufsops = {
 	.uo_balloc = ffs_balloc,
 };
 
-struct pool ffs_inode_pool;
-struct pool ffs_dinode1_pool;
-struct pool ffs_dinode2_pool;
+pool_cache_t ffs_inode_cache;
+pool_cache_t ffs_dinode1_cache;
+pool_cache_t ffs_dinode2_cache;
 
 static void ffs_oldfscompat_read(struct fs *, struct ufsmount *, daddr_t);
 static void ffs_oldfscompat_write(struct fs *, struct ufsmount *);
@@ -259,6 +259,8 @@ ffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 			vref(devvp);
 		}
 	}
+	if ((mp->mnt_flag & MNT_SOFTDEP) != 0)
+		devvp->v_uflag |= VU_SOFTDEP;
 
 	/*
 	 * If mount by non-root, then verify that user has necessary
@@ -648,7 +650,7 @@ ffs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 	}
 
 	/* Allocate a marker vnode. */
-	if ((mvp = valloc(mp)) == NULL)
+	if ((mvp = vnalloc(mp)) == NULL)
 		return ENOMEM;
 	/*
 	 * NOTE: not using the TAILQ_FOREACH here since in this loop vgone()
@@ -698,7 +700,7 @@ ffs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 		mutex_enter(&mntvnode_lock);
 	}
 	mutex_exit(&mntvnode_lock);
-	vfree(mvp);
+	vnfree(mvp);
 	return (error);
 }
 
@@ -1341,7 +1343,7 @@ ffs_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
 	}
 
 	/* Allocate a marker vnode. */
-	if ((mvp = valloc(mp)) == NULL)
+	if ((mvp = vnalloc(mp)) == NULL)
 		return (ENOMEM);
 
 	fstrans_start(mp, FSTRANS_SHARED);
@@ -1436,7 +1438,7 @@ loop:
 			allerror = error;
 	}
 	fstrans_done(mp);
-	vfree(mvp);
+	vnfree(mvp);
 	return (allerror);
 }
 
@@ -1469,7 +1471,7 @@ ffs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 		*vpp = NULL;
 		return (error);
 	}
-	ip = pool_get(&ffs_inode_pool, PR_WAITOK);
+	ip = pool_cache_get(ffs_inode_cache, PR_WAITOK);
 
 	/*
 	 * If someone beat us to it, put back the freshly allocated
@@ -1479,11 +1481,13 @@ ffs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 	if (ufs_ihashget(dev, ino, 0) != NULL) {
 		mutex_exit(&ufs_hashlock);
 		ungetnewvnode(vp);
-		pool_put(&ffs_inode_pool, ip);
+		pool_cache_put(ffs_inode_cache, ip);
 		goto retry;
 	}
 
 	vp->v_vflag |= VV_LOCKSWORK;
+	if ((mp->mnt_flag & MNT_SOFTDEP) != 0)
+		vp->v_uflag |= VU_SOFTDEP;
 
 	/*
 	 * XXX MFS ends up here, too, to allocate an inode.  Should we
@@ -1536,9 +1540,11 @@ ffs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 		return (error);
 	}
 	if (ip->i_ump->um_fstype == UFS1)
-		ip->i_din.ffs1_din = pool_get(&ffs_dinode1_pool, PR_WAITOK);
+		ip->i_din.ffs1_din = pool_cache_get(ffs_dinode1_cache,
+		    PR_WAITOK);
 	else
-		ip->i_din.ffs2_din = pool_get(&ffs_dinode2_pool, PR_WAITOK);
+		ip->i_din.ffs2_din = pool_cache_get(ffs_dinode2_cache,
+		    PR_WAITOK);
 	ffs_load_inode(bp, ip, fs, ino);
 	if (DOINGSOFTDEP(vp))
 		softdep_load_inodeblock(ip);
@@ -1631,12 +1637,12 @@ ffs_init(void)
 	if (ffs_initcount++ > 0)
 		return;
 
-	pool_init(&ffs_inode_pool, sizeof(struct inode), 0, 0, 0,
-		  "ffsinopl", &pool_allocator_nointr, IPL_NONE);
-	pool_init(&ffs_dinode1_pool, sizeof(struct ufs1_dinode), 0, 0, 0,
-		  "dino1pl", &pool_allocator_nointr, IPL_NONE);
-	pool_init(&ffs_dinode2_pool, sizeof(struct ufs2_dinode), 0, 0, 0,
-		  "dino2pl", &pool_allocator_nointr, IPL_NONE);
+	ffs_inode_cache = pool_cache_init(sizeof(struct inode), 0, 0, 0,
+	    "ffsino", NULL, IPL_NONE, NULL, NULL, NULL);
+	ffs_dinode1_cache = pool_cache_init(sizeof(struct ufs1_dinode), 0, 0, 0,
+	    "ffsdino1", NULL, IPL_NONE, NULL, NULL, NULL);
+	ffs_dinode2_cache = pool_cache_init(sizeof(struct ufs2_dinode), 0, 0, 0,
+	    "ffsdino2", NULL, IPL_NONE, NULL, NULL, NULL);
 	softdep_initialize();
 	ffs_snapshot_init();
 	ufs_init();
@@ -1658,9 +1664,9 @@ ffs_done(void)
 	/* XXX softdep cleanup ? */
 	ffs_snapshot_fini();
 	ufs_done();
-	pool_destroy(&ffs_dinode2_pool);
-	pool_destroy(&ffs_dinode1_pool);
-	pool_destroy(&ffs_inode_pool);
+	pool_cache_destroy(ffs_dinode2_cache);
+	pool_cache_destroy(ffs_dinode1_cache);
+	pool_cache_destroy(ffs_inode_cache);
 }
 
 SYSCTL_SETUP(sysctl_vfs_ffs_setup, "sysctl vfs.ffs subtree setup")

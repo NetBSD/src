@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.8 2006/03/29 23:07:50 cube Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.8.52.1 2008/01/08 22:09:19 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -39,43 +39,21 @@
 #ifndef _AMD64_MCONTEXT_H_
 #define _AMD64_MCONTEXT_H_
 
+#include <machine/frame_regs.h>
+
 /*
  * General register state
  */
-#define _NGREG		26
+#define GREG_OFFSETS(reg, REG, idx) _REG_##REG = idx,
+enum { _FRAME_GREG(GREG_OFFSETS) _NGREG = 26 };
+#undef GREG_OFFSETS
+
 typedef	unsigned long	__greg_t;
 typedef	__greg_t	__gregset_t[_NGREG];
 
-/*
- * This is laid out to match trapframe and intrframe (see <machine/frame.h>).
- * Hence, memcpy between gregs and a trapframe is possible.
- */
-#define _REG_RDI	0
-#define _REG_RSI	1
-#define _REG_RDX	2
-#define _REG_RCX	3
-#define _REG_R8		4
-#define _REG_R9		5
-#define _REG_R10	6
-#define _REG_R11	7
-#define _REG_R12	8
-#define _REG_R13	9
-#define _REG_R14	10
-#define _REG_R15	11
-#define _REG_RBP	12
-#define _REG_RBX	13
-#define _REG_RAX	14
-#define _REG_GS		15
-#define _REG_FS		16
-#define _REG_ES		17
-#define _REG_DS		18
-#define _REG_TRAPNO	19
-#define _REG_ERR	20
-#define _REG_RIP	21
-#define _REG_CS		22
-#define _REG_RFL	23
-#define _REG_URSP	24
-#define _REG_SS		25
+/* These names are for compatibility */
+#define	_REG_URSP	_REG_RSP
+#define	_REG_RFL	_REG_RFLAGS
 
 /*
  * Floating point register state
@@ -95,7 +73,7 @@ typedef struct {
 
 #define _UC_UCONTEXT_ALIGN	(~0xf)
 
-#define _UC_MACHINE_SP(uc)	((uc)->uc_mcontext.__gregs[_REG_URSP] - 128)
+#define _UC_MACHINE_SP(uc)	((uc)->uc_mcontext.__gregs[_REG_RSP] - 128)
 #define _UC_MACHINE_PC(uc)	((uc)->uc_mcontext.__gregs[_REG_RIP])
 #define _UC_MACHINE_INTRV(uc)	((uc)->uc_mcontext.__gregs[_REG_RAX])
 

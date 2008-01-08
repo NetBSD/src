@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_object.c,v 1.3.30.1 2008/01/02 21:58:41 bouyer Exp $	*/
+/*	$NetBSD: uvm_object.c,v 1.3.30.2 2008/01/08 22:12:07 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -45,12 +45,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_object.c,v 1.3.30.1 2008/01/02 21:58:41 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_object.c,v 1.3.30.2 2008/01/08 22:12:07 bouyer Exp $");
 
 #include "opt_uvmhist.h"
 
 #include <sys/param.h>
-#include <sys/lock.h>
 
 #include <uvm/uvm.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.52.4.1 2008/01/02 21:58:30 bouyer Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.52.4.2 2008/01/08 22:12:05 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.52.4.1 2008/01/02 21:58:30 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.52.4.2 2008/01/08 22:12:05 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -453,7 +453,7 @@ quotaon(struct lwp *l, struct mount *mp, int type, void *fname)
 		dqrele(NULLVP, dq);
 	}
 	/* Allocate a marker vnode. */
-	if ((mvp = valloc(mp)) == NULL) {
+	if ((mvp = vnalloc(mp)) == NULL) {
 		error = ENOMEM;
 		goto out;
 	}
@@ -487,7 +487,7 @@ again:
 		vput(vp);
 	}
 	mutex_exit(&mntvnode_lock);
-	vfree(mvp);
+	vnfree(mvp);
  out:
 	mutex_enter(&dqlock);
 	ump->um_qflags[type] &= ~QTF_OPENING;
@@ -513,7 +513,7 @@ quotaoff(struct lwp *l, struct mount *mp, int type)
 	int i, error;
 
 	/* Allocate a marker vnode. */
-	if ((mvp = valloc(mp)) == NULL)
+	if ((mvp = vnalloc(mp)) == NULL)
 		return ENOMEM;
 
 	mutex_enter(&dqlock);
@@ -521,7 +521,7 @@ quotaoff(struct lwp *l, struct mount *mp, int type)
 		cv_wait(&dqcv, &dqlock);
 	if ((qvp = ump->um_quotas[type]) == NULLVP) {
 		mutex_exit(&dqlock);
-		vfree(mvp);
+		vnfree(mvp);
 		return (0);
 	}
 	ump->um_qflags[type] |= QTF_CLOSING;
@@ -707,7 +707,7 @@ qsync(struct mount *mp)
 		return (0);
 
 	/* Allocate a marker vnode. */
-	if ((mvp = valloc(mp)) == NULL)
+	if ((mvp = vnalloc(mp)) == NULL)
 		return (ENOMEM);
 
 	/*
@@ -746,7 +746,7 @@ qsync(struct mount *mp)
 		mutex_enter(&mntvnode_lock);
 	}
 	mutex_exit(&mntvnode_lock);
-	vfree(mvp);
+	vnfree(mvp);
 	return (0);
 }
 
@@ -757,7 +757,7 @@ qsync(struct mount *mp)
 	(((((long)(dqvp)) >> 8) + id) & dqhash)
 static LIST_HEAD(dqhashhead, dquot) *dqhashtbl;
 static u_long dqhash;
-static struct pool dquot_pool;
+static pool_cache_t dquot_cache;
 
 MALLOC_JUSTDEFINE(M_DQUOT, "UFS quota", "UFS quota entries");
 
@@ -773,8 +773,8 @@ dqinit(void)
 	malloc_type_attach(M_DQUOT);
 	dqhashtbl =
 	    hashinit(desiredvnodes, HASH_LIST, M_DQUOT, M_WAITOK, &dqhash);
-	pool_init(&dquot_pool, sizeof(struct dquot), 0, 0, 0, "ufsdqpl",
-	    &pool_allocator_nointr, IPL_NONE);
+	dquot_cache = pool_cache_init(sizeof(struct dquot), 0, 0, 0, "ufsdq",
+	    NULL, IPL_NONE, NULL, NULL, NULL);
 }
 
 void
@@ -811,7 +811,7 @@ void
 dqdone(void)
 {
 
-	pool_destroy(&dquot_pool);
+	pool_cache_destroy(dquot_cache);
 	hashdone(dqhashtbl, M_DQUOT);
 	malloc_type_detach(M_DQUOT);
 	cv_destroy(&dqcv);
@@ -860,7 +860,7 @@ dqget(struct vnode *vp, u_long id, struct ufsmount *ump, int type,
 	 * Not in cache, allocate a new one.
 	 */
 	mutex_exit(&dqlock);
-	ndq = pool_get(&dquot_pool, PR_WAITOK);
+	ndq = pool_cache_get(dquot_cache, PR_WAITOK);
 	/*
 	 * Initialize the contents of the dquot structure.
 	 */
@@ -882,7 +882,7 @@ dqget(struct vnode *vp, u_long id, struct ufsmount *ump, int type,
 		KASSERT(dq->dq_cnt > 0);
 		dqref(dq);
 		mutex_exit(&dqlock);
-		pool_put(&dquot_pool, ndq);
+		pool_cache_put(dquot_cache, ndq);
 		*dqp = dq;
 		return 0;
 	}
@@ -975,7 +975,7 @@ dqrele(struct vnode *vp, struct dquot *dq)
 	mutex_exit(&dqlock);
 	mutex_exit(&dq->dq_interlock);
 	mutex_destroy(&dq->dq_interlock);
-	pool_put(&dquot_pool, dq);
+	pool_cache_put(dquot_cache, dq);
 }
 
 /*

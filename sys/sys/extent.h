@@ -1,4 +1,4 @@
-/*	$NetBSD: extent.h,v 1.16 2007/07/09 21:11:32 ad Exp $	*/
+/*	$NetBSD: extent.h,v 1.16.20.1 2008/01/08 22:11:55 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,6 @@
 #ifndef _SYS_EXTENT_H_
 #define _SYS_EXTENT_H_
 
-#include <sys/lock.h>
 #include <sys/queue.h>
 #include <sys/mutex.h>
 #include <sys/condvar.h>

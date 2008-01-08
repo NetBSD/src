@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_macho.c,v 1.40 2007/12/08 19:29:46 pooka Exp $	*/
+/*	$NetBSD: exec_macho.c,v 1.40.4.1 2008/01/08 22:11:29 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_macho.c,v 1.40 2007/12/08 19:29:46 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_macho.c,v 1.40.4.1 2008/01/08 22:11:29 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -579,7 +579,7 @@ exec_macho_makecmds(struct lwp *l, struct exec_package *epp)
 	if (error)
 		return (error);
 
-	emea = malloc(sizeof(struct exec_macho_emul_arg), M_EXEC, M_WAITOK);
+	emea = malloc(sizeof(struct exec_macho_emul_arg), M_TEMP, M_WAITOK);
 	epp->ep_emul_arg = (void *)emea;
 	emea->dynamic = 0;
 
@@ -615,6 +615,6 @@ exec_macho_makecmds(struct lwp *l, struct exec_package *epp)
 bad:
 	kill_vmcmds(&epp->ep_vmcmds);
 bad2:
-	free(emea, M_EXEC);
+	free(emea, M_TEMP);
 	return error;
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc_hpc.c,v 1.7 2007/10/17 19:57:04 garbled Exp $	 */
+/* $NetBSD: pckbc_hpc.c,v 1.7.8.1 2008/01/08 22:10:21 bouyer Exp $	 */
 
 /*
  * Copyright (c) 2003 Christopher SEKIYA
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_hpc.c,v 1.7 2007/10/17 19:57:04 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_hpc.c,v 1.7.8.1 2008/01/08 22:10:21 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,10 +43,9 @@ __KERNEL_RCSID(0, "$NetBSD: pckbc_hpc.c,v 1.7 2007/10/17 19:57:04 garbled Exp $"
 #include <sys/malloc.h>
 #include <sys/errno.h>
 #include <sys/queue.h>
-#include <sys/lock.h>
+#include <sys/bus.h>
 
 #include <machine/autoconf.h>
-#include <machine/bus.h>
 #include <machine/machtype.h>
 
 #include <dev/ic/i8042reg.h>

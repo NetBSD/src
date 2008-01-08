@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.20.6.1 2008/01/02 21:52:48 bouyer Exp $
+	$NetBSD: syscalls.master,v 1.20.6.2 2008/01/08 22:10:47 bouyer Exp $
 
 ; NetBSD i386 COMPAT_LINUX32 system call name/number "master" file.
 ; (See syscalls.conf to see what it is processed into.)
@@ -317,7 +317,6 @@
 190	NOARGS	{ int sys___vfork14(void); }
 191	STD	{ int linux32_sys_ugetrlimit(int which, \
 		    netbsd32_orlimitp_t rlp); }
-#define linux32_sys_mmap2_args linux32_sys_mmap_args
 192	STD	{ linux32_off_t linux32_sys_mmap2(netbsd32_u_long addr, \
 		    netbsd32_size_t len, int prot, int flags, int fd, \
 		    linux32_off_t offset); }

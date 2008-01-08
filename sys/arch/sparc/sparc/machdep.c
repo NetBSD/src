@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.274.8.1 2008/01/02 21:50:24 bouyer Exp $ */
+/*	$NetBSD: machdep.c,v 1.274.8.2 2008/01/08 22:10:25 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.274.8.1 2008/01/02 21:50:24 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.274.8.2 2008/01/08 22:10:25 bouyer Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -105,6 +105,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.274.8.1 2008/01/02 21:50:24 bouyer Exp
 #include <sys/syscallargs.h>
 #include <sys/exec.h>
 #include <sys/ucontext.h>
+#include <sys/simplelock.h>
 
 #include <uvm/uvm.h>		/* we use uvm.kernel_object */
 

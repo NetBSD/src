@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.21 2007/12/03 15:33:43 ad Exp $	*/
+/*	$NetBSD: intr.h,v 1.21.6.1 2008/01/08 22:09:48 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -32,10 +32,6 @@
 
 #ifndef _HPCMIPS_INTR_H_
 #define _HPCMIPS_INTR_H_
-
-#include <sys/device.h>
-#include <sys/lock.h>
-#include <sys/queue.h>
 
 #define	IPL_NONE	0	/* disable only this interrupt */
 #define	IPL_SOFTCLOCK	1	/* clock software interrupts (SI 0) */

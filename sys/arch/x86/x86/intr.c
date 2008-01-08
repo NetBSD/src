@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.37.4.1 2008/01/02 21:51:24 bouyer Exp $	*/
+/*	$NetBSD: intr.c,v 1.37.4.2 2008/01/08 22:10:38 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -140,7 +140,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.37.4.1 2008/01/02 21:51:24 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.37.4.2 2008/01/08 22:10:38 bouyer Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_acpi.h"
@@ -913,6 +913,9 @@ cpu_intr_init(struct cpu_info *ci)
 #if defined(INTRSTACKSIZE)
 	cp = (char *)uvm_km_alloc(kernel_map, INTRSTACKSIZE, 0, UVM_KMF_WIRED);
 	ci->ci_intrstack = cp + INTRSTACKSIZE - sizeof(register_t);
+#if defined(__x86_64__)
+	ci->ci_tss.tss_ist[0] = (uintptr_t)ci->ci_intrstack & ~0xf;
+#endif /* defined(__x86_64__) */
 #endif /* defined(INTRSTACKSIZE) */
 	ci->ci_idepth = -1;
 }

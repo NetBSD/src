@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.19.6.1 2008/01/02 21:57:52 bouyer Exp $	*/
+/*	$NetBSD: emul.c,v 1.19.6.2 2008/01/08 22:11:52 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -98,6 +98,7 @@ panic(const char *fmt, ...)
 	va_list ap;
 
 	va_start(ap, fmt);
+	printf("panic: ");
 	vprintf(fmt, ap);
 	va_end(ap);
 	printf("\n");

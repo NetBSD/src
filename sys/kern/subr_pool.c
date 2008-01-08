@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.138.4.2 2008/01/02 21:56:09 bouyer Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.138.4.3 2008/01/08 22:11:40 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002, 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.138.4.2 2008/01/02 21:56:09 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.138.4.3 2008/01/08 22:11:40 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pool.h"
@@ -52,7 +52,6 @@ __KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.138.4.2 2008/01/02 21:56:09 bouyer E
 #include <sys/errno.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
-#include <sys/lock.h>
 #include <sys/pool.h>
 #include <sys/syslog.h>
 #include <sys/debug.h>

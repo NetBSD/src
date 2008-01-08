@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_sys.h,v 1.67.4.1 2008/01/02 21:55:34 bouyer Exp $	*/
+/*	$NetBSD: puffs_sys.h,v 1.67.4.2 2008/01/08 22:11:27 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -270,7 +270,7 @@ checkerr(struct puffs_mount *pmp, int error, const char *str)
 
 #define PUFFS_MSG_ALLOC(type, a)					\
 	puffs_msgmem_alloc(sizeof(struct puffs_##type##msg_##a),	\
-	    &park_##a, (void **)& a##_msg, 1)
+	    &park_##a, (void *)& a##_msg, 1)
 
 #define PUFFS_MSG_RELEASE(a) 						\
 do {									\

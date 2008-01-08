@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.876.2.2 2008/01/02 21:53:42 bouyer Exp $
+#	$NetBSD: files,v 1.876.2.3 2008/01/08 22:10:52 bouyer Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -24,6 +24,7 @@ defflag				KTRACE
 defflag				MBUFTRACE
 defflag				PTRACE
 defflag				COREDUMP
+defflag opt_modular.h		MODULAR
 
 defparam			DEFCORENAME
 defparam			HZ
@@ -1396,6 +1397,7 @@ file	kern/subr_evcnt.c
 file	kern/subr_extent.c
 file	kern/subr_hash.c
 file	kern/subr_kmem.c
+file	kern/subr_kobj.c
 file	kern/subr_lockdebug.c
 file	kern/subr_log.c
 file	kern/subr_pool.c

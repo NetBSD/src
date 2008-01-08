@@ -1,4 +1,4 @@
-/*	$NetBSD: attimer_isa.c,v 1.7.8.1 2008/01/02 21:54:24 bouyer Exp $	*/
+/*	$NetBSD: attimer_isa.c,v 1.7.8.2 2008/01/08 22:11:06 bouyer Exp $	*/
 
 /*
  *  Copyright (c) 2005 The NetBSD Foundation.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: attimer_isa.c,v 1.7.8.1 2008/01/02 21:54:24 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: attimer_isa.c,v 1.7.8.2 2008/01/08 22:11:06 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,7 +81,7 @@ static int	attimer_isa_match(device_t, struct cfdata *, void *);
 static void	attimer_isa_attach(device_t, device_t, void *);
 
 CFATTACH_DECL(attimer_isa, sizeof(struct attimer_softc),
-    attimer_isa_match, attimer_isa_attach, NULL, NULL);
+    attimer_isa_match, attimer_isa_attach, attimer_detach, NULL);
 
 static int
 attimer_isa_match(device_t parent, struct cfdata *match, void *aux)
@@ -136,7 +136,9 @@ attimer_isa_attach(device_t parent, device_t self, void *aux)
 	aprint_naive(": AT Timer\n");
 	aprint_normal(": AT Timer\n");
 
-	if (bus_space_map(sc->sc_iot, IO_TIMER1, 4, 0, &sc->sc_ioh) != 0)
+	sc->sc_size = 4;
+	if (bus_space_map(sc->sc_iot, IO_TIMER1, sc->sc_size, 0,
+	                  &sc->sc_ioh) != 0)
 		aprint_error_dev(&sc->sc_dev, "could not map registers\n");
 	else
 		attimer_attach(sc);

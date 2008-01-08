@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.36.4.2 2008/01/02 21:56:11 bouyer Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.36.4.3 2008/01/08 22:11:41 bouyer Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.36.4.2 2008/01/02 21:56:11 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.36.4.3 2008/01/08 22:11:41 bouyer Exp $");
 
 #define	VMEM_DEBUG
 #if defined(_KERNEL)
@@ -54,7 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.36.4.2 2008/01/02 21:56:11 bouyer Ex
 #include <sys/systm.h>
 #include <sys/kernel.h>	/* hz */
 #include <sys/callout.h>
-#include <sys/lock.h>
 #include <sys/malloc.h>
 #include <sys/once.h>
 #include <sys/pool.h>

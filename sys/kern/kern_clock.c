@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.114.6.1 2008/01/02 21:55:46 bouyer Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.114.6.2 2008/01/08 22:11:31 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.114.6.1 2008/01/02 21:55:46 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.114.6.2 2008/01/08 22:11:31 bouyer Exp $");
 
 #include "opt_ntp.h"
 #include "opt_multiprocessor.h"
@@ -1402,11 +1402,12 @@ microuptime(struct timeval *tv)
 	int s;
 
 	/* microtime + time - mono_time */
-	microtime(&t);
 	s = splclock();
+	microtime(&t);
 	timeradd(&t, &time, &t);
 	timersub(&t, &mono_time, &t);
 	splx(s);
+	*tv = t;
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.54 2007/11/19 18:51:39 ad Exp $	*/
+/*	$NetBSD: zs.c,v 1.54.6.1 2008/01/08 22:09:36 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.54 2007/11/19 18:51:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.54.6.1 2008/01/08 22:09:36 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -726,9 +726,10 @@ int	unit;
 long	*ptime;
 const char *what;
 {
+	time_t cur_sec = time_second;
 
-	if(*ptime != time.tv_sec) {
-		*ptime = time.tv_sec;
+	if(*ptime != cur_sec) {
+		*ptime = cur_sec;
 		log(LOG_WARNING, "zs%d%c: %s overrun\n", unit >> 1,
 		    (unit & 1) + 'a', what);
 	}

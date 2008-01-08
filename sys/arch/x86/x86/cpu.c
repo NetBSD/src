@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.12.2.1 2008/01/02 21:51:23 bouyer Exp $	*/
+/*	$NetBSD: cpu.c,v 1.12.2.2 2008/01/08 22:10:37 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.12.2.1 2008/01/02 21:51:23 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.12.2.2 2008/01/08 22:10:37 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -163,7 +163,7 @@ struct cpu_info *cpu_info_list = &cpu_info_primary;
 static void	cpu_set_tss_gates(struct cpu_info *);
 
 #ifdef i386
-static void	cpu_init_tss(struct i386tss *, void *, void *);
+static void	tss_init(struct i386tss *, void *, void *);
 #endif
 
 #ifdef MULTIPROCESSOR
@@ -331,6 +331,7 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 			return;
 		}
 #endif
+		cpu_init_tss(ci);
 	} else {
 		KASSERT(ci->ci_data.cpu_idlelwp != NULL);
 	}
@@ -657,6 +658,7 @@ cpu_hatch(void *v)
 	fpuinit(ci);
 #endif
 	lldt(GSYSSEL(GLDT_SEL, SEL_KPL));
+	ltr(ci->ci_tss_sel);
 
 	cpu_init(ci);
 	cpu_get_tsc_freq(ci);
@@ -732,7 +734,7 @@ cpu_copy_trampoline(void)
 
 #ifdef i386
 static void
-cpu_init_tss(struct i386tss *tss, void *stack, void *func)
+tss_init(struct i386tss *tss, void *stack, void *func)
 {
 	memset(tss, 0, sizeof *tss);
 	tss->tss_esp0 = tss->tss_esp = (int)((char *)stack + USPACE - 16);
@@ -764,7 +766,7 @@ cpu_set_tss_gates(struct cpu_info *ci)
 
 	ci->ci_doubleflt_stack = (char *)uvm_km_alloc(kernel_map, USPACE, 0,
 	    UVM_KMF_WIRED);
-	cpu_init_tss(&ci->ci_doubleflt_tss, ci->ci_doubleflt_stack,
+	tss_init(&ci->ci_doubleflt_tss, ci->ci_doubleflt_stack,
 	    IDTVEC(tss_trap08));
 	setsegment(&sd, &ci->ci_doubleflt_tss, sizeof(struct i386tss) - 1,
 	    SDT_SYS386TSS, SEL_KPL, 0, 0);
@@ -782,8 +784,7 @@ cpu_set_tss_gates(struct cpu_info *ci)
 	 */
 	ci->ci_ddbipi_stack = (char *)uvm_km_alloc(kernel_map, USPACE, 0,
 	    UVM_KMF_WIRED);
-	cpu_init_tss(&ci->ci_ddbipi_tss, ci->ci_ddbipi_stack,
-	    Xintrddbipi);
+	tss_init(&ci->ci_ddbipi_tss, ci->ci_ddbipi_stack, Xintrddbipi);
 
 	setsegment(&sd, &ci->ci_ddbipi_tss, sizeof(struct i386tss) - 1,
 	    SDT_SYS386TSS, SEL_KPL, 0, 0);

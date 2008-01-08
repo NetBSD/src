@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.15.2.1 2008/01/02 21:51:22 bouyer Exp $	*/
+/*	$NetBSD: clock.c,v 1.15.2.2 2008/01/08 22:10:35 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -121,7 +121,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.15.2.1 2008/01/02 21:51:22 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.15.2.2 2008/01/08 22:10:35 bouyer Exp $");
 
 /* #define CLOCKDEBUG */
 /* #define CLOCK_PARANOIA */
@@ -136,11 +136,12 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.15.2.1 2008/01/02 21:51:22 bouyer Exp $"
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/mutex.h>
+#include <sys/cpu.h>
+#include <sys/intr.h>
 
-#include <machine/cpu.h>
-#include <machine/intr.h>
 #include <machine/pio.h>
 #include <machine/cpufunc.h>
+#include <machine/lock.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
@@ -148,6 +149,7 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.15.2.1 2008/01/02 21:51:22 bouyer Exp $"
 #include <dev/ic/i8253reg.h>
 #include <i386/isa/nvram.h>
 #include <x86/x86/tsc.h>
+#include <x86/lock.h>
 #include <dev/clock_subr.h>
 #include <machine/specialreg.h> 
 
@@ -166,9 +168,10 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.15.2.1 2008/01/02 21:51:22 bouyer Exp $"
 
 int sysbeepmatch(struct device *, struct cfdata *, void *);
 void sysbeepattach(struct device *, struct device *, void *);
+int sysbeepdetach(device_t, int);
 
 CFATTACH_DECL(sysbeep, sizeof(struct device),
-    sysbeepmatch, sysbeepattach, NULL, NULL);
+    sysbeepmatch, sysbeepattach, sysbeepdetach, NULL);
 
 static int ppi_attached;
 static pcppi_tag_t ppicookie;
@@ -194,6 +197,7 @@ static void	rtcput(mc_todregs *);
 static int	cmoscheck(void);
 
 static int	clock_expandyear(int);
+int 		sysbeepdetach(device_t, int);
 
 static unsigned int	gettick_broken_latch(void);
 
@@ -550,6 +554,14 @@ sysbeepattach(struct device *parent, struct device *self,
 
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
+}
+
+int
+sysbeepdetach(device_t self, int flags)
+{
+	pmf_device_deregister(self);
+	ppi_attached = 0;
+	return 0;
 }
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr2.c,v 1.8.6.1 2008/01/02 21:56:24 bouyer Exp $	*/
+/*	$NetBSD: vfs_subr2.c,v 1.8.6.2 2008/01/08 22:11:46 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>  
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr2.c,v 1.8.6.1 2008/01/02 21:56:24 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr2.c,v 1.8.6.2 2008/01/08 22:11:46 bouyer Exp $");
 
 #include "opt_ddb.h"
 
@@ -170,6 +170,8 @@ vntblinit(void)
 
 /*
  * Lookup a mount point by filesystem identifier.
+ *
+ * XXX Needs to add a reference to the mount point.
  */
 struct mount *
 vfs_getvfs(fsid_t *fsid)
@@ -533,6 +535,7 @@ reassignbuf(struct buf *bp, struct vnode *vp)
 	struct buflists *listheadp;
 	int delayx;
 
+	KASSERT(mutex_owned(&bufcache_lock));
 	KASSERT(bp->b_objlock == &vp->v_interlock);
 	KASSERT(mutex_owned(&vp->v_interlock));
 	KASSERT((bp->b_cflags & BC_BUSY) != 0);
@@ -989,6 +992,186 @@ mount_setspecific(struct mount *mp, specificdata_key_t key, void *data)
 
 	specificdata_setspecific(mount_specificdata_domain,
 				 &mp->mnt_specdataref, key, data);
+}
+
+int
+VFS_MOUNT(struct mount *mp, const char *a, void *b, size_t *c)
+{
+	int error;
+
+	KERNEL_LOCK(1, NULL);
+	error = (*(mp->mnt_op->vfs_mount))(mp, a, b, c);
+	KERNEL_UNLOCK_ONE(NULL);
+
+	return error;
+}
+	
+int
+VFS_START(struct mount *mp, int a)
+{
+	int error;
+
+	if ((mp->mnt_iflag & IMNT_MPSAFE) == 0) {
+		KERNEL_LOCK(1, NULL);
+	}
+	error = (*(mp->mnt_op->vfs_start))(mp, a);
+	if ((mp->mnt_iflag & IMNT_MPSAFE) == 0) {
+		KERNEL_UNLOCK_ONE(NULL);
+	}
+
+	return error;
+}
+	
+int
+VFS_UNMOUNT(struct mount *mp, int a)
+{
+	int error;
+
+	KERNEL_LOCK(1, NULL);
+	error = (*(mp->mnt_op->vfs_unmount))(mp, a);
+	KERNEL_UNLOCK_ONE(NULL);
+
+	return error;
+}
+
+int
+VFS_ROOT(struct mount *mp, struct vnode **a)
+{
+	int error;
+
+	if ((mp->mnt_iflag & IMNT_MPSAFE) == 0) {
+		KERNEL_LOCK(1, NULL);
+	}
+	error = (*(mp->mnt_op->vfs_root))(mp, a);
+	if ((mp->mnt_iflag & IMNT_MPSAFE) == 0) {
+		KERNEL_UNLOCK_ONE(NULL);
+	}
+
+	return error;
+}
+
+int
+VFS_QUOTACTL(struct mount *mp, int a, uid_t b, void *c)
+{
+	int error;
+
+	if ((mp->mnt_iflag & IMNT_MPSAFE) == 0) {
+		KERNEL_LOCK(1, NULL);
+	}
+	error = (*(mp->mnt_op->vfs_quotactl))(mp, a, b, c);
+	if ((mp->mnt_iflag & IMNT_MPSAFE) == 0) {
+		KERNEL_UNLOCK_ONE(NULL);
+	}
+
+	return error;
+}
+
+int
+VFS_STATVFS(struct mount *mp, struct statvfs *a)
+{
+	int error;
+
+	if ((mp->mnt_iflag & IMNT_MPSAFE) == 0) {
+		KERNEL_LOCK(1, NULL);
+	}
+	error = (*(mp->mnt_op->vfs_statvfs))(mp, a);
+	if ((mp->mnt_iflag & IMNT_MPSAFE) == 0) {
+		KERNEL_UNLOCK_ONE(NULL);
+	}
+
+	return error;
+}
+
+int
+VFS_SYNC(struct mount *mp, int a, struct kauth_cred *b)
+{
+	int error;
+
+	if ((mp->mnt_iflag & IMNT_MPSAFE) == 0) {
+		KERNEL_LOCK(1, NULL);
+	}
+	error = (*(mp->mnt_op->vfs_sync))(mp, a, b);
+	if ((mp->mnt_iflag & IMNT_MPSAFE) == 0) {
+		KERNEL_UNLOCK_ONE(NULL);
+	}
+
+	return error;
+}
+
+int
+VFS_FHTOVP(struct mount *mp, struct fid *a, struct vnode **b)
+{
+	int error;
+
+	if ((mp->mnt_iflag & IMNT_MPSAFE) == 0) {
+		KERNEL_LOCK(1, NULL);
+	}
+	error = (*(mp->mnt_op->vfs_fhtovp))(mp, a, b);
+	if ((mp->mnt_iflag & IMNT_MPSAFE) == 0) {
+		KERNEL_UNLOCK_ONE(NULL);
+	}
+
+	return error;
+}
+
+int
+VFS_VPTOFH(struct vnode *vp, struct fid *a, size_t *b)
+{
+	int error;
+
+	if ((vp->v_vflag & VV_MPSAFE) == 0) {
+		KERNEL_LOCK(1, NULL);
+	}
+	error = (*(vp->v_mount->mnt_op->vfs_vptofh))(vp, a, b);
+	if ((vp->v_vflag & VV_MPSAFE) == 0) {
+		KERNEL_UNLOCK_ONE(NULL);
+	}
+
+	return error;
+}
+
+int
+VFS_SNAPSHOT(struct mount *mp, struct vnode *a, struct timespec *b)
+{
+	int error;
+
+	if ((mp->mnt_iflag & IMNT_MPSAFE) == 0) {
+		KERNEL_LOCK(1, NULL);
+	}
+	error = (*(mp->mnt_op->vfs_snapshot))(mp, a, b);
+	if ((mp->mnt_iflag & IMNT_MPSAFE) == 0) {
+		KERNEL_UNLOCK_ONE(NULL);
+	}
+
+	return error;
+}
+
+int
+VFS_EXTATTRCTL(struct mount *mp, int a, struct vnode *b, int c, const char *d)
+{
+	int error;
+
+	KERNEL_LOCK(1, NULL);		/* XXXSMP check ffs */
+	error = (*(mp->mnt_op->vfs_extattrctl))(mp, a, b, c, d);
+	KERNEL_UNLOCK_ONE(NULL);	/* XXX */
+
+	return error;
+}
+
+int
+VFS_SUSPENDCTL(struct mount *mp, int a)
+{
+	int error;
+
+	if ((mp->mnt_iflag & IMNT_MPSAFE) == 0) {
+		KERNEL_LOCK(1, NULL);
+	}
+	error = (*(mp->mnt_op->vfs_suspendctl))(mp, a);
+	if ((mp->mnt_iflag & IMNT_MPSAFE) == 0) {
+		KERNEL_UNLOCK_ONE(NULL);
+	}
+
+	return error;
 }
 
 #ifdef DDB

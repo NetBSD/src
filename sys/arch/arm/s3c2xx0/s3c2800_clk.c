@@ -1,4 +1,4 @@
-/* $NetBSD: s3c2800_clk.c,v 1.10 2007/01/06 16:18:18 christos Exp $ */
+/* $NetBSD: s3c2800_clk.c,v 1.10.38.1 2008/01/08 22:09:31 bouyer Exp $ */
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -34,7 +34,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2800_clk.c,v 1.10 2007/01/06 16:18:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2800_clk.c,v 1.10.38.1 2008/01/08 22:09:31 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -290,7 +290,7 @@ cpu_initclocks()
 
 	s3c2800_intr_establish(S3C2800_INT_TIMER0, IPL_CLOCK, 
 			       IST_NONE, hardintr, 0);
-	s3c2800_intr_establish(S3C2800_INT_TIMER1, IPL_STATCLOCK,
+	s3c2800_intr_establish(S3C2800_INT_TIMER1, IPL_HIGH,
 			       IST_NONE, statintr, 0);
 
 	/* start timers */

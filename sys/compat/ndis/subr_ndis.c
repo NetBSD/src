@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sys/compat/ndis/subr_ndis.c,v 1.67.2.7 2005/03/31 21:50:11 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: subr_ndis.c,v 1.11.6.1 2008/01/02 21:53:04 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_ndis.c,v 1.11.6.2 2008/01/08 22:10:48 bouyer Exp $");
 #endif
 
 /*
@@ -851,7 +851,7 @@ NdisReadConfiguration(status, parm, cfg, key, type)
 #else /* __NetBSD__ */
 	mib[0] = sc->ndis_sysctl_mib;
 	
-	sysctl_lock(curlwp, NULL, 0);
+	sysctl_lock(false);
 		error = sysctl_locate(curlwp, &mib[0], 1, &pnode, NULL);
 	
 		numcld  = pnode->sysctl_csize;
@@ -865,7 +865,7 @@ NdisReadConfiguration(status, parm, cfg, key, type)
 			}
 			ndiscld++;
 		}
-	sysctl_unlock(curlwp);
+	sysctl_unlock();
 	
 	if(i < numcld) {
 		/* Found it */

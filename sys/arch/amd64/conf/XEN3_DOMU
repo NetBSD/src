@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOMU,v 1.2.12.1 2008/01/02 21:47:06 bouyer Exp $
+# $NetBSD: XEN3_DOMU,v 1.2.12.2 2008/01/08 22:09:18 bouyer Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -53,8 +53,8 @@ options 	DDB_ONPANIC=1	# see also sysctl(8): `ddb.onpanic'
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	KGDB		# remote debugger
 #options 	KGDB_DEVNAME="\"com\"",KGDB_DEVADDR=0x2f8,KGDB_DEVRATE=57600
-makeoptions	DEBUG="-g"	# compile full symbol table
-makeoptions	COPTS="-O2 -fno-omit-frame-pointer"
+makeoptions 	DEBUG="-g"	# compile full symbol table
+makeoptions 	COPTS="-O2 -fno-omit-frame-pointer"
 options DDB_COMMANDONENTER="trace;show registers"
 
 # Compatibility options

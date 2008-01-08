@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbc_acpi.c,v 1.23 2007/12/09 20:27:53 jmcneill Exp $	*/
+/*	$NetBSD: pckbc_acpi.c,v 1.23.2.1 2008/01/08 22:10:56 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_acpi.c,v 1.23 2007/12/09 20:27:53 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_acpi.c,v 1.23.2.1 2008/01/08 22:10:56 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,8 +59,6 @@ __KERNEL_RCSID(0, "$NetBSD: pckbc_acpi.c,v 1.23 2007/12/09 20:27:53 jmcneill Exp
 #include <sys/malloc.h>
 #include <sys/errno.h>
 #include <sys/queue.h>
-#include <sys/lock.h>
-
 #include <sys/bus.h>
 
 #include <dev/isa/isareg.h>

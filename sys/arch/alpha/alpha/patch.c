@@ -1,4 +1,4 @@
-/*	$NetBSD: patch.c,v 1.2 2007/11/28 17:40:03 ad Exp $	*/
+/*	$NetBSD: patch.c,v 1.2.10.1 2008/01/08 22:09:10 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.2 2007/11/28 17:40:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.2.10.1 2008/01/08 22:09:10 bouyer Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -91,11 +91,11 @@ alpha_patch(bool is_mp)
 	 * kernel code.
 	 */
 
-	KASSERT(curcpu()->ci_flags & CPUF_PRIMARY);
-	KASSERT((cpus_running & ~(1UL << cpu_number())) == 0);
-
 #if defined(MULTIPROCESSOR)
 	if (is_mp) {
+		KASSERT(curcpu()->ci_flags & CPUF_PRIMARY);
+		KASSERT((cpus_running & ~(1UL << cpu_number())) == 0);
+
 		patchfunc(_membar_producer_mp, _membar_producer_mp_end,
 			  _membar_producer, _membar_producer_end);
 		patchfunc(_membar_sync_mp, _membar_sync_mp_end,

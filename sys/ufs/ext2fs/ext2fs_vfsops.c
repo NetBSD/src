@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.125.4.1 2008/01/02 21:58:15 bouyer Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.125.4.2 2008/01/08 22:12:00 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.125.4.1 2008/01/02 21:58:15 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.125.4.2 2008/01/08 22:12:00 bouyer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -545,7 +545,7 @@ ext2fs_reload(struct mount *mountp, kauth_cred_t cred)
 	}
 
 	/* Allocate a marker vnode. */
-	if ((mvp = valloc(mountp)) == NULL)
+	if ((mvp = vnalloc(mountp)) == NULL)
 		return (ENOMEM);
 	/*
 	 * NOTE: not using the TAILQ_FOREACH here since in this loop vgone()
@@ -597,7 +597,7 @@ loop:
 		mutex_enter(&mntvnode_lock);
 	}
 	mutex_exit(&mntvnode_lock);
-	vfree(mvp);
+	vnfree(mvp);
 	return (error);
 }
 
@@ -869,7 +869,7 @@ ext2fs_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
 	}
 
 	/* Allocate a marker vnode. */
-	if ((mvp = valloc(mp)) == NULL)
+	if ((mvp = vnalloc(mp)) == NULL)
 		return (ENOMEM);
 
 	/*
@@ -919,7 +919,7 @@ loop:
 		mutex_enter(&mntvnode_lock);
 	}
 	mutex_exit(&mntvnode_lock);
-	vfree(mvp);
+	vnfree(mvp);
 	/*
 	 * Force stale file system control information to be flushed.
 	 */

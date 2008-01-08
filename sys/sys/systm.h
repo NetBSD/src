@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.203.6.1 2008/01/02 21:58:10 bouyer Exp $	*/
+/*	$NetBSD: systm.h,v 1.203.6.2 2008/01/08 22:12:00 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -42,7 +42,6 @@
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
-#include "opt_syscall_debug.h"
 #endif
 
 #include <machine/endian.h>
@@ -372,10 +371,9 @@ void	doforkhooks(struct proc *, struct proc *);
  */
 #ifdef _KERNEL
 bool	trace_is_enabled(struct proc *);
-int	trace_enter(struct lwp *, register_t, register_t,
+int	trace_enter(register_t, register_t,
 	    const struct sysent *, const register_t *);
-void	trace_exit(struct lwp *, register_t, const register_t *,
-	    register_t [], int);
+void	trace_exit(register_t, const register_t *, register_t [], int);
 #endif
 
 int	uiomove(void *, size_t, struct uio *);
@@ -466,10 +464,9 @@ extern int db_fromconsole; /* XXX ddb/ddbvar.h */
 #endif
 #endif /* _KERNEL */
 
-#ifdef SYSCALL_DEBUG
-void scdebug_call(struct lwp *, register_t, register_t[]);
-void scdebug_ret(struct lwp *, register_t, int, register_t[]);
-#endif /* SYSCALL_DEBUG */
+/* For SYSCALL_DEBUG */
+void scdebug_call(register_t, const register_t[]);
+void scdebug_ret(register_t, int, const register_t[]);
 
 void	kernel_lock_init(void);
 void	_kernel_lock(int, struct lwp *);

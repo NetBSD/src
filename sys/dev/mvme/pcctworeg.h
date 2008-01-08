@@ -1,4 +1,4 @@
-/*	$NetBSD: pcctworeg.h,v 1.1 2002/02/12 20:38:49 scw Exp $	*/
+/*	$NetBSD: pcctworeg.h,v 1.1.108.1 2008/01/08 22:11:08 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -239,6 +239,7 @@
  * this is simple since the Tick Counters already have
  * a 1uS period. (PCC2REG_TIMER[12]_COMPARE)
  */
+#define PCCTWO_TIMERFREQ	1000000
 #define PCCTWO_US2LIM(us)	(us)
 #define PCCTWO_LIM2US(lim)	(lim)
 

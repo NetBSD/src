@@ -1,4 +1,4 @@
-/* $NetBSD: nextkbd.c,v 1.12 2007/03/04 06:00:27 christos Exp $ */
+/* $NetBSD: nextkbd.c,v 1.12.32.1 2008/01/08 22:10:14 bouyer Exp $ */
 /*
  * Copyright (c) 1998 Matt DeBergalis
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nextkbd.c,v 1.12 2007/03/04 06:00:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nextkbd.c,v 1.12.32.1 2008/01/08 22:10:14 bouyer Exp $");
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
@@ -42,12 +42,11 @@ __KERNEL_RCSID(0, "$NetBSD: nextkbd.c,v 1.12 2007/03/04 06:00:27 christos Exp $"
 #include <sys/malloc.h>
 #include <sys/errno.h>
 #include <sys/queue.h>
-#include <sys/lock.h>
+#include <sys/bus.h>
+#include <sys/cpu.h>
+#include <sys/intr.h>
 
 #include <machine/autoconf.h>
-#include <machine/bus.h>
-#include <machine/cpu.h>
-#include <machine/intr.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wskbdvar.h>

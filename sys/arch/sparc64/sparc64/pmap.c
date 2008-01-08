@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.202.2.1 2008/01/02 21:50:32 bouyer Exp $	*/
+/*	$NetBSD: pmap.c,v 1.202.2.2 2008/01/08 22:10:30 bouyer Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.202.2.1 2008/01/02 21:50:32 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.202.2.2 2008/01/08 22:10:30 bouyer Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -39,7 +39,6 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.202.2.1 2008/01/02 21:50:32 bouyer Exp $"
 #include <sys/queue.h>
 #include <sys/systm.h>
 #include <sys/msgbuf.h>
-#include <sys/lock.h>
 #include <sys/pool.h>
 #include <sys/exec.h>
 #include <sys/core.h>
@@ -148,7 +147,6 @@ int tsbsize;		/* tsbents = 512 * 2^^tsbsize */
 
 struct pmap kernel_pmap_;
 
-int physmem;
 /*
  * Virtual and physical addresses of the start and end of kernel text
  * and data segments.
@@ -934,7 +932,6 @@ pmap_bootstrap(u_long kernelstart, u_long kernelend)
 	/*
 	 * Allocate and clear out pmap_kernel()->pm_segs[]
 	 */
-	mutex_init(&pmap_lock, MUTEX_DEFAULT, IPL_NONE);
 	pmap_kernel()->pm_refs = 1;
 	pmap_kernel()->pm_ctx = 0;
 
@@ -1124,6 +1121,7 @@ pmap_bootstrap(u_long kernelstart, u_long kernelend)
 	avail_start = nextavail;
 	for (mp = avail; mp->size; mp++)
 		avail_end = mp->start+mp->size;
+
 	BDPRINTF(PDB_BOOT1, ("Finished pmap_bootstrap()\n"));
 
 	BDPRINTF(PDB_BOOT, ("left kdata: %" PRId64 " @%" PRIx64 ".\n",
@@ -1182,6 +1180,8 @@ pmap_init()
 
 	vm_first_phys = avail_start;
 	vm_num_phys = avail_end - avail_start;
+
+	mutex_init(&pmap_lock, MUTEX_DEFAULT, IPL_NONE);
 }
 
 /*
@@ -1293,7 +1293,7 @@ pmap_destroy(pm)
 {
 	struct vm_page *pg, *nextpg;
 
-	if (atomic_dec_uint_nv(&pm->pm_refs) > 0) {
+	if ((int)atomic_dec_uint_nv(&pm->pm_refs) > 0) {
 		return;
 	}
 	DPRINTF(PDB_DESTROY, ("pmap_destroy: freeing pmap %p\n", pm));

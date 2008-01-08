@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.13.2.5 2008/01/02 21:51:25 bouyer Exp $	*/
+/*	$NetBSD: pmap.c,v 1.13.2.6 2008/01/08 22:10:39 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.13.2.5 2008/01/02 21:51:25 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.13.2.6 2008/01/08 22:10:39 bouyer Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -797,9 +797,8 @@ pmap_exec_account(struct pmap *pm, vaddr_t va, pt_entry_t opte, pt_entry_t npte)
 
 	if ((opte & PG_X) && (npte & PG_X) == 0 && va == pm->pm_hiexec) {
 		struct trapframe *tf = curlwp->l_md.md_regs;
-		struct pcb *pcb = &curlwp->l_addr->u_pcb;
 
-		pcb->pcb_cs = tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
+		tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
 		pm->pm_hiexec = I386_MAX_EXE_ADDR;
 	}
 #endif /* !defined(__x86_64__) */
@@ -835,9 +834,9 @@ pmap_exec_fixup(struct vm_map *map, struct trapframe *tf, struct pcb *pcb)
 
 	pm->pm_hiexec = va;
 	if (pm->pm_hiexec > I386_MAX_EXE_ADDR) {
-		pcb->pcb_cs = tf->tf_cs = GSEL(GUCODEBIG_SEL, SEL_UPL);
+		tf->tf_cs = GSEL(GUCODEBIG_SEL, SEL_UPL);
 	} else {
-		pcb->pcb_cs = tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
+		tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
 		return (0);
 	}
 	return (1);
@@ -2331,7 +2330,10 @@ pmap_load(void)
 	if (pmap->pm_pdir[PDIR_SLOT_APTE])
 	        pmap_pte_set(&pmap->pm_pdir[PDIR_SLOT_APTE], 0);
 	/* lldt() does pmap_pte_flush() */
-#endif
+#else /* XXX only native i386 - is it right ? */
+	ci->ci_tss.tss_ldt = pcb->pcb_ldt_sel;
+	ci->ci_tss.tss_cr3 = pcb->pcb_cr3;
+#endif /* XEN */
 	lldt(pcb->pcb_ldt_sel);
 	lcr3(pcb->pcb_cr3);
 #endif /* XEN && x86_64 */

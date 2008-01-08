@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.102.4.1 2008/01/02 21:58:18 bouyer Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.102.4.2 2008/01/08 22:12:01 bouyer Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.102.4.1 2008/01/02 21:58:18 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.102.4.2 2008/01/08 22:12:01 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -2240,7 +2240,7 @@ softdep_freefile(struct vnode *pvp, ino_t ino, int mode)
 	if ((ip->i_flag & IN_SPACECOUNTED) == 0) {
 		mutex_enter(&ump->um_lock);
 		ip->i_fs->fs_pendinginodes += 1;
-		mutex_enter(&ump->um_lock);
+		mutex_exit(&ump->um_lock);
 	}
 
 	/*
@@ -3827,8 +3827,7 @@ softdep_disk_write_complete(bp)
 	}
 
 	/* Avoid taking bufcache_lock if not doing softdep. */
-	if (bp->b_vp == NULL || bp->b_vp->v_mount == NULL ||
-	    !DOINGSOFTDEP(bp->b_vp))
+	if (bp->b_vp == NULL || !DOINGSOFTDEP(bp->b_vp))
 	    	return;
 
 	/*

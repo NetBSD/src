@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.2.2 2008/01/02 21:57:48 bouyer Exp $
+#	$NetBSD: Makefile,v 1.1.2.3 2008/01/08 22:11:52 bouyer Exp $
 #
 
 .include <bsd.own.mk>
@@ -13,9 +13,10 @@ SRCS+=	putter.c
 
 SRCS+=	puffs_rumpglue.c
 
-CPPFLAGS+= -I${NETBSDSRCDIR}/sys/rump/librump/rumpkern
+CPPFLAGS+= -I${NETBSDSRCDIR}/sys/rump/librump/rumpkern -I${LIBRUMPDIR}
 CPPFLAGS+= -I${NETBSDSRCDIR}/sys/rump/librump/rumpuser
 CPPFLAGS+= -DPUFFSDEBUG -DPUTTERDEBUG
 
+.include "${NETBSDSRCDIR}/sys/rump/Makefile.rump"
 .include <bsd.lib.mk>
 .include <bsd.klinks.mk>

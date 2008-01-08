@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.c,v 1.61.4.1 2008/01/02 21:55:33 bouyer Exp $	*/
+/*	$NetBSD: puffs_msgif.c,v 1.61.4.2 2008/01/08 22:11:26 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.61.4.1 2008/01/02 21:55:33 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.61.4.2 2008/01/08 22:11:26 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -562,7 +562,7 @@ puffs_msg_sendresp(struct puffs_mount *pmp, struct puffs_req *origpreq, int rv)
 	struct puffs_msgpark *park;
 	struct puffs_req *preq;
 
-	puffs_msgmem_alloc(sizeof(struct puffs_req), &park, (void **)&preq, 1);
+	puffs_msgmem_alloc(sizeof(struct puffs_req), &park, (void *)&preq, 1);
 	puffs_msg_setfaf(park); /* XXXXXX: avoids reqid override */
 
 	memcpy(preq, origpreq, sizeof(struct puffs_req));

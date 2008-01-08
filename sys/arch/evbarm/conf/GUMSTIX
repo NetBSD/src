@@ -1,4 +1,4 @@
-#	$NetBSD: GUMSTIX,v 1.21.6.1 2008/01/02 21:47:37 bouyer Exp $
+#	$NetBSD: GUMSTIX,v 1.21.6.2 2008/01/08 22:09:38 bouyer Exp $
 #
 #	GUMSTIX -- Gumstix. Inc. gumstix platforms kernel
 #
@@ -151,7 +151,7 @@ options 	DDB		# in-kernel debugger
 #options 	KGDB
 #options 	DEBUG_KGDB
 makeoptions	DEBUG="-g -O2"	# compile full symbol table
-options 	SYMTAB_SPACE=350000
+options 	SYMTAB_SPACE=380000
 #options 	AUDIO_DEBUG=2
 
 config		netbsd		root on ? type ?

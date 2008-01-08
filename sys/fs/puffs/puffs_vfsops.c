@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.72.6.1 2008/01/02 21:55:34 bouyer Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.72.6.2 2008/01/08 22:11:27 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.72.6.1 2008/01/02 21:55:34 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.72.6.2 2008/01/08 22:11:27 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -104,6 +104,9 @@ puffs_vfsop_mount(struct mount *mp, const char *path, void *data,
 	if (!data)
 		return EINVAL;
 
+	error = fstrans_mount(mp);
+	if (error)
+		return error;
 	args = (struct puffs_kargs *)data;
 
 	/* devel phase */
@@ -259,6 +262,8 @@ puffs_vfsop_mount(struct mount *mp, const char *path, void *data,
 	vfs_getnewfsid(mp);
 
  out:
+	if (error)
+		fstrans_unmount(mp);
 	if (error && pmp && pmp->pmp_pnodehash)
 		kmem_free(pmp->pmp_pnodehash, BUCKETALLOC(pmp->pmp_npnodehash));
 	if (error && pmp)
@@ -355,6 +360,7 @@ puffs_vfsop_unmount(struct mount *mp, int mntflags)
 		cv_destroy(&pmp->pmp_msg_waiter_cv);
 		mutex_destroy(&pmp->pmp_lock);
 
+		fstrans_unmount(mp);
 		kmem_free(pmp->pmp_pnodehash, BUCKETALLOC(pmp->pmp_npnodehash));
 		kmem_free(pmp, sizeof(struct puffs_mount));
 		error = 0;
@@ -439,7 +445,7 @@ pageflush(struct mount *mp, kauth_cred_t cred, int waitfor, int suspending)
 	error = 0;
 
 	/* Allocate a marker vnode. */
-	if ((mvp = valloc(mp)) == NULL)
+	if ((mvp = vnalloc(mp)) == NULL)
 		return ENOMEM;
 
 	/*
@@ -530,7 +536,7 @@ pageflush(struct mount *mp, kauth_cred_t cred, int waitfor, int suspending)
 		mutex_enter(&mntvnode_lock);
 	}
 	mutex_exit(&mntvnode_lock);
-	vfree(mvp);
+	vnfree(mvp);
 
 	return error;
 }
@@ -589,7 +595,7 @@ puffs_vfsop_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
 	}
 
 	argsize = sizeof(struct puffs_vfsmsg_fhtonode) + fhlen;
-	puffs_msgmem_alloc(argsize, &park_fhtonode, (void **)&fhtonode_msg, 1);
+	puffs_msgmem_alloc(argsize, &park_fhtonode, (void *)&fhtonode_msg, 1);
 	fhtonode_msg->pvfsr_dsize = fhlen;
 	memcpy(fhtonode_msg->pvfsr_data, fhdata, fhlen);
 	puffs_msg_setinfo(park_fhtonode, PUFFSOP_VFS, PUFFS_VFS_FHTOVP, NULL);
@@ -644,7 +650,7 @@ puffs_vfsop_vptofh(struct vnode *vp, struct fid *fhp, size_t *fh_size)
 		fhlen = PUFFS_FROMFHSIZE(*fh_size);
 
 	argsize = sizeof(struct puffs_vfsmsg_nodetofh) + fhlen;
-	puffs_msgmem_alloc(argsize, &park_nodetofh, (void **)&nodetofh_msg, 1);
+	puffs_msgmem_alloc(argsize, &park_nodetofh, (void *)&nodetofh_msg, 1);
 	nodetofh_msg->pvfsr_fhcookie = VPTOPNC(vp);
 	nodetofh_msg->pvfsr_dsize = fhlen;
 	puffs_msg_setinfo(park_nodetofh, PUFFSOP_VFS, PUFFS_VFS_VPTOFH, NULL);

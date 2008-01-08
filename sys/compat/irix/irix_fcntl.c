@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_fcntl.c,v 1.20.4.1 2008/01/02 21:52:05 bouyer Exp $ */
+/*	$NetBSD: irix_fcntl.c,v 1.20.4.2 2008/01/08 22:10:45 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_fcntl.c,v 1.20.4.1 2008/01/02 21:52:05 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_fcntl.c,v 1.20.4.2 2008/01/08 22:10:45 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -247,8 +247,10 @@ fd_truncate(struct lwp *l, int fd, int whence, off_t start, register_t *retval)
 		return EBADF;
 
 	vp = (struct vnode *)fp->f_data;
-	if (fp->f_type != DTYPE_VNODE || vp->v_type == VFIFO)
+	if (fp->f_type != DTYPE_VNODE || vp->v_type == VFIFO) {
+		FILE_UNLOCK(fp);
 		return ESPIPE;
+	}
 
 	switch (whence) {
 	case SEEK_CUR:
@@ -269,6 +271,7 @@ fd_truncate(struct lwp *l, int fd, int whence, off_t start, register_t *retval)
 		return EINVAL;
 		break;
 	}
+	FILE_UNLOCK(fp);
 
 	SCARG(&ft, fd) = fd;
 	return sys_ftruncate(l, &ft, retval);

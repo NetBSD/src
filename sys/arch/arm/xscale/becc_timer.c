@@ -1,4 +1,4 @@
-/*	$NetBSD: becc_timer.c,v 1.11.38.1 2007/12/13 21:54:36 bouyer Exp $	*/
+/*	$NetBSD: becc_timer.c,v 1.11.38.2 2008/01/08 22:09:33 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: becc_timer.c,v 1.11.38.1 2007/12/13 21:54:36 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: becc_timer.c,v 1.11.38.2 2008/01/08 22:09:33 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,8 +162,10 @@ cpu_initclocks(void)
 	/* ...and start it in motion. */
 	BECC_CSR_WRITE(BECC_TSCRA, TSCRx_TE | TSCRx_CM);
 
+#ifdef __HAVE_FAST_SOFTINTS
 	/* register soft interrupt handler as well */
 	becc_intr_establish(ICU_SOFT, IPL_SOFTCLOCK, becc_softint, NULL);
+#endif
 
 	restore_interrupts(oldirqstate);
 }

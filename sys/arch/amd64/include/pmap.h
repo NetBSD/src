@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.17 2007/11/28 16:44:46 ad Exp $	*/
+/*	$NetBSD: pmap.h,v 1.17.6.1 2008/01/08 22:09:19 bouyer Exp $	*/
 
 /*
  *
@@ -208,7 +208,7 @@
 
 #define NKL4_KIMG_ENTRIES	1
 #define NKL3_KIMG_ENTRIES	1
-#define NKL2_KIMG_ENTRIES	8
+#define NKL2_KIMG_ENTRIES	10
 
 /*
  * Since kva space is below the kernel in its entirety, we start off

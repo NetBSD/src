@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.98.10.1 2008/01/02 21:57:11 bouyer Exp $	*/
+/*	$NetBSD: route.c,v 1.98.10.2 2008/01/08 22:11:49 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
 #include "opt_route.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.98.10.1 2008/01/02 21:57:11 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.98.10.2 2008/01/08 22:11:49 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -614,7 +614,7 @@ rt_getifa(struct rt_addrinfo *info)
 	 */
 	if (info->rti_ifp == NULL && ifpaddr != NULL
 	    && ifpaddr->sa_family == AF_LINK &&
-	    (ifa = ifa_ifwithnet((const struct sockaddr *)ifpaddr)) != NULL)
+	    (ifa = ifa_ifwithnet(ifpaddr)) != NULL)
 		info->rti_ifp = ifa->ifa_ifp;
 	if (info->rti_ifa == NULL && ifaaddr != NULL)
 		info->rti_ifa = ifa_ifwithaddr(ifaaddr);
@@ -1226,7 +1226,7 @@ rtcache_lookup2(struct route *ro, const struct sockaddr *dst, int clone,
 		;
 	else if (sockaddr_cmp(odst, dst) != 0)
 		rtcache_free(ro);
-	else if (rtcache_down(ro))
+	else if (rtcache_validate(ro) == NULL)
 		rtcache_clear(ro);
 
 	if (ro->_ro_rt == NULL) {

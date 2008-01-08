@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.169.6.1 2008/01/02 21:47:21 bouyer Exp $	*/
+/*	$NetBSD: pmap.c,v 1.169.6.2 2008/01/08 22:09:25 bouyer Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -194,8 +194,8 @@
 #include "opt_lockdebug.h"
 #include "opt_multiprocessor.h"
 
-#include <sys/types.h>
 #include <sys/param.h>
+#include <sys/types.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
@@ -203,6 +203,7 @@
 #include <sys/user.h>
 #include <sys/pool.h>
 #include <sys/cdefs.h>
+#include <sys/cpu.h>
  
 #include <uvm/uvm.h>
 
@@ -212,7 +213,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.169.6.1 2008/01/02 21:47:21 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.169.6.2 2008/01/08 22:09:25 bouyer Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -946,7 +947,7 @@ pmap_use_l1(pmap_t pm)
 	 * Access to an L1 by the kernel pmap must not affect
 	 * the LRU list.
 	 */
-	if (current_intr_depth || pm == pmap_kernel())
+	if (cpu_intr_p() || pm == pmap_kernel())
 		return;
 
 	l1 = pm->pm_l1;

@@ -1,4 +1,4 @@
-/* 	$NetBSD: lwp.h,v 1.71.6.2 2008/01/02 21:58:03 bouyer Exp $	*/
+/* 	$NetBSD: lwp.h,v 1.71.6.3 2008/01/08 22:11:56 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -207,6 +207,7 @@ extern lwp_t lwp0;			/* LWP for proc0 */
 #define	LP_OWEUPC	0x00000010 /* Owe user profiling tick */
 #define	LP_MPSAFE	0x00000020 /* Starts life without kernel_lock */
 #define	LP_INTR		0x00000040 /* Soft interrupt handler */
+#define	LP_SYSCTLWRITE	0x00000080 /* sysctl write lock held */
 
 /* The third set is kept in l_prflag. */
 #define	LPR_DETACHED	0x00800000 /* Won't be waited for. */

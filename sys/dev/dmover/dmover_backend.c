@@ -1,4 +1,4 @@
-/*	$NetBSD: dmover_backend.c,v 1.7 2007/12/05 07:06:51 ad Exp $	*/
+/*	$NetBSD: dmover_backend.c,v 1.7.4.1 2008/01/08 22:11:00 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -40,10 +40,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmover_backend.c,v 1.7 2007/12/05 07:06:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dmover_backend.c,v 1.7.4.1 2008/01/08 22:11:00 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/mutex.h>
+#include <sys/simplelock.h>
 #include <sys/systm.h>
 
 #include <dev/dmover/dmovervar.h>
