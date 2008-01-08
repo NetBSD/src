@@ -1,4 +1,4 @@
-#	$NetBSD: std.ev64260,v 1.6 2007/10/17 19:54:16 garbled Exp $
+#	$NetBSD: std.ev64260,v 1.7 2008/01/08 13:47:49 joerg Exp $
 #
 # standard, required NetBSD/evbppc 'options'
 
@@ -16,7 +16,6 @@ makeoptions	TEXTADDR=0x3000
 makeoptions	NEED_SREC=yes
 makeoptions	BOARDTYPE="ev64260"
 options 	INTSTK=16384
-options		__HAVE_TIMECOUNTER
 
 options		PPC_INTR_IMPL="<powerpc/marvell/marvell_intr.h>"
 options		PPC_PCI_MACHDEP_IMPL="<powerpc/marvell/pci_machdep.h>"

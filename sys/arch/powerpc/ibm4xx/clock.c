@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.18 2006/09/27 09:11:47 freza Exp $	*/
+/*	$NetBSD: clock.c,v 1.19 2008/01/08 13:47:49 joerg Exp $	*/
 /*      $OpenBSD: clock.c,v 1.3 1997/10/13 13:42:53 pefo Exp $  */
 
 /*
@@ -33,11 +33,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.18 2006/09/27 09:11:47 freza Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.19 2008/01/08 13:47:49 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
+#include <sys/timetc.h>
 
 #include <prop/proplib.h>
 
@@ -54,6 +55,20 @@ static long ticks_per_intr;
 static volatile u_long lasttb, lasttb2;
 static u_long ticksmissed;
 static volatile int tickspending;
+
+static void init_ppc4xx_tc(void);
+static u_int get_ppc4xx_timecount(struct timecounter *);
+
+static struct timecounter ppc4xx_timecounter = {
+	get_ppc4xx_timecount,	/* get_timecount */
+	0,			/* no poll_pps */
+	~0,			/* counter_mask */
+	0,			/* frequency */
+	"ppc_timebase",		/* name */
+	100,			/* quality */
+	NULL,			/* tc_priv */
+	NULL			/* tc_next */
+};
 
 void decr_intr(struct clockframe *);	/* called from trap_subr.S */
 void stat_intr(struct clockframe *);	/* called from trap_subr.S */
@@ -152,6 +167,8 @@ cpu_initclocks(void)
 
 	/* Enable PIT & FIT(2^17c = 0.655ms) interrupts and auto-reload */
 	mtspr(SPR_TCR, TCR_PIE | TCR_ARE | TCR_FIE | TCR_PERIOD);
+
+	init_ppc4xx_tc();
 }
 
 void
@@ -166,29 +183,17 @@ calc_delayconst(void)
 	ns_per_tick = 1000000000 / ticks_per_sec;
 }
 
-/*
- * Fill in *tvp with current time with microsecond resolution.
- */
-void
-microtime(struct timeval *tvp)
+static u_int
+get_ppc4xx_timecount(struct timecounter *tc)
 {
 	u_long tb;
-	u_long ticks;
 	int msr;
 
 	__asm volatile ("mfmsr %0; wrteei 0" : "=r"(msr) :);
-
 	tb = mftbl();
-	ticks = ((tb - lasttb) * 1000000ULL) / ticks_per_sec;
-
-	*tvp = time;
-	tvp->tv_usec += ticks;
-	while (tvp->tv_usec >= 1000000) {
-		tvp->tv_usec -= 1000000;
-		tvp->tv_sec++;
-	}
-
 	__asm volatile ("mtmsr %0" :: "r"(msr));
+
+	return tb;
 }
 
 /*
@@ -233,4 +238,12 @@ setstatclockrate(int arg)
 {
 
 	/* Do nothing */
+}
+
+static void
+init_ppc4xx_tc(void)
+{
+	/* from machdep initialization */
+	ppc4xx_timecounter.tc_frequency = ticks_per_sec;
+	tc_init(&ppc4xx_timecounter);
 }
