@@ -1,4 +1,4 @@
-/*	$NetBSD: elan520.c,v 1.20 2007/12/21 07:31:44 dyoung Exp $	*/
+/*	$NetBSD: elan520.c,v 1.21 2008/01/08 04:47:44 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: elan520.c,v 1.20 2007/12/21 07:31:44 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elan520.c,v 1.21 2008/01/08 04:47:44 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -234,8 +234,7 @@ elansc_wdog_tickle(struct sysmon_wdog *smw)
 }
 
 static int
-elansc_match(struct device *parent, struct cfdata *match,
-    void *aux)
+elansc_match(device_t parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -316,7 +315,7 @@ elansc_detach(device_t self, int flags)
 }
 
 static void
-elansc_attach(struct device *parent, struct device *self, void *aux)
+elansc_attach(device_t parent, device_t self, void *aux)
 {
 	struct elansc_softc *sc = device_private(self);
 	struct pci_attach_args *pa = aux;
@@ -335,8 +334,7 @@ elansc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_memt = pa->pa_memt;
 	if (bus_space_map(sc->sc_memt, MMCR_BASE_ADDR, PAGE_SIZE, 0,
 	    &sc->sc_memh) != 0) {
-		aprint_error("%s: unable to map registers\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "unable to map registers\n");
 		return;
 	}
 
@@ -345,8 +343,8 @@ elansc_attach(struct device *parent, struct device *self, void *aux)
 	rev = bus_space_read_2(sc->sc_memt, sc->sc_memh, MMCR_REVID);
 	cpuctl = bus_space_read_1(sc->sc_memt, sc->sc_memh, MMCR_CPUCTL);
 
-	aprint_normal("%s: product %d stepping %d.%d, CPU clock %s\n",
-	    sc->sc_dev.dv_xname,
+	aprint_normal_dev(&sc->sc_dev,
+	    "product %d stepping %d.%d, CPU clock %s\n",
 	    (rev & REVID_PRODID) >> REVID_PRODID_SHIFT,
 	    (rev & REVID_MAJSTEP) >> REVID_MAJSTEP_SHIFT,
 	    (rev & REVID_MINSTEP),
@@ -375,9 +373,8 @@ elansc_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	ressta = bus_space_read_1(sc->sc_memt, sc->sc_memh, MMCR_RESSTA);
 	if (ressta & RESSTA_WDT_RST_DET)
-		aprint_error(
-		    "%s: WARNING: LAST RESET DUE TO WATCHDOG EXPIRATION!\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev,
+		    "WARNING: LAST RESET DUE TO WATCHDOG EXPIRATION!\n");
 	bus_space_write_1(sc->sc_memt, sc->sc_memh, MMCR_RESSTA, ressta);
 
 	/* Set up the watchdog registers with some defaults. */
@@ -426,14 +423,15 @@ elansc_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Hook up the watchdog timer.
 	 */
-	sc->sc_smw.smw_name = sc->sc_dev.dv_xname;
+	sc->sc_smw.smw_name = device_xname(&sc->sc_dev);
 	sc->sc_smw.smw_cookie = sc;
 	sc->sc_smw.smw_setmode = elansc_wdog_setmode;
 	sc->sc_smw.smw_tickle = elansc_wdog_tickle;
 	sc->sc_smw.smw_period = 32;	/* actually 32.54 */
-	if (sysmon_wdog_register(&sc->sc_smw) != 0)
-		aprint_error("%s: unable to register watchdog with sysmon\n",
-		    sc->sc_dev.dv_xname);
+	if (sysmon_wdog_register(&sc->sc_smw) != 0) {
+		aprint_error_dev(&sc->sc_dev,
+		    "unable to register watchdog with sysmon\n");
+	}
 }
 
 CFATTACH_DECL2(elansc, sizeof(struct elansc_softc),
