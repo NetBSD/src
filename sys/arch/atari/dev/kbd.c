@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.30 2007/03/04 05:59:40 christos Exp $	*/
+/*	$NetBSD: kbd.c,v 1.31 2008/01/08 18:04:16 joerg Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.30 2007/03/04 05:59:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.31 2008/01/08 18:04:16 joerg Exp $");
 
 #include "mouse.h"
 #include "ite.h"
@@ -535,7 +535,7 @@ void	*junk1, *junk2;
 			}
 			fe->id    = KBD_SCANCODE(code);
 			fe->value = KBD_RELEASED(code) ? VKEY_UP : VKEY_DOWN;
-			fe->time  = time;
+			getmicrotime(&fe->time);
 			k->k_events.ev_put = put;
 			EV_WAKEUP(&k->k_events);
 			splx(s);
