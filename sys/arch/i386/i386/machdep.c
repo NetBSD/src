@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.617.2.3 2008/01/08 22:10:01 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.617.2.4 2008/01/08 23:51:51 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.617.2.3 2008/01/08 22:10:01 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.617.2.4 2008/01/08 23:51:51 bouyer Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -527,8 +527,10 @@ cpu_startup()
 	gdt_init();
 	i386_proc0_tss_ldt_init();
 
+#ifndef XEN
 	cpu_init_tss(&cpu_info_primary);
 	ltr(cpu_info_primary.ci_tss_sel);
+#endif
 
 	x86_init();
 }
@@ -583,7 +585,7 @@ i386_switch_context(lwp_t *l)
 		ci->ci_fpused = 0;
 	}
 
-	HYPERVISOR_stack_switch(new->pcb_tss.tss_ss0, new->pcb_tss.tss_esp0);
+	HYPERVISOR_stack_switch(GSEL(GDATA_SEL, SEL_KPL), pcb->pcb_esp0);
 
 	if (xen_start_info.flags & SIF_PRIVILEGED) {
 		int iopl = pcb->pcb_iopl;
@@ -601,8 +603,9 @@ i386_switch_context(lwp_t *l)
 #endif
 	}
 }
-#endif
+#endif /* XEN */
 
+#ifndef XEN
 /*
  * Set up TSS and I/O bitmap.
  */
@@ -617,6 +620,7 @@ cpu_init_tss(struct cpu_info *ci)
 	tss->tss_cr3 = rcr3();
 	ci->ci_tss_sel = tss_alloc(tss);
 }
+#endif /* XEN */
 
 /*
  * sysctl helper routine for machdep.tm* nodes.
