@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.100 2008/01/04 23:26:44 dyoung Exp $	*/
+/*	$NetBSD: route.c,v 1.101 2008/01/08 03:37:45 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
 #include "opt_route.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.100 2008/01/04 23:26:44 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.101 2008/01/08 03:37:45 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -614,7 +614,7 @@ rt_getifa(struct rt_addrinfo *info)
 	 */
 	if (info->rti_ifp == NULL && ifpaddr != NULL
 	    && ifpaddr->sa_family == AF_LINK &&
-	    (ifa = ifa_ifwithnet((const struct sockaddr *)ifpaddr)) != NULL)
+	    (ifa = ifa_ifwithnet(ifpaddr)) != NULL)
 		info->rti_ifp = ifa->ifa_ifp;
 	if (info->rti_ifa == NULL && ifaaddr != NULL)
 		info->rti_ifa = ifa_ifwithaddr(ifaaddr);
