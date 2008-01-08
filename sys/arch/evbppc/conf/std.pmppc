@@ -1,4 +1,4 @@
-#	$NetBSD: std.pmppc,v 1.2 2007/10/17 19:54:16 garbled Exp $
+#	$NetBSD: std.pmppc,v 1.3 2008/01/08 13:47:49 joerg Exp $
 #
 # standard, required NetBSD/pmppc 'options'
 
@@ -12,7 +12,6 @@ makeoptions 	PPCDIR="oea"	# Tell Makefile.powerpc what dir to use
 options 	EXEC_ELF32	# exec ELF binaries
 options 	EXEC_SCRIPT	# exec #! scripts
 options		EVBPPC_HAS_MBR
-options		__HAVE_TIMECOUNTER
 
 options 	INTSTK=0x2000
 
