@@ -1,4 +1,4 @@
-/*	$NetBSD: nbcompat.c,v 1.9 2008/01/07 19:10:58 rittera Exp $	*/
+/*	$NetBSD: nbcompat.c,v 1.10 2008/01/08 07:59:23 he Exp $	*/
 
 /* nbcompat.c
  * Implementations of some FreeBSD functions on NetBSD to make things
@@ -6,7 +6,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nbcompat.c,v 1.9 2008/01/07 19:10:58 rittera Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nbcompat.c,v 1.10 2008/01/08 07:59:23 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,7 +87,6 @@ int
 ndis_kthread_create(void (*func)(void *), void *arg,
   struct proc **newpp, void *stack, size_t stacksize, const char *name)
 {
-  struct proc *p2;
   struct lwp *l;
   int error;
   
