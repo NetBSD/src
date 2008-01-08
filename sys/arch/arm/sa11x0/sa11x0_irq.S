@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_irq.S,v 1.11 2008/01/06 03:45:27 matt Exp $	*/
+/*	$NetBSD: sa11x0_irq.S,v 1.12 2008/01/08 02:07:52 matt Exp $	*/
 
 /*
  * Copyright (c) 1998 Mark Brinicombe.
@@ -226,7 +226,9 @@ nextirq:
 	/* Restore previous disabled mask */
 	bl	_C_LABEL(irq_setmasks)
 
+#ifdef __HAVE_FAST_SOFTINTS
 	bl	_C_LABEL(dosoftints)	/* Handle the soft interrupts */
+#endif
 
 	/* Kill IRQ's in preparation for exit */
         mrs     r0, cpsr_all
