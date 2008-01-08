@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_mutex.c,v 1.40 2008/01/05 01:37:35 ad Exp $	*/
+/*	$NetBSD: pthread_mutex.c,v 1.41 2008/01/08 20:56:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_mutex.c,v 1.40 2008/01/05 01:37:35 ad Exp $");
+__RCSID("$NetBSD: pthread_mutex.c,v 1.41 2008/01/08 20:56:08 christos Exp $");
 
 #include <sys/types.h>
 
@@ -54,6 +54,7 @@ __RCSID("$NetBSD: pthread_mutex.c,v 1.40 2008/01/05 01:37:35 ad Exp $");
 #ifndef	PTHREAD__HAVE_ATOMIC
 
 static int pthread_mutex_lock_slow(pthread_t, pthread_mutex_t *);
+static void once_cleanup(void *);
 
 int		_pthread_mutex_held_np(pthread_mutex_t *);
 pthread_t	_pthread_mutex_owner_np(pthread_mutex_t *);

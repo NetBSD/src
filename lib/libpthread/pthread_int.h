@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.64 2007/12/24 16:04:21 ad Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.65 2008/01/08 20:56:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -198,6 +198,8 @@ int	pthread__park(pthread_t, pthread_spin_t *, pthread_queue_t *,
 void	pthread__lockprim_init(void) PTHREAD_HIDE;
 void	pthread_lockinit(pthread_spin_t *) PTHREAD_HIDE;
 
+static inline void pthread__spinlock(pthread_t, pthread_spin_t *)
+    __attribute__((__always_inline__));
 static inline void
 pthread__spinlock(pthread_t self, pthread_spin_t *lock)
 {
@@ -206,12 +208,16 @@ pthread__spinlock(pthread_t self, pthread_spin_t *lock)
 	(*self->pt_lockops.plo_lock)(lock);
 }
 
+static inline int pthread__spintrylock(pthread_t, pthread_spin_t *)
+    __attribute__((__always_inline__));
 static inline int
 pthread__spintrylock(pthread_t self, pthread_spin_t *lock)
 {
 	return (*self->pt_lockops.plo_try)(lock);
 }
 
+static inline void pthread__spinunlock(pthread_t, pthread_spin_t *)
+    __attribute__((__always_inline__));
 static inline void
 pthread__spinunlock(pthread_t self, pthread_spin_t *lock)
 {
