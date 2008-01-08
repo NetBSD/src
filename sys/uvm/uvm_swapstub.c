@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swapstub.c,v 1.5 2007/02/23 08:18:35 skrll Exp $	*/
+/*	$NetBSD: uvm_swapstub.c,v 1.6 2008/01/08 06:25:55 matt Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swapstub.c,v 1.5 2007/02/23 08:18:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swapstub.c,v 1.6 2008/01/08 06:25:55 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,7 +48,7 @@ uvm_swap_init(void)
 }
 
 int
-sys_swapctl(struct lwp *l, void *v, register_t *retval)
+sys_swapctl(struct lwp *l, const struct sys_swapctl_args *v, register_t *retval)
 {
 
 	return ENOSYS;
