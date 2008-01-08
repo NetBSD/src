@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.84 2008/01/02 18:11:01 pooka Exp $	*/
+/*	$NetBSD: puffs.c,v 1.85 2008/01/08 00:22:31 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.84 2008/01/02 18:11:01 pooka Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.85 2008/01/08 00:22:31 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -201,7 +201,6 @@ puffs_setstacksize(struct puffs_usermount *pu, size_t ss)
 		stackshift++;
 	}
 	pu->pu_cc_stackshift = stackshift;
-	assert(1<<stackshift == ss);
 }
 
 struct puffs_pathobj *
