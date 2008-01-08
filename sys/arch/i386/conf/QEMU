@@ -1,4 +1,4 @@
-# $NetBSD: QEMU,v 1.13.6.1 2008/01/02 21:48:11 bouyer Exp $
+# $NetBSD: QEMU,v 1.13.6.2 2008/01/08 22:09:56 bouyer Exp $
 #
 # QEMU machine description file
 #
@@ -11,11 +11,11 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"QEMU-$Revision: 1.13.6.1 $"
+#ident 		"QEMU-$Revision: 1.13.6.2 $"
 
 maxusers	32		# estimated number of users
 
-makeoptions	CPUFLAGS="-march=pentiumpro -mtune=pentiumpro"
+makeoptions 	CPUFLAGS="-march=pentiumpro -mtune=pentiumpro"
 
 # CPU-related options.
 #options 	MATH_EMULATE	# floating point emulation
@@ -96,7 +96,7 @@ options 	DDB		# in-kernel debugger
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	KGDB		# remote debugger
 #options 	KGDB_DEVNAME="\"com\"",KGDB_DEVADDR=0x3f8,KGDB_DEVRATE=9600
-#makeoptions	DEBUG="-g"	# compile full symbol table
+#makeoptions 	DEBUG="-g"	# compile full symbol table
 
 # Compatibility options
 options 	COMPAT_NOMID	# NetBSD 0.8, 386BSD, and BSDI
@@ -456,7 +456,7 @@ pseudo-device	nsmb			# experimental - SMB requester
 pseudo-device	wsmux			# mouse & keyboard multiplexor
 pseudo-device	wsfont
 
-#options	FILEASSOC		# fileassoc(9) - required for Veriexec 
+#options 	FILEASSOC		# fileassoc(9) - required for Veriexec 
 
 # Veriexec
 #pseudo-device	veriexec

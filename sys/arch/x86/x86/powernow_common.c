@@ -1,4 +1,4 @@
-/*	$NetBSD: powernow_common.c,v 1.7 2007/10/17 19:58:17 garbled Exp $	*/
+/*	$NetBSD: powernow_common.c,v 1.7.8.1 2008/01/08 22:10:40 bouyer Exp $	*/
 
 /*
  *  Copyright (c) 2006 The NetBSD Foundation.
@@ -30,14 +30,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powernow_common.c,v 1.7 2007/10/17 19:58:17 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powernow_common.c,v 1.7.8.1 2008/01/08 22:10:40 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
-#include <x86/include/powernow.h>
+#include <x86/powernow.h>
+#include <x86/cpufunc.h>
 
 int
 powernow_probe(struct cpu_info *ci)

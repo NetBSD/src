@@ -1,4 +1,4 @@
-/*	$NetBSD: stuirda.c,v 1.3.4.1 2007/12/13 21:56:06 bouyer Exp $	*/
+/*	$NetBSD: stuirda.c,v 1.3.4.2 2008/01/08 22:11:22 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2001,2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stuirda.c,v 1.3.4.1 2007/12/13 21:56:06 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stuirda.c,v 1.3.4.2 2008/01/08 22:11:22 bouyer Exp $");
 
 #include <sys/param.h>
 
@@ -45,7 +45,6 @@ __KERNEL_RCSID(0, "$NetBSD: stuirda.c,v 1.3.4.1 2007/12/13 21:56:06 bouyer Exp $
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/lock.h>
 #include <sys/ioctl.h>
 #include <sys/conf.h>
 #include <sys/file.h>

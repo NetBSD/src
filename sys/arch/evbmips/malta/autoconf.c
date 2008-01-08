@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.11 2007/12/05 12:31:26 tsutsui Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.11.4.1 2008/01/08 22:09:44 bouyer Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,15 +36,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.11 2007/12/05 12:31:26 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.11.4.1 2008/01/08 22:09:44 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/conf.h>
 #include <sys/device.h>
-
-#include <machine/cpu.h>
+#include <sys/cpu.h>
 
 static void	findroot(void);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: biovar.h,v 1.5 2007/12/07 11:51:21 xtraeme Exp $ */
+/*	$NetBSD: biovar.h,v 1.5.4.1 2008/01/08 22:10:53 bouyer Exp $ */
 /*	$OpenBSD: biovar.h,v 1.26 2007/03/19 03:02:08 marco Exp $	*/
 
 /*
@@ -33,7 +33,14 @@
  * cookie.
  */
 
+#ifndef _DEV_BIOVAR_H_
+#define _DEV_BIOVAR_H_
+
 #include <sys/types.h>
+
+#ifndef _KERNEL
+#include <stdbool.h>
+#endif
 
 struct bio_common {
 	void		*bc_cookie;
@@ -60,7 +67,8 @@ struct bioc_inq {
 	int		bi_nodisk;	/* nr of total disks */
 };
 
-#define BIOCDISK _IOWR('B', 33, struct bioc_disk)
+#define BIOCDISK_NOVOL 	_IOWR('b', 38, struct bioc_disk)
+#define BIOCDISK 	_IOWR('B', 33, struct bioc_disk)
 /* structure that represents a disk in a RAID volume */
 struct bioc_disk {
 	void		*bd_cookie;
@@ -87,6 +95,8 @@ struct bioc_disk {
 #define BIOC_SDUNUSED_S		"Unused"
 #define BIOC_SDSCRUB		0x06
 #define BIOC_SDSCRUB_S		"Scrubbing"
+#define BIOC_SDPASSTHRU 	0x07
+#define BIOC_SDPASSTHRU_S 	"Pass through"
 #define BIOC_SDINVALID		0xff
 #define BIOC_SDINVALID_S	"Invalid"
 	uint64_t	bd_size;	/* size of the disk */
@@ -94,7 +104,29 @@ struct bioc_disk {
 	char		bd_vendor[32];	/* scsi string */
 	char		bd_serial[32];	/* serial number */
 	char		bd_procdev[16];	/* processor device */
+	
+	bool		bd_disknovol;	/* disk not associated with volumes */
 };
+
+/* COMPATIBILITY */
+#ifdef _KERNEL
+#define OBIOCDISK	_IOWR('B', 33, struct obioc_disk)
+/* structure that represents a disk in a RAID volume (compat) */
+struct obioc_disk {
+	void 		*bd_cookie;
+	uint16_t	bd_channel;
+	uint16_t 	bd_target;
+	uint16_t 	bd_lun;
+	uint16_t 	bd_other_id;
+	int 		bd_volid;
+	int 		bd_diskid;
+	int 		bd_status;
+	uint64_t 	bd_size;
+	char 		bd_vendor[32];
+	char 		bd_serial[32];
+	char 		bd_procdev[16];
+};
+#endif
 
 #define BIOCVOL _IOWR('B', 34, struct bioc_vol)
 /* structure that represents a RAID volume */
@@ -120,15 +152,41 @@ struct bioc_vol {
 #define BIOC_SVREBUILD_S	"Rebuild"
 #define BIOC_SVMIGRATING	0x06
 #define BIOC_SVMIGRATING_S	"Migrating"
+#define BIOC_SVCHECKING 	0x07
+#define BIOC_SVCHECKING_S	"Checking"
 #define BIOC_SVINVALID		0xff
 #define BIOC_SVINVALID_S	"Invalid"
 	uint64_t	bv_size;	/* size of the disk */
 	int		bv_level;	/* raid level */
+#define BIOC_SVOL_UNUSED	0xaa
+#define BIOC_SVOL_HOTSPARE	0xbb
+#define BIOC_SVOL_PASSTHRU	0xcc
+
 	int		bv_nodisk;	/* nr of drives */
 
 	char		bv_dev[16];	/* device */
 	char		bv_vendor[32];	/* scsi string */
+
+	uint16_t	bv_stripe_size;	/* stripe size */
 };
+
+/* COMPATIBILITY */
+#ifdef _KERNEL
+#define OBIOCVOL _IOWR('B', 34, struct obioc_vol)
+/* structure that represents a RAID volume */
+struct obioc_vol {
+	void 		*bv_cookie;
+	int 		bv_volid;
+	int16_t 	bv_percent;
+	uint16_t 	bv_seconds;
+	int 		bv_status;
+	uint64_t 	bv_size;
+	int 		bv_level;
+	int 		bv_nodisk;
+	char 		bv_dev[16];
+	char 		bv_vendor[32];
+};
+#endif
 
 #define BIOCALARM _IOWR('B', 35, struct bioc_alarm)
 struct bioc_alarm {
@@ -168,25 +226,31 @@ struct bioc_setstate {
 #define BIOC_SSOFFLINE		0x01	/* offline disk */
 #define BIOC_SSHOTSPARE		0x02	/* mark as hotspare */
 #define BIOC_SSREBUILD		0x03	/* rebuild on this disk */
+#define BIOC_SSDELHOTSPARE	0x04	/* unmark as hotspare */
+#define BIOC_SSPASSTHRU 	0x05	/* mark as pass-through */
+#define BIOC_SSDELPASSTHRU	0x06	/* unmark as pass-through */
+#define BIOC_SSCHECKSTART_VOL	0x07	/* start consistency check in vol# */
+#define BIOC_SSCHECKSTOP_VOL	0x08	/* stop consistency check in vol# */
 	int		bs_volid;	/* volume id for rebuild */
 };
 
-#define BIOCCREATERAID _IOWR('B', 38, struct bioc_createraid)
-struct bioc_createraid {
+#define BIOCVOLOPS _IOWR('B', 39, struct bioc_volops)
+struct bioc_volops {
 	void		*bc_cookie;
-	char		*bc_dev_list;
-	uint16_t	bc_dev_list_len;
-	uint16_t	bc_level;
+	uint64_t	bc_size;	/* size of the volume set */
+	uint64_t	bc_other_id;	/* unused for now */
+	uint32_t	bc_devmask;	/* device mask for the volume set */	
+	
+	uint16_t	bc_channel;
+	uint16_t	bc_target;
+	uint16_t	bc_lun;
+	uint16_t 	bc_stripe;	/* stripe size */
+	uint16_t	bc_level;	/* RAID level requested */
+
+	int 		bc_opcode;
+#define BIOC_VCREATE_VOLUME	0x00	/* create new volume */
+#define BIOC_VREMOVE_VOLUME	0x01	/* remove volume */
+	int 		bc_volid;	/* volume id to be created/removed */
 };
 
-/* kernel and userspace defines */
-#define BIOC_INQ		0x0001
-#define BIOC_DISK		0x0002
-#define BIOC_VOL		0x0004
-#define BIOC_ALARM		0x0008
-#define BIOC_BLINK		0x0010
-#define BIOC_SETSTATE		0x0020
-#define BIOC_CREATERAID		0x0040
-
-/* user space defines */
-#define BIOC_DEVLIST		0x10000
+#endif /* ! _DEV_BIOVAR_H_ */

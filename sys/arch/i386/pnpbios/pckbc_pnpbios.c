@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbc_pnpbios.c,v 1.12 2007/10/17 19:54:58 garbled Exp $	*/
+/*	$NetBSD: pckbc_pnpbios.c,v 1.12.8.1 2008/01/08 22:10:07 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_pnpbios.c,v 1.12 2007/10/17 19:54:58 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_pnpbios.c,v 1.12.8.1 2008/01/08 22:10:07 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,9 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: pckbc_pnpbios.c,v 1.12 2007/10/17 19:54:58 garbled E
 #include <sys/malloc.h>
 #include <sys/errno.h>
 #include <sys/queue.h>
-#include <sys/lock.h>
-
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>

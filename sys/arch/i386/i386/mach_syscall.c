@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_syscall.c,v 1.22.32.1 2007/12/13 21:54:44 bouyer Exp $	*/
+/*	$NetBSD: mach_syscall.c,v 1.22.32.2 2008/01/08 22:10:01 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_syscall.c,v 1.22.32.1 2007/12/13 21:54:44 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_syscall.c,v 1.22.32.2 2008/01/08 22:10:01 bouyer Exp $");
 
 #include "opt_vm86.h"
 
@@ -225,7 +225,7 @@ mach_syscall_fancy(frame)
 			goto bad;
 	}
 
-	if ((error = trace_enter(l, code, realcode, callp - code, args)) != 0)
+	if ((error = trace_enter(code, realcode, callp - code, args)) != 0)
 		goto out;
 
 	rval[0] = 0;
@@ -256,7 +256,7 @@ out:
 		break;
 	}
 
-	trace_exit(l, realcode, args, rval, error);
+	trace_exit(realcode, args, rval, error);
 
 	userret(l);
 }

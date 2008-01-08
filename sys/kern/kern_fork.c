@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.152.4.1 2008/01/02 21:55:50 bouyer Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.152.4.2 2008/01/08 22:11:32 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.152.4.1 2008/01/02 21:55:50 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.152.4.2 2008/01/08 22:11:32 bouyer Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
@@ -218,21 +218,25 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	bool		inmem;
 	int		tmp;
 	int		tnprocs;
+	int		error = 0;
 
-	/*
-	 * Although process entries are dynamically created, we still keep
-	 * a global limit on the maximum number we will create.  Don't allow
-	 * a nonprivileged user to use the last few processes; don't let root
-	 * exceed the limit. The variable nprocs is the current number of
-	 * processes, maxproc is the limit.
-	 */
 	p1 = l1->l_proc;
 	mutex_enter(&p1->p_mutex);
 	uid = kauth_cred_getuid(p1->p_cred);
 	mutex_exit(&p1->p_mutex);
 	tnprocs = atomic_inc_uint_nv(&nprocs);
-	if (__predict_false((tnprocs >= maxproc - 5 && uid != 0) ||
-			    tnprocs >= maxproc)) {
+
+	/*
+	 * Although process entries are dynamically created, we still keep
+	 * a global limit on the maximum number we will create.
+	 */
+	if (__predict_false(tnprocs >= maxproc))
+		error = -1;
+	else
+		error = kauth_authorize_process(p1->p_cred,
+		    KAUTH_PROCESS_FORK, p1, KAUTH_ARG(tnprocs), NULL, NULL);
+
+	if (error) {
 		static struct timeval lasttfm;
 		atomic_dec_uint(&nprocs);
 		if (ratecheck(&lasttfm, &fork_tfmrate))

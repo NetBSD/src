@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.72.2.1 2008/01/02 21:47:00 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.72.2.2 2008/01/08 22:09:14 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007
@@ -120,7 +120,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.72.2.1 2008/01/02 21:47:00 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.72.2.2 2008/01/08 22:09:14 bouyer Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -186,7 +186,10 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.72.2.1 2008/01/02 21:47:00 bouyer Exp 
 #include <machine/fpu.h>
 #include <machine/mtrr.h>
 #include <machine/mpbiosvar.h>
+
 #include <x86/cpu_msr.h>
+#include <x86/cpuvar.h>
+
 #include <x86/x86/tsc.h>
 
 #include <dev/isa/isareg.h>
@@ -382,6 +385,11 @@ cpu_startup(void)
 
 	gdt_init();
 	x86_64_proc0_tss_ldt_init();
+
+	cpu_init_tss(&cpu_info_primary);
+#if !defined(XEN)
+	ltr(cpu_info_primary.ci_tss_sel);
+#endif /* !defined(XEN) */
 }
 
 #ifdef XEN
@@ -399,15 +407,11 @@ x86_64_switch_context(struct pcb *new)
 		HYPERVISOR_fpu_taskswitch(0);
 		/* XXX ci->ci_fpused = 0; */
 	}
-	HYPERVISOR_stack_switch(GSEL(GDATA_SEL, SEL_KPL), new->pcb_tss.tss_rsp0);
+	HYPERVISOR_stack_switch(GSEL(GDATA_SEL, SEL_KPL), new->pcb_rsp0);
 	if (xen_start_info.flags & SIF_PRIVILEGED) {
 		struct physdev_op physop;
 		physop.cmd = PHYSDEVOP_SET_IOPL;
-		if ((new->pcb_tss.tss_iobase & SEL_RPL) == 0)
-			physop.u.set_iopl.iopl = 1;
-		else
-			physop.u.set_iopl.iopl =
-			    (new->pcb_tss.tss_iobase & SEL_RPL);
+		physop.u.set_iopl.iopl = new->pcb_iopl;
 		HYPERVISOR_physdev_op(&physop);
 	}
 }
@@ -422,40 +426,50 @@ x86_64_proc0_tss_ldt_init(void)
 {
 	struct lwp *l;
 	struct pcb *pcb;
-	int x;
 
 	l = &lwp0;
 	pcb = &l->l_addr->u_pcb;
 	pcb->pcb_flags = 0;
-	pcb->pcb_tss.tss_iobase =
-	    (u_int16_t)((char *)pcb->pcb_iomap - (char *)&pcb->pcb_tss);
-	for (x = 0; x < sizeof(pcb->pcb_iomap) / 4; x++)
-		pcb->pcb_iomap[x] = 0xffffffff;
-
 	pcb->pcb_fs = 0;
 	pcb->pcb_gs = 0;
+	pcb->pcb_rsp0 = (USER_TO_UAREA(l->l_addr) + KSTACK_SIZE - 16) & ~0xf;
+	pcb->pcb_iopl = SEL_KPL;
 
 	pcb->pcb_ldt_sel = pmap_kernel()->pm_ldt_sel =
 	    GSYSSEL(GLDT_SEL, SEL_KPL);
 	pcb->pcb_cr0 = rcr0();
-	pcb->pcb_tss.tss_rsp0 = (u_int64_t)l->l_addr + USPACE - 16;
-	pcb->pcb_tss.tss_ist[0] = (u_int64_t)l->l_addr + PAGE_SIZE;
-	pcb->pcb_tss.tss_ist[1] = (uint64_t) x86_64_doubleflt_stack
-	    + PAGE_SIZE - 16;
-	l->l_md.md_regs = (struct trapframe *)pcb->pcb_tss.tss_rsp0 - 1;
-	l->l_md.md_tss_sel = tss_alloc(pcb);
+	l->l_md.md_regs = (struct trapframe *)pcb->pcb_rsp0 - 1;
 
-#ifndef XEN
-	ltr(l->l_md.md_tss_sel);
+#if !defined(XEN)
 	lldt(pcb->pcb_ldt_sel);
 #else
 	xen_set_ldt((vaddr_t) ldtstore, LDT_SIZE >> 3);
 	/* Reset TS bit and set kernel stack for interrupt handlers */
 	HYPERVISOR_fpu_taskswitch(0);
-	HYPERVISOR_stack_switch(GSEL(GDATA_SEL, SEL_KPL), pcb->pcb_tss.tss_rsp0);
+	HYPERVISOR_stack_switch(GSEL(GDATA_SEL, SEL_KPL), pcb->pcb_rsp0);
 #endif /* XEN */
 }
 
+/*
+ * Set up TSS and I/O bitmap.
+ */
+void
+cpu_init_tss(struct cpu_info *ci)
+{
+	struct x86_64_tss *tss = &ci->ci_tss;
+	uintptr_t p;
+
+	tss->tss_iobase = IOMAP_INVALOFF << 16;
+	/* tss->tss_ist[0] is filled by cpu_intr_init */
+
+	/* double fault */
+	tss->tss_ist[1] = (uint64_t)x86_64_doubleflt_stack + PAGE_SIZE - 16;
+
+	/* NMI */
+	p = uvm_km_alloc(kernel_map, PAGE_SIZE, 0, UVM_KMF_WIRED);
+	tss->tss_ist[2] = p + PAGE_SIZE - 16;
+	ci->ci_tss_sel = tss_alloc(tss);
+}
 
 /*  
  * machine dependent system variables.
@@ -1690,7 +1704,17 @@ init_x86_64(paddr_t first_avail)
 	for (x = 0; x < 32; x++) {
 #ifndef XEN
 		idt_vec_reserve(x);
-		ist = (x == 8) ? 2 : 0;
+		switch (x) {
+		case 2:	/* NMI */
+			ist = 3;
+			break;
+		case 8:	/* double fault */
+			ist = 2;
+			break;
+		default:
+			ist = 0;
+			break;
+		}
 		setgate(&idt[x], IDTVEC(exceptions)[x], ist, SDT_SYS386IGT,
 		    (x == 3 || x == 4) ? SEL_UPL : SEL_KPL,
 		    GSEL(GCODE_SEL, SEL_KPL));
@@ -1760,10 +1784,6 @@ init_x86_64(paddr_t first_avail)
 	x86_enable_intr();
 
 	x86_init();
-
-        /* Make sure maxproc is sane */ 
-        if (maxproc > cpu_maxproc())
-                maxproc = cpu_maxproc();
 }
 
 void
@@ -1816,7 +1836,10 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 	const struct trapframe *tf = l->l_md.md_regs;
 	__greg_t ras_rip;
 
-	memcpy(mcp->__gregs, tf, sizeof *tf);
+	/* Copy general registers member by member */
+#define copy_from_tf(reg, REG, idx) mcp->__gregs[_REG_##REG] = tf->tf_##reg;
+	_FRAME_GREG(copy_from_tf)
+#undef copy_from_tf
 
 	if ((ras_rip = (__greg_t)ras_lookup(l->l_proc,
 	    (void *) mcp->__gregs[_REG_RIP])) != -1)
@@ -1853,7 +1876,12 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 		rflags = tf->tf_rflags;
 		err = tf->tf_err;
 		trapno = tf->tf_trapno;
-		memcpy(tf, gr, sizeof *tf);
+
+		/* Copy general registers member by member */
+#define copy_to_tf(reg, REG, idx) tf->tf_##reg = gr[_REG_##REG];
+		_FRAME_GREG(copy_to_tf)
+#undef copy_to_tf
+
 #ifdef XEN
 		/*
 		 * Xen has its own way of dealing with %cs and %ss,
@@ -1863,7 +1891,7 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 		tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
 #endif
 		rflags &= ~PSL_USER;
-		tf->tf_rflags = rflags | (gr[_REG_RFL] & PSL_USER);
+		tf->tf_rflags = rflags | (gr[_REG_RFLAGS] & PSL_USER);
 		tf->tf_err = err;
 		tf->tf_trapno = trapno;
 
@@ -1898,7 +1926,7 @@ check_mcontext(struct lwp *l, const mcontext_t *mcp, struct trapframe *tf)
 
 	gr = mcp->__gregs;
 
-	if (((gr[_REG_RFL] ^ tf->tf_rflags) & PSL_USERSTATIC) != 0)
+	if (((gr[_REG_RFLAGS] ^ tf->tf_rflags) & PSL_USERSTATIC) != 0)
 		return EINVAL;
 
 	if (__predict_false((pmap->pm_flags & PMF_USER_LDT) != 0)) {
@@ -2031,17 +2059,4 @@ int
 valid_user_selector(struct lwp *l, uint64_t seg, char *ldtp, int len)
 {
 	return memseg_baseaddr(l, seg, ldtp, len, NULL);
-}
-
-/*
- * Number of processes is limited by number of available GDT slots.
- */
-int
-cpu_maxproc(void)
-{
-#ifdef USER_LDT
-	return ((MAXGDTSIZ - DYNSEL_START) / 32);
-#else
-	return (MAXGDTSIZ - DYNSEL_START) / 16;
-#endif
 }

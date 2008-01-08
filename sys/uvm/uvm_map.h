@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.h,v 1.58.18.1 2008/01/02 21:58:40 bouyer Exp $	*/
+/*	$NetBSD: uvm_map.h,v 1.58.18.2 2008/01/08 22:12:07 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -359,11 +359,9 @@ bool		vm_map_starved_p(struct vm_map *);
 bool		vm_map_lock_try(struct vm_map *);
 void		vm_map_lock(struct vm_map *);
 void		vm_map_unlock(struct vm_map *);
-void		vm_map_upgrade(struct vm_map *);
 void		vm_map_unbusy(struct vm_map *);
 void		vm_map_lock_read(struct vm_map *);
 void		vm_map_unlock_read(struct vm_map *);
-void		vm_map_downgrade(struct vm_map *);
 void		vm_map_busy(struct vm_map *);
 bool		vm_map_locked_p(struct vm_map *);
 

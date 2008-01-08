@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.7 2007/10/17 19:58:00 garbled Exp $     */
+/*	$NetBSD: syscall.c,v 1.7.8.1 2008/01/08 22:10:34 bouyer Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -33,7 +33,7 @@
  /* All bugs are subject to removal without further notice */
 		
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.7 2007/10/17 19:58:00 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.7.8.1 2008/01/08 22:10:34 bouyer Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -203,7 +203,7 @@ syscall_fancy(struct trapframe *frame)
 	}
 
 	KERNEL_LOCK(1, l);
-	if ((err = trace_enter(l, frame->code, frame->code, NULL, args)) != 0)
+	if ((err = trace_enter(frame->code, frame->code, NULL, args)) != 0)
 		goto out;
 
 	if ((callp->sy_flags & SYCALL_MPSAFE) == 0) {
@@ -239,7 +239,7 @@ bad:
 		break;
 	}
 
-	trace_exit(l, frame->code, args, rval, err);
+	trace_exit(frame->code, args, rval, err);
 
 	userret(l, frame, oticks);
 }

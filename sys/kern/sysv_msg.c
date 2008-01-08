@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_msg.c,v 1.53.6.1 2008/01/02 21:56:17 bouyer Exp $	*/
+/*	$NetBSD: sysv_msg.c,v 1.53.6.2 2008/01/08 22:11:44 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.53.6.1 2008/01/02 21:56:17 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.53.6.2 2008/01/08 22:11:44 bouyer Exp $");
 
 #define SYSVMSG
 
@@ -1216,7 +1216,10 @@ sysctl_ipc_msgmni(SYSCTLFN_ARGS)
 	if (error || newp == NULL)
 		return error;
 
-	return msgrealloc(newsize, msginfo.msgseg);
+	sysctl_unlock();
+	error = msgrealloc(newsize, msginfo.msgseg);
+	sysctl_relock();
+	return error;
 }
 
 static int
@@ -1232,7 +1235,10 @@ sysctl_ipc_msgseg(SYSCTLFN_ARGS)
 	if (error || newp == NULL)
 		return error;
 
-	return msgrealloc(msginfo.msgmni, newsize);
+	sysctl_unlock();
+	error = msgrealloc(msginfo.msgmni, newsize);
+	sysctl_relock();
+	return error;
 }
 
 SYSCTL_SETUP(sysctl_ipc_msg_setup, "sysctl kern.ipc subtree setup")

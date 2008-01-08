@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.19 2007/12/05 12:31:26 tsutsui Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.19.4.1 2008/01/08 22:09:47 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,11 +77,12 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.19 2007/12/05 12:31:26 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.19.4.1 2008/01/08 22:09:47 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/conf.h>	/* setroot() */
+#include <sys/device.h>
 
 #include <machine/disklabel.h>
 

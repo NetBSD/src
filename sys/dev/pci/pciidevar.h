@@ -1,4 +1,4 @@
-/*	$NetBSD: pciidevar.h,v 1.35 2006/10/17 13:45:05 itohy Exp $	*/
+/*	$NetBSD: pciidevar.h,v 1.35.38.1 2008/01/08 22:11:17 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -150,12 +150,7 @@ struct pciide_softc {
 #endif	/* NATA_DMA */
 	} pciide_channels[PCIIDE_MAX_CHANNELS];
 
-	/* Power management */
-	void			*sc_powerhook;
-	struct pci_conf_state	sc_pciconf; /* Restore buffer */
-	/* Intel power management */
-	pcireg_t		sc_idetim;
-	pcireg_t		sc_udmatim;
+	pcireg_t		sc_pm_reg[4];
 };
 
 /* Given an ata_channel, get the pciide_softc. */

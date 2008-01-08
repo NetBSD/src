@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_irqhandler.c,v 1.12 2007/10/17 19:53:43 garbled Exp $	*/
+/*	$NetBSD: sa11x0_irqhandler.c,v 1.12.8.1 2008/01/08 22:09:32 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x0_irqhandler.c,v 1.12 2007/10/17 19:53:43 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x0_irqhandler.c,v 1.12.8.1 2008/01/08 22:09:32 bouyer Exp $");
 
 #include "opt_irqstats.h"
 
@@ -95,7 +95,6 @@ __KERNEL_RCSID(0, "$NetBSD: sa11x0_irqhandler.c,v 1.12 2007/10/17 19:53:43 garbl
 
 irqhandler_t *irqhandlers[NIRQS];
 
-int current_intr_depth;
 u_int actual_mask;
 #ifdef hpcarm
 #define IPL_LEVELS (NIPL+1)

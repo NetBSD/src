@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.29 2006/02/24 13:06:12 cube Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.29.58.1 2008/01/08 22:09:48 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -35,12 +35,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.29 2006/02/24 13:06:12 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.29.58.1 2008/01/08 22:09:48 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/device.h>
+#include <sys/bus.h>
 
-#include <machine/bus.h>
 #include <machine/autoconf.h>
 #include <machine/platid.h>
 #include <machine/bus_space_hpcmips.h>

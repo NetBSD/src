@@ -1,4 +1,4 @@
-/* $NetBSD: spivar.h,v 1.2 2006/10/07 07:21:13 gdamore Exp $ */
+/* $NetBSD: spivar.h,v 1.2.44.1 2008/01/08 22:11:21 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -45,6 +45,7 @@
 #define	_DEV_SPI_SPIVAR_H_
 
 #include <sys/queue.h>
+#include <sys/simplelock.h>
 
 /*
  * Serial Peripheral Interface bus.  This is a 4-wire bus common for

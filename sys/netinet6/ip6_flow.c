@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_flow.c,v 1.9.16.2 2008/01/02 21:57:30 bouyer Exp $	*/
+/*	$NetBSD: ip6_flow.c,v 1.9.16.3 2008/01/08 22:11:50 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_flow.c,v 1.9.16.2 2008/01/02 21:57:30 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_flow.c,v 1.9.16.3 2008/01/08 22:11:50 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,7 +128,7 @@ int ip6_hashsize = IP6FLOW_DEFAULT_HASHSIZE;
  * Calculate hash table position.
  */
 static size_t 
-ip6flow_hash(struct ip6_hdr *ip6)
+ip6flow_hash(const struct ip6_hdr *ip6)
 {
 	size_t hash;
 	uint32_t dst_sum, src_sum;
@@ -151,7 +151,7 @@ ip6flow_hash(struct ip6_hdr *ip6)
  * Check to see if a flow already exists - if so return it.
  */
 static struct ip6flow *
-ip6flow_lookup(struct ip6_hdr *ip6)
+ip6flow_lookup(const struct ip6_hdr *ip6)
 {
 	size_t hash;
 	struct ip6flow *ip6f;
@@ -233,7 +233,7 @@ ip6flow_fastforward(struct mbuf *m)
 	if ((m->m_flags & (M_BCAST|M_MCAST)) != 0)
 		return 0;
 
-	if (IP6_HDR_ALIGNED_P(mtod(m, void *)) == 0) {
+	if (IP6_HDR_ALIGNED_P(mtod(m, const void *)) == 0) {
 		if ((m = m_copyup(m, sizeof(struct ip6_hdr),
 				(max_linkhdr + 3) & ~3)) == NULL) {
 			return 0;
@@ -269,8 +269,7 @@ ip6flow_fastforward(struct mbuf *m)
 	/*
 	 * Route and interface still up?
 	 */
-	if (rtcache_down(&ip6f->ip6f_ro) ||
-	    (rt = rtcache_getrt(&ip6f->ip6f_ro)) == NULL ||
+	if ((rt = rtcache_validate(&ip6f->ip6f_ro)) == NULL ||
 	    (rt->rt_ifp->if_flags & IFF_UP) == 0) {
 	    	/* Route or interface is down */
 		return 0;
@@ -313,12 +312,11 @@ ip6flow_fastforward(struct mbuf *m)
  * Add the IPv6 flow statistics to the main IPv6 statistics.
  */
 static void
-ip6flow_addstats(struct ip6flow *ip6f)
+ip6flow_addstats(const struct ip6flow *ip6f)
 {
 	struct rtentry *rt;
 
-	if (!rtcache_down(&ip6f->ip6f_ro) &&
-	    (rt = rtcache_getrt(&ip6f->ip6f_ro)) != NULL)
+	if ((rt = rtcache_validate(&ip6f->ip6f_ro)) != NULL)
 		rt->rt_use += ip6f->ip6f_uses;
 	ip6stat.ip6s_fastforwardflows = ip6flow_inuse;
 	ip6stat.ip6s_cantforward += ip6f->ip6f_dropped;
@@ -367,8 +365,7 @@ ip6flow_reap(int just_one)
 			 * If this no longer points to a valid route -
 			 * reclaim it.
 			 */
-			if (rtcache_down(&ip6f->ip6f_ro) ||
-			    rtcache_getrt(&ip6f->ip6f_ro) == NULL)
+			if (rtcache_validate(&ip6f->ip6f_ro) == NULL)
 				goto done;
 			/*
 			 * choose the one that's been least recently
@@ -412,8 +409,7 @@ ip6flow_slowtimo(void)
 	for (ip6f = LIST_FIRST(&ip6flowlist); ip6f != NULL; ip6f = next_ip6f) {
 		next_ip6f = LIST_NEXT(ip6f, ip6f_list);
 		if (PRT_SLOW_ISEXPIRED(ip6f->ip6f_timer) ||
-		    rtcache_down(&ip6f->ip6f_ro) ||
-		    rtcache_getrt(&ip6f->ip6f_ro) == NULL) {
+		    rtcache_validate(&ip6f->ip6f_ro) == NULL) {
 			ip6flow_free(ip6f);
 		} else {
 			ip6f->ip6f_last_uses = ip6f->ip6f_uses;
@@ -432,12 +428,12 @@ ip6flow_slowtimo(void)
 void
 ip6flow_create(const struct route *ro, struct mbuf *m)
 {
-	struct ip6_hdr *ip6;
+	const struct ip6_hdr *ip6;
 	struct ip6flow *ip6f;
 	size_t hash;
 	int s;
 
-	ip6 = mtod(m, struct ip6_hdr *);
+	ip6 = mtod(m, const struct ip6_hdr *);
 
 	/*
 	 * If IPv6 Fast Forward is disabled, don't create a flow.

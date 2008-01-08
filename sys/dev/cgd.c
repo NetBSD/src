@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.48.6.1 2008/01/02 21:53:45 bouyer Exp $ */
+/* $NetBSD: cgd.c,v 1.48.6.2 2008/01/08 22:10:53 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.48.6.1 2008/01/02 21:53:45 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.48.6.2 2008/01/08 22:10:53 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -54,7 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.48.6.1 2008/01/02 21:53:45 bouyer Exp $");
 #include <sys/disklabel.h>
 #include <sys/fcntl.h>
 #include <sys/vnode.h>
-#include <sys/lock.h>
 #include <sys/conf.h>
 
 #include <dev/dkvar.h>

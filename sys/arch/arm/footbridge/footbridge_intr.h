@@ -1,4 +1,4 @@
-/* 	$NetBSD: footbridge_intr.h,v 1.11 2007/12/03 15:33:18 ad Exp $	*/
+/* 	$NetBSD: footbridge_intr.h,v 1.11.6.1 2008/01/08 22:09:27 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -154,7 +154,7 @@ void	_setsoftintr(int);
 
 #endif /* ! ARM_SPL_NOINLINE */
 
-#include <sys/device.h>
+#include <sys/evcnt.h>
 #include <sys/queue.h>
 #include <machine/irqhandler.h>
 

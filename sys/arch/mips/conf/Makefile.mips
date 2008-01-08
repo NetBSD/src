@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mips,v 1.47 2007/10/17 19:55:35 garbled Exp $
+#	$NetBSD: Makefile.mips,v 1.47.8.1 2008/01/08 22:10:10 bouyer Exp $
 
 # Makefile for NetBSD
 #
@@ -98,8 +98,9 @@ machdep.o mainbus.o trap.o: Makefile
 mips_machdep.o pmap.o: Makefile
 
 # various assembly files that depend on assym.h
-copy.o fp.o locore.o locore_mips1.o locore_mips3.o sigcode.o: assym.h
-mips32_subr.o mips3_subr.o mips5900_subr.o mips64_subr.o mipsX_subr.o: assym.h
+copy.o fp.o locore.o locore_mips1.o locore_mips3.o: assym.h
+lock_stubs.o mips32_subr.o mips3_subr.o mips5900_subr.o: assym.h
+mips64_subr.o mipsX_subr.o sigcode.o: assym.h
 
 
 ##

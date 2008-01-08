@@ -1,4 +1,4 @@
-/*	$NetBSD: plcomvar.h,v 1.5 2007/10/17 19:54:11 garbled Exp $	*/
+/*	$NetBSD: plcomvar.h,v 1.5.8.1 2008/01/08 22:09:40 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -42,7 +42,7 @@
 
 #include <sys/callout.h>
 #include <sys/timepps.h>
-#include <sys/lock.h>
+#include <sys/simplelock.h>
 
 int  plcomcnattach	(bus_space_tag_t, bus_addr_t, int, int, tcflag_t, int);
 void plcomcndetach	(void);

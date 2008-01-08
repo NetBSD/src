@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_timeout.c,v 1.30 2007/12/05 07:06:53 ad Exp $	*/
+/*	$NetBSD: kern_timeout.c,v 1.30.4.1 2008/01/08 22:11:37 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.30 2007/12/05 07:06:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.30.4.1 2008/01/08 22:11:37 bouyer Exp $");
 
 /*
  * Timeouts are kept in a hierarchical timing wheel.  The c_time is the
@@ -93,7 +93,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.30 2007/12/05 07:06:53 ad Exp $")
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/lock.h>
 #include <sys/callout.h>
 #include <sys/mutex.h>
 #include <sys/proc.h>

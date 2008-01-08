@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.47 2007/12/09 20:28:05 jmcneill Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.47.2.1 2008/01/08 22:11:09 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -30,13 +30,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.47 2007/12/09 20:28:05 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.47.2.1 2008/01/08 22:11:09 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
-#include <sys/lock.h>
 #include <sys/proc.h>
 #include <sys/device.h>
 #include <sys/conf.h>

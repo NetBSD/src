@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_syscall.c,v 1.16 2007/03/04 11:18:25 tsutsui Exp $	*/
+/*	$NetBSD: sunos_syscall.c,v 1.16.32.1 2008/01/08 22:10:09 bouyer Exp $	*/
 
 /*-
  * Portions Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_syscall.c,v 1.16 2007/03/04 11:18:25 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_syscall.c,v 1.16.32.1 2008/01/08 22:10:09 bouyer Exp $");
 
 #include "opt_execfmt.h"
 
@@ -316,7 +316,7 @@ sunos_syscall_fancy(register_t code, struct lwp *l, struct frame *frame)
 			goto bad;
 	}
 
-	if ((error = trace_enter(l, code, code, NULL, args)) != 0)
+	if ((error = trace_enter(code, code, NULL, args)) != 0)
 		goto out;
 
 	rval[0] = 0;
@@ -358,5 +358,5 @@ out:
 			frame->f_regs[SP] -= sizeof (int);
 	}
 
-	trace_exit(l, code, args, rval, error);
+	trace_exit(code, args, rval, error);
 }

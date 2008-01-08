@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ras.c,v 1.23.8.1 2008/01/02 21:55:56 bouyer Exp $	*/
+/*	$NetBSD: kern_ras.c,v 1.23.8.2 2008/01/08 22:11:35 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,10 +37,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ras.c,v 1.23.8.1 2008/01/02 21:55:56 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ras.c,v 1.23.8.2 2008/01/08 22:11:35 bouyer Exp $");
 
 #include <sys/param.h>
-#include <sys/lock.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/pool.h>
@@ -146,7 +145,7 @@ ras_fork(struct proc *p1, struct proc *p2)
 		nrp = pool_get(&ras_pool, PR_WAITOK);
 		nrp->ras_startaddr = rp->ras_startaddr;
 		nrp->ras_endaddr = rp->ras_endaddr;
-		nrp = p2->p_raslist;
+		nrp->ras_next = p2->p_raslist;
 		p2->p_raslist = nrp;
 	}
 

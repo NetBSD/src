@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.167.2.1 2008/01/02 21:56:00 bouyer Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.167.2.2 2008/01/08 22:11:36 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2006 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.167.2.1 2008/01/02 21:56:00 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.167.2.2 2008/01/08 22:11:36 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -1359,25 +1359,20 @@ trace_is_enabled(struct proc *p)
  * system call number range for emulation the process runs under.
  */
 int
-trace_enter(struct lwp *l, register_t code, register_t realcode,
+trace_enter(register_t code, register_t realcode,
     const struct sysent *callp, const register_t *args)
 {
-#if defined(SYSCALL_DEBUG) || defined(KTRACE) || defined(PTRACE)
-	struct proc *p = l->l_proc;
-
 #ifdef SYSCALL_DEBUG
-	scdebug_call(l, code, args);
+	scdebug_call(code, args);
 #endif /* SYSCALL_DEBUG */
 
 	ktrsyscall(code, realcode, callp, args);
 
 #ifdef PTRACE
-	if ((p->p_slflag & (PSL_SYSCALL|PSL_TRACED)) ==
+	if ((curlwp->l_proc->p_slflag & (PSL_SYSCALL|PSL_TRACED)) ==
 	    (PSL_SYSCALL|PSL_TRACED))
-		process_stoptrace(l);
+		process_stoptrace();
 #endif
-
-#endif /* SYSCALL_DEBUG || {K,P}TRACE */
 	return 0;
 }
 
@@ -1389,25 +1384,20 @@ trace_enter(struct lwp *l, register_t code, register_t realcode,
  * system call number range for emulation the process runs under.
  */
 void
-trace_exit(struct lwp *l, register_t code, const register_t *args, 
+trace_exit(register_t code, const register_t *args, 
     register_t rval[], int error)
 {
-#if defined(SYSCALL_DEBUG) || defined(KTRACE) || defined(PTRACE)
-	struct proc *p = l->l_proc;
-
 #ifdef SYSCALL_DEBUG
-	scdebug_ret(l, code, error, rval);
+	scdebug_ret(code, error, rval);
 #endif /* SYSCALL_DEBUG */
 
 	ktrsysret(code, error, rval);
 	
 #ifdef PTRACE
-	if ((p->p_slflag & (PSL_SYSCALL|PSL_TRACED)) ==
+	if ((curlwp->l_proc->p_slflag & (PSL_SYSCALL|PSL_TRACED)) ==
 	    (PSL_SYSCALL|PSL_TRACED))
-		process_stoptrace(l);
+		process_stoptrace();
 #endif
-
-#endif /* SYSCALL_DEBUG || {K,P}TRACE */
 }
 
 /*

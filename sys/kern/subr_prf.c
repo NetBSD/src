@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.111.6.1 2008/01/02 21:56:10 bouyer Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.111.6.2 2008/01/08 22:11:41 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.111.6.1 2008/01/02 21:56:10 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.111.6.2 2008/01/08 22:11:41 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
@@ -60,7 +60,6 @@ __KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.111.6.1 2008/01/02 21:56:10 bouyer Ex
 #include <sys/tprintf.h>
 #include <sys/syslog.h>
 #include <sys/malloc.h>
-#include <sys/lock.h>
 #include <sys/kprintf.h>
 
 #include <dev/cons.h>
@@ -78,9 +77,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.111.6.1 2008/01/02 21:56:10 bouyer Ex
 #include <ipkdb/ipkdb.h>
 #endif
 
-#if defined(MULTIPROCESSOR)
 struct simplelock kprintf_slock = SIMPLELOCK_INITIALIZER;
-#endif /* MULTIPROCESSOR */
 
 /*
  * note that stdarg.h and the ansi style va_start macro is used for both

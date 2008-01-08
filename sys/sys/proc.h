@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.262.4.1 2008/01/02 21:58:07 bouyer Exp $	*/
+/*	$NetBSD: proc.h,v 1.262.4.2 2008/01/08 22:11:57 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -83,7 +83,6 @@
 
 #include <machine/proc.h>		/* Machine-dependent proc substruct */
 #include <sys/aio.h>
-#include <sys/lock.h>
 #include <sys/rwlock.h>
 #include <sys/mqueue.h>
 #include <sys/mutex.h>

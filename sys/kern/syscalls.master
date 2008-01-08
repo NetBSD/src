@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.180.6.1 2008/01/02 21:56:16 bouyer Exp $
+	$NetBSD: syscalls.master,v 1.180.6.2 2008/01/08 22:11:43 bouyer Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -85,7 +85,7 @@
 16	STD MPSAFE	{ int sys_chown(const char *path, uid_t uid, \
 			    gid_t gid); }
 17	STD MPSAFE	{ int sys_obreak(char *nsize); } break
-18	COMPAT_20	{ int sys_getfsstat(struct statfs12 *buf, \
+18	COMPAT_20 MPSAFE	{ int sys_getfsstat(struct statfs12 *buf, \
 			    long bufsize, int flags); }
 19	COMPAT_43 MPSAFE	{ long sys_lseek(int fd, long offset, int whence); } \
 			    olseek
@@ -97,14 +97,14 @@
 21	COMPAT_40	{ int sys_mount(const char *type, const char *path, \
 			    int flags, void *data); }
 22	STD		{ int sys_unmount(const char *path, int flags); }
-23	STD 		{ int sys_setuid(uid_t uid); }
+23	STD MPSAFE	{ int sys_setuid(uid_t uid); }
 #ifdef COMPAT_43
-24	STD		{ uid_t sys_getuid_with_euid(void); } getuid
+24	STD MPSAFE	{ uid_t sys_getuid_with_euid(void); } getuid
 #else
 24	STD MPSAFE	{ uid_t sys_getuid(void); }
 #endif
 25	STD MPSAFE	{ uid_t sys_geteuid(void); }
-26	STD		{ int sys_ptrace(int req, pid_t pid, void *addr, \
+26	STD MPSAFE	{ int sys_ptrace(int req, pid_t pid, void *addr, \
 			    int data); }
 27	STD 		{ ssize_t sys_recvmsg(int s, struct msghdr *msg, \
 			    int flags); }
@@ -147,8 +147,8 @@
 48	COMPAT_13 MPSAFE	{ int sys_sigprocmask(int how, \
 			    int mask); } sigprocmask13
 49	STD MPSAFE	{ int sys___getlogin(char *namebuf, size_t namelen); }
-50	STD	 	{ int sys___setlogin(const char *namebuf); }
-51	STD		{ int sys_acct(const char *path); }
+50	STD MPSAFE 	{ int sys___setlogin(const char *namebuf); }
+51	STD MPSAFE	{ int sys_acct(const char *path); }
 52	COMPAT_13 MPSAFE	{ int sys_sigpending(void); } sigpending13
 53	COMPAT_13 MPSAFE	{ int sys_sigaltstack( \
 			    const struct sigaltstack13 *nss, \
@@ -164,19 +164,19 @@
 59	STD MPSAFE	{ int sys_execve(const char *path, \
 			    char * const *argp, char * const *envp); }
 60	STD MPSAFE	{ mode_t sys_umask(mode_t newmask); }
-61	STD 		{ int sys_chroot(const char *path); }
-62	COMPAT_43	{ int sys_fstat(int fd, struct stat43 *sb); } fstat43
-63	COMPAT_43	{ int sys_getkerninfo(int op, char *where, int *size, \
+61	STD MPSAFE	{ int sys_chroot(const char *path); }
+62	COMPAT_43 MPSAFE	{ int sys_fstat(int fd, struct stat43 *sb); } fstat43
+63	COMPAT_43 MPSAFE	{ int sys_getkerninfo(int op, char *where, int *size, \
 			    int arg); } ogetkerninfo
-64	COMPAT_43	{ int sys_getpagesize(void); } ogetpagesize
-65	COMPAT_12	{ int sys_msync(void *addr, size_t len); }
+64	COMPAT_43 MPSAFE { int sys_getpagesize(void); } ogetpagesize
+65	COMPAT_12 MPSAFE { int sys_msync(void *addr, size_t len); }
 ; XXX COMPAT_??? for 4.4BSD-compatible vfork(2)?
 66	STD MPSAFE	{ int sys_vfork(void); }
 67	OBSOL		vread
 68	OBSOL		vwrite
 69	STD MPSAFE	{ int sys_sbrk(intptr_t incr); }
 70	STD MPSAFE	{ int sys_sstk(int incr); }
-71	COMPAT_43	{ int sys_mmap(void *addr, size_t len, int prot, \
+71	COMPAT_43 MPSAFE	{ int sys_mmap(void *addr, size_t len, int prot, \
 			    int flags, int fd, long pos); } ommap
 72	STD MPSAFE	{ int sys_ovadvise(int anom); } vadvise
 73	STD MPSAFE	{ int sys_munmap(void *addr, size_t len); }
@@ -190,20 +190,20 @@
 			    char *vec); }
 79	STD MPSAFE	{ int sys_getgroups(int gidsetsize, \
 			    gid_t *gidset); }
-80	STD		{ int sys_setgroups(int gidsetsize, \
+80	STD MPSAFE	{ int sys_setgroups(int gidsetsize, \
 			    const gid_t *gidset); }
 81	STD MPSAFE 	{ int sys_getpgrp(void); }
-82	STD 		{ int sys_setpgid(int pid, int pgid); }
+82	STD MPSAFE	{ int sys_setpgid(int pid, int pgid); }
 83	STD		{ int sys_setitimer(int which, \
 			    const struct itimerval *itv, \
 			    struct itimerval *oitv); }
 84	COMPAT_43 MPSAFE	{ int sys_wait(void); } owait
-85	COMPAT_12	{ int sys_swapon(const char *name); } oswapon
+85	COMPAT_12 MPSAFE	{ int sys_swapon(const char *name); } oswapon
 86	STD		{ int sys_getitimer(int which, \
 			    struct itimerval *itv); }
-87	COMPAT_43	{ int sys_gethostname(char *hostname, u_int len); } \
+87	COMPAT_43 MPSAFE	{ int sys_gethostname(char *hostname, u_int len); } \
 			    ogethostname
-88	COMPAT_43	{ int sys_sethostname(char *hostname, u_int len); } \
+88	COMPAT_43 MPSAFE	{ int sys_sethostname(char *hostname, u_int len); } \
 			    osethostname
 89	COMPAT_43 MPSAFE	{ int sys_getdtablesize(void); } ogetdtablesize
 90	STD MPSAFE	{ int sys_dup2(int from, int to); }
@@ -254,15 +254,15 @@
 			    const struct iovec *iovp, int iovcnt); }
 121	STD MPSAFE	{ ssize_t sys_writev(int fd, \
 			    const struct iovec *iovp, int iovcnt); }
-122	STD		{ int sys_settimeofday(const struct timeval *tv, \
+122	STD MPSAFE	{ int sys_settimeofday(const struct timeval *tv, \
 			    const void *tzp); }
 123	STD MPSAFE	{ int sys_fchown(int fd, uid_t uid, gid_t gid); }
 124	STD MPSAFE	{ int sys_fchmod(int fd, mode_t mode); }
 125	COMPAT_43	{ int sys_recvfrom(int s, void *buf, size_t len, \
 			    int flags, void *from, int *fromlenaddr); } \
 			    orecvfrom
-126	STD		{ int sys_setreuid(uid_t ruid, uid_t euid); }
-127	STD		{ int sys_setregid(gid_t rgid, gid_t egid); }
+126	STD MPSAFE	{ int sys_setreuid(uid_t ruid, uid_t euid); }
+127	STD MPSAFE	{ int sys_setregid(gid_t rgid, gid_t egid); }
 128	STD MPSAFE	{ int sys_rename(const char *from, const char *to); }
 129	COMPAT_43 MPSAFE	{ int sys_truncate(const char *path, long length); } \
 			    otruncate
@@ -288,13 +288,13 @@
 143	COMPAT_43 MPSAFE	{ int sys_sethostid(int32_t hostid); } osethostid
 144	COMPAT_43 MPSAFE	{ int sys_getrlimit(int which, \
 			    struct orlimit *rlp); } ogetrlimit
-145	COMPAT_43	{ int sys_setrlimit(int which, \
+145	COMPAT_43 MPSAFE	{ int sys_setrlimit(int which, \
 			    const struct orlimit *rlp); } osetrlimit
 146	COMPAT_43 MPSAFE	{ int sys_killpg(int pgid, int signum); } okillpg
-147	STD	 	{ int sys_setsid(void); }
-148	STD		{ int sys_quotactl(const char *path, int cmd, \
+147	STD MPSAFE 	{ int sys_setsid(void); }
+148	STD MPSAFE	{ int sys_quotactl(const char *path, int cmd, \
 			    int uid, void *arg); }
-149	COMPAT_43	{ int sys_quota(void); } oquota
+149	COMPAT_43 MPSAFE	{ int sys_quota(void); } oquota
 150	COMPAT_43	{ int sys_getsockname(int fdec, void *asa, \
 			    int *alen); } ogetsockname
 
@@ -311,18 +311,18 @@
 #else
 155	EXCL		nfssvc
 #endif
-156	COMPAT_43 MPSAFE{ int sys_getdirentries(int fd, char *buf, \
+156	COMPAT_43 MPSAFE { int sys_getdirentries(int fd, char *buf, \
 			    u_int count, long *basep); } ogetdirentries
-157	COMPAT_20	{ int sys_statfs(const char *path, \
+157	COMPAT_20 MPSAFE	{ int sys_statfs(const char *path, \
 			    struct statfs12 *buf); }
-158	COMPAT_20	{ int sys_fstatfs(int fd, struct statfs12 *buf); }
+158	COMPAT_20 MPSAFE	{ int sys_fstatfs(int fd, struct statfs12 *buf); }
 159	UNIMPL
 160	UNIMPL
-161	COMPAT_30	{ int sys_getfh(const char *fname, \
+161	COMPAT_30 MPSAFE { int sys_getfh(const char *fname, \
 			    struct compat_30_fhandle *fhp); }
-162	COMPAT_09	{ int sys_getdomainname(char *domainname, int len); } \
+162	COMPAT_09 MPSAFE { int sys_getdomainname(char *domainname, int len); } \
 			    ogetdomainname
-163	COMPAT_09	{ int sys_setdomainname(char *domainname, int len); } \
+163	COMPAT_09 MPSAFE { int sys_setdomainname(char *domainname, int len); } \
 			    osetdomainname
 164	COMPAT_09 MPSAFE	{ int sys_uname(struct outsname *name); } ouname
 165	STD		{ int sys_sysarch(int op, void *parms); }
@@ -368,9 +368,9 @@
 180	UNIMPL
 
 ; Syscalls 180-199 are used by/reserved for BSD
-181	STD		{ int sys_setgid(gid_t gid); }
-182	STD 		{ int sys_setegid(gid_t egid); }
-183	STD		{ int sys_seteuid(uid_t euid); }
+181	STD MPSAFE	{ int sys_setgid(gid_t gid); }
+182	STD MPSAFE	{ int sys_setegid(gid_t egid); }
+183	STD MPSAFE	{ int sys_seteuid(uid_t euid); }
 #if defined(LFS) || !defined(_KERNEL)
 184	STD		{ int sys_lfs_bmapv(fsid_t *fsidp, \
 			    struct block_info *blkiov, int blkcnt); }
@@ -395,9 +395,9 @@
 193	UNIMPL
 194	STD MPSAFE	{ int sys_getrlimit(int which, \
 			    struct rlimit *rlp); }
-195	STD		{ int sys_setrlimit(int which, \
+195	STD MPSAFE	{ int sys_setrlimit(int which, \
 			    const struct rlimit *rlp); }
-196	COMPAT_12	{ int sys_getdirentries(int fd, char *buf, \
+196	COMPAT_12 MPSAFE	{ int sys_getdirentries(int fd, char *buf, \
 			    u_int count, long *basep); }
 197	STD MPSAFE	{ void *sys_mmap(void *addr, size_t len, int prot, \
 			    int flags, int fd, long pad, off_t pos); }
@@ -489,7 +489,7 @@
 #endif
 232	STD MPSAFE	{ int sys_clock_gettime(clockid_t clock_id, \
 			    struct timespec *tp); }
-233	STD		{ int sys_clock_settime(clockid_t clock_id, \
+233	STD MPSAFE	{ int sys_clock_settime(clockid_t clock_id, \
 			    const struct timespec *tp); }
 234	STD MPSAFE	{ int sys_clock_getres(clockid_t clock_id, \
 			    struct timespec *tp); }
@@ -614,10 +614,10 @@
 295	COMPAT_16 MPSAFE { int sys___sigreturn14(struct sigcontext *sigcntxp); }
 296	STD MPSAFE	{ int sys___getcwd(char *bufp, size_t length); }
 297	STD MPSAFE	{ int sys_fchroot(int fd); }
-298	COMPAT_30	{ int sys_fhopen(const struct compat_30_fhandle *fhp, int flags); }
-299	COMPAT_30	{ int sys_fhstat(const struct compat_30_fhandle *fhp, \
+298	COMPAT_30 MPSAFE	{ int sys_fhopen(const struct compat_30_fhandle *fhp, int flags); }
+299	COMPAT_30 MPSAFE	{ int sys_fhstat(const struct compat_30_fhandle *fhp, \
 			    struct stat13 *sb); }
-300	COMPAT_20	{ int sys_fhstatfs(const struct compat_30_fhandle *fhp, \
+300	COMPAT_20 MPSAFE	{ int sys_fhstatfs(const struct compat_30_fhandle *fhp, \
 			    struct statfs12 *buf); }
 #if defined(SYSVSEM) || !defined(_KERNEL)
 301	STD MPSAFE	{ int sys_____semctl13(int semid, int semnum, int cmd, \
@@ -710,14 +710,14 @@
 
 354	STD MPSAFE	{ int sys_fsync_range(int fd, int flags, off_t start, \
 			    off_t length); }
-355	STD		{ int sys_uuidgen(struct uuid *store, int count); }
-356	STD		{ int sys_getvfsstat(struct statvfs *buf, \
+355	STD MPSAFE	{ int sys_uuidgen(struct uuid *store, int count); }
+356	STD MPSAFE	{ int sys_getvfsstat(struct statvfs *buf, \
 			    size_t bufsize, int flags); }
-357	STD		{ int sys_statvfs1(const char *path, \
+357	STD MPSAFE	{ int sys_statvfs1(const char *path, \
 			    struct statvfs *buf, int flags); }
-358	STD		{ int sys_fstatvfs1(int fd, struct statvfs *buf, \
+358	STD MPSAFE	{ int sys_fstatvfs1(int fd, struct statvfs *buf, \
 			    int flags); }
-359	COMPAT_30	{ int sys_fhstatvfs1(const struct compat_30_fhandle *fhp, \
+359	COMPAT_30 MPSAFE	{ int sys_fhstatvfs1(const struct compat_30_fhandle *fhp, \
 			    struct statvfs *buf, int flags); }
 360	STD		{ int sys_extattrctl(const char *path, int cmd, \
 			    const char *filename, int attrnamespace, \
@@ -788,19 +788,19 @@
 388	STD MPSAFE	{ int sys___fstat30(int fd, struct stat *sb); }
 389	STD MPSAFE	{ int sys___lstat30(const char *path, struct stat *ub); }
 390	STD MPSAFE	{ int sys___getdents30(int fd, char *buf, size_t count); }
-391	STD		{ int sys_posix_fadvise(int fd, off_t offset, \
+391	STD MPSAFE	{ int sys_posix_fadvise(int fd, off_t offset, \
 			    off_t len, int advice); }
-392	COMPAT_30	{ int sys___fhstat30(const struct compat_30_fhandle \
+392	COMPAT_30 MPSAFE	{ int sys___fhstat30(const struct compat_30_fhandle \
 			    *fhp, struct stat *sb); }
 393	STD		{ int sys___ntp_gettime30(struct ntptimeval *ntvp); }
 394	STD		{ int sys___socket30(int domain, int type, int protocol); }
-395	STD		{ int sys___getfh30(const char *fname, void *fhp, \
+395	STD MPSAFE	{ int sys___getfh30(const char *fname, void *fhp, \
 			    size_t *fh_size); }
-396	STD		{ int sys___fhopen40(const void *fhp, size_t fh_size,\
+396	STD MPSAFE	{ int sys___fhopen40(const void *fhp, size_t fh_size,\
 			    int flags); }
-397	STD		{ int sys___fhstatvfs140(const void *fhp, \
+397	STD MPSAFE	{ int sys___fhstatvfs140(const void *fhp, \
 			    size_t fh_size, struct statvfs *buf, int flags); }
-398	STD		{ int sys___fhstat40(const void *fhp, \
+398	STD MPSAFE	{ int sys___fhstat40(const void *fhp, \
 			    size_t fh_size, struct stat *sb); }
 
 ; Asynchronous I/O system calls

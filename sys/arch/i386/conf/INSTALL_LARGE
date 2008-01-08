@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_LARGE,v 1.11 2007/12/05 00:19:41 xtraeme Exp $
+#	$NetBSD: INSTALL_LARGE,v 1.11.4.1 2008/01/08 22:09:54 bouyer Exp $
 #
 #	INSTALL_LARGE -- INSTALL suitable for modern machines
 #
@@ -9,8 +9,8 @@ acpi0 		at mainbus0
 
 #options 	ACPI_ACTIVATE_DEV	# If set, activate inactive devices
 #options 	ACPICA_PEDANTIC		# force strict conformance to the Spec.
-options		ACPIVERBOSE
-options		ACPI_SCANPCI
+options 	ACPIVERBOSE
+options 	ACPI_SCANPCI
 
 ioapic* 	at mainbus?
 bnx* 	at pci? dev ? function ?	# Broadcom NetXtremeII gigabit Ethernet

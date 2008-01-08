@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.920.6.1 2008/01/02 21:54:51 bouyer Exp $
+$NetBSD: pcidevs,v 1.920.6.2 2008/01/08 22:11:14 bouyer Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2794,7 +2794,7 @@ product SYMBIOS 895A			0x0012	53c895A
 product SYMBIOS 875A			0x0013	53c875A
 product SYMBIOS 1010			0x0020	53c1010
 product SYMBIOS 1010_2			0x0021	53c1010 (66MHz)
-product SYMBIOS 1030			0x0030	53c1030
+product SYMBIOS 1030			0x0030	53c1020/53c1030
 product SYMBIOS 1030R			0x1030	53c1030R
 product SYMBIOS 1030ZC			0x0031	53c1030ZC
 product SYMBIOS 1035			0x0040	53c1035

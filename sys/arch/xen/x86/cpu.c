@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.3.2.3 2008/01/06 18:29:45 bouyer Exp $	*/
+/*	$NetBSD: cpu.c,v 1.3.2.4 2008/01/08 22:10:41 bouyer Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.3.2.3 2008/01/06 18:29:45 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.3.2.4 2008/01/08 22:10:41 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -759,7 +759,7 @@ cpu_set_tss_gates(struct cpu_info *ci)
 	 */
 	ci->ci_ddbipi_stack = (char *)uvm_km_alloc(kernel_map, USPACE, 0,
 	    UVM_KMF_WIRED);
-	cpu_init_tss(&ci->ci_ddbipi_tss, ci->ci_ddbipi_stack,
+	tss_init(&ci->ci_ddbipi_tss, ci->ci_ddbipi_stack,
 	    Xintrddbipi);
 
 	setsegment(&sd, &ci->ci_ddbipi_tss, sizeof(struct i386tss) - 1,
