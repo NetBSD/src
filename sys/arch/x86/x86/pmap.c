@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.20 2008/01/04 15:55:30 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.21 2008/01/08 22:22:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.20 2008/01/04 15:55:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.21 2008/01/08 22:22:30 yamt Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -605,6 +605,17 @@ pmap_apte_flush(struct pmap *pmap)
 }
 
 /*
+ *	Add a reference to the specified pmap.
+ */
+
+inline void
+pmap_reference(struct pmap *pmap)
+{
+
+	atomic_inc_uint((unsigned *)&pmap->pm_obj[0].uo_refs);
+}
+
+/*
  * pmap_map_ptes: map a pmap's PTEs into KVM and lock them in
  *
  * => we lock enough pmaps to keep things locked in
@@ -668,6 +679,7 @@ pmap_map_ptes(struct pmap *pmap, struct pmap **pmap2,
 #endif /* XEN */
 
 	/* need to lock both curpmap and pmap: use ordered locking */
+	pmap_reference(ourpmap);
 	if ((uintptr_t) pmap < (uintptr_t) ourpmap) {
 		mutex_enter(&pmap->pm_lock);
 		mutex_enter(&ourpmap->pm_lock);
@@ -729,8 +741,10 @@ pmap_map_ptes(struct pmap *pmap, struct pmap **pmap2,
 	if (l->l_ncsw != ncsw) {
  unlock_and_retry:
 		crit_exit();
-	    	if (ourpmap != NULL)
+	    	if (ourpmap != NULL) {
 			mutex_exit(&ourpmap->pm_lock);
+			pmap_destroy(ourpmap);
+		}
 		mutex_exit(&pmap->pm_lock);
 		goto retry;
 	}
@@ -778,6 +792,7 @@ pmap_unmap_ptes(struct pmap *pmap, struct pmap *pmap2)
 		COUNT(apdp_pde_unmap);
 		mutex_exit(&pmap->pm_lock);
 		mutex_exit(&pmap2->pm_lock);
+		pmap_destroy(pmap2);
 	}
 
 	/* re-enable preemption */
@@ -1978,17 +1993,6 @@ pmap_destroy(struct pmap *pmap)
 	for (i = 0; i < PTP_LEVELS - 1; i++)
 		mutex_destroy(&pmap->pm_obj[i].vmobjlock);
 	pool_cache_put(&pmap_cache, pmap);
-}
-
-/*
- *	Add a reference to the specified pmap.
- */
-
-inline void
-pmap_reference(struct pmap *pmap)
-{
-
-	atomic_inc_uint((unsigned *)&pmap->pm_obj[0].uo_refs);
 }
 
 #if defined(PMAP_FORK)
