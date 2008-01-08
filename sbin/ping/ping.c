@@ -1,4 +1,4 @@
-/*	$NetBSD: ping.c,v 1.86 2007/01/17 21:59:49 hubertf Exp $	*/
+/*	$NetBSD: ping.c,v 1.87 2008/01/08 20:03:09 seanb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -58,7 +58,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping.c,v 1.86 2007/01/17 21:59:49 hubertf Exp $");
+__RCSID("$NetBSD: ping.c,v 1.87 2008/01/08 20:03:09 seanb Exp $");
 #endif
 
 #include <stdio.h>
@@ -259,6 +259,13 @@ main(int argc, char *argv[])
 		err(1, "Cannot create socket");
 	if ((sloop = cap_socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)) < 0)
 		err(1, "Cannot create socket");
+
+	/*
+	 * sloop is never read on.  This prevents packets from
+	 * queueing in its recv buffer.
+	 */
+	if (shutdown(sloop, SHUT_RD) == -1)
+		warn("Cannot shutdown for read");
 
 	if (setuid(getuid()) == -1)
 		err(1, "setuid");
