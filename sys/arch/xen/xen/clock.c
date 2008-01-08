@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.42 2007/11/22 16:17:06 bouyer Exp $	*/
+/*	$NetBSD: clock.c,v 1.43 2008/01/08 20:37:35 joerg Exp $	*/
 
 /*
  *
@@ -34,7 +34,7 @@
 #include "opt_xen.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.42 2007/11/22 16:17:06 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.43 2008/01/08 20:37:35 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,8 +78,6 @@ static volatile unsigned long shadow_time_version; /* XXXSMP */
 static volatile uint32_t shadow_freq_mul;
 static volatile int8_t shadow_freq_shift;
 static volatile struct timespec shadow_ts;
-
-static int timeset;
 
 /* The time when the last hardclock(9) call should have taken place. */
 static volatile uint64_t processed_system_time;
@@ -298,86 +296,33 @@ xen_wall_time(struct timespec *wt)
 #endif
 }
 
-void
-inittodr(time_t base)
+static int
+xen_rtc_get(todr_chip_handle_t todr, volatile struct timeval *tvp)
 {
 	struct timespec wt;
 
-	/*
-	 * if the file system time is more than a year older than the
-	 * kernel, warn and then set the base time to the CONFIG_TIME.
-	 */
-	if (base && base < (CONFIG_TIME-SECYR)) {
-		printf("WARNING: preposterous time in file system\n");
-		base = CONFIG_TIME;
-	}
-
 	xen_wall_time(&wt);
-	tc_setclock(&wt); /* XXX what about rtc_offset? */
-	
-	if (base != 0 && base < time_second - 5*SECYR)
-		printf("WARNING: file system time much less than clock time\n");
-	else if (base > time_second + 5*SECYR) {
-		printf("WARNING: clock time much less than file system time\n");
-		printf("WARNING: using file system time\n");
-		goto fstime;
-	}
+	tvp->tv_sec = wt.tv_sec;
+	tvp->tv_usec = wt.tv_nsec / 1000;
 
-	timeset = 1;
-	return;
-
-fstime:
-	timeset = 1;
-	wt.tv_sec = base;
-	tc_setclock(&wt);
-	printf("WARNING: CHECK AND RESET THE DATE!\n");
+	return 0;
 }
 
-void
-resettodr(void)
+static int
+xen_rtc_set(todr_chip_handle_t todr, volatile struct timeval *tvp)
 {
 #ifdef DOM0OPS
 	dom0_op_t op;
 	int s;
-#endif
-#ifdef DEBUG_CLOCK
-	struct timeval sent_delta;
-#endif
 
-	/*
-	 * We might have been called by boot() due to a crash early
-	 * on.  Don't reset the clock chip in this case.
-	 */
-	if (!timeset)
-		return;
-
-#ifdef XXX_DEBUG_CLOCK
-        {       /* XXX annoying debug printf not yet timecounterized */
-		char pm;
- 
-		if (timercmp(&time, &shadow_tv, >)) {
-			timersub(&time, &shadow_tv, &sent_delta);
-			pm = '+';
-		} else {
-			timersub(&shadow_tv, &time, &sent_delta);
-			pm = '-';
-		}
-		printf("resettodr: stepping Xen clock by %c%ld.%06ld\n",
-	    pm, sent_delta.tv_sec, sent_delta.tv_usec);
-	}
-#endif
-#ifdef DOM0OPS
 	if (xen_start_info.flags & SIF_PRIVILEGED) {
-		struct timespec now;
-
 		op.cmd = DOM0_SETTIME;
-		nanotime(&now);
 		/* XXX is rtc_offset handled correctly everywhere? */
-		op.u.settime.secs	 = now.tv_sec - rtc_offset * 60;
+		op.u.settime.secs	 = tvp->tv_sec;
 #ifdef XEN3
-		op.u.settime.nsecs	 = now.tv_nsec;
+		op.u.settime.nsecs	 = tvp->tv_usec * 1000;
 #else
-		op.u.settime.usecs	 = now.tv_nsec / 1000;
+		op.u.settime.usecs	 = tvp->tv_usec;
 #endif
 		s = splhigh();
 		op.u.settime.system_time = get_system_time();
@@ -385,13 +330,19 @@ resettodr(void)
 		HYPERVISOR_dom0_op(&op);
 	}
 #endif
-}
 
+	return 0;
+}
 
 void
 startrtclock()
 {
+	static struct todr_chip_handle	tch;
+	tch.todr_gettime = xen_rtc_get;
+	tch.todr_settime = xen_rtc_set;
+	tch.todr_setwen = NULL;
 
+	todr_attach(&tch);
 }
 
 /*
