@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.81 2008/01/05 22:48:31 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.82 2008/01/08 13:15:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007
@@ -120,7 +120,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.81 2008/01/05 22:48:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.82 2008/01/08 13:15:01 yamt Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -432,7 +432,7 @@ x86_64_proc0_tss_ldt_init(void)
 	pcb->pcb_flags = 0;
 	pcb->pcb_fs = 0;
 	pcb->pcb_gs = 0;
-	pcb->pcb_rsp0 = (u_int64_t)l->l_addr + USPACE - 16;
+	pcb->pcb_rsp0 = (USER_TO_UAREA(l->l_addr) + KSTACK_SIZE - 16) & ~0xf;
 	pcb->pcb_iopl = SEL_KPL;
 
 	pcb->pcb_ldt_sel = pmap_kernel()->pm_ldt_sel =
