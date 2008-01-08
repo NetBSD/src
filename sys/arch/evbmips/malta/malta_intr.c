@@ -1,4 +1,4 @@
-/*	$NetBSD: malta_intr.c,v 1.16 2008/01/08 14:28:35 dogcow Exp $	*/
+/*	$NetBSD: malta_intr.c,v 1.17 2008/01/08 16:15:04 tsutsui Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: malta_intr.c,v 1.16 2008/01/08 14:28:35 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: malta_intr.c,v 1.17 2008/01/08 16:15:04 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -64,21 +64,22 @@ __KERNEL_RCSID(0, "$NetBSD: malta_intr.c,v 1.16 2008/01/08 14:28:35 dogcow Exp $
  * given hardware interrupt priority level.
  */
 const uint32_t ipl_sr_bits[_IPL_N] = {
-	0,					/*  0: IPL_NONE */
-
-	MIPS_SOFT_INT_MASK_0,			/*  1: IPL_VM */
-
-	MIPS_SOFT_INT_MASK_0|
-		MIPS_SOFT_INT_MASK_1,		/*  3: IPL_SCHED */
-
-	MIPS_SOFT_INT_MASK_0|
-		MIPS_SOFT_INT_MASK_1|
-		MIPS_INT_MASK_0|
-		MIPS_INT_MASK_1|
-		MIPS_INT_MASK_2|
-		MIPS_INT_MASK_3|
-		MIPS_INT_MASK_4|
-		MIPS_INT_MASK_5,		/*  8: IPL_HIGH */
+	[IPL_NONE] = 0,
+	[IPL_SOFTCLOCK] =
+	    MIPS_SOFT_INT_MASK_0,
+	[IPL_SOFTNET] =
+	    MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1,
+	[IPL_VM] =
+	    MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1 |
+	    MIPS_INT_MASK_0,
+	[IPL_SCHED] =
+	    MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1 |
+	    MIPS_INT_MASK_0 |
+	    MIPS_INT_MASK_1 |
+	    MIPS_INT_MASK_2 |
+	    MIPS_INT_MASK_3 |
+	    MIPS_INT_MASK_4 |
+	    MIPS_INT_MASK_5,
 };
 
 /*
