@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.6 2005/12/11 12:17:09 christos Exp $ */
+/*	$NetBSD: obio.c,v 1.7 2008/01/08 02:07:53 matt Exp $ */
 
 /*
  * Copyright (c) 2002, 2003  Genetec Corporation.  All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.6 2005/12/11 12:17:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.7 2008/01/08 02:07:53 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -134,7 +134,7 @@ obio_intr(void *arg)
 				    LUBBOCK_INTRMASK, mask);
 
 				/* handle it later */
-				softintr_schedule(sc->sc_si);
+				softint_schedule(sc->sc_si);
 			}
 		}
 
@@ -277,7 +277,7 @@ obio_attach(struct device *parent, struct device *self, void *aux)
 #endif
 	sc->sc_ih = pxa2x0_gpio_intr_establish(0, IST_EDGE_FALLING, sc->sc_ipl,
 	    obio_intr, sc);
-	sc->sc_si = softintr_establish(IPL_SOFTNET, obio_softintr, sc);
+	sc->sc_si = softint_establish(SOFTINT_NET, obio_softintr, sc);
 
 
 	/*
