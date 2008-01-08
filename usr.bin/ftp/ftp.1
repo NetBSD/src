@@ -1,4 +1,4 @@
-.\" 	$NetBSD: ftp.1,v 1.122 2007/12/02 19:40:54 wiz Exp $
+.\" 	$NetBSD: ftp.1,v 1.123 2008/01/08 15:28:31 reed Exp $
 .\"
 .\" Copyright (c) 1996-2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -460,16 +460,6 @@ when an ascii type transfer is made, these linefeeds may be
 distinguished from a record delimiter only when
 .Ic \&cr
 is off.
-.It Ic ftp_debug Op Ar ftp_debug-value
-Toggle debugging mode.
-If an optional
-.Ar ftp_debug-value
-is specified it is used to set the debugging level.
-When debugging is on,
-.Nm
-prints each command sent to the remote machine, preceded
-by the string
-.Ql \-\-\*[Gt]
 .It Ic delete Ar remote-file
 Delete the file
 .Ar remote-file
@@ -543,6 +533,16 @@ format is
 .It Ic ftp Ar host Op Ar port
 A synonym for
 .Ic open .
+.It Ic ftp_debug Op Ar ftp_debug-value
+Toggle debugging mode.
+If an optional
+.Ar ftp_debug-value
+is specified it is used to set the debugging level.
+When debugging is on,
+.Nm
+prints each command sent to the remote machine, preceded
+by the string
+.Ql \-\-\*[Gt] .
 .It Ic gate Op Ar host Op Ar port
 Toggle gate-ftp mode, which used to connect through the
 TIS FWTK and Gauntlet ftp proxies.
