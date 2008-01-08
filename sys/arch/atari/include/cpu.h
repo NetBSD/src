@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.59 2007/10/17 19:53:57 garbled Exp $	*/
+/*	$NetBSD: cpu.h,v 1.60 2008/01/08 18:04:16 joerg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -219,11 +219,6 @@ int	cpu_dumpsize __P((void));
  * Prototypes from autoconf.c
  */
 void	config_console __P((void));
-
-/*
- * Prototypes from clock.c
- */
-long	clkread __P((void));
 
 /*
  * Prototypes from fpu.c
