@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.21 2008/01/08 22:22:30 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.22 2008/01/08 22:24:10 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.21 2008/01/08 22:22:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.22 2008/01/08 22:24:10 yamt Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -779,16 +779,6 @@ pmap_unmap_ptes(struct pmap *pmap, struct pmap *pmap2)
 		pmap_pte_flush();
 		pmap_apte_flush(pmap2);
 #endif
-#ifdef XEN
-		/* Reload user PGD if we had to clear it, and no other pmap was loaded*/
-		if ((pmap->pm_flags & PMF_USER_RELOAD) &&  xen_current_user_pgd == 0) {
-			s = splvm();
-			xen_set_user_pgd(pmap->pm_pdirpa);
-			pmap->pm_flags &= ~PMF_USER_RELOAD;
-			xen_current_user_pgd = pmap->pm_pdirpa;
-			splx(s);
-		}
-#endif /* XEN */
 		COUNT(apdp_pde_unmap);
 		mutex_exit(&pmap->pm_lock);
 		mutex_exit(&pmap2->pm_lock);
