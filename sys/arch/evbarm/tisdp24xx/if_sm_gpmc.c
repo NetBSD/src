@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sm_gpmc.c,v 1.1.2.2 2007/11/06 04:12:16 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sm_gpmc.c,v 1.1.2.3 2008/01/08 07:16:28 matt Exp $");
 
 #include "locators.h"
 
@@ -131,8 +131,8 @@ sm_gpmc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_bsh = bsh;
 
 	/* register the interrupt handler */
-	gpmcsc->ih = omap_intr_establish(gpmc->gpmc_intr, IPL_NET,
-	    sc->sc_dev.dv_xname, sm_gpmc_intr, gpmcsc);
+	gpmcsc->ih = intr_establish(gpmc->gpmc_intr, IPL_NET, IST_LEVEL,
+	    sm_gpmc_intr, gpmcsc);
 
 	if (gpmcsc->ih == NULL) {
 		aprint_error(": couldn't establish interrupt\n");
