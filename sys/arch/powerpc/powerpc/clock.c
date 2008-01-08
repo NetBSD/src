@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.4 2007/10/17 19:56:47 garbled Exp $	*/
+/*	$NetBSD: clock.c,v 1.5 2008/01/08 12:05:49 joerg Exp $	*/
 /*      $OpenBSD: clock.c,v 1.3 1997/10/13 13:42:53 pefo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.4 2007/10/17 19:56:47 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.5 2008/01/08 12:05:49 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -224,7 +224,7 @@ get_powerpc_timecount(struct timecounter *tc)
 }
 
 void
-init_powerpc_tc()
+init_powerpc_tc(void)
 {
 	/* from machdep initialization */
 	powerpc_timecounter.tc_frequency = ticks_per_sec;
