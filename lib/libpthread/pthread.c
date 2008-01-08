@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.95 2007/12/24 16:04:20 ad Exp $	*/
+/*	$NetBSD: pthread.c,v 1.96 2008/01/08 20:56:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.95 2007/12/24 16:04:20 ad Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.96 2008/01/08 20:56:08 christos Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -77,6 +77,8 @@ static int	pthread__stackalloc(pthread_t *);
 static void	pthread__initmain(pthread_t *);
 static void	pthread__fork_callback(void);
 static void	pthread__reap(pthread_t);
+static void	pthread__child_callback(void);
+static void	pthread__start(void);
 
 void	pthread__init(void);
 
