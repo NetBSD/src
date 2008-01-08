@@ -1,4 +1,4 @@
-/*	$NetBSD: obio_com.c,v 1.1.2.3 2007/11/05 22:01:56 matt Exp $	*/
+/*	$NetBSD: obio_com.c,v 1.1.2.4 2008/01/08 07:16:27 matt Exp $	*/
 
 /*
  * Based on arch/arm/omap/omap_com.c
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio_com.c,v 1.1.2.3 2007/11/05 22:01:56 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio_com.c,v 1.1.2.4 2008/01/08 07:16:27 matt Exp $");
 
 #include "opt_omap.h"
 #include "opt_com.h"
@@ -140,8 +140,8 @@ obiouart_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 
 	if (obio->obio_intr != OBIOCF_INTR_DEFAULT) {
-		omap_intr_establish(obio->obio_intr, IPL_SERIAL,
-			sc->sc_dev.dv_xname, comintr, sc);
+		intr_establish(obio->obio_intr, IPL_SERIAL, IST_LEVEL,
+			comintr, sc);
 	} else {
 		callout_init(&osc->sc_callout, 0);
 		callout_reset(&osc->sc_callout, 1, obiouart_callout, osc);
