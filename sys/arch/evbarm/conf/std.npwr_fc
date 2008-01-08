@@ -1,8 +1,9 @@
-#	$NetBSD: std.npwr_fc,v 1.1 2005/12/22 16:17:24 briggs Exp $
+#	$NetBSD: std.npwr_fc,v 1.2 2008/01/08 02:05:30 matt Exp $
 #
 # standard NetBSD/evbarm for IQ80321 options
 
 machine	evbarm arm
+include		"conf/std"	# MI standard options
 
 # Pull in IQ80321 config definitions.
 include "arch/evbarm/conf/files.npwr_fc"
