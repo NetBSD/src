@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.S,v 1.14 2007/04/10 16:54:34 dsl Exp $	*/
+/*	$NetBSD: mbr.S,v 1.15 2008/01/08 18:31:56 dsl Exp $	*/
 
 /*
  * Copyright (c) 1999-2004 The NetBSD Foundation, Inc. 
@@ -218,10 +218,8 @@ next_ptn:
 	pop	%dx			/* recover drive # */
 	push	%dx			/* save drive */
 	int	$0x13
-	jc	wait_key		/* abort menu on read fail */
-	cmpw	$MBR_MAGIC, LOADADDR + MBR_MAGIC_OFFSET
 	movw	$nametab - LOADADDR + BOOTADDR, %bx
-	je	next_extended
+	jnc	next_extended		/* abort menu on read fail */
 #endif
 
 /*
