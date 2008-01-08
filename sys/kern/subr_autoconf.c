@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.127 2008/01/04 21:18:12 ad Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.128 2008/01/08 06:27:46 dyoung Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.127 2008/01/04 21:18:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.128 2008/01/08 06:27:46 dyoung Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_ddb.h"
@@ -1738,9 +1738,10 @@ device_parent(device_t dev)
 bool
 device_foreach_child(device_t parent, bool (*func)(device_t, void *), void *arg)
 {
-	device_t curdev;
+	device_t curdev, nextdev;
 
-	TAILQ_FOREACH(curdev, &alldevs, dv_list) {
+	for (curdev = TAILQ_FIRST(&alldevs); curdev != NULL; curdev = nextdev) {
+		nextdev = TAILQ_NEXT(curdev, dv_list);
 		if (device_parent(curdev) != parent)
 			continue;
 		if (!(*func)(curdev, arg))
