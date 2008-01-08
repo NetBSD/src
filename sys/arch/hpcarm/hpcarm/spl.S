@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.5 2001/11/26 20:51:57 thorpej Exp $	*/
+/*	$NetBSD: spl.S,v 1.6 2008/01/08 02:07:55 matt Exp $	*/
 
 /*
  * Copyright (c) 1996-1998 Mark Brinicombe.
@@ -90,7 +90,9 @@ ENTRY(lowerspl)
 	stmfd	sp!, {r0, lr}		/* Preserve registers */
 	bl	_C_LABEL(irq_setmasks)	/* Update the actual masks */
 	msr	cpsr_all, r4
+#ifdef __HAVE_FAST_SOFTINTS
 	bl	_C_LABEL(dosoftints)	/* Process any pending soft ints */
+#endif
 	ldmfd	sp!, {r0, lr}
 	ldmfd	sp!, {r4}
 	mov	pc, lr
@@ -117,7 +119,9 @@ ENTRY(splx)
 	stmfd	sp!, {r0, lr}		/* Preserve registers */
 	bl	_C_LABEL(irq_setmasks)	/* Update the actual masks */
 	msr	cpsr_all, r4
+#ifdef __HAVE_FAST_SOFTINTS
 	bl	_C_LABEL(dosoftints)	/* Process any pending soft ints */
+#endif
 	ldmfd	sp!, {r0, lr}
 	ldmfd	sp!, {r4}
 	mov	pc, lr

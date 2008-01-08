@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_irq.S,v 1.9 2008/01/06 03:45:26 matt Exp $	*/
+/*	$NetBSD: iomd_irq.S,v 1.10 2008/01/08 02:07:51 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -326,7 +326,9 @@ exitirq:
 
 	bl	_C_LABEL(irq_setmasks)
 
+#if __HAVE_FAST_SOFTINTS
 	bl	_C_LABEL(dosoftints)	/* Handle the soft interrupts */
+#endif
 
 	/* Kill IRQ's in preparation for exit */
         mrs     r0, cpsr_all
