@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.22 2008/01/08 22:24:10 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.23 2008/01/09 11:13:16 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.22 2008/01/08 22:24:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.23 2008/01/09 11:13:16 yamt Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -759,9 +759,6 @@ pmap_map_ptes(struct pmap *pmap, struct pmap **pmap2,
 static void
 pmap_unmap_ptes(struct pmap *pmap, struct pmap *pmap2)
 {
-#ifdef XEN
-	int s;
-#endif
 
 	if (pmap == pmap_kernel()) {
 		return;
