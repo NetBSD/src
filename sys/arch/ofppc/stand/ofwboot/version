@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.7 2008/01/03 06:40:02 mrg Exp $
+$NetBSD: version,v 1.8 2008/01/09 19:34:45 garbled Exp $
 
 1.1:		Boot program for OpenFirmware; initial revision
 1.2:		Boot program rearrangement
@@ -7,3 +7,4 @@ $NetBSD: version,v 1.7 2008/01/03 06:40:02 mrg Exp $
 1.5:		Support for proper DDB symbol loading and MS-DOS file systems
 1.6:		Change how symbol table is conveyed to kernel
 1.7:		Support RAID partitions
+1.8:		Support IBM RS/6000, switch to stock libsa alloc

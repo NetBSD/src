@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.16 2007/10/18 19:58:54 garbled Exp $	*/
+/*	$NetBSD: boot.c,v 1.17 2008/01/09 19:34:45 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -157,8 +157,6 @@ chain(boot_entry_t entry, char *args, void *ssym, void *esym)
 {
 	extern char end[], *cp;
 	u_int l, magic = 0x19730224;
-
-	freeall();
 
 	/*
 	 * Stash pointer to start and end of symbol table after the argument
