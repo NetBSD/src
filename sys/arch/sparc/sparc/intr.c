@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.99 2008/01/08 21:32:11 martin Exp $ */
+/*	$NetBSD: intr.c,v 1.100 2008/01/09 13:52:33 ad Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.99 2008/01/08 21:32:11 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.100 2008/01/09 13:52:33 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_sparc_arch.h"
@@ -51,6 +51,8 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.99 2008/01/08 21:32:11 martin Exp $");
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/cpu.h>
+#include <sys/intr.h>
+#include <sys/simplelock.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -58,7 +60,6 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.99 2008/01/08 21:32:11 martin Exp $");
 
 #include <machine/ctlreg.h>
 #include <machine/instr.h>
-#include <machine/intr.h>
 #include <machine/trap.h>
 #include <machine/promlib.h>
 
