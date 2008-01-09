@@ -1,4 +1,4 @@
-/*	$NetBSD: xenfunc.h,v 1.13 2007/11/22 16:16:58 bouyer Exp $	*/
+/*	$NetBSD: xenfunc.h,v 1.13.6.1 2008/01/09 19:25:07 bouyer Exp $	*/
 
 /*
  *
@@ -48,7 +48,4 @@
 #endif
 
 void xen_set_ldt(vaddr_t, uint32_t);
-#ifndef __x86_64__
-void xen_update_descriptor(union descriptor *, union descriptor *);
-#endif
 #endif /* _XEN_XENFUNC_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_xpmap.c,v 1.3.12.4 2008/01/05 19:31:29 bouyer Exp $	*/
+/*	$NetBSD: x86_xpmap.c,v 1.3.12.5 2008/01/09 19:25:08 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2006 Mathieu Ropert <mro@adviseo.fr>
@@ -79,7 +79,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.3.12.4 2008/01/05 19:31:29 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.3.12.5 2008/01/09 19:25:08 bouyer Exp $");
 
 #include "opt_xen.h"
 #include "opt_ddb.h"
@@ -124,6 +124,7 @@ static char XBUF[256];
 
 volatile shared_info_t *HYPERVISOR_shared_info;
 union start_info_union start_info_union;
+paddr_t *xpmap_phys_to_machine_mapping;
 
 void xen_failsafe_handler(void);
 
@@ -143,26 +144,12 @@ xen_failsafe_handler(void)
 }
 
 
-#ifndef __x86_64__
-void
-xen_update_descriptor(union descriptor *table, union descriptor *entry)
-{
-	paddr_t pa;
-	pt_entry_t *ptp;
-
-	ptp = kvtopte((vaddr_t)table);
-	pa = (*ptp & PG_FRAME) | ((vaddr_t)table & ~PG_FRAME);
-	if (HYPERVISOR_update_descriptor(pa, entry->raw[0], entry->raw[1]))
-		panic("HYPERVISOR_update_descriptor failed\n");
-}
-#endif
-
 void
 xen_set_ldt(vaddr_t base, uint32_t entries)
 {
 	vaddr_t va;
 	vaddr_t end;
-	pt_entry_t *ptp, *maptp;
+	pt_entry_t *ptp;
 	int s;
 
 #ifdef __x86_64__
@@ -174,14 +161,11 @@ xen_set_ldt(vaddr_t base, uint32_t entries)
 	for (va = base; va < end; va += PAGE_SIZE) {
 		KASSERT(va >= VM_MIN_KERNEL_ADDRESS);
 		ptp = kvtopte(va);
-		maptp = (pt_entry_t *)vtomach((vaddr_t)ptp);
 		XENPRINTF(("xen_set_ldt %p %d %p %p\n", (void *)base,
 			      entries, ptp, maptp));
-		PTE_CLEARBITS(ptp, maptp, PG_RW);
+		pmap_pte_clearbits(ptp, PG_RW);
 	}
 	s = splvm();
-	PTE_UPDATES_FLUSH();
-
 	xpq_queue_set_ldt(base, entries);
 	xpq_flush_queue();
 	splx(s);
