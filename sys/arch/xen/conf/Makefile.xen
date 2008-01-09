@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.xen,v 1.20.6.4 2008/01/09 21:30:12 bouyer Exp $
+#	$NetBSD: Makefile.xen,v 1.20.6.5 2008/01/09 23:54:17 bouyer Exp $
 #	NetBSD: Makefile.i386,v 1.132 2003/07/05 16:56:10 simonb Exp 
 
 # Makefile for NetBSD
@@ -65,7 +65,7 @@ MD_CFILES=
 
 .if ${XEN_BUILD} == i386
 MD_SFILES=	${I386}/i386/locore.S \
-		${XEN}/${XEN_BUILD}/spl.S \
+		${I386}/i386/spl.S \
 		${I386}/i386/vector.S \
 		${I386}/i386/copy.S
 
@@ -75,7 +75,7 @@ copy.o: ${I386}/i386/copy.S assym.h
 locore.o: ${I386}/i386/locore.S assym.h
 	${NORMAL_S}
 
-spl.o: ${XEN}/${XEN_BUILD}/spl.S assym.h
+spl.o: ${I386}/i386/spl.S assym.h
 	${NORMAL_S}
 
 vector.o: ${I386}/i386/vector.S assym.h
