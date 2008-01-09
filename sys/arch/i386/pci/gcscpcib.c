@@ -1,4 +1,4 @@
-/* $NetBSD: gcscpcib.c,v 1.2 2008/01/09 14:32:36 xtraeme Exp $ */
+/* $NetBSD: gcscpcib.c,v 1.3 2008/01/09 14:49:48 xtraeme Exp $ */
 /* $OpenBSD: gcscpcib.c,v 1.6 2007/11/17 17:02:47 mbalmer Exp $	*/
 
 /*
@@ -24,7 +24,7 @@
  * AMD CS5535/CS5536 series LPC bridge also containing timer, watchdog and GPIO.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gcscpcib.c,v 1.2 2008/01/09 14:32:36 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gcscpcib.c,v 1.3 2008/01/09 14:49:48 xtraeme Exp $");
 
 #include "gpio.h"
 
@@ -268,7 +268,8 @@ gcscpcib_get_timecount(struct timecounter *tc)
 
 /* Watchdog timer support functions */
 static int	
-gscspcib_scan_mfgpt(struct gcscpcib_softc *sc){
+gscspcib_scan_mfgpt(struct gcscpcib_softc *sc)
+{
 	int i;
 
 #ifdef AMD553X_WDT_FORCEUSEMFGPT
