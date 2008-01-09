@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.235 2008/01/09 11:26:15 simonb Exp $
+#	$NetBSD: DEVNAMES,v 1.236 2008/01/09 14:44:51 xtraeme Exp $
 #
 # This file contains all used device names and defined attributes in
 # alphabetical order. New devices added to the system somewhere should first
@@ -479,6 +479,7 @@ gayle			amiga		Attribute
 gayle			amigappc	Attribute
 gbox			hp300
 gbus			alpha
+gcscpcib		i386
 gdrom			dreamcast
 gem			MI
 gentbi			MI
