@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.182 2008/01/07 16:56:27 ad Exp $	*/
+/*	$NetBSD: vnode.h,v 1.183 2008/01/09 08:18:12 elad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -609,6 +609,7 @@ void	vntblinit(void);
 void	vn_syncer_add_to_worklist(struct vnode *, int);
 void	vn_syncer_remove_from_worklist(struct vnode *);
 int	speedup_syncer(void);
+int	dorevoke(struct vnode *, kauth_cred_t);
 
 /* from vfs_syscalls.c - abused by compat code */
 int	getvnode(struct filedesc *, int, struct file **);
