@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.312 2008/01/09 16:15:22 ad Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.313 2008/01/09 21:29:38 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.312 2008/01/09 16:15:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.313 2008/01/09 21:29:38 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -829,22 +829,24 @@ vget(vnode_t *vp, int flags)
 	 * the VI_XLOCK or VI_FREEING flags are set.
 	 */
 	if ((vp->v_iflag & (VI_XLOCK | VI_FREEING)) != 0) {
-		if (flags & LK_NOWAIT) {
+		if ((flags & LK_NOWAIT) != 0) {
+			vp->v_usecount--;
 			mutex_exit(&vp->v_interlock);
 			return EBUSY;
 		}
 		vwait(vp, VI_XLOCK | VI_FREEING);
 		vrelel(vp, 1, 0);
-		return (ENOENT);
+		return ENOENT;
 	}
 	if (flags & LK_TYPE_MASK) {
-		if ((error = vn_lock(vp, flags | LK_INTERLOCK))) {
+		error = vn_lock(vp, flags | LK_INTERLOCK);
+		if (error != 0) {
 			vrele(vp);
 		}
-		return (error);
+		return error;
 	}
 	mutex_exit(&vp->v_interlock);
-	return (0);
+	return 0;
 }
 
 /*
