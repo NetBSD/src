@@ -1,4 +1,4 @@
-/* $NetBSD: gpioctl.c,v 1.4 2008/01/09 16:06:21 xtraeme Exp $ */
+/* $NetBSD: gpioctl.c,v 1.5 2008/01/09 16:08:33 xtraeme Exp $ */
 /*	$OpenBSD: gpioctl.c,v 1.2 2004/08/08 00:05:09 deraadt Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
@@ -124,7 +124,7 @@ main(int argc, char *argv[])
 	return EXIT_SUCCESS;
 }
 
-void
+static void
 getinfo(void)
 {
 	struct gpio_info info;
@@ -139,7 +139,7 @@ getinfo(void)
 	printf("%s: %d pins\n", device, info.gpio_npins);
 }
 
-void
+static void
 pinread(int pin)
 {
 	struct gpio_pin_op op;
@@ -155,7 +155,7 @@ pinread(int pin)
 	printf("pin %d: state %d\n", pin, op.gp_value);
 }
 
-void
+static void
 pinwrite(int pin, int value)
 {
 	struct gpio_pin_op op;
