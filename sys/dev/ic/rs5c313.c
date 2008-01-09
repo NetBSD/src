@@ -1,4 +1,4 @@
-/*	$NetBSD: rs5c313.c,v 1.3 2008/01/09 18:29:37 uwe Exp $	*/
+/*	$NetBSD: rs5c313.c,v 1.4 2008/01/09 22:09:22 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rs5c313.c,v 1.3 2008/01/09 18:29:37 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rs5c313.c,v 1.4 2008/01/09 22:09:22 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,8 +45,8 @@ __KERNEL_RCSID(0, "$NetBSD: rs5c313.c,v 1.3 2008/01/09 18:29:37 uwe Exp $");
 
 
 /* todr(9) methods */
-static int rs5c313_todr_gettime(todr_chip_handle_t, volatile struct timeval *);
-static int rs5c313_todr_settime(todr_chip_handle_t, volatile struct timeval *);
+static int rs5c313_todr_gettime_ymdhms(todr_chip_handle_t, struct clock_ymdhms *);
+static int rs5c313_todr_settime_ymdhms(todr_chip_handle_t, struct clock_ymdhms *);
 
 /* sugar for chip access */
 #define rtc_begin(sc)		((*sc->sc_ops->rs5c313_op_begin)(sc))
@@ -69,8 +69,11 @@ rs5c313_attach(struct rs5c313_softc *sc)
 	aprint_normal(": real time clock\n");
 
 	sc->sc_todr.cookie = sc;
-	sc->sc_todr.todr_gettime = rs5c313_todr_gettime;
-	sc->sc_todr.todr_settime = rs5c313_todr_settime;
+	sc->sc_todr.todr_gettime_ymdhms = rs5c313_todr_gettime_ymdhms;
+	sc->sc_todr.todr_settime_ymdhms = rs5c313_todr_settime_ymdhms;
+
+	sc->sc_todr.todr_gettime = NULL;
+	sc->sc_todr.todr_settime = NULL;
 	sc->sc_todr.todr_setwen = NULL;
 
 	if (rs5c313_init(sc) != 0) {
@@ -125,10 +128,9 @@ rs5c313_init(struct rs5c313_softc *sc)
 
 
 static int
-rs5c313_todr_gettime(todr_chip_handle_t todr, volatile struct timeval *tv)
+rs5c313_todr_gettime_ymdhms(todr_chip_handle_t todr, struct clock_ymdhms *dt)
 {
 	struct rs5c313_softc *sc = todr->cookie;
-	struct clock_ymdhms dt;
 	int retry;
 	int s;
 
@@ -162,7 +164,7 @@ rs5c313_todr_gettime(todr_chip_handle_t todr, volatile struct timeval *tv)
 	do {								\
 		int ones = rs5c313_read_reg(sc, RS5C313_ ## y ## 1);	\
 		int tens = rs5c313_read_reg(sc, RS5C313_ ## y ## 10);	\
-		dt.dt_ ## x = tens * 10 + ones;				\
+		dt->dt_ ## x = tens * 10 + ones;			\
 	} while (/* CONSTCOND */0)
 
 	RTCGET(sec, SEC);
@@ -172,49 +174,28 @@ rs5c313_todr_gettime(todr_chip_handle_t todr, volatile struct timeval *tv)
 	RTCGET(mon, MON);
 	RTCGET(year, YEAR);
 #undef	RTCGET
-	dt.dt_wday = rs5c313_read_reg(sc, RS5C313_WDAY);
+	dt->dt_wday = rs5c313_read_reg(sc, RS5C313_WDAY);
 
 	rtc_ce(sc, 0);
 	splx(s);
 
-	dt.dt_year = (dt.dt_year % 100) + 1900;
-	if (dt.dt_year < 1970) {
-		dt.dt_year += 100;
-	}
 
-	/*
-	 * If time_t is 32 bits, then the "End of Time" is 
-	 * Mon Jan 18 22:14:07 2038 (US/Eastern)
-	 * This code copes with RTC's past the end of time if time_t
-	 * is an int32 or less. Needed because sometimes RTCs screw
-	 * up or are badly set, and that would cause the time to go
-	 * negative in the calculation below, which causes Very Bad
-	 * Mojo. This at least lets the user boot and fix the problem.
-	 * Note the code is self eliminating once time_t goes to 64 bits.
-	 */
-	if (/* CONSTCOND */ sizeof(time_t) <= sizeof(int32_t)) {
-		if (dt.dt_year >= 2038) {
-			return -1;
-		}
+	dt->dt_year = (dt->dt_year % 100) + 1900;
+	if (dt->dt_year < POSIX_BASE_YEAR) {
+		dt->dt_year += 100;
 	}
-
-	tv->tv_sec = clock_ymdhms_to_secs(&dt);
-	tv->tv_usec = 0;
 
 	return 0;
 }
 
 
 static int
-rs5c313_todr_settime(todr_chip_handle_t todr, volatile struct timeval *tv)
+rs5c313_todr_settime_ymdhms(todr_chip_handle_t todr, struct clock_ymdhms *dt)
 {
 	struct rs5c313_softc *sc = todr->cookie;
-	struct clock_ymdhms dt;
 	int retry;
 	int t;
 	int s;
-
-	clock_secs_to_ymdhms(tv->tv_sec, &dt);
 
 	s = splhigh();
 
@@ -237,7 +218,7 @@ rs5c313_todr_settime(todr_chip_handle_t todr, volatile struct timeval *tv)
 
 #define	RTCSET(x, y)							     \
 	do {								     \
-		t = TOBCD(dt.dt_ ## y) & 0xff;				     \
+		t = TOBCD(dt->dt_ ## y) & 0xff;				     \
 		rs5c313_write_reg(sc, RS5C313_ ## x ## 1, t & 0x0f);	     \
 		rs5c313_write_reg(sc, RS5C313_ ## x ## 10, (t >> 4) & 0x0f); \
 	} while (/* CONSTCOND */0)
@@ -250,12 +231,12 @@ rs5c313_todr_settime(todr_chip_handle_t todr, volatile struct timeval *tv)
 
 #undef	RTCSET
 
-	t = dt.dt_year % 100;
+	t = dt->dt_year % 100;
 	t = TOBCD(t);
 	rs5c313_write_reg(sc, RS5C313_YEAR1, t & 0x0f);
 	rs5c313_write_reg(sc, RS5C313_YEAR10, (t >> 4) & 0x0f);
 
-	rs5c313_write_reg(sc, RS5C313_WDAY, dt.dt_wday);
+	rs5c313_write_reg(sc, RS5C313_WDAY, dt->dt_wday);
 
 	rtc_ce(sc, 0);
 	splx(s);
