@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.140.10.1 2007/11/06 23:16:40 matt Exp $	*/
+/*	$NetBSD: locore.s,v 1.140.10.2 2008/01/09 01:46:05 matt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -1077,10 +1077,8 @@ Lclkagain:
 	btst	#0,%d0			| clear timer1 int immediately to
 	jeq	Lnotim1			|  minimize chance of losing another
 	movpw	%a0@(CLKMSB1),%d1	|  due to statintr processing delay
-/* #ifdef __HAVE_TIMECOUNTER */		| XXX can't include <machine/types.h>
 	movl	_C_LABEL(clkint),%d1	| clkcounter += clkint
 	addl	%d1,_C_LABEL(clkcounter)
-/* #endif */
 Lnotim1:
 	btst	#2,%d0			| timer3 interrupt?
 	jeq	Lnotim3			| no, skip statclock

@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS266_OPT,v 1.7.2.1 2007/11/06 23:16:11 matt Exp $
+#	$NetBSD: OPENBLOCKS266_OPT,v 1.7.2.2 2008/01/09 01:45:51 matt Exp $
 #
 
 include		"arch/evbppc/conf/OPENBLOCKS266"
@@ -299,6 +299,7 @@ btbc* at pcmcia? function ?             # AnyCom BlueCard LSE041/039/139
 ubt* at uhub? port ?
 
 # Bluetooth Device Hub
+bthub*	at bcsp?
 bthub*	at bt3c?
 bthub*	at btbc?
 bthub*	at btuart?
@@ -324,6 +325,7 @@ btsco*	at bthub?
 #
 
 # miscellaneous pseudo-devices
+pseudo-device	bcsp			# BlueCore Serial Protocol
 pseudo-device	btuart			# Bluetooth HCI UART (H4)
 
 # wscons pseudo-devices

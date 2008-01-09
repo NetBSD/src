@@ -1,4 +1,4 @@
-/*	$NetBSD: gxpcic.c,v 1.5.2.1 2007/11/06 23:16:00 matt Exp $ */
+/*	$NetBSD: gxpcic.c,v 1.5.2.2 2008/01/09 01:45:46 matt Exp $ */
 /*
  * Copyright (C) 2005, 2006 WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -214,7 +214,7 @@ gxpcic_read(struct pxapcic_socket *so, int which)
 		return (reg & GPIO_SET ? 1 : 0);
 
 	default:
-		panic("%s: bogus register", __FUNCTION__);
+		panic("%s: bogus register", __func__);
 	}
 	/* NOTREACHED */
 }
@@ -231,7 +231,7 @@ gxpcic_write(struct pxapcic_socket *so, int which, u_int arg)
 		break;
 
 	default:
-		panic("%s: bogus register", __FUNCTION__);
+		panic("%s: bogus register", __func__);
 	}
 	/* NOTREACHED */
 }
@@ -241,7 +241,7 @@ gxpcic_set_power(struct pxapcic_socket *__so, int arg)
 {
 
 	if(arg != PXAPCIC_POWER_OFF && arg != PXAPCIC_POWER_3V)
-		panic("%s: bogus arg\n", __FUNCTION__);
+		panic("%s: bogus arg\n", __func__);
 
 	/* 3.3V only? */
 }

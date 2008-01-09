@@ -1,4 +1,4 @@
-/*	$NetBSD: pcctwo_68k.c,v 1.6 2005/12/11 12:18:17 christos Exp $	*/
+/*	$NetBSD: pcctwo_68k.c,v 1.6.50.1 2008/01/09 01:47:24 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcctwo_68k.c,v 1.6 2005/12/11 12:18:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcctwo_68k.c,v 1.6.50.1 2008/01/09 01:47:24 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -137,7 +137,9 @@ static int pcctwo_vec2icsr_1x2[] = {
 static	int pcctwoabortintr(void *);
 void	pcctwosoftintrinit(void);
 static	int pcctwosoftintr(void *);
+#ifdef notyet
 static	void pcctwosoftintrassert(void);
+#endif
 #endif
 
 static void pcctwoisrlink(void *, int (*)(void *), void *,
@@ -302,7 +304,9 @@ pcctwosoftintrinit(void)
 	pcc2_reg_write(sys_pcctwo, MCCHIPREG_TIMER4_CTRL, 0);
 	pcc2_reg_write32(sys_pcctwo, MCCHIPREG_TIMER4_COMP, 1);
 	pcc2_reg_write32(sys_pcctwo, MCCHIPREG_TIMER4_CNTR, 0);
+#ifdef notyet
 	_softintr_chipset_assert = pcctwosoftintrassert;
+#endif
 }
 
 static int
@@ -315,11 +319,14 @@ pcctwosoftintr(void *arg)
 	pcc2_reg_write(sc, MCCHIPREG_TIMER4_ICSR,
 	    PCCTWO_ICR_ICLR | PCCTWO_ICR_IEN | 1);
 
+#ifdef notyet
 	softintr_dispatch();
+#endif
 
 	return (1);
 }
 
+#ifdef notyet
 static void
 pcctwosoftintrassert(void)
 {
@@ -331,4 +338,5 @@ pcctwosoftintrassert(void)
 	 */
 	pcc2_reg_write(sys_pcctwo, MCCHIPREG_TIMER4_CTRL, PCCTWO_TT_CTRL_CEN);
 }
+#endif
 #endif

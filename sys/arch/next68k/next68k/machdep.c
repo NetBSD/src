@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.81.10.1 2007/11/06 23:19:51 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.81.10.2 2008/01/09 01:47:35 matt Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -79,11 +79,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.81.10.1 2007/11/06 23:19:51 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.81.10.2 2008/01/09 01:47:35 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
-#include "opt_compat_hpux.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -177,10 +176,6 @@ int	safepri = PSL_LOWIPL;
 
 extern	u_int lowram;
 extern	short exframesize[];
-
-#ifdef COMPAT_HPUX
-extern struct emul emul_hpux;
-#endif
 
 /* prototypes for local functions */
 void	identifycpu(void);

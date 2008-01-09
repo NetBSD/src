@@ -1,4 +1,4 @@
-/* $NetBSD: kvm86call.S,v 1.7 2006/04/11 17:14:07 drochner Exp $ */
+/* $NetBSD: kvm86call.S,v 1.7.38.1 2008/01/09 01:46:37 matt Exp $ */
 
 /*-
  * Copyright (c) 1998 Jonathan Lemon
@@ -34,7 +34,7 @@
 
 #include "assym.h"
 
-__KERNEL_RCSID(0, "$NetBSD: kvm86call.S,v 1.7 2006/04/11 17:14:07 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kvm86call.S,v 1.7.38.1 2008/01/09 01:46:37 matt Exp $");
 
 	.data
 	.align 4
@@ -44,20 +44,14 @@ __KERNEL_RCSID(0, "$NetBSD: kvm86call.S,v 1.7 2006/04/11 17:14:07 drochner Exp $
 kvm86_incall:		.long	0
 
 /* XXX arguments for kvm86call() */
-	.globl vm86pcb, vm86newptd, vm86frame, vm86pgtableva
-	.globl	vm86tssd0, vm86tssd1
-vm86pcb:		.long	0
+	.globl vm86newptd, vm86frame, vm86pgtableva
 vm86newptd:		.long	0
 vm86frame:		.long	0
 vm86pgtableva:		.long	0
-vm86tssd0:		.long	0
-vm86tssd1:		.long	0
 
 /* locals */
 SCRARGFRAME:		.long	0
 SCRSTACK:		.long	0
-SCRTSS0:		.long	0
-SCRTSS1:		.long	0
 
 	.text
 
@@ -77,30 +71,12 @@ ENTRY(kvm86_call)
 	movl	vm86frame,%edi		/* target frame location */
 	movl    SCRARGFRAME,%esi	/* source (set on entry) */
 	movl	$FRAMESIZE/4,%ecx	/* sizeof(struct trapframe)/4 */
-	cld
 	rep
 	movsl				/* copy frame to new stack */
 
-	movl	_C_LABEL(cpu_info_primary)+CPU_INFO_CURLWP,%ecx
-	movl	L_ADDR(%ecx),%eax
-	pushl	%eax			/* save curpcb */
-	movl	vm86pcb,%eax
-	movl	%eax,L_ADDR(%ecx)	/* set curpcb to vm86pcb */
-
 	movl	_C_LABEL(gdt),%eax
-	movl	L_MD_TSS_SEL(%ecx),%edi
-
+	movl	_C_LABEL(kvm86_tss_sel),%edi
 	andl	$~0x0200,4(%eax,%edi,1)	/* reset "task busy" */
-
-	movl	0(%eax,%edi,1),%edx
-	movl	%edx,SCRTSS0		/* save first word */
-	movl	4(%eax,%edi,1),%edx
-	movl	%edx,SCRTSS1		/* save second word */
-
-	movl	vm86tssd0,%edx		/* vm86 tssd entry */
-	movl	%edx,0(%eax,%edi,1)
-	movl	vm86tssd1,%edx		/* vm86 tssd entry */
-	movl	%edx,4(%eax,%edi,1)
 	ltr	%di
 
 	movl	%cr3,%eax
@@ -146,7 +122,6 @@ ENTRY(kvm86_ret)
 	movl	8(%ebp),%esi		/* source */
 	movl	SCRARGFRAME,%edi	/* destination */
 	movl	$FRAMESIZE/4,%ecx	/* size */
-	cld
 	rep
 	movsl				/* copy frame to original frame */
 
@@ -159,22 +134,16 @@ ENTRY(kvm86_ret)
 
 	movl	$0,kvm86_incall		/* reset trapflag */
 
-	movl	_C_LABEL(gdt),%eax
-	movl	_C_LABEL(cpu_info_primary)+CPU_INFO_CURLWP,%ecx
-	movl	L_MD_TSS_SEL(%ecx),%edi
-	movl	SCRTSS0, %edx
-	movl	%edx, 0(%eax,%edi,1)	/* restore first word */
-	movl	SCRTSS1, %edx
-	movl	%edx, 4(%eax,%edi,1)	/* restore second word */
-	ltr	%di
+	popl	%gs
+	popl	%fs
 
-	popl	%eax			/* restore curpcb */
-	movl	%eax, L_ADDR(%ecx)
+	movl	_C_LABEL(gdt),%eax
+	movl	CPUVAR(TSS_SEL),%edi
+	andl	$~0x0200,4(%eax,%edi,1)	/* reset "task busy" */
+	ltr	%di
 
 	movl	12(%ebp), %eax		/* will be kvm86_call()'s retval */
 
-	popl	%gs
-	popl	%fs
 	popl	%ebx
 	popl	%edi
 	popl	%esi

@@ -1,7 +1,7 @@
-/*	$NetBSD: softintr.c,v 1.5 2006/12/21 15:55:23 yamt Exp $	*/
+/*	$NetBSD: softintr.c,v 1.5.24.1 2008/01/09 01:47:19 matt Exp $	*/
 
 /*
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,167 +37,53 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: softintr.c,v 1.5 2006/12/21 15:55:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: softintr.c,v 1.5.24.1 2008/01/09 01:47:19 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/device.h>
-#include <sys/malloc.h>
+#include <sys/intr.h>
 
-#include <uvm/uvm_extern.h>
-
-#include <net/netisr.h>			/* Legacy softnet support */
-
-#include <machine/intr.h>
-
-/* XXX For legacy software interrupts. */
-struct mips_soft_intrhand *softnet_intrhand;
-
-struct mips_soft_intr mips_soft_intrs[SI_NQUEUES];
-
-/*
- * softintr_init:
- *
- *	Initialize the software interrupt system.
- */
+#ifdef notyet	/* __HAVE_FAST_SOFTINTS stuff */
 void
-softintr_init(void)
+softint_init_md(lwp_t *l, u_int level, uintptr_t *machdep)
 {
-	static const char *softintr_names[] = SI_QUEUENAMES;
-	struct mips_soft_intr *msi;
-	int i;
 
-	for (i = 0; i < SI_NQUEUES; i++) {
-		msi = &mips_soft_intrs[i];
-		TAILQ_INIT(&msi->softintr_q);
-		simple_lock_init(&msi->softintr_slock);
-		msi->softintr_siq = i;
-		evcnt_attach_dynamic(&msi->softintr_evcnt, EVCNT_TYPE_INTR,
-		    NULL, "soft", softintr_names[i]);
-	}
-
-	/* XXX Establish legacy soft interrupt handlers. */
-	softnet_intrhand = softintr_establish(IPL_SOFTNET,
-	    (void (*)(void *))netintr, NULL);
-
-	KASSERT(softnet_intrhand != NULL);
-}
-
-static int
-ipl2si(ipl_t ipl)
-{
-	int si;
-
-	switch (ipl) {
-	case IPL_SOFT:
-		si = SI_SOFT;
+	switch (level) {
+	case SOFTINT_BIO:
+		*machdep = mips_ipl_si_to_sr[IPL_SOFTBIO];
 		break;
-	case IPL_SOFTCLOCK:
-		si = SI_SOFTCLOCK;
+	case SOFTINT_NET:
+		*machdep = mips_ipl_si_to_sr[IPL_SOFTNET];
 		break;
-	case IPL_SOFTNET:
-		si = SI_SOFTNET;
+	case SOFTINT_SERIAL:
+		*machdep = mips_ipl_si_to_sr[IPL_SOFTSERIAL];
 		break;
-	case IPL_SOFTSERIAL:
-		si = SI_SOFTSERIAL;
+	case SOFTINT_CLOCK:
+		*machdep = mips_ipl_si_to_sr[IPL_SOFTCLOCK];
 		break;
 	default:
-		panic("ipl2si: %d", ipl);
+		panic("softint_init_md");
 	}
-	return si;
 }
 
-/*
- * softintr_establish:		[interface]
- *
- *	Register a software interrupt handler.
- */
-void *
-softintr_establish(int ipl, void (*func)(void *), void *arg)
-{
-	struct mips_soft_intr *msi;
-	struct mips_soft_intrhand *sih;
-	int si;
-
-	si = ipl2si(ipl);
-	msi = &mips_soft_intrs[si];
-
-	sih = malloc(sizeof(*sih), M_DEVBUF, M_NOWAIT);
-	if (__predict_true(sih != NULL)) {
-		sih->sih_intrhead = msi;
-		sih->sih_func = func;
-		sih->sih_arg = arg;
-		sih->sih_pending = 0;
-	}
-	return sih;
-}
-
-/*
- * softintr_disestablish:	[interface]
- *
- *	Unregister a software interrupt handler.
- */
 void
-softintr_disestablish(void *arg)
+mips_softintr_dispatch(u_int32_t ipending)
 {
-	struct mips_soft_intrhand *sih = arg;
-	struct mips_soft_intr *msi = sih->sih_intrhead;
-	int s;
-
-	s = splhigh();
-	simple_lock(&msi->softintr_slock);
-	if (sih->sih_pending) {
-		TAILQ_REMOVE(&msi->softintr_q, sih, sih_q);
-		sih->sih_pending = 0;
-	}
-	simple_unlock(&msi->softintr_slock);
-	splx(s);
-
-	free(sih, M_DEVBUF);
-}
-
-/*
- * softintr_dispatch:
- *
- *	Process pending software interrupts.
- *
- *	Called at splsoft()
- */
-void
-softintr_dispatch(ipending)
-	u_int32_t ipending;
-{
-	struct mips_soft_intr *msi;
-	struct mips_soft_intrhand *sih;
-	int i, s;
+	int i;
 
 	for (i = SI_NQUEUES - 1; i >= 0; i--) {
 		if ((ipending & mips_ipl_si_to_sr[i]) == 0)
 			continue;
-
-		msi = &mips_soft_intrs[i];
-
-		if (TAILQ_FIRST(&msi->softintr_q) != NULL)
-			msi->softintr_evcnt.ev_count++;
-
-		for (;;) {
-			s = splhigh();
-			simple_lock(&msi->softintr_slock);
-
-			sih = TAILQ_FIRST(&msi->softintr_q);
-			if (sih != NULL) {
-				TAILQ_REMOVE(&msi->softintr_q, sih, sih_q);
-				sih->sih_pending = 0;
-			}
-
-			simple_unlock(&msi->softintr_slock);
-			splx(s);
-
-			if (sih == NULL)
-				break;
-
-			uvmexp.softs++;
-			(*sih->sih_func)(sih->sih_arg);
-		}
+		/*
+		 * XXX
+		 * splhigh
+		 * save s0-s9 in curlwp's PCB
+		 * switch stack
+		 * switch curlwp
+		 * -> softint_dispatch
+		 * back to old stack
+		 * restore curlwp
+		 */
 	}
 }
+#endif

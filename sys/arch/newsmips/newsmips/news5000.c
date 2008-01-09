@@ -1,4 +1,4 @@
-/*	$NetBSD: news5000.c,v 1.16 2006/09/13 14:50:42 tsutsui Exp $	*/
+/*	$NetBSD: news5000.c,v 1.16.30.1 2008/01/09 01:47:32 matt Exp $	*/
 
 /*-
  * Copyright (C) 1999 SHIMIZU Ryo.  All rights reserved.
@@ -27,15 +27,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: news5000.c,v 1.16 2006/09/13 14:50:42 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: news5000.c,v 1.16.30.1 2008/01/09 01:47:32 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/timetc.h>
+#include <sys/cpu.h>
 
 #include <machine/adrsmap.h>
-#include <machine/cpu.h>
 #include <machine/intr.h>
 
 #include <newsmips/apbus/apbusvar.h>
@@ -57,6 +57,11 @@ static uint32_t news5000_getfreerun(struct timecounter *);
 void
 news5000_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 {
+	struct cpu_info *ci;
+
+	ci = curcpu();
+	ci->ci_idepth++;
+
 	if (ipending & MIPS_INT_MASK_2) {
 #ifdef DEBUG
 		static int l2cnt = 0;
@@ -154,6 +159,7 @@ news5000_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 		cause &= ~MIPS_INT_MASK_0;
 	}
 
+	ci->ci_idepth--;
 	_splset((status & ~cause & MIPS_HARD_INT_MASK) | MIPS_SR_INT_IE);
 }
 

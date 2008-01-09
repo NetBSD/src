@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.4 2005/12/11 12:18:51 christos Exp $	*/
+/*	$NetBSD: param.h,v 1.4.50.1 2008/01/09 01:48:41 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -129,6 +129,9 @@
 
 #ifdef _KERNEL
 #ifndef _LOCORE
+
+void	delay(int n);
+#define	DELAY(x)	 delay(x)
 
 #include <machine/systemsw.h>
 #include <machine/intr.h>

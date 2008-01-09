@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.18 2007/03/11 05:22:25 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.18.18.1 2008/01/09 01:47:29 matt Exp $	*/
 
 /*
  *
@@ -45,34 +45,13 @@
 
 #define	IPL_NONE	0
 #define	IPL_SOFTCLOCK	1
-#define	IPL_SOFTNET	2
-#define	IPL_SOFTSERIAL	3
-#define	IPL_SOFT	4
-#define	IPL_BIO		5
-#define	IPL_NET		6
-#define	IPL_TTY		7
-#define	IPL_VM		8
-#define	IPL_SERIAL	9
-#define	IPL_CLOCK	10
-#define	IPL_STATCLOCK	IPL_CLOCK
-#define	IPL_HIGH	11
-#define	IPL_SCHED	IPL_HIGH
-#define	IPL_LOCK	IPL_HIGH
-#define	NIPL		12
-
-#define	SI_SOFTSERIAL	0
-#define	SI_SOFTNET	1
-#define	SI_SOFTCLOCK	2
-#define	SI_SOFT		3
-
-#define	SI_NQUEUES	4
-
-#define	SI_QUEUENAMES {							\
-	"serial",							\
-	"net",								\
-	"clock",							\
-	"misc",								\
-}
+#define	IPL_SOFTBIO	2
+#define	IPL_SOFTNET	3
+#define	IPL_SOFTSERIAL	4
+#define	IPL_VM		5
+#define	IPL_SCHED	6
+#define	IPL_HIGH	6
+#define	NIPL		7
 
 typedef int ipl_t;
 typedef struct {
@@ -101,61 +80,12 @@ splx(int sr)
  */
 #define	spl0()		_spl0()
 
-#define	splsoft()	splraise2()
-#define	splsoftclock()	splsoft()
-#define	splsoftnet()	splsoft()
-#define	splsoftserial()	splsoft()
-#define	splbio()	splraise4()
-#define	splnet()	splraise4()
-#define	spltty()	splraise5()
+#define	splsoftbio()	splraise2()
+#define	splsoftclock()	splraise2()
+#define	splsoftnet()	splraise2()
+#define	splsoftserial()	splraise2()
 #define	splvm()		splraise5()
-#define	splserial()	splraise5()
-#define	splclock()	splraise6()
-#define	splstatclock()	splclock()
 #define	splhigh()	spl7()
 #define	splsched()	spl7()
-#define	spllock()	spl7()
-
-/*
- * simulated software interrupt register
- */
-#define SOFTINTR_IPL	2
-extern volatile uint8_t *ctrl_int2;
-
-#define	setsoft(x)		(x = 0)
-#define	softintr_assert()	(*ctrl_int2 = 0xff)
-#define	softintr_clear()	(*ctrl_int2 = 0)
-
-struct news68k_soft_intrhand {
-	LIST_ENTRY(news68k_soft_intrhand) sih_q;
-	struct news68k_soft_intr *sih_intrhead;
-	void (*sih_fn)(void *);
-	void *sih_arg;
-	volatile int sih_pending;
-};
-
-struct news68k_soft_intr {
-	LIST_HEAD(, news68k_soft_intrhand) nsi_q;
-	struct evcnt nsi_evcnt;
-	volatile unsigned char nsi_ssir;
-};
-
-void *softintr_establish(int, void (*)(void *), void *);
-void softintr_disestablish(void *);
-void softintr_init(void);
-void softintr_dispatch(void);
-
-#define	softintr_schedule(arg)					\
-	do {							\
-		struct news68k_soft_intrhand *__sih = (arg);	\
-		__sih->sih_pending = 1;				\
-		setsoft(__sih->sih_intrhead->nsi_ssir);		\
-		softintr_assert();				\
-	} while (/*CONSTCOND*/ 0)
-
-/* XXX For legacy software interrupts */
-extern struct news68k_soft_intrhand *softnet_intrhand;
-
-#define	setsoftnet()	softintr_schedule(softnet_intrhand)
 
 #endif /* _NEWS68K_INTR_H_ */

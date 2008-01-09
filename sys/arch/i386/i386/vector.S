@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.24.24.1 2007/11/06 23:17:36 matt Exp $	*/
+/*	$NetBSD: vector.S,v 1.24.24.2 2008/01/09 01:46:40 matt Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -71,6 +71,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <machine/asm.h>
+__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.24.24.2 2008/01/09 01:46:40 matt Exp $");
+
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
 #include "opt_ipkdb.h"
@@ -79,22 +82,16 @@
 #include <machine/i8259.h>
 #include <machine/i82093reg.h>
 #include <machine/i82489reg.h>
-#include <machine/asm.h>
 #include <machine/frameasm.h>
 #include <machine/segments.h>
 #include <machine/specialreg.h>
 #include <machine/trap.h>
-
-#include <net/netisr.h>
 
 #include "ioapic.h"
 #include "lapic.h"
 
 #include "npx.h"
 #include "assym.h"
-
-#define __HAVE_GENERIC_SOFT_INTERRUPTS	/* XXX */
-
 
 /*
  * Macros for interrupt entry, call to handler, and exit.
@@ -253,27 +250,23 @@ IDTVEC(intr_lapic_tlb_bcast)
 	pushl	%eax
 	pushl	%ebx
 	pushl	%edx
-	pushl	%ds
-	movl	$GSEL(GDATA_SEL, SEL_KPL), %eax
-	movl	%eax, %ds
 	/* Find out what we need to invalidate. */
-	movl	_C_LABEL(pmap_mbox)+MB_ADDR1, %eax
-	movl	_C_LABEL(pmap_mbox)+MB_ADDR2, %edx
-	movl	_C_LABEL(pmap_mbox)+MB_GLOBAL, %ebx
-	movl	$0, _C_LABEL(local_apic)+LAPIC_EOI
+	movl	%ss:_C_LABEL(pmap_mbox)+MB_ADDR1, %eax
+	movl	%ss:_C_LABEL(pmap_mbox)+MB_ADDR2, %edx
+	movl	%ss:_C_LABEL(pmap_mbox)+MB_GLOBAL, %ebx
+	movl	$0, %ss:_C_LABEL(local_apic)+LAPIC_EOI
 	cmpl	$-1, %eax
 	je,pn	3f
 1:
 	/* Invalidate a single page or a range of pages. */
-	invlpg	(%eax)
+	invlpg	%ss:(%eax)
 	addl	$PAGE_SIZE, %eax
 	cmpl	%edx, %eax
 	jb	1b
 2:
 	/* Ack the request, restore state & return. */
 	lock
-	incl	_C_LABEL(pmap_mbox)+MB_TAIL
-	popl	%ds
+	incl	%ss:_C_LABEL(pmap_mbox)+MB_TAIL
 	popl	%edx
 	popl	%ebx
 	popl	%eax
@@ -710,84 +703,6 @@ _C_LABEL(ioapic_level_stubs):
 #endif
 
 /*
- * Soft interrupt handlers
- */
-
-IDTVEC(softserial)
-	movl	$IPL_SOFTSERIAL, CPUVAR(ILEVEL)
-	IDEPTH_INCR
-	sti
-#ifdef MULTIPROCESSOR
-	call	_C_LABEL(x86_softintlock)
-#endif
-	movl	CPUVAR(ISOURCES) + SIR_SERIAL * 4, %edi
-	addl	$1,IS_EVCNTLO(%edi)
-	adcl	$0,IS_EVCNTHI(%edi)
-	pushl	$X86_SOFTINTR_SOFTSERIAL
-	call	_C_LABEL(softintr_dispatch)
-	addl	$4,%esp
-#ifdef MULTIPROCESSOR	
-	call	_C_LABEL(x86_softintunlock)
-#endif
-	cli
-	IDEPTH_DECR
-	jmp	*%esi
-
-IDTVEC(softnet)
-	movl	$IPL_SOFTNET, CPUVAR(ILEVEL)
-	IDEPTH_INCR
-	sti
-#ifdef MULTIPROCESSOR	
-	call	_C_LABEL(x86_softintlock)
-#endif
-	movl	CPUVAR(ISOURCES) + SIR_NET * 4, %edi
-	addl	$1,IS_EVCNTLO(%edi)
-	adcl	$0,IS_EVCNTHI(%edi)
-
-	xorl	%edi,%edi
-	xchgl	_C_LABEL(netisr),%edi
-
-	/* XXX Do the legacy netisrs here for now. */
-#define DONETISR(s, c) \
-	.globl  _C_LABEL(c)	;\
-	testl	$(1 << s),%edi	;\
-	jz	1f		;\
-	call	_C_LABEL(c)	;\
-1:
-#include <net/netisr_dispatch.h>
-	
-	pushl	$X86_SOFTINTR_SOFTNET
-	call	_C_LABEL(softintr_dispatch)
-	addl	$4,%esp
-#ifdef MULTIPROCESSOR	
-	call	_C_LABEL(x86_softintunlock)	
-#endif
-	cli
-	IDEPTH_DECR
-	jmp	*%esi
-
-IDTVEC(softclock)
-	movl	$IPL_SOFTCLOCK, CPUVAR(ILEVEL)
-	IDEPTH_INCR
-	sti
-#ifdef MULTIPROCESSOR	
-	call	_C_LABEL(x86_softintlock)
-#endif
-	movl	CPUVAR(ISOURCES) + SIR_CLOCK * 4, %edi
-	addl	$1,IS_EVCNTLO(%edi)
-	adcl	$0,IS_EVCNTHI(%edi)
-
-	pushl	$X86_SOFTINTR_SOFTCLOCK
-	call	_C_LABEL(softintr_dispatch)
-	addl	$4,%esp
-#ifdef MULTIPROCESSOR	
-	call	_C_LABEL(x86_softintunlock)		
-#endif
-	cli
-	IDEPTH_DECR
-	jmp	*%esi
-
-/*
  * Trap and fault vector routines
  *
  * On exit from the kernel to user mode, we always need to check for ASTs.  In
@@ -850,9 +765,6 @@ IDTVEC(trap0c)
 IDTVEC(trap0d)
 	TRAP(T_PROTFLT)
 IDTVEC(trap0e)
-#ifndef I586_CPU
-	TRAP(T_PAGEFLT)
-#else
 	pushl	$T_PAGEFLT
 	INTRENTRY
 	testb	$PGEX_U,TF_ERR(%esp)
@@ -863,7 +775,6 @@ IDTVEC(trap0e)
 	jne	calltrap
 	movb	$T_PRIVINFLT,TF_TRAPNO(%esp)
 	jmp	calltrap
-#endif
 
 IDTVEC(intrspurious)
 IDTVEC(trap0f)
@@ -992,10 +903,9 @@ calltrap:
 	pushl	$4f
 	call	_C_LABEL(printf)
 	addl	$4,%esp
-#ifdef DDB
-	int	$3
-#endif /* DDB */
-	movl	%ebx,CPUVAR(ILEVEL)
+	pushl	%ebx
+	call	_C_LABEL(spllower)
+	addl	$4,%esp
 	jmp	.Lalltraps_checkast	/* re-check ASTs */
 4:	.asciz	"WARNING: SPL NOT LOWERED ON TRAP EXIT\n"
 #endif /* DIAGNOSTIC */

@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.106 2007/03/14 19:31:45 jdc Exp $	*/
+/*	$NetBSD: zs.c,v 1.106.16.1 2008/01/09 01:48:54 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.106 2007/03/14 19:31:45 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.106.16.1 2008/01/09 01:48:54 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -62,10 +62,10 @@ __KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.106 2007/03/14 19:31:45 jdc Exp $");
 #include <sys/tty.h>
 #include <sys/time.h>
 #include <sys/syslog.h>
+#include <sys/intr.h>
 
 #include <machine/bsd_openprom.h>
 #include <machine/autoconf.h>
-#include <machine/intr.h>
 #include <machine/eeprom.h>
 #include <machine/psl.h>
 #include <machine/z8530var.h>
@@ -408,7 +408,7 @@ zs_attach(struct zsc_softc *zsc, struct zsdevice *zsd, int pri)
 	}
 
 	if (!didintr) {
-		zs_sicookie = softintr_establish(IPL_SOFTSERIAL, zssoft, NULL);
+		zs_sicookie = softint_establish(SOFTINT_SERIAL, zssoft, NULL);
 		if (zs_sicookie == NULL) {
 			printf("\n%s: cannot establish soft int handler\n",
 				zsc->zsc_dev.dv_xname);
@@ -429,7 +429,7 @@ zs_attach(struct zsc_softc *zsc, struct zsdevice *zsd, int pri)
 		cs = &zsc->zsc_cs_store[channel];
 		zsc->zsc_cs[channel] = cs;
 
-		simple_lock_init(&cs->cs_lock);
+		zs_lock_init(cs);
 		cs->cs_channel = channel;
 		cs->cs_private = NULL;
 		cs->cs_ops = &zsops_null;
@@ -639,7 +639,7 @@ zshard(void *arg)
 	/* We are at splzs here, so no need to lock. */
 	if (softreq && (zssoftpending == 0)) {
 		zssoftpending = 1;
-		softintr_schedule(zs_sicookie);
+		softint_schedule(zs_sicookie);
 	}
 	return (rval);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.44 2005/12/11 12:16:36 christos Exp $	*/
+/*	$NetBSD: param.h,v 1.44.50.1 2008/01/09 01:45:03 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -120,8 +120,8 @@
 extern volatile unsigned short *amiga_intena_read, *amiga_intena_write;
 
 #ifndef	_LOCORE
-void delay __P((int));
-void DELAY __P((int));
+void delay(unsigned int);
+#define	DELAY(x)	delay(x)
 #endif	/* !_LOCORE */
 #endif	/* _KERNEL */
 

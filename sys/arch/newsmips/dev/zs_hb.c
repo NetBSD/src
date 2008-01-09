@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_hb.c,v 1.21 2006/03/29 04:16:46 thorpej Exp $	*/
+/*	$NetBSD: zs_hb.c,v 1.21.38.1 2008/01/09 01:47:31 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,16 +45,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_hb.c,v 1.21 2006/03/29 04:16:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_hb.c,v 1.21.38.1 2008/01/09 01:47:31 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/tty.h>
 #include <sys/conf.h>
+#include <sys/cpu.h>
+#include <sys/intr.h>
 
 #include <machine/adrsmap.h>
-#include <machine/cpu.h>
 #include <machine/z8530var.h>
 
 #include <dev/cons.h>
@@ -231,7 +232,7 @@ zs_hb_attach(struct device *parent, struct device *self, void *aux)
 		cs = &zsc->zsc_cs_store[channel];
 		zsc->zsc_cs[channel] = cs;
 
-		simple_lock_init(&cs->cs_lock);
+		zs_lock_init(cs);
 		cs->cs_channel = channel;
 		cs->cs_private = NULL;
 		cs->cs_ops = &zsops_null;
@@ -292,7 +293,7 @@ zs_hb_attach(struct device *parent, struct device *self, void *aux)
 	if (!didintr) {
 		didintr = 1;
 
-		zsc->zsc_si = softintr_establish(IPL_SOFTSERIAL, zssoft, zsc);
+		zsc->zsc_si = softint_establish(SOFTINT_SERIAL, zssoft, zsc);
 		hb_intr_establish(intlevel, INTST1_SCC, IPL_SERIAL,
 		    zshard_hb, NULL);
 	}

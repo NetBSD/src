@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.amd64,v 1.14.36.1 2007/11/06 23:14:13 matt Exp $
+#	$NetBSD: Makefile.amd64,v 1.14.36.2 2008/01/09 01:44:50 matt Exp $
 
 # Makefile for NetBSD
 #
@@ -77,7 +77,8 @@ LINKFORMAT=	-T ${AMD64}/conf/${KERN_LDSCRIPT}
 # depend on CPU configuration
 locore.o machdep.o: Makefile
 
-busfunc.o cpufunc.o mptramp.o netbsd32_sigcode.o: assym.h
+acpi_wakeup_low.o busfunc.o cpufunc.o lock_stubs.o: assym.h
+linux32_sigcode.o mptramp.o netbsd32_sigcode.o: assym.h
 clock.o: config_time.h
 
 ##
@@ -100,8 +101,7 @@ clock.o: config_time.h
 %RULES
 ## Include rules for Atheros WLAN
 .include "$S/contrib/dev/ath/netbsd/Makefile.ath.inc"
-
-
+.include "$S/arch/x86/acpi/Makefile.wakecode.inc"
 
 # XXX -	Ugly, but make doesn't easily handle .o.uu (assumes it's a suffix)
 # XXX -	Also, config has no simple was to just add foo.o to the Makefile.

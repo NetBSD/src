@@ -1,4 +1,4 @@
-/* $NetBSD: i8259_common.c,v 1.2.8.2 2007/11/06 23:20:53 matt Exp $ */
+/* $NetBSD: i8259_common.c,v 1.2.8.3 2008/01/09 01:47:54 matt Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i8259_common.c,v 1.2.8.2 2007/11/06 23:20:53 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i8259_common.c,v 1.2.8.3 2008/01/09 01:47:54 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -106,7 +106,7 @@ i8259_ack_irq(struct pic_ops *pic, int irq)
 }
 
 int
-i8259_get_irq(struct pic_ops *pic)
+i8259_get_irq(struct pic_ops *pic, int mode)
 {
 	int irq;
 
@@ -117,7 +117,9 @@ i8259_get_irq(struct pic_ops *pic)
 		irq = (isa_inb(IO_ICU2) & 0x07) + 8;
 	}
 
-	if (irq == 0)
+	if (irq == 0 && mode == PIC_GET_IRQ)
+		return 255;
+	if (irq == 7 && mode == PIC_GET_RECHECK)
 		return 255;
 
 	return irq;

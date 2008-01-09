@@ -1,4 +1,4 @@
-/*	$NetBSD: iociic.c,v 1.4 2006/06/26 18:21:38 drochner Exp $	*/
+/*	$NetBSD: iociic.c,v 1.4.34.1 2008/01/09 01:44:27 matt Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -39,7 +39,7 @@
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
-#include <sys/lock.h>
+#include <sys/mutex.h>
 
 #include <machine/bus.h>
 #include <machine/cpu.h>
@@ -58,7 +58,7 @@ struct iociic_softc {
 	bus_space_handle_t sc_sh;
 
 	struct i2c_controller sc_i2c;
-	struct lock sc_buslock;
+	kmutex_t sc_buslock;
 
 	/*
 	 * The SDA pin is open-drain, so we make it an input by
@@ -128,7 +128,7 @@ iociic_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 
-	lockinit(&sc->sc_buslock, PRIBIO|PCATCH, "iociiclk", 0, 0);
+	mutex_init(&sc->sc_buslock, MUTEX_DEFAULT, IPL_NONE);
 
 	sc->sc_i2c.ic_cookie = sc;
 	sc->sc_i2c.ic_acquire_bus = iociic_acquire_bus;
@@ -175,7 +175,8 @@ iociic_acquire_bus(void *cookie, int flags)
 	if (flags & I2C_F_POLL)
 		return (0);
 
-	return (lockmgr(&sc->sc_buslock, LK_EXCLUSIVE, NULL));
+	mutex_enter(&sc->sc_buslock);
+	return (0);
 }
 
 static void
@@ -187,7 +188,7 @@ iociic_release_bus(void *cookie, int flags)
 	if (flags & I2C_F_POLL)
 		return;
 
-	(void) lockmgr(&sc->sc_buslock, LK_RELEASE, NULL);
+	mutex_exit(&sc->sc_buslock);
 }
 
 static int

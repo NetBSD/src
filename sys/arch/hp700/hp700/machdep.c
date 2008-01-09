@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.38.10.1 2007/11/06 23:16:47 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.38.10.2 2008/01/09 01:46:09 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -70,12 +70,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.38.10.1 2007/11/06 23:16:47 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.38.10.2 2008/01/09 01:46:09 matt Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
-#include "opt_compat_hpux.h"
 #include "opt_useleds.h"
 #include "opt_power_switch.h"
 
@@ -102,8 +101,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.38.10.1 2007/11/06 23:16:47 matt Exp $
 #include <sys/kcore.h>
 #include <sys/extent.h>
 #include <sys/ksyms.h>
-
 #include <sys/mount.h>
+#include <sys/mutex.h>
 #include <sys/syscallargs.h>
 
 #include <uvm/uvm_page.h>
@@ -118,10 +117,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.38.10.1 2007/11/06 23:16:47 matt Exp $
 #include <machine/cpufunc.h>
 #include <machine/autoconf.h>
 #include <machine/kcore.h>
-
-#ifdef COMPAT_HPUX
-#include <compat/hpux/hpux.h>
-#endif
 
 #ifdef	KGDB
 #include "com.h"
@@ -213,9 +208,6 @@ u_int	cpu_ticksnum, cpu_ticksdenom, cpu_hzticks;
 char	machine[] = MACHINE;
 char	cpu_model[128];
 const struct hppa_cpu_info *hppa_cpu_info;
-#ifdef COMPAT_HPUX
-int	cpu_model_hpux;	/* contains HPUX_SYSCONF_CPU* kind of value */
-#endif
 
 /*
  * exported methods for cpus
@@ -421,6 +413,8 @@ const struct hppa_cpu_info hppa_cpu_pa8600 = {
 	  _HPPA_CPU_UNSUPP
 #endif /* !HP8600_CPU */
 };
+
+extern kmutex_t vmmap_lock;
 
 void
 hppa_init(paddr_t start)
@@ -686,17 +680,6 @@ hppa_init(paddr_t start)
 	LDILDO(trap_ep_T_ITLBMISSNA, hppa_cpu_info->itlbh);
 #undef LDILDO
 
-#ifdef COMPAT_HPUX
-	if (hppa_cpu_info->hppa_cpu_info_pa_spec >= 
-	    HPPA_PA_SPEC_MAKE(2, 0, ' '))
-		cpu_model_hpux = HPUX_SYSCONF_CPUPA20;
-	else if (hppa_cpu_info->hppa_cpu_info_pa_spec >= 
-	    HPPA_PA_SPEC_MAKE(1, 1, ' '))
-		cpu_model_hpux = HPUX_SYSCONF_CPUPA11;
-	else 
-		cpu_model_hpux = HPUX_SYSCONF_CPUPA10;
-#endif
-
 	/* we hope this won't fail */
 	hp700_io_extent = extent_create("io",
 	    HPPA_IOSPACE, 0xffffffff, M_DEVBUF,
@@ -904,6 +887,8 @@ cpu_startup(void)
 	 */
 	vmmap = uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
 	    UVM_KMF_VAONLY | UVM_KMF_WAITVA);
+
+	mutex_init(&vmmap_lock, MUTEX_DEFAULT, IPL_NONE);
 }
 
 /*

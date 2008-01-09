@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.15.50.1 2007/11/06 23:15:26 matt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.15.50.2 2008/01/09 01:45:32 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.15.50.1 2007/11/06 23:15:26 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.15.50.2 2008/01/09 01:45:32 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,32 +59,20 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.15.50.1 2007/11/06 23:15:26 matt Exp 
 #include <machine/pte.h>
 #include <machine/intr.h>
 
-/*
-#include <dev/pci/pcivar.h>
-#include <dev/pci/pcidevs.h>
-#include <dev/scsipi/scsi_all.h>
-#include <dev/scsipi/scsipi_all.h>
-#include <dev/scsipi/scsiconf.h>
-#include <dev/ata/atavar.h>
-#include <dev/ic/wdcvar.h>
-#include <machine/isa_machdep.h>
-#include <dev/isa/isareg.h>
-#include <prep/pnpbus/pnpbusvar.h>
-*/
-
 void genppc_cpu_configure(void);
 static void findroot(void);
 
 /*
  * Determine i/o configuration for a machine.
  */
+
 void
 cpu_configure()
 {
 
 	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("configure: mainbus not configured");
-
+	
 	genppc_cpu_configure();
 }
 
@@ -114,22 +102,19 @@ findroot(void)
 	char buf[32];
 	const char *name;
 
-#if 0
-	aprint_normal("howto %x bootdev %x ", boothowto, bootdev);
-#endif
-
 	if ((bootdev & B_MAGICMASK) != (u_long)B_DEVMAGIC)
 		return;
-
+	
 	name = devsw_blk2name((bootdev >> B_TYPESHIFT) & B_TYPEMASK);
 	if (name == NULL)
 		return;
-
+	
 	part = (bootdev >> B_PARTITIONSHIFT) & B_PARTITIONMASK;
 	unit = (bootdev >> B_UNITSHIFT) & B_UNITMASK;
-
+	
 	sprintf(buf, "%s%d", name, unit);
-	for (dv = alldevs.tqh_first; dv != NULL; dv = dv->dv_list.tqe_next) {
+	for (dv = TAILQ_FIRST(&alldevs); dv != NULL;
+	     dv = TAILQ_NEXT(dv, dv_list)) {
 		if (strcmp(buf, dv->dv_xname) == 0) {
 			booted_device = dv;
 			booted_partition = part;

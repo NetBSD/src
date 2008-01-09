@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc_jensenio.c,v 1.6 2002/10/02 04:06:38 thorpej Exp $ */
+/* $NetBSD: pckbc_jensenio.c,v 1.6.84.1 2008/01/09 01:44:38 matt Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pckbc_jensenio.c,v 1.6 2002/10/02 04:06:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_jensenio.c,v 1.6.84.1 2008/01/09 01:44:38 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,10 +48,8 @@ __KERNEL_RCSID(0, "$NetBSD: pckbc_jensenio.c,v 1.6 2002/10/02 04:06:38 thorpej E
 #include <sys/malloc.h>
 #include <sys/errno.h>
 #include <sys/queue.h>
-#include <sys/lock.h> 
-
-#include <machine/intr.h>
-#include <machine/bus.h>
+#include <sys/intr.h>
+#include <sys/bus.h>
 
 #include <dev/ic/i8042reg.h>
 #include <dev/ic/pckbcvar.h> 
@@ -151,7 +149,7 @@ pckbc_jensenio_intr_establish(struct pckbc_softc *sc, pckbc_slot_t slot)
 	jsc->sc_ic[slot].ic_sc = sc;
 
 	scb_set(jsc->sc_ic[slot].ic_vector, pckbc_jensenio_intr,
-	    &jsc->sc_ic[slot]);
+	    &jsc->sc_ic[slot], IPL_VM);
 	printf("%s: %s slot interrupting at vector 0x%lx\n", sc->sc_dv.dv_xname,
 	    pckbc_slot_names[slot], jsc->sc_ic[slot].ic_vector);
 

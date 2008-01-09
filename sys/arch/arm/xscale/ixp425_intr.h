@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_intr.h,v 1.6.52.1 2007/11/09 05:37:47 matt Exp $	*/
+/*	$NetBSD: ixp425_intr.h,v 1.6.52.2 2008/01/09 01:45:27 matt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -50,9 +50,6 @@
 
 #define IXPREG(reg)     *((volatile u_int32_t*) (reg))
 
-#ifdef __PROG32
-void ixp425_do_pending(void);
-
 static inline void __attribute__((__unused__))
 ixp425_set_intrmask(void)
 {
@@ -61,9 +58,13 @@ ixp425_set_intrmask(void)
 	IXPREG(IXP425_INT_ENABLE) = intr_enabled & IXP425_INT_HWMASK;
 }
 
+#ifdef __HAVE_FAST_SOFTINTS
+void ixp425_do_pending(void);
+
 #define INT_SWMASK						\
 	((1U << IXP425_INT_bit31) | (1U << IXP425_INT_bit30) |	\
 	 (1U << IXP425_INT_bit14) | (1U << IXP425_INT_bit11))
+#endif
 
 static inline void __attribute__((__unused__))
 ixp425_splx(int new)
@@ -86,8 +87,10 @@ ixp425_splx(int new)
 		restore_interrupts(oldirqstate);
 	}
 
+#ifdef __HAVE_FAST_SOFTINTS
 	if ((ixp425_ipending & INT_SWMASK) & ~new)
 		ixp425_do_pending();
+#endif
 }
 
 static inline int __attribute__((__unused__))
@@ -121,14 +124,18 @@ ixp425_spllower(int ipl)
 #define splx(new)		ixp425_splx(new)
 #define	_spllower(ipl)		ixp425_spllower(ipl)
 #define	_splraise(ipl)		ixp425_splraise(ipl)
+#ifdef __HAVE_FAST_SOFTINTS
 void	_setsoftintr(int);
+#endif
 
 #else
 
 int	_splraise(int);
 int	_spllower(int);
 void	splx(int);
+#ifdef __HAVE_FAST_SOFTINTS
 void	_setsoftintr(int);
+#endif
 
 #endif /* ! EVBARM_SPL_NOINLINE */
 

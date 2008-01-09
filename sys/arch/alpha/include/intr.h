@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.60.10.1 2007/11/06 23:13:54 matt Exp $ */
+/* $NetBSD: intr.h,v 1.60.10.2 2008/01/09 01:44:36 matt Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -67,9 +67,7 @@
 #ifndef _ALPHA_INTR_H_
 #define _ALPHA_INTR_H_
 
-#include <sys/device.h>
-#include <sys/lock.h>
-#include <sys/queue.h>
+#include <sys/evcnt.h>
 
 #include <machine/atomic.h>
 
@@ -115,22 +113,13 @@ struct scbvec {
  */
 
 #define	IPL_NONE	0	/* no interrupt level */
-#define	IPL_SOFT	1	/* generic software interrupts */
-#define	IPL_SOFTCLOCK	2	/* clock software interrupts */
-#define	IPL_SOFTNET	3	/* network software interrupts */
-#define	IPL_SOFTSERIAL	4	/* serial software interrupts */
-#define	IPL_BIO		5	/* block I/O interrupts */
-#define	IPL_NET		6	/* network interrupts */
-#define	IPL_TTY		7	/* terminal interrupts */
-#define	IPL_LPT		IPL_TTY
-#define	IPL_VM		8	/* interrupts that can alloc mem */
-#define	IPL_CLOCK	9	/* clock interrupts */
-#define	IPL_IPI		IPL_CLOCK /* AARM, 5-2, II-B */
-#define	IPL_STATCLOCK	IPL_CLOCK
-#define	IPL_HIGH	10	/* all interrupts */
-#define	IPL_SCHED	IPL_HIGH
-#define	IPL_LOCK	IPL_HIGH
-#define	IPL_SERIAL	11	/* serial interrupts */
+#define	IPL_SOFTCLOCK	1	/* generic software interrupts */
+#define	IPL_SOFTBIO	1	/* generic software interrupts */
+#define	IPL_SOFTNET	1	/* generic software interrupts */
+#define	IPL_SOFTSERIAL	1	/* generic software interrupts */
+#define	IPL_VM		2	/* interrupts that can alloc mem */
+#define	IPL_SCHED	3	/* clock interrupts */
+#define	IPL_HIGH	4	/* all interrupts */
 
 typedef int ipl_t;
 typedef struct {
@@ -138,20 +127,6 @@ typedef struct {
 } ipl_cookie_t;
 
 ipl_cookie_t makeiplcookie(ipl_t);
-
-#define	SI_SOFTSERIAL	0
-#define	SI_SOFTNET	1
-#define	SI_SOFTCLOCK	2
-#define	SI_SOFT		3
-
-#define	SI_NQUEUES	4
-
-#define	SI_QUEUENAMES {							\
-	"serial",							\
-	"net",								\
-	"clock",							\
-	"misc",								\
-}
 
 #define	IST_UNUSABLE	-1	/* interrupt cannot be used */
 #define	IST_NONE	0	/* none (dummy) */
@@ -241,51 +216,7 @@ struct alpha_shared_intr {
 	((asi)[num].intr_maxstrays != 0 &&				\
 	 (asi)[num].intr_nstrays == (asi)[num].intr_maxstrays)
 
-#define	setsoft(x)	atomic_setbits_ulong(&ssir, 1 << (x))
-
-struct alpha_soft_intrhand {
-	TAILQ_ENTRY(alpha_soft_intrhand)
-		sih_q;
-	struct alpha_soft_intr *sih_intrhead;
-	void	(*sih_fn)(void *);
-	void	*sih_arg;
-	int	sih_pending;
-};
-
-struct alpha_soft_intr {
-	TAILQ_HEAD(, alpha_soft_intrhand)
-		softintr_q;
-	struct evcnt softintr_evcnt;
-	struct simplelock softintr_slock;
-	unsigned long softintr_siq;
-};
-
-void	*softintr_establish(int, void (*)(void *), void *);
-void	softintr_disestablish(void *);
-void	softintr_init(void);
 void	softintr_dispatch(void);
-
-#define	softintr_schedule(arg)						\
-do {									\
-	struct alpha_soft_intrhand *__sih = (arg);			\
-	struct alpha_soft_intr *__si = __sih->sih_intrhead;		\
-	int __s;							\
-									\
-	__s = splhigh();						\
-	simple_lock(&__si->softintr_slock);				\
-	if (__sih->sih_pending == 0) {					\
-		TAILQ_INSERT_TAIL(&__si->softintr_q, __sih, sih_q);	\
-		__sih->sih_pending = 1;					\
-		setsoft(__si->softintr_siq);				\
-	}								\
-	simple_unlock(&__si->softintr_slock);				\
-	splx(__s);							\
-} while (0)
-
-/* XXX For legacy software interrupts. */
-extern struct alpha_soft_intrhand *softnet_intrhand;
-
-#define	setsoftnet()	softintr_schedule(softnet_intrhand)
 
 struct alpha_shared_intr *alpha_shared_intr_alloc(unsigned int, unsigned int);
 int	alpha_shared_intr_dispatch(struct alpha_shared_intr *,
@@ -320,7 +251,7 @@ struct evcnt *alpha_shared_intr_evcnt(struct alpha_shared_intr *,
 extern struct scbvec scb_iovectab[];
 
 void	scb_init(void);
-void	scb_set(u_long, void (*)(void *, u_long), void *);
+void	scb_set(u_long, void (*)(void *, u_long), void *, int);
 u_long	scb_alloc(void (*)(void *, u_long), void *);
 void	scb_free(u_long);
 

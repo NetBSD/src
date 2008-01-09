@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.19 2007/03/11 05:22:25 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.19.18.1 2008/01/09 01:47:34 matt Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -42,20 +42,13 @@
 /* watch out for side effects */
 #define splx(s)         ((s) & PSL_IPL ? _spl(s) : spl0())
 
-#define splsoft()	splraise1()
-#define splsoftnet()    splsoft()
-#define splsoftclock()	splsoft()
-#define splsoftserial()	splsoft()
-#define splbio()        splraise3()
-#define splnet()        splraise3()
-#define spltty()        splraise3()
-#define splserial()     splraise5()
+#define splsoftbio()	splraise1()
+#define splsoftnet()    splraise1()
+#define splsoftclock()	splraise1()
+#define splsoftserial()	splraise1()
 #define splvm()         splraise6()
-#define splclock()      splraise3()	/* ??? */
-#define splstatclock()  splclock()
 #define splhigh()       spl7()
 #define splsched()      spl7()
-#define spllock()       spl7()
 
 #define spldma()        splraise6()
 
@@ -63,20 +56,13 @@
 
 #define	IPL_NONE	0
 #define	IPL_SOFTCLOCK	1
-#define	IPL_SOFTNET	2
-#define	IPL_SOFTSERIAL	3
-#define	IPL_SOFT	4
-#define	IPL_BIO		5
-#define	IPL_NET		6
-#define	IPL_TTY		7
-#define	IPL_SERIAL	8
-#define	IPL_VM		9
-#define	IPL_CLOCK	10
-#define	IPL_STATCLOCK	IPL_CLOCK
-#define	IPL_HIGH	11
-#define	IPL_LOCK	IPL_HIGH
-#define	IPL_SCHED	IPL_HIGH
-#define	NIPL		12
+#define	IPL_SOFTBIO	2
+#define	IPL_SOFTNET	3
+#define	IPL_SOFTSERIAL	4
+#define	IPL_VM		5
+#define	IPL_SCHED	6
+#define	IPL_HIGH	6
+#define	NIPL		7
 
 typedef int ipl_t;
 typedef struct {
@@ -105,8 +91,6 @@ extern volatile u_long *intrmask;
 #define INTR_ENABLE(x)		(*intrmask |= NEXT_I_BIT(x))
 #define INTR_DISABLE(x)		(*intrmask &= (~NEXT_I_BIT(x)))
 #define INTR_OCCURRED(x)	(*intrstat & NEXT_I_BIT(x))
-
-#include <m68k/softintr.h>
 
 #endif /* _KERNEL */
 

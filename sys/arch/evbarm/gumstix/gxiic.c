@@ -1,4 +1,4 @@
-/*	$NetBSD: gxiic.c,v 1.1 2007/08/21 12:36:18 kiyohara Exp $ */
+/*	$NetBSD: gxiic.c,v 1.1.2.1 2008/01/09 01:45:46 matt Exp $ */
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -25,12 +25,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gxiic.c,v 1.1 2007/08/21 12:36:18 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gxiic.c,v 1.1.2.1 2008/01/09 01:45:46 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/errno.h>
-#include <sys/lock.h>
+#include <sys/mutex.h>
 
 #include <arm/xscale/pxa2x0_i2c.h>
 
@@ -43,7 +43,7 @@ struct gxiic_softc {
 	struct pxa2x0_i2c_softc sc_pxa_i2c;
 
 	struct i2c_controller sc_i2c;
-	struct lock sc_lock;
+	kmutex_t sc_lock;
 };
 
 
@@ -87,7 +87,7 @@ gxiicattach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	lockinit(&sc->sc_lock, PZERO, "gxiic", 0, 0);
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
 
 	/* Initialize i2c_controller  */
 	sc->sc_i2c.ic_cookie = sc;
@@ -110,12 +110,11 @@ static int
 gxiic_acquire_bus(void *cookie, int flags)
 {
 	struct gxiic_softc *sc = cookie;
-	int err;
 
-	if ((err = lockmgr(&sc->sc_lock, LK_EXCLUSIVE, NULL)) == 0)
-		pxa2x0_i2c_open(&sc->sc_pxa_i2c);
+	mutex_enter(&sc->sc_lock);
+	pxa2x0_i2c_open(&sc->sc_pxa_i2c);
 
-	return err;
+	return 0;
 }
 
 static void
@@ -123,8 +122,8 @@ gxiic_release_bus(void *cookie, int flags)
 {
 	struct gxiic_softc *sc = cookie;
 
-	lockmgr(&sc->sc_lock, LK_RELEASE, NULL);
 	pxa2x0_i2c_close(&sc->sc_pxa_i2c);
+	mutex_exit(&sc->sc_lock);
 	return;
 }
 

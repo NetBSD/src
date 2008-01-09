@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.17 2005/12/11 12:17:33 christos Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.17.50.1 2008/01/09 01:46:13 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,11 +77,12 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.17 2005/12/11 12:17:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.17.50.1 2008/01/09 01:46:13 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/conf.h>	/* setroot() */
+#include <sys/device.h>
 
 #include <machine/disklabel.h>
 
@@ -103,8 +104,6 @@ static void get_device(const char *);
 void
 cpu_configure()
 {
-
-	softintr_init();
 
 	/* Kick off autoconfiguration. */
 	(void)splhigh();
@@ -165,7 +164,8 @@ get_device(const char *name)
 	else if (*cp != '\0' && *cp != ' ')
 		return;
 	sprintf(buf, "%s%d", devname, unit);
-	for (dv = alldevs.tqh_first; dv != NULL; dv = dv->dv_list.tqe_next) {
+	for (dv = TAILQ_FIRST(&alldevs); dv != NULL;
+	    dv = TAILQ_NEXT(dv, dv_list)) {
 		if (strcmp(buf, dv->dv_xname) == 0) {
 			booted_device = dv;
 			booted_partition = part;

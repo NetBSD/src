@@ -1,4 +1,4 @@
-#	$NetBSD: NAPPI,v 1.25 2006/08/26 20:26:44 christos Exp $
+#	$NetBSD: NAPPI,v 1.25.32.1 2008/01/09 01:45:42 matt Exp $
 #
 #	NAPPI -- Netwise APlication Platform Board Kernel
 #
@@ -129,7 +129,7 @@ options 	VERBOSE_INIT_ARM # verbose bootstraping messages
 options 	DDB		# in-kernel debugger
 options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 #makeoptions	DEBUG="-g"	# compile full symbol table
-options 	SYMTAB_SPACE=200000
+options 	SYMTAB_SPACE=280000
 
 config		netbsd		root on ? type ?
 

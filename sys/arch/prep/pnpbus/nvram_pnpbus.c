@@ -1,4 +1,4 @@
-/* $NetBSD: nvram_pnpbus.c,v 1.8.14.1 2007/11/06 23:21:13 matt Exp $ */
+/* $NetBSD: nvram_pnpbus.c,v 1.8.14.2 2008/01/09 01:48:00 matt Exp $ */
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvram_pnpbus.c,v 1.8.14.1 2007/11/06 23:21:13 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvram_pnpbus.c,v 1.8.14.2 2008/01/09 01:48:00 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -47,10 +47,10 @@ __KERNEL_RCSID(0, "$NetBSD: nvram_pnpbus.c,v 1.8.14.1 2007/11/06 23:21:13 matt E
 #include <sys/kthread.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
-#include <sys/lock.h>
+#include <sys/simplelock.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
 #include <machine/isa_machdep.h>
 /* clock stuff for motorolla machines */
 #include <dev/clock_subr.h>

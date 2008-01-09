@@ -1,4 +1,4 @@
-/*	$NetBSD: button.c,v 1.2 2007/03/04 06:00:03 christos Exp $	*/
+/*	$NetBSD: button.c,v 1.2.20.1 2008/01/09 01:46:57 matt Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,13 +36,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: button.c,v 1.2 2007/03/04 06:00:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: button.c,v 1.2.20.1 2008/01/09 01:46:57 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
-#include <sys/lock.h>
+#include <sys/simplelock.h>
 #include <sys/queue.h>
 #include <sys/proc.h>
 #include <sys/kthread.h>
@@ -101,8 +101,6 @@ static int
 btn_queue_event(button_event_t *bev)
 {
 
-	LOCK_ASSERT(simple_lock_held(&btn_event_queue_slock));
-
 	if (btn_event_queue_count == BTN_MAX_EVENTS)
 		return (0);
 
@@ -116,8 +114,6 @@ btn_queue_event(button_event_t *bev)
 static int
 btn_get_event(button_event_t *bev)
 {
-
-	LOCK_ASSERT(simple_lock_held(&btn_event_queue_slock));
 
 	if (btn_event_queue_count == 0)
 		return (0);

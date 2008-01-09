@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc_hpc.c,v 1.6.10.1 2007/11/06 23:21:50 matt Exp $	 */
+/* $NetBSD: pckbc_hpc.c,v 1.6.10.2 2008/01/09 01:48:43 matt Exp $	 */
 
 /*
  * Copyright (c) 2003 Christopher SEKIYA
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_hpc.c,v 1.6.10.1 2007/11/06 23:21:50 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_hpc.c,v 1.6.10.2 2008/01/09 01:48:43 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,10 +43,9 @@ __KERNEL_RCSID(0, "$NetBSD: pckbc_hpc.c,v 1.6.10.1 2007/11/06 23:21:50 matt Exp 
 #include <sys/malloc.h>
 #include <sys/errno.h>
 #include <sys/queue.h>
-#include <sys/lock.h>
+#include <sys/bus.h>
 
 #include <machine/autoconf.h>
-#include <machine/bus.h>
 #include <machine/machtype.h>
 
 #include <dev/ic/i8042reg.h>

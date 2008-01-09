@@ -1,4 +1,4 @@
-/*	$NetBSD: com_frodo.c,v 1.5 2006/07/13 22:56:01 gdamore Exp $	*/
+/*	$NetBSD: com_frodo.c,v 1.5.34.1 2008/01/09 01:45:59 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_frodo.c,v 1.5 2006/07/13 22:56:01 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_frodo.c,v 1.5.34.1 2008/01/09 01:45:59 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -153,8 +153,7 @@ com_frodo_attach(struct device *parent, struct device *self, void *aux)
 
 	com_attach_subr(sc);
 
-	frodo_intr_establish(parent, comintr, sc, fa->fa_line,
-	    ((sc->sc_hwflags & COM_HW_FIFO) != 0) ? IPL_TTY : IPL_TTYNOBUF);
+	frodo_intr_establish(parent, comintr, sc, fa->fa_line, IPL_VM);
 }
 
 int

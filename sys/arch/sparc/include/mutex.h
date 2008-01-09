@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.4.10.1 2007/11/06 23:22:26 matt Exp $	*/
+/*	$NetBSD: mutex.h,v 1.4.10.2 2008/01/09 01:48:55 matt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -89,6 +89,8 @@ struct kmutex {
 
 #else	/* __MUTEX_PRIVATE */
 
+#include <machine/lock.h>
+
 struct kmutex {
 	union {
 		/* Adaptive mutex */
@@ -104,7 +106,9 @@ struct kmutex {
 		} s;
 	} u;
 	__cpu_simple_lock_t	mtx_lock;			/* 4 */
-	uint8_t			mtx_idtype[3];			/* 5-7 */
+	uint8_t			mtx_dodebug;			/* 5 */
+	uint8_t			mtx_isspin;			/* 6 */
+	uint8_t			mtx_pad[1];			/* 7 */
 };
 
 #define	__HAVE_MUTEX_STUBS	1
@@ -145,22 +149,20 @@ MUTEX_HAS_WAITERS(volatile kmutex_t *mtx)
 }
 
 static inline void
-MUTEX_INITIALIZE_SPIN(kmutex_t *mtx, u_int id, int ipl)
+MUTEX_INITIALIZE_SPIN(kmutex_t *mtx, bool dodebug, int ipl)
 {
-	mtx->mtx_idtype[0] = (uint8_t)id;
-	mtx->mtx_idtype[1] = (uint8_t)(id >> 8);
-	mtx->mtx_idtype[2] = (uint8_t)((id >> 16) | 0x80);
+	mtx->mtx_dodebug = dodebug;
+	mtx->mtx_isspin = 1;
 	mtx->mtx_ipl = makeiplcookie(ipl);
 	mtx->mtx_interlock = __SIMPLELOCK_LOCKED;
 	__cpu_simple_lock_init(&mtx->mtx_lock);
 }
 
 static inline void
-MUTEX_INITIALIZE_ADAPTIVE(kmutex_t *mtx, u_int id)
+MUTEX_INITIALIZE_ADAPTIVE(kmutex_t *mtx, bool dodebug)
 {
-	mtx->mtx_idtype[0] = (uint8_t)id;
-	mtx->mtx_idtype[1] = (uint8_t)(id >> 8);
-	mtx->mtx_idtype[2] = (uint8_t)(id >> 16);
+	mtx->mtx_dodebug = dodebug;
+	mtx->mtx_isspin = 0;
 	__cpu_simple_lock_init(&mtx->mtx_lock);
 }
 
@@ -168,29 +170,24 @@ static inline void
 MUTEX_DESTROY(kmutex_t *mtx)
 {
 	mtx->mtx_owner = (uintptr_t)-1L;
-	mtx->mtx_idtype[0] = 0xff;
-	mtx->mtx_idtype[1] = 0xff;
-	mtx->mtx_idtype[2] = 0xff;
 }
 
-static inline u_int
-MUTEX_GETID(kmutex_t *mtx)
+static inline bool
+MUTEX_DEBUG_P(kmutex_t *mtx)
 {
-	return (u_int)mtx->mtx_idtype[0] |
-	    ((u_int)mtx->mtx_idtype[1] << 8) |
-	    (((u_int)mtx->mtx_idtype[2] & 0x7f) << 16);
+	return mtx->mtx_dodebug != 0;
 }
 
 static inline int
 MUTEX_SPIN_P(volatile kmutex_t *mtx)
 {
-	return mtx->mtx_idtype[2] & 0x80;
+	return mtx->mtx_isspin != 0;
 }
 
 static inline int
 MUTEX_ADAPTIVE_P(volatile kmutex_t *mtx)
 {
-	return (mtx->mtx_idtype[2] & 0x80) == 0;
+	return mtx->mtx_isspin == 0;
 }
 
 static inline int

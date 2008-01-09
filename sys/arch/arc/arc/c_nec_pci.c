@@ -1,4 +1,4 @@
-/*	$NetBSD: c_nec_pci.c,v 1.15.2.1 2007/11/06 23:14:45 matt Exp $	*/
+/*	$NetBSD: c_nec_pci.c,v 1.15.2.2 2008/01/09 01:45:04 matt Exp $	*/
 
 /*-
  * Copyright (C) 2000 Shuichiro URATA.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: c_nec_pci.c,v 1.15.2.1 2007/11/06 23:14:45 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: c_nec_pci.c,v 1.15.2.2 2008/01/09 01:45:04 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,30 +112,16 @@ struct mcclock_jazzio_config mcclock_nec_pci_conf = {
  */
 static const uint32_t nec_pci_ipl_sr_bits[_IPL_N] = {
 	[IPL_NONE] = 0,
-	[IPL_SOFT] =
-	    MIPS_SOFT_INT_MASK_0,
 	[IPL_SOFTCLOCK] =
 	    MIPS_SOFT_INT_MASK_0,
 	[IPL_SOFTNET] =
 	    MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1,
-	[IPL_SOFTSERIAL] =
-	    MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1,
-	[IPL_BIO] =
-	    MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1 |
-	    MIPS_INT_MASK_0 |
-	    MIPS_INT_MASK_1 |
-	    MIPS_INT_MASK_2,
-	[IPL_NET] =
-	    MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1 |
-	    MIPS_INT_MASK_0 |
-	    MIPS_INT_MASK_1 |
-	    MIPS_INT_MASK_2,
-	[IPL_TTY] =
+	[IPL_VM] =
 	    MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1 |
 	    MIPS_INT_MASK_0 |
 	    MIPS_INT_MASK_1 | 
 	    MIPS_INT_MASK_2,
-	[IPL_CLOCK] =
+	[IPL_SCHED] =
 	    MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1 |
 	    MIPS_INT_MASK_0 |
 	    MIPS_INT_MASK_1 |

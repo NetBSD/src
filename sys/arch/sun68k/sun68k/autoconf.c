@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.20 2006/09/30 13:37:32 tsutsui Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.20.28.1 2008/01/09 01:49:16 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.20 2006/09/30 13:37:32 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.20.28.1 2008/01/09 01:49:16 matt Exp $");
 
 #include "opt_kgdb.h"
 
@@ -76,7 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.20 2006/09/30 13:37:32 tsutsui Exp $"
 /*
  * Do general device autoconfiguration,
  * then choose root device (etc.)
- * Called by machdep.c: cpu_startup()
+ * Called by sys/kern/subr_autoconf.c: configure()
  */
 void 
 cpu_configure(void)
@@ -97,15 +97,9 @@ cpu_configure(void)
 #endif	/* KGDB */
 	}
 
-	/*
-	 * Install handlers for our "soft" interrupts.
-	 * There might be a better place to do this?
-	 */
-	softintr_init();
-
 	/* General device autoconfiguration. */
 	if (config_rootfound("mainbus", NULL) == NULL)
-		panic("configure: mainbus not found");
+		panic("%s: mainbus not found", __func__);
 
 	/*
 	 * Now that device autoconfiguration is finished,
@@ -163,7 +157,7 @@ mainbus_attach(struct device *parent, struct device *self, void *args)
 
 	/* Find the remaining buses */
 	ma.ma_name = NULL;
-	(void) config_found(self, &ma, NULL);
+	(void)config_found(self, &ma, NULL);
 
 	/* Lastly, find the PROM console */
 	ma.ma_name = "pcons";
@@ -183,19 +177,19 @@ mainbus_attach(struct device *parent, struct device *self, void *args)
  * setup the _attach_args for each child match and attach call.
  */
 int 
-sun68k_bus_search(struct device *parent, struct cfdata *cf,
-		  const int *ldesc, void *aux)
+sun68k_bus_search(struct device *parent, struct cfdata *cf, const int *ldesc,
+    void *aux)
 {
 	struct mainbus_attach_args *map = aux;
 	struct mainbus_attach_args ma;
 
 	/* Check whether we're looking for a specifically named device */
 	if (map->ma_name != NULL && strcmp(map->ma_name, cf->cf_name) != 0)
-		return (0);
+		return 0;
 
 #ifdef	DIAGNOSTIC
 	if (cf->cf_fstate == FSTATE_STAR)
-		panic("bus_scan: FSTATE_STAR");
+		panic("%s: FSTATE_STAR", __func__);
 #endif
 
 	/*
@@ -216,11 +210,11 @@ sun68k_bus_search(struct device *parent, struct cfdata *cf,
 	 */
 #ifdef	DIAGNOSTIC
 #define BAD_LOCATOR(ma_loc, what) \
-	panic("sun68k_bus_search: %s %s for: %s%d", \
+	panic("%s: %s %s for: %s%d", __func__ \
 		map->ma_loc == LOCATOR_REQUIRED ? "missing" : "unexpected", \
 		what, cf->cf_name, cf->cf_unit)
 #else
-#define BAD_LOCATOR(ma_loc, what) return (0)
+#define BAD_LOCATOR(ma_loc, what) return 0
 #endif
 
 #define CHECK_LOCATOR(ma_loc, cf_loc, what) \
@@ -242,7 +236,7 @@ sun68k_bus_search(struct device *parent, struct cfdata *cf,
 	if (config_match(parent, cf, &ma) > 0) {
 		config_attach(parent, cf, &ma, sun68k_bus_print);
 	}
-	return (0);
+	return 0;
 }
 
 /*
@@ -264,7 +258,7 @@ sun68k_bus_print(void *args, const char *name)
 	if (ma->ma_pri != -1)
 		aprint_normal(" ipl %d", ma->ma_pri);
 
-	return(UNCONF);
+	return UNCONF;
 }
 
 /****************************************************************/
@@ -306,7 +300,7 @@ str2hex(const char *p, int *_val)
 	int val;
 	int c;
 	
-	for(val = 0;; val = (val << 4) + c, p++) {
+	for (val = 0;; val = (val << 4) + c, p++) {
 		c = *((const unsigned char *) p);
 		if (c >= 'a') c-= ('a' + 10);
 		else if (c >= 'A') c -= ('A' + 10);
@@ -314,7 +308,7 @@ str2hex(const char *p, int *_val)
 		if (c < 0 || c > 15) break;
 	}
 	*_val = val;
-	return (p);
+	return p;
 }
 
 /*
@@ -343,7 +337,7 @@ cpu_rootconf(void)
 	if (*prompath == '(' &&
 	    *(prompath = str2hex(++prompath, &prom_ctlr)) == ',' &&
 	    *(prompath = str2hex(++prompath, &prom_unit)) == ',') 
-		(void) str2hex(++prompath, &prom_part);
+		(void)str2hex(++prompath, &prom_part);
 
 	/* Default to "unknown" */
 	boot_device = NULL;
@@ -386,7 +380,7 @@ net_find(char *name, int ctlr, int unit)
 	char tname[16];
 
 	sprintf(tname, "%s%d", name, ctlr);
-	return (find_dev_byname(tname));
+	return find_dev_byname(tname);
 }
 
 #if NSCSIBUS > 0
@@ -406,7 +400,7 @@ scsi_find(char *name, int ctlr, int unit)
 	sprintf(tname, "scsibus%d", ctlr);
 	scsibus = find_dev_byname(tname);
 	if (scsibus == NULL)
-		return (NULL);
+		return NULL;
 
 	/* Compute SCSI target/LUN from PROM unit. */
 	target = prom_sd_target((unit >> 3) & 7);
@@ -416,9 +410,9 @@ scsi_find(char *name, int ctlr, int unit)
 	sbsc = (struct scsibus_softc *)scsibus;
 	periph = scsipi_lookup_periph(sbsc->sc_channel, target, lun);
 	if (periph == NULL)
-		return (NULL);
+		return NULL;
 
-	return (periph->periph_dev);
+	return periph->periph_dev;
 }
 #endif /* NSCSIBUS > 0 */
 
@@ -434,7 +428,7 @@ xx_find(char *name, int ctlr, int unit)
 
 	diskunit = (ctlr * 2) + unit;
 	sprintf(tname, "%s%d", name, diskunit);
-	return (find_dev_byname(tname));
+	return find_dev_byname(tname);
 }
 
 /*
@@ -446,11 +440,11 @@ find_dev_byname(char *name)
 {
 	struct device *dv;
 
-	for (dv = alldevs.tqh_first; dv != NULL;
-	    dv = dv->dv_list.tqe_next) {
+	for (dv = TAILQ_FIRST(&alldevs); dv != NULL;
+	    dv = TAILQ_NEXT(dv, dv_list)) {
 		if (!strcmp(dv->dv_xname, name)) {
-			return(dv);
+			return dv;
 		}
 	}
-	return (NULL);
+	return NULL;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.27.10.1 2007/11/06 23:15:42 matt Exp $	*/
+/*	$NetBSD: intr.h,v 1.27.10.2 2008/01/09 01:45:39 matt Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -29,21 +29,14 @@
 #define	_COBALT_INTR_H_
 
 #define	IPL_NONE	0	/* Disable only this interrupt. */
-#define	IPL_SOFT	1	/* generic software interrupts */
-#define	IPL_SOFTCLOCK	2	/* clock software interrupts */
-#define	IPL_SOFTNET	3	/* network software interrupts */
-#define	IPL_SOFTSERIAL	4	/* serial software interrupts */
-#define	IPL_BIO		5	/* Disable block I/O interrupts. */
-#define	IPL_NET		6	/* Disable network interrupts. */
-#define	IPL_TTY		7	/* Disable terminal interrupts. */
-#define	IPL_SERIAL	IPL_TTY	/* Disable serial hardware interrupts. */
-#define	IPL_VM		8	/* Memory allocation */
-#define	IPL_CLOCK	9	/* Disable clock interrupts. */
-#define	IPL_STATCLOCK	10	/* Disable profiling interrupts. */
-#define	IPL_HIGH	11	/* Disable all interrupts. */
-#define	IPL_SCHED	IPL_HIGH
-#define	IPL_LOCK	IPL_HIGH
-#define NIPL		12
+#define	IPL_SOFTCLOCK	1	/* generic software interrupts */
+#define	IPL_SOFTBIO	1	/* clock software interrupts */
+#define	IPL_SOFTNET	2	/* network software interrupts */
+#define	IPL_SOFTSERIAL	2	/* serial software interrupts */
+#define	IPL_VM		3	/* Memory allocation */
+#define	IPL_SCHED	4	/* Disable clock interrupts. */
+#define	IPL_HIGH	4	/* Disable all interrupts. */
+#define NIPL		5
 
 /* Interrupt sharing types. */
 #define IST_NONE	0	/* none */
@@ -51,50 +44,26 @@
 #define IST_EDGE	2	/* edge-triggered */
 #define IST_LEVEL	3	/* level-triggered */
 
-/* Soft interrupt numbers. */
-#define	SI_SOFT		0	/* generic software interrupts */
-#define	SI_SOFTSERIAL	1	/* serial software interrupts */
-#define	SI_SOFTNET	2	/* network software interrupts */
-#define	SI_SOFTCLOCK	3	/* clock software interrupts */
-
-#define	SI_NQUEUES	4
-
-#define	SI_QUEUENAMES {							\
-	"misc",								\
-	"serial",							\
-	"net",								\
-	"clock",							\
-}
-
 #ifdef _KERNEL
 #ifndef _LOCORE
 
-#include <sys/device.h>
+#include <sys/evcnt.h>
 #include <mips/cpuregs.h>
 #include <mips/locore.h>
 
-#define splhigh()       _splraise(MIPS_INT_MASK)
+#define SPLVM		(MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1 | \
+			MIPS_INT_MASK_1 | MIPS_INT_MASK_2 | \
+			MIPS_INT_MASK_3 | MIPS_INT_MASK_4)
+#define SPLSCHED	(SPLVM | MIPS_INT_MASK_5)
+
 #define spl0()          (void)_spllower(0)
 #define splx(s)         (void)_splset(s)
-#define SPLSOFT		(MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1)
-#define SPLBIO		(SPLSOFT | MIPS_INT_MASK_4)
-#define SPLNET		(SPLBIO | MIPS_INT_MASK_1 | MIPS_INT_MASK_2)
-#define SPLTTY		(SPLNET | MIPS_INT_MASK_3)
-#define SPLCLOCK	(SPLTTY | MIPS_INT_MASK_0 | MIPS_INT_MASK_5)
-#define splbio()	_splraise(SPLBIO)
-#define splnet()	_splraise(SPLNET)
-#define spltty()	_splraise(SPLTTY)
-#define spllpt()	spltty()
-#define splserial()	_splraise(SPLTTY)
-#define splclock()	_splraise(SPLCLOCK)
-#define splvm()		splclock()
-#define splstatclock()	splclock()
+#define splvm()		_splraise(SPLVM)
+#define splsched()	_splraise(SPLSCHED)
+#define splhigh()       _splraise(MIPS_INT_MASK)
 
-#define	splsched()	splhigh()
-#define	spllock()	splhigh()
-
-#define splsoft()	_splraise(MIPS_SOFT_INT_MASK_0)
 #define splsoftclock()	_splraise(MIPS_SOFT_INT_MASK_0)
+#define splsoftbio()	_splraise(MIPS_SOFT_INT_MASK_0)
 #define splsoftnet()	_splraise(MIPS_SOFT_INT_MASK_0|MIPS_SOFT_INT_MASK_1)
 #define splsoftserial()	_splraise(MIPS_SOFT_INT_MASK_0|MIPS_SOFT_INT_MASK_1)
 

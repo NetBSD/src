@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.12.24.1 2007/11/06 23:19:02 matt Exp $	*/
+/*	$NetBSD: lock.h,v 1.12.24.2 2008/01/09 01:47:14 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2007 The NetBSD Foundation, Inc.
@@ -149,7 +149,7 @@ mb_memory(void)
 
 #else	/* !_KERNEL */
 
-int	_lock_cas4(volatile uint32_t *, uint32_t, uint32_t);
+unsigned _atomic_cas_uint(volatile unsigned *, unsigned, unsigned);
 void	mb_read(void);
 void	mb_write(void);
 void	mb_memory(void);
@@ -158,8 +158,9 @@ static __inline int
 __cpu_simple_lock_try(__cpu_simple_lock_t *lp)
 {
 
-	return _lock_cas4((volatile uint32_t *)lp,
-	    __SIMPLELOCK_UNLOCKED, __SIMPLELOCK_LOCKED);
+	return _atomic_cas_uint((volatile unsigned *)lp,
+	    __SIMPLELOCK_UNLOCKED, __SIMPLELOCK_LOCKED) ==
+	    __SIMPLELOCK_UNLOCKED;
 }
 
 #endif	/* _KERNEL */

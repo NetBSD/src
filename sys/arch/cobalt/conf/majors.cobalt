@@ -1,4 +1,4 @@
-#	$NetBSD: majors.cobalt,v 1.19 2007/03/04 10:35:19 tsutsui Exp $
+#	$NetBSD: majors.cobalt,v 1.19.20.1 2008/01/09 01:45:39 matt Exp $
 #
 # Device majors for cobalt
 #
@@ -37,7 +37,6 @@ device-major	isdnbchan	char 30			isdnbchan
 device-major	isdntrc		char 31			isdntrc
 device-major	isdntel		char 32			isdntel
 device-major	clockctl	char 33			clockctl
-device-major	systrace	char 34			systrace
 device-major	cgd		char 35  block 11	cgd
 device-major	panel		char 36			panel
 device-major	ksyms		char 37			ksyms

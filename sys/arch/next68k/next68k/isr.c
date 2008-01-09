@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.23 2007/03/08 16:37:44 tsutsui Exp $ */
+/*	$NetBSD: isr.c,v 1.23.20.1 2008/01/09 01:47:34 matt Exp $ */
 
 /*
  * This file was taken from mvme68k/mvme68k/isr.c
@@ -48,20 +48,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.23 2007/03/08 16:37:44 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.23.20.1 2008/01/09 01:47:34 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/vmmeter.h>
 #include <sys/device.h>
+#include <sys/bus.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm_extern.h>
-
-#include <net/netisr.h>
-
-#include <machine/bus.h>
-#include <machine/cpu.h>
 
 #include <next68k/next68k/isr.h>
 
@@ -82,6 +79,8 @@ struct	evcnt next68k_irq_evcnt[] = {
 	EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, irqgroupname, "nmi")
 };
 
+int idepth;
+int ssir;
 extern	int intrcnt[];		/* from locore.s. XXXSCW: will go away soon */
 extern	void (*vectab[])(void);
 extern	void badtrap(void);
@@ -275,6 +274,8 @@ isrdispatch_autovec(struct clockframe *frame)
 	} log[256];
 #endif
 
+	idepth++;
+
 	ipl = (frame->vec >> 2) - ISRAUTOVEC;
 
 #ifdef DIAGNOSTIC
@@ -296,6 +297,7 @@ isrdispatch_autovec(struct clockframe *frame)
 		printf("isrdispatch_autovec: ipl %d unexpected\n", ipl);
 		if (++unexpected > 10)
 			panic("too many unexpected interrupts");
+		idepth--;
 		return;
 	}
 
@@ -343,6 +345,15 @@ isrdispatch_autovec(struct clockframe *frame)
 		printf("  *intrmask = 0x%s\n", sbuf);
 	}
 #endif
+
+	idepth--;
+}
+
+bool
+cpu_intr_p(void)
+{
+
+	return idepth != 0;
 }
 
 /*
@@ -401,14 +412,9 @@ const int ipl2psl_table[NIPL] = {
 	[IPL_SOFTCLOCK]  = PSL_IPL1,
 	[IPL_SOFTNET]    = PSL_IPL1,
 	[IPL_SOFTSERIAL] = PSL_IPL1,
-	[IPL_SOFT]       = PSL_IPL1,
-	[IPL_BIO]        = PSL_IPL3,
-	[IPL_NET]        = PSL_IPL3,
-	[IPL_TTY]        = PSL_IPL3,
-	[IPL_SERIAL]     = PSL_IPL5,
+	[IPL_SOFTBIO]    = PSL_IPL1,
 	[IPL_VM]         = PSL_IPL6,
-	[IPL_CLOCK]      = PSL_IPL3,	/* ??? */
-	[IPL_HIGH]       = PSL_IPL7,
+	[IPL_SCHED]      = PSL_IPL7,
 };
 
 ipl_cookie_t

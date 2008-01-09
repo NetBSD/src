@@ -1,4 +1,4 @@
-/* $NetBSD: a12dc.c,v 1.18 2007/03/04 05:59:08 christos Exp $ */
+/* $NetBSD: a12dc.c,v 1.18.20.1 2008/01/09 01:44:30 matt Exp $ */
 
 /* [Notice revision 2.2]
  * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.
@@ -64,7 +64,7 @@
 #ifndef BSIDE
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: a12dc.c,v 1.18 2007/03/04 05:59:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a12dc.c,v 1.18.20.1 2008/01/09 01:44:30 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -164,7 +164,7 @@ a12dcattach(parent, self, aux)
 	/* note that we've attached the chipset; can't have 2 A12Cs. */
 	a12dcfound = 1;
 
-	printf(": driver %s\n", "$Revision: 1.18 $");
+	printf(": driver %s\n", "$Revision: 1.18.20.1 $");
 
 	tp = a12dc_tty[0] = ttymalloc();
 	tp->t_oproc = a12dcstart;
@@ -394,13 +394,7 @@ a12dcstart(tp)
 	s = spltty();
 	if (tp->t_state & (TS_TTSTOP | TS_BUSY))
 		goto out;
-	if (tp->t_outq.c_cc <= tp->t_lowat) {
-		if (tp->t_state & TS_ASLEEP) {
-			tp->t_state &= ~TS_ASLEEP;
-			wakeup((void *)&tp->t_outq);
-		}
-		selwakeup(&tp->t_wsel);
-	}
+	ttypull(tp);
 	tp->t_state |= TS_BUSY;
 	while (tp->t_outq.c_cc != 0)
 		a12dccnputc(tp->t_dev, getc(&tp->t_outq));

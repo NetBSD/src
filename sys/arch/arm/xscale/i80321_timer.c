@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_timer.c,v 1.16 2007/01/06 16:18:18 christos Exp $	*/
+/*	$NetBSD: i80321_timer.c,v 1.16.26.1 2008/01/09 01:45:27 matt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i80321_timer.c,v 1.16 2007/01/06 16:18:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i80321_timer.c,v 1.16.26.1 2008/01/09 01:45:27 matt Exp $");
 
 #include "opt_perfctrs.h"
 #include "opt_i80321.h"
@@ -262,7 +262,7 @@ cpu_initclocks(void)
 		panic("cpu_initclocks: unable to register timer interrupt");
 
 #if defined(PERFCTRS)
-	pmu_ih = i80321_intr_establish(ICU_INT_PMU, IPL_STATCLOCK,
+	pmu_ih = i80321_intr_establish(ICU_INT_PMU, IPL_HIGH,
 	    xscale_pmc_dispatch, NULL);
 	if (pmu_ih == NULL)
 		panic("cpu_initclocks: unable to register timer interrupt");

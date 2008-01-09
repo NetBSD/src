@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.36.2.1 2007/08/28 18:29:05 matt Exp $	*/
+/*	$NetBSD: syscall.c,v 1.36.2.2 2008/01/09 01:45:10 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.36.2.1 2007/08/28 18:29:05 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.36.2.2 2008/01/09 01:45:10 matt Exp $");
 
 #include <sys/device.h>
 #include <sys/errno.h>
@@ -464,7 +464,7 @@ syscall_fancy(struct trapframe *frame, struct lwp *l, u_int32_t insn)
 			goto bad;
 	}
 
-	if ((error = trace_enter(l, code, code, NULL, args)) != 0)
+	if ((error = trace_enter(code, code, NULL, args)) != 0)
 		goto out;
 
 	rval[0] = 0;
@@ -510,7 +510,7 @@ out:
 		break;
 	}
 
-	trace_exit(l, code, args, rval, error);
+	trace_exit(code, args, rval, error);
 	KERNEL_UNLOCK_LAST(l);
 	userret(l);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.18 2007/03/11 05:22:24 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.18.18.1 2008/01/09 01:45:03 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -51,21 +51,13 @@
 
 #define	IPL_NONE	0
 #define	IPL_SOFTCLOCK	1
+#define	IPL_SOFTBIO	1
 #define	IPL_SOFTNET	1
 #define	IPL_SOFTSERIAL	1
-#define	IPL_BIO		3
-#define	IPL_NET		4
-#define	IPL_TTY		5
-#define	IPL_SERIAL	6
-#define	IPL_LPT		7
-#define	IPL_VM		8
-#define	IPL_AUDIO	9
-#define	IPL_CLOCK	10
-#define	IPL_STATCLOCK	IPL_CLOCK
-#define	IPL_SCHED	IPL_HIGH
-#define	IPL_HIGH	11
-#define	IPL_LOCK	IPL_HIGH
-#define	_NIPL		12
+#define	IPL_VM		2
+#define	IPL_SCHED	3
+#define	IPL_HIGH	4
+#define	_NIPL		5
 
 extern int ipl2spl_table[_NIPL];
 
@@ -88,53 +80,25 @@ splraiseipl(ipl_cookie_t icookie)
 	return _splraise(ipl2spl_table[icookie._ipl]);
 }
 
-#ifdef splaudio
-#undef splaudio
-#endif
-#define splaudio spl6
-
-#define spllpt()	spl6()
-
-#if !defined(_LKM)
+#ifdef _KERNEL_OPT
 #include "opt_lev6_defer.h"
 #endif
 
 #define	spl0()			_spl0()	/* we have real software interrupts */
-
-#define splnone()		spl0()
 #define splsoftclock()		splraise1()
 #define splsoftnet()		splraise1()
 #define splsoftserial()		splraise1()
-#define splbio()		splraise3()
-#define splnet()		splraise3()
-
-/*
- * splserial hack, idea by Jason Thorpe.
- * drivers which need it (at the present only the coms) raise the variable to
- * their serial interrupt level.
- *
- * ipl2spl_table[IPL_SERIAL] is statically initialized in machdep.c
- * at the moment; should be some driver independent file.
- */
-
-#define splserial()	_splraise(ipl2spl_table[IPL_SERIAL])
-#define spltty()	splraise4()
-#define	splvm()		splraise4()
+#define splsoftbio()		splraise1()
+#define	splvm()			splraise4()
 
 #ifndef _LKM
 
 #ifndef LEV6_DEFER
-#define splclock()	splraise6()
-#define splstatclock()	splraise6()
+#define splsched()	splraise6()
 #define splhigh()	spl7()
-#define splsched()	spl7()
-#define spllock()	spl7()
 #else
-#define splclock()	splraise4()
-#define splstatclock()	splraise4()
-#define splhigh()	splraise4()
 #define splsched()	splraise4()
-#define spllock()	splraise4()
+#define splhigh()	splraise4()
 #endif
 
 #else	/* _LKM */
@@ -142,11 +106,8 @@ splraiseipl(ipl_cookie_t icookie)
 extern int _spllkm6(void);
 extern int _spllkm7(void);
 
-#define splclock()	_spllkm6()
-#define splstatclock()	_spllkm6()
-#define spllock()	_spllkm7()
+#define splsched()	_spllkm6()
 #define splhigh()	_spllkm7()
-#define splsched()	_spllkm7()
 
 #endif /* _LKM */
 

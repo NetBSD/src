@@ -1,4 +1,4 @@
-#	$NetBSD: NSLU2,v 1.7.10.1 2007/11/06 23:15:55 matt Exp $
+#	$NetBSD: NSLU2,v 1.7.10.2 2008/01/09 01:45:42 matt Exp $
 #
 #	Linksys NSLU2 "Slug" NAS Device
 #
@@ -141,7 +141,7 @@ options 	DEBUG
 options 	DDB		# in-kernel debugger
 options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 #makeoptions	DEBUG="-g"	# compile full symbol table
-options 	SYMTAB_SPACE=300000
+options 	SYMTAB_SPACE=310000
 
 config		netbsd		root on ? type ?
 

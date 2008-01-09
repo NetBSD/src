@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.91.10.1 2007/11/06 23:15:18 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.91.10.2 2008/01/09 01:45:29 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.91.10.1 2007/11/06 23:15:18 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.91.10.2 2008/01/09 01:45:29 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -596,9 +596,6 @@ trap(fp, type, code, v)
 	 */
 	case T_SSIR:
 	case T_SSIR|T_USER:
-
-		softintr_dispatch();
-
 		/*
 		 * If this was not an AST trap, we are all done.
 		 */

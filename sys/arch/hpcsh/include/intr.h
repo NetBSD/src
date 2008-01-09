@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.11 2007/02/16 02:53:46 ad Exp $	*/
+/*	$NetBSD: intr.h,v 1.11.24.1 2008/01/09 01:46:20 matt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -47,16 +47,9 @@
  */
 #define _INTR_N		16
 
-#define	IPL_BIO		9	/* block I/O */
-#define	IPL_NET		10	/* network */
-#define	IPL_TTY		11	/* terminal */
-#define	IPL_VM		IPL_TTY
-#define	IPL_SERIAL	11	/* serial */
-#define	IPL_CLOCK	14	/* clock */
-#define	IPL_STATCLOCK	IPL_CLOCK
-#define	IPL_SCHED	IPL_CLOCK
+#define	IPL_VM		11
+#define	IPL_SCHED	14
 #define	IPL_HIGH	15	/* everything */
-#define	IPL_LOCK	IPL_HIGH
 
 #include <hpcsh/dev/hd6446x/hd6446xintcvar.h>
 

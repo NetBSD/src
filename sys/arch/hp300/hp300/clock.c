@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.38 2006/09/09 19:45:49 tsutsui Exp $	*/
+/*	$NetBSD: clock.c,v 1.38.30.1 2008/01/09 01:46:04 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -85,14 +85,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.38 2006/09/09 19:45:49 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.38.30.1 2008/01/09 01:46:04 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#ifdef __HAVE_TIMECOUNTER
 #include <sys/timetc.h>
-#endif
 
 #include <machine/psl.h>
 #include <machine/cpu.h>
@@ -105,9 +103,7 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.38 2006/09/09 19:45:49 tsutsui Exp $");
 #endif
 
 void	statintr(struct clockframe *);
-#ifdef __HAVE_TIMECOUNTER
 static u_int mc6840_counter(struct timecounter *);
-#endif
 
 static int clkstd[1];
 
@@ -230,7 +226,6 @@ cpu_initclocks(void)
 {
 	volatile struct clkreg *clk;
 	int intvl, statint, profint, minint;
-#ifdef __HAVE_TIMECOUNTER
 	static struct timecounter tc = {
 		mc6840_counter,		/* get_timecount */
 		NULL,			/* no poll_pps */
@@ -239,7 +234,6 @@ cpu_initclocks(void)
 		"mc6840",		/* name */
 		100			/* quality */
 	};
-#endif
 
 	clkstd[0] = IIOV(0x5F8000);		/* XXX grot */
 	clk = (volatile struct clkreg *)clkstd[0];
@@ -298,9 +292,7 @@ cpu_initclocks(void)
 	clk->clk_cr2 = CLK_CR3;
 	clk->clk_cr3 = CLK_IENAB;
 
-#ifdef __HAVE_TIMECOUNTER
 	tc_init(&tc);
-#endif
 }
 
 /*
@@ -352,7 +344,6 @@ statintr(struct clockframe *fp)
 	statclock(fp);
 }
 
-#ifdef __HAVE_TIMECOUNTER
 u_int
 mc6840_counter(struct timecounter *tc)
 {
@@ -379,51 +370,3 @@ mc6840_counter(struct timecounter *tc)
 
 	return count;
 }
-#else
-
-/*
- * Return the best possible estimate of the current time.
- */
-void
-microtime(struct timeval *tvp)
-{
-	volatile struct clkreg *clk;
-	int s, u, t, u2, s2;
-	static struct timeval lasttime;
-
-	/*
-	 * Read registers from slowest-changing to fastest-changing,
-	 * then re-read out to slowest.  If the values read before the
-	 * innermost match those read after, the innermost value is
-	 * consistent with the outer values.  If not, it may not be and
-	 * we must retry.  Typically this loop runs only once; occasionally
-	 * it runs twice, and only rarely does it run longer.
-	 *
-	 * (Using this loop avoids the need to block interrupts.)
-	 */
-	clk = (volatile struct clkreg *)clkstd[0];
-	do {
-		s = time.tv_sec;
-		u = time.tv_usec;
-		__asm volatile (" clrl %0; movpw %1@(5),%0"
-			      : "=d" (t) : "a" (clk));
-		u2 = time.tv_usec;
-		s2 = time.tv_sec;
-	} while (u != u2 || s != s2);
-
-	u += (clkint - t) * CLK_RESOLUTION;
-	while (u >= 1000000) {		/* normalize */
-		s++;
-		u -= 1000000;
-	}
-	if (s == lasttime.tv_sec &&
-	    u <= lasttime.tv_usec &&
-	    (u = lasttime.tv_usec + 1) >= 1000000) {
-		s++;
-		u -= 1000000;
-	}
-	tvp->tv_sec = s;
-	tvp->tv_usec = u;
-	lasttime = *tvp;
-}
-#endif

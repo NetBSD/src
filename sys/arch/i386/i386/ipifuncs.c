@@ -1,4 +1,4 @@
-/*	$NetBSD: ipifuncs.c,v 1.17.10.1 2007/11/06 23:17:29 matt Exp $ */
+/*	$NetBSD: ipifuncs.c,v 1.17.10.2 2008/01/09 01:46:36 matt Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.17.10.1 2007/11/06 23:17:29 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.17.10.2 2008/01/09 01:46:36 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mtrr.h"
@@ -53,12 +53,12 @@ __KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.17.10.1 2007/11/06 23:17:29 matt Exp 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/systm.h>
+#include <sys/atomic.h>
 
 #include <uvm/uvm_extern.h>
 
 #include <x86/cpu_msr.h>
 #include <machine/intr.h>
-#include <machine/atomic.h>
 #include <machine/cpuvar.h>
 #include <machine/i82093var.h>
 #include <machine/i82489reg.h>
@@ -67,6 +67,8 @@ __KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.17.10.1 2007/11/06 23:17:29 matt Exp 
 #include <machine/gdt.h>
 
 #include <ddb/db_output.h>
+
+#include "acpi.h"
 
 void i386_ipi_halt(struct cpu_info *);
 
@@ -84,26 +86,29 @@ void i386_reload_mtrr(struct cpu_info *);
 #define i386_reload_mtrr NULL
 #endif
 
+#if NACPI > 0
+void acpi_cpu_sleep(struct cpu_info *);
+#else
+#define	acpi_cpu_sleep NULL
+#endif
+
 void (*ipifunc[X86_NIPI])(struct cpu_info *) =
 {
 	i386_ipi_halt,
-#if defined(I586_CPU) || defined(I686_CPU)
 	tsc_calibrate_cpu,	/* keep cycle counters synchronized */
-#else
-	0,
-#endif
 	i386_ipi_flush_fpu,
 	i386_ipi_synch_fpu,
 	i386_reload_mtrr,
 	gdt_reload_cpu,
-	msr_write_ipi
+	msr_write_ipi,
+	acpi_cpu_sleep,
 };
 
 void
 i386_ipi_halt(struct cpu_info *ci)
 {
 	x86_disable_intr();
-	x86_atomic_clearbits_l(&ci->ci_flags, CPUF_RUNNING);
+	atomic_and_32(&ci->ci_flags, ~CPUF_RUNNING);
 
 	for(;;) {
 		x86_hlt();

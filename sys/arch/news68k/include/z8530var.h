@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530var.h,v 1.5 2007/02/10 02:03:51 tsutsui Exp $	*/
+/*	$NetBSD: z8530var.h,v 1.5.24.1 2008/01/09 01:47:29 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -110,3 +110,4 @@ void  zs_write_csr(struct zs_chanstate *cs, u_char val);
 void  zs_write_data(struct zs_chanstate *cs, u_char val);
 
 #define	splzs()		splserial()
+#define IPL_ZS		IPL_SERIAL

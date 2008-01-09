@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.40.20.1 2007/11/06 23:18:46 matt Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.40.20.2 2008/01/09 01:47:11 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.40.20.1 2007/11/06 23:18:46 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.40.20.2 2008/01/09 01:47:11 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -695,8 +695,9 @@ writedisklabel(dev, strat, lp, osdep)
 	if (error != 0)
 		goto done;
 
-	bp->b_flags &= ~(B_READ|B_DONE);
+	bp->b_flags &= ~B_READ;
 	bp->b_flags |= B_WRITE;
+	bp->b_oflags &= ~BO_DONE;
 
 	memcpy((char *)bp->b_data + osdep->cd_labeloffset, (void *)lp,
 	    sizeof *lp);

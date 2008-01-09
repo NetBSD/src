@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.53 2007/03/04 06:00:50 christos Exp $ */
+/*	$NetBSD: intr.c,v 1.53.20.1 2008/01/09 01:49:06 matt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.53 2007/03/04 06:00:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.53.20.1 2008/01/09 01:49:06 matt Exp $");
 
 #include "opt_ddb.h"
 #include "pcons.h"
@@ -52,8 +52,6 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.53 2007/03/04 06:00:50 christos Exp $");
 #include <sys/malloc.h>
 
 #include <dev/cons.h>
-
-#include <net/netisr.h>
 
 #include <machine/cpu.h>
 #include <machine/ctlreg.h>
@@ -70,7 +68,6 @@ struct intrhand *intrlev[MAXINTNUM];
 
 void	strayintr(const struct trapframe64 *, int);
 int	softintr(void *);
-int	softnet(void *);
 int	intr_list_handler(void *);
 
 /*
@@ -135,36 +132,13 @@ softintr(void *fp)
 	return (1);
 }
 
-int
-softnet(void *fp)
-{
-	int n, s;
-	
-	s = splhigh();
-	n = netisr;
-	netisr = 0;
-	splx(s);
-	
-#define DONETISR(bit, fn) do {		\
-	if (n & (1 << bit))		\
-		fn();			\
-} while (0)
-#include <net/netisr_dispatch.h>
-#undef DONETISR
-	return (1);
-}
 
 struct intrhand soft01intr = { .ih_fun = softintr, .ih_number = 1 };
-struct intrhand soft01net = { .ih_fun = softnet, .ih_number = 1 };
 
-#if 1
+#if 0
 void 
 setsoftint() {
 	send_softint(-1, IPL_SOFTINT, &soft01intr);
-}
-void 
-setsoftnet() {
-	send_softint(-1, IPL_SOFTNET, &soft01net);
 }
 #endif
 
@@ -295,33 +269,4 @@ intr_establish(int level, struct intrhand *ih)
 	}
 
 	splx(s);
-}
-
-void *
-softintr_establish(int level, void (*fun)(void *), void *arg)
-{
-	struct intrhand *ih;
-
-	ih = malloc(sizeof(*ih), M_DEVBUF, 0);
-	memset(ih, 0, sizeof(*ih));
-	ih->ih_fun = (int (*)(void *))fun;	/* XXX */
-	ih->ih_arg = arg;
-	ih->ih_pil = level;
-	ih->ih_pending = 0;
-	ih->ih_clr = NULL;
-	return (void *)ih;
-}
-
-void
-softintr_disestablish(void *cookie)
-{
-	free(cookie, M_DEVBUF);
-}
-
-void
-softintr_schedule(void *cookie)
-{
-	struct intrhand *ih = (struct intrhand *)cookie;
-
-	send_softint(-1, ih->ih_pil, ih);
 }

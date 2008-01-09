@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.17 2007/01/24 13:08:14 hubertf Exp $	*/
+/*	$NetBSD: extintr.c,v 1.17.24.1 2008/01/09 01:47:50 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.17 2007/01/24 13:08:14 hubertf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.17.24.1 2008/01/09 01:47:50 matt Exp $");
 
 #include "opt_marvell.h"
 #include "opt_kgdb.h"
@@ -240,7 +240,6 @@ const char * const intr_typename_strings[NIST] = {
 };
 u_int32_t gpp_intrtype_level_mask = 0;
 
-STATIC void	softintr_init(void);
 STATIC void	write_intr_mask(volatile imask_t *);
 STATIC void	intr_calculatemasks(void);
 STATIC int	ext_intr_cause(volatile imask_t *, volatile imask_t *,
@@ -259,21 +258,6 @@ imask_print(char *str, volatile imask_t *imp)
 }
 
 /*
- * softintr_init - establish softclock, softnet; reserve SIR_HWCLOCK
- */
-STATIC void
-softintr_init(void)
-{
-	intr_sources[SIR_HWCLOCK].is_type = IST_CLOCK;	/* exclusive */
-
-#define DONETISR(n, f) \
-	softnet_handlers[(n)] = \
-	    softintr_establish(IPL_SOFTNET, (void (*)(void *))(f), NULL)
-#include <net/netisr_dispatch.h>
-#undef DONETISR
-}
-
-/*
  * initialize interrupt subsystem
  */
 void
@@ -283,7 +267,6 @@ init_interrupt(void)
 	intr_calculatemasks();
 	EXT_INTR_STATS_INIT();
 	SPL_STATS_INIT();
-	softintr_init();
 }
 
 const char *
@@ -632,12 +615,17 @@ cause_irq(const imask_t *cause, const imask_t *mask)
 void
 ext_intr(struct intrframe *frame)
 {
-#ifdef DEBUG
 	struct cpu_info * const ci = curcpu();
+#ifdef DEBUG
 	struct intrframe *oframe;
 #endif
-	EXT_INTR_STATS_DECL(tstart);
 
+#ifdef __HAVE_FAST_SOFTINTS
+#error don't count soft interrupts here
+#else
+	ci->ci_idepth++;
+#endif
+	EXT_INTR_STATS_DECL(tstart);
 	EXT_INTR_STATS_DEPTH();
 
 #ifdef DEBUG
@@ -665,6 +653,7 @@ ext_intr(struct intrframe *frame)
 	intrframe = oframe;
 	intr_depth--;
 #endif
+	ci->ci_idepth--;
 }
 
 /*
@@ -760,39 +749,6 @@ loop:
 	goto loop;
 }
 
-void *
-softintr_establish(int level, void (*fun)(void *), void *arg)
-{
-	int irq = 200;
-	switch (level) {
-	case IPL_SOFTNET:	irq = SIR_SOFTNET; break;
-	case IPL_SOFTCLOCK:	irq = SIR_SOFTCLOCK; break;
-	case IPL_SOFTSERIAL:	irq = SIR_SOFTSERIAL; break;
-	case IPL_SOFTI2C:	irq = SIR_SOFTI2C; break;
-	default:
-		panic("softintr_establish: bad level %d", level);
-	}
-
-	return intr_establish(irq, IST_SOFT, level, (int (*)(void *))fun, arg);
-}
-
-void
-softintr_disestablish(void *ih)
-{
-	intr_disestablish(ih);
-}
-
-void
-softintr_schedule(void *vih)
-{
-	struct intrhand *ih = vih;
-	register_t omsr;
-
-	omsr = extintr_disable();
-	ih->ih_flags |= IH_ACTIVE;
-	ipending.bits[IMASK_SOFTINT] |= ih->ih_softimask;
-	extintr_restore(omsr);
-}
 
 #ifdef EXT_INTR_STATS
 /*

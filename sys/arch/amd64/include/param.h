@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.3.32.1 2007/11/06 23:14:19 matt Exp $	*/
+/*	$NetBSD: param.h,v 1.3.32.2 2008/01/09 01:44:54 matt Exp $	*/
 
 #ifdef _KERNEL
 #include <machine/cpu.h>
@@ -56,8 +56,9 @@
 
 #define	SSIZE		1		/* initial stack size/NBPG */
 #define	SINCR		1		/* increment of stack/NBPG */
-#define	UPAGES		5		/* pages of u-area */
+#define	UPAGES		3		/* pages of u-area */
 #define	USPACE		(UPAGES * NBPG)	/* total size of u-area */
+#define	INTRSTACKSIZE	4096
 
 #ifndef MSGBUFSIZE
 #define MSGBUFSIZE	8*NBPG		/* default message buffer size */

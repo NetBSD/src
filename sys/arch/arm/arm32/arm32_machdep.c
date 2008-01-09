@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.49.12.3 2007/11/06 23:14:58 matt Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.49.12.4 2008/01/09 01:45:10 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.49.12.3 2007/11/06 23:14:58 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.49.12.4 2008/01/09 01:45:10 matt Exp $");
 
 #include "opt_md.h"
 #include "opt_cpuoptions.h"
@@ -438,4 +438,11 @@ cpu_need_resched(struct cpu_info *ci, int flags)
 	ci->ci_want_resched = 1;
 	if (curlwp != ci->ci_data.cpu_idlelwp)
 		setsoftast();
+}
+
+bool
+cpu_intr_p(void)
+{
+
+	return curcpu()->ci_intr_depth != 0;
 }

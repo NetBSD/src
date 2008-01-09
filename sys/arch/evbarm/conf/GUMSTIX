@@ -1,4 +1,4 @@
-#	$NetBSD: GUMSTIX,v 1.18.2.2 2007/11/09 05:37:50 matt Exp $
+#	$NetBSD: GUMSTIX,v 1.18.2.3 2008/01/09 01:45:41 matt Exp $
 #
 #	GUMSTIX -- Gumstix. Inc. gumstix platforms kernel
 #
@@ -128,7 +128,6 @@ options 	P1003_1B_SEMAPHORE	# p1003.1b semaphore support
 # Miscellaneous kernel options
 
 options 	KTRACE		# system call tracing, a la ktrace(1)
-#options 	SYSTRACE	# system call vetting via systrace(1)
 options 	IRQSTATS	# manage IRQ statistics
 #options 	LKM		# loadable kernel modules
 #options 	KMEMSTATS	# kernel memory statistics
@@ -152,7 +151,7 @@ options 	DDB		# in-kernel debugger
 #options 	KGDB
 #options 	DEBUG_KGDB
 makeoptions	DEBUG="-g -O2"	# compile full symbol table
-options 	SYMTAB_SPACE=375000
+options 	SYMTAB_SPACE=380000
 #options 	AUDIO_DEBUG=2
 
 config		netbsd		root on ? type ?
@@ -405,6 +404,7 @@ sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
 #ubt*	at uhub? port ?
 
 # Bluetooth Device Hub
+#bthub*	at bcsp?
 #bthub*	at bt3c?
 #bthub*	at btbc?
 bthub*	at btuart?
@@ -479,6 +479,7 @@ pseudo-device	rnd			# /dev/random and in-kernel generator
 options		RND_COM
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
+pseudo-device	bcsp			# BlueCore Serial Protocol
 pseudo-device	btuart			# Bluetooth HCI UART (H4)
 					# connect with Ericsson Bluetooth Module
 

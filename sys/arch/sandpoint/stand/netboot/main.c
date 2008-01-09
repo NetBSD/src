@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.7.4.2 2007/11/06 23:21:35 matt Exp $ */
+/* $NetBSD: main.c,v 1.7.4.3 2008/01/09 01:48:37 matt Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -131,7 +131,10 @@ main()
 		_rtt();
 	}
 
-	howto = RB_SINGLE | AB_VERBOSE | RB_KDB;
+	howto = RB_SINGLE | AB_VERBOSE;
+#ifdef START_DDB_SESSION
+	howto |= RB_KDB;
+#endif
 
 	bootinfo = (void *)0x4000;
 	bi_init(bootinfo);
@@ -314,14 +317,9 @@ void
 _wb(adr, siz)
 	uint32_t adr, siz;
 {
-	uint32_t off, bnd;
+	uint32_t bnd;
 
-	asm volatile ("eieio");
-	off = adr & (dcache_line_size - 1);
-	adr -= off;
-	siz += off;
-	if (siz > dcache_range_size)
-		siz = dcache_range_size;
+	asm volatile("eieio");
 	for (bnd = adr + siz; adr < bnd; adr += dcache_line_size)
 		asm volatile ("dcbst 0,%0" :: "r"(adr));
 	asm volatile ("sync");
@@ -331,14 +329,9 @@ void
 _wbinv(adr, siz)
 	uint32_t adr, siz;
 {
-	uint32_t off, bnd;
+	uint32_t bnd;
 
-	asm volatile ("eieio");
-	off = adr & (dcache_line_size - 1);
-	adr -= off;
-	siz += off;
-	if (siz > dcache_range_size)
-		siz = dcache_range_size;
+	asm volatile("eieio");
 	for (bnd = adr + siz; adr < bnd; adr += dcache_line_size)
 		asm volatile ("dcbf 0,%0" :: "r"(adr));
 	asm volatile ("sync");
@@ -350,21 +343,32 @@ _inv(adr, siz)
 {
 	uint32_t off, bnd;
 
-	/*
-	 * NB - if adr and/or adr + siz are not cache line
-	 * aligned, cache contents of the 1st and last cache line
-	 * which do not belong to the invalidating range will be
-	 * lost siliently. It's caller's responsibility to wb()
-	 * them in the case.
-	 */
-	asm volatile ("eieio");
 	off = adr & (dcache_line_size - 1);
 	adr -= off;
 	siz += off;
-	if (siz > dcache_range_size)
-		siz = dcache_range_size;
-	for (bnd = adr + siz; adr < bnd; adr += dcache_line_size)
+	asm volatile ("eieio");
+	if (off != 0) {
+		/* wbinv() leading unaligned dcache line */
+		asm volatile ("dcbf 0,%0" :: "r"(adr));
+		if (siz < dcache_line_size)
+			goto done;
+		adr += dcache_line_size;
+		siz -= dcache_line_size;
+	}
+	bnd = adr + siz;
+	off = bnd & (dcache_line_size - 1);
+	if (off != 0) {
+		/* wbinv() trailing unaligned dcache line */
+		asm volatile ("dcbf 0,%0" :: "r"(bnd)); /* it's OK */
+		if (siz < dcache_line_size)
+			goto done;
+		siz -= off;
+	}
+	for (bnd = adr + siz; adr < bnd; adr += dcache_line_size) {
+		/* inv() intermediate dcache lines if ever */
 		asm volatile ("dcbi 0,%0" :: "r"(adr));
+	}
+  done:
 	asm volatile ("sync");
 }
 
@@ -449,6 +453,18 @@ setup_82C686B()
 	pmgt  = pcimaketag(0, 22, 4);
 	ac97  = pcimaketag(0, 22, 5);
 
+#define	CFG(i,v) do { \
+   *(volatile unsigned char *)(0xfe000000 + 0x3f0) = (i); \
+   *(volatile unsigned char *)(0xfe000000 + 0x3f1) = (v); \
+   } while (0)
+	val = pcicfgread(pcib, 0x84);
+	val |= (02 << 8);
+	pcicfgwrite(pcib, 0x84, val);
+	CFG(0xe2, 0x0f); /* use COM1/2, don't use FDC/LPT */
+	val = pcicfgread(pcib, 0x84);
+	val &= ~(02 << 8);
+	pcicfgwrite(pcib, 0x84, val);
+
 	/* route pin C to i8259 IRQ 5, pin D to 11 */
 	val = pcicfgread(pcib, 0x54);
 	val = (val & 0xff) | 0xb0500000; /* Dx CB Ax xS */
@@ -531,6 +547,7 @@ pcifixup()
 		 * - LEGIRQ bit 11 steers interrupt to pin C (ide 0x40)
 		 * - sign as PCI pin C line 11 (ide 0x3d/3c)
 		 */
+		/* ide: 0x09 - programming interface; 1000'SsPp */
 		val = pcicfgread(ide, 0x08);
 		val &= 0xffff00ff;
 		pcicfgwrite(ide, 0x08, val | (0x8f << 8));
@@ -560,6 +577,7 @@ pcifixup()
 		 * - PCI interrupt routing (pcib 0x45/44)
 		 * - no PCI pin/line assignment (ide 0x3d/3c)
 		 */
+		/* ide: 0x09 - programming interface; 1000'SsPp */
 		val = pcicfgread(ide, 0x08);
 		val &= 0xffff00ff;
 		pcicfgwrite(ide, 0x08, val | (0x8a << 8));
@@ -620,22 +638,45 @@ pcifixup()
 			printf("pin D -> irq %d, %s\n",
 				irq, STEER(steer, 0x8));
 		}
-
-#if 1
+#if 0
 		/*
 		 * //// IDE fixup ////
 		 * - "native mode" (ide 0x09)
 		 * - use primary only (ide 0x40)
 		 */
-
 		/* ide: 0x09 - programming interface; 1000'SsPp */
 		val = pcicfgread(ide, 0x08) & 0xffff00ff;
 		pcicfgwrite(ide, 0x08, val | (0x8f << 8));
 
-		/* ide: 0x40 - use primary only */
-		val = pcicfgread(ide, 0x40);
-		pcicfgwrite(ide, 0x40, val | 0x02);
+		/* ide: 0x10-20 - leave them PCI memory space assigned */
 
+		/* ide: 0x40 - use primary only */
+		val = pcicfgread(ide, 0x40) &~ 03;
+		val |= 02;
+		pcicfgwrite(ide, 0x40, val);
+#else
+		/*
+		 * //// IDE fixup ////
+		 * - "compatiblity mode" (ide 0x09)
+		 * - use primary only (ide 0x40)
+		 * - remove PCI pin assignment (ide 0x3d)
+		 */
+		/* ide: 0x09 - programming interface; 1000'SsPp */
+		val = pcicfgread(ide, 0x08) & 0xffff00ff;
+		val |= (0x8a << 8);
+		pcicfgwrite(ide, 0x08, val);
+
+		/* ide: 0x10-20 - in this mode HW ignores these addresses */
+
+		/* ide: 0x40 - use primary only */
+		val = pcicfgread(ide, 0x40) &~ 03;
+		val |= 02;
+		pcicfgwrite(ide, 0x40, val);
+
+		/* ide: 0x3d/3c - turn off PCI pin */
+		val = pcicfgread(ide, 0x3c) & 0xffff00ff;
+		pcicfgwrite(ide, 0x3c, val);
+#endif
 		/*
 		 * //// USBx2, audio, and modem fixup ////
 		 * - disable USB #0 and #1 (pcib 0x48 and 0x85)
@@ -650,34 +691,7 @@ pcifixup()
 		/* pcib: 0x85 - disable AC97/MC97 at function 5/6 */
 		val = pcicfgread(pcib, 0x84);
 		pcicfgwrite(pcib, 0x84, val | 0x1c00);
-#else
-		/*
-		 * //// IDE fixup ////
-		 * - "compatiblity mode" (ide 0x09)
-		 * - use primary only (ide 0x40)
-		 * - ISA IRQ14/15 for primary/secondary (pcib 0x4a)
-		 * - no PCI pin/line assignment (ide 0x3d/3c)
-		 */
-		/* ide: 0x09 - programming interface; 1000'SsPp */
-		val = pcicfgread(ide, 0x08) & 0xffff00ff;
-		val |= (0x8a << 8);
-		pcicfgwrite(ide, 0x08, val);
 
-		/* ide: 0x10-20 - this mode ignores these addresses */
-
-		/* ide: 0x40 - use primary only */
-		val = pcicfgread(ide, 0x40);
-		pcicfgwrite(ide, 0x40, val | 0x02);
-
-		/* pcib: 0x4a - IDE primary/secondary IRQ routing */
-		val = pcicfgread(pcib, 0x48) & 0xff00ffff;
-		val |= (0x04 << 16);
-		pcicfgwrite(pcib, 0x48, val);
-
-		/* ide: 0x3d/3c - turn off PCI pin/line */
-		val = pcicfgread(ide, 0x3c) & 0xffff0000;
-		pcicfgwrite(ide, 0x3c, val);
-#endif
 		/*
 		 * //// fxp fixup ////
 		 * - use PCI pin A line 25 (fxp 0x3d/3c)

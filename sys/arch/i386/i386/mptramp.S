@@ -1,4 +1,4 @@
-/*	$NetBSD: mptramp.S,v 1.9.10.1 2007/11/06 23:17:31 matt Exp $	*/
+/*	$NetBSD: mptramp.S,v 1.9.10.2 2008/01/09 01:46:38 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -81,11 +81,13 @@
  *        2)   halt the processors waiting for them to be enabled
  *              by a idle-thread 
  */
+
+#include <machine/asm.h>
+__KERNEL_RCSID(0, "$NetBSD: mptramp.S,v 1.9.10.2 2008/01/09 01:46:38 matt Exp $");
 	
 #include "opt_mpbios.h"		/* for MPDEBUG */
 		
 #include "assym.h"
-#include <machine/asm.h>
 #include <machine/specialreg.h>
 #include <machine/segments.h>
 #include <machine/mpbiosvar.h>
@@ -191,8 +193,7 @@ _TRMP_LABEL(mp_startup)
 
 	movl	_C_LABEL(local_apic)+LAPIC_ID,%ecx
 	shrl	$LAPIC_ID_SHIFT,%ecx
-	leal	0(,%ecx,4),%ecx
-	movl	_C_LABEL(cpu_info)(%ecx),%ecx
+	movl	_C_LABEL(cpu_info)(,%ecx,4),%ecx
 	
 	HALTT(0x7, %ecx)
 

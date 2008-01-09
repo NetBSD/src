@@ -1,4 +1,4 @@
-# $NetBSD: QEMU,v 1.10.10.1 2007/11/06 23:17:18 matt Exp $
+# $NetBSD: QEMU,v 1.10.10.2 2008/01/09 01:46:30 matt Exp $
 #
 # QEMU machine description file
 #
@@ -11,16 +11,11 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"QEMU-$Revision: 1.10.10.1 $"
+#ident 		"QEMU-$Revision: 1.10.10.2 $"
 
 maxusers	32		# estimated number of users
 
-# CPU support.  At least one is REQUIRED.
-#options 	I386_CPU
-#options 	I486_CPU
-#options 	I586_CPU
-options 	I686_CPU
-makeoptions	CPUFLAGS="-march=pentiumpro -mtune=pentiumpro"
+makeoptions 	CPUFLAGS="-march=pentiumpro -mtune=pentiumpro"
 
 # CPU-related options.
 #options 	MATH_EMULATE	# floating point emulation
@@ -63,7 +58,6 @@ options 	NTP		# NTP phase/frequency locked loop
 				# Improves time behavior under VMware.
 
 options 	KTRACE		# system call tracing via ktrace(1)
-#options 	SYSTRACE	# system call vetting via systrace(1)
 
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
@@ -102,7 +96,7 @@ options 	DDB		# in-kernel debugger
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	KGDB		# remote debugger
 #options 	KGDB_DEVNAME="\"com\"",KGDB_DEVADDR=0x3f8,KGDB_DEVRATE=9600
-#makeoptions	DEBUG="-g"	# compile full symbol table
+#makeoptions 	DEBUG="-g"	# compile full symbol table
 
 # Compatibility options
 options 	COMPAT_NOMID	# NetBSD 0.8, 386BSD, and BSDI
@@ -462,7 +456,7 @@ pseudo-device	nsmb			# experimental - SMB requester
 pseudo-device	wsmux			# mouse & keyboard multiplexor
 pseudo-device	wsfont
 
-#options	FILEASSOC		# fileassoc(9) - required for Veriexec 
+#options 	FILEASSOC		# fileassoc(9) - required for Veriexec 
 
 # Veriexec
 #pseudo-device	veriexec

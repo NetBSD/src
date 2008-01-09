@@ -1,4 +1,4 @@
-/*	$NetBSD: pmu.c,v 1.8.2.2 2007/11/08 10:59:36 matt Exp $ */
+/*	$NetBSD: pmu.c,v 1.8.2.3 2008/01/09 01:47:09 matt Exp $ */
 
 /*-
  * Copyright (c) 2006 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmu.c,v 1.8.2.2 2007/11/08 10:59:36 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmu.c,v 1.8.2.3 2008/01/09 01:47:09 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,7 +77,6 @@ struct pmu_softc {
 	struct todr_chip_handle sc_todr;
 	struct adb_bus_accessops sc_adbops;
 	struct i2c_controller sc_i2c;
-	struct lock sc_buslock;
 	struct pmu_ops sc_pmu_ops;
 	bus_space_tag_t sc_memt;
 	bus_space_handle_t sc_memh;

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.5.10.1 2007/11/06 23:20:11 matt Exp $	*/
+/*	$NetBSD: intr.h,v 1.5.10.2 2008/01/09 01:47:41 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -40,9 +40,6 @@
 #define _PLAYSTATION2_INTR_H_
 #ifdef _KERNEL
 
-#include <sys/device.h>
-#include <sys/lock.h>
-#include <sys/queue.h>
 #include <mips/locore.h>
 
 /* Interrupt sharing types. */
@@ -53,103 +50,31 @@
 
 /* Interrupt priority levels */
 #define	IPL_NONE		0	/* nothing */
-
-#define IPL_SOFT		1	/* generic */
-#define	IPL_SOFTCLOCK		2	/* timeouts */
-#define	IPL_SOFTNET		3	/* protocol stacks */
-#define IPL_SOFTSERIAL		4	/* serial */
-
-#define	IPL_BIO			5	/* block I/O */
-#define	IPL_NET			6	/* network */
-#define	IPL_TTY			7	/* terminal */
-#define	IPL_SERIAL		7	/* serial */
-#define	IPL_CLOCK		8	/* clock */
-#define	IPL_HIGH		8	/* everything */
+#define IPL_SOFTCLOCK		1	/* timeouts */
+#define	IPL_SOFTBIO		1	/* bio */
+#define	IPL_SOFTNET		2	/* protocol stacks */
+#define IPL_SOFTSERIAL		2	/* serial */
+#define	IPL_VM			3	/* i/o */
+#define	IPL_SCHED		4	/* clock */
+#define	IPL_HIGH		4	/* everything */
 
 #define	_IPL_NSOFT	4
-#define	_IPL_N		9
-#define	IPL_SOFTNAMES {							\
-	"misc",								\
-	"clock",							\
-	"net",								\
-	"serial",							\
-}
+#define	_IPL_N		5
 
 /*
  * Hardware interrupt masks
  */
 extern u_int32_t __icu_mask[_IPL_N];
 
-#define	splbio()		splraise(__icu_mask[IPL_BIO])
-#define	splnet()		splraise(__icu_mask[IPL_NET])
-#define	spltty()		splraise(__icu_mask[IPL_TTY])
-#define	splserial()		splraise(__icu_mask[IPL_SERIAL])
-#define	splclock()		splraise(__icu_mask[IPL_CLOCK])
-
-#define	splstatclock()		splclock()
-#define splvm()			spltty()
-
-/*
- * Software interrupt masks
- */
-#define splsoft()		splraise(__icu_mask[IPL_SOFT])
-#define	splsoftclock()		splraise(__icu_mask[IPL_SOFTCLOCK])
+#define splsoftclock()		splraise(__icu_mask[IPL_SOFTCLOCK])
+#define	splsoftbio()		splraise(__icu_mask[IPL_SOFTBIO])
 #define	splsoftnet()		splraise(__icu_mask[IPL_SOFTNET])
 #define	splsoftserial()		splraise(__icu_mask[IPL_SOFTSERIAL])
+#define	splvm()			splraise(__icu_mask[IPL_VM])
+#define	splsched()		splraise(__icu_mask[IPL_SCHED])
+#define	splx(s)			splset(s)
 
 void	spllowersofthigh(void);
-
-/*
- * Miscellaneous
- */
-#define	splx(s)			splset(s)
-#define	splhigh()		splraise(__icu_mask[IPL_HIGH])
-#define	splsched()		splhigh()
-#define	spllock()		splhigh()
-
-/*
- * software simulated interrupt
- */
-struct playstation2_soft_intrhand {
-	TAILQ_ENTRY(playstation2_soft_intrhand) sih_q;
-	struct playstation2_soft_intr *sih_intrhead;
-	void	(*sih_fn)(void *);
-	void	*sih_arg;
-	int	sih_pending;
-};
-
-struct playstation2_soft_intr {
-	TAILQ_HEAD(, playstation2_soft_intrhand) softintr_q;
-	struct evcnt softintr_evcnt;
-	struct simplelock softintr_slock;
-	unsigned long softintr_ipl;
-};
-
-#define	softintr_schedule(arg)						\
-do {									\
-	struct playstation2_soft_intrhand *__sih = (arg);		\
-	struct playstation2_soft_intr *__si = __sih->sih_intrhead;	\
-	int __s;							\
-									\
-	__s = _intr_suspend();						\
-	simple_lock(&__si->softintr_slock);				\
-	if (__sih->sih_pending == 0) {					\
-		TAILQ_INSERT_TAIL(&__si->softintr_q, __sih, sih_q);	\
-		__sih->sih_pending = 1;					\
-		setsoft(__si->softintr_ipl);				\
-	}								\
-	simple_unlock(&__si->softintr_slock);				\
-	_intr_resume(__s);						\
-} while (0)
-
-void *softintr_establish(int, void (*)(void *), void *);
-void softintr_disestablish(void *);
-void setsoft(int);
-
-/* XXX For legacy software interrupts. */
-extern struct playstation2_soft_intrhand *softnet_intrhand;
-
-#define	setsoftnet()	softintr_schedule(softnet_intrhand)
 
 int splraise(int);
 void splset(int);

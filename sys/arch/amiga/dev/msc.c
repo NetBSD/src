@@ -1,4 +1,4 @@
-/*	$NetBSD: msc.c,v 1.38.20.1 2007/11/08 10:59:32 matt Exp $ */
+/*	$NetBSD: msc.c,v 1.38.20.2 2008/01/09 01:45:01 matt Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msc.c,v 1.38.20.1 2007/11/08 10:59:32 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msc.c,v 1.38.20.2 2008/01/09 01:45:01 matt Exp $");
 
 #include "msc.h"
 
@@ -1001,17 +1001,7 @@ mscstart(register struct tty *tp)
 
 	/* wake up if below low water */
 	cc = tp->t_outq.c_cc;
-
-	if (cc <= tp->t_lowat) {
-		if (tp->t_state & TS_ASLEEP) {
-			tp->t_state &= ~TS_ASLEEP;
-			wakeup((void *)&tp->t_outq);
-		}
-		selwakeup(&tp->t_wsel);
-	}
-
-	/* don't bother if no characters or busy */
-	if (cc == 0 || (tp->t_state & TS_BUSY))
+	if (!ttypull(tp) || (tp->t_state & TS_BUSY))
 		goto out;
 
 	/*

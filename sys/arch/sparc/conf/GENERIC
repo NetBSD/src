@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.200.2.1 2007/11/06 23:22:16 matt Exp $
+# $NetBSD: GENERIC,v 1.200.2.2 2008/01/09 01:48:51 matt Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.200.2.1 $"
+#ident 		"GENERIC-$Revision: 1.200.2.2 $"
 
 maxusers	32
 
@@ -64,7 +64,6 @@ config		netbsd	root on ? type ?
 
 ## System call tracing (see ktrace(1)).
 options 	KTRACE
-#options 	SYSTRACE	# system call vetting via systrace(1)
 
 ## Collect statistics on kernel malloc's and free's.  This does have a
 ## significant performance hit on slower machines, so it is intended for

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.11.10.1 2007/11/06 23:16:46 matt Exp $	*/
+/*	$NetBSD: intr.c,v 1.11.10.2 2008/01/09 01:46:08 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,16 +41,18 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.11.10.1 2007/11/06 23:16:46 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.11.10.2 2008/01/09 01:46:08 matt Exp $");
 
 #define __MUTEX_PRIVATE
 
 #include <sys/param.h>
 #include <sys/malloc.h>
+#include <sys/cpu.h>
 
 #include <machine/autoconf.h>
 #include <machine/cpufunc.h>
 #include <machine/intr.h>
+#include <machine/reg.h>
 
 #include <hp700/hp700/intr.h>
 #include <hp700/hp700/machdep.h>
@@ -168,9 +170,6 @@ hp700_intr_bootstrap(void)
 	/* Initialize the CPU interrupt register description. */
 	hp700_intr_reg_establish(&int_reg_cpu);
 	int_reg_cpu.int_reg_dev = "cpu0";	/* XXX */
-
-	/* Bootstrap soft interrupts. */
-	softintr_bootstrap();
 }
 
 /*
@@ -292,9 +291,6 @@ hp700_intr_init(void)
 	struct hp700_int_reg *int_reg;
 	int eiem;
 
-	/* Initialize soft interrupts. */
-	softintr_init();
-
 	/*
 	 * Put together the initial imask for each level.
 	 */
@@ -319,31 +315,12 @@ hp700_intr_init(void)
          * dropping data.
          */
         imask[IPL_SOFTCLOCK] |= imask[IPL_NONE]; 
-        imask[IPL_SOFTNET] |= imask[IPL_SOFTCLOCK];
-        imask[IPL_BIO] |= imask[IPL_SOFTNET];
-        imask[IPL_NET] |= imask[IPL_BIO];
-        imask[IPL_SOFTSERIAL] |= imask[IPL_NET];
-        imask[IPL_TTY] |= imask[IPL_SOFTSERIAL];
-
-        /*
-         * There are tty, network and disk drivers that use free() at interrupt
-         * time, so imp > (tty | net | bio).
-         */
-        imask[IPL_VM] |= imask[IPL_TTY];
-        
-        imask[IPL_AUDIO] |= imask[IPL_VM];
-   
-        /*
-         * Since run queues may be manipulated by both the statclock and tty,
-         * network, and disk drivers, clock > imp.
-         */             
-        imask[IPL_CLOCK] |= imask[IPL_AUDIO];
-        
-        /* 
-         * IPL_HIGH must block everything that can manipulate a run queue.
-         */     
-        imask[IPL_HIGH] |= imask[IPL_CLOCK]; 
-        imask[IPL_SERIAL] |= imask[IPL_HIGH]; 
+        imask[IPL_SOFTBIO] |= imask[IPL_SOFTCLOCK];
+        imask[IPL_SOFTNET] |= imask[IPL_SOFTBIO];
+        imask[IPL_SOFTSERIAL] |= imask[IPL_SOFTNET];
+        imask[IPL_VM] |= imask[IPL_SOFTSERIAL];
+        imask[IPL_SCHED] |= imask[IPL_VM];
+        imask[IPL_HIGH] |= imask[IPL_SCHED];
 
 	/* Now go back and flesh out the spl levels on each bit. */
 	for(bit_pos = 0; bit_pos < HP700_INT_BITS; bit_pos++) {
@@ -354,8 +331,8 @@ hp700_intr_init(void)
 	}
 
 	/* Print out the levels. */
-	printf("biomask %08x netmask %08x ttymask %08x\n",
-	    imask[IPL_BIO], imask[IPL_NET], imask[IPL_TTY]);
+	printf("vmmask %08x schedmask %08x highmask %08x\n",
+	    imask[IPL_VM], imask[IPL_SCHED], imask[IPL_HIGH]);
 #if 0
 	for(bit_pos = 0; bit_pos < NIPL; bit_pos++)
 		printf("imask[%d] == %08x\n", bit_pos, imask[bit_pos]);
@@ -546,4 +523,15 @@ hp700_intr_dispatch(int ncpl, int eiem, struct trapframe *frame)
 	/* Interrupts are disabled again, restore cpl and the depth. */
 	cpl = ncpl;
 	hppa_intr_depth = old_hppa_intr_depth;
+}
+
+bool
+cpu_intr_p(void)
+{
+
+#ifdef __HAVE_FAST_SOFTINTS
+#error this should not count fast soft interrupts
+#else
+	return hppa_intr_depth != 0;
+#endif
 }

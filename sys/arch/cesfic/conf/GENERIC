@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.46.28.1 2007/11/06 23:15:39 matt Exp $
+# $NetBSD: GENERIC,v 1.46.28.2 2008/01/09 01:45:36 matt Exp $
 #
 # GENERIC machine description file
 # 
@@ -57,7 +57,6 @@ options 	COMPAT_30	# NetBSD 3.0 compatibility.
 #options 	SYSVMSG		# System V-style message queues
 #options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 options 	KTRACE		# system call tracing support
-#options 	SYSTRACE	# system call vetting via systrace(1)
 #options 	NKMEMCLUSTERS=1024	# 4K pages in kernel malloc pool
 #options 	LKM		# Loadable kernel modules
 options 	COMPAT_SUNOS

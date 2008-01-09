@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.11 2007/03/05 13:06:44 tsutsui Exp $	*/
+/*	$NetBSD: zs.c,v 1.11.20.1 2008/01/09 01:45:37 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.11 2007/03/05 13:06:44 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.11.20.1 2008/01/09 01:45:37 matt Exp $");
 
 #include "opt_ddb.h"
 
@@ -146,7 +146,7 @@ zs_config(zsc, base)
 			cs->cs_defspeed = 9600;
 		}
 		zsc->zsc_cs[channel] = cs;
-		simple_lock_init(&cs->cs_lock);
+		zs_lock_init(cs);
 
 		cs->cs_defcflag = CREAD | CS8 | HUPCL;
 
@@ -216,7 +216,7 @@ zshard(arg)
 		rval |= zsc_intr_hard(zsc);
 		if ((zsc->zsc_cs[0]->cs_softreq) ||
 		    (zsc->zsc_cs[1]->cs_softreq)) {
-			softintr_schedule(zsc->zsc_softintr_cookie);
+			softint_schedule(zsc->zsc_softintr_cookie);
 		}
 	}
 	return (rval);

@@ -1,4 +1,4 @@
-/* $NetBSD: s3c2xx0_intr.c,v 1.11.30.1 2007/11/09 05:37:42 matt Exp $ */
+/* $NetBSD: s3c2xx0_intr.c,v 1.11.30.2 2008/01/09 01:45:23 matt Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2xx0_intr.c,v 1.11.30.1 2007/11/09 05:37:42 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2xx0_intr.c,v 1.11.30.2 2008/01/09 01:45:23 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,7 +111,7 @@ s3c2xx0_update_intr_masks(int irqno, int level)
 		s3c2xx0_imask[i] |= mask;	/* Enable interrupt at lower
 						 * level */
 	for (; i < NIPL - 1; ++i)
-		s3c2xx0_imask[i] &= ~mask;	/* Disable itnerrupt at upper
+		s3c2xx0_imask[i] &= ~mask;	/* Disable interrupt at upper
 						 * level */
 
 	/*
@@ -119,42 +119,12 @@ s3c2xx0_update_intr_masks(int irqno, int level)
 	 * limited input buffer space/"real-time" requirements) a better
 	 * chance at not dropping data.
 	 */
-	s3c2xx0_imask[IPL_BIO] &= s3c2xx0_imask[IPL_SOFTNET];
-	s3c2xx0_imask[IPL_NET] &= s3c2xx0_imask[IPL_BIO];
-	s3c2xx0_imask[IPL_SOFTSERIAL] &= s3c2xx0_imask[IPL_NET];
-	s3c2xx0_imask[IPL_TTY] &= s3c2xx0_imask[IPL_SOFTSERIAL];
-
-	/*
-	 * splvm() blocks all interrupts that use the kernel memory
-	 * allocation facilities.
-	 */
-	s3c2xx0_imask[IPL_VM] &= s3c2xx0_imask[IPL_TTY];
-
-	/*
-	 * Audio devices are not allowed to perform memory allocation
-	 * in their interrupt routines, and they have fairly "real-time"
-	 * requirements, so give them a high interrupt priority.
-	 */
-	s3c2xx0_imask[IPL_AUDIO] &= s3c2xx0_imask[IPL_VM];
-
-	/*
-	 * splclock() must block anything that uses the scheduler.
-	 */
-	s3c2xx0_imask[IPL_CLOCK] &= s3c2xx0_imask[IPL_AUDIO];
-
-	/*
-	 * splhigh() must block "everything".
-	 */
-	s3c2xx0_imask[IPL_HIGH] &= s3c2xx0_imask[IPL_STATCLOCK];
-
-	/*
-	 * XXX We need serial drivers to run at the absolute highest priority
-	 * in order to avoid overruns, so serial > high.
-	 */
-	s3c2xx0_imask[IPL_SERIAL] &= s3c2xx0_imask[IPL_HIGH];
-
+	s3c2xx0_imask[IPL_VM] &= s3c2xx0_imask[IPL_SOFTSERIAL];
+	s3c2xx0_imask[IPL_CLOCK] &= s3c2xx0_imask[IPL_VM];
+	s3c2xx0_imask[IPL_HIGH] &= s3c2xx0_imask[IPL_CLOCK];
 }
 
+#ifdef __HAVE_FAST_SOFTINTS
 void
 s3c2xx0_do_pending(int enable_int)
 {
@@ -185,14 +155,15 @@ s3c2xx0_do_pending(int enable_int)
 	do {
 		DO_SOFTINT(SI_SOFTSERIAL, IPL_SOFTSERIAL);
 		DO_SOFTINT(SI_SOFTNET, IPL_SOFTNET);
+		DO_SOFTINT(SI_SOFTBIO, IPL_SOFTBIO);
 		DO_SOFTINT(SI_SOFTCLOCK, IPL_SOFTCLOCK);
-		DO_SOFTINT(SI_SOFT, IPL_SOFT);
 	} while (get_pending_softint());
 
 	__cpu_simple_unlock(&processing);
 
 	restore_interrupts(oldirqstate);
 }
+#endif /* __HAVE_FAST_SOFTINTS */
 
 
 static int
@@ -219,12 +190,12 @@ s3c2xx0_intr_init(struct s3c2xx0_intr_dispatch * dispatch_table, int icu_len)
 	for (i = 0; i < icu_len; ++i) {
 		dispatch_table[i].func = stray_interrupt;
 		dispatch_table[i].cookie = (void *) (i);
-		dispatch_table[i].level = IPL_BIO;
+		dispatch_table[i].level = IPL_VM;
 	}
 
 	global_intr_mask = ~0;		/* no intr is globally blocked. */
 
-	_splraise(IPL_SERIAL);
+	_splraise(IPL_VM);
 	enable_interrupts(I32_bit);
 }
 
@@ -261,9 +232,11 @@ _spllower(int ipl)
 	return s3c2xx0_spllower(ipl);
 }
 
+#ifdef __HAVE_FAST_SOFTINTS
 #undef _setsoftintr
 void
 _setsoftintr(int si)
 {
 	return s3c2xx0_setsoftintr(si);
 }
+#endif

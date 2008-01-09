@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.200.10.1 2007/11/06 23:22:51 matt Exp $ */
+/*	$NetBSD: machdep.c,v 1.200.10.2 2008/01/09 01:49:08 matt Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.200.10.1 2007/11/06 23:22:51 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.200.10.2 2008/01/09 01:49:08 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -558,6 +558,7 @@ sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 }
 
 int	waittime = -1;
+struct pcb dumppcb;
 
 void
 cpu_reboot(register int howto, char *user_boot_string)
@@ -716,6 +717,7 @@ dumpsys()
 	/* copy registers to memory */
 	snapshot(curpcb);
 	stackdump();
+	memcpy(&dumppcb, curpcb, sizeof(struct pcb));
 
 	if (dumpdev == NODEV)
 		return;
@@ -1950,4 +1952,11 @@ cpu_need_resched(struct cpu_info *ci, int flags)
 	if ((flags & RESCHED_IMMED) || ci->ci_index != cpu_number())
 		sparc64_send_ipi(ci->ci_cpuid, sparc64_ipi_nop);
 #endif
+}
+
+bool
+cpu_intr_p(void)
+{
+
+	return curcpu()->ci_idepth >= 0;
 }

@@ -1,10 +1,8 @@
-#	$NetBSD: files.integrator,v 1.7 2005/12/11 12:17:06 christos Exp $
+#	$NetBSD: files.integrator,v 1.7.50.1 2008/01/09 01:45:43 matt Exp $
 #
 # ARM, Ltd. Integrator evaluation board configuraiton info
 #
 
-# Use the generic ARM soft interrupt code.
-file    arch/arm/arm/softintr.c
 file    arch/arm/arm32/irq_dispatch.S
 
 file	arch/evbarm/integrator/integrator_machdep.c

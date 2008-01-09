@@ -1,4 +1,4 @@
-/*	$NetBSD: nextcons.c,v 1.9 2007/01/24 13:08:14 hubertf Exp $	*/
+/*	$NetBSD: nextcons.c,v 1.9.24.1 2008/01/09 01:47:33 matt Exp $	*/
 
 /*
  * Copyright (c) 1999 Darrin B. Jewell
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nextcons.c,v 1.9 2007/01/24 13:08:14 hubertf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nextcons.c,v 1.9.24.1 2008/01/09 01:47:33 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,12 +41,11 @@ __KERNEL_RCSID(0, "$NetBSD: nextcons.c,v 1.9 2007/01/24 13:08:14 hubertf Exp $")
 #include <sys/malloc.h>
 #include <sys/errno.h>
 #include <sys/queue.h>
-#include <sys/lock.h>
+#include <sys/bus.h>
+#include <sys/cpu.h>
+#include <sys/intr.h>
 
 #include <machine/autoconf.h>
-#include <machine/bus.h>
-#include <machine/cpu.h>
-#include <machine/intr.h>
 
 #include <dev/cons.h>
 #include <dev/wscons/wskbdvar.h>

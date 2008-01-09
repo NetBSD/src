@@ -1,4 +1,4 @@
-/*	$NetBSD: hpib.c,v 1.34 2006/07/21 10:01:39 tsutsui Exp $	*/
+/*	$NetBSD: hpib.c,v 1.34.34.1 2008/01/09 01:46:03 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpib.c,v 1.34 2006/07/21 10:01:39 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpib.c,v 1.34.34.1 2008/01/09 01:46:03 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -284,7 +284,7 @@ hpibreq(struct device *pdev, struct hpibqueue *hq)
 	TAILQ_INSERT_TAIL(&sc->sc_queue, hq, hq_list);
 	splx(s);
 
-	if (sc->sc_queue.tqh_first == hq)
+	if (TAILQ_FIRST(&sc->sc_queue) == hq)
 		return 1;
 
 	return 0;
@@ -300,7 +300,7 @@ hpibfree(struct device *pdev, struct hpibqueue *hq)
 	TAILQ_REMOVE(&sc->sc_queue, hq, hq_list);
 	splx(s);
 
-	if ((hq = sc->sc_queue.tqh_first) != NULL)
+	if ((hq = TAILQ_FIRST(&sc->sc_queue)) != NULL)
 		(*hq->hq_start)(hq->hq_softc);
 }
 
@@ -401,7 +401,7 @@ hpibstart(void *arg)
 	struct hpibbus_softc *sc = arg;
 	struct hpibqueue *hq;
 
-	hq = sc->sc_queue.tqh_first;
+	hq = TAILQ_FIRST(&sc->sc_queue);
 	(*hq->hq_go)(hq->hq_softc);
 }
 

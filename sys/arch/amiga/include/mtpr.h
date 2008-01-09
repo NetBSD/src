@@ -1,4 +1,4 @@
-/*	$NetBSD: mtpr.h,v 1.18 2006/10/07 17:31:44 mhitch Exp $	*/
+/*	$NetBSD: mtpr.h,v 1.18.28.1 2008/01/09 01:45:03 matt Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -118,10 +118,6 @@ extern unsigned char ssir;
 
 #define setsoftnet()	do {single_inst_bset_b(ssir, SIR_NET); setsoftint(); } while (0)
 #define setsoftcback()	do {single_inst_bset_b(ssir, SIR_CBACK); setsoftint(); } while (0)
-
-void softintr_schedule __P((void *));
-void *softintr_establish __P((int,  void (*)(void *), void *));
-void softintr_disestablish __P((void *));
 
 #endif /* _KERNEL */
 

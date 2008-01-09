@@ -1,4 +1,4 @@
-/*	$NetBSD: ether_bpf.c,v 1.6.2.1 2007/11/06 23:17:53 matt Exp $	*/
+/*	$NetBSD: ether_bpf.c,v 1.6.2.2 2008/01/09 01:46:49 matt Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -34,6 +34,7 @@
 #include <stdlib.h>
 #include <limits.h>
 #include <sys/ioctl.h>
+#include <sys/queue.h>
 #include <sys/socket.h>
 #include <net/if.h>
 #include <net/bpf.h>
@@ -125,15 +126,15 @@ int EtherInit(ha)
 	}
 
 	kvm_read(kvm, nl[0].n_value, &ifh, sizeof(struct ifnet_head));
-	ifp = ifh.tqh_first;
+	ifp = TAILQ_FIRST(&ifh);
 	while (ifp) {
 		struct ifnet ifnet;
 		kvm_read(kvm, (u_long)ifp, &ifnet, sizeof(struct ifnet));
 		if (!strcmp(ifnet.if_xname, BPF_IFNAME)) {
-			ifap = ifnet.if_addrlist.tqh_first;
+			ifap = IFADDR_FIRST(&ifnet);
 			break;
 		}
-		ifp = ifnet.if_list.tqe_next;
+		ifp = IFNET_NEXT(&ifnet);
 	}
 	if (!ifp) {
 		warnx("interface not found");
@@ -154,7 +155,7 @@ int EtherInit(ha)
 			memcpy(ha, CLLADDR(sdlp), 6);
 			break;
 		}
-		ifap = ifaddr.ifa_list.tqe_next;
+		ifap = IFADDR_NEXT(&ifaddr);
 	}
 	free(sdlp);
 	kvm_close(kvm);

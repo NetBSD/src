@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.140.2.1 2007/11/06 23:22:47 matt Exp $ */
+/*	$NetBSD: autoconf.c,v 1.140.2.2 2008/01/09 01:49:05 matt Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.140.2.1 2007/11/06 23:22:47 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.140.2.2 2008/01/09 01:49:05 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -103,6 +103,8 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.140.2.1 2007/11/06 23:22:47 matt Exp 
 #error options RASTERCONSOLE is obsolete for sparc64 - remove it from your config file
 #endif
 
+#include <dev/wsfb/genfbvar.h>
+
 #include "ksyms.h"
 
 struct evcnt intr_evcnts[] = {
@@ -133,6 +135,7 @@ int kgdb_break_at_attach;
 #define	OFPATHLEN	128
 #define	OFNODEKEY	"OFpnode"
 
+char	machine_banner[100];
 char	machine_model[100];
 char	ofbootpath[OFPATHLEN], *ofboottarget, *ofbootpartition;
 int	ofbootpackage;
@@ -175,6 +178,11 @@ int autoconf_debug = 0x0;
 #else
 #define DPRINTF(l, s)
 #endif
+
+int console_node, console_instance;
+struct genfb_colormap_callback gfb_cb;
+static void of_set_palette(void *, int, int, int, int);
+static void copyprops(struct device *busdev, int, prop_dictionary_t);
 
 static void
 get_ncpus(void)
@@ -242,7 +250,9 @@ bootstrap(void *o0, void *bootargs, void *bootsize, void *o3, void *ofw)
 	void *bi;
 	long bmagic;
 
+#if NKSYMS || defined(DDB) || defined(LKM)
 	struct btinfo_symtab *bi_sym;
+#endif
 	struct btinfo_count *bi_count;
 	struct btinfo_kernend *bi_kend;
 	struct btinfo_tlb *bi_tlb;
@@ -257,6 +267,8 @@ bootstrap(void *o0, void *bootargs, void *bootsize, void *o3, void *ofw)
 	romtba = get_romtba();
 
 	prom_init();
+	console_instance = promops.po_stdout;
+	console_node = OF_instance_to_package(promops.po_stdout);
 
 	/* Initialize the PROM console so printf will not panic */
 	(*cn_tab->cn_init)(cn_tab);
@@ -507,6 +519,7 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 	struct mainbus_attach_args ma;
 	char sbuf[32];
 	const char *const *ssp, *sp = NULL;
+	char *c;
 	int node0, node, rv, i;
 
 	static const char *const openboot_special[] = {
@@ -525,9 +538,26 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 		NULL
 	};
 
+	if (OF_getprop(findroot(), "banner-name", machine_banner,
+	    sizeof machine_banner) < 0)
+		i = 0;
+	else {
+		i = 1;
+		if (((c = strchr(machine_banner, '(')) != NULL) &&
+		    c != &machine_banner[0]) {
+				while (*c == '(' || *c == ' ') {
+					*c = '\0';
+					c--;
+				}
+			}
+	}
 	OF_getprop(findroot(), "name", machine_model, sizeof machine_model);
 	prom_getidprom();
-	printf(": %s: hostid %lx\n", machine_model, hostid);
+	if (i)
+		printf(": %s (%s): hostid %lx\n", machine_model,
+		    machine_banner, hostid);
+	else
+		printf(": %s: hostid %lx\n", machine_model, hostid);
 
 	/*
 	 * Locate and configure the ``early'' devices.  These must be
@@ -682,7 +712,7 @@ romgetcursoraddr(int **rowp, int **colp)
 struct device *
 getdevunit(const char *name, int unit)
 {
-	struct device *dev = alldevs.tqh_first;
+	struct device *dev = TAILQ_FIRST(&alldevs);
 	char num[10], fullname[16];
 	int lunit;
 
@@ -696,7 +726,7 @@ getdevunit(const char *name, int unit)
 	strcat(fullname, num);
 
 	while (strcmp(device_xname(dev), fullname) != 0) {
-		if ((dev = dev->dv_list.tqe_next) == NULL)
+		if ((dev = TAILQ_NEXT(dev, dv_list)) == NULL)
 			return NULL;
 	}
 	return dev;
@@ -855,4 +885,129 @@ device_register(struct device *dev, void *aux)
 		dev_path_drive_match(dev, ofnode, adev->adev_channel*2+
 		    adev->adev_drv_data->drive, 0);
 	}
+
+	/* set properties for PCI framebuffers */
+	if (busdev != NULL) {
+
+		if (device_is_a(busdev, "pci")) {
+			/* see if this is going to be console */
+			struct pci_attach_args *pa = aux;
+			prop_dictionary_t dict;
+			int node, sub;
+			int console = 0;
+
+			dict = device_properties(dev);
+			node = PCITAG_NODE(pa->pa_tag);
+			device_setofnode(dev, node);
+
+			/* we only care about display devices from here on */
+			if (PCI_CLASS(pa->pa_class) != PCI_CLASS_DISPLAY)
+				return;
+
+			console = (node == console_node);
+
+			if (!console) {
+				/*
+				 * see if any child matches since OF attaches
+				 * nodes for each head and /chosen/stdout
+				 * points to the head rather than the device
+				 * itself in this case
+				 */
+				sub = OF_child(node);
+				while ((sub != 0) && (sub != console_node)) {
+					sub = OF_peer(sub);
+				}
+				if (sub == console_node) {
+					console = true;
+				}
+			}
+
+			if (console) {
+				uint64_t cmap_cb;
+
+				prop_dictionary_set_uint32(dict,
+				    "instance_handle", console_instance);
+				copyprops(busdev, console_node, dict);
+
+				gfb_cb.gcc_cookie = 
+				    (void *)(intptr_t)console_instance;
+				gfb_cb.gcc_set_mapreg = of_set_palette;
+				cmap_cb = (uint64_t)&gfb_cb;
+				prop_dictionary_set_uint64(dict,
+				    "cmap_callback", cmap_cb);
+			}
+		}
+	}
+}
+
+static void
+copyprops(struct device *busdev, int node, prop_dictionary_t dict)
+{
+	struct device *cntrlr;
+	prop_dictionary_t psycho;
+	paddr_t fbpa, mem_base = 0;
+	uint32_t temp, fboffset;
+	uint32_t fbaddr = 0;
+
+	cntrlr = device_parent(busdev);
+	if (cntrlr != NULL) {
+		psycho = device_properties(cntrlr);
+		prop_dictionary_get_uint64(psycho, "mem_base", &mem_base);
+	}
+
+	prop_dictionary_set_bool(dict, "is_console", 1);
+	if (!of_to_uint32_prop(dict, node, "width", "width")) {
+
+		OF_interpret("screen-width", 0, 1, &temp);
+		prop_dictionary_set_uint32(dict, "width", temp);
+	}
+	if (!of_to_uint32_prop(dict, console_node, "height", "height")) {
+
+		OF_interpret("screen-height", 0, 1, &temp);
+		prop_dictionary_set_uint32(dict, "height", temp);
+	}
+	of_to_uint32_prop(dict, console_node, "linebytes", "linebytes");
+	if (!of_to_uint32_prop(dict, console_node, "depth", "depth")) {
+		/*
+		 * XXX we should check linebytes vs. width but those
+		 * FBs that don't have a depth property ( /chaos/control... )
+		 * won't have linebytes either
+		 */
+		prop_dictionary_set_uint32(dict, "depth", 8);
+	}
+	OF_getprop(console_node, "address", &fbaddr, sizeof(fbaddr));
+	if (fbaddr == 0)
+		OF_interpret("frame-buffer-adr", 0, 1, &fbaddr);
+	if (fbaddr != 0) {
+	
+		pmap_extract(pmap_kernel(), fbaddr, &fbpa);
+#ifdef DEBUG
+		printf("membase: %lx fbpa: %lx\n", (unsigned long)mem_base,
+		    (unsigned long)fbpa);
+#endif
+		if (mem_base == 0) {
+			/* XXX this is guesswork */
+			fboffset = (uint32_t)(fbpa & 0xffffffff);
+		}
+			fboffset = (uint32_t)(fbpa - mem_base);
+		prop_dictionary_set_uint32(dict, "address", fboffset);
+	}
+	of_to_dataprop(dict, console_node, "EDID", "EDID");
+
+	temp = 0;
+	if (OF_getprop(console_node, "ATY,RefCLK", &temp, sizeof(temp)) != 4) {
+
+		OF_getprop(OF_parent(console_node), "ATY,RefCLK", &temp,
+		    sizeof(temp));
+	}
+	if (temp != 0)
+		prop_dictionary_set_uint32(dict, "refclk", temp / 10);
+}
+
+static void
+of_set_palette(void *cookie, int index, int r, int g, int b)
+{
+	int ih = (int)((intptr_t)cookie);
+
+	OF_call_method_1("color!", ih, 4, r, g, b, index);
 }

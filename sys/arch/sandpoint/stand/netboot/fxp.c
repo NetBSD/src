@@ -1,4 +1,4 @@
-/* $NetBSD: fxp.c,v 1.5.4.2 2007/11/06 23:21:34 matt Exp $ */
+/* $NetBSD: fxp.c,v 1.5.4.3 2008/01/09 01:48:37 matt Exp $ */
 
 /*
  * most of the following code was imported from dev/ic/i82557.c; the
@@ -366,8 +366,7 @@ fxp_recv(void *dev, char *buf, unsigned maxlen, unsigned timo)
 {
 	struct local *l = dev;
 	struct rxdesc *rfa;
-	time_t bound;
-	unsigned ruscus, len;
+	unsigned bound, ruscus, len;
 
 	fxp_scb_wait(l);
 	CSR_WRITE_1(l, FXP_CSR_SCB_COMMAND, FXP_SCB_COMMAND_RU_RESUME);
@@ -379,7 +378,7 @@ fxp_recv(void *dev, char *buf, unsigned maxlen, unsigned timo)
 		    && (((ruscus >> 2) & 0x0f) == FXP_SCB_RUS_SUSPENDED))
 			goto gotone;
 		DELAY(1000);	/* 1 milli second */
-	} while (bound-- > 0);
+	} while (--bound > 0);
 	errno = 0;
 	return -1;
   gotone:

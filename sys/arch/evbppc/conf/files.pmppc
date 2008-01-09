@@ -1,4 +1,4 @@
-#	$NetBSD: files.pmppc,v 1.2.8.2 2007/11/06 23:16:14 matt Exp $
+#	$NetBSD: files.pmppc,v 1.2.8.3 2008/01/09 01:45:52 matt Exp $
 #
 #
 maxpartitions 16
@@ -12,8 +12,6 @@ file	arch/powerpc/powerpc/clock.c
 file	kern/subr_disk_mbr.c			disk
 file	arch/evbppc/pmppc/pic_cpc700.c
 file	arch/evbppc/pmppc/machdep.c
-
-file	arch/powerpc/powerpc/softintr.c
 
 #
 # Machine-independent SCSI drivers

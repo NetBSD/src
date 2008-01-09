@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap3.h,v 1.42 2006/10/01 03:53:27 tsutsui Exp $	*/
+/*	$NetBSD: pmap3.h,v 1.42.28.1 2008/01/09 01:49:14 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  * XXX - Does user-level code really see this struct?
  */
 
-#include <sys/lock.h>
+#include <sys/simplelock.h>
 
 struct pmap {
 	unsigned char   	*pm_segmap; 	/* soft copy of segmap */

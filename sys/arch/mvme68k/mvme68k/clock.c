@@ -1,4 +1,4 @@
-/*      $NetBSD: clock.c,v 1.24 2006/09/09 22:28:27 gdamore Exp $	*/
+/*      $NetBSD: clock.c,v 1.24.30.1 2008/01/09 01:47:25 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.24 2006/09/09 22:28:27 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.24.30.1 2008/01/09 01:47:25 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -139,39 +139,3 @@ setstatclockrate(newhz)
 
 	/* XXX should we do something here? XXX */
 }
-
-/*
- * Return the best possible estimate of the time in the timeval
- * to which tvp points.  We do this by returning the current time
- * plus the amount of time, in uSec, since the last clock interrupt
- * (clock_args->ca_microtime()) was handled.
- *
- * Check that this time is no less than any previously-reported time,
- * which could happen around the time of a clock adjustment.  Just for fun,
- * we guarantee that the time will be greater than the value obtained by a
- * previous call.
- */
-
-void
-microtime(tvp)
-	struct timeval *tvp;
-{
-	int s = splhigh();
-	static struct timeval lasttime;
-
-	*tvp = time;
-	tvp->tv_usec += (*clock_args->ca_microtime)(clock_args->ca_arg);
-	while (tvp->tv_usec >= 1000000) {
-		tvp->tv_sec++;
-		tvp->tv_usec -= 1000000;
-	}
-	if (tvp->tv_sec == lasttime.tv_sec &&
-	    tvp->tv_usec <= lasttime.tv_usec &&
-	    (tvp->tv_usec = lasttime.tv_usec + 1) >= 1000000) {
-		tvp->tv_sec++;
-		tvp->tv_usec -= 1000000;
-	}
-	lasttime = *tvp;
-	splx(s);
-}
-

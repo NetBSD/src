@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_gb.c,v 1.36 2007/03/04 11:53:21 tsutsui Exp $	*/
+/*	$NetBSD: grf_gb.c,v 1.36.20.1 2008/01/09 01:46:01 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -121,9 +121,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_gb.c,v 1.36 2007/03/04 11:53:21 tsutsui Exp $");
-
-#include "opt_compat_hpux.h"
+__KERNEL_RCSID(0, "$NetBSD: grf_gb.c,v 1.36.20.1 2008/01/09 01:46:01 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -383,43 +381,6 @@ gb_mode(struct grf_data *gp, int cmd, void *data)
 	case GM_UNMAP:
 		gp->g_data = 0;
 		break;
-
-#ifdef COMPAT_HPUX
-	case GM_DESCRIBE:
-	{
-		struct grf_fbinfo *fi = (struct grf_fbinfo *)data;
-		struct grfinfo *gi = &gp->g_display;
-		int i;
-
-		/* feed it what HP-UX expects */
-		fi->id = gi->gd_id;
-		fi->mapsize = gi->gd_fbsize;
-		fi->dwidth = gi->gd_dwidth;
-		fi->dlength = gi->gd_dheight;
-		fi->width = gi->gd_fbwidth;
-		fi->length = gi->gd_fbheight;
-		fi->bpp = NBBY;
-		fi->xlen = (fi->width * fi->bpp) / NBBY;
-		fi->npl = gi->gd_planes;
-		fi->bppu = fi->npl;
-		fi->nplbytes = fi->xlen * ((fi->length * fi->bpp) / NBBY);
-		memcpy(fi->name,  "HP98700", 8);
-		fi->attr = 2;	/* HW block mover */
-		/*
-		 * If mapped, return the UVA where mapped.
-		 */
-		if (gp->g_data) {
-			fi->regbase = gp->g_data;
-			fi->fbbase = fi->regbase + gp->g_display.gd_regsize;
-		} else {
-			fi->fbbase = 0;
-			fi->regbase = 0;
-		}
-		for (i = 0; i < 6; i++)
-			fi->regions[i] = 0;
-		break;
-	}
-#endif
 
 	default:
 		error = EINVAL;

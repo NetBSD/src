@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.76 2007/03/04 05:59:27 christos Exp $ */
+/*	$NetBSD: ser.c,v 1.76.20.1 2008/01/09 01:45:02 matt Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -40,7 +40,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.76 2007/03/04 05:59:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.76.20.1 2008/01/09 01:45:02 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -923,14 +923,7 @@ serstart(struct tty *tp)
 		goto out;
 
 	cc = tp->t_outq.c_cc;
-	if (cc <= tp->t_lowat) {
-		if (tp->t_state & TS_ASLEEP) {
-			tp->t_state &= ~TS_ASLEEP;
-			wakeup((void *) & tp->t_outq);
-		}
-		selwakeup(&tp->t_wsel);
-	}
-	if (cc == 0 || (tp->t_state & TS_BUSY))
+	if (!ttypull(tp) || (tp->t_state & TS_BUSY))
 		goto out;
 
 	/*

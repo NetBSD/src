@@ -1,10 +1,7 @@
-#	$NetBSD: files.npwr_fc,v 1.1 2005/12/22 16:17:24 briggs Exp $
+#	$NetBSD: files.npwr_fc,v 1.1.52.1 2008/01/09 01:45:44 matt Exp $
 #
 # Intel IQ80321 evaluation board configuration info
 #
-
-# Use the generic ARM soft interrupt code.
-file	arch/arm/arm/softintr.c
 
 # Use the shared initarm_common() code.
 # XXX: Not yet ready for prime-time

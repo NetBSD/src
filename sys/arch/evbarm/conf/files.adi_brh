@@ -1,10 +1,7 @@
-#	$NetBSD: files.adi_brh,v 1.3 2003/06/16 17:40:49 thorpej Exp $
+#	$NetBSD: files.adi_brh,v 1.3.80.1 2008/01/09 01:45:43 matt Exp $
 #
 # ADI BRH evaluation board configuration info
 #
-
-# Use the generic ARM soft interrupt code.
-file	arch/arm/arm/softintr.c
 
 file	arch/evbarm/adi_brh/brh_7seg.c
 file	arch/evbarm/adi_brh/brh_machdep.c

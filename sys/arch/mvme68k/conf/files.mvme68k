@@ -1,4 +1,4 @@
-#	$NetBSD: files.mvme68k,v 1.60 2005/12/11 12:18:17 christos Exp $
+#	$NetBSD: files.mvme68k,v 1.60.50.1 2008/01/09 01:47:23 matt Exp $
 
 # config file for mvme68k
 
@@ -95,7 +95,6 @@ file arch/mvme68k/mvme68k/isr.c
 file arch/mvme68k/mvme68k/machdep.c
 file arch/mvme68k/mvme68k/mem.c
 file arch/mvme68k/mvme68k/pmap_bootstrap.c	compile-with "${NOPROF_C}"
-file arch/mvme68k/mvme68k/softintr.c
 file arch/mvme68k/mvme68k/trap.c
 file arch/m68k/m68k/cacheops.c
 file arch/m68k/m68k/db_memrw.c			ddb | kgdb

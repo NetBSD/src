@@ -1,4 +1,4 @@
-/*	$NetBSD: bios32.c,v 1.6.10.1 2007/11/06 23:13:59 matt Exp $	*/
+/*	$NetBSD: bios32.c,v 1.6.10.2 2008/01/09 01:44:42 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bios32.c,v 1.6.10.1 2007/11/06 23:13:59 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bios32.c,v 1.6.10.2 2008/01/09 01:44:42 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,6 +84,7 @@ __KERNEL_RCSID(0, "$NetBSD: bios32.c,v 1.6.10.1 2007/11/06 23:13:59 matt Exp $")
 #include <uvm/uvm.h>
 
 #include "ipmi.h"
+#include "opt_xen.h"
 
 #define	BIOS32_START	0xe0000
 #define	BIOS32_SIZE	0x20000
@@ -121,12 +122,12 @@ bios32_init()
 
 		entry = *(u_int32_t *)(p + 4);
 
-		printf("BIOS32 rev. %d found at 0x%lx\n",
+		aprint_verbose("BIOS32 rev. %d found at 0x%lx\n",
 		    *(p + 8), entry);
 
 		if (entry < BIOS32_START ||
 		    entry >= BIOS32_END) {
-			printf("BIOS32 entry point outside "
+			aprint_error("BIOS32 entry point outside "
 			    "allowable range\n");
 			entry = 0;
 		}
@@ -138,7 +139,6 @@ bios32_init()
 		bios32_entry.segment = GSEL(GCODE_SEL, SEL_KPL);
 	}
 #endif
-#if NIPMI > 0
 	uint8_t *p;
 	int i;
 
@@ -180,16 +180,19 @@ bios32_init()
 		smbios_entry.count = sh->count;
 
     		for (; pa < end; pa+= NBPG, eva+= NBPG)
+#ifdef XEN
+			pmap_kenter_ma(eva, pa, VM_PROT_READ);
+#else
 			pmap_kenter_pa(eva, pa, VM_PROT_READ);
+#endif
 		pmap_update(pmap_kernel());
 
-		printf("SMBIOS rev. %d.%d @ 0x%lx (%d entries)\n",
+		aprint_normal("SMBIOS rev. %d.%d @ 0x%lx (%d entries)\n",
 			    sh->majrev, sh->minrev, (u_long)sh->addr,
 			    sh->count);
 
 		break;
 	}
-#endif
 }
 
 /*
@@ -218,7 +221,8 @@ bios32_service(service, e, ei)
 	entry = ebx + edx;
 
 	if (entry < BIOS32_START || entry >= BIOS32_END) {
-		printf("bios32: entry point for service %c%c%c%c is outside "
+		aprint_error(
+		    "bios32: entry point for service %c%c%c%c is outside "
 		    "allowable range\n",
 		    service & 0xff,
 		    (service >> 8) & 0xff,
@@ -237,7 +241,6 @@ bios32_service(service, e, ei)
 	return (1);
 }
 
-#if NIPMI > 0
 /*
  * smbios_find_table() takes a caller supplied smbios struct type and
  * a pointer to a handle (struct smbtable) returning one if the structure
@@ -321,4 +324,3 @@ smbios_get_string(struct smbtable *st, u_int8_t indx, char *dest, size_t len)
 
 	return ret;
 }
-#endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.122.10.1 2007/11/06 23:19:27 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.122.10.2 2008/01/09 01:47:26 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,10 +77,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.122.10.1 2007/11/06 23:19:27 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.122.10.2 2008/01/09 01:47:26 matt Exp $");
 
 #include "opt_ddb.h"
-#include "opt_compat_hpux.h"
 #include "opt_m060sp.h"
 #include "opt_panicbutton.h"
 
@@ -181,10 +180,6 @@ u_char	mvme_ea[6];
 
 extern	u_int lowram;
 extern	short exframesize[];
-
-#ifdef COMPAT_HPUX
-extern struct emul emul_hpux;
-#endif
 
 /* prototypes for local functions */ 
 void	identifycpu __P((void));
@@ -1188,20 +1183,12 @@ cpu_exec_aout_makecmds(l, epp)
 
 const static int ipl2psl_table[] = {
 	[IPL_NONE] = PSL_IPL0,
-	[IPL_SOFT] = PSL_IPL1,
+	[IPL_SOFTBIO] = PSL_IPL1,
 	[IPL_SOFTCLOCK] = PSL_IPL1,
 	[IPL_SOFTNET] = PSL_IPL1,
 	[IPL_SOFTSERIAL] = PSL_IPL1,
-	[IPL_BIO] = PSL_IPL2,
-	[IPL_NET] = PSL_IPL3,
-	[IPL_TTY] = PSL_IPL3,
-	/* IPL_LPT == IPL_TTY */
 	[IPL_VM] = PSL_IPL3,
-	[IPL_SERIAL] = PSL_IPL4,
-	[IPL_CLOCK] = PSL_IPL5,
-	[IPL_HIGH] = PSL_IPL7,
-	/* IPL_SCHED == IPL_HIGH */
-	/* IPL_LOCK == IPL_HIGH */
+	[IPL_SCHED] = PSL_IPL7,
 };
 
 ipl_cookie_t

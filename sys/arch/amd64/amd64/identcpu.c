@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.23.10.1 2007/11/06 23:14:04 matt Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.23.10.2 2008/01/09 01:44:44 matt Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,12 +36,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.23.10.1 2007/11/06 23:14:04 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.23.10.2 2008/01/09 01:44:44 matt Exp $");
 
 #include "opt_enhanced_speedstep.h"
 #include "opt_intel_coretemp.h"
 #include "opt_intel_odcm.h"
 #include "opt_powernow_k8.h"
+#include "opt_xen.h"
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -54,15 +55,14 @@ __KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.23.10.1 2007/11/06 23:14:04 matt Exp 
 
 /* sysctl wants this. */
 char cpu_model[48];
+int cpu_vendor;
 
 void
 identifycpu(struct cpu_info *ci)
 {
-	u_int64_t last_tsc;
 	u_int32_t val;
 	char buf[512];
 	u_int32_t brand[12], descs[4];
-	int vendor;
 	const char *feature_str[3];
 
 	x86_cpuid(0, descs);
@@ -88,16 +88,13 @@ identifycpu(struct cpu_info *ci)
 
 	strcpy(cpu_model, (char *)brand);
 
-	vendor = CPUVENDOR_AMD;
+	cpu_vendor = CPUVENDOR_AMD;
 	if (cpu_model[0] == 0)
 		strcpy(cpu_model, "Opteron or Athlon 64");
 	else if (strstr(cpu_model, "AMD") == NULL)
-		vendor = CPUVENDOR_INTEL;
+		cpu_vendor = CPUVENDOR_INTEL;
 
-	last_tsc = rdtsc();
-	delay(100000);
-	ci->ci_tsc_freq = (rdtsc() - last_tsc) * 10;
-
+	cpu_get_tsc_freq(ci);
 	amd_cpu_cacheinfo(ci);
 
 	aprint_normal("%s: %s", ci->ci_dev->dv_xname, cpu_model);
@@ -108,7 +105,7 @@ identifycpu(struct cpu_info *ci)
 		    ((ci->ci_tsc_freq + 4999) / 10000) % 100);
 	aprint_normal("\n");
 
-	if (vendor == CPUVENDOR_INTEL) {
+	if (cpu_vendor == CPUVENDOR_INTEL) {
 		feature_str[0] = CPUID_FLAGS1;
 		feature_str[1] = CPUID_FLAGS2;
 		feature_str[2] = CPUID_FLAGS3;
@@ -144,7 +141,7 @@ identifycpu(struct cpu_info *ci)
 		    ci->ci_dev->dv_xname, buf);
 	}
 
-	if (vendor == CPUVENDOR_INTEL &&
+	if (cpu_vendor == CPUVENDOR_INTEL &&
 	    (ci->ci_feature_flags & CPUID_MASK4) != 0) {
 		bitmask_snprintf(ci->ci_feature_flags,
 		    CPUID_FLAGS4, buf, sizeof(buf));
@@ -154,22 +151,21 @@ identifycpu(struct cpu_info *ci)
 
 	x86_print_cacheinfo(ci);
 
+	identifycpu_cpuids(ci);
+
 #ifdef POWERNOW_K8
-	if (CPUID2FAMILY(ci->ci_signature) == 15 &&
-	    (cpu_model[0] == 'A' || cpu_model[0] == 'O') &&
+	if (cpu_vendor == CPUVENDOR_AMD &&
+	    CPUID2FAMILY(ci->ci_signature) == 15 &&
 	    powernow_probe(ci))
 		k8_powernow_init();
 #endif
-
-	x86_errata(ci, vendor);
-	x86_patch();
 
 #ifdef INTEL_ONDEMAND_CLOCKMOD
 	clockmod_init();
 #endif
 
 #ifdef ENHANCED_SPEEDSTEP
-	if ((vendor == CPUVENDOR_INTEL) &&
+	if ((cpu_vendor == CPUVENDOR_INTEL) &&
 	    (ci->ci_feature2_flags & CPUID2_EST)) {
 		if (rdmsr(MSR_MISC_ENABLE) & (1 << 16))
 			est_init(CPUVENDOR_INTEL);
@@ -180,7 +176,7 @@ identifycpu(struct cpu_info *ci)
 #endif
 
 #ifdef INTEL_CORETEMP
-	if (vendor == CPUVENDOR_INTEL)
+	if (cpu_vendor == CPUVENDOR_INTEL)
 		coretemp_register(ci);
 #endif
 }
@@ -188,6 +184,11 @@ identifycpu(struct cpu_info *ci)
 void
 cpu_probe_features(struct cpu_info *ci)
 {
+	uint32_t descs[4];
+
 	ci->ci_feature_flags = cpu_feature;
 	ci->ci_signature = 0;
+
+	x86_cpuid(1, descs);
+	ci->ci_initapicid = (descs[1] >> 24) & 0xff;
 }

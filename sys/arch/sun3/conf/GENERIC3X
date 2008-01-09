@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC3X,v 1.96.6.1 2007/11/06 23:23:01 matt Exp $
+# $NetBSD: GENERIC3X,v 1.96.6.2 2008/01/09 01:49:12 matt Exp $
 
 # GENERIC Sun3X (3/80, 3/470)
 # Supports root on: ie0, le0, sd*, ...
@@ -7,7 +7,7 @@ include 	"arch/sun3/conf/std.sun3x"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC3X-$Revision: 1.96.6.1 $"
+#ident		"GENERIC3X-$Revision: 1.96.6.2 $"
 
 # Machines to be supported by this kernel
 #options 	FPU_EMULATE	# XXX - Ever needed?
@@ -18,7 +18,6 @@ maxusers	4
 
 # Standard system options
 options 	KTRACE		# system call tracing
-#options 	SYSTRACE	# system call vetting via systrace(1)
 options 	SYSVMSG		# System V message queues
 options 	SYSVSEM		# System V semaphores
 options 	SYSVSHM		# System V shared memory

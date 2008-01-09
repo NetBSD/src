@@ -1,10 +1,7 @@
-#	$NetBSD: files.ixdp425,v 1.6 2005/12/11 12:17:06 christos Exp $
+#	$NetBSD: files.ixdp425,v 1.6.50.1 2008/01/09 01:45:44 matt Exp $
 #
 # Intel IXP425 networkproccesor board configuration info
 #
-
-# Use the generic ARM soft interrupt code.
-file	arch/arm/arm/softintr.c
 
 # IXP425 Network Processor CPU support
 include "arch/arm/xscale/files.ixp425"

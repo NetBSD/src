@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.80 2007/03/04 06:00:49 christos Exp $	*/
+/*	$NetBSD: psycho.c,v 1.80.20.1 2008/01/09 01:49:03 matt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Eduardo E. Horvath
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.80 2007/03/04 06:00:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.80.20.1 2008/01/09 01:49:03 matt Exp $");
 
 #include "opt_ddb.h"
 
@@ -266,8 +266,10 @@ psycho_attach(struct device *parent, struct device *self, void *aux)
 	struct psycho_pbm *pp;
 	struct pcibus_attach_args pba;
 	struct mainbus_attach_args *ma = aux;
+	struct psycho_ranges *pr;
+	prop_dictionary_t dict;
 	bus_space_handle_t bh;
-	uint64_t csr;
+	uint64_t csr, mem_base;
 	int psycho_br[2], n, i;
 	bus_space_handle_t pci_ctl;
 	char *model = prom_getpropstring(ma->ma_node, "model");
@@ -627,6 +629,14 @@ found:
 		iommu_reset(sc->sc_is);
 	}
 
+	dict = device_properties(self);
+	pr = get_psychorange(pp, 2);	/* memory range */
+#ifdef DEBUG
+	printf("memory range: %08x %08x\n", pr->phys_hi, pr->phys_lo);
+#endif
+	mem_base = ((uint64_t)pr->phys_hi) << 32 | pr->phys_lo;
+	prop_dictionary_set_uint64(dict, "mem_base", mem_base);
+
 	/*
 	 * attach the pci.. note we pass PCI A tags, etc., for the sabre here.
 	 */
@@ -745,7 +755,7 @@ psycho_alloc_extent(struct psycho_pbm *pp, int node, int ss, const char *name)
 	/* get available lists */
 	num = 0;
 	if (prom_getprop(node, "available", sizeof(*pa), &num, &pa)) {
-		printf("psycho_alloc_extent: prom_getprop failed\n");
+		printf("psycho_alloc_extent: no \"available\" property\n");
 		return NULL;
 	}
 
@@ -1236,16 +1246,11 @@ psycho_intr_establish(bus_space_tag_t t, int ihandle, int level,
 	DPRINTF(PDB_INTR, ("\npsycho: intr %lx: %p\nHunting for IRQ...\n",
 	    (long)ino, intrlev[ino]));
 
-	/* Hunt thru obio first */
-	for (intrmapptr = &sc->sc_regs->scsi_int_map,
-		     intrclrptr = &sc->sc_regs->scsi_clr_int;
-	     intrmapptr < &sc->sc_regs->ue_int_map;
-	     intrmapptr++, intrclrptr++) {
-		if (INTINO(*intrmapptr) == ino)
-			goto found;
-	}
-
-	/* Now do PCI interrupts */
+ 	/* 
+ 	 * First look for PCI interrupts, otherwise the PCI A slot 0
+ 	 * INTA# interrupt might match an unused non-PCI (obio)
+ 	 * interrupt.
+ 	 */
 	for (intrmapptr = &sc->sc_regs->pcia_slot0_int,
 		     intrclrptr = &sc->sc_regs->pcia0_clr_int[0];
 	     intrmapptr <= &sc->sc_regs->pcib_slot3_int;
@@ -1258,6 +1263,15 @@ psycho_intr_establish(bus_space_tag_t t, int ihandle, int level,
 			intrclrptr += vec & 0x3;
 			goto found;
 		}
+	}
+
+	/* Now hunt thru obio. */
+	for (intrmapptr = &sc->sc_regs->scsi_int_map,
+		     intrclrptr = &sc->sc_regs->scsi_clr_int;
+	     intrmapptr < &sc->sc_regs->ue_int_map;
+	     intrmapptr++, intrclrptr++) {
+		if (INTINO(*intrmapptr) == ino)
+			goto found;
 	}
 
 	/* Finally check the two FFB slots */
@@ -1309,6 +1323,10 @@ found:
 		DPRINTF(PDB_INTR, ("; reread intrmap = %016qx",
 			(unsigned long long)(imap = *intrmapptr)));
 	}
+ 	if (intrclrptr) {
+ 		/* set state to IDLE */
+ 		*intrclrptr = 0;
+ 	}
 	return (ih);
 }
 

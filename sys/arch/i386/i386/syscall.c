@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.46.2.1 2007/11/06 23:17:35 matt Exp $	*/
+/*	$NetBSD: syscall.c,v 1.46.2.2 2008/01/09 01:46:39 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.46.2.1 2007/11/06 23:17:35 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.46.2.2 2008/01/09 01:46:39 matt Exp $");
 
 #include "opt_vm86.h"
 
@@ -56,8 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.46.2.1 2007/11/06 23:17:35 matt Exp $"
 #include <machine/psl.h>
 #include <machine/userret.h>
 
-void syscall_plain(struct trapframe *);
-void syscall_fancy(struct trapframe *);
+void syscall(struct trapframe *);
 int x86_copyargs(void *, void *, size_t);
 #ifdef VM86
 void syscall_vm86(struct trapframe *);
@@ -68,10 +67,8 @@ syscall_intern(p)
 	struct proc *p;
 {
 
-	if (trace_is_enabled(p))
-		p->p_md.md_syscall = syscall_fancy;
-	else
-		p->p_md.md_syscall = syscall_plain;
+	p->p_trace_enabled = trace_is_enabled(p);
+	p->p_md.md_syscall = syscall;
 }
 
 /*
@@ -80,205 +77,78 @@ syscall_intern(p)
  * Like trap(), argument is call by reference.
  */
 void
-syscall_plain(frame)
-	struct trapframe *frame;
+syscall(struct trapframe *frame)
 {
-	char *params;
 	const struct sysent *callp;
 	struct lwp *l;
-	struct proc *p;
 	int error;
-	size_t argsize;
-	register_t code, args[8], rval[2];
+	register_t code, args[2 + SYS_MAXSYSARGS], rval[2];
 
 	uvmexp.syscalls++;
 	l = curlwp;
-	p = l->l_proc;
-	LWP_CACHE_CREDS(l, p);
+	LWP_CACHE_CREDS(l, l->l_proc);
 
-	code = frame->tf_eax;
-	callp = p->p_emul->e_sysent;
-	params = (char *)frame->tf_esp + sizeof(int);
+	code = frame->tf_eax & (SYS_NSYSENT - 1);
+	callp = l->l_proc->p_emul->e_sysent + code;
 
-	switch (code) {
-	case SYS_syscall:
-		/*
-		 * Code is first argument, followed by actual args.
-		 */
-		SYSCALL_COUNT(syscall_counts, SYS_syscall & (SYS_NSYSENT - 1));
-		code = fuword(params);
-		params += sizeof(int);
-		break;
-	case SYS___syscall:
-		/*
-		 * Like syscall, but code is a quad, so as to maintain
-		 * quad alignment for the rest of the arguments.
-		 */
-		SYSCALL_COUNT(syscall_counts, SYS___syscall & (SYS_NSYSENT - 1));
-		code = fuword(params + _QUAD_LOWWORD * sizeof(int));
-		params += sizeof(quad_t);
-		break;
-	default:
-		break;
-	}
-
-	code &= (SYS_NSYSENT - 1);
 	SYSCALL_COUNT(syscall_counts, code);
 	SYSCALL_TIME_SYS_ENTRY(l, syscall_times, code);
-	callp += code;
-	argsize = callp->sy_argsize;
-	if (argsize) {
-		error = x86_copyargs(params, (void *)args, argsize);
-		if (error)
+
+	if (callp->sy_argsize) {
+		error = x86_copyargs((char *)frame->tf_esp + sizeof(int), args,
+			    callp->sy_argsize);
+		if (__predict_false(error != 0))
 			goto bad;
 	}
 
-	rval[0] = 0;
-	rval[1] = 0;
+	if (!__predict_false(l->l_proc->p_trace_enabled)
+	    || __predict_false(callp->sy_flags & SYCALL_INDIRECT)
+	    || (error = trace_enter(frame->tf_eax & (SYS_NSYSENT - 1),
+		    frame->tf_eax & (SYS_NSYSENT - 1), NULL, args)) == 0) {
+		rval[0] = 0;
+		rval[1] = 0;
 
-	KASSERT(l->l_holdcnt == 0);
+		KASSERT(l->l_holdcnt == 0);
 
-	if (callp->sy_flags & SYCALL_MPSAFE) {
-		error = (*callp->sy_call)(l, args, rval);
-	} else {
-		KERNEL_LOCK(1, l);
-		error = (*callp->sy_call)(l, args, rval);
-		KERNEL_UNLOCK_LAST(l);
+		if (callp->sy_flags & SYCALL_MPSAFE) {
+			error = (*callp->sy_call)(l, args, rval);
+		} else {
+			KERNEL_LOCK(1, l);
+			error = (*callp->sy_call)(l, args, rval);
+			KERNEL_UNLOCK_LAST(l);
+		}
 	}
 
-#if defined(DIAGNOSTIC)
-	if (l->l_holdcnt != 0)
-		panic("l_holdcnt leak (%d) in syscall %d\n",
-		    l->l_holdcnt, (int)code);
-#endif /* defined(DIAGNOSTIC) */
+	if (__predict_false(l->l_proc->p_trace_enabled)
+	    && !__predict_false(callp->sy_flags & SYCALL_INDIRECT)) {
+		code = frame->tf_eax & (SYS_NSYSENT - 1);
+		trace_exit(code, args, rval, error);
+	}
 
-	switch (error) {
-	case 0:
+	if (__predict_true(error == 0)) {
 		frame->tf_eax = rval[0];
 		frame->tf_edx = rval[1];
 		frame->tf_eflags &= ~PSL_C;	/* carry bit */
-		break;
-	case ERESTART:
-		/*
-		 * The offset to adjust the PC by depends on whether we entered
-		 * the kernel through the trap or call gate.  We pushed the
-		 * size of the instruction into tf_err on entry.
-		 */
-		frame->tf_eip -= frame->tf_err;
-		break;
-	case EJUSTRETURN:
-		/* nothing to do */
-		break;
-	default:
-	bad:
-		frame->tf_eax = error;
-		frame->tf_eflags |= PSL_C;	/* carry bit */
-		break;
-	}
-
-	SYSCALL_TIME_SYS_EXIT(l);
-	userret(l);
-}
-
-void
-syscall_fancy(frame)
-	struct trapframe *frame;
-{
-	char *params;
-	const struct sysent *callp;
-	struct lwp *l;
-	struct proc *p;
-	int error;
-	size_t argsize;
-	register_t code, args[8], rval[2];
-
-	uvmexp.syscalls++;
-	l = curlwp;
-	p = l->l_proc;
-	LWP_CACHE_CREDS(l, p);
-
-	code = frame->tf_eax;
-	callp = p->p_emul->e_sysent;
-	params = (char *)frame->tf_esp + sizeof(int);
-
-	switch (code) {
-	case SYS_syscall:
-		/*
-		 * Code is first argument, followed by actual args.
-		 */
-		code = fuword(params);
-		params += sizeof(int);
-		break;
-	case SYS___syscall:
-		/*
-		 * Like syscall, but code is a quad, so as to maintain
-		 * quad alignment for the rest of the arguments.
-		 */
-		code = fuword(params + _QUAD_LOWWORD * sizeof(int));
-		params += sizeof(quad_t);
-		break;
-	default:
-		break;
-	}
-
-	code &= (SYS_NSYSENT - 1);
-	SYSCALL_COUNT(syscall_counts, code);
-	SYSCALL_TIME_SYS_ENTRY(l, syscall_times, code);
-	callp += code;
-	argsize = callp->sy_argsize;
-	if (argsize) {
-		error = x86_copyargs(params, (void *)args, argsize);
-		if (error)
-			goto bad;
-	}
-
-	if ((error = trace_enter(l, code, code, NULL, args)) != 0)
-		goto out;
-
-	rval[0] = 0;
-	rval[1] = 0;
-
-	KASSERT(l->l_holdcnt == 0);
-
-	if (callp->sy_flags & SYCALL_MPSAFE) {
-		error = (*callp->sy_call)(l, args, rval);
 	} else {
-		KERNEL_LOCK(1, l);
-		error = (*callp->sy_call)(l, args, rval);
-		KERNEL_UNLOCK_LAST(l);
+		switch (error) {
+		case ERESTART:
+			/*
+			 * The offset to adjust the PC by depends on whether we
+			 * entered the kernel through the trap or call gate.
+			 * We saved the instruction size in tf_err on entry.
+			 */
+			frame->tf_eip -= frame->tf_err;
+			break;
+		case EJUSTRETURN:
+			/* nothing to do */
+			break;
+		default:
+		bad:
+			frame->tf_eax = error;
+			frame->tf_eflags |= PSL_C;	/* carry bit */
+			break;
+		}
 	}
-
-#if defined(DIAGNOSTIC)
-	if (l->l_holdcnt != 0)
-		panic("l_holdcnt leak (%d) in syscall %d\n",
-		    l->l_holdcnt, (int)code);
-#endif /* defined(DIAGNOSTIC) */
-out:
-	switch (error) {
-	case 0:
-		frame->tf_eax = rval[0];
-		frame->tf_edx = rval[1];
-		frame->tf_eflags &= ~PSL_C;	/* carry bit */
-		break;
-	case ERESTART:
-		/*
-		 * The offset to adjust the PC by depends on whether we entered
-		 * the kernel through the trap or call gate.  We pushed the
-		 * size of the instruction into tf_err on entry.
-		 */
-		frame->tf_eip -= frame->tf_err;
-		break;
-	case EJUSTRETURN:
-		/* nothing to do */
-		break;
-	default:
-	bad:
-		frame->tf_eax = error;
-		frame->tf_eflags |= PSL_C;	/* carry bit */
-		break;
-	}
-
-	trace_exit(l, code, args, rval, error);
 
 	SYSCALL_TIME_SYS_EXIT(l);
 	userret(l);

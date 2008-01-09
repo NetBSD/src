@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.12.50.1 2007/11/06 23:21:25 matt Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.12.50.2 2008/01/09 01:48:36 matt Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.12.50.1 2007/11/06 23:21:25 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.12.50.2 2008/01/09 01:48:36 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -257,10 +257,10 @@ printf("line %d, pin %c", line, pin + '@');
 	 * Sandpoint X3 brd uses EPIC serial mode IRQ.
 	 * - i8259 PIC interrupt to EPIC IRQ0.
 	 * - WinBond IDE PCI C/D to EPIC IRQ8/9.
-	 * - PCI AD13 pin A,B,C,D to EPIC IRQ2,5,4,3.
-	 * - PCI AD14 pin A,B,C,D to EPIC IRQ3,2,5,4.
-	 * - PCI AD15 pin A,B,C,D to EPIC IRQ4,3,2,5.
-	 * - PCI AD16 pin A,B,C,D to EPIC IRQ5,4,3,2.
+	 * - PCI AD13 pin A to EPIC IRQ2.
+	 * - PCI AD14 pin A to EPIC IRQ3.
+	 * - PCI AD15 pin A to EPIC IRQ4.
+	 * - PCI AD16 pin A to EPIC IRQ5.
 	 */
 		if (line == 11
 		    && pa->pa_function == 1 && pa->pa_bus == 0) {
@@ -273,8 +273,8 @@ printf("line %d, pin %c", line, pin + '@');
 				line, pin + '@');
 			goto bad;
 		}
-		line -= 13; pin -= 1;
-		*ihp = 2 + ((line + (4 - pin)) & 03);
+		line -= 13; /* B/C/D is not available */
+		*ihp = 2 + line;
 		break;
 	case BRD_SANDPOINTX2:
 	/*
@@ -302,16 +302,18 @@ printf("line %d, pin %c", line, pin + '@');
 		break;
 	case BRD_ENCOREPP1:
 	/*
-	 * Ampro EnCorePP1 brd uses EPIC direct mode IRQ. VIA 686B SB
-	 * i8259 interrupt goes through EPC IRQ0.  PCI pin A-D are
-	 * tied with EPIC IRQ1-4.
-	 * - PCI AD22 pin A,B,C,D to EPIC IRQ 1,2,3,4.
-	 * - PCI AD23 pin A,B,C,D to EPIC IRQ 2,3,4,1.
-	 * - PCI AD24 pin A,B,C,D to EPIC IRQ 3,4,1,2.
-	 * - PCI AD25 pin A,B,C,D to EPIC IRQ 4,1,2,3.
+	 * Ampro EnCorePP1 brd uses EPIC direct mode IRQ.
+	 * PDF says VIA 686B SB i8259 interrupt goes through EPC IRQ0,
+	 * while  PCI pin A-D are tied with EPIC IRQ1-4.
+	 *
+	 * It mentions i82559 is at AD24, however, found at AD25 instead.
+	 * Heuristics show that i82559 responds to EPIC 2 (!).  Then we
+	 * decided to return EPIC 2 here since i82559 is the only one PCI
+	 * device ENCPP1 can have;
 	 */
-		line -= 22; pin -= 1;
-		*ihp = 1 + ((line + pin) & 3);
+		if (pa->pa_device != 25)
+			goto bad; /* eeh !? */
+		*ihp = 2;
 		break;
 	case BRD_KUROBOX:
 		/* map line 11,12,13,14 to EPIC IRQ0,1,4,3 */

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.99.6.1 2007/11/06 23:19:43 matt Exp $
+# $NetBSD: GENERIC,v 1.99.6.2 2008/01/09 01:47:31 matt Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/newsmips/conf/std.newsmips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.99.6.1 $"
+#ident 		"GENERIC-$Revision: 1.99.6.2 $"
 
 maxusers	16
 
@@ -34,7 +34,6 @@ options 	CPU_SINGLE		# no I/O processor
 
 # Standard system options
 options 	KTRACE			# system call tracing support
-#options 	SYSTRACE		# system call vetting via systrace(1)
 options 	SYSVMSG			# System V message queues
 options 	SYSVSEM			# System V semaphores
 options 	SYSVSHM			# System V shared memory

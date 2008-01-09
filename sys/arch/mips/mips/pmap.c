@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.175.10.1 2007/11/06 23:19:14 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.175.10.2 2008/01/09 01:47:18 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.175.10.1 2007/11/06 23:19:14 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.175.10.2 2008/01/09 01:47:18 matt Exp $");
 
 /*
  *	Manages physical address maps.
@@ -129,6 +129,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.175.10.1 2007/11/06 23:19:14 matt Exp $")
 #include <sys/user.h>
 #include <sys/buf.h>
 #include <sys/pool.h>
+#include <sys/mutex.h>
 #ifdef SYSVSHM
 #include <sys/shm.h>
 #endif
@@ -364,7 +365,6 @@ pmap_bootstrap(void)
 	/*
 	 * Initialize the kernel pmap.
 	 */
-	simple_lock_init(&pmap_kernel()->pm_lock);
 	pmap_kernel()->pm_count = 1;
 	pmap_kernel()->pm_asid = PMAP_ASID_RESERVED;
 	pmap_kernel()->pm_asidgen = 0;
@@ -568,7 +568,6 @@ pmap_create(void)
 	pmap = pool_get(&pmap_pmap_pool, PR_WAITOK);
 	memset(pmap, 0, sizeof(*pmap));
 
-	simple_lock_init(&pmap->pm_lock);
 	pmap->pm_count = 1;
 	if (free_segtab) {
 		pmap->pm_segtab = free_segtab;
@@ -624,10 +623,7 @@ pmap_destroy(pmap_t pmap)
 	if (pmapdebug & (PDB_FOLLOW|PDB_CREATE))
 		printf("pmap_destroy(%p)\n", pmap);
 #endif
-	simple_lock(&pmap->pm_lock);
 	count = --pmap->pm_count;
-	simple_unlock(&pmap->pm_lock);
-
 	if (count > 0)
 		return;
 
@@ -686,9 +682,7 @@ pmap_reference(pmap_t pmap)
 		printf("pmap_reference(%p)\n", pmap);
 #endif
 	if (pmap != NULL) {
-		simple_lock(&pmap->pm_lock);
 		pmap->pm_count++;
-		simple_unlock(&pmap->pm_lock);
 	}
 }
 
