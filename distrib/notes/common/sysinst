@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysinst,v 1.84 2008/01/06 20:16:24 skrll Exp $
+.\"	$NetBSD: sysinst,v 1.85 2008/01/09 11:25:59 simonb Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -60,7 +60,7 @@
 .  ds part_max p
 .\}
 .if \n[acorn26]:\n[acorn32]:\n[cats]:\n[evbarm]:\n[evbppc]:\n[ews4800mips]:\
-\n[pc532]:\n[sandpoint]:\n[shark] \{\
+\n[sandpoint]:\n[shark] \{\
 .  ds part_usr e
 .\}
 .if \n[macppc]:\n[news68k]:\n[newsmips]:\n[sparc]:\n[sparc64] \{\

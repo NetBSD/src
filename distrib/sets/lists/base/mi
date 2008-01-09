@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.736 2008/01/03 20:47:55 jdc Exp $
+# $NetBSD: mi,v 1.737 2008/01/09 11:25:59 simonb Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2638,7 +2638,7 @@
 ./usr/share/man/cat4/mac68k			base-man-share
 ./usr/share/man/cat4/macppc			base-man-share
 ./usr/share/man/cat4/mvme68k			base-man-share
-./usr/share/man/cat4/pc532			base-man-share
+./usr/share/man/cat4/pc532			base-obsolete		obsolete
 ./usr/share/man/cat4/pmax			base-man-share
 ./usr/share/man/cat4/pmppc			base-obsolete		obsolete
 ./usr/share/man/cat4/prep			base-man-share
@@ -2673,7 +2673,7 @@
 ./usr/share/man/cat8/evbmips			base-man-share
 ./usr/share/man/cat8/evbppc			base-man-share
 ./usr/share/man/cat8/evbsh3			base-man-share
-./usr/share/man/cat8/evbsh5			base-obsolete	obsolete
+./usr/share/man/cat8/evbsh5			base-obsolete		obsolete
 ./usr/share/man/cat8/hp300			base-man-share
 ./usr/share/man/cat8/hp700			base-man-share
 ./usr/share/man/cat8/hpcarm			base-man-share
@@ -2693,7 +2693,7 @@
 ./usr/share/man/cat8/newsmips			base-man-share
 ./usr/share/man/cat8/next68k			base-man-share
 ./usr/share/man/cat8/ofppc			base-man-share
-./usr/share/man/cat8/pc532			base-man-share
+./usr/share/man/cat8/pc532			base-obsolete		obsolete
 ./usr/share/man/cat8/playstation2		base-man-share
 ./usr/share/man/cat8/pmax			base-man-share
 ./usr/share/man/cat8/pmppc			base-obsolete		obsolete
@@ -2721,7 +2721,7 @@
 ./usr/share/man/cat9/hp300			base-man-share
 ./usr/share/man/cat9/i386			base-man-share
 ./usr/share/man/cat9/mac68k			base-man-share
-./usr/share/man/cat9/pc532			base-man-share
+./usr/share/man/cat9/pc532			base-obsolete		obsolete
 ./usr/share/man/cat9/pmax			base-man-share
 ./usr/share/man/cat9/sparc			base-man-share
 ./usr/share/man/cat9/sun3			base-man-share
@@ -2757,7 +2757,7 @@
 ./usr/share/man/html4/mac68k			base-man-share
 ./usr/share/man/html4/macppc			base-man-share
 ./usr/share/man/html4/mvme68k			base-man-share
-./usr/share/man/html4/pc532			base-man-share
+./usr/share/man/html4/pc532			base-obsolete		obsolete
 ./usr/share/man/html4/pmax			base-man-share
 ./usr/share/man/html4/pmppc			base-obsolete		obsolete
 ./usr/share/man/html4/prep			base-man-share
@@ -2791,7 +2791,7 @@
 ./usr/share/man/html8/evbmips			base-man-share
 ./usr/share/man/html8/evbppc			base-man-share
 ./usr/share/man/html8/evbsh3			base-man-share
-./usr/share/man/html8/evbsh5			base-obsolete	obsolete
+./usr/share/man/html8/evbsh5			base-obsolete		obsolete
 ./usr/share/man/html8/hp300			base-man-share
 ./usr/share/man/html8/hp700			base-man-share
 ./usr/share/man/html8/hpcarm			base-man-share
@@ -2811,7 +2811,7 @@
 ./usr/share/man/html8/newsmips			base-man-share
 ./usr/share/man/html8/next68k			base-man-share
 ./usr/share/man/html8/ofppc			base-man-share
-./usr/share/man/html8/pc532			base-man-share
+./usr/share/man/html8/pc532			base-obsolete		obsolete
 ./usr/share/man/html8/playstation		base-obsolete		obsolete
 ./usr/share/man/html8/playstation2		base-man-share
 ./usr/share/man/html8/pmax			base-man-share
@@ -2839,7 +2839,7 @@
 ./usr/share/man/html9/hp300			base-man-share
 ./usr/share/man/html9/i386			base-man-share
 ./usr/share/man/html9/mac68k			base-man-share
-./usr/share/man/html9/pc532			base-man-share
+./usr/share/man/html9/pc532			base-obsolete		obsolete
 ./usr/share/man/html9/pmax			base-man-share
 ./usr/share/man/html9/sparc			base-man-share
 ./usr/share/man/html9/sun3			base-man-share
@@ -2877,7 +2877,7 @@
 ./usr/share/man/man4/mac68k			base-man-share
 ./usr/share/man/man4/macppc			base-man-share
 ./usr/share/man/man4/mvme68k			base-man-share
-./usr/share/man/man4/pc532			base-man-share
+./usr/share/man/man4/pc532			base-obsolete		obsolete
 ./usr/share/man/man4/pmax			base-man-share
 ./usr/share/man/man4/pmppc			base-obsolete		obsolete
 ./usr/share/man/man4/prep			base-man-share
@@ -2912,7 +2912,7 @@
 ./usr/share/man/man8/evbmips			base-man-share
 ./usr/share/man/man8/evbppc			base-man-share
 ./usr/share/man/man8/evbsh3			base-man-share
-./usr/share/man/man8/evbsh5			base-obsolete	obsolete
+./usr/share/man/man8/evbsh5			base-obsolete		obsolete
 ./usr/share/man/man8/hp300			base-man-share
 ./usr/share/man/man8/hp700			base-man-share
 ./usr/share/man/man8/hpcarm			base-man-share
@@ -2932,7 +2932,7 @@
 ./usr/share/man/man8/newsmips			base-man-share
 ./usr/share/man/man8/next68k			base-man-share
 ./usr/share/man/man8/ofppc			base-man-share
-./usr/share/man/man8/pc532			base-man-share
+./usr/share/man/man8/pc532			base-obsolete		obsolete
 ./usr/share/man/man8/playstation2		base-man-share
 ./usr/share/man/man8/pmax			base-man-share
 ./usr/share/man/man8/pmppc			base-obsolete		obsolete
@@ -2960,7 +2960,7 @@
 ./usr/share/man/man9/hp300			base-man-share
 ./usr/share/man/man9/i386			base-man-share
 ./usr/share/man/man9/mac68k			base-man-share
-./usr/share/man/man9/pc532			base-man-share
+./usr/share/man/man9/pc532			base-obsolete		obsolete
 ./usr/share/man/man9/pmax			base-man-share
 ./usr/share/man/man9/sparc			base-man-share
 ./usr/share/man/man9/sun3			base-man-share
