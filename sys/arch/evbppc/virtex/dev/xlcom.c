@@ -1,4 +1,4 @@
-/* 	$NetBSD: xlcom.c,v 1.5 2007/12/02 20:46:53 ad Exp $ */
+/* 	$NetBSD: xlcom.c,v 1.6 2008/01/09 08:15:53 elad Exp $ */
 
 /*
  * Copyright (c) 2006 Jachym Holecek
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xlcom.c,v 1.5 2007/12/02 20:46:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xlcom.c,v 1.6 2008/01/09 08:15:53 elad Exp $");
 
 #include "opt_kgdb.h"
 
@@ -394,7 +394,6 @@ xlcom_open(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct xlcom_softc 	*sc;
 	struct tty 		*tp;
-	struct proc 		*p;
 	int 			error, s;
 
 	sc = device_lookup(&xlcom_cd, minor(dev));
@@ -402,13 +401,11 @@ xlcom_open(dev_t dev, int flags, int mode, struct lwp *l)
 		return (ENXIO);
 
 	tp = sc->sc_tty;
-	p = l->l_proc;
 
 	s = spltty(); 							/* { */
 
-	if ((tp->t_state & TS_ISOPEN) && (tp->t_state & TS_XCLUDE) &&
-	    kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
-	    &p->p_acflag) != 0) {
+	if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN,
+	    tp) != 0) {
 	    	error = EBUSY;
 	    	goto fail;
 	}
