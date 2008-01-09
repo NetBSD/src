@@ -1,4 +1,4 @@
-/*	$NetBSD: crime.c,v 1.27 2007/10/17 19:57:03 garbled Exp $	*/
+/*	$NetBSD: crime.c,v 1.28 2008/01/09 20:38:36 wiz Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher SEKIYA
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crime.c,v 1.27 2007/10/17 19:57:03 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crime.c,v 1.28 2008/01/09 20:38:36 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -158,7 +158,7 @@ crime_attach(struct device *parent, struct device *self, void *aux)
 	curcpu()->ci_cpu_freq = cps * 2 * hz;
 	curcpu()->ci_cycles_per_hz = curcpu()->ci_cpu_freq / (2 * hz);
 	curcpu()->ci_divisor_delay = curcpu()->ci_cpu_freq / (2 * 1000000);
-	MIPS_SET_CI_RECIPRICAL(curcpu());
+	MIPS_SET_CI_RECIPROCAL(curcpu());
 
 	/* Turn on memory error and crime error interrupts.
 	   All others turned on as devices are registered. */
