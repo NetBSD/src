@@ -1,4 +1,4 @@
-/*	$NetBSD: algor_p4032_intr.c,v 1.14 2007/12/03 15:33:03 ad Exp $	*/
+/*	$NetBSD: algor_p4032_intr.c,v 1.15 2008/01/09 14:46:48 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: algor_p4032_intr.c,v 1.14 2007/12/03 15:33:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: algor_p4032_intr.c,v 1.15 2008/01/09 14:46:48 tsutsui Exp $");
 
 #include "opt_ddb.h"
 
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: algor_p4032_intr.c,v 1.14 2007/12/03 15:33:03 ad Exp
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
+#include <sys/cpu.h>
 
 #include <machine/bus.h>
 #include <machine/autoconf.h>
@@ -326,21 +327,24 @@ algor_p4032_cal_timer(bus_space_tag_t st, bus_space_handle_t sh)
 
 	REGVAL(P4032_IRR0) = 0;
 
-	/* Compute the number of cycles per second. */
+	/* Update CPU frequency values */
 	cps = ((ctrdiff[2] + ctrdiff[3]) / 2) * 16;
-
-	/* Compute the number of ticks for hz. */
-	cycles_per_hz = cps / hz;
-
-	/* Compute the delay divisor. */
-	delay_divisor = (cps / 1000000) / 2;
+	curcpu()->ci_cpu_freq = cps;
+	curcpu()->ci_cycles_per_hz = (curcpu()->ci_cpu_freq + hz / 2) / hz;
+	curcpu()->ci_divisor_delay =
+	    ((curcpu()->ci_cpu_freq + (1000000 / 2)) / 1000000);
+	/* XXX mips_cpu_flags isn't set here; assume CPU_MIPS_DOUBLE_COUNT */
+	curcpu()->ci_cycles_per_hz /= 2;
+	curcpu()->ci_divisor_delay /= 2;
+	MIPS_SET_CI_RECIPRICAL(curcpu());
 
 	printf("Timer calibration: %lu cycles/sec [(%lu, %lu) * 16]\n",
-	    cps, ctrdiff[2], ctrdiff[3]);
+	    curcpu()->ci_cpu_freq, ctrdiff[2], ctrdiff[3]);
 	printf("CPU clock speed = %lu.%02luMHz "
-	    "(hz cycles = %lu, delay divisor = %u)\n",
-	    cps / 1000000, (cps % 1000000) / 10000,
-	    cycles_per_hz, delay_divisor);
+	    "(hz cycles = %lu, delay divisor = %lu)\n",
+	    curcpu()->ci_cpu_freq / 1000000,
+	    (curcpu()->ci_cpu_freq % 1000000) / 10000,
+	    curcpu()->ci_cycles_per_hz, curcpu()->ci_divisor_delay);
 }
 
 void *
