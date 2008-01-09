@@ -1,7 +1,10 @@
-/*	$NetBSD: requests.c,v 1.9.4.1 2007/11/06 23:11:55 matt Exp $	*/
+/*	$NetBSD: requests.c,v 1.9.4.2 2008/01/09 01:36:52 matt Exp $	*/
 
 /*
- * Copyright (c) 2006 Antti Kantee.  All Rights Reserved.
+ * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
+ *
+ * Development of this software was supported by the
+ * Research Foundation of Helsinki University of Technology
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -27,12 +30,15 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: requests.c,v 1.9.4.1 2007/11/06 23:11:55 matt Exp $");
+__RCSID("$NetBSD: requests.c,v 1.9.4.2 2008/01/09 01:36:52 matt Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/queue.h>
+#include <sys/socket.h>
+
+#include <dev/putter/putter.h>
 
 #include <assert.h>
 #include <errno.h>
@@ -44,176 +50,200 @@ __RCSID("$NetBSD: requests.c,v 1.9.4.1 2007/11/06 23:11:55 matt Exp $");
 #include "puffs_priv.h"
 
 /*
- * XXX: a lot of this stuff is together just with string and bubblegum now
+ * Read a frame from the upstream provider.  First read the frame
+ * length and after this read the actual contents.  Yes, optimize
+ * me some day.
  */
-
 /*ARGSUSED*/
-struct puffs_getreq *
-puffs_req_makeget(struct puffs_usermount *pu, size_t buflen, int maxops)
-{
-	struct puffs_getreq *pgr;
-
-	pgr = malloc(sizeof(struct puffs_getreq));
-	if (!pgr)
-		return NULL;
-
-	pgr->pgr_pu = pu;
-	pgr->pgr_buf = NULL;
-
-	return pgr;
-}
-
 int
-puffs_req_loadget(struct puffs_getreq *pgr)
+puffs_fsframe_read(struct puffs_usermount *pu, struct puffs_framebuf *pb,
+	int fd, int *done)
 {
-	struct puffs_frame pfr;
-	uint8_t *buf;
-	size_t rlen;
-	int fd = pgr->pgr_pu->pu_fd;
-
-	assert(pgr->pgr_buf == NULL);
-
-	if (read(fd, &pfr, sizeof(struct puffs_frame)) == -1) {
-		if (errno == EWOULDBLOCK)
-			return 0;
-		return -1;
-	}
-	buf = malloc(pfr.pfr_alloclen);
-	assert(buf != NULL); /* XXX: a bit more grace here, thanks */
-	memcpy(buf, &pfr, sizeof(pfr));
-
-	rlen = pfr.pfr_len - sizeof(pfr);
-	if (read(fd, buf + sizeof(pfr), rlen) != rlen) { /* XXX */
-		free(buf);
-		return -1;
-	}
-	pgr->pgr_buf = buf;
-
-	return 0;
-}
-
-struct puffs_req *
-puffs_req_get(struct puffs_getreq *pgr)
-{
-	void *buf;
-
-	buf = pgr->pgr_buf;
-	pgr->pgr_buf = NULL;
-	return buf;
-}
-
-int
-puffs_req_remainingget(struct puffs_getreq *pgr)
-{
-
-	return pgr->pgr_buf != NULL;
-}
-
-/*ARGSUSED*/
-void
-puffs_req_setmaxget(struct puffs_getreq *pgr, int maxops)
-{
-
-	/* nada */
-}
-
-void
-puffs_req_destroyget(struct puffs_getreq *pgr)
-{
-
-	free(pgr->pgr_buf);
-	free(pgr);
-}
-
-
-struct puffs_putreq *
-puffs_req_makeput(struct puffs_usermount *pu)
-{
-	struct puffs_putreq *ppr;
-
-	ppr = malloc(sizeof(struct puffs_putreq));
-	if (!ppr)
-		return NULL;
-	memset(ppr, 0, sizeof(*ppr));
-
-	TAILQ_INIT(&ppr->ppr_pccq);
-
-	ppr->ppr_pu = pu;
-
-	return ppr;
-}
-
-void
-puffs_req_put(struct puffs_putreq *ppr, struct puffs_req *preq)
-{
+	struct putter_hdr phdr;
+	void *win;
+	size_t howmuch, winlen, curoff;
 	ssize_t n;
+	int lenstate;
 
-	/* LINTED conversion is benign, says author; may revisit */
-	preq->preq_frhdr.pfr_len = preq->preq_buflen;
-	n = write(ppr->ppr_pu->pu_fd, preq, preq->preq_frhdr.pfr_len);
-	assert(n == preq->preq_frhdr.pfr_len);
+	puffs_framebuf_reserve_space(pb, PUFFS_MSG_MAXSIZE);
+
+	/* How much to read? */
+ the_next_level:
+	curoff = puffs_framebuf_telloff(pb);
+	if (curoff < sizeof(struct putter_hdr)) {
+		howmuch = sizeof(struct putter_hdr) - curoff;
+		lenstate = 1;
+	} else {
+		puffs_framebuf_getdata_atoff(pb, 0, &phdr, sizeof(phdr));
+		/*LINTED*/
+		howmuch = phdr.pth_framelen - curoff;
+		lenstate = 0;
+	}
+
+	if (puffs_framebuf_reserve_space(pb, howmuch) == -1)
+		return errno;
+
+	/* Read contents */
+	while (howmuch) {
+		winlen = howmuch;
+		curoff = puffs_framebuf_telloff(pb);
+		if (puffs_framebuf_getwindow(pb, curoff, &win, &winlen) == -1)
+			return errno;
+		n = read(fd, win, winlen);
+		switch (n) {
+		case 0:
+			return ECONNRESET;
+		case -1:
+			if (errno == EAGAIN)
+				return 0;
+			return errno;
+		default:
+			howmuch -= n;
+			puffs_framebuf_seekset(pb, curoff + n);
+			break;
+		}
+	}
+
+	if (lenstate)
+		goto the_next_level;
+
+	puffs_framebuf_seekset(pb, 0);
+	*done = 1;
+	return 0;
 }
 
 /*
- * instead of a direct preq, put a cc onto the push queue
+ * Write a frame upstream
  */
-void
-puffs_req_putcc(struct puffs_putreq *ppr, struct puffs_cc *pcc)
-{
-
-	PU_LOCK();
-	puffs_req_put(ppr, pcc->pcc_preq);
-	TAILQ_INSERT_TAIL(&ppr->ppr_pccq, pcc, entries);
-	PU_UNLOCK();
-}
-
 /*ARGSUSED*/
 int
-puffs_req_putput(struct puffs_putreq *ppr)
+puffs_fsframe_write(struct puffs_usermount *pu, struct puffs_framebuf *pb,
+	int fd, int *done)
 {
+	void *win;
+	uint64_t flen;
+	size_t winlen, howmuch, curoff;
+	ssize_t n;
+	int rv;
 
+	/*
+	 * Finalize it if we haven't written anything yet (or we're still
+	 * attempting to write the first byte)
+	 *
+	 * XXX: this shouldn't be here
+	 */
+	if (puffs_framebuf_telloff(pb) == 0) {
+		struct puffs_req *preq;
+
+		winlen = sizeof(struct puffs_req);
+		rv = puffs_framebuf_getwindow(pb, 0, (void *)&preq, &winlen);
+		if (rv == -1)
+			return errno;
+		preq->preq_pth.pth_framelen = flen = preq->preq_buflen;
+	} else {
+		struct putter_hdr phdr;
+
+		puffs_framebuf_getdata_atoff(pb, 0, &phdr, sizeof(phdr));
+		flen = phdr.pth_framelen;
+	}
+
+	/*
+	 * Then write it.  Chances are if we are talking to the kernel it'll
+	 * just shlosh in all at once, but if we're e.g. talking to the
+	 * network it might take a few tries.
+	 */
+	/*LINTED*/
+	howmuch = flen - puffs_framebuf_telloff(pb);
+
+	while (howmuch) {
+		winlen = howmuch;
+		curoff = puffs_framebuf_telloff(pb);
+		if (puffs_framebuf_getwindow(pb, curoff, &win, &winlen) == -1)
+			return errno;
+
+		/*
+		 * XXX: we know from the framebuf implementation that we
+		 * will always managed to map the entire window.  But if
+		 * that changes, this will catch it.  Then we can do stuff
+		 * iov stuff instead.
+		 */
+		assert(winlen == howmuch);
+
+		/* XXX: want NOSIGNAL if writing to a pipe */
+#if 0
+		n = send(fd, win, winlen, MSG_NOSIGNAL);
+#else
+		n = write(fd, win, winlen);
+#endif
+		switch (n) {
+		case 0:
+			return ECONNRESET;
+		case -1:
+			if (errno == EAGAIN)
+				return 0;
+			return errno;
+		default:
+			howmuch -= n;
+			puffs_framebuf_seekset(pb, curoff + n);
+			break;
+		}
+	}
+
+	*done = 1;
 	return 0;
 }
 
-void
-puffs_req_resetput(struct puffs_putreq *ppr)
-{
-	struct puffs_cc *pcc;
-
-	PU_LOCK();
-	while ((pcc = TAILQ_FIRST(&ppr->ppr_pccq)) != NULL) {
-		TAILQ_REMOVE(&ppr->ppr_pccq, pcc, entries);
-		puffs_cc_destroy(pcc);
-	}
-	PU_UNLOCK();
-}
-
-void
-puffs_req_destroyput(struct puffs_putreq *ppr)
-{
-
-	puffs_req_resetput(ppr);
-	free(ppr);
-}
-
+/*
+ * Compare if "pb1" is a response to a previously sent frame pb2.
+ * More often than not "pb1" is not a response to anything but
+ * rather a fresh request from the kernel.
+ */
 /*ARGSUSED*/
 int
-puffs_req_handle(struct puffs_getreq *pgr, struct puffs_putreq *ppr, int maxops)
+puffs_fsframe_cmp(struct puffs_usermount *pu,
+	struct puffs_framebuf *pb1, struct puffs_framebuf *pb2, int *notresp)
 {
-	struct puffs_usermount *pu;
-	struct puffs_req *preq;
-	int pval;
+	struct puffs_req *preq1, *preq2;
+	size_t winlen;
+	int rv;
 
-	assert(pgr->pgr_pu == ppr->ppr_pu);
-	pu = pgr->pgr_pu;
+	/* map incoming preq */
+	winlen = sizeof(struct puffs_req);
+	rv = puffs_framebuf_getwindow(pb1, 0, (void *)&preq1, &winlen);
+	assert(rv == 0); /* frames are always at least puffs_req in size */
+	assert(winlen = sizeof(struct puffs_req));
 
-	if (puffs_req_loadget(pgr) == -1)
-		return -1;
+	/*
+	 * Check if this is not a response in this slot.  That's the
+	 * likely case.
+	 */
+	if ((preq1->preq_opclass & PUFFSOPFLAG_ISRESPONSE) == 0) {
+		*notresp = 1;
+		return 0;
+	}
 
-	pval = 0;
-	while ((preq = puffs_req_get(pgr)) != NULL
-	    && puffs_getstate(pu) != PUFFS_STATE_UNMOUNTED)
-		pval = puffs_dopreq(pu, preq, ppr);
+	/* map second preq */
+	winlen = sizeof(struct puffs_req);
+	rv = puffs_framebuf_getwindow(pb2, 0, (void *)&preq2, &winlen);
+	assert(rv == 0); /* frames are always at least puffs_req in size */
+	assert(winlen = sizeof(struct puffs_req));
 
-	return pval;
+	/* then compare: resid equal? */
+	return preq1->preq_id != preq2->preq_id;
+}
+
+void
+puffs_fsframe_gotframe(struct puffs_usermount *pu, struct puffs_framebuf *pb)
+{
+	struct puffs_framebuf *newpb;
+
+	if ((newpb = puffs_framebuf_make()) == NULL)
+		abort();
+	/* XXX: optimize */
+	puffs__framebuf_moveinfo(pb, newpb);
+	puffs_framebuf_seekset(newpb, 0);
+	if (puffs_framebuf_reserve_space(newpb, PUFFS_MSG_MAXSIZE) == -1)
+		abort();
+
+	puffs_dopufbuf(pu, newpb);
 }

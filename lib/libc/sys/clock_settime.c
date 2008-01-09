@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_settime.c,v 1.8 2006/10/07 20:02:01 kardel Exp $ */
+/*	$NetBSD: clock_settime.c,v 1.8.8.1 2008/01/09 01:34:20 matt Exp $ */
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.      
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: clock_settime.c,v 1.8 2006/10/07 20:02:01 kardel Exp $");
+__RCSID("$NetBSD: clock_settime.c,v 1.8.8.1 2008/01/09 01:34:20 matt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -57,13 +57,14 @@ __weak_alias(clock_settime,_clock_settime)
 
 extern int __clockctl_fd;
 
+int __clock_settime(clockid_t, const struct timespec *);
+
 int
 clock_settime(clock_id, tp)
 	clockid_t clock_id;
 	const struct timespec *tp;
 {
 	struct clockctl_clock_settime args;
-	quad_t q;
 	int rv;
 
 	/*
@@ -71,12 +72,7 @@ clock_settime(clock_id, tp)
 	 * clockctl if that fails.
 	 */
 	if (__clockctl_fd == -1) {
-		q = __syscall((quad_t)SYS_clock_settime, clock_id, tp);
-		if (/* LINTED constant */ sizeof (quad_t) == sizeof (register_t)
-		    || /* LINTED constant */ BYTE_ORDER == LITTLE_ENDIAN)
-			rv = (int)q;
-		else
-			rv = (int)((u_quad_t)q >> 32); 
+		rv = __clock_settime(clock_id, tp);
 	
 		/*
 		 * return unless we failed with EPERM

@@ -1,4 +1,4 @@
-/*	$NetBSD: wsconsctl.c,v 1.14 2006/02/05 18:11:46 jmmv Exp $ */
+/*	$NetBSD: wsconsctl.c,v 1.14.10.1 2008/01/09 01:38:19 matt Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -36,6 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #include <err.h>
 #include <fcntl.h>
 #include <string.h>
@@ -56,7 +57,7 @@ extern int keyboard_field_tab_len;
 extern int mouse_field_tab_len;
 extern int display_field_tab_len;
 
-static void usage(const char *) __attribute__((__noreturn__));
+static void usage(const char *) __dead;
 
 static void
 usage(const char *msg)

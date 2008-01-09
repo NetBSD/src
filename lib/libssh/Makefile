@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2007/05/28 12:06:21 tls Exp $
+#	$NetBSD: Makefile,v 1.10.4.1 2008/01/09 01:36:55 matt Exp $
 
 .include <bsd.own.mk>
 
@@ -12,6 +12,7 @@ SRCS=	authfd.c authfile.c bufaux.c bufbn.c buffer.c canohost.c channels.c \
 	ssh-dss.c ssh-rsa.c dh.c kexdh.c kexgex.c \
 	kexdhc.c kexgexc.c scard.c msg.c progressmeter.c \
 	monitor_fdpass.c uidswap.c
+#	umac.c
 SRCS+=	random.c
 SRCS+=	readpassphrase.c getpeereid.c getrrsetbyname.c
 COPTS.monitor_fdpass.c = -Wno-stack-protector

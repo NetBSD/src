@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2006/09/05 19:44:44 riz Exp $
+#	$NetBSD: Makefile,v 1.5.8.1 2008/01/09 01:38:16 matt Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/18/93
 
 .include <bsd.own.mk>
@@ -16,6 +16,7 @@ FSCK= ${NETBSDSRCDIR}/sbin/fsck
 
 DPADD=  ${LIBUTIL}
 LDADD=  -lutil
-CPPFLAGS+=-I${FSCK_LFS} -I${FSCK} # -DNDEBUG # -DVERBOSE_BLOCKMAP
+CPPFLAGS+=-I${FSCK_LFS} -I${FSCK} "-Dmutex_enter(x)=" "-Dmutex_exit(x)=" # -DNDEBUG # -DVERBOSE_BLOCKMAP
+CPPFLAGS+="-DKASSERT(x)="
 
 .include <bsd.prog.mk>

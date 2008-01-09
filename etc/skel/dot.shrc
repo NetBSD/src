@@ -1,6 +1,8 @@
-#	$NetBSD: dot.shrc,v 1.2 2006/09/14 13:01:32 pavel Exp $
+#	$NetBSD: dot.shrc,v 1.2.8.1 2008/01/09 01:29:56 matt Exp $
 
-. /etc/shrc
+if [ -f /etc/shrc ]; then
+	. /etc/shrc
+fi
 
 case "$-" in *i*)
 	# interactive mode settings go here

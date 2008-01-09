@@ -1,4 +1,4 @@
-/*	$NetBSD: callcontext.c,v 1.7.4.1 2007/11/06 23:11:50 matt Exp $	*/
+/*	$NetBSD: callcontext.c,v 1.7.4.2 2008/01/09 01:36:44 matt Exp $	*/
 
 /*
  * Copyright (c) 2006 Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: callcontext.c,v 1.7.4.1 2007/11/06 23:11:50 matt Exp $");
+__RCSID("$NetBSD: callcontext.c,v 1.7.4.2 2008/01/09 01:36:44 matt Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -43,6 +43,7 @@ __RCSID("$NetBSD: callcontext.c,v 1.7.4.1 2007/11/06 23:11:50 matt Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <ucontext.h>
+#include <unistd.h>
 
 #include "puffs_priv.h"
 
@@ -97,20 +98,6 @@ puffs_cc_schedule(struct puffs_cc *pcc)
 	TAILQ_INSERT_TAIL(&pu->pu_sched, pcc, entries);
 }
 
-struct puffs_usermount *
-puffs_cc_getusermount(struct puffs_cc *pcc)
-{
-
-	return pcc->pcc_pu;
-}
-
-void *
-puffs_cc_getspecific(struct puffs_cc *pcc)
-{
-
-	return puffs_getspecific(pcc->pcc_pu);
-}
-
 int
 puffs_cc_getcaller(struct puffs_cc *pcc, pid_t *pid, lwpid_t *lid)
 {
@@ -131,38 +118,64 @@ puffs_cc_getcaller(struct puffs_cc *pcc, pid_t *pid, lwpid_t *lid)
 int pthread__stackid_setup(void *, size_t, pthread_t *);
 #endif
 
+/* for fakecc-users, need only one */
+static struct puffs_cc fakecc;
+
 int
-puffs_cc_create(struct puffs_usermount *pu, struct puffs_req *preq,
+puffs_cc_create(struct puffs_usermount *pu, struct puffs_framebuf *pb,
 	int type, struct puffs_cc **pccp)
 {
 	struct puffs_cc *volatile pcc;
 	size_t stacksize = 1<<pu->pu_cc_stackshift;
+	long psize = sysconf(_SC_PAGESIZE);
 	stack_t *st;
-	void *sp;
+	void *volatile sp;
 
 #ifdef PUFFS_WITH_THREADS
 	extern size_t pthread__stacksize;
 	stacksize = pthread__stacksize;
 #endif
 
-	pcc = malloc(sizeof(struct puffs_cc));
-	if (!pcc)
-		return -1;
+	/*
+	 * There are two paths and in the long run we don't have time to
+	 * change the one we're on.  For non-real cc's, we just simply use
+	 * a static copy.  For the other cases, we mmap the stack and
+	 * manually reserve a bit from the top for the data structure
+	 * (or, well, the bottom).
+	 *
+	 * XXX: threaded mode doesn't work very well now.  Not that it's
+	 * supported anyhow.
+	 */
+	if (type == PCC_FAKECC) {
+		pcc = &fakecc;
+		sp = NULL;
+	} else {
+		sp = mmap(NULL, stacksize, PROT_READ|PROT_WRITE,
+		    MAP_ANON|MAP_PRIVATE|MAP_ALIGNED(pu->pu_cc_stackshift),
+		    -1, 0);
+		if (sp == MAP_FAILED)
+			return -1;
+
+		pcc = sp;
+		sp = (uint8_t *)sp + psize;
+	}
+
 	memset(pcc, 0, sizeof(struct puffs_cc));
 	pcc->pcc_pu = pu;
-	pcc->pcc_preq = preq;
-
+	pcc->pcc_pb = pb;
 	pcc->pcc_flags = type;
+
+	/* Not a real cc?  Don't need to init more */
 	if (pcc->pcc_flags != PCC_REALCC)
 		goto out;
 
 	/* initialize both ucontext's */
 	if (getcontext(&pcc->pcc_uc) == -1) {
-		free(pcc);
+		munmap(pcc, stacksize);
 		return -1;
 	}
 	if (getcontext(&pcc->pcc_uc_ret) == -1) {
-		free(pcc);
+		munmap(pcc, stacksize);
 		return -1;
 	}
 	/* return here.  it won't actually be "here" due to swapcontext() */
@@ -170,14 +183,9 @@ puffs_cc_create(struct puffs_usermount *pu, struct puffs_req *preq,
 
 	/* allocate stack for execution */
 	st = &pcc->pcc_uc.uc_stack;
-	sp = mmap(NULL, stacksize, PROT_READ|PROT_WRITE,
-	    MAP_ANON|MAP_PRIVATE|MAP_ALIGNED(pu->pu_cc_stackshift), -1, 0);
-	if (sp == MAP_FAILED) {
-		free(pcc);
-		return -1;
-	}
+
 	st->ss_sp = pcc->pcc_stack = sp;
-	st->ss_size = stacksize;
+	st->ss_size = stacksize - psize;
 	st->ss_flags = 0;
 
 #ifdef PUFFS_WITH_THREADS
@@ -185,7 +193,7 @@ puffs_cc_create(struct puffs_usermount *pu, struct puffs_req *preq,
 	pthread_t pt;
 	extern int __isthreaded;
 	if (__isthreaded)
-		pthread__stackid_setup(sp, stacksize, &pt);
+		pthread__stackid_setup(sp, stacksize /* XXXb0rked */, &pt);
 	}
 #endif
 
@@ -227,8 +235,24 @@ puffs_cc_destroy(struct puffs_cc *pcc)
 	stacksize = pthread__stacksize;
 #endif
 
-	if (pcc->pcc_flags & PCC_REALCC)
-		munmap(pcc->pcc_stack, stacksize);
-	free(pcc->pcc_preq);
-	free(pcc);
+	if ((pcc->pcc_flags & PCC_FAKECC) == 0)
+		munmap(pcc, stacksize);
+}
+
+struct puffs_cc *
+puffs_cc_getcc(struct puffs_usermount *pu)
+{
+	extern int puffs_fakecc, puffs_usethreads;
+	size_t stacksize = 1<<pu->pu_cc_stackshift;
+	uintptr_t bottom;
+
+	if (puffs_fakecc)
+		return &fakecc;
+#ifndef PUFFS_WITH_THREADS
+	if (puffs_usethreads)
+		return &fakecc;
+#endif
+
+	bottom = ((uintptr_t)&bottom) & ~(stacksize-1);
+	return (struct puffs_cc *)bottom;
 }

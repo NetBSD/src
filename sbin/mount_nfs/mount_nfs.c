@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_nfs.c,v 1.60 2007/07/16 17:06:53 pooka Exp $	*/
+/*	$NetBSD: mount_nfs.c,v 1.60.4.1 2008/01/09 01:38:10 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_nfs.c	8.11 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: mount_nfs.c,v 1.60 2007/07/16 17:06:53 pooka Exp $");
+__RCSID("$NetBSD: mount_nfs.c,v 1.60.4.1 2008/01/09 01:38:10 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -158,7 +158,6 @@ struct nfs_args nfsdefargs = {
 
 int retrycnt = 0;
 int opflags = 0;
-int nfsproto = IPPROTO_UDP;
 int force2 = 0;
 int force3 = 0;
 int mnttcp_ok = 1;
@@ -300,7 +299,6 @@ mount_nfs(int argc, char *argv[])
 				nfsargsp->flags |= NFSMNT_SOFT;
 			if (altflags & ALTF_TCP) {
 				nfsargsp->sotype = SOCK_STREAM;
-				nfsproto = IPPROTO_TCP;
 			}
 			if (altflags & ALTF_PORT) {
 				port = getmntoptnum(mp, "port");
@@ -385,7 +383,6 @@ mount_nfs(int argc, char *argv[])
 			break;
 		case 'T':
 			nfsargsp->sotype = SOCK_STREAM;
-			nfsproto = IPPROTO_TCP;
 			break;
 		case 't':
 			num = strtol(optarg, &p, 10);

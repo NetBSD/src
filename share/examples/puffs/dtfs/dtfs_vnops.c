@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs_vnops.c,v 1.38.2.1 2007/11/06 23:12:40 matt Exp $	*/
+/*	$NetBSD: dtfs_vnops.c,v 1.38.2.2 2008/01/09 01:38:59 matt Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -40,8 +40,8 @@
 #include "dtfs.h"
 
 int
-dtfs_node_lookup(struct puffs_cc *pcc, void *opc, struct puffs_newinfo *pni,
-	const struct puffs_cn *pcn)
+dtfs_node_lookup(struct puffs_usermount *pu, void *opc,
+	struct puffs_newinfo *pni, const struct puffs_cn *pcn)
 {
 	struct puffs_node *pn_dir = opc;
 	struct dtfs_file *df = DTFS_CTOF(opc);
@@ -66,8 +66,7 @@ dtfs_node_lookup(struct puffs_cc *pcc, void *opc, struct puffs_newinfo *pni,
 		puffs_newinfo_setrdev(pni, dfd->dfd_node->pn_va.va_rdev);
 
 		if (straightflush)
-			puffs_flush_pagecache_node(puffs_cc_getusermount(pcc),
-			    dfd->dfd_node);
+			puffs_flush_pagecache_node(pu, dfd->dfd_node);
 
 		return 0;
 	}
@@ -86,8 +85,8 @@ dtfs_node_lookup(struct puffs_cc *pcc, void *opc, struct puffs_newinfo *pni,
 }
 
 int
-dtfs_node_access(struct puffs_cc *pcc, void *opc, int acc_mode,
-	const struct puffs_cred *pcr, const struct puffs_cid *pcid)
+dtfs_node_access(struct puffs_usermount *pu, void *opc, int acc_mode,
+	const struct puffs_cred *pcr)
 {
 	struct puffs_node *pn = opc;
 
@@ -96,21 +95,8 @@ dtfs_node_access(struct puffs_cc *pcc, void *opc, int acc_mode,
 }
 
 int
-dtfs_node_getattr(struct puffs_cc *pcc, void *opc,
-	struct vattr *va, const struct puffs_cred *pcr,
-	const struct puffs_cid *pcid)
-{
-	struct puffs_node *pn = opc;
-
-	memcpy(va, &pn->pn_va, sizeof(struct vattr));
-
-	return 0;
-}
-
-int
-dtfs_node_setattr(struct puffs_cc *pcc, void *opc,
-	const struct vattr *va, const struct puffs_cred *pcr,
-	const struct puffs_cid *pcid)
+dtfs_node_setattr(struct puffs_usermount *pu, void *opc,
+	const struct vattr *va, const struct puffs_cred *pcr)
 {
 	struct puffs_node *pn = opc;
 	int rv;
@@ -167,8 +153,9 @@ dtfs_node_setattr(struct puffs_cc *pcc, void *opc,
 
 /* create a new node in the parent directory specified by opc */
 int
-dtfs_node_create(struct puffs_cc *pcc, void *opc, struct puffs_newinfo *pni,
-	const struct puffs_cn *pcn, const struct vattr *va)
+dtfs_node_create(struct puffs_usermount *pu, void *opc,
+	struct puffs_newinfo *pni, const struct puffs_cn *pcn,
+	const struct vattr *va)
 {
 	struct puffs_node *pn_parent = opc;
 	struct puffs_node *pn_new;
@@ -185,7 +172,7 @@ dtfs_node_create(struct puffs_cc *pcc, void *opc, struct puffs_newinfo *pni,
 }
 
 int
-dtfs_node_remove(struct puffs_cc *pcc, void *opc, void *targ,
+dtfs_node_remove(struct puffs_usermount *pu, void *opc, void *targ,
 	const struct puffs_cn *pcn)
 {
 	struct puffs_node *pn_parent = opc;
@@ -197,14 +184,15 @@ dtfs_node_remove(struct puffs_cc *pcc, void *opc, void *targ,
 	dtfs_nukenode(targ, pn_parent, pcn->pcn_name, pcn->pcn_namelen);
 
 	if (pn->pn_va.va_nlink == 0)
-		puffs_setback(pcc, PUFFS_SETBACK_NOREF_N2);
+		puffs_setback(puffs_cc_getcc(pu), PUFFS_SETBACK_NOREF_N2);
 
 	return 0;
 }
 
 int
-dtfs_node_mkdir(struct puffs_cc *pcc, void *opc, struct puffs_newinfo *pni,
-	const struct puffs_cn *pcn, const struct vattr *va)
+dtfs_node_mkdir(struct puffs_usermount *pu, void *opc,
+	struct puffs_newinfo *pni, const struct puffs_cn *pcn,
+	const struct vattr *va)
 {
 	struct puffs_node *pn_parent = opc;
 	struct puffs_node *pn_new;
@@ -218,7 +206,7 @@ dtfs_node_mkdir(struct puffs_cc *pcc, void *opc, struct puffs_newinfo *pni,
 }
 
 int
-dtfs_node_rmdir(struct puffs_cc *pcc, void *opc, void *targ,
+dtfs_node_rmdir(struct puffs_usermount *pu, void *opc, void *targ,
 	const struct puffs_cn *pcn)
 {
 	struct puffs_node *pn_parent = opc;
@@ -228,13 +216,13 @@ dtfs_node_rmdir(struct puffs_cc *pcc, void *opc, void *targ,
 		return ENOTEMPTY;
 
 	dtfs_nukenode(targ, pn_parent, pcn->pcn_name, pcn->pcn_namelen);
-	puffs_setback(pcc, PUFFS_SETBACK_NOREF_N2);
+	puffs_setback(puffs_cc_getcc(pu), PUFFS_SETBACK_NOREF_N2);
 
 	return 0;
 }
 
 int
-dtfs_node_readdir(struct puffs_cc *pcc, void *opc,
+dtfs_node_readdir(struct puffs_usermount *pu, void *opc,
 	struct dirent *dent, off_t *readoff, size_t *reslen,
 	const struct puffs_cred *pcr,
 	int *eofflag, off_t *cookies, size_t *ncookies)
@@ -279,10 +267,9 @@ dtfs_node_readdir(struct puffs_cc *pcc, void *opc,
 }
 
 int
-dtfs_node_poll(struct puffs_cc *pcc, void *opc, int *events,
-	const struct puffs_cid *pcid)
+dtfs_node_poll(struct puffs_usermount *pu, void *opc, int *events)
 {
-	struct dtfs_mount *dtm = puffs_cc_getspecific(pcc);
+	struct dtfs_mount *dtm = puffs_getspecific(pu);
 	struct dtfs_poll dp;
 	struct itimerval it;
 
@@ -291,19 +278,19 @@ dtfs_node_poll(struct puffs_cc *pcc, void *opc, int *events,
 	if (setitimer(ITIMER_REAL, &it, NULL) == -1)
 		return errno;
 
-	dp.dp_pcc = pcc;
+	dp.dp_pcc = puffs_cc_getcc(pu);
 	LIST_INSERT_HEAD(&dtm->dtm_pollent, &dp, dp_entries);
-	puffs_cc_yield(pcc);
+	puffs_cc_yield(dp.dp_pcc);
 
 	*events = *events & (POLLIN | POLLOUT | POLLRDNORM | POLLWRNORM);
 	return 0;
 }
 
 int
-dtfs_node_mmap(struct puffs_cc *pcc, void *opc, vm_prot_t prot,
-	const struct puffs_cred *pcr, const struct puffs_cid *pcid)
+dtfs_node_mmap(struct puffs_usermount *pu, void *opc, vm_prot_t prot,
+	const struct puffs_cred *pcr)
 {
-	struct dtfs_mount *dtm = puffs_cc_getspecific(pcc);
+	struct dtfs_mount *dtm = puffs_getspecific(pu);
 
 	if ((dtm->dtm_allowprot & prot) != prot)
 		return EACCES;
@@ -312,7 +299,7 @@ dtfs_node_mmap(struct puffs_cc *pcc, void *opc, vm_prot_t prot,
 }
 
 int
-dtfs_node_rename(struct puffs_cc *pcc, void *opc, void *src,
+dtfs_node_rename(struct puffs_usermount *pu, void *opc, void *src,
 	const struct puffs_cn *pcn_src, void *targ_dir, void *targ,
 	const struct puffs_cn *pcn_targ)
 {
@@ -353,7 +340,7 @@ dtfs_node_rename(struct puffs_cc *pcc, void *opc, void *src,
 }
 
 int
-dtfs_node_link(struct puffs_cc *pcc, void *opc, void *targ,
+dtfs_node_link(struct puffs_usermount *pu, void *opc, void *targ,
 	const struct puffs_cn *pcn)
 {
 	struct puffs_node *pn_dir = opc;
@@ -371,9 +358,9 @@ dtfs_node_link(struct puffs_cc *pcc, void *opc, void *targ,
 }
 
 int
-dtfs_node_symlink(struct puffs_cc *pcc, void *opc, struct puffs_newinfo *pni,
-	const struct puffs_cn *pcn_src, const struct vattr *va,
-	const char *link_target)
+dtfs_node_symlink(struct puffs_usermount *pu, void *opc,
+	struct puffs_newinfo *pni, const struct puffs_cn *pcn_src,
+	const struct vattr *va, const char *link_target)
 {
 	struct puffs_node *pn_parent = opc;
 	struct puffs_node *pn_new;
@@ -394,7 +381,7 @@ dtfs_node_symlink(struct puffs_cc *pcc, void *opc, struct puffs_newinfo *pni,
 }
 
 int
-dtfs_node_readlink(struct puffs_cc *pcc, void *opc,
+dtfs_node_readlink(struct puffs_usermount *pu, void *opc,
 	const struct puffs_cred *cred, char *linkname, size_t *linklen)
 {
 	struct dtfs_file *df = DTFS_CTOF(opc);
@@ -408,8 +395,9 @@ dtfs_node_readlink(struct puffs_cc *pcc, void *opc,
 }
 
 int
-dtfs_node_mknod(struct puffs_cc *pcc, void *opc, struct puffs_newinfo *pni,
-	const struct puffs_cn *pcn, const struct vattr *va)
+dtfs_node_mknod(struct puffs_usermount *pu, void *opc,
+	struct puffs_newinfo *pni, const struct puffs_cn *pcn,
+	const struct vattr *va)
 {
 	struct puffs_node *pn_parent = opc;
 	struct puffs_node *pn_new;
@@ -435,7 +423,7 @@ dtfs_node_mknod(struct puffs_cc *pcc, void *opc, struct puffs_newinfo *pni,
  * Read operation, used both for VOP_READ and VOP_GETPAGES
  */
 int
-dtfs_node_read(struct puffs_cc *pcc, void *opc, uint8_t *buf,
+dtfs_node_read(struct puffs_usermount *pu, void *opc, uint8_t *buf,
 	off_t offset, size_t *resid, const struct puffs_cred *pcr, int ioflag)
 {
 	struct puffs_node *pn = opc;
@@ -473,7 +461,7 @@ dtfs_node_read(struct puffs_cc *pcc, void *opc, uint8_t *buf,
  * write operation on the wing
  */
 int
-dtfs_node_write(struct puffs_cc *pcc, void *opc, uint8_t *buf,
+dtfs_node_write(struct puffs_usermount *pu, void *opc, uint8_t *buf,
 	off_t offset, size_t *resid, const struct puffs_cred *pcr, int ioflag)
 {
 	struct puffs_node *pn = opc;
@@ -509,7 +497,7 @@ dtfs_node_write(struct puffs_cc *pcc, void *opc, uint8_t *buf,
 }
 
 int
-dtfs_node_reclaim(struct puffs_cc *pcc, void *opc, const struct puffs_cid *pcid)
+dtfs_node_reclaim(struct puffs_usermount *pu, void *opc)
 {
 	struct puffs_node *pn = opc;
 

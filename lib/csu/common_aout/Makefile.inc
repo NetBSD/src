@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.8 2004/02/14 07:48:37 simonb Exp $
+#	$NetBSD: Makefile.inc,v 1.8.22.1 2008/01/09 01:33:48 matt Exp $
 #	from: @(#)Makefile	5.5 (Berkeley) 5/21/91
 
 CPPFLAGS+=	-DLIBC_SCCS -I${.CURDIR}/../common_aout
@@ -46,6 +46,7 @@ CPPFLAGS+= -DDYNAMIC
 
 FILES=${OBJS}
 FILESDIR=${LIBDIR}
+CLEANFILES=${OBJS}
 
 .if ${MKPIC} != "no" && ${SHLINKINSTALLDIR} != "/usr/libexec"
 FILESDIR_lcrt0.o:=${SHLIBINSTALLDIR}

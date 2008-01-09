@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_mutex.c,v 1.31.2.1 2007/11/06 23:11:42 matt Exp $	*/
+/*	$NetBSD: pthread_mutex.c,v 1.31.2.2 2008/01/09 01:36:37 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,15 +37,16 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_mutex.c,v 1.31.2.1 2007/11/06 23:11:42 matt Exp $");
+__RCSID("$NetBSD: pthread_mutex.c,v 1.31.2.2 2008/01/09 01:36:37 matt Exp $");
+
+#include <sys/types.h>
+
+#include <machine/lock.h>
 
 #include <errno.h>
 #include <limits.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include <sys/types.h>
-#include <sys/lock.h>
 
 #include "pthread.h"
 #include "pthread_int.h"
@@ -53,6 +54,12 @@ __RCSID("$NetBSD: pthread_mutex.c,v 1.31.2.1 2007/11/06 23:11:42 matt Exp $");
 #ifndef	PTHREAD__HAVE_ATOMIC
 
 static int pthread_mutex_lock_slow(pthread_t, pthread_mutex_t *);
+
+int		_pthread_mutex_held_np(pthread_mutex_t *);
+pthread_t	_pthread_mutex_owner_np(pthread_mutex_t *);
+
+__weak_alias(pthread_mutex_held_np,_pthread_mutex_held_np)
+__weak_alias(pthread_mutex_owner_np,_pthread_mutex_owner_np)
 
 __strong_alias(__libc_mutex_init,pthread_mutex_init)
 __strong_alias(__libc_mutex_lock,pthread_mutex_lock)
@@ -142,8 +149,8 @@ pthread_mutex_destroy(pthread_mutex_t *mutex)
  * same mutex.
  * 
  * A memory barrier after a lock and before an unlock will provide
- * this behavior. This code relies on pthread__simple_lock_try() to issue
- * a barrier after obtaining a lock, and on pthread__simple_unlock() to
+ * this behavior. This code relies on pthread__spintrylock() to issue
+ * a barrier after obtaining a lock, and on pthread__spinunlock() to
  * issue a barrier before releasing a lock.
  */
 
@@ -155,13 +162,11 @@ pthread_mutex_lock(pthread_mutex_t *mutex)
 
 	self = pthread__self();
 
-	PTHREADD_ADD(PTHREADD_MUTEX_LOCK);
-
 	/*
 	 * Note that if we get the lock, we don't have to deal with any
 	 * non-default lock type handling.
 	 */
-	if (__predict_false(pthread__simple_lock_try(&mutex->ptm_lock) == 0)) {
+	if (__predict_false(pthread__spintrylock(self, &mutex->ptm_lock) == 0)) {
 		error = pthread_mutex_lock_slow(self, mutex);
 		if (error)
 			return error;
@@ -187,20 +192,19 @@ pthread_mutex_lock_slow(pthread_t self, pthread_mutex_t *mutex)
 	pthread__error(EINVAL, "Invalid mutex",
 	    mutex->ptm_magic == _PT_MUTEX_MAGIC);
 
-	PTHREADD_ADD(PTHREADD_MUTEX_LOCK_SLOW);
 	for (;;) {
 		/* Spin for a while. */
 		count = pthread__nspins;
 		while (__SIMPLELOCK_LOCKED_P(&mutex->ptm_lock)  && --count > 0)
 			pthread__smt_pause();
 		if (count > 0) {
-			if (pthread__simple_lock_try(&mutex->ptm_lock) != 0)
+			if (pthread__spintrylock(self, &mutex->ptm_lock) != 0)
 				break;
 			continue;
 		}
 
 		/* Okay, didn't look free. Get the interlock... */
-		pthread_spinlock(&mutex->ptm_interlock);
+		pthread__spinlock(self, &mutex->ptm_interlock);
 
 		/*
 		 * The mutex_unlock routine will get the interlock
@@ -212,7 +216,7 @@ pthread_mutex_lock_slow(pthread_t self, pthread_mutex_t *mutex)
 		PTQ_INSERT_HEAD(&mutex->ptm_blocked, self, pt_sleep);
 		if (__SIMPLELOCK_UNLOCKED_P(&mutex->ptm_lock)) {
 			PTQ_REMOVE(&mutex->ptm_blocked, self, pt_sleep);
-			pthread_spinunlock(&mutex->ptm_interlock);
+			pthread__spinunlock(self, &mutex->ptm_interlock);
 			continue;
 		}
 
@@ -221,7 +225,7 @@ pthread_mutex_lock_slow(pthread_t self, pthread_mutex_t *mutex)
 			switch (mp->type) {
 			case PTHREAD_MUTEX_ERRORCHECK:
 				PTQ_REMOVE(&mutex->ptm_blocked, self, pt_sleep);
-				pthread_spinunlock(&mutex->ptm_interlock);
+				pthread__spinunlock(self, &mutex->ptm_interlock);
 				return EDEADLK;
 
 			case PTHREAD_MUTEX_RECURSIVE:
@@ -232,7 +236,7 @@ pthread_mutex_lock_slow(pthread_t self, pthread_mutex_t *mutex)
 				 * own the mutex.
 				 */
 				PTQ_REMOVE(&mutex->ptm_blocked, self, pt_sleep);
-				pthread_spinunlock(&mutex->ptm_interlock);
+				pthread__spinunlock(self, &mutex->ptm_interlock);
 				if (mp->recursecount == INT_MAX)
 					return EAGAIN;
 				mp->recursecount++;
@@ -260,7 +264,7 @@ pthread_mutex_lock_slow(pthread_t self, pthread_mutex_t *mutex)
 		 */
 		self->pt_sleeponq = 1;
 		self->pt_sleepobj = &mutex->ptm_blocked;
-		pthread_spinunlock(&mutex->ptm_interlock);
+		pthread__spinunlock(self, &mutex->ptm_interlock);
 		(void)pthread__park(self, &mutex->ptm_interlock,
 		    &mutex->ptm_blocked, NULL, 0, &mutex->ptm_blocked);
 	}
@@ -280,8 +284,7 @@ pthread_mutex_trylock(pthread_mutex_t *mutex)
 
 	self = pthread__self();
 
-	PTHREADD_ADD(PTHREADD_MUTEX_TRYLOCK);
-	if (pthread__simple_lock_try(&mutex->ptm_lock) == 0) {
+	if (pthread__spintrylock(self, &mutex->ptm_lock) == 0) {
 		/*
 		 * These tests can be performed without holding the
 		 * interlock because these fields are only modified
@@ -315,14 +318,12 @@ pthread_mutex_unlock(pthread_mutex_t *mutex)
 	pthread__error(EINVAL, "Invalid mutex",
 	    mutex->ptm_magic == _PT_MUTEX_MAGIC);
 
-	PTHREADD_ADD(PTHREADD_MUTEX_UNLOCK);
-
 	/*
 	 * These tests can be performed without holding the
 	 * interlock because these fields are only modified
 	 * if we know we own the mutex.
 	 */
-	self = pthread_self();
+	self = pthread__self();
 	weown = (mutex->ptm_owner == self);
 	mp = mutex->ptm_private;
 
@@ -352,7 +353,7 @@ pthread_mutex_unlock(pthread_mutex_t *mutex)
 	}
 
 	mutex->ptm_owner = NULL;
-	pthread__simple_unlock(&mutex->ptm_lock);
+	pthread__spinunlock(self, &mutex->ptm_lock);
 
 	/*
 	 * Do a double-checked locking dance to see if there are any
@@ -364,7 +365,7 @@ pthread_mutex_unlock(pthread_mutex_t *mutex)
 	 * examination of the queue; if so, no harm is done, as the
 	 * waiter will loop and see that the mutex is still locked.
 	 */
-	pthread_spinlock(&mutex->ptm_interlock);
+	pthread__spinlock(self, &mutex->ptm_interlock);
 	pthread__unpark_all(self, &mutex->ptm_interlock, &mutex->ptm_blocked);
 	return 0;
 }
@@ -473,6 +474,20 @@ pthread__mutex_deferwake(pthread_t thread, pthread_mutex_t *mutex)
 {
 
 	return mutex->ptm_owner == thread;
+}
+
+int
+_pthread_mutex_held_np(pthread_mutex_t *mutex)
+{
+
+	return mutex->ptm_owner == pthread__self();
+}
+
+pthread_t
+_pthread_mutex_owner_np(pthread_mutex_t *mutex)
+{
+
+	return (pthread_t)mutex->ptm_owner;
 }
 
 #endif	/* !PTHREAD__HAVE_ATOMIC */

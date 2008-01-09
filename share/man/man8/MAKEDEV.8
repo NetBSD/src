@@ -6,7 +6,7 @@
 .\" *** DO NOT EDIT - any changes will be lost!!!
 .\" *** ------------------------------------------------------------------
 .\"
-.\" $NetBSD: MAKEDEV.8,v 1.23.4.1 2007/11/06 23:13:12 matt Exp $
+.\" $NetBSD: MAKEDEV.8,v 1.23.4.2 2008/01/09 01:39:14 matt Exp $
 .\"
 .\" Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -42,7 +42,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 11, 2007
+.Dd December 31, 2007
 .Dt MAKEDEV 8
 .Os
 .Sh NAME
@@ -91,17 +91,30 @@ Supported options are:
 .Bl -tag -width XmXmknodXX
 .It Fl f
 Force permissions to be updated on existing devices.
+This works only if
+.Xr mknod 8
+is used; it is not compatible with the
+.Fl p
+or
+.Fl s
+options.
 .It Fl M
-Create a memory filesystem, union mounted over the current directory,
+Create a memory file system, union mounted over the current directory,
 to contain the device special files.
-This is used by
-.Xr init 1
-when
-.Pa /dev/console
-does not exist.
+The memory file system is created using either
+.Xr mount_tmpfs 8
+or
+.Xr mount_mfs 8 .
+.Pp
 If the
 .Fl M
 flag is specified more than once, then
+.Nm
+assumes that it is being invoked from
+.Xr init 1
+to populate a memory file system for
+.Pa /dev .
+In this case,
 .Nm
 will also redirect its output to the system console.
 .It Fl m Ar mknod
@@ -113,6 +126,7 @@ program.
 Name of
 .Xr pax 1
 program.
+[Usually, $TOOL_PAX or mknod.]
 If this is specified, then instead of creating device nodes
 one by one using
 .Xr mknod 8 ,
@@ -125,6 +139,19 @@ Generate
 .Xr mtree 8
 specfile instead of creating devices.
 .El
+.Pp
+The
+.Fl m , Fl p ,
+and
+.Fl s
+flags are mutually exclusive.
+If none of these flags is specified, then
+.Nm
+will use the
+.Xr pax 1
+command if it appears to be usable, falling back to the
+.Xr mknod 8
+command if necessary.
 .Pp
 The special targets supported on
 .Nx
@@ -605,6 +632,8 @@ Consumer IR, see
 . It Ar clockctl
 Clock control for non root users, see
 .Xr \&clockctl 4
+. It Ar cpuctl
+CPU control
 . It Ar crypto
 Hardware crypto access driver, see
 .Xr \&crypto 4
@@ -680,6 +709,9 @@ SMB requester, see
 .Xr \&nsmb 4
 . It Ar openfirm
 OpenFirmware accessor
+. It Ar pad#
+Pseudo-audio device driver, see
+.Xr \&pad 4
 . It Ar pci#
 PCI bus access devices, see
 .Xr \&pci 4
@@ -688,9 +720,8 @@ PF packet filter
 . It Ar pow#
 Power management device (x68k), see
 .Xr \&x68k/pow 4
-. It Ar puffs
-Pass-to-Userspace Framework File System, see
-.Xr \&puffs 4
+. It Ar putter
+Pass-to-Userspace Transporter
 . It Ar px#
 PixelStamp Xserver access, see
 .Xr \&px 4
@@ -703,8 +734,8 @@ Random number generator, see
 . It Ar rtc#
 RealTimeClock, see
 .Xr \&atari/rtc 4 ,
-.Xr \&hp300/rtc 4 ,
-.Xr \&evbppc/rtc 4
+.Xr \&evbppc/rtc 4 ,
+.Xr \&hp300/rtc 4
 . It Ar satlink#
 PlanetConnect satellite receiver driver
 . It Ar scsibus#
@@ -729,9 +760,6 @@ PixelStamp interface chip
 . It Ar sysmon
 System Monitoring hardware, see
 .Xr \&envsys 4
-. It Ar systrace
-Syscall tracer, see
-.Xr \&systrace 4
 . It Ar tap#
 Virtual Ethernet device, see
 .Xr \&tap 4
@@ -800,6 +828,8 @@ you can get more debugging output by using
 .Xr MAKEDEV.local 8 ,
 .Xr diskless 8 ,
 .Xr mknod 8 ,
+.Xr mount_mfs 8 ,
+.Xr mount_tmpfs 8 ,
 .Xr mtree 8
 .Sh HISTORY
 The

@@ -1,4 +1,4 @@
-/*	$NetBSD: rexecd.c,v 1.24 2006/05/11 00:22:52 mrg Exp $	*/
+/*	$NetBSD: rexecd.c,v 1.24.10.1 2008/01/09 01:37:14 matt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)rexecd.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: rexecd.c,v 1.24 2006/05/11 00:22:52 mrg Exp $");
+__RCSID("$NetBSD: rexecd.c,v 1.24.10.1 2008/01/09 01:37:14 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -69,9 +69,9 @@ __RCSID("$NetBSD: rexecd.c,v 1.24 2006/05/11 00:22:52 mrg Exp $");
 int main(int, char *[]);
 static void rexecd_errx(int, const char *, ...)
      __attribute__((__noreturn__, __format__(__printf__, 2, 3)));
-static void doit(struct sockaddr *) __attribute__((__noreturn__));
+static void doit(struct sockaddr *) __dead;
 static void getstr(char *, int, const char *);
-static void usage(void) __attribute__((__noreturn__));
+static void usage(void) __dead;
 
 #ifdef USE_PAM
 static pam_handle_t *pamh;

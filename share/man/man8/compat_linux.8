@@ -1,4 +1,4 @@
-.\"	$NetBSD: compat_linux.8,v 1.34 2007/04/30 21:16:55 dsl Exp $
+.\"	$NetBSD: compat_linux.8,v 1.34.4.1 2008/01/09 01:39:16 matt Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
 .\" All rights reserved.
@@ -38,11 +38,12 @@
 .Sh DESCRIPTION
 .Nx
 supports running Linux binaries.
-This applies to amd64, arm, alpha, i386, m68k and powerpc systems for now.
+This applies to amd64, arm, alpha, i386, m68k, and powerpc systems for now.
 Both the a.out and ELF binary formats are supported.
 Most programs should work, including the ones that use the Linux SVGAlib (only
 on i386).
-NetBSD amd64 can execute both 32bit and 64bit linux programs.
+.Nx
+amd64 can execute both 32bit and 64bit linux programs.
 Programs that will not work include some that use
 i386-specific calls, such as enabling virtual 8086 mode.
 Currently, sound is only partially supported for Linux binaries (they will
@@ -74,7 +75,7 @@ directory for Linux binaries on your
 system.
 This directory is named
 .Pa /emul/linux
-or 
+or
 .Pa /emul/linux32
 for 32bit emulation on 64bit systems.
 Any file operations done by Linux programs run under
@@ -296,7 +297,7 @@ are standard, you could add the following:
 Note that these are mapped to
 .Pa /emul/linux/XXXX
 by
-.Nx Ns 's
+.Nx Ap s
 compat
 code, and should exist as such on your system.
 .Pp
@@ -554,10 +555,10 @@ Linux executables cannot handle directory offset cookies \*[Gt] 32 bits.
 Should such an offset occur, you will see the message
 .Dq linux_getdents: dir offset too large for emulated program .
 Currently, this can only
-happen on NFS mounted filesystems, mounted from servers that return
+happen on NFS mounted file systems, mounted from servers that return
 offsets with information in the upper 32 bits.
 These errors should rarely happen, but can be avoided by mounting this
-filesystem with offset translation enabled.
+file system with offset translation enabled.
 See the
 .Fl X
 option to

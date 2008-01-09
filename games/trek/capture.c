@@ -1,4 +1,4 @@
-/*	$NetBSD: capture.c,v 1.6 2003/08/07 09:37:50 agc Exp $	*/
+/*	$NetBSD: capture.c,v 1.6.22.1 2008/01/09 01:31:02 matt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)capture.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: capture.c,v 1.6 2003/08/07 09:37:50 agc Exp $");
+__RCSID("$NetBSD: capture.c,v 1.6.22.1 2008/01/09 01:31:02 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -58,7 +58,7 @@ __RCSID("$NetBSD: capture.c,v 1.6 2003/08/07 09:37:50 agc Exp $");
 /*ARGSUSED*/
 void
 capture(v)
-	int v __attribute__((__unused__));
+	int v __unused;
 {
 	int		i;
 	struct kling	*k;

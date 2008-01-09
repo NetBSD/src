@@ -1,4 +1,4 @@
-.\" $NetBSD: adbms.4,v 1.3 2007/05/15 14:39:30 xtraeme Exp $
+.\" $NetBSD: adbms.4,v 1.3.4.1 2008/01/09 01:39:04 matt Exp $
 .\"
 .\" Copyright (c) 2007
 .\" 	Michael Lorenz.  All rights reserved.
@@ -29,7 +29,7 @@
 .Dt ADBMS 4
 .Sh NAME
 .Nm adbms
-.Nd support for ADB mice, trackballs and touchpads
+.Nd support for ADB mice, trackballs, and touchpads
 .Sh SYNOPSIS
 .Cd "adbms* at nadb?"
 .Cd "wsmouse* at adbms?"
@@ -38,16 +38,17 @@ The
 .Nm
 driver handles most relative ADB pointing devices within the
 .Xr wscons 4
-framework. For touchpads it also provides support for translating tapping the
+framework.
+For touchpads it also provides support for translating tapping the
 pad to mouse button events.
 .Pp
 Tapping support can be turned on or off on a per-device basis using
 .Xr sysctl 8 :
 .Bl -tag
-.It Dv "machdep.adbms0.tapping"
+.It Dv machdep.adbms0.tapping
 0 disables tapping, 1 enables it.
 .El
 .Sh SEE ALSO
-.Xr wsmouse 4 ,
 .Xr nadb 4 ,
+.Xr wsmouse 4 ,
 .Xr wsconsctl 8

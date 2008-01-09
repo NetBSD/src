@@ -1,4 +1,4 @@
-/*	$NetBSD: screen.c,v 1.20 2007/05/28 15:01:57 blymn Exp $	*/
+/*	$NetBSD: screen.c,v 1.20.4.1 2008/01/09 01:36:24 matt Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)screen.c	8.2 (blymn) 11/27/2001";
 #else
-__RCSID("$NetBSD: screen.c,v 1.20 2007/05/28 15:01:57 blymn Exp $");
+__RCSID("$NetBSD: screen.c,v 1.20.4.1 2008/01/09 01:36:24 matt Exp $");
 #endif
 #endif					/* not lint */
 
@@ -140,6 +140,13 @@ newterm(char *type, FILE *outfd, FILE *infd)
 	new_screen->notty = FALSE;
 	new_screen->half_delay = FALSE;
 	new_screen->resized = 0;
+	new_screen->unget_len = 32;
+
+	if ((new_screen->unget_list =
+	    malloc(sizeof(wchar_t) * new_screen->unget_len)) == NULL) {
+		goto error_exit;
+	}
+	new_screen->unget_pos = 0;
 
 	if (_cursesi_gettmode(new_screen) == ERR)
 		goto error_exit;

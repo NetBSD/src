@@ -1,4 +1,4 @@
-.\" $NetBSD: kauth.9,v 1.52.4.1 2007/11/06 23:13:15 matt Exp $
+.\" $NetBSD: kauth.9,v 1.52.4.2 2008/01/09 01:39:19 matt Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 24, 2007
+.Dd January 8, 2008
 .Dt KAUTH 9
 .Os
 .Sh NAME
@@ -295,8 +295,6 @@ can be any of the following:
 Check if changing the time using
 .Xr adjtime 2
 is allowed.
-.It Dv KAUTH_REQ_SYSTEM_TIME_BACKWARDS
-Check if setting the time backwards is allowed.
 .It Dv KAUTH_REQ_SYSTEM_TIME_NTPADJTIME
 Check if setting the time using
 .Xr ntp_adjtime 2
@@ -305,8 +303,25 @@ is allowed.
 Check if changing the time (usually via
 .Xr settimeofday 2 )
 is allowed.
+.Pp
+.Ar arg1
+is a
+.Ft struct timespec *
+with the new time,
+.Ar arg2
+is a
+.Ft struct timeval *
+with the delta from the current time,
+.Ar arg3
+is a
+.Ft bool
+indicating whether the caller is a device context (eg.
+.Pa /dev/clockctl )
+or not.
 .It Dv KAUTH_REQ_SYSTEM_TIME_RTCOFFSET
 Check if changing the RTC offset is allowed.
+.It Dv KAUTH_REQ_SYSTEM_TIME_TIMECOUNTERS
+Check if manipulating timecounters is allowed.
 .El
 .El
 .Ss Process Scope
@@ -374,11 +389,6 @@ to another process.
 is the process the signal is being posted to, and
 .Ar arg1
 is the signal number.
-.It Dv KAUTH_PROCESS_CANSYSTRACE
-Checks whether object with passed credentials can use
-.Xr systrace 4
-on process
-.Ar p .
 .It Dv KAUTH_PROCESS_CORENAME
 Checks whether the coredump name for the process
 .Ar p
@@ -386,6 +396,12 @@ can be changed.
 .Pp
 .Ar arg1
 is the new corename.
+.It Dv KAUTH_PROCESS_FORK
+Checks if the process can fork.
+.Ar arg1
+is an
+.Ft int
+indicating how many processes exist on the system at the time of the check.
 .It Dv KAUTH_PROCESS_NICE
 Checks whether the
 .Em nice
@@ -766,7 +782,7 @@ The credentials are being inherited from a parent to a child process during a
 fork.
 .Pp
 .Ar cred
-are the credentials of the lwp context doing the copy, and
+are the credentials of the lwp context doing the fork, and
 .Ar arg0
 and
 .Ar arg1
@@ -1267,6 +1283,18 @@ first appeared in
 .Nx 4.0 ,
 and is a clean-room implementation based on Apple TN2127, available at
 http://developer.apple.com/technotes/tn2005/tn2127.html
+.Sh NOTES
+As
+.Nm
+in
+.Nx
+is still under active development, it is likely that the ABI, and possibly the
+API, will differ between
+.Nx
+versions.
+Developers are to take notice of this fact in order to avoid building code
+that expects one version of the ABI and running it in a system with a different
+one.
 .Sh AUTHORS
 .An Elad Efrat Aq elad@NetBSD.org
 implemented the kernel authorization framework in

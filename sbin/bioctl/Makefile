@@ -4,9 +4,6 @@ PROG=	bioctl
 SRCS=   bioctl.c strtonum.c
 MAN=	bioctl.8
 
-DPADD=  ${LIBUTIL}
-LDADD=  -lutil
-
 WARNS=	4
 
 .include <bsd.prog.mk>

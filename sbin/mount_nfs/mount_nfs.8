@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount_nfs.8,v 1.35 2007/06/01 17:43:19 ginsbach Exp $
+.\"	$NetBSD: mount_nfs.8,v 1.35.4.1 2008/01/09 01:38:10 matt Exp $
 .\"
 .\" Copyright (c) 1992, 1993, 1994, 1995
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)mount_nfs.8	8.3 (Berkeley) 3/29/95
 .\"
-.Dd June 1, 2007
+.Dd November 9, 2007
 .Dt MOUNT_NFS 8
 .Os
 .Sh NAME
@@ -287,6 +287,7 @@ It used to specify
 .Tn NQNFS .
 .It Fl R Ar retrycnt
 Set the retry count for doing the mount to the specified value.
+The default is 10000.
 .It Fl r Ar readsize
 Set the read data size to the specified value in bytes.
 It should normally be a power of 2 greater than or equal to 1024.
@@ -310,7 +311,7 @@ option also.
 .It Fl s
 A soft mount, which implies that file system calls will fail
 after
-.Ar retrycnt
+.Ar retrans
 round trip timeout intervals.
 .It Fl T
 Use
@@ -323,7 +324,7 @@ Not all
 .Tn NFS
 servers, especially not old ones, support this.
 .It Fl t Ar timeout
-Set the initial retransmit timeout to the specified value.
+Set the initial retransmit timeout to the specified value in 0.1 seconds.
 May be useful for fine tuning
 .Tn UDP
 mounts over internetworks
@@ -335,6 +336,7 @@ value if there is a low retransmit rate but long response delay observed.
 Normally, the -d option should be specified when using this option to manually
 tune the timeout
 interval.
+The default is 3 seconds.
 .It Fl U
 Force the mount protocol to use
 .Tn UDP
@@ -375,6 +377,7 @@ binaries will never need this option.
 This option introduces some overhead.
 .It Fl x Ar retrans
 Set the retransmit timeout count for soft mounts to the specified value.
+The default is 10.
 .El
 .Sh EXAMPLES
 The simplest way to invoke

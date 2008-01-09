@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_rwlock.c,v 1.20.2.1 2007/11/06 23:11:43 matt Exp $ */
+/*	$NetBSD: pthread_rwlock.c,v 1.20.2.2 2008/01/09 01:36:38 matt Exp $ */
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_rwlock.c,v 1.20.2.1 2007/11/06 23:11:43 matt Exp $");
+__RCSID("$NetBSD: pthread_rwlock.c,v 1.20.2.2 2008/01/09 01:36:38 matt Exp $");
 
 #include <errno.h>
 
@@ -45,6 +45,14 @@ __RCSID("$NetBSD: pthread_rwlock.c,v 1.20.2.1 2007/11/06 23:11:43 matt Exp $");
 #include "pthread_int.h"
 
 #ifndef	PTHREAD__HAVE_ATOMIC
+
+int	_pthread_rwlock_held_np(pthread_rwlock_t *);
+int	_pthread_rwlock_rdheld_np(pthread_rwlock_t *);
+int	_pthread_rwlock_wrheld_np(pthread_rwlock_t *);
+
+__weak_alias(pthread_mutex_held_np,_pthread_rwlock_held_np);
+__weak_alias(pthread_mutex_rdheld_np,_pthread_rwlock_rdheld_np);
+__weak_alias(pthread_mutex_wrheld_np,_pthread_rwlock_wrheld_np);
 
 __strong_alias(__libc_rwlock_init,pthread_rwlock_init)
 __strong_alias(__libc_rwlock_rdlock,pthread_rwlock_rdlock)
@@ -102,10 +110,10 @@ pthread_rwlock_rdlock(pthread_rwlock_t *rwlock)
 #endif
 	self = pthread__self();
 	
-	pthread_spinlock(&rwlock->ptr_interlock);
+	pthread__spinlock(self, &rwlock->ptr_interlock);
 #ifdef ERRORCHECK
 	if (rwlock->ptr_writer == self) {
-		pthread_spinunlock(&rwlock->ptr_interlock);
+		pthread__spinunlock(self, &rwlock->ptr_interlock);
 		return EDEADLK;
 	}
 #endif
@@ -119,14 +127,14 @@ pthread_rwlock_rdlock(pthread_rwlock_t *rwlock)
 	    	PTQ_INSERT_TAIL(&rwlock->ptr_rblocked, self, pt_sleep);
 		self->pt_sleeponq = 1;
 		self->pt_sleepobj = &rwlock->ptr_rblocked;
-		pthread_spinunlock(&rwlock->ptr_interlock);
+		pthread__spinunlock(self, &rwlock->ptr_interlock);
 		(void)pthread__park(self, &rwlock->ptr_interlock,
 		    &rwlock->ptr_rblocked, NULL, 0, &rwlock->ptr_rblocked);
-		pthread_spinlock(&rwlock->ptr_interlock);
+		pthread__spinlock(self, &rwlock->ptr_interlock);
 	}
 	
 	rwlock->ptr_nreaders++;
-	pthread_spinunlock(&rwlock->ptr_interlock);
+	pthread__spinunlock(self, &rwlock->ptr_interlock);
 
 	return 0;
 }
@@ -135,13 +143,15 @@ pthread_rwlock_rdlock(pthread_rwlock_t *rwlock)
 int
 pthread_rwlock_tryrdlock(pthread_rwlock_t *rwlock)
 {
+	pthread_t self;
 
 #ifdef ERRORCHECK
 	if ((rwlock == NULL) || (rwlock->ptr_magic != _PT_RWLOCK_MAGIC))
 		return EINVAL;
 #endif
 	
-	pthread_spinlock(&rwlock->ptr_interlock);
+	self = pthread__self();
+	pthread__spinlock(self, &rwlock->ptr_interlock);
 	/*
 	 * Don't get a readlock if there is a writer or if there are waiting
 	 * writers; i.e. prefer writers to readers. This strategy is dictated
@@ -149,12 +159,12 @@ pthread_rwlock_tryrdlock(pthread_rwlock_t *rwlock)
 	 */
 	if ((rwlock->ptr_writer != NULL) ||
 	    (!PTQ_EMPTY(&rwlock->ptr_wblocked))) {
-		pthread_spinunlock(&rwlock->ptr_interlock);
+		pthread__spinunlock(self, &rwlock->ptr_interlock);
 		return EBUSY;
 	}
 
 	rwlock->ptr_nreaders++;
-	pthread_spinunlock(&rwlock->ptr_interlock);
+	pthread__spinunlock(self, &rwlock->ptr_interlock);
 
 	return 0;
 }
@@ -172,10 +182,10 @@ pthread_rwlock_wrlock(pthread_rwlock_t *rwlock)
 #endif
 	self = pthread__self();
 	
-	pthread_spinlock(&rwlock->ptr_interlock);
+	pthread__spinlock(self, &rwlock->ptr_interlock);
 #ifdef ERRORCHECK
 	if (rwlock->ptr_writer == self) {
-		pthread_spinunlock(&rwlock->ptr_interlock);
+		pthread__spinunlock(self, &rwlock->ptr_interlock);
 		return EDEADLK;
 	}
 #endif
@@ -186,21 +196,21 @@ pthread_rwlock_wrlock(pthread_rwlock_t *rwlock)
 	while ((rwlock->ptr_nreaders > 0) || (rwlock->ptr_writer != NULL)) {
 #ifdef ERRORCHECK
 		if (pthread__started == 0) {
-			pthread_spinunlock(&rwlock->ptr_interlock);
+			pthread__spinunlock(self, &rwlock->ptr_interlock);
 			return EDEADLK;
 		}
 #endif
 	    	PTQ_INSERT_TAIL(&rwlock->ptr_wblocked, self, pt_sleep);
 		self->pt_sleeponq = 1;
 		self->pt_sleepobj = &rwlock->ptr_wblocked;
-		pthread_spinunlock(&rwlock->ptr_interlock);
+		pthread__spinunlock(self, &rwlock->ptr_interlock);
 		(void)pthread__park(self, &rwlock->ptr_interlock,
 		    &rwlock->ptr_wblocked, NULL, 0, &rwlock->ptr_wblocked);
-		pthread_spinlock(&rwlock->ptr_interlock);
+		pthread__spinlock(self, &rwlock->ptr_interlock);
 	}
 
 	rwlock->ptr_writer = self;
-	pthread_spinunlock(&rwlock->ptr_interlock);
+	pthread__spinunlock(self, &rwlock->ptr_interlock);
 
 	return 0;
 }
@@ -216,18 +226,18 @@ pthread_rwlock_trywrlock(pthread_rwlock_t *rwlock)
 #endif
 	self = pthread__self();
 	
-	pthread_spinlock(&rwlock->ptr_interlock);
+	pthread__spinlock(self, &rwlock->ptr_interlock);
 	/*
 	 * Prefer writers to readers here; permit writers even if there are
 	 * waiting readers.
 	 */
 	if ((rwlock->ptr_nreaders > 0) || (rwlock->ptr_writer != NULL)) {
-		pthread_spinunlock(&rwlock->ptr_interlock);
+		pthread__spinunlock(self, &rwlock->ptr_interlock);
 		return EBUSY;
 	}
 
 	rwlock->ptr_writer = self;
-	pthread_spinunlock(&rwlock->ptr_interlock);
+	pthread__spinunlock(self, &rwlock->ptr_interlock);
 
 	return 0;
 }
@@ -252,10 +262,10 @@ pthread_rwlock_timedrdlock(pthread_rwlock_t *rwlock,
 		return EINVAL;
 
 	self = pthread__self();
-	pthread_spinlock(&rwlock->ptr_interlock);
+	pthread__spinlock(self, &rwlock->ptr_interlock);
 #ifdef ERRORCHECK
 	if (rwlock->ptr_writer == self) {
-		pthread_spinunlock(&rwlock->ptr_interlock);
+		pthread__spinunlock(self, &rwlock->ptr_interlock);
 		return EDEADLK;
 	}
 #endif
@@ -270,11 +280,11 @@ pthread_rwlock_timedrdlock(pthread_rwlock_t *rwlock,
 	    	PTQ_INSERT_TAIL(&rwlock->ptr_rblocked, self, pt_sleep);
 		self->pt_sleeponq = 1;
 		self->pt_sleepobj = &rwlock->ptr_rblocked;
-		pthread_spinunlock(&rwlock->ptr_interlock);
+		pthread__spinunlock(self, &rwlock->ptr_interlock);
 		retval = pthread__park(self, &rwlock->ptr_interlock,
 		    &rwlock->ptr_rblocked, abs_timeout, 0,
 		    &rwlock->ptr_rblocked);
-		pthread_spinlock(&rwlock->ptr_interlock);
+		pthread__spinlock(self, &rwlock->ptr_interlock);
 	}
 
 	/* One last chance to get the lock, in case it was released between
@@ -285,7 +295,7 @@ pthread_rwlock_timedrdlock(pthread_rwlock_t *rwlock,
 		rwlock->ptr_nreaders++;
 		retval = 0;
 	}
-	pthread_spinunlock(&rwlock->ptr_interlock);
+	pthread__spinunlock(self, &rwlock->ptr_interlock);
 
 	return retval;
 }
@@ -311,10 +321,10 @@ pthread_rwlock_timedwrlock(pthread_rwlock_t *rwlock,
 		return EINVAL;
 
 	self = pthread__self();
-	pthread_spinlock(&rwlock->ptr_interlock);
+	pthread__spinlock(self, &rwlock->ptr_interlock);
 #ifdef ERRORCHECK
 	if (rwlock->ptr_writer == self) {
-		pthread_spinunlock(&rwlock->ptr_interlock);
+		pthread__spinunlock(self, &rwlock->ptr_interlock);
 		return EDEADLK;
 	}
 #endif
@@ -327,25 +337,25 @@ pthread_rwlock_timedwrlock(pthread_rwlock_t *rwlock,
 	    ((rwlock->ptr_nreaders > 0) || (rwlock->ptr_writer != NULL))) {
 #ifdef ERRORCHECK
 		if (pthread__started == 0) {
-			pthread_spinunlock(&rwlock->ptr_interlock);
+			pthread__spinunlock(self, &rwlock->ptr_interlock);
 			return EDEADLK;
 		}
 #endif
 	    	PTQ_INSERT_TAIL(&rwlock->ptr_wblocked, self, pt_sleep);
 		self->pt_sleeponq = 1;
 		self->pt_sleepobj = &rwlock->ptr_wblocked;
-		pthread_spinunlock(&rwlock->ptr_interlock);
+		pthread__spinunlock(self, &rwlock->ptr_interlock);
 		retval = pthread__park(self, &rwlock->ptr_interlock,
 		    &rwlock->ptr_wblocked, abs_timeout, 0,
 		    &rwlock->ptr_wblocked);
-		pthread_spinlock(&rwlock->ptr_interlock);
+		pthread__spinlock(self, &rwlock->ptr_interlock);
 	}
 
 	if ((rwlock->ptr_nreaders == 0) && (rwlock->ptr_writer == NULL)) {
 		rwlock->ptr_writer = self;
 		retval = 0;
 	}
-	pthread_spinunlock(&rwlock->ptr_interlock);
+	pthread__spinunlock(self, &rwlock->ptr_interlock);
 
 	return retval;
 }
@@ -362,12 +372,12 @@ pthread_rwlock_unlock(pthread_rwlock_t *rwlock)
 	writer = NULL;
 	self = pthread__self();
 	
-	pthread_spinlock(&rwlock->ptr_interlock);
+	pthread__spinlock(self, &rwlock->ptr_interlock);
 	if (rwlock->ptr_writer != NULL) {
 		/* Releasing a write lock. */
 #ifdef ERRORCHECK
 		if (rwlock->ptr_writer != self) {
-			pthread_spinunlock(&rwlock->ptr_interlock);
+			pthread__spinunlock(self, &rwlock->ptr_interlock);
 			return EPERM;
 		}
 #endif
@@ -391,7 +401,7 @@ pthread_rwlock_unlock(pthread_rwlock_t *rwlock)
 		}
 #ifdef ERRORCHECK
 	} else {
-		pthread_spinunlock(&rwlock->ptr_interlock);
+		pthread__spinunlock(self, &rwlock->ptr_interlock);
 		return EPERM;
 #endif	
 	}
@@ -431,6 +441,27 @@ pthread_rwlockattr_destroy(pthread_rwlockattr_t *attr)
 	attr->ptra_magic = _PT_RWLOCKATTR_DEAD;
 
 	return 0;
+}
+
+int
+_pthread_rwlock_held_np(pthread_rwlock_t *ptr)
+{
+
+	return ptr->ptr_writer != NULL || ptr->ptr_nreaders != 0;
+}
+
+int
+_pthread_rwlock_rdheld_np(pthread_rwlock_t *ptr)
+{
+
+	return ptr->ptr_nreaders != 0;
+}
+
+int
+_pthread_rwlock_wrheld_np(pthread_rwlock_t *ptr)
+{
+
+	return ptr->ptr_writer != 0;
 }
 
 #endif	/* !PTHREAD__HAVE_ATOMIC */

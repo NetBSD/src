@@ -1,4 +1,4 @@
-/*	$NetBSD: lseek.c,v 1.8 2003/08/07 16:44:01 agc Exp $	*/
+/*	$NetBSD: lseek.c,v 1.8.22.1 2008/01/09 01:34:21 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)lseek.c	8.1 (Berkeley) 6/17/93";
 #else
-__RCSID("$NetBSD: lseek.c,v 1.8 2003/08/07 16:44:01 agc Exp $");
+__RCSID("$NetBSD: lseek.c,v 1.8.22.1 2008/01/09 01:34:21 matt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -47,6 +47,8 @@ __RCSID("$NetBSD: lseek.c,v 1.8 2003/08/07 16:44:01 agc Exp $");
 __weak_alias(lseek,_lseek)
 #endif
 
+off_t __lseek(int, int, off_t, int);
+
 /*
  * This function provides 64-bit offset padding that
  * is not supplied by GCC 1.X but is supplied by GCC 2.X.
@@ -58,5 +60,5 @@ lseek(fd, offset, whence)
 	int	whence;
 {
 
-	return(__syscall((quad_t)SYS_lseek, fd, 0, offset, whence));
+	return __lseek(fd, 0, offset, whence);
 }

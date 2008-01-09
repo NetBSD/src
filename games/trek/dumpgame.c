@@ -1,4 +1,4 @@
-/*	$NetBSD: dumpgame.c,v 1.10 2006/03/19 01:00:35 christos Exp $	*/
+/*	$NetBSD: dumpgame.c,v 1.10.10.1 2008/01/09 01:31:03 matt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)dumpgame.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dumpgame.c,v 1.10 2006/03/19 01:00:35 christos Exp $");
+__RCSID("$NetBSD: dumpgame.c,v 1.10.10.1 2008/01/09 01:31:03 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -83,7 +83,7 @@ struct dump	Dump_template[] =
 /*ARGSUSED*/
 void
 dumpgame(v)
-	int v __attribute__((__unused__));
+	int v __unused;
 {
 	int		version;
 	int		fd;

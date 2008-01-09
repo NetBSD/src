@@ -1,4 +1,4 @@
-/* $NetBSD: crt0.c,v 1.16 2006/05/17 17:08:54 christos Exp $ */
+/* $NetBSD: crt0.c,v 1.16.10.1 2008/01/09 01:33:49 matt Exp $ */
 
 /*
  * Copyright (c) 1998 Christos Zoulas
@@ -79,10 +79,6 @@ ___start(argc, argv, envp, cleanup, obj, ps_strings)
 		__ps_strings = ps_strings;
 
 #ifdef DYNAMIC
-	/*
-	 * XXX: Checking for obj != NULL is completely bogus
-	 * this is just to avoid a gcc4 bug.
-	 */
 	if (&_DYNAMIC != NULL) {
 		_rtld_setup(cleanup, obj);
 	}
@@ -103,7 +99,7 @@ ___start(argc, argv, envp, cleanup, obj, ps_strings)
  * NOTE: Leave the RCS ID _after_ __start(), in case it gets placed in .text.
  */
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.16 2006/05/17 17:08:54 christos Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.16.10.1 2008/01/09 01:33:49 matt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "common.c"

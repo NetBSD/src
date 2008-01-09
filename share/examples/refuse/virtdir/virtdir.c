@@ -152,6 +152,7 @@ virtdir_add(virtdir_t *tp, const char *name, size_t size, uint8_t type, const ch
 	}
 	tp->v[tp->c].d_name = strrchr(tp->v[tp->c].name, '/') + 1;
 	tp->v[tp->c].type = type;
+	tp->v[tp->c].ino = (ino_t) random() & 0xfffff;
 	if (tgt != NULL) {
 		tp->v[tp->c].tgtlen = tgtlen;
 		tp->v[tp->c].tgt = strnsave(tgt, tgtlen);

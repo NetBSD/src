@@ -1,4 +1,4 @@
-/*	$NetBSD: subs.c,v 1.15 2005/07/01 01:12:39 jmc Exp $	*/
+/*	$NetBSD: subs.c,v 1.15.10.1 2008/01/09 01:30:44 matt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)subs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: subs.c,v 1.15 2005/07/01 01:12:39 jmc Exp $");
+__RCSID("$NetBSD: subs.c,v 1.15.10.1 2008/01/09 01:30:44 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -433,7 +433,7 @@ fixtty(struct termios *t)
 }
 
 void
-getout(int dummy __attribute__((__unused__)))
+getout(int dummy __unused)
 {
 	/* go to bottom of screen */
 	if (tflag) {

@@ -1,12 +1,14 @@
-$NetBSD: acronyms.comp,v 1.72 2007/01/19
+$NetBSD: acronyms.comp,v 1.73.4.1 2008/01/09 01:39:24 matt Exp $
 
 3WHS	three-way handshake
 ABI	application binary interface
 ACL	access control list
 ACPI	advanced configuration and power interface
+ADB	Apple desktop bus
 ADC	analog [to] digital converter
 ADPCM	adaptive differential pulse code modulation
 ADSL	asymmetric digital subscriber line
+AFS	Andrew file system
 AGP	accelerated graphics port
 AM	amplitude modulation
 AMI	alternate mark inversion
@@ -18,13 +20,17 @@ ARP	address resolution protocol
 ARQ	automatic repeat request
 AS	autonomous system
 ASCII	american standard code for information interchange
+ASLR	address space layout randomization
 ASN	autonomous system number
+AST	abstract syntax tree
+AST	asynchronous trap
 AT	advanced technology
 ATA	advanced technology attachment
 ATAPI	advanced technology attachment packet interface
 ATC	address translation cache
 ATM	asynchronous transfer mode
 ATX	advanced technology extended
+BAR	base address register
 BEDO	burst extended data output
 BER	basic encoding rules
 BER	bit error rate
@@ -127,6 +133,7 @@ GPL	gnu/general public license
 GPU	graphics processing unit
 GRE	generic routing encapsulation
 GUI	graphics user interface
+HA	high availability
 HDCP	high-bandwidth digital content protection
 HTML	hyper-text markup language
 HTTP	hyper-text transfer protocol
@@ -135,6 +142,8 @@ I2O	intelligent input/output
 IANA	internet assigned number authority
 IC	integrated circuit
 ICB	internet citizen's band
+ICE	internal compiler error
+ICE	in-circuit emulator
 ICMP	internet control message protocol
 IDE	integrated drive electronics
 IDRP	inter-domain routing protocol
@@ -164,8 +173,10 @@ ISO	international standards organization
 ISOC	internet society
 ISP	internet service provider
 JPEG	joint photographic experts group
+KLOC	thousand lines of code
 KPI	kernel programming interface
 KVA	kernel virtual address
+KVM	kernel virtual memory
 KVM	keyboard, video, mouse switch
 LAN	local area network
 LBA	logical block addressing
@@ -176,14 +187,17 @@ LED	light emitting diode
 LIR	local internet registry
 LKM	{linux, loadable} kernel module
 LLC	logical link control
+LOC	lines of code
 LRC	longitudinal redundancy check
 LSB	least significant bit [or: byte]
 LSB	linux standards base
+LSI	large scale integration
 LUN	logical unit number
 LZW	Lempel Ziv Welch
 MAC	medium access control
 MBR	master boot record
 MDRAM	multibank dynamic random access memory
+MFC	merge from current
 MFM	modified frequency modulation
 MIDI	musical instrument digital interface
 MIME	multipurpose internet mail extensions
@@ -211,11 +225,14 @@ OCL	object constraint language
 OCR	optical character recognition
 OEM	original equipment manufacturer
 OFDM	orthogonal frequency division multiplexing
+OS	operating system
 OSF	open software foundation
 OSI	open systems interconnection
 OSI	open-source initiative
 OSPF	open shortest path first
 OTP	one time password
+PA	physical address
+PAE	physical address extension
 PAM	pluggable authentication modules
 PAM	pulse amplitude modulation
 PAT	port address translation
@@ -231,7 +248,9 @@ PERL	practical extraction [and] report language
 PFS	perfect forward secrecy
 PGP	pretty good privacy
 PIC	programmable interrupt controller
+PIC	position independent code
 PID	process id
+PIE	position independent executable
 PIN	personal identification number
 PIO	programmed input/output
 PLL	phase locked loop
@@ -255,6 +274,7 @@ PWM	pulse width modulation
 QOS	quality of service
 RAID	redundant array of inexpensive disks
 RAM	random access memory
+RAS	restartable atomic sequence
 RCS	revision control system
 RGB	red green blue
 RIFF	Resource Interchange File Format
@@ -264,6 +284,7 @@ RISC	reduced instruction set computing
 RLE	run length encoding
 RLL	run length limited
 ROM	read only memory
+RPC	remote procedure call
 RPM	revolutions per minute
 RTF	rich text format
 RTS	request to send
@@ -278,6 +299,7 @@ SB	sound blaster
 SCM	software configuration management
 SCM	source code management
 SCSI	small computer system interface
+SCTP	stream control transmission protocol
 SDRAM	synchronous dynamic random access memory
 SGRAM	synchronous graphics random access memory
 SIFS	short inter-frame space
@@ -295,7 +317,9 @@ SSFDC	solid state floppy disc card
 SSH	secure shell
 SSL	secure sockets layer
 STP	shielded twisted pair
+STP	spanning-tree protocol
 SVGA	super video graphics {array,adapter}
+TCB	trusted computing base
 TCL	tool command language
 TCP	transmission control protocol
 TCQ	tagged command queueing
@@ -327,12 +351,14 @@ USWC	uncacheable speculative write combining
 UTP	unshielded twisted pair
 UUCP	unix-to-unix copy protocol
 UUOC	useless use of cat
+VA	virtual address
 VAX	virtual address extension
 VCM	virtual channel memory
 VESA	video electronics standards association
 VGA	video graphics {array,adapter}
 WIFI    wireless fidelity
 VLAN	virtual local area network
+VLSI	very large scale integration
 VLSM	variable length subnet mask
 VM	virtual {machine,memory}
 VPN	virtual private network

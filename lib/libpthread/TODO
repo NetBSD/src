@@ -1,4 +1,4 @@
-$NetBSD: TODO,v 1.10.2.1 2007/11/06 23:11:39 matt Exp $
+$NetBSD: TODO,v 1.10.2.2 2008/01/09 01:36:30 matt Exp $
 
 Bugs to fix:
 
@@ -9,22 +9,7 @@ Interfaces/features to implement:
 
 - Realtime exensions: priority scheduling, priority inheritance.
 
-- Figure out how to use registers reserved in the ABI to implement
-  pthread_self(). This will allow for assembly lock stubs.
-
-- Allow threads to change their stack size. This probably depends on the
-  above item.
-
-- Have a user/kernel shared page that:
-
-  o Has a hint mechanism that gives us a clue about whether an LWP is
-    currently running on another CPU. This could be used for adaptive locks,
-    but would need to be cheap to do in-kernel.
-
-  o Perhaps has a flag value that's reset when a detached LWP is into the
-    kernel and lwp_exit1(), meaning that its stack can be reclaimed. Again,
-    may or may not be worth it. Currently we test for this with _lwp_kill()
-    which is very inefficient.
+- Allow threads to change their stack size.
 
 - Keep a pool of dead LWPs so that we do not have take the full hit of
   _lwp_create() every time pthread_create() is called.

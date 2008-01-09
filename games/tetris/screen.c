@@ -1,4 +1,4 @@
-/*	$NetBSD: screen.c,v 1.19 2004/01/27 20:30:30 jsm Exp $	*/
+/*	$NetBSD: screen.c,v 1.19.22.1 2008/01/09 01:31:01 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,6 +38,7 @@
  * Tetris screen control.
  */
 
+#include <sys/cdefs.h>
 #include <sys/ioctl.h>
 
 #include <setjmp.h>
@@ -63,7 +64,7 @@ static struct termios oldtt;
 static void (*tstp)(int);
 
 static	void	scr_stop(int);
-static	void	stopset(int) __attribute__((__noreturn__));
+static	void	stopset(int) __dead;
 
 
 /*

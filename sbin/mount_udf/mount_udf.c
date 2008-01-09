@@ -1,4 +1,4 @@
-/* $NetBSD: mount_udf.c,v 1.10 2007/07/14 15:57:27 dsl Exp $ */
+/* $NetBSD: mount_udf.c,v 1.10.4.1 2008/01/09 01:38:11 matt Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mount_udf.c,v 1.10 2007/07/14 15:57:27 dsl Exp $");
+__RCSID("$NetBSD: mount_udf.c,v 1.10.4.1 2008/01/09 01:38:11 matt Exp $");
 #endif /* not lint */
 
 
@@ -76,7 +76,7 @@ static const struct mntopt mopts[] = {
 
 /* prototypes */
 int		mount_udf(int argc, char **argv);
-static void	usage(void) __attribute__((__noreturn__));
+static void	usage(void) __dead;
 
 
 /* code */

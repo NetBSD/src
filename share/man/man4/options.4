@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.352.4.1 2007/11/06 23:13:01 matt Exp $
+.\"	$NetBSD: options.4,v 1.352.4.2 2008/01/09 01:39:09 matt Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -30,7 +30,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd June 3, 2007
+.Dd December 31, 2007
 .Os
 .Dt OPTIONS 4
 .Sh NAME
@@ -263,7 +263,7 @@ When the
 .Em COMPAT_11
 option is set, the kernel will read (pre) 1.1 style disk labels as a
 last resort.
-When a disklabel is re-written, the old style label will be replaced
+When a disk label is re-written, the old style label will be replaced
 with a post 1.1 style label.
 This also enables the
 .Em EXEC_ELF_NOTELESS
@@ -377,7 +377,7 @@ support for some older pre
 .Bx 4.4
 socket calls.
 .It Cd options COMPAT_BSDPTY
-This option is currenty on by default and enables the pty multiplexor
+This option is currently on by default and enables the pty multiplexer
 .Xr ptm 4
 and
 .Xr ptmx 4
@@ -435,13 +435,6 @@ compatibility with
 .Fx
 applications built for the same architecture.
 At the moment this is limited to the i386 port.
-.It Cd options COMPAT_HPUX
-On those architectures that support it, this enables binary
-compatibility with
-.Tn HP/UX
-applications built for the same architecture.
-This is limited to the hp300 port, and has some known bugs.
-A limited set of programs do work.
 .It Cd options COMPAT_IBCS2
 On those architectures that support it, this enables binary
 compatibility with iBCS2 or SVR3 applications built for the same architecture.
@@ -585,7 +578,7 @@ variable which may be changed at run time.
 .It Cd options DDB_BREAK_CHAR=integer
 This option overrides using break to enter the kernel debugger
 on the serial console.
-The value given is the ascii value to be used instead.
+The value given is the ASCII value to be used instead.
 This is currently only supported by the com driver.
 .It Cd options DDB_VERBOSE_HELP
 This option adds more verbose descriptions to the
@@ -688,11 +681,6 @@ problems.
 .It Cd options MALLOCLOGSIZE=integer
 Defines the number of entries in the malloc log.
 Default is 100000 entries.
-.It Cd options SYSTRACE
-Add hooks for the system call policy facility.
-See
-.Xr systrace 1
-for details.
 .It Cd options UVMHIST
 Enables the UVM history logs, which create in-memory traces of
 various UVM activities.
@@ -1086,10 +1074,10 @@ Reduce the size of the NFS client code by omitting code that's only required
 for NFSv3 and NQNFS support, leaving only that code required to use NFSv2
 servers.
 .It Cd options SOFTDEP
-Enable kernel support for soft-dependencies in FFS filesystems.
+Enable kernel support for soft-dependencies in FFS file systems.
 Softdep improves write performance by aggregating and properly
 ordering disk metadata writes, achieving near-asynchronous write
-performance while maintaining the filesystem consistency of
+performance while maintaining the file system consistency of
 synchronous writes.
 Soft-dependencies are enabled on a per-mount basis.
 See
@@ -1114,11 +1102,11 @@ responsiveness under heavy disk I/O load may be improved, as processes
 blocking on disk reads are serviced sooner (file writes typically
 don't cause applications to block).
 The performance effect varies greatly depending on the hardware, drive
-firmware, filesystem configuration, workload, and desired performance
+firmware, file system configuration, workload, and desired performance
 trade-off.
 Systems using drive write-cache (most modern IDE disks, by default)
 are unlikely to benefit and may well suffer; such disks acknowledge
-writes very quickly, and optimise them internally according to
+writes very quickly, and optimize them internally according to
 physical layout.
 Giving these disks as many requests to work with as possible (the
 standard strategy) will typically produce the best results, especially
@@ -1127,7 +1115,7 @@ writes from cache as it seeks for reads.
 Disks that support a large number of concurrent tagged requests (SCSI
 disks and many hardware RAID controllers) expose this internal
 scheduling with tagged responses, and don't block for reads; such
-disks may not see a noticable difference with either strategy.
+disks may not see a noticeable difference with either strategy.
 However, if IDE disks are run with write-cache disabled for safety,
 writes are not acknowledged until actually completed, and only one
 request can be outstanding; a large number of small writes in one
@@ -1135,7 +1123,7 @@ locality can keep the disk busy, starving reads elsewhere on the disk.
 Such systems are likely to see the most benefit from this option.
 Finally, the performance interaction of this option with ffs soft
 dependencies can be subtle, as that mechanism can drastically alter
-the workload for filesystem metadata writes.
+the workload for file system metadata writes.
 .It Cd options BUFQ_PRIOCSCAN
 Enable another buffer queue strategy for disk I/O, per-priority cyclical scan.
 .It Cd options NEW_BUFQ_STRATEGY
@@ -1195,15 +1183,15 @@ and
 .Xr vnconfig 8
 for more information.
 .It Cd options TFTPROOT
-Download the root memory disk through TFTP at root mount time. This enable
-the use of a root
+Download the root memory disk through TFTP at root mount time.
+This enables the use of a root
 .Tn RAM
 disk without requiring it to be embedded in the kernel using
 .Xr mdsetimage 8 .
-The 
+The
 .Tn RAM
 disk name is obtained using DHCP's filename parameter.
-This option require 
+This option requires
 .Em MEMORY_DISK_HOOKS ,
 .Em MEMORY_DISK_DYNAMIC ,
 and
@@ -1483,18 +1471,24 @@ for details.
 not available on all architectures.
 .It Cd options SYSCALL_STATS
 Count the number of times each system call number is called.
-The values can be read through the sysctl interface and display using systat
+The values can be read through the sysctl interface and displayed using
 .Xr systat 1 .
 .Em NOTE :
 not yet available on all architectures.
 .It Cd options SYSCALL_TIMES
-Count the time spent (using cpu_counter32()) in each system call.
+Count the time spent (using
+.Fn cpu_counter32 )
+in each system call.
 .Em NOTE :
 Using this option will also enable
-.Em options SYSCALL_STATS
+.Cd options SYSCALL_STATS .
 .It Cd options SYSCALL_TIMES_HASCOUNTER
-Force use of cpu_counter32() even if cpu_hascounter() reports false.
-Useful for systems where the cycle counter doen't run at a constant rate
+Force use of
+.Fn cpu_counter32
+even if
+.Fn cpu_hascounter
+reports false.
+Useful for systems where the cycle counter doesn't run at a constant rate
 (e.g. Soekris boxes).
 .It Cd options XSERVER
 Compiles in kernel support for
@@ -1608,7 +1602,7 @@ and
 for details.
 .It Cd options IFA_STATS
 Tells the kernel to maintain per-address statistics on bytes sent
-and received over (currently) internet and appletalk addresses.
+and received over (currently) Internet and AppleTalk addresses.
 .\"This can be a fairly expensive operation, so you probably want to
 .\"keep this disabled.
 The option is not recommended as it degrades system stability.
@@ -1832,7 +1826,7 @@ or
 .Em MCLBYTES ,
 must be a power of two, and is computed as two raised to the power
 .Em MCLSHIFT .
-On systems with Ethernet network adaptors,
+On systems with Ethernet network adapters,
 .Em MCLSHIFT
 is often set to 11, giving 2048-byte mbuf clusters, large enough to
 hold a 1500-byte
@@ -1980,9 +1974,9 @@ These operations are still available to kernel sub-systems, including
 loadable kernel modules.
 .It Cd options SYSCTL_DISALLOW_KWRITE
 Prevents processes from adding nodes to the sysctl tree that make
-existing kernel memory areas writeable.
+existing kernel memory areas writable.
 Sections of kernel memory can still be read and new nodes that own
-their own data may still be writeable.
+their own data may still be writable.
 .It Cd options SYSCTL_DEBUG_SETUP
 Causes the SYSCTL_SETUP routines to print a brief message when they
 are invoked.
@@ -2297,6 +2291,25 @@ be done using
 See
 .Xr security 8
 for more details.
+.It Cd options PAX_ASLR=value
+Enables PaX ASLR.
+.Pp
+The
+.Ar value
+is the default value for the
+.Em global
+knob, see
+.Xr sysctl 3 .
+If 0, PaX ASLR will be enabled only if explicitly set on programs
+using
+.Xr paxctl 8 .
+If 1, PaX ASLR will be enabled to all programs, and exemption can
+be done using
+.Xr paxctl 8 .
+.Pp
+See
+.Xr security 8
+for more details.
 .El
 .Ss amiga-specific Options
 .Bl -ohang
@@ -2443,24 +2456,6 @@ and Hades.
 .El
 .Ss i386-specific Options
 .Bl -ohang
-.It Cd options I386_CPU,I486_CPU,I586_CPU,I686_CPU
-Include support for a particular class of
-.Tn CPU
-.Po
-.Tn i386 ,
-.Tn i486 ,
-.Tn Pentium ,
-or
-.Tn Pentium Pro
-.Pc .
-If the appropriate class for your
-.Tn CPU
-is not configured, the kernel will use the highest class available
-that will work.
-In general, using the correct
-.Tn CPU
-class will result in the best performance.
-At least one of these options must be present.
 .It Cd options ENHANCED_SPEEDSTEP
 Include support for the
 .Tn Enhanced SpeedStep Technology

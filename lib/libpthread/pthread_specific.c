@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_specific.c,v 1.11 2007/08/16 12:01:49 ad Exp $	*/
+/*	$NetBSD: pthread_specific.c,v 1.11.2.1 2008/01/09 01:36:39 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2007 The NetBSD Foundation, Inc.
@@ -37,15 +37,18 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_specific.c,v 1.11 2007/08/16 12:01:49 ad Exp $");
+__RCSID("$NetBSD: pthread_specific.c,v 1.11.2.1 2008/01/09 01:36:39 matt Exp $");
 
 /* Functions and structures dealing with thread-specific data */
 
 #include "pthread.h"
 #include "pthread_int.h"
 
+#include <sys/lwpctl.h>
+
 __strong_alias(__libc_thr_setspecific,pthread_setspecific)
 __strong_alias(__libc_thr_getspecific,pthread_getspecific)
+__strong_alias(__libc_thr_curcpu,pthread_curcpu_np)
 
 int
 pthread_setspecific(pthread_key_t key, const void *value)
@@ -66,11 +69,21 @@ pthread_setspecific(pthread_key_t key, const void *value)
 	return 0;
 }
 
-void*
+void *
 pthread_getspecific(pthread_key_t key)
 {
-	pthread_t self;
 
-	self = pthread__self();
-	return (self->pt_specific[key]);
+	return pthread__self()->pt_specific[key];
+}
+
+unsigned int
+pthread_curcpu_np(void)
+{
+	unsigned int cpu = pthread__self()->pt_lwpctl->lc_curcpu;
+
+	/* for pthread__dummy_lwpctl */
+	if (cpu == LWPCTL_CPU_NONE)
+		return 0;
+
+	return cpu;
 }

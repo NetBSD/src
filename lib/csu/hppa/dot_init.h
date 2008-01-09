@@ -1,4 +1,4 @@
-/* $NetBSD: dot_init.h,v 1.4 2007/05/15 16:51:38 skrll Exp $ */
+/* $NetBSD: dot_init.h,v 1.4.4.1 2008/01/09 01:33:49 matt Exp $ */
 
 /*-
  * Copyright (c) 2004 Nick Hudson
@@ -35,31 +35,28 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-#include <machine/asm.h>
 
 #define	MD_SECTION_PROLOGUE(sect, entry_pt)		\
 		__asm (					\
 		".section "#sect",\"ax\",@progbits	\n"\
 		".global "#entry_pt"			\n"\
 		".proc					\n"\
-		".callinfo frame=64,calls,save_rp,save_sp, entry_gr=4\n"\
+		".callinfo frame=64, calls, save_rp, save_sp, entry_gr=3\n"\
 		".entry					\n"\
 		#entry_pt":				\n"\
 		"	stw	%rp, -20(%sp)		\n"\
 		"	copy	%r3, %r1		\n"\
 		"	copy	%sp, %r3		\n"\
 		"	stw,ma	%r1, 64(%sp)		\n"\
-		"	stw	%r4, 8(%r3)		\n"\
 		"	/* fall thru */			\n"\
-		".previous				\n"\
 		".exit					\n"\
-		".procend")
+		".procend				\n"\
+		".previous")
 
 #define	MD_SECTION_EPILOGUE(sect)			\
 		__asm (					\
 		".section "#sect",\"ax\",@progbits	\n"\
 		"	ldw	-20(%r3) ,%rp		\n"\
-		"	ldw	8(%r3), %r4		\n"\
 		"	ldo	64(%r3), %sp		\n"\
 		"	ldw,mb	-64(%sp), %r3		\n"\
 		"	bv,n	%r0(%rp)		\n"\

@@ -1,4 +1,4 @@
-/*	$NetBSD: stresep_test.c,v 1.1 2006/08/12 23:51:12 christos Exp $	*/
+/*	$NetBSD: stresep_test.c,v 1.1.10.1 2008/01/09 01:37:30 matt Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -49,10 +49,13 @@
 int
 main(int argc, char **argv)
 {
-	char brk[] = "foo\\ bar baz bar\\ foo\\  ";
+	char brk[] = "foo\\ \\ bar baz bar\\ foo\\  bar\\ \\ foo \\ \\ \\ baz bar\\ \\ ";
 	char *p, *q = brk;
-	expect("foo bar");
+	expect("foo  bar");
 	expect("baz");
 	expect("bar foo ");
+	expect("bar  foo");
+	expect("   baz");
+	expect("bar  ");
 	return 0;
 }

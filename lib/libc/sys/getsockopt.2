@@ -1,4 +1,4 @@
-.\"	$NetBSD: getsockopt.2,v 1.29 2004/05/13 10:20:58 wiz Exp $
+.\"	$NetBSD: getsockopt.2,v 1.29.16.1 2008/01/09 01:34:21 matt Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)getsockopt.2	8.4 (Berkeley) 5/2/95
 .\"
-.Dd October 22, 2001
+.Dd December 16, 2007
 .Dt GETSOCKOPT 2
 .Os
 .Sh NAME
@@ -106,7 +106,20 @@ socket level options, described below.
 Options at other protocol levels vary in format and
 name; consult the appropriate entries in
 section
-4 of the manual.
+4 of the manual, including:
+.Xr clnp 4 ,
+.Xr faith 4 ,
+.Xr icmp6 4 ,
+.Xr ip 4 ,
+.Xr ip6 4 ,
+.Xr ipsec 4 ,
+.Xr multicast 4 ,
+.Xr pim 4 ,
+.Xr route 4 ,
+.Xr tcp 4 ,
+.Xr tp 4 ,
+and
+.Xr unix 4 .
 .Pp
 Most socket-level options use an
 .Fa int
@@ -360,6 +373,18 @@ is not in a valid part of the process address space.
 .Xr select 2 ,
 .Xr socket 2 ,
 .Xr getprotoent 3 ,
+.Xr clnp 4 ,
+.Xr faith 4 ,
+.Xr icmp6 4 ,
+.Xr ip 4 ,
+.Xr ip6 4 ,
+.Xr ipsec 4 ,
+.Xr multicast 4 ,
+.Xr pim 4 ,
+.Xr route 4 ,
+.Xr tcp 4 ,
+.Xr tp 4 ,
+.Xr unix 4 ,
 .Xr protocols 5
 .Sh HISTORY
 The

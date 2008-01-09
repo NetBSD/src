@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.62.2.2 2007/11/08 11:01:01 matt Exp $	*/
+/*	$NetBSD: puffs.c,v 1.62.2.3 2008/01/09 01:36:48 matt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.62.2.2 2007/11/08 11:01:01 matt Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.62.2.3 2008/01/09 01:36:48 matt Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -102,13 +102,31 @@ fillvnopmask(struct puffs_ops *pops, uint8_t *opmask)
 }
 #undef FILLOP
 
+/*
+ * Go over all framev entries and write everything we can.  This is
+ * mostly for the benefit of delivering "unmount" to the kernel.
+ */
+static void
+finalpush(struct puffs_usermount *pu)
+{
+	struct puffs_fctrl_io *fio;
+
+	LIST_FOREACH(fio, &pu->pu_ios, fio_entries) {
+		if (fio->stat & FIO_WRGONE)
+			continue;
+
+		puffs_framev_output(pu, fio->fctrl, fio);
+	}
+}
+
 /*ARGSUSED*/
 static void
 puffs_defaulterror(struct puffs_usermount *pu, uint8_t type,
 	int error, const char *str, void *cookie)
 {
 
-	fprintf(stderr, "%s\n", str);
+	fprintf(stderr, "abort: type %d, error %d, cookie %p (%s)\n",
+	    type, error, cookie, str);
 	abort();
 }
 
@@ -117,6 +135,18 @@ puffs_getselectable(struct puffs_usermount *pu)
 {
 
 	return pu->pu_fd;
+}
+
+uint64_t
+puffs__nextreq(struct puffs_usermount *pu)
+{
+	uint64_t rv;
+
+	PU_LOCK();
+	rv = pu->pu_nextreq++;
+	PU_UNLOCK();
+
+	return rv;
 }
 
 int
@@ -154,7 +184,15 @@ puffs_getstate(struct puffs_usermount *pu)
 void
 puffs_setstacksize(struct puffs_usermount *pu, size_t ss)
 {
+	long psize;
 	int stackshift;
+
+	psize = sysconf(_SC_PAGESIZE);
+	if (ss < 2*psize) {
+		ss = 2*psize;
+		fprintf(stderr, "puffs_setstacksize: adjusting stacksize "
+		    "to minimum %zu\n", ss);
+	}
  
 	assert(puffs_getstate(pu) == PUFFS_STATE_BEFOREMOUNT);
 	stackshift = -1;
@@ -163,7 +201,6 @@ puffs_setstacksize(struct puffs_usermount *pu, size_t ss)
 		stackshift++;
 	}
 	pu->pu_cc_stackshift = stackshift;
-	assert(1<<stackshift == ss);
 }
 
 struct puffs_pathobj *
@@ -300,6 +337,13 @@ puffs_set_errnotify(struct puffs_usermount *pu, pu_errnotify_fn fn)
 }
 
 void
+puffs_set_cmap(struct puffs_usermount *pu, pu_cmap_fn fn)
+{
+
+	pu->pu_cmap = fn;
+}
+
+void
 puffs_ml_setloopfn(struct puffs_usermount *pu, puffs_ml_loop_fn lfn)
 {
 
@@ -330,7 +374,7 @@ puffs_set_prepost(struct puffs_usermount *pu,
 void
 puffs_setback(struct puffs_cc *pcc, int whatback)
 {
-	struct puffs_req *preq = pcc->pcc_preq;
+	struct puffs_req *preq = puffs__framebuf_getdataptr(pcc->pcc_pb);
 
 	assert(PUFFSOP_OPCLASS(preq->preq_opclass) == PUFFSOP_VN && (
 	    preq->preq_optype == PUFFS_VN_OPEN ||
@@ -343,51 +387,173 @@ puffs_setback(struct puffs_cc *pcc, int whatback)
 }
 
 int
+puffs_daemon(struct puffs_usermount *pu, int nochdir, int noclose)
+{
+	ssize_t n;
+	int parent, value, fd;
+
+	if (pipe(pu->pu_dpipe) == -1)
+		return -1;
+
+	switch (fork()) {
+	case -1:
+		return -1;
+	case 0:
+		parent = 0;
+		break;
+	default:
+		parent = 1;
+		break;
+	}
+	pu->pu_state |= PU_PUFFSDAEMON;
+
+	if (parent) {
+		n = read(pu->pu_dpipe[0], &value, sizeof(int));
+		if (n == -1)
+			err(1, "puffs_daemon");
+		assert(n == sizeof(value));
+		if (value) {
+			errno = value;
+			err(1, "puffs_daemon");
+		}
+		exit(0);
+	} else {
+		if (setsid() == -1)
+			goto fail;
+
+		if (!nochdir)
+			chdir("/");
+
+		if (!noclose) {
+			fd = open(_PATH_DEVNULL, O_RDWR, 0);
+			if (fd == -1)
+				goto fail;
+			dup2(fd, STDIN_FILENO);
+			dup2(fd, STDOUT_FILENO);
+			dup2(fd, STDERR_FILENO);
+			if (fd > STDERR_FILENO)
+				close(fd);
+		}
+		return 0;
+	}
+
+ fail:
+	n = write(pu->pu_dpipe[1], &errno, sizeof(int));
+	assert(n == 4);
+	return -1;
+}
+
+int
 puffs_mount(struct puffs_usermount *pu, const char *dir, int mntflags,
 	void *cookie)
 {
 	char rp[MAXPATHLEN];
-	int rv, fd;
+	ssize_t n;
+	int rv, fd, sverrno;
+	char *comfd;
 
-#if 1
+	pu->pu_kargp->pa_root_cookie = cookie;
+
 	/* XXXkludgehere */
 	/* kauth doesn't provide this service any longer */
 	if (geteuid() != 0)
 		mntflags |= MNT_NOSUID | MNT_NODEV;
-#endif
 
-	if (realpath(dir, rp) == NULL)
-		return -1;
+	if (realpath(dir, rp) == NULL) {
+		rv = -1;
+		goto out;
+	}
 
 	if (strcmp(dir, rp) != 0) {
 		warnx("puffs_mount: \"%s\" is a relative path.", dir);
 		warnx("puffs_mount: using \"%s\" instead.", rp);
 	}
 
-	fd = open(_PATH_PUFFS, O_RDONLY);
-	if (fd == -1) {
-		warnx("puffs_mount: cannot open %s", _PATH_PUFFS);
-		return -1;
-	}
-	if (fd <= 2)
-		warnx("puffs_init: device fd %d (<= 2), sure this is "
-		    "what you want?", fd);
+	/*
+	 * Undocumented...  Well, documented only here.
+	 *
+	 * This is used for imaginative purposes.  If the env variable is
+	 * set, puffs_mount() doesn't do the regular mount procedure.
+	 * Rather, it crams the mount data down the comfd and sets comfd as
+	 * the puffs descriptor.
+	 *
+	 * This shouldn't be used unless you can read my mind ( ... or write
+	 * it, not to mention execute it, but that's starting to get silly).
+	 */
+	if ((comfd = getenv("PUFFS_COMFD")) != NULL) {
+		size_t len;
 
-	pu->pu_kargp->pa_fd = pu->pu_fd = fd;
-	pu->pu_kargp->pa_root_cookie = cookie;
-	if ((rv = mount(MOUNT_PUFFS, rp, mntflags,
-	    pu->pu_kargp, sizeof(struct puffs_kargs))) == -1)
-		goto out;
-#if 0
-	if ((rv = ioctl(pu->pu_fd, PUFFSREQSIZEOP, &pu->pu_maxreqlen)) == -1)
-		goto out;
-#endif
+		if (sscanf(comfd, "%d", &pu->pu_fd) != 1) {
+			errno = EINVAL;
+			rv = -1;
+			goto out;
+		}
+		/* check that what we got at least resembles an fd */
+		if (fcntl(pu->pu_fd, F_GETFL) == -1) {
+			rv = -1;
+			goto out;
+		}
+			
+		len = strlen(dir)+1;
+
+#define allwrite(buf, len)						\
+do {									\
+	ssize_t al_rv;							\
+	al_rv = write(pu->pu_fd, buf, len);				\
+	if (al_rv != len) {						\
+		if (al_rv != -1)					\
+			errno = EIO;					\
+		rv = -1;						\
+		abort();\
+		goto out;						\
+	}								\
+} while (/*CONSTCOND*/0)
+		allwrite(&len, sizeof(len));
+		allwrite(dir, len);
+		len = strlen(pu->pu_kargp->pa_mntfromname)+1;
+		allwrite(&len, sizeof(len));
+		allwrite(pu->pu_kargp->pa_mntfromname, len);
+		allwrite(&mntflags, sizeof(mntflags));
+		allwrite(pu->pu_kargp, sizeof(*pu->pu_kargp));
+		allwrite(&pu->pu_flags, sizeof(pu->pu_flags));
+#undef allwrite
+
+		rv = 0;
+	} else {
+		fd = open(_PATH_PUFFS, O_RDWR);
+		if (fd == -1) {
+			warnx("puffs_mount: cannot open %s", _PATH_PUFFS);
+			rv = -1;
+			goto out;
+		}
+		if (fd <= 2)
+			warnx("puffs_mount: device fd %d (<= 2), sure this is "
+			    "what you want?", fd);
+
+		pu->pu_kargp->pa_fd = pu->pu_fd = fd;
+		if ((rv = mount(MOUNT_PUFFS, rp, mntflags,
+		    pu->pu_kargp, sizeof(struct puffs_kargs))) == -1)
+			goto out;
+	}
+
 	PU_SETSTATE(pu, PUFFS_STATE_RUNNING);
 
  out:
+	if (rv != 0)
+		sverrno = errno;
+	else
+		sverrno = 0;
 	free(pu->pu_kargp);
 	pu->pu_kargp = NULL;
 
+	if (pu->pu_state & PU_PUFFSDAEMON) {
+		n = write(pu->pu_dpipe[1], &sverrno, sizeof(int));
+		assert(n == 4);
+		close(pu->pu_dpipe[0]);
+		close(pu->pu_dpipe[1]);
+	}
+
+	errno = sverrno;
 	return rv;
 }
 
@@ -438,10 +604,17 @@ _puffs_init(int develv, struct puffs_ops *pops, const char *mntfromname,
 	pu->pu_privdata = priv;
 	pu->pu_cc_stackshift = PUFFS_CC_STACKSHIFT_DEFAULT;
 	LIST_INIT(&pu->pu_pnodelst);
-	LIST_INIT(&pu->pu_framectrl.fb_ios);
+	LIST_INIT(&pu->pu_ios);
+	LIST_INIT(&pu->pu_ios_rmlist);
 	LIST_INIT(&pu->pu_ccnukelst);
 	TAILQ_INIT(&pu->pu_sched);
 	TAILQ_INIT(&pu->pu_exq);
+
+	pu->pu_framectrl[PU_FRAMECTRL_FS].rfb = puffs_fsframe_read;
+	pu->pu_framectrl[PU_FRAMECTRL_FS].wfb = puffs_fsframe_write;
+	pu->pu_framectrl[PU_FRAMECTRL_FS].cmpfb = puffs_fsframe_cmp;
+	pu->pu_framectrl[PU_FRAMECTRL_FS].gotfb = puffs_fsframe_gotframe;
+	pu->pu_framectrl[PU_FRAMECTRL_FS].fdnotfn = puffs_framev_unmountonclose;
 
 	/* defaults for some user-settable translation functions */
 	pu->pu_cmap = NULL; /* identity translation */
@@ -484,6 +657,7 @@ puffs_exit(struct puffs_usermount *pu, int force)
 	while ((pn = LIST_FIRST(&pu->pu_pnodelst)) != NULL)
 		puffs_pn_put(pn);
 
+	finalpush(pu);
 	puffs_framev_exit(pu);
 	if (pu->pu_state & PU_HASKQ)
 		close(pu->pu_kq);
@@ -495,40 +669,32 @@ puffs_exit(struct puffs_usermount *pu, int force)
 int
 puffs_mainloop(struct puffs_usermount *pu)
 {
-	struct puffs_getreq *pgr = NULL;
-	struct puffs_putreq *ppr = NULL;
-	struct puffs_framectrl *pfctrl = &pu->pu_framectrl;
+	struct puffs_framectrl *pfctrl;
 	struct puffs_fctrl_io *fio;
 	struct puffs_cc *pcc;
-	struct kevent *curev, *newevs;
+	struct kevent *curev;
 	size_t nchanges;
-	int puffsfd, sverrno;
-	int ndone;
+	int ndone, sverrno;
 
 	assert(puffs_getstate(pu) >= PUFFS_STATE_RUNNING);
-
-	pgr = puffs_req_makeget(pu, puffs_getmaxreqlen(pu), 0);
-	if (pgr == NULL)
-		goto out;
-
-	ppr = puffs_req_makeput(pu);
-	if (ppr == NULL)
-		goto out;
-
-	newevs = realloc(pfctrl->evs, (2*pfctrl->nfds+1)*sizeof(struct kevent));
-	if (newevs == NULL)
-		goto out;
-	pfctrl->evs = newevs;
-
-	pu->pu_state |= PU_INLOOP;
 
 	pu->pu_kq = kqueue();
 	if (pu->pu_kq == -1)
 		goto out;
 	pu->pu_state |= PU_HASKQ;
 
-	curev = pfctrl->evs;
-	LIST_FOREACH(fio, &pfctrl->fb_ios, fio_entries) {
+	puffs_setblockingmode(pu, PUFFSDEV_NONBLOCK);
+	if (puffs__framev_addfd_ctrl(pu, puffs_getselectable(pu),
+	    PUFFS_FBIO_READ | PUFFS_FBIO_WRITE,
+	    &pu->pu_framectrl[PU_FRAMECTRL_FS]) == -1)
+		goto out;
+
+	curev = realloc(pu->pu_evs, (2*pu->pu_nfds)*sizeof(struct kevent));
+	if (curev == NULL)
+		goto out;
+	pu->pu_evs = curev;
+
+	LIST_FOREACH(fio, &pu->pu_ios, fio_entries) {
 		EV_SET(curev, fio->io_fd, EVFILT_READ, EV_ADD,
 		    0, 0, (uintptr_t)fio);
 		curev++;
@@ -536,16 +702,17 @@ puffs_mainloop(struct puffs_usermount *pu)
 		    0, 0, (uintptr_t)fio);
 		curev++;
 	}
-	puffsfd = puffs_getselectable(pu);
-	EV_SET(curev, puffsfd, EVFILT_READ, EV_ADD, 0, 0, 0);
-	if (kevent(pu->pu_kq, pfctrl->evs, 2*pfctrl->nfds+1,
-	    NULL, 0, NULL) == -1)
+	if (kevent(pu->pu_kq, pu->pu_evs, 2*pu->pu_nfds, NULL, 0, NULL) == -1)
 		goto out;
+
+	pu->pu_state |= PU_INLOOP;
 
 	while (puffs_getstate(pu) != PUFFS_STATE_UNMOUNTED) {
 		if (pu->pu_ml_lfn)
 			pu->pu_ml_lfn(pu);
 
+		/* XXX: can we still do these optimizations? */
+#if 0
 		/*
 		 * Do this here, because:
 		 *  a) loopfunc might generate some results
@@ -556,23 +723,21 @@ puffs_mainloop(struct puffs_usermount *pu)
 		puffs_req_resetput(ppr);
 
 		/* micro optimization: skip kevent syscall if possible */
-		if (pfctrl->nfds == 0 && pu->pu_ml_timep == NULL
+		if (pu->pu_nfds == 1 && pu->pu_ml_timep == NULL
 		    && (pu->pu_state & PU_ASYNCFD) == 0) {
-			if (puffs_req_handle(pgr, ppr, 0) == -1)
-				goto out;
+			pfctrl = XXX->fctrl;
+			puffs_framev_input(pu, pfctrl, XXX);
 			continue;
 		}
+#endif
 
 		/* else: do full processing */
-
-		/*
-		 * Build list of which to enable/disable in writecheck.
-		 * Don't bother worrying about O(n) for now.
-		 */
-		nchanges = 0;
-		LIST_FOREACH(fio, &pfctrl->fb_ios, fio_entries) {
+		/* Don't bother worrying about O(n) for now */
+		LIST_FOREACH(fio, &pu->pu_ios, fio_entries) {
 			if (fio->stat & FIO_WRGONE)
 				continue;
+
+			pfctrl = fio->fctrl;
 
 			/*
 			 * Try to write out everything to avoid the
@@ -580,34 +745,38 @@ puffs_mainloop(struct puffs_usermount *pu)
 			 * case is that we can fit everything into the
 			 * socket buffer.
 			 */
-			if (puffs_framev_output(pu, pfctrl, fio, ppr)) {
-				/* need kernel notify? (error condition) */
-				if (puffs_req_putput(ppr) == -1)
-					goto out;
-				puffs_req_resetput(ppr);
-			}
+			puffs_framev_output(pu, pfctrl, fio);
+		}
+
+		/*
+		 * Build list of which to enable/disable in writecheck.
+		 */
+		nchanges = 0;
+		LIST_FOREACH(fio, &pu->pu_ios, fio_entries) {
+			if (fio->stat & FIO_WRGONE)
+				continue;
 
 			/* en/disable write checks for kqueue as needed */
 			assert((FIO_EN_WRITE(fio) && FIO_RM_WRITE(fio)) == 0);
 			if (FIO_EN_WRITE(fio)) {
-				EV_SET(&pfctrl->evs[nchanges], fio->io_fd,
+				EV_SET(&pu->pu_evs[nchanges], fio->io_fd,
 				    EVFILT_WRITE, EV_ENABLE, 0, 0,
 				    (uintptr_t)fio);
 				fio->stat |= FIO_WR;
 				nchanges++;
 			}
 			if (FIO_RM_WRITE(fio)) {
-				EV_SET(&pfctrl->evs[nchanges], fio->io_fd,
+				EV_SET(&pu->pu_evs[nchanges], fio->io_fd,
 				    EVFILT_WRITE, EV_DISABLE, 0, 0,
 				    (uintptr_t)fio);
 				fio->stat &= ~FIO_WR;
 				nchanges++;
 			}
-			assert(nchanges <= pfctrl->nfds);
+			assert(nchanges <= pu->pu_nfds);
 		}
 
-		ndone = kevent(pu->pu_kq, pfctrl->evs, nchanges,
-		    pfctrl->evs, pfctrl->nfds+1, pu->pu_ml_timep);
+		ndone = kevent(pu->pu_kq, pu->pu_evs, nchanges,
+		    pu->pu_evs, 2*pu->pu_nfds, pu->pu_ml_timep);
 
 		if (ndone == -1) {
 			if (errno != EINTR)
@@ -621,17 +790,20 @@ puffs_mainloop(struct puffs_usermount *pu)
 			continue;
 
 		/* iterate over the results */
-		for (curev = pfctrl->evs; ndone--; curev++) {
+		for (curev = pu->pu_evs; ndone--; curev++) {
 			int what;
 
+#if 0
 			/* get & possibly dispatch events from kernel */
 			if (curev->ident == puffsfd) {
 				if (puffs_req_handle(pgr, ppr, 0) == -1)
 					goto out;
 				continue;
 			}
+#endif
 
 			fio = (void *)curev->udata;
+			pfctrl = fio->fctrl;
 			if (curev->flags & EV_ERROR) {
 				assert(curev->filter == EVFILT_WRITE);
 				fio->stat &= ~FIO_WR;
@@ -645,12 +817,12 @@ puffs_mainloop(struct puffs_usermount *pu)
 
 			what = 0;
 			if (curev->filter == EVFILT_READ) {
-				puffs_framev_input(pu, pfctrl, fio, ppr);
+				puffs_framev_input(pu, pfctrl, fio);
 				what |= PUFFS_FBIO_READ;
 			}
 
 			else if (curev->filter == EVFILT_WRITE) {
-				puffs_framev_output(pu, pfctrl, fio, ppr);
+				puffs_framev_output(pu, pfctrl, fio);
 				what |= PUFFS_FBIO_WRITE;
 			}
 			if (what)
@@ -669,22 +841,17 @@ puffs_mainloop(struct puffs_usermount *pu)
 		 * Really free fd's now that we don't have references
 		 * to them.
 		 */
-		while ((fio = LIST_FIRST(&pfctrl->fb_ios_rmlist)) != NULL) {
+		while ((fio = LIST_FIRST(&pu->pu_ios_rmlist)) != NULL) {
 			LIST_REMOVE(fio, fio_entries);
 			free(fio);
 		}
 	}
+	finalpush(pu);
 	errno = 0;
-	puffs_req_putput(ppr);
 
  out:
 	/* store the real error for a while */
 	sverrno = errno;
-
-	if (ppr)
-		puffs_req_destroyput(ppr);
-	if (pgr)
-		puffs_req_destroyget(pgr);
 
 	errno = sverrno;
 	if (errno)

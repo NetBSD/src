@@ -1,3 +1,4 @@
+.\" $NetBSD: rcs2log.1,v 1.3.4.1 2008/01/09 01:31:58 matt Exp $
 .\"
 .\" Copyright 1992, 93, 94, 95, 96, 97, 1998 Free Software Foundation, Inc.
 .\"
@@ -32,7 +33,7 @@
 .Op Fl l Ar length
 .Op Fl r Ar option
 .Op Fl t Ar tabwidth
-.Op Fl u Ar login<TAB>fullname<TAB>mailaddr
+.Op Fl u Ar login\*[Lt]TAB\*[Gt]fullname\*[Lt]TAB\*[Gt]mailaddr
 .Op Fl -help
 .Op Fl -version
 .Op Ar file ...
@@ -73,7 +74,7 @@ to subsidiary log command.
 Tab stops are every
 .Ar tabwidth
 characters (default 8).
-.It Fl u Ar "login<TAB>fullname<TAB>mailaddr"
+.It Fl u Ar "login\*[Lt]TAB\*[Gt]fullname\*[Lt]TAB\*[Gt]mailaddr"
 Assume
 .Ar login
 has
@@ -93,6 +94,8 @@ Output version number.
 .Xr rlog 1 ,
 .Xr rcsfile 5
 .Sh AUTHORS
-Paul Eggert <eggert@twinsun.com>
+.An Paul Eggert
+.Aq eggert@twinsun.com
 .Sh BUGS
-Report bugs to <bug-gnu-emacs@gnu.org>.
+Report bugs to
+.Aq bug-gnu-emacs@gnu.org .

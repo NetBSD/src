@@ -1,4 +1,4 @@
-/*	$NetBSD: resize.c,v 1.14.4.1 2007/11/06 23:11:26 matt Exp $	*/
+/*	$NetBSD: resize.c,v 1.14.4.2 2008/01/09 01:36:24 matt Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)resize.c   blymn 2001/08/26";
 #else
-__RCSID("$NetBSD: resize.c,v 1.14.4.1 2007/11/06 23:11:26 matt Exp $");
+__RCSID("$NetBSD: resize.c,v 1.14.4.2 2008/01/09 01:36:24 matt Exp $");
 #endif
 #endif				/* not lint */
 
@@ -74,25 +74,50 @@ wresize(WINDOW *win, int req_nlines, int req_ncols)
 	if (win->orig == NULL) {
 		/* bound "our" windows by the screen size */
 		if (win == curscr || win == __virtscr || win == stdscr) {
+			if (nlines > LINES)
+				nlines = LINES;
+			if (nlines < 1)
+				nlines = 1;
+			if (ncols > COLS)
+				ncols = COLS;
+			if (ncols < 1)
+				ncols = 1;
+		} else {
+			if (win->begy > LINES)
+				win->begy = 0;
 			if (win->begy + nlines > LINES)
 				nlines = 0;
 			if (nlines <= 0)
 				nlines += LINES - win->begy;
+			if (nlines < 1)
+				nlines = 1;
+			if (win->begx > COLS)
+				win->begx = 0;
 			if (win->begx + ncols > COLS)
 				ncols = 0;
 			if (ncols <= 0)
 				ncols += COLS - win->begx;
+			if (ncols < 1)
+				ncols = 1;
 		}
 	} else {
 		/* subwins must fit inside the parent - check this */
+		if (win->begy > win->orig->begy + win->orig->maxy)
+			win->begy = win->orig->begy + win->orig->maxy - 1;
 		if (win->begy + nlines > win->orig->begy + win->orig->maxy)
 			nlines = 0;
 		if (nlines <= 0)
 			nlines += win->orig->begy + win->orig->maxy - win->begy;
+		if (nlines < 1)
+			nlines = 1;
+		if (win->begx > win->orig->begx + win->orig->maxx)
+			win->begx = win->orig->begx + win->orig->maxx - 1;
 		if (win->begx + ncols > win->orig->begx + win->orig->maxx)
 			ncols = 0;
 		if (ncols <= 0)
 			ncols += win->orig->begx + win->orig->maxx - win->begx;
+		if (ncols < 1)
+			ncols = 1;
 	}
 
 	if ((__resizewin(win, nlines, ncols)) == ERR)
@@ -319,15 +344,23 @@ __resizewin(WINDOW *win, int nlines, int ncols)
 		/* bound subwindows to new size and fixup their pointers */
 		for (swin = win->nextp; swin != win; swin = swin->nextp) {
 			y = swin->reqy;
+			if (swin->begy > win->begy + win->maxy)
+				swin->begy = win->begy + win->maxy - 1;
 			if (swin->begy + y > win->begy + win->maxy)
 				y = 0;
 			if (y <= 0)
 				y += win->begy + win->maxy - swin->begy;
+			if (y < 1)
+				y = 1;
 			x = swin->reqx;
+			if (swin->begx > win->begx + win->maxx)
+				swin->begx = win->begx + win->maxx - 1;
 			if (swin->begx + x > win->begx + win->maxx)
 				x = 0;
 			if (x <= 0)
 				x += win->begy + win->maxx - swin->begx;
+			if (x < 1)
+				x = 1;
 			__resizewin(swin, y, x);
 		}
 	}

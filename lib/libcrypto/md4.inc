@@ -1,8 +1,8 @@
-#	$NetBSD: md4.inc,v 1.2 2006/03/17 20:47:45 dsl Exp $
+#	$NetBSD: md4.inc,v 1.2.10.1 2008/01/09 01:34:36 matt Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
-#	SRCS extracted from /home/current/src/lib/libcrypto/../../crypto/dist/openssl/crypto/md4/Makefile.ssl
+#	SRCS extracted from src/crypto/dist/openssl/crypto/md4/Makefile
 #
 
 .PATH:	${OPENSSLSRC}/crypto/md4

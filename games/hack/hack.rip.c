@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.rip.c,v 1.7 2003/04/02 18:36:39 jsm Exp $	*/
+/*	$NetBSD: hack.rip.c,v 1.7.22.1 2008/01/09 01:30:50 matt Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.rip.c,v 1.7 2003/04/02 18:36:39 jsm Exp $");
+__RCSID("$NetBSD: hack.rip.c,v 1.7.22.1 2008/01/09 01:30:50 matt Exp $");
 #endif				/* not lint */
 
 #include "hack.h"
@@ -126,7 +126,7 @@ outrip()
 
 void
 center(line, text)
-	int             line __attribute__((__unused__));
+	int             line __unused;
 	char           *text;
 {
 	int             n = strlen(text) / 2;

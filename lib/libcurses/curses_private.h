@@ -1,4 +1,4 @@
-/*	$NetBSD: curses_private.h,v 1.40 2007/05/28 15:01:55 blymn Exp $	*/
+/*	$NetBSD: curses_private.h,v 1.40.4.1 2008/01/09 01:36:23 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 Brett Lymn
@@ -304,6 +304,8 @@ struct __screen {
 	int notty;
 	int half_delay;
 	int resized;
+	wchar_t *unget_list;
+	int unget_len, unget_pos;
 #ifdef HAVE_WCHAR
 #define MB_LEN_MAX 8
 #define MAX_CBUF_SIZE MB_LEN_MAX
@@ -369,6 +371,7 @@ void	__cursesi_free_nsp(nschar_t *);
 void	__cursesi_win_free_nsp(WINDOW *);
 void	__cursesi_putnsp(nschar_t *, const int, const int);
 #endif /* HAVE_WCHAR */
+int	 __unget(wint_t);
 char	*__longname(char *, char *);	/* Original BSD version */
 int	 __mvcur(int, int, int, int, int);
 WINDOW  *__newwin(SCREEN *, int, int, int, int, int);

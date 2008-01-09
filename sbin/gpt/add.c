@@ -29,7 +29,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/add.c,v 1.14 2006/06/22 22:05:28 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: add.c,v 1.4 2007/02/16 17:13:02 riz Exp $");
+__RCSID("$NetBSD: add.c,v 1.4.4.1 2008/01/09 01:38:05 matt Exp $");
 #endif
 
 #include <sys/types.h>
@@ -49,13 +49,16 @@ static uuid_t type;
 static off_t block, size;
 static unsigned int entry;
 
+const char addmsg[] = "add [-b lba] [-i index] [-s lba] [-t uuid] "
+	"device ...";
+
 static void
 usage_add(void)
 {
 
 	fprintf(stderr,
-	    "usage: %s [-b lba] [-i index] [-s lba] [-t uuid] device ...\n",
-	    getprogname());
+	    "usage: %s %s\n",
+	    getprogname(), addmsg);
 	exit(1);
 }
 
@@ -212,7 +215,7 @@ cmd_add(int argc, char *argv[])
 
 	/* Create UFS partitions by default. */
 	if (uuid_is_nil(&type, NULL)) {
-		uuid_t ufs = GPT_ENT_TYPE_FREEBSD_UFS;
+		uuid_t ufs = GPT_ENT_TYPE_NETBSD_FFS;
 		type = ufs;
 	}
 

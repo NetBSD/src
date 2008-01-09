@@ -1,8 +1,8 @@
-#	$NetBSD: md5.inc,v 1.5 2006/03/17 20:47:45 dsl Exp $
+#	$NetBSD: md5.inc,v 1.5.10.1 2008/01/09 01:34:36 matt Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
-#	SRCS extracted from /home/current/src/lib/libcrypto/../../crypto/dist/openssl/crypto/md5/Makefile.ssl
+#	SRCS extracted from src/crypto/dist/openssl/crypto/md5/Makefile
 #
 
 .PATH:	${OPENSSLSRC}/crypto/md5

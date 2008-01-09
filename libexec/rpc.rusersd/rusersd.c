@@ -1,4 +1,4 @@
-/*	$NetBSD: rusersd.c,v 1.16 2006/05/09 20:18:07 mrg Exp $	*/
+/*	$NetBSD: rusersd.c,v 1.16.10.1 2008/01/09 01:37:15 matt Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rusersd.c,v 1.16 2006/05/09 20:18:07 mrg Exp $");
+__RCSID("$NetBSD: rusersd.c,v 1.16.10.1 2008/01/09 01:37:15 matt Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -47,7 +47,7 @@ __RCSID("$NetBSD: rusersd.c,v 1.16 2006/05/09 20:18:07 mrg Exp $");
 
 int from_inetd = 1;
 
-static void cleanup(int) __attribute__((__noreturn__));
+static void cleanup(int) __dead;
 
 static void
 /*ARGSUSED*/

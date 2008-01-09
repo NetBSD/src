@@ -1,4 +1,4 @@
-.\"	$NetBSD: hier.7,v 1.75.4.1 2007/11/06 23:13:11 matt Exp $
+.\"	$NetBSD: hier.7,v 1.75.4.2 2008/01/09 01:39:13 matt Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)hier.7	8.5 (Berkeley) 6/1/94
 .\"
-.Dd January 6, 2007
+.Dd July 11, 2007
 .Dt HIER 7
 .Os
 .Sh NAME
@@ -412,6 +412,9 @@ standard C include files
 .Bl -tag -width "protocols/" -compact
 .It Sy arpa/
 include files for Internet service protocols
+.It Sy atf/
+include files for the Automated Testing Framework; see
+.Xr atf 1
 .It Sy g++/
 include files for the C++ compiler
 .It Sy machine/
@@ -595,6 +598,10 @@ timezone configuration information;
 see
 .Xr tzfile 5
 .El
+.It Sy tests/
+test programs; see
+.Xr atf-run 1
+for information on how to run them
 .El
 .Pp
 .It Sy /usr/src/
@@ -1013,6 +1020,9 @@ file system support
 .It Sy uvm/
 UVM virtual memory system
 .El
+.It Sy tests/
+source for test programs in
+.Pa /usr/tests
 .It Sy usr.bin/
 source for utilities/files in
 .Pa /usr/bin

@@ -1,4 +1,4 @@
-/*	$NetBSD: bufcache.h,v 1.7.10.1 2007/11/06 23:12:33 matt Exp $	*/
+/*	$NetBSD: bufcache.h,v 1.7.10.2 2008/01/09 01:38:05 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -90,6 +90,7 @@ struct ubuf {
 	daddr_t	b_blkno;		/* Underlying physical block number */
 	struct	uvnode *b_vp;		/* File vnode. */
 	int	b_hashval;		/* Hash value */
+	void	(*b_iodone)(void *);	/* unused */
 };
 
 #define b_bufsize b_bcount
@@ -108,6 +109,8 @@ struct ubuf {
 #define	B_LOCKED	0x00004000	/* Locked in core (not reusable). */
 #define	B_READ		0x00100000	/* Read buffer. */
 #define	B_DONTFREE	0x00010000	/* b_data not managed by bufcache */
+
+#define	b_cflags	b_flags
 
 LIST_HEAD(bufhash_struct, ubuf);
 

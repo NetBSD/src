@@ -29,7 +29,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/show.c,v 1.14 2006/06/22 22:22:32 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: show.c,v 1.2 2006/10/15 22:36:29 christos Exp $");
+__RCSID("$NetBSD: show.c,v 1.2.8.1 2008/01/09 01:38:07 matt Exp $");
 #endif
 
 #include <sys/types.h>
@@ -47,12 +47,14 @@ __RCSID("$NetBSD: show.c,v 1.2 2006/10/15 22:36:29 christos Exp $");
 static int show_label = 0;
 static int show_uuid = 0;
 
+const char showmsg[] = "show [-lu] device ...";
+
 static void
 usage_show(void)
 {
 
 	fprintf(stderr,
-	    "usage: %s [-lu] device ...\n", getprogname());
+	    "usage: %s %s\n", getprogname(), showmsg);
 	exit(1);
 }
 
@@ -68,6 +70,12 @@ friendly(uuid_t *t)
 	static uuid_t swap = GPT_ENT_TYPE_FREEBSD_SWAP;
 	static uuid_t ufs = GPT_ENT_TYPE_FREEBSD_UFS;
 	static uuid_t vinum = GPT_ENT_TYPE_FREEBSD_VINUM;
+	static uuid_t nb_swap = GPT_ENT_TYPE_NETBSD_SWAP;
+	static uuid_t nb_ufs = GPT_ENT_TYPE_NETBSD_FFS;
+	static uuid_t nb_lfs = GPT_ENT_TYPE_NETBSD_LFS;
+	static uuid_t nb_raid = GPT_ENT_TYPE_NETBSD_RAIDFRAME;
+	static uuid_t nb_ccd = GPT_ENT_TYPE_NETBSD_CCD;
+	static uuid_t nb_cgd = GPT_ENT_TYPE_NETBSD_CGD;
 	static char buf[80];
 	char *s;
 
@@ -76,6 +84,18 @@ friendly(uuid_t *t)
 
 	if (uuid_equal(t, &efi_slice, NULL))
 		return ("EFI System");
+	if (uuid_equal(t, &nb_swap, NULL))
+		return ("NetBSD swap");
+	if (uuid_equal(t, &nb_ufs, NULL))
+		return ("NetBSD UFS/UFS2");
+	if (uuid_equal(t, &nb_lfs, NULL))
+		return ("NetBSD LFS");
+	if (uuid_equal(t, &nb_raid, NULL))
+		return ("NetBSD RAIDFrame component");
+	if (uuid_equal(t, &nb_ccd, NULL))
+		return ("NetBSD ccd component");
+	if (uuid_equal(t, &nb_cgd, NULL))
+		return ("NetBSD Cryptographic Disk");
 	if (uuid_equal(t, &swap, NULL))
 		return ("FreeBSD swap");
 	if (uuid_equal(t, &ufs, NULL))

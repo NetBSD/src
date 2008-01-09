@@ -1,4 +1,4 @@
-.\"	$NetBSD: afterboot.8,v 1.32 2007/07/24 09:19:52 jmmv Exp $
+.\"	$NetBSD: afterboot.8,v 1.32.4.1 2008/01/09 01:39:15 matt Exp $
 .\"	$OpenBSD: afterboot.8,v 1.72 2002/02/22 02:02:33 miod Exp $
 .\"
 .\" Originally created by Marshall M. Midden -- 1997-10-20, m4@umn.edu
@@ -66,7 +66,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 2, 2007
+.Dd August 19, 2007
 .Dt AFTERBOOT 8
 .Os
 .Sh NAME
@@ -99,7 +99,7 @@ if they get used to using the manual pages.
 By the time that you have installed your system, it is quite likely that
 bugs in the release have been found.
 All significant and easily fixed problems will be reported at
-.Pa http://www.NetBSD.org/Security/ .
+.Pa http://www.NetBSD.org/support/security/ .
 It is recommended that you check this page regularly.
 .Ss Login
 Login as
@@ -826,7 +826,7 @@ A lot of it is available as binary packages that you can download from
 or a mirror, and install using
 .Xr pkg_add 1 .
 See
-.Pa http://www.NetBSD.org/Documentation/pkgsrc/
+.Pa http://www.NetBSD.org/docs/pkgsrc/
 and
 .Pa pkgsrc/doc/pkgsrc.txt
 for more details.
@@ -921,7 +921,48 @@ $ vi $K/SOMEFILE (adapt to your needs)
 $ ./build.sh tools
 $ ./build.sh kernel=SOMEFILE
 .Ed
+.Sh SYSTEM TESTING
+At this point, the system should be fully configured to your liking.
+It is now a good time to ensure that the system behaves according to
+its specifications and that it is stable on your hardware.
+You can easily do so by running the test suites available at
+.Pa /usr/tests/ ,
+assuming that you installed the
+.Pa tests.tgz
+set.
+If not, you can install it now by running:
+.Bd -literal -offset indent
+# cd /
+# tar xzpf /path/to/tests.tgz
+.Ed
+.Pp
+Once done, edit the
+.Pa /etc/atf/NetBSD.conf
+file to tune the configuration of the test suite, go to
+.Pa /usr/tests/
+hierarchy and use the
+.Xr atf-run 1
+and
+.Xr atf-report 1
+utilities to run all the tests in an automated way:
+.Bd -literal -offset indent
+# cd /usr/tests/
+# atf-run | atf-report
+.Ed
+.Pp
+Should any problems appear when running the test suite, please let the
+.Nx
+developers know by sending a message to the appropriate mailing list or
+by sending a problem report.  For more details see:
+.Bl -bullet -offset indent
+.It
+.Pa http://www.netbsd.org/mailinglists/
+.It
+.Pa http://www.netbsd.org/support/send-pr.html
+.El
 .Sh SEE ALSO
+.Xr atf-report 1 ,
+.Xr atf-run 1 ,
 .Xr chgrp 1 ,
 .Xr chmod 1 ,
 .Xr config 1 ,
@@ -948,6 +989,7 @@ $ ./build.sh kernel=SOMEFILE
 .Xr passwd 5 ,
 .Xr rc.conf 5 ,
 .Xr resolv.conf 5 ,
+.Xr hier 7 ,
 .Xr hostname 7 ,
 .Xr pkgsrc 7 ,
 .Xr adduser 8 ,

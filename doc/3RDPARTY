@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.550.2.1 2007/11/06 23:10:19 matt Exp $
+#	$NetBSD: 3RDPARTY,v 1.550.2.2 2008/01/09 01:29:24 matt Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -25,12 +25,12 @@
 #     remaining lines until the end of the record are notes.
 
 Package:	acpica
-Version:	20060217
-Current Vers:	20060912
+Version:	20071219
+Current Vers:	20070320
 Maintainer:	INTEL
-Archive Site:	http://developer.intel.com/technology/IAPC/acpi/downloads.htm
-Home Page:	http://developer.intel.com/technology/IAPC/acpi/
-Mailing List:	acpi-devel@lists.sourceforge.net
+Archive Site:	http://www.acpica.org/downloads/unix_source_code.php
+Home Page:	http://www.acpica.org/
+Mailing List:	devel@acpica.org
 License:	http://developer.intel.com/technology/iapc/acpi/license2.htm
 Responsible:	kochi
 Notes:
@@ -50,6 +50,21 @@ Notes:
 Amd2netbsd script to convert to BSD make system and remove unneeded files.
 Fix symbolic links before import.
 Check src/usr.sbin/amd/include/config.h is correct after import.
+
+Package:	Automated Testing Framework (ATF)
+Version:	0.3
+Current Vers:	0.3
+Maintainer:	Julio M. Merino Vidal <jmmv@NetBSD.org>
+Archive site:	ftp://ftp.NetBSD.org/pub/NetBSD/misc/jmmv/atf/
+Home page:	http://www.NetBSD.org/~jmmv/atf/
+Mailing List:	atf-devel@NetBSD.org
+Responsible:	jmmv
+License:	The NetBSD Foundation's license (BSD 4-clause)
+Notes:
+The source files are in dist/atf.
+Given that the primary goal of ATF is to provide a testing framework for
+NetBSD, no local changes should be ever needed.  Always direct them to the
+maintainer for integration in official releases.
 
 Package:	ath-hal
 Version:	0.9.17.2
@@ -82,7 +97,7 @@ Maintainer:	Paul Vixie <vixie@vix.com>
 Archive Site:	ftp://ftp.isc.org/isc/bind9/
 Home Page:	http://www.isc.org/sw/bind/
 Mailing List:
-Responsible:	vixie, itojun, christos
+Responsible:	vixie, christos
 License:	BSD-like (2-clause)
 Notes:
 First bind2netbsd script to import into src/dist/bind.
@@ -102,7 +117,7 @@ Todo[4]: Re-entrant functions of net/*
 
 Package:	binutils
 Version:	2.16.1
-Current Vers:	2.17
+Current Vers:	2.18
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/binutils/
 Home Page:	http://www.gnu.org/software/binutils/
@@ -141,7 +156,7 @@ Maintainer:	Citrus
 Archive Site:	http://citrus.bsdclub.org/
 Home Page:	http://citrus.bsdclub.org/
 Mailing List:	bsd-locale@hauN.org
-Responsible:	itojun, tshiozak
+Responsible:	tshiozak
 License:	Ambiguous. Either BSD or Perl Artistic License
 		See http://citrus.bsdclub.org/#pol_license for more info.
 Notes:
@@ -156,7 +171,7 @@ main trunc has Citrus code in the following places:
 
 Package:	cron
 Version:	3.0
-Current Vers:	4.1
+Current Vers:	4.3
 Maintainer:	Paul Vixie <vixie@vix.com>
 Archive Site:	ftp://ftp.isc.org/isc/cron/
 Home Page:
@@ -303,12 +318,12 @@ When updating GDB, it is imperative to test that:
 
 Package:	gettext
 Version:	0.14.4
-Current Vers:	0.14.5
+Current Vers:	0.17
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/gettext/
 Home Page:	http://www.gnu.org/software/gettext/
 Mailing List:	bug-gnu-utils@gnu.org
-Responsible:	itojun
+Responsible:
 License:	GPLv2
 Notes:
 GNU gettext is used for userland tools like msgfmt(1) only.  For libintl,
@@ -435,7 +450,7 @@ Maintainer:	KAME Project <kame@kame.net>
 Archive Site:	http://www.kame.net/
 Home Page:	http://www.kame.net/
 Mailing List:	snap-users@kame.net
-Responsible:	itojun
+Responsible:
 License:	BSD (3-clause)
 Notes:
 IPv6 part is based on KAME/NetBSD142 SNAP as of early June 2000, with
@@ -451,7 +466,7 @@ among KAME/*BSD, *BSD-current and recent *BSD releases.
 
 Package:	less
 Version:	less394
-Current Vers:	less409
+Current Vers:	less416
 Maintainer:	Mark Nudleman <markn@greenwoodsoftware.com>
 Archive Site:	http://www.greenwoodsoftware.com/less/download.html
 Home Page:	http://www.greenwoodsoftware.com/less/
@@ -505,12 +520,12 @@ Notes:
 
 Package:	libpcap
 Version:	0.9.4
-Current Vers:	0.9.5
+Current Vers:	0.9.8
 Maintainer:	tcpdump-workers@tcpdump.org
 Archive Site:	http://www.tcpdump.org/release/
 Home Page:	http://www.tcpdump.org/
 Mailing List:	tcpdump-workers@tcpdump.org
-Responsible:	itojun,dyoung
+Responsible:	dyoung
 License:	BSD (3/4-clause)
 Notes:
 
@@ -521,7 +536,7 @@ Maintainer:	Wietse Venema <wietse@porcupine.org>
 Archive Site:	ftp://ftp.porcupine.org/pub/security/
 Home Page:	ftp://ftp.porcupine.org/pub/security/
 Mailing List:
-Responsible:	cjs, itojun
+Responsible:	cjs
 License:	BSD-like
 Notes:
 We import only libwrap (under src/lib), tcpdchk and tcpdmatch (both
@@ -636,7 +651,7 @@ Maintainer:	The OpenSSL Project
 Archive Site:	ftp://ftp.openssl.org/source/
 Home Page:	http://www.openssl.org/
 Mailing List:	openssl-announce@openssl.org
-Responsible:	mcr, thorpej, itojun, groo, christos, mjf
+Responsible:	mcr, thorpej, groo, christos, mjf
 License:	OpenSSL and SSLeay license (both BSD-like)
 Notes:
 - Run openssl2netbsd to get rid of the RCSID identifiers
@@ -674,7 +689,7 @@ Maintainer:	The OpenBSD Project
 Archive Site:	ftp://ftp.openbsd.org/
 Home Page:	http://www.openbsd.org/faq/pf/
 Mailing List:	pf@benzedrine.cx or appropriate OpenBSD mailing list
-Responsible:	itojun, peter, yamt
+Responsible:	peter, yamt
 License:	BSD (2-clause)
 Notes:
 kernel code is imported into src/sys/dist/pf and src/sys/net has reachover
@@ -682,8 +697,8 @@ definition (files.pf).  userland code is imported into src/dist/pf, and
 reachover Makefiles are in src/usr.sbin/pf.
 
 Package:	pkg_install
-Version:	20071103
-Current Vers.:	20071103
+Version:	20071224
+Current Vers.:	20071224
 Maintainer:	The pkgsrc developers
 Home Page:	http://www.pkgsrc.org
 Mailing List:	tech-pkg@NetBSD.org
@@ -810,12 +825,12 @@ original.
 
 Package:	tcpdump
 Version:	3.9.7
-Current Vers:	3.9.7
+Current Vers:	3.9.8
 Maintainer:	tcpdump-workers@lists.tcpdump.org
 Archive Site:	http://www.tcpdump.org/release/
 Home Page:	http://www.tcpdump.org/
 Mailing List:	tcpdump-workers@lists.tcpdump.org
-Responsible:	itojun
+Responsible:
 License:	BSD (3-clause)
 Notes:
 Code will be imported into src/dist/tcpdump.  Changes have to go back to

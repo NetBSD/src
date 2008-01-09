@@ -1,4 +1,4 @@
-/*	$NetBSD: lrscan.c,v 1.6 2003/08/07 09:37:52 agc Exp $	*/
+/*	$NetBSD: lrscan.c,v 1.6.22.1 2008/01/09 01:31:04 matt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)lrscan.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: lrscan.c,v 1.6 2003/08/07 09:37:52 agc Exp $");
+__RCSID("$NetBSD: lrscan.c,v 1.6.22.1 2008/01/09 01:31:04 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -56,7 +56,7 @@ __RCSID("$NetBSD: lrscan.c,v 1.6 2003/08/07 09:37:52 agc Exp $");
 /*ARGSUSED*/
 void
 lrscan(v)
-	int v __attribute__((__unused__));
+	int v __unused;
 {
 	int		i, j;
 	struct quad	*q;

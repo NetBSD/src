@@ -1,4 +1,4 @@
-.\"	$NetBSD: uvm.9,v 1.85.2.1 2007/11/06 23:13:17 matt Exp $
+.\"	$NetBSD: uvm.9,v 1.85.2.2 2008/01/09 01:39:23 matt Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
 .\" All rights reserved.
@@ -44,7 +44,7 @@ UVM's external interface includes functions that:
 .Pp
 .Bl -hyphen -compact
 .It
-initialise UVM sub-systems
+initialize UVM sub-systems
 .It
 manage virtual address spaces
 .It
@@ -69,7 +69,7 @@ The swapper process swaps in runnable processes that are currently swapped
 out, if there is room.
 .Pp
 There are also several miscellaneous functions.
-.Sh INITIALISATION
+.Sh INITIALIZATION
 .Ft void
 .br
 .Fn uvm_init "void" ;
@@ -89,18 +89,18 @@ There are also several miscellaneous functions.
 .Fn uvm_init
 sets up the UVM system at system boot time, after the
 console has been setup.
-It initialises global state, the page, map, kernel virtual memory state,
+It initializes global state, the page, map, kernel virtual memory state,
 machine-dependent physical map, kernel memory allocator,
 pager and anonymous memory sub-systems, and then enables
 paging of kernel objects.
 .Pp
 .Fn uvm_init_limits
-initialises process limits for the named process.
+initializes process limits for the named process.
 This is for use by the system startup for process zero, before any
 other processes are created.
 .Pp
 .Fn uvm_setpagesize
-initialises the uvmexp members pagesize (if not already done by
+initializes the uvmexp members pagesize (if not already done by
 machine-dependent code), pageshift and pagemask.
 It should be called by machine-dependent code early in the
 .Fn pmap_init
@@ -108,7 +108,7 @@ call (see
 .Xr pmap 9 ) .
 .Pp
 .Fn uvm_swap_init
-initialises the swap sub-system.
+initializes the swap sub-system.
 .Sh VIRTUAL ADDRESS SPACE MANAGEMENT
 .Ft int
 .br
@@ -433,7 +433,6 @@ describing the type of access requested.
 .Fn uvm_fault
 returns a standard UVM return value.
 .Sh MEMORY MAPPING FILES AND DEVICES
-.Pp
 .Ft void
 .br
 .Fn uvm_vnp_setsize "struct vnode *vp" "voff_t newsize" ;
@@ -495,7 +494,6 @@ Mapping will be accessed for write.
 Fault in window's pages already during mapping operation.
 Makes sense only for write.
 .El
-.Ed
 .Pp
 Currently,
 .Fa uobj
@@ -768,7 +766,7 @@ If
 is non-zero, no segment of the list may cross this power-of-two
 boundary, relative to zero.
 .Fa nsegs
-is the maximum number of physically contigous segments.
+is the maximum number of physically contiguous segments.
 If
 .Fa waitok
 is non-zero, the function may sleep until enough memory is available.

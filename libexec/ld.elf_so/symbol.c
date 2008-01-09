@@ -1,4 +1,4 @@
-/*	$NetBSD: symbol.c,v 1.42 2007/02/23 01:16:32 matt Exp $	 */
+/*	$NetBSD: symbol.c,v 1.42.4.1 2008/01/09 01:37:13 matt Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: symbol.c,v 1.42 2007/02/23 01:16:32 matt Exp $");
+__RCSID("$NetBSD: symbol.c,v 1.42.4.1 2008/01/09 01:37:13 matt Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -117,7 +117,8 @@ _rtld_symlook_list(const char *name, unsigned long hash, const Objlist *objlist,
 	def = NULL;
 	defobj = NULL;
 	SIMPLEQ_FOREACH(elm, objlist, link) {
-		rdbg(("search object %p (%s)", elm->obj, elm->obj->path));
+		rdbg(("search object %p (%s) for %s", elm->obj, elm->obj->path,
+		    name));
 		if ((symp = _rtld_symlook_obj(name, hash, elm->obj, in_plt))
 		    != NULL) {
 			if ((def == NULL) ||
@@ -295,7 +296,7 @@ _rtld_symlook_default(const char *name, unsigned long hash,
 
 	/* Look first in the referencing object if linked symbolically. */
 	if (refobj->symbolic) {
-		rdbg(("search referencing object"));
+		rdbg(("search referencing object for %s", name));
 		symp = _rtld_symlook_obj(name, hash, refobj, in_plt);
 		if (symp != NULL) {
 			def = symp;
@@ -305,7 +306,7 @@ _rtld_symlook_default(const char *name, unsigned long hash,
 
 	/* Search all objects loaded at program start up. */
 	if (def == NULL || ELF_ST_BIND(def->st_info) == STB_WEAK) {
-		rdbg(("search _rtld_list_main"));
+		rdbg(("search _rtld_list_main for %s", name));
 		symp = _rtld_symlook_list(name, hash, &_rtld_list_main, &obj,
 		    in_plt);
 		if (symp != NULL &&
@@ -317,7 +318,7 @@ _rtld_symlook_default(const char *name, unsigned long hash,
 
 	/* Search all RTLD_GLOBAL objects. */
 	if (def == NULL || ELF_ST_BIND(def->st_info) == STB_WEAK) {
-		rdbg(("search _rtld_list_global"));
+		rdbg(("search _rtld_list_global for %s", name));
 		symp = _rtld_symlook_list(name, hash, &_rtld_list_global,
 		    &obj, in_plt);
 		if (symp != NULL &&
@@ -331,8 +332,8 @@ _rtld_symlook_default(const char *name, unsigned long hash,
 	SIMPLEQ_FOREACH(elm, &refobj->dldags, link) {
 		if (def != NULL && ELF_ST_BIND(def->st_info) != STB_WEAK)
 			break;
-		rdbg(("search DAG with root %p (%s)", elm->obj,
-		    elm->obj->path));
+		rdbg(("search DAG with root %p (%s) for %s", elm->obj,
+		    elm->obj->path, name));
 		symp = _rtld_symlook_list(name, hash, &elm->obj->dagmembers,
 		    &obj, in_plt);
 		if (symp != NULL &&

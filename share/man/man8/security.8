@@ -1,4 +1,4 @@
-.\" $NetBSD: security.8,v 1.15 2007/02/08 00:38:27 elad Exp $
+.\" $NetBSD: security.8,v 1.15.4.1 2008/01/09 01:39:16 matt Exp $
 .\"
 .\" Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd February 4, 2007
+.Dd December 27, 2007
 .Dt SECURITY 8
 .Os
 .Sh NAME
@@ -176,6 +176,8 @@ fully understand the implications of each feature.
 provides the following exploit mitigation features:
 .Bl -hyphen -compact
 .It
+PaX ASLR (Address Space Layout Randomization)
+.It
 PaX MPROTECT
 .Xr ( mprotect 2
 restrictions)
@@ -185,6 +187,69 @@ PaX SegvGuard
 .Xr gcc 1
 stack-smashing protection (SSP)
 .El
+.Ss PaX ASLR
+.Em PaX ASLR
+implements Address Space Layout Randomization, meant to complement
+non-executable mappings.
+Its purpose is to harden prediction of the address space layout, namely
+location of library and application functions that can be used by an attacker
+to circumvent non-executable mappings by using a technique called
+.Dq return to library
+to bypass the need to write new code to (potentially executable) regions of
+memory.
+.Pp
+When
+.Em PaX ASLR
+is used, it is more likely the attacker will fail to predict the addresses of
+such functions, causing the application to segfault.
+To detect cases where an attacker might try and brute-force the return address
+of respawning services,
+.Em PaX Segvguard
+can be used (see below).
+.Pp
+For non-PIE (Position Independent Executable) executables,
+the
+.Nx
+.Em PaX ASLR
+implementation introduces randomization to the following memory regions:
+.Bl -enum -compact
+.It
+The data segment
+.It
+The stack
+.El
+.Pp
+For PIE executables:
+.Bl -enum -compact
+.It
+The program itself (exec base)
+.It
+All shared libraries
+.It
+The data segment
+.It
+The stack
+.El
+.Pp
+While it can be enabled globally,
+.Nx
+provides a tool,
+.Xr paxctl 8 ,
+to enable
+.Em PaX ASLR
+on a per-program basis.
+.Pp
+Example usage:
+.Bd -literal -offset indent
+# paxctl +A /usr/sbin/sshd
+.Ed
+.Pp
+Enabling
+.Em PaX ASLR
+globally:
+.Bd -literal -offset indent
+# sysctl -w security.pax.aslr.global=1
+.Ed
 .Ss PaX MPROTECT
 .Em PaX MPROTECT
 implements memory protection restrictions, meant to complement non-executable

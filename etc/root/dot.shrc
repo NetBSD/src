@@ -1,6 +1,8 @@
-#	$NetBSD: dot.shrc,v 1.7 2006/09/14 13:01:31 pavel Exp $
+#	$NetBSD: dot.shrc,v 1.7.8.1 2008/01/09 01:29:56 matt Exp $
 
-. /etc/shrc
+if [ -f /etc/shrc ]; then
+	. /etc/shrc
+fi
 
 hup(){ (read pid; kill -HUP $pid) </var/run/$1.pid; }
 

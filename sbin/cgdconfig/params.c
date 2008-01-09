@@ -1,4 +1,4 @@
-/* $NetBSD: params.c,v 1.19.4.1 2007/11/06 23:12:30 matt Exp $ */
+/* $NetBSD: params.c,v 1.19.4.2 2008/01/09 01:38:02 matt Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: params.c,v 1.19.4.1 2007/11/06 23:12:30 matt Exp $");
+__RCSID("$NetBSD: params.c,v 1.19.4.2 2008/01/09 01:38:02 matt Exp $");
 #endif
 
 #include <sys/types.h>
@@ -435,28 +435,28 @@ keygen_filldefaults(struct keygen *kg, size_t keylen)
 struct keygen *
 keygen_combine(struct keygen *kg1, struct keygen *kg2)
 {
-	struct keygen *kg;
-
 	if (!kg1 && !kg2)
 		return NULL;
 
-	if (kg1)
-		kg = kg1;
-	else
-		kg = keygen_new();
+	if (!kg1)
+		kg1 = keygen_new();
 
 	if (!kg2)
-		return kg;
+		return kg1;
 
 	if (kg2->kg_method != KEYGEN_UNKNOWN)
-		kg->kg_method = kg2->kg_method;
-	if (kg2->kg_iterations > 0)
-		kg->kg_iterations = kg2->kg_iterations;
+		kg1->kg_method = kg2->kg_method;
+
+	if (kg2->kg_iterations != (size_t)-1 && kg2->kg_iterations > 0)
+		kg1->kg_iterations = kg2->kg_iterations;
+
 	if (kg2->kg_salt)
-		bits_assign(&kg->kg_salt, kg2->kg_salt);
+		bits_assign(&kg1->kg_salt, kg2->kg_salt);
+
 	if (kg2->kg_key)
-		bits_assign(&kg->kg_key, kg2->kg_key);
-	return kg;
+		bits_assign(&kg1->kg_key, kg2->kg_key);
+
+	return kg1;
 }
 
 struct keygen *

@@ -1,4 +1,4 @@
-.\"	$NetBSD: dmover.9,v 1.11 2007/07/14 10:52:48 ad Exp $
+.\"	$NetBSD: dmover.9,v 1.11.4.1 2008/01/09 01:39:19 matt Exp $
 .\"
 .\" Copyright (c) 2002 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -33,7 +33,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 24, 2005
+.Dd December 4, 2007
 .Dt DMOVER 9
 .Os
 .Sh NAME
@@ -425,7 +425,7 @@ The
 and
 .Fn dmover_process
 functions may be called from interrupt handlers at levels
-.Em IPL_BIO ,
+.Em IPL_VM ,
 .Em IPL_SOFTCLOCK ,
 and
 .Em IPL_SOFTNET ,
@@ -516,7 +516,7 @@ function.
 This function eventually invokes the client's call-back routine.
 .Pp
 If a hardware-assisted data mover uses interrupts, the interrupt handlers
-should be registered at IPL_BIO.
+should be registered at IPL_VM.
 .Pp
 The following functions are provided to the back-ends:
 .Bl -tag -width "XXXX"
@@ -556,7 +556,7 @@ functions must not be called from interrupt context.
 The
 .Fn dmover_done
 function may be called at
-.Em IPL_BIO ,
+.Em IPL_VM ,
 .Em IPL_SOFTCLOCK ,
 .Em IPL_SOFTNET ,
 or in non-interrupt context.
