@@ -1,0 +1,51 @@
+.\"	$NetBSD: gcscpcib.4,v 1.1 2008/01/09 14:23:47 xtraeme Exp $
+.\"     $OpenBSD: glxpcib.4,v 1.7 2007/11/17 11:38:50 mbalmer Exp $
+.\"
+.\" Michael Shalayeff, 2007. Public Domain.
+.\"
+.Dd January 9, 2008
+.Dt GCSCPCIB 4
+.Os
+.Sh NAME
+.Nm gcscide
+.Nd "AMD CS553[56] PCI-ISA bridge with timecounter, watchdog timer, and GPIO"
+.Sh SYNOPSIS
+.Cd "gcscpcib* at pci? dev ? function ?"
+.Cd "gpio* 	at gcscpcib?"
+.Cd "isa* 	at gcscpcib?"
+.Sh DESCRIPTION
+The
+.Nm
+driver provides support for the AMD Geode CS5535 and CS5536 Companion chip.
+This device contains a number of components, including a PCI-ISA bridge.
+Besides the core functionality, the
+.Nm
+driver implements a 32-bit 3.5 MHz timecounter, a watchdog timer device,
+and a GPIO device. The watchdog timer may be configured via the
+.Xr watchdog 8
+utility and the GPIO pins can be manipulated via the
+.Xr gpioctl 8
+utility.
+.Sh SEE ALSO
+.Xr gpio 4 ,
+.Xr intro 4 ,
+.Xr isa 4 ,
+.Xr pci 4 ,
+.Xr pcib 4 ,
+.Xr gpioctl 8 ,
+.Xr wdogctl 8
+.Sh HISTORY
+The
+.Nm
+driver first appeared in
+.Nx 5.0 .
+.Sh AUTHORS
+.An -nosplit
+The
+.Nm
+driver was written by
+.An Michael Shalayeff
+and
+.An Yojiro UO .
+The GPIO parts were added by
+.An Marc Balmer Aq mbalmer@openbsd.org .
