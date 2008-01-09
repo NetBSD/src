@@ -1,4 +1,4 @@
-/*	$NetBSD: pcivar.h,v 1.74.16.1 2007/11/06 23:29:28 matt Exp $	*/
+/*	$NetBSD: pcivar.h,v 1.74.16.2 2008/01/09 01:54:00 matt Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -42,6 +42,7 @@
  */
 
 #include <sys/device.h>
+#include <sys/pmf.h>
 #include <sys/bus.h>
 #include <dev/pci/pcireg.h>
 
@@ -169,7 +170,6 @@ struct pci_softc {
 	/* accounting of child devices */
 	struct device *sc_devices[32*8];
 #define PCI_SC_DEVICESC(d, f) sc_devices[(d) * 8 + (f)]
-	void *sc_powerhook;
 };
 
 struct pci_conf_state {
@@ -246,6 +246,7 @@ int	pci_set_powerstate(pci_chipset_tag_t, pcitag_t, pcireg_t);
 int	pci_activate(pci_chipset_tag_t, pcitag_t, void *,
     int (*)(pci_chipset_tag_t, pcitag_t, void *, pcireg_t));
 int	pci_activate_null(pci_chipset_tag_t, pcitag_t, void *, pcireg_t);
+void	pci_disable_retry(pci_chipset_tag_t, pcitag_t);
 
 #endif /* _KERNEL */
 

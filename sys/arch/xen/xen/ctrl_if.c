@@ -1,4 +1,4 @@
-/*	$NetBSD: ctrl_if.c,v 1.15.10.1 2007/11/06 23:24:31 matt Exp $	*/
+/*	$NetBSD: ctrl_if.c,v 1.15.10.2 2008/01/09 01:50:18 matt Exp $	*/
 
 /******************************************************************************
  * ctrl_if.c
@@ -9,7 +9,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ctrl_if.c,v 1.15.10.1 2007/11/06 23:24:31 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ctrl_if.c,v 1.15.10.2 2008/01/09 01:50:18 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -17,10 +17,10 @@ __KERNEL_RCSID(0, "$NetBSD: ctrl_if.c,v 1.15.10.1 2007/11/06 23:24:31 matt Exp $
 #include <sys/kthread.h>
 #include <sys/malloc.h>
 
-#include <machine/xen.h>
-#include <machine/hypervisor.h>
-#include <machine/ctrl_if.h>
-#include <machine/evtchn.h>
+#include <xen/xen.h>
+#include <xen/hypervisor.h>
+#include <xen/ctrl_if.h>
+#include <xen/evtchn.h>
 
 #if 0
 #define DPRINTK(_f, _a...) printk("(file=%s, line=%d) " _f, \

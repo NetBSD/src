@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.153.2.1 2007/11/06 23:33:28 matt Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.153.2.2 2008/01/09 01:57:10 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.153.2.1 2007/11/06 23:33:28 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.153.2.2 2008/01/09 01:57:10 matt Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -92,6 +92,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.153.2.1 2007/11/06 23:33:28 matt 
 #include <sys/kauth.h>
 #include <sys/cpu.h>
 #include <sys/intr.h>
+#include <sys/device.h>
 
 #include <net/if.h>
 #include <net/netisr.h>
@@ -99,6 +100,10 @@ __KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.153.2.1 2007/11/06 23:33:28 matt 
 #include <net/if_llc.h>
 #include <net/if_dl.h>
 #include <net/if_types.h>
+
+#include <net/if_media.h>
+#include <dev/mii/mii.h>
+#include <dev/mii/miivar.h>
 
 #if NARP == 0
 /*
@@ -1065,7 +1070,6 @@ ether_ifattach(struct ifnet *ifp, const u_int8_t *lla)
 	struct ethercom *ec = (struct ethercom *)ifp;
 
 	ifp->if_type = IFT_ETHER;
-	ifp->if_addrlen = ETHER_ADDR_LEN;
 	ifp->if_hdrlen = ETHER_HDR_LEN;
 	ifp->if_dlt = DLT_EN10MB;
 	ifp->if_mtu = ETHERMTU;
@@ -1074,9 +1078,7 @@ ether_ifattach(struct ifnet *ifp, const u_int8_t *lla)
 	if (ifp->if_baudrate == 0)
 		ifp->if_baudrate = IF_Mbps(10);		/* just a default */
 
-	if_alloc_sadl(ifp);
-	(void)sockaddr_dl_setaddr(ifp->if_sadl, ifp->if_sadl->sdl_len,
-	    lla, ifp->if_addrlen);
+	if_set_sadl(ifp, lla, ETHER_ADDR_LEN);
 
 	LIST_INIT(&ec->ec_multiaddrs);
 	ifp->if_broadcastaddr = etherbroadcastaddr;
@@ -1458,9 +1460,7 @@ ether_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 				break;
 			}
 
-			(void)sockaddr_dl_setaddr(ifp->if_sadl,
-			    ifp->if_sadl->sdl_len, CLLADDR(sdl),
-			    ifp->if_addrlen);
+			if_set_sadl(ifp, CLLADDR(sdl), ifp->if_addrlen);
 
 			/* Set new address. */
 			error = (*ifp->if_init)(ifp);

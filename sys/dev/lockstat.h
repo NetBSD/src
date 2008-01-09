@@ -1,4 +1,4 @@
-/*	$NetBSD: lockstat.h,v 1.5 2007/07/14 13:30:44 ad Exp $	*/
+/*	$NetBSD: lockstat.h,v 1.5.8.1 2008/01/09 01:52:14 matt Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -140,7 +140,7 @@ typedef struct lsbuf {
 } lsbuf_t;
 
 /*
- * Tracing stubs used by lock providers, e.g. lockmgr().
+ * Tracing stubs used by lock providers.
  */
 
 #if defined(_KERNEL) && defined(__HAVE_CPU_COUNTER) && NLOCKSTAT > 0

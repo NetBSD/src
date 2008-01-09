@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.481.2.1 2007/11/06 23:30:43 matt Exp $
+$NetBSD: usbdevs,v 1.481.2.2 2008/01/09 01:54:46 matt Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -502,6 +502,7 @@ vendor ARKMICROCHIPS	0x6547	ArkMicroChips
 vendor 3COM2		0x6891	3Com
 vendor INTEL		0x8086	Intel
 vendor MOSCHIP		0x9710	MosChip Semiconductor
+vendor EMPIA		0xeb1a	eMPIA Technology
 vendor HP2		0xf003	Hewlett Packard
 vendor USRP		0xfffe	GNU Radio USRP
 
@@ -858,6 +859,7 @@ product COREGA FETHER_USB_TXS	0x000d	FEther USB-TXS
 product COREGA WLANUSB		0x0012	Wireless LAN USB Stick-11
 product COREGA FETHER_USB2_TX	0x0017	FEther USB2-TX
 product COREGA WLUSB_11_KEY	0x001a	ULUSB-11 Key
+product COREGA CGWLUSB2GL	0x002d	CG-WLUSB2GL
 product COREGA FETHER_USB_TXC	0x9601	FEther USB-TXC
 
 /* Creative products */
@@ -902,6 +904,7 @@ product DELL X30		0x4003	Axim X30 PDA
 product DELL BC02		0x8000	BC02 Bluetooth USB Adapter
 product DELL TM1180		0x8100	TrueMobile 1180 WLAN
 product DELL TM350		0x8103	TrueMobile 350 Bluetooth USB Adapter
+product DELL HSDPA		0x8137	Dell/Novatel Wireless HSDPA Modem
 
 /* DeLorme products */
 product DELORME EARTHMATE	0x0100	Earthmate GPS
@@ -977,6 +980,9 @@ product ELECOM LDUSBTX3		0xabc1	LD-USB/TX
 /* Elsa products */
 product ELSA MODEM1		0x2265	ELSA Modem Board
 product ELSA USB2ETHERNET	0x3000	Microlink USB2Ethernet
+
+/* eMPIA products */
+product EMPIA CAMERA		0x2761	Camera
 
 /* EMS products */
 product EMS DUAL_SHOOTER	0x0003	PSX gun controller converter
@@ -1970,6 +1976,7 @@ product SIEMENS2 WL54G		0x3c06	54g USB Network Adapter
 
 /* Sierra Wireless products */
 product SIERRA AIRCARD580	0x0112	Sierra Wireless AirCard 580
+product SIERRA MINI5725		0x0220	Sierra Wireless miniPCI 5275
 
 /* Sigmatel products */
 product SIGMATEL SIR4116	0x4116	StIR4116 SIR

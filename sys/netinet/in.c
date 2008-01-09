@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.117.8.1 2007/11/06 23:33:46 matt Exp $	*/
+/*	$NetBSD: in.c,v 1.117.8.2 2008/01/09 01:57:24 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.117.8.1 2007/11/06 23:33:46 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.117.8.2 2008/01/09 01:57:24 matt Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet_conf.h"
@@ -408,9 +408,7 @@ in_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 			bzero((void *)ia, sizeof *ia);
 			TAILQ_INSERT_TAIL(&in_ifaddrhead, ia, ia_list);
 			IFAREF(&ia->ia_ifa);
-			TAILQ_INSERT_TAIL(&ifp->if_addrlist, &ia->ia_ifa,
-			    ifa_list);
-			IFAREF(&ia->ia_ifa);
+			ifa_insert(ifp, &ia->ia_ifa);
 			ia->ia_ifa.ifa_addr = sintosa(&ia->ia_addr);
 			ia->ia_ifa.ifa_dstaddr = sintosa(&ia->ia_dstaddr);
 			ia->ia_ifa.ifa_netmask = sintosa(&ia->ia_sockmask);
@@ -563,7 +561,7 @@ in_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 		break;
 
 	case SIOCDIFADDR:
-		in_purgeaddr(&ia->ia_ifa, ifp);
+		in_purgeaddr(&ia->ia_ifa);
 #ifdef PFIL_HOOKS
 		(void)pfil_run_hooks(&if_pfil, (struct mbuf **)SIOCDIFADDR,
 		    ifp, PFIL_IFADDR);
@@ -587,21 +585,21 @@ in_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 
 	if (error != 0 && newifaddr) {
 		KASSERT(ia != NULL);
-		in_purgeaddr(&ia->ia_ifa, ifp);
+		in_purgeaddr(&ia->ia_ifa);
 	}
 
 	return error;
 }
 
 void
-in_purgeaddr(struct ifaddr *ifa, struct ifnet *ifp)
+in_purgeaddr(struct ifaddr *ifa)
 {
+	struct ifnet *ifp = ifa->ifa_ifp;
 	struct in_ifaddr *ia = (void *) ifa;
 
 	in_ifscrub(ifp, ia);
 	LIST_REMOVE(ia, ia_hash);
-	TAILQ_REMOVE(&ifp->if_addrlist, &ia->ia_ifa, ifa_list);
-	IFAFREE(&ia->ia_ifa);
+	ifa_remove(ifp, &ia->ia_ifa);
 	TAILQ_REMOVE(&in_ifaddrhead, ia, ia_list);
 	if (ia->ia_allhosts != NULL)
 		in_delmulti(ia->ia_allhosts);
@@ -612,15 +610,7 @@ in_purgeaddr(struct ifaddr *ifa, struct ifnet *ifp)
 void
 in_purgeif(struct ifnet *ifp)		/* MUST be called at splsoftnet() */
 {
-	struct ifaddr *ifa, *nifa;
-
-	for (ifa = TAILQ_FIRST(&ifp->if_addrlist); ifa != NULL; ifa = nifa) {
-		nifa = TAILQ_NEXT(ifa, ifa_list);
-		if (ifa->ifa_addr->sa_family != AF_INET)
-			continue;
-		in_purgeaddr(ifa, ifp);
-	}
-
+	if_purgeaddrs(ifp, AF_INET, in_purgeaddr);
 	igmp_purgeif(ifp);		/* manipulates pools */
 #ifdef MROUTING
 	ip_mrouter_detach(ifp);
@@ -652,7 +642,7 @@ in_lifaddr_ioctl(struct socket *so, u_long cmd, void *data,
 	struct sockaddr *sa;
 
 	/* sanity checks */
-	if (!data || !ifp) {
+	if (data == NULL || ifp == NULL) {
 		panic("invalid argument to in_lifaddr_ioctl");
 		/*NOTRECHED*/
 	}
@@ -757,14 +747,14 @@ in_lifaddr_ioctl(struct socket *so, u_long cmd, void *data,
 		IFADDR_FOREACH(ifa, ifp) {
 			if (ifa->ifa_addr->sa_family != AF_INET)
 				continue;
-			if (!cmp)
+			if (cmp == 0)
 				break;
 			candidate.s_addr = ((struct sockaddr_in *)&ifa->ifa_addr)->sin_addr.s_addr;
 			candidate.s_addr &= mask.s_addr;
 			if (candidate.s_addr == match.s_addr)
 				break;
 		}
-		if (!ifa)
+		if (ifa == NULL)
 			return EADDRNOTAVAIL;
 		ia = (struct in_ifaddr *)ifa;
 
@@ -1028,8 +1018,8 @@ in_addprefix(struct in_ifaddr *target, int flags)
 	/*
 	 * noone seem to have prefix route.  insert it.
 	 */
-	error = rtinit(&target->ia_ifa, (int)RTM_ADD, flags);
-	if (!error)
+	error = rtinit(&target->ia_ifa, RTM_ADD, flags);
+	if (error == 0)
 		target->ia_flags |= IFA_ROUTE;
 	return error;
 }
@@ -1072,11 +1062,11 @@ in_scrubprefix(struct in_ifaddr *target)
 		 * if we got a matching prefix route, move IFA_ROUTE to him
 		 */
 		if ((ia->ia_flags & IFA_ROUTE) == 0) {
-			rtinit(&(target->ia_ifa), (int)RTM_DELETE,
+			rtinit(&target->ia_ifa, RTM_DELETE,
 			    rtinitflags(target));
 			target->ia_flags &= ~IFA_ROUTE;
 
-			error = rtinit(&ia->ia_ifa, (int)RTM_ADD,
+			error = rtinit(&ia->ia_ifa, RTM_ADD,
 			    rtinitflags(ia) | RTF_UP);
 			if (error == 0)
 				ia->ia_flags |= IFA_ROUTE;
@@ -1087,7 +1077,7 @@ in_scrubprefix(struct in_ifaddr *target)
 	/*
 	 * noone seem to have prefix route.  remove it.
 	 */
-	rtinit(&(target->ia_ifa), (int)RTM_DELETE, rtinitflags(target));
+	rtinit(&target->ia_ifa, RTM_DELETE, rtinitflags(target));
 	target->ia_flags &= ~IFA_ROUTE;
 	return 0;
 }

@@ -1,7 +1,7 @@
-/*	$NetBSD: com.c,v 1.262.2.2 2007/11/06 23:26:29 matt Exp $	*/
+/*	$NetBSD: com.c,v 1.262.2.3 2008/01/09 01:52:50 matt Exp $	*/
 
 /*-
- * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.262.2.2 2007/11/06 23:26:29 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.262.2.3 2008/01/09 01:52:50 matt Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -178,7 +178,6 @@ void	com_modem(struct com_softc *, int);
 void	tiocm_to_com(struct com_softc *, u_long, int);
 int	com_to_tiocm(struct com_softc *);
 void	com_iflush(struct com_softc *);
-void	com_power(int, void *);
 
 int	com_common_getc(dev_t, struct com_regs *);
 void	com_common_putc(dev_t, struct com_regs *, int);
@@ -387,7 +386,7 @@ com_attach_subr(struct com_softc *sc)
 	aprint_naive("\n");
 
 	callout_init(&sc->sc_diag_callout, 0);
-	mutex_init(&sc->sc_lock, MUTEX_SPIN, IPL_SERIAL);
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_HIGH);
 
 	/* Disable interrupts before configuring the device. */
 	if (sc->sc_type == COM_TYPE_PXA2x0)
@@ -560,12 +559,6 @@ fifodone:
 
 	com_config(sc);
 
-	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
-	    com_power, sc);
-	if (sc->sc_powerhook == NULL)
-		aprint_error("%s: WARNING: unable to establish power hook\n",
-			sc->sc_dev.dv_xname);
-
 	SET(sc->sc_hwflags, COM_HW_DEV_OK);
 }
 
@@ -625,10 +618,6 @@ com_detach(struct device *self, int flags)
 	struct com_softc *sc = (struct com_softc *)self;
 	int maj, mn;
 
-	/* kill the power hook */
-	if (sc->sc_powerhook != NULL)
-		powerhook_disestablish(sc->sc_powerhook);
-
 	/* locate the major number */
 	maj = cdevsw_lookup_major(&com_cdevsw);
 
@@ -672,7 +661,6 @@ com_activate(struct device *self, enum devact act)
 	struct com_softc *sc = (struct com_softc *)self;
 	int rv = 0;
 
-	mutex_spin_enter(&sc->sc_lock);
 	switch (act) {
 	case DVACT_ACTIVATE:
 		rv = EOPNOTSUPP;
@@ -749,6 +737,8 @@ com_shutdown(struct com_softc *sc)
 
 	CSR_WRITE_1(&sc->sc_regs, COM_REG_IER, sc->sc_ier);
 
+	mutex_spin_exit(&sc->sc_lock);
+
 	if (sc->disable) {
 #ifdef DIAGNOSTIC
 		if (!sc->enabled)
@@ -757,7 +747,6 @@ com_shutdown(struct com_softc *sc)
 		(*sc->disable)(sc);
 		sc->enabled = 0;
 	}
-	mutex_spin_exit(&sc->sc_lock);
 }
 
 int
@@ -799,18 +788,19 @@ comopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 		tp->t_dev = dev;
 
-		mutex_spin_enter(&sc->sc_lock);
 
 		if (sc->enable) {
 			if ((*sc->enable)(sc)) {
-				mutex_spin_exit(&sc->sc_lock);
 				splx(s);
 				printf("%s: device enable failed\n",
 				       sc->sc_dev.dv_xname);
 				return (EIO);
 			}
+			mutex_spin_enter(&sc->sc_lock);
 			sc->enabled = 1;
 			com_config(sc);
+		} else {
+			mutex_spin_enter(&sc->sc_lock);
 		}
 
 		/* Turn on interrupts. */
@@ -1712,16 +1702,8 @@ comstart(struct tty *tp)
 		goto out;
 	if (sc->sc_tx_stopped)
 		goto out;
-
-	if (tp->t_outq.c_cc <= tp->t_lowat) {
-		if (ISSET(tp->t_state, TS_ASLEEP)) {
-			CLR(tp->t_state, TS_ASLEEP);
-			wakeup(&tp->t_outq);
-		}
-		selwakeup(&tp->t_wsel);
-		if (tp->t_outq.c_cc == 0)
-			goto out;
-	}
+	if (!ttypull(tp))
+		goto out;
 
 	/* Grab the first contiguous region of buffer space. */
 	{
@@ -2559,24 +2541,14 @@ com_cleanup(void *arg)
 		CSR_WRITE_1(&sc->sc_regs, COM_REG_FIFO, 0);
 }
 
-void
-com_power(int why, void *arg)
+bool
+com_resume(device_t dev)
 {
-	struct com_softc *sc = arg;
+	struct com_softc *sc = device_private(dev);
 
 	mutex_spin_enter(&sc->sc_lock);
-	switch (why) {
-	case PWR_SUSPEND:
-	case PWR_STANDBY:
-		/* XXX should we do something to stop the device? */
-		break;
-	case PWR_RESUME:
-		com_loadchannelregs(sc);
-		break;
-	case PWR_SOFTSUSPEND:
-	case PWR_SOFTSTANDBY:
-	case PWR_SOFTRESUME:
-		break;
-	}
+	com_loadchannelregs(sc);
 	mutex_spin_exit(&sc->sc_lock);
+
+	return true;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.h,v 1.61.8.1 2007/11/06 23:33:59 matt Exp $	*/
+/*	$NetBSD: in6.h,v 1.61.8.2 2008/01/09 01:57:34 matt Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -646,7 +646,7 @@ struct cmsghdr;
  *	NOTE: We expect the src and dst addresses to be 16-bit
  *	aligned!
  */
-static __inline u_int16_t __attribute__((__unused__))
+static __inline u_int16_t __unused
 in6_cksum_phdr(const struct in6_addr *src, const struct in6_addr *dst,
     u_int32_t len, u_int32_t nxt)
 {

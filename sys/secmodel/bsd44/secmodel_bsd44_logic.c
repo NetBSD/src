@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_bsd44_logic.c,v 1.3 2007/01/09 12:57:56 elad Exp $ */
+/* $NetBSD: secmodel_bsd44_logic.c,v 1.3.20.1 2008/01/09 01:58:03 matt Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_logic.c,v 1.3 2007/01/09 12:57:56 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_logic.c,v 1.3.20.1 2008/01/09 01:58:03 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -37,7 +37,7 @@ __KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_logic.c,v 1.3 2007/01/09 12:57:56 ela
 
 #include <secmodel/bsd44/bsd44.h>
 #include <secmodel/bsd44/suser.h>
-#include <secmodel/bsd44/securelevel.h>
+#include <secmodel/securelevel/securelevel.h>
 
 int secmodel_bsd44_curtain;
 
@@ -47,6 +47,6 @@ int secmodel_bsd44_curtain;
 void
 secmodel_bsd44_init(void)
 {
-	secmodel_bsd44_securelevel_init();
+	secmodel_securelevel_init();
 	secmodel_bsd44_curtain = 0;
 }

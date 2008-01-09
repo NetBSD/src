@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_sl82c105_reg.h,v 1.4 2007/06/11 16:25:58 nisimura Exp $	*/
+/*	$NetBSD: pciide_sl82c105_reg.h,v 1.4.8.1 2008/01/09 01:53:59 matt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@ struct symph_cmdtime {
 };
 
 static const struct symph_cmdtime symph_pio_times[]
-    __attribute__((__unused__)) = {
+    __unused = {
 /*        programmed               actual       */
 	{ 5, 13 },		/* 6, 14 */
 	{ 4, 7 },		/* 5, 8 */
@@ -97,13 +97,13 @@ static const struct symph_cmdtime symph_pio_times[]
 };
 
 static const struct symph_cmdtime symph_sw_dma_times[]
-    __attribute__((__unused__)) = {
+    __unused = {
 /*        programmed               actual       */
 	{ 15, 15 },		/* 16, 16 */
 };
 
 static const struct symph_cmdtime symph_mw_dma_times[]
-     __attribute__((__unused__)) = {
+     __unused = {
 /*        programmed               actual       */
 	{ 7, 7 },		/* 8, 8 */
 	{ 2, 1 },		/* 3, 2 */

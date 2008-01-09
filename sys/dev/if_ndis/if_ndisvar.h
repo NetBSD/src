@@ -145,6 +145,7 @@ struct ndis_softc {
 	struct resource		*ndis_res_cm;	/* common mem (pccard) */
 	struct resource_list	ndis_rl;
 #else /* __NetBSD__ */
+	uint8_t	ndis_mac[ETHER_ADDR_LEN];
 	int ndis_sysctl_mib;
 	struct sysctllog *sysctllog;
 	

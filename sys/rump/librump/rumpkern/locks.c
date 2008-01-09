@@ -1,4 +1,4 @@
-/*	$NetBSD: locks.c,v 1.1.6.3 2007/11/08 11:00:18 matt Exp $	*/
+/*	$NetBSD: locks.c,v 1.1.6.4 2008/01/09 01:58:00 matt Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -57,6 +57,13 @@ mutex_enter(kmutex_t *mtx)
 	rumpuser_mutex_enter(mtx->kmtx_mtx);
 }
 
+void
+mutex_spin_enter(kmutex_t *mtx)
+{
+
+	mutex_enter(mtx);
+}
+
 int
 mutex_tryenter(kmutex_t *mtx)
 {
@@ -74,6 +81,13 @@ mutex_exit(kmutex_t *mtx)
 {
 
 	rumpuser_mutex_exit(mtx->kmtx_mtx);
+}
+
+void
+mutex_spin_exit(kmutex_t *mtx)
+{
+
+	mutex_exit(mtx);
 }
 
 int
@@ -129,6 +143,14 @@ rw_tryupgrade(krwlock_t *rw)
 	return 0;
 }
 
+int
+rw_write_held(krwlock_t *rw)
+{
+
+	/* XXX: always held for now */
+	return 1;
+}
+
 /* curriculum vitaes */
 
 /* forgive me for I have sinned */
@@ -155,11 +177,44 @@ cv_wait(kcondvar_t *cv, kmutex_t *mtx)
 	rumpuser_cv_wait(RUMPCV(cv), mtx->kmtx_mtx);
 }
 
+int
+cv_wait_sig(kcondvar_t *cv, kmutex_t *mtx)
+{
+
+	rumpuser_cv_wait(RUMPCV(cv), mtx->kmtx_mtx);
+	return 0;
+}
+
+int
+cv_timedwait(kcondvar_t *cv, kmutex_t *mtx, int ticks)
+{
+	extern int hz;
+
+	KASSERT(hz == 100);
+	return rumpuser_cv_timedwait(RUMPCV(cv), mtx->kmtx_mtx, ticks);
+}
+
+int
+cv_timedwait_sig(kcondvar_t *cv, kmutex_t *mtx, int ticks)
+{
+	extern int hz;
+
+	KASSERT(hz == 100);
+	return rumpuser_cv_timedwait(RUMPCV(cv), mtx->kmtx_mtx, ticks);
+}
+
 void
 cv_signal(kcondvar_t *cv)
 {
 
 	rumpuser_cv_signal(RUMPCV(cv));
+}
+
+void
+cv_broadcast(kcondvar_t *cv)
+{
+
+	rumpuser_cv_broadcast(RUMPCV(cv));
 }
 
 /* kernel biglock, only for vnode_if */

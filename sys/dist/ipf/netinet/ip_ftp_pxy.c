@@ -1,7 +1,4 @@
-/*	$NetBSD: ip_ftp_pxy.c,v 1.13 2007/05/15 22:52:50 martin Exp $	*/
-
-#include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ip_ftp_pxy.c,v 1.13 2007/05/15 22:52:50 martin Exp $");
+/*	$NetBSD: ip_ftp_pxy.c,v 1.13.8.1 2008/01/09 01:55:31 matt Exp $	*/
 
 /*
  * Copyright (C) 1997-2003 by Darren Reed
@@ -13,6 +10,9 @@ __KERNEL_RCSID(1, "$NetBSD: ip_ftp_pxy.c,v 1.13 2007/05/15 22:52:50 martin Exp $
  *
  * Id: ip_ftp_pxy.c,v 2.88.2.22 2007/05/10 09:30:39 darrenr Exp
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(1, "$NetBSD: ip_ftp_pxy.c,v 1.13.8.1 2008/01/09 01:55:31 matt Exp $");
 
 #define	IPF_FTP_PROXY
 

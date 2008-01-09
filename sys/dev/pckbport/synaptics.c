@@ -1,4 +1,4 @@
-/*	$NetBSD: synaptics.c,v 1.15.10.1 2007/11/06 23:29:39 matt Exp $	*/
+/*	$NetBSD: synaptics.c,v 1.15.10.2 2008/01/09 01:54:13 matt Exp $	*/
 
 /*
  * Copyright (c) 2005, Steve C. Woodford
@@ -48,6 +48,7 @@
 #include "opt_pms.h"
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.15.10.2 2008/01/09 01:54:13 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

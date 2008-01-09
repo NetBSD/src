@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.117 2007/06/24 20:35:37 christos Exp $	*/
+/*	$NetBSD: exec.h,v 1.117.8.1 2008/01/09 01:58:07 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -195,13 +195,18 @@ struct exec_package {
 	vaddr_t	ep_vm_minaddr;		/* bottom of process address space */
 	vaddr_t	ep_vm_maxaddr;		/* top of process address space */
 	u_int	ep_flags;		/* flags; see below. */
-	char	**ep_fa;		/* a fake args vector for scripts */
+	size_t	ep_fa_len;		/* byte size of ep_fa */
+	struct exec_fakearg {
+		char *fa_arg;
+		size_t fa_len;
+	} *ep_fa;			/* a fake args vector for scripts */
 	int	ep_fd;			/* a file descriptor we're holding */
 	void	*ep_emul_arg;		/* emulation argument */
 	const struct	execsw *ep_esch;/* execsw entry */
 	struct vnode *ep_emul_root;     /* base of emulation filesystem */
 	struct vnode *ep_interp;        /* vnode of (elf) interpeter */
 	uint32_t ep_pax_flags;		/* pax flags */
+	char	*ep_path;		/* absolute path of executable */
 };
 #define	EXEC_INDIR	0x0001		/* script handling already done */
 #define	EXEC_HASFD	0x0002		/* holding a shell script */
@@ -226,10 +231,6 @@ struct exec_vmcmd {
 };
 
 #ifdef _KERNEL
-#include <sys/mallocvar.h>
-
-MALLOC_DECLARE(M_EXEC);
-
 /*
  * funtions used either by execve() or the various CPU-dependent execve()
  * hooks.

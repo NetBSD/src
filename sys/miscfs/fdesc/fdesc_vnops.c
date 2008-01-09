@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.98.6.1 2007/11/06 23:33:15 matt Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.98.6.2 2008/01/09 01:57:01 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.98.6.1 2007/11/06 23:33:15 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.98.6.2 2008/01/09 01:57:01 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -277,7 +277,7 @@ fdesc_lookup(v)
 	struct vnode **vpp = ap->a_vpp;
 	struct vnode *dvp = ap->a_dvp;
 	struct componentname *cnp = ap->a_cnp;
-	struct lwp *l = cnp->cn_lwp;
+	struct lwp *l = curlwp;
 	const char *pname = cnp->cn_nameptr;
 	struct proc *p = l->l_proc;
 	int numfiles = p->p_fd->fd_nfiles;
@@ -412,7 +412,6 @@ fdesc_open(v)
 		struct vnode *a_vp;
 		int  a_mode;
 		kauth_cred_t a_cred;
-		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 
@@ -430,7 +429,7 @@ fdesc_open(v)
 		return EDUPFD;
 
 	case Fctty:
-		return cdev_open(devctty, ap->a_mode, 0, ap->a_l);
+		return cdev_open(devctty, ap->a_mode, 0, curlwp);
 	case Froot:
 	case Fdevfd:
 	case Flink:
@@ -459,7 +458,7 @@ fdesc_attr(fd, vap, cred, l)
 	switch (fp->f_type) {
 	case DTYPE_VNODE:
 		FILE_USE(fp);
-		error = VOP_GETATTR((struct vnode *) fp->f_data, vap, cred, l);
+		error = VOP_GETATTR((struct vnode *) fp->f_data, vap, cred);
 		FILE_UNUSE(fp, l);
 		if (error == 0 && vap->va_type == VDIR) {
 			/*
@@ -579,7 +578,7 @@ fdesc_getattr(v)
 
 	case Fdesc:
 		fd = VTOFDESC(vp)->fd_fd;
-		error = fdesc_attr(fd, vap, ap->a_cred, ap->a_l);
+		error = fdesc_attr(fd, vap, ap->a_cred, curlwp);
 		break;
 
 	default:
@@ -601,9 +600,8 @@ fdesc_setattr(v)
 		struct vnode *a_vp;
 		struct vattr *a_vap;
 		kauth_cred_t a_cred;
-		struct lwp *a_l;
 	} */ *ap = v;
-	struct filedesc *fdp = ap->a_l->l_proc->p_fd;
+	struct filedesc *fdp = curlwp->l_proc->p_fd;
 	struct file *fp;
 	unsigned fd;
 
@@ -889,14 +887,13 @@ fdesc_ioctl(v)
 		void *a_data;
 		int  a_fflag;
 		kauth_cred_t a_cred;
-		struct lwp *a_l;
 	} */ *ap = v;
 	int error = EOPNOTSUPP;
 
 	switch (VTOFDESC(ap->a_vp)->fd_type) {
 	case Fctty:
 		error = cdev_ioctl(devctty, ap->a_command, ap->a_data,
-		    ap->a_fflag, ap->a_l);
+		    ap->a_fflag, curlwp);
 		break;
 
 	default:
@@ -914,13 +911,12 @@ fdesc_poll(v)
 	struct vop_poll_args /* {
 		struct vnode *a_vp;
 		int a_events;
-		struct lwp *a_l;
 	} */ *ap = v;
 	int revents;
 
 	switch (VTOFDESC(ap->a_vp)->fd_type) {
 	case Fctty:
-		revents = cdev_poll(devctty, ap->a_events, ap->a_l);
+		revents = cdev_poll(devctty, ap->a_events, curlwp);
 		break;
 
 	default:
@@ -974,7 +970,6 @@ fdesc_inactive(v)
 {
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
-		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 

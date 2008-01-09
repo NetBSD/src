@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.15 2006/01/27 02:28:36 uwe Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.15.44.1 2008/01/09 01:56:45 matt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -74,7 +74,7 @@ vsnprintf(char *buf, size_t size, const char *fmt, va_list ap)
 	ebuf = buf + size - 1;
 	kdoprnt(sputchar, fmt, ap);
 	*sbuf = '\0';
-	return (sbuf - buf);
+	return sbuf - buf;
 }
 
 static void
@@ -92,7 +92,8 @@ kdoprnt(void (*put)(int), const char *fmt, va_list ap)
 			put(ch);
 		}
 		lflag = 0;
-reswitch:	switch (ch = *fmt++) {
+reswitch:
+		switch (ch = *fmt++) {
 		case 'l':
 			lflag = 1;
 			goto reswitch;
@@ -151,6 +152,7 @@ reswitch:	switch (ch = *fmt++) {
 			if (ch == '\0')
 				return;
 			put(ch);
+			break;
 		}
 	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: adt7467.c,v 1.8 2007/07/01 11:28:14 xtraeme Exp $	*/
+/*	$NetBSD: adt7467.c,v 1.8.8.1 2008/01/09 01:52:40 matt Exp $	*/
 
 /*-
  * Copyright (C) 2005 Michael Lorenz
@@ -37,7 +37,7 @@
  */
  
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adt7467.c,v 1.8 2007/07/01 11:28:14 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adt7467.c,v 1.8.8.1 2008/01/09 01:52:40 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,19 +54,12 @@ __KERNEL_RCSID(0, "$NetBSD: adt7467.c,v 1.8 2007/07/01 11:28:14 xtraeme Exp $");
 static void adt7467c_attach(struct device *, struct device *, void *);
 static int adt7467c_match(struct device *, struct cfdata *, void *);
 
-struct adt7467c_sysmon {
-	struct sysmon_envsys sme;
-	struct adt7467c_softc *sc;
-	struct envsys_data adt7467c_data[];
-};
-
-
 static uint8_t adt7467c_readreg(struct adt7467c_softc *, uint8_t);
 static void adt7467c_writereg(struct adt7467c_softc *, uint8_t, uint8_t);
 int sensor_type(char *);
 int temp2muk(uint8_t);
 int reg2rpm(uint16_t);
-int adt7467c_gtredata(struct sysmon_envsys *, envsys_data_t *);
+void adt7467c_refresh(struct sysmon_envsys *, envsys_data_t *);
 
 CFATTACH_DECL(adt7467c, sizeof(struct adt7467c_softc),
     adt7467c_match, adt7467c_attach, NULL, NULL);
@@ -188,10 +181,8 @@ sysctl_adt7467_temp(SYSCTLFN_ARGS)
 void
 adt7467c_setup(struct adt7467c_softc *sc)
 {
-	struct adt7467c_sysmon *datap;
 	const struct sysctlnode *me=NULL;
 	struct sysctlnode *node=NULL;
-	struct envsys_data *cur_t;
 	int i, ret;
 	int error;
 	const char *sensor_desc[] = { "case temperature", "CPU temperature",
@@ -199,10 +190,7 @@ adt7467c_setup(struct adt7467c_softc *sc)
 	char name[16];
 	uint8_t stuff, sensortab[] = {0x26, 0x27, 0x25};
 	
-	sc->num_sensors = 5;
-	datap = malloc(sizeof(struct sysmon_envsys) + 5 * 
-	    sizeof(struct envsys_data) + sizeof(void *),
-	    M_DEVBUF, M_WAITOK | M_ZERO);
+	sc->sc_sme = sysmon_envsys_create();
 	    
 	ret = sysctl_createv(NULL, 0, NULL, &me,
 	       CTLFLAG_READWRITE,
@@ -210,63 +198,65 @@ adt7467c_setup(struct adt7467c_softc *sc)
 	       NULL, 0, NULL, 0,
 	       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
 
-
 	/* temperature sensors */
 	for (i=0; i<3; i++) {
-		cur_t = &datap->adt7467c_data[i];
 		snprintf(name, 16, "temp%d", i);
-		strcpy(cur_t->desc, sensor_desc[i]);
-		cur_t->units = ENVSYS_STEMP;
-		cur_t->sensor = i;
+		strlcpy(sc->sc_sensor[i].desc, sensor_desc[i],
+		    sizeof(sc->sc_sensor[i].desc));
+		sc->sc_sensor[i].units = ENVSYS_STEMP;
 		sc->regs[i] = sensortab[i];
+		if (sysmon_envsys_sensor_attach(sc->sc_sme,
+						&sc->sc_sensor[i]))
+			goto out;
+
 		ret = sysctl_createv(NULL, 0, NULL, 
 		    (const struct sysctlnode **)&node, 
 		    CTLFLAG_READWRITE | CTLFLAG_OWNDESC | CTLFLAG_IMMEDIATE,
-		    CTLTYPE_INT, name, cur_t->desc, sysctl_adt7467_temp, 
+		    CTLTYPE_INT, name, sc->sc_sensor[i].desc,
+		    sysctl_adt7467_temp, 
 		    sc->regs[i]+0x42 , NULL, 0, CTL_MACHDEP, me->sysctl_num, 
 		    CTL_CREATE, CTL_EOL);
 		if (node != NULL) {
 			node->sysctl_data = sc;
 		}
-		cur_t->state = ENVSYS_SVALID;
 	}
 
-	cur_t = &datap->adt7467c_data[3];
 	snprintf(name, 16, "voltage0");
-	strcpy(cur_t->desc, name);
-	cur_t->sensor = 3;
+	strlcpy(sc->sc_sensor[3].desc, name, sizeof(sc->sc_sensor[3].desc));
 	sc->regs[3] = 0x21;
-	cur_t->units = ENVSYS_SVOLTS_DC;
-	cur_t->rfact = 1;
-	cur_t->state = ENVSYS_SVALID;
-	
-	cur_t = &datap->adt7467c_data[4];
+	sc->sc_sensor[3].units = ENVSYS_SVOLTS_DC;
+	if (sysmon_envsys_sensor_attach(sc->sc_sme, &sc->sc_sensor[3]))
+		goto out;
+
 	snprintf(name, 16, "fan0");
-	strcpy(cur_t->desc, name);
-	cur_t->sensor = 4;
+	strlcpy(sc->sc_sensor[4].desc, name, sizeof(sc->sc_sensor[4].desc));
 	sc->regs[4] = 0x28;
-	cur_t->units = ENVSYS_SFANRPM;
-	cur_t->state = ENVSYS_SVALID;
+	sc->sc_sensor[4].units = ENVSYS_SFANRPM;
+	if (sysmon_envsys_sensor_attach(sc->sc_sme, &sc->sc_sensor[4]))
+		goto out;
 
 	stuff = adt7467c_readreg(sc, 0x40);
 	adt7467c_writereg(sc, 0x40, stuff);
 
-	sc->sc_sysmon_cookie = &datap->sme;
+	sc->sc_sme->sme_name = sc->sc_dev.dv_xname;
+	sc->sc_sme->sme_cookie = sc;
+	sc->sc_sme->sme_refresh = adt7467c_refresh;
 
-	datap->sme.sme_name = sc->sc_dev.dv_xname;
-	datap->sme.sme_nsensors = 5;
-	datap->sme.sme_sensor_data = datap->adt7467c_data;
-	datap->sme.sme_cookie = sc;
-	datap->sme.sme_gtredata = adt7467c_gtredata;
-
-	if ((error = sysmon_envsys_register(&datap->sme)) != 0)
+	if ((error = sysmon_envsys_register(sc->sc_sme)) != 0) {
 		aprint_error("%s: unable to register with sysmon (%d)\n",
 		    sc->sc_dev.dv_xname, error);
+		goto out;
+	}
+	
+	return;
+
+out:
+	sysmon_envsys_destroy(sc->sc_sme);
 }
 
 
-int
-adt7467c_gtredata(struct sysmon_envsys *sme, envsys_data_t *edata)
+void
+adt7467c_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 {
 	struct adt7467c_softc *sc=sme->sme_cookie;
 	int i;
@@ -300,6 +290,5 @@ adt7467c_gtredata(struct sysmon_envsys *sme, envsys_data_t *edata)
 			break;
 	}
 	edata->state = ENVSYS_SVALID;
-	return 0;
 }
 #endif /* NSYSMON_ENVSYS > 0 */

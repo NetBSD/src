@@ -1,4 +1,4 @@
-/*	$NetBSD: cs428x.h,v 1.13 2007/06/15 13:26:57 joerg Exp $	*/
+/*	$NetBSD: cs428x.h,v 1.13.8.1 2008/01/09 01:53:37 matt Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.
@@ -141,9 +141,27 @@ struct cs428x_softc {
 	struct ac97_host_if host_if;
 
 	/* Power Management */
-	char	sc_suspend;
-	void   *sc_powerhook;		/* Power Hook */
-	struct pci_conf_state sc_pciconf;
+	union {
+		struct {
+			uint32_t pctl;
+			uint32_t pba;
+			uint32_t pfie;
+			uint32_t pdtc;
+			uint32_t cctl;
+			uint32_t cba;
+			uint32_t cie;
+		} cs4280;
+		struct {
+			uint32_t dba0;
+			uint32_t dbc0;
+			uint32_t dmr0;
+			uint32_t dcr0;
+			uint32_t dba1;
+			uint32_t dbc1;
+			uint32_t dmr1;
+			uint32_t dcr1;
+		} cs4281;
+	} sc_suspend_state;
 
 	/* CLKRUN hack (CS428X_FLAG_CLKRUN), only for CS4280 */
 	int sc_active;

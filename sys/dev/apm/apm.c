@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.12 2007/07/09 22:58:52 ad Exp $ */
+/*	$NetBSD: apm.c,v 1.12.8.1 2008/01/09 01:52:23 matt Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.12 2007/07/09 22:58:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.12.8.1 2008/01/09 01:52:23 matt Exp $");
 
 #include "opt_apm.h"
 
@@ -58,7 +58,6 @@ __KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.12 2007/07/09 22:58:52 ad Exp $");
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/kthread.h>
-#include <sys/lock.h>
 #include <sys/user.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
@@ -102,9 +101,9 @@ int	apmdebug = 0;
  * user context.
  */
 #define	APM_LOCK(apmsc)						\
-	(void) lockmgr(&(apmsc)->sc_lock, LK_EXCLUSIVE, NULL)
+	(void) mutex_enter(&(apmsc)->sc_lock)
 #define	APM_UNLOCK(apmsc)						\
-	(void) lockmgr(&(apmsc)->sc_lock, LK_RELEASE, NULL)
+	(void) mutex_exit(&(apmsc)->sc_lock)
 
 static void	apm_event_handle(struct apm_softc *, u_int, u_int);
 static void	apm_periodic_check(struct apm_softc *);
@@ -316,11 +315,8 @@ apm_suspend(struct apm_softc *sc)
 	sc->sc_power_state = PWR_SUSPEND;
  
 	if (!(sc->sc_hwflags & APM_F_DONT_RUN_HOOKS)) {
-		dopowerhooks(PWR_SOFTSUSPEND);
-
+		pmf_system_suspend();
 		apm_spl = splhigh();
-
-		dopowerhooks(PWR_SUSPEND);
 	}
 
 	error = (*sc->sc_ops->aa_set_powstate)(sc->sc_cookie, APM_DEV_ALLDEVS,
@@ -345,11 +341,8 @@ apm_standby(struct apm_softc *sc)
 	sc->sc_power_state = PWR_STANDBY;
 
 	if (!(sc->sc_hwflags & APM_F_DONT_RUN_HOOKS)) {
-		dopowerhooks(PWR_SOFTSTANDBY);
-
+		pmf_system_suspend();
 		apm_spl = splhigh();
-
-		dopowerhooks(PWR_STANDBY);
 	}
 	error = (*sc->sc_ops->aa_set_powstate)(sc->sc_cookie, APM_DEV_ALLDEVS,
 	    APM_SYS_STANDBY);
@@ -379,11 +372,8 @@ apm_resume(struct apm_softc *sc, u_int event_type, u_int event_info)
 
 	inittodr(time_second);
 	if (!(sc->sc_hwflags & APM_F_DONT_RUN_HOOKS)) {
-		dopowerhooks(PWR_RESUME);
-
 		splx(apm_spl);
-
-		dopowerhooks(PWR_SOFTRESUME);
+		pmf_system_resume();
 	}
 
 	apm_record_event(sc, event_type);
@@ -640,9 +630,7 @@ apm_match(void)
 void
 apm_attach(struct apm_softc *sc)
 {
-	struct apm_power_info pinfo;
 	u_int numbatts, capflags;
-	int error;
 
 	aprint_normal(": ");
 
@@ -670,17 +658,10 @@ apm_attach(struct apm_softc *sc)
 	 */
 	(*sc->sc_ops->aa_enable)(sc->sc_cookie, 1);
 
-	error = (*sc->sc_ops->aa_get_powstat)(sc->sc_cookie, 0, &pinfo);
-	if (error == 0) {
-#ifdef APM_POWER_PRINT
-		apm_power_print(sc, &pinfo);
-#endif
-	} else
-		apm_perror("get power status", error);
 	if (sc->sc_ops->aa_cpu_busy)
 		(*sc->sc_ops->aa_cpu_busy)(sc->sc_cookie);
 
-	lockinit(&sc->sc_lock, PWAIT, "apmlk", 0, 0);
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
 
 	/* Initial state is `resumed'. */
 	sc->sc_power_state = PWR_RESUME;
@@ -703,6 +684,9 @@ apm_attach(struct apm_softc *sc)
 		    "kernel APM support disabled\n",
 		    sc->sc_dev.dv_xname);
 	}
+
+	if (!pmf_device_register(&sc->sc_dev, NULL, NULL))
+		aprint_error_dev(&sc->sc_dev, "couldn't establish power handler\n");
 }
 
 void
@@ -950,7 +934,7 @@ apmkqfilter(dev_t dev, struct knote *kn)
 		break;
 
 	default:
-		return (1);
+		return (EINVAL);
 	}
 
 	kn->kn_hook = sc;

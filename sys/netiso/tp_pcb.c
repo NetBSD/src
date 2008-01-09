@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_pcb.c,v 1.34 2007/03/04 06:03:33 christos Exp $	*/
+/*	$NetBSD: tp_pcb.c,v 1.34.16.1 2008/01/09 01:57:48 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -68,7 +68,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_pcb.c,v 1.34 2007/03/04 06:03:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_pcb.c,v 1.34.16.1 2008/01/09 01:57:48 matt Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -809,7 +809,7 @@ tp_detach(struct tp_pcb *tpcb)
 		tp_rsyflush(tpcb);
 
 	if (tpcb->tp_next) {
-		remque(tpcb);
+		iso_remque(tpcb);
 		tpcb->tp_next = tpcb->tp_prev = 0;
 	}
 	tpcb->tp_notdetached = 0;
@@ -996,7 +996,7 @@ tp_pcbbind(void *v, struct mbuf *nam, struct lwp *l)
 				}
 		}
 		bcopy(tsel, tpcb->tp_lsuffix, (tpcb->tp_lsuffixlen = tlen));
-		insque(tpcb, &tp_bound_pcbs);
+		iso_insque(tpcb, &tp_bound_pcbs);
 	} else {
 		if (tlen || siso == 0)
 			return (EINVAL);

@@ -1,4 +1,4 @@
-/*	$NetBSD: iostat.h,v 1.7 2006/12/07 20:23:38 ad Exp $	*/
+/*	$NetBSD: iostat.h,v 1.7.20.1 2008/01/09 01:58:09 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2004 The NetBSD Foundation, Inc.
@@ -46,7 +46,6 @@
 
 #include <sys/time.h>
 #include <sys/queue.h>
-#include <sys/lock.h>
 
 #define	IOSTATNAMELEN	16
 

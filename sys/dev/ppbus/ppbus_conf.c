@@ -1,4 +1,4 @@
-/* $NetBSD: ppbus_conf.c,v 1.11 2006/03/29 17:23:56 thorpej Exp $ */
+/* $NetBSD: ppbus_conf.c,v 1.11.34.1 2008/01/09 01:54:17 matt Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 1999 Nicolas Souchu
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppbus_conf.c,v 1.11 2006/03/29 17:23:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppbus_conf.c,v 1.11.34.1 2008/01/09 01:54:17 matt Exp $");
 
 #include "opt_ppbus.h"
 #include "opt_ppbus_1284.h"
@@ -132,8 +132,7 @@ ppbus_attach(struct device *parent, struct device *self, void *aux)
 	ppbus->ppbus_owner = NULL;
 
 	/* Initialize locking structures */
-	lockinit(&(ppbus->sc_lock), PPBUSPRI | PCATCH, "ppbuslock", 0,
-		LK_NOWAIT);
+	mutex_init(&(ppbus->sc_lock), MUTEX_DEFAULT, IPL_NONE);
 
 	/* Set up bus mode and ieee state */
 	ppbus->sc_mode = ppbus->ppbus_getmode(device_parent(self));
@@ -190,16 +189,7 @@ ppbus_detach(struct device *self, int flag)
 				ppbus->sc_dev.dv_xname);
 	}
 
-	if (lockmgr(&(ppbus->sc_lock), LK_DRAIN, NULL)) {
-		if (!(flag & DETACH_QUIET))
-			printf("%s: error while waiting for lock activity to "
-				"end.\n", ppbus->sc_dev.dv_xname);
-		if (!(flag & DETACH_FORCE))
-			return 0;
-		if (!(flag & DETACH_QUIET))
-			printf("%s: continuing detach (DETACH_FORCE).\n",
-				ppbus->sc_dev.dv_xname);
-	}
+	mutex_destroy(&(ppbus->sc_lock));
 
 	/* Detach children devices */
 	while (!SLIST_EMPTY(&(ppbus->sc_childlist_head))) {

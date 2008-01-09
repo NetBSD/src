@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.91 2007/07/31 21:14:20 pooka Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.91.4.1 2008/01/09 01:58:30 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -121,8 +121,10 @@ extern int locked_queue_count;
 extern long locked_queue_bytes;
 extern int lfs_subsys_pages;
 extern int lfs_dirvcount;
-extern struct simplelock lfs_subsys_lock;
+extern kmutex_t lfs_lock;
 extern int lfs_debug_log_subsys[];
+extern kcondvar_t lfs_writing_cv;
+extern kcondvar_t locked_queue_cv;
 
 __BEGIN_DECLS
 /* lfs_alloc.c */
@@ -166,7 +168,7 @@ void lfs_debug_log(int, const char *, ...);
 /* lfs_inode.c */
 int lfs_update(struct vnode *, const struct timespec *, const struct timespec *,
     int);
-int lfs_truncate(struct vnode *, off_t, int, kauth_cred_t, struct lwp *);
+int lfs_truncate(struct vnode *, off_t, int, kauth_cred_t);
 struct ufs1_dinode *lfs_ifind(struct lfs *, ino_t, struct buf *);
 void lfs_finalize_ino_seguse(struct lfs *, struct inode *);
 void lfs_finalize_fs_seguse(struct lfs *);
@@ -181,7 +183,7 @@ int lfs_vflush(struct vnode *);
 int lfs_segwrite(struct mount *, int);
 int lfs_writefile(struct lfs *, struct segment *, struct vnode *);
 int lfs_writeinode(struct lfs *, struct segment *, struct inode *);
-int lfs_gatherblock(struct segment *, struct buf *, int *);
+int lfs_gatherblock(struct segment *, struct buf *, kmutex_t *);
 int lfs_gather(struct lfs *, struct segment *, struct vnode *, int (*match )(struct lfs *, struct buf *));
 void lfs_update_single(struct lfs *, struct segment *, struct vnode *,
     daddr_t, int32_t, int);
@@ -228,11 +230,10 @@ void lfs_init(void);
 void lfs_reinit(void);
 void lfs_done(void);
 int lfs_mountroot(void);
-int lfs_mount(struct mount *, const char *, void *, size_t *,
-		struct lwp *);
-int lfs_unmount(struct mount *, int, struct lwp *);
-int lfs_statvfs(struct mount *, struct statvfs *, struct lwp *);
-int lfs_sync(struct mount *, int, kauth_cred_t, struct lwp *);
+int lfs_mount(struct mount *, const char *, void *, size_t *);
+int lfs_unmount(struct mount *, int);
+int lfs_statvfs(struct mount *, struct statvfs *);
+int lfs_sync(struct mount *, int, kauth_cred_t);
 int lfs_vget(struct mount *, ino_t, struct vnode **);
 int lfs_fhtovp(struct mount *, struct fid *, struct vnode **);
 int lfs_vptofh(struct vnode *, struct fid *, size_t *);

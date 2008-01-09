@@ -1,4 +1,4 @@
-/*	$NetBSD: bootp.c,v 1.29.32.1 2007/11/06 23:32:55 matt Exp $	*/
+/*	$NetBSD: bootp.c,v 1.29.32.2 2008/01/09 01:56:36 matt Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -91,8 +91,7 @@ int bootp_flags;
 
 /* Fetch required bootp information */
 void
-bootp(sock)
-	int sock;
+bootp(int sock)
 {
 	struct iodesc *d;
 	struct bootp *bp;
@@ -271,10 +270,7 @@ bootp(sock)
 
 /* Transmit a bootp request */
 static ssize_t
-bootpsend(d, pkt, len)
-	struct iodesc *d;
-	void *pkt;
-	size_t len;
+bootpsend(struct iodesc *d, void *pkt, size_t len)
 {
 	struct bootp *bp;
 
@@ -291,15 +287,11 @@ bootpsend(d, pkt, len)
 		printf("bootpsend: calling sendudp\n");
 #endif
 
-	return (sendudp(d, pkt, len));
+	return sendudp(d, pkt, len);
 }
 
 static ssize_t
-bootprecv(d, pkt, len, tleft)
-	struct iodesc *d;
-	void *pkt;
-	size_t len;
-	time_t tleft;
+bootprecv(struct iodesc *d, void *pkt, size_t len, time_t tleft)
 {
 	ssize_t n;
 	struct bootp *bp;
@@ -352,16 +344,14 @@ bootprecv(d, pkt, len, tleft)
 	else
 		printf("bootprecv: unknown vendor 0x%lx\n", (long)bp->bp_vend);
 
-	return (n);
+	return n;
 bad:
 	errno = 0;
-	return (-1);
+	return -1;
 }
 
 static int
-vend_rfc1048(cp, len)
-	u_char *cp;
-	u_int len;
+vend_rfc1048(u_char *cp, u_int len)
 {
 	u_char *ep;
 	int size;
@@ -403,7 +393,7 @@ vend_rfc1048(cp, len)
 #ifdef SUPPORT_DHCP
 		if (tag == TAG_DHCP_MSGTYPE) {
 			if (*cp != expected_dhcpmsgtype)
-				return (-1);
+				return -1;
 			dhcp_ok = 1;
 		}
 		if (tag == TAG_SERVERID) {
@@ -419,13 +409,12 @@ vend_rfc1048(cp, len)
 #endif
 		cp += size;
 	}
-	return (0);
+	return 0;
 }
 
 #ifdef BOOTP_VEND_CMU
 static void
-vend_cmu(cp)
-	u_char *cp;
+vend_cmu(u_char *cp)
 {
 	struct cmu_vend *vp;
 

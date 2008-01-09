@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.vax,v 1.78 2007/03/31 05:59:45 matt Exp $
+#	$NetBSD: Makefile.vax,v 1.78.14.1 2008/01/09 01:49:32 matt Exp $
 
 # Makefile for NetBSD
 #
@@ -74,6 +74,9 @@ unimpl_emul.o: assym.h
 ##
 ## (7) misc settings
 ##
+
+# XXX recent gcc4 gets ICE on this one
+COPTS.db_command.c+=	-fno-tree-ter
 
 ##
 ## (8) config(8) generated machinery

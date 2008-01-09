@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_tz.c,v 1.23.8.1 2007/11/06 23:25:34 matt Exp $ */
+/* $NetBSD: acpi_tz.c,v 1.23.8.2 2008/01/09 01:52:20 matt Exp $ */
 
 /*
  * Copyright (c) 2003 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.23.8.1 2007/11/06 23:25:34 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.23.8.2 2008/01/09 01:52:20 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,7 +67,6 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.23.8.1 2007/11/06 23:25:34 matt Exp $"
 
 /* sensor indexes */
 #define ATZ_SENSOR_TEMP	0	/* thermal zone temperature */
-#define ATZ_NUMSENSORS	1	/* number of sensors */
 
 static int	acpitz_match(struct device *, struct cfdata *, void *);
 static void	acpitz_attach(struct device *, struct device *, void *);
@@ -106,13 +105,15 @@ struct acpitz_softc {
 	struct acpi_devnode *sc_devnode;
 	struct acpitz_zone sc_zone;
 	struct callout sc_callout;
-	struct envsys_data sc_data[ATZ_NUMSENSORS];
-	struct sysmon_envsys sc_sysmon;
+	struct sysmon_envsys *sc_sme;
+	envsys_data_t sc_sensor;
 	kmutex_t sc_mtx;
 	int sc_active;		/* active cooling level */
 	int sc_flags;
 	int sc_rate;		/* tz poll rate */
 	int sc_zone_expire;
+
+	int sc_first;
 };
 
 static void	acpitz_get_status(void *);
@@ -158,32 +159,30 @@ acpitz_attach(struct device *parent, struct device *self, void *aux)
 	ACPI_STATUS rv;
 	ACPI_INTEGER v;
 
-	mutex_init(&sc->sc_mtx, MUTEX_DRIVER, IPL_NONE);
+	mutex_init(&sc->sc_mtx, MUTEX_DEFAULT, IPL_NONE);
 
 #if 0
 	sc->sc_flags = ATZ_F_VERBOSE;
 #endif
 	sc->sc_devnode = aa->aa_node;
 
-	aprint_naive(": ACPI Thermal Zone\n");
-	aprint_normal(": ACPI Thermal Zone\n");
+	aprint_naive("\n");
 
 	rv = acpi_eval_integer(sc->sc_devnode->ad_handle, "_TZP", &v);
-	if (ACPI_FAILURE(rv)) {
-		aprint_verbose("%s: unable to get polling interval; using default of",
-		    sc->sc_dev.dv_xname);
+	if (ACPI_FAILURE(rv))
 		sc->sc_zone.tzp = ATZ_TZP_RATE;
-	} else {
+	else
 		sc->sc_zone.tzp = v;
-		aprint_verbose("%s: polling interval is", sc->sc_dev.dv_xname);
-	}
-	aprint_verbose(" %d.%ds\n", sc->sc_zone.tzp / 10, sc->sc_zone.tzp % 10);
+
+	aprint_debug(" sample rate %d.%ds\n",
+	    sc->sc_zone.tzp / 10, sc->sc_zone.tzp % 10);
 
 	/* XXX a value of 0 means "polling is not necessary" */
 	if (sc->sc_zone.tzp == 0)
 		sc->sc_zone.tzp = ATZ_TZP_RATE;
 
 	sc->sc_zone_expire = ATZ_ZONE_EXPIRE / sc->sc_zone.tzp;
+	sc->sc_first = 1;
 
 	acpitz_get_zone(sc, 1);
 	acpitz_get_status(sc);
@@ -191,8 +190,8 @@ acpitz_attach(struct device *parent, struct device *self, void *aux)
 	rv = AcpiInstallNotifyHandler(sc->sc_devnode->ad_handle,
 	    ACPI_SYSTEM_NOTIFY, acpitz_notify_handler, sc);
 	if (ACPI_FAILURE(rv)) {
-		aprint_error("%s: unable to install SYSTEM NOTIFY handler: %s\n",
-		    sc->sc_dev.dv_xname, AcpiFormatException(rv));
+		aprint_error(": unable to install SYSTEM NOTIFY handler: %s\n",
+		    AcpiFormatException(rv));
 		return;
 	}
 
@@ -200,6 +199,9 @@ acpitz_attach(struct device *parent, struct device *self, void *aux)
 	callout_setfunc(&sc->sc_callout, acpitz_tick, sc);
 
 	acpitz_init_envsys(sc);
+
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error(": couldn't establish power handler\n");
 
 	callout_schedule(&sc->sc_callout, sc->sc_zone.tzp * hz / 10);
 }
@@ -226,7 +228,8 @@ acpitz_get_status(void *opaque)
 	}
 
 	if (acpitz_get_integer(sc, "_TMP", &tmp)) {
-		printf("%s: failed to evaluate _TMP\n", sc->sc_dev.dv_xname);
+		aprint_error("%s: failed to evaluate _TMP\n",
+		    sc->sc_dev.dv_xname);
 		return;
 	}
 	sc->sc_zone.tmp = tmp;
@@ -238,9 +241,8 @@ acpitz_get_status(void *opaque)
 	 * that K = C + 273.2 rather than the nominal 273.15 used by envsys(4),
 	 * so we correct for that too.
 	 */
-	sc->sc_data[ATZ_SENSOR_TEMP].value_cur =
-	    sc->sc_zone.tmp * 100000 - 50000;
-	sc->sc_data[ATZ_SENSOR_TEMP].state = ENVSYS_SVALID;
+	sc->sc_sensor.value_cur = sc->sc_zone.tmp * 100000 - 50000;
+	sc->sc_sensor.state = ENVSYS_SVALID;
 
 	if (sc->sc_flags & ATZ_F_VERBOSE)
 		acpitz_print_status(sc);
@@ -277,14 +279,12 @@ acpitz_get_status(void *opaque)
 			int changed = (sc->sc_flags ^ flags) & flags;
 			sc->sc_flags = flags;
 			if (changed & ATZ_F_CRITICAL) {
-				sc->sc_data[ATZ_SENSOR_TEMP].state =
-				    ENVSYS_SCRITICAL;
+				sc->sc_sensor.state = ENVSYS_SCRITICAL;
 				printf("%s: zone went critical at temp %sC\n",
 				    sc->sc_dev.dv_xname,
 				    acpitz_celcius_string(tmp));
 			} else if (changed & ATZ_F_HOT) {
-				sc->sc_data[ATZ_SENSOR_TEMP].state =
-				    ENVSYS_SWARNOVER;
+				sc->sc_sensor.state = ENVSYS_SWARNOVER;
 				printf("%s: zone went hot at temp %sC\n",
 				    sc->sc_dev.dv_xname,
 				    acpitz_celcius_string(tmp));
@@ -411,9 +411,8 @@ acpitz_get_zone(void *opaque, int verbose)
 	ACPI_STATUS rv;
 	char buf[8];
 	int i, valid_levels;
-	static int first = 1;
 
-	if (!first) {
+	if (!sc->sc_first) {
 		acpitz_power_off(sc);
 
 		for (i = 0; i < ATZ_NLEVELS; i++) {
@@ -421,7 +420,8 @@ acpitz_get_zone(void *opaque, int verbose)
 				AcpiOsFree(sc->sc_zone.al[i].Pointer);
 			sc->sc_zone.al[i].Pointer = NULL;
 		}
-	}
+	} else
+		aprint_normal(":");
 
 	valid_levels = 0;
 
@@ -443,27 +443,18 @@ acpitz_get_zone(void *opaque, int verbose)
 		obj = sc->sc_zone.al[i].Pointer;
 		if (obj != NULL) {
 			if (obj->Type != ACPI_TYPE_PACKAGE) {
-				printf("%s: ac%d not package\n",
-				    sc->sc_dev.dv_xname, i);
+				aprint_error("%d not package\n", i);
 				AcpiOsFree(obj);
 				sc->sc_zone.al[i].Pointer = NULL;
 				continue;
 			}
 		}
 
-		if (first)
-			printf("%s: active cooling level %d: %sC\n",
-			    sc->sc_dev.dv_xname, i,
+		if (sc->sc_first)
+			aprint_normal(" active cooling level %d: %sC", i,
 			    acpitz_celcius_string(sc->sc_zone.ac[i]));
 
 		valid_levels++;
-	}
-
-	if (valid_levels == 0) {
-		sc->sc_flags |= ATZ_F_PASSIVEONLY;
-		if (first)
-			printf("%s: passive cooling mode only\n",
-			    sc->sc_dev.dv_xname);
 	}
 
 	acpitz_get_integer(sc, "_TMP", &sc->sc_zone.tmp);
@@ -482,24 +473,30 @@ acpitz_get_zone(void *opaque, int verbose)
 	acpitz_sane_temp(&sc->sc_zone.psv);
 
 	if (verbose) {
-		printf("%s:", sc->sc_dev.dv_xname);
 		if (sc->sc_zone.crt != ATZ_TMP_INVALID)
-			printf(" critical %sC",
+			aprint_normal(" critical %sC",
 			    acpitz_celcius_string(sc->sc_zone.crt));
 		if (sc->sc_zone.hot != ATZ_TMP_INVALID)
-			printf(" hot %sC",
+			aprint_normal(" hot %sC",
 			    acpitz_celcius_string(sc->sc_zone.hot));
 		if (sc->sc_zone.psv != ATZ_TMP_INVALID)
-			printf(" passive %sC",
+			aprint_normal(" passive %sC",
 			    acpitz_celcius_string(sc->sc_zone.tmp));
-		printf("\n");
 	}
+
+	if (valid_levels == 0) {
+		sc->sc_flags |= ATZ_F_PASSIVEONLY;
+		if (sc->sc_first)
+			aprint_normal(", passive cooling");
+	}
+	if (verbose)
+		aprint_normal("\n");
 
 	for (i = 0; i < ATZ_NLEVELS; i++)
 		acpitz_sane_temp(&sc->sc_zone.ac[i]);
 
 	acpitz_power_off(sc);
-	first = 0;
+	sc->sc_first = 0;
 }
 
 
@@ -529,7 +526,7 @@ acpitz_notify_handler(ACPI_HANDLE hdl, UINT32 notify, void *opaque)
 
 	KASSERT(func != NULL);
 
-	rv = AcpiOsQueueForExecution(OSD_PRIORITY_LO, func, sc);
+	rv = AcpiOsExecute(OSL_NOTIFY_HANDLER, func, sc);
 	if (rv != AE_OK)
 		printf("%s: unable to queue %s\n", sc->sc_dev.dv_xname, name);
 
@@ -570,7 +567,7 @@ acpitz_tick(void *opaque)
 {
 	struct acpitz_softc *sc = opaque;
 
-	AcpiOsQueueForExecution(OSD_PRIORITY_LO, acpitz_get_status, sc);
+	AcpiOsExecute(OSL_NOTIFY_HANDLER, acpitz_get_status, sc);
 
 	callout_schedule(&sc->sc_callout, sc->sc_zone.tzp * hz / 10);
 }
@@ -578,30 +575,23 @@ acpitz_tick(void *opaque)
 static void
 acpitz_init_envsys(struct acpitz_softc *sc)
 {
-	int i;
-
-	for (i = 0; i < ATZ_NUMSENSORS; i++) {
-		sc->sc_data[i].sensor = i;
-		sc->sc_data[i].state = ENVSYS_SVALID;
-		sc->sc_data[i].monitor = true;
-		sc->sc_data[i].flags = 
-		    (ENVSYS_FMONCRITICAL|ENVSYS_FMONWARNOVER);
+	sc->sc_sme = sysmon_envsys_create();
+	sc->sc_sensor.monitor = true;
+	sc->sc_sensor.flags = (ENVSYS_FMONCRITICAL|ENVSYS_FMONWARNOVER);
+	strlcpy(sc->sc_sensor.desc, "temperature", sizeof(sc->sc_sensor.desc));
+	if (sysmon_envsys_sensor_attach(sc->sc_sme, &sc->sc_sensor)) {
+		sysmon_envsys_destroy(sc->sc_sme);
+		return;
 	}
-#define INITDATA(index, unit, string) \
-	sc->sc_data[index].units = unit;				   \
-	strlcpy(sc->sc_data[index].desc, string,			   \
-	    sizeof(sc->sc_data[index].desc));
-
-	INITDATA(ATZ_SENSOR_TEMP, ENVSYS_STEMP, "temperature");
 
 	/* hook into sysmon */
-	sc->sc_sysmon.sme_sensor_data = sc->sc_data;
-	sc->sc_sysmon.sme_name = sc->sc_dev.dv_xname;
-	sc->sc_sysmon.sme_cookie = sc;
-	sc->sc_sysmon.sme_nsensors = ATZ_NUMSENSORS;
-	sc->sc_sysmon.sme_flags = SME_DISABLE_GTREDATA;
+	sc->sc_sme->sme_name = sc->sc_dev.dv_xname;
+	sc->sc_sme->sme_cookie = sc;
+	sc->sc_sme->sme_flags = SME_DISABLE_REFRESH;
 
-	if (sysmon_envsys_register(&sc->sc_sysmon))
+	if (sysmon_envsys_register(sc->sc_sme)) {
 		printf("%s: unable to register with sysmon\n",
 		    sc->sc_dev.dv_xname);
+		sysmon_envsys_destroy(sc->sc_sme);
+	}
 }

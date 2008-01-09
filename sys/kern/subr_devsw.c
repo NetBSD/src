@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_devsw.c,v 1.11.8.2 2007/11/08 11:00:04 matt Exp $	*/
+/*	$NetBSD: subr_devsw.c,v 1.11.8.3 2008/01/09 01:56:15 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2007 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.11.8.2 2007/11/08 11:00:04 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.11.8.3 2008/01/09 01:56:15 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -103,8 +103,8 @@ extern struct devsw_conv *devsw_conv, devsw_conv0[];
 extern const int sys_bdevsws, sys_cdevsws;
 extern int max_bdevsws, max_cdevsws, max_devsw_convs;
 
-static int bdevsw_attach(const char *, const struct bdevsw *, int *);
-static int cdevsw_attach(const char *, const struct cdevsw *, int *);
+static int bdevsw_attach(const struct bdevsw *, int *);
+static int cdevsw_attach(const struct cdevsw *, int *);
 static void devsw_detach_locked(const struct bdevsw *, const struct cdevsw *);
 
 kmutex_t devsw_lock;
@@ -165,10 +165,10 @@ devsw_attach(const char *devname, const struct bdevsw *bdev, int *bmajor,
 		return (0);
 	}
 
-	error = bdevsw_attach(devname, bdev, bmajor);
+	error = bdevsw_attach(bdev, bmajor);
 	if (error != 0) 
 		goto fail;
-	error = cdevsw_attach(devname, cdev, cmajor);
+	error = cdevsw_attach(cdev, cmajor);
 	if (error != 0) {
 		devsw_detach_locked(bdev, NULL);
 		goto fail;
@@ -221,7 +221,7 @@ devsw_attach(const char *devname, const struct bdevsw *bdev, int *bmajor,
 }
 
 static int
-bdevsw_attach(const char *devname, const struct bdevsw *devsw, int *devmajor)
+bdevsw_attach(const struct bdevsw *devsw, int *devmajor)
 {
 	const struct bdevsw **newptr;
 	int bmajor, i;
@@ -270,7 +270,7 @@ bdevsw_attach(const char *devname, const struct bdevsw *devsw, int *devmajor)
 }
 
 static int
-cdevsw_attach(const char *devname, const struct cdevsw *devsw, int *devmajor)
+cdevsw_attach(const struct cdevsw *devsw, int *devmajor)
 {
 	const struct cdevsw **newptr;
 	int cmajor, i;

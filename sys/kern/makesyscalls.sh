@@ -1,5 +1,5 @@
 #! /bin/sh -
-#	$NetBSD: makesyscalls.sh,v 1.59 2005/12/03 17:04:36 christos Exp $
+#	$NetBSD: makesyscalls.sh,v 1.59.46.1 2008/01/09 01:56:13 matt Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -54,11 +54,13 @@ esac
 #	nsysent		the size of the sysent table
 #	sys_nosys	[optional] name of function called for unsupported
 #			syscalls, if not sys_nosys()
+#       maxsysargs	[optiona] the maximum number or arguments
 #
 # NOTE THAT THIS makesyscalls.sh DOES NOT SUPPORT 'SYSLIBCOMPAT'.
 
 # source the config file.
 sys_nosys="sys_nosys"	# default is sys_nosys(), if not specified otherwise
+maxsysargs=8		# default limit is 8 (32bit) arguments
 . ./$1
 
 # tmp files:
@@ -136,6 +138,7 @@ BEGIN {
 	sysent = \"$sysent\"
 	sysnamesbottom = \"$sysnamesbottom\"
 	sys_nosys = \"$sys_nosys\"
+	maxsysargs = \"$maxsysargs\"
 	infile = \"$2\"
 
 	compatopts = \"$compatopts\"
@@ -157,7 +160,9 @@ BEGIN {
 		printf "#endif\n" > sysent
 	}
 
-	printf "\n#define\ts(type)\tsizeof(type)\n\n" > sysent
+	printf "\n#define\ts(type)\tsizeof(type)\n" > sysent
+	printf "#define\tn(type)\t(sizeof(type)/sizeof (%s))\n", registertype > sysent
+	printf "#define\tns(type)\tn(type), s(type)\n\n", registertype > sysent
 	printf "struct sysent %s[] = {\n",switchname > sysent
 
 	printf "/* \$NetBSD\$ */\n\n" > sysnames
@@ -196,9 +201,12 @@ NR == 1 {
 	printf "#define	_" constprefix "SYSCALL_H_\n\n" > sysnumhdr
 	printf "#ifndef _" constprefix "SYSCALLARGS_H_\n" > sysarghdr
 	printf "#define	_" constprefix "SYSCALLARGS_H_\n\n" > sysarghdr
-	printf "#ifdef\tsyscallarg\n" > sysarghdr
+	# Write max number of system call arguments to both headers
+	printf("#define\t%sMAXSYSARGS\t%d\n\n", constprefix, maxsysargs) \
+		> sysnumhdr
+	printf("#define\t%sMAXSYSARGS\t%d\n\n", constprefix, maxsysargs) \
+		> sysarghdr
 	printf "#undef\tsyscallarg\n" > sysarghdr
-	printf "#endif\n\n" > sysarghdr
 	printf "#define\tsyscallarg(x)\t\t\t\t\t\t\t\\\n" > sysarghdr
 	printf "\tunion {\t\t\t\t\t\t\t\t\\\n" > sysarghdr
 	printf "\t\t%s pad;\t\t\t\t\t\t\\\n", registertype > sysarghdr
@@ -214,6 +222,12 @@ NR == 1 {
 	printf "\t\t\tx datum;\t\t\t\t\t\\\n" > sysarghdr
 	printf "\t\t} be;\t\t\t\t\t\t\t\\\n" > sysarghdr
 	printf "\t}\n" > sysarghdr
+	printf("\n#undef check_syscall_args\n") >sysarghdr
+	printf("#define check_syscall_args(call) \\\n" \
+		"\ttypedef char call##_check_args" \
+		    "[sizeof (struct call##_args) \\\n" \
+		"\t\t<= %sMAXSYSARGS * sizeof (%s) ? 1 : -1];\n", \
+		constprefix, registertype) >sysarghdr
 	next
 }
 NF == 0 || $1 ~ /^;/ {
@@ -277,7 +291,10 @@ function parserr(was, wanted) {
 }
 function parseline() {
 	f=3			# toss number and type
-	sycall_flags="0"
+	if ($2 == "INDIR")
+		sycall_flags="SYCALL_INDIRECT"
+	else
+		sycall_flags="0"
 	if ($NF != "}") {
 		funcalias=$NF
 		end=NF-1
@@ -285,8 +302,12 @@ function parseline() {
 		funcalias=""
 		end=NF
 	}
+	if ($f == "INDIR") {		# allow for "NOARG INDIR"
+		sycall_flags = "SYCALL_INDIRECT | " sycall_flags
+		f++
+	}
 	if ($f == "MPSAFE") {		# allow for MP-safe syscalls
-		sycall_flags = sprintf("SYCALL_MPSAFE | %s", sycall_flags)
+		sycall_flags = "SYCALL_MPSAFE | " sycall_flags
 		f++
 	}
 	if ($f ~ /^[a-z0-9_]*$/) {	# allow syscall alias
@@ -373,7 +394,7 @@ function parseline() {
 	}
 	# must see another argument after varargs notice.
 	if (isvarargs) {
-		if (argc == varargc && $2 != "INDIR")
+		if (argc == varargc)
 			parserr($f, "argument definition")
 	} else
 		varargc = argc;
@@ -391,100 +412,73 @@ function printproto(wrap) {
 	    syscall) > sysnumhdr
 }
 
-function putent(nodefs, compatwrap) {
-	# output syscall declaration for switch table.  INDIR functions
-	# get none, since they always have sys_nosys() for their table
-	# entries.
-	if (nodefs != "INDIR") {
-		prototype = "(struct lwp *, void *, register_t *)"
-		if (compatwrap == "")
-			proto = sprintf("int\t%s%s;\n", funcname, prototype);
-		else
-			proto = sprintf("int\t%s_%s%s;\n", compatwrap,
-			    funcname, prototype);
-		if (sysmap[proto] != 1) {
-			sysmap[proto] = 1;
-			print proto > sysprotos;
-		}
+function putent(type, compatwrap) {
+	# output syscall declaration for switch table.
+	if (compatwrap == "")
+		compatwrap_ = ""
+	else
+		compatwrap_ = compatwrap "_"
+	if (argc == 0)
+		arg_type = "void";
+	else {
+		arg_type = "struct " compatwrap_ funcname "_args";
+	}
+	proto = "int\t" compatwrap_ funcname "(struct lwp *, const " \
+	    arg_type " *, register_t *);\n"
+	if (sysmap[proto] != 1) {
+		sysmap[proto] = 1;
+		print proto > sysprotos;
 	}
 
 	# output syscall switch entry
-	if (nodefs == "INDIR") {
-		printf("\t{ 0, 0, %s,\n\t    %s },\t\t\t/* %d = %s (indir) */\n", \
-		    sycall_flags, sys_nosys, syscall, funcalias) > sysent
+	printf("\t{ ") > sysent
+	if (argc == 0) {
+		printf("0, 0, ") > sysent
 	} else {
-#		printf("\t{ { %d", argc) > sysent
-#		for (i = 1; i <= argc; i++) {
-#			if (i == 5) 		# wrap the line
-#				printf(",\n\t    ") > sysent
-#			else
-#				printf(", ") > sysent
-#			printf("s(%s)", argtypenospc[i]) > sysent
-#		}
-		printf("\t{ %d, ", argc) > sysent
-		if (argc == 0)
-			printf("0") > sysent
-		else if (compatwrap == "")
-			printf("s(struct %s_args)", funcname) > sysent
-		else
-			printf("s(struct %s_%s_args)", compatwrap,
-			    funcname) > sysent
-		if (compatwrap == "")
-			wfn = sprintf("%s", funcname);
-		else
-			wfn = sprintf("%s(%s)", compatwrap, funcname);
-		printf(", %s,\n\t    %s },", sycall_flags, wfn) > sysent
-		for (i = 0; i < (33 - length(wfn)) / 8; i++)
-			printf("\t") > sysent
-		if (compatwrap == "")
-			printf("/* %d = %s */\n", syscall, funcalias) > sysent
-		else
-			printf("/* %d = %s %s */\n", syscall, compatwrap,
-			    funcalias) > sysent
+		printf("ns(struct %s%s_args), ", compatwrap_, funcname) > sysent
 	}
+	if (compatwrap == "")
+		wfn = "(sy_call_t *)" funcname;
+	else
+		wfn = "(sy_call_t *)" compatwrap "(" funcname ")";
+	printf("%s,\n\t    %s },", sycall_flags, wfn) > sysent
+	for (i = 0; i < (33 - length(wfn)) / 8; i++)
+		printf("\t") > sysent
+	printf("/* %d = %s%s */\n", syscall, compatwrap_, funcalias) > sysent
 
 	# output syscall name for names table
-	if (compatwrap == "")
-		printf("\t\"%s\",\t\t\t/* %d = %s */\n", funcalias, syscall,
-		    funcalias) > sysnamesbottom
-	else
-		printf("\t\"%s_%s\",\t/* %d = %s %s */\n", compatwrap,
-		    funcalias, syscall, compatwrap, funcalias) > sysnamesbottom
+	printf("\t/* %3d */\t\"%s%s\",\n", syscall, compatwrap_, funcalias) \
+	    > sysnamesbottom
 
 	# output syscall number of header, if appropriate
-	if (nodefs == "" || nodefs == "NOARGS" || nodefs == "INDIR") {
+	if (type == "STD" || type == "NOARGS" || type == "INDIR") {
 		# output a prototype, to be used to generate lint stubs in
 		# libc.
 		printproto("")
-
-	} else if (nodefs == "COMPAT") {
+	} else if (type == "COMPAT") {
 		# Just define the syscall number with a comment.  These
 		# may be used by compatibility stubs in libc.
-		printproto(compatwrap "_")
-	} else if (nodefs != "NODEF")
-		printf("\t\t\t\t/* %d is %s %s */\n\n", syscall,
-		    compatwrap, funcalias) > sysnumhdr
+		printproto(compatwrap_)
+	}
 
 	# output syscall argument structure, if it has arguments
-	if (argc != 0 && nodefs != "NOARGS" && nodefs != "INDIR") {
-		if (compatwrap == "")
-			printf("\nstruct %s_args {\n", funcname) > sysarghdr
-		else
-			printf("\nstruct %s_%s_args {\n", compatwrap,
-			    funcname) > sysarghdr
-		for (i = 1; i <= argc; i++)
-			printf("\tsyscallarg(%s) %s;\n", argtype[i],
-			    argname[i]) > sysarghdr
-		printf("};\n") > sysarghdr
+	if (argc != 0) {
+		printf("\nstruct %s%s_args", compatwrap_, funcname) > sysarghdr
+		if (type != "NOARGS") {
+			print " {" >sysarghdr;
+			for (i = 1; i <= argc; i++)
+				printf("\tsyscallarg(%s) %s;\n", argtype[i],
+				    argname[i]) > sysarghdr
+			printf "}" >sysarghdr;
+		}
+		printf(";\n") > sysarghdr
+		if (type != "NOARGS" && type != "INDIR") {
+			printf("check_syscall_args(%s%s)\n", compatwrap_,
+			    funcname) >sysarghdr
+		}
 	}
 }
-$2 == "STD" {
-	parseline()
-	putent("", "");
-	syscall++
-	next
-}
-$2 == "NODEF" || $2 == "NOARGS" || $2 == "INDIR" {
+$2 == "STD" || $2 == "NODEF" || $2 == "NOARGS" || $2 == "INDIR" {
 	parseline()
 	putent($2, "")
 	syscall++
@@ -502,8 +496,8 @@ $2 == "OBSOL" || $2 == "UNIMPL" || $2 == "EXCL" {
 
 	printf("\t{ 0, 0, 0,\n\t    %s },\t\t\t/* %d = %s */\n", \
 	    sys_nosys, syscall, comment) > sysent
-	printf("\t\"#%d (%s)\",\t\t/* %d = %s */\n", \
-	    syscall, comment, syscall, comment) > sysnamesbottom
+	printf("\t/* %3d */\t\"#%d (%s)\",\n", syscall, syscall, comment) \
+	    > sysnamesbottom
 	if ($2 != "UNIMPL")
 		printf("\t\t\t\t/* %d is %s */\n", syscall, comment) > sysnumhdr
 	syscall++

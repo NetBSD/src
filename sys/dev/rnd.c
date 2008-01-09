@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.c,v 1.63 2007/07/09 21:00:29 ad Exp $	*/
+/*	$NetBSD: rnd.c,v 1.63.8.1 2008/01/09 01:52:15 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.63 2007/07/09 21:00:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.63.8.1 2008/01/09 01:52:15 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -749,7 +749,7 @@ rndkqfilter(dev_t dev, struct knote *kn)
 		break;
 
 	default:
-		return (1);
+		return (EINVAL);
 	}
 
 	kn->kn_hook = NULL;

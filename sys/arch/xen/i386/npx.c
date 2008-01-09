@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.9 2006/12/08 15:05:18 yamt Exp $	*/
+/*	$NetBSD: npx.c,v 1.9.24.1 2008/01/09 01:50:03 matt Exp $	*/
 /*	NetBSD: npx.c,v 1.103 2004/03/21 10:56:24 simonb Exp 	*/
 
 /*-
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.9 2006/12/08 15:05:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.9.24.1 2008/01/09 01:50:03 matt Exp $");
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -76,7 +76,6 @@ __KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.9 2006/12/08 15:05:18 yamt Exp $");
 #define	IPRINTF(x)
 #endif
 
-#include "opt_cputype.h"
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
 
@@ -152,15 +151,11 @@ __KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.9 2006/12/08 15:05:18 yamt Exp $");
 int npxdna(struct cpu_info *);
 static int	npxdna_notset(struct cpu_info *);
 static int	npxdna_s87(struct cpu_info *);
-#ifdef I686_CPU
 static int	npxdna_xmm(struct cpu_info  *);
-#endif /* I686_CPU */
 static int	x86fpflags_to_ksiginfo(u_int32_t flags);
 
-#ifdef I686_CPU
 #define	fxsave(addr)		__asm("fxsave %0" : "=m" (*addr))
 #define	fxrstor(addr)		__asm("fxrstor %0" : : "m" (*addr))
-#endif /* I686_CPU */
 
 static	enum npx_type		npx_type;
 volatile u_int			npx_intrs_while_probing;
@@ -175,7 +170,6 @@ struct npx_softc		*npx_softc;
 static inline void
 fpu_save(union savefpu *addr)
 {
-#ifdef I686_CPU
 	if (i386_use_fxsave)
 	{
                 fxsave(&addr->sv_xmm);
@@ -183,7 +177,6 @@ fpu_save(union savefpu *addr)
 		/* FXSAVE doesn't FNINIT like FNSAVE does -- so do it here. */
 		fninit();
 	} else
-#endif /* I686_CPU */
 		fnsave(&addr->sv_87);
 }
 
@@ -304,8 +297,8 @@ npxprobe1(bus_space_tag_t iot, bus_space_handle_t ioh, int irq)
 
 	irqmask = i8259_setmask(irqmask);
 
+	idt_vec_reserve(NRSVIDT + irq);
 	idt[NRSVIDT + irq] = save_idt_npxintr;
-	idt_allocmap[NRSVIDT + irq] = 1;
 
 	idt[16] = save_idt_npxtrap;
 	write_eflags(save_eflags);
@@ -317,7 +310,7 @@ npxprobe1(bus_space_tag_t iot, bus_space_handle_t ioh, int irq)
 
 	return (rv);
 }
-#endif
+#endif /* 0 */
 
 void npxinit(ci)
 	struct cpu_info *ci;
@@ -344,11 +337,9 @@ npxattach(struct npx_softc *sc)
 
 	i386_fpu_present = 1;
 
-#ifdef I686_CPU
 	if (i386_use_fxsave)
 		npxdna_func = npxdna_xmm;
 	else
-#endif /* I686_CPU */
 		npxdna_func = npxdna_s87;
 }
 
@@ -527,7 +518,6 @@ x86fpflags_to_ksiginfo(u_int32_t flags)
  * to simply return.
  */
 
-#ifdef I686_CPU
 static int
 npxdna_xmm(struct cpu_info *ci)
 {
@@ -614,7 +604,6 @@ npxdna_xmm(struct cpu_info *ci)
 
 	return (1);
 }
-#endif /* I686_CPU */
 
 static int
 npxdna_s87(struct cpu_info *ci)

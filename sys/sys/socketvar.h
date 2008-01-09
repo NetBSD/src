@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.98.4.1 2007/11/06 23:34:56 matt Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.98.4.2 2008/01/09 01:58:17 matt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -271,7 +271,7 @@ struct stat;
 struct knote;
 
 struct	mbuf *m_intopt(struct socket *, int);
-struct	mbuf *getsombuf(struct socket *);
+struct	mbuf *getsombuf(struct socket *, int);
 
 /*
  * File operations on sockets.
@@ -324,7 +324,7 @@ void	soisconnected(struct socket *);
 void	soisconnecting(struct socket *);
 void	soisdisconnected(struct socket *);
 void	soisdisconnecting(struct socket *);
-int	solisten(struct socket *, int);
+int	solisten(struct socket *, int, struct lwp *);
 struct socket *
 	sonewconn(struct socket *, int);
 void	soqinsque(struct socket *, struct socket *, int);

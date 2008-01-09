@@ -1,4 +1,4 @@
-/*	$NetBSD: l2cap_signal.c,v 1.8 2007/05/16 18:34:49 plunky Exp $	*/
+/*	$NetBSD: l2cap_signal.c,v 1.8.8.1 2008/01/09 01:57:22 matt Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: l2cap_signal.c,v 1.8 2007/05/16 18:34:49 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: l2cap_signal.c,v 1.8.8.1 2008/01/09 01:57:22 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -85,7 +85,7 @@ l2cap_recv_signal(struct mbuf *m, struct hci_link *link)
 			goto reject;
 
 		DPRINTFN(2, "(%s) code %d, ident %d, len %d\n",
-			link->hl_unit->hci_devname,
+			device_xname(link->hl_unit->hci_dev),
 			cmd.code, cmd.ident, cmd.length);
 
 		switch (cmd.code) {
@@ -903,8 +903,8 @@ l2cap_send_signal(struct hci_link *link, uint8_t code, uint8_t ident,
 		return ENETDOWN;
 
 	if (sizeof(l2cap_cmd_hdr_t) + length > link->hl_mtu)
-		printf("(%s) exceeding L2CAP Signal MTU for link!\n",
-			link->hl_unit->hci_devname);
+		aprint_error_dev(link->hl_unit->hci_dev,
+		    "exceeding L2CAP Signal MTU for link!\n");
 #endif
 
 	m = m_gethdr(M_DONTWAIT, MT_DATA);
@@ -940,7 +940,7 @@ l2cap_send_signal(struct hci_link *link, uint8_t code, uint8_t ident,
 	m->m_len = MIN(length, MHLEN);
 
 	DPRINTFN(2, "(%s) code %d, ident %d, len %d\n",
-		link->hl_unit->hci_devname, code, ident, length);
+		device_xname(link->hl_unit->hci_dev), code, ident, length);
 
 	return hci_acl_send(m, link, NULL);
 }

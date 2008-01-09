@@ -1,12 +1,12 @@
-#	$NetBSD: genassym.cf,v 1.12.10.1 2007/11/06 23:23:57 matt Exp $
+#	$NetBSD: genassym.cf,v 1.12.10.2 2008/01/09 01:50:02 matt Exp $
 #	NetBSD: genassym.cf,v 1.40 2004/02/20 17:35:01 yamt Exp 
 
 #
-# Copyright (c) 1998 The NetBSD Foundation, Inc.
+# Copyright (c) 1998, 2006, 2007 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # This code is derived from software contributed to The NetBSD Foundation
-# by Charles M. Hannum.
+# by Charles M. Hannum, and by Andrew Doran.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -173,10 +173,9 @@ define	L_PRIORITY		offsetof(struct lwp, l_priority)
 define	L_STAT			offsetof(struct lwp, l_stat)
 define	L_WCHAN			offsetof(struct lwp, l_wchan)
 define	L_PROC			offsetof(struct lwp, l_proc)
-define	L_MD_TSS_SEL		offsetof(struct lwp, l_md.md_tss_sel)
 define	L_MD_REGS		offsetof(struct lwp, l_md.md_regs)
 define	L_CPU			offsetof(struct lwp, l_cpu)
-define	L_MUTEX			offsetof(struct lwp, l_mutex)
+define	L_CTXSWTCH		offsetof(struct lwp, l_ctxswtch)
 define	L_MD_ASTPENDING		offsetof(struct lwp, l_md.md_astpending)
 define	P_FLAG			offsetof(struct proc, p_flag)
 define	P_RASLIST		offsetof(struct proc, p_raslist)
@@ -201,11 +200,8 @@ define	PCB_CR3			offsetof(struct pcb, pcb_cr3)
 define	PCB_EBP			offsetof(struct pcb, pcb_ebp)
 define	PCB_ESP			offsetof(struct pcb, pcb_esp)
 define	PCB_CR0			offsetof(struct pcb, pcb_cr0)
-define	PCB_LDT_SEL		offsetof(struct pcb, pcb_ldt_sel)
 define	PCB_ONFAULT		offsetof(struct pcb, pcb_onfault)
 define	PCB_FPCPU		offsetof(struct pcb, pcb_fpcpu)
-define	PCB_TSS_SS0		offsetof(struct pcb, pcb_tss.tss_ss0)
-define	PCB_TSS_ESP0		offsetof(struct pcb, pcb_tss.tss_esp0)
 
 define	TF_CS			offsetof(struct trapframe, tf_cs)
 define	TF_EIP			offsetof(struct trapframe, tf_eip)
@@ -287,6 +283,7 @@ define        SIZEOF_ISTUB            sizeof(struct intrstub)
 define		IS_RECURSE	offsetof(struct iplsource, ipl_recurse)
 define		IS_RESUME	offsetof(struct iplsource, ipl_resume)
 define		IS_HANDLERS	offsetof(struct iplsource, ipl_handlers)
+define		IS_LWP		offsetof(struct iplsource, ipl_lwp)
 
 define		EV_EVCNTLO	offsetof(struct evcnt, ev_count)
 define		EV_EVCNTHI	offsetof(struct evcnt, ev_count)+4
@@ -307,16 +304,7 @@ define	IPL_NONE		IPL_NONE
 define	IPL_SCHED		IPL_SCHED
 define	IPL_HIGH		IPL_HIGH
 
-define	IPL_SOFTNET		IPL_SOFTNET
-define	IPL_SOFTCLOCK		IPL_SOFTCLOCK
-define	IPL_SOFTSERIAL		IPL_SOFTSERIAL
-define	IPL_SOFTXENEVT		IPL_SOFTXENEVT
-
 define	IREENT_MAGIC		IREENT_MAGIC
-
-define	X86_SOFTINTR_SOFTSERIAL	X86_SOFTINTR_SOFTSERIAL
-define	X86_SOFTINTR_SOFTNET	X86_SOFTINTR_SOFTNET
-define	X86_SOFTINTR_SOFTCLOCK	X86_SOFTINTR_SOFTCLOCK
 
 define	PSL_MBO			PSL_MBO
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_acct.c,v 1.75.8.1 2007/11/06 23:31:28 matt Exp $	*/
+/*	$NetBSD: kern_acct.c,v 1.75.8.2 2008/01/09 01:55:58 matt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.75.8.1 2007/11/06 23:31:28 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.75.8.2 2008/01/09 01:55:58 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,9 +105,9 @@ __KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.75.8.1 2007/11/06 23:31:28 matt Exp 
  */
 
 /*
- * Mutex to serialize system calls and kernel threads.
+ * Lock to serialize system calls and kernel threads.
  */
-kmutex_t	acct_lock;
+krwlock_t	acct_lock;
 
 /*
  * The global accounting state and related data.  Gain the mutex before
@@ -179,7 +179,7 @@ acct_chkfree(void)
 	sb = kmem_alloc(sizeof(*sb), KM_SLEEP);
 	if (sb == NULL)
 		return (ENOMEM);
-	error = VFS_STATVFS(acct_vp->v_mount, sb, NULL);
+	error = VFS_STATVFS(acct_vp->v_mount, sb);
 	if (error != 0) {
 		kmem_free(sb, sizeof(*sb));
 		return (error);
@@ -212,6 +212,8 @@ acct_stop(void)
 {
 	int error;
 
+	KASSERT(rw_write_held(&acct_lock));
+
 	if (acct_vp != NULLVP && acct_vp->v_type != VBAD) {
 		error = vn_close(acct_vp, FWRITE, acct_cred, NULL);
 #ifdef DIAGNOSTIC
@@ -240,7 +242,7 @@ acctwatch(void *arg)
 	int error;
 
 	log(LOG_NOTICE, "Accounting started\n");
-	mutex_enter(&acct_lock);
+	rw_enter(&acct_lock, RW_WRITER);
 	while (acct_state != ACCT_STOP) {
 		if (acct_vp->v_type == VBAD) {
 			log(LOG_NOTICE, "Accounting terminated\n");
@@ -254,14 +256,16 @@ acctwatch(void *arg)
 			printf("acctwatch: failed to statvfs, error = %d\n",
 			    error);
 #endif
-		error = kpause("actwat", false, acctchkfreq * hz, &acct_lock);
+		rw_exit(&acct_lock);
+		error = kpause("actwat", false, acctchkfreq * hz, NULL);
+		rw_enter(&acct_lock, RW_WRITER);
 #ifdef DIAGNOSTIC
 		if (error != 0 && error != EWOULDBLOCK)
 			printf("acctwatch: sleep error %d\n", error);
 #endif
 	}
 	acct_dkwatcher = NULL;
-	mutex_exit(&acct_lock);
+	rw_exit(&acct_lock);
 
 	kthread_exit(0);
 }
@@ -273,7 +277,7 @@ acct_init(void)
 	acct_state = ACCT_STOP;
 	acct_vp = NULLVP;
 	acct_cred = NULL;
-	mutex_init(&acct_lock, MUTEX_DEFAULT, IPL_NONE);
+	rw_init(&acct_lock);
 }
 
 /*
@@ -281,11 +285,11 @@ acct_init(void)
  * previous implementation done by Mark Tinguely.
  */
 int
-sys_acct(struct lwp *l, void *v, register_t *retval)
+sys_acct(struct lwp *l, const struct sys_acct_args *uap, register_t *retval)
 {
-	struct sys_acct_args /* {
+	/* {
 		syscallarg(const char *) path;
-	} */ *uap = v;
+	} */
 	struct nameidata nd;
 	int error;
 
@@ -301,8 +305,8 @@ sys_acct(struct lwp *l, void *v, register_t *retval)
 	if (SCARG(uap, path) != NULL) {
 		struct vattr va;
 		size_t pad;
-		NDINIT(&nd, LOOKUP, NOFOLLOW | TRYEMULROOT, UIO_USERSPACE, SCARG(uap, path),
-		    l);
+		NDINIT(&nd, LOOKUP, NOFOLLOW | TRYEMULROOT, UIO_USERSPACE,
+		    SCARG(uap, path));
 		if ((error = vn_open(&nd, FWRITE|O_APPEND, 0)) != 0)
 			return (error);
 		if (nd.ni_vp->v_type != VREG) {
@@ -310,7 +314,7 @@ sys_acct(struct lwp *l, void *v, register_t *retval)
 			error = EACCES;
 			goto bad;
 		}
-		if ((error = VOP_GETATTR(nd.ni_vp, &va, l->l_cred, l)) != 0) {
+		if ((error = VOP_GETATTR(nd.ni_vp, &va, l->l_cred)) != 0) {
 			VOP_UNLOCK(nd.ni_vp, 0);
 			goto bad;
 		}
@@ -324,7 +328,7 @@ sys_acct(struct lwp *l, void *v, register_t *retval)
 #endif
 			VATTR_NULL(&va);
 			va.va_size = size;
-			error = VOP_SETATTR(nd.ni_vp, &va, l->l_cred, l);
+			error = VOP_SETATTR(nd.ni_vp, &va, l->l_cred);
 			if (error != 0) {
 				VOP_UNLOCK(nd.ni_vp, 0);
 				goto bad;
@@ -333,7 +337,7 @@ sys_acct(struct lwp *l, void *v, register_t *retval)
 		VOP_UNLOCK(nd.ni_vp, 0);
 	}
 
-	mutex_enter(&acct_lock);
+	rw_enter(&acct_lock, RW_WRITER);
 
 	/*
 	 * If accounting was previously enabled, kill the old space-watcher,
@@ -367,7 +371,7 @@ sys_acct(struct lwp *l, void *v, register_t *retval)
 	}
 
  out:
-	mutex_exit(&acct_lock);
+	rw_exit(&acct_lock);
 	return (error);
  bad:
 	vn_close(nd.ni_vp, FWRITE, l->l_cred, l);
@@ -393,7 +397,7 @@ acct_process(struct lwp *l)
 	if (acct_state != ACCT_ACTIVE)
 		return 0;
 
-	mutex_enter(&acct_lock);
+	rw_enter(&acct_lock, RW_READER);
 
 	/* If accounting isn't enabled, don't bother */
 	if (acct_state != ACCT_ACTIVE)
@@ -461,7 +465,7 @@ acct_process(struct lwp *l)
 	/*
 	 * Now, just write the accounting information to the file.
 	 */
-	VOP_LEASE(acct_vp, l, l->l_cred, LEASE_WRITE);
+	VOP_LEASE(acct_vp, l->l_cred, LEASE_WRITE);
 	error = vn_rdwr(UIO_WRITE, acct_vp, (void *)&acct,
 	    sizeof(acct), (off_t)0, UIO_SYSSPACE, IO_APPEND|IO_UNIT,
 	    acct_cred, NULL, NULL);
@@ -472,6 +476,6 @@ acct_process(struct lwp *l)
 	p->p_rlimit[RLIMIT_FSIZE] = orlim;
 
  out:
-	mutex_exit(&acct_lock);
+	rw_exit(&acct_lock);
 	return (error);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.129.6.1 2007/11/06 23:34:21 matt Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.129.6.2 2008/01/09 01:57:52 matt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.129.6.1 2007/11/06 23:34:21 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.129.6.2 2008/01/09 01:57:52 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -152,7 +152,7 @@ nfsrv3_access(nfsd, slp, lwp, mrq)
 		    nfsrv_access(vp, VEXEC, cred, rdonly, lwp, 0) == 0)
 			outmode |= NFSV3ACCESS_LOOKUP;
 	}
-	getret = VOP_GETATTR(vp, &va, cred, lwp);
+	getret = VOP_GETATTR(vp, &va, cred);
 	vput(vp);
 	nfsm_reply(NFSX_POSTOPATTR(1) + NFSX_UNSIGNED);
 	nfsm_srvpostop_attr(getret, &va);
@@ -195,7 +195,7 @@ nfsrv_getattr(nfsd, slp, lwp, mrq)
 		return (0);
 	}
 	nqsrv_getl(vp, ND_READ);
-	error = VOP_GETATTR(vp, &va, cred, lwp);
+	error = VOP_GETATTR(vp, &va, cred);
 	vput(vp);
 	nfsm_reply(NFSX_FATTR(nfsd->nd_flag & ND_NFSV3));
 	if (error)
@@ -289,7 +289,7 @@ nfsrv_setattr(nfsd, slp, lwp, mrq)
 	}
 	nqsrv_getl(vp, ND_WRITE);
 	if (v3) {
-		error = preat_ret = VOP_GETATTR(vp, &preat, cred, lwp);
+		error = preat_ret = VOP_GETATTR(vp, &preat, cred);
 		if (!error && gcheck &&
 			(preat.va_ctime.tv_sec != guard.tv_sec ||
 			 preat.va_ctime.tv_nsec != guard.tv_nsec))
@@ -319,8 +319,8 @@ nfsrv_setattr(nfsd, slp, lwp, mrq)
 			lwp, 0)) != 0)
 			goto out;
 	}
-	error = VOP_SETATTR(vp, &va, cred, lwp);
-	postat_ret = VOP_GETATTR(vp, &va, cred, lwp);
+	error = VOP_SETATTR(vp, &va, cred);
+	postat_ret = VOP_GETATTR(vp, &va, cred);
 	if (!error)
 		error = postat_ret;
 out:
@@ -419,7 +419,7 @@ nfsrv_lookup(nfsd, slp, lwp, mrq)
 
 	if (dirp) {
 		if (v3)
-			dirattr_ret = VOP_GETATTR(dirp, &dirattr, cred, lwp);
+			dirattr_ret = VOP_GETATTR(dirp, &dirattr, cred);
 		vrele(dirp);
 	}
 
@@ -434,7 +434,7 @@ nfsrv_lookup(nfsd, slp, lwp, mrq)
 	vp = ndp->ni_vp;
 	error = nfsrv_composefh(vp, &nsfh, v3);
 	if (!error)
-		error = VOP_GETATTR(vp, &va, cred, lwp);
+		error = VOP_GETATTR(vp, &va, cred);
 	vput(vp);
 	vrele(ndp->ni_startdir);
 	nfsm_reply(NFSX_SRVFH(&nsfh, v3) + NFSX_POSTOPORFATTR(v3) +
@@ -533,7 +533,7 @@ nfsrv_readlink(nfsd, slp, lwp, mrq)
 	nqsrv_getl(vp, ND_READ);
 	error = VOP_READLINK(vp, uiop, cred);
 out:
-	getret = VOP_GETATTR(vp, &attr, cred, lwp);
+	getret = VOP_GETATTR(vp, &attr, cred);
 	vput(vp);
 	if (error)
 		m_freem(mp3);
@@ -615,7 +615,7 @@ nfsrv_read(nfsd, slp, lwp, mrq)
 	    if ((error = nfsrv_access(vp, VREAD, cred, rdonly, lwp, 1)) != 0)
 		error = nfsrv_access(vp, VEXEC, cred, rdonly, lwp, 1);
 	}
-	getret = VOP_GETATTR(vp, &va, cred, lwp);
+	getret = VOP_GETATTR(vp, &va, cred);
 	if (!error)
 		error = getret;
 	if (error) {
@@ -749,7 +749,7 @@ loan_fail:
 			free((void *)iv2, M_TEMP);
 		}
 read_error:
-		if (error || (getret = VOP_GETATTR(vp, &va, cred, lwp)) != 0){
+		if (error || (getret = VOP_GETATTR(vp, &va, cred)) != 0){
 			if (!error)
 				error = getret;
 			m_freem(mreq);
@@ -877,7 +877,7 @@ nfsrv_write(nfsd, slp, lwp, mrq)
 		return (0);
 	}
 	if (v3)
-		forat_ret = VOP_GETATTR(vp, &forat, cred, lwp);
+		forat_ret = VOP_GETATTR(vp, &forat, cred);
 	if (vp->v_type != VREG) {
 		if (v3)
 			error = EINVAL;
@@ -930,7 +930,7 @@ nfsrv_write(nfsd, slp, lwp, mrq)
 		nfsstats.srvvop_writes++;
 		free(iv, M_TEMP);
 	}
-	aftat_ret = VOP_GETATTR(vp, &va, cred, lwp);
+	aftat_ret = VOP_GETATTR(vp, &va, cred);
 	vput(vp);
 	if (!error)
 		error = aftat_ret;
@@ -1021,7 +1021,7 @@ nfsrv_writegather(ndp, slp, lwp, mrq)
 	int32_t t1;
 	char *bpos, *dpos;
 	int error = 0, rdonly, cache = 0, len = 0, forat_ret = 1;
-	int ioflags, aftat_ret = 1, s, adjust, v3, zeroing;
+	int ioflags, aftat_ret = 1, adjust, v3, zeroing;
 	char *cp2;
 	struct mbuf *mb, *mreq, *mrep, *md;
 	struct vnode *vp;
@@ -1103,8 +1103,8 @@ nfsmout:
 	    /*
 	     * Add this entry to the hash and time queues.
 	     */
-	    s = splsoftclock();
 	    owp = NULL;
+	    mutex_enter(&nfsd_lock);
 	    wp = LIST_FIRST(&slp->ns_tq);
 	    while (wp && wp->nd_time < nfsd->nd_time) {
 		owp = wp;
@@ -1144,7 +1144,7 @@ nfsmout:
 		    LIST_INSERT_HEAD(wpp, nfsd, nd_hash);
 		}
 	    }
-	    splx(s);
+	    mutex_exit(&nfsd_lock);
 	}
 
 	/*
@@ -1154,7 +1154,7 @@ nfsmout:
 loop1:
 	getmicrotime(&now);
 	cur_usec = (u_quad_t)now.tv_sec * 1000000 + (u_quad_t)now.tv_usec;
-	s = splsoftclock();
+	mutex_enter(&nfsd_lock);
 	for (nfsd = LIST_FIRST(&slp->ns_tq); nfsd; nfsd = owp) {
 		owp = LIST_NEXT(nfsd, nd_tq);
 		if (nfsd->nd_time > cur_usec)
@@ -1163,7 +1163,8 @@ loop1:
 		    continue;
 		LIST_REMOVE(nfsd, nd_tq);
 		LIST_REMOVE(nfsd, nd_hash);
-		splx(s);
+		mutex_exit(&nfsd_lock);
+
 		mrep = nfsd->nd_mrep;
 		nfsd->nd_mrep = NULL;
 		cred = nfsd->nd_cr;
@@ -1174,7 +1175,7 @@ loop1:
 		    false);
 		if (!error) {
 		    if (v3)
-			forat_ret = VOP_GETATTR(vp, &forat, cred, lwp);
+			forat_ret = VOP_GETATTR(vp, &forat, cred);
 		    if (vp->v_type != VREG) {
 			if (v3)
 			    error = EINVAL;
@@ -1226,7 +1227,7 @@ loop1:
 		}
 		m_freem(mrep);
 		if (vp) {
-		    aftat_ret = VOP_GETATTR(vp, &va, cred, lwp);
+		    aftat_ret = VOP_GETATTR(vp, &va, cred);
 		    vput(vp);
 		}
 
@@ -1270,7 +1271,7 @@ loop1:
 		     * Done. Put it at the head of the timer queue so that
 		     * the final phase can return the reply.
 		     */
-		    s = splsoftclock();
+		    mutex_enter(&nfsd_lock);
 		    if (nfsd != swp) {
 			nfsd->nd_time = 0;
 			LIST_INSERT_HEAD(&slp->ns_tq, nfsd, nd_tq);
@@ -1279,21 +1280,22 @@ loop1:
 		    if (nfsd) {
 			LIST_REMOVE(nfsd, nd_tq);
 		    }
-		    splx(s);
+		    mutex_exit(&nfsd_lock);
 		} while (nfsd);
-		s = splsoftclock();
 		swp->nd_time = 0;
+
+		mutex_enter(&nfsd_lock);
 		LIST_INSERT_HEAD(&slp->ns_tq, swp, nd_tq);
-		splx(s);
+		mutex_exit(&nfsd_lock);
 		goto loop1;
 	}
+	mutex_exit(&nfsd_lock);
 	nfs_timer_start();
-	splx(s);
 
 	/*
 	 * Search for a reply to return.
 	 */
-	s = splsoftclock();
+	mutex_enter(&nfsd_lock);
 	LIST_FOREACH(nfsd, &slp->ns_tq, nd_tq) {
 		if (nfsd->nd_mreq) {
 		    LIST_REMOVE(nfsd, nd_tq);
@@ -1302,7 +1304,7 @@ loop1:
 		    break;
 		}
 	}
-	splx(s);
+	mutex_exit(&nfsd_lock);
 	return (0);
 }
 
@@ -1322,6 +1324,8 @@ nfsrvw_coalesce(owp, nfsd)
         int overlap;
         struct mbuf *mp;
 	struct nfsrv_descript *m;
+
+	KASSERT(mutex_owned(&nfsd_lock));
 
         LIST_REMOVE(nfsd, nd_hash);
         LIST_REMOVE(nfsd, nd_tq);
@@ -1397,7 +1401,7 @@ nfsrv_create(nfsd, slp, lwp, mrq)
 	error = nfs_namei(&nd, &nsfh, len, slp, nam, &md, &dpos,
 		&dirp, lwp, (nfsd->nd_flag & ND_KERBAUTH), false);
 	if (dirp && v3) {
-		dirfor_ret = VOP_GETATTR(dirp, &dirfor, cred, lwp);
+		dirfor_ret = VOP_GETATTR(dirp, &dirfor, cred);
 	}
 	if (error) {
 		nfsm_reply(NFSX_WCCDATA(v3));
@@ -1468,8 +1472,8 @@ nfsrv_create(nfsd, slp, lwp, mrq)
 					 * == sizeof(nfstime3)
 					 */
 					fxdr_nfsv3time(cverf, &va.va_atime);
-					error = VOP_SETATTR(nd.ni_vp, &va, cred,
-						lwp);
+					error = VOP_SETATTR(nd.ni_vp, &va,
+						cred);
 				}
 			}
 		} else if (va.va_type == VCHR || va.va_type == VBLK ||
@@ -1505,12 +1509,12 @@ nfsrv_create(nfsd, slp, lwp, mrq)
 		}
 		vp = nd.ni_vp;
 	} else {
+		VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
 		vp = nd.ni_vp;
 		if (nd.ni_dvp == vp)
 			vrele(nd.ni_dvp);
 		else
 			vput(nd.ni_dvp);
-		VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
 		if (!error && va.va_size != -1) {
 			error = nfsrv_access(vp, VWRITE, cred,
 			    (nd.ni_cnd.cn_flags & RDONLY), lwp, 0);
@@ -1519,7 +1523,7 @@ nfsrv_create(nfsd, slp, lwp, mrq)
 				tempsize = va.va_size;
 				VATTR_NULL(&va);
 				va.va_size = tempsize;
-				error = VOP_SETATTR(vp, &va, cred, lwp);
+				error = VOP_SETATTR(vp, &va, cred);
 			}
 		}
 		if (error)
@@ -1528,7 +1532,7 @@ nfsrv_create(nfsd, slp, lwp, mrq)
 	if (!error) {
 		error = nfsrv_composefh(vp, &nsfh, v3);
 		if (!error)
-			error = VOP_GETATTR(vp, &va, cred, lwp);
+			error = VOP_GETATTR(vp, &va, cred);
 		vput(vp);
 	}
 	if (v3) {
@@ -1543,7 +1547,7 @@ nfsrv_create(nfsd, slp, lwp, mrq)
 				error = EEXIST;
 		}
 		if (dirp) {
-			diraft_ret = VOP_GETATTR(dirp, &diraft, cred, lwp);
+			diraft_ret = VOP_GETATTR(dirp, &diraft, cred);
 		}
 	}
 	if (dirp) {
@@ -1612,7 +1616,7 @@ nfsrv_mknod(nfsd, slp, lwp, mrq)
 	error = nfs_namei(&nd, &nsfh, len, slp, nam, &md, &dpos,
 		&dirp, lwp, (nfsd->nd_flag & ND_KERBAUTH), false);
 	if (dirp)
-		dirfor_ret = VOP_GETATTR(dirp, &dirfor, cred, lwp);
+		dirfor_ret = VOP_GETATTR(dirp, &dirfor, cred);
 	if (error) {
 		nfsm_reply(NFSX_WCCDATA(1));
 		nfsm_srvwcc_data(dirfor_ret, &dirfor, diraft_ret, &diraft);
@@ -1685,11 +1689,11 @@ out:
 	if (!error) {
 		error = nfsrv_composefh(vp, &nsfh, true);
 		if (!error)
-			error = VOP_GETATTR(vp, &va, cred, lwp);
+			error = VOP_GETATTR(vp, &va, cred);
 		vput(vp);
 	}
 	if (dirp) {
-		diraft_ret = VOP_GETATTR(dirp, &diraft, cred, lwp);
+		diraft_ret = VOP_GETATTR(dirp, &diraft, cred);
 		vrele(dirp);
 	}
 	nfsm_reply(NFSX_SRVFH(&nsfh, true) + NFSX_POSTOPATTR(1) +
@@ -1751,7 +1755,7 @@ nfsrv_remove(nfsd, slp, lwp, mrq)
 	error = nfs_namei(&nd, &nsfh, len, slp, nam, &md, &dpos,
 		&dirp, lwp, (nfsd->nd_flag & ND_KERBAUTH), false);
 	if (dirp && v3) {
-		dirfor_ret = VOP_GETATTR(dirp, &dirfor, cred, lwp);
+		dirfor_ret = VOP_GETATTR(dirp, &dirfor, cred);
 	}
 	if (!error) {
 		vp = nd.ni_vp;
@@ -1782,7 +1786,7 @@ out:
 	}
 	if (dirp) {
 		if (v3) {
-			diraft_ret = VOP_GETATTR(dirp, &diraft, cred, lwp);
+			diraft_ret = VOP_GETATTR(dirp, &diraft, cred);
 		}
 		vrele(dirp);
 	}
@@ -1843,7 +1847,7 @@ nfsrv_rename(nfsd, slp, lwp, mrq)
 	error = nfs_namei(&fromnd, &fnsfh, len, slp, nam, &md,
 		&dpos, &fdirp, lwp, (nfsd->nd_flag & ND_KERBAUTH), false);
 	if (fdirp && v3) {
-		fdirfor_ret = VOP_GETATTR(fdirp, &fdirfor, cred, lwp);
+		fdirfor_ret = VOP_GETATTR(fdirp, &fdirfor, cred);
 	}
 	if (error) {
 		nfsm_reply(2 * NFSX_WCCDATA(v3));
@@ -1874,7 +1878,7 @@ nfsrv_rename(nfsd, slp, lwp, mrq)
 	error = nfs_namei(&tond, &tnsfh, len2, slp, nam, &md,
 		&dpos, &tdirp, lwp, (nfsd->nd_flag & ND_KERBAUTH), false);
 	if (tdirp && v3) {
-		tdirfor_ret = VOP_GETATTR(tdirp, &tdirfor, cred, lwp);
+		tdirfor_ret = VOP_GETATTR(tdirp, &tdirfor, cred);
 	}
 	if (error) {
 		VOP_ABORTOP(fromnd.ni_dvp, &fromnd.ni_cnd);
@@ -1964,13 +1968,13 @@ out:
 out1:
 	if (fdirp) {
 		if (v3) {
-			fdiraft_ret = VOP_GETATTR(fdirp, &fdiraft, cred, lwp);
+			fdiraft_ret = VOP_GETATTR(fdirp, &fdiraft, cred);
 		}
 		vrele(fdirp);
 	}
 	if (tdirp) {
 		if (v3) {
-			tdiraft_ret = VOP_GETATTR(tdirp, &tdiraft, cred, lwp);
+			tdiraft_ret = VOP_GETATTR(tdirp, &tdiraft, cred);
 		}
 		vrele(tdirp);
 	}
@@ -2051,7 +2055,7 @@ nfsrv_link(nfsd, slp, lwp, mrq)
 	error = nfs_namei(&nd, &dnsfh, len, slp, nam, &md, &dpos,
 		&dirp, lwp, (nfsd->nd_flag & ND_KERBAUTH), false);
 	if (dirp && v3) {
-		dirfor_ret = VOP_GETATTR(dirp, &dirfor, cred, lwp);
+		dirfor_ret = VOP_GETATTR(dirp, &dirfor, cred);
 	}
 	if (error)
 		goto out1;
@@ -2079,10 +2083,10 @@ out:
 	}
 out1:
 	if (v3)
-		getret = VOP_GETATTR(vp, &at, cred, lwp);
+		getret = VOP_GETATTR(vp, &at, cred);
 	if (dirp) {
 		if (v3) {
-			diraft_ret = VOP_GETATTR(dirp, &diraft, cred, lwp);
+			diraft_ret = VOP_GETATTR(dirp, &diraft, cred);
 		}
 		vrele(dirp);
 	}
@@ -2135,7 +2139,7 @@ nfsrv_symlink(nfsd, slp, lwp, mrq)
 	error = nfs_namei(&nd, &nsfh, len, slp, nam, &md, &dpos,
 		&dirp, lwp, (nfsd->nd_flag & ND_KERBAUTH), false);
 	if (dirp && v3) {
-		dirfor_ret = VOP_GETATTR(dirp, &dirfor, cred, lwp);
+		dirfor_ret = VOP_GETATTR(dirp, &dirfor, cred);
 	}
 	if (error)
 		goto out;
@@ -2189,7 +2193,7 @@ abortop:
 	    if (v3) {
 		error = nfsrv_composefh(nd.ni_vp, &nsfh, v3);
 		if (!error)
-		    error = VOP_GETATTR(nd.ni_vp, &va, cred, lwp);
+		    error = VOP_GETATTR(nd.ni_vp, &va, cred);
 		vput(nd.ni_vp);
 	    } else {
 		vput(nd.ni_vp);
@@ -2200,7 +2204,7 @@ out:
 		free(pathcp, M_TEMP);
 	if (dirp) {
 		if (v3) {
-			diraft_ret = VOP_GETATTR(dirp, &diraft, cred, lwp);
+			diraft_ret = VOP_GETATTR(dirp, &diraft, cred);
 		}
 		vrele(dirp);
 	}
@@ -2266,7 +2270,7 @@ nfsrv_mkdir(nfsd, slp, lwp, mrq)
 	error = nfs_namei(&nd, &nsfh, len, slp, nam, &md, &dpos,
 		&dirp, lwp, (nfsd->nd_flag & ND_KERBAUTH), false);
 	if (dirp && v3) {
-		dirfor_ret = VOP_GETATTR(dirp, &dirfor, cred, lwp);
+		dirfor_ret = VOP_GETATTR(dirp, &dirfor, cred);
 	}
 	if (error) {
 		nfsm_reply(NFSX_WCCDATA(v3));
@@ -2301,13 +2305,13 @@ nfsrv_mkdir(nfsd, slp, lwp, mrq)
 		vp = nd.ni_vp;
 		error = nfsrv_composefh(vp, &nsfh, v3);
 		if (!error)
-			error = VOP_GETATTR(vp, &va, cred, lwp);
+			error = VOP_GETATTR(vp, &va, cred);
 		vput(vp);
 	}
 out:
 	if (dirp) {
 		if (v3) {
-			diraft_ret = VOP_GETATTR(dirp, &diraft, cred, lwp);
+			diraft_ret = VOP_GETATTR(dirp, &diraft, cred);
 		}
 		vrele(dirp);
 	}
@@ -2373,7 +2377,7 @@ nfsrv_rmdir(nfsd, slp, lwp, mrq)
 	error = nfs_namei(&nd, &nsfh, len, slp, nam, &md, &dpos,
 		&dirp, lwp, (nfsd->nd_flag & ND_KERBAUTH), false);
 	if (dirp && v3) {
-		dirfor_ret = VOP_GETATTR(dirp, &dirfor, cred, lwp);
+		dirfor_ret = VOP_GETATTR(dirp, &dirfor, cred);
 	}
 	if (error) {
 		nfsm_reply(NFSX_WCCDATA(v3));
@@ -2414,7 +2418,7 @@ out:
 	}
 	if (dirp) {
 		if (v3) {
-			diraft_ret = VOP_GETATTR(dirp, &diraft, cred, lwp);
+			diraft_ret = VOP_GETATTR(dirp, &diraft, cred);
 		}
 		vrele(dirp);
 	}
@@ -2531,7 +2535,7 @@ nfsrv_readdir(nfsd, slp, lwp, mrq)
 	}
 	nqsrv_getl(vp, ND_READ);
 	if (v3) {
-		error = getret = VOP_GETATTR(vp, &at, cred, lwp);
+		error = getret = VOP_GETATTR(vp, &at, cred);
 #ifdef NFS3_STRICTVERF
 		/*
 		 * XXX This check is too strict for Solaris 2.5 clients.
@@ -2568,7 +2572,7 @@ again:
 	if (!cookies && !error)
 		error = NFSERR_PERM;
 	if (v3) {
-		getret = VOP_GETATTR(vp, &at, cred, lwp);
+		getret = VOP_GETATTR(vp, &at, cred);
 		if (!error)
 			error = getret;
 	}
@@ -2787,7 +2791,7 @@ nfsrv_readdirplus(nfsd, slp, lwp, mrq)
 		nfsm_srvpostop_attr(getret, &at);
 		return (0);
 	}
-	error = getret = VOP_GETATTR(vp, &at, cred, lwp);
+	error = getret = VOP_GETATTR(vp, &at, cred);
 #ifdef NFS3_STRICTVERF
 	/*
 	 * XXX This check is too strict for Solaris 2.5 clients.
@@ -2824,7 +2828,7 @@ again:
 	error = VOP_READDIR(vp, &io, cred, &eofflag, &cookies, &ncookies);
 
 	off = (u_quad_t)io.uio_offset;
-	getret = VOP_GETATTR(vp, &at, cred, lwp);
+	getret = VOP_GETATTR(vp, &at, cred);
 
 	VOP_UNLOCK(vp, 0);
 
@@ -2930,7 +2934,7 @@ again:
 				vput(nvp);
 				goto invalid;
 			}
-			if (VOP_GETATTR(nvp, vap, cred, lwp)) {
+			if (VOP_GETATTR(nvp, vap, cred)) {
 				vput(nvp);
 				goto invalid;
 			}
@@ -3094,14 +3098,14 @@ nfsrv_commit(nfsd, slp, lwp, mrq)
 		nfsm_srvwcc_data(for_ret, &bfor, aft_ret, &aft);
 		return (0);
 	}
-	for_ret = VOP_GETATTR(vp, &bfor, cred, lwp);
+	for_ret = VOP_GETATTR(vp, &bfor, cred);
 	end = (cnt > 0) ? off + cnt : vp->v_size;
 	if (end < off || end > vp->v_size)
 		end = vp->v_size;
 	if (off < vp->v_size)
-		error = VOP_FSYNC(vp, cred, FSYNC_WAIT, off, end, lwp);
+		error = VOP_FSYNC(vp, cred, FSYNC_WAIT, off, end);
 	/* else error == 0, from nfsrv_fhtovp() */
-	aft_ret = VOP_GETATTR(vp, &aft, cred, lwp);
+	aft_ret = VOP_GETATTR(vp, &aft, cred);
 	vput(vp);
 	nfsm_reply(NFSX_V3WCCDATA + NFSX_V3WRITEVERF);
 	nfsm_srvwcc_data(for_ret, &bfor, aft_ret, &aft);
@@ -3152,8 +3156,8 @@ nfsrv_statfs(nfsd, slp, lwp, mrq)
 		return (0);
 	}
 	sf = malloc(sizeof(*sf), M_TEMP, M_WAITOK);
-	error = VFS_STATVFS(vp->v_mount, sf, lwp);
-	getret = VOP_GETATTR(vp, &at, cred, lwp);
+	error = VFS_STATVFS(vp->v_mount, sf);
+	getret = VOP_GETATTR(vp, &at, cred);
 	vput(vp);
 	nfsm_reply(NFSX_POSTOPATTR(v3) + NFSX_STATFS(v3));
 	if (v3)
@@ -3228,11 +3232,11 @@ nfsrv_fsinfo(nfsd, slp, lwp, mrq)
 
 	/* XXX Try to make a guess on the max file size. */
 	sb = malloc(sizeof(*sb), M_TEMP, M_WAITOK);
-	VFS_STATVFS(vp->v_mount, sb, (struct lwp *)0);
+	VFS_STATVFS(vp->v_mount, sb);
 	maxfsize = (u_quad_t)0x80000000 * sb->f_frsize - 1;
 	free(sb, M_TEMP);
 
-	getret = VOP_GETATTR(vp, &at, cred, lwp);
+	getret = VOP_GETATTR(vp, &at, cred);
 	vput(vp);
 	nfsm_reply(NFSX_V3POSTOPATTR + NFSX_V3FSINFO);
 	nfsm_srvpostop_attr(getret, &at);
@@ -3305,7 +3309,7 @@ nfsrv_pathconf(nfsd, slp, lwp, mrq)
 		error = VOP_PATHCONF(vp, _PC_CHOWN_RESTRICTED, &chownres);
 	if (!error)
 		error = VOP_PATHCONF(vp, _PC_NO_TRUNC, &notrunc);
-	getret = VOP_GETATTR(vp, &at, cred, lwp);
+	getret = VOP_GETATTR(vp, &at, cred);
 	vput(vp);
 	nfsm_reply(NFSX_V3POSTOPATTR + NFSX_V3PATHCONF);
 	nfsm_srvpostop_attr(getret, &at);
@@ -3418,10 +3422,10 @@ nfsrv_access(vp, flags, cred, rdonly, lwp, override)
 		if (vp->v_iflag & VI_TEXT)
 			return (ETXTBSY);
 	}
-	error = VOP_GETATTR(vp, &vattr, cred, lwp);
+	error = VOP_GETATTR(vp, &vattr, cred);
 	if (error)
 		return (error);
-	error = VOP_ACCESS(vp, flags, cred, lwp);
+	error = VOP_ACCESS(vp, flags, cred);
 	/*
 	 * Allow certain operations for the owner (reads and writes
 	 * on files that are already open).

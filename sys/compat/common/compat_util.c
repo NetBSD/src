@@ -1,4 +1,4 @@
-/* 	$NetBSD: compat_util.c,v 1.37 2007/07/13 21:04:29 dsl Exp $	*/
+/* 	$NetBSD: compat_util.c,v 1.37.8.1 2008/01/09 01:50:29 matt Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,9 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_util.c,v 1.37 2007/07/13 21:04:29 dsl Exp $");
-
-#include "opt_systrace.h"
+__KERNEL_RCSID(0, "$NetBSD: compat_util.c,v 1.37.8.1 2008/01/09 01:50:29 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,7 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: compat_util.c,v 1.37 2007/07/13 21:04:29 dsl Exp $")
 #include <sys/vnode.h>
 #include <sys/syslog.h>
 #include <sys/mount.h>
-
 
 #include <compat/common/compat_util.h>
 
@@ -74,7 +71,7 @@ emul_find_root(struct lwp *l, struct exec_package *epp)
 		/* Emulation doesn't have a root */
 		return;
 
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, emul_path, l);
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, emul_path);
 	if (namei(&nd) != 0)
 		/* emulation root doesn't exist */
 		return;
@@ -112,7 +109,7 @@ emul_find_interp(struct lwp *l, struct exec_package *epp, const char *itp)
 		flags = FOLLOW | TRYEMULROOT | EMULROOTSET;
 	}
 
-	NDINIT(&nd, LOOKUP, flags, UIO_SYSSPACE, itp, l);
+	NDINIT(&nd, LOOKUP, flags, UIO_SYSSPACE, itp);
 	error = namei(&nd);
 	if (error != 0) {
 		epp->ep_interp = NULL;
@@ -147,48 +144,8 @@ emul_flags_translate(const struct emul_flags_xtab *tab,
 	return (out);
 }
 
-/* The only user left of the stackgap is the systrace code. */
-#if SYSTRACE
-void *
-stackgap_init(p, sz)
-	const struct proc *p;
-	size_t sz;
-{
-	if (sz == 0)
-		sz = STACKGAPLEN;
-	if (sz > STACKGAPLEN)
-		panic("size %lu > STACKGAPLEN", (unsigned long)sz);
-#define szsigcode ((void *)(p->p_emul->e_esigcode - p->p_emul->e_sigcode))
-	return (void *)(((unsigned long)p->p_psstr - (unsigned long)szsigcode
-		- sz) & ~ALIGNBYTES);
-#undef szsigcode
-}
-
-
-void *
-stackgap_alloc(p, sgp, sz)
-	const struct proc *p;
-	void **sgp;
-	size_t sz;
-{
-	void *n = *sgp;
-	void *nsgp;
-	const struct emul *e = p->p_emul;
-	int sigsize = e->e_esigcode - e->e_sigcode;
-
-	sz = ALIGN(sz);
-	nsgp = (char *)*sgp + sz;
-	if (nsgp > (void *)(((char *)p->p_psstr) - sigsize))
-		return NULL;
-	*sgp = nsgp;
-	return n;
-}
-#endif
-
 void
-compat_offseterr(vp, msg)
-	struct vnode *vp;
-	const char *msg;
+compat_offseterr(struct vnode *vp, const char *msg)
 {
 	struct mount *mp;
 

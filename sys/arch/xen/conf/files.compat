@@ -1,4 +1,4 @@
-#	$NetBSD: files.compat,v 1.14 2007/01/05 17:53:53 jmcneill Exp $
+#	$NetBSD: files.compat,v 1.14.24.1 2008/01/09 01:50:02 matt Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 
 # options for MP configuration through the MP spec
@@ -53,3 +53,18 @@ defflag	opt_kstack_dr0.h		XXXKSTACK_CHECK_DR0
 
 # Microsoft Xbox support
 defflag	opt_xbox.h			XXXXBOX
+
+#Pentium 4+ Thermal Monitor ODCM (aka On Demand Clock Modulation)
+defflag opt_intel_odcm.h	XXXINTEL_ONDEMAND_CLOCKMOD
+
+# Intel On Die Temperature sensor
+defflag opt_intel_coretemp.h		XXXINTEL_CORETEMP
+
+# AMD Powernow/Cool`n'Quiet Technology
+defflag opt_powernow_k8.h	XXPOWERNOW_K8
+
+# Intel Enhanced Speedstep
+defflag	opt_enhanced_speedstep.h XXXENHANCED_SPEEDSTEP
+defflag opt_est.h		XXXEST_FREQ_USERWRITE
+
+defflag opt_powernow_k7.h XXXPOWERNOW_K7

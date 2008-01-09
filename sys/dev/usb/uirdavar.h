@@ -1,4 +1,4 @@
-/*	$NetBSD: uirdavar.h,v 1.1 2007/04/27 14:42:49 is Exp $	*/
+/*	$NetBSD: uirdavar.h,v 1.1.16.1 2008/01/09 01:54:44 matt Exp $	*/
 
 /*
  * Copyright (c) 2001,2007 The NetBSD Foundation, Inc.
@@ -128,7 +128,7 @@ struct uirda_softc {
 	usbd_device_handle	sc_udev;
 	usbd_interface_handle	sc_iface;
 
-	struct lock		sc_rd_buf_lk;
+	kmutex_t		sc_rd_buf_lk;
 	u_int8_t		*sc_rd_buf;
 	int			sc_rd_addr;
 	usbd_pipe_handle	sc_rd_pipe;
@@ -137,7 +137,7 @@ struct uirda_softc {
 	u_int			sc_rd_count;
 	u_char			sc_rd_err;
 
-	struct lock		sc_wr_buf_lk;
+	kmutex_t		sc_wr_buf_lk;
 	u_int8_t		*sc_wr_buf;
 	int			sc_wr_addr;
 	usbd_xfer_handle	sc_wr_xfer;

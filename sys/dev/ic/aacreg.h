@@ -1,4 +1,4 @@
-/*	$NetBSD: aacreg.h,v 1.9 2007/06/05 04:04:14 briggs Exp $	*/
+/*	$NetBSD: aacreg.h,v 1.9.8.1 2008/01/09 01:52:43 matt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -168,7 +168,7 @@ struct aac_adapter_init {
 	u_int32_t MaxIoCommands;	/* max outstanding commands */
 	u_int32_t MaxIoSize;		/* largest I/O command */
 	u_int32_t MaxFibSize;		/* largest FIB to adapter */
-} __attribute__((__packed__));
+} __packed;
 
 #define	AAC_INIT_STRUCT_REVISION		3
 #define	AAC_INIT_STRUCT_REVISION_4		4
@@ -305,7 +305,7 @@ struct FsaRevision {
 	        u_int32_t ul;
 	} external;
 	u_int32_t buildNumber;
-} __attribute__((__packed__));
+} __packed;
 
 /*
  * Adapter Information
@@ -441,7 +441,7 @@ struct aac_adapter_info {
 	u_int32_t batteryPlatform;
 	u_int32_t SupportedOptions;	/* supported features of this ctrlr */
 	u_int32_t OemVariant;
-} __attribute__((__packed__));
+} __packed;
 
 /*
  * Monitor/Kernel interface.
@@ -970,7 +970,7 @@ struct aac_srb_response {
 struct aac_fib_list_entry {
 	u_int32_t	Flink;
 	u_int32_t	Blink;
-} __attribute__((__packed__));
+} __packed;
 
 /*
  * FIB (FSA Interface Block?); this is the datastructure passed between the
@@ -993,14 +993,14 @@ struct aac_fib_header {
 		} _s;
 		struct aac_fib_list_entry FibLinks;
 	} _u;
-} __attribute__((__packed__));
+} __packed;
 
 #define	AAC_FIB_DATASIZE (512 - sizeof(struct aac_fib_header))
 
 struct aac_fib {
 	struct aac_fib_header Header;
 	u_int8_t data[AAC_FIB_DATASIZE];
-} __attribute__((__packed__));
+} __packed;
 
 /*
  * FIB commands

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_extent.c,v 1.68 2007/07/10 22:58:54 ad Exp $	*/
+/*	$NetBSD: subr_extent.c,v 1.68.8.1 2008/01/09 01:56:16 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998, 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_extent.c,v 1.68 2007/07/10 22:58:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_extent.c,v 1.68.8.1 2008/01/09 01:56:16 matt Exp $");
 
 #ifdef _KERNEL
 #include "opt_lockdebug.h"
@@ -97,7 +97,7 @@ panic(a)			printf(a)
 #define	cv_destroy(a)
 #define	KMEM_IS_RUNNING			(1)
 #define	IPL_VM				(0)
-#define	MUTEX_DRIVER			(0)
+#define	MUTEX_DEFAULT			(0)
 #endif
 
 static struct pool expool;
@@ -305,7 +305,7 @@ extent_create(const char *name, u_long start, u_long end,
 	}
 
 	/* Fill in the extent descriptor and return it to the caller. */
-	mutex_init(&ex->ex_lock, MUTEX_DRIVER, IPL_VM);
+	mutex_init(&ex->ex_lock, MUTEX_DEFAULT, IPL_VM);
 	cv_init(&ex->ex_cv, "extent");
 	LIST_INIT(&ex->ex_regions);
 	ex->ex_name = name;

@@ -50,7 +50,6 @@ $FreeBSD: src/sys/dev/cxgb/cxgb_osdep.h,v 1.10 2007/05/27 22:07:47 kmacy Exp $
 #include <dev/cxgb/cxgb_config.h>
 #endif
 #ifdef __NetBSD__
-typedef char *caddr_t;
 #include <dev/pci/cxgb_version.h>
 #include <dev/pci/cxgb_config.h>
 #include <sys/mbuf.h>
@@ -66,7 +65,7 @@ typedef char *caddr_t;
 #define mtx_trylock(a) simple_lock_try(a)
 #define MA_OWNED 1
 #define MA_NOTOWNED 0
-#define mtx_assert(a, w) { if (w == MA_OWNED) { simple_lock_assert_locked(a, "generic"); } else { simple_lock_assert_unlocked(a, "generic"); } }
+#define mtx_assert(a, w) 	/* xxx */
 
 #define EVL_VLID_MASK		0x0FFF
 
@@ -227,7 +226,7 @@ extern void kdb_backtrace(void);
 
 #define WARN_ON(condition) do { \
         if (unlikely((condition)!=0)) { \
-                log(LOG_WARNING, "BUG: warning at %s:%d/%s()\n", __FILE__, __LINE__, __FUNCTION__); \
+                log(LOG_WARNING, "BUG: warning at %s:%d/%s()\n", __FILE__, __LINE__, __func__); \
                 kdb_backtrace(); \
         } \
 } while (0)

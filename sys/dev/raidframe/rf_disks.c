@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_disks.c,v 1.67 2007/07/18 19:04:58 ad Exp $	*/
+/*	$NetBSD: rf_disks.c,v 1.67.6.1 2008/01/09 01:54:24 matt Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -67,7 +67,7 @@
  ***************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.67 2007/07/18 19:04:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.67.6.1 2008/01/09 01:54:24 matt Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -540,7 +540,7 @@ rf_AutoConfigureDisks(RF_Raid_t *raidPtr, RF_Config_t *cfgPtr,
 	while(ac!=NULL) {
 		if (ac->flag == 0) {
 			vn_lock(ac->vp, LK_EXCLUSIVE | LK_RETRY);
-			VOP_CLOSE(ac->vp, FREAD | FWRITE, NOCRED, 0);
+			VOP_CLOSE(ac->vp, FREAD | FWRITE, NOCRED);
 			vput(ac->vp);
 			ac->vp = NULL;
 #if DEBUG
@@ -614,7 +614,7 @@ rf_ConfigureDisk(RF_Raid_t *raidPtr, char *bf, RF_RaidDisk_t *diskPtr,
 	}
 	if (diskPtr->status == rf_ds_optimal) {
 
-		if ((error = VOP_GETATTR(vp, &va, l->l_cred, l)) != 0) 
+		if ((error = VOP_GETATTR(vp, &va, l->l_cred)) != 0) 
 			return (error);
 		if ((error = rf_getdisksize(vp, l, diskPtr)) != 0)
 			return (error);

@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.c,v 1.19.2.2 2007/11/08 11:00:16 matt Exp $	*/
+/*	$NetBSD: p2k.c,v 1.19.2.3 2008/01/09 01:57:57 matt Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -27,9 +27,11 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/types.h>
 #define __VFSOPS_EXPOSE
+
 #include <sys/mount.h>
+#include <sys/param.h>
+#include <sys/vnode.h>
 #include <sys/lock.h>
 #include <sys/namei.h>
 #include <sys/dirent.h>
@@ -87,17 +89,17 @@ freecn(struct componentname *cnp, int flags)
 }
 
 static void
-makelwp(struct puffs_cc *pcc)
+makelwp(struct puffs_usermount *pu)
 {
 	pid_t pid;
 	lwpid_t lid;
 
-	puffs_cc_getcaller(pcc, &pid, &lid);
+	puffs_cc_getcaller(puffs_cc_getcc(pu), &pid, &lid);
 	rump_setup_curlwp(pid, lid, 1);
 }
 
 static void
-clearlwp(struct puffs_cc *pcc)
+clearlwp(struct puffs_usermount *pu)
 {
 
 	rump_clear_curlwp();
@@ -139,8 +141,8 @@ p2k_run_fs(const char *vfsname, const char *devpath, const char *mountpath,
 	PUFFSOP_SET(pops, p2k, node, setattr);
 #if 0
 	PUFFSOP_SET(pops, p2k, node, poll);
-	PUFFSOP_SET(pops, p2k, node, mmap);
 #endif
+	PUFFSOP_SET(pops, p2k, node, mmap);
 	PUFFSOP_SET(pops, p2k, node, fsync);
 	PUFFSOP_SET(pops, p2k, node, seek);
 	PUFFSOP_SET(pops, p2k, node, remove);
@@ -158,7 +160,12 @@ p2k_run_fs(const char *vfsname, const char *devpath, const char *mountpath,
 	PUFFSOP_SET(pops, p2k, node, reclaim);
 
 	strcpy(typebuf, "p2k|");
-	strlcat(typebuf, vfsname, sizeof(typebuf));
+	if (strcmp(vfsname, "puffs") == 0) { /* XXX */
+		struct puffs_kargs *args = arg;
+		strlcat(typebuf, args->pa_typename, sizeof(typebuf));
+	} else {
+		strlcat(typebuf, vfsname, sizeof(typebuf));
+	}
 
 	pu = puffs_init(pops, devpath, typebuf, ukfs_getmp(ukfs), puffs_flags);
 	if (pu == NULL)
@@ -167,6 +174,7 @@ p2k_run_fs(const char *vfsname, const char *devpath, const char *mountpath,
 	pn_root = puffs_pn_new(pu, ukfs_getrvp(ukfs));
 	puffs_setroot(pu, pn_root);
 	puffs_setfhsize(pu, 0, PUFFS_FHFLAG_PASSTHROUGH);
+	puffs_setstacksize(pu, 0);
 	puffs_usethreads = 1;
 
 	puffs_set_prepost(pu, makelwp, clearlwp);
@@ -187,32 +195,30 @@ p2k_run_fs(const char *vfsname, const char *devpath, const char *mountpath,
 }
 
 int
-p2k_fs_statvfs(struct puffs_cc *pcc, struct statvfs *sbp,
-	const struct puffs_cid *pcid)
+p2k_fs_statvfs(struct puffs_usermount *pu, struct statvfs *sbp)
 {
-	struct mount *mp = puffs_cc_getspecific(pcc);
+	struct mount *mp = puffs_getspecific(pu);
 
-	return VFS_STATVFS(mp, sbp, NULL);
+	return VFS_STATVFS(mp, sbp);
 }
 
 int
-p2k_fs_unmount(struct puffs_cc *pcc, int flags, const struct puffs_cid *pcid)
+p2k_fs_unmount(struct puffs_usermount *pu, int flags)
 {
-	struct mount *mp = puffs_cc_getspecific(pcc);
+	struct mount *mp = puffs_getspecific(pu);
 
-	return VFS_UNMOUNT(mp, flags, curlwp);
+	return VFS_UNMOUNT(mp, flags);
 }
 
 int
-p2k_fs_sync(struct puffs_cc *pcc, int waitfor,
-	const struct puffs_cred *pcr, const struct puffs_cid *pcid)
+p2k_fs_sync(struct puffs_usermount *pu, int waitfor, const struct puffs_cred *pcr)
 {
-	struct mount *mp = puffs_cc_getspecific(pcc);
+	struct mount *mp = puffs_getspecific(pu);
 	kauth_cred_t cred;
 	int rv;
 
 	cred = cred_create(pcr);
-	rv = VFS_SYNC(mp, waitfor, (kauth_cred_t)cred, curlwp);
+	rv = VFS_SYNC(mp, waitfor, (kauth_cred_t)cred);
 	cred_destroy(cred);
 
 	rump_bioops_sync();
@@ -221,10 +227,10 @@ p2k_fs_sync(struct puffs_cc *pcc, int waitfor,
 }
 
 int
-p2k_fs_fhtonode(struct puffs_cc *pcc, void *fid, size_t fidsize,
+p2k_fs_fhtonode(struct puffs_usermount *pu, void *fid, size_t fidsize,
 	struct puffs_newinfo *pni)
 {
-	struct mount *mp = puffs_cc_getspecific(pcc);
+	struct mount *mp = puffs_getspecific(pu);
 	struct vnode *vp;
 	enum vtype vtype;
 	voff_t vsize;
@@ -245,7 +251,7 @@ p2k_fs_fhtonode(struct puffs_cc *pcc, void *fid, size_t fidsize,
 }
 
 int
-p2k_fs_nodetofh(struct puffs_cc *pcc, void *cookie, void *fid, size_t *fidsize)
+p2k_fs_nodetofh(struct puffs_usermount *pu, void *cookie, void *fid, size_t *fidsize)
 {
 	struct vnode *vp = cookie;
 
@@ -259,7 +265,7 @@ p2k_fs_nodetofh(struct puffs_cc *pcc, void *cookie, void *fid, size_t *fidsize)
 #define AUL(a) assert(RUMP_VOP_ISLOCKED(a) == 0)
 
 int
-p2k_node_lookup(struct puffs_cc *pcc, void *opc, struct puffs_newinfo *pni,
+p2k_node_lookup(struct puffs_usermount *pu, void *opc, struct puffs_newinfo *pni,
 	const struct puffs_cn *pcn)
 {
 	struct componentname *cn;
@@ -291,7 +297,7 @@ p2k_node_lookup(struct puffs_cc *pcc, void *opc, struct puffs_newinfo *pni,
 }
 
 int
-p2k_node_create(struct puffs_cc *pcc, void *opc, struct puffs_newinfo *pni,
+p2k_node_create(struct puffs_usermount *pu, void *opc, struct puffs_newinfo *pni,
 	const struct puffs_cn *pcn, const struct vattr *vap)
 {
 	struct componentname *cn;
@@ -312,7 +318,7 @@ p2k_node_create(struct puffs_cc *pcc, void *opc, struct puffs_newinfo *pni,
 }
 
 int
-p2k_node_mknod(struct puffs_cc *pcc, void *opc, struct puffs_newinfo *pni,
+p2k_node_mknod(struct puffs_usermount *pu, void *opc, struct puffs_newinfo *pni,
 	const struct puffs_cn *pcn, const struct vattr *vap)
 {
 	struct componentname *cn;
@@ -333,15 +339,15 @@ p2k_node_mknod(struct puffs_cc *pcc, void *opc, struct puffs_newinfo *pni,
 }
 
 int
-p2k_node_open(struct puffs_cc *pcc, void *opc, int mode,
-	const struct puffs_cred *pcr, const struct puffs_cid *pcid)
+p2k_node_open(struct puffs_usermount *pu, void *opc, int mode,
+	const struct puffs_cred *pcr)
 {
 	kauth_cred_t cred;
 	int rv;
 
 	cred = cred_create(pcr);
 	VLE(opc);
-	rv = RUMP_VOP_OPEN(opc, mode, cred, curlwp);
+	rv = RUMP_VOP_OPEN(opc, mode, cred);
 	VUL(opc);
 	cred_destroy(cred);
 
@@ -349,15 +355,15 @@ p2k_node_open(struct puffs_cc *pcc, void *opc, int mode,
 }
 
 int
-p2k_node_close(struct puffs_cc *pcc, void *opc, int flags,
-	const struct puffs_cred *pcr, const struct puffs_cid *pcid)
+p2k_node_close(struct puffs_usermount *pu, void *opc, int flags,
+	const struct puffs_cred *pcr)
 {
 	kauth_cred_t cred;
 	int rv;
 
 	cred = cred_create(pcr);
 	VLE(opc);
-	rv = RUMP_VOP_CLOSE(opc, flags, cred, curlwp);
+	rv = RUMP_VOP_CLOSE(opc, flags, cred);
 	VUL(opc);
 	cred_destroy(cred);
 
@@ -365,15 +371,15 @@ p2k_node_close(struct puffs_cc *pcc, void *opc, int flags,
 }
 
 int
-p2k_node_access(struct puffs_cc *pcc, void *opc, int mode,
-	const struct puffs_cred *pcr, const struct puffs_cid *pcid)
+p2k_node_access(struct puffs_usermount *pu, void *opc, int mode,
+	const struct puffs_cred *pcr)
 {
 	kauth_cred_t cred;
 	int rv;
 
 	cred = cred_create(pcr);
 	VLE(opc);
-	rv = RUMP_VOP_ACCESS(opc, mode, cred, curlwp);
+	rv = RUMP_VOP_ACCESS(opc, mode, cred);
 	VUL(opc);
 	cred_destroy(cred);
 
@@ -381,15 +387,15 @@ p2k_node_access(struct puffs_cc *pcc, void *opc, int mode,
 }
 
 int
-p2k_node_getattr(struct puffs_cc *pcc, void *opc, struct vattr *vap,
-	const struct puffs_cred *pcr, const struct puffs_cid *pcid)
+p2k_node_getattr(struct puffs_usermount *pu, void *opc, struct vattr *vap,
+	const struct puffs_cred *pcr)
 {
 	kauth_cred_t cred;
 	int rv;
 
 	cred = cred_create(pcr);
 	VLE(opc);
-	rv = RUMP_VOP_GETATTR(opc, vap, cred, curlwp);
+	rv = RUMP_VOP_GETATTR(opc, vap, cred);
 	VUL(opc);
 	cred_destroy(cred);
 
@@ -397,15 +403,15 @@ p2k_node_getattr(struct puffs_cc *pcc, void *opc, struct vattr *vap,
 }
 
 int
-p2k_node_setattr(struct puffs_cc *pcc, void *opc, const struct vattr *vap,
-	const struct puffs_cred *pcr, const struct puffs_cid *pcid)
+p2k_node_setattr(struct puffs_usermount *pu, void *opc, const struct vattr *vap,
+	const struct puffs_cred *pcr)
 {
 	kauth_cred_t cred;
 	int rv;
 
 	cred = cred_create(pcr);
 	VLE(opc);
-	rv = RUMP_VOP_SETATTR(opc, __UNCONST(vap), cred, curlwp);
+	rv = RUMP_VOP_SETATTR(opc, __UNCONST(vap), cred);
 	VUL(opc);
 	cred_destroy(cred);
 
@@ -413,15 +419,15 @@ p2k_node_setattr(struct puffs_cc *pcc, void *opc, const struct vattr *vap,
 }
 
 int
-p2k_node_fsync(struct puffs_cc *pcc, void *opc, const struct puffs_cred *pcr,
-	int flags, off_t offlo, off_t offhi, const struct puffs_cid *pcid)
+p2k_node_fsync(struct puffs_usermount *pu, void *opc, const struct puffs_cred *pcr,
+	int flags, off_t offlo, off_t offhi)
 {
 	kauth_cred_t cred;
 	int rv;
 
 	cred = cred_create(pcr);
 	VLE(opc);
-	rv = RUMP_VOP_FSYNC(opc, cred, flags, offlo, offhi, curlwp);
+	rv = RUMP_VOP_FSYNC(opc, cred, flags, offlo, offhi);
 	VUL(opc);
 	cred_destroy(cred);
 
@@ -429,7 +435,21 @@ p2k_node_fsync(struct puffs_cc *pcc, void *opc, const struct puffs_cred *pcr,
 }
 
 int
-p2k_node_seek(struct puffs_cc *pcc, void *opc, off_t oldoff, off_t newoff,
+p2k_node_mmap(struct puffs_usermount *pu, void *opc, vm_prot_t flags,
+	const struct puffs_cred *pcr)
+{
+	kauth_cred_t cred;
+	int rv;
+
+	cred = cred_create(pcr);
+	rv = RUMP_VOP_MMAP(opc, flags, cred);
+	cred_destroy(cred);
+
+	return rv;
+}
+
+int
+p2k_node_seek(struct puffs_usermount *pu, void *opc, off_t oldoff, off_t newoff,
 	const struct puffs_cred *pcr)
 {
 	kauth_cred_t cred;
@@ -445,7 +465,7 @@ p2k_node_seek(struct puffs_cc *pcc, void *opc, off_t oldoff, off_t newoff,
 }
 
 int
-p2k_node_remove(struct puffs_cc *pcc, void *opc, void *targ,
+p2k_node_remove(struct puffs_usermount *pu, void *opc, void *targ,
 	const struct puffs_cn *pcn)
 {
 	struct componentname *cn;
@@ -463,7 +483,7 @@ p2k_node_remove(struct puffs_cc *pcc, void *opc, void *targ,
 }
 
 int
-p2k_node_link(struct puffs_cc *pcc, void *opc, void *targ,
+p2k_node_link(struct puffs_usermount *pu, void *opc, void *targ,
 	const struct puffs_cn *pcn)
 {
 	struct componentname *cn;
@@ -478,7 +498,7 @@ p2k_node_link(struct puffs_cc *pcc, void *opc, void *targ,
 }
 
 int
-p2k_node_rename(struct puffs_cc *pcc, void *src_dir, void *src,
+p2k_node_rename(struct puffs_usermount *pu, void *src_dir, void *src,
 	const struct puffs_cn *pcn_src, void *targ_dir, void *targ,
 	const struct puffs_cn *pcn_targ)
 {
@@ -501,7 +521,7 @@ p2k_node_rename(struct puffs_cc *pcc, void *src_dir, void *src,
 }
 
 int
-p2k_node_mkdir(struct puffs_cc *pcc, void *opc, struct puffs_newinfo *pni,
+p2k_node_mkdir(struct puffs_usermount *pu, void *opc, struct puffs_newinfo *pni,
 	const struct puffs_cn *pcn, const struct vattr *vap)
 {
 	struct componentname *cn;
@@ -522,7 +542,7 @@ p2k_node_mkdir(struct puffs_cc *pcc, void *opc, struct puffs_newinfo *pni,
 }
 
 int
-p2k_node_rmdir(struct puffs_cc *pcc, void *opc, void *targ,
+p2k_node_rmdir(struct puffs_usermount *pu, void *opc, void *targ,
 	const struct puffs_cn *pcn)
 {
 	struct componentname *cn;
@@ -540,9 +560,9 @@ p2k_node_rmdir(struct puffs_cc *pcc, void *opc, void *targ,
 }
 
 int
-p2k_node_symlink(struct puffs_cc *pcc, void *opc, struct puffs_newinfo *pni,
-	const struct puffs_cn *pcn_src, const struct vattr *vap,
-	const char *link_target)
+p2k_node_symlink(struct puffs_usermount *pu, void *opc,
+	struct puffs_newinfo *pni, const struct puffs_cn *pcn_src,
+	const struct vattr *vap, const char *link_target)
 {
 	struct componentname *cn;
 	struct vnode *vp;
@@ -563,7 +583,7 @@ p2k_node_symlink(struct puffs_cc *pcc, void *opc, struct puffs_newinfo *pni,
 }
 
 int
-p2k_node_readdir(struct puffs_cc *pcc, void *opc, struct dirent *dent,
+p2k_node_readdir(struct puffs_usermount *pu, void *opc, struct dirent *dent,
 	off_t *readoff, size_t *reslen, const struct puffs_cred *pcr,
 	int *eofflag, off_t *cookies, size_t *ncookies)
 {
@@ -597,7 +617,7 @@ p2k_node_readdir(struct puffs_cc *pcc, void *opc, struct dirent *dent,
 }
 
 int
-p2k_node_readlink(struct puffs_cc *pcc, void *opc,
+p2k_node_readlink(struct puffs_usermount *pu, void *opc,
 	const struct puffs_cred *pcr, char *linkname, size_t *linklen)
 {
 	kauth_cred_t cred;
@@ -616,8 +636,9 @@ p2k_node_readlink(struct puffs_cc *pcc, void *opc,
 }
 
 int
-p2k_node_read(struct puffs_cc *pcc, void *opc, uint8_t *buf, off_t offset,
-	size_t *resid, const struct puffs_cred *pcr, int ioflag)
+p2k_node_read(struct puffs_usermount *pu, void *opc,
+	uint8_t *buf, off_t offset, size_t *resid,
+	const struct puffs_cred *pcr, int ioflag)
 {
 	kauth_cred_t cred;
 	struct uio *uio;
@@ -635,8 +656,9 @@ p2k_node_read(struct puffs_cc *pcc, void *opc, uint8_t *buf, off_t offset,
 }
 
 int
-p2k_node_write(struct puffs_cc *pcc, void *opc, uint8_t *buf, off_t offset,
-	size_t *resid, const struct puffs_cred *pcr, int ioflag)
+p2k_node_write(struct puffs_usermount *pu, void *opc,
+	uint8_t *buf, off_t offset, size_t *resid,
+	const struct puffs_cred *pcr, int ioflag)
 {
 	kauth_cred_t cred;
 	struct uio *uio;
@@ -654,7 +676,7 @@ p2k_node_write(struct puffs_cc *pcc, void *opc, uint8_t *buf, off_t offset,
 }
 
 int
-p2k_node_reclaim(struct puffs_cc *pcc, void *opc, const struct puffs_cid *pcid)
+p2k_node_reclaim(struct puffs_usermount *pu, void *opc)
 {
 
 	rump_recyclenode(opc);
@@ -664,16 +686,18 @@ p2k_node_reclaim(struct puffs_cc *pcc, void *opc, const struct puffs_cid *pcid)
 }
 
 int
-p2k_node_inactive(struct puffs_cc *pcc, void *opc, const struct puffs_cid *pcid)
+p2k_node_inactive(struct puffs_usermount *pu, void *opc)
 {
 	struct vnode *vp = opc;
+	bool recycle;
 	int rv;
 
+	rump_vp_interlock(vp);
 	(void) RUMP_VOP_PUTPAGES(vp, 0, 0, PGO_ALLPAGES);
 	VLE(vp);
-	rv = RUMP_VOP_INACTIVE(vp, curlwp);
+	rv = RUMP_VOP_INACTIVE(vp, &recycle);
 	if (vp->v_usecount == 0)
-		puffs_setback(pcc, PUFFS_SETBACK_NOREF_N1);
+		puffs_setback(puffs_cc_getcc(pu), PUFFS_SETBACK_NOREF_N1);
 
 	return rv;
 }

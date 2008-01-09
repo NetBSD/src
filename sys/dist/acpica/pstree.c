@@ -1,7 +1,9 @@
+/*	$NetBSD: pstree.c,v 1.1.46.1 2008/01/09 01:55:20 matt Exp $	*/
+
 /******************************************************************************
  *
  * Module Name: pstree - Parser op tree manipulation/traversal/search
- *              xRevision: 1.49 $
+ *              $Revision: 1.1.46.1 $
  *
  *****************************************************************************/
 
@@ -9,7 +11,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2007, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -114,15 +116,14 @@
  *
  *****************************************************************************/
 
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pstree.c,v 1.1 2006/03/23 13:36:31 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pstree.c,v 1.1.46.1 2008/01/09 01:55:20 matt Exp $");
 
 #define __PSTREE_C__
 
-#include "acpi.h"
-#include "acparser.h"
-#include "amlcode.h"
+#include <dist/acpica/acpi.h>
+#include <dist/acpica/acparser.h>
+#include <dist/acpica/amlcode.h>
 
 #define _COMPONENT          ACPI_PARSER
         ACPI_MODULE_NAME    ("pstree")
@@ -270,6 +271,8 @@ AcpiPsAppendArg (
     {
         Arg->Common.Parent = Op;
         Arg = Arg->Common.Next;
+
+        Op->Common.ArgListLength++;
     }
 }
 

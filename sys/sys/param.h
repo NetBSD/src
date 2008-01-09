@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.274.2.2 2007/11/08 11:00:21 matt Exp $	*/
+/*	$NetBSD: param.h,v 1.274.2.3 2008/01/09 01:58:13 matt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -63,7 +63,7 @@
  *	2.99.9		(299000900)
  */
 
-#define	__NetBSD_Version__	499003500	/* NetBSD 4.99.35 */
+#define	__NetBSD_Version__	499004800	/* NetBSD 4.99.48 */
 
 #define __NetBSD_Prereq__(M,m,p) (((((M) * 100000000) + \
     (m) * 1000000) + (p) * 100) <= __NetBSD_Version__)
@@ -162,6 +162,9 @@
 #endif
 #ifndef MAXCPUS
 #define	MAXCPUS			32
+#endif
+#ifndef MAX_LWP_PER_PROC
+#define	MAX_LWP_PER_PROC	8000
 #endif
 
 /*

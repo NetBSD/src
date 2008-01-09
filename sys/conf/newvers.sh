@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: newvers.sh,v 1.48.8.1 2007/11/06 23:25:21 matt Exp $
+#	$NetBSD: newvers.sh,v 1.48.8.2 2008/01/09 01:52:06 matt Exp $
 #
 # Copyright (c) 1984, 1986, 1990, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -80,20 +80,18 @@ const char copyright[] =
 ${copyright}
 "\n";
 
-#if \
-    defined(__alpha__) || \
-    defined(__hppa__) || \
-    defined(__i386__) || \
-    defined(__sparc64__) || \
-    defined(__m68k__) || \
-    defined(__macppc__) || \
-    defined(__x86_64__)
 /*
  * NetBSD identity note.
  */
+#ifdef __arm__
+#define _SHT_NOTE	%note
+#else
+#define _SHT_NOTE	@note
+#endif
+
 #define	_S(TAG)	__STRING(TAG)
 __asm(
-	".section\t\".note.netbsd.ident\", \"\",@note\n"
+	".section\t\".note.netbsd.ident\", \"\"," _S(_SHT_NOTE) "\n"
 	"\t.p2align\t2\n"
 	"\t.long\t" _S(ELF_NOTE_NETBSD_NAMESZ) "\n"
 	"\t.long\t" _S(ELF_NOTE_NETBSD_DESCSZ) "\n"
@@ -102,7 +100,6 @@ __asm(
 	"\t.long\t" _S(__NetBSD_Version__) "\n"
 	"\t.p2align\t2\n"
 );
-#endif
 
 _EOF
 echo $(expr ${v} + 1) > version

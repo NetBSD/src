@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ray.c,v 1.65.8.1 2007/11/06 23:29:44 matt Exp $	*/
+/*	$NetBSD: if_ray.c,v 1.65.8.2 2008/01/09 01:54:15 matt Exp $	*/
 
 /*
  * Copyright (c) 2000 Christian E. Hopps
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.65.8.1 2007/11/06 23:29:44 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.65.8.2 2008/01/09 01:54:15 matt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -158,12 +158,8 @@ struct ray_softc {
 
 	struct pcmcia_function		*sc_pf;
 	void				*sc_ih;
-	void				*sc_sdhook;
-	void				*sc_pwrhook;
 	int				sc_attached;
 
-	int				sc_flags;	/*. misc flags */
-#define RAY_FLAGS_RESUMEINIT	0x0001
 	int				sc_resetloop;
 
 	struct callout			sc_check_ccs_ch;
@@ -302,6 +298,7 @@ static u_int ray_find_free_tx_ccs(struct ray_softc *, u_int);
 static u_int8_t ray_free_ccs(struct ray_softc *, bus_size_t);
 static void ray_free_ccs_chain(struct ray_softc *, u_int);
 static void ray_if_start(struct ifnet *);
+static void ray_if_stop(struct ifnet *, int);
 static int ray_init(struct ray_softc *);
 static int ray_intr(void *);
 static void ray_intr_start(struct ray_softc *);
@@ -310,7 +307,6 @@ static int ray_issue_cmd(struct ray_softc *, bus_size_t, u_int);
 static int ray_match(struct device *, struct cfdata *, void *);
 static int ray_media_change(struct ifnet *);
 static void ray_media_status(struct ifnet *, struct ifmediareq *);
-void ray_power(int, void *);
 static ray_cmd_func_t ray_rccs_intr(struct ray_softc *, bus_size_t);
 static void ray_read_region(struct ray_softc *, bus_size_t,void *,size_t);
 static void ray_recv(struct ray_softc *, bus_size_t);
@@ -320,7 +316,6 @@ static void ray_reset(struct ray_softc *);
 static void ray_reset_resetloop(void *);
 static int ray_send_auth(struct ray_softc *, u_int8_t *, u_int8_t);
 static void ray_set_pending(struct ray_softc *, u_int);
-static void ray_shutdown(void *);
 static int ray_simple_cmd(struct ray_softc *, u_int, u_int);
 static void ray_start_assoc(struct ray_softc *);
 static void ray_start_join_net(struct ray_softc *);
@@ -571,7 +566,6 @@ ray_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_omode = sc->sc_mode = RAY_MODE_DEFAULT;
 	sc->sc_countrycode = sc->sc_dcountrycode =
 	    RAY_PID_COUNTRY_CODE_DEFAULT;
-	sc->sc_flags &= ~RAY_FLAGS_RESUMEINIT;
 
 	/*
 	 * attach the interface
@@ -590,6 +584,7 @@ ray_attach(struct device *parent, struct device *self, void *aux)
 	memcpy(ifp->if_xname, self->dv_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_start = ray_if_start;
+	ifp->if_stop = ray_if_stop;
 	ifp->if_ioctl = ray_ioctl;
 	ifp->if_mtu = ETHERMTU;
 	ifp->if_flags = IFF_BROADCAST|IFF_SIMPLEX|IFF_MULTICAST;
@@ -609,8 +604,10 @@ ray_attach(struct device *parent, struct device *self, void *aux)
 	else
 		ifmedia_set(&sc->sc_media, IFM_INFRA);
 
-	sc->sc_sdhook = shutdownhook_establish(ray_shutdown, sc);
-	sc->sc_pwrhook = powerhook_establish(self->dv_xname, ray_power, sc);
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+	else
+		pmf_class_network_register(self, ifp);
 
 	/* The attach is successful. */
 	sc->sc_attached = 1;
@@ -655,17 +652,14 @@ ray_detach(struct device *self, int flags)
 	struct ray_softc *sc;
 	struct ifnet *ifp;
 
-	sc = (struct ray_softc *)self;
+	sc = device_private(self);
 	ifp = &sc->sc_if;
 	RAY_DPRINTF(("%s: detach\n", sc->sc_xname));
 
 	if (!sc->sc_attached)
                 return (0);
 
-	if (sc->sc_pwrhook)
-		powerhook_disestablish(sc->sc_pwrhook);
-	if (sc->sc_sdhook)
-		shutdownhook_disestablish(sc->sc_sdhook);
+	pmf_device_deregister(self);
 
 	if (sc->sc_if.if_flags & IFF_UP)
 		ray_disable(sc);
@@ -760,7 +754,6 @@ ray_init(sc)
 	sc->sc_running = 0;
 	sc->sc_txfree = RAY_CCS_NTX;
 	sc->sc_checkcounters = 0;
-	sc->sc_flags &= ~RAY_FLAGS_RESUMEINIT;
 	sc->sc_authstate = RAY_AUTH_UNAUTH;
 
 	/* get startup results */
@@ -876,42 +869,6 @@ ray_reset_resetloop(arg)
 
 	sc = arg;
 	sc->sc_resetloop = 0;
-}
-
-void
-ray_power(int why, void *arg)
-{
-#if 0
-	struct ray_softc *sc;
-
-	/* can't do this until power hooks are called from thread */
-	sc = arg;
-	switch (why) {
-	case PWR_RESUME:
-		if ((sc->sc_flags & RAY_FLAGS_RESUMEINIT))
-			ray_init(sc);
-		break;
-	case PWR_SUSPEND:
-		if ((sc->sc_if.if_flags & IFF_RUNNING)) {
-			ray_stop(sc);
-			sc->sc_flags |= RAY_FLAGS_RESUMEINIT;
-		}
-		break;
-	case PWR_STANDBY:
-	default:
-		break;
-	}
-#endif
-}
-
-static void
-ray_shutdown(arg)
-	void *arg;
-{
-	struct ray_softc *sc;
-
-	sc = arg;
-	ray_disable(sc);
 }
 
 static int
@@ -1068,6 +1025,14 @@ ray_if_start(ifp)
 
 	sc = ifp->if_softc;
 	ray_intr_start(sc);
+}
+
+static void
+ray_if_stop(struct ifnet *ifp, int disable)
+{
+	struct ray_softc *sc = ifp->if_softc;
+
+	ray_stop(sc);
 }
 
 static int

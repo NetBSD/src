@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback.c,v 1.25.2.2 2007/11/08 10:59:44 matt Exp $      */
+/*      $NetBSD: xennetback.c,v 1.25.2.3 2008/01/09 01:50:23 matt Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -44,6 +44,7 @@
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/device.h>
+#include <sys/intr.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -59,14 +60,14 @@
 #include <net/if_ether.h>
 
 
-#include <machine/xen.h>
-#include <machine/xen_shm.h>
-#include <machine/evtchn.h>
-#include <machine/ctrl_if.h>
+#include <xen/xen.h>
+#include <xen/xen_shm.h>
+#include <xen/evtchn.h>
+#include <xen/ctrl_if.h>
 
 #ifdef XEN3
 #else
-#include <machine/xen-public/io/domain_controller.h>
+#include <xen/xen-public/io/domain_controller.h>
 #endif
 
 #include <uvm/uvm.h>
@@ -281,7 +282,7 @@ xnetback_ctrlif_rx(ctrl_msg_t *msg, unsigned long id)
 		xneti->handle = req->netif_handle;
 		xneti->status = DISCONNECTED;
 
-		xneti->xni_softintr = softintr_establish(IPL_SOFTNET,
+		xneti->xni_softintr = softint_establish(SOFTINT_NET,
 		    xennetback_ifsoftstart, xneti);
 		if (xneti->xni_softintr == NULL) {
 			free(xneti, M_DEVBUF);
@@ -440,7 +441,7 @@ fail_1:
 		hypervisor_mask_event(xneti->xni_evtchn);
 		event_remove_handler(xneti->xni_evtchn,
 		    xennetback_evthandler, xneti);
-		softintr_disestablish(xneti->xni_softintr);
+		softint_disestablish(xneti->xni_softintr);
 		ring_addr = (vaddr_t)xneti->xni_rxring;
 		pmap_remove(pmap_kernel(), ring_addr, ring_addr + PAGE_SIZE);
 		uvm_km_free(kernel_map, ring_addr, PAGE_SIZE,
@@ -751,7 +752,7 @@ again:
 		goto again; /* more work to do ? */
 
 	/* check to see if we can transmit more packets */
-	softintr_schedule(xneti->xni_softintr);
+	softint_schedule(xneti->xni_softintr);
 
 	return 1;
 }
@@ -827,7 +828,7 @@ xennetback_ifstart(struct ifnet *ifp)
 	 * stack will enqueue all pending mbufs in the interface's send queue
 	 * before it is processed by xennet_softstart().
 	 */
-	softintr_schedule(xneti->xni_softintr);
+	softint_schedule(xneti->xni_softintr);
 }
 
 static void

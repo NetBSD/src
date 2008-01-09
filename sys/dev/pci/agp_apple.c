@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_apple.c,v 1.1.16.1 2007/11/06 23:28:35 matt Exp $ */
+/*	$NetBSD: agp_apple.c,v 1.1.16.2 2008/01/09 01:53:31 matt Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,12 +30,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_apple.c,v 1.1.16.1 2007/11/06 23:28:35 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_apple.c,v 1.1.16.2 2008/01/09 01:53:31 matt Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
-#include <sys/lock.h>
 #include <sys/proc.h>
 #include <sys/conf.h>
 #include <sys/device.h>

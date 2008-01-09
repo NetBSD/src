@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vfsops.c,v 1.70.4.1 2007/11/06 23:31:18 matt Exp $	*/
+/*	$NetBSD: smbfs_vfsops.c,v 1.70.4.2 2008/01/09 01:55:50 matt Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.70.4.1 2007/11/06 23:31:18 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.70.4.2 2008/01/09 01:55:50 matt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_quota.h"
@@ -115,7 +115,7 @@ struct vfsops smbfs_vfsops = {
 	smbfs_start,
 	smbfs_unmount,
 	smbfs_root,
-	smbfs_quotactl,
+	(void *)eopnotsupp,	/* vfs_quotactl */
 	smbfs_statvfs,
 	smbfs_sync,
 	smbfs_vget,
@@ -135,9 +135,9 @@ struct vfsops smbfs_vfsops = {
 VFS_ATTACH(smbfs_vfsops);
 
 int
-smbfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
-    struct lwp *l)
+smbfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 {
+	struct lwp *l = curlwp;
 	struct smbfs_args *args = data; 	  /* holds data from mount request */
 	struct smbmount *smp = NULL;
 	struct smb_vc *vcp;
@@ -210,8 +210,9 @@ smbfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
 
 /* Unmount the filesystem described by mp. */
 int
-smbfs_unmount(struct mount *mp, int mntflags, struct lwp *l)
+smbfs_unmount(struct mount *mp, int mntflags)
 {
+	struct lwp *l = curlwp;
 	struct smbmount *smp = VFSTOSMBFS(mp);
 	struct smb_cred scred;
 	int error, flags;
@@ -322,23 +323,10 @@ smbfs_root(struct mount *mp, struct vnode **vpp)
  */
 /* ARGSUSED */
 int
-smbfs_start(struct mount *mp, int flags,
-    struct lwp *l)
+smbfs_start(struct mount *mp, int flags)
 {
 	SMBVDEBUG("flags=%04x\n", flags);
 	return 0;
-}
-
-/*
- * Do operations associated with quotas, not supported
- */
-/* ARGSUSED */
-int
-smbfs_quotactl(struct mount *mp, int cmd, uid_t uid,
-    void *arg, struct lwp *l)
-{
-	SMBVDEBUG("return EOPNOTSUPP\n");
-	return EOPNOTSUPP;
 }
 
 void
@@ -379,8 +367,9 @@ smbfs_done(void)
  * smbfs_statvfs call
  */
 int
-smbfs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l)
+smbfs_statvfs(struct mount *mp, struct statvfs *sbp)
 {
+	struct lwp *l = curlwp;
 	struct smbmount *smp = VFSTOSMBFS(mp);
 	struct smb_share *ssp = smp->sm_share;
 	struct smb_cred scred;
@@ -403,58 +392,59 @@ smbfs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l)
  * Flush out the buffer cache
  */
 int
-smbfs_sync(struct mount *mp, int waitfor, kauth_cred_t cred, struct lwp *l)
+smbfs_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
 {
-	struct vnode *vp, *nvp;
+	struct vnode *vp, *mvp;
 	struct smbnode *np;
 	int error, allerror = 0;
+
+	/* Allocate a marker vnode. */
+	if ((mvp = vnalloc(mp)) == NULL)
+		return ENOMEM;
 	/*
 	 * Force stale buffer cache information to be flushed.
 	 */
-	simple_lock(&mntvnode_slock);
+	mutex_enter(&mntvnode_lock);
 loop:
-	/*
-	 * NOTE: not using the TAILQ_FOREACH here since in this loop vgone()
-	 * and vclean() can be called indirectly
-	 */
-	for (vp = TAILQ_FIRST(&mp->mnt_vnodelist); vp; vp = nvp) {
+	for (vp = TAILQ_FIRST(&mp->mnt_vnodelist); vp; vp = vunmark(mvp)) {
+		vmark(mvp, vp);
 		/*
 		 * If the vnode that we are about to sync is no longer
 		 * associated with this mount point, start over.
 		 */
-		if (vp->v_mount != mp)
-			goto loop;
-		simple_lock(&vp->v_interlock);
-		nvp = TAILQ_NEXT(vp, v_mntvnodes);
-
+		if (vp->v_mount != mp || vismarker(vp))
+			continue;
+		mutex_enter(&vp->v_interlock);
 		np = VTOSMB(vp);
 		if (np == NULL) {
-			simple_unlock(&vp->v_interlock);
+			mutex_exit(&vp->v_interlock);
 			continue;
 		}
-			
 		if ((vp->v_type == VNON || (np->n_flag & NMODIFIED) == 0) &&
 		    LIST_EMPTY(&vp->v_dirtyblkhd) &&
-		     UVM_OBJ_IS_CLEAN(&vp->v_uobj)) {
-			simple_unlock(&vp->v_interlock);
+		     vp->v_uobj.uo_npages == 0) {
+			mutex_exit(&vp->v_interlock);
 			continue;
 		}
-		simple_unlock(&mntvnode_slock);
+		mutex_exit(&mntvnode_lock);
 		error = vget(vp, LK_EXCLUSIVE | LK_NOWAIT | LK_INTERLOCK);
 		if (error) {
-			simple_lock(&mntvnode_slock);
-			if (error == ENOENT)
+			mutex_enter(&mntvnode_lock);
+			if (error == ENOENT) {
+				(void)vunmark(mvp);
 				goto loop;
+			}
 			continue;
 		}
 		error = VOP_FSYNC(vp, cred,
-		    waitfor == MNT_WAIT ? FSYNC_WAIT : 0, 0, 0, l);
+		    waitfor == MNT_WAIT ? FSYNC_WAIT : 0, 0, 0);
 		if (error)
 			allerror = error;
 		vput(vp);
-		simple_lock(&mntvnode_slock);
+		mutex_enter(&mntvnode_lock);
 	}
-	simple_unlock(&mntvnode_slock);
+	mutex_exit(&mntvnode_lock);
+	vnfree(mvp);
 	return (allerror);
 }
 

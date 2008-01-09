@@ -1,4 +1,4 @@
-/*	$NetBSD: ltsleep.c,v 1.2.4.3 2007/11/08 11:00:18 matt Exp $	*/
+/*	$NetBSD: ltsleep.c,v 1.2.4.4 2008/01/09 01:58:00 matt Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -31,6 +31,7 @@
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/queue.h>
+#include <sys/simplelock.h>
 
 #include "rump_private.h"
 #include "rumpuser.h"
@@ -79,6 +80,44 @@ ltsleep(wchan_t ident, pri_t prio, const char *wmesg, int timo,
 
 	if (slock && (prio & PNORELOCK) == 0)
 		simple_lock(slock);
+
+	return 0;
+}
+
+int
+mtsleep(wchan_t ident, pri_t prio, const char *wmesg, int timo,
+	kmutex_t *lock)
+{
+	struct ltsleeper lts;
+	int iplrecurse;
+
+	lts.id = ident;
+	cv_init(&lts.cv, NULL);
+
+	mutex_enter(&sleepermtx);
+	LIST_INSERT_HEAD(&sleepers, &lts, entries);
+
+	/* release spl */
+	iplrecurse = rumpuser_whatis_ipl();
+	while (iplrecurse--)
+		rumpuser_rw_exit(&rumpspl);
+
+	/* protected by sleepermtx */
+	mutex_exit(lock);
+	cv_wait(&lts.cv, &sleepermtx);
+
+	/* retake ipl */
+	iplrecurse = rumpuser_whatis_ipl();
+	while (iplrecurse--)
+		rumpuser_rw_enter(&rumpspl, 0);
+
+	LIST_REMOVE(&lts, entries);
+	mutex_exit(&sleepermtx);
+
+	cv_destroy(&lts.cv);
+
+	if ((prio & PNORELOCK) == 0)
+		mutex_enter(lock);
 
 	return 0;
 }

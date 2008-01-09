@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_sysctl.c,v 1.25 2007/08/15 12:07:31 ad Exp $	*/
+/*	$NetBSD: netbsd32_sysctl.c,v 1.25.2.1 2008/01/09 01:51:40 matt Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_sysctl.c,v 1.25 2007/08/15 12:07:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_sysctl.c,v 1.25.2.1 2008/01/09 01:51:40 matt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -150,19 +150,16 @@ SYSCTL_SETUP(netbsd32_sysctl_emul_setup, "sysctl netbsd32 shadow tree setup")
 }
 
 int
-netbsd32___sysctl(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32___sysctl(struct lwp *l, const struct netbsd32___sysctl_args *uap, register_t *retval)
 {
-	struct netbsd32___sysctl_args /* {
+	/* {
 		syscallarg(netbsd32_intp) name;
 		syscallarg(u_int) namelen;
 		syscallarg(netbsd32_voidp) old;
 		syscallarg(netbsd32_size_tp) oldlenp;
 		syscallarg(netbsd32_voidp) new;
 		syscallarg(netbsd32_size_t) newlen;
-	} */ *uap = v;
+	} */
 	const struct sysctlnode *pnode;
 	netbsd32_size_t netbsd32_oldlen;
 	size_t oldlen, *oldlenp, savelen;
@@ -200,13 +197,7 @@ netbsd32___sysctl(l, v, retval)
 
 	ktrmib(name, SCARG(uap, namelen));
 
-	/*
-	 * wire old so that copyout() is less likely to fail?
-	 */
-	error = sysctl_lock(l, oldp, savelen);
-	if (error)
-		return (error);
-
+	sysctl_lock(newp != NULL);
 	pnode = &netbsd32_sysctl_root;
 	error = sysctl_locate(l, &name[0], SCARG(uap, namelen), &pnode, NULL);
 	pnode = (error == 0) ? &netbsd32_sysctl_root : NULL;
@@ -214,11 +205,7 @@ netbsd32___sysctl(l, v, retval)
 				oldp, &oldlen,
 				newp, SCARG(uap, newlen),
 				&name[0], l, pnode);
-
-	/*
-	 * release the sysctl lock
-	 */
-	sysctl_unlock(l);
+	sysctl_unlock();
 
 	/*
 	 * reset caller's oldlen, even if we got an error

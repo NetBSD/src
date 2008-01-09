@@ -1,4 +1,4 @@
-/* $NetBSD: via_drv.c,v 1.1 2007/03/23 14:58:56 jmcneill Exp $ */
+/* $NetBSD: via_drv.c,v 1.1.14.1 2008/01/09 01:54:12 matt Exp $ */
 
 /* via_drv.c -- VIA unichrome driver -*- linux-c -*-
  * Created: Fri Aug 12 2005 by anholt@FreeBSD.org
@@ -31,6 +31,9 @@
  *    Jared D. McNeill <jmcneill@NetBSD.org>
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: via_drv.c,v 1.1.14.1 2008/01/09 01:54:12 matt Exp $");
 
 #include <dev/drm/drmP.h>
 #include <dev/drm/drm.h>

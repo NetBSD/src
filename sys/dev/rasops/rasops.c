@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.56 2007/07/28 20:28:57 mjf Exp $	*/
+/*	 $NetBSD: rasops.c,v 1.56.6.1 2008/01/09 01:54:26 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.56 2007/07/28 20:28:57 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.56.6.1 2008/01/09 01:54:26 matt Exp $");
 
 #include "opt_rasops.h"
 #include "rasops_glue.h"
@@ -945,8 +945,10 @@ rasops_do_cursor(ri)
 				*(int32_t *)dp ^= ~0;
 				dp += 4;
 				if (ri->ri_hwbits) {
-					*(int32_t *)hp ^= ~0;
+					dp -= 4;
+					*(int32_t *)hp = *(int32_t *)dp;
 					hp += 4;
+					dp += 4;
 				}
 			}
 		}
@@ -962,16 +964,19 @@ rasops_do_cursor(ri)
 
 			if (slop1 & 1) {
 				*dp++ ^= ~0;
-				if (ri->ri_hwbits)
-					*hp++ ^= ~0;
+				if (ri->ri_hwbits) {
+					*hp++ = *(dp - 1);
+				}
 			}
 
 			if (slop1 & 2) {
 				*(int16_t *)dp ^= ~0;
 				dp += 2;
 				if (ri->ri_hwbits) {
-					*(int16_t *)hp ^= ~0;
+					dp -= 2;
+					*(int16_t *)hp = *(int16_t *)dp;
 					hp += 2;
+					dp += 2;
 				}
 			}
 
@@ -979,21 +984,23 @@ rasops_do_cursor(ri)
 				*(int32_t *)dp ^= ~0;
 				dp += 4;
 				if (ri->ri_hwbits) {
-					*(int32_t *)hp ^= ~0;
+					dp -= 4;
+					*(int32_t *)hp = *(int32_t *)dp;
 					hp += 4;
+					dp += 4;
 				}
 			}
 
 			if (slop2 & 1) {
 				*dp++ ^= ~0;
 				if (ri->ri_hwbits)
-					*hp++ ^= ~0;
+					*hp++ = *(dp - 1);
 			}
 
 			if (slop2 & 2) {
 				*(int16_t *)dp ^= ~0;
 				if (ri->ri_hwbits)
-					*(int16_t *)hp ^= ~0;
+					*(int16_t *)hp = *(int16_t *)(dp - 2);
 			}
 		}
 	}

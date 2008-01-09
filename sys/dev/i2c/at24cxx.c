@@ -1,4 +1,4 @@
-/*	$NetBSD: at24cxx.c,v 1.7.20.1 2007/11/06 23:26:09 matt Exp $	*/
+/*	$NetBSD: at24cxx.c,v 1.7.20.2 2008/01/09 01:52:40 matt Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -34,6 +34,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: at24cxx.c,v 1.7.20.2 2008/01/09 01:52:40 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

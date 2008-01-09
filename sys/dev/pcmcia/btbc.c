@@ -1,4 +1,4 @@
-/*	$NetBSD: btbc.c,v 1.1.4.1 2007/11/06 23:29:40 matt Exp $	*/
+/*	$NetBSD: btbc.c,v 1.1.4.2 2008/01/09 01:54:14 matt Exp $	*/
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btbc.c,v 1.1.4.1 2007/11/06 23:29:40 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btbc.c,v 1.1.4.2 2008/01/09 01:54:14 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -64,9 +64,13 @@ __KERNEL_RCSID(0, "$NetBSD: btbc.c,v 1.1.4.1 2007/11/06 23:29:40 matt Exp $");
 
 /* sc_flags */
 #define BTBC_SLEEPING		(1 << 0)	/* but not with the fishes */
+#define BTBC_XMIT		(1 << 1)	/* transmit active */
+#define BTBC_ENABLED		(1 << 2)	/* is enabled */
 
 /* Default baud rate: 57600, 115200, 230400 or 460800 */
+#ifndef BTBC_DEFAULT_BAUDRATE
 #define BTBC_DEFAULT_BAUDRATE	57600
+#endif
 
 struct btbc_softc {
 	device_t sc_dev;
@@ -76,7 +80,8 @@ struct btbc_softc {
 	void *sc_powerhook;			/* power hook descriptor */
 	int sc_flags;				/* flags */
 
-	struct hci_unit sc_unit;		/* Bluetooth HCI Unit */
+	struct hci_unit *sc_unit;		/* Bluetooth HCI Unit */
+	struct bt_stats sc_stats;		/* HCI stats */
 
 	/* hardware interrupt */
 	void *sc_intr;				/* cookie */
@@ -88,6 +93,11 @@ struct btbc_softc {
 #define TXBUF1_EMPTY	(1 << 0)
 #define TXBUF2_EMPTY	(1 << 1)
 #define TXBUF_MASK	(1 << 2)
+
+	/* output queues */
+	MBUFQ_HEAD()	sc_cmdq;
+	MBUFQ_HEAD()	sc_aclq;
+	MBUFQ_HEAD()	sc_scoq;
 
 	callout_t sc_ledch;			/* callout handler for LED */
 	uint8_t sc_ctrlreg;			/* value for control register */
@@ -106,14 +116,27 @@ static int btbc_set_baudrate(struct btbc_softc *, int);
 static void btbc_receive(struct btbc_softc *, uint32_t);
 static void btbc_transmit(struct btbc_softc *);
 static int btbc_intr(void *);
+static void btbc_start(struct btbc_softc *);
 
-static void btbc_start(struct hci_unit *);
-static int btbc_enable(struct hci_unit *);
-static void btbc_disable(struct hci_unit *);
+static int btbc_enable(device_t);
+static void btbc_disable(device_t);
+static void btbc_output_cmd(device_t, struct mbuf *);
+static void btbc_output_acl(device_t, struct mbuf *);
+static void btbc_output_sco(device_t, struct mbuf *);
+static void btbc_stats(device_t, struct bt_stats *, int);
 
 CFATTACH_DECL_NEW(btbc, sizeof(struct btbc_softc),
     btbc_match, btbc_attach, btbc_detach, NULL);
 
+static const struct hci_if btbc_hci = {
+	.enable = btbc_enable,
+	.disable = btbc_disable,
+	.output_cmd = btbc_output_cmd,
+	.output_acl = btbc_output_acl,
+	.output_sco = btbc_output_sco,
+	.get_stats = btbc_stats,
+	.ipl = IPL_TTY,
+};
 
 /* ARGSUSED */
 static int
@@ -143,7 +166,7 @@ btbc_pcmcia_validate_config(struct pcmcia_config_entry *cfe)
 static void
 btbc_attach(device_t parent, device_t self, void *aux)
 {
-	struct btbc_softc *sc = (struct btbc_softc *)self;
+	struct btbc_softc *sc = device_private(self);
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
 	int error;
@@ -151,10 +174,13 @@ btbc_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_pf = pa->pf;
 
+	MBUFQ_INIT(&sc->sc_cmdq);
+	MBUFQ_INIT(&sc->sc_aclq);
+	MBUFQ_INIT(&sc->sc_scoq);
+
 	if ((error = pcmcia_function_configure(pa->pf,
 	    btbc_pcmcia_validate_config)) != 0) {
-		aprint_error("%s: configure failed, error=%d\n",
-		    self->dv_xname, error);
+		aprint_error_dev(self, "configure failed, error=%d\n", error);
 		return;
 	}
 
@@ -162,15 +188,7 @@ btbc_attach(device_t parent, device_t self, void *aux)
 	sc->sc_pcioh = cfe->iospace[0].handle;
 
 	/* Attach Bluetooth unit */
-	sc->sc_unit.hci_softc = sc;
-	sc->sc_unit.hci_devname = device_xname(sc->sc_dev);
-	sc->sc_unit.hci_enable = btbc_enable;
-	sc->sc_unit.hci_disable = btbc_disable;
-	sc->sc_unit.hci_start_cmd = btbc_start;
-	sc->sc_unit.hci_start_acl = btbc_start;
-	sc->sc_unit.hci_start_sco = btbc_start;
-	sc->sc_unit.hci_ipl = makeiplcookie(IPL_TTY);
-	hci_attach(&sc->sc_unit);
+	sc->sc_unit = hci_attach(&btbc_hci, self, 0);
 
 	/* establish a power change hook */
 	sc->sc_powerhook = powerhook_establish(device_xname(sc->sc_dev),
@@ -186,10 +204,10 @@ btbc_attach(device_t parent, device_t self, void *aux)
 static int
 btbc_detach(device_t self, int flags)
 {
-	struct btbc_softc *sc = (struct btbc_softc *)self;
+	struct btbc_softc *sc = device_private(self);
 	int err = 0;
 
-	btbc_disable(&sc->sc_unit);
+	btbc_disable(sc->sc_dev);
 
 	if (sc->sc_powerhook) {
 		powerhook_disestablish(sc->sc_powerhook);
@@ -199,7 +217,10 @@ btbc_detach(device_t self, int flags)
 	callout_stop(&sc->sc_ledch);
 	callout_destroy(&sc->sc_ledch);
 
-	hci_detach(&sc->sc_unit);
+	if (sc->sc_unit) {
+		hci_detach(sc->sc_unit);
+		sc->sc_unit = NULL;
+	}
 
 	pcmcia_function_unconfigure(sc->sc_pf);
 
@@ -214,29 +235,23 @@ btbc_power(int why, void *arg)
 	switch(why) {
 	case PWR_SUSPEND:
 	case PWR_STANDBY:
-		if (sc->sc_unit.hci_flags & BTF_RUNNING) {
-			hci_detach(&sc->sc_unit);
+		if (sc->sc_flags & BTBC_ENABLED) {
+			if (sc->sc_unit) {
+				hci_detach(sc->sc_unit);
+				sc->sc_unit = NULL;
+			}
 
 			sc->sc_flags |= BTBC_SLEEPING;
-			printf_nolog("%s: sleeping\n", device_xname(sc->sc_dev));
+			aprint_verbose_dev(sc->sc_dev, "sleeping\n");
 		}
 		break;
 
 	case PWR_RESUME:
 		if (sc->sc_flags & BTBC_SLEEPING) {
-			printf_nolog("%s: waking up\n", device_xname(sc->sc_dev));
+			aprint_verbose_dev(sc->sc_dev, "waking up\n");
 			sc->sc_flags &= ~BTBC_SLEEPING;
 
-			memset(&sc->sc_unit, 0, sizeof(sc->sc_unit));
-			sc->sc_unit.hci_softc = sc;
-			sc->sc_unit.hci_devname = device_xname(sc->sc_dev);
-			sc->sc_unit.hci_enable = btbc_enable;
-			sc->sc_unit.hci_disable = btbc_disable;
-			sc->sc_unit.hci_start_cmd = btbc_start;
-			sc->sc_unit.hci_start_acl = btbc_start;
-			sc->sc_unit.hci_start_sco = btbc_start;
-			sc->sc_unit.hci_ipl = makeiplcookie(IPL_TTY);
-			hci_attach(&sc->sc_unit);
+			sc->sc_unit = hci_attach(&btbc_hci, sc->sc_dev, 0);
 		}
 		break;
 
@@ -335,7 +350,6 @@ btbc_write(struct btbc_softc *sc, uint32_t offset, uint8_t *buf, int buflen)
 static int
 btbc_set_baudrate(struct btbc_softc *sc, int baud)
 {
-	struct hci_unit *unit = &sc->sc_unit;
 	hci_cmd_hdr_t *p;
 	struct mbuf *m;
 	const uint16_t opcode = htole16(HCI_CMD_ERICSSON_SET_UART_BAUD_RATE);
@@ -369,9 +383,7 @@ btbc_set_baudrate(struct btbc_softc *sc, int baud)
 	m->m_pkthdr.len = m->m_len = sizeof(hci_cmd_hdr_t);
 	m_copyback(m, sizeof(hci_cmd_hdr_t), p->length, &param);
 
-	MBUFQ_ENQUEUE(&unit->hci_cmdq, m);
-	btbc_start(unit);
-
+	btbc_output_cmd(sc->sc_dev, m);
 	return 0;
 }
 
@@ -404,9 +416,9 @@ btbc_receive(struct btbc_softc *sc, uint32_t offset)
 				/* new packet */
 				MGETHDR(m, M_DONTWAIT, MT_DATA);
 				if (m == NULL) {
-					printf("%s: out of memory\n",
-						device_xname(sc->sc_dev));
-					++sc->sc_unit.hci_stats.err_rx;
+					aprint_error_dev(sc->sc_dev,
+					    "out of memory\n");
+					sc->sc_stats.err_rx++;
 					return;		/* (lost sync) */
 				}
 
@@ -420,9 +432,9 @@ btbc_receive(struct btbc_softc *sc, uint32_t offset)
 				/* extend mbuf */
 				MGET(m->m_next, M_DONTWAIT, MT_DATA);
 				if (m->m_next == NULL) {
-					printf("%s: out of memory\n",
-						device_xname(sc->sc_dev));
-					++sc->sc_unit.hci_stats.err_rx;
+					aprint_error_dev(sc->sc_dev,
+					    "out of memory\n");
+					sc->sc_stats.err_rx++;
 					return;		/* (lost sync) */
 				}
 
@@ -441,7 +453,7 @@ btbc_receive(struct btbc_softc *sc, uint32_t offset)
 		mtod(m, uint8_t *)[m->m_len++] = buf[i];
 		space--;
 		sc->sc_rxp->m_pkthdr.len++;
-		sc->sc_unit.hci_stats.byte_rx++;
+		sc->sc_stats.byte_rx++;
 
 		sc->sc_want--;
 		if (sc->sc_want > 0) {
@@ -473,9 +485,9 @@ btbc_receive(struct btbc_softc *sc, uint32_t offset)
 				break;
 
 			default:
-				printf("%s: Unknown packet type=%#x!\n",
-					device_xname(sc->sc_dev), buf[i]);
-				++sc->sc_unit.hci_stats.err_rx;
+				aprint_error_dev(sc->sc_dev,
+				    "Unknown packet type=%#x!\n", buf[i]);
+				sc->sc_stats.err_rx++;
 				m_freem(sc->sc_rxp);
 				sc->sc_rxp = NULL;
 				return;		/* (lost sync) */
@@ -504,22 +516,28 @@ btbc_receive(struct btbc_softc *sc, uint32_t offset)
 			break;
 
 		case BTBC_RECV_ACL_DATA:	/* ACL Packet Complete */
-			hci_input_acl(&sc->sc_unit, sc->sc_rxp);
-			sc->sc_unit.hci_stats.acl_rx++;
+			if (!hci_input_acl(sc->sc_unit, sc->sc_rxp))
+				sc->sc_stats.err_rx++;
+
+			sc->sc_stats.acl_rx++;
 			sc->sc_rxp = m = NULL;
 			space = 0;
 			break;
 
 		case BTBC_RECV_SCO_DATA:	/* SCO Packet Complete */
-			hci_input_sco(&sc->sc_unit, sc->sc_rxp);
-			sc->sc_unit.hci_stats.sco_rx++;
+			if (!hci_input_sco(sc->sc_unit, sc->sc_rxp))
+				sc->sc_stats.err_rx++;
+
+			sc->sc_stats.sco_rx++;
 			sc->sc_rxp = m = NULL;
 			space = 0;
 			break;
 
 		case BTBC_RECV_EVENT_DATA:	/* Event Packet Complete */
-			sc->sc_unit.hci_stats.evt_rx++;
-			hci_input_event(&sc->sc_unit, sc->sc_rxp);
+			if (!hci_input_event(sc->sc_unit, sc->sc_rxp))
+				sc->sc_stats.err_rx++;
+
+			sc->sc_stats.evt_rx++;
 			sc->sc_rxp = m = NULL;
 			space = 0;
 			break;
@@ -547,8 +565,8 @@ btbc_transmit(struct btbc_softc *sc)
 
 	m = sc->sc_txp;
 	if (m == NULL) {
-		sc->sc_unit.hci_flags &= ~BTF_XMIT;
-		btbc_start(&sc->sc_unit);
+		sc->sc_flags &= ~BTBC_XMIT;
+		btbc_start(sc);
 		return;
 	}
 
@@ -577,8 +595,8 @@ btbc_transmit(struct btbc_softc *sc)
 
 				if (M_GETCTX(m, void *) == NULL)
 					m_freem(m);
-				else
-					hci_complete_sco(&sc->sc_unit, m);
+				else if (!hci_complete_sco(sc->sc_unit, m))
+					sc->sc_stats.err_tx++;
 
 				break;
 			}
@@ -670,7 +688,7 @@ btbc_transmit(struct btbc_softc *sc)
 			break;
 		}
 	}
-	sc->sc_unit.hci_stats.byte_tx += count;
+	sc->sc_stats.byte_tx += count;
 }
 
 static int
@@ -719,13 +737,14 @@ btbc_intr(void *arg)
 		}
 
 		if (isr & 0x40) {	/* card eject ? */
-			printf("card eject?\n");
+			aprint_normal_dev(sc->sc_dev, "card eject?\n");
 			isr &= ~0x40;
 			bus_space_write_1(sc->sc_pcioh.iot, sc->sc_pcioh.ioh,
 			    BLUECARD_INTERRUPT, 0x40);
 		}
 		if (isr != 0x00) {
-			printf("unknwon intrrupt: isr=0x%x\n", isr);
+			aprint_error_dev(sc->sc_dev,
+			    "unknown interrupt: isr=0x%x\n", isr);
 			bus_space_write_1(sc->sc_pcioh.iot, sc->sc_pcioh.ioh,
 			    BLUECARD_INTERRUPT, isr);
 		}
@@ -736,35 +755,32 @@ btbc_intr(void *arg)
 
 /*
  * start sending on btbc
- * this should be called only when BTF_XMIT is not set, and
- * we only send cmd packets that are clear to send
+ *
+ * should be called at spltty() and when BTBC_XMIT is not set
  */
 static void
-btbc_start(struct hci_unit *unit)
+btbc_start(struct btbc_softc *sc)
 {
-	struct btbc_softc *sc = unit->hci_softc;
 	struct mbuf *m;
 
-	KASSERT((unit->hci_flags & BTF_XMIT) == 0);
+	KASSERT((sc->sc_flags & BTBC_XMIT) == 0);
 	KASSERT(sc->sc_txp == NULL);
 
-	if (MBUFQ_FIRST(&unit->hci_cmdq)) {
-		MBUFQ_DEQUEUE(&unit->hci_cmdq, m);
-		unit->hci_stats.cmd_tx++;
-		M_SETCTX(m, NULL);
+	if (MBUFQ_FIRST(&sc->sc_cmdq)) {
+		MBUFQ_DEQUEUE(&sc->sc_cmdq, m);
+		sc->sc_stats.cmd_tx++;
 		goto start;
 	}
 
-	if (MBUFQ_FIRST(&unit->hci_scotxq)) {
-		MBUFQ_DEQUEUE(&unit->hci_scotxq, m);
-		unit->hci_stats.sco_tx++;
+	if (MBUFQ_FIRST(&sc->sc_scoq)) {
+		MBUFQ_DEQUEUE(&sc->sc_scoq, m);
+		sc->sc_stats.sco_tx++;
 		goto start;
 	}
 
-	if (MBUFQ_FIRST(&unit->hci_acltxq)) {
-		MBUFQ_DEQUEUE(&unit->hci_acltxq, m);
-		unit->hci_stats.acl_tx++;
-		M_SETCTX(m, NULL);
+	if (MBUFQ_FIRST(&sc->sc_aclq)) {
+		MBUFQ_DEQUEUE(&sc->sc_aclq, m);
+		sc->sc_stats.acl_tx++;
 		goto start;
 	}
 
@@ -773,19 +789,21 @@ btbc_start(struct hci_unit *unit)
 
 start:
 	sc->sc_txp = m;
-	unit->hci_flags |= BTF_XMIT;
+	sc->sc_flags |= BTBC_XMIT;
 	btbc_transmit(sc);
 }
 
 static int
-btbc_enable(struct hci_unit *unit)
+btbc_enable(device_t self)
 {
-	struct btbc_softc *sc = unit->hci_softc;
-	int err;
+	struct btbc_softc *sc = device_private(self);
+	int err, s;
 	uint8_t id, ctrl;
 
-	if (unit->hci_flags & BTF_RUNNING)
+	if (sc->sc_flags & BTBC_ENABLED)
 		return 0;
+
+	s = spltty();
 
 	sc->sc_txstate = TXBUF1_EMPTY | TXBUF2_EMPTY;
 	sc->sc_intr = pcmcia_intr_establish(sc->sc_pf, IPL_TTY, btbc_intr, sc);
@@ -798,8 +816,8 @@ btbc_enable(struct hci_unit *unit)
 	if (err)
 		goto fail2;
 
-	unit->hci_flags |= BTF_RUNNING;
-	unit->hci_flags &= ~BTF_XMIT;
+	sc->sc_flags |= BTBC_ENABLED;
+	sc->sc_flags &= ~BTBC_XMIT;
 
 	/* Reset card */
 	ctrl = BLUECARD_CONTROL_RESET | BLUECARD_CONTROL_CARDRESET;
@@ -874,22 +892,27 @@ btbc_enable(struct hci_unit *unit)
 
 	btbc_set_baudrate(sc, BTBC_DEFAULT_BAUDRATE);
 
+	splx(s);
 	return 0;
 
 fail2:
 	pcmcia_intr_disestablish(sc->sc_pf, sc->sc_intr);
 	sc->sc_intr = NULL;
 fail1:
+	splx(s);
 	return err;
 }
 
 static void
-btbc_disable(struct hci_unit *unit)
+btbc_disable(device_t self)
 {
-	struct btbc_softc *sc = unit->hci_softc;
+	struct btbc_softc *sc = device_private(self);
+	int s;
 
-	if ((unit->hci_flags & BTF_RUNNING) == 0)
+	if ((sc->sc_flags & BTBC_ENABLED) == 0)
 		return;
+
+	s = spltty();
 
 	pcmcia_function_disable(sc->sc_pf);
 
@@ -908,7 +931,11 @@ btbc_disable(struct hci_unit *unit)
 		sc->sc_txp = NULL;
 	}
 
-	unit->hci_flags &= ~BTF_RUNNING;
+	MBUFQ_DRAIN(&sc->sc_cmdq);
+	MBUFQ_DRAIN(&sc->sc_aclq);
+	MBUFQ_DRAIN(&sc->sc_scoq);
+
+	sc->sc_flags &= ~BTBC_ENABLED;
 
 	/* Disable LED */
 	bus_space_write_1(sc->sc_pcioh.iot, sc->sc_pcioh.ioh,
@@ -922,4 +949,73 @@ btbc_disable(struct hci_unit *unit)
 	/* Turn FPGA off */
 	bus_space_write_1(sc->sc_pcioh.iot, sc->sc_pcioh.ioh,
 	    BLUECARD_CARDRESET, 0x80);
+
+	splx(s);
+}
+
+static void
+btbc_output_cmd(device_t self, struct mbuf *m)
+{
+	struct btbc_softc *sc = device_private(self);
+	int s;
+
+	KASSERT(sc->sc_flags & BTBC_ENABLED);
+
+	M_SETCTX(m, NULL);
+
+	s = spltty();
+	MBUFQ_ENQUEUE(&sc->sc_cmdq, m);
+	if ((sc->sc_flags & BTBC_XMIT) == 0)
+		btbc_start(sc);
+
+	splx(s);
+}
+
+static void
+btbc_output_acl(device_t self, struct mbuf *m)
+{
+	struct btbc_softc *sc = device_private(self);
+	int s;
+
+	KASSERT(sc->sc_flags & BTBC_ENABLED);
+
+	M_SETCTX(m, NULL);
+
+	s = spltty();
+	MBUFQ_ENQUEUE(&sc->sc_aclq, m);
+	if ((sc->sc_flags & BTBC_XMIT) == 0)
+		btbc_start(sc);
+
+	splx(s);
+}
+
+static void
+btbc_output_sco(device_t self, struct mbuf *m)
+{
+	struct btbc_softc *sc = device_private(self);
+	int s;
+
+	KASSERT(sc->sc_flags & BTBC_ENABLED);
+
+	s = spltty();
+	MBUFQ_ENQUEUE(&sc->sc_scoq, m);
+	if ((sc->sc_flags & BTBC_XMIT) == 0)
+		btbc_start(sc);
+
+	splx(s);
+}
+
+static void
+btbc_stats(device_t self, struct bt_stats *dest, int flush)
+{
+	struct btbc_softc *sc = device_private(self);
+	int s;
+
+	s = spltty();
+	memcpy(dest, &sc->sc_stats, sizeof(struct bt_stats));
+
+	if (flush)
+		memset(&sc->sc_stats, 0, sizeof(struct bt_stats));
+
+	splx(s);
 }

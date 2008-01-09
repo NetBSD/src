@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs.c,v 1.6 2007/07/26 22:57:38 pooka Exp $	*/
+/*	$NetBSD: sysvbfs.c,v 1.6.6.1 2008/01/09 01:55:51 matt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs.c,v 1.6 2007/07/26 22:57:38 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs.c,v 1.6.6.1 2008/01/09 01:55:51 matt Exp $");
 
 #include <sys/resource.h>
 #include <sys/param.h>
@@ -120,7 +120,7 @@ struct vfsops sysvbfs_vfsops = {
 	sysvbfs_start,
 	sysvbfs_unmount,
 	sysvbfs_root,
-	sysvbfs_quotactl,
+	(void *)eopnotsupp,	/* vfs_quotactl */
 	sysvbfs_statvfs,
 	sysvbfs_sync,
 	sysvbfs_vget,

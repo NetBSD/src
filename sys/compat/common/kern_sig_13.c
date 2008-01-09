@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig_13.c,v 1.15 2007/06/16 20:04:28 dsl Exp $	*/
+/*	$NetBSD: kern_sig_13.c,v 1.15.8.1 2008/01/09 01:50:31 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig_13.c,v 1.15 2007/06/16 20:04:28 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig_13.c,v 1.15.8.1 2008/01/09 01:50:31 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -56,9 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sig_13.c,v 1.15 2007/06/16 20:04:28 dsl Exp $")
 #include <compat/common/compat_sigaltstack.h>
 
 void
-native_sigset13_to_sigset(oss, ss)
-	const sigset13_t *oss;
-	sigset_t *ss;
+native_sigset13_to_sigset(const sigset13_t *oss, sigset_t *ss)
 {
 
 	ss->__bits[0] = *oss;
@@ -68,18 +66,14 @@ native_sigset13_to_sigset(oss, ss)
 }
 
 void
-native_sigset_to_sigset13(ss, oss)
-	const sigset_t *ss;
-	sigset13_t *oss;
+native_sigset_to_sigset13(const sigset_t *ss, sigset13_t *oss)
 {
 
 	*oss = ss->__bits[0];
 }
 
 void
-native_sigaction13_to_sigaction(osa, sa)
-	const struct sigaction13 *osa;
-	struct sigaction *sa;
+native_sigaction13_to_sigaction(const struct sigaction13 *osa, struct sigaction *sa)
 {
 
 	sa->sa_handler = osa->osa_handler;
@@ -88,9 +82,7 @@ native_sigaction13_to_sigaction(osa, sa)
 }
 
 void
-native_sigaction_to_sigaction13(sa, osa)
-	const struct sigaction *sa;
-	struct sigaction13 *osa;
+native_sigaction_to_sigaction13(const struct sigaction *sa, struct sigaction13 *osa)
 {
 
 	osa->osa_handler = sa->sa_handler;
@@ -99,23 +91,23 @@ native_sigaction_to_sigaction13(sa, osa)
 }
 
 int
-compat_13_sys_sigaltstack(struct lwp *l, void *v, register_t *retval)
+compat_13_sys_sigaltstack(struct lwp *l, const struct compat_13_sys_sigaltstack_args *uap, register_t *retval)
 {
-	struct compat_13_sys_sigaltstack_args /* {
+	/* {
 		syscallarg(const struct sigaltstack13 *) nss;
 		syscallarg(struct sigaltstack13 *) oss;
-	} */ *uap = v;
+	} */
 	compat_sigaltstack(uap, sigaltstack13, SS_ONSTACK, SS_DISABLE);
 }
 
 int
-compat_13_sys_sigaction(struct lwp *l, void *v, register_t *retval)
+compat_13_sys_sigaction(struct lwp *l, const struct compat_13_sys_sigaction_args *uap, register_t *retval)
 {
-	struct compat_13_sys_sigaction_args /* {
+	/* {
 		syscallarg(int) signum;
 		syscallarg(const struct sigaction13 *) nsa;
 		syscallarg(struct sigaction13 *) osa;
-	} */ *uap = v;
+	} */
 	struct sigaction13 nesa, oesa;
 	struct sigaction nbsa, obsa;
 	int error;
@@ -141,12 +133,12 @@ compat_13_sys_sigaction(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-compat_13_sys_sigprocmask(struct lwp *l, void *v, register_t *retval)
+compat_13_sys_sigprocmask(struct lwp *l, const struct compat_13_sys_sigprocmask_args *uap, register_t *retval)
 {
-	struct compat_13_sys_sigprocmask_args /* {
+	/* {
 		syscallarg(int) how;
 		syscallarg(int) mask;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 	sigset13_t ness, oess;
 	sigset_t nbss, obss;
@@ -165,7 +157,7 @@ compat_13_sys_sigprocmask(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-compat_13_sys_sigpending(struct lwp *l, void *v, register_t *retval)
+compat_13_sys_sigpending(struct lwp *l, const void *v, register_t *retval)
 {
 	sigset13_t ess;
 	sigset_t bss;
@@ -177,11 +169,11 @@ compat_13_sys_sigpending(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-compat_13_sys_sigsuspend(struct lwp *l, void *v, register_t *retval)
+compat_13_sys_sigsuspend(struct lwp *l, const struct compat_13_sys_sigsuspend_args *uap, register_t *retval)
 {
-	struct compat_13_sys_sigsuspend_args /* {
+	/* {
 		syscallarg(sigset13_t) mask;
-	} */ *uap = v;
+	} */
 	sigset13_t ess;
 	sigset_t bss;
 

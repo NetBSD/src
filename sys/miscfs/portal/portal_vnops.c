@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vnops.c,v 1.74.6.1 2007/11/06 23:33:20 matt Exp $	*/
+/*	$NetBSD: portal_vnops.c,v 1.74.6.2 2008/01/09 01:57:04 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: portal_vnops.c,v 1.74.6.1 2007/11/06 23:33:20 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: portal_vnops.c,v 1.74.6.2 2008/01/09 01:57:04 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -288,11 +288,10 @@ portal_open(v)
 		struct vnode *a_vp;
 		int  a_mode;
 		kauth_cred_t a_cred;
-		struct lwp *a_l;
 	} */ *ap = v;
 	struct socket *so = 0;
 	struct portalnode *pt;
-	struct lwp *l = ap->a_l;
+	struct lwp *l = curlwp;
 	struct vnode *vp = ap->a_vp;
 	int s;
 	struct uio auio;
@@ -523,7 +522,6 @@ portal_getattr(v)
 		struct vnode *a_vp;
 		struct vattr *a_vap;
 		kauth_cred_t a_cred;
-		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct vattr *vap = ap->a_vap;
@@ -570,7 +568,6 @@ portal_setattr(v)
 		struct vnode *a_vp;
 		struct vattr *a_vap;
 		kauth_cred_t a_cred;
-		struct lwp *a_l;
 	} */ *ap = v;
 
 	/*
@@ -601,7 +598,6 @@ portal_inactive(v)
 {
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
-		struct lwp *a_l;
 	} */ *ap = v;
 
 	VOP_UNLOCK(ap->a_vp, 0);

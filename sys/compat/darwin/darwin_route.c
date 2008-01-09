@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_route.c,v 1.12 2007/06/24 18:07:34 dsl Exp $ */
+/*	$NetBSD: darwin_route.c,v 1.12.8.1 2008/01/09 01:50:37 matt Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_route.c,v 1.12 2007/06/24 18:07:34 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_route.c,v 1.12.8.1 2008/01/09 01:50:37 matt Exp $");
 
 #include <sys/errno.h>
 #include <sys/systm.h>
@@ -52,10 +52,7 @@ static int darwin_copyout_sockaddr(struct sockaddr *, char **, size_t *, size_t)
 
 #define ALIGN(a)	(((a) + 3) & ~0x3UL)
 int
-darwin_ifaddrs(af, dst, sizep)
-	int af;
-	char *dst;
-	size_t *sizep;
+darwin_ifaddrs(int af, char *dst, size_t *sizep)
 {
 	struct darwin_if_msghdr dim;
 	struct ifnet *ifp;
@@ -262,11 +259,7 @@ darwin_ifaddrs(af, dst, sizep)
 
 
 static int
-darwin_copyout_sockaddr(sap, dstp, sizep, maxsize)
-	struct sockaddr *sap;
-	char **dstp;
-	size_t *sizep;
-	size_t maxsize;
+darwin_copyout_sockaddr(struct sockaddr *sap, char **dstp, size_t *sizep, size_t maxsize)
 {
 	size_t len;
 	int error;

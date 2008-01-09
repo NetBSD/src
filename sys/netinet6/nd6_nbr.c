@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.79.2.1 2007/11/06 23:34:09 matt Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.79.2.2 2008/01/09 01:57:39 matt Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.79.2.1 2007/11/06 23:34:09 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.79.2.2 2008/01/09 01:57:39 matt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -215,10 +215,7 @@ nd6_ns_input(struct mbuf *m, int off, int icmp6len)
 		struct rtentry *rt;
 		struct sockaddr_in6 tsin6;
 
-		memset(&tsin6, 0, sizeof(tsin6));
-		tsin6.sin6_len = sizeof(struct sockaddr_in6);
-		tsin6.sin6_family = AF_INET6;
-		tsin6.sin6_addr = taddr6;
+		sockaddr_in6_init(&tsin6, &taddr6, 0, 0, 0);
 
 		rt = rtalloc1((struct sockaddr *)&tsin6, 0);
 		if (rt && (rt->rt_flags & RTF_ANNOUNCE) != 0 &&
@@ -354,10 +351,10 @@ nd6_ns_output(struct ifnet *ifp, const struct in6_addr *daddr6,
 	const void *mac;
 	struct route ro;
 
-	memset(&ro, 0, sizeof(ro));
-
 	if (IN6_IS_ADDR_MULTICAST(taddr6))
 		return;
+
+	memset(&ro, 0, sizeof(ro));
 
 	/* estimate the size of message */
 	maxlen = sizeof(*ip6) + sizeof(*nd_ns);
@@ -451,10 +448,7 @@ nd6_ns_output(struct ifnet *ifp, const struct in6_addr *daddr6,
 			int error;
 			struct sockaddr_in6 dst_sa;
 
-			bzero(&dst_sa, sizeof(dst_sa));
-			dst_sa.sin6_family = AF_INET6;
-			dst_sa.sin6_len = sizeof(dst_sa);
-			dst_sa.sin6_addr = ip6->ip6_dst;
+			sockaddr_in6_init(&dst_sa, &ip6->ip6_dst, 0, 0, 0);
 
 			src = in6_selectsrc(&dst_sa, NULL,
 			    NULL, &ro, NULL, NULL, &error);

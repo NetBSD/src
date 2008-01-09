@@ -1,3 +1,5 @@
+/*	$NetBSD: r300_cmdbuf.c,v 1.3.14.1 2008/01/09 01:54:09 matt Exp $	*/
+
 /* r300_cmdbuf.c -- Command buffer emission for R300 -*- linux-c -*-
  *
  * Copyright (C) The Weather Channel, Inc.  2002.
@@ -32,6 +34,7 @@
  */
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: r300_cmdbuf.c,v 1.3.14.1 2008/01/09 01:54:09 matt Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/r300_cmdbuf.c,v 1.5 2006/05/17 06:36:28 anholt Exp $");
 */
@@ -247,26 +250,6 @@ static __inline__ int r300_check_range(unsigned reg, int count)
 	return 0;
 }
 
-/*
- * we expect offsets passed to the framebuffer to be either within video 
- * memory or within AGP space 
- */
-static __inline__ int r300_check_offset(drm_radeon_private_t *dev_priv,
-					u32 offset)
-{
-	/* we realy want to check against end of video aperture
-	   but this value is not being kept.
-	   This code is correct for now (does the same thing as the
-	   code that sets MC_FB_LOCATION) in radeon_cp.c */
-	if (offset >= dev_priv->fb_location &&
-	    offset < (dev_priv->fb_location + dev_priv->fb_size))
-		return 0;
-	if (offset >= dev_priv->gart_vm_start &&
-	    offset < (dev_priv->gart_vm_start + dev_priv->gart_size))
-		return 0;
-	return 1;
-}
-
 static __inline__ int r300_emit_carefully_checked_packet0(drm_radeon_private_t *
 							  dev_priv,
 							  drm_radeon_kcmd_buffer_t
@@ -295,7 +278,7 @@ static __inline__ int r300_emit_carefully_checked_packet0(drm_radeon_private_t *
 		case MARK_SAFE:
 			break;
 		case MARK_CHECK_OFFSET:
-			if (r300_check_offset(dev_priv, (u32) values[i])) {
+			if (!radeon_check_offset(dev_priv, (u32) values[i])) {
 				DRM_ERROR
 				    ("Offset failed range check (reg=%04x sz=%d)\n",
 				     reg, sz);
@@ -457,7 +440,7 @@ static __inline__ int r300_emit_3d_load_vbpntr(drm_radeon_private_t *dev_priv,
 	i = 1;
 	while ((k < narrays) && (i < (count + 1))) {
 		i++;		/* skip attribute field */
-		if (r300_check_offset(dev_priv, payload[i])) {
+		if (!radeon_check_offset(dev_priv, payload[i])) {
 			DRM_ERROR
 			    ("Offset failed range check (k=%d i=%d) while processing 3D_LOAD_VBPNTR packet.\n",
 			     k, i);
@@ -468,7 +451,7 @@ static __inline__ int r300_emit_3d_load_vbpntr(drm_radeon_private_t *dev_priv,
 		if (k == narrays)
 			break;
 		/* have one more to process, they come in pairs */
-		if (r300_check_offset(dev_priv, payload[i])) {
+		if (!radeon_check_offset(dev_priv, payload[i])) {
 			DRM_ERROR
 			    ("Offset failed range check (k=%d i=%d) while processing 3D_LOAD_VBPNTR packet.\n",
 			     k, i);
@@ -513,7 +496,7 @@ static __inline__ int r300_emit_bitblt_multi(drm_radeon_private_t *dev_priv,
 		if (cmd[1] & (RADEON_GMC_SRC_PITCH_OFFSET_CNTL 
 			      | RADEON_GMC_DST_PITCH_OFFSET_CNTL)) {
 			offset = cmd[2] << 10;
-			ret = r300_check_offset(dev_priv, offset);
+			ret = !radeon_check_offset(dev_priv, offset);
 			if (ret) {
 				DRM_ERROR("Invalid bitblt first offset is %08X\n", offset);
 				return DRM_ERR(EINVAL);
@@ -523,7 +506,7 @@ static __inline__ int r300_emit_bitblt_multi(drm_radeon_private_t *dev_priv,
 		if ((cmd[1] & RADEON_GMC_SRC_PITCH_OFFSET_CNTL) &&
 		    (cmd[1] & RADEON_GMC_DST_PITCH_OFFSET_CNTL)) {
 			offset = cmd[3] << 10;
-			ret = r300_check_offset(dev_priv, offset);
+			ret = !radeon_check_offset(dev_priv, offset);
 			if (ret) {
 				DRM_ERROR("Invalid bitblt second offset is %08X\n", offset);
 				return DRM_ERR(EINVAL);
@@ -556,7 +539,7 @@ static __inline__ int r300_emit_indx_buffer(drm_radeon_private_t *dev_priv,
 		DRM_ERROR("Invalid indx_buffer reg address %08X\n", cmd[1]);
 		return DRM_ERR(EINVAL);
 	}
-	ret = r300_check_offset(dev_priv, cmd[2]);
+	ret = !radeon_check_offset(dev_priv, cmd[2]);
 	if (ret) {
 		DRM_ERROR("Invalid indx_buffer offset is %08X\n", cmd[2]);
 		return DRM_ERR(EINVAL);

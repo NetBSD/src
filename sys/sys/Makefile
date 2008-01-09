@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.96.2.2 2007/11/08 11:00:20 matt Exp $
+#	$NetBSD: Makefile,v 1.96.2.3 2008/01/09 01:58:04 matt Exp $
 
 .include <bsd.sys.mk>
 
 INCSDIR= /usr/include/sys
 
-INCS=	acct.h agpio.h aio.h ansi.h ataio.h audioio.h \
+INCS=	acct.h agpio.h aio.h ansi.h ataio.h atomic.h audioio.h \
 	bitops.h bootblock.h bswap.h buf.h \
 	callback.h callout.h cdefs.h cdefs_aout.h \
 	cdefs_elf.h cdio.h chio.h clockctl.h condvar.h conf.h core.h \
@@ -17,8 +17,8 @@ INCS=	acct.h agpio.h aio.h ansi.h ataio.h audioio.h \
 	float_ieee754.h fstypes.h gcq.h gmon.h gpio.h hash.h \
 	ieee754.h inttypes.h ioccom.h ioctl.h ioctl_compat.h iostat.h ipc.h \
 	joystick.h \
-	kcore.h kgdb.h ksem.h ksyms.h ktrace.h \
-	lkm.h localedef.h lock.h lockf.h lwp.h \
+	kcore.h kgdb.h kmem.h ksem.h ksyms.h ktrace.h \
+	lkm.h localedef.h lock.h lockf.h lwp.h lwpctl.h \
 	malloc.h mallocvar.h mbuf.h md4.h \
 	md5.h midiio.h mman.h mount.h mqueue.h msg.h msgbuf.h mtio.h mutex.h \
 	namei.h null.h \
@@ -29,7 +29,7 @@ INCS=	acct.h agpio.h aio.h ansi.h ataio.h audioio.h \
 	shm.h siginfo.h signal.h signalvar.h sigtypes.h simplelock.h \
 	sleepq.h socket.h \
 	socketvar.h sockio.h specificdata.h stat.h statvfs.h \
-	syscall.h syscallargs.h sysctl.h systrace.h stdint.h swap.h \
+	syscall.h syscallargs.h sysctl.h stdint.h swap.h \
 	syncobj.h syslimits.h syslog.h \
 	tape.h termios.h time.h timeb.h timepps.h times.h \
 	timex.h trace.h tree.h tty.h ttychars.h ttycom.h \

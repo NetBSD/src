@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extern.h,v 1.54 2007/08/09 09:22:34 hannken Exp $	*/
+/*	$NetBSD: ufs_extern.h,v 1.54.2.1 2008/01/09 01:58:34 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -34,6 +34,8 @@
 #ifndef _UFS_UFS_EXTERN_H_
 #define _UFS_UFS_EXTERN_H_
 
+#include <sys/mutex.h>
+
 struct buf;
 struct componentname;
 struct direct;
@@ -53,7 +55,7 @@ struct uio;
 struct vattr;
 struct vnode;
 
-extern struct pool ufs_direct_pool;	/* memory pool for directs */
+extern pool_cache_t ufs_direct_cache;	/* memory pool for directs */
 
 __BEGIN_DECLS
 #define	ufs_abortop	genfs_abortop
@@ -115,7 +117,7 @@ void	ufs_ihashins(struct inode *);
 void	ufs_ihashrem(struct inode *);
 
 /* ufs_inode.c */
-int	ufs_reclaim(struct vnode *, struct lwp *);
+int	ufs_reclaim(struct vnode *);
 int	ufs_balloc_range(struct vnode *, off_t, off_t, kauth_cred_t, int);
 
 /* ufs_lookup.c */
@@ -152,9 +154,9 @@ int	qsync(struct mount *);
 void	ufs_init(void);
 void	ufs_reinit(void);
 void	ufs_done(void);
-int	ufs_start(struct mount *, int, struct lwp *);
+int	ufs_start(struct mount *, int);
 int	ufs_root(struct mount *, struct vnode **);
-int	ufs_quotactl(struct mount *, int, uid_t, void *, struct lwp *);
+int	ufs_quotactl(struct mount *, int, uid_t, void *);
 int	ufs_fhtovp(struct mount *, struct ufid *, struct vnode **);
 
 /* ufs_vnops.c */
@@ -185,5 +187,7 @@ void  softdep_change_linkcnt(struct inode *);
 void  softdep_releasefile(struct inode *);
 
 __END_DECLS
+
+extern kmutex_t ufs_ihash_lock;
 
 #endif /* !_UFS_UFS_EXTERN_H_ */

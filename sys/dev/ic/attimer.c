@@ -1,4 +1,4 @@
-/*	$NetBSD: attimer.c,v 1.2.46.1 2007/11/06 23:26:26 matt Exp $	*/
+/*	$NetBSD: attimer.c,v 1.2.46.2 2008/01/09 01:52:48 matt Exp $	*/
 
 /*
  *  Copyright (c) 2005 The NetBSD Foundation.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: attimer.c,v 1.2.46.1 2007/11/06 23:26:26 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: attimer.c,v 1.2.46.2 2008/01/09 01:52:48 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,6 +56,20 @@ void
 attimer_attach(struct attimer_softc *sc)
 {
 	sc->sc_flags |= ATT_CONFIGURED;
+
+	if (!pmf_device_register(&sc->sc_dev, NULL, NULL))
+		aprint_error_dev(&sc->sc_dev, "couldn't establish power handler\n");
+}
+
+int
+attimer_detach(device_t self, int flags)
+{
+	struct attimer_softc *sc = device_private(self);
+
+	pmf_device_deregister(self);
+	sc->sc_flags &= ~ATT_CONFIGURED;
+	bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_size);
+	return 0;
 }
 
 /*
@@ -68,20 +82,21 @@ attimer_attach(struct attimer_softc *sc)
  */
 
 struct attimer_softc *
-attimer_attach_speaker()
+attimer_attach_speaker(void)
 {
 	int i;
 	struct attimer_softc *sc;
 
-	for (i = 0; i < attimer_cd.cd_ndevs; i++)
-		if (attimer_cd.cd_devs[i] != NULL) {
-			sc = (struct attimer_softc *)attimer_cd.cd_devs[i];
-			if ((sc->sc_flags & ATT_CONFIGURED) &&
-			    !(sc->sc_flags & ATT_ATTACHED)) {
-				sc->sc_flags |= ATT_ATTACHED;
-				return sc;
-			}
+	for (i = 0; i < attimer_cd.cd_ndevs; i++) {
+		if (attimer_cd.cd_devs[i] == NULL)
+			continue;
+		sc = (struct attimer_softc *)attimer_cd.cd_devs[i];
+		if ((sc->sc_flags & ATT_CONFIGURED) &&
+		    !(sc->sc_flags & ATT_ATTACHED)) {
+			sc->sc_flags |= ATT_ATTACHED;
+			return sc;
 		}
+	}
 	return NULL;
 }
 

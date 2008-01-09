@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.19.10.1 2007/11/06 23:24:01 matt Exp $	*/
+/*	$NetBSD: vector.S,v 1.19.10.2 2008/01/09 01:50:04 matt Exp $	*/
 /*	NetBSD: 1.13 2004/03/11 11:39:26 yamt Exp 	*/
 
 /*
@@ -295,101 +295,6 @@ _C_LABEL(xenev_stubs):
 	.long _C_LABEL(Xrecurse_xenev29), _C_LABEL(Xresume_xenev29)
 	.long _C_LABEL(Xrecurse_xenev30), _C_LABEL(Xresume_xenev30)
 	.long _C_LABEL(Xrecurse_xenev31), _C_LABEL(Xresume_xenev31)
-
-/*
- * Soft interrupt handlers
- */
-
-#define EVCNTLO(x) _C_LABEL(x) + EV_EVCNTLO
-#define EVCNTHI(x) _C_LABEL(x) + EV_EVCNTHI
-IDTVEC(softserial)
-	movl	$IPL_SOFTSERIAL, CPUVAR(ILEVEL)
-	IDEPTH_INCR
-	STI(%eax)
-#ifdef MULTIPROCESSOR
-	call	_C_LABEL(x86_softintlock)
-#endif
-	addl    $1,EVCNTLO(softserial_evtcnt)
-	adcl    $0,EVCNTHI(softserial_evtcnt)
-	pushl   $X86_SOFTINTR_SOFTSERIAL
-	call	_C_LABEL(softintr_dispatch)
-	addl	$4,%esp
-#ifdef MULTIPROCESSOR
-	call	_C_LABEL(x86_softintunlock)
-#endif
-	CLI(%eax)
-	IDEPTH_DECR
-	jmp	*%esi
-
-IDTVEC(softnet)
-	movl	$IPL_SOFTNET, CPUVAR(ILEVEL)
-	IDEPTH_INCR
-	STI(%eax)
-#ifdef MULTIPROCESSOR
-	call	_C_LABEL(x86_softintlock)
-#endif
-	addl    $1,EVCNTLO(softnet_evtcnt)
-	adcl    $0,EVCNTHI(softnet_evtcnt)
-	xorl	%edi,%edi
-	xchgl	_C_LABEL(netisr),%edi
-
-	/* XXX Do the legacy netisrs here for now. */
-#define DONETISR(s, c) \
-	.globl  _C_LABEL(c)	;\
-	testl	$(1 << s),%edi	;\
-	jz	1f		;\
-	call	_C_LABEL(c)	;\
-1:
-#include <net/netisr_dispatch.h>
-
-	pushl	$X86_SOFTINTR_SOFTNET
-	call	_C_LABEL(softintr_dispatch)
-	addl	$4,%esp
-#ifdef MULTIPROCESSOR
-	call	_C_LABEL(x86_softintunlock)
-#endif
-	CLI(%eax)
-	IDEPTH_DECR
-	jmp	*%esi
-
-IDTVEC(softclock)
-	movl	$IPL_SOFTCLOCK, CPUVAR(ILEVEL)
-	IDEPTH_INCR
-	STI(%eax)
-#ifdef MULTIPROCESSOR
-	call	_C_LABEL(x86_softintlock)
-#endif
-	addl    $1,EVCNTLO(softclock_evtcnt)
-	adcl    $0,EVCNTHI(softclock_evtcnt)
-
-	pushl	$X86_SOFTINTR_SOFTCLOCK
-	call	_C_LABEL(softintr_dispatch)
-	addl	$4,%esp
-#ifdef MULTIPROCESSOR
-	call	_C_LABEL(x86_softintunlock)
-#endif
-	CLI(%eax)
-	IDEPTH_DECR
-	jmp	*%esi
-
-#if defined(DOM0OPS)
-IDTVEC(softxenevt)
-	movl	$IPL_SOFTXENEVT, CPUVAR(ILEVEL)
-	IDEPTH_INCR
-	STI(%eax)
-#ifdef MULTIPROCESSOR
-	call	_C_LABEL(x86_softintlock)
-#endif
-	addl    $1,EVCNTLO(softxenevt_evtcnt)
-	adcl    $0,EVCNTHI(softxenevt_evtcnt)
-	call	_C_LABEL(xenevt_notify)
-#ifdef MULTIPROCESSOR
-	call	_C_LABEL(x86_softintunlock)
-#endif
-	CLI(%eax)
-	IDEPTH_DECR
-	jmp	*%esi
-#endif /* defined(DOM0OPS) */
 
 /*
  * Trap and fault vector routines

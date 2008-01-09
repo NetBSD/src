@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.96.8.1 2007/11/06 23:25:22 matt Exp $	*/
+/*	$NetBSD: db_command.c,v 1.96.8.2 2008/01/09 01:52:08 matt Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1991,1990 Carnegie Mellon University
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.96.8.1 2007/11/06 23:25:22 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.96.8.2 2008/01/09 01:52:08 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -76,12 +76,14 @@ __KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.96.8.1 2007/11/06 23:25:22 matt Exp
 #include <sys/systm.h>
 #include <sys/reboot.h>
 #include <sys/device.h>
+#include <sys/lwp.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/namei.h>
 #include <sys/pool.h>
 #include <sys/proc.h>
 #include <sys/vnode.h>
+#include <sys/vmem.h>
 #include <sys/lockdebug.h>
 #include <sys/sleepq.h>
 #include <sys/cpu.h>
@@ -210,6 +212,7 @@ static void	db_reboot_cmd(db_expr_t, bool, db_expr_t, const char *);
 static void	db_sifting_cmd(db_expr_t, bool, db_expr_t, const char *);
 static void	db_stack_trace_cmd(db_expr_t, bool, db_expr_t, const char *);
 static void	db_sync_cmd(db_expr_t, bool, db_expr_t, const char *);
+static void	db_whatis_cmd(db_expr_t, bool, db_expr_t, const char *);
 static void	db_uvmexp_print_cmd(db_expr_t, bool, db_expr_t, const char *);
 static void	db_vnode_print_cmd(db_expr_t, bool, db_expr_t, const char *);
 
@@ -350,6 +353,8 @@ static const struct db_command db_command_table[] = {
 	    "Set a watchpoint for a region. ","address[,size]",NULL) },
 	{ DDB_ADD_CMD("watch",	db_watchpoint_cmd,	CS_MORE,
 	    "Set a watchpoint for a region. ","address[,size]",NULL) },
+	{ DDB_ADD_CMD("whatis",	db_whatis_cmd, 0,
+	    "Describe what an address is", "address", NULL) },
 	{ DDB_ADD_CMD("write",	db_write_cmd,		CS_MORE|CS_SET_DOT,
 	    "Write the expressions at succeeding locations.",
 	    "[/bhl] address expression [expression ...]",NULL) },
@@ -713,7 +718,7 @@ db_get_list_type(const char *name)
 				break;
 			}
 
-		} else if (error == CMD_FOUND){
+		} else if (error == CMD_FOUND) {
 			/*
 			 * partial match, search will continue, but
 			 * note current result in case we won't
@@ -721,7 +726,7 @@ db_get_list_type(const char *name)
 			 */
 			if (cmd->flag == CS_SHOW)
 				ret = DDB_SHOW_CMD;
-			if (cmd->flag == CS_MACH)
+			else if (cmd->flag == CS_MACH)
 				ret = DDB_MACH_CMD;
 			else
 				ret = DDB_BASE_CMD;
@@ -1357,4 +1362,19 @@ db_sync_cmd(db_expr_t addr, bool have_addr,
 	 */
 	db_recover = 0;
 	cpu_reboot(RB_DUMP, NULL);
+}
+
+/*
+ * Describe what an address is
+ */
+void
+db_whatis_cmd(db_expr_t address, bool have_addr,
+    db_expr_t count, const char *modif)
+{
+	const uintptr_t addr = (uintptr_t)address;
+
+	lwp_whatis(addr, db_printf);
+	pool_whatis(addr, db_printf);
+	vmem_whatis(addr, db_printf);
+	uvm_whatis(addr, db_printf);
 }

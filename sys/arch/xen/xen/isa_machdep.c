@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.8 2007/02/22 21:38:23 bouyer Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.8.22.1 2008/01/09 01:50:20 matt Exp $	*/
 /*	NetBSD isa_machdep.c,v 1.11 2004/06/20 18:04:08 thorpej Exp 	*/
 
 /*-
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.8 2007/02/22 21:38:23 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.8.22.1 2008/01/09 01:50:20 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,6 +94,15 @@ __KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.8 2007/02/22 21:38:23 bouyer Exp $
 #include <dev/isa/isavar.h>
 
 #include <uvm/uvm_extern.h>
+
+#ifdef XEN3
+#include "ioapic.h"
+#endif
+
+#if NIOAPIC > 0
+#include <machine/i82093var.h>
+#include <machine/mpconfig.h>
+#endif
 
 static int _isa_dma_may_bounce(bus_dma_tag_t, bus_dmamap_t, int, int *);
 
@@ -152,11 +161,42 @@ isa_intr_establish(ic, irq, type, level, ih_fun, ih_arg)
 {
 	int evtch;
 	char evname[8];
+	struct xen_intr_handle ih;
+#if NIOAPIC > 0
+	struct pic *pic = NULL;
+#endif
 
-	evtch = bind_pirq_to_evtch(irq);
+	ih.pirq = irq;
+
+#if NIOAPIC > 0
+	if (mp_busses != NULL) {
+		if (intr_find_mpmapping(mp_isa_bus, irq, &ih) == 0 ||
+		    intr_find_mpmapping(mp_eisa_bus, irq, &ih) == 0) {
+			if (!APIC_IRQ_ISLEGACY(ih.pirq)) {
+				pic = (struct pic *)
+				    ioapic_find(APIC_IRQ_APIC(ih.pirq));
+				if (pic == NULL) {
+					printf("isa_intr_establish: "
+					    "unknown apic %d\n",
+					    APIC_IRQ_APIC(ih.pirq));
+					return NULL;
+				}
+			}
+		} else
+			printf("isa_intr_establish: no MP mapping found\n");
+	}
+#endif
+
+	evtch = xen_intr_map(&ih.pirq, type);
 	if (evtch == -1)
 		return NULL;
-	snprintf(evname, sizeof(evname), "irq%d", irq);
+#if NIOAPIC > 0
+	if (pic)
+		snprintf(evname, sizeof(evname), "%s pin %d",
+		    pic->pic_name, APIC_IRQ_PIN(ih.pirq));
+	else
+#endif
+		snprintf(evname, sizeof(evname), "irq%d", irq);
 
 	return (void *)pirq_establish(irq, evtch, ih_fun, ih_arg, level,
 	    evname);

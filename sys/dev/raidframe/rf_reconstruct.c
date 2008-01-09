@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.98.6.1 2007/11/06 23:30:04 matt Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.98.6.2 2008/01/09 01:54:25 matt Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.98.6.1 2007/11/06 23:30:04 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.98.6.2 2008/01/09 01:54:25 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -455,7 +455,7 @@ rf_ReconstructInPlace(RF_Raid_t *raidPtr, RF_RowCol_t col)
 	/* Ok, so we can at least do a lookup...
 	   How about actually getting a vp for it? */
 
-	if ((retcode = VOP_GETATTR(vp, &va, lwp->l_cred, lwp)) != 0) {
+	if ((retcode = VOP_GETATTR(vp, &va, lwp->l_cred)) != 0) {
 		RF_LOCK_MUTEX(raidPtr->mutex);
 		raidPtr->reconInProgress--;
 		RF_UNLOCK_MUTEX(raidPtr->mutex);
@@ -463,7 +463,7 @@ rf_ReconstructInPlace(RF_Raid_t *raidPtr, RF_RowCol_t col)
 		return(retcode);
 	}
 
-	retcode = VOP_IOCTL(vp, DIOCGPART, &dpart, FREAD, lwp->l_cred, lwp);
+	retcode = VOP_IOCTL(vp, DIOCGPART, &dpart, FREAD, lwp->l_cred);
 	if (retcode) {
 		RF_LOCK_MUTEX(raidPtr->mutex);
 		raidPtr->reconInProgress--;

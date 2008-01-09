@@ -1,4 +1,4 @@
-/*	$NetBSD: specfs.c,v 1.6.4.2 2007/11/08 11:00:19 matt Exp $	*/
+/*	$NetBSD: specfs.c,v 1.6.4.3 2008/01/09 01:58:01 matt Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -219,7 +219,7 @@ rump_specstrategy(void *v)
 	if (bp->b_flags & B_ASYNC) {
 		struct rumpuser_aio *rua;
 
-		rua = rumpuser_malloc(sizeof(struct rumpuser_aio), 0);
+		rua = kmem_alloc(sizeof(struct rumpuser_aio), KM_SLEEP);
 		rua->rua_fd = sp->rsp_fd;
 		rua->rua_data = bp->b_data;
 		rua->rua_dlen = bp->b_bcount;
@@ -239,7 +239,7 @@ rump_specstrategy(void *v)
 		 * so for now set N_AIOS high and FIXXXME some day.
 		 */
 		if ((rua_head+1) % N_AIOS == rua_tail) {
-			rumpuser_free(rua);
+			kmem_free(rua, sizeof(*rua));
 			rumpuser_mutex_exit(&rua_mtx);
 			goto syncfallback;
 		}
@@ -252,10 +252,10 @@ rump_specstrategy(void *v)
 	} else {
  syncfallback:
 		if (bp->b_flags & B_READ) {
-			rumpuser_read(sp->rsp_fd, bp->b_data,
+			rumpuser_read_bio(sp->rsp_fd, bp->b_data,
 			    bp->b_bcount, off, bp);
 		} else {
-			rumpuser_write(sp->rsp_fd, bp->b_data,
+			rumpuser_write_bio(sp->rsp_fd, bp->b_data,
 			    bp->b_bcount, off, bp);
 		}
 		biowait(bp);
@@ -275,7 +275,7 @@ rump_specsimpleul(void *v)
 	KASSERT(offset != VDESC_NO_OFFSET);
 
 	vp = *VOPARG_OFFSETTO(struct vnode **, offset, ap);
-	simple_unlock(&vp->v_interlock);
+	mutex_exit(&vp->v_interlock);
 
 	return 0;
 }

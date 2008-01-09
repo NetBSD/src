@@ -1,4 +1,4 @@
-/*  $NetBSD: if_wpivar.h,v 1.6.8.1 2007/11/06 23:29:12 matt Exp $    */
+/*  $NetBSD: if_wpivar.h,v 1.6.8.2 2008/01/09 01:53:52 matt Exp $    */
 
 /*-
  * Copyright (c) 2006
@@ -125,7 +125,7 @@ struct wpi_power_group {
 };
 
 struct wpi_softc {
-	struct device		sc_dev;
+	device_t			sc_dev;
 	struct ethercom	 	sc_ec;
 	struct ieee80211com	sc_ic;
 	int			(*sc_newstate)(struct ieee80211com *,
@@ -166,7 +166,6 @@ struct wpi_softc {
 	int8_t			maxpwr[IEEE80211_CHAN_MAX];
 
 	int			sc_tx_timer;
-	void			*powerhook;
 
 #if NBPFILTER > 0
 	void *			sc_drvbpf;

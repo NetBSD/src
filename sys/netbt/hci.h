@@ -1,4 +1,4 @@
-/*	$NetBSD: hci.h,v 1.10.8.1 2007/11/06 23:33:41 matt Exp $	*/
+/*	$NetBSD: hci.h,v 1.10.8.2 2008/01/09 01:57:21 matt Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -54,7 +54,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: hci.h,v 1.10.8.1 2007/11/06 23:33:41 matt Exp $
+ * $Id: hci.h,v 1.10.8.2 2008/01/09 01:57:21 matt Exp $
  * $FreeBSD: src/sys/netgraph/bluetooth/include/ng_hci.h,v 1.6 2005/01/07 01:45:43 imp Exp $
  */
 
@@ -90,6 +90,7 @@
 #define HCI_FEATURES_SIZE		8   /* LMP features */
 #define HCI_UNIT_NAME_SIZE		248 /* unit name size */
 #define HCI_DEVNAME_SIZE		16  /* same as dv_xname */
+#define HCI_COMMANDS_SIZE		64  /* supported commands mask */
 
 /* HCI specification */
 #define HCI_SPEC_V10			0x00 /* v1.0 */
@@ -1413,7 +1414,7 @@ typedef struct {
 /* No command parameter(s) */
 typedef struct {
 	uint8_t		status;		/* 0x00 - success */
-	uint8_t		commands[64];	/* opcode bitmask */
+	uint8_t		commands[HCI_COMMANDS_SIZE];	/* opcode bitmask */
 } __attribute__ ((__packed__)) hci_read_local_commands_rp;
 
 #define HCI_OCF_READ_LOCAL_FEATURES			0x0003
@@ -1999,7 +2000,6 @@ struct btreq {
 #define btr_sco_mtu	btru.btri.btri_sco_mtu
 #define btr_link_policy btru.btri.btri_link_policy
 #define btr_packet_type btru.btri.btri_packet_type
-#define btr_uclass	btru.btri.btri_uclass
 #define btr_stats	btru.btrs
 
 /* hci_unit & btr_flags */
@@ -2012,7 +2012,13 @@ struct btreq {
 #define BTF_INIT_BDADDR		(1<<5)	/* waiting for bdaddr */
 #define BTF_INIT_BUFFER_SIZE	(1<<6)	/* waiting for buffer size */
 #define BTF_INIT_FEATURES	(1<<7)	/* waiting for features */
-#define BTF_INIT		(BTF_INIT_BDADDR | BTF_INIT_BUFFER_SIZE | BTF_INIT_FEATURES)
+#define BTF_POWER_UP_NOOP	(1<<8)	/* should wait for No-op on power up */
+#define BTF_INIT_COMMANDS	(1<<9)	/* waiting for supported commands */
+
+#define BTF_INIT		(BTF_INIT_BDADDR	\
+				| BTF_INIT_BUFFER_SIZE	\
+				| BTF_INIT_FEATURES	\
+				| BTF_INIT_COMMANDS)
 
 /**************************************************************************
  **************************************************************************
@@ -2021,6 +2027,8 @@ struct btreq {
  **************************************************************************/
 
 #ifdef _KERNEL
+
+#include <sys/device.h>
 
 struct l2cap_channel;
 struct mbuf;
@@ -2099,14 +2107,27 @@ struct hci_memo {
 };
 
 /*
+ * The Bluetooth HCI interface attachment structure
+ */
+struct hci_if {
+	int	(*enable)(device_t);
+	void	(*disable)(device_t);
+	void	(*output_cmd)(device_t, struct mbuf *);
+	void	(*output_acl)(device_t, struct mbuf *);
+	void	(*output_sco)(device_t, struct mbuf *);
+	void	(*get_stats)(device_t, struct bt_stats *, int);
+	int	ipl;		/* for locking */
+};
+
+/*
  * The Bluetooth HCI device unit structure
  */
 struct hci_unit {
-	void		*hci_softc;		/* ptr to device softc */
-	struct device	*hci_bthub;		/* bthub(4) handle */
+	device_t	 hci_dev;		/* bthci handle */
+	device_t	 hci_bthub;		/* bthub(4) handle */
+	const struct hci_if *hci_if;		/* bthci driver interface */
 
 	/* device info */
-	const char	*hci_devname;		/* device name */
 	bdaddr_t	 hci_bdaddr;		/* device address */
 	uint16_t	 hci_flags;		/* see BTF_ above */
 
@@ -2116,6 +2137,8 @@ struct hci_unit {
 
 	uint16_t	 hci_link_policy;	/* link policy */
 	uint16_t	 hci_lmp_mask;		/* link policy capabilities */
+
+	uint8_t		 hci_cmds[HCI_COMMANDS_SIZE]; /* opcode bitmask */
 
 	/* flow control */
 	uint16_t	 hci_max_acl_size;	/* ACL payload mtu */
@@ -2127,25 +2150,9 @@ struct hci_unit {
 	TAILQ_HEAD(,hci_link)	hci_links;	/* list of ACL/SCO links */
 	LIST_HEAD(,hci_memo)	hci_memos;	/* cached memo list */
 
-	/*
-	 * h/w driver callbacks
-	 *
-	 * the device driver must supply these.
-	 */
-	int	(*hci_enable)		/* enable device */
-		(struct hci_unit *);
-	void	(*hci_disable)		/* disable device */
-		(struct hci_unit *);
-	void	(*hci_start_cmd)	/* initiate cmd output routine */
-		(struct hci_unit *);
-	void	(*hci_start_acl)	/* initiate acl output routine */
-		(struct hci_unit *);
-	void	(*hci_start_sco)	/* initiate sco output routine */
-		(struct hci_unit *);
-	ipl_cookie_t hci_ipl;		/* to block queue operations */
-
 	/* input queues */
 	void			*hci_rxint;	/* receive interrupt cookie */
+	kmutex_t		 hci_devlock;	/* device queue lock */
 	MBUFQ_HEAD()		 hci_eventq;	/* Event queue */
 	MBUFQ_HEAD()		 hci_aclrxq;	/* ACL rx queue */
 	MBUFQ_HEAD()		 hci_scorxq;	/* SCO rx queue */
@@ -2155,12 +2162,7 @@ struct hci_unit {
 
 	/* output queues */
 	MBUFQ_HEAD()		 hci_cmdwait;	/* pending commands */
-	MBUFQ_HEAD()		 hci_cmdq;	/* Command queue */
-	MBUFQ_HEAD()		 hci_acltxq;	/* ACL tx queue */
-	MBUFQ_HEAD()		 hci_scotxq;	/* SCO tx queue */
 	MBUFQ_HEAD()		 hci_scodone;	/* SCO done queue */
-
-	struct bt_stats		 hci_stats;	/* unit statistics */
 
 	SIMPLEQ_ENTRY(hci_unit) hci_next;
 };
@@ -2210,16 +2212,16 @@ int hci_ctloutput(int, struct socket *, int, int, struct mbuf **);
 void hci_mtap(struct mbuf *, struct hci_unit *);
 
 /* hci_unit.c */
-void hci_attach(struct hci_unit *);
+struct hci_unit *hci_attach(const struct hci_if *, device_t, uint16_t);
 void hci_detach(struct hci_unit *);
 int hci_enable(struct hci_unit *);
 void hci_disable(struct hci_unit *);
 struct hci_unit *hci_unit_lookup(bdaddr_t *);
 int hci_send_cmd(struct hci_unit *, uint16_t, void *, uint8_t);
-void hci_input_event(struct hci_unit *, struct mbuf *);
-void hci_input_acl(struct hci_unit *, struct mbuf *);
-void hci_input_sco(struct hci_unit *, struct mbuf *);
-void hci_complete_sco(struct hci_unit *, struct mbuf *);
+bool hci_input_event(struct hci_unit *, struct mbuf *);
+bool hci_input_acl(struct hci_unit *, struct mbuf *);
+bool hci_input_sco(struct hci_unit *, struct mbuf *);
+bool hci_complete_sco(struct hci_unit *, struct mbuf *);
 void hci_output_cmd(struct hci_unit *, struct mbuf *);
 void hci_output_acl(struct hci_unit *, struct mbuf *);
 void hci_output_sco(struct hci_unit *, struct mbuf *);

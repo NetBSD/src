@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14.84.1 2007/11/06 23:33:10 matt Exp $
+#	$NetBSD: Makefile,v 1.14.84.2 2008/01/09 01:56:51 matt Exp $
 
 .if ${MACHINE} == "amd64"
 SUBDIR+=	linux_elf
@@ -19,10 +19,6 @@ SUBDIR+=	elf netbsd32_aout netbsd32_elf sunos32_aout svr4_32_elf
 
 .if ${MACHINE} == "alpha"
 SUBDIR+=	linux_aout linux_elf osf1_ecoff
-.endif
-
-.if ${MACHINE} == "hp300"
-SUBDIR+=	hpux_aout
 .endif
 
 .if ${MACHINE} == "i386"

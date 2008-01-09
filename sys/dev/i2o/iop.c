@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.66.8.1 2007/11/06 23:26:12 matt Exp $	*/
+/*	$NetBSD: iop.c,v 1.66.8.2 2008/01/09 01:52:43 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.66.8.1 2007/11/06 23:26:12 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.66.8.2 2008/01/09 01:52:43 matt Exp $");
 
 #include "iop.h"
 
@@ -290,8 +290,8 @@ iop_init(struct iop_softc *sc, const char *intrstr)
 
 	printf("I2O adapter");
 
-	mutex_init(&sc->sc_intrlock, MUTEX_DRIVER, IPL_VM);
-	mutex_init(&sc->sc_conflock, MUTEX_DRIVER, IPL_NONE);
+	mutex_init(&sc->sc_intrlock, MUTEX_DEFAULT, IPL_VM);
+	mutex_init(&sc->sc_conflock, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&sc->sc_confcv, "iopconf");
 
 	if (iop_ictxhashtbl == NULL)

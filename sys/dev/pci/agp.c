@@ -1,4 +1,4 @@
-/*	$NetBSD: agp.c,v 1.48.2.1 2007/11/06 23:28:34 matt Exp $	*/
+/*	$NetBSD: agp.c,v 1.48.2.2 2008/01/09 01:53:30 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -65,7 +65,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.48.2.1 2007/11/06 23:28:34 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.48.2.2 2008/01/09 01:53:30 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,6 +103,7 @@ static int agp_deallocate_user(struct agp_softc *, int);
 static int agp_bind_user(struct agp_softc *, agp_bind *);
 static int agp_unbind_user(struct agp_softc *, agp_unbind *);
 static int agpdev_match(struct pci_attach_args *);
+static bool agp_resume(device_t);
 
 #include "agp_ali.h"
 #include "agp_amd.h"
@@ -121,6 +122,11 @@ const struct agp_product {
 #if NAGP_ALI > 0
 	{ PCI_VENDOR_ALI,	-1,
 	  NULL,			agp_ali_attach },
+#endif
+
+#if NAGP_AMD64 > 0
+	{ PCI_VENDOR_AMD,	PCI_PRODUCT_AMD_AGP8151_DEV,
+	  agp_amd64_match,	agp_amd64_attach },
 #endif
 
 #if NAGP_AMD > 0
@@ -157,7 +163,15 @@ const struct agp_product {
 	  NULL,			agp_i810_attach },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82965Q_HB,
 	  NULL,			agp_i810_attach },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82965PM_HB,
+	  NULL,			agp_i810_attach },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82965G_HB,
+	  NULL,			agp_i810_attach },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82Q35_HB,
+	  NULL,			agp_i810_attach },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82G33_HB,
+	  NULL,			agp_i810_attach },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82Q33_HB,
 	  NULL,			agp_i810_attach },
 #endif
 
@@ -166,27 +180,26 @@ const struct agp_product {
 	  NULL,			agp_intel_attach },
 #endif
 
+#if NAGP_AMD64 > 0
+	{ PCI_VENDOR_NVIDIA,	PCI_PRODUCT_NVIDIA_NFORCE3_PCHB,
+	  agp_amd64_match,	agp_amd64_attach },
+	{ PCI_VENDOR_NVIDIA,	PCI_PRODUCT_NVIDIA_NFORCE3_250_PCHB,
+	  agp_amd64_match,	agp_amd64_attach },
+#endif
+
+#if NAGP_AMD64 > 0
+	{ PCI_VENDOR_SIS,	PCI_PRODUCT_SIS_755,
+	  agp_amd64_match,	agp_amd64_attach },
+	{ PCI_VENDOR_SIS,	PCI_PRODUCT_SIS_760,
+	  agp_amd64_match,	agp_amd64_attach },
+#endif
+
 #if NAGP_SIS > 0
 	{ PCI_VENDOR_SIS,	-1,
 	  NULL,			agp_sis_attach },
 #endif
 
-#if NAGP_VIA > 0
-	{ PCI_VENDOR_VIATECH,	-1,
-	  NULL,			agp_via_attach },
-#endif
-
 #if NAGP_AMD64 > 0
-	{ PCI_VENDOR_AMD,	PCI_PRODUCT_AMD_AGP8151_DEV,
-	  agp_amd64_match,	agp_amd64_attach },
-	{ PCI_VENDOR_SIS,	PCI_PRODUCT_SIS_755,
-	  agp_amd64_match,	agp_amd64_attach },
-	{ PCI_VENDOR_SIS,	PCI_PRODUCT_SIS_760,
-	  agp_amd64_match,	agp_amd64_attach },
-	{ PCI_VENDOR_NVIDIA,	PCI_PRODUCT_NVIDIA_NFORCE3_PCHB,
-	  agp_amd64_match,	agp_amd64_attach },
-	{ PCI_VENDOR_NVIDIA,	PCI_PRODUCT_NVIDIA_NFORCE3_250_PCHB,
-	  agp_amd64_match,	agp_amd64_attach },
 	{ PCI_VENDOR_VIATECH,	PCI_PRODUCT_VIATECH_K8M800_0,
 	  agp_amd64_match,	agp_amd64_attach },
 	{ PCI_VENDOR_VIATECH,	PCI_PRODUCT_VIATECH_K8T890_0,
@@ -195,6 +208,11 @@ const struct agp_product {
 	  agp_amd64_match,	agp_amd64_attach },
 	{ PCI_VENDOR_VIATECH,	PCI_PRODUCT_VIATECH_K8HTB,
 	  agp_amd64_match,	agp_amd64_attach },
+#endif
+
+#if NAGP_VIA > 0
+	{ PCI_VENDOR_VIATECH,	-1,
+	  NULL,			agp_via_attach },
 #endif
 
 	{ 0,			0,
@@ -306,7 +324,7 @@ agpattach(struct device *parent, struct device *self, void *aux)
 	 * The mutex is used to prevent re-entry to
 	 * agp_generic_bind_memory() since that function can sleep.
 	 */
-	mutex_init(&sc->as_mtx, MUTEX_DRIVER, IPL_NONE);
+	mutex_init(&sc->as_mtx, MUTEX_DEFAULT, IPL_NONE);
 
 	TAILQ_INIT(&sc->as_memory);
 
@@ -317,6 +335,11 @@ agpattach(struct device *parent, struct device *self, void *aux)
 		    (unsigned long)AGP_GET_APERTURE(sc));
 	else
 		sc->as_chipc = NULL;
+
+	if (!device_pmf_is_registered(self)) {
+		if (!pmf_device_register(self, NULL, agp_resume))
+			aprint_error_dev(self, "couldn't establish power handler\n");
+	}
 }
 
 CFATTACH_DECL(agp, sizeof(struct agp_softc),
@@ -1064,4 +1087,12 @@ agp_free_dmamem(bus_dma_tag_t tag, size_t size, bus_dmamap_t map,
 	bus_dmamap_destroy(tag, map);
 	bus_dmamem_unmap(tag, vaddr, size);
 	bus_dmamem_free(tag, seg, nseg);
+}
+
+static bool
+agp_resume(device_t dv)
+{
+	agp_flush_cache();
+
+	return true;
 }

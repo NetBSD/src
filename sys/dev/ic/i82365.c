@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.99.8.1 2007/11/06 23:26:39 matt Exp $	*/
+/*	$NetBSD: i82365.c,v 1.99.8.2 2008/01/09 01:52:53 matt Exp $	*/
 
 /*
  * Copyright (c) 2004 Charles M. Hannum.  All rights reserved.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.99.8.1 2007/11/06 23:26:39 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.99.8.2 2008/01/09 01:52:53 matt Exp $");
 
 #define	PCICDEBUG
 
@@ -237,7 +237,7 @@ pcic_attach(sc)
 
 	DPRINTF(("pcic ident regs:"));
 
-	lockinit(&sc->sc_pcic_lock, PWAIT, "pciclk", 0, 0);
+	mutex_init(&sc->sc_pcic_lock, MUTEX_DEFAULT, IPL_NONE);
 
 	/* find and configure for the available sockets */
 	for (i = 0; i < __arraycount(sc->handle); i++) {
@@ -537,7 +537,7 @@ pcic_event_thread(arg)
 		 * Serialize event processing on the PCIC.  We may
 		 * sleep while we hold this lock.
 		 */
-		(void) lockmgr(&sc->sc_pcic_lock, LK_EXCLUSIVE, NULL);
+		mutex_enter(&sc->sc_pcic_lock);
 
 		s = splhigh();
 		if ((pe = SIMPLEQ_FIRST(&h->events)) == NULL) {
@@ -549,7 +549,7 @@ pcic_event_thread(arg)
 			/*
 			 * No events to process; release the PCIC lock.
 			 */
-			(void) lockmgr(&sc->sc_pcic_lock, LK_RELEASE, NULL);
+			(void) mutex_exit(&sc->sc_pcic_lock);
 			(void) tsleep(&h->events, PWAIT, "pcicev", 0);
 			continue;
 		} else {
@@ -619,7 +619,7 @@ pcic_event_thread(arg)
 		}
 		free(pe, M_TEMP);
 
-		(void) lockmgr(&sc->sc_pcic_lock, LK_RELEASE, NULL);
+		mutex_exit(&sc->sc_pcic_lock);
 	}
 
 	h->event_thread = NULL;

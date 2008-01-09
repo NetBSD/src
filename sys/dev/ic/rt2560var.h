@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2560var.h,v 1.5 2007/03/04 06:02:00 christos Exp $	*/
+/*	$NetBSD: rt2560var.h,v 1.5.16.1 2008/01/09 01:52:59 matt Exp $	*/
 /*	$OpenBSD: rt2560var.h,v 1.2 2006/01/14 12:43:27 damien Exp $  */
 
 /*-
@@ -105,7 +105,6 @@ struct rt2560_softc {
 
 	int			(*sc_enable)(struct rt2560_softc *);
 	void			(*sc_disable)(struct rt2560_softc *);
-	void			(*sc_power)(struct rt2560_softc *, int);
 
 	bus_dma_tag_t		sc_dmat;
 	bus_space_tag_t		sc_st;
@@ -167,9 +166,6 @@ struct rt2560_softc {
 #define sc_txtap		sc_txtapu.th
 	int			sc_txtap_len;
 #endif
-
-	void			*sc_powerhook;
-	int			sc_suspend;
 };
 
 #define	sc_if		sc_ec.ec_if

@@ -1,4 +1,4 @@
-/*	$NetBSD: esis.c,v 1.48.2.1 2007/11/06 23:34:16 matt Exp $	*/
+/*	$NetBSD: esis.c,v 1.48.2.2 2008/01/09 01:57:46 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esis.c,v 1.48.2.1 2007/11/06 23:34:16 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esis.c,v 1.48.2.2 2008/01/09 01:57:46 matt Exp $");
 
 #include "opt_iso.h"
 #ifdef ISO
@@ -288,7 +288,7 @@ esis_input(struct mbuf *m0, ...)
 	shp = va_arg(ap, struct snpa_hdr *);
 	va_end(ap);
 
-	TAILQ_FOREACH(ifa, &shp->snh_ifp->if_addrlist, ifa_list)
+	IFADDR_FOREACH(ifa, shp->snh_ifp)
 		if (ifa->ifa_addr->sa_family == AF_ISO)
 			break;
 	/* if we have no iso address just send it to the sockets */
@@ -585,7 +585,7 @@ esis_eshinput(
 		 * See if we want to compress out multiple nsaps
 		 * differing only by nsel
 		 */
-		TAILQ_FOREACH(ifa, &shp->snh_ifp->if_addrlist, ifa_list)
+		IFADDR_FOREACH(ifa, shp->snh_ifp)
 			if (ifa->ifa_addr->sa_family == AF_ISO) {
 				nsellength =
 				((struct iso_ifaddr *) ifa)->ia_addr.siso_tlen;
@@ -852,7 +852,7 @@ esis_config(void *v)
 			/* search for an ISO address family */
 			struct ifaddr  *ifa;
 
-			TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
+			IFADDR_FOREACH(ifa, ifp) {
 				if (ifa->ifa_addr->sa_family == AF_ISO) {
 					esis_shoutput(ifp,
 			      iso_systype & SNPA_ES ? ESIS_ESH : ESIS_ISH,

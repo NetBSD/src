@@ -1,4 +1,40 @@
-/* $NetBSD: kern_auth.c,v 1.51.8.2 2007/11/08 10:59:59 matt Exp $ */
+/* $NetBSD: kern_auth.c,v 1.51.8.3 2008/01/09 01:55:58 matt Exp $ */
+
+/*-
+ * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Andrew Doran.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -28,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.51.8.2 2007/11/08 10:59:59 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.51.8.3 2008/01/09 01:55:58 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -40,7 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.51.8.2 2007/11/08 10:59:59 matt Exp 
 #include <sys/kmem.h>
 #include <sys/rwlock.h>
 #include <sys/sysctl.h>		/* for pi_[p]cread */
-#include <sys/mutex.h>
+#include <sys/atomic.h>
 #include <sys/specificdata.h>
 
 /*
@@ -66,11 +102,9 @@ struct kauth_cred {
 	 * Keeping it seperate from the rest of the data prevents false
 	 * sharing between CPUs.
 	 */
-	kmutex_t cr_lock;		/* lock on cr_refcnt */
 	u_int cr_refcnt;		/* reference count */
-
-	uid_t cr_uid
-	    __aligned(CACHE_LINE_SIZE);	/* user id */
+	uint8_t cr_pad[CACHE_LINE_SIZE - sizeof(u_int)];
+	uid_t cr_uid;			/* user id */
 	uid_t cr_euid;			/* effective user id */
 	uid_t cr_svuid;			/* saved effective user id */
 	gid_t cr_gid;			/* group id */
@@ -103,11 +137,10 @@ struct kauth_scope {
 };
 
 static int kauth_cred_hook(kauth_cred_t, kauth_action_t, void *, void *);
-static int kauth_cred_ctor(void *, void *, int);
-static void kauth_cred_dtor(void *, void *);
 
 /* List of scopes and its lock. */
-static SIMPLEQ_HEAD(, kauth_scope) scope_list;
+static SIMPLEQ_HEAD(, kauth_scope) scope_list =
+    SIMPLEQ_HEAD_INITIALIZER(scope_list);
 
 /* Built-in scopes: generic, process. */
 static kauth_scope_t kauth_builtin_scope_generic;
@@ -147,26 +180,6 @@ kauth_cred_alloc(void)
 	return (cred);
 }
 
-static int
-kauth_cred_ctor(void *arg, void *obj, int flags)
-{
-	kauth_cred_t cred;
-
-	cred = obj;
-	mutex_init(&cred->cr_lock, MUTEX_DEFAULT, IPL_NONE);
-
-	return 0;
-}
-
-static void
-kauth_cred_dtor(void *arg, void *obj)
-{
-	kauth_cred_t cred;
-
-	cred = obj;
-	mutex_destroy(&cred->cr_lock);
-}
-
 /* Increment reference count to cred. */
 void
 kauth_cred_hold(kauth_cred_t cred)
@@ -174,29 +187,23 @@ kauth_cred_hold(kauth_cred_t cred)
 	KASSERT(cred != NULL);
 	KASSERT(cred->cr_refcnt > 0);
 
-        mutex_enter(&cred->cr_lock);
-        cred->cr_refcnt++;
-        mutex_exit(&cred->cr_lock);
+        atomic_inc_uint(&cred->cr_refcnt);
 }
 
 /* Decrease reference count to cred. If reached zero, free it. */
 void
 kauth_cred_free(kauth_cred_t cred)
 {
-	u_int refcnt;
 
 	KASSERT(cred != NULL);
 	KASSERT(cred->cr_refcnt > 0);
 
-	mutex_enter(&cred->cr_lock);
-	refcnt = --cred->cr_refcnt;
-	mutex_exit(&cred->cr_lock);
+	if (atomic_dec_uint_nv(&cred->cr_refcnt) > 0)
+		return;
 
-	if (refcnt == 0) {
-		kauth_cred_hook(cred, KAUTH_CRED_FREE, NULL, NULL);
-		specificdata_fini(kauth_domain, &cred->cr_sd);
-		pool_cache_put(kauth_cred_cache, cred);
-	}
+	kauth_cred_hook(cred, KAUTH_CRED_FREE, NULL, NULL);
+	specificdata_fini(kauth_domain, &cred->cr_sd);
+	pool_cache_put(kauth_cred_cache, cred);
 }
 
 static void
@@ -796,12 +803,11 @@ kauth_register_scope(const char *id, kauth_scope_callback_t callback,
 void
 kauth_init(void)
 {
-	SIMPLEQ_INIT(&scope_list);
 	rw_init(&kauth_lock);
 
 	kauth_cred_cache = pool_cache_init(sizeof(struct kauth_cred),
 	    CACHE_LINE_SIZE, 0, 0, "kcredpl", NULL, IPL_NONE,
-	    kauth_cred_ctor, kauth_cred_dtor, NULL);
+	    NULL, NULL, NULL);
 
 	/* Create specificdata domain. */
 	kauth_domain = specificdata_domain_create();

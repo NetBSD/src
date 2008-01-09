@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.127.8.1 2007/11/06 23:26:26 matt Exp $  */
+/*	$NetBSD: atw.c,v 1.127.8.2 2008/01/09 01:52:48 matt Exp $  */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.127.8.1 2007/11/06 23:26:26 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.127.8.2 2008/01/09 01:52:48 matt Exp $");
 
 #include "bpfilter.h"
 
@@ -201,6 +201,8 @@ void	atw_watchdog(struct ifnet *);
 /* Device attachment */
 void	atw_attach(struct atw_softc *);
 int	atw_detach(struct atw_softc *);
+static void atw_evcnt_attach(struct atw_softc *);
+static void atw_evcnt_detach(struct atw_softc *);
 
 /* Rx/Tx process */
 int	atw_add_rxbuf(struct atw_softc *, int);
@@ -829,6 +831,8 @@ atw_attach(struct atw_softc *sc)
 	if_attach(ifp);
 	ieee80211_ifattach(ic);
 
+	atw_evcnt_attach(sc);
+
 	sc->sc_newstate = ic->ic_newstate;
 	ic->ic_newstate = atw_newstate;
 
@@ -1357,7 +1361,7 @@ atw_init(struct ifnet *ifp)
 				goto out;
 			}
 		} else
-			ATW_INIT_RXDESC(sc, i);
+			atw_init_rxdesc(sc, i);
 	}
 	sc->sc_rxptr = 0;
 
@@ -1521,8 +1525,13 @@ atw_tune(struct atw_softc *sc)
 	DELAY(atw_nar_delay);
 	ATW_WRITE(sc, ATW_RDR, 0x1);
 
-	if (rc == 0)
+	if (rc == 0) {
 		sc->sc_cur_chan = chan;
+		sc->sc_rxtap.ar_chan_freq = sc->sc_txtap.at_chan_freq =
+		    htole16(ic->ic_curchan->ic_freq);
+		sc->sc_rxtap.ar_chan_flags = sc->sc_txtap.at_chan_flags =
+		    htole16(ic->ic_curchan->ic_flags);
+	}
 
 	return rc;
 }
@@ -2027,7 +2036,7 @@ atw_filter_setup(struct atw_softc *sc)
 	if ((ifp->if_flags & IFF_RUNNING) != 0)
 		atw_idle(sc, ATW_NAR_SR);
 
-	sc->sc_opmode &= ~(ATW_NAR_PR|ATW_NAR_MM);
+	sc->sc_opmode &= ~(ATW_NAR_PB|ATW_NAR_PR|ATW_NAR_MM);
 	ifp->if_flags &= ~IFF_ALLMULTI;
 
 	/* XXX in scan mode, do not filter packets.  Maybe this is
@@ -2035,7 +2044,7 @@ atw_filter_setup(struct atw_softc *sc)
 	 */
 	if (ic->ic_state == IEEE80211_S_SCAN ||
 	    (ifp->if_flags & IFF_PROMISC) != 0) {
-		sc->sc_opmode |= ATW_NAR_PR;
+		sc->sc_opmode |= ATW_NAR_PR | ATW_NAR_PB;
 		goto allmulti;
 	}
 
@@ -2626,7 +2635,7 @@ atw_add_rxbuf(struct atw_softc *sc, int idx)
 	bus_dmamap_sync(sc->sc_dmat, rxs->rxs_dmamap, 0,
 	    rxs->rxs_dmamap->dm_mapsize, BUS_DMASYNC_PREREAD);
 
-	ATW_INIT_RXDESC(sc, idx);
+	atw_init_rxdesc(sc, idx);
 
 	return (0);
 }
@@ -2773,6 +2782,8 @@ atw_detach(struct atw_softc *sc)
 
 	if (sc->sc_srom)
 		free(sc->sc_srom, M_DEVBUF);
+
+	atw_evcnt_detach(sc);
 
 	return (0);
 }
@@ -3080,7 +3091,7 @@ atw_rxintr(struct atw_softc *sc)
 	struct mbuf *m;
 	u_int32_t rxstat;
 	int i, len, rate, rate0;
-	u_int32_t rssi, rssi0;
+	u_int32_t rssi, ctlrssi;
 
 	for (i = sc->sc_rxptr;; i = ATW_NEXTRX(i)) {
 		rxs = &sc->sc_rxsoft[i];
@@ -3088,16 +3099,16 @@ atw_rxintr(struct atw_softc *sc)
 		ATW_CDRXSYNC(sc, i, BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 
 		rxstat = le32toh(sc->sc_rxdescs[i].ar_stat);
-		rssi0 = le32toh(sc->sc_rxdescs[i].ar_rssi);
+		ctlrssi = le32toh(sc->sc_rxdescs[i].ar_ctlrssi);
 		rate0 = __SHIFTOUT(rxstat, ATW_RXSTAT_RXDR_MASK);
 
 		if (rxstat & ATW_RXSTAT_OWN)
 			break; /* We have processed all receive buffers. */
 
 		DPRINTF3(sc,
-		    ("%s: rx stat %08x rssi0 %08x buf1 %08x buf2 %08x\n",
+		    ("%s: rx stat %08x ctlrssi %08x buf1 %08x buf2 %08x\n",
 		    sc->sc_dev.dv_xname,
-		    rxstat, rssi0,
+		    rxstat, ctlrssi,
 		    le32toh(sc->sc_rxdescs[i].ar_buf1),
 		    le32toh(sc->sc_rxdescs[i].ar_buf2)));
 
@@ -3117,30 +3128,23 @@ atw_rxintr(struct atw_softc *sc)
 		 * If an error occurred, update stats, clear the status
 		 * word, and leave the packet buffer in place.  It will
 		 * simply be reused the next time the ring comes around.
-	 	 * If 802.1Q VLAN MTU is enabled, ignore the Frame Too Long
-		 * error.
 		 */
-
-		if ((rxstat & ATW_RXSTAT_ES) != 0 &&
-		    ((sc->sc_ec.ec_capenable & ETHERCAP_VLAN_MTU) == 0 ||
-		     (rxstat & (ATW_RXSTAT_DE | ATW_RXSTAT_SFDE |
-		                ATW_RXSTAT_SIGE | ATW_RXSTAT_CRC16E |
-				ATW_RXSTAT_RXTOE | ATW_RXSTAT_CRC32E |
-				ATW_RXSTAT_ICVE)) != 0)) {
+		if ((rxstat & (ATW_RXSTAT_DE | ATW_RXSTAT_RXTOE)) != 0) {
 #define	PRINTERR(bit, str)						\
 			if (rxstat & (bit))				\
 				printf("%s: receive error: %s\n",	\
 				    sc->sc_dev.dv_xname, str)
 			ifp->if_ierrors++;
 			PRINTERR(ATW_RXSTAT_DE, "descriptor error");
+			PRINTERR(ATW_RXSTAT_RXTOE, "time-out");
+#if 0
 			PRINTERR(ATW_RXSTAT_SFDE, "PLCP SFD error");
 			PRINTERR(ATW_RXSTAT_SIGE, "PLCP signal error");
 			PRINTERR(ATW_RXSTAT_CRC16E, "PLCP CRC16 error");
-			PRINTERR(ATW_RXSTAT_RXTOE, "time-out");
-			PRINTERR(ATW_RXSTAT_CRC32E, "FCS error");
 			PRINTERR(ATW_RXSTAT_ICVE, "WEP ICV error");
+#endif
 #undef PRINTERR
-			ATW_INIT_RXDESC(sc, i);
+			atw_init_rxdesc(sc, i);
 			continue;
 		}
 
@@ -3161,22 +3165,17 @@ atw_rxintr(struct atw_softc *sc)
 		m = rxs->rxs_mbuf;
 		if (atw_add_rxbuf(sc, i) != 0) {
 			ifp->if_ierrors++;
-			ATW_INIT_RXDESC(sc, i);
 			bus_dmamap_sync(sc->sc_dmat, rxs->rxs_dmamap, 0,
 			    rxs->rxs_dmamap->dm_mapsize, BUS_DMASYNC_PREREAD);
+			atw_init_rxdesc(sc, i);
 			continue;
 		}
 
 		ifp->if_ipackets++;
-		if (sc->sc_opmode & ATW_NAR_PR)
-			len -= IEEE80211_CRC_LEN;
 		m->m_pkthdr.rcvif = ifp;
 		m->m_pkthdr.len = m->m_len = MIN(m->m_ext.ext_size, len);
 
-		if (rate0 >= sizeof(rate_tbl) / sizeof(rate_tbl[0]))
-			rate = 0;
-		else
-			rate = rate_tbl[rate0];
+		rate = (rate0 < __arraycount(rate_tbl)) ? rate_tbl[rate0] : 0;
 
 		/* The RSSI comes straight from a register in the
 		 * baseband processor.  I know that for the RF3000,
@@ -3184,11 +3183,12 @@ atw_rxintr(struct atw_softc *sc)
 		 * bits.  Mask those off.
 		 *
 		 * TBD Treat other basebands.
+		 * TBD Use short-preamble bit and such in RF3000_RXSTAT.
 		 */
 		if (sc->sc_bbptype == ATW_BBPTYPE_RFMD)
-			rssi = rssi0 & RF3000_RSSI_MASK;
+			rssi = ctlrssi & RF3000_RSSI_MASK;
 		else
-			rssi = rssi0;
+			rssi = ctlrssi;
 
  #if NBPFILTER > 0
 		/* Pass this up to any BPF listeners. */
@@ -3196,17 +3196,42 @@ atw_rxintr(struct atw_softc *sc)
 			struct atw_rx_radiotap_header *tap = &sc->sc_rxtap;
 
 			tap->ar_rate = rate;
-			tap->ar_chan_freq = htole16(ic->ic_curchan->ic_freq);
-			tap->ar_chan_flags = htole16(ic->ic_curchan->ic_flags);
 
 			/* TBD verify units are dB */
 			tap->ar_antsignal = (int)rssi;
-			/* TBD tap->ar_flags */
+			if (sc->sc_opmode & ATW_NAR_PR)
+				tap->ar_flags = IEEE80211_RADIOTAP_F_FCS;
+			else
+				tap->ar_flags = 0;
 
-			bpf_mtap2(sc->sc_radiobpf, (void *)tap,
-			    tap->ar_ihdr.it_len, m);
+			if ((rxstat & ATW_RXSTAT_CRC32E) != 0)
+				tap->ar_flags |= IEEE80211_RADIOTAP_F_BADFCS;
+
+			bpf_mtap2(sc->sc_radiobpf, tap,
+			    sizeof(sc->sc_rxtapu), m);
  		}
- #endif /* NBPFILTER > 0 */
+#endif /* NBPFILTER > 0 */
+
+		sc->sc_recv_ev.ev_count++;
+
+		if ((rxstat & (ATW_RXSTAT_CRC16E|ATW_RXSTAT_CRC32E|ATW_RXSTAT_ICVE|ATW_RXSTAT_SFDE|ATW_RXSTAT_SIGE)) != 0) {
+			if (rxstat & ATW_RXSTAT_CRC16E)
+				sc->sc_crc16e_ev.ev_count++;
+			if (rxstat & ATW_RXSTAT_CRC32E)
+				sc->sc_crc32e_ev.ev_count++;
+			if (rxstat & ATW_RXSTAT_ICVE)
+				sc->sc_icve_ev.ev_count++;
+			if (rxstat & ATW_RXSTAT_SFDE)
+				sc->sc_sfde_ev.ev_count++;
+			if (rxstat & ATW_RXSTAT_SIGE)
+				sc->sc_sige_ev.ev_count++;
+			ifp->if_ierrors++;
+			m_freem(m);
+			continue;
+		}
+
+		if (sc->sc_opmode & ATW_NAR_PR)
+			m_adj(m, -IEEE80211_CRC_LEN);
 
 		wh = mtod(m, struct ieee80211_frame_min *);
 		ni = ieee80211_find_rxnode(ic, wh);
@@ -3232,12 +3257,7 @@ atw_rxintr(struct atw_softc *sc)
 void
 atw_txintr(struct atw_softc *sc)
 {
-#define TXSTAT_ERRMASK (ATW_TXSTAT_TUF | ATW_TXSTAT_TLT | ATW_TXSTAT_TRT | \
-    ATW_TXSTAT_TRO | ATW_TXSTAT_SOFBR)
-#define TXSTAT_FMT "\20\31ATW_TXSTAT_SOFBR\32ATW_TXSTAT_TRO\33ATW_TXSTAT_TUF" \
-    "\34ATW_TXSTAT_TRT\35ATW_TXSTAT_TLT"
-
-	static char txstat_buf[sizeof("ffffffff<>" TXSTAT_FMT)];
+	static char txstat_buf[sizeof("ffffffff<>" ATW_TXSTAT_FMT)];
 	struct ifnet *ifp = &sc->sc_if;
 	struct atw_txsoft *txs;
 	u_int32_t txstat;
@@ -3298,9 +3318,9 @@ atw_txintr(struct atw_softc *sc)
 		ifp->if_flags &= ~IFF_OACTIVE;
 
 		if ((ifp->if_flags & IFF_DEBUG) != 0 &&
-		    (txstat & TXSTAT_ERRMASK) != 0) {
-			bitmask_snprintf(txstat & TXSTAT_ERRMASK, TXSTAT_FMT,
-			    txstat_buf, sizeof(txstat_buf));
+		    (txstat & ATW_TXSTAT_ERRMASK) != 0) {
+			bitmask_snprintf(txstat & ATW_TXSTAT_ERRMASK,
+			    ATW_TXSTAT_FMT, txstat_buf, sizeof(txstat_buf));
 			printf("%s: txstat %s %" __PRIuBITS "\n",
 			    sc->sc_dev.dv_xname, txstat_buf,
 			    __SHIFTOUT(txstat, ATW_TXSTAT_ARC_MASK));
@@ -3338,8 +3358,6 @@ atw_txintr(struct atw_softc *sc)
 		KASSERT((ifp->if_flags & IFF_OACTIVE) == 0);
 		sc->sc_tx_timer = 0;
 	}
-#undef TXSTAT_ERRMASK
-#undef TXSTAT_FMT
 }
 
 /*
@@ -3373,6 +3391,34 @@ atw_watchdog(struct ifnet *ifp)
 	if (sc->sc_tx_timer != 0 || sc->sc_rescan_timer != 0)
 		ifp->if_timer = 1;
 	ieee80211_watchdog(ic);
+}
+
+static void
+atw_evcnt_detach(struct atw_softc *sc)
+{
+	evcnt_detach(&sc->sc_sige_ev);
+	evcnt_detach(&sc->sc_sfde_ev);
+	evcnt_detach(&sc->sc_icve_ev);
+	evcnt_detach(&sc->sc_crc32e_ev);
+	evcnt_detach(&sc->sc_crc16e_ev);
+	evcnt_detach(&sc->sc_recv_ev);
+}
+
+static void
+atw_evcnt_attach(struct atw_softc *sc)
+{
+	evcnt_attach_dynamic(&sc->sc_recv_ev, EVCNT_TYPE_MISC,
+	    NULL, sc->sc_if.if_xname, "recv");
+	evcnt_attach_dynamic(&sc->sc_crc16e_ev, EVCNT_TYPE_MISC,
+	    &sc->sc_recv_ev, sc->sc_if.if_xname, "CRC16 error");
+	evcnt_attach_dynamic(&sc->sc_crc32e_ev, EVCNT_TYPE_MISC,
+	    &sc->sc_recv_ev, sc->sc_if.if_xname, "CRC32 error");
+	evcnt_attach_dynamic(&sc->sc_icve_ev, EVCNT_TYPE_MISC,
+	    &sc->sc_recv_ev, sc->sc_if.if_xname, "ICV error");
+	evcnt_attach_dynamic(&sc->sc_sfde_ev, EVCNT_TYPE_MISC,
+	    &sc->sc_recv_ev, sc->sc_if.if_xname, "PLCP SFD error");
+	evcnt_attach_dynamic(&sc->sc_sige_ev, EVCNT_TYPE_MISC,
+	    &sc->sc_recv_ev, sc->sc_if.if_xname, "PLCP Signal Field error");
 }
 
 #ifdef ATW_DEBUG
@@ -3514,13 +3560,9 @@ atw_start(struct ifnet *ifp)
 			struct atw_tx_radiotap_header *tap = &sc->sc_txtap;
 
 			tap->at_rate = rate;
-			tap->at_chan_freq = htole16(ic->ic_curchan->ic_freq);
-			tap->at_chan_flags = htole16(ic->ic_curchan->ic_flags);
 
-			/* TBD tap->at_flags */
-
-			bpf_mtap2(sc->sc_radiobpf, (void *)tap,
-			    tap->at_ihdr.it_len, m0);
+			bpf_mtap2(sc->sc_radiobpf, tap,
+			    sizeof(sc->sc_txtapu), m0);
 		}
 #endif /* NBPFILTER > 0 */
 

@@ -27,7 +27,7 @@
  *	i4b_tel.c - device driver for ISDN telephony
  *	--------------------------------------------
  *
- *	$Id: i4b_tel.c,v 1.20 2007/03/04 06:03:31 christos Exp $
+ *	$Id: i4b_tel.c,v 1.20.16.1 2008/01/09 01:57:44 matt Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_tel.c,v 1.20 2007/03/04 06:03:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_tel.c,v 1.20.16.1 2008/01/09 01:57:44 matt Exp $");
 
 #include "isdntel.h"
 
@@ -1030,7 +1030,7 @@ isdntelkqfilter(dev_t dev, struct knote *kn)
 		else if (func == FUNCDIAL)
 			kn->kn_fop = &i4btel_dialread_filtops;
 		else
-			return (1);
+			return (ENXIO);
 		break;
 
 	case EVFILT_WRITE:
@@ -1040,11 +1040,11 @@ isdntelkqfilter(dev_t dev, struct knote *kn)
 		else if (func == FUNCDIAL)
 			kn->kn_fop = &i4btel_seltrue_filtops;
 		else
-			return (1);
+			return (ENXIO);
 		break;
 
 	default:
-		return (1);
+		return (EINVAL);
 	}
 
 	kn->kn_hook = sc;

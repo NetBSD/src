@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_file.c,v 1.28 2007/07/17 20:33:17 christos Exp $	*/
+/*	$NetBSD: freebsd_file.c,v 1.28.8.1 2008/01/09 01:50:40 matt Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_file.c,v 1.28 2007/07/17 20:33:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_file.c,v 1.28.8.1 2008/01/09 01:50:40 matt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -60,11 +60,10 @@ __KERNEL_RCSID(0, "$NetBSD: freebsd_file.c,v 1.28 2007/07/17 20:33:17 christos E
 
 #define	ARRAY_LENGTH(array)	(sizeof(array)/sizeof(array[0]))
 
-static const char * convert_from_freebsd_mount_type __P((int));
+static const char * convert_from_freebsd_mount_type(int);
 
 static const char *
-convert_from_freebsd_mount_type(type)
-	int type;
+convert_from_freebsd_mount_type(int type)
 {
 	static const char * const netbsd_mount_type[] = {
 		NULL,     /*  0 = MOUNT_NONE */
@@ -95,17 +94,14 @@ convert_from_freebsd_mount_type(type)
 }
 
 int
-freebsd_sys_mount(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+freebsd_sys_mount(struct lwp *l, const struct freebsd_sys_mount_args *uap, register_t *retval)
 {
-	struct freebsd_sys_mount_args /* {
+	/* {
 		syscallarg(int) type;
 		syscallarg(char *) path;
 		syscallarg(int) flags;
 		syscallarg(void *) data;
-	} */ *uap = v;
+	} */
 	const char *type;
 	struct vfsops *vfsops;
 	register_t dummy;

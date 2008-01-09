@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_pth.c,v 1.1.6.3 2007/11/08 11:00:19 matt Exp $	*/
+/*	$NetBSD: rumpuser_pth.c,v 1.1.6.4 2008/01/09 01:58:02 matt Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -32,6 +32,7 @@
 #include <sys/lwp.h>
 
 #include <assert.h>
+#include <errno.h>
 #include <pthread.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -79,10 +80,10 @@ iothread(void *arg)
 		pthread_mutex_unlock(&rua_mtx.pthmtx);
 
 		if (rua->rua_op)
-			rumpuser_read(rua->rua_fd, rua->rua_data,
+			rumpuser_read_bio(rua->rua_fd, rua->rua_data,
 			    rua->rua_dlen, rua->rua_off, rua->rua_bp);
 		else
-			rumpuser_write(rua->rua_fd, rua->rua_data,
+			rumpuser_write_bio(rua->rua_fd, rua->rua_data,
 			    rua->rua_dlen, rua->rua_off, rua->rua_bp);
 
 		free(rua);
@@ -245,11 +246,37 @@ rumpuser_cv_wait(struct rumpuser_cv *cv, struct rumpuser_mtx *mtx)
 	NOFAIL(pthread_cond_wait(&cv->pthcv, &mtx->pthmtx) == 0);
 }
 
+int
+rumpuser_cv_timedwait(struct rumpuser_cv *cv, struct rumpuser_mtx *mtx,
+	int stdticks)
+{
+	struct timespec ts;
+	int rv;
+
+	ts.tv_sec = stdticks / 100;
+	ts.tv_nsec = (stdticks % 100) * 100000000;
+
+	rv = pthread_cond_timedwait(&cv->pthcv, &mtx->pthmtx, &ts);
+	if (rv != 0 && rv != ETIMEDOUT)
+		abort();
+
+	if (rv == ETIMEDOUT)
+		rv = EWOULDBLOCK;
+	return rv;
+}
+
 void
 rumpuser_cv_signal(struct rumpuser_cv *cv)
 {
 
 	NOFAIL(pthread_cond_signal(&cv->pthcv) == 0);
+}
+
+void
+rumpuser_cv_broadcast(struct rumpuser_cv *cv)
+{
+
+	NOFAIL(pthread_cond_broadcast(&cv->pthcv) == 0);
 }
 
 /*
@@ -283,8 +310,8 @@ rumpuser_set_ipl(int what)
 	if (what == RUMPUSER_IPL_INTR) {
 		pthread_setspecific(isintr, (void *)RUMPUSER_IPL_INTR);
 	} else  {
-		cur = (int)pthread_getspecific(isintr);
-		pthread_setspecific(isintr, (void *)(cur+1));
+		cur = (int)(intptr_t)pthread_getspecific(isintr);
+		pthread_setspecific(isintr, (void *)(intptr_t)(cur+1));
 	}
 }
 
@@ -292,7 +319,7 @@ int
 rumpuser_whatis_ipl()
 {
 
-	return (int)pthread_getspecific(isintr);
+	return (int)(intptr_t)pthread_getspecific(isintr);
 }
 
 void
@@ -303,8 +330,8 @@ rumpuser_clear_ipl(int what)
 	if (what == RUMPUSER_IPL_INTR)
 		cur = 1;
 	else
-		cur = (int)pthread_getspecific(isintr);
+		cur = (int)(intptr_t)pthread_getspecific(isintr);
 	cur--;
 
-	pthread_setspecific(isintr, (void *)cur);
+	pthread_setspecific(isintr, (void *)(intptr_t)cur);
 }

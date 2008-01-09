@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.101 2007/07/09 21:10:54 ad Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.101.8.1 2008/01/09 01:56:12 matt Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -29,13 +29,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.101 2007/07/09 21:10:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.101.8.1 2008/01/09 01:56:12 matt Exp $");
 
 #include "opt_veriexec.h"
 
 #include <sys/param.h>
 #include <sys/mount.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/vnode.h>
 #include <sys/namei.h>
 #include <sys/exec.h>
@@ -64,8 +64,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.101 2007/07/09 21:10:54 ad E
 #include <miscfs/specfs/specdev.h>
 #include <prop/proplib.h>
 #include <sys/fcntl.h>
-
-MALLOC_DEFINE(M_VERIEXEC, "Veriexec", "Veriexec data-structures");
 
 /* Readable values for veriexec_file_report(). */
 #define	REPORT_ALWAYS		0x01	/* Always print */
@@ -96,6 +94,7 @@ struct veriexec_file_entry {
 	size_t npages;			    	/* Number of pages. */
 	size_t last_page_size;			/* To support < PAGE_SIZE */
 	struct veriexec_fpops *ops;		/* Fingerprint ops vector*/
+	size_t filename_len;			/* Length of filename. */
 };
 
 /* Veriexec per-table data. */
@@ -106,16 +105,18 @@ struct veriexec_table_entry {
 
 static int veriexec_verbose;
 int veriexec_strict;
+static int veriexec_bypass = 1;
 
-static char *veriexec_fp_names;
-static size_t veriexec_name_max;
+static char *veriexec_fp_names = NULL;
+static size_t veriexec_name_max = 0;
 
 static const struct sysctlnode *veriexec_count_node;
 
 static fileassoc_t veriexec_hook;
 static specificdata_key_t veriexec_mountspecific_key;
 
-static LIST_HEAD(, veriexec_fpops) veriexec_fpops_list;
+static LIST_HEAD(, veriexec_fpops) veriexec_fpops_list =
+	LIST_HEAD_INITIALIZER(veriexec_fpops_list);
 
 static int veriexec_raw_cb(kauth_cred_t, kauth_action_t, void *,
     void *, void *, void *, void *);
@@ -216,8 +217,6 @@ veriexec_fpops_add(const char *fp_type, size_t hash_len, size_t ctx_size,
     veriexec_fpop_final_t final)
 {
 	struct veriexec_fpops *ops;
-	char *newp;
-	unsigned int new_max;
 
 	/* Sanity check all parameters. */
 	if ((fp_type == NULL) || (hash_len == 0) || (ctx_size == 0) ||
@@ -227,7 +226,7 @@ veriexec_fpops_add(const char *fp_type, size_t hash_len, size_t ctx_size,
 	if (veriexec_fpops_lookup(fp_type) != NULL)
 		return (EEXIST);
 
-	ops = malloc(sizeof(*ops), M_VERIEXEC, M_WAITOK);
+	ops = kmem_alloc(sizeof(*ops), KM_SLEEP);
 
 	ops->type = fp_type;
 	ops->hash_len = hash_len;
@@ -245,8 +244,7 @@ veriexec_fpops_add(const char *fp_type, size_t hash_len, size_t ctx_size,
 	 */
 	if (veriexec_fp_names == NULL) {
 		veriexec_name_max = 64;
-		veriexec_fp_names = malloc(veriexec_name_max, M_VERIEXEC,
-		    M_WAITOK|M_ZERO);
+		veriexec_fp_names = kmem_zalloc(veriexec_name_max, KM_SLEEP);
 	}
 
 	/*
@@ -255,10 +253,14 @@ veriexec_fpops_add(const char *fp_type, size_t hash_len, size_t ctx_size,
 	 */
 	while (veriexec_name_max - (strlen(veriexec_fp_names) + 1) <
 	    strlen(fp_type)) {
+		char *newp;
+		unsigned int new_max;
+
 		/* Add space for four algorithm names. */
 		new_max = veriexec_name_max + 64;
-		newp = realloc(veriexec_fp_names, new_max, M_VERIEXEC,
-		    M_WAITOK|M_ZERO);
+		newp = kmem_zalloc(new_max, KM_SLEEP);
+		strlcpy(newp, veriexec_fp_names, new_max);
+		kmem_free(veriexec_fp_names, veriexec_name_max);
 		veriexec_fp_names = newp;
 		veriexec_name_max = new_max;
 	}
@@ -281,7 +283,7 @@ veriexec_mountspecific_dtor(void *v)
 	}
 	sysctl_free(__UNCONST(vte->vte_node));
 	veriexec_tablecount--;
-	free(vte, M_VERIEXEC);
+	kmem_free(vte, sizeof(*vte));
 }
 
 /*
@@ -307,10 +309,6 @@ veriexec_init(void)
 	    veriexec_mountspecific_dtor);
 	if (error)
 		panic("Veriexec: Can't create mountspecific key");
-
-	LIST_INIT(&veriexec_fpops_list);
-	veriexec_fp_names = NULL;
-	veriexec_name_max = 0;
 
 #define	FPOPS_ADD(a, b, c, d, e, f)	\
 	veriexec_fpops_add(a, b, c, (veriexec_fpop_init_t)d, \
@@ -380,7 +378,7 @@ veriexec_fp_calc(struct lwp *l, struct vnode *vp,
 	size_t resid, npages;
 	int error, do_perpage, pagen;
 
-	error = VOP_GETATTR(vp, &va, l->l_cred, l);
+	error = VOP_GETATTR(vp, &va, l->l_cred);
 	if (error)
 		return (error);
 
@@ -392,19 +390,17 @@ veriexec_fp_calc(struct lwp *l, struct vnode *vp,
 #endif  /* notyet */
 		do_perpage = 0;
 
-	ctx = (void *) malloc(vfe->ops->context_size, M_VERIEXEC, M_WAITOK);
-	buf = (u_char *) malloc(PAGE_SIZE, M_VERIEXEC, M_WAITOK);
+	ctx = kmem_alloc(vfe->ops->context_size, KM_SLEEP);
+	buf = kmem_alloc(PAGE_SIZE, KM_SLEEP);
 
 	page_ctx = NULL;
 	page_fp = NULL;
 	npages = 0;
 	if (do_perpage) {
 		npages = (va.va_size >> PAGE_SHIFT) + 1;
-		page_fp = (u_char *) malloc(vfe->ops->hash_len * npages,
-		    M_VERIEXEC, M_WAITOK|M_ZERO);
+		page_fp = kmem_alloc(vfe->ops->hash_len * npages, KM_SLEEP);
 		vfe->page_fp = page_fp;
-		page_ctx = (void *) malloc(vfe->ops->context_size, M_VERIEXEC,
-		    M_WAITOK);
+		page_ctx = kmem_alloc(vfe->ops->context_size, KM_SLEEP);
 	}
 
 	(vfe->ops->init)(ctx);
@@ -427,7 +423,8 @@ veriexec_fp_calc(struct lwp *l, struct vnode *vp,
 
 		if (error) {
 			if (do_perpage) {
-				free(vfe->page_fp, M_VERIEXEC);
+				kmem_free(vfe->page_fp,
+				    vfe->ops->hash_len * npages);
 				vfe->page_fp = NULL;
 			}
 
@@ -468,9 +465,10 @@ veriexec_fp_calc(struct lwp *l, struct vnode *vp,
 
 bad:
 	if (do_perpage)
-		free(page_ctx, M_VERIEXEC);
-	free(ctx, M_VERIEXEC);
-	free(buf, M_VERIEXEC);
+		kmem_free(page_ctx, vfe->ops->context_size);
+
+	kmem_free(ctx, vfe->ops->context_size);
+	kmem_free(buf, PAGE_SIZE);
 
 	return (error);
 }
@@ -581,14 +579,13 @@ veriexec_file_verify(struct lwp *l, struct vnode *vp, const u_char *name, int fl
 		u_char *digest;
 
 		/* Calculate fingerprint for on-disk file. */
-		digest = malloc(vfe->ops->hash_len, M_VERIEXEC,
-		    M_WAITOK | M_ZERO);
+		digest = kmem_zalloc(vfe->ops->hash_len, KM_SLEEP);
 
 		error = veriexec_fp_calc(l, vp, vfe, digest);
 		if (error) {
 			veriexec_file_report(vfe, "Fingerprint calculation error.",
 			    name, NULL, REPORT_ALWAYS);
-			free(digest, M_VERIEXEC);
+			kmem_free(digest, vfe->ops->hash_len);
 			return (error);
 		}
 
@@ -598,7 +595,7 @@ veriexec_file_verify(struct lwp *l, struct vnode *vp, const u_char *name, int fl
 		else
 			vfe->status = FINGERPRINT_NOMATCH;
 
-		free(digest, M_VERIEXEC);
+		kmem_free(digest, vfe->ops->hash_len);
 	}
 
 	if (!(vfe->type & flag)) {
@@ -671,10 +668,17 @@ veriexec_verify(struct lwp *l, struct vnode *vp, const u_char *name, int flag,
 	struct veriexec_file_entry *vfe;
 	int r;
 
+	if (veriexec_bypass)
+		return 0;
+
+	KERNEL_LOCK(1, NULL);
+
 	r = veriexec_file_verify(l, vp, name, flag, &vfe);
 
 	if (found != NULL)
 		*found = (vfe != NULL) ? true : false;
+
+	KERNEL_UNLOCK_ONE(NULL);
 
 	return (r);
 }
@@ -702,8 +706,8 @@ veriexec_page_verify(struct veriexec_file_entry *vfe, struct vm_page *pg,
 	if (idx >= vfe->npages)
 		return (0);
 
-	ctx = malloc(vfe->ops->context_size, M_VERIEXEC, M_WAITOK);
-	fp = malloc(vfe->ops->hash_len, M_VERIEXEC, M_WAITOK);
+	ctx = kmem_alloc(vfe->ops->context_size, KM_SLEEP);
+	fp = kmem_alloc(vfe->ops->hash_len, KM_SLEEP);
 	kva = uvm_km_alloc(kernel_map, PAGE_SIZE, 0, UVM_KMF_VAONLY | UVM_KMF_WAITVA);
 	pmap_kenter_pa(kva, VM_PAGE_TO_PHYS(pg), VM_PROT_READ);
 
@@ -744,8 +748,8 @@ veriexec_page_verify(struct veriexec_file_entry *vfe, struct vm_page *pg,
 		}
 	}
 
-	free(ctx, M_VERIEXEC);
-	free(fp, M_VERIEXEC);
+	kmem_free(ctx, vfe->ops->context_size);
+	kmem_free(fp, vfe->ops->hash_len);
 
 	return (error);
 }
@@ -758,9 +762,16 @@ int
 veriexec_removechk(struct lwp *l, struct vnode *vp, const char *pathbuf)
 {
 	struct veriexec_file_entry *vfe;
+	int error;
+
+	if (veriexec_bypass)
+		return 0;
+
+	KERNEL_LOCK(1, NULL);
 
 	vfe = veriexec_get(vp);
 	if (vfe == NULL) {
+		KERNEL_UNLOCK_ONE(NULL);
 		/* Lockdown mode: Deny access to non-monitored files. */
 		if (veriexec_strict >= VERIEXEC_LOCKDOWN)
 			return (EPERM);
@@ -773,9 +784,12 @@ veriexec_removechk(struct lwp *l, struct vnode *vp, const char *pathbuf)
 
 	/* IDS mode: Deny removal of monitored files. */
 	if (veriexec_strict >= VERIEXEC_IDS)
-		return (EPERM);
+		error = EPERM;
+	else
+		error = veriexec_file_delete(l, vp);
 
-	return (veriexec_file_delete(l, vp));
+	KERNEL_UNLOCK_ONE(NULL);
+	return error;
 }
 
 /*
@@ -791,11 +805,17 @@ veriexec_renamechk(struct lwp *l, struct vnode *fromvp, const char *fromname,
 {
 	struct veriexec_file_entry *vfe, *tvfe;
 
+	if (veriexec_bypass)
+		return 0;
+
+	KERNEL_LOCK(1, NULL);
+
 	if (veriexec_strict >= VERIEXEC_LOCKDOWN) {
 		log(LOG_ALERT, "Veriexec: Preventing rename of `%s' to "
 		    "`%s', uid=%u, pid=%u: Lockdown mode.\n", fromname, toname,
 		    kauth_cred_geteuid(l->l_cred), l->l_proc->p_pid);
 
+		KERNEL_UNLOCK_ONE(NULL);
 		return (EPERM);
 	}
 
@@ -813,6 +833,7 @@ veriexec_renamechk(struct lwp *l, struct vnode *fromvp, const char *fromname,
 			    l->l_proc->p_pid, (vfe != NULL && tvfe != NULL) ?
 			    "files" : "file");
 
+			KERNEL_UNLOCK_ONE(NULL);
 			return (EPERM);
 		}
 
@@ -824,8 +845,9 @@ veriexec_renamechk(struct lwp *l, struct vnode *fromvp, const char *fromname,
 		 * XXX: big enough for the new filename.
 		 */
 		if (vfe != NULL) {
-			free(vfe->filename, M_VERIEXEC);
+			kmem_free(vfe->filename, vfe->filename_len);
 			vfe->filename = NULL;
+			vfe->filename_len = 0;
 		}
 
 		/*
@@ -841,6 +863,7 @@ veriexec_renamechk(struct lwp *l, struct vnode *fromvp, const char *fromname,
 		    kauth_cred_geteuid(l->l_cred), l->l_proc->p_pid);
 	}
 
+	KERNEL_UNLOCK_ONE(NULL);
 	return (0);
 }
 
@@ -849,12 +872,12 @@ veriexec_file_free(struct veriexec_file_entry *vfe)
 {
 	if (vfe != NULL) {
 		if (vfe->fp != NULL)
-			free(vfe->fp, M_VERIEXEC);
+			kmem_free(vfe->fp, vfe->ops->hash_len);
 		if (vfe->page_fp != NULL)
-			free(vfe->page_fp, M_VERIEXEC);
+			kmem_free(vfe->page_fp, vfe->ops->hash_len);
 		if (vfe->filename != NULL)
-			free(vfe->filename, M_VERIEXEC);
-		free(vfe, M_VERIEXEC);
+			kmem_free(vfe->filename, vfe->filename_len);
+		kmem_free(vfe, sizeof(*vfe));
 	}
 }
 
@@ -1038,7 +1061,7 @@ veriexec_table_add(struct lwp *l, struct mount *mp)
 	struct veriexec_table_entry *vte;
 	u_char buf[16];
 
-	vte = malloc(sizeof(*vte), M_VERIEXEC, M_WAITOK | M_ZERO);
+	vte = kmem_zalloc(sizeof(*vte), KM_SLEEP);
 	mount_setspecific(mp, veriexec_mountspecific_key, vte);
 
 	snprintf(buf, sizeof(buf), "table%u", veriexec_tablecount++);
@@ -1077,7 +1100,7 @@ veriexec_file_add(struct lwp *l, prop_dictionary_t dict)
 
 	file = prop_string_cstring_nocopy(prop_dictionary_get(dict, "file"));
 
-	NDINIT(&nid, LOOKUP, FOLLOW, UIO_SYSSPACE, file, l);
+	NDINIT(&nid, LOOKUP, FOLLOW, UIO_SYSSPACE, file);
 	error = namei(&nid);
 	if (error)
 		return (error);
@@ -1092,7 +1115,7 @@ veriexec_file_add(struct lwp *l, prop_dictionary_t dict)
 		goto out;
 	}
 
-	vfe = malloc(sizeof(*vfe), M_VERIEXEC, M_WAITOK | M_ZERO);
+	vfe = kmem_zalloc(sizeof(*vfe), KM_SLEEP);
 
 	/* Lookup fingerprint hashing algorithm. */
 	fp_type = prop_string_cstring_nocopy(prop_dictionary_get(dict,
@@ -1116,7 +1139,7 @@ veriexec_file_add(struct lwp *l, prop_dictionary_t dict)
 		goto out;
 	}
 
-	vfe->fp = malloc(vfe->ops->hash_len, M_VERIEXEC, M_WAITOK);
+	vfe->fp = kmem_alloc(vfe->ops->hash_len, KM_SLEEP);
 	memcpy(vfe->fp, prop_data_data_nocopy(prop_dictionary_get(dict, "fp")),
 	    vfe->ops->hash_len);
 
@@ -1170,11 +1193,9 @@ veriexec_file_add(struct lwp *l, prop_dictionary_t dict)
 
 	vfe->status = FINGERPRINT_NOTEVAL;
 	if (prop_bool_true(prop_dictionary_get(dict, "keep-filename"))) {
-		size_t len;
-
-		len = strlen(file) + 1;
-		vfe->filename = malloc(len, M_VERIEXEC, M_WAITOK);
-		strlcpy(vfe->filename, file, len);
+		vfe->filename_len = strlen(file) + 1;
+		vfe->filename = kmem_alloc(vfe->filename_len, KM_SLEEP);
+		strlcpy(vfe->filename, file, vfe->filename_len);
 	} else
 		vfe->filename = NULL;
 
@@ -1199,12 +1220,11 @@ veriexec_file_add(struct lwp *l, prop_dictionary_t dict)
 	    (vfe->type & VERIEXEC_UNTRUSTED)) {
 		u_char *digest;
 
-		digest = malloc(vfe->ops->hash_len, M_VERIEXEC,
-		    M_WAITOK | M_ZERO);
+		digest = kmem_zalloc(vfe->ops->hash_len, KM_SLEEP);
 
 		error = veriexec_fp_calc(l, nid.ni_vp, vfe, digest);
 		if (error) {
-			free(digest, M_VERIEXEC);
+			kmem_free(digest, vfe->ops->hash_len);
 			goto out;
 		}
 
@@ -1213,10 +1233,11 @@ veriexec_file_add(struct lwp *l, prop_dictionary_t dict)
 		else
 			vfe->status = FINGERPRINT_NOMATCH;
 
-		free(digest, M_VERIEXEC);
+		kmem_free(digest, vfe->ops->hash_len);
 	}
 
 	veriexec_file_report(NULL, "New entry.", file, NULL, REPORT_DEBUG);
+	veriexec_bypass = 0;
 
  out:
 	vrele(nid.ni_vp);
@@ -1292,8 +1313,10 @@ veriexec_unmountchk(struct mount *mp)
 {
 	int error;
 
-	if (doing_shutdown)
+	if (veriexec_bypass || doing_shutdown)
 		return (0);
+
+	KERNEL_LOCK(1, NULL);
 
 	switch (veriexec_strict) {
 	case VERIEXEC_LEARNING:
@@ -1332,6 +1355,7 @@ veriexec_unmountchk(struct mount *mp)
 		break;
 	}
 
+	KERNEL_UNLOCK_ONE(NULL);
 	return (error);
 }
 
@@ -1340,6 +1364,11 @@ veriexec_openchk(struct lwp *l, struct vnode *vp, const char *path, int fmode)
 {
 	struct veriexec_file_entry *vfe = NULL;
 	int error = 0;
+
+	if (veriexec_bypass)
+		return 0;
+
+	KERNEL_LOCK(1, NULL);
 
 	if (vp == NULL) {
 		/* If no creation requested, let this fail normally. */
@@ -1372,6 +1401,7 @@ veriexec_openchk(struct lwp *l, struct vnode *vp, const char *path, int fmode)
 	}
 
  out:
+	KERNEL_UNLOCK_ONE(NULL);
 	return (error);
 }
 

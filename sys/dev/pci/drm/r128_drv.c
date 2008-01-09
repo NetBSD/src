@@ -1,3 +1,5 @@
+/*	$NetBSD: r128_drv.c,v 1.2.12.1 2008/01/09 01:54:08 matt Exp $	*/
+
 /* r128_drv.c -- ATI Rage 128 driver -*- linux-c -*-
  * Created: Mon Dec 13 09:47:27 1999 by faith@precisioninsight.com
  */
@@ -32,6 +34,7 @@
  */
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: r128_drv.c,v 1.2.12.1 2008/01/09 01:54:08 matt Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/r128_drv.c,v 1.11 2005/12/20 22:44:36 jhb Exp $");
 */

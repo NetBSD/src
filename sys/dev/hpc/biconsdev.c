@@ -1,4 +1,4 @@
-/*	$NetBSD: biconsdev.c,v 1.18.16.1 2007/11/06 23:26:05 matt Exp $	*/
+/*	$NetBSD: biconsdev.c,v 1.18.16.2 2008/01/09 01:52:38 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: biconsdev.c,v 1.18.16.1 2007/11/06 23:26:05 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: biconsdev.c,v 1.18.16.2 2008/01/09 01:52:38 matt Exp $");
 
 #include "biconsdev.h"
 #include <sys/param.h>
@@ -149,16 +149,9 @@ biconsdev_output(struct tty *tp)
 	s = spltty();
 	tp->t_state &= ~TS_BUSY;
 	/* Come back if there's more to do */
-	if (tp->t_outq.c_cc) {
+	if (ttypull(tp)) {
 		tp->t_state |= TS_TIMEOUT;
 		callout_schedule(&tp->t_rstrt_ch, 1);
-	}
-	if (tp->t_outq.c_cc <= tp->t_lowat) {
-		if (tp->t_state&TS_ASLEEP) {
-			tp->t_state &= ~TS_ASLEEP;
-			wakeup((void *)&tp->t_outq);
-		}
-		selwakeup(&tp->t_wsel);
 	}
 	splx(s);
 }

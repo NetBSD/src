@@ -1,4 +1,4 @@
-/*	$NetBSD: libx68k.h,v 1.3 2001/10/15 16:13:40 minoura Exp $	*/
+/*	$NetBSD: libx68k.h,v 1.3.100.1 2008/01/09 01:49:43 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Minoura Makoto
@@ -37,30 +37,30 @@ struct devspec {
 };
 
 /* consio.c */
-int consio_init (int);
-int check_getchar (void);
-int awaitkey_1sec (void);
-void print_title (const char*, ...);
+int consio_init(int);
+int check_getchar(void);
+int awaitkey_1sec(void);
+void print_title(const char *, ...);
 
 /* parseutils.c */
-char *gettrailer (char*);
-int parseopts (const char*, int*);
-int parseboot (char*, char**, int*);
+char *gettrailer(char *);
+int parseopts(const char *, int *);
+int parseboot(char *, char **, int *);
 
-/* sd.c */
+/* sdcd.c */
 struct sd_softc;
-int sdstrategy(void *devdata, int rw, daddr_t blk, size_t, void*, size_t*);
+int sdstrategy(void *, int, daddr_t, size_t, void *, size_t *);
 int sdopen(struct open_file *, ...);
-int sdclose(struct open_file*);
+int sdclose(struct open_file *);
 int sd_getbsdpartition(int, int);
-int cdstrategy(void *devdata, int rw, daddr_t blk, size_t, void*, size_t*);
+int cdstrategy(void *, int, daddr_t, size_t, void *, size_t *);
 int cdopen(struct open_file *, ...);
-int cdclose(struct open_file*);
+int cdclose(struct open_file *);
 
 /* fd.c */
-int fdstrategy(void *devdata, int rw, daddr_t blk, size_t, void*, size_t*);
+int fdstrategy(void *, int, daddr_t, size_t, void *, size_t *);
 int fdopen(struct open_file *, ...);
-int fdclose(struct open_file*);
+int fdclose(struct open_file *);
 
 /* devopen.c */
 int devparse(const char *, int *, int *, int *, char **);

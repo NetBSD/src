@@ -1,4 +1,4 @@
-/*	$NetBSD: acphy.c,v 1.19 2006/11/16 21:24:06 christos Exp $	*/
+/*	$NetBSD: acphy.c,v 1.19.24.1 2008/01/09 01:53:18 matt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acphy.c,v 1.19 2006/11/16 21:24:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acphy.c,v 1.19.24.1 2008/01/09 01:53:18 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -146,6 +146,9 @@ acphyattach(struct device *parent, struct device *self, void *aux)
 	else
 		mii_phy_add_media(sc);
 	aprint_normal("\n");
+
+	if (!pmf_device_register(self, NULL, mii_phy_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
 static int

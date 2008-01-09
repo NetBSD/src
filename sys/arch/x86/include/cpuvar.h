@@ -1,7 +1,7 @@
-/* 	$NetBSD: cpuvar.h,v 1.14.10.1 2007/11/06 23:23:35 matt Exp $ */
+/* 	$NetBSD: cpuvar.h,v 1.14.10.2 2008/01/09 01:49:47 matt Exp $ */
 
 /*-
- * Copyright (c) 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -74,7 +74,7 @@
 #define	_X86_CPUVAR_H_
 
 struct cpu_functions {
-	int (*start)(struct cpu_info *);
+	int (*start)(struct cpu_info *, paddr_t);
 	int (*stop)(struct cpu_info *);
 	void (*cleanup)(struct cpu_info *);
 };
@@ -107,10 +107,12 @@ extern u_int32_t cpus_running;
 int x86_ipi(int,int,int);
 void x86_self_ipi(int);
 int x86_ipi_init(int);
-void x86_errata(struct cpu_info *, int);
+void x86_errata(void);
 
 void identifycpu(struct cpu_info *);
+void identifycpu_cpuids(struct cpu_info *);
 void cpu_init(struct cpu_info *);
+void cpu_init_tss(struct cpu_info *);
 void cpu_init_first(void);
 
 #ifdef INTEL_CORETEMP
@@ -127,6 +129,11 @@ int	via_get_bus_clock(struct cpu_info *);
 int	p3_get_bus_clock(struct cpu_info *);
 int	p4_get_bus_clock(struct cpu_info *);
 #endif
+
+void	cpu_get_tsc_freq(struct cpu_info *);
+
+extern int cpu_vendor;
+extern bool x86_mp_online;
 
 #endif
 

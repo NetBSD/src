@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arcsubr.c,v 1.55.18.1 2007/11/06 23:33:26 matt Exp $	*/
+/*	$NetBSD: if_arcsubr.c,v 1.55.18.2 2008/01/09 01:57:09 matt Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arcsubr.c,v 1.55.18.1 2007/11/06 23:33:26 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arcsubr.c,v 1.55.18.2 2008/01/09 01:57:09 matt Exp $");
 
 #include "opt_inet.h"
 
@@ -617,17 +617,6 @@ arc_sprintf(uint8_t *ap)
 }
 
 /*
- * Register (new) link level address.
- */
-void
-arc_storelladdr(struct ifnet *ifp, uint8_t lla)
-{
-	(void)sockaddr_dl_setaddr(ifp->if_sadl, ifp->if_sadl->sdl_len, &lla,
-	    sizeof(lla));
-	ifp->if_mtu = ARC_PHDS_MAXMTU;
-}
-
-/*
  * Perform common duties while attaching to interface list
  */
 void
@@ -656,8 +645,7 @@ arc_ifattach(struct ifnet *ifp, uint8_t lla)
 		   ifp->if_xname, ifp->if_xname);
 	}
 	if_attach(ifp);
-	if_alloc_sadl(ifp);
-	arc_storelladdr(ifp, lla);
+	if_set_sadl(ifp, &lla, sizeof(lla));
 
 	ifp->if_broadcastaddr = &arcbroadcastaddr;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: null_vfsops.c,v 1.68.4.1 2007/11/06 23:33:19 matt Exp $	*/
+/*	$NetBSD: null_vfsops.c,v 1.68.4.2 2008/01/09 01:57:04 matt Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: null_vfsops.c,v 1.68.4.1 2007/11/06 23:33:19 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: null_vfsops.c,v 1.68.4.2 2008/01/09 01:57:04 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,13 +95,13 @@ VFS_PROTOS(nullfs);
  * Mount null layer
  */
 int
-nullfs_mount(mp, path, data, data_len, l)
+nullfs_mount(mp, path, data, data_len)
 	struct mount *mp;
 	const char *path;
 	void *data;
 	size_t *data_len;
-	struct lwp *l;
 {
+	struct lwp *l = curlwp;
 	struct nameidata nd;
 	struct null_args *args = data;
 	struct vnode *lowerrootvp, *vp;
@@ -134,8 +134,7 @@ nullfs_mount(mp, path, data, data_len, l)
 	/*
 	 * Find lower node
 	 */
-	NDINIT(&nd, LOOKUP, FOLLOW|LOCKLEAF,
-		UIO_USERSPACE, args->la.target, l);
+	NDINIT(&nd, LOOKUP, FOLLOW|LOCKLEAF, UIO_USERSPACE, args->la.target);
 	if ((error = namei(&nd)) != 0)
 		return (error);
 
@@ -185,16 +184,19 @@ nullfs_mount(mp, path, data, data_len, l)
 		return (error);
 	}
 	/*
-	 * Unlock the node
-	 */
-	vp->v_vflag |= VV_ROOT;
-	VOP_UNLOCK(vp, 0);
-
-	/*
 	 * Keep a held reference to the root vnode.
 	 * It is vrele'd in nullfs_unmount.
 	 */
+	vp->v_vflag |= VV_ROOT;
 	nmp->nullm_rootvp = vp;
+
+	/* We don't need kernel_lock. */
+	mp->mnt_iflag |= IMNT_MPSAFE;
+
+	/*
+	 * Unlock the node
+	 */
+	VOP_UNLOCK(vp, 0);
 
 	error = set_statvfs_info(path, UIO_USERSPACE, args->la.target,
 	    UIO_USERSPACE, mp->mnt_op->vfs_name, mp, l);
@@ -209,7 +211,7 @@ nullfs_mount(mp, path, data, data_len, l)
  * Free reference to null layer
  */
 int
-nullfs_unmount(struct mount *mp, int mntflags, struct lwp *l)
+nullfs_unmount(struct mount *mp, int mntflags)
 {
 	struct null_mount *nmp = MOUNTTONULLMOUNT(mp);
 	struct vnode *null_rootvp = nmp->nullm_rootvp;
@@ -232,12 +234,7 @@ nullfs_unmount(struct mount *mp, int mntflags, struct lwp *l)
 	vprint("alias root of lower", null_rootvp);
 #endif
 	/*
-	 * Release reference on underlying root vnode
-	 */
-	vrele(null_rootvp);
-
-	/*
-	 * And blow it away for future re-use
+	 * Blow it away for future re-use
 	 */
 	vgone(null_rootvp);
 

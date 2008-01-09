@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.95.6.1 2007/11/06 23:27:16 matt Exp $ */
+/* $NetBSD: vga.c,v 1.95.6.2 2008/01/09 01:53:05 matt Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.95.6.1 2007/11/06 23:27:16 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.95.6.2 2008/01/09 01:53:05 matt Exp $");
 
 /* for WSCONS_SUPPORT_PCVTFONTS */
 #include "opt_wsdisplay_compat.h"
@@ -1488,3 +1488,11 @@ vga_setborder(struct vga_config *vc, u_int value)
 	return (0);
 }
 #endif /* WSDISPLAY_CUSTOM_BORDER */
+
+void
+vga_resume(struct vga_softc *sc)
+{
+#ifdef VGA_RESET_ON_RESUME
+	vga_initregs(&sc->sc_vc->hdl);
+#endif
+}

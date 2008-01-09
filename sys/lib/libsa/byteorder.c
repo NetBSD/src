@@ -1,4 +1,4 @@
-/*	$NetBSD: byteorder.c,v 1.2 2001/10/31 20:19:52 thorpej Exp $	*/
+/*	$NetBSD: byteorder.c,v 1.2.96.1 2008/01/09 01:56:37 matt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -62,7 +62,7 @@ sa_htobe16(uint16_t val)
 	un.bytes[1] = val & 0xff;
 	un.bytes[0] = (val >> 8) & 0xff;
 
-	return (un.val);
+	return un.val;
 }
 
 uint16_t
@@ -73,7 +73,7 @@ sa_htole16(uint16_t val)
 	un.bytes[0] = val & 0xff;
 	un.bytes[1] = (val >> 8) & 0xff;
 
-	return (un.val);
+	return un.val;
 }
 
 uint16_t
@@ -84,7 +84,7 @@ sa_be16toh(uint16_t val)
 	un.val = val;
 
 	return ((un.bytes[0] << 8) |
-		 un.bytes[1]);
+	         un.bytes[1]);
 }
 
 uint16_t
@@ -95,7 +95,7 @@ sa_le16toh(uint16_t val)
 	un.val = val;
 
 	return ((un.bytes[1] << 8) |
-		 un.bytes[0]);
+	         un.bytes[0]);
 }
 
 /* 32-bit */
@@ -110,7 +110,7 @@ sa_htobe32(uint32_t val)
 	un.bytes[1] = (val >> 16) & 0xff;
 	un.bytes[0] = (val >> 24) & 0xff;
 
-	return (un.val);
+	return un.val;
 }
 
 uint32_t
@@ -123,7 +123,7 @@ sa_htole32(uint32_t val)
 	un.bytes[2] = (val >> 16) & 0xff;
 	un.bytes[3] = (val >> 24) & 0xff;
 
-	return (un.val);
+	return un.val;
 }
 
 uint32_t
@@ -134,9 +134,9 @@ sa_be32toh(uint32_t val)
 	un.val = val;
 
 	return ((un.bytes[0] << 24) |
-		(un.bytes[1] << 16) |
-		(un.bytes[2] << 8) |
-		 un.bytes[3]);
+	        (un.bytes[1] << 16) |
+	        (un.bytes[2] << 8) |
+	         un.bytes[3]);
 }
 
 uint32_t
@@ -147,9 +147,9 @@ sa_le32toh(uint32_t val)
 	un.val = val;
 
 	return ((un.bytes[3] << 24) |
-		(un.bytes[2] << 16) |
-		(un.bytes[1] << 8) |
-		 un.bytes[0]);
+	        (un.bytes[2] << 16) |
+	        (un.bytes[1] << 8) |
+	         un.bytes[0]);
 }
 
 /* 64-bit */
@@ -162,7 +162,7 @@ sa_htobe64(uint64_t val)
 	un.words[BE64_HI] = sa_htobe32(val >> 32);
 	un.words[BE64_LO] = sa_htobe32(val & 0xffffffffU);
 
-	return (un.val);
+	return un.val;
 }
 
 uint64_t
@@ -173,7 +173,7 @@ sa_htole64(uint64_t val)
 	un.words[LE64_HI] = sa_htole32(val >> 32);
 	un.words[LE64_LO] = sa_htole32(val & 0xffffffffU);
 
-	return (un.val);
+	return un.val;
 }
 
 uint64_t
@@ -189,7 +189,7 @@ sa_be64toh(uint64_t val)
 	rv = (((uint64_t)un.words[BE64_HI]) << 32) |
 	     un.words[BE64_LO];
 
-	return (rv);
+	return rv;
 }
 
 uint64_t
@@ -205,5 +205,5 @@ sa_le64toh(uint64_t val)
 	rv = (((uint64_t)un.words[LE64_HI]) << 32) |
 	     un.words[LE64_LO];
 
-	return (rv);
+	return rv;
 }

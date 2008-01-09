@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_exception.c,v 1.10 2007/05/17 14:51:37 yamt Exp $ */
+/*	$NetBSD: mach_exception.c,v 1.10.8.1 2008/01/09 01:51:25 matt Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_exception.c,v 1.10 2007/05/17 14:51:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_exception.c,v 1.10.8.1 2008/01/09 01:51:25 matt Exp $");
 
 #include "opt_compat_darwin.h"
 
@@ -364,7 +364,7 @@ mach_exception(exc_l, exc, code)
 	 * no new exception will be taken until the catcher
 	 * acknowledge the first one.
 	 */
-	lockmgr(&catcher_med->med_exclock, LK_EXCLUSIVE, NULL);
+	rw_enter(&catcher_med->med_exclock, RW_WRITER);
 
 	/*
 	 * If the catcher died, we are done.
@@ -396,7 +396,7 @@ mach_exception(exc_l, exc, code)
 	/*
 	 * Unlock the catcher's exception handler
 	 */
-	lockmgr(&catcher_med->med_exclock, LK_RELEASE, NULL);
+	rw_exit(&catcher_med->med_exclock);
 
 out:
 	MACH_PORT_UNREF(exc_port);
@@ -404,9 +404,7 @@ out:
 }
 
 static void
-mach_siginfo_to_exception(ksi, code)
-	const struct ksiginfo *ksi;
-	int *code;
+mach_siginfo_to_exception(const struct ksiginfo *ksi, int *code)
 {
 	code[1] = (long)ksi->ksi_addr;
 	switch (ksi->ksi_signo) {
@@ -479,8 +477,7 @@ mach_siginfo_to_exception(ksi, code)
 }
 
 int
-mach_exception_raise(args)
-	struct mach_trap_args *args;
+mach_exception_raise(struct mach_trap_args *args)
 {
 	struct lwp *l = args->l;
 	mach_exception_raise_reply_t *rep;
@@ -511,7 +508,7 @@ mach_exception_raise(args)
 	 * Check for unexpected exception acknowledge, whereas
 	 * the kernel sent no exception message.
 	 */
-	if (lockstatus(&med->med_exclock) == 0) {
+	if (!rw_lock_held(&med->med_exclock)) {
 #ifdef DEBUG_MACH
 		printf("spurious mach_exception_raise\n");
 #endif
@@ -530,15 +527,13 @@ mach_exception_raise(args)
 }
 
 int
-mach_exception_raise_state(args)
-	struct mach_trap_args *args;
+mach_exception_raise_state(struct mach_trap_args *args)
 {
 	return mach_exception_raise(args);
 }
 
 int
-mach_exception_raise_state_identity(args)
-	struct mach_trap_args *args;
+mach_exception_raise_state_identity(struct mach_trap_args *args)
 {
 	return mach_exception_raise(args);
 }

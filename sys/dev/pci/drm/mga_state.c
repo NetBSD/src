@@ -1,3 +1,5 @@
+/*	$NetBSD: mga_state.c,v 1.3.12.1 2008/01/09 01:54:07 matt Exp $	*/
+
 /* mga_state.c -- State support for MGA G200/G400 -*- linux-c -*-
  * Created: Thu Jan 27 02:53:43 2000 by jhartmann@precisioninsight.com
  */
@@ -34,6 +36,7 @@
  */
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mga_state.c,v 1.3.12.1 2008/01/09 01:54:07 matt Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/mga_state.c,v 1.11 2005/11/28 23:13:53 anholt Exp $");
 */
@@ -653,7 +656,7 @@ static void mga_dma_dispatch_swap(drm_device_t * dev)
 
 	FLUSH_DMA();
 
-	DRM_DEBUG("%s... done.\n", __FUNCTION__);
+	DRM_DEBUG("%s... done.\n", __func__);
 }
 
 static void mga_dma_dispatch_vertex(drm_device_t * dev, drm_buf_t * buf)
@@ -1016,7 +1019,7 @@ static int mga_dma_iload(DRM_IOCTL_ARGS)
 #if 0
 	if (mga_do_wait_for_idle(dev_priv) < 0) {
 		if (MGA_DMA_DEBUG)
-			DRM_INFO("%s: -EBUSY\n", __FUNCTION__);
+			DRM_INFO("%s: -EBUSY\n", __func__);
 		return DRM_ERR(EBUSY);
 	}
 #endif
@@ -1080,7 +1083,7 @@ static int mga_getparam(DRM_IOCTL_ARGS)
 	int value;
 
 	if (!dev_priv) {
-		DRM_ERROR("%s called with no initialization\n", __FUNCTION__);
+		DRM_ERROR("%s called with no initialization\n", __func__);
 		return DRM_ERR(EINVAL);
 	}
 
@@ -1116,7 +1119,7 @@ static int mga_set_fence(DRM_IOCTL_ARGS)
 	DMA_LOCALS;
 
 	if (!dev_priv) {
-		DRM_ERROR("%s called with no initialization\n", __FUNCTION__);
+		DRM_ERROR("%s called with no initialization\n", __func__);
 		return DRM_ERR(EINVAL);
 	}
 
@@ -1148,7 +1151,7 @@ static int mga_wait_fence(DRM_IOCTL_ARGS)
 	u32 fence;
 
 	if (!dev_priv) {
-		DRM_ERROR("%s called with no initialization\n", __FUNCTION__);
+		DRM_ERROR("%s called with no initialization\n", __func__);
 		return DRM_ERR(EINVAL);
 	}
 

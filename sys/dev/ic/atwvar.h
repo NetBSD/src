@@ -1,4 +1,4 @@
-/*	$NetBSD: atwvar.h,v 1.23 2007/03/04 06:01:50 christos Exp $	*/
+/*	$NetBSD: atwvar.h,v 1.23.16.1 2008/01/09 01:52:49 matt Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 The NetBSD Foundation, Inc.  All rights reserved.
@@ -159,24 +159,23 @@ enum atw_bbptype { ATW_BBPTYPE_INTERSIL = 0, ATW_BBPTYPE_RFMD  = 1,
 
 struct atw_rx_radiotap_header {
 	struct ieee80211_radiotap_header	ar_ihdr;
-	u_int8_t				ar_flags;
-	u_int8_t				ar_rate;
-	u_int16_t				ar_chan_freq;
-	u_int16_t				ar_chan_flags;
-	u_int8_t				ar_antsignal;
-} __attribute__((__packed__));
+	uint8_t					ar_flags;
+	uint8_t					ar_rate;
+	uint16_t				ar_chan_freq;
+	uint16_t				ar_chan_flags;
+	uint8_t					ar_antsignal;
+} __packed;
 
-#define ATW_TX_RADIOTAP_PRESENT	((1 << IEEE80211_RADIOTAP_FLAGS) | \
-				 (1 << IEEE80211_RADIOTAP_RATE) | \
+#define ATW_TX_RADIOTAP_PRESENT	((1 << IEEE80211_RADIOTAP_RATE) | \
 				 (1 << IEEE80211_RADIOTAP_CHANNEL))
 
 struct atw_tx_radiotap_header {
 	struct ieee80211_radiotap_header	at_ihdr;
-	u_int8_t				at_flags;
-	u_int8_t				at_rate;
-	u_int16_t				at_chan_freq;
-	u_int16_t				at_chan_flags;
-} __attribute__((__packed__));
+	uint8_t					at_rate;
+	uint8_t					at_pad;
+	uint16_t				at_chan_freq;
+	uint16_t				at_chan_flags;
+} __packed;
 
 enum atw_revision {
 	ATW_REVISION_AB = 0x11,	/* ADM8211A */
@@ -285,6 +284,13 @@ struct atw_softc {
 	uint8_t		sc_rf3000_options1;
 	uint8_t		sc_rf3000_options2;
 
+	struct evcnt	sc_recv_ev;
+	struct evcnt	sc_crc16e_ev;
+	struct evcnt	sc_crc32e_ev;
+	struct evcnt	sc_icve_ev;
+	struct evcnt	sc_sfde_ev;
+	struct evcnt	sc_sige_ev;
+
 	struct callout	sc_scan_ch;
 	union {
 		struct atw_rx_radiotap_header	tap;
@@ -338,7 +344,7 @@ struct atw_frame {
 			struct ieee80211_frame	ihdr;
 		} s2;
 	} u;
-} __attribute__((__packed__));
+} __packed;
 
 #define atw_hdrctl	u.s1.hdrctl
 #define atw_fragthr	u.s1.fragthr
@@ -401,26 +407,26 @@ do {									\
  * field is only 11 bits, we must subtract 1 from the length to avoid
  * having it truncated to 0!
  */
-#define	ATW_INIT_RXDESC(sc, x)						\
-do {									\
-	struct atw_rxsoft *__rxs = &sc->sc_rxsoft[(x)];			\
-	struct atw_rxdesc *__rxd = &sc->sc_rxdescs[(x)];		\
-	struct mbuf *__m = __rxs->rxs_mbuf;				\
-									\
-	__rxd->ar_buf1 =						\
-	    htole32(__rxs->rxs_dmamap->dm_segs[0].ds_addr);		\
-	__rxd->ar_buf2 =	/* for descriptor chaining */		\
-	    htole32(ATW_CDRXADDR((sc), ATW_NEXTRX((x))));		\
-	__rxd->ar_ctl =							\
-	    htole32(__SHIFTIN(((__m->m_ext.ext_size - 1) & ~0x3U),	\
-	                   ATW_RXCTL_RBS1_MASK) |			\
-		    0 /* ATW_RXCTL_RCH */ |				\
-	    ((x) == (ATW_NRXDESC - 1) ? ATW_RXCTL_RER : 0));		\
-	__rxd->ar_stat = htole32(ATW_RXSTAT_OWN);			\
-	            							\
-	ATW_CDRXSYNC((sc), (x),						\
-	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);			\
-} while (0)
+static inline void
+atw_init_rxdesc(struct atw_softc *sc, int x)
+{
+	struct atw_rxsoft *rxs = &sc->sc_rxsoft[x];
+	struct atw_rxdesc *rxd = &sc->sc_rxdescs[x];
+	struct mbuf *m = rxs->rxs_mbuf;
+
+	rxd->ar_buf1 =
+	    htole32(rxs->rxs_dmamap->dm_segs[0].ds_addr);
+	rxd->ar_buf2 =	/* for descriptor chaining */
+	    htole32(ATW_CDRXADDR((sc), ATW_NEXTRX(x)));
+	rxd->ar_ctlrssi =
+	    htole32(__SHIFTIN(((m->m_ext.ext_size - 1) & ~0x3U),
+	                   ATW_RXCTL_RBS1_MASK) |
+		    0 /* ATW_RXCTL_RCH */ |
+	    (x == (ATW_NRXDESC - 1) ? ATW_RXCTL_RER : 0));
+	rxd->ar_stat = htole32(ATW_RXSTAT_OWN);
+
+	ATW_CDRXSYNC((sc), x, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+}
 
 /* country codes from ADM8211 SROM */
 #define	ATW_COUNTRY_FCC 0		/* USA 1-11 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: statvfs.h,v 1.12 2007/07/17 11:19:35 pooka Exp $	 */
+/*	$NetBSD: statvfs.h,v 1.12.8.1 2008/01/09 01:58:18 matt Exp $	 */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -175,8 +175,9 @@ __END_DECLS
 #endif /* _KERNEL || _STANDALONE */
 
 #if defined(_KERNEL)
-#define	STATVFSBUF_GET()	malloc(sizeof(struct statvfs), M_TEMP, M_WAITOK)
-#define	STATVFSBUF_PUT(sb)	free(sb, M_TEMP);
+#include <sys/kmem.h>
+#define	STATVFSBUF_GET()	kmem_alloc(sizeof(struct statvfs), KM_SLEEP)
+#define	STATVFSBUF_PUT(sb)	kmem_free(sb, sizeof(struct statvfs))
 #endif /* defined(_KERNEL) */
 
 #endif /* !_SYS_STATVFS_H_ */

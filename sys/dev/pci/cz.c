@@ -1,4 +1,4 @@
-/*	$NetBSD: cz.c,v 1.45 2007/07/09 21:00:52 ad Exp $	*/
+/*	$NetBSD: cz.c,v 1.45.8.1 2008/01/09 01:53:40 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cz.c,v 1.45 2007/07/09 21:00:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cz.c,v 1.45.8.1 2008/01/09 01:53:40 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -739,7 +739,9 @@ cz_intr(void *arg)
 				/*
 				 * Do wakeup stuff here.
 				 */
+				mutex_spin_enter(&tty_lock); /* XXX */
 				ttwakeup(tp);
+				mutex_spin_exit(&tty_lock); /* XXX */
 				wakeup(tp);
 			}
 			break;
@@ -760,7 +762,9 @@ cz_intr(void *arg)
 				/*
 				 * Do wakeup stuff here.
 				 */
+				mutex_spin_enter(&tty_lock); /* XXX */
 				ttwakeup(tp);
+				mutex_spin_exit(&tty_lock); /* XXX */
 				wakeup(tp);
 			}
 			break;
@@ -808,7 +812,9 @@ cz_intr(void *arg)
 			 * flags set. So TTY_FE by itself works.
 			 */
 			(*tp->t_linesw->l_rint)(TTY_FE, tp);
+			mutex_spin_enter(&tty_lock); /* XXX */
 			ttwakeup(tp);
+			mutex_spin_exit(&tty_lock); /* XXX */
 			wakeup(tp);
 			break;
 
@@ -1475,17 +1481,8 @@ czttystart(struct tty *tp)
 	s = spltty();
 	if (ISSET(tp->t_state, TS_BUSY | TS_TIMEOUT | TS_TTSTOP))
 		goto out;
-
-	if (tp->t_outq.c_cc <= tp->t_lowat) {
-		if (ISSET(tp->t_state, TS_ASLEEP)) {
-			CLR(tp->t_state, TS_ASLEEP);
-			wakeup(&tp->t_outq);
-		}
-		selwakeup(&tp->t_wsel);
-		if (tp->t_outq.c_cc == 0)
-			goto out;
-	}
-
+	if (!ttypull(tp))
+		goto out;
 	cztty_transmit(sc, tp);
  out:
 	splx(s);

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_threadstuff.h,v 1.23 2007/07/18 19:04:59 ad Exp $	*/
+/*	$NetBSD: rf_threadstuff.h,v 1.23.6.1 2008/01/09 01:54:25 matt Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -48,7 +48,8 @@
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/kthread.h>
-#include <sys/lock.h>
+#include <sys/simplelock.h>
+#include <sys/mutex.h>
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -68,14 +69,14 @@ typedef void *RF_ThreadArg_t;
 
 
 /* non-spinlock */
-#define decl_lock_data(a,b) a struct lock b;
+#define decl_lock_data(a,b) a kmutex_t b;
 
 #define RF_DECLARE_LKMGR_MUTEX(_m_)           decl_lock_data(,(_m_))
 #define RF_DECLARE_LKMGR_STATIC_MUTEX(_m_)    decl_lock_data(static,(_m_))
 #define RF_DECLARE_LKMGR_EXTERN_MUTEX(_m_)    decl_lock_data(extern,(_m_))
 
-#define RF_LOCK_LKMGR_MUTEX(_m_)        lockmgr(&(_m_),LK_EXCLUSIVE,NULL)
-#define RF_UNLOCK_LKMGR_MUTEX(_m_)      lockmgr(&(_m_),LK_RELEASE,NULL)
+#define RF_LOCK_LKMGR_MUTEX(_m_)        mutex_enter(&(_m_))
+#define RF_UNLOCK_LKMGR_MUTEX(_m_)      mutex_exit(&(_m_))
 
 
 /*

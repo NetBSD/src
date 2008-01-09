@@ -1,4 +1,4 @@
-/*      $NetBSD: ip6_etherip.c,v 1.5 2007/05/02 20:40:26 dyoung Exp $        */
+/*      $NetBSD: ip6_etherip.c,v 1.5.8.1 2008/01/09 01:57:36 matt Exp $        */
 
 /*
  *  Copyright (c) 2006, Hans Rosenfeld <rosenfeld@grumpf.hope-2000.org>
@@ -58,6 +58,7 @@
  */
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ip6_etherip.c,v 1.5.8.1 2008/01/09 01:57:36 matt Exp $");
 
 #include "opt_inet.h"
 
@@ -97,6 +98,7 @@
 int
 ip6_etherip_output(struct ifnet *ifp, struct mbuf *m)
 {
+	struct rtentry *rt;
 	struct etherip_softc *sc = (struct etherip_softc *)ifp->if_softc;
 	struct sockaddr_in6 *sin6_src, *sin6_dst;
 	struct ip6_hdr *ip6;    /* capsule IP header, host byte ordered */
@@ -162,12 +164,12 @@ ip6_etherip_output(struct ifnet *ifp, struct mbuf *m)
 	}
 
 	sockaddr_in6_init(&u.dst6, &sin6_dst->sin6_addr, 0, 0, 0);
-	if (rtcache_lookup(&sc->sc_ro, &u.dst) == NULL) {
+	if ((rt = rtcache_lookup(&sc->sc_ro, &u.dst)) == NULL) {
 		m_freem(m);
 		return ENETUNREACH;
 	}
 	/* if it constitutes infinite encapsulation, punt. */
-	if (sc->sc_ro.ro_rt->rt_ifp == ifp) {
+	if (rt->rt_ifp == ifp) {
 		rtcache_free(&sc->sc_ro);
 		m_freem(m);
 		return ENETUNREACH;     /* XXX */

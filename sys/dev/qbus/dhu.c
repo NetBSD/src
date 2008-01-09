@@ -1,4 +1,4 @@
-/*	$NetBSD: dhu.c,v 1.47.16.2 2007/11/08 10:59:56 matt Exp $	*/
+/*	$NetBSD: dhu.c,v 1.47.16.3 2008/01/09 01:54:21 matt Exp $	*/
 /*
  * Copyright (c) 2003, Hugh Graham.
  * Copyright (c) 1992, 1993
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dhu.c,v 1.47.16.2 2007/11/08 10:59:56 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dhu.c,v 1.47.16.3 2008/01/09 01:54:21 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -358,7 +358,7 @@ dhurint(arg)
 		}
 
 		if (!(tp->t_state & TS_ISOPEN)) {
-			wakeup((void *)&tp->t_rawq);
+			clwakeup(&tp->t_rawq);
 			continue;
 		}
 
@@ -438,9 +438,6 @@ dhuopen(dev, flag, mode, l)
 	if (line >= sc->sc_lines)
 		return ENXIO;
 
-	if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN, tp))
-		return (EBUSY);
-
 	mutex_spin_enter(&tty_lock);
 	if (sc->sc_type == IS_DHU) {
 		/* CSR 3:0 must be 0 */
@@ -452,6 +449,10 @@ dhuopen(dev, flag, mode, l)
 	sc->sc_dhu[line].dhu_modem = DHU_READ_WORD(DHU_UBA_STAT);
 
 	tp = sc->sc_dhu[line].dhu_tty;
+
+	if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN, tp))
+		return (EBUSY);
+
 	tp->t_oproc   = dhustart;
 	tp->t_param   = dhuparam;
 	tp->t_hwiflow = dhuiflow;
@@ -685,14 +686,7 @@ dhustart(tp)
 	s = spltty();
 	if (tp->t_state & (TS_TIMEOUT|TS_BUSY|TS_TTSTOP))
 		goto out;
-	if (tp->t_outq.c_cc <= tp->t_lowat) {
-		if (tp->t_state & TS_ASLEEP) {
-			tp->t_state &= ~TS_ASLEEP;
-			wakeup((void *)&tp->t_outq);
-		}
-		selwakeup(&tp->t_wsel);
-	}
-	if (tp->t_outq.c_cc == 0)
+	if (!ttypull(tp))
 		goto out;
 	cc = ndqb(&tp->t_outq, 0);
 	if (cc == 0)

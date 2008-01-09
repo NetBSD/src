@@ -1,4 +1,4 @@
-/*	$NetBSD: intvec.S,v 1.12 2007/04/06 17:45:41 matt Exp $   */
+/*	$NetBSD: intvec.S,v 1.12.14.1 2008/01/09 01:49:36 matt Exp $   */
 
 /*
  * Copyright (c) 1994, 1997 Ludd, University of Lule}, Sweden.
@@ -296,71 +296,6 @@ SCBENTRY(sbiflt);
 	calls	$1, _C_LABEL(panic)
 
 TRAPCALL(astintr, T_ASTFLT)
-
-SCBENTRY(softclock)
-	PUSHR
-	movab	_C_LABEL(softclock_head),%r0
-	jsb	softintr_dispatch
-	incl	_C_LABEL(softclock_intrcnt)+EV_COUNT
-	adwc	$0,_C_LABEL(softclock_intrcnt)+EV_COUNT+4
-	incl	_C_LABEL(uvmexp)+UVME_SOFTS
-	POPR
-	rei
-
-SCBENTRY(softnet)
-	PUSHR
-
-#	tstl	_C_LABEL(netisr)			# any netisr's set
-#	beql	2f			# no, skip looking at them one by one
-#define DONETISR(bit, fn) \
-	bbcci	$bit,_C_LABEL(netisr),1f; \
-	calls	$0,_C_LABEL(fn); \
-	1:
-
-#include <net/netisr_dispatch.h>
-
-#undef DONETISR
-
-2:	movab	_C_LABEL(softnet_head),%r0
-	jsb	softintr_dispatch
-	incl	_C_LABEL(softnet_intrcnt)+EV_COUNT
-	adwc	$0,_C_LABEL(softnet_intrcnt)+EV_COUNT+4
-	incl	_C_LABEL(uvmexp)+UVME_SOFTS
-	POPR
-	rei
-
-SCBENTRY(softserial)
-	PUSHR
-	movab	_C_LABEL(softserial_head),%r0
-	jsb	softintr_dispatch
-	incl	_C_LABEL(softserial_intrcnt)+EV_COUNT
-	adwc	$0,_C_LABEL(softserial_intrcnt)+EV_COUNT+4
-	incl	_C_LABEL(uvmexp)+UVME_SOFTS
-	POPR
-	rei
-
-	.align	2
-softintr_dispatch:
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
-	pushl	%r0
-	calls	$0,_C_LABEL(krnlock)
-	movl	(%sp)+,%r0
-#endif
-	movl	SHD_INTRS(%r0), %r0	# anything to do? (get first handler)
-	beql	3f			# nope return
-	pushl	%r7			# we need to use %r7 so save it
-	movl	%r0, %r7			# move first item to %r7
-1:	bbcc	$0,SH_PENDING(%r7),2f	# need call this one?
-	pushl	SH_ARG(%r7)		# push function argument
-	calls	$1, *SH_FUNC(%r7)	# call function
-2:	movl	SH_NEXT(%r7), %r7		# get next handler
-	bneq	1b			# if not null, process it
-	movl	(%sp)+, %r7		# done, restore %r7
-3:
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
-	calls	$0,_C_LABEL(krnunlock)
-#endif
-	rsb				# return to caller
 
 TRAPCALL(ddbtrap, T_KDBTRAP)
 

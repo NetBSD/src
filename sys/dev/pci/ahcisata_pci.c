@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_pci.c,v 1.1 2007/05/12 11:04:59 bouyer Exp $	*/
+/*	$NetBSD: ahcisata_pci.c,v 1.1.14.1 2008/01/09 01:53:32 matt Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.1 2007/05/12 11:04:59 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.1.14.1 2008/01/09 01:53:32 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -39,6 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.1 2007/05/12 11:04:59 bouyer Exp 
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/disklabel.h>
+#include <sys/pmf.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -48,10 +49,19 @@ __KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.1 2007/05/12 11:04:59 bouyer Exp 
 #include <dev/pci/pciidevar.h>
 #include <dev/ic/ahcisatavar.h>
 
+struct ahci_pci_softc {
+	struct ahci_softc ah_sc; /* must come first, struct device */
+	pci_chipset_tag_t sc_pc;
+	pcitag_t sc_pcitag;
+};
+
+
 static int  ahci_pci_match(struct device *, struct cfdata *, void *);
 static void ahci_pci_attach(struct device *, struct device *, void *);
+static bool ahci_pci_resume(device_t);
 
-CFATTACH_DECL(ahcisata_pci, sizeof(struct ahci_softc),
+
+CFATTACH_DECL(ahcisata_pci, sizeof(struct ahci_pci_softc),
     ahci_pci_match, ahci_pci_attach, NULL, NULL);
 
 static int
@@ -85,7 +95,8 @@ static void
 ahci_pci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
-	struct ahci_softc *sc = (struct ahci_softc *)self;
+	struct ahci_pci_softc *psc = (struct ahci_pci_softc *)self;
+	struct ahci_softc *sc = &psc->ah_sc;
 	bus_size_t size;
 	char devinfo[256];
 	const char *intrstr;
@@ -98,6 +109,9 @@ ahci_pci_attach(struct device *parent, struct device *self, void *aux)
 		aprint_error("%s: can't map ahci registers\n", AHCINAME(sc));
 		return;
 	}
+	psc->sc_pc = pa->pa_pc;
+	psc->sc_pcitag = pa->pa_tag;
+
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
 	aprint_naive(": AHCI disk controller\n");
 	aprint_normal(": %s\n", devinfo);
@@ -116,4 +130,24 @@ ahci_pci_attach(struct device *parent, struct device *self, void *aux)
 	    intrstr ? intrstr : "unknown interrupt");
 	sc->sc_dmat = pa->pa_dmat;
 	ahci_attach(sc);
+
+	if (!pmf_device_register(self, NULL, ahci_pci_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+}
+
+static bool
+ahci_pci_resume(device_t dv)
+{
+	struct ahci_pci_softc *psc = device_private(dv);
+	struct ahci_softc *sc = &psc->ah_sc;
+	int s;
+
+	s = splbio();
+	ahci_reset(sc);
+	ahci_setup_ports(sc);
+	ahci_reprobe_drives(sc);
+	ahci_enable_intrs(sc);
+	splx(s);
+
+	return true;
 }

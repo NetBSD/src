@@ -1,4 +1,4 @@
-/*	$NetBSD: dmover_process.c,v 1.2.76.1 2007/11/06 23:25:58 matt Exp $	*/
+/*	$NetBSD: dmover_process.c,v 1.2.76.2 2008/01/09 01:52:32 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -40,12 +40,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmover_process.c,v 1.2.76.1 2007/11/06 23:25:58 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dmover_process.c,v 1.2.76.2 2008/01/09 01:52:32 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/intr.h>
+#include <sys/simplelock.h>
 
 #include <dev/dmover/dmovervar.h>
 

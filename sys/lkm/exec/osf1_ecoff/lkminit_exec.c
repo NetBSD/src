@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_exec.c,v 1.8 2005/12/11 12:24:48 christos Exp $ */
+/* $NetBSD: lkminit_exec.c,v 1.8.46.1 2008/01/09 01:56:53 matt Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_exec.c,v 1.8 2005/12/11 12:24:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_exec.c,v 1.8.46.1 2008/01/09 01:56:53 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: lkminit_exec.c,v 1.8 2005/12/11 12:24:48 christos Ex
 #include <compat/osf1/osf1.h>
 #include <compat/osf1/osf1_exec.h>
 
-int exec_osf1_ecoff_lkmentry __P((struct lkm_table *, int, int));
+int exec_osf1_ecoff_lkmentry(struct lkm_table *, int, int);
 
 static struct execsw exec_osf1_ecoff =
 	/* OSF/1 (Digital Unix) ECOFF */

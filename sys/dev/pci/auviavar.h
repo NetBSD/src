@@ -1,4 +1,4 @@
-/*	$NetBSD: auviavar.h,v 1.11 2007/02/21 23:00:00 thorpej Exp $	*/
+/*	$NetBSD: auviavar.h,v 1.11.18.1 2008/01/09 01:53:35 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -74,10 +74,6 @@ struct auvia_softc {
 	struct auvia_dma *sc_dmas;
 
 	struct auvia_softc_chan sc_play, sc_record;
-
-	/* Power Management */
-	void *sc_powerhook;
-	int sc_suspend;
 
 #define AUVIA_NFORMATS	8
 	struct audio_format sc_formats[AUVIA_NFORMATS];

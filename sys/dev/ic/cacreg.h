@@ -1,4 +1,4 @@
-/*	$NetBSD: cacreg.h,v 1.8 2006/11/28 23:06:33 ad Exp $	*/
+/*	$NetBSD: cacreg.h,v 1.8.24.1 2008/01/09 01:52:49 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -138,7 +138,7 @@ struct cac_drive_info {
 	u_int8_t	nsectors;
 	u_int8_t	checksum;
 	u_int8_t	mirror;
-} __attribute__((__packed__));
+} __packed;
 
 struct cac_controller_info {
 	u_int8_t	num_drvs;
@@ -175,13 +175,13 @@ struct cac_controller_info {
 	u_int8_t	red_ctlr_stat;
 	u_int8_t	red_fail_reason;
 	u_int8_t	reserved[403];
-} __attribute__((__packed__));
+} __packed;
 
 struct cac_hdr {
 	u_int8_t	drive;		/* logical drive */
 	u_int8_t	priority;	/* block priority */
 	u_int16_t	size;		/* size of request, in words */
-} __attribute__((__packed__));
+} __packed;
 
 struct cac_req {
 	u_int16_t	next;		/* offset of next request */
@@ -191,11 +191,11 @@ struct cac_req {
 	u_int16_t	bcount;		/* block count */
 	u_int8_t	sgcount;	/* number of scatter/gather entries */
 	u_int8_t	reserved;	/* reserved */
-} __attribute__((__packed__));
+} __packed;
 
 struct cac_sgb {
 	u_int32_t	length;		/* length of S/G segment */
 	u_int32_t	addr;		/* physical address of block */
-} __attribute__((__packed__));
+} __packed;
 
 #endif	/* !_IC_CACREG_H_ */

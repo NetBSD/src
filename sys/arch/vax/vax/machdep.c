@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.158 2007/03/04 06:01:01 christos Exp $	 */
+/* $NetBSD: machdep.c,v 1.158.20.1 2008/01/09 01:49:37 matt Exp $	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.158 2007/03/04 06:01:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.158.20.1 2008/01/09 01:49:37 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -169,10 +169,6 @@ struct vm_map *phys_map = NULL;
 #ifdef DEBUG
 int iospace_inited = 0;
 #endif
-
-struct softintr_head softclock_head = { IPL_SOFTCLOCK };
-struct softintr_head softnet_head = { IPL_SOFTNET };
-struct softintr_head softserial_head = { IPL_SOFTSERIAL };
 
 void
 cpu_startup()
@@ -613,40 +609,6 @@ vax_unmap_physmem(addr, size)
 			     (iomap_ex_malloc_safe ? EX_MALLOCOK : 0)))
 		printf("vax_unmap_physmem: addr 0x%lx size %dvpg: "
 		    "can't free region\n", addr, size);
-}
-
-void *
-softintr_establish(int ipl, void (*func)(void *), void *arg)
-{
-	struct softintr_handler *sh;
-	struct softintr_head *shd;
-
-	switch (ipl) {
-	case IPL_SOFTCLOCK: shd = &softclock_head; break;
-	case IPL_SOFTNET: shd = &softnet_head; break;
-	case IPL_SOFTSERIAL: shd = &softserial_head; break;
-	default: panic("softintr_establish: unsupported soft IPL");
-	}
-
-	sh = malloc(sizeof(*sh), M_SOFTINTR, M_NOWAIT);
-	if (sh == NULL)
-		return NULL;
-
-	LIST_INSERT_HEAD(&shd->shd_intrs, sh, sh_link);
-	sh->sh_head = shd;
-	sh->sh_pending = 0;
-	sh->sh_func = func;
-	sh->sh_arg = arg;
-
-	return sh;
-}
-
-void
-softintr_disestablish(void *arg)
-{
-	struct softintr_handler *sh = arg;
-	LIST_REMOVE(sh, sh_link);
-	free(sh, M_SOFTINTR);
 }
 
 #include <dev/bi/bivar.h>

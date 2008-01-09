@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_apollo_reg.h,v 1.16 2005/12/11 12:22:50 christos Exp $	*/
+/*	$NetBSD: pciide_apollo_reg.h,v 1.16.46.1 2008/01/09 01:53:58 matt Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -150,21 +150,21 @@
 #define APO_UDMA_CLK66(channel) (0x08 << ((1 - (channel)) << 4)) /* via only */
 
 /* for via */
-static const int8_t via_udma133_tim[] __attribute__((__unused__)) =
+static const int8_t via_udma133_tim[] __unused =
     {0x07, 0x07, 0x06, 0x04, 0x02, 0x01, 0x00};
-static const int8_t via_udma100_tim[] __attribute__((__unused__)) =
+static const int8_t via_udma100_tim[] __unused =
     {0x07, 0x07, 0x04, 0x02, 0x01, 0x00};
-static const int8_t via_udma66_tim[] __attribute__((__unused__)) =
+static const int8_t via_udma66_tim[] __unused =
     {0x03, 0x03, 0x02, 0x01, 0x00};
-static const int8_t via_udma33_tim[] __attribute__((__unused__)) =
+static const int8_t via_udma33_tim[] __unused =
     {0x03, 0x02, 0x00};
 
 /* for amd and nvidia */
-static const int8_t amd7x6_udma_tim[] __attribute__((__unused__)) =
+static const int8_t amd7x6_udma_tim[] __unused =
     {0x02, 0x01, 0x00, 0x04, 0x05, 0x06, 0x07};
 
 /* for all */
-static const int8_t apollo_pio_set[] __attribute__((__unused__)) =
+static const int8_t apollo_pio_set[] __unused =
     {0x0a, 0x0a, 0x0a, 0x02, 0x02};
-static const int8_t apollo_pio_rec[] __attribute__((__unused__)) =
+static const int8_t apollo_pio_rec[] __unused =
     {0x08, 0x08, 0x08, 0x02, 0x00};

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.143.2.1 2007/11/06 23:29:10 matt Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.143.2.2 2008/01/09 01:53:51 matt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.143.2.1 2007/11/06 23:29:10 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.143.2.2 2008/01/09 01:53:51 matt Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -268,11 +268,8 @@ struct wm_softc {
 	bus_space_handle_t sc_flashh;	/* flash registers space handle */
 	bus_dma_tag_t sc_dmat;		/* bus DMA tag */
 	struct ethercom sc_ethercom;	/* ethernet common data */
-	void *sc_sdhook;		/* shutdown hook */
-	void *sc_powerhook;		/* power hook */
 	pci_chipset_tag_t sc_pc;
 	pcitag_t sc_pcitag;
-	struct pci_conf_state sc_pciconf;
 
 	wm_chip_type sc_type;		/* chip type */
 	int sc_flags;			/* flags; see below */
@@ -522,9 +519,6 @@ static void	wm_watchdog(struct ifnet *);
 static int	wm_ioctl(struct ifnet *, u_long, void *);
 static int	wm_init(struct ifnet *);
 static void	wm_stop(struct ifnet *, int);
-
-static void	wm_shutdown(void *);
-static void	wm_powerhook(int, void *);
 
 static void	wm_reset(struct wm_softc *);
 static void	wm_rxdrain(struct wm_softc *);
@@ -1617,19 +1611,11 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 	    NULL, sc->sc_dev.dv_xname, "rx_macctl");
 #endif /* WM_EVENT_COUNTERS */
 
-	/*
-	 * Make sure the interface is shutdown during reboot.
-	 */
-	sc->sc_sdhook = shutdownhook_establish(wm_shutdown, sc);
-	if (sc->sc_sdhook == NULL)
-		aprint_error("%s: WARNING: unable to establish shutdown hook\n",
-		    sc->sc_dev.dv_xname);
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+	else
+		pmf_class_network_register(self, ifp);
 
-	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
-	    wm_powerhook, sc);
-	if (sc->sc_powerhook == NULL)
-		aprint_error("%s: can't establish powerhook\n",
-		    sc->sc_dev.dv_xname);
 	return;
 
 	/*
@@ -1657,48 +1643,6 @@ wm_attach(struct device *parent, struct device *self, void *aux)
  fail_1:
 	bus_dmamem_free(sc->sc_dmat, &seg, rseg);
  fail_0:
-	return;
-}
-
-/*
- * wm_shutdown:
- *
- *	Make sure the interface is stopped at reboot time.
- */
-static void
-wm_shutdown(void *arg)
-{
-	struct wm_softc *sc = arg;
-
-	wm_stop(&sc->sc_ethercom.ec_if, 1);
-}
-
-static void
-wm_powerhook(int why, void *arg)
-{
-	struct wm_softc *sc = arg;
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
-	pci_chipset_tag_t pc = sc->sc_pc;
-	pcitag_t tag = sc->sc_pcitag;
-
-	switch (why) {
-	case PWR_SOFTSUSPEND:
-		wm_shutdown(sc);
-		break;
-	case PWR_SOFTRESUME:
-		ifp->if_flags &= ~IFF_RUNNING;
-		wm_init(ifp);
-		if (ifp->if_flags & IFF_RUNNING)
-			wm_start(ifp);
-		break;
-	case PWR_SUSPEND:
-		pci_conf_capture(pc, tag, &sc->sc_pciconf);
-		break;
-	case PWR_RESUME:
-		pci_conf_restore(pc, tag, &sc->sc_pciconf);
-		break;
-	}
-
 	return;
 }
 
@@ -3088,8 +3032,8 @@ wm_init(struct ifnet *ifp)
 		CSR_WRITE(sc, WMREG_TDLEN, WM_TXDESCSIZE(sc));
 		CSR_WRITE(sc, WMREG_TDH, 0);
 		CSR_WRITE(sc, WMREG_TDT, 0);
-		CSR_WRITE(sc, WMREG_TIDV, 64);
-		CSR_WRITE(sc, WMREG_TADV, 128);
+		CSR_WRITE(sc, WMREG_TIDV, 375);		/* ITR / 4 */
+		CSR_WRITE(sc, WMREG_TADV, 375);		/* should be same */
 
 		CSR_WRITE(sc, WMREG_TXDCTL, TXDCTL_PTHRESH(0) |
 		    TXDCTL_HTHRESH(0) | TXDCTL_WTHRESH(0));
@@ -3130,8 +3074,8 @@ wm_init(struct ifnet *ifp)
 		CSR_WRITE(sc, WMREG_RDLEN, sizeof(sc->sc_rxdescs));
 		CSR_WRITE(sc, WMREG_RDH, 0);
 		CSR_WRITE(sc, WMREG_RDT, 0);
-		CSR_WRITE(sc, WMREG_RDTR, 0 | RDTR_FPD);
-		CSR_WRITE(sc, WMREG_RADV, 128);
+		CSR_WRITE(sc, WMREG_RDTR, 375 | RDTR_FPD);	/* ITR/4 */
+		CSR_WRITE(sc, WMREG_RADV, 375);		/* MUST be same */
 	}
 	for (i = 0; i < WM_NRXDESC; i++) {
 		rxs = &sc->sc_rxsoft[i];
@@ -3247,8 +3191,18 @@ wm_init(struct ifnet *ifp)
 	CSR_WRITE(sc, WMREG_TIPG, sc->sc_tipg);
 
 	if (sc->sc_type >= WM_T_82543) {
-		/* Set up the interrupt throttling register (units of 256ns) */
-		sc->sc_itr = 1000000000 / (7000 * 256);
+		/*
+		 * Set up the interrupt throttling register (units of 256ns)
+		 * Note that a footnote in Intel's documentation says this
+		 * ticker runs at 1/4 the rate when the chip is in 100Mbit
+		 * or 10Mbit mode.  Empirically, it appears to be the case
+		 * that that is also true for the 1024ns units of the other
+		 * interrupt-related timer registers -- so, really, we ought
+		 * to divide this value by 4 when the link speed is low.
+		 *
+		 * XXX implement this division at link speed change!
+		 */
+		sc->sc_itr = 1000000000 / (1500 * 256);	/* 2604 ints/sec */
 		CSR_WRITE(sc, WMREG_ITR, sc->sc_itr);
 	}
 

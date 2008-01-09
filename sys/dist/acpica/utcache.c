@@ -1,7 +1,9 @@
+/*	$NetBSD: utcache.c,v 1.1.46.1 2008/01/09 01:55:26 matt Exp $	*/
+
 /******************************************************************************
  *
  * Module Name: utcache - local cache allocation routines
- *              xRevision: 1.3 $
+ *              $Revision: 1.1.46.1 $
  *
  *****************************************************************************/
 
@@ -9,7 +11,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2007, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -115,11 +117,11 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: utcache.c,v 1.1 2006/03/23 13:36:32 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: utcache.c,v 1.1.46.1 2008/01/09 01:55:26 matt Exp $");
 
 #define __UTCACHE_C__
 
-#include "acpi.h"
+#include <dist/acpica/acpi.h>
 
 #define _COMPONENT          ACPI_UTILITIES
         ACPI_MODULE_NAME    ("utcache")
@@ -215,7 +217,7 @@ AcpiOsPurgeCache (
 
         Next = *(ACPI_CAST_INDIRECT_PTR (char,
                     &(((char *) Cache->ListHead)[Cache->LinkOffset])));
-        ACPI_MEM_FREE (Cache->ListHead);
+        ACPI_FREE (Cache->ListHead);
 
         Cache->ListHead = Next;
         Cache->CurrentDepth--;
@@ -297,7 +299,7 @@ AcpiOsReleaseObject (
 
     if (Cache->CurrentDepth >= Cache->MaxDepth)
     {
-        ACPI_MEM_FREE (Object);
+        ACPI_FREE (Object);
         ACPI_MEM_TRACKING (Cache->TotalFreed++);
     }
 
@@ -351,7 +353,7 @@ AcpiOsAcquireObject (
     void                    *Object;
 
 
-    ACPI_FUNCTION_NAME ("OsAcquireObject");
+    ACPI_FUNCTION_NAME (OsAcquireObject);
 
 
     if (!Cache)
@@ -380,8 +382,8 @@ AcpiOsAcquireObject (
         Cache->CurrentDepth--;
 
         ACPI_MEM_TRACKING (Cache->Hits++);
-        ACPI_MEM_TRACKING (ACPI_DEBUG_PRINT ((ACPI_DB_EXEC,
-            "Object %p from %s cache\n", Object, Cache->ListName)));
+        ACPI_DEBUG_PRINT ((ACPI_DB_EXEC,
+            "Object %p from %s cache\n", Object, Cache->ListName));
 
         Status = AcpiUtReleaseMutex (ACPI_MTX_CACHES);
         if (ACPI_FAILURE (Status))
@@ -399,7 +401,14 @@ AcpiOsAcquireObject (
 
         ACPI_MEM_TRACKING (Cache->TotalAllocated++);
 
-        /* Avoid deadlock with ACPI_MEM_CALLOCATE */
+#ifdef ACPI_DBG_TRACK_ALLOCATIONS
+        if ((Cache->TotalAllocated - Cache->TotalFreed) > Cache->MaxOccupied)
+        {
+            Cache->MaxOccupied = Cache->TotalAllocated - Cache->TotalFreed;
+        }
+#endif
+
+        /* Avoid deadlock with ACPI_ALLOCATE_ZEROED */
 
         Status = AcpiUtReleaseMutex (ACPI_MTX_CACHES);
         if (ACPI_FAILURE (Status))
@@ -407,7 +416,7 @@ AcpiOsAcquireObject (
             return (NULL);
         }
 
-        Object = ACPI_MEM_CALLOCATE (Cache->ObjectSize);
+        Object = ACPI_ALLOCATE_ZEROED (Cache->ObjectSize);
         if (!Object)
         {
             return (NULL);

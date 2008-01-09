@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_oldolduname.c,v 1.63 2007/05/10 21:30:15 christos Exp $	*/
+/*	$NetBSD: linux_oldolduname.c,v 1.63.8.1 2008/01/09 01:51:13 matt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_oldolduname.c,v 1.63 2007/05/10 21:30:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_oldolduname.c,v 1.63.8.1 2008/01/09 01:51:13 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,19 +58,18 @@ __KERNEL_RCSID(0, "$NetBSD: linux_oldolduname.c,v 1.63 2007/05/10 21:30:15 chris
 /* Not used on: alpha, m68k, sparc, sparc64 */
 
 int
-linux_sys_oldolduname(struct lwp *l, void *v,
-    register_t *retval)
+linux_sys_oldolduname(struct lwp *l, const struct linux_sys_oldolduname_args *uap, register_t *retval)
 {
-	struct linux_sys_uname_args /* {
+	/* {
 		syscallarg(struct linux_oldoldutsname *) up;
-	} */ *uap = v;
+	} */
 	struct linux_oldoldutsname luts;
 
-	strncpy(luts.l_sysname, linux_sysname, sizeof(luts.l_sysname));
-	strncpy(luts.l_nodename, hostname, sizeof(luts.l_nodename));
-	strncpy(luts.l_release, linux_release, sizeof(luts.l_release));
-	strncpy(luts.l_version, linux_version, sizeof(luts.l_version));
-	strncpy(luts.l_machine, LINUX_UNAME_ARCH, sizeof(luts.l_machine));
+	strlcpy(luts.l_sysname, linux_sysname, sizeof(luts.l_sysname));
+	strlcpy(luts.l_nodename, hostname, sizeof(luts.l_nodename));
+	strlcpy(luts.l_release, linux_release, sizeof(luts.l_release));
+	strlcpy(luts.l_version, linux_version, sizeof(luts.l_version));
+	strlcpy(luts.l_machine, LINUX_UNAME_ARCH, sizeof(luts.l_machine));
 
 	return copyout(&luts, SCARG(uap, up), sizeof(luts));
 }

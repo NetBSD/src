@@ -1,4 +1,4 @@
-/*	$NetBSD: auacer.c,v 1.16.16.1 2007/11/06 23:28:38 matt Exp $	*/
+/*	$NetBSD: auacer.c,v 1.16.16.2 2008/01/09 01:53:33 matt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auacer.c,v 1.16.16.1 2007/11/06 23:28:38 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auacer.c,v 1.16.16.2 2008/01/09 01:53:33 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -133,10 +133,6 @@ struct auacer_softc {
 
 	int  sc_dmamap_flags;
 
-	/* Power Management */
-	void *sc_powerhook;
-	int sc_suspend;
-
 #define AUACER_NFORMATS	3
 	struct audio_format sc_formats[AUACER_NFORMATS];
 	struct audio_encoding_set *sc_encodings;
@@ -194,7 +190,7 @@ static int	auacer_allocmem(struct auacer_softc *, size_t, size_t,
 				struct auacer_dma *);
 static int	auacer_freemem(struct auacer_softc *, struct auacer_dma *);
 
-static void	auacer_powerhook(int, void *);
+static bool	auacer_resume(device_t);
 static int	auacer_set_rate(struct auacer_softc *, int, u_int);
 
 static void auacer_reset(struct auacer_softc *sc);
@@ -350,14 +346,12 @@ auacer_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	/* Watch for power change */
-	sc->sc_suspend = PWR_RESUME;
-	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
-	    auacer_powerhook, sc);
-
 	audio_attach_mi(&auacer_hw_if, sc, &sc->sc_dev);
 
 	auacer_reset(sc);
+
+	if (!pmf_device_register(self, NULL, auacer_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
 CFATTACH_DECL(auacer, sizeof(struct auacer_softc),
@@ -1030,38 +1024,14 @@ auacer_alloc_cdata(struct auacer_softc *sc)
 	return error;
 }
 
-static void
-auacer_powerhook(int why, void *addr)
+static bool
+auacer_resume(device_t dv)
 {
-	struct auacer_softc *sc;
+	struct auacer_softc *sc = device_private(dv);
 
-	sc = (struct auacer_softc *)addr;
-	switch (why) {
-	case PWR_SUSPEND:
-	case PWR_STANDBY:
-		/* Power down */
-		DPRINTF(1, ("%s: power down\n", sc->sc_dev.dv_xname));
-		sc->sc_suspend = why;
-		break;
+	auacer_reset_codec(sc);
+	delay(1000);
+	sc->codec_if->vtbl->restore_ports(sc->codec_if);
 
-	case PWR_RESUME:
-		/* Wake up */
-		DPRINTF(1, ("%s: power resume\n", sc->sc_dev.dv_xname));
-		if (sc->sc_suspend == PWR_RESUME) {
-			printf("%s: resume without suspend.\n",
-			    sc->sc_dev.dv_xname);
-			sc->sc_suspend = why;
-			return;
-		}
-		sc->sc_suspend = why;
-		auacer_reset_codec(sc);
-		delay(1000);
-		sc->codec_if->vtbl->restore_ports(sc->codec_if);
-		break;
-
-	case PWR_SOFTSUSPEND:
-	case PWR_SOFTSTANDBY:
-	case PWR_SOFTRESUME:
-		break;
-	}
+	return true;
 }

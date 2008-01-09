@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_tty.c,v 1.35 2007/04/03 16:11:31 hannken Exp $	*/
+/*	$NetBSD: tty_tty.c,v 1.35.10.1 2008/01/09 01:56:27 matt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993, 1995
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_tty.c,v 1.35 2007/04/03 16:11:31 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_tty.c,v 1.35.10.1 2008/01/09 01:56:27 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,7 +74,7 @@ cttyopen(dev_t dev, int flag, int mode, struct lwp *l)
 	  (flag&FREAD ? VREAD : 0) | (flag&FWRITE ? VWRITE : 0), l->l_cred, l);
 	if (!error)
 #endif /* PARANOID */
-		error = VOP_OPEN(ttyvp, flag, NOCRED, l);
+		error = VOP_OPEN(ttyvp, flag, NOCRED);
 	VOP_UNLOCK(ttyvp, 0);
 	return (error);
 }
@@ -130,7 +130,7 @@ cttyioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 		mutex_exit(&proclist_lock);
 		return (rv);
 	}
-	return (VOP_IOCTL(ttyvp, cmd, addr, flag, NOCRED, l));
+	return (VOP_IOCTL(ttyvp, cmd, addr, flag, NOCRED));
 }
 
 /*ARGSUSED*/
@@ -141,7 +141,7 @@ cttypoll(dev_t dev, int events, struct lwp *l)
 
 	if (ttyvp == NULL)
 		return (seltrue(dev, events, l));
-	return (VOP_POLL(ttyvp, events, l));
+	return (VOP_POLL(ttyvp, events));
 }
 
 static int

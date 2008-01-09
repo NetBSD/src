@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.47.4.1 2007/11/06 23:31:04 matt Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.47.4.2 2008/01/09 01:55:40 matt Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.47.4.1 2007/11/06 23:31:04 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.47.4.2 2008/01/09 01:55:40 matt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -92,7 +92,7 @@ struct vfsops cd9660_vfsops = {
 	cd9660_start,
 	cd9660_unmount,
 	cd9660_root,
-	cd9660_quotactl,
+	(void *)eopnotsupp,
 	cd9660_statvfs,
 	cd9660_sync,
 	cd9660_vget,
@@ -130,7 +130,7 @@ int
 cd9660_mountroot()
 {
 	struct mount *mp;
-	struct lwp *l = curlwp;	/* XXX */
+	struct lwp *l = curlwp;
 	int error;
 	struct iso_args args;
 
@@ -153,7 +153,7 @@ cd9660_mountroot()
 	mutex_enter(&mountlist_lock);
 	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
 	mutex_exit(&mountlist_lock);
-	(void)cd9660_statvfs(mp, &mp->mnt_stat, l);
+	(void)cd9660_statvfs(mp, &mp->mnt_stat);
 	vfs_unbusy(mp);
 	return (0);
 }
@@ -164,13 +164,13 @@ cd9660_mountroot()
  * mount system call
  */
 int
-cd9660_mount(mp, path, data, data_len, l)
+cd9660_mount(mp, path, data, data_len)
 	struct mount *mp;
 	const char *path;
 	void *data;
 	size_t *data_len;
-	struct lwp *l;
 {
+	struct lwp *l = curlwp;
 	struct nameidata nd;
 	struct vnode *devvp;
 	struct iso_args *args = data;
@@ -199,7 +199,7 @@ cd9660_mount(mp, path, data, data_len, l)
 	 * Not an update, or updating the name: look up the name
 	 * and verify that it refers to a sensible block device.
 	 */
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, args->fspec, l);
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, args->fspec);
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	devvp = nd.ni_vp;
@@ -218,7 +218,7 @@ cd9660_mount(mp, path, data, data_len, l)
 	 */
 	if (kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER, NULL) != 0) {
 		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-		error = VOP_ACCESS(devvp, VREAD, l->l_cred, l);
+		error = VOP_ACCESS(devvp, VREAD, l->l_cred);
 		VOP_UNLOCK(devvp, 0);
 		if (error) {
 			vrele(devvp);
@@ -239,13 +239,13 @@ cd9660_mount(mp, path, data, data_len, l)
 			error = EBUSY;
 			goto fail;
 		}
-		error = VOP_OPEN(devvp, FREAD, FSCRED, l);
+		error = VOP_OPEN(devvp, FREAD, FSCRED);
 		if (error)
 			goto fail;
 		error = iso_mountfs(devvp, mp, l, args);
 		if (error) {
 			vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-			(void)VOP_CLOSE(devvp, FREAD, NOCRED, l);
+			(void)VOP_CLOSE(devvp, FREAD, NOCRED);
 			VOP_UNLOCK(devvp, 0);
 			goto fail;
 		}
@@ -340,14 +340,14 @@ iso_mountfs(devvp, mp, l, argp)
 	 */
 	iso_bsize = ISO_DEFAULT_BLOCK_SIZE;
 
-	error = VOP_IOCTL(devvp, DIOCGDINFO, &label, FREAD, FSCRED, l);
+	error = VOP_IOCTL(devvp, DIOCGDINFO, &label, FREAD, FSCRED);
 	if (!error &&
 	    label.d_partitions[DISKPART(dev)].p_fstype == FS_ISO9660) {
 		/* XXX more sanity checks? */
 		sess = label.d_partitions[DISKPART(dev)].p_cdsession;
 	} else {
 		/* fallback to old method */
-		error = VOP_IOCTL(devvp, CDIOREADMSADDR, &sess, 0, FSCRED, l);
+		error = VOP_IOCTL(devvp, CDIOREADMSADDR, &sess, 0, FSCRED);
 		if (error)
 			sess = 0;	/* never mind */
 	}
@@ -420,6 +420,7 @@ iso_mountfs(devvp, mp, l, argp)
 	mp->mnt_stat.f_fsid = mp->mnt_stat.f_fsidx.__fsid_val[0];
 	mp->mnt_stat.f_namemax = MAXNAMLEN;
 	mp->mnt_flag |= MNT_LOCAL;
+	mp->mnt_iflag |= IMNT_MPSAFE;
 	mp->mnt_dev_bshift = iso_bsize;
 	mp->mnt_fs_bshift = isomp->im_bshift;
 	isomp->im_mountp = mp;
@@ -516,8 +517,7 @@ out:
  */
 /* ARGSUSED */
 int
-cd9660_start(struct mount *mp, int flags,
-    struct lwp *l)
+cd9660_start(struct mount *mp, int flags)
 {
 	return 0;
 }
@@ -526,10 +526,9 @@ cd9660_start(struct mount *mp, int flags,
  * unmount system call
  */
 int
-cd9660_unmount(mp, mntflags, l)
+cd9660_unmount(mp, mntflags)
 	struct mount *mp;
 	int mntflags;
-	struct lwp *l;
 {
 	struct iso_mnt *isomp;
 	int error, flags = 0;
@@ -541,16 +540,11 @@ cd9660_unmount(mp, mntflags, l)
 
 	isomp = VFSTOISOFS(mp);
 
-#ifdef	ISODEVMAP
-	if (isomp->iso_ftype == ISO_FTYPE_RRIP)
-		iso_dunmap(isomp->im_dev);
-#endif
-
 	if (isomp->im_devvp->v_type != VBAD)
 		isomp->im_devvp->v_specmountpoint = NULL;
 
 	vn_lock(isomp->im_devvp, LK_EXCLUSIVE | LK_RETRY);
-	error = VOP_CLOSE(isomp->im_devvp, FREAD, NOCRED, l);
+	error = VOP_CLOSE(isomp->im_devvp, FREAD, NOCRED);
 	vput(isomp->im_devvp);
 	free(isomp, M_ISOFSMNT);
 	mp->mnt_data = NULL;
@@ -580,29 +574,12 @@ cd9660_root(mp, vpp)
 }
 
 /*
- * Do operations associated with quotas, not supported
- */
-/* ARGSUSED */
-int
-cd9660_quotactl(
-    struct mount *mp,
-    int cmd,
-    uid_t uid,
-    void *arg,
-    struct lwp *l)
-{
-
-	return (EOPNOTSUPP);
-}
-
-/*
  * Get file system statistics.
  */
 int
 cd9660_statvfs(
     struct mount *mp,
-    struct statvfs *sbp,
-    struct lwp *l)
+    struct statvfs *sbp)
 {
 	struct iso_mnt *isomp;
 
@@ -630,8 +607,7 @@ int
 cd9660_sync(
     struct mount *mp,
     int waitfor,
-    kauth_cred_t cred,
-    struct lwp *l)
+    kauth_cred_t cred)
 {
 	return (0);
 }
@@ -720,9 +696,6 @@ cd9660_vget_internal(mp, ino, vpp, relocated, isodir)
 {
 	struct iso_mnt *imp;
 	struct iso_node *ip;
-#ifdef ISODEVMAP
-	struct iso_dnode *dp;
-#endif
 	struct buf *bp;
 	struct vnode *vp, *nvp;
 	dev_t dev;
@@ -730,7 +703,9 @@ cd9660_vget_internal(mp, ino, vpp, relocated, isodir)
 
 	imp = VFSTOISOFS(mp);
 	dev = imp->im_dev;
-	if ((*vpp = cd9660_ihashget(dev, ino)) != NULLVP)
+
+ retry:
+	if ((*vpp = cd9660_ihashget(dev, ino, LK_EXCLUSIVE)) != NULLVP)
 		return (0);
 
 	/* Allocate a new vnode/iso_node. */
@@ -739,11 +714,27 @@ cd9660_vget_internal(mp, ino, vpp, relocated, isodir)
 		return (error);
 	}
 	ip = pool_get(&cd9660_node_pool, PR_WAITOK);
+
+	/*
+	 * If someone beat us to it, put back the freshly allocated
+	 * vnode/inode pair and retry.
+	 */
+	mutex_enter(&cd9660_hashlock);
+	if (cd9660_ihashget(dev, ino, 0) != NULL) {
+		mutex_exit(&cd9660_hashlock);
+		ungetnewvnode(vp);
+		pool_put(&cd9660_node_pool, ip);
+		goto retry;
+	}
+
 	memset(ip, 0, sizeof(struct iso_node));
 	vp->v_data = ip;
 	ip->i_vnode = vp;
 	ip->i_dev = dev;
 	ip->i_number = ino;
+	ip->i_mnt = imp;
+	ip->i_devvp = imp->im_devvp;
+	genfs_node_init(vp, &cd9660_genfsops);
 
 	/*
 	 * Put it onto its hash chain and lock it so that other requests for
@@ -752,6 +743,7 @@ cd9660_vget_internal(mp, ino, vpp, relocated, isodir)
 	 * disk portion of this inode to be read.
 	 */
 	cd9660_ihashins(ip);
+	mutex_exit(&cd9660_hashlock);
 
 	if (isodir == 0) {
 		int lbn, off;
@@ -807,8 +799,6 @@ cd9660_vget_internal(mp, ino, vpp, relocated, isodir)
 	} else
 		bp = 0;
 
-	ip->i_mnt = imp;
-	ip->i_devvp = imp->im_devvp;
 	VREF(ip->i_devvp);
 
 	if (relocated) {
@@ -871,10 +861,6 @@ cd9660_vget_internal(mp, ino, vpp, relocated, isodir)
 		/*
 		 * if device, look at device number table for translation
 		 */
-#ifdef	ISODEVMAP
-		if ((dp = iso_dmap(dev, ino, 0)) != NULL)
-			ip->inode.iso_rdev = dp->d_dev;
-#endif
 		vp->v_op = cd9660_specop_p;
 		if ((nvp = checkalias(vp, ip->inode.iso_rdev, mp)) != NULL) {
 			/*
@@ -886,7 +872,6 @@ cd9660_vget_internal(mp, ino, vpp, relocated, isodir)
 			vp->v_data = NULL;
 			VOP_UNLOCK(vp, 0);
 			vp->v_op = spec_vnodeop_p;
-			vrele(vp);
 			vgone(vp);
 			lockmgr(&nvp->v_lock, LK_EXCLUSIVE, &nvp->v_interlock);
 			/*
@@ -917,7 +902,6 @@ cd9660_vget_internal(mp, ino, vpp, relocated, isodir)
 	 * XXX need generation number?
 	 */
 
-	genfs_node_init(vp, &cd9660_genfsops);
 	*vpp = vp;
 	return (0);
 }

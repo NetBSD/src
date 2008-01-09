@@ -1,4 +1,4 @@
-/* $NetBSD: mtd803.c,v 1.13.16.1 2007/11/06 23:26:56 matt Exp $ */
+/* $NetBSD: mtd803.c,v 1.13.16.2 2008/01/09 01:52:56 matt Exp $ */
 
 /*-
  *
@@ -43,7 +43,7 @@
  *    I don't have access to a computer with PCI other than i386, and i386
  *    is just such a machine where dmamap_syncs don't do anything.
  * - Powerhook for when resuming after standby.
- * - Watchdog stuff doesn't work yet, the system crashes.(lockmgr: no context)
+ * - Watchdog stuff doesn't work yet, the system crashes.
  * - There seems to be a CardBus version of the card. (see datasheet)
  *    Perhaps a detach function is necessary then? (free buffs, stop rx/tx etc)
  * - When you enable the TXBUN (Tx buffer unavailable) interrupt, it gets
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mtd803.c,v 1.13.16.1 2007/11/06 23:26:56 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mtd803.c,v 1.13.16.2 2008/01/09 01:52:56 matt Exp $");
 
 #include "bpfilter.h"
 

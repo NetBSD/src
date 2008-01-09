@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.156.2.1 2007/11/06 23:35:25 matt Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.156.2.2 2008/01/09 01:58:36 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.156.2.1 2007/11/06 23:35:25 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.156.2.2 2008/01/09 01:58:36 matt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -166,7 +166,7 @@ ufs_mknod(void *v)
 	 * checked to see if it is an alias of an existing entry in
 	 * the inode cache.
 	 */
-	vput(*vpp);
+	VOP_UNLOCK(*vpp, 0);
 	(*vpp)->v_type = VNON;
 	vgone(*vpp);
 	error = VFS_VGET(mp, ino, vpp);
@@ -192,7 +192,6 @@ ufs_open(void *v)
 		struct vnode	*a_vp;
 		int		a_mode;
 		kauth_cred_t	a_cred;
-		struct lwp	*a_l;
 	} */ *ap = v;
 
 	/*
@@ -217,17 +216,16 @@ ufs_close(void *v)
 		struct vnode	*a_vp;
 		int		a_fflag;
 		kauth_cred_t	a_cred;
-		struct lwp	*a_l;
 	} */ *ap = v;
 	struct vnode	*vp;
 	struct inode	*ip;
 
 	vp = ap->a_vp;
 	ip = VTOI(vp);
-	simple_lock(&vp->v_interlock);
+	mutex_enter(&vp->v_interlock);
 	if (vp->v_usecount > 1)
 		UFS_ITIMES(vp, NULL, NULL, NULL);
-	simple_unlock(&vp->v_interlock);
+	mutex_exit(&vp->v_interlock);
 	return (0);
 }
 
@@ -238,7 +236,6 @@ ufs_access(void *v)
 		struct vnode	*a_vp;
 		int		a_mode;
 		kauth_cred_t	a_cred;
-		struct lwp	*a_l;
 	} */ *ap = v;
 	struct vnode	*vp;
 	struct inode	*ip;
@@ -297,7 +294,6 @@ ufs_getattr(void *v)
 		struct vnode	*a_vp;
 		struct vattr	*a_vap;
 		kauth_cred_t	a_cred;
-		struct lwp	*a_l;
 	} */ *ap = v;
 	struct vnode	*vp;
 	struct inode	*ip;
@@ -368,7 +364,6 @@ ufs_setattr(void *v)
 		struct vnode	*a_vp;
 		struct vattr	*a_vap;
 		kauth_cred_t	a_cred;
-		struct lwp	*a_l;
 	} */ *ap = v;
 	struct vattr	*vap;
 	struct vnode	*vp;
@@ -381,7 +376,7 @@ ufs_setattr(void *v)
 	vp = ap->a_vp;
 	ip = VTOI(vp);
 	cred = ap->a_cred;
-	l = ap->a_l;
+	l = curlwp;
 
 	/*
 	 * Check for unsettable attributes.
@@ -480,7 +475,7 @@ ufs_setattr(void *v)
 				error = EPERM;
 				goto out;
 			}
-			error = UFS_TRUNCATE(vp, vap->va_size, 0, cred, l);
+			error = UFS_TRUNCATE(vp, vap->va_size, 0, cred);
 			if (error)
 				goto out;
 			break;
@@ -504,7 +499,7 @@ ufs_setattr(void *v)
 		    (error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
 		    NULL)) &&
 		    ((vap->va_vaflags & VA_UTIMES_NULL) == 0 ||
-		    (error = VOP_ACCESS(vp, VWRITE, cred, l))))
+		    (error = VOP_ACCESS(vp, VWRITE, cred))))
 			goto out;
 		if (vap->va_atime.tv_sec != VNOVAL)
 			if (!(vp->v_mount->mnt_flag & MNT_NOATIME))
@@ -726,10 +721,10 @@ ufs_link(void *v)
 		softdep_change_linkcnt(ip);
 	error = UFS_UPDATE(vp, NULL, NULL, UPDATE_DIROP);
 	if (!error) {
-		newdir = pool_get(&ufs_direct_pool, PR_WAITOK);
+		newdir = pool_cache_get(ufs_direct_cache, PR_WAITOK);
 		ufs_makedirentry(ip, cnp, newdir);
 		error = ufs_direnter(dvp, vp, newdir, cnp, NULL);
-		pool_put(&ufs_direct_pool, newdir);
+		pool_cache_put(ufs_direct_cache, newdir);
 	}
 	if (error) {
 		ip->i_ffs_effnlink--;
@@ -786,7 +781,7 @@ ufs_whiteout(void *v)
 			panic("ufs_whiteout: old format filesystem");
 #endif
 
-		newdir = pool_get(&ufs_direct_pool, PR_WAITOK);
+		newdir = pool_cache_get(ufs_direct_cache, PR_WAITOK);
 		newdir->d_ino = WINO;
 		newdir->d_namlen = cnp->cn_namelen;
 		memcpy(newdir->d_name, cnp->cn_nameptr,
@@ -794,7 +789,7 @@ ufs_whiteout(void *v)
 		newdir->d_name[cnp->cn_namelen] = '\0';
 		newdir->d_type = DT_WHT;
 		error = ufs_direnter(dvp, NULL, newdir, cnp, NULL);
-		pool_put(&ufs_direct_pool, newdir);
+		pool_cache_put(ufs_direct_cache, newdir);
 		break;
 
 	case DELETE:
@@ -822,7 +817,7 @@ ufs_whiteout(void *v)
 
 
 /*
- * Rename system call.
+ * Rename vnode operation
  * 	rename("foo", "bar");
  * is essentially
  *	unlink("bar");
@@ -1000,7 +995,7 @@ ufs_rename(void *v)
 	 * to namei, as the parent directory is unlocked by the
 	 * call to checkpath().
 	 */
-	error = VOP_ACCESS(fvp, VWRITE, tcnp->cn_cred, tcnp->cn_lwp);
+	error = VOP_ACCESS(fvp, VWRITE, tcnp->cn_cred);
 	VOP_UNLOCK(fvp, 0);
 	if (oldparent != dp->i_number)
 		newparent = dp->i_number;
@@ -1063,10 +1058,10 @@ ufs_rename(void *v)
 				goto bad;
 			}
 		}
-		newdir = pool_get(&ufs_direct_pool, PR_WAITOK);
+		newdir = pool_cache_get(ufs_direct_cache, PR_WAITOK);
 		ufs_makedirentry(ip, tcnp, newdir);
 		error = ufs_direnter(tdvp, NULL, newdir, tcnp, NULL);
-		pool_put(&ufs_direct_pool, newdir);
+		pool_cache_put(ufs_direct_cache, newdir);
 		if (error != 0) {
 			if (doingdirectory && newparent) {
 				dp->i_ffs_effnlink--;
@@ -1159,7 +1154,7 @@ ufs_rename(void *v)
 			DIP_ASSIGN(xp, nlink, xp->i_nlink);
 			xp->i_flag |= IN_CHANGE;
 			if ((error = UFS_TRUNCATE(tvp, (off_t)0, IO_SYNC,
-			    tcnp->cn_cred, tcnp->cn_lwp)))
+			    tcnp->cn_cred)))
 				goto bad;
 		}
 		VN_KNOTE(tdvp, NOTE_WRITE);
@@ -1256,9 +1251,6 @@ ufs_rename(void *v)
 	return (error);
 }
 
-/*
- * Mkdir system call
- */
 int
 ufs_mkdir(void *v)
 {
@@ -1406,10 +1398,10 @@ ufs_mkdir(void *v)
 			(void)VOP_BWRITE(bp);
 		goto bad;
 	}
-	newdir = pool_get(&ufs_direct_pool, PR_WAITOK);
+	newdir = pool_cache_get(ufs_direct_cache, PR_WAITOK);
 	ufs_makedirentry(ip, cnp, newdir);
 	error = ufs_direnter(dvp, tvp, newdir, cnp, bp);
-	pool_put(&ufs_direct_pool, newdir);
+	pool_cache_put(ufs_direct_cache, newdir);
  bad:
 	if (error == 0) {
 		VN_KNOTE(dvp, NOTE_WRITE | NOTE_LINK);
@@ -1443,9 +1435,6 @@ ufs_mkdir(void *v)
 	return (error);
 }
 
-/*
- * Rmdir system call.
- */
 int
 ufs_rmdir(void *v)
 {
@@ -1538,8 +1527,7 @@ ufs_rmdir(void *v)
 		ip->i_ffs_effnlink--;
 		DIP_ASSIGN(ip, nlink, ip->i_nlink);
 		ip->i_flag |= IN_CHANGE;
-		error = UFS_TRUNCATE(vp, (off_t)0, IO_SYNC, cnp->cn_cred,
-		    cnp->cn_lwp);
+		error = UFS_TRUNCATE(vp, (off_t)0, IO_SYNC, cnp->cn_cred);
 	}
 	cache_purge(vp);
 #ifdef UFS_DIRHASH
@@ -1894,17 +1882,16 @@ ufsspec_close(void *v)
 		struct vnode	*a_vp;
 		int		a_fflag;
 		kauth_cred_t	a_cred;
-		struct lwp	*a_l;
 	} */ *ap = v;
 	struct vnode	*vp;
 	struct inode	*ip;
 
 	vp = ap->a_vp;
 	ip = VTOI(vp);
-	simple_lock(&vp->v_interlock);
+	mutex_enter(&vp->v_interlock);
 	if (vp->v_usecount > 1)
 		UFS_ITIMES(vp, NULL, NULL, NULL);
-	simple_unlock(&vp->v_interlock);
+	mutex_exit(&vp->v_interlock);
 	return (VOCALL (spec_vnodeop_p, VOFFSET(vop_close), ap));
 }
 
@@ -1960,17 +1947,16 @@ ufsfifo_close(void *v)
 		struct vnode	*a_vp;
 		int		a_fflag;
 		kauth_cred_t	a_cred;
-		struct lwp	*a_l;
 	} */ *ap = v;
 	struct vnode	*vp;
 	struct inode	*ip;
 
 	vp = ap->a_vp;
 	ip = VTOI(vp);
-	simple_lock(&vp->v_interlock);
+	mutex_enter(&vp->v_interlock);
 	if (ap->a_vp->v_usecount > 1)
 		UFS_ITIMES(vp, NULL, NULL, NULL);
-	simple_unlock(&vp->v_interlock);
+	mutex_exit(&vp->v_interlock);
 	return (VOCALL (fifo_vnodeop_p, VOFFSET(vop_close), ap));
 }
 
@@ -2073,7 +2059,6 @@ ufs_vinit(struct mount *mntp, int (**specops)(void *), int (**fifoops)(void *),
 			vp->v_vflag &= ~VV_LOCKSWORK;
 			VOP_UNLOCK(vp, 0);
 			vp->v_op = spec_vnodeop_p;
-			vrele(vp);
 			vgone(vp);
 			lockmgr(&nvp->v_lock, LK_EXCLUSIVE, &nvp->v_interlock);
 			/*
@@ -2171,10 +2156,10 @@ ufs_makeinode(int mode, struct vnode *dvp, struct vnode **vpp,
 	 */
 	if ((error = UFS_UPDATE(tvp, NULL, NULL, UPDATE_DIROP)) != 0)
 		goto bad;
-	newdir = pool_get(&ufs_direct_pool, PR_WAITOK);
+	newdir = pool_cache_get(ufs_direct_cache, PR_WAITOK);
 	ufs_makedirentry(ip, cnp, newdir);
 	error = ufs_direnter(dvp, tvp, newdir, cnp, NULL);
-	pool_put(&ufs_direct_pool, newdir);
+	pool_cache_put(ufs_direct_cache, newdir);
 	if (error)
 		goto bad;
 	if ((cnp->cn_flags & SAVESTART) == 0)

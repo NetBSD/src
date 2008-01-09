@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_power.c,v 1.22.2.1 2007/11/06 23:30:21 matt Exp $	*/
+/*	$NetBSD: sysmon_power.c,v 1.22.2.2 2008/01/09 01:54:34 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.22.2.1 2007/11/06 23:30:21 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.22.2.2 2008/01/09 01:54:34 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include <sys/param.h>
@@ -82,6 +82,7 @@ __KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.22.2.1 2007/11/06 23:30:21 matt E
 #include <sys/mutex.h>
 #include <sys/kmem.h>
 #include <sys/proc.h>
+#include <sys/device.h>
 
 #include <dev/sysmon/sysmonvar.h>
 #include <prop/proplib.h>
@@ -118,6 +119,7 @@ static const struct power_event_description pswitch_type_desc[] = {
 	{ PSWITCH_TYPE_LID, 		"lid_switch" },
 	{ PSWITCH_TYPE_RESET, 		"reset_button" },
 	{ PSWITCH_TYPE_ACADAPTER,	"acadapter" },
+	{ PSWITCH_TYPE_HOTKEY,		"hotkey_button" },
 	{ -1, NULL }
 };
 
@@ -156,6 +158,7 @@ static const struct power_event_description penvsys_type_desc[] = {
 
 #define SYSMON_MAX_POWER_EVENTS		32
 #define SYSMON_POWER_DICTIONARY_BUSY	0x01
+#define SYSMON_POWER_DICTIONARY_READY	0x02
 
 static power_event_t sysmon_power_event_queue[SYSMON_MAX_POWER_EVENTS];
 static int sysmon_power_event_queue_head;
@@ -189,7 +192,7 @@ static void sysmon_power_destroy_dictionary(struct power_event_dictionary *);
 void
 sysmon_power_init(void)
 {
-	mutex_init(&sysmon_power_event_queue_mtx, MUTEX_DRIVER, IPL_NONE);
+	mutex_init(&sysmon_power_event_queue_mtx, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&sysmon_power_event_queue_cv, "smpower");
 }
 
@@ -265,7 +268,7 @@ sysmon_power_daemon_task(struct power_event_dictionary *ped,
 	power_event_t pev;
 	int rv, error = 0;
 
-	if (!pev_data)
+	if (!ped || !ped->dict || !pev_data)
 		return EINVAL;
 
 	mutex_enter(&sysmon_power_event_queue_mtx);
@@ -342,12 +345,6 @@ sysmon_power_daemon_task(struct power_event_dictionary *ped,
 	}
 
 	/*
-	 * The dictionary for the event was created successfully
-	 * at this point, time to add it into the list.
-	 */
-	SLIST_INSERT_HEAD(&pev_dict_list, ped, pev_dict_head);
-
-	/*
 	 * Enqueue the event.
 	 */
 	rv = sysmon_queue_power_event(&pev);
@@ -359,8 +356,11 @@ sysmon_power_daemon_task(struct power_event_dictionary *ped,
 		goto out;
 	} else {
 		/*
-		 * Notify the daemon that an event is ready.
+		 * Notify the daemon that an event is ready and its
+		 * dictionary is ready to be fetched.
 		 */
+		ped->flags |= SYSMON_POWER_DICTIONARY_READY;
+		SLIST_INSERT_HEAD(&pev_dict_list, ped, pev_dict_head);
 		cv_broadcast(&sysmon_power_event_queue_cv);
 		mutex_exit(&sysmon_power_event_queue_mtx);
 		selnotify(&sysmon_power_event_queue_selinfo, 0);
@@ -522,7 +522,7 @@ sysmonkqfilter_power(dev_t dev, struct knote *kn)
 		break;
 
 	default:
-		return 1;
+		return EINVAL;
 	}
 
 	mutex_enter(&sysmon_power_event_queue_mtx);
@@ -563,9 +563,15 @@ sysmonioctl_power(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		 */
 		mutex_enter(&sysmon_power_event_queue_mtx);
 		ped = SLIST_FIRST(&pev_dict_list);
-		if (!ped) {
+		if (!ped || !ped->dict) {
 			mutex_exit(&sysmon_power_event_queue_mtx);
 			error = ENOTSUP;
+			break;
+		}
+
+		if ((ped->flags & SYSMON_POWER_DICTIONARY_READY) == 0) {
+			mutex_exit(&sysmon_power_event_queue_mtx);
+			error = EINVAL;
 			break;
 		}
 
@@ -590,6 +596,7 @@ sysmonioctl_power(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		 */
 		mutex_enter(&sysmon_power_event_queue_mtx);
 		ped->flags &= ~SYSMON_POWER_DICTIONARY_BUSY;
+		ped->flags &= ~SYSMON_POWER_DICTIONARY_READY;
 		SLIST_REMOVE_HEAD(&pev_dict_list, pev_dict_head);
 		mutex_exit(&sysmon_power_event_queue_mtx);
 		sysmon_power_destroy_dictionary(ped);
@@ -891,6 +898,23 @@ sysmon_pswitch_event(struct sysmon_pswitch *smpsw, int event)
 
 	KASSERT(smpsw != NULL);
 
+	/*
+	 * For pnp specific events, we don't care if the power daemon
+	 * is running or not
+	 */
+	if (smpsw->smpsw_type == PSWITCH_TYPE_LID) {
+		switch (event) {
+		case PSWITCH_EVENT_PRESSED:
+			pmf_event_inject(NULL, PMFE_CHASSIS_LID_CLOSE);
+			break;
+		case PSWITCH_EVENT_RELEASED:
+			pmf_event_inject(NULL, PMFE_CHASSIS_LID_OPEN);
+			break;
+		default:
+			break;
+		}
+	}
+
 	if (sysmon_power_daemon != NULL) {
 		/*
 		 * Create a new dictionary for the event.
@@ -947,6 +971,12 @@ sysmon_pswitch_event(struct sysmon_pswitch *smpsw, int event)
 		 */
 		/* XXX */
 		printf("%s: sleep button pressed.\n", smpsw->smpsw_name);
+		break;
+
+	case PSWITCH_TYPE_HOTKEY:
+		/*
+		 * Eat up the event, there's nothing we can do
+		 */
 		break;
 
 	case PSWITCH_TYPE_LID:

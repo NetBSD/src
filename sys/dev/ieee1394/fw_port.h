@@ -1,4 +1,4 @@
-/*	$NetBSD: fw_port.h,v 1.24.2.1 2007/11/06 23:27:21 matt Exp $	*/
+/*	$NetBSD: fw_port.h,v 1.24.2.2 2008/01/09 01:53:08 matt Exp $	*/
 /*
  * Copyright (c) 2004 KIYOHARA Takashi
  * All rights reserved.
@@ -212,7 +212,7 @@ typedef bus_dma_tag_t fw_bus_dma_tag_t;
 #define FW_ATTACH_START(dname, sc, fwa)					\
 	struct __CONCAT(dname,_softc) *sc =				\
 	    ((struct __CONCAT(dname,_softc) *)device_get_softc(dev));	\
-	__attribute__((__unused__))struct fw_attach_args *fwa =		\
+	__unused struct fw_attach_args *fwa =		\
 	    device_get_ivars(dev)
 #define FW_ATTACH_RETURN(r)	return (r)
 
@@ -234,7 +234,7 @@ typedef bus_dma_tag_t fw_bus_dma_tag_t;
 	__CONCAT(dname,_open)(fw_dev_t dev, int flags, int fmt, fw_proc_t td)
 #define FW_OPEN_START			\
 	int unit = DEV2UNIT(dev);	\
-	__attribute__((__unused__))struct firewire_softc *sc = \
+	__unused struct firewire_softc *sc = \
 	    devclass_get_softc(firewire_devclass, unit)
 
 /*
@@ -271,7 +271,7 @@ typedef bus_dma_tag_t fw_bus_dma_tag_t;
 	    (fw_dev_t dev, u_long cmd, void *data, int flag, fw_proc_t td)
 #define FW_IOCTL_START			\
 	int unit = DEV2UNIT(dev);       \
-	__attribute__((__unused__))struct firewire_softc *sc = \
+	__unused struct firewire_softc *sc = \
 	    devclass_get_softc(firewire_devclass, unit)
 
 /*
@@ -303,7 +303,7 @@ typedef bus_dma_tag_t fw_bus_dma_tag_t;
 #define FW_STRATEGY_START		\
 	fw_dev_t dev = bp->bio_dev;	\
 	int unit = DEV2UNIT(dev);	\
-	__attribute__((__unused__))struct firewire_softc *sc = \
+	__unused struct firewire_softc *sc = \
 	    devclass_get_softc(firewire_devclass, unit)
 
 /*
@@ -841,7 +841,7 @@ fw_bus_dmamem_alloc(fw_bus_dma_tag_t ft, void **vp, int f, bus_dmamap_t *mp)
 #define FW_ATTACH_START(dname, sc, fwa)					\
 	struct __CONCAT(dname,_softc) *sc =				\
 	    (struct __CONCAT(dname,_softc) *)self;			\
-	__attribute__((__unused__))struct fw_attach_args *fwa =		\
+	__unused struct fw_attach_args *fwa =		\
 	    (struct fw_attach_args *)aux
 #define FW_ATTACH_RETURN(r)	return
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: fwdma.c,v 1.8.14.1 2007/11/06 23:27:22 matt Exp $	*/
+/*	$NetBSD: fwdma.c,v 1.8.14.2 2008/01/09 01:53:08 matt Exp $	*/
 /*-
  * Copyright (c) 2003
  * 	Hidetoshi Shimokawa. All rights reserved.
@@ -35,7 +35,8 @@
  */
 
 #include <sys/cdefs.h>
-#ifdef __FBSDID
+__KERNEL_RCSID(0, "$NetBSD: fwdma.c,v 1.8.14.2 2008/01/09 01:53:08 matt Exp $");
+#if defined(__FreeBSD__)
 __FBSDID("$FreeBSD: src/sys/dev/firewire/fwdma.c,v 1.9 2007/06/06 14:31:36 simokawa Exp $");
 #endif
 
@@ -47,7 +48,6 @@ __FBSDID("$FreeBSD: src/sys/dev/firewire/fwdma.c,v 1.9 2007/06/06 14:31:36 simok
 #include <sys/conf.h>
 #include <sys/malloc.h>
 #if defined(__FreeBSD__) && __FreeBSD_version >= 501102 
-#include <sys/lock.h>
 #include <sys/mutex.h>
 #endif
 

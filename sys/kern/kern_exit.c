@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.186.2.2 2007/11/08 11:00:01 matt Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.186.2.3 2008/01/09 01:56:01 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -74,11 +74,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.186.2.2 2007/11/08 11:00:01 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.186.2.3 2008/01/09 01:56:01 matt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
-#include "opt_systrace.h"
 #include "opt_sysv.h"
 
 #include <sys/param.h>
@@ -109,13 +108,13 @@ __KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.186.2.2 2007/11/08 11:00:01 matt Exp
 #include <sys/sched.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
-#include <sys/systrace.h>
 #include <sys/kauth.h>
 #include <sys/sleepq.h>
 #include <sys/lockdebug.h>
 #include <sys/ktrace.h>
-
 #include <sys/cpu.h>
+#include <sys/lwpctl.h>
+#include <sys/atomic.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -166,14 +165,15 @@ exit_psignal(struct proc *p, struct proc *pp, ksiginfo_t *ksi)
  *	Death of process.
  */
 int
-sys_exit(struct lwp *l, void *v, register_t *retval)
+sys_exit(struct lwp *l, const struct sys_exit_args *uap, register_t *retval)
 {
-	struct sys_exit_args /* {
+	/* {
 		syscallarg(int)	rval;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 
 	/* Don't call exit1() multiple times in the same process. */
+	KERNEL_LOCK(1, NULL);
 	mutex_enter(&p->p_smutex);
 	if (p->p_sflag & PS_WEXIT) {
 		mutex_exit(&p->p_smutex);
@@ -227,7 +227,7 @@ exit1(struct lwp *l, int rv)
 		KERNEL_UNLOCK_ALL(l, &l->l_biglocks);
 		sigclearall(p, &contsigmask, &kq);
 		p->p_waited = 0;
-		mb_write();
+		membar_producer();
 		p->p_stat = SSTOP;
 		lwp_lock(l);
 		p->p_nrlwps--;
@@ -237,6 +237,10 @@ exit1(struct lwp *l, int rv)
 		KERNEL_LOCK(l->l_biglocks, l);
 	} else
 		mutex_exit(&p->p_smutex);
+
+	/* Destroy any lwpctl info. */
+	if (p->p_lwpctl != NULL)
+		lwp_ctl_exit();
 
 	/* Destroy all AIO works */
 	aio_exit(p, p->p_aio);
@@ -292,9 +296,6 @@ exit1(struct lwp *l, int rv)
 		ktrderef(p);
 		mutex_exit(&ktrace_lock);
 	}
-#endif
-#ifdef SYSTRACE
-	systrace_sys_exit(p);
 #endif
 
 	/*
@@ -375,15 +376,11 @@ exit1(struct lwp *l, int rv)
 				tp->t_pgrp = NULL;
 				tp->t_session = NULL;
 				mutex_spin_exit(&tty_lock);
-				SESSRELE(sp);
 				mutex_exit(&proclist_lock);
 				(void) ttywait(tp);
 				mutex_enter(&proclist_lock);
 
-				/*
-				 * The tty could have been revoked
-				 * if we blocked.
-				 */
+				/* The tty could have been revoked. */
 				vprevoke = sp->s_ttyvp;
 			} else
 				mutex_spin_exit(&tty_lock);
@@ -398,9 +395,12 @@ exit1(struct lwp *l, int rv)
 		sp->s_leader = NULL;
 
 		if (vprevoke != NULL || vprele != NULL) {
-			mutex_exit(&proclist_lock);
-			if (vprevoke != NULL)
+			if (vprevoke != NULL) {
+				SESSRELE(sp);
+				mutex_exit(&proclist_lock);
 				VOP_REVOKE(vprevoke, REVOKEALL);
+			} else
+				mutex_exit(&proclist_lock);
 			if (vprele != NULL)
 				vrele(vprele);
 			mutex_enter(&proclist_lock);
@@ -421,6 +421,8 @@ exit1(struct lwp *l, int rv)
 	 * Notify interested parties of our demise.
 	 */
 	KNOTE(&p->p_klist, NOTE_EXIT);
+
+
 
 #if PERFCTRS
 	/*
@@ -677,9 +679,10 @@ do_sys_wait(struct lwp *l, int *pid, int *status, int options,
 	struct proc	*child;
 	int		error;
 
+	KERNEL_LOCK(1, NULL);		/* XXXSMP */
 	mutex_enter(&proclist_lock);
-
 	error = find_stopped_child(l->l_proc, *pid, options, &child, status);
+	KERNEL_UNLOCK_ONE(NULL);	/* XXXSMP */
 
 	if (child == NULL) {
 		mutex_exit(&proclist_lock);
@@ -695,9 +698,7 @@ do_sys_wait(struct lwp *l, int *pid, int *status, int options,
 		if (options & WNOWAIT)
 			mutex_exit(&proclist_lock);
 		else {
-			KERNEL_LOCK(1, l);		/* XXXSMP */
 			proc_free(child, ru);
-			KERNEL_UNLOCK_ONE(l);		/* XXXSMP */
 		}
 	} else {
 		/* Child state must have been SSTOP. */
@@ -710,23 +711,24 @@ do_sys_wait(struct lwp *l, int *pid, int *status, int options,
 }
 
 int
-sys_wait4(struct lwp *l, void *v, register_t *retval)
+sys_wait4(struct lwp *l, const struct sys_wait4_args *uap, register_t *retval)
 {
-	struct sys_wait4_args /* {
+	/* {
 		syscallarg(int)			pid;
 		syscallarg(int *)		status;
 		syscallarg(int)			options;
 		syscallarg(struct rusage *)	rusage;
-	} */ *uap = v;
+	} */
 	int		status, error;
 	int		was_zombie;
 	struct rusage	ru;
+	int pid = SCARG(uap, pid);
 
-	error = do_sys_wait(l, &SCARG(uap, pid), &status, SCARG(uap, options),
+	error = do_sys_wait(l, &pid, &status, SCARG(uap, options),
 	    SCARG(uap, rusage) != NULL ? &ru : NULL, &was_zombie);
 
-	retval[0] = SCARG(uap, pid);
-	if (SCARG(uap, pid) == 0)
+	retval[0] = pid;
+	if (pid == 0)
 		return error;
 
 	if (SCARG(uap, rusage))
@@ -904,7 +906,9 @@ proc_free(struct proc *p, struct rusage *ru)
 				kpsignal(parent, &ksi, NULL);
 				mutex_exit(&proclist_mutex);
 			}
+			KERNEL_LOCK(1, NULL);		/* XXXSMP */
 			cv_broadcast(&parent->p_waitcv);
+			KERNEL_UNLOCK_ONE(NULL);	/* XXXSMP */
 			mutex_exit(&proclist_lock);
 			return;
 		}
@@ -988,7 +992,7 @@ proc_free(struct proc *p, struct rusage *ru)
 	if (p->p_textvp)
 		vrele(p->p_textvp);
 
-	mutex_destroy(&p->p_raslock);
+	mutex_destroy(&p->p_auxlock);
 	mutex_destroy(&p->p_mutex);
 	mutex_destroy(&p->p_stmutex);
 	mutex_destroy(&p->p_smutex);
@@ -996,7 +1000,7 @@ proc_free(struct proc *p, struct rusage *ru)
 	cv_destroy(&p->p_lwpcv);
 	rw_destroy(&p->p_reflock);
 
-	pool_put(&proc_pool, p);
+	proc_free_mem(p);
 
 	/*
 	 * Collect child u-areas.

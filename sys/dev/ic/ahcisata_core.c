@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.4.10.1 2007/11/06 23:26:19 matt Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.4.10.2 2008/01/09 01:52:44 matt Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.4.10.1 2007/11/06 23:26:19 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.4.10.2 2008/01/09 01:52:44 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.4.10.1 2007/11/06 23:26:19 matt 
 #include <sys/systm.h>
 #include <sys/disklabel.h>
 #include <sys/proc.h>
+#include <sys/buf.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -48,6 +49,8 @@ __KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.4.10.1 2007/11/06 23:26:19 matt 
 #include <dev/ata/satavar.h>
 #include <dev/ata/satareg.h>
 #include <dev/ic/ahcisatavar.h>
+
+#include "atapibus.h"
 
 #ifdef AHCI_DEBUG
 int ahcidebug_mask = 0x0;
@@ -76,6 +79,26 @@ void ahci_channel_start(struct ahci_softc *, struct ata_channel *);
 void ahci_timeout(void *);
 int  ahci_dma_setup(struct ata_channel *, int, void *, size_t, int);
 
+#if NATAPIBUS > 0
+void ahci_atapibus_attach(struct atabus_softc *);
+void ahci_atapi_kill_pending(struct scsipi_periph *);
+void ahci_atapi_minphys(struct buf *);
+void ahci_atapi_scsipi_request(struct scsipi_channel *,
+    scsipi_adapter_req_t, void *);
+void ahci_atapi_start(struct ata_channel *, struct ata_xfer *);
+int  ahci_atapi_complete(struct ata_channel *, struct ata_xfer *, int);
+void ahci_atapi_kill_xfer(struct ata_channel *, struct ata_xfer *, int);
+void ahci_atapi_probe_device(struct atapibus_softc *, int);
+
+static const struct scsipi_bustype ahci_atapi_bustype = {
+	SCSIPI_BUSTYPE_ATAPI,
+	atapi_scsipi_cmd,
+	atapi_interpret_sense,
+	atapi_print_addr,
+	ahci_atapi_kill_pending,
+};
+#endif /* NATAPIBUS */
+
 #define ATA_DELAY 10000 /* 10s for a drive I/O */
 
 const struct ata_bustype ahci_ata_bustype = {
@@ -92,6 +115,96 @@ const struct ata_bustype ahci_ata_bustype = {
 
 void ahci_intr_port(struct ahci_softc *, struct ahci_channel *);
 
+static void ahci_setup_port(struct ahci_softc *sc, int i);
+
+int
+ahci_reset(struct ahci_softc *sc)
+{
+	int i;
+
+	/* reset controller */
+	AHCI_WRITE(sc, AHCI_GHC, AHCI_GHC_HR);
+	/* wait up to 1s for reset to complete */
+	for (i = 0; i < 1000; i++) {
+		delay(1000);
+		if ((AHCI_READ(sc, AHCI_GHC) & AHCI_GHC_HR) == 0)
+			break;
+	}
+	if ((AHCI_READ(sc, AHCI_GHC) & AHCI_GHC_HR)) {
+		aprint_error("%s: reset failed\n", AHCINAME(sc));
+		return -1;
+	}
+	/* enable ahci mode */
+	AHCI_WRITE(sc, AHCI_GHC, AHCI_GHC_AE);
+	return 0;
+}
+
+void
+ahci_setup_ports(struct ahci_softc *sc)
+{
+	u_int32_t ahci_ports;
+	int i, port;
+	
+	ahci_ports = AHCI_READ(sc, AHCI_PI);
+	for (i = 0, port = 0; i < AHCI_MAX_PORTS; i++) {
+		if ((ahci_ports & (1 << i)) == 0)
+			continue;
+		if (port >= sc->sc_atac.atac_nchannels) {
+			aprint_error("%s: more ports than announced\n",
+			    AHCINAME(sc));
+			break;
+		}
+		ahci_setup_port(sc, i);
+	}
+}
+
+void
+ahci_reprobe_drives(struct ahci_softc *sc)
+{
+	u_int32_t ahci_ports;
+	int i, port;
+	struct ahci_channel *achp;
+	struct ata_channel *chp;
+
+	ahci_ports = AHCI_READ(sc, AHCI_PI);
+	for (i = 0, port = 0; i < AHCI_MAX_PORTS; i++) {
+		if ((ahci_ports & (1 << i)) == 0)
+			continue;
+		if (port >= sc->sc_atac.atac_nchannels) {
+			aprint_error("%s: more ports than announced\n",
+			    AHCINAME(sc));
+			break;
+		}
+		achp = &sc->sc_channels[i];
+		chp = &achp->ata_channel;
+
+		ahci_probe_drive(chp);
+	}
+}
+
+static void
+ahci_setup_port(struct ahci_softc *sc, int i)
+{
+	struct ahci_channel *achp;
+
+	achp = &sc->sc_channels[i];
+
+	AHCI_WRITE(sc, AHCI_P_CLB(i), achp->ahcic_bus_cmdh);
+	AHCI_WRITE(sc, AHCI_P_CLBU(i), 0);
+	AHCI_WRITE(sc, AHCI_P_FB(i), achp->ahcic_bus_rfis);
+	AHCI_WRITE(sc, AHCI_P_FBU(i), 0);
+}
+
+void
+ahci_enable_intrs(struct ahci_softc *sc)
+{
+
+	/* clear interrupts */
+	AHCI_WRITE(sc, AHCI_IS, AHCI_READ(sc, AHCI_IS));
+	/* enable interrupts */
+	AHCI_WRITE(sc, AHCI_GHC, AHCI_READ(sc, AHCI_GHC) | AHCI_GHC_IE);
+}
+
 void
 ahci_attach(struct ahci_softc *sc)
 {
@@ -106,21 +219,8 @@ ahci_attach(struct ahci_softc *sc)
 	void *cmdhp;
 	void *cmdtblp;
 
-	/* reset controller */
-	AHCI_WRITE(sc, AHCI_GHC, AHCI_GHC_HR);
-	delay(1000);
-	/* wait up to 1s for reset to complete */
-	for (i = 0; i < 1000; i++) {
-		if ((AHCI_READ(sc, AHCI_GHC) & AHCI_GHC_HR) == 0)
-			break;
-	}
-	if ((AHCI_READ(sc, AHCI_GHC) & AHCI_GHC_HR)) {
-		aprint_error("%s: reset failed\n", AHCINAME(sc));
+	if (ahci_reset(sc) != 0)
 		return;
-	}
-	/* enable ahci mode */
-	AHCI_WRITE(sc, AHCI_GHC, AHCI_GHC_AE);
-
 
 	ahci_cap = AHCI_READ(sc, AHCI_CAP);
 	sc->sc_atac.atac_nchannels = (ahci_cap & AHCI_CAP_NPMASK) + 1;
@@ -147,10 +247,12 @@ ahci_attach(struct ahci_softc *sc)
 	sc->sc_atac.atac_dma_cap = 2;
 	sc->sc_atac.atac_udma_cap = 6;
 	sc->sc_atac.atac_channels = sc->sc_chanarray;
-	sc->sc_atac.atac_atapibus_attach = NULL; /* XXX */
 	sc->sc_atac.atac_probe = ahci_probe_drive;
 	sc->sc_atac.atac_bustype_ata = &ahci_ata_bustype;
 	sc->sc_atac.atac_set_modes = ahci_setup_channel;
+#if NATAPIBUS > 0
+	sc->sc_atac.atac_atapibus_attach = ahci_atapibus_attach;
+#endif
 
 	dmasize =
 	    (AHCI_RFIS_SIZE + AHCI_CMDH_SIZE) * sc->sc_atac.atac_nchannels;
@@ -184,10 +286,7 @@ ahci_attach(struct ahci_softc *sc)
 	}
 	sc->sc_cmd_hdr = cmdhp;
 
-	/* clear interrupts */
-	AHCI_WRITE(sc, AHCI_IS, AHCI_READ(sc, AHCI_IS));
-	/* enable interrupts */
-	AHCI_WRITE(sc, AHCI_GHC, AHCI_READ(sc, AHCI_GHC) | AHCI_GHC_IE);
+	ahci_enable_intrs(sc);
 
 	ahci_ports = AHCI_READ(sc, AHCI_PI);
 	for (i = 0, port = 0; i < AHCI_MAX_PORTS; i++) {
@@ -278,10 +377,7 @@ ahci_attach(struct ahci_softc *sc)
 				goto end;
 			}
 		}
-		AHCI_WRITE(sc, AHCI_P_CLB(i), achp->ahcic_bus_cmdh);
-		AHCI_WRITE(sc, AHCI_P_CLBU(i), 0);
-		AHCI_WRITE(sc, AHCI_P_FB(i), achp->ahcic_bus_rfis);
-		AHCI_WRITE(sc, AHCI_P_FBU(i), 0);
+		ahci_setup_port(sc, i);
 		chp->ch_ndrive = 1;
 		if (bus_space_subregion(sc->sc_ahcit, sc->sc_ahcih,
 		    AHCI_P_SSTS(i), 1,  &achp->ahcic_sstatus) != 0) {
@@ -410,6 +506,22 @@ ahci_reset_channel(struct ata_channel *chp, int flags)
 		    chp->ch_queue->active_xfer, KILL_RESET);
 	}
 	ahci_channel_start(sc, chp);
+#if 0
+	/* Wait 15s for device to host FIS to arrive. */
+	for (i = 0; i <1500; i++) {
+		if (AHCI_READ(sc, AHCI_P_IS(chp->ch_channel)) & AHCI_P_IX_DHRS)
+			break;
+		if (flags & AT_WAIT)
+			tsleep(&sc, PRIBIO, "ahcid2h", mstohz(10));
+		else
+			delay (10000);
+	}
+	if (i == 1500)
+		aprint_error("%s port %d: D2H FIS never arrived\n", AHCINAME(sc));
+#endif
+	/* clear port interrupt register */
+	AHCI_WRITE(sc, AHCI_P_IS(chp->ch_channel), 0xffffffff);
+
 	return;
 }
 
@@ -454,6 +566,19 @@ ahci_probe_drive(struct ata_channel *chp)
 	case SStatus_DET_DEV:
 		AHCI_WRITE(sc, AHCI_P_SERR(chp->ch_channel),
 		    AHCI_READ(sc, AHCI_P_SERR(chp->ch_channel)));
+#if 0
+		/* wait 15s for d2h FIS */
+		for (i = 0; i <1500; i++) {
+			if (AHCI_READ(sc, AHCI_P_IS(chp->ch_channel))
+			    & AHCI_P_IX_DHRS)
+				break;
+			tsleep(&sc, PRIBIO, "ahcid2h", mstohz(10));
+		}
+		if (i == 1500)
+			aprint_error("%s: D2H FIS never arrived\n",
+			    AHCINAME(sc));
+#endif
+
 		sig = AHCI_READ(sc, AHCI_P_SIG(chp->ch_channel));
 		AHCIDEBUG_PRINT(("%s: port %d: sig=0x%x CMD=0x%x\n",
 		    AHCINAME(sc), chp->ch_channel, sig,
@@ -464,9 +589,7 @@ ahci_probe_drive(struct ata_channel *chp)
 		 */
 		s = splbio();
 		if ((sig & 0xffff0000) == 0xeb140000) {
-			aprint_error("%s port %d: ATAPI device ignored\n",
-			    AHCINAME(sc), chp->ch_channel);
-			chp->ch_drive[0].drive_flags |= 0 /* DRIVE_ATAPI XXX */;
+			chp->ch_drive[0].drive_flags |= DRIVE_ATAPI;
 		} else
 			chp->ch_drive[0].drive_flags |= DRIVE_ATA;
 		splx(s);
@@ -1065,3 +1188,401 @@ end:
 	AHCI_CMDTBL_SYNC(sc, achp, slot, BUS_DMASYNC_PREWRITE);
 	return 0;
 }
+
+#if NATAPIBUS > 0
+void
+ahci_atapibus_attach(struct atabus_softc * ata_sc)
+{
+	struct ata_channel *chp = ata_sc->sc_chan;
+	struct atac_softc *atac = chp->ch_atac;
+	struct scsipi_adapter *adapt = &atac->atac_atapi_adapter._generic;
+	struct scsipi_channel *chan = &chp->ch_atapi_channel;
+	/*
+	 * Fill in the scsipi_adapter.
+	 */
+	adapt->adapt_dev = &atac->atac_dev;
+	adapt->adapt_nchannels = atac->atac_nchannels;
+	adapt->adapt_request = ahci_atapi_scsipi_request;
+	adapt->adapt_minphys = ahci_atapi_minphys;
+	atac->atac_atapi_adapter.atapi_probe_device = ahci_atapi_probe_device;
+
+	/*
+	 * Fill in the scsipi_channel.
+	 */
+	memset(chan, 0, sizeof(*chan));
+	chan->chan_adapter = adapt;
+	chan->chan_bustype = &ahci_atapi_bustype;
+	chan->chan_channel = chp->ch_channel;
+	chan->chan_flags = SCSIPI_CHAN_OPENINGS;
+	chan->chan_openings = 1;
+	chan->chan_max_periph = 1;
+	chan->chan_ntargets = 1;
+	chan->chan_nluns = 1;
+	chp->atapibus = config_found_ia(&ata_sc->sc_dev, "atapi", chan,
+		atapiprint);
+}
+
+void
+ahci_atapi_minphys(struct buf *bp)
+{
+	if (bp->b_bcount > MAXPHYS)
+		bp->b_bcount = MAXPHYS;
+	minphys(bp);
+}
+
+/*
+ * Kill off all pending xfers for a periph.
+ *
+ * Must be called at splbio().
+ */
+void
+ahci_atapi_kill_pending(struct scsipi_periph *periph)
+{
+	struct atac_softc *atac =
+	    (void *)periph->periph_channel->chan_adapter->adapt_dev;
+	struct ata_channel *chp =
+	    atac->atac_channels[periph->periph_channel->chan_channel];
+
+	ata_kill_pending(&chp->ch_drive[periph->periph_target]);
+}
+
+void
+ahci_atapi_scsipi_request(struct scsipi_channel *chan,
+    scsipi_adapter_req_t req, void *arg)
+{
+	struct scsipi_adapter *adapt = chan->chan_adapter;
+	struct scsipi_periph *periph;
+	struct scsipi_xfer *sc_xfer;
+	struct ahci_softc *sc = (void *)adapt->adapt_dev;
+	struct atac_softc *atac = &sc->sc_atac;
+	struct ata_xfer *xfer;
+	int channel = chan->chan_channel;
+	int drive, s;
+
+	switch (req) {
+	case ADAPTER_REQ_RUN_XFER:
+		sc_xfer = arg;
+		periph = sc_xfer->xs_periph;
+		drive = periph->periph_target;
+		if (!device_is_active(&atac->atac_dev)) {
+			sc_xfer->error = XS_DRIVER_STUFFUP;
+			scsipi_done(sc_xfer);
+			return;
+		}
+		xfer = ata_get_xfer(ATAXF_NOSLEEP);
+		if (xfer == NULL) {
+			sc_xfer->error = XS_RESOURCE_SHORTAGE;
+			scsipi_done(sc_xfer);
+			return;
+		}
+
+		if (sc_xfer->xs_control & XS_CTL_POLL)
+			xfer->c_flags |= C_POLL;
+		xfer->c_drive = drive;
+		xfer->c_flags |= C_ATAPI;
+		xfer->c_cmd = sc_xfer;
+		xfer->c_databuf = sc_xfer->data;
+		xfer->c_bcount = sc_xfer->datalen;
+		xfer->c_start = ahci_atapi_start;
+		xfer->c_intr = ahci_atapi_complete;
+		xfer->c_kill_xfer = ahci_atapi_kill_xfer;
+		xfer->c_dscpoll = 0;
+		s = splbio();
+		ata_exec_xfer(atac->atac_channels[channel], xfer);
+#ifdef DIAGNOSTIC
+		if ((sc_xfer->xs_control & XS_CTL_POLL) != 0 &&
+		    (sc_xfer->xs_status & XS_STS_DONE) == 0)
+			panic("ahci_atapi_scsipi_request: polled command "
+			    "not done");
+#endif
+		splx(s);
+		return;
+	default:
+		/* Not supported, nothing to do. */
+		;
+	}
+}
+
+void
+ahci_atapi_start(struct ata_channel *chp, struct ata_xfer *xfer)
+{
+	struct ahci_softc *sc = (struct ahci_softc *)chp->ch_atac;
+	struct ahci_channel *achp = (struct ahci_channel *)chp;
+	struct scsipi_xfer *sc_xfer = xfer->c_cmd;
+	int slot = 0 /* XXX slot */;
+	struct ahci_cmd_tbl *cmd_tbl;
+	struct ahci_cmd_header *cmd_h;
+	u_int8_t *fis;
+	int i;
+	int channel = chp->ch_channel;
+
+	AHCIDEBUG_PRINT(("ahci_atapi_start CI 0x%x\n",
+	    AHCI_READ(sc, AHCI_P_CI(chp->ch_channel))), DEBUG_XFERS);
+
+	cmd_tbl = achp->ahcic_cmd_tbl[slot];
+	AHCIDEBUG_PRINT(("%s port %d tbl %p\n", AHCINAME(sc), chp->ch_channel,
+	      cmd_tbl), DEBUG_XFERS);
+	fis = cmd_tbl->cmdt_cfis;
+
+	fis[0] = 0x27;  /* host to device */
+	fis[1] = 0x80;  /* command FIS */
+	fis[2] = ATAPI_PKT_CMD;
+	memset(&cmd_tbl->cmdt_acmd, 0, sizeof(cmd_tbl->cmdt_acmd));
+	memcpy(cmd_tbl->cmdt_acmd, sc_xfer->cmd, sc_xfer->cmdlen);
+	fis[3] = (sc_xfer->datalen ? ATAPI_PKT_CMD_FTRE_DMA : 0);
+	fis[4] = 0;
+	fis[5] = 0;
+	fis[6] = 0;
+	fis[7] = WDSD_LBA;
+	fis[8] = 0;
+	fis[9] = 0;
+	fis[10] = 0;
+	fis[11] = 0; /* ext features */
+	fis[12] = 0;
+	fis[13] = 0;
+	fis[14] = 0;
+	fis[15] = WDCTL_4BIT;
+	fis[16] = 0;
+	fis[17] = 0;
+	fis[18] = 0;
+	fis[19] = 0;
+
+	cmd_h = &achp->ahcic_cmdh[slot];
+	AHCIDEBUG_PRINT(("%s port %d header %p\n", AHCINAME(sc),
+	    chp->ch_channel, cmd_h), DEBUG_XFERS);
+	if (ahci_dma_setup(chp, slot, sc_xfer->datalen ? sc_xfer->data : NULL,
+	    sc_xfer->datalen,
+	    (sc_xfer->xs_control & XS_CTL_DATA_IN) ?
+	    BUS_DMA_READ : BUS_DMA_WRITE)) {
+		sc_xfer->error = XS_DRIVER_STUFFUP;
+		ahci_atapi_complete(chp, xfer, slot);
+		return;
+	}
+	cmd_h->cmdh_flags = htole16(
+	    ((sc_xfer->xs_control & XS_CTL_DATA_OUT) ? AHCI_CMDH_F_WR : 0) |
+	    20 /* fis lenght */ / 4 | AHCI_CMDH_F_A);
+	cmd_h->cmdh_prdbc = 0;
+	AHCI_CMDH_SYNC(sc, achp, slot,
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+
+	if (xfer->c_flags & C_POLL) {
+		/* polled command, disable interrupts */
+		AHCI_WRITE(sc, AHCI_GHC,
+		    AHCI_READ(sc, AHCI_GHC) & ~AHCI_GHC_IE);
+	}
+	chp->ch_flags |= ATACH_IRQ_WAIT;
+	chp->ch_status = 0;
+	/* start command */
+	AHCI_WRITE(sc, AHCI_P_CI(chp->ch_channel), 1 << slot);
+	/* and says we started this command */
+	achp->ahcic_cmds_active |= 1 << slot;
+
+	if ((xfer->c_flags & C_POLL) == 0) {
+		chp->ch_flags |= ATACH_IRQ_WAIT; /* wait for interrupt */
+		callout_reset(&chp->ch_callout, mstohz(sc_xfer->timeout),
+		    ahci_timeout, chp);
+		return;
+	}
+	/*
+	 * Polled command. 
+	 */
+	for (i = 0; i < ATA_DELAY / 10; i++) {
+		if (sc_xfer->xs_status & XS_STS_DONE)
+			break;
+		ahci_intr_port(sc, achp);
+		delay(10000);
+	}
+	AHCIDEBUG_PRINT(("%s port %d poll end GHC 0x%x IS 0x%x list 0x%x%x fis 0x%x%x CMD 0x%x CI 0x%x\n", AHCINAME(sc), channel, 
+	    AHCI_READ(sc, AHCI_GHC), AHCI_READ(sc, AHCI_IS),
+	    AHCI_READ(sc, AHCI_P_CLBU(channel)), AHCI_READ(sc, AHCI_P_CLB(channel)),
+	    AHCI_READ(sc, AHCI_P_FBU(channel)), AHCI_READ(sc, AHCI_P_FB(channel)),
+	    AHCI_READ(sc, AHCI_P_CMD(channel)), AHCI_READ(sc, AHCI_P_CI(channel))),
+	    DEBUG_XFERS);
+	if ((sc_xfer->xs_status & XS_STS_DONE) == 0) {
+		sc_xfer->error = XS_TIMEOUT;
+		ahci_atapi_complete(chp, xfer, slot);
+	}
+	/* reenable interrupts */
+	AHCI_WRITE(sc, AHCI_GHC, AHCI_READ(sc, AHCI_GHC) | AHCI_GHC_IE);
+}
+
+int
+ahci_atapi_complete(struct ata_channel *chp, struct ata_xfer *xfer, int irq)
+{
+	int slot = 0; /* XXX slot */
+	struct scsipi_xfer *sc_xfer = xfer->c_cmd;
+	int drive = xfer->c_drive;
+	struct ahci_channel *achp = (struct ahci_channel *)chp;
+	struct ahci_softc *sc = (struct ahci_softc *)chp->ch_atac;
+
+	AHCIDEBUG_PRINT(("ahci_atapi_complete channel %d\n", chp->ch_channel),
+	    DEBUG_FUNCS);
+
+	achp->ahcic_cmds_active &= ~(1 << slot);
+	chp->ch_flags &= ~ATACH_IRQ_WAIT;
+	if (xfer->c_flags & C_TIMEOU) {
+		sc_xfer->error = XS_TIMEOUT;
+	} else {
+		callout_stop(&chp->ch_callout);
+		sc_xfer->error = 0;
+	}
+
+	chp->ch_queue->active_xfer = NULL;
+	bus_dmamap_sync(sc->sc_dmat, achp->ahcic_datad[slot], 0,
+	    achp->ahcic_datad[slot]->dm_mapsize,
+	    (sc_xfer->xs_control & XS_CTL_DATA_IN) ? BUS_DMASYNC_POSTREAD :
+	    BUS_DMASYNC_POSTWRITE);
+	bus_dmamap_unload(sc->sc_dmat, achp->ahcic_datad[slot]);
+
+	if (chp->ch_drive[drive].drive_flags & DRIVE_WAITDRAIN) {
+		ahci_atapi_kill_xfer(chp, xfer, KILL_GONE);
+		chp->ch_drive[drive].drive_flags &= ~DRIVE_WAITDRAIN;
+		wakeup(&chp->ch_queue->active_xfer);
+		return 0;
+	}
+	ata_free_xfer(chp, xfer);
+
+	if (chp->ch_status & WDCS_ERR) {
+		sc_xfer->error = XS_SHORTSENSE;
+		sc_xfer->sense.atapi_sense = chp->ch_error;
+	} 
+
+	AHCI_CMDH_SYNC(sc, achp, slot,
+	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+	sc_xfer->resid = sc_xfer->datalen;
+	sc_xfer->resid -= le32toh(achp->ahcic_cmdh[slot].cmdh_prdbc);
+	AHCIDEBUG_PRINT(("ahci_atapi_complete datalen %d resid %d\n",
+	    sc_xfer->datalen, sc_xfer->resid), DEBUG_XFERS);
+	scsipi_done(sc_xfer);
+	atastart(chp);
+	return 0;
+}
+
+void
+ahci_atapi_kill_xfer(struct ata_channel *chp, struct ata_xfer *xfer, int reason)
+{
+	struct scsipi_xfer *sc_xfer = xfer->c_cmd;
+	struct ahci_channel *achp = (struct ahci_channel *)chp;
+	int slot = 0; /* XXX slot */
+
+	achp->ahcic_cmds_active &= ~(1 << slot);
+
+	/* remove this command from xfer queue */
+	switch (reason) {
+	case KILL_GONE:
+		sc_xfer->error = XS_DRIVER_STUFFUP;
+		break;
+	case KILL_RESET:
+		sc_xfer->error = XS_RESET;
+		break;
+	default:
+		printf("ahci_ata_atapi_kill_xfer: unknown reason %d\n", reason);
+		panic("ahci_ata_atapi_kill_xfer");
+	}
+	ata_free_xfer(chp, xfer);
+	scsipi_done(sc_xfer);
+}
+
+void
+ahci_atapi_probe_device(struct atapibus_softc *sc, int target)
+{
+	struct scsipi_channel *chan = sc->sc_channel;
+	struct scsipi_periph *periph;
+	struct ataparams ids;
+	struct ataparams *id = &ids;
+	struct ahci_softc *ahcic = (void *)chan->chan_adapter->adapt_dev;
+	struct atac_softc *atac = &ahcic->sc_atac;
+	struct ata_channel *chp = atac->atac_channels[chan->chan_channel];
+	struct ata_drive_datas *drvp = &chp->ch_drive[target];
+	struct scsipibus_attach_args sa;
+	char serial_number[21], model[41], firmware_revision[9];
+	int s;
+
+	/* skip if already attached */
+	if (scsipi_lookup_periph(chan, target, 0) != NULL)
+		return;
+
+	/* if no ATAPI device detected at attach time, skip */
+	if ((drvp->drive_flags & DRIVE_ATAPI) == 0) {
+		AHCIDEBUG_PRINT(("ahci_atapi_probe_device: drive %d "
+		    "not present\n", target), DEBUG_PROBE);
+		return;
+	}
+
+	/* Some ATAPI devices need a bit more time after software reset. */
+	delay(5000);
+	if (ata_get_params(drvp,  AT_WAIT, id) == 0) {
+#ifdef ATAPI_DEBUG_PROBE
+		printf("%s drive %d: cmdsz 0x%x drqtype 0x%x\n",
+		    AHCINAME(sc), target,
+		    id->atap_config & ATAPI_CFG_CMD_MASK,
+		    id->atap_config & ATAPI_CFG_DRQ_MASK);
+#endif
+		periph = scsipi_alloc_periph(M_NOWAIT);
+		if (periph == NULL) {
+			printf("%s: unable to allocate periph for drive %d\n",
+			    sc->sc_dev.dv_xname, target);
+			return;
+		}
+		periph->periph_dev = NULL;
+		periph->periph_channel = chan;
+		periph->periph_switch = &atapi_probe_periphsw;
+		periph->periph_target = target;
+		periph->periph_lun = 0;
+		periph->periph_quirks = PQUIRK_ONLYBIG;
+
+#ifdef SCSIPI_DEBUG
+		if (SCSIPI_DEBUG_TYPE == SCSIPI_BUSTYPE_ATAPI &&
+		    SCSIPI_DEBUG_TARGET == target)
+			periph->periph_dbflags |= SCSIPI_DEBUG_FLAGS;
+#endif
+		periph->periph_type = ATAPI_CFG_TYPE(id->atap_config);
+		if (id->atap_config & ATAPI_CFG_REMOV)
+			periph->periph_flags |= PERIPH_REMOVABLE;
+		if (periph->periph_type == T_SEQUENTIAL) {
+			s = splbio();
+			drvp->drive_flags |= DRIVE_ATAPIST;
+			splx(s);
+		}
+
+		sa.sa_periph = periph;
+		sa.sa_inqbuf.type =  ATAPI_CFG_TYPE(id->atap_config);
+		sa.sa_inqbuf.removable = id->atap_config & ATAPI_CFG_REMOV ?
+		    T_REMOV : T_FIXED;
+		scsipi_strvis((u_char *)model, 40, id->atap_model, 40);
+		scsipi_strvis((u_char *)serial_number, 20, id->atap_serial,
+		    20);
+		scsipi_strvis((u_char *)firmware_revision, 8,
+		    id->atap_revision, 8);
+		sa.sa_inqbuf.vendor = model;
+		sa.sa_inqbuf.product = serial_number;
+		sa.sa_inqbuf.revision = firmware_revision;
+
+		/*
+		 * Determine the operating mode capabilities of the device.
+		 */
+		if ((id->atap_config & ATAPI_CFG_CMD_MASK) == ATAPI_CFG_CMD_16)
+			periph->periph_cap |= PERIPH_CAP_CMD16;
+		/* XXX This is gross. */
+		periph->periph_cap |= (id->atap_config & ATAPI_CFG_DRQ_MASK);
+
+		drvp->drv_softc = atapi_probe_device(sc, target, periph, &sa);
+
+		if (drvp->drv_softc)
+			ata_probe_caps(drvp);
+		else {
+			s = splbio();
+			drvp->drive_flags &= ~DRIVE_ATAPI;
+			splx(s);
+		}
+	} else {
+		AHCIDEBUG_PRINT(("ahci_atapi_get_params: ATAPI_IDENTIFY_DEVICE "
+		    "failed for drive %s:%d:%d: error 0x%x\n",
+		    AHCINAME(ahcic), chp->ch_channel, target,
+		    chp->ch_error), DEBUG_PROBE);
+		s = splbio();
+		drvp->drive_flags &= ~DRIVE_ATAPI;
+		splx(s);
+	}
+}
+#endif /* NATAPIBUS */

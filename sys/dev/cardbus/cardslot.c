@@ -1,4 +1,4 @@
-/*	$NetBSD: cardslot.c,v 1.35.8.1 2007/11/06 23:25:49 matt Exp $	*/
+/*	$NetBSD: cardslot.c,v 1.35.8.2 2008/01/09 01:52:28 matt Exp $	*/
 
 /*
  * Copyright (c) 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardslot.c,v 1.35.8.1 2007/11/06 23:25:49 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardslot.c,v 1.35.8.2 2008/01/09 01:52:28 matt Exp $");
 
 #include "opt_cardslot.h"
 
@@ -66,6 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: cardslot.c,v 1.35.8.1 2007/11/06 23:25:49 matt Exp $
 
 
 STATIC void cardslotattach(struct device *, struct device *, void *);
+STATIC int cardslotdetach(device_t, int);
 
 STATIC int cardslotmatch(struct device *, struct cfdata *, void *);
 static void cardslot_event_thread(void *arg);
@@ -76,7 +77,7 @@ static int cardslot_16_submatch(struct device *, struct cfdata *,
 				     const int *, void *);
 
 CFATTACH_DECL(cardslot, sizeof(struct cardslot_softc),
-    cardslotmatch, cardslotattach, NULL, NULL);
+    cardslotmatch, cardslotattach, cardslotdetach, NULL);
 
 STATIC int
 cardslotmatch(struct device *parent, struct cfdata *cf,
@@ -113,7 +114,8 @@ cardslotattach(struct device *parent, struct device *self,
 	SIMPLEQ_INIT(&sc->sc_events);
 	sc->sc_th_enable = 0;
 
-	printf(" slot %d flags %x\n", sc->sc_slot,
+	aprint_naive("\n");
+	aprint_normal(" slot %d flags %x\n", sc->sc_slot,
 	       device_cfdata(&sc->sc_dev)->cf_flags);
 
 	DPRINTF(("%s attaching CardBus bus...\n", sc->sc_dev.dv_xname));
@@ -165,9 +167,31 @@ cardslotattach(struct device *parent, struct device *self,
 		/* attach deferred */
 		cardslot_event_throw(sc, CARDSLOT_EVENT_INSERTION_16);
 	}
+
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
+STATIC int
+cardslotdetach(device_t self, int flags)
+{
+	int rc;
+	struct cardslot_softc *sc = device_private(self);
 
+	if ((rc = config_detach_children(self, flags)) != 0)
+		return rc;
+
+	sc->sc_th_enable = 0;
+	wakeup(&sc->sc_events);
+	while (sc->sc_event_thread != NULL)
+		(void)tsleep(sc, PWAIT, "cardslotthd", 0);
+
+	if (!SIMPLEQ_EMPTY(&sc->sc_events))
+		aprint_error_dev(self, "events outstanding");
+
+	pmf_device_deregister(self);
+	return 0;
+}
 
 STATIC int
 cardslot_cb_print(void *aux, const char *pnp)

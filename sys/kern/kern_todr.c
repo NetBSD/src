@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_todr.c,v 1.24 2006/09/24 18:24:55 peter Exp $	*/
+/*	$NetBSD: kern_todr.c,v 1.24.26.1 2008/01/09 01:56:12 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,13 +76,15 @@
  *	@(#)clock.c	8.1 (Berkeley) 6/10/93
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.24 2006/09/24 18:24:55 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.24.26.1 2008/01/09 01:56:12 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/timetc.h>
+#include <sys/intr.h>
+
 #include <dev/clock_subr.h>	/* hmm.. this should probably move to sys */
 
 #ifdef	__HAVE_GENERIC_TODR
@@ -113,9 +115,7 @@ inittodr(time_t base)
 {
 	int badbase = 0, waszero = (base == 0), goodtime = 0, badrtc = 0;
 	int s;
-#ifdef	__HAVE_TIMECOUNTER
 	struct timespec ts;
-#endif
 	struct timeval tv;
 
 	if (base < 5 * SECYR) {
@@ -193,14 +193,10 @@ inittodr(time_t base)
 
 	timeset = 1;
 
-	s = splclock();
-#ifdef	__HAVE_TIMECOUNTER
 	ts.tv_sec = tv.tv_sec;
 	ts.tv_nsec = tv.tv_usec * 1000;
+	s = splclock();
 	tc_setclock(&ts);
-#else
-	time = tv;
-#endif
 	splx(s);
 
 	if (waszero || goodtime)
@@ -219,9 +215,7 @@ inittodr(time_t base)
 void
 resettodr(void)
 {
-#ifdef	__HAVE_TIMECOUNTER
-	struct timeval	time;
-#endif
+	struct timeval tv;
 
 	/*
 	 * We might have been called by boot() due to a crash early
@@ -231,15 +225,13 @@ resettodr(void)
 	if (!timeset)
 		return;
 
-#ifdef	__HAVE_TIMECOUNTER
-	getmicrotime(&time);
-#endif
+	getmicrotime(&tv);
 
-	if (time.tv_sec == 0)
+	if (tv.tv_sec == 0)
 		return;
 
 	if (todr_handle)
-		if (todr_settime(todr_handle, &time) != 0)
+		if (todr_settime(todr_handle, &tv) != 0)
 			printf("Cannot set TOD clock time\n");
 }
 

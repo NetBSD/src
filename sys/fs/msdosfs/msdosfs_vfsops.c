@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.50.4.1 2007/11/06 23:31:09 matt Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.50.4.2 2008/01/09 01:55:44 matt Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.50.4.1 2007/11/06 23:31:09 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.50.4.2 2008/01/09 01:55:44 matt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -119,7 +119,7 @@ struct vfsops msdosfs_vfsops = {
 	msdosfs_start,
 	msdosfs_unmount,
 	msdosfs_root,
-	msdosfs_quotactl,
+	(void *)eopnotsupp,		/* vfs_quotactl */
 	msdosfs_statvfs,
 	msdosfs_sync,
 	msdosfs_vget,
@@ -216,7 +216,7 @@ msdosfs_mountroot()
 	}
 
 	if ((error = update_mp(mp, &args)) != 0) {
-		(void)msdosfs_unmount(mp, 0, l);
+		(void)msdosfs_unmount(mp, 0);
 		vfs_unbusy(mp);
 		vfs_destroy(mp);
 		vrele(rootvp);
@@ -226,7 +226,7 @@ msdosfs_mountroot()
 	mutex_enter(&mountlist_lock);
 	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
 	mutex_exit(&mountlist_lock);
-	(void)msdosfs_statvfs(mp, &mp->mnt_stat, l);
+	(void)msdosfs_statvfs(mp, &mp->mnt_stat);
 	vfs_unbusy(mp);
 	return (0);
 }
@@ -237,13 +237,13 @@ msdosfs_mountroot()
  * special file to treat as a filesystem.
  */
 int
-msdosfs_mount(mp, path, data, data_len, l)
+msdosfs_mount(mp, path, data, data_len)
 	struct mount *mp;
 	const char *path;
 	void *data;
 	size_t *data_len;
-	struct lwp *l;
 {
+	struct lwp *l = curlwp;
 	struct nameidata nd;
 	struct vnode *devvp;	  /* vnode for blk device to mount */
 	struct msdosfs_args *args = data; /* holds data from mount request */
@@ -316,7 +316,7 @@ msdosfs_mount(mp, path, data, data_len, l)
 				devvp = pmp->pm_devvp;
 				vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 				error = VOP_ACCESS(devvp, VREAD | VWRITE,
-						   l->l_cred, l);
+						   l->l_cred);
 				VOP_UNLOCK(devvp, 0);
 				DPRINTF(("VOP_ACCESS %d\n", error));
 				if (error)
@@ -333,7 +333,7 @@ msdosfs_mount(mp, path, data, data_len, l)
 	 * Not an update, or updating the name: look up the name
 	 * and verify that it refers to a sensible block device.
 	 */
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, args->fspec, l);
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, args->fspec);
 	if ((error = namei(&nd)) != 0) {
 		DPRINTF(("namei %d\n", error));
 		return (error);
@@ -359,7 +359,7 @@ msdosfs_mount(mp, path, data, data_len, l)
 		if ((mp->mnt_flag & MNT_RDONLY) == 0)
 			accessmode |= VWRITE;
 		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-		error = VOP_ACCESS(devvp, accessmode, l->l_cred, l);
+		error = VOP_ACCESS(devvp, accessmode, l->l_cred);
 		VOP_UNLOCK(devvp, 0);
 		if (error) {
 			DPRINTF(("VOP_ACCESS2 %d\n", error));
@@ -390,7 +390,7 @@ msdosfs_mount(mp, path, data, data_len, l)
 			xflags = FREAD;
 		else
 			xflags = FREAD|FWRITE;
-		error = VOP_OPEN(devvp, xflags, FSCRED, l);
+		error = VOP_OPEN(devvp, xflags, FSCRED);
 		if (error) {
 			DPRINTF(("VOP_OPEN %d\n", error));
 			goto fail;
@@ -399,7 +399,7 @@ msdosfs_mount(mp, path, data, data_len, l)
 		if (error) {
 			DPRINTF(("msdosfs_mountfs %d\n", error));
 			vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-			(void) VOP_CLOSE(devvp, xflags, NOCRED, l);
+			(void) VOP_CLOSE(devvp, xflags, NOCRED);
 			VOP_UNLOCK(devvp, 0);
 			goto fail;
 		}
@@ -415,7 +415,7 @@ msdosfs_mount(mp, path, data, data_len, l)
 		}
 	}
 	if ((error = update_mp(mp, args)) != 0) {
-		msdosfs_unmount(mp, MNT_FORCE, l);
+		msdosfs_unmount(mp, MNT_FORCE);
 		DPRINTF(("update_mp %d\n", error));
 		return error;
 	}
@@ -470,7 +470,7 @@ msdosfs_mountfs(devvp, mp, l, argp)
 	 * that the size of a disk block will always be 512 bytes.
 	 * Let's root them out...
 	 */
-	error = VOP_IOCTL(devvp, DIOCGPART, &dpart, FREAD, NOCRED, l);
+	error = VOP_IOCTL(devvp, DIOCGPART, &dpart, FREAD, NOCRED);
 	if (error == 0) {
 		secsize = dpart.disklab->d_secsize;
 		dtype = dpart.disklab->d_type;
@@ -478,8 +478,7 @@ msdosfs_mountfs(devvp, mp, l, argp)
 		psize = dpart.part->p_size;
 	} else {
 		struct dkwedge_info dkw;
-		error = VOP_IOCTL(devvp, DIOCGWEDGEINFO, &dkw, FREAD,
-		    NOCRED, l);
+		error = VOP_IOCTL(devvp, DIOCGWEDGEINFO, &dkw, FREAD, NOCRED);
 		secsize = 512;	/* XXX */
 		dtype = DTYPE_FLOPPY; /* XXX */
 		fstype = FS_MSDOS;
@@ -639,6 +638,14 @@ msdosfs_mountfs(devvp, mp, l, argp)
 		pmp->pm_FATsecs     *= tmp;
 		SecPerClust         *= tmp;
 	}
+
+	/* Check that fs has nonzero FAT size */
+	if (pmp->pm_FATsecs == 0) {
+		DPRINTF(("FATsecs is 0\n"));
+		error = EINVAL;
+		goto error_exit;
+	}
+
 	pmp->pm_fatblk = pmp->pm_ResSectors;
 	if (FAT32(pmp)) {
 		pmp->pm_rootdirblk = getulong(b710->bpbRootClust);
@@ -832,8 +839,7 @@ error_exit:;
 }
 
 int
-msdosfs_start(struct mount *mp, int flags,
-    struct lwp *l)
+msdosfs_start(struct mount *mp, int flags)
 {
 
 	return (0);
@@ -843,10 +849,9 @@ msdosfs_start(struct mount *mp, int flags,
  * Unmount the filesystem described by mp.
  */
 int
-msdosfs_unmount(mp, mntflags, l)
+msdosfs_unmount(mp, mntflags)
 	struct mount *mp;
 	int mntflags;
-	struct lwp *l;
 {
 	struct msdosfsmount *pmp;
 	int error, flags;
@@ -886,7 +891,7 @@ msdosfs_unmount(mp, mntflags, l)
 #endif
 	vn_lock(pmp->pm_devvp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_CLOSE(pmp->pm_devvp,
-	    pmp->pm_flags & MSDOSFSMNT_RONLY ? FREAD : FREAD|FWRITE, NOCRED, l);
+	    pmp->pm_flags & MSDOSFSMNT_RONLY ? FREAD : FREAD|FWRITE, NOCRED);
 	vput(pmp->pm_devvp);
 	free(pmp->pm_inusemap, M_MSDOSFSFAT);
 	free(pmp, M_MSDOSFSMNT);
@@ -914,15 +919,7 @@ msdosfs_root(mp, vpp)
 }
 
 int
-msdosfs_quotactl(struct mount *mp, int cmds,
-    uid_t uid, void *arg, struct lwp *l)
-{
-
-	return (EOPNOTSUPP);
-}
-
-int
-msdosfs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l)
+msdosfs_statvfs(struct mount *mp, struct statvfs *sbp)
 {
 	struct msdosfsmount *pmp;
 
@@ -943,13 +940,12 @@ msdosfs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l)
 }
 
 int
-msdosfs_sync(mp, waitfor, cred, l)
+msdosfs_sync(mp, waitfor, cred)
 	struct mount *mp;
 	int waitfor;
 	kauth_cred_t cred;
-	struct lwp *l;
 {
-	struct vnode *vp, *nvp;
+	struct vnode *vp, *mvp;
 	struct denode *dep;
 	struct msdosfsmount *pmp = VFSTOMSDOSFS(mp);
 	int error, allerror = 0;
@@ -965,49 +961,52 @@ msdosfs_sync(mp, waitfor, cred, l)
 			/* update fats here */
 		}
 	}
+	/* Allocate a marker vnode. */
+	if ((mvp = vnalloc(mp)) == NULL)
+		return ENOMEM;
 	/*
 	 * Write back each (modified) denode.
 	 */
-	simple_lock(&mntvnode_slock);
+	mutex_enter(&mntvnode_lock);
 loop:
-	for (vp = TAILQ_FIRST(&mp->mnt_vnodelist); vp; vp = nvp) {
-		/*
-		 * If the vnode that we are about to sync is no longer
-		 * associated with this mount point, start over.
-		 */
-		if (vp->v_mount != mp)
-			goto loop;
-		simple_lock(&vp->v_interlock);
-		nvp = TAILQ_NEXT(vp, v_mntvnodes);
+	for (vp = TAILQ_FIRST(&mp->mnt_vnodelist); vp; vp = vunmark(mvp)) {
+		vmark(mvp, vp);
+		if (vp->v_mount != mp || vismarker(vp))
+			continue;
+		mutex_enter(&vp->v_interlock);
 		dep = VTODE(vp);
 		if (waitfor == MNT_LAZY || vp->v_type == VNON ||
 		    (((dep->de_flag &
 		    (DE_ACCESS | DE_CREATE | DE_UPDATE | DE_MODIFIED)) == 0) &&
 		     (LIST_EMPTY(&vp->v_dirtyblkhd) &&
 		      UVM_OBJ_IS_CLEAN(&vp->v_uobj)))) {
-			simple_unlock(&vp->v_interlock);
+			mutex_exit(&vp->v_interlock);
 			continue;
 		}
-		simple_unlock(&mntvnode_slock);
+		mutex_exit(&mntvnode_lock);
 		error = vget(vp, LK_EXCLUSIVE | LK_NOWAIT | LK_INTERLOCK);
 		if (error) {
-			simple_lock(&mntvnode_slock);
-			if (error == ENOENT)
+			mutex_enter(&mntvnode_lock);
+			if (error == ENOENT) {
+				(void)vunmark(mvp);
 				goto loop;
+			}
 			continue;
 		}
 		if ((error = VOP_FSYNC(vp, cred,
-		    waitfor == MNT_WAIT ? FSYNC_WAIT : 0, 0, 0, l)) != 0)
+		    waitfor == MNT_WAIT ? FSYNC_WAIT : 0, 0, 0)) != 0)
 			allerror = error;
 		vput(vp);
-		simple_lock(&mntvnode_slock);
+		mutex_enter(&mntvnode_lock);
 	}
-	simple_unlock(&mntvnode_slock);
+	mutex_exit(&mntvnode_lock);
+	vnfree(mvp);
+
 	/*
 	 * Force stale file system control information to be flushed.
 	 */
 	if ((error = VOP_FSYNC(pmp->pm_devvp, cred,
-	    waitfor == MNT_WAIT ? FSYNC_WAIT : 0, 0, 0, l)) != 0)
+	    waitfor == MNT_WAIT ? FSYNC_WAIT : 0, 0, 0)) != 0)
 		allerror = error;
 #ifdef QUOTA
 	/* qsync(mp); */

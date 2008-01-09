@@ -1,4 +1,4 @@
-/*	$NetBSD: sunkbd.c,v 1.25 2007/07/09 21:01:23 ad Exp $	*/
+/*	$NetBSD: sunkbd.c,v 1.25.8.1 2008/01/09 01:54:32 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunkbd.c,v 1.25 2007/07/09 21:01:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunkbd.c,v 1.25.8.1 2008/01/09 01:54:32 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -312,10 +312,9 @@ sunkbd_write_data(k, c)
 	int c;
 {
 	struct tty *tp = (struct tty *)k->k_priv;
-	int	s;
 
-	s = spltty();
+	mutex_spin_enter(&tty_lock);
 	ttyoutput(c, tp);
 	ttstart(tp);
-	splx(s);
+	mutex_spin_exit(&tty_lock);
 }

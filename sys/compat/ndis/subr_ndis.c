@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sys/compat/ndis/subr_ndis.c,v 1.67.2.7 2005/03/31 21:50:11 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: subr_ndis.c,v 1.9.2.1 2007/11/06 23:25:08 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_ndis.c,v 1.9.2.2 2008/01/09 01:51:33 matt Exp $");
 #endif
 
 /*
@@ -100,7 +100,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_ndis.c,v 1.9.2.1 2007/11/06 23:25:08 matt Exp $
 #include <net/if_dl.h>
 #include <net/if_media.h>
 
-#include <machine/atomic.h>
+#include <sys/atomic.h>
 #ifdef __FreeBSD__
 #include <machine/bus_memio.h>
 #include <machine/bus_pio.h>
@@ -851,7 +851,7 @@ NdisReadConfiguration(status, parm, cfg, key, type)
 #else /* __NetBSD__ */
 	mib[0] = sc->ndis_sysctl_mib;
 	
-	sysctl_lock(curlwp, NULL, 0);
+	sysctl_lock(false);
 		error = sysctl_locate(curlwp, &mib[0], 1, &pnode, NULL);
 	
 		numcld  = pnode->sysctl_csize;
@@ -865,7 +865,7 @@ NdisReadConfiguration(status, parm, cfg, key, type)
 			}
 			ndiscld++;
 		}
-	sysctl_unlock(curlwp);
+	sysctl_unlock();
 	
 	if(i < numcld) {
 		/* Found it */
@@ -1674,7 +1674,9 @@ NdisReadNetworkAddress(status, addr, addrlen, adapter)
 #ifdef __FreeBSD__
 		*addr = sc->arpcom.ac_enaddr;
 #else
-                *addr = LLADDR(sc->arpcom.ec_if.if_sadl);
+		memcpy(sc->ndis_mac, CLLADDR(sc->arpcom.ec_if.if_sadl),
+		    ETHER_ADDR_LEN);
+                *addr = sc->ndis_mac;
 #endif
 		*addrlen = ETHER_ADDR_LEN;
 		*status = NDIS_STATUS_SUCCESS;
@@ -2594,7 +2596,7 @@ __stdcall static uint32_t
 NdisInterlockedIncrement(addend)
 	uint32_t		*addend;
 {
-	atomic_add_long((u_long *)addend, 1);
+	atomic_inc_32(addend);
 	return(*addend);
 }
 
@@ -2602,7 +2604,7 @@ __stdcall static uint32_t
 NdisInterlockedDecrement(addend)
 	uint32_t		*addend;
 {
-	atomic_subtract_long((u_long *)addend, 1);
+	atomic_dec_32(addend);
 	return(*addend);
 }
 

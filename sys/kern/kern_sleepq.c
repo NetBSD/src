@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.12.2.1 2007/11/06 23:31:57 matt Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.12.2.2 2008/01/09 01:56:09 matt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,10 +42,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.12.2.1 2007/11/06 23:31:57 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.12.2.2 2008/01/09 01:56:09 matt Exp $");
 
 #include <sys/param.h>
-#include <sys/lock.h>
 #include <sys/kernel.h>
 #include <sys/cpu.h>
 #include <sys/pool.h>
@@ -76,7 +75,8 @@ sleeptab_init(sleeptab_t *st)
 
 	for (i = 0; i < SLEEPTAB_HASH_SIZE; i++) {
 		sq = &st->st_queues[i].st_queue;
-		mutex_init(&st->st_queues[i].st_mutex, MUTEX_SPIN, IPL_SCHED);
+		mutex_init(&st->st_queues[i].st_mutex, MUTEX_DEFAULT,
+		    IPL_SCHED);
 		sleepq_init(sq, &st->st_queues[i].st_mutex);
 	}
 }

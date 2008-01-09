@@ -1,4 +1,4 @@
-/*	$NetBSD: pf.c,v 1.40 2007/08/07 10:08:21 yamt Exp $	*/
+/*	$NetBSD: pf.c,v 1.40.2.1 2008/01/09 01:55:37 matt Exp $	*/
 /*	$OpenBSD: pf.c,v 1.487 2005/04/22 09:53:18 dhartmei Exp $ */
 
 /*
@@ -36,6 +36,9 @@
  *
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pf.c,v 1.40.2.1 2008/01/09 01:55:37 matt Exp $");
+
 #include "bpfilter.h"
 #include "pflog.h"
 #ifdef __OpenBSD__
@@ -63,6 +66,7 @@
 #include <net/route.h>
 
 #include <netinet/in.h>
+#include <netinet/in_offload.h>
 #include <netinet/in_var.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
@@ -2715,6 +2719,7 @@ pf_calc_mss(struct pf_addr *addr, sa_family_t af, u_int16_t offer)
 	} u;
 	struct route		 ro;
 	struct route *rop = &ro;
+	struct rtentry *rt;
 	int			 hlen;
 	u_int16_t		 mss = tcp_mssdflt;
 
@@ -2743,8 +2748,8 @@ pf_calc_mss(struct pf_addr *addr, sa_family_t af, u_int16_t offer)
 #else
 	rtcache_init_noclone(rop);
 #endif
-	if (rop->ro_rt != NULL) {
-		mss = rop->ro_rt->rt_ifp->if_mtu - hlen - sizeof(struct tcphdr);
+	if ((rt = rtcache_getrt(rop)) != NULL) {
+		mss = rt->rt_ifp->if_mtu - hlen - sizeof(struct tcphdr);
 		mss = max(tcp_mssdflt, mss);
 	}
 	rtcache_free(rop);
@@ -5305,7 +5310,7 @@ pf_routable(struct pf_addr *addr, sa_family_t af)
 	}
 #else
 	rtcache_init(&ro);
-	rc = (ro.ro_rt != NULL) ? 1 : 0;
+	rc = rtcache_getrt(&ro) != NULL ? 1 : 0;
 	rtcache_free(&ro);
 #endif
 
@@ -5434,17 +5439,21 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 	rtcache_setdst(ro, dst);
 
 	if (r->rt == PF_FASTROUTE) {
+		struct rtentry *rt;
+
 		rtcache_init(ro);
-		if (ro->ro_rt == NULL) {
+		rt = rtcache_getrt(ro);
+
+		if (rt == NULL) {
 			ipstat.ips_noroute++;
 			goto bad;
 		}
 
-		ifp = ro->ro_rt->rt_ifp;
-		ro->ro_rt->rt_use++;
+		ifp = rt->rt_ifp;
+		rt->rt_use++;
 
-		if (ro->ro_rt->rt_flags & RTF_GATEWAY)
-			dst = ro->ro_rt->rt_gateway;
+		if (rt->rt_flags & RTF_GATEWAY)
+			dst = rt->rt_gateway;
 	} else {
 		if (TAILQ_EMPTY(&r->rpool.list)) {
 			DPFPRINTF(PF_DEBUG_URGENT,
@@ -5558,6 +5567,10 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 			goto bad;
 	}
 
+	/* Make ip_fragment re-compute checksums. */
+	if (IN_NEED_CHECKSUM(ifp, M_CSUM_IPv4)) {
+		m0->m_pkthdr.csum_flags |= M_CSUM_IPv4;
+	}
 	m1 = m0;
 	error = ip_fragment(m0, ifp, ifp->if_mtu);
 	if (error) {

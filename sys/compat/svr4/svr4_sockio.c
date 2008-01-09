@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_sockio.c,v 1.30 2007/05/29 21:32:28 christos Exp $	 */
+/*	$NetBSD: svr4_sockio.c,v 1.30.8.1 2008/01/09 01:51:54 matt Exp $	 */
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_sockio.c,v 1.30 2007/05/29 21:32:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_sockio.c,v 1.30.8.1 2008/01/09 01:51:54 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -67,14 +67,13 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_sockio.c,v 1.30 2007/05/29 21:32:28 christos Ex
 #include <compat/svr4/svr4_ioctl.h>
 #include <compat/svr4/svr4_sockio.h>
 
-static int bsd_to_svr4_flags __P((int));
+static int bsd_to_svr4_flags(int);
 
 #define bsd_to_svr4_flag(a) \
 	if (bf & __CONCAT(I,a))	sf |= __CONCAT(SVR4_I,a)
 
 static int
-bsd_to_svr4_flags(bf)
-	int bf;
+bsd_to_svr4_flags(int bf)
 {
 	int sf = 0;
 	bsd_to_svr4_flag(FF_UP);
@@ -92,6 +91,18 @@ bsd_to_svr4_flags(bf)
 }
 
 int
+svr4_count_ifnum(struct ifnet *ifp)
+{
+	struct ifaddr *ifa;
+	int ifnum = 0;
+
+	IFADDR_FOREACH(ifa, ifp)
+		ifnum++;
+
+	return MAX(1, ifnum);
+}
+
+int
 svr4_sock_ioctl(struct file *fp, struct lwp *l, register_t *retval,
     int fd, u_long cmd, void *data)
 {
@@ -105,7 +116,6 @@ svr4_sock_ioctl(struct file *fp, struct lwp *l, register_t *retval,
 	case SVR4_SIOCGLIFNUM:
 		{
 			struct ifnet *ifp;
-			struct ifaddr *ifa;
 			struct svr4_lifnum lifnum;
 
 			error = copyin(data, &lifnum, sizeof(lifnum));
@@ -114,14 +124,8 @@ svr4_sock_ioctl(struct file *fp, struct lwp *l, register_t *retval,
 
 			lifnum.lifn_count = 0;
 			/* XXX: We don't pay attention to family or flags */
-			for (ifp = ifnet.tqh_first;
-			     ifp != 0; ifp = ifp->if_list.tqe_next)
-				if ((ifa = ifp->if_addrlist.tqh_first) == NULL)
-					lifnum.lifn_count++;
-				else
-					for (;ifa != NULL;
-					    ifa = ifa->ifa_list.tqe_next)
-						lifnum.lifn_count++;
+			IFNET_FOREACH(ifp)
+				lifnum.lifn_count += svr4_count_ifnum(ifp);
 
 			DPRINTF(("SIOCGLIFNUM [family=%d,flags=%d,count=%d]\n",
 			    lifnum.lifn_family, lifnum.lifn_flags,
@@ -132,7 +136,6 @@ svr4_sock_ioctl(struct file *fp, struct lwp *l, register_t *retval,
 	case SVR4_SIOCGIFNUM:
 		{
 			struct ifnet *ifp;
-			struct ifaddr *ifa;
 			int ifnum = 0;
 
 			/*
@@ -147,15 +150,8 @@ svr4_sock_ioctl(struct file *fp, struct lwp *l, register_t *retval,
 			 * entry per physical interface?
 			 */
 
-			for (ifp = ifnet.tqh_first;
-			     ifp != 0; ifp = ifp->if_list.tqe_next)
-				if ((ifa = ifp->if_addrlist.tqh_first) == NULL)
-					ifnum++;
-				else
-					for (;ifa != NULL;
-					    ifa = ifa->ifa_list.tqe_next)
-						ifnum++;
-
+			IFNET_FOREACH(ifp)
+				ifnum += svr4_count_ifnum(ifp);
 
 			DPRINTF(("SIOCGIFNUM %d\n", ifnum));
 			return copyout(&ifnum, data, sizeof(ifnum));

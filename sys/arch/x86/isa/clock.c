@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.9.10.1 2007/11/06 23:23:39 matt Exp $	*/
+/*	$NetBSD: clock.c,v 1.9.10.2 2008/01/09 01:49:50 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -121,7 +121,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.9.10.1 2007/11/06 23:23:39 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.9.10.2 2008/01/09 01:49:50 matt Exp $");
 
 /* #define CLOCKDEBUG */
 /* #define CLOCK_PARANOIA */
@@ -136,11 +136,12 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.9.10.1 2007/11/06 23:23:39 matt Exp $");
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/mutex.h>
+#include <sys/cpu.h>
+#include <sys/intr.h>
 
-#include <machine/cpu.h>
-#include <machine/intr.h>
 #include <machine/pio.h>
 #include <machine/cpufunc.h>
+#include <machine/lock.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
@@ -148,6 +149,7 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.9.10.1 2007/11/06 23:23:39 matt Exp $");
 #include <dev/ic/i8253reg.h>
 #include <i386/isa/nvram.h>
 #include <x86/x86/tsc.h>
+#include <x86/lock.h>
 #include <dev/clock_subr.h>
 #include <machine/specialreg.h> 
 
@@ -166,9 +168,10 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.9.10.1 2007/11/06 23:23:39 matt Exp $");
 
 int sysbeepmatch(struct device *, struct cfdata *, void *);
 void sysbeepattach(struct device *, struct device *, void *);
+int sysbeepdetach(device_t, int);
 
 CFATTACH_DECL(sysbeep, sizeof(struct device),
-    sysbeepmatch, sysbeepattach, NULL, NULL);
+    sysbeepmatch, sysbeepattach, sysbeepdetach, NULL);
 
 static int ppi_attached;
 static pcppi_tag_t ppicookie;
@@ -194,6 +197,7 @@ static void	rtcput(mc_todregs *);
 static int	cmoscheck(void);
 
 static int	clock_expandyear(int);
+int 		sysbeepdetach(device_t, int);
 
 static unsigned int	gettick_broken_latch(void);
 
@@ -257,22 +261,21 @@ static int ticks[6];
 static unsigned int
 gettick_broken_latch(void)
 {
-	u_long flags;
 	int v1, v2, v3;
 	int w1, w2, w3;
+	int s;
 
 	/* Don't want someone screwing with the counter while we're here. */
-	flags = x86_read_psl();
-	x86_disable_intr();
-
+	s = splhigh();
+	__cpu_simple_lock(&tmr_lock);
 	v1 = inb(IO_TIMER1+TIMER_CNTR0);
 	v1 |= inb(IO_TIMER1+TIMER_CNTR0) << 8;
 	v2 = inb(IO_TIMER1+TIMER_CNTR0);
 	v2 |= inb(IO_TIMER1+TIMER_CNTR0) << 8;
 	v3 = inb(IO_TIMER1+TIMER_CNTR0);
 	v3 |= inb(IO_TIMER1+TIMER_CNTR0) << 8;
-
-	x86_write_psl(flags);
+	__cpu_simple_unlock(&tmr_lock);
+	splx(s);
 
 #ifdef CLOCK_PARANOIA
 	if (clock_debug) {
@@ -366,15 +369,12 @@ startrtclock(void)
 
 	tc_init(&i8254_timecounter);
 
-#if defined(I586_CPU) || defined(I686_CPU) || defined(__x86_64__)
 	init_TSC();
-#endif
-
 	rtc_register();
 }
 
 /*
- * Must be called at splclock().
+ * Must be called at splsched().
  */
 static void
 tickle_tc(void) 
@@ -421,31 +421,25 @@ u_int
 i8254_get_timecount(struct timecounter *tc)
 {
 	u_int count;
-	u_char high, low;
-	u_long flags;
+	uint16_t rdval;
+	int s;
 
 	/* Don't want someone screwing with the counter while we're here. */
-	flags = x86_read_psl();
-	x86_disable_intr();
+	s = splhigh();
 	__cpu_simple_lock(&tmr_lock);
-
 	/* Select timer0 and latch counter value. */ 
 	outb(IO_TIMER1 + TIMER_MODE, TIMER_SEL0 | TIMER_LATCH);
-
-	low = inb(IO_TIMER1 + TIMER_CNTR0);
-	high = inb(IO_TIMER1 + TIMER_CNTR0);
-	count = rtclock_tval - ((high << 8) | low);
-
+	/* insb to make the read atomic */
+	insb(IO_TIMER1+TIMER_CNTR0, &rdval, 2);
+	count = rtclock_tval - rdval;
 	if (rtclock_tval && (count < i8254_lastcount || !i8254_ticked)) {
 		i8254_ticked = 1;
 		i8254_offset += rtclock_tval;
 	}
-
 	i8254_lastcount = count;
 	count += i8254_offset;
-
 	__cpu_simple_unlock(&tmr_lock);
-	x86_write_psl(flags);
+	splx(s);
 
 	return (count);
 }
@@ -453,21 +447,23 @@ i8254_get_timecount(struct timecounter *tc)
 unsigned int
 gettick(void)
 {
-	u_long flags;
-	u_char lo, hi;
-
+	uint16_t rdval;
+	int s;
+	
 	if (clock_broken_latch)
 		return (gettick_broken_latch());
 
 	/* Don't want someone screwing with the counter while we're here. */
-	flags = x86_read_psl();
-	x86_disable_intr();
+	s = splhigh();
+	__cpu_simple_lock(&tmr_lock);
 	/* Select counter 0 and latch it. */
 	outb(IO_TIMER1+TIMER_MODE, TIMER_SEL0 | TIMER_LATCH);
-	lo = inb(IO_TIMER1+TIMER_CNTR0);
-	hi = inb(IO_TIMER1+TIMER_CNTR0);
-	x86_write_psl(flags);
-	return ((hi << 8) | lo);
+	/* insb to make the read atomic */
+	insb(IO_TIMER1+TIMER_CNTR0, &rdval, 2);
+	__cpu_simple_unlock(&tmr_lock);
+	splx(s);
+
+	return rdval;
 }
 
 /*
@@ -483,11 +479,6 @@ i8254_delay(unsigned int n)
 {
 	unsigned int cur_tick, initial_tick;
 	int remaining;
-	static const int delaytab[26] = {
-		 0,  2,  3,  4,  5,  6,  7,  9, 10, 11,
-		12, 13, 15, 16, 17, 18, 19, 21, 22, 23,
-		24, 25, 27, 28, 29, 30,
-	};
 
 	/* allow DELAY() to be used before startrtclock() */
 	if (!rtclock_init)
@@ -499,9 +490,7 @@ i8254_delay(unsigned int n)
 	 */
 	initial_tick = gettick();
 
-	if (n <= 25)
-		remaining = delaytab[n];
-	else if (n <= UINT_MAX / TIMER_FREQ) {
+	if (n <= UINT_MAX / TIMER_FREQ) {
 		/*
 		 * For unsigned arithmetic, division can be replaced with
 		 * multiplication with the inverse and a shift.
@@ -562,6 +551,17 @@ sysbeepattach(struct device *parent, struct device *self,
 
 	ppicookie = ((struct pcppi_attach_args *)aux)->pa_cookie;
 	ppi_attached = 1;
+
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+}
+
+int
+sysbeepdetach(device_t self, int flags)
+{
+	pmf_device_deregister(self);
+	ppi_attached = 0;
+	return 0;
 }
 #endif
 

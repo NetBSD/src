@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_usema.h,v 1.10 2006/09/01 04:49:48 sekiya Exp $ */
+/*	$NetBSD: irix_usema.h,v 1.10.28.1 2008/01/09 01:50:53 matt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/param.h>
 #include <sys/device.h>
-#include <sys/lock.h>
+#include <sys/rwlock.h>
 #include <sys/queue.h>
 #include <sys/vnode.h>
 
@@ -49,27 +49,27 @@
 #include <compat/irix/irix_exec.h>
 
 extern struct vfsops irix_usema_dummy_vfsops;
-void irix_usema_dummy_vfs_init __P((void));
+void irix_usema_dummy_vfs_init(void);
 extern const struct vnodeopv_desc * const irix_usema_vnodeopv_descs[];
 extern const struct vnodeopv_desc irix_usema_opv_desc;
-extern int (**irix_usema_vnodeop_p) __P((void *));
+extern int (**irix_usema_vnodeop_p)(void *);
 extern const struct vnodeopv_entry_desc irix_usema_vnodeop_entries[];
 
 
-void	irix_usemaattach __P((struct device *, struct device *, void *));
+void	irix_usemaattach(struct device *, struct device *, void *);
 
-int	irix_usema_close	__P((void *));
-int	irix_usema_access	__P((void *));
-int	irix_usema_getattr	__P((void *));
-int	irix_usema_setattr	__P((void *));
-int	irix_usema_fcntl	__P((void *));
-int	irix_usema_ioctl	__P((void *));
-int	irix_usema_poll		__P((void *));
-int	irix_usema_inactive	__P((void *));
+int	irix_usema_close(void *);
+int	irix_usema_access(void *);
+int	irix_usema_getattr(void *);
+int	irix_usema_setattr(void *);
+int	irix_usema_fcntl(void *);
+int	irix_usema_ioctl(void *);
+int	irix_usema_poll(void *);
+int	irix_usema_inactive(void *);
 
-void	irix_usema_exit_cleanup	__P((struct proc *, struct proc *));
+void	irix_usema_exit_cleanup(struct proc *, struct proc *);
 #ifdef DEBUG_IRIX
-void	irix_usema_debug	__P((void));
+void	irix_usema_debug(void);
 #endif
 
 #define IRIX_USEMADEV_MINOR	1
@@ -114,7 +114,7 @@ struct irix_usema_rec {
 	int iur_waiting_count;
 	TAILQ_HEAD(iur_waiting_p, irix_waiting_proc_rec) iur_waiting_p;
 	TAILQ_HEAD(iur_released_p, irix_waiting_proc_rec) iur_released_p;
-	struct lock iur_lock; 		/* lock for both lists */
+	krwlock_t iur_lock; 		/* lock for both lists */
 };
 
 /* From IRIX's <sys/usioctl.h> */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vfsops.c,v 1.28.4.1 2007/11/06 23:31:12 matt Exp $	*/
+/*	$NetBSD: ptyfs_vfsops.c,v 1.28.4.2 2008/01/09 01:55:46 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.28.4.1 2007/11/06 23:31:12 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.28.4.2 2008/01/09 01:55:46 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -204,9 +204,9 @@ ptyfs_done(void)
  * Mount the Pseudo tty params filesystem
  */
 int
-ptyfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
-    struct lwp *l)
+ptyfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 {
+	struct lwp *l = curlwp;
 	int error = 0;
 	struct ptyfsmount *pmnt;
 	struct ptyfs_args *args = data;
@@ -264,15 +264,14 @@ ptyfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
 
 /*ARGSUSED*/
 int
-ptyfs_start(struct mount *mp, int flags,
-    struct lwp *p)
+ptyfs_start(struct mount *mp, int flags)
 {
 	return 0;
 }
 
 /*ARGSUSED*/
 int
-ptyfs_unmount(struct mount *mp, int mntflags, struct lwp *p)
+ptyfs_unmount(struct mount *mp, int mntflags)
 {
 	int error;
 	int flags = 0;
@@ -307,15 +306,7 @@ ptyfs_root(struct mount *mp, struct vnode **vpp)
 
 /*ARGSUSED*/
 int
-ptyfs_quotactl(struct mount *mp, int cmd, uid_t uid,
-    void *arg, struct lwp *p)
-{
-	return EOPNOTSUPP;
-}
-
-/*ARGSUSED*/
-int
-ptyfs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *p)
+ptyfs_statvfs(struct mount *mp, struct statvfs *sbp)
 {
 	sbp->f_bsize = DEV_BSIZE;
 	sbp->f_frsize = DEV_BSIZE;
@@ -336,7 +327,7 @@ ptyfs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *p)
 /*ARGSUSED*/
 int
 ptyfs_sync(struct mount *mp, int waitfor,
-    kauth_cred_t uc, struct lwp *p)
+    kauth_cred_t uc)
 {
 	return 0;
 }
@@ -389,7 +380,7 @@ struct vfsops ptyfs_vfsops = {
 	ptyfs_start,
 	ptyfs_unmount,
 	ptyfs_root,
-	ptyfs_quotactl,
+	(void *)eopnotsupp,		/* vfs_quotactl */
 	ptyfs_statvfs,
 	ptyfs_sync,
 	ptyfs_vget,
@@ -399,9 +390,8 @@ struct vfsops ptyfs_vfsops = {
 	ptyfs_reinit,
 	ptyfs_done,
 	NULL,				/* vfs_mountroot */
-	(int (*)(struct mount *, struct vnode *, struct timespec *))eopnotsupp,
-	(int (*)(struct mount *, int, struct vnode *, int, const char *,
-	    struct lwp *))eopnotsupp,
+	(void *)eopnotsupp,
+	(void *)eopnotsupp,
 	(void *)eopnotsupp,		/* vfs_suspendctl */
 	ptyfs_vnodeopv_descs,
 	0,

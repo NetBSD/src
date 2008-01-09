@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.31.10.1 2007/11/06 23:23:23 matt Exp $	*/
+/*	$NetBSD: kbd.c,v 1.31.10.2 2008/01/09 01:49:40 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.31.10.1 2007/11/06 23:23:23 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.31.10.2 2008/01/09 01:49:40 matt Exp $");
 
 #include "ite.h"
 #include "bell.h"
@@ -47,9 +47,9 @@ __KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.31.10.1 2007/11/06 23:23:23 matt Exp $");
 #include <sys/kernel.h>
 #include <sys/syslog.h>
 #include <sys/signalvar.h>
-
-#include <machine/cpu.h>
-#include <machine/bus.h>
+#include <sys/cpu.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <arch/x68k/dev/intiovar.h>
 #include <arch/x68k/dev/mfp.h>
@@ -124,7 +124,8 @@ kbdattach(struct device *parent, struct device *self, void *aux)
 
 	/* MFP interrupt #12 is for USART receive buffer full */
 	intio_intr_establish(mfp->sc_intr + 12, "kbd", kbdintr, sc);
-	sc->sc_softintr_cookie = softintr_establish(IPL_SOFT, kbdsoftint, sc);
+	sc->sc_softintr_cookie = softint_establish(SOFTINT_SERIAL,
+	    kbdsoftint, sc);
 
 	kbdenable(1);
 	sc->sc_event_mode = 0;
@@ -335,7 +336,7 @@ kbdintr(void *arg)
 	/* if not in event mode, deliver straight to ite to process key stroke */
 	if (!sc->sc_event_mode) {
 		kbdbuf[kbdputoff++ & KBDBUFMASK] = c;
-		softintr_schedule(sc->sc_softintr_cookie);
+		softint_schedule(sc->sc_softintr_cookie);
 		return 0;
 	}
 

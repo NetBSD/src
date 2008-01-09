@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_raid_promise.c,v 1.8 2006/05/14 21:42:26 elad Exp $	*/
+/*	$NetBSD: ata_raid_promise.c,v 1.8.34.1 2008/01/09 01:52:25 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000,2001,2002 Søren Schmidt <sos@FreeBSD.org>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_raid_promise.c,v 1.8 2006/05/14 21:42:26 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_raid_promise.c,v 1.8.34.1 2008/01/09 01:52:25 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -86,7 +86,7 @@ ata_raid_read_config_promise(struct wd_softc *sc)
 	if (error)
 		goto out;
 
-	error = VOP_OPEN(vp, FREAD, NOCRED, 0);
+	error = VOP_OPEN(vp, FREAD, NOCRED);
 	if (error) {
 		vput(vp);
 		goto out;

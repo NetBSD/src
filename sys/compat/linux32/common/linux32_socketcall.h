@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_socketcall.h,v 1.1 2006/02/09 19:18:57 manu Exp $ */
+/*	$NetBSD: linux32_socketcall.h,v 1.1.48.1 2008/01/09 01:51:23 matt Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -178,21 +178,24 @@ union linux32_socketcall_args {
 
 # ifdef _KERNEL
 __BEGIN_DECLS
-int linux32_sys_socketpair __P((struct lwp *, void *, register_t *));
-int linux32_sys_sendto __P((struct lwp *, void *, register_t *));
-int linux32_sys_recvfrom __P((struct lwp *, void *, register_t *));
-int linux32_sys_setsockopt __P((struct lwp *, void *, register_t *));
-int linux32_sys_getsockopt __P((struct lwp *, void *, register_t *));
-int linux32_sys_connect __P((struct lwp *, void *, register_t *));
-int linux32_sys_socket __P((struct lwp *, void *, register_t *));
-int linux32_sys_bind __P((struct lwp *, void *, register_t *));
-int linux32_sys_getsockname __P((struct lwp *, void *, register_t *));
-int linux32_sys_getpeername __P((struct lwp *, void *, register_t *));
-int linux32_sys_sendmsg __P((struct lwp *, void *, register_t *));
-int linux32_sys_recvmsg __P((struct lwp *, void *, register_t *));
-int linux32_sys_recv __P((struct lwp *, void *, register_t *));
-int linux32_sys_send __P((struct lwp *, void *, register_t *));
-int linux32_sys_accept __P((struct lwp *, void *, register_t *));
+#define SYS_DEF(foo) struct foo##_args; \
+    int foo(struct lwp *, const struct foo##_args *, register_t *)
+SYS_DEF(linux32_sys_socketpair);
+SYS_DEF(linux32_sys_sendto);
+SYS_DEF(linux32_sys_recvfrom);
+SYS_DEF(linux32_sys_setsockopt);
+SYS_DEF(linux32_sys_getsockopt);
+SYS_DEF(linux32_sys_connect);
+SYS_DEF(linux32_sys_socket);
+SYS_DEF(linux32_sys_bind);
+SYS_DEF(linux32_sys_getsockname);
+SYS_DEF(linux32_sys_getpeername);
+SYS_DEF(linux32_sys_sendmsg);
+SYS_DEF(linux32_sys_recvmsg);
+SYS_DEF(linux32_sys_recv);
+SYS_DEF(linux32_sys_send);
+SYS_DEF(linux32_sys_accept);
+#undef SYS_DEF
 __END_DECLS
 # endif /* !_KERNEL */
 

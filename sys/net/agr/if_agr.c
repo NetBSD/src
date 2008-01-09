@@ -1,4 +1,4 @@
-/*	$NetBSD: if_agr.c,v 1.14.2.1 2007/11/06 23:33:39 matt Exp $	*/
+/*	$NetBSD: if_agr.c,v 1.14.2.2 2008/01/09 01:57:17 matt Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.14.2.1 2007/11/06 23:33:39 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.14.2.2 2008/01/09 01:57:17 matt Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -464,6 +464,7 @@ agr_getconfig(struct ifnet *ifp, struct agrreq *ar)
 static int
 agr_addport(struct ifnet *ifp, struct ifnet *ifp_port)
 {
+	const struct ifaddr *ifa;
 	struct agr_softc *sc = ifp->if_softc;
 	struct agr_port *port = NULL;
 	int error = 0;
@@ -491,9 +492,11 @@ agr_addport(struct ifnet *ifp, struct ifnet *ifp_port)
 	}
 	port->port_flags = AGRPORT_LARVAL;
 
-	if (TAILQ_NEXT(TAILQ_FIRST(&ifp_port->if_addrlist), ifa_list) != NULL) {
-		error = EBUSY;
-		goto out;
+	IFADDR_FOREACH(ifa, ifp_port) {
+		if (ifa->ifa_addr->sa_family != AF_LINK) {
+			error = EBUSY;
+			goto out;
+		}
 	}
 
 	if (sc->sc_nports == 0) {
@@ -530,7 +533,7 @@ agr_addport(struct ifnet *ifp, struct ifnet *ifp_port)
 	 */
 
 	error = (*ifp_port->if_ioctl)(ifp_port, SIOCSIFADDR,
-	    (void *)TAILQ_FIRST(&ifp->if_addrlist));
+	    (void *)ifp->if_dl);
 
 	if (error) {
 		printf("%s: SIOCSIFADDR error %d\n", __func__, error);
@@ -617,14 +620,6 @@ agr_remport(struct ifnet *ifp, struct ifnet *ifp_port)
 	}
 
 	KASSERT(sc->sc_nports > 0);
-
-#if 0
-	if (sc->sc_nports == 1 &&
-	    TAILQ_NEXT(TAILQ_FIRST(&ifp->if_addrlist), ifa_list) != NULL) {
-		error = EBUSY;
-		return error;
-	}
-#endif
 
 	AGR_LOCK(sc);
 	port->port_flags |= AGRPORT_DETACHING;
@@ -802,7 +797,6 @@ agr_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct sockaddr *sa;
 	struct agrreq ar;
-	struct proc *p;
 	int error = 0;
 	int s;
 
@@ -843,8 +837,7 @@ agr_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	case SIOCSETAGR:
 		splx(s);
-		p = curproc; /* XXX */
-		error = kauth_authorize_network(p->p_cred,
+		error = kauth_authorize_network(kauth_cred_get(),
 		    KAUTH_NETWORK_INTERFACE,
 		    KAUTH_REQ_NETWORK_INTERFACE_SETPRIV, ifp, (void *)cmd,
 		    NULL);

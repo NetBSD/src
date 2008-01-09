@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.74.16.1 2007/11/06 23:35:09 matt Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.74.16.2 2008/01/09 01:58:24 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.74.16.1 2007/11/06 23:35:09 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.74.16.2 2008/01/09 01:58:24 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -189,7 +189,7 @@ ext2fs_mknod(void *v)
 	 * checked to see if it is an alias of an existing entry in
 	 * the inode cache.
 	 */
-	vput(*vpp);
+	VOP_UNLOCK(*vpp, 0);
 	(*vpp)->v_type = VNON;
 	vgone(*vpp);
 	error = VFS_VGET(mp, ino, vpp);
@@ -213,7 +213,6 @@ ext2fs_open(void *v)
 		struct vnode *a_vp;
 		int  a_mode;
 		kauth_cred_t a_cred;
-		struct lwp *a_l;
 	} */ *ap = v;
 
 	/*
@@ -232,7 +231,6 @@ ext2fs_access(void *v)
 		struct vnode *a_vp;
 		int  a_mode;
 		kauth_cred_t a_cred;
-		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct inode *ip = VTOI(vp);
@@ -272,7 +270,6 @@ ext2fs_getattr(void *v)
 		struct vnode *a_vp;
 		struct vattr *a_vap;
 		kauth_cred_t a_cred;
-		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct inode *ip = VTOI(vp);
@@ -327,13 +324,12 @@ ext2fs_setattr(void *v)
 		struct vnode *a_vp;
 		struct vattr *a_vap;
 		kauth_cred_t a_cred;
-		struct lwp *a_l;
 	} */ *ap = v;
 	struct vattr *vap = ap->a_vap;
 	struct vnode *vp = ap->a_vp;
 	struct inode *ip = VTOI(vp);
 	kauth_cred_t cred = ap->a_cred;
-	struct lwp *l = ap->a_l;
+	struct lwp *l = curlwp;
 	int error;
 
 	/*
@@ -404,7 +400,7 @@ ext2fs_setattr(void *v)
 		default:
 			break;
 		}
-		error = ext2fs_truncate(vp, vap->va_size, 0, cred, l->l_proc);
+		error = ext2fs_truncate(vp, vap->va_size, 0, cred);
 		if (error)
 			return (error);
 	}
@@ -416,7 +412,7 @@ ext2fs_setattr(void *v)
 			(error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER, 
 			NULL)) &&
 			((vap->va_vaflags & VA_UTIMES_NULL) == 0 ||
-			(error = VOP_ACCESS(vp, VWRITE, cred, l))))
+			(error = VOP_ACCESS(vp, VWRITE, cred))))
 			return (error);
 		if (vap->va_atime.tv_sec != VNOVAL)
 			if (!(vp->v_mount->mnt_flag & MNT_NOATIME))
@@ -730,10 +726,9 @@ abortit:
 		goto abortit;
 	}
 	if ((ip->i_e2fs_mode & IFMT) == IFDIR) {
-        	error = VOP_ACCESS(fvp, VWRITE, tcnp->cn_cred, tcnp->cn_lwp);
+        	error = VOP_ACCESS(fvp, VWRITE, tcnp->cn_cred);
         	if (!error && tvp)
-                	error = VOP_ACCESS(tvp, VWRITE, tcnp->cn_cred,
-			    tcnp->cn_lwp);
+                	error = VOP_ACCESS(tvp, VWRITE, tcnp->cn_cred);
         	if (error) {
                 	VOP_UNLOCK(fvp, 0);
                 	error = EACCES;
@@ -789,7 +784,7 @@ abortit:
 	 * to namei, as the parent directory is unlocked by the
 	 * call to checkpath().
 	 */
-	error = VOP_ACCESS(fvp, VWRITE, tcnp->cn_cred, tcnp->cn_lwp);
+	error = VOP_ACCESS(fvp, VWRITE, tcnp->cn_cred);
 	VOP_UNLOCK(fvp, 0);
 	if (oldparent != dp->i_number)
 		newparent = dp->i_number;
@@ -923,7 +918,7 @@ abortit:
 			if (--xp->i_e2fs_nlink != 0)
 				panic("rename: linked directory");
 			error = ext2fs_truncate(tvp, (off_t)0, IO_SYNC,
-			    tcnp->cn_cred, tcnp->cn_lwp->l_proc);
+			    tcnp->cn_cred);
 		}
 		xp->i_flag |= IN_CHANGE;
 		VN_KNOTE(tdvp, NOTE_WRITE);
@@ -1227,8 +1222,7 @@ ext2fs_rmdir(void *v)
 	 * worry about them later.
 	 */
 	ip->i_e2fs_nlink -= 2;
-	error = ext2fs_truncate(vp, (off_t)0, IO_SYNC, cnp->cn_cred,
-	    cnp->cn_lwp->l_proc);
+	error = ext2fs_truncate(vp, (off_t)0, IO_SYNC, cnp->cn_cred);
 	cache_purge(ITOV(ip));
 out:
 	VN_KNOTE(vp, NOTE_DELETE);
@@ -1349,7 +1343,7 @@ ext2fs_fsync(void *v)
 	if (error == 0 && ap->a_flags & FSYNC_CACHE) {
 		int l = 0;
 		error = VOP_IOCTL(VTOI(vp)->i_devvp, DIOCCACHESYNC, &l, FWRITE,
-		    ap->a_l->l_cred, ap->a_l);
+		    curlwp->l_cred);
 	}
 
 	return error;
@@ -1383,7 +1377,6 @@ ext2fs_vinit(struct mount *mntp, int (**specops)(void *),
 			vp->v_vflag &= ~VV_LOCKSWORK;
 			VOP_UNLOCK(vp, 0);
 			vp->v_op = spec_vnodeop_p;
-			vrele(vp);
 			vgone(vp);
 			lockmgr(&nvp->v_lock, LK_EXCLUSIVE, &nvp->v_interlock);
 			/*
@@ -1494,7 +1487,14 @@ ext2fs_reclaim(void *v)
 	struct inode *ip = VTOI(vp);
 	int error;
 
-	if ((error = ufs_reclaim(vp, ap->a_l)) != 0)
+	/*
+	 * The inode must be freed and updated before being removed
+	 * from its hash chain.  Other threads trying to gain a hold
+	 * on the inode will be stalled because it is locked (VI_XLOCK).
+	 */
+	if (ip->i_omode == 1 && (vp->v_mount->mnt_flag & MNT_RDONLY) == 0)
+		ext2fs_vfree(vp, ip->i_number, ip->i_e2fs_mode);
+	if ((error = ufs_reclaim(vp)) != 0)
 		return (error);
 	if (ip->i_din.e2fs_din != NULL)
 		pool_put(&ext2fs_dinode_pool, ip->i_din.e2fs_din);

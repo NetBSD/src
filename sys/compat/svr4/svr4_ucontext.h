@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_ucontext.h,v 1.7 2003/01/18 08:44:27 thorpej Exp $	 */
+/*	$NetBSD: svr4_ucontext.h,v 1.7.76.1 2008/01/09 01:51:57 matt Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -85,10 +85,10 @@ struct svr4_sigframe {
 };
 
 
-void *svr4_getmcontext __P((struct lwp *, struct svr4_mcontext *, u_long *));
-int svr4_setmcontext __P((struct lwp *, struct svr4_mcontext *, u_long));
+void *svr4_getmcontext(struct lwp *, struct svr4_mcontext *, u_long *);
+int svr4_setmcontext(struct lwp *, struct svr4_mcontext *, u_long);
 
-void svr4_getcontext __P((struct lwp *, struct svr4_ucontext *));
-int svr4_setcontext __P((struct lwp *, struct svr4_ucontext *));
+void svr4_getcontext(struct lwp *, struct svr4_ucontext *);
+int svr4_setcontext(struct lwp *, struct svr4_ucontext *);
 
 #endif /* !_SVR4_UCONTEXT_H_ */

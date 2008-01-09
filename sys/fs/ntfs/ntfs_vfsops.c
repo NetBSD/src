@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.56.4.1 2007/11/06 23:31:12 matt Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.56.4.2 2008/01/09 01:55:45 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.56.4.1 2007/11/06 23:31:12 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.56.4.2 2008/01/09 01:55:45 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,18 +70,13 @@ MALLOC_JUSTDEFINE(M_NTFSDIR,"NTFS dir",  "NTFS dir buffer");
 static int	ntfs_mount(struct mount *, char *, void *,
 				struct nameidata *, struct proc *);
 #else
-static int	ntfs_mount(struct mount *, const char *, void *, size_t *,
-				struct lwp *);
+static int	ntfs_mount(struct mount *, const char *, void *, size_t *);
 #endif
-static int	ntfs_quotactl(struct mount *, int, uid_t, void *,
-				   struct lwp *);
 static int	ntfs_root(struct mount *, struct vnode **);
-static int	ntfs_start(struct mount *, int, struct lwp *);
-static int	ntfs_statvfs(struct mount *, struct statvfs *,
-				 struct lwp *);
-static int	ntfs_sync(struct mount *, int, kauth_cred_t,
-			       struct lwp *);
-static int	ntfs_unmount(struct mount *, int, struct lwp *);
+static int	ntfs_start(struct mount *, int);
+static int	ntfs_statvfs(struct mount *, struct statvfs *);
+static int	ntfs_sync(struct mount *, int, kauth_cred_t);
+static int	ntfs_unmount(struct mount *, int);
 static int	ntfs_vget(struct mount *mp, ino_t ino,
 			       struct vnode **vpp);
 static int	ntfs_mountfs(struct vnode *, struct mount *,
@@ -165,7 +160,7 @@ ntfs_mountroot()
 	mutex_enter(&mountlist_lock);
 	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
 	mutex_exit(&mountlist_lock);
-	(void)ntfs_statvfs(mp, &mp->mnt_stat, l);
+	(void)ntfs_statvfs(mp, &mp->mnt_stat);
 	vfs_unbusy(mp);
 	return (0);
 }
@@ -232,12 +227,12 @@ ntfs_mount (
 #else
 	const char *path,
 	void *data,
-	size_t *data_len,
-	struct lwp *l )
+	size_t *data_len)
 #endif
 {
 	struct nameidata nd;
 #ifdef __NetBSD__
+	struct lwp *l = curlwp;
 	struct nameidata *ndp = &nd;
 #endif
 	int		err = 0, flags;
@@ -296,7 +291,7 @@ ntfs_mount (
 #ifdef __FreeBSD__
 	NDINIT(ndp, LOOKUP, FOLLOW, UIO_USERSPACE, args->fspec, p);
 #else
-	NDINIT(ndp, LOOKUP, FOLLOW, UIO_USERSPACE, args->fspec, l);
+	NDINIT(ndp, LOOKUP, FOLLOW, UIO_USERSPACE, args->fspec);
 #endif
 	err = namei(ndp);
 	if (err) {
@@ -378,13 +373,13 @@ ntfs_mount (
 			flags = FREAD;
 		else
 			flags = FREAD|FWRITE;
-		err = VOP_OPEN(devvp, flags, FSCRED, l);
+		err = VOP_OPEN(devvp, flags, FSCRED);
 		if (err)
 			goto fail;
 		err = ntfs_mountfs(devvp, mp, args, l);
 		if (err) {
 			vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-			(void)VOP_CLOSE(devvp, flags, NOCRED, l);
+			(void)VOP_CLOSE(devvp, flags, NOCRED);
 			VOP_UNLOCK(devvp, 0);
 			goto fail;
 		}
@@ -399,7 +394,7 @@ dostatvfs:
 	 *
 	 * This code is common to root and non-root mounts
 	 */
-	(void)VFS_STATVFS(mp, &mp->mnt_stat, l);
+	(void)VFS_STATVFS(mp, &mp->mnt_stat);
 	return (err);
 
 fail:
@@ -603,8 +598,7 @@ out:
 static int
 ntfs_start (
 	struct mount *mp,
-	int flags,
-	struct lwp *l)
+	int flags)
 {
 	return (0);
 }
@@ -612,9 +606,9 @@ ntfs_start (
 static int
 ntfs_unmount(
 	struct mount *mp,
-	int mntflags,
-	struct lwp *l)
+	int mntflags)
 {
+	struct lwp *l = curlwp;
 	struct ntfsmount *ntmp;
 	int error, ronly = 0, flags, i;
 
@@ -659,7 +653,7 @@ ntfs_unmount(
 	/* lock the device vnode before calling VOP_CLOSE() */
 	vn_lock(ntmp->ntm_devvp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_CLOSE(ntmp->ntm_devvp, ronly ? FREAD : FREAD|FWRITE,
-		NOCRED, l);
+		NOCRED);
 	KASSERT(error == 0);
 	VOP_UNLOCK(ntmp->ntm_devvp, 0);
 
@@ -694,22 +688,6 @@ ntfs_root(
 
 	*vpp = nvp;
 	return (0);
-}
-
-/*
- * Do operations associated with quotas, not supported
- */
-/* ARGSUSED */
-static int
-ntfs_quotactl (
-	struct mount *mp,
-	int cmds,
-	uid_t uid,
-	void *arg,
-	struct lwp *l)
-{
-
-	return EOPNOTSUPP;
 }
 
 int
@@ -747,8 +725,7 @@ ntfs_calccfree(
 static int
 ntfs_statvfs(
 	struct mount *mp,
-	struct statvfs *sbp,
-	struct lwp *l)
+	struct statvfs *sbp)
 {
 	struct ntfsmount *ntmp = VFSTONTFS(mp);
 	u_int64_t mftallocated;
@@ -778,8 +755,7 @@ static int
 ntfs_sync (
 	struct mount *mp,
 	int waitfor,
-	kauth_cred_t cred,
-	struct lwp *l)
+	kauth_cred_t cred)
 {
 	/*dprintf(("ntfs_sync():\n"));*/
 	return (0);
@@ -1026,7 +1002,7 @@ struct vfsops ntfs_vfsops = {
 	ntfs_start,
 	ntfs_unmount,
 	ntfs_root,
-	ntfs_quotactl,
+	(void *)eopnotsupp,	/* vfs_quotactl */
 	ntfs_statvfs,
 	ntfs_sync,
 	ntfs_vget,

@@ -1,4 +1,4 @@
-/*	$NetBSD: vga_pci.c,v 1.33 2007/08/26 19:52:06 martin Exp $	*/
+/*	$NetBSD: vga_pci.c,v 1.33.2.1 2008/01/09 01:54:03 matt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_pci.c,v 1.33 2007/08/26 19:52:06 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_pci.c,v 1.33.2.1 2008/01/09 01:54:03 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,6 +52,12 @@ __KERNEL_RCSID(0, "$NetBSD: vga_pci.c,v 1.33 2007/08/26 19:52:06 martin Exp $");
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
 
+#include "opt_vga.h"
+
+#ifdef VGA_POST
+#include <x86/vga_post.h>
+#endif
+
 #define	NBARS		6	/* number of PCI BARs */
 
 struct vga_bar {
@@ -69,11 +75,16 @@ struct vga_pci_softc {
 
 	struct vga_bar sc_bars[NBARS];
 	struct vga_bar sc_rom;
+
+#ifdef VGA_POST
+	struct vga_post *sc_posth;
+#endif
 };
 
 static int	vga_pci_match(struct device *, struct cfdata *, void *);
 static void	vga_pci_attach(struct device *, struct device *, void *);
 static int	vga_pci_lookup_quirks(struct pci_attach_args *);
+static bool	vga_pci_resume(device_t dv);
 
 CFATTACH_DECL(vga_pci, sizeof(struct vga_pci_softc),
     vga_pci_match, vga_pci_attach, NULL, NULL);
@@ -174,7 +185,8 @@ vga_pci_attach(struct device *parent, struct device *self, void *aux)
 	psc->sc_pcitag = pa->pa_tag;
 
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
-	printf(": %s (rev. 0x%02x)\n", devinfo,
+	aprint_naive("\n");
+	aprint_normal(": %s (rev. 0x%02x)\n", devinfo,
 	    PCI_REVISION(pa->pa_class));
 
 	/*
@@ -197,7 +209,7 @@ vga_pci_attach(struct device *parent, struct device *self, void *aux)
 		if (PCI_MAPREG_MEM_TYPE(psc->sc_bars[bar].vb_type) ==
 		    PCI_MAPREG_MEM_TYPE_64BIT) {
 			/* XXX */
-			printf("%s: WARNING: ignoring 64-bit BAR @ 0x%02x\n",
+			aprint_error("%s: WARNING: ignoring 64-bit BAR @ 0x%02x\n",
 			    sc->sc_dev.dv_xname, reg);
 			bar++;
 			continue;
@@ -208,7 +220,7 @@ vga_pci_attach(struct device *parent, struct device *self, void *aux)
 		     &psc->sc_bars[bar].vb_base,
 		     &psc->sc_bars[bar].vb_size,
 		     &psc->sc_bars[bar].vb_flags))
-			printf("%s: WARNING: strange BAR @ 0x%02x\n",
+			aprint_error("%s: WARNING: strange BAR @ 0x%02x\n",
 			       sc->sc_dev.dv_xname, reg);
 	}
 
@@ -217,7 +229,35 @@ vga_pci_attach(struct device *parent, struct device *self, void *aux)
 	vga_common_attach(sc, pa->pa_iot, pa->pa_memt, WSDISPLAY_TYPE_PCIVGA,
 			  vga_pci_lookup_quirks(pa), &vga_pci_funcs);
 
+#ifdef VGA_POST
+	psc->sc_posth = vga_post_init(pa->pa_bus, pa->pa_device, pa->pa_function);
+	if (psc->sc_posth == NULL)
+		aprint_error_dev(self, "WARNING: could not prepare POST handler\n");
+#endif
+
+	/*
+	 * XXX Do not use the generic PCI framework for now as
+	 * XXX it would power down the device when the console
+	 * XXX is still using it.
+	 */
+	if (!pmf_device_register(self, NULL, vga_pci_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 	config_found_ia(self, "drm", aux, vga_drm_print);
+}
+
+static bool
+vga_pci_resume(device_t dv)
+{
+	struct vga_pci_softc *sc = device_private(dv);
+
+	vga_resume(&sc->sc_vga);
+
+#ifdef VGA_POST
+	if (sc->sc_posth != NULL)
+		vga_post_call(sc->sc_posth);
+#endif
+
+	return true;
 }
 
 int

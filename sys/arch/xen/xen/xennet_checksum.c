@@ -1,4 +1,4 @@
-/*	$NetBSD: xennet_checksum.c,v 1.2 2006/11/10 11:52:49 yamt Exp $	*/
+/*	$NetBSD: xennet_checksum.c,v 1.2.30.1 2008/01/09 01:50:23 matt Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xennet_checksum.c,v 1.2 2006/11/10 11:52:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xennet_checksum.c,v 1.2.30.1 2008/01/09 01:50:23 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -43,7 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: xennet_checksum.c,v 1.2 2006/11/10 11:52:49 yamt Exp
 #include <netinet/tcp.h>
 #include <netinet/udp.h>
 
-#include <machine/xennet_checksum.h>
+#include <xen/xennet_checksum.h>
 
 static const void *m_extract(struct mbuf *, int, int, void *);
 static void *m_extract_write(struct mbuf *, int, int, void *);

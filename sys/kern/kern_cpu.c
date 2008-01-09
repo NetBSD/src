@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cpu.c,v 1.6.2.2 2007/11/08 11:00:00 matt Exp $	*/
+/*	$NetBSD: kern_cpu.c,v 1.6.2.3 2008/01/09 01:56:00 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.6.2.2 2007/11/08 11:00:00 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.6.2.3 2008/01/09 01:56:00 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,6 +99,8 @@ kmutex_t cpu_lock;
 int	ncpu;
 int	ncpuonline;
 
+static struct cpu_info *cpu_infos[MAXCPUS];
+
 int
 mi_cpu_attach(struct cpu_info *ci)
 {
@@ -107,7 +109,7 @@ mi_cpu_attach(struct cpu_info *ci)
 
 	ci->ci_index = ncpu;
 
-	mutex_init(&spc->spc_lwplock, MUTEX_SPIN, IPL_SCHED);
+	mutex_init(&spc->spc_lwplock, MUTEX_DEFAULT, IPL_SCHED);
 	sched_cpuattach(ci);
 	uvm_cpu_attach(ci);
 
@@ -128,6 +130,7 @@ mi_cpu_attach(struct cpu_info *ci)
 	TAILQ_INIT(&ci->ci_data.cpu_biodone);
 	ncpu++;
 	ncpuonline++;
+	cpu_infos[cpu_index(ci)] = ci;
 
 	return 0;
 }
@@ -222,6 +225,17 @@ cpu_lookup(cpuid_t id)
 	}
 
 	return NULL;
+}
+
+struct cpu_info *
+cpu_lookup_byindex(u_int idx)
+{
+	struct cpu_info *ci = cpu_infos[idx];
+
+	KASSERT(idx < MAXCPUS);
+	KASSERT(ci == NULL || cpu_index(ci) == idx);
+
+	return ci;
 }
 
 static void

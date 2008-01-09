@@ -247,7 +247,6 @@ typedef struct drm_radeon_private {
 
 	int do_boxes;
 	int page_flipping;
-	int current_page;
 
 	u32 color_fmt;
 	unsigned int front_offset;
@@ -293,6 +292,7 @@ typedef struct drm_radeon_private {
 
 	/* starting from here on, data is preserved accross an open */
 	uint32_t flags;		/* see radeon_chip_flags */
+	unsigned long fb_aper_offset;
 
 } drm_radeon_private_t;
 
@@ -310,6 +310,21 @@ typedef struct drm_radeon_kcmd_buffer {
 extern int radeon_no_wb;
 extern drm_ioctl_desc_t radeon_ioctls[];
 extern int radeon_max_ioctl;
+
+/* Check whether the given hardware address is inside the framebuffer or the
+ * GART area.
+ */
+static __inline__ int radeon_check_offset(drm_radeon_private_t *dev_priv,
+					  u64 off)
+{
+	u32 fb_start = dev_priv->fb_location;
+	u32 fb_end = fb_start + dev_priv->fb_size - 1;
+	u32 gart_start = dev_priv->gart_vm_start;
+	u32 gart_end = gart_start + dev_priv->gart_size - 1;
+
+	return ((off >= fb_start && off <= fb_end) ||
+		(off >= gart_start && off <= gart_end));
+}
 
 				/* radeon_cp.c */
 extern int radeon_cp_init(DRM_IOCTL_ARGS);
@@ -1100,7 +1115,7 @@ do {									\
 #define BEGIN_RING( n ) do {						\
 	if ( RADEON_VERBOSE ) {						\
 		DRM_INFO( "BEGIN_RING( %d ) in %s\n",			\
-			   n, __FUNCTION__ );				\
+			   n, __func__ );				\
 	}								\
 	if ( dev_priv->ring.space <= (n) * sizeof(u32) ) {		\
 		COMMIT_RING();						\

@@ -1,4 +1,4 @@
-/*	$NetBSD: overlay_vfsops.c,v 1.43.4.1 2007/11/06 23:33:19 matt Exp $	*/
+/*	$NetBSD: overlay_vfsops.c,v 1.43.4.2 2008/01/09 01:57:04 matt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 National Aeronautics & Space Administration
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.43.4.1 2007/11/06 23:33:19 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.43.4.2 2008/01/09 01:57:04 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,9 +96,9 @@ VFS_PROTOS(ov);
  * Mount overlay layer
  */
 int
-ov_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
-    struct lwp *l)
+ov_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 {
+	struct lwp *l = curlwp;
 	int error = 0;
 	struct overlay_args *args = data;
 	struct vnode *lowerrootvp, *vp;
@@ -198,7 +198,7 @@ ov_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
  * Free reference to overlay layer
  */
 int
-ov_unmount(struct mount *mp, int mntflags, struct lwp *l)
+ov_unmount(struct mount *mp, int mntflags)
 {
 	struct vnode *overlay_rootvp = MOUNTTOOVERLAYMOUNT(mp)->ovm_rootvp;
 	int error;
@@ -220,16 +220,13 @@ ov_unmount(struct mount *mp, int mntflags, struct lwp *l)
 	vprint("alias root of lower", overlay_rootvp);
 #endif
 	/*
-	 * Release reference on underlying root vnode
-	 */
-	vrele(overlay_rootvp);
-	/*
-	 * And blow it away for future re-use
+	 * Blow it away for future re-use
 	 */
 	vgone(overlay_rootvp);
 	/*
 	 * Finally, throw away the overlay_mount structure
 	 */
+	mutex_destroy(&((struct overlay_mount *)mp->mnt_data)->ovm_hashlock);
 	free(mp->mnt_data, M_UFSMNT);	/* XXX */
 	mp->mnt_data = 0;
 	return 0;

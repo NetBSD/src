@@ -1,4 +1,4 @@
-/* 	$NetBSD: ioapic.c,v 1.19.10.1 2007/11/06 23:23:49 matt Exp $	*/
+/* 	$NetBSD: ioapic.c,v 1.19.10.2 2008/01/09 01:49:56 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.19.10.1 2007/11/06 23:23:49 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.19.10.2 2008/01/09 01:49:56 matt Exp $");
 
 #include "opt_ddb.h"
 
@@ -80,10 +80,11 @@ __KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.19.10.1 2007/11/06 23:23:49 matt Exp $"
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/kernel.h>
+#include <sys/bus.h>
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/bus.h>
 #include <machine/isa_machdep.h> /* XXX intrhand */
 #include <machine/i82093reg.h>
 #include <machine/i82093var.h>
@@ -92,6 +93,7 @@ __KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.19.10.1 2007/11/06 23:23:49 matt Exp $"
 #include <machine/mpbiosvar.h>
 #include <machine/pio.h>
 #include <machine/pmap.h>
+#include <machine/lock.h>
 
 #include "acpi.h"
 #include "opt_mpbios.h"
@@ -276,24 +278,22 @@ ioapic_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_flags = aaa->flags;
 	sc->sc_pic.pic_apicid = aaa->apic_id;
 
-	printf("\n");
+	aprint_naive("\n");
 
 	if (ioapic_find(aaa->apic_id) != NULL) {
-		printf("%s: duplicate apic id (ignored)\n",
-		    sc->sc_pic.pic_dev.dv_xname);
+		aprint_error(": duplicate apic id (ignored)\n");
 		return;
 	}
 
 	ioapic_add(sc);
 
-	aprint_verbose("%s: pa 0x%lx", sc->sc_pic.pic_dev.dv_xname,
-	    aaa->apic_address);
+	aprint_verbose(": pa 0x%lx", aaa->apic_address);
 #ifndef _IOAPIC_CUSTOM_RW
 	{
 	bus_space_handle_t bh;
 
 	if (x86_mem_add_mapping(aaa->apic_address, PAGE_SIZE, 0, &bh) != 0) {
-		printf(": map failed\n");
+		aprint_error(": map failed\n");
 		return;
 	}
 	sc->sc_reg = (volatile u_int32_t *)(bh + IOAPIC_REG);
@@ -334,14 +334,15 @@ ioapic_attach(struct device *parent, struct device *self, void *aux)
 		    aaa->flags & IOAPIC_PICMODE ? "PIC" : "virtual wire");
 	}
 	
-	aprint_verbose(", version %x, %d pins\n", sc->sc_apic_vers,
+	aprint_verbose(", version %x, %d pins", sc->sc_apic_vers,
 	    sc->sc_apic_sz);
+	aprint_normal("\n");
 
 	sc->sc_pins = malloc(sizeof(struct ioapic_pin) * sc->sc_apic_sz,
 	    M_DEVBUF, M_WAITOK);
 
 	for (i=0; i<sc->sc_apic_sz; i++) {
-		uint32_t redlo;
+		uint32_t redlo, redhi;
 
 		sc->sc_pins[i].ip_next = NULL;
 		sc->sc_pins[i].ip_map = NULL;
@@ -360,6 +361,8 @@ ioapic_attach(struct device *parent, struct device *self, void *aux)
 		if (i >= 16)
 			redlo |= IOAPIC_REDLO_LEVEL | IOAPIC_REDLO_ACTLO;
 		ioapic_write(sc, IOAPIC_REDLO(i), redlo);
+		redhi = (cpu_info_primary.ci_apicid << IOAPIC_REDHI_DEST_SHIFT);
+		ioapic_write(sc, IOAPIC_REDHI(i), redhi);
 	}
 	
 	/*
@@ -369,7 +372,7 @@ ioapic_attach(struct device *parent, struct device *self, void *aux)
 	 * mapping later ...
 	 */
 	if (apic_id != sc->sc_pic.pic_apicid) {
-		aprint_verbose("%s: misconfigured as apic %d\n",
+		aprint_debug("%s: misconfigured as apic %d\n",
 		    sc->sc_pic.pic_dev.dv_xname, apic_id);
 
 		ioapic_write(sc,IOAPIC_ID,
@@ -383,11 +386,15 @@ ioapic_attach(struct device *parent, struct device *self, void *aux)
 			    sc->sc_pic.pic_dev.dv_xname,
 			    sc->sc_pic.pic_apicid);
 		} else {
-			aprint_verbose("%s: remapped to apic %d\n",
+			aprint_debug("%s: remapped to apic %d\n",
 			    sc->sc_pic.pic_dev.dv_xname,
 			    sc->sc_pic.pic_apicid);
 		}
 	}
+
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+
 #if 0
 	/* output of this was boring. */
 	if (mp_verbose)
@@ -467,6 +474,31 @@ ioapic_enable(void)
 		outb(IMCR_ADDR, IMCR_REGISTER);
 		outb(IMCR_DATA, IMCR_APIC);
 	}
+}
+
+void
+ioapic_reenable(void)
+{
+	int p;
+	struct ioapic_softc *sc;
+
+	if (ioapics == NULL)
+		return;
+
+	aprint_normal("%s reenabling\n", device_xname(&ioapics->sc_pic.pic_dev));
+
+	for (sc = ioapics; sc != NULL; sc = sc->sc_next) {
+		ioapic_write(sc,IOAPIC_ID,
+		    (ioapic_read(sc,IOAPIC_ID)&~IOAPIC_ID_MASK)
+		    |(sc->sc_pic.pic_apicid<<IOAPIC_ID_SHIFT));
+
+		for (p = 0; p < sc->sc_apic_sz; p++) {
+			apic_set_redir(sc, p, sc->sc_pins[p].ip_vector,
+				    sc->sc_pins[p].ip_cpu);
+		}
+	}
+
+	ioapic_enable();
 }
 
 void

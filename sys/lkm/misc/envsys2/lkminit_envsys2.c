@@ -1,4 +1,4 @@
-/*	$NetBSD: lkminit_envsys2.c,v 1.3.10.1 2007/11/06 23:33:12 matt Exp $	*/
+/*	$NetBSD: lkminit_envsys2.c,v 1.3.10.2 2008/01/09 01:56:55 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -26,12 +26,12 @@
  */
 
 /*
- * This is a virtual driver for sysmon_envsys(9), that shows in how
+ * This is a virtual driver for sysmon_envsys(9). That shows in how
  * the framework works and to verify correct operation of the framework.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_envsys2.c,v 1.3.10.1 2007/11/06 23:33:12 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_envsys2.c,v 1.3.10.2 2008/01/09 01:56:55 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,7 +50,6 @@ enum sensors {
 	SENSOR_VCORE_RESISTANCE,
 	SENSOR_CURRENT_POWER,
 	SENSOR_CURRENT_POTENCY,
-	SENSOR_CURRENT_RESISTANCE,
 	SENSOR_BATTERY0_CAPACITY,
 	SENSOR_BATTERY0_CAPSTATE,
 	SENSOR_BATTERY0_CHARGESTATE,
@@ -63,12 +62,12 @@ enum sensors {
 	SENSOR_DUP_CPUTEMP,
 	SENSOR_DUP_TECHNOLOGY,
 	SENSOR_EMPTY_DESC,
-	SENSOR_INVALID_STATE,
+	SENSOR_INVALID_UNITS,
 	SENSOR_MAXSENSORS		/* must be last */
 };
 
 struct envsys2_softc {
-	struct sysmon_envsys sc_sysmon;
+	struct sysmon_envsys *sc_sme;
 	envsys_data_t sc_sensor[SENSOR_MAXSENSORS];
 };
 
@@ -82,28 +81,26 @@ MOD_MISC("envsys2");
 /* 
  * Required stuff by sysmon_envsys(9).
  */
-static int 	envsys2_gtredata(struct sysmon_envsys *, envsys_data_t *);
+static void 	envsys2_refresh(struct sysmon_envsys *, envsys_data_t *);
 static void 	envsys2_initsensors(struct envsys2_softc *);
 static struct 	envsys2_softc e2_sc;
 
 /*
- * This function assigns sensor index, state, description and unit
- * type. All sensors should be initialized with a valid state
- * (ENVSYS_SVALID), otherwise some members won't be created on its
- * dictionary.
+ * This function assigns sensor description and units type for
+ * all sensors. If we don't assign a valid state (ENVSYS_SVALID),
+ * its state will be unknown and the value won't be visible on
+ * envstat(8).
  */
 static void
 envsys2_initsensors(struct envsys2_softc *sc)
 {
 	/*
-	 * Initialize the sensors with index, units, description
-	 * and optionally with monitoring flags.
+	 * Initialize the sensors with units and description.
+	 * And optionally with monitoring flags.
 	 */
 #define INITSENSOR(idx, unit, string)					\
 	do {								\
-		sc->sc_sensor[idx].sensor = idx;			\
 		sc->sc_sensor[idx].units = unit;			\
-		sc->sc_sensor[idx].state = ENVSYS_SVALID;		\
 		(void)strlcpy(sc->sc_sensor[idx].desc, string,		\
 		    sizeof(sc->sc_sensor->desc));			\
 	} while (/* CONSTCOND */ 0)
@@ -125,7 +122,7 @@ envsys2_initsensors(struct envsys2_softc *sc)
 
 	/*
 	 * We want to monitor for a critical over state in the VCore
-	 * sensor, so that we know if there's overvolt on it.
+	 * sensor, so that we know if there's overvoltage on it.
 	 */
 	INITSENSOR(SENSOR_VCORE, ENVSYS_SVOLTS_DC, "VCore");
 	sc->sc_sensor[SENSOR_VCORE].monitor = true;
@@ -151,6 +148,9 @@ envsys2_initsensors(struct envsys2_softc *sc)
 	INITSENSOR(SENSOR_BATTERY0_CHARGESTATE, ENVSYS_BATTERY_CHARGE,
 		   "Battery0 charging");
 
+	/*
+	 * Same than Battery0, but this uses Ah.
+	 */
 	INITSENSOR(SENSOR_BATTERY1_CAPACITY, ENVSYS_SAMPHOUR,
 		   "Battery1 capacity");
 
@@ -166,7 +166,7 @@ envsys2_initsensors(struct envsys2_softc *sc)
 
 	/*
 	 * We don't want to be able to set a critical limit in userland,
-	 * so we must disable the monitoring flag in the sensor.
+	 * so we must enable the monitoring flag in the sensor.
 	 */
 	INITSENSOR(SENSOR_TECHNOLOGY, ENVSYS_INTEGER, "Technology");
 	sc->sc_sensor[SENSOR_TECHNOLOGY].flags = ENVSYS_FMONNOTSUPP;
@@ -181,23 +181,20 @@ envsys2_initsensors(struct envsys2_softc *sc)
 
 	/*
 	 * Let's add two sensors with duplicate descriptions
-	 * (they will be ignored and reported with debug output).
+	 * (they won't be attached).
 	 *
 	 */
 	INITSENSOR(SENSOR_DUP_CPUTEMP, ENVSYS_STEMP, "CPU Temp");
 	INITSENSOR(SENSOR_DUP_TECHNOLOGY, ENVSYS_INTEGER, "Technology");
-	/* 
-	 * Let's try to add a sensor with empty description
-	 * (it will be ignored and reported with debug output).
-	 */
-	INITSENSOR(SENSOR_EMPTY_DESC, ENVSYS_STEMP, "");
-
 	/*
-	 * Now we will test a sensor with an unsupported state
-	 * (it will be ignored and reported with debug output).
+	 * Another one with empty description (it won't be attached). 
+ 	 */
+	INITSENSOR(SENSOR_EMPTY_DESC, ENVSYS_STEMP, "");
+	/*
+	 * And finally another sensor with invalid units type
+	 * (it won't be attached).
 	 */
-	INITSENSOR(SENSOR_INVALID_STATE, ENVSYS_SFANRPM, "Another Fan");
-	sc->sc_sensor[SENSOR_INVALID_STATE].state = -1;
+	INITSENSOR(SENSOR_INVALID_UNITS, -1, "Invalid units");
 }
 
 /*
@@ -208,8 +205,8 @@ envsys2_initsensors(struct envsys2_softc *sc)
  * otherwise we might be refreshing the sensor more times than it
  * should.
  */
-static int
-envsys2_gtredata(struct sysmon_envsys *sme, envsys_data_t *edata)
+static void
+envsys2_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 {
 	switch (edata->sensor) {
 	case SENSOR_CPUTEMP:
@@ -252,10 +249,8 @@ envsys2_gtredata(struct sysmon_envsys *sme, envsys_data_t *edata)
 		 */
 		edata->value_cur = 2420000;
 		edata->value_max = 3893000;
-		/* enable value_max */
-		edata->flags |= ENVSYS_FVALID_MAX;
-		/* enable percentage display */
-		edata->flags |= ENVSYS_FPERCENT;
+		/* enable value_max and percentage display */
+		edata->flags |= (ENVSYS_FVALID_MAX | ENVSYS_FPERCENT);
 		break;
 	case SENSOR_BATTERY0_CAPSTATE:
 		edata->value_cur = ENVSYS_BATTERY_CAPACITY_NORMAL;
@@ -267,8 +262,7 @@ envsys2_gtredata(struct sysmon_envsys *sme, envsys_data_t *edata)
 		/* Battery1 in Ah */
 		edata->value_cur = 1890000;
 		edata->value_max= 4000000;
-		edata->flags |= ENVSYS_FVALID_MAX;
-		edata->flags |= ENVSYS_FPERCENT;
+		edata->flags |= (ENVSYS_FVALID_MAX | ENVSYS_FPERCENT);
 		break;
 	case SENSOR_BATTERY1_CAPSTATE:
 		edata->value_cur = ENVSYS_BATTERY_CAPACITY_CRITICAL;
@@ -291,40 +285,23 @@ envsys2_gtredata(struct sysmon_envsys *sme, envsys_data_t *edata)
 		/* Master disk, use the common DRIVE_ONLINE. */
 		edata->value_cur = ENVSYS_DRIVE_ONLINE;
 		break;
-	case SENSOR_DUP_CPUTEMP:
-	case SENSOR_DUP_TECHNOLOGY:
-	case SENSOR_EMPTY_DESC:
-		/*
-		 * These sensors are to test the framework
-		 * work as expected, and they have duplicate
-		 * or empty description.
-		 */
-		edata->state = ENVSYS_SINVALID;
-		return 0;
-	case SENSOR_INVALID_STATE:
 	default:
-		/*
-		 * The last sensor is to test the framework
-		 * works as expected, and this sensor must not
-		 * have any state set.
-		 */
-		return 0;
+		edata->state = ENVSYS_SINVALID;
+		break;
 	}
 
-	/* 
-	 * If we changed the state previously in a sensor and the value
-	 * returned is acceptable, its state must be updated.
+	/*
+	 * Data provided was right, so mark the sensor as valid otherwise
+	 * its state will be unknown.
 	 */
-
 	edata->state = ENVSYS_SVALID;
-	return 0;
 }
 
 static int
 envsys2_mod_handle(struct lkm_table *lkmtp, int cmd)
 {
 	struct envsys2_softc *sc = &e2_sc;
-	int err = 0;
+	int i, err = 0;
 
 	switch (cmd) {
 	case LKM_E_LOAD:
@@ -334,33 +311,58 @@ envsys2_mod_handle(struct lkm_table *lkmtp, int cmd)
 		if (lkmexists(lkmtp))
 			return EEXIST;
 
-		/* 
-		 * We must firstly create and initialize the sensors.
+		/*
+		 * Allocate and initialize the sysmon_envsys object. 
+		 */
+		sc->sc_sme = sysmon_envsys_create();
+
+		/*
+		 * Initialize the sensors with required values: units and desc.
 		 */
 		envsys2_initsensors(sc);
 
 		/*
-		 * Now register our driver with sysmon_envsys(9).
+		 * Attach the sensors and ignore the ones that weren't
+		 * accepted: two sensors with duplicate description, another
+		 * one with empty description and the last one with invalid
+		 * units type.
 		 */
-		sc->sc_sysmon.sme_name = "envsys2";
-		sc->sc_sysmon.sme_sensor_data = sc->sc_sensor;
-		sc->sc_sysmon.sme_cookie = sc;
-		sc->sc_sysmon.sme_gtredata = envsys2_gtredata;
-		sc->sc_sysmon.sme_nsensors = SENSOR_MAXSENSORS;
+		for (i = 0; i < SENSOR_MAXSENSORS; i++) {
+			if (sysmon_envsys_sensor_attach(sc->sc_sme,
+							&sc->sc_sensor[i])) {
+				printf("envsys2: failed to add sensor%d\n", i);
+				continue;
+			}
+		}
 
-		err = sysmon_envsys_register(&sc->sc_sysmon);
-		if (err)
-			printf("%s: unable to register with sysmon (%d)\n",
-		    	    __func__, err);
+		/*
+		 * Now register our driver to sysmon_envsys(9).
+		 */
+		sc->sc_sme->sme_name = "envsys2";
+		sc->sc_sme->sme_cookie = sc;
+		sc->sc_sme->sme_refresh = envsys2_refresh;
+		sc->sc_sme->sme_events_timeout = 60; /* 60 seconds */
+
+		err = sysmon_envsys_register(sc->sc_sme);
+		if (err) {
+			printf("envsys2: unable to register with sysmon "
+			    "(%d)\n", err);
+			/*
+			 * Was there an error? free resources used by
+			 * sysmon_envsys_create().
+			 */
+			sysmon_envsys_destroy(sc->sc_sme);
+		}
 		break;
 
 	case LKM_E_UNLOAD:
 		/*
 		 * Unregister our driver with the sysmon_envsys(9)
 		 * framework. This will remove all events currently
-		 * assigned and the device itself.
+		 * assigned, sensors attached and the object will be
+		 * freed via sysmon_envsys_destroy() at last.
 		 */
-		sysmon_envsys_unregister(&sc->sc_sysmon);
+		sysmon_envsys_unregister(sc->sc_sme);
 		break;
 
 	default:	/* we only understand load/unload */

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.h,v 1.7 2005/11/11 23:22:08 chs Exp $ */
+/*	$NetBSD: linux_machdep.h,v 1.7.48.1 2008/01/09 01:51:05 matt Exp $ */
 
 /*-
  * Copyright (c) 1995, 2000, 2001 The NetBSD Foundation, Inc.
@@ -231,7 +231,7 @@ struct linux_rt_sigframe
 
 #ifdef _KERNEL
 __BEGIN_DECLS /* XXX from NetBSD/i386. Not arch dependent? */
-void linux_syscall_intern __P((struct proc *));
+void linux_syscall_intern(struct proc *);
 __END_DECLS
 #endif /* !_KERNEL */
 

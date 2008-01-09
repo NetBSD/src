@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.1.8.2 2007/11/06 23:23:44 matt Exp $	*/
+/*	$NetBSD: pcib.c,v 1.1.8.3 2008/01/09 01:49:52 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.1.8.2 2007/11/06 23:23:44 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.1.8.3 2008/01/09 01:49:52 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -55,10 +55,15 @@ __KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.1.8.2 2007/11/06 23:23:44 matt Exp $");
 
 #include "isa.h"
 
+struct pcib_softc {
+	pci_chipset_tag_t	sc_pc;
+	pcitag_t		sc_tag;
+};
+
 int	pcibmatch(struct device *, struct cfdata *, void *);
 void	pcibattach(struct device *, struct device *, void *);
 
-CFATTACH_DECL(pcib, sizeof(struct device),
+CFATTACH_DECL_NEW(pcib, sizeof(struct pcib_softc),
     pcibmatch, pcibattach, NULL, NULL);
 
 void	pcib_callback(struct device *);
@@ -187,6 +192,7 @@ pcibmatch(struct device *parent, struct cfdata *match, void *aux)
 void
 pcibattach(struct device *parent, struct device *self, void *aux)
 {
+	struct pcib_softc *sc = device_private(self);
 	struct pci_attach_args *pa = aux;
 	char devinfo[256];
 
@@ -200,6 +206,17 @@ pcibattach(struct device *parent, struct device *self, void *aux)
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
 	aprint_normal("%s: %s (rev. 0x%02x)\n", self->dv_xname, devinfo,
 	    PCI_REVISION(pa->pa_class));
+
+	sc->sc_pc = pa->pa_pc;
+	sc->sc_tag = pa->pa_tag;
+
+	/* If a more specific pcib implementation has already registered a
+	 * power handler, don't overwrite it.
+	 */
+ 	if (!device_pmf_is_registered(self)) {
+ 		if (!pmf_device_register(self, NULL, NULL))
+ 	    		aprint_error_dev(self, "couldn't establish power handler\n");
+	}
 
 	config_defer(self, pcib_callback);
 }

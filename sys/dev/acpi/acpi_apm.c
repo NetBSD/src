@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_apm.c,v 1.10.8.1 2007/11/06 23:25:31 matt Exp $	*/
+/*	$NetBSD: acpi_apm.c,v 1.10.8.2 2008/01/09 01:52:17 matt Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_apm.c,v 1.10.8.1 2007/11/06 23:25:31 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_apm.c,v 1.10.8.2 2008/01/09 01:52:17 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -337,7 +337,8 @@ acpiapm_get_powstat(void *opaque, u_int batteryid,
 		else if (strstr(desc, " design cap"))
 			descap = data / 1000;
 		else if (strstr(desc, " charge") &&
-		    strstr(desc, " charge rate") == NULL) {
+		    strstr(desc, " charge rate") == NULL &&
+		    strstr(desc, " charge state") == NULL) {
 			cap += data / 1000;
 			cap_valid = 1;
 			pinfo->nbattery++;

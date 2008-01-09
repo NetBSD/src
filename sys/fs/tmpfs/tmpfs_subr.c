@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.36.2.2 2007/11/08 10:59:58 matt Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.36.2.3 2008/01/09 01:55:52 matt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.36.2.2 2007/11/08 10:59:58 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.36.2.3 2008/01/09 01:55:52 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -57,6 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.36.2.2 2007/11/08 10:59:58 matt Exp
 #include <sys/vnode.h>
 #include <sys/kauth.h>
 #include <sys/proc.h>
+#include <sys/atomic.h>
 
 #include <uvm/uvm.h>
 
@@ -93,7 +94,7 @@ __KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.36.2.2 2007/11/08 10:59:58 matt Exp
 int
 tmpfs_alloc_node(struct tmpfs_mount *tmp, enum vtype type,
     uid_t uid, gid_t gid, mode_t mode, struct tmpfs_node *parent,
-    char *target, dev_t rdev, struct proc *p, struct tmpfs_node **node)
+    char *target, dev_t rdev, struct tmpfs_node **node)
 {
 	struct tmpfs_node *nnode;
 
@@ -107,19 +108,14 @@ tmpfs_alloc_node(struct tmpfs_mount *tmp, enum vtype type,
 	KASSERT(uid != VNOVAL && gid != VNOVAL && mode != VNOVAL);
 
 	nnode = NULL;
-	mutex_enter(&tmp->tm_lock);
-	if (tmp->tm_nodes_cnt >= tmp->tm_nodes_max) {
-		mutex_exit(&tmp->tm_lock);
+	if (atomic_inc_uint_nv(&tmp->tm_nodes_cnt) >= tmp->tm_nodes_max) {
+		atomic_dec_uint(&tmp->tm_nodes_cnt);
 		return ENOSPC;
 	}
-	tmp->tm_nodes_cnt++;
-	mutex_exit(&tmp->tm_lock);
 
 	nnode = (struct tmpfs_node *)TMPFS_POOL_GET(&tmp->tm_node_pool, 0);
 	if (nnode == NULL) {
-		mutex_enter(&tmp->tm_lock);
-		tmp->tm_nodes_cnt--;
-		mutex_exit(&tmp->tm_lock);
+		atomic_dec_uint(&tmp->tm_nodes_cnt);
 		return ENOSPC;
 	}
 
@@ -160,11 +156,6 @@ tmpfs_alloc_node(struct tmpfs_mount *tmp, enum vtype type,
 		nnode->tn_spec.tn_dir.tn_readdir_lastn = 0;
 		nnode->tn_spec.tn_dir.tn_readdir_lastp = NULL;
 		nnode->tn_links++;
-		nnode->tn_spec.tn_dir.tn_parent->tn_links++;
-		if (parent != NULL) {
-			KASSERT(parent->tn_vnode != NULL);
-			VN_KNOTE(parent->tn_vnode, NOTE_LINK);
-		}
 		break;
 
 	case VFIFO:
@@ -178,9 +169,7 @@ tmpfs_alloc_node(struct tmpfs_mount *tmp, enum vtype type,
 		nnode->tn_spec.tn_lnk.tn_link =
 		    tmpfs_str_pool_get(&tmp->tm_str_pool, nnode->tn_size, 0);
 		if (nnode->tn_spec.tn_lnk.tn_link == NULL) {
-			mutex_enter(&tmp->tm_lock);
-			tmp->tm_nodes_cnt--;
-			mutex_exit(&tmp->tm_lock);
+			atomic_dec_uint(&tmp->tm_nodes_cnt);
 			TMPFS_POOL_PUT(&tmp->tm_node_pool, nnode);
 			return ENOSPC;
 		}
@@ -229,16 +218,13 @@ tmpfs_alloc_node(struct tmpfs_mount *tmp, enum vtype type,
 void
 tmpfs_free_node(struct tmpfs_mount *tmp, struct tmpfs_node *node)
 {
-	size_t pages;
 
-	if (node->tn_type == VREG)
-		pages = node->tn_spec.tn_reg.tn_aobj_pages;
-	else
-		pages = 0;
-
+	if (node->tn_type == VREG) {
+		atomic_add_int(&tmp->tm_pages_used,
+		    -node->tn_spec.tn_reg.tn_aobj_pages);
+	}
+	atomic_dec_uint(&tmp->tm_nodes_cnt);
 	mutex_enter(&tmp->tm_lock);
-	tmp->tm_pages_used -= pages;
-	tmp->tm_nodes_cnt--;
 	LIST_REMOVE(node, tn_entries);
 	mutex_exit(&tmp->tm_lock);
 
@@ -358,9 +344,9 @@ tmpfs_alloc_vp(struct mount *mp, struct tmpfs_node *node, struct vnode **vpp)
 	for (;;) {
 		mutex_enter(&node->tn_vlock);
 		if ((vp = node->tn_vnode) != NULL) {
-			simple_lock(&vp->v_interlock);
+			mutex_enter(&vp->v_interlock);
 			mutex_exit(&node->tn_vlock);
-			error = vget(vp, LK_EXCLUSIVE | LK_RETRY | LK_INTERLOCK);
+			error = vget(vp, LK_EXCLUSIVE | LK_INTERLOCK);
 			if (error == ENOENT) {
 				/* vnode was reclaimed. */
 				continue;
@@ -403,7 +389,6 @@ tmpfs_alloc_vp(struct mount *mp, struct tmpfs_node *node, struct vnode **vpp)
 			vp->v_vflag &= ~VV_LOCKSWORK;
 			VOP_UNLOCK(vp, 0);
 			vp->v_op = spec_vnodeop_p;
-			vrele(vp);
 			vgone(vp);
 
 			/* Reinitialize aliased node. */
@@ -417,7 +402,8 @@ tmpfs_alloc_vp(struct mount *mp, struct tmpfs_node *node, struct vnode **vpp)
 		break;
 
 	case VDIR:
-		vp->v_vflag |= (node->tn_spec.tn_dir.tn_parent == node ? VV_ROOT : 0);
+		vp->v_vflag |= node->tn_spec.tn_dir.tn_parent == node ?
+		    VV_ROOT : 0;
 		break;
 
 	case VFIFO:
@@ -442,6 +428,7 @@ tmpfs_alloc_vp(struct mount *mp, struct tmpfs_node *node, struct vnode **vpp)
 	*vpp = vp;
 
 	KASSERT(IFF(error == 0, *vpp != NULL && VOP_ISLOCKED(*vpp)));
+	KASSERT(*vpp == node->tn_vnode);
 
 	return error;
 }
@@ -513,8 +500,7 @@ tmpfs_alloc_file(struct vnode *dvp, struct vnode **vpp, struct vattr *vap,
 
 	/* Allocate a node that represents the new file. */
 	error = tmpfs_alloc_node(tmp, vap->va_type, kauth_cred_geteuid(cnp->cn_cred),
-	    dnode->tn_gid, vap->va_mode, parent, target, vap->va_rdev,
-	    cnp->cn_lwp->l_proc, &node);
+	    dnode->tn_gid, vap->va_mode, parent, target, vap->va_rdev, &node);
 	if (error != 0)
 		goto out;
 
@@ -538,6 +524,11 @@ tmpfs_alloc_file(struct vnode *dvp, struct vnode **vpp, struct vattr *vap,
 	 * insert the new node into the directory, an operation that
 	 * cannot fail. */
 	tmpfs_dir_attach(dvp, de);
+	if (vap->va_type == VDIR) {
+		VN_KNOTE(dvp, NOTE_LINK);
+		dnode->tn_links++;
+		KASSERT(dnode->tn_links <= LINK_MAX);
+	}
 
 out:
 	if (error != 0 || !(cnp->cn_flags & SAVESTART))
@@ -621,6 +612,7 @@ tmpfs_dir_detach(struct vnode *vp, struct tmpfs_dirent *de)
 struct tmpfs_dirent *
 tmpfs_dir_lookup(struct tmpfs_node *node, struct componentname *cnp)
 {
+	bool found;
 	struct tmpfs_dirent *de;
 
 	KASSERT(IMPLIES(cnp->cn_namelen == 1, cnp->cn_nameptr[0] != '.'));
@@ -630,14 +622,17 @@ tmpfs_dir_lookup(struct tmpfs_node *node, struct componentname *cnp)
 
 	node->tn_status |= TMPFS_NODE_ACCESSED;
 
+	found = 0;
 	TAILQ_FOREACH(de, &node->tn_spec.tn_dir.tn_dir, td_entries) {
 		KASSERT(cnp->cn_namelen < 0xffff);
 		if (de->td_namelen == (uint16_t)cnp->cn_namelen &&
-		    memcmp(de->td_name, cnp->cn_nameptr, de->td_namelen) == 0)
+		    memcmp(de->td_name, cnp->cn_nameptr, de->td_namelen) == 0) {
+			found = 1;
 			break;
+		}
 	}
 
-	return de;
+	return found ? de : NULL;
 }
 
 /* --------------------------------------------------------------------- */
@@ -883,7 +878,7 @@ int
 tmpfs_reg_resize(struct vnode *vp, off_t newsize)
 {
 	int error;
-	size_t newpages, oldpages;
+	u_int newpages, oldpages;
 	struct tmpfs_mount *tmp;
 	struct tmpfs_node *node;
 	off_t oldsize;
@@ -903,32 +898,15 @@ tmpfs_reg_resize(struct vnode *vp, off_t newsize)
 	KASSERT(oldpages == node->tn_spec.tn_reg.tn_aobj_pages);
 	newpages = round_page(newsize) / PAGE_SIZE;
 
-	mutex_enter(&tmp->tm_lock);
 	if (newpages > oldpages &&
-	    newpages - oldpages > TMPFS_PAGES_AVAIL(tmp)) {
+	    (ssize_t)(newpages - oldpages) > TMPFS_PAGES_AVAIL(tmp)) {
 		error = ENOSPC;
-		mutex_exit(&tmp->tm_lock);
 		goto out;
 	}
-	tmp->tm_pages_used += (newpages - oldpages);
-	mutex_exit(&tmp->tm_lock);
+	atomic_add_int(&tmp->tm_pages_used, newpages - oldpages);
 
 	if (newsize < oldsize) {
 		int zerolen = MIN(round_page(newsize), node->tn_size) - newsize;
-
-		/*
-		 * free "backing store"
-		 */
-
-		if (newpages < oldpages) {
-			struct uvm_object *uobj;
-			
-			uobj = node->tn_spec.tn_reg.tn_aobj;
-
-			simple_lock(&uobj->vmobjlock);
-			uao_dropswap_range(uobj, newpages, oldpages);
-			simple_unlock(&uobj->vmobjlock);
-		}
 
 		/*
 		 * zero out the truncated part of the last page.
@@ -940,6 +918,20 @@ tmpfs_reg_resize(struct vnode *vp, off_t newsize)
 	node->tn_spec.tn_reg.tn_aobj_pages = newpages;
 	node->tn_size = newsize;
 	uvm_vnp_setsize(vp, newsize);
+
+	/*
+	 * free "backing store"
+	 */
+
+	if (newpages < oldpages) {
+		struct uvm_object *uobj;
+
+		uobj = node->tn_spec.tn_reg.tn_aobj;
+
+		mutex_enter(&uobj->vmobjlock);
+		uao_dropswap_range(uobj, newpages, oldpages);
+		mutex_exit(&uobj->vmobjlock);
+	}
 
 	error = 0;
 
@@ -1239,7 +1231,7 @@ tmpfs_chtimes(struct vnode *vp, struct timespec *atime, struct timespec *mtime,
 	if (kauth_cred_geteuid(cred) != node->tn_uid &&
 	    (error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
 	    NULL)) && ((vaflags & VA_UTIMES_NULL) == 0 ||
-	    (error = VOP_ACCESS(vp, VWRITE, cred, l))))
+	    (error = VOP_ACCESS(vp, VWRITE, cred))))
 		return error;
 
 	if (atime->tv_sec != VNOVAL && atime->tv_nsec != VNOVAL)

@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_stat.c,v 1.9 2007/04/30 14:05:47 dsl Exp $ */
+/*	$NetBSD: darwin_stat.c,v 1.9.8.1 2008/01/09 01:50:37 matt Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_stat.c,v 1.9 2007/04/30 14:05:47 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_stat.c,v 1.9.8.1 2008/01/09 01:50:37 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -54,7 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_stat.c,v 1.9 2007/04/30 14:05:47 dsl Exp $");
 #include <compat/sys/stat.h>
 
 #include <compat/common/compat_util.h>
-#include <compat/common/compat_file.h>
 
 #include <compat/mach/mach_types.h>
 #include <compat/mach/mach_vm.h>
@@ -64,15 +63,12 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_stat.c,v 1.9 2007/04/30 14:05:47 dsl Exp $");
 #include <compat/darwin/darwin_syscallargs.h>
 
 int
-darwin_sys_stat(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+darwin_sys_stat(struct lwp *l, const struct darwin_sys_stat_args *uap, register_t *retval)
 {
-	struct darwin_sys_stat_args /* {
+	/* {
 		syscallarg(char *) path;
 		syscallarg(struct stat12 *) ub;
-	} */ *uap = v;
+	} */
 	struct stat12 sb12;
 	struct stat sb;
 	int error;
@@ -89,15 +85,12 @@ darwin_sys_stat(l, v, retval)
 }
 
 int
-darwin_sys_fstat(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+darwin_sys_fstat(struct lwp *l, const struct darwin_sys_fstat_args *uap, register_t *retval)
 {
-	struct darwin_sys_fstat_args /* {
+	/* {
 		syscallarg(int) fd;
 		syscallarg(struct stat12 *) sb;
-	} */ *uap = v;
+	} */
 	struct stat12 sb12;
 	struct stat sb;
 	int error;
@@ -114,15 +107,12 @@ darwin_sys_fstat(l, v, retval)
 }
 
 int
-darwin_sys_lstat(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+darwin_sys_lstat(struct lwp *l, const struct darwin_sys_lstat_args *uap, register_t *retval)
 {
-	struct darwin_sys_lstat_args /* {
+	/* {
 		syscallarg(char *) path;
 		syscallarg(struct stat12 *) ub;
-	} */ *uap = v;
+	} */
 	struct stat12 sb12;
 	struct stat sb;
 	int error;
@@ -139,16 +129,13 @@ darwin_sys_lstat(l, v, retval)
 }
 
 int
-darwin_sys_mknod(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+darwin_sys_mknod(struct lwp *l, const struct darwin_sys_mknod_args *uap, register_t *retval)
 {
-	struct darwin_sys_mknod_args /* {
+	/* {
 		syscallarg(char) path;
 		syscallarg(mode_t) mode;
 		syscallarg(dev_t) dev:
-	} */ *uap = v;
+	} */
 	struct sys_mknod_args cup;
 
 	SCARG(&cup, path) = SCARG(uap, path);

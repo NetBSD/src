@@ -1,4 +1,4 @@
-/* $NetBSD: i82596var.h,v 1.8 2007/03/04 12:26:22 tsutsui Exp $ */
+/* $NetBSD: i82596var.h,v 1.8.16.1 2008/01/09 01:52:55 matt Exp $ */
 
 /*
  * Copyright (c) 2003 Jochen Kunz.
@@ -45,7 +45,7 @@ struct iee_scp {
 	volatile uint16_t scp_sysbus;		/* Sysbus Byte */
 	volatile uint32_t scp_pad2;
 	volatile uint32_t scp_iscp_addr;	/* Int. Sys. Conf. Pointer */
-} __attribute__((__packed__));
+} __packed;
 
 
 
@@ -54,7 +54,7 @@ struct iee_iscp {
 	volatile uint16_t iscp_bussy;		/* Even Word, bits 0..15 */
 	volatile uint16_t iscp_pad;		/* Odd Word, bits 16..32 */
 	volatile uint32_t iscp_scb_addr;	/* address of SCB */
-} __attribute__((__packed__));
+} __packed;
 
 
 
@@ -72,7 +72,7 @@ struct iee_scb {
 	volatile uint32_t scb_short_fr_err;	/* Short Frame Errors */
 	volatile uint16_t scb_tt_off;		/* Bus Throtle Off Timer */
 	volatile uint16_t scb_tt_on;		/* Bus Throtle On Timer */
-} __attribute__((__packed__));
+} __packed;
 /* [1] In MONITOR mode these counters change function. */
 
 
@@ -100,7 +100,7 @@ struct iee_cb {
 		volatile uint32_t cb_tdr;	/* Time & Flags from TDR CMD */
 		volatile uint32_t cb_dump_addr;	/* Address of Dump buffer */
 	};
-} __attribute__((__packed__));
+} __packed;
 
 
 
@@ -110,7 +110,7 @@ struct iee_tbd {
 	volatile uint16_t tbd_pad;
 	volatile uint32_t tbd_link_addr;	/* Link Address to next RFD */
 	volatile uint32_t tbd_tb_addr;		/* Transmit Buffer Address */
-} __attribute__((__packed__));
+} __packed;
 
 
 
@@ -126,7 +126,7 @@ struct iee_rfd {
 	volatile uint8_t rfd_src_addr[6];	/* Source Address */
 	volatile uint16_t rfd_length;		/* Length Field */
 	volatile uint16_t rfd_pad;		/* Optional Data */
-} __attribute__((__packed__));
+} __packed;
 
 
 
@@ -138,7 +138,7 @@ struct iee_rbd {
 	volatile uint32_t rbd_rb_addr;		/* Receive Buffer Address */
 	volatile uint16_t rbd_size;		/* Size of Receive Buffer */
 	volatile uint16_t rbd_pad2;
-} __attribute__((__packed__));
+} __packed;
 
 
 

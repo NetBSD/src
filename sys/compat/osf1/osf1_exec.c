@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_exec.c,v 1.40 2005/12/11 12:20:23 christos Exp $ */
+/* $NetBSD: osf1_exec.c,v 1.40.46.1 2008/01/09 01:51:42 matt Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_exec.c,v 1.40 2005/12/11 12:20:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_exec.c,v 1.40.46.1 2008/01/09 01:51:42 matt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -53,9 +53,9 @@ extern struct sysent osf1_sysent[];
 extern const char * const osf1_syscallnames[];
 extern char osf1_sigcode[], osf1_esigcode[];
 #ifdef __HAVE_SYSCALL_INTERN
-void osf1_syscall_intern __P((struct proc *));
+void osf1_syscall_intern(struct proc *);
 #else
-void syscall __P((void));
+void syscall(void);
 #endif
 
 struct uvm_object *emul_osf1_object;

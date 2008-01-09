@@ -1,4 +1,4 @@
-/*	$NetBSD: cread.c,v 1.18 2006/01/25 18:27:23 christos Exp $	*/
+/*	$NetBSD: cread.c,v 1.18.44.1 2008/01/09 01:56:38 matt Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -92,37 +92,31 @@ void	zmemcpy __P((unsigned char *, unsigned char *, unsigned int));
  */
 
 void *
-zcalloc (opaque, items, size)
-	void *opaque;
-	unsigned items;
-	unsigned size;
+zcalloc(void *opaque, unsigned int items, unsigned int size)
 {
-	return(alloc(items * size));
+
+	return alloc(items * size);
 }
 
 void
-zcfree (opaque, ptr)
-	void *opaque;
-	void *ptr;
+zcfree(void *opaque, void *ptr)
 {
+
 	dealloc(ptr, 0); /* XXX works only with modified allocator */
 }
 
 void
-zmemcpy(dest, source, len)
-	unsigned char *dest;
-	unsigned char *source;
-	unsigned int len;
+zmemcpy(unsigned char *dest, unsigned char *source, unsigned int len)
 {
+
 	bcopy(source, dest, len);
 }
 
 static int
-get_byte(s)
-	struct sd *s;
+get_byte(struct sd *s)
 {
 	if (s->z_eof)
-		return (EOF);
+		return EOF;
 
 	if (s->stream.avail_in == 0) {
 		int got;
@@ -131,7 +125,8 @@ get_byte(s)
 		got = oread(s->fd, s->inbuf, Z_BUFSIZE);
 		if (got <= 0) {
 			s->z_eof = 1;
-			if (errno) s->z_err = Z_ERRNO;
+			if (errno)
+				s->z_err = Z_ERRNO;
 			return EOF;
 		}
 		s->stream.avail_in = got;
@@ -142,24 +137,23 @@ get_byte(s)
 }
 
 static unsigned long
-getLong (s)
-    struct sd *s;
+getLong(struct sd *s)
 {
-	unsigned long x = (unsigned long)get_byte(s);
+	unsigned long x;
 	int c;
 
+	x  =  (unsigned long)get_byte(s);
 	x += ((unsigned long)get_byte(s)) << 8;
 	x += ((unsigned long)get_byte(s)) << 16;
 	c = get_byte(s);
 	if (c == EOF)
 		s->z_err = Z_DATA_ERROR;
-	x += ((unsigned long)c)<<24;
+	x += ((unsigned long)c) << 24;
 	return x;
 }
 
 static void
-check_header(s)
-	struct sd *s;
+check_header(struct sd *s)
 {
 	int method; /* method byte */
 	int flags;  /* flags byte */
@@ -206,15 +200,18 @@ check_header(s)
 		len  =  (unsigned int)get_byte(s);
 		len += ((unsigned int)get_byte(s)) << 8;
 		/* len is garbage if EOF but the loop below will quit anyway */
-		while (len-- != 0 && get_byte(s) != EOF) /*void*/;
+		while (len-- != 0 && get_byte(s) != EOF)
+			/*void*/;
 	}
 	if ((flags & ORIG_NAME) != 0) {
 		/* skip the original file name */
-		while ((c = get_byte(s)) != 0 && c != EOF) /*void*/;
+		while ((c = get_byte(s)) != 0 && c != EOF)
+			/*void*/;
 	}
 	if ((flags & COMMENT) != 0) {
 		/* skip the .gz file comment */
-		while ((c = get_byte(s)) != 0 && c != EOF) /*void*/;
+		while ((c = get_byte(s)) != 0 && c != EOF)
+			/*void*/;
 	}
 	if ((flags & HEAD_CRC) != 0) {  /* skip the header crc */
 		for (len = 0; len < 2; len++)
@@ -228,16 +225,14 @@ check_header(s)
  */
 
 int
-open(fname, mode)
-	const char *fname;
-	int mode;
+open(const char *fname, int mode)
 {
 	int fd;
 	struct sd *s = 0;
 
 	if (((fd = oopen(fname, mode)) == -1) || (mode != 0))
 		/* compression only for read */
-		return (fd);
+		return fd;
 
 	ss[fd] = s = alloc(sizeof(struct sd));
 	if (s == 0)
@@ -247,7 +242,7 @@ open(fname, mode)
 	if (inflateInit2(&(s->stream), -15) != Z_OK)
 		goto errout;
 
-	s->stream.next_in  = s->inbuf = (unsigned char*)alloc(Z_BUFSIZE);
+	s->stream.next_in = s->inbuf = (unsigned char *)alloc(Z_BUFSIZE);
 	if (s->inbuf == 0) {
 		inflateEnd(&(s->stream));
 		goto errout;
@@ -255,32 +250,31 @@ open(fname, mode)
 
 	s->fd = fd;
 	check_header(s); /* skip the .gz header */
-	return (fd);
+	return fd;
 
 errout:
 	if (s != 0)
 		dealloc(s, sizeof(struct sd));
 	oclose(fd);
-	return (-1);
+	return -1;
 }
 
 int
-close(fd)
-	int fd;
+close(int fd)
 {
 	struct open_file *f;
 	struct sd *s;
 
 #if !defined(LIBSA_NO_FD_CHECKING)
-	if ((unsigned)fd >= SOPEN_MAX) {
+	if ((unsigned int)fd >= SOPEN_MAX) {
 		errno = EBADF;
-		return (-1);
+		return -1;
 	}
 #endif
 	f = &files[fd];
 
 	if ((f->f_flags & F_READ) == 0)
-		return (oclose(fd));
+		return oclose(fd);
 
 	s = ss[fd];
 
@@ -289,14 +283,11 @@ close(fd)
 	dealloc(s->inbuf, Z_BUFSIZE);
 	dealloc(s, sizeof(struct sd));
 
-	return (oclose(fd));
+	return oclose(fd);
 }
 
 ssize_t
-read(fd, buf, len)
-	int fd;
-	void *buf;
-	size_t len;
+read(int fd, void *buf, size_t len)
 {
 	struct sd *s;
 	unsigned char *start = buf; /* starting point for crc computation */
@@ -304,9 +295,9 @@ read(fd, buf, len)
 	s = ss[fd];
 
 	if (s->z_err == Z_DATA_ERROR || s->z_err == Z_ERRNO)
-		return (-1);
+		return -1;
 	if (s->z_err == Z_STREAM_END)
-		return (0);  /* EOF */
+		return 0;  /* EOF */
 
 	s->stream.next_out = buf;
 	s->stream.avail_out = len;
@@ -329,9 +320,9 @@ read(fd, buf, len)
 			if (s->stream.avail_out > 0) {
 				int got;
 				got = oread(s->fd, s->stream.next_out,
-					    s->stream.avail_out);
+				            s->stream.avail_out);
 				if (got == -1)
-					return (got);
+					return got;
 				s->stream.avail_out -= got;
 			}
 			return (int)(len - s->stream.avail_out);
@@ -378,30 +369,27 @@ read(fd, buf, len)
 	}
 
 	s->crc = crc32(s->crc, start,
-		       (unsigned int)(s->stream.next_out - start));
+	               (unsigned int)(s->stream.next_out - start));
 
 	return (int)(len - s->stream.avail_out);
 }
 
 off_t
-lseek(fd, offset, where)
-	int fd;
-	off_t offset;
-	int where;
+lseek(int fd, off_t offset, int where)
 {
 	struct open_file *f;
 	struct sd *s;
 
 #if !defined(LIBSA_NO_FD_CHECKING)
-	if ((unsigned)fd >= SOPEN_MAX) {
+	if ((unsigned int)fd >= SOPEN_MAX) {
 		errno = EBADF;
-		return (-1);
+		return -1;
 	}
 #endif
 	f = &files[fd];
 
 	if ((f->f_flags & F_READ) == 0)
-		return (olseek(fd, offset, where));
+		return olseek(fd, offset, where);
 
 	s = ss[fd];
 
@@ -411,12 +399,12 @@ lseek(fd, offset, where)
 			/* make sure the lookahead buffer is invalid */
 			s->stream.avail_in = 0;
 		}
-		return (res);
+		return res;
 	}
 
 	switch(where) {
 	case SEEK_CUR:
-		    offset += s->stream.total_out;
+		offset += s->stream.total_out;
 	case SEEK_SET:
 		/* if seek backwards, simply start from the beginning */
 		if (offset < s->stream.total_out) {
@@ -425,7 +413,7 @@ lseek(fd, offset, where)
 
 			res = olseek(fd, 0, SEEK_SET);
 			if(res == (off_t)-1)
-			    return(res);
+				return res;
 			/* ??? perhaps fallback to close / open */
 
 			inflateEnd(&(s->stream));
@@ -440,7 +428,7 @@ lseek(fd, offset, where)
 			check_header(s); /* skip the .gz header */
 		}
 
-		    /* to seek forwards, throw away data */
+		/* to seek forwards, throw away data */
 		if (offset > s->stream.total_out) {
 			off_t toskip = offset - s->stream.total_out;
 
@@ -448,10 +436,12 @@ lseek(fd, offset, where)
 #define DUMMYBUFSIZE 256
 				char dummybuf[DUMMYBUFSIZE];
 				off_t len = toskip;
-				if (len > DUMMYBUFSIZE) len = DUMMYBUFSIZE;
+
+				if (len > DUMMYBUFSIZE)
+					len = DUMMYBUFSIZE;
 				if (read(fd, dummybuf, len) != len) {
 					errno = EOFFSET;
-					return ((off_t)-1);
+					return (off_t)-1;
 				}
 				toskip -= len;
 			}
@@ -460,13 +450,14 @@ lseek(fd, offset, where)
 		if (offset != s->stream.total_out)
 			panic("lseek compressed");
 #endif
-		return (offset);
+		return offset;
 	case SEEK_END:
 		errno = EOFFSET;
 		break;
 	default:
 		errno = EINVAL;
+		break;
 	}
 
-	return ((off_t)-1);
+	return (off_t)-1;
 }

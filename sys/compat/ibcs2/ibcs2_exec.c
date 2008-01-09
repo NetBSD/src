@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_exec.c,v 1.68 2007/04/22 08:29:56 dsl Exp $	*/
+/*	$NetBSD: ibcs2_exec.c,v 1.68.8.1 2008/01/09 01:50:44 matt Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec.c,v 1.68 2007/04/22 08:29:56 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec.c,v 1.68.8.1 2008/01/09 01:50:44 matt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -61,13 +61,13 @@ __KERNEL_RCSID(0, "$NetBSD: ibcs2_exec.c,v 1.68 2007/04/22 08:29:56 dsl Exp $");
 #include <compat/ibcs2/ibcs2_errno.h>
 #include <compat/ibcs2/ibcs2_syscall.h>
 
-static void ibcs2_e_proc_exec __P((struct proc *, struct exec_package *));
+static void ibcs2_e_proc_exec(struct proc *, struct exec_package *);
 
 extern struct sysent ibcs2_sysent[];
 extern const char * const ibcs2_syscallnames[];
 extern char ibcs2_sigcode[], ibcs2_esigcode[];
 #ifndef __HAVE_SYSCALL_INTERN
-void syscall __P((void));
+void syscall(void);
 #endif
 
 #ifdef IBCS2_DEBUG
@@ -123,9 +123,7 @@ const struct emul emul_ibcs2 = {
  * behaviour accordingly can do so.
  */
 static void
-ibcs2_e_proc_exec(p, epp)
-	struct proc *p;
-	struct exec_package *epp;
+ibcs2_e_proc_exec(struct proc *p, struct exec_package *epp)
 {
 	if (epp->ep_esch->es_makecmds == exec_ibcs2_xout_makecmds)
 		p->p_emuldata = IBCS2_EXEC_XENIX;

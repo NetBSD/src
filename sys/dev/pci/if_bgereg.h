@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgereg.h,v 1.43.2.1 2007/11/06 23:28:55 matt Exp $	*/
+/*	$NetBSD: if_bgereg.h,v 1.43.2.2 2008/01/09 01:53:43 matt Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -2385,7 +2385,9 @@ struct bge_softc {
 	bus_space_handle_t	bge_bhandle;
 	bus_space_tag_t		bge_btag;
 	void			*bge_intrhand;
-	struct pci_attach_args	bge_pa;
+	pci_chipset_tag_t	sc_pc;
+	pcitag_t		sc_pcitag;
+
 	struct mii_data		bge_mii;
 	struct ifmedia		bge_ifmedia;	/* media info */
 	u_int8_t		bge_extram;	/* has external SSRAM */
@@ -2437,6 +2439,4 @@ struct bge_softc {
 	int			bge_pending_rxintr_change;
 	SLIST_HEAD(, txdmamap_pool_entry) txdma_list;
 	struct txdmamap_pool_entry *txdma[BGE_TX_RING_CNT];
-	void			*bge_powerhook;
-	struct pci_conf_state	bge_pciconf;
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_signal.h,v 1.29 2005/12/11 12:20:26 christos Exp $	 */
+/*	$NetBSD: svr4_signal.h,v 1.29.46.1 2008/01/09 01:51:54 matt Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
 #define	SVR4_SIGIGNORE_MASK	0x0800
 #define	SVR4_SIGPAUSE_MASK	0x1000
 
-typedef void (*svr4_sig_t) __P((int, svr4_siginfo_t *, void *));
+typedef void (*svr4_sig_t)(int, svr4_siginfo_t *, void *);
 #define	SVR4_SIG_DFL	(svr4_sig_t)	 0
 #define	SVR4_SIG_ERR	(svr4_sig_t)	-1
 #define	SVR4_SIG_IGN	(svr4_sig_t)	 1
@@ -135,11 +135,11 @@ struct svr4_sigaltstack {
 
 extern const int native_to_svr4_signo[];
 extern const int svr4_to_native_signo[];
-void native_to_svr4_sigset __P((const sigset_t *, svr4_sigset_t *));
-void svr4_to_native_sigset __P((const svr4_sigset_t *, sigset_t *));
-void native_to_svr4_sigaltstack __P((const struct sigaltstack *, struct svr4_sigaltstack *));
-void svr4_to_native_sigaltstack __P((const struct svr4_sigaltstack *, struct sigaltstack *));
-void svr4_sendsig __P((const struct ksiginfo *, const sigset_t *));
+void native_to_svr4_sigset(const sigset_t *, svr4_sigset_t *);
+void svr4_to_native_sigset(const svr4_sigset_t *, sigset_t *);
+void native_to_svr4_sigaltstack(const struct sigaltstack *, struct svr4_sigaltstack *);
+void svr4_to_native_sigaltstack(const struct svr4_sigaltstack *, struct sigaltstack *);
+void svr4_sendsig(const struct ksiginfo *, const sigset_t *);
 
 /* sys_context() function codes */
 #define	SVR4_GETCONTEXT		0

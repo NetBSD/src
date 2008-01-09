@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.121.14.1 2007/11/08 11:00:09 matt Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.121.14.2 2008/01/09 01:56:27 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.121.14.1 2007/11/08 11:00:09 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.121.14.2 2008/01/09 01:56:27 matt Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_ddb.h"
@@ -1440,7 +1440,7 @@ m_print(const struct mbuf *m, const char *modif, void (*pr)(const char *, ...))
 
 nextchain:
 	(*pr)("MBUF %p\n", m);
-	bitmask_snprintf(m->m_flags, M_FLAGS_BITS, buf, sizeof(buf));
+	bitmask_snprintf((u_int)m->m_flags, M_FLAGS_BITS, buf, sizeof(buf));
 	(*pr)("  data=%p, len=%d, type=%d, flags=0x%s\n",
 	    m->m_data, m->m_len, m->m_type, buf);
 	(*pr)("  owner=%p, next=%p, nextpkt=%p\n", m->m_owner, m->m_next,

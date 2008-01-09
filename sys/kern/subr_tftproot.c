@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_tftproot.c,v 1.1 2007/05/08 06:10:27 manu Exp $ */
+/*	$NetBSD: subr_tftproot.c,v 1.1.16.1 2008/01/09 01:56:19 matt Exp $ */
 
 /*-
  * Copyright (c) 2007 Emmanuel Dreyfus, all rights reserved.
@@ -39,13 +39,13 @@
 #include "opt_md.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_tftproot.c,v 1.1 2007/05/08 06:10:27 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_tftproot.c,v 1.1.16.1 2008/01/09 01:56:19 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/mount.h>
 #include <sys/lwp.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/mbuf.h>
 #include <sys/timevar.h>
 #include <sys/socketvar.h>
@@ -160,8 +160,7 @@ tftproot_dhcpboot(bootdv)
 
 	l = curlwp; /* XXX */
 
-	nd = malloc(sizeof(*nd), M_NFSMNT, M_WAITOK);
-	bzero(nd, sizeof(nd));
+	nd = kmem_zalloc(sizeof(*nd), KM_SLEEP);
 	nd->nd_ifp = ifp;
 	nd->nd_nomount = 1;
 
@@ -197,7 +196,7 @@ tftproot_dhcpboot(bootdv)
 
 out:
 	if (nd)
-		free(nd, M_NFSMNT);
+		kmem_free(nd, sizeof(*nd));
 
 	return error;
 }

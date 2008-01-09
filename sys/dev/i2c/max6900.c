@@ -1,4 +1,4 @@
-/*	$NetBSD: max6900.c,v 1.7 2007/01/12 19:33:21 cube Exp $	*/
+/*	$NetBSD: max6900.c,v 1.7.20.1 2008/01/09 01:52:41 matt Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -34,6 +34,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: max6900.c,v 1.7.20.1 2008/01/09 01:52:41 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

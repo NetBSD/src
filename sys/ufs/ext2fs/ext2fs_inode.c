@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_inode.c,v 1.59.8.1 2007/11/06 23:35:06 matt Exp $	*/
+/*	$NetBSD: ext2fs_inode.c,v 1.59.8.2 2008/01/09 01:58:23 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.59.8.1 2007/11/06 23:35:06 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.59.8.2 2008/01/09 01:58:23 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -141,11 +141,10 @@ ext2fs_inactive(void *v)
 {
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
-		struct lwp *a_l;
+		bool *a_recycle;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct inode *ip = VTOI(vp);
-	struct lwp *l = ap->a_l;
 	int error = 0;
 
 	if (prtactive && vp->v_usecount != 0)
@@ -156,24 +155,23 @@ ext2fs_inactive(void *v)
 
 	error = 0;
 	if (ip->i_e2fs_nlink == 0 && (vp->v_mount->mnt_flag & MNT_RDONLY) == 0) {
+		/* Defer final inode free and update to reclaim.*/
 		if (ext2fs_size(ip) != 0) {
-			error = ext2fs_truncate(vp, (off_t)0, 0, NOCRED, NULL);
+			error = ext2fs_truncate(vp, (off_t)0, 0, NOCRED);
 		}
 		ip->i_e2fs_dtime = time_second;
-		ip->i_flag |= IN_CHANGE | IN_UPDATE;
-		ext2fs_vfree(vp, ip->i_number, ip->i_e2fs_mode);
-	}
-	if (ip->i_flag & (IN_CHANGE | IN_UPDATE | IN_MODIFIED)) {
+		ip->i_flag |= IN_CHANGE | IN_UPDATE | IN_MODIFIED;
+		ip->i_omode = 1;
+	} else if (ip->i_flag & (IN_CHANGE | IN_UPDATE | IN_MODIFIED)) {
 		ext2fs_update(vp, NULL, NULL, 0);
 	}
 out:
-	VOP_UNLOCK(vp, 0);
 	/*
 	 * If we are done with the inode, reclaim it
 	 * so that it can be reused immediately.
 	 */
-	if (ip->i_e2fs_dtime != 0)
-		vrecycle(vp, NULL, l);
+	*ap->a_recycle = (ip->i_e2fs_dtime != 0);
+	VOP_UNLOCK(vp, 0);
 	return (error);
 }
 
@@ -240,7 +238,7 @@ ext2fs_update(struct vnode *vp, const struct timespec *acc,
  */
 int
 ext2fs_truncate(struct vnode *ovp, off_t length, int ioflag,
-    kauth_cred_t cred, struct proc *p)
+    kauth_cred_t cred)
 {
 	daddr_t lastblock;
 	struct inode *oip = VTOI(ovp);
@@ -295,7 +293,7 @@ ext2fs_truncate(struct vnode *ovp, off_t length, int ioflag,
 		    ioflag & IO_SYNC ? B_SYNC : 0);
 		if (error) {
 			(void) ext2fs_truncate(ovp, osize, ioflag & IO_SYNC,
-			    cred, p);
+			    cred);
 			return (error);
 		}
 		uvm_vnp_setsize(ovp, length);
@@ -480,7 +478,7 @@ ext2fs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn, daddr_t lastbn,
 	 */
 	vp = ITOV(ip);
 	bp = getblk(vp, lbn, (int)fs->e2fs_bsize, 0, 0);
-	if (bp->b_flags & (B_DONE | B_DELWRI)) {
+	if (bp->b_oflags & (BO_DONE | BO_DELWRI)) {
 		/* Braces must be here in case trace evaluates to nothing. */
 		trace(TR_BREADHIT, pack(vp, fs->e2fs_bsize), lbn);
 	} else {

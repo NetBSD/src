@@ -1,4 +1,4 @@
-/*	$NetBSD: rwlock.h,v 1.2 2007/02/17 05:34:07 matt Exp $	*/
+/*	$NetBSD: rwlock.h,v 1.2.26.1 2008/01/09 01:49:34 matt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 struct krwlock {
 	volatile uintptr_t	rw_owner;
 	__cpu_simple_lock_t	rw_lock;
-	unsigned int	 	rw_id : 24;
+	unsigned int	 	rw_dodebug : 24;
 };
 
 #ifdef __RWLOCK_PRIVATE
@@ -95,9 +95,9 @@ RW_SET_WAITERS(krwlock_t *rw, uintptr_t need, uintptr_t set)
  *		used in the LOCKDEBUG case.
  */
 static inline void
-RW_SETID(krwlock_t *rw, u_int id)
+RW_SETDEBUG(krwlock_t *rw, bool dodebug)
 {
-	rw->rw_id = id;
+	rw->rw_dodebug = dodebug;
 }
 
 /*
@@ -105,10 +105,10 @@ RW_SETID(krwlock_t *rw, u_int id)
  *		Get the debugging ID for the lock, an integer.  Only
  *		used in the LOCKDEBUG case.
  */
-static inline u_int
-RW_GETID(krwlock_t *rw)
+static inline bool
+RW_DEBUG_P(krwlock_t *rw)
 {
-	return rw->rw_id;
+	return rw->rw_dodebug;
 }
 
 #endif	/* __RWLOCK_PRIVATE */

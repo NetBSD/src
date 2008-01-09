@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.c,v 1.41 2007/02/25 04:46:32 uwe Exp $	*/
+/*	$NetBSD: nfs.c,v 1.41.18.1 2008/01/09 01:56:43 matt Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -122,10 +122,7 @@ ssize_t	nfs_readdata __P((struct nfs_iodesc *, off_t, void *, size_t));
  * On error, return non-zero and set errno.
  */
 int
-nfs_getrootfh(d, path, fhp)
-	struct iodesc *d;
-	char *path;
-	u_char *fhp;
+nfs_getrootfh(struct iodesc *d, char *path, u_char *fhp)
 {
 	int len;
 	struct args {
@@ -166,18 +163,18 @@ nfs_getrootfh(d, path, fhp)
 	    args, len, repl, sizeof(*repl));
 	if (cc == -1) {
 		/* errno was set by rpc_call */
-		return (-1);
+		return -1;
 	}
 	if (cc < 4) {
 		errno = EBADRPC;
-		return (-1);
+		return -1;
 	}
 	if (repl->errno) {
 		errno = ntohl(repl->errno);
-		return (-1);
+		return -1;
 	}
 	bcopy(repl->fh, fhp, sizeof(repl->fh));
-	return (0);
+	return 0;
 }
 
 /*
@@ -185,11 +182,8 @@ nfs_getrootfh(d, path, fhp)
  * Return zero or error number.
  */
 int
-nfs_lookupfh(d, name, len, newfd)
-	struct nfs_iodesc *d;
-	const char *name;
-	int len;
-	struct nfs_iodesc *newfd;
+nfs_lookupfh(struct nfs_iodesc *d, const char *name, int len,
+	struct nfs_iodesc *newfd)
 {
 	int rlen;
 	struct args {
@@ -234,16 +228,16 @@ nfs_lookupfh(d, name, len, newfd)
 	cc = rpc_call(d->iodesc, NFS_PROG, NFS_VER2, NFSPROC_LOOKUP,
 	    args, len, repl, rlen);
 	if (cc == -1)
-		return (errno);		/* XXX - from rpc_call */
+		return errno;		/* XXX - from rpc_call */
 	if (cc < 4)
-		return (EIO);
+		return EIO;
 	if (repl->errno) {
 		/* saerrno.h now matches NFS error numbers. */
-		return (ntohl(repl->errno));
+		return ntohl(repl->errno);
 	}
 	bcopy( repl->fh, &newfd->fh, sizeof(newfd->fh));
 	bcopy(&repl->fa, &newfd->fa, sizeof(newfd->fa));
-	return (0);
+	return 0;
 }
 
 #ifndef NFS_NOSYMLINK
@@ -251,9 +245,7 @@ nfs_lookupfh(d, name, len, newfd)
  * Get the destination of a symbolic link.
  */
 int
-nfs_readlink(d, buf)
-	struct nfs_iodesc *d;
-	char *buf;
+nfs_readlink(struct nfs_iodesc *d, char *buf)
 {
 	struct {
 		n_long	h[RPC_HEADER_WORDS];
@@ -272,24 +264,24 @@ nfs_readlink(d, buf)
 
 	bcopy(d->fh, sdata.fh, NFS_FHSIZE);
 	cc = rpc_call(d->iodesc, NFS_PROG, NFS_VER2, NFSPROC_READLINK,
-		      sdata.fh, NFS_FHSIZE,
-		      &rdata.d, sizeof(rdata.d));
+	              sdata.fh, NFS_FHSIZE,
+	              &rdata.d, sizeof(rdata.d));
 	if (cc == -1)
-		return (errno);
+		return errno;
 
 	if (cc < 4)
-		return (EIO);
+		return EIO;
 
 	if (rdata.d.errno)
-		return (ntohl(rdata.d.errno));
+		return ntohl(rdata.d.errno);
 
 	rdata.d.len = ntohl(rdata.d.len);
 	if (rdata.d.len > NFS_MAXPATHLEN)
-		return (ENAMETOOLONG);
+		return ENAMETOOLONG;
 
 	bcopy(rdata.d.path, buf, rdata.d.len);
 	buf[rdata.d.len] = 0;
-	return (0);
+	return 0;
 }
 #endif
 
@@ -298,11 +290,7 @@ nfs_readlink(d, buf)
  * Return transfer count or -1 (and set errno)
  */
 ssize_t
-nfs_readdata(d, off, addr, len)
-	struct nfs_iodesc *d;
-	off_t off;
-	void *addr;
-	size_t len;
+nfs_readdata(struct nfs_iodesc *d, off_t off, void *addr, size_t len)
 {
 	struct nfs_read_args *args;
 	struct nfs_read_repl *repl;
@@ -334,25 +322,25 @@ nfs_readdata(d, off, addr, len)
 	    repl, sizeof(*repl));
 	if (cc == -1) {
 		/* errno was already set by rpc_call */
-		return (-1);
+		return -1;
 	}
 	if (cc < (ssize_t)hlen) {
 		errno = EBADRPC;
-		return (-1);
+		return -1;
 	}
 	if (repl->errno) {
 		errno = ntohl(repl->errno);
-		return (-1);
+		return -1;
 	}
 	rlen = cc - hlen;
 	x = ntohl(repl->count);
 	if (rlen < (size_t)x) {
 		printf("nfsread: short packet, %lu < %ld\n", (u_long) rlen, x);
 		errno = EBADRPC;
-		return(-1);
+		return -1;
 	}
 	bcopy(repl->data, addr, x);
-	return (x);
+	return x;
 }
 
 /*
@@ -360,24 +348,21 @@ nfs_readdata(d, off, addr, len)
  * On error, return non-zero and set errno.
  */
 int
-nfs_mount(sock, ip, path)
-	int sock;
-	struct in_addr ip;
-	char *path;
+nfs_mount(int sock, struct in_addr ip, char *path)
 {
 	struct iodesc *desc;
 	struct nfsv2_fattrs *fa;
 
 	if (!(desc = socktodesc(sock))) {
 		errno = EINVAL;
-		return(-1);
+		return -1;
 	}
 
 	/* Bind to a reserved port. */
 	desc->myport = htons(--rpc_port);
 	desc->destip = ip;
 	if (nfs_getrootfh(desc, path, nfs_root_node.fh))
-		return (-1);
+		return -1;
 	nfs_root_node.iodesc = desc;
 	/* Fake up attributes for the root dir. */
 	fa = &nfs_root_node.fa;
@@ -390,7 +375,7 @@ nfs_mount(sock, ip, path)
 		printf("nfs_mount: got fh for %s\n", path);
 #endif
 
-	return(0);
+	return 0;
 }
 
 /*
@@ -398,9 +383,7 @@ nfs_mount(sock, ip, path)
  * return zero or error number
  */
 int
-nfs_open(path, f)
-	const char *path;
-	struct open_file *f;
+nfs_open(const char *path, struct open_file *f)
 {
 	struct nfs_iodesc *newfd, *currfd;
 	const char *cp;
@@ -415,11 +398,11 @@ nfs_open(path, f)
 
 #ifdef NFS_DEBUG
  	if (debug)
- 	    printf("nfs_open: %s\n", path);
+		printf("nfs_open: %s\n", path);
 #endif
 	if (nfs_root_node.iodesc == NULL) {
 		printf("nfs_open: must mount first.\n");
-		return (ENXIO);
+		return ENXIO;
 	}
 
 	currfd = &nfs_root_node;
@@ -537,7 +520,7 @@ out:
 #endif
 	if (!error) {
 		f->f_fsdata = (void *)currfd;
-		return (0);
+		return 0;
 	}
 
 #ifdef NFS_DEBUG
@@ -550,12 +533,11 @@ out:
 	if (newfd)
 		dealloc(newfd, sizeof(*newfd));
 
-	return (error);
+	return error;
 }
 
 int
-nfs_close(f)
-	struct open_file *f;
+nfs_close(struct open_file *f)
 {
 	struct nfs_iodesc *fp = (struct nfs_iodesc *)f->f_fsdata;
 
@@ -568,18 +550,14 @@ nfs_close(f)
 		dealloc(fp, sizeof(struct nfs_iodesc));
 	f->f_fsdata = (void *)0;
 
-	return (0);
+	return 0;
 }
 
 /*
  * read a portion of a file
  */
 int
-nfs_read(f, buf, size, resid)
-	struct open_file *f;
-	void *buf;
-	size_t size;
-	size_t *resid;	/* out */
+nfs_read(struct open_file *f, void *buf, size_t size, size_t *resid)
 {
 	struct nfs_iodesc *fp = (struct nfs_iodesc *)f->f_fsdata;
 	ssize_t cc;
@@ -602,7 +580,7 @@ nfs_read(f, buf, size, resid)
 				printf("nfs_read: read: %s\n",
 				       strerror(errno));
 #endif
-			return (errno);	/* XXX - from nfs_readdata */
+			return errno;	/* XXX - from nfs_readdata */
 		}
 		if (cc == 0) {
 #ifdef NFS_DEBUG
@@ -619,27 +597,20 @@ ret:
 	if (resid)
 		*resid = size;
 
-	return (0);
+	return 0;
 }
 
 /*
  * Not implemented.
  */
 int
-nfs_write(f, buf, size, resid)
-	struct open_file *f;
-	void *buf;
-	size_t size;
-	size_t *resid;	/* out */
+nfs_write(struct open_file *f, void *buf, size_t size, size_t *resid)
 {
-	return (EROFS);
+	return EROFS;
 }
 
 off_t
-nfs_seek(f, offset, where)
-	struct open_file *f;
-	off_t offset;
-	int where;
+nfs_seek(struct open_file *f, off_t offset, int where)
 {
 	struct nfs_iodesc *d = (struct nfs_iodesc *)f->f_fsdata;
 	n_long size = ntohl(d->fa.fa_size);
@@ -655,10 +626,10 @@ nfs_seek(f, offset, where)
 		d->off = size - offset;
 		break;
 	default:
-		return (-1);
+		return -1;
 	}
 
-	return (d->off);
+	return d->off;
 }
 
 /* NFNON=0, NFREG=1, NFDIR=2, NFBLK=3, NFCHR=4, NFLNK=5 */
@@ -666,9 +637,7 @@ const int nfs_stat_types[8] = {
 	0, S_IFREG, S_IFDIR, S_IFBLK, S_IFCHR, S_IFLNK, 0 };
 
 int
-nfs_stat(f, sb)
-	struct open_file *f;
-	struct stat *sb;
+nfs_stat(struct open_file *f, struct stat *sb)
 {
 	struct nfs_iodesc *fp = (struct nfs_iodesc *)f->f_fsdata;
 	n_long ftype, mode;
@@ -683,5 +652,5 @@ nfs_stat(f, sb)
 	sb->st_gid   = ntohl(fp->fa.fa_gid);
 	sb->st_size  = ntohl(fp->fa.fa_size);
 
-	return (0);
+	return 0;
 }

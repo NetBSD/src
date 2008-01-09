@@ -1,4 +1,4 @@
-/* $NetBSD: pax.h,v 1.9 2007/06/24 20:35:37 christos Exp $ */
+/* $NetBSD: pax.h,v 1.9.8.1 2008/01/09 01:58:14 matt Exp $ */
 
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -27,19 +27,35 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __SYS_PAX_H__
-#define	__SYS_PAX_H__
+#ifndef _SYS_PAX_H_
+#define _SYS_PAX_H_
 
 #include <uvm/uvm_extern.h>
 
 struct lwp;
+struct exec_package;
+struct vmspace;
+
+#ifdef PAX_ASLR
+/*
+ * We stick this here because we need it in kern/exec_elf32.c for now.
+ */
+#ifndef PAX_ASLR_DELTA_EXEC_LEN
+#define	PAX_ASLR_DELTA_EXEC_LEN	12
+#endif
+#endif /* PAX_ASLR */
 
 void pax_init(void);
 void pax_adjust(struct lwp *, uint32_t);
 
 void pax_mprotect(struct lwp *, vm_prot_t *, vm_prot_t *);
-
 int pax_segvguard(struct lwp *, struct vnode *, const char *, bool);
 
-#endif /* !__SYS_PAX_H__ */
+#define	PAX_ASLR_DELTA(delta, lsb, len)	\
+    (((delta) & ((1UL << (len)) - 1)) << (lsb))
+bool pax_aslr_active(struct lwp *);
+void pax_aslr_init(struct lwp *, struct vmspace *);
+void pax_aslr_stack(struct lwp *, struct exec_package *, u_long *);
+void pax_aslr(struct lwp *, vaddr_t *, vaddr_t, int);
 
+#endif /* !_SYS_PAX_H_ */

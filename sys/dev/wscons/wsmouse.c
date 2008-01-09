@@ -1,4 +1,4 @@
-/* $NetBSD: wsmouse.c,v 1.52.8.1 2007/11/06 23:30:53 matt Exp $ */
+/* $NetBSD: wsmouse.c,v 1.52.8.2 2008/01/09 01:54:50 matt Exp $ */
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.52.8.1 2007/11/06 23:30:53 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.52.8.2 2008/01/09 01:54:50 matt Exp $");
 
 #include "wsmouse.h"
 #include "wsdisplay.h"
@@ -264,16 +264,20 @@ wsmouse_attach(struct device *parent, struct device *self, void *aux)
 	if (mux >= 0) {
 		error = wsmux_attach_sc(wsmux_getmux(mux), &sc->sc_base);
 		if (error)
-			printf(" attach error=%d", error);
+			aprint_error(" attach error=%d", error);
 		else
-			printf(" mux %d", mux);
+			aprint_normal(" mux %d", mux);
 	}
 #else
 	if (device_cfdata(&sc->sc_base.me_dv)->wsmousedevcf_mux >= 0)
-		printf(" (mux ignored)");
+		aprint_normal(" (mux ignored)");
 #endif
 
-	printf("\n");
+	aprint_naive("\n");
+	aprint_normal("\n");
+
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
 int

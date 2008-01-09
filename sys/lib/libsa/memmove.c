@@ -1,4 +1,4 @@
-/*	$NetBSD: memmove.c,v 1.3 2005/12/11 12:24:46 christos Exp $	*/
+/*	$NetBSD: memmove.c,v 1.3.46.1 2008/01/09 01:56:42 matt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -38,10 +38,7 @@
  * This is designed to be small, not fast.
  */
 void *
-memmove(s1, s2, n)
-	void *s1;
-	const void *s2;
-	size_t n;
+memmove(void *s1, const void *s2, size_t n)
 {
 	const char *f = s2;
 	char *t = s1;
@@ -51,8 +48,9 @@ memmove(s1, s2, n)
 		t += n;
 		while (n-- > 0)
 			*--t = *--f;
-	} else
+	} else {
 		while (n-- > 0)
 			*t++ = *f++;
-	return (s1);
+	}
+	return s1;
 }

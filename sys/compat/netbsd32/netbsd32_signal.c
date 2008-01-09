@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_signal.c,v 1.25.8.1 2007/11/06 23:25:12 matt Exp $	*/
+/*	$NetBSD: netbsd32_signal.c,v 1.25.8.2 2008/01/09 01:51:38 matt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.25.8.1 2007/11/06 23:25:12 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.25.8.2 2008/01/09 01:51:38 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,16 +60,13 @@ static void netbsd32_si32_to_si(siginfo_t *, const siginfo32_t *);
 
 
 int
-netbsd32_sigaction(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_sigaction(struct lwp *l, const struct netbsd32_sigaction_args *uap, register_t *retval)
 {
-	struct netbsd32_sigaction_args /* {
+	/* {
 		syscallarg(int) signum;
 		syscallarg(const netbsd32_sigactionp_t) nsa;
 		syscallarg(netbsd32_sigactionp_t) osa;
-	} */ *uap = v;
+	} */
 	struct sigaction nsa, osa;
 	struct netbsd32_sigaction *sa32p, sa32;
 	int error;
@@ -103,30 +100,24 @@ netbsd32_sigaction(l, v, retval)
 }
 
 int
-netbsd32___sigaltstack14(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32___sigaltstack14(struct lwp *l, const struct netbsd32___sigaltstack14_args *uap, register_t *retval)
 {
-	struct netbsd32___sigaltstack14_args /* {
+	/* {
 		syscallarg(const netbsd32_sigaltstackp_t) nss;
 		syscallarg(netbsd32_sigaltstackp_t) oss;
-	} */ *uap = v;
+	} */
 	compat_sigaltstack(uap, netbsd32_sigaltstack, SS_ONSTACK, SS_DISABLE);
 }
 
 /* ARGSUSED */
 int
-netbsd32___sigaction14(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32___sigaction14(struct lwp *l, const struct netbsd32___sigaction14_args *uap, register_t *retval)
 {
-	struct netbsd32___sigaction14_args /* {
+	/* {
 		syscallarg(int) signum;
 		syscallarg(const struct sigaction *) nsa;
 		syscallarg(struct sigaction *) osa;
-	} */ *uap = v;
+	} */
 	struct netbsd32_sigaction sa32;
 	struct sigaction nsa, osa;
 	int error;
@@ -158,18 +149,15 @@ netbsd32___sigaction14(l, v, retval)
 
 /* ARGSUSED */
 int
-netbsd32___sigaction_sigtramp(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32___sigaction_sigtramp(struct lwp *l, const struct netbsd32___sigaction_sigtramp_args *uap, register_t *retval)
 {
-	struct netbsd32___sigaction_sigtramp_args /* {
+	/* {
 		syscallarg(int) signum;
 		syscallarg(const netbsd32_sigactionp_t) nsa;
 		syscallarg(netbsd32_sigactionp_t) osa;
 		syscallarg(netbsd32_voidp) tramp;
 		syscallarg(int) vers;
-	} */ *uap = v;
+	} */
 	struct netbsd32_sigaction sa32;
 	struct sigaction nsa, osa;
 	int error;
@@ -324,11 +312,11 @@ getucontext32(struct lwp *l, ucontext32_t *ucp)
 
 /* ARGSUSED */
 int
-netbsd32_getcontext(struct lwp *l, void *v, register_t *retval)
+netbsd32_getcontext(struct lwp *l, const struct netbsd32_getcontext_args *uap, register_t *retval)
 {
-	struct netbsd32_getcontext_args /* {
+	/* {
 		syscallarg(netbsd32_ucontextp) ucp;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 	ucontext32_t uc;
 
@@ -377,11 +365,11 @@ setucontext32(struct lwp *l, const ucontext32_t *ucp)
 
 /* ARGSUSED */
 int
-netbsd32_setcontext(struct lwp *l, void *v, register_t *retval)
+netbsd32_setcontext(struct lwp *l, const struct netbsd32_setcontext_args *uap, register_t *retval)
 {
-	struct netbsd32_setcontext_args /* {
+	/* {
 		syscallarg(netbsd32_ucontextp) ucp;
-	} */ *uap = v;
+	} */
 	ucontext32_t uc;
 	int error;
 	struct proc *p = l->l_proc;
@@ -438,13 +426,13 @@ netbsd32_sigtimedwait_put_timeout(const void *src, void *dst, size_t size)
 }
 
 int
-netbsd32___sigtimedwait(struct lwp *l, void *v, register_t *retval)
+netbsd32___sigtimedwait(struct lwp *l, const struct netbsd32___sigtimedwait_args *uap, register_t *retval)
 {
-	struct netbsd32___sigtimedwait_args /* {
+	/* {
 		syscallarg(netbsd32_sigsetp_t) set;
 		syscallarg(netbsd32_siginfop_t) info;
 		syscallarg(netbsd32_timespecp_t) timeout;
-	} */ *uap = v;
+	} */
 	struct sys___sigtimedwait_args ua;
 
 	NETBSD32TOP_UAP(set, const sigset_t);

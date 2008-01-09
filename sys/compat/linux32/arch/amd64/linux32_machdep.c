@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_machdep.c,v 1.11.8.1 2007/11/06 23:25:04 matt Exp $ */
+/*	$NetBSD: linux32_machdep.c,v 1.11.8.2 2008/01/09 01:51:19 matt Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -31,7 +31,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_machdep.c,v 1.11.8.1 2007/11/06 23:25:04 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_machdep.c,v 1.11.8.2 2008/01/09 01:51:19 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,16 +87,16 @@ extern char linux32_sigcode[1];
 extern char linux32_rt_sigcode[1];
 extern char linux32_esigcode[1];
 
-extern void (osyscall_return) __P((void));
+extern void (osyscall_return)(void);
 
-static void linux32_save_ucontext __P((struct lwp *, struct trapframe *,
-    const sigset_t *, struct sigaltstack *, struct linux32_ucontext *));
-static void linux32_save_sigcontext __P((struct lwp *, struct trapframe *,
-    const sigset_t *, struct linux32_sigcontext *));
-static void linux32_rt_sendsig __P((const ksiginfo_t *, const sigset_t *));
-static void linux32_old_sendsig __P((const ksiginfo_t *, const sigset_t *));
-static int linux32_restore_sigcontext __P((struct lwp *, 
-    struct linux32_sigcontext *, register_t *));
+static void linux32_save_ucontext(struct lwp *, struct trapframe *,
+    const sigset_t *, struct sigaltstack *, struct linux32_ucontext *);
+static void linux32_save_sigcontext(struct lwp *, struct trapframe *,
+    const sigset_t *, struct linux32_sigcontext *);
+static void linux32_rt_sendsig(const ksiginfo_t *, const sigset_t *);
+static void linux32_old_sendsig(const ksiginfo_t *, const sigset_t *);
+static int linux32_restore_sigcontext(struct lwp *, 
+    struct linux32_sigcontext *, register_t *);
 
 void
 linux32_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
@@ -246,9 +246,9 @@ linux32_rt_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	}
 
 	/* Save register context. */
+	linux32_save_ucontext(l, tf, mask, sas, &frame.sf_uc);
 	sendsig_reset(l, sig);
 	mutex_exit(&p->p_smutex);
-	linux32_save_ucontext(l, tf, mask, sas, &frame.sf_uc);
 	error = copyout(&frame, fp, sizeof(frame));
 	mutex_enter(&p->p_smutex);
 
@@ -344,12 +344,7 @@ linux32_setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 }
 
 static void
-linux32_save_ucontext(l, tf, mask, sas, uc)
-	struct lwp *l;
-	struct trapframe *tf;
-	const sigset_t *mask;
-	struct sigaltstack *sas;
-	struct linux32_ucontext *uc;
+linux32_save_ucontext(struct lwp *l, struct trapframe *tf, const sigset_t *mask, struct sigaltstack *sas, struct linux32_ucontext *uc)
 {
 	uc->uc_flags = 0;
 	NETBSD32PTR32(uc->uc_link, NULL);
@@ -386,7 +381,7 @@ linux32_save_sigcontext(l, tf, mask, sc)
 	sc->sc_ss = tf->tf_ss;
 	sc->sc_err = tf->tf_err;
 	sc->sc_trapno = tf->tf_trapno;
-	/* sc->sc_cr2 = l->l_addr->u_pcb.pcb_cr2; */ /* XXX */
+	sc->sc_cr2 = l->l_addr->u_pcb.pcb_cr2;
 	NETBSD32PTR32(sc->sc_387, NULL);
 
 	/* Save signal stack. */
@@ -397,14 +392,11 @@ linux32_save_sigcontext(l, tf, mask, sc)
 }
 
 int
-linux32_sys_sigreturn(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_sigreturn(struct lwp *l, const struct linux32_sys_sigreturn_args *uap, register_t *retval)
 {
-	struct linux32_sys_sigreturn_args /* {
+	/* {
 		syscallarg(linux32_sigcontextp_t) scp;
-	} */ *uap = v;
+	} */
 	struct linux32_sigcontext ctx;
 	int error;
 
@@ -415,14 +407,11 @@ linux32_sys_sigreturn(l, v, retval)
 }
 
 int
-linux32_sys_rt_sigreturn(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_rt_sigreturn(struct lwp *l, const struct linux32_sys_rt_sigreturn_args *uap, register_t *retval)
 {
-	struct linux32_sys_rt_sigreturn_args /* {
+	/* {
 		syscallarg(linux32_ucontextp_t) ucp;
-	} */ *uap = v;
+	} */
 	struct linux32_ucontext ctx;
 	int error;
 

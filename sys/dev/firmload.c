@@ -1,4 +1,4 @@
-/*	$NetBSD: firmload.c,v 1.7 2007/01/14 10:56:34 is Exp $	*/
+/*	$NetBSD: firmload.c,v 1.7.20.1 2008/01/09 01:52:12 matt Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: firmload.c,v 1.7 2007/01/14 10:56:34 is Exp $");
+__KERNEL_RCSID(0, "$NetBSD: firmload.c,v 1.7.20.1 2008/01/09 01:52:12 matt Exp $");
 
 /*
  * The firmload API provides an interface for device drivers to access
@@ -251,7 +251,7 @@ firmware_open(const char *drvname, const char *imgname, firmware_handle_t *fhp)
 	for (path = firmware_path_first(drvname, imgname, pnbuf, &prefix);
 	     path != NULL;
 	     path = firmware_path_next(drvname, imgname, pnbuf, &prefix)) {
-		NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, path, curlwp);
+		NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, path);
 		error = vn_open(&nd, FREAD, 0);
 		if (error == ENOENT)
 			continue;
@@ -266,7 +266,7 @@ firmware_open(const char *drvname, const char *imgname, firmware_handle_t *fhp)
 
 	vp = nd.ni_vp;
 
-	error = VOP_GETATTR(vp, &va, kauth_cred_get(), curlwp);
+	error = VOP_GETATTR(vp, &va, kauth_cred_get());
 	if (error) {
 		VOP_UNLOCK(vp, 0);
 		(void)vn_close(vp, FREAD, kauth_cred_get(), curlwp);

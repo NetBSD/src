@@ -1,7 +1,13 @@
+/*	$NetBSD: nbcompat.c,v 1.5.18.2 2008/01/09 01:51:32 matt Exp $	*/
+
 /* nbcompat.c
  * Implementations of some FreeBSD functions on NetBSD to make things
  * a bit smoother.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: nbcompat.c,v 1.5.18.2 2008/01/09 01:51:32 matt Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -51,17 +57,15 @@ bus_release_resource(device_t dev, int type, int rid,
 void
 mtx_lock(struct mtx *mutex)
 {
-	/* I'm not sure if this is needed or not.  NetBSD kernel
-	 * threads aren't preempted, but there still may be a need
-	 * for lockmgr locks.
-	 */
-	//lockmgr(mutex, LK_EXCLUSIVE, NULL);
+	/* XXXSMP needs doing
+	*/
+	//mutex_enter(mutex);
 }
 
 void
 mtx_unlock(struct mtx *mutex)
 {
-	//lockmgr(mutex, LK_RELEASE, NULL);
+	//mutex_exit(mutex);
 }
 
 int
@@ -81,34 +85,17 @@ device_is_attached(device_t dev)
  */
 int
 ndis_kthread_create(void (*func)(void *), void *arg,
-    struct proc **newpp, void *stack, size_t stacksize, const char *fmt, ...)
+  struct proc **newpp, void *stack, size_t stacksize, const char *name)
 {
-        struct proc *p2;
-        int error;
-        va_list ap;
-
-        /* First, create the new process. */
-        error = fork1(&lwp0, FORK_SHAREVM | FORK_SHARECWD | FORK_SHAREFILES |
-            FORK_SHARESIGS, SIGCHLD, stack, stacksize, func, arg, NULL, &p2);
-        if (__predict_false(error != 0))
-                return (error);
-
-        /*
-         * Mark it as a system process and not a candidate for
-         * swapping.  Set P_NOCLDWAIT so that children are reparented
-         * to init(8) when they exit.  init(8) can easily wait them
-         * out for us.
-         */
-        p2->p_flag |= PK_SYSTEM | PK_NOCLDWAIT;
-        LIST_FIRST(&p2->p_lwps)->l_flag |= LW_INMEM;
-
-        /* Name it as specified. */
-        va_start(ap, fmt);
-        vsnprintf(p2->p_comm, MAXCOMLEN, fmt, ap);
-        va_end(ap);
-
-        /* All done! */
-        if (newpp != NULL)
-                *newpp = p2;
-        return (0);
+  struct lwp *l;
+  int error;
+  
+  error = kthread_create(PRI_NONE, 0, NULL, func, arg, &l, "%s", name);
+  if (__predict_false(error != 0))
+    return (error);
+  
+  /* All done! */
+  if (newpp != NULL)
+    *newpp = l->l_proc;
+  return (0);
 }

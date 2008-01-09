@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb_rnd.c,v 1.3.10.1 2007/11/06 23:23:43 matt Exp $	*/
+/*	$NetBSD: pchb_rnd.c,v 1.3.10.2 2008/01/09 01:49:51 matt Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchb_rnd.c,v 1.3.10.1 2007/11/06 23:23:43 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pchb_rnd.c,v 1.3.10.2 2008/01/09 01:49:51 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,6 +54,30 @@ static void pchb_rnd_callout(void *v);
 
 #define	PCHB_RNG_RETRIES	1000
 #define	PCHB_RNG_MIN_SAMPLES	10
+
+void
+pchb_detach_rnd(struct pchb_softc *sc)
+{
+	uint8_t reg8;
+
+	if (!sc->sc_rnd_attached)
+		return;
+
+	/* pch is polled for entropy, so no estimate is available. */
+	rnd_detach_source(&sc->sc_rnd_source);
+
+	callout_stop(&sc->sc_rnd_ch);
+	callout_destroy(&sc->sc_rnd_ch);
+
+	/* Disable the RNG. */
+	reg8 = bus_space_read_1(sc->sc_st, sc->sc_sh, I82802_RNG_HWST);
+	bus_space_write_1(sc->sc_st, sc->sc_sh, I82802_RNG_HWST,
+	    reg8 & ~I82802_RNG_HWST_ENABLE);
+
+	bus_space_unmap(sc->sc_st, sc->sc_sh, I82802_IOSIZE);
+
+	sc->sc_rnd_attached = false;
+}
 
 void
 pchb_attach_rnd(struct pchb_softc *sc, struct pci_attach_args *pa)
@@ -173,6 +197,7 @@ pchb_attach_rnd(struct pchb_softc *sc, struct pci_attach_args *pa)
 	    RND_TYPE_RNG, RND_FLAG_NO_ESTIMATE);
 	sc->sc_rnd_i = sizeof(sc->sc_rnd_ax);
 	pchb_rnd_callout(sc);
+	sc->sc_rnd_attached = true;
 }
 
 static void

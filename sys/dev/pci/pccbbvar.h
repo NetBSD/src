@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbbvar.h,v 1.29 2007/08/10 22:57:54 dyoung Exp $	*/
+/*	$NetBSD: pccbbvar.h,v 1.29.2.1 2008/01/09 01:53:54 matt Exp $	*/
 /*
  * Copyright (c) 1999 HAYAKAWA Koichi.  All rights reserved.
  *
@@ -110,6 +110,7 @@ struct pccbb_softc {
 
 	bus_space_tag_t sc_base_memt;
 	bus_space_handle_t sc_base_memh;
+	bus_size_t sc_base_size;
 
 	struct callout sc_insert_ch;
 
@@ -122,6 +123,7 @@ struct pccbb_softc {
 #define	CBB_16BITCARD	0x04
 #define	CBB_32BITCARD	0x08
 #define	CBB_MEMHMAPPED	0x02000000
+#define	CBB_SPECMAPPED	0x04000000	/* "special" mapping */
 
 	pci_chipset_tag_t sc_pc;
 	pcitag_t sc_tag;
@@ -131,9 +133,6 @@ struct pccbb_softc {
 	bus_addr_t sc_mem_end;		/* CardBus/PCMCIA memory end */
 	bus_addr_t sc_io_start;		/* CardBus/PCMCIA io start */
 	bus_addr_t sc_io_end;		/* CardBus/PCMCIA io end */
-
-	pcireg_t sc_sockbase;		/* Socket base register */
-	pcireg_t sc_busnum;		/* bus number */
 
 	/* CardBus stuff */
 	struct cardslot_softc *sc_csc;
@@ -156,8 +155,6 @@ struct pccbb_softc {
 	LIST_HEAD(, pccbb_intrhand_list) sc_pil;
 	int sc_pil_intr_enable;	/* can i call intr handler for child device? */
 
-	int sc_pwrmgt_offs;	/* Offset for power management capability */
-	struct pci_conf_state sc_pciconf;
 	pcireg_t sc_ricoh_misc_ctrl;
 };
 

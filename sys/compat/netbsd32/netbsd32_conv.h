@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_conv.h,v 1.16 2007/03/16 22:21:41 dsl Exp $	*/
+/*	$NetBSD: netbsd32_conv.h,v 1.16.10.1 2008/01/09 01:51:35 matt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -56,33 +56,33 @@
 
 #include <compat/netbsd32/netbsd32.h>
 
-static __inline void netbsd32_from_timeval __P((const struct timeval *, struct netbsd32_timeval *));
-static __inline void netbsd32_to_timeval __P((const struct netbsd32_timeval *, struct timeval *));
-static __inline void netbsd32_from_itimerval __P((const struct itimerval *, struct netbsd32_itimerval *));
-static __inline void netbsd32_to_itimerval __P((const struct netbsd32_itimerval *, struct itimerval *));
-static __inline void netbsd32_to_timespec __P((const struct netbsd32_timespec *, struct timespec *));
-static __inline void netbsd32_from_timespec __P((const struct timespec *, struct netbsd32_timespec *));
-static __inline void netbsd32_from_rusage __P((const struct rusage *, struct netbsd32_rusage *));
-static __inline void netbsd32_to_rusage __P((const struct netbsd32_rusage *, struct rusage *));
-static __inline int netbsd32_to_iovecin __P((const struct netbsd32_iovec *, struct iovec *, int));
-static __inline void netbsd32_to_msghdr __P((const struct netbsd32_msghdr *, struct msghdr *));
-static __inline void netbsd32_from_msghdr __P((struct netbsd32_msghdr *, const struct msghdr *));
-static __inline void netbsd32_from_statvfs __P((const struct statvfs *, struct netbsd32_statvfs *));
-static __inline void netbsd32_from_timex __P((const struct timex *, struct netbsd32_timex *));
-static __inline void netbsd32_to_timex __P((const struct netbsd32_timex *, struct timex *));
-static __inline void netbsd32_from___stat13 __P((const struct stat *, struct netbsd32_stat13 *));
-static __inline void netbsd32_from___stat30 __P((const struct stat *, struct netbsd32_stat *));
-static __inline void netbsd32_to_ipc_perm __P((const struct netbsd32_ipc_perm *, struct ipc_perm *));
-static __inline void netbsd32_from_ipc_perm __P((const struct ipc_perm *, struct netbsd32_ipc_perm *));
-static __inline void netbsd32_to_msg __P((const struct netbsd32_msg *, struct msg *));
-static __inline void netbsd32_from_msg __P((const struct msg *, struct netbsd32_msg *));
-static __inline void netbsd32_to_msqid_ds __P((const struct netbsd32_msqid_ds *, struct msqid_ds *));
-static __inline void netbsd32_from_msqid_ds __P((const struct msqid_ds *, struct netbsd32_msqid_ds *));
-static __inline void netbsd32_to_shmid_ds __P((const struct netbsd32_shmid_ds *, struct shmid_ds *));
-static __inline void netbsd32_from_shmid_ds __P((const struct shmid_ds *, struct netbsd32_shmid_ds *));
-static __inline void netbsd32_to_semid_ds __P((const struct  netbsd32_semid_ds *, struct  semid_ds *));
-static __inline void netbsd32_from_semid_ds __P((const struct  semid_ds *, struct  netbsd32_semid_ds *));
-static __inline void netbsd32_from_loadavg __P((struct netbsd32_loadavg *, const struct loadavg *));
+static __inline void netbsd32_from_timeval(const struct timeval *, struct netbsd32_timeval *);
+static __inline void netbsd32_to_timeval(const struct netbsd32_timeval *, struct timeval *);
+static __inline void netbsd32_from_itimerval(const struct itimerval *, struct netbsd32_itimerval *);
+static __inline void netbsd32_to_itimerval(const struct netbsd32_itimerval *, struct itimerval *);
+static __inline void netbsd32_to_timespec(const struct netbsd32_timespec *, struct timespec *);
+static __inline void netbsd32_from_timespec(const struct timespec *, struct netbsd32_timespec *);
+static __inline void netbsd32_from_rusage(const struct rusage *, struct netbsd32_rusage *);
+static __inline void netbsd32_to_rusage(const struct netbsd32_rusage *, struct rusage *);
+static __inline int netbsd32_to_iovecin(const struct netbsd32_iovec *, struct iovec *, int);
+static __inline void netbsd32_to_msghdr(const struct netbsd32_msghdr *, struct msghdr *);
+static __inline void netbsd32_from_msghdr(struct netbsd32_msghdr *, const struct msghdr *);
+static __inline void netbsd32_from_statvfs(const struct statvfs *, struct netbsd32_statvfs *);
+static __inline void netbsd32_from_timex(const struct timex *, struct netbsd32_timex *);
+static __inline void netbsd32_to_timex(const struct netbsd32_timex *, struct timex *);
+static __inline void netbsd32_from___stat13(const struct stat *, struct netbsd32_stat13 *);
+static __inline void netbsd32_from___stat30(const struct stat *, struct netbsd32_stat *);
+static __inline void netbsd32_to_ipc_perm(const struct netbsd32_ipc_perm *, struct ipc_perm *);
+static __inline void netbsd32_from_ipc_perm(const struct ipc_perm *, struct netbsd32_ipc_perm *);
+static __inline void netbsd32_to_msg(const struct netbsd32_msg *, struct msg *);
+static __inline void netbsd32_from_msg(const struct msg *, struct netbsd32_msg *);
+static __inline void netbsd32_to_msqid_ds(const struct netbsd32_msqid_ds *, struct msqid_ds *);
+static __inline void netbsd32_from_msqid_ds(const struct msqid_ds *, struct netbsd32_msqid_ds *);
+static __inline void netbsd32_to_shmid_ds(const struct netbsd32_shmid_ds *, struct shmid_ds *);
+static __inline void netbsd32_from_shmid_ds(const struct shmid_ds *, struct netbsd32_shmid_ds *);
+static __inline void netbsd32_to_semid_ds(const struct  netbsd32_semid_ds *, struct  semid_ds *);
+static __inline void netbsd32_from_semid_ds(const struct  semid_ds *, struct  netbsd32_semid_ds *);
+static __inline void netbsd32_from_loadavg(struct netbsd32_loadavg *, const struct loadavg *);
 static __inline void netbsd32_to_sigevent(const struct netbsd32_sigevent *, struct sigevent *);
 static __inline int  netbsd32_to_dirent12(char *, int);
 

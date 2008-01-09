@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_types.h,v 1.4 2007/04/11 11:45:55 njoly Exp $ */
+/*	$NetBSD: linux32_types.h,v 1.4.10.1 2008/01/09 01:51:23 matt Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -56,6 +56,7 @@ typedef netbsd32_pointer_t linux32_oldold_utsnamep_t;
 typedef netbsd32_pointer_t linux32_gidp_t;
 typedef netbsd32_pointer_t linux32_oldselectp_t;
 typedef netbsd32_pointer_t linux32_sysinfop_t;
+typedef netbsd32_pointer_t linux32_oldutsnamep_t;
 
 struct linux32_sysctl {
 	netbsd32_intp name;

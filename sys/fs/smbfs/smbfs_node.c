@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_node.c,v 1.31.8.1 2007/11/06 23:31:18 matt Exp $	*/
+/*	$NetBSD: smbfs_node.c,v 1.31.8.2 2008/01/09 01:55:50 matt Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_node.c,v 1.31.8.1 2007/11/06 23:31:18 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_node.c,v 1.31.8.2 2008/01/09 01:55:50 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -135,7 +135,7 @@ loop:
 		    || memcmp(name, np->n_name, nmlen) != 0)
 			continue;
 		vp = SMBTOV(np);
-		simple_lock(&(vp)->v_interlock);
+		mutex_enter(&(vp)->v_interlock);
 		smbfs_hash_unlock(smp);
 		if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK) != 0)
 			goto retry;
@@ -160,6 +160,8 @@ loop:
 	}
 	vp->v_type = fap->fa_attr & SMB_FA_DIR ? VDIR : VREG;
 	vp->v_data = np;
+	genfs_node_init(vp, &smbfs_genfsops);
+
 	np->n_vnode = vp;
 	np->n_mount = VFSTOSMBFS(mp);
 	np->n_nmlen = nmlen;
@@ -198,7 +200,6 @@ loop:
 	LIST_INSERT_HEAD(nhpp, np, n_hash);
 	smbfs_hash_unlock(smp);
 
-	genfs_node_init(vp, &smbfs_genfsops);
 	uvm_vnp_setsize(vp, np->n_size);
 	*vpp = vp;
 	return 0;
@@ -255,6 +256,7 @@ smbfs_reclaim(v)
 		SMBVDEBUG("root vnode\n");
 		smp->sm_root = NULL;
 	}
+	genfs_node_destroy(vp);
 	vp->v_data = NULL;
 	smbfs_hash_unlock(smp);
 	if (np->n_name)
@@ -277,9 +279,8 @@ smbfs_inactive(v)
 {
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
-		struct thread *a_td;
 	} */ *ap = v;
-	struct lwp *l = ap->a_l;
+	struct lwp *l = curlwp;
 	kauth_cred_t cred = l->l_cred;
 	struct vnode *vp = ap->a_vp;
 	struct smbnode *np = VTOSMB(vp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: segments.h,v 1.3 2006/01/15 22:09:51 bouyer Exp $	*/
+/*	$NetBSD: segments.h,v 1.3.48.1 2008/01/09 01:50:07 matt Exp $	*/
 /*	NetBSD: segments.h,v 1.41 2004/03/05 11:33:27 junyoung Exp 	*/
 
 /*-
@@ -131,7 +131,7 @@ struct segment_descriptor {
 	unsigned sd_def32:1;		/* default 32 vs 16 bit size */
 	unsigned sd_gran:1;		/* limit granularity (byte/page) */
 	unsigned sd_hibase:8;		/* segment base address (msb) */
-} __attribute__((packed));
+} __packed;
 
 /*
  * Gate descriptors (e.g. indirect descriptors)
@@ -145,12 +145,12 @@ struct gate_descriptor {
 	unsigned gd_dpl:2;		/* segment descriptor priority level */
 	unsigned gd_p:1;		/* segment descriptor present */
 	unsigned gd_hioffset:16;	/* gate offset (msb) */
-} __attribute__((packed));
+} __packed;
 
 struct ldt_descriptor {
 	vaddr_t ld_base;
 	uint32_t ld_entries;
-} __attribute__((packed));
+} __packed;
 
 /*
  * Generic descriptor
@@ -161,7 +161,7 @@ union descriptor {
 	struct ldt_descriptor ld;
 	uint32_t raw[2];
 	uint64_t raw64;
-} __attribute__((packed));
+} __packed;
 
 /*
  * region descriptors, used to load gdt/idt tables before segments yet exist.
@@ -169,7 +169,7 @@ union descriptor {
 struct region_descriptor {
 	unsigned rd_limit:16;		/* segment extent */
 	unsigned rd_base:32;		/* base address  */
-} __attribute__((packed));
+} __packed;
 
 #if __GNUC__ == 2 && __GNUC_MINOR__ < 7
 #pragma pack(4)
@@ -177,19 +177,14 @@ struct region_descriptor {
 
 #ifdef _KERNEL
 extern union descriptor *gdt, *ldt;
-extern struct gate_descriptor *idt;
 
 void setgate(struct gate_descriptor *, void *, int, int, int, int);
 void setregion(struct region_descriptor *, void *, size_t);
-void setsegment(struct segment_descriptor *, void *, size_t, int, int,
+void setsegment(struct segment_descriptor *, const void *, size_t, int, int,
     int, int);
-void setgdt(int, void *, size_t, int, int, int, int);
+void setgdt(int, const void *, size_t, int, int, int, int);
 void unsetgate(struct gate_descriptor *);
 void cpu_init_idt(void);
-
-int idt_vec_alloc(int, int);
-void idt_vec_set(int, void (*)(void));
-void idt_vec_free(int);
 
 #endif /* _KERNEL */
 
@@ -301,7 +296,9 @@ void idt_vec_free(int);
 #define GTRAPTSS_SEL	18
 #define GIPITSS_SEL	19
 #define GUCODEBIG_SEL	20	/* User code with executable stack */
-#define	NGDT		21
+#define	GUFS_SEL	21
+#define	GUGS_SEL	22
+#define	NGDT		23
 
 /*
  * Entries in the Local Descriptor Table (LDT)

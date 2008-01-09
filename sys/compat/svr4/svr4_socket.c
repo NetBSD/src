@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_socket.c,v 1.16 2007/02/09 21:55:24 ad Exp $	*/
+/*	$NetBSD: svr4_socket.c,v 1.16.20.1 2008/01/09 01:51:54 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_socket.c,v 1.16 2007/02/09 21:55:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_socket.c,v 1.16.20.1 2008/01/09 01:51:54 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -85,11 +85,7 @@ static TAILQ_HEAD(svr4_sockcache_head, svr4_sockcache_entry) svr4_head;
 static int initialized = 0;
 
 struct sockaddr_un *
-svr4_find_socket(p, fp, dev, ino)
-	struct proc *p;
-	struct file *fp;
-	dev_t dev;
-	svr4_ino_t ino;
+svr4_find_socket(struct proc *p, struct file *fp, dev_t dev, svr4_ino_t ino)
 {
 	struct svr4_sockcache_entry *e;
 	void *cookie = ((struct socket *) fp->f_data)->so_internal;
@@ -121,9 +117,7 @@ svr4_find_socket(p, fp, dev, ino)
 
 
 void
-svr4_delete_socket(p, fp)
-	struct proc *p;
-	struct file *fp;
+svr4_delete_socket(struct proc *p, struct file *fp)
 {
 	struct svr4_sockcache_entry *e;
 	void *cookie = ((struct socket *) fp->f_data)->so_internal;
@@ -146,10 +140,7 @@ svr4_delete_socket(p, fp)
 
 
 int
-svr4_add_socket(p, path, st)
-	struct proc *p;
-	const char *path;
-	struct stat *st;
+svr4_add_socket(struct proc *p, const char *path, struct stat *st)
 {
 	struct svr4_sockcache_entry *e;
 	size_t len;
@@ -184,35 +175,35 @@ svr4_add_socket(p, path, st)
 
 
 int
-svr4_sys_socket(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_sys_socket(struct lwp *l, const struct svr4_sys_socket_args *uap, register_t *retval)
 {
-	struct svr4_sys_socket_args *uap = v;
+	struct sys___socket30_args bsd_ua;
+
+	SCARG(&bsd_ua, domain) = SCARG(uap, domain);
+	SCARG(&bsd_ua, protocol) = SCARG(uap, protocol);
 
 	switch (SCARG(uap, type)) {
 	case SVR4_SOCK_DGRAM:
-		SCARG(uap, type) = SOCK_DGRAM;
+		SCARG(&bsd_ua, type) = SOCK_DGRAM;
 		break;
 
 	case SVR4_SOCK_STREAM:
-		SCARG(uap, type) = SOCK_STREAM;
+		SCARG(&bsd_ua, type) = SOCK_STREAM;
 		break;
 
 	case SVR4_SOCK_RAW:
-		SCARG(uap, type) = SOCK_RAW;
+		SCARG(&bsd_ua, type) = SOCK_RAW;
 		break;
 
 	case SVR4_SOCK_RDM:
-		SCARG(uap, type) = SOCK_RDM;
+		SCARG(&bsd_ua, type) = SOCK_RDM;
 		break;
 
 	case SVR4_SOCK_SEQPACKET:
-		SCARG(uap, type) = SOCK_SEQPACKET;
+		SCARG(&bsd_ua, type) = SOCK_SEQPACKET;
 		break;
 	default:
 		return EINVAL;
 	}
-	return sys___socket30(l, uap, retval);
+	return sys___socket30(l, &bsd_ua, retval);
 }

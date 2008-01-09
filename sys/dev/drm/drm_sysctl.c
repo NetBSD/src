@@ -1,3 +1,5 @@
+/* $NetBSD: drm_sysctl.c,v 1.1.14.1 2008/01/09 01:52:36 matt Exp $ */
+
 /*-
  * Copyright 2003 Eric Anholt
  * All Rights Reserved.
@@ -22,6 +24,7 @@
  */
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: drm_sysctl.c,v 1.1.14.1 2008/01/09 01:52:36 matt Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/drm_sysctl.c,v 1.2 2005/11/28 23:13:53 anholt Exp $");
 */
@@ -48,69 +51,22 @@ struct drm_sysctl_list {
 #define DRM_SYSCTL_ENTRIES (sizeof(drm_sysctl_list)/sizeof(drm_sysctl_list[0]))
 
 struct drm_sysctl_info {
-#ifdef __FreeBSD__
-	struct sysctl_ctx_list ctx;
-#elif defined __NetBSD__
 	const struct sysctlnode *dri, *dri_card, *dri_debug;
 	const struct sysctlnode *dri_rest[DRM_SYSCTL_ENTRIES];
-#endif
 	char		       name[7];
 };
 
 int drm_sysctl_init(drm_device_t *dev)
 {
 	struct drm_sysctl_info *info;
-#ifdef __FreeBSD__
-	struct sysctl_oid *oid;
-	struct sysctl_oid *top, *drioid;
-#endif
 	int		  i;
 
 	info = malloc(sizeof *info, M_DRM, M_WAITOK | M_ZERO);
 	if ( !info )
 		return 1;
+
 	dev->sysctl = info;
 
-#ifdef __FreeBSD__
-	/* Add the sysctl node for DRI if it doesn't already exist */
-	drioid = SYSCTL_ADD_NODE( &info->ctx, &sysctl__hw_children, OID_AUTO, "dri", CTLFLAG_RW, NULL, "DRI Graphics");
-	if (!drioid)
-		return 1;
-
-	/* Find the next free slot under hw.dri */
-	i = 0;
-	SLIST_FOREACH(oid, SYSCTL_CHILDREN(drioid), oid_link) {
-		if (i <= oid->oid_arg2)
-			i = oid->oid_arg2 + 1;
-	}
-	if (i>9)
-		return 1;
-	
-	/* Add the hw.dri.x for our device */
-	info->name[0] = '0' + i;
-	info->name[1] = 0;
-	top = SYSCTL_ADD_NODE( &info->ctx, SYSCTL_CHILDREN(drioid), OID_AUTO, info->name, CTLFLAG_RW, NULL, NULL);
-	if (!top)
-		return 1;
-	
-	for (i = 0; i < DRM_SYSCTL_ENTRIES; i++) {
-		oid = SYSCTL_ADD_OID(&info->ctx, 
-			SYSCTL_CHILDREN(top), 
-			OID_AUTO, 
-			drm_sysctl_list[i].name, 
-			CTLTYPE_INT | CTLFLAG_RD, 
-			dev, 
-			0, 
-			drm_sysctl_list[i].f, 
-			"A", 
-			NULL);
-		if (!oid)
-			return 1;
-	}
-	SYSCTL_ADD_INT(&info->ctx, SYSCTL_CHILDREN(top), OID_AUTO, "debug",
-	    CTLFLAG_RW, &drm_debug_flag, sizeof(drm_debug_flag),
-	    "Enable debugging output");
-#elif defined(__NetBSD__)
 	sysctl_createv(NULL, 0, NULL, &info->dri,
 			CTLFLAG_READWRITE, CTLTYPE_NODE,
 			"dri", SYSCTL_DESCR("DRI Graphics"), NULL, 0, NULL, 0,
@@ -135,17 +91,11 @@ int drm_sysctl_init(drm_device_t *dev)
 			NULL, 0,
 			&drm_debug_flag, sizeof(drm_debug_flag),
 			CTL_HW, info->dri->sysctl_num, CTL_CREATE);
-#endif
-
 	return 0;
 }
 
 int drm_sysctl_cleanup(drm_device_t *dev)
 {
-#ifdef __FreeBSD__
-	int error;
-	error = sysctl_ctx_free( &dev->sysctl->ctx );
-#elif defined(__NetBSD__)
 	int i, error = 0;
 
 	sysctl_destroyv(NULL, CTL_HW, dev->sysctl->dri->sysctl_num,
@@ -160,7 +110,6 @@ int drm_sysctl_cleanup(drm_device_t *dev)
 	                              dev->sysctl->dri_card->sysctl_num,
 	                              CTL_DESTROY);
 	sysctl_destroyv(NULL, CTL_HW, dev->sysctl->dri->sysctl_num, CTL_DESTROY);
-#endif
 
 	free(dev->sysctl, M_DRM);
 	dev->sysctl = NULL;
@@ -168,10 +117,8 @@ int drm_sysctl_cleanup(drm_device_t *dev)
 	return error;
 }
 
-#ifdef __NetBSD__
 #define SYSCTL_OUT(x, y, z) \
 	(len+=z,(len<*oldlenp)?(strcat((char*)oldp, y),0):EOVERFLOW)
-#endif
 
 #define DRM_SYSCTL_PRINT(fmt, arg...)				\
 do {								\
@@ -183,26 +130,16 @@ do {								\
 
 static int drm_name_info DRM_SYSCTL_HANDLER_ARGS
 {
-#ifdef __FreeBSD__
-	drm_device_t *dev = arg1;
-#elif defined(__NetBSD__)
 	int len = 0;
 	drm_device_t *dev = rnode->sysctl_data;
-#endif
 	char buf[128];
 	int retcode;
 	int hasunique = 0;
 
-#ifdef __NetBSD__
 	if(oldp == NULL) return EINVAL;
 	*((char*)oldp) = '\0';
-#endif
 
-#ifdef __FreeBSD__
-	DRM_SYSCTL_PRINT("%s 0x%x", dev->driver.name, dev2udev(dev->devnode));
-#elif defined(__NetBSD__)
 	DRM_SYSCTL_PRINT("%s", dev->driver.name);
-#endif
 	
 	DRM_LOCK();
 	if (dev->unique) {
@@ -222,12 +159,8 @@ done:
 
 static int drm_vm_info DRM_SYSCTL_HANDLER_ARGS
 {
-#ifdef __FreeBSD__
-	drm_device_t *dev = arg1;
-#elif defined(__NetBSD__)
 	int len = 0;
 	drm_device_t *dev = rnode->sysctl_data;
-#endif
 	drm_local_map_t *map, *tempmaps;
 	const char   *types[] = { "FB", "REG", "SHM", "AGP", "SG" };
 	const char *type, *yesno;
@@ -235,10 +168,8 @@ static int drm_vm_info DRM_SYSCTL_HANDLER_ARGS
 	char buf[128];
 	int retcode;
 
-#ifdef __NetBSD__
 	if(oldp == NULL) return EINVAL;
 	*((char*)oldp) = '\0';
-#endif
 
 	/* We can't hold the lock while doing SYSCTL_OUTs, so allocate a
 	 * temporary copy of all the map entries and then SYSCTL_OUT that.
@@ -291,12 +222,8 @@ done:
 
 static int drm_bufs_info DRM_SYSCTL_HANDLER_ARGS
 {
-#ifdef __FreeBSD__
-	drm_device_t	 *dev = arg1;
-#elif defined(__NetBSD__)
 	int len = 0;
 	drm_device_t *dev = rnode->sysctl_data;
-#endif
 	drm_device_dma_t *dma = dev->dma;
 	drm_device_dma_t tempdma;
 	int *templists;
@@ -304,10 +231,8 @@ static int drm_bufs_info DRM_SYSCTL_HANDLER_ARGS
 	char buf[128];
 	int retcode;
 
-#ifdef __NetBSD__
 	if(oldp == NULL) return EINVAL;
 	*((char*)oldp) = '\0';
-#endif
 
 	/* We can't hold the locks around DRM_SYSCTL_PRINT, so make a temporary
 	 * copy of the whole structure and the relevant data from buflist.
@@ -357,21 +282,15 @@ done:
 
 static int drm_clients_info DRM_SYSCTL_HANDLER_ARGS
 {
-#ifdef __FreeBSD__
-	drm_device_t *dev = arg1;
-#elif defined(__NetBSD__)
 	int len = 0;
 	drm_device_t *dev = rnode->sysctl_data;
-#endif
 	drm_file_t *priv, *tempprivs;
 	char buf[128];
 	int retcode;
 	int privcount, i;
 
-#ifdef __NetBSD__
 	if(oldp == NULL) return EINVAL;
 	*((char*)oldp) = '\0';
-#endif
 
 	DRM_LOCK();
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.10.8.1 2007/11/06 23:34:52 matt Exp $	*/
+/*	$NetBSD: mutex.h,v 1.10.8.2 2008/01/09 01:58:13 matt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -83,10 +83,10 @@
  *
  * Otherwise, the following must be defined:
  *
- *	MUTEX_INITIALIZE_SPIN(mtx, id, minipl)
+ *	MUTEX_INITIALIZE_SPIN(mtx, dodebug, minipl)
  *		Initialize a spin mutex.
  *
- *	MUTEX_INITIALIZE_ADAPTIVE(mtx, id)
+ *	MUTEX_INITIALIZE_ADAPTIVE(mtx, dodebug)
  *		Initialize an adaptive mutex.
  *
  *	MUTEX_DESTROY(mtx)
@@ -123,9 +123,9 @@
  *		Release the lock and clear the "has waiters" indication.
  *		Must be interrupt atomic, need not be MP safe.
  *
- *	MUTEX_GETID(rw)
- *		Get the debugging ID for the mutex, an integer.  Only
- *		used in the LOCKDEBUG case.
+ *	MUTEX_DEBUG_P(mtx)
+ *		Evaluates to true if the mutex is initialized with
+ *		dodebug==true.  Only used in the LOCKDEBUG case.
  *
  * Machine dependent code may optionally provide stubs for the following
  * functions to implement the easy (unlocked / no waiters) cases.  If
@@ -152,16 +152,12 @@
 #include <sys/inttypes.h>
 #endif
 
-/*
- * MUTEX_NODEBUG disables most LOCKDEBUG checks for the lock.  It should
- * not be used.
- */
 typedef enum kmutex_type_t {
-	MUTEX_SPIN = 0,
-	MUTEX_ADAPTIVE = 1,
-	MUTEX_DEFAULT = 2,
-	MUTEX_DRIVER = 3,
-	MUTEX_NODEBUG = 4
+	MUTEX_SPIN = 0,		/* To get a spin mutex at IPL_NONE */
+	MUTEX_ADAPTIVE = 1,	/* For porting code written for Solaris */
+	MUTEX_DEFAULT = 2,	/* The only native, endorsed type */
+	MUTEX_DRIVER = 3,	/* For porting code written for Solaris */
+	MUTEX_NODEBUG = 4	/* Disables LOCKDEBUG; use with care */
 } kmutex_type_t;
 
 typedef struct kmutex kmutex_t;
@@ -172,6 +168,7 @@ typedef struct kmutex kmutex_t;
 
 #define	MUTEX_BIT_SPIN			0x01
 #define	MUTEX_BIT_WAITERS		0x02
+#define	MUTEX_BIT_DEBUG			0x04
 
 #define	MUTEX_SPIN_IPL(mtx)		((mtx)->mtx_ipl)
 #define	MUTEX_SPIN_OLDSPL(ci)		((ci)->ci_mtx_oldspl)
@@ -210,6 +207,7 @@ void	mutex_spin_exit(kmutex_t *);
 int	mutex_tryenter(kmutex_t *);
 
 int	mutex_owned(kmutex_t *);
+lwp_t	*mutex_owner(kmutex_t *);
 
 #endif /* _KERNEL */
 

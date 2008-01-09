@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vfsops.c,v 1.27.4.2 2007/11/08 10:59:58 matt Exp $	*/
+/*	$NetBSD: tmpfs_vfsops.c,v 1.27.4.3 2008/01/09 01:55:52 matt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.27.4.2 2007/11/08 10:59:58 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.27.4.3 2008/01/09 01:55:52 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -64,18 +64,15 @@ __KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.27.4.2 2007/11/08 10:59:58 matt E
 
 /* --------------------------------------------------------------------- */
 
-static int	tmpfs_mount(struct mount *, const char *, void *, size_t *,
-		    struct lwp *);
-static int	tmpfs_start(struct mount *, int, struct lwp *);
-static int	tmpfs_unmount(struct mount *, int, struct lwp *);
+static int	tmpfs_mount(struct mount *, const char *, void *, size_t *);
+static int	tmpfs_start(struct mount *, int);
+static int	tmpfs_unmount(struct mount *, int);
 static int	tmpfs_root(struct mount *, struct vnode **);
-static int	tmpfs_quotactl(struct mount *, int, uid_t, void *,
-		    struct lwp *);
 static int	tmpfs_vget(struct mount *, ino_t, struct vnode **);
 static int	tmpfs_fhtovp(struct mount *, struct fid *, struct vnode **);
 static int	tmpfs_vptofh(struct vnode *, struct fid *, size_t *);
-static int	tmpfs_statvfs(struct mount *, struct statvfs *, struct lwp *);
-static int	tmpfs_sync(struct mount *, int, kauth_cred_t, struct lwp *);
+static int	tmpfs_statvfs(struct mount *, struct statvfs *);
+static int	tmpfs_sync(struct mount *, int, kauth_cred_t);
 static void	tmpfs_init(void);
 static void	tmpfs_done(void);
 static int	tmpfs_snapshot(struct mount *, struct vnode *,
@@ -84,9 +81,9 @@ static int	tmpfs_snapshot(struct mount *, struct vnode *,
 /* --------------------------------------------------------------------- */
 
 static int
-tmpfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
-    struct lwp *l)
+tmpfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 {
+	struct lwp *l = curlwp;
 	int error;
 	ino_t nodes;
 	size_t pages;
@@ -104,12 +101,10 @@ tmpfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
 		tmp = VFS_TO_TMPFS(mp);
 
 		args->ta_version = TMPFS_ARGS_VERSION;
-		mutex_enter(&tmp->tm_lock);
 		args->ta_nodes_max = tmp->tm_nodes_max;
 		args->ta_size_max = tmp->tm_pages_max * PAGE_SIZE;
-		root = tmp->tm_root;
-		mutex_exit(&tmp->tm_lock);
 
+		root = tmp->tm_root;
 		args->ta_root_uid = root->tn_uid;
 		args->ta_root_gid = root->tn_gid;
 		args->ta_root_mode = root->tn_mode;
@@ -172,8 +167,9 @@ tmpfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
 	/* Allocate the root node. */
 	error = tmpfs_alloc_node(tmp, VDIR, args->ta_root_uid,
 	    args->ta_root_gid, args->ta_root_mode & ALLPERMS, NULL, NULL,
-	    VNOVAL, l->l_proc, &root);
+	    VNOVAL, &root);
 	KASSERT(error == 0 && root != NULL);
+	root->tn_links++;
 	tmp->tm_root = root;
 
 	mp->mnt_data = tmp;
@@ -191,8 +187,7 @@ tmpfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
 /* --------------------------------------------------------------------- */
 
 static int
-tmpfs_start(struct mount *mp, int flags,
-    struct lwp *l)
+tmpfs_start(struct mount *mp, int flags)
 {
 
 	return 0;
@@ -202,7 +197,7 @@ tmpfs_start(struct mount *mp, int flags,
 
 /* ARGSUSED2 */
 static int
-tmpfs_unmount(struct mount *mp, int mntflags, struct lwp *l)
+tmpfs_unmount(struct mount *mp, int mntflags)
 {
 	int error;
 	int flags = 0;
@@ -225,7 +220,10 @@ tmpfs_unmount(struct mount *mp, int mntflags, struct lwp *l)
 	 * a directory, we free all its directory entries.  Note that after
 	 * freeing a node, it will automatically go to the available list,
 	 * so we will later have to iterate over it to release its items. */
-	while ((node = LIST_FIRST(&tmp->tm_nodes)) != NULL) {
+	node = LIST_FIRST(&tmp->tm_nodes);
+	while (node != NULL) {
+		struct tmpfs_node *next;
+
 		if (node->tn_type == VDIR) {
 			struct tmpfs_dirent *de;
 
@@ -241,7 +239,9 @@ tmpfs_unmount(struct mount *mp, int mntflags, struct lwp *l)
 			}
 		}
 
+		next = LIST_NEXT(node, tn_entries);
 		tmpfs_free_node(tmp, node);
+		node = next;
 	}
 
 	tmpfs_pool_destroy(&tmp->tm_dirent_pool);
@@ -265,17 +265,6 @@ tmpfs_root(struct mount *mp, struct vnode **vpp)
 {
 
 	return tmpfs_alloc_vp(mp, VFS_TO_TMPFS(mp)->tm_root, vpp);
-}
-
-/* --------------------------------------------------------------------- */
-
-static int
-tmpfs_quotactl(struct mount *mp, int cmd, uid_t uid,
-    void *arg, struct lwp *l)
-{
-
-	printf("tmpfs_quotactl called; need for it unknown yet\n");
-	return EOPNOTSUPP;
 }
 
 /* --------------------------------------------------------------------- */
@@ -306,13 +295,11 @@ tmpfs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
 
 	memcpy(&tfh, fhp, sizeof(struct tmpfs_fid));
 
-	mutex_enter(&tmp->tm_lock);
-	if (tfh.tf_id >= tmp->tm_nodes_max) {
-		mutex_exit(&tmp->tm_lock);
+	if (tfh.tf_id >= tmp->tm_nodes_max)
 		return EINVAL;
-	}
 
 	found = false;
+	mutex_enter(&tmp->tm_lock);
 	LIST_FOREACH(node, &tmp->tm_nodes, tn_entries) {
 		if (node->tn_id == tfh.tf_id &&
 		    node->tn_gen == tfh.tf_gen) {
@@ -354,14 +341,12 @@ tmpfs_vptofh(struct vnode *vp, struct fid *fhp, size_t *fh_size)
 
 /* ARGSUSED2 */
 static int
-tmpfs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l)
+tmpfs_statvfs(struct mount *mp, struct statvfs *sbp)
 {
 	fsfilcnt_t freenodes;
 	struct tmpfs_mount *tmp;
 
 	tmp = VFS_TO_TMPFS(mp);
-
-	mutex_enter(&tmp->tm_lock);
 
 	sbp->f_iosize = sbp->f_frsize = sbp->f_bsize = PAGE_SIZE;
 
@@ -376,8 +361,6 @@ tmpfs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l)
 	sbp->f_favail = sbp->f_ffree = freenodes;
 	sbp->f_fresvd = 0;
 
-	mutex_exit(&tmp->tm_lock);
-
 	copy_statvfs_info(sbp, mp);
 
 	return 0;
@@ -388,7 +371,7 @@ tmpfs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l)
 /* ARGSUSED0 */
 static int
 tmpfs_sync(struct mount *mp, int waitfor,
-    kauth_cred_t uc, struct lwp *l)
+    kauth_cred_t uc)
 {
 
 	return 0;
@@ -444,7 +427,7 @@ struct vfsops tmpfs_vfsops = {
 	tmpfs_start,			/* vfs_start */
 	tmpfs_unmount,			/* vfs_unmount */
 	tmpfs_root,			/* vfs_root */
-	tmpfs_quotactl,			/* vfs_quotactl */
+	(void *)eopnotsupp,		/* vfs_quotactl */
 	tmpfs_statvfs,			/* vfs_statvfs */
 	tmpfs_sync,			/* vfs_sync */
 	tmpfs_vget,			/* vfs_vget */

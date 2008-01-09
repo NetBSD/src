@@ -1,4 +1,4 @@
-/*	$NetBSD: wskbdmap_mfii.c,v 1.11 2006/04/01 23:02:32 christos Exp $	*/
+/*	$NetBSD: wskbdmap_mfii.c,v 1.11.34.1 2008/01/09 01:54:14 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,8 +37,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbdmap_mfii.c,v 1.11 2006/04/01 23:02:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbdmap_mfii.c,v 1.11.34.1 2008/01/09 01:54:14 matt Exp $");
 
+#include "opt_wskbdmap.h"
 #include <sys/types.h>
 #include <dev/wscons/wsksymdef.h>
 #include <dev/wscons/wsksymvar.h>
@@ -136,7 +137,10 @@ static const keysym_t pckbd_keydesc_us[] = {
     KC(127),			KS_Pause, /* Break */
     KC(156),			KS_KP_Enter,
     KC(157),			KS_Control_R,
+    KC(160),			KS_Cmd_VolumeToggle,
     KC(170),			KS_Print_Screen,
+    KC(174),			KS_Cmd_VolumeDown,
+    KC(176),			KS_Cmd_VolumeUp,
     KC(181),			KS_KP_Divide,
     KC(183),			KS_Print_Screen,
     KC(184),			KS_Alt_R,	KS_Multi_key,

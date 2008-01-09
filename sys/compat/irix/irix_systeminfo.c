@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_systeminfo.c,v 1.13 2007/02/15 20:32:48 ad Exp $ */
+/*	$NetBSD: irix_systeminfo.c,v 1.13.20.1 2008/01/09 01:50:52 matt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_systeminfo.c,v 1.13 2007/02/15 20:32:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_systeminfo.c,v 1.13.20.1 2008/01/09 01:50:52 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -76,16 +76,13 @@ char irix_si_version[128] = "04131232";
 #define BUF_SIZE 16
 
 int
-irix_sys_systeminfo(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+irix_sys_systeminfo(struct lwp *l, const struct irix_sys_systeminfo_args *uap, register_t *retval)
 {
-	struct irix_sys_systeminfo_args /* {
+	/* {
 		syscallarg(int) what;
 		syscallarg(char *) buf;
 		syscallarg(long) len;
-	} */ *uap = v;
+	} */
 	const char *str = NULL;
 	char strbuf[BUF_SIZE + 1];
 	int error = 0;
@@ -146,7 +143,7 @@ irix_sys_systeminfo(l, v, retval)
 
 	case SVR4_MIPS_SI_SERIAL: /* Unimplemented yet */
 	default:
-		return svr4_sys_systeminfo(l, v, retval);
+		return svr4_sys_systeminfo(l, (const void *)uap, retval);
 		break;
 	}
 

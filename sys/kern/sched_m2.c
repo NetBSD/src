@@ -1,7 +1,8 @@
-/*	$NetBSD: sched_m2.c,v 1.10.2.3 2007/11/08 11:00:04 matt Exp $	*/
+/*	$NetBSD: sched_m2.c,v 1.10.2.4 2008/01/09 01:56:14 matt Exp $	*/
 
 /*
- * Copyright (c) 2007, Mindaugas Rasiukevicius
+ * Copyright (c) 2007, Mindaugas Rasiukevicius <rmind at NetBSD org>
+ * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_m2.c,v 1.10.2.3 2007/11/08 11:00:04 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_m2.c,v 1.10.2.4 2008/01/09 01:56:14 matt Exp $");
 
 #include <sys/param.h>
 
@@ -217,7 +218,7 @@ sched_cpuattach(struct cpu_info *ci)
 	 * XXX: Estimate cache behaviour more..
 	 */
 	size = roundup(sizeof(runqueue_t), CACHE_LINE_SIZE) + CACHE_LINE_SIZE;
-	rq_ptr = kmem_zalloc(size, KM_NOSLEEP);
+	rq_ptr = kmem_zalloc(size, KM_SLEEP);
 	if (rq_ptr == NULL) {
 		panic("scheduler: could not allocate the runqueue");
 	}
@@ -225,7 +226,7 @@ sched_cpuattach(struct cpu_info *ci)
 	ci_rq = (void *)(roundup((intptr_t)(rq_ptr), CACHE_LINE_SIZE));
 
 	/* Initialize run queues */
-	mutex_init(&ci_rq->r_rq_mutex, MUTEX_SPIN, IPL_SCHED);
+	mutex_init(&ci_rq->r_rq_mutex, MUTEX_DEFAULT, IPL_SCHED);
 	for (i = 0; i < PRI_RT_COUNT; i++)
 		TAILQ_INIT(&ci_rq->r_rt_queue[i].q_head);
 	for (i = 0; i < PRI_TS_COUNT; i++)

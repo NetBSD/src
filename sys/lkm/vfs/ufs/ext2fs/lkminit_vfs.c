@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_vfs.c,v 1.6 2005/12/11 12:24:50 christos Exp $ */
+/* $NetBSD: lkminit_vfs.c,v 1.6.46.1 2008/01/09 01:56:59 matt Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_vfs.c,v 1.6 2005/12/11 12:24:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_vfs.c,v 1.6.46.1 2008/01/09 01:56:59 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -52,7 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: lkminit_vfs.c,v 1.6 2005/12/11 12:24:50 christos Exp
 
 #include <ufs/ext2fs/ext2fs_extern.h>
 
-int ext2fs_lkmentry __P((struct lkm_table *, int, int));
+int ext2fs_lkmentry(struct lkm_table *, int, int);
 
 /*
  * This is the vfsops table for the file system in question
@@ -67,8 +67,8 @@ MOD_VFS("ext2fs", -1, &ext2fs_vfsops);
 /*
  * take care of fs specific sysctl nodes
  */
-static int load __P((struct lkm_table *, int));
-static int unload __P((struct lkm_table *, int));
+static int load(struct lkm_table *, int);
+static int unload(struct lkm_table *, int);
 static struct sysctllog *_ext2fs_log;
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_input.c,v 1.35 2007/03/04 06:03:31 christos Exp $	*/
+/*	$NetBSD: clnp_input.c,v 1.35.16.1 2008/01/09 01:57:45 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clnp_input.c,v 1.35 2007/03/04 06:03:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clnp_input.c,v 1.35.16.1 2008/01/09 01:57:45 matt Exp $");
 
 #include "opt_iso.h"
 
@@ -322,8 +322,7 @@ clnp_input(struct mbuf *m, ...)
  	/*
  	 * make sure this interface has a ISO address
  	 */
-	for (ifa = shp->snh_ifp->if_addrlist.tqh_first; ifa != 0;
-	     ifa = ifa->ifa_list.tqe_next)
+	IFADDR_FOREACH(ifa, shp->snh_ifp)
 		if (ifa->ifa_addr->sa_family == AF_ISO)
 			break;
 	if (ifa == 0) {

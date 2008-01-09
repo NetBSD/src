@@ -1,4 +1,4 @@
-/*	$NetBSD: lm75.c,v 1.14.8.1 2007/11/06 23:26:10 matt Exp $	*/
+/*	$NetBSD: lm75.c,v 1.14.8.2 2008/01/09 01:52:41 matt Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -35,6 +35,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: lm75.c,v 1.14.8.2 2008/01/09 01:52:41 matt Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -50,8 +53,8 @@ struct lmtemp_softc {
 	i2c_tag_t sc_tag;
 	int sc_address;
 
-	envsys_data_t sc_sensor[1];
-	struct sysmon_envsys sc_sysmon;
+	envsys_data_t sc_sensor;
+	struct sysmon_envsys *sc_sme;
 
 	uint32_t (*sc_lmtemp_decode)(const uint8_t *);
 };
@@ -62,7 +65,7 @@ static void lmtemp_attach(struct device *, struct device *, void *);
 CFATTACH_DECL(lmtemp, sizeof(struct lmtemp_softc),
 	lmtemp_match, lmtemp_attach, NULL, NULL);
 
-static int	lmtemp_gtredata(struct sysmon_envsys *, envsys_data_t *);
+static void	lmtemp_refresh(struct sysmon_envsys *, envsys_data_t *);
 
 static int lmtemp_config_write(struct lmtemp_softc *, uint8_t);
 static uint32_t lmtemp_decode_lm75(const uint8_t *);
@@ -139,25 +142,28 @@ lmtemp_attach(struct device *parent, struct device *self, void *aux)
 	}
 	iic_release_bus(sc->sc_tag, I2C_F_POLL);
 
+	sc->sc_sme = sysmon_envsys_create();
 	/* Initialize sensor data. */
-	sc->sc_sensor[0].sensor = 0;
-	sc->sc_sensor[0].state = ENVSYS_SVALID;
-	sc->sc_sensor[0].units =  ENVSYS_STEMP;
-	(void)strlcpy(sc->sc_sensor[0].desc,
-	    sc->sc_dev.dv_xname, sizeof(sc->sc_sensor[0].desc));
+	sc->sc_sensor.units =  ENVSYS_STEMP;
+	(void)strlcpy(sc->sc_sensor.desc,
+	    sc->sc_dev.dv_xname, sizeof(sc->sc_sensor.desc));
+	if (sysmon_envsys_sensor_attach(sc->sc_sme, &sc->sc_sensor)) {
+		sysmon_envsys_destroy(sc->sc_sme);
+		return;
+	}
 
 	sc->sc_lmtemp_decode = lmtemptbl[i].lmtemp_decode;
 
 	/* Hook into system monitor. */
-	sc->sc_sysmon.sme_name = sc->sc_dev.dv_xname;
-	sc->sc_sysmon.sme_sensor_data = sc->sc_sensor;
-	sc->sc_sysmon.sme_cookie = sc;
-	sc->sc_sysmon.sme_gtredata = lmtemp_gtredata;
-	sc->sc_sysmon.sme_nsensors = 1;
+	sc->sc_sme->sme_name = sc->sc_dev.dv_xname;
+	sc->sc_sme->sme_cookie = sc;
+	sc->sc_sme->sme_refresh = lmtemp_refresh;
 
-	if (sysmon_envsys_register(&sc->sc_sysmon))
+	if (sysmon_envsys_register(sc->sc_sme)) {
 		aprint_error("%s: unable to register with sysmon\n",
 		    sc->sc_dev.dv_xname);
+		sysmon_envsys_destroy(sc->sc_sme);
+	}
 }
 
 static int
@@ -202,24 +208,22 @@ lmtemp_refresh_sensor_data(struct lmtemp_softc *sc)
 		printf("%s: unable to read temperature, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
 #endif
-		sc->sc_sensor[0].state = ENVSYS_SINVALID;
+		sc->sc_sensor.state = ENVSYS_SINVALID;
 		return;
 	}
 
-	sc->sc_sensor[0].value_cur = val;
-	sc->sc_sensor[0].state = ENVSYS_SVALID;
+	sc->sc_sensor.value_cur = val;
+	sc->sc_sensor.state = ENVSYS_SVALID;
 }
 
-static int
-lmtemp_gtredata(struct sysmon_envsys *sme, envsys_data_t *edata)
+static void
+lmtemp_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 {
 	struct lmtemp_softc *sc = sme->sme_cookie;
 
 	iic_acquire_bus(sc->sc_tag, 0);	/* also locks our instance */
 	lmtemp_refresh_sensor_data(sc);
 	iic_release_bus(sc->sc_tag, 0);	/* also unlocks our instance */
-
-	return (0);
 }
 
 static uint32_t

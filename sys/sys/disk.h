@@ -1,4 +1,4 @@
-/*	$NetBSD: disk.h,v 1.45.6.1 2007/11/06 23:34:45 matt Exp $	*/
+/*	$NetBSD: disk.h,v 1.45.6.2 2008/01/09 01:58:06 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2004 The NetBSD Foundation, Inc.
@@ -234,6 +234,7 @@ __link_set_add_data(dkwedge_methods, name ## _ddm)
 #define	DKW_PTYPE_CCD		"ccd"
 #define	DKW_PTYPE_APPLEUFS	"appleufs"
 #define	DKW_PTYPE_NTFS		"ntfs"
+#define	DKW_PTYPE_CGD		"cgd"
 
 /*
  * Disk geometry dictionary.

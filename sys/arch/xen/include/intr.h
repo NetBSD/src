@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.16.10.1 2007/11/06 23:24:04 matt Exp $	*/
+/*	$NetBSD: intr.h,v 1.16.10.2 2008/01/09 01:50:07 matt Exp $	*/
 /*	NetBSD intr.h,v 1.15 2004/10/31 10:39:34 yamt Exp	*/
 
 /*-
@@ -40,12 +40,12 @@
 #ifndef _XEN_INTR_H_
 #define	_XEN_INTR_H_
 
-#include <machine/intrdefs.h>
-#include <machine/xen.h>
-#include <machine/hypervisor.h>
-#include <machine/evtchn.h>
+#include <xen/intrdefs.h>
 
 #ifndef _LOCORE
+#include <xen/xen.h>
+#include <xen/hypervisor.h>
+#include <xen/evtchn.h>
 #include <machine/cpu.h>
 #include <machine/pic.h>
 
@@ -88,6 +88,7 @@ struct iplsource {
 	struct intrhand *ipl_handlers;   /* handler chain */
 	void *ipl_recurse;               /* entry for spllower */
 	void *ipl_resume;                /* entry for doreti */
+	struct lwp *ipl_lwp;
 	u_int32_t ipl_evt_mask1;	/* pending events for this IPL */
 	u_int32_t ipl_evt_mask2[NR_EVENT_CHANNELS];
 };
@@ -167,14 +168,9 @@ splraiseipl(ipl_cookie_t icookie)
  * Stub declarations.
  */
 
-extern void Xsoftclock(void);
-extern void Xsoftnet(void);
-extern void Xsoftserial(void);
-extern void Xsoftxenevt(void);
+extern void Xsoftintr(void);
 
 struct cpu_info;
-
-extern char idt_allocmap[];
 
 struct pcibus_attach_args;
 
@@ -195,53 +191,5 @@ struct pic *intr_findpic(int);
 void intr_add_pcibus(struct pcibus_attach_args *);
 
 #endif /* !_LOCORE */
-
-/*
- * Generic software interrupt support.
- */
-
-#define	X86_SOFTINTR_SOFTCLOCK		0
-#define	X86_SOFTINTR_SOFTNET		1
-#define	X86_SOFTINTR_SOFTSERIAL		2
-#define	X86_NSOFTINTR			3
-
-#ifndef _LOCORE
-#include <sys/queue.h>
-
-struct x86_soft_intrhand {
-	TAILQ_ENTRY(x86_soft_intrhand)
-		sih_q;
-	struct x86_soft_intr *sih_intrhead;
-	void	(*sih_fn)(void *);
-	void	*sih_arg;
-	int	sih_pending;
-};
-
-struct x86_soft_intr {
-	TAILQ_HEAD(, x86_soft_intrhand)
-		softintr_q;
-	int softintr_ssir;
-	struct simplelock softintr_slock;
-};
-
-#define	x86_softintr_lock(si, s)					\
-do {									\
-	(s) = splhigh();						\
-	simple_lock(&si->softintr_slock);				\
-} while (/*CONSTCOND*/ 0)
-
-#define	x86_softintr_unlock(si, s)					\
-do {									\
-	simple_unlock(&si->softintr_slock);				\
-	splx((s));							\
-} while (/*CONSTCOND*/ 0)
-
-void	*softintr_establish(int, void (*)(void *), void *);
-void	softintr_disestablish(void *);
-void	softintr_init(void);
-void	softintr_dispatch(int);
-void	softintr_schedule(void *);
-
-#endif /* _LOCORE */
 
 #endif /* _XEN_INTR_H_ */

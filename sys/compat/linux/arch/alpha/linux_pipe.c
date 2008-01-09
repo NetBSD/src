@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_pipe.c,v 1.10 2007/02/09 21:55:18 ad Exp $	*/
+/*	$NetBSD: linux_pipe.c,v 1.10.20.1 2008/01/09 01:50:53 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_pipe.c,v 1.10 2007/02/09 21:55:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_pipe.c,v 1.10.20.1 2008/01/09 01:50:53 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,10 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_pipe.c,v 1.10 2007/02/09 21:55:18 ad Exp $");
 
 
 int
-linux_sys_pipe(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_pipe(struct lwp *l, const void *v, register_t *retval)
 {
 	int error;
 

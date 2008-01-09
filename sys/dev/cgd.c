@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.46.6.1 2007/11/06 23:25:27 matt Exp $ */
+/* $NetBSD: cgd.c,v 1.46.6.2 2008/01/09 01:52:11 matt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.46.6.1 2007/11/06 23:25:27 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.46.6.2 2008/01/09 01:52:11 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -54,7 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.46.6.1 2007/11/06 23:25:27 matt Exp $");
 #include <sys/disklabel.h>
 #include <sys/fcntl.h>
 #include <sys/vnode.h>
-#include <sys/lock.h>
 #include <sys/conf.h>
 
 #include <dev/dkvar.h>
@@ -295,6 +294,7 @@ cgdstart(struct dk_softc *dksc, struct buf *bp)
 	void *	addr;
 	void *	newaddr;
 	daddr_t	bn;
+	struct	vnode *vp;
 
 	DPRINTF_FOLLOW(("cgdstart(%p, %p)\n", dksc, bp));
 	disk_busy(&dksc->sc_dkdev); /* XXX: put in dksubr.c */
@@ -306,7 +306,7 @@ cgdstart(struct dk_softc *dksc, struct buf *bp)
 	 * we can fail quickly if they are unavailable.
 	 */
 
-	nbp = getiobuf_nowait();
+	nbp = getiobuf(cs->sc_tvn, false);
 	if (nbp == NULL) {
 		disk_unbusy(&dksc->sc_dkdev, 0, (bp->b_flags & B_READ));
 		return -1;
@@ -330,18 +330,22 @@ cgdstart(struct dk_softc *dksc, struct buf *bp)
 	}
 
 	nbp->b_data = newaddr;
-	nbp->b_flags = bp->b_flags | B_CALL;
+	nbp->b_flags = bp->b_flags;
+	nbp->b_oflags = bp->b_oflags;
+	nbp->b_cflags = bp->b_cflags;
 	nbp->b_iodone = cgdiodone;
 	nbp->b_proc = bp->b_proc;
 	nbp->b_blkno = bn;
-	nbp->b_vp = cs->sc_tvn;
 	nbp->b_bcount = bp->b_bcount;
 	nbp->b_private = bp;
 
 	BIO_COPYPRIO(nbp, bp);
 
 	if ((nbp->b_flags & B_READ) == 0) {
-		V_INCR_NUMOUTPUT(nbp->b_vp);
+		vp = nbp->b_vp;
+		mutex_enter(&vp->v_interlock);
+		vp->v_numoutput++;
+		mutex_exit(&vp->v_interlock);
 	}
 	VOP_STRATEGY(cs->sc_tvn, nbp);
 	return 0;
@@ -624,12 +628,12 @@ cgdinit(struct cgd_softc *cs, const char *cpath, struct vnode *vp,
 	cs->sc_tpath = malloc(cs->sc_tpathlen, M_DEVBUF, M_WAITOK);
 	memcpy(cs->sc_tpath, tmppath, cs->sc_tpathlen);
 
-	if ((ret = VOP_GETATTR(vp, &va, l->l_cred, l)) != 0)
+	if ((ret = VOP_GETATTR(vp, &va, l->l_cred)) != 0)
 		goto bail;
 
 	cs->sc_tdev = va.va_rdev;
 
-	ret = VOP_IOCTL(vp, DIOCGPART, &dpart, FREAD, l->l_cred, l);
+	ret = VOP_IOCTL(vp, DIOCGPART, &dpart, FREAD, l->l_cred);
 	if (ret)
 		goto bail;
 

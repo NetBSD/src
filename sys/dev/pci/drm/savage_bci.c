@@ -1,3 +1,5 @@
+/*	$NetBSD: savage_bci.c,v 1.2.12.1 2008/01/09 01:54:10 matt Exp $	*/
+
 /* savage_bci.c -- BCI support for Savage
  *
  * Copyright 2004  Felix Kuehling
@@ -24,6 +26,7 @@
  */
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: savage_bci.c,v 1.2.12.1 2008/01/09 01:54:10 matt Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/savage_bci.c,v 1.3 2006/04/09 20:45:45 anholt Exp $");
 */

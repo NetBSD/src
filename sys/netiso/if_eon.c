@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eon.c,v 1.59.2.1 2007/11/06 23:34:16 matt Exp $	*/
+/*	$NetBSD: if_eon.c,v 1.59.2.2 2008/01/09 01:57:46 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -67,7 +67,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_eon.c,v 1.59.2.1 2007/11/06 23:34:16 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eon.c,v 1.59.2.2 2008/01/09 01:57:46 matt Exp $");
 
 #include "opt_eon.h"
 
@@ -154,7 +154,7 @@ eonattach(void)
 	ifp->if_flags = IFF_BROADCAST;
 	if_attach(ifp);
 	if_alloc_sadl(ifp);
-	eonioctl(ifp, SIOCSIFADDR, (void *) ifp->if_addrlist.tqh_first);
+	eonioctl(ifp, SIOCSIFADDR, ifp->if_dl);
 	eon_llinfo.el_qhdr.link =
 		eon_llinfo.el_qhdr.rlink = &(eon_llinfo.el_qhdr);
 
@@ -180,8 +180,8 @@ eonattach(void)
 int
 eonioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
-	int    s = splnet();
-	int    error = 0;
+	struct ifaddr *ifa = data;
+	int error = 0, s = splnet();
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_EON]) {
@@ -190,14 +190,12 @@ eonioctl(struct ifnet *ifp, u_long cmd, void *data)
 #endif
 
 	switch (cmd) {
-		struct ifaddr *ifa;
-
 	case SIOCSIFADDR:
-		if ((ifa = (struct ifaddr *) data) != NULL) {
-			ifp->if_flags |= IFF_UP;
-			if (ifa->ifa_addr->sa_family != AF_LINK)
-				ifa->ifa_rtrequest = eonrtrequest;
-		}
+		if (ifa == NULL)
+			break;
+		ifp->if_flags |= IFF_UP;
+		if (ifa->ifa_addr->sa_family != AF_LINK)
+			ifa->ifa_rtrequest = eonrtrequest;
 		break;
 	default:
 		error = EINVAL;
@@ -211,6 +209,7 @@ eonioctl(struct ifnet *ifp, u_long cmd, void *data)
 void
 eoniphdr(struct eon_iphdr *hdr, const void *loc, struct route *ro, int class)
 {
+	struct rtentry *rt;
 	struct mbuf     mhead;
 	union {
 		struct sockaddr		dst;
@@ -223,8 +222,8 @@ eoniphdr(struct eon_iphdr *hdr, const void *loc, struct route *ro, int class)
 	rtcache_setdst(ro, &u.dst);
 	rtcache_init(ro);
 
-	if (ro->ro_rt != NULL)
-		ro->ro_rt->rt_use++;
+	if ((rt = rtcache_getrt(ro)) != NULL)
+		rt->rt_use++;
 	hdr->ei_ip.ip_dst = u.dst4.sin_addr;
 	hdr->ei_ip.ip_p = IPPROTO_EON;
 	hdr->ei_ip.ip_ttl = MAXTTL;
@@ -255,6 +254,7 @@ eoniphdr(struct eon_iphdr *hdr, const void *loc, struct route *ro, int class)
 void
 eonrtrequest(int cmd, struct rtentry *rt, struct rt_addrinfo *info)
 {
+	struct rtentry *nrt;
 	unsigned long   zerodst = 0;
 	const void *ipaddrloc = &zerodst;
 	struct eon_llinfo *el = (struct eon_llinfo *) rt->rt_llinfo;
@@ -266,7 +266,7 @@ eonrtrequest(int cmd, struct rtentry *rt, struct rt_addrinfo *info)
 	switch (cmd) {
 	case RTM_DELETE:
 		if (el) {
-			remque(&el->el_qhdr);
+			iso_remque(&el->el_qhdr);
 			rtcache_free(&el->el_iproute);
 			Free(el);
 			rt->rt_llinfo = NULL;
@@ -281,7 +281,7 @@ eonrtrequest(int cmd, struct rtentry *rt, struct rt_addrinfo *info)
 		if (el == NULL)
 			return;
 		memset(el, 0, sizeof(*el));
-		insque(&el->el_qhdr, &eon_llinfo.el_qhdr);
+		iso_insque(&el->el_qhdr, &eon_llinfo.el_qhdr);
 		el->el_rt = rt;
 		break;
 	}
@@ -303,9 +303,8 @@ eonrtrequest(int cmd, struct rtentry *rt, struct rt_addrinfo *info)
 	}
 	el->el_flags |= RTF_UP;
 	eoniphdr(&el->el_ei, ipaddrloc, &el->el_iproute, EON_NORMAL_ADDR);
-	if (el->el_iproute.ro_rt != NULL)
-		rt->rt_rmx.rmx_mtu = el->el_iproute.ro_rt->rt_rmx.rmx_mtu
-			- sizeof(el->el_ei);
+	if ((nrt = rtcache_getrt(&el->el_iproute)) != NULL)
+		rt->rt_rmx.rmx_mtu = nrt->rt_rmx.rmx_mtu - sizeof(el->el_ei);
 }
 
 /*

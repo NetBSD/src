@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_if.c,v 1.12 2007/03/12 18:18:31 ad Exp $	*/
+/*	$NetBSD: pf_if.c,v 1.12.14.1 2008/01/09 01:55:38 matt Exp $	*/
 /*	$OpenBSD: pf_if.c,v 1.23 2004/12/22 17:17:55 dhartmei Exp $ */
 
 /*
@@ -30,6 +30,9 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pf_if.c,v 1.12.14.1 2008/01/09 01:55:38 matt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -446,7 +449,7 @@ pfi_instance_add(struct ifnet *ifp, int net, int flags)
 
 	if (ifp == NULL)
 		return;
-	TAILQ_FOREACH(ia, &ifp->if_addrlist, ifa_list) {
+	IFADDR_FOREACH(ia, ifp) {
 		if (ia->ifa_addr == NULL)
 			continue;
 		af = ia->ifa_addr->sa_family;

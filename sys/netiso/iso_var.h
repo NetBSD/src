@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_var.h,v 1.26 2007/05/02 20:40:29 dyoung Exp $	*/
+/*	$NetBSD: iso_var.h,v 1.26.8.1 2008/01/09 01:57:47 matt Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1991, 1993
@@ -149,7 +149,7 @@ int iso_hash (struct sockaddr_iso *, struct afhash *);
 int iso_netof (struct iso_addr *, void *);
 int iso_control (struct socket *, u_long, void *, struct ifnet *,
 		     struct lwp *);
-void iso_purgeaddr (struct ifaddr *, struct ifnet *);
+void iso_purgeaddr(struct ifaddr *);
 void iso_purgeif (struct ifnet *);
 void iso_ifscrub (struct ifnet *, struct iso_ifaddr *);
 int iso_ifinit (struct ifnet *, struct iso_ifaddr *, struct sockaddr_iso *,
@@ -160,6 +160,8 @@ int iso_eqtype (struct iso_addr *, struct iso_addr *);
 struct iso_ifaddr *iso_localifa (const struct sockaddr_iso *);
 int iso_nlctloutput (int, int, void *, struct mbuf *);
 void dump_isoaddr(const struct sockaddr_iso *);
+void iso_insque(void *, void *);
+void iso_remque(void *);
 
 /* iso_chksum.c */
 int iso_check_csum (struct mbuf *, int);

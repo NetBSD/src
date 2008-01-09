@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.97.2.1 2007/11/06 23:34:45 matt Exp $ */
+/* $NetBSD: device.h,v 1.97.2.2 2008/01/09 01:58:06 matt Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -80,6 +80,11 @@
 #include <sys/evcnt.h>
 #include <sys/queue.h>
 
+typedef struct device *device_t;
+#ifdef _KERNEL
+#include <sys/pmf.h>
+#endif
+
 #include <prop/proplib.h>
 
 /*
@@ -92,7 +97,10 @@ typedef enum devclass {
 	DV_DISK,		/* disk drive (label, etc) */
 	DV_IFNET,		/* network interface */
 	DV_TAPE,		/* tape device */
-	DV_TTY			/* serial line interface (?) */
+	DV_TTY,			/* serial line interface (?) */
+	DV_AUDIODEV,		/* audio device */
+	DV_DISPLAYDEV,		/* display device */
+	DV_BUS			/* bus device */
 } devclass_t;
 
 /*
@@ -103,10 +111,14 @@ typedef enum devact {
 	DVACT_DEACTIVATE	/* deactivate the device */
 } devact_t;
 
+typedef enum {
+	DVA_SYSTEM,
+	DVA_HARDWARE
+} devactive_t;
+
 typedef struct cfdata *cfdata_t;
 typedef struct cfdriver *cfdriver_t;
 typedef struct cfattach *cfattach_t;
-typedef struct device *device_t;
 
 struct device {
 	devclass_t	dv_class;	/* this device's classification */
@@ -119,15 +131,37 @@ struct device {
 	char		dv_xname[16];	/* external name (name + unit) */
 	device_t	dv_parent;	/* pointer to parent device
 					   (NULL if pseudo- or root node) */
+	int		dv_depth;	/* number of parents until root */
 	int		dv_flags;	/* misc. flags; see below */
 	void		*dv_private;	/* this device's private storage */
 	int		*dv_locators;	/* our actual locators (optional) */
 	prop_dictionary_t dv_properties;/* properties dictionary */
+
+	size_t		dv_activity_count;
+	void		(**dv_activity_handlers)(device_t, devactive_t);
+
+	bool		(*dv_driver_suspend)(device_t);
+	bool		(*dv_driver_resume)(device_t);
+	bool		(*dv_driver_child_register)(device_t);
+
+	void		*dv_bus_private;
+	bool		(*dv_bus_suspend)(device_t);
+	bool		(*dv_bus_resume)(device_t);
+	void		(*dv_bus_deregister)(device_t);
+
+	void		*dv_class_private;
+	bool		(*dv_class_suspend)(device_t);
+	bool		(*dv_class_resume)(device_t);
+	void		(*dv_class_deregister)(device_t);
 };
 
 /* dv_flags */
-#define	DVF_ACTIVE	0x0001		/* device is activated */
-#define	DVF_PRIV_ALLOC	0x0002		/* device private storage != device */
+#define	DVF_ACTIVE		0x0001	/* device is activated */
+#define	DVF_PRIV_ALLOC		0x0002	/* device private storage != device */
+#define	DVF_POWER_HANDLERS	0x0004	/* device has suspend/resume support */
+#define	DVF_CLASS_SUSPENDED	0x0008	/* device class suspend was called */
+#define	DVF_DRIVER_SUSPENDED	0x0010	/* device driver suspend was called */
+#define	DVF_BUS_SUSPENDED	0x0020	/* device bus suspend was called */
 
 TAILQ_HEAD(devicelist, device);
 
@@ -370,9 +404,11 @@ int	config_match(device_t, cfdata_t, void *);
 device_t config_attach_pseudo(cfdata_t);
 
 int	config_detach(device_t, int);
+int	config_detach_children(device_t, int flags);
 int	config_activate(device_t);
 int	config_deactivate(device_t);
 void	config_defer(device_t, void (*)(device_t));
+void	config_deferred(device_t);
 void	config_interrupts(device_t, void (*)(device_t));
 void	config_pending_incr(void);
 void	config_pending_decr(void);
@@ -392,12 +428,53 @@ cfattach_t	device_cfattach(device_t);
 int		device_unit(device_t);
 const char	*device_xname(device_t);
 device_t	device_parent(device_t);
+bool		device_foreach_child(device_t, bool (*)(device_t, void *),
+		                     void *);
 bool		device_is_active(device_t);
+bool		device_is_enabled(device_t);
+bool		device_has_power(device_t);
 int		device_locator(device_t, u_int);
 void		*device_private(device_t);
 prop_dictionary_t device_properties(device_t);
 
+bool		device_active(device_t, devactive_t);
+bool		device_active_register(device_t,
+				       void (*)(device_t, devactive_t));
+void		device_active_deregister(device_t,
+				         void (*)(device_t, devactive_t));
+
 bool		device_is_a(device_t, const char *);
+
+bool		device_pmf_is_registered(device_t);
+
+bool		device_pmf_driver_suspend(device_t);
+bool		device_pmf_driver_resume(device_t);
+
+void		device_pmf_driver_register(device_t,
+		    bool (*)(device_t), bool (*)(device_t));
+void		device_pmf_driver_deregister(device_t);
+
+bool		device_pmf_driver_child_register(device_t);
+void		device_pmf_driver_set_child_register(device_t,
+		    bool (*)(device_t));
+
+void		*device_pmf_bus_private(device_t);
+bool		device_pmf_bus_suspend(device_t);
+bool		device_pmf_bus_resume(device_t);
+
+void		device_pmf_bus_register(device_t, void *,
+		    bool (*)(device_t), bool (*)(device_t),
+		    void (*)(device_t));
+void		device_pmf_bus_deregister(device_t);
+
+void		*device_pmf_class_private(device_t);
+bool		device_pmf_class_suspend(device_t);
+bool		device_pmf_class_resume(device_t);
+
+void		device_pmf_class_register(device_t, void *,
+		    bool (*)(device_t), bool (*)(device_t),
+		    void (*)(device_t));
+void		device_pmf_class_deregister(device_t);
 
 #endif /* _KERNEL */
 

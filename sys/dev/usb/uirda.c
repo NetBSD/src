@@ -1,4 +1,4 @@
-/*	$NetBSD: uirda.c,v 1.25 2007/05/11 13:12:14 is Exp $	*/
+/*	$NetBSD: uirda.c,v 1.25.8.1 2008/01/09 01:54:43 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,13 +37,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uirda.c,v 1.25 2007/05/11 13:12:14 is Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uirda.c,v 1.25.8.1 2008/01/09 01:54:43 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/lock.h>
+#include <sys/mutex.h>
 #include <sys/ioctl.h>
 #include <sys/conf.h>
 #include <sys/file.h>
@@ -271,8 +271,8 @@ USB_ATTACH(uirda)
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
 			   USBDEV(sc->sc_dev));
 
-	lockinit(&sc->sc_wr_buf_lk, PZERO, "iirwrl", 0, 0);
-	lockinit(&sc->sc_rd_buf_lk, PZERO, "uirrdl", 0, 0);
+	mutex_init(&sc->sc_wr_buf_lk, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&sc->sc_rd_buf_lk, MUTEX_DEFAULT, IPL_NONE);
 
 	ia.ia_type = IR_TYPE_IRFRAME;
 	ia.ia_methods = sc->sc_irm ? sc->sc_irm : &uirda_methods;
@@ -319,6 +319,9 @@ USB_DETACH(uirda)
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
 			   USBDEV(sc->sc_dev));
+
+	mutex_destroy(&sc->sc_wr_buf_lk);
+	mutex_destroy(&sc->sc_rd_buf_lk);
 
 	return (rv);
 }
@@ -483,7 +486,7 @@ uirda_read(void *h, struct uio *uio, int flag)
 		}
 		splx(s);
 
-		lockmgr(&sc->sc_rd_buf_lk, LK_EXCLUSIVE, NULL);
+		mutex_enter(&sc->sc_rd_buf_lk);
 		n = sc->sc_rd_count - sc->sc_hdszi;
 		DPRINTFN(1,("%s: sc=%p n=%u, hdr=0x%02x\n", __func__,
 			    sc, n, sc->sc_rd_buf[0]));
@@ -492,7 +495,7 @@ uirda_read(void *h, struct uio *uio, int flag)
 		else
 			error = uiomove(sc->sc_rd_buf + sc->sc_hdszi, n, uio);
 		sc->sc_rd_count = 0;
-		lockmgr(&sc->sc_rd_buf_lk, LK_RELEASE, NULL);
+		mutex_exit(&sc->sc_rd_buf_lk);
 
 		err = uirda_start_read(sc);
 		/* XXX check err */
@@ -530,7 +533,7 @@ uirda_write(void *h, struct uio *uio, int flag)
 		return (EINVAL);
 
 	sc->sc_refcnt++;
-	lockmgr(&sc->sc_wr_buf_lk, LK_EXCLUSIVE, NULL);
+	mutex_enter(&sc->sc_wr_buf_lk);
 
 	sc->sc_wr_buf[0] = UIRDA_EB_NO_CHANGE | UIRDA_NO_SPEED;
 	error = uiomove(sc->sc_wr_buf + UIRDA_OUTPUT_HEADER_SIZE, n, uio);
@@ -553,7 +556,7 @@ uirda_write(void *h, struct uio *uio, int flag)
 		}
 	}
 
-	lockmgr(&sc->sc_wr_buf_lk, LK_RELEASE, NULL);
+	mutex_exit(&sc->sc_wr_buf_lk);
 	if (--sc->sc_refcnt < 0)
 		usb_detach_wakeup(USBDEV(sc->sc_dev));
 
@@ -640,7 +643,7 @@ uirda_kqfilter(void *h, struct knote *kn)
 		kn->kn_fop = &uirdawrite_filtops;
 		break;
 	default:
-		return (1);
+		return (EINVAL);
 	}
 
 	kn->kn_hook = sc;
@@ -725,28 +728,28 @@ uirda_set_params(void *h, struct irda_params *p)
 			return (EINVAL);
 
 		/* Change the write buffer */
-		lockmgr(&sc->sc_wr_buf_lk, LK_EXCLUSIVE, NULL);
+		mutex_enter(&sc->sc_wr_buf_lk);
 		if (sc->sc_wr_buf != NULL)
 			usbd_free_buffer(sc->sc_wr_xfer);
 		sc->sc_wr_buf = usbd_alloc_buffer(sc->sc_wr_xfer, p->maxsize+1);
-		lockmgr(&sc->sc_wr_buf_lk, LK_RELEASE, NULL);
+		mutex_exit(&sc->sc_wr_buf_lk);
 		if (sc->sc_wr_buf == NULL)
 			return (ENOMEM);
 
 		/* Change the read buffer */
-		lockmgr(&sc->sc_rd_buf_lk, LK_EXCLUSIVE, NULL);
+		mutex_enter(&sc->sc_rd_buf_lk);
 		usbd_abort_pipe(sc->sc_rd_pipe);
 		if (sc->sc_rd_buf != NULL)
 			usbd_free_buffer(sc->sc_rd_xfer);
 		sc->sc_rd_buf = usbd_alloc_buffer(sc->sc_rd_xfer, p->maxsize+1);
 		sc->sc_rd_count = 0;
 		if (sc->sc_rd_buf == NULL) {
-			lockmgr(&sc->sc_rd_buf_lk, LK_RELEASE, NULL);
+			mutex_exit(&sc->sc_rd_buf_lk);
 			return (ENOMEM);
 		}
 		sc->sc_params.maxsize = p->maxsize;
 		err = uirda_start_read(sc); /* XXX check */
-		lockmgr(&sc->sc_rd_buf_lk, LK_RELEASE, NULL);
+		mutex_exit(&sc->sc_rd_buf_lk);
 #endif
 	}
 	if (hdr != 0 && hdr != sc->sc_wr_hdr) {
@@ -758,7 +761,7 @@ uirda_set_params(void *h, struct irda_params *p)
 		DPRINTF(("%s: sc=%p setting header 0x%02x\n",
 			 __func__, sc, hdr));
 		sc->sc_wr_hdr = hdr;
-		lockmgr(&sc->sc_wr_buf_lk, LK_EXCLUSIVE, NULL);
+		mutex_enter(&sc->sc_wr_buf_lk);
 		sc->sc_wr_buf[0] = hdr;
 		n = UIRDA_OUTPUT_HEADER_SIZE;
 		err = usbd_bulk_transfer(sc->sc_wr_xfer, sc->sc_wr_pipe,
@@ -769,7 +772,7 @@ uirda_set_params(void *h, struct irda_params *p)
 			    USBDEVNAME(sc->sc_dev), err);
 			usbd_clear_endpoint_stall(sc->sc_wr_pipe);
 		}
-		lockmgr(&sc->sc_wr_buf_lk, LK_RELEASE, NULL);
+		mutex_exit(&sc->sc_wr_buf_lk);
 	}
 
 	sc->sc_params = *p;

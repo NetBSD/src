@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.91.6.1 2007/11/06 23:35:24 matt Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.91.6.2 2008/01/09 01:58:35 matt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.91.6.1 2007/11/06 23:35:24 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.91.6.2 2008/01/09 01:58:35 matt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -154,7 +154,7 @@ ufs_lookup(void *v)
 	/*
 	 * Check accessiblity of directory.
 	 */
-	if ((error = VOP_ACCESS(vdp, VEXEC, cred, cnp->cn_lwp)) != 0)
+	if ((error = VOP_ACCESS(vdp, VEXEC, cred)) != 0)
 		return (error);
 
 	if ((flags & ISLASTCN) && (vdp->v_mount->mnt_flag & MNT_RDONLY) &&
@@ -425,7 +425,7 @@ notfound:
 		 * Access for write is interpreted as allowing
 		 * creation of files in the directory.
 		 */
-		error = VOP_ACCESS(vdp, VWRITE, cred, cnp->cn_lwp);
+		error = VOP_ACCESS(vdp, VWRITE, cred);
 		if (error)
 			goto out;
 		/*
@@ -514,7 +514,7 @@ found:
 		/*
 		 * Write access to directory required to delete files.
 		 */
-		error = VOP_ACCESS(vdp, VWRITE, cred, cnp->cn_lwp);
+		error = VOP_ACCESS(vdp, VWRITE, cred);
 		if (error)
 			goto out;
 		/*
@@ -567,7 +567,7 @@ found:
 	 * regular file, or empty directory.
 	 */
 	if (nameiop == RENAME && (flags & ISLASTCN)) {
-		error = VOP_ACCESS(vdp, VWRITE, cred, cnp->cn_lwp);
+		error = VOP_ACCESS(vdp, VWRITE, cred);
 		if (error)
 			goto out;
 		/*
@@ -763,7 +763,7 @@ ufs_direnter(struct vnode *dvp, struct vnode *tvp, struct direct *dirp,
 
 	error = 0;
 	cr = cnp->cn_cred;
-	l = cnp->cn_lwp;
+	l = curlwp;
 
 	dp = VTOI(dvp);
 	newentrysize = DIRSIZ(0, dirp, 0);
@@ -847,7 +847,7 @@ ufs_direnter(struct vnode *dvp, struct vnode *tvp, struct direct *dirp,
 				return (error);
 			if (tvp != NULL)
 				VOP_UNLOCK(tvp, 0);
-			error = VOP_FSYNC(dvp, l->l_cred, FSYNC_WAIT, 0, 0, l);
+			error = VOP_FSYNC(dvp, l->l_cred, FSYNC_WAIT, 0, 0);
 			if (tvp != 0)
 				vn_lock(tvp, LK_EXCLUSIVE | LK_RETRY);
 			return (error);
@@ -1009,7 +1009,7 @@ ufs_direnter(struct vnode *dvp, struct vnode *tvp, struct direct *dirp,
 		if (dp->i_dirhash != NULL)
 			ufsdirhash_dirtrunc(dp, dp->i_endoff);
 #endif
-		(void) UFS_TRUNCATE(dvp, (off_t)dp->i_endoff, IO_SYNC, cr, l);
+		(void) UFS_TRUNCATE(dvp, (off_t)dp->i_endoff, IO_SYNC, cr);
 		if (DOINGSOFTDEP(dvp) && (tvp != NULL))
 			vn_lock(tvp, LK_EXCLUSIVE | LK_RETRY);
 	}

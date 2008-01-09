@@ -1,6 +1,6 @@
 #undef DEBUG_DARWIN
 #undef DEBUG_MACH
-/*	$NetBSD: darwin_mman.c,v 1.23 2007/03/04 06:01:14 christos Exp $ */
+/*	$NetBSD: darwin_mman.c,v 1.23.16.1 2008/01/09 01:50:36 matt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_mman.c,v 1.23 2007/03/04 06:01:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_mman.c,v 1.23.16.1 2008/01/09 01:50:36 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -58,8 +58,6 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_mman.c,v 1.23 2007/03/04 06:01:14 christos Ex
 
 #include <compat/sys/signal.h>
 
-#include <compat/common/compat_file.h>
-
 #include <compat/mach/mach_types.h>
 #include <compat/mach/mach_vm.h>
 
@@ -67,12 +65,9 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_mman.c,v 1.23 2007/03/04 06:01:14 christos Ex
 #include <compat/darwin/darwin_syscallargs.h>
 
 int
-darwin_sys_load_shared_file(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+darwin_sys_load_shared_file(struct lwp *l, const struct darwin_sys_load_shared_file_args *uap, register_t *retval)
 {
-	struct darwin_sys_load_shared_file_args /* {
+	/* {
 		syscallarg(char *) filename;
 		syscallarg(void *) addr;
 		syscallarg(u_long) len;
@@ -80,7 +75,7 @@ darwin_sys_load_shared_file(l, v, retval)
 		syscallarg(int) count:
 		syscallarg(mach_sf_mapping_t *) mappings;
 		syscallarg(int *) flags;
-	} */ *uap = v;
+	} */
 	struct file *fp;
 	struct filedesc *fdp;
 	struct vnode *vp = NULL;
@@ -126,7 +121,7 @@ darwin_sys_load_shared_file(l, v, retval)
 	SCARG(&open_cup, path) = SCARG(uap, filename);
 	SCARG(&open_cup, flags) = O_RDONLY;
 	SCARG(&open_cup, mode) = 0;
-	if ((error = bsd_sys_open(l, &open_cup, &fdc)) != 0)
+	if ((error = sys_open(l, &open_cup, &fdc)) != 0)
 		goto bad1;
 
 	fd = (int)fdc;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4281.c,v 1.34.8.1 2007/11/06 23:28:45 matt Exp $	*/
+/*	$NetBSD: cs4281.c,v 1.34.8.2 2008/01/09 01:53:37 matt Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.34.8.1 2007/11/06 23:28:45 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.34.8.2 2008/01/09 01:53:37 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,7 +106,8 @@ static void	 cs4281_set_adc_rate(struct cs428x_softc *, int);
 static int      cs4281_init(struct cs428x_softc *, int);
 
 /* Power Management */
-static void cs4281_power(int, void *);
+static bool cs4281_suspend(device_t);
+static bool cs4281_resume(device_t);
 
 static const struct audio_hw_if cs4281_hw_if = {
 	NULL,			/* open */
@@ -292,9 +293,8 @@ cs4281_attach(struct device *parent, struct device *self, void *aux)
 	midi_attach_mi(&cs4281_midi_hw_if, sc, &sc->sc_dev);
 #endif
 
-	sc->sc_suspend = PWR_RESUME;
-	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
-	    cs4281_power, sc);
+	if (!pmf_device_register(self, cs4281_suspend, cs4281_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
 static int
@@ -721,93 +721,64 @@ cs4281_trigger_input(void *addr, void *start, void *end, int blksize,
 	return 0;
 }
 
-/* Power Hook */
-static void
-cs4281_power(int why, void *v)
+static bool
+cs4281_suspend(device_t dv)
 {
-	static uint32_t dba0 = 0, dbc0 = 0, dmr0 = 0, dcr0 = 0;
-	static uint32_t dba1 = 0, dbc1 = 0, dmr1 = 0, dcr1 = 0;
-	struct cs428x_softc *sc;
+	struct cs428x_softc *sc = device_private(dv);
 
-	sc = (struct cs428x_softc *)v;
-	DPRINTF(("%s: cs4281_power why=%d\n", sc->sc_dev.dv_xname, why));
-	switch (why) {
-	case PWR_SUSPEND:
-	case PWR_STANDBY:
-		sc->sc_suspend = why;
-
-		/* save current playback status */
-		if (sc->sc_prun) {
-			dcr0 = BA0READ4(sc, CS4281_DCR0);
-			dmr0 = BA0READ4(sc, CS4281_DMR0);
-			dbc0 = BA0READ4(sc, CS4281_DBC0);
-			dba0 = BA0READ4(sc, CS4281_DBA0);
-		}
-
-		/* save current capture status */
-		if (sc->sc_rrun) {
-			dcr1 = BA0READ4(sc, CS4281_DCR1);
-			dmr1 = BA0READ4(sc, CS4281_DMR1);
-			dbc1 = BA0READ4(sc, CS4281_DBC1);
-			dba1 = BA0READ4(sc, CS4281_DBA1);
-		}
-		/* Stop DMA */
-		BA0WRITE4(sc, CS4281_DCR0, BA0READ4(sc, CS4281_DCR0) | DCRn_MSK);
-		BA0WRITE4(sc, CS4281_DCR1, BA0READ4(sc, CS4281_DCR1) | DCRn_MSK);
-
-		pci_conf_capture(sc->sc_pc, sc->sc_pt, &sc->sc_pciconf);
-		if (sc->sc_ih != NULL)
-			pci_intr_disestablish(sc->sc_pc, sc->sc_ih);
-
-		break;
-	case PWR_RESUME:
-		if (sc->sc_suspend == PWR_RESUME) {
-			printf("cs4281_power: odd, resume without suspend.\n");
-			sc->sc_suspend = why;
-			return;
-		}
-
-		sc->sc_ih = pci_intr_establish(sc->sc_pc, sc->intrh,
-		    IPL_AUDIO, cs4281_intr, sc);
-		if (sc->sc_ih == NULL) {
-			aprint_error("%s: can't establish interrupt",
-			    sc->sc_dev.dv_xname);
-			/* XXX jmcneill what should we do here? */
-			return;
-		}
-		pci_conf_restore(sc->sc_pc, sc->sc_pt, &sc->sc_pciconf);
-
-		sc->sc_suspend = why;
-		cs4281_init(sc, 0);
-		cs4281_reset_codec(sc);
-
-		/* restore ac97 registers */
-		(*sc->codec_if->vtbl->restore_ports)(sc->codec_if);
-
-		/* restore DMA related status */
-		if (sc->sc_prun) {
-			cs4281_set_dac_rate(sc, sc->sc_prate);
-			BA0WRITE4(sc, CS4281_DBA0, dba0);
-			BA0WRITE4(sc, CS4281_DBC0, dbc0);
-			BA0WRITE4(sc, CS4281_DMR0, dmr0);
-			BA0WRITE4(sc, CS4281_DCR0, dcr0);
-		}
-		if (sc->sc_rrun) {
-			cs4281_set_adc_rate(sc, sc->sc_rrate);
-			BA0WRITE4(sc, CS4281_DBA1, dba1);
-			BA0WRITE4(sc, CS4281_DBC1, dbc1);
-			BA0WRITE4(sc, CS4281_DMR1, dmr1);
-			BA0WRITE4(sc, CS4281_DCR1, dcr1);
-		}
-		/* enable intterupts */
-		if (sc->sc_prun || sc->sc_rrun)
-			BA0WRITE4(sc, CS4281_HICR, HICR_IEV | HICR_CHGM);
-		break;
-	case PWR_SOFTSUSPEND:
-	case PWR_SOFTSTANDBY:
-	case PWR_SOFTRESUME:
-		break;
+	/* save current playback status */
+	if (sc->sc_prun) {
+		sc->sc_suspend_state.cs4281.dcr0 = BA0READ4(sc, CS4281_DCR0);
+		sc->sc_suspend_state.cs4281.dmr0 = BA0READ4(sc, CS4281_DMR0);
+		sc->sc_suspend_state.cs4281.dbc0 = BA0READ4(sc, CS4281_DBC0);
+		sc->sc_suspend_state.cs4281.dba0 = BA0READ4(sc, CS4281_DBA0);
 	}
+
+	/* save current capture status */
+	if (sc->sc_rrun) {
+		sc->sc_suspend_state.cs4281.dcr1 = BA0READ4(sc, CS4281_DCR1);
+		sc->sc_suspend_state.cs4281.dmr1 = BA0READ4(sc, CS4281_DMR1);
+		sc->sc_suspend_state.cs4281.dbc1 = BA0READ4(sc, CS4281_DBC1);
+		sc->sc_suspend_state.cs4281.dba1 = BA0READ4(sc, CS4281_DBA1);
+	}
+	/* Stop DMA */
+	BA0WRITE4(sc, CS4281_DCR0, BA0READ4(sc, CS4281_DCR0) | DCRn_MSK);
+	BA0WRITE4(sc, CS4281_DCR1, BA0READ4(sc, CS4281_DCR1) | DCRn_MSK);
+
+	return true;
+}
+
+static bool
+cs4281_resume(device_t dv)
+{
+	struct cs428x_softc *sc = device_private(dv);
+
+	cs4281_init(sc, 0);
+	cs4281_reset_codec(sc);
+
+	/* restore ac97 registers */
+	(*sc->codec_if->vtbl->restore_ports)(sc->codec_if);
+
+	/* restore DMA related status */
+	if (sc->sc_prun) {
+		cs4281_set_dac_rate(sc, sc->sc_prate);
+		BA0WRITE4(sc, CS4281_DBA0, sc->sc_suspend_state.cs4281.dba0);
+		BA0WRITE4(sc, CS4281_DBC0, sc->sc_suspend_state.cs4281.dbc0);
+		BA0WRITE4(sc, CS4281_DMR0, sc->sc_suspend_state.cs4281.dmr0);
+		BA0WRITE4(sc, CS4281_DCR0, sc->sc_suspend_state.cs4281.dcr0);
+	}
+	if (sc->sc_rrun) {
+		cs4281_set_adc_rate(sc, sc->sc_rrate);
+		BA0WRITE4(sc, CS4281_DBA1, sc->sc_suspend_state.cs4281.dba1);
+		BA0WRITE4(sc, CS4281_DBC1, sc->sc_suspend_state.cs4281.dbc1);
+		BA0WRITE4(sc, CS4281_DMR1, sc->sc_suspend_state.cs4281.dmr1);
+		BA0WRITE4(sc, CS4281_DCR1, sc->sc_suspend_state.cs4281.dcr1);
+	}
+	/* enable intterupts */
+	if (sc->sc_prun || sc->sc_rrun)
+		BA0WRITE4(sc, CS4281_HICR, HICR_IEV | HICR_CHGM);
+
+	return true;
 }
 
 /* control AC97 codec */

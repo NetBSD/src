@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_bsd44.c,v 1.10 2007/01/16 11:53:00 elad Exp $ */
+/* $NetBSD: secmodel_bsd44.c,v 1.10.20.1 2008/01/09 01:58:02 matt Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44.c,v 1.10 2007/01/16 11:53:00 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44.c,v 1.10.20.1 2008/01/09 01:58:02 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -39,7 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44.c,v 1.10 2007/01/16 11:53:00 elad Exp
 
 #include <secmodel/bsd44/bsd44.h>
 #include <secmodel/bsd44/suser.h>
-#include <secmodel/bsd44/securelevel.h>
+#include <secmodel/securelevel/securelevel.h>
 
 SYSCTL_SETUP(sysctl_security_bsd44_setup,
     "sysctl security bsd44 setup")
@@ -82,7 +82,7 @@ SYSCTL_SETUP(sysctl_security_bsd44_setup,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "securelevel",
 		       SYSCTL_DESCR("System security level"),
-		       secmodel_bsd44_sysctl_securelevel, 0, NULL, 0,
+		       secmodel_securelevel_sysctl, 0, NULL, 0,
 		       CTL_CREATE, CTL_EOL);
 
 	sysctl_createv(clog, 0, &rnode, NULL,
@@ -100,7 +100,7 @@ secmodel_bsd44_start(void)
 	secmodel_bsd44_init();
 
 	secmodel_bsd44_suser_start();
-	secmodel_bsd44_securelevel_start();
+	secmodel_securelevel_start();
 
 	secmodel_register();
 }
@@ -110,7 +110,7 @@ void
 secmodel_bsd44_stop(void)
 {
 	secmodel_bsd44_suser_stop();
-	secmodel_bsd44_securelevel_stop();
+	secmodel_securelevel_stop();
 
 	secmodel_deregister();
 }

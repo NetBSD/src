@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.c,v 1.9 2007/04/16 19:12:19 ad Exp $	*/
+/*	$NetBSD: gdt.c,v 1.9.12.1 2008/01/09 01:50:02 matt Exp $	*/
 /*	NetBSD: gdt.c,v 1.32 2004/02/13 11:36:13 wiz Exp 	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.9 2007/04/16 19:12:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.9.12.1 2008/01/09 01:50:02 matt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -46,7 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.9 2007/04/16 19:12:19 ad Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/lock.h>
+#include <sys/mutex.h>
 #include <sys/user.h>
 
 #include <uvm/uvm.h>
@@ -58,7 +58,7 @@ int gdt_count[2];	/* number of GDT entries in use */
 int gdt_next[2];	/* next available slot for sweeping */
 int gdt_free[2];	/* next free slot; terminated with GNULL_SEL */
 
-struct lock gdt_lock_store;
+kmutex_t gdt_lock_store;
 
 static inline void gdt_lock(void);
 static inline void gdt_unlock(void);
@@ -82,18 +82,18 @@ static inline void
 gdt_lock()
 {
 
-	(void) lockmgr(&gdt_lock_store, LK_EXCLUSIVE, NULL);
+	mutex_enter(&gdt_lock_store);
 }
 
 static inline void
 gdt_unlock()
 {
 
-	(void) lockmgr(&gdt_lock_store, LK_RELEASE, NULL);
+	mutex_exit(&gdt_lock_store);
 }
 
 void
-setgdt(int sel, void *base, size_t limit,
+setgdt(int sel, const void *base, size_t limit,
     int type, int dpl, int def32, int gran)
 {
 	struct segment_descriptor sd;
@@ -130,7 +130,7 @@ gdt_init()
 	vaddr_t va;
 	struct cpu_info *ci = &cpu_info_primary;
 
-	lockinit(&gdt_lock_store, PZERO, "gdtlck", 0, 0);
+	mutex_init(&gdt_lock_store, MUTEX_DEFAULT, IPL_NONE);
 
 	max_len = MAXGDTSIZ * sizeof(gdt[0]);
 	min_len = MINGDTSIZ * sizeof(gdt[0]);
@@ -365,33 +365,6 @@ gdt_put_slot1(int slot, int which)
 	gdt_free[which] = slot;
 
 	gdt_unlock();
-}
-
-int
-tss_alloc(struct pcb *pcb)
-{
-#ifndef XEN
-	int slot;
-
-	slot = gdt_get_slot();
-	setgdt(slot, &pcb->pcb_tss, sizeof(struct pcb) - 1,
-	    SDT_SYS386TSS, SEL_KPL, 0, 0);
-	return GSEL(slot, SEL_KPL);
-#else
-
-	return GSEL(GNULL_SEL, SEL_KPL);
-#endif
-}
-
-void
-tss_free(int sel)
-{
-
-#ifndef XEN
-	gdt_put_slot(IDXSEL(sel));
-#else
-	KASSERT(sel == GSEL(GNULL_SEL, SEL_KPL));
-#endif
 }
 
 /*

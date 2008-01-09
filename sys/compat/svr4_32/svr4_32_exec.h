@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_exec.h,v 1.10 2005/12/11 12:20:26 christos Exp $	 */
+/*	$NetBSD: svr4_32_exec.h,v 1.10.46.1 2008/01/09 01:51:58 matt Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -47,8 +47,8 @@
 # define SVR4_32_AUX_ARGSIZ howmany(sizeof(Aux32Info) * 8, sizeof(netbsd32_charp))
 #endif
 
-int svr4_32_copyargs __P((struct lwp *, struct exec_package *, struct ps_strings *,
-    char **, void *));
+int svr4_32_copyargs(struct lwp *, struct exec_package *, struct ps_strings *,
+    char **, void *);
 
 /*
  * The following is horrible; there must be a better way. I need to
@@ -69,9 +69,9 @@ int svr4_32_copyargs __P((struct lwp *, struct exec_package *, struct ps_strings
 
 extern const struct emul emul_svr4_32;
 
-void svr4_32_setregs __P((struct lwp *, struct exec_package *, u_long));
+void svr4_32_setregs(struct lwp *, struct exec_package *, u_long);
 vaddr_t svr4_32_vm_default_addr(struct proc *, vaddr_t, vsize_t);
-int svr4_32_elf32_probe __P((struct lwp *, struct exec_package *, void *,
-    char *, vaddr_t *));
+int svr4_32_elf32_probe(struct lwp *, struct exec_package *, void *,
+    char *, vaddr_t *);
 
 #endif /* !_SVR4_32_EXEC_H_ */

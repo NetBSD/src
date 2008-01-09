@@ -1,4 +1,4 @@
-/*	$NetBSD: mcd.c,v 1.100.6.1 2007/11/06 23:27:51 matt Exp $	*/
+/*	$NetBSD: mcd.c,v 1.100.6.2 2008/01/09 01:53:13 matt Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -56,7 +56,7 @@
 /*static char COPYRIGHT[] = "mcd-driver (C)1993 by H.Veit & B.Moore";*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcd.c,v 1.100.6.1 2007/11/06 23:27:51 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcd.c,v 1.100.6.2 2008/01/09 01:53:13 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,7 +75,7 @@ __KERNEL_RCSID(0, "$NetBSD: mcd.c,v 1.100.6.1 2007/11/06 23:27:51 matt Exp $");
 #include <sys/disklabel.h>
 #include <sys/device.h>
 #include <sys/disk.h>
-
+#include <sys/mutex.h>
 #include <sys/cpu.h>
 #include <sys/intr.h>
 #include <sys/bus.h>
@@ -122,7 +122,7 @@ struct mcd_mbx {
 struct mcd_softc {
 	struct	device sc_dev;
 	struct	disk sc_dk;
-	struct	lock sc_lock;
+	kmutex_t sc_lock;
 	void *sc_ih;
 
 	callout_t sc_pintr_ch;
@@ -249,7 +249,7 @@ mcdattach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	lockinit(&sc->sc_lock, PRIBIO | PCATCH, "mcdlock", 0, 0);
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
 
 	sc->sc_iot = iot;
 	sc->sc_ioh = ioh;
@@ -298,8 +298,7 @@ mcdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 	if (sc == NULL)
 		return ENXIO;
 
-	if ((error = lockmgr(&sc->sc_lock, LK_EXCLUSIVE, NULL)) != 0)
-		return error;
+	mutex_enter(&sc->sc_lock);
 
 	if (sc->sc_dk.dk_openmask != 0) {
 		/*
@@ -368,7 +367,7 @@ mcdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 	}
 	sc->sc_dk.dk_openmask = sc->sc_dk.dk_copenmask | sc->sc_dk.dk_bopenmask;
 
-	lockmgr(&sc->sc_lock, LK_RELEASE, NULL);
+	mutex_exit(&sc->sc_lock);
 	return 0;
 
 bad2:
@@ -383,7 +382,7 @@ bad:
 	}
 
 bad3:
-	lockmgr(&sc->sc_lock, LK_RELEASE, NULL);
+	mutex_exit(&sc->sc_lock);
 	return error;
 }
 
@@ -392,12 +391,10 @@ mcdclose(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	struct mcd_softc *sc = device_lookup(&mcd_cd, MCDUNIT(dev));
 	int part = MCDPART(dev);
-	int error;
 	
 	MCD_TRACE("close: partition=%d\n", part);
 
-	if ((error = lockmgr(&sc->sc_lock, LK_EXCLUSIVE, NULL)) != 0)
-		return error;
+	mutex_enter(&sc->sc_lock);
 
 	switch (fmt) {
 	case S_IFCHR:
@@ -418,7 +415,7 @@ mcdclose(dev_t dev, int flag, int fmt, struct lwp *l)
 		(void) mcd_setlock(sc, MCD_LK_UNLOCK);
 	}
 
-	lockmgr(&sc->sc_lock, LK_RELEASE, NULL);
+	mutex_exit(&sc->sc_lock);
 	return 0;
 }
 
@@ -605,8 +602,7 @@ mcdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 #endif
 		lp = addr;
 
-		if ((error = lockmgr(&sc->sc_lock, LK_EXCLUSIVE, NULL)) != 0)
-			return error;
+		mutex_enter(&sc->sc_lock);
 		sc->flags |= MCDF_LABELLING;
 
 		error = setdisklabel(sc->sc_dk.dk_label,
@@ -616,7 +612,7 @@ mcdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 		}
 
 		sc->flags &= ~MCDF_LABELLING;
-		lockmgr(&sc->sc_lock, LK_RELEASE, NULL);
+		mutex_exit(&sc->sc_lock);
 		return error;
 	}
 

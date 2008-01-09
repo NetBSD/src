@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_pcctwo.c,v 1.10.34.1 2007/11/06 23:28:26 matt Exp $	*/
+/*	$NetBSD: clock_pcctwo.c,v 1.10.34.2 2008/01/09 01:53:26 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -43,12 +43,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock_pcctwo.c,v 1.10.34.1 2007/11/06 23:28:26 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock_pcctwo.c,v 1.10.34.2 2008/01/09 01:53:26 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/timetc.h>
 
 #include <machine/psl.h>
 #include <sys/bus.h>
@@ -65,6 +66,7 @@ struct clock_pcctwo_softc {
 	struct device sc_dev;
 	struct clock_attach_args sc_clock_args;
 	u_char sc_clock_lvl;
+	struct timecounter sc_tc;
 };
 
 CFATTACH_DECL(clock_pcctwo, sizeof(struct clock_pcctwo_softc),
@@ -75,10 +77,11 @@ extern struct cfdriver clock_cd;
 static int clock_pcctwo_profintr(void *);
 static int clock_pcctwo_statintr(void *);
 static void clock_pcctwo_initclocks(void *, int, int);
-static long clock_pcctwo_microtime(void *);
+static u_int clock_pcctwo_getcount(struct timecounter *);
 static void clock_pcctwo_shutdown(void *);
 
 static struct clock_pcctwo_softc *clock_pcctwo_sc;
+static uint32_t clock_pcctwo_count;
 
 /* ARGSUSED */
 int
@@ -119,7 +122,6 @@ clock_pcctwo_attach(parent, self, aux)
 
 	sc->sc_clock_args.ca_arg = sc;
 	sc->sc_clock_args.ca_initfunc = clock_pcctwo_initclocks;
-	sc->sc_clock_args.ca_microtime = clock_pcctwo_microtime;
 
 	/* Do common portions of clock config. */
 	clock_config(self, &sc->sc_clock_args, pcctwointr_evcnt(pa->pa_ipl));
@@ -162,20 +164,25 @@ clock_pcctwo_initclocks(arg, prof_us, stat_us)
 	pcc2_reg_write(sys_pcctwo, PCC2REG_TIMER2_CONTROL,
 	    PCCTWO_TT_CTRL_CEN | PCCTWO_TT_CTRL_COC | PCCTWO_TT_CTRL_COVF);
 	pcc2_reg_write(sys_pcctwo, PCC2REG_TIMER2_ICSR, sc->sc_clock_lvl);
+
+	sc->sc_tc.tc_get_timecount = clock_pcctwo_getcount;
+	sc->sc_tc.tc_name = "pcctwo_count";
+	sc->sc_tc.tc_frequency = PCCTWO_TIMERFREQ;
+	sc->sc_tc.tc_quality = 100;
+	sc->sc_tc.tc_counter_mask = ~0;
+	tc_init(&sc->sc_tc);
 }
 
 /* ARGSUSED */
-long
-clock_pcctwo_microtime(arg)
-	void *arg;
+u_int
+clock_pcctwo_getcount(struct timecounter *tc)
 {
-	static int ovfl_adj[] = {
-		0,       10000,  20000,  30000,
-		40000,   50000,  60000,  70000,
-		80000,   90000, 100000, 110000,
-		120000, 130000, 140000, 150000};
-	u_int8_t cr;
-	u_int32_t tc, tc2;
+	u_int cnt;
+	uint32_t tc1, tc2;
+	uint8_t cr;
+	int s;
+
+	s = splhigh();
 
 	/*
 	 * There's no way to latch the counter and overflow registers
@@ -183,16 +190,21 @@ clock_pcctwo_microtime(arg)
 	 * race by checking for counter wrap-around and re-reading the
 	 * overflow counter if necessary.
 	 *
-	 * Note: This only works because we're called at splhigh().
+	 * Note: This only works because we're at splhigh().
 	 */
-	tc = pcc2_reg_read32(sys_pcctwo, PCC2REG_TIMER1_COUNTER);
+	tc1 = pcc2_reg_read32(sys_pcctwo, PCC2REG_TIMER1_COUNTER);
 	cr = pcc2_reg_read(sys_pcctwo, PCC2REG_TIMER1_CONTROL);
-	if (tc > (tc2 = pcc2_reg_read32(sys_pcctwo, PCC2REG_TIMER1_COUNTER))) {
+	tc2 = pcc2_reg_read32(sys_pcctwo, PCC2REG_TIMER1_COUNTER);
+	if (tc1 > tc2) {
 		cr = pcc2_reg_read(sys_pcctwo, PCC2REG_TIMER1_CONTROL);
-		tc = tc2;
+		tc1 = tc2;
 	}
+	cnt = clock_pcctwo_count;
+	splx(s);
+	/* XXX assume HZ == 100 */
+	cnt += tc1 + (PCCTWO_TIMERFREQ / 100) * PCCTWO_TT_CTRL_OVF(cr);
 
-	return ((long) PCCTWO_LIM2US(tc) + ovfl_adj[PCCTWO_TT_CTRL_OVF(cr)]);
+	return cnt;
 }
 
 int
@@ -214,8 +226,11 @@ clock_pcctwo_profintr(frame)
 	    clock_pcctwo_sc->sc_clock_lvl);
 	splx(s);
 
-	for (cr = PCCTWO_TT_CTRL_OVF(cr); cr; cr--)
+	for (cr = PCCTWO_TT_CTRL_OVF(cr); cr; cr--) {
+		/* XXX assume HZ == 100 */
+		clock_pcctwo_count += PCCTWO_TIMERFREQ / 100;
 		hardclock(frame);
+	}
 
 	return (1);
 }

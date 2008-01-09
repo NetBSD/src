@@ -1,4 +1,4 @@
-/*	$NetBSD: acpivar.h,v 1.29.2.1 2007/11/06 23:25:34 matt Exp $	*/
+/*	$NetBSD: acpivar.h,v 1.29.2.2 2008/01/09 01:52:20 matt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -260,7 +260,7 @@ extern const struct acpi_resource_parse_ops acpi_resource_parse_ops_default;
 
 int		acpi_check(device_t, const char *);
 int		acpi_probe(void);
-ACPI_STATUS	acpi_OsGetRootPointer(UINT32, ACPI_POINTER *);
+ACPI_PHYSICAL_ADDRESS	acpi_OsGetRootPointer(void);
 int		acpi_match_hid(ACPI_DEVICE_INFO *, const char * const *);
 void		acpi_set_wake_gpe(ACPI_HANDLE);
 
@@ -289,19 +289,6 @@ char *		acpi_pci_link_name(void *);
 ACPI_HANDLE	acpi_pci_link_handle(void *);
 void		acpi_pci_link_state(void);
 
-
-
-
-#if defined(_KERNEL_OPT)
-#include "acpiec.h"
-
-#if NACPIEC > 0
-void		acpiec_early_attach(struct device *);
-#endif
-#else
-#define	NACPIEC	0
-#endif
-
 struct acpi_io		*acpi_res_io(struct acpi_resources *, int);
 struct acpi_iorange	*acpi_res_iorange(struct acpi_resources *, int);
 struct acpi_mem		*acpi_res_mem(struct acpi_resources *, int);
@@ -318,7 +305,7 @@ ACPI_STATUS	acpi_enter_sleep_state(struct acpi_softc *, int);
  * quirk handling
  */
 struct acpi_quirk {
-	uint32_t aq_tabletype;	/* what type of table (FADT, DSDT, etc) */
+	const char *aq_tabletype; /* what type of table (FADT, DSDT, etc) */
 	const char *aq_oemid;	/* compared against the table OemId */
 	int aq_oemrev;		/* compared against the table OemRev */
 	int aq_cmpop;		/* how to compare the oemrev number */

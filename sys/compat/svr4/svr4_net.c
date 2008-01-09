@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_net.c,v 1.48 2007/07/05 19:19:24 dsl Exp $	*/
+/*	$NetBSD: svr4_net.c,v 1.48.8.1 2008/01/09 01:51:53 matt Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_net.c,v 1.48 2007/07/05 19:19:24 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_net.c,v 1.48.8.1 2008/01/09 01:51:53 matt Exp $");
 
 #define COMPAT_SVR4 1
 
@@ -102,9 +102,9 @@ enum {
 	dev_unix_ord_stream	= 40
 };
 
-int svr4_netattach __P((int));
+int svr4_netattach(int);
 
-int svr4_soo_close __P((struct file *, struct lwp *));
+int svr4_soo_close(struct file *, struct lwp *);
 
 static const struct fileops svr4_netops = {
 	soo_read, soo_write, soo_ioctl, soo_fcntl, soo_poll,
@@ -210,9 +210,7 @@ svr4_netopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 
 int
-svr4_soo_close(fp, l)
-	struct file *fp;
-	struct lwp *l;
+svr4_soo_close(struct file *fp, struct lwp *l)
 {
 	struct socket *so = (struct socket *) fp->f_data;
 
@@ -223,8 +221,7 @@ svr4_soo_close(fp, l)
 
 
 struct svr4_strm *
-svr4_stream_get(fp)
-	struct file *fp;
+svr4_stream_get(struct file *fp)
 {
 	struct socket *so;
 	struct svr4_strm *st;

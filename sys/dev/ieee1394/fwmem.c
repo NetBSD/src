@@ -1,4 +1,4 @@
-/*	$NetBSD: fwmem.c,v 1.5.6.1 2007/11/06 23:27:22 matt Exp $	*/
+/*	$NetBSD: fwmem.c,v 1.5.6.2 2008/01/09 01:53:08 matt Exp $	*/
 /*-
  * Copyright (c) 2002-2003
  * 	Hidetoshi Shimokawa. All rights reserved.
@@ -35,7 +35,8 @@
  */
 
 #include <sys/cdefs.h>
-#ifdef __FBSDID
+__KERNEL_RCSID(0, "$NetBSD: fwmem.c,v 1.5.6.2 2008/01/09 01:53:08 matt Exp $");
+#if defined(__FreeBSD__)
 __FBSDID("$FreeBSD: src/sys/dev/firewire/fwmem.c,v 1.34 2007/06/06 14:31:36 simokawa Exp $");
 #endif
 

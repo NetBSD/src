@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_balloc.c,v 1.45.8.1 2007/11/06 23:35:10 matt Exp $	*/
+/*	$NetBSD: ffs_balloc.c,v 1.45.8.2 2008/01/09 01:58:25 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_balloc.c,v 1.45.8.1 2007/11/06 23:35:10 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_balloc.c,v 1.45.8.2 2008/01/09 01:58:25 matt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -460,13 +460,13 @@ fail:
 			}
 			bp = getblk(vp, indirs[i].in_lbn, (int)fs->fs_bsize, 0,
 			    0);
-			if (bp->b_flags & B_DELWRI) {
+			if (bp->b_oflags & BO_DELWRI) {
 				nb = fsbtodb(fs, cgtod(fs, dtog(fs,
 				    dbtofsb(fs, bp->b_blkno))));
 				bwrite(bp);
 				bp = getblk(ip->i_devvp, nb, (int)fs->fs_cgsize,
 				    0, 0);
-				if (bp->b_flags & B_DELWRI) {
+				if (bp->b_oflags & BO_DELWRI) {
 					bwrite(bp);
 				} else {
 					brelse(bp, BC_INVAL);
@@ -475,6 +475,13 @@ fail:
 				brelse(bp, BC_INVAL);
 			}
 		}
+
+		/* Now flush all dependencies to disk. */
+#ifdef notyet
+		/* XXX pages locked */
+		(void)softdep_sync_metadata(vp);
+#endif
+
 		if (DOINGSOFTDEP(vp) && unwindidx == 0) {
 			ip->i_flag |= IN_CHANGE | IN_UPDATE;
 			ffs_update(vp, NULL, NULL, UPDATE_WAIT);
@@ -524,6 +531,14 @@ fail:
 		ip->i_ffs1_blocks -= btodb(deallocated);
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 	}
+	/*
+	 * Flush all dependencies again so that the soft updates code
+	 * doesn't find any untracked changes.
+	 */
+#ifdef notyet
+	/* XXX pages locked */
+	(void)softdep_sync_metadata(vp);
+#endif
 	return (error);
 }
 
@@ -612,8 +627,10 @@ ffs_balloc_ufs2(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
 				brelse(bp, 0);
 				return (error);
 			}
+			mutex_enter(&bp->b_interlock);
 			bp->b_blkno = fsbtodb(fs, nb);
 			bp->b_xflags |= BX_ALTDATA;
+			mutex_exit(&bp->b_interlock);
 			*bpp = bp;
 			return (0);
 		}
@@ -1011,13 +1028,13 @@ fail:
 			}
 			bp = getblk(vp, indirs[i].in_lbn, (int)fs->fs_bsize, 0,
 			    0);
-			if (bp->b_flags & B_DELWRI) {
+			if (bp->b_oflags & BO_DELWRI) {
 				nb = fsbtodb(fs, cgtod(fs, dtog(fs,
 				    dbtofsb(fs, bp->b_blkno))));
 				bwrite(bp);
 				bp = getblk(ip->i_devvp, nb, (int)fs->fs_cgsize,
 				    0, 0);
-				if (bp->b_flags & B_DELWRI) {
+				if (bp->b_oflags & BO_DELWRI) {
 					bwrite(bp);
 				} else {
 					brelse(bp, BC_INVAL);
@@ -1026,6 +1043,13 @@ fail:
 				brelse(bp, BC_INVAL);
 			}
 		}
+
+		/* Now flush the dependencies to disk. */
+#ifdef notyet
+		/* XXX pages locked */
+		(void)softdep_sync_metadata(vp);
+#endif
+
 		if (DOINGSOFTDEP(vp) && unwindidx == 0) {
 			ip->i_flag |= IN_CHANGE | IN_UPDATE;
 			ffs_update(vp, NULL, NULL, UPDATE_WAIT);
@@ -1075,5 +1099,14 @@ fail:
 		ip->i_ffs2_blocks -= btodb(deallocated);
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 	}
+
+	/*
+	 * Flush all dependencies again so that the soft updates code
+	 * doesn't find any untracked changes.
+	 */
+#ifdef notyet
+	/* XXX pages locked */
+	(void)softdep_sync_metadata(vp);
+#endif
 	return (error);
 }

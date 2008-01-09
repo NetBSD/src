@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.102.8.1 2007/11/06 23:30:31 matt Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.102.8.2 2008/01/09 01:54:37 matt Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.102.8.1 2007/11/06 23:30:31 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.102.8.2 2008/01/09 01:54:37 matt Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
@@ -90,12 +90,11 @@ __KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.102.8.1 2007/11/06 23:30:31 matt Exp $"
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/sockio.h>
-#include <sys/lock.h>
+#include <sys/mutex.h>
 #include <sys/mbuf.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>
-
 #include <sys/device.h>
 #if NRND > 0
 #include <sys/rnd.h>
@@ -439,13 +438,13 @@ Static void
 aue_lock_mii(struct aue_softc *sc)
 {
 	sc->aue_refcnt++;
-	lockmgr(&sc->aue_mii_lock, LK_EXCLUSIVE, NULL);
+	mutex_enter(&sc->aue_mii_lock);
 }
 
 Static void
 aue_unlock_mii(struct aue_softc *sc)
 {
-	lockmgr(&sc->aue_mii_lock, LK_RELEASE, NULL);
+	mutex_exit(&sc->aue_mii_lock);
 	if (--sc->aue_refcnt < 0)
 		usb_detach_wakeup(USBDEV(sc->aue_dev));
 }
@@ -713,6 +712,26 @@ USB_MATCH(aue)
 {
 	USB_MATCH_START(aue, uaa);
 
+	/* 
+	 * Some manufacturers use the same vendor and product id for
+	 * different devices. We need to sanity check the DeviceClass 
+	 * in this case
+	 * Currently known guilty products:
+	 * 0x050d/0x0121 Belkin Bluetooth and USB2LAN
+	 *
+	 * If this turns out to be more common, we could use a quirk
+	 * table.
+	 */
+	if (uaa->vendor == USB_VENDOR_BELKIN &&
+		uaa->product == USB_PRODUCT_BELKIN_USB2LAN) {
+		usb_device_descriptor_t *dd;
+		
+		dd = usbd_get_device_descriptor(uaa->device);
+		if (dd != NULL &&
+			dd->bDeviceClass != UDCLASS_IN_INTERFACE)
+			return (UMATCH_NONE);
+	}
+	
 	return (aue_lookup(uaa->vendor, uaa->product) != NULL ?
 		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
 }
@@ -752,7 +771,7 @@ USB_ATTACH(aue)
 
 	usb_init_task(&sc->aue_tick_task, aue_tick_task, sc);
 	usb_init_task(&sc->aue_stop_task, (void (*)(void *))aue_stop, sc);
-	lockinit(&sc->aue_mii_lock, PZERO, "auemii", 0, 0);
+	mutex_init(&sc->aue_mii_lock, MUTEX_DEFAULT, IPL_NONE);
 
 	err = usbd_device2interface_handle(dev, AUE_IFACE_IDX, &iface);
 	if (err) {
@@ -926,6 +945,8 @@ USB_DETACH(aue)
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->aue_udev,
 			   USBDEV(sc->aue_dev));
+
+	mutex_destroy(&sc->aue_mii_lock);
 
 	return (0);
 }

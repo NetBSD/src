@@ -1,4 +1,4 @@
-/*	$NetBSD: pdqvar.h,v 1.37.16.1 2007/11/06 23:27:02 matt Exp $	*/
+/*	$NetBSD: pdqvar.h,v 1.37.16.2 2008/01/09 01:52:58 matt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -228,7 +228,7 @@ extern void pdq_os_databuf_free(struct _pdq_os_ctx_t *, struct mbuf *);
 #define	PDQ_OS_IFP_TO_SOFTC(ifp)		((pdq_softc_t *) (ifp)->if_softc)
 #define	PDQ_ARP_IFINIT(sc, ifa)			arp_ifinit(&(sc)->sc_if, (ifa))
 #define	PDQ_FDDICOM(sc)				(&(sc)->sc_ec)
-#define	PDQ_LANADDR(sc)				LLADDR((sc)->sc_if.if_sadl)
+#define	PDQ_LANADDR(sc)				CLLADDR((sc)->sc_if.if_sadl)
 #define	PDQ_LANADDR_SIZE(sc)			((sc)->sc_if.if_sadl->sdl_alen)
 #endif
 

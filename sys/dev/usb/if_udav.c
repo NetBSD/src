@@ -1,4 +1,4 @@
-/*	$NetBSD: if_udav.c,v 1.18 2007/07/12 21:24:02 xtraeme Exp $	*/
+/*	$NetBSD: if_udav.c,v 1.18.8.1 2008/01/09 01:54:39 matt Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 /*
  * Copyright (c) 2003
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.18 2007/07/12 21:24:02 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.18.8.1 2008/01/09 01:54:39 matt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -52,11 +52,10 @@ __KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.18 2007/07/12 21:24:02 xtraeme Exp $")
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/lock.h>
+#include <sys/mutex.h>
 #include <sys/mbuf.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>
-
 #include <sys/device.h>
 #if NRND > 0
 #include <sys/rnd.h>
@@ -200,7 +199,7 @@ USB_ATTACH(udav)
 	}
 
 	usb_init_task(&sc->sc_tick_task, udav_tick_task, sc);
-	lockinit(&sc->sc_mii_lock, PZERO, "udavmii", 0, 0);
+	mutex_init(&sc->sc_mii_lock, MUTEX_DEFAULT, IPL_NONE);
 	usb_init_task(&sc->sc_stop_task, (void (*)(void *)) udav_stop_task, sc);
 
 	/* get control interface */
@@ -365,6 +364,8 @@ USB_DETACH(udav)
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
 			   USBDEV(sc->sc_dev));
+
+	mutex_destroy(&sc->sc_mii_lock);
 
 	return (0);
 }
@@ -613,7 +614,7 @@ udav_init(struct ifnet *ifp)
 {
 	struct udav_softc *sc = ifp->if_softc;
 	struct mii_data *mii = GET_MII(sc);
-	u_char *eaddr;
+	uint8_t eaddr[ETHER_ADDR_LEN];
 	int s;
 
 	DPRINTF(("%s: %s: enter\n", USBDEVNAME(sc->sc_dev), __func__));
@@ -626,7 +627,7 @@ udav_init(struct ifnet *ifp)
 	/* Cancel pending I/O and free all TX/RX buffers */
 	udav_stop(ifp, 1);
 
-	eaddr = LLADDR(ifp->if_sadl);
+	memcpy(eaddr, CLLADDR(ifp->if_sadl), sizeof(eaddr));
 	udav_csr_write(sc, UDAV_PAR, eaddr, ETHER_ADDR_LEN);
 
 	/* Initialize network control register */
@@ -1476,7 +1477,7 @@ udav_lock_mii(struct udav_softc *sc)
 			__func__));
 
 	sc->sc_refcnt++;
-	lockmgr(&sc->sc_mii_lock, LK_EXCLUSIVE, NULL);
+	mutex_enter(&sc->sc_mii_lock);
 }
 
 Static void
@@ -1485,7 +1486,7 @@ udav_unlock_mii(struct udav_softc *sc)
 	DPRINTFN(0xff, ("%s: %s: enter\n", USBDEVNAME(sc->sc_dev),
 		       __func__));
 
-	lockmgr(&sc->sc_mii_lock, LK_RELEASE, NULL);
+	mutex_exit(&sc->sc_mii_lock);
 	if (--sc->sc_refcnt < 0)
 		usb_detach_wakeup(USBDEV(sc->sc_dev));
 }

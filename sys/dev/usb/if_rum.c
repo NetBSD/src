@@ -1,8 +1,8 @@
 /*	$OpenBSD: if_rum.c,v 1.40 2006/09/18 16:20:20 damien Exp $	*/
-/*	$NetBSD: if_rum.c,v 1.15.2.1 2007/11/06 23:30:32 matt Exp $	*/
+/*	$NetBSD: if_rum.c,v 1.15.2.2 2008/01/09 01:54:38 matt Exp $	*/
 
 /*-
- * Copyright (c) 2005, 2006 Damien Bergamini <damien.bergamini@free.fr>
+ * Copyright (c) 2005-2007 Damien Bergamini <damien.bergamini@free.fr>
  * Copyright (c) 2006 Niall O'Higgins <niallo@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -20,11 +20,11 @@
 
 /*-
  * Ralink Technology RT2501USB/RT2601USB chipset driver
- * http://www.ralinktech.com/
+ * http://www.ralinktech.com.tw/
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.15.2.1 2007/11/06 23:30:32 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.15.2.2 2008/01/09 01:54:38 matt Exp $");
 
 #include "bpfilter.h"
 
@@ -92,6 +92,7 @@ static const struct usb_devno rum_devs[] = {
 	{ USB_VENDOR_ABOCOM,		USB_PRODUCT_ABOCOM_RT2573_2 },
 	{ USB_VENDOR_ABOCOM,		USB_PRODUCT_ABOCOM_RT2573_3 },
 	{ USB_VENDOR_ABOCOM,		USB_PRODUCT_ABOCOM_RT2573_4 },
+	{ USB_VENDOR_ABOCOM,		USB_PRODUCT_ABOCOM_WUG2700 },
 	{ USB_VENDOR_AMIT,		USB_PRODUCT_AMIT_CGWLUSB2GO },
 	{ USB_VENDOR_ASUSTEK,		USB_PRODUCT_ASUSTEK_WL167G_2 },
 	{ USB_VENDOR_ASUSTEK,		USB_PRODUCT_ASUSTEK_WL167G_3 },
@@ -100,6 +101,7 @@ static const struct usb_devno rum_devs[] = {
 	{ USB_VENDOR_CISCOLINKSYS,	USB_PRODUCT_CISCOLINKSYS_WUSB54GC },
 	{ USB_VENDOR_CISCOLINKSYS,	USB_PRODUCT_CISCOLINKSYS_WUSB54GR },
 	{ USB_VENDOR_CONCEPTRONIC,	USB_PRODUCT_CONCEPTRONIC_C54RU2 },
+	{ USB_VENDOR_COREGA,		USB_PRODUCT_COREGA_CGWLUSB2GL },
 	{ USB_VENDOR_DICKSMITH,		USB_PRODUCT_DICKSMITH_CWD854F },
 	{ USB_VENDOR_DICKSMITH,		USB_PRODUCT_DICKSMITH_RT2573 },
 	{ USB_VENDOR_DLINK2,		USB_PRODUCT_DLINK2_DWLG122C1 },
@@ -146,7 +148,7 @@ Static void		rum_txeof(usbd_xfer_handle, usbd_private_handle,
 Static void		rum_rxeof(usbd_xfer_handle, usbd_private_handle,
 			    usbd_status);
 #if NBPFILTER > 0
-Static uint8_t		rum_rxrate(struct rum_rx_desc *);
+Static uint8_t		rum_rxrate(const struct rum_rx_desc *);
 #endif
 Static int		rum_ack_rate(struct ieee80211com *, int);
 Static uint16_t		rum_txtime(int, int, uint32_t);
@@ -193,6 +195,7 @@ Static void		rum_stop(struct ifnet *, int);
 Static int		rum_load_microcode(struct rum_softc *, const u_char *,
 			    size_t);
 Static int		rum_prepare_beacon(struct rum_softc *);
+Static void		rum_newassoc(struct ieee80211_node *, int);
 Static void		rum_amrr_start(struct rum_softc *,
 			    struct ieee80211_node *);
 Static void		rum_amrr_timeout(void *);
@@ -443,6 +446,7 @@ USB_ATTACH(rum)
 
 	if_attach(ifp);
 	ieee80211_ifattach(ic);
+	ic->ic_newassoc = rum_newassoc;
 
 	/* override state transition machine */
 	sc->sc_newstate = ic->ic_newstate;
@@ -524,7 +528,7 @@ rum_alloc_tx_list(struct rum_softc *sc)
 
 	sc->tx_queued = 0;
 
-	for (i = 0; i < RT2573_TX_LIST_COUNT; i++) {
+	for (i = 0; i < RUM_TX_LIST_COUNT; i++) {
 		data = &sc->tx_data[i];
 
 		data->sc = sc;
@@ -562,7 +566,7 @@ rum_free_tx_list(struct rum_softc *sc)
 	struct rum_tx_data *data;
 	int i;
 
-	for (i = 0; i < RT2573_TX_LIST_COUNT; i++) {
+	for (i = 0; i < RUM_TX_LIST_COUNT; i++) {
 		data = &sc->tx_data[i];
 
 		if (data->xfer != NULL) {
@@ -583,7 +587,7 @@ rum_alloc_rx_list(struct rum_softc *sc)
 	struct rum_rx_data *data;
 	int i, error;
 
-	for (i = 0; i < RT2573_RX_LIST_COUNT; i++) {
+	for (i = 0; i < RUM_RX_LIST_COUNT; i++) {
 		data = &sc->rx_data[i];
 
 		data->sc = sc;
@@ -634,7 +638,7 @@ rum_free_rx_list(struct rum_softc *sc)
 	struct rum_rx_data *data;
 	int i;
 
-	for (i = 0; i < RT2573_RX_LIST_COUNT; i++) {
+	for (i = 0; i < RUM_RX_LIST_COUNT; i++) {
 		data = &sc->rx_data[i];
 
 		if (data->xfer != NULL) {
@@ -731,10 +735,14 @@ rum_task(void *arg)
 		if (ic->ic_opmode != IEEE80211_M_MONITOR)
 			rum_enable_tsf_sync(sc);
 
-		/* enable automatic rate adaptation in STA mode */
-		if (ic->ic_opmode == IEEE80211_M_STA &&
-		    ic->ic_fixed_rate == IEEE80211_FIXED_RATE_NONE)
-			rum_amrr_start(sc, ni);
+		if (ic->ic_opmode == IEEE80211_M_STA) {
+			/* fake a join to init the tx rate */
+			rum_newassoc(ic->ic_bss, 1);
+
+			/* enable automatic rate adaptation in STA mode */
+			if (ic->ic_fixed_rate == IEEE80211_FIXED_RATE_NONE)
+				rum_amrr_start(sc, ni);
+		}
 
 		break;
 	}
@@ -788,8 +796,6 @@ rum_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 
 	s = splnet();
 
-	m_freem(data->m);
-	data->m = NULL;
 	ieee80211_free_node(data->ni);
 	data->ni = NULL;
 
@@ -916,7 +922,7 @@ skip:	/* setup a new transfer */
  */
 #if NBPFILTER > 0
 Static uint8_t
-rum_rxrate(struct rum_rx_desc *desc)
+rum_rxrate(const struct rum_rx_desc *desc)
 {
 	if (le32toh(desc->flags) & RT2573_RX_OFDM) {
 		/* reverse function of rum_plcp_signal */
@@ -1110,7 +1116,7 @@ rum_tx_mgt(struct rum_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	wh = mtod(m0, struct ieee80211_frame *);
 
 	if (!IEEE80211_IS_MULTICAST(wh->i_addr1)) {
-		flags |= RT2573_TX_ACK;
+		flags |= RT2573_TX_NEED_ACK;
 
 		dur = rum_txtime(RUM_ACK_SIZE, rum_ack_rate(ic, rate),
 		    ic->ic_flags) + sc->sifs;
@@ -1187,6 +1193,8 @@ rum_tx_data(struct rum_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 		rate = ic->ic_bss->ni_rates.rs_rates[ic->ic_fixed_rate];
 	else
 		rate = ni->ni_rates.rs_rates[ni->ni_txrate];
+	if (rate == 0)
+		rate = 2;	/* XXX should not happen */
 	rate &= IEEE80211_RATE_VAL;
 
 	if (wh->i_fc[1] & IEEE80211_FC1_WEP) {
@@ -1203,11 +1211,10 @@ rum_tx_data(struct rum_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	data = &sc->tx_data[0];
 	desc = (struct rum_tx_desc *)data->buf;
 
-	data->m = m0;
 	data->ni = ni;
 
 	if (!IEEE80211_IS_MULTICAST(wh->i_addr1)) {
-		flags |= RT2573_TX_ACK;
+		flags |= RT2573_TX_NEED_ACK;
 
 		dur = rum_txtime(RUM_ACK_SIZE, rum_ack_rate(ic, rate),
 		    ic->ic_flags) + sc->sifs;
@@ -1245,14 +1252,15 @@ rum_tx_data(struct rum_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	    (size_t)m0->m_pkthdr.len + RT2573_TX_DESC_SIZE,
 	    rate, xferlen));
 
+	/* mbuf is no longer needed */
+	m_freem(m0);
+
 	usbd_setup_xfer(data->xfer, sc->sc_tx_pipeh, data, data->buf, xferlen,
 	    USBD_FORCE_SHORT_XFER | USBD_NO_COPY, RUM_TX_TIMEOUT, rum_txeof);
 
 	error = usbd_transfer(data->xfer);
-	if (error != USBD_NORMAL_COMPLETION && error != USBD_IN_PROGRESS) {
-		m_freem(m0);
+	if (error != USBD_NORMAL_COMPLETION && error != USBD_IN_PROGRESS)
 		return error;
-	}
 
 	sc->tx_queued++;
 
@@ -1271,7 +1279,7 @@ rum_start(struct ifnet *ifp)
 	for (;;) {
 		IF_POLL(&ic->ic_mgtq, m0);
 		if (m0 != NULL) {
-			if (sc->tx_queued >= RT2573_TX_LIST_COUNT) {
+			if (sc->tx_queued >= RUM_TX_LIST_COUNT) {
 				ifp->if_flags |= IFF_OACTIVE;
 				break;
 			}
@@ -1292,7 +1300,7 @@ rum_start(struct ifnet *ifp)
 			IFQ_POLL(&ifp->if_snd, m0);
 			if (m0 == NULL)
 				break;
-			if (sc->tx_queued >= RT2573_TX_LIST_COUNT) {
+			if (sc->tx_queued >= RUM_TX_LIST_COUNT) {
 				ifp->if_flags |= IFF_OACTIVE;
 				break;
 			}
@@ -1603,12 +1611,12 @@ rum_set_basicrates(struct rum_softc *sc)
 	if (ic->ic_curmode == IEEE80211_MODE_11B) {
 		/* 11b basic rates: 1, 2Mbps */
 		rum_write(sc, RT2573_TXRX_CSR5, 0x3);
-	} else if (IEEE80211_IS_CHAN_5GHZ(ic->ic_bss->ni_chan)) {
+	} else if (ic->ic_curmode == IEEE80211_MODE_11A) {
 		/* 11a basic rates: 6, 12, 24Mbps */
 		rum_write(sc, RT2573_TXRX_CSR5, 0x150);
 	} else {
-		/* 11g basic rates: 1, 2, 5.5, 11, 6, 12, 24Mbps */
-		rum_write(sc, RT2573_TXRX_CSR5, 0x15f);
+		/* 11b/g basic rates: 1, 2, 5.5, 11Mbps */
+		rum_write(sc, RT2573_TXRX_CSR5, 0xf);
 	}
 }
 
@@ -2048,12 +2056,18 @@ rum_init(struct ifnet *ifp)
 	/*
 	 * Start up the receive pipe.
 	 */
-	for (i = 0; i < RT2573_RX_LIST_COUNT; i++) {
+	for (i = 0; i < RUM_RX_LIST_COUNT; i++) {
 		data = &sc->rx_data[i];
 
 		usbd_setup_xfer(data->xfer, sc->sc_rx_pipeh, data, data->buf,
 		    MCLBYTES, USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT, rum_rxeof);
-		usbd_transfer(data->xfer);
+		error = usbd_transfer(data->xfer);
+		if (error != USBD_NORMAL_COMPLETION &&
+		    error != USBD_IN_PROGRESS) {
+			printf("%s: could not queue Rx transfer\n",
+			    USBDEVNAME(sc->sc_dev));
+			goto fail;
+		}
 	}
 
 	/* update Rx filter */
@@ -2181,6 +2195,13 @@ rum_prepare_beacon(struct rum_softc *sc)
 }
 
 Static void
+rum_newassoc(struct ieee80211_node *ni, int isnew)
+{
+	/* start with lowest Tx rate */
+	ni->ni_txrate = 0;
+}
+
+Static void
 rum_amrr_start(struct rum_softc *sc, struct ieee80211_node *ni)
 {
 	int i;
@@ -2204,9 +2225,6 @@ rum_amrr_timeout(void *arg)
 {
 	struct rum_softc *sc = arg;
 	usb_device_request_t req;
-	int s;
-
-	s = splusb();
 
 	/*
 	 * Asynchronously read statistic registers (cleared by read).
@@ -2221,8 +2239,6 @@ rum_amrr_timeout(void *arg)
 	    USBD_DEFAULT_TIMEOUT, &req, sc->sta, sizeof sc->sta, 0,
 	    rum_amrr_update);
 	(void)usbd_transfer(sc->amrr_xfer);
-
-	splx(s);
 }
 
 Static void

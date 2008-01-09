@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_socket.c,v 1.17 2007/06/30 15:31:50 dsl Exp $ */
+/* $NetBSD: osf1_socket.c,v 1.17.8.1 2008/01/09 01:51:44 matt Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_socket.c,v 1.17 2007/06/30 15:31:50 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_socket.c,v 1.17.8.1 2008/01/09 01:51:44 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,10 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: osf1_socket.c,v 1.17 2007/06/30 15:31:50 dsl Exp $")
 #include <compat/osf1/osf1_cvt.h>
 
 int
-osf1_sys_recvmsg_xopen(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+osf1_sys_recvmsg_xopen(struct lwp *l, const struct osf1_sys_recvmsg_xopen_args *uap, register_t *retval)
 {
 
 	/* XXX */
@@ -89,12 +86,8 @@ osf1_sys_recvmsg_xopen(l, v, retval)
 }
 
 int
-osf1_sys_sendmsg_xopen(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+osf1_sys_sendmsg_xopen(struct lwp *l, const struct osf1_sys_sendmsg_xopen_args *uap, register_t *retval)
 {
-	struct osf1_sys_sendmsg_xopen_args *uap = v;
 	struct osf1_msghdr_xopen osf_msghdr;
 	struct osf1_iovec_xopen osf_iovec, *osf_iovec_ptr;
 	struct msghdr bsd_msghdr;
@@ -149,12 +142,8 @@ printf("sendmsg flags leftover: 0x%lx\n", leftovers);
 }
 
 int
-osf1_sys_sendto(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+osf1_sys_sendto(struct lwp *l, const struct osf1_sys_sendto_args *uap, register_t *retval)
 {
-	struct osf1_sys_sendto_args *uap = v;
 	struct sys_sendto_args a;
 	unsigned long leftovers;
 
@@ -174,12 +163,8 @@ osf1_sys_sendto(l, v, retval)
 }
 
 int
-osf1_sys_socket(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+osf1_sys_socket(struct lwp *l, const struct osf1_sys_socket_args *uap, register_t *retval)
 {
-	struct osf1_sys_socket_args *uap = v;
 	struct compat_30_sys_socket_args a;
 
 	/* XXX TRANSLATE */
@@ -195,12 +180,8 @@ osf1_sys_socket(l, v, retval)
 }
 
 int
-osf1_sys_socketpair(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+osf1_sys_socketpair(struct lwp *l, const struct osf1_sys_socketpair_args *uap, register_t *retval)
 {
-	struct osf1_sys_socketpair_args *uap = v;
 	struct sys_socketpair_args a;
 
 	/* XXX TRANSLATE */

@@ -1,4 +1,4 @@
-/*	$NetBSD: mpt_pci.c,v 1.11.6.1 2007/11/06 23:29:19 matt Exp $	*/
+/*	$NetBSD: mpt_pci.c,v 1.11.6.2 2008/01/09 01:53:53 matt Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpt_pci.c,v 1.11.6.1 2007/11/06 23:29:19 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpt_pci.c,v 1.11.6.2 2008/01/09 01:53:53 matt Exp $");
 
 #include <dev/ic/mpt.h>			/* pulls in all headers */
 
@@ -182,7 +182,20 @@ mpt_pci_attach(struct device *parent, struct device *self, void *aux)
 	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, reg);
 
 	/*
-	 * Ensure that the ROM is diabled.
+	 * Disable split transactions on the 53c1020 and 53c1030 for
+	 * revisions older than 8.
+	 */
+	if ((PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_SYMBIOS_1030) &&
+	    (PCI_REVISION(pa->pa_class) < 0x08)) {
+		aprint_normal("%s: applying 1030 quirk\n",
+		    mpt->sc_dev.dv_xname);
+		reg = pci_conf_read(pa->pa_pc, pa->pa_tag, 0x6a);
+		reg &= 0x8f;
+		pci_conf_write(pa->pa_pc, pa->pa_tag, 0x6a, reg);
+	}
+
+	/*
+	 * Ensure that the ROM is disabled.
 	 */
 	reg = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_MAPREG_ROM);
 	reg &= ~1;

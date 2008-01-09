@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_dirent.c,v 1.19 2007/03/06 12:43:08 tsutsui Exp $ */
+/*	$NetBSD: irix_dirent.c,v 1.19.16.1 2008/01/09 01:50:48 matt Exp $ */
 
 /*-
  * Copyright (c) 1994, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_dirent.c,v 1.19 2007/03/06 12:43:08 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_dirent.c,v 1.19.16.1 2008/01/09 01:50:48 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -71,17 +71,14 @@ __KERNEL_RCSID(0, "$NetBSD: irix_dirent.c,v 1.19 2007/03/06 12:43:08 tsutsui Exp
 #define SVR4_NAMEOFF(dp)       ((char *)&(dp)->d_name - (char *)dp)
 
 int
-irix_sys_ngetdents(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+irix_sys_ngetdents(struct lwp *l, const struct irix_sys_ngetdents_args *uap, register_t *retval)
 {
-	struct irix_sys_ngetdents_args /* {
+	/* {
 		syscallarg(int) fildes;
 		syscallarg(irix_dirent_t *) buf;
 		syscallarg(unsigned short) nbyte;
 		syscallarg(int *) eof;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 	struct dirent *bdp;
 	struct vnode *vp;
@@ -203,22 +200,19 @@ out1:
 }
 
 int
-irix_sys_getdents(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+irix_sys_getdents(struct lwp *l, const struct irix_sys_getdents_args *uap, register_t *retval)
 {
-	struct irix_sys_ngetdents_args /* {
+	/* {
 		syscallarg(int) fildes;
 		syscallarg(irix_dirent_t *) buf;
 		syscallarg(unsigned short) nbyte;
 		syscallarg(int *) eof;
-	} */ *uap = v;
+	} */
 	struct irix_sys_ngetdents_args cup;
 
 	SCARG(&cup, fildes) = SCARG(uap, fildes);
 	SCARG(&cup, buf) = SCARG(uap, buf);
-	SCARG(&cup, nbyte) = SCARG(uap, nbyte);
+	SCARG(&cup, nbyte) = SCARG(uap, nbytes);
 	SCARG(&cup, eof) = NULL;
 
 	return irix_sys_ngetdents(l, (void *)&cup, retval);
@@ -230,17 +224,14 @@ irix_sys_getdents(l, v, retval)
  * 32 bit versions (only 3 lines of diff)
  */
 int
-irix_sys_ngetdents64(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+irix_sys_ngetdents64(struct lwp *l, const struct irix_sys_ngetdents64_args *uap, register_t *retval)
 {
-	struct irix_sys_ngetdents64_args /* {
+	/* {
 		syscallarg(int) fildes;
 		syscallarg(irix_dirent64_t *) buf;
 		syscallarg(unsigned short) nbyte;
 		syscallarg(int *) eof;
-	} */ *uap = v;
+	} */
 	struct dirent *bdp;
 	struct proc *p = l->l_proc;
 	struct vnode *vp;
@@ -361,22 +352,19 @@ out1:
 }
 
 int
-irix_sys_getdents64(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+irix_sys_getdents64(struct lwp *l, const struct irix_sys_getdents64_args *uap, register_t *retval)
 {
-	struct irix_sys_ngetdents64_args /* {
+	/* {
 		syscallarg(int) fildes;
 		syscallarg(irix_dirent64_t *) buf;
 		syscallarg(unsigned short) nbyte;
 		syscallarg(int *) eof;
-	} */ *uap = v;
+	} */
 	struct irix_sys_ngetdents64_args cup;
 
 	SCARG(&cup, fildes) = SCARG(uap, fildes);
 	SCARG(&cup, buf) = SCARG(uap, buf);
-	SCARG(&cup, nbyte) = SCARG(uap, nbyte);
+	SCARG(&cup, nbyte) = SCARG(uap, nbytes);
 	SCARG(&cup, eof) = NULL;
 
 	return irix_sys_ngetdents64(l, (void *)&cup, retval);

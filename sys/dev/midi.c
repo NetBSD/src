@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.55.8.1 2007/11/06 23:25:29 matt Exp $	*/
+/*	$NetBSD: midi.c,v 1.55.8.2 2008/01/09 01:52:14 matt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.55.8.1 2007/11/06 23:25:29 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.55.8.2 2008/01/09 01:52:14 matt Exp $");
 
 #include "midi.h"
 #include "sequencer.h"
@@ -151,6 +151,8 @@ midiattach(struct device *parent, struct device *self, void *aux)
 	const struct midi_hw_if *hwp = sa->hwif;
 	void *hdlp = sa->hdl;
 
+	aprint_naive("\n");
+
 	DPRINTFN(2, ("MIDI attach\n"));
 
 #ifdef DIAGNOSTIC
@@ -167,6 +169,10 @@ midiattach(struct device *parent, struct device *self, void *aux)
 	sc->hw_if = hwp;
 	sc->hw_hdl = hdlp;
 	midi_attach(sc, parent);
+        if (!device_pmf_is_registered(self))
+		if (!pmf_device_register(self, NULL, NULL))
+			aprint_error_dev(self,
+			    "couldn't establish power handler\n"); 
 }
 
 int
@@ -192,6 +198,8 @@ mididetach(struct device *self, int flags)
 	int maj, mn;
 
 	DPRINTFN(2,("midi_detach: sc=%p flags=%d\n", sc, flags));
+
+	pmf_device_deregister(self);
 
 	sc->dying = 1;
 
@@ -273,7 +281,7 @@ midi_attach(struct midi_softc *sc, struct device *parent)
 			sc->dev.dv_xname, "rcv incomplete msgs");
 	}
 	
-	printf(": %s%s\n", mi.name,
+	aprint_normal(": %s%s\n", mi.name,
 	    (sc->props & (MIDI_PROP_OUT_INTR|MIDI_PROP_NO_OUTPUT)) ?
 	    "" : " (CPU-intensive output)");
 }
@@ -1762,7 +1770,7 @@ midikqfilter(dev_t dev, struct knote *kn)
 		break;
 
 	default:
-		return (1);
+		return (EINVAL);
 	}
 
 	kn->kn_hook = sc;

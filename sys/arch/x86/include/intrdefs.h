@@ -1,42 +1,17 @@
-/*	$NetBSD: intrdefs.h,v 1.8.14.1 2007/11/06 23:23:35 matt Exp $	*/
+/*	$NetBSD: intrdefs.h,v 1.8.14.2 2008/01/09 01:49:47 matt Exp $	*/
 
 #ifndef _X86_INTRDEFS_H_
 #define _X86_INTRDEFS_H_
 
-/*
- * Interrupt priority levels.
- * 
- * There are tty, network and disk drivers that use free() at interrupt
- * time, so imp > (tty | net | bio).
- *
- * Since run queues may be manipulated by both the statclock and tty,
- * network, and disk drivers, clock > imp.
- *
- * IPL_HIGH must block everything that can manipulate a run queue.
- *
- * We need serial drivers to run at the absolute highest priority to
- * avoid overruns, so serial > high.
- *
- * The level numbers are picked to fit into APIC vector priorities.
- *
- */
+/* Interrupt priority levels. */
 #define	IPL_NONE	0x0	/* nothing */
 #define	IPL_SOFTCLOCK	0x1	/* timeouts */
-#define	IPL_SOFTBIO	0x2	/* block I/O */
+#define	IPL_SOFTBIO	0x2	/* block I/O passdown */
 #define	IPL_SOFTNET	0x3	/* protocol stacks */
-#define	IPL_SOFTSERIAL	0x4	/* serial */
-#define	IPL_BIO		0x5	/* block I/O */
-#define	IPL_NET		0x5	/* network */
-#define	IPL_TTY		0x5	/* terminal */
-#define	IPL_LPT		0x5
-#define	IPL_VM		0x5	/* memory allocation */
-#define	IPL_AUDIO	0x5	/* audio */
-#define	IPL_CLOCK	0x6	/* clock */
-#define	IPL_STATCLOCK	0x6
-#define IPL_SCHED	0x6
-#define	IPL_HIGH	0x7	/* everything */
-#define	IPL_SERIAL	0x7	/* serial */
-#define IPL_IPI		0x7	/* inter-processor interrupts */
+#define	IPL_SOFTSERIAL	0x4	/* serial passdown */
+#define	IPL_VM		0x5	/* low I/O, memory allocation */
+#define IPL_SCHED	0x6	/* medium I/O, scheduler, clock */
+#define	IPL_HIGH	0x7	/* high I/O, statclock, IPIs */
 #define	NIPL		8
 
 /* Interrupt sharing types. */
@@ -86,12 +61,14 @@
 #define X86_IPI_MTRR			0x00000010
 #define X86_IPI_GDT			0x00000020
 #define X86_IPI_WRITE_MSR		0x00000040
+#define X86_IPI_ACPI_CPU_SLEEP		0x00000080
 
-#define X86_NIPI		7
+#define X86_NIPI		8
 
 #define X86_IPI_NAMES { "halt IPI", "timeset IPI", "FPU flush IPI", \
 			 "FPU synch IPI", "MTRR update IPI", \
-			 "GDT update IPI", "MSR write IPI" }
+			 "GDT update IPI", "MSR write IPI", \
+			 "ACPI CPU sleep IPI" }
 
 #define IREENT_MAGIC	0x18041969
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.80.2.1 2007/11/06 23:33:35 matt Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.80.2.2 2008/01/09 01:57:13 matt Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.80.2.1 2007/11/06 23:33:35 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.80.2.2 2008/01/09 01:57:13 matt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -474,9 +474,6 @@ stripopen(dev_t dev, struct tty *tp)
 	struct lwp *l = curlwp;		/* XXX */
 	struct strip_softc *sc;
 	int error;
-#ifdef __NetBSD__
-	int s;
-#endif
 
 	if ((error = kauth_authorize_generic(l->l_cred,
 	    KAUTH_GENERIC_ISSUSER, NULL)) != 0)
@@ -493,11 +490,11 @@ stripopen(dev_t dev, struct tty *tp)
 				softint_disestablish(sc->sc_si);
 				return (ENOBUFS);
 			}
+			mutex_spin_enter(&tty_lock);
 			tp->t_sc = (void *)sc;
 			sc->sc_ttyp = tp;
 			sc->sc_if.if_baudrate = tp->t_ospeed;
 			ttyflush(tp, FREAD | FWRITE);
-#ifdef __NetBSD__
 			/*
 			 * Make sure tty output queue is large enough
 			 * to hold a full-sized packet (including frame
@@ -506,15 +503,14 @@ stripopen(dev_t dev, struct tty *tp)
 			 * of escapes and clever RLL bytestuffing),
 			 * plus frame header, and add two on for frame ends.
 			 */
-			s = spltty();
 			if (tp->t_outq.c_cn < STRIP_MTU_ONWIRE) {
 				sc->sc_oldbufsize = tp->t_outq.c_cn;
 				sc->sc_oldbufquot = tp->t_outq.c_cq != 0;
 
+				mutex_spin_exit(&tty_lock);
 				clfree(&tp->t_outq);
 				error = clalloc(&tp->t_outq, 3*SLMTU, 0);
 				if (error) {
-					splx(s);
 					softint_disestablish(sc->sc_si);
 					/*
 					 * clalloc() might return -1 which
@@ -523,13 +519,11 @@ stripopen(dev_t dev, struct tty *tp)
 					 */
 					return (ENOMEM);
 				}
-			} else
+				mutex_spin_enter(&tty_lock);
+			} else 
 				sc->sc_oldbufsize = sc->sc_oldbufquot = 0;
-			splx(s);
-#endif /* __NetBSD__ */
-			s = spltty();
 			strip_resetradio(sc, tp);
-			splx(s);
+			mutex_spin_exit(&tty_lock);
 
 			/*
 			 * Start the watchdog timer to get the radio

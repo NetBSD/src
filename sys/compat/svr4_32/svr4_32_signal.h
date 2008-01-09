@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_signal.h,v 1.10 2007/03/04 07:54:10 christos Exp $	 */
+/*	$NetBSD: svr4_32_signal.h,v 1.10.16.1 2008/01/09 01:52:00 matt Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -69,10 +69,10 @@ struct svr4_32_sigaltstack {
 };
 typedef netbsd32_caddr_t svr4_32_sigaltstackp;
 
-void native_to_svr4_32_sigset __P((const sigset_t *, svr4_32_sigset_t *));
-void svr4_32_to_native_sigset __P((const svr4_32_sigset_t *, sigset_t *));
-void native_to_svr4_32_sigaltstack __P((const struct sigaltstack *, struct svr4_32_sigaltstack *));
-void svr4_32_to_native_sigaltstack __P((const struct svr4_32_sigaltstack *, struct sigaltstack *));
-void svr4_32_sendsig __P((const ksiginfo_t *, const sigset_t *));
+void native_to_svr4_32_sigset(const sigset_t *, svr4_32_sigset_t *);
+void svr4_32_to_native_sigset(const svr4_32_sigset_t *, sigset_t *);
+void native_to_svr4_32_sigaltstack(const struct sigaltstack *, struct svr4_32_sigaltstack *);
+void svr4_32_to_native_sigaltstack(const struct svr4_32_sigaltstack *, struct sigaltstack *);
+void svr4_32_sendsig(const ksiginfo_t *, const sigset_t *);
 
 #endif /* !_SVR4_32_SIGNAL_H_ */

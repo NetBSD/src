@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi.c,v 1.31.8.1 2007/11/06 23:30:39 matt Exp $	*/
+/*	$NetBSD: umidi.c,v 1.31.8.2 2008/01/09 01:54:44 matt Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.31.8.1 2007/11/06 23:30:39 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.31.8.2 2008/01/09 01:54:44 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -52,7 +52,6 @@ __KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.31.8.1 2007/11/06 23:30:39 matt Exp $");
 #include <sys/proc.h>
 #include <sys/vnode.h>
 #include <sys/poll.h>
-#include <sys/lock.h>
 #include <sys/intr.h>
 
 #include <dev/usb/usb.h>

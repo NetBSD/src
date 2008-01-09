@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.70 2007/03/04 06:02:48 christos Exp $	*/
+/*	$NetBSD: ucom.c,v 1.70.16.1 2008/01/09 01:54:41 matt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.70 2007/03/04 06:02:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.70.16.1 2008/01/09 01:54:41 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -208,6 +208,8 @@ USB_ATTACH(ucom)
 			  RND_TYPE_TTY, 0);
 #endif
 
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 	USB_ATTACH_SUCCESS_RETURN;
 }
 
@@ -222,6 +224,7 @@ USB_DETACH(ucom)
 		 sc, flags, tp, sc->sc_bulkin_no, sc->sc_bulkout_no));
 
 	sc->sc_dying = 1;
+	pmf_device_deregister(self);
 
 	if (sc->sc_bulkin_pipe != NULL)
 		usbd_abort_pipe(sc->sc_bulkin_pipe);
@@ -232,9 +235,11 @@ USB_DETACH(ucom)
 	if (--sc->sc_refcnt >= 0) {
 		/* Wake up anyone waiting */
 		if (tp != NULL) {
+			mutex_spin_enter(&tty_lock);
 			CLR(tp->t_state, TS_CARR_ON);
 			CLR(tp->t_cflag, CLOCAL | MDMBUF);
 			ttyflush(tp, FREAD|FWRITE);
+			mutex_spin_exit(&tty_lock);
 		}
 		/* Wait for processes to go away. */
 		usb_detach_wait(USBDEV(sc->sc_dev));
@@ -911,15 +916,8 @@ ucomstart(struct tty *tp)
 	if (sc->sc_tx_stopped)
 		goto out;
 
-	if (tp->t_outq.c_cc <= tp->t_lowat) {
-		if (ISSET(tp->t_state, TS_ASLEEP)) {
-			CLR(tp->t_state, TS_ASLEEP);
-			wakeup(&tp->t_outq);
-		}
-		selwakeup(&tp->t_wsel);
-		if (tp->t_outq.c_cc == 0)
-			goto out;
-	}
+	if (!ttypull(tp)) 
+		goto out;
 
 	/* Grab the first contiguous region of buffer space. */
 	data = tp->t_outq.c_cf;
@@ -1058,7 +1056,9 @@ ucomreadcb(usbd_xfer_handle xfer, usbd_private_handle p, usbd_status status)
 		/* Send something to wake upper layer */
 		s = spltty();
 		(*rint)('\n', tp);
+		mutex_spin_enter(&tty_lock);	/* XXX */
 		ttwakeup(tp);
+		mutex_spin_exit(&tty_lock);	/* XXX */
 		splx(s);
 		return;
 	}

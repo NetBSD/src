@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4280.c,v 1.46.8.1 2007/11/06 23:28:43 matt Exp $	*/
+/*	$NetBSD: cs4280.c,v 1.46.8.2 2008/01/09 01:53:36 matt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Tatoku Ogaito.  All rights reserved.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.46.8.1 2007/11/06 23:28:43 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.46.8.2 2008/01/09 01:53:36 matt Exp $");
 
 #include "midi.h"
 
@@ -110,8 +110,8 @@ static int cs4280_reset_codec(void *);
 #endif
 static enum ac97_host_flags cs4280_flags_codec(void *);
 
-/* For PowerHook */
-static void cs4280_power(int, void *);
+static bool cs4280_resume(device_t);
+static bool cs4280_suspend(device_t);
 
 /* Internal functions */
 static const struct cs4280_card_t * cs4280_identify_card(struct pci_attach_args *);
@@ -365,9 +365,8 @@ cs4280_attach(struct device *parent, struct device *self, void *aux)
 	midi_attach_mi(&cs4280_midi_hw_if, sc, &sc->sc_dev);
 #endif
 
-	sc->sc_suspend = PWR_RESUME;
-	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
-	    cs4280_power, sc);
+	if (!pmf_device_register(self, cs4280_suspend, cs4280_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
 /* Interrupt handling function */
@@ -912,99 +911,79 @@ cs4280_trigger_input(void *addr, void *start, void *end, int blksize,
 	return 0;
 }
 
-/* Power Hook */
-static void
-cs4280_power(int why, void *v)
+static bool
+cs4280_suspend(device_t dv)
 {
-	static uint32_t pctl = 0, pba = 0, pfie = 0, pdtc = 0;
-	static uint32_t cctl = 0, cba = 0, cie = 0;
-	struct cs428x_softc *sc;
+	struct cs428x_softc *sc = device_private(dv);
 
-	sc = (struct cs428x_softc *)v;
-	DPRINTF(("%s: cs4280_power why=%d\n", sc->sc_dev.dv_xname, why));
-	switch (why) {
-	case PWR_SUSPEND:
-	case PWR_STANDBY:
-		sc->sc_suspend = why;
-
-		/* save current playback status */
-		if (sc->sc_prun) {
-			pctl = BA1READ4(sc, CS4280_PCTL);
-			pfie = BA1READ4(sc, CS4280_PFIE);
-			pba  = BA1READ4(sc, CS4280_PBA);
-			pdtc = BA1READ4(sc, CS4280_PDTC);
-			DPRINTF(("pctl=0x%08x pfie=0x%08x pba=0x%08x pdtc=0x%08x\n",
-			    pctl, pfie, pba, pdtc));
-		}
-
-		/* save current capture status */
-		if (sc->sc_rrun) {
-			cctl = BA1READ4(sc, CS4280_CCTL);
-			cie  = BA1READ4(sc, CS4280_CIE);
-			cba  = BA1READ4(sc, CS4280_CBA);
-			DPRINTF(("cctl=0x%08x cie=0x%08x cba=0x%08x\n",
-			    cctl, cie, cba));
-		}
-
-		/* Stop DMA */
-		BA1WRITE4(sc, CS4280_PCTL, pctl & ~PCTL_MASK);
-		BA1WRITE4(sc, CS4280_CCTL, BA1READ4(sc, CS4280_CCTL) & ~CCTL_MASK);
-
-		pci_conf_capture(sc->sc_pc, sc->sc_pt, &sc->sc_pciconf);
-		if (sc->sc_ih != NULL)
-			pci_intr_disestablish(sc->sc_pc, sc->sc_ih);
-
-		break;
-	case PWR_RESUME:
-		if (sc->sc_suspend == PWR_RESUME) {
-			printf("cs4280_power: odd, resume without suspend.\n");
-			sc->sc_suspend = why;
-			return;
-		}
-
-		sc->sc_ih = pci_intr_establish(sc->sc_pc, sc->intrh,
-		    IPL_AUDIO, cs4280_intr, sc);
-		if (sc->sc_ih == NULL) {
-			aprint_error("%s: can't establish interrupt",
-			    sc->sc_dev.dv_xname);
-			/* XXX jmcneill what should we do here? */
-			return;
-		}
-		pci_conf_restore(sc->sc_pc, sc->sc_pt, &sc->sc_pciconf);
-
-		sc->sc_suspend = why;
-		cs4280_init(sc, 0);
-#if 0
-		cs4280_reset_codec(sc);
-#endif
-		/* restore ac97 registers */
-		(*sc->codec_if->vtbl->restore_ports)(sc->codec_if);
-
-		/* restore DMA related status */
-		if(sc->sc_prun) {
-			DPRINTF(("pctl=0x%08x pfie=0x%08x pba=0x%08x pdtc=0x%08x\n",
-			    pctl, pfie, pba, pdtc));
-			cs4280_set_dac_rate(sc, sc->sc_prate);
-			BA1WRITE4(sc, CS4280_PDTC, pdtc);
-			BA1WRITE4(sc, CS4280_PBA,  pba);
-			BA1WRITE4(sc, CS4280_PFIE, pfie);
-			BA1WRITE4(sc, CS4280_PCTL, pctl);
-		}
-
-		if (sc->sc_rrun) {
-			DPRINTF(("cctl=0x%08x cie=0x%08x cba=0x%08x\n",
-			    cctl, cie, cba));
-			cs4280_set_adc_rate(sc, sc->sc_rrate);
-			BA1WRITE4(sc, CS4280_CBA,  cba);
-			BA1WRITE4(sc, CS4280_CIE,  cie);
-			BA1WRITE4(sc, CS4280_CCTL, cctl);
-		}
-		break;
-	case PWR_SOFTSUSPEND:
-	case PWR_SOFTSTANDBY:
-	case PWR_SOFTRESUME:
-		break;
+	if (sc->sc_prun) {
+		sc->sc_suspend_state.cs4280.pctl = BA1READ4(sc, CS4280_PCTL);
+		sc->sc_suspend_state.cs4280.pfie = BA1READ4(sc, CS4280_PFIE);
+		sc->sc_suspend_state.cs4280.pba  = BA1READ4(sc, CS4280_PBA);
+		sc->sc_suspend_state.cs4280.pdtc = BA1READ4(sc, CS4280_PDTC);
+		DPRINTF(("pctl=0x%08x pfie=0x%08x pba=0x%08x pdtc=0x%08x\n",
+		    sc->sc_suspend_state.cs4280.pctl,
+		    sc->sc_suspend_state.cs4280.pfie,
+		    sc->sc_suspend_state.cs4280.pba,
+		    sc->sc_suspend_state.cs4280.pdtc));
 	}
+
+	/* save current capture status */
+	if (sc->sc_rrun) {
+		sc->sc_suspend_state.cs4280.cctl = BA1READ4(sc, CS4280_CCTL);
+		sc->sc_suspend_state.cs4280.cie  = BA1READ4(sc, CS4280_CIE);
+		sc->sc_suspend_state.cs4280.cba  = BA1READ4(sc, CS4280_CBA);
+		DPRINTF(("cctl=0x%08x cie=0x%08x cba=0x%08x\n",
+		    sc->sc_suspend_state.cs4280.cctl,
+		    sc->sc_suspend_state.cs4280.cie,
+		    sc->sc_suspend_state.cs4280.cba));
+	}
+
+	/* Stop DMA */
+	BA1WRITE4(sc, CS4280_PCTL, sc->sc_suspend_state.cs4280.pctl & ~PCTL_MASK);
+	BA1WRITE4(sc, CS4280_CCTL, BA1READ4(sc, CS4280_CCTL) & ~CCTL_MASK);
+
+	return true;
+}
+
+static bool
+cs4280_resume(device_t dv)
+{
+	struct cs428x_softc *sc = device_private(dv);
+
+	cs4280_init(sc, 0);
+#if 0
+	cs4280_reset_codec(sc);
+#endif
+	/* restore ac97 registers */
+	(*sc->codec_if->vtbl->restore_ports)(sc->codec_if);
+
+	/* restore DMA related status */
+	if(sc->sc_prun) {
+		DPRINTF(("pctl=0x%08x pfie=0x%08x pba=0x%08x pdtc=0x%08x\n",
+		    sc->sc_suspend_state.cs4280.pctl,
+		    sc->sc_suspend_state.cs4280.pfie,
+		    sc->sc_suspend_state.cs4280.pba,
+		    sc->sc_suspend_state.cs4280.pdtc));
+		cs4280_set_dac_rate(sc, sc->sc_prate);
+		BA1WRITE4(sc, CS4280_PDTC, sc->sc_suspend_state.cs4280.pdtc);
+		BA1WRITE4(sc, CS4280_PBA,  sc->sc_suspend_state.cs4280.pba);
+		BA1WRITE4(sc, CS4280_PFIE, sc->sc_suspend_state.cs4280.pfie);
+		BA1WRITE4(sc, CS4280_PCTL, sc->sc_suspend_state.cs4280.pctl);
+	}
+
+	if (sc->sc_rrun) {
+		DPRINTF(("cctl=0x%08x cie=0x%08x cba=0x%08x\n",
+		    sc->sc_suspend_state.cs4280.cctl,
+		    sc->sc_suspend_state.cs4280.cie,
+		    sc->sc_suspend_state.cs4280.cba));
+		cs4280_set_adc_rate(sc, sc->sc_rrate);
+		BA1WRITE4(sc, CS4280_CBA,  sc->sc_suspend_state.cs4280.cba);
+		BA1WRITE4(sc, CS4280_CIE,  sc->sc_suspend_state.cs4280.cie);
+		BA1WRITE4(sc, CS4280_CCTL, sc->sc_suspend_state.cs4280.cctl);
+	}
+
+	return true;
 }
 
 static int

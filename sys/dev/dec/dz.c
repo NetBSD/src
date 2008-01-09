@@ -1,4 +1,4 @@
-/*	$NetBSD: dz.c,v 1.28.8.2 2007/11/08 10:59:48 matt Exp $	*/
+/*	$NetBSD: dz.c,v 1.28.8.3 2008/01/09 01:52:31 matt Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dz.c,v 1.28.8.2 2007/11/08 10:59:48 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dz.c,v 1.28.8.3 2008/01/09 01:52:31 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -271,7 +271,7 @@ dzrint(void *arg)
 		cn_check_magic(tp->t_dev, mcc, dz_cnm_state);
 
 		if (!(tp->t_state & TS_ISOPEN)) {
-			wakeup((void *)&tp->t_rawq);
+			clwakeup(&tp->t_rawq);
 			continue;
 		}
 
@@ -571,7 +571,6 @@ void
 dzstart(struct tty *tp)
 {
 	struct dz_softc *sc;
-	struct clist *cl;
 	int unit, line, s;
 	char state;
 
@@ -584,21 +583,9 @@ dzstart(struct tty *tp)
 		splx(s);
 		return;
 	}
-	cl = &tp->t_outq;
-	if (cl->c_cc <= tp->t_lowat) {
-		if (tp->t_state & TS_ASLEEP) {
-			tp->t_state &= ~TS_ASLEEP;
-			wakeup((void *)cl);
-		}
-		selwakeup(&tp->t_wsel);
-	}
-	if (cl->c_cc == 0) {
-		splx(s);
+	if (!ttypull(tp))
 		return;
-	}
-
 	tp->t_state |= TS_BUSY;
-
 	state = dz_read2(sc, sc->sc_dr.dr_tcrw) & 255;
 	if ((state & (1 << line)) == 0)
 		dz_write1(sc, sc->sc_dr.dr_tcr, state | (1 << line));

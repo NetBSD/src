@@ -1,4 +1,4 @@
-/*	$NetBSD: consio.c,v 1.4 2001/12/02 14:25:44 minoura Exp $	*/
+/*	$NetBSD: consio.c,v 1.4.96.1 2008/01/09 01:49:42 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 MINOURA Makoto.
@@ -68,7 +68,7 @@ consio_init(int device)
 }
 
 int
-getchar (void)
+getchar(void)
 {
 	int r;
 
@@ -85,7 +85,7 @@ getchar (void)
 }
 
 void
-putchar (int c)
+putchar(int c)
 {
 	if (c == '\n')
 		putchar('\r');
@@ -98,7 +98,7 @@ putchar (int c)
 }
 
 int
-check_getchar (void)
+check_getchar(void)
 {
 	switch (x68k_console_device) {
 	case ITE:
@@ -111,7 +111,7 @@ check_getchar (void)
 }
 
 int
-awaitkey_1sec (void)
+awaitkey_1sec(void)
 {
 	int i, c;
 
@@ -120,9 +120,9 @@ awaitkey_1sec (void)
 
 	for (i = 0; i < 100 && (c = check_getchar()) == 0; i++) {
 		while (MFP_TIMERC > 100)
-			(void) JOYA;
+			(void)JOYA;
 		while (MFP_TIMERC <= 100)
-			(void) JOYA;
+			(void)JOYA;
 	}
 
 	while (check_getchar())
@@ -158,7 +158,7 @@ print_title(const char *fmt, ...)
 		char *p;
 
 		y = y1 = (IOCS_B_LOCATE(-1, -1) & 0xffff) + 1;
-		put_image (8, y*16-6);
+		put_image(8, y*16-6);
 		IOCS_B_LOCATE(0, y+3);
 		IOCS_B_PRINT("\360D\360a\360e\360m\360o\360n "
 			     "\360l\360o\360g\360o "

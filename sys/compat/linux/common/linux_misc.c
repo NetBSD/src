@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.183.8.2 2007/11/08 10:59:45 matt Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.183.8.3 2008/01/09 01:51:12 matt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.183.8.2 2007/11/08 10:59:45 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.183.8.3 2008/01/09 01:51:12 matt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ptrace.h"
@@ -184,10 +184,10 @@ const int linux_fstypes_cnt = sizeof(linux_fstypes) / sizeof(linux_fstypes[0]);
 # endif
 
 /* Local linux_misc.c functions: */
-static void linux_to_bsd_mmap_args __P((struct sys_mmap_args *,
-    const struct linux_sys_mmap_args *));
-static int linux_mmap __P((struct lwp *, struct linux_sys_mmap_args *,
-    register_t *, off_t));
+static void linux_to_bsd_mmap_args(struct sys_mmap_args *,
+    const struct linux_sys_mmap_args *);
+static int linux_mmap(struct lwp *, const struct linux_sys_mmap_args *,
+    register_t *, off_t);
 
 
 /*
@@ -220,19 +220,17 @@ bsd_to_linux_wstat(int st)
  * it to what Linux wants.
  */
 int
-linux_sys_wait4(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_wait4(struct lwp *l, const struct linux_sys_wait4_args *uap, register_t *retval)
 {
-	struct linux_sys_wait4_args /* {
+	/* {
 		syscallarg(int) pid;
 		syscallarg(int *) status;
 		syscallarg(int) options;
 		syscallarg(struct rusage *) rusage;
-	} */ *uap = v;
+	} */
 	int error, status, options, linux_options, was_zombie;
 	struct rusage ru;
+	int pid = SCARG(uap, pid);
 
 	linux_options = SCARG(uap, options);
 	options = WOPTSCHECKED;
@@ -255,11 +253,11 @@ linux_sys_wait4(l, v, retval)
 
 # endif
 
-	error = do_sys_wait(l, &SCARG(uap, pid), &status, options,
+	error = do_sys_wait(l, &pid, &status, options,
 	    SCARG(uap, rusage) != NULL ? &ru : NULL, &was_zombie);
 
-	retval[0] = SCARG(uap, pid);
-	if (SCARG(uap, pid) == 0)
+	retval[0] = pid;
+	if (pid == 0)
 		return error;
 
 	sigdelset(&l->l_proc->p_sigpend.sp_set, SIGCHLD);	/* XXXAD ksiginfo leak */
@@ -280,14 +278,11 @@ linux_sys_wait4(l, v, retval)
  * done in the kernel in Linux. NetBSD does it in the library.
  */
 int
-linux_sys_brk(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_brk(struct lwp *l, const struct linux_sys_brk_args *uap, register_t *retval)
 {
-	struct linux_sys_brk_args /* {
+	/* {
 		syscallarg(char *) nsize;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 	char *nbrk = SCARG(uap, nsize);
 	struct sys_obreak_args oba;
@@ -310,15 +305,12 @@ linux_sys_brk(l, v, retval)
  * Implement the fs stat functions. Straightforward.
  */
 int
-linux_sys_statfs(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_statfs(struct lwp *l, const struct linux_sys_statfs_args *uap, register_t *retval)
 {
-	struct linux_sys_statfs_args /* {
+	/* {
 		syscallarg(const char *) path;
 		syscallarg(struct linux_statfs *) sp;
-	} */ *uap = v;
+	} */
 	struct statvfs *sb;
 	struct linux_statfs ltmp;
 	int error;
@@ -335,15 +327,12 @@ linux_sys_statfs(l, v, retval)
 }
 
 int
-linux_sys_fstatfs(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_fstatfs(struct lwp *l, const struct linux_sys_fstatfs_args *uap, register_t *retval)
 {
-	struct linux_sys_fstatfs_args /* {
+	/* {
 		syscallarg(int) fd;
 		syscallarg(struct linux_statfs *) sp;
-	} */ *uap = v;
+	} */
 	struct statvfs *sb;
 	struct linux_statfs ltmp;
 	int error;
@@ -366,19 +355,19 @@ linux_sys_fstatfs(l, v, retval)
  * long, and an extra domainname field.
  */
 int
-linux_sys_uname(struct lwp *l, void *v, register_t *retval)
+linux_sys_uname(struct lwp *l, const struct linux_sys_uname_args *uap, register_t *retval)
 {
-	struct linux_sys_uname_args /* {
+	/* {
 		syscallarg(struct linux_utsname *) up;
-	} */ *uap = v;
+	} */
 	struct linux_utsname luts;
 
-	strncpy(luts.l_sysname, linux_sysname, sizeof(luts.l_sysname));
-	strncpy(luts.l_nodename, hostname, sizeof(luts.l_nodename));
-	strncpy(luts.l_release, linux_release, sizeof(luts.l_release));
-	strncpy(luts.l_version, linux_version, sizeof(luts.l_version));
-	strncpy(luts.l_machine, LINUX_UNAME_ARCH, sizeof(luts.l_machine));
-	strncpy(luts.l_domainname, domainname, sizeof(luts.l_domainname));
+	strlcpy(luts.l_sysname, linux_sysname, sizeof(luts.l_sysname));
+	strlcpy(luts.l_nodename, hostname, sizeof(luts.l_nodename));
+	strlcpy(luts.l_release, linux_release, sizeof(luts.l_release));
+	strlcpy(luts.l_version, linux_version, sizeof(luts.l_version));
+	strlcpy(luts.l_machine, LINUX_UNAME_ARCH, sizeof(luts.l_machine));
+	strlcpy(luts.l_domainname, domainname, sizeof(luts.l_domainname));
 
 	return copyout(&luts, SCARG(uap, up), sizeof(luts));
 }
@@ -391,19 +380,16 @@ linux_sys_uname(struct lwp *l, void *v, register_t *retval)
  * Only called directly on machines with >= 6 free regs.
  */
 int
-linux_sys_mmap(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_mmap(struct lwp *l, const struct linux_sys_mmap_args *uap, register_t *retval)
 {
-	struct linux_sys_mmap_args /* {
+	/* {
 		syscallarg(unsigned long) addr;
 		syscallarg(size_t) len;
 		syscallarg(int) prot;
 		syscallarg(int) flags;
 		syscallarg(int) fd;
 		syscallarg(linux_off_t) offset;
-	} */ *uap = v;
+	} */
 
 	if (SCARG(uap, offset) & PAGE_MASK)
 		return EINVAL;
@@ -421,19 +407,16 @@ linux_sys_mmap(l, v, retval)
  * point, and the actual syscall.
  */
 int
-linux_sys_mmap2(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_mmap2(struct lwp *l, const struct linux_sys_mmap2_args *uap, register_t *retval)
 {
-	struct linux_sys_mmap2_args /* {
+	/* {
 		syscallarg(unsigned long) addr;
 		syscallarg(size_t) len;
 		syscallarg(int) prot;
 		syscallarg(int) flags;
 		syscallarg(int) fd;
 		syscallarg(linux_off_t) offset;
-	} */ *uap = v;
+	} */
 
 	return linux_mmap(l, uap, retval,
 	    ((off_t)SCARG(uap, offset)) << PAGE_SHIFT);
@@ -443,15 +426,14 @@ linux_sys_mmap2(l, v, retval)
  * Massage arguments and call system mmap(2).
  */
 static int
-linux_mmap(l, uap, retval, offset)
-	struct lwp *l;
-	struct linux_sys_mmap_args *uap;
-	register_t *retval;
-	off_t offset;
+linux_mmap(struct lwp *l, const struct linux_sys_mmap_args *uap, register_t *retval, off_t offset)
 {
 	struct sys_mmap_args cma;
 	int error;
 	size_t mmoff=0;
+
+	linux_to_bsd_mmap_args(&cma, uap);
+	SCARG(&cma, pos) = offset;
 
 	if (SCARG(uap, flags) & LINUX_MAP_GROWSDOWN) {
 		/*
@@ -466,35 +448,29 @@ linux_mmap(l, uap, retval, offset)
 		 */
 		rlim_t ssl = l->l_proc->p_rlimit[RLIMIT_STACK].rlim_cur;
 
-		if (SCARG(uap, len) < ssl) {
+		if (SCARG(&cma, len) < ssl) {
 			/* Compute the address offset */
 			mmoff = round_page(ssl) - SCARG(uap, len);
 
-			if (SCARG(uap, addr))
-				SCARG(uap, addr) -= mmoff;
+			if (SCARG(&cma, addr))
+				SCARG(&cma, addr) = (char *)SCARG(&cma, addr) - mmoff;
 
-			SCARG(uap, len) = (size_t) ssl;
+			SCARG(&cma, len) = (size_t) ssl;
 		}
 	}
-
-	linux_to_bsd_mmap_args(&cma, uap);
-	SCARG(&cma, pos) = offset;
 
 	error = sys_mmap(l, &cma, retval);
 	if (error)
 		return (error);
 
 	/* Shift the returned address for stack-like segment if necessary */
-	if (SCARG(uap, flags) & LINUX_MAP_GROWSDOWN && mmoff)
-		retval[0] += mmoff;
+	retval[0] += mmoff;
 
 	return (0);
 }
 
 static void
-linux_to_bsd_mmap_args(cma, uap)
-	struct sys_mmap_args *cma;
-	const struct linux_sys_mmap_args *uap;
+linux_to_bsd_mmap_args(struct sys_mmap_args *cma, const struct linux_sys_mmap_args *uap)
 {
 	int flags = MAP_TRYFIXED, fl = SCARG(uap, flags);
 
@@ -518,17 +494,14 @@ linux_to_bsd_mmap_args(cma, uap)
 #define	LINUX_MREMAP_FIXED	2
 
 int
-linux_sys_mremap(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_mremap(struct lwp *l, const struct linux_sys_mremap_args *uap, register_t *retval)
 {
-	struct linux_sys_mremap_args /* {
+	/* {
 		syscallarg(void *) old_address;
 		syscallarg(size_t) old_size;
 		syscallarg(size_t) new_size;
 		syscallarg(u_long) flags;
-	} */ *uap = v;
+	} */
 
 	struct proc *p;
 	struct vm_map *map;
@@ -577,16 +550,13 @@ done:
 }
 
 int
-linux_sys_msync(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_msync(struct lwp *l, const struct linux_sys_msync_args *uap, register_t *retval)
 {
-	struct linux_sys_msync_args /* {
+	/* {
 		syscallarg(void *) addr;
 		syscallarg(int) len;
 		syscallarg(int) fl;
-	} */ *uap = v;
+	} */
 
 	struct sys___msync13_args bma;
 
@@ -599,13 +569,13 @@ linux_sys_msync(l, v, retval)
 }
 
 int
-linux_sys_mprotect(struct lwp *l, void *v, register_t *retval)
+linux_sys_mprotect(struct lwp *l, const struct linux_sys_mprotect_args *uap, register_t *retval)
 {
-	struct linux_sys_mprotect_args /* {
+	/* {
 		syscallarg(const void *) start;
 		syscallarg(unsigned long) len;
 		syscallarg(int) prot;
-	} */ *uap = v;
+	} */
 	struct vm_map_entry *entry;
 	struct vm_map *map;
 	struct proc *p;
@@ -671,14 +641,11 @@ linux_sys_mprotect(struct lwp *l, void *v, register_t *retval)
 #define	CONVTCK(r)	(r.tv_sec * hz + r.tv_usec / (1000000 / hz))
 
 int
-linux_sys_times(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_times(struct lwp *l, const struct linux_sys_times_args *uap, register_t *retval)
 {
-	struct linux_sys_times_args /* {
+	/* {
 		syscallarg(struct times *) tms;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 	struct timeval t;
 	int error;
@@ -722,16 +689,13 @@ linux_sys_times(l, v, retval)
  * Note that this doesn't handle union-mounted filesystems.
  */
 int
-linux_sys_getdents(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_getdents(struct lwp *l, const struct linux_sys_getdents_args *uap, register_t *retval)
 {
-	struct linux_sys_getdents_args /* {
+	/* {
 		syscallarg(int) fd;
 		syscallarg(struct linux_dirent *) dent;
 		syscallarg(unsigned int) count;
-	} */ *uap = v;
+	} */
 	struct dirent *bdp;
 	struct vnode *vp;
 	char *inp, *tbuf;		/* BSD-format */
@@ -763,7 +727,7 @@ linux_sys_getdents(l, v, retval)
 		goto out1;
 	}
 
-	if ((error = VOP_GETATTR(vp, &va, l->l_cred, l)))
+	if ((error = VOP_GETATTR(vp, &va, l->l_cred)))
 		goto out1;
 
 	nbytes = SCARG(uap, count);
@@ -887,18 +851,15 @@ out1:
  * this.
  */
 int
-linux_sys_select(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_select(struct lwp *l, const struct linux_sys_select_args *uap, register_t *retval)
 {
-	struct linux_sys_select_args /* {
+	/* {
 		syscallarg(int) nfds;
 		syscallarg(fd_set *) readfds;
 		syscallarg(fd_set *) writefds;
 		syscallarg(fd_set *) exceptfds;
 		syscallarg(struct timeval *) timeout;
-	} */ *uap = v;
+	} */
 
 	return linux_select1(l, retval, SCARG(uap, nfds), SCARG(uap, readfds),
 	    SCARG(uap, writefds), SCARG(uap, exceptfds), SCARG(uap, timeout));
@@ -982,44 +943,17 @@ linux_select1(l, retval, nfds, readfds, writefds, exceptfds, timeout)
 }
 
 /*
- * Get the process group of a certain process. Look it up
- * and return the value.
- */
-int
-linux_sys_getpgid(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
-{
-	struct linux_sys_getpgid_args /* {
-		syscallarg(int) pid;
-	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	struct proc *targp;
-
-	if (SCARG(uap, pid) != 0 && SCARG(uap, pid) != p->p_pid) {
-		if ((targp = pfind(SCARG(uap, pid))) == 0)
-			return ESRCH;
-	}
-	else
-		targp = p;
-
-	retval[0] = targp->p_pgid;
-	return 0;
-}
-
-/*
  * Set the 'personality' (emulation mode) for the current process. Only
  * accept the Linux personality here (0). This call is needed because
  * the Linux ELF crt0 issues it in an ugly kludge to make sure that
  * ELF binaries run in Linux mode, not SVR4 mode.
  */
 int
-linux_sys_personality(struct lwp *l, void *v, register_t *retval)
+linux_sys_personality(struct lwp *l, const struct linux_sys_personality_args *uap, register_t *retval)
 {
-	struct linux_sys_personality_args /* {
+	/* {
 		syscallarg(int) per;
-	} */ *uap = v;
+	} */
 
 	if (SCARG(uap, per) != 0)
 		return EINVAL;
@@ -1034,15 +968,12 @@ linux_sys_personality(struct lwp *l, void *v, register_t *retval)
  */
 #ifndef COMPAT_LINUX32
 int
-linux_sys_setreuid16(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_setreuid16(struct lwp *l, const struct linux_sys_setreuid16_args *uap, register_t *retval)
 {
-	struct linux_sys_setreuid16_args /* {
+	/* {
 		syscallarg(int) ruid;
 		syscallarg(int) euid;
-	} */ *uap = v;
+	} */
 	struct sys_setreuid_args bsa;
 
 	SCARG(&bsa, ruid) = ((linux_uid_t)SCARG(uap, ruid) == (linux_uid_t)-1) ?
@@ -1054,15 +985,12 @@ linux_sys_setreuid16(l, v, retval)
 }
 
 int
-linux_sys_setregid16(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_setregid16(struct lwp *l, const struct linux_sys_setregid16_args *uap, register_t *retval)
 {
-	struct linux_sys_setregid16_args /* {
+	/* {
 		syscallarg(int) rgid;
 		syscallarg(int) egid;
-	} */ *uap = v;
+	} */
 	struct sys_setregid_args bsa;
 
 	SCARG(&bsa, rgid) = ((linux_gid_t)SCARG(uap, rgid) == (linux_gid_t)-1) ?
@@ -1074,17 +1002,14 @@ linux_sys_setregid16(l, v, retval)
 }
 
 int
-linux_sys_setresuid16(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_setresuid16(struct lwp *l, const struct linux_sys_setresuid16_args *uap, register_t *retval)
 {
-	struct linux_sys_setresuid16_args /* {
+	/* {
 		syscallarg(uid_t) ruid;
 		syscallarg(uid_t) euid;
 		syscallarg(uid_t) suid;
-	} */ *uap = v;
-	struct linux_sys_setresuid16_args lsa;
+	} */
+	struct linux_sys_setresuid_args lsa;
 
 	SCARG(&lsa, ruid) = ((linux_uid_t)SCARG(uap, ruid) == (linux_uid_t)-1) ?
 		(uid_t)-1 : SCARG(uap, ruid);
@@ -1097,17 +1022,14 @@ linux_sys_setresuid16(l, v, retval)
 }
 
 int
-linux_sys_setresgid16(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_setresgid16(struct lwp *l, const struct linux_sys_setresgid16_args *uap, register_t *retval)
 {
-	struct linux_sys_setresgid16_args /* {
+	/* {
 		syscallarg(gid_t) rgid;
 		syscallarg(gid_t) egid;
 		syscallarg(gid_t) sgid;
-	} */ *uap = v;
-	struct linux_sys_setresgid16_args lsa;
+	} */
+	struct linux_sys_setresgid_args lsa;
 
 	SCARG(&lsa, rgid) = ((linux_gid_t)SCARG(uap, rgid) == (linux_gid_t)-1) ?
 		(gid_t)-1 : SCARG(uap, rgid);
@@ -1121,15 +1043,12 @@ linux_sys_setresgid16(l, v, retval)
 #endif /* COMPAT_LINUX32 */
 
 int
-linux_sys_getgroups16(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_getgroups16(struct lwp *l, const struct linux_sys_getgroups16_args *uap, register_t *retval)
 {
-	struct linux_sys_getgroups16_args /* {
+	/* {
 		syscallarg(int) gidsetsize;
 		syscallarg(linux_gid_t *) gidset;
-	} */ *uap = v;
+	} */
 	linux_gid_t lset[16];
 	linux_gid_t *gidset;
 	unsigned int ngrps;
@@ -1166,15 +1085,12 @@ linux_sys_getgroups16(l, v, retval)
 #define COMPAT_NGROUPS16 16
 
 int
-linux_sys_setgroups16(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_setgroups16(struct lwp *l, const struct linux_sys_setgroups16_args *uap, register_t *retval)
 {
-	struct linux_sys_setgroups16_args /* {
+	/* {
 		syscallarg(int) gidsetsize;
 		syscallarg(linux_gid_t *) gidset;
-	} */ *uap = v;
+	} */
 	linux_gid_t lset[COMPAT_NGROUPS16];
 	kauth_cred_t ncred;
 	int error;
@@ -1209,43 +1125,45 @@ linux_sys_setgroups16(l, v, retval)
  * If modification is requested, refuse.
  */
 int
-linux_sys_setfsuid(l, v, retval)
-	 struct lwp *l;
-	 void *v;
-	 register_t *retval;
+linux_sys_setfsuid(struct lwp *l, const struct linux_sys_setfsuid_args *uap, register_t *retval)
 {
-	 struct linux_sys_setfsuid_args /* {
+	 /* {
 		 syscallarg(uid_t) uid;
-	 } */ *uap = v;
+	 } */
 	 uid_t uid;
 
 	 uid = SCARG(uap, uid);
 	 if (kauth_cred_getuid(l->l_cred) != uid)
-		 return sys_nosys(l, v, retval);
-	 else
-		 return (0);
+		 return sys_nosys(l, uap, retval);
+
+	 *retval = uid;
+	 return 0;
 }
 
-/* XXX XXX XXX */
-# ifndef alpha
 int
-linux_sys_getfsuid(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_setfsgid(struct lwp *l, const struct linux_sys_setfsgid_args *uap, register_t *retval)
 {
-	return sys_getuid(l, v, retval);
+	/* {
+		syscallarg(gid_t) gid;
+	} */
+	gid_t gid;
+
+	gid = SCARG(uap, gid);
+	if (kauth_cred_getgid(l->l_cred) != gid)
+		return sys_nosys(l, uap, retval);
+
+	*retval = gid;
+	return 0;
 }
-# endif
 
 int
-linux_sys_setresuid(struct lwp *l, void *v, register_t *retval)
+linux_sys_setresuid(struct lwp *l, const struct linux_sys_setresuid_args *uap, register_t *retval)
 {
-	struct linux_sys_setresuid_args /* {
+	/* {
 		syscallarg(uid_t) ruid;
 		syscallarg(uid_t) euid;
 		syscallarg(uid_t) suid;
-	} */ *uap = v;
+	} */
 
 	/*
 	 * Note: These checks are a little different than the NetBSD
@@ -1261,13 +1179,13 @@ linux_sys_setresuid(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-linux_sys_getresuid(struct lwp *l, void *v, register_t *retval)
+linux_sys_getresuid(struct lwp *l, const struct linux_sys_getresuid_args *uap, register_t *retval)
 {
-	struct linux_sys_getresuid_args /* {
+	/* {
 		syscallarg(uid_t *) ruid;
 		syscallarg(uid_t *) euid;
 		syscallarg(uid_t *) suid;
-	} */ *uap = v;
+	} */
 	kauth_cred_t pc = l->l_cred;
 	int error;
 	uid_t uid;
@@ -1293,20 +1211,17 @@ linux_sys_getresuid(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-linux_sys_ptrace(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_ptrace(struct lwp *l, const struct linux_sys_ptrace_args *uap, register_t *retval)
 {
-#if defined(PTRACE) || defined(_LKM)
-	struct linux_sys_ptrace_args /* {
+	/* {
 		i386, m68k, powerpc: T=int
 		alpha, amd64: T=long
 		syscallarg(T) request;
 		syscallarg(T) pid;
 		syscallarg(T) addr;
 		syscallarg(T) data;
-	} */ *uap = v;
+	} */
+#if defined(PTRACE) || defined(_LKM)
 	const int *ptr;
 	int request;
 	int error;
@@ -1360,14 +1275,14 @@ linux_sys_ptrace(l, v, retval)
 }
 
 int
-linux_sys_reboot(struct lwp *l, void *v, register_t *retval)
+linux_sys_reboot(struct lwp *l, const struct linux_sys_reboot_args *uap, register_t *retval)
 {
-	struct linux_sys_reboot_args /* {
+	/* {
 		syscallarg(int) magic1;
 		syscallarg(int) magic2;
 		syscallarg(int) cmd;
 		syscallarg(void *) arg;
-	} */ *uap = v;
+	} */
 	struct sys_reboot_args /* {
 		syscallarg(int) opt;
 		syscallarg(char *) bootstr;
@@ -1415,15 +1330,12 @@ linux_sys_reboot(struct lwp *l, void *v, register_t *retval)
  * Copy of compat_12_sys_swapon().
  */
 int
-linux_sys_swapon(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_swapon(struct lwp *l, const struct linux_sys_swapon_args *uap, register_t *retval)
 {
-	struct sys_swapctl_args ua;
-	struct linux_sys_swapon_args /* {
+	/* {
 		syscallarg(const char *) name;
-	} */ *uap = v;
+	} */
+	struct sys_swapctl_args ua;
 
 	SCARG(&ua, cmd) = SWAP_ON;
 	SCARG(&ua, arg) = (void *)__UNCONST(SCARG(uap, name));
@@ -1435,15 +1347,12 @@ linux_sys_swapon(l, v, retval)
  * Stop swapping to the file or block device specified by path.
  */
 int
-linux_sys_swapoff(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_swapoff(struct lwp *l, const struct linux_sys_swapoff_args *uap, register_t *retval)
 {
-	struct sys_swapctl_args ua;
-	struct linux_sys_swapoff_args /* {
+	/* {
 		syscallarg(const char *) path;
-	} */ *uap = v;
+	} */
+	struct sys_swapctl_args ua;
 
 	SCARG(&ua, cmd) = SWAP_OFF;
 	SCARG(&ua, arg) = __UNCONST(SCARG(uap, path)); /*XXXUNCONST*/
@@ -1455,12 +1364,12 @@ linux_sys_swapoff(l, v, retval)
  */
 /* ARGSUSED */
 int
-linux_sys_setdomainname(struct lwp *l, void *v, register_t *retval)
+linux_sys_setdomainname(struct lwp *l, const struct linux_sys_setdomainname_args *uap, register_t *retval)
 {
-	struct linux_sys_setdomainname_args /* {
+	/* {
 		syscallarg(char *) domainname;
 		syscallarg(int) len;
-	} */ *uap = v;
+	} */
 	int name[2];
 
 	name[0] = CTL_KERN;
@@ -1474,11 +1383,11 @@ linux_sys_setdomainname(struct lwp *l, void *v, register_t *retval)
  */
 /* ARGSUSED */
 int
-linux_sys_sysinfo(struct lwp *l, void *v, register_t *retval)
+linux_sys_sysinfo(struct lwp *l, const struct linux_sys_sysinfo_args *uap, register_t *retval)
 {
-	struct linux_sys_sysinfo_args /* {
+	/* {
 		syscallarg(struct linux_sysinfo *) arg;
-	} */ *uap = v;
+	} */
 	struct linux_sysinfo si;
 	struct loadavg *la;
 
@@ -1505,19 +1414,16 @@ linux_sys_sysinfo(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-linux_sys_getrlimit(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_getrlimit(struct lwp *l, const struct linux_sys_getrlimit_args *uap, register_t *retval)
 {
-	struct linux_sys_getrlimit_args /* {
+	/* {
 		syscallarg(int) which;
 # ifdef LINUX_LARGEFILE64
 		syscallarg(struct rlimit *) rlp;
 # else
 		syscallarg(struct orlimit *) rlp;
 # endif
-	} */ *uap = v;
+	} */
 # ifdef LINUX_LARGEFILE64
 	struct rlimit orl;
 # else
@@ -1535,19 +1441,16 @@ linux_sys_getrlimit(l, v, retval)
 }
 
 int
-linux_sys_setrlimit(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_setrlimit(struct lwp *l, const struct linux_sys_setrlimit_args *uap, register_t *retval)
 {
-	struct linux_sys_setrlimit_args /* {
+	/* {
 		syscallarg(int) which;
 # ifdef LINUX_LARGEFILE64
 		syscallarg(struct rlimit *) rlp;
 # else
 		syscallarg(struct orlimit *) rlp;
 # endif
-	} */ *uap = v;
+	} */
 	struct rlimit rl;
 # ifdef LINUX_LARGEFILE64
 	struct rlimit orl;
@@ -1571,12 +1474,9 @@ linux_sys_setrlimit(l, v, retval)
 # if !defined(__mips__) && !defined(__amd64__)
 /* XXX: this doesn't look 100% common, at least mips doesn't have it */
 int
-linux_sys_ugetrlimit(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_ugetrlimit(struct lwp *l, const struct linux_sys_ugetrlimit_args *uap, register_t *retval)
 {
-	return linux_sys_getrlimit(l, v, retval);
+	return linux_sys_getrlimit(l, (const void *)uap, retval);
 }
 # endif
 
@@ -1586,22 +1486,18 @@ linux_sys_ugetrlimit(l, v, retval)
  * This is the way Linux does it and glibc depends on this behaviour.
  */
 int
-linux_sys_nosys(struct lwp *l, void *v,
-    register_t *retval)
+linux_sys_nosys(struct lwp *l, const void *v, register_t *retval)
 {
 	return (ENOSYS);
 }
 
 int
-linux_sys_getpriority(l, v, retval)
-        struct lwp *l;
-        void *v;
-        register_t *retval;
+linux_sys_getpriority(struct lwp *l, const struct linux_sys_getpriority_args *uap, register_t *retval)
 {
-        struct linux_sys_getpriority_args /* {
+        /* {
                 syscallarg(int) which;
                 syscallarg(int) who;
-        } */ *uap = v;
+        } */
         struct sys_getpriority_args bsa;
         int error;
 

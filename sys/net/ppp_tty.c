@@ -1,4 +1,4 @@
-/*	$NetBSD: ppp_tty.c,v 1.47.16.1 2007/11/08 11:00:13 matt Exp $	*/
+/*	$NetBSD: ppp_tty.c,v 1.47.16.2 2008/01/09 01:57:15 matt Exp $	*/
 /*	Id: ppp_tty.c,v 1.3 1996/07/01 01:04:11 paulus Exp 	*/
 
 /*
@@ -93,7 +93,7 @@
 /* from NetBSD: if_ppp.c,v 1.15.2.2 1994/07/28 05:17:58 cgd Exp */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppp_tty.c,v 1.47.16.1 2007/11/08 11:00:13 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppp_tty.c,v 1.47.16.2 2008/01/09 01:57:15 matt Exp $");
 
 #include "ppp.h"
 
@@ -251,7 +251,9 @@ pppopen(dev_t dev, struct tty *tp)
     sc->sc_if.if_baudrate = tp->t_ospeed;
 
     tp->t_sc = (void *) sc;
+    mutex_spin_enter(&tty_lock);
     ttyflush(tp, FREAD | FWRITE);
+    mutex_spin_exit(&tty_lock);
 
     splx(s);
     return (0);
@@ -270,7 +272,9 @@ pppclose(struct tty *tp, int flag)
     int s;
 
     s = spltty();
+    mutex_spin_enter(&tty_lock);
     ttyflush(tp, FREAD|FWRITE);
+    mutex_spin_exit(&tty_lock);	/* XXX */
     ttyldisc_release(tp->t_linesw);
     tp->t_linesw = ttyldisc_default();
     sc = (struct ppp_softc *) tp->t_sc;
@@ -701,12 +705,13 @@ pppasyncstart(struct ppp_softc *sc)
     u_char *start, *stop, *cp;
     int n, ndone, done, idle;
     struct mbuf *m2;
-    int s;
 
     if (sc->sc_flags & SC_SYNC){
 	pppsyncstart(sc);
 	return;
     }
+
+    mutex_spin_enter(&tty_lock);
 
     idle = 0;
     while (CCOUNT(&tp->t_outq) < PPP_HIWAT) {
@@ -768,17 +773,12 @@ pppasyncstart(struct ppp_softc *sc)
 		 * Put it out in a different form.
 		 */
 		if (len) {
-		    s = spltty();
-		    if (putc(PPP_ESCAPE, &tp->t_outq)) {
-			splx(s);
+		    if (putc(PPP_ESCAPE, &tp->t_outq))
 			break;
-		    }
 		    if (putc(*start ^ PPP_TRANS, &tp->t_outq)) {
 			(void) unputc(&tp->t_outq);
-			splx(s);
 			break;
 		    }
-		    splx(s);
 		    sc->sc_stats.ppp_obytes += 2;
 		    start++;
 		    len--;
@@ -819,7 +819,6 @@ pppasyncstart(struct ppp_softc *sc)
 		 * Try to output the FCS and flag.  If the bytes
 		 * don't all fit, back out.
 		 */
-		s = spltty();
 		for (q = endseq; q < p; ++q)
 		    if (putc(*q, &tp->t_outq)) {
 			done = 0;
@@ -827,7 +826,6 @@ pppasyncstart(struct ppp_softc *sc)
 			    unputc(&tp->t_outq);
 			break;
 		    }
-		splx(s);
 		if (done)
 		    sc->sc_stats.ppp_obytes += q - endseq;
 	    }
@@ -860,7 +858,6 @@ pppasyncstart(struct ppp_softc *sc)
     }
 
     /* Call pppstart to start output again if necessary. */
-    s = spltty();
     pppstart(tp);
 
     /*
@@ -873,7 +870,7 @@ pppasyncstart(struct ppp_softc *sc)
 	sc->sc_flags |= SC_TIMEOUT;
     }
 
-    splx(s);
+    mutex_spin_exit(&tty_lock);
 }
 
 /*
@@ -884,14 +881,13 @@ static void
 pppasyncctlp(struct ppp_softc *sc)
 {
     struct tty *tp;
-    int s;
 
     /* Put a placeholder byte in canq for ttselect()/ttnread(). */
-    s = spltty();
+    mutex_spin_enter(&tty_lock);
     tp = (struct tty *) sc->sc_devp;
     putc(0, &tp->t_canq);
     ttwakeup(tp);
-    splx(s);
+    mutex_spin_exit(&tty_lock);
 }
 
 /*
@@ -945,12 +941,11 @@ ppp_timeout(void *x)
 {
     struct ppp_softc *sc = (struct ppp_softc *) x;
     struct tty *tp = (struct tty *) sc->sc_devp;
-    int s;
 
-    s = spltty();
+    mutex_spin_enter(&tty_lock);
     sc->sc_flags &= ~SC_TIMEOUT;
     pppstart(tp);
-    splx(s);
+    mutex_spin_exit(&tty_lock);
 }
 
 /*
@@ -1023,8 +1018,11 @@ pppinput(int c, struct tty *tp)
 	}
 	if (c == tp->t_cc[VSTART] && tp->t_cc[VSTART] != _POSIX_VDISABLE) {
 	    tp->t_state &= ~TS_TTSTOP;
-	    if (tp->t_oproc != NULL)
+	    if (tp->t_oproc != NULL) {
+	        mutex_spin_enter(&tty_lock);	/* XXX */
 		(*tp->t_oproc)(tp);
+	        mutex_spin_exit(&tty_lock);	/* XXX */
+	    }
 	    return 0;
 	}
     }

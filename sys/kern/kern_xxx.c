@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_xxx.c,v 1.65 2007/02/09 21:55:31 ad Exp $	*/
+/*	$NetBSD: kern_xxx.c,v 1.65.20.1 2008/01/09 01:56:13 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_xxx.c,v 1.65 2007/02/09 21:55:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_xxx.c,v 1.65.20.1 2008/01/09 01:56:13 matt Exp $");
 
 #include "opt_syscall_debug.h"
 
@@ -44,17 +44,18 @@ __KERNEL_RCSID(0, "$NetBSD: kern_xxx.c,v 1.65 2007/02/09 21:55:31 ad Exp $");
 #include <sys/syscall.h>
 #include <sys/sysctl.h>
 #include <sys/mount.h>
+#include <sys/syscall.h>
 #include <sys/syscallargs.h>
 #include <sys/kauth.h>
 
 /* ARGSUSED */
 int
-sys_reboot(struct lwp *l, void *v, register_t *retval)
+sys_reboot(struct lwp *l, const struct sys_reboot_args *uap, register_t *retval)
 {
-	struct sys_reboot_args /* {
+	/* {
 		syscallarg(int) opt;
 		syscallarg(char *) bootstr;
-	} */ *uap = v;
+	} */
 	int error;
 	char *bootstr, bs[128];
 
@@ -77,6 +78,23 @@ sys_reboot(struct lwp *l, void *v, register_t *retval)
 	return (0);
 }
 
+/*
+ * Pull in the indirect syscall functions here.
+ * They are only actually used if the ports syscall entry code
+ * doesn't special-case SYS_SYSCALL and SYS___SYSCALL
+ *
+ * In some cases the generated code for the two functions is identical,
+ * but there isn't a MI way of determining that - so we don't try.
+ */
+
+#define SYS_SYSCALL sys_syscall
+#include "sys_syscall.c"
+#undef SYS_SYSCALL
+
+#define SYS_SYSCALL sys___syscall
+#include "sys_syscall.c"
+#undef SYS_SYSCALL
+
 #ifdef SYSCALL_DEBUG
 #define	SCDEBUG_CALLS		0x0001	/* show calls */
 #define	SCDEBUG_RETURNS		0x0002	/* show returns */
@@ -90,8 +108,9 @@ int	scdebug = SCDEBUG_CALLS|SCDEBUG_RETURNS|SCDEBUG_SHOWARGS|SCDEBUG_ALL;
 #endif
 
 void
-scdebug_call(struct lwp *l, register_t code, register_t args[])
+scdebug_call(register_t code, const register_t args[])
 {
+	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
 	const struct sysent *sy;
 	const struct emul *em;
@@ -132,8 +151,9 @@ scdebug_call(struct lwp *l, register_t code, register_t args[])
 }
 
 void
-scdebug_ret(struct lwp *l, register_t code, int error, register_t retval[])
+scdebug_ret(register_t code, int error, const register_t retval[])
 {
+	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
 	const struct sysent *sy;
 	const struct emul *em;

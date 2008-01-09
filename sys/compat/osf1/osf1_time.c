@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_time.c,v 1.14 2007/05/13 14:47:54 dsl Exp $ */
+/* $NetBSD: osf1_time.c,v 1.14.8.1 2008/01/09 01:51:45 matt Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_time.c,v 1.14 2007/05/13 14:47:54 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_time.c,v 1.14.8.1 2008/01/09 01:51:45 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,12 +46,8 @@ __KERNEL_RCSID(0, "$NetBSD: osf1_time.c,v 1.14 2007/05/13 14:47:54 dsl Exp $");
 #include <compat/osf1/osf1_cvt.h>
 
 int
-osf1_sys_gettimeofday(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+osf1_sys_gettimeofday(struct lwp *l, const struct osf1_sys_gettimeofday_args *uap, register_t *retval)
 {
-	struct osf1_sys_gettimeofday_args *uap = v;
 	struct osf1_timeval otv;
 	struct osf1_timezone otz;
 	struct timeval tv;
@@ -71,12 +67,8 @@ osf1_sys_gettimeofday(l, v, retval)
 }
 
 int
-osf1_sys_setitimer(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+osf1_sys_setitimer(struct lwp *l, const struct osf1_sys_setitimer_args *uap, register_t *retval)
 {
-	struct osf1_sys_setitimer_args *uap = v;
 	struct osf1_itimerval o_itv, o_oitv;
 	struct itimerval b_itv, b_oitv;
 	int which;
@@ -133,12 +125,8 @@ osf1_sys_setitimer(l, v, retval)
 }
 
 int
-osf1_sys_getitimer(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+osf1_sys_getitimer(struct lwp *l, const struct osf1_sys_getitimer_args *uap, register_t *retval)
 {
-	struct osf1_sys_getitimer_args *uap = v;
 	struct osf1_itimerval o_oitv;
 	struct itimerval b_oitv;
 	int which;
@@ -172,12 +160,8 @@ osf1_sys_getitimer(l, v, retval)
 }
 
 int
-osf1_sys_settimeofday(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+osf1_sys_settimeofday(struct lwp *l, const struct osf1_sys_settimeofday_args *uap, register_t *retval)
 {
-	struct osf1_sys_settimeofday_args *uap = v;
 	struct osf1_timeval otv;
 	struct timeval tv, *tvp;
 	int error = 0;

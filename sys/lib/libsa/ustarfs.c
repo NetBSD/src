@@ -1,4 +1,4 @@
-/*	$NetBSD: ustarfs.c,v 1.29 2007/03/05 14:49:04 he Exp $	*/
+/*	$NetBSD: ustarfs.c,v 1.29.16.1 2008/01/09 01:56:46 matt Exp $	*/
 
 /* [Notice revision 2.2]
  * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.
@@ -116,9 +116,13 @@ typedef struct ustar_struct {
  * kind of block buffering, so we optimize for the slowest device.
  */
 
+#ifndef USTAR_SECT_PER_CYL
+#define USTAR_SECT_PER_CYL	(18 * 2)
+#endif
+
 typedef struct ust_active_struct {
 	ustar_t	uas_active;
-	char	uas_1cyl[18 * 2 * 512];
+	char	uas_1cyl[USTAR_SECT_PER_CYL * 512];
 	ustoffs	uas_volsize;		/* XXX this is hardwired now */
 	ustoffs	uas_windowbase;		/* relative to volume 0 */
 	ustoffs	uas_filestart;		/* relative to volume 0 */
@@ -132,7 +136,7 @@ typedef struct ust_active_struct {
 } ust_active_t;
 
 static const char formatid[] = "USTARFS",
-		  metaname[] = "USTAR.volsize.";
+                  metaname[] = "USTAR.volsize.";
 
 static const int ustarfs_mode_offset = BBSIZE;
 
@@ -156,9 +160,7 @@ void changedisk_hook __P((struct open_file *));
 #endif
 
 static int
-convert(f, base, fw)
-	const char *f;
-	int base, fw;
+convert(const char *f, int base, int fw)
 {
 	int	i, c, result = 0;
 
@@ -177,18 +179,14 @@ convert(f, base, fw)
 }
 
 static void
-ustarfs_sscanf(s,f,xi)
-	const char *s,*f;
-	int *xi;
+ustarfs_sscanf(const char *s, const char *f, int *xi)
 {
+
 	*xi = convert(s, 8, convert(f + 1, 10, 99));
 }
 
 static int
-ustarfs_cylinder_read(f, seek2, forcelabel)
-	struct open_file *f;
-	ustoffs seek2;
-	int forcelabel;
+ustarfs_cylinder_read(struct open_file *f, ustoffs seek2, int forcelabel)
 {
 	int i, e;
 
@@ -201,17 +199,14 @@ ustarfs_cylinder_read(f, seek2, forcelabel)
 }
 
 static int
-real_fs_cylinder_read(f, seek2, forcelabel)
-	struct open_file *f;
-	ustoffs seek2;
-	int forcelabel;
+real_fs_cylinder_read(struct open_file *f, ustoffs seek2, int forcelabel)
 {
 	int i;
 	int e = 0;	/* XXX work around gcc warning */
 	ustoffs	lda;
 	char *xferbase;
 	ust_active_t *ustf;
-	size_t	xferrqst, xfercount;
+	size_t xferrqst, xfercount;
 
 	ustf = f->f_fsdata;
 	xferrqst = sizeof ustf->uas_1cyl;
@@ -230,8 +225,9 @@ real_fs_cylinder_read(f, seek2, forcelabel)
 			xferbase += lda;
 			seek2    += lda;
 		}
-	} else
+	} else {
 		ustf->uas_offset = 0;
+	}
 	while(xferrqst > 0) {
 #if !defined(LIBSA_NO_TWIDDLE)
 		twiddle();
@@ -256,8 +252,7 @@ real_fs_cylinder_read(f, seek2, forcelabel)
 }
 
 static int
-checksig(ustf)
-	ust_active_t *ustf;
+checksig(ust_active_t *ustf)
 {
 	int	i, rcs;
 
@@ -267,9 +262,7 @@ checksig(ustf)
 }
 
 static int
-get_volume(f, vn)
-	struct open_file *f;
-	int vn;
+get_volume(struct open_file *f, int vn)
 {
 	int	e, needvolume, havevolume;
 	ust_active_t *ustf;
@@ -317,16 +310,13 @@ static void
 setwindow(ust_active_t *ustf, ustoffs pda, ustoffs vda)
 {
 	ustf->uas_windowbase = lda2vda(pda2lda(pda), ustf->uas_volsize,
-					vda2vn(vda, ustf->uas_volsize))
-			     + ustf->uas_offset;
+	                                vda2vn(vda, ustf->uas_volsize))
+	                     + ustf->uas_offset;
 	ustf->uas_init_window = 1;
 }
 
 static int
-read512block(f, vda, block)
-	struct open_file *f;
-	ustoffs vda;
-	char block[512];
+read512block(struct open_file *f, ustoffs vda, char block[512])
 {
 	ustoffs pda;
 	ssize_t	e;
@@ -375,8 +365,7 @@ tryagain:
 }
 
 static int
-init_volzero_sig(f)
-	struct open_file *f;
+init_volzero_sig(struct open_file *f)
 {
 	int e;
 	ust_active_t *ustf;
@@ -393,10 +382,7 @@ init_volzero_sig(f)
 }
 
 int
-ustarfs_open(path, f)
-	const char *path;
-	struct open_file *f;
-
+ustarfs_open(const char *path, struct open_file *f)
 {
 	ust_active_t *ustf;
 	ustoffs offset;
@@ -457,37 +443,31 @@ ustarfs_open(path, f)
 
 #ifndef LIBSA_NO_FS_WRITE
 int
-ustarfs_write(f, start, size, resid)
-	struct open_file *f;
-	void *start;
-	size_t size;
-	size_t *resid;
+ustarfs_write(struct open_file *f, void *start, size_t size, size_t *resid)
 {
-	return (EROFS);
+
+	return EROFS;
 }
 #endif /* !LIBSA_NO_FS_WRITE */
 
 #ifndef LIBSA_NO_FS_SEEK
 off_t
-ustarfs_seek(f, offs, whence)
-	struct open_file *f;
-	off_t offs;
-	int whence;
+ustarfs_seek(struct open_file *f, off_t offs, int whence)
 {
 	ust_active_t *ustf;
 
 	ustf = f->f_fsdata;
 	switch (whence) {
-	    case SEEK_SET:
+	case SEEK_SET:
 		ustf->uas_fseek = offs;
 		break;
-	    case SEEK_CUR:
+	case SEEK_CUR:
 		ustf->uas_fseek += offs;
 		break;
-	    case SEEK_END:
+	case SEEK_END:
 		ustf->uas_fseek = ustf->uas_filesize - offs;
 		break;
-	    default:
+	default:
 		return -1;
 	}
 	return ustf->uas_fseek;
@@ -495,21 +475,17 @@ ustarfs_seek(f, offs, whence)
 #endif /* !LIBSA_NO_FS_SEEK */
 
 int
-ustarfs_read(f, start, size, resid)
-	struct open_file *f;
-	void *start;
-	size_t size;
-	size_t *resid;
+ustarfs_read(struct open_file *f, void *start, size_t size, size_t *resid)
 {
 	ust_active_t *ustf;
 	int	e;
 	char	*space512;
-	int	blkoffs,
-		readoffs,
-		bufferoffset;
+	int	blkoffs;
+	int	readoffs;
+	int	bufferoffset;
 	size_t	seg;
-	size_t	infile,
-		inbuffer;
+	size_t	infile;
+	size_t	inbuffer;
 
 	e = 0;
 	space512 = alloc(512);
@@ -533,7 +509,7 @@ ustarfs_read(f, start, size, resid)
 		memcpy(start, space512 + bufferoffset, seg);
 		ustf->uas_fseek += seg;
 		start = (char *)start + seg;
-		size  -= seg;
+		size -= seg;
 	}
 	if (resid)
 		*resid = size;
@@ -542,9 +518,7 @@ ustarfs_read(f, start, size, resid)
 }
 
 int
-ustarfs_stat(f, sb)
-	struct open_file *f;
-	struct stat *sb;
+ustarfs_stat(struct open_file *f, struct stat *sb)
 {
 	int	mode, uid, gid;
 	ust_active_t *ustf;
@@ -565,8 +539,7 @@ ustarfs_stat(f, sb)
 
 #ifndef LIBSA_NO_FS_CLOSE
 int
-ustarfs_close(f)
-	struct open_file *f;
+ustarfs_close(struct open_file *f)
 {
 	if (f == NULL || f->f_fsdata == NULL)
 		return EINVAL;

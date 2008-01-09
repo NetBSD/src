@@ -1,4 +1,4 @@
-/*	$NetBSD: sata_subr.c,v 1.8 2006/11/30 23:07:31 bouyer Exp $	*/
+/*	$NetBSD: sata_subr.c,v 1.8.24.1 2008/01/09 01:52:26 matt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -39,6 +39,8 @@
 /*
  * Common functions for Serial ATA.
  */
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sata_subr.c,v 1.8.24.1 2008/01/09 01:52:26 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

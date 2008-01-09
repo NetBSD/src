@@ -1,3 +1,5 @@
+/* $NetBSD: drm_agpsupport.c,v 1.2.12.1 2008/01/09 01:52:33 matt Exp $ */
+
 /* drm_agpsupport.h -- DRM support for AGP/GART backend -*- linux-c -*-
  * Created: Mon Dec 13 09:56:45 1999 by faith@precisioninsight.com
  */
@@ -32,63 +34,19 @@
  */
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: drm_agpsupport.c,v 1.2.12.1 2008/01/09 01:52:33 matt Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/drm_agpsupport.c,v 1.5 2006/04/09 20:45:44 anholt Exp $");
 */
 
 #include "drmP.h"
 
-#ifdef __FreeBSD__
-#include <pci/agpreg.h>
-#include <dev/pci/pcireg.h>
-#endif
-
 /* Returns 1 if AGP or 0 if not. */
 static int
 drm_device_find_capability(drm_device_t *dev, int cap)
 {
-#ifdef __FreeBSD__
-#if __FreeBSD_version >= 700010
-
-	return (pci_find_extcap(dev->device, cap, NULL) == 0);
-#else
-	/* Code taken from agp.c.  IWBNI that was a public interface. */
-	u_int32_t status;
-	u_int8_t ptr, next;
-
-	/*
-	 * Check the CAP_LIST bit of the PCI status register first.
-	 */
-	status = pci_read_config(dev->device, PCIR_STATUS, 2);
-	if (!(status & 0x10))
-		return 0;
-
-	/*
-	 * Traverse the capabilities list.
-	 */
-	for (ptr = pci_read_config(dev->device, AGP_CAPPTR, 1);
-	     ptr != 0;
-	     ptr = next) {
-		u_int32_t capid = pci_read_config(dev->device, ptr, 4);
-		next = AGP_CAPID_GET_NEXT_PTR(capid);
-
-		/*
-		 * If this capability entry ID is cap, then we are done.
-		 */
-		if (AGP_CAPID_GET_CAP_ID(capid) == cap)
-			return 1;
-	}
-
-	return 0;
-#endif
-#else
-#ifdef __NetBSD__
 	return pci_get_capability(dev->pa.pa_pc, dev->pa.pa_tag, cap,
 				  NULL, NULL);
-#endif
-	/* XXX: fill me in for non-FreeBSD */
-	return 1;
-#endif
 }
 
 int drm_device_is_agp(drm_device_t *dev)

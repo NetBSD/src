@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_lookup.c,v 1.12.16.1 2007/11/06 23:31:09 matt Exp $	*/
+/*	$NetBSD: msdosfs_lookup.c,v 1.12.16.2 2008/01/09 01:55:44 matt Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_lookup.c,v 1.12.16.1 2007/11/06 23:31:09 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_lookup.c,v 1.12.16.2 2008/01/09 01:55:44 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -133,7 +133,7 @@ msdosfs_lookup(v)
 	/*
 	 * Check accessiblity of directory.
 	 */
-	if ((error = VOP_ACCESS(vdp, VEXEC, cnp->cn_cred, cnp->cn_lwp)) != 0)
+	if ((error = VOP_ACCESS(vdp, VEXEC, cnp->cn_cred)) != 0)
 		return (error);
 
 	if ((flags & ISLASTCN) && (vdp->v_mount->mnt_flag & MNT_RDONLY) &&
@@ -350,7 +350,7 @@ notfound:
 		 * Access for write is interpreted as allowing
 		 * creation of files in the directory.
 		 */
-		error = VOP_ACCESS(vdp, VWRITE, cnp->cn_cred, cnp->cn_lwp);
+		error = VOP_ACCESS(vdp, VWRITE, cnp->cn_cred);
 		if (error)
 			return (error);
 
@@ -467,7 +467,7 @@ foundroot:
 		/*
 		 * Write access to directory required to delete files.
 		 */
-		error = VOP_ACCESS(vdp, VWRITE, cnp->cn_cred, cnp->cn_lwp);
+		error = VOP_ACCESS(vdp, VWRITE, cnp->cn_cred);
 		if (error)
 			return (error);
 
@@ -500,7 +500,7 @@ foundroot:
 		if (blkoff == MSDOSFSROOT_OFS)
 			return EROFS;				/* really? XXX */
 
-		error = VOP_ACCESS(vdp, VWRITE, cnp->cn_cred, cnp->cn_lwp);
+		error = VOP_ACCESS(vdp, VWRITE, cnp->cn_cred);
 		if (error)
 			return (error);
 
@@ -606,7 +606,7 @@ createde(dep, ddep, depp, cnp)
 		    - ddep->de_FileSize;
 		dirclust = de_clcount(pmp, needlen);
 		if ((error = extendfile(ddep, dirclust, 0, 0, DE_CLEAR)) != 0) {
-			(void)detrunc(ddep, ddep->de_FileSize, 0, NOCRED, NULL);
+			(void)detrunc(ddep, ddep->de_FileSize, 0, NOCRED);
 			goto err_norollback;
 		}
 

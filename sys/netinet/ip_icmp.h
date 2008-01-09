@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.h,v 1.23 2006/05/14 02:34:41 christos Exp $	*/
+/*	$NetBSD: ip_icmp.h,v 1.23.34.1 2008/01/09 01:57:27 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -46,7 +46,7 @@
 struct icmp_ra_addr {
 	u_int32_t ira_addr;
 	u_int32_t ira_preference;
-} __attribute__((__packed__));
+} __packed;
 
 /*
  * Structure of an icmp header.
@@ -61,19 +61,19 @@ struct icmp {
 		struct ih_idseq {
 			  n_short icd_id;
 			  n_short icd_seq;
-		} ih_idseq __attribute__((__packed__));
+		} ih_idseq __packed;
 		int32_t   ih_void;
 
 		/* ICMP_UNREACH_NEEDFRAG -- Path MTU Discovery (RFC1191) */
 		struct ih_pmtu {
 			  n_short ipm_void;
 			  n_short ipm_nextmtu;
-		} ih_pmtu __attribute__((__packed__));
+		} ih_pmtu __packed;
 		struct ih_rtradv {
 			u_int8_t irt_num_addrs;
 			u_int8_t irt_wpa;
 			u_int16_t irt_lifetime;
-		} ih_rtradv __attribute__((__packed__));
+		} ih_rtradv __packed;
 	} icmp_hun /* XXX __attribute__((__packed__)) ??? */;
 #define	icmp_pptr	  icmp_hun.ih_pptr
 #define	icmp_gwaddr	  icmp_hun.ih_gwaddr
@@ -90,7 +90,7 @@ struct icmp {
 			  n_time its_otime;
 			  n_time its_rtime;
 			  n_time its_ttime;
-		} id_ts __attribute__((__packed__));
+		} id_ts __packed;
 		struct id_ip  {
 			  struct ip idi_ip;
 			  /* options and then 64 bits of data */

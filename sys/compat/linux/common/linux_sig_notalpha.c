@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sig_notalpha.c,v 1.33.20.1 2007/11/06 23:25:00 matt Exp $	*/
+/*	$NetBSD: linux_sig_notalpha.c,v 1.33.20.2 2008/01/09 01:51:15 matt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sig_notalpha.c,v 1.33.20.1 2007/11/06 23:25:00 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sig_notalpha.c,v 1.33.20.2 2008/01/09 01:51:15 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,15 +73,12 @@ __KERNEL_RCSID(0, "$NetBSD: linux_sig_notalpha.c,v 1.33.20.1 2007/11/06 23:25:00
  * sigaction() apply.
  */
 int
-linux_sys_signal(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_signal(struct lwp *l, const struct linux_sys_signal_args *uap, register_t *retval)
 {
-	struct linux_sys_signal_args /* {
+	/* {
 		syscallarg(int) signum;
 		syscallarg(linux_handler_t) handler;
-	} */ *uap = v;
+	} */
 	struct sigaction nbsa, obsa;
 	int error, sig;
 
@@ -103,8 +100,7 @@ linux_sys_signal(l, v, retval)
 
 /* ARGSUSED */
 int
-linux_sys_siggetmask(struct lwp *l, void *v,
-    register_t *retval)
+linux_sys_siggetmask(struct lwp *l, const void *v, register_t *retval)
 {
 	struct proc *p = l->l_proc;
 	sigset_t bss;
@@ -127,14 +123,11 @@ linux_sys_siggetmask(struct lwp *l, void *v,
  * they are here, and have not been mapped directly.
  */
 int
-linux_sys_sigsetmask(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_sigsetmask(struct lwp *l, const struct linux_sys_sigsetmask_args *uap, register_t *retval)
 {
-	struct linux_sys_sigsetmask_args /* {
+	/* {
 		syscallarg(linux_old_sigset_t) mask;
-	} */ *uap = v;
+	} */
 	sigset_t nbss, obss;
 	linux_old_sigset_t nlss, olss;
 	struct proc *p = l->l_proc;
@@ -153,13 +146,13 @@ linux_sys_sigsetmask(l, v, retval)
 }
 
 int
-linux_sys_sigprocmask(struct lwp *l, void *v, register_t *retval)
+linux_sys_sigprocmask(struct lwp *l, const struct linux_sys_sigprocmask_args *uap, register_t *retval)
 {
-	struct linux_sys_sigprocmask_args /* {
+	/* {
 		syscallarg(int) how;
 		syscallarg(const linux_old_sigset_t *) set;
 		syscallarg(linux_old_sigset_t *) oset;
-	} */ *uap = v;
+	} */
 
 	return(linux_sigprocmask1(l, SCARG(uap, how),
 				SCARG(uap, set), SCARG(uap, oset)));
@@ -171,7 +164,7 @@ linux_sys_sigprocmask(struct lwp *l, void *v, register_t *retval)
  * of sigsuspend(2).
  */
 int
-linux_sys_pause(struct lwp *l, void *v, register_t *retval)
+linux_sys_pause(struct lwp *l, const void *v, register_t *retval)
 {
 
 	return (sigsuspend1(l, 0));

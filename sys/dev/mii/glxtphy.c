@@ -1,4 +1,4 @@
-/*	$NetBSD: glxtphy.c,v 1.17 2006/11/16 21:24:07 christos Exp $	*/
+/*	$NetBSD: glxtphy.c,v 1.17.24.1 2008/01/09 01:53:20 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: glxtphy.c,v 1.17 2006/11/16 21:24:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: glxtphy.c,v 1.17.24.1 2008/01/09 01:53:20 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -158,6 +158,9 @@ glxtphyattach(struct device *parent, struct device *self, void *aux)
 	else
 		mii_phy_add_media(sc);
 	aprint_normal("\n");
+
+	if (!pmf_device_register(self, NULL, mii_phy_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
 static int

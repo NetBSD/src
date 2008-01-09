@@ -1,3 +1,5 @@
+/*	$NetBSD: mach64_irq.c,v 1.2.14.1 2008/01/09 01:54:06 matt Exp $	*/
+
 /* mach64_irq.c -- IRQ handling for ATI Mach64 -*- linux-c -*-
  * Created: Tue Feb 25, 2003 by Leif Delgass, based on radeon_irq.c/r128_irq.c
  */
@@ -36,6 +38,7 @@
  */
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mach64_irq.c,v 1.2.14.1 2008/01/09 01:54:06 matt Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/mach64_irq.c,v 1.2 2005/11/28 23:13:53 anholt Exp $");
 */

@@ -1,4 +1,4 @@
-/* 	$NetBSD: linux_signal.h,v 1.26 2007/02/09 21:55:19 ad Exp $	*/
+/* 	$NetBSD: linux_signal.h,v 1.26.20.1 2008/01/09 01:51:16 matt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -59,14 +59,14 @@
 extern const int native_to_linux_signo[];
 extern const int linux_to_native_signo[];
 __BEGIN_DECLS
-int linux_sigprocmask1 __P((struct lwp *, int, const linux_old_sigset_t *,
-						linux_old_sigset_t *));
+int linux_sigprocmask1(struct lwp *, int, const linux_old_sigset_t *,
+						linux_old_sigset_t *);
 
 #if LINUX__NSIG_WORDS > 1
-void linux_old_extra_to_native_sigset __P((sigset_t *,
-    const linux_old_sigset_t *, const unsigned long *));
-void native_to_linux_old_extra_sigset __P((linux_old_sigset_t *,
-    unsigned long *, const sigset_t *));
+void linux_old_extra_to_native_sigset(sigset_t *,
+    const linux_old_sigset_t *, const unsigned long *);
+void native_to_linux_old_extra_sigset(linux_old_sigset_t *,
+    unsigned long *, const sigset_t *);
 #define linux_old_to_native_sigset(x,y) \
     linux_old_extra_to_native_sigset(x, y, (const unsigned long *)0)
 #define native_to_linux_old_sigset(x,y) \
@@ -81,23 +81,23 @@ void native_to_linux_old_extra_sigset __P((linux_old_sigset_t *,
     native_to_linux_sigset((linux_sigset_t *)(void *)x, y)
 #endif
 
-void linux_to_native_sigset __P((sigset_t *, const linux_sigset_t *));
-void native_to_linux_sigset __P((linux_sigset_t *, const sigset_t *));
-int linux_to_native_sigflags __P((const unsigned long));
-unsigned int native_to_linux_sigflags __P((const int));
+void linux_to_native_sigset(sigset_t *, const linux_sigset_t *);
+void native_to_linux_sigset(linux_sigset_t *, const sigset_t *);
+int linux_to_native_sigflags(const unsigned long);
+unsigned int native_to_linux_sigflags(const int);
 
-void linux_old_to_native_sigaction __P((struct sigaction *,
-    const struct linux_old_sigaction *));
-void native_to_linux_old_sigaction __P((struct linux_old_sigaction *,
-    const struct sigaction *));
+void linux_old_to_native_sigaction(struct sigaction *,
+    const struct linux_old_sigaction *);
+void native_to_linux_old_sigaction(struct linux_old_sigaction *,
+    const struct sigaction *);
 
-void linux_to_native_sigaction __P((struct sigaction *,
-    const struct linux_sigaction *));
-void native_to_linux_sigaction __P((struct linux_sigaction *,
-    const struct sigaction *));
+void linux_to_native_sigaction(struct sigaction *,
+    const struct linux_sigaction *);
+void native_to_linux_sigaction(struct linux_sigaction *,
+    const struct sigaction *);
 
-void native_to_linux_sigaltstack __P((struct linux_sigaltstack *,
-    const struct sigaltstack *));
+void native_to_linux_sigaltstack(struct linux_sigaltstack *,
+    const struct sigaltstack *);
 
 __END_DECLS
 #endif /* !_KERNEL */

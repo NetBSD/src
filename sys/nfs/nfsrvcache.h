@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsrvcache.h,v 1.15 2007/06/01 11:56:04 yamt Exp $	*/
+/*	$NetBSD: nfsrvcache.h,v 1.15.8.1 2008/01/09 01:57:55 matt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -55,8 +55,9 @@ struct nfsrvcache {
 	} rc_un;
 	union nethostaddr rc_haddr;		/* Host address */
 	u_int32_t rc_proc;			/* rpc proc number */
-	u_char    rc_state;		/* Current state of request */
-	u_char    rc_flag;		/* Flag bits */
+	int rc_state;		/* Current state of request */
+	int rc_gflags;		/* Flag bits */
+	int rc_flags;		/* Flag bits */
 };
 
 #define	rc_reply	rc_un.ru_repmb
@@ -75,9 +76,10 @@ struct nfsrvcache {
 #define	RC_DOIT		2
 #define	RC_CHECKIT	3
 
-/* Flag bits */
-#define	RC_LOCKED	0x01
-#define	RC_WANTED	0x02
+/* rc_gflags */
+#define	RC_G_LOCKED	0x01
+
+/* rc_flags */
 #define	RC_REPSTATUS	0x04
 #define	RC_REPMBUF	0x08
 #define	RC_INETADDR	0x20

@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.892.2.1 2007/11/06 23:29:24 matt Exp $
+$NetBSD: pcidevs,v 1.892.2.2 2008/01/09 01:53:55 matt Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1007,6 +1007,7 @@ product APPLE U3_PPB4		0x0048	U3 PCI-PCI bridge
 product APPLE U3_PPB5		0x0049	U3 PCI-PCI bridge
 product APPLE U3_AGP		0x004b	U3 AGP Interface
 product APPLE K2_GMAC		0x004c	GMAC Ethernet
+product APPLE SHASTA_GMAC	0x0051	Shasta GMAC
 product APPLE INTREPID2_AGP	0x0066	Intrepid 2 AGP
 product APPLE INTREPID2_PCI1	0x0067	Intrepid 2 PCI
 product APPLE INTREPID2_PCI2	0x0068	Intrepid 2 PCI
@@ -1240,9 +1241,11 @@ product ATI RADEON_R423_UH	0x5548	Radeon X800 (R423) UH
 product ATI RADEON_R423_UI	0x5549	Radeon X800PRO (R423) UI
 product ATI RADEON_R423_UJ	0x554a	Radeon X800LE (R423) UJ
 product ATI RADEON_R423_UK	0x554b	Radeon X800SE (R423) UK
+product ATI RADEON_R430_554F	0x554f  Radeon X800 GTO (R430) 554F
 product ATI RADEON_R423_UQ	0x5551	FireGL V7200 (R423) UQ
 product ATI RADEON_R423_UR	0x5552	FireGL V5100 (R423) UR
 product ATI RADEON_R423_UT	0x5554	FireGL V7100 (R423) UT
+product ATI RADEON_R430_556F	0x556f  Radeon X800 GTO (R430) Secondary
 product ATI MACH64_VT		0x5654	Mach64 VT
 product ATI MACH64_VTB		0x5655	Mach64 VTB
 product ATI MACH64_VT4		0x5656	Mach64 VT4
@@ -1879,7 +1882,7 @@ product MARVELL YUKON_C036	0x4366	Yukon 88EC036
 product MARVELL YUKON_C032	0x4367	Yukon 88EC032
 product MARVELL YUKON_C034	0x4368	Yukon 88EC034
 product MARVELL YUKON_C042	0x4369	Yukon 88EC042
-product MARVELL YUKON_CO55	0x436a	Yukon 88ECO55
+product MARVELL YUKON_C055	0x436a	Yukon 88EC055
 product MARVELL	GT64120		0x4620	GT-64120 System Controller
 product MARVELL	BELKIN		0x5005	Belkin Gigabit Ethernet
 product MARVELL 88SX5040	0x5040	88SX5040 SATA
@@ -2119,6 +2122,7 @@ product INTEL 82571EB_FIBER	0x105f	i82571EB 1000baseX Ethernet
 product INTEL 82571EB_SERDES	0x1060	i82571EB Gigabit Ethernet (SERDES)
 product INTEL 82801FB_LAN	0x1064	82801FB 10/100 Ethernet
 product INTEL PRO_100_VE_5	0x1068	PRO/100 VE (LOM) Network Controller
+product INTEL 82801GB_LAN	0x1069	82801GB 10/100 Ethernet
 product INTEL 82547GI		0x1075	i82547GI Gigabit Ethernet
 product INTEL 82541GI		0x1076	i82541GI Gigabit Ethernet
 product INTEL 82541GI_MOBILE	0x1077	i82541GI Mobile Gigabit Ethernet
@@ -2309,6 +2313,21 @@ product INTEL 6300ESB_EHCI	0x25ad	6300ESB USB EHCI Controller
 product INTEL 6300ESB_PCIX	0x25ae	6300ESB PCI-X Bridge
 product INTEL 6300ESB_RAID	0x25b0	6300ESB SATA RAID Controller
 product INTEL 5000X_MCH		0x25c0	5000X Memory Controller Hub
+product INTEL 5000_PCIE_1	0x25e2	5000 Series Chipset PCI Express x4 Port 2
+product INTEL 5000_PCIE_2	0x25e3	5000 Series Chipset PCI Express x4 Port 3
+product INTEL 5000_PCIE_3	0x25e4	5000 Series Chipset PCI Express x4 Port 4
+product INTEL 5000_PCIE_4	0x25e4	5000 Series Chipset PCI Express x4 Port 5
+product INTEL 5000_PCIE_5	0x25e6	5000 Series Chipset PCI Express x4 Port 6
+product INTEL 5000_PCIE_6	0x25e7	5000 Series Chipset PCI Express x4 Port 7
+product INTEL 5000_FSB_REG	0x25f0	5000 Series Chipset FSB Registers
+product INTEL 5000_RESERVED_1	0x25f1	5000 Series Chipset Reserved Registers
+product INTEL 5000_RESERVED_2	0x25f3	5000 Series Chipset Reserved Registers
+product INTEL 5000_FBD_1	0x25f5	5000 Series Chipset FBD Registers
+product INTEL 5000_FBD_2	0x25f6	5000 Series Chipset FBD Registers
+product INTEL 5000_PCIE_7	0x25f7	5000 Series Chipset PCI Express x8 Port 2-3
+product INTEL 5000_PCIE_8	0x25f8	5000 Series Chipset PCI Express x8 Port 4-5
+product INTEL 5000_PCIE_9	0x25f9	5000 Series Chipset PCI Express x8 Port 6-7
+product INTEL 5000X_PCIE        0x25fa  5000X PCI Express x16 Port 4-7
 product INTEL 82801FB_LPC	0x2640	82801FB LPC Interface Bridge
 product INTEL 82801FBM_LPC	0x2641	82801FBM ICH6M LPC Interface Bridge
 product INTEL 82801FB_SATA	0x2651	82801FB Serial ATA Controller
@@ -2443,7 +2462,22 @@ product INTEL 82965G_HB		0x29a0  82965G Host Bridge
 product INTEL 82965G_EXP	0x29a1  82965G PCI Express Bridge
 product INTEL 82965G_IGD	0x29a2  82965G Integrated Graphics Device
 product INTEL 82965G_IGD_1	0x29a3  82965G Integrated Graphics Device
+product INTEL 82Q35_HB		0x29b0  82Q35 Host Bridge
+product INTEL 82Q35_EXP		0x29b1  82Q35 PCI Express Bridge
+product INTEL 82Q35_IGD		0x29b2  82Q35 Integrated Graphics Device
+product INTEL 82Q35_IGD_1	0x29b3  82Q35 Integrated Graphics Device
+product INTEL 82G33_HB		0x29c0	82G33/P35 Host Bridge
+product INTEL 82G33_EXP		0x29c1	82G33 PCI Express Port
+product INTEL 82G33_IGD		0x29c2	82G33 Integrated Graphics Device
+product INTEL 82G33_IGD_1	0x29c3	82G33 Integrated Graphics Device
 product INTEL 82801I_LAN	0x29c4	82801I LAN Controller
+product INTEL 82Q33_HB		0x29d0  82Q35 Host Bridge
+product INTEL 82Q33_EXP		0x29d1  82Q35 PCI Express Bridge
+product INTEL 82Q33_IGD		0x29d2  82Q35 Integrated Graphics Device
+product INTEL 82Q33_IGD_1	0x29d3  82Q35 Integrated Graphics Device
+product INTEL 82965PM_HB	0x2a00  82965PM Host Bridge
+product INTEL 82965PM_IGD	0x2a02	82965PM Integrated Graphics Device
+product INTEL 82965PM_IGD_1	0x2a03	82965PM Integrated Graphics Device
 product INTEL 31244		0x3200	31244 Serial ATA Controller
 product INTEL 82855PM_DDR	0x3340	82855PM MCH Host Controller
 product INTEL 82855PM_AGP	0x3341	82855PM Host-AGP Bridge
@@ -2760,7 +2794,7 @@ product SYMBIOS 895A			0x0012	53c895A
 product SYMBIOS 875A			0x0013	53c875A
 product SYMBIOS 1010			0x0020	53c1010
 product SYMBIOS 1010_2			0x0021	53c1010 (66MHz)
-product SYMBIOS 1030			0x0030	53c1030
+product SYMBIOS 1030			0x0030	53c1020/53c1030
 product SYMBIOS 1030R			0x1030	53c1030R
 product SYMBIOS 1030ZC			0x0031	53c1030ZC
 product SYMBIOS 1035			0x0040	53c1035
@@ -2863,6 +2897,7 @@ product NVIDIA	RIVATNT2	0x0028	RIVA TNT2
 product NVIDIA	RIVATNT2U	0x0029	RIVA TNT2 Ultra
 product NVIDIA	VANTA		0x002c	Vanta
 product NVIDIA	RIVATNT2M64	0x002d	RIVA TNT2 Model 64
+product	NVIDIA	MCP04_PCIB	0x0030	MCP04 PCI-ISA Bridge
 product NVIDIA	MCP04_SMBUS	0x0034	MCP04 SMBus
 product NVIDIA	MCP04_IDE	0x0035	MCP04 IDE
 product NVIDIA	MCP04_SATA	0x0036	MCP04 SATA
@@ -2873,7 +2908,8 @@ product NVIDIA	GEFORCE_6800U	0x0040	GeForce 6800 Ultra
 product NVIDIA	GEFORCE_6800	0x0041	GeForce 6800
 product NVIDIA	GEFORCE_6800LE	0x0042	GeForce 6800LE
 product NVIDIA	GEFORCE_6800GT	0x0045	GeForce 6800 GT
-product NVIDIA	NFORCE4_PCIB	0x0051	nForce4 PCI-ISA bridge
+product NVIDIA	NFORCE4_PCIB1	0x0050	nForce4 PCI-ISA bridge
+product NVIDIA	NFORCE4_PCIB2	0x0051	nForce4 PCI-ISA bridge
 product NVIDIA	NFORCE4_SMBUS	0x0052	nForce4 SMBus
 product NVIDIA	NFORCE4_ATA133	0x0053	nForce4 ATA133 IDE
 product NVIDIA	NFORCE4_SATA1	0x0054	nForce4 Serial ATA 1
@@ -3050,7 +3086,7 @@ product NVIDIA	MCP65_MEM	0x0444	nForce MCP65 Memory Controller
 product NVIDIA	MCP65_MEM2	0x0445	nForce MCP65 Memory Controller
 product NVIDIA	MCP65_SMB	0x0446	nForce MCP65 SMBus Controller
 product NVIDIA	MCP65_IDE	0x0448	nForce MCP65 ATA133 IDE Controller
-product NVIDIA	MCP65_PCI	0x0449  nForce MCP65 PCI Brige
+product NVIDIA	MCP65_PCI	0x0449  nForce MCP65 PCI Bridge
 product NVIDIA	MCP65_HDA_1	0x044a	nForce MCP65 High Definition Audio Controller
 product NVIDIA	MCP65_HDA_2	0x044b	nForce MCP65 High Definition Audio Controller
 product NVIDIA	MCP65_AHCI_1	0x044c  nForce MCP65 AHCI Controller
@@ -3092,6 +3128,43 @@ product NVIDIA	MCP67_AHCI_8	0x055b	nForce MCP67 AHCI Controller
 product NVIDIA	MCP67_HDA_1	0x055c	nForce MCP67 High Definition Audio Controller
 product NVIDIA	MCP67_HDA_2	0x055d	nForce MCP67 High Definition Audio Controller
 product NVIDIA	MCP67_IDE	0x0560	nForce MCP67 ATA133 IDE Controller
+product NVIDIA	MCP73_IDE 	0x056c	nForce MCP73 ATA133 IDE Controller
+product NVIDIA	MCP77_IDE 	0x0759	nForce MCP77 ATA133 IDE Controller
+product NVIDIA	MCP77_HDA_1 	0x0774	nForce MCP77 High Definition Audio Controller
+product NVIDIA	MCP77_HDA_2 	0x0775	nForce MCP77 High Definition Audio Controller
+product NVIDIA	MCP77_HDA_3 	0x0776	nForce MCP77 High Definition Audio Controller
+product NVIDIA	MCP77_HDA_4 	0x0777	nForce MCP77 High Definition Audio Controller
+product NVIDIA	MCP73_SMB 	0x07d8	nForce MCP73 SMBus Controller
+product NVIDIA	MCP73_LAN1	0x07dc	nForce MCP73 Gigabit Ethernet Controller
+product NVIDIA	MCP73_LAN2 	0x07dd  nForce MCP73 Gigabit Ethernet Controller
+product NVIDIA	MCP73_LAN3	0x07de	nForce MCP73 Gigabit Ethernet Controller
+product NVIDIA	MCP73_LAN4	0x07df	nForce MCP73 Gigabit Ethernet Controller
+product NVIDIA	MCP73_AHCI_1 	0x07f0	nForce MCP73 AHCI Controller
+product NVIDIA	MCP73_AHCI_2	0x07f1	nForce MCP73 AHCI Controller
+product NVIDIA	MCP73_AHCI_3	0x07f2	nForce MCP73 AHCI Controller
+product NVIDIA	MCP73_AHCI_4	0x07f3	nForce MCP73 AHCI Controller
+product NVIDIA	MCP73_AHCI_5	0x07f4	nForce MCP73 AHCI Controller
+product NVIDIA	MCP73_AHCI_6	0x07f5	nForce MCP73 AHCI Controller
+product NVIDIA	MCP73_AHCI_7	0x07f6	nForce MCP73 AHCI Controller
+product NVIDIA	MCP73_AHCI_8	0x07f7	nForce MCP73 AHCI Controller
+product NVIDIA	MCP73_AHCI_9	0x07f8	nForce MCP73 AHCI Controller
+product NVIDIA	MCP73_AHCI_10	0x07f9	nForce MCP73 AHCI Controller
+product NVIDIA	MCP73_AHCI_11	0x07fa	nForce MCP73 AHCI Controller
+product NVIDIA	MCP73_AHCI_12	0x07fb	nForce MCP73 AHCI Controller
+product NVIDIA	MCP73_HDA_1	0x07fc	nForce MCP73 High Definition Audio Controller
+product NVIDIA	MCP73_HDA_2	0x07fd	nForce MCP73 High Definition Audio Controller
+product NVIDIA	MCP77_AHCI_1	0x0ad0	nForce MCP77 AHCI Controller
+product NVIDIA	MCP77_AHCI_2	0x0ad1	nForce MCP77 AHCI Controller
+product NVIDIA	MCP77_AHCI_3	0x0ad2	nForce MCP77 AHCI Controller
+product NVIDIA	MCP77_AHCI_4	0x0ad3	nForce MCP77 AHCI Controller
+product NVIDIA	MCP77_AHCI_5	0x0ad4	nForce MCP77 AHCI Controller
+product NVIDIA	MCP77_AHCI_6	0x0ad5	nForce MCP77 AHCI Controller
+product NVIDIA	MCP77_AHCI_7	0x0ad6	nForce MCP77 AHCI Controller
+product NVIDIA	MCP77_AHCI_8	0x0ad7	nForce MCP77 AHCI Controller
+product NVIDIA	MCP77_AHCI_9	0x0ad8	nForce MCP77 AHCI Controller
+product NVIDIA	MCP77_AHCI_10	0x0ad9	nForce MCP77 AHCI Controller
+product NVIDIA	MCP77_AHCI_11	0x0ada	nForce MCP77 AHCI Controller
+product NVIDIA	MCP77_AHCI_12	0x0adb	nForce MCP77 AHCI Controller
 
 /* Nvidia & SGS-Thomson Microelectronics */
 product NVIDIA_SGS	RIVA128	0x0018	Riva 128
@@ -3775,6 +3848,7 @@ product VIATECH VT8623		0x3123	VT8623 (Apollo CLE266) CPU-PCI Bridge
 product VIATECH VT8233A		0x3147	VT8233A PCI-ISA Bridge
 product VIATECH VT8237_SATA	0x3149	VT8237 Integrated SATA Controller
 product VIATECH K8HTB		0x3188	K8HTB Host
+product	VIATECH	VT8237_PCIB	0x3227  VT8237 PCI-ISA Bridge
 product VIATECH VT6421_RAID	0x3249	VT6421 Serial RAID Controller
 product	VIATECH VT3314_IG	0x3344	VT3314 CN900 UniChrome Integrated Graphics
 product VIATECH VT8237R_SATA	0x3349	VT8237R Integrated SATA Controller

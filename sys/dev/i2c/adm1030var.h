@@ -1,4 +1,4 @@
-/*	$NetBSD: adm1030var.h,v 1.3 2007/01/05 23:09:33 jmcneill Exp $	*/
+/*	$NetBSD: adm1030var.h,v 1.3.20.1 2008/01/09 01:52:39 matt Exp $	*/
 
 /*-
  * Copyright (C) 2005 Michael Lorenz.
@@ -35,7 +35,7 @@
 #define ADM1030VAR_H
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adm1030var.h,v 1.3 2007/01/05 23:09:33 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adm1030var.h,v 1.3.20.1 2008/01/09 01:52:39 matt Exp $");
 
 #include <dev/i2c/i2cvar.h>
 
@@ -45,7 +45,8 @@ __KERNEL_RCSID(0, "$NetBSD: adm1030var.h,v 1.3 2007/01/05 23:09:33 jmcneill Exp 
 struct adm1030c_softc {
 	struct device sc_dev;
 	struct device *parent;
-	struct sysmon_envsys *sc_sysmon_cookie;
+	struct sysmon_envsys *sc_sme;
+	envsys_data_t *sc_sensor;
 	struct i2c_controller *sc_i2c;
 	int sc_node, address;
 	uint8_t regs[3];

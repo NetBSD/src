@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.104.4.1 2007/11/06 23:33:23 matt Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.104.4.2 2008/01/09 01:57:06 matt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.104.4.1 2007/11/06 23:33:23 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.104.4.2 2008/01/09 01:57:06 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -167,9 +167,8 @@ spec_open(void *v)
 		struct vnode *a_vp;
 		int  a_mode;
 		kauth_cred_t a_cred;
-		struct lwp *a_l;
 	} */ *ap = v;
-	struct lwp *l = ap->a_l;
+	struct lwp *l = curlwp;
 	struct vnode *vp = ap->a_vp;
 	dev_t dev = (dev_t)vp->v_rdev;
 	int error;
@@ -407,7 +406,6 @@ spec_ioctl(void *v)
 		void  *a_data;
 		int  a_fflag;
 		kauth_cred_t a_cred;
-		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp;
 	dev_t dev;
@@ -419,11 +417,11 @@ spec_ioctl(void *v)
 
 	vp = ap->a_vp;
 	dev = NODEV;
-	simple_lock(&vp->v_interlock);
+	mutex_enter(&vp->v_interlock);
 	if ((vp->v_iflag & VI_XLOCK) == 0 && vp->v_specinfo) {
 		dev = vp->v_rdev;
 	}
-	simple_unlock(&vp->v_interlock);
+	mutex_exit(&vp->v_interlock);
 	if (dev == NODEV) {
 		return ENXIO;
 	}
@@ -432,11 +430,11 @@ spec_ioctl(void *v)
 
 	case VCHR:
 		return cdev_ioctl(dev, ap->a_command, ap->a_data,
-		    ap->a_fflag, ap->a_l);
+		    ap->a_fflag, curlwp);
 
 	case VBLK:
 		return bdev_ioctl(dev, ap->a_command, ap->a_data,
-		   ap->a_fflag, ap->a_l);
+		   ap->a_fflag, curlwp);
 
 	default:
 		panic("spec_ioctl");
@@ -451,7 +449,6 @@ spec_poll(void *v)
 	struct vop_poll_args /* {
 		struct vnode *a_vp;
 		int a_events;
-		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp;
 	dev_t dev;
@@ -463,11 +460,11 @@ spec_poll(void *v)
 
 	vp = ap->a_vp;
 	dev = NODEV;
-	simple_lock(&vp->v_interlock);
+	mutex_enter(&vp->v_interlock);
 	if ((vp->v_iflag & VI_XLOCK) == 0 && vp->v_specinfo) {
 		dev = vp->v_rdev;
 	}
-	simple_unlock(&vp->v_interlock);
+	mutex_exit(&vp->v_interlock);
 	if (dev == NODEV) {
 		return POLLERR;
 	}
@@ -475,7 +472,7 @@ spec_poll(void *v)
 	switch (vp->v_type) {
 
 	case VCHR:
-		return cdev_poll(dev, ap->a_events, ap->a_l);
+		return cdev_poll(dev, ap->a_events, curlwp);
 
 	default:
 		return (genfs_poll(v));
@@ -516,7 +513,6 @@ spec_mmap(void *v)
 		struct vnode *a_vp;
 		vm_prot_t a_prot;
 		kauth_cred_t a_cred;
-		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 
@@ -540,7 +536,6 @@ spec_fsync(void *v)
 		int  a_flags;
 		off_t offlo;
 		off_t offhi;
-		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 
@@ -570,7 +565,7 @@ spec_strategy(void *v)
 		bioopsp->io_start(bp);
 
 	if (!(bp->b_flags & B_READ))
-		error = fscow_run(bp);
+		error = fscow_run(bp, false);
 
 	if (error) {
 		bp->b_error = error;
@@ -629,7 +624,6 @@ spec_close(void *v)
 		struct vnode *a_vp;
 		int  a_fflag;
 		kauth_cred_t a_cred;
-		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct session *sess;
@@ -656,8 +650,8 @@ spec_close(void *v)
 		 * actual tty device.
 		 */
 		mutex_enter(&proclist_lock);
-		if (count == 2 && ap->a_l &&
-		    vp == (sess = ap->a_l->l_proc->p_session)->s_ttyvp) {
+		if (count == 2 &&
+		    vp == (sess = curlwp->l_proc->p_session)->s_ttyvp) {
 			sess->s_ttyvp = NULL;
 			if (sess->s_ttyp->t_session != NULL) {
 				sess->s_ttyp->t_pgrp = NULL;
@@ -690,7 +684,7 @@ spec_close(void *v)
 		 * we must invalidate any in core blocks, so that
 		 * we can, for instance, change floppy disks.
 		 */
-		error = vinvalbuf(vp, V_SAVE, ap->a_cred, ap->a_l, 0, 0);
+		error = vinvalbuf(vp, V_SAVE, ap->a_cred, curlwp, 0, 0);
 		if (error)
 			return (error);
 		/*
@@ -730,9 +724,9 @@ spec_close(void *v)
 		VOP_UNLOCK(vp, 0);
 
 	if (vp->v_type == VBLK)
-		error = bdev_close(dev, flags1, mode, ap->a_l);
+		error = bdev_close(dev, flags1, mode, curlwp);
 	else
-		error = cdev_close(dev, flags1, mode, ap->a_l);
+		error = cdev_close(dev, flags1, mode, curlwp);
 
 	if (!(flags1 & FNONBLOCK))
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);

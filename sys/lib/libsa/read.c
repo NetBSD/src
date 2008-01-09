@@ -1,4 +1,4 @@
-/*	$NetBSD: read.c,v 1.13 2005/12/11 12:24:46 christos Exp $	*/
+/*	$NetBSD: read.c,v 1.13.46.1 2008/01/09 01:56:44 matt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -65,21 +65,18 @@
 
 ssize_t
 #ifndef __INTERNAL_LIBSA_CREAD
-read(fd, dest, bcount)
+read(int fd, void *dest, size_t bcount)
 #else
-oread(fd, dest, bcount)
+oread(int fd, void *dest, size_t bcount)
 #endif
-	int fd;
-	void *dest;
-	size_t bcount;
 {
 	struct open_file *f = &files[fd];
 	size_t resid;
 
 #if !defined(LIBSA_NO_FD_CHECKING)
-	if ((unsigned)fd >= SOPEN_MAX || !(f->f_flags & F_READ)) {
+	if ((unsigned int)fd >= SOPEN_MAX || !(f->f_flags & F_READ)) {
 		errno = EBADF;
-		return (-1);
+		return -1;
 	}
 #endif
 #if !defined(LIBSA_NO_RAW_ACCESS)
@@ -90,13 +87,13 @@ oread(fd, dest, bcount)
 		errno = DEV_STRATEGY(f->f_dev)(f->f_devdata, F_READ,
 			btodb(f->f_offset), bcount, dest, &resid);
 		if (errno)
-			return (-1);
+			return -1;
 		f->f_offset += resid;
-		return (resid);
+		return resid;
 	}
 #endif
 	resid = bcount;
 	if ((errno = FS_READ(f->f_ops)(f, dest, bcount, &resid)))
-		return (-1);
+		return -1;
 	return (ssize_t)(bcount - resid);
 }

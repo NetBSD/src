@@ -1,4 +1,4 @@
-/*	$NetBSD: satlink.c,v 1.33.8.1 2007/11/06 23:27:57 matt Exp $	*/
+/*	$NetBSD: satlink.c,v 1.33.8.2 2008/01/09 01:53:15 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: satlink.c,v 1.33.8.1 2007/11/06 23:27:57 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: satlink.c,v 1.33.8.2 2008/01/09 01:53:15 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -477,7 +477,7 @@ satlinkkqfilter(dev_t dev, struct knote *kn)
 		break;
 
 	default:
-		return (1);
+		return (EINVAL);
 	}
 
 	kn->kn_hook = sc;

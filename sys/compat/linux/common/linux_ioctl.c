@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ioctl.c,v 1.48.8.1 2007/11/06 23:24:57 matt Exp $	*/
+/*	$NetBSD: linux_ioctl.c,v 1.48.8.2 2008/01/09 01:51:10 matt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ioctl.c,v 1.48.8.1 2007/11/06 23:24:57 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ioctl.c,v 1.48.8.2 2008/01/09 01:51:10 matt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "sequencer.h"
@@ -68,7 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_ioctl.c,v 1.48.8.1 2007/11/06 23:24:57 matt Ex
 #include <compat/linux/linux_syscallargs.h>
 
 #include <compat/ossaudio/ossaudio.h>
-#define LINUX_TO_OSS(v) (v)	/* do nothing, same ioctl() encoding */
+#define LINUX_TO_OSS(v) ((const void *)(v))	/* do nothing, same ioctl() encoding */
 
 /*
  * Most ioctl command are just converted to their NetBSD values,
@@ -76,27 +76,24 @@ __KERNEL_RCSID(0, "$NetBSD: linux_ioctl.c,v 1.48.8.1 2007/11/06 23:24:57 matt Ex
  * values need some massaging.
  */
 int
-linux_sys_ioctl(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_ioctl(struct lwp *l, const struct linux_sys_ioctl_args *uap, register_t *retval)
 {
-	struct linux_sys_ioctl_args /* {
+	/* {
 		syscallarg(int) fd;
 		syscallarg(u_long) com;
 		syscallarg(void *) data;
-	} */ *uap = v;
+	} */
 	int error;
 
 	switch (LINUX_IOCGROUP(SCARG(uap, com))) {
 	case 'M':
-		error = oss_ioctl_mixer(l, LINUX_TO_OSS(v), retval);
+		error = oss_ioctl_mixer(l, LINUX_TO_OSS(uap), retval);
 		break;
 	case 'Q':
-		error = oss_ioctl_sequencer(l, LINUX_TO_OSS(v), retval);
+		error = oss_ioctl_sequencer(l, LINUX_TO_OSS(uap), retval);
 		break;
 	case 'P':
-		error = oss_ioctl_audio(l, LINUX_TO_OSS(v), retval);
+		error = oss_ioctl_audio(l, LINUX_TO_OSS(uap), retval);
 		break;
 	case 'r': /* VFAT ioctls; not yet supported */
 		error = ENOSYS;
@@ -134,9 +131,9 @@ linux_sys_ioctl(l, v, retval)
 		if (fp->f_type == DTYPE_VNODE &&
 		    (vp = (struct vnode *)fp->f_data) != NULL &&
 		    vp->v_type == VCHR &&
-		    VOP_GETATTR(vp, &va, l->l_cred, l) == 0 &&
+		    VOP_GETATTR(vp, &va, l->l_cred) == 0 &&
 		    cdevsw_lookup(va.va_rdev) == &sequencer_cdevsw) {
-			error = oss_ioctl_sequencer(l, (void*)LINUX_TO_OSS(uap),
+			error = oss_ioctl_sequencer(l, (const void *)LINUX_TO_OSS(uap),
 						   retval);
 		}
 		else {

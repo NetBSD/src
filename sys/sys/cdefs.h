@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.64.24.1 2007/11/06 23:34:43 matt Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.64.24.2 2008/01/09 01:58:06 matt Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -171,17 +171,23 @@
  * these work for GNU C++ (modulo a slight glitch in the C++ grammar
  * in the distribution version of 2.5.5).
  */
-#if !__GNUC_PREREQ__(2, 5)
-#define	__attribute__(x)	/* delete __attribute__ if non-gcc or gcc1 */
-#if defined(__GNUC__) && !defined(__STRICT_ANSI__)
-#define	__dead		__volatile
-#define	__pure		__const
-#endif
+#if !__GNUC_PREREQ__(2, 0)
+#define __attribute__(x)
 #endif
 
-/* Delete pseudo-keywords wherever they are not available or needed. */
-#ifndef __dead
+#if __GNUC_PREREQ__(2, 5)
+#define	__dead		__attribute__((__noreturn__))
+#elif defined(__GNUC__)
+#define	__dead		__volatile
+#else
 #define	__dead
+#endif
+
+#if __GNUC_PREREQ__(2, 96)
+#define	__pure		__attribute__((__pure__))
+#elif defined(__GNUC__)
+#define	__pure		__const
+#else
 #define	__pure
 #endif
 

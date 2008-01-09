@@ -1,8 +1,9 @@
+/*	$NetBSD: exresop.c,v 1.1.46.1 2008/01/09 01:55:13 matt Exp $	*/
 
 /******************************************************************************
  *
  * Module Name: exresop - AML Interpreter operand/object resolution
- *              xRevision: 1.90 $
+ *              $Revision: 1.1.46.1 $
  *
  *****************************************************************************/
 
@@ -10,7 +11,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2007, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,15 +117,15 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exresop.c,v 1.1 2006/03/23 13:36:31 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exresop.c,v 1.1.46.1 2008/01/09 01:55:13 matt Exp $");
 
 #define __EXRESOP_C__
 
-#include "acpi.h"
-#include "amlcode.h"
-#include "acparser.h"
-#include "acinterp.h"
-#include "acnamesp.h"
+#include <dist/acpica/acpi.h>
+#include <dist/acpica/amlcode.h>
+#include <dist/acpica/acparser.h>
+#include <dist/acpica/acinterp.h>
+#include <dist/acpica/acnamesp.h>
 
 
 #define _COMPONENT          ACPI_EXECUTER
@@ -227,7 +228,6 @@ AcpiExResolveOperands (
     ACPI_OPERAND_OBJECT     *ObjDesc;
     ACPI_STATUS             Status = AE_OK;
     UINT8                   ObjectType;
-    void                    *TempNode;
     UINT32                  ArgTypes;
     const ACPI_OPCODE_INFO  *OpInfo;
     UINT32                  ThisArgType;
@@ -235,7 +235,7 @@ AcpiExResolveOperands (
     UINT16                  TargetOp = 0;
 
 
-    ACPI_FUNCTION_TRACE_U32 ("ExResolveOperands", Opcode);
+    ACPI_FUNCTION_TRACE_U32 (ExResolveOperands, Opcode);
 
 
     OpInfo = AcpiPsGetOpcodeInfo (Opcode);
@@ -289,7 +289,7 @@ AcpiExResolveOperands (
             ObjectType = ((ACPI_NAMESPACE_NODE *) ObjDesc)->Type;
 
             /*
-             * Resolve an alias object. The construction of these objects 
+             * Resolve an alias object. The construction of these objects
              * guarantees that there is only one level of alias indirection;
              * thus, the attached object is always the aliased namespace node
              */
@@ -336,7 +336,6 @@ AcpiExResolveOperands (
 
                     /*lint -fallthrough */
 
-                case AML_NAME_OP:
                 case AML_INDEX_OP:
                 case AML_REF_OF_OP:
                 case AML_ARG_OP:
@@ -422,15 +421,6 @@ AcpiExResolveOperands (
             if (ACPI_FAILURE (Status))
             {
                 return_ACPI_STATUS (Status);
-            }
-
-            if (ObjDesc->Reference.Opcode == AML_NAME_OP)
-            {
-                /* Convert a named reference to the actual named object */
-
-                TempNode = ObjDesc->Reference.Object;
-                AcpiUtRemoveReference (ObjDesc);
-                (*StackPtr) = TempNode;
             }
             goto NextOperand;
 
@@ -717,23 +707,21 @@ AcpiExResolveOperands (
             goto NextOperand;
 
 
-        case ARGI_REGION_OR_FIELD:
+        case ARGI_REGION_OR_BUFFER: /* Used by Load() only */
 
-            /* Need an operand of type REGION or a FIELD in a region */
+            /* Need an operand of type REGION or a BUFFER (which could be a resolved region field) */
 
             switch (ACPI_GET_OBJECT_TYPE (ObjDesc))
             {
+            case ACPI_TYPE_BUFFER:
             case ACPI_TYPE_REGION:
-            case ACPI_TYPE_LOCAL_REGION_FIELD:
-            case ACPI_TYPE_LOCAL_BANK_FIELD:
-            case ACPI_TYPE_LOCAL_INDEX_FIELD:
 
                 /* Valid operand */
                 break;
 
             default:
                 ACPI_ERROR ((AE_INFO,
-                    "Needed [Region/RegionField], found [%s] %p",
+                    "Needed [Region/Buffer], found [%s] %p",
                     AcpiUtGetObjectTypeName (ObjDesc), ObjDesc));
 
                 return_ACPI_STATUS (AE_AML_OPERAND_TYPE);

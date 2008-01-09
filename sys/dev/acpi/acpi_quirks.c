@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_quirks.c,v 1.8 2006/09/23 17:04:26 fvdl Exp $	*/
+/*	$NetBSD: acpi_quirks.c,v 1.8.24.1 2008/01/09 01:52:19 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: acpi_quirks.c,v 1.8 2006/09/23 17:04:26 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_quirks.c,v 1.8.24.1 2008/01/09 01:52:19 matt Exp $");
 
 #include "opt_acpi.h"
 
@@ -58,9 +58,9 @@ static int acpi_rev_cmp(uint32_t, uint32_t, int);
  * XXX add more
  */
 static struct acpi_quirk acpi_quirks[] = {
-	{ ACPI_TABLE_FADT, "PTLTD ", 0x06040000, AQ_LTE, "  FACP  ",
+	{ ACPI_SIG_FADT, "PTLTD ", 0x06040000, AQ_LTE, "  FACP  ",
 	  ACPI_QUIRK_BROKEN },
-	{ ACPI_TABLE_FADT, "NVIDIA", 0x06040000, AQ_EQ, "CK8     ",
+	{ ACPI_SIG_FADT, "NVIDIA", 0x06040000, AQ_EQ, "CK8     ",
 	  ACPI_QUIRK_IRQ0 },
 };
 
@@ -106,26 +106,27 @@ acpi_find_quirks(void)
 {
 	int i, nquirks;
 	struct acpi_quirk *aqp;
-	ACPI_TABLE_HEADER *hdr;
+	ACPI_TABLE_HEADER fadt, dsdt, xsdt, *hdr;
 
 	nquirks = sizeof(acpi_quirks) / sizeof(struct acpi_quirk);
 
+	if (ACPI_FAILURE(AcpiGetTableHeader(ACPI_SIG_FADT, 0, &fadt)))
+		memset(&fadt, 0, sizeof(fadt));
+	if (ACPI_FAILURE(AcpiGetTableHeader(ACPI_SIG_DSDT, 0, &dsdt)))
+		memset(&dsdt, 0, sizeof(dsdt));
+	if (ACPI_FAILURE(AcpiGetTableHeader(ACPI_SIG_XSDT, 0, &xsdt)))
+		memset(&xsdt, 0, sizeof(xsdt));
+
 	for (i = 0; i < nquirks; i++) {
 		aqp = &acpi_quirks[i];
-		/* XXX AcpiGetTableHeader doesn't work for some reason */
-		switch (aqp->aq_tabletype) {
-		case ACPI_TABLE_DSDT:
-			hdr = (ACPI_TABLE_HEADER *)AcpiGbl_DSDT;
-			break;
-		case ACPI_TABLE_XSDT:
-			hdr = (ACPI_TABLE_HEADER *)AcpiGbl_XSDT;
-			break;
-		case ACPI_TABLE_FADT:
-			hdr = (ACPI_TABLE_HEADER *)AcpiGbl_FADT;
-			break;
-		default:
+		if (!strncmp(aqp->aq_tabletype, ACPI_SIG_DSDT, 4))
+			hdr = &dsdt;
+		else if (!strncmp(aqp->aq_tabletype, ACPI_SIG_XSDT, 4))
+			hdr = &xsdt;
+		else if (!strncmp(aqp->aq_tabletype, ACPI_SIG_FADT, 4))
+			hdr = &fadt;
+		else
 			continue;
-		}
 		if (strncmp(aqp->aq_oemid, hdr->OemId, strlen(aqp->aq_oemid)))
 			continue;
 		if (acpi_rev_cmp(aqp->aq_oemrev, hdr->OemRevision,

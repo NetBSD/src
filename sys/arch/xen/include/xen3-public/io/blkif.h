@@ -1,4 +1,4 @@
-/* $NetBSD: blkif.h,v 1.2.42.1 2007/11/06 23:24:26 matt Exp $ */
+/* $NetBSD: blkif.h,v 1.2.42.2 2008/01/09 01:50:12 matt Exp $ */
 /******************************************************************************
  * blkif.h
  * 
@@ -79,6 +79,8 @@ struct blkif_request_segment {
     uint8_t     first_sect, last_sect;
 };
 
+/* native-type requests/responses (always used in frontends ) */
+
 struct blkif_request {
     uint8_t        operation;    /* BLKIF_OP_???                         */
     uint8_t        nr_segments;  /* number of segments                   */
@@ -96,6 +98,44 @@ struct blkif_response {
 };
 typedef struct blkif_response blkif_response_t;
 
+/* i386 requests/responses */
+struct blkif_x86_32_request {
+    uint8_t        operation;    /* BLKIF_OP_???                         */
+    uint8_t        nr_segments;  /* number of segments                   */
+    blkif_vdev_t   handle;       /* only for read/write requests         */
+    uint64_t       id;           /* private guest value, echoed in resp  */
+    blkif_sector_t sector_number;/* start sector idx on disk (r/w only)  */
+    struct blkif_request_segment seg[BLKIF_MAX_SEGMENTS_PER_REQUEST];
+} __packed;
+typedef struct blkif_x86_32_request blkif_x86_32_request_t;
+
+struct blkif_x86_32_response {
+    uint64_t        id;              /* copied from request */
+    uint8_t         operation;       /* copied from request */
+    uint8_t         _pad; 
+    int16_t         status;          /* BLKIF_RSP_???       */
+} __packed;
+typedef struct blkif_x86_32_response blkif_x86_32_response_t;
+
+/* amd64-type requests/responses (always used in frontends ) */
+
+struct blkif_x86_64_request {
+    uint8_t        operation;    /* BLKIF_OP_???                         */
+    uint8_t        nr_segments;  /* number of segments                   */
+    blkif_vdev_t   handle;       /* only for read/write requests         */
+    uint64_t __attribute__((__aligned__(8))) id;/* private guest value, echoed in resp  */
+    blkif_sector_t sector_number;/* start sector idx on disk (r/w only)  */
+    struct blkif_request_segment seg[BLKIF_MAX_SEGMENTS_PER_REQUEST];
+};
+typedef struct blkif_x86_64_request blkif_x86_64_request_t;
+
+struct blkif_x86_64_response {
+    uint64_t __attribute__((__aligned__(8))) id; /* copied from request */
+    uint8_t         operation;       /* copied from request */
+    int16_t         status;          /* BLKIF_RSP_???       */
+};
+typedef struct blkif_x86_64_response blkif_x86_64_response_t;
+
 /*
  * STATUS RETURN CODES.
  */
@@ -111,6 +151,15 @@ typedef struct blkif_response blkif_response_t;
  */
 
 DEFINE_RING_TYPES(blkif, struct blkif_request, struct blkif_response);
+DEFINE_RING_TYPES(blkif_x86_32, struct blkif_x86_32_request, struct blkif_x86_32_response);
+DEFINE_RING_TYPES(blkif_x86_64, struct blkif_x86_64_request, struct blkif_x86_64_response);
+
+union blkif_back_ring_proto {
+	blkif_back_ring_t ring_n; /* native/common members */
+	blkif_x86_32_back_ring_t ring_32;
+	blkif_x86_64_back_ring_t ring_64;
+};
+typedef union blkif_back_ring_proto blkif_back_ring_proto_t;
 
 #define VDISK_CDROM        0x1
 #define VDISK_REMOVABLE    0x2

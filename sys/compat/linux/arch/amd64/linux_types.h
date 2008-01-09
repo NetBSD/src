@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_types.h,v 1.3 2007/04/05 16:39:11 njoly Exp $ */
+/*	$NetBSD: linux_types.h,v 1.3.10.1 2008/01/09 01:50:56 matt Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -88,6 +88,6 @@ struct linux_stat {
 	unsigned 	lst_ctime;
 	unsigned	lst_ctime_nsec;
 	unsigned long long lst_ino;
-} __attribute__((packed));
+} __packed;
 
 #endif /* !_AMD64_LINUX_TYPES_H */

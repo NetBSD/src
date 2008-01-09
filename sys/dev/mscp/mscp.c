@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp.c,v 1.26.6.1 2007/11/06 23:28:24 matt Exp $	*/
+/*	$NetBSD: mscp.c,v 1.26.6.2 2008/01/09 01:53:25 matt Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp.c,v 1.26.6.1 2007/11/06 23:28:24 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp.c,v 1.26.6.2 2008/01/09 01:53:25 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -374,16 +374,6 @@ rwend:
 #ifdef notyet
 			(*md->md_offline)(ui, mp);
 #endif
-		}
-
-		/*
-		 * If the transfer has something to do with bad
-		 * block forwarding, let the driver handle the
-		 * rest.
-		 */
-		if ((bp->b_flags & B_BAD) != 0 && me->me_bb != NULL) {
-			(*me->me_bb)(drive, mp, bp);
-			goto out;
 		}
 
 		/*

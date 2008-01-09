@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.85.6.1 2007/11/06 23:35:32 matt Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.85.6.2 2008/01/09 01:58:43 matt Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.85.6.1 2007/11/06 23:35:32 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.85.6.2 2008/01/09 01:58:43 matt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -76,7 +76,7 @@ struct pool *uvm_aiobuf_pool;
  * list of uvm pagers in the system
  */
 
-struct uvm_pagerops * const uvmpagerops[] = {
+const struct uvm_pagerops * const uvmpagerops[] = {
 	&aobj_pager,
 	&uvm_deviceops,
 	&uvm_vnodeops,
@@ -129,8 +129,7 @@ uvm_pager_init(void)
 	/*
 	 * call pager init functions
 	 */
-	for (lcv = 0 ; lcv < sizeof(uvmpagerops)/sizeof(struct uvm_pagerops *);
-	    lcv++) {
+	for (lcv = 0 ; lcv < __arraycount(uvmpagerops); lcv++) {
 		if (uvmpagerops[lcv]->pgo_init)
 			uvmpagerops[lcv]->pgo_init();
 	}
@@ -174,8 +173,9 @@ ReStart:
 		if (pdaemon) {
 			mutex_enter(&pager_map_wanted_lock);
 			if (emerginuse) {
-				mtsleep(&emergva, PVM | PNORELOCK, "emergva",
-				    0, &pager_map_wanted_lock);
+				UVM_UNLOCK_AND_WAIT(&emergva,
+				    &pager_map_wanted_lock, false,
+				    "emergva", 0);
 				goto ReStart;
 			}
 			emerginuse = true;
@@ -192,8 +192,8 @@ ReStart:
 		mutex_enter(&pager_map_wanted_lock);
 		pager_map_wanted = true;
 		UVMHIST_LOG(maphist, "  SLEEPING on pager_map",0,0,0,0);
-		mtsleep(pager_map, PVM | PNORELOCK, "pager_map", 0,
-		    &pager_map_wanted_lock);
+		UVM_UNLOCK_AND_WAIT(pager_map, &pager_map_wanted_lock, false,
+		    "pager_map", 0);
 		goto ReStart;
 	}
 
@@ -258,7 +258,7 @@ uvm_pagermapout(vaddr_t kva, int npages)
 /*
  * interrupt-context iodone handler for nested i/o bufs.
  *
- * => must be at splbio().
+ * => the buffer is private so need not be locked here
  */
 
 void
@@ -267,8 +267,9 @@ uvm_aio_biodone1(struct buf *bp)
 	struct buf *mbp = bp->b_private;
 
 	KASSERT(mbp != bp);
-	if (bp->b_error != 0)
+	if (bp->b_error != 0) {
 		mbp->b_error = bp->b_error;
+	}
 	mbp->b_resid -= bp->b_bcount;
 	putiobuf(bp);
 	if (mbp->b_resid == 0) {
@@ -279,8 +280,6 @@ uvm_aio_biodone1(struct buf *bp)
 /*
  * interrupt-context iodone handler for single-buf i/os
  * or the top-level buf of a nested-buf i/o.
- *
- * => must be at splbio().
  */
 
 void
@@ -303,18 +302,18 @@ uvm_aio_aiodone(struct buf *bp)
 	int npages = bp->b_bufsize >> PAGE_SHIFT;
 	struct vm_page *pg, *pgs[npages];
 	struct uvm_object *uobj;
-	struct simplelock *slock;
-	int s, i, error, swslot;
+	kmutex_t *slock;
+	int i, error, swslot;
+	int pageout_done = 0;
 	bool write, swap;
 	UVMHIST_FUNC("uvm_aio_aiodone"); UVMHIST_CALLED(ubchist);
 	UVMHIST_LOG(ubchist, "bp %p", bp, 0,0,0);
 
 	error = bp->b_error;
 	write = (bp->b_flags & B_READ) == 0;
-	/* XXXUBC B_NOCACHE is for swap pager, should be done differently */
-	if (write && !(bp->b_flags & B_NOCACHE) && bioopsp) {
-		bioopsp->io_pageiodone(bp);
-	}
+	/* XXXUBC BC_NOCACHE is for swap pager, should be done differently */
+	if (write && !(bp->b_cflags & BC_NOCACHE) && bioopsp != NULL)
+		(*bioopsp->io_pageiodone)(bp);
 
 	uobj = NULL;
 	for (i = 0; i < npages; i++) {
@@ -331,8 +330,8 @@ uvm_aio_aiodone(struct buf *bp)
 	if (!swap) {
 		uobj = pg->uobject;
 		slock = &uobj->vmobjlock;
-		simple_lock(slock);
-		uvm_lock_pageq();
+		mutex_enter(slock);
+		mutex_enter(&uvm_pageqlock);
 	} else {
 #if defined(VMSWAP)
 		if (error) {
@@ -366,8 +365,8 @@ uvm_aio_aiodone(struct buf *bp)
 			} else {
 				slock = &pg->uanon->an_lock;
 			}
-			simple_lock(slock);
-			uvm_lock_pageq();
+			mutex_enter(slock);
+			mutex_enter(&uvm_pageqlock);
 		}
 #endif /* defined(VMSWAP) */
 
@@ -388,7 +387,7 @@ uvm_aio_aiodone(struct buf *bp)
 			} else if (error == ENOMEM) {
 				if (pg->flags & PG_PAGEOUT) {
 					pg->flags &= ~PG_PAGEOUT;
-					uvmexp.paging--;
+					pageout_done++;
 				}
 				pg->flags &= ~PG_CLEAN;
 				uvm_pageactivate(pg);
@@ -438,7 +437,7 @@ uvm_aio_aiodone(struct buf *bp)
 
 		if (pg->flags & PG_PAGEOUT) {
 			pg->flags &= ~PG_PAGEOUT;
-			uvmexp.paging--;
+			pageout_done++;
 			uvmexp.pdfreed++;
 			pg->flags |= PG_RELEASED;
 		}
@@ -451,20 +450,21 @@ uvm_aio_aiodone(struct buf *bp)
 		if (swap) {
 			if (pg->uobject == NULL && pg->uanon->an_ref == 0 &&
 			    (pg->flags & PG_RELEASED) != 0) {
-				uvm_unlock_pageq();
+				mutex_exit(&uvm_pageqlock);
 				uvm_anon_release(pg->uanon);
 			} else {
 				uvm_page_unbusy(&pg, 1);
-				uvm_unlock_pageq();
-				simple_unlock(slock);
+				mutex_exit(&uvm_pageqlock);
+				mutex_exit(slock);
 			}
 		}
 #endif /* defined(VMSWAP) */
 	}
+	uvm_pageout_done(pageout_done);
 	if (!swap) {
 		uvm_page_unbusy(pgs, npages);
-		uvm_unlock_pageq();
-		simple_unlock(slock);
+		mutex_exit(&uvm_pageqlock);
+		mutex_exit(slock);
 	} else {
 #if defined(VMSWAP)
 		KASSERT(write);
@@ -484,12 +484,12 @@ uvm_aio_aiodone(struct buf *bp)
 		uvmexp.pdpending--;
 #endif /* defined(VMSWAP) */
 	}
-	s = splbio();
-	if (write && (bp->b_flags & B_AGE) != 0) {
+	if (write && (bp->b_cflags & BC_AGE) != 0) {
+		mutex_enter(bp->b_objlock);
 		vwakeup(bp);
+		mutex_exit(bp->b_objlock);
 	}
 	putiobuf(bp);
-	splx(s);
 }
 
 /*

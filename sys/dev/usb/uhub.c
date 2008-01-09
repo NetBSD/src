@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.89.10.1 2007/11/06 23:30:38 matt Exp $	*/
+/*	$NetBSD: uhub.c,v 1.89.10.2 2008/01/09 01:54:43 matt Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.89.10.1 2007/11/06 23:30:38 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.89.10.2 2008/01/09 01:54:43 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -165,11 +165,11 @@ USB_ATTACH(uhub)
 
 	devinfop = usbd_devinfo_alloc(dev, 1);
 	USB_ATTACH_SETUP;
-	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfop);
+	aprint_normal("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfop);
 	usbd_devinfo_free(devinfop);
 
 	if (dev->depth > 0 && UHUB_IS_HIGH_SPEED(sc)) {
-		printf("%s: %s transaction translator%s\n",
+		aprint_normal("%s: %s transaction translator%s\n",
 		       USBDEVNAME(sc->sc_dev),
 		       UHUB_IS_SINGLE_TT(sc) ? "single" : "multiple",
 		       UHUB_IS_SINGLE_TT(sc) ? "" : "s");
@@ -183,7 +183,7 @@ USB_ATTACH(uhub)
 	}
 
 	if (dev->depth > USB_HUB_MAX_DEPTH) {
-		printf("%s: hub depth (%d) exceeded, hub ignored\n",
+		aprint_error("%s: hub depth (%d) exceeded, hub ignored\n",
 		       USBDEVNAME(sc->sc_dev), USB_HUB_MAX_DEPTH);
 		USB_ATTACH_ERROR_RETURN;
 	}
@@ -210,12 +210,13 @@ USB_ATTACH(uhub)
 	for (nremov = 0, port = 1; port <= nports; port++)
 		if (!UHD_NOT_REMOV(&hubdesc, port))
 			nremov++;
-	printf("%s: %d port%s with %d removable, %s powered\n",
+	aprint_verbose("%s: %d port%s with %d removable, %s powered\n",
 	       USBDEVNAME(sc->sc_dev), nports, nports != 1 ? "s" : "",
 	       nremov, dev->self_powered ? "self" : "bus");
 
 	if (nports == 0) {
-		printf("%s: no ports, hub ignored\n", USBDEVNAME(sc->sc_dev));
+		aprint_debug("%s: no ports, hub ignored\n",
+		    USBDEVNAME(sc->sc_dev));
 		goto bad;
 	}
 
@@ -231,24 +232,27 @@ USB_ATTACH(uhub)
 	/* Set up interrupt pipe. */
 	err = usbd_device2interface_handle(dev, 0, &iface);
 	if (err) {
-		printf("%s: no interface handle\n", USBDEVNAME(sc->sc_dev));
+		aprint_error("%s: no interface handle\n",
+		    USBDEVNAME(sc->sc_dev));
 		goto bad;
 	}
 
 	if (UHUB_IS_HIGH_SPEED(sc) && !UHUB_IS_SINGLE_TT(sc)) {
 		err = usbd_set_interface(iface, 1);
 		if (err)
-			printf("%s: can't enable multiple TTs\n",
+			aprint_error("%s: can't enable multiple TTs\n",
 			       USBDEVNAME(sc->sc_dev));
 	}
 
 	ed = usbd_interface2endpoint_descriptor(iface, 0);
 	if (ed == NULL) {
-		printf("%s: no endpoint descriptor\n", USBDEVNAME(sc->sc_dev));
+		aprint_error("%s: no endpoint descriptor\n",
+		    USBDEVNAME(sc->sc_dev));
 		goto bad;
 	}
 	if ((ed->bmAttributes & UE_XFERTYPE) != UE_INTERRUPT) {
-		printf("%s: bad interrupt endpoint\n", USBDEVNAME(sc->sc_dev));
+		aprint_error("%s: bad interrupt endpoint\n",
+		    USBDEVNAME(sc->sc_dev));
 		goto bad;
 	}
 
@@ -268,7 +272,7 @@ USB_ATTACH(uhub)
 		  USBD_SHORT_XFER_OK, &sc->sc_ipipe, sc, sc->sc_statusbuf,
 		  sc->sc_statuslen, uhub_intr, USBD_DEFAULT_INTERVAL);
 	if (err) {
-		printf("%s: cannot open interrupt pipe\n",
+		aprint_error("%s: cannot open interrupt pipe\n",
 		       USBDEVNAME(sc->sc_dev));
 		goto bad;
 	}
@@ -342,7 +346,7 @@ USB_ATTACH(uhub)
 		/* Turn the power on. */
 		err = usbd_set_port_feature(dev, port, UHF_PORT_POWER);
 		if (err)
-			printf("%s: port %d power on failed, %s\n",
+			aprint_error("%s: port %d power on failed, %s\n",
 			       USBDEVNAME(sc->sc_dev), port,
 			       usbd_errstr(err));
 		DPRINTF(("usb_init_port: turn on port %d power\n", port));
@@ -353,6 +357,9 @@ USB_ATTACH(uhub)
 	/* The usual exploration will finish the setup. */
 
 	sc->sc_running = 1;
+
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	USB_ATTACH_SUCCESS_RETURN;
 
@@ -591,6 +598,7 @@ USB_DETACH(uhub)
 	if (hub == NULL)		/* Must be partially working */
 		return (0);
 
+	pmf_device_deregister(self);
 	usbd_abort_pipe(sc->sc_ipipe);
 	usbd_close_pipe(sc->sc_ipipe);
 

@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_bsd44_suser.c,v 1.37 2007/02/21 23:00:09 thorpej Exp $ */
+/* $NetBSD: secmodel_bsd44_suser.c,v 1.37.18.1 2008/01/09 01:58:03 matt Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.37 2007/02/21 23:00:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.37.18.1 2008/01/09 01:58:03 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.37 2007/02/21 23:00:09 th
 #include <net/route.h>
 #include <sys/ptrace.h>
 #include <sys/vnode.h>
+#include <sys/proc.h>
 
 #include <miscfs/procfs/procfs.h>
 
@@ -238,9 +239,29 @@ secmodel_bsd44_suser_system_cb(kauth_cred_t cred, kauth_action_t action,
 		switch (req) {
 		case KAUTH_REQ_SYSTEM_TIME_ADJTIME:
 		case KAUTH_REQ_SYSTEM_TIME_NTPADJTIME:
-		case KAUTH_REQ_SYSTEM_TIME_SYSTEM:
+		case KAUTH_REQ_SYSTEM_TIME_TIMECOUNTERS:
 			if (isroot)
 				result = KAUTH_RESULT_ALLOW;
+			break;
+
+		case KAUTH_REQ_SYSTEM_TIME_SYSTEM: {
+			bool device_context = (bool)arg3;
+
+			if (device_context || isroot)
+				result = KAUTH_RESULT_ALLOW;
+
+			break;
+		}
+
+		case KAUTH_REQ_SYSTEM_TIME_RTCOFFSET:
+			/*
+			 * Decisions here are root-agnostic.
+			 *
+			 * KAUTH_REQ_SYSTEM_TIME_RTCOFFSET - Should be used
+			 *  only after the caller was determined as someone
+			 *  who can modify sysctl. For us, this means root.
+			 */
+			result = KAUTH_RESULT_ALLOW;
 			break;
 
 		default:
@@ -250,8 +271,19 @@ secmodel_bsd44_suser_system_cb(kauth_cred_t cred, kauth_action_t action,
 		break;
 
 	case KAUTH_SYSTEM_SYSCTL:
-		if (isroot)
-			result = KAUTH_RESULT_ALLOW;
+		switch (req) {
+		case KAUTH_REQ_SYSTEM_SYSCTL_ADD:
+		case KAUTH_REQ_SYSTEM_SYSCTL_DELETE:
+		case KAUTH_REQ_SYSTEM_SYSCTL_DESC:
+		case KAUTH_REQ_SYSTEM_SYSCTL_PRVT:
+			if (isroot)
+				result = KAUTH_RESULT_ALLOW;
+			break;
+
+		default:
+			break;
+		}
+
 		break;
 
 	case KAUTH_SYSTEM_SWAPCTL:
@@ -262,6 +294,36 @@ secmodel_bsd44_suser_system_cb(kauth_cred_t cred, kauth_action_t action,
 	case KAUTH_SYSTEM_MKNOD:
 		if (isroot)
 			result = KAUTH_RESULT_ALLOW;
+		break;
+
+	case KAUTH_SYSTEM_DEBUG:
+		switch (req) {
+		case KAUTH_REQ_SYSTEM_DEBUG_IPKDB:
+		default:
+			/* Decisions are root-agnostic. */
+			result = KAUTH_RESULT_ALLOW;
+			break;
+		}
+
+		break;
+
+	case KAUTH_SYSTEM_CHSYSFLAGS:
+	case KAUTH_SYSTEM_LKM:
+	case KAUTH_SYSTEM_SETIDCORE:
+		/*
+		 * Decisions here are root-agnostic.
+		 *
+		 * CHSYSFLAGS - Should be used only after the caller was
+		 *              determined as root. Needs to be re-factored
+		 *              anyway. Infects ufs, ext2fs, tmpfs, and rump.
+		 *
+		 * LKM - Subject to permissions on /dev/lkm for now.
+		 *
+		 * SETIDCORE - Should be used only after the caller was
+		 *             determined as someone who can modify sysctl
+		 *             data. For us, this means root.
+		 */
+		result = KAUTH_RESULT_ALLOW;
 		break;
 
 	default:
@@ -402,6 +464,7 @@ secmodel_bsd44_suser_process_cb(kauth_cred_t cred, kauth_action_t action,
 
 	case KAUTH_PROCESS_CANPTRACE: {
 		switch ((u_long)arg1) {
+		case PT_TRACE_ME:
 		case PT_ATTACH:
 		case PT_WRITE_I:
 		case PT_WRITE_D:
@@ -458,21 +521,6 @@ secmodel_bsd44_suser_process_cb(kauth_cred_t cred, kauth_action_t action,
 		break;
 		}
 
-	case KAUTH_PROCESS_CANSYSTRACE:
-		if (isroot) {
-			result = KAUTH_RESULT_ALLOW;
-			break;
-		}
-
-		if (kauth_cred_getuid(cred) != kauth_cred_getuid(p->p_cred) ||
-		    ISSET(p->p_flag, PK_SUGID)) {
-			result = KAUTH_RESULT_DENY;
-			break;
-		}
-
-		result = KAUTH_RESULT_ALLOW;
-		break;
-
 	case KAUTH_PROCESS_CORENAME:
 		result = KAUTH_RESULT_ALLOW;
 
@@ -485,6 +533,22 @@ secmodel_bsd44_suser_process_cb(kauth_cred_t cred, kauth_action_t action,
 		}
 
 		break;
+
+	case KAUTH_PROCESS_FORK: {
+		int lnprocs = (int)(unsigned long)arg2;
+
+		/*
+		 * Don't allow a nonprivileged user to use the last few
+		 * processes. The variable lnprocs is the current number of
+		 * processes, maxproc is the limit.
+		 */
+		if (__predict_false((lnprocs >= maxproc - 5) && !isroot))
+			result = KAUTH_RESULT_DENY;
+		else
+			result = KAUTH_RESULT_ALLOW;
+
+		break;
+		}
 
 	case KAUTH_PROCESS_NICE:
 		if (isroot) {
@@ -611,6 +675,35 @@ secmodel_bsd44_suser_network_cb(kauth_cred_t cred, kauth_action_t action,
 			result = KAUTH_RESULT_ALLOW;
 			break;
 		}
+		break;
+
+	case KAUTH_NETWORK_FIREWALL:
+		switch (req) {
+		case KAUTH_REQ_NETWORK_FIREWALL_FW:
+		case KAUTH_REQ_NETWORK_FIREWALL_NAT:
+			/*
+			 * Decisions are root-agnostic.
+			 *
+			 * Both requests are issued from the context of a
+			 * device with permission bits acting as access
+			 * control.
+			 */
+			result = KAUTH_RESULT_ALLOW;
+			break;
+
+		default:
+			break;
+		}
+		break;
+
+	case KAUTH_NETWORK_FORWSRCRT:
+		/*
+		 * Decision is root-agnostic.
+		 *
+		 * Can only be issued from sysctl context, in our case, only
+		 * root can get here.
+		 */
+		result = KAUTH_RESULT_ALLOW;
 		break;
 
 	case KAUTH_NETWORK_INTERFACE:
@@ -752,6 +845,17 @@ secmodel_bsd44_suser_device_cb(kauth_cred_t cred, kauth_action_t action,
         result = KAUTH_RESULT_DENY;
 
 	switch (action) {
+	case KAUTH_DEVICE_RAWIO_SPEC:
+	case KAUTH_DEVICE_RAWIO_PASSTHRU:
+		/*
+		 * Decision is root-agnostic.
+		 *
+		 * Both requests can be issued on devices subject to their
+		 * permission bits.
+		 */
+		result = KAUTH_RESULT_ALLOW;
+		break;
+
 	case KAUTH_DEVICE_TTY_OPEN:
 		tty = arg0;
 

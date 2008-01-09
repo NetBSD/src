@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vfsops.c,v 1.26 2006/11/16 01:33:38 christos Exp $	*/
+/*	$NetBSD: layer_vfsops.c,v 1.26.24.1 2008/01/09 01:57:02 matt Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_vfsops.c,v 1.26 2006/11/16 01:33:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_vfsops.c,v 1.26.24.1 2008/01/09 01:57:02 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -95,12 +95,11 @@ __KERNEL_RCSID(0, "$NetBSD: layer_vfsops.c,v 1.26 2006/11/16 01:33:38 christos E
  * when that filesystem was mounted.
  */
 int
-layerfs_start(struct mount *mp, int flags,
-    struct lwp *l)
+layerfs_start(struct mount *mp, int flags)
 {
 
 #ifdef notyet
-	return VFS_START(MOUNTTOLAYERMOUNT(mp)->layerm_vfs, flags, l);
+	return VFS_START(MOUNTTOLAYERMOUNT(mp)->layerm_vfs, flags);
 #else
 	return 0;
 #endif
@@ -135,26 +134,27 @@ layerfs_root(mp, vpp)
 }
 
 int
-layerfs_quotactl(mp, cmd, uid, arg, l)
+layerfs_quotactl(mp, cmd, uid, arg)
 	struct mount *mp;
 	int cmd;
 	uid_t uid;
 	void *arg;
-	struct lwp *l;
 {
 
-	return VFS_QUOTACTL(MOUNTTOLAYERMOUNT(mp)->layerm_vfs,
-				cmd, uid, arg, l);
+	return VFS_QUOTACTL(MOUNTTOLAYERMOUNT(mp)->layerm_vfs, cmd, uid, arg);
 }
 
 int
-layerfs_statvfs(mp, sbp, l)
+layerfs_statvfs(mp, sbp)
 	struct mount *mp;
 	struct statvfs *sbp;
-	struct lwp *l;
 {
 	int error;
-	struct statvfs *sbuf = malloc(sizeof(*sbuf), M_TEMP, M_WAITOK);
+	struct statvfs *sbuf;
+
+	sbuf = kmem_alloc(sizeof(*sbuf), KM_SLEEP);
+	if (sbuf == NULL)
+		return ENOMEM;
 
 #ifdef LAYERFS_DIAGNOSTIC
 	if (layerfs_debug)
@@ -165,7 +165,7 @@ layerfs_statvfs(mp, sbp, l)
 
 	(void)memset(sbuf, 0, sizeof(*sbuf));
 
-	error = VFS_STATVFS(MOUNTTOLAYERMOUNT(mp)->layerm_vfs, sbuf, l);
+	error = VFS_STATVFS(MOUNTTOLAYERMOUNT(mp)->layerm_vfs, sbuf);
  	if (error)
 		goto done;
 
@@ -185,13 +185,13 @@ layerfs_statvfs(mp, sbp, l)
 	sbp->f_namemax = sbuf->f_namemax;
 	copy_statvfs_info(sbp, mp);
 done:
-	free(sbuf, M_TEMP);
+	kmem_free(sbuf, sizeof(*sbuf));
 	return error;
 }
 
 int
 layerfs_sync(struct mount *mp, int waitfor,
-    kauth_cred_t cred, struct lwp *l)
+    kauth_cred_t cred)
 {
 
 	/*

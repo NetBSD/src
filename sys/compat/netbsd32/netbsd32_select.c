@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_select.c,v 1.12 2007/03/18 21:38:34 dsl Exp $	*/
+/*	$NetBSD: netbsd32_select.c,v 1.12.10.1 2008/01/09 01:51:38 matt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_select.c,v 1.12 2007/03/18 21:38:34 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_select.c,v 1.12.10.1 2008/01/09 01:51:38 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,15 +53,15 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_select.c,v 1.12 2007/03/18 21:38:34 dsl Exp
 #include <compat/netbsd32/netbsd32_conv.h>
 
 int
-netbsd32_select(struct lwp *l, void *v, register_t *retval)
+netbsd32_select(struct lwp *l, const struct netbsd32_select_args *uap, register_t *retval)
 {
-	struct netbsd32_select_args /* {
+	/* {
 		syscallarg(int) nd;
 		syscallarg(netbsd32_fd_setp_t) in;
 		syscallarg(netbsd32_fd_setp_t) ou;
 		syscallarg(netbsd32_fd_setp_t) ex;
 		syscallarg(netbsd32_timevalp_t) tv;
-	} */ *uap = v;
+	} */
 	int error;
 	struct netbsd32_timeval tv32;
 	struct timeval atv, *tv = NULL;
@@ -79,19 +79,16 @@ netbsd32_select(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-netbsd32_pselect(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_pselect(struct lwp *l, const struct netbsd32_pselect_args *uap, register_t *retval)
 {
-	struct netbsd32_pselect_args /* {
+	/* {
 		syscallarg(int) nd;
 		syscallarg(netbsd32_fd_setp_t) in;
 		syscallarg(netbsd32_fd_setp_t) ou;
 		syscallarg(netbsd32_fd_setp_t) ex;
 		syscallarg(const netbsd32_timespecp_t) ts;
 		syscallarg(const netbsd32_sigsetp_t) mask;
-	} */ *uap = v;
+	} */
 	int error;
 	struct netbsd32_timespec ts32;
 	struct timespec ts;
@@ -119,17 +116,14 @@ netbsd32_pselect(l, v, retval)
 }
 
 int
-netbsd32_pollts(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_pollts(struct lwp *l, const struct netbsd32_pollts_args *uap, register_t *retval)
 {
-	struct netbsd32_pollts_args /* {
+	/* {
 		syscallarg(struct netbsd32_pollfdp_t) fds;
 		syscallarg(u_int) nfds;
 		syscallarg(const netbsd32_timespecp_t) ts;
 		syscallarg(const netbsd32_sigsetp_t) mask;
-	} */ *uap = v;
+	} */
 	int error;
 	struct netbsd32_timespec ts32;
 	struct timespec ts;

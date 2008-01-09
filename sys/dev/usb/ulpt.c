@@ -1,4 +1,4 @@
-/*	$NetBSD: ulpt.c,v 1.78 2007/03/13 13:51:55 drochner Exp $	*/
+/*	$NetBSD: ulpt.c,v 1.78.12.1 2008/01/09 01:54:44 matt Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ulpt.c,v 1.24 1999/11/17 22:33:44 n_hibma Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.78 2007/03/13 13:51:55 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.78.12.1 2008/01/09 01:54:44 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,14 +78,21 @@ __KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.78 2007/03/13 13:51:55 drochner Exp $");
 #define	ULPT_BSIZE	PAGE_SIZE
 
 #define ULPT_READS_PER_SEC 5
+/* XXX Why is 10 us a reasonable value? */ 
 #define ULPT_READ_TIMO 10
 
 #ifdef ULPT_DEBUG
-#define DPRINTF(x)	if (ulptdebug) logprintf x
-#define DPRINTFN(n,x)	if (ulptdebug>(n)) logprintf x
+#define DPRINTFN(n,x)	if (ulptdebug>=(n)) logprintf x
 int	ulptdebug = 0;
+/*
+ * The strategy for debug levels is:
+ *   1: attach-time operations
+ *   2: open/close/status/reset
+ *   3: read/write basic
+ *   4: read/write details
+ *  10: left over from previous debug code
+ */
 #else
-#define DPRINTF(x)
 #define DPRINTFN(n,x)
 #endif
 
@@ -115,7 +122,7 @@ struct ulpt_softc {
 	usbd_xfer_handle sc_in_xfer;
 	void *sc_in_buf;
 
-	usb_callout_t sc_read_callout;
+	usb_callout_t sc_read_callout;	/* to drain input on write-only opens */
 	int sc_has_callout;
 
 	u_char sc_state;
@@ -201,6 +208,7 @@ USB_MATCH(ulpt)
 {
 	USB_IFMATCH_START(ulpt, uaa);
 
+	/* XXX Print something useful, or don't. */
 	DPRINTFN(10,("ulpt_match\n"));
 
 	if (uaa->class == UICLASS_PRINTER &&
@@ -225,8 +233,6 @@ USB_ATTACH(ulpt)
 	u_int8_t epcount;
 	int i, altno;
 	usbd_desc_iter_t iter;
-
-	DPRINTFN(10,("ulpt_attach: sc=%p\n", sc));
 
 	devinfop = usbd_devinfo_alloc(dev, 0);
 	USB_ATTACH_SETUP;
@@ -254,7 +260,7 @@ USB_ATTACH(ulpt)
  found:
 	if (id != ifcd) {
 		/* Found a new bidir setting */
-		DPRINTF(("ulpt_attach: set altno = %d\n", altno));
+		DPRINTFN(1, ("ulpt_attach: set altno = %d\n", altno));
 		err = usbd_set_interface(iface, altno);
 		if (err) {
 			printf("%s: setting alternate interface failed\n",
@@ -298,8 +304,6 @@ USB_ATTACH(ulpt)
 
 	printf("%s: using %s-directional mode\n", USBDEVNAME(sc->sc_dev),
 	       sc->sc_in >= 0 ? "bi" : "uni");
-
-	DPRINTFN(10, ("ulpt_attach: bulk=%d\n", sc->sc_out));
 
 	sc->sc_iface = iface;
 	sc->sc_ifaceno = id->bInterfaceNumber;
@@ -352,6 +356,9 @@ USB_ATTACH(ulpt)
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
 			   USBDEV(sc->sc_dev));
 
+	DPRINTFN(1, ("ulpt_attach: sc=%p in=%d out=%d\n",
+		     sc, sc->sc_out, sc->sc_in));
+
 	USB_ATTACH_SUCCESS_RETURN;
 }
 
@@ -383,7 +390,7 @@ USB_DETACH(ulpt)
 	struct vnode *vp;
 #endif
 
-	DPRINTF(("ulpt_detach: sc=%p\n", sc));
+	DPRINTFN(1, ("ulpt_detach: sc=%p\n", sc));
 
 	sc->sc_dying = 1;
 	if (sc->sc_out_pipe != NULL)
@@ -444,7 +451,7 @@ ulpt_status(struct ulpt_softc *sc)
 	USETW(req.wIndex, sc->sc_ifaceno);
 	USETW(req.wLength, 1);
 	err = usbd_do_request(sc->sc_udev, &req, &status);
-	DPRINTFN(1, ("ulpt_status: status=0x%02x err=%d\n", status, err));
+	DPRINTFN(2, ("ulpt_status: status=0x%02x err=%d\n", status, err));
 	if (!err)
 		return (status);
 	else
@@ -456,7 +463,7 @@ ulpt_reset(struct ulpt_softc *sc)
 {
 	usb_device_request_t req;
 
-	DPRINTFN(1, ("ulpt_reset\n"));
+	DPRINTFN(2, ("ulpt_reset\n"));
 	req.bRequest = UR_SOFT_RESET;
 	USETW(req.wValue, 0);
 	USETW(req.wIndex, sc->sc_ifaceno);
@@ -474,21 +481,6 @@ ulpt_reset(struct ulpt_softc *sc)
 		(void)usbd_do_request(sc->sc_udev, &req, 0); /* 1.1 */
 	}
 }
-
-#if 0
-static void
-ulpt_input(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
-{
-	struct ulpt_softc *sc = priv;
-
-	DPRINTFN(2,("ulpt_input: got some data\n"));
-	/* Do it again. */
-	if (xfer == sc->sc_in_xfer1)
-		usbd_transfer(sc->sc_in_xfer2);
-	else
-		usbd_transfer(sc->sc_in_xfer1);
-}
-#endif
 
 int ulptusein = 1;
 
@@ -513,7 +505,7 @@ ulptopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 	sc->sc_state = ULPT_INIT;
 	sc->sc_flags = flags;
-	DPRINTF(("ulptopen: flags=0x%x\n", (unsigned)flags));
+	DPRINTFN(2, ("ulptopen: flags=0x%x\n", (unsigned)flags));
 
 #if defined(ULPT_DEBUG) && defined(__FreeBSD__)
 	/* Ignoring these flags might not be a good idea */
@@ -532,7 +524,7 @@ ulptopen(dev_t dev, int flag, int mode, struct lwp *l)
 #endif
 
 	for (spin = 0; (ulpt_status(sc) & LPS_SELECT) == 0; spin += STEP) {
-		DPRINTF(("ulpt_open: waiting a while\n"));
+		DPRINTFN(2, ("ulpt_open: waiting a while\n"));
 		if (spin >= TIMEOUT) {
 			error = EBUSY;
 			sc->sc_state = 0;
@@ -570,7 +562,7 @@ ulptopen(dev_t dev, int flag, int mode, struct lwp *l)
 	}
 
 	if (ulptusein && sc->sc_in != -1) {
-		DPRINTF(("ulpt_open: open input pipe\n"));
+		DPRINTFN(2, ("ulpt_open: opening input pipe %d\n", sc->sc_in));
 		err = usbd_open_pipe(sc->sc_iface, sc->sc_in,0,&sc->sc_in_pipe);
 		if (err) {
 			error = EIO;
@@ -589,7 +581,7 @@ ulptopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 		/* If it's not opened for read then set up a reader. */
 		if (!(flag & FREAD)) {
-			DPRINTF(("ulpt_open: start read callout\n"));
+			DPRINTFN(2, ("ulpt_open: start read callout\n"));
 			usb_callout_init(sc->sc_read_callout);
 			usb_callout(sc->sc_read_callout, hz/5, ulpt_tick, sc);
 			sc->sc_has_callout = 1;
@@ -618,10 +610,13 @@ ulptopen(dev_t dev, int flag, int mode, struct lwp *l)
 	if (--sc->sc_refcnt < 0)
 		usb_detach_wakeup(USBDEV(sc->sc_dev));
 
-	DPRINTF(("ulptopen: done, error=%d\n", error));
+	DPRINTFN(2, ("ulptopen: done, error=%d\n", error));
 	return (error);
 }
 
+/*
+ * XXX Document return value semantics.
+ */
 int
 ulpt_statusmsg(u_char status, struct ulpt_softc *sc)
 {
@@ -633,9 +628,9 @@ ulpt_statusmsg(u_char status, struct ulpt_softc *sc)
 
 	if (new & LPS_SELECT)
 		log(LOG_NOTICE, "%s: offline\n", USBDEVNAME(sc->sc_dev));
-	else if (new & LPS_NOPAPER)
+	if (new & LPS_NOPAPER)
 		log(LOG_NOTICE, "%s: out of paper\n", USBDEVNAME(sc->sc_dev));
-	else if (new & LPS_NERR)
+	if (new & LPS_NERR)
 		log(LOG_NOTICE, "%s: output error\n", USBDEVNAME(sc->sc_dev));
 
 	return (status);
@@ -654,6 +649,7 @@ ulptclose(dev_t dev, int flag, int mode,
 		return (0);
 
 	if (sc->sc_has_callout) {
+		DPRINTFN(2, ("ulptclose: stopping read callout\n"));
 		usb_uncallout(sc->sc_read_callout, ulpt_tick, sc);
 		sc->sc_has_callout = 0;
 	}
@@ -680,7 +676,7 @@ ulptclose(dev_t dev, int flag, int mode,
 
 	sc->sc_state = 0;
 
-	DPRINTF(("ulptclose: closed\n"));
+	DPRINTFN(2, ("ulptclose: closed\n"));
 	return (0);
 }
 
@@ -693,7 +689,7 @@ ulpt_do_write(struct ulpt_softc *sc, struct uio *uio, int flags)
 	usbd_xfer_handle xfer;
 	usbd_status err;
 
-	DPRINTF(("ulptwrite\n"));
+	DPRINTFN(3, ("ulptwrite\n"));
 	xfer = sc->sc_out_xfer;
 	bufp = sc->sc_out_buf;
 	while ((n = min(ULPT_BSIZE, uio->uio_resid)) != 0) {
@@ -701,11 +697,11 @@ ulpt_do_write(struct ulpt_softc *sc, struct uio *uio, int flags)
 		error = uiomove(bufp, n, uio);
 		if (error)
 			break;
-		DPRINTFN(1, ("ulptwrite: transfer %d bytes\n", n));
+		DPRINTFN(4, ("ulptwrite: transfer %d bytes\n", n));
 		err = usbd_bulk_transfer(xfer, sc->sc_out_pipe, USBD_NO_COPY,
 			  USBD_NO_TIMEOUT, bufp, &n, "ulptwr");
 		if (err) {
-			DPRINTF(("ulptwrite: error=%d\n", err));
+			DPRINTFN(3, ("ulptwrite: error=%d\n", err));
 			error = EIO;
 			break;
 		}
@@ -732,40 +728,168 @@ ulptwrite(dev_t dev, struct uio *uio, int flags)
 	return (error);
 }
 
+/*
+ * Perform a read operation according to the given uio.
+ * This should respect nonblocking I/O status.
+ * 
+ * XXX Doing a short read when more data is available seems to be
+ * problematic.  See
+ * http://www.freebsd.org/cgi/query-pr.cgi?pr=91538&cat= for a fix.
+ * However, this will be unnecessary given a proper fix for the next
+ * problem, and most actual callers read a lot.
+ *
+ * XXX This code should interact properly with select/poll, and that
+ * requires the USB transactions to be queued and function before the
+ * user does a read.  Read will then consume data from a buffer, and
+ * not interact with the device. See ucom.c for an example of how to
+ * do this.
+ */
 int
 ulpt_do_read(struct ulpt_softc *sc, struct uio *uio, int flags)
 {
-	u_int32_t n, on;
-	int error = 0;
+	u_int32_t n, nread, nreq;
+	int error = 0, nonblocking, timeout;
 	void *bufp;
 	usbd_xfer_handle xfer;
-	usbd_status err;
+	usbd_status err = USBD_NORMAL_COMPLETION;
 
-	DPRINTF(("ulptread\n"));
-
+	/* XXX Resolve with background reader process.  KASSERT? */
 	if (sc->sc_in_pipe == NULL)
-		return 0;
+		return EIO;
+
+	if (flags & IO_NDELAY)
+		nonblocking = 1;
+	else
+		nonblocking = 0;
+
+	if (nonblocking)
+		timeout = USBD_DEFAULT_TIMEOUT; /* 5 ms */
+	else
+		timeout = USBD_NO_TIMEOUT;
+
+	DPRINTFN(3, ("ulptread nonblocking=%d uio_reside=%d timeout=%d\n",
+		     nonblocking, uio->uio_resid, timeout));
 
 	xfer = sc->sc_in_xfer;
 	bufp = sc->sc_in_buf;
-	while ((n = min(ULPT_BSIZE, uio->uio_resid)) != 0) {
-		DPRINTFN(1, ("ulptread: transfer %d bytes\n", n));
-		on = n;
+	nread = 0;
+	while ((nreq = min(ULPT_BSIZE, uio->uio_resid)) != 0) {
+		KASSERT(error == 0);
+		if (error != 0) {
+			printf("ulptread: pre-switch error %d != 0", error);
+			goto done;
+		}
+
+		/*
+		 * XXX Even with the short timeout, this will tsleep,
+		 * but it should be adequately prompt in practice.
+		 */
+		n = nreq;
+		DPRINTFN(4, ("ulptread: transfer %d bytes, nonblocking=%d timeout=%d\n",
+			     n, nonblocking, timeout));
 		err = usbd_bulk_transfer(xfer, sc->sc_in_pipe,
 			  USBD_NO_COPY | USBD_SHORT_XFER_OK,
-			  USBD_NO_TIMEOUT, bufp, &n, "ulptrd");
-		if (err) {
-			DPRINTF(("ulptread: error=%d\n", err));
+			  timeout, bufp, &n, "ulptrd");
+
+		DPRINTFN(4, ("ulptread: transfer complete nreq %d n %d nread %d err %d\n",
+			     nreq, n, nread, err));
+		/*
+		 * Process "err" return, jumping to done if we set "error".
+		 */
+		switch (err) {
+		case USBD_NORMAL_COMPLETION:
+			if (n == 0) {
+				DPRINTFN(3, ("ulptread: NORMAL n==0\n"));
+			}
+			break;
+
+		case USBD_SHORT_XFER:
+			/* We said SHORT_XFER_OK, so shouldn't happen. */
+			DPRINTFN(3, ("ulptread: SHORT n=%d\n", n));
+			break;
+
+		case USBD_TIMEOUT:
+			if (nonblocking == 0) {
+				/* XXX Cannot happen; perhaps KASSERT. */
+				printf("ulptread: timeout in blocking mode\n");
+				error = EIO;
+				goto done;
+			}
+
+			DPRINTFN(3, ("ulptread: TIMEOUT n %d nread %d error %d\n",
+				     n, nread, error));
+			/*
+			 * Don't set error until we understand why
+			 * this happens.
+			 */
+			break;
+
+		case USBD_INTERRUPTED:
+			/*
+			 * The tsleep in usbd_bulk_transfer was
+			 * interrupted.  Reflect it to the caller so
+			 * that reading can be interrupted.
+			 */
+			error = EINTR;
+			DPRINTFN(3, ("ulptread: EINTR error %d\n", error));
+			goto done;
+			break;
+
+		default:
+			/* Assume all other return codes are really errors. */
 			error = EIO;
+			DPRINTFN(3, ("ulptread: n %d err %d error %d\n",
+				     n, err, error));
+			goto done;
 			break;
 		}
-		error = uiomove(bufp, n, uio);
-		if (error)
+		/* XXX KASSERT */
+		if (error != 0) {
+			printf("ulptread: post-switch error %d != 0", error);
+			goto done;
+		}
+
+		if (n > 0) {
+			/*
+			 * Record progress to enable later choosing
+			 * between short reads and EWOULDBLOCK.
+			 */
+			nread += n;
+
+			/* Copy to userspace, giving up on any error. */
+			error = uiomove(bufp, n, uio);
+			if (error != 0)
+				break;
+		} else {
+			/*
+			 * We read 0 bytes, and therefore are done,
+			 * even if we aren't in nonblocking mode.
+			 */
+			if (error == 0 && nread == 0)
+				error = EWOULDBLOCK;
+			DPRINTFN(3, ("ulptread: read 0=>done error %d\n",
+				     error));
+			goto done;
+		}
+
+		/*
+		 * A short transfer indicates no more data will be
+		 * forthcoming.  Terminate this read regardless of
+		 * whether we are in nonblocking mode.  XXX Reconsider
+		 * for blocking mode; maybe we should continue to
+		 * block, but maybe it just doesn't make senes to do
+		 * blocking reads from devices like this.
+		 */
+		if (err == USBD_SHORT_XFER) {
+			DPRINTFN(3, ("ulptread: SHORT=>done n %d nread %d err %d error %d\n",
+				     n, nread, err, error));
 			break;
-		if (on != n)
-			break;
+		}
 	}
 
+done:
+	DPRINTFN(3, ("ulptread: finished n %d nread %d err %d error %d\n",
+			     n, nread, err, error));
 	return (error);
 }
 
@@ -799,17 +923,25 @@ ulpt_read_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
 	usbd_get_xfer_status(xfer, &xsc, NULL, &n, &err);
 	sc = xsc;
 
-	DPRINTFN(1,("ulpt_read_cb: start sc=%p, err=%d n=%d\n", sc, err, n));
+	DPRINTFN(4, ("ulpt_read_cb: start sc=%p, err=%d n=%d\n", sc, err, n));
 
 #ifdef ULPT_DEBUG
 	if (!err && n > 0)
-		DPRINTF(("ulpt_tick: discarding %d bytes\n", n));
+		DPRINTFN(3, ("ulpt_tick: discarding %d bytes\n", n));
 #endif
 	if (!err || err == USBD_TIMEOUT)
 		usb_callout(sc->sc_read_callout, hz / ULPT_READS_PER_SEC,
 			    ulpt_tick, sc);
 }
 
+/*
+ * For devices which are not opened for reading, this function is
+ * called continuously to start read bulk transfers to avoid the
+ * printer overflowing its output buffer.
+ * 
+ * XXX This should be adapted for continuous reads to allow select to
+ * work; see do_ulpt_read().
+ */
 void
 ulpt_tick(void *xsc)
 {
@@ -819,19 +951,26 @@ ulpt_tick(void *xsc)
 	if (sc == NULL || sc->sc_dying)
 		return;
 
-	DPRINTFN(1,("ulpt_tick: start sc=%p\n", sc));
-
 	usbd_setup_xfer(sc->sc_in_xfer, sc->sc_in_pipe, sc, sc->sc_in_buf,
 			ULPT_BSIZE, USBD_NO_COPY | USBD_SHORT_XFER_OK,
 			ULPT_READ_TIMO, ulpt_read_cb);
 	err = usbd_transfer(sc->sc_in_xfer);
-	DPRINTFN(1,("ulpt_tick: err=%d\n", err));
+	DPRINTFN(3, ("ulpt_tick: sc=%p err=%d\n", sc, err));
 }
 
 int
 ulptioctl(dev_t dev, u_long cmd, void *data,
     int flag, struct lwp *l)
 {
+	struct ulpt_softc *sc;
+
+	USB_GET_SC(ulpt, ULPTUNIT(dev), sc);
+
+	switch (cmd) {
+	case FIONBIO:
+		return 0;
+	}
+
 	return ENODEV;
 }
 
@@ -861,18 +1000,4 @@ ieee1284_print_id(char *str)
 
 #if defined(__FreeBSD__)
 DRIVER_MODULE(ulpt, uhub, ulpt_driver, ulpt_devclass, usbd_driver_load, 0);
-#endif
-
-
-
-
-
-#if 0
-		usbd_setup_xfer(sc->sc_in_xfer1, sc->sc_in_pipe, sc,
-		    sc->sc_junk, sizeof sc->sc_junk, USBD_SHORT_XFER_OK,
-		    USBD_NO_TIMEOUT, ulpt_input);
-		usbd_setup_xfer(sc->sc_in_xfer2, sc->sc_in_pipe, sc,
-		    sc->sc_junk, sizeof sc->sc_junk, USBD_SHORT_XFER_OK,
-		    USBD_NO_TIMEOUT, ulpt_input);
-		usbd_transfer(sc->sc_in_xfer1); /* ignore failed start */
 #endif

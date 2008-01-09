@@ -1,4 +1,4 @@
-/* $NetBSD: esavar.h,v 1.8 2007/03/04 06:02:18 christos Exp $ */
+/* $NetBSD: esavar.h,v 1.8.16.1 2008/01/09 01:53:41 matt Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -132,6 +132,5 @@ struct esa_softc
 	int			type;		/* Allegro-1 or Maestro 3? */
 	int			delay1, delay2;
 
-	void			*powerhook;
 	uint16_t		*savemem;
 };

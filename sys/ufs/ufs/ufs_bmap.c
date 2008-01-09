@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_bmap.c,v 1.45.8.1 2007/11/06 23:35:23 matt Exp $	*/
+/*	$NetBSD: ufs_bmap.c,v 1.45.8.2 2008/01/09 01:58:34 matt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_bmap.c,v 1.45.8.1 2007/11/06 23:35:23 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_bmap.c,v 1.45.8.2 2008/01/09 01:58:34 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,7 +119,7 @@ ufs_bmaparray(struct vnode *vp, daddr_t bn, daddr_t *bnp, struct indir *ap,
     int *nump, int *runp, ufs_issequential_callback_t is_sequential)
 {
 	struct inode *ip;
-	struct buf *bp;
+	struct buf *bp, *cbp;
 	struct ufsmount *ump;
 	struct mount *mp;
 	struct indir a[NIADDR + 1], *xap;
@@ -219,8 +219,16 @@ ufs_bmaparray(struct vnode *vp, daddr_t bn, daddr_t *bnp, struct indir *ap,
 		 */
 
 		metalbn = xap->in_lbn;
-		if ((daddr == 0 && !incore(vp, metalbn)) || metalbn == bn)
+		if (metalbn == bn)
 			break;
+		if (daddr == 0) {
+			mutex_enter(&bufcache_lock);
+			cbp = incore(vp, metalbn);
+			mutex_exit(&bufcache_lock);
+			if (cbp == NULL)
+				break;
+		}
+
 		/*
 		 * If we get here, we've either got the block in the cache
 		 * or we have a disk address for it, go fetch it.
@@ -240,7 +248,7 @@ ufs_bmaparray(struct vnode *vp, daddr_t bn, daddr_t *bnp, struct indir *ap,
 
 			return (ENOMEM);
 		}
-		if (bp->b_flags & (B_DONE | B_DELWRI)) {
+		if (bp->b_oflags & (BO_DONE | BO_DELWRI)) {
 			trace(TR_BREADHIT, pack(vp, size), metalbn);
 		}
 #ifdef DIAGNOSTIC

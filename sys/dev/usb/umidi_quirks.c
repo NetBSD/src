@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi_quirks.c,v 1.12.30.1 2007/11/06 23:30:40 matt Exp $	*/
+/*	$NetBSD: umidi_quirks.c,v 1.12.30.2 2008/01/09 01:54:45 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi_quirks.c,v 1.12.30.1 2007/11/06 23:30:40 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi_quirks.c,v 1.12.30.2 2008/01/09 01:54:45 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,7 +51,6 @@ __KERNEL_RCSID(0, "$NetBSD: umidi_quirks.c,v 1.12.30.1 2007/11/06 23:30:40 matt 
 #include <sys/proc.h>
 #include <sys/vnode.h>
 #include <sys/poll.h>
-#include <sys/lock.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>

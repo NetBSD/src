@@ -1,3 +1,5 @@
+/* $NetBSD: drm.h,v 1.1.14.1 2008/01/09 01:52:33 matt Exp $ */
+
 /**
  * \file drm.h
  * Header for the Direct Rendering Manager

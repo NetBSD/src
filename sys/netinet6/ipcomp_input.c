@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcomp_input.c,v 1.31.16.1 2007/11/06 23:34:06 matt Exp $	*/
+/*	$NetBSD: ipcomp_input.c,v 1.31.16.2 2008/01/09 01:57:38 matt Exp $	*/
 /*	$KAME: ipcomp_input.c,v 1.29 2001/09/04 08:43:19 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipcomp_input.c,v 1.31.16.1 2007/11/06 23:34:06 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipcomp_input.c,v 1.31.16.2 2008/01/09 01:57:38 matt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -140,11 +140,7 @@ ipcomp4_input(m, va_alist)
 	ipcomp = mtod(md, struct ipcomp *);
 	ip = mtod(m, struct ip *);
 	nxt = ipcomp->comp_nxt;
-#ifdef _IP_VHL
-	hlen = IP_VHL_HL(ip->ip_vhl) << 2;
-#else
 	hlen = ip->ip_hl << 2;
-#endif
 
 	cpi = ntohs(ipcomp->comp_cpi);
 

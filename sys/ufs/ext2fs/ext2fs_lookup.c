@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_lookup.c,v 1.51.6.1 2007/11/06 23:35:07 matt Exp $	*/
+/*	$NetBSD: ext2fs_lookup.c,v 1.51.6.2 2008/01/09 01:58:23 matt Exp $	*/
 
 /*
  * Modified for NetBSD 1.2E
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.51.6.1 2007/11/06 23:35:07 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.51.6.2 2008/01/09 01:58:23 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -300,7 +300,7 @@ ext2fs_lookup(void *v)
 	/*
 	 * Check accessiblity of directory.
 	 */
-	if ((error = VOP_ACCESS(vdp, VEXEC, cred, cnp->cn_lwp)) != 0)
+	if ((error = VOP_ACCESS(vdp, VEXEC, cred)) != 0)
 		return (error);
 
 	if ((flags & ISLASTCN) && (vdp->v_mount->mnt_flag & MNT_RDONLY) &&
@@ -485,7 +485,7 @@ searchloop:
 		 * Access for write is interpreted as allowing
 		 * creation of files in the directory.
 		 */
-		error = VOP_ACCESS(vdp, VWRITE, cred, cnp->cn_lwp);
+		error = VOP_ACCESS(vdp, VWRITE, cred);
 		if (error)
 			return (error);
 		/*
@@ -571,7 +571,7 @@ found:
 		/*
 		 * Write access to directory required to delete files.
 		 */
-		if ((error = VOP_ACCESS(vdp, VWRITE, cred, cnp->cn_lwp)) != 0)
+		if ((error = VOP_ACCESS(vdp, VWRITE, cred)) != 0)
 			return (error);
 		/*
 		 * Return pointer to current entry in dp->i_offset,
@@ -619,7 +619,7 @@ found:
 	 * regular file, or empty directory.
 	 */
 	if (nameiop == RENAME && (flags & ISLASTCN)) {
-		error = VOP_ACCESS(vdp, VWRITE, cred, cnp->cn_lwp);
+		error = VOP_ACCESS(vdp, VWRITE, cred);
 		if (error)
 			return (error);
 		/*
@@ -870,7 +870,7 @@ ext2fs_direnter(struct inode *ip, struct vnode *dvp, struct componentname *cnp)
 	dp->i_flag |= IN_CHANGE | IN_UPDATE;
 	if (!error && dp->i_endoff && dp->i_endoff < ext2fs_size(dp))
 		error = ext2fs_truncate(dvp, (off_t)dp->i_endoff, IO_SYNC,
-		    cnp->cn_cred, cnp->cn_lwp->l_proc);
+		    cnp->cn_cred);
 	return (error);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.h,v 1.14.2.2 2007/11/08 11:00:18 matt Exp $	*/
+/*	$NetBSD: rump.h,v 1.14.2.3 2008/01/09 01:58:01 matt Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -56,8 +56,7 @@ struct lwp;
 
 void	rump_init(void);
 struct mount	*rump_mnt_init(struct vfsops *, int);
-int		rump_mnt_mount(struct mount *, const char *, void *,
-			       size_t *, struct lwp *);
+int		rump_mnt_mount(struct mount *, const char *, void *, size_t *);
 void		rump_mnt_destroy(struct mount *);
 
 struct componentname	*rump_makecn(u_long, u_long, const char *, size_t,
@@ -98,6 +97,7 @@ void	rump_vp_lock_exclusive(struct vnode *);
 void	rump_vp_lock_shared(struct vnode *);
 void	rump_vp_unlock(struct vnode *);
 int	rump_vp_islocked(struct vnode *);
+void	rump_vp_interlock(struct vnode *);
 
 kauth_cred_t	rump_cred_create(uid_t, gid_t, size_t, gid_t *);
 void		rump_cred_destroy(kauth_cred_t);
@@ -105,12 +105,12 @@ void		rump_cred_destroy(kauth_cred_t);
 #define RUMPCRED_SUSER	NULL
 #define WizardMode	RUMPCRED_SUSER /* COMPAT_NETHACK */
 
-int	rump_vfs_unmount(struct mount *, int, struct lwp *);
+int	rump_vfs_unmount(struct mount *, int);
 int	rump_vfs_root(struct mount *, struct vnode **, int);
 #if 0
-int	rump_vfs_statvfs(struct mount *, struct statvfs *, struct lwp *);
+int	rump_vfs_statvfs(struct mount *, struct statvfs *);
 #endif
-int	rump_vfs_sync(struct mount *, int, kauth_cred_t, struct lwp *);
+int	rump_vfs_sync(struct mount *, int, kauth_cred_t);
 int	rump_vfs_fhtovp(struct mount *, struct fid *, struct vnode **);
 int	rump_vfs_vptofh(struct vnode *, struct fid *, size_t *);
 void	rump_vfs_syncwait(struct mount *);

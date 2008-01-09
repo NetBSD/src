@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.49.6.1 2007/11/06 23:25:28 matt Exp $	*/
+/*	$NetBSD: ld.c,v 1.49.6.2 2008/01/09 01:52:13 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.49.6.1 2007/11/06 23:25:28 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.49.6.2 2008/01/09 01:52:13 matt Exp $");
 
 #include "rnd.h"
 
@@ -58,7 +58,6 @@ __KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.49.6.1 2007/11/06 23:25:28 matt Exp $");
 #include <sys/disk.h>
 #include <sys/dkio.h>
 #include <sys/stat.h>
-#include <sys/lock.h>
 #include <sys/conf.h>
 #include <sys/fcntl.h>
 #include <sys/vnode.h>
@@ -108,7 +107,7 @@ ldattach(struct ld_softc *sc)
 {
 	char tbuf[9];
 
-	mutex_init(&sc->sc_mutex, MUTEX_DRIVER, IPL_BIO);
+	mutex_init(&sc->sc_mutex, MUTEX_DEFAULT, IPL_VM);
 
 	if ((sc->sc_flags & LDF_ENABLED) == 0) {
 		aprint_normal("%s: disabled\n", sc->sc_dv.dv_xname);
@@ -529,7 +528,44 @@ ldioctl(dev_t dev, u_long cmd, void *addr, int32_t flag, struct lwp *l)
 
 		return (dkwedge_list(&sc->sc_dk, dkwl, l));
 	    }
+	case DIOCGSTRATEGY:
+	    {
+		struct disk_strategy *dks = (void *)addr;
 
+		mutex_enter(&sc->sc_mutex);
+		strlcpy(dks->dks_name, bufq_getstrategyname(sc->sc_bufq),
+		    sizeof(dks->dks_name));
+		mutex_exit(&sc->sc_mutex);
+		dks->dks_paramlen = 0;
+
+		return 0;
+	    }
+	case DIOCSSTRATEGY:
+	    {
+		struct disk_strategy *dks = (void *)addr;
+		struct bufq_state *new, *old;
+
+		if ((flag & FWRITE) == 0)
+			return EPERM;
+
+		if (dks->dks_param != NULL)
+			return EINVAL;
+
+		dks->dks_name[sizeof(dks->dks_name) - 1] = 0; /* ensure term */
+		error = bufq_alloc(&new, dks->dks_name,
+		    BUFQ_EXACT|BUFQ_SORT_RAWBLOCK);
+		if (error)
+			return error;
+
+		mutex_enter(&sc->sc_mutex);
+		old = sc->sc_bufq;
+		bufq_move(new, old);
+		sc->sc_bufq = new;
+		mutex_exit(&sc->sc_mutex);
+		bufq_free(old);
+
+		return 0;
+	    }
 	default:
 		error = ENOTTY;
 		break;

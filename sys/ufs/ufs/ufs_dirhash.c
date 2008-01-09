@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_dirhash.c,v 1.19.6.1 2007/11/06 23:35:23 matt Exp $	*/
+/*	$NetBSD: ufs_dirhash.c,v 1.19.6.2 2008/01/09 01:58:34 matt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Ian Dowse.  All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_dirhash.c,v 1.19.6.1 2007/11/06 23:35:23 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_dirhash.c,v 1.19.6.2 2008/01/09 01:58:34 matt Exp $");
 
 /*
  * This implements a hash-based lookup scheme for UFS directories.
@@ -76,14 +76,16 @@ static doff_t ufsdirhash_getprev(struct direct *dp, doff_t offset,
 	   int dirblksiz);
 static int ufsdirhash_recycle(int wanted);
 
-static struct pool ufsdirhash_pool;
+static pool_cache_t ufsdirhash_cache;
 
 #define DIRHASHLIST_LOCK()		mutex_enter(&ufsdirhash_lock)
 #define DIRHASHLIST_UNLOCK()		mutex_exit(&ufsdirhash_lock)
 #define DIRHASH_LOCK(dh)		mutex_enter(&(dh)->dh_lock)
 #define DIRHASH_UNLOCK(dh)		mutex_exit(&(dh)->dh_lock)
-#define DIRHASH_BLKALLOC_WAITOK()	pool_get(&ufsdirhash_pool, PR_WAITOK)
-#define DIRHASH_BLKFREE(ptr)		pool_put(&ufsdirhash_pool, ptr)
+#define DIRHASH_BLKALLOC_WAITOK()	\
+    pool_cache_get(ufsdirhash_cache, PR_WAITOK)
+#define DIRHASH_BLKFREE(ptr)		\
+    pool_cache_put(ufsdirhash_cache, ptr)
 
 /* Dirhash list; recently-used entries are near the tail. */
 static TAILQ_HEAD(, dirhash) ufsdirhash_list;
@@ -1075,8 +1077,8 @@ ufsdirhash_init()
 
 	mutex_init(&ufsdirhash_lock, MUTEX_DEFAULT, IPL_NONE);
 	malloc_type_attach(M_DIRHASH);
-	pool_init(&ufsdirhash_pool, DH_NBLKOFF * sizeof(daddr_t), 0, 0, 0,
-	    "ufsdirhash", &pool_allocator_nointr, IPL_NONE);
+	ufsdirhash_cache = pool_cache_init(DH_NBLKOFF * sizeof(daddr_t), 0,
+	    0, 0, "ufsdirhash", NULL, IPL_NONE, NULL, NULL, NULL);
 	TAILQ_INIT(&ufsdirhash_list);
 }
 
@@ -1085,7 +1087,7 @@ ufsdirhash_done(void)
 {
 
 	KASSERT(TAILQ_EMPTY(&ufsdirhash_list));
-	pool_destroy(&ufsdirhash_pool);
+	pool_cache_destroy(ufsdirhash_cache);
 	malloc_type_detach(M_DIRHASH);
 	mutex_destroy(&ufsdirhash_lock);
 }
