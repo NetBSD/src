@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2007/07/24 10:20:15 pavel Exp $
+#	$NetBSD: Makefile,v 1.7.4.1 2008/01/09 01:27:54 matt Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -19,7 +19,6 @@ ${V}=		${${V}DIR}/${F}.fs
 # to update the release documentation in distrib/notes/common/contents
 MDSETTARGETS=	INSTALL_LARGE		${RAMDISK_B}	-
 MDSETTARGETS+=	INSTALL			${RAMDISK_B}	-
-MDSETTARGETS+=	INSTALL_LAPTOP		${RAMDISK_B}	-
 MDSETTARGETS+=	INSTALL_XEN2_DOMU	${RAMDISK_B}	-
 MDSETTARGETS+=	INSTALL_XEN3_DOMU	${RAMDISK_B}	-
 # MDSETTARGETS+=	INSTALL_SMALL		${RAMDISK_S}	-

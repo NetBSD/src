@@ -1,0 +1,14 @@
+Content-Type: application/X-atf-atffile; version="1"
+
+prop: var1=value1
+prop: var2 = value2
+prop: var3	=	value3
+prop: var4	    =	    value4
+
+prop:var5=value5
+    prop:var6=value6
+
+prop: var7 = "This is a long value."
+prop: var8 = "Single-word"
+prop: var9 = "    Single-word	"
+prop: var10 = Single-word

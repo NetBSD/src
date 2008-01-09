@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.34 2007/03/08 13:51:37 bouyer Exp $
+# $NetBSD: Makefile,v 1.34.4.1 2008/01/09 01:27:51 matt Exp $
 #
 # Consult "*.conf" for the configuration variables; this Makefile is typically
 # not edited for basic configuration changes.
@@ -83,7 +83,32 @@ MACPPC_MKBOOTHFSDIR!= cd ${.CURDIR}/macppc_mkboothfs && ${PRINTOBJDIR}
 SGIMIPS_SGIVOL?=	${TOOLDIR}/bin/nbsgivol
 .endif
 
-RSYNC_SITE?=	rsync://rsync.NetBSD.org/NetBSD/${RELEASENAME}
+##### rsync settings #####
+
+# rsync host; check mirrors on http://www.NetBSD.org/mirrors/#rsync
+# (note not all rsync mirrors provide NetBSD-daily)
+RSYNC_HOST?=	rsync.NetBSD.org
+
+# extra path for rsync mirrors ("/pub", "/netbsd" etc.)
+RSYNC_PATH_PREFIX?=
+
+.if ${RELEASE} == "current"
+# daily date dir name
+BRANCH?=	HEAD
+#DAILY_DIR?=	yyyymmddhhmmZ
+RSYNC_PATH?=	${RSYNC_PATH_PREFIX}/NetBSD-daily/${BRANCH}/${DAILY_DIR}
+.else
+# extra suffix on pre-release ("_BETA2", "_RC5" etc.)
+RELEASE_SUFFIX?=
+RSYNC_PATH?=	${RSYNC_PATH_PREFIX}/NetBSD/${RELEASENAME}${RELEASE_SUFFIX}
+
+# alternative for NetBSD-daily sets of stable branches
+#DAILY_DIR?=	yyyymmddhhmmZ
+#BRANCH?=	netbsd-4
+#RSYNC_PATH?=	${RSYNC_PATH_PREFIX}/NetBSD-daily/${BRANCH}/${DAILY_DIR}
+.endif
+
+RSYNC_SITE?=	rsync://${RSYNC_HOST}${RSYNC_PATH}
 RSYNC_ARGS?=	-va --delete
 RSYNC_EXCLUDE+=	--exclude=/* --exclude=Split --exclude=cdrom
 
@@ -392,15 +417,15 @@ size-${image}: stage-${image} extfileprep fileprep-${image}
 		size=$$(($$(($$size + 327679)) / 327680 * 327680)) && \
 		bootfiles=`for f in ${SUN_BOOT_ARGS.${image}:N-:O}; do echo $$f; done | uniq` && \
 		for f in $$bootfiles; do \
-			bfsize=`ls -l $$f | awk '{print $$5}'` && \
+			bfsize=$$(${TOOL_STAT} -f '%z' $$f) && \
 			size=$$(($$size + $$(($$(($$bfsize + 327679)) / 327680 * 327680)))); \
 		done; \
 	fi && \
 	if [ "${BASE_PORTS.${image}:Mpmax}" != "" ]; then \
-		size=$$(($$size + $$(($$((`ls -l ${BOOTFILE.pmax} | awk '{print $$5}'` + 511)) / 512 * 512)))); \
+		size=$$(($$size + $$(($$(($$(${TOOL_STAT} -f '%z' ${BOOTFILE.pmax}) + 511)) / 512 * 512)))); \
 	fi && \
 	if [ "${BASE_PORTS.${image}:Mvax}" != "" ]; then \
-		size=$$(($$size + $$(($$((`ls -l ${BOOTFILE.vax} | awk '{print $$5}'` + 511)) / 512 * 512)))); \
+		size=$$(($$size + $$(($$(($$(${TOOL_STAT} -f '%z' ${BOOTFILE.vax})  + 511)) / 512 * 512)))); \
 	fi && \
 	if [ "${BASE_PORTS.${image}:Msgimips}" != "" -a \
 	    "${EXTFILES.sgimips}" != "" ]; then \
@@ -451,10 +476,10 @@ ${IMAGEDIR}/${image}.iso: size-${image}
 	rm -f $@.raw $@.tmp
 .endif
 	@echo Rounding up to 32k boundary and padding 32k....
-	@size=`ls -l $@ | awk '{print $$5}'` && \
-	newsize=$$(($$(($$size + 32767)) / 32768 * 32768)) && \
-	dd if=/dev/zero bs=512 count=$$(($$(($$newsize - $$size)) / 512)) >>$@ 2>/dev/null
-	dd if=${EASTER_EGG} bs=32768 count=1 conv=sync >>$@ 2>/dev/null
+	@size=$$(${TOOL_STAT} -f '%z' $@); \
+	    pad=$$(( 32768 - ( $$size & 32767 ) )); \
+	    [ $$pad = 32768 ] || \
+	    dd if=/dev/zero bs=1 count=$$pad >>$@ 2>/dev/null
 
 .endfor		# image in ${CD_IMAGES}		# }
 

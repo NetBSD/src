@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.247.4.1 2007/11/06 23:07:10 matt Exp $
+#	$NetBSD: Makefile,v 1.247.4.2 2008/01/09 01:19:18 matt Exp $
 
 #
 # This is the top-level makefile for building NetBSD. For an outline of
@@ -121,7 +121,7 @@ _SRC_TOP_OBJ_=
 .endif
 
 _SUBDIR=	tools lib include gnu bin games libexec sbin usr.bin
-_SUBDIR+=	usr.sbin share rescue sys etc .WAIT distrib regress
+_SUBDIR+=	usr.sbin share rescue sys etc tests .WAIT distrib regress
 
 #
 # Weed out directories that don't exist.

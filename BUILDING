@@ -634,15 +634,18 @@ BUILDING
 
      -B buildid
                Set the value of BUILDID to buildid.  This will also append the
-               build idenfitier to the name of the ``make'' wrapper script so
+               build identifier to the name of the ``make'' wrapper script so
                that the resulting name is of the form
                ``nbmake-MACHINE-BUILDID''.
 
-     -C cddir  Set the value of CDEXTRA to cddir.  If a relative path is spec-
-               ified, it will be converted to an absolute path before being
-               used.  When combined with ``iso-image'' or
-               ``iso-image-source'', it will cause the contents of cddir to be
-               added to the CD-ROM image.
+     -C cdextras
+               Set the value of CDEXTRA to cdextras which is a space-separated
+               list of files or directories which will be added in order to
+               the CD-ROM image when used in conjunction with ``iso-image'' or
+               ``iso-image-source''.  Files will be added to the root of the
+               CD-ROM image, whereas directories will be copied recursively.
+               If relative paths are specified, they will be converted to
+               absolute paths before being used.
 
      -D dest   Set the value of DESTDIR to dest.  If a relative path is speci-
                fied, it will be converted to an absolute path before being

@@ -1,4 +1,4 @@
-.\"	$NetBSD: racoon.conf.5,v 1.39.4.1 2007/11/06 23:07:38 matt Exp $
+.\"	$NetBSD: racoon.conf.5,v 1.39.4.2 2008/01/09 01:22:36 matt Exp $
 .\"
 .\"	Id: racoon.conf.5,v 1.54 2006/08/22 18:17:17 manubsd Exp
 .\"
@@ -152,7 +152,7 @@ The user to which the unprivileged instance of
 should switch.
 This can be a quoted user name or a numeric UID.
 .It Ic group Ar group ;
-The group the unprivilegied instance of
+The group the unprivileged instance of
 .Xr racoon 8 ,
 should switch.
 This can be a quoted group name or a numeric GID.
@@ -184,7 +184,8 @@ When running in privilege separation mode,
 .Ic certificate
 and
 .Ic script
-paths are mandatory. A
+paths are mandatory.
+A
 .Xr racoon 8
 restart is required if you want path changes to be taken into account.
 .Bl -tag -width Ds -compact
@@ -223,7 +224,8 @@ will refuse to execute a script stored outside of this directory.
 Specifies file where to store PID of process.
 If path starts with
 .Pa /
-it is treated as an absolute path. Otherwise, it is treated as a relative 
+it is treated as an absolute path.
+Otherwise, it is treated as a relative
 path to the VARRUN directory specified at compilation time.
 Default is
 .Pa racoon.pid .
@@ -319,12 +321,14 @@ The
 .Ar owner ,
 and
 .Ar group
-values specify the socket path, owner, and group. They must be quoted.
+values specify the socket path, owner, and group.
+They must be quoted.
 The defaults are
 .Pa /var/racoon/racoon.sock ,
 UID 0, and GID 0.
 .Ar mode
-is the access mode in octal. The default is 0600.
+is the access mode in octal.
+The default is 0600.
 .It Ic adminsock disabled ;
 This directive tells racoon to not listen on the admin socket.
 .El
@@ -409,7 +413,8 @@ Means to use SIT_IDENTITY_ONLY as specified in RFC 2407.
 You can omit this statement.
 .\"
 .It Ic identifier Ar idtype ;
-This statment is obsolete. Instead, use
+This statement is obsolete.
+Instead, use
 .Ic my_identifier .
 .\"
 .It Xo
@@ -825,7 +830,7 @@ RFC2409 specifies that the value MUST be between 8 and 256 bytes.
 The default size is 16 bytes.
 .\"
 .It Ic ph1id Ar number ;
-An optionnal number to identify the remote proposal and to link it
+An optional number to identify the remote proposal and to link it
 only with sainfos who have the same number.
 Defaults to 0.
 .\"
@@ -947,10 +952,12 @@ Otherwise, these instructions are identical.
 .Pp
 The
 .Ic anonymous
-keyword can be used to match any id. The
+keyword can be used to match any id.
+The
 .Ic clientaddr
 keyword can be used to match a remote id that is equal to either the peer
-ip address or the mode_cfg ip address ( if assigned ). This can be useful
+ip address or the mode_cfg ip address ( if assigned ).
+This can be useful
 to restrict policy generation when racoon is acting as a client gateway
 for peers with dynamic ip addresses.
 .Pp
@@ -1108,7 +1115,8 @@ This is the default.
 means to use a RADIUS server.
 It works only if
 .Xr racoon 8
-was built with libradius support. Radius configuration is hanlded by
+was built with libradius support.
+Radius configuration is handled by
 .Xr radius.conf 5 .
 .Ar pam
 means to use PAM.
@@ -1119,8 +1127,8 @@ was built with libpam support.
 means to use LDAP.
 It works only if
 .Xr racoon 8
-was built with libldap support. LDAP configuration is handled by
-statements in the
+was built with libldap support.
+LDAP configuration is handled by statements in the
 .Ic ldapcfg
 section.
 .It Ic auth_groups Ar "group1", ... ;
@@ -1128,7 +1136,7 @@ Specifies the group memberships for Xauth in quoted group name strings.
 When defined, the authenticating user must be a member of at least one
 group for Xauth to succeed.
 .It Ic group_source (system | ldap) ;
-Specifies the source for group validataion of users through Xauth.
+Specifies the source for group validation of users through Xauth.
 .Ar system
 means to use the Unix user database.
 This is the default.
@@ -1154,7 +1162,7 @@ This is the default.
 means to use a RADIUS server.
 It works only if
 .Xr racoon 8
-was built with libradius support and requires RADIUS authentiation.
+was built with libradius support and requires RADIUS authentication.
 RADIUS configuration is handled by
 .Xr radius.conf 5 .
 .Ar ldap
@@ -1215,12 +1223,13 @@ A list of IPv4 addresses for DNS servers, separated by commas, or on multiple
 .Ic dns4
 lines.
 .It Ic wins4 Ar addresses ;
-A list of IPv4 address for WINS servers. The keyword
+A list of IPv4 address for WINS servers.
+The keyword
 .It nbns4
 can also be used as an alias for
 .It wins4 .
 .It Ic split_network (include | local_lan) Ar network/mask, ...
-The network configuration to send, in cidr notation (e.g. 192.168.1.0/24).
+The network configuration to send, in CIDR notation (e.g. 192.168.1.0/24).
 If
 .Ic include
 is specified, the tunnel should be only used to encrypt the indicated
@@ -1284,8 +1293,8 @@ Use the subtree ldap search scope.
 Otherwise, use the one level search scope.
 The default is
 .Ic off .
-.It Ic bind_dn Ar distinguised name;
-The user dn used to optionaly bind as before performing ldap search operations.
+.It Ic bind_dn Ar distinguished name;
+The user dn used to optionally bind as before performing ldap search operations.
 If this option is not specified, anonymous binds are used.
 .It Ic bind_pw Ar string;
 The password used when binding as

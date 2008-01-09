@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_object_impl.h,v 1.17.2.1 2007/11/06 23:07:27 matt Exp $	*/
+/*	$NetBSD: prop_object_impl.h,v 1.17.2.2 2008/01/09 01:21:35 matt Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -242,7 +242,7 @@ struct _prop_object_iterator {
 #include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/systm.h>
-#include <sys/lock.h>
+#include <sys/simplelock.h>
 #include <sys/rwlock.h>
 
 #define	_PROP_ASSERT(x)		KASSERT(x)

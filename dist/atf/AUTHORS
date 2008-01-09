@@ -1,0 +1,20 @@
+Automated Testing Framework (atf)
+Copyright (c) 2007 The NetBSD Foundation, Inc.
+All rights reserved.
+
+
+Authors
+=======
+
+* Julio M. Merino Vidal <jmmv@NetBSD.org>
+
+  Main developer.  He started the work on this project when he took part
+  in the Google Summer of Code 2007 program as a student.
+
+* Martin Husemann <martin@NetBSD.org>
+
+  Mentored this project during its development as part of the Google
+  Summer of Code 2007 program.
+
+
+-- EOF

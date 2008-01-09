@@ -1,0 +1,90 @@
+Automated Testing Framework (atf)
+Copyright (c) 2007 The NetBSD Foundation, Inc.
+All rights reserved.
+
+
+Version 0.3
+===========
+
+Release date: November 11th, 2007
+Status:       Experimental
+
+Changes:
+
+* Added XML output support to atf-report.  This is accompanied by a DTD for
+  the format's structure and sample XSLT/CSS files to post-process this
+  output and convert it to a plain HTML report.
+
+* Changed atf-run to add system information to the report it generates.
+  This is currently used by atf-report's XML output only, and is later
+  printed in the HTML reports in a nice and useful summary table.  The user
+  and system administrator are allowed to tune this feature by means of
+  hooks.
+
+* Removed the test cases' 'isolated' property.  This was intended to avoid
+  touching the file system at all when running the related test case, but
+  this has not been true for a long while: some control files are
+  unconditionally required for several purposes, and we cannot easily get
+  rid of them.  This way we remove several critical and delicate pieces of
+  code.
+
+* Improved atf-report's CSV output format to include information about
+  test programs too.
+
+* Fixed the tests that used atf-compile to not require this tool as a
+  helper.  Avoids systems without build-time utilities to skip many tests
+  that could otherwise be run.  (E.g. NetBSD without the comp.tgz set
+  installed.)
+
+* Many general cleanups: Fixed many pieces of code marked as ugly and/or
+  incomplete.
+
+
+Version 0.2
+===========
+
+Release date: September 20th, 2007
+Status:       Experimental
+
+Changes:
+
+* Test cases now get a known umask on entry.
+
+* atf-run now detects many unexpected failures caused by test programs
+  and reports them as bogus tests.  atf-report is able to handle these
+  new errors and nicely reports them to the user.
+
+* All the data formats read and written by the tools have been documented
+  and cleaned up.  These include those grammars that define how the
+  different components communicate with each other as well as the format
+  of files written by the developers and users: the Atffiles and the
+  configuration files.
+
+* Added the atf-version tool, a utility that displays information about the
+  currently installed version of ATF.
+
+* Test cases can now define an optional cleanup routine to undo their
+  actions regardless of their exit status.
+
+* atf-report now summarizes the list of failed (bogus) test programs when
+  using the ticker output format.
+
+* Test programs now capture some termination signals and clean up any
+  temporary files before exiting the program.
+
+* Multiple bug fixes and improvements all around.
+
+
+Version 0.1
+===========
+
+Release date: August 20th, 2007
+Status:       Experimental
+
+Changes:
+
+* First public version.  This was released coinciding with the end of the
+  Google Summer of Code 2007 program.
+
+
+-- EOF

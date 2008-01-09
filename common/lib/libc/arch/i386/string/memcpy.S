@@ -1,4 +1,4 @@
-/*	$NetBSD: memcpy.S,v 1.2 2006/04/07 12:07:55 yamt Exp $	*/
+/*	$NetBSD: memcpy.S,v 1.2.18.1 2008/01/09 01:20:54 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: memcpy.S,v 1.2 2006/04/07 12:07:55 yamt Exp $")
+	RCSID("$NetBSD: memcpy.S,v 1.2.18.1 2008/01/09 01:20:54 matt Exp $")
 #endif
 
 	/*
@@ -73,7 +73,7 @@ ENTRY(memcpy)
 	movl	%ecx,%eax
 	jb	.Lbackwards
 #endif
-	cld			/* nope, copy forwards. */
+	/* nope, copy forwards. */
 	shrl	$2,%ecx		/* copy by words */
 	rep
 	movsl

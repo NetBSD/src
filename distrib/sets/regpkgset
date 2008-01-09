@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-# $NetBSD: regpkgset,v 1.9 2007/02/05 18:26:01 apb Exp $
+# $NetBSD: regpkgset,v 1.9.4.1 2008/01/09 01:28:13 matt Exp $
 #
 # Copyright (c) 2003 Alistair G. Crooks.  All rights reserved.
 #
@@ -126,7 +126,7 @@ if [ $# -lt 1 ]; then
 fi
 
 case "$1" in
-all)	list="base comp etc games man misc text" ;;
+all)	list="base comp etc games man misc tests text" ;;
 *)	list="$*" ;;
 esac
 

@@ -13,6 +13,9 @@
 /* Define to 1 if you have the `asprintf' function. */
 #define HAVE_ASPRINTF 1
 
+/* Define to 1 if you have the `bcopy' function. */
+#define HAVE_BCOPY 1
+
 /* Define to 1 if you have the `bswap64' function. */
 #define HAVE_BSWAP64 1
 
@@ -66,6 +69,9 @@
 
 /* Define to 1 if you have the <memory.h> header file. */
 #define HAVE_MEMORY_H 1
+
+/* Define to 1 if you have the `memset' function. */
+#define HAVE_MEMSET 1
 
 /* Define to 1 if you have the <netdb.h> header file. */
 #define HAVE_NETDB_H 1
@@ -194,13 +200,13 @@
 #define PACKAGE_NAME "netbsd-iscsi"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "netbsd-iscsi 20071025"
+#define PACKAGE_STRING "netbsd-iscsi 20071221"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "netbsd-iscsi"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "20071025"
+#define PACKAGE_VERSION "20071221"
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1

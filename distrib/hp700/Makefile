@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.2 2007/03/06 21:57:02 bouyer Exp $
+#	$NetBSD: Makefile,v 1.2.4.1 2008/01/09 01:27:52 matt Exp $
 
-SUBDIR=	ramdisk .WAIT kernel cdroms
+SUBDIR=	ramdisk .WAIT kernel cdroms sysnbsd
 TARGETS+=release
 
 iso_image:

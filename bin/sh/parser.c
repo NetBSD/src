@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.65 2007/06/07 20:57:59 dsl Exp $	*/
+/*	$NetBSD: parser.c,v 1.65.4.1 2008/01/09 01:20:03 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.65 2007/06/07 20:57:59 dsl Exp $");
+__RCSID("$NetBSD: parser.c,v 1.65.4.1 2008/01/09 01:20:03 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -114,8 +114,8 @@ STATIC int readtoken(void);
 STATIC int xxreadtoken(void);
 STATIC int readtoken1(int, char const *, char *, int);
 STATIC int noexpand(char *);
-STATIC void synexpect(int) __attribute__((__noreturn__));
-STATIC void synerror(const char *) __attribute__((__noreturn__));
+STATIC void synexpect(int) __dead;
+STATIC void synerror(const char *) __dead;
 STATIC void setprompt(int);
 
 

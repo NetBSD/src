@@ -1,0 +1,6 @@
+Content-Type: application/X-atf-atffile; version="1"
+
+prop: foo = bar # A comment.
+conf: foo = bar # A comment.
+tp: foo # A comment.
+tp-glob: foo # A comment.

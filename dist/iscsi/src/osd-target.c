@@ -1,4 +1,4 @@
-/* $NetBSD: osd-target.c,v 1.6 2007/06/16 23:13:26 agc Exp $ */
+/* $NetBSD: osd-target.c,v 1.6.4.1 2008/01/09 01:26:14 matt Exp $ */
 
 /*
  * Copyright © 2006 Alistair Crooks.  All rights reserved.
@@ -32,7 +32,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright © 2006 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: osd-target.c,v 1.6 2007/06/16 23:13:26 agc Exp $");
+__RCSID("$NetBSD: osd-target.c,v 1.6.4.1 2008/01/09 01:26:14 matt Exp $");
 #endif
 #include "config.h"
 
@@ -52,7 +52,7 @@ __RCSID("$NetBSD: osd-target.c,v 1.6 2007/06/16 23:13:26 agc Exp $");
 #include <unistd.h>
 
 #include "iscsi.h"
-#include "util.h"
+#include "iscsiutil.h"
 #include "target.h"
 #include "device.h"
 

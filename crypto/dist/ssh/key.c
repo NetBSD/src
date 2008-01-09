@@ -1,5 +1,5 @@
-/*	$NetBSD: key.c,v 1.25 2007/03/10 22:52:06 christos Exp $	*/
-/* $OpenBSD: key.c,v 1.68 2006/11/06 21:25:28 markus Exp $ */
+/*	$NetBSD: key.c,v 1.25.4.1 2008/01/09 01:22:41 matt Exp $	*/
+/* $OpenBSD: key.c,v 1.69 2007/07/12 05:48:05 ray Exp $ */
 /*
  * read_bignum():
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -34,7 +34,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: key.c,v 1.25 2007/03/10 22:52:06 christos Exp $");
+__RCSID("$NetBSD: key.c,v 1.25.4.1 2008/01/09 01:22:41 matt Exp $");
 
 #include <sys/types.h>
 
@@ -170,9 +170,7 @@ key_equal(const Key *a, const Key *b)
 		    BN_cmp(a->dsa->pub_key, b->dsa->pub_key) == 0;
 	default:
 		fatal("key_equal: bad key type %d", a->type);
-		break;
 	}
-	return 0;
 }
 
 u_char*

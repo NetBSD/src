@@ -1,0 +1,9 @@
+Content-Type: application/X-atf-atffile; version="1"
+
+prop: test-suite = atf
+
+tp: t_tc
+tp: t_tp
+tp: t_normalize
+tp: t_config
+tp: t_atf_check

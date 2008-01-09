@@ -42,7 +42,7 @@
 #include <sd.h>
 #endif
 
-#include "util.h"
+#include "iscsiutil.h"
 #include "util.c"
 #include "driver.h"
 #include "iscsi.h"

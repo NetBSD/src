@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.97.8.1 2007/11/06 23:10:14 matt Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.97.8.2 2008/01/09 01:28:29 matt Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -802,6 +802,9 @@ message set_man_pages
 
 message set_misc
 {Divers}
+
+message set_tests
+{Test programs}
 
 message set_text_tools
 {Outils de manipulation de textes}

@@ -38,7 +38,7 @@
 #ifndef _DRIVER_H_
 #define _DRIVER_H_
 #include "iscsi.h"
-#include "util.h"
+#include "iscsiutil.h"
 #include "initiator.h"
 
 /*

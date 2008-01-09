@@ -41,7 +41,7 @@
 #include <stdint.h>
 #endif
 
-#include "util.h"
+#include "iscsiutil.h"
 
 #define OSD_VENDOR	"NetBSD"
 #define OSD_PRODUCT	"NetBSD/Intel OSD"

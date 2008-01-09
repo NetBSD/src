@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.de,v 1.11 2007/05/17 01:50:49 hubertf Exp $	*/
+/*	$NetBSD: msg.md.de,v 1.11.4.1 2008/01/09 01:28:35 matt Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -169,8 +169,4 @@ message updatembr
 NetBSD Bootcodes updaten?}
 
 message set_kernel_1	{Kernel (GENERIC)}
-message set_kernel_2	{Kernel (GENERIC.MP)}
-message set_kernel_3	{Kernel (GENERIC_LAPTOP)}
-message set_kernel_4	{Kernel (GENERIC_DIAGNOSTIC)}
-message set_kernel_5	{Kernel (GENERIC.NOACPI)}
-/* message set_kernel_6	{Kernel (GENERIC_PS2TINY)} */
+message set_kernel_2	{Kernel (GENERIC.NOACPI)}

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_doi.c,v 1.31 2007/07/18 12:07:51 vanhu Exp $	*/
+/*	$NetBSD: ipsec_doi.c,v 1.31.4.1 2008/01/09 01:22:35 matt Exp $	*/
 
 /* Id: ipsec_doi.c,v 1.55 2006/08/17 09:20:41 vanhu Exp */
 
@@ -3237,7 +3237,9 @@ ipsecdoi_transportmode(pp)
 
 	for (; pp; pp = pp->next) {
 		for (pr = pp->head; pr; pr = pr->next) {
-			if (pr->encmode != IPSECDOI_ATTR_ENC_MODE_TRNS)
+			if (pr->encmode != IPSECDOI_ATTR_ENC_MODE_TRNS &&
+			    pr->encmode != IPSECDOI_ATTR_ENC_MODE_UDPTRNS_RFC &&
+			    pr->encmode != IPSECDOI_ATTR_ENC_MODE_UDPTRNS_DRAFT)
 				return 0;
 		}
 	}
@@ -4065,8 +4067,12 @@ ipsecdoi_setid2(iph2)
 		return -1;
 	}
 
-	iph2->id = ipsecdoi_sockaddr2id((struct sockaddr *)&sp->spidx.src,
-					sp->spidx.prefs, sp->spidx.ul_proto);
+	if (!ipsecdoi_transportmode(iph2->proposal))
+		iph2->id = ipsecdoi_sockaddr2id((struct sockaddr *)&sp->spidx.src,
+				sp->spidx.prefs, sp->spidx.ul_proto);
+	else
+		iph2->id = ipsecdoi_sockaddr2id(iph2->src, IPSECDOI_PREFIX_HOST,
+				sp->spidx.ul_proto);
 	if (iph2->id == NULL) {
 		plog(LLV_ERROR, LOCATION, NULL,
 			"failed to get ID for %s\n",
@@ -4077,8 +4083,12 @@ ipsecdoi_setid2(iph2)
 		s_ipsecdoi_ident(((struct ipsecdoi_id_b *)iph2->id->v)->type));
 
 	/* remote side */
-	iph2->id_p = ipsecdoi_sockaddr2id((struct sockaddr *)&sp->spidx.dst,
+	if (!ipsecdoi_transportmode(iph2->proposal))
+		iph2->id_p = ipsecdoi_sockaddr2id((struct sockaddr *)&sp->spidx.dst,
 				sp->spidx.prefd, sp->spidx.ul_proto);
+	else
+		iph2->id_p = ipsecdoi_sockaddr2id(iph2->dst, IPSECDOI_PREFIX_HOST,
+			sp->spidx.ul_proto);
 	if (iph2->id_p == NULL) {
 		plog(LLV_ERROR, LOCATION, NULL,
 			"failed to get ID for %s\n",
@@ -4115,7 +4125,7 @@ ipsecdoi_sockaddr2id(saddr, prefixlen, ul_proto)
 	switch (saddr->sa_family) {
 	case AF_INET:
 		len1 = sizeof(struct in_addr);
-		if (prefixlen == (sizeof(struct in_addr) << 3)) {
+		if (prefixlen >= (sizeof(struct in_addr) << 3)) {
 			type = IPSECDOI_ID_IPV4_ADDR;
 			len2 = 0;
 		} else {
@@ -4128,7 +4138,7 @@ ipsecdoi_sockaddr2id(saddr, prefixlen, ul_proto)
 #ifdef INET6
 	case AF_INET6:
 		len1 = sizeof(struct in6_addr);
-		if (prefixlen == (sizeof(struct in6_addr) << 3)) {
+		if (prefixlen >= (sizeof(struct in6_addr) << 3)) {
 			type = IPSECDOI_ID_IPV6_ADDR;
 			len2 = 0;
 		} else {

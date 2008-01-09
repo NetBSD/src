@@ -1,4 +1,7 @@
-# $NetBSD: lkm.mi,v 1.19 2007/06/29 23:30:16 rumble Exp $
+# $NetBSD: lkm.mi,v 1.19.4.1 2008/01/09 01:28:13 matt Exp $
+#
+# Note: don't delete entries from here - mark them as "obsolete" instead.
+#
 ./usr/lkm/adosfs.o				base-vfs-lkm
 ./usr/lkm/bsdcomp.o				base-ppp-lkm
 ./usr/lkm/cd9660.o				base-vfs-lkm

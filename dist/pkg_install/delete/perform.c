@@ -1,4 +1,4 @@
-/*	$NetBSD: perform.c,v 1.1.1.3 2007/08/14 22:59:50 joerg Exp $	*/
+/*	$NetBSD: perform.c,v 1.1.1.3.2.1 2008/01/09 01:26:17 matt Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -11,7 +11,7 @@
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.15 1997/10/13 15:03:52 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.1.1.3 2007/08/14 22:59:50 joerg Exp $");
+__RCSID("$NetBSD: perform.c,v 1.1.1.3.2.1 2008/01/09 01:26:17 matt Exp $");
 #endif
 #endif
 
@@ -849,7 +849,7 @@ pkg_do(char *pkg)
 				warnx("%s is not empty", LogDir);
 			return 0;
 		} else {
-			if (fexec(REMOVE_CMD, "-r", LogDir, NULL)) {
+			if (fexec(REMOVE_CMD, "-rf", LogDir, NULL)) {
 				warnx("couldn't remove log entry in %s, deinstall failed", LogDir);
 				if (!Force)
 					return 1;

@@ -1,4 +1,4 @@
-# $NetBSD: README,v 1.6 2004/02/13 11:36:08 wiz Exp $
+# $NetBSD: README,v 1.6.22.1 2008/01/09 01:28:12 matt Exp $
 
 To: "NetBSD Port Maintainers"
 Subject: distribution sets, etc...
@@ -79,6 +79,9 @@ the sets are as follows:
 	misc:	share/dict, share/doc, and the machine-dependent
 		man pages for other CPUs which happen to always
 		be installed.
+
+	tests:	unit, regression, integration and stress tests for the
+		whole system.
 
 	text:	text processing tools.  groff and all of its friends.
 		includes man pages for all bins contained within.

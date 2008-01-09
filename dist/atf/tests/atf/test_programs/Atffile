@@ -1,0 +1,12 @@
+Content-Type: application/X-atf-atffile; version="1"
+
+prop: test-suite = atf
+
+tp: t_config
+tp: t_meta_data
+tp: t_workdir
+tp: t_env
+tp: t_fork
+tp: t_srcdir
+tp: t_cleanup
+tp: t_status

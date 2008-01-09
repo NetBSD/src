@@ -1,0 +1,84 @@
+#
+# Automated Testing Framework (atf)
+#
+# Copyright (c) 2007 The NetBSD Foundation, Inc.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+# 3. All advertising materials mentioning features or use of this
+#    software must display the following acknowledgement:
+#        This product includes software developed by the NetBSD
+#        Foundation, Inc. and its contributors.
+# 4. Neither the name of The NetBSD Foundation nor the names of its
+#    contributors may be used to endorse or promote products derived
+#    from this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND
+# CONTRIBUTORS ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
+# INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+# MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+# IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS BE LIABLE FOR ANY
+# DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+# GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+# IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+# OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+# IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+
+#
+# File: atf.header.subr
+#
+#   This file provides default contents for the hooks that must be
+#   redefined by test programs and other stuff that has to be defined
+#   before the test program's code is parsed.
+#
+
+# ------------------------------------------------------------------------
+# GLOBAL VARIABLES
+# ------------------------------------------------------------------------
+
+# The list of all test cases defined by the test program.
+Defined_Test_Cases=
+
+# ------------------------------------------------------------------------
+# PUBLIC INTERFACE
+# ------------------------------------------------------------------------
+
+#
+# atf_init_test_cases
+#
+#   The function in charge of registering the test cases that have to
+#   be made available to the user.  Must be redefined.
+#
+atf_init_test_cases()
+{
+    _atf_error 128 "No test cases defined"
+}
+
+#
+# atf_test_case tc-name
+#
+#   Defines a new test case named tc-name.  The name provided here must be
+#   accompanied by two functions named after it: <tc-name>_head and
+#   <tc-name>_body, and may also be accompanied by a <tc-name>_cleanup
+#   function.
+#
+atf_test_case()
+{
+    Defined_Test_Cases="${Defined_Test_Cases} ${1}"
+
+    eval "${1}_head() { _atf_error 128 '${1}_head not defined'; }"
+    eval "${1}_body() { :; }"
+    eval "${1}_cleanup() { :; }"
+}
+
+# vim: syntax=sh:expandtab:shiftwidth=4:softtabstop=4

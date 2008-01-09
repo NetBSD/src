@@ -1,5 +1,5 @@
-/*	$NetBSD: clientloop.h,v 1.8 2006/09/28 21:22:14 christos Exp $	*/
-/* $OpenBSD: clientloop.h,v 1.16 2006/03/25 22:22:42 djm Exp $ */
+/*	$NetBSD: clientloop.h,v 1.8.8.1 2008/01/09 01:22:40 matt Exp $	*/
+/* $OpenBSD: clientloop.h,v 1.17 2007/08/07 07:32:53 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -45,6 +45,7 @@ void	 client_x11_get_proto(const char *, const char *, u_int,
 void	 client_global_request_reply_fwd(int, u_int32_t, void *);
 void	 client_session2_setup(int, int, int, const char *, struct termios *,
 	    int, Buffer *, char **, dispatch_fn *);
+int	 client_request_tun_fwd(int, int, int);
 
 /* Multiplexing protocol version */
 #define SSHMUX_VER			1

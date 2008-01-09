@@ -32,7 +32,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: bcopy.S,v 1.1 2005/12/20 19:28:51 christos Exp $")
+	RCSID("$NetBSD: bcopy.S,v 1.1.18.1 2008/01/09 01:21:15 matt Exp $")
 #endif
 
 	/*
@@ -59,7 +59,7 @@ ENTRY(bcopy)
 	subq	%rsi,%rax
 	cmpq	%rcx,%rax	/* overlapping? */
 	jb	1f
-	cld			/* nope, copy forwards. */
+	/* nope, copy forwards. */
 	shrq	$3,%rcx		/* copy by words */
 	rep
 	movsq

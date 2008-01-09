@@ -1,4 +1,4 @@
-/* $NetBSD: lib.h,v 1.1.1.4.2.1 2007/11/06 23:09:43 matt Exp $ */
+/* $NetBSD: lib.h,v 1.1.1.4.2.2 2008/01/09 01:26:18 matt Exp $ */
 
 /* from FreeBSD Id: lib.h,v 1.25 1997/10/08 07:48:03 charnier Exp */
 
@@ -287,6 +287,10 @@ typedef struct {
 
 #define IS_STDIN(str)	((str) != NULL && !strcmp((str), "-"))
 #define IS_FULLPATH(str)	((str) != NULL && (str)[0] == '/')
+
+/* Conflict handling (conflicts.c) */
+int	some_installed_package_conflicts_with(const char *, char **, char **);
+
 
 /* Prototypes */
 /* Misc */

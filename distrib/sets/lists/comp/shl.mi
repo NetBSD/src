@@ -1,7 +1,11 @@
-# $NetBSD: shl.mi,v 1.58.4.1 2007/11/06 23:10:10 matt Exp $
+# $NetBSD: shl.mi,v 1.58.4.2 2008/01/09 01:28:17 matt Exp $
+#
+# Note: don't delete entries from here - mark them as "obsolete" instead.
+#
 ./usr/lib/crtbeginT.o				comp-c-lib
 ./usr/lib/libarchive_pic.a			comp-c-piclib
 ./usr/lib/libasn1_pic.a				comp-c-piclib		kerberos
+./usr/lib/libatf_pic.a				comp-atf-piclib
 ./usr/lib/libbind9_pic.a			comp-bind-piclib
 ./usr/lib/libbluetooth_pic.a			comp-c-piclib
 ./usr/lib/libbsdmalloc_pic.a			comp-c-piclib

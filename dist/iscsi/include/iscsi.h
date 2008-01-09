@@ -33,7 +33,7 @@
 #ifndef ISCSI_H
 #define ISCSI_H
 
-#include "util.h"
+#include "iscsiutil.h"
 
 /*
  * iSCSI Version 18

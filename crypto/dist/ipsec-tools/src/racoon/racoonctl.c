@@ -1,4 +1,4 @@
-/*	$NetBSD: racoonctl.c,v 1.7 2006/10/02 07:12:26 manu Exp $	*/
+/*	$NetBSD: racoonctl.c,v 1.7.10.1 2008/01/09 01:22:37 matt Exp $	*/
 
 /*	Id: racoonctl.c,v 1.11 2006/04/06 17:06:25 manubsd Exp */
 
@@ -184,6 +184,7 @@ struct ulproto_tag {
 	{ IPPROTO_ICMP,	"icmp" },
 	{ IPPROTO_TCP,	"tcp" },
 	{ IPPROTO_UDP,	"udp" },
+	{ IPPROTO_GRE,	"gre" },
 	{ 0, NULL },
 };
 
@@ -240,7 +241,7 @@ usage()
 "            : {\"esp\",\"ah\"} <family> <src/prefixlen/port> <dst/prefixlen/port>\n"
 "                              <ul_proto>\n"
 "    <family>: \"inet\" or \"inet6\"\n"
-"    <ul_proto>: \"icmp\", \"tcp\", \"udp\" or \"any\"\n",
+"    <ul_proto>: \"icmp\", \"tcp\", \"udp\", \"gre\" or \"any\"\n",
 	pname, pname, pname, pname, pname, pname, pname);
 }
 

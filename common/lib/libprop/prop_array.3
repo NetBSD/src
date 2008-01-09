@@ -1,4 +1,4 @@
-.\"	$NetBSD: prop_array.3,v 1.5 2007/08/16 16:30:59 thorpej Exp $
+.\"	$NetBSD: prop_array.3,v 1.5.2.1 2008/01/09 01:21:35 matt Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -190,7 +190,7 @@ otherwise.
 .It Fn prop_array_add "prop_array_t array" "prop_object_t obj"
 Add a reference to the object
 .Fa obj
-to the array, appending to the end and growing the array's capacity of
+to the array, appending to the end and growing the array's capacity if
 necessary.
 The object will be retained by the array.
 Returns

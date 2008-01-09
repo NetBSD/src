@@ -60,7 +60,7 @@
 #include "constants.h"
 #include <scsi/scsicam.h>	
 #include <linux/genhd.h>
-#include "util.h"
+#include "iscsiutil.h"
 #include "osd.h"
 
 /*

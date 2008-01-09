@@ -1,4 +1,4 @@
-/*	$NetBSD: byte_swap_2.S,v 1.2 2005/12/27 09:38:11 yamt Exp $	*/
+/*	$NetBSD: byte_swap_2.S,v 1.2.18.1 2008/01/09 01:20:53 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,7 +36,7 @@
 
 #include <machine/asm.h>
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: byte_swap_2.S,v 1.2 2005/12/27 09:38:11 yamt Exp $")
+	RCSID("$NetBSD: byte_swap_2.S,v 1.2.18.1 2008/01/09 01:20:53 matt Exp $")
 #endif
 
 #if defined(_KERNEL) || defined(_STANDALONE)
@@ -48,5 +48,5 @@ _ENTRY(_C_LABEL(ntohs))
 _ENTRY(_C_LABEL(htons))
 _PROF_PROLOGUE
 	movzwl	4(%esp),%eax
-	rorw	$8,%ax
+	xchgb	%al, %ah
 	ret

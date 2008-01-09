@@ -1,2 +1,5 @@
-# $NetBSD: shl.mi,v 1.1 2005/03/18 20:45:43 tron Exp $
+# $NetBSD: shl.mi,v 1.1.14.1 2008/01/09 01:28:26 matt Exp $
+#
+# Note: don't delete entries from here - mark them as "obsolete" instead.
+#
 ./usr/X11R6/lib/libdmx.so.1.0
