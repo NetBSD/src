@@ -1,4 +1,4 @@
-/*	$NetBSD: rs5c313.c,v 1.4 2008/01/09 22:09:22 uwe Exp $	*/
+/*	$NetBSD: rs5c313.c,v 1.5 2008/01/09 22:20:40 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rs5c313.c,v 1.4 2008/01/09 22:09:22 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rs5c313.c,v 1.5 2008/01/09 22:20:40 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,10 +71,6 @@ rs5c313_attach(struct rs5c313_softc *sc)
 	sc->sc_todr.cookie = sc;
 	sc->sc_todr.todr_gettime_ymdhms = rs5c313_todr_gettime_ymdhms;
 	sc->sc_todr.todr_settime_ymdhms = rs5c313_todr_settime_ymdhms;
-
-	sc->sc_todr.todr_gettime = NULL;
-	sc->sc_todr.todr_settime = NULL;
-	sc->sc_todr.todr_setwen = NULL;
 
 	if (rs5c313_init(sc) != 0) {
 		aprint_error_dev(&sc->sc_dev, "init failed\n");
