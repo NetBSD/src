@@ -1,4 +1,4 @@
-.\" $NetBSD: gpioctl.8,v 1.3 2008/01/09 15:50:00 xtraeme Exp $
+.\" $NetBSD: gpioctl.8,v 1.4 2008/01/09 15:56:27 xtraeme Exp $
 .\"	$OpenBSD: gpioctl.8,v 1.5 2004/12/02 05:11:40 grange Exp $
 .\"
 .\" Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
@@ -115,6 +115,12 @@ push-pull output
 tri-state (output disabled)
 .It pu
 internal pull-up enabled
+.It pd
+internal pull-down enabled
+.It iin
+invert input
+.It iout
+invert output
 .El
 .Pp
 Note that not all the flags can be supported by the particular
