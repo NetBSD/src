@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.339 2008/01/05 19:08:49 dsl Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.340 2008/01/09 08:18:12 elad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.339 2008/01/05 19:08:49 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.340 2008/01/09 08:18:12 elad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -3552,6 +3552,29 @@ sys_umask(struct lwp *l, const struct sys_umask_args *uap, register_t *retval)
 	return (0);
 }
 
+int
+dorevoke(struct vnode *vp, kauth_cred_t cred)
+{
+	struct vattr vattr;
+	int error;
+	bool revoke;
+
+	if ((error = VOP_GETATTR(vp, &vattr, cred)) != 0)
+		goto out;
+	if (kauth_cred_geteuid(cred) != vattr.va_uid &&
+	    (error = kauth_authorize_generic(cred,
+	    KAUTH_GENERIC_ISSUSER, NULL)) != 0)
+		goto out;
+	mutex_enter(&vp->v_interlock);
+	revoke = (vp->v_usecount > 1 || (vp->v_iflag & (VI_ALIASED|VI_LAYER)));
+	mutex_exit(&vp->v_interlock);
+	if (revoke)
+		VOP_REVOKE(vp, REVOKEALL);
+
+ out:
+	return (error);
+}
+
 /*
  * Void all references to file by ripping underlying filesystem
  * away from vnode.
@@ -3564,9 +3587,7 @@ sys_revoke(struct lwp *l, const struct sys_revoke_args *uap, register_t *retval)
 		syscallarg(const char *) path;
 	} */
 	struct vnode *vp;
-	struct vattr vattr;
 	int error;
-	bool revoke;
 	struct nameidata nd;
 
 	NDINIT(&nd, LOOKUP, FOLLOW | TRYEMULROOT, UIO_USERSPACE,
@@ -3574,18 +3595,7 @@ sys_revoke(struct lwp *l, const struct sys_revoke_args *uap, register_t *retval)
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	vp = nd.ni_vp;
-	if ((error = VOP_GETATTR(vp, &vattr, l->l_cred)) != 0)
-		goto out;
-	if (kauth_cred_geteuid(l->l_cred) != vattr.va_uid &&
-	    (error = kauth_authorize_generic(l->l_cred,
-	    KAUTH_GENERIC_ISSUSER, NULL)) != 0)
-		goto out;
-	mutex_enter(&vp->v_interlock);
-	revoke = (vp->v_usecount > 1 || (vp->v_iflag & (VI_ALIASED|VI_LAYER)));
-	mutex_exit(&vp->v_interlock);
-	if (revoke)
-		VOP_REVOKE(vp, REVOKEALL);
-out:
+	error = dorevoke(vp, l->l_cred);
 	vrele(vp);
 	return (error);
 }
