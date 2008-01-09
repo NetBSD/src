@@ -1,10 +1,30 @@
-/*	$NetBSD: frameasm.h,v 1.10 2007/11/29 09:53:33 yamt Exp $	*/
+/*	$NetBSD: frameasm.h,v 1.10.6.1 2008/01/09 19:20:44 bouyer Exp $	*/
 
 #ifndef _I386_FRAMEASM_H_
 #define _I386_FRAMEASM_H_
 
 #ifdef _KERNEL_OPT
 #include "opt_multiprocessor.h"
+#include "opt_xen.h"
+#endif
+
+#if !defined(XEN)
+#define CLI(reg)        cli
+#define STI(reg)        sti
+#else
+/* XXX assym.h */
+#define TRAP_INSTR      int $0x82
+#define XEN_BLOCK_EVENTS(reg)   movb $1,EVTCHN_UPCALL_MASK(reg)
+#define XEN_UNBLOCK_EVENTS(reg) movb $0,EVTCHN_UPCALL_MASK(reg)
+#define XEN_TEST_PENDING(reg)   testb $0xFF,EVTCHN_UPCALL_PENDING(reg)
+
+#define CLI(reg)        movl    _C_LABEL(HYPERVISOR_shared_info),reg ;  \
+                        XEN_BLOCK_EVENTS(reg)
+#define STI(reg)        movl    _C_LABEL(HYPERVISOR_shared_info),reg ;  \
+			XEN_UNBLOCK_EVENTS(reg)
+#define STIC(reg)       movl    _C_LABEL(HYPERVISOR_shared_info),reg ;  \
+			XEN_UNBLOCK_EVENTS(reg)  ; \
+			testb $0xff,EVTCHN_UPCALL_PENDING(reg)
 #endif
 
 #ifndef TRAPLOG
