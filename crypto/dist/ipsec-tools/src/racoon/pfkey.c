@@ -1,6 +1,6 @@
-/*	$NetBSD: pfkey.c,v 1.22.4.1 2007/11/06 23:07:37 matt Exp $	*/
+/*	$NetBSD: pfkey.c,v 1.22.4.2 2008/01/09 01:22:36 matt Exp $	*/
 
-/* $Id: pfkey.c,v 1.22.4.1 2007/11/06 23:07:37 matt Exp $ */
+/* $Id: pfkey.c,v 1.22.4.2 2008/01/09 01:22:36 matt Exp $ */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1109,7 +1109,7 @@ pk_sendupdate(iph2)
 			sa_args.l_natt_type = iph2->ph1->natt_options->encaps_type;
 			sa_args.l_natt_sport = extract_port (iph2->ph1->remote);
 			sa_args.l_natt_dport = extract_port (iph2->ph1->local);
-			sa_args.l_natt_oa = NULL;  // FIXME: Here comes OA!!!
+			sa_args.l_natt_oa = iph2->natoa_src;
 #ifdef SADB_X_EXT_NAT_T_FRAG
 			sa_args.l_natt_frag = iph2->ph1->rmconf->esp_frag;
 #endif
@@ -1398,7 +1398,7 @@ pk_sendadd(iph2)
 			sa_args.l_natt_type = UDP_ENCAP_ESPINUDP;
 			sa_args.l_natt_sport = extract_port(iph2->ph1->local);
 			sa_args.l_natt_dport = extract_port(iph2->ph1->remote);
-			sa_args.l_natt_oa = NULL; // FIXME: Here comes OA!!!
+			sa_args.l_natt_oa = iph2->natoa_dst;
 #ifdef SADB_X_EXT_NAT_T_FRAG
 			sa_args.l_natt_frag = iph2->ph1->rmconf->esp_frag;
 #endif
@@ -2833,6 +2833,11 @@ pk_recv(so, lenp)
 		return NULL;
 
 	reallen = PFKEY_UNUNIT64(buf.sadb_msg_len);
+	if (reallen < sizeof(buf)) {
+		*lenp = -1;
+		errno = EIO;
+		return NULL;    /*fatal*/
+	}
 	if ((newmsg = racoon_calloc(1, reallen)) == NULL)
 		return NULL;
 

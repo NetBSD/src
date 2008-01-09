@@ -1,4 +1,7 @@
-# $NetBSD: mi,v 1.7 2005/03/18 20:45:43 tron Exp $
+# $NetBSD: mi,v 1.7.12.1 2008/01/09 01:28:24 matt Exp $
+#
+# Note: don't delete entries from here - mark them as "obsolete" instead.
+#
 ./usr/X11R6/lib/X11/fonts/100dpi/UTBI__10-ISO8859-1.pcf.gz
 ./usr/X11R6/lib/X11/fonts/100dpi/UTBI__10-ISO8859-10.pcf.gz
 ./usr/X11R6/lib/X11/fonts/100dpi/UTBI__10-ISO8859-13.pcf.gz

@@ -37,7 +37,7 @@
 #include "parameters.h"
 #include "defs.h"
 
-#define CONFIG_INITIATOR_NUM_TARGETS 1
+#define CONFIG_INITIATOR_NUM_TARGETS 16
 
 /***********
  * Private *
@@ -138,5 +138,8 @@ int             initiator_discover(char *, uint64_t, int);
 void		get_target_info(uint64_t, initiator_target_t *);
 
 int		ii_initiator_init(const char *, int, int, const char *, char *, int, int, int);
+
+int		initiator_get_targets(int, strv_t *);
+int		initiator_set_target_name(int, char *);
 
 #endif				/* _INITIATOR_H_ */

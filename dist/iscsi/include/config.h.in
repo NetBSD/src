@@ -12,6 +12,9 @@
 /* Define to 1 if you have the `asprintf' function. */
 #undef HAVE_ASPRINTF
 
+/* Define to 1 if you have the `bcopy' function. */
+#undef HAVE_BCOPY
+
 /* Define to 1 if you have the `bswap64' function. */
 #undef HAVE_BSWAP64
 
@@ -65,6 +68,9 @@
 
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H
+
+/* Define to 1 if you have the `memset' function. */
+#undef HAVE_MEMSET
 
 /* Define to 1 if you have the <netdb.h> header file. */
 #undef HAVE_NETDB_H

@@ -1,4 +1,7 @@
-# $NetBSD: mi,v 1.4 2004/05/16 10:35:55 lukem Exp $
+# $NetBSD: mi,v 1.4.20.1 2008/01/09 01:28:23 matt Exp $
+#
+# Note: don't delete entries from here - mark them as "obsolete" instead.
+#
 ./etc/X11/fs/config
 ./etc/X11/lbxproxy/AtomControl
 ./etc/X11/proxymngr/pmconfig

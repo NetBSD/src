@@ -1,9 +1,9 @@
-# $NetBSD: md.amd64,v 1.25.4.1 2007/11/06 23:10:07 matt Exp $
+# $NetBSD: md.amd64,v 1.25.4.2 2008/01/09 01:28:15 matt Exp $
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
 ./usr/include/amd64/aout_machdep.h		comp-c-include
 ./usr/include/amd64/asm.h			comp-c-include
-./usr/include/amd64/atomic.h			comp-c-include
+./usr/include/amd64/atomic.h			comp-obsolete		obsolete
 ./usr/include/amd64/autoconf.h			comp-obsolete		obsolete
 ./usr/include/amd64/bootinfo.h			comp-c-include
 ./usr/include/amd64/bswap.h			comp-c-include
@@ -19,6 +19,7 @@
 ./usr/include/amd64/float.h			comp-c-include
 ./usr/include/amd64/fpu.h			comp-c-include
 ./usr/include/amd64/frame.h			comp-c-include
+./usr/include/amd64/frame_regs.h		comp-c-include
 ./usr/include/amd64/gdt.h			comp-c-include
 ./usr/include/amd64/ieee.h			comp-c-include
 ./usr/include/amd64/ieeefp.h			comp-c-include
@@ -160,3 +161,34 @@
 ./usr/libdata/debug/usr/sbin/acpidump.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/amldb.debug	comp-sysutil-debug	debug
 ./usr/libdata/lint/llib-lx86_64.ln		comp-c-lintlib		lint
+./usr/share/ldscripts/elf_i386.x		comp-util-bin
+./usr/share/ldscripts/elf_i386.xbn		comp-util-bin
+./usr/share/ldscripts/elf_i386.xc		comp-util-bin
+./usr/share/ldscripts/elf_i386.xd		comp-util-bin
+./usr/share/ldscripts/elf_i386.xdc		comp-util-bin
+./usr/share/ldscripts/elf_i386.xdw		comp-util-bin
+./usr/share/ldscripts/elf_i386.xn		comp-util-bin
+./usr/share/ldscripts/elf_i386.xr		comp-util-bin
+./usr/share/ldscripts/elf_i386.xs		comp-util-bin
+./usr/share/ldscripts/elf_i386.xsc		comp-util-bin
+./usr/share/ldscripts/elf_i386.xsw		comp-util-bin
+./usr/share/ldscripts/elf_i386.xu		comp-util-bin
+./usr/share/ldscripts/elf_i386.xw		comp-util-bin
+./usr/share/ldscripts/elf_x86_64.x		comp-util-bin
+./usr/share/ldscripts/elf_x86_64.xbn		comp-util-bin
+./usr/share/ldscripts/elf_x86_64.xc		comp-util-bin
+./usr/share/ldscripts/elf_x86_64.xd		comp-util-bin
+./usr/share/ldscripts/elf_x86_64.xdc		comp-util-bin
+./usr/share/ldscripts/elf_x86_64.xdw		comp-util-bin
+./usr/share/ldscripts/elf_x86_64.xn		comp-util-bin
+./usr/share/ldscripts/elf_x86_64.xr		comp-util-bin
+./usr/share/ldscripts/elf_x86_64.xs		comp-util-bin
+./usr/share/ldscripts/elf_x86_64.xsc		comp-util-bin
+./usr/share/ldscripts/elf_x86_64.xsw		comp-util-bin
+./usr/share/ldscripts/elf_x86_64.xu		comp-util-bin
+./usr/share/ldscripts/elf_x86_64.xw		comp-util-bin
+./usr/share/ldscripts/i386nbsd.x		comp-util-bin
+./usr/share/ldscripts/i386nbsd.xbn		comp-util-bin
+./usr/share/ldscripts/i386nbsd.xn		comp-util-bin
+./usr/share/ldscripts/i386nbsd.xr		comp-util-bin
+./usr/share/ldscripts/i386nbsd.xu		comp-util-bin

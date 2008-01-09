@@ -93,7 +93,7 @@
 #include <unistd.h>
 
 #include "compat.h"
-#include "util.h"
+#include "iscsiutil.h"
 
 
 

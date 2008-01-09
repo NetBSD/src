@@ -1,4 +1,4 @@
-/*	$NetBSD: echo.c,v 1.12 2005/02/06 04:43:43 perry Exp $	*/
+/*	$NetBSD: echo.c,v 1.12.16.1 2008/01/09 01:20:04 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -50,6 +50,9 @@
  * It is suggested that 'printf "%b" "string"' be used to get \ sequences
  * expanded.  printf is now a builtin of netbsd's sh and csh.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: echo.c,v 1.12.16.1 2008/01/09 01:20:04 matt Exp $");
 
 #define main echocmd
 

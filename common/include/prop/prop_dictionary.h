@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_dictionary.h,v 1.7 2007/08/16 16:28:17 thorpej Exp $	*/
+/*	$NetBSD: prop_dictionary.h,v 1.7.2.1 2008/01/09 01:20:45 matt Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -51,7 +51,6 @@ prop_dictionary_t prop_dictionary_create_with_capacity(unsigned int);
 prop_dictionary_t prop_dictionary_copy(prop_dictionary_t);
 prop_dictionary_t prop_dictionary_copy_mutable(prop_dictionary_t);
 
-unsigned int	prop_dictionary_capacity(prop_dictionary_t);
 unsigned int	prop_dictionary_count(prop_dictionary_t);
 bool		prop_dictionary_ensure_capacity(prop_dictionary_t,
 						unsigned int);

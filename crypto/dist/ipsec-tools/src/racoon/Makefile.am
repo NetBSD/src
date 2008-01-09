@@ -113,10 +113,12 @@ cfparse.o: cfparse.c
 cftoken.c: cftoken.l
 	$(LEX) -ocftoken.c $(srcdir)/cftoken.l
 
-cfparse.h cfparse.c: $(srcdir)/cfparse.y
-	$(YACC) -d $(srcdir)/cfparse.y && \
-	mv y.tab.c cfparse.c && \
-	mv y.tab.h cfparse.h
+cfparse.h: cfparse.c
+
+cfparse.c: $(srcdir)/cfparse.y
+	$(YACC) -bcfparse -d $(srcdir)/cfparse.y && \
+	mv cfparse.tab.c cfparse.c && \
+	mv cfparse.tab.h cfparse.h
 
 # Plain-RSA parser
 prsa_tok.o: prsa_tok.c prsa_par.h
@@ -128,10 +130,12 @@ prsa_par.o: prsa_par.c
 prsa_tok.c: $(srcdir)/prsa_tok.l
 	$(LEX) -Pprsa -oprsa_tok.c $(srcdir)/prsa_tok.l
 
-prsa_par.h prsa_par.c: $(srcdir)/prsa_par.y
-	$(YACC) -pprsa -d $(srcdir)/prsa_par.y && \
-	mv y.tab.c prsa_par.c && \
-	mv y.tab.h prsa_par.h
+prsa_par.h: prsa_par.c
+
+prsa_par.c: $(srcdir)/prsa_par.y
+	$(YACC) -bprsa_par -pprsa -d $(srcdir)/prsa_par.y && \
+	mv prsa_par.tab.c prsa_par.c && \
+	mv prsa_par.tab.h prsa_par.h
 
 # special object rules
 crypto_openssl_test.o: crypto_openssl.c

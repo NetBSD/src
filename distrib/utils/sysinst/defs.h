@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.132 2006/10/04 21:27:27 christos Exp $	*/
+/*	$NetBSD: defs.h,v 1.132.8.1 2008/01/09 01:28:27 matt Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -107,6 +107,7 @@ enum {
     SET_GAMES,		/* text games */
     SET_MAN_PAGES,	/* online manual pages */
     SET_MISC,		/* miscellaneuous */
+    SET_TESTS,		/* tests */
     SET_TEXT_TOOLS,	/* text processing tools */
 
     /* X11 sets */
@@ -137,7 +138,7 @@ enum {
 #define SET_CORE SET_BASE, SET_ETC
 /* All system sets */
 #define SET_SYSTEM SET_CORE, SET_COMPILER, SET_GAMES, \
-		    SET_MAN_PAGES, SET_MISC, SET_TEXT_TOOLS
+		    SET_MAN_PAGES, SET_MISC, SET_TESTS, SET_TEXT_TOOLS
 /* All X11 sets */
 #define SET_X11_NOSERVERS SET_X11_BASE, SET_X11_FONTS, SET_X11_PROG, SET_X11_ETC
 #define SET_X11 SET_X11_NOSERVERS, SET_X11_SERVERS

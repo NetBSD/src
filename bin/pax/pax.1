@@ -1,4 +1,4 @@
-.\"    $NetBSD: pax.1,v 1.53.4.1 2007/11/06 23:07:18 matt Exp $
+.\"    $NetBSD: pax.1,v 1.53.4.2 2008/01/09 01:20:02 matt Exp $
 .\"
 .\" Copyright (c) 1992 Keith Muller.
 .\" Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 .Nd read and write file archives and copy directory hierarchies
 .Sh SYNOPSIS
 .Nm
-.Op Fl 0cdjnvzVO
+.Op Fl 0cdjnOVvz
 .Bk -words
 .Op Fl E Ar limit
 .Ek
@@ -76,7 +76,7 @@
 .Op Ar pattern ...\&
 .Nm
 .Fl r
-.Op Fl cdijknuvzADOVYZ
+.Op Fl AcDdijknOuVvYZz
 .Bk -words
 .Op Fl E Ar limit
 .Ek
@@ -119,7 +119,7 @@
 .Op Ar pattern ...\&
 .Nm
 .Fl w
-.Op Fl dijtuvzAHLMOPVX
+.Op Fl AdHijLMOPtuVvXz
 .Bk -words
 .Op Fl b Ar blocksize
 .Ek
@@ -167,7 +167,7 @@
 .Nm
 .Fl r
 .Fl w
-.Op Fl dijklntuvzADHLMOPVXYZ
+.Op Fl ADdHijkLlMnOPtuVvXYZz
 .Bk -words
 .Op Fl N Ar dbdir
 .Ek
@@ -1066,7 +1066,8 @@ Multiple
 options may be supplied and checking stops with the first match.
 .It Fl V
 A final summary of archive operations is printed after they have been
-completed.  Some potentially long-running tape operations are noted.
+completed.
+Some potentially long-running tape operations are noted.
 .It Fl X
 When traversing the file hierarchy specified by a pathname,
 do not descend into directories that have a different device ID.
@@ -1093,8 +1094,13 @@ Do not interpret filenames that contain a `:' as remote files.
 .It Fl -insecure
 Normally
 .Nm
-ignores filenames that contain `..' as a path component. With this option,
-files that contain `..' can be processed.
+ignores filenames that contain
+.Dq ..
+as a path component.
+With this option,
+files that contain
+.Dq ..
+can be processed.
 .El
 .Pp
 The options that operate on the names of files or archive members

@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.58 2007/05/17 01:50:49 hubertf Exp $	*/
+/*	$NetBSD: md.h,v 1.58.4.1 2008/01/09 01:28:35 matt Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -59,21 +59,14 @@
 /*
  *  Default filesets to fetch and install during installation
  *  or upgrade. The standard sets are:
- *      base etc comp games man misc text xbase xcomp xetc xfont xserver
+ *      base etc comp games man misc tests text xbase xcomp xetc xfont xserver
  */
 
 #define SET_KERNEL_GENERIC	SET_KERNEL_1
-#define SET_KERNEL_MP		SET_KERNEL_2
-#define SET_KERNEL_LAPTOP	SET_KERNEL_3
-#define SET_KERNEL_DIAGNOSTIC	SET_KERNEL_4
-/* #define SET_KERNEL_TINY		SET_KERNEL_6 */
+#define	SET_KERNEL_NOACPI	SET_KERNEL_2
 
 #define SET_KERNEL_1_NAME	"kern-GENERIC"
-#define SET_KERNEL_2_NAME	"kern-GENERIC.MP"
-#define SET_KERNEL_3_NAME	"kern-GENERIC_LAPTOP"
-#define SET_KERNEL_4_NAME	"kern-GENERIC_DIAGNOSTIC"
-#define SET_KERNEL_5_NAME	"kern-GENERIC.NOACPI"
-/* #define SET_KERNEL_6_NAME	"kern-GENERIC_TINY" */
+#define SET_KERNEL_2_NAME	"kern-GENERIC.NOACPI"
 
 /*
  * Disk names accepted as valid targets for a from-scratch installation.

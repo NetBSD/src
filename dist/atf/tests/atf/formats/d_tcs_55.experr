@@ -1,0 +1,12 @@
+0: Missing terminators in stdout or stderr
+5: Unexpected token `passe'; expected passed, failed or skipped
+0: Missing terminators in stdout or stderr
+7: Unexpected token `,'; expected new line
+0: Missing terminators in stdout or stderr
+9: Unexpected token `<<NEWLINE>>'; expected `,'
+0: Missing terminators in stdout or stderr
+11: Empty reason for failed test case result
+0: Missing terminators in stdout or stderr
+13: Unexpected token `<<NEWLINE>>'; expected `,'
+0: Missing terminators in stdout or stderr
+15: Empty reason for skipped test case result

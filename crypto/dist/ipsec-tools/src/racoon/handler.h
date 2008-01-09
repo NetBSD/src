@@ -1,4 +1,4 @@
-/*	$NetBSD: handler.h,v 1.9 2006/09/09 16:22:09 manu Exp $	*/
+/*	$NetBSD: handler.h,v 1.9.10.1 2008/01/09 01:22:34 matt Exp $	*/
 
 /* Id: handler.h,v 1.19 2006/02/25 08:25:12 manubsd Exp */
 
@@ -253,6 +253,10 @@ struct ph2handle {
 		 */
 	struct sockaddr *src_id;
 	struct sockaddr *dst_id;
+#ifdef ENABLE_NATT
+	struct sockaddr *natoa_src;	/* peer's view of my address */
+	struct sockaddr *natoa_dst;	/* peer's view of his address */
+#endif
 
 	u_int32_t spid;			/* policy id by kernel */
 

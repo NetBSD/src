@@ -1,4 +1,7 @@
-# $NetBSD: mi,v 1.52 2006/09/12 02:36:37 simonb Exp $
+# $NetBSD: mi,v 1.52.8.1 2008/01/09 01:28:20 matt Exp $
+#
+# Note: don't delete entries from here - mark them as "obsolete" instead.
+#
 ./etc/mtree/set.xbase				xbase-sys-root
 ./var/db/obsolete/xbase				xbase-sys-root
 ./var/db/obsolete/xetc				xbase-sys-root
@@ -113,7 +116,7 @@
 ./usr/X11R6/bin/xsetroot
 ./usr/X11R6/bin/xsm
 ./usr/X11R6/bin/xstdcmap
-./usr/X11R6/bin/xsystrace
+./usr/X11R6/bin/xsystrace			xbase-obsolete	obsolete
 ./usr/X11R6/bin/xterm
 ./usr/X11R6/bin/xtrapchar
 ./usr/X11R6/bin/xtrapin
@@ -218,12 +221,12 @@
 ./usr/X11R6/include/X11/pixmaps/NetBSDinv.xpm
 ./usr/X11R6/include/X11/pixmaps/XFree86.xpm
 ./usr/X11R6/include/X11/pixmaps/XFree86bw.xpm
-./usr/X11R6/include/X11/pixmaps/deny-always.xpm
-./usr/X11R6/include/X11/pixmaps/deny.xpm
-./usr/X11R6/include/X11/pixmaps/logo.xpm
-./usr/X11R6/include/X11/pixmaps/permit-always.xpm
-./usr/X11R6/include/X11/pixmaps/permit.xpm
-./usr/X11R6/include/X11/pixmaps/skull.xpm
+./usr/X11R6/include/X11/pixmaps/deny-always.xpm		xbase-obsolete	obsolete
+./usr/X11R6/include/X11/pixmaps/deny.xpm		xbase-obsolete	obsolete
+./usr/X11R6/include/X11/pixmaps/logo.xpm		xbase-obsolete	obsolete
+./usr/X11R6/include/X11/pixmaps/permit-always.xpm	xbase-obsolete	obsolete
+./usr/X11R6/include/X11/pixmaps/permit.xpm		xbase-obsolete	obsolete
+./usr/X11R6/include/X11/pixmaps/skull.xpm		xbase-obsolete	obsolete
 ./usr/X11R6/lib/X11/XErrorDB
 ./usr/X11R6/lib/X11/XKeysymDB
 ./usr/X11R6/lib/X11/Xcms.txt
@@ -263,7 +266,7 @@
 ./usr/X11R6/lib/X11/app-defaults/Xmessage
 ./usr/X11R6/lib/X11/app-defaults/Xmessage-color
 ./usr/X11R6/lib/X11/app-defaults/Xmh
-./usr/X11R6/lib/X11/app-defaults/Xsystrace
+./usr/X11R6/lib/X11/app-defaults/Xsystrace		xbase-obsolete	obsolete
 ./usr/X11R6/lib/X11/etc/sun.termcap			xbase-obsolete	obsolete
 ./usr/X11R6/lib/X11/etc/sun.terminfo			xbase-obsolete	obsolete
 ./usr/X11R6/lib/X11/etc/xterm.termcap			xbase-obsolete	obsolete
@@ -909,7 +912,7 @@
 ./usr/X11R6/man/cat1/xsetroot.0			-unknown-		.cat
 ./usr/X11R6/man/cat1/xsm.0			-unknown-		.cat
 ./usr/X11R6/man/cat1/xstdcmap.0			-unknown-		.cat
-./usr/X11R6/man/cat1/xsystrace.0		-unknown-		.cat
+./usr/X11R6/man/cat1/xsystrace.0		xbase-obsolete		obsolete
 ./usr/X11R6/man/cat1/xterm.0			-unknown-		.cat
 ./usr/X11R6/man/cat1/xtrap.0			-unknown-		.cat
 ./usr/X11R6/man/cat1/xtrapchar.0		-unknown-		.cat
@@ -1029,7 +1032,7 @@
 ./usr/X11R6/man/man1/xsetroot.1			-unknown-		.man
 ./usr/X11R6/man/man1/xsm.1			-unknown-		.man
 ./usr/X11R6/man/man1/xstdcmap.1			-unknown-		.man
-./usr/X11R6/man/man1/xsystrace.1		-unknown-		.man
+./usr/X11R6/man/man1/xsystrace.1		xbase-obsolete		obsolete
 ./usr/X11R6/man/man1/xterm.1			-unknown-		.man
 ./usr/X11R6/man/man1/xtrap.1			-unknown-		.man
 ./usr/X11R6/man/man1/xtrapchar.1		-unknown-		.man

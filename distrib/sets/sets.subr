@@ -1,4 +1,4 @@
-#	$NetBSD: sets.subr,v 1.56 2007/02/05 18:26:01 apb Exp $
+#	$NetBSD: sets.subr,v 1.56.4.1 2008/01/09 01:28:13 matt Exp $
 #
 
 #
@@ -58,7 +58,6 @@ MKVARS="\
 	MKSENDMAIL	\
 	MKSHARE		\
 	MKSKEY		\
-	MKUUCP		\
 	MKX11		\
 	MKYP		\
 	USE_INET6	\
@@ -185,7 +184,7 @@ done
 IFS=$oIFS
 
 setsdir=${0%/*}
-nlists="base comp etc games man misc text"
+nlists="base comp etc games man misc tests text"
 case $x11_version in
 3)	xlists="xbase3 xcomp3 xcontrib3 xfont3 xmisc3 xserver3" ;;
 4)	xlists="xbase4 xcomp4 xcontrib4 xfont4 xmisc4 xserver4" ;;
@@ -219,7 +218,7 @@ fi
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.56 2007/02/05 18:26:01 apb Exp $
+# 	# $NetBSD: sets.subr,v 1.56.4.1 2008/01/09 01:28:13 matt Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root

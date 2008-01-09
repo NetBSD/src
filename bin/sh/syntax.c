@@ -1,4 +1,7 @@
-/*	$NetBSD: syntax.c,v 1.1 2004/01/17 17:38:12 dsl Exp $	*/
+/*	$NetBSD: syntax.c,v 1.1.22.1 2008/01/09 01:20:03 matt Exp $	*/
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: syntax.c,v 1.1.22.1 2008/01/09 01:20:03 matt Exp $");
 
 #include "shell.h"
 #include "syntax.h"

@@ -6,7 +6,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: memcmp.S,v 1.1 2005/12/20 19:28:49 christos Exp $")
+	RCSID("$NetBSD: memcmp.S,v 1.1.18.1 2008/01/09 01:20:53 matt Exp $")
 #endif
 
 ENTRY(memcmp)
@@ -14,7 +14,6 @@ ENTRY(memcmp)
 	pushl	%esi
 	movl	12(%esp),%edi
 	movl	16(%esp),%esi
-	cld				/* set compare direction forward */
 
 	movl	20(%esp),%ecx		/* compare by words */
 	shrl	$2,%ecx
