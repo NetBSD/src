@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.c,v 1.20 2008/01/09 17:01:46 joerg Exp $	*/
+/*	$NetBSD: in_cksum.c,v 1.21 2008/01/09 17:13:52 joerg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1992, 1993
@@ -32,11 +32,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.20 2008/01/09 17:01:46 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.21 2008/01/09 17:13:52 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
+#ifdef _KERNEL
 #include <sys/systm.h>
+#else
+#include <stdio.h>
+#endif
 #include <netinet/in.h>
 
 /*
@@ -51,6 +55,10 @@ __KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.20 2008/01/09 17:01:46 joerg Exp $");
 
 #define ADDCARRY(x)  (x > 65535 ? x -= 65535 : x)
 #define REDUCE {l_util.l = sum; sum = l_util.s[0] + l_util.s[1]; ADDCARRY(sum);}
+
+#ifndef _KERNEL
+int	in_cksum(struct mbuf*, int);
+#endif
 
 int
 in_cksum(struct mbuf *m, int len)
