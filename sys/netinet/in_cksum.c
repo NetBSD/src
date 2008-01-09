@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.c,v 1.19 2005/12/11 12:24:57 christos Exp $	*/
+/*	$NetBSD: in_cksum.c,v 1.20 2008/01/09 17:01:46 joerg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1992, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.19 2005/12/11 12:24:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.20 2008/01/09 17:01:46 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -44,6 +44,9 @@ __KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.19 2005/12/11 12:24:57 christos Exp $
  *
  * This routine is very heavily used in the network
  * code and should be modified for each CPU to be as fast as possible.
+ *
+ * A discussion of different implementation techniques can be found in
+ * RFC 1071.
  */
 
 #define ADDCARRY(x)  (x > 65535 ? x -= 65535 : x)
