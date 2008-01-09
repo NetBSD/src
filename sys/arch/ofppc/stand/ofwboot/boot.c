@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.17 2008/01/09 19:34:45 garbled Exp $	*/
+/*	$NetBSD: boot.c,v 1.18 2008/01/09 19:39:07 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -92,7 +92,6 @@
 
 #include <machine/cpu.h>
 
-#include "alloc.h"
 #include "boot.h"
 #include "ofdev.h"
 #include "openfirm.h"
