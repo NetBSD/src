@@ -1,4 +1,4 @@
-/*	$NetBSD: malta_intr.c,v 1.17 2008/01/08 16:15:04 tsutsui Exp $	*/
+/*	$NetBSD: malta_intr.c,v 1.18 2008/01/09 20:38:35 wiz Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: malta_intr.c,v 1.17 2008/01/08 16:15:04 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: malta_intr.c,v 1.18 2008/01/09 20:38:35 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -193,10 +193,10 @@ malta_cal_timer(bus_space_tag_t st, bus_space_handle_t sh)
 	/* Compute the number of ticks for hz. */
 	curcpu()->ci_cycles_per_hz = (curcpu()->ci_cpu_freq + hz / 2) / hz;
 
-	/* Compute the delay divisor and reciprical. */
+	/* Compute the delay divisor and reciprocal. */
 	curcpu()->ci_divisor_delay =
 	    ((curcpu()->ci_cpu_freq + 500000) / 1000000);
-	MIPS_SET_CI_RECIPRICAL(curcpu());
+	MIPS_SET_CI_RECIPROCAL(curcpu());
 
 	/*
 	 * Get correct cpu frequency if the CPU runs at twice the
