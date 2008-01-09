@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_fcntl.c,v 1.67 2008/01/09 08:18:12 elad Exp $	 */
+/*	$NetBSD: svr4_fcntl.c,v 1.68 2008/01/09 13:24:57 gson Exp $	 */
 
 /*-
  * Copyright (c) 1994, 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_fcntl.c,v 1.67 2008/01/09 08:18:12 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_fcntl.c,v 1.68 2008/01/09 13:24:57 gson Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -226,9 +226,7 @@ fd_revoke(struct lwp *l, int fd, register_t *retval)
 	struct filedesc *fdp = l->l_proc->p_fd;
 	struct file *fp;
 	struct vnode *vp;
-	struct vattr vattr;
 	int error;
-	bool revoke;
 
 	if ((fp = fd_getfile(fdp, fd)) == NULL)
 		return EBADF;
