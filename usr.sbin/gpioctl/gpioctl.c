@@ -1,4 +1,4 @@
-/* $NetBSD: gpioctl.c,v 1.3 2008/01/09 15:57:06 xtraeme Exp $ */
+/* $NetBSD: gpioctl.c,v 1.4 2008/01/09 16:06:21 xtraeme Exp $ */
 /*	$OpenBSD: gpioctl.c,v 1.2 2004/08/08 00:05:09 deraadt Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
@@ -33,18 +33,17 @@
 
 #define _PATH_DEV_GPIO	"/dev/gpio0"
 
-const char *device = _PATH_DEV_GPIO;
-int devfd = -1;
-int quiet = 0;
+static const char *device = _PATH_DEV_GPIO;
+static int devfd = -1;
+static int quiet = 0;
 
-void	getinfo(void);
-void	pinread(int);
-void	pinwrite(int, int);
-void	pinctl(int, char *[], int);
+static void	getinfo(void);
+static void	pinread(int);
+static void	pinwrite(int, int);
+static void	pinctl(int, char *[], int);
+static void 	usage(void);
 
-__dead void usage(void);
-
-const struct bitstr {
+static const struct bitstr {
 	unsigned int mask;
 	const char *string;
 } pinflags[] = {
@@ -69,6 +68,8 @@ main(int argc, char *argv[])
 	int do_ctl = 0;
 	int pin = 0, value = 0;
 
+	setprogname(argv[0]);
+
 	while ((ch = getopt(argc, argv, "cd:hq")) != -1)
 		switch (ch) {
 		case 'c':
@@ -92,11 +93,11 @@ main(int argc, char *argv[])
 	if (argc > 0) {
 		pin = strtol(argv[0], &ep, 10);
 		if (*argv[0] == '\0' || *ep != '\0' || pin < 0)
-			errx(1, "%s: invalid pin", argv[0]);
+			errx(EXIT_FAILURE, "%s: invalid pin", argv[0]);
 	}
 
 	if ((devfd = open(device, O_RDWR)) == -1)
-		err(1, "%s", device);
+		err(EXIT_FAILURE, "%s", device);
 
 	if (argc == 0 && !do_ctl) {
 		getinfo();
@@ -111,7 +112,8 @@ main(int argc, char *argv[])
 		} else {
 			value = strtol(argv[1], &ep, 10);
 			if (*argv[1] == '\0' || *ep != '\0')
-				errx(1, "%s: invalid value", argv[1]);
+				errx(EXIT_FAILURE, "%s: invalid value",
+				    argv[1]);
 			pinwrite(pin, value);
 		}
 	} else {
@@ -119,7 +121,7 @@ main(int argc, char *argv[])
 		/* NOTREACHED */
 	}
 
-	return (0);
+	return EXIT_SUCCESS;
 }
 
 void
@@ -127,9 +129,9 @@ getinfo(void)
 {
 	struct gpio_info info;
 
-	bzero(&info, sizeof(info));
+	memset(&info, 0, sizeof(info));
 	if (ioctl(devfd, GPIOINFO, &info) == -1)
-		err(1, "GPIOINFO");
+		err(EXIT_FAILURE, "GPIOINFO");
 
 	if (quiet)
 		return;
@@ -142,10 +144,10 @@ pinread(int pin)
 {
 	struct gpio_pin_op op;
 
-	bzero(&op, sizeof(op));
+	memset(&op, 0, sizeof(op));
 	op.gp_pin = pin;
 	if (ioctl(devfd, GPIOPINREAD, &op) == -1)
-		err(1, "GPIOPINREAD");
+		err(EXIT_FAILURE, "GPIOPINREAD");
 
 	if (quiet)
 		return;
@@ -159,17 +161,17 @@ pinwrite(int pin, int value)
 	struct gpio_pin_op op;
 
 	if (value < 0 || value > 2)
-		errx(1, "%d: invalid value", value);
+		errx(EXIT_FAILURE, "%d: invalid value", value);
 
-	bzero(&op, sizeof(op));
+	memset(&op, 0, sizeof(op));
 	op.gp_pin = pin;
 	op.gp_value = (value == 0 ? GPIO_PIN_LOW : GPIO_PIN_HIGH);
 	if (value < 2) {
 		if (ioctl(devfd, GPIOPINWRITE, &op) == -1)
-			err(1, "GPIOPINWRITE");
+			err(EXIT_FAILURE, "GPIOPINWRITE");
 	} else {
 		if (ioctl(devfd, GPIOPINTOGGLE, &op) == -1)
-			err(1, "GPIOPINTOGGLE");
+			err(EXIT_FAILURE, "GPIOPINTOGGLE");
 	}
 
 	if (quiet)
@@ -179,7 +181,7 @@ pinwrite(int pin, int value)
 	    (value < 2 ? value : 1 - op.gp_value));
 }
 
-void
+static void
 pinctl(int pin, char *flags[], int nflags)
 {
 	struct gpio_pin_ctl ctl;
@@ -187,7 +189,7 @@ pinctl(int pin, char *flags[], int nflags)
 	const struct bitstr *bs;
 	int i;
 
-	bzero(&ctl, sizeof(ctl));
+	memset(&ctl, 0, sizeof(ctl));
 	ctl.gp_pin = pin;
 	if (flags != NULL) {
 		for (i = 0; i < nflags; i++)
@@ -199,7 +201,7 @@ pinctl(int pin, char *flags[], int nflags)
 	}
 	ctl.gp_flags = fl;
 	if (ioctl(devfd, GPIOPINCTL, &ctl) == -1)
-		err(1, "GPIOPINCTL");
+		err(EXIT_FAILURE, "GPIOPINCTL");
 
 	if (quiet)
 		return;
@@ -221,15 +223,13 @@ pinctl(int pin, char *flags[], int nflags)
 	printf("\n");
 }
 
-void
+static void
 usage(void)
 {
-	extern char *__progname;
-
 	fprintf(stderr, "usage: %s [-hq] [-d device] [pin] [0 | 1 | 2]\n",
-	    __progname);
+	    getprogname());
 	fprintf(stderr, "       %s [-hq] [-d device] -c pin [flags]\n",
-	    __progname);
+	    getprogname());
 
-	exit(1);
+	exit(EXIT_FAILURE);
 }
