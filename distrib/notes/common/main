@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.385 2007/12/19 15:03:26 rillig Exp $
+.\"	$NetBSD: main,v 1.386 2008/01/09 11:25:58 simonb Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -53,7 +53,7 @@
 .as MACHINE_LIST " evbsh3 ews4800mips hp300 hp700 hpcarm hpcmips hpcsh
 .as MACHINE_LIST " hppa i386 ibmnws iyonix luna68k mac68k macppc mipsco mmeye
 .as MACHINE_LIST " mvme68k mvmeppc netwinder news68k newsmips next68k ofppc
-.as MACHINE_LIST " pc532 pdp10 playstation2 pmax prep sandpoint sbmips
+.as MACHINE_LIST " pdp10 playstation2 pmax prep sandpoint sbmips
 .as MACHINE_LIST " sgimips shark sparc sparc64 sun2 sun3 vax x68k xen zaurus .
 .so \*[.CURDIR]/../common/macros
 .
@@ -1761,7 +1761,6 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Nick Hudson                    Ta Mt                skrll Ta Sy hp700
 .It Ta Noriyuki Soda                  Ta Mt                 soda Ta Sy arc
 .It Ta Paul Kranenburg                Ta Mt                   pk Ta Sy sparc
-.It Ta Phil Nelson                    Ta Mt                 phil Ta Sy pc532
 .It Ta Reinoud Zandijk                Ta Mt              reinoud Ta Sy acorn32
 .It Ta Ross Harvey                    Ta Mt                 ross Ta Sy alpha
 .It Ta S\(/oren J\(/orvang            Ta Mt                soren Ta Sy sgimips
