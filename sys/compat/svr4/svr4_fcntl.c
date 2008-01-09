@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_fcntl.c,v 1.66 2008/01/05 19:14:08 dsl Exp $	 */
+/*	$NetBSD: svr4_fcntl.c,v 1.67 2008/01/09 08:18:12 elad Exp $	 */
 
 /*-
  * Copyright (c) 1994, 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_fcntl.c,v 1.66 2008/01/05 19:14:08 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_fcntl.c,v 1.67 2008/01/09 08:18:12 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -245,19 +245,7 @@ fd_revoke(struct lwp *l, int fd, register_t *retval)
 		goto out;
 	}
 
-	if ((error = VOP_GETATTR(vp, &vattr, l->l_cred)) != 0)
-		goto out;
-
-	if (kauth_cred_geteuid(l->l_cred) != vattr.va_uid &&
-	    (error = kauth_authorize_generic(l->l_cred,
-	    KAUTH_GENERIC_ISSUSER, NULL)) != 0)
-		goto out;
-
-	mutex_enter(&vp->v_interlock);
-	revoke = (vp->v_usecount > 1 || (vp->v_iflag & VI_ALIASED));
-	mutex_exit(&vp->v_interlock);
-	if (revoke)
-		VOP_REVOKE(vp, REVOKEALL);
+	error = dorevoke(vp, l->l_cred);
 out:
 	vrele(vp);
 	FILE_UNUSE(fp, l);
