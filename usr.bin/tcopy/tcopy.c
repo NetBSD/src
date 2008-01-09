@@ -1,4 +1,4 @@
-/*	$NetBSD: tcopy.c,v 1.13 2006/04/30 23:30:13 christos Exp $	*/
+/*	$NetBSD: tcopy.c,v 1.14 2008/01/09 05:48:59 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1987, 1993, 1995
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)tcopy.c	8.3 (Berkeley) 1/23/95";
 #endif
-__RCSID("$NetBSD: tcopy.c,v 1.13 2006/04/30 23:30:13 christos Exp $");
+__RCSID("$NetBSD: tcopy.c,v 1.14 2008/01/09 05:48:59 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -56,6 +56,7 @@ __RCSID("$NetBSD: tcopy.c,v 1.13 2006/04/30 23:30:13 christos Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <util.h>
 
 #define	MAXREC	(64 * 1024)
 #define	NOCOUNT	(-2)
@@ -301,6 +302,7 @@ intr(signo)
 	}
 	fprintf(msg, "interrupt at file %d: record %ld\n", filen, record);
 	fprintf(msg, "total length: %lld bytes\n", (long long)(tsize + size));
+	(void)raise_default_signal(signo);
 	exit(1);
 }
 
