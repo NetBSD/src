@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.153 2008/01/07 08:39:03 martti Exp $
+# $NetBSD: ALL,v 1.154 2008/01/09 14:28:55 xtraeme Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.153 $"
+#ident 		"ALL-$Revision: 1.154 $"
 
 maxusers	32		# estimated number of users
 
@@ -443,6 +443,8 @@ hpet* 	at amdpcib?
 ichlpcib* at pci? dev ? function ?	# Intel ICH PCI-ISA w/ watchdog and
 					# SpeedStep support
 hpet0 		at ichlpcib?		# High Precision Event Timer
+gcscpcib* at pci? dev ? function ?	# AMD CS5535/CS5536 PCI-ISA w/
+gpio* 	at gcscpcib? 			# timecounter, watchdog and GPIO
 piixpcib* at pci? dev ? function ?	# Intel PIIX4 PCI-ISA w/ SpeedStep
 gscpcib* at pci? dev ? function ?	# NS Geode PCI-ISA w/ GPIO support
 viapcib* at pci? dev ? function ?	# VIA VT8235 PCI-ISA w/ SMBus support
@@ -464,6 +466,7 @@ eisa0	at pceb?
 
 # ISA bus support
 isa0 	at amdpcib?
+isa0 	at gcscpcib?
 isa0	at ichlpcib?
 isa0	at piixpcib?
 isa0	at gscpcib?
