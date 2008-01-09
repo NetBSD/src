@@ -1,4 +1,4 @@
-/*	$NetBSD: dbrivar.h,v 1.7 2007/07/12 22:58:50 macallan Exp $	*/
+/*	$NetBSD: dbrivar.h,v 1.7.8.1 2008/01/09 01:54:28 matt Exp $	*/
 
 /*
  * Copyright (C) 1997 Rudolf Koenig (rfkoenig@immd4.informatik.uni-erlangen.de)
@@ -111,6 +111,7 @@ struct dbri_desc {
 	size_t		len;
 	void		(*callback)(void *);
 	void		*callback_args;
+	void		*softint;
 };
 
 struct dbri_dma {

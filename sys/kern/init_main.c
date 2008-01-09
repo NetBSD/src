@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.312.2.3 2007/11/08 10:59:59 matt Exp $	*/
+/*	$NetBSD: init_main.c,v 1.312.2.4 2008/01/09 01:55:57 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,16 +71,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.312.2.3 2007/11/08 10:59:59 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.312.2.4 2008/01/09 01:55:57 matt Exp $");
 
 #include "opt_ipsec.h"
-#include "opt_multiprocessor.h"
 #include "opt_ntp.h"
 #include "opt_pipe.h"
 #include "opt_posix.h"
 #include "opt_syscall_debug.h"
 #include "opt_sysv.h"
-#include "opt_systrace.h"
 #include "opt_fileassoc.h"
 #include "opt_ktrace.h"
 #include "opt_pax.h"
@@ -143,9 +141,6 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.312.2.3 2007/11/08 10:59:59 matt Exp
 #ifdef SYSVMSG
 #include <sys/msg.h>
 #endif
-#ifdef SYSTRACE
-#include <sys/systrace.h>
-#endif
 #ifdef P1003_1B_SEMAPHORE
 #include <sys/ksem.h>
 #endif
@@ -164,16 +159,16 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.312.2.3 2007/11/08 10:59:59 matt Exp
 #ifdef KTRACE
 #include <sys/ktrace.h>
 #endif
-#include <sys/debug.h>
 #include <sys/kauth.h>
 #include <net80211/ieee80211_netbsd.h>
 
 #include <sys/syscall.h>
 #include <sys/syscallargs.h>
 
-#if defined(PAX_MPROTECT) || defined(PAX_SEGVGUARD)
+#if defined(PAX_MPROTECT) || defined(PAX_SEGVGUARD) || defined(PAX_ASLR)
 #include <sys/pax.h>
-#endif /* PAX_MPROTECT || PAX_SEGVGUARD */
+#endif /* PAX_MPROTECT || PAX_SEGVGUARD || PAX_ASLR */
+
 #include <ufs/ufs/quota.h>
 
 #include <miscfs/genfs/genfs.h>
@@ -288,10 +283,6 @@ main(void)
 
 	uvm_init();
 
-#ifdef DEBUG
-	debug_init();
-#endif
-
 	kmem_init();
 
 	/* Initialize the extent manager. */
@@ -341,6 +332,9 @@ main(void)
 	/* Initialize signal-related data structures. */
 	signal_init();
 
+	/* Initialize resource management. */
+	resource_init();
+
 	/* Create process 0 (the swapper). */
 	proc0_init();
 
@@ -349,6 +343,9 @@ main(void)
 
 	/* Charge root for one process. */
 	(void)chgproccnt(0, 1);
+
+	/* Initialize timekeeping. */
+	time_init();
 
 	/* Initialize the run queues, turnstiles and sleep queues. */
 	mutex_init(&cpu_lock, MUTEX_DEFAULT, IPL_NONE);
@@ -426,6 +423,9 @@ main(void)
 	tty_init();
 	ttyldisc_init();
 
+	/* Initialize the buffer cache, part 2. */
+	bufinit2();
+
 	/* Initialize the disk wedge subsystem. */
 	dkwedge_init();
 
@@ -460,10 +460,6 @@ main(void)
 	/* Lock the kernel on behalf of proc0. */
 	KERNEL_LOCK(1, l);
 
-#ifdef SYSTRACE
-	systrace_init();
-#endif
-
 #ifdef SYSVSHM
 	/* Initialize System V style shared memory. */
 	shminit();
@@ -491,9 +487,9 @@ main(void)
 	veriexec_init();
 #endif /* NVERIEXEC > 0 */
 
-#if defined(PAX_MPROTECT) || defined(PAX_SEGVGUARD)
+#if defined(PAX_MPROTECT) || defined(PAX_SEGVGUARD) || defined(PAX_ASLR)
 	pax_init();
-#endif /* PAX_MPROTECT || PAX_SEGVGUARD */
+#endif /* PAX_MPROTECT || PAX_SEGVGUARD || PAX_ASLR */
 
 	/* Attach pseudo-devices. */
 	for (pdev = pdevinit; pdev->pdev_attach != NULL; pdev++)
@@ -552,12 +548,10 @@ main(void)
 
 	/*
 	 * Now that device driver threads have been created, wait for
-	 * them to finish any deferred autoconfiguration.  Note we don't
-	 * need to lock this semaphore, since we haven't booted any
-	 * secondary processors, yet.
+	 * them to finish any deferred autoconfiguration.
 	 */
 	while (config_pending)
-		(void) tsleep(&config_pending, PWAIT, "cfpend", 0);
+		(void) tsleep(&config_pending, PWAIT, "cfpend", hz);
 
 	/*
 	 * Finalize configuration now that all real devices have been
@@ -634,13 +628,13 @@ main(void)
 		p->p_stats->p_start = time;
 		LIST_FOREACH(l, &p->p_lwps, l_sibling) {
 			lwp_lock(l);
-			l->l_rtime.tv_sec = l->l_rtime.tv_usec = 0;
+			memset(&l->l_rtime, 0, sizeof(l->l_rtime));
 			lwp_unlock(l);
 		}
 		mutex_exit(&p->p_smutex);
 	}
 	mutex_exit(&proclist_lock);
-	curlwp->l_stime = time;
+	binuptime(&curlwp->l_stime);
 
 	for (CPU_INFO_FOREACH(cii, ci)) {
 		ci->ci_schedstate.spc_lastmod = time_second;
@@ -648,25 +642,21 @@ main(void)
 
 	/* Create the pageout daemon kernel thread. */
 	uvm_swap_init();
-	if (kthread_create(PRI_PGDAEMON, 0, NULL, uvm_pageout,
+	if (kthread_create(PRI_PGDAEMON, KTHREAD_MPSAFE, NULL, uvm_pageout,
 	    NULL, NULL, "pgdaemon"))
 		panic("fork pagedaemon");
 
 	/* Create the filesystem syncer kernel thread. */
-	if (kthread_create(PRI_IOFLUSH, 0, NULL, sched_sync, NULL, NULL, "ioflush"))
+	if (kthread_create(PRI_IOFLUSH, KTHREAD_MPSAFE, NULL, sched_sync,
+	    NULL, NULL, "ioflush"))
 		panic("fork syncer");
 
 	/* Create the aiodone daemon kernel thread. */
 	if (workqueue_create(&uvm.aiodone_queue, "aiodoned",
-	    uvm_aiodone_worker, NULL, PRI_VM, IPL_BIO, 0))
+	    uvm_aiodone_worker, NULL, PRI_VM, IPL_NONE, WQ_MPSAFE))
 		panic("fork aiodoned");
 
 	vmem_rehash_start();
-
-#if defined(MULTIPROCESSOR)
-	/* Boot the secondary processors. */
-	cpu_boot_secondary_processors();
-#endif
 
 	/* Initialize exec structures */
 	exec_init(1);
@@ -688,7 +678,7 @@ check_console(struct lwp *l)
 	struct nameidata nd;
 	int error;
 
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, "/dev/console", l);
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, "/dev/console");
 	error = namei(&nd);
 	if (error == 0)
 		vrele(nd.ni_vp);

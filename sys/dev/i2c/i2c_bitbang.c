@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c_bitbang.c,v 1.7 2007/04/30 00:07:54 macallan Exp $	*/
+/*	$NetBSD: i2c_bitbang.c,v 1.7.8.1 2008/01/09 01:52:41 matt Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -39,6 +39,9 @@
  * Common module for bit-bang'ing an I2C bus.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: i2c_bitbang.c,v 1.7.8.1 2008/01/09 01:52:41 matt Exp $");
+
 #include <sys/param.h>
 
 #include <dev/i2c/i2cvar.h>
@@ -64,6 +67,8 @@ i2c_wait_for_scl(void *v, i2c_bitbang_ops_t ops)
 {
 	int bail = 0;
 
+	DIR(INPUT);
+
 	while (((READ & SCL) == 0) && (bail < SCL_BAIL_COUNT)) {
 
 		delay(1);
@@ -83,13 +88,15 @@ i2c_bitbang_send_start(void *v, int flags, i2c_bitbang_ops_t ops)
 {
 
 	DIR(OUTPUT);
-
 	SETBITS(SDA | SCL);
 	delay(5);		/* bus free time (4.7 uS) */
 	SETBITS(      SCL);
+
 	if (i2c_wait_for_scl(v, ops) != 0)
 		return EIO;
 	delay(4);		/* start hold time (4.0 uS) */
+
+	DIR(OUTPUT);
 	SETBITS(        0);
 	delay(5);		/* clock low time (4.7 uS) */
 
@@ -102,7 +109,6 @@ i2c_bitbang_send_stop(void *v, int flags, i2c_bitbang_ops_t ops)
 {
 
 	DIR(OUTPUT);
-
 	SETBITS(      SCL);
 	delay(4);		/* stop setup time (4.0 uS) */
 	SETBITS(SDA | SCL);
@@ -157,29 +163,40 @@ i2c_bitbang_read_byte(void *v, uint8_t *valp, int flags,
 	uint8_t val = 0;
 	uint32_t bit;
 
-	DIR(INPUT);
+	DIR(OUTPUT);
 	SETBITS(SDA      );
 
 	for (i = 0; i < 8; i++) {
 		val <<= 1;
+
+		DIR(OUTPUT);
 		SETBITS(SDA | SCL);
+
 		if (i2c_wait_for_scl(v, ops) != 0)
 			return EIO;
 		delay(4);	/* clock high time (4.0 uS) */
+
+		DIR(INPUT);
 		if (READ & SDA)
 			val |= 1;
+
+		DIR(OUTPUT);
 		SETBITS(SDA      );
 		delay(5);	/* clock low time (4.7 uS) */
 	}
 
 	bit = (flags & I2C_F_LAST) ? SDA : 0;
+
 	DIR(OUTPUT);
 	SETBITS(bit      );
 	delay(1);	/* data setup time (250 nS) */
 	SETBITS(bit | SCL);
+
 	if (i2c_wait_for_scl(v, ops) != 0)
 		return EIO;
 	delay(4);	/* clock high time (4.0 uS) */
+
+	DIR(OUTPUT);
 	SETBITS(bit      );
 	delay(5);	/* clock low time (4.7 uS) */
 
@@ -202,29 +219,36 @@ i2c_bitbang_write_byte(void *v, uint8_t val, int flags,
 	uint8_t mask;
 	int error;
 
-	DIR(OUTPUT);
-
 	for (mask = 0x80; mask != 0; mask >>= 1) {
 		bit = (val & mask) ? SDA : 0;
+
+		DIR(OUTPUT);
 		SETBITS(bit      );
 		delay(1);	/* data setup time (250 nS) */
 		SETBITS(bit | SCL);
+
 		if (i2c_wait_for_scl(v, ops))
 			return EIO;
 		delay(4);	/* clock high time (4.0 uS) */
+
+		DIR(OUTPUT);
 		SETBITS(bit      );
 		delay(5);	/* clock low time (4.7 uS) */
 	}
 
-	DIR(INPUT);
-
+	DIR(OUTPUT);
 	SETBITS(SDA      );
 	delay(5);
 	SETBITS(SDA | SCL);
+
 	if (i2c_wait_for_scl(v, ops) != 0)
 		return EIO;
 	delay(4);
+
+	DIR(INPUT);
 	error = (READ & SDA) ? EIO : 0;
+
+	DIR(OUTPUT);
 	SETBITS(SDA      );
 	delay(5);
 

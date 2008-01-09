@@ -1,4 +1,4 @@
-/*	$NetBSD: fstat.c,v 1.5 2005/12/11 12:24:46 christos Exp $	*/
+/*	$NetBSD: fstat.c,v 1.5.46.1 2008/01/09 01:56:40 matt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -34,16 +34,14 @@
 #include "stand.h"
 
 int
-fstat(fd, sb)
-	int fd;
-	struct stat *sb;
+fstat(int fd, struct stat *sb)
 {
 	struct open_file *f = &files[fd];
 
 #if !defined(LIBSA_NO_FD_CHECKING)
-	if ((unsigned)fd >= SOPEN_MAX || f->f_flags == 0) {
+	if ((unsigned int)fd >= SOPEN_MAX || f->f_flags == 0) {
 		errno = EBADF;
-		return (-1);
+		return -1;
 	}
 #endif
 
@@ -51,10 +49,10 @@ fstat(fd, sb)
 	/* operation not defined on raw devices */
 	if (f->f_flags & F_RAW) {
 		errno = EOPNOTSUPP;
-		return (-1);
+		return -1;
 	}
 #endif
 
 	errno = FS_STAT(f->f_ops)(f, sb);	/* XXX no point setting errno */
-	return (0);
+	return 0;
 }

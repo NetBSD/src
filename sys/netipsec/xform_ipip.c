@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipip.c,v 1.17.16.1 2007/11/06 23:34:14 matt Exp $	*/
+/*	$NetBSD: xform_ipip.c,v 1.17.16.2 2008/01/09 01:57:43 matt Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ipip.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ipip.c,v 1.25 2002/06/10 18:04:55 itojun Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.17.16.1 2007/11/06 23:34:14 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.17.16.2 2008/01/09 01:57:43 matt Exp $");
 
 /*
  * IP-inside-IP processing
@@ -342,10 +342,8 @@ _ipip_input(struct mbuf *m, int iphlen, struct ifnet *gifp)
 	if ((m->m_pkthdr.rcvif == NULL ||
 	    !(m->m_pkthdr.rcvif->if_flags & IFF_LOOPBACK)) &&
 	    ipip_allow != 2) {
-		for (ifp = ifnet.tqh_first; ifp != 0;
-		     ifp = ifp->if_list.tqe_next) {
-			for (ifa = ifp->if_addrlist.tqh_first; ifa != 0;
-			     ifa = ifa->ifa_list.tqe_next) {
+		IFNET_FOREACH(ifp) {
+			IFADDR_FOREACH(ifa, ifp) {
 #ifdef INET
 				if (ipo) {
 					if (ifa->ifa_addr->sa_family !=
@@ -687,19 +685,37 @@ static struct xformsw ipe4_xformsw = {
 #ifdef INET
 extern struct domain inetdomain;
 static struct ipprotosw ipe4_protosw = {
-  SOCK_RAW,	&inetdomain,	IPPROTO_IPV4,	PR_ATOMIC|PR_ADDR|PR_LASTHDR,
-  ip4_input,	0, 		0,		rip_ctloutput,
-  rip_usrreq,
-  0,		0,		0,		0,
+ .pr_type = SOCK_RAW,
+ .pr_domain = &inetdomain,
+ .pr_protocol = IPPROTO_IPV4,
+ .pr_flags = PR_ATOMIC|PR_ADDR|PR_LASTHDR,
+ .pr_input = ip4_input,
+ .pr_output = 0,
+ .pr_ctlinput = 0,
+ .pr_ctloutput = rip_ctloutput,
+ .pr_usrreq = rip_usrreq,
+ .pr_init = 0,
+ .pr_fasttimo = 0,
+ .pr_slowtimo =	0,
+ .pr_drain = 0,
 };
 #endif
 #ifdef INET6
 extern struct domain inet6domain;
 static struct ip6protosw ipe4_protosw6 = {
- SOCK_RAW,     &inet6domain,   IPPROTO_IPV6,PR_ATOMIC|PR_ADDR|PR_LASTHDR,
- ip4_input6,	0,	0, 	rip6_ctloutput,
- rip6_usrreq,
- 0,	0,	0,	0,
+ .pr_type = SOCK_RAW,
+ .pr_domain = &inet6domain,
+ .pr_protocol = IPPROTO_IPV6,
+ .pr_flags = PR_ATOMIC|PR_ADDR|PR_LASTHDR,
+ .pr_input = ip4_input6,
+ .pr_output = 0,
+ .pr_ctlinput = 0,
+ .pr_ctloutput = rip6_ctloutput,
+ .pr_usrreq = rip6_usrreq,
+ .pr_init = 0,
+ .pr_fasttimo = 0,
+ .pr_slowtimo = 0,
+ .pr_drain = 0,
 };
 #endif
 

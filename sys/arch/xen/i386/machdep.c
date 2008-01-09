@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.41.10.1 2007/11/06 23:23:59 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.41.10.2 2008/01/09 01:50:03 matt Exp $	*/
 /*	NetBSD: machdep.c,v 1.559 2004/07/22 15:12:46 mycroft Exp 	*/
 
 /*-
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.41.10.1 2007/11/06 23:23:59 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.41.10.2 2008/01/09 01:50:03 matt Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -81,7 +81,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.41.10.1 2007/11/06 23:23:59 matt Exp $
 #include "opt_compat_netbsd.h"
 #include "opt_compat_svr4.h"
 #include "opt_cpureset_delay.h"
-#include "opt_cputype.h"
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
 #include "opt_kgdb.h"
@@ -232,6 +231,8 @@ int	physmem;
 int	dumpmem_low;
 int	dumpmem_high;
 unsigned int cpu_feature;
+unsigned int cpu_feature2;
+unsigned int cpu_feature_padlock;
 int	cpu_class;
 int	i386_fpu_present;
 int	i386_fpu_exception;
@@ -248,10 +249,7 @@ paddr_t msgbuf_paddr;
 
 vaddr_t	idt_vaddr;
 paddr_t	idt_paddr;
-
-#ifdef I586_CPU
 vaddr_t	pentium_idt_vaddr;
-#endif
 
 struct vm_map *exec_map = NULL;
 struct vm_map *mb_map = NULL;
@@ -370,23 +368,15 @@ i386_proc0_tss_ldt_init()
 {
 	struct lwp *l;
 	struct pcb *pcb;
-	int x;
 
 	l = &lwp0;
 	pcb = &l->l_addr->u_pcb;
-	pcb->pcb_tss.tss_ioopt =
-	    ((char *)pcb->pcb_iomap - (char *)&pcb->pcb_tss) << 16
-		| SEL_KPL;		/* i/o pl */
-
-	for (x = 0; x < sizeof(pcb->pcb_iomap) / 4; x++)
-		pcb->pcb_iomap[x] = 0xffffffff;
 
 	pcb->pcb_ldt_sel = pmap_kernel()->pm_ldt_sel = GSEL(GLDT_SEL, SEL_KPL);
 	pcb->pcb_cr0 = rcr0();
-	pcb->pcb_tss.tss_ss0 = GSEL(GDATA_SEL, SEL_KPL);
-	pcb->pcb_tss.tss_esp0 = USER_TO_UAREA(l->l_addr) + KSTACK_SIZE - 16;
-	l->l_md.md_regs = (struct trapframe *)pcb->pcb_tss.tss_esp0 - 1;
-	l->l_md.md_tss_sel = tss_alloc(pcb);
+	pcb->pcb_esp0 = USER_TO_UAREA(l->l_addr) + KSTACK_SIZE - 16;
+	pcb->pcb_iopl = SEL_KPL;
+	l->l_md.md_regs = (struct trapframe *)pcb->pcb_esp0 - 1;
 
 #ifndef XEN
 	ltr(l->l_md.md_tss_sel);
@@ -394,9 +384,10 @@ i386_proc0_tss_ldt_init()
 #else
 	HYPERVISOR_fpu_taskswitch();
 	XENPRINTF(("lwp tss sp %p ss %04x/%04x\n",
-		      (void *)pcb->pcb_tss.tss_esp0,
-		      pcb->pcb_tss.tss_ss0, IDXSEL(pcb->pcb_tss.tss_ss0)));
-	HYPERVISOR_stack_switch(pcb->pcb_tss.tss_ss0, pcb->pcb_tss.tss_esp0);
+		      (void *)pcb->pcb_esp0,
+		      GSEL(GDATA_SEL, SEL_KPL),
+		      IDXSEL(GSEL(GDATA_SEL, SEL_KPL))));
+	HYPERVISOR_stack_switch(GSEL(GDATA_SEL, SEL_KPL), pcb->pcb_esp0);
 #endif
 }
 
@@ -406,9 +397,10 @@ i386_proc0_tss_ldt_init()
  * - switch stack pointer for user->kernel transition
  */
 void
-i386_switch_context(struct pcb *new)
+i386_switch_context(lwp_t *l)
 {
 	struct cpu_info *ci;
+	struct pcb *pcb = &l->l_addr->u_pcb;
 
 	ci = curcpu();
 	if (ci->ci_fpused) {
@@ -416,19 +408,20 @@ i386_switch_context(struct pcb *new)
 		ci->ci_fpused = 0;
 	}
 
-	HYPERVISOR_stack_switch(new->pcb_tss.tss_ss0, new->pcb_tss.tss_esp0);
+	HYPERVISOR_stack_switch(GSEL(GDATA_SEL, SEL_KPL), pcb->pcb_esp0);
 
 	if (xen_start_info.flags & SIF_PRIVILEGED) {
+		int iopl = pcb->pcb_iopl;
 #ifdef XEN3
 	        struct physdev_op physop;
 		physop.cmd = PHYSDEVOP_SET_IOPL;
-		physop.u.set_iopl.iopl = new->pcb_tss.tss_ioopt & SEL_RPL;
+		physop.u.set_iopl.iopl = iopl;
 		HYPERVISOR_physdev_op(&physop);
 #else
 		dom0_op_t op;
 		op.cmd = DOM0_IOPL;
 		op.u.iopl.domain = DOMID_SELF;
-		op.u.iopl.iopl = new->pcb_tss.tss_ioopt & SEL_RPL; /* i/o pl */
+		op.u.iopl.iopl = iopl;
 		HYPERVISOR_dom0_op(&op);
 #endif
 	}
@@ -1136,12 +1129,7 @@ setregs(struct lwp *l, struct exec_package *pack, u_long stack)
  */
 
 union	descriptor *gdt, *ldt;
-struct gate_descriptor *idt;
-char idt_allocmap[NIDT];
-struct simplelock idt_lock = SIMPLELOCK_INITIALIZER;
-#ifdef I586_CPU
 union	descriptor *pentium_idt;
-#endif
 struct user *proc0paddr;
 extern vaddr_t proc0uarea;
 
@@ -1183,8 +1171,8 @@ setregion(struct region_descriptor *rd, void *base, size_t limit)
 }
 
 void
-setsegment(struct segment_descriptor *sd, void *base, size_t limit, int type,
-    int dpl, int def32, int gran)
+setsegment(struct segment_descriptor *sd, const void *base, size_t limit,
+    int type, int dpl, int def32, int gran)
 {
 
 	sd->sd_lolimit = (int)limit;
@@ -1216,18 +1204,16 @@ int xen_idt_idx;
 
 #define	KBTOB(x)	((size_t)(x) * 1024UL)
 
+#if !defined(XEN)
 void cpu_init_idt()
 {
 	struct region_descriptor region;
 
 	panic("cpu_init_idt");
-#ifdef I586_CPU
 	setregion(&region, pentium_idt, NIDT * sizeof(idt[0]) - 1);
-#else
-	setregion(&region, idt, NIDT * sizeof(idt[0]) - 1);
-#endif
         lidt(&region);
 }
+#endif /* defined(XEN) */
 
 #if !defined(XEN) && !defined(REALBASEMEM) && !defined(REALEXTMEM)
 void
@@ -1423,7 +1409,7 @@ init386(paddr_t first_avail)
 	cpu_feature = cpu_info_primary.ci_feature_flags;
 
 	/* not on Xen... */
-	cpu_feature &= ~(CPUID_PGE|CPUID_PSE|CPUID_MTRR|CPUID_FXSR);
+	cpu_feature &= ~(CPUID_PGE|CPUID_PSE|CPUID_MTRR|CPUID_FXSR|CPUID_NOX);
 
 	proc0paddr = UAREA_TO_USER(proc0uarea);
 	lwp0.l_addr = proc0paddr;
@@ -1878,10 +1864,8 @@ init386(paddr_t first_avail)
 
 #if !defined(XEN)
 	idt = (struct gate_descriptor *)idt_vaddr;
-#ifdef I586_CPU
  	pmap_kenter_pa(pentium_idt_vaddr, idt_paddr, VM_PROT_READ);
 	pentium_idt = (union descriptor *)pentium_idt_vaddr;
-#endif
 #endif
 	pmap_update(pmap_kernel());
 
@@ -1915,20 +1899,20 @@ init386(paddr_t first_avail)
 #if !defined(XEN)
 	/* exceptions */
 	for (x = 0; x < 32; x++) {
+		idt_vec_reserve(x);
 		setgate(&idt[x], IDTVEC(exceptions)[x], 0, SDT_SYS386TGT,
 		    (x == 3 || x == 4) ? SEL_UPL : SEL_KPL,
 		    GSEL(GCODE_SEL, SEL_KPL));
-		idt_allocmap[x] = 1;
 	}
 
 	/* new-style interrupt gate for syscalls */
+	idt_vec_reserve(128);
 	setgate(&idt[128], &IDTVEC(syscall), 0, SDT_SYS386TGT, SEL_UPL,
 	    GSEL(GCODE_SEL, SEL_KPL));
-	idt_allocmap[128] = 1;
 #ifdef COMPAT_SVR4
+	idt_vec_reserve(0xd2);
 	setgate(&idt[0xd2], &IDTVEC(svr4_fasttrap), 0, SDT_SYS386TGT,
 	    SEL_UPL, GSEL(GCODE_SEL, SEL_KPL));
-	idt_allocmap[0xd2] = 1;
 #endif /* COMPAT_SVR4 */
 #endif
 
@@ -2033,10 +2017,6 @@ init386(paddr_t first_avail)
 	intr_default_setup();
 #endif
 
-	/* Initialize software interrupts. */
-	XENPRINTF(("softintr_init\n"));
-	softintr_init();
-
 	XENPRINTF(("splraise(IPL_IPI)\n"));
 	splraise(IPL_IPI);
 	XENPRINTF(("enable_intr\n"));
@@ -2052,12 +2032,6 @@ init386(paddr_t first_avail)
 		cngetc();
 	}
 
-#ifdef __HAVE_CPU_MAXPROC
-	XENPRINTF(("cpu_maxproc\n"));
-	/* Make sure maxproc is sane */
-	if (maxproc > cpu_maxproc())
-		maxproc = cpu_maxproc();
-#endif
 	XENPRINTF(("init386 end\n"));
 }
 
@@ -2367,104 +2341,4 @@ void
 cpu_initclocks()
 {
 	(*initclock_func)();
-}
-
-void
-cpu_need_resched(struct cpu_info *ci, int flags)
-{
-	bool immed = (flags & RESCHED_IMMED) != 0;
-
-	if (ci->ci_want_resched && !immed)
-		return;
-	ci->ci_want_resched = 1;
-
-	if (ci->ci_curlwp != ci->ci_data.cpu_idlelwp) {
-		aston(ci->ci_curlwp);
-#ifdef MULTIPROCESSOR
-		if (immed && ci != curcpu()) {
-			x86_send_ipi(ci, 0);
-		}
-#endif
-	} else {
-#ifdef MULTIPROCESSOR
-		if (ci != curcpu())
-			x86_send_ipi(ci, 0);
-#endif
-	}
-}
-
-void
-cpu_signotify(struct lwp *l)
-{
-
-	aston(l);
-#ifdef MULTIPROCESSOR
-	if (l->l_cpu != NULL && l->l_cpu != curcpu())
-		x86_send_ipi(l->l_cpu, 0);
-#endif
-}
-
-void
-cpu_need_proftick(struct lwp *l)
-{
-
-	KASSERT(l->l_cpu == curcpu());
-
-	l->l_pflag |= LP_OWEUPC;
-	aston(l);
-}
-
-/*
- * Allocate an IDT vector slot within the given range.
- * XXX needs locking to avoid MP allocation races.
- */
-
-int
-idt_vec_alloc(int low, int high)
-{
-	int vec;
-
-	simple_lock(&idt_lock);
-	for (vec = low; vec <= high; vec++) {
-		if (idt_allocmap[vec] == 0) {
-			idt_allocmap[vec] = 1;
-			simple_unlock(&idt_lock);
-			return vec;
-		}
-	}
-	simple_unlock(&idt_lock);
-	return 0;
-}
-
-void
-idt_vec_set(int vec, void (*function)(void))
-{
-	/*
-	 * Vector should be allocated, so no locking needed.
-	 */
-	KASSERT(idt_allocmap[vec] == 1);
-	setgate(&idt[vec], function, 0, SDT_SYS386IGT, SEL_KPL,
-	    GSEL(GCODE_SEL, SEL_KPL));
-}
-
-void
-idt_vec_free(int vec)
-{
-	simple_lock(&idt_lock);
-	unsetgate(&idt[vec]);
-	idt_allocmap[vec] = 0;
-	simple_unlock(&idt_lock);
-}
-
-/*
- * Number of processes is limited by number of available GDT slots.
- */
-int
-cpu_maxproc(void)
-{
-#ifdef USER_LDT
-	return ((MAXGDTSIZ - NGDT) / 2);
-#else
-	return (MAXGDTSIZ - NGDT);
-#endif
 }

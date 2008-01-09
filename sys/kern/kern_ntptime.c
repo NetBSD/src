@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ntptime.c,v 1.43.16.1 2007/11/06 23:31:45 matt Exp $	*/
+/*	$NetBSD: kern_ntptime.c,v 1.43.16.2 2008/01/09 01:56:05 matt Exp $	*/
 #include <sys/types.h> 	/* XXX to get __HAVE_TIMECOUNTER, remove
 			   after all ports are converted. */
 #ifdef __HAVE_TIMECOUNTER
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_ntptime.c,v 1.59 2005/05/28 14:34:41 rwatson Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.43.16.1 2007/11/06 23:31:45 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.43.16.2 2008/01/09 01:56:05 matt Exp $");
 
 #include "opt_ntp.h"
 #include "opt_compat_netbsd.h"
@@ -216,8 +216,7 @@ static void hardupdate(long offset);
  * ntp_gettime() - NTP user application interface
  */
 void
-ntp_gettime(ntv)
-	struct ntptimeval *ntv;
+ntp_gettime(struct ntptimeval *ntv)
 {
 	nanotime(&ntv->time);
 	ntv->maxerror = time_maxerror;
@@ -231,14 +230,11 @@ ntp_gettime(ntv)
  * ntp_adjtime() - NTP daemon application interface
  */
 int
-sys_ntp_adjtime(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_ntp_adjtime(struct lwp *l, const struct sys_ntp_adjtime_args *uap, register_t *retval)
 {
-	struct sys_ntp_adjtime_args /* {
+	/* {
 		syscallarg(struct timex *) tp;
-	} */ *uap = v;
+	} */
 	struct timex ntv;
 	int error = 0;
 
@@ -261,8 +257,7 @@ sys_ntp_adjtime(l, v, retval)
 }
 
 void
-ntp_adjtime1(ntv)
-	struct timex *ntv;
+ntp_adjtime1(struct timex *ntv)
 {
 	long freq;
 	int modes;
@@ -903,7 +898,7 @@ hardpps(struct timespec *tsp,		/* time at PPS */
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.43.16.1 2007/11/06 23:31:45 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.43.16.2 2008/01/09 01:56:05 matt Exp $");
 
 #include "opt_ntp.h"
 #include "opt_compat_netbsd.h"
@@ -962,8 +957,7 @@ extern long pps_stbcnt;		/* stability limit exceeded */
  * ntp_gettime() - NTP user application interface
  */
 void
-ntp_gettime(ntvp)
-	struct ntptimeval *ntvp;
+ntp_gettime(struct ntptimeval *ntvp)
 {
 	struct timeval atv;
 	int s;
@@ -1000,14 +994,11 @@ ntp_gettime(ntvp)
  * ntp_adjtime() - NTP daemon application interface
  */
 int
-sys_ntp_adjtime(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_ntp_adjtime(struct lwp *l, const struct sys_ntp_adjtime_args *uap, register_t *retval)
 {
-	struct sys_ntp_adjtime_args /* {
+	/* {
 		syscallarg(struct timex *) tp;
-	} */ *uap = v;
+	} */
 	struct timex ntv;
 	int error = 0;
 
@@ -1030,8 +1021,7 @@ sys_ntp_adjtime(l, v, retval)
 }
 
 void
-ntp_adjtime1(ntv)
-	struct timex *ntv;
+ntp_adjtime1(struct timex *ntv)
 {
 	int modes;
 	int s;
@@ -1143,11 +1133,11 @@ ntp_timestatus()
  * ntp_gettime() - NTP user application interface
  */
 int
-sys___ntp_gettime30(struct lwp *l, void *v, register_t *retval)
+sys___ntp_gettime30(struct lwp *l, const struct sys___ntp_gettime30_args *uap, register_t *retval)
 {
-	struct sys___ntp_gettime30_args /* {
+	/* {
 		syscallarg(struct ntptimeval *) ntvp;
-	} */ *uap = v;
+	} */
 	struct ntptimeval ntv;
 	int error = 0;
 
@@ -1165,11 +1155,11 @@ sys___ntp_gettime30(struct lwp *l, void *v, register_t *retval)
 
 #ifdef COMPAT_30
 int
-compat_30_sys_ntp_gettime(struct lwp *l, void *v, register_t *retval)
+compat_30_sys_ntp_gettime(struct lwp *l, const struct compat_30_sys_ntp_gettime_args *uap, register_t *retval)
 {
-	struct compat_30_sys_ntp_gettime_args /* {
+	/* {
 		syscallarg(struct ntptimeval30 *) ontvp;
-	} */ *uap = v;
+	} */
 	struct ntptimeval ntv;
 	struct ntptimeval30 ontv;
 	int error = 0;
@@ -1228,7 +1218,7 @@ SYSCTL_SETUP(sysctl_kern_ntptime_setup, "sysctl kern.ntptime node setup")
 /* For some reason, raising SIGSYS (as sys_nosys would) is problematic. */
 
 int
-sys___ntp_gettime30(struct lwp *l, void *v, register_t *retval)
+sys___ntp_gettime30(struct lwp *l, const struct sys___ntp_gettime30_args *uap, register_t *retval)
 {
 
 	return(ENOSYS);
@@ -1236,7 +1226,7 @@ sys___ntp_gettime30(struct lwp *l, void *v, register_t *retval)
 
 #ifdef COMPAT_30
 int
-compat_30_sys_ntp_gettime(struct lwp *l, void *v, register_t *retval)
+compat_30_sys_ntp_gettime(struct lwp *l, const struct compat_30_sys_ntp_gettime_args *uap, register_t *retval)
 {
 
  	return(ENOSYS);

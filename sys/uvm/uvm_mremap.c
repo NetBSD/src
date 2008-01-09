@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mremap.c,v 1.7.2.1 2007/11/06 23:35:31 matt Exp $	*/
+/*	$NetBSD: uvm_mremap.c,v 1.7.2.2 2008/01/09 01:58:42 matt Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mremap.c,v 1.7.2.1 2007/11/06 23:35:31 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mremap.c,v 1.7.2.2 2008/01/09 01:58:42 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/mman.h>
@@ -78,10 +78,10 @@ uvm_mapent_extend(struct vm_map *map, vaddr_t endva, vsize_t size)
 			error = E2BIG; /* XXX */
 			goto done;
 		}
-		simple_lock(&uobj->vmobjlock);
+		mutex_enter(&uobj->vmobjlock);
 		KASSERT(uobj->uo_refs > 0);
 		uobj->uo_refs++;
-		simple_unlock(&uobj->vmobjlock);
+		mutex_exit(&uobj->vmobjlock);
 		reserved_entry->object.uvm_obj = uobj;
 		reserved_entry->offset = newoffset;
 	}
@@ -239,15 +239,15 @@ done:
  */
 
 int
-sys_mremap(struct lwp *l, void *v, register_t *retval)
+sys_mremap(struct lwp *l, const struct sys_mremap_args *uap, register_t *retval)
 {
-	struct sys_mremap_args /* {
+	/* {
 		syscallarg(void *) old_address;
 		syscallarg(size_t) old_size;
 		syscallarg(void *) new_address;
 		syscallarg(size_t) new_size;
 		syscallarg(int) flags;
-	} */ *uap = v;
+	} */
 
 	struct proc *p;
 	struct vm_map *map;

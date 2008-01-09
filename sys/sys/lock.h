@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.72.6.1 2007/11/06 23:34:49 matt Exp $	*/
+/*	$NetBSD: lock.h,v 1.72.6.2 2008/01/09 01:58:10 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,25 +75,18 @@
 #ifndef	_SYS_LOCK_H_
 #define	_SYS_LOCK_H_
 
-#if defined(_KERNEL_OPT)
-#include "opt_lockdebug.h"
-#include "opt_multiprocessor.h"
-#endif
-
 #include <sys/stdint.h>
-#include <sys/queue.h>
-#include <sys/simplelock.h>
+#include <sys/mutex.h>
 
 #include <machine/lock.h>
 
 /*
- * The general lock structure.  Provides for multiple shared locks
- * and upgrading from shared to exclusive.
+ * The general lock structure.
  */
 struct lock {
-	struct	simplelock lk_interlock;/* lock on remaining fields */
 	u_int	lk_flags;		/* see below */
 	int	lk_sharecount;		/* # of accepted shared locks */
+	kmutex_t lk_interlock;		/* lock on structure */
 	short	lk_exclusivecount;	/* # of recursive exclusive locks */
 	short	lk_recurselevel;	/* lvl above which recursion ok */
 	int	lk_waitcount;		/* # of sleepers */
@@ -112,22 +105,12 @@ struct lock {
  *	holding an exclusive lock requests a shared lock, the exclusive
  *	lock(s) will be downgraded to shared locks.
  *   LK_EXCLUSIVE - stop further shared locks, when they are cleared,
- *	grant a pending upgrade if it exists, then grant an exclusive
- *	lock. Only one exclusive lock may exist at a time, except that
+ *	grant then grant an exclusive lock.
+ *	Only one exclusive lock may exist at a time, except that
  *	a process holding an exclusive lock may get additional exclusive
  *	locks if it explicitly sets the LK_CANRECURSE flag in the lock
  *	request, or if the LK_CANRECURSE flag was set when the lock was
  *	initialized.
- *   LK_UPGRADE - the process must hold a shared lock that it wants to
- *	have upgraded to an exclusive lock. Other processes may get
- *	exclusive access to the resource between the time that the upgrade
- *	is requested and the time that it is granted.
- *   LK_EXCLUPGRADE - the process must hold a shared lock that it wants to
- *	have upgraded to an exclusive lock. If the request succeeds, no
- *	other processes will have gotten exclusive access to the resource
- *	between the time that the upgrade is requested and the time that
- *	it is granted. However, if another process has already requested
- *	an upgrade, the request will fail (see error returns below).
  *   LK_DOWNGRADE - the process must hold an exclusive lock that it wants
  *	to have downgraded to a shared lock. If the process holds multiple
  *	(recursive) exclusive locks, they will all be downgraded to shared
@@ -142,8 +125,6 @@ struct lock {
 #define	LK_TYPE_MASK	0x0000000f	/* type of lock sought */
 #define	LK_SHARED	0x00000001	/* shared lock */
 #define	LK_EXCLUSIVE	0x00000002	/* exclusive lock */
-#define	LK_UPGRADE	0x00000003	/* shared-to-exclusive upgrade */
-#define	LK_EXCLUPGRADE	0x00000004	/* first shared-to-exclusive upgrade */
 #define	LK_DOWNGRADE	0x00000005	/* exclusive-to-shared downgrade */
 #define	LK_RELEASE	0x00000006	/* release any type of lock */
 #define	LK_DRAIN	0x00000007	/* wait for all lock activity to end */
@@ -160,7 +141,6 @@ struct lock {
 #define	LK_SLEEPFAIL	0x00000020	/* sleep, then return failure */
 #define	LK_CANRECURSE	0x00000040	/* this may be recursive lock attempt */
 #define	LK_REENABLE	0x00000080	/* lock is be reenabled after drain */
-#define	LK_SETRECURSE	0x00100000	/* other locks while we have it OK */
 #define	LK_RECURSEFAIL  0x00200000	/* attempt at recursive lock fails */
 #define	LK_RESURRECT	0x00800000	/* immediately reenable drained lock */
 /*
@@ -168,12 +148,12 @@ struct lock {
  *
  * These flags are used internally to the lock manager.
  */
-#define	LK_WANT_UPGRADE	0x00000100	/* waiting for share-to-excl upgrade */
 #define	LK_WANT_EXCL	0x00000200	/* exclusive lock sought */
 #define	LK_HAVE_EXCL	0x00000400	/* exclusive lock obtained */
 #define	LK_WAITDRAIN	0x00000800	/* process waiting for lock to drain */
 #define	LK_DRAINING	0x00004000	/* lock is being drained */
 #define	LK_DRAINED	0x00008000	/* lock has been decommissioned */
+#define	LK_DODEBUG	0x00010000	/* has lockdebug bits */
 /*
  * Internal state flags corresponding to lk_sharecount, and lk_waitcount
  */
@@ -191,7 +171,6 @@ struct lock {
 #define __LK_FLAG_BITS \
 	"\20" \
 	"\22LK_RECURSEFAIL" \
-	"\21LK_SETRECURSE" \
 	"\20LK_WAIT_NOZERO" \
 	"\19LK_SHARE_NOZERO" \
 	"\18LK_RETRY" \
@@ -201,7 +180,6 @@ struct lock {
 	"\12LK_WAITDRAIN" \
 	"\11LK_HAVE_EXCL" \
 	"\10LK_WANT_EXCL" \
-	"\09LK_WANT_UPGRADE" \
 	"\08LK_REENABLE" \
 	"\07LK_CANRECURSE" \
 	"\06LK_SLEEPFAIL" \
@@ -211,17 +189,22 @@ struct lock {
  *
  * Successfully obtained locks return 0. Locks will always succeed
  * unless one of the following is true:
- *	LK_FORCEUPGRADE is requested and some other process has already
- *	    requested a lock upgrade (returns EBUSY).
  *	LK_NOWAIT is set and a sleep would be required (returns EBUSY).
  *	LK_SLEEPFAIL is set and a sleep was done (returns ENOLCK).
  *	PCATCH is set in lock priority and a signal arrives (returns
  *	    either EINTR or ERESTART if system calls is to be restarted).
  *	Non-null lock timeout and timeout expires (returns EWOULDBLOCK).
  * A failed lock attempt always returns a non-zero error value. No lock
- * is held after an error return (in particular, a failed LK_UPGRADE
- * or LK_FORCEUPGRADE will have released its shared access lock).
+ * is held after an error return.
  */
+
+
+/*
+ * Indicator that no process/cpu holds exclusive lock
+ */
+#define	LK_KERNPROC	((pid_t) -2)
+#define	LK_NOPROC	((pid_t) -1)
+#define	LK_NOCPU	((cpuid_t) -1)
 
 #ifdef _KERNEL
 
@@ -229,7 +212,7 @@ struct proc;
 
 void	lockinit(struct lock *, pri_t, const char *, int, int);
 void	lockdestroy(struct lock *);
-int	lockmgr(struct lock *, u_int flags, struct simplelock *);
+int	lockmgr(struct lock *, u_int flags, kmutex_t *);
 void	transferlockers(struct lock *, struct lock *);
 int	lockstatus(struct lock *);
 void	lockmgr_printinfo(struct lock *);

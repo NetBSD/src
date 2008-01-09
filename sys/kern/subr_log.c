@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_log.c,v 1.41.8.1 2007/11/08 11:00:05 matt Exp $	*/
+/*	$NetBSD: subr_log.c,v 1.41.8.2 2008/01/09 01:56:17 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_log.c,v 1.41.8.1 2007/11/08 11:00:05 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_log.c,v 1.41.8.2 2008/01/09 01:56:17 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,9 +94,9 @@ static bool	log_async;
 static struct selinfo log_selp;		/* process waiting on select call */
 static pid_t	log_pgid;		/* process/group for async I/O */
 static kcondvar_t log_cv;
-static kmutex_t log_lock;
 static void	*log_sih;
 
+kmutex_t log_lock;
 int	log_open;			/* also used in log() */
 int	msgbufmapped;			/* is the message buffer mapped */
 int	msgbufenabled;			/* is logging to the buffer enabled */
@@ -137,7 +137,7 @@ void
 loginit(void)
 {
 
-	mutex_init(&log_lock, MUTEX_SPIN, IPL_VM);
+	mutex_init(&log_lock, MUTEX_DEFAULT, IPL_VM);
 	selinit(&log_selp);
 	cv_init(&log_cv, "klog");
 	log_sih = softint_establish(SOFTINT_CLOCK | SOFTINT_MPSAFE,
@@ -294,7 +294,7 @@ logkqfilter(dev_t dev, struct knote *kn)
 		break;
 
 	default:
-		return (1);
+		return (EINVAL);
 	}
 
 	mutex_spin_enter(&log_lock);

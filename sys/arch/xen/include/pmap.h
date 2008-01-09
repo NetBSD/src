@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.10.22.1 2007/11/06 23:24:04 matt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.10.22.2 2008/01/09 01:50:07 matt Exp $	*/
 /*	NetBSD: pmap.h,v 1.82 2004/02/20 17:35:01 yamt Exp 	*/
 
 /*
@@ -47,12 +47,13 @@
 
 #include "opt_xen.h"
 
+#include <sys/atomic.h>
+
 #include <machine/cpufunc.h>
 #include <machine/pte.h>
-#include <machine/xenfunc.h>
-#include <machine/xenpmap.h>
+#include <xen/xenfunc.h>
+#include <xen/xenpmap.h>
 #include <machine/segments.h>
-#include <machine/atomic.h>
 #include <uvm/uvm_object.h>
 
 /*
@@ -390,33 +391,21 @@ pmap_remove_all(struct pmap *pmap)
  *	if hardware doesn't support one-page flushing)
  */
 
-__inline static void __attribute__((__unused__))
+__inline static void __unused
 pmap_update_pg(vaddr_t va)
 {
-#if defined(I386_CPU)
-	if (cpu_class == CPUCLASS_386)
-		tlbflush();
-	else
-#endif
-		invlpg((u_int) va);
+	invlpg((u_int) va);
 }
 
 /*
  * pmap_update_2pg: flush two pages from the TLB
  */
 
-__inline static void __attribute__((__unused__))
+__inline static void __unused
 pmap_update_2pg(vaddr_t va, vaddr_t vb)
 {
-#if defined(I386_CPU)
-	if (cpu_class == CPUCLASS_386)
-		tlbflush();
-	else
-#endif
-	{
-		invlpg((u_int) va);
-		invlpg((u_int) vb);
-	}
+	invlpg((u_int) va);
+	invlpg((u_int) vb);
 }
 
 /*
@@ -428,7 +417,7 @@ pmap_update_2pg(vaddr_t va, vaddr_t vb)
  *	unprotecting a page is done on-demand at fault time.
  */
 
-__inline static void __attribute__((__unused__))
+__inline static void __unused
 pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 {
 	if ((prot & VM_PROT_WRITE) == 0) {
@@ -448,7 +437,7 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
  *	unprotecting a page is done on-demand at fault time.
  */
 
-__inline static void __attribute__((__unused__))
+__inline static void __unused
 pmap_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 {
 	if ((prot & VM_PROT_WRITE) == 0) {
@@ -471,7 +460,7 @@ pmap_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 
 #include <lib/libkern/libkern.h>
 
-static __inline pt_entry_t * __attribute__((__unused__))
+static __inline pt_entry_t * __unused
 vtopte(vaddr_t va)
 {
 
@@ -480,7 +469,7 @@ vtopte(vaddr_t va)
 	return (PTE_BASE + x86_btop(va));
 }
 
-static __inline pt_entry_t * __attribute__((__unused__))
+static __inline pt_entry_t * __unused
 kvtopte(vaddr_t va)
 {
 
@@ -504,7 +493,7 @@ kvtopte(vaddr_t va)
  * machine-dependent code only.
  */
 
-static __inline paddr_t __attribute__((__unused__))
+static __inline paddr_t __unused
 vtomach(vaddr_t va)
 {
 	pt_entry_t pte;
@@ -513,11 +502,12 @@ vtomach(vaddr_t va)
 	return xpmap_ptom((pte & PG_FRAME) | (va & ~PG_FRAME));
 }
 
-#define pmap_pte_set(p, n)		x86_atomic_testset_ul(p, n)
-#define pmap_pte_setbits(p, b)		x86_atomic_setbits_l(p, b)
-#define pmap_pte_clearbits(p, b)	x86_atomic_clearbits_l(p, b)
-#define pmap_cpu_has_pg_n()		(cpu_class != CPUCLASS_386)
-#define pmap_cpu_has_invlpg()		(cpu_class != CPUCLASS_386)
+#define pmap_pte_testset(p, n)		\
+    atomic_swap_ulong((volatile unsigned long *)p, n)
+#define pmap_pte_setbits(p, b)		\
+    atomic_or_ulong((volatile unsigned long *)p, b)
+#define pmap_pte_clearbits(p, b)	\
+    atomic_and_ulong((volatile unsigned long *)p, ~(b))
 
 paddr_t vtophys(vaddr_t);
 vaddr_t	pmap_map(vaddr_t, paddr_t, paddr_t, vm_prot_t);

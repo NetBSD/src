@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sk.c,v 1.42.6.1 2007/11/08 10:59:54 matt Exp $	*/
+/*	$NetBSD: if_sk.c,v 1.42.6.2 2008/01/09 01:53:50 matt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -122,6 +122,7 @@
  */
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.42.6.2 2008/01/09 01:53:50 matt Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1229,6 +1230,8 @@ sk_attach(struct device *parent, struct device *self, void *aux)
 	void *kva;
 	int i, rseg;
 
+	aprint_naive("\n");
+
 	sc_if->sk_port = sa->skc_port;
 	sc_if->sk_softc = sc;
 	sc->sk_if[sa->skc_port] = sc_if;
@@ -1517,6 +1520,8 @@ skc_attach(struct device *parent, struct device *self, void *aux)
 	u_int32_t command;
 	const char *revstr;
 	const struct sysctlnode *node;
+
+	aprint_naive("\n");
 
 	DPRINTFN(2, ("begin skc_attach\n"));
 

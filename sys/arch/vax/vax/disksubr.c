@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.43.12.1 2007/11/06 23:23:13 matt Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.43.12.2 2008/01/09 01:49:36 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.43.12.1 2007/11/06 23:23:13 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.43.12.2 2008/01/09 01:49:36 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -263,7 +263,8 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *),
 		goto done;
 	dlp = (struct disklabel *)((char *)bp->b_data + LABELOFFSET);
 	bcopy(lp, dlp, sizeof(struct disklabel));
-	bp->b_flags &= ~(B_READ|B_DONE);
+	bp->b_oflags &= ~(BO_DONE);
+	bp->b_flags &= ~(B_READ);
 	bp->b_flags |= B_WRITE;
 	(*strat)(bp);
 	error = biowait(bp);

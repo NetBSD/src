@@ -1,4 +1,4 @@
-/* $NetBSD: gpio.c,v 1.12 2007/03/04 06:01:46 christos Exp $ */
+/* $NetBSD: gpio.c,v 1.12.16.1 2008/01/09 01:52:37 matt Exp $ */
 /*	$OpenBSD: gpio.c,v 1.6 2006/01/14 12:33:49 grange Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.12 2007/03/04 06:01:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.12.16.1 2008/01/09 01:52:37 matt Exp $");
 
 /*
  * General Purpose Input/Output framework.
@@ -49,6 +49,7 @@ struct gpio_softc {
 
 int	gpio_match(struct device *, struct cfdata *, void *);
 void	gpio_attach(struct device *, struct device *, void *);
+bool	gpio_resume(device_t);
 int	gpio_detach(struct device *, int);
 int	gpio_activate(struct device *, enum devact);
 int	gpio_search(struct device *, struct cfdata *, const int *, void *);
@@ -76,6 +77,19 @@ gpio_match(struct device *parent, struct cfdata *cf,
 	return (1);
 }
 
+bool
+gpio_resume(device_t self)
+{
+	struct gpio_softc *sc = device_private(self);
+	int pin;
+
+	for (pin = 0; pin < sc->sc_npins; pin++) {
+		gpiobus_pin_ctl(sc->sc_gc, pin, sc->sc_pins[pin].pin_flags);
+		gpiobus_pin_write(sc->sc_gc, pin, sc->sc_pins[pin].pin_state);
+	}
+	return true;
+}
+
 void
 gpio_attach(struct device *parent, struct device *self, void *aux)
 {
@@ -87,6 +101,9 @@ gpio_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_npins = gba->gba_npins;
 
 	printf(": %d pins\n", sc->sc_npins);
+
+	if (!pmf_device_register(self, NULL, gpio_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	/*
 	 * Attach all devices that can be connected to the GPIO pins
@@ -222,7 +239,8 @@ gpio_pin_write(void *gpio, struct gpio_pinmap *map, int pin, int value)
 {
 	struct gpio_softc *sc = gpio;
 
-	return (gpiobus_pin_write(sc->sc_gc, map->pm_map[pin], value));
+	gpiobus_pin_write(sc->sc_gc, map->pm_map[pin], value);
+	sc->sc_pins[map->pm_map[pin]].pin_state = value;
 }
 
 void
@@ -295,6 +313,9 @@ gpioioctl(dev_t dev, u_long cmd, void *data, int flag,
 
 	sc = (struct gpio_softc *)device_lookup(&gpio_cd, minor(dev));
 	gc = sc->sc_gc;
+
+	if (cmd != GPIOINFO && !device_is_active(&sc->sc_dev))
+		return EBUSY;
 
 	switch (cmd) {
 	case GPIOINFO:

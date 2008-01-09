@@ -1,3 +1,5 @@
+/* $NetBSD: drmP.h,v 1.6.12.2 2008/01/09 01:52:33 matt Exp $ */
+
 /* drmP.h -- Private header for Direct Rendering Manager -*- linux-c -*-
  * Created: Mon Jan  4 10:05:05 1999 by faith@precisioninsight.com
  */
@@ -118,6 +120,7 @@ typedef struct drm_file drm_file_t;
 #include <sys/kauth.h>
 #include <sys/types.h>
 #include <sys/file.h>
+#include <sys/atomic.h>
 #include <uvm/uvm.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
@@ -350,9 +353,9 @@ typedef u_int8_t u8;
 	below should be enough for x86, perhaps others. */
 
 #if defined(__NetBSD__) 
-#define DRM_READMEMORYBARRIER()		mb_read()
-#define DRM_WRITEMEMORYBARRIER()	mb_write()
-#define DRM_MEMORYBARRIER()		mb_memory()
+#define DRM_READMEMORYBARRIER()		membar_consumer()
+#define DRM_WRITEMEMORYBARRIER()	membar_producer()
+#define DRM_MEMORYBARRIER()		membar_sync()
 #elif defined(__i386__) 
 #define DRM_READMEMORYBARRIER()		__asm __volatile( \
 					"lock; addl $0,0(%%esp)" : : : "memory");
@@ -464,7 +467,7 @@ do {									\
 	if (!_DRM_LOCK_IS_HELD(dev->lock.hw_lock->lock) ||		\
 	     dev->lock.filp != filp) {					\
 		DRM_ERROR("%s called without lock held\n",		\
-			   __FUNCTION__);				\
+			   __func__);				\
 		return EINVAL;						\
 	}								\
 } while (0)
@@ -596,14 +599,11 @@ typedef struct drm_freelist {
 typedef struct drm_dma_handle {
 	void *vaddr;
 	bus_addr_t busaddr;
-#if defined(__FreeBSD__)
-	bus_dma_tag_t tag;
+	bus_dma_tag_t dmat;
 	bus_dmamap_t map;
-#elif defined(__NetBSD__)
 	bus_dma_segment_t seg;
+	size_t size;
 	void *addr;
-	bus_addr_t dmaaddr;
-#endif
 } drm_dma_handle_t;
 
 typedef struct drm_buf_entry {
@@ -819,7 +819,7 @@ typedef struct {
  */
 struct drm_device {
 #if defined(__NetBSD__) || defined(__OpenBSD__)
-	struct device	  device; /* softc is an extension of struct device */
+	struct device		device;
 #endif
 
 	struct drm_driver_info driver;

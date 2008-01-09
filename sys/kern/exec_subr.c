@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_subr.c,v 1.54.6.1 2007/11/06 23:31:26 matt Exp $	*/
+/*	$NetBSD: exec_subr.c,v 1.54.6.2 2008/01/09 01:55:57 matt Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -31,14 +31,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.54.6.1 2007/11/06 23:31:26 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.54.6.2 2008/01/09 01:55:57 matt Exp $");
 
 #include "opt_pax.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/vnode.h>
 #include <sys/filedesc.h>
 #include <sys/exec.h>
@@ -113,14 +113,13 @@ vmcmdset_extend(struct exec_vmcmd_set *evsp)
 		evsp->evs_cnt = EXEC_DEFAULT_VMCMD_SETSIZE;
 
 	/* allocate it */
-	nvcp = malloc(evsp->evs_cnt * sizeof(struct exec_vmcmd),
-	    M_EXEC, M_WAITOK);
+	nvcp = kmem_alloc(evsp->evs_cnt * sizeof(struct exec_vmcmd), KM_SLEEP);
 
 	/* free the old struct, if there was one, and record the new one */
 	if (ocnt) {
 		memcpy(nvcp, evsp->evs_cmds,
 		    (ocnt * sizeof(struct exec_vmcmd)));
-		free(evsp->evs_cmds, M_EXEC);
+		kmem_free(evsp->evs_cmds, ocnt * sizeof(struct exec_vmcmd));
 	}
 	evsp->evs_cmds = nvcp;
 }
@@ -141,8 +140,8 @@ kill_vmcmds(struct exec_vmcmd_set *evsp)
 		if (vcp->ev_vp != NULL)
 			vrele(vcp->ev_vp);
 	}
+	kmem_free(evsp->evs_cmds, evsp->evs_cnt * sizeof(struct exec_vmcmd));
 	evsp->evs_used = evsp->evs_cnt = 0;
-	free(evsp->evs_cmds, M_EXEC);
 }
 
 /*
@@ -185,16 +184,16 @@ vmcmd_map_pagedvn(struct lwp *l, struct exec_vmcmd *cmd)
 	 * check the file system's opinion about mmapping the file
 	 */
 
-	error = VOP_MMAP(vp, prot, p->p_cred, l);
+	error = VOP_MMAP(vp, prot, p->p_cred);
 	if (error)
 		return error;
 
 	if ((vp->v_vflag & VV_MAPPED) == 0) {
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-		simple_lock(&vp->v_interlock);
+		mutex_enter(&vp->v_interlock);
 		vp->v_vflag |= VV_MAPPED;
 		vp->v_iflag |= VI_MAPPED;
-		simple_unlock(&vp->v_interlock);
+		mutex_exit(&vp->v_interlock);
 		VOP_UNLOCK(vp, 0);
 	}
 
@@ -388,6 +387,13 @@ exec_setup_stack(struct lwp *l, struct exec_package *epp)
 		epp->ep_minsaddr = USRSTACK;
 		max_stack_size = MAXSSIZ;
 	}
+
+#ifdef PAX_ASLR
+	pax_aslr_stack(l, epp, &max_stack_size);
+#endif /* PAX_ASLR */
+
+	l->l_proc->p_stackbase = epp->ep_minsaddr;
+	
 	epp->ep_maxsaddr = (u_long)STACK_GROW(epp->ep_minsaddr,
 		max_stack_size);
 	epp->ep_ssize = l->l_proc->p_rlimit[RLIMIT_STACK].rlim_cur;

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_var.h,v 1.72.2.1 2007/11/06 23:34:24 matt Exp $	*/
+/*	$NetBSD: nfs_var.h,v 1.72.2.2 2008/01/09 01:57:54 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -44,13 +44,8 @@
 #include <sys/mallocvar.h>
 #include <sys/pool.h>
 
-MALLOC_DECLARE(M_NFSREQ);
-MALLOC_DECLARE(M_NFSMNT);
-MALLOC_DECLARE(M_NFSUID);
 MALLOC_DECLARE(M_NFSD);
 MALLOC_DECLARE(M_NFSDIROFF);
-MALLOC_DECLARE(M_NFSBIGFH);
-MALLOC_DECLARE(M_NQLEASE);
 
 struct vnode;
 struct uio;
@@ -195,9 +190,11 @@ void nfs_timer_start(void);
 int nfs_sigintr(struct nfsmount *, struct nfsreq *, struct lwp *);
 int nfs_getreq(struct nfsrv_descript *, struct nfsd *, int);
 int nfs_msg(struct lwp *, const char *, const char *);
-void nfsrv_rcv(struct socket *, void *, int);
+void nfsrv_soupcall(struct socket *, void *, int);
+void nfsrv_rcv(struct nfssvc_sock *);
 int nfsrv_getstream(struct nfssvc_sock *, int);
-int nfsrv_dorec(struct nfssvc_sock *, struct nfsd *, struct nfsrv_descript **);
+int nfsrv_dorec(struct nfssvc_sock *, struct nfsd *, struct nfsrv_descript **,
+    bool *);
 void nfsrv_wakenfsd(struct nfssvc_sock *);
 int nfsdsock_lock(struct nfssvc_sock *, bool);
 void nfsdsock_unlock(struct nfssvc_sock *);
@@ -206,6 +203,10 @@ int nfsdsock_sendreply(struct nfssvc_sock *, struct nfsrv_descript *);
 void nfsdreq_init(void);
 struct nfsrv_descript *nfsdreq_alloc(void);
 void nfsdreq_free(struct nfsrv_descript *);
+
+void nfsdsock_setbits(struct nfssvc_sock *, int);
+void nfsdsock_clearbits(struct nfssvc_sock *, int);
+bool nfsdsock_testbits(struct nfssvc_sock *, int);
 
 /* nfs_srvcache.c */
 void nfsrv_initcache(void);
@@ -280,8 +281,10 @@ int nfsrv_comparefh(const nfsrvfh_t *, const nfsrvfh_t *);
 void nfsrv_copyfh(nfsrvfh_t *, const nfsrvfh_t *);
 
 /* nfs_syscalls.c */
-int sys_getfh(struct lwp *, void *, register_t *);
-int sys_nfssvc(struct lwp *, void *, register_t *);
+struct sys_getfh_args;
+struct sys_nfssvc_args;
+int sys_getfh(struct lwp *, const struct sys_getfh_args *, register_t *);
+int sys_nfssvc(struct lwp *, const struct sys_nfssvc_args *, register_t *);
 int nfssvc_addsock(struct file *, struct mbuf *);
 int nfssvc_nfsd(struct nfsd_srvargs *, void *, struct lwp *);
 void nfsrv_zapsock(struct nfssvc_sock *);

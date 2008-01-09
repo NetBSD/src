@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_output.c,v 1.11 2007/02/17 22:34:10 dyoung Exp $	 */
+/*	$NetBSD: ddp_output.c,v 1.11.18.1 2008/01/09 01:57:20 matt Exp $	 */
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_output.c,v 1.11 2007/02/17 22:34:10 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddp_output.c,v 1.11.18.1 2008/01/09 01:57:20 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,14 +123,15 @@ at_cksum(struct mbuf *m, int skip)
 int
 ddp_route(struct mbuf *m, struct route *ro)
 {
+	struct rtentry *rt;
 	struct sockaddr_at gate;
 	struct elaphdr *elh;
 	struct at_ifaddr *aa = NULL;
 	struct ifnet   *ifp = NULL;
 	u_short         net;
 
-	if (ro->ro_rt != NULL && (ifp = ro->ro_rt->rt_ifp) != NULL) {
-		net = satosat(ro->ro_rt->rt_gateway)->sat_addr.s_net;
+	if ((rt = rtcache_getrt(ro)) != NULL) {
+		net = satosat(rt->rt_gateway)->sat_addr.s_net;
 		TAILQ_FOREACH(aa, &at_ifaddr, aa_list) {
 			if (aa->aa_ifp == ifp &&
 			    ntohs(net) >= ntohs(aa->aa_firstnet) &&
@@ -165,7 +166,7 @@ ddp_route(struct mbuf *m, struct route *ro)
 			elh->el_dnode = satocsat(rtcache_getdst(ro))->sat_addr.s_node;
 		} else {
 			elh->el_dnode =
-			    satosat(ro->ro_rt->rt_gateway)->sat_addr.s_node;
+			    satosat(rt->rt_gateway)->sat_addr.s_node;
 		}
 	}
 	if (ntohs(satocsat(rtcache_getdst(ro))->sat_addr.s_net) >=
@@ -174,9 +175,9 @@ ddp_route(struct mbuf *m, struct route *ro)
 	    ntohs(aa->aa_lastnet)) {
 		gate = *satocsat(rtcache_getdst(ro));
 	} else {
-		gate = *satosat(ro->ro_rt->rt_gateway);
+		gate = *satosat(rt->rt_gateway);
 	}
-	ro->ro_rt->rt_use++;
+	rt->rt_use++;
 
 #if IFA_STATS
 	aa->aa_ifa.ifa_data.ifad_outbytes += m->m_pkthdr.len;

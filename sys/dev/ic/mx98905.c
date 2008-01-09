@@ -1,4 +1,4 @@
-/*	$NetBSD: mx98905.c,v 1.9.16.1 2007/11/06 23:26:56 matt Exp $	*/
+/*	$NetBSD: mx98905.c,v 1.9.16.2 2008/01/09 01:52:56 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: mx98905.c,v 1.9.16.1 2007/11/06 23:26:56 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mx98905.c,v 1.9.16.2 2008/01/09 01:52:56 matt Exp $");
 
 #include <sys/device.h>
 #include <sys/mbuf.h>
@@ -300,13 +300,14 @@ mx98905_write_mbuf(sc, m, buf)
  * ring-wrap.
  */
 int
-mx98905_ring_copy(sc, src, dst, amount)
+mx98905_ring_copy(sc, src, vdst, amount)
 	struct dp8390_softc *sc;
 	int src;
-	void *dst;
+	void *vdst;
 	u_short amount;
 {
 	struct ne2000_softc *nsc = (struct ne2000_softc *)sc;
+	uint8_t *dst = vdst;
 	bus_space_tag_t nict = sc->sc_regt;
 	bus_space_handle_t nich = sc->sc_regh;
 	bus_space_tag_t asict = nsc->sc_asict;
@@ -327,8 +328,7 @@ mx98905_ring_copy(sc, src, dst, amount)
 		dst += tmp_amount;
 	}
 
-	mx98905_readmem(nict, nich, asict, asich, src, (u_int8_t *)dst,
-	    amount, useword);
+	mx98905_readmem(nict, nich, asict, asich, src, dst, amount, useword);
 
 	return (src + amount);
 }

@@ -1,3 +1,5 @@
+/*	$NetBSD: sis_drv.c,v 1.2.12.1 2008/01/09 01:54:11 matt Exp $	*/
+
 /* sis.c -- sis driver -*- linux-c -*-
  */
 /*-
@@ -27,6 +29,7 @@
  */
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sis_drv.c,v 1.2.12.1 2008/01/09 01:54:11 matt Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/sis_drv.c,v 1.7 2005/12/20 22:44:36 jhb Exp $");
 */

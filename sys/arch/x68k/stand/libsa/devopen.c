@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.3 2006/05/10 06:24:03 skrll Exp $	*/
+/*	$NetBSD: devopen.c,v 1.3.38.1 2008/01/09 01:49:42 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Minoura Makoto
@@ -56,21 +56,21 @@ devparse(const char *fname, int *dev, int *unit, int *part, char **file)
 	}
 
 	if (devspec[i].ds_name == 0)
-		return (ENODEV);
+		return ENODEV;
 	s += strlen(devspec[i].ds_name);
 	*dev = devspec[i].ds_dev;
 
 	*unit = *s++ - '0';
 	if (*unit < 0 || *unit > devspec[i].ds_maxunit)
 		/* bad unit */
-		return (ENODEV);
+		return ENODEV;
 	*part = *s++ - 'a';
 	if (*part < 0 || *part > MAXPARTITIONS)
 		/* bad partition */
-		return (ENODEV);
+		return ENODEV;
 
 	if (*s++ != ':')
-		return (ENODEV);
+		return ENODEV;
 
 	if (*s == '/') {
 		s++;
@@ -80,7 +80,7 @@ devparse(const char *fname, int *dev, int *unit, int *part, char **file)
 	*file = __UNCONST(s);
 
 	return 0;
-}    
+}
 
 int
 devopen(struct open_file *f, const char *fname, char **file)
@@ -91,17 +91,17 @@ devopen(struct open_file *f, const char *fname, char **file)
 
 	error = devparse(fname, &dev, &unit, &part, file);
 	if (error)
-	    return(error);
-	
+	    return error;
+
 	dp = &devsw[dev];
-	
+
 	if (!dp->dv_open)
-		return(ENODEV);
+		return ENODEV;
 
 	f->f_dev = dp;
-    
+
 	if ((error = (*dp->dv_open)(f, unit, part)) == 0)
-	    return(0);
-	
-	return(error);
-}    
+	    return 0;
+
+	return error;
+}

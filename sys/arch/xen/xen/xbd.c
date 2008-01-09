@@ -1,4 +1,4 @@
-/* $NetBSD: xbd.c,v 1.38.6.1 2007/11/06 23:24:34 matt Exp $ */
+/* $NetBSD: xbd.c,v 1.38.6.2 2008/01/09 01:50:21 matt Exp $ */
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.38.6.1 2007/11/06 23:24:34 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.38.6.2 2008/01/09 01:50:21 matt Exp $");
 
 #include "xbd_hypervisor.h"
 #include "rnd.h"
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.38.6.1 2007/11/06 23:24:34 matt Exp $");
 #include <sys/disklabel.h>
 #include <sys/fcntl.h>
 #include <sys/vnode.h>
-#include <sys/lock.h>
+#include <sys/simplelock.h>
 #include <sys/conf.h>
 #include <sys/queue.h>
 #include <sys/stat.h>
@@ -66,12 +66,12 @@ __KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.38.6.1 2007/11/06 23:24:34 matt Exp $");
 #endif
 
 #include <dev/dkvar.h>
-#include <machine/xbdvar.h>
+#include <xen/xbdvar.h>
 
-#include <machine/xen.h>
-#include <machine/hypervisor.h>
-#include <machine/evtchn.h>
-#include <machine/ctrl_if.h>
+#include <xen/xen.h>
+#include <xen/hypervisor.h>
+#include <xen/evtchn.h>
+#include <xen/ctrl_if.h>
 
 
 static void	control_send(blkif_request_t *, blkif_response_t *);

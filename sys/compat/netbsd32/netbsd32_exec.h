@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_exec.h,v 1.25 2007/03/26 17:12:02 cube Exp $	*/
+/*	$NetBSD: netbsd32_exec.h,v 1.25.10.1 2008/01/09 01:51:36 matt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -53,22 +53,22 @@ struct netbsd32_exec {
 extern const struct emul emul_netbsd32;
 
 #ifdef EXEC_AOUT
-int netbsd32_exec_aout_prep_zmagic __P((struct lwp *, struct exec_package *));
-int netbsd32_exec_aout_prep_nmagic __P((struct lwp *, struct exec_package *));
-int netbsd32_exec_aout_prep_omagic __P((struct lwp *, struct exec_package *));
-int exec_netbsd32_makecmds __P((struct lwp *, struct exec_package *));
+int netbsd32_exec_aout_prep_zmagic(struct lwp *, struct exec_package *);
+int netbsd32_exec_aout_prep_nmagic(struct lwp *, struct exec_package *);
+int netbsd32_exec_aout_prep_omagic(struct lwp *, struct exec_package *);
+int exec_netbsd32_makecmds(struct lwp *, struct exec_package *);
 #endif
 #ifdef EXEC_ELF32
-int netbsd32_elf32_probe __P((struct lwp *, struct exec_package *, void *,
-    char *, vaddr_t *));
-int netbsd32_elf32_probe_noteless __P((struct lwp *, struct exec_package *,
-    void *, char *, vaddr_t *));
-int netbsd32_elf32_copyargs __P((struct lwp *, struct exec_package *,
-    struct ps_strings *, char **, void *));
+int netbsd32_elf32_probe(struct lwp *, struct exec_package *, void *,
+    char *, vaddr_t *);
+int netbsd32_elf32_probe_noteless(struct lwp *, struct exec_package *,
+    void *, char *, vaddr_t *);
+int netbsd32_elf32_copyargs(struct lwp *, struct exec_package *,
+    struct ps_strings *, char **, void *);
 #endif /* EXEC_ELF32 */
 
-static __inline int netbsd32_copyargs __P((struct lwp *, struct exec_package *,
-    struct ps_strings *, char **, void *));
+static __inline int netbsd32_copyargs(struct lwp *, struct exec_package *,
+    struct ps_strings *, char **, void *);
 
 void netbsd32_setregs (struct lwp *, struct exec_package *, u_long stack);
 int netbsd32_sigreturn (struct proc *, void *, register_t *);

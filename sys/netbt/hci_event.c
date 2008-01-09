@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_event.c,v 1.7.6.1 2007/11/06 23:33:41 matt Exp $	*/
+/*	$NetBSD: hci_event.c,v 1.7.6.2 2008/01/09 01:57:21 matt Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_event.c,v 1.7.6.1 2007/11/06 23:33:41 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_event.c,v 1.7.6.2 2008/01/09 01:57:21 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -59,6 +59,8 @@ static void hci_event_read_clock_offset_compl(struct hci_unit *, struct mbuf *);
 static void hci_cmd_read_bdaddr(struct hci_unit *, struct mbuf *);
 static void hci_cmd_read_buffer_size(struct hci_unit *, struct mbuf *);
 static void hci_cmd_read_local_features(struct hci_unit *, struct mbuf *);
+static void hci_cmd_read_local_ver(struct hci_unit *, struct mbuf *);
+static void hci_cmd_read_local_commands(struct hci_unit *, struct mbuf *);
 static void hci_cmd_reset(struct hci_unit *, struct mbuf *);
 
 #ifdef BLUETOOTH_DEBUG
@@ -148,7 +150,8 @@ hci_event(struct mbuf *m, struct hci_unit *unit)
 
 	KASSERT(hdr.type == HCI_EVENT_PKT);
 
-	DPRINTFN(1, "(%s) event %s\n", unit->hci_devname, hci_eventstr(hdr.event));
+	DPRINTFN(1, "(%s) event %s\n",
+	    device_xname(unit->hci_dev), hci_eventstr(hdr.event));
 
 	switch(hdr.event) {
 	case HCI_EVENT_COMMAND_STATUS:
@@ -252,10 +255,16 @@ hci_event_command_status(struct hci_unit *unit, struct mbuf *m)
 	m_adj(m, sizeof(ep));
 
 	DPRINTFN(1, "(%s) opcode (%03x|%04x) status = 0x%x num_cmd_pkts = %d\n",
-		unit->hci_devname,
+		device_xname(unit->hci_dev),
 		HCI_OGF(le16toh(ep.opcode)), HCI_OCF(le16toh(ep.opcode)),
 		ep.status,
 		ep.num_cmd_pkts);
+
+	if (ep.status > 0)
+		aprint_error_dev(unit->hci_dev,
+		    "CommandStatus opcode (%03x|%04x) failed (status=0x%02x)\n",
+		    HCI_OGF(le16toh(ep.opcode)), HCI_OCF(le16toh(ep.opcode)),
+		    ep.status);
 
 	unit->hci_num_cmd_pkts = ep.num_cmd_pkts;
 
@@ -283,15 +292,28 @@ static void
 hci_event_command_compl(struct hci_unit *unit, struct mbuf *m)
 {
 	hci_command_compl_ep ep;
+	hci_status_rp rp;
 
 	KASSERT(m->m_pkthdr.len >= sizeof(ep));
 	m_copydata(m, 0, sizeof(ep), &ep);
 	m_adj(m, sizeof(ep));
 
 	DPRINTFN(1, "(%s) opcode (%03x|%04x) num_cmd_pkts = %d\n",
-		unit->hci_devname,
+		device_xname(unit->hci_dev),
 		HCI_OGF(le16toh(ep.opcode)), HCI_OCF(le16toh(ep.opcode)),
 		ep.num_cmd_pkts);
+
+	/*
+	 * I am not sure if this is completely correct, it is not guaranteed
+	 * that a command_complete packet will contain the status though most
+	 * do seem to.
+	 */
+	m_copydata(m, 0, sizeof(rp), &rp);
+	if (rp.status > 0)
+		aprint_error_dev(unit->hci_dev,
+		    "CommandComplete opcode (%03x|%04x) failed (status=0x%02x)\n",
+		    HCI_OGF(le16toh(ep.opcode)), HCI_OCF(le16toh(ep.opcode)),
+		    rp.status);
 
 	unit->hci_num_cmd_pkts = ep.num_cmd_pkts;
 
@@ -309,6 +331,14 @@ hci_event_command_compl(struct hci_unit *unit, struct mbuf *m)
 
 	case HCI_CMD_READ_LOCAL_FEATURES:
 		hci_cmd_read_local_features(unit, m);
+		break;
+
+	case HCI_CMD_READ_LOCAL_VER:
+		hci_cmd_read_local_ver(unit, m);
+		break;
+
+	case HCI_CMD_READ_LOCAL_COMMANDS:
+		hci_cmd_read_local_commands(unit, m);
 		break;
 
 	case HCI_CMD_RESET:
@@ -366,10 +396,9 @@ hci_event_num_compl_pkts(struct hci_unit *unit, struct mbuf *m)
 			}
 		} else {
 			/* XXX need to issue Read_Buffer_Size or Reset? */
-			printf("%s: unknown handle %d! "
-				"(losing track of %d packet buffer%s)\n",
-				unit->hci_devname, handle,
-				num, (num == 1 ? "" : "s"));
+			aprint_error_dev(unit->hci_dev,
+			    "unknown handle %d! (losing track of %d packet buffer%s)\n",
+			    handle, num, (num == 1 ? "" : "s"));
 		}
 	}
 
@@ -496,7 +525,7 @@ hci_event_con_compl(struct hci_unit *unit, struct mbuf *m)
 
 	DPRINTFN(1, "(%s) %s connection complete for "
 		"%02x:%02x:%02x:%02x:%02x:%02x status %#x\n",
-		unit->hci_devname,
+		device_xname(unit->hci_dev),
 		(ep.link_type == HCI_LINK_ACL ? "ACL" : "SCO"),
 		ep.bdaddr.b[5], ep.bdaddr.b[4], ep.bdaddr.b[3],
 		ep.bdaddr.b[2], ep.bdaddr.b[1], ep.bdaddr.b[0],
@@ -554,14 +583,14 @@ hci_event_con_compl(struct hci_unit *unit, struct mbuf *m)
 		err = hci_send_cmd(unit, HCI_CMD_WRITE_LINK_POLICY_SETTINGS,
 						&cp, sizeof(cp));
 		if (err)
-			printf("%s: Warning, could not write link policy\n",
-				unit->hci_devname);
+			aprint_error_dev(unit->hci_dev,
+			    "Warning, could not write link policy\n");
 
 		err = hci_send_cmd(unit, HCI_CMD_READ_CLOCK_OFFSET,
 				    &cp.con_handle, sizeof(cp.con_handle));
 		if (err)
-			printf("%s: Warning, could not read clock offset\n",
-				unit->hci_devname);
+			aprint_error_dev(unit->hci_dev,
+			    "Warning, could not read clock offset\n");
 
 		err = hci_acl_setmode(link);
 		if (err == EINPROGRESS)
@@ -808,7 +837,6 @@ static void
 hci_cmd_read_bdaddr(struct hci_unit *unit, struct mbuf *m)
 {
 	hci_read_bdaddr_rp rp;
-	int s;
 
 	KASSERT(m->m_pkthdr.len >= sizeof(rp));
 	m_copydata(m, 0, sizeof(rp), &rp);
@@ -822,9 +850,7 @@ hci_cmd_read_bdaddr(struct hci_unit *unit, struct mbuf *m)
 
 	bdaddr_copy(&unit->hci_bdaddr, &rp.bdaddr);
 
-	s = splraiseipl(unit->hci_ipl);
 	unit->hci_flags &= ~BTF_INIT_BDADDR;
-	splx(s);
 
 	wakeup(unit);
 }
@@ -836,7 +862,6 @@ static void
 hci_cmd_read_buffer_size(struct hci_unit *unit, struct mbuf *m)
 {
 	hci_read_buffer_size_rp rp;
-	int s;
 
 	KASSERT(m->m_pkthdr.len >= sizeof(rp));
 	m_copydata(m, 0, sizeof(rp), &rp);
@@ -853,9 +878,7 @@ hci_cmd_read_buffer_size(struct hci_unit *unit, struct mbuf *m)
 	unit->hci_max_sco_size = rp.max_sco_size;
 	unit->hci_num_sco_pkts = le16toh(rp.num_sco_pkts);
 
-	s = splraiseipl(unit->hci_ipl);
 	unit->hci_flags &= ~BTF_INIT_BUFFER_SIZE;
-	splx(s);
 
 	wakeup(unit);
 }
@@ -867,7 +890,6 @@ static void
 hci_cmd_read_local_features(struct hci_unit *unit, struct mbuf *m)
 {
 	hci_read_local_features_rp rp;
-	int s;
 
 	KASSERT(m->m_pkthdr.len >= sizeof(rp));
 	m_copydata(m, 0, sizeof(rp), &rp);
@@ -944,15 +966,66 @@ hci_cmd_read_local_features(struct hci_unit *unit, struct mbuf *m)
 
 	/* XXX what do 2MBPS/3MBPS/3SLOT eSCO mean? */
 
-	s = splraiseipl(unit->hci_ipl);
 	unit->hci_flags &= ~BTF_INIT_FEATURES;
-	splx(s);
 
 	wakeup(unit);
 
 	DPRINTFN(1, "%s: lmp_mask %4.4x, acl_mask %4.4x, sco_mask %4.4x\n",
-		unit->hci_devname, unit->hci_lmp_mask,
+		device_xname(unit->hci_dev), unit->hci_lmp_mask,
 		unit->hci_acl_mask, unit->hci_sco_mask);
+}
+
+/*
+ * process results of read_local_ver command_complete event
+ *
+ * reading local supported commands is only supported from 1.2 spec
+ */
+static void
+hci_cmd_read_local_ver(struct hci_unit *unit, struct mbuf *m)
+{
+	hci_read_local_ver_rp rp;
+
+	KASSERT(m->m_pkthdr.len >= sizeof(rp));
+	m_copydata(m, 0, sizeof(rp), &rp);
+	m_adj(m, sizeof(rp));
+
+	if (rp.status != 0)
+		return;
+
+	if ((unit->hci_flags & BTF_INIT_COMMANDS) == 0)
+		return;
+
+	if (rp.hci_version < HCI_SPEC_V12) {
+		unit->hci_flags &= ~BTF_INIT_COMMANDS;
+		wakeup(unit);
+		return;
+	}
+
+	hci_send_cmd(unit, HCI_CMD_READ_LOCAL_COMMANDS, NULL, 0);
+}
+
+/*
+ * process results of read_local_commands command_complete event
+ */
+static void
+hci_cmd_read_local_commands(struct hci_unit *unit, struct mbuf *m)
+{
+	hci_read_local_commands_rp rp;
+
+	KASSERT(m->m_pkthdr.len >= sizeof(rp));
+	m_copydata(m, 0, sizeof(rp), &rp);
+	m_adj(m, sizeof(rp));
+
+	if (rp.status != 0)
+		return;
+
+	if ((unit->hci_flags & BTF_INIT_COMMANDS) == 0)
+		return;
+
+	unit->hci_flags &= ~BTF_INIT_COMMANDS;
+	memcpy(unit->hci_cmds, rp.commands, HCI_COMMANDS_SIZE);
+
+	wakeup(unit);
 }
 
 /*
@@ -998,5 +1071,8 @@ hci_cmd_reset(struct hci_unit *unit, struct mbuf *m)
 		return;
 
 	if (hci_send_cmd(unit, HCI_CMD_READ_LOCAL_FEATURES, NULL, 0))
+		return;
+
+	if (hci_send_cmd(unit, HCI_CMD_READ_LOCAL_VER, NULL, 0))
 		return;
 }

@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.861.2.1 2007/11/06 23:25:20 matt Exp $
+#	$NetBSD: files,v 1.861.2.2 2008/01/09 01:52:06 matt Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -11,6 +11,9 @@ devclass disk
 devclass tape
 devclass ifnet
 devclass tty
+devclass audiodev
+devclass displaydev
+devclass bus
 
 # options understood by the machine-independent part of the kernel
 # (note, these are case-sensitive)
@@ -20,8 +23,8 @@ defflag				KMEMSTATS
 defflag				KTRACE
 defflag				MBUFTRACE
 defflag				PTRACE
-defflag				SYSTRACE
 defflag				COREDUMP
+defflag opt_modular.h		MODULAR
 
 defparam			DEFCORENAME
 defparam			HZ
@@ -94,6 +97,12 @@ file kern/subr_syscall_stats.c	syscall_stats
 
 defparam opt_pax.h		PAX_MPROTECT
 				PAX_SEGVGUARD
+ 				PAX_ASLR
+ 				PAX_ASLR_DELTA_MMAP_LSB
+ 				PAX_ASLR_DELTA_MMAP_LEN
+ 				PAX_ASLR_DELTA_STACK_LSB
+ 				PAX_ASLR_DELTA_STACK_LEN
+ 				PAX_ASLR_DELTA_PROG_LEN
 
 defflag	opt_fileassoc.h		FILEASSOC
 
@@ -114,7 +123,6 @@ defflag	opt_compat_netbsd.h	COMPAT_10: COMPAT_11
 defflag	opt_compat_netbsd.h	COMPAT_09: COMPAT_10
 defflag				COMPAT_OSSAUDIO
 defflag				COMPAT_FREEBSD: COMPAT_30
-defflag				COMPAT_HPUX
 defflag				COMPAT_IBCS2
 defflag				COMPAT_IRIX
 defflag				COMPAT_LINUX
@@ -273,7 +281,7 @@ define	aurateconv
 
 # audio and midi devices, attaches to audio hardware driver
 #
-device	audio
+device	audio: audiodev
 attach	audio at audiobus
 device	midi
 attach	midi at midibus
@@ -315,7 +323,7 @@ include "dev/videomode/files.videomode"
 # net device attributes - we have generic code for arc(net), ether(net),
 # fddi, token ring, atm and eco(net).
 #
-define	arc
+define	arcnet
 define	atm
 define	eco
 define	ether
@@ -532,6 +540,10 @@ file	dev/ic/esiop.c			esiop
 #
 device	uha: scsi
 file	dev/ic/uha.c			uha
+
+# 3Com common probe code
+define  elink
+file    dev/isa/elink.c                 elink
 
 # Aironet PC4500/PC4800
 #
@@ -803,7 +815,7 @@ file	dev/ic/rrunner.c		esh			needs-flag
 
 # SMC 90c26, SMC 90C56 (and 90C66 if in compat mode) chip driver
 #
-device	bah: ifnet, arc, arp
+device	bah: ifnet, arcnet, arp
 file	dev/ic/smc90cx6.c		bah
 
 # OPL2/OPL3 FM synth driver
@@ -1017,7 +1029,7 @@ defparam opt_vga.h		VGA_CONSOLE_SCREENTYPE
 defflag opt_vga.h 		VGA_CONSOLE_ATI_BROKEN_FONTSEL
 defflag opt_vga.h		VGA_RASTERCONSOLE
 defflag opt_vga.h		VGA_RESET
-device	vga: wsemuldisplaydev, pcdisplayops, drm
+device	vga: displaydev, wsemuldisplaydev, pcdisplayops, drm
 file	dev/ic/vga.c		vga & !vga_rasterconsole	needs-flag
 file	dev/ic/vga_raster.c	vga_rasterconsole		needs-flag
 file	dev/ic/vga_subr.c	vga | vga_rasterconsole
@@ -1225,6 +1237,15 @@ file	kern/kern_drvctl.c		drvctl
 # cpu control
 defpseudo cpuctl
 
+# pass-to-userspace transporter
+defpseudo putter
+file	dev/putter/putter.c		putter
+
+# userspace block/char device drivers
+defpseudo pud
+file	dev/pud/pud.c			pud
+file	dev/pud/pud_dev.c		pud
+
 #
 # File systems
 #
@@ -1341,6 +1362,7 @@ file	kern/kern_fileassoc.c		fileassoc
 file	kern/kern_ntptime.c
 file	kern/kern_pax.c			pax_mprotect | pax_segvguard
 file	kern/kern_physio.c
+file	kern/kern_pmf.c
 file	kern/kern_proc.c
 file	kern/kern_prot.c
 file	kern/kern_ras.c
@@ -1351,7 +1373,6 @@ file	kern/kern_sleepq.c
 file	kern/kern_softint.c
 file	kern/kern_stub.c
 file	kern/kern_subr.c
-file	kern/kern_systrace.c		systrace
 file	kern/kern_synch.c
 file	kern/kern_sysctl.c
 file	kern/kern_tc.c
@@ -1376,6 +1397,7 @@ file	kern/subr_evcnt.c
 file	kern/subr_extent.c
 file	kern/subr_hash.c
 file	kern/subr_kmem.c
+file	kern/subr_kobj.c
 file	kern/subr_lockdebug.c
 file	kern/subr_log.c
 file	kern/subr_pool.c
@@ -1451,7 +1473,7 @@ file	net/bpf.c			bpfilter		needs-flag
 file	net/bpf_filter.c		bpf_filter
 file	net/bsd-comp.c			ppp & ppp_bsdcomp
 file	net/if.c
-file	net/if_arcsubr.c		arc			needs-flag
+file	net/if_arcsubr.c		arcnet			needs-flag
 file	net/if_atmsubr.c		atm
 file	net/if_bridge.c			bridge			needs-flag
 file	net/bridgestp.c			bridge
@@ -1545,3 +1567,18 @@ define	onewire_bitbang
 include	"dev/gpio/files.gpio"
 
 include "dev/onewire/files.onewire"
+
+#
+# Pseudo audio device
+#
+include "dev/pad/files.pad"
+
+#
+# Intel 386 Real Mode emulator
+#
+include "lib/libx86emu/files.x86emu"
+
+#
+# "tprof" profiler.
+#
+include	"dev/tprof/files.tprof"

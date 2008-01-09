@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_subr2.c,v 1.34 2007/03/04 06:03:33 christos Exp $	*/
+/*	$NetBSD: tp_subr2.c,v 1.34.16.1 2008/01/09 01:57:49 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -66,7 +66,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_subr2.c,v 1.34 2007/03/04 06:03:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_subr2.c,v 1.34.16.1 2008/01/09 01:57:49 matt Exp $");
 
 /*
  * this def'n is to cause the expansion of this macro in the routine
@@ -510,7 +510,7 @@ tp_mss(struct tp_pcb *tpcb, int nhdr_size)
 	else
 		mss = 1 << tpcb->tp_tpdusize;
 	so = tpcb->tp_sock;
-	if ((rt = *(tpcb->tp_routep)) == 0) {
+	if ((rt = rtcache_getrt(tpcb->tp_routep)) == NULL) {
 		bufsize = so->so_rcv.sb_hiwat;
 		goto punt_route;
 	}
@@ -656,7 +656,7 @@ tp_route_to(struct mbuf *m, struct tp_pcb *tpcb, void *channel)
 		 * level options or done a pcbconnect and XXXXXXX'edly apply
 		 * to both inpcb's and isopcb's
 		 */
-		remque(isop_new);
+		iso_remque(isop_new);
 		free(isop_new, M_PCB);
 		tpcb->tp_npcb = (void *) isop;
 		tpcb->tp_netservice = ISO_CONS;
@@ -680,7 +680,7 @@ tp_route_to(struct mbuf *m, struct tp_pcb *tpcb, void *channel)
 				tpcb->tp_netservice = ISO_CLNS;
 				if (clnp_route(&siso->siso_addr, &isop->isop_route,
 				    flags, NULL, NULL) == 0) {
-					rt = isop->isop_route.ro_rt;
+					rt = rtcache_getrt(&isop->isop_route);
 					if (rt && rt->rt_flags & RTF_PROTO1)
 						tpcb->tp_netservice = ISO_CONS;
 				}

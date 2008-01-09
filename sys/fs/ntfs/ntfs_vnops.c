@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vnops.c,v 1.35 2007/07/29 13:31:09 ad Exp $	*/
+/*	$NetBSD: ntfs_vnops.c,v 1.35.6.1 2008/01/09 01:55:45 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.35 2007/07/29 13:31:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.35.6.1 2008/01/09 01:55:45 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -203,7 +203,6 @@ ntfs_getattr(void *v)
 		struct vnode *a_vp;
 		struct vattr *a_vap;
 		kauth_cred_t a_cred;
-		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct fnode *fp = VTOF(vp);
@@ -452,7 +451,6 @@ ntfs_access(void *v)
 		struct vnode *a_vp;
 		int  a_mode;
 		kauth_cred_t a_cred;
-		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct ntnode *ip = VTONT(vp);
@@ -535,7 +533,6 @@ ntfs_open(void *v)
 		struct vnode *a_vp;
 		int  a_mode;
 		kauth_cred_t a_cred;
-		struct lwp *a_l;
 	} */ *ap __unused = v;
 #ifdef NTFS_DEBUG
 	struct vnode *vp = ap->a_vp;
@@ -564,7 +561,6 @@ ntfs_close(void *v)
 		struct vnode *a_vp;
 		int  a_fflag;
 		kauth_cred_t a_cred;
-		struct lwp *a_l;
 	} */ *ap __unused = v;
 #ifdef NTFS_DEBUG
 	struct vnode *vp = ap->a_vp;
@@ -747,7 +743,7 @@ ntfs_lookup(void *v)
 	    (int)cnp->cn_namelen, cnp->cn_nameptr, cnp->cn_namelen,
 	    (unsigned long long)dip->i_number));
 
-	error = VOP_ACCESS(dvp, VEXEC, cred, cnp->cn_lwp);
+	error = VOP_ACCESS(dvp, VEXEC, cred);
 	if(error)
 		return (error);
 
@@ -830,7 +826,6 @@ ntfs_fsync(void *v)
 		int a_flags;
 		off_t offlo;
 		off_t offhi;
-		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	int wait;

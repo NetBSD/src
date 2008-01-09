@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.2.12.1 2007/11/06 23:23:55 matt Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.2.12.2 2008/01/09 01:49:59 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.2.12.1 2007/11/06 23:23:55 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.2.12.2 2008/01/09 01:49:59 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_mtrr.h"
@@ -58,6 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.2.12.1 2007/11/06 23:23:55 matt Ex
 #include <sys/buf.h>
 #include <sys/signal.h>
 #include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/kauth.h>
 
 #include <sys/mount.h>
@@ -80,7 +81,11 @@ __KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.2.12.1 2007/11/06 23:23:55 matt Ex
 #undef	VM86
 #undef	IOPERM
 #else
+#if defined(XEN)
+#undef	IOPERM
+#else /* defined(XEN) */
 #define	IOPERM
+#endif /* defined(XEN) */
 #endif
 
 #ifdef VM86
@@ -101,6 +106,8 @@ int x86_get_ioperm(struct lwp *, void *, register_t *);
 int x86_set_ioperm(struct lwp *, void *, register_t *);
 int x86_get_mtrr(struct lwp *, void *, register_t *);
 int x86_set_mtrr(struct lwp *, void *, register_t *);
+int x86_set_sdbase(void *arg, char which);
+int x86_get_sdbase(void *arg, char which);
 
 #ifdef LDT_DEBUG
 static void x86_print_ldt(int, const struct segment_descriptor *);
@@ -431,7 +438,7 @@ x86_iopl(struct lwp *l, void *args, register_t *retval)
 	int error;
 	struct x86_iopl_args ua;
 #ifdef XEN
-	struct pcb *pcb = &l->l_addr->u_pcb;
+	int iopl;
 #else
 	struct trapframe *tf = l->l_md.md_regs;
 #endif
@@ -445,19 +452,17 @@ x86_iopl(struct lwp *l, void *args, register_t *retval)
 		return error;
 
 #ifdef XEN
-	{
-		pcb->pcb_tss.tss_ioopt &= ~SEL_RPL;
-		if (ua.iopl)
-			pcb->pcb_tss.tss_ioopt |= SEL_UPL; /* i/o pl */
-		else
-			pcb->pcb_tss.tss_ioopt |= SEL_KPL; /* i/o pl */
-	}
+	if (ua.iopl)
+		iopl = SEL_UPL;
+	else
+		iopl = SEL_KPL;
+	l->l_addr->u_pcb.pcb_iopl = iopl;
 	/* Force the change at ring 0. */
 #ifdef XEN3
 	{
 		struct physdev_op physop;
 		physop.cmd = PHYSDEVOP_SET_IOPL;
-		physop.u.set_iopl.iopl = pcb->pcb_tss.tss_ioopt & SEL_RPL;
+		physop.u.set_iopl.iopl = iopl;
 		HYPERVISOR_physdev_op(&physop);
 	}
 #else /* XEN3 */
@@ -465,7 +470,7 @@ x86_iopl(struct lwp *l, void *args, register_t *retval)
 		dom0_op_t op;
 		op.cmd = DOM0_IOPL;
 		op.u.iopl.domain = DOMID_SELF;
-		op.u.iopl.iopl = pcb->pcb_tss.tss_ioopt & SEL_RPL; /* i/o pl */
+		op.u.iopl.iopl = iopl;
 		HYPERVISOR_dom0_op(&op);
 	}
 #endif /* XEN3 */
@@ -491,6 +496,8 @@ x86_get_ioperm(struct lwp *l, void *args, register_t *retval)
 	int error;
 	struct pcb *pcb = &l->l_addr->u_pcb;
 	struct x86_get_ioperm_args ua;
+	void *dummymap = NULL;
+	void *iomap;
 
 	error = kauth_authorize_machdep(l->l_cred, KAUTH_MACHDEP_IOPERM_GET,
 	    NULL, NULL, NULL, NULL);
@@ -500,7 +507,16 @@ x86_get_ioperm(struct lwp *l, void *args, register_t *retval)
 	if ((error = copyin(args, &ua, sizeof(ua))) != 0)
 		return (error);
 
-	return copyout(pcb->pcb_iomap, ua.iomap, sizeof(pcb->pcb_iomap));
+	iomap = pcb->pcb_iomap;
+	if (iomap == NULL) {
+		iomap = dummymap = kmem_alloc(IOMAPSIZE, KM_SLEEP);
+		memset(dummymap, 0xff, IOMAPSIZE);
+	}
+	error = copyout(iomap, ua.iomap, IOMAPSIZE);
+	if (dummymap != NULL) {
+		kmem_free(dummymap, IOMAPSIZE);
+	}
+	return error;
 #else
 	return EINVAL;
 #endif
@@ -510,9 +526,12 @@ int
 x86_set_ioperm(struct lwp *l, void *args, register_t *retval)
 {
 #ifdef IOPERM
+	struct cpu_info *ci;
 	int error;
 	struct pcb *pcb = &l->l_addr->u_pcb;
 	struct x86_set_ioperm_args ua;
+	void *new;
+	void *old;
 
   	error = kauth_authorize_machdep(l->l_cred, KAUTH_MACHDEP_IOPERM_SET,
 	    NULL, NULL, NULL, NULL);
@@ -522,7 +541,26 @@ x86_set_ioperm(struct lwp *l, void *args, register_t *retval)
 	if ((error = copyin(args, &ua, sizeof(ua))) != 0)
 		return (error);
 
-	return copyin(ua.iomap, pcb->pcb_iomap, sizeof(pcb->pcb_iomap));
+	new = kmem_alloc(IOMAPSIZE, KM_SLEEP);
+	error = copyin(ua.iomap, new, IOMAPSIZE);
+	if (error) {
+		kmem_free(new, IOMAPSIZE);
+		return error;
+	}
+	old = pcb->pcb_iomap;
+	pcb->pcb_iomap = new;
+	if (old != NULL) {
+		kmem_free(old, IOMAPSIZE);
+	}
+
+	crit_enter();
+	ci = curcpu();
+	memcpy(ci->ci_iomap, pcb->pcb_iomap, sizeof(ci->ci_iomap));
+	ci->ci_tss.tss_iobase =
+	    ((uintptr_t)ci->ci_iomap - (uintptr_t)&ci->ci_tss) << 16;
+	crit_exit();
+
+	return error;
 #else
 	return EINVAL;
 #endif
@@ -597,12 +635,76 @@ x86_set_mtrr(struct lwp *l, void *args, register_t *retval)
 }
 
 int
-sys_sysarch(struct lwp *l, void *v, register_t *retval)
+x86_set_sdbase(void *arg, char which)
 {
-	struct sys_sysarch_args /* {
+#ifdef i386
+	struct segment_descriptor sd;
+	vaddr_t base;
+	int error;
+
+	error = copyin(arg, &base, sizeof(base));
+	if (error != 0)
+		return error;
+
+	sd.sd_lobase = base & 0xffffff;
+	sd.sd_hibase = (base >> 24) & 0xff;
+	sd.sd_lolimit = 0xffff;
+	sd.sd_hilimit = 0xf;
+	sd.sd_type = SDT_MEMRWA;
+	sd.sd_dpl = SEL_UPL;
+	sd.sd_p = 1;
+	sd.sd_xx = 0;
+	sd.sd_def32 = 1;
+	sd.sd_gran = 1;
+
+	crit_enter();
+	if (which == 'f') {
+		memcpy(&curpcb->pcb_fsd, &sd, sizeof(sd));
+		memcpy(&curcpu()->ci_gdt[GUFS_SEL], &sd, sizeof(sd));
+	} else /* which == 'g' */ {
+		memcpy(&curpcb->pcb_gsd, &sd, sizeof(sd));
+		memcpy(&curcpu()->ci_gdt[GUGS_SEL], &sd, sizeof(sd));
+	}
+	crit_exit();
+
+	return 0;
+#else
+	return EINVAL;
+#endif
+}
+
+int
+x86_get_sdbase(void *arg, char which)
+{
+#ifdef i386
+	struct segment_descriptor *sd;
+	vaddr_t base;
+
+	switch (which) {
+	case 'f':
+		sd = (struct segment_descriptor *)&curpcb->pcb_fsd;
+		break;
+	case 'g':
+		sd = (struct segment_descriptor *)&curpcb->pcb_gsd;
+		break;
+	default:
+		panic("x86_get_sdbase");
+	}
+
+	base = sd->sd_hibase << 24 | sd->sd_lobase;
+	return copyout(&base, &arg, sizeof(base));
+#else
+	return EINVAL;
+#endif
+}
+
+int
+sys_sysarch(struct lwp *l, const struct sys_sysarch_args *uap, register_t *retval)
+{
+	/* {
 		syscallarg(int) op;
 		syscallarg(void *) parms;
-	} */ *uap = v;
+	} */
 	int error = 0;
 
 	switch(SCARG(uap, op)) {
@@ -657,6 +759,22 @@ sys_sysarch(struct lwp *l, void *v, register_t *retval)
 		error = pmc_read(l, SCARG(uap, parms), retval);
 		break;
 #endif
+
+	case X86_SET_FSBASE:
+		error = x86_set_sdbase(SCARG(uap, parms), 'f');
+		break;
+
+	case X86_SET_GSBASE:
+		error = x86_set_sdbase(SCARG(uap, parms), 'g');
+		break;
+
+	case X86_GET_FSBASE:
+		error = x86_get_sdbase(SCARG(uap, parms), 'f');
+		break;
+
+	case X86_GET_GSBASE:
+		error = x86_get_sdbase(SCARG(uap, parms), 'g');
+		break;
 
 	default:
 		error = EINVAL;

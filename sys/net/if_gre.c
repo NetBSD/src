@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.102.2.2 2007/11/08 11:00:13 matt Exp $ */
+/*	$NetBSD: if_gre.c,v 1.102.2.3 2008/01/09 01:57:10 matt Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.102.2.2 2007/11/08 11:00:13 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.102.2.3 2008/01/09 01:57:10 matt Exp $");
 
 #include "opt_gre.h"
 #include "opt_inet.h"
@@ -358,6 +358,7 @@ gre_clone_create(struct if_clone *ifc, int unit)
 static int
 gre_clone_destroy(struct ifnet *ifp)
 {
+	int s;
 	struct gre_softc *sc = ifp->if_softc;
 
 	GRE_DPRINTF(sc, "%s: l.%d\n", __func__, __LINE__);
@@ -365,8 +366,13 @@ gre_clone_destroy(struct ifnet *ifp)
 #if NBPFILTER > 0
 	bpfdetach(ifp);
 #endif
+	s = splnet();
 	if_detach(ifp);
 
+	/* Some LWPs may still wait in gre_ioctl_lock(), however,
+	 * no new LWP will enter gre_ioctl_lock(), because ifunit()
+	 * cannot locate the interface any longer.
+	 */
 	mutex_enter(&sc->sc_mtx);
 	GRE_DPRINTF(sc, "%s: l.%d\n", __func__, __LINE__);
 	while (sc->sc_state != GRE_S_IDLE)
@@ -375,9 +381,14 @@ gre_clone_destroy(struct ifnet *ifp)
 	sc->sc_state = GRE_S_DIE;
 	cv_broadcast(&sc->sc_condvar);
 	gre_join(sc);
-	sc->sc_so = gre_reconf(sc, sc->sc_so, sc->sc_lwp, NULL);
+	/* At this point, no other LWP will access the gre_softc, so
+	 * we can release the mutex.
+	 */
 	mutex_exit(&sc->sc_mtx);
 	GRE_DPRINTF(sc, "%s: l.%d\n", __func__, __LINE__);
+	/* Note that we must not hold the mutex while we call gre_reconf(). */
+	sc->sc_so = gre_reconf(sc, sc->sc_so, sc->sc_lwp, NULL);
+	splx(s);
 
 	cv_destroy(&sc->sc_condvar);
 	mutex_destroy(&sc->sc_mtx);
@@ -413,8 +424,7 @@ gre_receive(struct socket *so, void *arg, int waitflag)
 		sc->sc_error_ev.ev_count++;
 		return;
 	}
-	if (m->m_len < sizeof(*gh) &&
-	    (m = m_pullup(m, sizeof(*gh))) == NULL) {
+	if (m->m_len < sizeof(*gh) && (m = m_pullup(m, sizeof(*gh))) == NULL) {
 		GRE_DPRINTF(sc, "%s: m_pullup failed\n", __func__);
 		sc->sc_pullup_ev.ev_count++;
 		return;
@@ -466,7 +476,7 @@ gre_socreate(struct gre_softc *sc, struct lwp *l,
 		return rc;
 	}
 
-	if ((m = getsombuf(so)) == NULL) {
+	if ((m = getsombuf(so, MT_SONAME)) == NULL) {
 		rc = ENOBUFS;
 		goto out;
 	}
@@ -810,9 +820,7 @@ shutdown:
 		gre_upcall_remove(so);
 		softint_disestablish(sc->sc_si);
 		sc->sc_si = NULL;
-		mutex_exit(&sc->sc_mtx);
 		fdrelease(l, sc->sc_soparm.sp_fd);
-		mutex_enter(&sc->sc_mtx);
 		gre_clearconf(&sc->sc_soparm, false);
 		sc->sc_soparm.sp_fd = -1;
 		so = NULL;
@@ -1014,28 +1022,24 @@ gre_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 	return error;
 }
 
-/* Caller must hold sc->sc_mtx. */
 static int
 gre_getname(struct socket *so, int req, struct mbuf *nam, struct lwp *l)
 {
 	return (*so->so_proto->pr_usrreq)(so, req, NULL, nam, NULL, l);
 }
 
-/* Caller must hold sc->sc_mtx. */
 static int
 gre_getsockname(struct socket *so, struct mbuf *nam, struct lwp *l)
 {
 	return gre_getname(so, PRU_SOCKADDR, nam, l);
 }
 
-/* Caller must hold sc->sc_mtx. */
 static int
 gre_getpeername(struct socket *so, struct mbuf *nam, struct lwp *l)
 {
 	return gre_getname(so, PRU_PEERADDR, nam, l);
 }
 
-/* Caller must hold sc->sc_mtx. */
 static int
 gre_getnames(struct socket *so, struct lwp *l, struct sockaddr_storage *src,
     struct sockaddr_storage *dst)
@@ -1044,7 +1048,7 @@ gre_getnames(struct socket *so, struct lwp *l, struct sockaddr_storage *src,
 	struct sockaddr_storage *ss;
 	int rc;
 
-	if ((m = getsombuf(so)) == NULL)
+	if ((m = getsombuf(so, MT_SONAME)) == NULL)
 		return ENOBUFS;
 
 	ss = mtod(m, struct sockaddr_storage *);
@@ -1073,7 +1077,6 @@ gre_closef(struct file **fpp, struct lwp *l)
 	*fpp = NULL;
 }
 
-/* Caller must hold sc->sc_mtx. */
 static int
 gre_ssock(struct ifnet *ifp, struct gre_soparm *sp, int fd)
 {
@@ -1198,6 +1201,39 @@ gre_clearconf(struct gre_soparm *sp, bool force)
 }
 
 static int
+gre_ioctl_lock(struct gre_softc *sc)
+{
+	mutex_enter(&sc->sc_mtx);
+
+	while (sc->sc_state == GRE_S_IOCTL)
+		gre_wait(sc);
+
+	if (sc->sc_state != GRE_S_IDLE) {
+		cv_signal(&sc->sc_condvar);
+		mutex_exit(&sc->sc_mtx);
+		GRE_DPRINTF(sc, "%s: l.%d\n", __func__, __LINE__);
+		return ENXIO;
+	}
+
+	sc->sc_state = GRE_S_IOCTL;
+
+	mutex_exit(&sc->sc_mtx);
+	return 0;
+}
+
+static void
+gre_ioctl_unlock(struct gre_softc *sc)
+{
+	mutex_enter(&sc->sc_mtx);
+
+	KASSERT(sc->sc_state == GRE_S_IOCTL);
+	sc->sc_state = GRE_S_IDLE;
+	cv_signal(&sc->sc_condvar);
+
+	mutex_exit(&sc->sc_mtx);
+}
+
+static int
 gre_ioctl(struct ifnet *ifp, const u_long cmd, void *data)
 {
 	struct lwp *l = curlwp;
@@ -1205,7 +1241,7 @@ gre_ioctl(struct ifnet *ifp, const u_long cmd, void *data)
 	struct if_laddrreq *lifr = (struct if_laddrreq *)data;
 	struct gre_softc *sc = ifp->if_softc;
 	struct gre_soparm *sp;
-	int fd, error = 0, oproto, otype;
+	int fd, error = 0, oproto, otype, s;
 	struct gre_soparm sp0;
 
 	ifr = data;
@@ -1231,18 +1267,12 @@ gre_ioctl(struct ifnet *ifp, const u_long cmd, void *data)
 		break;
 	}
 
-	mutex_enter(&sc->sc_mtx);
-
-	while (sc->sc_state == GRE_S_IOCTL)
-		gre_wait(sc);
-
-	if (sc->sc_state != GRE_S_IDLE) {
+	if ((error = gre_ioctl_lock(sc)) != 0) {
 		GRE_DPRINTF(sc, "%s: l.%d\n", __func__, __LINE__);
-		error = ENXIO;
-		goto out;
+		return error;
 	}
+	s = splnet();
 
-	sc->sc_state = GRE_S_IOCTL;
 	sp0 = sc->sc_soparm;
 	sp0.sp_fd = -1;
 	sp = &sp0;
@@ -1399,9 +1429,7 @@ gre_ioctl(struct ifnet *ifp, const u_long cmd, void *data)
 			goto sendconf;
 
 		GRE_DPRINTF(sc, "%s: l.%d\n", __func__, __LINE__);
-		mutex_exit(&sc->sc_mtx);
 		error = gre_socreate(sc, l, sp, &fd);
-		mutex_enter(&sc->sc_mtx);
 
 		if (error != 0)
 			break;
@@ -1409,15 +1437,12 @@ gre_ioctl(struct ifnet *ifp, const u_long cmd, void *data)
 	setsock:
 		GRE_DPRINTF(sc, "%s: l.%d\n", __func__, __LINE__);
 
-		mutex_exit(&sc->sc_mtx);
 		error = gre_ssock(ifp, sp, fd);
 
 		if (cmd != GRESSOCK) {
 			GRE_DPRINTF(sc, "%s: l.%d\n", __func__, __LINE__);
 			fdrelease(l, fd);
 		}
-
-		mutex_enter(&sc->sc_mtx);
 
 		if (error == 0) {
 	sendconf:
@@ -1481,12 +1506,8 @@ gre_ioctl(struct ifnet *ifp, const u_long cmd, void *data)
 	}
 out:
 	GRE_DPRINTF(sc, "%s: l.%d\n", __func__, __LINE__);
-	if (sc->sc_state == GRE_S_IOCTL) {
-		GRE_DPRINTF(sc, "%s: l.%d\n", __func__, __LINE__);
-		sc->sc_state = GRE_S_IDLE;
-	}
-	cv_signal(&sc->sc_condvar);
-	mutex_exit(&sc->sc_mtx);
+	splx(s);
+	gre_ioctl_unlock(sc);
 	return error;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.4.2.2 2007/11/06 23:34:48 matt Exp $	*/
+/*	$NetBSD: intr.h,v 1.4.2.3 2008/01/09 01:58:09 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -55,7 +55,6 @@ void	softint_init(struct cpu_info *);
 lwp_t	*softint_picklwp(void);
 void	softint_overlay(void);
 void	softint_block(lwp_t *);
-pri_t	softint_kpri(lwp_t *);
 
 /* MD-MI interface. */
 void	softint_init_md(lwp_t *, u_int, uintptr_t *);
@@ -72,7 +71,30 @@ void	softint_dispatch(lwp_t *, int);
 #define	SOFTINT_COUNT	0x0004
 #define	SOFTINT_LVLMASK	0x00ff
 
-extern u_int softint_timing;
+extern u_int	softint_timing;
+extern int	safepri;
+
+/*
+ * Historical aliases.  XXX Audio devices should run at
+ * IPL_SCHED, but they need to acquire kernel_lock.
+ */
+#define	IPL_BIO		IPL_VM
+#define	IPL_NET		IPL_VM
+#define	IPL_TTY		IPL_VM
+#define	IPL_LPT		IPL_VM
+#define	IPL_AUDIO	IPL_VM
+#define	IPL_CLOCK	IPL_SCHED
+#define	IPL_IPI		IPL_HIGH
+#define	IPL_SERIAL	IPL_HIGH
+
+#define	splbio()	splvm()
+#define	splnet()	splvm()
+#define	spltty()	splvm()
+#define	spllpt()	splvm()
+#define	splaudio()	splvm()
+#define	splclock()	splsched()
+#define	splipi()	splhigh()
+#define	splserial()	splhigh()
 
 #endif	/* _KERNEL */
 

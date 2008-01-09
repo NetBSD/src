@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.33 2007/04/02 16:44:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.33.10.1 2008/01/09 01:56:02 matt Exp $");
 
 #ifdef _KERNEL
 #include "opt_ddb.h"
@@ -367,6 +367,8 @@ addsymtab(const char *name,
 		 */
 		if (sym[i].st_name == 0)
 			continue; /* Skip nameless entries */
+		if (sym[i].st_shndx == SHN_UNDEF)
+			continue; /* Skip external references */
 		if (ELF_ST_TYPE(sym[i].st_info) == STT_FILE)
 			continue; /* Skip filenames */
 		if (ELF_ST_TYPE(sym[i].st_info) == STT_NOTYPE &&
@@ -588,6 +590,8 @@ ksyms_getval(const char *mod, const char *sym, unsigned long *val, int type)
 		if (mod && strcmp(st->sd_name, mod))
 			continue;
 		if ((es = findsym(sym, st)) == NULL)
+			continue;
+		if (es->st_shndx == SHN_UNDEF)
 			continue;
 
 		/* Skip if bad binding */
@@ -819,7 +823,8 @@ ksyms_addsymtab(const char *mod, void *symstart, vsize_t symsize,
 		/* Check if the symbol exists */
 		if (ksyms_getval(NULL, symname, &rval, KSYMS_EXTERN) == 0) {
 			/* Check (and complain) about differing values */
-			if (sym[i].st_value != rval) {
+			if (sym[i].st_value != rval &&
+			    sym[i].st_shndx != SHN_UNDEF) {
 				if (specialsym(symname)) {
 					info.maxsyms++;
 					info.maxnamep += strlen(symname) + 1 +

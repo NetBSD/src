@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_kthread.c,v 1.18.8.1 2007/11/06 23:31:37 matt Exp $	*/
+/*	$NetBSD: kern_kthread.c,v 1.18.8.2 2008/01/09 01:56:03 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_kthread.c,v 1.18.8.1 2007/11/06 23:31:37 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_kthread.c,v 1.18.8.2 2008/01/09 01:56:03 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,8 +116,8 @@ kthread_create(pri_t pri, int flag, struct cpu_info *ci,
 	}
 	if ((flag & KTHREAD_INTR) != 0)
 		l->l_pflag |= LP_INTR;
-	if ((flag & KTHREAD_MPSAFE) != 0)
-		l->l_pflag |= LP_MPSAFE;
+	if ((flag & KTHREAD_MPSAFE) == 0)
+		l->l_pflag &= ~LP_MPSAFE;
 
 	/*
 	 * Set the new LWP running, unless the caller has requested

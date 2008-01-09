@@ -1,4 +1,4 @@
-/*	$NetBSD: ch.c,v 1.77 2007/03/04 06:02:42 christos Exp $	*/
+/*	$NetBSD: ch.c,v 1.77.16.1 2008/01/09 01:54:30 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ch.c,v 1.77 2007/03/04 06:02:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ch.c,v 1.77.16.1 2008/01/09 01:54:30 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -504,7 +504,7 @@ chkqfilter(dev_t dev, struct knote *kn)
 		break;
 
 	default:
-		return (1);
+		return (EINVAL);
 	}
 
 	kn->kn_hook = sc;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stf.c,v 1.60.8.1 2007/11/06 23:33:34 matt Exp $	*/
+/*	$NetBSD: if_stf.c,v 1.60.8.2 2008/01/09 01:57:13 matt Exp $	*/
 /*	$KAME: if_stf.c,v 1.62 2001/06/07 22:32:16 itojun Exp $ */
 
 /*
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.60.8.1 2007/11/06 23:33:34 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.60.8.2 2008/01/09 01:57:13 matt Exp $");
 
 #include "opt_inet.h"
 
@@ -330,8 +330,9 @@ stf_getsrcifa6(struct ifnet *ifp)
 
 static int
 stf_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
-    struct rtentry *rt)
+    struct rtentry *rt0)
 {
+	struct rtentry *rt;
 	struct stf_softc *sc;
 	const struct sockaddr_in6 *dst6;
 	const struct in_addr *in4;
@@ -417,14 +418,14 @@ stf_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 		ip_ecn_ingress(ECN_NOCARE, &ip->ip_tos, &tos);
 
 	sockaddr_in_init(&u.dst4, &ip->ip_dst, 0);
-	if (rtcache_lookup(&sc->sc_ro, &u.dst) == NULL) {
+	if ((rt = rtcache_lookup(&sc->sc_ro, &u.dst)) == NULL) {
 		m_freem(m);
 		ifp->if_oerrors++;
 		return ENETUNREACH;
 	}
 
 	/* If the route constitutes infinite encapsulation, punt. */
-	if (sc->sc_ro.ro_rt->rt_ifp == ifp) {
+	if (rt->rt_ifp == ifp) {
 		rtcache_free(&sc->sc_ro);
 		m_freem(m);
 		ifp->if_oerrors++;

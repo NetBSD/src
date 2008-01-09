@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_fcntl.c,v 1.17 2007/02/09 21:55:18 ad Exp $ */
+/*	$NetBSD: irix_fcntl.c,v 1.17.20.1 2008/01/09 01:50:48 matt Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_fcntl.c,v 1.17 2007/02/09 21:55:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_fcntl.c,v 1.17.20.1 2008/01/09 01:50:48 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -68,21 +68,18 @@ __KERNEL_RCSID(0, "$NetBSD: irix_fcntl.c,v 1.17 2007/02/09 21:55:18 ad Exp $");
 #include <compat/svr4/svr4_fcntl.h>
 #include <compat/svr4/svr4_syscallargs.h>
 
-static int fd_truncate __P((struct lwp *, int, int, off_t, register_t *));
-static int bsd_to_irix_fcntl_flags __P((int));
-static int irix_to_bsd_fcntl_flags __P((int));
+static int fd_truncate(struct lwp *, int, int, off_t, register_t *);
+static int bsd_to_irix_fcntl_flags(int);
+static int irix_to_bsd_fcntl_flags(int);
 
 int
-irix_sys_lseek64(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+irix_sys_lseek64(struct lwp *l, const struct irix_sys_lseek64_args *uap, register_t *retval)
 {
 	/*
 	 * Note: we have an alignement problem here. If pad2, pad3 and pad4
 	 * are removed, lseek64 will break, because whence will be wrong.
 	 */
-	struct irix_sys_lseek64_args /* {
+	/* {
 		syscallarg(int) fd;
 		syscallarg(int) pad1;
 		syscallarg(irix_off64_t) offset;
@@ -90,7 +87,8 @@ irix_sys_lseek64(l, v, retval)
 		syscallarg(int) pad2;
 		syscallarg(int) pad3;
 		syscallarg(int) pad4;
-	} */ *uap = v;
+	} */
+
 	struct sys_lseek_args cup;
 
 #ifdef DEBUG_IRIX
@@ -109,17 +107,15 @@ irix_sys_lseek64(l, v, retval)
 }
 
 int
-irix_sys_fcntl(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+irix_sys_fcntl(struct lwp *l, const struct irix_sys_fcntl_args *uap, register_t *retval)
 {
-	struct irix_sys_fcntl_args /* {
+	/* {
 		syscallarg(int) fd;
 		syscallarg(int) cmd;
 		syscallarg(char *)arg;
-	} */ *uap = v;
+	} */
 	struct svr4_sys_fcntl_args cup;
+	struct sys_fcntl_args bsd_ua;
 	int cmd;
 	int error;
 
@@ -158,10 +154,10 @@ irix_sys_fcntl(l, v, retval)
 		break;
 
 	case IRIX_F_GETFL:
-		SCARG(&cup, fd) = SCARG(uap, fd);
-		SCARG(&cup, cmd) = F_GETFL;
-		SCARG(&cup, arg) = SCARG(uap, arg);
-		if ((error = sys_fcntl(l, &cup, retval)) != 0)
+		SCARG(&bsd_ua, fd) = SCARG(uap, fd);
+		SCARG(&bsd_ua, cmd) = F_GETFL;
+		SCARG(&bsd_ua, arg) = SCARG(uap, arg);
+		if ((error = sys_fcntl(l, &bsd_ua, retval)) != 0)
 			return error;
 		*retval = bsd_to_irix_fcntl_flags(*retval);
 		return 0;
@@ -175,11 +171,11 @@ irix_sys_fcntl(l, v, retval)
 		if ((int)SCARG(uap, arg) & IRIX_FDIRECT)
 			return EINVAL;
 
-		SCARG(&cup, fd) = SCARG(uap, fd);
-		SCARG(&cup, arg) =
+		SCARG(&bsd_ua, fd) = SCARG(uap, fd);
+		SCARG(&bsd_ua, arg) =
 		    (char *)irix_to_bsd_fcntl_flags((int)SCARG(uap, arg));
-		SCARG(&cup, cmd) = F_SETFL;
-		return sys_fcntl(l, &cup, retval);
+		SCARG(&bsd_ua, cmd) = F_SETFL;
+		return sys_fcntl(l, &bsd_ua, retval);
 		break;
 
 	case SVR4_F_DUPFD:
@@ -238,12 +234,7 @@ irix_sys_fcntl(l, v, retval)
 }
 
 static int
-fd_truncate(l, fd, whence, start, retval)
-	struct lwp *l;
-	int fd;
-	int whence;
-	off_t start;
-	register_t *retval;
+fd_truncate(struct lwp *l, int fd, int whence, off_t start, register_t *retval)
 {
 	struct filedesc *fdp = l->l_proc->p_fd;
 	struct file *fp;
@@ -256,8 +247,10 @@ fd_truncate(l, fd, whence, start, retval)
 		return EBADF;
 
 	vp = (struct vnode *)fp->f_data;
-	if (fp->f_type != DTYPE_VNODE || vp->v_type == VFIFO)
+	if (fp->f_type != DTYPE_VNODE || vp->v_type == VFIFO) {
+		FILE_UNLOCK(fp);
 		return ESPIPE;
+	}
 
 	switch (whence) {
 	case SEEK_CUR:
@@ -265,7 +258,7 @@ fd_truncate(l, fd, whence, start, retval)
 		break;
 
 	case SEEK_END:
-		if ((error = VOP_GETATTR(vp, &vattr, l->l_cred, l)) != 0)
+		if ((error = VOP_GETATTR(vp, &vattr, l->l_cred)) != 0)
 			return error;
 		SCARG(&ft, length) = vattr.va_size + start;
 		break;
@@ -278,22 +271,20 @@ fd_truncate(l, fd, whence, start, retval)
 		return EINVAL;
 		break;
 	}
+	FILE_UNLOCK(fp);
 
 	SCARG(&ft, fd) = fd;
 	return sys_ftruncate(l, &ft, retval);
 }
 
 int
-irix_sys_open(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+irix_sys_open(struct lwp *l, const struct irix_sys_open_args *uap, register_t *retval)
 {
-	struct irix_sys_open_args /* {
+	/* {
 		syscallarg(char *) path;
 		syscallarg(int) flags;
 		syscallarg(mode_t) mode;
-	} */ *uap = v;
+	} */
 	extern const struct cdevsw irix_usema_cdevsw;
 	struct proc *p = l->l_proc;
 	int error;
@@ -302,7 +293,7 @@ irix_sys_open(l, v, retval)
 	struct vnode *vp;
 	struct vnode *nvp;
 
-	if ((error = svr4_sys_open(l, v, retval)) != 0)
+	if ((error = svr4_sys_open(l, (const void *)uap, retval)) != 0)
 		return error;
 
 	fd = (int)*retval;
@@ -354,8 +345,7 @@ irix_sys_open(l, v, retval)
 }
 
 static int
-irix_to_bsd_fcntl_flags(flags)
-	int flags;
+irix_to_bsd_fcntl_flags(int flags)
 {
 	int ret = 0;
 
@@ -381,8 +371,7 @@ irix_to_bsd_fcntl_flags(flags)
 }
 
 static int
-bsd_to_irix_fcntl_flags(flags)
-	int flags;
+bsd_to_irix_fcntl_flags(int flags)
 {
 	int ret = 0;
 

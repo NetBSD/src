@@ -1,4 +1,4 @@
-/*	$NetBSD: isa.c,v 1.128.20.1 2007/11/06 23:27:46 matt Exp $	*/
+/*	$NetBSD: isa.c,v 1.128.20.2 2008/01/09 01:53:12 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa.c,v 1.128.20.1 2007/11/06 23:27:46 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa.c,v 1.128.20.2 2008/01/09 01:53:12 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,7 +100,8 @@ isaattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_dynamicdevs = 0;
 
 	isa_attach_hook(parent, self, iba);
-	printf("\n");
+	aprint_naive("\n");
+	aprint_normal("\n");
 
 	/* XXX Add code to fetch known-devices. */
 
@@ -135,6 +136,9 @@ isaattach(struct device *parent, struct device *self, void *aux)
 
 	/* Attach all indrect-config children. */
 	isarescan(self, "isa", wildcard);
+
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsmbreg.h,v 1.1 2007/07/11 07:53:29 kiyohara Exp $	*/
+/*	$NetBSD: nfsmbreg.h,v 1.1.12.1 2008/01/09 01:53:53 matt Exp $	*/
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -28,8 +28,13 @@
 #ifndef _NFSMB_H_
 #define _NFSMB_H_
 
-#define NFORCE_SMB1 		0x50
-#define NFORCE_SMB2		0x54
+/* nForce 2/3/4 */
+#define NFORCE_OLD_SMB1 	0x50
+#define NFORCE_OLD_SMB2 	0x54
+/* nForce MCPXX */
+#define NFORCE_SMB1		0x20
+#define NFORCE_SMB2		0x24
+
 #define NFORCE_SMBBASE(x)	((x) & 0xfffc)
 #define NFORCE_SMBSIZE		8
 

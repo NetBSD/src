@@ -1,4 +1,4 @@
-#	$NetBSD: files.tc,v 1.31 2006/08/17 22:19:13 bjh21 Exp $
+#	$NetBSD: files.tc,v 1.31.28.1 2008/01/09 01:54:35 matt Exp $
 #
 # Config file and device description for machine-independent
 # TURBOchannel code.  Included by ports that need it.
@@ -55,10 +55,10 @@ file   dev/ic/z8530sc.c                zsc
 device zstty: tty
 attach zstty at zsc
 file   dev/ic/z8530tty.c               zstty           needs-flag
- 
+
 attach vsms at zsc with zsms
 file   dev/tc/zsms.c                   zsms
- 
+
 attach lkkbd at zsc with zskbd
 file   dev/tc/zskbd.c                  zskbd           needs-flag
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_irc_pxy.c,v 1.9 2007/04/14 20:34:37 martin Exp $	*/
+/*	$NetBSD: ip_irc_pxy.c,v 1.9.8.1 2008/01/09 01:55:32 matt Exp $	*/
 
 /*
  * Copyright (C) 2000-2003 Darren Reed
@@ -7,6 +7,9 @@
  *
  * Id: ip_irc_pxy.c,v 2.39.2.6 2006/07/14 06:12:14 darrenr Exp
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(1, "$NetBSD: ip_irc_pxy.c,v 1.9.8.1 2008/01/09 01:55:32 matt Exp $");
 
 #define	IPF_IRC_PROXY
 

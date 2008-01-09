@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.18 2007/03/14 12:44:39 njoly Exp $
+	$NetBSD: syscalls.master,v 1.18.12.1 2008/01/09 01:50:57 matt Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -48,7 +48,9 @@
 #include <compat/linux/common/linux_types.h>
 #include <compat/linux/common/linux_mmap.h>
 #include <compat/linux/common/linux_ipc.h>
+#include <compat/linux/common/linux_msg.h>
 #include <compat/linux/common/linux_sem.h>
+#include <compat/linux/common/linux_shm.h>
 #include <compat/linux/common/linux_signal.h>
 #include <compat/linux/common/linux_siginfo.h>
 #include <compat/linux/common/linux_machdep.h>
@@ -98,7 +100,7 @@
 				u_int iovcnt); }
 20	NOARGS		{ int sys_writev(int fd, struct iovec *iovp, \
 				u_int iovcnt); }
-21	STD		{ int linux_sys_access(const char *path, int flags); }
+21	NOARGS		{ int sys_access(const char *path, int flags); }
 22	STD		{ int linux_sys_pipe(int *pfds); }
 23	STD		{ int linux_sys_select(int nfds, fd_set *readfds, \
 			    fd_set *writefds, fd_set *exceptfds, \
@@ -110,10 +112,10 @@
 27	NOARGS		{ int sys_mincore(void *addr, size_t len, char *vec); }
 28	NOARGS		{ int sys_madvise(void *addr, size_t len, int behav); }
 #ifdef SYSVSHM
-29	STD		{ int linux_sys_shmget(key_t key, size_t size, \
+29	NOARGS		{ int linux_sys_shmget(key_t key, size_t size, \
 			    int shmflg); }
 30	NOARGS		{ int sys_shmat(int shmid, void *shmaddr, int shmflg); }
-31	STD		{ int linux_sys_shmctl(int shmid, int cmd, \
+31	NOARGS		{ int linux_sys_shmctl(int shmid, int cmd, \
 			    struct linux_shmid_ds *buf); }
 #else
 29	UNIMPL		shmget
@@ -167,7 +169,7 @@
 			    void *parent_tidptr, void *child_tidptr); }
 57	NOARGS		{ int sys_fork(void); }
 58	NOARGS		{ int sys___vfork14(void); }
-59	STD		{ int linux_sys_execve(const char *path, char **argp, \
+59	NOARGS		{ int sys_execve(const char *path, char **argp, \
 			    char **envp); }
 60	NOARGS		{ int sys_exit(int rval); }
 61	STD		{ int linux_sys_wait4(int pid, int *status, \
@@ -196,7 +198,7 @@
 			    int msgflg); }
 70	NOARGS		{ ssize_t sys_msgrcv(int msqid, void *msgp, \
 			    size_t msgsz, long msgtyp, int msgflg); }
-71	STD		{ int linux_sys_msgctl(int msqid, int cmd, \
+71	NOARGS		{ int linux_sys_msgctl(int msqid, int cmd, \
 			    struct linux_msqid_ds *buf); }
 #else
 68	UNIMPL		msgget
@@ -215,27 +217,25 @@
 78	STD		{ int linux_sys_getdents(int fd, \
 			    struct linux_dirent *dent, unsigned int count); }
 79	NOARGS		{ int sys___getcwd(char *bufp, size_t length); }
-80	STD		{ int linux_sys_chdir(const char *path); }
+80	NOARGS		{ int sys_chdir(const char *path); }
 81	NOARGS		{ int sys_fchdir(int fd); }
-82	STD		{ int linux_sys_rename(const char *from, \
+82	NOARGS		{ int sys___posix_rename(const char *from, \
 			    const char *to); }
-83	STD		{ int linux_sys_mkdir(const char *path, int mode); }
-84	STD		{ int linux_sys_rmdir(const char *path); }
+83	NOARGS		{ int sys_mkdir(const char *path, int mode); }
+84	NOARGS		{ int sys_rmdir(const char *path); }
 85	STD		{ int linux_sys_creat(const char *path, int mode); }
-86	STD		{ int linux_sys_link(const char *path, \
-			    const char *link); }
+86	NOARGS		{ int sys_link(const char *path, const char *link); }
 87	STD		{ int linux_sys_unlink(const char *path); }
-88	STD		{ int linux_sys_symlink(const char *path, \
-			    const char *to); }
-89	STD		{ int linux_sys_readlink(const char *name, char *buf, \
+88	NOARGS		{ int sys_symlink(const char *path, const char *to); }
+89	NOARGS		{ int sys_readlink(const char *name, char *buf, \
 			    int count); }
-90	STD		{ int linux_sys_chmod(const char *path, int mode); }
+90	NOARGS		{ int sys_chmod(const char *path, int mode); }
 91	NOARGS		{ int sys_fchmod(int fd, int mode); }
-92	STD		{ int linux_sys_chown(const char *path, uid_t uid, \
+92	NOARGS		{ int sys___posix_chown(const char *path, uid_t uid, \
 				gid_t gid); }
 93	NOARGS		{ int sys___posix_fchown(int fd, uid_t uid, \
 			    gid_t gid); }
-94	STD		{ int linux_sys_lchown(const char *path, uid_t uid, \
+94	NOARGS		{ int sys___posix_lchown(const char *path, uid_t uid, \
 			    gid_t gid); }
 95	NOARGS		{ int sys_umask(int newmask); }
 96	STD		{ int linux_sys_gettimeofday(struct timeval *tp, \
@@ -270,9 +270,9 @@
 			    gid_t sgid); }
 120	STD		{ int linux_sys_getresgid(gid_t *rgid, gid_t *egid, \
 			    gid_t *sgid); }
-121	STD		{ int linux_sys_getpgid(int pid); }
+121	NOARGS		{ pid_t sys_getpgid(pid_t pid); }
 122	STD		{ int linux_sys_setfsuid(uid_t uid); }
-123	STD		{ int linux_sys_getfsuid(void); }
+123	STD		{ int linux_sys_setfsgid(gid_t gid); }
 124	NOARGS		{ pid_t sys_getsid(pid_t pid); }
 125	UNIMPL		capget
 126	UNIMPL		capset

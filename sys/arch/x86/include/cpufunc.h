@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.2.14.2 2007/11/06 23:23:34 matt Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.2.14.3 2008/01/09 01:49:46 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -97,7 +97,8 @@ void	fxrstor(void *);
 void	x86_monitor(const void *, uint32_t, uint32_t);
 void	x86_mwait(uint32_t, uint32_t);
 void	x86_ldmxcsr(void *);
-void	x86_cpuid(unsigned, unsigned *);
+#define	x86_cpuid(a,b)	x86_cpuid2((a),0,(b))
+void	x86_cpuid2(unsigned, unsigned, unsigned *);
 
 /* Use read_psl, write_psl when saving and restoring interrupt state. */
 void	x86_disable_intr(void);
@@ -123,18 +124,6 @@ uint64_t	rdtsc(void);
 uint64_t	rdpmc(u_int);
 void		wrmsr(u_int, uint64_t);
 void		wrmsr_locked(u_int, u_int, u_int64_t);
-
-/*
- * XXX Maybe these don't belong here...
- */
-
-extern int (*copyout_func)(const void *, void *, size_t);
-extern int (*copyin_func)(const void *, void *, size_t);
-
-int	i386_copyout(const void *, void *, size_t);
-int	i486_copyout(const void *, void *, size_t);
-
-int	i386_copyin(const void *, void *, size_t);
 
 #endif /* _KERNEL */
 

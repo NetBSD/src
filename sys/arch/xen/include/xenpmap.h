@@ -1,4 +1,4 @@
-/*	$NetBSD: xenpmap.h,v 1.15 2006/10/17 18:53:04 bouyer Exp $	*/
+/*	$NetBSD: xenpmap.h,v 1.15.28.1 2008/01/09 01:50:08 matt Exp $	*/
 
 /*
  *
@@ -41,19 +41,15 @@ void xpq_queue_machphys_update(paddr_t, paddr_t);
 void xpq_queue_invlpg(vaddr_t);
 void xpq_queue_pde_update(pd_entry_t *, pd_entry_t);
 void xpq_queue_pte_update(pt_entry_t *, pt_entry_t);
-void xpq_queue_unchecked_pte_update(pt_entry_t *, pt_entry_t);
 void xpq_queue_pt_switch(paddr_t);
 void xpq_flush_queue(void);
 void xpq_queue_set_ldt(vaddr_t, uint32_t);
 void xpq_queue_tlb_flush(void);
-void xpq_queue_pin_table(paddr_t, int);
+void xpq_queue_pin_table(paddr_t);
 void xpq_queue_unpin_table(paddr_t);
 int  xpq_update_foreign(pt_entry_t *, pt_entry_t, int);
 
 extern paddr_t *xpmap_phys_to_machine_mapping;
-
-#define	XPQ_PIN_L1_TABLE 1
-#define	XPQ_PIN_L2_TABLE 2
 
 #ifndef XEN
 #define	PDE_GET(_pdp)						\
@@ -67,17 +63,17 @@ extern paddr_t *xpmap_phys_to_machine_mapping;
 #define PTE_CLEAR(_ptp,_maptp)					\
 	*(_maptp) = 0
 #define PTE_ATOMIC_SET(_ptp,_maptp,_npte,_opte)			\
-	(_opte) = x86_atomic_testset_ul((_maptp), (_npte))
+	(_opte) = atomic_swap_ulong((volatile unsigned long *)(_maptp), (_npte))
 #define PTE_ATOMIC_CLEAR(_ptp,_maptp,_opte)			\
-	(_opte) = x86_atomic_testset_ul((_maptp), 0)
+	(_opte) = atomic_swap_ulong((volatile unsigned long *)((_maptp), 0)
 #define PDE_CLEARBITS(_pdp,_mapdp,_bits)			\
 	*(_mapdp) &= ~(_bits)
 #define PTE_ATOMIC_CLEARBITS(_ptp,_maptp,_bits)			\
-	x86_atomic_clearbits_l((_maptp), (_bits))
+	atomic_and_ulong((volatile unsigned long *)(_maptp), ~(_bits))
 #define PTE_SETBITS(_ptp,_maptp,_bits)				\
 	*(_maptp) |= (_bits)
 #define PTE_ATOMIC_SETBITS(_ptp,_maptp,_bits)			\
-	x86_atomic_setbits_l((_maptp), (_bits))
+	atomic_or_ulong((volatile unsigned long *)(_maptp), (_bits))
 #else
 paddr_t *xpmap_phys_to_machine_mapping;
 
@@ -108,12 +104,6 @@ paddr_t *xpmap_phys_to_machine_mapping;
 #define PTE_SET_MA(_ptp,_maptp,_npte) do {			\
 	int _s = splvm();					\
 	xpq_queue_pte_update((_maptp), (_npte));		\
-	xpq_flush_queue();					\
-	splx(_s);						\
-} while (/*CONSTCOND*/0)
-#define PTE_SET_MA_UNCHECKED(_ptp,_maptp,_npte) do {		\
-	_s = splvm();						\
-	xpq_queue_unchecked_pte_update((_maptp), (_npte));	\
 	xpq_flush_queue();					\
 	splx(_s);						\
 } while (/*CONSTCOND*/0)
@@ -233,6 +223,13 @@ xpmap_mtop(paddr_t mpa)
 }
 
 static __inline paddr_t
+xpmap_mtop_masked(paddr_t mpa)
+{
+	return ((machine_to_phys_mapping[mpa >> PAGE_SHIFT] << PAGE_SHIFT) +
+	    XPMAP_OFFSET);
+}
+
+static __inline paddr_t
 xpmap_ptom(paddr_t ppa)
 {
 	return (xpmap_phys_to_machine_mapping[(ppa -
@@ -289,6 +286,10 @@ MULTI_update_va_mapping_otherdomain(
 #else
 #define MULTI_UVMFLAGS_INDEX 3
 #define MULTI_UVMDOMID_INDEX 4
+#endif
+
+#if defined(__x86_64__)
+void xen_set_user_pgd(paddr_t);
 #endif
 
 #endif /* XEN3 */

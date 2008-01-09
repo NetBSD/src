@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rumvar.h,v 1.6 2006/08/18 15:11:12 damien Exp $	*/
+/*	$OpenBSD: if_rumvar.h,v 1.7 2006/11/13 20:06:38 damien Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Damien Bergamini <damien.bergamini@free.fr>
@@ -17,8 +17,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#define RT2573_RX_LIST_COUNT	1
-#define RT2573_TX_LIST_COUNT	1
+#define RUM_RX_LIST_COUNT	1
+#define RUM_TX_LIST_COUNT	1
 
 struct rum_rx_radiotap_header {
 	struct ieee80211_radiotap_header wr_ihdr;
@@ -102,8 +102,8 @@ struct rum_softc {
 	struct ieee80211_amrr		amrr;
 	struct ieee80211_amrr_node	amn;
 
-	struct rum_rx_data		rx_data[RT2573_RX_LIST_COUNT];
-	struct rum_tx_data		tx_data[RT2573_TX_LIST_COUNT];
+	struct rum_rx_data		rx_data[RUM_RX_LIST_COUNT];
+	struct rum_tx_data		tx_data[RUM_TX_LIST_COUNT];
 	int				tx_queued;
 
 	struct ieee80211_beacon_offsets	sc_bo;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.106.8.1 2007/11/06 23:33:34 matt Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.106.8.2 2008/01/09 01:57:12 matt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.106.8.1 2007/11/06 23:33:34 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.106.8.2 2008/01/09 01:57:12 matt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -302,7 +302,6 @@ slopen(dev_t dev, struct tty *tp)
 	struct lwp *l = curlwp;		/* XXX */
 	struct sl_softc *sc;
 	int error;
-	int s;
 
 	if ((error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
 	    NULL)) != 0)
@@ -324,11 +323,9 @@ slopen(dev_t dev, struct tty *tp)
 			tp->t_sc = (void *)sc;
 			sc->sc_ttyp = tp;
 			sc->sc_if.if_baudrate = tp->t_ospeed;
-			s = spltty();
+			mutex_spin_enter(&tty_lock);
 			tp->t_state |= TS_ISOPEN | TS_XCLUDE;
-			splx(s);
 			ttyflush(tp, FREAD | FWRITE);
-#ifdef __NetBSD__
 			/*
 			 * make sure tty output queue is large enough
 			 * to hold a full-sized packet (including frame
@@ -337,15 +334,14 @@ slopen(dev_t dev, struct tty *tp)
 			 * of possible escapes), and add two on for frame
 			 * ends.
 			 */
-			s = spltty();
 			if (tp->t_outq.c_cn < 2 * SLMAX + 2) {
 				sc->sc_oldbufsize = tp->t_outq.c_cn;
 				sc->sc_oldbufquot = tp->t_outq.c_cq != 0;
 
 				clfree(&tp->t_outq);
+				mutex_spin_exit(&tty_lock);
 				error = clalloc(&tp->t_outq, 2 * SLMAX + 2, 0);
 				if (error) {
-					splx(s);
 					softint_disestablish(sc->sc_si);
 					/*
 					 * clalloc() might return -1 which
@@ -354,10 +350,10 @@ slopen(dev_t dev, struct tty *tp)
 					 */
 					return ENOMEM; /* XXX ?! */
 				}
-			} else
+			} else {
 				sc->sc_oldbufsize = sc->sc_oldbufquot = 0;
-			splx(s);
-#endif /* __NetBSD__ */
+				mutex_spin_exit(&tty_lock);
+			}
 			return 0;
 		}
 	return ENXIO;

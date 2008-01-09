@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_bsdpty.c,v 1.12 2007/03/26 22:52:44 hubertf Exp $	*/
+/*	$NetBSD: tty_bsdpty.c,v 1.12.10.1 2008/01/09 01:56:26 matt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_bsdpty.c,v 1.12 2007/03/26 22:52:44 hubertf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_bsdpty.c,v 1.12.10.1 2008/01/09 01:56:26 matt Exp $");
 
 #include "opt_ptm.h"
 
@@ -132,7 +132,7 @@ pty_allocvp(struct ptm_pty *ptm, struct lwp *l, struct vnode **vp, dev_t dev,
 	if (error)
 		return error;
 
-	NDINIT(&nd, LOOKUP, NOFOLLOW|LOCKLEAF, UIO_SYSSPACE, name, l);
+	NDINIT(&nd, LOOKUP, NOFOLLOW|LOCKLEAF, UIO_SYSSPACE, name);
 	if ((error = namei(&nd)) != 0)
 		return error;
 	*vp = nd.ni_vp;

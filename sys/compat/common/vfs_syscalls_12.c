@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_12.c,v 1.22 2007/04/30 14:05:47 dsl Exp $	*/
+/*	$NetBSD: vfs_syscalls_12.c,v 1.22.8.1 2008/01/09 01:50:33 matt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_12.c,v 1.22 2007/04/30 14:05:47 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_12.c,v 1.22.8.1 2008/01/09 01:50:33 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,7 +57,6 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_12.c,v 1.22 2007/04/30 14:05:47 dsl Exp
 #include <sys/syscallargs.h>
 
 #include <compat/sys/stat.h>
-#include <compat/common/compat_file.h>
 
 /*
  * Convert from a new to an old stat structure.
@@ -90,14 +89,14 @@ compat_12_stat_conv(const struct stat *st, struct stat12 *ost)
  * Read a block of directory entries in a file system independent format.
  */
 int
-compat_12_sys_getdirentries(struct lwp *l, void *v, register_t *retval)
+compat_12_sys_getdirentries(struct lwp *l, const struct compat_12_sys_getdirentries_args *uap, register_t *retval)
 {
-	struct compat_12_sys_getdirentries_args /* {
+	/* {
 		syscallarg(int) fd;
 		syscallarg(char *) buf;
 		syscallarg(u_int) count;
 		syscallarg(long *) basep;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 	struct file *fp;
 	int error, done;
@@ -128,12 +127,12 @@ compat_12_sys_getdirentries(struct lwp *l, void *v, register_t *retval)
  */
 /* ARGSUSED */
 int
-compat_12_sys_stat(struct lwp *l, void *v, register_t *retval)
+compat_12_sys_stat(struct lwp *l, const struct compat_12_sys_stat_args *uap, register_t *retval)
 {
-	struct compat_12_sys_stat_args /* {
+	/* {
 		syscallarg(const char *) path;
 		syscallarg(struct stat12 *) ub;
-	} */ *uap = v;
+	} */
 	struct stat sb;
 	struct stat12 osb;
 	int error;
@@ -152,12 +151,12 @@ compat_12_sys_stat(struct lwp *l, void *v, register_t *retval)
  */
 /* ARGSUSED */
 int
-compat_12_sys_lstat(struct lwp *l, void *v, register_t *retval)
+compat_12_sys_lstat(struct lwp *l, const struct compat_12_sys_lstat_args *uap, register_t *retval)
 {
-	struct compat_12_sys_lstat_args /* {
+	/* {
 		syscallarg(const char *) path;
 		syscallarg(struct stat12 *) ub;
-	} */ *uap = v;
+	} */
 	struct stat sb;
 	struct stat12 osb;
 	int error;
@@ -175,12 +174,12 @@ compat_12_sys_lstat(struct lwp *l, void *v, register_t *retval)
  */
 /* ARGSUSED */
 int
-compat_12_sys_fstat(struct lwp *l, void *v, register_t *retval)
+compat_12_sys_fstat(struct lwp *l, const struct compat_12_sys_fstat_args *uap, register_t *retval)
 {
-	struct compat_12_sys_fstat_args /* {
+	/* {
 		syscallarg(int) fd;
 		syscallarg(struct stat12 *) sb;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 	int fd = SCARG(uap, fd);
 	struct filedesc *fdp = p->p_fd;

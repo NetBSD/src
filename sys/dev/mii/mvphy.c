@@ -1,4 +1,4 @@
-/*	$NetBSD: mvphy.c,v 1.3 2007/02/17 23:23:38 jmcneill Exp $	*/
+/*	$NetBSD: mvphy.c,v 1.3.18.1 2008/01/09 01:53:23 matt Exp $	*/
 
 /*-
  * Copyright (c) 2006 Sam Leffler, Errno Consulting
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvphy.c,v 1.3 2007/02/17 23:23:38 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvphy.c,v 1.3.18.1 2008/01/09 01:53:23 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -212,15 +212,15 @@ mvphyattach(struct device *parent, struct device *self, void *aux)
 	else
 		mii_phy_add_media(sc);
 	aprint_normal("\n");
+
+	if (!pmf_device_register(self, NULL, mii_phy_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
 static int
 mvphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
-
-	if (!device_is_active(&sc->mii_dev))
-		return (ENXIO);
 
 	switch (cmd) {
 	case MII_POLLSTAT:

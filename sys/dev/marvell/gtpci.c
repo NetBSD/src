@@ -1,4 +1,4 @@
-/*	$NetBSD: gtpci.c,v 1.15.20.1 2007/11/06 23:28:16 matt Exp $	*/
+/*	$NetBSD: gtpci.c,v 1.15.20.2 2008/01/09 01:53:17 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtpci.c,v 1.15.20.1 2007/11/06 23:28:16 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtpci.c,v 1.15.20.2 2008/01/09 01:53:17 matt Exp $");
 
 #include "opt_marvell.h"
 #include <sys/param.h>
@@ -287,11 +287,11 @@ gtpci_attach(struct device *parent, struct device *self, void *aux)
 	(void)gtpci_read(gtpc, PCI_ERROR_ADDRESS_LOW(gtpc->gtpc_busno));
 	if (gtpc->gtpc_host) {
 		intr_establish(pci_irqs[gtpc->gtpc_busno][0], IST_LEVEL,
-		    IPL_GTERR, gtpci_error_intr, pc);
+		    IPL_VM, gtpci_error_intr, pc);
 		intr_establish(pci_irqs[gtpc->gtpc_busno][1], IST_LEVEL,
-		    IPL_GTERR, gtpci_error_intr, pc);
+		    IPL_VM, gtpci_error_intr, pc);
 		intr_establish(pci_irqs[gtpc->gtpc_busno][2], IST_LEVEL,
-		    IPL_GTERR, gtpci_error_intr, pc);
+		    IPL_VM, gtpci_error_intr, pc);
 		aprint_normal("%s: %s%d error interrupts at irqs %s, %s, %s\n",
 		    pc->pc_parent->dv_xname, "pci", busno,
 		    intr_string(pci_irqs[gtpc->gtpc_busno][0]),

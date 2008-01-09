@@ -5,6 +5,7 @@
 #include <sys/lkm.h>
 #include <sys/cdefs.h>
 #include <sys/queue.h>
+#include <sys/mutex.h>
 #ifdef _KERNEL
 #include <sys/device.h>
 #else
@@ -13,17 +14,17 @@ typedef struct device *device_t;
 
 #define CTLFLAG_RW			CTLFLAG_READWRITE
 
-#define mtx				lock
-#define mtx_init(mtx, desc, type, opts)	lockinit(mtx, PWAIT, desc, 0, 0/*LK_CANRECURSE*/)
+#define mtx				kmutex
+#define mtx_init(mtx, desc, type, opts)	mutex_init(mtx, MUTEX_DEFAULT, IPL_NONE)
 /*
-#define mtx_lock(mtx)		ndis_mtx_ipl = splnet() lockmgr(mtx, LK_EXCLUSIVE? LK_SHARED, NULL)
-#define mtx_unlock(mtx)         splx(ndis_mtx_ipl)	lockmgr(mtx, LK_RELEASE, NULL)
+#define mtx_lock(mtx)		ndis_mtx_ipl = splnet() mutex_enter(mtx)
+#define mtx_unlock(mtx)         splx(ndis_mtx_ipl)	mutex_exit(mtx)
 */
 
 void mtx_lock(struct mtx *mutex);
 void mtx_unlock(struct mtx *mutex);
 
-#define mtx_destroy(mtx)
+#define mtx_destroy(mtx)		mutex_destroy(mtx)
 
 /* I don't think this is going to work
 struct sysctl_ctx_entry {
@@ -99,52 +100,6 @@ int	device_is_attached(device_t dev);
  */
 int
 ndis_kthread_create(void (*func)(void *), void *arg,
-    struct proc **newpp, void *stack, size_t stacksize, const char *fmt, ...);
-
-/*
- * NetBSD miss some atomic function so we add this function here. Note it
- * is x86 function ( taken from FreeBSD atomic.h)
- */
-
-static 
-__inline void atomic_add_long(volatile u_long *p, u_long v) {
-     __asm __volatile("lock ; addl %1,%0" : "+m" (*p) : "ir" (v)); 
-} 
-
-static
- __inline void atomic_subtract_long(volatile u_long *p, u_long v){
-     __asm __volatile("lock ; subl %1,%0" : "+m" (*p) : "ir" (v)); 
-}
-
-static
- __inline void atomic_store_rel_int( volatile u_int *p, u_int v){
-     __asm __volatile("xchgl %1,%0" : "+m" (*p), "+r" (v) : : "memory");
-}
-
-static __inline int
-atomic_cmpset_int(volatile u_int *dst, u_int expe, u_int src)
-{
-        int res = expe;
-
-        __asm __volatile(
-        "       pushfl ;                "
-        "       cli ;                   "
-        "       cmpl    %0,%2 ;         "
-        "       jne     1f ;            "
-        "       movl    %1,%2 ;         "
-        "1:                             "
-        "       sete    %%al;           "
-        "       movzbl  %%al,%0 ;       "
-        "       popfl ;                 "
-        "# atomic_cmpset_int"
-        : "+a" (res)                    /* 0 (result) */
-        : "r" (src),                    /* 1 */
-          "m" (*(dst))                  /* 2 */
-        : "memory");
-
-        return (res);
-}
-
-#define atomic_cmpset_acq_int           atomic_cmpset_int
+    struct proc **newpp, void *stack, size_t stacksize, const char *name);
 
 #endif /* _NBCOMPAT_H_ */

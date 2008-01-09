@@ -1,4 +1,4 @@
-/* $NetBSD: ppbus_base.c,v 1.13 2007/03/04 06:02:28 christos Exp $ */
+/* $NetBSD: ppbus_base.c,v 1.13.16.1 2008/01/09 01:54:16 matt Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 1999 Nicolas Souchu
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppbus_base.c,v 1.13 2007/03/04 06:02:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppbus_base.c,v 1.13.16.1 2008/01/09 01:54:16 matt Exp $");
 
 #include "opt_ppbus_1284.h"
 #include "opt_ppbus.h"
@@ -39,7 +39,6 @@ __KERNEL_RCSID(0, "$NetBSD: ppbus_base.c,v 1.13 2007/03/04 06:02:28 christos Exp
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>
-#include <sys/lock.h>
 #include <sys/systm.h>
 
 #include <dev/ppbus/ppbus_1284.h>
@@ -371,9 +370,7 @@ ppbus_request_bus(struct device * dev, struct device * busdev, int how,
 
 	/* Loop until lock acquired (if PPBUS_WAIT) or an error occurs */
 	for(;;) {
-		error = lockmgr(&(bus->sc_lock), LK_EXCLUSIVE | LK_RECURSEFAIL,
-			NULL);
-		if(!error)
+		if (mutex_tryenter(&(bus->sc_lock)))
 			break;
 
 		if(how & PPBUS_WAIT) {
@@ -389,6 +386,7 @@ ppbus_request_bus(struct device * dev, struct device * busdev, int how,
 			}
 		}
 		else {
+			error = EWOULDBLOCK;
 			goto end;
 		}
 	}
@@ -403,7 +401,7 @@ ppbus_request_bus(struct device * dev, struct device * busdev, int how,
 	}
 
 	/* Release lock */
-	lockmgr(&(bus->sc_lock), LK_RELEASE, NULL);
+	mutex_exit(&(bus->sc_lock));
 
 end:
 	return error;
@@ -424,9 +422,7 @@ ppbus_release_bus(struct device * dev, struct device * busdev, int how,
 
 	/* Loop until lock acquired (if PPBUS_WAIT) or an error occurs */
 	for(;;) {
-		error = lockmgr(&(bus->sc_lock), LK_EXCLUSIVE | LK_RECURSEFAIL,
-			NULL);
-		if(!error)
+		if (mutex_tryenter(&(bus->sc_lock)))
 			break;
 
 		if(how & PPBUS_WAIT) {
@@ -442,6 +438,7 @@ ppbus_release_bus(struct device * dev, struct device * busdev, int how,
 			}
 		}
 		else {
+			error = EWOULDBLOCK;
 			goto end;
 		}
 	}
@@ -456,7 +453,7 @@ ppbus_release_bus(struct device * dev, struct device * busdev, int how,
 	}
 
 	/* Release lock */
-	lockmgr(&(bus->sc_lock), LK_RELEASE, NULL);
+	mutex_exit(&(bus->sc_lock));
 
 end:
 	return error;

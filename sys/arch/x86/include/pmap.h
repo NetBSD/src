@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.2.10.3 2007/11/08 10:59:42 matt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.2.10.4 2008/01/09 01:49:48 matt Exp $	*/
 
 /*
  *
@@ -159,6 +159,9 @@ struct pmap {
 
 /* pm_flags */
 #define	PMF_USER_LDT	0x01	/* pmap has user-set LDT */
+#define	PMF_USER_XPIN	0x02	/* pmap pdirpa is pinned (Xen) */
+#define	PMF_USER_RELOAD	0x04	/* reload user pmap on PTE unmap (Xen) */
+
 
 /*
  * for each managed physical page we maintain a list of <PMAP,VA>'s
@@ -173,36 +176,6 @@ struct pv_entry {			/* locked by its list's pvh_lock */
 	struct pmap *pv_pmap;		/* the pmap */
 	vaddr_t pv_va;			/* the virtual address */
 	struct vm_page *pv_ptp;		/* the vm_page of the PTP */
-};
-
-/*
- * pv_entrys are dynamically allocated in chunks from a single page.
- * we keep track of how many pv_entrys are in use for each page and
- * we can free pv_entry pages if needed.  there is one lock for the
- * entire allocation system.
- */
-
-struct pv_page_info {
-	TAILQ_ENTRY(pv_page) pvpi_list;
-	struct pv_entry *pvpi_pvfree;
-	int pvpi_nfree;
-};
-
-/*
- * number of pv_entry's in a pv_page
- * (note: won't work on systems where NPBG isn't a constant)
- */
-
-#define PVE_PER_PVPAGE ((PAGE_SIZE - sizeof(struct pv_page_info)) / \
-			sizeof(struct pv_entry))
-
-/*
- * a pv_page: where pv_entrys are allocated from
- */
-
-struct pv_page {
-	struct pv_page_info pvinfo;
-	struct pv_entry pvents[PVE_PER_PVPAGE];
 };
 
 /*
@@ -247,6 +220,7 @@ void		pmap_remove(struct pmap *, vaddr_t, vaddr_t);
 bool		pmap_test_attrs(struct vm_page *, unsigned);
 void		pmap_write_protect(struct pmap *, vaddr_t, vaddr_t, vm_prot_t);
 void		pmap_load(void);
+paddr_t		pmap_init_tmp_pgtbl(paddr_t);
 
 vaddr_t reserve_dumppages(vaddr_t); /* XXX: not a pmap fn */
 
@@ -277,33 +251,21 @@ pmap_remove_all(struct pmap *pmap)
  *	if hardware doesn't support one-page flushing)
  */
 
-__inline static void __attribute__((__unused__))
+__inline static void __unused
 pmap_update_pg(vaddr_t va)
 {
-#if defined(I386_CPU)
-	if (cpu_class == CPUCLASS_386)
-		tlbflush();
-	else
-#endif
-		invlpg(va);
+	invlpg(va);
 }
 
 /*
  * pmap_update_2pg: flush two pages from the TLB
  */
 
-__inline static void __attribute__((__unused__))
+__inline static void __unused
 pmap_update_2pg(vaddr_t va, vaddr_t vb)
 {
-#if defined(I386_CPU)
-	if (cpu_class == CPUCLASS_386)
-		tlbflush();
-	else
-#endif
-	{
-		invlpg(va);
-		invlpg(vb);
-	}
+	invlpg(va);
+	invlpg(vb);
 }
 
 /*
@@ -315,7 +277,7 @@ pmap_update_2pg(vaddr_t va, vaddr_t vb)
  *	unprotecting a page is done on-demand at fault time.
  */
 
-__inline static void __attribute__((__unused__))
+__inline static void __unused
 pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 {
 	if ((prot & VM_PROT_WRITE) == 0) {
@@ -335,7 +297,7 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
  *	unprotecting a page is done on-demand at fault time.
  */
 
-__inline static void __attribute__((__unused__))
+__inline static void __unused
 pmap_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 {
 	if ((prot & VM_PROT_WRITE) == 0) {
@@ -358,7 +320,7 @@ pmap_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 
 #include <lib/libkern/libkern.h>
 
-static __inline pt_entry_t * __attribute__((__unused__))
+static __inline pt_entry_t * __unused
 vtopte(vaddr_t va)
 {
 
@@ -367,7 +329,7 @@ vtopte(vaddr_t va)
 	return (PTE_BASE + pl1_i(va));
 }
 
-static __inline pt_entry_t * __attribute__((__unused__))
+static __inline pt_entry_t * __unused
 kvtopte(vaddr_t va)
 {
 	pd_entry_t *pde;
@@ -387,6 +349,60 @@ void	pmap_cpu_init_early(struct cpu_info *);
 void	pmap_cpu_init_late(struct cpu_info *);
 void	sse2_zero_page(void *);
 void	sse2_copy_page(void *, void *);
+
+
+#ifdef XEN
+
+#define XPTE_MASK	L1_FRAME
+#define XPTE_SHIFT	9
+
+/* PTE access inline fuctions */
+
+/*
+ * Get the machine address of the pointed pte
+ * We use hardware MMU to get value so works only for levels 1-3
+ */
+
+static __inline paddr_t
+xpmap_ptetomach(pt_entry_t *pte)
+{
+	pt_entry_t *up_pte;
+	vaddr_t va = (vaddr_t) pte;
+
+	va = ((va & XPTE_MASK) >> XPTE_SHIFT) | (vaddr_t) PTE_BASE;
+	up_pte = (pt_entry_t *) va;
+
+	return (paddr_t) (((*up_pte) & PG_FRAME) + (((vaddr_t) pte) & (~PG_FRAME & ~VA_SIGN_MASK)));
+}
+
+/*
+ * xpmap_update()
+ * Update an active pt entry with Xen
+ * Equivalent to *pte = npte
+ */
+
+static __inline void
+xpmap_update (pt_entry_t *pte, pt_entry_t npte)
+{
+        int s = splvm();
+
+        xpq_queue_pte_update((pt_entry_t *) xpmap_ptetomach(pte), npte);
+        xpq_flush_queue();
+        splx(s);
+}
+
+
+/* Xen helpers to change bits of a pte */
+#define XPMAP_UPDATE_DIRECT	1	/* Update direct map entry flags too */
+
+/* pmap functions with machine addresses */
+void	pmap_kenter_ma(vaddr_t, paddr_t, vm_prot_t);
+int	pmap_enter_ma(struct pmap *, vaddr_t, paddr_t, paddr_t,
+	    vm_prot_t, int, int);
+bool	pmap_extract_ma(pmap_t, vaddr_t, paddr_t *);
+paddr_t	vtomach(vaddr_t);
+
+#endif	/* XEN */
 
 /*
  * Hooks for the pool allocator.

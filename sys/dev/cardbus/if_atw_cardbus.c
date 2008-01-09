@@ -1,4 +1,4 @@
-/* $NetBSD: if_atw_cardbus.c,v 1.17.24.1 2007/11/06 23:25:51 matt Exp $ */
+/* $NetBSD: if_atw_cardbus.c,v 1.17.24.2 2008/01/09 01:52:29 matt Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2003 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atw_cardbus.c,v 1.17.24.1 2007/11/06 23:25:51 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atw_cardbus.c,v 1.17.24.2 2008/01/09 01:52:29 matt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -400,14 +400,12 @@ atw_cardbus_power(struct atw_softc *sc, int why)
 void
 atw_cardbus_setup(struct atw_cardbus_softc *csc)
 {
-	struct atw_softc *sc = &csc->sc_atw;
 	cardbus_devfunc_t ct = csc->sc_ct;
 	cardbus_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
 	pcireg_t reg;
 
-	(void)cardbus_setpowerstate(sc->sc_dev.dv_xname, ct, csc->sc_tag,
-	    PCI_PWR_D0);
+	(void)cardbus_set_powerstate(ct, csc->sc_tag, PCI_PWR_D0);
 
 	/* Program the BAR. */
 	cardbus_conf_write(cc, cf, csc->sc_tag, csc->sc_bar_reg,

@@ -1,4 +1,4 @@
-/*	$NetBSD: bicons.c,v 1.11.28.1 2007/11/06 23:26:04 matt Exp $	*/
+/*	$NetBSD: bicons.c,v 1.11.28.2 2008/01/09 01:52:38 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bicons.c,v 1.11.28.1 2007/11/06 23:26:04 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bicons.c,v 1.11.28.2 2008/01/09 01:52:38 matt Exp $");
 
 #define HALF_FONT
 
@@ -131,7 +131,7 @@ static void draw_char(int, int, int);
 static void clear(int, int);
 static void scroll(int, int, int);
 static void bicons_puts(const char *);
-static void bicons_printf(const char *, ...) __attribute__((__unused__));
+static void bicons_printf(const char *, ...) __unused;
 
 int
 bicons_init(struct consdev *cndev)

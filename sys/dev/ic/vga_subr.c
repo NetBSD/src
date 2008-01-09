@@ -1,4 +1,4 @@
-/* $NetBSD: vga_subr.c,v 1.21.6.1 2007/11/06 23:27:17 matt Exp $ */
+/* $NetBSD: vga_subr.c,v 1.21.6.2 2008/01/09 01:53:05 matt Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_subr.c,v 1.21.6.1 2007/11/06 23:27:17 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_subr.c,v 1.21.6.2 2008/01/09 01:53:05 matt Exp $");
 
 /* for WSDISPLAY_BORDER_COLOR */
 #include "opt_wsdisplay_border.h"
@@ -48,9 +48,6 @@ __KERNEL_RCSID(0, "$NetBSD: vga_subr.c,v 1.21.6.1 2007/11/06 23:27:17 matt Exp $
 
 static void fontram(struct vga_handle *);
 static void textram(struct vga_handle *);
-#ifdef VGA_RESET
-static void vga_initregs(struct vga_handle *);
-#endif
 
 static void
 fontram(struct vga_handle *vh)
@@ -214,7 +211,6 @@ vga_load_builtinfont(struct vga_handle *vh, u_int8_t *font, int firstchar,
 }
 #endif /* !VGA_RASTERCONSOLE */
 
-#ifdef VGA_RESET
 /*
  * vga_reset():
  *	Reset VGA registers to put it into 80x25 text mode. (mode 3)
@@ -375,7 +371,7 @@ static const u_int8_t vga_dacpal[] = {
 	0x3f, 0x3f, 0x3f	/* WHITE        */
 };
 
-static void
+void
 vga_initregs(vh)
 	struct vga_handle *vh;
 {
@@ -427,4 +423,3 @@ vga_initregs(vh)
 	/* reenable video */
 	vga_ts_write(vh, mode, vga_ts[1] & ~VGA_TS_MODE_BLANK);
 }
-#endif /* VGA_RESET */

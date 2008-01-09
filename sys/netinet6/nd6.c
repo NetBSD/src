@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.118.2.1 2007/11/06 23:34:08 matt Exp $	*/
+/*	$NetBSD: nd6.c,v 1.118.2.2 2008/01/09 01:57:39 matt Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.118.2.1 2007/11/06 23:34:08 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.118.2.2 2008/01/09 01:57:39 matt Exp $");
 
 #include "opt_ipsec.h"
 
@@ -107,7 +107,14 @@ struct nd_drhead nd_defrouter;
 struct nd_prhead nd_prefix = { 0 };
 
 int nd6_recalc_reachtm_interval = ND6_RECALC_REACHTM_INTERVAL;
-static struct sockaddr_in6 all1_sa;
+static const struct sockaddr_in6 all1_sa = {
+	  .sin6_family = AF_INET6
+	, .sin6_len = sizeof(struct sockaddr_in6)
+	, .sin6_addr = {.s6_addr = {0xff, 0xff, 0xff, 0xff,
+				    0xff, 0xff, 0xff, 0xff,
+				    0xff, 0xff, 0xff, 0xff,
+				    0xff, 0xff, 0xff, 0xff}}
+};
 
 static void nd6_setmtu0(struct ifnet *, struct nd_ifinfo *);
 static void nd6_slowtimo(void *);
@@ -129,17 +136,11 @@ void
 nd6_init(void)
 {
 	static int nd6_init_done = 0;
-	int i;
 
 	if (nd6_init_done) {
 		log(LOG_NOTICE, "nd6_init called more than once(ignored)\n");
 		return;
 	}
-
-	all1_sa.sin6_family = AF_INET6;
-	all1_sa.sin6_len = sizeof(struct sockaddr_in6);
-	for (i = 0; i < sizeof(all1_sa.sin6_addr); i++)
-		all1_sa.sin6_addr.s6_addr[i] = 0xff;
 
 	/* initialization of the default router list */
 	TAILQ_INIT(&nd_defrouter);
@@ -638,7 +639,7 @@ regen_tmpaddr(struct in6_ifaddr *ia6)
 	struct in6_ifaddr *public_ifa6 = NULL;
 
 	ifp = ia6->ia_ifa.ifa_ifp;
-	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
+	IFADDR_FOREACH(ifa, ifp) {
 		struct in6_ifaddr *it6;
 
 		if (ifa->ifa_addr->sa_family != AF_INET6)
@@ -790,10 +791,7 @@ nd6_lookup(const struct in6_addr *addr6, int create, struct ifnet *ifp)
 	struct rtentry *rt;
 	struct sockaddr_in6 sin6;
 
-	bzero(&sin6, sizeof(sin6));
-	sin6.sin6_len = sizeof(struct sockaddr_in6);
-	sin6.sin6_family = AF_INET6;
-	sin6.sin6_addr = *addr6;
+	sockaddr_in6_init(&sin6, addr6, 0, 0, 0);
 	rt = rtalloc1((struct sockaddr *)&sin6, create);
 	if (rt && (rt->rt_flags & RTF_LLINFO) == 0) {
 		/*
@@ -830,8 +828,8 @@ nd6_lookup(const struct in6_addr *addr6, int create, struct ifnet *ifp)
 		 * destination in nd6_rtrequest which will be
 		 * called in rtrequest via ifa->ifa_rtrequest.
 		 */
-		if ((e = rtrequest(RTM_ADD, (struct sockaddr *)&sin6,
-		    ifa->ifa_addr, (struct sockaddr *)&all1_sa,
+		if ((e = rtrequest(RTM_ADD, (const struct sockaddr *)&sin6,
+		    ifa->ifa_addr, (const struct sockaddr *)&all1_sa,
 		    (ifa->ifa_flags | RTF_HOST | RTF_LLINFO) &
 		    ~RTF_CLONING, &rt)) != 0) {
 #if 0
@@ -2256,10 +2254,8 @@ fill_drlist(void *oldp, size_t *oldlenp, size_t ol)
 	TAILQ_FOREACH(dr, &nd_defrouter, dr_entry) {
 
 		if (oldp && d + 1 <= de) {
-			bzero(d, sizeof(*d));
-			d->rtaddr.sin6_family = AF_INET6;
-			d->rtaddr.sin6_len = sizeof(struct sockaddr_in6);
-			d->rtaddr.sin6_addr = dr->rtaddr;
+			memset(d, 0, sizeof(*d));
+			sockaddr_in6_init(&d->rtaddr, &dr->rtaddr, 0, 0, 0);
 			if (sa6_recoverscope(&d->rtaddr)) {
 				log(LOG_ERR,
 				    "scope error in router list (%s)\n",
@@ -2356,10 +2352,8 @@ fill_prlist(void *oldp, size_t *oldlenp, size_t ol)
 					continue;
 				}
 				s6 = &sin6[advrtrs];
-				s6->sin6_family = AF_INET6;
-				s6->sin6_len = sizeof(struct sockaddr_in6);
-				s6->sin6_addr = pfr->router->rtaddr;
-				s6->sin6_scope_id = 0;
+				sockaddr_in6_init(s6, &pfr->router->rtaddr,
+				    0, 0, 0);
 				if (sa6_recoverscope(s6)) {
 					log(LOG_ERR,
 					    "scope error in "

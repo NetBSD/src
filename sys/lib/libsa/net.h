@@ -1,4 +1,4 @@
-/*	$NetBSD: net.h,v 1.19 2006/01/24 17:07:19 christos Exp $	*/
+/*	$NetBSD: net.h,v 1.19.44.1 2008/01/09 01:56:42 matt Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass
@@ -92,17 +92,15 @@ void	arp_reply __P((struct iodesc *, void *));
 int	rarp_getipaddress __P((int));
 
 /* Link functions: */
-ssize_t sendether __P((struct iodesc *d, void *pkt, size_t len,
-			u_char *dea, int etype));
-ssize_t readether __P((struct iodesc *d, void *pkt, size_t len,
-			time_t tleft, u_int16_t *etype));
+ssize_t sendether __P((struct iodesc *, void *, size_t, u_char *, int));
+ssize_t readether __P((struct iodesc *, void *, size_t, time_t, u_int16_t *));
 
 ssize_t	sendudp __P((struct iodesc *, void *, size_t));
 ssize_t	readudp __P((struct iodesc *, void *, size_t, time_t));
 ssize_t	sendrecv __P((struct iodesc *,
-		      ssize_t (*)(struct iodesc *, void *, size_t),
+			ssize_t (*)(struct iodesc *, void *, size_t),
 			void *, size_t,
-		        ssize_t (*)(struct iodesc *, void *, size_t, time_t),
+			ssize_t (*)(struct iodesc *, void *, size_t, time_t),
 			void *, size_t));
 
 /* Utilities: */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.88.8.1 2007/11/06 23:35:11 matt Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.88.8.2 2008/01/09 01:58:26 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.88.8.1 2007/11/06 23:35:11 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.88.8.2 2008/01/09 01:58:26 matt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -123,9 +123,18 @@ ffs_update(struct vnode *vp, const struct timespec *acc,
 		return (error);
 	}
 	ip->i_flag &= ~(IN_MODIFIED | IN_ACCESSED);
-	if (DOINGSOFTDEP(vp))
+	if (DOINGSOFTDEP(vp)) {
+		if (ip->i_omode != 0) {
+			/*
+			 * XXX If the inode has been unlinked, wait
+			 * for the update (and so dependencies) to
+			 * flush.  Ensures that the slate is clean
+			 * when the inode is reused.
+			 */
+			waitfor |= UPDATE_WAIT;
+		}
 		softdep_update_inodeblock(ip, bp, waitfor);
-	else if (ip->i_ffs_effnlink != ip->i_nlink)
+	} else if (ip->i_ffs_effnlink != ip->i_nlink)
 		panic("ffs_update: bad link cnt");
 	if (fs->fs_magic == FS_UFS1_MAGIC) {
 		cp = (char *)bp->b_data +
@@ -164,8 +173,7 @@ ffs_update(struct vnode *vp, const struct timespec *acc,
  * disk blocks.
  */
 int
-ffs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred,
-    struct lwp *l)
+ffs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 {
 	daddr_t lastblock;
 	struct inode *oip = VTOI(ovp);
@@ -232,7 +240,7 @@ ffs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred,
 			if (error)
 				return error;
 			if (ioflag & IO_SYNC) {
-				simple_lock(&ovp->v_interlock);
+				mutex_enter(&ovp->v_interlock);
 				VOP_PUTPAGES(ovp,
 				    trunc_page(osize & fs->fs_bmask),
 				    round_page(eob), PGO_CLEANIT | PGO_SYNCIO);
@@ -241,8 +249,7 @@ ffs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred,
 		uvm_vnp_setwritesize(ovp, length);
 		error = ufs_balloc_range(ovp, length - 1, 1, cred, aflag);
 		if (error) {
-			(void) ffs_truncate(ovp, osize, ioflag & IO_SYNC,
-			    cred, l);
+			(void) ffs_truncate(ovp, osize, ioflag & IO_SYNC, cred);
 			return (error);
 		}
 		uvm_vnp_setsize(ovp, length);
@@ -283,7 +290,7 @@ ffs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred,
 		    osize);
 		uvm_vnp_zerorange(ovp, length, eoz - length);
 		if (round_page(eoz) > round_page(length)) {
-			simple_lock(&ovp->v_interlock);
+			mutex_enter(&ovp->v_interlock);
 			error = VOP_PUTPAGES(ovp, round_page(length),
 			    round_page(eoz),
 			    PGO_CLEANIT | PGO_DEACTIVATE |
@@ -307,19 +314,21 @@ ffs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred,
 			 * so that it will have no data structures left.
 			 */
 			if ((error = VOP_FSYNC(ovp, cred, FSYNC_WAIT,
-			    0, 0, l)) != 0) {
+			    0, 0)) != 0) {
 				genfs_node_unlock(ovp);
 				return (error);
 			}
+			mutex_enter(&ump->um_lock);
 			if (oip->i_flag & IN_SPACECOUNTED)
 				fs->fs_pendingblocks -= DIP(oip, blocks);
+			mutex_exit(&ump->um_lock);
 		} else {
 			uvm_vnp_setsize(ovp, length);
 #ifdef QUOTA
  			(void) chkdq(oip, -DIP(oip, blocks), NOCRED, 0);
 #endif
 			softdep_setup_freeblocks(oip, length, 0);
-			(void) vinvalbuf(ovp, 0, cred, l, 0, 0);
+			(void) vinvalbuf(ovp, 0, cred, curlwp, 0, 0);
 			genfs_node_unlock(ovp);
 			oip->i_flag |= IN_CHANGE | IN_UPDATE;
 			return (ffs_update(ovp, NULL, NULL, 0));
@@ -559,7 +568,7 @@ ffs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn, daddr_t lastbn,
 	 */
 	vp = ITOV(ip);
 	bp = getblk(vp, lbn, (int)fs->fs_bsize, 0, 0);
-	if (bp->b_flags & (B_DONE | B_DELWRI)) {
+	if (bp->b_oflags & (BO_DONE | BO_DELWRI)) {
 		/* Braces must be here in case trace evaluates to nothing. */
 		trace(TR_BREADHIT, pack(vp, fs->fs_bsize), lbn);
 	} else {

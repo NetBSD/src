@@ -1,4 +1,4 @@
-/*	$NetBSD: timevar.h,v 1.13.2.1 2007/11/06 23:35:01 matt Exp $	*/
+/*	$NetBSD: timevar.h,v 1.13.2.2 2008/01/09 01:58:20 matt Exp $	*/
 
 /*
  *  Copyright (c) 2005 The NetBSD Foundation.
@@ -129,7 +129,6 @@ struct	ptimers {
  * 
  */
 
-#ifdef __HAVE_TIMECOUNTER
 void	binuptime(struct bintime *);
 void	nanouptime(struct timespec *);
 void	microuptime(struct timeval *);
@@ -145,23 +144,10 @@ void	getmicrouptime(struct timeval *);
 void	getbintime(struct bintime *);
 void	getnanotime(struct timespec *);
 void	getmicrotime(struct timeval *);
-#else /* !__HAVE_TIMECOUNTER */
-/* timecounter compat functions */
-void	microtime(struct timeval *);
-void	nanotime(struct timespec *);
-
-void	nanouptime(struct timespec *);
-void	getbinuptime(struct bintime *);
-void	getnanouptime(struct timespec *);
-void	getmicrouptime(struct timeval *);
-
-void	getnanotime(struct timespec *);
-void	getmicrotime(struct timeval *);
-#endif /* !__HAVE_TIMECOUNTER */
 
 /* Other functions */
 int	adjtime1(const struct timeval *, struct timeval *, struct proc *);
-int	clock_settime1(struct proc *, clockid_t, const struct timespec *);
+int	clock_settime1(struct proc *, clockid_t, const struct timespec *, bool);
 int	dogetitimer(struct proc *, int, struct itimerval *);
 int	dosetitimer(struct proc *, int, struct itimerval *);
 int	dotimer_gettime(int, struct proc *, struct itimerspec *);
@@ -191,6 +177,7 @@ int	tvtohz(struct timeval *);
 int	inittimeleft(struct timeval *, struct timeval *);
 int	gettimeleft(struct timeval *, struct timeval *);
 void	timerupcall(struct lwp *);
+void	time_init(void);
 
 #ifdef __HAVE_TIMECOUNTER
 extern time_t time_second;	/* current second in the epoch */

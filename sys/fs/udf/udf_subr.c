@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.36.6.1 2007/11/06 23:31:23 matt Exp $ */
+/* $NetBSD: udf_subr.c,v 1.36.6.2 2008/01/09 01:55:53 matt Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_subr.c,v 1.36.6.1 2007/11/06 23:31:23 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.36.6.2 2008/01/09 01:55:53 matt Exp $");
 #endif /* not lint */
 
 
@@ -464,14 +464,14 @@ udf_update_discinfo(struct udf_mount *ump)
 	memset(di, 0, sizeof(struct mmc_discinfo));
 
 	/* check if we're on a MMC capable device, i.e. CD/DVD */
-	error = VOP_IOCTL(devvp, MMCGETDISCINFO, di, FKIOCTL, NOCRED, NULL);
+	error = VOP_IOCTL(devvp, MMCGETDISCINFO, di, FKIOCTL, NOCRED);
 	if (error == 0) {
 		udf_dump_discinfo(ump);
 		return 0;
 	}
 
 	/* disc partition support */
-	error = VOP_IOCTL(devvp, DIOCGPART, &dpart, FREAD, NOCRED, NULL);
+	error = VOP_IOCTL(devvp, DIOCGPART, &dpart, FREAD, NOCRED);
 	if (error)
 		return ENODEV;
 
@@ -491,7 +491,6 @@ udf_update_discinfo(struct udf_mount *ump)
 	/* TODO problem with last_possible_lba on resizable VND; request */
 	di->last_possible_lba = dpart.part->p_size;
 	di->sector_size       = dpart.disklab->d_secsize;
-	di->blockingnr        = 1;
 
 	di->num_sessions = 1;
 	di->num_tracks   = 1;
@@ -517,8 +516,7 @@ udf_update_trackinfo(struct udf_mount *ump, struct mmc_trackinfo *ti)
 	class = di->mmc_class;
 	if (class != MMC_CLASS_DISC) {
 		/* tracknr specified in struct ti */
-		error = VOP_IOCTL(devvp, MMCGETTRACKINFO, ti, FKIOCTL,
-			NOCRED, NULL);
+		error = VOP_IOCTL(devvp, MMCGETTRACKINFO, ti, FKIOCTL, NOCRED);
 		return error;
 	}
 
@@ -570,12 +568,14 @@ udf_search_tracks(struct udf_mount *ump, struct udf_args *args,
 		args->sessionnr = ump->discinfo.num_sessions;
 
 	/* search the tracks for this session, zero session nr indicates last */
-	if (args->sessionnr == 0) {
+	if (args->sessionnr == 0)
 		args->sessionnr = ump->discinfo.num_sessions;
-		if (ump->discinfo.last_session_state == MMC_STATE_EMPTY) {
-			args->sessionnr--;
-		}
-	}
+	if (ump->discinfo.last_session_state == MMC_STATE_EMPTY)
+		args->sessionnr--;
+
+	/* sanity */
+	if (args->sessionnr == 0)
+		args->sessionnr = 1;
 
 	/* search the first and last track of the specified session */
 	num_tracks  = ump->discinfo.num_tracks;
@@ -705,9 +705,8 @@ udf_read_anchors(struct udf_mount *ump, struct udf_args *args)
 	}
 
 	/* VATs are only recorded on sequential media, but initialise */
-	ump->first_possible_vat_location = track_start + 256 + 1;
-	ump->last_possible_vat_location  = track_end
-		+ ump->discinfo.blockingnr;
+	ump->first_possible_vat_location = track_start + 2;
+	ump->last_possible_vat_location  = track_end + last_track.packet_size;
 
 	return ok;
 }
@@ -1291,7 +1290,7 @@ udf_search_vat(struct udf_mount *ump, union udf_pmap *mapping)
 	mapping = mapping;
 
 	vat_loc = ump->last_possible_vat_location;
-	early_vat_loc = vat_loc - 2 * ump->discinfo.blockingnr;
+	early_vat_loc = vat_loc - 256;	/* 8 blocks of 32 sectors */
 	early_vat_loc = MAX(early_vat_loc, ump->first_possible_vat_location);
 	late_vat_loc  = vat_loc + 1024;
 
@@ -1306,7 +1305,6 @@ udf_search_vat(struct udf_mount *ump, union udf_pmap *mapping)
 		if (!error) break;
 		if (vat_node) {
 			vput(vat_node->vnode);
-			udf_dispose_node(vat_node);
 			vat_node = NULL;
 		}
 		vat_loc--;	/* walk backwards */
@@ -1785,7 +1783,7 @@ loop:
 		    unp->loc.loc.part_num == icbptr->loc.part_num) {
 			vp = unp->vnode;
 			assert(vp);
-			simple_lock(&vp->v_interlock);
+			mutex_enter(&vp->v_interlock);
 			mutex_exit(&ump->ihash_lock);
 			if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK))
 				goto loop;
@@ -2711,27 +2709,32 @@ udf_read_file_extent(struct udf_node *node,
 		     uint32_t from, uint32_t sectors,
 		     uint8_t *blob)
 {
-	struct buf buf;
+	struct buf *buf;
 	uint32_t sector_size;
+	int rv;
 
-	BUF_INIT(&buf);
+	buf = getiobuf(NULL, true);
 
 	sector_size = node->ump->discinfo.sector_size;
 
-	buf.b_bufsize = sectors * sector_size;
-	buf.b_data    = blob;
-	buf.b_bcount  = buf.b_bufsize;
-	buf.b_resid   = buf.b_bcount;
-	buf.b_flags   = B_BUSY | B_READ;
-	buf.b_vp      = node->vnode;
-	buf.b_proc    = NULL;
+	buf->b_bufsize = sectors * sector_size;
+	buf->b_data    = blob;
+	buf->b_bcount  = buf->b_bufsize;
+	buf->b_resid   = buf->b_bcount;
+	buf->b_cflags  = BC_BUSY;
+	buf->b_flags   = B_READ;
+	buf->b_vp      = node->vnode;
+	buf->b_proc    = NULL;
 
-	buf.b_blkno  = from;
-	buf.b_lblkno = 0;
-	BIO_SETPRIO(&buf, BPRIO_TIMELIMITED);
+	buf->b_blkno  = from;
+	buf->b_lblkno = 0;
+	BIO_SETPRIO(buf, BPRIO_TIMELIMITED);
 
-	udf_read_filebuf(node, &buf);
-	return biowait(&buf);
+	udf_read_filebuf(node, buf);
+	rv = biowait(buf);
+	putiobuf(buf);
+
+	return rv;
 }
 
 
@@ -2837,7 +2840,7 @@ udf_read_filebuf(struct udf_node *node, struct buf *buf)
 			rbuflen = run_length * sector_size;
 			rblk    = run_start  * (sector_size/DEV_BSIZE);
 
-			nestbuf = getiobuf();
+			nestbuf = getiobuf(NULL, true);
 			nestiobuf_setup(buf, nestbuf, buf_offset, rbuflen);
 			/* nestbuf is B_ASYNC */
 

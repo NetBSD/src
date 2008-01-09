@@ -1,4 +1,4 @@
-/* $NetBSD: bzero.c,v 1.3 1999/11/13 21:17:56 thorpej Exp $ */
+/* $NetBSD: bzero.c,v 1.3.102.1 2008/01/09 01:56:37 matt Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -36,9 +36,7 @@
 #undef bzero			/* in case of LIBSA_USE_MEMSET */
 
 void
-bzero(dstv, length)
-	void *dstv;
-	size_t length;
+bzero(void *dstv, size_t length)
 {
 	u_char *dst = dstv;
 

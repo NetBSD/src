@@ -1,4 +1,4 @@
-/* $NetBSD: ppbus_1284.c,v 1.8 2005/12/11 12:23:28 christos Exp $ */
+/* $NetBSD: ppbus_1284.c,v 1.8.46.1 2008/01/09 01:54:16 matt Exp $ */
 
 /*-
  * Copyright (c) 1997 Nicolas Souchu
@@ -32,7 +32,7 @@
 /* General purpose routines for the IEEE1284-1994 Standard */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppbus_1284.c,v 1.8 2005/12/11 12:23:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppbus_1284.c,v 1.8.46.1 2008/01/09 01:54:16 matt Exp $");
 
 #include "opt_ppbus_1284.h"
 
@@ -158,7 +158,7 @@ ppbus_request_mode(int mode, int options)
 			request_mode = EPP_1284_NORMAL;
 			break;
 		default:
-			panic("%s: unsupported mode %d\n", __FUNCTION__, mode);
+			panic("%s: unsupported mode %d\n", __func__, mode);
 		}
 	}
 

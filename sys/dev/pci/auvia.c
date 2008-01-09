@@ -1,4 +1,4 @@
-/*	$NetBSD: auvia.c,v 1.60 2007/03/04 06:02:16 christos Exp $	*/
+/*	$NetBSD: auvia.c,v 1.60.16.1 2008/01/09 01:53:35 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.60 2007/03/04 06:02:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.60.16.1 2008/01/09 01:53:35 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,7 +118,7 @@ static int	auvia_trigger_output(void *, void *, void *, int,
 static int	auvia_trigger_input(void *, void *, void *, int,
 				    void (*)(void *), void *,
 				    const audio_params_t *);
-static void	auvia_powerhook(int, void *);
+static bool	auvia_resume(device_t);
 static int	auvia_intr(void *);
 
 static int	auvia_attach_codec(void *, struct ac97_codec_if *);
@@ -453,10 +453,8 @@ auvia_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	/* Watch for power change */
-	sc->sc_suspend = PWR_RESUME;
-	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
-	    auvia_powerhook, sc);
+	if (!pmf_device_register(self, NULL, auvia_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	audio_attach_mi(&auvia_hw_if, sc, &sc->sc_dev);
 	sc->codec_if->vtbl->unlock(sc->codec_if);
@@ -1113,36 +1111,14 @@ auvia_intr(void *arg)
 	return rval;
 }
 
-static void
-auvia_powerhook(int why, void *addr)
+static bool
+auvia_resume(device_t dv)
 {
-	struct auvia_softc *sc;
+	struct auvia_softc *sc = device_private(dv);
 
-	sc = addr;
-	switch (why) {
-	case PWR_SUSPEND:
-	case PWR_STANDBY:
-		/* Power down */
-		sc->sc_suspend = why;
-		break;
+	auvia_reset_codec(sc);
+	DELAY(1000);
+	(sc->codec_if->vtbl->restore_ports)(sc->codec_if);
 
-	case PWR_RESUME:
-		/* Wake up */
-		if (sc->sc_suspend == PWR_RESUME) {
-			printf("%s: resume without suspend.\n",
-			    sc->sc_dev.dv_xname);
-			sc->sc_suspend = why;
-			return;
-		}
-		sc->sc_suspend = why;
-		auvia_reset_codec(sc);
-		DELAY(1000);
-		(sc->codec_if->vtbl->restore_ports)(sc->codec_if);
-		break;
-
-	case PWR_SOFTSUSPEND:
-	case PWR_SOFTSTANDBY:
-	case PWR_SOFTRESUME:
-		break;
-	}
+	return true;
 }

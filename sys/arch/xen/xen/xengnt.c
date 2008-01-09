@@ -1,4 +1,4 @@
-/*      $NetBSD: xengnt.c,v 1.2.46.1 2007/11/06 23:24:37 matt Exp $      */
+/*      $NetBSD: xengnt.c,v 1.2.46.2 2008/01/09 01:50:23 matt Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -39,9 +39,9 @@
 #include <sys/kernel.h>
 #include <uvm/uvm.h>
 
-#include <machine/hypervisor.h>
-#include <machine/xen.h>
-#include <machine/granttables.h>
+#include <xen/hypervisor.h>
+#include <xen/xen.h>
+#include <xen/granttables.h>
 
 /* #define XENDEBUG */
 #ifdef XENDEBUG

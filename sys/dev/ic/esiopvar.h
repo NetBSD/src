@@ -1,4 +1,4 @@
-/*	$NetBSD: esiopvar.h,v 1.15 2006/02/16 20:17:16 perry Exp $	*/
+/*	$NetBSD: esiopvar.h,v 1.15.40.1 2008/01/09 01:52:51 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 Manuel Bouyer.
@@ -41,7 +41,7 @@
  */
 struct esiop_slot {
 	u_int32_t dsa; /* DSA of the xfer. The first 2 bits holds flags */
-} __attribute__((__packed__));
+} __packed;
 
 #define CMD_SLOTSIZE (sizeof(struct esiop_slot) / sizeof(u_int32_t))
 
@@ -54,7 +54,7 @@ struct esiop_xfer {
 	struct siop_common_xfer siop_tables;
 	u_int32_t tlq; /* target/lun/tag loaded in scratchC by script */
 	u_int32_t saved_offset;/* contains scratchA if script saved an offset */
-} __attribute__((__packed__));
+} __packed;
 
 #define ESIOP_XFER(cmd, m) (((struct esiop_xfer *)((cmd)->cmd_tables))->m)
 

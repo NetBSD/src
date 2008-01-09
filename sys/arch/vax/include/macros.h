@@ -1,4 +1,4 @@
-/*	$NetBSD: macros.h,v 1.41.10.1 2007/11/06 23:23:11 matt Exp $	*/
+/*	$NetBSD: macros.h,v 1.41.10.2 2008/01/09 01:49:33 matt Exp $	*/
 
 /*
  * Copyright (c) 1994, 1998, 2000 Ludd, University of Lule}, Sweden.
@@ -66,7 +66,6 @@ vax_remque(void *p)
 			: "r" (p)
 			: "memory" );
 }
-#define _remque vax_remque
 
 static __inline void  __attribute__((__unused__))
 vax_insque(void *p, void *q)
@@ -76,7 +75,6 @@ vax_insque(void *p, void *q)
 			: "r" (p),"r" (q)
 			: "memory" );
 }
-#define _insque vax_insque
 
 #if 0
 static __inline void *__attribute__((__unused__))
@@ -340,7 +338,7 @@ bbcci(int bitnr, long *addr)
 }
 
 static inline struct lwp *
-cpu_switchto(struct lwp *oldlwp, struct lwp *newlwp)
+cpu_switchto(struct lwp *oldlwp, struct lwp *newlwp, bool returning)
 {
 	struct lwp *prevlwp;
 	__asm volatile(

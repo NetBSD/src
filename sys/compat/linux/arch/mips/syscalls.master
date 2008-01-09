@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.23 2007/03/04 06:01:22 christos Exp $  
+	$NetBSD: syscalls.master,v 1.23.16.1 2008/01/09 01:51:05 matt Exp $  
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -72,17 +72,16 @@
 7	STD		{ int linux_sys_waitpid(int pid, int *status, \
 			    int options);}
 8	STD		{ int linux_sys_creat(const char *path, int mode); }
-9	STD		{ int linux_sys_link(const char *path, \
-			    const char *link); }
+9	NOARGS		{ int sys_link(const char *path, const char *link); }
 10	STD		{ int linux_sys_unlink(const char *path); }
-11	STD		{ int linux_sys_execve(const char *path, char **argp, \
+11	NOARGS		{ int sys_execve(const char *path, char **argp, \
 			    char **envp); }
-12	STD		{ int linux_sys_chdir(const char *path); }
+12	NOARGS		{ int sys_chdir(const char *path); }
 13	STD		{ int linux_sys_time(linux_time_t *t); }
 14	STD		{ int linux_sys_mknod(const char *path, int mode, \
 			    int dev); }
-15	STD		{ int linux_sys_chmod(const char *path, int mode); }
-16	STD		{ int linux_sys_lchown(const char *path, int uid, \
+15	NOARGS		{ int sys_chmod(const char *path, int mode); }
+16	NOARGS		{ int sys___posix_lchown(const char *path, int uid, \
 			    int gid); }
 17	UNIMPL
 18	OBSOL		ostat
@@ -103,15 +102,15 @@
 			    struct linux_utimbuf *times); }
 31	UNIMPL
 32	UNIMPL
-33	STD		{ int linux_sys_access(const char *path, int flags); }
+33	NOARGS		{ int sys_access(const char *path, int flags); }
 34	STD		{ int linux_sys_nice(int incr); }
 35	UNIMPL
 36	NOARGS		{ int sys_sync(void); }
 37	STD		{ int linux_sys_kill(int pid, int signum); }
-38	STD		{ int linux_sys_rename(const char *from, \
+38	NOARGS		{ int sys___posix_rename(const char *from, \
 			    const char *to); }
-39	STD		{ int linux_sys_mkdir(const char *path, int mode); }
-40	STD		{ int linux_sys_rmdir(const char *path); }
+39	NOARGS		{ int sys_mkdir(const char *path, int mode); }
+40	NOARGS		{ int sys_rmdir(const char *path); }
 41	NOARGS		{ int sys_dup(u_int fd); }
 42	STD		{ int linux_sys_pipe(int *pfds); }
 43	STD		{ int linux_sys_times(struct times *tms); }
@@ -165,11 +164,10 @@
 80	NOARGS		{ int sys_getgroups(u_int gidsetsize, gid_t *gidset); }
 81	NOARGS		{ int sys_setgroups(u_int gidsetsize, gid_t *gidset); }
 82	UNIMPL		old_select
-83	STD		{ int linux_sys_symlink(const char *path, \
-			    const char *to); }
+83	NOARGS		{ int sys_symlink(const char *path, const char *to); }
 84	NOARGS		{ int compat_43_sys_lstat(const char *path, \
 			    struct stat43 *up); } oolstat
-85	STD		{ int linux_sys_readlink(const char *name, char *buf, \
+85	NOARGS		{ int sys_readlink(const char *name, char *buf, \
 			    int count); }
 86	UNIMPL		uselib
 ;86	STD		{ int linux_sys_uselib(const char *path); }
@@ -181,7 +179,7 @@
 90	NOARGS      	{ int linux_sys_mmap(unsigned long addr, size_t len, \
 			    int prot, int flags, int fd, linux_off_t offset); }
 91	NOARGS		{ int sys_munmap(void *addr, int len); }
-92	STD		{ int linux_sys_truncate(const char *path, \
+92	NOARGS		{ int compat_43_sys_truncate(const char *path, \
 			    long length); }
 93	NOARGS		{ int compat_43_sys_ftruncate(int fd, long length); }
 94	NOARGS		{ int sys_fchmod(int fd, int mode); }
@@ -235,14 +233,14 @@
 129	UNIMPL		delete_module
 130	UNIMPL		get_kernel_syms
 131	UNIMPL		quotactl
-132	STD		{ int linux_sys_getpgid(int pid); }
+132	NOARGS		{ pid_t sys_getpgid(pid_t pid); }
 133	NOARGS		{ int sys_fchdir(int fd); }
 134	UNIMPL		bdflush
 135	UNIMPL		sysfs
 136	STD		{ int linux_sys_personality(int per); }
 137	UNIMPL		afs_syscall
 138	STD		{ int linux_sys_setfsuid(uid_t uid); }
-139	NOARGS		{ int linux_sys_getfsuid(void); }
+139	STD		{ int linux_sys_setfsgid(gid_t gid); }
 140	STD		{ int linux_sys_llseek(int fd, u_int32_t ohigh, \
 			    u_int32_t olow, void *res, int whence); }
 141	STD		{ int linux_sys_getdents(int fd, \
@@ -354,7 +352,7 @@
 			    size_t nbyte, linux_off_t offset); }
 201	STD		{ int linux_sys_pwrite(int fd, char *buf, \
 			    size_t nbyte, linux_off_t offset); }
-202	STD		{ int linux_sys_chown(const char *path, \
+202	NOARGS		{ int sys___posix_chown(const char *path, \
 			    int uid, int gid); }
 203	NOARGS		{ int sys___getcwd(char *bufp, size_t length); }
 204	UNIMPL		capget
@@ -365,6 +363,7 @@
 207	UNIMPL		sendfile
 208	UNIMPL
 209	UNIMPL
+#define linux_sys_mmap2_args linux_sys_mmap_args
 210	NOARGS		{ linux_off_t linux_sys_mmap2(unsigned long addr, \
 			    size_t len, int prot, int flags, int fd, \
 			    linux_off_t offset); }

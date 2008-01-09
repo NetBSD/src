@@ -1,4 +1,4 @@
-/*	$NetBSD: patch.c,v 1.3.10.1 2007/11/06 23:23:52 matt Exp $	*/
+/*	$NetBSD: patch.c,v 1.3.10.2 2008/01/09 01:49:58 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -41,13 +41,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.3.10.1 2007/11/06 23:23:52 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.3.10.2 2008/01/09 01:49:58 matt Exp $");
 
-#include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
-#ifdef i386
-#include "opt_cputype.h"
-#endif
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -61,30 +57,31 @@ __KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.3.10.1 2007/11/06 23:23:52 matt Exp $");
 
 void	spllower(int);
 void	spllower_end(void);
-void	i686_spllower(int);
-void	i686_spllower_end(void);
-void	i686_spllower_patch(void);
-void	amd64_spllower(int);
-void	amd64_spllower_end(void);
-void	amd64_spllower_patch(void);
+void	cx8_spllower(int);
+void	cx8_spllower_end(void);
+void	cx8_spllower_patch(void);
 
 void	mutex_spin_exit_end(void);
 void	i686_mutex_spin_exit(int);
 void	i686_mutex_spin_exit_end(void);
 void	i686_mutex_spin_exit_patch(void);
 
-void	mb_read(void);
-void	mb_read_end(void);
-void	mb_write(void);
-void	mb_write_end(void);
-void	mb_memory(void);
-void	mb_memory_end(void);
-void	x86_mb_nop(void);
-void	x86_mb_nop_end(void);
-void	sse2_mb_read(void);
-void	sse2_mb_read_end(void);
-void	sse2_mb_memory(void);
-void	sse2_mb_memory_end(void);
+void	membar_consumer(void);
+void	membar_consumer_end(void);
+void	membar_sync(void);
+void	membar_sync_end(void);
+void	sse2_lfence(void);
+void	sse2_lfence_end(void);
+void	sse2_mfence(void);
+void	sse2_mfence_end(void);
+
+void	_atomic_cas_64(void);
+void	_atomic_cas_64_end(void);
+void	_atomic_cas_cx8(void);
+void	_atomic_cas_cx8_end(void);
+
+extern void	*x86_lockpatch[];
+extern void	*atomic_lockpatch[];
 
 #define	X86_NOP		0x90
 #define	X86_REP		0xf3
@@ -98,14 +95,11 @@ patchfunc(void *from_s, void *from_e, void *to_s, void *to_e,
 	  void *pcrel)
 {
 	uint8_t *ptr;
-	u_long psl;
 
 	if ((uintptr_t)from_e - (uintptr_t)from_s !=
 	    (uintptr_t)to_e - (uintptr_t)to_s)
 		panic("patchfunc: sizes do not match (from=%p)", from_s);
 
-	psl = x86_read_psl();
-	x86_disable_intr();
 	memcpy(to_s, from_s, (uintptr_t)to_e - (uintptr_t)to_s);
 	if (pcrel != NULL) {
 		ptr = pcrel;
@@ -119,13 +113,12 @@ patchfunc(void *from_s, void *from_e, void *to_s, void *to_e,
 		*(uint32_t *)(ptr + 1 - (uintptr_t)from_s + (uintptr_t)to_s) +=
 		    ((uint32_t)(uintptr_t)from_s - (uint32_t)(uintptr_t)to_s);
 	}
-	x86_flush();
-	x86_write_psl(psl);
 }
 
 static inline void  __attribute__ ((__unused__))
 patchbytes(void *addr, const int byte1, const int byte2)
 {
+
 	((uint8_t *)addr)[0] = (uint8_t)byte1;
 	if (byte2 != -1)
 		((uint8_t *)addr)[1] = (uint8_t)byte2;
@@ -136,79 +129,82 @@ x86_patch(void)
 {
 #if !defined(GPROF)
 	static int again;
+	u_long psl;
 	u_long cr0;
 
 	if (again)
 		return;
 	again = 1;
 
+	/* Disable interrupts. */
+	psl = x86_read_psl();
+	x86_disable_intr();
+
 	/* Disable write protection in supervisor mode. */
 	cr0 = rcr0();
 	lcr0(cr0 & ~CR0_WP);
 
-	/*
-	 * i686 patches.
-	 */
-#ifdef I686_CPU
-	if (cpu_class == CPUCLASS_686 && (cpu_feature & CPUID_CX8) != 0) {
+	if (ncpu == 1) {
+#ifndef LOCKDEBUG
+		int i;
+
+		/* Uniprocessor: kill LOCK prefixes. */
+		for (i = 0; x86_lockpatch[i] != 0; i++)
+			patchbytes(x86_lockpatch[i], X86_NOP, -1);	
+		for (i = 0; atomic_lockpatch[i] != 0; i++)
+			patchbytes(atomic_lockpatch[i], X86_NOP, -1);
+		/*
+		 * Uniprocessor: kill kernel_lock.  Fill another
+		 * 14 bytes of NOPs so not to confuse the decoder.
+		 */
+		patchbytes(_kernel_lock, X86_NOP, X86_RET);
+		patchbytes(_kernel_unlock, X86_NOP, X86_RET);
+		for (i = 2; i < 16; i++) {
+			patchbytes((char *)_kernel_lock + i, X86_NOP, -1);
+			patchbytes((char *)_kernel_unlock + i, X86_NOP, -1);
+		}
+#endif
+	} else if ((cpu_feature & CPUID_SSE2) != 0) {
+		/* Faster memory barriers. */
 		patchfunc(
-		    i686_spllower, i686_spllower_end,
-		    spllower, spllower_end,
-		    i686_spllower_patch
+		    sse2_lfence, sse2_lfence_end,
+		    membar_consumer, membar_consumer_end,
+		    NULL
 		);
-#if !defined(LOCKDEBUG) && !defined(I386_CPU) && !defined(DIAGNOSTIC)
+		patchfunc(
+		    sse2_mfence, sse2_mfence_end,
+		    membar_sync, membar_sync_end,
+		    NULL
+		);
+	}
+
+	if ((cpu_feature & CPUID_CX8) != 0) {
+		/* Faster splx(), mutex_spin_exit(). */
+		patchfunc(
+		    cx8_spllower, cx8_spllower_end,
+		    spllower, spllower_end,
+		    cx8_spllower_patch
+		);
+#if defined(i386)
+#ifndef LOCKDEBUG
 		patchfunc(
 		    i686_mutex_spin_exit, i686_mutex_spin_exit_end,
 		    mutex_spin_exit, mutex_spin_exit_end,
 		    i686_mutex_spin_exit_patch
 		);
-#endif	/* !defined(LOCKDEBUG) && !defined(I386_CPU) */
-	}
-	if ((cpu_feature & CPUID_SSE2) != 0) {
+#endif
 		patchfunc(
-		    sse2_mb_read, sse2_mb_read_end,
-		    mb_read, mb_read_end,
+		    _atomic_cas_cx8, _atomic_cas_cx8_end,
+		    _atomic_cas_64, _atomic_cas_64_end,
 		    NULL
 		);
-		patchfunc(
-		    sse2_mb_memory, sse2_mb_memory_end,
-		    mb_memory, mb_memory_end,
-		    NULL
-		);
+#endif
 	}
-#endif	/* I686_CPU */
 
-	/*
-	 * AMD64 patches.
-	 */
-#ifdef __x86_64__
-	patchfunc(
-	    amd64_spllower, amd64_spllower_end,
-	    spllower, spllower_end,
-	    amd64_spllower_patch
-	);
-#endif	/* __x86_64__ */
-
-	/*
-	 * Uniprocessor.  XXX Should be determined at runtime.
-	 */
-#if !defined(MULTIPROCESSOR)
-	patchfunc(
-		x86_mb_nop, x86_mb_nop_end,
-		mb_read, mb_read_end,
-		NULL
-	);
-	patchfunc(
-		x86_mb_nop, x86_mb_nop_end,
-		mb_write, mb_write_end,
-		NULL
-	);
-	patchfunc(
-		x86_mb_nop, x86_mb_nop_end,
-		mb_memory, mb_memory_end,
-		NULL
-	);
-#endif	/* !MULTIPROCESSOR */
+	/* Write back and invalidate cache, flush pipelines. */
+	wbinvd();
+	x86_flush();
+	x86_write_psl(psl);
 
 	/* Re-enable write protection. */
 	lcr0(cr0);

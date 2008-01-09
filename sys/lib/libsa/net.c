@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.30 2006/01/21 10:06:06 dsl Exp $	*/
+/*	$NetBSD: net.c,v 1.30.44.1 2008/01/09 01:56:42 matt Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -81,14 +81,11 @@
  * zero errno to indicate it isn't done yet.
  */
 ssize_t
-sendrecv(d, sproc, sbuf, ssize, rproc, rbuf, rsize)
-	struct iodesc *d;
-	ssize_t (*sproc)(struct iodesc *, void *, size_t);
-	void *sbuf;
-	size_t ssize;
-	ssize_t (*rproc)(struct iodesc *, void *, size_t, time_t);
-	void *rbuf;
-	size_t rsize;
+sendrecv(struct iodesc *d,
+	ssize_t (*sproc)(struct iodesc *, void *, size_t),
+	void *sbuf, size_t ssize,
+	ssize_t (*rproc)(struct iodesc *, void *, size_t, time_t),
+	void *rbuf, size_t rsize)
 {
 	ssize_t cc;
 	time_t t, tmo, tlast;
@@ -133,7 +130,7 @@ sendrecv(d, sproc, sbuf, ssize, rproc, rbuf, rsize)
 		cc = (*rproc)(d, rbuf, rsize, tleft);
 		/* Return on data, EOF or real error. */
 		if (cc != -1 || errno != 0)
-			return (cc);
+			return cc;
 
 		/* Timed out or didn't get the packet we're waiting for */
 		t = getsecs();

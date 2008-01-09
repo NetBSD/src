@@ -1,3 +1,5 @@
+/* $NetBSD: drm_vm.c,v 1.4.12.1 2008/01/09 01:52:36 matt Exp $ */
+
 /*-
  * Copyright 2003 Eric Anholt
  * All Rights Reserved.
@@ -22,6 +24,7 @@
  */
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: drm_vm.c,v 1.4.12.1 2008/01/09 01:52:36 matt Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/drm_vm.c,v 1.2 2005/11/28 23:13:53 anholt Exp $");
 */
@@ -29,24 +32,15 @@ __FBSDID("$FreeBSD: src/sys/dev/drm/drm_vm.c,v 1.2 2005/11/28 23:13:53 anholt Ex
 #include "drmP.h"
 #include "drm.h"
 
-#if defined(__FreeBSD__) && __FreeBSD_version >= 500102
-int drm_mmap(struct cdev *kdev, vm_offset_t offset, vm_paddr_t *paddr,
-    int prot)
-#elif defined(__FreeBSD__)
-int drm_mmap(dev_t kdev, vm_offset_t offset, int prot)
-#elif defined(__NetBSD__) || defined(__OpenBSD__)
+/* WARNING:  pure, unadulterated EVIL ahead! */
+
 paddr_t drm_mmap(dev_t kdev, off_t offset, int prot)
-#endif
 {
 	DRM_DEVICE;
 	drm_local_map_t *map;
 	drm_file_t *priv;
 	drm_map_type_t type;
-#ifdef __FreeBSD__
-	vm_paddr_t phys;
-#else
 	paddr_t phys;
-#endif
 
 	DRM_LOCK();
 	priv = drm_find_file_by_proc(dev, DRM_CURPROC);
@@ -68,16 +62,10 @@ paddr_t drm_mmap(dev_t kdev, off_t offset, int prot)
 			unsigned long page = offset >> PAGE_SHIFT;
 			unsigned long pphys = dma->pagelist[page];
 
-#if defined(__FreeBSD__) && __FreeBSD_version >= 500102
-			*paddr = phys;
-			DRM_SPINUNLOCK(&dev->dma_lock);
-			return 0;
-#else
 #ifdef macppc
 			return pphys;
 #else
 			return atop(pphys);
-#endif
 #endif
 		} else {
 			DRM_SPINUNLOCK(&dev->dma_lock);
@@ -119,11 +107,7 @@ paddr_t drm_mmap(dev_t kdev, off_t offset, int prot)
 		phys = offset;
 		break;
 	case _DRM_CONSISTENT:
-#ifdef __FreeBSD__
-		phys = vtophys((char *)map->handle + (offset - map->offset));
-#else
 		phys = vtophys((paddr_t)map->handle + (offset - map->offset));
-#endif
 		break;
 	case _DRM_SCATTER_GATHER:
 	case _DRM_SHM:
@@ -134,15 +118,10 @@ paddr_t drm_mmap(dev_t kdev, off_t offset, int prot)
 		return -1;	/* This should never happen. */
 	}
 
-#if defined(__FreeBSD__) && __FreeBSD_version >= 500102
-	*paddr = phys;
-	return 0;
-#else
 #ifdef macppc
 	return phys;
 #else
 	return atop(phys);
-#endif
 #endif
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs.c,v 1.49.34.1 2007/11/06 23:32:57 matt Exp $	*/
+/*	$NetBSD: ufs.c,v 1.49.34.2 2008/01/09 01:56:46 matt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -68,6 +68,7 @@
 #include <ufs/ufs/dir.h>
 #ifdef LIBSA_LFS
 #include <sys/queue.h>
+#include <sys/condvar.h>
 #include <sys/mount.h>			/* XXX for MNAMELEN */
 #include <ufs/lfs/lfs.h>
 #else
@@ -194,7 +195,7 @@ find_inode_sector(ino32_t inumber, struct open_file *f, daddr_t *isp)
 
 	rc = read_inode(fs->lfs_ifile, f);
 	if (rc)
-		return (rc);
+		return rc;
 
 	ifileent_blkno =
 	    (inumber / fs->lfs_ifpb) + fs->lfs_cleansz + fs->lfs_segtabsz;
@@ -202,15 +203,15 @@ find_inode_sector(ino32_t inumber, struct open_file *f, daddr_t *isp)
 	    (inumber % fs->lfs_ifpb) * sizeof (IFILE_Vx);
 	rc = buf_read_file(f, &ent_in_buf, &buf_after_ent);
 	if (rc)
-		return (rc);
+		return rc;
 	/* make sure something's not badly wrong, but don't panic. */
 	if (buf_after_ent < sizeof (IFILE_Vx))
-		return (EINVAL);
+		return EINVAL;
 
 	*isp = FSBTODB(fs, ((IFILE_Vx *)ent_in_buf)->if_daddr);
 	if (*isp == LFS_UNUSED_DADDR)	/* again, something badly wrong */
-		return (EINVAL);
-	return (0);
+		return EINVAL;
+	return 0;
 }
 #endif
 
@@ -235,7 +236,7 @@ read_inode(ino32_t inumber, struct open_file *f)
 	if (inumber == fs->lfs_ifile)
 		inode_sector = FSBTODB(fs, fs->lfs_idaddr);
 	else if ((rc = find_inode_sector(inumber, f, &inode_sector)) != 0)
-		return (rc);
+		return rc;
 #else
 	inode_sector = FSBTODB(fs, ino_to_fsba(fs, inumber));
 #endif
@@ -270,7 +271,7 @@ read_inode(ino32_t inumber, struct open_file *f)
 	 */
 	fp->f_ind_cache_block = ~0;
 	fp->f_buf_blkno = -1;
-	return (rc);
+	return rc;
 }
 
 /*
@@ -282,7 +283,7 @@ block_map(struct open_file *f, indp_t file_block, indp_t *disk_block_p)
 {
 	struct file *fp = (struct file *)f->f_fsdata;
 	struct fs *fs = fp->f_fs;
-	unsigned level;
+	uint level;
 	indp_t ind_cache;
 	indp_t ind_block_num;
 	size_t rsize;
@@ -315,7 +316,7 @@ block_map(struct open_file *f, indp_t file_block, indp_t *disk_block_p)
 	if (file_block < NDADDR) {
 		/* Direct block. */
 		*disk_block_p = fp->f_di.di_db[file_block];
-		return (0);
+		return 0;
 	}
 
 	file_block -= NDADDR;
@@ -332,7 +333,7 @@ block_map(struct open_file *f, indp_t file_block, indp_t *disk_block_p)
 			break;
 		if (level > NIADDR * fp->f_nishift)
 			/* Block number too high */
-			return (EFBIG);
+			return EFBIG;
 		file_block -= (indp_t)1 << level;
 	}
 
@@ -342,7 +343,7 @@ block_map(struct open_file *f, indp_t file_block, indp_t *disk_block_p)
 		level -= fp->f_nishift;
 		if (ind_block_num == 0) {
 			*disk_block_p = 0;	/* missing */
-			return (0);
+			return 0;
 		}
 
 		twiddle();
@@ -356,7 +357,7 @@ block_map(struct open_file *f, indp_t file_block, indp_t *disk_block_p)
 			FSBTODB(fp->f_fs, ind_block_num), fs->fs_bsize,
 			buf, &rsize);
 		if (rc)
-			return (rc);
+			return rc;
 		if (rsize != fs->fs_bsize)
 			return EIO;
 		ind_block_num = buf[file_block >> level];
@@ -372,7 +373,7 @@ block_map(struct open_file *f, indp_t file_block, indp_t *disk_block_p)
 
 	*disk_block_p = ind_block_num;
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -401,7 +402,7 @@ buf_read_file(struct open_file *f, char **buf_p, size_t *size_p)
 	if (file_block != fp->f_buf_blkno) {
 		rc = block_map(f, file_block, &disk_block);
 		if (rc)
-			return (rc);
+			return rc;
 
 		if (disk_block == 0) {
 			memset(fp->f_buf, 0, block_size);
@@ -412,7 +413,7 @@ buf_read_file(struct open_file *f, char **buf_p, size_t *size_p)
 				FSBTODB(fs, disk_block),
 				block_size, fp->f_buf, &fp->f_buf_size);
 			if (rc)
-				return (rc);
+				return rc;
 		}
 
 		fp->f_buf_blkno = file_block;
@@ -432,7 +433,7 @@ buf_read_file(struct open_file *f, char **buf_p, size_t *size_p)
 	if (*size_p > fp->f_di.di_size - fp->f_seekp)
 		*size_p = fp->f_di.di_size - fp->f_seekp;
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -441,7 +442,7 @@ buf_read_file(struct open_file *f, char **buf_p, size_t *size_p)
  */
 static int
 search_directory(const char *name, int length, struct open_file *f,
-    ino32_t *inumber_p)
+	ino32_t *inumber_p)
 {
 	struct file *fp = (struct file *)f->f_fsdata;
 	struct direct *dp;
@@ -455,7 +456,7 @@ search_directory(const char *name, int length, struct open_file *f,
 	while (fp->f_seekp < (off_t)fp->f_di.di_size) {
 		rc = buf_read_file(f, &buf, &buf_size);
 		if (rc)
-			return (rc);
+			return rc;
 
 		dp = (struct direct *)buf;
 		edp = (struct direct *)(buf + buf_size);
@@ -474,12 +475,12 @@ search_directory(const char *name, int length, struct open_file *f,
 			    !memcmp(name, dp->d_name, length)) {
 				/* found entry */
 				*inumber_p = dp->d_ino;
-				return (0);
+				return 0;
 			}
 		}
 		fp->f_seekp += buf_size;
 	}
-	return (ENOENT);
+	return ENOENT;
 }
 
 #ifdef LIBSA_FFSv2
@@ -733,12 +734,12 @@ ufs_open(const char *path, struct open_file *f)
 
 #endif /* !LIBSA_FS_SINGLECOMPONENT */
 
-        fp->f_seekp = 0;		/* reset seek pointer */
+	fp->f_seekp = 0;		/* reset seek pointer */
 
 out:
 	if (rc)
 		ufs_close(f);
-	return (rc);
+	return rc;
 }
 
 int
@@ -748,13 +749,13 @@ ufs_close(struct open_file *f)
 
 	f->f_fsdata = NULL;
 	if (fp == NULL)
-		return (0);
+		return 0;
 
 	if (fp->f_buf)
 		dealloc(fp->f_buf, fp->f_fs->fs_bsize);
 	dealloc(fp->f_fs, SBLOCKSIZE);
 	dealloc(fp, sizeof(struct file));
-	return (0);
+	return 0;
 }
 
 /*
@@ -791,7 +792,7 @@ ufs_read(struct open_file *f, void *start, size_t size, size_t *resid)
 	}
 	if (resid)
 		*resid = size;
-	return (rc);
+	return rc;
 }
 
 /*
@@ -802,7 +803,7 @@ int
 ufs_write(struct open_file *f, void *start, size_t size, size_t *resid)
 {
 
-	return (EROFS);
+	return EROFS;
 }
 #endif /* !LIBSA_NO_FS_WRITE */
 
@@ -823,9 +824,9 @@ ufs_seek(struct open_file *f, off_t offset, int where)
 		fp->f_seekp = fp->f_di.di_size - offset;
 		break;
 	default:
-		return (-1);
+		return -1;
 	}
-	return (fp->f_seekp);
+	return fp->f_seekp;
 }
 #endif /* !LIBSA_NO_FS_SEEK */
 
@@ -840,7 +841,7 @@ ufs_stat(struct open_file *f, struct stat *sb)
 	sb->st_uid = fp->f_di.di_uid;
 	sb->st_gid = fp->f_di.di_gid;
 	sb->st_size = fp->f_di.di_size;
-	return (0);
+	return 0;
 }
 
 #ifdef LIBSA_FFSv1

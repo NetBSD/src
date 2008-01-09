@@ -1,4 +1,4 @@
-/*	$NetBSD: atareg.h,v 1.30 2007/08/21 16:53:18 bouyer Exp $	*/
+/*	$NetBSD: atareg.h,v 1.30.2.1 2008/01/09 01:52:25 matt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -194,9 +194,11 @@ atacmd_tostatq(int cmd32)
 #endif /* _KERNEL */
 
 /* Subcommands for SET_FEATURES (features register) */
+#define	WDSF_8BIT_PIO_EN	0x01
 #define	WDSF_WRITE_CACHE_EN	0x02
 #define	WDSF_SET_MODE		0x03
 #define	WDSF_REASSIGN_EN	0x04
+#define	WDSF_APM_EN		0x05
 #define	WDSF_RETRY_DS		0x33
 #define	WDSF_SET_CACHE_SGMT	0x54
 #define	WDSF_READAHEAD_DS	0x55
@@ -204,6 +206,7 @@ atacmd_tostatq(int cmd32)
 #define	WDSF_ECC_DS		0x77
 #define	WDSF_WRITE_CACHE_DS	0x82
 #define	WDSF_REASSIGN_DS	0x84
+#define	WDSF_APM_DS		0x85
 #define	WDSF_ECC_EN		0x88
 #define	WDSF_RETRY_EN		0x99
 #define	WDSF_SET_CURRENT	0x9a
@@ -472,7 +475,7 @@ struct ata_smart_attr {
 	u_int8_t		worst;
 	u_int8_t		raw[6];
 	u_int8_t		reserved;
-} __attribute__((packed));
+} __packed;
 
 struct ata_smart_attributes {
 	u_int16_t		data_structure_revision;
@@ -490,13 +493,13 @@ struct ata_smart_attributes {
 	u_int8_t		reserved_374_385[12];
 	u_int8_t		vendor_specific_386_509[125];
 	int8_t			checksum;
-} __attribute__((packed));
+} __packed;
 
 struct ata_smart_thresh {
 	u_int8_t		id;
 	u_int8_t		value;
 	u_int8_t		reserved[10];
-} __attribute__((packed));
+} __packed;
 
 struct ata_smart_thresholds {
 	u_int16_t		data_structure_revision;
@@ -504,7 +507,7 @@ struct ata_smart_thresholds {
 	u_int8_t		reserved[18];
 	u_int8_t		vendor_specific[131];
 	int8_t			checksum;
-} __attribute__((packed));
+} __packed;
 
 struct ata_smart_selftest {
 	u_int8_t		number;
@@ -513,7 +516,7 @@ struct ata_smart_selftest {
 	u_int8_t		failure_check_point;
 	u_int32_t		lba_first_error;
 	u_int8_t		vendor_specific[15];
-} __attribute__((packed));
+} __packed;
 
 struct ata_smart_selftestlog {
 	u_int16_t		data_structure_revision;
@@ -522,6 +525,6 @@ struct ata_smart_selftestlog {
 	u_int8_t		mostrecenttest;
 	u_int8_t		reserved[2];
 	u_int8_t		checksum;
-} __attribute__((packed));
+} __packed;
 
 #endif /* _DEV_ATA_ATAREG_H_ */

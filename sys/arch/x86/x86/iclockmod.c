@@ -1,4 +1,4 @@
-/*	$NetBSD: iclockmod.c,v 1.7.18.1 2007/11/06 23:23:48 matt Exp $ */
+/*	$NetBSD: iclockmod.c,v 1.7.18.2 2008/01/09 01:49:55 matt Exp $ */
 /*      $OpenBSD: p4tcc.c,v 1.13 2006/12/20 17:50:40 gwk Exp $ */
 
 /*
@@ -30,7 +30,7 @@
 
 /*
  * On-Demand Clock Modulation driver, to modulate the clock duty cycle
- * by software. Avaible on Pentium M and later models (feature TM).
+ * by software. Available on Pentium M and later models (feature TM).
  *
  * References:
  * Intel Developer's manual v.3 #245472-012
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iclockmod.c,v 1.7.18.1 2007/11/06 23:23:48 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iclockmod.c,v 1.7.18.2 2008/01/09 01:49:55 matt Exp $");
 
 #include "opt_intel_odcm.h"
 
@@ -90,9 +90,12 @@ static int
 clockmod_getstate(void)
 {
 	uint64_t msr;
-	int i, val = 0;
+	int i, val = -1;
 
 	msr = rdmsr(MSR_THERM_CONTROL);
+	if ((msr & ODCM_ENABLE) == 0)
+		return (ODCM_MAXSTATES - 1);
+
 	msr = (msr >> ODCM_REGOFFSET) & (ODCM_MAXSTATES - 1);
 
 	for (i = 0; i < __arraycount(state); i++) {
@@ -101,6 +104,7 @@ clockmod_getstate(void)
 			break;
 		}
 	}
+	KASSERT(val != -1);
 	return val;
 }
 
@@ -113,6 +117,7 @@ clockmod_setstate(int level)
 		if (level == state[i].level && !state[i].errata)
 			break;
 	}
+	KASSERT(i != __arraycount(state));
 
 	mcb.msr_read = true;
 	mcb.msr_type = MSR_THERM_CONTROL;
@@ -196,8 +201,8 @@ clockmod_init_main(void)
 	clockmod_level = clockmod_getstate();
 
 	aprint_normal("%s: Intel(R) On Demand Clock Modulation (state %s)\n",
-	    curcpu()->ci_dev->dv_xname, clockmod_level == 0 ? "disabled" :
-	    "enabled");
+	    curcpu()->ci_dev->dv_xname, clockmod_level == (ODCM_MAXSTATES - 1) ?
+	    "disabled" : "enabled");
 
 	/* Create sysctl machdep.clockmod subtree */
 	sysctl_createv(NULL, 0, NULL, &node,
@@ -242,7 +247,7 @@ static int
 clockmod_sysctl_helper(SYSCTLFN_ARGS)
 {
 	struct sysctlnode node;
-	int lvl, oldlvl, error;
+	int i, lvl, oldlvl, error;
 
 	node = *rnode;
 	node.sysctl_data = &lvl;
@@ -260,7 +265,11 @@ clockmod_sysctl_helper(SYSCTLFN_ARGS)
 		return error;
 
 	/* invalid level? */
-	if (lvl < 0 || lvl >= __arraycount(state))
+	for (i = 0; i < __arraycount(state); i++) {
+		if (lvl == state[i].level && !state[i].errata)
+			break;
+	}
+	if (i == __arraycount(state))
 		return EINVAL;
 
 	if (rnode->sysctl_num == clockmod_state_target && lvl != oldlvl) {

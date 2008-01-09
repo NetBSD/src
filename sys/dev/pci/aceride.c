@@ -1,4 +1,4 @@
-/*	$NetBSD: aceride.c,v 1.23 2007/02/09 21:55:27 ad Exp $	*/
+/*	$NetBSD: aceride.c,v 1.23.20.1 2008/01/09 01:53:30 matt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aceride.c,v 1.23 2007/02/09 21:55:27 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aceride.c,v 1.23.20.1 2008/01/09 01:53:30 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -167,6 +167,26 @@ acer_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	    ~ACER_CHANSTATUSREGS_RO);
 	cr = pci_conf_read(sc->sc_pc, sc->sc_tag, PCI_CLASS_REG);
 	cr |= (PCIIDE_CHANSTATUS_EN << PCI_INTERFACE_SHIFT);
+	
+	{
+		/*
+		 * some BIOSes (port-cats ABLE) enable native mode, but don't
+		 * setup everything correctly, so allow the forcing of
+		 * compat mode
+		 */
+		bool force_compat_mode;
+		bool property_is_set;
+		property_is_set = prop_dictionary_get_bool(
+				device_properties(&sc->sc_wdcdev.sc_atac.atac_dev),
+				"ali1543-ide-force-compat-mode",
+				&force_compat_mode);
+		if (property_is_set && force_compat_mode) {
+			cr &= ~((PCIIDE_INTERFACE_PCI(0)
+				| PCIIDE_INTERFACE_PCI(1))
+				<< PCI_INTERFACE_SHIFT);
+		}
+	}
+
 	pci_conf_write(sc->sc_pc, sc->sc_tag, PCI_CLASS_REG, cr);
 	/* Don't use cr, re-read the real register content instead */
 	interface = PCI_INTERFACE(pci_conf_read(sc->sc_pc, sc->sc_tag,

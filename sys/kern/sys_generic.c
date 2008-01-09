@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.105.2.1 2007/11/06 23:32:24 matt Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.105.2.2 2008/01/09 01:56:21 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.105.2.1 2007/11/06 23:32:24 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.105.2.2 2008/01/09 01:56:21 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,13 +118,13 @@ int		nselcoll;
  */
 /* ARGSUSED */
 int
-sys_read(lwp_t *l, void *v, register_t *retval)
+sys_read(struct lwp *l, const struct sys_read_args *uap, register_t *retval)
 {
-	struct sys_read_args /* {
+	/* {
 		syscallarg(int)		fd;
 		syscallarg(void *)	buf;
 		syscallarg(size_t)	nbyte;
-	} */ *uap = v;
+	} */
 	int		fd;
 	struct file	*fp;
 	proc_t		*p;
@@ -138,7 +138,7 @@ sys_read(lwp_t *l, void *v, register_t *retval)
 		return (EBADF);
 
 	if ((fp->f_flag & FREAD) == 0) {
-		mutex_exit(&fp->f_lock);
+		FILE_UNLOCK(fp);
 		return (EBADF);
 	}
 
@@ -197,13 +197,13 @@ dofileread(int fd, struct file *fp, void *buf, size_t nbyte,
  * Scatter read system call.
  */
 int
-sys_readv(lwp_t *l, void *v, register_t *retval)
+sys_readv(struct lwp *l, const struct sys_readv_args *uap, register_t *retval)
 {
-	struct sys_readv_args /* {
+	/* {
 		syscallarg(int)				fd;
 		syscallarg(const struct iovec *)	iovp;
 		syscallarg(int)				iovcnt;
-	} */ *uap = v;
+	} */
 
 	return do_filereadv(SCARG(uap, fd), SCARG(uap, iovp),
 	    SCARG(uap, iovcnt), NULL, FOF_UPDATE_OFFSET, retval);
@@ -231,7 +231,7 @@ do_filereadv(int fd, const struct iovec *iovp, int iovcnt,
 		return EBADF;
 
 	if ((fp->f_flag & FREAD) == 0) {
-		mutex_exit(&fp->f_lock);
+		FILE_UNLOCK(fp);
 		return EBADF;
 	}
 
@@ -331,13 +331,13 @@ do_filereadv(int fd, const struct iovec *iovp, int iovcnt,
  * Write system call
  */
 int
-sys_write(lwp_t *l, void *v, register_t *retval)
+sys_write(struct lwp *l, const struct sys_write_args *uap, register_t *retval)
 {
-	struct sys_write_args /* {
+	/* {
 		syscallarg(int)			fd;
 		syscallarg(const void *)	buf;
 		syscallarg(size_t)		nbyte;
-	} */ *uap = v;
+	} */
 	int		fd;
 	struct file	*fp;
 
@@ -347,7 +347,7 @@ sys_write(lwp_t *l, void *v, register_t *retval)
 		return (EBADF);
 
 	if ((fp->f_flag & FWRITE) == 0) {
-		mutex_exit(&fp->f_lock);
+		FILE_UNLOCK(fp);
 		return (EBADF);
 	}
 
@@ -412,13 +412,13 @@ dofilewrite(int fd, struct file *fp, const void *buf,
  * Gather write system call
  */
 int
-sys_writev(lwp_t *l, void *v, register_t *retval)
+sys_writev(struct lwp *l, const struct sys_writev_args *uap, register_t *retval)
 {
-	struct sys_writev_args /* {
+	/* {
 		syscallarg(int)				fd;
 		syscallarg(const struct iovec *)	iovp;
 		syscallarg(int)				iovcnt;
-	} */ *uap = v;
+	} */
 
 	return do_filewritev(SCARG(uap, fd), SCARG(uap, iovp),
 	    SCARG(uap, iovcnt), NULL, FOF_UPDATE_OFFSET, retval);
@@ -446,7 +446,7 @@ do_filewritev(int fd, const struct iovec *iovp, int iovcnt,
 		return EBADF;
 
 	if ((fp->f_flag & FWRITE) == 0) {
-		mutex_exit(&fp->f_lock);
+		FILE_UNLOCK(fp);
 		return EBADF;
 	}
 
@@ -553,13 +553,13 @@ do_filewritev(int fd, const struct iovec *iovp, int iovcnt,
  */
 /* ARGSUSED */
 int
-sys_ioctl(lwp_t *l, void *v, register_t *retval)
+sys_ioctl(struct lwp *l, const struct sys_ioctl_args *uap, register_t *retval)
 {
-	struct sys_ioctl_args /* {
+	/* {
 		syscallarg(int)		fd;
 		syscallarg(u_long)	com;
 		syscallarg(void *)	data;
-	} */ *uap = v;
+	} */
 	struct file	*fp;
 	proc_t		*p;
 	struct filedesc	*fdp;
@@ -638,22 +638,22 @@ sys_ioctl(lwp_t *l, void *v, register_t *retval)
 	switch (com) {
 
 	case FIONBIO:
-		mutex_enter(&fp->f_lock);
+		FILE_LOCK(fp);
 		if (*(int *)data != 0)
 			fp->f_flag |= FNONBLOCK;
 		else
 			fp->f_flag &= ~FNONBLOCK;
-		mutex_exit(&fp->f_lock);
+		FILE_UNLOCK(fp);
 		error = (*fp->f_ops->fo_ioctl)(fp, FIONBIO, data, l);
 		break;
 
 	case FIOASYNC:
-		mutex_enter(&fp->f_lock);
+		FILE_LOCK(fp);
 		if (*(int *)data != 0)
 			fp->f_flag |= FASYNC;
 		else
 			fp->f_flag &= ~FASYNC;
-		mutex_exit(&fp->f_lock);
+		FILE_UNLOCK(fp);
 		error = (*fp->f_ops->fo_ioctl)(fp, FIOASYNC, data, l);
 		break;
 
@@ -694,16 +694,16 @@ sys_ioctl(lwp_t *l, void *v, register_t *retval)
  * Select system call.
  */
 int
-sys_pselect(lwp_t *l, void *v, register_t *retval)
+sys_pselect(struct lwp *l, const struct sys_pselect_args *uap, register_t *retval)
 {
-	struct sys_pselect_args /* {
+	/* {
 		syscallarg(int)				nd;
 		syscallarg(fd_set *)			in;
 		syscallarg(fd_set *)			ou;
 		syscallarg(fd_set *)			ex;
 		syscallarg(const struct timespec *)	ts;
 		syscallarg(sigset_t *)			mask;
-	} */ * const uap = v;
+	} */
 	struct timespec	ats;
 	struct timeval	atv, *tv = NULL;
 	sigset_t	amask, *mask = NULL;
@@ -756,15 +756,15 @@ gettimeleft(struct timeval *tv, struct timeval *sleeptv)
 }
 
 int
-sys_select(lwp_t *l, void *v, register_t *retval)
+sys_select(struct lwp *l, const struct sys_select_args *uap, register_t *retval)
 {
-	struct sys_select_args /* {
+	/* {
 		syscallarg(int)			nd;
 		syscallarg(fd_set *)		in;
 		syscallarg(fd_set *)		ou;
 		syscallarg(fd_set *)		ex;
 		syscallarg(struct timeval *)	tv;
-	} */ * const uap = v;
+	} */
 	struct timeval atv, *tv = NULL;
 	int error;
 
@@ -922,13 +922,13 @@ selscan(lwp_t *l, fd_mask *ibitp, fd_mask *obitp, int nfd,
  * Poll system call.
  */
 int
-sys_poll(lwp_t *l, void *v, register_t *retval)
+sys_poll(struct lwp *l, const struct sys_poll_args *uap, register_t *retval)
 {
-	struct sys_poll_args /* {
+	/* {
 		syscallarg(struct pollfd *)	fds;
 		syscallarg(u_int)		nfds;
 		syscallarg(int)			timeout;
-	} */ * const uap = v;
+	} */
 	struct timeval	atv, *tv = NULL;
 
 	if (SCARG(uap, timeout) != INFTIM) {
@@ -945,14 +945,14 @@ sys_poll(lwp_t *l, void *v, register_t *retval)
  * Poll system call.
  */
 int
-sys_pollts(lwp_t *l, void *v, register_t *retval)
+sys_pollts(struct lwp *l, const struct sys_pollts_args *uap, register_t *retval)
 {
-	struct sys_pollts_args /* {
+	/* {
 		syscallarg(struct pollfd *)		fds;
 		syscallarg(u_int)			nfds;
 		syscallarg(const struct timespec *)	ts;
 		syscallarg(const sigset_t *)		mask;
-	} */ * const uap = v;
+	} */
 	struct timespec	ats;
 	struct timeval	atv, *tv = NULL;
 	sigset_t	amask, *mask = NULL;
@@ -1195,7 +1195,7 @@ void
 selsysinit(void)
 {
 
-	mutex_init(&select_lock, MUTEX_DRIVER, IPL_VM);
+	mutex_init(&select_lock, MUTEX_DEFAULT, IPL_VM);
 	cv_init(&select_cv, "select");
 }
 

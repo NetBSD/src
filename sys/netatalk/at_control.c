@@ -1,4 +1,4 @@
-/*	$NetBSD: at_control.c,v 1.19.8.1 2007/11/06 23:33:39 matt Exp $	 */
+/*	$NetBSD: at_control.c,v 1.19.8.2 2008/01/09 01:57:20 matt Exp $	 */
 
 /*
  * Copyright (c) 1990,1994 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at_control.c,v 1.19.8.1 2007/11/06 23:33:39 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at_control.c,v 1.19.8.2 2008/01/09 01:57:20 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -203,9 +203,7 @@ at_control(cmd, data, ifp, l)
 		         * Find the end of the interface's addresses
 		         * and link our new one on the end
 		         */
-			TAILQ_INSERT_TAIL(&ifp->if_addrlist,
-			    (struct ifaddr *) aa, ifa_list);
-			IFAREF(&aa->aa_ifa);
+			ifa_insert(ifp, &aa->aa_ifa);
 
 			/*
 		         * As the at_ifaddr contains the actual sockaddrs,
@@ -316,7 +314,7 @@ at_control(cmd, data, ifp, l)
 		    (const struct sockaddr_at *)ifreq_getaddr(cmd, ifr));
 
 	case SIOCDIFADDR:
-		at_purgeaddr((struct ifaddr *) aa, ifp);
+		at_purgeaddr(&aa->aa_ifa);
 		break;
 
 	default:
@@ -328,10 +326,9 @@ at_control(cmd, data, ifp, l)
 }
 
 void
-at_purgeaddr(ifa, ifp)
-	struct ifaddr *ifa;
-	struct ifnet *ifp;
+at_purgeaddr(struct ifaddr *ifa)
 {
+	struct ifnet *ifp = ifa->ifa_ifp;
 	struct at_ifaddr *aa = (void *) ifa;
 
 	/*
@@ -343,24 +340,15 @@ at_purgeaddr(ifa, ifp)
 	/*
 	 * remove the ifaddr from the interface
 	 */
-	TAILQ_REMOVE(&ifp->if_addrlist, (struct ifaddr *) aa, ifa_list);
-	IFAFREE(&aa->aa_ifa);
+	ifa_remove(ifp, &aa->aa_ifa);
 	TAILQ_REMOVE(&at_ifaddr, aa, aa_list);
 	IFAFREE(&aa->aa_ifa);
 }
 
 void
-at_purgeif(ifp)
-	struct ifnet *ifp;
+at_purgeif(struct ifnet *ifp)
 {
-	struct ifaddr *ifa, *nifa;
-
-	for (ifa = TAILQ_FIRST(&ifp->if_addrlist); ifa != NULL; ifa = nifa) {
-		nifa = TAILQ_NEXT(ifa, ifa_list);
-		if (ifa->ifa_addr->sa_family != AF_APPLETALK)
-			continue;
-		at_purgeaddr(ifa, ifp);
-	}
+	if_purgeaddrs(ifp, AF_APPLETALK, at_purgeaddr);
 }
 
 /*
@@ -865,24 +853,17 @@ aa_clean()
 	struct ifaddr  *ifa;
 	struct ifnet   *ifp;
 
-	while (aa = at_ifaddr) {
+	while ((aa = TAILQ_FIRST(&at_ifaddr)) != NULL) {
+		TAILQ_REMOVE(&at_ifaddr, aa, aa_list);
 		ifp = aa->aa_ifp;
 		at_scrub(ifp, aa);
-		at_ifaddr = aa->aa_next;
-		if ((ifa = ifp->if_addrlist) == (struct ifaddr *) aa) {
-			ifp->if_addrlist = ifa->ifa_next;
-		} else {
-			while (ifa->ifa_next &&
-			       (ifa->ifa_next != (struct ifaddr *) aa)) {
-				ifa = ifa->ifa_next;
-			}
-			if (ifa->ifa_next) {
-				ifa->ifa_next =
-				    ((struct ifaddr *) aa)->ifa_next;
-			} else {
-				panic("at_entry");
-			}
+		IFADDR_FOREACH(ifa, ifp) {
+			if (ifa == &aa->aa_ifa)
+				break;
 		}
+		if (ifa == NULL)
+			panic("aa not present");
+		ifa_remove(ifp, ifa);
 	}
 }
 #endif

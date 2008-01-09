@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_signal.h,v 1.16 2005/12/11 12:20:12 christos Exp $ */
+/*	$NetBSD: irix_signal.h,v 1.16.46.1 2008/01/09 01:50:50 matt Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -245,11 +245,11 @@ struct irix_sigframe {
 
 #ifdef _KERNEL
 __BEGIN_DECLS
-void native_to_irix_sigset __P((const sigset_t *, irix_sigset_t *));
-void irix_to_native_sigset __P((const irix_sigset_t *, sigset_t *));
+void native_to_irix_sigset(const sigset_t *, irix_sigset_t *);
+void irix_to_native_sigset(const irix_sigset_t *, sigset_t *);
 
 
-void irix_sendsig __P((const ksiginfo_t *, const sigset_t *));
+void irix_sendsig(const ksiginfo_t *, const sigset_t *);
 __END_DECLS
 #endif /* _KERNEL */
 

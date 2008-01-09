@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.141.2.2 2007/11/08 11:00:10 matt Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.141.2.3 2008/01/09 01:56:28 matt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.141.2.2 2007/11/08 11:00:10 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.141.2.3 2008/01/09 01:56:28 matt Exp $");
 
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
@@ -428,11 +428,11 @@ sokva_reclaim_callback(struct callback_entry *ce, void *obj, void *arg)
 }
 
 struct mbuf *
-getsombuf(struct socket *so)
+getsombuf(struct socket *so, int type)
 {
 	struct mbuf *m;
 
-	m = m_get(M_WAIT, MT_SONAME);
+	m = m_get(M_WAIT, type);
 	MCLAIM(m, so->so_mowner);
 	return m;
 }
@@ -442,7 +442,7 @@ m_intopt(struct socket *so, int val)
 {
 	struct mbuf *m;
 
-	m = getsombuf(so);
+	m = getsombuf(so, MT_SOOPTS);
 	m->m_len = sizeof(int);
 	*mtod(m, int *) = val;
 	return m;
@@ -452,7 +452,7 @@ void
 soinit(void)
 {
 
-	mutex_init(&so_pendfree_lock, MUTEX_DRIVER, IPL_VM);
+	mutex_init(&so_pendfree_lock, MUTEX_DEFAULT, IPL_VM);
 	cv_init(&socurkva_cv, "sokva");
 
 	/* Set the initial adjusted socket buffer size. */
@@ -580,13 +580,13 @@ sobind(struct socket *so, struct mbuf *nam, struct lwp *l)
 }
 
 int
-solisten(struct socket *so, int backlog)
+solisten(struct socket *so, int backlog, struct lwp *l)
 {
 	int	s, error;
 
 	s = splsoftnet();
 	error = (*so->so_proto->pr_usrreq)(so, PRU_LISTEN, NULL,
-	    NULL, NULL, NULL);
+	    NULL, NULL, l);
 	if (error != 0) {
 		splx(s);
 		return error;
@@ -1010,12 +1010,15 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 {
 	struct lwp *l = curlwp;
 	struct mbuf	*m, **mp;
-	int		flags, len, error, s, offset, moff, type, orig_resid;
+	int atomic, flags, len, error, s, offset, moff, type, orig_resid;
 	const struct protosw	*pr;
 	struct mbuf	*nextrecord;
 	int		mbuf_removed = 0;
+	const struct domain *dom;
 
 	pr = so->so_proto;
+	atomic = pr->pr_flags & PR_ATOMIC;
+	dom = pr->pr_domain;
 	mp = mp0;
 	type = 0;
 	orig_resid = uio->uio_resid;
@@ -1076,8 +1079,7 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 	     (so->so_rcv.sb_cc < so->so_rcv.sb_lowat ||
 	      ((flags & MSG_WAITALL) &&
 	       uio->uio_resid <= so->so_rcv.sb_hiwat)) &&
-	     m->m_nextpkt == NULL &&
-	     (pr->pr_flags & PR_ATOMIC) == 0)) {
+	     m->m_nextpkt == NULL && !atomic)) {
 #ifdef DIAGNOSTIC
 		if (m == NULL && so->so_rcv.sb_cc)
 			panic("receive 1");
@@ -1166,7 +1168,6 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 			sbfree(&so->so_rcv, m);
 			mbuf_removed = 1;
 			if (controlp != NULL) {
-				struct domain *dom = pr->pr_domain;
 				if (dom->dom_externalize && l &&
 				    mtod(m, struct cmsghdr *)->cmsg_type ==
 				    SCM_RIGHTS)
@@ -1180,9 +1181,9 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 				 * Dispose of any SCM_RIGHTS message that went
 				 * through the read path rather than recv.
 				 */
-				if (pr->pr_domain->dom_dispose &&
+				if (dom->dom_dispose &&
 				    mtod(m, struct cmsghdr *)->cmsg_type == SCM_RIGHTS)
-					(*pr->pr_domain->dom_dispose)(m);
+					(*dom->dom_dispose)(m);
 				MFREE(m, so->so_rcv.sb_mb);
 				m = so->so_rcv.sb_mb;
 			}
@@ -1269,8 +1270,7 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 				 * This avoids a later panic("receive 1a")
 				 * when compiled with DIAGNOSTIC.
 				 */
-				if (m && mbuf_removed
-				    && (pr->pr_flags & PR_ATOMIC))
+				if (m && mbuf_removed && atomic)
 					(void) sbdroprecord(&so->so_rcv);
 
 				goto release;
@@ -1373,7 +1373,7 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 		}
 	}
 
-	if (m && pr->pr_flags & PR_ATOMIC) {
+	if (m && atomic) {
 		flags |= MSG_TRUNC;
 		if ((flags & MSG_PEEK) == 0)
 			(void) sbdroprecord(&so->so_rcv);
@@ -1795,7 +1795,7 @@ soo_kqfilter(struct file *fp, struct knote *kn)
 		sb = &so->so_snd;
 		break;
 	default:
-		return (1);
+		return (EINVAL);
 	}
 	SLIST_INSERT_HEAD(&sb->sb_sel.sel_klist, kn, kn_selnext);
 	sb->sb_flags |= SB_KNOTE;

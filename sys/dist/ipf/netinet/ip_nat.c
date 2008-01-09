@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.c,v 1.30.8.1 2007/11/06 23:30:58 matt Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.30.8.2 2008/01/09 01:55:33 matt Exp $	*/
 
 /*
  * Copyright (C) 1995-2003 by Darren Reed.
@@ -116,8 +116,13 @@ extern struct ifnet vpnif;
 #define	SOCKADDR_IN	struct sockaddr_in
 
 #if !defined(lint)
+#if defined(__NetBSD__)
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ip_nat.c,v 1.30.8.2 2008/01/09 01:55:33 matt Exp $");
+#else
 static const char sccsid[] = "@(#)ip_nat.c	1.11 6/5/96 (C) 1995 Darren Reed";
-static const char rcsid[] = "@(#)$Id: ip_nat.c,v 1.30.8.1 2007/11/06 23:30:58 matt Exp $";
+static const char rcsid[] = "@(#)$Id: ip_nat.c,v 1.30.8.2 2008/01/09 01:55:33 matt Exp $";
+#endif
 #endif
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_semaphore.c,v 1.15 2007/03/12 18:18:29 ad Exp $ */
+/*	$NetBSD: mach_semaphore.c,v 1.15.14.1 2008/01/09 01:51:28 matt Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,14 +37,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_semaphore.c,v 1.15 2007/03/12 18:18:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_semaphore.c,v 1.15.14.1 2008/01/09 01:51:28 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/signal.h>
 #include <sys/pool.h>
-#include <sys/lock.h>
+#include <sys/rwlock.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>
 
@@ -59,7 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: mach_semaphore.c,v 1.15 2007/03/12 18:18:29 ad Exp $
 
 /* Semaphore list, lock, pools */
 static LIST_HEAD(mach_semaphore_list, mach_semaphore) mach_semaphore_list;
-static struct lock mach_semaphore_list_lock;
+static krwlock_t mach_semaphore_list_lock;
 static struct pool mach_semaphore_list_pool;
 static struct pool mach_waiting_lwp_pool;
 
@@ -72,12 +72,11 @@ static void mach_waiting_lwp_put
     (struct mach_waiting_lwp *, struct mach_semaphore *, int);
 
 int
-mach_sys_semaphore_wait_trap(struct lwp *l, void *v,
-    register_t *retval)
+mach_sys_semaphore_wait_trap(struct lwp *l, const struct mach_sys_semaphore_wait_trap_args *uap, register_t *retval)
 {
-	struct mach_sys_semaphore_wait_trap_args /* {
+	/* {
 		syscallarg(mach_port_name_t) wait_name;
-	} */ *uap = v;
+	} */
 	struct mach_semaphore *ms;
 	struct mach_waiting_lwp *mwl;
 	struct mach_right *mr;
@@ -93,11 +92,11 @@ mach_sys_semaphore_wait_trap(struct lwp *l, void *v,
 
 	ms = (struct mach_semaphore *)mr->mr_port->mp_data;
 
-	lockmgr(&ms->ms_lock, LK_EXCLUSIVE, NULL);
+	rw_enter(&ms->ms_lock, RW_WRITER);
 	ms->ms_value--;
 	if (ms->ms_value < 0)
 		blocked = 1;
-	lockmgr(&ms->ms_lock, LK_RELEASE, NULL);
+	rw_exit(&ms->ms_lock);
 
 	if (blocked != 0) {
 		mwl = mach_waiting_lwp_get(l, ms);
@@ -109,12 +108,11 @@ mach_sys_semaphore_wait_trap(struct lwp *l, void *v,
 }
 
 int
-mach_sys_semaphore_signal_trap(struct lwp *l, void *v,
-    register_t *retval)
+mach_sys_semaphore_signal_trap(struct lwp *l, const struct mach_sys_semaphore_signal_trap_args *uap, register_t *retval)
 {
-	struct mach_sys_semaphore_signal_trap_args /* {
+	/* {
 		syscallarg(mach_port_name_t) signal_name;
-	} */ *uap = v;
+	} */
 	struct mach_semaphore *ms;
 	struct mach_waiting_lwp *mwl;
 	struct mach_right *mr;
@@ -130,24 +128,23 @@ mach_sys_semaphore_signal_trap(struct lwp *l, void *v,
 
 	ms = (struct mach_semaphore *)mr->mr_port->mp_data;
 
-	lockmgr(&ms->ms_lock, LK_EXCLUSIVE, NULL);
+	rw_enter(&ms->ms_lock, RW_WRITER);
 	ms->ms_value++;
 	if (ms->ms_value >= 0)
 		unblocked = 1;
-	lockmgr(&ms->ms_lock, LK_RELEASE, NULL);
+	rw_exit(&ms->ms_lock);
 
 	if (unblocked != 0) {
-		lockmgr(&ms->ms_lock, LK_SHARED, NULL);
+		rw_enter(&ms->ms_lock, RW_READER);
 		mwl = TAILQ_FIRST(&ms->ms_waiting);
 		wakeup(mwl);
-		lockmgr(&ms->ms_lock, LK_RELEASE, NULL);
+		rw_exit(&ms->ms_lock);
 	}
 	return 0;
 }
 
 int
-mach_semaphore_create(args)
-	struct mach_trap_args *args;
+mach_semaphore_create(struct mach_trap_args *args)
 {
 	mach_semaphore_create_request_t *req = args->smsg;
 	mach_semaphore_create_reply_t *rep = args->rmsg;
@@ -174,8 +171,7 @@ mach_semaphore_create(args)
 }
 
 int
-mach_semaphore_destroy(args)
-	struct mach_trap_args *args;
+mach_semaphore_destroy(struct mach_trap_args *args)
 {
 	mach_semaphore_destroy_request_t *req = args->smsg;
 	mach_semaphore_destroy_reply_t *rep = args->rmsg;
@@ -210,7 +206,7 @@ void
 mach_semaphore_init(void)
 {
 	LIST_INIT(&mach_semaphore_list);
-	lockinit(&mach_semaphore_list_lock, PZERO|PCATCH, "mach_sem", 0, 0);
+	rw_init(&mach_semaphore_list_lock);
 	pool_init(&mach_semaphore_list_pool, sizeof (struct mach_semaphore),
 	    0, 0, 0, "mach_sem_pool", NULL, IPL_NONE);
 	pool_init(&mach_waiting_lwp_pool, sizeof (struct mach_waiting_lwp),
@@ -220,9 +216,7 @@ mach_semaphore_init(void)
 }
 
 static struct mach_semaphore *
-mach_semaphore_get(value, policy)
-	int value;
-	int policy;
+mach_semaphore_get(int value, int policy)
 {
 	struct mach_semaphore *ms;
 
@@ -231,30 +225,29 @@ mach_semaphore_get(value, policy)
 	ms->ms_value = value;
 	ms->ms_policy = policy;
 	TAILQ_INIT(&ms->ms_waiting);
-	lockinit(&ms->ms_lock, PZERO|PCATCH, "mach_waitp", 0, 0);
+	rw_init(&ms->ms_lock);
 
-	lockmgr(&mach_semaphore_list_lock, LK_EXCLUSIVE, NULL);
+	rw_enter(&mach_semaphore_list_lock, RW_WRITER);
 	LIST_INSERT_HEAD(&mach_semaphore_list, ms, ms_list);
-	lockmgr(&mach_semaphore_list_lock, LK_RELEASE, NULL);
+	rw_exit(&mach_semaphore_list_lock);
 
 	return ms;
 }
 
 static void
-mach_semaphore_put(ms)
-	struct mach_semaphore *ms;
+mach_semaphore_put(struct mach_semaphore *ms)
 {
 	struct mach_waiting_lwp *mwl;
 
-	lockmgr(&ms->ms_lock, LK_EXCLUSIVE, NULL);
+	rw_enter(&ms->ms_lock, RW_WRITER);
 	while ((mwl = TAILQ_FIRST(&ms->ms_waiting)) != NULL)
 		mach_waiting_lwp_put(mwl, ms, 0);
-	lockmgr(&ms->ms_lock, LK_RELEASE, NULL);
-	lockmgr(&ms->ms_lock, LK_DRAIN, NULL);
+	rw_exit(&ms->ms_lock);
+	rw_destroy(&ms->ms_lock);
 
-	lockmgr(&mach_semaphore_list_lock, LK_EXCLUSIVE, NULL);
+	rw_enter(&mach_semaphore_list_lock, RW_WRITER);
 	LIST_REMOVE(ms, ms_list);
-	lockmgr(&mach_semaphore_list_lock, LK_RELEASE, NULL);
+	rw_exit(&mach_semaphore_list_lock);
 
 	pool_put(&mach_semaphore_list_pool, ms);
 
@@ -262,9 +255,7 @@ mach_semaphore_put(ms)
 }
 
 static struct mach_waiting_lwp *
-mach_waiting_lwp_get(l, ms)
-	struct lwp *l;
-	struct mach_semaphore *ms;
+mach_waiting_lwp_get(struct lwp *l, struct mach_semaphore *ms)
 {
 	struct mach_waiting_lwp *mwl;
 
@@ -272,24 +263,21 @@ mach_waiting_lwp_get(l, ms)
 	    M_WAITOK);
 	mwl->mwl_l = l;
 
-	lockmgr(&ms->ms_lock, LK_EXCLUSIVE, NULL);
+	rw_enter(&ms->ms_lock, RW_WRITER);
 	TAILQ_INSERT_TAIL(&ms->ms_waiting, mwl, mwl_list);
-	lockmgr(&ms->ms_lock, LK_RELEASE, NULL);
+	rw_exit(&ms->ms_lock);
 
 	return mwl;
 }
 
 static void
-mach_waiting_lwp_put(mwl, ms, locked)
-	struct mach_waiting_lwp *mwl;
-	struct mach_semaphore *ms;
-	int locked;
+mach_waiting_lwp_put(struct mach_waiting_lwp *mwl, struct mach_semaphore *ms, int locked)
 {
 	if (!locked)
-		lockmgr(&ms->ms_lock, LK_EXCLUSIVE, NULL);
+		rw_enter(&ms->ms_lock, RW_WRITER);
 	TAILQ_REMOVE(&ms->ms_waiting, mwl, mwl_list);
 	if (!locked)
-		lockmgr(&ms->ms_lock, LK_RELEASE, NULL);
+		rw_exit(&ms->ms_lock);
 	pool_put(&mach_waiting_lwp_pool, mwl);
 
 	return;
@@ -300,40 +288,35 @@ mach_waiting_lwp_put(mwl, ms, locked)
  * can be some memory leaks here.
  */
 void
-mach_semaphore_cleanup(l)
-	struct lwp *l;
+mach_semaphore_cleanup(struct lwp *l)
 {
 	struct mach_semaphore *ms;
 	struct mach_waiting_lwp *mwl;
 
-	lockmgr(&mach_semaphore_list_lock, LK_SHARED, NULL);
+	rw_enter(&mach_semaphore_list_lock, RW_READER);
 	LIST_FOREACH(ms, &mach_semaphore_list, ms_list) {
-		lockmgr(&ms->ms_lock, LK_SHARED, NULL);
+		rw_enter(&ms->ms_lock, RW_WRITER);
 		TAILQ_FOREACH(mwl, &ms->ms_waiting, mwl_list)
 			if (mwl->mwl_l == l) {
-				lockmgr(&ms->ms_lock, LK_UPGRADE, NULL);
 				mach_waiting_lwp_put(mwl, ms, 0);
 				ms->ms_value++;
 				if (ms->ms_value >= 0)
 					wakeup(TAILQ_FIRST(&ms->ms_waiting));
 			}
-		lockmgr(&ms->ms_lock, LK_RELEASE, NULL);
+		rw_exit(&ms->ms_lock);
 	}
-	lockmgr(&mach_semaphore_list_lock, LK_RELEASE, NULL);
+	rw_exit(&mach_semaphore_list_lock);
 
 	return;
 }
 
 int
-mach_sys_semaphore_wait_signal_trap(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+mach_sys_semaphore_wait_signal_trap(struct lwp *l, const struct mach_sys_semaphore_wait_signal_trap_args *uap, register_t *retval)
 {
-	struct mach_sys_semaphore_wait_signal_trap_args /* {
+	/* {
 		syscallarg(mach_port_name_t) wait_name;
 		syscallarg(mach_port_name_t) signal_name;
-	} */ *uap = v;
+	} */
 	struct mach_sys_semaphore_wait_trap_args cupwait;
 	struct mach_sys_semaphore_signal_trap_args cupsig;
 	int error;
@@ -351,13 +334,12 @@ mach_sys_semaphore_wait_signal_trap(l, v, retval)
 
 
 int
-mach_sys_semaphore_signal_thread_trap(struct lwp *l, void *v,
-    register_t *retval)
+mach_sys_semaphore_signal_thread_trap(struct lwp *l, const struct mach_sys_semaphore_signal_thread_trap_args *uap, register_t *retval)
 {
-	struct mach_sys_semaphore_signal_thread_trap_args /* {
+	/* {
 		syscallarg(mach_port_name_t) signal_name;
 		syscallarg(mach_port_name_t) thread;
-	} */ *uap = v;
+	} */
 	struct mach_right *mr;
 	struct mach_semaphore *ms;
 	mach_port_t mn;
@@ -389,12 +371,12 @@ mach_sys_semaphore_signal_thread_trap(struct lwp *l, void *v,
 		if (mr->mr_port->mp_datatype != MACH_MP_LWP)
 			return EINVAL;
 
-		lockmgr(&ms->ms_lock, LK_SHARED, NULL);
+		rw_enter(&ms->ms_lock, RW_WRITER);
 		TAILQ_FOREACH(mwl, &ms->ms_waiting, mwl_list)
 			if (mwl->mwl_l == (struct lwp *)mr->mr_port->mp_data)
 				break;
 	} else {
-		lockmgr(&ms->ms_lock, LK_SHARED, NULL);
+		rw_enter(&ms->ms_lock, RW_WRITER);
 		mwl = TAILQ_FIRST(&ms->ms_waiting);
 	}
 
@@ -403,15 +385,14 @@ mach_sys_semaphore_signal_thread_trap(struct lwp *l, void *v,
 	 * exit without touching the semaphore.
 	 */
 	if (mwl == NULL) {
-		lockmgr(&ms->ms_lock, LK_RELEASE, NULL);
+		rw_exit(&ms->ms_lock);
 		return 0; /* Should be KERN_NOT_WAITING */
 	}
 
-	lockmgr(&ms->ms_lock, LK_UPGRADE, NULL);
 	ms->ms_value++;
 	if (ms->ms_value >= 0)
 		unblocked = 1;
-	lockmgr(&ms->ms_lock, LK_RELEASE, NULL);
+	rw_exit(&ms->ms_lock);
 
 	if (unblocked != 0)
 		wakeup(mwl);
@@ -421,12 +402,11 @@ mach_sys_semaphore_signal_thread_trap(struct lwp *l, void *v,
 
 
 int
-mach_sys_semaphore_signal_all_trap(struct lwp *l, void *v,
-    register_t *retval)
+mach_sys_semaphore_signal_all_trap(struct lwp *l, const struct mach_sys_semaphore_signal_all_trap_args *uap, register_t *retval)
 {
-	struct mach_sys_semaphore_signal_all_trap_args /* {
+	/* {
 		syscallarg(mach_port_name_t) signal_name;
-	} */ *uap = v;
+	} */
 	struct mach_right *mr;
 	struct mach_semaphore *ms;
 	mach_port_t mn;
@@ -445,11 +425,10 @@ mach_sys_semaphore_signal_all_trap(struct lwp *l, void *v,
 
 	ms = (struct mach_semaphore *)mr->mr_port->mp_data;
 
-	lockmgr(&ms->ms_lock, LK_EXCLUSIVE, NULL);
+	rw_enter(&ms->ms_lock, RW_WRITER);
 	ms->ms_value++;
 	if (ms->ms_value >= 0)
 		unblocked = 1;
-	lockmgr(&ms->ms_lock, LK_DOWNGRADE, NULL);
 
 	/*
 	 * Wakeup all threads sleeping on it.
@@ -458,7 +437,7 @@ mach_sys_semaphore_signal_all_trap(struct lwp *l, void *v,
 		TAILQ_FOREACH(mwl, &ms->ms_waiting, mwl_list)
 			wakeup(mwl);
 
-	lockmgr(&ms->ms_lock, LK_RELEASE, NULL);
+	rw_exit(&ms->ms_lock);
 
 	return 0;
 }

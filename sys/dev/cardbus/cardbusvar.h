@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbusvar.h,v 1.35 2005/12/11 12:21:15 christos Exp $	*/
+/*	$NetBSD: cardbusvar.h,v 1.35.46.1 2008/01/09 01:52:28 matt Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -40,9 +40,11 @@
 #include <dev/cardbus/rbus.h>
 #endif
 
+struct {
+	int dummy;
+} cardbus_chipset_tag;
 
-
-typedef void *cardbus_chipset_tag_t;
+typedef struct cardbus_chipset_tag *cardbus_chipset_tag_t;
 typedef int cardbus_intr_handle_t;
 
 
@@ -127,7 +129,7 @@ typedef struct cardbus_functions {
 #endif /* rbus */
 
 /*
- * struct cbslot_attach_args is the attach argument for cardbus card.
+ * struct cbslot_attach_args is the attach argument for Cardbus cardslot.
  */
 struct cbslot_attach_args {
 	const char *cba_busname;
@@ -147,7 +149,17 @@ struct cbslot_attach_args {
 #endif
 
 	int cba_cacheline;		/* cache line size */
-	int cba_lattimer;		/* latency timer */
+	int cba_max_lattimer;		/* No card's latency timer may
+					 * exceed this.  On a PCI-Cardbus
+					 * bridge, I let the latency timer on
+					 * the primary bus (PCI bus) set
+					 * the maximum.  That is kind of an
+					 * arbitrary choice.  A more sensible
+					 * choice may be either the
+					 * latency timer on the primary bus,
+					 * or the bridge's buffer size,
+					 * whichever is larger.
+					 */
 };
 
 
@@ -175,7 +187,12 @@ struct cardbus_softc {
 #endif
 
 	int sc_cacheline;		/* cache line size */
-	int sc_lattimer;		/* latency timer */
+	int sc_max_lattimer;		/* No card's latency timer
+					 * may exceed this.  On a PCI-Cardbus
+					 * bridge, the latency timer on
+					 * the primary bus (PCI bus) sets
+					 * the maximum.
+					 */
 	int sc_volt;			/* applied Vcc voltage */
 #define PCCARD_33V  0x02
 #define PCCARD_XXV  0x04
@@ -184,6 +201,9 @@ struct cardbus_softc {
   struct cardbus_devfunc *sc_funcs[8];	/* list of cardbus device functions */
 };
 
+struct cardbus_conf_state {
+	cardbusreg_t reg[16];
+};
 
 /*
  * struct cardbus_devfunc:
@@ -204,8 +224,8 @@ typedef struct cardbus_devfunc {
 	rbus_tag_t ct_rbus_memt;	/* CardBus mem rbus tag */
 #endif
 
-	u_int32_t ct_bar[6];		/* Base Address Regs 0 to 6 */
-	u_int32_t ct_lc;		/* Latency timer and cache line size */
+	cardbusreg_t ct_bar[6];		/* Base Address Regs 0 to 6 */
+	cardbusreg_t ct_bhlc;		/* Latency timer and cache line size */
 	/* u_int32_t ct_cisreg; */	/* CIS reg: is it needed??? */
 
 	struct device *ct_device;	/* pointer to the device */
@@ -311,10 +331,18 @@ int cardbus_restore_bar(cardbus_devfunc_t);
 int cardbus_function_enable(struct cardbus_softc *, int);
 int cardbus_function_disable(struct cardbus_softc *, int);
 
+void cardbus_disable_retry(cardbus_chipset_tag_t, cardbus_function_tag_t,
+    cardbustag_t);
+
 int cardbus_get_capability(cardbus_chipset_tag_t, cardbus_function_tag_t,
     cardbustag_t, int, int *, cardbusreg_t *);
-int cardbus_powerstate(cardbus_devfunc_t, pcitag_t, const int *, int *);
-int cardbus_setpowerstate(const char *, cardbus_devfunc_t, pcitag_t, int);
+int cardbus_get_powerstate(cardbus_devfunc_t, cardbustag_t, cardbusreg_t *);
+int cardbus_set_powerstate(cardbus_devfunc_t, cardbustag_t, cardbusreg_t);
+
+void cardbus_conf_capture(cardbus_chipset_tag_t, cardbus_function_tag_t,
+    cardbustag_t, struct cardbus_conf_state *);
+void cardbus_conf_restore(cardbus_chipset_tag_t, cardbus_function_tag_t,
+    cardbustag_t, struct cardbus_conf_state *);
 
 #define Cardbus_function_enable(ct) cardbus_function_enable((ct)->ct_sc, (ct)->ct_func)
 #define Cardbus_function_disable(ct) cardbus_function_disable((ct)->ct_sc, (ct)->ct_func)
@@ -333,9 +361,9 @@ int cardbus_setpowerstate(const char *, cardbus_devfunc_t, pcitag_t, int);
 #define Cardbus_free_tag(ct, tag) (*(ct)->ct_cf->cardbus_free_tag)((ct)->ct_cc, (tag))
 #define cardbus_free_tag(cc, cf, tag) (*(cf)->cardbus_free_tag)(cc, (tag))
 
-#define Cardbus_conf_read(ct, tag, offs) (*(ct)->ct_cf->cardbus_conf_read)((ct)->ct_cf, (tag), (offs))
+#define Cardbus_conf_read(ct, tag, offs) (*(ct)->ct_cf->cardbus_conf_read)((ct)->ct_cc, (tag), (offs))
 #define cardbus_conf_read(cc, cf, tag, offs) ((cf)->cardbus_conf_read)((cc), (tag), (offs))
-#define Cardbus_conf_write(ct, tag, offs, val) (*(ct)->ct_cf->cardbus_conf_write)((ct)->ct_cf, (tag), (offs), (val))
+#define Cardbus_conf_write(ct, tag, offs, val) (*(ct)->ct_cf->cardbus_conf_write)((ct)->ct_cc, (tag), (offs), (val))
 #define cardbus_conf_write(cc, cf, tag, offs, val) ((cf)->cardbus_conf_write)((cc), (tag), (offs), (val))
 
 #endif /* !_DEV_CARDBUS_CARDBUSVAR_H_ */

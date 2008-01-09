@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.h,v 1.6.2.1 2007/11/06 23:34:57 matt Exp $	*/
+/*	$NetBSD: spl.h,v 1.6.2.2 2008/01/09 01:58:18 matt Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -53,26 +53,8 @@ _SPL_DECL(softnet, SOFTNET)
 _SPL_DECL(softserial, SOFTSERIAL)
 #endif /* defined(IPL_SOFTSERIAL) */
 
-_SPL_DECL(bio, BIO)
-_SPL_DECL(net, NET)
-_SPL_DECL(tty, TTY)
 _SPL_DECL(vm, VM)
-_SPL_DECL(clock, CLOCK)
 _SPL_DECL(sched, SCHED)
 _SPL_DECL(high, HIGH)
-
-#if defined(IPL_SERIAL)
-_SPL_DECL(serial, SERIAL)
-#endif /* defined(IPL_SERIAL) */
-#if defined(IPL_AUDIO)
-_SPL_DECL(audio, AUDIO)
-#endif /* defined(IPL_AUDIO) */
-#if defined(IPL_LPT)
-_SPL_DECL(lpt, LPT)
-#endif /* defined(IPL_LPT) */
-
-#if defined(IPL_IPI)
-_SPL_DECL(ipi, IPI)
-#endif /* defined(IPL_IPI) */
 
 #undef _SPL_DECL

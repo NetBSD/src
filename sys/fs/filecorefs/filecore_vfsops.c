@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vfsops.c,v 1.40.4.1 2007/11/06 23:31:07 matt Exp $	*/
+/*	$NetBSD: filecore_vfsops.c,v 1.40.4.2 2008/01/09 01:55:42 matt Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.40.4.1 2007/11/06 23:31:07 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.40.4.2 2008/01/09 01:55:42 matt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -113,7 +113,7 @@ struct vfsops filecore_vfsops = {
 	filecore_start,
 	filecore_unmount,
 	filecore_root,
-	filecore_quotactl,
+	(void *)eopnotsupp,		/* vfs_quotactl */
 	filecore_statvfs,
 	filecore_sync,
 	filecore_vget,
@@ -189,13 +189,13 @@ filecore_mountroot()
  * mount system call
  */
 int
-filecore_mount(mp, path, data, data_len, l)
+filecore_mount(mp, path, data, data_len)
 	struct mount *mp;
 	const char *path;
 	void *data;
 	size_t *data_len;
-	struct lwp *l;
 {
+	struct lwp *l = curlwp;
 	struct nameidata nd;
 	struct vnode *devvp;
 	struct filecore_args *args = data;
@@ -227,7 +227,7 @@ filecore_mount(mp, path, data, data_len, l)
 	 * Not an update, or updating the name: look up the name
 	 * and verify that it refers to a sensible block device.
 	 */
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, args->fspec, l);
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, args->fspec);
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	devvp = nd.ni_vp;
@@ -246,7 +246,7 @@ filecore_mount(mp, path, data, data_len, l)
 	 */
 	if (kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER, NULL)) {
 		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-		error = VOP_ACCESS(devvp, VREAD, l->l_cred, l);
+		error = VOP_ACCESS(devvp, VREAD, l->l_cred);
 		VOP_UNLOCK(devvp, 0);
 		if (error) {
 			vrele(devvp);
@@ -307,7 +307,7 @@ filecore_mountfs(devvp, mp, l, argp)
 	    != 0)
 		return (error);
 
-	error = VOP_OPEN(devvp, ronly ? FREAD : FREAD|FWRITE, FSCRED, l);
+	error = VOP_OPEN(devvp, ronly ? FREAD : FREAD|FWRITE, FSCRED);
 	if (error)
 		return error;
 
@@ -402,7 +402,7 @@ out:
 		brelse(bp, 0);
 	}
 	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-	(void)VOP_CLOSE(devvp, ronly ? FREAD : FREAD|FWRITE, NOCRED, l);
+	(void)VOP_CLOSE(devvp, ronly ? FREAD : FREAD|FWRITE, NOCRED);
 	VOP_UNLOCK(devvp, 0);
 	return error;
 }
@@ -413,10 +413,9 @@ out:
  */
 /* ARGSUSED */
 int
-filecore_start(mp, flags, l)
+filecore_start(mp, flags)
 	struct mount *mp;
 	int flags;
-	struct lwp *l;
 {
 	return 0;
 }
@@ -425,10 +424,9 @@ filecore_start(mp, flags, l)
  * unmount system call
  */
 int
-filecore_unmount(mp, mntflags, l)
+filecore_unmount(mp, mntflags)
 	struct mount *mp;
 	int mntflags;
-	struct lwp *l;
 {
 	struct filecore_mnt *fcmp;
 	int error, flags = 0;
@@ -443,7 +441,7 @@ filecore_unmount(mp, mntflags, l)
 	if (fcmp->fc_devvp->v_type != VBAD)
 		fcmp->fc_devvp->v_specmountpoint = NULL;
 	vn_lock(fcmp->fc_devvp, LK_EXCLUSIVE | LK_RETRY);
-	error = VOP_CLOSE(fcmp->fc_devvp, FREAD, NOCRED, l);
+	error = VOP_CLOSE(fcmp->fc_devvp, FREAD, NOCRED);
 	vput(fcmp->fc_devvp);
 	free(fcmp, M_FILECOREMNT);
 	mp->mnt_data = NULL;
@@ -469,29 +467,12 @@ filecore_root(mp, vpp)
 }
 
 /*
- * Do operations associated with quotas, not supported
- */
-/* ARGSUSED */
-int
-filecore_quotactl(mp, cmd, uid, arg, l)
-	struct mount *mp;
-	int cmd;
-	uid_t uid;
-	void *arg;
-	struct lwp *l;
-{
-
-	return (EOPNOTSUPP);
-}
-
-/*
  * Get file system statistics.
  */
 int
-filecore_statvfs(mp, sbp, l)
+filecore_statvfs(mp, sbp)
 	struct mount *mp;
 	struct statvfs *sbp;
-	struct lwp *l;
 {
 	struct filecore_mnt *fcmp = VFSTOFILECORE(mp);
 
@@ -512,11 +493,10 @@ filecore_statvfs(mp, sbp, l)
 
 /* ARGSUSED */
 int
-filecore_sync(mp, waitfor, cred, l)
+filecore_sync(mp, waitfor, cred)
 	struct mount *mp;
 	int waitfor;
 	kauth_cred_t cred;
-	struct lwp *l;
 {
 	return (0);
 }

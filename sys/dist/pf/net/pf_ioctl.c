@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_ioctl.c,v 1.31 2007/07/09 21:10:48 ad Exp $	*/
+/*	$NetBSD: pf_ioctl.c,v 1.31.8.1 2008/01/09 01:55:38 matt Exp $	*/
 /*	$OpenBSD: pf_ioctl.c,v 1.139 2005/03/03 07:13:39 dhartmei Exp $ */
 
 /*
@@ -35,6 +35,9 @@
  * Materiel Command, USAF, under agreement number F30602-01-2-0537.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pf_ioctl.c,v 1.31.8.1 2008/01/09 01:55:38 matt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"

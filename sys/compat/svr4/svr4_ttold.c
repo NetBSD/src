@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_ttold.c,v 1.29 2007/03/04 06:01:33 christos Exp $	 */
+/*	$NetBSD: svr4_ttold.c,v 1.29.16.1 2008/01/09 01:51:57 matt Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_ttold.c,v 1.29 2007/03/04 06:01:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_ttold.c,v 1.29.16.1 2008/01/09 01:51:57 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -66,28 +66,26 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_ttold.c,v 1.29 2007/03/04 06:01:33 christos Exp
 #include <compat/svr4/svr4_ioctl.h>
 
 
-static void svr4_tchars_to_bsd_tchars __P((const struct svr4_tchars *st,
-					   struct tchars *bt));
-static void bsd_tchars_to_svr4_tchars __P((const struct tchars *bt,
-					   struct svr4_tchars *st));
-static void svr4_sgttyb_to_bsd_sgttyb __P((const struct svr4_sgttyb *ss,
-					   struct sgttyb *bs));
-static void bsd_sgttyb_to_svr4_sgttyb __P((const struct sgttyb *bs,
-					   struct svr4_sgttyb *ss));
-static void svr4_ltchars_to_bsd_ltchars __P((const struct svr4_ltchars *sl,
-					     struct ltchars *bl));
-static void bsd_ltchars_to_svr4_ltchars __P((const struct ltchars *bl,
-					     struct svr4_ltchars *sl));
+static void svr4_tchars_to_bsd_tchars(const struct svr4_tchars *st,
+					   struct tchars *bt);
+static void bsd_tchars_to_svr4_tchars(const struct tchars *bt,
+					   struct svr4_tchars *st);
+static void svr4_sgttyb_to_bsd_sgttyb(const struct svr4_sgttyb *ss,
+					   struct sgttyb *bs);
+static void bsd_sgttyb_to_svr4_sgttyb(const struct sgttyb *bs,
+					   struct svr4_sgttyb *ss);
+static void svr4_ltchars_to_bsd_ltchars(const struct svr4_ltchars *sl,
+					     struct ltchars *bl);
+static void bsd_ltchars_to_svr4_ltchars(const struct ltchars *bl,
+					     struct svr4_ltchars *sl);
 
 #ifdef DEBUG_SVR4
-static void print_svr4_sgttyb __P((const char *, struct svr4_sgttyb *));
-static void print_svr4_tchars __P((const char *, struct svr4_tchars *));
-static void print_svr4_ltchars __P((const char *, struct svr4_ltchars *));
+static void print_svr4_sgttyb(const char *, struct svr4_sgttyb *);
+static void print_svr4_tchars(const char *, struct svr4_tchars *);
+static void print_svr4_ltchars(const char *, struct svr4_ltchars *);
 
 static void
-print_svr4_sgttyb(str, ss)
-	const char *str;
-	struct svr4_sgttyb *ss;
+print_svr4_sgttyb(const char *str, struct svr4_sgttyb *ss)
 {
 
 	uprintf("%s\nispeed=%o ospeed=%o ", str, ss->sg_ispeed, ss->sg_ospeed);
@@ -96,9 +94,7 @@ print_svr4_sgttyb(str, ss)
 }
 
 static void
-print_svr4_tchars(str, st)
-	const char *str;
-	struct svr4_tchars *st;
+print_svr4_tchars(const char *str, struct svr4_tchars *st)
 {
 	uprintf("%s\nintrc=%o quitc=%o ", str, st->t_intrc, st->t_quitc);
 	uprintf("startc=%o stopc=%o eofc=%o brkc=%o\n", st->t_startc,
@@ -106,9 +102,7 @@ print_svr4_tchars(str, st)
 }
 
 static void
-print_svr4_ltchars(str, sl)
-	const char *str;
-	struct svr4_ltchars *sl;
+print_svr4_ltchars(const char *str, struct svr4_ltchars *sl)
 {
 	uprintf("%s\nsuspc=%o dsuspc=%o ", str, sl->t_suspc, sl->t_dsuspc);
 	uprintf("rprntc=%o flushc=%o werasc=%o lnextc=%o\n", sl->t_rprntc,
@@ -117,9 +111,7 @@ print_svr4_ltchars(str, sl)
 #endif /* DEBUG_SVR4 */
 
 static void
-svr4_tchars_to_bsd_tchars(st, bt)
-	const struct svr4_tchars	*st;
-	struct tchars			*bt;
+svr4_tchars_to_bsd_tchars(const struct svr4_tchars *st, struct tchars *bt)
 {
 	bt->t_intrc  = st->t_intrc;
 	bt->t_quitc  = st->t_quitc;
@@ -131,9 +123,7 @@ svr4_tchars_to_bsd_tchars(st, bt)
 
 
 static void
-bsd_tchars_to_svr4_tchars(bt, st)
-	const struct tchars	*bt;
-	struct svr4_tchars	*st;
+bsd_tchars_to_svr4_tchars(const struct tchars *bt, struct svr4_tchars *st)
 {
 	st->t_intrc  = bt->t_intrc;
 	st->t_quitc  = bt->t_quitc;
@@ -145,9 +135,7 @@ bsd_tchars_to_svr4_tchars(bt, st)
 
 
 static void
-svr4_sgttyb_to_bsd_sgttyb(ss, bs)
-	const struct svr4_sgttyb	*ss;
-	struct sgttyb			*bs;
+svr4_sgttyb_to_bsd_sgttyb(const struct svr4_sgttyb *ss, struct sgttyb *bs)
 {
 	bs->sg_ispeed = ss->sg_ispeed;
 	bs->sg_ospeed = ss->sg_ospeed;
@@ -158,9 +146,7 @@ svr4_sgttyb_to_bsd_sgttyb(ss, bs)
 
 
 static void
-bsd_sgttyb_to_svr4_sgttyb(bs, ss)
-	const struct sgttyb	*bs;
-	struct svr4_sgttyb	*ss;
+bsd_sgttyb_to_svr4_sgttyb(const struct sgttyb *bs, struct svr4_sgttyb *ss)
 {
 	ss->sg_ispeed = bs->sg_ispeed;
 	ss->sg_ospeed = bs->sg_ospeed;
@@ -171,9 +157,7 @@ bsd_sgttyb_to_svr4_sgttyb(bs, ss)
 
 
 static void
-svr4_ltchars_to_bsd_ltchars(sl, bl)
-	const struct svr4_ltchars	*sl;
-	struct ltchars			*bl;
+svr4_ltchars_to_bsd_ltchars(const struct svr4_ltchars *sl, struct ltchars *bl)
 {
 	bl->t_suspc  = sl->t_suspc;
 	bl->t_dsuspc = sl->t_dsuspc;
@@ -185,9 +169,7 @@ svr4_ltchars_to_bsd_ltchars(sl, bl)
 
 
 static void
-bsd_ltchars_to_svr4_ltchars(bl, sl)
-	const struct ltchars	*bl;
-	struct svr4_ltchars	*sl;
+bsd_ltchars_to_svr4_ltchars(const struct ltchars *bl, struct svr4_ltchars *sl)
 {
 	sl->t_suspc  = bl->t_suspc;
 	sl->t_dsuspc = bl->t_dsuspc;

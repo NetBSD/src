@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.107.6.2 2007/11/08 11:00:05 matt Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.107.6.3 2008/01/09 01:56:18 matt Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.107.6.2 2007/11/08 11:00:05 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.107.6.3 2008/01/09 01:56:18 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
@@ -60,7 +60,6 @@ __KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.107.6.2 2007/11/08 11:00:05 matt Exp 
 #include <sys/tprintf.h>
 #include <sys/syslog.h>
 #include <sys/malloc.h>
-#include <sys/lock.h>
 #include <sys/kprintf.h>
 
 #include <dev/cons.h>
@@ -78,9 +77,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.107.6.2 2007/11/08 11:00:05 matt Exp 
 #include <ipkdb/ipkdb.h>
 #endif
 
-#if defined(MULTIPROCESSOR)
 struct simplelock kprintf_slock = SIMPLELOCK_INITIALIZER;
-#endif /* MULTIPROCESSOR */
 
 /*
  * note that stdarg.h and the ansi style va_start macro is used for both
@@ -145,19 +142,6 @@ const char HEXDIGITS[] = "0123456789ABCDEF";
 /*
  * functions
  */
-
-/*
- * tablefull: warn that a system table is full
- */
-
-void
-tablefull(const char *tab, const char *hint)
-{
-	if (hint)
-		log(LOG_ERR, "%s: table is full - %s\n", tab, hint);
-	else
-		log(LOG_ERR, "%s: table is full\n", tab);
-}
 
 /*
  * twiddle: spin a little propellor on the console.

@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vfsops.c,v 1.29.4.1 2007/11/06 23:31:23 matt Exp $ */
+/* $NetBSD: udf_vfsops.c,v 1.29.4.2 2008/01/09 01:55:54 matt Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_vfsops.c,v 1.29.4.1 2007/11/06 23:31:23 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.29.4.2 2008/01/09 01:55:54 matt Exp $");
 #endif /* not lint */
 
 
@@ -116,7 +116,7 @@ struct vfsops udf_vfsops = {
 	udf_start,
 	udf_unmount,
 	udf_root,
-	udf_quotactl,
+	(void *)eopnotsupp,		/* vfs_quotactl */
 	udf_statvfs,
 	udf_sync,
 	udf_vget,
@@ -241,8 +241,9 @@ free_udf_mountinfo(struct mount *mp)
 
 int
 udf_mount(struct mount *mp, const char *path,
-	  void *data, size_t *data_len, struct lwp *l)
+	  void *data, size_t *data_len)
 {
+	struct lwp *l = curlwp;
 	struct nameidata nd;
 	struct udf_args *args = data;
 	struct udf_mount *ump;
@@ -280,7 +281,7 @@ udf_mount(struct mount *mp, const char *path,
 	}
 
 	/* lookup name to get its vnode */
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, args->fspec, l);
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, args->fspec);
 	error = namei(&nd);
 	if (error)
 		return error;
@@ -313,7 +314,7 @@ udf_mount(struct mount *mp, const char *path,
 		if ((mp->mnt_flag & MNT_RDONLY) == 0)
 			accessmode |= VWRITE;
 		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-		error = VOP_ACCESS(devvp, accessmode, l->l_cred, l);
+		error = VOP_ACCESS(devvp, accessmode, l->l_cred);
 		VOP_UNLOCK(devvp, 0);
 		if (error) {
 			vrele(devvp);
@@ -344,14 +345,14 @@ udf_mount(struct mount *mp, const char *path,
 	} else {
 		openflags = FREAD | FWRITE;
 	}
-	error = VOP_OPEN(devvp, openflags, FSCRED, l);
+	error = VOP_OPEN(devvp, openflags, FSCRED);
 	if (error == 0) {
 		/* opened ok, try mounting */
 		error = udf_mountfs(devvp, mp, l, args);
 		if (error) {
 			free_udf_mountinfo(mp);
 			vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-			(void) VOP_CLOSE(devvp, openflags, NOCRED, l);
+			(void) VOP_CLOSE(devvp, openflags, NOCRED);
 			VOP_UNLOCK(devvp, 0);
 		}
 	}
@@ -393,7 +394,7 @@ udf_unmount_sanity_check(struct mount *mp)
 
 
 int
-udf_unmount(struct mount *mp, int mntflags, struct lwp *l)
+udf_unmount(struct mount *mp, int mntflags)
 {
 	struct udf_mount *ump;
 	int error, flags, closeflags;
@@ -440,7 +441,7 @@ udf_unmount(struct mount *mp, int mntflags, struct lwp *l)
 
 	/* devvp is still locked by us */
 	vn_lock(ump->devvp, LK_EXCLUSIVE | LK_RETRY);
-	error = VOP_CLOSE(ump->devvp, closeflags, NOCRED, l);
+	error = VOP_CLOSE(ump->devvp, closeflags, NOCRED);
 	if (error)
 		printf("Error during closure of device! error %d, "
 		       "device might stay locked\n", error);
@@ -582,7 +583,7 @@ udf_mountfs(struct vnode *devvp, struct mount *mp,
 /* --------------------------------------------------------------------- */
 
 int
-udf_start(struct mount *mp, int flags, struct lwp *l)
+udf_start(struct mount *mp, int flags)
 {
 	/* do we have to do something here? */
 	return 0;
@@ -619,17 +620,7 @@ udf_root(struct mount *mp, struct vnode **vpp)
 /* --------------------------------------------------------------------- */
 
 int
-udf_quotactl(struct mount *mp, int cmds, uid_t uid,
-    void *arg, struct lwp *l)
-{
-	DPRINTF(NOTIMPL, ("udf_quotactl called\n"));
-	return EOPNOTSUPP;
-}
-
-/* --------------------------------------------------------------------- */
-
-int
-udf_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l)
+udf_statvfs(struct mount *mp, struct statvfs *sbp)
 {
 	struct udf_mount *ump = VFSTOUDF(mp);
 	struct logvol_int_desc *lvid;
@@ -683,7 +674,7 @@ udf_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l)
 
 int
 udf_sync(struct mount *mp, int waitfor,
-    kauth_cred_t cred, struct lwp *p)
+    kauth_cred_t cred)
 {
 	DPRINTF(CALL, ("udf_sync called\n"));
 	/* nothing to be done as upto now read-only */

@@ -1,4 +1,4 @@
-/*	$NetBSD: dmover_backend.c,v 1.6 2007/07/09 21:00:32 ad Exp $	*/
+/*	$NetBSD: dmover_backend.c,v 1.6.8.1 2008/01/09 01:52:32 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -40,10 +40,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmover_backend.c,v 1.6 2007/07/09 21:00:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dmover_backend.c,v 1.6.8.1 2008/01/09 01:52:32 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/mutex.h>
+#include <sys/simplelock.h>
 #include <sys/systm.h>
 
 #include <dev/dmover/dmovervar.h>
@@ -60,7 +61,7 @@ initialize(void)
 	simple_lock(&initialized_slock);
 	if (__predict_true(initialized == 0)) {
 		TAILQ_INIT(&dmover_backend_list);
-		mutex_init(&dmover_backend_list_lock, MUTEX_DRIVER, IPL_BIO);
+		mutex_init(&dmover_backend_list_lock, MUTEX_DEFAULT, IPL_VM);
 
 		/* Initialize the other bits of dmover. */
 		dmover_session_initialize();

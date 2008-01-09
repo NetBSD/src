@@ -1,4 +1,4 @@
-/*	$NetBSD: tcpip.h,v 1.10 2005/12/10 23:36:23 elad Exp $	*/
+/*	$NetBSD: tcpip.h,v 1.10.46.1 2008/01/09 01:57:31 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -40,7 +40,7 @@
 struct tcpiphdr {
 	struct 	ipovly ti_i;		/* overlaid ip structure */
 	struct	tcphdr ti_t;		/* tcp header */
-} __attribute__((__packed__));
+} __packed;
 #define	ti_x1		ti_i.ih_x1
 #define	ti_pr		ti_i.ih_pr
 #define	ti_len		ti_i.ih_len

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.19.12.1 2007/11/06 23:30:32 matt Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.19.12.2 2008/01/09 01:54:38 matt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.19.12.1 2007/11/06 23:30:32 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.19.12.2 2008/01/09 01:54:38 matt Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
@@ -85,7 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.19.12.1 2007/11/06 23:30:32 matt Exp $"
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/sockio.h>
-#include <sys/lock.h>
+#include <sys/mutex.h>
 #include <sys/mbuf.h>
 #include <sys/kernel.h>
 #if defined(__OpenBSD__)
@@ -199,13 +199,13 @@ Static void
 axe_lock_mii(struct axe_softc *sc)
 {
 	sc->axe_refcnt++;
-	usb_lockmgr(&sc->axe_mii_lock, LK_EXCLUSIVE, NULL);
+	mutex_enter(&sc->axe_mii_lock);
 }
 
 Static void
 axe_unlock_mii(struct axe_softc *sc)
 {
-	usb_lockmgr(&sc->axe_mii_lock, LK_RELEASE, NULL);
+	mutex_exit(&sc->axe_mii_lock);
 	if (--sc->axe_refcnt < 0)
 		usb_detach_wakeup(USBDEV(sc->axe_dev));
 }
@@ -216,10 +216,11 @@ axe_cmd(struct axe_softc *sc, int cmd, int index, int val, void *buf)
 	usb_device_request_t	req;
 	usbd_status		err;
 
+	KASSERT(mutex_owned(&sc->axe_mii_lock));
+
 	if (sc->axe_dying)
 		return(0);
 
-	axe_lock_mii(sc);
 	if (AXE_CMD_DIR(cmd))
 		req.bmRequestType = UT_WRITE_VENDOR_DEVICE;
 	else
@@ -230,7 +231,6 @@ axe_cmd(struct axe_softc *sc, int cmd, int index, int val, void *buf)
 	USETW(req.wLength, AXE_CMD_LEN(cmd));
 
 	err = usbd_do_request(sc->axe_udev, &req, buf);
-	axe_unlock_mii(sc);
 
 	if (err)
 		return(-1);
@@ -319,7 +319,9 @@ axe_miibus_statchg(device_ptr_t dev)
 	else
 		val = 0;
 	DPRINTF(("axe_miibus_statchg: val=0x%x\n", val));
+	axe_lock_mii(sc);
 	err = axe_cmd(sc, AXE_CMD_WRITE_MEDIA, 0, val, NULL);
+	axe_unlock_mii(sc);
 	if (err) {
 		printf("%s: media change failed\n", USBDEVNAME(sc->axe_dev));
 		return;
@@ -375,6 +377,7 @@ axe_setmulti(struct axe_softc *sc)
 
 	ifp = GET_IFP(sc);
 
+	axe_lock_mii(sc);
 	axe_cmd(sc, AXE_CMD_RXCTL_READ, 0, 0, (void *)&rxmode);
 	rxmode = le16toh(rxmode);
 
@@ -405,6 +408,7 @@ axe_setmulti(struct axe_softc *sc)
 	ifp->if_flags &= ~IFF_ALLMULTI;
 	axe_cmd(sc, AXE_CMD_WRITE_MCAST, 0, 0, (void *)&hashtbl);
 	axe_cmd(sc, AXE_CMD_RXCTL_WRITE, 0, rxmode, NULL);
+	axe_unlock_mii(sc);
 	return;
 }
 
@@ -461,7 +465,7 @@ USB_ATTACH(axe)
 	}
 
 	usb_init_task(&sc->axe_tick_task, axe_tick_task, sc);
-	lockinit(&sc->axe_mii_lock, PZERO, "axemii", 0, LK_CANRECURSE);
+	mutex_init(&sc->axe_mii_lock, MUTEX_DEFAULT, IPL_NONE);
 	usb_init_task(&sc->axe_stop_task, (void (*)(void *))axe_stop, sc);
 
 	err = usbd_device2interface_handle(dev, AXE_IFACE_IDX, &sc->axe_iface);
@@ -506,6 +510,7 @@ USB_ATTACH(axe)
 	/*
 	 * Get station address.
 	 */
+	axe_lock_mii(sc);
 	axe_cmd(sc, AXE_CMD_READ_NODEID, 0, 0, &eaddr);
 
 	/*
@@ -513,6 +518,7 @@ USB_ATTACH(axe)
 	 */
 	axe_cmd(sc, AXE_CMD_READ_IPG012, 0, 0, (void *)&sc->axe_ipgs);
 	axe_cmd(sc, AXE_CMD_READ_PHYID, 0, 0, (void *)&sc->axe_phyaddrs);
+	axe_unlock_mii(sc);
 
 	/*
 	 * Work around broken adapters that appear to lie about
@@ -1113,6 +1119,7 @@ axe_init(void *xsc)
 	}
 
 	/* Set transmitter IPG values */
+	axe_lock_mii(sc);
 	axe_cmd(sc, AXE_CMD_WRITE_IPG0, 0, sc->axe_ipgs[0], NULL);
 	axe_cmd(sc, AXE_CMD_WRITE_IPG1, 0, sc->axe_ipgs[1], NULL);
 	axe_cmd(sc, AXE_CMD_WRITE_IPG2, 0, sc->axe_ipgs[2], NULL);
@@ -1128,6 +1135,7 @@ axe_init(void *xsc)
 		rxmode |= AXE_RXCMD_BROADCAST;
 
 	axe_cmd(sc, AXE_CMD_RXCTL_WRITE, 0, rxmode, NULL);
+	axe_unlock_mii(sc);
 
 	/* Load the multicast filter. */
 	axe_setmulti(sc);
@@ -1211,21 +1219,25 @@ axe_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			    ifp->if_flags & IFF_PROMISC &&
 			    !(sc->axe_if_flags & IFF_PROMISC)) {
 
+				axe_lock_mii(sc);
 				axe_cmd(sc, AXE_CMD_RXCTL_READ,
 					0, 0, (void *)&rxmode);
 				rxmode = le16toh(rxmode) | AXE_RXCMD_PROMISC;
 				axe_cmd(sc, AXE_CMD_RXCTL_WRITE,
 					0, rxmode, NULL);
+				axe_unlock_mii(sc);
 
 				axe_setmulti(sc);
 			} else if (ifp->if_flags & IFF_RUNNING &&
 			    !(ifp->if_flags & IFF_PROMISC) &&
 			    sc->axe_if_flags & IFF_PROMISC) {
+				axe_lock_mii(sc);
 				axe_cmd(sc, AXE_CMD_RXCTL_READ,
 					0, 0, (void *)&rxmode);
 				rxmode = le16toh(rxmode) & ~AXE_RXCMD_PROMISC;
 				axe_cmd(sc, AXE_CMD_RXCTL_WRITE,
 					0, rxmode, NULL);
+				axe_unlock_mii(sc);
 				axe_setmulti(sc);
 			} else if (!(ifp->if_flags & IFF_RUNNING))
 				axe_init(sc);

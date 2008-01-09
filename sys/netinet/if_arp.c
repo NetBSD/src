@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.126.2.1 2007/11/06 23:33:45 matt Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.126.2.2 2008/01/09 01:57:23 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.126.2.1 2007/11/06 23:33:45 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.126.2.2 2008/01/09 01:57:23 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -115,8 +115,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.126.2.1 2007/11/06 23:33:45 matt Exp $"
 #include <netinet/ip.h>
 #include <netinet/if_inarp.h>
 
-#include "arc.h"
-#if NARC > 0
+#include "arcnet.h"
+#if NARCNET > 0
 #include <net/if_arc.h>
 #endif
 #include "fddi.h"
@@ -222,10 +222,19 @@ lla_snprintf(u_int8_t *adrp, int len)
 DOMAIN_DEFINE(arpdomain);	/* forward declare and add to link set */
 
 const struct protosw arpsw[] = {
-	{ 0, &arpdomain, 0, 0,
-	  0, 0, 0, 0,
-	  0,
-	  0, 0, 0, arp_drain,
+	{ .pr_type = 0,
+	  .pr_domain = &arpdomain,
+	  .pr_protocol = 0,
+	  .pr_flags = 0,
+	  .pr_input = 0,
+	  .pr_output = 0,
+	  .pr_ctlinput = 0,
+	  .pr_ctloutput = 0,
+	  .pr_usrreq =  0,
+	  .pr_init = 0,
+	  .pr_fasttimo = 0,
+	  .pr_slowtimo = 0,
+	  .pr_drain = arp_drain,
 	}
 };
 

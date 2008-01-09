@@ -29,7 +29,7 @@ copyright="\
  * SUCH DAMAGE.
  */
 "
-SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.44.6.2 2007/11/08 11:00:11 matt Exp $'
+SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.44.6.3 2008/01/09 01:56:33 matt Exp $'
 
 # Script to produce VFS front-end sugar.
 #
@@ -220,6 +220,8 @@ BEGIN	{
 	vop_offset = 1; # start at 1, to count the 'default' op
 
 	printf("\n/* Special cases: */\n#include <sys/buf.h>\n");
+	printf("#ifndef _KERNEL\n#include <stdbool.h>\n#endif\n\n");
+
 	argc=1;
 	argtype[0]="struct buf *";
 	argname[0]="bp";
@@ -270,7 +272,6 @@ const struct vnodeop_desc vop_default_desc = {
 	"default",
 	0,
 	NULL,
-	VDESC_NO_OFFSET,
 	VDESC_NO_OFFSET,
 	VDESC_NO_OFFSET,
 	VDESC_NO_OFFSET,
@@ -336,8 +337,6 @@ function doit() {
 	do_offset("struct vnode **");
 	# cred (if any)
 	do_offset("kauth_cred_t");
-	# lwp (if any)
-	do_offset("struct lwp *");
 	# componentname
 	do_offset("struct componentname *");
 	# transport layer information

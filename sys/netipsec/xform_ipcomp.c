@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipcomp.c,v 1.14.8.1 2007/11/06 23:34:14 matt Exp $	*/
+/*	$NetBSD: xform_ipcomp.c,v 1.14.8.2 2008/01/09 01:57:43 matt Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ipcomp.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /* $OpenBSD: ip_ipcomp.c,v 1.1 2001/07/05 12:08:52 jjbg Exp $ */
 
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.14.8.1 2007/11/06 23:34:14 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.14.8.2 2008/01/09 01:57:43 matt Exp $");
 
 /* IP payload compression protocol (IPComp), see RFC 2393 */
 #include "opt_inet.h"
@@ -603,8 +603,11 @@ ipcomp_output_cb(struct cryptop *crp)
 		}
 	} else {
 		/* compression was useless, we have lost time */
-		/* XXX add statistic */
+		ipcompstat.ipcomps_uselesscomp++;
+		DPRINTF(("ipcomp_output_cb: compression was useless : initial size was %d"
+				   	"and compressed size is %d\n", rlen, crp->crp_olen));
 	}
+
 
 	/* Release the crypto descriptor */
 	free(tc, M_XDATA);

@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.5.10.1 2007/11/06 23:23:14 matt Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.5.10.2 2008/01/09 01:49:37 matt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@ NENTRY(mutex_enter, 0)
  */
 NENTRY(mutex_exit, 0)
 	movl	4(%ap), %r0			/* get mutex */
-	blbs	MTX_ID(%r0), 1f			/* go slow if this is SPIN */
+	blbs	MTX_FLAGS(%r0), 1f			/* go slow if this is SPIN */
 	mfpr	$PR_SSP, %r1			/* get curcpu */
 	cmpl	(%r0),CI_CURLWP(%r1)		/* is the owner still us and */
 						/*    no waiters? */
@@ -83,7 +83,7 @@ NENTRY(mutex_exit, 0)
 NENTRY(mutex_spin_enter, 0)
 	movl	4(%ap), %r0			/* get spin mutex */
 #ifdef DIAGNOSTIC
-	blbc	MTX_ID(%r0), 3f
+	blbc	MTX_FLAGS(%r0), 3f
 #endif
 	mfpr	$PR_IPL, %r2			/* get current IPL */
 	movzbl	MTX_IPL(%r0), %r3
@@ -108,7 +108,7 @@ NENTRY(mutex_spin_enter, 0)
 NENTRY(mutex_spin_exit, 0)
 	movl	4(%ap), %r0			/* get spin mutex */
 #ifdef DIAGNOSTIC
-	blbc	MTX_ID(%r0), 2f			/* assert this is a spinlock */
+	blbc	MTX_FLAGS(%r0), 2f			/* assert this is a spinlock */
 #endif
 #if defined(DIAGNOSTIC) || defined(MULTIPROCESSOR)
 	bbcci	$0, (%r0), 2f			/* clear mutex */

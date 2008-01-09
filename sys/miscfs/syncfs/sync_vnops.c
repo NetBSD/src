@@ -1,4 +1,4 @@
-/*	$NetBSD: sync_vnops.c,v 1.17.10.1 2007/11/06 23:33:24 matt Exp $	*/
+/*	$NetBSD: sync_vnops.c,v 1.17.10.2 2008/01/09 01:57:07 matt Exp $	*/
 
 /*
  * Copyright 1997 Marshall Kirk McKusick. All Rights Reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sync_vnops.c,v 1.17.10.1 2007/11/06 23:33:24 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sync_vnops.c,v 1.17.10.2 2008/01/09 01:57:07 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -97,7 +97,9 @@ vfs_allocate_syncvnode(mp)
 		}
 		next = start;
 	}
+	mutex_enter(&vp->v_interlock);
 	vn_syncer_add_to_worklist(vp, syncdelay > 0 ? next % syncdelay : 0);
+	mutex_exit(&vp->v_interlock);
 	mp->mnt_syncer = vp;
 	return (0);
 }
@@ -113,9 +115,10 @@ vfs_deallocate_syncvnode(mp)
 
 	vp = mp->mnt_syncer;
 	mp->mnt_syncer = NULL;
+	mutex_enter(&vp->v_interlock);
 	vn_syncer_remove_from_worklist(vp);
 	vp->v_writecount = 0;
-	vrele(vp);
+	mutex_exit(&vp->v_interlock);
 	vgone(vp);
 }
 
@@ -132,7 +135,6 @@ sync_fsync(v)
 		int a_flags;
 		off_t offlo;
 		off_t offhi;
-		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *syncvp = ap->a_vp;
 	struct mount *mp = syncvp->v_mount;
@@ -147,7 +149,9 @@ sync_fsync(v)
 	/*
 	 * Move ourselves to the back of the sync list.
 	 */
+	mutex_enter(&syncvp->v_interlock);
 	vn_syncer_add_to_worklist(syncvp, syncdelay);
+	mutex_exit(&syncvp->v_interlock);
 
 	/*
 	 * Walk the list of vnodes pushing all that are dirty and
@@ -157,7 +161,7 @@ sync_fsync(v)
 	if (vfs_busy(mp, LK_NOWAIT, &mountlist_lock) == 0) {
 		asyncflag = mp->mnt_flag & MNT_ASYNC;
 		mp->mnt_flag &= ~MNT_ASYNC;
-		VFS_SYNC(mp, MNT_LAZY, ap->a_cred, ap->a_l);
+		VFS_SYNC(mp, MNT_LAZY, ap->a_cred);
 		if (asyncflag)
 			mp->mnt_flag |= MNT_ASYNC;
 		vfs_unbusy(mp);

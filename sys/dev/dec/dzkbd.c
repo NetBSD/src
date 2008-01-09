@@ -1,4 +1,4 @@
-/*	$NetBSD: dzkbd.c,v 1.18.8.1 2007/11/06 23:25:56 matt Exp $	*/
+/*	$NetBSD: dzkbd.c,v 1.18.8.2 2008/01/09 01:52:31 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dzkbd.c,v 1.18.8.1 2007/11/06 23:25:56 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dzkbd.c,v 1.18.8.2 2008/01/09 01:52:31 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: dzkbd.c,v 1.18.8.1 2007/11/06 23:25:56 matt Exp $");
 #include <sys/ioctl.h>
 #include <sys/syslog.h>
 #include <sys/malloc.h>
+#include <sys/intr.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wskbdvar.h>

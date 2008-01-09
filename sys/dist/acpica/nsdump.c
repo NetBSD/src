@@ -1,7 +1,9 @@
+/*	$NetBSD: nsdump.c,v 1.3.24.1 2008/01/09 01:55:15 matt Exp $	*/
+
 /******************************************************************************
  *
  * Module Name: nsdump - table dumping routines for debug
- *              xRevision: 1.176 $
+ *              $Revision: 1.3.24.1 $
  *
  *****************************************************************************/
 
@@ -9,7 +11,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2007, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,13 +118,13 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsdump.c,v 1.3 2006/11/16 01:33:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nsdump.c,v 1.3.24.1 2008/01/09 01:55:15 matt Exp $");
 
 #define __NSDUMP_C__
 
-#include "acpi.h"
-#include "acnamesp.h"
-#include "acparser.h"
+#include <dist/acpica/acpi.h>
+#include <dist/acpica/acnamesp.h>
+#include <dist/acpica/acparser.h>
 
 
 #define _COMPONENT          ACPI_NAMESPACE
@@ -166,7 +168,7 @@ AcpiNsPrintPathname (
     ACPI_NATIVE_UINT        i;
 
 
-    ACPI_FUNCTION_NAME ("NsPrintPathname");
+    ACPI_FUNCTION_NAME (NsPrintPathname);
 
 
     if (!(AcpiDbgLevel & ACPI_LV_NAMES) || !(AcpiDbgLayer & ACPI_NAMESPACE))
@@ -223,7 +225,7 @@ AcpiNsDumpPathname (
     UINT32                  Component)
 {
 
-    ACPI_FUNCTION_TRACE ("NsDumpPathname");
+    ACPI_FUNCTION_TRACE (NsDumpPathname);
 
 
     /* Do this only if the requested debug level and component are enabled */
@@ -274,7 +276,7 @@ AcpiNsDumpOneObject (
     UINT32                  i;
 
 
-    ACPI_FUNCTION_NAME ("NsDumpOneObject");
+    ACPI_FUNCTION_NAME (NsDumpOneObject);
 
 
     /* Is output enabled? */
@@ -316,6 +318,8 @@ AcpiNsDumpOneObject (
 
         if (!AcpiUtValidAcpiName (ThisNode->Name.Integer))
         {
+            ThisNode->Name.Integer = AcpiUtRepairName (ThisNode->Name.Ascii);
+
             ACPI_WARNING ((AE_INFO, "Invalid ACPI Name %08X",
                 ThisNode->Name.Integer));
         }
@@ -333,6 +337,13 @@ AcpiNsDumpOneObject (
     AcpiDbgLevel = 0;
     ObjDesc = AcpiNsGetAttachedObject (ThisNode);
     AcpiDbgLevel = DbgLevel;
+
+    /* Temp nodes are those nodes created by a control method */
+
+    if (ThisNode->Flags & ANOBJ_TEMPORARY)
+    {
+        AcpiOsPrintf ("(T) ");
+    }
 
     switch (Info->DisplayType & ACPI_DISPLAY_MASK)
     {
@@ -729,8 +740,8 @@ AcpiNsDumpObjects (
     Info.DisplayType = DisplayType;
 
     (void) AcpiNsWalkNamespace (Type, StartHandle, MaxDepth,
-                ACPI_NS_WALK_NO_UNLOCK, AcpiNsDumpOneObject,
-                (void *) &Info, NULL);
+                ACPI_NS_WALK_NO_UNLOCK | ACPI_NS_WALK_TEMP_NODES,
+                AcpiNsDumpOneObject, (void *) &Info, NULL);
 }
 
 
@@ -790,7 +801,7 @@ AcpiNsDumpTables (
     ACPI_HANDLE             SearchHandle = SearchBase;
 
 
-    ACPI_FUNCTION_TRACE ("NsDumpTables");
+    ACPI_FUNCTION_TRACE (NsDumpTables);
 
 
     if (!AcpiGbl_RootNode)

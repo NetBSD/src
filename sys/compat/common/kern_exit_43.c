@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit_43.c,v 1.19.8.1 2007/11/06 23:24:45 matt Exp $	*/
+/*	$NetBSD: kern_exit_43.c,v 1.19.8.2 2008/01/09 01:50:30 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit_43.c,v 1.19.8.1 2007/11/06 23:24:45 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit_43.c,v 1.19.8.2 2008/01/09 01:50:30 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,7 +72,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_exit_43.c,v 1.19.8.1 2007/11/06 23:24:45 matt E
 #endif
 
 int
-compat_43_sys_wait(struct lwp *l, void *v, register_t *retval)
+compat_43_sys_wait(struct lwp *l, const void *v, register_t *retval)
 {
 	int error, status, was_zombie;
 	int child_pid = WAIT_ANY;

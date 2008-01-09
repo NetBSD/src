@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231_ebus.c,v 1.22.24.1 2007/11/06 23:26:00 matt Exp $ */
+/*	$NetBSD: cs4231_ebus.c,v 1.22.24.2 2008/01/09 01:52:36 matt Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -28,16 +28,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4231_ebus.c,v 1.22.24.1 2007/11/06 23:26:00 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4231_ebus.c,v 1.22.24.2 2008/01/09 01:52:36 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/errno.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/cpu.h>
 
 #include <machine/autoconf.h>
-#include <sys/cpu.h>
+
 #include <dev/ebus/ebusreg.h>
 #include <dev/ebus/ebusvar.h>
 
@@ -60,6 +61,8 @@ int cs4231_ebus_debug = 0;
 struct cs4231_ebus_softc {
 	struct cs4231_softc sc_cs4231;
 
+	void *sc_pint;
+	void *sc_rint;
 	bus_space_tag_t sc_bt;
 	bus_space_handle_t sc_pdmareg; /* playback DMA */
 	bus_space_handle_t sc_cdmareg; /* record DMA */
@@ -68,6 +71,9 @@ struct cs4231_ebus_softc {
 
 void	cs4231_ebus_attach(struct device *, struct device *, void *);
 int	cs4231_ebus_match(struct device *, struct cfdata *, void *);
+
+static void	cs4231_ebus_pint(void *);
+static void	cs4231_ebus_rint(void *);
 
 CFATTACH_DECL(audiocs_ebus, sizeof(struct cs4231_ebus_softc),
     cs4231_ebus_match, cs4231_ebus_attach, NULL, NULL);
@@ -128,7 +134,8 @@ static int	cs4231_ebus_trigger_transfer(struct cs4231_softc *,
 static void	cs4231_ebus_dma_advance(struct cs_transfer *,
 					bus_space_tag_t, bus_space_handle_t);
 static int	cs4231_ebus_dma_intr(struct cs_transfer *,
-				     bus_space_tag_t, bus_space_handle_t);
+				     bus_space_tag_t, bus_space_handle_t,
+				     void *);
 static int	cs4231_ebus_intr(void *);
 
 
@@ -163,6 +170,11 @@ cs4231_ebus_attach(struct device *parent, struct device *self, void *aux)
 	ea = aux;
 	sc->sc_bustag = ebsc->sc_bt = ea->ea_bustag;
 	sc->sc_dmatag = ea->ea_dmatag;
+
+	ebsc->sc_pint = softint_establish(SOFTINT_SERIAL,
+	    cs4231_ebus_pint, ebsc);
+	ebsc->sc_rint = softint_establish(SOFTINT_SERIAL,
+	    cs4231_ebus_rint, ebsc);
 
 	/*
 	 * These are the register we get from the prom:
@@ -203,7 +215,7 @@ cs4231_ebus_attach(struct device *parent, struct device *self, void *aux)
 	/* establish interrupt channels */
 	for (i = 0; i < ea->ea_nintr; ++i)
 		bus_intr_establish(ea->ea_bustag,
-				   ea->ea_intr[i], IPL_AUDIO,
+				   ea->ea_intr[i], IPL_SCHED,
 				   cs4231_ebus_intr, ebsc);
 
 	cs4231_common_attach(sc, bh);
@@ -437,7 +449,7 @@ cs4231_ebus_halt_input(void *addr)
 
 static int
 cs4231_ebus_dma_intr(struct cs_transfer *t, bus_space_tag_t dt,
-		     bus_space_handle_t dh)
+		     bus_space_handle_t dh, void *sih)
 {
 	uint32_t csr;
 #ifdef AUDIO_DEBUG
@@ -475,7 +487,7 @@ cs4231_ebus_dma_intr(struct cs_transfer *t, bus_space_tag_t dt,
 
 	/* call audio(9) framework while DMA is chugging along */
 	if (t->t_intr != NULL)
-		(*t->t_intr)(t->t_arg);
+		softint_schedule(sih);
 	return 1;
 }
 
@@ -517,19 +529,39 @@ cs4231_ebus_intr(void *arg)
 
 	ret = 0;
 
-	if (cs4231_ebus_dma_intr(&sc->sc_capture,
-				 ebsc->sc_bt, ebsc->sc_cdmareg) != 0)
+	if (cs4231_ebus_dma_intr(&sc->sc_capture, ebsc->sc_bt,
+	    ebsc->sc_cdmareg, ebsc->sc_rint) != 0)
 	{
 		++sc->sc_intrcnt.ev_count;
 		ret = 1;
 	}
 
-	if (cs4231_ebus_dma_intr(&sc->sc_playback,
-				 ebsc->sc_bt, ebsc->sc_pdmareg) != 0)
+	if (cs4231_ebus_dma_intr(&sc->sc_playback, ebsc->sc_bt,
+	    ebsc->sc_pdmareg, ebsc->sc_pint) != 0)
 	{
 		++sc->sc_intrcnt.ev_count;
 		ret = 1;
 	}
 
 	return ret;
+}
+
+static void
+cs4231_ebus_pint(void *cookie)
+{
+	struct cs4231_softc *sc = cookie;
+	struct cs_transfer *t = &sc->sc_playback;
+
+	if (t->t_intr != NULL)
+		(*t->t_intr)(t->t_arg);
+}
+
+static void
+cs4231_ebus_rint(void *cookie)
+{
+	struct cs4231_softc *sc = cookie;
+	struct cs_transfer *t = &sc->sc_capture;
+
+	if (t->t_intr != NULL)
+		(*t->t_intr)(t->t_arg);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: smsc.c,v 1.2.10.1 2007/11/06 23:28:00 matt Exp $ */
+/*	$NetBSD: smsc.c,v 1.2.10.2 2008/01/09 01:53:15 matt Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smsc.c,v 1.2.10.1 2007/11/06 23:28:00 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smsc.c,v 1.2.10.2 2008/01/09 01:53:15 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,29 +75,22 @@ __KERNEL_RCSID(0, "$NetBSD: smsc.c,v 1.2.10.1 2007/11/06 23:28:00 matt Exp $");
 #define DPRINTF(x)
 #endif
 
-int smsc_probe(struct device *, struct cfdata *, void *);
-void smsc_attach(struct device *, struct device *, void *);
-int smsc_detach(struct device *, int);
-static uint8_t smsc_readreg(struct smsc_softc *, int);
+static int	smsc_match(struct device *, struct cfdata *, void *);
+static void	smsc_attach(struct device *, struct device *, void *);
+static int 	smsc_detach(struct device *, int);
+static uint8_t	smsc_readreg(struct smsc_softc *, int);
 /*static void smsc_writereg(struct smsc_softc *, int, int);*/
-void smsc_setup(struct smsc_softc *);
 
-static int smsc_gtredata(struct sysmon_envsys *, envsys_data_t *);
+static void 	smsc_refresh(struct sysmon_envsys *, envsys_data_t *);
 
 CFATTACH_DECL(smsc, sizeof(struct smsc_softc),
-    smsc_probe, smsc_attach, smsc_detach, NULL);
-
-struct smsc_sysmon {
-	struct sysmon_envsys sme;
-	struct smsc_softc *sc;
-	envsys_data_t smsc_sensor[];
-};
+    smsc_match, smsc_attach, smsc_detach, NULL);
 
 /*
  * Probe for the SMSC Super I/O chip
  */
-int
-smsc_probe(struct device *parent, struct cfdata *match, void *aux)
+static int
+smsc_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	bus_space_handle_t ioh;
 	struct isa_attach_args *ia = aux;
@@ -154,16 +147,18 @@ smsc_probe(struct device *parent, struct cfdata *match, void *aux)
  * Get the base address for the monitoring registers and set up the
  * env sysmon framework.
  */
-void
+static void
 smsc_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct smsc_softc *smsc_sc = (void *)self;
+	struct smsc_softc *sc = device_private(self);
 	struct isa_attach_args *ia = aux;
 	bus_space_handle_t ioh;
 	uint8_t rev, msb, lsb;
 	unsigned address;
+	char label[8];
+	int i;
 
-	smsc_sc->smsc_iot = ia->ia_iot;
+	sc->sc_iot = ia->ia_iot;
 
 	/* To attach we need to find the actual i/o register space,
 	   map the base registers in first. */
@@ -197,24 +192,97 @@ smsc_attach(struct device *parent, struct device *self, void *aux)
 	bus_space_unmap(ia->ia_iot, ioh, 2);
 
 	/* Map the i/o space for the registers. */
-	if (bus_space_map(ia->ia_iot, address, 2, 0, &smsc_sc->smsc_ioh)) {
+	if (bus_space_map(ia->ia_iot, address, 2, 0, &sc->sc_ioh)) {
 		aprint_error(": can't map register i/o space\n");
 		return;
 	}
 
+	sc->sc_sme = sysmon_envsys_create();
+
+	for (i = 0; i < 4; i++) {
+		sprintf(label, "Temp-%d", i);
+		strlcpy(sc->sc_sensor[i].desc, label,
+		    sizeof(sc->sc_sensor[i].desc));
+		sc->sc_sensor[i].units = ENVSYS_STEMP;
+		switch (i) {
+		case 0:
+			sc->sc_regs[i] = SMSC_TEMP1;
+			break;
+
+		case 1:
+			sc->sc_regs[i] = SMSC_TEMP2;
+			break;
+
+		case 2:
+			sc->sc_regs[i] = SMSC_TEMP3;
+			break;
+
+		case 3:
+			sc->sc_regs[i] = SMSC_TEMP4;
+			break;
+		}
+		if (sysmon_envsys_sensor_attach(sc->sc_sme,
+						&sc->sc_sensor[i])) {
+			sysmon_envsys_destroy(sc->sc_sme);
+			return;
+		}
+
+	}
+
+	for (i = 4; i < SMSC_MAX_SENSORS; i++) {
+		sprintf(label, "Fan-%d", i - 3);
+		strlcpy(sc->sc_sensor[i].desc, label,
+		    sizeof(sc->sc_sensor[i].desc));
+		sc->sc_sensor[i].units = ENVSYS_SFANRPM;
+		switch (i) {
+		case 4:
+			sc->sc_regs[i] = SMSC_FAN1_LSB;
+			break;
+
+		case 5:
+			sc->sc_regs[i] = SMSC_FAN2_LSB;
+			break;
+
+		case 6:
+			sc->sc_regs[i] = SMSC_FAN3_LSB;
+			break;
+
+		case 7:
+			sc->sc_regs[i] = SMSC_FAN4_LSB;
+			break;
+
+		default:
+			aprint_error(": more fans than expected");
+			break;
+		}
+		if (sysmon_envsys_sensor_attach(sc->sc_sme,
+						&sc->sc_sensor[i])) {
+			sysmon_envsys_destroy(sc->sc_sme);
+			return;
+		}
+	}
+
+	sc->sc_sme->sme_name = sc->sc_dev.dv_xname;
+	sc->sc_sme->sme_cookie = sc;
+	sc->sc_sme->sme_refresh = smsc_refresh;
+
+	if ((i = sysmon_envsys_register(sc->sc_sme)) != 0) {
+		aprint_error("%s: unable to register with sysmon (%d)\n",
+		    sc->sc_dev.dv_xname, i);
+		sysmon_envsys_destroy(sc->sc_sme);
+	}
+
 	aprint_normal(": monitor registers at 0x%04x  (rev. %u)\n",
 	       address, rev);
-
-	smsc_setup(smsc_sc);
 }
 
-int
+static int
 smsc_detach(struct device *self, int flags)
 {
 	struct smsc_softc *sc = device_private(self);
 
-	sysmon_envsys_unregister(sc->smsc_sysmon);
-	bus_space_unmap(sc->smsc_iot, sc->smsc_ioh, 2);
+	sysmon_envsys_unregister(sc->sc_sme);
+	bus_space_unmap(sc->sc_iot, sc->sc_ioh, 2);
 	return 0;
 }
 
@@ -224,8 +292,8 @@ smsc_detach(struct device *self, int flags)
 static uint8_t
 smsc_readreg(struct smsc_softc *sc, int reg)
 {
-	bus_space_write_1(sc->smsc_iot, sc->smsc_ioh, SMSC_ADDR, reg);
-	return bus_space_read_1(sc->smsc_iot, sc->smsc_ioh, SMSC_DATA);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, SMSC_ADDR, reg);
+	return bus_space_read_1(sc->sc_iot, sc->sc_ioh, SMSC_DATA);
 }
 
 
@@ -236,9 +304,10 @@ smsc_readreg(struct smsc_softc *sc, int reg)
 static void
 smsc_writereg (struct smsc_softc *sc, int reg, int val)
 {
-	bus_space_write_1(sc->smsc_iot, sc->smsc_ioh, SMSC_ADDR, reg);
-	bus_space_write_1(sc->smsc_iot, sc->smsc_ioh, SMSC_DATA, val);
-} */
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, SMSC_ADDR, reg);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, SMSC_DATA, val);
+}
+*/
 
 /* convert temperature read from the chip to micro kelvin */
 static inline int
@@ -274,109 +343,18 @@ smsc_reg2rpm(unsigned int r)
 #define SMSC_MAX_TEMP_UK ((127 * 1000000) + 273150000)
 
 /*
- * Set up the environment monitoring framework for all the devices
- * that we monitor.
- */
-void
-smsc_setup(struct smsc_softc *sc)
-{
-	struct smsc_sysmon *datap;
-	int error, i;
-	char label[8];
-	envsys_data_t *edata;
-
-	datap = malloc(sizeof(struct sysmon_envsys) + SMSC_MAX_SENSORS *
-	    sizeof(envsys_data_t) + sizeof(void *),
-	    M_DEVBUF, M_WAITOK | M_ZERO);
-
-	for (i = 0; i < 4; i++) {
-		edata = &datap->smsc_sensor[i];
-		sprintf(label, "Temp-%d", i + 1);
-		strlcpy(edata->desc, label, sizeof(edata->desc));
-		edata->units = ENVSYS_STEMP;
-		edata->sensor = i;
-		edata->state = ENVSYS_SVALID;
-		switch (i) {
-		case 0:
-			sc->regs[i] = SMSC_TEMP1;
-			break;
-
-		case 1:
-			sc->regs[i] = SMSC_TEMP2;
-			break;
-
-		case 2:
-			sc->regs[i] = SMSC_TEMP3;
-			break;
-
-		case 3:
-			sc->regs[i] = SMSC_TEMP4;
-			break;
-		}
-
-	}
-
-	for (i = 4; i < SMSC_MAX_SENSORS; i++) {
-		edata = &datap->smsc_sensor[i];
-		sprintf(label, "Fan-%d", i - 3);
-		strlcpy(edata->desc, label, sizeof(edata->desc));
-		edata->units = ENVSYS_SFANRPM;
-		edata->sensor = i;
-		edata->units = ENVSYS_SFANRPM;
-		edata->state = ENVSYS_SVALID;
-
-		switch (i) {
-		case 4:
-			sc->regs[i] = SMSC_FAN1_LSB;
-			break;
-
-		case 5:
-			sc->regs[i] = SMSC_FAN2_LSB;
-			break;
-
-		case 6:
-			sc->regs[i] = SMSC_FAN3_LSB;
-			break;
-
-		case 7:
-			sc->regs[i] = SMSC_FAN4_LSB;
-			break;
-
-		default:
-			aprint_error(": more fans than expected");
-			break;
-		}
-	}
-
-	sc->smsc_sysmon = &datap->sme;
-	datap->sme.sme_nsensors = SMSC_MAX_SENSORS;
-	datap->sme.sme_sensor_data = datap->smsc_sensor;
-	datap->sme.sme_name = sc->sc_dev.dv_xname;
-	datap->sme.sme_cookie = sc;
-	datap->sme.sme_gtredata = smsc_gtredata;
-
-	if ((error = sysmon_envsys_register(&datap->sme)) != 0) {
-		aprint_error("%s: unable to register with sysmon (%d)\n",
-		    sc->sc_dev.dv_xname, error);
-		return;
-	}
-
-}
-
-/*
  * Get the data for the requested sensor, update the sysmon structure
  * with the retrieved value.
  */
-static int
-smsc_gtredata(struct sysmon_envsys *sme, envsys_data_t *edata)
+static void
+smsc_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 {
 	struct smsc_softc *sc = sme->sme_cookie;
-	int i, reg;
+	int reg;
 	unsigned int rpm;
 	uint8_t msb, lsb;
 
-	i = edata->sensor;
-	reg = sc->regs[i];
+	reg = sc->sc_regs[edata->sensor];
 
 	switch (edata->units) {
 	case ENVSYS_STEMP:
@@ -393,7 +371,5 @@ smsc_gtredata(struct sysmon_envsys *sme, envsys_data_t *edata)
 		edata->value_cur = smsc_reg2rpm(rpm);
 		break;
 	}
-
 	edata->state = ENVSYS_SVALID;
-	return 0;
 }

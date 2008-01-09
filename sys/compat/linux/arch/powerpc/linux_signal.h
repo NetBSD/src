@@ -1,4 +1,4 @@
-/* $NetBSD: linux_signal.h,v 1.9 2005/12/11 12:20:16 christos Exp $ */
+/* $NetBSD: linux_signal.h,v 1.9.46.1 2008/01/09 01:51:06 matt Exp $ */
 
 /*-
  * Copyright (c) 1995, 1998, 2001 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@
 
 #define	LINUX_MINSIGSTKSZ	2048
 
-typedef void (*linux_handler_t) __P((int));
+typedef void (*linux_handler_t)(int);
 
 typedef unsigned long linux_old_sigset_t;
 typedef struct {
@@ -118,14 +118,14 @@ struct linux_old_sigaction {
 	linux_handler_t linux_sa_handler;
 	linux_old_sigset_t linux_sa_mask;
 	unsigned long linux_sa_flags;
-	void (*linux_sa_restorer) __P((void));
+	void (*linux_sa_restorer)(void);
 };
 
 /* Used in rt_* calls */
 struct linux_sigaction {
 	linux_handler_t linux_sa_handler;
 	unsigned long linux_sa_flags;
-	void (*linux_sa_restorer) __P((void));
+	void (*linux_sa_restorer)(void);
 	linux_sigset_t	linux_sa_mask;
 };
 

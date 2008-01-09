@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall_stats.h,v 1.1 2007/02/18 16:58:15 dsl Exp $	*/
+/*	$NetBSD: syscall_stats.h,v 1.1.22.1 2008/01/09 01:58:19 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,9 @@
 #ifndef _SYS_SYCALL_STAT_H_
 #define	_SYS_SYCALL_STAT_H_
 
+#ifndef _LKM
 #include "opt_syscall_stats.h"
+#endif
 
 #ifdef SYSCALL_STATS
 #include <sys/syscall.h>

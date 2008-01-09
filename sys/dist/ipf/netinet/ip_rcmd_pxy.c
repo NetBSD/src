@@ -1,7 +1,4 @@
-/*	$NetBSD: ip_rcmd_pxy.c,v 1.9 2007/04/14 20:34:38 martin Exp $	*/
-
-#include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ip_rcmd_pxy.c,v 1.9 2007/04/14 20:34:38 martin Exp $");
+/*	$NetBSD: ip_rcmd_pxy.c,v 1.9.8.1 2008/01/09 01:55:36 matt Exp $	*/
 
 /*
  * Copyright (C) 1998-2003 by Darren Reed
@@ -13,6 +10,9 @@ __KERNEL_RCSID(1, "$NetBSD: ip_rcmd_pxy.c,v 1.9 2007/04/14 20:34:38 martin Exp $
  * Simple RCMD transparent proxy for in-kernel use.  For use with the NAT
  * code.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(1, "$NetBSD: ip_rcmd_pxy.c,v 1.9.8.1 2008/01/09 01:55:36 matt Exp $");
 
 #define	IPF_RCMD_PROXY
 

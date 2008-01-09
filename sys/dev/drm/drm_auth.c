@@ -1,3 +1,5 @@
+/* $NetBSD: drm_auth.c,v 1.2.12.1 2008/01/09 01:52:34 matt Exp $ */
+
 /* drm_auth.h -- IOCTLs for authentication -*- linux-c -*-
  * Created: Tue Feb  2 08:37:54 1999 by faith@valinux.com
  */
@@ -32,6 +34,7 @@
  */
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: drm_auth.c,v 1.2.12.1 2008/01/09 01:52:34 matt Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/drm_auth.c,v 1.2 2005/11/28 23:13:52 anholt Exp $");
 */
@@ -129,11 +132,7 @@ int drm_getmagic(DRM_IOCTL_ARGS)
 	drm_file_t *priv;
 
 	DRM_LOCK();
-#ifdef __FreeBSD__
-	priv = drm_find_file_by_proc(dev, p);
-#elif defined(__NetBSD__)
 	priv = drm_find_file_by_proc(dev, p->l_proc);
-#endif
 	DRM_UNLOCK();
 	if (priv == NULL) {
 		DRM_ERROR("can't find authenticator\n");

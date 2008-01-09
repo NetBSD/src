@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.208.2.1 2007/11/06 23:35:13 matt Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.208.2.2 2008/01/09 01:58:27 matt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.208.2.1 2007/11/06 23:35:13 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.208.2.2 2008/01/09 01:58:27 matt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -133,9 +133,9 @@ static const struct ufs_ops ffs_ufsops = {
 	.uo_balloc = ffs_balloc,
 };
 
-struct pool ffs_inode_pool;
-struct pool ffs_dinode1_pool;
-struct pool ffs_dinode2_pool;
+pool_cache_t ffs_inode_cache;
+pool_cache_t ffs_dinode1_cache;
+pool_cache_t ffs_dinode2_cache;
 
 static void ffs_oldfscompat_read(struct fs *, struct ufsmount *, daddr_t);
 static void ffs_oldfscompat_write(struct fs *, struct ufsmount *);
@@ -173,7 +173,7 @@ ffs_mountroot(void)
 	fs = ump->um_fs;
 	memset(fs->fs_fsmnt, 0, sizeof(fs->fs_fsmnt));
 	(void)copystr(mp->mnt_stat.f_mntonname, fs->fs_fsmnt, MNAMELEN - 1, 0);
-	(void)ffs_statvfs(mp, &mp->mnt_stat, l);
+	(void)ffs_statvfs(mp, &mp->mnt_stat);
 	vfs_unbusy(mp);
 	setrootfstime((time_t)fs->fs_time);
 	return (0);
@@ -185,9 +185,9 @@ ffs_mountroot(void)
  * mount system call
  */
 int
-ffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
-    struct lwp *l)
+ffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 {
+	struct lwp *l = curlwp;
 	struct nameidata nd;
 	struct vnode *devvp = NULL;
 	struct ufs_args *args = data;
@@ -219,7 +219,7 @@ ffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
 		/*
 		 * Look up the name and verify that it's sane.
 		 */
-		NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, args->fspec, l);
+		NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, args->fspec);
 		if ((error = namei(&nd)) != 0)
 			return (error);
 		devvp = nd.ni_vp;
@@ -259,6 +259,8 @@ ffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
 			vref(devvp);
 		}
 	}
+	if ((mp->mnt_flag & MNT_SOFTDEP) != 0)
+		devvp->v_uflag |= VU_SOFTDEP;
 
 	/*
 	 * If mount by non-root, then verify that user has necessary
@@ -272,7 +274,7 @@ ffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
 		    (mp->mnt_flag & MNT_RDONLY) == 0)
 			accessmode |= VWRITE;
 		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-		error = VOP_ACCESS(devvp, accessmode, l->l_cred, l);
+		error = VOP_ACCESS(devvp, accessmode, l->l_cred);
 		VOP_UNLOCK(devvp, 0);
 	}
 
@@ -301,13 +303,13 @@ ffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
 			xflags = FREAD;
 		else
 			xflags = FREAD|FWRITE;
-		error = VOP_OPEN(devvp, xflags, FSCRED, l);
+		error = VOP_OPEN(devvp, xflags, FSCRED);
 		if (error)
 			goto fail;
 		error = ffs_mountfs(devvp, mp, l);
 		if (error) {
 			vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-			(void)VOP_CLOSE(devvp, xflags, NOCRED, l);
+			(void)VOP_CLOSE(devvp, xflags, NOCRED);
 			VOP_UNLOCK(devvp, 0);
 			goto fail;
 		}
@@ -482,7 +484,7 @@ fail:
 int
 ffs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 {
-	struct vnode *vp, *nvp, *devvp;
+	struct vnode *vp, *mvp, *devvp;
 	struct inode *ip;
 	void *space;
 	struct buf *bp;
@@ -510,7 +512,7 @@ ffs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 	 * Step 2: re-read superblock from disk.
 	 */
 	fs = ump->um_fs;
-	if (VOP_IOCTL(devvp, DIOCGPART, &dpart, FREAD, NOCRED, l) != 0)
+	if (VOP_IOCTL(devvp, DIOCGPART, &dpart, FREAD, NOCRED) != 0)
 		size = DEV_BSIZE;
 	else
 		size = dpart.disklab->d_secsize;
@@ -559,7 +561,7 @@ ffs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 	/* First check to see if this is tagged as an Apple UFS filesystem
 	 * in the disklabel
 	 */
-	if ((VOP_IOCTL(devvp, DIOCGPART, &dpart, FREAD, cred, l) == 0) &&
+	if ((VOP_IOCTL(devvp, DIOCGPART, &dpart, FREAD, cred) == 0) &&
 		(dpart.part->p_fstype == FS_APPLEUFS)) {
 		ump->um_flags |= UFS_ISAPPLEUFS;
 	}
@@ -608,7 +610,7 @@ ffs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 	}
 	mutex_exit(&ump->um_lock);
 
-	ffs_statvfs(mp, &mp->mnt_stat, l);
+	ffs_statvfs(mp, &mp->mnt_stat);
 	/*
 	 * Step 3: re-read summary information from disk.
 	 */
@@ -647,30 +649,36 @@ ffs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 			*lp++ = fs->fs_contigsumsize;
 	}
 
-loop:
+	/* Allocate a marker vnode. */
+	if ((mvp = vnalloc(mp)) == NULL)
+		return ENOMEM;
 	/*
 	 * NOTE: not using the TAILQ_FOREACH here since in this loop vgone()
 	 * and vclean() can be called indirectly
 	 */
-	simple_lock(&mntvnode_slock);
-	for (vp = TAILQ_FIRST(&mp->mnt_vnodelist); vp; vp = nvp) {
-		if (vp->v_mount != mp) {
-			simple_unlock(&mntvnode_slock);
-			goto loop;
-		}
+	mutex_enter(&mntvnode_lock);
+ loop:
+	for (vp = TAILQ_FIRST(&mp->mnt_vnodelist); vp; vp = vunmark(mvp)) {
+		vmark(mvp, vp);
+		if (vp->v_mount != mp || vismarker(vp))
+			continue;
 		/*
 		 * Step 4: invalidate all inactive vnodes.
 		 */
-		if (vrecycle(vp, &mntvnode_slock, l))
+		if (vrecycle(vp, &mntvnode_lock, l)) {
+			mutex_enter(&mntvnode_lock);
+			(void)vunmark(mvp);
 			goto loop;
+		}
 		/*
 		 * Step 5: invalidate all cached file data.
 		 */
-		simple_lock(&vp->v_interlock);
-		nvp = TAILQ_NEXT(vp, v_mntvnodes);
-		simple_unlock(&mntvnode_slock);
-		if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK))
+		mutex_enter(&vp->v_interlock);
+		mutex_exit(&mntvnode_lock);
+		if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK)) {
+			(void)vunmark(mvp);
 			goto loop;
+		}
 		if (vinvalbuf(vp, 0, cred, l, 0, 0))
 			panic("ffs_reload: dirty2");
 		/*
@@ -682,16 +690,18 @@ loop:
 		if (error) {
 			brelse(bp, 0);
 			vput(vp);
-			return (error);
+			(void)vunmark(mvp);
+			break;
 		}
 		ffs_load_inode(bp, ip, fs, ip->i_number);
 		ip->i_ffs_effnlink = ip->i_nlink;
 		brelse(bp, 0);
 		vput(vp);
-		simple_lock(&mntvnode_slock);
+		mutex_enter(&mntvnode_lock);
 	}
-	simple_unlock(&mntvnode_slock);
-	return (0);
+	mutex_exit(&mntvnode_lock);
+	vnfree(mvp);
+	return (error);
 }
 
 /*
@@ -732,7 +742,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 		return (error);
 
 	ronly = (mp->mnt_flag & MNT_RDONLY) != 0;
-	if (VOP_IOCTL(devvp, DIOCGPART, &dpart, FREAD, cred, l) != 0)
+	if (VOP_IOCTL(devvp, DIOCGPART, &dpart, FREAD, cred) != 0)
 		size = DEV_BSIZE;
 	else
 		size = dpart.disklab->d_secsize;
@@ -742,6 +752,10 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	fs = NULL;
 	sblockloc = 0;
 	fstype = 0;
+
+	error = fstrans_mount(mp);
+	if (error)
+		return error;
 
 	/*
 	 * Try reading the superblock in each of its possible locations.
@@ -853,7 +867,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	/* First check to see if this is tagged as an Apple UFS filesystem
 	 * in the disklabel
 	 */
-	if ((VOP_IOCTL(devvp, DIOCGPART, &dpart, FREAD, cred, l) == 0) &&
+	if ((VOP_IOCTL(devvp, DIOCGPART, &dpart, FREAD, cred) == 0) &&
 		(dpart.part->p_fstype == FS_APPLEUFS)) {
 		ump->um_flags |= UFS_ISAPPLEUFS;
 	}
@@ -974,7 +988,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	mp->mnt_fs_bshift = fs->fs_bshift;
 	mp->mnt_dev_bshift = DEV_BSHIFT;	/* XXX */
 	mp->mnt_flag |= MNT_LOCAL;
-	mp->mnt_iflag |= IMNT_HAS_TRANS;
+	mp->mnt_iflag |= IMNT_MPSAFE;
 #ifdef FFS_EI
 	if (needswap)
 		ump->um_flags |= UFS_NEEDSWAP;
@@ -1016,6 +1030,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 #endif /* UFS_EXTATTR */
 	return (0);
 out:
+	fstrans_unmount(mp);
 	if (fs)
 		free(fs, M_UFSMNT);
 	devvp->v_specmountpoint = NULL;
@@ -1150,8 +1165,9 @@ ffs_oldfscompat_write(struct fs *fs, struct ufsmount *ump)
  * unmount system call
  */
 int
-ffs_unmount(struct mount *mp, int mntflags, struct lwp *l)
+ffs_unmount(struct mount *mp, int mntflags)
 {
+	struct lwp *l = curlwp;
 	struct ufsmount *ump = VFSTOUFS(mp);
 	struct fs *fs = ump->um_fs;
 	int error, flags, penderr;
@@ -1207,16 +1223,18 @@ ffs_unmount(struct mount *mp, int mntflags, struct lwp *l)
 		ump->um_devvp->v_specmountpoint = NULL;
 	vn_lock(ump->um_devvp, LK_EXCLUSIVE | LK_RETRY);
 	(void)VOP_CLOSE(ump->um_devvp, fs->fs_ronly ? FREAD : FREAD|FWRITE,
-		NOCRED, l);
+		NOCRED);
 	vput(ump->um_devvp);
 	free(fs->fs_csp, M_UFSMNT);
 	free(fs, M_UFSMNT);
 	if (ump->um_oldfscompat != NULL)
 		free(ump->um_oldfscompat, M_UFSMNT);
+	softdep_unmount(mp);
 	mutex_destroy(&ump->um_lock);
 	free(ump, M_UFSMNT);
 	mp->mnt_data = NULL;
 	mp->mnt_flag &= ~MNT_LOCAL;
+	fstrans_unmount(mp);
 	return (0);
 }
 
@@ -1262,7 +1280,7 @@ ffs_flushfiles(struct mount *mp, int flags, struct lwp *l)
 	 * Flush filesystem metadata.
 	 */
 	vn_lock(ump->um_devvp, LK_EXCLUSIVE | LK_RETRY);
-	error = VOP_FSYNC(ump->um_devvp, l->l_cred, FSYNC_WAIT, 0, 0, l);
+	error = VOP_FSYNC(ump->um_devvp, l->l_cred, FSYNC_WAIT, 0, 0);
 	VOP_UNLOCK(ump->um_devvp, 0);
 	return (error);
 }
@@ -1271,7 +1289,7 @@ ffs_flushfiles(struct mount *mp, int flags, struct lwp *l)
  * Get file system statistics.
  */
 int
-ffs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l)
+ffs_statvfs(struct mount *mp, struct statvfs *sbp)
 {
 	struct ufsmount *ump;
 	struct fs *fs;
@@ -1309,9 +1327,10 @@ ffs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l)
  * Note: we are always called with the filesystem marked `MPBUSY'.
  */
 int
-ffs_sync(struct mount *mp, int waitfor, kauth_cred_t cred, struct lwp *l)
+ffs_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
 {
-	struct vnode *vp, *nvp;
+	struct lwp *l = curlwp;
+	struct vnode *vp, *mvp;
 	struct inode *ip;
 	struct ufsmount *ump = VFSTOUFS(mp);
 	struct fs *fs;
@@ -1322,59 +1341,66 @@ ffs_sync(struct mount *mp, int waitfor, kauth_cred_t cred, struct lwp *l)
 		printf("fs = %s\n", fs->fs_fsmnt);
 		panic("update: rofs mod");
 	}
+
+	/* Allocate a marker vnode. */
+	if ((mvp = vnalloc(mp)) == NULL)
+		return (ENOMEM);
+
 	fstrans_start(mp, FSTRANS_SHARED);
 	/*
 	 * Write back each (modified) inode.
 	 */
-	simple_lock(&mntvnode_slock);
+	mutex_enter(&mntvnode_lock);
 loop:
 	/*
 	 * NOTE: not using the TAILQ_FOREACH here since in this loop vgone()
 	 * and vclean() can be called indirectly
 	 */
-	for (vp = TAILQ_FIRST(&mp->mnt_vnodelist); vp; vp = nvp) {
+	for (vp = TAILQ_FIRST(&mp->mnt_vnodelist); vp; vp = vunmark(mvp)) {
+		vmark(mvp, vp);
 		/*
 		 * If the vnode that we are about to sync is no longer
 		 * associated with this mount point, start over.
 		 */
-		if (vp->v_mount != mp)
-			goto loop;
-		simple_lock(&vp->v_interlock);
-		nvp = TAILQ_NEXT(vp, v_mntvnodes);
+		if (vp->v_mount != mp || vismarker(vp))
+			continue;
+		mutex_enter(&vp->v_interlock);
 		ip = VTOI(vp);
-		if (vp->v_type == VNON ||
-		    ((ip->i_flag &
-		      (IN_CHANGE | IN_UPDATE | IN_MODIFIED)) == 0 &&
-		     LIST_EMPTY(&vp->v_dirtyblkhd) &&
-		     UVM_OBJ_IS_CLEAN(&vp->v_uobj)))
+		if (ip == NULL || (vp->v_iflag & (VI_XLOCK|VI_CLEAN)) != 0 ||
+		    vp->v_type == VNON || ((ip->i_flag &
+		    (IN_CHANGE | IN_UPDATE | IN_MODIFIED)) == 0 &&
+		    LIST_EMPTY(&vp->v_dirtyblkhd) &&
+		    UVM_OBJ_IS_CLEAN(&vp->v_uobj)))
 		{
-			simple_unlock(&vp->v_interlock);
+			mutex_exit(&vp->v_interlock);
 			continue;
 		}
 		if (vp->v_type == VBLK &&
 		    fstrans_getstate(mp) == FSTRANS_SUSPENDING) {
-			simple_unlock(&vp->v_interlock);
+			mutex_exit(&vp->v_interlock);
 			continue;
 		}
-		simple_unlock(&mntvnode_slock);
+		mutex_exit(&mntvnode_lock);
 		error = vget(vp, LK_EXCLUSIVE | LK_NOWAIT | LK_INTERLOCK);
 		if (error) {
-			simple_lock(&mntvnode_slock);
-			if (error == ENOENT)
+			mutex_enter(&mntvnode_lock);
+			if (error == ENOENT) {
+				(void)vunmark(mvp);
 				goto loop;
+			}
 			continue;
 		}
 		if (vp->v_type == VREG && waitfor == MNT_LAZY)
 			error = ffs_update(vp, NULL, NULL, 0);
 		else
 			error = VOP_FSYNC(vp, cred,
-			    waitfor == MNT_WAIT ? FSYNC_WAIT : 0, 0, 0, l);
+			    waitfor == MNT_WAIT ? FSYNC_WAIT : 0, 0, 0);
 		if (error)
 			allerror = error;
 		vput(vp);
-		simple_lock(&mntvnode_slock);
+		mutex_enter(&mntvnode_lock);
 	}
-	simple_unlock(&mntvnode_slock);
+	mutex_exit(&mntvnode_lock);
 	/*
 	 * Force stale file system control information to be flushed.
 	 */
@@ -1383,7 +1409,7 @@ loop:
 			allerror = error;
 		/* Flushed work items may create new vnodes to clean */
 		if (allerror == 0 && count) {
-			simple_lock(&mntvnode_slock);
+			mutex_enter(&mntvnode_lock);
 			goto loop;
 		}
 	}
@@ -1391,11 +1417,11 @@ loop:
 	    !LIST_EMPTY(&ump->um_devvp->v_dirtyblkhd))) {
 		vn_lock(ump->um_devvp, LK_EXCLUSIVE | LK_RETRY);
 		if ((error = VOP_FSYNC(ump->um_devvp, cred,
-		    waitfor == MNT_WAIT ? FSYNC_WAIT : 0, 0, 0, l)) != 0)
+		    waitfor == MNT_WAIT ? FSYNC_WAIT : 0, 0, 0)) != 0)
 			allerror = error;
 		VOP_UNLOCK(ump->um_devvp, 0);
 		if (allerror == 0 && waitfor == MNT_WAIT) {
-			simple_lock(&mntvnode_slock);
+			mutex_enter(&mntvnode_lock);
 			goto loop;
 		}
 	}
@@ -1412,6 +1438,7 @@ loop:
 			allerror = error;
 	}
 	fstrans_done(mp);
+	vnfree(mvp);
 	return (allerror);
 }
 
@@ -1444,7 +1471,7 @@ ffs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 		*vpp = NULL;
 		return (error);
 	}
-	ip = pool_get(&ffs_inode_pool, PR_WAITOK);
+	ip = pool_cache_get(ffs_inode_cache, PR_WAITOK);
 
 	/*
 	 * If someone beat us to it, put back the freshly allocated
@@ -1454,11 +1481,13 @@ ffs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 	if (ufs_ihashget(dev, ino, 0) != NULL) {
 		mutex_exit(&ufs_hashlock);
 		ungetnewvnode(vp);
-		pool_put(&ffs_inode_pool, ip);
+		pool_cache_put(ffs_inode_cache, ip);
 		goto retry;
 	}
 
 	vp->v_vflag |= VV_LOCKSWORK;
+	if ((mp->mnt_flag & MNT_SOFTDEP) != 0)
+		vp->v_uflag |= VU_SOFTDEP;
 
 	/*
 	 * XXX MFS ends up here, too, to allocate an inode.  Should we
@@ -1476,6 +1505,12 @@ ffs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 #ifdef QUOTA
 	ufsquota_init(ip);
 #endif
+
+	/*
+	 * Initialize genfs node, we might proceed to destroy it in
+	 * error branches.
+	 */
+	genfs_node_init(vp, &ffs_genfsops);
 
 	/*
 	 * Put it onto its hash chain and lock it so that other requests for
@@ -1505,9 +1540,11 @@ ffs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 		return (error);
 	}
 	if (ip->i_ump->um_fstype == UFS1)
-		ip->i_din.ffs1_din = pool_get(&ffs_dinode1_pool, PR_WAITOK);
+		ip->i_din.ffs1_din = pool_cache_get(ffs_dinode1_cache,
+		    PR_WAITOK);
 	else
-		ip->i_din.ffs2_din = pool_get(&ffs_dinode2_pool, PR_WAITOK);
+		ip->i_din.ffs2_din = pool_cache_get(ffs_dinode2_cache,
+		    PR_WAITOK);
 	ffs_load_inode(bp, ip, fs, ino);
 	if (DOINGSOFTDEP(vp))
 		softdep_load_inodeblock(ip);
@@ -1526,7 +1563,6 @@ ffs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 	 * Finish inode initialization now that aliasing has been resolved.
 	 */
 
-	genfs_node_init(vp, &ffs_genfsops);
 	ip->i_devvp = ump->um_devvp;
 	VREF(ip->i_devvp);
 
@@ -1601,12 +1637,12 @@ ffs_init(void)
 	if (ffs_initcount++ > 0)
 		return;
 
-	pool_init(&ffs_inode_pool, sizeof(struct inode), 0, 0, 0,
-		  "ffsinopl", &pool_allocator_nointr, IPL_NONE);
-	pool_init(&ffs_dinode1_pool, sizeof(struct ufs1_dinode), 0, 0, 0,
-		  "dino1pl", &pool_allocator_nointr, IPL_NONE);
-	pool_init(&ffs_dinode2_pool, sizeof(struct ufs2_dinode), 0, 0, 0,
-		  "dino2pl", &pool_allocator_nointr, IPL_NONE);
+	ffs_inode_cache = pool_cache_init(sizeof(struct inode), 0, 0, 0,
+	    "ffsino", NULL, IPL_NONE, NULL, NULL, NULL);
+	ffs_dinode1_cache = pool_cache_init(sizeof(struct ufs1_dinode), 0, 0, 0,
+	    "ffsdino1", NULL, IPL_NONE, NULL, NULL, NULL);
+	ffs_dinode2_cache = pool_cache_init(sizeof(struct ufs2_dinode), 0, 0, 0,
+	    "ffsdino2", NULL, IPL_NONE, NULL, NULL, NULL);
 	softdep_initialize();
 	ffs_snapshot_init();
 	ufs_init();
@@ -1628,9 +1664,9 @@ ffs_done(void)
 	/* XXX softdep cleanup ? */
 	ffs_snapshot_fini();
 	ufs_done();
-	pool_destroy(&ffs_dinode2_pool);
-	pool_destroy(&ffs_dinode1_pool);
-	pool_destroy(&ffs_inode_pool);
+	pool_cache_destroy(ffs_dinode2_cache);
+	pool_cache_destroy(ffs_dinode1_cache);
+	pool_cache_destroy(ffs_inode_cache);
 }
 
 SYSCTL_SETUP(sysctl_vfs_ffs_setup, "sysctl vfs.ffs subtree setup")
@@ -1757,7 +1793,7 @@ ffs_cgupdate(struct ufsmount *mp, int waitfor)
 
 int
 ffs_extattrctl(struct mount *mp, int cmd, struct vnode *vp,
-    int attrnamespace, const char *attrname, struct lwp *l)
+    int attrnamespace, const char *attrname)
 {
 #ifdef UFS_EXTATTR
 	/*
@@ -1765,10 +1801,9 @@ ffs_extattrctl(struct mount *mp, int cmd, struct vnode *vp,
 	 * UFS2 has native extended attributes.
 	 */
 	if (VFSTOUFS(mp)->um_fstype == UFS1)
-		return (ufs_extattrctl(mp, cmd, vp, attrnamespace, attrname,
-				       l));
+		return (ufs_extattrctl(mp, cmd, vp, attrnamespace, attrname));
 #endif
-	return (vfs_stdextattrctl(mp, cmd, vp, attrnamespace, attrname, l));
+	return (vfs_stdextattrctl(mp, cmd, vp, attrnamespace, attrname));
 }
 
 int
@@ -1781,7 +1816,7 @@ ffs_suspendctl(struct mount *mp, int cmd)
 	case SUSPEND_SUSPEND:
 		if ((error = fstrans_setstate(mp, FSTRANS_SUSPENDING)) != 0)
 			return error;
-		error = ffs_sync(mp, MNT_WAIT, l->l_proc->p_cred, l);
+		error = ffs_sync(mp, MNT_WAIT, l->l_proc->p_cred);
 		if (error == 0)
 			error = fstrans_setstate(mp, FSTRANS_SUSPENDED);
 		if (error != 0) {

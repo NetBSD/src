@@ -1,7 +1,9 @@
+/*	$NetBSD: rsmisc.c,v 1.1.46.1 2008/01/09 01:55:23 matt Exp $	*/
+
 /*******************************************************************************
  *
  * Module Name: rsmisc - Miscellaneous resource descriptors
- *              xRevision: 1.44 $
+ *              $Revision: 1.1.46.1 $
  *
  ******************************************************************************/
 
@@ -9,7 +11,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2007, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -115,12 +117,12 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rsmisc.c,v 1.1 2006/03/23 13:36:31 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rsmisc.c,v 1.1.46.1 2008/01/09 01:55:23 matt Exp $");
 
 #define __RSMISC_C__
 
-#include "acpi.h"
-#include "acresrc.h"
+#include <dist/acpica/acpi.h>
+#include <dist/acpica/acresrc.h>
 
 #define _COMPONENT          ACPI_RESOURCES
         ACPI_MODULE_NAME    ("rsmisc")
@@ -166,7 +168,7 @@ AcpiRsConvertAmlToResource (
     UINT16                  Temp16 = 0;
 
 
-    ACPI_FUNCTION_TRACE ("RsConvertAmlToResource");
+    ACPI_FUNCTION_TRACE (RsConvertAmlToResource);
 
 
     if (((ACPI_NATIVE_UINT) Resource) & 0x3)
@@ -437,7 +439,7 @@ AcpiRsConvertResourceToAml (
     UINT16                  ItemCount = 0;
 
 
-    ACPI_FUNCTION_TRACE ("RsConvertResourceToAml");
+    ACPI_FUNCTION_TRACE (RsConvertResourceToAml);
 
 
     /*

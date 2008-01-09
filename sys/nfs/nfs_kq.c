@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_kq.c,v 1.15 2007/07/09 21:11:30 ad Exp $	*/
+/*	$NetBSD: nfs_kq.c,v 1.15.8.1 2008/01/09 01:57:52 matt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,15 +37,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_kq.c,v 1.15 2007/07/09 21:11:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_kq.c,v 1.15.8.1 2008/01/09 01:57:52 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/condvar.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
+#include <sys/kmem.h>
 #include <sys/mount.h>
-#include <sys/malloc.h>
 #include <sys/mutex.h>
 #include <sys/vnode.h>
 #include <sys/unistd.h>
@@ -127,7 +127,7 @@ nfs_kqpoll(void *arg)
 			/* save v_size, nfs_getattr() updates it */
 			osize = ke->vp->v_size;
 
-			(void) VOP_GETATTR(ke->vp, &attr, l->l_cred, l);
+			(void) VOP_GETATTR(ke->vp, &attr, l->l_cred);
 
 			/* following is a bit fragile, but about best
 			 * we can get */
@@ -195,7 +195,7 @@ filt_nfsdetach(struct knote *kn)
 				/* last user, g/c */
 				cv_destroy(&ke->cv);
 				SLIST_REMOVE(&kevlist, ke, kevq, kev_link);
-				FREE(ke, M_KEVENT);
+				kmem_free(ke, sizeof(*ke));
 			}
 			break;
 		}
@@ -252,7 +252,7 @@ nfs_kqfilter(void *v)
 	struct kevq *ke;
 	int error = 0;
 	struct vattr attr;
-	struct lwp *l = curlwp;		/* XXX */
+	struct lwp *l = curlwp;
 
 	vp = ap->a_vp;
 	kn = ap->a_kn;
@@ -264,7 +264,7 @@ nfs_kqfilter(void *v)
 		kn->kn_fop = &nfsvnode_filtops;
 		break;
 	default:
-		return (1);
+		return (EINVAL);
 	}
 
 	kn->kn_hook = vp;
@@ -279,7 +279,7 @@ nfs_kqfilter(void *v)
 	 * held. This is likely cheap due to attrcache, so do it now.
 	 */
 	memset(&attr, 0, sizeof(attr));
-	(void) VOP_GETATTR(vp, &attr, l->l_cred, l);
+	(void) VOP_GETATTR(vp, &attr, l->l_cred);
 
 	mutex_enter(&nfskevq_lock);
 
@@ -301,8 +301,7 @@ nfs_kqfilter(void *v)
 		ke->usecount++;
 	} else {
 		/* need a new one */
-		MALLOC(ke, struct kevq *, sizeof(struct kevq), M_KEVENT,
-			M_WAITOK);
+		ke = kmem_alloc(sizeof(*ke), KM_SLEEP);
 		ke->vp = vp;
 		ke->usecount = 1;
 		ke->flags = 0;

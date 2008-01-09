@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.20.24.1 2007/11/06 23:24:31 matt Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.20.24.2 2008/01/09 01:50:18 matt Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -64,7 +64,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.20.24.1 2007/11/06 23:24:31 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.20.24.2 2008/01/09 01:50:18 matt Exp $");
 
 #include "opt_xen.h"
 #include "isa.h"
@@ -81,13 +81,13 @@ __KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.20.24.1 2007/11/06 23:24:31 matt Exp $"
 
 #include <machine/intrdefs.h>
 
-#include <machine/xen.h>
-#include <machine/hypervisor.h>
-#include <machine/evtchn.h>
+#include <xen/xen.h>
+#include <xen/hypervisor.h>
+#include <xen/evtchn.h>
 #ifndef XEN3
-#include <machine/ctrl_if.h>
+#include <xen/ctrl_if.h>
 #endif
-#include <machine/xenfunc.h>
+#include <xen/xenfunc.h>
 
 /*
  * This lock protects updates to the following mapping and reference-count
@@ -116,8 +116,7 @@ physdev_op_t physdev_op_notify = {
 };
 #endif
 
-int debug_port;
-int xen_debug_handler(void *);
+int debug_port = -1;
 #ifndef XEN3
 static int xen_misdirect_handler(void *);
 #endif
@@ -153,20 +152,13 @@ events_default_setup()
 void
 init_events()
 {
+#ifndef XEN3
 	int evtch;
 
-	evtch = bind_virq_to_evtch(VIRQ_DEBUG);
-	aprint_verbose("debug virtual interrupt using event channel %d\n",
-	    evtch);
-	event_set_handler(evtch, &xen_debug_handler, NULL, IPL_DEBUG,
-	    "debugev");
-	hypervisor_enable_event(evtch);
-
-#ifndef XEN3
 	evtch = bind_virq_to_evtch(VIRQ_MISDIRECT);
 	aprint_verbose("misdirect virtual interrupt using event channel %d\n",
 	    evtch);
-	event_set_handler(evtch, &xen_misdirect_handler, NULL, IPL_DIE,
+	event_set_handler(evtch, &xen_misdirect_handler, NULL, IPL_HIGH,
 	    "misdirev");
 	hypervisor_enable_event(evtch);
 
@@ -174,6 +166,16 @@ init_events()
 	 * alive. */
 	ctrl_if_init();
 #endif
+	debug_port = bind_virq_to_evtch(VIRQ_DEBUG);
+	aprint_verbose("debug virtual interrupt using event channel %d\n",
+	    debug_port);
+	/*
+	 * Don't call event_set_handler(), we'll use a shortcut. Just set
+	 * evtsource[] to a non-NULL value so that evtchn_do_event will
+	 * be called.
+	 */
+	evtsource[debug_port] = (void *)-1;
+	hypervisor_enable_event(debug_port);
 
 	x86_enable_intr();		/* at long last... */
 }
@@ -205,8 +207,7 @@ evtchn_do_event(int evtch, struct intrframe *regs)
 	 * Shortcut for the debug handler, we want it to always run,
 	 * regardless of the IPL level.
 	 */
-
-	if (evtch == debug_port) {
+	if (__predict_false(evtch == debug_port)) {
 		xen_debug_handler(NULL);
 		hypervisor_enable_event(evtch);
 		return 0;
@@ -289,8 +290,6 @@ bind_virq_to_evtch(int virq)
 		if (HYPERVISOR_event_channel_op(&op) != 0)
 			panic("Failed to bind virtual IRQ %d\n", virq);
 		evtchn = op.u.bind_virq.port;
-		if (virq == VIRQ_DEBUG)
-			debug_port = evtchn;
 
 		virq_to_evtch[virq] = evtchn;
 	}
@@ -605,9 +604,9 @@ xen_debug_handler(void *arg)
 {
 	struct cpu_info *ci = curcpu();
 	int i;
-	int ci_ilevel = ci->ci_ilevel;
-	int ci_ipending = ci->ci_ipending;
-	int ci_idepth = ci->ci_idepth;
+	int xci_ilevel = ci->ci_ilevel;
+	int xci_ipending = ci->ci_ipending;
+	int xci_idepth = ci->ci_idepth;
 	u_long upcall_pending =
 	    HYPERVISOR_shared_info->vcpu_info[0].evtchn_upcall_pending;
 	u_long upcall_mask =
@@ -630,7 +629,7 @@ xen_debug_handler(void *arg)
 	__insn_barrier();
 	printf("debug event\n");
 	printf("ci_ilevel 0x%x ci_ipending 0x%x ci_idepth %d\n",
-	    ci_ilevel, ci_ipending, ci_idepth);
+	    xci_ilevel, xci_ipending, xci_idepth);
 	printf("evtchn_upcall_pending %ld evtchn_upcall_mask %ld"
 	    " evtchn_pending_sel 0x%lx\n",
 		upcall_pending, upcall_mask, pending_sel);

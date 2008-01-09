@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.28.6.1 2007/11/06 23:31:04 matt Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.28.6.2 2008/01/09 01:55:40 matt Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.28.6.1 2007/11/06 23:31:04 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.28.6.2 2008/01/09 01:55:40 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,63 +84,6 @@ struct isoreaddir {
 int	iso_uiodir(struct isoreaddir *, struct dirent *, off_t);
 int	iso_shipdir(struct isoreaddir *);
 
-#if 0
-/*
- * Mknod vnode call
- *  Actually remap the device number
- */
-int
-cd9660_mknod(ndp, vap, cred, p)
-	struct nameidata *ndp;
-	kauth_cred_t cred;
-	struct vattr *vap;
-	struct proc *p;
-{
-#ifndef	ISODEVMAP
-	PNBUF_PUT(ndp->ni_pnbuf);
-	vput(ndp->ni_dvp);
-	vput(ndp->ni_vp);
-	return (EINVAL);
-#else
-	struct vnode *vp;
-	struct iso_node *ip;
-	struct iso_dnode *dp;
-
-	vp = ndp->ni_vp;
-	ip = VTOI(vp);
-
-	if (ip->i_mnt->iso_ftype != ISO_FTYPE_RRIP
-	    || vap->va_type != vp->v_type
-	    || (vap->va_type != VCHR && vap->va_type != VBLK)) {
-		PNBUF_PUT(ndp->ni_pnbuf);
-		vput(ndp->ni_dvp);
-		vput(ndp->ni_vp);
-		return (EINVAL);
-	}
-
-	dp = iso_dmap(ip->i_dev, ip->i_number, 1);
-	if (ip->inode.iso_rdev == vap->va_rdev ||
-	    vap->va_rdev == (dev_t)VNOVAL) {
-		/* same as the unmapped one, delete the mapping */
-		LIST_REMOVE(dp, d_hash);
-		FREE(dp, M_CACHE);
-	} else
-		/* enter new mapping */
-		dp->d_dev = vap->va_rdev;
-
-	/*
-	 * Remove inode so that it will be reloaded by iget and
-	 * checked to see if it is an alias of an existing entry
-	 * in the inode cache.
-	 */
-	vput(vp);
-	vp->v_type = VNON;
-	vgone(vp);
-	return (0);
-#endif
-}
-#endif
-
 /*
  * Check mode permission on inode pointer. Mode is READ, WRITE or EXEC.
  * The mode is shifted to select the owner/group/other fields. The
@@ -154,7 +97,6 @@ cd9660_access(v)
 		struct vnode *a_vp;
 		int  a_mode;
 		kauth_cred_t a_cred;
-		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct iso_node *ip = VTOI(vp);
@@ -187,7 +129,6 @@ cd9660_getattr(v)
 		struct vnode *a_vp;
 		struct vattr *a_vap;
 		kauth_cred_t a_cred;
-		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct iso_node *ip = VTOI(vp);

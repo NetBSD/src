@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ioctl.h,v 1.23 2005/12/11 12:20:19 christos Exp $	*/
+/*	$NetBSD: linux_ioctl.h,v 1.23.46.1 2008/01/09 01:51:10 matt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -43,23 +43,23 @@ struct linux_sys_ioctl_args;
 
 #ifdef _KERNEL
 __BEGIN_DECLS
-int linux_machdepioctl __P((struct lwp *, void *, register_t *));
-int linux_ioctl_cdrom __P((struct lwp *, struct linux_sys_ioctl_args *,
-    register_t *));
-int linux_ioctl_termios __P((struct lwp *, struct linux_sys_ioctl_args *,
-    register_t *));
-int linux_ioctl_socket __P((struct lwp *, struct linux_sys_ioctl_args *,
-    register_t *));
-int linux_ioctl_hdio __P((struct lwp *, struct linux_sys_ioctl_args *,
-    register_t *));
-int linux_ioctl_fdio __P((struct lwp *, struct linux_sys_ioctl_args *uap,
-                 register_t *retval));
-int linux_ioctl_blkio __P((struct lwp *, struct linux_sys_ioctl_args *uap,
-                 register_t *retval));
-int linux_ioctl_sg __P((struct lwp *, struct linux_sys_ioctl_args *uap,
-                 register_t *retval));
-int linux_ioctl_mtio __P((struct lwp *, struct linux_sys_ioctl_args *uap, 
-                 register_t *retval));
+int linux_machdepioctl(struct lwp *, const struct linux_sys_ioctl_args *, register_t *);
+int linux_ioctl_cdrom(struct lwp *, const struct linux_sys_ioctl_args *,
+    register_t *);
+int linux_ioctl_termios(struct lwp *, const struct linux_sys_ioctl_args *,
+    register_t *);
+int linux_ioctl_socket(struct lwp *, const struct linux_sys_ioctl_args *,
+    register_t *);
+int linux_ioctl_hdio(struct lwp *, const struct linux_sys_ioctl_args *,
+    register_t *);
+int linux_ioctl_fdio(struct lwp *, const struct linux_sys_ioctl_args *uap,
+                 register_t *retval);
+int linux_ioctl_blkio(struct lwp *, const struct linux_sys_ioctl_args *uap,
+                 register_t *retval);
+int linux_ioctl_sg(struct lwp *, const struct linux_sys_ioctl_args *uap,
+                 register_t *retval);
+int linux_ioctl_mtio(struct lwp *, const struct linux_sys_ioctl_args *uap, 
+                 register_t *retval);
 __END_DECLS
 #endif	/* !_KERNEL */
 

@@ -1,5 +1,5 @@
-# $NetBSD: Makefile,v 1.3.12.2 2007/11/06 23:32:58 matt Exp $
+# $NetBSD: Makefile,v 1.3.12.3 2008/01/09 01:56:50 matt Exp $
 
-SUBDIR=		aps it lm nsclpcsio smsc ug
+SUBDIR=		aps itesio lm nsclpcsio smsc ug
 
 .include <bsd.subdir.mk>

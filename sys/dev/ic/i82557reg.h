@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557reg.h,v 1.18 2005/12/11 12:21:26 christos Exp $	*/
+/*	$NetBSD: i82557reg.h,v 1.18.46.1 2008/01/09 01:52:54 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -143,6 +143,7 @@
 #define FXP_SCB_COMMAND_RU_BASE		6
 #define FXP_SCB_COMMAND_RU_RBDRESUME	7
 
+#define FXP_SCB_INTRCNTL_REQUEST_SWI	0x02
 /*
  * Command block definitions
  */
@@ -368,6 +369,7 @@ struct fxp_tbd {
 #define FXP_CB_STATUS_C		0x8000
 
 /* commands */
+#define FXP_CB_COMMAND_CMD	0x0007	/* XXX how about FXPF_IPCB case? */
 #define FXP_CB_COMMAND_NOP	0x0
 #define FXP_CB_COMMAND_IAS	0x1
 #define FXP_CB_COMMAND_CONFIG	0x2

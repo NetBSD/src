@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_exec.c,v 1.64 2007/04/22 08:29:58 dsl Exp $	 */
+/*	$NetBSD: mach_exec.c,v 1.64.8.1 2008/01/09 01:51:25 matt Exp $	 */
 
 /*-
  * Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.64 2007/04/22 08:29:58 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.64.8.1 2008/01/09 01:51:25 matt Exp $");
 
 #include "opt_syscall_debug.h"
 
@@ -133,12 +133,7 @@ const struct emul emul_mach = {
  * emulation, and it probably contains Darwin specific bits.
  */
 int
-exec_mach_copyargs(l, pack, arginfo, stackp, argp)
-	struct lwp *l;
-	struct exec_package *pack;
-	struct ps_strings *arginfo;
-	char **stackp;
-	void *argp;
+exec_mach_copyargs(struct lwp *l, struct exec_package *pack, struct ps_strings *arginfo, char **stackp, void *argp)
 {
 	struct exec_macho_emul_arg *emea;
 	struct exec_macho_object_header *macho_hdr;
@@ -172,7 +167,7 @@ exec_mach_copyargs(l, pack, arginfo, stackp, argp)
 	*stackp += len + 1;
 
 	/* We don't need this anymore */
-	free(pack->ep_emul_arg, M_EXEC);
+	free(pack->ep_emul_arg, M_TEMP);
 	pack->ep_emul_arg = NULL;
 
 	len = len % sizeof(zero);
@@ -190,17 +185,14 @@ exec_mach_copyargs(l, pack, arginfo, stackp, argp)
 }
 
 int
-exec_mach_probe(path)
-	const char **path;
+exec_mach_probe(const char **path)
 {
 	*path = emul_mach.e_path;
 	return 0;
 }
 
 void
-mach_e_proc_exec(p, epp)
-	struct proc *p;
-	struct exec_package *epp;
+mach_e_proc_exec(struct proc *p, struct exec_package *epp)
 {
 	mach_e_proc_init(p, p->p_vmspace);
 
@@ -218,10 +210,7 @@ mach_e_proc_fork(struct proc *p, struct proc *parent, int forkflags)
 }
 
 void
-mach_e_proc_fork1(p, parent, allocate)
-	struct proc *p;
-	struct proc *parent;
-	int allocate;
+mach_e_proc_fork1(struct proc *p, struct proc *parent, int allocate)
 {
 	struct mach_emuldata *med1;
 	struct mach_emuldata *med2;
@@ -295,10 +284,10 @@ mach_e_proc_init(struct proc *p, struct vmspace *vmspace)
 	 * must free anything that will not be used anymore.
 	 */
 	if (med->med_inited != 0) {
-		lockmgr(&med->med_rightlock, LK_EXCLUSIVE, NULL);
+		rw_enter(&med->med_rightlock, RW_WRITER);
 		while ((mr = LIST_FIRST(&med->med_right)) != NULL)
 			mach_right_put_exclocked(mr, MACH_PORT_TYPE_ALL_RIGHTS);
-		lockmgr(&med->med_rightlock, LK_RELEASE, NULL);
+		rw_exit(&med->med_rightlock);
 
 		/*
 		 * Do not touch special ports. Some other process (eg: gdb)
@@ -310,8 +299,8 @@ mach_e_proc_init(struct proc *p, struct vmspace *vmspace)
 		 * p->p_emuldata is uninitialized. Go ahead and initialize it.
 		 */
 		LIST_INIT(&med->med_right);
-		lockinit(&med->med_rightlock, PZERO|PCATCH, "mach_right", 0, 0);
-		lockinit(&med->med_exclock, PZERO, "exclock", 0, 0);
+		rw_init(&med->med_rightlock);
+		rw_init(&med->med_exclock);
 
 		/*
 		 * For debugging purpose, it's convenient to have each process
@@ -360,8 +349,7 @@ mach_e_proc_init(struct proc *p, struct vmspace *vmspace)
 }
 
 void
-mach_e_proc_exit(p)
-	struct proc *p;
+mach_e_proc_exit(struct proc *p)
 {
 	struct mach_emuldata *med;
 	struct mach_right *mr;
@@ -372,10 +360,10 @@ mach_e_proc_exit(p)
 
 	med = (struct mach_emuldata *)p->p_emuldata;
 
-	lockmgr(&med->med_rightlock, LK_EXCLUSIVE, NULL);
+	rw_enter(&med->med_rightlock, RW_WRITER);
 	while ((mr = LIST_FIRST(&med->med_right)) != NULL)
 		mach_right_put_exclocked(mr, MACH_PORT_TYPE_ALL_RIGHTS);
-	lockmgr(&med->med_rightlock, LK_RELEASE, NULL);
+	rw_exit(&med->med_rightlock);
 
 	MACH_PORT_UNREF(med->med_bootstrap);
 
@@ -384,7 +372,7 @@ mach_e_proc_exit(p)
 	 * release it now as it will never be released by the
 	 * exception handler.
 	 */
-	if (lockstatus(&med->med_exclock) != 0)
+	if (rw_lock_held(&med->med_exclock))
 		wakeup(&med->med_exclock);
 
 	/*
@@ -404,6 +392,8 @@ mach_e_proc_exit(p)
 		if (med->med_exc[i] != NULL)
 			MACH_PORT_UNREF(med->med_exc[i]);
 
+	rw_destroy(&med->med_exclock);
+	rw_destroy(&med->med_rightlock);
 	free(med, M_EMULDATA);
 	p->p_emuldata = NULL;
 
@@ -434,8 +424,7 @@ mach_e_lwp_fork(struct lwp *l1, struct lwp *l2)
 }
 
 void
-mach_e_lwp_exit(l)
-	struct lwp *l;
+mach_e_lwp_exit(struct lwp *l)
 {
 	struct mach_lwp_emuldata *mle;
 

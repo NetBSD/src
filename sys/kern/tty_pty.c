@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.101.8.1 2007/11/08 11:00:09 matt Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.101.8.2 2008/01/09 01:56:26 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.101.8.1 2007/11/08 11:00:09 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.101.8.2 2008/01/09 01:56:26 matt Exp $");
 
 #include "opt_compat_sunos.h"
 #include "opt_ptm.h"
@@ -319,9 +319,9 @@ ptsopen(dev_t dev, int flag, int devtype, struct lwp *l)
 	if ((error = pty_check(ptn)) != 0)
 		return (error);
 
+	mutex_spin_enter(&tty_lock);
 	pti = pt_softc[ptn];
 	tp = pti->pt_tty;
-
 	if (!ISSET(tp->t_state, TS_ISOPEN)) {
 		ttychars(tp);		/* Set up default chars */
 		tp->t_iflag = TTYDEF_IFLAG;
@@ -331,13 +331,13 @@ ptsopen(dev_t dev, int flag, int devtype, struct lwp *l)
 		tp->t_ispeed = tp->t_ospeed = TTYDEF_SPEED;
 		ttsetwater(tp);		/* would be done in xxparam() */
 	} else if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN,
-	    tp) != 0)
+	    tp) != 0) {
+		mutex_spin_exit(&tty_lock);
 		return (EBUSY);
+	}
 	if (tp->t_oproc)			/* Ctrlr still around. */
 		SET(tp->t_state, TS_CARR_ON);
-
 	if (!ISSET(flag, O_NONBLOCK)) {
-		mutex_spin_enter(&tty_lock);
 		while (!ISSET(tp->t_state, TS_CARR_ON)) {
 			tp->t_wopen++;
 			error = ttysleep(tp, &tp->t_rawq.c_cv, true, 0);
@@ -347,8 +347,8 @@ ptsopen(dev_t dev, int flag, int devtype, struct lwp *l)
 				return (error);
 			}
 		}
-		mutex_spin_exit(&tty_lock);
 	}
+	mutex_spin_exit(&tty_lock);
 	error = (*tp->t_linesw->l_open)(dev, tp);
 	ptcwakeup(tp, FREAD|FWRITE);
 	return (error);
@@ -377,23 +377,25 @@ ptsread(dev, uio, flag)
 	struct pt_softc *pti = pt_softc[minor(dev)];
 	struct tty *tp = pti->pt_tty;
 	int error = 0;
-	int cc;
+	int cc, c;
 
 again:
 	if (pti->pt_flags & PF_REMOTE) {
+		mutex_spin_enter(&tty_lock);
 		while (isbackground(p, tp)) {	/* XXXSMP */
 			if (sigismasked(curlwp, SIGTTIN) ||
 			    p->p_pgrp->pg_jobc == 0 ||
-			    p->p_flag & PS_PPWAIT)
+			    p->p_flag & PS_PPWAIT) {
+				mutex_spin_exit(&tty_lock);
 				return (EIO);
-			mutex_spin_enter(&tty_lock);
+			}
 			ttysig(tp, TTYSIG_PG1, SIGTTIN);
 			error = ttysleep(tp, &lbolt, true, 0);
-			mutex_spin_exit(&tty_lock);
-			if (error)
+			if (error) {
+				mutex_spin_exit(&tty_lock);
 				return (error);
+			}
 		}
-		mutex_spin_enter(&tty_lock);
 		if (tp->t_canq.c_cc == 0) {
 			if (flag & IO_NDELAY) {
 				mutex_spin_exit(&tty_lock);
@@ -406,8 +408,9 @@ again:
 			goto again;
 		}
 		while(error == 0 && tp->t_canq.c_cc > 1 && uio->uio_resid > 0) {
+			c = getc(&tp->t_canq);
 			mutex_spin_exit(&tty_lock);
-			error = ureadc(getc(&tp->t_canq), uio);
+			error = ureadc(c, uio);
 			mutex_spin_enter(&tty_lock);
 			/* Re-check terminal state here? */
 		}
@@ -417,9 +420,8 @@ again:
 		mutex_spin_exit(&tty_lock);
 		if (cc)
 			return (error);
-	} else
-		if (tp->t_oproc)
-			error = (*tp->t_linesw->l_read)(tp, uio, flag);
+	} else if (tp->t_oproc)
+		error = (*tp->t_linesw->l_read)(tp, uio, flag);
 	ptcwakeup(tp, FWRITE);
 	return (error);
 }
@@ -464,13 +466,14 @@ ptspoll(dev, events, l)
 /*
  * Start output on pseudo-tty.
  * Wake up process polling or sleeping for input from controlling tty.
- * Called with tty lock held.
  */
 void
 ptsstart(tp)
 	struct tty *tp;
 {
 	struct pt_softc *pti = pt_softc[minor(tp->t_dev)];
+
+	KASSERT(mutex_owned(&tty_lock));
 
 	if (ISSET(tp->t_state, TS_TTSTOP))
 		return;
@@ -485,7 +488,6 @@ ptsstart(tp)
 
 /*
  * Stop output.
- * Called with tty lock held.
  */
 void
 ptsstop(tp, flush)
@@ -493,6 +495,8 @@ ptsstop(tp, flush)
 	int flush;
 {
 	struct pt_softc *pti = pt_softc[minor(tp->t_dev)];
+
+	KASSERT(mutex_owned(&tty_lock));
 
 	/* note: FLUSHREAD and FLUSHWRITE already ok */
 	if (flush == 0) {
@@ -570,8 +574,8 @@ ptcclose(dev_t dev, int flag, int devtype, struct lwp *l)
 	struct tty *tp = pti->pt_tty;
 
 	(void)(*tp->t_linesw->l_modem)(tp, 0);
-	CLR(tp->t_state, TS_CARR_ON);
 	mutex_spin_enter(&tty_lock);
+	CLR(tp->t_state, TS_CARR_ON);
 	tp->t_oproc = 0;		/* mark closed */
 	mutex_spin_exit(&tty_lock);
 	return (0);
@@ -658,14 +662,7 @@ ptcread(dev, uio, flag)
 		if (error == 0 && !ISSET(tp->t_state, TS_ISOPEN))
 			error = EIO;
 	}
-
-	if (tp->t_outq.c_cc <= tp->t_lowat) {
-		if (ISSET(tp->t_state, TS_ASLEEP)) {
-			CLR(tp->t_state, TS_ASLEEP);
-			cv_broadcast(&tp->t_outq.c_cv);
-		}
-		selnotify(&tp->t_wsel, NOTE_SUBMIT);
-	}
+	ttypull(tp);
 out:
 	mutex_spin_exit(&tty_lock);
 	return (error);
@@ -720,7 +717,7 @@ again:
 		}
 		(void) putc(0, &tp->t_canq);
 		ttwakeup(tp);
-		cv_broadcast(&tp->t_canq.c_cv);
+		clwakeup(&tp->t_canq);
 		error = 0;
 		goto out;
 	}
@@ -744,7 +741,7 @@ again:
 		while (cc > 0) {
 			if ((tp->t_rawq.c_cc + tp->t_canq.c_cc) >= TTYHOG - 2 &&
 			   (tp->t_canq.c_cc > 0 || !ISSET(tp->t_lflag, ICANON))) {
-				cv_broadcast(&tp->t_rawq.c_cv);
+				clwakeup(&tp->t_rawq);
 				goto block;
 			}
 			/* XXX - should change l_rint to be called with lock
@@ -860,7 +857,9 @@ filt_ptcread(struct knote *kn, long hint)
 	pti = kn->kn_hook;
 	tp = pti->pt_tty;
 
-	mutex_spin_enter(&tty_lock);
+	if ((hint & NOTE_SUBMIT) == 0) {
+		mutex_spin_enter(&tty_lock);
+	}
 
 	canread = (ISSET(tp->t_state, TS_ISOPEN) &&
 		    ((tp->t_outq.c_cc > 0 && !ISSET(tp->t_state, TS_TTSTOP)) ||
@@ -879,7 +878,9 @@ filt_ptcread(struct knote *kn, long hint)
 			kn->kn_data++;
 	}
 
-	mutex_spin_exit(&tty_lock);
+	if ((hint & NOTE_SUBMIT) == 0) {
+		mutex_spin_exit(&tty_lock);
+	}
 
 	return (canread);
 }
@@ -909,7 +910,9 @@ filt_ptcwrite(struct knote *kn, long hint)
 	pti = kn->kn_hook;
 	tp = pti->pt_tty;
 
-	mutex_spin_enter(&tty_lock);
+	if ((hint & NOTE_SUBMIT) == 0) {
+		mutex_spin_enter(&tty_lock);
+	}
 
 	canwrite = (ISSET(tp->t_state, TS_ISOPEN) &&
 		    ((pti->pt_flags & PF_REMOTE) ?
@@ -928,7 +931,9 @@ filt_ptcwrite(struct knote *kn, long hint)
 		kn->kn_data = nwrite;
 	}
 
-	mutex_spin_exit(&tty_lock);
+	if ((hint & NOTE_SUBMIT) == 0) {
+		mutex_spin_exit(&tty_lock);
+	}
 
 	return (canwrite);
 }
@@ -954,7 +959,7 @@ ptckqfilter(dev_t dev, struct knote *kn)
 		kn->kn_fop = &ptcwrite_filtops;
 		break;
 	default:
-		return (1);
+		return (EINVAL);
 	}
 
 	kn->kn_hook = pti;

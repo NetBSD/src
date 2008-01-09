@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.94 2007/07/17 20:34:40 christos Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.94.8.1 2008/01/09 01:50:45 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.94 2007/07/17 20:34:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.94.8.1 2008/01/09 01:50:45 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -157,16 +157,14 @@ __KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.94 2007/07/17 20:34:40 christos Exp
 #include <compat/sys/mount.h>
 
 int
-ibcs2_sys_ulimit(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ibcs2_sys_ulimit(struct lwp *l, const struct ibcs2_sys_ulimit_args *uap, register_t *retval)
 {
-	struct ibcs2_sys_ulimit_args /* {
+	/* {
 		syscallarg(int) cmd;
 		syscallarg(int) newlimit;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
+	struct ibcs2_sys_sysconf_args sysconf_ua;
 #ifdef notyet
 	int error;
 	struct rlimit rl;
@@ -200,25 +198,22 @@ ibcs2_sys_ulimit(l, v, retval)
 		*retval = p->p_rlimit[RLIMIT_RSS].rlim_cur; /* XXX */
 		return 0;
 	case IBCS2_GETDTABLESIZE:
-		SCARG(uap, cmd) = IBCS2_SC_OPEN_MAX;
-		return ibcs2_sys_sysconf(l, uap, retval);
+		SCARG(&sysconf_ua, name) = IBCS2_SC_OPEN_MAX;
+		return ibcs2_sys_sysconf(l, &sysconf_ua, retval);
 	default:
 		return ENOSYS;
 	}
 }
 
 int
-ibcs2_sys_waitsys(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ibcs2_sys_waitsys(struct lwp *l, const struct ibcs2_sys_waitsys_args *uap, register_t *retval)
 {
 #if defined(__i386__)
-	struct ibcs2_sys_waitsys_args /* {
+	/* {
 		syscallarg(int) a1;
 		syscallarg(int) a2;
 		syscallarg(int) a3;
-	} */ *uap = v;
+	} */
 #endif
 	int error;
 	int pid, options, status, was_zombie;
@@ -245,15 +240,12 @@ ibcs2_sys_waitsys(l, v, retval)
 }
 
 int
-ibcs2_sys_execv(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ibcs2_sys_execv(struct lwp *l, const struct ibcs2_sys_execv_args *uap, register_t *retval)
 {
-	struct ibcs2_sys_execv_args /* {
+	/* {
 		syscallarg(const char *) path;
 		syscallarg(char **) argp;
-	} */ *uap = v;
+	} */
 	struct sys_execve_args ap;
 
 	SCARG(&ap, path) = SCARG(uap, path);
@@ -264,16 +256,13 @@ ibcs2_sys_execv(l, v, retval)
 }
 
 int
-ibcs2_sys_execve(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ibcs2_sys_execve(struct lwp *l, const struct ibcs2_sys_execve_args *uap, register_t *retval)
 {
-	struct ibcs2_sys_execve_args /* {
+	/* {
 		syscallarg(const char *) path;
 		syscallarg(char **) argp;
 		syscallarg(char **) envp;
-	} */ *uap = v;
+	} */
 	struct sys_execve_args ap;
 
 	SCARG(&ap, path) = SCARG(uap, path);
@@ -284,14 +273,11 @@ ibcs2_sys_execve(l, v, retval)
 }
 
 int
-ibcs2_sys_umount(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ibcs2_sys_umount(struct lwp *l, const struct ibcs2_sys_umount_args *uap, register_t *retval)
 {
-	struct ibcs2_sys_umount_args /* {
+	/* {
 		syscallarg(char *) name;
-	} */ *uap = v;
+	} */
 	struct sys_unmount_args um;
 
 	SCARG(&um, path) = SCARG(uap, name);
@@ -300,18 +286,17 @@ ibcs2_sys_umount(l, v, retval)
 }
 
 int
-ibcs2_sys_mount(struct lwp *l, void *v,
-    register_t *retval)
+ibcs2_sys_mount(struct lwp *l, const struct ibcs2_sys_mount_args *uap, register_t *retval)
 {
 #ifdef notyet
-	struct ibcs2_sys_mount_args /* {
+	/* {
 		syscallarg(char *) special;
 		syscallarg(char *) dir;
 		syscallarg(int) flags;
 		syscallarg(int) fstype;
 		syscallarg(char *) data;
 		syscallarg(int) len;
-	} */ *uap = v;
+	} */
 	int oflags = SCARG(uap, flags), nflags, error;
 	char fsname[MFSNAMELEN];
 
@@ -379,16 +364,13 @@ ibcs2_sys_mount(struct lwp *l, void *v,
  */
 
 int
-ibcs2_sys_getdents(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ibcs2_sys_getdents(struct lwp *l, const struct ibcs2_sys_getdents_args *uap, register_t *retval)
 {
-	struct ibcs2_sys_getdents_args /* {
+	/* {
 		syscallarg(int) fd;
 		syscallarg(char *) buf;
 		syscallarg(int) nbytes;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 	struct dirent *bdp;
 	struct vnode *vp;
@@ -509,16 +491,13 @@ out1:
 }
 
 int
-ibcs2_sys_read(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ibcs2_sys_read(struct lwp *l, const struct ibcs2_sys_read_args *uap, register_t *retval)
 {
-	struct ibcs2_sys_read_args /* {
+	/* {
 		syscallarg(int) fd;
 		syscallarg(char *) buf;
 		syscallarg(u_int) nbytes;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 	struct dirent *bdp;
 	struct vnode *vp;
@@ -543,7 +522,7 @@ ibcs2_sys_read(l, v, retval)
 	/* getvnode() will use the descriptor for us */
 	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0) {
 		if (error == EINVAL)
-			return sys_read(l, uap, retval);
+			return sys_read(l, (const void *)uap, retval);
 		else
 			return error;
 	}
@@ -554,7 +533,7 @@ ibcs2_sys_read(l, v, retval)
 	vp = fp->f_data;
 	if (vp->v_type != VDIR) {
 		FILE_UNUSE(fp, l);
-		return sys_read(l, uap, retval);
+		return sys_read(l, (const void *)uap, retval);
 	}
 	buflen = min(MAXBSIZE, max(DEV_BSIZE, (size_t)SCARG(uap, nbytes)));
 	tbuf = malloc(buflen, M_TEMP, M_WAITOK);
@@ -642,22 +621,19 @@ out1:
 }
 
 int
-ibcs2_sys_mknod(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ibcs2_sys_mknod(struct lwp *l, const struct ibcs2_sys_mknod_args *uap, register_t *retval)
 {
-	struct ibcs2_sys_mknod_args /* {
+	/* {
 		syscallarg(const char *) path;
 		syscallarg(int) mode;
 		syscallarg(int) dev;
-	} */ *uap = v;
+	} */
 
 	if (S_ISFIFO(SCARG(uap, mode))) {
 		struct sys_mkfifo_args ap;
 		SCARG(&ap, path) = SCARG(uap, path);
 		SCARG(&ap, mode) = SCARG(uap, mode);
-		return sys_mkfifo(l, uap, retval);
+		return sys_mkfifo(l, &ap, retval);
 	} else {
 		struct sys_mknod_args ap;
 		SCARG(&ap, path) = SCARG(uap, path);
@@ -668,15 +644,12 @@ ibcs2_sys_mknod(l, v, retval)
 }
 
 int
-ibcs2_sys_getgroups(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ibcs2_sys_getgroups(struct lwp *l, const struct ibcs2_sys_getgroups_args *uap, register_t *retval)
 {
-	struct ibcs2_sys_getgroups_args /* {
+	/* {
 		syscallarg(int) gidsetsize;
 		syscallarg(ibcs2_gid_t *) gidset;
-	} */ *uap = v;
+	} */
 	ibcs2_gid_t iset[16];
 	ibcs2_gid_t *gidset;
 	unsigned int ngrps;
@@ -713,15 +686,12 @@ ibcs2_sys_getgroups(l, v, retval)
 #define COMPAT_NGROUPS16 16
 
 int
-ibcs2_sys_setgroups(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ibcs2_sys_setgroups(struct lwp *l, const struct ibcs2_sys_setgroups_args *uap, register_t *retval)
 {
-	struct ibcs2_sys_setgroups_args /* {
+	/* {
 		syscallarg(int) gidsetsize;
 		syscallarg(ibcs2_gid_t *) gidset;
-	} */ *uap = v;
+	} */
 
 	ibcs2_gid_t iset[COMPAT_NGROUPS16];
 	kauth_cred_t ncred;
@@ -750,14 +720,11 @@ ibcs2_sys_setgroups(l, v, retval)
 }
 
 int
-ibcs2_sys_setuid(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ibcs2_sys_setuid(struct lwp *l, const struct ibcs2_sys_setuid_args *uap, register_t *retval)
 {
-	struct ibcs2_sys_setuid_args /* {
+	/* {
 		syscallarg(int) uid;
-	} */ *uap = v;
+	} */
 	struct sys_setuid_args sa;
 
 	SCARG(&sa, uid) = (uid_t)SCARG(uap, uid);
@@ -765,14 +732,11 @@ ibcs2_sys_setuid(l, v, retval)
 }
 
 int
-ibcs2_sys_setgid(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ibcs2_sys_setgid(struct lwp *l, const struct ibcs2_sys_setgid_args *uap, register_t *retval)
 {
-	struct ibcs2_sys_setgid_args /* {
+	/* {
 		syscallarg(int) gid;
-	} */ *uap = v;
+	} */
 	struct sys_setgid_args sa;
 
 	SCARG(&sa, gid) = (gid_t)SCARG(uap, gid);
@@ -780,11 +744,11 @@ ibcs2_sys_setgid(l, v, retval)
 }
 
 int
-xenix_sys_ftime(struct lwp *l, void *v, register_t *retval)
+xenix_sys_ftime(struct lwp *l, const struct xenix_sys_ftime_args *uap, register_t *retval)
 {
-	struct xenix_sys_ftime_args /* {
+	/* {
 		syscallarg(struct xenix_timeb *) tp;
-	} */ *uap = v;
+	} */
 	struct timeval tv;
 	struct xenix_timeb itb;
 
@@ -798,14 +762,11 @@ xenix_sys_ftime(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-ibcs2_sys_time(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ibcs2_sys_time(struct lwp *l, const struct ibcs2_sys_time_args *uap, register_t *retval)
 {
-	struct ibcs2_sys_time_args /* {
+	/* {
 		syscallarg(ibcs2_time_t *) tp;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 	struct timeval tv;
 
@@ -819,42 +780,41 @@ ibcs2_sys_time(l, v, retval)
 }
 
 int
-ibcs2_sys_pathconf(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ibcs2_sys_pathconf(struct lwp *l, const struct ibcs2_sys_pathconf_args *uap, register_t *retval)
 {
-	struct ibcs2_sys_pathconf_args /* {
+	/* {
 		syscallarg(char *) path;
 		syscallarg(int) name;
-	} */ *uap = v;
-	SCARG(uap, name)++;	/* iBCS2 _PC_* defines are offset by one */
-	return sys_pathconf(l, uap, retval);
+	} */
+	struct sys_pathconf_args bsd_ua;
+
+	SCARG(&bsd_ua, path) = SCARG(uap, path);
+	/* iBCS2 _PC_* defines are offset by one */
+	SCARG(&bsd_ua, name) = SCARG(uap, name) + 1;
+	return sys_pathconf(l, &bsd_ua, retval);
 }
 
 int
-ibcs2_sys_fpathconf(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ibcs2_sys_fpathconf(struct lwp *l, const struct ibcs2_sys_fpathconf_args *uap, register_t *retval)
 {
-	struct ibcs2_sys_fpathconf_args /* {
+	/* {
 		syscallarg(int) fd;
 		syscallarg(int) name;
-	} */ *uap = v;
-	SCARG(uap, name)++;	/* iBCS2 _PC_* defines are offset by one */
-	return sys_fpathconf(l, uap, retval);
+	} */
+	struct sys_fpathconf_args bsd_ua;
+
+	SCARG(&bsd_ua, fd) = SCARG(uap, fd);
+	/* iBCS2 _PC_* defines are offset by one */
+	SCARG(&bsd_ua, name) = SCARG(uap, name) + 1;
+	return sys_fpathconf(l, &bsd_ua, retval);
 }
 
 int
-ibcs2_sys_sysconf(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ibcs2_sys_sysconf(struct lwp *l, const struct ibcs2_sys_sysconf_args *uap, register_t *retval)
 {
-	struct ibcs2_sys_sysconf_args /* {
+	/* {
 		syscallarg(int) name;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 	int mib[2], value, error;
 	size_t len;
@@ -918,14 +878,11 @@ ibcs2_sys_sysconf(l, v, retval)
 }
 
 int
-ibcs2_sys_alarm(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ibcs2_sys_alarm(struct lwp *l, const struct ibcs2_sys_alarm_args *uap, register_t *retval)
 {
-	struct ibcs2_sys_alarm_args /* {
+	/* {
 		syscallarg(unsigned) sec;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 	struct itimerval it, oit;
 	int error;
@@ -949,46 +906,41 @@ ibcs2_sys_alarm(l, v, retval)
 }
 
 int
-ibcs2_sys_getmsg(struct lwp *l, void *v,
-    register_t *retval)
+ibcs2_sys_getmsg(struct lwp *l, const struct ibcs2_sys_getmsg_args *uap, register_t *retval)
 {
 #ifdef notyet
-	struct ibcs2_sys_getmsg_args /* {
+	/* {
 		syscallarg(int) fd;
 		syscallarg(struct ibcs2_stropts *) ctl;
 		syscallarg(struct ibcs2_stropts *) dat;
 		syscallarg(int *) flags;
-	} */ *uap = v;
+	} */
 #endif
 
 	return 0;
 }
 
 int
-ibcs2_sys_putmsg(struct lwp *l, void *v,
-    register_t *retval)
+ibcs2_sys_putmsg(struct lwp *l, const struct ibcs2_sys_putmsg_args *uap, register_t *retval)
 {
 #ifdef notyet
-	struct ibcs2_sys_putmsg_args /* {
+	/* {
 		syscallarg(int) fd;
 		syscallarg(struct ibcs2_stropts *) ctl;
 		syscallarg(struct ibcs2_stropts *) dat;
 		syscallarg(int) flags;
-	} */ *uap = v;
+	} */
 #endif
 
 	return 0;
 }
 
 int
-ibcs2_sys_times(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ibcs2_sys_times(struct lwp *l, const struct ibcs2_sys_times_args *uap, register_t *retval)
 {
-	struct ibcs2_sys_times_args /* {
+	/* {
 		syscallarg(struct tms *) tp;
-	} */ *uap = v;
+	} */
 	struct tms tms;
 	struct timeval t;
 	struct rusage *ru;
@@ -1012,14 +964,11 @@ ibcs2_sys_times(l, v, retval)
 }
 
 int
-ibcs2_sys_stime(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ibcs2_sys_stime(struct lwp *l, const struct ibcs2_sys_stime_args *uap, register_t *retval)
 {
-	struct ibcs2_sys_stime_args /* {
+	/* {
 		syscallarg(long *) timep;
-	} */ *uap = v;
+	} */
 	struct timeval tv;
 	int error;
 
@@ -1031,15 +980,12 @@ ibcs2_sys_stime(l, v, retval)
 }
 
 int
-ibcs2_sys_utime(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ibcs2_sys_utime(struct lwp *l, const struct ibcs2_sys_utime_args *uap, register_t *retval)
 {
-	struct ibcs2_sys_utime_args /* {
+	/* {
 		syscallarg(const char *) path;
 		syscallarg(struct ibcs2_utimbuf *) buf;
-	} */ *uap = v;
+	} */
 	int error;
 	struct timeval *tptr;
 	struct timeval tp[2];
@@ -1063,14 +1009,11 @@ ibcs2_sys_utime(l, v, retval)
 }
 
 int
-ibcs2_sys_nice(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ibcs2_sys_nice(struct lwp *l, const struct ibcs2_sys_nice_args *uap, register_t *retval)
 {
-	struct ibcs2_sys_nice_args /* {
+	/* {
 		syscallarg(int) incr;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 	struct sys_setpriority_args sa;
 
@@ -1088,17 +1031,14 @@ ibcs2_sys_nice(l, v, retval)
  */
 
 int
-ibcs2_sys_pgrpsys(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ibcs2_sys_pgrpsys(struct lwp *l, const struct ibcs2_sys_pgrpsys_args *uap, register_t *retval)
 {
-	struct ibcs2_sys_pgrpsys_args /* {
+	/* {
 		syscallarg(int) type;
 		syscallarg(void *) dummy;
 		syscallarg(int) pid;
 		syscallarg(int) pgid;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 
 	switch (SCARG(uap, type)) {
@@ -1139,11 +1079,11 @@ ibcs2_sys_pgrpsys(l, v, retval)
  */
 
 int
-ibcs2_sys_plock(struct lwp *l, void *v, register_t *retval)
+ibcs2_sys_plock(struct lwp *l, const struct ibcs2_sys_plock_args *uap, register_t *retval)
 {
-	struct ibcs2_sys_plock_args /* {
+	/* {
 		syscallarg(int) cmd;
-	} */ *uap = v;
+	} */
 #define IBCS2_UNLOCK	0
 #define IBCS2_PROCLOCK	1
 #define IBCS2_TEXTLOCK	2
@@ -1163,13 +1103,13 @@ ibcs2_sys_plock(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-ibcs2_sys_uadmin(struct lwp *l, void *v, register_t *retval)
+ibcs2_sys_uadmin(struct lwp *l, const struct ibcs2_sys_uadmin_args *uap, register_t *retval)
 {
-	struct ibcs2_sys_uadmin_args /* {
+	/* {
 		syscallarg(int) cmd;
 		syscallarg(int) func;
 		syscallarg(void *) data;
-	} */ *uap = v;
+	} */
 	int error;
 
 #define SCO_A_REBOOT        1
@@ -1219,13 +1159,13 @@ ibcs2_sys_uadmin(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-ibcs2_sys_sysfs(struct lwp *l, void *v, register_t *retval)
+ibcs2_sys_sysfs(struct lwp *l, const struct ibcs2_sys_sysfs_args *uap, register_t *retval)
 {
-	struct ibcs2_sys_sysfs_args /* {
+	/* {
 		syscallarg(int) cmd;
 		syscallarg(void *) d1;
 		syscallarg(char *) buf;
-	} */ *uap = v;
+	} */
 
 #define IBCS2_GETFSIND        1
 #define IBCS2_GETFSTYP        2
@@ -1241,14 +1181,11 @@ ibcs2_sys_sysfs(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-xenix_sys_rdchk(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+xenix_sys_rdchk(struct lwp *l, const struct xenix_sys_rdchk_args *uap, register_t *retval)
 {
-	struct xenix_sys_rdchk_args /* {
+	/* {
 		syscallarg(int) fd;
-	} */ *uap = v;
+	} */
 	struct file *fp;
 	int nbytes;
 	int error;
@@ -1267,15 +1204,12 @@ xenix_sys_rdchk(l, v, retval)
 }
 
 int
-xenix_sys_chsize(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+xenix_sys_chsize(struct lwp *l, const struct xenix_sys_chsize_args *uap, register_t *retval)
 {
-	struct xenix_sys_chsize_args /* {
+	/* {
 		syscallarg(int) fd;
 		syscallarg(long) size;
-	} */ *uap = v;
+	} */
 	struct sys_ftruncate_args sa;
 
 	SCARG(&sa, fd) = SCARG(uap, fd);
@@ -1285,14 +1219,11 @@ xenix_sys_chsize(l, v, retval)
 }
 
 int
-xenix_sys_nap(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+xenix_sys_nap(struct lwp *l, const struct xenix_sys_nap_args *uap, register_t *retval)
 {
-	struct xenix_sys_nap_args /* {
+	/* {
 		syscallarg(long) millisec;
-	} */ *uap = v;
+	} */
 	int error;
 	struct timespec rqt;
 	struct timespec rmt;
@@ -1307,150 +1238,21 @@ xenix_sys_nap(l, v, retval)
 	return 0;
 }
 
-int
-ibcs2_sys_unlink(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
-{
-	struct ibcs2_sys_unlink_args /* {
-		syscallarg(const char *) path;
-	} */ *uap = v;
-
-	return sys_unlink(l, uap, retval);
-}
-
-int
-ibcs2_sys_chdir(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
-{
-	struct ibcs2_sys_chdir_args /* {
-		syscallarg(const char *) path;
-	} */ *uap = v;
-
-	return sys_chdir(l, uap, retval);
-}
-
-int
-ibcs2_sys_chmod(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
-{
-	struct ibcs2_sys_chmod_args /* {
-		syscallarg(const char *) path;
-		syscallarg(int) mode;
-	} */ *uap = v;
-
-	return sys_chmod(l, uap, retval);
-}
-
-int
-ibcs2_sys_chown(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
-{
-	struct ibcs2_sys_chown_args /* {
-		syscallarg(const char *) path;
-		syscallarg(int) uid;
-		syscallarg(int) gid;
-	} */ *uap = v;
-
-	return sys___posix_chown(l, uap, retval);
-}
-
-int
-ibcs2_sys_rmdir(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
-{
-	struct ibcs2_sys_rmdir_args /* {
-		syscallarg(const char *) path;
-	} */ *uap = v;
-
-	return sys_rmdir(l, uap, retval);
-}
-
-int
-ibcs2_sys_mkdir(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
-{
-	struct ibcs2_sys_mkdir_args /* {
-		syscallarg(const char *) path;
-		syscallarg(int) mode;
-	} */ *uap = v;
-
-	return sys_mkdir(l, uap, retval);
-}
-
-int
-ibcs2_sys_symlink(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
-{
-	struct ibcs2_sys_symlink_args /* {
-		syscallarg(const char *) path;
-		syscallarg(const char *) link;
-	} */ *uap = v;
-
-	return sys_symlink(l, uap, retval);
-}
-
-int
-ibcs2_sys_rename(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
-{
-	struct ibcs2_sys_rename_args /* {
-		syscallarg(const char *) from;
-		syscallarg(const char *) to;
-	} */ *uap = v;
-
-	return sys___posix_rename(l, uap, retval);
-}
-
-int
-ibcs2_sys_readlink(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
-{
-	struct ibcs2_sys_readlink_args /* {
-		syscallarg(const char *) path;
-		syscallarg(char *) buf;
-		syscallarg(int) count;
-	} */ *uap = v;
-
-	return sys_readlink(l, uap, retval);
-}
-
-
 /*
  * mmap compat code borrowed from svr4/svr4_misc.c
  */
 
 int
-ibcs2_sys_mmap(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ibcs2_sys_mmap(struct lwp *l, const struct ibcs2_sys_mmap_args *uap, register_t *retval)
 {
-	struct ibcs2_sys_mmap_args /* {
+	/* {
 		syscallarg(ibcs2_void *) addr;
 		syscallarg(ibcs2_size_t) len;
 		syscallarg(int) prot;
 		syscallarg(int) flags;
 		syscallarg(int) fd;
 		syscallarg(ibcs2_off_t) off;
-	} */ *uap = v;
+	} */
 	struct sys_mmap_args mm;
 
 #define _MAP_NEW	0x80000000 /* XXX why? */
@@ -1471,19 +1273,16 @@ ibcs2_sys_mmap(l, v, retval)
 }
 
 int
-ibcs2_sys_memcntl(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ibcs2_sys_memcntl(struct lwp *l, const struct ibcs2_sys_memcntl_args *uap, register_t *retval)
 {
-	struct ibcs2_sys_memcntl_args /* {
+	/* {
 		syscallarg(ibcs2_void *) addr;
 		syscallarg(ibcs2_size_t) len;
 		syscallarg(int) cmd;
 		syscallarg(ibcs2_void *) arg;
 		syscallarg(int) attr;
 		syscallarg(int) mask;
-	} */ *uap = v;
+	} */
 
 	switch (SCARG(uap, cmd)) {
 	case IBCS2_MC_SYNC:
@@ -1519,12 +1318,11 @@ ibcs2_sys_memcntl(l, v, retval)
 }
 
 int
-ibcs2_sys_gettimeofday(struct lwp *l, void *v,
-    register_t *retval)
+ibcs2_sys_gettimeofday(struct lwp *l, const struct ibcs2_sys_gettimeofday_args *uap, register_t *retval)
 {
-	struct ibcs2_sys_gettimeofday_args /* {
+	/* {
 		syscallarg(struct timeval *) tp;
-	} */ *uap = v;
+	} */
 
 	if (SCARG(uap, tp)) {
 		struct timeval atv;
@@ -1537,14 +1335,11 @@ ibcs2_sys_gettimeofday(struct lwp *l, void *v,
 }
 
 int
-ibcs2_sys_settimeofday(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ibcs2_sys_settimeofday(struct lwp *l, const struct ibcs2_sys_settimeofday_args *uap, register_t *retval)
 {
-	struct ibcs2_sys_settimeofday_args /* {
+	/* {
 		syscallarg(struct timeval *) tp;
-	} */ *uap = v;
+	} */
 	struct sys_settimeofday_args ap;
 
 	SCARG(&ap, tv) = SCARG(uap, tp);
@@ -1553,12 +1348,12 @@ ibcs2_sys_settimeofday(l, v, retval)
 }
 
 int
-ibcs2_sys_scoinfo(struct lwp *l, void *v, register_t *retval)
+ibcs2_sys_scoinfo(struct lwp *l, const struct ibcs2_sys_scoinfo_args *uap, register_t *retval)
 {
-	struct ibcs2_sys_scoinfo_args /* {
+	/* {
 		syscallarg(struct scoutsname *) bp;
 		syscallarg(int) len;
-	} */ *uap = v;
+	} */
 	struct scoutsname uts;
 
 	(void)memset(&uts, 0, sizeof(uts));
@@ -1588,16 +1383,13 @@ ibcs2_sys_scoinfo(struct lwp *l, void *v, register_t *retval)
 #define X_LK_TESTLK 8
 
 int
-xenix_sys_locking(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+xenix_sys_locking(struct lwp *l, const struct xenix_sys_locking_args *uap, register_t *retval)
 {
-	struct xenix_sys_locking_args /* {
+	/* {
 	      syscallarg(int) fd;
 	      syscallarg(int) blk;
 	      syscallarg(int) size;
-	} */ *uap = v;
+	} */
 	struct flock fl;
 	int cmd;
 
@@ -1605,7 +1397,7 @@ xenix_sys_locking(l, v, retval)
 	case X_LK_GETLK:
 	case X_LK_SETLK:
 	case X_LK_SETLKW:
-		return ibcs2_sys_fcntl(l, v, retval);
+		return ibcs2_sys_fcntl(l, (const void *)uap, retval);
 	}
 
 	switch SCARG(uap, blk) {

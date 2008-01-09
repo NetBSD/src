@@ -1,3 +1,5 @@
+/* $NetBSD: drm_linux_list.h,v 1.1.14.1 2008/01/09 01:52:35 matt Exp $ */
+
 /* drm_linux_list.h -- linux list functions for the BSDs.
  * Created: Mon Apr 7 14:30:16 1999 by anholt@FreeBSD.org
  */

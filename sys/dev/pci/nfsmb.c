@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsmb.c,v 1.5.2.1 2007/11/06 23:29:20 matt Exp $	*/
+/*	$NetBSD: nfsmb.c,v 1.5.2.2 2008/01/09 01:53:53 matt Exp $	*/
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfsmb.c,v 1.5.2.1 2007/11/06 23:29:20 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfsmb.c,v 1.5.2.2 2008/01/09 01:53:53 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -116,7 +116,13 @@ nfsmbc_match(struct device *parent, struct cfdata *match, void *aux)
 		case PCI_PRODUCT_NVIDIA_NFORCE3_SMBUS:
 		case PCI_PRODUCT_NVIDIA_NFORCE3_250_SMBUS:
 		case PCI_PRODUCT_NVIDIA_NFORCE4_SMBUS:
+		case PCI_PRODUCT_NVIDIA_NFORCE430_SMBUS:
 		case PCI_PRODUCT_NVIDIA_MCP04_SMBUS:
+		case PCI_PRODUCT_NVIDIA_MCP55_SMB:
+		case PCI_PRODUCT_NVIDIA_MCP61_SMB:
+		case PCI_PRODUCT_NVIDIA_MCP65_SMB:
+		case PCI_PRODUCT_NVIDIA_MCP67_SMB:
+		case PCI_PRODUCT_NVIDIA_MCP73_SMB:
 			return 1;
 		}
 	}
@@ -131,6 +137,7 @@ nfsmbc_attach(struct device *parent, struct device *self, void *aux)
 	struct pci_attach_args *pa = aux;
 	struct nfsmbc_attach_args nfsmbca;
 	pcireg_t reg;
+	int baseregs[2];
 	char devinfo[256];
 
 	aprint_naive("\n");
@@ -145,12 +152,28 @@ nfsmbc_attach(struct device *parent, struct device *self, void *aux)
 
 	nfsmbca.nfsmb_iot = sc->sc_iot;
 
-	reg = pci_conf_read(pa->pa_pc, pa->pa_tag, NFORCE_SMB1);
+	switch (PCI_PRODUCT(pa->pa_id)) {
+	case PCI_PRODUCT_NVIDIA_NFORCE2_SMBUS:
+	case PCI_PRODUCT_NVIDIA_NFORCE2_400_SMBUS:
+	case PCI_PRODUCT_NVIDIA_NFORCE3_SMBUS:
+	case PCI_PRODUCT_NVIDIA_NFORCE3_250_SMBUS:
+	case PCI_PRODUCT_NVIDIA_NFORCE4_SMBUS:
+	case PCI_PRODUCT_NVIDIA_NFORCE430_SMBUS:
+		baseregs[0] = NFORCE_OLD_SMB1;
+		baseregs[1] = NFORCE_OLD_SMB2;
+		break;
+	default:
+		baseregs[0] = NFORCE_SMB1;
+		baseregs[1] = NFORCE_SMB2;
+		break;
+	}
+
+	reg = pci_conf_read(pa->pa_pc, pa->pa_tag, baseregs[0]);
 	nfsmbca.nfsmb_num = 1;
 	nfsmbca.nfsmb_addr = NFORCE_SMBBASE(reg);
 	sc->sc_nfsmb[0] = config_found(&sc->sc_dev, &nfsmbca, nfsmbc_print);
 
-	reg = pci_conf_read(pa->pa_pc, pa->pa_tag, NFORCE_SMB2);
+	reg = pci_conf_read(pa->pa_pc, pa->pa_tag, baseregs[1]);
 	nfsmbca.nfsmb_num = 2;
 	nfsmbca.nfsmb_addr = NFORCE_SMBBASE(reg);
 	sc->sc_nfsmb[1] = config_found(&sc->sc_dev, &nfsmbca, nfsmbc_print);

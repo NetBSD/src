@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.8 2007/04/06 17:48:06 matt Exp $	*/
+/*	$NetBSD: mutex.h,v 1.8.14.1 2008/01/09 01:49:33 matt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@ struct kmutex {
 			uint8_t			s_dummyhi;	/* 3 */
 		} u_s;
 	} mtx_u;
-	uint32_t			mtx_id;			/* 4-7 */
+	uint32_t			mtx_flags;		/* 4-7 */
 };
 #define	mtx_owner	mtx_u.u_owner
 #define	mtx_lock	mtx_u.u_s.s_lock
@@ -147,18 +147,20 @@ MUTEX_CLEAR_WAITERS(volatile kmutex_t *mtx)
 }
 
 static inline void
-MUTEX_INITIALIZE_SPIN(kmutex_t *mtx, u_int id, int ipl)
+MUTEX_INITIALIZE_SPIN(kmutex_t *mtx, bool dodebug, int ipl)
 {
-	mtx->mtx_id = (id << 1) | 1;
+	/* lock_stubs.S checks the lowest bit of mtx_flags using blbs/blbc */
+	mtx->mtx_flags = (dodebug << 1) | 1;
 	mtx->mtx_owner = 0x80000000;
 	mtx->mtx_ipl = makeiplcookie(ipl);
 	mtx->mtx_lock = 0;
 }
 
 static inline void
-MUTEX_INITIALIZE_ADAPTIVE(kmutex_t *mtx, u_int id)
+MUTEX_INITIALIZE_ADAPTIVE(kmutex_t *mtx, bool dodebug)
 {
-	mtx->mtx_id = id << 1;
+	/* lock_stubs.S checks the lowest bit of mtx_flags using blbs/blbc */
+	mtx->mtx_flags = (dodebug << 1);
 	mtx->mtx_ipl = makeiplcookie(-1);
 	mtx->mtx_owner = 0;
 }
@@ -167,25 +169,25 @@ static inline void
 MUTEX_DESTROY(kmutex_t *mtx)
 {
 	mtx->mtx_owner = (uintptr_t)-1L;
-	mtx->mtx_id = 0xdeadface << 1;
+	mtx->mtx_flags = 0xdeadface << 1;
 }
 
-static inline u_int
-MUTEX_GETID(volatile kmutex_t *mtx)
+static inline bool
+MUTEX_DEBUG_P(volatile kmutex_t *mtx)
 {
-	return mtx->mtx_id >> 1;
+	return mtx->mtx_flags >> 1;
 }
 
 static inline bool
 MUTEX_SPIN_P(volatile kmutex_t *mtx)
 {
-	return (mtx->mtx_id & 1) != 0;
+	return (mtx->mtx_flags & 1) != 0;
 }
 
 static inline bool
 MUTEX_ADAPTIVE_P(volatile kmutex_t *mtx)
 {
-	return (mtx->mtx_id & 1) == 0;
+	return (mtx->mtx_flags & 1) == 0;
 }
 
 static inline bool

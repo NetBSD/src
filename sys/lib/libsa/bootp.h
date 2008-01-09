@@ -1,4 +1,4 @@
-/*	$NetBSD: bootp.h,v 1.7 2002/03/20 23:10:39 thorpej Exp $	*/
+/*	$NetBSD: bootp.h,v 1.7.86.1 2008/01/09 01:56:36 matt Exp $	*/
 
 /*
  * Bootstrap Protocol (BOOTP).  RFC951 and RFC1048.
@@ -41,7 +41,7 @@ struct bootp {
 #else
 #define BOOTP_VENDSIZE 64
 #endif
-	unsigned char	bp_vend[BOOTP_VENDSIZE];	/* vendor-specific area */
+	unsigned char	bp_vend[BOOTP_VENDSIZE]; /* vendor-specific area */
 };
 
 /*
@@ -64,7 +64,6 @@ struct bootp {
  */
 #define VM_RFC1048	{ 99, 130, 83, 99 }
 
-
 
 /*
  * RFC1048 tag values used to specify what information is being supplied in
@@ -108,13 +107,13 @@ struct bootp {
 #define TAG_END			((unsigned char) 255)
 
 #ifdef SUPPORT_DHCP
-#define DHCPDISCOVER 1
-#define DHCPOFFER 2
-#define DHCPREQUEST 3
-#define DHCPDECLINE 4
-#define DHCPACK 5
-#define DHCPNAK 6
-#define DHCPRELEASE 7
+#define DHCPDISCOVER	1
+#define DHCPOFFER	2
+#define DHCPREQUEST	3
+#define DHCPDECLINE	4
+#define DHCPACK		5
+#define DHCPNAK		6
+#define DHCPRELEASE	7
 #endif
 
 /*

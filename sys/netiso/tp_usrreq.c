@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_usrreq.c,v 1.32 2007/03/04 06:03:33 christos Exp $	*/
+/*	$NetBSD: tp_usrreq.c,v 1.32.16.1 2008/01/09 01:57:49 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -65,7 +65,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_usrreq.c,v 1.32 2007/03/04 06:03:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_usrreq.c,v 1.32.16.1 2008/01/09 01:57:49 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,6 +90,7 @@ __KERNEL_RCSID(0, "$NetBSD: tp_usrreq.c,v 1.32 2007/03/04 06:03:33 christos Exp 
 #include <netiso/tp_meas.h>
 #include <netiso/iso.h>
 #include <netiso/iso_errno.h>
+#include <netiso/iso_var.h>
 
 int             TNew;
 int             TPNagle1, TPNagle2;
@@ -455,7 +456,7 @@ tp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 			error = EINVAL;
 		else {
 			struct tp_pcb **tt;
-			remque(tpcb);
+			iso_remque(tpcb);
 			tpcb->tp_next = tpcb->tp_prev = tpcb;
 			for (tt = &tp_listeners; *tt; tt = &((*tt)->tp_nextlisten))
 				if ((*tt)->tp_lsuffixlen)

@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_ioctl.c,v 1.5 2007/01/04 19:07:03 elad Exp $	*/
+/*	$NetBSD: hci_ioctl.c,v 1.5.20.1 2008/01/09 01:57:21 matt Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_ioctl.c,v 1.5 2007/01/04 19:07:03 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_ioctl.c,v 1.5.20.1 2008/01/09 01:57:21 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/domain.h>
@@ -60,16 +60,16 @@ hci_dump(void)
 	struct rfcomm_session *rs;
 	struct rfcomm_dlc *dlc;
 
-	printf("HCI:\n");
+	uprintf("HCI:\n");
 	SIMPLEQ_FOREACH(unit, &hci_unit_list, hci_next) {
-		printf("UNIT %s: flags 0x%4.4x, "
+		uprintf("UNIT %s: flags 0x%4.4x, "
 			"num_cmd=%d, num_acl=%d, num_sco=%d\n",
-			unit->hci_devname, unit->hci_flags,
+			device_xname(unit->hci_dev), unit->hci_flags,
 			unit->hci_num_cmd_pkts,
 			unit->hci_num_acl_pkts,
 			unit->hci_num_sco_pkts);
 		TAILQ_FOREACH(link, &unit->hci_links, hl_next) {
-			printf("+HANDLE #%d: %s "
+			uprintf("+HANDLE #%d: %s "
 			    "raddr=%2.2x:%2.2x:%2.2x:%2.2x:%2.2x:%2.2x, "
 			    "state %d, refcnt %d\n",
 			    link->hl_handle,
@@ -79,9 +79,9 @@ hci_dump(void)
 		}
 	}
 
-	printf("L2CAP:\n");
+	uprintf("L2CAP:\n");
 	LIST_FOREACH(chan, &l2cap_active_list, lc_ncid) {
-		printf("CID #%d state %d, psm=0x%4.4x, "
+		uprintf("CID #%d state %d, psm=0x%4.4x, "
 		    "laddr=%2.2x:%2.2x:%2.2x:%2.2x:%2.2x:%2.2x, "
 		    "raddr=%2.2x:%2.2x:%2.2x:%2.2x:%2.2x:%2.2x\n",
 		    chan->lc_lcid, chan->lc_state, chan->lc_raddr.bt_psm,
@@ -90,23 +90,23 @@ hci_dump(void)
 	}
 
 	LIST_FOREACH(chan, &l2cap_listen_list, lc_ncid) {
-		printf("LISTEN psm=0x%4.4x, "
+		uprintf("LISTEN psm=0x%4.4x, "
 		    "laddr=%2.2x:%2.2x:%2.2x:%2.2x:%2.2x:%2.2x\n",
 		    chan->lc_laddr.bt_psm,
 		    BDADDR(chan->lc_laddr.bt_bdaddr));
 	}
 
-	printf("RFCOMM:\n");
+	uprintf("RFCOMM:\n");
 	LIST_FOREACH(rs, &rfcomm_session_active, rs_next) {
 		chan = rs->rs_l2cap;
-		printf("SESSION: state=%d, flags=0x%4.4x, psm 0x%4.4x "
+		uprintf("SESSION: state=%d, flags=0x%4.4x, psm 0x%4.4x "
 		    "laddr=%2.2x:%2.2x:%2.2x:%2.2x:%2.2x:%2.2x, "
 		    "raddr=%2.2x:%2.2x:%2.2x:%2.2x:%2.2x:%2.2x\n",
 		    rs->rs_state, rs->rs_flags, chan->lc_raddr.bt_psm,
 		    BDADDR(chan->lc_laddr.bt_bdaddr),
 		    BDADDR(chan->lc_raddr.bt_bdaddr));
 		LIST_FOREACH(dlc, &rs->rs_dlcs, rd_next) {
-			printf("+DLC channel=%d, dlci=%d, "
+			uprintf("+DLC channel=%d, dlci=%d, "
 			    "state=%d, flags=0x%4.4x, rxcred=%d, rxsize=%ld, "
 			    "txcred=%d, pending=%d, txqlen=%d\n",
 			    dlc->rd_raddr.bt_channel, dlc->rd_dlci,
@@ -119,12 +119,12 @@ hci_dump(void)
 
 	LIST_FOREACH(rs, &rfcomm_session_listen, rs_next) {
 		chan = rs->rs_l2cap;
-		printf("LISTEN: psm 0x%4.4x, "
+		uprintf("LISTEN: psm 0x%4.4x, "
 		    "laddr=%2.2x:%2.2x:%2.2x:%2.2x:%2.2x:%2.2x\n",
 		    chan->lc_laddr.bt_psm,
 		    BDADDR(chan->lc_laddr.bt_bdaddr));
 		LIST_FOREACH(dlc, &rs->rs_dlcs, rd_next)
-			printf("+DLC channel=%d\n", dlc->rd_laddr.bt_channel);
+			uprintf("+DLC channel=%d\n", dlc->rd_laddr.bt_channel);
 	}
 }
 
@@ -136,7 +136,7 @@ hci_ioctl(unsigned long cmd, void *data, struct lwp *l)
 {
 	struct btreq *btr = data;
 	struct hci_unit *unit;
-	int s, err = 0;
+	int err = 0;
 
 	DPRINTFN(1, "cmd %#lx\n", cmd);
 
@@ -176,8 +176,8 @@ hci_ioctl(unsigned long cmd, void *data, struct lwp *l)
 	case SIOCZBTSTATS:
 	case SIOCSBTSCOMTU:
 		SIMPLEQ_FOREACH(unit, &hci_unit_list, hci_next) {
-			if (strncmp(unit->hci_devname, btr->btr_name,
-			    HCI_DEVNAME_SIZE) == 0)
+			if (strncmp(device_xname(unit->hci_dev),
+			    btr->btr_name, HCI_DEVNAME_SIZE) == 0)
 				break;
 		}
 
@@ -206,7 +206,7 @@ hci_ioctl(unsigned long cmd, void *data, struct lwp *l)
 	case SIOCGBTINFO:	/* get unit info */
 	case SIOCGBTINFOA:	/* get info by address */
 		memset(btr, 0, sizeof(struct btreq));
-		strlcpy(btr->btr_name, unit->hci_devname, HCI_DEVNAME_SIZE);
+		strlcpy(btr->btr_name, device_xname(unit->hci_dev), HCI_DEVNAME_SIZE);
 		bdaddr_copy(&btr->btr_bdaddr, &unit->hci_bdaddr);
 
 		btr->btr_flags = unit->hci_flags;
@@ -233,9 +233,7 @@ hci_ioctl(unsigned long cmd, void *data, struct lwp *l)
 			unit->hci_flags &= ~BTF_UP;
 		}
 
-		s = splraiseipl(unit->hci_ipl);
 		unit->hci_flags |= (btr->btr_flags & BTF_INIT);
-		splx(s);
 
 		if ((unit->hci_flags & BTF_UP) == 0
 		    && (btr->btr_flags & BTF_UP)) {
@@ -243,9 +241,7 @@ hci_ioctl(unsigned long cmd, void *data, struct lwp *l)
 			if (err)
 				break;
 
-			s = splraiseipl(unit->hci_ipl);
 			unit->hci_flags |= BTF_UP;
-			splx(s);
 		}
 
 		btr->btr_flags = unit->hci_flags;
@@ -274,10 +270,7 @@ hci_ioctl(unsigned long cmd, void *data, struct lwp *l)
 		break;
 
 	case SIOCGBTSTATS:	/* get unit statistics */
-		s = splraiseipl(unit->hci_ipl);
-		memcpy(&btr->btr_stats, &unit->hci_stats,
-			sizeof(struct bt_stats));
-		splx(s);
+		(*unit->hci_if->get_stats)(unit->hci_dev, &btr->btr_stats, 0);
 		break;
 
 	case SIOCZBTSTATS:	/* get & reset unit statistics */
@@ -286,12 +279,7 @@ hci_ioctl(unsigned long cmd, void *data, struct lwp *l)
 		if (err)
 			break;
 
-		s = splraiseipl(unit->hci_ipl);
-		memcpy(&btr->btr_stats, &unit->hci_stats,
-			sizeof(struct bt_stats));
-		memset(&unit->hci_stats, 0, sizeof(struct bt_stats));
-		splx(s);
-
+		(*unit->hci_if->get_stats)(unit->hci_dev, &btr->btr_stats, 1);
 		break;
 
 	case SIOCSBTSCOMTU:	/* set sco_mtu value for unit */

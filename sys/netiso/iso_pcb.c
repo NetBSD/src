@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_pcb.c,v 1.39 2007/05/02 20:40:29 dyoung Exp $	*/
+/*	$NetBSD: iso_pcb.c,v 1.39.8.1 2008/01/09 01:57:47 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -62,7 +62,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iso_pcb.c,v 1.39 2007/05/02 20:40:29 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iso_pcb.c,v 1.39.8.1 2008/01/09 01:57:47 matt Exp $");
 
 #include "opt_iso.h"
 
@@ -118,7 +118,7 @@ iso_pcballoc(struct socket *so, void *v)
 		return ENOBUFS;
 	isop->isop_head = head;
 	isop->isop_socket = so;
-	insque(isop, head);
+	iso_insque(isop, head);
 	if (so)
 		so->so_pcb = isop;
 	return 0;
@@ -333,8 +333,8 @@ iso_pcbconnect(void *v, struct mbuf *nam, struct lwp *l)
 			return error;
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_ISO]) {
-			printf("iso_pcbconnect localzero 2, ro->ro_rt %p",
-			       isop->isop_route.ro_rt);
+			printf("iso_pcbconnect localzero 2, rt %p",
+			       rtcache_getrt(&isop->isop_route));
 			printf(" ia %p\n", ia);
 		}
 #endif
@@ -545,7 +545,7 @@ iso_pcbdetach(void *v)
 		printf("iso_pcbdetach 4 \n");
 	}
 #endif
-	remque(isop);
+	iso_remque(isop);
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_ISO]) {
 		printf("iso_pcbdetach 5 \n");

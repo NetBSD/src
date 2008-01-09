@@ -1,4 +1,4 @@
-/*	$NetBSD: gt.c,v 1.13.20.1 2007/11/06 23:28:15 matt Exp $	*/
+/*	$NetBSD: gt.c,v 1.13.20.2 2008/01/09 01:53:16 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.13.20.1 2007/11/06 23:28:15 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.13.20.2 2008/01/09 01:53:16 matt Exp $");
 
 #include "opt_marvell.h"
 #include "locators.h"
@@ -563,7 +563,7 @@ gt_comm_intr_enb(struct gt_softc *gt)
 	gt_write(gt, GT_CommUnitIntr_Mask, GT_CommUnitIntr_DFLT);
 	(void)gt_read(gt, GT_CommUnitIntr_ErrAddr);
 
-	intr_establish(IRQ_COMM, IST_LEVEL, IPL_GTERR, gt_comm_intr, gt);
+	intr_establish(IRQ_COMM, IST_LEVEL, IPL_VM, gt_comm_intr, gt);
 	printf("%s: Comm Unit irpt at %d\n", gt->gt_dev.dv_xname, IRQ_COMM);
 }
 
@@ -626,7 +626,7 @@ gt_ecc_intr_enb(struct gt_softc *gt)
 	(void)gt_read(gt, GT_ECC_Addr);	/* read last! */
 	gt_write(gt, GT_ECC_Addr, 0);		/* clear irpt */
 
-	intr_establish(IRQ_ECC, IST_LEVEL, IPL_GTERR, gt_ecc_intr, gt);
+	intr_establish(IRQ_ECC, IST_LEVEL, IPL_VM, gt_ecc_intr, gt);
 	printf("%s: ECC irpt at %d\n", gt->gt_dev.dv_xname, IRQ_ECC);
 }
 #endif	/* GT_ECC */
@@ -923,7 +923,7 @@ gt_devbus_intr_enb(struct gt_softc *gt)
 	(void)gt_read(gt, GT_DEVBUS_ERR_ADDR);	/* clear addr */
 	gt_write(gt, GT_ECC_Addr, 0);		/* clear irpt */
 
-	intr_establish(IRQ_DEV, IST_LEVEL, IPL_GTERR, gt_devbus_intr, gt);
+	intr_establish(IRQ_DEV, IST_LEVEL, IPL_VM, gt_devbus_intr, gt);
 	printf("%s: Device Bus Error irpt at %d\n",
 		gt->gt_dev.dv_xname, IRQ_DEV);
 }

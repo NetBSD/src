@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.113 2007/08/27 05:39:44 dyoung Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.113.2.1 2008/01/09 01:57:27 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.113 2007/08/27 05:39:44 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.113.2.1 2008/01/09 01:57:27 matt Exp $");
 
 #include "opt_ipsec.h"
 
@@ -717,14 +717,12 @@ icmp_reflect(struct mbuf *m)
 	 * use that, if it's an address on the interface which
 	 * received the packet
 	 */
-	if (sin == (struct sockaddr_in *)0 && m->m_pkthdr.rcvif) {
+	if (sin == NULL && m->m_pkthdr.rcvif) {
 		struct sockaddr_in sin_dst;
 		struct route icmproute;
 		int errornum;
 
-		sin_dst.sin_family = AF_INET;
-		sin_dst.sin_len = sizeof(struct sockaddr_in);
-		sin_dst.sin_addr = ip->ip_dst;
+		sockaddr_in_init(&sin_dst, &ip->ip_dst, 0);
 		memset(&icmproute, 0, sizeof(icmproute));
 		errornum = 0;
 		sin = in_selectsrc(&sin_dst, &icmproute, 0, NULL, &errornum);
@@ -733,7 +731,7 @@ icmp_reflect(struct mbuf *m)
 		/* check to make sure sin is a source address on rcvif */
 		if (sin) {
 			t = sin->sin_addr;
-			sin = (struct sockaddr_in *)0;
+			sin = NULL;
 			INADDR_TO_IA(t, ia);
 			while (ia) {
 				if (ia->ia_ifp == m->m_pkthdr.rcvif) {
@@ -751,7 +749,7 @@ icmp_reflect(struct mbuf *m)
 	 * interface.  This can happen when routing is asymmetric, or
 	 * when the incoming packet was encapsulated
 	 */
-	if (sin == (struct sockaddr_in *)0 && m->m_pkthdr.rcvif) {
+	if (sin == NULL && m->m_pkthdr.rcvif) {
 		IFADDR_FOREACH(ifa, m->m_pkthdr.rcvif) {
 			if (ifa->ifa_addr->sa_family != AF_INET)
 				continue;
@@ -766,7 +764,7 @@ icmp_reflect(struct mbuf *m)
 	 * We find the first AF_INET address on the first non-loopback
 	 * interface.
 	 */
-	if (sin == (struct sockaddr_in *)0)
+	if (sin == NULL)
 		TAILQ_FOREACH(ia, &in_ifaddrhead, ia_list) {
 			if (ia->ia_ifp->if_flags & IFF_LOOPBACK)
 				continue;
@@ -778,7 +776,7 @@ icmp_reflect(struct mbuf *m)
 	 * If we still didn't find an address, punt.  We could have an
 	 * interface up (and receiving packets) with no address.
 	 */
-	if (sin == (struct sockaddr_in *)0) {
+	if (sin == NULL) {
 		m_freem(m);
 		goto done;
 	}
@@ -898,8 +896,7 @@ icmp_send(struct mbuf *m, struct mbuf *opts)
 		    inet_ntoa(ip->ip_dst), inet_ntoa(ip->ip_src));
 	}
 #endif
-	(void) ip_output(m, opts, NULL, 0,
-	    (struct ip_moptions *)NULL, (struct socket *)NULL);
+	(void)ip_output(m, opts, NULL, 0, NULL, NULL);
 }
 
 n_time

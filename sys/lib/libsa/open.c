@@ -1,4 +1,4 @@
-/*	$NetBSD: open.c,v 1.25 2005/12/11 12:24:46 christos Exp $	*/
+/*	$NetBSD: open.c,v 1.25.46.1 2008/01/09 01:56:43 matt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -72,12 +72,10 @@ oopen(){}
 
 int
 #ifndef __INTERNAL_LIBSA_CREAD
-open(fname, mode)
+open(const char *fname, int mode)
 #else
-oopen(fname, mode)
+oopen(const char *fname, int mode)
 #endif
-	const char *fname;
-	int mode;
 {
 	struct open_file *f;
 	int fd, error;
@@ -91,7 +89,7 @@ oopen(fname, mode)
 		if (f->f_flags == 0)
 			goto fnd;
 	errno = EMFILE;
-	return (-1);
+	return -1;
 fnd:
 	/*
 	 * Try to open the device.
@@ -121,7 +119,7 @@ fnd:
 	/* see if we opened a raw device; otherwise, 'file' is the file name. */
 	if (file == (char *)0 || *file == '\0') {
 		f->f_flags |= F_RAW;
-		return (fd);
+		return fd;
 	}
 #endif
 
@@ -132,7 +130,7 @@ fnd:
 		error = FS_OPEN(&file_system[i])(file, f);
 		if (error == 0) {
 			f->f_ops = &file_system[i];
-			return (fd);
+			return fd;
 		}
 		if (error != EINVAL)
 			besterror = error;
@@ -141,7 +139,7 @@ fnd:
 #else
 	error = FS_OPEN(&file_system[i])(file, f);
 	if (error == 0)
-		return (fd);
+		return fd;
 	if (error == EINVAL)
 		error = ENOENT;
 #endif
@@ -155,5 +153,5 @@ fnd:
 err:
 	f->f_flags = 0;
 	errno = error;
-	return (-1);
+	return -1;
 }

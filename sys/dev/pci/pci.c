@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.103.24.1 2007/11/06 23:29:23 matt Exp $	*/
+/*	$NetBSD: pci.c,v 1.103.24.2 2008/01/09 01:53:55 matt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,11 +36,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.103.24.1 2007/11/06 23:29:23 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.103.24.2 2008/01/09 01:53:55 matt Exp $");
 
 #include "opt_pci.h"
 
 #include <sys/param.h>
+#include <sys/malloc.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
@@ -50,7 +51,11 @@ __KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.103.24.1 2007/11/06 23:29:23 matt Exp $");
 
 #include <uvm/uvm_extern.h>
 
+#include <net/if.h>
+
 #include "locators.h"
+
+static bool pci_child_register(device_t);
 
 #ifdef PCI_CONFIG_DUMP
 int pci_config_dump = 1;
@@ -126,86 +131,6 @@ pcimatch(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-pci_power_devices(struct pci_softc *sc, int why)
-{
-	pci_chipset_tag_t pc;
-	int device, function, nfunctions;
-	pcitag_t tag;
-	pcireg_t bhlcr, id;
-	pcireg_t state;
-#ifdef __PCI_BUS_DEVORDER
-	char devs[32];
-	int i;
-#endif
-
-	pc = sc->sc_pc;
-	switch (why) {
-	case PWR_STANDBY:
-		state = PCI_PMCSR_STATE_D1;
-		break;
-	case PWR_SUSPEND:
-		state = PCI_PMCSR_STATE_D3;
-		break;
-	case PWR_RESUME:
-		state = PCI_PMCSR_STATE_D0;
-		break;
-	default:
-		/* we should never be called here */
-#ifdef DIAGNOSTIC
-		panic("pci_power_devices called with invalid reason %d\n",
-		    why);
-		/* NOTREACHED */
-#endif
-		return;
-	}
-
-#ifdef __PCI_BUS_DEVORDER
-	pci_bus_devorder(sc->sc_pc, sc->sc_bus, devs);
-	for (i = 0; (device = devs[i]) < 32 && device >= 0; i++)
-#else
-	for (device = 0; device < sc->sc_maxndevs; device++)
-#endif
-	{
-		tag = pci_make_tag(pc, sc->sc_bus, device, 0);
-		bhlcr = pci_conf_read(pc, tag, PCI_BHLC_REG);
-		if (PCI_HDRTYPE_TYPE(bhlcr) > 2)
-			continue;
-		id = pci_conf_read(pc, tag, PCI_ID_REG);
-		if (PCI_VENDOR(id) == PCI_VENDOR_INVALID ||
-		    PCI_VENDOR(id) == 0x0000)
-			continue;
-		nfunctions = PCI_HDRTYPE_MULTIFN(bhlcr) ? 8 : 1;
-
-		for (function = 0; function < nfunctions; function++) {
-			tag = pci_make_tag(pc, sc->sc_bus, device, function);
-			if (sc->PCI_SC_DEVICESC(device, function) != NULL)
-				continue;
-			(void)pci_set_powerstate(pc, tag, state);
-		}
-	}
-
-	return;
-}
-
-static void
-pci_powerhook(int why, void *aux)
-{
-	struct pci_softc *sc;
-
-	sc = (struct pci_softc *)aux;
-
-	switch (why) {
-	case PWR_SUSPEND:
-	case PWR_STANDBY:
-	case PWR_RESUME:
-		pci_power_devices(sc, why);
-		break;
-	}
-
-	return;
-}
-
-static void
 pciattach(struct device *parent, struct device *self, void *aux)
 {
 	struct pcibus_attach_args *pba = aux;
@@ -229,22 +154,22 @@ pciattach(struct device *parent, struct device *self, void *aux)
 
 	if (io_enabled == 0 && mem_enabled == 0) {
 		aprint_error("%s: no spaces enabled!\n", self->dv_xname);
-		return;
+		goto fail;
 	}
 
 #define	PRINT(str)							\
 do {									\
-	aprint_normal("%s%s", sep, str);				\
+	aprint_verbose("%s%s", sep, str);				\
 	sep = ", ";							\
 } while (/*CONSTCOND*/0)
 
-	aprint_normal("%s: ", self->dv_xname);
+	aprint_verbose("%s: ", self->dv_xname);
 
 	if (io_enabled)
 		PRINT("i/o space");
 	if (mem_enabled)
 		PRINT("memory space");
-	aprint_normal(" enabled");
+	aprint_verbose(" enabled");
 
 	if (mrl_enabled || mrm_enabled || mwi_enabled) {
 		if (mrl_enabled)
@@ -253,10 +178,10 @@ do {									\
 			PRINT("rd/mult");
 		if (mwi_enabled)
 			PRINT("wr/inv");
-		aprint_normal(" ok");
+		aprint_verbose(" ok");
 	}
 
-	aprint_normal("\n");
+	aprint_verbose("\n");
 
 #undef PRINT
 
@@ -272,13 +197,24 @@ do {									\
 	sc->sc_intrtag = pba->pba_intrtag;
 	sc->sc_flags = pba->pba_flags;
 
-	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
-	    pci_powerhook, sc);
-	if (sc->sc_powerhook == NULL)
-		aprint_error("%s: can't establish powerhook\n",
-		    sc->sc_dev.dv_xname);
+	device_pmf_driver_set_child_register(&sc->sc_dev, pci_child_register);
 
 	pcirescan(&sc->sc_dev, "pci", wildcard);
+
+fail:
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+}
+
+static int
+pcidetach(struct device *self, int flags)
+{
+	int rc;
+
+	if ((rc = config_detach_children(self, flags)) != 0)
+		return rc;
+	pmf_device_deregister(self);
+	return 0;
 }
 
 int
@@ -446,6 +382,9 @@ pcidevdetached(struct device *sc, struct device *dev)
 
 	psc->PCI_SC_DEVICESC(d, f) = 0;
 }
+
+CFATTACH_DECL2(pci, sizeof(struct pci_softc),
+    pcimatch, pciattach, pcidetach, NULL, pcirescan, pcidevdetached);
 
 int
 pci_get_capability(pci_chipset_tag_t pc, pcitag_t tag, int capid,
@@ -694,9 +633,13 @@ pci_conf_restore(pci_chipset_tag_t pc, pcitag_t tag,
 		  struct pci_conf_state *pcs)
 {
 	int off;
+	pcireg_t val;
 
-	for (off = 0; off < 16; off++)
-		pci_conf_write(pc, tag, (off * 4), pcs->reg[off]);
+	for (off = 15; off >= 0; off--) {
+		val = pci_conf_read(pc, tag, (off * 4));
+		if (val != pcs->reg[off])
+			pci_conf_write(pc, tag, (off * 4), pcs->reg[off]);
+	}
 
 	return;
 }
@@ -704,16 +647,12 @@ pci_conf_restore(pci_chipset_tag_t pc, pcitag_t tag,
 /*
  * Power Management Capability (Rev 2.2)
  */
-int
-pci_get_powerstate(pci_chipset_tag_t pc, pcitag_t tag , pcireg_t *state)
+static int
+pci_get_powerstate_int(pci_chipset_tag_t pc, pcitag_t tag , pcireg_t *state,
+    int offset)
 {
-	int offset;
-	pcireg_t value, cap, now;
+	pcireg_t value, now;
 
-	if (!pci_get_capability(pc, tag, PCI_CAP_PWRMGMT, &offset, &value))
-		return EOPNOTSUPP;
-
-	cap = value >> PCI_PMCR_SHIFT;
 	value = pci_conf_read(pc, tag, offset + PCI_PMCSR);
 	now = value & PCI_PMCSR_STATE_MASK;
 	switch (now) {
@@ -729,15 +668,24 @@ pci_get_powerstate(pci_chipset_tag_t pc, pcitag_t tag , pcireg_t *state)
 }
 
 int
-pci_set_powerstate(pci_chipset_tag_t pc, pcitag_t tag, pcireg_t state)
+pci_get_powerstate(pci_chipset_tag_t pc, pcitag_t tag , pcireg_t *state)
 {
 	int offset;
-	pcireg_t value, cap, now;
+	pcireg_t value;
 
 	if (!pci_get_capability(pc, tag, PCI_CAP_PWRMGMT, &offset, &value))
 		return EOPNOTSUPP;
 
-	cap = value >> PCI_PMCR_SHIFT;
+	return pci_get_powerstate_int(pc, tag, state, offset);
+}
+
+static int
+pci_set_powerstate_int(pci_chipset_tag_t pc, pcitag_t tag, pcireg_t state,
+    int offset, pcireg_t cap_reg)
+{
+	pcireg_t value, cap, now;
+
+	cap = cap_reg >> PCI_PMCR_SHIFT;
 	value = pci_conf_read(pc, tag, offset + PCI_PMCSR);
 	now = value & PCI_PMCSR_STATE_MASK;
 	value &= ~PCI_PMCSR_STATE_MASK;
@@ -749,22 +697,28 @@ pci_set_powerstate(pci_chipset_tag_t pc, pcitag_t tag, pcireg_t state)
 		value |= PCI_PMCSR_STATE_D0;
 		break;
 	case PCI_PMCSR_STATE_D1:
-		if (now == PCI_PMCSR_STATE_D2 || now == PCI_PMCSR_STATE_D3)
+		if (now == PCI_PMCSR_STATE_D2 || now == PCI_PMCSR_STATE_D3) {
+			printf("invalid transition from %d to D1\n", (int)now);
 			return EINVAL;
-		if (!(cap & PCI_PMCR_D1SUPP))
+		}
+		if (!(cap & PCI_PMCR_D1SUPP)) {
+			printf("D1 not supported\n");
 			return EOPNOTSUPP;
+		}
 		value |= PCI_PMCSR_STATE_D1;
 		break;
 	case PCI_PMCSR_STATE_D2:
-		if (now == PCI_PMCSR_STATE_D3)
+		if (now == PCI_PMCSR_STATE_D3) {
+			printf("invalid transition from %d to D2\n", (int)now);
 			return EINVAL;
-		if (!(cap & PCI_PMCR_D2SUPP))
+		}
+		if (!(cap & PCI_PMCR_D2SUPP)) {
+			printf("D2 not supported\n");
 			return EOPNOTSUPP;
+		}
 		value |= PCI_PMCSR_STATE_D2;
 		break;
 	case PCI_PMCSR_STATE_D3:
-		if (now == PCI_PMCSR_STATE_D3)
-			return 0;
 		value |= PCI_PMCSR_STATE_D3;
 		break;
 	default:
@@ -773,6 +727,20 @@ pci_set_powerstate(pci_chipset_tag_t pc, pcitag_t tag, pcireg_t state)
 	pci_conf_write(pc, tag, offset + PCI_PMCSR, value);
 	DELAY(1000);
 	return 0;
+}
+
+int
+pci_set_powerstate(pci_chipset_tag_t pc, pcitag_t tag, pcireg_t state)
+{
+	int offset;
+	pcireg_t value;
+
+	if (!pci_get_capability(pc, tag, PCI_CAP_PWRMGMT, &offset, &value)) {
+		printf("pci_set_powerstate not supported\n");
+		return EOPNOTSUPP;
+	}
+
+	return pci_set_powerstate_int(pc, tag, state, offset, value);
 }
 
 int
@@ -822,5 +790,137 @@ pci_activate_null(pci_chipset_tag_t pc, pcitag_t tag,
 	return 0;
 }
 
-CFATTACH_DECL2(pci, sizeof(struct pci_softc),
-    pcimatch, pciattach, NULL, NULL, pcirescan, pcidevdetached);
+/* I have disabled this code for now. --dyoung
+ *
+ * Insofar as I understand what the PCI retry timeout is [1],
+ * I see no justification for any driver to disable when it
+ * attaches/resumes a device.
+ *
+ * A PCI bus bridge may tell a bus master to retry its transaction
+ * at a later time if the resources to complete the transaction
+ * are not immediately available.  Taking a guess, PCI bus masters
+ * that implement a PCI retry timeout register count down from the
+ * retry timeout to 0 while it retries a delayed PCI transaction.
+ * When it reaches 0, it stops retrying.  A PCI master is *never*
+ * supposed to stop retrying a delayed transaction, though.
+ *
+ * Incidentally, I initially suspected that writing 0 to the register
+ * would not disable *retries*, but would disable the timeout.
+ * That is, any device whose retry timeout was set to 0 would
+ * *never* timeout.  However, I found out, by using PCI debug
+ * facilities on the AMD Elan SC520, that if I write 0 to the retry
+ * timeout register on an ath(4) MiniPCI card, the card really does
+ * not retry transactions.
+ *
+ * Some uses of this register have mentioned "interference" with
+ * a CPU's "C3 sleep state."  It seems to me that if a bus master
+ * is properly put to sleep, it will neither initiate new transactions,
+ * nor retry delayed transactions, so disabling retries should not
+ * be necessary.
+ *
+ * [1] The timeout does not appear to be documented in any PCI
+ * standard, and we have no documentation of it for the devices by
+ * Atheros, and others, that supposedly implement it.
+ */
+void
+pci_disable_retry(pci_chipset_tag_t pc, pcitag_t tag)
+{
+#if 0
+	pcireg_t retry;
+
+	/*
+	 * Disable retry timeout to keep PCI Tx retries from
+	 * interfering with ACPI C3 CPU state.
+	 */
+	retry = pci_conf_read(pc, tag, PCI_RETRY_TIMEOUT_REG);
+	retry &= ~PCI_RETRY_TIMEOUT_REG_MASK;
+	pci_conf_write(pc, tag, PCI_RETRY_TIMEOUT_REG, retry);
+#endif
+}
+
+struct pci_child_power {
+	struct pci_conf_state p_pciconf;
+	pci_chipset_tag_t p_pc;
+	pcitag_t p_tag;
+	bool p_has_pm;
+	int p_pm_offset;
+	pcireg_t p_pm_cap;
+	pcireg_t p_class;
+};
+
+static bool
+pci_child_suspend(device_t dv)
+{
+	struct pci_child_power *priv = device_pmf_bus_private(dv);
+
+	pci_conf_capture(priv->p_pc, priv->p_tag, &priv->p_pciconf);
+
+	if (priv->p_has_pm &&
+	    PCI_CLASS(priv->p_class) != PCI_CLASS_DISPLAY &&
+	    pci_set_powerstate_int(priv->p_pc, priv->p_tag,
+	    PCI_PMCSR_STATE_D3, priv->p_pm_offset, priv->p_pm_cap)) {
+		aprint_error_dev(dv, "unsupported state, continuing.\n");
+		return false;
+	}
+	return true;
+}
+
+static bool
+pci_child_resume(device_t dv)
+{
+	struct pci_child_power *priv = device_pmf_bus_private(dv);
+
+	if (priv->p_has_pm &&
+	    pci_set_powerstate_int(priv->p_pc, priv->p_tag,
+	    PCI_PMCSR_STATE_D0, priv->p_pm_offset, priv->p_pm_cap)) {
+		aprint_error_dev(dv, "unsupported state, continuing.\n");
+		return false;
+	}
+
+	pci_conf_restore(priv->p_pc, priv->p_tag, &priv->p_pciconf);
+
+	return true;
+}
+
+static void
+pci_child_deregister(device_t dv)
+{
+	struct pci_child_power *priv = device_pmf_bus_private(dv);
+
+	free(priv, M_DEVBUF);
+}
+
+static bool
+pci_child_register(device_t child)
+{
+	device_t self = device_parent(child);
+	struct pci_softc *sc = device_private(self);
+	struct pci_child_power *priv;
+	int device, function, off;
+	pcireg_t reg;
+
+	priv = malloc(sizeof(*priv), M_DEVBUF, M_WAITOK);
+
+	device = device_locator(child, PCICF_DEV);
+	function = device_locator(child, PCICF_FUNCTION);
+
+	priv->p_pc = sc->sc_pc;
+	priv->p_tag = pci_make_tag(priv->p_pc, sc->sc_bus, device,
+	    function);
+	priv->p_class = pci_conf_read(priv->p_pc, priv->p_tag, PCI_CLASS_REG);
+
+	if (pci_get_capability(priv->p_pc, priv->p_tag,
+			       PCI_CAP_PWRMGMT, &off, &reg)) {
+		priv->p_has_pm = true;
+		priv->p_pm_offset = off;
+		priv->p_pm_cap = reg;
+	} else {
+		priv->p_has_pm = false;
+		priv->p_pm_offset = -1;
+	}
+
+	device_pmf_bus_register(child, priv, pci_child_suspend,
+	    pci_child_resume, pci_child_deregister);
+
+	return true;
+}

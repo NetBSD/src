@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)ptrace.h	8.2 (Berkeley) 1/4/94
- *	$NetBSD: freebsd_ptrace.h,v 1.5 2007/03/04 06:01:15 christos Exp $
+ *	$NetBSD: freebsd_ptrace.h,v 1.5.16.1 2008/01/09 01:50:41 matt Exp $
  */
 
 #ifndef	_FREEBSD_PTRACE_H_
@@ -51,13 +51,13 @@
 
 #define	FREEBSD_PT_FIRSTMACH	32	/* for machine-specific requests */
 
-void netbsd_to_freebsd_ptrace_regs __P((struct reg *, struct fpreg *,
-					struct freebsd_ptrace_reg *));
-void freebsd_to_netbsd_ptrace_regs __P((struct freebsd_ptrace_reg *,
-					struct reg *, struct fpreg *));
-int freebsd_ptrace_getregs __P((struct freebsd_ptrace_reg *, void *,
-				register_t *));
-int freebsd_ptrace_setregs __P((struct freebsd_ptrace_reg *, void *,
-				int));
+void netbsd_to_freebsd_ptrace_regs(struct reg *, struct fpreg *,
+					struct freebsd_ptrace_reg *);
+void freebsd_to_netbsd_ptrace_regs(struct freebsd_ptrace_reg *,
+					struct reg *, struct fpreg *);
+int freebsd_ptrace_getregs(struct freebsd_ptrace_reg *, void *,
+				register_t *);
+int freebsd_ptrace_setregs(struct freebsd_ptrace_reg *, void *,
+				int);
 
 #endif	/* !_FREEBSD_PTRACE_H_ */

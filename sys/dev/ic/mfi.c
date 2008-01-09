@@ -1,4 +1,4 @@
-/* $NetBSD: mfi.c,v 1.8.8.1 2007/11/06 23:26:53 matt Exp $ */
+/* $NetBSD: mfi.c,v 1.8.8.2 2008/01/09 01:52:55 matt Exp $ */
 /* $OpenBSD: mfi.c,v 1.66 2006/11/28 23:59:45 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.8.8.1 2007/11/06 23:26:53 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.8.8.2 2008/01/09 01:52:55 matt Exp $");
 
 #include "bio.h"
 
@@ -102,7 +102,7 @@ int		mfi_ioctl_blink(struct mfi_softc *sc, struct bioc_blink *);
 int		mfi_ioctl_setstate(struct mfi_softc *, struct bioc_setstate *);
 int		mfi_bio_hs(struct mfi_softc *, int, int, void *);
 int		mfi_create_sensors(struct mfi_softc *);
-int		mfi_sensor_gtredata(struct sysmon_envsys *, envsys_data_t *);
+void		mfi_sensor_refresh(struct sysmon_envsys *, envsys_data_t *);
 #endif /* NBIO > 0 */
 
 struct mfi_ccb *
@@ -1857,55 +1857,60 @@ mfi_create_sensors(struct mfi_softc *sc)
 	int			i;
 	int nsensors = sc->sc_ld_cnt;
 
-	sc->sc_sensor_data =
-	    malloc(sizeof(struct envsys_data) * nsensors,
-		M_DEVBUF, M_NOWAIT | M_ZERO);
-	if (sc->sc_sensor_data == NULL) {
-		aprint_error("%s: can't allocate envsys_tre_data\n",
+	sc->sc_sme = sysmon_envsys_create();
+	sc->sc_sensor = malloc(sizeof(envsys_data_t) * nsensors,
+	    M_DEVBUF, M_NOWAIT | M_ZERO);
+	if (sc->sc_sensor == NULL) {
+		aprint_error("%s: can't allocate envsys_data_t\n",
 		    DEVNAME(sc));
 		return(ENOMEM);
 	}
 
 	for (i = 0; i < nsensors; i++) {
-		sc->sc_sensor_data[i].sensor = i;
-		sc->sc_sensor_data[i].units = ENVSYS_DRIVE;
-		sc->sc_sensor_data[i].state = ENVSYS_SVALID;
-		sc->sc_sensor_data[i].monitor = true;
+		sc->sc_sensor[i].units = ENVSYS_DRIVE;
+		sc->sc_sensor[i].monitor = true;
 		/* Enable monitoring for drive state changes */
-		sc->sc_sensor_data[i].flags |= ENVSYS_FMONSTCHANGED;
+		sc->sc_sensor[i].flags |= ENVSYS_FMONSTCHANGED;
 		/* logical drives */
-		snprintf(sc->sc_sensor_data[i].desc,
-		    sizeof(sc->sc_sensor_data[i].desc), "%s:%d",
+		snprintf(sc->sc_sensor[i].desc,
+		    sizeof(sc->sc_sensor[i].desc), "%s:%d",
 		    DEVNAME(sc), i);
+		if (sysmon_envsys_sensor_attach(sc->sc_sme,
+						&sc->sc_sensor[i]))
+			goto out;
 	}
 
-	sc->sc_envsys.sme_name = DEVNAME(sc);
-	sc->sc_envsys.sme_cookie = sc;
-	sc->sc_envsys.sme_gtredata = mfi_sensor_gtredata;
-	sc->sc_envsys.sme_nsensors = sc->sc_ld_cnt;
-	if (sysmon_envsys_register(&sc->sc_envsys)) {
+	sc->sc_sme->sme_name = DEVNAME(sc);
+	sc->sc_sme->sme_cookie = sc;
+	sc->sc_sme->sme_refresh = mfi_sensor_refresh;
+	if (sysmon_envsys_register(sc->sc_sme)) {
 		printf("%s: unable to register with sysmon\n", DEVNAME(sc));
-		return(1);
+		goto out;
 	}
 	return (0);
+
+out:
+	free(sc->sc_sensor, M_DEVBUF);
+	sysmon_envsys_destroy(sc->sc_sme);
+	return EINVAL;
 }
 
-int
-mfi_sensor_gtredata(struct sysmon_envsys *sme, envsys_data_t *edata)
+void
+mfi_sensor_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 {
 	struct mfi_softc	*sc = sme->sme_cookie;
 	struct bioc_vol		bv;
 	int s;
 
 	if (edata->sensor >= sc->sc_ld_cnt)
-		return EINVAL;
+		return;
 
 	bzero(&bv, sizeof(bv));
 	bv.bv_volid = edata->sensor;
 	s = splbio();
 	if (mfi_ioctl_vol(sc, &bv)) {
 		splx(s);
-		return EIO;
+		return;
 	}
 	splx(s);
 
@@ -1932,8 +1937,6 @@ mfi_sensor_gtredata(struct sysmon_envsys *sme, envsys_data_t *edata)
 		edata->value_cur = 0; /* unknown */
 		edata->state = ENVSYS_SINVALID;
 	}
-
-	return 0;
 }
 
 #endif /* NBIO > 0 */

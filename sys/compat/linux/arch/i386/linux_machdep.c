@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.129.8.1 2007/11/06 23:24:51 matt Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.129.8.2 2008/01/09 01:50:59 matt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.129.8.1 2007/11/06 23:24:51 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.129.8.2 2008/01/09 01:50:59 matt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -113,16 +113,16 @@ __KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.129.8.1 2007/11/06 23:24:51 matt
 #define DPRINTF(a)
 #endif
 
-static struct biosdisk_info *fd2biosinfo __P((struct proc *, struct file *));
+static struct biosdisk_info *fd2biosinfo(struct proc *, struct file *);
 extern struct disklist *x86_alldisks;
-static void linux_save_ucontext __P((struct lwp *, struct trapframe *,
-    const sigset_t *, struct sigaltstack *, struct linux_ucontext *));
-static void linux_save_sigcontext __P((struct lwp *, struct trapframe *,
-    const sigset_t *, struct linux_sigcontext *));
-static int linux_restore_sigcontext __P((struct lwp *,
-    struct linux_sigcontext *, register_t *));
-static void linux_rt_sendsig __P((const ksiginfo_t *, const sigset_t *));
-static void linux_old_sendsig __P((const ksiginfo_t *, const sigset_t *));
+static void linux_save_ucontext(struct lwp *, struct trapframe *,
+    const sigset_t *, struct sigaltstack *, struct linux_ucontext *);
+static void linux_save_sigcontext(struct lwp *, struct trapframe *,
+    const sigset_t *, struct linux_sigcontext *);
+static int linux_restore_sigcontext(struct lwp *,
+    struct linux_sigcontext *, register_t *);
+static void linux_rt_sendsig(const ksiginfo_t *, const sigset_t *);
+static void linux_old_sendsig(const ksiginfo_t *, const sigset_t *);
 
 extern char linux_sigcode[], linux_rt_sigcode[];
 /*
@@ -130,10 +130,7 @@ extern char linux_sigcode[], linux_rt_sigcode[];
  */
 
 void
-linux_setregs(l, epp, stack)
-	struct lwp *l;
-	struct exec_package *epp;
-	u_long stack;
+linux_setregs(struct lwp *l, struct exec_package *epp, u_long stack)
 {
 	struct pcb *pcb = &l->l_addr->u_pcb;
 	struct trapframe *tf;
@@ -197,12 +194,7 @@ linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 
 
 static void
-linux_save_ucontext(l, tf, mask, sas, uc)
-	struct lwp *l;
-	struct trapframe *tf;
-	const sigset_t *mask;
-	struct sigaltstack *sas;
-	struct linux_ucontext *uc;
+linux_save_ucontext(struct lwp *l, struct trapframe *tf, const sigset_t *mask, struct sigaltstack *sas, struct linux_ucontext *uc)
 {
 	uc->uc_flags = 0;
 	uc->uc_link = NULL;
@@ -213,11 +205,7 @@ linux_save_ucontext(l, tf, mask, sas, uc)
 }
 
 static void
-linux_save_sigcontext(l, tf, mask, sc)
-	struct lwp *l;
-	struct trapframe *tf;
-	const sigset_t *mask;
-	struct linux_sigcontext *sc;
+linux_save_sigcontext(struct lwp *l, struct trapframe *tf, const sigset_t *mask, struct linux_sigcontext *sc)
 {
 	/* Save register context. */
 #ifdef VM86
@@ -449,14 +437,11 @@ linux_old_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
  * a machine fault.
  */
 int
-linux_sys_rt_sigreturn(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_rt_sigreturn(struct lwp *l, const struct linux_sys_rt_sigreturn_args *uap, register_t *retval)
 {
-	struct linux_sys_rt_sigreturn_args /* {
+	/* {
 		syscallarg(struct linux_ucontext *) ucp;
-	} */ *uap = v;
+	} */
 	struct linux_ucontext context, *ucp = SCARG(uap, ucp);
 	int error;
 
@@ -473,14 +458,11 @@ linux_sys_rt_sigreturn(l, v, retval)
 }
 
 int
-linux_sys_sigreturn(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_sigreturn(struct lwp *l, const struct linux_sys_sigreturn_args *uap, register_t *retval)
 {
-	struct linux_sys_sigreturn_args /* {
+	/* {
 		syscallarg(struct linux_sigcontext *) scp;
-	} */ *uap = v;
+	} */
 	struct linux_sigcontext context, *scp = SCARG(uap, scp);
 	int error;
 
@@ -509,7 +491,7 @@ linux_restore_sigcontext(struct lwp *l, struct linux_sigcontext *scp,
 	DPRINTF(("sigreturn enter esp=%x eip=%x\n", tf->tf_esp, tf->tf_eip));
 #ifdef VM86
 	if (scp->sc_eflags & PSL_VM) {
-		void syscall_vm86 __P((struct trapframe *));
+		void syscall_vm86(struct trapframe *);
 
 		tf->tf_vm86_gs = scp->sc_gs;
 		tf->tf_vm86_fs = scp->sc_fs;
@@ -576,7 +558,7 @@ linux_restore_sigcontext(struct lwp *l, struct linux_sigcontext *scp,
 #ifdef USER_LDT
 
 static int
-linux_read_ldt(struct lwp *l, struct linux_sys_modify_ldt_args *uap,
+linux_read_ldt(struct lwp *l, const struct linux_sys_modify_ldt_args *uap,
     register_t *retval)
 {
 	struct x86_get_ldt_args gl;
@@ -630,7 +612,7 @@ struct linux_ldt_info {
 };
 
 static int
-linux_write_ldt(struct lwp *l, struct linux_sys_modify_ldt_args *uap,
+linux_write_ldt(struct lwp *l, const struct linux_sys_modify_ldt_args *uap,
     int oldmode)
 {
 	struct linux_ldt_info ldt_info;
@@ -688,29 +670,28 @@ linux_write_ldt(struct lwp *l, struct linux_sys_modify_ldt_args *uap,
 #endif /* USER_LDT */
 
 int
-linux_sys_modify_ldt(struct lwp *l, void *v,
-    register_t *retval)
+linux_sys_modify_ldt(struct lwp *l, const struct linux_sys_modify_ldt_args *uap, register_t *retval)
 {
-	struct linux_sys_modify_ldt_args /* {
+	/* {
 		syscallarg(int) func;
 		syscallarg(void *) ptr;
 		syscallarg(size_t) bytecount;
-	} */ *uap = v;
+	} */
 
 	switch (SCARG(uap, func)) {
 #ifdef USER_LDT
 	case 0:
-		return linux_read_ldt(l, uap, retval);
+		return linux_read_ldt(l, (const void *)uap, retval);
 	case 1:
-		return linux_write_ldt(l, uap, 1);
+		return linux_write_ldt(l, (const void *)uap, 1);
 	case 2:
 #ifdef notyet
-		return (linux_read_default_ldt(l, uap, retval);
+		return (linux_read_default_ldt(l, (const void *)uap, retval);
 #else
 		return (ENOSYS);
 #endif
 	case 0x11:
-		return linux_write_ldt(l, uap, 0);
+		return linux_write_ldt(l, (const void *)uap, 0);
 #endif /* USER_LDT */
 
 	default:
@@ -725,9 +706,7 @@ linux_sys_modify_ldt(struct lwp *l, void *v,
  * array for all major device numbers, and map linux_mknod too.
  */
 dev_t
-linux_fakedev(dev, raw)
-	dev_t dev;
-	int raw;
+linux_fakedev(dev_t dev, int raw)
 {
 	extern const struct cdevsw ptc_cdevsw, pts_cdevsw;
 	const struct cdevsw *cd = cdevsw_lookup(dev);
@@ -865,16 +844,13 @@ fd2biosinfo(struct proc *p, struct file *fp)
  * We come here in a last attempt to satisfy a Linux ioctl() call
  */
 int
-linux_machdepioctl(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_machdepioctl(struct lwp *l, const struct linux_sys_ioctl_args *uap, register_t *retval)
 {
-	struct linux_sys_ioctl_args /* {
+	/* {
 		syscallarg(int) fd;
 		syscallarg(u_long) com;
 		syscallarg(void *) data;
-	} */ *uap = v;
+	} */
 	struct sys_ioctl_args bia;
 	u_long com;
 	int error, error1;
@@ -1098,13 +1074,11 @@ out:
  * to rely on I/O permission maps, which are not implemented.
  */
 int
-linux_sys_iopl(struct lwp *l, void *v, register_t *retval)
+linux_sys_iopl(struct lwp *l, const struct linux_sys_iopl_args *uap, register_t *retval)
 {
-#if 0
-	struct linux_sys_iopl_args /* {
+	/* {
 		syscallarg(int) level;
-	} */ *uap = v;
-#endif
+	} */
 	struct trapframe *fp = l->l_md.md_regs;
 
 	if (kauth_authorize_machdep(l->l_cred, KAUTH_MACHDEP_IOPL,
@@ -1120,16 +1094,13 @@ linux_sys_iopl(struct lwp *l, void *v, register_t *retval)
  * just let it have the whole range.
  */
 int
-linux_sys_ioperm(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_ioperm(struct lwp *l, const struct linux_sys_ioperm_args *uap, register_t *retval)
 {
-	struct linux_sys_ioperm_args /* {
+	/* {
 		syscallarg(unsigned int) lo;
 		syscallarg(unsigned int) hi;
 		syscallarg(int) val;
-	} */ *uap = v;
+	} */
 	struct trapframe *fp = l->l_md.md_regs;
 
 	if (kauth_authorize_machdep(l->l_cred, SCARG(uap, val) ?
@@ -1161,8 +1132,7 @@ linux_get_uname_arch(void)
 
 #ifdef LINUX_NPTL
 void *
-linux_get_newtls(l)
-	struct lwp *l;
+linux_get_newtls(struct lwp *l)
 {
 	struct trapframe *tf = l->l_md.md_regs;
 
@@ -1171,9 +1141,7 @@ linux_get_newtls(l)
 }
 
 int
-linux_set_newtls(l, tls)
-	struct lwp *l;
-	void *tls;
+linux_set_newtls(struct lwp *l, void *tls)
 {
 	/* XXX: Implement me */
 	return 0;

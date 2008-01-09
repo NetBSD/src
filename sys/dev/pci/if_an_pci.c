@@ -1,4 +1,4 @@
-/*	$NetBSD: if_an_pci.c,v 1.22.10.1 2007/11/06 23:28:54 matt Exp $	*/
+/*	$NetBSD: if_an_pci.c,v 1.22.10.2 2008/01/09 01:53:42 matt Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_an_pci.c,v 1.22.10.1 2007/11/06 23:28:54 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_an_pci.c,v 1.22.10.2 2008/01/09 01:53:42 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,6 +81,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_an_pci.c,v 1.22.10.1 2007/11/06 23:28:54 matt Exp
 
 struct an_pci_softc {
 	struct an_softc sc_an;		/* real "an" softc */
+	pci_chipset_tag_t sc_pct;
+	pcitag_t sc_pcitag;
 
 	/* PCI-specific goo. */
 	void	*sc_ih;			/* interrupt handle */
@@ -130,6 +132,9 @@ an_pci_attach(struct device *parent, struct device *self, void *aux)
 	bus_size_t iosize;
 	u_int32_t csr;
 
+	psc->sc_pct = pa->pa_pc;
+	psc->sc_pcitag = pa->pa_tag;
+
 	aprint_naive(": 802.11 controller\n");
 
         pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
@@ -171,4 +176,9 @@ an_pci_attach(struct device *parent, struct device *self, void *aux)
 		pci_intr_disestablish(pa->pa_pc, psc->sc_ih);
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, iosize);
 	}
+
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+	else
+		pmf_class_network_register(self, &sc->sc_if);
 }

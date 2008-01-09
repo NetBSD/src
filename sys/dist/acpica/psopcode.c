@@ -1,7 +1,9 @@
+/*	$NetBSD: psopcode.c,v 1.3.24.1 2008/01/09 01:55:20 matt Exp $	*/
+
 /******************************************************************************
  *
  * Module Name: psopcode - Parser/Interpreter opcode information table
- *              xRevision: 1.95 $
+ *              $Revision: 1.3.24.1 $
  *
  *****************************************************************************/
 
@@ -9,7 +11,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2007, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -114,18 +116,20 @@
  *
  *****************************************************************************/
 
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psopcode.c,v 1.3 2006/11/16 01:33:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psopcode.c,v 1.3.24.1 2008/01/09 01:55:20 matt Exp $");
 
-#include "acpi.h"
-#include "acparser.h"
-#include "acopcode.h"
-#include "amlcode.h"
+#include <dist/acpica/acpi.h>
+#include <dist/acpica/acparser.h>
+#include <dist/acpica/acopcode.h>
+#include <dist/acpica/amlcode.h>
 
 
 #define _COMPONENT          ACPI_PARSER
         ACPI_MODULE_NAME    ("psopcode")
+
+
+const UINT8                 AcpiGbl_ArgumentCount[] = {0,1,1,1,1,2,2,2,2,3,3,6};
 
 
 /*******************************************************************************
@@ -498,7 +502,7 @@ const ACPI_OPCODE_INFO *
 AcpiPsGetOpcodeInfo (
     UINT16                  Opcode)
 {
-    ACPI_FUNCTION_NAME ("PsGetOpcodeInfo");
+    ACPI_FUNCTION_NAME (PsGetOpcodeInfo);
 
 
     /*
@@ -557,8 +561,33 @@ AcpiPsGetOpcodeName (
     return (Op->Name);
 
 #else
-    return ("AE_NOT_CONFIGURED");
+    return ("OpcodeName unavailable");
 
 #endif
 }
 
+
+/*******************************************************************************
+ *
+ * FUNCTION:    AcpiPsGetArgumentCount
+ *
+ * PARAMETERS:  OpType              - Type associated with the AML opcode
+ *
+ * RETURN:      Argument count
+ *
+ * DESCRIPTION: Obtain the number of expected arguments for an AML opcode
+ *
+ ******************************************************************************/
+
+UINT8
+AcpiPsGetArgumentCount (
+    UINT32                  OpType)
+{
+
+    if (OpType <= AML_TYPE_EXEC_6A_0T_1R)
+    {
+        return (AcpiGbl_ArgumentCount[OpType]);
+    }
+
+    return (0);
+}

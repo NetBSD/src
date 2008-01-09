@@ -1,4 +1,4 @@
-/* $NetBSD: memset.c,v 1.3 1999/11/13 21:17:57 thorpej Exp $ */
+/* $NetBSD: memset.c,v 1.3.102.1 2008/01/09 01:56:42 matt Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -34,10 +34,7 @@
 #include <lib/libkern/libkern.h>
 
 void *
-memset(dstv, c, length)
-	void *dstv;
-	int c;
-	size_t length;
+memset(void *dstv, int c, size_t length)
 {
 	u_char *dst = dstv;
 

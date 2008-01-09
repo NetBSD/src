@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile_aout.c,v 1.9 2007/06/05 08:48:50 martin Exp $ */
+/* $NetBSD: loadfile_aout.c,v 1.9.8.1 2008/01/09 01:56:41 matt Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -92,11 +92,7 @@
 #ifdef BOOT_AOUT
 
 int
-loadfile_aout(fd, x, marks, flags)
-	int fd;
-	struct exec *x;
-	u_long *marks;
-	int flags;
+loadfile_aout(int fd, struct exec *x, u_long *marks, int flags)
 {
 	u_long entry = x->a_entry;
 	paddr_t aoutp = 0;
@@ -105,6 +101,7 @@ loadfile_aout(fd, x, marks, flags)
 	paddr_t offset = marks[MARK_START];
 	u_long magic = N_GETMAGIC(*x);
 	int sub;
+	ssize_t nr;
 
 	/* some ports dont use the offset */
 	offset = offset;
@@ -144,8 +141,13 @@ loadfile_aout(fd, x, marks, flags)
 	if (flags & LOAD_TEXT) {
 		PROGRESS(("%ld", x->a_text));
 
-		if (READ(fd, maxp, x->a_text - sub) !=
-		    (ssize_t)(x->a_text - sub)) {
+		nr = READ(fd, maxp, x->a_text - sub);
+		if (nr == -1) {
+			WARN(("read text"));
+			return 1;
+		}
+		if (nr != (ssize_t)(x->a_text - sub)) {
+			errno = EIO;
 			WARN(("read text"));
 			return 1;
 		}
@@ -180,7 +182,13 @@ loadfile_aout(fd, x, marks, flags)
 		PROGRESS(("+%ld", x->a_data));
 
 		marks[MARK_DATA] = LOADADDR(maxp);
-		if (READ(fd, maxp, x->a_data) != (ssize_t)x->a_data) {
+		nr = READ(fd, maxp, x->a_data);
+		if (nr == -1) {
+			WARN(("read data"));
+			return 1;
+		}
+		if (nr != (ssize_t)x->a_data) {
+			errno = EIO;
 			WARN(("read data"));
 			return 1;
 		}
@@ -225,7 +233,13 @@ loadfile_aout(fd, x, marks, flags)
 		if (flags & LOAD_SYM) {
 			PROGRESS(("+[%ld", x->a_syms));
 
-			if (READ(fd, maxp, x->a_syms) != (ssize_t)x->a_syms) {
+			nr = READ(fd, maxp, x->a_syms);
+			if (nr == -1) {
+				WARN(("read symbols"));
+				return 1;
+			}
+			if (nr != (ssize_t)x->a_syms) {
+				errno = EIO;
 				WARN(("read symbols"));
 				return 1;
 			}
@@ -238,7 +252,13 @@ loadfile_aout(fd, x, marks, flags)
 		if (flags & (LOAD_SYM|COUNT_SYM))
 			maxp += x->a_syms;
 
-		if (read(fd, &cc, sizeof(cc)) != sizeof(cc)) {
+		nr = read(fd, &cc, sizeof(cc));
+		if (nr == -1) {
+			WARN(("read string table"));
+			return 1;
+		}
+		if (nr != sizeof(cc)) {
+			errno = EIO;
 			WARN(("read string table"));
 			return 1;
 		}
@@ -260,7 +280,13 @@ loadfile_aout(fd, x, marks, flags)
 		}
 
 		if (flags & LOAD_SYM) {
-			if (READ(fd, maxp, cc) != cc) {
+			nr = READ(fd, maxp, cc);
+			if (nr == -1) {
+				WARN(("read strings"));
+				return 1;
+			}
+			if (nr != cc) {
+				errno = EIO;
 				WARN(("read strings"));
 				return 1;
 			}

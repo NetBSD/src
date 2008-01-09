@@ -1,4 +1,4 @@
-/* $NetBSD: nsclpcsio_isa.c,v 1.17.8.1 2007/11/06 23:27:54 matt Exp $ */
+/* $NetBSD: nsclpcsio_isa.c,v 1.17.8.2 2008/01/09 01:53:14 matt Exp $ */
 
 /*
  * Copyright (c) 2002
@@ -26,8 +26,13 @@
  * SUCH DAMAGE.
  */
 
+/*
+ * National Semiconductor PC87366 LPC Super I/O driver.
+ * Supported logical devices: GPIO, TMS, VLM.
+ */
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsclpcsio_isa.c,v 1.17.8.1 2007/11/06 23:27:54 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nsclpcsio_isa.c,v 1.17.8.2 2008/01/09 01:53:14 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,47 +57,168 @@ __KERNEL_RCSID(0, "$NetBSD: nsclpcsio_isa.c,v 1.17.8.1 2007/11/06 23:27:54 matt 
 #endif
 #include <dev/sysmon/sysmonvar.h>
 
-static int nsclpcsio_isa_match(struct device *, struct cfdata *, void *);
-static void nsclpcsio_isa_attach(struct device *, struct device *, void *);
-static int nsclpcsio_isa_detach(struct device *, int);
+#define SIO_REG_SID	0x20	/* Super I/O ID */
+#define SIO_SID_PC87366	0xE9	/* PC87366 is identified by 0xE9.*/
 
-#define GPIO_NPINS 29
+#define SIO_REG_SRID	0x27	/* Super I/O Revision */
+
+#define SIO_REG_LDN	0x07	/* Logical Device Number */
+#define SIO_LDN_FDC	0x00	/* Floppy Disk Controller (FDC) */
+#define SIO_LDN_PP	0x01	/* Parallel Port (PP) */
+#define SIO_LDN_SP2	0x02	/* Serial Port 2 with IR (SP2) */
+#define SIO_LDN_SP1	0x03	/* Serial Port 1 (SP1) */
+#define SIO_LDN_SWC	0x04	/* System Wake-Up Control (SWC) */
+#define SIO_LDN_KBCM	0x05	/* Mouse Controller (KBC) */
+#define SIO_LDN_KBCK	0x06	/* Keyboard Controller (KBC) */
+#define SIO_LDN_GPIO	0x07	/* General-Purpose I/O (GPIO) Ports */
+#define SIO_LDN_ACB	0x08	/* ACCESS.bus Interface (ACB) */
+#define SIO_LDN_FSCM	0x09	/* Fan Speed Control and Monitor (FSCM) */
+#define SIO_LDN_WDT	0x0A	/* WATCHDOG Timer (WDT) */
+#define SIO_LDN_GMP	0x0B	/* Game Port (GMP) */
+#define SIO_LDN_MIDI	0x0C	/* Musical Instrument Digital Interface */
+#define SIO_LDN_VLM	0x0D	/* Voltage Level Monitor (VLM) */
+#define SIO_LDN_TMS	0x0E	/* Temperature Sensor (TMS) */
+
+#define SIO_REG_ACTIVE	0x30	/* Logical Device Activate Register */
+#define SIO_ACTIVE_EN		0x01	/* enabled */
+
+#define SIO_REG_IO_MSB	0x60	/* I/O Port Base, bits 15-8 */
+#define SIO_REG_IO_LSB	0x61	/* I/O Port Base, bits 7-0 */
+
+#define SIO_LDNUM	15	/* total number of logical devices */
+
+/* Supported logical devices description */
+static const struct {
+	const char *ld_name;
+	int ld_num;
+	int ld_iosize;
+} sio_ld[] = {
+	{ "GPIO",	SIO_LDN_GPIO,	16 },
+	{ "VLM",	SIO_LDN_VLM,	16 },
+	{ "TMS",	SIO_LDN_TMS,	16 }
+};
+
+/* GPIO */
+#define SIO_GPIO_PINSEL	0xf0
+#define SIO_GPIO_PINCFG	0xf1
+#define SIO_GPIO_PINEV	0xf2
+
 #define	SIO_GPIO_CONF_OUTPUTEN	(1 << 0)
 #define	SIO_GPIO_CONF_PUSHPULL	(1 << 1)
 #define	SIO_GPIO_CONF_PULLUP	(1 << 2)
 
+#define SIO_GPDO0	0x00
+#define SIO_GPDI0	0x01
+#define SIO_GPEVEN0	0x02
+#define SIO_GPEVST0	0x03
+#define SIO_GPDO1	0x04
+#define SIO_GPDI1	0x05
+#define SIO_GPEVEN1	0x06
+#define SIO_GPEVST1	0x07
+#define SIO_GPDO2	0x08
+#define SIO_GPDI2	0x09
+#define SIO_GPDO3	0x0a
+#define SIO_GPDI3	0x0b
+
+#define SIO_GPIO_NPINS	29
+
+/* TMS */
+#define SIO_TEVSTS	0x00	/* Temperature Event Status */
+#define SIO_TEVSMI	0x02	/* Temperature Event to SMI */
+#define SIO_TEVIRQ	0x04	/* Temperature Event to IRQ */
+#define SIO_TMSCFG	0x08	/* TMS Configuration */
+#define SIO_TMSBS	0x09	/* TMS Bank Select */
+#define SIO_TCHCFST	0x0a	/* Temperature Channel Config and Status */
+#define SIO_RDCHT	0x0b	/* Read Channel Temperature */
+#define SIO_CHTH	0x0c	/* Channel Temperature High Limit */
+#define SIO_CHTL	0x0d	/* Channel Temperature Low Limit */
+#define SIO_CHOTL	0x0e	/* Channel Overtemperature Limit */
+
+/* VLM */
+#define SIO_VEVSTS0	0x00	/* Voltage Event Status 0 */
+#define SIO_VEVSTS1	0x01	/* Voltage Event Status 1 */
+#define SIO_VEVSMI0	0x02	/* Voltage Event to SMI 0 */
+#define SIO_VEVSMI1	0x03	/* Voltage Event to SMI 1 */
+#define SIO_VEVIRQ0	0x04	/* Voltage Event to IRQ 0 */
+#define SIO_VEVIRQ1	0x05	/* Voltage Event to IRQ 1 */
+#define SIO_VID 	0x06	/* Voltage ID */
+#define SIO_VCNVR	0x07	/* Voltage Conversion Rate */
+#define SIO_VLMCFG	0x08	/* VLM Configuration */
+#define SIO_VLMBS	0x09	/* VLM Bank Select */
+#define SIO_VCHCFST	0x0a	/* Voltage Channel Config and Status */
+#define SIO_RDCHV	0x0b	/* Read Channel Voltage */
+#define SIO_CHVH	0x0c	/* Channel Voltage High Limit */
+#define SIO_CHVL	0x0d	/* Channel Voltage Low Limit */
+#define SIO_OTSL	0x0e	/* Overtemperature Shutdown Limit */
+
+#define SIO_REG_SIOCF1	0x21
+#define SIO_REG_SIOCF2	0x22
+#define SIO_REG_SIOCF3	0x23
+#define SIO_REG_SIOCF4	0x24
+#define SIO_REG_SIOCF5	0x25
+#define SIO_REG_SIOCF8	0x28
+#define SIO_REG_SIOCFA	0x2a
+#define SIO_REG_SIOCFB	0x2b
+#define SIO_REG_SIOCFC	0x2c
+#define SIO_REG_SIOCFD	0x2d
+
+#define SIO_VLM_OFF	3
+#define SIO_NUM_SENSORS	(SIO_VLM_OFF + 14)
+#define SIO_VREF	1235	/* 1000.0 * VREF */
+
 struct nsclpcsio_softc {
 	struct device sc_dev;
-	bus_space_tag_t sc_iot, sc_gpio_iot, sc_tms_iot;
-	bus_space_handle_t sc_ioh, sc_gpio_ioh, sc_tms_ioh;
+	bus_space_tag_t sc_iot;
+	bus_space_handle_t sc_ioh;
 
-	envsys_data_t sc_data[3];
-	struct sysmon_envsys sc_sysmon;
+	bus_space_handle_t sc_ld_ioh[SIO_LDNUM];
+	int sc_ld_en[SIO_LDNUM];
+
+	/* TMS and VLM */
+	struct sysmon_envsys *sc_sme;
+	envsys_data_t sc_sensor[SIO_NUM_SENSORS];
+
 	kmutex_t sc_lock;
-
 #if NGPIO > 0
 	/* GPIO */
 	struct gpio_chipset_tag sc_gpio_gc;
-	struct gpio_pin sc_gpio_pins[GPIO_NPINS];
+	struct gpio_pin sc_gpio_pins[SIO_GPIO_NPINS];
 #endif
 };
 
 #define GPIO_READ(sc, reg)			\
-	bus_space_read_1((sc)->sc_gpio_iot,	\
-	    (sc)->sc_gpio_ioh, (reg))
+	bus_space_read_1((sc)->sc_iot,			\
+	    (sc)->sc_ld_ioh[SIO_LDN_GPIO], (reg))
 #define GPIO_WRITE(sc, reg, val)		\
-	bus_space_write_1((sc)->sc_gpio_iot,	\
-	    (sc)->sc_gpio_ioh, (reg), (val))
+	bus_space_write_1((sc)->sc_iot,			\
+	    (sc)->sc_ld_ioh[SIO_LDN_GPIO], (reg), (val))
+#define TMS_WRITE(sc, reg, val)				\
+	bus_space_write_1((sc)->sc_iot,			\
+	    (sc)->sc_ld_ioh[SIO_LDN_TMS], (reg), (val))
+#define TMS_READ(sc, reg)				\
+	bus_space_read_1((sc)->sc_iot,			\
+	    (sc)->sc_ld_ioh[SIO_LDN_TMS], (reg))
+#define VLM_WRITE(sc, reg, val)				\
+	bus_space_write_1((sc)->sc_iot,			\
+	    (sc)->sc_ld_ioh[SIO_LDN_VLM], (reg), (val))
+#define VLM_READ(sc, reg)				\
+	bus_space_read_1((sc)->sc_iot,			\
+	    (sc)->sc_ld_ioh[SIO_LDN_VLM], (reg))
+
+static int	nsclpcsio_isa_match(struct device *, struct cfdata *, void *);
+static void	nsclpcsio_isa_attach(struct device *, struct device *, void *);
+static int	nsclpcsio_isa_detach(struct device *, int);
 
 CFATTACH_DECL(nsclpcsio_isa, sizeof(struct nsclpcsio_softc),
     nsclpcsio_isa_match, nsclpcsio_isa_attach, nsclpcsio_isa_detach, NULL);
 
-static u_int8_t nsread(bus_space_tag_t, bus_space_handle_t, int);
-static void nswrite(bus_space_tag_t, bus_space_handle_t, int, u_int8_t);
+static uint8_t	nsread(bus_space_tag_t, bus_space_handle_t, int);
+static void	nswrite(bus_space_tag_t, bus_space_handle_t, int, uint8_t);
 static int nscheck(bus_space_tag_t, int);
 
-static void tms_update(struct nsclpcsio_softc *, int);
-static int tms_gtredata(struct sysmon_envsys *, envsys_data_t *);
+static void	nsclpcsio_tms_init(struct nsclpcsio_softc *);
+static void	nsclpcsio_vlm_init(struct nsclpcsio_softc *);
+static void	nsclpcsio_refresh(struct sysmon_envsys *, envsys_data_t *);
 
 #if NGPIO > 0
 static void nsclpcsio_gpio_init(struct nsclpcsio_softc *);
@@ -102,57 +228,45 @@ static int nsclpcsio_gpio_pin_read(void *, int);
 static void nsclpcsio_gpio_pin_ctl(void *, int, int);
 #endif
 
-static u_int8_t
-nsread(iot, ioh, idx)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	int idx;
+static uint8_t
+nsread(bus_space_tag_t iot, bus_space_handle_t ioh, int idx)
 {
-
 	bus_space_write_1(iot, ioh, 0, idx);
-	return (bus_space_read_1(iot, ioh, 1));
+	return bus_space_read_1(iot, ioh, 1);
 }
 
 static void
-nswrite(iot, ioh, idx, data)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	int idx;
-	u_int8_t data;
+nswrite(bus_space_tag_t iot, bus_space_handle_t ioh, int idx, uint8_t data)
 {
-
 	bus_space_write_1(iot, ioh, 0, idx);
 	bus_space_write_1(iot, ioh, 1, data);
 }
 
 static int
-nscheck(iot, base)
-	bus_space_tag_t iot;
-	int base;
+nscheck(bus_space_tag_t iot, int base)
 {
 	bus_space_handle_t ioh;
 	int rv = 0;
 
 	if (bus_space_map(iot, base, 2, 0, &ioh))
-		return (0);
+		return 0;
 
 	/* XXX this is for PC87366 only for now */
-	if (nsread(iot, ioh, 0x20) == 0xe9)
+	if (nsread(iot, ioh, SIO_REG_SID) == SIO_SID_PC87366)
 		rv = 1;
 
 	bus_space_unmap(iot, ioh, 2);
-	return (rv);
+	return rv;
 }
 
 static int
-nsclpcsio_isa_match(struct device *parent,
-    struct cfdata *match, void *aux)
+nsclpcsio_isa_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	int iobase;
 
 	if (ISA_DIRECT_CONFIG(ia))
-		return (0);
+		return 0;
 
 	if (ia->ia_nio > 0 && ia->ia_io[0].ir_addr != ISA_UNKNOWN_PORT) {
 		/* XXX check for legal iobase ??? */
@@ -160,7 +274,7 @@ nsclpcsio_isa_match(struct device *parent,
 			iobase = ia->ia_io[0].ir_addr;
 			goto found;
 		}
-		return (0);
+		return 0;
 	}
 
 	/* PC87366 has two possible locations depending on wiring */
@@ -172,7 +286,8 @@ nsclpcsio_isa_match(struct device *parent,
 		iobase = 0x4e;
 		goto found;
 	}
-	return (0);
+
+	return 0;
 
 found:
 	ia->ia_nio = 1;
@@ -181,254 +296,258 @@ found:
 	ia->ia_niomem = 0;
 	ia->ia_nirq = 0;
 	ia->ia_ndrq = 0;
-	return (1);
+
+	return 1;
 }
 
-static void
-nsclpcsio_isa_attach(struct device *parent, struct device *self,
-    void *aux)
+static struct sysmon_envsys *
+nsclpcsio_envsys_init(struct nsclpcsio_softc *sc)
 {
-	struct nsclpcsio_softc *sc = (void *)self;
-	struct isa_attach_args *ia = aux;
-#if NGPIO > 0
-	struct gpiobus_attach_args gba;
-#endif
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	u_int8_t val;
-	int tms_iobase, gpio_iobase = 0;
 	int i;
+	struct sysmon_envsys *sme;
 
-	sc->sc_iot = iot = ia->ia_iot;
-	if (bus_space_map(ia->ia_iot, ia->ia_io[0].ir_addr, 2, 0, &ioh)) {
-		printf(": can't map i/o space\n");
-		return;
-	}
-	sc->sc_ioh = ioh;
-	printf(": NSC PC87366 rev. %d\n", nsread(iot, ioh, 0x27));
-
-	mutex_init(&sc->sc_lock, MUTEX_DRIVER, IPL_NONE);
-
-	nswrite(iot, ioh, 0x07, 0x07); /* select gpio */
-
-	val = nsread(iot, ioh, 0x30); /* control register */
-	if (!(val & 1)) {
-		printf("%s: GPIO disabled\n", sc->sc_dev.dv_xname);
-	} else {
-		gpio_iobase = (nsread(iot, ioh, 0x60) << 8) |
-			       nsread(iot, ioh, 0x61);
-		sc->sc_gpio_iot = iot;
-		if (bus_space_map(iot, gpio_iobase, 0x2c, 0,
-		    &sc->sc_gpio_ioh)) {
-			printf("%s: can't map GPIO i/o space\n",
-			    sc->sc_dev.dv_xname);
-			return;
-		}
-		printf("%s: GPIO at 0x%x\n", sc->sc_dev.dv_xname, gpio_iobase);
-
-#if NGPIO > 0
-		nsclpcsio_gpio_init(sc);
-#endif
-	}
-
-	nswrite(iot, ioh, 0x07, 0x0e); /* select tms */
-
-	val = nsread(iot, ioh, 0x30); /* control register */
-	if (!(val & 1)) {
-		printf("%s: TMS disabled\n", sc->sc_dev.dv_xname);
-		return;
-	}
-
-	tms_iobase = (nsread(iot, ioh, 0x60) << 8) | nsread(iot, ioh, 0x61);
-	sc->sc_tms_iot = iot;
-	if (bus_space_map(iot, tms_iobase, 16, 0, &sc->sc_tms_ioh)) {
-		printf("%s: can't map TMS i/o space\n", sc->sc_dev.dv_xname);
-		return;
-	}
-	printf("%s: TMS at 0x%x\n", sc->sc_dev.dv_xname, tms_iobase);
-
-	if (bus_space_read_1(sc->sc_tms_iot, sc->sc_tms_ioh, 0x08) & 1) {
-		printf("%s: TMS in standby mode\n", sc->sc_dev.dv_xname);
-
-		/* Wake up the TMS and enable all temperature sensors. */
-		bus_space_write_1(sc->sc_tms_iot, sc->sc_tms_ioh, 0x08, 0x00);
-		bus_space_write_1(sc->sc_tms_iot, sc->sc_tms_ioh, 0x09, 0x00);
-		bus_space_write_1(sc->sc_tms_iot, sc->sc_tms_ioh, 0x0a, 0x01);
-		bus_space_write_1(sc->sc_tms_iot, sc->sc_tms_ioh, 0x09, 0x01);
-		bus_space_write_1(sc->sc_tms_iot, sc->sc_tms_ioh, 0x0a, 0x01);
-		bus_space_write_1(sc->sc_tms_iot, sc->sc_tms_ioh, 0x09, 0x02);
-		bus_space_write_1(sc->sc_tms_iot, sc->sc_tms_ioh, 0x0a, 0x01);
-
-		if (!(bus_space_read_1(sc->sc_tms_iot, sc->sc_tms_ioh, 0x08)
-		      & 1)) {
-			printf("%s: TMS awoken\n", sc->sc_dev.dv_xname);
-		} else {
-			return;
+	sme = sysmon_envsys_create();
+	for (i = 0; i < SIO_NUM_SENSORS; i++) {
+		if (sysmon_envsys_sensor_attach(sme, &sc->sc_sensor[i]) != 0) {
+			aprint_error_dev(&sc->sc_dev,
+			    "could not attach sensor %d", i);
+			goto err;
 		}
 	}
-
-	/* Initialize sensor meta data */
-	for (i = 0; i < 3; i++) {
-		sc->sc_data[i].sensor = i;
-		sc->sc_data[i].units =ENVSYS_STEMP;
-	}
-	strcpy(sc->sc_data[0].desc, "TSENS1");
-	strcpy(sc->sc_data[1].desc, "TSENS2");
-	strcpy(sc->sc_data[2].desc, "TNSC");
-
-	/* Get initial set of sensor values. */
-	for (i = 0; i < 3; i++)
-		tms_update(sc, i);
 
 	/*
 	 * Hook into the System Monitor.
 	 */
-	sc->sc_sysmon.sme_name = sc->sc_dev.dv_xname;
-	sc->sc_sysmon.sme_sensor_data = sc->sc_data;
-	sc->sc_sysmon.sme_cookie = sc;
-	sc->sc_sysmon.sme_gtredata = tms_gtredata;
-	sc->sc_sysmon.sme_nsensors = 3;
+	sme->sme_name = device_xname(&sc->sc_dev);
+	sme->sme_cookie = sc;
+	sme->sme_refresh = nsclpcsio_refresh;
 
-	if (sysmon_envsys_register(&sc->sc_sysmon))
-		printf("%s: unable to register with sysmon\n",
+	if (sysmon_envsys_register(sme) != 0) {
+		aprint_error("%s: unable to register with sysmon\n",
 		    sc->sc_dev.dv_xname);
+		goto err;
+	}
+	return sme;
+err:
+	sysmon_envsys_destroy(sme);
+	return NULL;
+}
+
+static void
+nsclpcsio_isa_attach(struct device *parent, struct device *self, void *aux)
+{
+	struct nsclpcsio_softc *sc = device_private(self);
+	struct isa_attach_args *ia = aux;
+#if NGPIO > 0
+	struct gpiobus_attach_args gba;
+#endif
+	int i, iobase;
+
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
+
+	sc->sc_iot = ia->ia_iot;
+	iobase = ia->ia_io[0].ir_addr;
+
+	if (bus_space_map(ia->ia_iot, iobase, 2, 0, &sc->sc_ioh)) {
+		aprint_error(": can't map i/o space\n");
+		return;
+	}
+
+	aprint_normal(": NSC PC87366 rev. 0x%d ",
+	    nsread(sc->sc_iot, sc->sc_ioh, SIO_REG_SRID));
+
+	/* Configure all supported logical devices */
+	for (i = 0; i < __arraycount(sio_ld); i++) {
+		sc->sc_ld_en[sio_ld[i].ld_num] = 0;
+
+		/* Select the device and check if it's activated */
+		nswrite(sc->sc_iot, sc->sc_ioh, SIO_REG_LDN, sio_ld[i].ld_num);
+		if ((nsread(sc->sc_iot, sc->sc_ioh,
+		    SIO_REG_ACTIVE) & SIO_ACTIVE_EN) == 0)
+			continue;
+
+		/* Map I/O space if necessary */
+		if (sio_ld[i].ld_iosize != 0) {
+			iobase = (nsread(sc->sc_iot, sc->sc_ioh,
+			    SIO_REG_IO_MSB) << 8);
+			iobase |= nsread(sc->sc_iot, sc->sc_ioh,
+			    SIO_REG_IO_LSB);
+			if (bus_space_map(sc->sc_iot, iobase,
+			    sio_ld[i].ld_iosize, 0,
+			    &sc->sc_ld_ioh[sio_ld[i].ld_num]))
+				continue;
+		}
+
+		sc->sc_ld_en[sio_ld[i].ld_num] = 1;
+		aprint_normal("%s ", sio_ld[i].ld_name);
+	}
+
+	aprint_normal("\n");
+
+#if NGPIO > 0
+	nsclpcsio_gpio_init(sc);
+#endif
+	nsclpcsio_tms_init(sc);
+	nsclpcsio_vlm_init(sc);
+	sc->sc_sme = nsclpcsio_envsys_init(sc);
 
 #if NGPIO > 0
 	/* attach GPIO framework */
-	if (gpio_iobase != 0) {
+	if (sc->sc_ld_en[SIO_LDN_GPIO]) {
 		gba.gba_gc = &sc->sc_gpio_gc;
 		gba.gba_pins = sc->sc_gpio_pins;
-		gba.gba_npins = GPIO_NPINS;
+		gba.gba_npins = SIO_GPIO_NPINS;
 		config_found_ia(&sc->sc_dev, "gpiobus", &gba, NULL);
 	}
 #endif
-	return;
 }
 
 static int
 nsclpcsio_isa_detach(struct device *self, int flags)
 {
+	int i, rc;
 	struct nsclpcsio_softc *sc = device_private(self);
 
-	sysmon_envsys_unregister(&sc->sc_sysmon);
+	if ((rc = config_detach_children(self, flags)) != 0)
+		return rc;
+
+	if (sc->sc_sme != NULL)
+		sysmon_envsys_unregister(sc->sc_sme);
+	mutex_destroy(&sc->sc_lock);
+
+	for (i = 0; i < __arraycount(sio_ld); i++) {
+		if (sc->sc_ld_en[sio_ld[i].ld_num] &&
+		    sio_ld[i].ld_iosize != 0) {
+			bus_space_unmap(sc->sc_iot,
+			    sc->sc_ld_ioh[sio_ld[i].ld_num],
+			    sio_ld[i].ld_iosize);
+		}
+	}
+
 	bus_space_unmap(sc->sc_iot, sc->sc_ioh, 2);
+
 	return 0;
 }
 
 static void
-tms_update(sc, chan)
-	struct nsclpcsio_softc *sc;
-	int chan;
+nsclpcsio_tms_init(struct nsclpcsio_softc *sc)
 {
-	bus_space_tag_t iot = sc->sc_tms_iot;
-	bus_space_handle_t ioh = sc->sc_tms_ioh;
-	u_int8_t status;
-	int8_t temp, ctemp; /* signed!! */
+	int i;
 
-	mutex_enter(&sc->sc_lock);
+	/* Initialisation, PC87366.pdf, page 208 */
+	TMS_WRITE(sc, 0x08, 0x00);
+	TMS_WRITE(sc, 0x09, 0x0f);
+	TMS_WRITE(sc, 0x0a, 0x08);
+	TMS_WRITE(sc, 0x0b, 0x04);
+	TMS_WRITE(sc, 0x0c, 0x35);
+	TMS_WRITE(sc, 0x0d, 0x05);
+	TMS_WRITE(sc, 0x0e, 0x05);
 
-	nswrite(iot, ioh, 0x07, 0x0e); /* select tms */
+	TMS_WRITE(sc, SIO_TMSCFG, 0x00);
 
-	bus_space_write_1(iot, ioh, 0x09, chan); /* select */
-
-	status = bus_space_read_1(iot, ioh, 0x0a); /* config/status */
-	if (status & 0x01) {
-		/* enabled */
-		sc->sc_data[chan].state = ENVSYS_SVALID;
-	} else {
-		sc->sc_data[chan].state = ENVSYS_SINVALID;
-		mutex_exit(&sc->sc_lock);
-		return;
+	for (i = 0; i < SIO_VLM_OFF; i++) {
+		TMS_WRITE(sc, SIO_TMSBS, i);
+		TMS_WRITE(sc, SIO_TCHCFST, 0x01);
+		sc->sc_sensor[i].units = ENVSYS_STEMP;
 	}
 
-	/*
-	 * If the channel is enabled, it is considered valid.
-	 * An "open circuit" might be temporary.
-	 */
-#if 0
-	sc->sc_data[chan].state = ENVSYS_SVALID;
-	if (status & 0x40) {
-		/*
-		 * open circuit
-		 * XXX should have a warning for it
-		 */
-		sc->sc_data[chan].warnflags = ENVSYS_WARN_OK; /* XXX */
-		mutex_exit(&sc->sc_lock);
-		return;
-	}
-#endif
+#define COPYDESCR(x, y)					\
+	do {						\
+		(void)strlcpy((x), (y), sizeof(x));	\
+	} while (/* CONSTCOND */ 0)
 
-	/* get current temperature in signed degree celsius */
-	temp = bus_space_read_1(iot, ioh, 0x0b);
-	sc->sc_data[chan].value_cur = (int)temp * 1000000 + 273150000;
-	sc->sc_data[chan].state = ENVSYS_SVALID;
-
-	if (status & 0x0e) { /* any temperature warning? */
-		/*
-		 * XXX the chip documentation is a bit fuzzy - it doesn't state
-		 * that the hardware OTS output depends on the "overtemp"
-		 * warning bit.
-		 * It seems the output gets cleared if the warning bit is reset.
-		 * This sucks.
-		 * The hardware might do something useful with output pins, eg
-		 * throttling the CPU, so we must do the comparision in
-		 * software, and only reset the bits if the reason is gone.
-		 */
-		if (status & 0x02) { /* low limit */
-			sc->sc_data[chan].state = ENVSYS_SWARNUNDER;
-			/* read low limit */
-			ctemp = bus_space_read_1(iot, ioh, 0x0d);
-			if (temp <= ctemp) /* still valid, don't reset */
-				status &= ~0x02;
-		}
-		if (status & 0x04) { /* high limit */
-			sc->sc_data[chan].state = ENVSYS_SWARNOVER;
-			/* read high limit */
-			ctemp = bus_space_read_1(iot, ioh, 0x0c);
-			if (temp >= ctemp) /* still valid, don't reset */
-				status &= ~0x04;
-		}
-		if (status & 0x08) { /* overtemperature */
-			sc->sc_data[chan].state = ENVSYS_SCRITOVER;
-			/* read overtemperature limit */
-			ctemp = bus_space_read_1(iot, ioh, 0x0e);
-			if (temp >= ctemp) /* still valid, don't reset */
-				status &= ~0x08;
-		}
-
-		/* clear outdated warnings */
-		if (status & 0x0e)
-			bus_space_write_1(iot, ioh, 0x0a, status);
-	}
-
-	mutex_exit(&sc->sc_lock);
-
-	return;
+	COPYDESCR(sc->sc_sensor[0].desc, "TSENS1");
+	COPYDESCR(sc->sc_sensor[1].desc, "TSENS2");
+	COPYDESCR(sc->sc_sensor[2].desc, "TNSC");
 }
 
-static int
-tms_gtredata(struct sysmon_envsys *sme, envsys_data_t *data)
+static void
+nsclpcsio_vlm_init(struct nsclpcsio_softc *sc)
+{
+	int i;
+	char tmp[16];
+	envsys_data_t *sensor = &sc->sc_sensor[SIO_VLM_OFF];
+
+	for (i = 0; i < SIO_NUM_SENSORS - SIO_VLM_OFF; i++) {
+		VLM_WRITE(sc, SIO_VLMBS, i);
+		VLM_WRITE(sc, SIO_VCHCFST, 0x01);
+		sensor[i].units = ENVSYS_SVOLTS_DC;
+	}
+
+	for (i = 0; i < 7; i++) {
+		(void)snprintf(tmp, sizeof(tmp), "VSENS%d", i);
+		COPYDESCR(sensor[i].desc, tmp);
+	}
+
+	COPYDESCR(sensor[7 ].desc, "VSB");
+	COPYDESCR(sensor[8 ].desc, "VDD");
+	COPYDESCR(sensor[9 ].desc, "VBAT");
+	COPYDESCR(sensor[10].desc, "AVDD");
+	COPYDESCR(sensor[11].desc, "TS1");
+	COPYDESCR(sensor[12].desc, "TS2");
+	COPYDESCR(sensor[13].desc, "TS3");
+}
+
+
+static void
+nsclpcsio_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 {
 	struct nsclpcsio_softc *sc = sme->sme_cookie;
+	uint8_t status, data;
+	int8_t sdata = 0;
+	int scale, rfact;
 
-	tms_update(sc, data->sensor);
-	return (0);
+	scale = rfact = 0;
+	status = data = 0;
+
+	mutex_enter(&sc->sc_lock);
+	/* TMS */
+	if (edata->sensor < SIO_VLM_OFF && sc->sc_ld_en[SIO_LDN_TMS]) {
+		TMS_WRITE(sc, SIO_TMSBS, edata->sensor);
+		status = TMS_READ(sc, SIO_TCHCFST);
+		if (!(status & 0x01))
+			edata->state = ENVSYS_SINVALID;
+
+		sdata = TMS_READ(sc, SIO_RDCHT);
+		edata->value_cur = sdata * 1000000 + 273150000;
+		edata->state = ENVSYS_SVALID;
+	/* VLM */
+	} else if (edata->sensor >= SIO_VLM_OFF &&
+		   edata->sensor < SIO_NUM_SENSORS &&
+		   sc->sc_ld_en[SIO_LDN_VLM]) {
+		VLM_WRITE(sc, SIO_VLMBS, edata->sensor - SIO_VLM_OFF);
+		status = VLM_READ(sc, SIO_VCHCFST);
+		if (!(status & 0x01)) {
+			edata->state = ENVSYS_SINVALID;
+		} else {
+			data = VLM_READ(sc, SIO_RDCHV);
+			scale = 1;
+			switch (edata->sensor - SIO_VLM_OFF) {
+			case 7:
+			case 8:
+			case 10:
+				scale = 2;
+				break;
+			}
+			/* Vi = (2.45±0.05)*VREF *RDCHVi / 256 */
+			rfact = 10 * scale * ((245 * SIO_VREF) >> 8);
+			edata->value_cur = data * rfact;
+			edata->state = ENVSYS_SVALID;
+		}
+	}
+	mutex_exit(&sc->sc_lock);
 }
 
 #if NGPIO > 0
 static void
 nsclpcsio_gpio_pin_select(struct nsclpcsio_softc *sc, int pin)
 {
-	u_int8_t v;
-	bus_space_tag_t iot = sc->sc_iot;
-	bus_space_handle_t ioh = sc->sc_ioh;
+	uint8_t v;
 
 	v = ((pin / 8) << 4) | (pin % 8);
 
-	nswrite(iot, ioh, 0x07, 0x07); /* select gpio */
-	nswrite(iot, ioh, 0xf0, v);
-
-	return;
+	nswrite(sc->sc_iot, sc->sc_ioh, SIO_REG_LDN, SIO_LDN_GPIO);
+	nswrite(sc->sc_iot, sc->sc_ioh, SIO_GPIO_PINSEL, v);
 }
 
 static void
@@ -436,7 +555,7 @@ nsclpcsio_gpio_init(struct nsclpcsio_softc *sc)
 {
 	int i;
 
-	for (i = 0; i < GPIO_NPINS; i++) {
+	for (i = 0; i < SIO_GPIO_NPINS; i++) {
 		sc->sc_gpio_pins[i].pin_num = i;
 		sc->sc_gpio_pins[i].pin_caps = GPIO_PIN_INPUT |
 		    GPIO_PIN_OUTPUT | GPIO_PIN_OPENDRAIN |
@@ -461,17 +580,27 @@ nsclpcsio_gpio_pin_read(void *aux, int pin)
 {
 	struct nsclpcsio_softc *sc = (struct nsclpcsio_softc *)aux;
 	int port, shift, reg;
-	u_int8_t v;
+	uint8_t v;
 
-	reg = 0x00;
 	port = pin / 8;
 	shift = pin % 8;
 
 	switch (port) {
-	case 0: reg = 0x00; break;
-	case 1: reg = 0x04; break;
-	case 2: reg = 0x08; break;
-	case 3: reg = 0x0a; break;
+	case 0:
+		reg = SIO_GPDI0;
+		break;
+	case 1:
+		reg = SIO_GPDI1;
+		break;
+	case 2:
+		reg = SIO_GPDI2;
+		break;
+	case 3:
+		reg = SIO_GPDI3;
+		break;
+	default:
+		reg = SIO_GPDI0;
+		break;
 	}
 
 	v = GPIO_READ(sc, reg);
@@ -484,17 +613,27 @@ nsclpcsio_gpio_pin_write(void *aux, int pin, int v)
 {
 	struct nsclpcsio_softc *sc = (struct nsclpcsio_softc *)aux;
 	int port, shift, reg;
-	u_int8_t d;
+	uint8_t d;
 
 	port = pin / 8;
 	shift = pin % 8;
 
 	switch (port) {
-	case 0: reg = 0x00; break;
-	case 1: reg = 0x04; break;
-	case 2: reg = 0x08; break;
-	case 3: reg = 0x0a; break;
-	default: reg = 0x00; break; /* shouldn't happen */
+	case 0:
+		reg = SIO_GPDO0;
+		break;
+	case 1:
+		reg = SIO_GPDO1;
+		break;
+	case 2:
+		reg = SIO_GPDO2;
+		break;
+	case 3:
+		reg = SIO_GPDO3;
+		break;
+	default:
+		reg = SIO_GPDO0;
+		break; /* shouldn't happen */
 	}
 
 	d = GPIO_READ(sc, reg);
@@ -503,21 +642,19 @@ nsclpcsio_gpio_pin_write(void *aux, int pin, int v)
 	else if (v == 1)
 		d |= (1 << shift);
 	GPIO_WRITE(sc, reg, d);
-
-	return;
 }
 
 void
 nsclpcsio_gpio_pin_ctl(void *aux, int pin, int flags)
 {
 	struct nsclpcsio_softc *sc = (struct nsclpcsio_softc *)aux;
-	u_int8_t conf;
+	uint8_t conf;
 
 	mutex_enter(&sc->sc_lock);
 
-	nswrite(sc->sc_iot, sc->sc_ioh, 0x07, 0x07); /* select gpio */
+	nswrite(sc->sc_iot, sc->sc_ioh, SIO_REG_LDN, SIO_LDN_GPIO);
 	nsclpcsio_gpio_pin_select(sc, pin);
-	conf = nsread(sc->sc_iot, sc->sc_ioh, 0xf1);
+	conf = nsread(sc->sc_iot, sc->sc_ioh, SIO_GPIO_PINCFG);
 
 	conf &= ~(SIO_GPIO_CONF_OUTPUTEN | SIO_GPIO_CONF_PUSHPULL |
 	    SIO_GPIO_CONF_PULLUP);
@@ -528,10 +665,8 @@ nsclpcsio_gpio_pin_ctl(void *aux, int pin, int flags)
 	if (flags & GPIO_PIN_PULLUP)
 		conf |= SIO_GPIO_CONF_PULLUP;
 
-	nswrite(sc->sc_iot, sc->sc_ioh, 0xf1, conf);
+	nswrite(sc->sc_iot, sc->sc_ioh, SIO_GPIO_PINCFG, conf);
 
 	mutex_exit(&sc->sc_lock);
-
-	return;
 }
 #endif /* NGPIO */

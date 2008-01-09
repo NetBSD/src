@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.247.2.2 2007/11/08 11:00:00 matt Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.247.2.3 2008/01/09 01:56:01 matt Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.247.2.2 2007/11/08 11:00:00 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.247.2.3 2008/01/09 01:56:01 matt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.247.2.2 2007/11/08 11:00:00 matt Exp
 #include <sys/proc.h>
 #include <sys/mount.h>
 #include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/namei.h>
 #include <sys/vnode.h>
 #include <sys/file.h>
@@ -62,23 +63,17 @@ __KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.247.2.2 2007/11/08 11:00:00 matt Exp
 #include <sys/stat.h>
 #include <sys/syscall.h>
 #include <sys/kauth.h>
+#include <sys/lwpctl.h>
+#include <sys/pax.h>
+#include <sys/cpu.h>
 
 #include <sys/syscallargs.h>
 #if NVERIEXEC > 0
 #include <sys/verified_exec.h>
 #endif /* NVERIEXEC > 0 */
 
-#ifdef SYSTRACE
-#include <sys/systrace.h>
-#endif /* SYSTRACE */
-
-#ifdef PAX_SEGVGUARD
-#include <sys/pax.h>
-#endif /* PAX_SEGVGUARD */
-
 #include <uvm/uvm_extern.h>
 
-#include <sys/cpu.h>
 #include <machine/reg.h>
 
 #include <compat/common/compat_util.h>
@@ -90,8 +85,6 @@ static int exec_sigcode_map(struct proc *, const struct emul *);
 #else
 #define DPRINTF(a)
 #endif /* DEBUG_EXEC */
-
-MALLOC_DEFINE(M_EXEC, "exec", "argument lists & other mem used by exec");
 
 /*
  * Exec function switch:
@@ -206,6 +199,8 @@ krwlock_t exec_lock;
 static void link_es(struct execsw_entry **, const struct execsw *);
 #endif /* LKM */
 
+static kmutex_t sigobject_lock;
+
 /*
  * check exec:
  * given an "executable" described in the exec package's namei info,
@@ -253,11 +248,11 @@ check_exec(struct lwp *l, struct exec_package *epp)
 		error = EACCES;
 		goto bad1;
 	}
-	if ((error = VOP_ACCESS(vp, VEXEC, l->l_cred, l)) != 0)
+	if ((error = VOP_ACCESS(vp, VEXEC, l->l_cred)) != 0)
 		goto bad1;
 
 	/* get attributes */
-	if ((error = VOP_GETATTR(vp, epp->ep_vap, l->l_cred, l)) != 0)
+	if ((error = VOP_GETATTR(vp, epp->ep_vap, l->l_cred)) != 0)
 		goto bad1;
 
 	/* Check mount point */
@@ -269,7 +264,7 @@ check_exec(struct lwp *l, struct exec_package *epp)
 		epp->ep_vap->va_mode &= ~(S_ISUID | S_ISGID);
 
 	/* try to open it */
-	if ((error = VOP_OPEN(vp, FREAD, l->l_cred, l)) != 0)
+	if ((error = VOP_OPEN(vp, FREAD, l->l_cred)) != 0)
 		goto bad1;
 
 	/* unlock vp, since we need it unlocked from here on out. */
@@ -364,7 +359,7 @@ bad2:
 	 * pathname buf, and punt.
 	 */
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-	VOP_CLOSE(vp, FREAD, l->l_cred, l);
+	VOP_CLOSE(vp, FREAD, l->l_cred);
 	vput(vp);
 	PNBUF_PUT(ndp->ni_cnd.cn_pnbuf);
 	return error;
@@ -396,13 +391,13 @@ execve_fetch_element(char * const *array, size_t index, char **value)
  */
 /* ARGSUSED */
 int
-sys_execve(struct lwp *l, void *v, register_t *retval)
+sys_execve(struct lwp *l, const struct sys_execve_args *uap, register_t *retval)
 {
-	struct sys_execve_args /* {
+	/* {
 		syscallarg(const char *)	path;
 		syscallarg(char * const *)	argp;
 		syscallarg(char * const *)	envp;
-	} */ *uap = v;
+	} */
 
 	return execve1(l, SCARG(uap, path), SCARG(uap, argp),
 	    SCARG(uap, envp), execve_fetch_element);
@@ -425,16 +420,13 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	struct ps_strings	arginfo;
 	struct ps_strings	*aip = &arginfo;
 	struct vmspace		*vm;
-	char			**tmpfap;
+	struct exec_fakearg	*tmpfap;
 	int			szsigcode;
 	struct exec_vmcmd	*base_vcp;
 	ksiginfo_t		ksi;
 	ksiginfoq_t		kq;
-#ifdef SYSTRACE
-	int			wassugid = ISSET(p->p_flag, PK_SUGID);
-	char			pathbuf[MAXPATHLEN];
+	char			*pathbuf;
 	size_t			pathbuflen;
-#endif /* SYSTRACE */
 
 	p = l->l_proc;
 
@@ -454,30 +446,20 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	 * functions call check_exec() recursively - for example,
 	 * see exec_script_makecmds().
 	 */
-#ifdef SYSTRACE
-	if (ISSET(p->p_flag, PK_SYSTRACE))
-		systrace_execve0(p);
-
-	error = copyinstr(path, pathbuf, sizeof(pathbuf), &pathbuflen);
+	pathbuf = PNBUF_GET();
+	error = copyinstr(path, pathbuf, MAXPATHLEN, &pathbuflen);
 	if (error) {
 		DPRINTF(("execve: copyinstr path %d", error));
 		goto clrflg;
 	}
 
-	NDINIT(&nid, LOOKUP, NOFOLLOW | TRYEMULROOT, UIO_SYSSPACE, pathbuf, l);
-#else
-	NDINIT(&nid, LOOKUP, NOFOLLOW | TRYEMULROOT, UIO_USERSPACE, path, l);
-#endif /* SYSTRACE */
+	NDINIT(&nid, LOOKUP, NOFOLLOW | TRYEMULROOT, UIO_SYSSPACE, pathbuf);
 
 	/*
 	 * initialize the fields of the exec package.
 	 */
-#ifdef SYSTRACE
-	pack.ep_name = pathbuf;
-#else
 	pack.ep_name = path;
-#endif /* SYSTRACE */
-	pack.ep_hdr = malloc(exec_maxhdrsz, M_EXEC, M_WAITOK);
+	pack.ep_hdr = kmem_alloc(exec_maxhdrsz, KM_SLEEP);
 	pack.ep_hdrlen = exec_maxhdrsz;
 	pack.ep_hdrvalid = 0;
 	pack.ep_ndp = &nid;
@@ -496,7 +478,9 @@ execve1(struct lwp *l, const char *path, char * const *args,
 
 	/* see if we can run it. */
 	if ((error = check_exec(l, &pack)) != 0) {
-		DPRINTF(("execve: check exec failed %d\n", error));
+		if (error != ENOENT) {
+			DPRINTF(("execve: check exec failed %d\n", error));
+		}
 		goto freehdr;
 	}
 
@@ -515,18 +499,18 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	/* copy the fake args list, if there's one, freeing it as we go */
 	if (pack.ep_flags & EXEC_HASARGL) {
 		tmpfap = pack.ep_fa;
-		while (*tmpfap != NULL) {
-			char *cp;
+		while (tmpfap->fa_arg != NULL) {
+			const char *cp;
 
-			cp = *tmpfap;
+			cp = tmpfap->fa_arg;
 			while (*cp)
 				*dp++ = *cp++;
 			dp++;
 
-			FREE(*tmpfap, M_EXEC);
+			kmem_free(tmpfap->fa_arg, tmpfap->fa_len);
 			tmpfap++; argc++;
 		}
-		FREE(pack.ep_fa, M_EXEC);
+		kmem_free(pack.ep_fa, pack.ep_fa_len);
 		pack.ep_flags &= ~EXEC_HASARGL;
 	}
 
@@ -603,6 +587,11 @@ execve1(struct lwp *l, const char *path, char * const *args,
 		    szsigcode + sizeof(struct ps_strings) + STACK_PTHREADSPACE)
 		    - argp;
 
+#ifdef PAX_ASLR
+	if (pax_aslr_active(l))
+		len += (arc4random() % PAGE_SIZE);
+#endif /* PAX_ASLR */
+
 #ifdef STACKLALIGN	/* arm, etc. */
 	len = STACKALIGN(len);	/* make the stack "safely" aligned */
 #else
@@ -622,6 +611,10 @@ execve1(struct lwp *l, const char *path, char * const *args,
 		mutex_exit(&p->p_smutex);
 	}
 	KDASSERT(p->p_nlwps == 1);
+
+	/* Destroy any lwpctl info. */
+	if (p->p_lwpctl != NULL)
+		lwp_ctl_exit();
 
 	/* This is now LWP 1 */
 	l->l_lid = 1;
@@ -655,6 +648,10 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	vm->vm_ssize = btoc(pack.ep_ssize);
 	vm->vm_maxsaddr = (void *)pack.ep_maxsaddr;
 	vm->vm_minsaddr = (void *)pack.ep_minsaddr;
+
+#ifdef PAX_ASLR
+	pax_aslr_init(l, vm);
+#endif /* PAX_ASLR */
 
 	/* create the new process's VM space by running the vmcmds */
 #ifdef DIAGNOSTIC
@@ -695,7 +692,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	kill_vmcmds(&pack.ep_vmcmds);
 
 	vn_lock(pack.ep_vp, LK_EXCLUSIVE | LK_RETRY);
-	VOP_CLOSE(pack.ep_vp, FREAD, l->l_cred, l);
+	VOP_CLOSE(pack.ep_vp, FREAD, l->l_cred);
 	vput(pack.ep_vp);
 
 	/* if an error happened, deallocate and punt */
@@ -707,6 +704,39 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	/* remember information about the process */
 	arginfo.ps_nargvstr = argc;
 	arginfo.ps_nenvstr = envc;
+
+	/* set command name & other accounting info */
+	i = min(nid.ni_cnd.cn_namelen, MAXCOMLEN);
+	(void)memcpy(p->p_comm, nid.ni_cnd.cn_nameptr, i);
+	p->p_comm[i] = '\0';
+
+	dp = PNBUF_GET();
+	/*
+	 * If the path starts with /, we don't need to do any work.
+	 * This handles the majority of the cases.
+	 * In the future perhaps we could canonicalize it?
+	 */
+	if (pathbuf[0] == '/')
+		(void)strlcpy(pack.ep_path = dp, pathbuf, MAXPATHLEN);
+#ifdef notyet
+	/*
+	 * Although this works most of the time [since the entry was just
+	 * entered in the cache] we don't use it because it theoretically
+	 * can fail and it is not the cleanest interface, because there
+	 * could be races. When the namei cache is re-written, this can
+	 * be changed to use the appropriate function.
+	 */
+	else if (!(error = vnode_to_path(dp, MAXPATHLEN, p->p_textvp, l, p)))
+		pack.ep_path = dp;
+#endif
+	else {
+#ifdef notyet
+		printf("Cannot get path for pid %d [%s] (error %d)",
+		    (int)p->p_pid, p->p_comm, error);
+#endif
+		pack.ep_path = NULL;
+		PNBUF_PUT(dp);
+	}
 
 	stack = (char *)STACK_ALLOC(STACK_GROW(vm->vm_minsaddr,
 		STACK_PTHREADSPACE + sizeof(struct ps_strings) + szsigcode),
@@ -740,6 +770,10 @@ execve1(struct lwp *l, const char *path, char * const *args,
 
 	/* Now copy argc, args & environ to new stack */
 	error = (*pack.ep_esch->es_copyargs)(l, &pack, &arginfo, &stack, argp);
+	if (pack.ep_path) {
+		PNBUF_PUT(pack.ep_path);
+		pack.ep_path = NULL;
+	}
 	if (error) {
 		DPRINTF(("execve: copyargs failed %d\n", error));
 		goto exec_abort;
@@ -769,13 +803,11 @@ execve1(struct lwp *l, const char *path, char * const *args,
 
 	l->l_ctxlink = NULL;	/* reset ucontext link */
 
-	/* set command name & other accounting info */
-	i = min(nid.ni_cnd.cn_namelen, MAXCOMLEN);
-	memcpy(p->p_comm, nid.ni_cnd.cn_nameptr, i);
-	p->p_comm[i] = '\0';
-	p->p_acflag &= ~AFORK;
 
+	p->p_acflag &= ~AFORK;
+	mutex_enter(&p->p_mutex);
 	p->p_flag |= PK_EXEC;
+	mutex_exit(&p->p_mutex);
 
 	/*
 	 * Stop profiling.
@@ -904,7 +936,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 		goto exec_abort;
 	}
 
-	free(pack.ep_hdr, M_EXEC);
+	kmem_free(pack.ep_hdr, pack.ep_hdrlen);
 
 	/* The emulation root will usually have been found when we looked
 	 * for the elf interpreter (or similar), if not look now. */
@@ -912,7 +944,9 @@ execve1(struct lwp *l, const char *path, char * const *args,
 		emul_find_root(l, &pack);
 
 	/* Any old emulation root got removed by fdcloseexec */
+	rw_enter(&p->p_cwdi->cwdi_lock, RW_WRITER);
 	p->p_cwdi->cwdi_edir = pack.ep_emul_root;
+	rw_exit(&p->p_cwdi->cwdi_lock);
 	pack.ep_emul_root = NULL;
 	if (pack.ep_interp != NULL)
 		vrele(pack.ep_interp);
@@ -984,13 +1018,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 		mutex_exit(&proclist_mutex);
 	}
 
-#ifdef SYSTRACE
-	/* XXXSMP */
-	if (ISSET(p->p_flag, PK_SYSTRACE) &&
-	    wassugid && !ISSET(p->p_flag, PK_SUGID))
-		systrace_execve1(pathbuf, p);
-#endif /* SYSTRACE */
-
+	PNBUF_PUT(pathbuf);
 	return (EJUSTRETURN);
 
  bad:
@@ -1003,21 +1031,20 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	}
 	/* close and put the exec'd file */
 	vn_lock(pack.ep_vp, LK_EXCLUSIVE | LK_RETRY);
-	VOP_CLOSE(pack.ep_vp, FREAD, l->l_cred, l);
+	VOP_CLOSE(pack.ep_vp, FREAD, l->l_cred);
 	vput(pack.ep_vp);
 	PNBUF_PUT(nid.ni_cnd.cn_pnbuf);
 	uvm_km_free(exec_map, (vaddr_t) argp, NCARGS, UVM_KMF_PAGEABLE);
 
  freehdr:
-	free(pack.ep_hdr, M_EXEC);
+	kmem_free(pack.ep_hdr, pack.ep_hdrlen);
 	if (pack.ep_emul_root != NULL)
 		vrele(pack.ep_emul_root);
 	if (pack.ep_interp != NULL)
 		vrele(pack.ep_interp);
 
-#ifdef SYSTRACE
  clrflg:
-#endif /* SYSTRACE */
+	PNBUF_PUT(pathbuf);
 	rw_exit(&p->p_reflock);
 #ifdef LKM
 	rw_exit(&exec_lock);
@@ -1026,6 +1053,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	return error;
 
  exec_abort:
+	PNBUF_PUT(pathbuf);
 	rw_exit(&p->p_reflock);
 #ifdef LKM
 	rw_exit(&exec_lock);
@@ -1042,13 +1070,14 @@ execve1(struct lwp *l, const char *path, char * const *args,
 		FREE(pack.ep_emul_arg, M_TEMP);
 	PNBUF_PUT(nid.ni_cnd.cn_pnbuf);
 	uvm_km_free(exec_map, (vaddr_t) argp, NCARGS, UVM_KMF_PAGEABLE);
-	free(pack.ep_hdr, M_EXEC);
+	kmem_free(pack.ep_hdr, pack.ep_hdrlen);
 	if (pack.ep_emul_root != NULL)
 		vrele(pack.ep_emul_root);
 	if (pack.ep_interp != NULL)
 		vrele(pack.ep_interp);
 
 	/* Acquire the sched-state mutex (exit1() will release it). */
+	KERNEL_LOCK(1, NULL);	/* XXXSMP */
 	mutex_enter(&p->p_smutex);
 	exit1(l, W_EXITCODE(error, SIGABRT));
 
@@ -1137,8 +1166,7 @@ emul_register(const struct emul *emul, int ro_entry)
 		goto out;
 	}
 
-	MALLOC(ee, struct emul_entry *, sizeof(struct emul_entry),
-		M_EXEC, M_WAITOK);
+	ee = kmem_alloc(sizeof(*ee), KM_SLEEP);
 	ee->el_emul = emul;
 	ee->ro_entry = ro_entry;
 	LIST_INSERT_HEAD(&el_head, ee, el_list);
@@ -1207,7 +1235,7 @@ emul_unregister(const char *name)
 
 	/* entry is not used, remove it */
 	LIST_REMOVE(it, el_list);
-	FREE(it, M_EXEC);
+	kmem_free(it, sizeof(*it));
 
  out:
 	rw_exit(&exec_lock);
@@ -1245,8 +1273,7 @@ exec_add(struct execsw *esp, const char *e_name)
 	}
 
 	/* if we got here, the entry doesn't exist yet */
-	MALLOC(it, struct exec_entry *, sizeof(struct exec_entry),
-		M_EXEC, M_WAITOK);
+	it = kmem_alloc(sizeof(*it), KM_SLEEP);
 	it->es = esp;
 	LIST_INSERT_HEAD(&ex_head, it, ex_list);
 
@@ -1284,7 +1311,7 @@ exec_remove(const struct execsw *esp)
 
 	/* remove item from list and free resources */
 	LIST_REMOVE(it, ex_list);
-	FREE(it, M_EXEC);
+	kmem_free(it, sizeof(*it));
 
 	/* update execsw[] */
 	exec_init(0);
@@ -1355,6 +1382,7 @@ exec_init(int init_boot)
 	if (init_boot) {
 		/* do one-time initializations */
 		rw_init(&exec_lock);
+		mutex_init(&sigobject_lock, MUTEX_DEFAULT, IPL_NONE);
 
 		/* register compiled-in emulations */
 		for(i=0; i < nexecs_builtin; i++) {
@@ -1386,7 +1414,7 @@ exec_init(int init_boot)
 	 * Now that we have sorted all execw entries, create new execsw[]
 	 * and free no longer needed memory in the process.
 	 */
-	new_es = malloc(es_sz * sizeof(struct execsw *), M_EXEC, M_WAITOK);
+	new_es = kmem_alloc(es_sz * sizeof(struct execsw *), KM_SLEEP);
 	for(i=0; list; i++) {
 		new_es[i] = list->es;
 		e1 = list->next;
@@ -1399,11 +1427,11 @@ exec_init(int init_boot)
 	 * used memory.
 	 */
 	old_es = execsw;
-	execsw = new_es;
-	nexecs = es_sz;
 	if (old_es)
 		/*XXXUNCONST*/
-		free(__UNCONST(old_es), M_EXEC);
+		kmem_free(__UNCONST(old_es), nexecs * sizeof(struct execsw *));
+	execsw = new_es;
+	nexecs = es_sz;
 
 	/*
 	 * Figure out the maximum size of an exec header.
@@ -1435,7 +1463,7 @@ exec_init(int init_boot)
 
 	/* do one-time initializations */
 	nexecs = nexecs_builtin;
-	execsw = malloc(nexecs*sizeof(struct execsw *), M_EXEC, M_WAITOK);
+	execsw = kmem_alloc(nexecs * sizeof(struct execsw *), KM_SLEEP);
 
 	/*
 	 * Fill in execsw[] and figure out the maximum size of an exec header.
@@ -1480,23 +1508,28 @@ exec_sigcode_map(struct proc *p, const struct emul *e)
 
 	uobj = *e->e_sigobject;
 	if (uobj == NULL) {
-		uobj = uao_create(sz, 0);
-		(*uobj->pgops->pgo_reference)(uobj);
-		va = vm_map_min(kernel_map);
-		if ((error = uvm_map(kernel_map, &va, round_page(sz),
-		    uobj, 0, 0,
-		    UVM_MAPFLAG(UVM_PROT_RW, UVM_PROT_RW,
-		    UVM_INH_SHARE, UVM_ADV_RANDOM, 0)))) {
-			printf("kernel mapping failed %d\n", error);
-			(*uobj->pgops->pgo_detach)(uobj);
-			return (error);
-		}
-		memcpy((void *)va, e->e_sigcode, sz);
+		mutex_enter(&sigobject_lock);
+		if ((uobj = *e->e_sigobject) == NULL) {
+			uobj = uao_create(sz, 0);
+			(*uobj->pgops->pgo_reference)(uobj);
+			va = vm_map_min(kernel_map);
+			if ((error = uvm_map(kernel_map, &va, round_page(sz),
+			    uobj, 0, 0,
+			    UVM_MAPFLAG(UVM_PROT_RW, UVM_PROT_RW,
+			    UVM_INH_SHARE, UVM_ADV_RANDOM, 0)))) {
+				printf("kernel mapping failed %d\n", error);
+				(*uobj->pgops->pgo_detach)(uobj);
+				mutex_exit(&sigobject_lock);
+				return (error);
+			}
+			memcpy((void *)va, e->e_sigcode, sz);
 #ifdef PMAP_NEED_PROCWR
-		pmap_procwr(&proc0, va, sz);
+			pmap_procwr(&proc0, va, sz);
 #endif
-		uvm_unmap(kernel_map, va, va + round_page(sz));
-		*e->e_sigobject = uobj;
+			uvm_unmap(kernel_map, va, va + round_page(sz));
+			*e->e_sigobject = uobj;
+		}
+		mutex_exit(&sigobject_lock);
 	}
 
 	/* Just a hint to uvm_map where to put it. */

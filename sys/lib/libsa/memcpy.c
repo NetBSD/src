@@ -1,4 +1,4 @@
-/*	$NetBSD: memcpy.c,v 1.6 2005/12/11 12:24:46 christos Exp $	*/
+/*	$NetBSD: memcpy.c,v 1.6.46.1 2008/01/09 01:56:42 matt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -38,15 +38,12 @@
  * This is designed to be small, not fast.
  */
 void *
-memcpy(s1, s2, n)
-	void *s1;
-	const void *s2;
-	size_t n;
+memcpy(void *s1, const void *s2, size_t n)
 {
 	const char *f = s2;
 	char *t = s1;
 
 	while (n-- > 0)
 		*t++ = *f++;
-	return (s1);
+	return s1;
 }

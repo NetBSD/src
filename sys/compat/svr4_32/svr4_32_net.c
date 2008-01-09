@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_net.c,v 1.14 2007/02/09 21:55:26 ad Exp $	 */
+/*	$NetBSD: svr4_32_net.c,v 1.14.20.1 2008/01/09 01:51:59 matt Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_net.c,v 1.14 2007/02/09 21:55:26 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_net.c,v 1.14.20.1 2008/01/09 01:51:59 matt Exp $");
 
 #define COMPAT_SVR4 1
 
@@ -96,10 +96,10 @@ enum {
 	dev_unix_ord_stream	= 40
 };
 
-int svr4_32_netattach __P((int));
+int svr4_32_netattach(int);
 
-int svr4_soo_close __P((struct file *, struct lwp *));
-int svr4_ptm_alloc __P((struct proc *));
+int svr4_soo_close(struct file *, struct lwp *);
+int svr4_ptm_alloc(struct proc *);
 
 static const struct fileops svr4_32_netops = {
 	soo_read, soo_write, soo_ioctl, soo_fcntl, soo_poll,
@@ -111,15 +111,13 @@ static const struct fileops svr4_32_netops = {
  * Used by new config, but we don't need it.
  */
 int
-svr4_32_netattach(n)
-	int n;
+svr4_32_netattach(int n)
 {
 	return 0;
 }
 
 struct svr4_strm *
-svr4_32_stream_get(fp)
-	struct file *fp;
+svr4_32_stream_get(struct file *fp)
 {
 	struct socket *so;
 	struct svr4_strm *st;

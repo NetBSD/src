@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.h,v 1.73.16.1 2007/11/08 11:00:23 matt Exp $	*/
+/*	$NetBSD: tty.h,v 1.73.16.2 2008/01/09 01:58:21 matt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -56,15 +56,23 @@
  * *DON'T* play with c_cs, c_ce, c_cq, or c_cl outside tty_subr.c!!!
  */
 struct clist {
-	kcondvar_t c_cv;	/* notifier 1, locked by tty lock */
-	kcondvar_t c_cvf;	/* notifier 2, locked by tty lock */
-	int	c_cc;		/* count of characters in queue */
-	int	c_cn;		/* total ring buffer length */
 	u_char	*c_cf;		/* points to first character */
 	u_char	*c_cl;		/* points to next open character */
 	u_char	*c_cs;		/* start of ring buffer */
 	u_char	*c_ce;		/* c_ce + c_len */
 	u_char	*c_cq;		/* N bits/bytes long, see tty_subr.c */
+	kcondvar_t c_cv;	/* notifier, locked by tty lock */
+	kcondvar_t c_cvf;	/* notifier, locked by tty lock */
+	int	c_cc;		/* count of characters in queue */
+	int	c_cn;		/* total ring buffer length */
+};
+
+/* tty signal types */
+enum ttysigtype {
+	TTYSIG_PG1,
+	TTYSIG_PG2,
+	TTYSIG_LEADER,
+	TTYSIG_COUNT
 };
 
 /*
@@ -106,9 +114,7 @@ struct tty {
 	short	t_hiwat;		/* High water mark. */
 	short	t_lowat;		/* Low water mark. */
 	short	t_gen;			/* Generation number. */
-	sigset_t t_sigpg1;		/* Signals to PG (set 1) */
-	sigset_t t_sigpg2;		/* Signals to PG (set 2) */
-	sigset_t t_sigleader;		/* Signals to session leader */
+	sigset_t t_sigs[TTYSIG_COUNT];	/* Pending signals */
 	int	t_sigcount;		/* # pending signals */
 	TAILQ_ENTRY(tty) t_sigqueue;	/* entry on pending signal list */
 };
@@ -136,7 +142,6 @@ struct tty {
 #endif /* _KERNEL */
 
 /* These flags are kept in t_state. */
-#define	TS_ASLEEP	0x00001		/* Process waiting for tty. */
 #define	TS_ASYNC	0x00002		/* Tty in async I/O mode. */
 #define	TS_BUSY		0x00004		/* Draining output. */
 #define	TS_CARR_ON	0x00008		/* Carrier is present. */
@@ -207,13 +212,7 @@ extern	int tty_count;			/* number of ttys in global ttylist */
 extern	struct ttychars ttydefaults;
 
 /* Symbolic sleep message strings. */
-extern	 const char ttyin[], ttyout[], ttopen[], ttclos[], ttybg[], ttybuf[];
-
-enum ttysigtype {
-	TTYSIG_PG1,
-	TTYSIG_PG2,
-	TTYSIG_LEADER
-};
+extern	 const char ttclos[];
 
 int	 b_to_q(const u_char *, int, struct clist *);
 void	 catq(struct clist *, struct clist *);
@@ -263,9 +262,11 @@ struct tty
 	*ttymalloc(void);
 void	 ttyfree(struct tty *);
 u_char	*firstc(struct clist *, int *);
+bool	 ttypull(struct tty *);
 
 int	clalloc(struct clist *, int, int);
 void	clfree(struct clist *);
+void	clwakeup(struct clist *);
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_freebsd.h"

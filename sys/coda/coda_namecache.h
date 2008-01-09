@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_namecache.h,v 1.10 2006/05/14 21:24:49 elad Exp $	*/
+/*	$NetBSD: coda_namecache.h,v 1.10.34.1 2008/01/09 01:50:26 matt Exp $	*/
 
 /*
  *
@@ -77,41 +77,18 @@
 	((namelen == cp->namelen) && (dcp == cp->dcp) && \
 		 (bcmp(cp->name,name,namelen) == 0))
 
-/*
- * Functions to modify the hash and lru chains.
- * insque and remque assume that the pointers are the first thing
- * in the list node, thus the trickery for lru.
- */
-
-#define CODA_NC_HSHINS(elem, pred)	insque(elem,pred)
-#define CODA_NC_HSHREM(elem)		remque(elem)
-#define CODA_NC_HSHNUL(elem)		(elem)->hash_next = \
-					(elem)->hash_prev = (elem)
-
-#define CODA_NC_LRUINS(elem, pred)	insque(LRU_PART(elem), LRU_PART(pred))
-#define CODA_NC_LRUREM(elem)		remque(LRU_PART(elem));
-#define CODA_NC_LRUGET(lruhead)		LRU_TOP((lruhead).lru_prev)
-
 #define CODA_NC_VALID(cncp)	(cncp->dcp != (struct cnode *)0)
 
-#define LRU_PART(cncp)			(struct coda_cache *) \
-				((char *)cncp + (2*sizeof(struct coda_cache *)))
-#define LRU_TOP(cncp)				(struct coda_cache *) \
-			((char *)cncp - (2*sizeof(struct coda_cache *)))
-#define DATA_PART(cncp)				(struct coda_cache *) \
-			((char *)cncp + (4*sizeof(struct coda_cache *)))
-#define DATA_SIZE	(sizeof(struct coda_cache)-(4*sizeof(struct coda_cache *)))
+#define DATA_PART(cncp)	(&((cncp)->cp))
+#define DATA_SIZE	(sizeof(struct coda_cache) - offsetof(struct coda_cache, cp))
 
 /*
  * Structure for an element in the CODA Name Cache.
- * NOTE: I use the position of arguments and their size in the
- * implementation of the functions CODA_NC_LRUINS, CODA_NC_LRUREM, and
- * DATA_PART.
  */
 
 struct coda_cache {
-	struct coda_cache	*hash_next,*hash_prev;	/* Hash list */
-	struct coda_cache	*lru_next, *lru_prev;	/* LRU list */
+	LIST_ENTRY(coda_cache)	hash;		/* Hash list */
+	TAILQ_ENTRY(coda_cache)	lru;		/* LRU list */
 	struct cnode	*cp;			/* vnode of the file */
 	struct cnode	*dcp;			/* parent's cnode */
 	kauth_cred_t    cred;			/* user credentials */
@@ -120,14 +97,13 @@ struct coda_cache {
 };
 
 struct	coda_lru {		/* Start of LRU chain */
-	char *dummy1, *dummy2;			/* place holders */
-	struct coda_cache *lru_next, *lru_prev;   /* position of pointers is important */
+	TAILQ_HEAD(,coda_cache)	head;
 };
 
 
 struct coda_hash {		/* Start of Hash chain */
-	struct coda_cache *hash_next, *hash_prev; /* NOTE: chain pointers must be first */
-        int length;                             /* used for tuning purposes */
+	LIST_HEAD(,coda_cache)	head;
+	int			length;	/* used for tuning purposes */
 };
 
 

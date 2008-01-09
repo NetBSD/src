@@ -1,4 +1,4 @@
-/* $NetBSD: cgd_crypto.c,v 1.7 2007/01/21 23:00:08 cbiere Exp $ */
+/* $NetBSD: cgd_crypto.c,v 1.7.20.1 2008/01/09 01:52:11 matt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd_crypto.c,v 1.7 2007/01/21 23:00:08 cbiere Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd_crypto.c,v 1.7.20.1 2008/01/09 01:52:11 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -246,7 +246,7 @@ cgd_cipher_aes_cbc(void *privdata, struct uio *dstuio,
 		cgd_cipher_uio_cbc(&encd, aes_cbc_dec_int, dstuio, srcuio);
 		break;
 	default:
-		DIAGPANIC(("%s: unrecognised direction %d", __FUNCTION__, dir));
+		DIAGPANIC(("%s: unrecognised direction %d", __func__, dir));
 	}
 }
 
@@ -358,7 +358,7 @@ cgd_cipher_3des_cbc(void *privdata, struct uio *dstuio,
 		cgd_cipher_uio_cbc(&ce, c3des_cbc_dec_int, dstuio, srcuio);
 		break;
 	default:
-		DIAGPANIC(("%s: unrecognised direction %d", __FUNCTION__, dir));
+		DIAGPANIC(("%s: unrecognised direction %d", __func__, dir));
 	}
 }
 
@@ -454,7 +454,7 @@ cgd_cipher_bf_cbc(void *privdata, struct uio *dstuio,
 		cgd_cipher_uio_cbc(&be, bf_cbc_dec_int, dstuio, srcuio);
 		break;
 	default:
-		DIAGPANIC(("%s: unrecognised direction %d", __FUNCTION__, dir));
+		DIAGPANIC(("%s: unrecognised direction %d", __func__, dir));
 	}
 
 }

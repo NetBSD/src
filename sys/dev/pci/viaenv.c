@@ -1,4 +1,4 @@
-/*	$NetBSD: viaenv.c,v 1.23.2.1 2007/11/06 23:29:34 matt Exp $	*/
+/*	$NetBSD: viaenv.c,v 1.23.2.2 2008/01/09 01:54:03 matt Exp $	*/
 
 /*
  * Copyright (c) 2000 Johan Danielsson
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viaenv.c,v 1.23.2.1 2007/11/06 23:29:34 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viaenv.c,v 1.23.2.2 2008/01/09 01:54:03 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,11 +71,10 @@ struct viaenv_softc {
 
 	int     sc_fan_div[2];	/* fan RPM divisor */
 
-	envsys_data_t sc_data[VIANUMSENSORS];
+	struct sysmon_envsys *sc_sme;
+	envsys_data_t sc_sensor[VIANUMSENSORS];
 
 	struct timeval sc_lastread;
-
-	struct sysmon_envsys sc_sysmon;
 };
 
 /* autoconf(9) glue */
@@ -86,7 +85,7 @@ CFATTACH_DECL(viaenv, sizeof(struct viaenv_softc),
     viaenv_match, viaenv_attach, NULL, NULL);
 
 /* envsys(4) glue */
-static int viaenv_gtredata(struct sysmon_envsys *, envsys_data_t *);
+static void viaenv_refresh(struct sysmon_envsys *, envsys_data_t *);
 
 static int val_to_uK(unsigned int);
 static int val_to_rpm(unsigned int, int);
@@ -317,53 +316,59 @@ viaenv_attach(struct device *parent, struct device *self, void *aux)
 		goto nohwm;
 	}
 
-	/* Initialize sensors */
-	for (i = 0; i < VIANUMSENSORS; i++) {
-		sc->sc_data[i].sensor = i;
-		sc->sc_data[i].state = ENVSYS_SVALID;
-	}
-
 	for (i = 0; i < 3; i++)
-		sc->sc_data[i].units = ENVSYS_STEMP;
+		sc->sc_sensor[i].units = ENVSYS_STEMP;
 
 #define COPYDESCR(x, y) 				\
 	do {						\
 		strlcpy((x), (y), sizeof(x));		\
 	} while (0)
 
-	COPYDESCR(sc->sc_data[0].desc, "TSENS1");
-	COPYDESCR(sc->sc_data[1].desc, "TSENS2");
-	COPYDESCR(sc->sc_data[2].desc, "TSENS3");
+	COPYDESCR(sc->sc_sensor[0].desc, "TSENS1");
+	COPYDESCR(sc->sc_sensor[1].desc, "TSENS2");
+	COPYDESCR(sc->sc_sensor[2].desc, "TSENS3");
 
 	for (i = 3; i < 5; i++)
-		sc->sc_data[i].units = ENVSYS_SFANRPM;
+		sc->sc_sensor[i].units = ENVSYS_SFANRPM;
 	
-	COPYDESCR(sc->sc_data[3].desc, "FAN1");
-	COPYDESCR(sc->sc_data[4].desc, "FAN2");
+	COPYDESCR(sc->sc_sensor[3].desc, "FAN1");
+	COPYDESCR(sc->sc_sensor[4].desc, "FAN2");
 
 	for (i = 5; i < 10; i++)
-		sc->sc_data[i].units = ENVSYS_SVOLTS_DC;
+		sc->sc_sensor[i].units = ENVSYS_SVOLTS_DC;
 
-	COPYDESCR(sc->sc_data[5].desc, "VSENS1");	/* CPU core (2V) */
-	COPYDESCR(sc->sc_data[6].desc, "VSENS2");	/* NB core? (2.5V) */
-	COPYDESCR(sc->sc_data[7].desc, "Vcore");	/* Vcore (3.3V) */
-	COPYDESCR(sc->sc_data[8].desc, "VSENS3");	/* VSENS3 (5V) */
-	COPYDESCR(sc->sc_data[9].desc, "VSENS4");	/* VSENS4 (12V) */
+	COPYDESCR(sc->sc_sensor[5].desc, "VSENS1");	/* CPU core (2V) */
+	COPYDESCR(sc->sc_sensor[6].desc, "VSENS2");	/* NB core? (2.5V) */
+	COPYDESCR(sc->sc_sensor[7].desc, "Vcore");	/* Vcore (3.3V) */
+	COPYDESCR(sc->sc_sensor[8].desc, "VSENS3");	/* VSENS3 (5V) */
+	COPYDESCR(sc->sc_sensor[9].desc, "VSENS4");	/* VSENS4 (12V) */
 
 #undef COPYDESCR
+
+	sc->sc_sme = sysmon_envsys_create();
+
+	/* Initialize sensors */
+	for (i = 0; i < VIANUMSENSORS; i++) {
+		if (sysmon_envsys_sensor_attach(sc->sc_sme,
+						&sc->sc_sensor[i])) {
+			sysmon_envsys_destroy(sc->sc_sme);
+			return;
+		}
+	}
 
 	/*
 	 * Hook into the System Monitor.
 	 */
-	sc->sc_sysmon.sme_name = sc->sc_dev.dv_xname;
-	sc->sc_sysmon.sme_sensor_data = sc->sc_data;
-	sc->sc_sysmon.sme_cookie = sc;
-	sc->sc_sysmon.sme_gtredata = viaenv_gtredata;
-	sc->sc_sysmon.sme_nsensors = VIANUMSENSORS;
+	sc->sc_sme->sme_name = sc->sc_dev.dv_xname;
+	sc->sc_sme->sme_cookie = sc;
+	sc->sc_sme->sme_refresh = viaenv_refresh;
 
-	if (sysmon_envsys_register(&sc->sc_sysmon))
+	if (sysmon_envsys_register(sc->sc_sme)) {
 		printf("%s: unable to register with sysmon\n",
 		    sc->sc_dev.dv_xname);
+		sysmon_envsys_destroy(sc->sc_sme);
+		return;
+	}
 
 nohwm:
 	/* Check if power management I/O space is enabled */
@@ -392,11 +397,10 @@ nopm:
 	return;
 }
 
-static int
-viaenv_gtredata(struct sysmon_envsys *sme, envsys_data_t *edata)
+static void
+viaenv_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 {
 	struct viaenv_softc *sc = sme->sme_cookie;
 
 	viaenv_refresh_sensor_data(sc, edata);
-	return 0;
 }

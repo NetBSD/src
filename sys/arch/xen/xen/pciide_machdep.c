@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_machdep.c,v 1.6 2006/09/28 18:53:16 bouyer Exp $	*/
+/*	$NetBSD: pciide_machdep.c,v 1.6.28.1 2008/01/09 01:50:20 matt Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_machdep.c,v 1.6 2006/09/28 18:53:16 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_machdep.c,v 1.6.28.1 2008/01/09 01:50:20 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,7 +52,16 @@ __KERNEL_RCSID(0, "$NetBSD: pciide_machdep.c,v 1.6 2006/09/28 18:53:16 bouyer Ex
 #include <dev/pci/pciidereg.h>
 #include <dev/pci/pciidevar.h>
 
-#include <machine/evtchn.h>
+#include <xen/evtchn.h>
+
+#ifdef XEN3
+#include "ioapic.h"
+#endif
+
+#if NIOAPIC > 0
+#include <machine/i82093var.h>
+#include <machine/mpbiosvar.h>
+#endif  
 
 void *
 pciide_machdep_compat_intr_establish(dev, pa, chan, func, arg)
@@ -64,6 +73,12 @@ pciide_machdep_compat_intr_establish(dev, pa, chan, func, arg)
 {
 	struct pintrhand *ih;
 	char evname[8];
+        struct xen_intr_handle xenih;
+#if NIOAPIC > 0
+	struct pic *pic = NULL;
+#endif
+	int evtch;
+
 #ifndef XEN3
 	physdev_op_t physdev_op;
 
@@ -74,15 +89,51 @@ pciide_machdep_compat_intr_establish(dev, pa, chan, func, arg)
 	if (HYPERVISOR_physdev_op(&physdev_op) < 0)
 		panic("HYPERVISOR_physdev_op(PHYSDEVOP_PCI_INITIALISE_DEVICE)");
 #endif /* !XEN3 */
-	snprintf(evname, sizeof(evname), "irq%d", PCIIDE_COMPAT_IRQ(chan));
+	xenih.pirq = PCIIDE_COMPAT_IRQ(chan);
+#if NIOAPIC > 0
+	if (mp_busses != NULL) {
+		if (intr_find_mpmapping(mp_isa_bus, xenih.pirq, &xenih) == 0 ||
+		    intr_find_mpmapping(mp_eisa_bus, xenih.pirq, &xenih) == 0) {
+			if (!APIC_IRQ_ISLEGACY(xenih.pirq)) {
+				pic = (struct pic *)
+				    ioapic_find(APIC_IRQ_APIC(xenih.pirq));
+				if (pic == NULL) {
+					printf("pciide_machdep_compat_intr_establish: "
+					    "unknown apic %d\n",
+					    APIC_IRQ_APIC(xenih.pirq));
+					return NULL;
+				}
+			}
+		} else
+			printf("pciide_machdep_compat_intr_establish: "
+			    "no MP mapping found\n");
+	}
+#endif
+	evtch = xen_intr_map(&xenih.pirq, IST_EDGE);
+	if (evtch == -1)
+		return NULL;
+#if NIOAPIC > 0
+	if (pic)
+		snprintf(evname, sizeof(evname), "%s pin %d",
+		    pic->pic_name, APIC_IRQ_PIN(xenih.pirq));
+	else
+#endif
+		snprintf(evname, sizeof(evname), "irq%d",
+		    PCIIDE_COMPAT_IRQ(chan));
 
 	ih = pirq_establish(PCIIDE_COMPAT_IRQ(chan),
-	    bind_pirq_to_evtch(PCIIDE_COMPAT_IRQ(chan)), func, arg, IPL_BIO,
-	    evname);
+	    evtch, func, arg, IPL_BIO, evname);
 	if (ih == NULL)
 		return NULL;
 
-	printf("%s: %s channel using event channel %d for irq %d\n",
-	    dev->dv_xname, PCIIDE_CHANNEL_NAME(chan), ih->evtch, ih->pirq);
+	printf("%s: %s channel interrupting at ",
+	    dev->dv_xname, PCIIDE_CHANNEL_NAME(chan));
+#if NIOAPIC > 0
+	if (pic)
+		printf("%s pin %d", pic->pic_name, APIC_IRQ_PIN(xenih.pirq));
+	else
+#endif
+		printf("irq %d", ih->pirq);
+	printf(", event channel %d\n", ih->evtch);
 	return (void *)ih;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_30.c,v 1.21 2007/04/30 08:32:15 dsl Exp $	*/
+/*	$NetBSD: netbsd32_compat_30.c,v 1.21.8.1 2008/01/09 01:51:35 matt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_30.c,v 1.21 2007/04/30 08:32:15 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_30.c,v 1.21.8.1 2008/01/09 01:51:35 matt Exp $");
 
 #include "opt_nfsserver.h"
 
@@ -61,16 +61,13 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_30.c,v 1.21 2007/04/30 08:32:15 dsl 
 
 
 int
-compat_30_netbsd32_getdents(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+compat_30_netbsd32_getdents(struct lwp *l, const struct compat_30_netbsd32_getdents_args *uap, register_t *retval)
 {
-	struct compat_30_netbsd32_getdents_args /* {
+	/* {
 		syscallarg(int) fd;
 		syscallarg(netbsd32_charp) buf;
 		syscallarg(netbsd32_size_t) count;
-	} */ *uap = v;
+	} */
 	struct file *fp;
 	int error, done;
 	char  *buf;
@@ -100,15 +97,12 @@ compat_30_netbsd32_getdents(l, v, retval)
 }
 
 int
-compat_30_netbsd32___stat13(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+compat_30_netbsd32___stat13(struct lwp *l, const struct compat_30_netbsd32___stat13_args *uap, register_t *retval)
 {
-	struct compat_30_netbsd32___stat13_args /* {
+	/* {
 		syscallarg(const netbsd32_charp) path;
 		syscallarg(netbsd32_stat13p_t) ub;
-	} */ *uap = v;
+	} */
 	struct netbsd32_stat13 sb32;
 	struct stat sb;
 	int error;
@@ -125,15 +119,12 @@ compat_30_netbsd32___stat13(l, v, retval)
 }
 
 int
-compat_30_netbsd32___fstat13(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+compat_30_netbsd32___fstat13(struct lwp *l, const struct compat_30_netbsd32___fstat13_args *uap, register_t *retval)
 {
-	struct compat_30_netbsd32___fstat13_args /* {
+	/* {
 		syscallarg(int) fd;
 		syscallarg(netbsd32_stat13p_t) sb;
-	} */ *uap = v;
+	} */
 	int fd = SCARG(uap, fd);
 	struct proc *p = l->l_proc;
 	struct filedesc *fdp = p->p_fd;
@@ -157,15 +148,12 @@ compat_30_netbsd32___fstat13(l, v, retval)
 }
 
 int
-compat_30_netbsd32___lstat13(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+compat_30_netbsd32___lstat13(struct lwp *l, const struct compat_30_netbsd32___lstat13_args *uap, register_t *retval)
 {
-	struct compat_30_netbsd32___lstat13_args /* {
+	/* {
 		syscallarg(const netbsd32_charp) path;
 		syscallarg(netbsd32_stat13p_t) ub;
-	} */ *uap = v;
+	} */
 	struct netbsd32_stat13 sb32;
 	struct stat sb;
 	int error;
@@ -182,15 +170,12 @@ compat_30_netbsd32___lstat13(l, v, retval)
 }
 
 int
-compat_30_netbsd32_fhstat(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+compat_30_netbsd32_fhstat(struct lwp *l, const struct compat_30_netbsd32_fhstat_args *uap, register_t *retval)
 {
-	struct compat_30_netbsd32_fhstat_args /* {
+	/* {
 		syscallarg(const netbsd32_fhandlep_t) fhp;
 		syscallarg(netbsd32_stat13p_t) sb;
-	} */ *uap = v;
+	} */
 	struct stat sb;
 	struct netbsd32_stat13 sb32;
 	int error;
@@ -224,16 +209,13 @@ compat_30_netbsd32_fhstat(l, v, retval)
 }
 
 int
-compat_30_netbsd32_fhstatvfs1(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+compat_30_netbsd32_fhstatvfs1(struct lwp *l, const struct compat_30_netbsd32_fhstatvfs1_args *uap, register_t *retval)
 {
-	struct compat_30_netbsd32_fhstatvfs1_args /* {
+	/* {
 		syscallarg(const netbsd32_fhandlep_t) fhp;
 		syscallarg(netbsd32_statvfsp_t) buf;
 		syscallarg(int) flags;
-	} */ *uap = v;
+	} */
 	struct statvfs *sbuf;
 	struct netbsd32_statvfs *s32;
 	int error;
@@ -254,16 +236,13 @@ compat_30_netbsd32_fhstatvfs1(l, v, retval)
 }
 
 int
-compat_30_netbsd32_socket(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+compat_30_netbsd32_socket(struct lwp *l, const struct compat_30_netbsd32_socket_args *uap, register_t *retval)
 {
-	struct compat_30_netbsd32_socket_args /* {
+	/* {
 		syscallarg(int) domain;
 		syscallarg(int) type;
 		syscallarg(int) protocol;
-	} */ *uap = v;
+	} */
 	struct compat_30_sys_socket_args ua;
 
 	NETBSD32TO64_UAP(domain);
@@ -273,15 +252,12 @@ compat_30_netbsd32_socket(l, v, retval)
 }
 
 int
-compat_30_netbsd32_getfh(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+compat_30_netbsd32_getfh(struct lwp *l, const struct compat_30_netbsd32_getfh_args *uap, register_t *retval)
 {
-	struct compat_30_netbsd32_getfh_args /* {
+	/* {
 		syscallarg(const netbsd32_charp) fname;
 		syscallarg(netbsd32_compat_30_fhandlep_t) fhp;
-	} */ *uap = v;
+	} */
 	struct compat_30_sys_getfh_args ua;
 
 	NETBSD32TOP_UAP(fname, const char);
@@ -291,15 +267,13 @@ compat_30_netbsd32_getfh(l, v, retval)
 }
 
 
-int compat_30_netbsd32_sys___fhstat30(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+int
+compat_30_netbsd32_sys___fhstat30(struct lwp *l, const struct compat_30_netbsd32_sys___fhstat30_args *uap, register_t *retval)
 {
-	struct compat_30_netbsd32_sys___fhstat30_args /* {
+	/* {
 		syscallarg(const netbsd32_fhandlep_t) fhp;
 		syscallarg(netbsd32_statp_t) sb;
-	} */ *uap = v;
+	} */
 	struct stat sb;
 	struct netbsd32_stat sb32;
 	int error;
@@ -320,15 +294,12 @@ int compat_30_netbsd32_sys___fhstat30(l, v, retval)
  * and call the device open routine if any.
  */
 int
-compat_30_netbsd32_fhopen(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+compat_30_netbsd32_fhopen(struct lwp *l, const struct compat_30_netbsd32_fhopen_args *uap, register_t *retval)
 {
-	struct compat_30_netbsd32_fhopen_args /* {
+	/* {
 		syscallarg(const fhandle_t *) fhp;
 		syscallarg(int) flags;
-	} */ *uap = v;
+	} */
 	struct compat_30_sys_fhopen_args ua;
 
 	NETBSD32TOP_UAP(fhp, struct compat_30_fhandle);

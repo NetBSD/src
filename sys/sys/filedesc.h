@@ -1,4 +1,4 @@
-/*	$NetBSD: filedesc.h,v 1.40.8.1 2007/11/06 23:34:47 matt Exp $	*/
+/*	$NetBSD: filedesc.h,v 1.40.8.2 2008/01/09 01:58:08 matt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -92,7 +92,7 @@ struct cwdinfo {
 	struct vnode	*cwdi_edir;	/* emulation root (if known) */
 	krwlock_t	cwdi_lock;	/* lock on entire struct */
 	u_short		cwdi_cmask;	/* mask for file creation */
-	u_short		cwdi_refcnt;	/* reference count */
+	u_int		cwdi_refcnt;	/* reference count */
 };
 
 
@@ -158,9 +158,13 @@ void	cwdfree(struct cwdinfo *);
 #define GETCWD_CHECK_ACCESS 0x0001
 int	getcwd_common(struct vnode *, struct vnode *, char **, char *, int,
     int, struct lwp *);
+int	vnode_to_path(char *, size_t, struct vnode *, struct lwp *,
+    struct proc *);
 
 int	closef(struct file *, struct lwp *);
 int	getsock(struct filedesc *, int, struct file **);
+struct file *fgetdummy(void);
+void	fputdummy(struct file *);
 
 struct stat;
 int	do_sys_fstat(struct lwp *, int, struct stat *);

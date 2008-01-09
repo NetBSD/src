@@ -1,4 +1,4 @@
-/*	$NetBSD: frag6.c,v 1.38.8.1 2007/11/06 23:33:57 matt Exp $	*/
+/*	$NetBSD: frag6.c,v 1.38.8.2 2008/01/09 01:57:32 matt Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.38.8.1 2007/11/06 23:33:57 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.38.8.2 2008/01/09 01:57:32 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -170,6 +170,7 @@ frag6_init()
 int
 frag6_input(struct mbuf **mp, int *offp, int proto)
 {
+	struct rtentry *rt;
 	struct mbuf *m = *mp, *t;
 	struct ip6_hdr *ip6;
 	struct ip6_frag *ip6f;
@@ -194,8 +195,8 @@ frag6_input(struct mbuf **mp, int *offp, int proto)
 	/* find the destination interface of the packet. */
 	sockaddr_in6_init(&u.dst6, &ip6->ip6_dst, 0, 0, 0);
 	rtcache_lookup(&ro, &u.dst);
-	if (ro.ro_rt != NULL && ro.ro_rt->rt_ifa != NULL)
-		dstifp = ((struct in6_ifaddr *)ro.ro_rt->rt_ifa)->ia_ifp;
+	if ((rt = rtcache_getrt(&ro)) != NULL && rt->rt_ifa != NULL)
+		dstifp = ((struct in6_ifaddr *)rt->rt_ifa)->ia_ifp;
 
 	/* jumbo payload can't contain a fragment header */
 	if (ip6->ip6_plen == 0) {

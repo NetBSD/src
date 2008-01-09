@@ -1,4 +1,4 @@
-/*	$NetBSD: dbri.c,v 1.15.6.1 2007/11/06 23:30:07 matt Exp $	*/
+/*	$NetBSD: dbri.c,v 1.15.6.2 2008/01/09 01:54:27 matt Exp $	*/
 
 /*
  * Copyright (C) 1997 Rudolf Koenig (rfkoenig@immd4.informatik.uni-erlangen.de)
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbri.c,v 1.15.6.1 2007/11/06 23:30:07 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbri.c,v 1.15.6.2 2008/01/09 01:54:27 matt Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -54,7 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: dbri.c,v 1.15.6.1 2007/11/06 23:30:07 matt Exp $");
 #include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/kernel.h>
-
 #include <sys/bus.h>
 #include <sys/intr.h>
 
@@ -109,6 +108,7 @@ static void	dbri_config_interrupts(struct device *);
 
 /* interrupt handler */
 static int	dbri_intr(void *);
+static void	dbri_softint(void *);
 
 /* supporting subroutines */
 static int	dbri_init(struct dbri_softc *);
@@ -282,7 +282,7 @@ dbri_attach_sbus(struct device *parent, struct device *self, void *aux)
 	struct sbus_attach_args *sa = aux;
 	bus_space_handle_t ioh;
 	bus_size_t size;
-	int error, rseg, pwr;
+	int error, rseg, pwr, i;
 	char *ver = &sa->sa_name[9];
 
 	sc->sc_iot = sa->sa_bustag;
@@ -306,6 +306,11 @@ dbri_attach_sbus(struct device *parent, struct device *self, void *aux)
 		/* we can't control power so we're always up */
 		sc->sc_have_powerctl = 0;
 		sc->sc_powerstate = 1;
+	}
+
+	for (i = 0; i < DBRI_NUM_DESCRIPTORS; i++) {
+		sc->sc_desc[i].softint = softint_establish(SOFTINT_SERIAL,
+		    dbri_softint, &sc->sc_desc[i]);
 	}
 
 	if (sa->sa_npromvaddrs)
@@ -370,7 +375,7 @@ dbri_attach_sbus(struct device *parent, struct device *self, void *aux)
 
 	sbus_establish(&sc->sc_sd, &sc->sc_dev);
 
-	bus_intr_establish(sa->sa_bustag, sa->sa_pri, IPL_AUDIO, dbri_intr,
+	bus_intr_establish(sa->sa_bustag, sa->sa_pri, IPL_SCHED, dbri_intr,
 	    sc);
 
 	sc->sc_locked = 0;
@@ -503,6 +508,15 @@ dbri_intr(void *hdl)
 	return (1);
 }
 
+static void
+dbri_softint(void *cookie)
+{
+	struct dbri_desc *dd = cookie;
+
+	if (dd->callback != NULL)
+		dd->callback(dd->callback_args);
+}
+
 static int
 dbri_init(struct dbri_softc *sc)
 {
@@ -586,7 +600,7 @@ dbri_command_send(struct dbri_softc *sc, volatile u_int32_t *cmd)
 	int maxloops = 1000000;
 	int x;
 
-	x = splaudio();
+	x = splsched();
 
 	sc->sc_locked--;
 
@@ -677,10 +691,8 @@ dbri_process_interrupt(struct dbri_softc *sc, int32_t i)
 		td = sc->sc_pipe[channel].desc;
 		dd = &sc->sc_desc[td];
 
-		if (dd->callback != NULL) {
-			dd->callback(dd->callback_args);
-		} else
-			DPRINTF("!");
+		if (dd->callback != NULL)
+			softint_schedule(dd->softint);
 		break;
 	}
 	case DBRI_INTR_FXDT:		/* fixed data change */
@@ -710,7 +722,7 @@ dbri_process_interrupt(struct dbri_softc *sc, int32_t i)
 		dd = &sc->sc_desc[td];
 
 		if (dd->callback != NULL)
-			dd->callback(dd->callback_args);
+			softint_schedule(dd->softint);
 		break;
 	}
 	case DBRI_INTR_UNDR:
@@ -1180,7 +1192,7 @@ pipe_reset(struct dbri_softc *sc, int pipe)
 
 #if 0
 	if (dd->callback)
-		(*dd->callback)(dd->callback_args);
+		softint_schedule(dd->softint);
 #endif
 
 	sc->sc_pipe[pipe].desc = -1;
@@ -1311,7 +1323,7 @@ setup_ring_xmit(struct dbri_softc *sc, int pipe, int which, int num, int blksz,
 	dd->callback = callback;
 	dd->callback_args = callback_args;
 
-	x = splaudio();
+	x = splsched();
 
 	/* the pipe shouldn't be active */
 	if (pipe_active(sc, pipe)) {
@@ -1402,7 +1414,7 @@ setup_ring_recv(struct dbri_softc *sc, int pipe, int which, int num, int blksz,
 	dd->callback = callback;
 	dd->callback_args = callback_args;
 
-	x = splaudio();
+	x = splsched();
 
 	/* the pipe shouldn't be active */
 	if (pipe_active(sc, pipe)) {
@@ -2185,7 +2197,7 @@ dbri_powerhook(int why, void *cookie)
 				int s;
 
 				dbri_bring_up(sc);
-				s = splaudio();
+				s = splsched();
 				cmd = dbri_command_lock(sc);
 				*(cmd++) = DBRI_CMD(DBRI_COMMAND_SDP,
 				    0, sc->sc_pipe[4].sdp |

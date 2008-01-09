@@ -1,8 +1,10 @@
+/*	$NetBSD: nsxfobj.c,v 1.1.46.1 2008/01/09 01:55:19 matt Exp $	*/
+
 /*******************************************************************************
  *
  * Module Name: nsxfobj - Public interfaces to the ACPI subsystem
  *                         ACPI Object oriented interfaces
- *              xRevision: 1.120 $
+ *              $Revision: 1.1.46.1 $
  *
  ******************************************************************************/
 
@@ -10,7 +12,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2007, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -115,14 +117,13 @@
  *
  *****************************************************************************/
 
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsxfobj.c,v 1.1 2006/03/23 13:36:31 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nsxfobj.c,v 1.1.46.1 2008/01/09 01:55:19 matt Exp $");
 
 #define __NSXFOBJ_C__
 
-#include "acpi.h"
-#include "acnamesp.h"
+#include <dist/acpica/acpi.h>
+#include <dist/acpica/acnamesp.h>
 
 
 #define _COMPONENT          ACPI_NAMESPACE
@@ -188,6 +189,8 @@ AcpiGetType (
     Status = AcpiUtReleaseMutex (ACPI_MTX_NAMESPACE);
     return (Status);
 }
+
+ACPI_EXPORT_SYMBOL (AcpiGetType)
 
 
 /*******************************************************************************
@@ -258,6 +261,8 @@ UnlockAndExit:
     (void) AcpiUtReleaseMutex (ACPI_MTX_NAMESPACE);
     return (Status);
 }
+
+ACPI_EXPORT_SYMBOL (AcpiGetParent)
 
 
 /*******************************************************************************
@@ -351,4 +356,5 @@ UnlockAndExit:
     return (Status);
 }
 
+ACPI_EXPORT_SYMBOL (AcpiGetNextObject)
 

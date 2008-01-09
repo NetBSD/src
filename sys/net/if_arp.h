@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.h,v 1.26 2007/03/04 06:03:15 christos Exp $	*/
+/*	$NetBSD: if_arp.h,v 1.26.16.1 2008/01/09 01:57:09 matt Exp $	*/
 
 /*
  * Copyright (c) 1986, 1993
@@ -80,7 +80,7 @@ struct	arphdr {
 	(ntohs((ap)->ar_hrd) == ARPHRD_IEEE1394 \
 		? (((char *)((ap)+1))+(ap)->ar_hln+(ap)->ar_pln) \
 		: (((char *)((ap)+1))+(ap)->ar_hln+(ap)->ar_pln+(ap)->ar_hln))
-} __attribute__((__packed__));
+} __packed;
 
 
 /*

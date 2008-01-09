@@ -1,4 +1,4 @@
-/*	$NetBSD: lkminit_misc.c,v 1.6 2005/12/11 12:24:49 christos Exp $	*/
+/*	$NetBSD: lkminit_misc.c,v 1.6.46.1 2008/01/09 01:56:56 matt Exp $	*/
 
 /*
  * Makefile for miscmod
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_misc.c,v 1.6 2005/12/11 12:24:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_misc.c,v 1.6.46.1 2008/01/09 01:56:56 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -53,10 +53,10 @@ __KERNEL_RCSID(0, "$NetBSD: lkminit_misc.c,v 1.6 2005/12/11 12:24:49 christos Ex
 #include <sys/syscall.h>
 
 
-int	misccall __P((struct lwp *, void *, register_t *));
-int	misc_example_lkmentry __P((struct lkm_table *lkmtp, int, int));
+int	misccall(struct lwp *, void *, register_t *);
+int	misc_example_lkmentry(struct lkm_table *lkmtp, int, int);
 
-static int miscmod_handle __P((struct lkm_table *, int));
+static int miscmod_handle(struct lkm_table *, int);
 
 /*
  * These two entries define our system call and module information.  We
@@ -98,7 +98,7 @@ miscmod_handle( lkmtp, cmd)
 	int			i;
 	struct lkm_misc		*args = lkmtp->private.lkm_misc;
 	int			err = 0;	/* default = success*/
-	extern int sys_lkmnosys __P((struct lwp *, void *, register_t *));
+	extern int sys_lkmnosys(struct lwp *, void *, register_t *);
 
 	switch( cmd) {
 	case LKM_E_LOAD:
