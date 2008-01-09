@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.985 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.986 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -287,6 +287,9 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	openssh: import 4.7 [christos 20071217]
 	x86: Add support for ACPI S3 (suspend-to-RAM) on MP systems.
 		[joerg 20071218]
+	sparc64: add support for Sun PGX32 / TechSource Raptor GFX 8P to
+		genfb ( mostly workarounds for firmware bugs ), also build
+		XFree86's glint driver for accelerated X [macallan 20071219]
 	newsyslog: newsyslog.conf flag 'J' will bzip2 logfiles.
 		[dogcow 20071221]
 	thinkpad(4): Add driver for IBM/Lenovo Thinkpad hotkeys and
