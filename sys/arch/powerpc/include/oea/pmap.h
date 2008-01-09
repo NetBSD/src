@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.10 2007/02/21 22:59:50 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.11 2008/01/09 21:21:45 garbled Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -101,6 +101,10 @@ void pmap_syncicache (paddr_t, psize_t);
 #ifdef PPC_OEA64
 vaddr_t pmap_setusr (vaddr_t);
 vaddr_t pmap_unsetusr (void);
+#endif
+
+#ifdef PPC_OEA64_BRIDGE
+int pmap_setup_segment0_map(int use_large_pages, ...);
 #endif
 
 #define PMAP_NEED_PROCWR
