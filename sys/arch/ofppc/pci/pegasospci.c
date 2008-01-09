@@ -1,4 +1,4 @@
-/* $NetBSD: pegasospci.c,v 1.9 2007/12/27 17:49:36 garbled Exp $ */
+/* $NetBSD: pegasospci.c,v 1.10 2008/01/09 07:35:29 mrg Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pegasospci.c,v 1.9 2007/12/27 17:49:36 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pegasospci.c,v 1.10 2008/01/09 07:35:29 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -252,6 +252,12 @@ pegasospci_indirect_attach_hook(struct device *parent, struct device *self,
 	tag = pci_make_tag(pc, pba->pba_bus, 12, 5);
 	reg = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
 	reg |= PCI_COMMAND_IO_ENABLE;
+	pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, reg);
+
+	/* VT6102 (Rhine II) 10/100 Ethernet: device 13, function 0 */
+	tag = pci_make_tag(pc, pba->pba_bus, 13, 0);
+	reg = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
+	reg |= PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE;
 	pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, reg);
 }
 
