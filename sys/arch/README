@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.49 2008/01/07 05:02:38 uwe Exp $
+$NetBSD: README,v 1.50 2008/01/09 11:26:15 simonb Exp $
 
 acorn26:	Acorn ARM2- and ARM3-based machines (arm, 20000509)
 acorn32:	Acorn computers Ltd. ARM 6/7/SA based machines (arm, 20011118)
@@ -41,7 +41,6 @@ news68k:	Sony's m68k based NET WORK STATION (m68k, 19991209)
 newsmips:	Sony's MIPS based NET WORK STATION (mips, 19980218)
 next68k:	NeXT Computer's cubes and slabs (m68k, 19980609)
 ofppc:		Open Firmware based PowerPC machines (powerpc, 19980528)
-pc532:		"PC-532" kit computer, based on NS 32532 CPU (ns32k, 19930909)
 playstation2:	Sony PlayStation 2 (mips, 20011016)
 pmax:		Digital Equipment Corp. MIPS based machines (mips, 19931012)
 prep:		PowerPC Reference Platform machines (powerpc, 20000229)
@@ -77,4 +76,3 @@ sun68k:		Sun Microsystems Motorola 680x0 CPU based platform files
 Single port cpu families
 alpha:		Digital Equipment Alpha processor
 m88k:		Motorola 88xxx CPU based platform files
-ns32k:		National Semiconductor NS 32532 processor

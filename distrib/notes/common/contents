@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.135 2007/12/15 14:00:08 pavel Exp $
+.\"	$NetBSD: contents,v 1.136 2008/01/09 11:25:58 simonb Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -270,7 +270,7 @@ see below.
 Netbootable RAM disk kernel and the file system in the RAM disk; see below.
 .\}
 .if \n[alpha]:\n[amd64]:\n[amiga]:\n[atari]:\n[bebox]:\n[ews4800mips]:\
-\n[i386]:\n[news68k]:\n[newsmips]:\n[pc532]:\n[sparc]:\n[x68k]:\n[prep]:\
+\n[i386]:\n[news68k]:\n[newsmips]:\n[sparc]:\n[x68k]:\n[prep]:\
 \n[sandpoint] \{\
 .		It Pa floppy/
 \*M boot and installation floppies; see below.
@@ -1845,35 +1845,6 @@ This must be the third file written to the tape.
 .tag)
 .\}
 .
-.
-.if \n[pc532] \{\
-.Pp
-The initial installation process on a pc532 without a previous
-.Nx
-installation is supported by the following files:
-.(tag floppy-144.fs
-.It Pa floppy-144.fs
-A file system containing the boot loader and install kernel with
-a 2 MB root.
-.It Pa download.c
-The source for a program to download
-.Pa inst-11.fs
-into memory via the pc532
-.Tn ROM
-monitor .
-.tag)
-.Pp
-The upgrade process is supported by having a copy of a \*V kernel
-available.
-This file is:
-.(tag kern.tgz
-.It Pa kern.tgz
-Contains a kernel produced from the
-.Pa DEFAULT
-configuration file in
-.Pa pc532/conf .
-.tag)
-.\}
 .
 .if \n[sgimips] \{\
 .Pp

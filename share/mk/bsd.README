@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.198 2007/12/28 21:35:45 christos Exp $
+#	$NetBSD: bsd.README,v 1.199 2008/01/09 11:26:14 simonb Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new (as of 1993) make "include" files
@@ -517,8 +517,7 @@ USETOOLS	Indicates whether the tools specified by ${TOOLDIR} should
 		make(1) include files).
 
 OBJECT_FMT	Object file format.  [set to "ELF" on architectures that
-		use ELF -- currently all architectures but ns32k, set to
-		"a.out" on ns32k].
+		use ELF -- currently all architectures].
 
 TOOLCHAIN_MISSING
 		If not "no", this indicates that the platform being built

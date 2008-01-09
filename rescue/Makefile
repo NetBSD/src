@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2005/05/22 03:45:30 lukem Exp $
+#	$NetBSD: Makefile,v 1.20 2008/01/09 11:26:06 simonb Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -14,7 +14,7 @@ LISTS=		${.CURDIR}/list
 TARGETDIR=	${DESTDIR}/rescue
 PARSELISTENV+=  TARGETDIR=${TARGETDIR:Q}
 
-.for f in bim edlabel ldconfig pdisk
+.for f in edlabel ldconfig pdisk
 PROG_${f}!=	cd ${NETBSDSRCDIR}/sbin/${f} && ${MAKE} -V PROG
 .if (${PROG_${f}} != "")
 LISTS+=		${.CURDIR}/list.${f}

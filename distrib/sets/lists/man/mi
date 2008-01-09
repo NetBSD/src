@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1048 2008/01/03 20:48:01 jdc Exp $
+# $NetBSD: mi,v 1.1049 2008/01/09 11:26:01 simonb Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1192,12 +1192,12 @@
 ./usr/share/man/cat4/owtemp.0			man-sys-catman		.cat
 ./usr/share/man/cat4/pad.0			man-sys-catman		.cat
 ./usr/share/man/cat4/pas.0			man-sys-catman		.cat
-./usr/share/man/cat4/pc532/intro.0		man-sys-catman		.cat
-./usr/share/man/cat4/pc532/lpt.0		man-sys-catman		.cat
-./usr/share/man/cat4/pc532/mem.0		man-sys-catman		.cat
-./usr/share/man/cat4/pc532/ncr.0		man-sys-catman		.cat
-./usr/share/man/cat4/pc532/plip.0		man-sys-catman		.cat
-./usr/share/man/cat4/pc532/scn.0		man-sys-catman		.cat
+./usr/share/man/cat4/pc532/intro.0		man-obsolete		obsolete
+./usr/share/man/cat4/pc532/lpt.0		man-obsolete		obsolete
+./usr/share/man/cat4/pc532/mem.0		man-obsolete		obsolete
+./usr/share/man/cat4/pc532/ncr.0		man-obsolete		obsolete
+./usr/share/man/cat4/pc532/plip.0		man-obsolete		obsolete
+./usr/share/man/cat4/pc532/scn.0		man-obsolete		obsolete
 ./usr/share/man/cat4/pcdisplay.0		man-sys-catman		.cat
 ./usr/share/man/cat4/pchb.0			man-sys-catman		.cat
 ./usr/share/man/cat4/pci.0			man-sys-catman		.cat
@@ -2269,7 +2269,7 @@
 ./usr/share/man/cat8/pam_unix.0			man-sysutil-catman	pam,.cat
 ./usr/share/man/cat8/paxctl.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/pc532/MAKEDEV.0		man-obsolete		obsolete
-./usr/share/man/cat8/pc532/bim.0		man-sysutil-catman	.cat
+./usr/share/man/cat8/pc532/bim.0		man-obsolete		obsolete
 ./usr/share/man/cat8/pc532/makedev.0		man-obsolete		obsolete
 ./usr/share/man/cat8/pcictl.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/pcnfsd.0			man-nfsserver-catman	.cat
@@ -3709,12 +3709,12 @@
 ./usr/share/man/man4/owtemp.4			man-sys-man		.man
 ./usr/share/man/man4/pad.4			man-sys-man		.man
 ./usr/share/man/man4/pas.4			man-sys-man		.man
-./usr/share/man/man4/pc532/intro.4		man-sys-man		.man
-./usr/share/man/man4/pc532/lpt.4		man-sys-man		.man
-./usr/share/man/man4/pc532/mem.4		man-sys-man		.man
-./usr/share/man/man4/pc532/ncr.4		man-sys-man		.man
-./usr/share/man/man4/pc532/plip.4		man-sys-man		.man
-./usr/share/man/man4/pc532/scn.4		man-sys-man		.man
+./usr/share/man/man4/pc532/intro.4		man-obsolete		obsolete
+./usr/share/man/man4/pc532/lpt.4		man-obsolete		obsolete
+./usr/share/man/man4/pc532/mem.4		man-obsolete		obsolete
+./usr/share/man/man4/pc532/ncr.4		man-obsolete		obsolete
+./usr/share/man/man4/pc532/plip.4		man-obsolete		obsolete
+./usr/share/man/man4/pc532/scn.4		man-obsolete		obsolete
 ./usr/share/man/man4/pcdisplay.4		man-sys-man		.man
 ./usr/share/man/man4/pchb.4			man-sys-man		.man
 ./usr/share/man/man4/pci.4			man-sys-man		.man
@@ -4786,7 +4786,7 @@
 ./usr/share/man/man8/pam_unix.8			man-sysutil-man		.man,pam
 ./usr/share/man/man8/paxctl.8			man-sysutil-man		.man
 ./usr/share/man/man8/pc532/MAKEDEV.8		man-obsolete		obsolete
-./usr/share/man/man8/pc532/bim.8		man-sysutil-man		.man
+./usr/share/man/man8/pc532/bim.8		man-obsolete		obsolete
 ./usr/share/man/man8/pc532/makedev.8		man-obsolete		obsolete
 ./usr/share/man/man8/pcictl.8			man-sysutil-man		.man
 ./usr/share/man/man8/pcnfsd.8			man-nfsserver-man	.man

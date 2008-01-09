@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.181 2007/12/17 19:23:44 garbled Exp $
+#	$NetBSD: build.sh,v 1.182 2008/01/09 11:25:58 simonb Exp $
 #
 # Copyright (c) 2001-2005 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -327,10 +327,6 @@ getarch()
 		MACHINE_ARCH=mipsel
 		;;
 
-	pc532)
-		MACHINE_ARCH=ns32k
-		;;
-
 	evbppc64|macppc64)
 		makewrappermachine=${MACHINE}
 		MACHINE=${MACHINE%64}
@@ -373,7 +369,7 @@ validatearch()
 	#
 	case "${MACHINE_ARCH}" in
 
-	alpha|arm|armeb|hppa|i386|m68000|m68k|mipse[bl]|mips64e[bl]|ns32k|powerpc|powerpc64|sh[35]e[bl]|sparc|sparc64|vax|x86_64|ia64)
+	alpha|arm|armeb|hppa|i386|m68000|m68k|mipse[bl]|mips64e[bl]|powerpc|powerpc64|sh[35]e[bl]|sparc|sparc64|vax|x86_64|ia64)
 		;;
 
 	"")
@@ -1095,7 +1091,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.181 2007/12/17 19:23:44 garbled Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.182 2008/01/09 11:25:58 simonb Exp $
 # with these arguments: ${_args}
 #
 

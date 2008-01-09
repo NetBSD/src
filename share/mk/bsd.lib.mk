@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.272 2007/09/15 14:36:14 christos Exp $
+#	$NetBSD: bsd.lib.mk,v 1.273 2008/01/09 11:26:14 simonb Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -138,15 +138,6 @@ CPICFLAGS ?= -fPIC -DPIC
 CPPPICFLAGS?= -DPIC -DBIGPIC
 CAPICFLAGS?= ${CPPPICFLAGS} ${CPICFLAGS}
 APICFLAGS ?= -KPIC
-
-.elif ${MACHINE_ARCH} == "ns32k"					# } {
-
-# XXX no shared libraries yet on ns32k
-FPICFLAGS?=
-CPICFLAGS?=
-CPPPICFLAGS?=
-CAPICFLAGS?=
-APICFLAGS?=
 
 .else									# } {
 

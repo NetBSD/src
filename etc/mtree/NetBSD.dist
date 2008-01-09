@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.358 2007/12/31 15:31:41 ad Exp $
+#	$NetBSD: NetBSD.dist,v 1.359 2008/01/09 11:26:02 simonb Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -751,7 +751,6 @@
 ./usr/share/man/cat4/mac68k
 ./usr/share/man/cat4/macppc
 ./usr/share/man/cat4/mvme68k
-./usr/share/man/cat4/pc532
 ./usr/share/man/cat4/pmax
 ./usr/share/man/cat4/prep
 ./usr/share/man/cat4/sgimips
@@ -800,7 +799,6 @@
 ./usr/share/man/cat8/newsmips
 ./usr/share/man/cat8/next68k
 ./usr/share/man/cat8/ofppc
-./usr/share/man/cat8/pc532
 ./usr/share/man/cat8/playstation2
 ./usr/share/man/cat8/pmax
 ./usr/share/man/cat8/prep
@@ -823,7 +821,6 @@
 ./usr/share/man/cat9/hp300
 ./usr/share/man/cat9/i386
 ./usr/share/man/cat9/mac68k
-./usr/share/man/cat9/pc532
 ./usr/share/man/cat9/pmax
 ./usr/share/man/cat9/sparc
 ./usr/share/man/cat9/sun3
@@ -857,7 +854,6 @@
 ./usr/share/man/man4/mac68k
 ./usr/share/man/man4/macppc
 ./usr/share/man/man4/mvme68k
-./usr/share/man/man4/pc532
 ./usr/share/man/man4/pmax
 ./usr/share/man/man4/prep
 ./usr/share/man/man4/sgimips
@@ -906,7 +902,6 @@
 ./usr/share/man/man8/newsmips
 ./usr/share/man/man8/next68k
 ./usr/share/man/man8/ofppc
-./usr/share/man/man8/pc532
 ./usr/share/man/man8/playstation2
 ./usr/share/man/man8/pmax
 ./usr/share/man/man8/prep
@@ -929,7 +924,6 @@
 ./usr/share/man/man9/hp300
 ./usr/share/man/man9/i386
 ./usr/share/man/man9/mac68k
-./usr/share/man/man9/pc532
 ./usr/share/man/man9/pmax
 ./usr/share/man/man9/sparc
 ./usr/share/man/man9/sun3
@@ -963,7 +957,6 @@
 ./usr/share/man/html4/mac68k
 ./usr/share/man/html4/macppc
 ./usr/share/man/html4/mvme68k
-./usr/share/man/html4/pc532
 ./usr/share/man/html4/pmax
 ./usr/share/man/html4/prep
 ./usr/share/man/html4/sgimips
@@ -1012,7 +1005,6 @@
 ./usr/share/man/html8/newsmips
 ./usr/share/man/html8/next68k
 ./usr/share/man/html8/ofppc
-./usr/share/man/html8/pc532
 ./usr/share/man/html8/playstation2
 ./usr/share/man/html8/pmax
 ./usr/share/man/html8/prep
@@ -1035,7 +1027,6 @@
 ./usr/share/man/html9/hp300
 ./usr/share/man/html9/i386
 ./usr/share/man/html9/mac68k
-./usr/share/man/html9/pc532
 ./usr/share/man/html9/pmax
 ./usr/share/man/html9/sparc
 ./usr/share/man/html9/sun3
