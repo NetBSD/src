@@ -1,4 +1,4 @@
-/*	$NetBSD: rs5c313.c,v 1.5 2008/01/09 22:20:40 uwe Exp $	*/
+/*	$NetBSD: rs5c313.c,v 1.6 2008/01/09 22:29:20 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rs5c313.c,v 1.5 2008/01/09 22:20:40 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rs5c313.c,v 1.6 2008/01/09 22:29:20 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,6 +64,7 @@ static void rs5c313_write_reg(struct rs5c313_softc *, int, int);
 void
 rs5c313_attach(struct rs5c313_softc *sc)
 {
+	device_t self = &sc->sc_dev;
 
 	aprint_naive("\n");
 	aprint_normal(": real time clock\n");
@@ -73,7 +74,7 @@ rs5c313_attach(struct rs5c313_softc *sc)
 	sc->sc_todr.todr_settime_ymdhms = rs5c313_todr_settime_ymdhms;
 
 	if (rs5c313_init(sc) != 0) {
-		aprint_error_dev(&sc->sc_dev, "init failed\n");
+		aprint_error_dev(self, "init failed\n");
 		return;
 	}
 
@@ -84,6 +85,7 @@ rs5c313_attach(struct rs5c313_softc *sc)
 static int
 rs5c313_init(struct rs5c313_softc *sc)
 {
+	device_t self = &sc->sc_dev;
 	int status = 0;
 	int retry;
 
@@ -98,7 +100,7 @@ rs5c313_init(struct rs5c313_softc *sc)
 	}
 
 	sc->sc_valid = 0;
-	aprint_error_dev(&sc->sc_dev, "time not valid\n");
+	aprint_error_dev(self, "time not valid\n");
 
 	rs5c313_write_reg(sc, RS5C313_TINT, 0);
 	rs5c313_write_reg(sc, RS5C313_CTRL, (CTRL_BASE | CTRL_ADJ));
