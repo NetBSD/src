@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.183 2008/01/09 08:18:12 elad Exp $	*/
+/*	$NetBSD: vnode.h,v 1.184 2008/01/09 16:15:23 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -113,15 +113,15 @@ TAILQ_HEAD(vnodelst, vnode);
 struct vnode {
 	struct uvm_object v_uobj;		/* i: the VM object */
 	kcondvar_t	v_cv;			/* i: synchronization */
-	int		v_waitcnt;		/* i: # waiters for VXLOCK */
 	voff_t		v_size;			/* i: size of file */
 	voff_t		v_writesize;		/* i: new size after write */
 	int		v_iflag;		/* i: VI_* flags */
 	int		v_vflag;		/* v: VV_* flags */
 	int		v_uflag;		/* u: VU_* flags */
 	int		v_numoutput;		/* i: # of pending writes */
-	long		v_writecount;		/* i: ref count of writers */
-	long		v_holdcnt;		/* i: page & buffer refs */
+	int		v_writecount;		/* i: ref count of writers */
+	int		v_holdcnt;		/* i: page & buffer refs */
+	int		v_synclist_slot;	/* s: synclist slot index */
 	struct mount	*v_mount;		/* v: ptr to vfs we are in */
 	int		(**v_op)(void *);	/* :: vnode operations vector */
 	TAILQ_ENTRY(vnode) v_freelist;		/* f: vnode freelist */
@@ -129,7 +129,6 @@ struct vnode {
 	TAILQ_ENTRY(vnode) v_mntvnodes;		/* m: vnodes for mount point */
 	struct buflists	v_cleanblkhd;		/* x: clean blocklist head */
 	struct buflists	v_dirtyblkhd;		/* x: dirty blocklist head */
-	int		v_synclist_slot;	/* s: synclist slot index */
 	TAILQ_ENTRY(vnode) v_synclist;		/* s: vnodes with dirty bufs */
 	LIST_HEAD(, namecache) v_dnclist;	/* n: namecaches (children) */
 	LIST_HEAD(, namecache) v_nclist;	/* n: namecaches (parent) */
@@ -201,6 +200,7 @@ typedef struct vnode vnode_t;
 #define	VI_CLEAN	0x00080000	/* has been reclaimed */
 #define	VI_INACTPEND	0x00100000	/* inactivation is pending */
 #define	VI_INACTREDO	0x00200000	/* need to redo VOP_INACTIVE() */
+#define	VI_FREEING	0x00400000	/* vnode is being freed */
 
 /*
  * The third set are locked by the underlying file system.
@@ -211,7 +211,8 @@ typedef struct vnode vnode_t;
 #define	VNODE_FLAGBITS \
     "\20\1ROOT\2SYSTEM\3ISTTY\4MAPPED\5MPSAFE\6LOCKSWORK\11TEXT\12EXECMAP" \
     "\13WRMAP\14WRMAPDIRTY\15XLOCK\16ALIASED\17ONWORKLST\20MARKER" \
-    "\22LAYER\23MAPPED\24CLEAN\25INACTPEND\26INACTREDO\31DIROP\32VU_SOFTDEP" 
+    "\22LAYER\23MAPPED\24CLEAN\25INACTPEND\26INACTREDO\27FREEING" \
+    "\31DIROP\32SOFTDEP" 
 
 #define	VSIZENOTSET	((voff_t)-1)
 

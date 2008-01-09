@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.311 2008/01/07 16:12:55 ad Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.312 2008/01/09 16:15:22 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.311 2008/01/07 16:12:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.312 2008/01/09 16:15:22 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -825,15 +825,15 @@ vget(vnode_t *vp, int flags)
 	/*
 	 * If the vnode is in the process of being cleaned out for
 	 * another use, we wait for the cleaning to finish and then
-	 * return failure. Cleaning is determined by checking that
-	 * the VI_XLOCK flag is set.
+	 * return failure.  Cleaning is determined by checking if
+	 * the VI_XLOCK or VI_FREEING flags are set.
 	 */
-	if ((vp->v_iflag & VI_XLOCK) != 0) {
+	if ((vp->v_iflag & (VI_XLOCK | VI_FREEING)) != 0) {
 		if (flags & LK_NOWAIT) {
 			mutex_exit(&vp->v_interlock);
 			return EBUSY;
 		}
-		vwait(vp, VI_XLOCK);
+		vwait(vp, VI_XLOCK | VI_FREEING);
 		vrelel(vp, 1, 0);
 		return (ENOENT);
 	}
@@ -954,24 +954,31 @@ vrelel(vnode_t *vp, int doinactive, int onhead)
 		}
 
 		/*
-		 * The vnode may gain another reference while being
-		 * deactivated.  Note that VOP_INACTIVE() will drop
-		 * the vnode lock.
+		 * The vnode can gain another reference while being
+		 * deactivated.  If VOP_INACTIVE() indicates that
+		 * the described file has been deleted, then recycle
+		 * the vnode irrespective of additional references.
+		 * Another thread may be waiting to re-use the on-disk
+		 * inode.
+		 *
+		 * Note that VOP_INACTIVE() will drop the vnode lock.
 		 */
 		VOP_INACTIVE(vp, &recycle);
 		mutex_enter(&vp->v_interlock);
-		if (vp->v_usecount > 1) {
-			vp->v_usecount--;
-			mutex_exit(&vp->v_interlock);
-			return;
-		}
+		if (!recycle) {
+			if (vp->v_usecount > 1) {
+				vp->v_usecount--;
+				mutex_exit(&vp->v_interlock);
+				return;
+			}
 
-		/*
-		 * If we grew another reference while VOP_INACTIVE()
-		 * was underway, then retry.
-		 */
-		if ((vp->v_iflag & VI_INACTREDO) != 0) {
-			goto retry;
+			/*
+			 * If we grew another reference while
+			 * VOP_INACTIVE() was underway, retry.
+			 */
+			if ((vp->v_iflag & VI_INACTREDO) != 0) {
+				goto retry;
+			}
 		}
 
 		/* Take care of space accounting. */
@@ -1377,7 +1384,7 @@ vclean(vnode_t *vp, int flags)
 	mutex_enter(&vp->v_interlock);
 	vp->v_vnlock = &vp->v_lock;
 	VN_KNOTE(vp, NOTE_REVOKE);
-	vp->v_iflag &= ~VI_XLOCK;
+	vp->v_iflag &= ~(VI_XLOCK | VI_FREEING);
 	vp->v_iflag |= VI_CLEAN;
 	vp->v_vflag &= ~VV_LOCKSWORK;
 	cv_broadcast(&vp->v_cv);
