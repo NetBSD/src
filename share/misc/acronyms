@@ -1,5 +1,4 @@
-$NetBSD: acronyms,v 1.176 2008/01/02 09:14:17 sketch Exp $
-
+$NetBSD: acronyms,v 1.177 2008/01/09 20:41:10 wiz Exp $
 AFAIC	as far as I'm concerned
 AFAICR	as far as I can recall
 AFAICT	as far as I can tell
@@ -191,6 +190,7 @@ PPL	pretty please
 PTV	parental tunnel vision
 QED	quod erat demonstrandum
 RFC	request for comments
+RFE	request for enhancements
 RIP	rest in peace
 RL	real life
 RLC	rod length check
