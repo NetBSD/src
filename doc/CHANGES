@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.983 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.984 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -317,3 +317,5 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	gcscpcib(4): Added driver for the AMD CS5535 and CS5536 Companion
 		Device with support for Timecounter, Watchdog Timer and
 		GPIO. Adapted from OpenBSD by Yojiro UO. [xtraeme 20080109]
+	kernel: All platforms have been converted to use generic TODR.
+		[joerg 20080108]
