@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.617.2.4 2008/01/08 23:51:51 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.617.2.5 2008/01/09 19:25:05 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.617.2.4 2008/01/08 23:51:51 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.617.2.5 2008/01/09 19:25:05 bouyer Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -2267,7 +2267,6 @@ init386(paddr_t first_avail)
 		       ptoa(physmem), 2*1024*1024UL);
 		cngetc();
 	}
-	XENPRINTF(("init386 end\n"));
 }
 
 #ifdef COMPAT_NOMID
