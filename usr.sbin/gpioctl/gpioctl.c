@@ -1,4 +1,4 @@
-/* $NetBSD: gpioctl.c,v 1.2 2008/01/09 15:56:27 xtraeme Exp $ */
+/* $NetBSD: gpioctl.c,v 1.3 2008/01/09 15:57:06 xtraeme Exp $ */
 /*	$OpenBSD: gpioctl.c,v 1.2 2004/08/08 00:05:09 deraadt Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
@@ -33,7 +33,7 @@
 
 #define _PATH_DEV_GPIO	"/dev/gpio0"
 
-char *device = _PATH_DEV_GPIO;
+const char *device = _PATH_DEV_GPIO;
 int devfd = -1;
 int quiet = 0;
 
