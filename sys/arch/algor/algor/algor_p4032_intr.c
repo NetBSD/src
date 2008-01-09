@@ -1,4 +1,4 @@
-/*	$NetBSD: algor_p4032_intr.c,v 1.15 2008/01/09 14:46:48 tsutsui Exp $	*/
+/*	$NetBSD: algor_p4032_intr.c,v 1.16 2008/01/09 20:38:34 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: algor_p4032_intr.c,v 1.15 2008/01/09 14:46:48 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: algor_p4032_intr.c,v 1.16 2008/01/09 20:38:34 wiz Exp $");
 
 #include "opt_ddb.h"
 
@@ -336,7 +336,7 @@ algor_p4032_cal_timer(bus_space_tag_t st, bus_space_handle_t sh)
 	/* XXX mips_cpu_flags isn't set here; assume CPU_MIPS_DOUBLE_COUNT */
 	curcpu()->ci_cycles_per_hz /= 2;
 	curcpu()->ci_divisor_delay /= 2;
-	MIPS_SET_CI_RECIPRICAL(curcpu());
+	MIPS_SET_CI_RECIPROCAL(curcpu());
 
 	printf("Timer calibration: %lu cycles/sec [(%lu, %lu) * 16]\n",
 	    curcpu()->ci_cpu_freq, ctrdiff[2], ctrdiff[3]);

@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.9 2007/10/17 19:54:14 garbled Exp $ */
+/* $NetBSD: machdep.c,v 1.10 2008/01/09 20:38:35 wiz Exp $ */
 
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -147,7 +147,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.9 2007/10/17 19:54:14 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.10 2008/01/09 20:38:35 wiz Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -215,7 +215,7 @@ cal_timer(void)
 
 	/* XXX: i don't understand this logic, it was borrowed from Malta */
 	curcpu()->ci_divisor_delay = ((cntfreq + 500000) / 1000000);
-	MIPS_SET_CI_RECIPRICAL(curcpu());
+	MIPS_SET_CI_RECIPROCAL(curcpu());
 }
 
 void
