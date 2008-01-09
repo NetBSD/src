@@ -1,4 +1,4 @@
-/*	$NetBSD: ofwmagic.S,v 1.2 1997/10/09 08:38:18 jtc Exp $	*/
+/*	$NetBSD: ofwmagic.S,v 1.3 2008/01/09 19:36:40 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  * Magic note section used by OpenFirmware.
  */
 
-	.section ".note"
+	.section ".note","",@note
 
 	# note header
 
@@ -48,7 +48,7 @@
 	.long	8
 
 	# note descriptor size
-	.long	20
+	.long	24
 
 	# note type (IEEE 1275)
 	.long	0x1275
@@ -72,3 +72,31 @@
 	.long	-1
 	# virt-size
 	.long	-1
+	# load-base 
+	.long	0x4000
+
+	# second note is for IBM LPARs
+	# length of name
+	.long 24
+	# note descriptor size
+	.long 28
+	# note type
+	.long 0x12759999
+	# name of owner
+	.asciz "IBM,RPA-Client-Config"
+	.balign 4
+
+	# lpar affinity
+	.long 0
+	# minimum size in megabytes
+	.long 64
+	# minimum percentage size
+	.long 0
+	# max pft size ( 2^48 bytes )
+	.long 48
+	# splpar
+	.long 1
+	# min load ?
+	.long -1
+	# new mem def ?
+	.long 0
