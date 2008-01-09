@@ -1,4 +1,4 @@
-/*	$NetBSD: rs5c313.c,v 1.2 2007/11/06 01:46:02 uwe Exp $	*/
+/*	$NetBSD: rs5c313.c,v 1.3 2008/01/09 18:29:37 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rs5c313.c,v 1.2 2007/11/06 01:46:02 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rs5c313.c,v 1.3 2008/01/09 18:29:37 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -198,7 +198,7 @@ rs5c313_todr_gettime(todr_chip_handle_t todr, volatile struct timeval *tv)
 		}
 	}
 
-	tv->tv_sec = clock_ymdhms_to_secs(&dt) + rtc_offset * 60;
+	tv->tv_sec = clock_ymdhms_to_secs(&dt);
 	tv->tv_usec = 0;
 
 	return 0;
@@ -214,7 +214,7 @@ rs5c313_todr_settime(todr_chip_handle_t todr, volatile struct timeval *tv)
 	int t;
 	int s;
 
-	clock_secs_to_ymdhms(tv->tv_sec - rtc_offset * 60, &dt);
+	clock_secs_to_ymdhms(tv->tv_sec, &dt);
 
 	s = splhigh();
 
