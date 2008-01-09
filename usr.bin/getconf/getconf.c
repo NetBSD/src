@@ -1,4 +1,4 @@
-/*	$NetBSD: getconf.c,v 1.27.4.1 2007/11/06 23:35:46 matt Exp $	*/
+/*	$NetBSD: getconf.c,v 1.27.4.2 2008/01/09 02:00:42 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: getconf.c,v 1.27.4.1 2007/11/06 23:35:46 matt Exp $");
+__RCSID("$NetBSD: getconf.c,v 1.27.4.2 2008/01/09 02:00:42 matt Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -60,7 +60,7 @@ struct conf_variable
 static void print_longvar(const char *, long);
 static void print_strvar(const char *, const char *);
 static void printvar(const struct conf_variable *, const char *);
-static void usage(void) __attribute__((__noreturn__));
+static void usage(void) __dead;
 
 static const struct conf_variable conf_table[] =
 {

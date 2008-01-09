@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.10 2005/03/09 02:02:07 christos Exp $	*/
+/*	$NetBSD: expand.c,v 1.10.18.1 2008/01/09 02:00:37 matt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)expand.c	8.1 (Berkeley) 6/9/93";
 #endif
-__RCSID("$NetBSD: expand.c,v 1.10 2005/03/09 02:02:07 christos Exp $");
+__RCSID("$NetBSD: expand.c,v 1.10.18.1 2008/01/09 02:00:37 matt Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -56,7 +56,7 @@ size_t	tabstops[100];
 
 static	void	getstops(const char *);
 	int	main(int, char **);
-static	void	usage(void) __attribute__((__noreturn__));
+static	void	usage(void) __dead;
 
 int
 main(int argc, char *argv[])

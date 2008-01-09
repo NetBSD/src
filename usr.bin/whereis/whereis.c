@@ -1,4 +1,4 @@
-/*	$NetBSD: whereis.c,v 1.18 2006/07/30 11:50:29 martin Exp $	*/
+/*	$NetBSD: whereis.c,v 1.18.10.1 2008/01/09 02:01:26 matt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\n\
 #if 0
 static char sccsid[] = "@(#)whereis.c	8.3 (Berkeley) 5/4/95";
 #endif
-__RCSID("$NetBSD: whereis.c,v 1.18 2006/07/30 11:50:29 martin Exp $");
+__RCSID("$NetBSD: whereis.c,v 1.18.10.1 2008/01/09 02:01:26 matt Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -53,7 +53,7 @@ __RCSID("$NetBSD: whereis.c,v 1.18 2006/07/30 11:50:29 martin Exp $");
 #include <string.h>
 #include <unistd.h>
 
-static void usage(void) __attribute__((__noreturn__));
+static void usage(void) __dead;
 
 int
 main(int argc, char *argv[])

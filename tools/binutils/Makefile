@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2006/08/27 07:04:00 simonb Exp $
+#	$NetBSD: Makefile,v 1.11.8.1 2008/01/09 01:59:58 matt Exp $
 
 .include <bsd.own.mk>
 
@@ -45,9 +45,12 @@ native-binutils: .native/.configure_done
 			${HOST_SH} ${GNUHOSTDIST}/configure \
 			--build=`${GNUHOSTDIST}/config.guess` \
 			--host=${MACHINE_GNU_PLATFORM} \
-			--target=${MACHINE_GNU_PLATFORM}) && \
-		(cd .native && ${MAKE} configure-host) && \
-		(cd .native/bfd && ${MAKE} bfd.h bfdver.h) && \
+			--target=${MACHINE_GNU_PLATFORM})
+	PATH=${TOOLDIR}/bin:$$PATH; export PATH; \
+		(cd .native && ${MAKE} configure-host)
+	PATH=${TOOLDIR}/bin:$$PATH; export PATH; \
+		(cd .native/bfd && ${MAKE} bfd.h bfdver.h)
+	PATH=${TOOLDIR}/bin:$$PATH; export PATH; \
 		(cd .native/ld && ${MAKE} ldemul-list.h)
 	@touch $@
 

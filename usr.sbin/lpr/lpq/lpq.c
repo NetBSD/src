@@ -1,4 +1,4 @@
-/*	$NetBSD: lpq.c,v 1.16 2005/11/28 03:26:06 christos Exp $	*/
+/*	$NetBSD: lpq.c,v 1.16.10.1 2008/01/09 02:02:06 matt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)lpq.c	8.3 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: lpq.c,v 1.16 2005/11/28 03:26:06 christos Exp $");
+__RCSID("$NetBSD: lpq.c,v 1.16.10.1 2008/01/09 02:02:06 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -71,7 +71,7 @@ char	*user[MAXUSERS];	/* users to process */
 int	 users;			/* # of users in user array */
 uid_t	uid, euid;
 
-static void usage(void) __attribute__((__noreturn__));
+static void usage(void) __dead;
 
 int
 main(int argc, char *argv[])

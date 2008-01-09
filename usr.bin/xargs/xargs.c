@@ -1,4 +1,4 @@
-/*	$NetBSD: xargs.c,v 1.16 2007/04/18 15:56:07 christos Exp $	*/
+/*	$NetBSD: xargs.c,v 1.16.4.1 2008/01/09 02:01:27 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993\n\
 static char sccsid[] = "@(#)xargs.c	8.1 (Berkeley) 6/6/93";
 __FBSDID("$FreeBSD: src/usr.bin/xargs/xargs.c,v 1.62 2006/01/01 22:59:54 jmallett Exp $");
 #endif
-__RCSID("$NetBSD: xargs.c,v 1.16 2007/04/18 15:56:07 christos Exp $");
+__RCSID("$NetBSD: xargs.c,v 1.16.4.1 2008/01/09 02:01:27 matt Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -67,7 +67,7 @@ static void	parse_input(int, char *[]);
 static void	prerun(int, char *[]);
 static int	prompt(void);
 static void	run(char **);
-static void	usage(void) __attribute__((__noreturn__));
+static void	usage(void) __dead;
 void		strnsubst(char **, const char *, const char *, size_t);
 static void	waitchildren(const char *, int);
 
@@ -101,12 +101,24 @@ main(int argc, char *argv[])
 	(void)setlocale(LC_ALL, "");
 
 	/*
-	 * POSIX.2 limits the exec line length to ARG_MAX - 2K.  Running that
-	 * caused some E2BIG errors, so it was changed to ARG_MAX - 4K.  Given
-	 * that the smallest argument is 2 bytes in length, this means that
-	 * the number of arguments is limited to:
+	 * SUSv3 says of the exec family of functions:
+	 *     The number of bytes available for the new process'
+	 *     combined argument and environment lists is {ARG_MAX}. It
+	 *     is implementation-defined whether null terminators,
+	 *     pointers, and/or any alignment bytes are included in this
+	 *     total.
 	 *
-	 *	 (ARG_MAX - 4K - LENGTH(utility + arguments)) / 2.
+	 * SUSv3 says of xargs:
+	 *     ... the combined argument and environment lists ...
+	 *     shall not exceed {ARG_MAX}-2048.
+	 *
+	 * To be conservative, we use ARG_MAX - 4K, and we do include
+	 * nul terminators and pointers in the calculation.
+	 *
+	 * Given that the smallest argument is 2 bytes in length, this
+	 * means that the number of arguments is limited to:
+	 *
+	 *	 (ARG_MAX - 4K - LENGTH(env + utility + arguments)) / 2.
 	 *
 	 * We arbitrarily limit the number of arguments to 5000.  This is
 	 * allowed by POSIX.2 as long as the resulting minimum exec line is

@@ -1,4 +1,4 @@
-/*	$NetBSD: lpr.c,v 1.35.10.1 2007/11/06 23:36:27 matt Exp $	*/
+/*	$NetBSD: lpr.c,v 1.35.10.2 2008/01/09 02:02:06 matt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)lpr.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: lpr.c,v 1.35.10.1 2007/11/06 23:36:27 matt Exp $");
+__RCSID("$NetBSD: lpr.c,v 1.35.10.2 2008/01/09 02:02:06 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -114,7 +114,7 @@ static char	*lmktemp(const char *, int, int);
 static void	 mktemps(void);
 static int	 nfile(char *);
 static int	 test(const char *);
-static void	 usage(void) __attribute__((__noreturn__));
+static void	 usage(void) __dead;
 
 uid_t	uid, euid;
 

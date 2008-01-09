@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.c,v 1.24 2005/08/04 19:41:28 rpaulo Exp $	*/
+/*	$NetBSD: mbuf.c,v 1.24.12.1 2008/01/09 02:00:50 matt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)mbuf.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: mbuf.c,v 1.24 2005/08/04 19:41:28 rpaulo Exp $");
+__RCSID("$NetBSD: mbuf.c,v 1.24.12.1 2008/01/09 02:00:50 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -53,10 +53,10 @@ __RCSID("$NetBSD: mbuf.c,v 1.24 2005/08/04 19:41:28 rpaulo Exp $");
 #include <limits.h>
 #include <errno.h>
 #include <err.h>
+#include <stdbool.h>
 #include "netstat.h"
 
 #define	YES	1
-typedef int bool;
 
 struct	mbstat mbstat;
 struct pool mbpool, mclpool;
@@ -192,8 +192,6 @@ mbpr(mbaddr, msizeaddr, mclbaddr, mbpooladdr, mclpooladdr)
 	
 	printf("%lu Kbytes allocated to network (%lu%% in use)\n",
 	    totmem / 1024, totpct);
-	printf("%lu requests for memory denied\n", mbstat.m_drops);
-	printf("%lu requests for memory delayed\n", mbstat.m_wait);
 
 dump_drain:
 	printf("%lu calls to protocol drain routines\n", mbstat.m_drain);

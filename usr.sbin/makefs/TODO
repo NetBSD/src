@@ -1,7 +1,11 @@
-$NetBSD: TODO,v 1.6 2002/02/06 02:17:14 lukem Exp $
+$NetBSD: TODO,v 1.6.24.1 2008/01/09 02:02:07 matt Exp $
 
 todo
 ----
+
+- read files from multiple directories with or without root
+  specification, e.g., makefs -t cd9660 output.iso dir1 root2=dir2
+  dir3 root4=dir4
 
 - display block numbers for a given file (e.g, /boot)
 

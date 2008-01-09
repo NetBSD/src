@@ -1,4 +1,4 @@
-.\" $NetBSD: sdpd.8,v 1.3 2007/03/18 15:53:55 plunky Exp $
+.\" $NetBSD: sdpd.8,v 1.3.4.1 2008/01/09 02:02:27 matt Exp $
 .\"
 .\" Copyright (c) 2004 Maksim Yevmenkin <m_evmenkin@yahoo.com>
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $Id: sdpd.8,v 1.3 2007/03/18 15:53:55 plunky Exp $
+.\" $Id: sdpd.8,v 1.3.4.1 2008/01/09 02:02:27 matt Exp $
 .\" $FreeBSD: src/usr.sbin/bluetooth/sdpd/sdpd.8,v 1.5 2005/12/06 17:56:36 emax Exp $
 .\"
 .Dd January 13, 2004
@@ -72,12 +72,12 @@ command on the control socket.
 .Pp
 The command line options are as follows:
 .Bl -tag -width indent
-.It Fl d
-Do not detach from the controlling terminal.
 .It Fl c Ar path
 Specify path to the control socket.
 The default path is
 .Pa /var/run/sdp .
+.It Fl d
+Do not detach from the controlling terminal.
 .It Fl G Ar group
 Grant permission to members of the
 .Ar group
@@ -141,10 +141,8 @@ as RFCOMM channels etc., before registering the service.
 .It Pa /var/run/sdp
 .El
 .Sh SEE ALSO
-.Xr sdp 3 ,
-.Xr sdpquery 1
-.Sh AUTHORS
-.An Maksim Yevmenkin Aq m_evmenkin@yahoo.com
+.Xr sdpquery 1 ,
+.Xr sdp 3
 .Sh HISTORY
 The
 .Nm
@@ -156,6 +154,8 @@ by
 .An Iain Hibbert
 under the sponsorship of
 .An Itronix, Inc.
+.Sh AUTHORS
+.An Maksim Yevmenkin Aq m_evmenkin@yahoo.com
 .Sh BUGS
 Most likely.
 Please report if found.

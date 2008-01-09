@@ -1,4 +1,4 @@
-/*	$NetBSD: rwho.c,v 1.16 2005/10/01 13:33:21 he Exp $	*/
+/*	$NetBSD: rwho.c,v 1.16.12.1 2008/01/09 02:00:53 matt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rwho.c	8.1 (Berkeley) 6/6/93";*/
-__RCSID("$NetBSD: rwho.c,v 1.16 2005/10/01 13:33:21 he Exp $");
+__RCSID("$NetBSD: rwho.c,v 1.16.12.1 2008/01/09 02:00:53 matt Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -57,7 +57,7 @@ __RCSID("$NetBSD: rwho.c,v 1.16 2005/10/01 13:33:21 he Exp $");
 #include <utmp.h>
 #include <sysexits.h>
 
-static void usage(void) __attribute__((__noreturn__));
+static void usage(void) __dead;
 static int utmpcmp(const void *, const void *);
 
 /* 

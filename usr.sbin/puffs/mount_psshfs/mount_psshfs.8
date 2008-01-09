@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount_psshfs.8,v 1.10.4.1 2007/11/06 23:36:32 matt Exp $
+.\"	$NetBSD: mount_psshfs.8,v 1.10.4.2 2008/01/09 02:02:19 matt Exp $
 .\"
 .\" Copyright (c) 2007 Antti Kantee.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd October 20, 2007
+.Dd December 14, 2007
 .Dt MOUNT_PSSHFS 8
 .Os
 .Sh NAME
@@ -47,7 +47,7 @@ The mandatory parameters are the target host name and local mount
 point.
 The target host parameter can optionally contain a username whose
 credentials will be used by the remote sshd, and a relative or
-absolute path for the remote mountpoint's root.
+absolute path for the remote mount point's root.
 If no user is given, the credentials of the user issuing the mount
 command are used.
 If no path is given, the user's home directory on the remote machine
@@ -57,21 +57,31 @@ The following command line options are available:
 .Pp
 .Bl -tag -width xxx
 .It Fl e
-Makes the mounted file system nfs exportable.
+Makes the mounted file system NFS exportable.
 If this option is used, it is very important to understand that
 .Nm
-can not provide complete support for nfs due to the limitations in
+can not provide complete support for NFS due to the limitations in
 the backend.
 Files are valid only for the time that
 .Nm
 is running and in the event of e.g. a server crash, all client retries
 to access files will fail.
+.It Fl F Ar configfile
+Pass a configuration file to
+.Xr ssh 1 .
+This will make it ignore the system-wide
+.Pa /etc/ssh/ssh_config
+configuration file and use
+.Pa configfile
+instead of
+.Pa ~/.ssh/config .
 .It Fl o Ar [no]option
 This flag can be used to give standard mount options and options
 to puffs.
 .It Fl O Ar sshopt=value
 Pass an option to
-.Xr ssh 1 , for example
+.Xr ssh 1 ,
+for example
 .Fl O Ar Port=22 .
 For a list of valid options, see
 .Xr ssh_config 5 .
@@ -83,6 +93,27 @@ when also performing bulk data reads.
 .It Fl s
 This flag can be used to make the program stay on top.
 The default is to detach from the terminal and run in the background.
+.It Fl t Ar timeout
+By default
+.Nm
+caches directory contents and node attributes for 30 seconds before
+re-fetching from the server to check if anything has changed on
+the server.
+This option is used to adjust the timeout period to
+.Ar timeout
+seconds.
+A value 0 means the cache is never valid and \-1 means it is
+valid indefinitely.
+It is possible to force a re-read regardless of timeout status by sending
+.Dv SIGHUP
+to the
+.Nm
+process.
+.Pp
+Note: the file system will still free nodes when requested by the
+kernel and will lose all cached information in doing so.
+How frequently this happens depends on system activity and the total
+number of available vnodes in the system (kern.maxvnodes).
 .El
 .Sh EXAMPLES
 The following example illustrates how to mount the directory
@@ -102,14 +133,14 @@ It is possible to use
 .Xr fstab 5
 for psshfs mounts, with SSH public key authentication:
 .Pp
-.Dl "abc@bigiron:/usr /mnt psshfs rw,noauto,-O=BatchMode=yes,-O=IdentityFile=/root/.ssh/id_rsa 0 0"
+.Dl "abc@bigiron:/usr /mnt psshfs rw,noauto,-O=BatchMode=yes,-O=IdentityFile=/root/.ssh/id_rsa,-t=-1"
 .Sh SEE ALSO
-.Xr fstab 5 ,
 .Xr sftp 1 ,
 .Xr puffs 3 ,
 .Xr puffs 4 ,
-.Xr mount 8 ,
+.Xr fstab 5 ,
 .Xr ssh_config 5 ,
+.Xr mount 8 ,
 .Xr sshd 8
 .Sh HISTORY
 The

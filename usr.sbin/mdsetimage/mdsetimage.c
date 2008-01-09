@@ -1,4 +1,4 @@
-/* $NetBSD: mdsetimage.c,v 1.16 2001/10/01 23:32:34 cgd Exp $ */
+/* $NetBSD: mdsetimage.c,v 1.16.24.1 2008/01/09 02:02:08 matt Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -37,7 +37,7 @@ __COPYRIGHT(
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: mdsetimage.c,v 1.16 2001/10/01 23:32:34 cgd Exp $");
+__RCSID("$NetBSD: mdsetimage.c,v 1.16.24.1 2008/01/09 02:02:08 matt Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -55,7 +55,7 @@ __RCSID("$NetBSD: mdsetimage.c,v 1.16 2001/10/01 23:32:34 cgd Exp $");
 #include "extern.h"
 
 int		main __P((int, char *[]));
-static void	usage __P((void)) __attribute__((noreturn));
+static void	usage __P((void)) __dead;
 static int	find_md_root __P((const char *, const char *, size_t,
 		    const struct nlist *, size_t *, u_int32_t *));
 

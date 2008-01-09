@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.1 2006/06/19 15:44:56 gdamore Exp $	*/
+/*	$NetBSD: profile.h,v 1.1.10.1 2008/01/09 02:02:26 matt Exp $	*/
 
 /*
  * profile.h
@@ -27,7 +27,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: profile.h,v 1.1 2006/06/19 15:44:56 gdamore Exp $
+ * $Id: profile.h,v 1.1.10.1 2008/01/09 02:02:26 matt Exp $
  * $FreeBSD: src/usr.sbin/bluetooth/sdpd/profile.h,v 1.1 2004/01/20 20:48:26 emax Exp $
  */
 
@@ -63,7 +63,8 @@ typedef struct attr *	attr_p;
 
 struct profile
 {
-	uint16_t		uuid;	/* profile uuid */
+	uint16_t *		uuid;	/* profile uuid list */
+	ssize_t			usize;	/* profile uuid list size */
 	uint16_t		dsize;	/* profile data size */
 	profile_data_valid_p	valid;	/* profile data validator */
 	attr_t const * const	attrs;	/* supported attributes */

@@ -820,7 +820,7 @@ bsd_set_countermeasures(void *priv, int enabled)
 {
 	struct bsd_driver_data *drv = priv;
 
-	wpa_printf(MSG_DEBUG, "%s: enabled=%d", __FUNCTION__, enabled);
+	wpa_printf(MSG_DEBUG, "%s: enabled=%d", __func__, enabled);
 	return set80211param(drv, IEEE80211_IOC_COUNTERMEASURES, enabled);
 }
 

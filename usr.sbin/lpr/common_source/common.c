@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.37 2006/05/25 02:53:10 christos Exp $	*/
+/*	$NetBSD: common.c,v 1.37.10.1 2008/01/09 02:02:05 matt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)common.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: common.c,v 1.37 2006/05/25 02:53:10 christos Exp $");
+__RCSID("$NetBSD: common.c,v 1.37.10.1 2008/01/09 02:02:05 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -258,7 +258,8 @@ getq(struct queue **namelist[])
 		goto errdone;
 
 	while ((d = readdir(dirp)) != NULL) {
-		if (d->d_name[0] != 'c' || d->d_name[1] != 'f')
+		if (d->d_name[0] != 'c' || d->d_name[1] != 'f'
+		    || d->d_name[2] == '\0')
 			continue;	/* daemon control files only */
 		seteuid(euid);
 		if (stat(d->d_name, &stbuf) < 0) {
@@ -321,11 +322,23 @@ compar(const void *p1, const void *p2)
 {
 	const struct queue *const *q1 = p1;
 	const struct queue *const *q2 = p2;
+	int j1, j2;
 
 	if ((*q1)->q_time < (*q2)->q_time)
 		return -1;
 	if ((*q1)->q_time > (*q2)->q_time)
 		return 1;
+
+	j1 = atoi((*q1)->q_name+3);
+	j2 = atoi((*q2)->q_name+3);
+
+        if (j1 == j2)
+                return 0;
+        if ((j1 < j2 && j2-j1 < 500) || (j1 > j2 && j1-j2 > 500))
+                return -1;
+        if ((j1 < j2 && j2-j1 > 500) || (j1 > j2 && j1-j2 < 500))
+                return 1;
+ 
 	return 0;
 }
 

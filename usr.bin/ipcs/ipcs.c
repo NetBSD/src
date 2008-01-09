@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcs.c,v 1.37 2006/11/25 21:40:06 christos Exp $	*/
+/*	$NetBSD: ipcs.c,v 1.37.8.1 2008/01/09 02:00:44 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -61,6 +61,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #include <sys/param.h>
 #include <sys/sysctl.h>
 #include <sys/ipc.h>
@@ -117,7 +118,7 @@ static void	show_shminfo(time_t, time_t, time_t, int, u_int64_t, mode_t,
     uid_t, gid_t, uid_t, gid_t, u_int32_t, u_int64_t, pid_t, pid_t);
 static void	show_shminfo_hdr(void);
 static void	show_shmtotal(struct shminfo *);
-static void	usage(void) __attribute__((__noreturn__));
+static void	usage(void) __dead;
 static void	unconfsem(void);
 static void	unconfmsg(void);
 static void	unconfshm(void);

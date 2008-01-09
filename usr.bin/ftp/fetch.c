@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.182 2007/08/22 23:47:13 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.182.2.1 2008/01/09 02:00:38 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997-2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.182 2007/08/22 23:47:13 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.182.2.1 2008/01/09 02:00:38 matt Exp $");
 #endif /* not lint */
 
 /*
@@ -329,6 +329,7 @@ parse_url(const char *url, const char *desc, url_t *type,
 	    || pass == NULL || host == NULL || port == NULL || portnum == NULL
 	    || path == NULL)
 		errx(1, "parse_url: invoked with NULL argument!");
+	DPRINTF("parse_url: %s `%s'\n", desc, url);
 
 	origurl = url;
 	*type = UNKNOWN_URL_T;
@@ -453,9 +454,9 @@ parse_url(const char *url, const char *desc, url_t *type,
 
 	DPRINTF("parse_url: user `%s' pass `%s' host %s port %s(%d) "
 	    "path `%s'\n",
-	    *user ? *user : "<null>", *pass ? *pass : "<null>",
-	    *host ? *host : "<null>", *port ? *port : "<null>",
-	    *portnum ? *portnum : -1, *path ? *path : "<null>");
+	    STRorNULL(*user), STRorNULL(*pass),
+	    STRorNULL(*host), STRorNULL(*port),
+	    *portnum ? *portnum : -1, STRorNULL(*path));
 
 	return (0);
 }
@@ -506,6 +507,8 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 	url_t			urltype;
 	in_port_t		portnum;
 
+	DPRINTF("fetch_url: `%s' proxyenv `%s'\n", url, STRorNULL(proxyenv));
+
 	oldintr = oldintp = NULL;
 	closefunc = NULL;
 	fin = fout = NULL;
@@ -549,6 +552,7 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 		else
 			savefile = ftp_strdup(decodedpath);
 	}
+	DPRINTF("fetch_url: savefile `%s'\n", savefile);
 	if (EMPTYSTRING(savefile)) {
 		if (urltype == FTP_URL_T) {
 			rval = fetch_ftp(url);
@@ -557,8 +561,6 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 		warnx("No file after directory (you must specify an "
 		    "output file) `%s'", url);
 		goto cleanup_fetch_url;
-	} else {
-		DPRINTF("savefile `%s'\n", savefile);
 	}
 
 	restart_point = 0;
@@ -841,7 +843,7 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 		}
 		while (len > 0 && (ISLWS(buf[len-1])))
 			buf[--len] = '\0';
-		DPRINTF("received `%s'\n", buf);
+		DPRINTF("fetch_url: received `%s'\n", buf);
 
 				/* Determine HTTP response code */
 		cp = strchr(buf, ' ');
@@ -867,7 +869,7 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 				buf[--len] = '\0';
 			if (len == 0)
 				break;
-			DPRINTF("received `%s'\n", buf);
+			DPRINTF("fetch_url: received `%s'\n", buf);
 
 		/*
 		 * Look for some headers
@@ -879,7 +881,7 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 				filesize = STRTOLL(cp, &ep, 10);
 				if (filesize < 0 || *ep != '\0')
 					goto improper;
-				DPRINTF("parsed len as: " LLF "\n",
+				DPRINTF("fetch_url: parsed len as: " LLF "\n",
 				    (LLT)filesize);
 
 			} else if (match_token(&cp, "Content-Range:")) {
@@ -961,7 +963,8 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 
 			} else if (match_token(&cp, "Location:")) {
 				location = ftp_strdup(cp);
-				DPRINTF("parsed location as `%s'\n", cp);
+				DPRINTF("fetch_url: parsed location as `%s'\n",
+				    cp);
 
 			} else if (match_token(&cp, "Transfer-Encoding:")) {
 				if (match_token(&cp, "binary")) {
@@ -976,19 +979,19 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 					goto cleanup_fetch_url;
 				}
 				ischunked++;
-				DPRINTF("using chunked encoding\n");
+				DPRINTF("fetch_url: using chunked encoding\n");
 
 			} else if (match_token(&cp, "Proxy-Authenticate:")
 				|| match_token(&cp, "WWW-Authenticate:")) {
 				if (! (token = match_token(&cp, "Basic"))) {
 					DPRINTF(
-				"skipping unknown auth scheme `%s'\n",
+			"fetch_url: skipping unknown auth scheme `%s'\n",
 						    token);
 					continue;
 				}
 				FREEPTR(auth);
 				auth = ftp_strdup(token);
-				DPRINTF("parsed auth as `%s'\n", cp);
+				DPRINTF("fetch_url: parsed auth as `%s'\n", cp);
 			}
 
 		}
@@ -1187,7 +1190,8 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 				warnx("Unexpected data following chunk-size");
 				goto cleanup_fetch_url;
 			}
-			DPRINTF("got chunk-size of " LLF "\n", (LLT)chunksize);
+			DPRINTF("fetch_url: got chunk-size of " LLF "\n",
+			    (LLT)chunksize);
 			if (chunksize == 0) {
 				lastchunk = 1;
 				goto chunkdone;
@@ -1358,6 +1362,7 @@ fetch_ftp(const char *url)
 	in_port_t	 portnum;
 	url_t		 urltype;
 
+	DPRINTF("fetch_ftp: `%s'\n", url);
 	host = path = dir = file = user = pass = NULL;
 	port = NULL;
 	rval = 1;
@@ -1456,10 +1461,9 @@ fetch_ftp(const char *url)
 	}
 	DPRINTF("fetch_ftp: user `%s' pass `%s' host %s port %s "
 	    "path `%s' dir `%s' file `%s'\n",
-	    user ? user : "<null>", pass ? pass : "<null>",
-	    host ? host : "<null>", port ? port : "<null>",
-	    path ? path : "<null>",
-	    dir ? dir : "<null>", file ? file : "<null>");
+	    STRorNULL(user), STRorNULL(pass),
+	    STRorNULL(host), STRorNULL(port),
+	    STRorNULL(path), STRorNULL(dir), STRorNULL(file));
 
 	dirhasglob = filehasglob = 0;
 	if (doglob && urltype == CLASSIC_URL_T) {
@@ -1584,9 +1588,8 @@ fetch_ftp(const char *url)
 				url_decode(dir);
 			} else
 				nextpart = NULL;
-			DPRINTF("dir `%s', nextpart `%s'\n",
-			    dir ? dir : "<null>",
-			    nextpart ? nextpart : "<null>");
+			DPRINTF("fetch_ftp: dir `%s', nextpart `%s'\n",
+			    STRorNULL(dir), STRorNULL(nextpart));
 			if (urltype == FTP_URL_T || *dir != '\0') {
 				xargv[0] = "cd";
 				xargv[1] = dir;
@@ -1846,7 +1849,7 @@ auto_put(int argc, char **argv, const char *uploadserver)
 		}
 	}
 	DPRINTF("auto_put: URL `%s' argv[2] `%s'\n",
-	    path, uargv[2] ? uargv[2] : "<null>");
+	    path, STRorNULL(uargv[2]));
 
 			/* connect and cwd */
 	rval = auto_fetch(1, &path);

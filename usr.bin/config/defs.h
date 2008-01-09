@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.20 2007/01/13 23:47:36 christos Exp $	*/
+/*	$NetBSD: defs.h,v 1.20.4.1 2008/01/09 02:00:35 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -98,7 +98,7 @@ extern const char *progname;
  * The next two lines define the current version of the config(1) binary,
  * and the minimum version of the configuration files it supports.
  */
-#define CONFIG_VERSION		20070109
+#define CONFIG_VERSION		20071109
 #define CONFIG_MINVERSION	0
 
 /*
@@ -555,6 +555,7 @@ struct nvlist *newnv(const char *, const char *, void *, int, struct nvlist *);
 void	nvfree(struct nvlist *);
 void	nvfreel(struct nvlist *);
 struct nvlist *nvcat(struct nvlist *, struct nvlist *);
+void	autogen_comment(FILE *, const char *);
 
 /* liby */
 void	yyerror(const char *);

@@ -1,4 +1,4 @@
-/* $NetBSD: envstat.c,v 1.42.2.1 2007/11/06 23:36:25 matt Exp $ */
+/* $NetBSD: envstat.c,v 1.42.2.2 2008/01/09 02:01:59 matt Exp $ */
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: envstat.c,v 1.42.2.1 2007/11/06 23:36:25 matt Exp $");
+__RCSID("$NetBSD: envstat.c,v 1.42.2.2 2008/01/09 02:01:59 matt Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -48,6 +48,7 @@ __RCSID("$NetBSD: envstat.c,v 1.42.2.1 2007/11/06 23:36:25 matt Exp $");
 #include <syslog.h>
 #include <prop/proplib.h>
 #include <sys/envsys.h>
+#include <sys/types.h>
 
 #include "envstat.h"
 
@@ -78,6 +79,12 @@ struct envsys_sensor {
 	char 	dvname[ENVSYS_DESCLEN];
 };
 
+struct envsys_dvprops {
+	uint64_t	refresh_timo;
+	char 		refresh_units[ENVSYS_DESCLEN];
+	/* more values could be added in the future */
+};
+
 static unsigned int interval, flags, width;
 static char *mydevname, *sensors;
 static struct envsys_sensor *gesen;
@@ -85,7 +92,7 @@ static size_t gnelems, newsize;
 
 static int parse_dictionary(int);
 static int send_dictionary(FILE *, int);
-static int find_sensors(prop_array_t, const char *);
+static int find_sensors(prop_array_t, const char *, struct envsys_dvprops *);
 static void print_sensors(struct envsys_sensor *, size_t, const char *);
 static int check_sensors(struct envsys_sensor *, char *, size_t);
 static int usage(void);
@@ -270,7 +277,7 @@ send_dictionary(FILE *cf, int fd)
 	}
 
 	/* 
-	 * Send our dictionary to the kernel then.
+	 * Send our sensor properties dictionary to the kernel then.
 	 */
 	error = prop_dictionary_send_ioctl(udict, fd, ENVSYS_SETDICTIONARY);
 	if (error)
@@ -283,6 +290,7 @@ send_dictionary(FILE *cf, int fd)
 static int
 parse_dictionary(int fd)
 {
+	struct envsys_dvprops *edp = NULL;
 	prop_array_t array;
 	prop_dictionary_t dict;
 	prop_object_iterator_t iter;
@@ -308,7 +316,7 @@ parse_dictionary(int fd)
 			goto out;
 		}
 
-		rval = find_sensors(obj, mydevname);
+		rval = find_sensors(obj, mydevname, NULL);
 		if (rval)
 			goto out;
 
@@ -333,22 +341,39 @@ parse_dictionary(int fd)
 				goto out;
 			}
 
-			dnp = prop_dictionary_keysym_cstring_nocopy(obj);
-
-			if (flags & ENVSYS_DFLAG) {
-				(void)printf("%s\n", dnp);
-				continue;
-			} else {
-				(void)printf("[%s]\n", dnp);
-				rval = find_sensors(array, dnp);
-				if (rval)
-					goto out;
+			edp = (struct envsys_dvprops *)malloc(sizeof(*edp));
+			if (!edp) {
+				rval = ENOMEM;
+				goto out;
 			}
 
-			if ((flags & ENVSYS_LFLAG) == 0)
+			dnp = prop_dictionary_keysym_cstring_nocopy(obj);
+			rval = find_sensors(array, dnp, edp);
+			if (rval)
+				goto out;
+
+			if (((flags & ENVSYS_LFLAG) == 0) &&
+			    (flags & ENVSYS_DFLAG)) {
+				(void)printf("%s (checking events every ",
+				    dnp);
+				if (edp->refresh_timo == 1)
+					(void)printf("second)\n");
+				else
+					(void)printf("%d seconds)\n",
+					    (int)edp->refresh_timo);
+				continue;
+			}
+			
+			if ((flags & ENVSYS_LFLAG) == 0) {
+				(void)printf("[%s]\n", dnp);
 				print_sensors(gesen, gnelems, dnp);
+			}
+
 			if (interval)
 				(void)printf("\n");
+
+			free(edp);
+			edp = NULL;
 		}
 
 		prop_object_iterator_release(iter);
@@ -361,15 +386,17 @@ out:
 		gnelems = 0;
 		newsize = 0;
 	}
+	if (edp)
+		free(edp);
 	prop_object_release(dict);
 	return rval;
 }
 
 static int
-find_sensors(prop_array_t array, const char *dvname)
+find_sensors(prop_array_t array, const char *dvname, struct envsys_dvprops *edp)
 {
 	prop_object_iterator_t iter;
-	prop_object_t obj, obj1;
+	prop_object_t obj, obj1, obj2;
 	prop_string_t state, desc = NULL;
 	struct envsys_sensor *esen = NULL;
 	int rval = 0;
@@ -391,7 +418,18 @@ find_sensors(prop_array_t array, const char *dvname)
 
 	/* iterate over the array of dictionaries */
 	while ((obj = prop_object_iterator_next(iter)) != NULL) {
-	
+
+		/* get the refresh-timeout property */
+		obj2 = prop_dictionary_get(obj, "device-properties");
+		if (obj2) {
+			if (!edp)
+				continue;
+			if (!prop_dictionary_get_uint64(obj2,
+							"refresh-timeout",
+							&edp->refresh_timo))
+				continue;
+		}
+
 		/* copy device name */
 		(void)strlcpy(gesen[gnelems].dvname, dvname,
 		    sizeof(gesen[gnelems].dvname));
@@ -401,8 +439,9 @@ find_sensors(prop_array_t array, const char *dvname)
 		/* check sensor's state */
 		state = prop_dictionary_get(obj, "state");
 
-		/* mark invalid sensors */
-		if (prop_string_equals_cstring(state, "invalid"))
+		/* mark sensors with invalid/unknown state */
+		if ((prop_string_equals_cstring(state, "invalid") ||
+		     prop_string_equals_cstring(state, "unknown")))
 			gesen[gnelems].invalid = true;
 		else
 			gesen[gnelems].invalid = false;

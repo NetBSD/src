@@ -1,4 +1,4 @@
-/*	$NetBSD: psshfs.h,v 1.23.2.1 2007/11/06 23:36:33 matt Exp $	*/
+/*	$NetBSD: psshfs.h,v 1.23.2.2 2008/01/09 02:02:21 matt Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -42,17 +42,16 @@ extern unsigned int max_reads;
  */
 #define SFTP_PROTOVERSION 3
 
-/*
- * Refresh directories every n seconds as indicated by the following macro.
- * Note that local changes will still be visible immediately.
- */
-#define PSSHFS_REFRESHIVAL 30
+#define DEFAULTREFRESH 30
+#define REFRESHTIMEOUT(pctx, t) \
+  (!(pctx)->refreshival || ((pctx->refreshival!=-1) && ((t)>pctx->refreshival)))
 
 PUFFSOP_PROTOS(psshfs);
 
 #define NEXTREQ(pctx) ((pctx->nextreq)++)
-#define PSSHFSAUTOVAR(pcc)						\
-	struct psshfs_ctx *pctx = puffs_cc_getspecific(pcc);		\
+#define PSSHFSAUTOVAR(pu)						\
+	struct puffs_cc *pcc = puffs_cc_getcc(pu);			\
+	struct psshfs_ctx *pctx = puffs_getspecific(pu);		\
 	uint32_t reqid = NEXTREQ(pctx);					\
 	struct puffs_framebuf *pb = psbuf_makeout();			\
 	int rv = 0
@@ -92,8 +91,6 @@ struct psshfs_dir {
 	char *entryname;
 	struct vattr va;
 	time_t attrread;
-
-	struct puffs_framebuf *getattr_pb;
 };
 
 struct psshfs_fid {
@@ -103,18 +100,18 @@ struct psshfs_fid {
 
 struct psshfs_wait {
 	struct puffs_cc *pw_cc;
+	int pw_type;
 	TAILQ_ENTRY(psshfs_wait) pw_entries;
 };
+#define PWTYPE_READDIR	1
+#define PWTYPE_READ1	2
+#define PWTYPE_READ2	3
+#define PWTYPE_WRITE	4
 
 struct psshfs_node {
 	struct puffs_node *parent;
 
 	struct psshfs_dir *dir;	/* only valid if we're of type VDIR */
-	struct delayattr {
-		struct puffs_framebuf *pufbuf;
-		struct readdirattr *rda;
-	} *da;
-	size_t nextda;
 
 	size_t denttot;
 	size_t dentnext;
@@ -122,24 +119,33 @@ struct psshfs_node {
 	int childcount;
 
 	int stat;
-	int opencount;
 	int readcount;
 
 	time_t attrread;
-	struct puffs_framebuf *getattr_pb;
+	char *symlink;
+	time_t slread;
 
 	char *fhand_r;
 	char *fhand_w;
 	uint32_t fhand_r_len;
 	uint32_t fhand_w_len;
+	struct puffs_framebuf *lazyopen_r;
+	struct puffs_framebuf *lazyopen_w;
+	int lazyopen_err_r, lazyopen_err_w;
 
 	TAILQ_HEAD(, psshfs_wait) pw;
 };
 #define PSN_RECLAIMED	0x01
 #define PSN_HASFH	0x02
-#define PSN_READMAP	0x04
-#define PSN_WRITEMAP	0x08
-#define PSN_READDIR	0x10
+#define PSN_READDIR	0x04
+#define PSN_DOLAZY_R	0x08
+#define PSN_DOLAZY_W	0x10
+#define PSN_LAZYWAIT_R	0x20
+#define PSN_LAZYWAIT_W	0x40
+#define PSN_HANDLECLOSE	0x80
+
+#define HANDLE_READ	0x1
+#define HANDLE_WRITE	0x2
 
 struct psshfs_ctx {
 	int sshfd;
@@ -156,6 +162,8 @@ struct psshfs_ctx {
 
 	int canexport;
 	time_t mounttime;
+
+	int refreshival;
 };
 
 int	psshfs_domount(struct puffs_usermount *);
@@ -198,7 +206,7 @@ void	psbuf_req_data(struct puffs_framebuf *, int, uint32_t,
 		       const void *, uint32_t);
 void	psbuf_req_str(struct puffs_framebuf *, int, uint32_t, const char *);
 
-int	sftp_readdir(struct puffs_cc *, struct psshfs_ctx *,
+int	sftp_readdir(struct puffs_usermount *, struct psshfs_ctx *,
 		     struct puffs_node *);
 
 struct psshfs_dir *lookup(struct psshfs_dir *, size_t, const char *);
@@ -209,7 +217,13 @@ struct puffs_node *allocnode(struct puffs_usermount *, struct puffs_node *,
 struct psshfs_dir *direnter(struct puffs_node *, const char *);
 void nukenode(struct puffs_node *, const char *, int);
 void doreclaim(struct puffs_node *);
-int getpathattr(struct puffs_cc *, const char *, struct vattr *);
-int getnodeattr(struct puffs_cc *, struct puffs_node *);
+int getpathattr(struct puffs_usermount *, const char *, struct vattr *);
+int getnodeattr(struct puffs_usermount *, struct puffs_node *);
+
+void closehandles(struct puffs_usermount *, struct psshfs_node *, int);
+void lazyopen_rresp(struct puffs_usermount *, struct puffs_framebuf *,
+		    void *, int);
+void lazyopen_wresp(struct puffs_usermount *, struct puffs_framebuf *,
+		    void *, int);
 
 #endif /* PSSHFS_H_ */

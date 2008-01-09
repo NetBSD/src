@@ -1,9 +1,11 @@
-#	$NetBSD: Makefile,v 1.158 2007/06/21 14:09:23 ginsbach Exp $
+#	$NetBSD: Makefile,v 1.158.4.1 2008/01/09 02:00:29 matt Exp $
 #	from: @(#)Makefile	8.3 (Berkeley) 1/7/94
 
 .include <bsd.own.mk>
 
-SUBDIR= apply apropos asa at audio awk banner basename biff bthset btpin \
+SUBDIR= apply apropos asa at atf-compile atf-config atf-report atf-run \
+	atf-version audio awk \
+	banner basename biff bthset btkey btpin \
 	bzip2 bzip2recover cal calendar cap_mkdb cdplay \
 	checknr chflags chpass cksum cmp col colcrt colrm \
 	column comm compress config crontab crunch csplit ctags cut \

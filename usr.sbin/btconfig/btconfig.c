@@ -1,4 +1,4 @@
-/* $NetBSD: btconfig.c,v 1.5.4.1 2007/11/06 23:36:21 matt Exp $ */
+/* $NetBSD: btconfig.c,v 1.5.4.2 2008/01/09 02:01:55 matt Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -34,24 +34,20 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2006 Itronix, Inc.\n"
 	    "All rights reserved.\n");
-__RCSID("$NetBSD: btconfig.c,v 1.5.4.1 2007/11/06 23:36:21 matt Exp $");
+__RCSID("$NetBSD: btconfig.c,v 1.5.4.2 2008/01/09 02:01:55 matt Exp $");
 
-#include <sys/types.h>
+#include <sys/ioctl.h>
 #include <sys/param.h>
 #include <sys/socket.h>
-#include <sys/ioctl.h>
 
-#include <net/if.h>
-
-#include <stdio.h>
-#include <string.h>
-#include <ctype.h>
-#include <stdlib.h>
-#include <util.h>
-#include <unistd.h>
-#include <errno.h>
-#include <err.h>
 #include <bluetooth.h>
+#include <err.h>
+#include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <util.h>
 
 /* inquiry results storage */
 struct result {
@@ -108,7 +104,10 @@ int opt_reset = 0;
 			"\005XMIT_SCO"		\
 			"\006INIT_BDADDR"	\
 			"\007INIT_BUFFER_SIZE"	\
-			"\010INIT_FEATURES"
+			"\010INIT_FEATURES"	\
+			"\011POWER_UP_NOOP"	\
+			"\012INIT_COMMANDS"	\
+			""
 
 /* authorisation (flag) */
 int opt_auth = 0;
@@ -614,7 +613,7 @@ config_unit(void)
 void
 print_info(int level)
 {
-	uint8_t val, buf[MAX_STR_SIZE];
+	uint8_t version, val, buf[MAX_STR_SIZE];
 	uint16_t val16;
 
 	if (lflag) {
@@ -642,6 +641,16 @@ print_info(int level)
 
 	if (level-- < 1 || (btr.btr_flags & BTF_UP) == 0)
 		return;
+
+	load_value(HCI_CMD_READ_LOCAL_VER, &version, sizeof(version));
+	printf("\tHCI version: ");
+	switch(version) {
+	case HCI_SPEC_V10:	printf("1.0\n");	break;
+	case HCI_SPEC_V11:	printf("1.0b\n");	break;
+	case HCI_SPEC_V12:	printf("1.2\n");	break;
+	case HCI_SPEC_V20:	printf("2.0\n");	break;
+	default:		printf("unknown\n");	break;
+	}
 
 	load_value(HCI_CMD_READ_UNIT_CLASS, buf, HCI_CLASS_SIZE);
 	class = (buf[2] << 16) | (buf[1] << 8) | (buf[0]);
@@ -684,7 +693,10 @@ print_info(int level)
 	if (val & HCI_LINK_POLICY_ENABLE_PARK_MODE)	tag("park");
 	else if (level > 0)				tag("-park");
 
-	load_value(HCI_CMD_READ_INQUIRY_MODE, &val, sizeof(val));
+	val = 0;
+	if (version >= HCI_SPEC_V12)
+		load_value(HCI_CMD_READ_INQUIRY_MODE, &val, sizeof(val));
+
 	if (val)				tag("rssi");
 	else if (level > 0)			tag("-rssi");
 

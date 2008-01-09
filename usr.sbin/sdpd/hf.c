@@ -1,4 +1,4 @@
-/*	$NetBSD: hf.c,v 1.1 2006/08/17 20:13:31 plunky Exp $	*/
+/*	$NetBSD: hf.c,v 1.1.10.1 2008/01/09 02:02:25 matt Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hf.c,v 1.1 2006/08/17 20:13:31 plunky Exp $");
+__RCSID("$NetBSD: hf.c,v 1.1.10.1 2008/01/09 02:02:25 matt Exp $");
 
 #include <sys/queue.h>
 #include <bluetooth.h>
@@ -148,8 +148,16 @@ static attr_t	hf_profile_attrs[] = {
 	{ 0, NULL } /* end entry */
 };
 
-profile_t	hf_profile_descriptor = {
+static uint16_t	hf_profile_uuids[] = {
 	SDP_SERVICE_CLASS_HANDSFREE,
+	SDP_SERVICE_CLASS_GENERIC_AUDIO,
+	SDP_UUID_PROTOCOL_L2CAP,
+	SDP_UUID_PROTOCOL_RFCOMM,
+};
+
+profile_t	hf_profile_descriptor = {
+	hf_profile_uuids,
+	sizeof(hf_profile_uuids),
 	sizeof(sdp_hf_profile_t),
 	hf_profile_data_valid,
 	(attr_t const * const) &hf_profile_attrs

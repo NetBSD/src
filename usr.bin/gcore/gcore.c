@@ -1,4 +1,4 @@
-/*	$NetBSD: gcore.c,v 1.9 2006/04/01 22:34:01 christos Exp $	*/
+/*	$NetBSD: gcore.c,v 1.9.12.1 2008/01/09 02:00:41 matt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: gcore.c,v 1.9 2006/04/01 22:34:01 christos Exp $");
+__RCSID("$NetBSD: gcore.c,v 1.9.12.1 2008/01/09 02:00:41 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -54,7 +54,7 @@ __RCSID("$NetBSD: gcore.c,v 1.9 2006/04/01 22:34:01 christos Exp $");
 #include <unistd.h>
 #include <errno.h>
 
-static void usage(void) __attribute__((__noreturn__));
+static void usage(void) __dead;
 
 static void
 usage(void)

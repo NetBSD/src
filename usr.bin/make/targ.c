@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.49 2006/12/21 20:05:37 dsl Exp $	*/
+/*	$NetBSD: targ.c,v 1.49.4.1 2008/01/09 02:00:48 matt Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: targ.c,v 1.49 2006/12/21 20:05:37 dsl Exp $";
+static char rcsid[] = "$NetBSD: targ.c,v 1.49.4.1 2008/01/09 02:00:48 matt Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)targ.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: targ.c,v 1.49 2006/12/21 20:05:37 dsl Exp $");
+__RCSID("$NetBSD: targ.c,v 1.49.4.1 2008/01/09 02:00:48 matt Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -355,6 +355,8 @@ Targ_FindNode(const char *name, int flags)
 	Hash_SetValue(he, gn);
     Var_Append(".ALLTARGETS", name, VAR_GLOBAL);
     (void)Lst_AtEnd(allTargets, gn);
+    if (doing_depend)
+	gn->flags |= FROM_DEPEND;
     return gn;
 }
 

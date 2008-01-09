@@ -1,4 +1,4 @@
-/*	$NetBSD: provider.c,v 1.1 2006/06/19 15:44:56 gdamore Exp $	*/
+/*	$NetBSD: provider.c,v 1.1.10.1 2008/01/09 02:02:27 matt Exp $	*/
 
 /*
  * provider.c
@@ -27,19 +27,21 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: provider.c,v 1.1 2006/06/19 15:44:56 gdamore Exp $
+ * $Id: provider.c,v 1.1.10.1 2008/01/09 02:02:27 matt Exp $
  * $FreeBSD: src/usr.sbin/bluetooth/sdpd/provider.c,v 1.1 2004/01/20 20:48:26 emax Exp $
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: provider.c,v 1.1 2006/06/19 15:44:56 gdamore Exp $");
+__RCSID("$NetBSD: provider.c,v 1.1.10.1 2008/01/09 02:02:27 matt Exp $");
 
 #include <sys/queue.h>
 #include <bluetooth.h>
+#include <sdp.h>
 #include <string.h>
 #include <stdlib.h>
 #include "profile.h"
 #include "provider.h"
+#include "uuid-private.h"
 
 static TAILQ_HEAD(, provider)	providers = TAILQ_HEAD_INITIALIZER(providers);
 static uint32_t			change_state = 0;
@@ -197,4 +199,39 @@ uint32_t
 provider_get_change_state(void)
 {
 	return (change_state);
+}
+
+/*
+ * Match provider to UUID list
+ *
+ *	all UUIDs in list must match one of the
+ *	provider UUIDs or the PublicBrowseGroup
+ */
+
+int
+provider_match_uuid(provider_p provider, uint128_t *uuid, int ucount)
+{
+	uint128_t puuid;
+	int num, max;
+
+	max = provider->profile->usize / sizeof(provider->profile->uuid[0]);
+
+	for (; ucount-- > 0 ; uuid++) {
+		if (memcmp(uuid, &uuid_public_browse_group, sizeof(*uuid)) == 0)
+			continue;
+
+		for (num = 0 ; ; num++) {
+			if (num == max)
+				return 0;
+
+			memcpy(&puuid, &uuid_base, sizeof(puuid));
+			puuid.b[2] = provider->profile->uuid[num] >> 8;
+			puuid.b[3] = provider->profile->uuid[num];
+
+			if (memcmp(uuid, &puuid, sizeof(*uuid)) == 0)
+				break;
+		}
+	}
+
+	return 1;
 }

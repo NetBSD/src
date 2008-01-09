@@ -1,4 +1,4 @@
-/*	$NetBSD: nineproto.c,v 1.8 2007/07/07 21:14:28 pooka Exp $	*/
+/*	$NetBSD: nineproto.c,v 1.8.4.1 2008/01/09 02:02:17 matt Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: nineproto.c,v 1.8 2007/07/07 21:14:28 pooka Exp $");
+__RCSID("$NetBSD: nineproto.c,v 1.8.4.1 2008/01/09 02:02:17 matt Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -181,9 +181,10 @@ proto_getstat(struct puffs_framebuf *pb, struct vattr *vap,
 }
 
 int
-proto_cc_dupfid(struct puffs_cc *pcc, p9pfid_t oldfid, p9pfid_t newfid)
+proto_cc_dupfid(struct puffs_usermount *pu, p9pfid_t oldfid, p9pfid_t newfid)
 {
-	struct puffs9p *p9p = puffs_cc_getspecific(pcc);
+	struct puffs_cc *pcc = puffs_cc_getcc(pu);
+	struct puffs9p *p9p = puffs_getspecific(pu);
 	struct puffs_framebuf *pb;
 	p9ptag_t tag = NEXTTAG(p9p);
 	uint16_t qids;
@@ -207,10 +208,10 @@ proto_cc_dupfid(struct puffs_cc *pcc, p9pfid_t oldfid, p9pfid_t newfid)
 }
 
 int
-proto_cc_clunkfid(struct puffs_cc *pcc, p9pfid_t fid, int waitforit)
+proto_cc_clunkfid(struct puffs_usermount *pu, p9pfid_t fid, int waitforit)
 {
-	struct puffs_usermount *pu = puffs_cc_getusermount(pcc);
-	struct puffs9p *p9p = puffs_cc_getspecific(pcc);
+	struct puffs_cc *pcc = puffs_cc_getcc(pu);
+	struct puffs9p *p9p = puffs_getspecific(pu);
 	struct puffs_framebuf *pb;
 	p9ptag_t tag = NEXTTAG(p9p);
 	int rv = 0;
@@ -240,14 +241,16 @@ proto_cc_clunkfid(struct puffs_cc *pcc, p9pfid_t fid, int waitforit)
  * walk a new fid, then open it
  */
 int
-proto_cc_open(struct puffs_cc *pcc, p9pfid_t fid, p9pfid_t newfid, int mode)
+proto_cc_open(struct puffs_usermount *pu, p9pfid_t fid,
+	p9pfid_t newfid, int mode)
 {
-	struct puffs9p *p9p = puffs_cc_getspecific(pcc);
+	struct puffs_cc *pcc = puffs_cc_getcc(pu);
+	struct puffs9p *p9p = puffs_getspecific(pu);
 	struct puffs_framebuf *pb;
 	p9ptag_t tag = NEXTTAG(p9p);
 	int rv;
 
-	rv = proto_cc_dupfid(pcc, fid, newfid);
+	rv = proto_cc_dupfid(pu, fid, newfid);
 	if (rv)
 		return rv;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ifwatchd.c,v 1.20 2004/11/25 06:57:38 martin Exp $	*/
+/*	$NetBSD: ifwatchd.c,v 1.20.16.1 2008/01/09 02:02:04 matt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  * Define this for special treatment of sys/net/if_spppsubr.c based interfaces.
  */
 #define SPPP_IF_SUPPORT
- 
+
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -132,7 +132,7 @@ main(int argc, char **argv)
 	char msg[2048], *msgp;
 
 	openlog(argv[0], LOG_PID|LOG_CONS, LOG_DAEMON);
-	while ((c = getopt(argc, argv, "qvhic:n:u:d:A:D:")) != -1)
+	while ((c = getopt(argc, argv, "qvhic:n:u:d:A:D:")) != -1) {
 		switch (c) {
 		case 'h':
 			usage();
@@ -178,6 +178,7 @@ main(int argc, char **argv)
 			errs++;
 			break;
 		}
+	}
 
 	if (errs)
 		usage();
@@ -185,7 +186,7 @@ main(int argc, char **argv)
 	argv += optind;
 	argc -= optind;
 
-	if (argc <= 0) 
+	if (argc <= 0)
 		usage();
 
 	if (verbose) {
@@ -205,7 +206,7 @@ main(int argc, char **argv)
 	}
 
 	if (!verbose)
-		daemon(0,0);
+		daemon(0, 0);
 
 	s = socket(PF_ROUTE, SOCK_RAW, 0);
 	if (s < 0) {
@@ -220,10 +221,10 @@ main(int argc, char **argv)
 	for (;;) {
 		n = read(s, msg, sizeof msg);
 		msgp = msg;
-		for (msgp = msg; n > 0; n -= ((struct rt_msghdr*)msgp)->rtm_msglen, msgp += ((struct rt_msghdr*)msgp)->rtm_msglen) {
+		for (msgp = msg; n > 0;
+		     n -= ((struct rt_msghdr*)msgp)->rtm_msglen,
+		     msgp += ((struct rt_msghdr*)msgp)->rtm_msglen)
 			dispatch(msgp, n);
-			
-		}
 	}
 
 	close(s);
@@ -234,9 +235,9 @@ main(int argc, char **argv)
 }
 
 static void
-usage()
+usage(void)
 {
-	fprintf(stderr, 
+	fprintf(stderr,
 	    "usage:\n"
 	    "\tifwatchd [-hiqv] [-A arrival-script] [-D departure-script]\n"
 	    "\t\t  [-d down-script] [-u up-script]\n"
@@ -290,10 +291,7 @@ work:
 }
 
 static void
-check_addrs(cp, addrs, ev)
-	char    *cp;
-	int     addrs;
-	enum event ev;
+check_addrs(char *cp, int addrs, enum event ev)
 {
 	struct sockaddr *sa, *ifa = NULL, *brd = NULL;
 	char ifname_buf[IFNAMSIZ];
@@ -303,23 +301,22 @@ check_addrs(cp, addrs, ev)
 	if (addrs == 0)
 		return;
 	for (i = 1; i; i <<= 1) {
-		if (i & addrs) {
-			sa = (struct sockaddr *)cp;
-			if (i == RTA_IFP) {
-				struct sockaddr_dl * li = (struct sockaddr_dl*)sa;
-				ifndx = li->sdl_index;
-				if (!find_interface(ifndx)) {
-					if (verbose)
-						printf("ignoring change on interface #%d\n", ifndx);
-					return;
-				}
-			} else if (i == RTA_IFA) {
-				ifa = sa;
-			} else if (i == RTA_BRD) {
-				brd = sa;
+		if ((i & addrs) == 0)
+			continue;
+		sa = (struct sockaddr *)cp;
+		if (i == RTA_IFP) {
+			struct sockaddr_dl * li = (struct sockaddr_dl*)sa;
+			ifndx = li->sdl_index;
+			if (!find_interface(ifndx)) {
+				if (verbose)
+					printf("ignoring change on interface #%d\n", ifndx);
+				return;
 			}
-			ADVANCE(cp, sa);
-		}
+		} else if (i == RTA_IFA)
+			ifa = sa;
+		else if (i == RTA_BRD)
+			brd = sa;
+		ADVANCE(cp, sa);
 	}
 	if (ifa != NULL) {
 		ifname = if_indextoname(ifndx, ifname_buf);
@@ -336,11 +333,8 @@ check_addrs(cp, addrs, ev)
 }
 
 static void
-invoke_script(sa, dest, ev, ifindex, ifname_hint)
-	struct sockaddr *sa, *dest;
-	enum event ev;
-	int ifindex;
-	const char *ifname_hint;
+invoke_script(struct sockaddr *sa, struct sockaddr *dest, enum event ev,
+    int ifindex, const char *ifname_hint)
 {
 	char addr[NI_MAXHOST], daddr[NI_MAXHOST], ifname_buf[IFNAMSIZ];
 	const char *ifname;
@@ -447,7 +441,7 @@ check_carrier(int if_index, int carrier_status)
 	if (p == NULL)
 		return;
 
-	/* 
+	/*
 	 * Treat it as an event worth handling if:
 	 * - the carrier status changed, or
 	 * - this is the first time we've been called, and
@@ -480,31 +474,33 @@ check_announce(struct if_announcemsghdr *ifan)
 	const char *ifname = ifan->ifan_name;
 
 	SLIST_FOREACH(p, &ifs, next) {
-		if (strcmp(p->ifname, ifname) == 0) {
-			switch (ifan->ifan_what) {
-			case IFAN_ARRIVAL:
-				invoke_script(NULL, NULL, ARRIVAL, p->index,
-				    NULL);
-				break;
-			case IFAN_DEPARTURE:
-				invoke_script(NULL, NULL, DEPARTURE, p->index,
-				    p->ifname);
-				break;
-			default:
-				if (verbose)
-					(void) printf("unknown announce: "
-					    "what=%d\n", ifan->ifan_what);
-				break;
-			}
-			return;
+		if (strcmp(p->ifname, ifname) != 0)
+			continue;
+
+		switch (ifan->ifan_what) {
+		case IFAN_ARRIVAL:
+			invoke_script(NULL, NULL, ARRIVAL, p->index,
+			    NULL);
+			break;
+		case IFAN_DEPARTURE:
+			invoke_script(NULL, NULL, DEPARTURE, p->index,
+			    p->ifname);
+			break;
+		default:
+			if (verbose)
+				(void) printf("unknown announce: "
+				    "what=%d\n", ifan->ifan_what);
+			break;
 		}
+		return;
 	}
 }
 
-static void rescan_interfaces()
+static void
+rescan_interfaces(void)
 {
 	struct interface_data * p;
-	
+
 	SLIST_FOREACH(p, &ifs, next) {
 		p->index = if_nametoindex(p->ifname);
 		if (verbose)
@@ -513,7 +509,8 @@ static void rescan_interfaces()
 	}
 }
 
-static void free_interfaces()
+static void
+free_interfaces(void)
 {
 	struct interface_data * p;
 
@@ -525,18 +522,19 @@ static void free_interfaces()
 	}
 }
 
-static int find_interface(index)
-	int index;
+static int
+find_interface(int index)
 {
 	struct interface_data * p;
-	
+
 	SLIST_FOREACH(p, &ifs, next)
 		if (p->index == index)
 			return 1;
 	return 0;
 }
 
-static void run_initial_ups()
+static void
+run_initial_ups(void)
 {
 	struct interface_data * ifd;
 	struct ifaddrs *res = NULL, *p;
@@ -546,45 +544,47 @@ static void run_initial_ups()
 	if (s < 0)
 		return;
 
-	if (getifaddrs(&res) == 0) {
-		for (p = res; p; p = p->ifa_next) {
-			SLIST_FOREACH(ifd, &ifs, next) {
-				if (strcmp(ifd->ifname, p->ifa_name) == 0)
-					break;
-			}
-			if (ifd == NULL)
-				continue;
+	if (getifaddrs(&res) != 0)
+		goto out;
 
-			if (p->ifa_addr && p->ifa_addr->sa_family == AF_LINK)
-				invoke_script(NULL, NULL, ARRIVAL, ifd->index,
-				    NULL);
-
-			if ((p->ifa_flags & IFF_UP) == 0)
-				continue;
-			if (p->ifa_addr == NULL)
-				continue;
-			if (p->ifa_addr->sa_family == AF_LINK) {
-				struct ifmediareq ifmr;
-
-				memset(&ifmr, 0, sizeof(ifmr));
-				strncpy(ifmr.ifm_name, ifd->ifname,
-				    sizeof(ifmr.ifm_name));
-				if (ioctl(s, SIOCGIFMEDIA, &ifmr) != -1
-				    && (ifmr.ifm_status & IFM_AVALID)
-				    && (ifmr.ifm_status & IFM_ACTIVE)) {
-					invoke_script(NULL, NULL, CARRIER,
-					    ifd->index, ifd->ifname);
-					ifd->last_carrier_status =
-					    LINK_STATE_UP;
-				    }
-				continue;
-			}
-			if (if_is_connected(ifd->ifname))
-				invoke_script(p->ifa_addr, p->ifa_dstaddr, UP,
-				    ifd->index, ifd->ifname);
+	for (p = res; p; p = p->ifa_next) {
+		SLIST_FOREACH(ifd, &ifs, next) {
+			if (strcmp(ifd->ifname, p->ifa_name) == 0)
+				break;
 		}
-		freeifaddrs(res);
+		if (ifd == NULL)
+			continue;
+
+		if (p->ifa_addr && p->ifa_addr->sa_family == AF_LINK)
+			invoke_script(NULL, NULL, ARRIVAL, ifd->index,
+			    NULL);
+
+		if ((p->ifa_flags & IFF_UP) == 0)
+			continue;
+		if (p->ifa_addr == NULL)
+			continue;
+		if (p->ifa_addr->sa_family == AF_LINK) {
+			struct ifmediareq ifmr;
+
+			memset(&ifmr, 0, sizeof(ifmr));
+			strncpy(ifmr.ifm_name, ifd->ifname,
+			    sizeof(ifmr.ifm_name));
+			if (ioctl(s, SIOCGIFMEDIA, &ifmr) != -1
+			    && (ifmr.ifm_status & IFM_AVALID)
+			    && (ifmr.ifm_status & IFM_ACTIVE)) {
+				invoke_script(NULL, NULL, CARRIER,
+				    ifd->index, ifd->ifname);
+				ifd->last_carrier_status =
+				    LINK_STATE_UP;
+			    }
+			continue;
+		}
+		if (if_is_connected(ifd->ifname))
+			invoke_script(p->ifa_addr, p->ifa_dstaddr, UP,
+			    ifd->index, ifd->ifname);
 	}
+	freeifaddrs(res);
+out:
 	close(s);
 }
 
@@ -599,7 +599,7 @@ static void run_initial_ups()
  * treat is as connected.
  */
 static int
-check_is_connected(const char * ifname, int def_retval)
+check_is_connected(const char *ifname, int def_retval)
 {
 	int s, err;
 	struct spppstatus oldstatus;

@@ -1,8 +1,8 @@
-/*	$NetBSD: fwcontrol.c,v 1.5 2006/05/24 22:08:53 christos Exp $	*/
+/*	$NetBSD: fwcontrol.c,v 1.5.10.1 2008/01/09 02:02:01 matt Exp $	*/
 /*
  * Copyright (C) 2002
  * 	Hidetoshi Shimokawa. All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -19,7 +19,7 @@
  * 4. Neither the name of the author nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -35,7 +35,7 @@
 #if defined(__FreeBSD__)
 
 #include <sys/cdefs.h>
-__FBSDID("$FreeBSD: /repoman/r/ncvs/src/usr.sbin/fwcontrol/fwcontrol.c,v 1.22 2005/05/20 12:50:47 charnier Exp $");
+__FBSDID("$FreeBSD: src/usr.sbin/fwcontrol/fwcontrol.c,v 1.23 2006/10/26 22:33:38 imp Exp $");
 #endif
 
 #include <sys/param.h>
@@ -50,11 +50,13 @@ __FBSDID("$FreeBSD: /repoman/r/ncvs/src/usr.sbin/fwcontrol/fwcontrol.c,v 1.22 20
 #include <dev/firewire/firewire.h>
 #include <dev/firewire/iec13213.h>
 #include <dev/firewire/fwphyreg.h>
+#include <dev/firewire/iec68113.h>
 #elif defined(__NetBSD__)
 #include "eui64.h"
 #include <dev/ieee1394/firewire.h>
 #include <dev/ieee1394/iec13213.h>
 #include <dev/ieee1394/fwphyreg.h>
+#include <dev/ieee1394/iec68113.h>
 #endif
 
 #include <netinet/in.h>
@@ -63,12 +65,11 @@ __FBSDID("$FreeBSD: /repoman/r/ncvs/src/usr.sbin/fwcontrol/fwcontrol.c,v 1.22 20
 #include <err.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sysexits.h>
 #include <unistd.h>
+#include "fwmethods.h"
 
-extern int dvrecv(int, char *, char, int);
-extern int dvsend(int, char *, char, int);
-
-int sysctl_set_int(const char *, int);
+static void sysctl_set_int(const char *, int);
 
 static void
 usage(void)
@@ -87,13 +88,13 @@ usage(void)
 		"\t-m: set fwmem target\n"
 		"\t-o: send link-on packet to the node\n"
 		"\t-p: dump PHY registers\n"
-		"\t-R: receive DV stream\n"
+		"\t-R: receive DV or MPEG TS stream\n"
 		"\t-r: bus reset\n"
 		"\t-S: send DV stream\n"
 		"\t-s: write RESET_START register on the node\n"
 		"\t-t: read topology map\n"
 		"\t-u: specify bus number\n", getprogname());
-	exit(0);
+	exit(EX_USAGE);
 }
 
 static void
@@ -297,7 +298,7 @@ reset_start(int fd, int node)
 }
 
 static void
-set_pri_req(int fd, int pri_req)
+set_pri_req(int fd, u_int32_t pri_req)
 {
 	struct fw_devlstreq *data;
 	struct fw_devinfo *devinfo;
@@ -317,7 +318,7 @@ set_pri_req(int fd, int pri_req)
 		eui64_ntoa(&eui, addr, sizeof(addr));
 		printf("%d %s, %08x",
 			devinfo->dst, addr, reg);
-		if (reg > 0 && pri_req >= 0) {
+		if (reg > 0) {
 			old = (reg & 0x3f);
 			max = (reg & 0x3f00) >> 8;
 			if (pri_req > max)
@@ -332,7 +333,7 @@ set_pri_req(int fd, int pri_req)
 }
 
 static void
-parse_bus_info_block(u_int32_t *p, int info_len)
+parse_bus_info_block(u_int32_t *p)
 {
 	char addr[EUI64_SIZ];
 	struct bus_info *bi;
@@ -413,7 +414,7 @@ show_crom(u_int32_t *crom_buf)
 		printf("(OK)\n");
 	else
 		printf("(NG)\n");
-	parse_bus_info_block(crom_buf+1, hdr->info_len);
+	parse_bus_info_block(crom_buf+1);
 
 	crom_init_context(&cc, crom_buf);
 	dir = cc.stack[0].dir;
@@ -568,7 +569,7 @@ dump_phy_registers(int fd)
 	    "Max_Legacy_SPD:%d BLINK:%d Bridge:%d\n"
 	    "Page_Select:%d Port_Select%d\n",
 	    b.phy_id, b.r, b.cps,
-	    b.rhb, b.ibr, b.gap_count, 
+	    b.rhb, b.ibr, b.gap_count,
 	    b.extended, b.num_ports,
 	    b.phy_speed, b.delay,
 	    b.lctrl, b.c, b.jitter, b.pwr_class,
@@ -625,12 +626,60 @@ open_dev(int *fd, char *devbase)
 	}
 }
 
-int
+static void
 sysctl_set_int(const char *name, int val)
 {
 	if (sysctlbyname(name, NULL, NULL, &val, sizeof(int)) < 0)
 		err(1, "sysctl %s failed.", name);
-	return (0);
+}
+
+static fwmethod *
+detect_recv_fn(int fd, char ich)
+{
+	char *buf;
+	struct fw_isochreq isoreq;
+	struct fw_isobufreq bufreq;
+	int len;
+	u_int32_t *ptr;
+	struct ciphdr *ciph;
+	fwmethod *retfn;
+
+	bufreq.rx.nchunk = 8;
+	bufreq.rx.npacket = 16;
+	bufreq.rx.psize = 1024;
+	bufreq.tx.nchunk = 0;
+	bufreq.tx.npacket = 0;
+	bufreq.tx.psize = 0;
+
+	if (ioctl(fd, FW_SSTBUF, &bufreq) < 0)
+		err(1, "ioctl FW_SSTBUF");
+
+	isoreq.ch = ich & 0x3f;
+	isoreq.tag = (ich >> 6) & 3;
+
+	if (ioctl(fd, FW_SRSTREAM, &isoreq) < 0)
+		err(1, "ioctl FW_SRSTREAM");
+
+	buf = (char *)malloc(1024*16);
+	len = read(fd, buf, 1024*16);
+	ptr = (u_int32_t *) buf;
+	ciph = (struct ciphdr *)(ptr + 1);
+
+	switch(ciph->fmt) {
+		case CIP_FMT_DVCR:
+			fprintf(stderr, "Detected DV format on input.\n");
+			retfn = dvrecv;
+			break;
+		case CIP_FMT_MPEG:
+			fprintf(stderr, "Detected MPEG TS format on input.\n");
+			retfn = mpegtsrecv;
+			break;
+		default:
+			errx(1, "Unsupported format for receiving: fmt=0x%x",
+			    ciph->fmt);
+	}
+	free(buf);
+	return retfn;
 }
 
 int
@@ -638,9 +687,11 @@ main(int argc, char **argv)
 {
 	u_int32_t crom_buf[1024/4];
 	char devbase[1024] = "/dev/fw0";
-	int fd, tmp, ch, len=1024;
+	int fd, ch, len=1024;
+	long tmp;
 	struct fw_eui64 eui;
 	struct eui64 target;
+	fwmethod *recvfn = NULL;
 
 	fd = -1;
 
@@ -649,10 +700,12 @@ main(int argc, char **argv)
 		list_dev(fd);
 	}
 
-	while ((ch = getopt(argc, argv, "g:m:o:s:b:prtc:d:l:u:R:S:")) != -1)
+	while ((ch = getopt(argc, argv, "M:g:m:o:s:b:prtc:d:l:u:R:S:")) != -1)
 		switch(ch) {
 		case 'b':
 			tmp = strtol(optarg, NULL, 0);
+			if (tmp < 0 || tmp > (long)0xffffffff)
+				errx(EX_USAGE, "invalid number: %s", optarg);
 			open_dev(&fd, devbase);
 			set_pri_req(fd, tmp);
 			break;
@@ -680,7 +733,7 @@ main(int argc, char **argv)
 		case 'm':
 		       if (eui64_hostton(optarg, &target) != 0 &&
 			   eui64_aton(optarg, &target) != 0)
-				errx(1, "invalid target: %s", optarg);
+				errx(EX_USAGE, "invalid target: %s", optarg);
 			eui.hi = ntohl(*(u_int32_t*)&(target.octet[0]));
 			eui.lo = ntohl(*(u_int32_t*)&(target.octet[4]));
 			sysctl_set_int("hw.fwmem.eui64_hi", eui.hi);
@@ -711,7 +764,7 @@ main(int argc, char **argv)
 			break;
 		case 'u':
 			tmp = strtol(optarg, NULL, 0);
-			snprintf(devbase, sizeof(devbase), "/dev/fw%d",  tmp);
+			snprintf(devbase, sizeof(devbase), "/dev/fw%ld",  tmp);
 			if (fd > 0) {
 				close(fd);
 				fd = -1;
@@ -723,9 +776,27 @@ main(int argc, char **argv)
 			break;
 #define TAG	(1<<6)
 #define CHANNEL	63
+		case 'M':
+			switch (optarg[0]) {
+			case 'm':
+				recvfn = mpegtsrecv;
+				break;
+			case 'd':
+				recvfn = dvrecv;
+				break;
+			default:
+				errx(EX_USAGE, "unrecognized method: %s",
+				    optarg);
+			}
+			break;
 		case 'R':
 			open_dev(&fd, devbase);
-			dvrecv(fd, optarg, TAG | CHANNEL, -1);
+			if (recvfn == NULL) /* guess... */
+				recvfn = detect_recv_fn(fd, TAG | CHANNEL);
+			close(fd);
+			fd = -1;
+			open_dev(&fd, devbase);
+			(*recvfn)(fd, optarg, TAG | CHANNEL, -1);
 			break;
 		case 'S':
 			open_dev(&fd, devbase);

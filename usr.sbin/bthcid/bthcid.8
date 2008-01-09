@@ -1,4 +1,4 @@
-.\" $NetBSD: bthcid.8,v 1.5 2006/10/03 02:04:42 wiz Exp $
+.\" $NetBSD: bthcid.8,v 1.5.8.1 2008/01/09 02:01:56 matt Exp $
 .\"
 .\" Copyright (c) 2006 Itronix Inc.
 .\" All rights reserved.
@@ -52,7 +52,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $Id: bthcid.8,v 1.5 2006/10/03 02:04:42 wiz Exp $
+.\" $Id: bthcid.8,v 1.5.8.1 2008/01/09 02:01:56 matt Exp $
 .\" $FreeBSD: src/usr.sbin/bluetooth/hcsecd/hcsecd.8,v 1.6 2006/02/11 15:36:37 markus Exp $
 .\"
 .Dd September 29, 2006
@@ -72,7 +72,7 @@
 .Sh DESCRIPTION
 The
 .Nm
-daemon manages link keys and PIN codes for Bluetooth devices.
+daemon handles Link Key and PIN code requests for Bluetooth devices.
 It opens a raw HCI socket and listens for the following HCI events.
 .Pp
 .Bl -tag -width XXXX -compact
@@ -116,6 +116,13 @@ to the cache prior to pairing with the
 utility.
 .El
 .Pp
+Some of the functionality of
+.Nm
+can be handled by the Bluetooth controller directly, and cached Link
+Keys may be examined, deleted or moved to device storage using the
+.Xr btkey 1
+program.
+.Pp
 The command line options are as follows:
 .Bl -tag -width XXXX
 .It Fl d Ar device
@@ -143,6 +150,7 @@ The default path is
 .El
 .Sh SEE ALSO
 .Xr btpin 1 ,
+.Xr btkey 1 ,
 .Xr bluetooth 4 ,
 .Xr btconfig 8
 .Sh HISTORY
@@ -160,14 +168,3 @@ under the sponsorship of Itronix, Inc.
 .Sh AUTHORS
 .An Maksim Yevmenkin Aq m_evmenkin@yahoo.com
 .An Iain Hibbert
-.Sh BUGS
-The only way to make the
-.Nm
-daemon forget a link key is to edit the
-.Pa /var/db/bthcid.keys
-file by hand.
-.Pp
-The only way to specify link keys (useful when multiple operating
-systems are used on the same hardware), is to edit the
-.Pa /var/db/bthcid.keys
-file by hand.

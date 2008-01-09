@@ -1,4 +1,4 @@
-/* 	$NetBSD: config.c,v 1.5.2.2 2007/11/06 23:36:23 matt Exp $	*/
+/* 	$NetBSD: config.c,v 1.5.2.3 2008/01/09 02:01:58 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: config.c,v 1.5.2.2 2007/11/06 23:36:23 matt Exp $");
+__RCSID("$NetBSD: config.c,v 1.5.2.3 2008/01/09 02:01:58 matt Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -61,13 +61,13 @@ enum {
 	DEV_ERR
 };
 
-static prop_dictionary_t cfdict, sensordict;
+static prop_dictionary_t cfdict, sensordict, refreshdict;
 static void config_errmsg(int, const char *, const char *);
 
 static void
 config_errmsg(int lvl, const char *key, const char *key2)
 {
-	(void)printf("error: ");
+	(void)printf("envstat: ");
 
 	switch (lvl) {
 	case VALUE_ERR:
@@ -87,12 +87,12 @@ config_errmsg(int lvl, const char *key, const char *key2)
 		break;
 	}
 
-	(void)printf("please fix the configuration file!\n");
+	(void)printf("envstat: please fix the configuration file!\n");
 	exit(EXIT_FAILURE);
 }
 
 /*
- * Adds a property into the global dictionary 'cfdict'.
+ * Adds a property into a temporary dictionary.
  */
 void
 config_dict_add_prop(const char *key, char *value)
@@ -111,16 +111,13 @@ config_dict_add_prop(const char *key, char *value)
 }
 
 /*
- * Adds the last property into the dictionary and puts it into
- * the singly linked list for future use.
+ * Marks sensor's dictionary to say that it's the last property
+ * and the dictionary should be added into the singly linked list.
  */
 void
-config_dict_mark(const char *key)
+config_dict_mark(void)
 {
 	struct sensor_block *sb;
-
-	if (!key)
-		err(EXIT_FAILURE, "!key");
 
 	sb = calloc(1, sizeof(*sb));
 	if (!sb)
@@ -155,6 +152,96 @@ prop_dictionary_t
 config_dict_parsed(void)
 {
 	return cfdict;
+}
+
+/*
+ * To add device properties into the global array, for now only the
+ * 'refresh-timeout' property is accepted.
+ */
+void
+config_dict_adddev_prop(const char *key, const char *value, int line)
+{
+	prop_dictionary_t d = NULL;
+	uint64_t timo;
+	size_t len;
+	char *endptr, *tmp, *strval;
+	bool minutes, hours;
+
+	minutes = hours = false;
+
+	/*
+	 * Check what was specified: seconds, minutes or hours.
+	 */
+	if ((tmp = strchr(value, 's'))) {
+		/* 
+		 * do nothing, by default the value will be sent as seconds.
+		 */
+	} else if ((tmp = strchr(value, 'm'))) {
+		minutes = true;
+	} else if ((tmp = strchr(value, 'h'))) {
+		hours = true;
+	} else
+		goto bad;
+
+	len = strlen(value);
+	strval = calloc(len, sizeof(*value));
+	if (!strval)
+		err(EXIT_FAILURE, "calloc");
+
+	(void)strlcpy(strval, value, len);
+
+	timo = strtoul(strval, &endptr, 10);
+	if (*endptr != '\0') {
+		free(strval);
+		goto bad;
+	}
+
+	free(strval);
+
+	if (!refreshdict) {
+		refreshdict = prop_dictionary_create();
+		if (!refreshdict)
+			err(EXIT_FAILURE, "prop_dict_create refresh");
+	}
+
+	d = prop_dictionary_create();
+	if (!d)
+		err(EXIT_FAILURE, "prop_dict_create refresh 1");
+
+	if (minutes)
+		timo *= 60;
+	else if (hours) {
+		/* 
+		 * Make sure the value is not too high...
+		 */
+		if (timo > 999)
+			goto bad;
+		timo *= 60 * 60;
+	} else {
+		/*
+		 * 1 second is the lowest value allowed.
+		 */
+		if (timo < 1)
+			goto bad;
+	}
+
+	if (!prop_dictionary_set_uint64(d, key, timo))
+		err(EXIT_FAILURE, "%s", key);
+
+	if (!prop_dictionary_set(refreshdict, "device-properties", d))
+		err(EXIT_FAILURE, "device-properties %s", key);
+
+	prop_object_release(d);
+	return;
+
+bad:
+	(void)printf("envstat: invalid value for the '%s' "
+	    "property at line %d\n", key, line);
+	(void)printf("envstat: please fix the configuration file!\n");
+	if (d)
+		prop_object_release(d);
+
+	exit(EXIT_FAILURE);
 }
 
 /*
@@ -247,6 +334,15 @@ config_devblock_add(const char *key, prop_dictionary_t kdict)
 	SLIST_FOREACH(sb, &sensor_block_list, sb_head)
 		if (!prop_array_add(db->array, sb->dict))
 			err(EXIT_FAILURE, "prop_array_add");
+
+	/*
+	 * Add the device-properties dictionary into the array.
+	 */
+	if (refreshdict) {
+		if (!prop_array_add(db->array, refreshdict))
+			err(EXIT_FAILURE, "prop_array_add refreshdict");
+		prop_object_release(refreshdict);
+	}
 
 	/*
 	 * Add this device block into our list.
@@ -371,8 +467,7 @@ config_devblock_check_sensorprops(prop_dictionary_t ksdict,
 						       val))
 				err(EXIT_FAILURE, "dict_set critcap");
 		} else
-			config_errmsg(PROP_ERR,
-				      "critical-capacity", sensor);
+			config_errmsg(PROP_ERR, "critical-capacity", sensor);
 	}
 
 	/*
@@ -455,8 +550,10 @@ convert_val_to_pnumber(prop_dictionary_t kdict, const char *prop,
 	
 		(void)strlcpy(strval, value, len);
 		val = strtod(strval, &endptr);
-		if (*endptr != '\0')
+		if (*endptr != '\0') {
+			free(strval);
 			config_errmsg(VALUE_ERR, prop, sensor);
+		}
 
 		/* convert to fahrenheit */
 		if (!celsius)
@@ -465,6 +562,7 @@ convert_val_to_pnumber(prop_dictionary_t kdict, const char *prop,
 		/* convert to microKelvin */
 		val = val * 1000000 + 273150000;
 		num = prop_number_create_unsigned_integer(val);
+		free(strval);
 
 	} else if (prop_string_equals_cstring(obj, "Fan")) {
 		/* no conversion */

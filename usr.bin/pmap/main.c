@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.16 2004/01/31 20:53:55 atatat Exp $ */
+/*	$NetBSD: main.c,v 1.16.24.1 2008/01/09 02:00:52 matt Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.16 2004/01/31 20:53:55 atatat Exp $");
+__RCSID("$NetBSD: main.c,v 1.16.24.1 2008/01/09 02:00:52 matt Exp $");
 #endif
 
 #include <sys/param.h>
@@ -55,24 +55,8 @@ __RCSID("$NetBSD: main.c,v 1.16 2004/01/31 20:53:55 atatat Exp $");
 #include <limits.h>
 #include <string.h>
 
-/*
- * define LOCKDEBUG here so that we get the LOCKDEBUG sized version of
- * struct kbit from pmap.h
- */
-#define LOCKDEBUG
-
 #include "pmap.h"
 #include "main.h"
-
-/*
- * strange gyrations to get the prototype for the regular version of
- * the vm printing functions
- */
-#undef VERSION
-#define VERSION regular
-#include "pmap.h"
-#undef VERSION
-#define VERSION lockdebug
 
 struct cache_head lcache;
 struct nchashhead *nchashtbl;
@@ -84,14 +68,6 @@ u_long nchash_addr, nchashtbl_addr, kernel_map_addr;
 int debug, verbose, recurse, page_size;
 int print_all, print_map, print_maps, print_solaris, print_ddb;
 rlim_t maxssiz;
-
-void (*process_map)(kvm_t *, struct kinfo_proc2 *,
-		    struct kbit *, const char *);
-void (*dump_vm_map)(kvm_t *, struct kinfo_proc2 *,
-		    struct kbit *, struct kbit *, const char *);
-size_t (*dump_vm_map_entry)(kvm_t *, struct kinfo_proc2 *,
-			    struct kbit *, struct kbit *, int);
-void (*dump_amap)(kvm_t *, struct kbit *);
 
 struct nlist ksyms[] = {
 	{ "_maxsmap" },
@@ -143,7 +119,6 @@ struct nlist kmaps[] = {
 #define AMAP_ADDRESS		4
 
 void check_fd(int);
-int not_using_lockdebug(kvm_t *);
 void load_symbols(kvm_t *);
 void cache_enter(int, struct namecache *);
 
@@ -294,19 +269,6 @@ main(int argc, char *argv[])
 	/* get "bootstrap" addresses from kernel */
 	load_symbols(kd);
 
-	if (not_using_lockdebug(kd)) {
-		process_map = PMAPFUNC(process_map,regular);
-		dump_vm_map = PMAPFUNC(dump_vm_map,regular);
-		dump_vm_map_entry = PMAPFUNC(dump_vm_map_entry,regular);
-		dump_amap = PMAPFUNC(dump_amap,regular);
-	}
-	else {
-		process_map = PMAPFUNC(process_map,lockdebug);
-		dump_vm_map = PMAPFUNC(dump_vm_map,lockdebug);
-		dump_vm_map_entry = PMAPFUNC(dump_vm_map_entry,lockdebug);
-		dump_amap = PMAPFUNC(dump_amap,lockdebug);
-	}
-
 	if (address) {
 		struct kbit kbit2, *at = &kbit2;
 
@@ -408,57 +370,6 @@ check_fd(int fd)
 	}
 }
 
-int
-not_using_lockdebug(kvm_t *kd)
-{
-	struct kbit kbit[3];
-	struct kbit *vm_map, *header, *vm_map_entry;
-
-	vm_map = &kbit[0];
-	header = &kbit[1];
-	vm_map_entry = &kbit[2];
-
-	A(vm_map) = kernel_map_addr;
-	S(vm_map) = sizeof(struct vm_map);
-	KDEREF(kd, vm_map);
-
-	A(header) = A(vm_map) + offsetof(struct vm_map, header);
-	S(header) = sizeof(struct vm_map_entry);
-	memcpy(D(header, vm_map_entry), &D(vm_map, vm_map)->header, S(header));
-
-	/*
-	 * the kernel *always* has map entries, but we might see a
-	 * zero if we're using a lockdebug kernel and haven't noticed
-	 * yet.
-	 */
-	if (D(vm_map, vm_map)->nentries == 0) {
-
-		/* no entries -> all pointers must point to the header */
-		if (P(header) == D(header, vm_map_entry)->next &&
-		    P(header) == D(header, vm_map_entry)->prev &&
-		    P(header) == D(vm_map, vm_map)->hint &&
-		    P(header) == D(vm_map, vm_map)->first_free)
-			return (0);
-	}
-	else {
-
-		P(vm_map_entry) = D(header, vm_map_entry)->next;
-		S(vm_map_entry) = sizeof(struct vm_map_entry);
-		if (!KDEREFOK(kd, vm_map_entry))
-			return (1);
-
-		/* we have entries, so there must be referential integrity */
-		if (D(vm_map_entry, vm_map_entry)->prev == P(header) &&
-		    vm_map_min(D(vm_map, vm_map)) <=
-		    D(vm_map_entry, vm_map_entry)->start &&
-		    D(vm_map_entry, vm_map_entry)->end <=
-		    vm_map_max(D(vm_map, vm_map)))
-			return (0);
-	}
-
-	return (1);
-}
-
 void
 load_symbols(kvm_t *kd)
 {
@@ -496,8 +407,8 @@ load_symbols(kvm_t *kd)
 	(void)kvm_nlist(kd, &kmaps[0]);
 
 #define get_map_address(m) do {\
-	if (kmaps[CONCAT(NL_,m)].n_value != 0) \
-		_KDEREF(kd, kmaps[CONCAT(NL_,m)].n_value, &m, sizeof(m)); \
+	if (kmaps[__CONCAT(NL_,m)].n_value != 0) \
+		_KDEREF(kd, kmaps[__CONCAT(NL_,m)].n_value, &m, sizeof(m)); \
 	} while (0/*CONSTCOND*/)
 
 	get_map_address(kmem_map);

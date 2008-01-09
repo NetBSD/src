@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.105 2007/05/22 05:16:48 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.105.4.1 2008/01/09 02:00:40 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996-2005 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.105 2007/05/22 05:16:48 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.105.4.1 2008/01/09 02:00:40 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -1064,7 +1064,7 @@ usage(void)
 	const char *progname = getprogname();
 
 	(void)fprintf(stderr,
-"usage: %s [-46AadefginpRtvV] [-N netrc] [-o outfile] [-P port] [-q quittime]\n"
+"usage: %s [-46AadefginpRtVv] [-N netrc] [-o outfile] [-P port] [-q quittime]\n"
 "           [-r retry] [-s srcaddr] [-T dir,max[,inc]]\n"
 "           [[user@]host [port]] [host:path[/]] [file:///file]\n"
 "           [ftp://[user[:pass]@]host[:port]/path[/]]\n"

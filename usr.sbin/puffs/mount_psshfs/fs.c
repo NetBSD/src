@@ -1,4 +1,4 @@
-/*	$NetBSD: fs.c,v 1.13 2007/07/01 18:40:16 pooka Exp $	*/
+/*	$NetBSD: fs.c,v 1.13.4.1 2008/01/09 02:02:19 matt Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fs.c,v 1.13 2007/07/01 18:40:16 pooka Exp $");
+__RCSID("$NetBSD: fs.c,v 1.13.4.1 2008/01/09 02:02:19 matt Exp $");
 #endif /* !lint */
 
 #include <err.h>
@@ -129,9 +129,8 @@ psshfs_domount(struct puffs_usermount *pu)
 }
 
 int
-psshfs_fs_unmount(struct puffs_cc *pcc, int flags, const struct puffs_cid *pcid)
+psshfs_fs_unmount(struct puffs_usermount *pu, int flags)
 {
-	struct puffs_usermount *pu = puffs_cc_getusermount(pcc);
 	struct psshfs_ctx *pctx = puffs_getspecific(pu);
 
 	kill(pctx->sshpid, SIGTERM);
@@ -140,10 +139,9 @@ psshfs_fs_unmount(struct puffs_cc *pcc, int flags, const struct puffs_cid *pcid)
 }
 
 int
-psshfs_fs_nodetofh(struct puffs_cc *pcc, void *cookie,
+psshfs_fs_nodetofh(struct puffs_usermount *pu, void *cookie,
 	void *fid, size_t *fidsize)
 {
-	struct puffs_usermount *pu = puffs_cc_getusermount(pcc);
 	struct psshfs_ctx *pctx = puffs_getspecific(pu);
 	struct puffs_node *pn = cookie;
 	struct psshfs_node *psn = pn->pn_data;
@@ -158,10 +156,9 @@ psshfs_fs_nodetofh(struct puffs_cc *pcc, void *cookie,
 }
 
 int
-psshfs_fs_fhtonode(struct puffs_cc *pcc, void *fid, size_t fidsize,
+psshfs_fs_fhtonode(struct puffs_usermount *pu, void *fid, size_t fidsize,
 	struct puffs_newinfo *pni)
 {
-	struct puffs_usermount *pu = puffs_cc_getusermount(pcc);
 	struct psshfs_ctx *pctx = puffs_getspecific(pu);
 	struct psshfs_fid *pf = fid;
 	struct puffs_node *pn = pf->node;
@@ -177,7 +174,7 @@ psshfs_fs_fhtonode(struct puffs_cc *pcc, void *fid, size_t fidsize,
 		return EINVAL;
 
 	/* update node attributes */
-	rv = getnodeattr(pcc, pn);
+	rv = getnodeattr(pu, pn);
 	if (rv)
 		return EINVAL;
 

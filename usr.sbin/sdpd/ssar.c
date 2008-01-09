@@ -1,4 +1,4 @@
-/*	$NetBSD: ssar.c,v 1.1 2006/06/19 15:44:56 gdamore Exp $	*/
+/*	$NetBSD: ssar.c,v 1.1.10.1 2008/01/09 02:02:28 matt Exp $	*/
 
 /*
  * ssar.c
@@ -27,12 +27,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: ssar.c,v 1.1 2006/06/19 15:44:56 gdamore Exp $
+ * $Id: ssar.c,v 1.1.10.1 2008/01/09 02:02:28 matt Exp $
  * $FreeBSD: src/usr.sbin/bluetooth/sdpd/ssar.c,v 1.2 2005/01/05 18:37:37 emax Exp $
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ssar.c,v 1.1 2006/06/19 15:44:56 gdamore Exp $");
+__RCSID("$NetBSD: ssar.c,v 1.1.10.1 2008/01/09 02:02:28 matt Exp $");
 
 #include <sys/queue.h>
 #include <bluetooth.h>
@@ -55,12 +55,11 @@ server_prepare_service_search_attribute_response(server_p srv, int32_t fd)
 	uint8_t		*rsp = srv->fdidx[fd].rsp;
 	uint8_t const	*rsp_end = rsp + L2CAP_MTU_MAXIMUM;
 
-	uint8_t const	*sspptr = NULL, *aidptr = NULL;
-	uint8_t		*ptr = NULL;
+	uint8_t const	*aidptr = NULL;
 
 	provider_t	*provider = NULL;
-	int32_t		 type, rsp_limit, ssplen, aidlen, cslen, cs;
-	uint128_t	 uuid, puuid;
+	int32_t		 type, rsp_limit, ucount, aidlen, cslen, cs;
+	uint128_t	 ulist[12];
 
 	/*
 	 * Minimal Service Search Attribute Request request
@@ -73,30 +72,10 @@ server_prepare_service_search_attribute_response(server_p srv, int32_t fd)
 	 * value8		- 1 byte  ContinuationState
 	 */
 
-	if (req_end - req < 13)
+	/* Get ServiceSearchPattern */
+	ucount = server_get_service_search_pattern(&req, req_end, ulist);
+	if (ucount < 1 || ucount > 12)
 		return (SDP_ERROR_CODE_INVALID_REQUEST_SYNTAX);
-
-	/* Get size of ServiceSearchPattern */
-	ssplen = 0;
-	SDP_GET8(type, req);
-	switch (type) {
-	case SDP_DATA_SEQ8:
-		SDP_GET8(ssplen, req);
-		break;
-
-	case SDP_DATA_SEQ16:
-		SDP_GET16(ssplen, req);
-		break;
-
-	case SDP_DATA_SEQ32:
-		SDP_GET32(ssplen, req);
-		break;
-	}
-	if (ssplen <= 0)
-		return (SDP_ERROR_CODE_INVALID_REQUEST_SYNTAX);
-
-	sspptr = req;
-	req += ssplen;
 
 	/* Get MaximumAttributeByteCount */
 	if (req + 2 > req_end)
@@ -145,13 +124,12 @@ server_prepare_service_search_attribute_response(server_p srv, int32_t fd)
 		return (SDP_ERROR_CODE_INVALID_REQUEST_SYNTAX);
 
 	SDP_GET8(cslen, req);
-	if (cslen != 0) {
-		if (cslen != 2 || req_end - req != 2)
-			return (SDP_ERROR_CODE_INVALID_REQUEST_SYNTAX);
-
+	if (cslen == 2 && req + 2 == req_end)
 		SDP_GET16(cs, req);
-	} else
+	else if (cslen == 0 && req == req_end)
 		cs = 0;
+	else
+		return (SDP_ERROR_CODE_INVALID_REQUEST_SYNTAX);
 
 	/* Process the request. First, check continuation state */
 	if (srv->fdidx[fd].rsp_cs != cs)
@@ -168,70 +146,23 @@ server_prepare_service_search_attribute_response(server_p srv, int32_t fd)
 	 *	[ attr list ]
 	 */
 
-	ptr = rsp + 3;
+	rsp += 3;	/* leave space for sequence header */
 
-	while (ssplen > 0) {
-		SDP_GET8(type, sspptr);
-		ssplen --;
+	for (provider = provider_get_first();
+	     provider != NULL;
+	     provider = provider_get_next(provider)) {
+		if (!provider_match_bdaddr(provider, &srv->req_sa.bt_bdaddr))
+			continue;
 
-		switch (type) {
-		case SDP_DATA_UUID16:
-			if (ssplen < 2)
-				return (SDP_ERROR_CODE_INVALID_REQUEST_SYNTAX);
+		if (!provider_match_uuid(provider, ulist, ucount))
+			continue;
 
-			memcpy(&uuid, &uuid_base, sizeof(uuid));
-			uuid.b[2] = *sspptr ++;
-			uuid.b[3] = *sspptr ++;
-			ssplen -= 2;
-			break;
+		cs = server_prepare_attr_list(provider,
+			aidptr, aidptr + aidlen, rsp, rsp_end);
+		if (cs < 0)
+			return (SDP_ERROR_CODE_INSUFFICIENT_RESOURCES);
 
-		case SDP_DATA_UUID32:
-			if (ssplen < 4)
-				return (SDP_ERROR_CODE_INVALID_REQUEST_SYNTAX);
-
-			memcpy(&uuid, &uuid_base, sizeof(uuid));
-			uuid.b[0] = *sspptr ++;
-			uuid.b[1] = *sspptr ++;
-			uuid.b[2] = *sspptr ++;
-			uuid.b[3] = *sspptr ++;
-			ssplen -= 4;
-			break;
-
-		case SDP_DATA_UUID128:
-			if (ssplen < 16)
-				return (SDP_ERROR_CODE_INVALID_REQUEST_SYNTAX);
-
-			memcpy(uuid.b, sspptr, 16);
-			sspptr += 16;
-			ssplen -= 16;
-			break;
-
-		default:
-			return (SDP_ERROR_CODE_INVALID_REQUEST_SYNTAX);
-			/* NOT REACHED */
-		}
-
-		for (provider = provider_get_first();
-		     provider != NULL;
-		     provider = provider_get_next(provider)) {
-			if (!provider_match_bdaddr(provider, &srv->req_sa.bt_bdaddr))
-				continue;
-
-			memcpy(&puuid, &uuid_base, sizeof(puuid));
-			puuid.b[2] = provider->profile->uuid >> 8;
-			puuid.b[3] = provider->profile->uuid;
-
-			if (memcmp(&uuid, &puuid, sizeof(uuid)) != 0 &&
-			    memcmp(&uuid, &uuid_public_browse_group, sizeof(uuid)) != 0)
-				continue;
-
-			cs = server_prepare_attr_list(provider,
-				aidptr, aidptr + aidlen, ptr, rsp_end);
-			if (cs < 0)
-				return (SDP_ERROR_CODE_INSUFFICIENT_RESOURCES);
-
-			ptr += cs;
-		}
+		rsp += cs;
 	}
 
 	/* Set reply size (not counting PDU header and continuation state) */
@@ -239,13 +170,13 @@ server_prepare_service_search_attribute_response(server_p srv, int32_t fd)
 	if (srv->fdidx[fd].rsp_limit > rsp_limit)
 		srv->fdidx[fd].rsp_limit = rsp_limit;
 
-	srv->fdidx[fd].rsp_size = ptr - rsp;
+	srv->fdidx[fd].rsp_size = rsp - srv->fdidx[fd].rsp;
 	srv->fdidx[fd].rsp_cs = 0;
 
 	/* Fix AttributeLists sequence header */
-	ptr = rsp;
-	SDP_PUT8(SDP_DATA_SEQ16, ptr);
-	SDP_PUT16(srv->fdidx[fd].rsp_size - 3, ptr);
+	rsp = srv->fdidx[fd].rsp;
+	SDP_PUT8(SDP_DATA_SEQ16, rsp);
+	SDP_PUT16(srv->fdidx[fd].rsp_size - 3, rsp);
 
 	return (0);
 }

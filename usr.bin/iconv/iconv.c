@@ -1,4 +1,4 @@
-/*	$NetBSD: iconv.c,v 1.10 2006/08/26 18:17:42 christos Exp $	*/
+/*	$NetBSD: iconv.c,v 1.10.8.1 2008/01/09 02:00:43 matt Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: iconv.c,v 1.10 2006/08/26 18:17:42 christos Exp $");
+__RCSID("$NetBSD: iconv.c,v 1.10.8.1 2008/01/09 02:00:43 matt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <errno.h>
@@ -40,7 +40,7 @@ __RCSID("$NetBSD: iconv.c,v 1.10 2006/08/26 18:17:42 christos Exp $");
 #include <err.h>
 #include <util.h>
 
-static void usage(void) __attribute__((__unused__));
+static void usage(void) __unused;
 static int scmp(const void *, const void *);
 static void show_codesets(void);
 static void do_conv(const char *, FILE *, const char *, const char *, int, int);

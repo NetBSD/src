@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.4 2002/04/07 20:18:01 ad Exp $	*/
+/*	$NetBSD: util.c,v 1.4.24.1 2008/01/09 02:02:09 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
 
 #ifndef lint
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: util.c,v 1.4 2002/04/07 20:18:01 ad Exp $");
+__RCSID("$NetBSD: util.c,v 1.4.24.1 2008/01/09 02:02:09 matt Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -177,7 +177,7 @@ mlx_scsi_inquiry(int chan, int targ, char **vendor, char **device,
 	static struct {
 		struct	mlx_dcdb dcdb;
 		struct	scsipi_inquiry_data inq;
-	} __attribute__ ((__packed__)) dcdb_cmd;
+	} __packed dcdb_cmd;
 	struct scsipi_inquiry *inq_cmd;
 	int rv;
 

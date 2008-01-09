@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/usr.sbin/ndiscvt/inf-token.l,v 1.3 2004/01/11 21:10:35 mdodd Exp $");
 #endif
 #ifdef __NetBSD__
-__RCSID("$NetBSD: inf-token.l,v 1.6 2006/06/11 19:25:19 martin Exp $");
+__RCSID("$NetBSD: inf-token.l,v 1.6.10.1 2008/01/09 02:02:11 matt Exp $");
 #endif
 
 #include <regex.h>
@@ -188,13 +188,18 @@ opt_unicode_input(char *buf, size_t max_size)
 		return YY_NULL;
 	}
 	/*
-	 * read unicode string and skip every second byte - poor man's
+	 * read unicode string and skip every second byte if it is zero,
+	 * replace it by an innocent 'A' otherwise. Poor man's
 	 * version of "iconv -f unicode -t ascii" - should be good enough
 	 * for INF files (maybe besides comments, which we don't care
 	 * about)
 	 */
 	rb = fread(buf, 1, max_size&~1, yyin);
-	for (i = 0; i < rb; i += 2)
-		*t++ = buf[i];
+	for (i = 0; i < rb; i += 2) {
+		if (buf[i+1] != 0)
+			*t++ = 'A';
+		else
+			*t++ = buf[i];
+	}
 	return t-buf;
 }

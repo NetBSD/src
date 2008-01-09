@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.15 2006/05/24 18:01:43 christos Exp $	*/
+/*	$NetBSD: defs.h,v 1.15.10.1 2008/01/09 02:01:28 matt Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -320,26 +320,21 @@ extern void set_first_derives(void);
 extern void closure(short *, int);
 extern void finalize_closure(void);
 
-extern __dead void fatal(char *) __attribute__((__noreturn__));
+extern __dead void fatal(char *);
 
 extern void reflexive_transitive_closure(unsigned *, int);
-extern __dead void done(int) __attribute__((__noreturn__));
+extern __dead void done(int);
 
-extern __dead void no_space(void) __attribute__((__noreturn__));
-extern __dead void open_error(char *) __attribute__((__noreturn__));
-extern __dead void unexpected_EOF(void) __attribute__((__noreturn__));
+extern __dead void no_space(void);
+extern __dead void open_error(char *);
+extern __dead void unexpected_EOF(void);
 extern void print_pos(char *, char *);
-extern __dead void syntax_error(int, char *, char *)
-    __attribute__((__noreturn__));
-extern __dead void unterminated_comment(int, char *, char *)
-    __attribute__((__noreturn__));
-extern __dead void unterminated_string(int, char *, char *)
-    __attribute__((__noreturn__));
-extern __dead void unterminated_text(int, char *, char *)
-    __attribute__((__noreturn__));
-extern __dead void unterminated_union(int, char *, char *)
-    __attribute__((__noreturn__));
-extern __dead void over_unionized(char *) __attribute__((__noreturn__));
+extern __dead void syntax_error(int, char *, char *);
+extern __dead void unterminated_comment(int, char *, char *);
+extern __dead void unterminated_string(int, char *, char *);
+extern __dead void unterminated_text(int, char *, char *);
+extern __dead void unterminated_union(int, char *, char *);
+extern __dead void over_unionized(char *);
 extern void illegal_tag(int, char *, char *);
 extern void illegal_character(char *);
 extern void used_reserved(char *);
@@ -347,21 +342,19 @@ extern void tokenized_start(char *);
 extern void retyped_warning(char *);
 extern void reprec_warning(char *);
 extern void revalued_warning(char *);
-extern __dead void terminal_start(char *) __attribute__((__noreturn__));
+extern __dead void terminal_start(char *);
 extern void restarted_warning(void);
-extern __dead void no_grammar(void) __attribute__((__noreturn__));
-extern __dead void terminal_lhs(int) __attribute__((__noreturn__));
+extern __dead void no_grammar(void);
+extern __dead void terminal_lhs(int);
 extern void prec_redeclared(void);
-extern __dead void unterminated_action(int, char *, char *)
-    __attribute__((__noreturn__));
+extern __dead void unterminated_action(int, char *, char *);
 extern void dollar_warning(int, int);
-extern __dead void dollar_error(int, char *, char *)
-    __attribute__((__noreturn__));
-extern __dead void untyped_lhs(void) __attribute__((__noreturn__));
-extern __dead void untyped_rhs(int, char *) __attribute__((__noreturn__));
-extern __dead void unknown_rhs(int) __attribute__((__noreturn__));
+extern __dead void dollar_error(int, char *, char *);
+extern __dead void untyped_lhs(void);
+extern __dead void untyped_rhs(int, char *);
+extern __dead void unknown_rhs(int);
 extern void default_action_warning(void);
-extern __dead void undefined_goal(char *) __attribute__((__noreturn__));
+extern __dead void undefined_goal(char *);
 extern void undefined_symbol_warning(char *);
 
 extern void lalr(void);

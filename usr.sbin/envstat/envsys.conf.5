@@ -1,4 +1,4 @@
-.\" $NetBSD: envsys.conf.5,v 1.5.2.2 2007/11/06 23:36:26 matt Exp $
+.\" $NetBSD: envsys.conf.5,v 1.5.2.3 2008/01/09 02:01:59 matt Exp $
 .\"
 .\" -
 .\" Copyright (c) 2007 Juan Romero Pardines.
@@ -25,7 +25,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd October 7, 2007
+.Dd November 13, 2007
 .Dt ENVSYS.CONF 5
 .Os
 .Sh NAME
@@ -66,10 +66,12 @@ The value must be surrounded by double quotes if it contains whitespace.
 There can be multiple groups of devices and multiple groups of sensors
 in the configuration file.
 .Pp
-A device block consists of one or more sensor blocks.
-It has the following syntax:
+A device block consists of one or more sensor blocks and one or more global
+properties. It has the following syntax:
 .Bd -literal -offset indent
 	device_name {
+		prop = value;
+		...
         	sensor0 {
 			prop = value;
         		...
@@ -126,8 +128,8 @@ Invalid sensors and devices will be detected by the
 .Xr envstat 8
 parser and will be reported as errors.
 .Pp
-The following properties are provided (please note that not all properties
-apply to all type of sensors):
+The following properties are provided for sensor blocks (please note that
+not all properties apply to all type of sensors):
 .Bl -tag -width ident
 .It critical-capacity = 10;
 .Pp
@@ -223,7 +225,7 @@ Sets a new description in a sensor.
 You can set this property in
 all sensors, except that you won't be able to set a description
 that is currently used for the specified device.
-.It rfact = 56000;
+.It rfact = 56000
 .Pp
 Sets a new resistor factor property in a sensor.
 This property is only allowed in
@@ -238,6 +240,26 @@ of the value returned by the driver.
 If a sensor supports this, the
 .Em allow-rfact
 object appears enabled (true) in the dictionary.
+.El
+.Pp
+The following properties are available for device blocks:
+.Bl -tag -width ident
+.It refresh-timeout = 10s
+.Pp
+This property sets the refresh timeout value in a driver, and will be used
+to refresh data and check for critical conditions any time the timeout
+is met. The value may be specified in seconds, minutes or hours. To specify
+the value in seconds, the
+.Em s
+character must be appended last, if minutes is desired, a
+.Em m
+and a
+.Em h
+for hours. For example
+.Em 10s
+for 10 seconds or
+.Em 1h
+for one hour.
 .El
 .Sh FILES
 .Bl -tag -width /etc/envsys.conf -compact

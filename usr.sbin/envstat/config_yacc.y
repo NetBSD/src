@@ -1,4 +1,4 @@
-/* 	$NetBSD: config_yacc.y,v 1.2.2.2 2007/11/06 23:36:24 matt Exp $	*/
+/* 	$NetBSD: config_yacc.y,v 1.2.2.3 2008/01/09 02:01:58 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: config_yacc.y,v 1.2.2.2 2007/11/06 23:36:24 matt Exp $");
+__RCSID("$NetBSD: config_yacc.y,v 1.2.2.3 2008/01/09 02:01:58 matt Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -56,8 +56,8 @@ static prop_dictionary_t kdict;
 
 %token EOL EQUAL LBRACE RBRACE
 %token STRING NUMBER SENSOR
-%token SENSOR_PROP
-%token <string>	SENSOR STRING SENSOR_PROP
+%token SENSOR_PROP DEVICE_PROP
+%token <string>	SENSOR STRING SENSOR_PROP DEVICE_PROP
 %union {
 	char *string;
 }
@@ -72,17 +72,19 @@ devices	:	device
 	|	devices device
 	;
 
-device	:	STRING LBRACE sensors RBRACE
+device	:	STRING LBRACE props RBRACE
 				{ config_devblock_add($1, kdict); }
 	;
 
-sensors	:	sensor
-	|	sensors sensor
+props	:	sensor
+	|	props sensor
+	|	devprop
+	|	props devprop
 	;
 
 sensor	:	SENSOR LBRACE params RBRACE
 				{ config_dict_add_prop("index", $1);
-				  config_dict_mark($1); }
+				  config_dict_mark(); }
 	;
 
 params	:	prop
@@ -92,6 +94,11 @@ params	:	prop
 prop	:	SENSOR_PROP EQUAL STRING EOL
      				{ config_dict_add_prop($1, $3); }
 	;
+
+devprop	:	DEVICE_PROP EQUAL STRING EOL
+				{ config_dict_adddev_prop($1, $3, yyline); }
+	;
+
 
 %%
 
@@ -114,6 +121,6 @@ config_parse(FILE *f, prop_dictionary_t d)
 {
 	kdict = prop_dictionary_copy(d);
 	yyrestart(f);
-	yyline = 0;
+	yyline = 1;
 	yyparse();
 }

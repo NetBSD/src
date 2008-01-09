@@ -1,4 +1,4 @@
-/*	$NetBSD: btdevctl.c,v 1.5 2007/08/17 17:59:16 pavel Exp $	*/
+/*	$NetBSD: btdevctl.c,v 1.5.2.1 2008/01/09 02:01:55 matt Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -34,7 +34,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2006 Itronix, Inc.\n"
 	    "All rights reserved.\n");
-__RCSID("$NetBSD: btdevctl.c,v 1.5 2007/08/17 17:59:16 pavel Exp $");
+__RCSID("$NetBSD: btdevctl.c,v 1.5.2.1 2008/01/09 02:01:55 matt Exp $");
 
 #include <prop/proplib.h>
 #include <sys/ioctl.h>
@@ -116,7 +116,7 @@ main(int argc, char *argv[])
 			else if (strcasecmp(optarg, BTDEVsecure) == 0)
 				mode = BTDEVsecure;
 			else
-				errx(EXIT_FAILURE, "%s: unknown mode", mode);
+				errx(EXIT_FAILURE, "%s: unknown mode", optarg);
 
 			break;
 

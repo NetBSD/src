@@ -37,7 +37,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)id.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: id.c,v 1.27 2006/06/07 13:09:56 liamjfoy Exp $");
+__RCSID("$NetBSD: id.c,v 1.27.10.1 2008/01/09 02:00:43 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -69,18 +69,26 @@ main(int argc, char *argv[])
 	struct passwd *pw;
 	int ch, id;
 	int Gflag, gflag, nflag, pflag, rflag, uflag;
+	const char *opts;
 
 	Gflag = gflag = nflag = pflag = rflag = uflag = 0;
 
 	if (strcmp(getprogname(), "groups") == 0) {
 		Gflag = 1;
 		nflag = 1;
+		opts = "";
+		if (argc > 2)
+			usage();
 	} else if (strcmp(getprogname(), "whoami") == 0) {
 		uflag = 1;
 		nflag = 1;
-	}
+		opts = "";
+		if (argc > 1)
+			usage();
+	} else
+		opts = "Ggnpru";
 
-	while ((ch = getopt(argc, argv, "Ggnpru")) != -1)
+	while ((ch = getopt(argc, argv, opts)) != -1)
 		switch (ch) {
 		case 'G':
 			Gflag = 1;
@@ -117,6 +125,9 @@ main(int argc, char *argv[])
 	default:
 		usage();
 	}
+
+	if (strcmp(opts, "") != 0 && argc > 1)
+		usage();
 
 	pw = *argv ? who(*argv) : NULL;
 
@@ -184,7 +195,7 @@ pretty(struct passwd *pw)
 			(void)printf("uid\t%s\n", pw->pw_name);
 		else
 			(void)printf("uid\t%u\n", rid);
-		
+
 		if ((eid = geteuid()) != rid) {
 			if ((pw = getpwuid(eid)) != NULL)
 				(void)printf("euid\t%s\n", pw->pw_name);

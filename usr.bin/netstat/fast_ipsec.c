@@ -1,4 +1,4 @@
-/*	$NetBSD: fast_ipsec.c,v 1.7 2005/08/04 19:41:28 rpaulo Exp $ */
+/*	$NetBSD: fast_ipsec.c,v 1.7.12.1 2008/01/09 02:00:50 matt Exp $ */
 /* 	$FreeBSD: src/tools/tools/crypto/ipsecstats.c,v 1.1.4.1 2003/06/03 00:13:13 sam Exp $ */
 
 /*-
@@ -33,7 +33,7 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #ifdef __NetBSD__
-__RCSID("$NetBSD: fast_ipsec.c,v 1.7 2005/08/04 19:41:28 rpaulo Exp $");
+__RCSID("$NetBSD: fast_ipsec.c,v 1.7.12.1 2008/01/09 02:00:50 matt Exp $");
 #endif
 #endif /* not lint*/
 
@@ -216,7 +216,7 @@ fast_ipsec_stats(u_long off, char *name)
 	STAT(ipsecstats.ips_out_inval, "generic errors (output)");
 	STAT(ipsecstats.ips_out_bundlesa, "bundled SA processed (output)");
 	STAT(ipsecstats.ips_spdcache_lookup, "SPD cache lookups");
-	STAT(ipsecstats.ips_spdcache_lookup, "SPD cache misses");
+	STAT(ipsecstats.ips_spdcache_miss, "SPD cache misses");
 #undef STAT
 	printf("\n");
 	
@@ -313,6 +313,8 @@ fast_ipsec_stats(u_long off, char *name)
 	IPCOMP(ipcs.ipcomps_output,	"output IPcomp packets");
 	IPCOMP(ipcs.ipcomps_invalid,	"specified an invalid TDB");
 	IPCOMP(ipcs.ipcomps_toobig,	"packets decompressed as too big");
+	IPCOMP(ipcs.ipcomps_minlen, "packets too short to be compressed");
+	IPCOMP(ipcs.ipcomps_uselesscomp, "packet for which compression was useless");
 	IPCOMP(ipcs.ipcomps_pdrops,	"packets blocked due to policy");
 	IPCOMP(ipcs.ipcomps_crypto,	"failed crypto requests");
 

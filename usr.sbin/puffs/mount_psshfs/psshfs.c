@@ -1,4 +1,4 @@
-/*	$NetBSD: psshfs.c,v 1.34.4.1 2007/11/06 23:36:32 matt Exp $	*/
+/*	$NetBSD: psshfs.c,v 1.34.4.2 2008/01/09 02:02:20 matt Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: psshfs.c,v 1.34.4.1 2007/11/06 23:36:32 matt Exp $");
+__RCSID("$NetBSD: psshfs.c,v 1.34.4.2 2008/01/09 02:02:20 matt Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -61,12 +61,14 @@ __RCSID("$NetBSD: psshfs.c,v 1.34.4.1 2007/11/06 23:36:32 matt Exp $");
 #include "psshfs.h"
 
 static void	pssh_connect(struct psshfs_ctx *, char **);
+static void	psshfs_loopfn(struct puffs_usermount *);
 static void	usage(void);
 static void	add_ssharg(char ***, int *, char *);
 
 #define SSH_PATH "/usr/bin/ssh"
 
 unsigned int max_reads;
+static int sighup;
 
 static void
 add_ssharg(char ***sshargs, int *nargs, char *arg)
@@ -84,9 +86,17 @@ usage()
 {
 
 	fprintf(stderr, "usage: %s "
-	    "[-es] [-O sshopt=value] [-o opts] user@host:path mountpath\n",
+	    "[-es] [-F configfile] [-O sshopt=value] [-o opts] "
+	    "user@host:path mountpath\n",
 	    getprogname());
 	exit(1);
+}
+
+static void
+takehup(int sig)
+{
+
+	sighup = 1;
 }
 
 int
@@ -101,7 +111,7 @@ main(int argc, char *argv[])
 	char *hostpath;
 	int mntflags, pflags, ch;
 	int detach;
-	int exportfs;
+	int exportfs, refreshival;
 	int nargs, x;
 
 	setprogname(argv[0]);
@@ -111,15 +121,20 @@ main(int argc, char *argv[])
 
 	mntflags = pflags = exportfs = nargs = 0;
 	detach = 1;
+	refreshival = DEFAULTREFRESH;
 	sshargs = NULL;
 	add_ssharg(&sshargs, &nargs, SSH_PATH);
 	add_ssharg(&sshargs, &nargs, "-axs");
 	add_ssharg(&sshargs, &nargs, "-oClearAllForwardings=yes");
 
-	while ((ch = getopt(argc, argv, "eo:O:r:s")) != -1) {
+	while ((ch = getopt(argc, argv, "eF:o:O:r:st:")) != -1) {
 		switch (ch) {
 		case 'e':
 			exportfs = 1;
+			break;
+		case 'F':
+			add_ssharg(&sshargs, &nargs, "-F");
+			add_ssharg(&sshargs, &nargs, optarg);
 			break;
 		case 'O':
 			add_ssharg(&sshargs, &nargs, "-o");
@@ -136,6 +151,11 @@ main(int argc, char *argv[])
 			break;
 		case 's':
 			detach = 0;
+			break;
+		case 't':
+			refreshival = atoi(optarg);
+			if (refreshival < 0 && refreshival != -1)
+				errx(1, "invalid timeout %d", refreshival);
 			break;
 		default:
 			usage();
@@ -164,8 +184,6 @@ main(int argc, char *argv[])
 	PUFFSOP_SET(pops, psshfs, node, lookup);
 	PUFFSOP_SET(pops, psshfs, node, create);
 	PUFFSOP_SET(pops, psshfs, node, open);
-	PUFFSOP_SET(pops, psshfs, node, close);
-	PUFFSOP_SET(pops, psshfs, node, mmap);
 	PUFFSOP_SET(pops, psshfs, node, inactive);
 	PUFFSOP_SET(pops, psshfs, node, readdir);
 	PUFFSOP_SET(pops, psshfs, node, getattr);
@@ -186,6 +204,7 @@ main(int argc, char *argv[])
 
 	memset(&pctx, 0, sizeof(pctx));
 	pctx.mounttime = time(NULL);
+	pctx.refreshival = refreshival;
 
 	userhost = argv[0];
 	hostpath = strchr(userhost, ':');
@@ -198,10 +217,11 @@ main(int argc, char *argv[])
 	add_ssharg(&sshargs, &nargs, argv[0]);
 	add_ssharg(&sshargs, &nargs, "sftp");
 
+	signal(SIGHUP, takehup);
+	puffs_ml_setloopfn(pu, psshfs_loopfn);
+
 	pssh_connect(&pctx, sshargs);
 
-	if (puffs_setblockingmode(pu, PUFFSDEV_NONBLOCK) == -1)
-		err(1, "setblockingmode");
 	if (exportfs)
 		puffs_setfhsize(pu, sizeof(struct psshfs_fid),
 		    PUFFS_FHFLAG_NFSV2 | PUFFS_FHFLAG_NFSV3);
@@ -219,11 +239,14 @@ main(int argc, char *argv[])
 		err(1, "framebuf addfd");
 
 	if (detach)
-		if (daemon(1, 1) == -1)
-			err(1, "daemon");
+		if (puffs_daemon(pu, 1, 1) == -1)
+			err(1, "puffs_daemon");
 
 	if (puffs_mount(pu, argv[1], mntflags, puffs_getroot(pu)) == -1)
 		err(1, "puffs_mount");
+	if (puffs_setblockingmode(pu, PUFFSDEV_NONBLOCK) == -1)
+		err(1, "setblockingmode");
+
 	if (puffs_mainloop(pu) == -1)
 		err(1, "mainloop");
 
@@ -264,5 +287,27 @@ pssh_connect(struct psshfs_ctx *pctx, char **sshargs)
 		pctx->sshfd = fds[1];
 		close(fds[0]);
 		break;
+	}
+}
+
+static void *
+invalone(struct puffs_usermount *pu, struct puffs_node *pn, void *arg)
+{
+	struct psshfs_node *psn = pn->pn_data;
+
+	psn->attrread = 0;
+	psn->dentread = 0;
+	psn->slread = 0;
+
+	return NULL;
+}
+
+static void
+psshfs_loopfn(struct puffs_usermount *pu)
+{
+
+	if (sighup) {
+		puffs_pn_nodewalk(pu, invalone, NULL);
+		sighup = 0;
 	}
 }

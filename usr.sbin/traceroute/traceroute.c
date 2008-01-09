@@ -1,4 +1,4 @@
-/*	$NetBSD: traceroute.c,v 1.69 2007/04/08 09:45:41 scw Exp $	*/
+/*	$NetBSD: traceroute.c,v 1.69.4.1 2008/01/09 02:02:35 matt Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997
@@ -29,7 +29,7 @@ static const char rcsid[] =
 #else
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997\n\
 The Regents of the University of California.  All rights reserved.\n");
-__RCSID("$NetBSD: traceroute.c,v 1.69 2007/04/08 09:45:41 scw Exp $");
+__RCSID("$NetBSD: traceroute.c,v 1.69.4.1 2008/01/09 02:02:35 matt Exp $");
 #endif
 #endif
 
@@ -1307,7 +1307,7 @@ again:
 				u_int8_t zero;
 				u_int8_t protocol;
 				u_int16_t len;
-			} __attribute__((__packed__)) phdr;
+			} __packed phdr;
 
 			/* Checksum */
 			ui = (struct udpiphdr *)outip;

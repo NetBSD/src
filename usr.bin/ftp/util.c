@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.143 2007/05/24 05:05:19 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.143.4.1 2008/01/09 02:00:41 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997-2007 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.143 2007/05/24 05:05:19 lukem Exp $");
+__RCSID("$NetBSD: util.c,v 1.143.4.1 2008/01/09 02:00:41 matt Exp $");
 #endif /* not lint */
 
 /*
@@ -391,8 +391,7 @@ ftp_login(const char *host, const char *luser, const char *lpass)
 		pass = ftp_strdup(lpass);
 
 	DPRINTF("ftp_login: user `%s' pass `%s' host `%s'\n",
-	    user ? user : "<null>", pass ? pass : "<null>",
-	    host ? host : "<null>");
+	    STRorNULL(user), STRorNULL(pass), STRorNULL(host));
 
 	/*
 	 * Set up arguments for an anonymous FTP session, if necessary.
@@ -763,7 +762,8 @@ remotemodtime(const char *file, int noisy)
 			else
 				goto cleanup_parse_time;
 		} else
-			DPRINTF("parsed date `%s' as " LLF ", %s",
+			DPRINTF("remotemodtime: parsed date `%s' as " LLF
+			    ", %s",
 			    timestr, (LLT)rtime,
 			    rfc2822time(localtime(&rtime)));
 	} else {
@@ -805,7 +805,7 @@ updatelocalcwd(void)
 
 	if (getcwd(localcwd, sizeof(localcwd)) == NULL)
 		localcwd[0] = '\0';
-	DPRINTF("got localcwd as `%s'\n", localcwd);
+	DPRINTF("updatelocalcwd: got `%s'\n", localcwd);
 }
 
 /*
@@ -837,7 +837,7 @@ updateremotecwd(void)
 		remotecwd[i] = *cp;
 	}
 	remotecwd[i] = '\0';
-	DPRINTF("got remotecwd as `%s'\n", remotecwd);
+	DPRINTF("updateremotecwd: got `%s'\n", remotecwd);
 	goto cleanupremotecwd;
  badremotecwd:
 	remotecwd[0]='\0';

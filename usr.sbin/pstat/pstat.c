@@ -1,4 +1,4 @@
-/*	$NetBSD: pstat.c,v 1.100.4.1 2007/11/06 23:36:29 matt Exp $	*/
+/*	$NetBSD: pstat.c,v 1.100.4.2 2008/01/09 02:02:16 matt Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)pstat.c	8.16 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: pstat.c,v 1.100.4.1 2007/11/06 23:36:29 matt Exp $");
+__RCSID("$NetBSD: pstat.c,v 1.100.4.2 2008/01/09 02:02:16 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,7 +55,6 @@ __RCSID("$NetBSD: pstat.c,v 1.100.4.1 2007/11/06 23:36:29 matt Exp $");
 #include <sys/mount.h>
 #undef NFS
 #include <sys/uio.h>
-#include <sys/namei.h>
 #include <miscfs/genfs/layer.h>
 #include <miscfs/union/union.h>
 #undef _KERNEL
@@ -380,7 +379,6 @@ const struct flagbit_desc vnode_flags[] = {
 	{ VV_ISTTY,	'I' },
 	{ VI_EXECMAP,	'E' },
 	{ VI_XLOCK,	'L' },
-	{ VI_XWANT,	'W' },
 	{ VI_ALIASED,	'A' },
 	{ VU_DIROP,	'D' },
 	{ VI_LAYER,	'Y' },
@@ -790,7 +788,6 @@ static const struct flagbit_desc ttystates[] = {
 	{ TS_TIMEOUT,	'T'},
 	{ TS_FLUSH,	'F'},
 	{ TS_BUSY,	'B'},
-	{ TS_ASLEEP,	'A'},
 	{ TS_XCLUDE,	'X'},
 	{ TS_TTSTOP,	'S'},
 	{ TS_TBLOCK,	'K'},

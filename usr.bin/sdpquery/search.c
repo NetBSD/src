@@ -1,4 +1,4 @@
-/*	$NetBSD: search.c,v 1.4.4.1 2007/11/06 23:36:15 matt Exp $	*/
+/*	$NetBSD: search.c,v 1.4.4.2 2008/01/09 02:00:54 matt Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -55,12 +55,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: search.c,v 1.4.4.1 2007/11/06 23:36:15 matt Exp $
+ * $Id: search.c,v 1.4.4.2 2008/01/09 02:00:54 matt Exp $
  * $FreeBSD: src/usr.sbin/bluetooth/sdpcontrol/search.c,v 1.4 2005/05/27 19:11:33 emax Exp $
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: search.c,v 1.4.4.1 2007/11/06 23:36:15 matt Exp $");
+__RCSID("$NetBSD: search.c,v 1.4.4.2 2008/01/09 02:00:54 matt Exp $");
 
 #include <netinet/in.h>
 #include <bluetooth.h>
@@ -661,9 +661,9 @@ do_sdp_search(bdaddr_t *laddr, bdaddr_t *raddr, int argc, char const **argv)
 	return EXIT_SUCCESS;
 
 usage:
-	printf("Known services:\n");
+	fprintf(stderr, "Known services:\n");
 	for (s = services ; s->name != NULL ; s++)
-		printf("\t%s\t%s\n", s->name, s->description);
+		fprintf(stderr, "\t%s\t%s\n", s->name, s->description);
 
 	return EXIT_FAILURE;
 } /* do_sdp_search */
