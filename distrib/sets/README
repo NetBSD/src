@@ -1,4 +1,4 @@
-# $NetBSD: README,v 1.7 2007/11/12 15:06:45 jmmv Exp $
+# $NetBSD: README,v 1.8 2008/01/09 11:25:59 simonb Exp $
 
 To: "NetBSD Port Maintainers"
 Subject: distribution sets, etc...
@@ -97,13 +97,12 @@ machine-dependent man pages that are always installed should go
 in the 'man' set, and which should go into the 'misc' set.
 
 
-I've made attempts to get the md files for the amiga, i386, hp300,
-pc532, and sparc done.  I've not attempted the rest (though there
-are empty files for all architectures except the da30, in the
-various directories).  I think i got the amiga, i386, and sparc
-done correctly, but i know that (because of weirdnesses in how
-their last snapshots were built) i didn't get hp300 or pc532
-done right.
+I've made attempts to get the md files for the amiga, i386, hp300, and
+sparc done.  I've not attempted the rest (though there are empty files
+for all architectures except the da30, in the various directories).  I
+think i got the amiga, i386, and sparc done correctly, but i know that
+(because of weirdnesses in how their last snapshots were built) i didn't
+get hp300 done right.
 
 what you folks need to do:
 
@@ -127,4 +126,3 @@ doing it for the N architectures, but i'm not _sure_...  8-)
 thanks,
 
 chris
-

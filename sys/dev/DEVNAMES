@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.234 2007/12/05 09:10:25 xtraeme Exp $
+#	$NetBSD: DEVNAMES,v 1.235 2008/01/09 11:26:15 simonb Exp $
 #
 # This file contains all used device names and defined attributes in
 # alphabetical order. New devices added to the system somewhere should first
@@ -249,7 +249,6 @@ clock			cats
 clock			luna68k
 clock			mvme68k
 clock			netwinder
-clock			pc532
 clock			sparc
 clock			sparc64
 clock			sun2
@@ -735,7 +734,6 @@ lpt			MI
 lpt			amiga
 lpt			amigappc
 lpt			mvme68k
-lpt			pc532
 lpt			sgimips
 lpt			sparc64
 lsi64854		MI		Attribute
@@ -781,7 +779,6 @@ mainbus			newsmips
 mainbus			next68k
 mainbus			ofppc
 mainbus			ofppc		Attribute
-mainbus			pc532
 mainbus			pmax
 mainbus			prep
 mainbus			prep		Attribute
@@ -886,7 +883,6 @@ mtty			MI
 mu			vax
 mulaw			MI		Attribute
 nca			MI
-ncr			pc532
 ncr5380sbc		MI		Attribute
 ncr53c9x		MI		Attribute
 ncrsc			mvme68k
@@ -1110,7 +1106,6 @@ rtc			acorn26
 rtc			acorn32
 rtc			evbmips
 rtc			hp300
-rtc			pc532
 rtc			evbppc
 rtc			sparc
 rtc			x68k
@@ -1154,7 +1149,6 @@ sci			amigappc	Attribute
 sci			evbsh3
 scif			evbsh3
 scif			hpcsh
-scn			pc532
 scr			shark
 scsi			MI		Attribute
 scsibus			MI
