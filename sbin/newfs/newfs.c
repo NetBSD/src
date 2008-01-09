@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.99 2007/07/16 17:06:55 pooka Exp $	*/
+/*	$NetBSD: newfs.c,v 1.99.4.1 2008/01/09 01:38:13 matt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
@@ -78,7 +78,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.13 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.99 2007/07/16 17:06:55 pooka Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.99.4.1 2008/01/09 01:38:13 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -133,7 +133,7 @@ struct mntopt mopts[] = {
 static gid_t mfs_group(const char *);
 static uid_t mfs_user(const char *);
 static int64_t strsuftoi64(const char *, const char *, int64_t, int64_t, int *);
-static void usage(void) __attribute__((__noreturn__));
+static void usage(void) __dead;
 
 #define	COMPAT			/* allow non-labeled disks */
 

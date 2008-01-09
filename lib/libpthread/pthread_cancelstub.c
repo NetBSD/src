@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cancelstub.c,v 1.14.6.1 2007/11/06 23:11:40 matt Exp $	*/
+/*	$NetBSD: pthread_cancelstub.c,v 1.14.6.2 2008/01/09 01:36:34 matt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_cancelstub.c,v 1.14.6.1 2007/11/06 23:11:40 matt Exp $");
+__RCSID("$NetBSD: pthread_cancelstub.c,v 1.14.6.2 2008/01/09 01:36:34 matt Exp $");
 
 /*
  * This is necessary because the names are always weak (they are not
@@ -116,7 +116,7 @@ int	__sigsuspend14(const sigset_t *);
 
 #define TESTCANCEL(id) 	do {						\
 	if (__predict_false((id)->pt_cancel))				\
-		pthread_exit(PTHREAD_CANCELED);				\
+		pthread__cancelled();					\
 	} while (/*CONSTCOND*/0)
 
 
@@ -253,7 +253,7 @@ mq_send(mqd_t mqdes, const char *msg_ptr, size_t msg_len, unsigned msg_prio)
 ssize_t
 mq_receive(mqd_t mqdes, char *msg_ptr, size_t msg_len, unsigned *msg_prio)
 {
-	int retval;
+	ssize_t retval;
 	pthread_t self;
 
 	self = pthread__self();
@@ -283,7 +283,7 @@ ssize_t
 mq_timedreceive(mqd_t mqdes, char *msg_ptr, size_t msg_len, unsigned *msg_prio,
     const struct timespec *abst)
 {
-	int retval;
+	ssize_t retval;
 	pthread_t self;
 
 	self = pthread__self();

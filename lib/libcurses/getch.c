@@ -1,4 +1,4 @@
-/*	$NetBSD: getch.c,v 1.48.4.1 2007/11/06 23:11:24 matt Exp $	*/
+/*	$NetBSD: getch.c,v 1.48.4.2 2008/01/09 01:36:23 matt Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)getch.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: getch.c,v 1.48.4.1 2007/11/06 23:11:24 matt Exp $");
+__RCSID("$NetBSD: getch.c,v 1.48.4.2 2008/01/09 01:36:23 matt Exp $");
 #endif
 #endif					/* not lint */
 
@@ -208,8 +208,8 @@ int	ESCDELAY = 300;		/* Delay in ms between keys for esc seq's */
 /* Key buffer */
 #define INBUF_SZ 16		/* size of key buffer - must be larger than
 				 * longest multi-key sequence */
-static wchar_t  inbuf[INBUF_SZ];
-static int     start, end, working; /* pointers for manipulating inbuf data */
+static wchar_t	inbuf[INBUF_SZ];
+static int	start, end, working; /* pointers for manipulating inbuf data */
 
 /* prototypes for private functions */
 static void add_key_sequence(SCREEN *screen, char *sequence, int key_type);
@@ -558,13 +558,6 @@ reread:
 			if (delay && __timeout(delay) == ERR)
 				return ERR;
 			c = getchar();
-			if (_cursesi_screen->resized) {
-				if (c != -1)
-					ungetch(c);
-				_cursesi_screen->resized = 0;
-				clearerr(infd);
-				return KEY_RESIZE;
-			}
 			if (c == EOF) {
 				clearerr(infd);
 				return ERR;
@@ -607,13 +600,6 @@ reread:
 			}
 
 			c = getchar();
-			if (_cursesi_screen->resized) {
-				if (c != -1)
-					ungetch(c);
-				_cursesi_screen->resized = 0;
-				clearerr(infd);
-				return KEY_RESIZE;
-			}
 			if (c == -1 || ferror(infd)) {
 				clearerr(infd);
 				return ERR;
@@ -822,6 +808,21 @@ wgetch(WINDOW *win)
 	    "__rawmode = %d, __nl = %d, flags = %#.4x\n",
 	    __echoit, __rawmode, _cursesi_screen->nl, win->flags);
 #endif
+	if (_cursesi_screen->resized) {
+		_cursesi_screen->resized = 0;
+		return KEY_RESIZE;
+	}
+	if (_cursesi_screen->unget_pos) {
+#ifdef DEBUG
+		__CTRACE(__CTRACE_INPUT, "wgetch returning char at %d\n",
+		    _cursesi_screen->unget_pos);
+#endif
+		_cursesi_screen->unget_pos--;
+		c = _cursesi_screen->unget_list[_cursesi_screen->unget_pos];
+		if (__echoit)
+			waddch(win, (chtype) c);
+		return c;
+	}
 	if (__echoit && !__rawmode) {
 		cbreak();
 		weset = 1;
@@ -871,14 +872,6 @@ wgetch(WINDOW *win)
 		}
 
 		c = getchar();
-		if (_cursesi_screen->resized) {
-			if (c != -1)
-				ungetch(c);
-			_cursesi_screen->resized = 0;
-			clearerr(infd);
-			__restore_termios();
-			return KEY_RESIZE;
-		}
 		if (feof(infd)) {
 			clearerr(infd);
 			__restore_termios();
@@ -930,5 +923,43 @@ wgetch(WINDOW *win)
 int
 ungetch(int c)
 {
-	return ((ungetc(c, _cursesi_screen->infd) == EOF) ? ERR : OK);
+	return __unget((wint_t) c);
+}
+
+/*
+ * __unget --
+ *    Do the work for ungetch() and unget_wch();
+ */
+int
+__unget(wint_t c)
+{
+	wchar_t	*p;
+	int	len;
+
+#ifdef DEBUG
+	__CTRACE(__CTRACE_INPUT, "__unget(%x)\n", c);
+#endif
+	if (_cursesi_screen->unget_pos >= _cursesi_screen->unget_len) {
+		len = _cursesi_screen->unget_len + 32;
+		if ((p = realloc(_cursesi_screen->unget_list,
+		    sizeof(wchar_t) * len)) == NULL) {
+			/* Can't realloc(), so just lose the oldest entry */
+			memmove(_cursesi_screen->unget_list,
+			    _cursesi_screen->unget_list + sizeof(wchar_t),
+			    _cursesi_screen->unget_len - 1);
+			_cursesi_screen->unget_list[_cursesi_screen->unget_len
+			    - 1] = c;
+			_cursesi_screen->unget_pos =
+			    _cursesi_screen->unget_len;
+			return OK;
+		} else {
+			_cursesi_screen->unget_pos =
+			    _cursesi_screen->unget_len;
+			_cursesi_screen->unget_len = len;
+			_cursesi_screen->unget_list = p;
+		}
+	}
+	_cursesi_screen->unget_list[_cursesi_screen->unget_pos] = c;
+	_cursesi_screen->unget_pos++;
+	return OK;
 }

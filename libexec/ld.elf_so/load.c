@@ -1,4 +1,4 @@
-/*	$NetBSD: load.c,v 1.32.4.1 2007/11/06 23:12:09 matt Exp $	 */
+/*	$NetBSD: load.c,v 1.32.4.2 2008/01/09 01:37:12 matt Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: load.c,v 1.32.4.1 2007/11/06 23:12:09 matt Exp $");
+__RCSID("$NetBSD: load.c,v 1.32.4.2 2008/01/09 01:37:12 matt Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -68,9 +68,19 @@ Objlist _rtld_list_main =	/* Objects loaded at program startup */
   SIMPLEQ_HEAD_INITIALIZER(_rtld_list_main);
 Objlist _rtld_list_global =	/* Objects dlopened with RTLD_GLOBAL */
   SIMPLEQ_HEAD_INITIALIZER(_rtld_list_global);
+  
+void
+_rtld_objlist_push_head(Objlist *list, Obj_Entry *obj)
+{
+	Objlist_Entry *elm;
+
+	elm = NEW(Objlist_Entry);
+	elm->obj = obj;
+	SIMPLEQ_INSERT_HEAD(list, elm, link);
+}
 
 void
-_rtld_objlist_add(Objlist *list, Obj_Entry *obj)
+_rtld_objlist_push_tail(Objlist *list, Obj_Entry *obj)
 {
 	Objlist_Entry *elm;
 
@@ -159,12 +169,12 @@ _rtld_load_object(const char *filepath, int mode)
 	if (mode & RTLD_MAIN && !obj->mainref) {
 		obj->mainref = 1;
 		rdbg(("adding %p (%s) to _rtld_list_main", obj, obj->path));
-		_rtld_objlist_add(&_rtld_list_main, obj);
+		_rtld_objlist_push_tail(&_rtld_list_main, obj);
 	}
 	if (mode & RTLD_GLOBAL && !obj->globalref) {
 		obj->globalref = 1;
 		rdbg(("adding %p (%s) to _rtld_list_global", obj, obj->path));
-		_rtld_objlist_add(&_rtld_list_global, obj);
+		_rtld_objlist_push_tail(&_rtld_list_global, obj);
 	}
 #endif
 	return obj;

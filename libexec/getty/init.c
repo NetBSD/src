@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.16 2006/11/16 04:15:13 christos Exp $	*/
+/*	$NetBSD: init.c,v 1.16.8.1 2008/01/09 01:37:10 matt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)init.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: init.c,v 1.16 2006/11/16 04:15:13 christos Exp $");
+__RCSID("$NetBSD: init.c,v 1.16.8.1 2008/01/09 01:37:10 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -82,8 +82,8 @@ struct	gettystrs gettystrs[] = {
 	{ "st", M(VSTATUS) },	/* status */
 	{ "b2", M(VEOL2) },	/* alt brk char */
 	{ "pp" },		/* ppp login program */
-	{ "if" },               /* sysv-like 'issue' filename */
-	{ "al" },               /* user to auto-login */
+	{ "if" },		/* sysv-like 'issue' filename */
+	{ "al" },		/* user to auto-login */
 	{ 0 }
 };
 

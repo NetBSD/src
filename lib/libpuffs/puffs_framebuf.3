@@ -1,4 +1,4 @@
-.\"	$NetBSD: puffs_framebuf.3,v 1.10.4.1 2007/11/06 23:11:54 matt Exp $
+.\"	$NetBSD: puffs_framebuf.3,v 1.10.4.2 2008/01/09 01:36:50 matt Exp $
 .\"
 .\" Copyright (c) 2007 Antti Kantee.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd October 2, 2007
+.Dd December 4, 2007
 .Dt PUFFS_FRAMEBUF 3
 .Os
 .Sh NAME
@@ -123,7 +123,7 @@
 .Fa "struct puffs_usermount *pu"
 .Fa "struct puffs_framebuf *cmp1" "struct puffs_framebuf *cmp2" "int *notresp"
 .Fc
-.Ft int
+.Ft void
 .Fo puffs_framev_gotframe_fn
 .Fa "struct puffs_usermount *pu" "struct puffs_framebuf *pufbuf"
 .Fc
@@ -155,7 +155,7 @@
 This document describes interfaces which are not yet guaranteed to be
 stable.
 In case you update your system sources, please recompile everything
-and fix complation errors.
+and fix compilation errors.
 If your sources are out-of-sync, incorrect operation may result.
 .Pp
 The
@@ -196,7 +196,7 @@ only if the socket has been enabled for reading.
 File descriptors are treated like sockets: they have two sides, a read
 side and a write side.
 The framework determines that one side of the descriptor has been
-close if the supplied I/O callbacks return an error or if the I/O
+closed if the supplied I/O callbacks return an error or if the I/O
 multiplexing call says a side has been closed.
 It is still possible, from the framework perspective, to write to a
 file descriptor whose read side is closed.
@@ -253,7 +253,7 @@ Free memory used by buffer.
 .It Fn puffs_framebuf_recycle pufbuf
 Reset offsets so that buffer can be reused.
 Does not free memory or reallocate memory.
-.It Fn puffs_framebuf_reserver_space pufbuf space
+.It Fn puffs_framebuf_reserve_space pufbuf space
 Make sure that the buffer has
 .Ar space
 bytes of available memory starting from the current offset.
@@ -281,7 +281,7 @@ Read
 bytes of data from the buffer into
 .Ar data .
 Advances the offset cursor.
-.It Fn puffs_framebuf_getdata_atoff pufbuf offset data dlen 
+.It Fn puffs_framebuf_getdata_atoff pufbuf offset data dlen
 Read data from buffer position
 .Ar offset .
 Does NOT modify the offset cursor.
@@ -323,7 +323,7 @@ to outgoing queue of descriptor
 and yield with the continuation
 .Ar pcc .
 Execution is resumed once a response is received.
-Returns 0 if the buffer was succesfully enqueued (not necessarily
+Returns 0 if the buffer was successfully enqueued (not necessarily
 delivered) and non-zero to signal a non-recoverable error.
 .Pp
 Usually the buffer is placed at the end of the output queue.
@@ -345,7 +345,7 @@ will be called with the argument
 The callback function
 .Fn fcb
 is responsible for freeing the buffer.
-Returns 0 if the buffer was succesfully enqueued (not necessarily
+Returns 0 if the buffer was successfully enqueued (not necessarily
 delivered) and non-zero to signal a non-recoverable error.
 .Pp
 See
@@ -372,7 +372,7 @@ can be used to control if the buffer is to be freed immediately after
 sending of if a response is expected and the buffer should be freed
 only after the response arrives (receiving an unexpected message from
 the server is treated as an error).
-Returns 0 if the buffer was succesfully enqueued (not necessarily
+Returns 0 if the buffer was successfully enqueued (not necessarily
 delivered) and non-zero to signal a non-recoverable error.
 .Pp
 See
@@ -427,7 +427,7 @@ The events which happened are returned back in
 .Ar what .
 The possible events are
 .Dv PUFFS_FBIO_READ ,
-.Dv PUFFS_FBIO_WRITE
+.Dv PUFFS_FBIO_WRITE ,
 and
 .Dv PUFFS_FBIO_ERROR ,
 specifying read, write and error conditions, respectively.
@@ -445,7 +445,7 @@ Callback function.
 Read at most one frame from file descriptor
 .Ar fd
 into the buffer
-.Ar pufbuf.
+.Ar pufbuf .
 If a complete frame is read, the value pointed to by
 .Ar done
 must be set to 1.
@@ -463,7 +463,7 @@ Write the frame contained in
 .Ar pufbuf
 to the file descriptor
 .Ar fd .
-In case the entire frame is succesfully written,
+In case the entire frame is successfully written,
 .Ar *done
 should be set to 1.
 This function should return 0 on success (even if a complete frame was not
@@ -512,7 +512,7 @@ Called when no outstanding request matches an incoming frame.
 The incoming buffer must not be destroyed.
 May not block.
 .It Fn puffs_framev_fdnotify_fn pu fd what
-Is called when the read- or write side of the file descriptor
+Is called when the read or write side of the file descriptor
 .Ar fd
 is closed.
 It is called once for each side, the bitmask parameter
@@ -532,7 +532,7 @@ The framework provides the routines
 and
 .Fn puffs_framev_unmountonclose ,
 which can be given as
-.Ar fdnotfn.
+.Ar fdnotfn .
 The first one removes the file descriptor once both sides are closed
 while the second one unmounts the file system and exits the mainloop.
 .It Fn puffs_framev_addfd pu fd what
@@ -553,12 +553,12 @@ If not specified, the descriptor will be in a disabled state.
 .It Fn puffs_framev_enablefd pu fd error
 Enable events of type
 .Ar what
-for
+for file descriptor
 .Ar fd .
 .It Fn puffs_framev_disablefd pu fd error
 Disable events of type
 .Ar what
-for
+for file descriptor
 .Ar fd .
 .It Fn puffs_framev_removefd pu fd error
 Remove file descriptor
@@ -580,7 +580,7 @@ or
 .Fn puffs_node_reclaim ,
 depending a little on the structure of the file system.
 .It Fn puffs_framev_unmountonclose pu fd what
-This is library provided convinience routine for
+This is library provided convenience routine for
 .Fn puffs_framev_fdnotify_fn .
 It unmounts the file system when both the read and write side are
 closed.

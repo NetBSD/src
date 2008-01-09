@@ -1,4 +1,4 @@
-/*	$NetBSD: dm.c,v 1.23 2006/05/25 07:11:54 dan Exp $	*/
+/*	$NetBSD: dm.c,v 1.23.10.1 2008/01/09 01:30:47 matt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)dm.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dm.c,v 1.23 2006/05/25 07:11:54 dan Exp $");
+__RCSID("$NetBSD: dm.c,v 1.23.10.1 2008/01/09 01:30:47 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -72,12 +72,12 @@ void	c_tty(const char *);
 const char *hour(int);
 double	load(void);
 void	nogamefile(void);
-void	play(char **) __attribute__((__noreturn__));
+void	play(char **) __dead;
 void	read_config(void);
 int	users(void);
 
 int
-main(int argc __attribute__((__unused__)), char *argv[])
+main(int argc __unused, char *argv[])
 {
 	char *cp;
 

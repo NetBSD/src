@@ -1,4 +1,4 @@
-.\"     $NetBSD: kthread.9,v 1.15 2007/07/14 11:22:33 ad Exp $
+.\"     $NetBSD: kthread.9,v 1.15.4.1 2008/01/09 01:39:20 matt Exp $
 .\"
 .\" Copyright (c) 2000, 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 14, 2007
+.Dd November 22, 2007
 .Dt KTHREAD 9
 .Os
 .Sh NAME
@@ -126,7 +126,7 @@ Must only be called by a kernel thread.
 .El
 .Sh RETURN VALUES
 Upon successful completion,
-.Fn kthread_create1
+.Fn kthread_create
 returns 0.
 Otherwise, the following error values are returned:
 .Bl -tag -width [EAGAIN]

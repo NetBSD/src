@@ -1,4 +1,4 @@
-/*	$NetBSD: help.c,v 1.7 2003/08/07 09:37:52 agc Exp $	*/
+/*	$NetBSD: help.c,v 1.7.22.1 2008/01/09 01:31:03 matt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)help.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: help.c,v 1.7 2003/08/07 09:37:52 agc Exp $");
+__RCSID("$NetBSD: help.c,v 1.7.22.1 2008/01/09 01:31:03 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -69,7 +69,7 @@ const char	*const Cntvect[3] =
 /*ARGSUSED*/
 void
 help(v)
-	int v __attribute__((__unused__));
+	int v __unused;
 {
 	int		i;
 	double		dist, x;

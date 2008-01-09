@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_attr.3,v 1.5 2007/03/21 18:53:32 ad Exp $
+.\" $NetBSD: pthread_attr.3,v 1.5.6.1 2008/01/09 01:36:32 matt Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -149,12 +149,13 @@ and
 .Fn pthread_attr_getdetachstate
 are mutually exclusive and must be one of:
 .Bl -tag -width xxxxxxxx
-.It PTHREAD_CREATE_JOINABLE
+.It Dv PTHREAD_CREATE_JOINABLE
 The threads must explicitely be waited for using the
 .Fn pthread_join
 function once they exit for their status to be received and their resources
-to be freed.  This is the default.
-.It PTHREAD_CREATE_DETACHED
+to be freed.
+This is the default.
+.It Dv PTHREAD_CREATE_DETACHED
 The thread's resources will automatically be freed once the thread exits,
 and the thread will not be joined.
 .El

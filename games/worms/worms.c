@@ -1,4 +1,4 @@
-/*	$NetBSD: worms.c,v 1.16 2004/09/12 04:51:32 christos Exp $	*/
+/*	$NetBSD: worms.c,v 1.16.16.1 2008/01/09 01:31:06 matt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)worms.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: worms.c,v 1.16 2004/09/12 04:51:32 christos Exp $");
+__RCSID("$NetBSD: worms.c,v 1.16.16.1 2008/01/09 01:31:06 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -180,7 +180,7 @@ static struct	worm {
 volatile sig_atomic_t sig_caught = 0;
 
 int	 main(int, char **);
-void	 nomem(void) __attribute__((__noreturn__));
+void	 nomem(void) __dead;
 void	 onsig(int);
 
 int
@@ -340,7 +340,7 @@ main(argc, argv)
 
 void
 onsig(signo)
-	int signo __attribute__((__unused__));
+	int signo __unused;
 {
 	sig_caught = 1;
 }

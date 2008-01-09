@@ -1,4 +1,4 @@
-.\" $NetBSD: veriexecctl.8,v 1.30 2007/05/15 19:47:47 elad Exp $
+.\" $NetBSD: veriexecctl.8,v 1.30.4.1 2008/01/09 01:38:19 matt Exp $
 .\"
 .\" Copyright (c) 1999
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$Id: veriexecctl.8,v 1.30 2007/05/15 19:47:47 elad Exp $
+.\"	$Id: veriexecctl.8,v 1.30.4.1 2008/01/09 01:38:19 matt Exp $
 .\"
 .Dd May 15, 2007
 .Dt VERIEXECCTL 8
@@ -88,7 +88,7 @@ Only entries that have the filename will be presented.
 .Pp
 This can be used to recover a lost database:
 .Bd -literal -offset indent
-# veriexecctl dump > /etc/signatures
+# veriexecctl dump \*[Gt] /etc/signatures
 .Ed
 .It Cm flush
 Delete all entries in the
@@ -133,7 +133,7 @@ using the following command:
 The fingerprint for the file.
 Can (usually) be generated using the following command:
 .Bd -literal -offset indent
-% cksum -a \*[Lt]algorithm\*[Gt] \*[Lt]file\*[Gt] 
+% cksum -a \*[Lt]algorithm\*[Gt] \*[Lt]file\*[Gt]
 .Ed
 .It flags
 Optional listing of entry flags, separated by a comma.
@@ -153,8 +153,8 @@ Allow indirect execution only.
 .Pp
 Execution of a program is said to be
 .Dq indirect
-if it is invoked by the kernel to interpret a script (
-.Dq hash-bang ).
+if it is invoked by the kernel to interpret a script
+.Pq Dq hash-bang .
 .It file
 Allow opening the file only, via the
 .Xr open 2

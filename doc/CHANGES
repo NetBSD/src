@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.914.2.1 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.914.2.2 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -9,16 +9,17 @@ containing just the word `help' to `majordomo@NetBSD.org'.]
 
 Changes from NetBSD 4.0 to NetBSD 5.0:
 	evbppc: add support for Xilinx Virtex II-Pro/4-FX. [freza 20061202]
-	mac68k: add support for four more Nubus video cards, including the 
+	mac68k: add support for four more Nubus video cards, including the
 		VillageTronic MacPicasso 340. [hauke 20061206]
 	ixp425: add support for NPE Ethernet. [scw 20061210]
 	nfs: Remove NQNFS support from kernel. [yamt 20061227]
 	mount_psshfs(8): add puffs sshfs [pooka 20061229]
-  	zaurus: add support for Sharp C3x00 PDA. [ober 20070105]
+	zaurus: add support for Sharp C3x00 PDA. [ober 20070105]
 	i386: add support for Microsoft Xbox. [jmcneill 20070105]
-	ntp: Import ntp 4.2.4 (20061228). Tracking of network interface address
-		changes is now supported - no more ntpd restarts when interface
-		addresses are re-configured (WLAN/DSL/ppp/...). [kardel 20070106]
+	ntp: Import ntp 4.2.4 (20061228). Tracking of network interface
+		address changes is now supported - no more ntpd
+		restarts when interface addresses are re-configured
+		(WLAN/DSL/ppp/...). [kardel 20070106]
 	kernel: global 'securelevel' variable removed; it is now internal to
 		the secmodel. [elad 20070110]
 	GCC: Updated to version 4.1.2-20070110.  [mrg 20070111]
@@ -41,7 +42,7 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		[kiyohara 20070221]
 	btuartd(8): Add support for Bluetooth HCI UART (H4) daemon.
 		[kiyohara 20070221]
-        mutex(9), rwlock(9): Support priority inheritance. [yamt 20070226]
+	mutex(9), rwlock(9): Support priority inheritance. [yamt 20070226]
 	eeprom(8): Add the missing kernel bits on arm and powerpc that kept
 		eeprom from actually changing firmware settings
 		[macallan 20070228]
@@ -60,6 +61,8 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		power and overheating in CPUs supporting the Thermal
 		Monitor feature (TM). Adapted from OpenBSD/FreeBSD.
 		See options(4) for more information. [xtraeme 20070320]
+	kernel: Import of DRM (Direct Rendering Manager).  Not yet enabled
+		by default. [drochner 20070320]
 	libc: add support for LC_TIME [manu 20070328]
 	genfb: generic framebuffer console driver with PCI and SBus
 		frontends [macallan 20070411]
@@ -83,9 +86,9 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	kernel: Added support for POSIX Asynchronous I/O. [rmind 20070430]
 	puffs(3): Add puffs_framebuf(3), which abstracts the buffer
 		management and event loop for networked file systems
-		using puffs_cc(3).  Convert mount_psshfs(8) and 
+		using puffs_cc(3).  Convert mount_psshfs(8) and
 		mount_9p(8) to use it.  [pooka 20070505]
-	kernel: Add the TFTPROOT kernel option for TFTP'ing root RAMdisk 
+	kernel: Add the TFTPROOT kernel option for TFTP'ing root RAMdisk
 		at root mount time. [manu 20070508]
 	pf(4): Make 'nat' and 'rdr' translation rules obey state
 		policy flags ('if-bound', 'group-bound', 'floating').
@@ -104,7 +107,6 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	top(1): Allow a single process to be selected by pid.
 		Add a 'thread mode' that displays LWPs.
 		[ad 20070524]
-	aac(4): Compile and run on amd64. [briggs 20070525]
 	libcurses: Merge in wide curses work done by Ruibiao Qui as a
 		Google Summer of Code project [blymn 20070529]
 	powerpc: Add booted_kernel and booted_device sysctl [nisimura 20070601]
@@ -126,8 +128,8 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		[christos 20070625]
 	fast_ipsec(4): Add support for IPsec NAT-T [degroote 20070627]
 	efs: Added read-only Silicon Graphics EFS file system. [rumble 20070629]
-	envsys(4), sysmon_envsys(9): Imported envsys2. New API with the following
-		features:
+	envsys(4), sysmon_envsys(9): Imported envsys2. New API with the
+		following features:
 		- Cleaned up the API for simplicity and efficiency.
 		- Ability to send capacity/critical/warning events to powerd(8).
 		- Added support for a 'dictionary based communication channel'
@@ -198,7 +200,7 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		simultaneous client threads on a 4xCPU i386 system before
 		serious performance drop-off occurs. [ad 20070907]
 	kernel: Added support for POSIX message queues. [rmind 20070907]
-	aps(4): driver for IBM Thinkpad Active Protection System, 
+	aps(4): driver for IBM Thinkpad Active Protection System,
 		provides support for some sensors exported through
 		the envsys(4) framework. Ported by Pierre Pronchery
 		from OpenBSD. [xtraeme 20070911]
@@ -228,3 +230,87 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		available on Core or newer CPUs. Ported from FreeBSD.
 		[xtraeme 20071029]
 	x86: Added support for Intel 82G965 chipset.  [jnemeth 20071030]
+	nsclpcsio(4): Added support for the VLM logical device. This provides
+		14 voltage sensors in addition to the previous 3 temperature
+		sensors provided in the TMS logical device. From OpenBSD.
+		[xtraeme 20071109]
+	btkey(1): A new utility to manage Bluetooth link keys in OS and
+		and device storage. [plunky 20071109]
+	putter(9): A Pass-to-Userspace Transporter, a generic request-response
+		handler for kernel-attached userspace daemons (e.g. puffs(4)).
+		[pooka 20071110]
+	pad(4): Added the pseudo-audio device driver, for feeding back raw
+		PCM data to userland. [jmcneill 20071111]
+	r128fb(4): New accelerated console driver for ATI Rage 128 graphics
+		controllers. [macallan 20071111]
+	atf: Initial import of the Automated Testing Framework, version 0.3.
+		Provides a framework to easily define and run test cases for
+		the NetBSD operating system.  Work until 0.1 sponsored by
+		Google Summer of Code 2007 and mentored by martin.
+		[jmmv 20071112]
+	sysinst: Add support to install the new tests.tgz set.
+		[jmmv 20071112]
+	tests: Converted the regress/bin tree to use ATF and migrated it
+		to tests/util.  [jmmv 20071112]
+	tests: Converted the regress/sys/fs/tmpfs tree to use ATF and
+		migrated it to tests/fs/tmpfs.  [jmmv 20071112]
+	tests: Converted the regress/games tree to use ATF and migrated it
+		to tests/games.  [jmmv 20071112]
+	ahcisata(4): Add support for ATAPI devices. [bouyer 20071112]
+	newfs_ext2fs(8): Add a native newfs_ext2fs(8) command.
+		Closes PR bin/16175. [tsutsui 20071117]
+	x86: Add support for /boot.cfg to configure the bootloader. This
+		includes optionally displaying menus, altering banner text
+		and changing options such as timeouts and console device
+		which previously required use of installboot.
+		[sborrill 20071120]
+	pud(4): Add a driver via which it is possible to implement
+		block and character devices in userspace. [pooka 20071120]
+	xen: Added support for amd64 architecture, both as dom0 and domU.
+		[bouyer 20071122]
+	i386: Create a boot.cfg on the install CD to allow the end-user to
+		select either the standard or non-ACPI kernel easily.
+		[sborrill 20071123]
+	libsa: Add ext2fs support. [tsutsui 20071201]
+	bcsp(4): Add support for BlueCore Serial Protocol. [kiyohara 20071202]
+	toolchain: Install the linker scripts on amd64, which allows to
+		link x86 32bits objects using the native ld(1).
+		[bouyer 20071202]
+	arcmsr(4): Areca Technology Corporation SATA RAID controller driver,
+		ported from OpenBSD. [xtraeme 20071204]
+	acpi: Updated ACPI-CA to 20070320. [jmcneill 20071211]
+	kernel: Added a new power management framework, see pmf(9) for details.
+		[jmcneill, joerg 20071211]
+	MAKEDEV(8): Use pax(1) in preference to mknod(8) to create device
+		nodes more efficiently; use mount_tmpfs(8) in preference to
+		mount_mfs(8) when creating a memory file system. [apb 20071215]
+	openssh: import 4.7 [christos 20071217]
+	x86: Add support for ACPI S3 (suspend-to-RAM) on MP systems.
+		[joerg 20071218]
+	newsyslog: newsyslog.conf flag 'J' will bzip2 logfiles.
+		[dogcow 20071221]
+	thinkpad(4): Add driver for IBM/Lenovo Thinkpad hotkeys and
+		brightness controls [jmcneill 20071221]
+	kernel: Address Space Layout Randomization support in the kernel and
+		dynamic linker, see security(8). [elad, christos 20071226]
+	msdosfs: Significantly speed up write speed (up to 16x faster).
+		[reinoud 20071228]
+	itesio(4): Added support for the Watchdog Timer. [xtraeme 20071229]
+	usermode: Add port of the NetBSD kernel to userspace.
+		[jmcneill 20071229]
+	hp700: kernels are now compiled with -O2. [skrll 20071230]
+	compat_hpux: removed. [ad 20071231]
+	systrace(1): removed. [ad 20071231]
+	tprof: add tprof, a simple performance monitor based profiler,
+		inspired from linux oprofile.  it's still very experimental.
+		[yamt 20080102]
+	bioctl(8): Rewritten to handle new features like creating/removing
+		hot-spare, pass-through disks and RAID volumes, start/stop
+		consistency checks in volumes and others. [xtraeme 20080102]
+	arcmsr(4): Added support to create/remove hot-spare, pass-through
+		disks and RAID volumes, start/stop consistency checks
+		in volumes as well as showing information about physical
+		disks (even if they are marked as hot-spare, pass-through
+		or unused). [xtraeme 20080102]
+	ofppc: Support intallation and RAID bootable root.  [mrg 20080102]
+	gem(4): Add support for Sun SX fibre cards.  [jdc 20080105]

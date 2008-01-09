@@ -1,4 +1,4 @@
-/*	$NetBSD: pass1.c,v 1.15 2005/08/19 02:07:18 christos Exp $	*/
+/*	$NetBSD: pass1.c,v 1.15.10.1 2008/01/09 01:38:04 matt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)pass1.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: pass1.c,v 1.15 2005/08/19 02:07:18 christos Exp $");
+__RCSID("$NetBSD: pass1.c,v 1.15.10.1 2008/01/09 01:38:04 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -163,7 +163,10 @@ checkinode(ino_t inumber, struct inodesc *idesc)
 	mode_t mode;
 
 	dp = getnextinode(inumber);
-	if (inumber < EXT2_FIRSTINO && inumber != EXT2_ROOTINO) 
+	if (inumber < EXT2_FIRSTINO &&
+	    inumber != EXT2_ROOTINO &&
+	    !(inumber == EXT2_RESIZEINO &&
+	      (sblock.e2fs.e2fs_features_compat & EXT2F_COMPAT_RESIZE) != 0))
 		return;
 
 	mode = fs2h16(dp->e2di_mode) & IFMT;
@@ -272,7 +275,10 @@ checkinode(ino_t inumber, struct inodesc *idesc)
 	}
 	if (ftypeok(dp) == 0)
 		goto unknown;
-	n_files++;
+	if (inumber >= EXT2_FIRSTINO || inumber == EXT2_ROOTINO) {
+		/* Don't count reserved inodes except root */
+		n_files++;
+	}
 	lncntp[inumber] = fs2h16(dp->e2di_nlink);
 	if (dp->e2di_nlink == 0) {
 		zlnp = (struct zlncnt *)malloc(sizeof *zlnp);

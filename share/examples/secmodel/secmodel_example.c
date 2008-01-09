@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_example.c,v 1.14 2007/01/20 16:47:38 elad Exp $ */
+/* $NetBSD: secmodel_example.c,v 1.14.4.1 2008/01/09 01:39:02 matt Exp $ */
 
 /*
  * This file is placed in the public domain.
@@ -13,7 +13,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_example.c,v 1.14 2007/01/20 16:47:38 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_example.c,v 1.14.4.1 2008/01/09 01:39:02 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -87,16 +87,16 @@ secmodel_start(void)
 {
 	secmodel_example_init();
 
-        kauth_listen_scope(KAUTH_SCOPE_GENERIC,
-           secmodel_example_generic_cb, NULL);
-        kauth_listen_scope(KAUTH_SCOPE_SYSTEM,
-           secmodel_example_system_cb, NULL);
-        kauth_listen_scope(KAUTH_SCOPE_PROCESS,
-           secmodel_example_process_cb, NULL);
-        kauth_listen_scope(KAUTH_SCOPE_NETWORK,
-           secmodel_example_network_cb, NULL);
-        kauth_listen_scope(KAUTH_SCOPE_MACHDEP,
-           secmodel_example_machdep_cb, NULL);
+	kauth_listen_scope(KAUTH_SCOPE_GENERIC,
+	   secmodel_example_generic_cb, NULL);
+	kauth_listen_scope(KAUTH_SCOPE_SYSTEM,
+	   secmodel_example_system_cb, NULL);
+	kauth_listen_scope(KAUTH_SCOPE_PROCESS,
+	   secmodel_example_process_cb, NULL);
+	kauth_listen_scope(KAUTH_SCOPE_NETWORK,
+	   secmodel_example_network_cb, NULL);
+	kauth_listen_scope(KAUTH_SCOPE_MACHDEP,
+	   secmodel_example_machdep_cb, NULL);
 }
 
 /*
@@ -107,19 +107,19 @@ int
 secmodel_example_generic_cb(kauth_cred_t, kauth_action_t action,
     void *cookie, void *arg0, void *arg1, void *arg2, void *arg3)
 {
-        int result;
+	int result;
 
-        result = KAUTH_RESULT_DENY;
+	result = KAUTH_RESULT_DENY;
 
-        switch(action) {
-        case KAUTH_GENERIC_ISSUSER:
-        case KAUTH_GENERIC_CANSEE:
-        default:
-                result = KAUTH_RESULT_DEFER;
-                break;
-        }
+	switch(action) {
+	case KAUTH_GENERIC_ISSUSER:
+	case KAUTH_GENERIC_CANSEE:
+	default:
+		result = KAUTH_RESULT_DEFER;
+		break;
+	}
 
-        return (result);
+	return (result);
 }
 
 /*
@@ -130,14 +130,14 @@ int
 secmodel_example_system_cb(kauth_cred_t cred, kauth_action_t action,
     void *cookie, void *arg0, void *arg1, void *arg2, void *arg3)
 {
-        int result;
+	int result;
 	enum kauth_system_req req;		
 
-        result = KAUTH_RESULT_DENY;
+	result = KAUTH_RESULT_DENY;
 
 	req = (enum kauth_system_req)arg0;
 
-        switch (action) {
+	switch (action) {
 	case KAUTH_SYSTEM_MOUNT:
 		switch (req) {
 		case KAUTH_REQ_SYSTEM_MOUNT_GET:
@@ -150,62 +150,63 @@ secmodel_example_system_cb(kauth_cred_t cred, kauth_action_t action,
 		}
 		break;
 
-        case KAUTH_SYSTEM_TIME:
-                switch (req) {
-                case KAUTH_REQ_SYSTEM_TIME_ADJTIME:
-                case KAUTH_REQ_SYSTEM_TIME_BACKWARDS:
-                case KAUTH_REQ_SYSTEM_TIME_NTPADJTIME:
-                case KAUTH_REQ_SYSTEM_TIME_RTCOFFSET:
-                case KAUTH_REQ_SYSTEM_TIME_SYSTEM:
-                default:
-                        result = KAUTH_RESULT_DEFER;
-                        break;
-                }
-                break;
+	case KAUTH_SYSTEM_TIME:
+		switch (req) {
+		case KAUTH_REQ_SYSTEM_TIME_ADJTIME:
+		case KAUTH_REQ_SYSTEM_TIME_BACKWARDS:
+		case KAUTH_REQ_SYSTEM_TIME_NTPADJTIME:
+		case KAUTH_REQ_SYSTEM_TIME_RTCOFFSET:
+		case KAUTH_REQ_SYSTEM_TIME_SYSTEM:
+		case KAUTH_REQ_SYSTEM_TIME_TIMECOUNTERS:
+		default:
+			result = KAUTH_RESULT_DEFER;
+			break;
+		}
+		break;
 
-        case KAUTH_SYSTEM_SYSCTL:
-                switch (req) {
-                case KAUTH_REQ_SYSTEM_SYSCTL_ADD:
-                case KAUTH_REQ_SYSTEM_SYSCTL_DELETE:
-                case KAUTH_REQ_SYSTEM_SYSCTL_DESC:
-                default:
-                        result = KAUTH_RESULT_DEFER;
-                        break;
-                }
-                break;
+	case KAUTH_SYSTEM_SYSCTL:
+		switch (req) {
+		case KAUTH_REQ_SYSTEM_SYSCTL_ADD:
+		case KAUTH_REQ_SYSTEM_SYSCTL_DELETE:
+		case KAUTH_REQ_SYSTEM_SYSCTL_DESC:
+		default:
+			result = KAUTH_RESULT_DEFER;
+			break;
+		}
+		break;
 
-        case KAUTH_SYSTEM_CHROOT:
-                switch (req) {
-                case KAUTH_REQ_SYSTEM_CHROOT_CHROOT:
-                case KAUTH_REQ_SYSTEM_CHROOT_FCHROOT:
-                default:
-                        result = KAUTH_RESULT_DEFER;
-                        break;
-                }
-                break;
+	case KAUTH_SYSTEM_CHROOT:
+		switch (req) {
+		case KAUTH_REQ_SYSTEM_CHROOT_CHROOT:
+		case KAUTH_REQ_SYSTEM_CHROOT_FCHROOT:
+		default:
+			result = KAUTH_RESULT_DEFER;
+			break;
+		}
+		break;
 
-        case KAUTH_SYSTEM_DEBUG:
-                switch (req) {
-                case KAUTH_REQ_SYSTEM_DEBUG_IPKDB:
-                default:
-                        result = KAUTH_RESULT_DEFER;
-                        break;
-                }
-                break;
+	case KAUTH_SYSTEM_DEBUG:
+		switch (req) {
+		case KAUTH_REQ_SYSTEM_DEBUG_IPKDB:
+		default:
+			result = KAUTH_RESULT_DEFER;
+			break;
+		}
+		break;
 
 	case KAUTH_SYSTEM_LKM:
-        case KAUTH_SYSTEM_FILEHANDLE:
-        case KAUTH_SYSTEM_MKNOD:
-        case KAUTH_SYSTEM_SETIDCORE:
-        case KAUTH_SYSTEM_SWAPCTL:
-        case KAUTH_SYSTEM_ACCOUNTING:
-        case KAUTH_SYSTEM_REBOOT:
-        default:
-                result = KAUTH_RESULT_DEFER;
-                break;
-        }
+	case KAUTH_SYSTEM_FILEHANDLE:
+	case KAUTH_SYSTEM_MKNOD:
+	case KAUTH_SYSTEM_SETIDCORE:
+	case KAUTH_SYSTEM_SWAPCTL:
+	case KAUTH_SYSTEM_ACCOUNTING:
+	case KAUTH_SYSTEM_REBOOT:
+	default:
+		result = KAUTH_RESULT_DEFER;
+		break;
+	}
 
-        return (result);
+	return (result);
 }
 
 /*
@@ -218,27 +219,27 @@ int
 secmodel_example_process_cb(kauth_cred_t cred, kauth_action_t action,
     void *cookie, void *arg0, void *arg1, void *arg2, void *arg3)
 {
-        int result;
+	int result;
 
-        result = KAUTH_RESULT_DENY;
+	result = KAUTH_RESULT_DENY;
 
-        switch (action) {
+	switch (action) {
 	case KAUTH_PROCESS_CANPROCFS:
-        case KAUTH_PROCESS_CANSEE:
-        case KAUTH_PROCESS_CANSIGNAL:
-	case KAUTH_PROCESS_CANSYSTRACE:
+	case KAUTH_PROCESS_CANSEE:
+	case KAUTH_PROCESS_CANSIGNAL:
 	case KAUTH_PROCESS_CANPTRACE:
-        case KAUTH_PROCESS_CORENAME:
+	case KAUTH_PROCESS_CORENAME:
+	case KAUTH_PROCESS_FORK:
 	case KAUTH_PROCESS_NICE:
 	case KAUTH_PROCESS_RLIMIT:
-        case KAUTH_PROCESS_SETID:
+	case KAUTH_PROCESS_SETID:
 	case KAUTH_PROCESS_STOPFLAG:
-        default:
-                result = KAUTH_RESULT_DEFER;
-                break;
-        }
+	default:
+		result = KAUTH_RESULT_DEFER;
+		break;
+	}
 
-        return (result);
+	return (result);
 }
 
 /*
@@ -251,52 +252,52 @@ int
 secmodel_example_network_cb(kauth_cred_t cred, kauth_action_t action,
     void *cookie, void *arg0, void *arg1, void *arg2, void *arg3)
 {
-        int result;
+	int result;
 
-        result = KAUTH_RESULT_DENY;
+	result = KAUTH_RESULT_DENY;
 
-        switch (action) {
-        case KAUTH_NETWORK_ALTQ:
-                switch((u_long)arg0) {
-                case KAUTH_REQ_NETWORK_ALTQ_AFMAP:
-                case KAUTH_REQ_NETWORK_ALTQ_BLUE:
-                case KAUTH_REQ_NETWORK_ALTQ_CBQ:
-                case KAUTH_REQ_NETWORK_ALTQ_CDNR:
-                case KAUTH_REQ_NETWORK_ALTQ_CONF:
-                case KAUTH_REQ_NETWORK_ALTQ_FIFOQ:
-                case KAUTH_REQ_NETWORK_ALTQ_HFSC:
+	switch (action) {
+	case KAUTH_NETWORK_ALTQ:
+		switch((u_long)arg0) {
+		case KAUTH_REQ_NETWORK_ALTQ_AFMAP:
+		case KAUTH_REQ_NETWORK_ALTQ_BLUE:
+		case KAUTH_REQ_NETWORK_ALTQ_CBQ:
+		case KAUTH_REQ_NETWORK_ALTQ_CDNR:
+		case KAUTH_REQ_NETWORK_ALTQ_CONF:
+		case KAUTH_REQ_NETWORK_ALTQ_FIFOQ:
+		case KAUTH_REQ_NETWORK_ALTQ_HFSC:
 		case KAUTH_REQ_NETWORK_ALTQ_JOBS:
-                case KAUTH_REQ_NETWORK_ALTQ_PRIQ:
-                case KAUTH_REQ_NETWORK_ALTQ_RED:
-                case KAUTH_REQ_NETWORK_ALTQ_RIO:
-                case KAUTH_REQ_NETWORK_ALTQ_WFQ:
-                default:
-                        result = KAUTH_RESULT_DEFER;
-                        break;
-                }
-                break;
+		case KAUTH_REQ_NETWORK_ALTQ_PRIQ:
+		case KAUTH_REQ_NETWORK_ALTQ_RED:
+		case KAUTH_REQ_NETWORK_ALTQ_RIO:
+		case KAUTH_REQ_NETWORK_ALTQ_WFQ:
+		default:
+			result = KAUTH_RESULT_DEFER;
+			break;
+		}
+		break;
 
-        case KAUTH_NETWORK_BIND:
-                switch((u_long)arg0) {
-                case KAUTH_REQ_NETWORK_BIND_PORT:
-                case KAUTH_REQ_NETWORK_BIND_PRIVPORT:
-                default:
-                        result = KAUTH_RESULT_DEFER;
-                        break;
-                }       
-                break;
+	case KAUTH_NETWORK_BIND:
+		switch((u_long)arg0) {
+		case KAUTH_REQ_NETWORK_BIND_PORT:
+		case KAUTH_REQ_NETWORK_BIND_PRIVPORT:
+		default:
+			result = KAUTH_RESULT_DEFER;
+			break;
+		}       
+		break;
 
-        case KAUTH_NETWORK_FIREWALL:
-                switch ((u_long)arg0) {
-                case KAUTH_REQ_NETWORK_FIREWALL_FW:
-                case KAUTH_REQ_NETWORK_FIREWALL_NAT:
-                default:
-                        result = KAUTH_RESULT_DEFER;
-                        break;
-                }
-                break;
+	case KAUTH_NETWORK_FIREWALL:
+		switch ((u_long)arg0) {
+		case KAUTH_REQ_NETWORK_FIREWALL_FW:
+		case KAUTH_REQ_NETWORK_FIREWALL_NAT:
+		default:
+			result = KAUTH_RESULT_DEFER;
+			break;
+		}
+		break;
 
-        case KAUTH_NETWORK_FORWSRCRT:
+	case KAUTH_NETWORK_FORWSRCRT:
 		break;
 
 	case KAUTH_NETWORK_INTERFACE:
@@ -311,26 +312,26 @@ secmodel_example_network_cb(kauth_cred_t cred, kauth_action_t action,
 		}
 		break;
 
-        case KAUTH_NETWORK_ROUTE:
+	case KAUTH_NETWORK_ROUTE:
 		break;
 
-        case KAUTH_NETWORK_SOCKET:
-                switch((u_long)arg0) {
-                case KAUTH_REQ_NETWORK_SOCKET_OPEN:
-                case KAUTH_REQ_NETWORK_SOCKET_RAWSOCK:
+	case KAUTH_NETWORK_SOCKET:
+		switch((u_long)arg0) {
+		case KAUTH_REQ_NETWORK_SOCKET_OPEN:
+		case KAUTH_REQ_NETWORK_SOCKET_RAWSOCK:
 		case KAUTH_REQ_NETWORK_SOCKET_CANSEE:
-                default:
-                        result = KAUTH_RESULT_DEFER;
-                        break;
-                }
-                break;
+		default:
+			result = KAUTH_RESULT_DEFER;
+			break;
+		}
+		break;
 
-        default:
-                result = KAUTH_RESULT_DEFER;
-                break;
-        }
+	default:
+		result = KAUTH_RESULT_DEFER;
+		break;
+	}
 
-        return (result);
+	return (result);
 }
 
 /*
@@ -343,11 +344,11 @@ int
 secmodel_example_machdep_cb(kauth_cred_t cred, kauth_action_t action,
     void *cookie, void *arg0, void *arg1, void *arg2, void *arg3)
 {
-        int result;
+	int result;
 
-        result = KAUTH_RESULT_DENY;
+	result = KAUTH_RESULT_DENY;
 
-        switch (action) {
+	switch (action) {
 	case KAUTH_MACHDEP_IOPERM_GET:
 	case KAUTH_MACHDEP_IOPERM_SET:
 	case KAUTH_MACHDEP_IOPL:
@@ -359,9 +360,9 @@ secmodel_example_machdep_cb(kauth_cred_t cred, kauth_action_t action,
 	default:
 		result = KAUTH_RESULT_DEFER;
 		break;
-        }
+	}
 
-        return (result);
+	return (result);
 }
 
 /*
@@ -374,12 +375,12 @@ int
 secmodel_example_device_cb(kauth_cred_t cred, kauth_action_t action,
     void *cookie, void *arg0, void *arg1, void *arg2, void *arg3)
 {
-        int result;
+	int result;
 
-        result = KAUTH_RESULT_DENY;
+	result = KAUTH_RESULT_DENY;
 
-        switch (action) {
-        case KAUTH_DEVICE_TTY_OPEN:
+	switch (action) {
+	case KAUTH_DEVICE_TTY_OPEN:
 	case KAUTH_DEVICE_TTY_PRIVSET:
 		break;
 
@@ -403,5 +404,5 @@ secmodel_example_device_cb(kauth_cred_t cred, kauth_action_t action,
 		break;
 	}
 
-        return (result);
+	return (result);
 }

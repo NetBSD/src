@@ -1,6 +1,7 @@
-#	$NetBSD: Makefile,v 1.1 2006/05/10 22:48:13 mrg Exp $
+#	$NetBSD: Makefile,v 1.1.10.1 2008/01/09 01:31:59 matt Exp $
 
-PROG=           g++
+PROG=		gplusplus
+PROGNAME=	g++
 SRCS=		g++spec.c
 
 NOMAN=		# defined

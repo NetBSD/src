@@ -1,4 +1,4 @@
-/*	$NetBSD: mille.c,v 1.13 2003/08/07 09:37:25 agc Exp $	*/
+/*	$NetBSD: mille.c,v 1.13.22.1 2008/01/09 01:30:52 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1982, 1993\n\
 #if 0
 static char sccsid[] = "@(#)mille.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: mille.c,v 1.13 2003/08/07 09:37:25 agc Exp $");
+__RCSID("$NetBSD: mille.c,v 1.13.22.1 2008/01/09 01:30:52 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -139,7 +139,7 @@ main(ac, av)
  */
 void
 rub(dummy)
-	int dummy __attribute__((__unused__));
+	int dummy __unused;
 {
 	(void)signal(SIGINT, SIG_IGN);
 	if (getyn(REALLYPROMPT))

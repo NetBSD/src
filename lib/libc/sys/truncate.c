@@ -1,4 +1,4 @@
-/*	$NetBSD: truncate.c,v 1.10 2003/08/07 16:44:10 agc Exp $	*/
+/*	$NetBSD: truncate.c,v 1.10.22.1 2008/01/09 01:34:26 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -34,13 +34,15 @@
 #if 0
 static char sccsid[] = "@(#)truncate.c	8.1 (Berkeley) 6/17/93";
 #else
-__RCSID("$NetBSD: truncate.c,v 1.10 2003/08/07 16:44:10 agc Exp $");
+__RCSID("$NetBSD: truncate.c,v 1.10.22.1 2008/01/09 01:34:26 matt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <sys/syscall.h>
 #include <unistd.h>
+
+int __truncate(const char *, int, off_t);
 
 /*
  * This function provides 64-bit offset padding that
@@ -51,14 +53,6 @@ truncate(path, length)
 	const char *path;
 	off_t length;
 {
-	quad_t q;
-	int rv;
 
-	q = __syscall((quad_t)SYS_truncate, path, 0, length);
-	if (/* LINTED constant */ sizeof (quad_t) == sizeof (register_t) ||
-	    /* LINTED constant */ BYTE_ORDER == LITTLE_ENDIAN)
-		rv = (int)q;
-	else
-		rv = (int)((u_quad_t)q >> 32);
-	return rv;
+	return __truncate(path, 0, length);
 }

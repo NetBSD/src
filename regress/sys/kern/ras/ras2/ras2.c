@@ -1,4 +1,4 @@
-/* $NetBSD: ras2.c,v 1.7 2005/12/24 21:22:47 perry Exp $ */
+/* $NetBSD: ras2.c,v 1.7.10.1 2008/01/09 01:37:37 matt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@ main(void)
 
 	if (fork() != 0) {
 		wait(&rv);
-		return (rv);
+		return WEXITSTATUS(rv);
 	}
 
 	RAS_START(main);

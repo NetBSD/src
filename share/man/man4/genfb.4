@@ -1,4 +1,4 @@
-.\"	$NetBSD: genfb.4,v 1.1 2007/04/12 18:19:54 macallan Exp $
+.\"	$NetBSD: genfb.4,v 1.1.4.1 2008/01/09 01:39:07 matt Exp $
 .\"
 .\" Copyright (c) 2007 Michael Lorenz
 .\" All rights reserved.
@@ -39,10 +39,10 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for generic framebuffers that have no native driver. All
-it needs are some parameters to describe the framebuffer and an address.
+driver provides support for generic framebuffers that have no native driver.
+All it needs are some parameters to describe the framebuffer and an address.
 .Ss PCI
-When attaching to a 
+When attaching to a
 .Xr pci 4
 bus the driver is configured via device properties:
 .Bl -tag -width Dv
@@ -55,7 +55,7 @@ Line size in bytes.
 .It Dv depth Pq Li uint32
 Bits per pixel.
 .It Dv is_console Pq Li bool
-If true 
+If true,
 .Nm
 will try to become the system console.
 .It Dv address Pq Li uint32
@@ -65,15 +65,15 @@ Bus address of the framebuffer.
 When attaching to
 .Xr sbus 4
 all those parameters are retrieved from the firmware.
-
+.Sh SEE ALSO
+.Xr pci 4 ,
+.Xr sbus 4 ,
+.Xr wscons 4 ,
+.Xr wsdisplay 4
 .Sh BUGS
-There is no way to change the colour map even when the firmware supports it.
+There is no way to change the color map even when the firmware supports it.
 The
 .Xr pci 4
-bus frontend has only been tested on macppc and requires machine dependent code
-to pass the properties mentioned above. So far only macppc providesd them.
-.Sh SEE ALSO
-.Xr wscons 4
-.Xr wsdisplay 4
-.Xr pci 4
-.Xr sbus 4
+bus frontend has only been tested on macppc and requires machine
+dependent code to pass the properties mentioned above.
+So far only macppc provides them.

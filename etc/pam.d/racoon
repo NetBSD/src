@@ -1,0 +1,13 @@
+# $NetBSD: racoon,v 1.1.4.2 2008/01/09 01:29:55 matt Exp $
+#
+# PAM configuration for the "racoon" service, identical with ftp for now
+#
+
+# auth
+auth		include		ftpd
+
+# account
+account		include		ftpd
+
+# session
+session		include		ftpd

@@ -1,4 +1,4 @@
-/*	$NetBSD: rot13fs.c,v 1.12.4.1 2007/11/06 23:12:42 matt Exp $	*/
+/*	$NetBSD: rot13fs.c,v 1.12.4.2 2008/01/09 01:39:00 matt Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -177,8 +177,8 @@ main(int argc, char *argv[])
 		tbl[i + 'A'] = 'A' + ((i + 13) % 26);
 
 	if (detach)
-		if (daemon(1, 1) == -1)
-			err(1, "daemon");
+		if (puffs_daemon(pu, 1, 1) == -1)
+			err(1, "puffs_daemon");
 
 	if (puffs_mount(pu, argv[1], mntflags, pn_root) == -1)
 		err(1, "puffs_mount");
@@ -189,7 +189,7 @@ main(int argc, char *argv[])
 }
 
 int
-rot13_node_readdir(struct puffs_cc *pcc, void *opc, struct dirent *dent,
+rot13_node_readdir(struct puffs_usermount *pu, void *opc, struct dirent *dent,
 	off_t *readoff, size_t *reslen, const struct puffs_cred *pcr,
 	int *eofflag, off_t *cookies, size_t *ncookies)
 {
@@ -200,7 +200,7 @@ rot13_node_readdir(struct puffs_cc *pcc, void *opc, struct dirent *dent,
 	dp = dent;
 	rl = *reslen;
 
-	rv = puffs_null_node_readdir(pcc, opc, dent, readoff, reslen, pcr,
+	rv = puffs_null_node_readdir(pu, opc, dent, readoff, reslen, pcr,
 	    eofflag, cookies, ncookies);
 	if (rv)
 		return rv;
@@ -215,14 +215,15 @@ rot13_node_readdir(struct puffs_cc *pcc, void *opc, struct dirent *dent,
 }
 
 int
-rot13_node_read(struct puffs_cc *pcc, void *opc, uint8_t *buf, off_t offset,
-	size_t *resid, const struct puffs_cred *pcr, int ioflag)
+rot13_node_read(struct puffs_usermount *pu, void *opc,
+	uint8_t *buf, off_t offset, size_t *resid,
+	const struct puffs_cred *pcr, int ioflag)
 {
 	uint8_t *prebuf = buf;
 	size_t preres = *resid;
 	int rv;
 
-	rv = puffs_null_node_read(pcc, opc, buf, offset, resid, pcr, ioflag);
+	rv = puffs_null_node_read(pu, opc, buf, offset, resid, pcr, ioflag);
 	if (rv)
 		return rv;
 
@@ -232,10 +233,11 @@ rot13_node_read(struct puffs_cc *pcc, void *opc, uint8_t *buf, off_t offset,
 }
 
 int
-rot13_node_write(struct puffs_cc *pcc, void *opc, uint8_t *buf, off_t offset,
-	size_t *resid, const struct puffs_cred *pcr, int ioflag)
+rot13_node_write(struct puffs_usermount *pu, void *opc,
+	uint8_t *buf, off_t offset, size_t *resid,
+	const struct puffs_cred *pcr, int ioflag)
 {
 
 	flipflop(buf, *resid);
-	return puffs_null_node_write(pcc, opc, buf, offset, resid, pcr, ioflag);
+	return puffs_null_node_write(pu, opc, buf, offset, resid, pcr, ioflag);
 }

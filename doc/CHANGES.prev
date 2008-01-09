@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.70.4.1 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.70.4.2 $>
 
 
 Changes from 386bsd 0.1 + patchkit 0.2.2 to NetBSD 0.8:
@@ -1904,7 +1904,7 @@ Changes from NetBSD 1.0 to NetBSD 1.1:
 		colrm, column, comm, ctags, and cut to Lite versions. (glass)
 	Converted apply, apropos, ar, asa, at, basename, cap_mkdb, chflags,
 		and compress to new RCS Id format. (glass)
-	bdes(1): Added bsed(1) from Lite.  Domestic distribution only.  (glass)
+	bdes(1): Added bdes(1) from Lite.  Domestic distribution only.  (glass)
 	msdosfs: Lightened the sanity checks when mounting a msdosfs file
 		system, to be more compatible. [mycroft 19950327]
 	mcd: Rewrote most of the `mcd' driver, to be much simpler and faster,
@@ -8608,6 +8608,7 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 	ipf(8): Updated to version 4.1.22. [martin 20070515]
 	kernel: add jmide(4), a driver for the JMicron Technology JMB36x
 		PCIe to SATA II/PATA controllers. [bouyer 20070515]
+	aac(4): Compile and run on amd64. [briggs 20070525]
 	amd64: The Enhanced Speedstep driver is now able to work on EM64T
 		CPUs running in 64bit mode. [xtraeme 20070603]
 	audio(4): New ioctl AUDIO_GETBUFINFO reduces system overhead for many

@@ -1,8 +1,8 @@
-#	$NetBSD: x509.inc,v 1.6 2006/03/17 20:47:45 dsl Exp $
+#	$NetBSD: x509.inc,v 1.6.10.1 2008/01/09 01:34:41 matt Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
-#	SRCS extracted from /home/current/src/lib/libcrypto/../../crypto/dist/openssl/crypto/x509/Makefile.ssl
+#	SRCS extracted from src/crypto/dist/openssl/crypto/x509/Makefile
 #
 
 .PATH:	${OPENSSLSRC}/crypto/x509

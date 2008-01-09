@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211.h,v 1.3 2007/01/09 09:19:02 dyoung Exp $	*/
+/*	$NetBSD: ieee80211.h,v 1.3.4.1 2008/01/09 01:38:07 matt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,6 +38,8 @@ void	setifchan(const char *, int);
 void	setiffrag(const char *, int);
 void	setifpowersave(const char *, int);
 void	setifpowersavesleep(const char *, int);
+void	setiflist(const char *val, int dummy);
+
 
 void	ieee80211_statistics(void);
 void	ieee80211_status(void);

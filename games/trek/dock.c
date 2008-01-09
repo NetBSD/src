@@ -1,4 +1,4 @@
-/*	$NetBSD: dock.c,v 1.6 2003/08/07 09:37:50 agc Exp $	*/
+/*	$NetBSD: dock.c,v 1.6.22.1 2008/01/09 01:31:03 matt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)dock.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dock.c,v 1.6 2003/08/07 09:37:50 agc Exp $");
+__RCSID("$NetBSD: dock.c,v 1.6.22.1 2008/01/09 01:31:03 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,7 +59,7 @@ __RCSID("$NetBSD: dock.c,v 1.6 2003/08/07 09:37:50 agc Exp $");
 /*ARGSUSED*/
 void
 dock(v)
-	int v __attribute__((__unused__));
+	int v __unused;
 {
 	int		i, j;
 	int		ok;
@@ -133,7 +133,7 @@ dock(v)
 /*ARGSUSED*/
 void
 undock(v)
-	int v __attribute__((__unused__));
+	int v __unused;
 {
 	struct event	*e;
 	int		i;

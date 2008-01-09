@@ -1,0 +1,29 @@
+#!/bin/sh -
+#
+#	$NetBSD: hotkey_button,v 1.1.2.2 2008/01/09 01:29:55 matt Exp $
+#
+# Generic script for hotkey events. 
+#
+# Arguments passed by powerd(8):
+#
+#	hotkey event
+
+PATH=/usr/pkg/bin:$PATH; export PATH
+
+# XXXJDM need a better way to determine this
+XUSER="$(ls -l /dev/console | awk '{ print $3; }')"
+DISPLAY=:0.0; export DISPLAY
+
+case "${2}" in
+pressed)
+	if [ -f "/etc/powerd/actions/${1}" ]; then
+		sudo -u "$XUSER" -i "/etc/powerd/actions/${1}"
+	fi
+	exit 0
+	;;
+released)
+	;;
+*)
+	logger -p warning "${0}: unsupported event ${2} on device ${1}" >&1
+	exit 1
+esac

@@ -55,6 +55,7 @@ arm*-*-openbsd*)	gdb_host=nbsdelf ;;
 hppa*-*-hpux* | hppa*-*-hiux*)
 			gdb_host=hpux ;;
 hppa*-*-linux*)		gdb_host=linux ;;
+hppa*-*-netbsd*)	gdb_host=nbsd ;;
 hppa*-*-openbsd*)	gdb_host=obsd ;;
 
 i[34567]86-ncr-*)	gdb_host=ncr3000 ;;

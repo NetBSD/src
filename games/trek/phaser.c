@@ -1,4 +1,4 @@
-/*	$NetBSD: phaser.c,v 1.9 2003/08/07 09:37:53 agc Exp $	*/
+/*	$NetBSD: phaser.c,v 1.9.22.1 2008/01/09 01:31:04 matt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)phaser.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: phaser.c,v 1.9 2003/08/07 09:37:53 agc Exp $");
+__RCSID("$NetBSD: phaser.c,v 1.9.22.1 2008/01/09 01:31:04 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -95,7 +95,7 @@ struct banks
 /*ARGSUSED*/
 void
 phaser(v)
-	int v __attribute__((__unused__));
+	int v __unused;
 {
 	int		i;
 	int		j;

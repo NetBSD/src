@@ -1,4 +1,4 @@
-.\"	$NetBSD: symlink.7,v 1.12 2007/02/07 06:41:50 wiz Exp $
+.\"	$NetBSD: symlink.7,v 1.12.4.1 2008/01/09 01:39:14 matt Exp $
 .\"
 .\" Copyright (c) 1992, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -432,11 +432,13 @@ or
 .Fl P
 options.
 .Sh MAGIC SYMLINKS
-Symlinks in file systems with the
-.Li MNT_MAGICLINKS
-flag set have
+Magic symlinks can be enabled by setting
+.Dq vfs.generic.magiclinks
+with
+.Xr sysctl 8 .
+When magic symlinks are enabled
 .Dq magic
-patterns in symlinks expanded.
+patterns in symlinks are expanded.
 Those patterns begin with
 .Dq @
 .Pq an at-sign ,
@@ -518,6 +520,8 @@ This will always be
 on
 .Nx
 systems.
+.It @ruid
+Exapnds to the real user-id of the process.
 .It @uid
 Expands to the effective user-id of the process.
 .El

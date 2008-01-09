@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.248.4.1 2007/11/06 23:13:13 matt Exp $
+#       $NetBSD: Makefile,v 1.248.4.2 2008/01/09 01:39:18 matt Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -30,6 +30,7 @@ MAN=	altq.9 arc4random.9 arp.9 audio.9 autoconf.9 \
 	kpause.9 \
 	kfilter_register.9 knote.9 \
 	kprintf.9 kthread.9 linedisc.9 lock.9 log.9 ltsleep.9 \
+	LWP_CACHE_CREDS.9 \
 	makeiplcookie.9 \
 	malloc.9 mb.9 mbuf.9 mca.9 memcmp.9 memcpy.9 memoryallocators.9 \
 	memmove.9 memset.9 \
@@ -37,13 +38,13 @@ MAN=	altq.9 arc4random.9 arp.9 audio.9 autoconf.9 \
 	mstohz.9 mutex.9 m_tag.9 namecache.9 \
 	namei.9 opencrypto.9 optstr.9 \
 	panic.9 pci.9 pci_configure_bus.9 pci_intr.9 pckbport.9 \
-	pcmcia.9 pfil.9 physio.9 pmap.9 pmatch.9 pmc.9 \
+	pcmcia.9 pfil.9 physio.9 pmap.9 pmatch.9 pmc.9 pmf.9 \
 	pool.9 pool_cache.9 powerhook_establish.9 ppsratecheck.9 \
-	preempt.9 \
+	preempt.9 putter.9 \
 	radio.9 ras.9 rasops.9 ratecheck.9 resettodr.9 rnd.9 rssadapt.9 \
 	rt_timer.9 rwlock.9 RUN_ONCE.9 \
 	sched_4bsd.9 scsipi.9 \
-	secmodel.9 secmodel_bsd44.9 secmodel_overlay.9 \
+	secmodel.9 secmodel_bsd44.9 secmodel_overlay.9 secmodel_securelevel.9 \
 	setjmp.9 shutdownhook_establish.9 \
 	signal.9 softintr.9 spl.9 splraiseipl.9 store.9 suspendsched.9 \
 	sysctl.9 sysmon_envsys.9 tc.9 tcp_congctl.9 timecounter.9 time_second.9 \
@@ -352,7 +353,8 @@ MLINKS+=mca.9 mca_intr_establish.9 \
 	mca.9 mca_conf_read.9 \
 	mca.9 mca_conf_write.9
 MLINKS+=mutex.9 mutex_init.9 mutex.9 mutex_destroy.9 mutex.9 mutex_enter.9 \
-	mutex.9 mutex_exit.9 mutex.9 mutex_tryenter.9 mutex.9 mutex_owned.9
+	mutex.9 mutex_exit.9 mutex.9 mutex_tryenter.9 mutex.9 mutex_owned.9 \
+	mutex.9 mutex_spin_enter.9 mutex.9 mutex_spin_exit.9
 MLINKS+=m_tag.9 m_tag_copy.9 \
 	m_tag.9 m_tag_copy_chain.9 \
 	m_tag.9 m_tag_delete.9 \
@@ -530,12 +532,15 @@ MLINKS+=signal.9 siginit.9 \
 	signal.9 sigcode.9 \
 	signal.9 sigtramp.9
 MLINKS+=softintr.9 softintr_establish.9 softintr.9 softintr_disestablish.9 \
-	softintr.9 softintr_schedule.9
+	softintr.9 softintr_schedule.9 softintr.9 softint.9 \
+	softintr.9 softint_establish.9 softintr.9 softint_disestablish.9 \
+	softintr.9 softint_schedule.9
 MLINKS+=spl.9 spl0.9 spl.9 splbio.9 spl.9 splclock.9 spl.9 splhigh.9 \
 	spl.9 splimp.9 spl.9 spllowersoftclock.9 spl.9 splnet.9 \
 	spl.9 splsched.9 spl.9 splserial.9 \
 	spl.9 splsoftclock.9 spl.9 splsoftnet.9 spl.9 splsoftserial.9 \
-	spl.9 splstatclock.9 spl.9 spltty.9 spl.9 splvm.9 spl.9 splx.9
+	spl.9 splstatclock.9 spl.9 spltty.9 spl.9 splvm.9 spl.9 splx.9 \
+	spl.9 splsoftbio.9
 MLINKS+=store.9 subyte.9 store.9 suibyte.9 store.9 susword.9 \
 	store.9 suswintr.9 store.9 suword.9 store.9 suiword.9
 MLINKS+=sysctl.9 old_sysctl.9 \

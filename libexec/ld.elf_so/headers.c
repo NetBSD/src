@@ -1,4 +1,4 @@
-/*	$NetBSD: headers.c,v 1.21.4.1 2007/11/06 23:12:08 matt Exp $	 */
+/*	$NetBSD: headers.c,v 1.21.4.2 2008/01/09 01:37:12 matt Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: headers.c,v 1.21.4.1 2007/11/06 23:12:08 matt Exp $");
+__RCSID("$NetBSD: headers.c,v 1.21.4.2 2008/01/09 01:37:12 matt Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -225,6 +225,10 @@ _rtld_digest_dynamic(const char *execname, Obj_Entry *obj)
 #endif
 			break;
 #endif
+		case DT_FLAGS_1:
+			obj->initfirst =
+			    ((dynp->d_un.d_val & DF_1_INITFIRST) != 0);
+			break;
 		}
 	}
 
@@ -287,36 +291,40 @@ _rtld_digest_phdr(const Elf_Phdr *phdr, int phnum, caddr_t entry)
 	const Elf_Phdr *phlimit = phdr + phnum;
 	const Elf_Phdr *ph;
 	int             nsegs = 0;
+	ptrdiff_t	relocoffs = 0;
+	Elf_Addr	vaddr;
 
 	obj = _rtld_obj_new();
 	for (ph = phdr; ph < phlimit; ++ph) {
+		vaddr = ph->p_vaddr + relocoffs;
+		dbg(("headers: relocoffs = %lx\n", (long)relocoffs));
 		switch (ph->p_type) {
 
 		case PT_PHDR:
-			assert((const Elf_Phdr *) ph->p_vaddr == phdr);
+			relocoffs = (char *)phdr - (char *)ph->p_vaddr;
 			break;
 
 		case PT_INTERP:
-			obj->interp = (const char *) ph->p_vaddr;
+			obj->interp = (const char *)vaddr;
 			break;
 
 		case PT_LOAD:
 			assert(nsegs < 2);
 			if (nsegs == 0) {	/* First load segment */
-				obj->vaddrbase = round_down(ph->p_vaddr);
-				obj->mapbase = (caddr_t) obj->vaddrbase;
-				obj->relocbase = obj->mapbase - obj->vaddrbase;
-				obj->textsize = round_up(ph->p_vaddr +
-				    ph->p_memsz) - obj->vaddrbase;
+				obj->vaddrbase = round_down(vaddr);
+				obj->mapbase = (caddr_t)obj->vaddrbase;
+				obj->relocbase = (void *)relocoffs;
+				obj->textsize = round_up(vaddr + ph->p_memsz) -
+				    obj->vaddrbase;
 			} else {		/* Last load segment */
-				obj->mapsize = round_up(ph->p_vaddr +
-				    ph->p_memsz) - obj->vaddrbase;
+				obj->mapsize = round_up(vaddr + ph->p_memsz) -
+				    obj->vaddrbase;
 			}
 			++nsegs;
 			break;
 
 		case PT_DYNAMIC:
-			obj->dynamic = (Elf_Dyn *) ph->p_vaddr;
+			obj->dynamic = (Elf_Dyn *)vaddr;
 			break;
 		}
 	}

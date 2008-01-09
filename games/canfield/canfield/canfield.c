@@ -1,4 +1,4 @@
-/*	$NetBSD: canfield.c,v 1.22 2006/02/25 02:06:08 wiz Exp $	*/
+/*	$NetBSD: canfield.c,v 1.22.10.1 2008/01/09 01:30:46 matt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)canfield.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: canfield.c,v 1.22 2006/02/25 02:06:08 wiz Exp $");
+__RCSID("$NetBSD: canfield.c,v 1.22.10.1 2008/01/09 01:30:46 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -199,7 +199,7 @@ time_t acctstart;
 int dbfd = -1;
 
 void	askquit(int);
-void	cleanup(int) __attribute__((__noreturn__));
+void	cleanup(int) __dead;
 void	cleanupboard(void);
 void	clearabovemovebox(void);
 void	clearbelowmovebox(void);
@@ -1720,7 +1720,7 @@ finish(void)
  * procedure to clean up and exit
  */
 void
-cleanup(int dummy __attribute__((__unused__)))
+cleanup(int dummy __unused)
 {
 
 	total.thinktime += 1;
@@ -1743,7 +1743,7 @@ cleanup(int dummy __attribute__((__unused__)))
  * Field an interrupt.
  */
 void
-askquit(int dummy __attribute__((__unused__)))
+askquit(int dummy __unused)
 {
 	move(msgrow, msgcol);
 	printw("Really wish to quit?    ");

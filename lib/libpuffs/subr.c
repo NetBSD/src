@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.c,v 1.18.4.1 2007/11/06 23:11:55 matt Exp $	*/
+/*	$NetBSD: subr.c,v 1.18.4.2 2008/01/09 01:36:53 matt Exp $	*/
 
 /*
  * Copyright (c) 2006 Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: subr.c,v 1.18.4.1 2007/11/06 23:11:55 matt Exp $");
+__RCSID("$NetBSD: subr.c,v 1.18.4.2 2008/01/09 01:36:53 matt Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -81,8 +81,7 @@ puffs_nextdent(struct dirent **dent, const char *name, ino_t id, uint8_t dtype,
 
 /*ARGSUSED*/
 int
-puffs_fsnop_unmount(struct puffs_cc *dontuse1, int dontuse2,
-	const struct puffs_cid *dontuse3)
+puffs_fsnop_unmount(struct puffs_usermount *dontuse1, int dontuse2)
 {
 
 	/* would you like to see puffs rule again, my friend? */
@@ -91,8 +90,8 @@ puffs_fsnop_unmount(struct puffs_cc *dontuse1, int dontuse2,
 
 /*ARGSUSED*/
 int
-puffs_fsnop_sync(struct puffs_cc *dontuse1, int dontuse2,
-	const struct puffs_cred *dontuse3, const struct puffs_cid *dontuse4)
+puffs_fsnop_sync(struct puffs_usermount *dontuse1, int dontuse2,
+	const struct puffs_cred *dontuse3)
 {
 
 	return 0;
@@ -100,8 +99,7 @@ puffs_fsnop_sync(struct puffs_cc *dontuse1, int dontuse2,
 
 /*ARGSUSED*/
 int
-puffs_fsnop_statvfs(struct puffs_cc *dontuse1, struct statvfs *sbp,
-	const struct puffs_cid *dontuse2)
+puffs_fsnop_statvfs(struct puffs_usermount *dontuse1, struct statvfs *sbp)
 {
 
 	sbp->f_bsize = sbp->f_frsize = sbp->f_iosize = 512;
@@ -112,16 +110,25 @@ puffs_fsnop_statvfs(struct puffs_cc *dontuse1, struct statvfs *sbp,
 	return 0;
 }
 
+/*ARGSUSED3*/
+int
+puffs_genfs_node_getattr(struct puffs_usermount *pu, void *opc,
+	struct vattr *va, const struct puffs_cred *pcr)
+{
+	struct puffs_node *pn = PU_CMAP(pu, opc);
+
+	memcpy(va, &pn->pn_va, sizeof(struct vattr));
+	return 0;
+}
+
 /*
  * Just put the node, don't do anything else.  Don't use this if
  * your fs needs more cleanup.
  */
 /*ARGSUSED2*/
 int
-puffs_genfs_node_reclaim(struct puffs_cc *pcc, void *opc,
-	const struct puffs_cid *pcid)
+puffs_genfs_node_reclaim(struct puffs_usermount *pu, void *opc)
 {
-	struct puffs_usermount *pu = puffs_cc_getusermount(pcc);
 
 	puffs_pn_put(PU_CMAP(pu, opc));
 
@@ -136,7 +143,7 @@ void
 puffs_zerostatvfs(struct statvfs *sbp)
 {
 
-	puffs_fsnop_statvfs(NULL, sbp, 0);
+	puffs_fsnop_statvfs(NULL, sbp);
 }
 
 /*

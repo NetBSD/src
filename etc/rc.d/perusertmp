@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: perusertmp,v 1.6 2007/02/15 13:27:35 tron Exp $
+# $NetBSD: perusertmp,v 1.6.4.1 2008/01/09 01:29:56 matt Exp $
 #
 
 # PROVIDE: perusertmp
@@ -40,9 +40,9 @@ perusertmp_start()
 	/bin/chmod 0555 ${per_user_tmp_dir}
 
 	# Create magic link for /tmp.
-	if [ "$(/usr/bin/readlink /tmp)" != ${per_user_tmp_dir}/@uid ]; then
+	if [ "$(/usr/bin/readlink /tmp)" != ${per_user_tmp_dir}/@ruid ]; then
 		/bin/rm -rf /tmp
-		/bin/ln -s ${per_user_tmp_dir}/@uid /tmp
+		/bin/ln -s ${per_user_tmp_dir}/@ruid /tmp
 	fi
 }
 

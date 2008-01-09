@@ -1,4 +1,4 @@
-/*	$NetBSD: rain.c,v 1.18 2005/08/09 09:15:23 rpaulo Exp $	*/
+/*	$NetBSD: rain.c,v 1.18.10.1 2008/01/09 01:30:54 matt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rain.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: rain.c,v 1.18 2005/08/09 09:15:23 rpaulo Exp $");
+__RCSID("$NetBSD: rain.c,v 1.18.10.1 2008/01/09 01:30:54 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -146,7 +146,7 @@ main(int argc, char **argv)
 
 /* ARGSUSED */
 static void
-onsig(int dummy __attribute__((__unused__)))
+onsig(int dummy __unused)
 {
 	sig_caught = 1;
 }

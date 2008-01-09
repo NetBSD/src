@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.52 2007/01/17 21:44:51 hubertf Exp $	*/
+/*	$NetBSD: main.c,v 1.52.4.1 2008/01/09 01:37:11 matt Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.1 (Berkeley) 6/20/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.52 2007/01/17 21:44:51 hubertf Exp $");
+__RCSID("$NetBSD: main.c,v 1.52.4.1 2008/01/09 01:37:11 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -187,7 +187,7 @@ main(int argc, char *argv[], char *envp[])
 	int repcnt = 0, failopenlogged = 0, uugetty = 0, first_time = 1;
 	struct rlimit limit;
 	struct passwd *pw;
-        int rval;
+	int rval;
 
 	(void)signal(SIGINT, SIG_IGN);
 	openlog("getty", LOG_PID, LOG_AUTH);
@@ -228,58 +228,58 @@ main(int argc, char *argv[], char *envp[])
 		(void)strlcpy(ttyn, ttyname(0), sizeof(ttyn));
 	}
 	else {
-		    int i;
+		int i;
 
-		    rawttyn = argv[2];
-		    (void)strlcpy(ttyn, dev, sizeof(ttyn));
-		    (void)strlcat(ttyn, argv[2], sizeof(ttyn));
-		    if (uugetty)  {
-			    (void)chown(ttyn, ttyowner, 0);
-			    (void)strlcpy(lockfile, _PATH_LOCK,
+		rawttyn = argv[2];
+		(void)strlcpy(ttyn, dev, sizeof(ttyn));
+		(void)strlcat(ttyn, argv[2], sizeof(ttyn));
+		if (uugetty)  {
+			(void)chown(ttyn, ttyowner, 0);
+			(void)strlcpy(lockfile, _PATH_LOCK,
 				sizeof(lockfile));
-			    (void)strlcat(lockfile, argv[2],
+			(void)strlcat(lockfile, argv[2],
 				sizeof(lockfile));
-			    /*
-			     * wait for lockfiles to go away before we try
-			     * to open
-			     */
-			    if (pidlock(lockfile, 0, 0, 0) != 0)  {
-				    syslog(LOG_ERR,
+			/*
+			 * wait for lockfiles to go away before we try
+			 * to open
+			 */
+			if (pidlock(lockfile, 0, 0, 0) != 0)  {
+				syslog(LOG_ERR,
 					"%s: can't create lockfile", ttyn);
-				    exit(1);
-			    }
-			    (void)unlink(lockfile);
-		    }
-		    if (strcmp(argv[0], "+") != 0) {
-			    (void)chown(ttyn, ttyowner, 0);
-			    (void)chmod(ttyn, 0600);
-			    (void)revoke(ttyn);
-			    if (ttyaction(ttyn, "getty", "root"))
-				    syslog(LOG_WARNING, "%s: ttyaction failed",
+				exit(1);
+			}
+			(void)unlink(lockfile);
+		}
+		if (strcmp(argv[0], "+") != 0) {
+			(void)chown(ttyn, ttyowner, 0);
+			(void)chmod(ttyn, 0600);
+			(void)revoke(ttyn);
+			if (ttyaction(ttyn, "getty", "root"))
+				syslog(LOG_WARNING, "%s: ttyaction failed",
 					ttyn);
-			    /*
-			     * Delay the open so DTR stays down long enough
-			     * to be detected.
-			     */
-			    (void)sleep(2);
-			    while ((i = open(ttyn, O_RDWR)) == -1) {
-				    if ((repcnt % 10 == 0) &&
-					(errno != ENXIO || !failopenlogged)) {
-					    syslog(LOG_WARNING, "%s: %m", ttyn);
-					    closelog();
-					    failopenlogged = 1;
-				    }
-				    repcnt++;
-				    (void)sleep(60);
-			    }
-			    if (uugetty && pidlock(lockfile, 0, 0, 0) != 0)  {
-				    syslog(LOG_ERR, "%s: can't create lockfile",
+			/*
+			 * Delay the open so DTR stays down long enough
+			 * to be detected.
+			 */
+			(void)sleep(2);
+			while ((i = open(ttyn, O_RDWR)) == -1) {
+				if ((repcnt % 10 == 0) &&
+				    (errno != ENXIO || !failopenlogged)) {
+					syslog(LOG_WARNING, "%s: %m", ttyn);
+					closelog();
+					failopenlogged = 1;
+				}
+				repcnt++;
+				(void)sleep(60);
+			}
+			if (uugetty && pidlock(lockfile, 0, 0, 0) != 0)  {
+				syslog(LOG_ERR, "%s: can't create lockfile",
 					ttyn);
-				    exit(1);
-			    }
-			    if (uugetty)
-				    (void)chown(lockfile, ttyowner, 0);
-			    (void)login_tty(i);
+				exit(1);
+			}
+			if (uugetty)
+				(void)chown(lockfile, ttyowner, 0);
+			(void)login_tty(i);
 		}
 	}
 
@@ -336,10 +336,10 @@ main(int argc, char *argv[], char *envp[])
 			putpad(CL);
 		edithost(HE);
 
-                /*
-                 * If this is the first time through this, and an
-                 * issue file has been given, then send it.
-                 */
+		/*
+		 * If this is the first time through this, and an
+		 * issue file has been given, then send it.
+		 */
 		if (first_time != 0 && IF != NULL) {
 			char buf[_POSIX2_LINE_MAX];
 			FILE *fp;
@@ -383,11 +383,11 @@ main(int argc, char *argv[], char *envp[])
 			}
 		} else if ((rval = getname()) == 2) {
 			setflags(2);
-		        (void)execle(PP, "ppplogin", ttyn, (char *) 0, env);
-		        syslog(LOG_ERR, "%s: %m", PP);
-		        exit(1);
+			(void)execle(PP, "ppplogin", ttyn, (char *) 0, env);
+			syslog(LOG_ERR, "%s: %m", PP);
+			exit(1);
 		}
-		
+
 		if (rval || AL || NN) {
 			int i;
 
@@ -449,7 +449,7 @@ getname(void)
 	char *np;
 	unsigned char cs;
 	int ppp_state, ppp_connection;
-	
+
 	/*
 	 * Interrupt may happen if we use CBREAK mode
 	 */
@@ -470,7 +470,7 @@ getname(void)
 		exit(1);
 	}
 	crmod = digit = lower = upper = 0;
-        ppp_state = ppp_connection = 0;
+	ppp_state = ppp_connection = 0;
 	np = name;
 	for (;;) {
 		oflush();
@@ -554,7 +554,7 @@ getname(void)
 		 */
 		*np = '\0';
 		if (strstr(name, "CLIENT"))
-		       putf("\r\n");
+			putf("\r\n");
 	}
 	(void)signal(SIGINT, SIG_IGN);
 	*np = 0;
@@ -718,7 +718,7 @@ clearscreen(void)
 	if (rawttyn == NULL)
 		return;
 
-	typ = getttynam(rawttyn);	
+	typ = getttynam(rawttyn);
 
 	if ((typ == NULL) || (typ->ty_type == NULL) ||
 	    (typ->ty_type[0] == 0))

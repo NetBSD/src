@@ -1,4 +1,4 @@
-.\"	$NetBSD: pthread.3,v 1.6 2007/05/19 14:24:42 wiz Exp $
+.\"	$NetBSD: pthread.3,v 1.6.6.1 2008/01/09 01:36:30 matt Exp $
 .\"
 .\" Copyright (c) 2003 Hubert Feyrer <hubertf@NetBSD.org>
 .\" and Thomas Klausner <wiz@NetBSD.org>
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd May 19, 2007
+.Dd November 19, 2007
 .Dt PTHREAD 3
 .Os
 .Sh NAME
@@ -49,6 +49,17 @@ The
 library provides an implementation of the standard
 .Tn POSIX
 threads framework.
+.Pp
+Note that the system private thread interfaces upon which the
+.Nm
+library is built are subject to change without notice.
+In order to remain compatible with future
+.Nx
+releases, programs must be linked against the dynamic version of the
+thread library.
+Statically linked programs using the
+.Tn POSIX
+threads framework may not work when run on a future version of the system.
 .Sh ENVIRONMENT
 .Bl -tag -width PTHREAD_DEBUGCOUNTERSXX
 .It Ev PTHREAD_CONCURRENCY
@@ -74,18 +85,6 @@ Do not log errors via
 Log errors via
 .Xr syslogd 8 .
 .El
-.It Ev PTHREAD_DEBUGCOUNTERS
-Print pthread event counters before the program terminates.
-.It Ev PTHREAD_DEBUGLOG
-Write debugging information into shared memory.
-This debug log can be parsed and printed by the
-.Nm debuglog
-program found in
-.Pa src/lib/libpthread/debuglog.c .
-.\" Following commented out since it will be removed shortly.
-.\".It Ev PTHREAD_PREEMPT
-.\"Generate upcalls on a vanilla
-.\".Fn preempt .
 .It Ev PTHREAD_RRTIME
 The current version of the system does not inspect this variable.
 It is reserved for use by the

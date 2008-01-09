@@ -1,4 +1,4 @@
-/*	$NetBSD: stdlib.h,v 1.77 2007/04/22 08:21:50 ragge Exp $	*/
+/*	$NetBSD: stdlib.h,v 1.77.4.1 2008/01/09 01:33:06 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -93,8 +93,8 @@ extern size_t __mb_cur_max;
 #define	MB_CUR_MAX	__mb_cur_max
 
 __BEGIN_DECLS
-__dead	 void _Exit(int) __attribute__((__noreturn__));
-__dead	 void abort(void) __attribute__((__noreturn__));
+__dead	 void _Exit(int);
+__dead	 void abort(void);
 __pure	 int abs(int);
 int	 atexit(void (*)(void));
 double	 atof(const char *);
@@ -108,7 +108,7 @@ void	*bsearch(const void *, const void *, size_t, size_t,
 #endif /* __BSEARCH_DECLARED */
 void	*calloc(size_t, size_t);
 div_t	 div(int, int);
-__dead	 void exit(int) __attribute__((__noreturn__));
+__dead	 void exit(int);
 void	 free(void *);
 __aconst char *getenv(const char *);
 __pure long
@@ -229,6 +229,7 @@ int	 unsetenv(const char *) __RENAME(__unsetenv13);
 #endif
 
 int	 posix_openpt(int);
+int	 posix_memalign(void **, size_t, size_t);
 #endif
 
 /*
@@ -259,6 +260,18 @@ int	 cgetustr(char *, const char *, char **);
 
 int	 daemon(int, int);
 __aconst char *devname(dev_t, mode_t);
+
+#define	HN_DECIMAL		0x01
+#define	HN_NOSPACE		0x02
+#define	HN_B			0x04
+#define	HN_DIVISOR_1000		0x08
+
+#define	HN_GETSCALE		0x10
+#define	HN_AUTOSCALE		0x20
+
+int	 humanize_number(char *, size_t, int64_t, const char *, int, int);
+int	 dehumanize_number(const char *, int64_t *);
+
 dev_t	 getdevmajor(const char *, mode_t);
 int	 getloadavg(double [], int);
 

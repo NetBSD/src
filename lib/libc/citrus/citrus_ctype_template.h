@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_ctype_template.h,v 1.32.16.1 2007/11/06 23:11:11 matt Exp $	*/
+/*	$NetBSD: citrus_ctype_template.h,v 1.32.16.2 2008/01/09 01:34:02 matt Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -209,14 +209,13 @@ _FUNCNAME(mbtowc_priv)(_ENCODING_INFO * __restrict ei,
 
 	state = *psenc;
 	err = _FUNCNAME(mbrtowc_priv)(ei, pwc, (const char **)&s, n, psenc, &nr);
+	if (nr == (size_t)-2)
+		err = EILSEQ;
 	if (err) {
-		*nresult = -1;
-		return (err);
-	}
-	if (nr == (size_t)-2) {
+		/* In error case, we should restore the state. */
 		*psenc = state;
 		*nresult = -1;
-		return (EILSEQ);
+		return (err);
 	}
 
 	*nresult = (int)nr;

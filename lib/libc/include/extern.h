@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.14 2006/11/22 17:23:25 christos Exp $	*/
+/*	$NetBSD: extern.h,v 1.14.8.1 2008/01/09 01:34:08 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -60,5 +60,8 @@ int	snprintf_ss(char * __restrict, size_t, const char * __restrict, ...)
     __attribute__((__format__(__printf__, 3, 4)));
 int	vsnprintf_ss(char * __restrict, size_t, const char * __restrict,
     _BSD_VA_LIST_) __attribute__((__format__(__printf__, 3, 0)));
+
+void	_malloc_prefork(void);
+void	_malloc_postfork(void);
 
 __END_DECLS

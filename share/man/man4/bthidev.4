@@ -1,4 +1,4 @@
-.\" $NetBSD: bthidev.4,v 1.8 2007/04/21 06:15:22 plunky Exp $
+.\" $NetBSD: bthidev.4,v 1.8.4.1 2008/01/09 01:39:05 matt Exp $
 .\"
 .\" Copyright (c) 2006 Itronix Inc.
 .\" All rights reserved.
@@ -92,14 +92,14 @@ connection is present.
 This optional string represents the link mode of the baseband link, and
 may be one of
 .Sq auth ,
-.Sq encrypt
+.Sq encrypt ,
 or
 .Sq secure .
 .El
 .Pp
 When the
 .Nm
-driver has configured its children, it will initate a connection
+driver has configured its children, it will initiate a connection
 to the remote device.
 If this fails and the reconnect flag is not set, it will then wait for
 the device to initiate the connection.

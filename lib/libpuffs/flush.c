@@ -1,4 +1,4 @@
-/*	$NetBSD: flush.c,v 1.11.4.1 2007/11/06 23:11:51 matt Exp $	*/
+/*	$NetBSD: flush.c,v 1.11.4.2 2008/01/09 01:36:45 matt Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: flush.c,v 1.11.4.1 2007/11/06 23:11:51 matt Exp $");
+__RCSID("$NetBSD: flush.c,v 1.11.4.2 2008/01/09 01:36:45 matt Exp $");
 #endif /* !lint */
 
 /*
@@ -59,22 +59,35 @@ static int
 doflush(struct puffs_usermount *pu, void *cookie, int op,
 	off_t start, off_t end)
 {
-	struct puffs_flush pf;
-	ssize_t n;
+	struct puffs_framebuf *pb;
+	struct puffs_flush *pf;
+	size_t winlen;
+	int rv;
 
-	pf.pf_frhdr.pfr_len = sizeof(struct puffs_flush);
-	pf.pf_frhdr.pfr_type = PUFFSOP_FLUSH;
+	pb = puffs_framebuf_make();
+	if (pb == NULL)
+		return ENOMEM;
 
-	pf.pf_op = op;
-	pf.pf_cookie = cookie;
-	pf.pf_start = start;
-	pf.pf_end = end;
+	winlen = sizeof(struct puffs_flush);
+	if ((rv = puffs_framebuf_getwindow(pb, 0, (void *)&pf, &winlen)) == -1)
+		goto out;
+	assert(winlen == sizeof(struct puffs_flush));
 
-	n = write(pu->pu_fd, &pf, sizeof(struct puffs_flush));
+	pf->pf_req.preq_buflen = sizeof(struct puffs_flush);
+	pf->pf_req.preq_opclass = PUFFSOP_FLUSH;
+	pf->pf_req.preq_id = puffs__nextreq(pu);
 
-	/* XXX */
-	assert(n == sizeof(struct puffs_flush));
-	return 0;
+	pf->pf_op = op;
+	pf->pf_cookie = cookie;
+	pf->pf_start = start;
+	pf->pf_end = end;
+
+	rv = puffs_framev_enqueue_cc(puffs_cc_getcc(pu),
+	    puffs_getselectable(pu), pb, 0);
+
+ out:
+	puffs_framebuf_destroy(pb);
+	return rv;
 }
 
 int

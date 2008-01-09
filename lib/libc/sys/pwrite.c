@@ -1,4 +1,4 @@
-/*	$NetBSD: pwrite.c,v 1.8 2006/11/10 17:37:39 christos Exp $	*/
+/*	$NetBSD: pwrite.c,v 1.8.8.1 2008/01/09 01:34:24 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: pwrite.c,v 1.8 2006/11/10 17:37:39 christos Exp $");
+__RCSID("$NetBSD: pwrite.c,v 1.8.8.1 2008/01/09 01:34:24 matt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -48,6 +48,7 @@ __weak_alias(_pwrite,_sys_pwrite)
 #endif
 
 ssize_t	 _sys_pwrite(int, const void *, size_t, off_t);
+ssize_t	 __pwrite(int, const void *, size_t, int, off_t);
 
 /*
  * This function provides 64-bit offset padding that
@@ -56,14 +57,6 @@ ssize_t	 _sys_pwrite(int, const void *, size_t, off_t);
 ssize_t
 _sys_pwrite(int fd, const void *buf, size_t nbyte, off_t offset)
 {
-	quad_t q;
-	int rv;
 
-	q = __syscall((quad_t)SYS_pwrite, fd, buf, nbyte, 0, offset);
-	if (/* LINTED constant */ sizeof (quad_t) == sizeof (register_t) ||
-	    /* LINTED constant */ BYTE_ORDER == LITTLE_ENDIAN)
-		rv = (int)q;
-	else
-		rv = (int)((u_quad_t)q >> 32);
-	return rv;
+	return __pwrite(fd, buf, nbyte, 0, offset);
 }

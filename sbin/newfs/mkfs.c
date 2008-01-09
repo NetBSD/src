@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.102 2006/10/16 03:04:45 christos Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.102.8.1 2008/01/09 01:38:12 matt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -73,7 +73,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.102 2006/10/16 03:04:45 christos Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.102.8.1 2008/01/09 01:38:12 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -128,7 +128,6 @@ static void *mkfs_malloc(size_t size);
  * make file system for cylinder-group style file systems
  */
 #define	UMASK		0755
-#define	POWEROF2(num)	(((num) & ((num) - 1)) == 0)
 
 union {
 	struct fs fs;
@@ -180,7 +179,7 @@ mkfs(const char *fsys, int fi, int fo,
 		calc_memfree();
 		if (fssize * sectorsize > memleft)
 			fssize = memleft / sectorsize;
-		if ((membase = mkfs_malloc(fssize * sectorsize)) == 0)
+		if ((membase = mkfs_malloc(fssize * sectorsize)) == NULL)
 			exit(12);
 	}
 #endif
@@ -220,12 +219,12 @@ mkfs(const char *fsys, int fi, int fo,
 	 */
 	sblock.fs_bsize = bsize;
 	sblock.fs_fsize = fsize;
-	if (!POWEROF2(sblock.fs_bsize)) {
+	if (!powerof2(sblock.fs_bsize)) {
 		printf("block size must be a power of 2, not %d\n",
 		    sblock.fs_bsize);
 		exit(16);
 	}
-	if (!POWEROF2(sblock.fs_fsize)) {
+	if (!powerof2(sblock.fs_fsize)) {
 		printf("fragment size must be a power of 2, not %d\n",
 		    sblock.fs_fsize);
 		exit(17);
@@ -251,7 +250,7 @@ mkfs(const char *fsys, int fi, int fo,
 		exit(20);
 	}
 
-	if (maxbsize < bsize || !POWEROF2(maxbsize)) {
+	if (maxbsize < bsize || !powerof2(maxbsize)) {
 		sblock.fs_maxbsize = sblock.fs_bsize;
 	} else if (sblock.fs_maxbsize > FS_MAXCONTIG * sblock.fs_bsize) {
 		sblock.fs_maxbsize = FS_MAXCONTIG * sblock.fs_bsize;
@@ -462,7 +461,7 @@ mkfs(const char *fsys, int fi, int fo,
 		errx(1, "cylinder group summary doesn't fit in sectors");
 	fscs_0 = mmap(0, 2 * sblock.fs_fsize, PROT_READ|PROT_WRITE,
 			MAP_ANON|MAP_PRIVATE, -1, 0);
-	if (fscs_0 == NULL)
+	if (fscs_0 == MAP_FAILED)
 		exit(39);
 	memset(fscs_0, 0, 2 * sblock.fs_fsize);
 	fs_csaddr = sblock.fs_csaddr;
@@ -551,7 +550,7 @@ mkfs(const char *fsys, int fi, int fo,
 	for (;;) {
 		iobuf = mmap(0, iobuf_memsize, PROT_READ|PROT_WRITE,
 				MAP_ANON|MAP_PRIVATE, -1, 0);
-		if (iobuf != NULL)
+		if (iobuf != MAP_FAILED)
 			break;
 		if (iobuf_memsize != iobufsize) {
 			/* Try again with the smaller size */
@@ -1534,6 +1533,7 @@ static void *
 mkfs_malloc(size_t size)
 {
 	u_long pgsz;
+	caddr_t *memory;
 
 	if (size == 0)
 		return (NULL);
@@ -1545,7 +1545,8 @@ mkfs_malloc(size_t size)
 	if (size > memleft)
 		size = memleft;
 	memleft -= size;
-	return (mmap(0, size, PROT_READ|PROT_WRITE, MAP_ANON|MAP_PRIVATE,
-	    -1, 0));
+	memory = mmap(0, size, PROT_READ|PROT_WRITE, MAP_ANON|MAP_PRIVATE,
+	    -1, 0);
+	return memory != MAP_FAILED ? memory : NULL;
 }
 #endif	/* MFS */

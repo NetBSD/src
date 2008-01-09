@@ -1,4 +1,4 @@
-.\"	$NetBSD: virtdir.3,v 1.1 2007/04/15 15:10:57 agc Exp $
+.\"	$NetBSD: virtdir.3,v 1.1.4.1 2008/01/09 01:39:01 matt Exp $
 .\"
 .\" Copyright © 2007 Alistair Crooks.  All rights reserved.
 .\"
@@ -73,7 +73,7 @@
 .Sh DESCRIPTION
 .Nm
 provides virtual directory functionality for the benefit of
-.Xr librefuse 3
+.Xr refuse 3
 file systems (and also for FUSE-based file systems).
 .Pp
 It uses the framework provided by the
@@ -87,20 +87,26 @@ routines build up and manage a list of virtual directory entries.
 Each virtual directory entry is indexed by its full pathname within
 the file system.
 This is consistent with the way that
-.Xr librefuse 3
+.Xr refuse 3
 locates directory entries - by full pathname.
 .Pp
 The list of paths is sorted alphabetically.
 Each of these virtual directory entries has a distinct type -
-file ('f'), directory ('d') or symbolic link ('l').
+file
+.Pq Sq f ,
+directory
+.Pq Sq d ,
+or symbolic link
+.Pq Sq l .
 Additionally, an entry can point to a target - this
-is useful when modelling virtual directory entries which are
+is useful when modeling virtual directory entries which are
 symbolic links.
 The list contains three basic
 .Xr stat 2
 structures, which contain basic information for file, directory
-and symbolic link entries. This information can be specified at
-initialisation time, and customised within the individual
+and symbolic link entries.
+This information can be specified at
+initialization time, and customized within the individual
 getattr operation routines as specified by the
 individual file systems.
 The
@@ -109,18 +115,23 @@ functionality can also make virtual directory entries available
 on a per-directory basis
 to the caller by means of routines analogous to
 .Xr opendir 3 ,
-.Xr readdir 3 and
+.Xr readdir 3 ,
+and
 .Xr closedir 3 .
 These are
-openvirtdir, readvirtdir and closevirtdir, respectively.
+.Fn openvirtdir ,
+.Fn readvirtdir ,
+and
+.Fn closevirtdir ,
+respectively.
 .Sh SEE ALSO
-.Xr librefuse 3 ,
 .Xr puffs 3 ,
+.Xr refuse 3 ,
 .Xr puffs 4
 .Sh HISTORY
 An unsupported experimental version of
 .Nm
 first appeared in
 .Nx 5.0 .
-.Sh AUTHOR
+.Sh AUTHORS
 .An Alistair Crooks Aq agc@NetBSD.org

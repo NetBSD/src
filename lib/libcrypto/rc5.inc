@@ -1,8 +1,8 @@
-#	$NetBSD: rc5.inc,v 1.7 2006/03/17 23:10:48 dsl Exp $
+#	$NetBSD: rc5.inc,v 1.7.10.1 2008/01/09 01:34:39 matt Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
-#	SRCS extracted from /users/itojun/NetBSD/basesrc/lib/libcrypto/../../crypto/dist/openssl/crypto/rc5/Makefile.ssl
+#	SRCS extracted from src/crypto/dist/openssl/crypto/rc5/Makefile
 #
 
 .PATH:	${OPENSSLSRC}/crypto/rc5

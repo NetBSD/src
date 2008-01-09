@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.c,v 1.48 2006/11/24 19:37:02 christos Exp $	*/
+/*	$NetBSD: malloc.c,v 1.48.8.1 2008/01/09 01:34:15 matt Exp $	*/
 
 /*
  * ----------------------------------------------------------------------------
@@ -8,7 +8,7 @@
  * this stuff is worth it, you can buy me a beer in return.   Poul-Henning Kamp
  * ----------------------------------------------------------------------------
  *
- * From FreeBSD: malloc.c,v 1.43 1998/09/30 06:13:59 jb
+ * From FreeBSD: malloc.c,v 1.91 2006/01/12 07:28:20 jasone
  *
  */
 
@@ -40,12 +40,30 @@
  *
  */
 
+#include "namespace.h"
 #if defined(__FreeBSD__)
 #   if defined(__i386__)
 #       define malloc_minsize		16U
 #   endif
+#   if defined(__ia64__)
+#	define malloc_pageshift		13U
+#	define malloc_minsize		16U
+#   endif
 #   if defined(__alpha__)
+#       define malloc_pageshift		13U
 #       define malloc_minsize		16U
+#   endif
+#   if defined(__sparc64__)
+#       define malloc_pageshift		13U
+#       define malloc_minsize		16U
+#   endif
+#   if defined(__amd64__)
+#       define malloc_pageshift		12U
+#       define malloc_minsize		16U
+#   endif
+#   if defined(__arm__)
+#       define malloc_pageshift         12U
+#       define malloc_minsize           16U
 #   endif
 #   define HAS_UTRACE
 #   define UTRACE_LABEL
@@ -60,26 +78,27 @@ void utrace(struct ut *, int);
 #   include "libc_private.h"
 #   include "spinlock.h"
     static spinlock_t thread_lock	= _SPINLOCK_INITIALIZER;
-#   define THREAD_LOCK()		if (__isthreaded) _SPINLOCK(&thread_lock);
-#   define THREAD_UNLOCK()		if (__isthreaded) _SPINUNLOCK(&thread_lock);
+#   define _MALLOC_LOCK()		if (__isthreaded) _SPINLOCK(&thread_lock);
+#   define _MALLOC_UNLOCK()		if (__isthreaded) _SPINUNLOCK(&thread_lock);
 #endif /* __FreeBSD__ */
 
+#include <sys/types.h>
 #if defined(__NetBSD__)
 #   define malloc_minsize               16U
 #   define HAS_UTRACE
 #   define UTRACE_LABEL "malloc",
 #include <sys/cdefs.h>
+#include "extern.h"
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: malloc.c,v 1.48 2006/11/24 19:37:02 christos Exp $");
+__RCSID("$NetBSD: malloc.c,v 1.48.8.1 2008/01/09 01:34:15 matt Exp $");
 #endif /* LIBC_SCCS and not lint */
-#include <sys/types.h>
 int utrace(const char *, void *, size_t);
 
 #include <reentrant.h>
 extern int __isthreaded;
 static mutex_t thread_lock = MUTEX_INITIALIZER;
-#define THREAD_LOCK()	if (__isthreaded) mutex_lock(&thread_lock);
-#define THREAD_UNLOCK()	if (__isthreaded) mutex_unlock(&thread_lock);
+#define _MALLOC_LOCK()	if (__isthreaded) mutex_lock(&thread_lock);
+#define _MALLOC_UNLOCK()	if (__isthreaded) mutex_unlock(&thread_lock);
 #endif /* __NetBSD__ */
 
 #if defined(__sparc__) && defined(sun)
@@ -88,7 +107,7 @@ static mutex_t thread_lock = MUTEX_INITIALIZER;
     static int fdzero;
 #   define MMAP_FD	fdzero
 #   define INIT_MMAP() \
-	{ if ((fdzero=open("/dev/zero", O_RDWR, 0000)) == -1) \
+	{ if ((fdzero = open(_PATH_DEVZERO, O_RDWR, 0000)) == -1) \
 	    wrterror("open of /dev/zero"); }
 #endif /* __sparc__ */
 
@@ -97,15 +116,18 @@ static mutex_t thread_lock = MUTEX_INITIALIZER;
 #   define malloc_minsize		16U
 #endif /* __FOOCPU__ && __BAROS__ */
 
+#ifndef ZEROSIZEPTR
+#define ZEROSIZEPTR	((void *)(uintptr_t)(1UL << (malloc_pageshift - 1)))
+#endif
 
 /*
  * No user serviceable parts behind this point.
  */
-#include "namespace.h"
 #include <sys/types.h>
 #include <sys/mman.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <paths.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -172,12 +194,12 @@ static size_t malloc_pagemask;
 #define ptr2idx(foo) \
     (((size_t)(uintptr_t)(foo) >> malloc_pageshift)-malloc_origo)
 
-#ifndef THREAD_LOCK
-#define THREAD_LOCK()
+#ifndef _MALLOC_LOCK
+#define _MALLOC_LOCK()
 #endif
 
-#ifndef THREAD_UNLOCK
-#define THREAD_UNLOCK()
+#ifndef _MALLOC_UNLOCK
+#define _MALLOC_UNLOCK()
 #endif
 
 #ifndef MMAP_FD
@@ -192,14 +214,8 @@ static size_t malloc_pagemask;
 #define MADV_FREE MADV_DONTNEED
 #endif
 
-/* Set when initialization has been done */
-static unsigned malloc_started;	
-
-/* Recusion flag for public interface. */
-static int malloc_active;
-
 /* Number of free pages we cache */
-static unsigned malloc_cache = 16;
+static size_t malloc_cache = 16;
 
 /* The offset from pagenumber to index into the page directory */
 static size_t malloc_origo;
@@ -211,7 +227,7 @@ static size_t last_idx;
 static struct	pginfo **page_dir;
 
 /* How many slots in the page directory */
-static unsigned	malloc_ninfo;
+static size_t	malloc_ninfo;
 
 /* Free pages line up here */
 static struct pgfree free_list;
@@ -226,7 +242,9 @@ static int suicide;
 static int malloc_realloc;
 
 /* pass the kernel a hint on free pages ?  */
+#if defined(MADV_FREE)
 static int malloc_hint = 0;
+#endif
 
 /* xmalloc behaviour ?  */
 static int malloc_xmalloc;
@@ -264,14 +282,14 @@ static void *malloc_brk;
 static struct pgfree *px;
 
 /* compile-time options */
-char *malloc_options;
+const char *_malloc_options;
 
 /* Name of the current public function */
 static const char *malloc_func;
 
 /* Macro for mmap */
 #define MMAP(size) \
-	mmap(0, (size), PROT_READ|PROT_WRITE, MAP_ANON|MAP_PRIVATE, \
+	mmap(NULL, (size), PROT_READ|PROT_WRITE, MAP_ANON|MAP_PRIVATE, \
 	    MMAP_FD, (off_t)0);
 
 /*
@@ -283,29 +301,36 @@ static void ifree(void *ptr);
 static void *irealloc(void *ptr, size_t size);
 
 static void
+wrtmessage(const char *p1, const char *p2, const char *p3, const char *p4)
+{
+
+    write(STDERR_FILENO, p1, strlen(p1));
+    write(STDERR_FILENO, p2, strlen(p2));
+    write(STDERR_FILENO, p3, strlen(p3));
+    write(STDERR_FILENO, p4, strlen(p4));
+}
+
+void (*_malloc_message)(const char *p1, const char *p2, const char *p3,
+	    const char *p4) = wrtmessage;
+static void
 wrterror(const char *p)
 {
-    const char *progname = getprogname();
-    const char *q = " error: ";
-    write(STDERR_FILENO, progname, strlen(progname));
-    write(STDERR_FILENO, malloc_func, strlen(malloc_func));
-    write(STDERR_FILENO, q, strlen(q));
-    write(STDERR_FILENO, p, strlen(p));
+
     suicide = 1;
+    _malloc_message(getprogname(), malloc_func, " error: ", p);
     abort();
 }
 
 static void
 wrtwarning(const char *p)
 {
-    const char *progname = getprogname();
-    const char *q = " warning: ";
-    if (malloc_abort)
+
+    /*
+     * Sensitive processes, somewhat arbitrarily defined here as setuid,
+     * setgid, root and wheel cannot afford to have malloc mistakes.
+     */
+    if (malloc_abort || issetugid() || getuid() == 0 || getgid() == 0)
 	wrterror(p);
-    write(STDERR_FILENO, progname, strlen(progname));
-    write(STDERR_FILENO, malloc_func, strlen(malloc_func));
-    write(STDERR_FILENO, q, strlen(q));
-    write(STDERR_FILENO, p, strlen(p));
 }
 
 /*
@@ -393,7 +418,7 @@ extend_pgdir(size_t idx)
      */
 
     /* Get new pages */
-    new = (struct pginfo**) MMAP(newlen);
+    new = MMAP(newlen);
     if (new == MAP_FAILED)
 	return 0;
 
@@ -416,11 +441,13 @@ extend_pgdir(size_t idx)
  * Initialize the world
  */
 static void
-malloc_init (void)
+malloc_init(void)
 {
-    char *p, b[64];
-    int i, j;
-    int errnosave;
+    const char *p;
+    char b[64];
+    size_t i;
+    ssize_t j;
+    int save_errno = errno;
 
     /*
      * Compute page-size related variables.
@@ -440,17 +467,17 @@ malloc_init (void)
 
     for (i = 0; i < 3; i++) {
 	if (i == 0) {
-	    errnosave = errno;
 	    j = readlink("/etc/malloc.conf", b, sizeof b - 1);
-	    errno = errnosave;
 	    if (j <= 0)
 		continue;
 	    b[j] = '\0';
 	    p = b;
-	} else if (i == 1) {
+	} else if (i == 1 && issetugid() == 0) {
 	    p = getenv("MALLOC_OPTIONS");
+	} else if (i == 1) {
+	    continue;
 	} else {
-	    p = malloc_options;
+	    p = _malloc_options;
 	}
 	for (; p != NULL && *p != '\0'; p++) {
 	    switch (*p) {
@@ -475,10 +502,8 @@ malloc_init (void)
 		case 'z': malloc_zero    = 0; break;
 		case 'Z': malloc_zero    = 1; break;
 		default:
-		    j = malloc_abort;
-		    malloc_abort = 0;
-		    wrtwarning("unknown char in MALLOC_OPTIONS.\n");
-		    malloc_abort = j;
+		    _malloc_message(getprogname(), malloc_func,
+			 " warning: ", "unknown char in MALLOC_OPTIONS\n");
 		    break;
 	    }
 	}
@@ -491,17 +516,10 @@ malloc_init (void)
      * the user asked for.
      */
     if (malloc_zero)
-	malloc_junk=1;
-
-    /*
-     * If we run with junk (or implicitly from above: zero), we want to
-     * force realloc() to get new storage, so we can DTRT with it.
-     */
-    if (malloc_junk)
-	malloc_realloc=1;
+	malloc_junk = 1;
 
     /* Allocate one page for the page directory */
-    page_dir = (struct pginfo **) MMAP(malloc_pagesize);
+    page_dir = MMAP(malloc_pagesize);
 
     if (page_dir == MAP_FAILED)
 	wrterror("mmap(2) failed, check limits.\n");
@@ -527,10 +545,9 @@ malloc_init (void)
      * This is a nice hack from Kaleb Keithly (kaleb@x.org).
      * We can sbrk(2) further back when we keep this on a low address.
      */
-    px = (struct pgfree *) imalloc (sizeof *px);
+    px = imalloc(sizeof *px);
 
-    /* Been here, done that */
-    malloc_started++;
+    errno = save_errno;
 }
 
 /*
@@ -632,7 +649,8 @@ malloc_make_chunks(int bits)
 {
     struct  pginfo *bp;
     void *pp;
-    int i, k, l;
+    int i, k;
+    long l;
 
     /* Allocate a new bucket */
     pp = malloc_pages(malloc_pagesize);
@@ -640,15 +658,15 @@ malloc_make_chunks(int bits)
 	return 0;
 
     /* Find length of admin structure */
-    l = (int)offsetof(struct pginfo, bits[0]);
-    l += sizeof bp->bits[0] *
+    l = (long)offsetof(struct pginfo, bits[0]);
+    l += (long)sizeof bp->bits[0] *
 	(((malloc_pagesize >> bits)+MALLOC_BITS-1) / MALLOC_BITS);
 
     /* Don't waste more than two chunks on this */
     if ((1<<(bits)) <= l+l) {
 	bp = (struct  pginfo *)pp;
     } else {
-	bp = (struct  pginfo *)imalloc((size_t)l);
+	bp = imalloc((size_t)l);
 	if (bp == NULL) {
 	    ifree(pp);
 	    return 0;
@@ -657,7 +675,7 @@ malloc_make_chunks(int bits)
 
     bp->size = (1<<bits);
     bp->shift = bits;
-    bp->total = bp->free = malloc_pagesize >> bits;
+    bp->total = bp->free = (u_short)(malloc_pagesize >> bits);
     bp->page = pp;
 
     /* set all valid bits in the bitmap */
@@ -673,11 +691,11 @@ malloc_make_chunks(int bits)
 
     if (bp == bp->page) {
 	/* Mark the ones we stole for ourselves */
-	for(i=0;l > 0;i++) {
-	    bp->bits[i/MALLOC_BITS] &= ~(1<<(i%MALLOC_BITS));
+	for(i = 0; l > 0; i++) {
+	    bp->bits[i / MALLOC_BITS] &= ~(1 << (i % MALLOC_BITS));
 	    bp->free--;
 	    bp->total--;
-	    l -= (1 << bits);
+	    l -= (long)(1 << bits);
 	}
     }
 
@@ -703,12 +721,13 @@ malloc_bytes(size_t size)
     int j;
     u_int u;
     struct  pginfo *bp;
-    int k;
+    size_t k;
     u_int *lp;
 
     /* Don't bother with anything less than this */
     if (size < malloc_minsize)
 	size = malloc_minsize;
+
 
     /* Find the right bucket */
     j = 1;
@@ -763,6 +782,8 @@ imalloc(size_t size)
 	abort();
 
     if ((size + malloc_pagesize) < size)	/* Check for overflow */
+	result = NULL;
+    else if ((size + malloc_pagesize) >= (uintptr_t)page_dir)
 	result = NULL;
     else if (size <= malloc_maxsize)
 	result = malloc_bytes(size);
@@ -821,6 +842,8 @@ irealloc(void *ptr, size_t size)
         if (!malloc_realloc && 			/* unless we have to, */
 	  size <= osize && 			/* .. or are too small, */
 	  size > (osize - malloc_pagesize)) {	/* .. or can free a page, */
+	    if (malloc_junk)
+		memset((u_char *)ptr + size, SOME_JUNK, osize-size);
 	    return ptr;				/* don't do anything. */
 	}
 
@@ -836,7 +859,7 @@ irealloc(void *ptr, size_t size)
 	i = ((size_t)(uintptr_t)ptr & malloc_pagemask) >> (*mp)->shift;
 
 	/* Verify that it isn't a free chunk already */
-        if ((*mp)->bits[i/MALLOC_BITS] & (1<<(i%MALLOC_BITS))) {
+        if ((*mp)->bits[i/MALLOC_BITS] & (1UL << (i % MALLOC_BITS))) {
 	    wrtwarning("chunk is already free.\n");
 	    return NULL;
 	}
@@ -844,9 +867,11 @@ irealloc(void *ptr, size_t size)
 	osize = (*mp)->size;
 
 	if (!malloc_realloc &&		/* Unless we have to, */
-	  size < osize && 		/* ..or are too small, */
-	  (size > osize/2 ||	 	/* ..or could use a smaller size, */
+	  size <= osize && 		/* ..or are too small, */
+	  (size > osize / 2 ||	 	/* ..or could use a smaller size, */
 	  osize == malloc_minsize)) {	/* ..(if there is one) */
+	    if (malloc_junk)
+		memset((u_char *)ptr + size, SOME_JUNK, osize-size);
 	    return ptr;			/* ..Don't do anything */
 	}
 
@@ -914,7 +939,7 @@ free_pages(void *ptr, size_t idx, struct pginfo *info)
 
     /* add to free-list */
     if (px == NULL)
-	px = imalloc(sizeof *pt);	/* This cannot fail... */
+	px = imalloc(sizeof *px);	/* This cannot fail... */
     px->page = ptr;
     px->end =  tail;
     px->size = l;
@@ -1021,7 +1046,7 @@ free_bytes(void *ptr, size_t idx, struct pginfo *info)
 	return;
     }
 
-    if (info->bits[i/MALLOC_BITS] & (1<<(i%MALLOC_BITS))) {
+    if (info->bits[i/MALLOC_BITS] & (1UL << (i % MALLOC_BITS))) {
 	wrtwarning("chunk is already free.\n");
 	return;
     }
@@ -1029,7 +1054,7 @@ free_bytes(void *ptr, size_t idx, struct pginfo *info)
     if (malloc_junk)
 	memset(ptr, SOME_JUNK, (size_t)info->size);
 
-    info->bits[i/MALLOC_BITS] |= 1<<(i%MALLOC_BITS);
+    info->bits[i/MALLOC_BITS] |= (u_int)(1UL << (i % MALLOC_BITS));
     info->free++;
 
     mp = page_dir + info->shift;
@@ -1103,91 +1128,157 @@ ifree(void *ptr)
     return;
 }
 
+static void *
+pubrealloc(void *ptr, size_t size, const char *func)
+{
+    void *r;
+    int err = 0;
+    static int malloc_active; /* Recusion flag for public interface. */
+    static unsigned malloc_started; /* Set when initialization has been done */
+
+    /*
+     * If a thread is inside our code with a functional lock held, and then
+     * catches a signal which calls us again, we would get a deadlock if the
+     * lock is not of a recursive type.
+     */
+    _MALLOC_LOCK();
+    malloc_func = func;
+    if (malloc_active > 0) {
+	if (malloc_active == 1) {
+	    wrtwarning("recursive call\n");
+	    malloc_active = 2;
+	}
+        _MALLOC_UNLOCK();
+	errno = EINVAL;
+	return (NULL);
+    } 
+    malloc_active = 1;
+
+    if (!malloc_started) {
+        if (ptr != NULL) {
+	    wrtwarning("malloc() has never been called\n");
+	    malloc_active = 0;
+            _MALLOC_UNLOCK();
+	    errno = EINVAL;
+	    return (NULL);
+	}
+	malloc_init();
+	malloc_started = 1;
+    }
+   
+    if (ptr == ZEROSIZEPTR)
+	ptr = NULL;
+    if (malloc_sysv && !size) {
+	if (ptr != NULL)
+	    ifree(ptr);
+	r = NULL;
+    } else if (!size) {
+	if (ptr != NULL)
+	    ifree(ptr);
+	r = ZEROSIZEPTR;
+    } else if (ptr == NULL) {
+	r = imalloc(size);
+	err = (r == NULL);
+    } else {
+        r = irealloc(ptr, size);
+	err = (r == NULL);
+    }
+    UTRACE(ptr, size, r);
+    malloc_active = 0;
+    _MALLOC_UNLOCK();
+    if (malloc_xmalloc && err)
+	wrterror("out of memory\n");
+    if (err)
+	errno = ENOMEM;
+    return (r);
+}
+
 /*
  * These are the public exported interface routines.
  */
 
-
 void *
 malloc(size_t size)
 {
-    void *r;
 
-    THREAD_LOCK();
-    malloc_func = " in malloc():";
-    if (malloc_active++) {
-	wrtwarning("recursive call.\n");
-        malloc_active--;
-	THREAD_UNLOCK();
+    return pubrealloc(NULL, size, " in malloc():");
+}
+
+int
+posix_memalign(void **memptr, size_t alignment, size_t size)
+{
+    int err;
+    void *result;
+
+    /* Make sure that alignment is a large enough power of 2. */
+    if (((alignment - 1) & alignment) != 0 || alignment < sizeof(void *))
+	    return EINVAL;
+
+    /* 
+     * (size & alignment) is enough to assure the requested alignment, since
+     * the allocator always allocates power-of-two blocks.
+     */
+    err = errno; /* Protect errno against changes in pubrealloc(). */
+    result = pubrealloc(NULL, (size & alignment), " in posix_memalign()");
+    errno = err;
+
+    if (result == NULL)
+	return ENOMEM;
+
+    *memptr = result;
+    return 0;
+}
+
+void *
+calloc(size_t num, size_t size)
+{
+    void *ret;
+
+    if (size != 0 && (num * size) / size != num) {
+	/* size_t overflow. */
+	errno = ENOMEM;
 	return (NULL);
     }
-    if (!malloc_started)
-	malloc_init();
-    if (malloc_sysv && !size)
-	r = NULL;
-    else
-	r = imalloc(size);
-    UTRACE(0, size, r);
-    malloc_active--;
-    THREAD_UNLOCK();
-    if (r == NULL && (size != 0 || !malloc_sysv)) {
-	if (malloc_xmalloc)
-	    wrterror("out of memory.\n");
-	errno = ENOMEM;
-    }
-    return (r);
+
+    ret = pubrealloc(NULL, num * size, " in calloc():");
+
+    if (ret != NULL)
+	memset(ret, 0, num * size);
+
+    return ret;
 }
 
 void
 free(void *ptr)
 {
-    THREAD_LOCK();
-    malloc_func = " in free():";
-    if (malloc_active++) {
-	wrtwarning("recursive call.\n");
-	malloc_active--;
-	THREAD_UNLOCK();
-	return;
-    }
-    if (!malloc_started)
-	malloc_init();
-    ifree(ptr);
-    UTRACE(ptr, 0, 0);
-    malloc_active--;
-    THREAD_UNLOCK();
-    return;
+
+    pubrealloc(ptr, 0, " in free():");
 }
 
 void *
 realloc(void *ptr, size_t size)
 {
-    void *r;
 
-    THREAD_LOCK();
-    malloc_func = " in realloc():";
-    if (malloc_active++) {
-	wrtwarning("recursive call.\n");
-        malloc_active--;
-	THREAD_UNLOCK();
-	return (NULL);
-    }
-    if (!malloc_started)
-	malloc_init();
-    if (malloc_sysv && !size) {
-	ifree(ptr);
-	r = NULL;
-    } else if (!ptr) {
-	r = imalloc(size);
-    } else {
-        r = irealloc(ptr, size);
-    }
-    UTRACE(ptr, size, r);
-    malloc_active--;
-    THREAD_UNLOCK();
-    if (r == NULL && (size != 0 || !malloc_sysv)) {
-	if (malloc_xmalloc)
-	    wrterror("out of memory.\n");
-	errno = ENOMEM;
-    }
-    return (r);
+    return pubrealloc(ptr, size, " in realloc():");
+}
+
+/*
+ * Begin library-private functions, used by threading libraries for protection
+ * of malloc during fork().  These functions are only called if the program is
+ * running in threaded mode, so there is no need to check whether the program
+ * is threaded here.
+ */
+
+void
+_malloc_prefork(void)
+{
+
+	_MALLOC_LOCK();
+}
+
+void
+_malloc_postfork(void)
+{
+
+	_MALLOC_UNLOCK();
 }

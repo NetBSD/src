@@ -1,11 +1,11 @@
-/*	$NetBSD: pthread_tsd.c,v 1.3 2007/08/16 12:01:49 ad Exp $	*/
+/*	$NetBSD: pthread_tsd.c,v 1.3.2.1 2008/01/09 01:36:40 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Nathan J. Williams.
+ * by Nathan J. Williams, and by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_tsd.c,v 1.3 2007/08/16 12:01:49 ad Exp $");
+__RCSID("$NetBSD: pthread_tsd.c,v 1.3.2.1 2008/01/09 01:36:40 matt Exp $");
 
 /* Functions and structures dealing with thread-specific data */
 #include <errno.h>
@@ -182,6 +182,7 @@ pthread__destroy_tsd(pthread_t self)
 
 	if (!self->pt_havespecific)
 		return;
+	pthread_mutex_unlock(&self->pt_lock);
 
 	/* Butenhof, section 5.4.2 (page 167):
 	 * 
@@ -227,4 +228,5 @@ pthread__destroy_tsd(pthread_t self)
 	} while (!done && iterations--);
 
 	self->pt_havespecific = 0;
+	pthread_mutex_lock(&self->pt_lock);
 }

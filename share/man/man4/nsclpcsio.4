@@ -1,25 +1,53 @@
-.\" $NetBSD: nsclpcsio.4,v 1.1 2002/08/06 16:44:50 drochner Exp $
+.\" $NetBSD: nsclpcsio.4,v 1.1.24.1 2008/01/09 01:39:09 matt Exp $
 .\"
-.Dd August 6, 2002
+.Dd November 9, 2007
 .Dt NSCLPCSIO 4
 .Os
 .Sh NAME
 .Nm nsclpcsio
-.Nd National Semiconductor PC87366 hardware monitor
+.Nd National Semiconductor PC87366 LPC Super I/O
 .Sh SYNOPSIS
 .Cd "nsclpcsio* at isa?"
+.Cd "gpio* at nsclpcsio?"
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for the hardware monitor part of the
+driver provides support for the 
 .Tn National Semiconductor
-PC87366 LPC Super I/O chip to be used with
-the
-.Xr envsys 4
-API.
+PC87366 LPC Super I/O. The Super I/O incorporates several logical
+devices, the following ones are supported: GPIO, VLM and TMS.
 .Pp
-Currently, only the 3 temperature monitors are supported:
-Two external inputs and one sensor built into the PC87366 chip.
+The GPIO logical device provides 29 I/O pins which can be accessed
+through the
+.Xr gpio 4
+framework. The
+.Xr gpioctl 8
+program allows easy manipulation of the pins from userland.
+.Pp
+VLM and TMS logical devices provides hardware monitoring capabilities to
+be used with the
+.Xr envsys 4
+API. The following 17 monitoring sensors are available:
+.Bl -column "Sensor" "Units" "Typical" -offset indent
+.It Sy "Sensor" Ta Sy "Units" Ta Sy "Typical Use"
+.It Li "TSENS1" Ta "uK" Ta "Remote diode"
+.It Li "TSENS2" Ta "uK" Ta "Remote diode"
+.It Li "TNSC" Ta "uK" Ta "Local diode"
+.It Li "VSENS0" Ta "uV DC" Ta "External source"
+.It Li "VSENS1" Ta "uV DC" Ta "External source"
+.It Li "VSENS2" Ta "uV DC" Ta "External source"
+.It Li "VSENS3" Ta "uV DC" Ta "External source"
+.It Li "VSENS4" Ta "uV DC" Ta "External source"
+.It Li "VSENS5" Ta "uV DC" Ta "External source"
+.It Li "VSENS6" Ta "uV DC" Ta "External source"
+.It Li "VSB" Ta "uV DC" Ta "VSB"
+.It Li "VDD" Ta "uV DC" Ta "VDD"
+.It Li "VBAT" Ta "uV DC" Ta "VBAT"
+.It Li "AVDD" Ta "uV DC" Ta "AVDD"
+.It Li "TS1" Ta "uV DC" Ta "Thermistor"
+.It Li "TS2" Ta "uV DC" Ta "Thermistor"
+.It Li "TS3" Ta "uV DC" Ta "Thermistor"
+.El
 .Sh SEE ALSO
 .Xr envsys 4 ,
 .Xr envstat 8
@@ -32,5 +60,3 @@ device appeared in
 The chip decodes address ranges which are not obvious and
 cannot be controlled by the kernel configuration file
 (must be set up by the BIOS).
-.Pp
-Voltage and Fan monitoring is not supported yet.

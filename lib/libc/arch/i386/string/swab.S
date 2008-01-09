@@ -6,7 +6,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: swab.S,v 1.12 2005/08/02 14:25:40 rpaulo Exp $")
+	RCSID("$NetBSD: swab.S,v 1.12.10.1 2008/01/09 01:33:57 matt Exp $")
 #endif
 
 /*
@@ -21,8 +21,6 @@ ENTRY(swab)
 	movl	12(%esp),%esi
 	movl	16(%esp),%edi
 	movl	20(%esp),%ecx
-
-	cld				# set direction forward
 
 	shrl	$1,%ecx
 	testl	$7,%ecx			# copy first group of 1 to 7 words

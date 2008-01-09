@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.131 2007/05/30 01:13:15 tls Exp $
+#	$NetBSD: Makefile,v 1.131.4.1 2008/01/09 01:33:52 matt Exp $
 #	@(#)Makefile	8.2 (Berkeley) 2/3/94
 #
 # All library objects contain sccsid strings by default; they may be
@@ -65,6 +65,7 @@ COMPATDIR=${.CURDIR}/compat
 .include "${.CURDIR}/isc/Makefile.inc"
 .include "${.CURDIR}/locale/Makefile.inc"
 .include "${.CURDIR}/md/Makefile.inc"
+.include "${.CURDIR}/misc/Makefile.inc"
 .include "${.CURDIR}/net/Makefile.inc"
 .include "${.CURDIR}/nameser/Makefile.inc"
 .include "${.CURDIR}/nls/Makefile.inc"
@@ -109,3 +110,7 @@ FILESDIR=	/var/db
 CSHLIBFLAGS+=	-D_I18N_DYNAMIC
 
 .include <bsd.lib.mk>
+
+# force the dynamic linker to initialize libc first
+SHLIB_SHFLAGS+=	-Wl,-z,initfirst
+

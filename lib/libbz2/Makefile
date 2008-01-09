@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2007/05/28 12:06:18 tls Exp $
+#	$NetBSD: Makefile,v 1.11.4.1 2008/01/09 01:33:52 matt Exp $
 
 USE_FORT?= yes	# data driven bugs?
 
@@ -19,7 +19,7 @@ TEXINFO=	bzip2.info
 CLEANFILES+=	bzip2.texi
 
 # XXX huffman.c gets mis-compiled with 2.95.3
-.if ${MACHINE_ARCH} == "vax"
+.if ${MACHINE_ARCH} == "vax" && ${HAVE_GCC} < 3
 COPTS+=		-O0
 .endif
 

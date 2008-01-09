@@ -1,4 +1,4 @@
-/*	$NetBSD: pass5.c,v 1.13 2006/05/06 22:23:37 christos Exp $	*/
+/*	$NetBSD: pass5.c,v 1.13.10.1 2008/01/09 01:38:04 matt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)pass5.c	8.6 (Berkeley) 11/30/94";
 #else
-__RCSID("$NetBSD: pass5.c,v 1.13 2006/05/06 22:23:37 christos Exp $");
+__RCSID("$NetBSD: pass5.c,v 1.13.10.1 2008/01/09 01:38:04 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -273,9 +273,9 @@ print_bmap(u_char *map, u_int32_t size)
 
 	i = 0;
 	while (i < size) {
-		printf("%u: ",i);
+		printf("%04x: ",i);
 		for (j = 0; j < 16; j++, i++)
-			printf("%2x ", (u_int)map[i] & 0xff);
+			printf("%02x ", (u_int)map[i] & 0xff);
 		printf("\n");
 	}
 }

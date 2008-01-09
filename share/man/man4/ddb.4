@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.103.4.1 2007/11/06 23:12:59 matt Exp $
+.\"	$NetBSD: ddb.4,v 1.103.4.2 2008/01/09 01:39:06 matt Exp $
 .\"
 .\" Copyright (c) 1997 - 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -63,7 +63,7 @@
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
 .\"
-.Dd March 28, 2007
+.Dd December 13, 2007
 .Dt DDB 4
 .Os
 .Sh NAME
@@ -963,6 +963,13 @@ Warning: attempts to watch wired kernel memory may cause
 an unrecoverable error in some systems such as i386.
 Watchpoints on user addresses work the best.
 .It Xo
+.Ic whatis
+.Sm off
+.Ar address
+.Sm on
+.Xc
+Describe what an address is.
+.It Xo
 .Ic write Ns Op Cm /bhl
 .Ar address
 .Ar expression Op Ar expression ...
@@ -1157,7 +1164,7 @@ Dumps the UVM histories.
 Set or clear a physical or virtual hardware watchpoint.
 Pass the address to be watched, or
 .Dq 0
-(or ommit the address) to clear the watchpoint.
+(or omit the address) to clear the watchpoint.
 Optional modifiers are
 .Dq p
 for physical address,
@@ -1168,7 +1175,7 @@ for 8 bit width,
 .Dq h
 for 16 bit,
 .Dq l
-for 32 bit or 
+for 32 bit or
 .Dq L
 for 64 bit.
 .It Ic window
@@ -1211,7 +1218,7 @@ The number of lines.
 This is used by the
 .Ic more
 feature.
-When this varibale is set to zero the
+When this variable is set to zero the
 .Ic more
 feature is disabled.
 .It Va maxoff
@@ -1227,7 +1234,7 @@ The width of the displayed line.
 wraps the current line by printing new line when
 .Va maxwidth
 column is reached.
-When this varibale is set to zero
+When this variable is set to zero
 .Nm
 doesn't perform any wrapping.
 .It Va onpanic
@@ -1260,7 +1267,7 @@ output will not only be displayed on screen but
 also be fed to the msgbuf.
 The default of the variable can be set using the kernel configuration option
 .D1 Cd options DDB_TEE_MSGBUF=1
-wich will initialise
+which will initialize
 .Va tee_msgbuf
 to be 1.
 This option is especially handy for poor souls

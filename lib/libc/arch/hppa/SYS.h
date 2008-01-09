@@ -1,4 +1,4 @@
-/*	$NetBSD: SYS.h,v 1.5 2004/07/01 06:50:04 skrll Exp $	*/
+/*	$NetBSD: SYS.h,v 1.5.16.1 2008/01/09 01:33:53 matt Exp $	*/
 
 /*	$OpenBSD: SYS.h,v 1.9 2001/09/20 20:52:09 millert Exp $	*/
 
@@ -39,7 +39,7 @@
 #define _LOCORE
 #include <machine/frame.h>
 
-#define	SYSENTRY(x,n)	ENTRY(x,n)
+#define	SYSENTRY(x)	LEAF_ENTRY(x)
 #define	SYSEXIT(x)	EXIT(x)
 
 #define	SYSCALL(x)				!\
@@ -52,14 +52,14 @@
 	ldw	HPPA_FRAME_ERP(%sr0,%sp), %rp	
 
 #define	PSEUDO(x,y)				!\
-SYSENTRY(x,0)					!\
+SYSENTRY(x)					!\
 	SYSCALL(y)				!\
 	bv	%r0(%rp)			!\
 	nop					!\
 SYSEXIT(x)
 
 #define	PSEUDO_NOERROR(x,y)			!\
-SYSENTRY(x,0)					!\
+SYSENTRY(x)					!\
 	stw	%rp, HPPA_FRAME_ERP(%sr0,%sp)	!\
 	ldil	L%SYSCALLGATE, %r1		!\
 	ble	4(%sr7, %r1)			!\

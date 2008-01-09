@@ -1,4 +1,4 @@
-/*	$NetBSD: xprintf.c,v 1.18 2005/04/24 21:11:58 christos Exp $	 */
+/*	$NetBSD: xprintf.c,v 1.18.10.1 2008/01/09 01:37:14 matt Exp $	 */
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: xprintf.c,v 1.18 2005/04/24 21:11:58 christos Exp $");
+__RCSID("$NetBSD: xprintf.c,v 1.18.10.1 2008/01/09 01:37:14 matt Exp $");
 #endif /* not lint */
 
 #include <string.h>
@@ -43,6 +43,7 @@ __RCSID("$NetBSD: xprintf.c,v 1.18 2005/04/24 21:11:58 christos Exp $");
 #ifdef RTLD_LOADER
 #define	SZ_LONG		0x01
 #define	SZ_UNSIGNED	0x02
+#define SZ_SIZE_T	0x04
 
 /*
  * Non-mallocing printf, for use by malloc and rtld itself.
@@ -78,6 +79,10 @@ xvsnprintf(char *buf, size_t buflen, const char *fmt, va_list ap)
 				size |= SZ_LONG;
 				fmt++;
 				goto rflag;
+			case 'z':
+				size |= SZ_SIZE_T;
+				fmt++;
+				goto rflag;
 			case 'u':
 				size |= SZ_UNSIGNED;
 				/* FALLTHROUGH */
@@ -87,10 +92,12 @@ xvsnprintf(char *buf, size_t buflen, const char *fmt, va_list ap)
 				char digits[sizeof(int) * 3], *dp = digits;
 #define	SARG() \
 (size & SZ_LONG ? va_arg(ap, long) : \
-va_arg(ap, int))
+((size & SZ_SIZE_T ? va_arg(ap, size_t) : \
+va_arg(ap, int))))
 #define	UARG() \
 (size & SZ_LONG ? va_arg(ap, unsigned long) : \
-va_arg(ap, unsigned int))
+((size & SZ_SIZE_T ? va_arg(ap, size_t) : \
+va_arg(ap, unsigned int))))
 #define	ARG()	(size & SZ_UNSIGNED ? UARG() : SARG())
 
 				if (fmt[1] == 'd') {

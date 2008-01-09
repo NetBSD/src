@@ -1,4 +1,4 @@
-/*	$NetBSD: softfloat.h,v 1.5 2006/05/11 23:53:14 mrg Exp $	*/
+/*	$NetBSD: softfloat.h,v 1.5.10.1 2008/01/09 01:34:01 matt Exp $	*/
 
 /* This is a derivative work. */
 
@@ -272,6 +272,7 @@ int float128_to_int32( float128 );
 int float128_to_int32_round_to_zero( float128 );
 long long float128_to_int64( float128 );
 long long float128_to_int64_round_to_zero( float128 );
+unsigned long long float128_to_uint64_round_to_zero( float128 );
 float32 float128_to_float32( float128 );
 float64 float128_to_float64( float128 );
 #ifdef FLOATX80

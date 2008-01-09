@@ -1,4 +1,4 @@
-/*	$NetBSD: login_cap.c,v 1.27.4.1 2007/11/06 23:11:59 matt Exp $	*/
+/*	$NetBSD: login_cap.c,v 1.27.4.2 2008/01/09 01:36:56 matt Exp $	*/
 
 /*-
  * Copyright (c) 1995,1997 Berkeley Software Design, Inc. All rights reserved.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: login_cap.c,v 1.27.4.1 2007/11/06 23:11:59 matt Exp $");
+__RCSID("$NetBSD: login_cap.c,v 1.27.4.2 2008/01/09 01:36:56 matt Exp $");
 #endif /* LIBC_SCCS and not lint */
  
 #include <sys/types.h>
@@ -559,9 +559,11 @@ int
 setusercontext(login_cap_t *lc, struct passwd *pwd, uid_t uid, u_int flags)
 {
 	char per_user_tmp[MAXPATHLEN + 1];
+	const char *component_name;
 	login_cap_t *flc;
 	quad_t p;
 	int i;
+	ssize_t len;
 
 	flc = NULL;
 
@@ -617,27 +619,73 @@ setusercontext(login_cap_t *lc, struct passwd *pwd, uid_t uid, u_int flags)
 	}
 
 	/* Create per-user temporary directories if needed. */
-	if (readlink("/tmp", per_user_tmp, sizeof(per_user_tmp)) != -1) {
-		static const char atuid[] = "/@uid";
+	if ((len = readlink("/tmp", per_user_tmp, 
+	    sizeof(per_user_tmp) - 6)) != -1) {
+
+		static const char atuid[] = "/@ruid";
 		char *lp;
+
+		/* readlink does not nul-terminate the string */
+		per_user_tmp[len] = '\0';
 
 		/* Check if it's magic symlink. */
 		lp = strstr(per_user_tmp, atuid);
 		if (lp != NULL && *(lp + (sizeof(atuid) - 1)) == '\0') {
 			lp++;
 
-			if ((sizeof(per_user_tmp) - (lp - per_user_tmp)) < 64) {
+			if (snprintf(lp, 11, "/%u", pwd->pw_uid) > 10) {
 				syslog(LOG_ERR, "real temporary path too long");
 				login_close(flc);
 				return (-1);
 			}
-			(void)sprintf(lp, "/%u", pwd->pw_uid); /* safe */
 			if (mkdir(per_user_tmp, S_IRWXU) != -1) {
-				(void)chown(per_user_tmp, pwd->pw_uid,
-				    pwd->pw_gid);
+				if (chown(per_user_tmp, pwd->pw_uid,
+				    pwd->pw_gid)) {
+					component_name = "chown";
+					goto out;
+				}
+
+				/* 
+			 	 * Must set sticky bit for tmp directory, some
+			 	 * programs rely on this.
+			 	 */
+				if(chmod(per_user_tmp, S_IRWXU | S_ISVTX)) {
+					component_name = "chmod";
+					goto out;
+				}
 			} else {
-				syslog(LOG_ERR, "can't create `%s' directory",
-				    per_user_tmp);
+				if (errno != EEXIST) {
+					component_name = "mkdir";
+					goto out;
+				} else {
+					/* 
+					 * We must ensure that we own the
+					 * directory and that is has the correct
+					 * permissions, otherwise a DOS attack
+					 * is possible.
+					 */
+					struct stat sb;
+					if (stat(per_user_tmp, &sb) == -1) {
+						component_name = "stat";
+						goto out;
+					}
+
+					if (sb.st_uid != pwd->pw_uid) {
+						if (chown(per_user_tmp, 
+						    pwd->pw_uid, pwd->pw_gid)) {
+							component_name = "chown";
+							goto out;
+						}
+					}
+
+					if (sb.st_mode != (S_IRWXU | S_ISVTX)) {
+						if (chmod(per_user_tmp, 
+						    S_IRWXU | S_ISVTX)) {
+							component_name = "chmod";
+							goto out;
+						}
+					}
+				}
 			}
 		}
 	}
@@ -666,6 +714,17 @@ setusercontext(login_cap_t *lc, struct passwd *pwd, uid_t uid, u_int flags)
 
 	login_close(flc);
 	return (0);
+
+out:
+	if (component_name != NULL) {
+		syslog(LOG_ERR, "%s %s: %m", component_name, per_user_tmp);
+		login_close(flc);
+		return (-1);
+	} else {
+		syslog(LOG_ERR, "%s: %m", per_user_tmp);
+		login_close(flc);
+		return (-1);
+	}
 }
 
 void

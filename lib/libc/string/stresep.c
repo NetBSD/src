@@ -1,4 +1,4 @@
-/*	$NetBSD: stresep.c,v 1.1 2006/08/12 23:49:54 christos Exp $	*/
+/*	$NetBSD: stresep.c,v 1.1.10.1 2008/01/09 01:34:17 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)strsep.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: stresep.c,v 1.1 2006/08/12 23:49:54 christos Exp $");
+__RCSID("$NetBSD: stresep.c,v 1.1.10.1 2008/01/09 01:34:17 matt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -75,7 +75,7 @@ stresep(char **stringp, const char *delim, int esc)
 		return NULL;
 	for (tok = s;;) {
 		c = *s++;
-		if (esc != '\0' && c == esc) {
+		while (esc != '\0' && c == esc) {
 			(void)strcpy(s - 1, s);
 			c = *s++;
 		}

@@ -29,7 +29,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/destroy.c,v 1.6 2005/08/31 01:47:19 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: destroy.c,v 1.2 2006/10/15 22:36:29 christos Exp $");
+__RCSID("$NetBSD: destroy.c,v 1.2.8.1 2008/01/09 01:38:06 matt Exp $");
 #endif
 
 #include <sys/types.h>
@@ -46,12 +46,14 @@ __RCSID("$NetBSD: destroy.c,v 1.2 2006/10/15 22:36:29 christos Exp $");
 
 static int recoverable;
 
+const char destroymsg[] = "destroy [-r] device ...";
+
 static void
 usage_destroy(void)
 {
 
 	fprintf(stderr,
-	    "usage: %s [-r] device ...\n", getprogname());
+	    "usage: %s %s\n", getprogname(), destroymsg);
 	exit(1);
 }
 

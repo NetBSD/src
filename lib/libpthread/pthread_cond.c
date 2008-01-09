@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cond.c,v 1.34.2.1 2007/11/06 23:11:40 matt Exp $	*/
+/*	$NetBSD: pthread_cond.c,v 1.34.2.2 2008/01/09 01:36:34 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_cond.c,v 1.34.2.1 2007/11/06 23:11:40 matt Exp $");
+__RCSID("$NetBSD: pthread_cond.c,v 1.34.2.2 2008/01/09 01:36:34 matt Exp $");
 
 #include <errno.h>
 #include <sys/time.h>
@@ -104,21 +104,20 @@ pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex)
 	    mutex->ptm_owner != NULL);
 
 	self = pthread__self();
-	PTHREADD_ADD(PTHREADD_COND_WAIT);
 
 	/* Just hang out for a while if threads aren't running yet. */
 	if (__predict_false(pthread__started == 0))
 		return pthread_cond_wait_nothread(self, mutex, NULL);
 
 	if (__predict_false(self->pt_cancel))
-		pthread_exit(PTHREAD_CANCELED);
+		pthread__cancelled();
 
 	/*
 	 * Note this thread as waiting on the CV.  To ensure good
 	 * performance it's critical that the spinlock is held for
 	 * as short a time as possible - that means no system calls.
 	 */ 
-	pthread_spinlock(&cond->ptc_lock);
+	pthread__spinlock(self, &cond->ptc_lock);
 #ifdef ERRORCHECK
 	if (cond->ptc_mutex == NULL)
 		cond->ptc_mutex = mutex;
@@ -134,7 +133,7 @@ pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex)
 	self->pt_signalled = 0;
 	self->pt_sleeponq = 1;
 	self->pt_sleepobj = &cond->ptc_waiters;
-	pthread_spinunlock(&cond->ptc_lock);
+	pthread__spinunlock(self, &cond->ptc_lock);
 
  	/*
  	 * Before releasing the mutex, note that this thread is
@@ -158,10 +157,10 @@ pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex)
 	 * last issued a wakeup.
 	 */
 	if (PTQ_EMPTY(&cond->ptc_waiters) && cond->ptc_mutex != NULL) {
-		pthread_spinlock(&cond->ptc_lock);
+		pthread__spinlock(self, &cond->ptc_lock);
 		if (PTQ_EMPTY(&cond->ptc_waiters))
 			cond->ptc_mutex = NULL;
-		pthread_spinunlock(&cond->ptc_lock);
+		pthread__spinunlock(self, &cond->ptc_lock);
 	}
 
 	/*
@@ -171,7 +170,7 @@ pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex)
 	if (__predict_false(self->pt_cancel)) {
 		if (self->pt_signalled)
 			pthread_cond_signal(cond);
-		pthread_exit(PTHREAD_CANCELED);
+		pthread__cancelled();
 	}
 
 	return 0;
@@ -195,21 +194,20 @@ pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
 	    (abstime->tv_nsec >= 0) && (abstime->tv_nsec < 1000000000));
 
 	self = pthread__self();
-	PTHREADD_ADD(PTHREADD_COND_TIMEDWAIT);
 
 	/* Just hang out for a while if threads aren't running yet. */
 	if (__predict_false(pthread__started == 0))
 		return pthread_cond_wait_nothread(self, mutex, abstime);
 
 	if (__predict_false(self->pt_cancel))
-		pthread_exit(PTHREAD_CANCELED);
+		pthread__cancelled();
 
 	/*
 	 * Note this thread as waiting on the CV.  To ensure good
 	 * performance it's critical that the spinlock is held for
 	 * as short a time as possible - that means no system calls.
 	 */ 
-	pthread_spinlock(&cond->ptc_lock);
+	pthread__spinlock(self, &cond->ptc_lock);
 #ifdef ERRORCHECK
 	if (cond->ptc_mutex == NULL)
 		cond->ptc_mutex = mutex;
@@ -225,7 +223,7 @@ pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
 	self->pt_signalled = 0;
 	self->pt_sleeponq = 1;
 	self->pt_sleepobj = &cond->ptc_waiters;
-	pthread_spinunlock(&cond->ptc_lock);
+	pthread__spinunlock(self, &cond->ptc_lock);
 
  	/*
  	 * Before releasing the mutex, note that this thread is
@@ -249,10 +247,10 @@ pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
 	 * last issued a wakeup.
 	 */
 	if (PTQ_EMPTY(&cond->ptc_waiters) && cond->ptc_mutex != NULL) {
-		pthread_spinlock(&cond->ptc_lock);
+		pthread__spinlock(self, &cond->ptc_lock);
 		if (PTQ_EMPTY(&cond->ptc_waiters))
 			cond->ptc_mutex = NULL;
-		pthread_spinunlock(&cond->ptc_lock);
+		pthread__spinunlock(self, &cond->ptc_lock);
 	}
 
 	/*
@@ -263,7 +261,7 @@ pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
 		if (self->pt_signalled)
 			pthread_cond_signal(cond);
 		if (self->pt_cancel)
-			pthread_exit(PTHREAD_CANCELED);
+			pthread__cancelled();
 	}
 
 	return retval;
@@ -277,13 +275,12 @@ pthread_cond_signal(pthread_cond_t *cond)
 
 	pthread__error(EINVAL, "Invalid condition variable",
 	    cond->ptc_magic == _PT_COND_MAGIC);
-	PTHREADD_ADD(PTHREADD_COND_SIGNAL);
 
 	if (PTQ_EMPTY(&cond->ptc_waiters))
 		return 0;
 
 	self = pthread__self();
-	pthread_spinlock(&cond->ptc_lock);
+	pthread__spinlock(self, &cond->ptc_lock);
 
 	/*
 	 * Find a thread that is still blocked (no pending wakeup).
@@ -296,7 +293,7 @@ pthread_cond_signal(pthread_cond_t *cond)
 	}
 	if (__predict_false(signaled == NULL)) {
 		cond->ptc_mutex = NULL;
-		pthread_spinunlock(&cond->ptc_lock);
+		pthread__spinunlock(self, &cond->ptc_lock);
 		return 0;
 	}
 
@@ -328,13 +325,12 @@ pthread_cond_signal(pthread_cond_t *cond)
 	    pthread__mutex_deferwake(self, mutex)) {
 		signaled->pt_sleepobj = NULL;
 		signaled->pt_sleeponq = 0;
-		pthread_spinunlock(&cond->ptc_lock);
+		pthread__spinunlock(self, &cond->ptc_lock);
 		self->pt_waiters[self->pt_nwaiters++] = signaled->pt_lid;
 	} else {
 		pthread__unpark(self, &cond->ptc_lock,
 		    &cond->ptc_waiters, signaled);
 	}
-	PTHREADD_ADD(PTHREADD_COND_WOKEUP);
 
 	return 0;
 }
@@ -349,13 +345,11 @@ pthread_cond_broadcast(pthread_cond_t *cond)
 	pthread__error(EINVAL, "Invalid condition variable",
 	    cond->ptc_magic == _PT_COND_MAGIC);
 
-	PTHREADD_ADD(PTHREADD_COND_BROADCAST);
-
 	if (PTQ_EMPTY(&cond->ptc_waiters))
 		return 0;
 
 	self = pthread__self();
-	pthread_spinlock(&cond->ptc_lock);
+	pthread__spinlock(self, &cond->ptc_lock);
 	mutex = cond->ptc_mutex;
 	cond->ptc_mutex = NULL;
 
@@ -382,16 +376,12 @@ pthread_cond_broadcast(pthread_cond_t *cond)
 		}
 		if (signaled == NULL) {
 			/* Anything more to do? */
-			pthread_spinunlock(&cond->ptc_lock);
+			pthread__spinunlock(self, &cond->ptc_lock);
 			return 0;
 		}
 	}
 	pthread__unpark_all(self, &cond->ptc_lock, &cond->ptc_waiters);
-
-	PTHREADD_ADD(PTHREADD_COND_WOKEUP);
-
 	return 0;
-
 }
 
 

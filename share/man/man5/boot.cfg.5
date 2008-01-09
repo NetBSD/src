@@ -1,0 +1,175 @@
+.\"	$NetBSD: boot.cfg.5,v 1.4.2.2 2008/01/09 01:39:13 matt Exp $
+.\"
+.\" Copyright (c) 2007 Stephen Borrill
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd November 19, 2007
+.Dt BOOT.CFG 5
+.Os
+.Sh NAME
+.Nm boot.cfg
+.Nd configuration file for /boot
+.Sh DESCRIPTION
+The file /boot.cfg
+is used to alter the behaviour of the standard boot loader described in
+.Xr boot 8 .
+Configuration changes include setting the timeout, choosing a console device,
+altering the banner text and displaying a menu allowing boot commands to be
+easily chosen.
+If a
+.Nm
+file is not present, the system will boot as normal.
+.Ss FILE FORMAT
+The format of the file is a series of lines containing keyword/value pairs
+separated by an equals sign
+.Pq Sq = .
+There should be no whitespace surrounding the equals sign.
+Lines beginning with a hash
+.Pq Sq #
+are comments and will be ignored.
+.Pp
+Some keywords can be present multiple times in the file to define additional
+items.
+Such keywords are noted below.
+.Pp
+.Bl -tag -width timeout
+.It Sy banner
+(may be present multiple times)
+The text from banner lines is displayed instead of the standard welcome text
+by the boot loader.
+Up to 10 lines can be defined.
+No special character sequences are recognised, so to specify a blank line, a
+banner line with no value should be given.
+.It Sy menu
+(may be present multiple times)
+Used to define a menu item to be displayed to the end-user at boot time
+which allows a series of boot commands to be run without further typing.
+The value consists of the required menu text, followed by a colon
+.Pq Sq \&:
+and then the desired command.
+If the specified menu text is empty
+(the colon appears immediately after the equals sign),
+then the displayed menu text is the same as the command.
+For example:
+.Bd -literal
+menu=Boot normally:boot
+menu=Boot single-user:boot -s
+menu=:boot hd1a:netbsd -as
+.Ed
+.Pp
+Each menu item will be prefixed by an ascending number when displayed,
+i.e. the order in the
+.Nm
+file is important.
+.Pp
+The command is executed just as though the user had typed it in
+and so can be any valid command that would be accepted at the
+normal boot prompt.
+In addition,
+.So prompt Sc
+can be used to drop to the normal boot prompt.
+.It Sy timeout
+If the value is greater than zero, this specifies the time in seconds
+that the boot loader will wait for the end-user to choose a menu item.
+During the countdown period, they may press Return to choose the default
+option or press a number key corresponding to a menu option.
+If any other key is pressed, the countdown will stop and the user will be
+prompted to choose a menu option with no further time limit.
+If the timeout value is set to zero, the default option will be booted
+immediately.
+If the timeout value is negative or is not a number, there will be no
+time limit for the user to choose an option.
+.It Sy default
+Used to specify the default menu item  which will be chosen in the case of
+Return being pressed or the timeout timer reaching zero.
+The value is the number of the menu item as displayed.
+As described above, the menu items are counted from 1 in the order listed in
+.Nm .
+If not specified, the default value will be option 1, i.e. the first item.
+.It Sy consdev
+Changes the console device to that specified in the value.
+Valid values are any of those that could be specified at the normal boot
+prompt with the consdev command.
+.El
+.Sh EXAMPLES
+Here is an example
+.Nm
+file:
+.Bd -literal -offset indent
+banner=Welcome to NetBSD
+banner==================
+banner=
+banner=Please choose an option from the following menu:
+menu=Boot normally:boot
+menu=Boot single-user:boot -s
+menu=Boot from second disk:boot hd1a:
+menu=Go to command line (advanced users only):prompt
+timeout=-1
+default=1
+.Ed
+.Pp
+This will display:
+.Bd -literal -offset indent
+Welcome to NetBSD
+=================
+
+Please choose an option from the following menu:
+
+      1. Boot normally
+      2. Boot single-user
+      3. Boot from second disk
+      4. Go to command line (advanced users only)
+
+Option [1]:
+.Ed
+.Pp
+It will then wait for the user to type 1, 2, 3 or 4 followed by Return.
+Pressing Return by itself will run option 1.
+There will be no timeout.
+.Sh SEE ALSO
+.Xr boot 8
+.Sh BUGS
+Support for
+.Nm
+is currently for 
+.Nx Ns /i386 and
+.Nx Ns /amd64 only.
+It is hoped that its use will be extended to other appropriate ports that
+use the
+.Xr boot 8
+interface.
+.Sh HISTORY
+The
+.Nm
+utility appeared in
+.Nx 5.0 .
+.Sh AUTHORS
+The
+.Nm
+extensions to
+.Xr boot 8
+were written by
+.An Stephen Borrill
+.Aq sborrill@NetBSD.org .

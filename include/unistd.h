@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.113 2007/08/09 15:23:02 he Exp $	*/
+/*	$NetBSD: unistd.h,v 1.113.2.1 2008/01/09 01:33:06 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
 #include <sys/null.h>
 
 __BEGIN_DECLS
-__dead	 void _exit(int) __attribute__((__noreturn__));
+__dead	 void _exit(int);
 int	 access(const char *, int);
 unsigned int alarm(unsigned int);
 int	 chdir(const char *);

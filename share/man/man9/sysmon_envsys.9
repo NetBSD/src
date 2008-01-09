@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysmon_envsys.9,v 1.5.4.1 2007/11/06 23:13:17 matt Exp $
+.\"	$NetBSD: sysmon_envsys.9,v 1.5.4.2 2008/01/09 01:39:23 matt Exp $
 .\"
 .\" Copyright (c) 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 1, 2007
+.Dd December 7, 2007
 .Dt SYSMON_ENVSYS 9
 .Os
 .Sh NAME
@@ -42,10 +42,18 @@
 .Nd kernel part of the envsys 2 framework
 .Sh SYNOPSIS
 .In dev/sysmon/sysmonvar.h
-.Ft int
-.Fn sysmon_envsys_register "struct sysmon_envsys *sme"
+.Ft struct sysmon_envsys *
+.Fn sysmon_envsys_create "void"
 .Ft void
-.Fn sysmon_envsys_unregister "struct sysmon_envsys *sme"
+.Fn sysmon_envsys_destroy "struct sysmon_envsys *"
+.Ft int
+.Fn sysmon_envsys_register "struct sysmon_envsys *"
+.Ft void
+.Fn sysmon_envsys_unregister "struct sysmon_envsys *"
+.Ft int
+.Fn sysmon_envsys_sensor_attach "struct sysmon_envsys *, envsys_data_t *"
+.Ft int
+.Fn sysmon_envsys_sensor_detach "struct sysmon_envsys *, envsys_data_t *"
 .Sh DESCRIPTION
 .Pp
 .Nm
@@ -54,20 +62,42 @@ is the kernel part of the
 framework.
 With this framework you are able to register and unregister a
 .Nm
-driver, define what sensors the driver will support, enable or
-disable them on demand (for example if the values are not reporting
-data within the accepted limits), enable/disable automatic monitoring,
-etc.
+device, attach or detach sensors into a device and enable or disable
+automatic monitoring for some sensors without any user interactivity,
+among other things.
 .Pp
 .Ss HOW TO USE THE FRAMEWORK
 .Pp
-To register a new driver with the
+To register a new driver to the
 .Nm
-framework a
+framework, a
 .Sy sysmon_envsys
-structure must be allocated and at least the required members
-must be specified, continue reading if you want to know what are
-the required and optional members.
+object must be allocated and initialized; the
+.Fn sysmon_envsys_create
+function is used for this. This returns a zero'ed pointer to a sysmon_envsys
+structure and takes care of initialization of some private features.
+.Pp
+Once we have the object we could start initializing sensors (see the
+.Em SENSOR DETAILS
+section for more information) and attaching
+them to the device, this is acomplished by the
+.Fn sysmon_envsys_sensor_attach
+function. This function attachs the envsys_data_t (sensor) specified
+as second argument into the sysmon_envsys object specified in the
+first argument.
+.Pp
+Finally when the sensors are already attached, the device needs to set
+some required (and optional) members of the sysmon_envsys struct before
+calling the
+.Fn sysmon_envsys_register
+function to register the device.
+.Pp
+If there's some error before registering the device, the
+.Fn sysmon_envsys_destroy
+function must be used to detach the sensors previously attached
+and free the sysmon_envsys object allocated by the
+.Fn sysmon_envsys_create
+function.
 .Pp
 The
 .Em sysmon_envsys
@@ -76,12 +106,11 @@ structure is defined as follow
 .Bd -literal
 struct sysmon_envsys {
 	const char 	*sme_name;
-	uint32_t 	sme_nsensors;
 	int		sme_flags;
 	int		sme_class;
-	envsys_data_t 	*sme_sensor_data;
+	uint64_t	sme_events_timeout;
 	void 		*sme_cookie;
-	int (*sme_gtredata)(struct sysmon_envsys *sme, envsys_data_t *edata);
+	void (*sme_refresh)(struct sysmon_envsys *, envsys_data_t *);
 };
 .Ed
 .Pp
@@ -94,24 +123,22 @@ This specifies the class of the sysmon envsys device. See the
 section for more information (OPTIONAL).
 .It Fa sme_name
 The name that will be used in the driver (REQUIRED).
-.It Fa sme_nsensors
-Total number of sensors that the driver supports (REQUIRED).
 .It Fa sme_flags
 Additional flags for the
 .Nm
 device. Currently supporting
-.Ar SME_DISABLE_GTREDATA .
+.Ar SME_DISABLE_REFRESH .
 If enabled, the
-.Ar sme_gtredata
+.Ar sme_refresh
 function callback won't be used
 to refresh sensors data and the driver will use its own method.
 Hence
 .Ar sme_cookie
 won't be necessary either (OPTIONAL).
-.It Fa sme_sensor_data
-Pointer to the first
-.Sy envsys_data_t
-structure specified in the driver (REQUIRED).
+.It Fa sme_events_timeout
+This is used to specify the default timeout value that will be used to
+check for critical events if any monitoring flag was set. The value
+is used as seconds (OPTIONAL).
 .El
 .Pp
 .Pp
@@ -122,13 +149,14 @@ framework, the following members must be specified:
 .Bl -tag -width "sme_sensor_data_xxxxxxxxx"
 .It Fa sme_cookie
 Pointer to the device struct (also called
-.Dq softc )
-This will be used in the
-.Sy sme_gtredata
+.Dq softc
+). This may be used in the
+.Sy sme_refresh
 function callback.
-.It Fa sme_gtredata
+.It Fa sme_refresh
 Pointer to a function that will be used to refresh sensor data in
-the device.
+the device. This can be used to set the state and other properties of the
+sensor depending of the returned data by the driver.
 .Em NOTE :
 .Em You don't have to refresh all sensors, only the sensor specified by the
 .Sy edata->sensor
@@ -139,34 +167,25 @@ Note that it's not necessary to refresh the sensors data before the
 driver is registered, only do it if you need the data in your driver
 to check for a specific condition.
 .Pp
-Before registering a driver, the properties for all supported sensors
-must be set, see the section
-.Sy SENSOR DETAILS
-for more information.
 .Pp
-Once all required members are set, the
-.Fn sysmon_envsys_register
-function must be used to register the driver.
-.Pp
-If the required fields to enable automatic monitoring were set,
-.Nm
-will register all these events and a timeout of 10 seconds will check
-if any condition was triggered and  an event of the same type
-will be sent to the
-.Xr powerd 8
-daemon (if running).
-.Pp
-The timeout value may be changed via sysctl(8) like:
-.Bd -literal -offset indent
-$ sysctl kern.envsys.refresh_value
-.Ed
+The timeout value for the monitoring events on a device may be changed via the
+.Em ENVSYS_SETDICTIONARY
+.Xr ioctl 2
+or the
+.Xr envstat 8
+command.
 .Pp
 To unregister a driver previously registered with the
 .Nm
 framework, the
 .Fn sysmon_envsys_unregister
 function must be used. If there were monitoring events registered for the
-driver, they all will be destroyed before the device is unregistered.
+driver, they all will be destroyed before the device is unregistered and
+its sensors will be detached; finally the
+.Em sysmon_envsys
+object will be freed, so there's no need to call
+.Fn sysmon_envsys_destroy
+if we are going to unregister a device.
 .Pp
 .Ss DEVICE CLASSES
 The
@@ -237,7 +256,6 @@ Each sensor uses a
 structure, it's defined as follow (only the public members are shown);
 .Bd -literal
 typedef struct envsys_data {
-	uint32_t	sensor;
 	uint32_t	units;
 	uint32_t	state;
 	uint32_t	flags;
@@ -257,10 +275,8 @@ The members for the
 structure have the following meaning:
 .Pp
 .Bl -tag -width cdoscdosrunru
-.It Fa sensor
-Used to set the sensor number.
 .It Fa units
-Used to set the unit type.
+Used to set the units type.
 .It Fa state
 Used to set the current state.
 .It Fa flags
@@ -304,16 +320,16 @@ Used to set the description string.
 Users of this framework must take care about the following points:
 .Bl -bullet
 .It
-Each sensor must have a different
-.Ar sensor
-number starting from 0, otherwise there won't be any way to
-differentiate them. This restriction is only per-driver.
+The
+.Ar desc
+member needs to have a valid description, unique in a device and non empty
+to be valid.
 .It
 The
 .Ar units
 type must be valid. The following units are defined:
 .Pp
-.Bl -tag -width "ENVSYS_SVOLTS_DCXXX" -compact
+.Bl -tag -width "ENVSYS_BATTERY_CAPACITY" -compact
 .It ENVSYS_STEMP
 For temperature sensors.
 .It ENVSYS_SFANRPM
@@ -358,11 +374,10 @@ is set to
 .Em SME_CLASS_BATTERY .
 .El
 .It
-When initializing the sensor the
+When initializing or refreshing the sensor, the
 .Ar state
-field must be set to
-.Em ENVSYS_SVALID
-(otherwise some sensor's objects won't be created into its dictionary):
+member should be set to a known state (otherwise it will be in
+unknown state). Possible values:
 .Pp
 .Bl -tag -width "ENVSYS_SCRITUNDERXX" -compact
 .It ENVSYS_SVALID
@@ -433,8 +448,10 @@ or
 .Ar ENVSYS_BATTERY_CAPACITY .
 .It ENVSYS_FMONNOTSUPP
 Disallows to set a critical limit via the
-.Xr ioctl(9) .
-This flag has not any effect for monitoring flags set in the driver.
+.Em ENVSYS_SETDICTIONARY
+.Xr ioctl(2) .
+This flag has not any effect for monitoring flags set in the driver and it's
+only meant to disable setting critical limits from userland.
 .El
 .Pp
 .Em If the driver has to use any of the
@@ -475,6 +492,8 @@ Drive is powering down.
 Drive has failed.
 .It ENVSYS_DRIVE_PFAIL
 Drive has been degraded.
+.It ENVSYS_DRIVE_MIGRATING
+Drive is migrating.
 .El
 .Pp
 .It
@@ -487,7 +506,7 @@ to the
 .Ar value_cur
 member:
 .Pp
-.Bl -tag -width "ENVSYS_BATTERY_CAPACITY_WARNING" -compact
+.Bl -tag -width "ENVSYS_BATTERY_CAPACITY_CRITICAL" -compact
 .It ENVSYS_BATTERY_CAPACITY_NORMAL
 Battery charge is in normal capacity.
 .It ENVSYS_BATTERY_CAPACITY_CRITICAL
@@ -553,7 +572,7 @@ mydriver_initialize_sensors(struct mysoftc *sc)
 }
 
 int
-mydriver_gtredata(struct sysmon_envsys *sme, envsys_data_t *edata)
+mydriver_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 {
 	struct mysoftc *sc = sme->sme_cookie;
 

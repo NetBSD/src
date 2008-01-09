@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.47 2007/05/28 12:06:18 tls Exp $
+#	$NetBSD: Makefile,v 1.47.4.1 2008/01/09 01:34:26 matt Exp $
 
 # RCSid:
 #	Id: Makefile,v 1.33 1998/11/11 11:53:53 sjg Exp
@@ -129,7 +129,7 @@ INCSDIR=/usr/include/openssl
 
 update_inc:
 	(cd ${.CURDIR}; find ${OPENSSLSRC}/crypto \
-	    -name Makefile.ssl | \
+	    -name Makefile | \
 	    perl ${OPENSSLSRC}/extsrcs.pl 2> srcs.inc )
 
 .include <bsd.lib.mk>

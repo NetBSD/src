@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.13 2007/05/18 20:28:11 christos Exp $
+#	$NetBSD: Makefile,v 1.13.4.1 2008/01/09 01:37:24 matt Exp $
 
 # missing: libexec sbin usr.sbin share gnu
-SUBDIR+= games include lib libexec sys usr.bin
+SUBDIR+= include lib libexec sys usr.bin
 
 .include <bsd.subdir.mk>

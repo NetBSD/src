@@ -1,4 +1,4 @@
-#	$NetBSD: RESPONSIBLE,v 1.81.4.1 2007/11/06 23:10:22 matt Exp $
+#	$NetBSD: RESPONSIBLE,v 1.81.4.2 2008/01/09 01:29:27 matt Exp $
 
 List of sections of the system, and who is responsible for them (or at
 least considered an expert on them).
@@ -12,6 +12,7 @@ necessarily incomplete!
 Userland Programs:
 
 amd		christos
+atf		jmmv
 audioplay	mrg
 audiorecord	mrg
 awk		jdolecek
@@ -58,6 +59,7 @@ wpa_supplicant	scw, dyoung
 
 Userland Libraries:
 
+atf		jmmv
 citrus		itojun
 curses		blymn, jdc
 edit		christos, jdolecek
@@ -95,7 +97,7 @@ Kernel:
 
 device support:
 
-acpi		thorpej, kochi, jmcneill
+acpi		thorpej, kochi, jmcneill, joerg
 audio		augustss, jmcneill
 cgd		elric
 firewire	jmc
@@ -178,7 +180,6 @@ lwp/pthread	nathanw
 ntp		simonb, jonathan
 pipes		jdolecek
 splash		jmcneill
-systrace	provos
 uvm		chuck, chs, mrg, atatat
 
 kern/compat:

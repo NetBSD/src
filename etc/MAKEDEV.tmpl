@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.87.2.1 2007/11/06 23:10:23 matt Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.87.2.2 2008/01/09 01:29:49 matt Exp $
 #
 # Copyright (c) 2003,2007 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -261,10 +261,11 @@
 #	np*	UNIBUS Ethernet co-processor interface, for downloading.
 #	nsmb*	SMB requester
 #	openfirm OpenFirmware accessor
+#	pad*	Pseudo-audio device driver
 #	pci*	PCI bus access devices
 #	pf	PF packet filter
 #	pow*	power management device (x68k)
-#	puffs	Pass-to-Userspace Framework File System
+#	putter	Pass-to-Userspace Transporter
 #	px*	PixelStamp Xserver access
 #	radio*	radio devices
 #	random	Random number generator
@@ -278,7 +279,6 @@
 #	ss*	SCSI scanner
 #	stic*	PixelStamp interface chip
 #	sysmon	System Monitoring hardware
-#	systrace syscall tracer
 #	tap*	virtual Ethernet device
 #	tun*	network tunnel driver
 #	twa	3ware Apache control interface
@@ -304,10 +304,12 @@
 usage()
 {
 	cat 1>&2 << _USAGE_
-Usage: ${0##*/} [-f] [-m mknod] [-s]  special [...]
+Usage: ${0##*/} [-fMs] [-m mknod] [-p pax] special [...]
 	Create listed special devices.  Options:
 	-f		Force permissions to be updated on existing devices.
+	-M		Create memory file system.
 	-m mknod	Name of mknod(8) program.  [\$TOOL_MKNOD or mknod]
+	-p pax  	Name of pax(2) program.  [\$TOOL_PAX or pax]
 	-s		Generate mtree(8) specfile instead of creating devices.
 
 _USAGE_
@@ -345,12 +347,55 @@ hexprint()
 	echo "${hex:-0}"
 }
 
+# linecount multiline_string
+#	count the number of lines in the string
+#
+linecount()
+{
+	local IFS='
+' # just a newline, no other white space between the quotes
+	set -- $1
+	echo $#
+}
+
+# nooutput -12 cmd [args...]
+#	run a command with stdout and/or stderr ignored.
+#	"nooutput -2 cmd" is like "cmd 2>/dev/null",
+#	except it should work even if /dev/null doesn't [yet] exist.
+#
+nooutput()
+{
+	local flags="$1" ; shift
+	local junk
+	case "$flags" in
+	"-1")	junk="$( "$@" )" ;;
+	"-2")	exec 4>&1 ; junk="$( "$@" 2>&1 1>&4 )" ; exec 4>&- ;;
+	"-12")	junk="$( "$@" 2>&1 )" ;;
+	*)	warn "Incorrect use of nooutput" ;;
+	esac
+}
+
+# check_pax path_to_pax
+#	Check whether pax supports the command line options we
+#	will want to use.
+#
+check_pax()
+{
+	local pax="$1"
+	echo ". type=dir optional" | nooutput -12 "${pax}" -r -w -M -pe .
+}
+
+# setup args...
+#	Parse command line arguments, exit on error.
+#	Callers should shift $((OPTIND - 1)) afterwards.
+#
 setup()
 {
 	PATH=/sbin:/usr/sbin:/bin:/usr/bin:/rescue
 
 	do_create_mfs=false
 	do_force=false
+	do_mknod=false
 	do_pax=false
 	do_redirect=false
 	do_specfile=false
@@ -361,7 +406,7 @@ setup()
 		case ${ch} in
 		M)
 			# "-M" sets do_create_mfs;
-			# "-M -M" also sets do_redirect
+			# "-M -M" is for use from init(8), and sets do_redirect
 			do_redirect=$do_create_mfs
 			do_create_mfs=true
 			;;
@@ -369,14 +414,18 @@ setup()
 			opts="${opts} -f"
 			;;
 		m)	TOOL_MKNOD=${OPTARG}
+			do_mknod=true
 			opts="${opts} -m ${OPTARG}"
 			;;
 		p)	TOOL_PAX="${OPTARG}"
-			if ( echo "" | "${TOOL_PAX}" -w -M ); then
+			if check_pax "${TOOL_PAX}"; then
 				do_pax=true
+				# do not add this to $opts; we will later
+				# add "-s" instead.
 			else
 				warn "Ignored -p option:" \
 					"${TOOL_PAX} is missing or broken"
+				do_mknod=true
 			fi
 			;;
 		s)	do_specfile=true
@@ -388,13 +437,6 @@ setup()
 
 	shift $((${OPTIND} - 1))
 	[ $# -gt 0 ] || usage
-
-	MKNOD="${TOOL_MKNOD:-mknod} -F netbsd"
-	if $do_force; then
-		MKNOD="${MKNOD} -R"
-	else
-		MKNOD="${MKNOD} -r"
-	fi
 
 	u_root="%uid_root%"
 	u_uucp="%uid_uucp%"
@@ -419,9 +461,98 @@ setup()
 		nofdesc=true
 	fi
 
+	# do_force requires mknod
+	if $do_force; then
+		if $do_pax || $do_specfile; then
+			warn "-f option works only with mknod"
+			exit 1
+		fi
+		do_mknod=true
+	fi
+
+	# If no other options take precedence, then default to
+	# using pax, if it appears to work.
+	if ! $do_mknod && ! $do_specfile && ! $do_pax; then
+		: ${TOOL_PAX:=pax}
+		if check_pax "${TOOL_PAX}"; then
+			do_pax=true
+		else
+			do_mknod=true
+		fi
+	fi
+
+	# Now we need exactly one of do_pax, do_mknod, or do_specfile.
+	case $(( $($do_pax && echo 1 || echo 0) + \
+		$($do_mknod && echo 1 || echo 0) + \
+		$($do_specfile && echo 1 || echo 0) ))
+	in
+	1)	: OK ;;
+	*)	
+		warn "-m, -p, and -s options are mutually exclusive"
+		exit 1
+		;;
+	esac
+
+	# If we are using mknod, then decide what options to pass it.
+	if $do_mknod; then
+		MKNOD="${TOOL_MKNOD:-mknod} -F netbsd"
+		if $do_force; then
+			MKNOD="${MKNOD} -R"
+		else
+			MKNOD="${MKNOD} -r"
+		fi
+	fi
+
+	# do_pax internally implies do_specfile.  This happens after
+	# checking for mutually-exclusive options.
 	if $do_pax && ! $do_specfile; then
 		do_specfile=true
 		opts="${opts} -s"
+	fi
+}
+
+# wrap_makedev makedev_name ...
+#	Invoke a makedev-like function, with additional processing
+#	as appropriate for use from the outer level.
+#
+wrap_makedev()
+{
+	if $do_specfile; then
+		# "optional" tells pax(1) not to create the directory itself.
+		echo ". type=dir optional"
+	fi
+	"$@"
+}
+
+# makedev_main makedev_name args...
+#	Perform most of the work of the main program.  makedev_name is
+#	the name of a makedev-like function, and the other args are
+#	command line args with which the MAKEDEV (or MAKEDEV.local)
+#	script was invoked.
+#
+makedev_main()
+{
+	local makedev="$1" ; shift
+
+	# Parse command line args
+	setup ${1+"$@"}
+	shift $((${OPTIND}-1))
+
+	if $do_create_mfs; then
+		# Count inodes and create mfs file system.
+		# The makedev call merely updates $count_nodes.
+		count_nodes=0
+		$makedev ${1+"$@"}
+		create_mfs_dev $count_nodes
+		unset count_nodes
+	fi
+
+	if $do_pax ; then
+		# wrap_makedev will print an mtree specification because
+		# do_pax implies do_specfile.  pax will create device nodes.
+		wrap_makedev $makedev ${1+"$@"} | ${TOOL_PAX} -r -w -M -pe .
+	else
+		wrap_makedev $makedev ${1+"$@"}
 	fi
 }
 
@@ -477,7 +608,7 @@ makedir()
 	if $do_specfile; then
 		echo "./$1 type=dir mode=$2 gid=$g_wheel uid=$u_root"
 	else
-		mkdir $1 2>/dev/null
+		nooutput -2 mkdir $1
 		chmod $2 $1
 	fi
 }
@@ -485,16 +616,6 @@ makedir()
 warn()
 {
 	echo 1>&2 "$0: $*"
-}
-
-# wrap_makedev makedev ...
-wrap_makedev()
-{
-	if $do_specfile; then
-		# "optional" tells pax(1) not to create the directory itself.
-		echo ". type=dir optional"
-	fi
-	eval "$@"
 }
 
 # makedev special [...]
@@ -521,14 +642,16 @@ all)
 	makedev vnd0 vnd1 vnd2 vnd3
 	makedev bpf
 	makedev tun0 tun1 tun2 tun3
-	makedev ipl pf crypto random systrace
+	makedev ipl pf crypto random
 	makedev lkm lockstat clockctl cpuctl
 	makedev atabus0 atabus1 atabus2 atabus3
 	makedev tap tap0 tap1 tap2 tap3
 	makedev gpio gpio0 gpio1 gpio2 gpio3 gpio4 gpio5 gpio6 gpio7
+	makedev pad pad0 pad1 pad2 pad3
 	makedev bthub
 	makedev cfs
-	makedev puffs
+	makedev putter
+	makedev drvctl
 	makedev local # do this last
 	;;
 
@@ -549,6 +672,11 @@ audio)
 gpio)
 	makedev gpio0 gpio1 gpio2 gpio3 gpio4 gpio5 gpio6 gpio7
 	lndev gpio0 gpio
+	;;
+
+pad)
+	makedev pad0 pad1 pad2 pad3
+	lndev pad0 pad
 	;;
 
 radio)
@@ -1287,6 +1415,11 @@ openfirm)
 	mkdev openfirm c %openfirm_chr% 0 444
 	;;
 
+pad*)
+	unit=${i#pad}
+	mkdev pad$unit c %pad_chr% $unit 444
+	;;
+
 nvram)
 	mkdev nvram c %nvram_chr% 0 644
 	;;
@@ -1306,10 +1439,6 @@ nsmb)
 nsmb*)
 	unit=${i#nsmb}
 	mkdev nsmb$unit c %nsmb_chr% $unit 644
-	;;
-
-systrace)
-	mkdev systrace c %systrace_chr% 0 644
 	;;
 
 kttcp)
@@ -1683,8 +1812,11 @@ fw*)
 	done
 	;;
 
-puffs)
-	mkdev puffs c %puffs_chr% 0x7ffff 600
+# create putter device and symlinks for all subsystems using it
+putter)
+	mkdev putter c %putter_chr% 0 600
+	mkdev pud c %putter_chr% 1 600
+	lndev putter puffs 
 	;;
 
 midevend)
@@ -1693,10 +1825,8 @@ local)
 	if [ -f "$0.local" ]; then
 		umask 0
 		if [ -n "$count_nodes" ]; then
-			sh "$0.local" $opts -s all | \
-			while read l; do
-				count_nodes=$((count_nodes + 1))
-			done
+			count_nodes=$((count_nodes + \
+			    $(linecount "$(sh "$0.local" $opts -s all)") ))
 		else
 			sh "$0.local" $opts all
 		fi
@@ -1834,49 +1964,64 @@ makedisk_minimal()
 	mkdev r${name}${unit}$rn c $chr $(($unit * $doff + $ro)) 640 $g_operator
 }
 
+# create_mfs_dev nodes
+#       Create a memory file system for a given number of device nodes,
+#       and mount it.  Attempts to use mount_tmpfs, or falls back to
+#       mount_mfs.
+#
+#       If do_redirect, then also redirect output to the console.
+#
 create_mfs_dev()
 {
-	ninode=$((${1-1200} * 11 / 10))
-	fs_size=$((8192 + 2 * 8192 + 4096 + ninode*(128+18) + 8192))
-	fs_size=$((fs_size/512))
-	[ "$fs_size" -lt 80 ] && fs_size=80
-
+	ndevnodes=${1-1200}
 	dev_mountpoint=${PWD:-/dev}
-	mount_mfs -b 4096 -f 512 -s $fs_size -n $ninode -p 07555 -o union swap $dev_mountpoint
 
-	cd $dev_mountpoint
+	# Number of inodes is the specified number of device nodes, plus
+	# a margin to allow for extra device nodes created later.
+	ninode=$((ndevnodes * 11 / 10))
+	# Add 2 reserved inodes (needed for both mfs and tmpfs), and round
+	# up to a multiple of 32 (needed for mfs, not needed for tmpfs).
+	ninode=$(( (ninode + 2 + 31) / 32 * 32 ))
+	# This file system size calculation is exact for mount_mfs(8)
+	# with 512-byte sectors; it's larger than necessary
+	# for mount_tmpfs(8).  40960 bytes (80 blocks) is the minimum size
+	# allowed by mount_mfs.
+	fs_bytes=$((8192 + 2 * 8192 + 4096 + ninode*(128+18) + 8192))
+	[ "$fs_bytes" -lt 40960 ] && fs_bytes=40960
+	fs_blocks=$((fs_bytes/512))
+
+	# Try tmpfs; if that fails try mfs.
+	if mount_tmpfs -s $fs_bytes -n $ninode -m 0755 \
+		-o union tmpfs "$dev_mountpoint"
+	then
+	    fstype=tmpfs
+	elif mount_mfs -b 4096 -f 512 -s $fs_blocks -n $ninode -p 0755 \
+		-o union swap "$dev_mountpoint"
+	then
+	    fstype=mfs
+	else
+	    warn "Failed to create memory file system"
+	    exit 1
+	fi
+
+	# Our current directory was in the lower file system; change it to
+	# the newly mounted upper file system.
+	cd "$dev_mountpoint"
+
 	if $do_redirect; then
 		# Redirect stdout and stderr to console
 		mknod -m 600 -g 0 -u 0 temp_console c 0 0
 		exec >temp_console 2>&1
 		rm temp_console
 	fi
-	echo "Created mfs $dev_mountpoint ($fs_size blocks, $ninode inodes)"
+
+	echo "Created $fstype $dev_mountpoint" \
+		"($fs_blocks blocks, $ninode inodes)"
 }
 
 #
 # MAIN: If MAKEDEV_AS_LIBRARY is set, then we are being used as a
-# function library, so just return.  Otherwise, call the setup function
-# to parse command line args and set some other variables; then call the
-# makedev function to create requested devices.
+# function library, so just return.  Otherwise, do all the real work.
 #
 [ -n "${MAKEDEV_AS_LIBRARY}" ] && return
-
-setup ${1+"$@"}
-shift $((${OPTIND}-1))
-
-if $do_create_mfs; then
-	# Count inodes and create mfs file system
-	count_nodes=0
-	makedev ${1+"$@"}
-	create_mfs_dev $count_nodes
-	unset count_nodes
-fi
-
-if $do_pax ; then
-	# wrap_makedev will print an mtree specification;
-	# pax will create device nodes.
-	wrap_makedev makedev ${1+"$@"} | ${TOOL_PAX} -r -w -M .
-else
-	wrap_makedev makedev ${1+"$@"}
-fi
+makedev_main makedev ${1+"$@"}

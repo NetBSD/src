@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.apply.c,v 1.8 2004/01/27 20:30:29 jsm Exp $	*/
+/*	$NetBSD: hack.apply.c,v 1.8.22.1 2008/01/09 01:30:50 matt Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.apply.c,v 1.8 2004/01/27 20:30:29 jsm Exp $");
+__RCSID("$NetBSD: hack.apply.c,v 1.8.22.1 2008/01/09 01:30:50 matt Exp $");
 #endif				/* not lint */
 
 #include	"hack.h"
@@ -137,7 +137,7 @@ xit:
 /* ARGSUSED */
 static void
 use_camera(obj) /* */ 
-	struct obj     *obj __attribute__((__unused__));
+	struct obj     *obj __unused;
 {
 	struct monst *mtmp;
 	if (!getdir(1)) {	/* ask: in what direction? */
@@ -303,7 +303,7 @@ bchit(ddx, ddy, range, sym)
 /* ARGSUSED */
 static void
 use_whistle(obj)
-	struct obj     *obj __attribute__((__unused__));
+	struct obj     *obj __unused;
 {
 	struct monst *mtmp = fmon;
 	pline("You produce a high whistling sound.");
@@ -321,7 +321,7 @@ use_whistle(obj)
 /* ARGSUSED */
 static void
 use_magic_whistle(obj)
-	struct obj     *obj __attribute__((__unused__));
+	struct obj     *obj __unused;
 {
 	struct monst *mtmp = fmon;
 	pline("You produce a strange whistling sound.");

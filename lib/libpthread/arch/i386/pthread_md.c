@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_md.c,v 1.3 2003/03/08 08:03:37 lukem Exp $	*/
+/*	$NetBSD: pthread_md.c,v 1.3.24.1 2008/01/09 01:36:42 matt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,10 +37,12 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_md.c,v 1.3 2003/03/08 08:03:37 lukem Exp $");
+__RCSID("$NetBSD: pthread_md.c,v 1.3.24.1 2008/01/09 01:36:42 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
+
+#include <machine/sysarch.h>
 #include <machine/cpu.h>
 
 #include "pthread.h"
@@ -54,7 +56,8 @@ int (*_md_swapcontext_u)(ucontext_t *, const ucontext_t *);
  * Initialize the function pointers for get/setcontext to the
  * old-fp-save (s87) or new-fxsave (xmm) FP routines.
  */
-void pthread__i386_init(void)
+void
+pthread__i386_init(void)
 {
 	int mib[2];
 	size_t len;
@@ -76,4 +79,11 @@ void pthread__i386_init(void)
 		_md_swapcontext_u = _swapcontext_u_s87;
 	}
 
+}
+
+void
+pthread__threadreg_set(pthread_t self)
+{
+
+	sysarch(I386_SET_GSBASE, &self);
 }

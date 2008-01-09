@@ -557,7 +557,7 @@
 /* #undef PROC_SERVICE_IS_OLD */
 
 /* Define to the type of arg 3 for ptrace. */
-#define PTRACE_TYPE_ARG3 caddr_t
+#define PTRACE_TYPE_ARG3 void *
 
 /* Define to the type of arg 5 for ptrace. */
 /* #undef PTRACE_TYPE_ARG5 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_priv.h,v 1.20.2.1 2007/11/06 23:11:54 matt Exp $	*/
+/*	$NetBSD: puffs_priv.h,v 1.20.2.2 2008/01/09 01:36:52 matt Exp $	*/
 
 /*
  * Copyright (c) 2006 Antti Kantee.  All Rights Reserved.
@@ -45,7 +45,7 @@ extern pthread_mutex_t pu_lock;
 #define PU_UNLOCK()
 #endif
 
-#define PU_CMAP(pu, c)	(pu->pu_cmap ? pu->pu_cmap(c) : (struct puffs_node *)c)
+#define PU_CMAP(pu, c) (pu->pu_cmap ? pu->pu_cmap(pu,c) : (struct puffs_node*)c)
 
 struct puffs_framectrl {
 	puffs_framev_readframe_fn rfb;
@@ -53,18 +53,11 @@ struct puffs_framectrl {
 	puffs_framev_cmpframe_fn cmpfb;
 	puffs_framev_gotframe_fn gotfb;
 	puffs_framev_fdnotify_fn fdnotfn;
-
-	struct kevent *evs;
-	size_t nfds;
-
-	struct timespec timeout;
-	struct timespec *timp;
-
-	LIST_HEAD(, puffs_fctrl_io) fb_ios;
-	LIST_HEAD(, puffs_fctrl_io) fb_ios_rmlist;
 };
 
 struct puffs_fctrl_io {
+	struct puffs_framectrl *fctrl;
+
 	int io_fd;
 	int stat;
 
@@ -99,7 +92,7 @@ struct puffs_fctrl_io {
 	&& (fio->wwait == 0)))
 
 struct puffs_executor {
-	struct puffs_req		*pex_preq;
+	struct puffs_framebuf		*pex_pufbuf;
 	TAILQ_ENTRY(puffs_executor)	pex_entries;
 };
 
@@ -121,7 +114,9 @@ struct puffs_usermount {
 #define PU_INLOOP	0x100
 #define PU_ASYNCFD	0x200
 #define PU_HASKQ	0x400
+#define PU_PUFFSDAEMON	0x800
 #define PU_SETSTATE(pu, s) (pu->pu_state = (s) | (pu->pu_state & ~PU_STATEMASK))
+	int			pu_dpipe[2];
 
 	struct puffs_node	*pu_pn_root;
 
@@ -131,7 +126,7 @@ struct puffs_usermount {
 
 	TAILQ_HEAD(, puffs_executor) pu_exq;
 
-	struct puffs_node	*(*pu_cmap)(void *);
+	pu_cmap_fn		pu_cmap;
 
 	pu_pathbuild_fn		pu_pathbuild;
 	pu_pathtransform_fn	pu_pathtransform;
@@ -144,7 +139,13 @@ struct puffs_usermount {
 	pu_prepost_fn		pu_oppre;
 	pu_prepost_fn		pu_oppost;
 
-	struct puffs_framectrl	pu_framectrl;
+	struct puffs_framectrl	pu_framectrl[2];
+#define PU_FRAMECTRL_FS   0
+#define PU_FRAMECTRL_USER 1
+	LIST_HEAD(, puffs_fctrl_io) pu_ios;
+	LIST_HEAD(, puffs_fctrl_io) pu_ios_rmlist;
+	struct kevent		*pu_evs;
+	size_t			pu_nfds;
 
 	puffs_ml_loop_fn	pu_ml_lfn;
 	struct timespec		pu_ml_timeout;
@@ -152,6 +153,7 @@ struct puffs_usermount {
 
 	struct puffs_kargs	*pu_kargp;
 
+	uint64_t		pu_nextreq;
 	void			*pu_privdata;
 };
 
@@ -159,7 +161,7 @@ struct puffs_usermount {
 
 struct puffs_cc {
 	struct puffs_usermount	*pcc_pu;
-	struct puffs_req	*pcc_preq;
+	struct puffs_framebuf	*pcc_pb;
 
 	ucontext_t		pcc_uc;		/* "continue" 		*/
 	ucontext_t		pcc_uc_ret;	/* "yield" 		*/
@@ -169,7 +171,6 @@ struct puffs_cc {
 	lwpid_t			pcc_lid;
 
 	int			pcc_flags;
-	struct puffs_putreq	*pcc_ppr;
 
 	TAILQ_ENTRY(puffs_cc)	entries;
 	LIST_ENTRY(puffs_cc)	nlst_entries;
@@ -190,22 +191,6 @@ do {									\
 	(ap)->pcc_flags = type;						\
 } while (/*CONSTCOND*/0)
 
-/*
- * Reqs
- */
-
-struct puffs_getreq {
-	struct puffs_usermount	*pgr_pu;
-
-	void			*pgr_buf;
-};
-
-struct puffs_putreq {
-	struct puffs_usermount *ppr_pu;
-
-	TAILQ_HEAD(, puffs_cc)	ppr_pccq;
-};
-
 struct puffs_newinfo {
 	void		**pni_cookie;
 	enum vtype	*pni_vtype;
@@ -223,36 +208,42 @@ struct puffs_newinfo {
 	/*LINTED: tnilxnaht, the cast is ok */				\
 	to = (void *)from
 
-#define PUFFS_MAKEKCID(to, from)					\
-	/*LINTED: tnilxnaht, the cast is ok */				\
-	const struct puffs_kcid *to = (const void *)from
-#define PUFFS_MAKECID(to, from)						\
-	/*LINTED: tnilxnaht, the cast is ok */				\
-	const struct puffs_cid *to = (const void *)from
-#define PUFFS_KCIDTOCID(to, from)					\
-	/*LINTED: tnilxnaht, the cast is ok */				\
-	to = (void *)from
-
 __BEGIN_DECLS
 
 void	puffs_calldispatcher(struct puffs_cc *);
 
 void	puffs_framev_input(struct puffs_usermount *, struct puffs_framectrl *,
-			   struct puffs_fctrl_io *, struct puffs_putreq *);
+			   struct puffs_fctrl_io *);
 int	puffs_framev_output(struct puffs_usermount *, struct puffs_framectrl*,
-			    struct puffs_fctrl_io *, struct puffs_putreq *);
+			    struct puffs_fctrl_io *);
 void	puffs_framev_exit(struct puffs_usermount *);
 void	puffs_framev_readclose(struct puffs_usermount *,
 			       struct puffs_fctrl_io *, int);
 void	puffs_framev_writeclose(struct puffs_usermount *,
 				struct puffs_fctrl_io *, int);
 void	puffs_framev_notify(struct puffs_fctrl_io *, int);
+void	*puffs__framebuf_getdataptr(struct puffs_framebuf *);
+int	puffs__framev_addfd_ctrl(struct puffs_usermount *, int, int,
+				 struct puffs_framectrl *);
+void	puffs__framebuf_moveinfo(struct puffs_framebuf *,
+				 struct puffs_framebuf *);
 
-int	puffs_cc_create(struct puffs_usermount *, struct puffs_req *,
+int	puffs_cc_create(struct puffs_usermount *, struct puffs_framebuf *,
 			int, struct puffs_cc **);
 void	puffs_cc_destroy(struct puffs_cc *);
 void	puffs_cc_setcaller(struct puffs_cc *, pid_t, lwpid_t);
 void	puffs_goto(struct puffs_cc *);
+
+int	puffs_fsframe_read(struct puffs_usermount *, struct puffs_framebuf *,
+			   int, int *);
+int	puffs_fsframe_write(struct puffs_usermount *, struct puffs_framebuf *,
+			   int, int *);
+int	puffs_fsframe_cmp(struct puffs_usermount *, struct puffs_framebuf *,
+			  struct puffs_framebuf *, int *);
+void	puffs_fsframe_gotframe(struct puffs_usermount *,
+			       struct puffs_framebuf *);
+
+uint64_t	puffs__nextreq(struct puffs_usermount *pu);
 
 __END_DECLS
 

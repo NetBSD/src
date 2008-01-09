@@ -1,4 +1,4 @@
-/*	$NetBSD: convfp.c,v 1.5 2006/05/10 19:07:22 mrg Exp $	*/
+/*	$NetBSD: convfp.c,v 1.5.10.1 2008/01/09 01:37:29 matt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -49,12 +49,14 @@
 
 static void test1();
 static void test2();
+static void test3();
 
 int
 main()
 {
 	test1();
 	test2();
+	test3();
 	printf("PASSED\n");
 	return 0;
 }
@@ -117,4 +119,26 @@ test2()
 
 	printf("FAILED: %.3f casted to unsigned long is %lu\n", nv, uv);
 	exit(1);
+}
+
+static void
+test3()
+{
+	double dv = 1.9;
+	long double ldv = dv;
+	unsigned long l1 = dv;
+	unsigned long l2 = ldv;
+
+	printf("Testing double/long double casts to unsigned long\n");
+	if (l1 != 1) {
+		printf("FAILED: double 1.9 casted to unsigned long should"
+		    " be 1, but is %lu\n", l1);
+		exit(1);
+	}
+
+	if (l2 != 1) {
+		printf("FAILED: long double 1.9 casted to unsigned long should"
+		    " be 1, but is %lu\n", l2);
+		exit(1);
+	}
 }

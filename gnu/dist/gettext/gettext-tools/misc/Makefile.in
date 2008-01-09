@@ -14,7 +14,21 @@
 
 @SET_MAKE@
 
-
+# Disable parallel make, because the interaction between the
+# $(am__ELCFILES) and elc-stamp targets is extremely unfriendly to
+# parallel make.  Without this, the following happens:
+#   * elc-stamp gets made.  Because EMACS = no, this doesn't
+#     create any of the *.elc files.
+#   * The *.elc files referred to by ${am__ELCFILES) are all made in
+#     parallel.
+#   * Each of those parallel job discovers that its .elc file doesn't
+#     exist, deletes elc-stamp, and runs a recursive
+#	$(MAKE) $(AM_MAKEFLAGS) elc-stamp
+#   * One of those parallel "make elc-stamp" jobs is likely to delete
+#     the elc-temp file at just the wrong time, so that the
+#	mv -f elc-temp elc-stamp
+#     command in another parallel job fails, thus aborting the build.
+.NOTPARALLEL:
 
 srcdir = @srcdir@
 top_srcdir = @top_srcdir@

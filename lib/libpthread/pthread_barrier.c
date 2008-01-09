@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_barrier.c,v 1.14 2007/08/16 13:54:16 ad Exp $	*/
+/*	$NetBSD: pthread_barrier.c,v 1.14.2.1 2008/01/09 01:36:33 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,25 +37,18 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_barrier.c,v 1.14 2007/08/16 13:54:16 ad Exp $");
+__RCSID("$NetBSD: pthread_barrier.c,v 1.14.2.1 2008/01/09 01:36:33 matt Exp $");
 
 #include <errno.h>
 
 #include "pthread.h"
 #include "pthread_int.h"
 
-#undef PTHREAD_BARRIER_DEBUG
-
-#ifdef PTHREAD_BARRIER_DEBUG
-#define SDPRINTF(x) DPRINTF(x)
-#else
-#define SDPRINTF(x)
-#endif
-
 int
 pthread_barrier_init(pthread_barrier_t *barrier,
     const pthread_barrierattr_t *attr, unsigned int count)
 {
+	pthread_t self;
 
 #ifdef ERRORCHECK
 	if ((barrier == NULL) ||
@@ -67,19 +60,21 @@ pthread_barrier_init(pthread_barrier_t *barrier,
 		return EINVAL;
 
 	if (barrier->ptb_magic == _PT_BARRIER_MAGIC) {
+		self = pthread__self();
+
 		/*
 		 * We're simply reinitializing the barrier to a
 		 * new count.
 		 */
-		pthread_spinlock(&barrier->ptb_lock);
+		pthread__spinlock(self, &barrier->ptb_lock);
 
 		if (barrier->ptb_magic != _PT_BARRIER_MAGIC) {
-			pthread_spinunlock(&barrier->ptb_lock);
+			pthread__spinunlock(self, &barrier->ptb_lock);
 			return EINVAL;
 		}
 
 		if (!PTQ_EMPTY(&barrier->ptb_waiters)) {
-			pthread_spinunlock(&barrier->ptb_lock);
+			pthread__spinunlock(self, &barrier->ptb_lock);
 			return EBUSY;
 		}
 
@@ -87,7 +82,7 @@ pthread_barrier_init(pthread_barrier_t *barrier,
 		barrier->ptb_curcount = 0;
 		barrier->ptb_generation = 0;
 
-		pthread_spinunlock(&barrier->ptb_lock);
+		pthread__spinunlock(self, &barrier->ptb_lock);
 
 		return 0;
 	}
@@ -106,27 +101,29 @@ pthread_barrier_init(pthread_barrier_t *barrier,
 int
 pthread_barrier_destroy(pthread_barrier_t *barrier)
 {
+	pthread_t self;
 
 #ifdef ERRORCHECK
 	if ((barrier == NULL) || (barrier->ptb_magic != _PT_BARRIER_MAGIC))
 		return EINVAL;
 #endif
 
-	pthread_spinlock(&barrier->ptb_lock);
+	self = pthread__self();
+	pthread__spinlock(self, &barrier->ptb_lock);
 
 	if (barrier->ptb_magic != _PT_BARRIER_MAGIC) {
-		pthread_spinunlock(&barrier->ptb_lock);
+		pthread__spinunlock(self, &barrier->ptb_lock);
 		return EINVAL;
 	}
 
 	if (!PTQ_EMPTY(&barrier->ptb_waiters)) {
-		pthread_spinunlock(&barrier->ptb_lock);
+		pthread__spinunlock(self, &barrier->ptb_lock);
 		return EBUSY;
 	}
 
 	barrier->ptb_magic = _PT_BARRIER_DEAD;
 
-	pthread_spinunlock(&barrier->ptb_lock);
+	pthread__spinunlock(self, &barrier->ptb_lock);
 
 	return 0;
 }
@@ -144,7 +141,7 @@ pthread_barrier_wait(pthread_barrier_t *barrier)
 #endif
 	self = pthread__self();
 
-	pthread_spinlock(&barrier->ptb_lock);
+	pthread__spinlock(self, &barrier->ptb_lock);
 
 	/*
 	 * A single arbitrary thread is supposed to return
@@ -157,9 +154,6 @@ pthread_barrier_wait(pthread_barrier_t *barrier)
 	 * but instead is responsible for waking everyone else up.
 	 */
 	if (barrier->ptb_curcount + 1 == barrier->ptb_initcount) {
-		SDPRINTF(("(barrier wait %p) Satisfied %p\n",
-		    self, barrier));
-
 		barrier->ptb_generation++;
 		pthread__unpark_all(self, &barrier->ptb_lock,
 		    &barrier->ptb_waiters);
@@ -169,20 +163,16 @@ pthread_barrier_wait(pthread_barrier_t *barrier)
 	barrier->ptb_curcount++;
 	gen = barrier->ptb_generation;
 	while (gen == barrier->ptb_generation) {
-		SDPRINTF(("(barrier wait %p) Waiting on %p\n",
-		    self, barrier));
 		PTQ_INSERT_TAIL(&barrier->ptb_waiters, self, pt_sleep);
 		self->pt_sleeponq = 1;
 		self->pt_sleepobj = &barrier->ptb_waiters;
-		pthread_spinunlock(&barrier->ptb_lock);
+		pthread__spinunlock(self, &barrier->ptb_lock);
 		(void)pthread__park(self, &barrier->ptb_lock,
 		    &barrier->ptb_waiters, NULL, 0,
 		    &barrier->ptb_waiters);
-		SDPRINTF(("(barrier wait %p) Woke up on %p\n",
-		    self, barrier));
-		pthread_spinlock(&barrier->ptb_lock);
+		pthread__spinlock(self, &barrier->ptb_lock);
 	}
-	pthread_spinunlock(&barrier->ptb_lock);
+	pthread__spinunlock(self, &barrier->ptb_lock);
 
 	return 0;
 }

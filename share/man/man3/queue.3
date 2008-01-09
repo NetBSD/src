@@ -1,4 +1,4 @@
-.\"	$NetBSD: queue.3,v 1.33.12.1 2007/11/06 23:12:53 matt Exp $
+.\"	$NetBSD: queue.3,v 1.33.12.2 2008/01/09 01:39:02 matt Exp $
 .\"
 .\" Copyright (c) 2000, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -60,7 +60,7 @@
 .\"
 .\"	@(#)queue.3	8.1 (Berkeley) 12/13/93
 .\"
-.Dd October 22, 2007
+.Dd December 11, 2007
 .Dt QUEUE 3
 .Os
 .Sh NAME
@@ -102,6 +102,7 @@
 .Nm STAILQ_EMPTY ,
 .Nm STAILQ_FIRST ,
 .Nm STAILQ_NEXT ,
+.Nm STAILQ_CONCAT ,
 .Nm LIST_HEAD ,
 .Nm LIST_HEAD_INITIALIZER ,
 .Nm LIST_ENTRY ,
@@ -130,6 +131,7 @@
 .Nm TAILQ_NEXT ,
 .Nm TAILQ_LAST ,
 .Nm TAILQ_PREV ,
+.Nm TAILQ_CONCAT ,
 .Nm CIRCLEQ_HEAD ,
 .Nm CIRCLEQ_HEAD_INITIALIZER ,
 .Nm CIRCLEQ_ENTRY ,
@@ -201,6 +203,7 @@
 .Fn STAILQ_FIRST "STAILQ_HEAD *head"
 .Ft TYPE *
 .Fn STAILQ_NEXT "TYPE *elm" "STAILQ_ENTRY NAME"
+.Fn STAILQ_CONCAT "STAILQ_HEAD *head1" "STAILQ_HEAD *head2"
 .sp
 .Fn LIST_HEAD "HEADNAME" "TYPE"
 .Fn LIST_HEAD_INITIALIZER "head"
@@ -239,6 +242,7 @@
 .Fn TAILQ_LAST "TAILQ_HEAD *head" "HEADNAME"
 .Ft TYPE *
 .Fn TAILQ_PREV "TYPE *elm" "HEADNAME" "TAILQ_ENTRY NAME"
+.Fn TAILQ_CONCAT "TAILQ_HEAD *head1" "TAILQ_HEAD *head2" "TAILQ_ENTRY NAME"
 .sp
 .Fn CIRCLEQ_HEAD "HEADNAME" "TYPE"
 .Fn CIRCLEQ_HEAD_INITIALIZER "head"
@@ -290,6 +294,8 @@ Simple queues add the following functionality:
 .Bl -enum -compact -offset indent
 .It
 Entries can be added at the end of a list.
+.It
+They may be concatenated.
 .El
 However:
 .Bl -enum -compact -offset indent
@@ -328,6 +334,8 @@ Tail queues add the following functionality:
 .Bl -enum -compact -offset indent
 .It
 Entries can be added at the end of a list.
+.It
+They may be concatenated.
 .El
 However:
 .Bl -enum -compact -offset indent
@@ -414,6 +422,7 @@ _NEXT:+:+:+:+:+:+
 _PREV:-:-:-:-:+:+
 _REMOVE:+:+:+:+:+:+
 _REMOVE_HEAD:+:-:+:+:-:-
+_CONCAT:-:-:-:+:+:-
 .TE
 .Sh SINGLY-LINKED LISTS
 A singly-linked list is headed by a structure defined by the
@@ -948,6 +957,14 @@ The macro
 .Nm TAILQ_NEXT
 returns the element after the element
 .Fa elm .
+.Pp
+The macro
+.Nm TAILQ_CONCAT
+concatenates the tail queue headed by
+.Fa head2
+onto the end of the one headed by
+.Fa head1
+removing all entries from the former.
 .Sh TAIL QUEUE EXAMPLE
 .Bd -literal
 TAILQ_HEAD(tailhead, entry) head;

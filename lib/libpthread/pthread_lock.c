@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_lock.c,v 1.24.2.1 2007/11/06 23:11:41 matt Exp $	*/
+/*	$NetBSD: pthread_lock.c,v 1.24.2.2 2008/01/09 01:36:36 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -41,11 +41,12 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_lock.c,v 1.24.2.1 2007/11/06 23:11:41 matt Exp $");
+__RCSID("$NetBSD: pthread_lock.c,v 1.24.2.2 2008/01/09 01:36:36 matt Exp $");
 
 #include <sys/types.h>
-#include <sys/lock.h>
 #include <sys/ras.h>
+
+#include <machine/lock.h>
 
 #include <errno.h>
 #include <unistd.h>
@@ -56,17 +57,11 @@ __RCSID("$NetBSD: pthread_lock.c,v 1.24.2.1 2007/11/06 23:11:41 matt Exp $");
 #include "pthread_int.h"
 
 /* How many times to try acquiring spin locks on MP systems. */
-#define	PTHREAD__NSPINS		64
-
-static void pthread_spinlock_slow(pthread_spin_t *);
+#define	PTHREAD__NSPINS         64
 
 RAS_DECL(pthread__lock);
 
-int
-pthread__simple_locked_p(__cpu_simple_lock_t *alp)
-{
-	return __SIMPLELOCK_LOCKED_P(alp);
-}
+static void 	pthread__spinlock_slow(pthread_spin_t *);
 
 #ifdef PTHREAD__ASM_RASOPS
 
@@ -109,6 +104,7 @@ static const struct pthread_lock_ops pthread__lock_ops_ras = {
 	pthread__ras_simple_lock_init,
 	pthread__ras_simple_lock_try,
 	pthread__ras_simple_unlock,
+	pthread__spinlock_slow,
 };
 
 static void
@@ -136,6 +132,7 @@ static const struct pthread_lock_ops pthread__lock_ops_atomic = {
 	pthread__atomic_simple_lock_init,
 	pthread__atomic_simple_lock_try,
 	pthread__atomic_simple_unlock,
+	pthread__spinlock_slow,
 };
 
 /*
@@ -146,50 +143,29 @@ static const struct pthread_lock_ops pthread__lock_ops_atomic = {
  */
 const struct pthread_lock_ops *pthread__lock_ops = &pthread__lock_ops_ras;
 
-void
-pthread_spinlock(pthread_spin_t *lock)
-{
-	if (__predict_true(pthread__simple_lock_try(lock)))
-		return;
-
-	pthread_spinlock_slow(lock);
-}
-
 /*
  * Prevent this routine from being inlined.  The common case is no
  * contention and it's better to not burden the instruction decoder.
  */
-#if __GNUC_PREREQ__(3, 0)
-__attribute ((noinline))
-#endif
 static void 
-pthread_spinlock_slow(pthread_spin_t *lock)
+pthread__spinlock_slow(pthread_spin_t *lock)
 {
+	pthread_t self;
 	int count;
+
+	self = pthread__self();
 
 	do {
 		count = pthread__nspins;
-		while (pthread__simple_locked_p(lock) && --count > 0)
+		while (__SIMPLELOCK_LOCKED_P(lock) && --count > 0)
 			pthread__smt_pause();
 		if (count > 0) {
-			if (pthread__simple_lock_try(lock))
+			if ((*self->pt_lockops.plo_try)(lock))
 				break;
 			continue;
 		}
 		sched_yield();
 	} while (/*CONSTCOND*/ 1);
-}
-
-int
-pthread_spintrylock(pthread_spin_t *lock)
-{
-	return pthread__simple_lock_try(lock);
-}
-
-void
-pthread_spinunlock(pthread_spin_t *lock)
-{
-	pthread__simple_unlock(lock);
 }
 
 /*
@@ -202,7 +178,7 @@ pthread__lockprim_init(void)
 {
 	char *p;
 
-	if ((p = getenv("PTHREAD_NSPINS")) != NULL)
+	if ((p = pthread__getenv("PTHREAD_NSPINS")) != NULL)
 		pthread__nspins = atoi(p);
 	else if (pthread__concurrency != 1)
 		pthread__nspins = PTHREAD__NSPINS;

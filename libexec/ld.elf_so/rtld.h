@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.74.4.1 2007/11/06 23:12:11 matt Exp $	 */
+/*	$NetBSD: rtld.h,v 1.74.4.2 2008/01/09 01:37:13 matt Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -177,7 +177,14 @@ typedef struct Struct_Obj_Entry {
 			printed:1,	/* True if ldd has printed it */
 			isdynamic:1,	/* True if this is a pure PIC object */
 			mainref:1,	/* True if on _rtld_list_main */
-			globalref:1;	/* True if on _rtld_list_global */
+			globalref:1,	/* True if on _rtld_list_global */
+			init_done:1,	/* True if .init has been added */
+			init_called:1,	/* True if .init function has been 
+					 * called */
+			fini_called:1,	/* True if .fini function has been 
+					 * called */
+                        initfirst:1;	/* True if object's .init/.fini take
+                        		 * priority over others */
 
 	struct link_map linkmap;	/* for GDB */
 
@@ -222,7 +229,8 @@ void *_rtld_objmain_sym(const char *);
 void _rtld_debug_state(void);
 void _rtld_linkmap_add(Obj_Entry *);
 void _rtld_linkmap_delete(Obj_Entry *);
-void _rtld_objlist_add(Objlist *, Obj_Entry *);
+void _rtld_objlist_push_head(Objlist *, Obj_Entry *);
+void _rtld_objlist_push_tail(Objlist *, Obj_Entry *);
 Objlist_Entry *_rtld_objlist_find(Objlist *, const Obj_Entry *);
 
 /* expand.c */

@@ -1,4 +1,4 @@
-/*	$NetBSD: mmap.c,v 1.12 2003/08/07 16:44:02 agc Exp $	*/
+/*	$NetBSD: mmap.c,v 1.12.22.1 2008/01/09 01:34:22 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)mmap.c	8.1 (Berkeley) 6/17/93";
 #else
-__RCSID("$NetBSD: mmap.c,v 1.12 2003/08/07 16:44:02 agc Exp $");
+__RCSID("$NetBSD: mmap.c,v 1.12.22.1 2008/01/09 01:34:22 matt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -47,6 +47,8 @@ __RCSID("$NetBSD: mmap.c,v 1.12 2003/08/07 16:44:02 agc Exp $");
 #ifdef __weak_alias
 __weak_alias(mmap,_mmap)
 #endif
+
+void *__mmap(void *, size_t, int, int, int, int, off_t);
 
 /*
  * This function provides 64-bit offset padding that
@@ -61,14 +63,6 @@ mmap(addr, len, prot, flags, fd, offset)
 	int	fd;
 	off_t	offset;
 {
-	quad_t q;
-	caddr_t rv;
 
-	q = __syscall((quad_t)SYS_mmap, addr, len, prot, flags, fd, 0, offset);
-	if (/* LINTED constant */ sizeof (quad_t) == sizeof (register_t) ||
-	    /* LINTED constant */ BYTE_ORDER == LITTLE_ENDIAN)
-		rv = (caddr_t)(long)q;
-	else
-		rv = (caddr_t)(long)((u_quad_t)q >> 32);
-	return rv;
+	return __mmap(addr, len, prot, flags, fd, 0, offset);
 }

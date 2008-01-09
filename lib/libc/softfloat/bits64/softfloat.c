@@ -1,4 +1,4 @@
-/* $NetBSD: softfloat.c,v 1.3 2006/05/11 16:38:44 mrg Exp $ */
+/* $NetBSD: softfloat.c,v 1.3.10.1 2008/01/09 01:34:13 matt Exp $ */
 
 /*
  * This version hacked for use with gcc -msoft-float by bjh21.
@@ -46,7 +46,7 @@ this code that are retained.
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: softfloat.c,v 1.3 2006/05/11 16:38:44 mrg Exp $");
+__RCSID("$NetBSD: softfloat.c,v 1.3.10.1 2008/01/09 01:34:13 matt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef SOFTFLOAT_FOR_GCC
@@ -4432,6 +4432,56 @@ int64 float128_to_int64_round_to_zero( float128 a )
         z = aSig0>>( - shiftCount );
         if (    aSig1
              || ( shiftCount && (bits64) ( aSig0<<( shiftCount & 63 ) ) ) ) {
+            float_exception_flags |= float_flag_inexact;
+        }
+    }
+    if ( aSign ) z = - z;
+    return z;
+
+}
+
+/*
+ * just like above - but do not care for overflow of signed results
+ */
+uint64 float128_to_uint64_round_to_zero( float128 a )
+{
+    flag aSign;
+    int32 aExp, shiftCount;
+    bits64 aSig0, aSig1;
+    uint64 z;
+
+    aSig1 = extractFloat128Frac1( a );
+    aSig0 = extractFloat128Frac0( a );
+    aExp = extractFloat128Exp( a );
+    aSign = extractFloat128Sign( a );
+    if ( aExp ) aSig0 |= LIT64( 0x0001000000000000 );
+    shiftCount = aExp - 0x402F;
+    if ( 0 < shiftCount ) {
+        if ( 0x403F <= aExp ) {
+            aSig0 &= LIT64( 0x0000FFFFFFFFFFFF );
+            if (    ( a.high == LIT64( 0xC03E000000000000 ) )
+                 && ( aSig1 < LIT64( 0x0002000000000000 ) ) ) {
+                if ( aSig1 ) float_exception_flags |= float_flag_inexact;
+            }
+            else {
+                float_raise( float_flag_invalid );
+            }
+            return LIT64( 0xFFFFFFFFFFFFFFFF );
+        }
+        z = ( aSig0<<shiftCount ) | ( aSig1>>( ( - shiftCount ) & 63 ) );
+        if ( (bits64) ( aSig1<<shiftCount ) ) {
+            float_exception_flags |= float_flag_inexact;
+        }
+    }
+    else {
+        if ( aExp < 0x3FFF ) {
+            if ( aExp | aSig0 | aSig1 ) {
+                float_exception_flags |= float_flag_inexact;
+            }
+            return 0;
+        }
+        z = aSig0>>( - shiftCount );
+        if (aSig1 || ( shiftCount && (bits64) ( aSig0<<( shiftCount & 63 ) ) ) ) {
             float_exception_flags |= float_flag_inexact;
         }
     }

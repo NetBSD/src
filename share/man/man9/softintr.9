@@ -1,4 +1,38 @@
-.\" $NetBSD: softintr.9,v 1.12 2003/04/16 13:35:33 wiz Exp $
+.\"	$NetBSD: softintr.9,v 1.12.24.1 2008/01/09 01:39:22 matt Exp $
+.\"
+.\" Copyright (c) 2007 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Andrew Doran.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"        This product includes software developed by the NetBSD
+.\"        Foundation, Inc. and its contributors.
+.\" 4. Neither the name of The NetBSD Foundation nor the names of its
+.\"    contributors may be used to endorse or promote products derived
+.\"    from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\" Copyright (c) 2000 Christopher G. Demetriou.
 .\" All rights reserved.
@@ -32,99 +66,144 @@
 .\"
 .\" --(license Id: LICENSE.proto,v 1.1 2000/06/13 21:40:26 cgd Exp )--
 .\"
-.Dd May 30, 2000
-.Dt SOFTINTR 9
+.Dd December 6, 2007
+.Dt SOFTINT 9
 .Os
 .Sh NAME
-.Nm softintr ,
-.Nm softintr_establish ,
-.Nm softintr_disestablish ,
-.Nm softintr_schedule
+.Nm softint ,
+.Nm softint_establish ,
+.Nm softint_disestablish ,
+.Nm softint_schedule
 .Nd machine-independent software interrupt framework
 .Sh SYNOPSIS
-.In machine/intr.h
+.In sys/intr.h
 .Ft void *
-.Fn softintr_establish "int level" "void (*fun)(void *)" "void *arg"
+.Fn softint_establish "int flags" "void (*func)(void *)" "void *arg"
 .Ft void
-.Fn softintr_disestablish "void *cookie"
+.Fn softint_sisestablish "void *cookie"
 .Ft void
-.Fn softintr_schedule "void *cookie"
+.Fn softint_schedule "void *cookie"
 .Sh DESCRIPTION
-The
-.Nx
-machine-independent software interrupt framework is designed to provide
+The software interrupt framework is designed to provide
 a generic software interrupt mechanism which can be used any time a
 low-priority callback is needed.
+.Pp
 It allows dynamic registration of software interrupts for loadable
 drivers and protocol stacks, prioritization and fair queueing of software
-interrupts, and allows machine-dependent optimizations to reduce cost
-and code complexity.
+interrupts, and allows machine-dependent optimizations to reduce cost.
 .Pp
-In order to provide this framework, the machine-dependent
-.Aq Pa machine/types.h
-must define the
-.Dv __HAVE_GENERIC_SOFT_INTERRUPTS
-symbol (without a value),
-furthermore, the machine-dependent
-.Aq Pa machine/intr.h
-include file must provide prototypes for the
-.Nm
-functions and must provide definitions of
-several constants which define software interrupt priority levels
-(IPLs):
-.Bl -tag -width "IPL_SOFTSERIAL"
-.It Dv IPL_SOFTCLOCK
-The software IPL for software clock interrupts
-.Pq i.e., Fn softclock .
-.It Dv IPL_SOFTNET
-The software IPL for network callbacks.
-.It Dv IPL_SOFTSERIAL
-The software IPL for serial driver callbacks.
-.El
+Four priority levels are provided.
+In order of priority (lowest to highest) the levels are: clock, bio,
+net, serial.
+The names are symbolic and in isolation do not have any direct
+connection with a particular kind of device activity: they are
+only meant as a guide.
 .Pp
-Other constants of the form
-.Dv IPL_SOFT*
-are reserved for future use by this framework.
+The four priority levels map directly to scheduler priority
+levels, and where the architecture implements 'fast' software
+interrupts, they also map onto interrupt priorities. 
+The interrupt priorities are intended to be hidden from machine
+independent code, which should in general use thread-safe mechanisms
+to synchronize with software interrupts (for example: mutexes).
+.Pp
+Software interrupts run with limited machine context. 
+In particular, they do not possess any address space context.
+They should not try to operate on user space addresses, or to use
+virtual memory facilities other than those noted as interrupt
+safe.
+Unlike hardware interrupts, software interrupts do have thread
+context.
+They may block on synchronization objects, sleep, and resume
+execution at a later time.
+.Pp
+Since software interrupts are a limited resource and run with
+higher priority than most other LWPs in the system, all
+block-and-resume activity by a software interrupt must be kept
+short to allow further processing at that level to continue.
+By extension, code running with process context must take care to
+ensure that any lock that may be taken from a software interrupt
+can not be held for more than a short period of time.
+.Pp
+The kernel does not allow software interrupts to use facilities
+or perform actions that are likely to block for a significant
+amount of time.
+This means that it's not valid for a software interrupt to
+sleep on condition variables or to wait for resources to
+become available (for example, memory).
 .Pp
 The following is a brief description of each function in the framework:
-.Bl -tag -width "softintr_disestablish()"
-.It Fn softintr_establish
-Register a software interrupt at level
-.Fa level ,
-which will call the function
-.Fa fun
-with one
-argument,
-.Fa arg .
-It may allocate a machine-specific data structure.
-If successful,
-.Fn softintr_establish
-returns a
+.Bl -tag -width abcxdcc
+.It Fn softint_establish flags func arg
+.Pp
+Register a software interrupt.
+The
+.Fa flags
+value must contain one of the following constants, specifing
+the priority level for the soft interrupt:
+.Pp
+.Dv SOFTINT_CLOCK ,
+.Dv SOFTINT_BIO ,
+.Dv SOFTINT_NET ,
+.Dv SOFTINT_SERIAL
+.Pp
+If the constant
+.Dv SOFTINT_MPSAFE
+is not logically ORed into
+.Fa flags ,
+the global
+.Dv kernel_lock
+will automatically be acquired before the soft interrupt handler
+is called.
+.Pp
+The constant
+.Fa func
+specifies the function to call when the soft interrupt is
+executed.
+The argument
+.Fa arg
+will be passed to this function.
+.Pp
+.Fn softint_establish
+may block in order to allocate memory.
+If successful, it returns a
 .Pf non- Dv NULL
-opaque cookie which can be used as an argument to
-.Fn softintr_schedule
-or
-.Fn softintr_disestablish .
+opaque value to be used as an argument to
+.Fn softint_schedule
+and/or
+.Fn softint_disestablish .
 If for some reason it does not succeed, it returns
 .Dv NULL .
-.It Fn softintr_disestablish
+.It Fn softint_disestablish cookie
+.Pp
 Deallocate a software interrupt previously allocated
 by a call to
-.Fn softintr_establish .
+.Fn softint_establish .
 .\" XXX What happens to pending scheduled calls?
-.It Fn softintr_schedule
+.It Fn softint_schedule cookie
+.Pp
 Schedule a software interrupt previously allocated
 by a call to
-.Fn softintr_establish
+.Fn softint_establish
 to be executed as soon as that software interrupt is unblocked.
-This function may assume that the interrupt is currently blocked,
-so it need not check to see if the interrupt needs to be executed
-immediately.
-.Fn softintr_schedule
+.Fn softint_schedule
 can safely be called multiple times before the
 callback routine is invoked.
+.Pp
+Soft interrupt scheduling is CPU-local.
+A request to dispatch a soft interrupt will only be serviced on
+the same CPU where the request was made.
+The LWPs (light weight processes) dedicated to soft interrupt
+processing are bound to their home CPUs, so if a soft interrupt
+handler sleeps and later resumes, it will always resume on the
+same CPU.
+.Pp
+On a system with multiple processors, multiple instances of
+the same soft interrupt handler can be in flight simultaneously
+(at most one per-CPU).
 .El
 .Sh SEE ALSO
+.Xr mutex 9 ,
+.Xr rwlock 9 ,
 .Xr spl 9
 .Sh HISTORY
 The
@@ -134,9 +213,9 @@ and was implemented by one port in
 .Nx 1.3 .
 However, it did not gain wider implementation until
 .Nx 1.5 .
-.Sh AUTHORS
-The
-.Nx
-machine-independent software interrupt framework was designed by
-.An Charles Hannum
-.Aq mycroft@NetBSD.org .
+Between
+.Nx 4.0
+and
+.Nx 5.0
+the framework was re-implemented in a machine-independant way to
+provide software interrupts with thread context.

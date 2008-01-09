@@ -1,4 +1,4 @@
-.\" $NetBSD: evcnt.9,v 1.15 2006/09/17 12:15:20 wiz Exp $
+.\" $NetBSD: evcnt.9,v 1.15.8.1 2008/01/09 01:39:19 matt Exp $
 .\"
 .\" Copyright (c) 2000 Christopher G. Demetriou
 .\" All rights reserved.
@@ -62,14 +62,14 @@ structure.
 Its user-accessible fields are:
 .Bd -literal
 struct evcnt {
-        uint64_t       ev_count;      /* how many have occurred */
-        TAILQ_ENTRY(evcnt) ev_list;    /* entry on list of all counters */
-        unsigned char   ev_type;       /* counter type; see below */
-        unsigned char   ev_grouplen;   /* 'group' len, excluding NUL */
-        unsigned char   ev_namelen;    /* 'name' len, excluding NUL */
-        const struct evcnt *ev_parent; /* parent, for hierarchical ctrs */
-        const char      *ev_group;     /* name of group */
-        const char      *ev_name;      /* name of specific event */
+	uint64_t	ev_count;	/* how many have occurred */
+	TAILQ_ENTRY(evcnt) ev_list;	/* entry on list of all counters */
+	unsigned char	ev_type;	/* counter type; see below */
+	unsigned char	ev_grouplen;	/* 'group' len, excluding NUL */
+	unsigned char	ev_namelen;	/* 'name' len, excluding NUL */
+	const struct evcnt *ev_parent;	/* parent, for hierarchical ctrs */
+	const char	*ev_group;	/* name of group */
+	const char	*ev_name;	/* name of specific event */
 };
 .Ed
 .Pp
@@ -228,12 +228,12 @@ and
 interrupts) a device driver might use:
 .Bd -literal
 struct foo_softc {
-        struct device sc_dev;          /* generic device information */
-        [ . . . ]
-        struct evcnt sc_ev_intr;       /* interrupt count */
-        struct evcnt sc_ev_intr_rd;    /* 'readable' interrupt count */
-        struct evcnt sc_ev_intr_wr;    /* 'writable' interrupt count */
-        [ . . . ]
+	struct device sc_dev;		/* generic device information */
+	[ . . . ]
+	struct evcnt sc_ev_intr;	/* interrupt count */
+	struct evcnt sc_ev_intr_rd;	/* 'readable' interrupt count */
+	struct evcnt sc_ev_intr_wr;	/* 'writable' interrupt count */
+	[ . . . ]
 };
 .Ed
 .Pp
@@ -244,22 +244,22 @@ function, using code like:
 .Bd -literal
 void
 fooattach(parent, self, aux)
-        struct device *parent, *self;
-        void *aux;
+	struct device *parent, *self;
+	void *aux;
 {
-        struct foo_softc *sc = (struct foo_softc *)self;
+	struct foo_softc *sc = (struct foo_softc *)self;
 
-        [ . . . ]
+	[ . . . ]
 
-        /* Initialize and attach event counters. */
-        evcnt_attach_dynamic(\*[Am]sc-\*[Gt]sc_ev, EVCNT_TYPE_INTR,
-            NULL, sc-\*[Gt]sc_dev.dv_xname, "intr");
-        evcnt_attach_dynamic(\*[Am]sc-\*[Gt]sc_ev_rd, EVCNT_TYPE_INTR,
-            \*[Am]sc-\*[Gt]sc_ev, sc-\*[Gt]sc_dev.dv_xname, "intr rd");
-        evcnt_attach_dynamic(\*[Am]sc-\*[Gt]sc_ev_wr, EVCNT_TYPE_INTR,
-            \*[Am]sc-\*[Gt]sc_ev, sc-\*[Gt]sc_dev.dv_xname, "intr wr");
+	/* Initialize and attach event counters. */
+	evcnt_attach_dynamic(\*[Am]sc-\*[Gt]sc_ev, EVCNT_TYPE_INTR,
+	    NULL, sc-\*[Gt]sc_dev.dv_xname, "intr");
+	evcnt_attach_dynamic(\*[Am]sc-\*[Gt]sc_ev_rd, EVCNT_TYPE_INTR,
+	    \*[Am]sc-\*[Gt]sc_ev, sc-\*[Gt]sc_dev.dv_xname, "intr rd");
+	evcnt_attach_dynamic(\*[Am]sc-\*[Gt]sc_ev_wr, EVCNT_TYPE_INTR,
+	    \*[Am]sc-\*[Gt]sc_ev, sc-\*[Gt]sc_dev.dv_xname, "intr wr");
 
-        [ . . . ]
+	[ . . . ]
 }
 .Ed
 .Pp
@@ -273,13 +273,13 @@ counters only after detaching all children).
 Code like the following might be used to initialize a static
 event counter (in this example, one used to track CPU alignment traps):
 .Bd -literal
-        struct evcnt aligntrap_ev = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
-            NULL, "cpu", "aligntrap")
+	struct evcnt aligntrap_ev = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
+	    NULL, "cpu", "aligntrap")
 .Ed
 .Pp
 To attach this event counter, code like the following could be used:
 .Bd -literal
-        evcnt_attach_static(\*[Am]aligntrap_ev);
+	evcnt_attach_static(\*[Am]aligntrap_ev);
 .Ed
 .Sh CODE REFERENCES
 This section describes places within the

@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_rwlock2.c,v 1.5.2.2 2007/11/06 23:11:44 matt Exp $ */
+/*	$NetBSD: pthread_rwlock2.c,v 1.5.2.3 2008/01/09 01:36:39 matt Exp $ */
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_rwlock2.c,v 1.5.2.2 2007/11/06 23:11:44 matt Exp $");
+__RCSID("$NetBSD: pthread_rwlock2.c,v 1.5.2.3 2008/01/09 01:36:39 matt Exp $");
 
 #include <errno.h>
 #include <stddef.h>
@@ -55,6 +55,16 @@ static int pthread__rwlock_wrlock(pthread_rwlock_t *, const struct timespec *);
 static int pthread__rwlock_rdlock(pthread_rwlock_t *, const struct timespec *);
 static void pthread__rwlock_early(void *);
 
+int	_pthread_rwlock_held_np(pthread_rwlock_t *);
+int	_pthread_rwlock_rdheld_np(pthread_rwlock_t *);
+int	_pthread_rwlock_wrheld_np(pthread_rwlock_t *);
+
+#ifndef lint
+__weak_alias(pthread_rwlock_held_np,_pthread_rwlock_held_np);
+__weak_alias(pthread_rwlock_rdheld_np,_pthread_rwlock_rdheld_np);
+__weak_alias(pthread_rwlock_wrheld_np,_pthread_rwlock_wrheld_np);
+#endif
+
 __strong_alias(__libc_rwlock_init,pthread_rwlock_init)
 __strong_alias(__libc_rwlock_rdlock,pthread_rwlock_rdlock)
 __strong_alias(__libc_rwlock_wrlock,pthread_rwlock_wrlock)
@@ -63,22 +73,21 @@ __strong_alias(__libc_rwlock_trywrlock,pthread_rwlock_trywrlock)
 __strong_alias(__libc_rwlock_unlock,pthread_rwlock_unlock)
 __strong_alias(__libc_rwlock_destroy,pthread_rwlock_destroy)
 
-static inline int
-rw_cas(pthread_rwlock_t *ptr, uintptr_t *o, uintptr_t n)
+static inline uintptr_t
+rw_cas(pthread_rwlock_t *ptr, uintptr_t o, uintptr_t n)
 {
 
-	return pthread__atomic_cas_ptr(&ptr->ptr_owner, (void **)o, (void *)n);
+	return (uintptr_t)pthread__atomic_cas_ptr(&ptr->ptr_owner, (void *)o,
+	    (void *)n);
 }
 
 int
 pthread_rwlock_init(pthread_rwlock_t *ptr,
 	    const pthread_rwlockattr_t *attr)
 {
-#ifdef ERRORCHECK
-	if ((ptr == NULL) ||
-	    (attr && (attr->ptra_magic != _PT_RWLOCKATTR_MAGIC)))
+
+	if (attr && (attr->ptra_magic != _PT_RWLOCKATTR_MAGIC))
 		return EINVAL;
-#endif
 	ptr->ptr_magic = _PT_RWLOCK_MAGIC;
 	pthread_lockinit(&ptr->ptr_interlock);
 	PTQ_INIT(&ptr->ptr_rblocked);
@@ -94,15 +103,12 @@ int
 pthread_rwlock_destroy(pthread_rwlock_t *ptr)
 {
 
-#ifdef ERRORCHECK
-	if ((ptr == NULL) ||
-	    (ptr->ptr_magic != _PT_RWLOCK_MAGIC) ||
+	if ((ptr->ptr_magic != _PT_RWLOCK_MAGIC) ||
 	    (!PTQ_EMPTY(&ptr->ptr_rblocked)) ||
 	    (!PTQ_EMPTY(&ptr->ptr_wblocked)) ||
 	    (ptr->ptr_nreaders != 0) ||
 	    (ptr->ptr_owner != NULL))
 		return EINVAL;
-#endif
 	ptr->ptr_magic = _PT_RWLOCK_DEAD;
 
 	return 0;
@@ -111,24 +117,25 @@ pthread_rwlock_destroy(pthread_rwlock_t *ptr)
 static int
 pthread__rwlock_rdlock(pthread_rwlock_t *ptr, const struct timespec *ts)
 {
-	uintptr_t owner;
+	uintptr_t owner, next;
 	pthread_t self;
 	int error;
 	
 	self = pthread__self();
 
 #ifdef ERRORCHECK
-	if ((ptr == NULL) || (ptr->ptr_magic != _PT_RWLOCK_MAGIC))
+	if (ptr->ptr_magic != _PT_RWLOCK_MAGIC)
 		return EINVAL;
 #endif
 
-	for (owner = (uintptr_t)ptr->ptr_owner;;) {
+	for (owner = (uintptr_t)ptr->ptr_owner;; owner = next) {
 		/*
 		 * Read the lock owner field.  If the need-to-wait
 		 * indicator is clear, then try to acquire the lock.
 		 */
 		if ((owner & (RW_WRITE_LOCKED | RW_WRITE_WANTED)) == 0) {
-			if (rw_cas(ptr, &owner, owner + RW_READ_INCR)) {
+			next = rw_cas(ptr, owner, owner + RW_READ_INCR);
+			if (owner == next) {
 				/* Got it! */
 				return 0;
 			}
@@ -147,14 +154,15 @@ pthread__rwlock_rdlock(pthread_rwlock_t *ptr, const struct timespec *ts)
 		 * Grab the interlock.  Once we have that, we
 		 * can adjust the waiter bits and sleep queue.
 		 */
-		pthread_spinlock(&ptr->ptr_interlock);
+		pthread__spinlock(self, &ptr->ptr_interlock);
 
 		/*
 		 * Mark the rwlock as having waiters.  If the set fails,
 		 * then we may not need to sleep and should spin again.
 		 */
-		if (!rw_cas(ptr, &owner, owner | RW_HAS_WAITERS)) {
-			pthread_spinunlock(&ptr->ptr_interlock);
+		next = rw_cas(ptr, owner, owner | RW_HAS_WAITERS);
+		if (owner != next) {
+			pthread__spinunlock(self, &ptr->ptr_interlock);
 			continue;
 		}
 
@@ -165,24 +173,14 @@ pthread__rwlock_rdlock(pthread_rwlock_t *ptr, const struct timespec *ts)
 		self->pt_sleeponq = 1;
 		self->pt_sleepobj = &ptr->ptr_rblocked;
 		self->pt_early = pthread__rwlock_early;
-		pthread_spinunlock(&ptr->ptr_interlock);
+		pthread__spinunlock(self, &ptr->ptr_interlock);
 
 		error = pthread__park(self, &ptr->ptr_interlock,
 		    &ptr->ptr_rblocked, ts, 0, &ptr->ptr_rblocked);
 
 		/* Did we get the lock? */
-		if (self->pt_rwlocked == _RW_LOCKED) {
-#ifdef ERRORCHECK
-			/* XXX paranoid, remove later */
-			owner = (uintptr_t)ptr->ptr_owner;
-			if ((owner & RW_THREAD) == 0 ||
-			    (owner & RW_WRITE_LOCKED) != 0) {
-				pthread__errorfunc(__FILE__, __LINE__,
-				    __func__, "internal rwlock error");
-			}
-#endif
+		if (self->pt_rwlocked == _RW_LOCKED)
 			return 0;
-		}
 		if (error != 0)
 			return error;
 
@@ -195,10 +193,10 @@ pthread__rwlock_rdlock(pthread_rwlock_t *ptr, const struct timespec *ts)
 int
 pthread_rwlock_tryrdlock(pthread_rwlock_t *ptr)
 {
-	uintptr_t owner;
+	uintptr_t owner, next;
 
 #ifdef ERRORCHECK
-	if ((ptr == NULL) || (ptr->ptr_magic != _PT_RWLOCK_MAGIC))
+	if (ptr->ptr_magic != _PT_RWLOCK_MAGIC)
 		return EINVAL;
 #endif
 
@@ -207,10 +205,11 @@ pthread_rwlock_tryrdlock(pthread_rwlock_t *ptr)
 	 * writers; i.e. prefer writers to readers. This strategy is dictated
 	 * by SUSv3.
 	 */
-	for (owner = (uintptr_t)ptr->ptr_owner;;) {
+	for (owner = (uintptr_t)ptr->ptr_owner;; owner = next) {
 		if ((owner & (RW_WRITE_LOCKED | RW_WRITE_WANTED)) != 0)
 			return EBUSY;
-		if (rw_cas(ptr, &owner, owner + RW_READ_INCR)) {
+		next = rw_cas(ptr, owner, owner + RW_READ_INCR);
+		if (owner == next) {
 			/* Got it! */
 			return 0;
 		}
@@ -220,28 +219,26 @@ pthread_rwlock_tryrdlock(pthread_rwlock_t *ptr)
 static int
 pthread__rwlock_wrlock(pthread_rwlock_t *ptr, const struct timespec *ts)
 {
-	uintptr_t owner;
+	uintptr_t owner, next;
 	pthread_t self;
 	int error;
 
 	self = pthread__self();
 
 #ifdef ERRORCHECK
-	if ((ptr == NULL) || (ptr->ptr_magic != _PT_RWLOCK_MAGIC))
+	if (ptr->ptr_magic != _PT_RWLOCK_MAGIC)
 		return EINVAL;
-	if (((uintptr_t)self & RW_FLAGMASK) != 0)
-		pthread__errorfunc(__FILE__, __LINE__, __func__,
-		    "bad thread pointer");
 #endif
 
-	for (owner = (uintptr_t)ptr->ptr_owner;;) {
+	for (owner = (uintptr_t)ptr->ptr_owner;; owner = next) {
 		/*
 		 * Read the lock owner field.  If the need-to-wait
 		 * indicator is clear, then try to acquire the lock.
 		 */
 		if ((owner & RW_THREAD) == 0) {
-			if (rw_cas(ptr, &owner,
-			    (uintptr_t)self | RW_WRITE_LOCKED)) {
+			next = rw_cas(ptr, owner,
+			    (uintptr_t)self | RW_WRITE_LOCKED);
+			if (owner == next) {
 				/* Got it! */
 				return 0;
 			}
@@ -260,15 +257,16 @@ pthread__rwlock_wrlock(pthread_rwlock_t *ptr, const struct timespec *ts)
 		 * Grab the interlock.  Once we have that, we
 		 * can adjust the waiter bits and sleep queue.
 		 */
-		pthread_spinlock(&ptr->ptr_interlock);
+		pthread__spinlock(self, &ptr->ptr_interlock);
 
 		/*
 		 * Mark the rwlock as having waiters.  If the set fails,
 		 * then we may not need to sleep and should spin again.
 		 */
-		if (!rw_cas(ptr, &owner,
-		    owner | RW_HAS_WAITERS | RW_WRITE_WANTED)) {
-			pthread_spinunlock(&ptr->ptr_interlock);
+		next = rw_cas(ptr, owner,
+		    owner | RW_HAS_WAITERS | RW_WRITE_WANTED);
+		if (owner != next) {
+			pthread__spinunlock(self, &ptr->ptr_interlock);
 			continue;
 		}
 
@@ -278,24 +276,14 @@ pthread__rwlock_wrlock(pthread_rwlock_t *ptr, const struct timespec *ts)
 		self->pt_sleeponq = 1;
 		self->pt_sleepobj = &ptr->ptr_wblocked;
 		self->pt_early = pthread__rwlock_early;
-		pthread_spinunlock(&ptr->ptr_interlock);
+		pthread__spinunlock(self, &ptr->ptr_interlock);
 
 		error = pthread__park(self, &ptr->ptr_interlock,
 		    &ptr->ptr_wblocked, ts, 0, &ptr->ptr_wblocked);
 
 		/* Did we get the lock? */
-		if (self->pt_rwlocked == _RW_LOCKED) {
-#ifdef ERRORCHECK
-			/* XXX paranoid, remove later */
-			owner = (uintptr_t)ptr->ptr_owner;
-			if ((owner & RW_THREAD) == 0 ||
-			    (owner & RW_WRITE_LOCKED) == 0) {
-				pthread__errorfunc(__FILE__, __LINE__,
-				    __func__, "internal rwlock error");
-			}
-#endif
+		if (self->pt_rwlocked == _RW_LOCKED)
 			return 0;
-		}
 		if (error != 0)
 			return error;
 
@@ -308,20 +296,21 @@ pthread__rwlock_wrlock(pthread_rwlock_t *ptr, const struct timespec *ts)
 int
 pthread_rwlock_trywrlock(pthread_rwlock_t *ptr)
 {
-	uintptr_t owner;
+	uintptr_t owner, next;
 	pthread_t self;
 
 #ifdef ERRORCHECK
-	if ((ptr == NULL) || (ptr->ptr_magic != _PT_RWLOCK_MAGIC))
+	if (ptr->ptr_magic != _PT_RWLOCK_MAGIC)
 		return EINVAL;
 #endif
 
 	self = pthread__self();
 
-	for (owner = (uintptr_t)ptr->ptr_owner;;) {
-		if ((owner & RW_THREAD) != 0)
+	for (owner = (uintptr_t)ptr->ptr_owner;; owner = next) {
+		if (owner != 0)
 			return EBUSY;
-		if (rw_cas(ptr, &owner, owner | (uintptr_t)self)) {
+		next = rw_cas(ptr, owner, (uintptr_t)self | RW_WRITE_LOCKED);
+		if (owner == next) {
 			/* Got it! */
 			return 0;
 		}
@@ -376,11 +365,13 @@ pthread_rwlock_timedwrlock(pthread_rwlock_t *ptr,
 int
 pthread_rwlock_unlock(pthread_rwlock_t *ptr)
 {
-	uintptr_t owner, decr, new;
+	uintptr_t owner, decr, new, next;
 	pthread_t self, thread;
 
+#ifdef ERRORCHECK
 	if ((ptr == NULL) || (ptr->ptr_magic != _PT_RWLOCK_MAGIC))
 		return EINVAL;
+#endif
 
 	self = pthread__self();
 
@@ -402,7 +393,7 @@ pthread_rwlock_unlock(pthread_rwlock_t *ptr)
 		}
 	}
 
-	for (;;) {
+	for (;; owner = next) {
 		/*
 		 * Compute what we expect the new value of the lock to be.
 		 * Only proceed to do direct handoff if there are waiters,
@@ -410,7 +401,8 @@ pthread_rwlock_unlock(pthread_rwlock_t *ptr)
 		 */
 		new = (owner - decr);
 		if ((new & (RW_THREAD | RW_HAS_WAITERS)) != RW_HAS_WAITERS) {
-			if (rw_cas(ptr, &owner, new)) {
+			next = rw_cas(ptr, owner, new);
+			if (owner == next) {
 				/* Released! */
 				return 0;
 			}
@@ -422,10 +414,11 @@ pthread_rwlock_unlock(pthread_rwlock_t *ptr)
 		 * the waiter bits.  We must check to see if there are
 		 * still waiters before proceeding.
 		 */
-		pthread_spinlock(&ptr->ptr_interlock);
+		pthread__spinlock(self, &ptr->ptr_interlock);
 		owner = (uintptr_t)ptr->ptr_owner;
 		if ((owner & RW_HAS_WAITERS) == 0) {
-			pthread_spinunlock(&ptr->ptr_interlock);
+			pthread__spinunlock(self, &ptr->ptr_interlock);
+			next = owner;
 			continue;
 		}
 
@@ -493,12 +486,12 @@ pthread_rwlock_unlock(pthread_rwlock_t *ptr)
 static void
 pthread__rwlock_early(void *obj)
 {
-	uintptr_t owner, set, new;
+	uintptr_t owner, set, new, next;
 	pthread_rwlock_t *ptr;
 	pthread_t self;
 	u_int off;
 
-	self = pthread_self();
+	self = pthread__self();
 
 	switch (self->pt_rwlocked) {
 	case _RW_WANT_READ:
@@ -531,20 +524,44 @@ pthread__rwlock_early(void *obj)
 	else
 		set = 0;
 
-	for (;;) {
+	for (;; owner = next) {
 		new = (owner & ~(RW_HAS_WAITERS | RW_WRITE_WANTED)) | set;
-		if (rw_cas(ptr, &owner, new))
+		next = rw_cas(ptr, owner, new);
+		if (owner == next)
 			break;
 	}
 }
 
 int
+_pthread_rwlock_held_np(pthread_rwlock_t *ptr)
+{
+	uintptr_t owner = (uintptr_t)ptr->ptr_owner;
+
+	return (owner & RW_THREAD) != 0;
+}
+
+int
+_pthread_rwlock_rdheld_np(pthread_rwlock_t *ptr)
+{
+	uintptr_t owner = (uintptr_t)ptr->ptr_owner;
+
+	return (owner & RW_THREAD) != 0 && (owner & RW_WRITE_LOCKED) == 0;
+}
+
+int
+_pthread_rwlock_wrheld_np(pthread_rwlock_t *ptr)
+{
+	uintptr_t owner = (uintptr_t)ptr->ptr_owner;
+
+	return (owner & RW_THREAD) != 0 && (owner & RW_WRITE_LOCKED) != 0;
+}
+
+int
 pthread_rwlockattr_init(pthread_rwlockattr_t *attr)
 {
-#ifdef ERRORCHECK
+
 	if (attr == NULL)
 		return EINVAL;
-#endif
 	attr->ptra_magic = _PT_RWLOCKATTR_MAGIC;
 
 	return 0;
@@ -554,11 +571,10 @@ pthread_rwlockattr_init(pthread_rwlockattr_t *attr)
 int
 pthread_rwlockattr_destroy(pthread_rwlockattr_t *attr)
 {
-#ifdef ERRORCHECK
+
 	if ((attr == NULL) ||
 	    (attr->ptra_magic != _PT_RWLOCKATTR_MAGIC))
 		return EINVAL;
-#endif
 	attr->ptra_magic = _PT_RWLOCKATTR_DEAD;
 
 	return 0;

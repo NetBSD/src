@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_misc.c,v 1.2 2007/08/16 13:54:17 ad Exp $	*/
+/*	$NetBSD: pthread_misc.c,v 1.2.2.1 2008/01/09 01:36:37 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_misc.c,v 1.2 2007/08/16 13:54:17 ad Exp $");
+__RCSID("$NetBSD: pthread_misc.c,v 1.2.2.1 2008/01/09 01:36:37 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -49,13 +49,16 @@ __RCSID("$NetBSD: pthread_misc.c,v 1.2 2007/08/16 13:54:17 ad Exp $");
 #include "pthread.h"
 #include "pthread_int.h"
 
+int	pthread__sched_yield(void);
+
 int	_sys___sigprocmask14(int, const sigset_t *, sigset_t *);
 int	_sys_nanosleep(const struct timespec *, struct timespec *);
+int	_sys_sched_yield(void);
 
 __strong_alias(_nanosleep, nanosleep)
 __strong_alias(__libc_thr_sigsetmask,pthread_sigmask)
 __strong_alias(__sigprocmask14,pthread_sigmask)
-__strong_alias(__libc_thr_yield,_sys_sched_yield)
+__strong_alias(__libc_thr_yield,pthread__sched_yield)
 
 /*ARGSUSED*/
 int
@@ -108,4 +111,23 @@ nanosleep(const struct timespec *rqtp, struct timespec *rmtp)
 	 * to _lwp_nanosleep() and allow it to recycle our kernel stack.
 	 */
 	return  _sys_nanosleep(rqtp, rmtp);
+}
+
+int
+pthread__sched_yield(void)
+{
+	pthread_t self;
+	int error;
+
+	self = pthread__self();
+
+#ifdef PTHREAD__HAVE_ATOMIC
+	/* Memory barrier for unlocked mutex release. */
+	pthread__membar_producer();
+#endif
+	self->pt_blocking++;
+	error = _sys_sched_yield();
+	self->pt_blocking--;
+
+	return error;
 }

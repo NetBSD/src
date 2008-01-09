@@ -1,4 +1,4 @@
-/*	$NetBSD: _context_u.S,v 1.2.24.1 2007/11/06 23:11:47 matt Exp $	*/
+/*	$NetBSD: _context_u.S,v 1.2.24.2 2008/01/09 01:36:41 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2007 The NetBSD Foundation, Inc.
@@ -39,12 +39,13 @@
 #include <machine/asm.h>
 #include "assym.h"
 
+#define	STUB(n)		ENTRY(n); .hidden _C_LABEL(n)
 
 #define FPSAVE(reg)	fnsave UC_FPREGS(reg)
 #define FPLOAD(reg)	frstor UC_FPREGS(reg)
 #include "_getsetc.S"
 	
-ENTRY(_getcontext_u_s87)
+STUB(_getcontext_u_s87)
 	movl	4(%esp), %ecx
 	movl	0(%esp), %edx
 	GETC
@@ -54,11 +55,11 @@ ENTRY(_getcontext_u_s87)
 	xorl	%eax,  %eax
 	ret
 
-ENTRY(_setcontext_u_s87)					
+STUB(_setcontext_u_s87)					
 	movl	4(%esp), %ecx
 	SETC
 
-ENTRY(_swapcontext_u_s87)
+STUB(_swapcontext_u_s87)
 	movl	4(%esp), %ecx
 	movl	0(%esp), %edx
 	GETC
@@ -76,7 +77,7 @@ ENTRY(_swapcontext_u_s87)
 #define FPLOAD(reg)	fxrstor UC_FXSAVEREGS(reg)
 #include "_getsetc.S"
 
-ENTRY(_getcontext_u_xmm)
+STUB(_getcontext_u_xmm)
 	movl	4(%esp), %ecx
 	movl	0(%esp), %edx
 	GETC
@@ -86,11 +87,11 @@ ENTRY(_getcontext_u_xmm)
 	xorl	%eax,  %eax
 	ret
 
-ENTRY(_setcontext_u_xmm)					
+STUB(_setcontext_u_xmm)					
 	movl	4(%esp), %ecx
 	SETC
 
-ENTRY(_swapcontext_u_xmm)
+STUB(_swapcontext_u_xmm)
 	movl	4(%esp), %ecx
 	movl	0(%esp), %edx
 	GETC
@@ -100,39 +101,30 @@ ENTRY(_swapcontext_u_xmm)
 	movl	8(%esp), %ecx
 	SETC
 
-ENTRY(pthread__atomic_cas_ptr)
-	movl	4(%esp), %ecx
-	movl	8(%esp), %eax
-	movl	12(%esp), %edx
-	movl	(%eax), %eax
-	lock
-	cmpxchgl %edx, (%ecx)
-	jnz	1f
-	mov	$1, %eax
-	ret
-1:
-	mov	8(%esp), %edx
-	mov	%eax, (%edx)
-	mov	$0, %eax
-	ret
-
-ENTRY(pthread__atomic_swap_ptr)
+STUB(pthread__atomic_swap_ptr)
 	movl	4(%esp), %ecx
 	movl	8(%esp), %eax
 	xchgl	%eax, (%ecx)
 	ret
 
-ENTRY(pthread__membar_full)
+STUB(pthread__atomic_or_ulong)
+	movl	4(%esp), %ecx
+	movl	8(%esp), %eax
+	lock
+	orl	%eax, (%ecx)
+	ret
+
+STUB(pthread__membar_full)
 	lock
 	addl	$0, -4(%esp)
 	ret
 
-ENTRY(pthread__membar_producer)
+STUB(pthread__membar_producer)
 	/* A store is enough */
-	movl	$0, -4(%esp)
+	addl	$0, -4(%esp)
 	ret
 
-ENTRY(pthread__membar_consumer)
+STUB(pthread__membar_consumer)
 	lock
 	addl	$0, -4(%esp)
 	ret

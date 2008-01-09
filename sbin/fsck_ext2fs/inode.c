@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.c,v 1.20 2005/08/19 02:07:18 christos Exp $	*/
+/*	$NetBSD: inode.c,v 1.20.10.1 2008/01/09 01:38:04 matt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)inode.c	8.5 (Berkeley) 2/8/95";
 #else
-__RCSID("$NetBSD: inode.c,v 1.20 2005/08/19 02:07:18 christos Exp $");
+__RCSID("$NetBSD: inode.c,v 1.20.10.1 2008/01/09 01:38:04 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -372,7 +372,10 @@ ginode(ino_t inumber)
 {
 	daddr_t iblk;
 
-	if ((inumber < EXT2_FIRSTINO && inumber != EXT2_ROOTINO)
+	if ((inumber < EXT2_FIRSTINO &&
+	     inumber != EXT2_ROOTINO &&
+	     !(inumber == EXT2_RESIZEINO &&
+	       (sblock.e2fs.e2fs_features_compat & EXT2F_COMPAT_RESIZE) != 0))
 		|| inumber > maxino)
 		errexit("bad inode number %llu to ginode\n",
 		    (unsigned long long)inumber);

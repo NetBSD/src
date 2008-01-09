@@ -1,4 +1,4 @@
-.\"     $NetBSD: ath.4,v 1.19 2007/04/08 02:29:39 erh Exp $
+.\"     $NetBSD: ath.4,v 1.19.4.1 2008/01/09 01:39:04 matt Exp $
 .\"
 .\" Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
 .\" All rights reserved.
@@ -109,12 +109,13 @@ The driver may also be configured to operate in hostap mode.
 In this mode a host may function as an access point (base station).
 Access points are different than operating in IBSS mode.
 They operate in BSS mode.
-They allow for easier roaming and bridge all ethernet traffic such
+They allow for easier roaming and bridge all Ethernet traffic such
 that machines connected via an access point appear to be on the local
-ethernet segment.
+Ethernet segment.
 .Pp
-The mode of operation is chosen by specifing the appropriate mediaopt
-value to ifconfig.  The
+The mode of operation is chosen by specifying the appropriate mediaopt
+value to ifconfig.
+The
 .Fl m
 flag to ifconfig will list the available options.
 .Pp
@@ -225,7 +226,7 @@ This should not happen.
 An invalid transmit rate was specified for an outgoing frame.
 The frame is discarded.
 This should not happen.
-.It "ath%d: ath_chan_set: unable to reset channel %u (%u Mhz)"
+.It "ath%d: ath_chan_set: unable to reset channel %u (%u MHz)"
 The Atheros Hardware Access Layer was unable to reset the hardware
 when switching channels during scanning.
 This should not happen.

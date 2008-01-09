@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.12 2004/01/27 20:30:29 jsm Exp $	*/
+/*	$NetBSD: main.c,v 1.12.22.1 2008/01/09 01:30:49 matt Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.4 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.12 2004/01/27 20:30:29 jsm Exp $");
+__RCSID("$NetBSD: main.c,v 1.12.22.1 2008/01/09 01:30:49 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -532,7 +532,7 @@ quit()
 
 void
 quitsig(dummy)
-	int dummy __attribute__((__unused__));
+	int dummy __unused;
 {
 	quit();
 }

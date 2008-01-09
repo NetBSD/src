@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.340.4.1 2007/11/06 23:10:28 matt Exp $
+#	$NetBSD: NetBSD.dist,v 1.340.4.2 2008/01/09 01:29:53 matt Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -27,6 +27,7 @@
 ./etc/X11/xinit
 ./etc/X11/xserver
 ./etc/X11/xsm
+./etc/atf
 ./etc/cgd			mode=0700
 ./etc/bluetooth
 ./etc/defaults
@@ -50,7 +51,6 @@
 ./etc/skel
 ./etc/sliphome
 ./etc/ssh
-./etc/systrace
 ./lib
 ./libdata
 ./libdata/firmware
@@ -224,6 +224,7 @@
 ./usr/include/adosfs
 ./usr/include/altq
 ./usr/include/arpa
+./usr/include/atf
 ./usr/include/crypto
 ./usr/include/dev
 ./usr/include/dev/apm
@@ -327,6 +328,20 @@
 ./usr/libdata/debug/usr/libexec/lpr
 ./usr/libdata/debug/usr/libexec/postfix
 ./usr/libdata/debug/usr/sbin
+./usr/libdata/debug/usr/tests
+./usr/libdata/debug/usr/tests/atf
+./usr/libdata/debug/usr/tests/atf/formats
+./usr/libdata/debug/usr/tests/atf/test_programs
+./usr/libdata/debug/usr/tests/atf/tools
+./usr/libdata/debug/usr/tests/atf/units
+./usr/libdata/debug/usr/tests/fs
+./usr/libdata/debug/usr/tests/fs/puffs
+./usr/libdata/debug/usr/tests/fs/tmpfs
+./usr/libdata/debug/usr/tests/net
+./usr/libdata/debug/usr/tests/net/sys
+./usr/libdata/debug/usr/tests/util
+./usr/libdata/debug/usr/tests/util/df
+./usr/libdata/debug/usr/tests/util/id
 ./usr/libdata/firmware
 ./usr/libdata/lint
 ./usr/libexec
@@ -338,12 +353,14 @@
 ./usr/pkg			ignore optional
 ./usr/sbin
 ./usr/share
+./usr/share/atf
 ./usr/share/calendar
 ./usr/share/dhcpd
 ./usr/share/dict
 ./usr/share/dict/papers
 ./usr/share/dict/special
 ./usr/share/doc
+./usr/share/doc/atf
 ./usr/share/doc/groff
 ./usr/share/doc/groff/mom
 ./usr/share/doc/html
@@ -433,6 +450,7 @@
 ./usr/share/examples
 ./usr/share/examples/amd
 ./usr/share/examples/apm
+./usr/share/examples/atf
 ./usr/share/examples/dhcp
 ./usr/share/examples/emul
 ./usr/share/examples/emul/linux
@@ -1045,6 +1063,10 @@
 ./usr/share/tmac
 ./usr/share/tmac/mdoc
 ./usr/share/tmac/mm
+./usr/share/xml
+./usr/share/xml/atf
+./usr/share/xsl
+./usr/share/xsl/atf
 ./usr/share/vi
 ./usr/share/vi/catalog
 ./usr/share/wscons
@@ -1072,6 +1094,24 @@
 ./usr/share/zoneinfo/Mideast
 ./usr/share/zoneinfo/Pacific
 ./usr/share/zoneinfo/US
+./usr/tests
+./usr/tests/atf
+./usr/tests/atf/formats
+./usr/tests/atf/sh_interface
+./usr/tests/atf/test_programs
+./usr/tests/atf/tools
+./usr/tests/atf/units
+./usr/tests/fs
+./usr/tests/fs/puffs
+./usr/tests/fs/tmpfs
+./usr/tests/games
+./usr/tests/net
+./usr/tests/net/sys
+./usr/tests/util
+./usr/tests/util/df
+./usr/tests/util/id
+./usr/tests/util/ps
+./usr/tests/util/sh
 ./var
 ./var/account
 ./var/at

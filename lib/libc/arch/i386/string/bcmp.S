@@ -6,7 +6,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: bcmp.S,v 1.8 2003/07/26 19:24:33 salo Exp $")
+	RCSID("$NetBSD: bcmp.S,v 1.8.22.1 2008/01/09 01:33:56 matt Exp $")
 #endif
 
 ENTRY(bcmp)
@@ -15,7 +15,6 @@ ENTRY(bcmp)
 	movl	12(%esp),%edi
 	movl	16(%esp),%esi
 	xorl	%eax,%eax		/* clear return value */
-	cld				/* set compare direction forward */
 
 	movl	20(%esp),%ecx		/* compare by words */
 	shrl	$2,%ecx

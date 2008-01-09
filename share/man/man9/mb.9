@@ -1,4 +1,4 @@
-.\"	$NetBSD: mb.9,v 1.3 2007/04/08 21:41:21 ad Exp $
+.\"	$NetBSD: mb.9,v 1.3.4.1 2008/01/09 01:39:20 matt Exp $
 .\"
 .\" Copyright (c) 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -68,7 +68,7 @@ in an unpredictable order.
 .Fn mb_read ,
 and
 .Fn mb_write
-can be used to control the order in which memory acceses occur, and
+can be used to control the order in which memory accesses occur, and
 thus the order in which those accesses become visible to other processors.
 They can be used to implement
 .Dq lockless
@@ -99,13 +99,13 @@ interfaces should be used.
 .It Fn mb_memory ""
 .Pp
 Issue a full memory barrier, ordering all memory accesses.
-Causes all loads and stores preceeding the call to
+Causes all loads and stores preceding the call to
 .Fn mb_memory
 to complete before further memory accesses can be made.
 .It Fn mb_read ""
 .Pp
 Issue a read memory barrier, ordering all loads from memory.
-Causes all loads preceeding the call to
+Causes all loads preceding the call to
 .Fn mb_read
 to complete before further loads can be made.
 Stores may be reordered ahead of or behind a call to
@@ -113,7 +113,7 @@ Stores may be reordered ahead of or behind a call to
 .It Fn mb_write ""
 .Pp
 Issue a write memory barrier, ordering all stores to memory.
-Causes all stores preceeding the call to
+Causes all stores preceding the call to
 .Fn mb_write
 to complete before further stores can be made.
 Loads may be reordered ahead of or behind a call to

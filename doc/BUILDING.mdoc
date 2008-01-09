@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.49.4.1 2007/11/06 23:10:20 matt Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.49.4.2 2008/01/09 01:29:25 matt Exp $
 .\"
 .\" Copyright (c) 2001-2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1198,25 +1198,25 @@ Set the value of
 .Sy BUILDID
 to
 .Ar buildid .
-This will also append the build idenfitier to the name of the
+This will also append the build identifier to the name of the
 .Dq make
 wrapper script so that the resulting name is of the form
 .Dq Sy \*[toolprefix]make-MACHINE-BUILDID .
 .
-.It Fl C Ar cddir
+.It Fl C Ar cdextras
 Set the value of
 .Sy CDEXTRA
 to
-.Ar cddir .
-If a relative path is specified, it will be converted to an
-absolute path before being used.
-When combined with
+.Ar cdextras 
+which is a space-separated list of files or directories which will be
+added in order to the CD-ROM image when used in conjunction with
 .Dq iso-image
 or
-.Dq iso-image-source ,
-it will cause the contents of
-.Ar cddir
-to be added to the CD-ROM image.
+.Dq iso-image-source .
+Files will be added to the root of the CD-ROM image, whereas directories
+will be copied recursively.
+If relative paths are specified, they will be converted to
+absolute paths before being used.
 .
 .It Fl D Ar dest
 Set the value of

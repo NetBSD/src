@@ -1,4 +1,4 @@
-/*	$NetBSD: atrun.c,v 1.16 2005/10/31 16:15:42 christos Exp $	*/
+/*	$NetBSD: atrun.c,v 1.16.10.1 2008/01/09 01:37:10 matt Exp $	*/
 
 /*
  *  atrun.c - run jobs queued by at; run with root privileges.
@@ -26,6 +26,7 @@
  */
 
 /* System Headers */
+#include <sys/cdefs.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 
@@ -58,14 +59,14 @@
 #if 0
 static char rcsid[] = "$OpenBSD: atrun.c,v 1.7 1997/09/08 22:12:10 millert Exp $";
 #else
-__RCSID("$NetBSD: atrun.c,v 1.16 2005/10/31 16:15:42 christos Exp $");
+__RCSID("$NetBSD: atrun.c,v 1.16.10.1 2008/01/09 01:37:10 matt Exp $");
 #endif
 
 static int debug = 0;
 
 /* Local functions */
-static void perr(const char *, ...) __attribute__((__noreturn__));
-static void perrx(const char *, ...) __attribute__((__noreturn__));
+static void perr(const char *, ...) __dead;
+static void perrx(const char *, ...) __dead;
 static int write_string(int, const char *);
 static void run_file(const char *, uid_t, gid_t);
 static void become_user(struct passwd *, uid_t);

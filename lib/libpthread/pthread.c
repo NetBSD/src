@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.80.2.1 2007/11/06 23:11:39 matt Exp $	*/
+/*	$NetBSD: pthread.c,v 1.80.2.2 2008/01/09 01:36:31 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,13 +37,14 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.80.2.1 2007/11/06 23:11:39 matt Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.80.2.2 2008/01/09 01:36:31 matt Exp $");
 
 #define	__EXPOSE_STACK	1
 
 #include <sys/param.h>
 #include <sys/mman.h>
 #include <sys/sysctl.h>
+#include <sys/lwpctl.h>
 
 #include <err.h>
 #include <errno.h>
@@ -60,13 +61,6 @@ __RCSID("$NetBSD: pthread.c,v 1.80.2.1 2007/11/06 23:11:39 matt Exp $");
 #include "pthread.h"
 #include "pthread_int.h"
 
-#ifdef PTHREAD_MAIN_DEBUG
-#define SDPRINTF(x) DPRINTF(x)
-#else
-#define SDPRINTF(x)
-#endif
-
-
 pthread_rwlock_t pthread__alltree_lock = PTHREAD_RWLOCK_INITIALIZER;
 RB_HEAD(__pthread__alltree, __pthread_st) pthread__alltree;
 
@@ -75,20 +69,25 @@ static int	pthread__cmp(struct __pthread_st *, struct __pthread_st *);
 RB_PROTOTYPE_STATIC(__pthread__alltree, __pthread_st, pt_alltree, pthread__cmp)
 #endif
 
-static void	pthread__create_tramp(void *(*)(void *), void *);
+static void	pthread__create_tramp(pthread_t, void *(*)(void *), void *);
 static void	pthread__initthread(pthread_t);
 static void	pthread__scrubthread(pthread_t, char *, int);
 static int	pthread__stackid_setup(void *, size_t, pthread_t *);
 static int	pthread__stackalloc(pthread_t *);
 static void	pthread__initmain(pthread_t *);
+static void	pthread__fork_callback(void);
+static void	pthread__reap(pthread_t);
+
+void	pthread__init(void);
 
 int pthread__started;
-
 pthread_mutex_t pthread__deadqueue_lock = PTHREAD_MUTEX_INITIALIZER;
 pthread_queue_t pthread__deadqueue;
 pthread_queue_t pthread__allqueue;
 
 static pthread_attr_t pthread_default_attr;
+static lwpctl_t pthread__dummy_lwpctl = { .lc_curcpu = LWPCTL_CPU_NONE };
+static pthread_t pthread__first;
 
 enum {
 	DIAGASSERT_ABORT =	1<<0,
@@ -124,6 +123,8 @@ __strong_alias(__libc_thr_create,pthread_create)
 __strong_alias(__libc_thr_exit,pthread_exit)
 __strong_alias(__libc_thr_errno,pthread__errno)
 __strong_alias(__libc_thr_setcancelstate,pthread_setcancelstate)
+__strong_alias(__libc_thr_equal,pthread_equal)
+__strong_alias(__libc_thr_init,pthread__init)
 
 /*
  * Static library kludge.  Place a reference to a symbol any library
@@ -148,7 +149,7 @@ void *pthread__static_lib_binder[] = {
  * spinlock counts for mutexes is an internal example).
  */
 void
-pthread_init(void)
+pthread__init(void)
 {
 	pthread_t first;
 	char *p;
@@ -195,11 +196,12 @@ pthread_init(void)
 	PTQ_INSERT_HEAD(&pthread__allqueue, first, pt_allq);
 	RB_INSERT(__pthread__alltree, &pthread__alltree, first);
 
+	(void)_lwp_ctl(LWPCTL_FEATURE_CURCPU, &first->pt_lwpctl);
+
 	/* Start subsystems */
 	PTHREAD_MD_INIT
-	pthread__debug_init();
 
-	for (p = getenv("PTHREAD_DIAGASSERT"); p && *p; p++) {
+	for (p = pthread__getenv("PTHREAD_DIAGASSERT"); p && *p; p++) {
 		switch (*p) {
 		case 'a':
 			pthread__diagassert |= DIAGASSERT_ABORT;
@@ -222,14 +224,24 @@ pthread_init(void)
 		}
 	}
 
-
 	/* Tell libc that we're here and it should role-play accordingly. */
+	pthread__first = first;
+	pthread_atfork(NULL, NULL, pthread__fork_callback);
 	__isthreaded = 1;
+}
+
+static void
+pthread__fork_callback(void)
+{
+
+	/* lwpctl state is not copied across fork. */
+	(void)_lwp_ctl(LWPCTL_FEATURE_CURCPU, &pthread__first->pt_lwpctl);
 }
 
 static void
 pthread__child_callback(void)
 {
+
 	/*
 	 * Clean up data structures that a forked child process might
 	 * trip over. Note that if threads have been created (causing
@@ -253,7 +265,6 @@ pthread__start(void)
 	 * fork() before creating any threads. 
 	 */
 	pthread_atfork(NULL, NULL, pthread__child_callback);
-	SDPRINTF(("(pthread__start %p) Started.\n", pthread__self()));
 }
 
 
@@ -263,8 +274,8 @@ static void
 pthread__initthread(pthread_t t)
 {
 
+	t->pt_self = t;
 	t->pt_magic = PT_MAGIC;
-	t->pt_spinlocks = 0;
 	t->pt_willpark = 0;
 	t->pt_unpark = 0;
 	t->pt_sleeponq = 0;
@@ -273,11 +284,15 @@ pthread__initthread(pthread_t t)
 	t->pt_signalled = 0;
 	t->pt_havespecific = 0;
 	t->pt_early = NULL;
+	t->pt_lwpctl = &pthread__dummy_lwpctl;
+	t->pt_blocking = 0;
+	t->pt_droplock = NULL;
 
+	memcpy(&t->pt_lockops, pthread__lock_ops, sizeof(t->pt_lockops));
 	pthread_mutex_init(&t->pt_lock, NULL);
 	PTQ_INIT(&t->pt_cleanup_stack);
-	PTQ_INIT(&t->pt_joiners);
-	memset(&t->pt_specific, 0, sizeof(int) * PTHREAD_KEYS_MAX);
+	pthread_cond_init(&t->pt_joiners, NULL);
+	memset(&t->pt_specific, 0, sizeof(t->pt_specific));
 }
 
 static void
@@ -304,8 +319,6 @@ pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 	char * volatile name;
 	unsigned long flag;
 	int ret;
-
-	PTHREADD_ADD(PTHREADD_CREATE);
 
 	/*
 	 * It's okay to check this without a lock because there can
@@ -341,18 +354,16 @@ pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 		if (newthread != NULL) {
 			PTQ_REMOVE(&pthread__deadqueue, newthread, pt_deadq);
 			pthread_mutex_unlock(&pthread__deadqueue_lock);
-			if ((newthread->pt_flags & PT_FLAG_DETACHED) != 0) {
-				/* Still running? */
-				if (_lwp_kill(newthread->pt_lid, 0) == 0 ||
-				    errno != ESRCH) {
-					pthread_mutex_lock(
-					    &pthread__deadqueue_lock);
-					PTQ_INSERT_TAIL(&pthread__deadqueue,
-					    newthread, pt_deadq);
-					pthread_mutex_unlock(
-					    &pthread__deadqueue_lock);
-					newthread = NULL;
-				}
+			/* Still running? */
+			if (newthread->pt_lwpctl->lc_curcpu !=
+			    LWPCTL_CPU_EXITED &&
+			    (_lwp_kill(newthread->pt_lid, 0) == 0 ||
+			    errno != ESRCH)) {
+				pthread_mutex_lock(&pthread__deadqueue_lock);
+				PTQ_INSERT_TAIL(&pthread__deadqueue,
+				    newthread, pt_deadq);
+				pthread_mutex_unlock(&pthread__deadqueue_lock);
+				newthread = NULL;
 			}
 		} else
 			pthread_mutex_unlock(&pthread__deadqueue_lock);
@@ -392,18 +403,14 @@ pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 	 * Create the new LWP.
 	 */
 	pthread__scrubthread(newthread, name, nattr.pta_flags);
-	makecontext(&newthread->pt_uc, pthread__create_tramp, 2,
-	    startfunc, arg);
+	makecontext(&newthread->pt_uc, pthread__create_tramp, 3,
+	    newthread, startfunc, arg);
 
-	flag = 0;
+	flag = LWP_DETACHED;
 	if ((newthread->pt_flags & PT_FLAG_SUSPENDED) != 0)
 		flag |= LWP_SUSPENDED;
-	if ((newthread->pt_flags & PT_FLAG_DETACHED) != 0)
-		flag |= LWP_DETACHED;
 	ret = _lwp_create(&newthread->pt_uc, flag, &newthread->pt_lid);
 	if (ret != 0) {
-		SDPRINTF(("(pthread_create %p) _lwp_create: %s\n",
-		    strerror(errno)));
 		free(name);
 		newthread->pt_state = PT_STATE_DEAD;
 		pthread_mutex_lock(&pthread__deadqueue_lock);
@@ -412,13 +419,6 @@ pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 		return ret;
 	}
 
-	/* XXX must die */
-	newthread->pt_num = newthread->pt_lid;
-
-	SDPRINTF(("(pthread_create %p) new thread %p (name %p, lid %d).\n",
-		  pthread__self(), newthread, newthread->pt_name,
-		  (int)newthread->pt_lid));
-	
 	*thread = newthread;
 
 	return 0;
@@ -426,17 +426,33 @@ pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 
 
 static void
-pthread__create_tramp(void *(*start)(void *), void *arg)
+pthread__create_tramp(pthread_t self, void *(*start)(void *), void *arg)
 {
 	void *retval;
+
+#ifdef PTHREAD__HAVE_THREADREG
+	/* Set up identity register. */
+	pthread__threadreg_set(self);
+#endif
 
 	/*
 	 * Throw away some stack in a feeble attempt to reduce cache
 	 * thrash.  May help for SMT processors.  XXX We should not
 	 * be allocating stacks on fixed 2MB boundaries.  Needs a
-	 * thread register or decent thread local storage.
+	 * thread register or decent thread local storage.  Note
+	 * that pt_lid may not be set by this point, but we don't
+	 * care.
 	 */
-	(void)alloca(((unsigned)pthread__self()->pt_lid & 7) << 8);
+	(void)alloca(((unsigned)self->pt_lid & 7) << 8);
+
+	if (self->pt_name != NULL) {
+		pthread_mutex_lock(&self->pt_lock);
+		if (self->pt_name != NULL)
+			(void)_lwp_setname(0, self->pt_name);
+		pthread_mutex_unlock(&self->pt_lock);
+	}
+
+	(void)_lwp_ctl(LWPCTL_FEATURE_CURCPU, &self->pt_lwpctl);
 
 	retval = (*start)(arg);
 
@@ -455,13 +471,8 @@ pthread_suspend_np(pthread_t thread)
 	if (self == thread) {
 		return EDEADLK;
 	}
-#ifdef ERRORCHECK
 	if (pthread__find(thread) != 0)
 		return ESRCH;
-#endif
-	SDPRINTF(("(pthread_suspend_np %p) Suspend thread %p.\n",
-	    pthread__self(), thread));
-
 	if (_lwp_suspend(thread->pt_lid) == 0)
 		return 0;
 	return errno;
@@ -471,13 +482,8 @@ int
 pthread_resume_np(pthread_t thread)
 {
  
-#ifdef ERRORCHECK
 	if (pthread__find(thread) != 0)
 		return ESRCH;
-#endif
-	SDPRINTF(("(pthread_resume_np %p) Resume thread %p.\n",
-	    pthread__self(), thread));
-
 	if (_lwp_continue(thread->pt_lid) == 0)
 		return 0;
 	return errno;
@@ -491,41 +497,42 @@ pthread_exit(void *retval)
 	char *name;
 
 	self = pthread__self();
-	SDPRINTF(("(pthread_exit %p) status %p, flags %x, cancel %d\n",
-		  self, retval, self->pt_flags, self->pt_cancel));
 
 	/* Disable cancellability. */
 	pthread_mutex_lock(&self->pt_lock);
 	self->pt_flags |= PT_FLAG_CS_DISABLED;
 	self->pt_cancel = 0;
-	pthread_mutex_unlock(&self->pt_lock);
 
 	/* Call any cancellation cleanup handlers */
-	while (!PTQ_EMPTY(&self->pt_cleanup_stack)) {
-		cleanup = PTQ_FIRST(&self->pt_cleanup_stack);
-		PTQ_REMOVE(&self->pt_cleanup_stack, cleanup, ptc_next);
-		(*cleanup->ptc_cleanup)(cleanup->ptc_arg);
+	if (!PTQ_EMPTY(&self->pt_cleanup_stack)) {
+		pthread_mutex_unlock(&self->pt_lock);
+		while (!PTQ_EMPTY(&self->pt_cleanup_stack)) {
+			cleanup = PTQ_FIRST(&self->pt_cleanup_stack);
+			PTQ_REMOVE(&self->pt_cleanup_stack, cleanup, ptc_next);
+			(*cleanup->ptc_cleanup)(cleanup->ptc_arg);
+		}
+		pthread_mutex_lock(&self->pt_lock);
 	}
 
 	/* Perform cleanup of thread-specific data */
 	pthread__destroy_tsd(self);
 
+	/* Signal our exit. */
 	self->pt_exitval = retval;
-
-	pthread_mutex_lock(&self->pt_lock);
 	if (self->pt_flags & PT_FLAG_DETACHED) {
 		self->pt_state = PT_STATE_DEAD;
 		name = self->pt_name;
 		self->pt_name = NULL;
-		pthread_mutex_lock(&pthread__deadqueue_lock);
-		PTQ_INSERT_TAIL(&pthread__deadqueue, self, pt_deadq);
-		pthread_mutex_unlock(&pthread__deadqueue_lock);
 		pthread_mutex_unlock(&self->pt_lock);
 		if (name != NULL)
 			free(name);
+		pthread_mutex_lock(&pthread__deadqueue_lock);
+		PTQ_INSERT_TAIL(&pthread__deadqueue, self, pt_deadq);
+		pthread_mutex_unlock(&pthread__deadqueue_lock);
 		_lwp_exit();
 	} else {
 		self->pt_state = PT_STATE_ZOMBIE;
+		pthread_cond_broadcast(&self->pt_joiners);
 		pthread_mutex_unlock(&self->pt_lock);
 		/* Note: name will be freed by the joiner. */
 		_lwp_exit();
@@ -541,10 +548,9 @@ int
 pthread_join(pthread_t thread, void **valptr)
 {
 	pthread_t self;
-	char *name;
+	int error;
 
 	self = pthread__self();
-	SDPRINTF(("(pthread_join %p) Joining %p.\n", self, thread));
 
 	if (pthread__find(thread) != 0)
 		return ESRCH;
@@ -555,42 +561,55 @@ pthread_join(pthread_t thread, void **valptr)
 	if (thread == self)
 		return EDEADLK;
 
-	/*
-	 * IEEE Std 1003.1, 2004 Edition:
-	 *
-	 * "The pthread_join() function shall not return an
-	 * error code of [EINTR]."
-	 */
-	while (_lwp_wait(thread->pt_lid, NULL) != 0) {
-		if (errno != EINTR)
-			return errno;
-	}
+	self->pt_droplock = &thread->pt_lock;
+	pthread_mutex_lock(&thread->pt_lock);
+	for (;;) {
+		if (thread->pt_state == PT_STATE_ZOMBIE)
+			break;
+		if (thread->pt_state == PT_STATE_DEAD) {
+			pthread_mutex_unlock(&thread->pt_lock);
+			self->pt_droplock = NULL;
+			return ESRCH;
+		}
+		if ((thread->pt_flags & PT_FLAG_DETACHED) != 0) {
+			pthread_mutex_unlock(&thread->pt_lock);
+			self->pt_droplock = NULL;
+			return EINVAL;
+		}
+		error = pthread_cond_wait(&thread->pt_joiners,
+		    &thread->pt_lock);
+		if (error != 0) {
+			pthread__errorfunc(__FILE__, __LINE__,
+			    __func__, "unexpected return from cond_wait()");
+		}
 
-	/*
-	 * No need to lock - nothing else should (legally) be
-	 * interested in the thread's state at this point.
-	 *
-	 * _lwp_wait() provides a barrier, so the user level
-	 * thread state will be visible to us at this point.
-	 */
-	if (thread->pt_state != PT_STATE_ZOMBIE) {
-		pthread__errorfunc(__FILE__, __LINE__, __func__,
-		    "not a zombie");
 	}
 	if (valptr != NULL)
 		*valptr = thread->pt_exitval;
-	name = thread->pt_name;
-	thread->pt_name = NULL;
-	thread->pt_state = PT_STATE_DEAD;
-	pthread_mutex_lock(&pthread__deadqueue_lock);
-	PTQ_INSERT_HEAD(&pthread__deadqueue, thread, pt_deadq);
-	pthread_mutex_unlock(&pthread__deadqueue_lock);
-	SDPRINTF(("(pthread_join %p) Joined %p.\n", self, thread));
-	if (name != NULL)
-		free(name);
+	/* pthread__reap() will drop the lock. */
+	pthread__reap(thread);
+	self->pt_droplock = NULL;
+
 	return 0;
 }
 
+static void
+pthread__reap(pthread_t thread)
+{
+	char *name;
+
+	name = thread->pt_name;
+	thread->pt_name = NULL;
+	thread->pt_state = PT_STATE_DEAD;
+	pthread_mutex_unlock(&thread->pt_lock);
+
+	pthread_mutex_lock(&pthread__deadqueue_lock);
+	PTQ_INSERT_HEAD(&pthread__deadqueue, thread, pt_deadq);
+	pthread_mutex_unlock(&pthread__deadqueue_lock);
+
+	if (name != NULL)
+		free(name);
+}
 
 int
 pthread_equal(pthread_t t1, pthread_t t2)
@@ -604,7 +623,6 @@ pthread_equal(pthread_t t1, pthread_t t2)
 int
 pthread_detach(pthread_t thread)
 {
-	int rv;
 
 	if (pthread__find(thread) != 0)
 		return ESRCH;
@@ -614,12 +632,22 @@ pthread_detach(pthread_t thread)
 
 	pthread_mutex_lock(&thread->pt_lock);
 	thread->pt_flags |= PT_FLAG_DETACHED;
-	rv = _lwp_detach(thread->pt_lid);
-	pthread_mutex_unlock(&thread->pt_lock);
+	if (thread->pt_state == PT_STATE_ZOMBIE) {
+		/* pthread__reap() will drop the lock. */
+		pthread__reap(thread);
+	} else {
+		/*
+		 * Not valid for threads to be waiting in
+		 * pthread_join() (there are intractable
+		 * sync issues from the application
+		 * perspective), but give those threads
+		 * a chance anyway.
+		 */
+		pthread_cond_broadcast(&thread->pt_joiners);
+		pthread_mutex_unlock(&thread->pt_lock);
+	}
 
-	if (rv == 0)
-		return 0;
-	return errno;
+	return 0;
 }
 
 
@@ -667,6 +695,7 @@ pthread_setname_np(pthread_t thread, const char *name, void *arg)
 	pthread_mutex_lock(&thread->pt_lock);
 	oldname = thread->pt_name;
 	thread->pt_name = cp;
+	(void)_lwp_setname(thread->pt_lid, cp);
 	pthread_mutex_unlock(&thread->pt_lock);
 
 	if (oldname != NULL)
@@ -744,7 +773,7 @@ pthread_setcancelstate(int state, int *oldstate)
 			/* This is not a deferred cancellation point. */
 			if (self->pt_flags & PT_FLAG_CS_ASYNC) {
 				pthread_mutex_unlock(&self->pt_lock);
-				pthread_exit(PTHREAD_CANCELED);
+				pthread__cancelled();
 			}
 		}
 	} else
@@ -778,7 +807,7 @@ pthread_setcanceltype(int type, int *oldtype)
 		self->pt_flags |= PT_FLAG_CS_ASYNC;
 		if (self->pt_cancel) {
 			pthread_mutex_unlock(&self->pt_lock);
-			pthread_exit(PTHREAD_CANCELED);
+			pthread__cancelled();
 		}
 	} else if (type == PTHREAD_CANCEL_DEFERRED)
 		self->pt_flags &= ~PT_FLAG_CS_ASYNC;
@@ -792,13 +821,13 @@ pthread_setcanceltype(int type, int *oldtype)
 
 
 void
-pthread_testcancel()
+pthread_testcancel(void)
 {
 	pthread_t self;
 
 	self = pthread__self();
 	if (self->pt_cancel)
-		pthread_exit(PTHREAD_CANCELED);
+		pthread__cancelled();
 }
 
 
@@ -831,7 +860,24 @@ pthread__testcancel(pthread_t self)
 {
 
 	if (self->pt_cancel)
-		pthread_exit(PTHREAD_CANCELED);
+		pthread__cancelled();
+}
+
+
+void
+pthread__cancelled(void)
+{
+	pthread_mutex_t *droplock;
+	pthread_t self;
+
+	self = pthread__self();
+	droplock = self->pt_droplock;
+	self->pt_droplock = NULL;
+
+	if (droplock != NULL && pthread_mutex_held_np(droplock))
+		pthread_mutex_unlock(droplock);
+
+	pthread_exit(PTHREAD_CANCELED);
 }
 
 
@@ -882,8 +928,6 @@ pthread__assertfunc(const char *file, int line, const char *function,
 {
 	char buf[1024];
 	int len;
-
-	SDPRINTF(("(af)\n"));
 
 	/*
 	 * snprintf should not acquire any locks, or we could
@@ -957,23 +1001,16 @@ pthread__park(pthread_t self, pthread_spin_t *lock,
 	int rv, error;
 	void *obj;
 
-	SDPRINTF(("(pthread__park %p) queue %p enter\n", self, queue));
-
 	/* Clear the willpark flag, since we're about to block. */
 	self->pt_willpark = 0;
 
-	/* 
-	 * Kernels before 4.99.27 can't park and unpark in one step,
-	 * so take care of it now if on an old kernel.
-	 *
-	 * XXX Remove this check before NetBSD 5.0 is released.
-	 * It's for compatibility with recent -current only.
+	/*
+	 * For non-interlocked release of mutexes we need a store
+	 * barrier before incrementing pt_blocking away from zero. 
+	 * This is provided by the caller (it will release an
+	 * interlock, or do an explicit barrier).
 	 */
-	if (__predict_false(pthread__osrev < 499002700) &&
-	    self->pt_unpark != 0) {
-		_lwp_unpark(self->pt_unpark, self->pt_unparkhint);
-		self->pt_unpark = 0;
-	}
+	self->pt_blocking++;
 
 	/*
 	 * Wait until we are awoken by a pending unpark operation,
@@ -1023,8 +1060,6 @@ pthread__park(pthread_t self, pthread_spin_t *lock,
 				break;
 			default:
 				OOPS("_lwp_park failed");
-				SDPRINTF(("(pthread__park %p) syscall rv=%d\n",
-				    self, rv));	
 				break;
 			}
 		}
@@ -1039,7 +1074,7 @@ pthread__park(pthread_t self, pthread_spin_t *lock,
 	 * without holding any locks.
 	 */
 	if (__predict_false(self->pt_sleeponq)) {
-		pthread_spinlock(lock);
+		pthread__spinlock(self, lock);
 		if (self->pt_sleeponq) {
 			PTQ_REMOVE(queue, self, pt_sleep);
 			obj = self->pt_sleepobj;
@@ -1048,11 +1083,10 @@ pthread__park(pthread_t self, pthread_spin_t *lock,
 			if (obj != NULL && self->pt_early != NULL)
 				(*self->pt_early)(obj);
 		}
-		pthread_spinunlock(lock);
+		pthread__spinunlock(self, lock);
 	}
 	self->pt_early = NULL;
-
-	SDPRINTF(("(pthread__park %p) queue %p exit\n", self, queue));
+	self->pt_blocking--;
 
 	return rv;
 }
@@ -1064,12 +1098,9 @@ pthread__unpark(pthread_t self, pthread_spin_t *lock,
 	int rv;
 
 	if (target == NULL) {
-		pthread_spinunlock(lock);
+		pthread__spinunlock(self, lock);
 		return;
 	}
-
-	SDPRINTF(("(pthread__unpark %p) queue %p target %p\n",
-	    self, queue, target));
 
 	/*
 	 * Easy: the thread has already been removed from
@@ -1084,7 +1115,7 @@ pthread__unpark(pthread_t self, pthread_spin_t *lock,
 	 * to the thread in pthread__park() before the unpark
 	 * operation is set in motion.
 	 */
-	pthread_spinunlock(lock);
+	pthread__spinunlock(self, lock);
 
 	/*
 	 * If the calling thread is about to block, defer
@@ -1096,8 +1127,6 @@ pthread__unpark(pthread_t self, pthread_spin_t *lock,
 	} else {
 		rv = _lwp_unpark(target->pt_lid, queue);
 		if (rv != 0 && errno != EALREADY && errno != EINTR) {
-			SDPRINTF(("(pthread__unpark %p) syscall rv=%d\n",
-			    self, rv));
 			OOPS("_lwp_unpark failed");
 		}
 	}
@@ -1112,13 +1141,13 @@ pthread__unpark_all(pthread_t self, pthread_spin_t *lock,
 	void *wakeobj;
 
 	if (PTQ_EMPTY(queue) && self->pt_nwaiters == 0) {
-		pthread_spinunlock(lock);
+		pthread__spinunlock(self, lock);
 		return;
 	}
 
 	wakeobj = queue;
 
-	for (;; n = 0) {
+	for (;;) {
 		/*
 		 * Pull waiters from the queue and add to this
 		 * thread's waiters list.
@@ -1149,8 +1178,6 @@ pthread__unpark_all(pthread_t self, pthread_spin_t *lock,
 			thread->pt_sleeponq = 0;
 			self->pt_waiters[n++] = thread->pt_lid;
 			PTQ_REMOVE(queue, thread, pt_sleep);
-			SDPRINTF(("(pthread__unpark_all %p) queue %p "
-			    "unpark %p\n", self, queue, thread));
 		}
 
 		/*
@@ -1161,7 +1188,7 @@ pthread__unpark_all(pthread_t self, pthread_spin_t *lock,
 		 */
 		switch (n) {
 		case 0:
-			pthread_spinunlock(lock);
+			pthread__spinunlock(self, lock);
 			return;
 		case 1:
 			/*
@@ -1169,7 +1196,7 @@ pthread__unpark_all(pthread_t self, pthread_spin_t *lock,
 			 * defer unparking the target until _lwp_park()
 			 * is called.
 			 */
-			pthread_spinunlock(lock);
+			pthread__spinunlock(self, lock);
 			if (self->pt_willpark && self->pt_unpark == 0) {
 				self->pt_unpark = self->pt_waiters[0];
 				self->pt_unparkhint = queue;
@@ -1178,8 +1205,6 @@ pthread__unpark_all(pthread_t self, pthread_spin_t *lock,
 			rv = (ssize_t)_lwp_unpark(self->pt_waiters[0], queue);
 			if (rv != 0 && errno != EALREADY && errno != EINTR) {
 				OOPS("_lwp_unpark failed");
-				SDPRINTF(("(pthread__unpark_all %p) "
-				    "syscall rv=%d\n", self, rv));
 			}
 			return;
 		default:
@@ -1198,17 +1223,15 @@ pthread__unpark_all(pthread_t self, pthread_spin_t *lock,
 			 * marked to be woken (sleepobj == NULL).
 			 */
 			wakeobj = NULL;
-			pthread_spinunlock(lock);
+			pthread__spinunlock(self, lock);
 			rv = _lwp_unpark_all(self->pt_waiters, (size_t)n,
 			    queue);
 			if (rv != 0 && errno != EINTR) {
 				OOPS("_lwp_unpark_all failed");
-				SDPRINTF(("(pthread__unpark_all %p) "
-				    "syscall rv=%d\n", self, rv));
 			}
 			break;
 		}
-		pthread_spinlock(lock);
+		pthread__spinlock(self, lock);
 	}
 }
 
@@ -1257,8 +1280,9 @@ pthread__initmain(pthread_t *newt)
 	ret = getrlimit(RLIMIT_STACK, &slimit);
 	if (ret == -1)
 		err(1, "Couldn't get stack resource consumption limits");
-	value = getenv("PTHREAD_STACKSIZE");
-	if (value) {
+
+	value = pthread__getenv("PTHREAD_STACKSIZE");
+	if (value != NULL) {
 		pthread__stacksize = atoi(value) * 1024;
 		if (pthread__stacksize > slimit.rlim_cur)
 			pthread__stacksize = (size_t)slimit.rlim_cur;
@@ -1289,6 +1313,11 @@ pthread__initmain(pthread_t *newt)
 	}
 
 	*newt = t;
+
+#ifdef PTHREAD__HAVE_THREADREG
+	/* Set up identity register. */
+	pthread__threadreg_set(t);
+#endif
 }
 
 static int
@@ -1332,4 +1361,15 @@ pthread__cmp(struct __pthread_st *a, struct __pthread_st *b)
 }
 RB_GENERATE_STATIC(__pthread__alltree, __pthread_st, pt_alltree, pthread__cmp)
 #endif
+
+/* Because getenv() wants to use locks. */
+char *
+pthread__getenv(const char *name)
+{
+	extern char *__findenv(const char *, int *);
+	int off;
+
+	return __findenv(name, &off);
+}
+
 

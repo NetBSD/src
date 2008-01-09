@@ -1,4 +1,4 @@
-.\"	$NetBSD: kmem_alloc.9,v 1.5 2007/02/17 08:50:04 wiz Exp $
+.\"	$NetBSD: kmem_alloc.9,v 1.5.4.1 2008/01/09 01:39:20 matt Exp $
 .\"
 .\" Copyright (c)2006 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\" ------------------------------------------------------------
-.Dd June 25, 2006
+.Dd January 4, 2008
 .Dt KMEM_ALLOC 9
 .Os
 .\" ------------------------------------------------------------
@@ -61,6 +61,8 @@ if there is not enough memory available.
 .El
 .Pp
 The contents of allocated memory are uninitialized.
+.Pp
+Unlike Solaris, kmem_alloc(0, flags) is illegal.
 .\" ------------------------------------------------------------
 .Sh RETURN VALUES
 On success,

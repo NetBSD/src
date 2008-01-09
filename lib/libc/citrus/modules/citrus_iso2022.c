@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_iso2022.c,v 1.16.10.1 2007/11/06 23:11:12 matt Exp $	*/
+/*	$NetBSD: citrus_iso2022.c,v 1.16.10.2 2008/01/09 01:34:02 matt Exp $	*/
 
 /*-
  * Copyright (c)1999, 2002 Citrus Project,
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_iso2022.c,v 1.16.10.1 2007/11/06 23:11:12 matt Exp $");
+__RCSID("$NetBSD: citrus_iso2022.c,v 1.16.10.2 2008/01/09 01:34:02 matt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -1024,9 +1024,11 @@ static int
 _ISO2022_sputwchar(_ISO2022EncodingInfo * __restrict ei, wchar_t wc,
 		   char * __restrict string, size_t n,
 		   char ** __restrict result,
-		   _ISO2022State * __restrict psenc)
+		   _ISO2022State * __restrict psenc,
+		   size_t * __restrict nresult)
 {
-	int i = 0, len;
+	int i = 0;
+	size_t len;
 	_ISO2022Charset cs;
 	char *p;
 	char tmp[MB_LEN_MAX];
@@ -1037,11 +1039,15 @@ _ISO2022_sputwchar(_ISO2022EncodingInfo * __restrict ei, wchar_t wc,
 	_DIAGASSERT(ei != NULL);
 	_DIAGASSERT(string != NULL);
 	/* result may be NULL */
-	/* state appears to be unused */
+	_DIAGASSERT(psenc != NULL);
+	_DIAGASSERT(nresult != NULL);
 
-	if (iscntl(wc & 0xff)) {
+	if (isc0(wc & 0xff)) {
 		/* go back to INIT0 or ASCII on control chars */
 		cs = ei->initg[0].final ? ei->initg[0] : ascii;
+	} else if (isc1(wc & 0xff)) {
+		/* go back to INIT1 or ISO-8859-1 on control chars */
+		cs = ei->initg[1].final ? ei->initg[1] : iso88591;
 	} else if (!(wc & ~0xff)) {
 		if (wc & 0x80) {
 			/* special treatment for ISO-8859-1 */
@@ -1140,7 +1146,7 @@ planeok:
 		*p++ = 'O';
 		psenc->singlegl = psenc->singlegr = 3;
 	} else
-		abort();
+		goto ilseq;
 
 sideok:
 	if (psenc->singlegl == target)
@@ -1152,7 +1158,7 @@ sideok:
 	else if ((ei->flags & F_8BIT) && psenc->gr == target)
 		mask = 0x80;
 	else
-		abort();
+		goto ilseq;
 
 	switch (cs.type) {
 	case CS94:
@@ -1171,16 +1177,23 @@ sideok:
 	/* reset single shift state */
 	psenc->singlegl = psenc->singlegr = -1;
 
-	len = p - tmp;
+	len = (size_t)(p - tmp);
 	if (n < len) {
 		if (result)
 			*result = (char *)0;
-	} else {
-		if (result)
-			*result = string + len;
-		memcpy(string, tmp, len);
+		*nresult = (size_t)-1;
+		return E2BIG;
 	}
-	return len;
+	if (result)
+		*result = string + len;
+	memcpy(string, tmp, len);
+	*nresult = len;
+
+	return 0;
+
+ilseq:
+	*nresult = (size_t)-1;
+	return EILSEQ;
 }
 
 static int
@@ -1191,32 +1204,30 @@ _citrus_ISO2022_put_state_reset(_ISO2022EncodingInfo * __restrict ei,
 {
 	char buf[MB_LEN_MAX];
 	char *result;
-	int len, ret;
+	int ret;
+	size_t len;
 
 	_DIAGASSERT(ei != NULL);
 	_DIAGASSERT(nresult != 0);
 	_DIAGASSERT(s != NULL);
 
 	/* XXX state will be modified after this operation... */
-	len = _ISO2022_sputwchar(ei, L'\0', buf, sizeof(buf), &result, psenc);
-	if (len==0) {
-		ret = EINVAL;
-		goto err;
+	ret = _ISO2022_sputwchar(ei, L'\0', buf, sizeof(buf), &result, psenc,
+	    &len);
+	if (ret) {
+		*nresult = len;
+		return ret;
 	}
+
 	if (sizeof(buf) < len || n < len-1) {
 		/* XXX should recover state? */
-		ret = E2BIG;
-		goto err;
+		*nresult = (size_t)-1;
+		return E2BIG;
 	}
 
 	memcpy(s, buf, len-1);
-	*nresult = (size_t)(len-1);
+	*nresult = len-1;
 	return (0);
-
-err:
-	/* bound check failure */
-	*nresult = (size_t)-1;
-	return ret;
 }
 
 static int
@@ -1227,28 +1238,31 @@ _citrus_ISO2022_wcrtomb_priv(_ISO2022EncodingInfo * __restrict ei,
 {
 	char buf[MB_LEN_MAX];
 	char *result;
-	int len, ret;
+	int ret;
+	size_t len;
 
 	_DIAGASSERT(ei != NULL);
-	_DIAGASSERT(nresult != 0);
 	_DIAGASSERT(s != NULL);
+	_DIAGASSERT(psenc != NULL);
+	_DIAGASSERT(nresult != 0);
 
 	/* XXX state will be modified after this operation... */
-	len = _ISO2022_sputwchar(ei, wc, buf, sizeof(buf), &result, psenc);
+	ret = _ISO2022_sputwchar(ei, wc, buf, sizeof(buf), &result, psenc,
+	    &len);
+	if (ret) {
+		*nresult = len;
+		return ret;
+	}
+
 	if (sizeof(buf) < len || n < len) {
 		/* XXX should recover state? */
-		ret = E2BIG;
-		goto err;
+		*nresult = (size_t)-1;
+		return E2BIG;
 	}
 
 	memcpy(s, buf, len);
-	*nresult = (size_t)len;
+	*nresult = len;
 	return (0);
-
-err:
-	/* bound check failure */
-	*nresult = (size_t)-1;
-	return ret;
 }
 
 static __inline int

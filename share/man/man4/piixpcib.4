@@ -1,4 +1,4 @@
-.\" $NetBSD: piixpcib.4,v 1.2.2.2 2007/11/06 23:13:03 matt Exp $
+.\" $NetBSD: piixpcib.4,v 1.2.2.3 2008/01/09 01:39:10 matt Exp $
 .\"
 .\" Copyright (c) 2007 Stephan Meisinger
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd October 15, 2007
+.Dd November 23, 2007
 .Dt PIIXPCIB 4
 .Os
 .Sh NAME
@@ -22,7 +22,7 @@
 .Nd Intel PIIX4 PCI-ISA bridge with SpeedStep
 .Sh SYNOPSIS
 .Cd "piixpcib* at pci? dev ? function ?"
-.Cd "isa* at piipcib?"
+.Cd "isa* at piixpcib?"
 .Sh DESCRIPTION
 The
 .Nm
@@ -40,7 +40,7 @@ The user can manually control the CPU frequency with the
 .Xr sysctl 8
 program using the following node:
 .Bl -tag -width usscanner -offset indent
-.It machdep.speedstep = [0/1]
+.It machdep.speedstep_state = [0/1]
 .El
 .Sh SEE ALSO
 .Xr isa 4 ,

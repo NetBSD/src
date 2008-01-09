@@ -1,4 +1,4 @@
-.\"     $NetBSD: fstrans.9,v 1.8.4.1 2007/11/06 23:13:15 matt Exp $
+.\"     $NetBSD: fstrans.9,v 1.8.4.2 2008/01/09 01:39:19 matt Exp $
 .\"
 .\" Copyright (c) 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 7, 2007
+.Dd December 2, 2007
 .Dt FSTRANS 9
 .Os
 .Sh NAME
@@ -65,13 +65,13 @@
 .Ft int
 .Fn fstrans_is_owner "struct mount *mp"
 .Ft int
-.Fn fscow_establish "struct mount *mp" "int (*func)(void *, struct buf *)" \
-"void *cookie"
+.Fn fscow_establish "struct mount *mp" \
+"int (*func)(void *, struct buf *, bool)" "void *cookie"
 .Ft int
-.Fn fscow_disestablish "struct mount *mp" "int (*func)(void *, struct buf *)" \
-"void *cookie"
+.Fn fscow_disestablish "struct mount *mp" \
+"int (*func)(void *, struct buf *, bool)" "void *cookie"
 .Ft int
-.Fn fscow_run "struct buf *bp"
+.Fn fscow_run "struct buf *bp" "bool data_valid"
 .Sh DESCRIPTION
 The
 .Nm
@@ -151,9 +151,14 @@ will be called for every buffer written through this file system.
 .It Fn fscow_disestablish "mp" "func" "cookie"
 Disestablish a copy-on-write callback registered with
 .Fn fscow_establish .
-.It Fn fscow_run "bp"
+.It Fn fscow_run "bp" "data_valid"
 Run all copy-on-write callbacks established for the file system this buffer
 belongs to.
+If
+.Fa data_valid
+is
+.Dv true
+the buffer data has not yet been modified.
 .El
 .Sh RETURN VALUES
 The functions

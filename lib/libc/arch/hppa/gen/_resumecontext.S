@@ -1,4 +1,4 @@
-/*	$NetBSD: _resumecontext.S,v 1.1 2004/07/18 22:37:32 chs Exp $	*/
+/*	$NetBSD: _resumecontext.S,v 1.1.16.1 2008/01/09 01:33:54 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,16 +37,17 @@
  */
 
 #include "SYS.h"
-#include <sys/cdefs.h>
+
+#include <machine/asm.h>
 #include <machine/mcontext.h>
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: _resumecontext.S,v 1.1 2004/07/18 22:37:32 chs Exp $")
+	RCSID("$NetBSD: _resumecontext.S,v 1.1.16.1 2008/01/09 01:33:54 matt Exp $")
 #endif /* SYSLIBC_SCCS && !lint */
 
 	.import	_resumecontext, code
 
-ENTRY_NOPROFILE(__resumecontext, 0)
+LEAF_ENTRY_NOPROFILE(__resumecontext)
 #ifdef PIC
 	ldw	HPPA_FRAME_EDP(%sp), %r19
 	addil	LT%_C_LABEL(_resumecontext), %r19

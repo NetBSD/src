@@ -1,4 +1,4 @@
-.\"     $NetBSD: efun.3,v 1.5 2007/07/01 21:41:16 pooka Exp $
+.\"     $NetBSD: efun.3,v 1.5.4.1 2008/01/09 01:36:56 matt Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -92,9 +92,13 @@ and
 functions
 operate exactly as the correspoding functions that do not start with an
 .Sq e
-except that they call
+except that in case of an error, they call
 the installed error handler that can be configured with
 .Nm esetfunc .
+For the string handling functions, it is an error when the destination
+buffer is not large enough to hold the complete string.
+For functions that allocate memory or open a file, it is an error when
+they would return a null pointer.
 The default error handler is
 .Xr err 3 .
 The function

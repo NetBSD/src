@@ -1,4 +1,4 @@
-/*	$NetBSD: arithmetic.c,v 1.21 2004/11/05 21:30:31 dsl Exp $	*/
+/*	$NetBSD: arithmetic.c,v 1.21.16.1 2008/01/09 01:30:43 matt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)arithmetic.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: arithmetic.c,v 1.21 2004/11/05 21:30:31 dsl Exp $");
+__RCSID("$NetBSD: arithmetic.c,v 1.21.16.1 2008/01/09 01:30:43 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -85,13 +85,13 @@ __RCSID("$NetBSD: arithmetic.c,v 1.21 2004/11/05 21:30:31 dsl Exp $");
 #include <unistd.h>
 
 int	getrandom(int, int, int);
-void	intr(int) __attribute__((__noreturn__));
+void	intr(int) __dead;
 int	main(int, char *[]);
 int	opnum(int);
 void	penalise(int, int, int);
 int	problem(void);
 void	showstats(int);
-void	usage(void) __attribute__((__noreturn__));
+void	usage(void) __dead;
 
 const char keylist[] = "+-x/";
 const char defaultkeys[] = "+-";
@@ -159,7 +159,7 @@ main(argc, argv)
 /* Handle interrupt character.  Print score and exit. */
 void
 intr(dummy)
-	int dummy __attribute__((__unused__));
+	int dummy __unused;
 {
 	showstats(1);
 	exit(0);

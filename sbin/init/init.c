@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.93 2007/03/21 03:51:30 dyoung Exp $	*/
+/*	$NetBSD: init.c,v 1.93.4.1 2008/01/09 01:38:09 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n"
 #if 0
 static char sccsid[] = "@(#)init.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: init.c,v 1.93 2007/03/21 03:51:30 dyoung Exp $");
+__RCSID("$NetBSD: init.c,v 1.93.4.1 2008/01/09 01:38:09 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -1669,7 +1669,7 @@ mfs_dev(void)
 			(void)execl(INIT_BSHELL, "sh",
 			    access("./MAKEDEV", X_OK) == 0
 				? "./MAKEDEV" : "/etc/MAKEDEV",
-			    "-MM", "-ppax", "init", NULL); 
+			    "-MM", "init", NULL); 
 		_exit(10);
 		/* NOTREACHED */
 

@@ -1,4 +1,4 @@
-.\"	$NetBSD: sgivol.8,v 1.4 2007/03/10 18:16:50 rumble Exp $
+.\"	$NetBSD: sgivol.8,v 1.4.4.1 2008/01/09 01:39:17 matt Exp $
 .\"
 .\" Copyright (c) 2006 Stephen M. Rumble
 .\" All rights reserved.
@@ -70,7 +70,7 @@ program prepares an SGI Volume Header to be used to boot
 The
 .Tr SGI
 PROM is able to load executables within the header, which in turn are used
-to load the kernel from another filesystem.
+to load the kernel from another file system.
 .Sh OPTIONS
 The following options are available:
 .Bl -tag -width 123456
@@ -78,7 +78,7 @@ The following options are available:
 Force the operation.
 Do not ask the user before proceeding.
 .It Fl h
-Set the size of the newly initialised volume header in blocks.
+Set the size of the newly initialized volume header in blocks.
 One block is 512 bytes.
 The default volume header size is 3135 blocks (1.53MB).
 .It Fl q
@@ -91,8 +91,8 @@ The numerical partition types for the volume header include:
 	 1:	Replicated Tracks
 	 2:	Replicated Sectors
 	 3:	Raw
-	 4:	BSD4.2 Filesystem
-	 5:	SysV Filesystem
+	 4:	BSD4.2 file system
+	 5:	SysV file system
 	 6:	Entire Volume (all disk blocks)
 	 7:	EFS
 	 8:	Logical Volume
@@ -107,7 +107,7 @@ To display the existing volume header and partition table on disk
 .Dq sd0 :
 .Dl Ic sgivol sd0
 .Pp
-To initialise a new volume header 42 512-byte blocks large on disk
+To initialize a new volume header 42 512-byte blocks large on disk
 .Dq sd0 :
 .Dl Ic sgivol -i -h 42 sd0
 .Pp
