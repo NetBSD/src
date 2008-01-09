@@ -1,4 +1,4 @@
-.\"	$NetBSD: prop_dictionary.3,v 1.8.2.1 2007/11/06 23:07:24 matt Exp $
+.\"	$NetBSD: prop_dictionary.3,v 1.8.2.2 2008/01/09 01:21:35 matt Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 11, 2007
+.Dd January 4, 2008
 .Dt PROP_DICTIONARY 3
 .Os
 .Sh NAME
@@ -43,7 +43,6 @@
 .Nm prop_dictionary_create_with_capacity ,
 .Nm prop_dictionary_copy ,
 .Nm prop_dictionary_copy_mutable ,
-.Nm prop_dictionary_capacity ,
 .Nm prop_dictionary_count ,
 .Nm prop_dictionary_ensure_capacity ,
 .Nm prop_dictionary_iterator ,
@@ -79,8 +78,6 @@
 .Ft prop_dictionary_t
 .Fn prop_dictionary_copy_mutable "prop_dictionary_t dict"
 .\"
-.Ft unsigned int
-.Fn prop_dictionary_capacity "prop_dictionary_t dict"
 .Ft unsigned int
 .Fn prop_dictionary_count "prop_dictionary_t dict"
 .Ft bool
@@ -162,9 +159,6 @@ immutable.
 Like
 .Fn prop_dictionary_copy ,
 except the resulting dictionary is always mutable.
-.It Fn prop_dictionary_capacity "prop_dictionary_t dict"
-Returns the total capacity of the dictionary, including objects already stored
-in the dictionary.
 .It Fn prop_dictionary_count "prop_dictionary_t dict"
 Returns the number of objects stored in the dictionary.
 .It Fn prop_dictionary_ensure_capacity "prop_dictionary_t dict"

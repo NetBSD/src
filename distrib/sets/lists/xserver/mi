@@ -1,4 +1,7 @@
-# $NetBSD: mi,v 1.18 2006/09/12 02:36:38 simonb Exp $
+# $NetBSD: mi,v 1.18.8.1 2008/01/09 01:28:25 matt Exp $
+#
+# Note: don't delete entries from here - mark them as "obsolete" instead.
+#
 ./etc/mtree/set.xserver				xserver-sys-root
 ./usr/X11R6/bin/Xdmx
 ./usr/X11R6/bin/Xnest

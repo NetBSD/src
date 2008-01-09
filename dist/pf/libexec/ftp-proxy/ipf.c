@@ -1,4 +1,4 @@
-/*	$NetBSD: ipf.c,v 1.2 2004/11/14 11:26:47 yamt Exp $	*/
+/*	$NetBSD: ipf.c,v 1.2.18.1 2008/01/09 01:26:16 matt Exp $	*/
 
 /*
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -107,8 +107,8 @@ ipf_get_proxy_env(int connected_fd, struct sockaddr_in *server,
 	natlook.nl_flags = IPN_TCPUDP;
 	natlook.nl_outip = client->sin_addr;
 	natlook.nl_inip = proxy_sa_ptr->sin_addr;
-	natlook.nl_outport = ntohs(client->sin_port);
-	natlook.nl_inport = ntohs(proxy_sa_ptr->sin_port);
+	natlook.nl_outport = client->sin_port;
+	natlook.nl_inport = proxy_sa_ptr->sin_port;
 
 	/*
 	 * Open the NAT device and lookup the mapping pair.

@@ -1,0 +1,25 @@
+#	$NetBSD: list.ramdisk,v 1.1.2.2 2008/01/09 01:28:09 matt Exp $
+
+SRCDIRS	bin sbin usr.bin usr.sbin gnu/usr.bin libexec
+
+# init invokes the shell as -sh
+ARGVLN	sh -sh
+
+# libhack.o is built by Makefile & included Makefile.inc
+LIBS	libhack.o -lbz2 -lutil -ll -lm
+
+# various files that we need in /etc for the install
+COPY	${NETBSDSRCDIR}/etc/group		etc/group
+COPY	${NETBSDSRCDIR}/etc/master.passwd	etc/master.passwd
+COPY	${NETBSDSRCDIR}/etc/netconfig		etc/netconfig
+COPY	${NETBSDSRCDIR}/etc/protocols		etc/protocols
+COPY	${NETBSDSRCDIR}/distrib/common/services		etc/services
+
+# we need the boot block in /usr/mdec + the MBR copy
+COPY	${DESTDIR}/usr/mdec/ofwboot		usr/mdec/ofwboot
+
+# and the common installation tools
+COPY	${CURDIR}/../common/termcap.mini	usr/share/misc/termcap
+
+# and the boot script
+COPY	${CURDIR}/../common/dot.profile		.profile

@@ -1,4 +1,4 @@
-/* $NetBSD: test.c,v 1.33 2007/06/24 18:54:58 christos Exp $ */
+/* $NetBSD: test.c,v 1.33.4.1 2008/01/09 01:20:06 matt Exp $ */
 
 /*
  * test(1); version 7-like  --  author Erik Baalbergen
@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: test.c,v 1.33 2007/06/24 18:54:58 christos Exp $");
+__RCSID("$NetBSD: test.c,v 1.33.4.1 2008/01/09 01:20:06 matt Exp $");
 #endif
 
 #include <sys/stat.h>
@@ -171,10 +171,10 @@ static int olderf(const char *, const char *);
 static int equalf(const char *, const char *);
 
 #if defined(SHELL)
-extern void error(const char *, ...) __attribute__((__noreturn__));
+extern void error(const char *, ...) __dead;
 extern void *ckmalloc(size_t);
 #else
-static void error(const char *, ...) __attribute__((__noreturn__));
+static void error(const char *, ...) __dead;
 
 static void
 error(const char *msg, ...)

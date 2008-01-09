@@ -1,7 +1,7 @@
-# $NetBSD: Makefile.inc,v 1.6 2006/10/27 21:23:15 christos Exp $
+# $NetBSD: Makefile.inc,v 1.6.16.1 2008/01/09 01:20:46 matt Exp $
 
 COMMON_DIR:=${.PARSEDIR}
-COMMON_CODEDIRS=gen gmon inet md net quad stdlib string
+COMMON_CODEDIRS=atomic gen gmon inet md net quad stdlib string
 COMMON_CODEDIRS+=hash/sha1 hash/sha2 hash/rmd160
 
 .if defined(LIBKERN_ARCH) && !empty(LIBKERN_ARCH) && \
@@ -20,7 +20,11 @@ COMMON_ARCHDIR=${COMMON_DIR}/arch/${COMMON_ARCHSUBDIR}
 .PATH.c: ${COMMON_DIR}/$i
 .endif
 .if exists(${COMMON_ARCHDIR}/$i)
+.PATH.c: ${COMMON_ARCHDIR}/$i
 .PATH.S: ${COMMON_ARCHDIR}/$i
+.endif
+.if exists(${COMMON_ARCHDIR}/${i}/Makefile.inc)
+.include "${COMMON_ARCHDIR}/${i}/Makefile.inc"
 .endif
 .endfor
 

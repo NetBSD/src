@@ -5,6 +5,10 @@
 
 #include <sys/types.h>
 
+#ifdef HAVE_STDINT_H
+#include <stdint.h>
+#endif
+
 #ifdef HAVE_ASM_BYTEORDER_H
 #include <asm/byteorder.h>
 #endif
@@ -63,6 +67,11 @@ size_t strlcpy(char *, const char *, size_t);
 #  define __static_cast(x,y) (x)y
 #  endif
 #define _DIAGASSERT(e) (__static_cast(void,0))
+#endif
+
+/* Added for busybox, which doesn't define INFTIM */
+#ifndef INFTIM
+#define INFTIM	-1
 #endif
 
 #ifndef HAVE_UUID_H

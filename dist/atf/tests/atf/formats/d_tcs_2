@@ -1,0 +1,5 @@
+Content-Type: application/X-atf-tcs; version="1"
+
+tcs-count: 1
+tc-start: a-test
+tc-end: a-test, passed

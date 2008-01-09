@@ -1,7 +1,6 @@
-#	$NetBSD: Makefile,v 1.5 2007/03/06 21:52:45 bouyer Exp $
+#	$NetBSD: Makefile,v 1.5.4.1 2008/01/09 01:27:50 matt Exp $
 
 FLOPPYBASE=	boot-com
-FLOPPYMAX=	3
 FLOPPYKERNEL=	netbsd-INSTALL.gz
 FLOPPYBOOTOPTIONS=	-o console=com0
 

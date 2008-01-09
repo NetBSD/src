@@ -1,4 +1,4 @@
-/* $NetBSD: netmask.c,v 1.8 2007/06/16 23:13:26 agc Exp $ */
+/* $NetBSD: netmask.c,v 1.8.4.1 2008/01/09 01:26:14 matt Exp $ */
 
 /*
  * Copyright © 2006 Alistair Crooks.  All rights reserved.
@@ -45,7 +45,7 @@
 #include <arpa/inet.h>
 #endif
 
-#include "util.h"
+#include "iscsiutil.h"
 
 enum {
 	NETMASK_BUFFER_SIZE = 256
@@ -113,7 +113,8 @@ allow_netmask(const char *netmaskarg, const char *addr)
 		}
 	}
 	for ( ; i < 3 ; i++) {
-		(void) strlcat(maskaddr, ".0", sizeof(maskaddr));
+		(void) snprintf(cp, sizeof(maskaddr) - (int)(cp - maskaddr), ".0");
+		cp += 2;
 	}
 
 	/* translate netmask to in_addr */

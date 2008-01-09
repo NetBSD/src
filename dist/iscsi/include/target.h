@@ -34,7 +34,7 @@
 #define _TARGET_H_
 
 #include "iscsi.h"
-#include "util.h"
+#include "iscsiutil.h"
 #include "parameters.h"
 #include "storage.h"
 

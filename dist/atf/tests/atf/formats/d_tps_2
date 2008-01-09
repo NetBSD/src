@@ -1,0 +1,7 @@
+Content-Type: application/X-atf-tps; version="2"
+
+tps-count: 2
+tp-start: first-prog, 0
+tp-end: first-prog
+tp-start: second-prog, 0
+tp-end: second-prog, This program failed

@@ -1,4 +1,4 @@
-.\" $NetBSD: tar.1,v 1.25 2007/05/04 21:19:37 christos Exp $
+.\" $NetBSD: tar.1,v 1.25.4.1 2008/01/09 01:20:02 matt Exp $
 .\"
 .\" Copyright (c) 1996 SigmaSoft, Th. Lockert
 .\" All rights reserved.
@@ -34,14 +34,14 @@
 .Sh SYNOPSIS
 .Nm tar
 .Sm off
-.Oo \&- Oc {crtux} Op Fl befhjklmopqvwzHOPSXZ014578
+.Oo \&- Oc {crtux} Op Fl 014578befHhjklmOoPpqSvwXZz
 .Sm on
 .Op Ar archive
 .Op Ar blocksize
 .\" XXX how to do this right?
 .Op Fl C Ar directory
-.Op Fl T Ar file
 .Op Fl s Ar replstr
+.Op Fl T Ar file
 .Op Ar file ...
 .Sh DESCRIPTION
 The
@@ -197,7 +197,8 @@ in the following format:
 File or archive member names that substitute to the empty string
 are not selected and will be skipped.
 The substitutions are applied by default to the destination hard and symbolic
-links. The optional trailing
+links.
+The optional trailing
 .Cm s
 prevents the substitutions from being performed on symbolic link destinations.
 .It Fl v
@@ -231,7 +232,8 @@ but SunOS-5 uses
 .Dq Fl I Ar file
 because they use
 .Sq Fl F
-to mean something else.  We might someday provide SunOS-5 compatability
+to mean something else.
+We might someday provide SunOS-5 compatability
 but it makes little sense to confuse things with ISC/SCO compatability.
 .\".It Fl L
 .\"Do not follow any symlinks (do the opposite of
@@ -282,10 +284,10 @@ as remote files.
 Normally
 .Nm
 ignores filenames that contain
-.Sq ..
+.Dq ..
 as a path component.
 With this option, files that contain
-.Sq ..
+.Dq ..
 can be processed.
 .It Fl -no-recursion
 Cause files of type directory being copied or archived, or archive members of

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootcd,v 1.9.4.1 2007/11/06 23:09:47 matt Exp $
+#	$NetBSD: Makefile.bootcd,v 1.9.4.2 2008/01/09 01:27:51 matt Exp $
 #
 # Makefile snipped to create a CD/DVD ISO
 #
@@ -15,7 +15,12 @@
 #	CDRELEASE	Set to 'true' to include $RELEASEDIR/$MACHINE on the CD
 #	CDRELEASE_NOISOS Excludes installation/cdrom directory if set
 #	CDSOURCE	Set to 'true' to include $RELEASEDIR/source on the CD
-#	CDEXTRA		Set to a directory containing extra stuff to put on CD
+#	CDEXTRA		Set to a list of files or directories containing extra
+#			stuff to put on CD (set by build.sh -C flag)
+#	CDBUILDEXTRA	Set to a list of files or directories containing extra
+#			stuff to put on CD (use in Makefiles)
+#	CDEXTRA_SKIP	A list of file exclusion paths to exclude when copying
+#			directories of extra stuff in CDEXTRA AND CDBUILDEXTRA
 #	BOOT		Defaults to $DESTDIR/usr/mdec/boot
 #	BOOTXX_CD9660	Defaults to $DESTDIR/usr/mdec/bootxx_cd9660
 #	CDBOOTOPTIONS	Options for installboot, eg -o console=com0,speed=9600
@@ -24,9 +29,10 @@
 #	CDINSTKERNEL	instkernel directory (relative to ${.CURDIR})
 #	CDKERNELS	couples of the form:
 #				source	name_on_cd
-# source kernels are copied from ${CDINSTKENRNEL} (or it's obj dir)
-# note that as of yet, bootxx_cd9660 can't load kernel names  of more than
-# 8 chars.
+# source kernels are copied from ${CDINSTKERNEL} (or its obj dir)
+# note that as of yet, bootxx_cd9660 can't load kernel names of more than
+# 8 chars (though they can be in a sub-directory meaning the pathname is
+# longer than 8 chars)
 #
 
 BOOT?=		${DESTDIR}/usr/mdec/boot
@@ -135,19 +141,35 @@ copy-releasedir:
 			. $$release_destdir; 				\
 		cd $$curdir;						\
 	fi
-	if [ "X${CDEXTRA}" != "X" ]; then 				\
-		if [ ! -d ${CDEXTRA} ]; then	 			\
-			echo "Missing ${CDEXTRA}, aborting"; 		\
-			exit 1; 					\
-		fi; 							\
+	if [ "X${CDEXTRA}${CDBUILDEXTRA}" != "X" ]; then		\
 		curdir=$$(pwd);						\
-		release_destdir=$$(pwd)/cdrom;		 		\
-		cd ${CDEXTRA};		 				\
-		echo Copying $$(pwd) to $$release_destdir ...;		\
-		${TOOL_PAX} 						\
-			-rw -pe -v 					\
-			. $$release_destdir; 				\
-		cd $$curdir;						\
+		skipflag="";						\
+		if [ "X${CDEXTRA_SKIP}" != "X" ]; then			\
+			rm -f cdskip;					\
+			for skip in ${CDEXTRA_SKIP};			\
+			do						\
+				echo $${skip} >> cdskip;		\
+			done;						\
+			skipflag="-X $${curdir}/cdskip";		\
+		fi;							\
+		for cde in ${CDEXTRA} ${CDBUILDEXTRA};			\
+		do							\
+			release_destdir=$${curdir}/cdrom;		\
+			if [ -f $${cde} ]; then				\
+				echo Copying $${cde} to $$release_destdir ...;	\
+				${CP} $${cde} $${release_destdir};	\
+			elif [ -d $${cde} ]; then			\
+				cd $${cde};				\
+				echo Copying $$(pwd) to $$release_destdir ...;	\
+				${TOOL_MTREE} -c $${skipflag} |		\
+					${TOOL_PAX} -rw -pe -v -M	\
+					$$release_destdir; 		\
+			else						\
+				echo "Missing $${cde}, aborting"; 	\
+				exit 1; 				\
+			fi; 						\
+			cd $$curdir;					\
+		done;							\
 	fi
 
 image:

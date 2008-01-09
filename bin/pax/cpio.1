@@ -1,4 +1,4 @@
-.\" $NetBSD: cpio.1,v 1.10 2007/04/23 18:41:11 christos Exp $
+.\" $NetBSD: cpio.1,v 1.10.4.1 2008/01/09 01:20:02 matt Exp $
 .\"
 .\" Copyright (c) 1997 SigmaSoft, Th. Lockert
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .Sh SYNOPSIS
 .Nm cpio
 .Fl o
-.Op Fl aABcLvzZ
+.Op Fl AaBcLvZz
 .Op Fl C Ar bytes
 .Op Fl F Ar archive
 .Op Fl H Ar format
@@ -43,7 +43,7 @@
 .Op Ar "\*[Gt] archive"
 .Nm cpio
 .Fl i
-.Op Fl bBcdfmrsStuvzZ6
+.Op Fl 6BbcdfmrSstuvZz
 .Op Fl C Ar bytes
 .Op Fl E Ar file
 .Op Fl F Ar archive
@@ -53,7 +53,7 @@
 .Op Ar "\*[Lt] archive"
 .Nm cpio
 .Fl p
-.Op Fl adlLmuv
+.Op Fl adLlmuv
 .Ar destination-directory
 .Ar "\*[Lt] name-list"
 .Sh DESCRIPTION
@@ -244,10 +244,10 @@ as remote files.
 Normally
 .Nm
 ignores filenames that contain
-.Sq ..
-as a path component. With this option,
-files that contain
-.Sq ..
+.Dq ..
+as a path component.
+With this option, files that contain
+.Dq ..
 can be processed.
 .El
 .El

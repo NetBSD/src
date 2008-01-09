@@ -1,0 +1,112 @@
+.\"	$NetBSD: atomic_ops.3,v 1.3.4.2 2008/01/09 01:21:30 matt Exp $
+.\"
+.\" Copyright (c) 2007 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Jason R. Thorpe.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\" notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\" notice, this list of conditions and the following disclaimer in the
+.\" documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\" must display the following acknowledgement:
+.\"	This product includes software developed by the NetBSD
+.\"	Foundation, Inc. and its contributors.
+.\" 4. Neither the name of The NetBSD Foundation nor the names of its
+.\" contributors may be used to endorse or promote products derived
+.\" from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd April 11, 2007
+.Dt ATOMIC_OPS 3
+.Os
+.Sh NAME
+.Nm atomic_ops
+.Nd atomic memory operations
+.\" .Sh LIBRARY
+.\" .Lb libc
+.Sh SYNOPSIS
+.In sys/atomic.h
+.Sh DESCRIPTION
+The
+.Nm atomic_ops
+family of functions provide atomic memory operations.
+There are 7 classes of atomic memory operations available:
+.Pp
+.Bl -tag -width "atomic_swap(3)"
+.It Xr atomic_add 3
+These functions perform atomic addition.
+.It Xr atomic_and 3
+These functions perform atomic logical
+.Dq and .
+.It Xr atomic_cas 3
+These functions perform atomic compare-and-swap.
+.It Xr atomic_dec 3
+These functions perform atomic decrement.
+.It Xr atomic_inc 3
+These functions perform atomic increment.
+.It Xr atomic_or 3
+These functions perform atomic logical
+.Dq or .
+.It Xr atomic_swap 3
+These functions perform atomic swap.
+.El
+.Pp
+After an atomic operation is complete, the store to the target memory
+location will have global visibility.
+The global visibility of other loads and stores before and after the atomic
+operation are undefined.
+Applications that require synchronization of loads and stores with respect
+to an atomic operation must use memory barriers.
+See
+.Xr membar_ops 3 .
+.Pp
+Because atomic memory operations require expensive synchronization at the
+hardware level, applications should take care to minimize their use.
+In certain cases, it may be more appropriate to use a mutex, especially
+if more than one memory location will be modified.
+.Pp
+Users of atomic memory operations should not make assumptions about how
+the memory access is performed
+.Pq specifically, the width of the memory access .
+For this reason, applications making use of atomic memory operations should
+limit their use to regular memory.
+The results of using atomic memory operations on anything other than
+regular memory are undefined.
+.Pp
+Users of atomic memory operations should take care to modify any given
+memory location either entirely with atomic operations or entirely with
+some other synchronization mechanism.
+Intermixing of atomic operations with other synchronization mechanisms
+for the same memory location results in undefined behavior.
+.Sh SEE ALSO
+.Xr atomic_add 3 ,
+.Xr atomic_and 3 ,
+.Xr atomic_cas 3 ,
+.Xr atomic_dec 3 ,
+.Xr atomic_inc 3 ,
+.Xr atomic_or 3 ,
+.Xr atomic_swap 3 ,
+.Xr membar_ops 3
+.Sh HISTORY
+The
+.Nm atomic_ops
+functions first appeared in
+.Nx 5.0 .

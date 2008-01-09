@@ -1,4 +1,7 @@
-# $NetBSD: mi,v 1.720.2.1 2007/11/06 23:10:05 matt Exp $
+# $NetBSD: mi,v 1.720.2.2 2008/01/09 01:28:14 matt Exp $
+#
+# Note: don't delete entries from here - mark them as "obsolete" instead.
+#
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -37,7 +40,7 @@
 ./bin/sleep					base-util-root
 ./bin/stty					base-util-root
 ./bin/sync					base-util-root
-./bin/systrace					base-util-root
+./bin/systrace					base-obsolete		obsolete
 ./bin/tar					base-util-root
 ./bin/test					base-util-root
 ./dev						base-sys-root
@@ -71,6 +74,7 @@
 ./etc/X11/xinit					base-x11-root
 ./etc/X11/xserver				base-x11-root
 ./etc/X11/xsm					base-x11-root
+./etc/atf					base-atf-bin
 ./etc/cgd					base-sys-root
 ./etc/defaults					base-sys-root
 ./etc/disklabels				base-obsolete		obsolete
@@ -98,7 +102,7 @@
 ./etc/skel					base-sys-root
 ./etc/sliphome					base-slip-root
 ./etc/ssh					base-sys-root
-./etc/systrace					base-util-root
+./etc/systrace					base-util-root		obsolete
 ./etc/uucp					base-obsolete		obsolete
 ./lib						base-sys-root
 ./lib/libdes.so					base-obsolete		obsolete
@@ -200,6 +204,7 @@
 ./sbin/mountd					base-obsolete		obsolete
 ./sbin/newbtconf				base-sysutil-root
 ./sbin/newfs					base-sysutil-root
+./sbin/newfs_ext2fs				base-sysutil-root
 ./sbin/newfs_lfs				base-sysutil-root
 ./sbin/newfs_msdos				base-sysutil-root
 ./sbin/newfs_sysvbfs				base-sysutil-root
@@ -408,6 +413,10 @@
 ./usr/bin/apply					base-util-bin
 ./usr/bin/apropos				base-man-bin
 ./usr/bin/at					base-cron-bin
+./usr/bin/atf-config				base-atf-bin
+./usr/bin/atf-report				base-atf-bin
+./usr/bin/atf-run				base-atf-bin
+./usr/bin/atf-version				base-atf-bin
 ./usr/bin/atq					base-cron-bin
 ./usr/bin/atrm					base-cron-bin
 ./usr/bin/audioctl				base-audio-bin
@@ -421,6 +430,7 @@
 ./usr/bin/bdes					base-crypto-bin		crypto
 ./usr/bin/biff					base-mail-bin
 ./usr/bin/bthset				base-util-bin
+./usr/bin/btkey					base-util-bin
 ./usr/bin/btpin					base-util-bin
 ./usr/bin/bunzip2				base-util-bin
 ./usr/bin/bzcat					base-util-bin
@@ -769,6 +779,8 @@
 ./usr/include/dev/pci				base-c-usr
 ./usr/include/dev/pckbc				base-c-usr
 ./usr/include/dev/pcmcia			base-c-usr
+./usr/include/dev/pud				base-c-usr
+./usr/include/dev/putter			base-c-usr
 ./usr/include/dev/raidframe			base-c-usr
 ./usr/include/dev/rcons				base-obsolete		obsolete
 ./usr/include/dev/sbus				base-c-usr
@@ -918,6 +930,8 @@
 ./usr/libdata/firmware				base-sys-usr
 ./usr/libdata/lint				base-c-usr
 ./usr/libexec					base-sys-usr
+./usr/libexec/atf-cleanup			base-atf-bin
+./usr/libexec/atf-format			base-atf-bin
 ./usr/libexec/atrun				base-cron-bin
 ./usr/libexec/ching				base-games-usr
 ./usr/libexec/comsat				base-mail-bin
@@ -1323,6 +1337,12 @@
 ./usr/sbin/zdump				base-sysutil-bin
 ./usr/sbin/zic					base-sysutil-bin
 ./usr/share					base-sys-share
+./usr/share/atf					base-atf-share
+./usr/share/atf/atf-run.hooks			base-atf-bin
+./usr/share/atf/atf.config.subr			base-atf-share
+./usr/share/atf/atf.footer.subr			base-atf-share
+./usr/share/atf/atf.header.subr			base-atf-share
+./usr/share/atf/atf.init.subr			base-atf-share
 ./usr/share/calendar				base-calendar-share
 ./usr/share/calendar/calendar.birthday		base-calendar-share	share
 ./usr/share/calendar/calendar.christian		base-calendar-share	share
@@ -4014,7 +4034,9 @@
 ./usr/share/zoneinfo/W-SU			base-sys-share		share
 ./usr/share/zoneinfo/WET			base-sys-share		share
 ./usr/share/zoneinfo/Zulu			base-sys-share		share
+./usr/share/zoneinfo/iso3166.tab		base-sys-share		share
 ./usr/share/zoneinfo/posixrules			base-sys-share		share
+./usr/share/zoneinfo/zone.tab			base-sys-share		share
 ./var						base-sys-root
 ./var/account					base-sys-root
 ./var/at					base-cron-root
@@ -4053,6 +4075,7 @@
 ./var/db/obsolete/games				base-sys-root
 ./var/db/obsolete/man				base-sys-root
 ./var/db/obsolete/misc				base-sys-root
+./var/db/obsolete/tests				base-sys-root
 ./var/db/obsolete/text				base-sys-root
 ./var/db/xdm					base-sys-root
 ./var/empty					base-obsolete		obsolete

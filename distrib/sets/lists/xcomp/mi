@@ -1,4 +1,7 @@
-# $NetBSD: mi,v 1.29 2006/09/11 22:28:33 dbj Exp $
+# $NetBSD: mi,v 1.29.8.1 2008/01/09 01:28:22 matt Exp $
+#
+# Note: don't delete entries from here - mark them as "obsolete" instead.
+#
 ./etc/mtree/set.xcomp			xcomp-sys-root
 ./usr/X11R6/bin/bdftruncate.pl		xcomp-obsolete	obsolete
 ./usr/X11R6/bin/ccmakedep
@@ -3925,7 +3928,7 @@
 ./usr/libdata/debug/usr/X11R6/bin/xsetroot.debug	-unknown-	debug
 ./usr/libdata/debug/usr/X11R6/bin/xsm.debug		-unknown-	debug
 ./usr/libdata/debug/usr/X11R6/bin/xstdcmap.debug	-unknown-	debug
-./usr/libdata/debug/usr/X11R6/bin/xsystrace.debug	-unknown-	debug
+./usr/libdata/debug/usr/X11R6/bin/xsystrace.debug	xcomp-obsolete	obsolete
 ./usr/libdata/debug/usr/X11R6/bin/xterm.debug		-unknown-	debug
 ./usr/libdata/debug/usr/X11R6/bin/xtest.debug		-unknown-	debug
 ./usr/libdata/debug/usr/X11R6/bin/xtrapchar.debug	-unknown-	debug

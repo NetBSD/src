@@ -1,4 +1,4 @@
-.\"	$NetBSD: pf.conf.5,v 1.11 2007/05/10 23:03:22 dyoung Exp $
+.\"	$NetBSD: pf.conf.5,v 1.11.4.1 2008/01/09 01:26:16 matt Exp $
 .\"	$OpenBSD: pf.conf.5,v 1.326 2005/03/01 18:10:44 jmc Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
@@ -1782,7 +1782,7 @@ The default policy is specified by the
 global option, but this can be adjusted on individual filter rules by adding one
 of the
 .Ar if-bound ,
-.Ar group-bound
+.Ar group-bound ,
 or
 .Ar floating
 keywords to the
@@ -1805,7 +1805,8 @@ translation rules by adding a keyword
 .Ar group-bound
 or
 .Ar floating
-at the end of the rule.  For example, a rule such as this,
+at the end of the rule.
+For example, a rule such as this,
 .Bd -literal -offset indent
 nat on sip0 from 10/8 to ! 10/8 -> 192.168.1.4/32 if-bound
 .Ed

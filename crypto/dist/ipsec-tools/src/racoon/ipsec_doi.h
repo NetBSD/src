@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_doi.h,v 1.9 2006/12/09 05:52:57 manu Exp $	*/
+/*	$NetBSD: ipsec_doi.h,v 1.9.6.1 2008/01/09 01:22:35 matt Exp $	*/
 
 /* Id: ipsec_doi.h,v 1.15 2006/08/11 16:06:30 vanhu Exp */
 
@@ -196,6 +196,12 @@ struct ipsecdoi_pl_id {
 /* The use for checking proposal payload. This is not exchange type. */
 #define IPSECDOI_TYPE_PH1	0
 #define IPSECDOI_TYPE_PH2	1
+
+/*
+ * Prefix that will make ipsecdoi_sockaddr2id() generate address type
+ * identities without knowning the exact length of address.
+ */
+#define IPSECDOI_PREFIX_HOST	0xff
 
 struct isakmpsa;
 struct ipsecdoi_pl_sa;

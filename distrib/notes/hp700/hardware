@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.2 2003/11/01 03:03:00 grant Exp $
+.\"	$NetBSD: hardware,v 1.2.22.1 2008/01/09 01:28:00 matt Exp $
 .
 Since
 .Nx*M
@@ -8,17 +8,7 @@ Check the
 mailing list and the
 .Nx*M
 port homepage for an up-to-date list of known supported hardware.
-.Lk http://www.NetBSD.org/Ports/hp700/
+.Lk http://www.NetBSD.org/ports/hp700/
 .Pp
 .Nx*M
-\*V does not
-have any local disk support, so you must netboot and run diskless.
-.Pp
-.
-.Ss2 Supported hardware
-.
-Unknown.
-.
-.Ss2 Unsupported hardware
-.
-Unknown.
+\*V works from local disk, once installed, or diskless via netboot.
