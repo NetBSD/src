@@ -1,4 +1,4 @@
-/*  $NetBSD: if_wpi.c,v 1.33 2007/12/09 20:28:10 jmcneill Exp $    */
+/*  $NetBSD: if_wpi.c,v 1.34 2008/01/09 20:15:40 degroote Exp $    */
 
 /*-
  * Copyright (c) 2006, 2007
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.33 2007/12/09 20:28:10 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.34 2008/01/09 20:15:40 degroote Exp $");
 
 /*
  * Driver for Intel PRO/Wireless 3945ABG 802.11 network adapters.
@@ -164,6 +164,8 @@ static void wpi_hw_config(struct wpi_softc *);
 static int  wpi_init(struct ifnet *);
 static void wpi_stop(struct ifnet *, int);
 static bool wpi_resume(device_t);
+static int	wpi_getrfkill(struct wpi_softc *);
+static void wpi_sysctlattach(struct wpi_softc *);
 
 CFATTACH_DECL_NEW(wpi, sizeof (struct wpi_softc), wpi_match, wpi_attach,
 	wpi_detach, NULL);
@@ -339,6 +341,8 @@ wpi_attach(device_t parent __unused, device_t self, void *aux)
 
 	sc->amrr.amrr_min_success_threshold = 1;
 	sc->amrr.amrr_max_success_threshold = 15;
+
+	wpi_sysctlattach(sc);
 
 	if (!pmf_device_register(self, NULL, wpi_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
@@ -3037,13 +3041,9 @@ wpi_init(struct ifnet *ifp)
 	}
 
 	/* Check the status of the radio switch */
-	wpi_mem_lock(sc);
-	tmp = wpi_mem_read(sc, WPI_MEM_RFKILL);
-	wpi_mem_unlock(sc);
-
-	if (!(tmp & 0x01)) {
+	if (wpi_getrfkill(sc)) {
 		aprint_error_dev(sc->sc_dev, "Radio is disabled by hardware switch\n");
-		error = EPERM; // XXX
+		error = EBUSY; 
 		goto fail1;
 	}
 
@@ -3136,4 +3136,81 @@ wpi_resume(device_t dv)
 	(void)wpi_reset(sc);
 
 	return true;
+}
+
+/*
+ * Return whether or not the radio is enabled in hardware
+ * (i.e. the rfkill switch is "off").
+ */
+static int
+wpi_getrfkill(struct wpi_softc *sc)
+{
+	uint32_t tmp;
+
+	wpi_mem_lock(sc);
+	tmp = wpi_mem_read(sc, WPI_MEM_RFKILL);
+	wpi_mem_unlock(sc);
+
+	return !(tmp & 0x01);
+}
+
+static int
+wpi_sysctl_radio(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node;
+	struct wpi_softc *sc;
+	int val, error;
+
+	node = *rnode;
+	sc = (struct wpi_softc *)node.sysctl_data;
+
+	val = !wpi_getrfkill(sc);
+
+	node.sysctl_data = &val;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+
+	if (error || newp == NULL)
+		return error;
+
+	return 0;
+}
+
+static void
+wpi_sysctlattach(struct wpi_softc *sc)
+{
+	int rc;
+	const struct sysctlnode *rnode;
+	const struct sysctlnode *cnode;
+
+	struct sysctllog **clog = &sc->sc_sysctllog;
+
+	if ((rc = sysctl_createv(clog, 0, NULL, &rnode,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "hw", NULL,
+	    NULL, 0, NULL, 0, CTL_HW, CTL_EOL)) != 0)
+		goto err;
+
+	if ((rc = sysctl_createv(clog, 0, &rnode, &rnode,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE, device_xname(sc->sc_dev),
+	    SYSCTL_DESCR("wpi controls and statistics"),
+	    NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL)) != 0)
+		goto err;
+
+	if ((rc = sysctl_createv(clog, 0, &rnode, &cnode,
+	    CTLFLAG_PERMANENT, CTLTYPE_INT, "radio",
+	    SYSCTL_DESCR("radio transmitter switch state (0=off, 1=on)"),
+	    wpi_sysctl_radio, 0, sc, 0, CTL_CREATE, CTL_EOL)) != 0)
+		goto err;
+
+#ifdef WPI_DEBUG
+	/* control debugging printfs */
+	if ((rc = sysctl_createv(clog, 0, &rnode, &cnode,
+	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE, CTLTYPE_INT,
+	    "debug", SYSCTL_DESCR("Enable debugging output"),
+	    NULL, 0, &wpi_debug, 0, CTL_CREATE, CTL_EOL)) != 0)
+		goto err;
+#endif
+
+	return;
+err:
+	aprint_error("%s: sysctl_createv failed (rc = %d)\n", __func__, rc);
 }
