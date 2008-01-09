@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.12 2007/10/18 15:28:39 yamt Exp $	*/
+/*	$NetBSD: spl.S,v 1.13 2008/01/09 23:45:34 bouyer Exp $	*/
 /*	NetBSD: spl.S,v 1.11 2004/02/20 17:35:01 yamt Exp 	*/
 
 /*
@@ -107,8 +107,11 @@ IDTVEC(spllower)
 #endif /* defined(DDB) || defined(GPROF) */
 	movl	$.Lspllower_resume,%esi	# address to resume loop at
 1:
-	CLI(%eax)
+# because of the way Xen interrupts works *%esi will in fact be called
+# from Xdoreti via iret. So we have to always disable interrupts here
+# for Xen
 .Lspllower_resume:
+	CLI(%eax)
 	movl	%ebx,%eax		# get cpl
 	movl	CPUVAR(IUNMASK)(,%eax,4),%eax
 	andl	CPUVAR(IPENDING),%eax	# any non-masked bits left?
