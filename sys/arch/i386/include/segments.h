@@ -1,4 +1,4 @@
-/*	$NetBSD: segments.h,v 1.44.6.3 2008/01/08 22:10:04 bouyer Exp $	*/
+/*	$NetBSD: segments.h,v 1.44.6.4 2008/01/09 21:29:54 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -97,7 +97,11 @@
 #endif /* XEN */
 #define	SEL_UPL		3		/* user privilege level */
 #define	SEL_RPL		3		/* requester's privilege level mask */
+#ifdef XEN
 #define	CHK_UPL		2		/* user privilege level mask */
+#else
+#define CHK_UPL		SEL_RPL
+#endif /* XEN */
 #define	ISLDT(s)	((s) & SEL_LDT)	/* is it local or global */
 #define	SEL_LDT		4		/* local descriptor table */
 #define	IDXSEL(s)	(((s) >> 3) & 0x1fff)		/* index of selector */
