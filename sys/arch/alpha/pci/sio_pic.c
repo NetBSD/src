@@ -1,4 +1,4 @@
-/* $NetBSD: sio_pic.c,v 1.34 2005/12/11 12:16:17 christos Exp $ */
+/* $NetBSD: sio_pic.c,v 1.34.50.1 2008/01/09 01:44:40 matt Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sio_pic.c,v 1.34 2005/12/11 12:16:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sio_pic.c,v 1.34.50.1 2008/01/09 01:44:40 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -473,7 +473,8 @@ sio_intr_establish(v, irq, type, level, fn, arg)
 
 	if (cookie != NULL &&
 	    alpha_shared_intr_firstactive(sio_intr, irq)) {
-		scb_set(0x800 + SCB_IDXTOVEC(irq), sio_iointr, NULL);
+		scb_set(0x800 + SCB_IDXTOVEC(irq), sio_iointr, NULL,
+		    level);
 		sio_setirqstat(irq, 1,
 		    alpha_shared_intr_get_sharetype(sio_intr, irq));
 	}

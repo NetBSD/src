@@ -1,4 +1,4 @@
-/*	$NetBSD: idle_machdep.c,v 1.2 2007/05/17 14:51:15 yamt Exp $	*/
+/*	$NetBSD: idle_machdep.c,v 1.2.16.1 2008/01/09 01:45:10 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -38,10 +38,11 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: idle_machdep.c,v 1.2 2007/05/17 14:51:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: idle_machdep.c,v 1.2.16.1 2008/01/09 01:45:10 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
+#include <arm/cpufunc.h>
 
 void
 cpu_idle(void)
@@ -49,7 +50,7 @@ cpu_idle(void)
 
 	if (cpu_do_powersave) {
 		IRQdisable;
-		cpufuncs.cf_sleep(0);
+		cpu_sleep(0);
 		IRQenable;
 	}
 }

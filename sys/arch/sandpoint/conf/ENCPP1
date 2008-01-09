@@ -1,4 +1,4 @@
-# $NetBSD: ENCPP1,v 1.2.8.2 2007/11/06 23:21:19 matt Exp $
+# $NetBSD: ENCPP1,v 1.2.8.3 2008/01/09 01:48:35 matt Exp $
 #
 # Ampro EnCorePP1 machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/sandpoint/conf/std.sandpoint"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ENCPP1-$Revision: 1.2.8.2 $"
+#ident 		"ENCPP1-$Revision: 1.2.8.3 $"
 
 maxusers	32
 
@@ -190,6 +190,6 @@ midi*		at pcppi?		# MIDI interface to the PC speaker
 com0	at isa? port 0x3f8 irq 4	# standard PC serial ports
 com1	at isa? port 0x2f8 irq 3
 
-lpt0	at isa? port 0x278 irq 7	# standard PC parallel ports
+#lpt0	at isa? port 0x278 irq 7	# standard PC parallel ports
 
 wd*	at atabus? drive ? flags 0x0000

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.196.10.1 2007/11/06 23:16:40 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.196.10.2 2008/01/09 01:46:05 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,10 +77,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.196.10.1 2007/11/06 23:16:40 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.196.10.2 2008/01/09 01:46:05 matt Exp $");
 
 #include "opt_ddb.h"
-#include "opt_compat_hpux.h"
 #include "opt_compat_netbsd.h"
 #include "opt_panicbutton.h"
 #include "hil.h"
@@ -179,10 +178,6 @@ int	safepri = PSL_LOWIPL;
 
 extern	u_int lowram;
 extern	short exframesize[];
-
-#ifdef COMPAT_HPUX
-extern struct emul emul_hpux;
-#endif
 
 /* prototypes for local functions */
 static void	parityenable(void);

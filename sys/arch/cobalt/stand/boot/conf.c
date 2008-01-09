@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.4.50.1 2007/11/06 23:15:45 matt Exp $	*/
+/*	$NetBSD: conf.c,v 1.4.50.2 2008/01/09 01:45:39 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -41,6 +41,7 @@
 
 #include <lib/libsa/stand.h>
 #include <ufs.h>
+#include <ext2fs.h>
 #include <nfs.h>
 #include <netif.h>
 #include <dev_net.h>
@@ -55,17 +56,19 @@ struct devsw devsw[] = {
 	{ "nfs", net_strategy, net_open, net_close, net_ioctl }
 };
 
-int	ndevs = (sizeof(devsw)/sizeof(devsw[0]));
+int ndevs = __arraycount(devsw);
 
 /*
  * Filesystem configuration
  */
 struct fs_ops file_system[] = {
-	FS_OPS(ufs),
+	FS_OPS(ffsv1),
+	FS_OPS(ffsv2),
+	FS_OPS(ext2fs),
 	FS_OPS(nfs),
 };
 
-int nfsys = sizeof(file_system) / sizeof(file_system[0]);
+int nfsys = __arraycount(file_system);
 
 extern struct netif_driver en_driver;
 
@@ -73,4 +76,4 @@ struct netif_driver *netif_drivers[] = {
 	&ether_tlp_driver,
 };
 
-int n_netif_drivers = sizeof(netif_drivers) / sizeof(netif_drivers[0]);
+int n_netif_drivers = __arraycount(netif_drivers);

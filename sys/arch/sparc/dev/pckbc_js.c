@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbc_js.c,v 1.14.10.1 2007/11/06 23:22:22 matt Exp $ */
+/*	$NetBSD: pckbc_js.c,v 1.14.10.2 2008/01/09 01:48:53 matt Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -28,17 +28,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_js.c,v 1.14.10.1 2007/11/06 23:22:22 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_js.c,v 1.14.10.2 2008/01/09 01:48:53 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <machine/autoconf.h>
-#include <machine/bus.h>
-#include <machine/intr.h>
 
 #include <dev/ic/i8042reg.h>
 #include <dev/ic/pckbcvar.h>
@@ -46,12 +46,6 @@ __KERNEL_RCSID(0, "$NetBSD: pckbc_js.c,v 1.14.10.1 2007/11/06 23:22:22 matt Exp 
 
 #include <dev/ebus/ebusreg.h>
 #include <dev/ebus/ebusvar.h>
-
-#ifdef __GENERIC_SOFT_INTERRUPTS_ALL_LEVELS
-#define	IPL_JSCKBD	IPL_TTY
-#else
-#define	IPL_JSCKBD	IPL_SOFTSERIAL
-#endif
 
 struct pckbc_js_softc {
 	struct pckbc_softc jsc_pckbc;	/* real "pckbc" softc */
@@ -254,7 +248,7 @@ pckbc_js_intr_establish(struct pckbc_softc *sc, pckbport_slot_t slot)
 	 * We can not choose the devic class interruptlevel freely,
 	 * so we debounce via a softinterrupt.
 	 */
-	jsc->jsc_int_cookie = softintr_establish(IPL_JSCKBD,
+	jsc->jsc_int_cookie = softint_establish(SOFTINT_SERIAL,
 	    pckbcintr_soft, &jsc->jsc_pckbc);
 	if (jsc->jsc_int_cookie == NULL) {
 		printf("%s: unable to establish %s soft interrupt\n",
@@ -275,7 +269,7 @@ jsc_pckbdintr(void *vsc)
 {
 	struct pckbc_js_softc *jsc = vsc;
 
-	softintr_schedule(jsc->jsc_int_cookie);
+	softint_schedule(jsc->jsc_int_cookie);
 	pckbcintr_hard(&jsc->jsc_pckbc);
 
 	/*

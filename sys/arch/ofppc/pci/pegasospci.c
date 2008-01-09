@@ -1,4 +1,4 @@
-/* $NetBSD: pegasospci.c,v 1.4.4.3 2007/11/08 10:59:39 matt Exp $ */
+/* $NetBSD: pegasospci.c,v 1.4.4.4 2008/01/09 01:47:37 matt Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pegasospci.c,v 1.4.4.3 2007/11/08 10:59:39 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pegasospci.c,v 1.4.4.4 2008/01/09 01:47:37 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -62,6 +62,8 @@ struct pegasospci_softc {
 
 static void pegasospci_attach(struct device *, struct device *, void *);
 static int pegasospci_match(struct device *, struct cfdata *, void *);
+static void pegasospci_indirect_attach_hook(struct device *, struct device *,
+    struct pcibus_attach_args *);
 static pcireg_t pegasospci_indirect_conf_read(void *, pcitag_t, int);
 static void pegasospci_indirect_conf_write(void *, pcitag_t, int, pcireg_t);
 
@@ -108,7 +110,6 @@ pegasospci_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct confargs *ca = aux;
 	char name[32];
-	int node;
 
 	if (strcmp(ca->ca_name, "pci") != 0)
 		return 0;
@@ -118,12 +119,7 @@ pegasospci_match(struct device *parent, struct cfdata *cf, void *aux)
 	if (strcmp(name, "pci") != 0)
 		return 0;
 
-	node = OF_finddevice("/");
-	if (node < 0)
-		return 0;
-	memset(name, 0, sizeof(name));
-	OF_getprop(node, "name", name, sizeof(name));
-	if (strcmp(name, "bplan,Pegasos2") != 0)
+	if (strcmp(model_name, "Pegasos2") != 0)
 		return 0;
 
 	return 10;
@@ -163,15 +159,18 @@ pegasospci_attach(struct device *parent, struct device *self, void *aux)
 		panic("Can't init pegasospci mem tag");
 
 	/* are we the primary pci bus? */
-	if (of_find_firstchild_byname(OF_finddevice("/"), "pci") ==
-	    ca->ca_node) {
+	if (of_find_firstchild_byname(OF_finddevice("/"), "pci") == node) {
+		int isa_node;
+
 		isprim++;
 		/* yes we are, now do we have an ISA child? */
-		if (of_find_firstchild_byname(ca->ca_node, "isa") != -1) {
+		isa_node = of_find_firstchild_byname(node, "isa");
+		if (isa_node != -1) {
 			/* The Pegasos is very simple.  isa == pci */
 			genppc_isa_io_space_tag = sc->sc_iot;
 			genppc_isa_mem_space_tag = sc->sc_memt;
 			map_isa_ioregs(sc->sc_iot.pbs_offset);
+			ofppc_init_comcons(isa_node);
 		}
 	}
 
@@ -189,6 +188,7 @@ pegasospci_attach(struct device *parent, struct device *self, void *aux)
 		/* Pegasos2: primary PCI host (33MHz) @ 0x80000000 */
 		pc->pc_addr = mapiodev(PEGASOS2_PCI0_ADDR, 4);
 		pc->pc_data = mapiodev(PEGASOS2_PCI0_DATA, 4);
+		pc->pc_attach_hook = pegasospci_indirect_attach_hook;
 	} else {
 		/* Pegasos2: second PCI host (66MHz) @ 0xc0000000 */
 		pc->pc_addr = mapiodev(PEGASOS2_PCI1_ADDR, 4);
@@ -219,6 +219,40 @@ pegasospci_attach(struct device *parent, struct device *self, void *aux)
 	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
 
 	config_found_ia(self, "pcibus", &pba, pcibusprint);
+}
+
+static void
+pegasospci_indirect_attach_hook(struct device *parent, struct device *self,
+    struct pcibus_attach_args *pba)
+{
+	pcitag_t tag;
+	pcireg_t reg;
+	pci_chipset_tag_t pc;
+
+	if (pba->pba_bus != 0)
+		return;
+
+	aprint_normal(": indirect configuration space access");
+
+	/*
+	 * SmartFirmware 1.2 only initializes the devices it will use,
+	 * i.e. ATA, USB, serial, network. Devices like Firewire or Audio
+	 * are lacking the IO/MEM-enable flags in the PCI command register,
+	 * although the interrupt assignments and BARs are correctly set up.
+	 */
+	pc = pba->pba_pc;
+
+	/* VT6306 IEEE 1394: device 1 */
+	tag = pci_make_tag(pc, pba->pba_bus, 1, 0);
+	reg = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
+	reg |= PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE;
+	pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, reg);
+
+	/* VT82C686A AC97: device 12, function 5 */
+	tag = pci_make_tag(pc, pba->pba_bus, 12, 5);
+	reg = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
+	reg |= PCI_COMMAND_IO_ENABLE;
+	pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, reg);
 }
 
 static pcireg_t

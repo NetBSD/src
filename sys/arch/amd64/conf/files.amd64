@@ -1,7 +1,11 @@
-#	$NetBSD: files.amd64,v 1.42.2.1 2007/11/06 23:14:13 matt Exp $
+#	$NetBSD: files.amd64,v 1.42.2.2 2008/01/09 01:44:51 matt Exp $
 #
 # new style config file for amd64 architecture
 #
+
+version 20071109
+
+ifndef xen
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16
@@ -13,6 +17,9 @@ defparam		CPURESET_DELAY
 
 # The REAL{BASE,EXT}MEM options
 defparam opt_realmem.h	REALBASEMEM REALEXTMEM
+
+# The PHYSMEM_MAX_{SIZE,ADDR} optionms
+defparam opt_physmem.h	PHYSMEM_MAX_ADDR PHYSMEM_MAX_SIZE
 
 #
 # XXX these are just here at the moment so that we can share files
@@ -30,6 +37,7 @@ file	arch/amd64/amd64/db_disasm.c		ddb
 file	arch/amd64/amd64/db_interface.c	ddb
 file	arch/amd64/amd64/db_memrw.c		ddb | kgdb
 file	arch/amd64/amd64/db_trace.c		ddb
+file	arch/amd64/amd64/kobj_machdep.c		modular
 file	arch/amd64/amd64/kgdb_machdep.c		kgdb
 file	kern/subr_disk_mbr.c			disk
 file	arch/amd64/amd64/gdt.c
@@ -183,6 +191,7 @@ include "dev/bluetooth/files.bluetooth"
 include	"dev/ieee1394/files.ieee1394"
 include "dev/apm/files.apm"
 include "dev/acpi/files.acpi"
-file	arch/amd64/acpi/acpi_wakeup.c	acpi
+file	arch/amd64/acpi/acpi_wakeup_low.S	acpi
 
 include	"arch/amd64/conf/majors.amd64"
+endif #xen

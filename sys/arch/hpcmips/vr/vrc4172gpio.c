@@ -1,4 +1,4 @@
-/*	$NetBSD: vrc4172gpio.c,v 1.11 2006/03/29 04:16:45 thorpej Exp $	*/
+/*	$NetBSD: vrc4172gpio.c,v 1.11.38.1 2008/01/09 01:46:17 matt Exp $	*/
 /*-
  * Copyright (c) 2001 TAKEMRUA Shin. All rights reserved.
  *
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vrc4172gpio.c,v 1.11 2006/03/29 04:16:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vrc4172gpio.c,v 1.11.38.1 2008/01/09 01:46:17 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -359,7 +359,7 @@ vrc4172gpio_port_read(hpcio_chip_t hc, int port)
 	int on;
 
 	if (!CHECK_PORT(port))
-		panic("%s: illegal gpio port", __FUNCTION__);
+		panic("%s: illegal gpio port", __func__);
 
 	on = (read_4(sc, VRC2_EXGPDATA) & (1 << port));
 
@@ -373,7 +373,7 @@ vrc4172gpio_port_write(hpcio_chip_t hc, int port, int onoff)
 	u_int32_t data;
 
 	if (!CHECK_PORT(port))
-		panic("%s: illegal gpio port", __FUNCTION__);
+		panic("%s: illegal gpio port", __func__);
 	data = read_4(sc, VRC2_EXGPDATA);
 	if (onoff)
 		data |= (1<<port);
@@ -443,7 +443,7 @@ dumpbits(u_int32_t *data, int ndata, int start, int end, const char *sym)
 	int i, j;
 
 	if (start <= end)
-		panic("%s(%d): %s", __FILE__, __LINE__, __FUNCTION__);
+		panic("%s(%d): %s", __FILE__, __LINE__, __func__);
 
 	for (i = start; end <= i; i--) {
 		int d = 0;
@@ -489,9 +489,9 @@ vrc4172gpio_intr_establish(
 	s = splhigh();
 
 	if (!CHECK_PORT(port))
-		panic ("%s: bogus interrupt line", __FUNCTION__);
+		panic ("%s: bogus interrupt line", __func__);
 	if (sc->sc_intr_mode[port] && mode != sc->sc_intr_mode[port])
-		panic ("%s: bogus interrupt type", __FUNCTION__);
+		panic ("%s: bogus interrupt type", __func__);
 	else
 		sc->sc_intr_mode[port] = mode;
 
@@ -501,7 +501,7 @@ vrc4172gpio_intr_establish(
 
 	ih = malloc(sizeof(struct vrc4172gpio_intr_entry), M_DEVBUF, M_NOWAIT);
 	if (ih == NULL)
-		panic("%s: no memory", __FUNCTION__);
+		panic("%s: no memory", __func__);
 
 	ih->ih_port = port;
 	ih->ih_fun = ih_fun;
@@ -604,7 +604,7 @@ vrc4172gpio_intr_disestablish(hpcio_chip_t hc, void *arg)
 			return;
 		}
 	}
-	panic("%s: no such a handle.", __FUNCTION__);
+	panic("%s: no such a handle.", __func__);
 	/* NOTREACHED */
 }
 
@@ -637,7 +637,7 @@ vrc4172gpio_intr(void *arg)
 
 	/* dispatch handler */
 	reg = read_4(sc, VRC2_EXGPINTST);
-	DPRINTF(DBG_INTR, "%s: EXGPINTST=%06x\n", __FUNCTION__, reg);
+	DPRINTF(DBG_INTR, "%s: EXGPINTST=%06x\n", __func__, reg);
 	for (i = 0; i < VRC2_EXGP_NPORTS; i++) {
 		if (reg & (1 << i)) {
 			register struct vrc4172gpio_intr_entry *ih;

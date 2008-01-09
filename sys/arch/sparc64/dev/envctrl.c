@@ -1,4 +1,4 @@
-/*	$NetBSD: envctrl.c,v 1.6.10.1 2007/11/06 23:22:42 matt Exp $ */
+/*	$NetBSD: envctrl.c,v 1.6.10.2 2008/01/09 01:49:02 matt Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: envctrl.c,v 1.6.10.1 2007/11/06 23:22:42 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: envctrl.c,v 1.6.10.2 2008/01/09 01:49:02 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -78,7 +78,7 @@ struct envctrl_softc {
 	kcondvar_t sc_sleepcond;
 	kmutex_t sc_sleepmtx;
 
-	struct sysmon_envsys sc_sysmon;
+	struct sysmon_envsys *sc_sme;
 	envsys_data_t sc_sensor[13];
 	uint8_t sc_keyswitch;
 	uint8_t sc_fanstate;
@@ -155,10 +155,7 @@ envctrlattach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * fill envsys sensor structures
 	 */
-	for (i = 0; i < 12; i++) {
-		sc->sc_sensor[i].sensor = i;
-		sc->sc_sensor[i].state = ENVSYS_SVALID;
-	}
+	sc->sc_sme = sysmon_envsys_create();
 
 	for (i = 0; i < 8; i++)
 		sc->sc_sensor[i].units = ENVSYS_STEMP;
@@ -183,15 +180,24 @@ envctrlattach(struct device *parent, struct device *self, void *aux)
 	sprintf(sc->sc_sensor[10].desc, "ps failed");
 	sprintf(sc->sc_sensor[11].desc, "fans failed");
 
-	sc->sc_sysmon.sme_name = sc->sc_dev.dv_xname;
-	sc->sc_sysmon.sme_sensor_data = sc->sc_sensor;
-	sc->sc_sysmon.sme_cookie = sc;
-	sc->sc_sysmon.sme_flags = SME_DISABLE_GTREDATA;
-	sc->sc_sysmon.sme_nsensors = 12;
+	for (i = 0; i < 12; i++) {
+		if (sysmon_envsys_sensor_attach(sc->sc_sme,
+						&sc->sc_sensor[i])) {
+			sysmon_envsys_destroy(sc->sc_sme);
+			return;
+		}
+	}
 
-	if (sysmon_envsys_register(&sc->sc_sysmon))
+	sc->sc_sme->sme_name = sc->sc_dev.dv_xname;
+	sc->sc_sme->sme_cookie = sc;
+	sc->sc_sme->sme_flags = SME_DISABLE_REFRESH;
+
+	if (sysmon_envsys_register(sc->sc_sme)) {
 		aprint_error("%s: unable to register with sysmon\n",
 		    sc->sc_dev.dv_xname);
+		sysmon_envsys_destroy(sc->sc_sme);
+		return;
+	}
 
 	envctrl_update_sensors(sc);
 

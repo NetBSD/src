@@ -1,7 +1,11 @@
-#	$NetBSD: files.i386,v 1.313.2.1 2007/11/06 23:17:20 matt Exp $
+#	$NetBSD: files.i386,v 1.313.2.2 2008/01/09 01:46:31 matt Exp $
 #
 # new style config file for i386 architecture
 #
+
+version 20071109
+
+ifndef xen
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 8
@@ -9,9 +13,6 @@ maxpartitions 8
 maxusers 2 16 128
 
 defparam opt_kernbase.h	KERNBASE
-
-# Processor type options.
-defflag	opt_cputype.h	I386_CPU I486_CPU I586_CPU I686_CPU
 
 # delay before cpu_reset() for reboot.
 defparam		CPURESET_DELAY
@@ -34,6 +35,9 @@ defflag	opt_xserver.h	XSERVER XSERVER_DDB
 
 # The REAL{BASE,EXT}MEM options
 defparam opt_realmem.h	REALBASEMEM REALEXTMEM
+
+# The PHYSMEM_MAX_{SIZE,ADDR} optionms
+defparam opt_physmem.h	PHYSMEM_MAX_ADDR PHYSMEM_MAX_SIZE
 
 # understand boot device passed by pre-1.3 bootblocks
 defflag			COMPAT_OLDBOOT
@@ -77,6 +81,7 @@ file	arch/i386/i386/i386func.S
 file	arch/i386/i386/in_cksum.S	inet | inet6
 file	arch/i386/i386/ipkdb_glue.c	ipkdb
 file	arch/i386/i386/kgdb_machdep.c	kgdb
+file	arch/i386/i386/kobj_machdep.c	modular
 file	arch/i386/i386/machdep.c
 file	arch/i386/i386/identcpu.c
 file	arch/i386/i386/math_emulate.c	math_emulate
@@ -141,7 +146,8 @@ define	vesabiosbus {}
 
 # XXX BIOS32 only if something that uses it is configured!
 device	mainbus: isabus, eisabus, mcabus, pcibus, bios32, acpibus,
-	cpubus, ioapicbus, apmbus, pnpbiosbus, vesabiosbus, ipmibus
+	cpubus, ioapicbus, apmbus, pnpbiosbus, vesabiosbus, ipmibus,
+	bioscall
 attach	mainbus at root
 file	arch/i386/i386/mainbus.c	mainbus
 
@@ -240,7 +246,7 @@ include	"dev/isa/files.isa"
 file	arch/x86/isa/clock.c		isa
 
 # TSC support
-file	arch/x86/x86/tsc.c		i586_cpu | i686_cpu
+file	arch/x86/x86/tsc.c
 
 # Numeric Processing Extension; Math Co-processor
 device	npx
@@ -248,13 +254,6 @@ file	arch/i386/isa/npx.c		npx needs-flag
 
 attach	npx at isa with npx_isa
 file	arch/i386/isa/npx_isa.c		npx_isa
-
-# PC console support a la "pccons"
-device	pc: tty
-attach	pc at isa
-device	pcconskbd: pckbport_machdep_cnattach
-attach	pcconskbd at pckbport
-file	arch/i386/isa/pccons.c		pc | pcconskbd needs-flag
 
 # PC Mice: Logitech-style and Microsoft-style
 device	lms: wsmousedev
@@ -477,7 +476,7 @@ include	"dev/ieee1394/files.ieee1394"
 include	"arch/i386/pnpbios/files.pnpbios"
 
 include "dev/acpi/files.acpi"
-file	arch/i386/acpi/acpi_wakeup.c	acpi
+file	arch/i386/acpi/acpi_wakeup_low.S	acpi
 
 # Toshiba VALD 
 device	vald
@@ -487,11 +486,6 @@ file	arch/i386/acpi/vald_acpi.c		vald_acpi
 # Sony SPIC (jog dial etc.)
 attach	spic at acpinodebus with spic_acpi
 file	arch/i386/acpi/spic_acpi.c		spic_acpi
-
-# Sony Misc (brightness etc.)
-device	sony
-attach	sony at acpinodebus with sony_acpi
-file	arch/i386/acpi/sony_acpi.c		sony_acpi
 
 # Numeric Processing Extension; Math Co-processor
 attach	npx at acpinodebus with npx_acpi
@@ -504,11 +498,11 @@ defflag	opt_vesabios.h	VESABIOSVERBOSE
 
 include	"dev/rasops/files.rasops"
 
-device	vesafb: wsemuldisplaydev, vcons, rasops8, rasops16, rasops32, splash, bioscall
+device	vesafb: displaydev, wsemuldisplaydev, vcons, rasops8, rasops16, rasops32, splash, bioscall
 attach	vesafb at vesabios
 file	arch/i386/bios/vesafb.c		vesafb needs-flag
-defparam 	opt_vesafb.h	VESAFB_WIDTH VESAFB_HEIGHT VESAFB_DEPTH
-defflag 	opt_vesafb.h	VESAFB_PM
+defparam opt_vesafb.h	VESAFB_WIDTH VESAFB_HEIGHT VESAFB_DEPTH
+defflag	opt_vesafb.h	VESAFB_PM
 
 device	vesatext
 attach	vesatext at vesabios
@@ -523,3 +517,4 @@ attach	glxsb at pci
 file	arch/i386/pci/glxsb.c		glxsb
 
 include "arch/i386/conf/majors.i386"
+endif #xen

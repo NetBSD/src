@@ -1,4 +1,4 @@
-/* $NetBSD: sb1250_icu.c,v 1.8 2006/12/21 15:55:24 yamt Exp $ */
+/* $NetBSD: sb1250_icu.c,v 1.8.24.1 2008/01/09 01:48:41 matt Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sb1250_icu.c,v 1.8 2006/12/21 15:55:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sb1250_icu.c,v 1.8.24.1 2008/01/09 01:48:41 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,17 +59,6 @@ struct sb1250_ihand {
 	struct evcnt count;
 };
 static struct sb1250_ihand sb1250_ihands[64];		/* XXX */
-
-/*
- * This is a mask of bits to clear in the SR when we go to a
- * given software interrupt priority level.
- */
-const uint32_t mips_ipl_si_to_sr[SI_NQUEUES] = {
-	[SI_SOFT] = MIPS_SOFT_INT_MASK_0,
-	[SI_SOFTCLOCK] = MIPS_SOFT_INT_MASK_0,
-	[SI_SOFTNET] = MIPS_SOFT_INT_MASK_1,
-	[SI_SOFTSERIAL] = MIPS_SOFT_INT_MASK_1,
-};
 
 #define	SB1250_I_IMR_ADDR	(MIPS_PHYS_TO_KSEG1(0x10020000 + 0x0028))
 #define	SB1250_I_IMR_SSTATUS	(MIPS_PHYS_TO_KSEG1(0x10020000 + 0x0040))
@@ -111,8 +100,6 @@ sb1250_icu_init(void)
 		evcnt_attach_dynamic(&sb1250_ihands[i].count, EVCNT_TYPE_INTR,
 		    NULL, "sb1250", name);	/* XXX "sb1250"? */
 	}
-
-	softintr_init();
 }
 
 static void
@@ -121,7 +108,10 @@ sb1250_cpu_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 	int i, j;
 	uint64_t sstatus;
 	uint32_t cycles;
+	struct cpu_info *ci;
 
+	ci = curcpu();
+	ci->ci_idepth++;
 	uvmexp.intrs++;
 
 	/* XXX do something if 5? */
@@ -148,17 +138,18 @@ sb1250_cpu_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 		}
 		cause &= ~(MIPS_INT_MASK_0 << i);
 	}
+	ci->ci_idepth--;
 
 	/* Re-enable anything that we have processed. */
 	_splset(MIPS_SR_INT_IE | ((status & ~cause) & MIPS_HARD_INT_MASK));
 
+#ifdef __HAVE_FAST_SOFTINTS
 	ipending &= (MIPS_SOFT_INT_MASK_1|MIPS_SOFT_INT_MASK_0);
 	if (ipending == 0)
 		return;
-
 	_clrsoftintr(ipending);
-
 	softintr_dispatch(ipending);
+#endif
 }
 
 static void *
@@ -213,20 +204,11 @@ sb1250_intr_establish(u_int num, u_int ipl,
 
 static const int ipl2spl_table[] = {
 	[IPL_NONE] = 0,
-	[IPL_SOFT] = _IMR_SOFT,
-	[IPL_SOFTCLOCK] = _IMR_SOFT,
-	[IPL_SOFTNET] = _IMR_SOFT,
-	[IPL_SOFTSERIAL] = _IMR_SOFT,
-	[IPL_BIO] = _IMR_VM,
-	[IPL_NET] = _IMR_VM,
-	[IPL_TTY] = _IMR_VM,
+	[IPL_SOFTCLOCK] = MIPS_SOFT_INT_MASK_0,
+	[IPL_SOFTNET] = MIPS_SOFT_INT_MASK_1,
 	[IPL_VM] = _IMR_VM,
-	[IPL_CLOCK] = _IMR_SCHED,
-	[IPL_STATCLOCK] = _IMR_SCHED,
 	[IPL_SCHED] = _IMR_SCHED,
-	[IPL_SERIAL] = _IMR_SERIAL,
 	[IPL_HIGH] = _IMR_HIGH,
-	[IPL_LOCK] = _IMR_HIGH,
 };
 
 ipl_cookie_t

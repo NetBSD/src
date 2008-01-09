@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.23.18.1 2007/11/06 23:16:43 matt Exp $	*/
+/*	$NetBSD: intr.h,v 1.23.18.2 2008/01/09 01:46:06 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999 The NetBSD Foundation, Inc.
@@ -54,21 +54,13 @@
  */
 #define	IPL_NONE	0
 #define	IPL_SOFTCLOCK	1
-#define	IPL_SOFTNET	2
-#define	IPL_SOFTSERIAL	3
-#define	IPL_SOFT	4	/* disable all software interrupts */
-#define	IPL_BIO		5
-#define	IPL_NET		6
-#define	IPL_TTY		7
-#define	IPL_SERIAL	IPL_TTY	/* XXX */
-#define	IPL_TTYNOBUF	8	/* IPL_TTY + higher ISR priority */
-#define	IPL_VM		9
-#define	IPL_CLOCK	10
-#define	IPL_STATCLOCK	IPL_CLOCK
-#define	IPL_HIGH	11
-#define	IPL_SCHED	IPL_HIGH
-#define	IPL_LOCK	IPL_HIGH
-#define	NIPL		12
+#define	IPL_SOFTBIO	2
+#define	IPL_SOFTNET	3
+#define	IPL_SOFTSERIAL	4
+#define	IPL_VM		5
+#define	IPL_SCHED	6
+#define	IPL_HIGH	7
+#define	NIPL		8
 
 /*
  * Convert PSL values to m68k CPU IPLs and vice-versa.
@@ -104,20 +96,13 @@ splraiseipl(ipl_cookie_t icookie)
 
 /* These spl calls are used by machine-independent code. */
 /* spl0 requires checking for software interrupts */
-#define	splsoft()	splraise1()
-#define	splsoftclock()	splsoft()
-#define	splsoftnet()	splsoft()
-#define	splsoftserial()	splsoft()
-#define	splbio()	_splraise(hp300_ipl2psl[IPL_BIO])
-#define	splnet()	_splraise(hp300_ipl2psl[IPL_NET])
-#define	spltty()	_splraise(hp300_ipl2psl[IPL_TTY])
-#define	splserial()	_splraise(hp300_ipl2psl[IPL_TTY])
+#define	splsoftbio()	splraise1()
+#define	splsoftclock()	splraise1()
+#define	splsoftnet()	splraise1()
+#define	splsoftserial()	splraise1()
 #define	splvm()		_splraise(hp300_ipl2psl[IPL_VM])
-#define	splclock()	spl6()
-#define	splstatclock()	splclock()
+#define	splsched()	spl6()
 #define	splhigh()	spl7()
-#define	splsched()	spl7()
-#define	spllock()	spl7()
 
 /* watch out for side effects */
 #define	splx(s)		((s) & PSL_IPL ? _spl((s)) : spl0())
@@ -134,8 +119,6 @@ struct hp300_intr {
 	LIST_HEAD(, hp300_intrhand) hi_q;
 	struct evcnt hi_evcnt;
 };
-
-#include <m68k/softintr.h>
 
 /* locore.s */
 int	spl0(void);

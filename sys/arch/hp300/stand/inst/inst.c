@@ -1,4 +1,4 @@
-/*	$NetBSD: inst.c,v 1.15 2005/12/24 22:45:35 perry Exp $	*/
+/*	$NetBSD: inst.c,v 1.15.50.1 2008/01/09 01:46:06 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -108,7 +108,7 @@ int	a2int(char *);
 struct	inst_command {
 	char	*ic_cmd;		/* command name */
 	char	*ic_desc;		/* command description */
-	void	(*ic_func) __P((void));	/* handling function */
+	void	(*ic_func)(void);	/* handling function */
 } inst_commands[] = {
 	{ "disklabel",	"place partition map on disk",	dsklabel },
 	{ "miniroot",	"place miniroot on disk",	miniroot },

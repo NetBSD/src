@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.36.10.1 2007/11/06 23:21:55 matt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.36.10.2 2008/01/09 01:48:44 matt Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.36.10.1 2007/11/06 23:21:55 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.36.10.2 2008/01/09 01:48:44 matt Exp $");
 
 #include "opt_ddb.h"
 
@@ -66,8 +66,6 @@ cpu_configure()
 {
 	int s;
 
-	softintr_init();
-
 	s = splhigh();
 	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("no mainbus found");
@@ -77,10 +75,6 @@ cpu_configure()
 	 * caused by probes for non-existent devices.
 	 */
 	(*platform.bus_reset)();
-
-	printf("biomask %02x netmask %02x ttymask %02x clockmask %02x\n",
-	    ipl2spl_table[IPL_BIO] >> 8, ipl2spl_table[IPL_NET] >> 8, 
-	    ipl2spl_table[IPL_TTY] >> 8, ipl2spl_table[IPL_CLOCK] >> 8);
 
 	/*
 	 * Hardware interrupts will be enabled in cpu_initclocks(9)
@@ -192,17 +186,19 @@ device_register(struct device *dev, void *aux)
 		struct pci_attach_args *pa = aux;
 
 		if (BUILTIN_AHC_P(pa)) {
-			prop_bool_t usetd = prop_bool_create(true);
-			KASSERT(usetd != NULL);
-
-			if (prop_dictionary_set(device_properties(dev),
-						"aic7xxx-use-target-defaults",
-						usetd) == false) {
+			if (prop_dictionary_set_bool(device_properties(dev),
+			    "aic7xxx-use-target-defaults", true) == false) {
 				printf("WARNING: unable to set "
 				    "aic7xxx-use-target-defaults property "
 				    "for %s\n", dev->dv_xname);
 			}
-			prop_object_release(usetd);
+
+			if (prop_dictionary_set_bool(device_properties(dev),
+			    "aic7xxx-override-ultra", true) == false) {
+				printf("WARNING: unable to set "
+				    "aic7xxx-override-ultra property for %s\n",
+				    dev->dv_xname);
+			}
 		}
 	}
 
@@ -228,12 +224,6 @@ device_register(struct device *dev, void *aux)
 			prop_object_release(gfe_boundary);
 			return;
 		}
-	}
-
-	if (device_is_a(dev, "ahc")) {
-
-		prop_dictionary_set_bool(device_properties(dev),
-		    "override_ultra", true);
 	}
 
 	if (found)

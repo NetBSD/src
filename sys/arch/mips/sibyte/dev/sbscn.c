@@ -1,4 +1,4 @@
-/* $NetBSD: sbscn.c,v 1.22.10.1 2007/11/06 23:19:18 matt Exp $ */
+/* $NetBSD: sbscn.c,v 1.22.10.2 2008/01/09 01:47:20 matt Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -116,7 +116,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbscn.c,v 1.22.10.1 2007/11/06 23:19:18 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbscn.c,v 1.22.10.2 2008/01/09 01:47:20 matt Exp $");
 
 #define	SBSCN_DEBUG
 
@@ -144,6 +144,7 @@ __KERNEL_RCSID(0, "$NetBSD: sbscn.c,v 1.22.10.1 2007/11/06 23:19:18 matt Exp $")
 #include <sys/malloc.h>
 #include <sys/vnode.h>
 #include <sys/kauth.h>
+#include <sys/intr.h>
 
 #include <mips/sibyte/dev/sbobiovar.h>
 #if 0
@@ -384,7 +385,7 @@ sbscn_attach_channel(struct sbscn_softc *sc, int chan, int intr)
 	}
 #endif
 
-	ch->ch_si = softintr_establish(IPL_SOFTSERIAL, sbscn_soft, ch);
+	ch->ch_si = softint_establish(SOFTINT_SERIAL, sbscn_soft, ch);
 
 #if NRND > 0 && defined(RND_SBSCN)
 	rnd_attach_source(&ch->ch_rnd_source, sc->sc_dev.dv_xname,
@@ -823,7 +824,7 @@ sbscn_schedrx(struct sbscn_channel *ch)
 	ch->ch_rx_ready = 1;
 
 	/* Wake up the poller. */
-	softintr_schedule(ch->ch_si);
+	softint_schedule(ch->ch_si);
 }
 
 void
@@ -1235,16 +1236,8 @@ sbscn_start(struct tty *tp)
 		goto out;
 	if (ch->ch_tx_stopped)
 		goto out;
-
-	if (tp->t_outq.c_cc <= tp->t_lowat) {
-		if (ISSET(tp->t_state, TS_ASLEEP)) {
-			CLR(tp->t_state, TS_ASLEEP);
-			wakeup(&tp->t_outq);
-		}
-		selwakeup(&tp->t_wsel);
-		if (tp->t_outq.c_cc == 0)
-			goto out;
-	}
+	if (!ttypull(tp))
+		goto out;
 
 	/* Grab the first contiguous region of buffer space. */
 	{
@@ -1676,7 +1669,7 @@ XXX
 	}
 
 	/* Wake up the poller. */
-	softintr_schedule(ch->ch_si);
+	softint_schedule(ch->ch_si);
 
 #if NRND > 0 && defined(RND_SBSCN)
 	rnd_add_uint32(&ch->ch_rnd_source, isr | sr);

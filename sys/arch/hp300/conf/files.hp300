@@ -1,4 +1,4 @@
-#	$NetBSD: files.hp300,v 1.76 2007/03/04 01:57:21 tsutsui Exp $
+#	$NetBSD: files.hp300,v 1.76.20.1 2008/01/09 01:45:59 matt Exp $
 #
 # hp300-specific configuration info
 
@@ -195,17 +195,10 @@ file	arch/m68k/m68k/db_memrw.c		ddb | kgdb
 file	arch/m68k/m68k/kgdb_machdep.c		kgdb
 file	arch/m68k/m68k/pmap_motorola.c
 file	arch/m68k/m68k/procfs_machdep.c		procfs
-file	arch/m68k/m68k/softintr.c
 file	arch/m68k/m68k/sys_machdep.c
 file	arch/m68k/m68k/vm_machdep.c
 
 file	dev/cons.c
-
-#
-# HP-UX binary compatibility
-#
-include "compat/hpux/files.hpux"
-file	arch/hp300/hp300/hpux_machdep.c		compat_hpux
 
 # NetBSD m68k a.out Binary Compatibility (COMPAT_AOUT_M68K)
 include	"compat/aoutm68k/files.aoutm68k"

@@ -1,4 +1,4 @@
-/* 	$NetBSD: xlcom.c,v 1.2.20.1 2007/11/06 23:16:27 matt Exp $ */
+/* 	$NetBSD: xlcom.c,v 1.2.20.2 2008/01/09 01:45:54 matt Exp $ */
 
 /*
  * Copyright (c) 2006 Jachym Holecek
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xlcom.c,v 1.2.20.1 2007/11/06 23:16:27 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xlcom.c,v 1.2.20.2 2008/01/09 01:45:54 matt Exp $");
 
 #include "opt_kgdb.h"
 
@@ -46,15 +46,14 @@ __KERNEL_RCSID(0, "$NetBSD: xlcom.c,v 1.2.20.1 2007/11/06 23:16:27 matt Exp $");
 #include <sys/tty.h>
 #include <sys/time.h>
 #include <sys/syslog.h>
+#include <sys/intr.h>
+#include <sys/bus.h>
 
 #if defined(KGDB)
 #include <sys/kgdb.h>
 #endif /* KGDB */
 
 #include <dev/cons.h>
-
-#include <machine/intr.h>
-#include <machine/bus.h>
 
 #include <evbppc/virtex/virtex.h>
 #include <evbppc/virtex/dev/xcvbusvar.h>
@@ -211,8 +210,8 @@ xlcom_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_rput = sc->sc_rget = 0;
 	sc->sc_ravail = XLCOM_RXBUF_SIZE;
 
-	sc->sc_rx_soft = softintr_establish(IPL_SOFTSERIAL, xlcom_rx_soft, sc);
-	sc->sc_tx_soft = softintr_establish(IPL_SOFTSERIAL, xlcom_tx_soft, sc);
+	sc->sc_rx_soft = softint_establish(SOFTINT_SERIAL, xlcom_rx_soft, sc);
+	sc->sc_tx_soft = softint_establish(SOFTINT_SERIAL, xlcom_tx_soft, sc);
 
 	if (sc->sc_rx_soft == NULL || sc->sc_tx_soft == NULL) {
 		printf("%s: could not establish Rx or Tx softintr\n",
@@ -318,7 +317,7 @@ xlcom_send_chunk(struct xlcom_softc *sc)
 	/* Try to grab more data while FIFO drains. */
 	if (sc->sc_tbc == 0) {
 		sc->sc_tty->t_state &= ~TS_BUSY;
-		softintr_schedule(sc->sc_tx_soft);
+		softint_schedule(sc->sc_tx_soft);
 	}
 }
 
@@ -350,7 +349,7 @@ xlcom_recv_chunk(struct xlcom_softc *sc)
 
 	/* Shedule completion hook if we received any. */
 	if (n != sc->sc_ravail)
-		softintr_schedule(sc->sc_rx_soft);
+		softint_schedule(sc->sc_rx_soft);
 }
 
 static int
@@ -605,17 +604,9 @@ xlcom_start(struct tty *tp)
 		return ;
 	}
 
-	if (tp->t_outq.c_cc <= tp->t_lowat) {
-		if (tp->t_state & TS_ASLEEP) {
-			tp->t_state &= ~TS_ASLEEP;
-			wakeup(&tp->t_outq);
-		}
-		selwakeup(&tp->t_wsel);
-
-		if (tp->t_outq.c_cc == 0) {
-			splx(s1);
-			return ;
-		}
+	if (!ttypull(tp)) {
+		splx(s1);
+		return;
 	}
 
 	tp->t_state |= TS_BUSY;

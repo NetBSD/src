@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.2 2007/02/09 21:55:06 ad Exp $	*/
+/*	$NetBSD: mutex.h,v 1.2.26.1 2008/01/09 01:47:15 matt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 
 struct kmutex {
 	uintptr_t	mtx_pad1;
-	uint32_t	mtx_pad2[3];
+	uint32_t	mtx_pad2[2];
 };
 
 #else	/* __MUTEX_PRIVATE */
@@ -56,19 +56,20 @@ struct kmutex {
 	volatile uintptr_t	mtx_owner;
 	ipl_cookie_t		mtx_ipl;
 	__cpu_simple_lock_t	mtx_lock;
-	volatile uint32_t	mtx_id;
 };
 
 #define	__HAVE_SIMPLE_MUTEXES		1
 #define	__HAVE_MUTEX_STUBS		1
 #define	__HAVE_SPIN_MUTEX_STUBS		1
 
-#define	MUTEX_RECEIVE(mtx)		mb_read()
-#define	MUTEX_GIVE(mtx)			mb_memory()
+#define	MUTEX_RECEIVE(mtx)		membar_enter()
+#define	MUTEX_GIVE(mtx)			membar_exit()
 
-#define	MUTEX_CAS(p, o, n)		_lock_cas((p), (o), (n))
+#define	MUTEX_CAS(p, o, n)		\
+    (_atomic_cas_ulong((volatile unsigned long *)(p), (o), (n)) == (o))
 
-int	_lock_cas(volatile uintptr_t *, uintptr_t, uintptr_t);
+unsigned long	_atomic_cas_ulong(volatile unsigned long *,
+    unsigned long, unsigned long);
 
 #endif	/* __MUTEX_PRIVATE */
 

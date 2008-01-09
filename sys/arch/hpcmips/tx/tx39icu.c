@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39icu.c,v 1.22 2005/12/11 12:17:34 christos Exp $ */
+/*	$NetBSD: tx39icu.c,v 1.22.50.1 2008/01/09 01:46:15 matt Exp $ */
 
 /*-
  * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tx39icu.c,v 1.22 2005/12/11 12:17:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tx39icu.c,v 1.22.50.1 2008/01/09 01:46:15 matt Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -88,35 +88,20 @@ u_int32_t tx39intrvec;
 const u_int32_t __ipl_sr_bits_tx[_IPL_N] = {
 	0,					/* IPL_NONE */
 
-	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFT */
-
 	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFTCLOCK */
 
 	MIPS_SOFT_INT_MASK_0|
 		MIPS_SOFT_INT_MASK_1,		/* IPL_SOFTNET */
 
 	MIPS_SOFT_INT_MASK_0|
-		MIPS_SOFT_INT_MASK_1,		/* IPL_SOFTSERIAL */
+		MIPS_SOFT_INT_MASK_1|
+		MIPS_INT_MASK_2|
+		MIPS_INT_MASK_4,		/* IPL_VM */
 
 	MIPS_SOFT_INT_MASK_0|
 		MIPS_SOFT_INT_MASK_1|
 		MIPS_INT_MASK_2|
-		MIPS_INT_MASK_4,		/* IPL_BIO */
-
-	MIPS_SOFT_INT_MASK_0|
-		MIPS_SOFT_INT_MASK_1|
-		MIPS_INT_MASK_2|
-		MIPS_INT_MASK_4,		/* IPL_NET */
-
-	MIPS_SOFT_INT_MASK_0|
-		MIPS_SOFT_INT_MASK_1|
-		MIPS_INT_MASK_2|
-		MIPS_INT_MASK_4,		/* IPL_{TTY,SERIAL} */
-
-	MIPS_SOFT_INT_MASK_0|
-		MIPS_SOFT_INT_MASK_1|
-		MIPS_INT_MASK_2|
-		MIPS_INT_MASK_4,		/* IPL_{CLOCK,HIGH} */
+		MIPS_INT_MASK_4,		/* IPL_SCHED */
 };
 
 /* IRQHIGH lines list */
@@ -335,8 +320,10 @@ TX_INTR(u_int32_t status, u_int32_t cause, u_int32_t pc, u_int32_t ipending)
 
 	uvmexp.intrs++;
 
+#ifdef __HAVE_FAST_SOFTINTS
 	if ((ipending & MIPS_HARD_INT_MASK) == 0)
 		goto softintr;
+#endif
 
 	tc = tx_conf_get_tag();
 	sc = tc->tc_intrt;
@@ -369,7 +356,9 @@ TX_INTR(u_int32_t status, u_int32_t cause, u_int32_t pc, u_int32_t ipending)
 	if (ipending & MIPS_INT_MASK_4) {
 		tx39_irqhigh_intr(ipending, pc, status, cause);
 
+#ifdef __HAVE_FAST_SOFTINTS
 		goto softintr;
+#endif
 	}
 
 	/* IRQLOW */
@@ -426,10 +415,11 @@ TX_INTR(u_int32_t status, u_int32_t cause, u_int32_t pc, u_int32_t ipending)
 	tx_conf_write(tc, TX39_INTRENABLE6_REG, reg);
 #endif
 
+#ifdef __HAVE_FAST_SOFTINTS
  softintr:
 	_splset((status & ~cause & MIPS_HARD_INT_MASK) | MIPS_SR_INT_IE);
-
 	softintr(ipending);
+#endif
 }
 
 int

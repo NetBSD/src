@@ -1,4 +1,4 @@
-#	$NetBSD: majors.ews4800mips,v 1.2 2006/11/24 22:04:22 wiz Exp $
+#	$NetBSD: majors.ews4800mips,v 1.2.28.1 2008/01/09 01:45:55 matt Exp $
 #
 # Device majors for ews4800mips
 #
@@ -34,7 +34,6 @@ device-major	wskbd		char 28			wskbd
 device-major	wsmouse		char 29			wsmouse
 device-major	wsmux		char 30			wsmux
 device-major	clockctl	char 38			clockctl
-device-major	systrace	char 39			systrace
 device-major	cgd		char 40  block 10	cgd
 device-major	ksyms		char 41			ksyms
 device-major	wsfont		char 42			wsfont

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.7 2007/03/09 06:45:20 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.7.20.1 2008/01/09 01:46:56 matt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 Wasabi Systems, Inc.
@@ -42,23 +42,15 @@
 
 /* Interrupt priority "levels". */
 #define	IPL_NONE	0	/* nothing */
-#define	IPL_SOFT	1	/* generic software interrupts */
-#define	IPL_SOFTCLOCK	2	/* software clock interrupt */
+#define	IPL_SOFTCLOCK	1	/* software clock interrupt */
+#define	IPL_SOFTBIO	2	/* generic software interrupts */
 #define	IPL_SOFTNET	3	/* software network interrupt */
-#define	IPL_BIO		4	/* block I/O */
-#define	IPL_NET		5	/* network */
-#define	IPL_SOFTSERIAL	6	/* software serial interrupt */
-#define	IPL_TTY		7	/* terminals */
-#define	IPL_VM		8	/* memory allocation */
-#define	IPL_AUDIO	9	/* audio device */
-#define	IPL_CLOCK	10	/* clock interrupt */
-#define	IPL_STATCLOCK	11	/* statistics clock interrupt */
-#define	IPL_HIGH	12	/* everything */
-#define	IPL_SCHED	IPL_HIGH
-#define	IPL_LOCK	IPL_HIGH
-#define	IPL_SERIAL	13	/* serial device */
+#define	IPL_SOFTSERIAL	4	/* software serial interrupt */
+#define	IPL_VM		5	/* memory allocation */
+#define	IPL_SCHED	6	/* scheduler */
+#define	IPL_HIGH	6	/* everything */
 
-#define	NIPL		14
+#define	NIPL		7
 
 /* Interrupt sharing types. */
 #define	IST_NONE	0	/* none */
@@ -75,9 +67,6 @@
 #define	__NEWINTR	/* enables new hooks in cpu_fork()/cpu_switch() */
 
 #ifndef _LOCORE
-
-#include <sys/device.h>
-#include <sys/queue.h>
 
 #if defined(_LKM)
 
@@ -134,8 +123,6 @@ void	_setsoftintr(int);
 
 #endif /* _LKM */
 
-#define	splsoft()	_splraise(IPL_SOFT)
-
 typedef uint8_t ipl_t;
 typedef struct {
 	ipl_t _ipl;
@@ -159,7 +146,6 @@ splraiseipl(ipl_cookie_t icookie)
 
 #include <sys/spl.h>
 
-/* Use generic software interrupt support. */
 #include <arm/softintr.h>
 
 #endif /* ! _LOCORE */

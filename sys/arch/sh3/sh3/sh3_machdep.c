@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.64.2.1 2007/11/06 23:22:08 matt Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.64.2.2 2008/01/09 01:48:49 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2002 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.64.2.1 2007/11/06 23:22:08 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.64.2.2 2008/01/09 01:48:49 matt Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_memsize.h"
@@ -150,6 +150,10 @@ uint32_t dumpmag = 0x8fca0101;	/* magic number */
 int dumpsize;			/* pages */
 long dumplo;	 		/* blocks */
 
+vaddr_t intstack, intfp, intsp;
+static const vsize_t intstacksize = 3 * NBPG;
+
+
 void
 sh_cpu_init(int arch, int product)
 {
@@ -201,6 +205,7 @@ sh_cpu_init(int arch, int product)
 	uvm_setpagesize();
 }
 
+
 /*
  * void sh_proc0_init(void):
  *	Setup proc0 u-area.
@@ -210,6 +215,12 @@ sh_proc0_init()
 {
 	struct switchframe *sf;
 	vaddr_t u;
+
+	/* Steal interrupt stack */
+	intstack = uvm_pageboot_alloc(intstacksize);
+	memset((void *)intstack, 0, intstacksize);
+	intsp = intstack + intstacksize; /* interrupt stack bottom */
+	intfp = intstack + NBPG; /* interrupt frame stack bottom */
 
 	/* Steal process0 u-area */
 	u = uvm_pageboot_alloc(USPACE);
@@ -222,9 +233,9 @@ sh_proc0_init()
 	 * u-area map:
 	 * |user| .... | .................. |
 	 * | PAGE_SIZE | USPACE - PAGE_SIZE |
-         *        frame top        stack top
+         *        frame bot        stack bot
 	 * current frame ... r6_bank
-	 * stack top     ... r7_bank
+	 * stack bottom  ... r7_bank
 	 * current stack ... r15
 	 */
 	curpcb = lwp0.l_md.md_pcb = &lwp0.l_addr->u_pcb;
@@ -518,11 +529,11 @@ sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
  * a machine fault.
  */
 int
-compat_16_sys___sigreturn14(struct lwp *l, void *v, register_t *retval)
+compat_16_sys___sigreturn14(struct lwp *l, const struct compat_16_sys___sigreturn14_args *uap, register_t *retval)
 {
-	struct compat_16_sys___sigreturn14_args /* {
+	/* {
 		syscallarg(struct sigcontext *) sigcntxp;
-	} */ *uap = v;
+	} */
 	struct sigcontext *scp, context;
 	struct trapframe *tf;
 	struct proc *p = l->l_proc;

@@ -1,4 +1,4 @@
-/*	$NetBSD: scif.c,v 1.51.10.1 2007/11/06 23:21:58 matt Exp $ */
+/*	$NetBSD: scif.c,v 1.51.10.2 2008/01/09 01:48:45 matt Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scif.c,v 1.51.10.1 2007/11/06 23:21:58 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scif.c,v 1.51.10.2 2008/01/09 01:48:45 matt Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_scif.h"
@@ -117,13 +117,13 @@ __KERNEL_RCSID(0, "$NetBSD: scif.c,v 1.51.10.1 2007/11/06 23:21:58 matt Exp $");
 #include <sys/malloc.h>
 #include <sys/kgdb.h>
 #include <sys/kauth.h>
+#include <sys/intr.h>
 
 #include <dev/cons.h>
 
 #include <sh3/clock.h>
 #include <sh3/exception.h>
 #include <sh3/scifreg.h>
-#include <machine/intr.h>
 
 #include <sh3/dev/scifvar.h>
 
@@ -481,7 +481,7 @@ scif_attach(device_t parent, device_t self, void *aux)
 	    scifintr, sc);
 #endif
 
-	sc->sc_si = softintr_establish(IPL_SOFTSERIAL, scifsoft, sc);
+	sc->sc_si = softint_establish(SOFTINT_SERIAL, scifsoft, sc);
 	SET(sc->sc_hwflags, SCIF_HW_DEV_OK);
 
 	tp = ttymalloc();
@@ -514,16 +514,8 @@ scifstart(struct tty *tp)
 		goto out;
 	if (sc->sc_tx_stopped)
 		goto out;
-
-	if (tp->t_outq.c_cc <= tp->t_lowat) {
-		if (ISSET(tp->t_state, TS_ASLEEP)) {
-			CLR(tp->t_state, TS_ASLEEP);
-			wakeup(&tp->t_outq);
-		}
-		selwakeup(&tp->t_wsel);
-		if (tp->t_outq.c_cc == 0)
-			goto out;
-	}
+	if (!ttypull(tp))
+		goto out;
 
 	/* Grab the first contiguous region of buffer space. */
 	{
@@ -937,7 +929,7 @@ scif_schedrx(struct scif_softc *sc)
 	sc->sc_rx_ready = 1;
 
 	/* Wake up the poller. */
-	softintr_schedule(sc->sc_si);
+	softint_schedule(sc->sc_si);
 }
 
 static void
@@ -1385,7 +1377,7 @@ scifintr(void *arg)
 	}
 
 	/* Wake up the poller. */
-	softintr_schedule(sc->sc_si);
+	softint_schedule(sc->sc_si);
 
 #if NRND > 0 && defined(RND_SCIF)
 	rnd_add_uint32(&sc->rnd_source, iir | lsr);

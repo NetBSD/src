@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.2.8.2 2007/11/06 23:20:53 matt Exp $ */
+/*	$NetBSD: intr.c,v 1.2.8.3 2008/01/09 01:47:54 matt Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,13 +30,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.2.8.2 2007/11/06 23:20:53 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.2.8.3 2008/01/09 01:47:54 matt Exp $");
 
 #include "opt_multiprocessor.h"
 
 #include <sys/param.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -491,9 +492,12 @@ pic_do_pending_int(void)
 	mtmsr(dmsr);
 
 	pcpl = ci->ci_cpl;
+#ifdef __HAVE_FAST_SOFTINTS
 again:
+#endif
 
 	/* Do now unmasked pendings */
+	ci->ci_idepth++;
 	while ((hwpend = (ci->ci_ipending & ~pcpl & HWIRQ_MASK)) != 0) {
 		irq = 31 - cntlzw(hwpend);
 		KASSERT(irq <= virq_max);
@@ -507,7 +511,6 @@ again:
 
 		splraise(is->is_mask);
 		mtmsr(emsr);
-		KERNEL_LOCK(1, NULL);
 		ih = is->is_hand;
 		while (ih) {
 #ifdef DIAGNOSTIC
@@ -517,10 +520,15 @@ again:
 					irq, is->is_hwirq, is);
 			}
 #endif
+			if (ih->ih_level == IPL_VM) {
+				KERNEL_LOCK(1, NULL);
+			}
 			(*ih->ih_fun)(ih->ih_arg);
+			if (ih->ih_level == IPL_VM) {
+				KERNEL_UNLOCK_ONE(NULL);
+			}
 			ih = ih->ih_next;
 		}
-		KERNEL_UNLOCK_ONE(NULL);
 		mtmsr(dmsr);
 		ci->ci_cpl = pcpl;
 
@@ -528,32 +536,24 @@ again:
 		pic->pic_reenable_irq(pic, is->is_hwirq - pic->pic_intrbase,
 		    is->is_type);
 	}
+	ci->ci_idepth--;
 
+#ifdef __HAVE_FAST_SOFTINTS
 	if ((ci->ci_ipending & ~pcpl) & (1 << SIR_SERIAL)) {
 		ci->ci_ipending &= ~(1 << SIR_SERIAL);
 		splsoftserial();
 		mtmsr(emsr);
-		KERNEL_LOCK(1, NULL);
-
 		softintr__run(IPL_SOFTSERIAL);
-
-		KERNEL_UNLOCK_ONE(NULL);
 		mtmsr(dmsr);
 		ci->ci_cpl = pcpl;
 		ci->ci_ev_softserial.ev_count++;
 		goto again;
 	}
 	if ((ci->ci_ipending & ~pcpl) & (1 << SIR_NET)) {
-
 		ci->ci_ipending &= ~(1 << SIR_NET);
 		splsoftnet();
-
 		mtmsr(emsr);
-		KERNEL_LOCK(1, NULL);
-
 		softintr__run(IPL_SOFTNET);
-
-		KERNEL_UNLOCK_ONE(NULL);
 		mtmsr(dmsr);
 		ci->ci_cpl = pcpl;
 		ci->ci_ev_softnet.ev_count++;
@@ -563,16 +563,13 @@ again:
 		ci->ci_ipending &= ~(1 << SIR_CLOCK);
 		splsoftclock();
 		mtmsr(emsr);
-		KERNEL_LOCK(1, NULL);
-
 		softintr__run(IPL_SOFTCLOCK);
-
-		KERNEL_UNLOCK_ONE(NULL);
 		mtmsr(dmsr);
 		ci->ci_cpl = pcpl;
 		ci->ci_ev_softclock.ev_count++;
 		goto again;
 	}
+#endif
 
 	ci->ci_cpl = pcpl;	/* Don't use splx... we are here already! */
 	ci->ci_iactive = 0;
@@ -589,7 +586,7 @@ pic_handle_intr(void *cookie)
 	int irq, realirq;
 	int pcpl, msr, r_imen, bail;
 
-	realirq = pic->pic_get_irq(pic);
+	realirq = pic->pic_get_irq(pic, PIC_GET_IRQ);
 	if (realirq == 255)
 		return 0;
 
@@ -603,7 +600,7 @@ start:
 	while (realirq == ipiops.ppc_ipi_vector) {
 		ppcipi_intr(NULL);
 		pic->pic_ack_irq(pic, realirq);
-		realirq = pic->pic_get_irq(pic);
+		realirq = pic->pic_get_irq(pic, PIC_GET_IRQ);
 	}
 	if (realirq == 255) {
 		return 0;
@@ -629,32 +626,38 @@ start:
 
 		/* this interrupt is no longer pending */
 		ci->ci_ipending &= ~r_imen;
+		ci->ci_idepth++;
 		
 		splraise(is->is_mask);
 		mtmsr(msr | PSL_EE);
-		KERNEL_LOCK(1, NULL);
 		ih = is->is_hand;
 		bail = 0;
 		while ((ih != NULL) && (bail < 10)) {
 			if (ih->ih_fun == NULL)
 				panic("bogus handler for IRQ %s %d",
 				    pic->pic_name, realirq);
+			if (ih->ih_level == IPL_VM) {
+				KERNEL_LOCK(1, NULL);
+			}
 			(*ih->ih_fun)(ih->ih_arg);
+			if (ih->ih_level == IPL_VM) {
+				KERNEL_UNLOCK_ONE(NULL);
+			}
 			ih = ih->ih_next;
 			bail++;
 		}
-		KERNEL_UNLOCK_ONE(NULL);
 		mtmsr(msr);
 		ci->ci_cpl = pcpl;
 		
 		uvmexp.intrs++;
 		is->is_ev.ev_count++;
+		ci->ci_idepth--;
 	}
 #ifdef PIC_DEBUG
 boo:
 #endif /* PIC_DEBUG */
 	pic->pic_ack_irq(pic, realirq);
-	realirq = pic->pic_get_irq(pic);
+	realirq = pic->pic_get_irq(pic, PIC_GET_RECHECK);
 	if (realirq != 255)
 		goto start;
 

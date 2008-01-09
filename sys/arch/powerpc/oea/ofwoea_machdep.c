@@ -1,4 +1,4 @@
-/* $NetBSD: ofwoea_machdep.c,v 1.4.6.2 2007/11/06 23:20:46 matt Exp $ */
+/* $NetBSD: ofwoea_machdep.c,v 1.4.6.3 2008/01/09 01:47:53 matt Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.4.6.2 2007/11/06 23:20:46 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.4.6.3 2008/01/09 01:47:53 matt Exp $");
 
 
 #include "opt_compat_netbsd.h"
@@ -57,6 +57,8 @@ __KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.4.6.2 2007/11/06 23:20:46 matt 
 #include <machine/pmap.h>
 #include <machine/powerpc.h>
 #include <machine/trap.h>
+#include <machine/vmparam.h>
+#include <machine/autoconf.h>
 #include <powerpc/bus.h>
 #include <powerpc/oea/bat.h>
 #include <powerpc/ofw_bus.h>
@@ -109,6 +111,7 @@ struct ofw_translations {
 struct pmap ofw_pmap;
 struct ofw_translations ofmap[32];
 char bootpath[256];
+char model_name[64];
 #if NKSYMS || defined(DDB) || defined(LKM)
 void *startsym, *endsym;
 #endif
@@ -131,7 +134,7 @@ static void set_timebase(void);
 void
 ofwoea_initppc(u_int startkernel, u_int endkernel, char *args)
 {
-	int ofmaplen;
+	int ofmaplen, node;
 #if defined (PPC_OEA64_BRIDGE)
 	register_t scratch;
 #endif
@@ -150,6 +153,14 @@ ofwoea_initppc(u_int startkernel, u_int endkernel, char *args)
 	if (startsym == NULL || endsym == NULL)
 	    startsym = endsym = NULL;
 #endif
+
+	/* get model name and perform model-specific actions */
+	memset(model_name, 0, sizeof(model_name));
+	node = OF_finddevice("/");
+	if (node >= 0) {
+		OF_getprop(node, "model", model_name, sizeof(model_name));
+		model_init();
+	}
 
 	ofwoea_consinit();
 
@@ -362,11 +373,15 @@ ofwoea_batinit(void)
 	/* XXX this is a macppc-specific hack */
 	bitmap = 0x8f00;
 #endif
-	for (i=1; i < 0x10; i++)
+	for (i=1; i < 0x10; i++) {
+		/* skip the three vital SR regions */
+		if (i == USER_SR || i == KERNEL_SR || i == KERNEL2_SR)
+			continue;
 		if (bitmap & (1 << i)) {
 			oea_iobat_add(0x10000000 * i, BAT_BL_256M);
 			DPRINTF("Batmapped 256M at 0x%x\n", 0x10000000 * i);
 		}
+	}
 #endif
 }
 

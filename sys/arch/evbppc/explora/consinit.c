@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.5 2005/12/11 12:17:12 christos Exp $	*/
+/*	$NetBSD: consinit.c,v 1.5.50.1 2008/01/09 01:45:53 matt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.5 2005/12/11 12:17:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.5.50.1 2008/01/09 01:45:53 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,7 +84,7 @@ consinit(void)
 
 #ifdef COM_IS_CONSOLE
 	tag = elb_get_bus_space_tag(BASE_COM);
-	comcnattach(tag, BASE_COM, COM_CONSOLE_SPEED,
+	comcnattach(tag, _BUS_SPACE_UNSTRIDE(tag, BASE_COM), COM_CONSOLE_SPEED,
 	    COM_FREQ, COM_TYPE_NORMAL,
 	    (TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8);
 #else
@@ -94,6 +94,7 @@ consinit(void)
 	tag = elb_get_bus_space_tag(BASE_FB);
 	fb_cnattach(tag, BASE_FB2, (void *)BASE_FB);
 	tag = elb_get_bus_space_tag(BASE_PCKBC);
-	pckbc_cnattach(tag, BASE_PCKBC, BASE_PCKBC2-BASE_PCKBC, PCKBC_KBD_SLOT);
+	pckbc_cnattach(tag, _BUS_SPACE_UNSTRIDE(tag, BASE_PCKBC),
+	    _BUS_SPACE_UNSTRIDE(tag, BASE_PCKBC2-BASE_PCKBC), PCKBC_KBD_SLOT);
 #endif
 }

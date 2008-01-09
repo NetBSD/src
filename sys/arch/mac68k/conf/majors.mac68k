@@ -1,4 +1,4 @@
-#	$NetBSD: majors.mac68k,v 1.18 2006/11/24 22:04:23 wiz Exp $
+#	$NetBSD: majors.mac68k,v 1.18.28.1 2008/01/09 01:47:04 matt Exp $
 #
 # Device majors for mac68k
 #
@@ -46,7 +46,6 @@ device-major	wsdisplay	char 46			wsdisplay
 device-major	vcoda		char 47			vcoda
 device-major	clockctl	char 48			clockctl
 device-major	wd		char 49  block 22	wd
-device-major	systrace	char 50			systrace
 device-major	cgd		char 51  block 23	cgd
 device-major	ksyms		char 52			ksyms
 device-major	wsfont		char 53			wsfont

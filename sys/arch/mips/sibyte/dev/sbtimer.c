@@ -1,4 +1,4 @@
-/* $NetBSD: sbtimer.c,v 1.11 2006/03/29 04:16:45 thorpej Exp $ */
+/* $NetBSD: sbtimer.c,v 1.11.38.1 2008/01/09 01:47:20 matt Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbtimer.c,v 1.11 2006/03/29 04:16:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbtimer.c,v 1.11.38.1 2008/01/09 01:47:20 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -112,7 +112,7 @@ sbtimer_attach(struct device *parent, struct device *self, void *aux)
 		}
 		printf("system timer");
 	} else if ((sc->sc_flags & SBTIMER_STATCLOCK) != 0) {
-		ipl = IPL_STATCLOCK;
+		ipl = IPL_HIGH;
 		fun = sbtimer_statclockintr;
 
 		/* XXX make sure it's the statclock */
@@ -175,10 +175,14 @@ sbtimer_clockintr(void *arg, uint32_t status, uint32_t pc)
 	cf.pc = pc;
 	cf.sr = status;
 
-	/* reset the CPU count register (used by microtime) */
-	mips3_cp0_count_write(0);
-
 	hardclock(&cf);
+
+	/*
+	 * We never want a CPU core clock interrupt, so adjust the CP0
+	 * compare register to just before the CP0 clock register's value
+	 * each time.
+	 */
+	mips3_cp0_compare_write(mips3_cp0_count_read() - 1);
 }
 
 static void

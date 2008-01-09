@@ -1,4 +1,4 @@
-/*	$NetBSD: geode.c,v 1.8 2006/11/16 01:32:38 christos Exp $	*/
+/*	$NetBSD: geode.c,v 1.8.28.1 2008/01/09 01:46:45 matt Exp $	*/
 
 /*-
  * Copyright (c) 2005 David Young.  All rights reserved.
@@ -77,7 +77,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: geode.c,v 1.8 2006/11/16 01:32:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: geode.c,v 1.8.28.1 2008/01/09 01:46:45 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -137,6 +137,27 @@ geode_gcb_attach(struct device *parent, struct device *self, void *aux)
 	while (config_found(self, NULL, NULL) != NULL)
 		/* empty */;
 }
+static int
+geode_gcb_detach(device_t self, int flags)
+{
+	int rc;
+	struct geode_gcb_softc *sc = device_private(self);
 
-CFATTACH_DECL(geodegcb, sizeof(struct geode_gcb_softc),
-    geode_gcb_match, geode_gcb_attach, NULL, NULL);
+	if ((rc = config_detach_children(self, flags)) != 0)
+		return rc;
+
+	bus_space_unmap(sc->sc_iot, sc->sc_ioh, SC1100_GCB_SIZE);
+	return 0;
+}
+
+static void
+geode_gcb_childdetached(device_t parent, device_t child)
+{
+	/* We hold no references to child devices, so there is nothing
+	 * to do.
+	 */
+}
+
+CFATTACH_DECL2(geodegcb, sizeof(struct geode_gcb_softc),
+    geode_gcb_match, geode_gcb_attach, geode_gcb_detach, NULL, NULL,
+    geode_gcb_childdetached);

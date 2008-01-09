@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.44.10.1 2007/11/06 23:13:28 matt Exp $
+$NetBSD: README,v 1.44.10.2 2008/01/09 01:44:25 matt Exp $
 
 acorn26:	Acorn ARM2- and ARM3-based machines (arm, 20000509)
 acorn32:	Acorn computers Ltd. ARM 6/7/SA based machines (arm, 20011118)
@@ -27,6 +27,7 @@ hpcsh:		Hitachi SuperH(TM) based handheld PCs (sh3, 20010117)
 i386:		Intel/AMD etc. x86 processor line (i386, 19930321)
 ibmnws:		IBM Network Station Thin Clients (powerpc, -)
 iyonix:		Castle Technology xscale based workstations (arm, 20040713)
+landisk:	SH4 processor based NAS appliances by I-O DATA (sh3, 20060901)
 luna68k:	LUNA product line of OMRON Tateishi Electric (m68k, 20000105)
 mac68k:		Apple Macintosh (m68k, 19930929)
 macppc:		Apple Power Macintosh and clones (powerpc, 19980515)
@@ -35,7 +36,6 @@ mmeye:		Hitachi SuperH(TM) computer controlled camera (sh3)
 mvme68k:	Motorola's VMEbus 68K based single board computers (m68k, 19950725)
 mvmeppc:	Motorola's PowerPC machines running older PPCBUG
 		(powerpc, 20020227)
-mvme88k:	Motorola's VMEbus 88K based single board computers (m88k, -)
 netwinder:	StrongARM based Netwinder machines (arm, 20010609)
 news68k:	Sony's m68k based NET WORK STATION (m68k, 19991209)
 newsmips:	Sony's MIPS based NET WORK STATION (mips, 19980218)

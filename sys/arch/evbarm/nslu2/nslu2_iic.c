@@ -1,4 +1,4 @@
-/*	$NetBSD: nslu2_iic.c,v 1.2 2006/06/26 18:21:39 drochner Exp $	*/
+/*	$NetBSD: nslu2_iic.c,v 1.2.36.1 2008/01/09 01:45:48 matt Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -40,9 +40,8 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/lock.h>
-
-#include <machine/bus.h>
+#include <sys/mutex.h>
+#include <sys/bus.h>
 
 #include <dev/i2c/i2cvar.h>
 #include <dev/i2c/i2c_bitbang.h>
@@ -56,7 +55,7 @@ struct slugiic_softc {
 	struct device sc_dev;
 	struct i2c_controller sc_ic;
 	struct i2c_bitbang_ops sc_ibo;
-	struct lock sc_lock;
+	kmutex_t sc_lock;
 	uint32_t sc_dirout;
 };
 
@@ -68,7 +67,8 @@ slugiic_acquire_bus(void *arg, int flags)
 	if (flags & I2C_F_POLL)
 		return (0);
 
-	return (lockmgr(&sc->sc_lock, LK_EXCLUSIVE, NULL));
+	mutex_enter(&sc->sc_lock);
+	return (0);
 }
 
 static void
@@ -79,7 +79,7 @@ slugiic_release_bus(void *arg, int flags)
 	if (flags & I2C_F_POLL)
 		return;
 
-	(void) lockmgr(&sc->sc_lock, LK_RELEASE, NULL);
+	mutex_exit(&sc->sc_lock);
 }
 
 static int
@@ -224,7 +224,7 @@ slugiic_attach(struct device *parent, struct device *self, void *arg)
 	sc->sc_ibo.ibo_bits[I2C_BIT_OUTPUT] = 0;
 	sc->sc_ibo.ibo_bits[I2C_BIT_INPUT] = GPIO_I2C_SDA_BIT;
 
-	lockinit(&sc->sc_lock, PRIBIO|PCATCH, "slugiiclk", 0, 0);
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
 
 	sc->sc_dirout = 0;
 

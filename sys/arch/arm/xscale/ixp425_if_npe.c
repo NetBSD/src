@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_if_npe.c,v 1.4.12.1 2007/11/06 23:15:11 matt Exp $	*/
+/*	$NetBSD: ixp425_if_npe.c,v 1.4.12.2 2008/01/09 01:45:27 matt Exp $	*/
 
 /*-
  * Copyright (c) 2006 Sam Leffler.  All rights reserved.
@@ -28,7 +28,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/arm/xscale/ixp425/if_npe.c,v 1.1 2006/11/19 23:55:23 sam Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: ixp425_if_npe.c,v 1.4.12.1 2007/11/06 23:15:11 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_if_npe.c,v 1.4.12.2 2008/01/09 01:45:27 matt Exp $");
 
 /*
  * Intel XScale NPE Ethernet driver.
@@ -192,7 +192,7 @@ static void	npe_deactivate(struct npe_softc *);
 #endif
 static int	npe_ifmedia_change(struct ifnet *ifp);
 static void	npe_ifmedia_status(struct ifnet *ifp, struct ifmediareq *ifmr);
-static void	npe_setmac(struct npe_softc *sc, u_char *eaddr);
+static void	npe_setmac(struct npe_softc *sc, const u_char *eaddr);
 static void	npe_getmac(struct npe_softc *sc, u_char *eaddr);
 static void	npe_txdone(int qid, void *arg);
 static int	npe_rxbuf_init(struct npe_softc *, struct npebuf *,
@@ -732,7 +732,7 @@ npe_tick(void *xsc)
 }
 
 static void
-npe_setmac(struct npe_softc *sc, u_char *eaddr)
+npe_setmac(struct npe_softc *sc, const u_char *eaddr)
 {
 	WR4(sc, NPE_MAC_UNI_ADDR_1, eaddr[0]);
 	WR4(sc, NPE_MAC_UNI_ADDR_2, eaddr[1]);
@@ -1021,7 +1021,7 @@ if (ifp->if_flags & IFF_RUNNING) return;/*XXX*/
 		| NPE_RX_CNTRL1_PAUSE_EN);	/* ena pause frame handling */
 	WR4(sc, NPE_MAC_RX_CNTRL2, 0);
 
-	npe_setmac(sc, LLADDR(ifp->if_sadl));
+	npe_setmac(sc, CLLADDR(ifp->if_sadl));
 	npe_setmcast(sc);
 
 	npe_startxmit(sc);

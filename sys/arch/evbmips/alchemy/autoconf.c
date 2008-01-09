@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.c,v 1.14 2007/02/22 05:26:18 thorpej Exp $ */
+/* $NetBSD: autoconf.c,v 1.14.22.1 2008/01/09 01:45:49 matt Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,17 +37,18 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.14 2007/02/22 05:26:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.14.22.1 2008/01/09 01:45:49 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
+#include <sys/device.h>
+#include <sys/bus.h>
 
 #include <sys/socket.h>		/* these three just to get ETHER_ADDR_LEN(!) */
 #include <net/if.h>
 #include <net/if_ether.h>
 
-#include <machine/bus.h>
 #include <machine/yamon.h>
 
 #include <mips/alchemy/include/aureg.h>

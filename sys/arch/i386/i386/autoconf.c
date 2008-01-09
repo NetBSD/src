@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.86.10.1 2007/11/06 23:17:22 matt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.86.10.2 2008/01/09 01:46:32 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.86.10.1 2007/11/06 23:17:22 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.86.10.2 2008/01/09 01:46:32 matt Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_multiprocessor.h"
@@ -61,6 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.86.10.1 2007/11/06 23:17:22 matt Exp 
 #include <machine/cpu.h>
 #include <machine/gdt.h>
 #include <machine/pcb.h>
+#include <machine/cpufunc.h>
 #include <x86/x86/tsc.h>
 
 #include "ioapic.h"
@@ -77,6 +78,8 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.86.10.1 2007/11/06 23:17:22 matt Exp 
 #include "bios32.h"
 #if NBIOS32 > 0
 #include <machine/bios32.h>
+/* XXX */
+extern void platform_init(void);
 #endif
 
 #include "opt_pcibios.h"
@@ -104,6 +107,7 @@ cpu_configure(void)
 
 #if NBIOS32 > 0
 	bios32_init();
+	platform_init();
 #endif
 #ifdef PCIBIOS
 	pcibios_init();
@@ -131,16 +135,14 @@ cpu_configure(void)
 	cpu_init_idle_lwps();
 #endif
 
-#if defined(I586_CPU) || defined(I686_CPU)
 	init_TSC_tc();
-#endif
 
 	spl0();
 #if NLAPIC > 0
 	lapic_tpr = 0;
 #endif
 
-#if defined(I686_CPU) && defined(VIA_PADLOCK)
+#if defined(VIA_PADLOCK)
 	via_padlock_attach();
-#endif /* defined(I686_CPU) && defined(VIA_PADLOCK) */
+#endif
 }

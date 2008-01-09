@@ -1,4 +1,4 @@
-/*	$NetBSD: epcom.c,v 1.14 2007/03/04 05:59:37 christos Exp $ */
+/*	$NetBSD: epcom.c,v 1.14.22.1 2008/01/09 01:45:14 matt Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2001, 2002, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epcom.c,v 1.14 2007/03/04 05:59:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epcom.c,v 1.14.22.1 2008/01/09 01:45:14 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -242,7 +242,7 @@ epcom_attach_subr(struct epcom_softc *sc)
 		aprint_normal("%s: console\n", sc->sc_dev.dv_xname);
 	}
 
-	sc->sc_si = softintr_establish(IPL_SOFTSERIAL, epcomsoft, sc);
+	sc->sc_si = softint_establish(SOFTINT_SERIAL, epcomsoft, sc);
 
 #if NRND > 0 && defined(RND_COM)
 	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
@@ -367,16 +367,8 @@ epcomstart(struct tty *tp)
 		goto out;
 	if (sc->sc_tx_stopped)
 		goto out;
-
-	if (tp->t_outq.c_cc <= tp->t_lowat) {
-		if (ISSET(tp->t_state, TS_ASLEEP)) {
-			CLR(tp->t_state, TS_ASLEEP);
-			wakeup(&tp->t_outq);
-		}
-		selwakeup(&tp->t_wsel);
-		if (tp->t_outq.c_cc == 0)
-			goto out;
-	}
+	if (!ttypull(tp))
+		goto out;
 
 	/* Grab the first contiguous region of buffer space. */
 	{
@@ -1144,7 +1136,7 @@ epcomintr(void* arg)
 	}
 
 	/* Wake up the poller. */
-	softintr_schedule(sc->sc_si);
+	softint_schedule(sc->sc_si);
 
 #if 0 /* XXX: broken */
 #if NRND > 0 && defined(RND_COM)

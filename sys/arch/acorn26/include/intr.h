@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.11 2007/03/09 06:45:19 thorpej Exp $ */
+/* $NetBSD: intr.h,v 1.11.20.1 2008/01/09 01:44:26 matt Exp $ */
 /*-
  * Copyright (c) 1998, 2000 Ben Harris
  * All rights reserved.
@@ -44,39 +44,21 @@
 #define IPL_NONE	0
 #define IPL_SOFTCLOCK	1
 #define IPL_SOFTNET	2
+#define IPL_SOFTBIO	IPL_SOFTNET
 #define IPL_SOFTSERIAL	IPL_SOFTNET
-#define IPL_BIO		3
-#define IPL_NET		4
-#define IPL_TTY		5
-#define IPL_LPT		IPL_TTY
-#define IPL_VM		6
-#define IPL_AUDIO	7
-#define IPL_SERIAL	8
-#define IPL_CLOCK	9
-#define IPL_HIGH	10
-#define IPL_STATCLOCK	IPL_HIGH
-#define IPL_SCHED	IPL_HIGH
-#define	IPL_LOCK	IPL_HIGH
+#define IPL_VM		3
+#define IPL_SCHED	4
+#define IPL_HIGH	4
 #define NIPL		IPL_HIGH + 1
 
 #if defined(_KERNEL) && !defined(_LOCORE)
 
 #define splsoftnet()	raisespl(IPL_SOFTNET)
-#define splsoft()	splsoftnet()
+#define splsoftbio()	splsoftnet()
 #define splsoftserial()	splsoftnet()
 #define splsoftclock()	raisespl(IPL_SOFTCLOCK)
-#define splbio()	raisespl(IPL_BIO)
-#define splnet()	raisespl(IPL_NET)
-#define spltty()	raisespl(IPL_TTY)
-#define spllpt()	raisespl(IPL_LPT)
 #define splvm()		raisespl(IPL_VM)
-#define	splaudio()	raisespl(IPL_AUDIO)
-#define splserial()	raisespl(IPL_SERIAL)
-#define splclock()	raisespl(IPL_CLOCK)
-
-#define splstatclock()	splhigh()
 #define	splsched()	splhigh()
-#define spllock()	splhigh()
 
 #define spl0()			lowerspl(IPL_NONE)
 #define splx(s)			lowerspl(s)
@@ -116,23 +98,6 @@ splraiseipl(ipl_cookie_t icookie)
 #define	IST_PULSE	1	/* pulsed */
 #define	IST_EDGE	2	/* edge-triggered */
 #define	IST_LEVEL	3	/* level-triggered */
-
-/*
- * Soft Interrupts
- */
-
-/* New-fangled generic soft interrupts */
-extern void *softintr_establish(int, void (*)(void *), void *);
-extern void softintr_disestablish(void *);
-extern void softintr_schedule(void *);
-
-/* Old-fashioned soft interrupts */
-extern void *sh_softnet;
-#define setsoftnet() softintr_schedule(sh_softnet)
-
-/* Machine-dependent soft-interrupt servicing routines */
-extern void softintr_init(void);
-extern void dosoftints(int);
 
 #endif /* _KERNEL && !ASSEMBLER */
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.1 2002/06/05 01:04:23 fredette Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.1.88.1 2008/01/09 01:46:24 matt Exp $	*/
 
 /*	$OpenBSD: ptrace.h,v 1.2 1998/12/01 03:05:44 mickey Exp $	*/
 
@@ -40,3 +40,10 @@
 #define	PT_SETREGS	(PT_FIRSTMACH + 2)
 #define	PT_GETFPREGS	(PT_FIRSTMACH + 3)
 #define	PT_SETFPREGS	(PT_FIRSTMACH + 4)
+
+#define PT_MACHDEP_STRINGS \
+	"PT_STEP", \
+	"PT_GETREGS", \
+	"PT_SETREGS", \
+	"PT_GETFPREGS", \
+	"PT_SETFPREGS",

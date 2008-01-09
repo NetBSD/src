@@ -1,4 +1,4 @@
-/*	$NetBSD: vr.c,v 1.48 2007/03/08 07:14:41 he Exp $	*/
+/*	$NetBSD: vr.c,v 1.48.20.1 2008/01/09 01:46:16 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vr.c,v 1.48 2007/03/08 07:14:41 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vr.c,v 1.48.20.1 2008/01/09 01:46:16 matt Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -44,12 +44,13 @@ __KERNEL_RCSID(0, "$NetBSD: vr.c,v 1.48 2007/03/08 07:14:41 he Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/reboot.h>
+#include <sys/device.h>
+#include <sys/bus.h>
 
 #include <uvm/uvm_extern.h>
 
 #include <machine/sysconf.h>
 #include <machine/bootinfo.h>
-#include <machine/bus.h>
 #include <machine/bus_space_hpcmips.h>
 #include <machine/platid.h>
 #include <machine/platid_mask.h>
@@ -128,32 +129,19 @@ __KERNEL_RCSID(0, "$NetBSD: vr.c,v 1.48 2007/03/08 07:14:41 he Exp $");
 const u_int32_t __ipl_sr_bits_vr[_IPL_N] = {
 	0,					/* IPL_NONE */
 
-	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFT */
-
 	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFTCLOCK */
 
 	MIPS_SOFT_INT_MASK_0|
 		MIPS_SOFT_INT_MASK_1,		/* IPL_SOFTNET */
 
 	MIPS_SOFT_INT_MASK_0|
-		MIPS_SOFT_INT_MASK_1,		/* IPL_SOFTSERIAL */
-
-	MIPS_SOFT_INT_MASK_0|
 		MIPS_SOFT_INT_MASK_1|
-		MIPS_INT_MASK_0,		/* IPL_BIO */
-
-	MIPS_SOFT_INT_MASK_0|
-		MIPS_SOFT_INT_MASK_1|
-		MIPS_INT_MASK_0,		/* IPL_NET */
-
-	MIPS_SOFT_INT_MASK_0|
-		MIPS_SOFT_INT_MASK_1|
-		MIPS_INT_MASK_0,		/* IPL_{TTY,SERIAL} */
+		MIPS_INT_MASK_0,		/* IPL_VM */
 
 	MIPS_SOFT_INT_MASK_0|
 		MIPS_SOFT_INT_MASK_1|
 		MIPS_INT_MASK_0|
-		MIPS_INT_MASK_1,		/* IPL_{CLOCK,HIGH} */
+		MIPS_INT_MASK_1,		/* IPL_SCHED */
 };
 
 #if defined(VR41XX) && defined(TX39XX)
@@ -566,6 +554,7 @@ VR_INTR(u_int32_t status, u_int32_t cause, u_int32_t pc, u_int32_t ipending)
 		(*vr_intr_handler[0])(vr_intr_arg[0], pc, status);
 	}
 
+#ifdef __HAVE_FAST_SOFTINTS
 	if (ipending & MIPS_SOFT_INT_MASK_1) {
 		_splset(MIPS_INT_MASK_1|MIPS_INT_MASK_0|MIPS_SR_INT_IE);
 		softintr(MIPS_SOFT_INT_MASK_1);
@@ -576,6 +565,7 @@ VR_INTR(u_int32_t status, u_int32_t cause, u_int32_t pc, u_int32_t ipending)
 		    MIPS_SR_INT_IE);
 		softintr(MIPS_SOFT_INT_MASK_0);
 	}
+#endif
 }
 
 void *

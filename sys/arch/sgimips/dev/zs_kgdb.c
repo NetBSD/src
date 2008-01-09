@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_kgdb.c,v 1.11.10.1 2007/11/06 23:21:48 matt Exp $	*/
+/*	$NetBSD: zs_kgdb.c,v 1.11.10.2 2008/01/09 01:48:43 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_kgdb.c,v 1.11.10.1 2007/11/06 23:21:48 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_kgdb.c,v 1.11.10.2 2008/01/09 01:48:43 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -163,7 +163,7 @@ int
 zs_check_kgdb(struct zs_chanstate *cs, int dev)
 {
 
-	if (dev != Kgdb_dev)
+	if (dev != kgdb_dev)
 		return (0);
 
 	/*

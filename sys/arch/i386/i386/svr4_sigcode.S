@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_sigcode.S,v 1.9.50.1 2007/11/06 23:17:35 matt Exp $	*/
+/*	$NetBSD: svr4_sigcode.S,v 1.9.50.2 2008/01/09 01:46:39 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -70,6 +70,9 @@
  *	@(#)locore.s	7.3 (Berkeley) 5/13/91
  */
 
+#include <machine/asm.h>
+__KERNEL_RCSID(0, "$NetBSD: svr4_sigcode.S,v 1.9.50.2 2008/01/09 01:46:39 matt Exp $");
+
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
 #include "opt_multiprocessor.h"
@@ -80,7 +83,6 @@
 #include <machine/segments.h>
 #include <machine/trap.h>
 #include <compat/svr4/svr4_syscall.h>
-#include <machine/asm.h>
 #include <machine/frameasm.h>
 
 /*

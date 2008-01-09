@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.20 2006/10/10 00:40:47 uwe Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.20.28.1 2008/01/09 01:48:48 matt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,20 +37,19 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.20 2006/10/10 00:40:47 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.20.28.1 2008/01/09 01:48:48 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
+#include <sys/intr.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm_extern.h>	/* uvmexp.intrs */
-
-#include <net/netisr.h>
 
 #include <sh3/exception.h>
 #include <sh3/clock.h>
 #include <sh3/intcreg.h>
 #include <sh3/tmureg.h>
-#include <machine/intr.h>
 
 static void intc_intr_priority(int, int);
 static struct intc_intrhand *intc_alloc_ih(void);
@@ -62,9 +61,6 @@ static void intpri_intr_enable(int);
 static void intpri_intr_disable(int);
 #endif
 
-static void netintr(void);
-static int tmu1_intr(void *);
-
 /*
  * EVTCODE to intc_intrhand mapper.
  * max #76 is SH4_INTEVT_TMU4 (0xb80)
@@ -75,9 +71,6 @@ struct intc_intrhand __intc_intrhand[_INTR_N + 1] = {
 	/* Place holder interrupt handler for unregistered interrupt. */
 	[0] = { .ih_func = intc_unknown_intr, .ih_level = 0xf0 }
 };
-
-struct sh_soft_intr sh_soft_intrs[_IPL_NSOFT];
-struct sh_soft_intrhand *softnet_intrhand;
 
 /*
  * SH INTC support.
@@ -569,30 +562,10 @@ intpri_intr_disable(int evtcode)
 }
 #endif /* SH4 */
 
-/*
- * Software interrupt support
- */
+#ifdef __HAVE_FAST_SOFTINTS
 void
 softintr_init(void)
 {
-	static const char *softintr_names[] = IPL_SOFTNAMES;
-	struct sh_soft_intr *asi;
-	int i;
-
-	for (i = 0; i < _IPL_NSOFT; i++) {
-		asi = &sh_soft_intrs[i];
-		TAILQ_INIT(&asi->softintr_q);
-
-		asi->softintr_ipl = IPL_SOFT + i;
-		simple_lock_init(&asi->softintr_slock);
-		evcnt_attach_dynamic(&asi->softintr_evcnt, EVCNT_TYPE_INTR,
-		    NULL, "soft", softintr_names[i]);
-	}
-
-	/* XXX Establish legacy soft interrupt handlers. */
-	softnet_intrhand = softintr_establish(IPL_SOFTNET,
-	    (void (*)(void *))netintr, NULL);
-	KDASSERT(softnet_intrhand != NULL);
 
 	/*
 	 * This runs at the lowest soft priority, so that when splx() sets
@@ -606,97 +579,11 @@ softintr_init(void)
 void
 softintr_dispatch(int ipl)
 {
-	struct sh_soft_intr *asi;
-	struct sh_soft_intrhand *sih;
-	int s;
+
 
 	s = _cpu_intr_suspend();
-
-	asi = &sh_soft_intrs[ipl - IPL_SOFT];
-
-	if (TAILQ_FIRST(&asi->softintr_q) != NULL)
-		asi->softintr_evcnt.ev_count++;
-
-	while ((sih = TAILQ_FIRST(&asi->softintr_q)) != NULL) {
-		TAILQ_REMOVE(&asi->softintr_q, sih, sih_q);
-		sih->sih_pending = 0;
-
-		uvmexp.softs++;
-
-		_cpu_intr_resume(s);
-		(*sih->sih_fn)(sih->sih_arg);
-		s = _cpu_intr_suspend();
-	}
-
+	/* XXX dispatch */
 	_cpu_intr_resume(s);
-}
-
-/* Register a software interrupt handler. */
-void *
-softintr_establish(int ipl, void (*func)(void *), void *arg)
-{
-	struct sh_soft_intr *asi;
-	struct sh_soft_intrhand *sih;
-	int s;
-
-	if (__predict_false(ipl >= (IPL_SOFT + _IPL_NSOFT) ||
-			    ipl < IPL_SOFT))
-		panic("softintr_establish");
-
-	sih = malloc(sizeof(*sih), M_DEVBUF, M_NOWAIT);
-
-	s = _cpu_intr_suspend();
-	asi = &sh_soft_intrs[ipl - IPL_SOFT];
-	if (__predict_true(sih != NULL)) {
-		sih->sih_intrhead = asi;
-		sih->sih_fn = func;
-		sih->sih_arg = arg;
-		sih->sih_pending = 0;
-	}
-	_cpu_intr_resume(s);
-
-	return (sih);
-}
-
-/* Unregister a software interrupt handler. */
-void
-softintr_disestablish(void *arg)
-{
-	struct sh_soft_intrhand *sih = arg;
-	struct sh_soft_intr *asi = sih->sih_intrhead;
-	int s;
-
-	s = _cpu_intr_suspend();
-	if (sih->sih_pending) {
-		TAILQ_REMOVE(&asi->softintr_q, sih, sih_q);
-		sih->sih_pending = 0;
-	}
-	_cpu_intr_resume(s);
-
-	free(sih, M_DEVBUF);
-}
-
-/*
- * Software (low priority) network interrupt. i.e. softnet().
- */
-static void
-netintr(void)
-{
-#define	DONETISR(bit, fn)						\
-	do {								\
-		if (n & (1 << bit))					\
-			fn();						\
-	} while (/*CONSTCOND*/0)
-
-	int s, n;
-
-	s = splnet();
-	n = netisr;
-	netisr = 0;
-	splx(s);
-#include <net/netisr_dispatch.h>
-
-#undef DONETISR
 }
 
 /*
@@ -743,4 +630,12 @@ tmu1_intr(void *arg)
 		
 	return (0);
 }
+#endif /* __HAVE_FAST_SOFTINTS */
 
+bool
+cpu_intr_p(void)
+{
+	register vaddr_t sp __asm("r15");
+
+	return sp <= intsp;	/* are we on interrupt stack? */
+}

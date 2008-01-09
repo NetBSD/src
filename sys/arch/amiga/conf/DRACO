@@ -1,4 +1,4 @@
-# $NetBSD: DRACO,v 1.122.2.1 2007/11/06 23:14:27 matt Exp $
+# $NetBSD: DRACO,v 1.122.2.2 2008/01/09 01:44:57 matt Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
@@ -28,7 +28,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.122.2.1 $"
+#ident 		"GENERIC-$Revision: 1.122.2.2 $"
 
 
 maxusers	8
@@ -166,7 +166,6 @@ options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 
 options 	KTRACE		# system call tracing support
 options 	LKM		# Loadable kernel modules
-#options 	SYSTRACE	# system call vetting via systrace(1)
 #options 	INSECURE	# disable kernel security levels
 options 	SCSIVERBOSE	# human readable SCSI error messages
 options 	USERCONF	# userconf(4) support

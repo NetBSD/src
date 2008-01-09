@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.4.10.1 2007/11/06 23:19:07 matt Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.4.10.2 2008/01/09 01:47:17 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -69,10 +69,6 @@
 #define	BDSYNC		nop
 #endif	/* MIPS_HAS_LLSC != 0 && defined(MULTIPROCESSOR) */
 
-#if !(defined(__mips_n32) || defined(_LP64))
-STRONG_ALIAS(_lock_cas4, _lock_cas)
-#endif	/* !(n32 || LP64) */
-
 STRONG_ALIAS(mb_read, mb_memory)
 STRONG_ALIAS(mb_write, mb_memory)
 
@@ -91,44 +87,55 @@ END(mb_memory)
 	.set	noat
 
 /*
- * int _lock_cas(uintptr_t *val, uintptr_t old, uintptr_t new);
+ * unsigned long _atomic_cas_ulong(volatile unsigned long *val,
+ *     unsigned long old, unsigned long new);
  */
-LEAF(_lock_cas)
-	LL	t0, (a0)
+LEAF(_atomic_cas_ulong)
 1:
+	LL	t0, (a0)
 	bne	t0, a1, 2f
 	 addu	t1, zero, a2
 	SC	t1, (a0)
 	beq	t1, zero, 1b
-	 LL	t0, (a0)
-	SYNC
+	 nop
 	j	ra
-	 li	v0, 1
+	 addu	v0, zero, a1
 2:
 	j	ra
-	 addu	v0, zero, zero
-END(_lock_cas)
+	 addu	v0, zero, t0
+END(_atomic_cas_ulong)
+
+STRONG_ALIAS(atomic_cas_ulong,_atomic_cas_ulong)
+STRONG_ALIAS(_atomic_cas_ptr,_atomic_cas_ulong)
+STRONG_ALIAS(atomic_cas_ptr,_atomic_cas_ulong)
 
 #if defined(__mips_n32) || defined(_LP64)
+STRONG_ALIAS(_atomic_cas_64,_atomic_cas_ulong)
+STRONG_ALIAS(atomic_cas_64,_atomic_cas_ulong)
+#endif
+
 /*
- * int _lock_cas4(uint32_t *val, uint32_t old, uint32_t new);
+ * unsigned int _atomic_cas_uint(volatile unsigned int *val,
+ *    unsigned int old, unsigned int new);
  */
-LEAF(_lock_cas4)
-	ll	t0, (a0)
+LEAF(_atomic_cas_uint)
 1:
+	ll	t0, (a0)
 	bne	t0, a1, 2f
 	 addu	t1, zero, a2
 	sc	t1, (a0)
 	beq	t1, zero, 1b
-	 ll	t0, (a0)
-	SYNC
+	 nop
 	j	ra
-	 li	v0, 1
+	 addu	v0, zero, a1
 2:
 	j	ra
-	 addu	v0, zero, zero
-END(_lock_cas4)
-#endif	/* n32 || LP64 */
+	 addu	v0, zero, t0
+END(_atomic_cas_uint)
+
+STRONG_ALIAS(_atomic_cas_32,_atomic_cas_uint)
+STRONG_ALIAS(atomic_cas_32,_atomic_cas_uint)
+STRONG_ALIAS(atomic_cas_uint,_atomic_cas_uint)
 
 #ifndef LOCKDEBUG
 
@@ -247,10 +254,9 @@ END(mutex_spin_enter)
 	.set	noreorder
 	.set	noat
 
-STRONG_ALIAS(_lock_cas4, _lock_cas)
-
 /*
- * int _lock_cas(uintptr_t *val, uintptr_t old, uintptr_t new);
+ * unsigned long _atomic_cas_ulong(volatile unsigned long *val,
+ *     unsigned long old, unsigned long new);
  */
 	.text
 	.align	7
@@ -259,19 +265,27 @@ EXPORT(_lock_ras_start)
 
 	.space	12
 
-LEAF_NOPROFILE(_lock_cas)
+LEAF_NOPROFILE(_atomic_cas_ulong)
 	LDPTR	t0, (a0)	/* <- critical section start */
-_lock_cas_start:
+_atomic_cas_start:
 	 nop
 	bne	t0, a1, 1f
  	 nop
 	STPTR	a2, (a0)	/* <- critical section end */
 	j	ra
-	 li	v0, 1
+	 addu	v0, zero, a1
 1:
 	j	ra
-	 addu	v0, zero, zero
-END(_lock_cas)
+	 addu	v0, zero, t0
+END(_atomic_cas_ulong)
+
+STRONG_ALIAS(atomic_cas_ulong,_atomic_cas_ulong)
+STRONG_ALIAS(_atomic_cas_32,_atomic_cas_ulong)
+STRONG_ALIAS(atomic_cas_32,_atomic_cas_ulong)
+STRONG_ALIAS(_atomic_cas_uint,_atomic_cas_ulong)
+STRONG_ALIAS(atomic_cas_uint,_atomic_cas_ulong)
+STRONG_ALIAS(_atomic_cas_ptr,_atomic_cas_ulong)
+STRONG_ALIAS(atomic_cas_ptr,_atomic_cas_ulong)
 
 #ifndef LOCKDEBUG
 /*
@@ -379,11 +393,11 @@ END(mutex_spin_enter)
 LEAF_NOPROFILE(_lock_ras)
 	li	t1, -16
 	and	t2, k1, t1
-	la	t0, _lock_cas_start
+	la	t0, _atomic_cas_start
 	beq	t2, t0, 1f
 	 nop
 #ifndef LOCKDEBUG
-	addiu	t0, _mutex_enter_start - _lock_cas_start
+	addiu	t0, _mutex_enter_start - _atomic_cas_start
 	beq	t2, t0, 1f
 	 nop
 	addiu	t0, _mutex_exit_start - _mutex_enter_start

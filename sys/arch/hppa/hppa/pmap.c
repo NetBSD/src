@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.37.10.1 2007/11/06 23:17:03 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.37.10.2 2008/01/09 01:46:22 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -171,11 +171,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.37.10.1 2007/11/06 23:17:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.37.10.2 2008/01/09 01:46:22 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/lock.h>
+#include <sys/simplelock.h>
 #include <sys/malloc.h>
 #include <sys/user.h>
 #include <sys/proc.h>
@@ -229,7 +229,7 @@ int pmapdebug = 0
 	;
 #define PMAP_PRINTF_MASK(m,v,x) do {	\
   if ((pmapdebug & (m)) == (v)) {	\
-    printf("%s", __FUNCTION__);		\
+    printf("%s", __func__);		\
     printf x;				\
   }					\
 } while(/* CONSTCOND */ 0)
@@ -1270,7 +1270,7 @@ pmap_create(void)
 		splx(s);
 	} else {
 		splx(s);
-		MALLOC(pmap, struct pmap *, sizeof(*pmap), M_VMMAP, M_NOWAIT);
+		MALLOC(pmap, struct pmap *, sizeof(*pmap), M_VMPMAP, M_NOWAIT);
 		if (pmap == NULL)
 			return NULL;
 		memset(pmap, 0, sizeof(*pmap));
@@ -1619,7 +1619,7 @@ pmap_unwire(pmap_t pmap, vaddr_t va)
 
 /*
  * pmap_extract(pmap, va, pap)
- *	fills in the physical address corrsponding to the
+ *	fills in the physical address corresponding to the
  *	virtual address specified by pmap and va into the
  *	storage pointed to by pap and returns true if the
  *	virtual address is mapped. returns false in not mapped.

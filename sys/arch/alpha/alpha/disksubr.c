@@ -1,4 +1,4 @@
-/* $NetBSD: disksubr.c,v 1.33.6.1 2007/11/06 23:13:41 matt Exp $ */
+/* $NetBSD: disksubr.c,v 1.33.6.2 2008/01/09 01:44:31 matt Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.33.6.1 2007/11/06 23:13:41 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.33.6.2 2008/01/09 01:44:31 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,7 +110,7 @@ readdisklabel(dev, strat, lp, clp)
 		i = 0;
 		do {
 			/* read a bad sector table */
-			bp->b_flags &= ~(B_DONE);
+			bp->b_oflags &= ~BO_DONE;
 			bp->b_flags |= B_READ;
 			bp->b_blkno = lp->d_secperunit - lp->d_nsectors + i;
 			if (lp->d_secsize > DEV_BSIZE)
@@ -244,8 +244,9 @@ writedisklabel(dev, strat, lp, clp)
 		dp[63] = sum;
 	}
 
-	bp->b_flags &= ~(B_READ|B_DONE);
+	bp->b_flags &= ~B_READ;
 	bp->b_flags |= B_WRITE;
+	bp->b_oflags &= ~BO_DONE;
 	(*strat)(bp);
 	error = biowait(bp);
 

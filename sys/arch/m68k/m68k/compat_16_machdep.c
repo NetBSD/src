@@ -1,4 +1,4 @@
-/*    $NetBSD: compat_16_machdep.c,v 1.10 2007/03/04 06:00:04 christos Exp $   */
+/*    $NetBSD: compat_16_machdep.c,v 1.10.20.1 2008/01/09 01:47:01 matt Exp $   */
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.10 2007/03/04 06:00:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.10.20.1 2008/01/09 01:47:01 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -104,7 +104,6 @@ __KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.10 2007/03/04 06:00:04 chris
 #include <machine/frame.h>
 
 extern  short exframesize[];
-int	compat_16_sys___sigreturn14(struct lwp *, void *, register_t *);
 void	m68881_save(struct fpframe *);
 void	m68881_restore(struct fpframe *);
 
@@ -283,11 +282,11 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
  * a machine fault.
  */
 int
-compat_16_sys___sigreturn14(struct lwp *l, void *v, register_t *retval)
+compat_16_sys___sigreturn14(struct lwp *l, const struct compat_16_sys___sigreturn14_args *uap, register_t *retval)
 {
-	struct compat_16_sys___sigreturn14_args /* {
+	/* {
 		syscallarg(struct sigcontext *) sigcntxp;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 	struct sigcontext *scp;
 	struct frame *frame;

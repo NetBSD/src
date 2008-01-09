@@ -1,4 +1,4 @@
-/*	$NetBSD: tctrl.c,v 1.42.10.1 2007/11/06 23:22:22 matt Exp $	*/
+/*	$NetBSD: tctrl.c,v 1.42.10.2 2008/01/09 01:48:53 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2005, 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tctrl.c,v 1.42.10.1 2007/11/06 23:22:22 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tctrl.c,v 1.42.10.2 2008/01/09 01:48:53 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -149,7 +149,7 @@ struct tctrl_softc {
 	/* ENVSYS stuff */
 #define ENVSYS_NUMSENSORS 3
 	struct	evcnt sc_intrcnt;	/* interrupt counting */
-	struct	sysmon_envsys sc_sme;
+	struct	sysmon_envsys *sc_sme;
 	envsys_data_t sc_sensor[ENVSYS_NUMSENSORS];
 
 	struct	sysmon_pswitch sc_sm_pbutton;	/* power button */
@@ -193,7 +193,7 @@ static int tctrl_apm_record_event(struct tctrl_softc *, u_int);
 static void tctrl_init_lcd(void);
 
 static void tctrl_sensor_setup(struct tctrl_softc *);
-static int tctrl_gtredata(struct sysmon_envsys *, envsys_data_t *);
+static void tctrl_refresh(struct sysmon_envsys *, envsys_data_t *);
 
 static void tctrl_power_button_pressed(void *);
 static void tctrl_lid_state(struct tctrl_softc *);
@@ -1263,38 +1263,42 @@ tctrlkqfilter(dev_t dev, struct knote *kn)
 static void
 tctrl_sensor_setup(struct tctrl_softc *sc)
 {
-	int error;
+	int i, error;
+
+	sc->sc_sme = sysmon_envsys_create();
 
 	/* case temperature */
 	(void)strlcpy(sc->sc_sensor[0].desc, "Case temperature",
 	    sizeof(sc->sc_sensor[0].desc));
-	sc->sc_sensor[0].sensor = 0;
 	sc->sc_sensor[0].units = ENVSYS_STEMP;
-	sc->sc_sensor[0].state = ENVSYS_SVALID;
 
 	/* battery voltage */
 	(void)strlcpy(sc->sc_sensor[1].desc, "Internal battery voltage",
 	    sizeof(sc->sc_sensor[1].desc));
-	sc->sc_sensor[1].sensor = 1;
 	sc->sc_sensor[1].units = ENVSYS_SVOLTS_DC;
-	sc->sc_sensor[1].state = ENVSYS_SVALID;
 
 	/* DC voltage */
 	(void)strlcpy(sc->sc_sensor[2].desc, "DC-In voltage",
 	    sizeof(sc->sc_sensor[2].desc));
-	sc->sc_sensor[2].sensor = 2;
 	sc->sc_sensor[2].units = ENVSYS_SVOLTS_DC;
-	sc->sc_sensor[2].state = ENVSYS_SVALID;
 
-	sc->sc_sme.sme_name = sc->sc_dev.dv_xname;
-	sc->sc_sme.sme_nsensors = ENVSYS_NUMSENSORS;
-	sc->sc_sme.sme_sensor_data = sc->sc_sensor;
-	sc->sc_sme.sme_cookie = sc;
-	sc->sc_sme.sme_gtredata = tctrl_gtredata;
+	for (i = 0; i < ENVSYS_NUMSENSORS; i++) {
+		if (sysmon_envsys_sensor_attach(sc->sc_sme,
+						&sc->sc_sensor[i])) {
+			sysmon_envsys_destroy(sc->sc_sme);
+			return;
+		}
+	}
 
-	if ((error = sysmon_envsys_register(&sc->sc_sme)) != 0) {
+	sc->sc_sme->sme_name = sc->sc_dev.dv_xname;
+	sc->sc_sme->sme_cookie = sc;
+	sc->sc_sme->sme_refresh = tctrl_refresh;
+
+	if ((error = sysmon_envsys_register(sc->sc_sme)) != 0) {
 		printf("%s: couldn't register sensors (%d)\n",
 		    sc->sc_dev.dv_xname, error);
+		sysmon_envsys_destroy(sc->sc_sme);
+		return;
 	}
 
 	/* now register the power button */
@@ -1369,8 +1373,8 @@ tctrl_powerfail(void *arg)
 	return (1);
 }
 
-static int
-tctrl_gtredata(struct sysmon_envsys *sme, envsys_data_t *edata)
+static void
+tctrl_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 {
 	/*struct tctrl_softc *sc = sme->sme_cookie;*/
 	struct tctrl_req req;
@@ -1390,7 +1394,6 @@ tctrl_gtredata(struct sysmon_envsys *sme, envsys_data_t *edata)
 			edata->value_cur =             /* 273160? */
 			    (uint32_t)((int)((int)req.rspbuf[0] - 32) * 5000000
 			    / 9 + 273150000);
-			edata->state = ENVSYS_SVALID;
 			req.cmdbuf[0] = TS102_OP_RD_MAX_TEMP;
 			req.cmdlen = 1;
 			req.rsplen = 2;
@@ -1412,7 +1415,6 @@ tctrl_gtredata(struct sysmon_envsys *sme, envsys_data_t *edata)
 
 		case 1: /* battery voltage */
 			{
-				edata->state = ENVSYS_SVALID;
 				edata->units = ENVSYS_SVOLTS_DC;
 				req.cmdbuf[0] = TS102_OP_RD_INT_BATT_VLT;
 				req.cmdlen = 1;
@@ -1424,7 +1426,6 @@ tctrl_gtredata(struct sysmon_envsys *sme, envsys_data_t *edata)
 			break;
 		case 2: /* DC voltage */
 			{
-				edata->state = ENVSYS_SVALID;
 				edata->units = ENVSYS_SVOLTS_DC;
 				req.cmdbuf[0] = TS102_OP_RD_DC_IN_VLT;
 				req.cmdlen = 1;
@@ -1436,7 +1437,6 @@ tctrl_gtredata(struct sysmon_envsys *sme, envsys_data_t *edata)
 			break;
 	}
 	edata->state = ENVSYS_SVALID;
-	return 0;
 }
 
 static void

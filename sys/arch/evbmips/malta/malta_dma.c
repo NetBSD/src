@@ -1,4 +1,4 @@
-/*	$NetBSD: malta_dma.c,v 1.5 2005/12/11 12:17:11 christos Exp $	*/
+/*	$NetBSD: malta_dma.c,v 1.5.50.1 2008/01/09 01:45:50 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,9 +41,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: malta_dma.c,v 1.5 2005/12/11 12:17:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: malta_dma.c,v 1.5.50.1 2008/01/09 01:45:50 matt Exp $");
 
 #include <sys/param.h>
+#include <sys/device.h>
 
 #define	_MIPS_BUS_DMA_PRIVATE
 #include <machine/bus.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.47.10.1 2007/11/06 23:22:27 matt Exp $ */
+/*	$NetBSD: types.h,v 1.47.10.2 2008/01/09 01:48:56 matt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -106,6 +106,7 @@ typedef	volatile unsigned char		__cpu_simple_lock_t;
 #define __HAVE_GENERIC_TODR
 
 #ifdef SUN4U
+#define	__HAVE_ATOMIC64_OPS
 #define __HAVE_CPU_COUNTER	/* sparc v9 CPUs have %tick */
 #if defined(_KERNEL)
 #define __HAVE_RAS

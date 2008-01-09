@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.3.10.1 2007/11/06 23:14:06 matt Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.3.10.2 2008/01/09 01:44:45 matt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -49,6 +49,7 @@
 #include "opt_lockdebug.h"
 
 #include <machine/asm.h>
+#include <machine/frameasm.h>
 
 #include "assym.h"
 
@@ -56,13 +57,8 @@
 #define	FULL
 #endif
 
-#if defined(MULTIPROCESSOR)
-#define	LOCK		lock
-#else
-#define	LOCK		/* nothing */
-#endif
-
 #define	END(name,a)	.align	a; LABEL(name)
+#define	LOCK(num)	.Lpatch/**/num: lock
 
 #ifndef LOCKDEBUG
 
@@ -73,10 +69,10 @@
  */
 	.align	64
 
-NENTRY(mutex_enter)				/* 0x0000, 25 bytes */
+NENTRY(mutex_enter)
 	movq	CPUVAR(CURLWP), %rcx
 	xorq	%rax, %rax
-	LOCK
+	LOCK(1)
 	cmpxchgq %rcx, MTX_OWNER(%rdi)
 	jnz,pn	_C_LABEL(mutex_vector_enter)
 	ret
@@ -90,7 +86,7 @@ NENTRY(mutex_enter)				/* 0x0000, 25 bytes */
  * on multiprocessor systems, and comments in arch/x86/include/lock.h about
  * memory ordering on Intel x86 systems.
  */
-NENTRY(mutex_exit)				/* 0x0020, 24 bytes */
+NENTRY(mutex_exit)
 	movq	CPUVAR(CURLWP), %rax
 	xorq	%rdx, %rdx
 	cmpxchgq %rdx, MTX_OWNER(%rdi)
@@ -116,7 +112,7 @@ NENTRY(mutex_spin_enter)
 	cmovgl	%esi, %ecx
 	movl	%ecx, CPU_INFO_ILEVEL(%r8)	/* splraiseipl() */
 #if defined(FULL)
-	LOCK
+	LOCK(11)
 	cmpxchgb %ah, MTX_LOCK(%rdi)		/* lock */
 	jnz,pn	_C_LABEL(mutex_spin_retry)	/* failed; hard case */
 #endif
@@ -140,11 +136,11 @@ NENTRY(mutex_spin_exit)
 	cmpl	CPU_INFO_ILEVEL(%r8), %edi
 	jae	1f
 	movl	CPU_INFO_IUNMASK(%r8,%rdi,4), %esi
-	cli	
+	CLI(ax)
 	testl	CPU_INFO_IPENDING(%r8), %esi
 	jnz	_C_LABEL(Xspllower)
 	movl	%edi, CPU_INFO_ILEVEL(%r8)
-	sti
+	STI(ax)
 1:	rep					/* double byte ret as branch */
 	ret					/* target: see AMD docs */
 
@@ -183,7 +179,7 @@ NENTRY(mutex_spin_exit)
  *
  * Acquire one hold on a RW lock.
  */
-NENTRY(rw_enter)				/* 0x00c0, 62 bytes */
+NENTRY(rw_enter)
 	cmpl	$RW_READER, %esi
 	jne	2f
 
@@ -194,7 +190,7 @@ NENTRY(rw_enter)				/* 0x00c0, 62 bytes */
 	testb	$(RW_WRITE_LOCKED|RW_WRITE_WANTED), %al
 	leaq	RW_READ_INCR(%rax), %rdx 
 	jnz,pn	_C_LABEL(rw_vector_enter)
-	LOCK
+	LOCK(2)
 	cmpxchgq %rdx, RW_OWNER(%rdi)
 	jnz,pn	1b
 	ret
@@ -205,7 +201,7 @@ NENTRY(rw_enter)				/* 0x00c0, 62 bytes */
 2:	movq	CPUVAR(CURLWP), %rcx
 	xorq	%rax, %rax
 	orq	$RW_WRITE_LOCKED, %rcx
-	LOCK
+	LOCK(3)
 	cmpxchgq %rcx, RW_OWNER(%rdi)
 	jnz,pn	_C_LABEL(rw_vector_enter)
 	ret
@@ -215,7 +211,7 @@ NENTRY(rw_enter)				/* 0x00c0, 62 bytes */
  *
  * Release one hold on a RW lock.
  */
-NENTRY(rw_exit)					/* 0x0100, 64 bytes */
+NENTRY(rw_exit)
 	movq	RW_OWNER(%rdi), %rax
 	testb	$RW_WRITE_LOCKED, %al
 	jnz	2f
@@ -228,7 +224,7 @@ NENTRY(rw_exit)					/* 0x0100, 64 bytes */
 	cmpq	$RW_READ_INCR, %rax
 	leaq	-RW_READ_INCR(%rax), %rdx
 	jb,pn	3f
-	LOCK
+	LOCK(4)
 	cmpxchgq %rdx, RW_OWNER(%rdi)
 	jnz,pn	1b
 	ret
@@ -239,7 +235,7 @@ NENTRY(rw_exit)					/* 0x0100, 64 bytes */
 2:	leaq	-RW_WRITE_LOCKED(%rax), %rdx
 	subq	CPUVAR(CURLWP), %rdx
 	jnz,pn	3f
-	LOCK
+	LOCK(5)
 	cmpxchgq %rdx, RW_OWNER(%rdi)
 	jnz	3f
 	ret
@@ -249,41 +245,49 @@ NENTRY(rw_exit)					/* 0x0100, 64 bytes */
 #endif	/* LOCKDEBUG */
 
 /*
- * int _lock_cas(uintptr_t *val, uintptr_t old, uintptr_t new);
- *
- * Perform an atomic compare-and-set operation.
+ * Spinlocks.
  */
-NENTRY(_lock_cas)				/* 0x0140, 19 bytes */
-	movq	%rsi, %rax
-	LOCK
-	cmpxchgq %rdx, (%rdi)
-	movq	$0, %rax
-	setz	%al				/* = 1 if success */
+NENTRY(__cpu_simple_lock_init)
+	movb	$0, (%rdi)
+	ret
+
+NENTRY(__cpu_simple_lock)
+	movl	$0x0100, %eax
+1:
+	LOCK(6)
+	cmpxchgb %ah, (%rdi)
+	jnz	2f
+	ret
+2:
+	movl	$0x0100, %eax
+	pause
+	nop
+	nop
+	cmpb	$0, (%rdi)
+	je	1b
+	jmp	2b
+
+NENTRY(__cpu_simple_unlock)
+	movb	$0, (%rdi)
+	ret
+
+NENTRY(__cpu_simple_lock_try)
+	movl	$0x0100, %eax
+	LOCK(7)
+	cmpxchgb %ah, (%rdi)
+	movl	$0, %eax
+	setz	%al	
 	ret
 
 /*
- * Memory barrier operations.
+ * Patchpoints to replace with NOP when ncpu == 1.
  */
-NENTRY(mb_read)
-	lfence
-	ret
-END(mb_read_end, 8)
-
-NENTRY(mb_write)
-	/* Nothing just yet */
-	ret
-END(mb_write_end, 8)
-
-NENTRY(mb_memory)
-	mfence
-	ret
-END(mb_memory_end, 8)
-
-/*
- * Make sure code after the ret is properly encoded with nopness
- * by gas, or could stall newer processors.
- */
-
-NENTRY(x86_mb_nop)
-	ret
-END(x86_mb_nop_end, 8)
+#ifndef LOCKDEBUG
+LABEL(x86_lockpatch)
+	.quad	.Lpatch1, .Lpatch2, .Lpatch3, .Lpatch4
+	.quad	.Lpatch5, .Lpatch6, .Lpatch7
+#ifdef FULL
+	.quad	.Lpatch11
+#endif
+	.quad	0
+#endif

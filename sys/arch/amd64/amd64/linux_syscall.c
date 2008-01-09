@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscall.c,v 1.14.12.1 2007/11/06 23:14:05 matt Exp $ */
+/*	$NetBSD: linux_syscall.c,v 1.14.12.2 2008/01/09 01:44:45 matt Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.14.12.1 2007/11/06 23:14:05 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.14.12.2 2008/01/09 01:44:45 matt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_linux.h"
@@ -88,7 +88,8 @@ linux_syscall(struct trapframe *frame)
 	struct proc *p;
 	struct lwp *l;
 	int error;
-	register_t code, args[6], rval[2];
+	register_t code, rval[2];
+	#define args (&frame->tf_rdi)
 
 	l = curlwp;
 	p = l->l_proc;
@@ -103,17 +104,14 @@ linux_syscall(struct trapframe *frame)
 	code &= (SYS_NSYSENT - 1);
 	callp += code;
 
-	/* Linux system calls have a maximum of 6 arguments, copy them all */
-	args[0] = frame->tf_rdi;
-	args[1] = frame->tf_rsi;
-	args[2] = frame->tf_rdx;
-	args[3] = frame->tf_r10;
-	args[4] = frame->tf_r8;
-	args[5] = frame->tf_r9;
+	/*
+	 * Linux system calls have a maximum of 6 arguments, they are
+	 * already adjacent in the syscall trapframe.
+	 */
 
 	KERNEL_LOCK(1, l);
 	if (__predict_false(p->p_trace_enabled)
-	    && (error = trace_enter(l, code, code, NULL, args)) != 0)
+	    && (error = trace_enter(code, code, NULL, args)) != 0)
 		goto out;
 
 	rval[0] = 0;
@@ -124,7 +122,6 @@ out:
 	switch (error) {
 	case 0:
 		frame->tf_rax = rval[0];
-		frame->tf_rflags &= ~PSL_C;	/* carry bit */
 		break;
 	case ERESTART:
 		/*
@@ -140,12 +137,11 @@ out:
 	default:
 		error = native_to_linux_errno[error];
 		frame->tf_rax = error;
-		frame->tf_rflags |= PSL_C;	/* carry bit */
 		break;
 	}
 
 	if (__predict_false(p->p_trace_enabled))
-		trace_exit(l, code, args, rval, error);
+		trace_exit(code, args, rval, error);
 
 	userret(l);
 }

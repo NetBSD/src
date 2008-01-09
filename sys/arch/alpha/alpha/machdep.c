@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.299.10.1 2007/11/06 23:13:44 matt Exp $ */
+/* $NetBSD: machdep.c,v 1.299.10.2 2008/01/09 01:44:32 matt Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.299.10.1 2007/11/06 23:13:44 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.299.10.2 2008/01/09 01:44:32 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -750,6 +750,11 @@ nobootinfo:
 		}
 	}
 
+	/*
+	 * Perform any initial kernel patches based on the running system.
+	 * We may perform more later if we attach additional CPUs.
+	 */
+	alpha_patch(false);
 
 	/*
 	 * Figure out the number of CPUs in the box, from RPB fields.
@@ -1998,9 +2003,9 @@ cpu_need_resched(struct cpu_info *ci, int flags)
 	bool immed = (flags & RESCHED_IMMED) != 0;
 #endif /* defined(MULTIPROCESSOR) */
 
+	aston(ci->ci_data.cpu_onproc);
 	ci->ci_want_resched = 1;
-	if (ci->ci_curlwp != ci->ci_data.cpu_idlelwp) {
-		aston(ci->ci_curlwp);
+	if (ci->ci_data.cpu_onproc != ci->ci_data.cpu_idlelwp) {
 #if defined(MULTIPROCESSOR)
 		if (immed && ci != curcpu()) {
 			alpha_send_ipi(ci->ci_cpuid, 0);

@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.46.2.1 2007/11/06 23:22:49 matt Exp $
+#	$NetBSD: genassym.cf,v 1.46.2.2 2008/01/09 01:49:06 matt Exp $
 
 #
 # Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -174,6 +174,7 @@ define	CI_WANT_RESCHED	offsetof(struct cpu_info, ci_want_resched)
 define	CI_EINTRSTACK	offsetof(struct cpu_info, ci_eintstack)
 define	CI_IDLELWP	offsetof(struct cpu_info, ci_data.cpu_idlelwp)
 define	CI_CLOCKRATE	offsetof(struct cpu_info, ci_cpu_clockrate)
+define	CI_IDEPTH	offsetof(struct cpu_info, ci_idepth)
 
 # CPU boot arguments structure
 define	CBA_NODE	offsetof(struct cpu_bootargs, cb_node)

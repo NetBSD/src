@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_sbdio.c,v 1.4.10.1 2007/11/06 23:16:32 matt Exp $	*/
+/*	$NetBSD: zs_sbdio.c,v 1.4.10.2 2008/01/09 01:45:57 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2005 The NetBSD Foundation, Inc.
@@ -44,13 +44,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_sbdio.c,v 1.4.10.1 2007/11/06 23:16:32 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_sbdio.c,v 1.4.10.2 2008/01/09 01:45:57 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/tty.h>
 #include <sys/conf.h>
+#include <sys/intr.h>
 
 #include <dev/cons.h>
 #include <dev/ic/z8530reg.h>
@@ -156,7 +157,7 @@ zs_sbdio_attach(struct device *parent, struct device *self, void *aux)
 			zsc_args.hwflags = 0;
 		}
 
-		simple_lock_init(&cs->cs_lock);
+		zs_lock_init(cs);
 		cs->cs_brg_clk = PCLK / 16;
 		cs->cs_defcflag = zs_def_cflag;
 
@@ -189,7 +190,7 @@ zs_sbdio_attach(struct device *parent, struct device *self, void *aux)
 		}
 	}
 
-	zsc->zsc_si = softintr_establish(IPL_SOFTSERIAL,
+	zsc->zsc_si = softint_establish(SOFTINT_SERIAL,
 	    (void (*)(void *))zsc_intr_soft, zsc);
 	intr_establish(sa->sa_irq, zshard, zsc);
 

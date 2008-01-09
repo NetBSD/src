@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.32.10.1 2007/11/06 23:14:10 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.32.10.2 2008/01/09 01:44:48 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.32.10.1 2007/11/06 23:14:10 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.32.10.2 2008/01/09 01:44:48 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -83,6 +83,12 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.32.10.1 2007/11/06 23:14:10 matt Exp $");
 #include "opt_multiprocessor.h"
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ibcs2.h"
+#include "opt_xen.h"
+#if !defined(XEN)
+#include "tprof.h"
+#else /* !defined(XEN) */
+#define	NTPROF	0
+#endif /* !defined(XEN) */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,6 +106,10 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.32.10.1 2007/11/06 23:14:10 matt Exp $");
 
 #include <uvm/uvm_extern.h>
 
+#if NTPROF > 0
+#include <x86/tprof.h>
+#endif /* NTPROF > 0 */
+
 #include <machine/cpu.h>
 #include <machine/cpufunc.h>
 #include <machine/fpu.h>
@@ -111,16 +121,15 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.32.10.1 2007/11/06 23:14:10 matt Exp $");
 #include <machine/db_machdep.h>
 #endif
 
+#ifndef XEN
 #include "isa.h"
+#endif
 
 #ifdef KGDB
 #include <sys/kgdb.h>
 #endif
 
 void trap(struct trapframe *);
-#if defined(I386_CPU)
-int trapwrite(unsigned);
-#endif
 
 const char *trap_type[] = {
 	"privileged instruction fault",		/*  0 T_PRIVINFLT */
@@ -214,7 +223,7 @@ trap(struct trapframe *frame)
 	}
 #endif
 
-	if (!KERNELMODE(frame->tf_cs, frame->tf_rflags)) {
+	if (type != T_NMI && !KERNELMODE(frame->tf_cs, frame->tf_rflags)) {
 		type |= T_USER;
 		l->l_md.md_regs = frame;
 		LWP_CACHE_CREDS(l, p);
@@ -323,7 +332,6 @@ copyfault:
 	case T_SEGNPFLT|T_USER:
 	case T_STKFLT|T_USER:
 	case T_ALIGNFLT|T_USER:
-	case T_NMI|T_USER:
 #ifdef TRAP_SIGDEBUG
 		printf("pid %d (%s): BUS (%x) at rip %lx addr %lx\n",
 		    p->p_pid, p->p_comm, type, frame->tf_rip, rcr2());
@@ -339,7 +347,6 @@ copyfault:
 			ksi.ksi_code = BUS_ADRERR;
 			break;
 		case T_TSSFLT|T_USER:
-		case T_NMI|T_USER:
 			ksi.ksi_code = BUS_OBJERR;
 			break;
 		case T_ALIGNFLT|T_USER:
@@ -377,15 +384,11 @@ copyfault:
 		uvmexp.softs++;
 		if (l->l_flag & LP_OWEUPC) {
 			p->p_flag &= ~LP_OWEUPC;
-			KERNEL_LOCK(1, l);
 			ADDUPROF(l);
-			KERNEL_UNLOCK_LAST(l);
 		}
 		/* Allow a forced task switch. */
-		if (curcpu()->ci_want_resched) {
-			curcpu()->ci_want_resched = 0;
+		if (curcpu()->ci_want_resched)
 			preempt();
-		}
 		goto out;
 
 #if 0 /* handled by fpudna() */
@@ -436,7 +439,6 @@ copyfault:
 			goto copyefault;
 
 		cr2 = rcr2();
-		KERNEL_LOCK(1, NULL);
 		goto faultcommon;
 
 	case T_PAGEFLT|T_USER: {	/* page fault */
@@ -450,11 +452,11 @@ copyfault:
 		if (p->p_emul->e_usertrap != NULL &&
 		    (*p->p_emul->e_usertrap)(l, cr2, frame) != 0)
 			return;
-		KERNEL_LOCK(1, l);
 faultcommon:
 		vm = p->p_vmspace;
 		if (vm == NULL)
 			goto we_re_toast;
+		pcb->pcb_cr2 = cr2;
 		va = trunc_page((vaddr_t)cr2);
 		/*
 		 * It is only a kernel address space fault iff:
@@ -492,8 +494,6 @@ faultcommon:
 				uvm_grow(p, va);
 
 			if (type == T_PAGEFLT) {
-				KERNEL_UNLOCK_ONE(NULL);
-
 				/*
 				 * we need to switch pmap now if we're in
 				 * the middle of copyin/out.
@@ -507,7 +507,6 @@ faultcommon:
 					pmap_load();
 				return;
 			}
-			KERNEL_UNLOCK_LAST(l);
 			goto out;
 		}
 		KSI_INIT_TRAP(&ksi);
@@ -520,10 +519,8 @@ faultcommon:
 			ksi.ksi_code = SEGV_MAPERR;
 
 		if (type == T_PAGEFLT) {
-			if (pcb->pcb_onfault != 0) {
-				KERNEL_UNLOCK_ONE(NULL);
+			if (pcb->pcb_onfault != 0)
 				goto copyfault;
-			}
 			printf("uvm_fault(%p, 0x%lx, %d) -> %x\n",
 			    map, va, ftype, error);
 			goto we_re_toast;
@@ -543,10 +540,6 @@ faultcommon:
 			ksi.ksi_signo = SIGSEGV;
 		}
 		(*p->p_emul->e_trapsignal)(l, &ksi);
-		if (type == T_PAGEFLT)
-			KERNEL_UNLOCK_ONE(NULL);
-		else
-			KERNEL_UNLOCK_LAST(l);
 		break;
 	}
 
@@ -576,14 +569,16 @@ faultcommon:
 				ksi.ksi_code = TRAP_BRKPT;
 			else
 				ksi.ksi_code = TRAP_TRACE;
-			KERNEL_LOCK(1, l);
 			(*p->p_emul->e_trapsignal)(l, &ksi);
-			KERNEL_UNLOCK_LAST(l);
 		}
 		break;
 
-#if	NISA > 0
 	case T_NMI:
+#if NTPROF > 0
+		if (tprof_pmi_nmi(frame))
+			return;
+#endif /* NTPROF > 0 */
+#if	NISA > 0
 #if defined(KGDB) || defined(DDB)
 		/* NMI can be hooked up to a pushbutton for debugging */
 		printf ("NMI ... going to debugger\n");
@@ -604,6 +599,7 @@ faultcommon:
 		else
 			return;
 #endif /* NISA > 0 */
+		;	/* avoid a label at end of compound statement */
 	}
 
 	if ((type & T_USER) == 0)
@@ -612,9 +608,7 @@ out:
 	userret(l);
 	return;
 trapsignal:
-	KERNEL_LOCK(1, l);
 	(*p->p_emul->e_trapsignal)(l, &ksi);
-	KERNEL_UNLOCK_LAST(l);
 	userret(l);
 }
 
@@ -627,9 +621,6 @@ startlwp(void *arg)
 
 	err = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
 	pool_put(&lwp_uc_pool, uc);
-
-	KERNEL_UNLOCK_LAST(l);
-
 	userret(l);
 }
 
@@ -637,6 +628,9 @@ startlwp(void *arg)
 static void
 frame_dump(struct trapframe *tf)
 {
+	int i;
+	unsigned long *p;
+
 	printf("rip %p  rsp %p  rfl %p\n",
 	    (void *)tf->tf_rip, (void *)tf->tf_rsp, (void *)tf->tf_rflags);
 	printf("rdi %p  rsi %p  rdx %p\n",
@@ -649,5 +643,14 @@ frame_dump(struct trapframe *tf)
 	    (void *)tf->tf_r13, (void *)tf->tf_r14, (void *)tf->tf_r15);
 	printf("rbp %p  rbx %p  rax %p\n",
 	    (void *)tf->tf_rbp, (void *)tf->tf_rbx, (void *)tf->tf_rax);
+	printf("cs %p  ds %p  es %p  fs %p  gs %p  ss %p\n",
+		tf->tf_cs & 0xffff, tf->tf_ds & 0xffff, tf->tf_es & 0xffff,
+		tf->tf_fs & 0xffff, tf->tf_gs & 0xffff, tf->tf_ss & 0xffff);
+	
+	printf("\n");
+	printf("Stack dump:\n");
+	for (i = 0, p = (unsigned long *) tf; i < 20; i ++, p += 4)
+		printf("   0x%.16lx  0x%.16lx  0x%.16lx 0x%.16lx\n", *p, p[1], p[2], p[3]);
+	printf("\n");
 }
 #endif

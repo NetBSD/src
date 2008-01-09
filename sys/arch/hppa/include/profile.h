@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.7 2007/04/07 09:02:07 skrll Exp $	*/
+/*	$NetBSD: profile.h,v 1.7.14.1 2008/01/09 01:46:24 matt Exp $	*/
 
 /*	$OpenBSD: profile.h,v 1.1 1998/12/05 17:25:55 mickey Exp $	*/
 
@@ -33,20 +33,18 @@
  *	@(#)profile.h	8.1 (Berkeley) 6/11/93
  */
 
-#define	_MCOUNT_DECL static __inline void _mcount
-
-#define	MCOUNT \
-extern void mcount(void) __asm("mcount");				\
-void									\
-mcount()								\
-{									\
-}
+#define	_MCOUNT_DECL	void _mcount
+#define _MCOUNT_FUNC	mcount
 
 #ifdef _KERNEL
-/*
- * Note that we assume splhigh() and splx() cannot call mcount()
- * recursively.
- */
-#define	MCOUNT_ENTER	s = splhigh()
-#define	MCOUNT_EXIT	splx(s)
+#define	MCOUNT_ENTER			\
+        __asm volatile (		\
+	    "mfctl %%eiem, %0\n\t"	\
+	    "mtctl %%r0, %%eiem"	\
+	    : "=r"(s) /* output */	\
+	    : /* no inputs */);
+
+#define	MCOUNT_EXIT	\
+	__asm volatile("mtctl %0, %%eiem" : /* no outputs */ : "r" (s))
+
 #endif /* _KERNEL */

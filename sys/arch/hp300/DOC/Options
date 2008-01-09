@@ -1,4 +1,4 @@
-$NetBSD: Options,v 1.9 2006/03/08 23:46:23 lukem Exp $
+$NetBSD: Options,v 1.9.40.1 2008/01/09 01:45:58 matt Exp $
 
 Here is a list of hp300 specific kernel compilation options and what they
 mean:
@@ -66,17 +66,6 @@ PANICBUTTON
 DEBUG
 	Compiles in a variety of consistency checks and debug printfs
 	throughout the hp300 MD code and device drivers.
-
-COMPAT_HPUX
-	Enables HP-UX binary compatibility mode.  Allows a variety of
-	"recent" HP-UX binaries to be run unchanged.  Due to the
-	evolutionary and "as-needed" nature of this code, "recent" is
-	anywhere from release 6.2 to 8.0 of HP-UX.  It will run 8.0
-	shared-library binaries (assuming all the necessary shared-libraries
-	are installed in the filesystem).
-
-COMPAT_OHPUX
-	Compile in old 4.2-ish HP-UX (pre-6.0?) compatibility code.
 
 DCMSTATS
 	Compile in code to collect a variety of transmit/receive statistics

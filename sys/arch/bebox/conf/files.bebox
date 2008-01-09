@@ -1,4 +1,4 @@
-#	$NetBSD: files.bebox,v 1.48.14.1 2007/11/06 23:15:30 matt Exp $
+#	$NetBSD: files.bebox,v 1.48.14.2 2008/01/09 01:45:34 matt Exp $
 #
 # First try for bebox specific configuration info
 #
@@ -16,7 +16,6 @@ file    arch/powerpc/powerpc/clock.c
 file    arch/powerpc/oea/prep_machdep.c
 file	arch/powerpc/powerpc/bus_dma.c
 file	arch/powerpc/powerpc/bus_space.c
-file	arch/powerpc/powerpc/softintr.c
 file	arch/powerpc/powerpc/procfs_machdep.c	procfs
 file    arch/bebox/bebox/pic_bebox.c
 
@@ -107,13 +106,6 @@ file	arch/bebox/isa/mcclock_isa.c		mcclock_isa
 # attribute used to represent the "keyboard controller"
 # XXX should be a real device
 define pckbcport { [irq = -1], [port = -1] }
-
-# PC console support a la "pccons"
-device	pc: tty, pckbcport
-attach	pc at isa
-device	pcconskbd: pckbport_machdep_cnattach
-attach	pcconskbd at pckbport
-file	arch/bebox/isa/pccons.c		pc | pcconskbd needs-flag
 
 # PC Mice; Logitech-style, Microsoft-style, and PS/2-style
 device	lms

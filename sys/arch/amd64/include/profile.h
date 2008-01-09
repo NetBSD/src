@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.7.24.1 2007/11/06 23:14:20 matt Exp $	*/
+/*	$NetBSD: profile.h,v 1.7.24.2 2008/01/09 01:44:54 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -33,9 +33,12 @@
 
 #ifdef _KERNEL_OPT
 #include "opt_multiprocessor.h"
+#include "opt_xen.h"
 #endif
 
-#include <machine/atomic.h>
+#ifdef _KERNEL
+#include <machine/lock.h>
+#endif
 
 #define	_MCOUNT_DECL void _mcount
 
@@ -85,11 +88,7 @@ __cpu_simple_lock_t __mcount_lock;
 static inline void
 MCOUNT_ENTER_MP(void)
 {
-	while (x86_atomic_testset_b(&__mcount_lock, __SIMPLELOCK_LOCKED)
-	    != __SIMPLELOCK_UNLOCKED) {
-		while (__mcount_lock == __SIMPLELOCK_LOCKED)
-			;
-	}
+	__cpu_simple_lock(&__mcount_lock);
 	__insn_barrier();
 }
 
@@ -104,6 +103,29 @@ MCOUNT_EXIT_MP(void)
 #define MCOUNT_EXIT_MP()
 #endif
 
+#ifdef XEN
+static inline void
+mcount_disable_intr(void)
+{
+	/* works because __cli is a macro */
+	__cli();
+}
+
+static inline u_long
+mcount_read_psl(void)
+{
+	return (HYPERVISOR_shared_info->vcpu_info[0].evtchn_upcall_mask);
+}
+
+static inline void
+mcount_write_psl(u_long psl)
+{
+	HYPERVISOR_shared_info->vcpu_info[0].evtchn_upcall_mask = psl;
+	x86_lfence();
+	/* XXX can't call hypervisor_force_callback() because we're in mcount*/ 
+}
+
+#else /* XEN */
 static inline void
 mcount_disable_intr(void)
 {
@@ -125,6 +147,7 @@ mcount_write_psl(u_long ef)
 	__asm volatile("pushl %0; popfl" : : "r" (ef));
 }
 
+#endif /* XEN */
 #define	MCOUNT_ENTER							\
 	s = (int)mcount_read_psl();					\
 	mcount_disable_intr();						\

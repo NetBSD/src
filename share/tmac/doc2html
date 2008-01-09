@@ -1,4 +1,4 @@
-.\" $NetBSD: doc2html,v 1.50 2006/06/19 15:44:44 gdamore Exp $
+.\" $NetBSD: doc2html,v 1.50.10.1 2008/01/09 01:39:28 matt Exp $
 .\"
 .\" Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -724,9 +724,8 @@ Unknown .Bl list type \\$1 (#\\n(.c)
 ..
 .de Fl
 .DEBUG .tm .Fl \\$*
-.	as doc-pcresult <b>-</b>
-.	nr doc-dosep 0
 .	mode-bold-on
+.	doc-sep-append \-
 .	recurse \\$@
 .	mode-bold-off
 .	pc-fin
@@ -920,9 +919,11 @@ AT&T UNIX\\$*
 \\*[dot-dot]
 ..
 .
-.\" generate Aq Ao Ac Bq Bo Bc Dq Do Dc Pq Po Pc Qq Qo Qc Sq So Sc Oo Oc
+.\" generate Aq Ao Ac Bq Bo Bc Brq Bro Brc Dq Do Dc
+.\"	Pq Po Pc Qq Qo Qc Sq So Sc Oo Oc
 .make-quoter A &lt; &gt;
 .make-quoter B \&[ ]
+.make-quoter Br \&{ }
 .make-quoter D \&`` ''
 .make-quoter P \&( )
 .make-quoter Q \&" "
@@ -1354,6 +1355,9 @@ AT&T UNIX\\$*
 .als doc2html@@Bq Bq
 .als doc2html@@Bo Bo
 .als doc2html@@Bc Bc
+.als doc2html@@Brq Brq
+.als doc2html@@Bro Bro
+.als doc2html@@Brc Brc
 .als doc2html@@Dq Dq
 .als doc2html@@Do Do
 .als doc2html@@Dc Dc

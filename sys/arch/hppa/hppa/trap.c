@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.46.2.1 2007/11/06 23:17:05 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.46.2.2 2008/01/09 01:46:23 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.46.2.1 2007/11/06 23:17:05 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.46.2.2 2008/01/09 01:46:23 matt Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -1149,7 +1149,7 @@ syscall(struct trapframe *frame, int *args)
 		callp += code;
 	argsize = callp->sy_argsize;
 
-	if ((error = trace_enter(l, code, code, NULL, args)) != 0)
+	if ((error = trace_enter(code, code, NULL, args)) != 0)
 		goto out;
 
 	rval[0] = 0;
@@ -1196,7 +1196,7 @@ out:
 		break;
 	}
 
-	trace_exit(l, code, args, rval, error);
+	trace_exit(code, args, rval, error);
 
 	userret(l, frame->tf_iioq_head, 0);
 #ifdef DEBUG

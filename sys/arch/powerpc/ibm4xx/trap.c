@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.43.10.1 2007/11/06 23:20:30 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.43.10.2 2008/01/09 01:47:47 matt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.43.10.1 2007/11/06 23:20:30 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.43.10.2 2008/01/09 01:47:47 matt Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -166,9 +166,7 @@ trap(struct trapframe *frame)
 		ksi.ksi_signo = SIGTRAP;
 		ksi.ksi_trap = EXC_TRC;
 		ksi.ksi_addr = (void *)frame->srr0;
-		KERNEL_LOCK(1, l);
 		trapsignal(l, &ksi);
-		KERNEL_UNLOCK_LAST(l);
 		break;
 
 	/*
@@ -183,7 +181,6 @@ trap(struct trapframe *frame)
 			vaddr_t va;
 			struct faultbuf *fb = NULL;
 
-			KERNEL_LOCK(1, NULL);
 			va = frame->dar;
 			if (frame->tf_xtra[TF_PID] == KERNEL_PID) {
 				map = kernel_map;
@@ -200,7 +197,6 @@ trap(struct trapframe *frame)
 			    (ftype & VM_PROT_WRITE) ? "write" : "read",
 			    (void *)va, frame->tf_xtra[TF_ESR]));
 			rv = uvm_fault(map, trunc_page(va), ftype);
-			KERNEL_UNLOCK_ONE(NULL);
 			if (rv == 0)
 				goto done;
 			if ((fb = l->l_addr->u_pcb.pcb_onfault) != NULL) {
@@ -221,8 +217,6 @@ trap(struct trapframe *frame)
 	case EXC_DSI|EXC_USER:
 		/* FALLTHROUGH */
 	case EXC_DTMISS|EXC_USER:
-		KERNEL_LOCK(1, l);
-
 		if (frame->tf_xtra[TF_ESR] & (ESR_DST|ESR_DIZ))
 			ftype = VM_PROT_WRITE;
 
@@ -234,7 +228,6 @@ trap(struct trapframe *frame)
 		rv = uvm_fault(&p->p_vmspace->vm_map, trunc_page(frame->dar),
 		    ftype);
 		if (rv == 0) {
-			KERNEL_UNLOCK_LAST(l);
 			break;
 		}
 		KSI_INIT_TRAP(&ksi);
@@ -250,12 +243,10 @@ trap(struct trapframe *frame)
 			ksi.ksi_signo = SIGKILL;
 		}
 		trapsignal(l, &ksi);
-		KERNEL_UNLOCK_LAST(l);
 		break;
 
 	case EXC_ITMISS|EXC_USER:
 	case EXC_ISI|EXC_USER:
-		KERNEL_LOCK(1, l);
 		ftype = VM_PROT_EXECUTE;
 		DBPRINTF(TDB_ALL,
 		    ("trap(EXC_ISI|EXC_USER) at %lx execute fault tf %p\n",
@@ -263,7 +254,6 @@ trap(struct trapframe *frame)
 		rv = uvm_fault(&p->p_vmspace->vm_map, trunc_page(frame->srr0),
 		    ftype);
 		if (rv == 0) {
-			KERNEL_UNLOCK_LAST(l);
 			break;
 		}
 		KSI_INIT_TRAP(&ksi);
@@ -272,7 +262,6 @@ trap(struct trapframe *frame)
 		ksi.ksi_addr = (void *)frame->srr0;
 		ksi.ksi_code = (rv == EACCES ? SEGV_ACCERR : SEGV_MAPERR);
 		trapsignal(l, &ksi);
-		KERNEL_UNLOCK_LAST(l);
 		break;
 
 	case EXC_AST|EXC_USER:
@@ -289,7 +278,6 @@ trap(struct trapframe *frame)
 
 
 	case EXC_ALI|EXC_USER:
-		KERNEL_LOCK(1, l);
 		if (fix_unaligned(l, frame) != 0) {
 			KSI_INIT_TRAP(&ksi);
 			ksi.ksi_signo = SIGBUS;
@@ -298,7 +286,6 @@ trap(struct trapframe *frame)
 			trapsignal(l, &ksi);
 		} else
 			frame->srr0 += 4;
-		KERNEL_UNLOCK_LAST(l);
 		break;
 
 	case EXC_PGM|EXC_USER:
@@ -320,9 +307,7 @@ trap(struct trapframe *frame)
 			ksi.ksi_signo = rv;
 			ksi.ksi_trap = EXC_PGM;
 			ksi.ksi_addr = (void *)frame->srr0;
-			KERNEL_LOCK(1, l);
 			trapsignal(l, &ksi);
-			KERNEL_UNLOCK_LAST(l);
 		}
 		break;
 
@@ -409,11 +394,11 @@ int
 copyin(const void *udaddr, void *kaddr, size_t len)
 {
 	struct pmap *pm = curproc->p_vmspace->vm_map.pmap;
-	int msr, pid, tmp, ctx;
+	int msr, pid, tmp, ctx, count=0;
 	struct faultbuf env;
 
 	/* For bigger buffers use the faster copy */
-	if (len > 256)
+	if (len > 1024)
 		return (bigcopyin(udaddr, kaddr, len));
 
 	if (setfault(&env)) {
@@ -427,26 +412,44 @@ copyin(const void *udaddr, void *kaddr, size_t len)
 		ctx = pm->pm_ctx;
 	}
 
-	__asm volatile("addi %6,%6,1; mtctr %6;"	/* Set up counter */
-		"mfmsr %0;"			/* Save MSR */
-		"li %1,0x20; "
-		"andc %1,%0,%1; mtmsr %1;"	/* Disable IMMU */
-		"mfpid %1;"			/* Save old PID */
-		"sync; isync;"
+	__asm volatile(
+		"   mfmsr %[msr];"          /* Save MSR */
+		"   li %[pid],0x20; "
+		"   andc %[pid],%[msr],%[pid]; mtmsr %[pid];"   /* Disable IMMU */
+		"   mfpid %[pid];"          /* Save old PID */
+		"   sync; isync;"
 
-		"1: bdz 2f;"			/* while len */
-		"mtpid %3; sync;"		/* Load user ctx */
-		"lbz %2,0(%4); addi %4,%4,1;"	/* Load byte */
-		"sync; isync;"
-		"mtpid %1;sync;"
-		"stb %2,0(%5); dcbf 0,%5; addi %5,%5,1;" /* Store kernel byte */
-		"sync; isync;"
-		"b 1b;"				/* repeat */
+		"   srwi. %[count],%[len],0x2;"     /* How many words? */
+		"   beq-  2f;"              /* No words. Go do bytes */
+		"   mtctr %[count];"
+		"1: mtpid %[ctx]; sync;"
+		"   lswi %[tmp],%[udaddr],4;"       /* Load user word */
+		"   addi %[udaddr],%[udaddr],0x4;"  /* next udaddr word */
+		"   sync; isync;"
+		"   mtpid %[pid];sync;"
+		"   stswi %[tmp],%[kaddr],4;"        /* Store kernel word */
+		"   dcbf 0,%[kaddr];"           /* flush cache */
+		"   addi %[kaddr],%[kaddr],0x4;"    /* next udaddr word */
+		"   sync; isync;"
+		"   bdnz 1b;"               /* repeat */
 
-		"2: mtpid %1; mtmsr %0;"	/* Restore PID and MSR */
-		"sync; isync;"
-		: "=&r" (msr), "=&r" (pid), "=&r" (tmp)
-		: "r" (ctx), "b" (udaddr), "b" (kaddr), "b" (len));
+		"2: andi. %[count],%[len],0x3;"     /* How many remaining bytes? */
+		"   addi %[count],%[count],0x1;"
+		"   mtctr %[count];"
+		"3: bdz 10f;"               /* while count */
+		"   mtpid %[ctx];sync;"
+		"   lbz %[tmp],0(%[udaddr]);"       /* Load user byte */
+		"   addi %[udaddr],%[udaddr],0x1;"  /* next udaddr byte */
+		"   sync; isync;"
+		"   mtpid %[pid]; sync;"
+		"   stb %[tmp],0(%[kaddr]);"        /* Store kernel byte */  
+		"   dcbf 0,%[kaddr];"           /* flush cache */
+		"   addi %[kaddr],%[kaddr],0x1;"
+		"   sync; isync;"
+		"   b 3b;"
+		"10:mtpid %[pid]; mtmsr %[msr]; sync; isync;" /* Restore PID and MSR */
+		: [msr] "=&r" (msr), [pid] "=&r" (pid), [tmp] "=&r" (tmp)
+		: [udaddr] "b" (udaddr), [ctx] "b" (ctx), [kaddr] "b" (kaddr), [len] "b" (len), [count] "b" (count));
 
 	curpcb->pcb_onfault = 0;
 	return 0;
@@ -490,11 +493,11 @@ int
 copyout(const void *kaddr, void *udaddr, size_t len)
 {
 	struct pmap *pm = curproc->p_vmspace->vm_map.pmap;
-	int msr, pid, tmp, ctx;
+	int msr, pid, tmp, ctx, count=0;
 	struct faultbuf env;
 
 	/* For big copies use more efficient routine */
-	if (len > 256)
+	if (len > 1024)
 		return (bigcopyout(kaddr, udaddr, len));
 
 	if (setfault(&env)) {
@@ -508,26 +511,44 @@ copyout(const void *kaddr, void *udaddr, size_t len)
 		ctx = pm->pm_ctx;
 	}
 
-	__asm volatile("addi %6,%6,1; mtctr %6;"	/* Set up counter */
-		"mfmsr %0;"			/* Save MSR */
-		"li %1,0x20; "
-		"andc %1,%0,%1; mtmsr %1;"	/* Disable IMMU */
-		"mfpid %1;"			/* Save old PID */
-		"sync; isync;"
+	__asm volatile(
+		"   mfmsr %[msr];"          /* Save MSR */ \
+		"   li %[pid],0x20; " \
+		"   andc %[pid],%[msr],%[pid]; mtmsr %[pid];"   /* Disable IMMU */ \
+		"   mfpid %[pid];"          /* Save old PID */ \
+		"   sync; isync;"
 
-		"1: bdz 2f;"			/* while len */
-		"mtpid %1;sync;"
-		"lbz %2,0(%5); addi %5,%5,1;"	/* Load kernel byte */
-		"sync; isync;"
-		"mtpid %3; sync;"		/* Load user ctx */
-		"stb %2,0(%4);  dcbf 0,%4; addi %4,%4,1;" /* Store user byte */
-		"sync; isync;"
-		"b 1b;"				/* repeat */
+		"   srwi. %[count],%[len],0x2;"     /* How many words? */
+		"   beq-  2f;"              /* No words. Go do bytes */
+		"   mtctr %[count];"
+		"1: mtpid %[pid];sync;"
+		"   lswi %[tmp],%[kaddr],4;"        /* Load kernel word */
+		"   addi %[kaddr],%[kaddr],0x4;"    /* next kaddr word */
+		"   sync; isync;"
+		"   mtpid %[ctx]; sync;"
+		"   stswi %[tmp],%[udaddr],4;"       /* Store user word */
+		"   dcbf 0,%[udaddr];"          /* flush cache */
+		"   addi %[udaddr],%[udaddr],0x4;"  /* next udaddr word */
+		"   sync; isync;"
+		"   bdnz 1b;"               /* repeat */
 
-		"2: mtpid %1; mtmsr %0;"	/* Restore PID and MSR */
-		"sync; isync;"
-		: "=&r" (msr), "=&r" (pid), "=&r" (tmp)
-		: "r" (ctx), "b" (udaddr), "b" (kaddr), "b" (len));
+		"2: andi. %[count],%[len],0x3;"     /* How many remaining bytes? */
+		"   addi %[count],%[count],0x1;"
+		"   mtctr %[count];"
+		"3: bdz  10f;"              /* while count */
+		"   mtpid %[pid];sync;"
+		"   lbz %[tmp],0(%[kaddr]);"        /* Load kernel byte */
+		"   addi %[kaddr],%[kaddr],0x1;"    /* next kaddr byte */
+		"   sync; isync;"
+		"   mtpid %[ctx]; sync;"
+		"   stb %[tmp],0(%[udaddr]);"       /* Store user byte */
+		"   dcbf 0,%[udaddr];"          /* flush cache */
+		"   addi %[udaddr],%[udaddr],0x1;"
+		"   sync; isync;"
+		"   b 3b;"
+		"10:mtpid %[pid]; mtmsr %[msr]; sync; isync;" /* Restore PID and MSR */
+		: [msr] "=&r" (msr), [pid] "=&r" (pid), [tmp] "=&r" (tmp)
+		: [udaddr] "b" (udaddr), [ctx] "b" (ctx), [kaddr] "b" (kaddr), [len] "b" (len), [count] "b" (count)); 
 
 	curpcb->pcb_onfault = 0;
 	return 0;
