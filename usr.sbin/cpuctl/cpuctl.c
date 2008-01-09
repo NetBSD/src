@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuctl.c,v 1.1 2007/08/04 11:03:05 ad Exp $	*/
+/*	$NetBSD: cpuctl.c,v 1.2 2008/01/09 00:01:33 tnn Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #ifndef lint
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: cpuctl.c,v 1.1 2007/08/04 11:03:05 ad Exp $");
+__RCSID("$NetBSD: cpuctl.c,v 1.2 2008/01/09 00:01:33 tnn Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -109,9 +109,11 @@ main(int argc, char **argv)
 void
 usage(void)
 {
+	const char *progname = getprogname();
 
-	(void)fprintf(stderr, "usage: %s <command> [arguments]\n",
-	    getprogname());
+	fprintf(stderr, "usage: %s list\n", progname);
+	fprintf(stderr, "       %s offline cpuid\n", progname);
+	fprintf(stderr, "       %s online cpuid\n", progname);
 	exit(EXIT_FAILURE);
 	/* NOTREACHED */
 }
