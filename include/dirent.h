@@ -1,4 +1,4 @@
-/*	$NetBSD: dirent.h,v 1.29 2006/05/17 20:32:19 christos Exp $	*/
+/*	$NetBSD: dirent.h,v 1.30 2008/01/09 20:55:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
 
 /*
  * The kernel defines the format of directory entries returned by 
- * the getdirentries(2) system call.
+ * the getdents(2) system call.
  */
 #include <sys/dirent.h>
 
